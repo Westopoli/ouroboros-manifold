@@ -1,6 +1,16 @@
 import config
 
 
+def get_tech_multipliers(archetype: str, tech_level: float) -> dict:
+    weights = config.ARCHETYPE_TECH_MULTIPLIERS.get(archetype, {"attack": 0.0, "defense": 0.0, "economy": 0.0})
+    ratio = tech_level / 100.0
+    return {
+        "attack":  1.0 + ratio * weights["attack"],
+        "defense": 1.0 + ratio * weights["defense"],
+        "economy": 1.0 + ratio * weights["economy"],
+    }
+
+
 def grow_tech(faction, world) -> dict | None:
     owned = [r for r in world.regions.values() if r.faction_id == faction.id and r.fields]
     if not owned:

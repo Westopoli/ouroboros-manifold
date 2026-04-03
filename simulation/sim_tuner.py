@@ -413,6 +413,14 @@ def run_scenario(name: str, scenario: dict, seed_override: int | None = None) ->
                 if config.ENABLE_ADJACENCY_BONUS:
                     for nr in w.allied_inhabited_neighbors(region.id):
                         adj_bonus += config.NEIGHBOR_ECONOMY_BONUS * (nr.fields["economy"] / 100.0)
+                    if config.ENABLE_DIPLOMACY and region.faction_id:
+                        for nid in w.get_neighbors(region.id):
+                            nr = w.regions.get(nid)
+                            if (nr and nr.tier != "empty" and nr.faction_id
+                                    and nr.faction_id != region.faction_id):
+                                our_stance = registry[region.faction_id].diplomatic_stance.get(nr.faction_id, "hostile")
+                                if our_stance == "cooperative":
+                                    adj_bonus += config.NEIGHBOR_ECONOMY_BONUS * (nr.fields["economy"] / 100.0)
                 deltas = _drift.compute_drift_deltas(
                     region, tick=t,
                     faction_modifier=modifier,

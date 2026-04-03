@@ -1,5 +1,6 @@
 import config
 import events as _events
+import technology as _tech
 
 
 def resolve(intents: list, snapshot: dict, registry: dict,
@@ -28,7 +29,7 @@ def resolve(intents: list, snapshot: dict, registry: dict,
         elif action == "reinforce":
             resolved.append(_resolve_reinforce(intent, snapshot, rng))
         elif action == "attack":
-            resolved.append(_resolve_attack(intent, snapshot, rng, tick))
+            resolved.append(_resolve_attack(intent, snapshot, registry, rng, tick))
         elif action == "colonize":
             resolved.append(_resolve_colonize(intent, snapshot))
 
@@ -59,7 +60,12 @@ def _resolve_collision(collision_intents: list, snapshot: dict, registry: dict,
         eco     = faction_economies[fid]
         ratio   = eco / max_economy if max_economy > 0 else 1.0
         factor  = config.COLLISION_ECONOMY_FLOOR + (config.COLLISION_ECONOMY_CEILING - config.COLLISION_ECONOMY_FLOOR) * ratio
-        effective_strengths.append(commit * config.ATTACK_EFFICIENCY * factor)
+        atk_mult = 1.0
+        if config.ENABLE_TECHNOLOGY:
+            fac = registry.get(fid)
+            if fac:
+                atk_mult = _tech.get_tech_multipliers(fac.archetype, fac.tech_level)["attack"]
+        effective_strengths.append(commit * config.ATTACK_EFFICIENCY * factor * atk_mult)
 
     # 2. Weighted probability draw
     total_str = sum(effective_strengths)
@@ -122,11 +128,16 @@ def _resolve_collision(collision_intents: list, snapshot: dict, registry: dict,
 
     if has_external_defender:
         mil_before = target_data["fields"]["military"]
+        def_mult = 1.0
+        if config.ENABLE_TECHNOLOGY:
+            def_fac = registry.get(target_owner)
+            if def_fac:
+                def_mult = _tech.get_tech_multipliers(def_fac.archetype, def_fac.tech_level)["defense"]
         total_mil_dmg = total_eco_dmg = total_ten_dmg = total_pop_dmg = 0.0
 
         for i, intent in enumerate(collision_intents):
             ea  = effective_strengths[i]
-            ed  = mil_before * config.RESISTANCE_FACTOR
+            ed  = mil_before * config.RESISTANCE_FACTOR * def_mult
             net = (ea - ed) * rng.uniform(*config.STOCHASTIC_RANGE)
             if net > config.BREAKTHROUGH_THRESHOLD:
                 total_mil_dmg += net * 0.8
@@ -189,11 +200,16 @@ def _resolve_collision(collision_intents: list, snapshot: dict, registry: dict,
     elif target_owner is not None:
         # Participant-owned — treat as attack, not colonization
         mil_before = target_data["fields"]["military"]
+        def_mult = 1.0
+        if config.ENABLE_TECHNOLOGY:
+            def_fac = registry.get(target_owner)
+            if def_fac:
+                def_mult = _tech.get_tech_multipliers(def_fac.archetype, def_fac.tech_level)["defense"]
         total_mil_dmg = total_eco_dmg = total_ten_dmg = total_pop_dmg = 0.0
 
         for i, intent in enumerate(collision_intents):
             ea  = effective_strengths[i]
-            ed  = mil_before * config.RESISTANCE_FACTOR
+            ed  = mil_before * config.RESISTANCE_FACTOR * def_mult
             net = (ea - ed) * rng.uniform(*config.STOCHASTIC_RANGE)
             if net > config.BREAKTHROUGH_THRESHOLD:
                 total_mil_dmg += net * 0.8
@@ -360,14 +376,24 @@ def _resolve_reinforce(intent, snapshot, rng):
     )
 
 
-def _resolve_attack(intent, snapshot, rng, tick):
+def _resolve_attack(intent, snapshot, registry, rng, tick):
     tid     = intent["target_region"]
     td      = snapshot[tid]
     commit  = intent["budget_committed"]
     mil_before = td["fields"]["military"]
 
-    effective_attack  = commit * config.ATTACK_EFFICIENCY
-    effective_defense = mil_before * config.RESISTANCE_FACTOR
+    atk_mult = def_mult = 1.0
+    if config.ENABLE_TECHNOLOGY and registry:
+        atk_fac = registry.get(intent["faction_id"])
+        if atk_fac:
+            atk_mult = _tech.get_tech_multipliers(atk_fac.archetype, atk_fac.tech_level)["attack"]
+        def_fid = td["faction_id"]
+        def_fac = registry.get(def_fid) if def_fid else None
+        if def_fac:
+            def_mult = _tech.get_tech_multipliers(def_fac.archetype, def_fac.tech_level)["defense"]
+
+    effective_attack  = commit * config.ATTACK_EFFICIENCY * atk_mult
+    effective_defense = mil_before * config.RESISTANCE_FACTOR * def_mult
     raw_net           = effective_attack - effective_defense
     stochastic        = rng.uniform(*config.STOCHASTIC_RANGE)
     net_force         = raw_net * stochastic

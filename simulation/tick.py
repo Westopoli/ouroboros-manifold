@@ -182,12 +182,30 @@ def run_tick(world, tick_num: int, ledger=None,
             if entry is not None:
                 log["tech_growth"][faction.id] = entry
 
-    # ── Step 5: Passive drift (with optional faction modifiers) ──────────────
+    # ── Step 5: Passive drift (with optional faction modifiers + adjacency) ──
     for region in world.inhabited_regions():
         modifier = {}
         if registry is not None and region.faction_id in registry:
             modifier = registry[region.faction_id].modifiers
-        deltas = _drift.apply_drift(region, faction_modifier=modifier)
+        adj_bonus = 0.0
+        if config.ENABLE_ADJACENCY_BONUS:
+            for nr in world.allied_inhabited_neighbors(region.id):
+                adj_bonus += config.NEIGHBOR_ECONOMY_BONUS * (nr.fields["economy"] / 100.0)
+            # Cooperative-faction neighbors also contribute adjacency bonus
+            if config.ENABLE_DIPLOMACY and registry and region.faction_id:
+                for nid in world.get_neighbors(region.id):
+                    nr = world.regions.get(nid)
+                    if (nr and nr.tier != "empty" and nr.faction_id
+                            and nr.faction_id != region.faction_id):
+                        our_stance = registry[region.faction_id].diplomatic_stance.get(nr.faction_id, "hostile")
+                        if our_stance == "cooperative":
+                            adj_bonus += config.NEIGHBOR_ECONOMY_BONUS * (nr.fields["economy"] / 100.0)
+        deltas = _drift.compute_drift_deltas(
+            region, tick=tick_num,
+            faction_modifier=modifier,
+            adjacency_bonus=adj_bonus,
+        )
+        _drift.apply_drift_deltas(region, deltas)
         log["drift"][region.id] = deltas
 
     # ── Step 7: Log ──────────────────────────────────────────────────────────

@@ -1,7 +1,7 @@
 # Ouroboros Manifold — Missions Reference
 
-> **Extracted from game_bible.md v1.23.** This file is authoritative for mission generation,
-> archetypes, objectives, difficulty, and briefings. If this file conflicts with game_bible.md,
+> **Extracted from game_bible.md v1.23, updated v2.01.** This file is authoritative for mission generation,
+> archetypes, objectives, difficulty, outcome band classification, and briefings. If this file conflicts with game_bible.md,
 > flag it for Westley — do not silently resolve the conflict.
 >
 > **Modification rule:** Same as the master bible — append-only unless Westley approves
@@ -320,11 +320,27 @@ This means complications feel like memorable disruptions, not background noise. 
 
 **This entire system is implemented after missions work end-to-end without complications. Missions on their own should be a complete, satisfying experience first.**
 
+### Outcome Band Classification System
+
+> **RESOLVED (v2.01).** The classification system is the bridge between tactical gameplay and simulation consequences. It evaluates the player's mission performance and produces a single outcome band that the Mission Outcome Resolver consumes.
+
+**Two-component scoring function evaluated at mission end.** The classification runs once when the mission concludes (either all objectives are resolved, the time deadline expires, or the player's force is eliminated). The result is revealed to the player at mission end, not during gameplay.
+
+**Component 1 — Objective completion score (0.0 to 1.0).** Each mission instance defines a weighted set of objectives generated from the archetype's objective shape. One primary objective carries dominant weight (e.g., 0.6 of the objective score). Zero to three secondary objectives split the remaining weight. Each objective produces a completion value: binary objectives are 0 or 1 (did you hold the position? did the convoy survive?), graduated objectives scale linearly (what percentage of enemy forces were eliminated? how many defensive positions were held?). The weighted sum produces the objective score. Per-archetype objective sets are authored separately — the classification system is objective-agnostic, it just consumes completion values and weights.
+
+**Component 2 — Force retention ratio (0.0 to 1.0).** Total surviving unit value (using the power rating system) divided by total deployed unit value. Lose nothing, it's 1.0. Lose everything, it's 0.0. This is a straightforward accounting of what survived.
+
+**Final score formula:** `final_score = (objective_score × w_obj) + (retention_ratio × w_ret)` where `w_obj` is the dominant weight (e.g., 0.75) and `w_ret` is the secondary weight (e.g., 0.25). All weights are config values tuned during playtesting. Objectives carry the most weight — completing the mission matters more than preserving forces. But a commander who achieves the objective AND brings their people home scores higher than one who wins through attrition.
+
+**Per-archetype threshold boundaries.** The final score maps to one of 5 outcome bands through threshold boundaries that are **defined per archetype, not universal**. The same final score means different things for different mission types. A Rear Guard / Evacuation mission where you save 60% of the evacuees is a strong success — you weren't expected to save everyone. An Assault mission where you only neutralize 60% of the enemy garrison is a partial failure — you didn't finish the job. Per-archetype thresholds let the system calibrate "what good looks like" for each tactical situation. Threshold values are config per archetype, tuned during playtesting.
+
+**Time is a constraint, not a scoring input.** Missions have time deadlines. The deadline is pass/fail — you either complete objectives before time runs out, or whatever objective state exists when the deadline expires becomes your final objective score. Completing the mission faster does not improve the score.
+
 ### Mission Outcome Resolver
 
 After a mission ends, the outcome resolver translates the tactical result into simulation consequences. The resolver sits between the tactical layer (which classifies what happened) and the simulation (which needs field deltas to process).
 
-**Input: outcome band.** The tactical layer evaluates the player's performance and assigns one of 4–5 outcome bands defined by the mission's archetype. Bands represent the spectrum from total success to total failure. The resolver receives a single band classification — one value, thin interface.
+**Input: outcome band.** The Outcome Band Classification System (see above) evaluates the player's tactical performance and produces a single outcome band from the archetype's 5-band spectrum. The resolver receives this single band classification — one value, thin interface.
 
 **Transformation: proportional lookup table per archetype.** Each mission archetype defines a consequence table mapping each outcome band to field deltas for the mission region. Deltas are defined as **proportional to the region's current state** rather than absolute numbers. Instead of "military +10," the table says "military +10% of deficit from 100." A region at military 20 gets a bigger absolute boost from a successful defense mission than a region at military 80. A region already near collapse gets hit harder by failure.
 

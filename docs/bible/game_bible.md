@@ -8,7 +8,7 @@
 >
 > **OPEN QUESTION GOVERNANCE:** The "Open Design Questions" section at the end of this document is a staging area, not a permanent home. When an open question is resolved through brainstorming, the answer must be written into its natural section in the relevant spoke file, and the question must be removed from the open list. If you are an AI session reading this document and you notice decided design content that still appears as an open question (or vice versa — an unresolved question living only inline with no entry in the open questions section), flag it for Westley.
 >
-> **Last updated:** April 2, 2026 (v2.00) — Hub-and-spoke restructuring. Monolithic bible split into hub + 8 spoke files. No content changes — pure extraction from v1.23. Previous monolithic versions preserved in `docs/bible_history/`.
+> **Last updated:** April 3, 2026 (v2.01) — Outcome Band Classification System added to bible_missions.md (two-component scoring: objective completion + force retention, per-archetype thresholds). Unit Behavior AI added to bible_combat.md (universal decision loop for all units, player-activated abilities, nearest-target acquisition, fog-of-war flinch retreat). Previous: (v2.00) Hub-and-spoke restructuring. Monolithic bible split into hub + 8 spoke files. Previous monolithic versions preserved in `docs/bible_history/`.
 
 ---
 
@@ -30,8 +30,8 @@
 ### Spoke Files (Full References)
 
 - [`bible_simulation.md`](bible_simulation.md) — Region state model, drift formulas, event chains, tick sequence, faction agents, diplomacy, technology, coherence ledger
-- [`bible_missions.md`](bible_missions.md) — Mission generation, 10 mission archetypes, objectives, difficulty, briefings, complications, outcome resolver
-- [`bible_combat.md`](bible_combat.md) — Unit combat categories, 6-unit roster, abilities, force allocation, 2.5D layers, tactical variety
+- [`bible_missions.md`](bible_missions.md) — Mission generation, 10 mission archetypes, objectives, difficulty, briefings, complications, outcome band classification, outcome resolver
+- [`bible_combat.md`](bible_combat.md) — Unit combat categories, 6-unit roster, abilities, unit behavior AI, force allocation, 2.5D layers, tactical variety
 - [`bible_world.md`](bible_world.md) — Scale, world generation, topology, faction lifecycle, civilizational lifecycle, map generation, visual style, sci-fi era
 - [`bible_chronicle.md`](bible_chronicle.md) — Chronicle scroll, distiller algorithm, template authoring framework, lineage entanglement
 - [`bible_antagonist.md`](bible_antagonist.md) — External military archetypes, internal threats, spatial manifestation, threat progression
@@ -407,8 +407,8 @@ The library builder architecture (offline generation, JSON storage, caching cont
 ### 2. Force and Asset Design (RESOLVED in v1.12)
 *Fully resolved. 6-unit roster, one ability per unit, light economy, force allocation algorithm. See `bible_combat.md` and "The Player's Toolkit" section above.*
 
-### 3. Combat and Tactical Layer (RESOLVED in v1.12)
-*Fully resolved. Layers are map-defined terrain, standard RTS camera, one base environmental hazard type (sensor interference), mission type differentiation through force comp + map + objectives. See `bible_combat.md`.*
+### 3. Combat and Tactical Layer (RESOLVED in v1.12, updated v2.01)
+*Fully resolved. Layers are map-defined terrain, standard RTS camera, one base environmental hazard type (sensor interference), mission type differentiation through force comp + map + objectives. Unit Behavior AI: universal decision loop (fog-of-war flinch retreat → player orders → nearest-target engagement), player-activated abilities, identical system for player and enemy units across all archetypes. See `bible_combat.md`.*
 
 ### 4. Map Generation System (RESOLVED in v1.13, updated v1.23)
 *Fully resolved. Five-gradient property vocabulary (sensor_interference, elevation, obstacle_density, cover_density, layer_accessibility_mask). Strategic Layout Authoring Framework: shared pool of 10–20 hand-authored spatial blueprints defining zone positions and spatial relationships as relative coordinates; archetype topology templates redefined as compatibility filters selecting from the shared layout pool. Fog of war via multiplicative sensor radius reduction with cross-layer visibility at vantage nodes. Recon phase: terrain visible, enemies hidden. Canvas sizing: archetype base + bounded simulation modifier with per-archetype direction. Simulation-to-gradient mappings: composite axes for baseline intensities, individual fields for bounded texture deltas. See `bible_world.md`.*

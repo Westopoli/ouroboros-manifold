@@ -1,7 +1,7 @@
 # Ouroboros Manifold — Force and Combat Design Reference
 
-> **Extracted from game_bible.md v1.23.** This file is authoritative for unit roster,
-> combat categories, abilities, and force design. If this file conflicts with game_bible.md,
+> **Extracted from game_bible.md v1.23, updated v2.01.** This file is authoritative for unit roster,
+> combat categories, abilities, unit behavior AI, and force design. If this file conflicts with game_bible.md,
 > flag it for Westley — do not silently resolve the conflict.
 >
 > **Modification rule:** Same as the master bible — append-only unless Westley approves
@@ -183,3 +183,35 @@ Different mission types feel different through the combination of three existing
 **Objective shape and pacing** — "hold X until Y" plays differently from "get A from B to C" even on identical maps. The timer, the success spectrum, and what counts as partial success create distinct pacing per archetype.
 
 No additional mission-type-specific rules are needed. The combination of different forces + different maps + different objectives produces distinct tactical experiences through the same engine. This is consistent with the skeleton/skin principle — the engine is uniform, the content (force profiles, map scripts, objective templates) creates variety.
+
+### Unit Behavior AI
+
+> **RESOLVED (v2.01).** Unit behavior is a single universal system shared by all units on both sides across all mission archetypes. Player units and enemy units run the same decision loop. The design philosophy draws from Immortal: Gates of Pyre's accessibility approach — units handle the basics competently so the player's skill expression is in strategic direction (where to send forces, when to commit, how to position), not in babysitting individual units. Archetype differentiation happens at the mission setup and simulation level, not in per-archetype unit micro behavior.
+
+#### Unit Decision Loop — Universal, Priority-Ordered
+
+Every unit evaluates three checks each frame, in priority order. The first check that produces an action wins. This loop is identical for all 6 unit types, player and enemy units alike.
+
+**1. Am I taking damage from a source I cannot engage?** If the unit is receiving damage from an attacker it cannot see (fog of war, different layer outside sensor range) or cannot reach (out of weapon range with no path to close distance), the unit automatically moves a short distance away from the damage direction. This is a flinch, not a strategic retreat — the unit breaks contact and stops. If the player wants to push back into the danger, they issue an explicit move order. Once the damage source is visible and in range, this check no longer triggers — the unit stands and fights.
+
+**2. Do I have a player-issued order?** If the unit has an active order (move, attack-move, hold position, target specific enemy), it executes that order. Player orders always override autonomous behavior. A manual target order persists until the target dies, moves out of range, or the player issues a new order.
+
+**3. Is there an enemy in my engagement range?** If yes, the unit attacks the **nearest enemy**. No RPS-aware targeting, no priority lists — closest threat gets shot. If the unit is already engaged with a target that is still alive and in range, it continues engaging that target rather than switching (no target ping-ponging). If no enemy is in range, the unit holds position.
+
+**Supply unit exception.** Supply units have no attack capability, so check 3 for them is simply "hold position." Their primary survival mechanism is check 1's retreat behavior — they flinch away from any damage source since they can never fight back.
+
+#### Abilities — Player-Activated Only
+
+All unit abilities are **manually activated by the player**. No auto-cast, no smart suggestions, no trigger conditions evaluated by the AI. The ability bar in the UI displays each unit's ability and its cooldown state. The player learns ability timing through gameplay experience.
+
+**Ability education happens in the tutorial**, not during missions. The tutorial teaches what each unit type's ability does, when it's useful, and how to activate it. During missions, the only ability information displayed is the cooldown indicator on the UI bar — no contextual prompts, no "ability ready" notifications beyond the bar itself.
+
+**The one exception** is the Interceptor's "Intercept" ability, which is defined in the ability spec as a passive proximity trigger (see "Abilities — One Per Unit" above). This is not a contradiction — Intercept is a passive that the player positions for, not an active ability the player clicks. The skill expression is where you park the Interceptor, not when you press a button.
+
+#### Enemy Units — Same Loop, No Special Intelligence
+
+Enemy units run the identical decision loop as player units. They acquire the nearest target, return fire, flinch from damage they can't engage, and use abilities on cooldown when minimally sensible conditions are met (enemies in range for offensive abilities, friendlies nearby for defensive abilities). Enemy ability usage is simple threshold-based — no sophisticated timing optimization.
+
+What makes each mission archetype *feel* different from the enemy's side is not AI micro behavior but **mission setup**: where enemy units are placed, what scripted macro objectives they pursue (advance toward player position, hold defensive positions, hide and ambush, patrol routes), and what composition they have. The mission generator authors these macro-level behaviors per archetype at generation time. The unit-level AI is always the same — the variety comes from the tactical situation the setup creates.
+
+**Enemy macro objectives are a separate design question** from unit behavior AI and will be specified when the mission-level AI system is designed. The unit behavior system described here is the foundation that macro objectives build on top of.
