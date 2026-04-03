@@ -22,9 +22,10 @@
 4. [The Player's Toolkit](#the-players-toolkit) — Assets, force composition, economy, commanding forces
 5. [Tone and Feel](#tone-and-feel) — Elegiac, humorous, weighted by time
 6. [What's Unique (Blue Ocean)](#whats-unique-blue-ocean) — The combination no other game offers
-7. [Transition from Previous Iteration](#transition-from-previous-iteration) — What survives, what's cut, what changes
-8. [Open Design Questions](#open-design-questions) — Resolved design decisions
-9. [Document Maintenance](#document-maintenance) — Rules, workflow, governance
+7. [Design Experience Guide](#design-experience-guide) — Quick-reference for design decisions: player identity, phase feelings, heuristics, litmus tests
+8. [Transition from Previous Iteration](#transition-from-previous-iteration) — What survives, what's cut, what changes
+9. [Open Design Questions](#open-design-questions) — Resolved design decisions
+10. [Document Maintenance](#document-maintenance) — Rules, workflow, governance
 
 ### Spoke Files (Full References)
 
@@ -287,6 +288,50 @@ The combination that doesn't exist in any current game:
 4. **AI-generated mission and narrative content** — every playthrough is contextually unique through library-built templates with simulation-driven variables.
 5. **The tragedy of understanding** — you can read the system, master the patterns, and still face outcomes you can't prevent. Mastery means you understand WHY you lost, not that you always win.
 6. **Cyclic civilizational arcs** — the game loops through early/mid/late eras, with each cycle carrying the scars and ruins of the last. The Ouroboros isn't a name — it's the structure.
+
+---
+
+## Design Experience Guide
+
+> **This section is a quick-reference for design decisions.** When you're choosing between two approaches and the code doesn't make the answer obvious, check here first. These are the player experience commitments that every mechanical decision should serve.
+
+### Core Player Identity
+
+The player is **a commander** — one person with limited tools, given an impossible task by a civilization that has its own plans. The player influences the world but never dictates to it. They receive orders and equipment, not a kingdom and a treasury. The gap between what they need and what they get is where the drama lives. Every design decision should reinforce this: the player is *inside* the world, not *above* it.
+
+### The Five Feelings
+
+The game should produce these distinct player experiences depending on the faction's lifecycle state. These are the emotional targets — if a mechanic doesn't serve at least one of them, question whether it belongs.
+
+1. **Pioneer survival** (young faction) — scrappy, resource-scarce, every mission matters because the faction can't absorb a loss. The feeling of building something fragile in a dangerous world.
+2. **Strategic depth** (established faction) — real military, real logistics, real enemies. The player is a commander with actual resources making actual strategic choices about which fronts to prioritize.
+3. **Imperial weight** (overextended faction) — too much territory, not enough resources. Every solution creates a new problem. The feeling of managing decline before it becomes collapse.
+4. **Elegiac decline** (declining faction) — watching an institution die from the inside while trying to save what you can. Last stands, fighting former allies, protecting the last intact core regions.
+5. **Survival and identity** (faction born from collapse) — a new faction finding its footing in a dangerous world, surrounded by the wreckage of what came before. The feeling of starting over with scars.
+
+The player may experience all five across a single playthrough through lineage rotation — including experiencing the consequences of their own failures from the other side.
+
+### Design Decision Heuristics
+
+When facing a design fork, these resolve the ambiguity:
+
+- **Uncertainty** — genuine, never faked. If the player can guarantee an outcome, the design is wrong. Multiple forces compete and none fully controls the result.
+- **Control** — the player influences, never dictates. The civilization has its own plans. If a feature gives the player too much control over the world, pull it back.
+- **Loss** — dramatic, never punishing. Losing a region is a chronicle moment, not a game over. The generational structure absorbs every loss. If the player can lose and the game becomes *more* interesting, the design is right.
+- **Humor** — dry, earned, never forced. The game winks, it doesn't mug. Easter eggs and absurdity are welcome. Cringe is not.
+- **Complexity** — accessible floor, deep ceiling. A new player can play without understanding every system. A skilled player plays differently because they read the situation better, not because they memorized more rules.
+- **Pacing** — the world is always in motion. If the map is static for 100 ticks, the core fantasy fails. Static = broken.
+- **Mastery** — mastery means understanding *why* you lost, not that you always win. The tragedy of understanding is the core emotional loop.
+
+### The Litmus Tests
+
+Quick yes/no checks for any feature or design decision:
+
+1. **Commander or god?** Does this make the player feel like a commander inside a living world, or a god hovering above it? If god — redesign.
+2. **Chronicle material?** Would this produce interesting chronicle entries? If a feature can't generate narrative material, it's mechanical overhead without payoff.
+3. **Era-agnostic?** Does this work identically with a different theme pack? If it depends on sci-fi specifics, it violates the revenue principle.
+4. **Loss is interesting?** Can the player lose and still want to keep playing? If failure makes the game less interesting instead of more, the stakes are wrong.
+5. **The world doesn't care?** Does the world continue operating regardless of the player's actions? If a system pauses, waits, or adjusts itself for the player, it breaks the living-world contract.
 
 ---
 

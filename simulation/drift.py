@@ -36,16 +36,33 @@ def tension_drift(fields: dict, composites: dict) -> float:
         * config.TENSION_STRESS_RATE
     )
     natural_decay = config.TENSION_NATURAL_DECAY_RATE * (fields["tension"] / 100.0)
-    return economic_tension + stress_pressure - natural_decay
+
+    # Subsistence crisis: economy near floor creates compounding pressure
+    subsistence_pressure = 0.0
+    subsistence_thresh = config.ECONOMY_FLOOR + config.SUBSISTENCE_CRISIS_RANGE
+    if fields["economy"] < subsistence_thresh:
+        severity = (subsistence_thresh - fields["economy"]) / config.SUBSISTENCE_CRISIS_RANGE
+        subsistence_pressure = config.SUBSISTENCE_TENSION_RATE * severity * (fields["population"] / 100.0)
+
+    return economic_tension + stress_pressure + subsistence_pressure - natural_decay
 
 
 def population_drift(fields: dict) -> float:
     if fields["economy"] > config.POPULATION_SUBSISTENCE:
-        eco_factor = (fields["economy"] - config.POPULATION_SUBSISTENCE) / (100.0 - config.POPULATION_SUBSISTENCE)
-        return config.POPULATION_GROWTH_RATE * eco_factor * (1.0 - fields["population"] / 100.0)
+        base = config.POPULATION_GROWTH_RATE * (
+            (fields["economy"] - config.POPULATION_SUBSISTENCE) / (100.0 - config.POPULATION_SUBSISTENCE)
+        ) * (1.0 - fields["population"] / 100.0)
     else:
         deficit = config.POPULATION_SUBSISTENCE - fields["economy"]
-        return -deficit * config.POPULATION_DECLINE_RATE
+        base = -deficit * config.POPULATION_DECLINE_RATE
+
+    # Subsistence crisis: economy near floor accelerates population loss
+    subsistence_thresh = config.ECONOMY_FLOOR + config.SUBSISTENCE_CRISIS_RANGE
+    if fields["economy"] < subsistence_thresh:
+        severity = (subsistence_thresh - fields["economy"]) / config.SUBSISTENCE_CRISIS_RANGE
+        base -= config.SUBSISTENCE_POP_RATE * severity
+
+    return base
 
 
 def _deoscillated_stability(fields: dict) -> float:
@@ -140,7 +157,12 @@ def compute_drift_deltas(region: Region, tick: int = 0,
     if faction_modifier:
         for field, bonus in faction_modifier.items():
             if field in deltas:
-                deltas[field] += bonus
+                if field == "military" and config.ENABLE_RECRUITMENT:
+                    # Gate military modifier by recruitment headroom so it respects the ceiling
+                    mil_headroom = max(0.0, 1.0 - f["military"] / config.RECRUITMENT_CEILING)
+                    deltas[field] += bonus * mil_headroom
+                else:
+                    deltas[field] += bonus
 
     # Recruitment reads de-oscillated economy
     if config.ENABLE_RECRUITMENT:
@@ -187,7 +209,11 @@ def apply_drift(region: Region, faction_modifier: dict | None = None) -> dict:
     if faction_modifier:
         for field, bonus in faction_modifier.items():
             if field in deltas:
-                deltas[field] += bonus
+                if field == "military" and config.ENABLE_RECRUITMENT:
+                    mil_headroom = max(0.0, 1.0 - f["military"] / config.RECRUITMENT_CEILING)
+                    deltas[field] += bonus * mil_headroom
+                else:
+                    deltas[field] += bonus
 
     if config.ENABLE_RECRUITMENT:
         headroom = max(0.0, 1.0 - f["military"] / config.RECRUITMENT_CEILING)

@@ -7,6 +7,7 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 from sim_validator import run_recorded_scenario
 from sim_tuner import SCENARIOS
 from invariants import run_invariants, GROUP_MAP
+import tuning_loop
 
 
 def print_report(scenario_name: str, tlog, results: list):
@@ -96,12 +97,15 @@ def main():
     groups = None
     scenario_names = []
     list_mode = False
+    mode = None  # None = normal validator, "report_only" or "propose_and_test"
 
     for arg in args:
         if arg == "--list-invariants":
             list_mode = True
         elif arg.startswith("--groups="):
             groups = arg.split("=")[1].split(",")
+        elif arg.startswith("--mode="):
+            mode = arg.split("=")[1]
         elif arg == "--all":
             scenario_names = list(SCENARIOS.keys())
         else:
@@ -128,9 +132,16 @@ def main():
             scenario = dict(scenario)
             del scenario["variants"]
 
-        tlog = run_recorded_scenario(scenario_name, scenario)
-        results = run_invariants(tlog, groups=groups)
-        print_report(scenario_name, tlog, results)
+        if mode == "report_only":
+            report = tuning_loop.diagnose(scenario_name, scenario)
+            tuning_loop.print_report(report)
+        elif mode == "propose_and_test":
+            report = tuning_loop.propose_and_test(scenario_name, scenario)
+            tuning_loop.print_report(report)
+        else:
+            tlog = run_recorded_scenario(scenario_name, scenario)
+            results = run_invariants(tlog, groups=groups)
+            print_report(scenario_name, tlog, results)
 
 
 if __name__ == "__main__":

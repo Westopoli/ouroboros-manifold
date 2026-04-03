@@ -164,6 +164,14 @@ POPULATION_SUBSISTENCE   = 15.0   # economy below this causes population decline
 POPULATION_GROWTH_RATE   = 3   # logistic growth coefficient (was 0.25, /5 timescale)
 POPULATION_DECLINE_RATE  = 0.2  # decline per unit of economy deficit (was 0.015, /5 timescale)
 
+# ── Subsistence crisis (economy near floor) ─────────────────────────────────
+# When economy is within SUBSISTENCE_CRISIS_RANGE of ECONOMY_FLOOR, tension rises
+# and population declines proportional to severity. Creates a death spiral that
+# makes the economic floor painful rather than a safe equilibrium.
+SUBSISTENCE_CRISIS_RANGE  = 3.0    # economy within this of ECONOMY_FLOOR triggers crisis
+SUBSISTENCE_TENSION_RATE  = 0.15   # extra tension per tick at floor, scaled by severity and population
+SUBSISTENCE_POP_RATE      = 0.08   # extra population decline per tick at floor, scaled by severity
+
 # ── Antagonist (Groups D; kept for backward compat when ENABLE_FACTIONS=False) ──
 ANTAGONIST_BUDGET_GROWTH_RATE = 0.04  # budget added per tick (~8 at tick 200)
 ANTAGONIST_BUDGET_START       = 0.0

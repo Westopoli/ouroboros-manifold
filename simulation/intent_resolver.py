@@ -186,8 +186,75 @@ def _resolve_collision(collision_intents: list, snapshot: dict, registry: dict,
                  "bypass_floor": bypass_floor},
         ))
 
+    elif target_owner is not None:
+        # Participant-owned — treat as attack, not colonization
+        mil_before = target_data["fields"]["military"]
+        total_mil_dmg = total_eco_dmg = total_ten_dmg = total_pop_dmg = 0.0
+
+        for i, intent in enumerate(collision_intents):
+            ea  = effective_strengths[i]
+            ed  = mil_before * config.RESISTANCE_FACTOR
+            net = (ea - ed) * rng.uniform(*config.STOCHASTIC_RANGE)
+            if net > config.BREAKTHROUGH_THRESHOLD:
+                total_mil_dmg += net * 0.8
+                total_eco_dmg += net * 0.3
+                total_ten_dmg += min(net * 0.5, 30.0)
+            elif net > 0.0:
+                total_mil_dmg += net * 0.5
+                total_eco_dmg += net * 0.2
+                total_ten_dmg += net * 0.4
+            else:
+                total_mil_dmg += ea * 0.10
+                total_ten_dmg += 2.0
+
+        mil_after    = max(0.0, mil_before - total_mil_dmg)
+        conquest     = None
+        chain_spawns = []
+        bypass_floor = False
+
+        if mil_after < config.CONQUEST_THRESHOLD:
+            conquest = {
+                "region_id":      tid,
+                "new_faction_id": winner_fid,
+                "old_faction_id": target_owner,
+                "garrison":       winner_commit * config.CONQUEST_GARRISON_FRACTION,
+            }
+            total_eco_dmg += config.CONQUEST_ECONOMY_DISRUPTION
+            total_ten_dmg += config.CONQUEST_TENSION_SPIKE
+            total_pop_dmg += config.CONQUEST_POPULATION_LOSS
+            bypass_floor   = True
+            chain_tag      = _events._next_chain_tag()
+            if rng.random() < 0.60:
+                delay = round(rng.triangular(4, 8, 6))
+                chain_spawns.append({
+                    "template_id": "CONQUEST_UNREST",
+                    "region_id":   tid,
+                    "due_tick":    tick + delay,
+                    "chain_tag":   chain_tag,
+                    "probability": 1.0,
+                    "conditions":  {},
+                })
+
+        deltas = {tid: {"military": -total_mil_dmg, "economy": -total_eco_dmg, "tension": +total_ten_dmg}}
+        if total_pop_dmg:
+            deltas[tid]["population"] = -total_pop_dmg
+
+        resolved.append(_base(
+            winner_intent,
+            budget_spent=winner_spent,
+            deltas=deltas,
+            outcome_band="collision",
+            conquest=conquest,
+            chain_spawns=chain_spawns,
+            significance="collision",
+            log={**sig, "effective_strengths": [round(s, 4) for s in effective_strengths],
+                 "opposition_ratio": round(opp_ratio, 4), "retention_ceiling": round(ret_ceiling, 4),
+                 "retention_fraction": round(ret_fraction, 4), "budget_refunded": round(budget_refunded, 4),
+                 "bypass_floor": bypass_floor},
+        ))
+
     else:
-        # Uninhabited (or participant-owned) — colonize with margin modifier
+        # Uninhabited — colonize with margin modifier
         mil_start = config.COLONY_START_MILITARY
         if margin_ratio < config.COLLISION_NARROW_MARGIN:
             mil_start *= rng.uniform(config.COLLISION_NARROW_MIL_PENALTY, 0.70)

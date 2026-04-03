@@ -11,6 +11,8 @@ The game bible is the single source of truth for what this game is. It uses a **
 
 **Reading discipline:** Read the hub first. Then read only the spoke(s) relevant to your task — stage specs list which spokes to read in their "Bible References" section. Don't read every spoke every time.
 
+**Design decisions:** When facing a design fork — "should this feel punishing or dramatic?", "does the player control this or does the civilization?" — check the **Design Experience Guide** section in the hub. It has heuristics and litmus tests for resolving ambiguity without reading 200 lines of vision docs.
+
 **Previous versions:** Monolithic bible versions are archived in `docs/bible_history/game_bible_X_YY.md`.
 
 If something in any other doc conflicts with the bible (hub or any spoke), the bible wins.

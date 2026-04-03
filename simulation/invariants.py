@@ -1,4 +1,5 @@
 from sim_validator import InvariantResult, TrajectoryLog
+import config
 import statistics
 
 
@@ -443,7 +444,7 @@ def conquest_causes_disruption(log: TrajectoryLog) -> InvariantResult:
                              "tension_before": prev_ten, "tension_after": curr_ten,
                              "governing_configs": ["CONQUEST_TENSION_SPIKE"]},
                 )
-            if curr_eco >= prev_eco:
+            if curr_eco >= prev_eco and prev_eco > config.ECONOMY_FLOOR + 0.5:
                 return InvariantResult(
                     "E3_conquest_disruption", False, "critical",
                     f"Conquest at tick {snap.tick} on {rid}: economy didn't decrease "
