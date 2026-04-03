@@ -91,11 +91,11 @@ def run_tick(world, tick_num: int, ledger=None,
         for faction in list(registry.values()):
             intent = faction.decide(snapshot, world.adjacency, registry, rng, tick_num)
             intents.append(intent)
-            log["faction_actions"].append(intent)
         # 3c: Resolve
         resolved = _intent_resolver.resolve(intents, snapshot, registry, rng, tick=tick_num)
         # 3d: Apply
         for action in resolved:
+            log["faction_actions"].append(action)
             _apply_resolved_action(world, registry, action, pending_queue, ledger, tick_num)
             if action.get("conquest"):
                 log["conquests"].append(action["conquest"])

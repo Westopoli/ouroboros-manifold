@@ -4,9 +4,16 @@
 
 ## The Bible
 
-The game bible is the single source of truth for what this game is. Bible files are versioned as `docs/game_bible_X_YY.md` — always use the highest-numbered version (e.g. `1_07` is newer than `1_06`). It has a table of contents — navigate to the section you need, don't read the whole thing every time. If something in any other doc conflicts with the bible, the bible wins.
+The game bible is the single source of truth for what this game is. It uses a **hub-and-spoke architecture** in `docs/bible/`:
 
-Read the relevant bible section before starting work that touches game design, simulation behavior, mission structure, fleet/combat mechanics, chronicle systems, or tone.
+- **Hub:** `docs/bible/game_bible.md` — vision, principles, generational structure, player toolkit, tone, and summary paragraphs pointing to spokes
+- **Spokes:** `docs/bible/bible_*.md` — full reference for each major system (simulation, missions, combat, world, chronicle, antagonist, monetization, AI pipeline)
+
+**Reading discipline:** Read the hub first. Then read only the spoke(s) relevant to your task — stage specs list which spokes to read in their "Bible References" section. Don't read every spoke every time.
+
+**Previous versions:** Monolithic bible versions are archived in `docs/bible_history/game_bible_X_YY.md`.
+
+If something in any other doc conflicts with the bible (hub or any spoke), the bible wins.
 
 ## Model Usage
 
@@ -83,6 +90,8 @@ Workflow for any bug:
 
 One confirmed diagnosis is worth ten guesses.
 
+**One fix at a time.** When multiple issues are identified, fix one, have the user run and verify, then move to the next. Batching fixes reduces the ability to isolate which change caused a new problem or resolved an old one.
+
 ## Test Checkpoints
 
 **Never run tests yourself. Never self-verify test output.**
@@ -93,7 +102,26 @@ After any code change that requires a test run:
 3. Wait for the user to run it and paste or share the output.
 4. Only proceed after the user has seen the output and given sign-off.
 
-This applies to every test at every stage — unit tests, integration tests, one-off diagnostic scripts. No exceptions. The user's eyes on the output is a hard requirement, not a courtesy.
+This applies to every test at every stage — unit tests, integration tests, one-off diagnostic scripts. The user's eyes on the output is a hard requirement, not a courtesy.
+
+### Exception: Simulation Validator
+
+The simulation validator (`simulation/sim_validator.py` / `simulation/test_validate.py`) is the one test system you run yourself. After implementing or changing simulation code:
+1. Run the validator yourself.
+2. Analyze the results.
+3. If invariants fail: diagnose and adjust `config.py` values within defined bounds, then re-run. Iterate until the report is clean. **`config.py` is the only engine file you may modify during validator tuning.** All other engine files (see protected list below) require Westley's approval.
+4. If you find a bug or design flaw that you can't resolve through config tuning, **escalate to Westley** — don't silently work around it.
+5. When all invariants pass, present the final report to Westley for sign-off.
+
+**Protected engine files.** These files are read-only during validator tuning. If a fix requires changing one of them, escalate to Westley:
+`tick.py`, `drift.py`, `faction.py`, `region.py`, `events.py`, `event_engine.py`, `intent_resolver.py`, `border_friction.py`, `technology.py`, `diplomacy.py`, `world.py`, `templates.py`, `theme_scifi.py`
+
+**Invariant modification rules.** When an invariant fails, there are three valid responses: adjust config, escalate a real bug, or recalibrate the invariant. Rules for the third:
+- **You may** narrow an invariant's scope without approval — skipping cases it was never meant to check (empty regions, factions with zero territory, runs shorter than the invariant's window).
+- **You may not** widen thresholds, extend time windows, or loosen tolerances without presenting the change to Westley first. This includes any change that makes the invariant more permissive for cases it IS supposed to catch.
+- **You may never** reclassify a real finding as a skip. If the simulation has a bug and the invariant caught it, the answer is escalate — not adjust the invariant to stop catching it.
+
+This replaces the manual checkpoint loop for simulation work. Westley reviews the final validator report, not intermediate terminal output.
 
 ## Tone
 
@@ -139,7 +167,8 @@ All simulation code lives in `simulation/`. Here's the live engine:
 - `__pycache__/` — Python bytecode
 
 ### Docs layout
-- `docs/bible_history/` — versioned game bibles (use highest-numbered)
+- `docs/bible/` — game bible hub + spoke files (active reference)
+- `docs/bible_history/` — archived monolithic bible versions
 - `docs/stage_specs/` — stage implementation specs
 - `docs/articles/` — design essays
 - `docs/website/` — marketing site

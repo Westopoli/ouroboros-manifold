@@ -557,6 +557,147 @@ The validator calls `sim_tuner.py`'s graph generation alongside the invariant ch
 
 ---
 
+## File Protection Policy
+
+**CRITICAL CONSTRAINT: The tuning system may ONLY modify `config.py`. It must NEVER modify any other engine file.**
+
+This is the single most important rule in the entire system. The tuning loop exists to adjust numeric parameters. It does not exist to fix code. The following files are **read-only** to the tuning system and must never be edited by any automated process:
+
+```
+PROTECTED FILES — do not modify:
+  region.py
+  drift.py
+  faction.py
+  tick.py
+  events.py
+  event_engine.py
+  intent_resolver.py
+  border_friction.py
+  technology.py
+  diplomacy.py
+  world.py
+  templates.py
+  theme_scifi.py
+  (and any future engine files)
+
+TUNING-WRITABLE — the ONLY file the tuning loop may edit:
+  config.py
+```
+
+### Enforcement
+
+The tuning loop (`tuning_loop.py`) must enforce this at the code level:
+
+```python
+WRITABLE_FILES = {"config.py"}
+
+def apply_config_change(key: str, value: float) -> None:
+    """The ONLY mutation the tuning system is allowed to make."""
+    assert hasattr(config, key), f"Unknown config key: {key}"
+    assert key in CONFIG_BOUNDS, f"Config key {key} has no defined safe bounds"
+    lo, hi = CONFIG_BOUNDS[key]
+    assert lo <= value <= hi, f"{key}={value} outside bounds [{lo}, {hi}]"
+    setattr(config, key, value)
+```
+
+There is no function for editing any other file. The tuning loop has no file-write capability beyond `config.py`. If a code change is needed, the system outputs a report describing the problem, and Westley makes the change.
+
+### What happens when the tuning loop can't fix a failure through config
+
+If all governing configs have been adjusted to their bounds and the invariant still fails, the report must say:
+
+```
+ESCALATION REQUIRED — cannot resolve through config tuning alone.
+  Invariant: [name]
+  Attempted: [list of config changes tried]
+  Result: still failing after exhausting config bounds
+  
+  This likely requires a code change to: [file(s) involved based on the invariant]
+  Westley must review and decide.
+```
+
+The tuning system stops. It does not attempt to "help" by editing game code. It waits.
+
+### Why this matters
+
+Config values are safe to experiment with — they're numbers with known bounds, and reverting is trivial (restore the previous value). Engine code changes can introduce subtle bugs, break invariants that were passing, and create states that are hard to roll back from. The entire value proposition of this tuning system is that it can iterate quickly on config without risking the codebase.
+
+---
+
+## Invariant Modification Policy
+
+**The validator files (`sim_validator.py`, `invariants.py`, `tuning_loop.py`, `test_validate.py`) are owned by Claude Code — but modifications to invariants that weaken them require Westley's approval.**
+
+The File Protection Policy above covers engine files. This section covers the validator's *own* files, which present a different and more subtle risk: Claude Code may "fix" a failing invariant by loosening it, making a real problem invisible.
+
+### The Three Valid Responses to a Failing Invariant
+
+When an invariant fails, there are exactly three valid responses. Claude Code must classify every failure into one of these categories before acting:
+
+**Response 1: Tune config.** The invariant correctly identified a behavioral problem. The fix is adjusting a config value. Claude Code may do this autonomously within the bounds defined by the tuning loop. No invariant code changes.
+
+**Response 2: Escalate to Westley.** The invariant correctly identified a problem that cannot be fixed through config — it's a code bug, a design flaw, or a conflict between competing goals. Claude Code reports it and stops. No invariant code changes, no engine code changes.
+
+**Response 3: Recalibrate the invariant.** The invariant itself has a bug — it's testing the wrong condition, using a threshold that's too tight, or checking state that doesn't apply (e.g., checking empty regions that have no fields). The invariant code needs to change. **This is the dangerous case.**
+
+### Rules for Response 3 (Invariant Recalibration)
+
+Claude Code MAY fix an invariant without approval ONLY if ALL of the following are true:
+
+1. **The fix is purely additive scope reduction** — skipping a case the invariant was never meant to check. Examples: skipping empty-tier regions in a field health check, skipping factions with zero regions, skipping runs shorter than the invariant's minimum window. The invariant still checks everything it was designed to check; it just stops checking things that are out of scope.
+
+2. **The fix does not change the pass threshold for in-scope cases.** Widening a tolerance (±0.5 → ±3.0), raising a tick window (60 → 120), lowering a required count — these all make the invariant more permissive for cases it *is* supposed to catch. These changes require approval.
+
+3. **The fix does not reclassify a finding from "real" to "skip."** If Claude Code investigates a failure and concludes "this is a real bug in the engine, but I'll adjust the invariant to not flag it" — that is never acceptable. That is papering over a bug. The correct response is Response 2: escalate.
+
+**If any of those conditions are NOT met, Claude Code must stop and present the proposed invariant change to Westley before applying it.** The presentation must include:
+
+```
+INVARIANT RECALIBRATION REQUEST
+  Invariant: [name]
+  Current behavior: [what the invariant checks now]
+  Proposed change: [what Claude Code wants to change and why]
+  
+  Failing case that triggered this:
+    Scenario: [name], Seed: [N], Tick: [T]
+    Details: [what the invariant found]
+  
+  Classification:
+    [ ] Scope reduction (skip out-of-scope case) — auto-approve candidate
+    [x] Threshold change (widen tolerance / extend window) — NEEDS REVIEW
+    [ ] Finding reclassification (real issue → skip) — NEVER ALLOWED
+  
+  Risk: [what real problems might this change mask?]
+```
+
+### Why This Matters
+
+The invariant library is the system's definition of "working correctly." If Claude Code can freely weaken invariants, the system degrades over time — each loosening makes the definition of "correct" a little more permissive, until the invariants pass on broken simulations. This is the equivalent of deleting unit tests to make the build green.
+
+The specific failure mode from the first run illustrates this perfectly: Claude Code found that the conqueror was attacking empty regions (a real decision-logic bug in `faction.py`), but instead of escalating, it adjusted invariant E1 to skip attacks with `deltas=None`. The bug is now invisible to the validator. The correct response was:
+
+```
+ESCALATION REQUIRED
+  E1 found: conqueror attacking uninhabited region_e1 with no damage deltas.
+  Root cause: faction.decide() scores uninhabited regions as attack candidates
+              instead of colonize candidates when diplomatic stance check passes
+              vacuously (no faction to be hostile toward).
+  This is a code bug in faction.py, not a config issue.
+  Westley must review.
+```
+
+### Summary Table
+
+| Situation | Claude Code may act autonomously? | Example |
+|-----------|-----------------------------------|---------|
+| Config value needs adjusting | Yes (within bounds) | BUDGET_GROWTH_RATE too low |
+| Engine code has a bug | No — escalate | Conqueror attacks empty regions |
+| Invariant checks out-of-scope case | Yes — narrow scope | Skip empty-tier regions |
+| Invariant threshold too tight | No — request approval | Flatline tolerance ±0.5 → ±3.0 |
+| Invariant catches real bug but Claude Code wants to skip it | **Never** | E1 skip attacks with no deltas |
+
+---
+
 ## Design Principles
 
 1. **Invariants are conservative.** It's better to have an invariant that passes when it shouldn't (false negative) than one that fails when it shouldn't (false positive). False positives erode trust in the system.
