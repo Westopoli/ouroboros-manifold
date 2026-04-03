@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="auto">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Game — Ouroboros Manifold</title>
+    <meta name="description" content="What makes Ouroboros Manifold different from every other strategy game. Stochastic simulation, generational chapters, and a civilization that doesn't need you.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script>(function(){var s=localStorage.getItem('om-theme');if(s&&s!=='auto')document.documentElement.setAttribute('data-theme',s)})();</script>
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        /* ========================================
+           THE GAME — PAGE-SPECIFIC
+           ======================================== */
+        .page-hero {
+            padding: calc(72px + var(--space-xl)) var(--space-md) var(--space-xl);
+            max-width: var(--reading-width);
+            margin: 0 auto;
+        }
+
+        .page-hero-label {
+            font-family: var(--font-body);
+            font-size: 0.75rem;
+            font-weight: 500;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: var(--space-sm);
+        }
+
+        .page-hero-title {
+            font-family: var(--font-display);
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 300;
+            line-height: 1.1;
+            color: var(--text-primary);
+            margin-bottom: var(--space-md);
+        }
+
+        .page-hero-subtitle {
+            font-family: var(--font-body);
+            font-size: 1.0625rem;
+            font-weight: 300;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        /* Pillar sections */
+        .pillar {
+            padding: var(--space-2xl) var(--space-md);
+        }
+
+        .pillar-container {
+            max-width: var(--reading-width);
+            margin: 0 auto;
+        }
+
+        .pillar-number {
+            font-family: var(--font-display);
+            font-size: 0.875rem;
+            font-weight: 400;
+            color: var(--text-tertiary);
+            letter-spacing: 0.1em;
+            margin-bottom: var(--space-xs);
+        }
+
+        .pillar-title {
+            font-family: var(--font-display);
+            font-size: clamp(1.75rem, 3vw, 2.75rem);
+            font-weight: 400;
+            line-height: 1.15;
+            color: var(--text-primary);
+            margin-bottom: var(--space-md);
+        }
+
+        .pillar-body {
+            font-family: var(--font-body);
+            font-size: 1rem;
+            font-weight: 300;
+            color: var(--text-secondary);
+            line-height: 1.85;
+        }
+
+        .pillar-body p {
+            margin-bottom: var(--space-sm);
+        }
+
+        .pillar-body p:last-child {
+            margin-bottom: 0;
+        }
+
+        .pillar-visual {
+            max-width: var(--content-width);
+            margin: var(--space-lg) auto 0;
+            padding: 0 var(--space-md);
+        }
+
+        .pillar-visual-inner {
+            width: 100%;
+            aspect-ratio: 21 / 9;
+            background: var(--surface-subtle);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.35s ease, border-color 0.35s ease;
+        }
+
+        /* Alternating subtle backgrounds for rhythm */
+        .pillar:nth-child(even) {
+            background: var(--surface-subtle);
+            transition: background 0.35s ease;
+        }
+
+        .pillar:nth-child(even) .pillar-visual-inner {
+            background: var(--surface);
+        }
+
+        /* CTA at bottom */
+        .game-cta {
+            text-align: center;
+            padding: var(--space-xl) var(--space-md) var(--space-2xl);
+        }
+
+        .game-cta-title {
+            font-family: var(--font-display);
+            font-size: clamp(1.75rem, 3vw, 2.5rem);
+            font-weight: 400;
+            color: var(--text-primary);
+            margin-bottom: var(--space-sm);
+        }
+
+        .game-cta-sub {
+            font-family: var(--font-body);
+            font-size: 1rem;
+            font-weight: 300;
+            color: var(--text-secondary);
+            margin-bottom: var(--space-md);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- NAVIGATION -->
+    <nav class="nav" id="nav">
+        <div class="nav-left">
+            <a href="/" class="nav-logo">Ouroboros Manifold</a>
+            <div class="theme-toggle" id="themeToggle">
+                <button data-theme="auto" class="active">Auto</button>
+                <button data-theme="light">Light</button>
+                <button data-theme="dark">Dark</button>
+            </div>
+        </div>
+        <ul class="nav-links">
+            <li><a href="/the-game" class="nav-active">The Game</a></li>
+            <li><a href="/era-library">Era Library</a></li>
+            <li><a href="/account">Account</a></li>
+            <li><a href="/articles">Articles</a></li>
+            <li><a href="#" class="nav-cta">Join Waitlist</a></li>
+        </ul>
+    </nav>
+
+    <!-- PAGE HERO -->
+    <header class="page-hero reveal">
+        <div class="page-hero-label">The Game</div>
+        <h1 class="page-hero-title">What makes this different from everything else</h1>
+        <p class="page-hero-subtitle">Six design pillars that don't exist together in any current strategy game. Not marketing claims — mechanical realities built into the simulation from day one.</p>
+    </header>
+
+    <div class="divider"></div>
+
+    <!-- PILLAR 1 -->
+    <section class="pillar">
+        <div class="pillar-container reveal">
+            <div class="pillar-number">01</div>
+            <h2 class="pillar-title">Genuinely Stochastic Simulation</h2>
+            <div class="pillar-body">
+                <p>Most strategy games use the word "random" to mean "we rolled a die on top of a scripted outcome." Ouroboros Manifold is different. The world runs on a System Dynamics model — an established mathematical framework where stocks and flows interact through rate equations. On top of that foundation sits a stochastic event chain layer, where events fire based on probability rolls weighted by current state, and each event can spawn follow-up events with delays and conditions.</p>
+                <p>The result is a simulation that produces genuine uncertainty. Not randomness — emergence. Multiple forces compete every tick: passive drift, faction agent decisions, event chain cascades, and raw noise. The outcome of any given century is the product of all these forces interacting, and no single force controls the result. You can read the currents, understand the pressures, and still face outcomes you didn't predict — because the system is too complex for any one actor to fully control.</p>
+                <p>This is the Foundation feeling. You're not playing against a script. You're operating inside a living probability space.</p>
+            </div>
+        </div>
+        <div class="pillar-visual reveal reveal-delay-1">
+            <div class="pillar-visual-inner">
+                <span class="placeholder-label">Simulation Diagram / Emergent Outcome Visualization</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- PILLAR 2 -->
+    <section class="pillar">
+        <div class="pillar-container reveal">
+            <div class="pillar-number">02</div>
+            <h2 class="pillar-title">Generational Chapter Structure</h2>
+            <div class="pillar-body">
+                <p>You are not one character. You are not one empire. You are a series of commanders — each inheriting a world shaped by what came before, each facing a new crisis that emerged from centuries of accumulated consequence.</p>
+                <p>Each mission is a chapter. You receive a briefing, command a force, and execute an objective. When the mission ends — success, failure, or something in between — time jumps forward. The simulation runs. Decades or centuries pass. Factions rise and fall. Territories change hands. New threats emerge from the simulation's own dynamics. Then you return as someone new: a descendant of your previous commander, a successor from a different lineage, or someone shaped by the ripple effects of missions you played three hours ago.</p>
+                <p>What carries over isn't stats or gear — it's consequence. The world remembers. A frontier you saved in Chapter 2 might be the economic backbone of the civilization by Chapter 5. A political rival you created might produce a descendant who becomes the antagonist two generations later. The chronicle scroll tracks it all.</p>
+            </div>
+        </div>
+        <div class="pillar-visual reveal reveal-delay-1">
+            <div class="pillar-visual-inner">
+                <span class="placeholder-label">Generational Timeline / Chapter Flow Diagram</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- PILLAR 3 -->
+    <section class="pillar">
+        <div class="pillar-container reveal">
+            <div class="pillar-number">03</div>
+            <h2 class="pillar-title">Commander, Not King</h2>
+            <div class="pillar-body">
+                <p>In most strategy games, you are the state. You decide what the civilization builds, where it expands, who it fights. The world exists to serve your decisions.</p>
+                <p>In Ouroboros Manifold, the civilization has its own agenda. Faction agents make strategic decisions — reinforcing borders, launching attacks, colonizing empty regions, managing budgets — using the same information and decision framework you'd use. The player's civilization runs an autonomous agent that acts on its own priorities. You don't tell it where to expand. You don't set tax rates. You receive a mission briefing, a force allocation, and a deadline. Your job is to execute.</p>
+                <p>This constraint is what makes the game feel different from everything else in the genre. You are powerful but not omnipotent. You matter but you are not the center. The civilization's trajectory is shaped by your successes and failures, but it is not controlled by them. That gap between influence and control is where the game lives.</p>
+            </div>
+        </div>
+        <div class="pillar-visual reveal reveal-delay-1">
+            <div class="pillar-visual-inner">
+                <span class="placeholder-label">Mission Briefing Screen / Tactical Command View</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- PILLAR 4 -->
+    <section class="pillar">
+        <div class="pillar-container reveal">
+            <div class="pillar-number">04</div>
+            <h2 class="pillar-title">AI-Generated Content</h2>
+            <div class="pillar-body">
+                <p>Every playthrough is contextually unique — not because of branching dialogue trees or hand-authored permutations, but because an AI library pipeline generates mission briefings, chronicle entries, unit flavor, and narrative content that responds to the simulation's actual state.</p>
+                <p>The content is pre-generated and stored offline. No API calls during gameplay, no latency, no runtime dependencies. The library builder creates thousands of template combinations, and the game engine selects and fills them based on what's actually happening in the simulation. A mission briefing for defending a prosperous core region reads completely differently from one for holding a devastated frontier — because they are different templates, assembled from different fragments, populated with different simulation data.</p>
+                <p>The result is a game that reads like it was hand-authored for your specific playthrough, without the impossible production cost of actually authoring thousands of unique narrative paths.</p>
+            </div>
+        </div>
+        <div class="pillar-visual reveal reveal-delay-1">
+            <div class="pillar-visual-inner">
+                <span class="placeholder-label">Generated Content Comparison / Two Different Briefings</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- PILLAR 5 -->
+    <section class="pillar">
+        <div class="pillar-container reveal">
+            <div class="pillar-number">05</div>
+            <h2 class="pillar-title">The Tragedy of Understanding</h2>
+            <div class="pillar-body">
+                <p>Most games reward mastery with victory. Learn the systems, optimize your play, and you win. Ouroboros Manifold rewards mastery with understanding — which is more satisfying and more honest.</p>
+                <p>You can read the simulation. You can see the factional tension rising in a border region, predict that an attack is coming, position your forces perfectly, execute flawlessly — and still face an outcome you couldn't prevent, because three other forces were acting simultaneously and the probability space didn't break your way. That's not unfair. That's the world being too big and too alive for one hand to hold it all.</p>
+                <p>Mastery means you understand why things happened. You can read the chronicle scroll after a time jump and trace the causal chains — this economic collapse triggered that revolt, which created the opening for that conquest, which is why your new mission is a desperate defense instead of an expansion campaign. The game doesn't cheat. It just doesn't owe you a win.</p>
+            </div>
+        </div>
+        <div class="pillar-visual reveal reveal-delay-1">
+            <div class="pillar-visual-inner">
+                <span class="placeholder-label">Chronicle Entry / Causal Chain Visualization</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- PILLAR 6 -->
+    <section class="pillar">
+        <div class="pillar-container reveal">
+            <div class="pillar-number">06</div>
+            <h2 class="pillar-title">Cyclic Civilizational Arcs</h2>
+            <div class="pillar-body">
+                <p>The game doesn't end when the civilization wins or loses. It loops. Expansion gives way to consolidation. Consolidation gives way to conflict. Conflict leads to overextension. Overextension leads to fragmentation. And from the fragments, something new begins. The Ouroboros isn't a name — it's the structure.</p>
+                <p>Each cycle carries the scars and ruins of the last. A region that was the heart of a thriving empire becomes contested rubble. A frontier outpost that survived the collapse becomes the seed of the next expansion. The simulation's lifecycle phases — expansion, consolidation, conflict, overextension, fragmentation — emerge naturally from the mechanics rather than from scripts. Different playthroughs produce different arcs because different decisions interact with different probability rolls to produce different trajectories.</p>
+                <p>Over many chapters, you experience the full sweep of a civilization's history from inside. Not as a detached observer, but as a series of people who lived through it, shaped it, and were shaped by it.</p>
+            </div>
+        </div>
+        <div class="pillar-visual reveal reveal-delay-1">
+            <div class="pillar-visual-inner">
+                <span class="placeholder-label">World Map / Territorial Change Over Time</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- BOTTOM CTA -->
+    <section class="game-cta reveal">
+        <h2 class="game-cta-title">Something new is coming</h2>
+        <p class="game-cta-sub">Join the waitlist to be notified when the game launches.</p>
+        <a href="#" class="btn-primary">Join the Waitlist</a>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-signup">
+                <h3 class="footer-signup-heading">Stay in the loop</h3>
+                <p class="footer-signup-sub">Get notified when the game launches. No spam, no noise.</p>
+                <div class="footer-email-form">
+                    <input type="email" class="footer-email-input" placeholder="your@email.com">
+                    <button class="footer-email-btn">Subscribe</button>
+                </div>
+            </div>
+            <div class="footer-right">
+                <ul class="footer-links">
+                    <li><a href="/the-game">The Game</a></li>
+                    <li><a href="/era-library">Era Library</a></li>
+                    <li><a href="/articles">Articles</a></li>
+                </ul>
+                <div class="footer-social">
+                    <a href="#">DC</a><a href="#">RD</a><a href="#">X</a><a href="#">YT</a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <span class="footer-copyright">&copy; 2026 Ouroboros Manifold. All rights reserved.</span>
+            <ul class="footer-legal"><li><a href="#">Privacy Policy</a></li><li><a href="#">Terms of Service</a></li></ul>
+        </div>
+    </footer>
+
+    <script src="shared.js"></script>
+</body>
+</html>

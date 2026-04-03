@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="auto">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Era Library — Ouroboros Manifold</title>
+    <meta name="description" content="Browse the era catalog. One engine, infinite settings. Sci-fi, Medieval, Roman, Viking, and more — each a complete world.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script>(function(){var s=localStorage.getItem('om-theme');if(s&&s!=='auto')document.documentElement.setAttribute('data-theme',s)})();</script>
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        .page-hero {
+            padding: calc(72px + var(--space-xl)) var(--space-md) var(--space-lg);
+            max-width: var(--content-width);
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .page-hero-label {
+            font-family: var(--font-body);
+            font-size: 0.75rem;
+            font-weight: 500;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: var(--space-sm);
+        }
+
+        .page-hero-title {
+            font-family: var(--font-display);
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 300;
+            line-height: 1.1;
+            color: var(--text-primary);
+            margin-bottom: var(--space-md);
+        }
+
+        .page-hero-subtitle {
+            font-family: var(--font-body);
+            font-size: 1.0625rem;
+            font-weight: 300;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Era catalog grid */
+        .era-catalog {
+            padding: var(--space-lg) var(--space-md) var(--space-2xl);
+        }
+
+        .era-catalog-container {
+            max-width: var(--content-width);
+            margin: 0 auto;
+        }
+
+        .era-catalog-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: var(--space-md);
+        }
+
+        .era-catalog-card {
+            background: var(--surface-subtle);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            cursor: default;
+        }
+
+        .era-catalog-card:hover {
+            border-color: var(--text-tertiary);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px var(--card-hover-shadow);
+        }
+
+        .era-catalog-card-image {
+            width: 100%;
+            aspect-ratio: 16 / 10;
+            background: var(--surface-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.35s ease;
+        }
+
+        .era-catalog-card-content {
+            padding: var(--space-md);
+        }
+
+        .era-catalog-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-xs);
+        }
+
+        .era-catalog-card-name {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .era-catalog-card-badge {
+            font-family: var(--font-body);
+            font-size: 0.6875rem;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+
+        .badge-base {
+            background: var(--accent);
+            color: var(--text-on-inverted);
+        }
+
+        .badge-coming {
+            background: var(--border);
+            color: var(--text-secondary);
+        }
+
+        .badge-dev {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-tertiary);
+        }
+
+        .era-catalog-card-tagline {
+            font-family: var(--font-body);
+            font-size: 0.9375rem;
+            font-weight: 300;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: var(--space-sm);
+        }
+
+        .era-catalog-card-sample {
+            font-family: var(--font-display);
+            font-size: 0.9375rem;
+            font-weight: 400;
+            font-style: italic;
+            color: var(--text-tertiary);
+            line-height: 1.6;
+            padding-top: var(--space-sm);
+            border-top: 1px solid var(--border);
+        }
+
+        /* Subscription teaser */
+        .subscribe-teaser {
+            background: var(--surface-inverted);
+            color: var(--text-on-inverted);
+            padding: var(--space-xl) var(--space-md);
+            text-align: center;
+            transition: background 0.35s ease;
+        }
+
+        .subscribe-teaser-container {
+            max-width: 640px;
+            margin: 0 auto;
+        }
+
+        .subscribe-teaser-title {
+            font-family: var(--font-display);
+            font-size: clamp(1.75rem, 3vw, 2.5rem);
+            font-weight: 400;
+            margin-bottom: var(--space-sm);
+        }
+
+        .subscribe-teaser-body {
+            font-family: var(--font-body);
+            font-size: 1rem;
+            font-weight: 300;
+            opacity: 0.6;
+            line-height: 1.7;
+            margin-bottom: var(--space-md);
+        }
+
+        .subscribe-teaser .btn-primary {
+            background: var(--accent);
+            color: var(--text-on-inverted);
+        }
+
+        .subscribe-teaser .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+
+        @media (max-width: 600px) {
+            .era-catalog-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- NAVIGATION -->
+    <nav class="nav" id="nav">
+        <div class="nav-left">
+            <a href="/" class="nav-logo">Ouroboros Manifold</a>
+            <div class="theme-toggle" id="themeToggle">
+                <button data-theme="auto" class="active">Auto</button>
+                <button data-theme="light">Light</button>
+                <button data-theme="dark">Dark</button>
+            </div>
+        </div>
+        <ul class="nav-links">
+            <li><a href="/the-game">The Game</a></li>
+            <li><a href="/era-library" class="nav-active">Era Library</a></li>
+            <li><a href="/account">Account</a></li>
+            <li><a href="/articles">Articles</a></li>
+            <li><a href="#" class="nav-cta">Join Waitlist</a></li>
+        </ul>
+    </nav>
+
+    <!-- PAGE HERO -->
+    <header class="page-hero reveal">
+        <div class="page-hero-label">Era Library</div>
+        <h1 class="page-hero-title">One engine. Infinite worlds.</h1>
+        <p class="page-hero-subtitle">Every era plays the same deep simulation with a completely different identity. Same mechanics, different civilizations. Browse the catalog.</p>
+    </header>
+
+    <div class="divider"></div>
+
+    <!-- ERA CATALOG -->
+    <section class="era-catalog">
+        <div class="era-catalog-container">
+            <div class="era-catalog-grid">
+
+                <div class="era-catalog-card reveal">
+                    <div class="era-catalog-card-image">
+                        <span class="placeholder-label">Sci-Fi Era Art</span>
+                    </div>
+                    <div class="era-catalog-card-content">
+                        <div class="era-catalog-card-header">
+                            <span class="era-catalog-card-name">Sci-Fi</span>
+                            <span class="era-catalog-card-badge badge-base">Base Game</span>
+                        </div>
+                        <p class="era-catalog-card-tagline">Thousands of years into the future. Humanity has spread across star systems, and the civilization you serve is older than most nations in history.</p>
+                        <p class="era-catalog-card-sample">"Commander Vael arrived to find a garrison at half strength and an economy bleeding from trade route collapse."</p>
+                    </div>
+                </div>
+
+                <div class="era-catalog-card reveal reveal-delay-1">
+                    <div class="era-catalog-card-image">
+                        <span class="placeholder-label">Medieval Era Art</span>
+                    </div>
+                    <div class="era-catalog-card-content">
+                        <div class="era-catalog-card-header">
+                            <span class="era-catalog-card-name">Medieval</span>
+                            <span class="era-catalog-card-badge badge-coming">Coming Soon</span>
+                        </div>
+                        <p class="era-catalog-card-tagline">Feudal kingdoms, fragile alliances, and the long shadow of a collapsing empire. Command knights and siege engines across a fractured continent.</p>
+                        <p class="era-catalog-card-sample">"The Duke's third son inherited a border march that three generations of his family had bled to hold."</p>
+                    </div>
+                </div>
+
+                <div class="era-catalog-card reveal reveal-delay-2">
+                    <div class="era-catalog-card-image">
+                        <span class="placeholder-label">Roman Era Art</span>
+                    </div>
+                    <div class="era-catalog-card-content">
+                        <div class="era-catalog-card-header">
+                            <span class="era-catalog-card-name">Roman</span>
+                            <span class="era-catalog-card-badge badge-coming">Coming Soon</span>
+                        </div>
+                        <p class="era-catalog-card-tagline">Legions, provinces, and a republic straining under the weight of its own ambition. The roads connect everything — including the threats.</p>
+                        <p class="era-catalog-card-sample">"The Senate dispatched a new legate to the northern frontier. The previous three had not returned."</p>
+                    </div>
+                </div>
+
+                <div class="era-catalog-card reveal">
+                    <div class="era-catalog-card-image">
+                        <span class="placeholder-label">Age of Sail Era Art</span>
+                    </div>
+                    <div class="era-catalog-card-content">
+                        <div class="era-catalog-card-header">
+                            <span class="era-catalog-card-name">Age of Sail</span>
+                            <span class="era-catalog-card-badge badge-coming">Coming Soon</span>
+                        </div>
+                        <p class="era-catalog-card-tagline">Colonial empires, trade winds, and wars fought across oceans. Every port is a lifeline. Every fleet is irreplaceable.</p>
+                        <p class="era-catalog-card-sample">"The admiralty's orders arrived six weeks late. By then, the colony had already fallen."</p>
+                    </div>
+                </div>
+
+                <div class="era-catalog-card reveal reveal-delay-1">
+                    <div class="era-catalog-card-image">
+                        <span class="placeholder-label">Feudal Japan Era Art</span>
+                    </div>
+                    <div class="era-catalog-card-content">
+                        <div class="era-catalog-card-header">
+                            <span class="era-catalog-card-name">Feudal Japan</span>
+                            <span class="era-catalog-card-badge badge-dev">In Development</span>
+                        </div>
+                        <p class="era-catalog-card-tagline">Warring clans, shifting loyalties, and a culture where honor and pragmatism are in constant tension.</p>
+                        <p class="era-catalog-card-sample">"The daimyo's daughter proved more capable than the generals who had dismissed her."</p>
+                    </div>
+                </div>
+
+                <div class="era-catalog-card reveal reveal-delay-2">
+                    <div class="era-catalog-card-image">
+                        <span class="placeholder-label">WW2 Era Art</span>
+                    </div>
+                    <div class="era-catalog-card-content">
+                        <div class="era-catalog-card-header">
+                            <span class="era-catalog-card-name">World War II</span>
+                            <span class="era-catalog-card-badge badge-dev">In Development</span>
+                        </div>
+                        <p class="era-catalog-card-tagline">Industrial warfare, occupied territories, and commanders who inherit the consequences of decisions made above their pay grade.</p>
+                        <p class="era-catalog-card-sample">"The supply line had been cut for eleven days. Headquarters did not acknowledge the situation."</p>
+                    </div>
+                </div>
+
+                <div class="era-catalog-card reveal">
+                    <div class="era-catalog-card-image">
+                        <span class="placeholder-label">Viking Era Art</span>
+                    </div>
+                    <div class="era-catalog-card-content">
+                        <div class="era-catalog-card-header">
+                            <span class="era-catalog-card-name">Viking</span>
+                            <span class="era-catalog-card-badge badge-dev">In Development</span>
+                        </div>
+                        <p class="era-catalog-card-tagline">Longships, raids, and a culture that measures wealth in reputation. Every expedition is a gamble. Every return is a story.</p>
+                        <p class="era-catalog-card-sample">"His father's raid had made them wealthy. His own would determine if they survived the winter."</p>
+                    </div>
+                </div>
+
+                <div class="era-catalog-card reveal reveal-delay-1">
+                    <div class="era-catalog-card-image">
+                        <span class="placeholder-label">Cyberpunk Era Art</span>
+                    </div>
+                    <div class="era-catalog-card-content">
+                        <div class="era-catalog-card-header">
+                            <span class="era-catalog-card-name">Cyberpunk</span>
+                            <span class="era-catalog-card-badge badge-dev">In Development</span>
+                        </div>
+                        <p class="era-catalog-card-tagline">Megacorps, urban sprawl, and a civilization that automated everything except its own collapse. The network is the battlefield.</p>
+                        <p class="era-catalog-card-sample">"The contract specified neutralization. It did not specify of whom."</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- SUBSCRIPTION TEASER -->
+    <section class="subscribe-teaser reveal">
+        <div class="subscribe-teaser-container">
+            <h2 class="subscribe-teaser-title">Every era. One subscription.</h2>
+            <p class="subscribe-teaser-body">Subscribe and get access to the full era catalog as it grows — every expansion, every update, every new world. Pricing details coming at launch.</p>
+            <a href="#" class="btn-primary">Join the Waitlist</a>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-signup">
+                <h3 class="footer-signup-heading">Stay in the loop</h3>
+                <p class="footer-signup-sub">Get notified when the game launches. No spam, no noise.</p>
+                <div class="footer-email-form">
+                    <input type="email" class="footer-email-input" placeholder="your@email.com">
+                    <button class="footer-email-btn">Subscribe</button>
+                </div>
+            </div>
+            <div class="footer-right">
+                <ul class="footer-links">
+                    <li><a href="/the-game">The Game</a></li>
+                    <li><a href="/era-library">Era Library</a></li>
+                    <li><a href="/articles">Articles</a></li>
+                </ul>
+                <div class="footer-social">
+                    <a href="#">DC</a><a href="#">RD</a><a href="#">X</a><a href="#">YT</a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <span class="footer-copyright">&copy; 2026 Ouroboros Manifold. All rights reserved.</span>
+            <ul class="footer-legal"><li><a href="#">Privacy Policy</a></li><li><a href="#">Terms of Service</a></li></ul>
+        </div>
+    </footer>
+
+    <script src="shared.js"></script>
+</body>
+</html>

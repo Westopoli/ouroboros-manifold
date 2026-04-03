@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="auto">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Stochastic Simulation Philosophy — Ouroboros Manifold</title>
+    <meta name="description" content="Why genuine uncertainty makes better strategy games than scripted AI — and how System Dynamics with event chains produces emergent history.">
+    <meta property="og:title" content="The Stochastic Simulation Philosophy — Ouroboros Manifold">
+    <meta property="og:description" content="Why genuine uncertainty makes better strategy games than scripted AI.">
+    <meta property="og:type" content="article">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script>(function(){var s=localStorage.getItem('om-theme');if(s&&s!=='auto')document.documentElement.setAttribute('data-theme',s)})();</script>
+    <link rel="stylesheet" href="../shared.css">
+    <style>
+        /* Article header image */
+        .article-hero-image {
+            width: 100%;
+            max-width: var(--content-width);
+            margin: 72px auto 0;
+            padding: 0 var(--space-md);
+        }
+
+        .article-hero-image-inner {
+            width: 100%;
+            aspect-ratio: 21 / 9;
+            background: var(--surface-subtle);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.35s ease, border-color 0.35s ease;
+        }
+
+        /* Article header */
+        .article-header {
+            max-width: var(--reading-width);
+            margin: 0 auto;
+            padding: var(--space-lg) var(--space-md) var(--space-md);
+        }
+
+        .article-category {
+            font-family: var(--font-body);
+            font-size: 0.75rem;
+            font-weight: 500;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: var(--space-sm);
+        }
+
+        .article-title {
+            font-family: var(--font-display);
+            font-size: clamp(2rem, 4.5vw, 3.25rem);
+            font-weight: 400;
+            line-height: 1.15;
+            color: var(--text-primary);
+            margin-bottom: var(--space-sm);
+        }
+
+        .article-meta {
+            font-family: var(--font-body);
+            font-size: 0.8125rem;
+            font-weight: 400;
+            color: var(--text-tertiary);
+            display: flex;
+            gap: var(--space-sm);
+        }
+
+        /* Article body */
+        .article-body {
+            max-width: var(--reading-width);
+            margin: 0 auto;
+            padding: var(--space-md) var(--space-md) var(--space-xl);
+        }
+
+        .article-body p {
+            font-family: var(--font-body);
+            font-size: 1.0625rem;
+            font-weight: 300;
+            color: var(--text-secondary);
+            line-height: 1.85;
+            margin-bottom: var(--space-md);
+        }
+
+        .article-body h2 {
+            font-family: var(--font-display);
+            font-size: 1.75rem;
+            font-weight: 400;
+            color: var(--text-primary);
+            margin-top: var(--space-lg);
+            margin-bottom: var(--space-sm);
+        }
+
+        .article-body h3 {
+            font-family: var(--font-display);
+            font-size: 1.375rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-top: var(--space-md);
+            margin-bottom: var(--space-xs);
+        }
+
+        .article-body blockquote {
+            border-left: 3px solid var(--accent);
+            padding-left: var(--space-md);
+            margin: var(--space-md) 0;
+        }
+
+        .article-body blockquote p {
+            font-family: var(--font-display);
+            font-size: 1.1875rem;
+            font-weight: 400;
+            font-style: italic;
+            color: var(--text-primary);
+        }
+
+        .article-body-image {
+            width: calc(100% + 4rem);
+            margin-left: -2rem;
+            margin-right: -2rem;
+            aspect-ratio: 16 / 9;
+            background: var(--surface-subtle);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: var(--space-md);
+            margin-bottom: var(--space-md);
+            transition: background 0.35s ease, border-color 0.35s ease;
+        }
+
+        /* Article footer */
+        .article-footer-section {
+            max-width: var(--reading-width);
+            margin: 0 auto;
+            padding: 0 var(--space-md) var(--space-xl);
+        }
+
+        .article-author {
+            padding: var(--space-md) 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            margin-bottom: var(--space-md);
+        }
+
+        .article-author-name {
+            font-family: var(--font-body);
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .article-author-bio {
+            font-family: var(--font-body);
+            font-size: 0.8125rem;
+            font-weight: 300;
+            color: var(--text-tertiary);
+            margin-top: 4px;
+        }
+
+        .article-nav {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: var(--space-lg);
+        }
+
+        .article-nav a {
+            font-family: var(--font-body);
+            font-size: 0.875rem;
+            font-weight: 400;
+            color: var(--text-secondary);
+            transition: color 0.2s ease;
+        }
+
+        .article-nav a:hover {
+            color: var(--text-primary);
+        }
+
+        .article-cta {
+            text-align: center;
+            padding: var(--space-lg);
+            background: var(--surface-subtle);
+            border-radius: 12px;
+            transition: background 0.35s ease;
+        }
+
+        .article-cta-title {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            font-weight: 400;
+            color: var(--text-primary);
+            margin-bottom: var(--space-xs);
+        }
+
+        .article-cta-body {
+            font-family: var(--font-body);
+            font-size: 0.9375rem;
+            font-weight: 300;
+            color: var(--text-secondary);
+            margin-bottom: var(--space-md);
+        }
+
+        @media (max-width: 600px) {
+            .article-body-image {
+                width: 100%;
+                margin-left: 0;
+                margin-right: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- NAVIGATION -->
+    <nav class="nav" id="nav">
+        <div class="nav-left">
+            <a href="/" class="nav-logo">Ouroboros Manifold</a>
+            <div class="theme-toggle" id="themeToggle">
+                <button data-theme="auto" class="active">Auto</button>
+                <button data-theme="light">Light</button>
+                <button data-theme="dark">Dark</button>
+            </div>
+        </div>
+        <ul class="nav-links">
+            <li><a href="/the-game">The Game</a></li>
+            <li><a href="/era-library">Era Library</a></li>
+            <li><a href="/account">Account</a></li>
+            <li><a href="/articles" class="nav-active">Articles</a></li>
+            <li><a href="#" class="nav-cta">Join Waitlist</a></li>
+        </ul>
+    </nav>
+
+    <!-- ARTICLE HERO IMAGE -->
+    <div class="article-hero-image">
+        <div class="article-hero-image-inner">
+            <span class="placeholder-label">Article Header Image</span>
+        </div>
+    </div>
+
+    <!-- ARTICLE HEADER -->
+    <header class="article-header reveal">
+        <div class="article-category">Design</div>
+        <h1 class="article-title">The Stochastic Simulation Philosophy</h1>
+        <div class="article-meta">
+            <span>April 1, 2026</span>
+            <span>&middot;</span>
+            <span>12 min read</span>
+        </div>
+    </header>
+
+    <!-- ARTICLE BODY -->
+    <article class="article-body reveal">
+
+        <p>Every strategy game makes a promise about its world: that it will respond to your decisions in meaningful ways. Most break that promise within the first hour. The AI follows scripts. The events trigger on timers. The "random" outcomes are weighted so heavily that the same patterns emerge every playthrough. The world pretends to be alive, but it's a theme park ride with a thin coat of noise.</p>
+
+        <p>Ouroboros Manifold takes a different approach. The simulation underneath the game is built on System Dynamics — an established mathematical framework used in economics, ecology, and engineering to model complex systems with feedback loops. This isn't a game design buzzword. It's a specific, well-documented methodology with decades of literature on how to build, tune, and debug models that produce meaningful emergent behavior.</p>
+
+        <h2>What System Dynamics Actually Means</h2>
+
+        <p>A System Dynamics model consists of stocks and flows. Stocks are accumulating quantities — things that have a current value and change over time. In the game, each region has four stock variables: military strength, economic output, factional tension, and population. These are the ground truth of the simulation. Everything else is derived from them.</p>
+
+        <p>Flows are rates of change. Each stock has a drift formula — a rate equation that determines how it changes each tick based on the current values of all the stocks. Military strength decays when the economy can't sustain it. Economic output is dragged down by factional tension. Population grows when the economy is strong and the region is stable. These relationships create feedback loops: a strong economy funds a strong military, which provides stability, which reduces tension, which helps the economy. Break any link in the chain and the whole system shifts.</p>
+
+        <div class="article-body-image">
+            <span class="placeholder-label">System Dynamics Diagram / Stock-Flow Visualization</span>
+        </div>
+
+        <p>The critical insight is that these feedback loops interact in ways that are mathematically predictable in aggregate but unpredictable in specific outcomes. You can look at a region with high tension, declining economy, and weakening military and predict that something bad is coming. But you can't predict exactly when, or exactly what form it will take, or how the neighboring regions will respond to it.</p>
+
+        <h2>The Event Chain Layer</h2>
+
+        <p>On top of the continuous System Dynamics model sits a discrete stochastic layer: the event chain architecture. Events are dramatic moments that interrupt and redirect the continuous drift — famines, revolts, breakthroughs, invasions, diplomatic incidents. Events fire based on probability rolls weighted by current state. A region with high factional tension is more likely to experience a revolt. A region with low military near a hostile border is more likely to be invaded.</p>
+
+        <blockquote>
+            <p>The System Dynamics layer handles the slow background hum of civilizational change. The event chain layer handles the things that happen.</p>
+        </blockquote>
+
+        <p>But events don't just fire and disappear. Each event can spawn follow-up events with delays and conditions. A famine doesn't just reduce population — it can trigger a revolt in 3–8 ticks if tension is above a threshold, which can trigger a military crackdown, which can trigger a diaspora event that affects neighboring regions. These cause-and-effect chains produce coherent multi-step narratives rather than isolated random occurrences.</p>
+
+        <h2>Why This Matters for Gameplay</h2>
+
+        <p>The result is a world that produces genuine uncertainty — not randomness, but emergence. Multiple forces compete every tick: passive drift pushing regions toward equilibrium, faction agents making strategic decisions about attacks and reinforcements, event chains cascading through regions, and the inherent noise of probability rolls. No single force controls the outcome.</p>
+
+        <p>For the player, this means mastery looks different than in other strategy games. You can read the system. You can see the pressures building. You can position your forces perfectly and execute flawlessly. And the world might still produce an outcome you didn't predict — not because the game cheated, but because the system is genuinely complex enough that complete prediction is impossible.</p>
+
+        <p>That's the feeling we're building toward. Not frustration at randomness, but the profound satisfaction of understanding a system that is too rich to fully control. The Foundation feeling — being inside the machine, reading the currents, doing what you can.</p>
+
+    </article>
+
+    <!-- ARTICLE FOOTER -->
+    <div class="article-footer-section">
+        <div class="article-author">
+            <div class="article-author-name">Westley</div>
+            <div class="article-author-bio">Solo developer of Ouroboros Manifold.</div>
+        </div>
+
+        <div class="article-nav">
+            <span></span>
+            <a href="/articles/commander-not-king">&larr; Commander, Not King</a>
+        </div>
+
+        <div class="article-cta">
+            <h3 class="article-cta-title">Follow the development</h3>
+            <p class="article-cta-body">Get notified when new articles are published and when the game launches.</p>
+            <a href="#" class="btn-primary">Join the Waitlist</a>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-signup">
+                <h3 class="footer-signup-heading">Stay in the loop</h3>
+                <p class="footer-signup-sub">Get notified when the game launches. No spam, no noise.</p>
+                <div class="footer-email-form">
+                    <input type="email" class="footer-email-input" placeholder="your@email.com">
+                    <button class="footer-email-btn">Subscribe</button>
+                </div>
+            </div>
+            <div class="footer-right">
+                <ul class="footer-links">
+                    <li><a href="/the-game">The Game</a></li>
+                    <li><a href="/era-library">Era Library</a></li>
+                    <li><a href="/articles">Articles</a></li>
+                </ul>
+                <div class="footer-social">
+                    <a href="#">DC</a><a href="#">RD</a><a href="#">X</a><a href="#">YT</a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <span class="footer-copyright">&copy; 2026 Ouroboros Manifold. All rights reserved.</span>
+            <ul class="footer-legal"><li><a href="#">Privacy Policy</a></li><li><a href="#">Terms of Service</a></li></ul>
+        </div>
+    </footer>
+
+    <script src="../shared.js"></script>
+</body>
+</html>

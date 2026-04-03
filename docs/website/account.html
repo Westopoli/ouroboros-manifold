@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="auto">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account — Ouroboros Manifold</title>
+    <meta name="description" content="Manage your Ouroboros Manifold account, subscription, and era library.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script>(function(){var s=localStorage.getItem('om-theme');if(s&&s!=='auto')document.documentElement.setAttribute('data-theme',s)})();</script>
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        .account-page {
+            min-height: calc(100vh - 72px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: calc(72px + var(--space-xl)) var(--space-md) var(--space-xl);
+        }
+
+        .account-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: var(--surface-subtle);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto var(--space-md);
+            transition: background 0.35s ease, border-color 0.35s ease;
+        }
+
+        .account-icon svg {
+            width: 28px;
+            height: 28px;
+            stroke: var(--text-tertiary);
+            fill: none;
+            stroke-width: 1.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .account-title {
+            font-family: var(--font-display);
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 400;
+            color: var(--text-primary);
+            margin-bottom: var(--space-sm);
+        }
+
+        .account-subtitle {
+            font-family: var(--font-body);
+            font-size: 1.0625rem;
+            font-weight: 300;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            max-width: 480px;
+            margin: 0 auto var(--space-lg);
+        }
+
+        .account-email-form {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-bottom: var(--space-sm);
+        }
+
+        .account-email-input {
+            width: 280px;
+            padding: 0.75rem 1rem;
+            font-family: var(--font-body);
+            font-size: 0.875rem;
+            background: var(--surface-subtle);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            outline: none;
+            transition: border-color 0.2s ease, background 0.35s ease;
+        }
+
+        .account-email-input::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .account-email-input:focus {
+            border-color: var(--accent);
+        }
+
+        .account-note {
+            font-family: var(--font-body);
+            font-size: 0.8125rem;
+            font-weight: 300;
+            color: var(--text-tertiary);
+        }
+
+        .account-features {
+            display: flex;
+            gap: var(--space-lg);
+            margin-top: var(--space-xl);
+            max-width: 640px;
+        }
+
+        .account-feature {
+            text-align: center;
+            flex: 1;
+        }
+
+        .account-feature-title {
+            font-family: var(--font-display);
+            font-size: 1.125rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: var(--space-xs);
+        }
+
+        .account-feature-body {
+            font-family: var(--font-body);
+            font-size: 0.8125rem;
+            font-weight: 300;
+            color: var(--text-tertiary);
+            line-height: 1.6;
+        }
+
+        @media (max-width: 600px) {
+            .account-email-form {
+                flex-direction: column;
+                align-items: center;
+            }
+            .account-email-input {
+                width: 100%;
+                max-width: 320px;
+            }
+            .account-features {
+                flex-direction: column;
+                gap: var(--space-md);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- NAVIGATION -->
+    <nav class="nav" id="nav">
+        <div class="nav-left">
+            <a href="/" class="nav-logo">Ouroboros Manifold</a>
+            <div class="theme-toggle" id="themeToggle">
+                <button data-theme="auto" class="active">Auto</button>
+                <button data-theme="light">Light</button>
+                <button data-theme="dark">Dark</button>
+            </div>
+        </div>
+        <ul class="nav-links">
+            <li><a href="/the-game">The Game</a></li>
+            <li><a href="/era-library">Era Library</a></li>
+            <li><a href="/account" class="nav-active">Account</a></li>
+            <li><a href="/articles">Articles</a></li>
+            <li><a href="#" class="nav-cta">Join Waitlist</a></li>
+        </ul>
+    </nav>
+
+    <!-- ACCOUNT — COMING SOON -->
+    <main class="account-page">
+        <div class="account-icon reveal">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
+        </div>
+        <h1 class="account-title reveal reveal-delay-1">Account management is coming</h1>
+        <p class="account-subtitle reveal reveal-delay-2">When the game launches, this is where you'll manage your subscription, view your era library, and track your purchase history. For now, join the waitlist.</p>
+        <div class="account-email-form reveal reveal-delay-3">
+            <input type="email" class="account-email-input" placeholder="your@email.com">
+            <button class="btn-primary" style="padding: 0.75rem 1.5rem; font-size: 0.875rem;">Notify Me</button>
+        </div>
+        <p class="account-note reveal reveal-delay-3">No spam. One email when accounts go live.</p>
+
+        <div class="account-features reveal reveal-delay-4">
+            <div class="account-feature">
+                <div class="account-feature-title">Subscription</div>
+                <div class="account-feature-body">Manage your plan, billing, and payment method.</div>
+            </div>
+            <div class="account-feature">
+                <div class="account-feature-title">Era Library</div>
+                <div class="account-feature-body">See every era you own and download new content.</div>
+            </div>
+            <div class="account-feature">
+                <div class="account-feature-title">Purchase History</div>
+                <div class="account-feature-body">Full record of every transaction and receipt.</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-signup">
+                <h3 class="footer-signup-heading">Stay in the loop</h3>
+                <p class="footer-signup-sub">Get notified when the game launches. No spam, no noise.</p>
+                <div class="footer-email-form">
+                    <input type="email" class="footer-email-input" placeholder="your@email.com">
+                    <button class="footer-email-btn">Subscribe</button>
+                </div>
+            </div>
+            <div class="footer-right">
+                <ul class="footer-links">
+                    <li><a href="/the-game">The Game</a></li>
+                    <li><a href="/era-library">Era Library</a></li>
+                    <li><a href="/articles">Articles</a></li>
+                </ul>
+                <div class="footer-social">
+                    <a href="#">DC</a><a href="#">RD</a><a href="#">X</a><a href="#">YT</a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <span class="footer-copyright">&copy; 2026 Ouroboros Manifold. All rights reserved.</span>
+            <ul class="footer-legal"><li><a href="#">Privacy Policy</a></li><li><a href="#">Terms of Service</a></li></ul>
+        </div>
+    </footer>
+
+    <script src="shared.js"></script>
+</body>
+</html>
