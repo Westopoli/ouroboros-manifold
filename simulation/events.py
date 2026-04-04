@@ -77,9 +77,10 @@ TEMPLATES = {
     "evt_regional_revolt": {
         "id":                "evt_regional_revolt",
         "name":              "Regional Revolt",
-        "trigger_field":     "tension",
-        "trigger_threshold": 45,
-        "trigger_direction": "above",
+        "trigger_field":     None,
+        "trigger_threshold": None,
+        "trigger_direction": None,
+        "trigger_mode":      "probability",
         "immediate_effects": {"military": -2, "economy": -2, "tension": +4},
         "chain_spawns": [
             {
@@ -92,7 +93,7 @@ TEMPLATES = {
                 "template_id": "evt_revolt_entrenched",
                 "delay_range":  [3, 8],
                 "probability":  0.55,
-                "conditions":   {"tension": {"above": 50}},
+                "conditions":   {"tension": {"above": 40}},
             },
         ],
         "chain_tags":    ["political_unrest"],
@@ -374,7 +375,7 @@ def roll_noise_offsets(region_ids: list, rng: random.Random) -> dict:
 # ── Threshold trigger evaluation ─────────────────────────────────────────────
 
 def evaluate_triggers(region, noise_offsets: dict, trigger_state: dict,
-                      tick: int = 0) -> list:
+                      tick: int = 0, rng: random.Random | None = None) -> list:
     """
     Return list of template IDs whose threshold is newly crossed this tick.
     trigger_state: {region_id: {template_id: bool}} — True means threshold is currently breached.
@@ -401,6 +402,8 @@ def evaluate_triggers(region, noise_offsets: dict, trigger_state: dict,
     region_state   = trigger_state.setdefault(region.id, {})
 
     for tid, tmpl in TEMPLATES.items():
+        if tmpl.get("trigger_mode") == "probability":
+            continue  # handled below
         if tmpl["trigger_field"] is None:
             continue
         field_val = region.fields[tmpl["trigger_field"]]
@@ -417,6 +420,21 @@ def evaluate_triggers(region, noise_offsets: dict, trigger_state: dict,
 
         if now_active and not was_active:
             triggered.append(tid)
+
+    # Probability-based triggers (revolt) — any region can fire, tension scales probability
+    if rng is not None:
+        for tid, tmpl in TEMPLATES.items():
+            if tmpl.get("trigger_mode") != "probability":
+                continue
+            cooldown_key = f"{tid}_cooldown"
+            last_fired = region_state.get(cooldown_key, -999)
+            if tick - last_fired < config.REVOLT_COOLDOWN_TICKS:
+                continue
+            tension = region.fields["tension"] / 100.0
+            prob = config.REVOLT_BASE_PROBABILITY * (tension ** config.REVOLT_TENSION_EXPONENT)
+            if rng.random() < prob:
+                triggered.append(tid)
+                region_state[cooldown_key] = tick
 
     return triggered
 

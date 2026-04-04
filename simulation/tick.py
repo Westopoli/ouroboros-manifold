@@ -59,7 +59,7 @@ def run_tick(world, tick_num: int, ledger=None,
 
         # Step 2: evaluate fresh threshold triggers
         for region in world.inhabited_regions():
-            triggered_ids = _events.evaluate_triggers(region, noise_offsets, trigger_state, tick=tick_num)
+            triggered_ids = _events.evaluate_triggers(region, noise_offsets, trigger_state, tick=tick_num, rng=rng)
             for tid in triggered_ids:
                 chain_tag = f"{tid}_{region.id}_t{tick_num}"
                 result    = _events.fire_event(tid, region, tick_num, chain_tag, rng)
@@ -398,6 +398,12 @@ def _handle_revolt_faction_creation(evt: dict, world, registry: dict,
 
     # Transfer ownership
     region.faction_id = new_id
+
+    # Buff fields — breakaway starts viable, not in crisis
+    region.fields["tension"] = min(region.fields["tension"], config.REVOLT_BREAKAWAY_TENSION_CAP)
+    region.fields["population"] = max(region.fields["population"], config.REVOLT_BREAKAWAY_POP_FLOOR)
+    region.fields["economy"] = max(region.fields["economy"], config.REVOLT_BREAKAWAY_ECO_FLOOR)
+    region.recompute_composites()
 
     # Create the new faction (hostile toward all current factions by default)
     new_faction = Faction(

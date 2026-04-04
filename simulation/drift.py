@@ -157,11 +157,12 @@ def compute_drift_deltas(region: Region, tick: int = 0,
         eco_for_recruit = f_deosc["economy"]
         headroom = max(0.0, 1.0 - f["military"] / config.RECRUITMENT_CEILING)
         pop_factor = f_deosc["population"] / 100.0
+        tension_suppression = (1.0 - f["tension"] / 100.0) ** config.TENSION_RECRUITMENT_SCALE
         eco_recruitment = (
             config.RECRUITMENT_RATE
             * (eco_for_recruit / 100.0)
             * pop_factor
-            * (1.0 - f["tension"] / 100.0)
+            * tension_suppression
         ) if eco_for_recruit > config.RECRUITMENT_THRESHOLD else 0.0
         recruitment = (config.RECRUITMENT_BASELINE * pop_factor + eco_recruitment) * headroom
         deltas["military"] += recruitment

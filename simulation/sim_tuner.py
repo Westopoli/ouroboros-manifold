@@ -391,7 +391,7 @@ def run_scenario(name: str, scenario: dict, seed_override: int | None = None) ->
                 for evt in fired:
                     event_log.append({"tick": t, "name": evt.get("name", evt.get("template_id", "?")), "region_id": evt.get("region_id", "?")})
                 for region in w.inhabited_regions():
-                    triggered_ids = _events.evaluate_triggers(region, noise_offsets, trigger_state, tick=t)
+                    triggered_ids = _events.evaluate_triggers(region, noise_offsets, trigger_state, tick=t, rng=w.rng)
                     for tid in triggered_ids:
                         chain_tag = f"{tid}_{region.id}_t{t}"
                         result = _events.fire_event(tid, region, t, chain_tag, w.rng)

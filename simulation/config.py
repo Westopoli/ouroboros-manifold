@@ -212,9 +212,10 @@ TENSION_OSCILLATION_PERIOD    = 18  # slightly longer than economy so cycles dri
 # recruitment = (RECRUITMENT_BASELINE + eco_term) * headroom
 # eco_term fires only when economy > RECRUITMENT_THRESHOLD
 # baseline always fires (militia from population)
+TENSION_RECRUITMENT_SCALE = 0.3  # exponent on (1 - tension/100); lower = tension suppresses recruitment less
 RECRUITMENT_BASELINE     = 0.1   # constant recruitment term independent of economy
 RECRUITMENT_THRESHOLD    = 20.0   # economy must exceed this for the economy-scaled term
-RECRUITMENT_RATE         = 4  # economy-scaled recruitment per tick at full economy, zero tension
+RECRUITMENT_RATE         = 12  # economy-scaled recruitment per tick at full economy, zero tension
 RECRUITMENT_CEILING      = 90.0   # recruitment approaches zero as military nears this value;
                                   # drift alone cannot push military past this ceiling
 
@@ -276,14 +277,24 @@ CONQUEST_ECONOMY_DISRUPTION = 5.0   # was 10.0, halved for 5x timescale
 CONQUEST_GARRISON_FRACTION  = 0.65  # fraction of committed budget that becomes garrison military
 
 # ── Entrenchment (tenure-based defense bonus) ────────────────────────────────
-ENTRENCHMENT_BASE       = 1.3   # defense multiplier at tick 0 of ownership
+ENTRENCHMENT_BASE       = 1.0   # defense multiplier at tick 0 of ownership
 ENTRENCHMENT_MAX        = 2.0   # defense multiplier at full entrenchment
 ENTRENCHMENT_RAMP_TICKS = 3     # ticks to reach max entrenchment
+
+# ── Revolt probability (replaces threshold trigger) ─────────────────────────
+REVOLT_BASE_PROBABILITY  = 0.01    # per-region per-tick base probability of revolt
+REVOLT_TENSION_EXPONENT  = 0.8     # tension scaling curve (higher = low-tension revolts rarer)
+REVOLT_COOLDOWN_TICKS    = 20      # minimum ticks between revolts on same region
 
 # ── Revolt faction creation (Group L4) ───────────────────────────────────────
 REVOLT_SUCCESS_RANGE  = (0.30, 0.85)  # range of probability for breakaway formation
 REVOLT_MILITARY_STEAL = 0.50          # fraction of region military claimed by breakaway
 REVOLT_ECONOMY_STEAL  = 0.30          # fraction of region economy claimed by breakaway
+
+# ── Breakaway starting field buffs ───────────────────────────────────────────
+REVOLT_BREAKAWAY_TENSION_CAP = 40.0   # cap tension — revolt succeeded, people are mobilized
+REVOLT_BREAKAWAY_POP_FLOOR   = 30.0   # minimum population — revolt needed people
+REVOLT_BREAKAWAY_ECO_FLOOR   = 20.0   # minimum economy — seized infrastructure
 
 # ── Unified agent scoring (Stage 3 F1) ───────────────────────────────────────
 #

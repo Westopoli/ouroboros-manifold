@@ -312,7 +312,7 @@ def run_recorded_scenario(name: str, scenario: dict,
                 fired = _events.resolve_pending(pending_queue, w, t, w.rng)
                 manual_log["events"].extend(fired)
                 for region in w.inhabited_regions():
-                    triggered_ids = _events.evaluate_triggers(region, noise_offsets, trigger_state, tick=t)
+                    triggered_ids = _events.evaluate_triggers(region, noise_offsets, trigger_state, tick=t, rng=w.rng)
                     for tid in triggered_ids:
                         chain_tag = f"{tid}_{region.id}_t{t}"
                         result = _events.fire_event(tid, region, t, chain_tag, w.rng)

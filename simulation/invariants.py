@@ -38,6 +38,10 @@ def no_field_flatline(log: TrajectoryLog) -> InvariantResult:
                         continue
                     if val > 98.0 or val < 2.0:
                         continue
+                    # Skip slow monotonic growth/decay — not a true flatline
+                    net_change = window[-1] - window[0]
+                    if abs(net_change) > 1.0:
+                        continue
                     return InvariantResult(
                         "A1_no_field_flatline", False, "critical",
                         f"{fid} {field} flatlined (range={w_max - w_min:.1f}) over ticks {start}–{start + WINDOW} at ~{val:.1f}",
@@ -405,6 +409,13 @@ def conquest_changes_ownership(log: TrajectoryLog) -> InvariantResult:
                 continue
             actual_owner = log.region_faction_at(rid, next_tick)
             if actual_owner != new_fid:
+                # Skip if the region was re-conquered at tick T+1 (legitimate back-to-back conquest)
+                reconquered = any(
+                    c.get("region_id") == rid
+                    for c in log.snapshots[next_tick].conquests
+                ) if next_tick < len(log.snapshots) else False
+                if reconquered:
+                    continue
                 return InvariantResult(
                     "E2_conquest_ownership", False, "critical",
                     f"Conquest at tick {snap.tick}: {rid} should belong to {new_fid} but belongs to {actual_owner}",
