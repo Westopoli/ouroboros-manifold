@@ -6,6 +6,7 @@ import events as _events
 import drift as _drift
 import technology as _tech
 import tick as _tick
+import diplomacy as _diplomacy
 
 
 @dataclass
@@ -21,6 +22,8 @@ class TickSnapshot:
     conquests: list        # [{region_id, old_faction_id, new_faction_id}]
     colonizations: list    # [{region_id, faction_id}]
     collisions: list       # [collision log dicts]
+    diplomatic_events: list  # [{event_type, tick, factions, result, ...}]
+    betrayals: list          # [{event_type, tick, betrayer, victim, ...}]
 
 
 @dataclass
@@ -170,6 +173,7 @@ def _capture_snapshot(tick: int, world, registry: dict, tick_log: dict | None) -
             "faction_id": r.faction_id,
             "tier": r.tier,
             "composites": dict(r.composites) if r.composites else {},
+            "held_since_tick": r.held_since_tick,
         }
 
     factions = {}
@@ -203,6 +207,8 @@ def _capture_snapshot(tick: int, world, registry: dict, tick_log: dict | None) -
     conquests = []
     colonizations = []
     collisions = []
+    diplomatic_events = []
+    betrayals = []
 
     if tick_log:
         events_fired = tick_log.get("events", [])
@@ -210,6 +216,8 @@ def _capture_snapshot(tick: int, world, registry: dict, tick_log: dict | None) -
         conquests = tick_log.get("conquests", [])
         colonizations = tick_log.get("colonizations", [])
         collisions = tick_log.get("collisions", [])
+        diplomatic_events = tick_log.get("diplomatic_events", [])
+        betrayals = tick_log.get("betrayals", [])
 
     return TickSnapshot(
         tick=tick,
@@ -220,6 +228,8 @@ def _capture_snapshot(tick: int, world, registry: dict, tick_log: dict | None) -
         conquests=conquests,
         colonizations=colonizations,
         collisions=collisions,
+        diplomatic_events=diplomatic_events,
+        betrayals=betrayals,
     )
 
 
@@ -277,6 +287,8 @@ def run_recorded_scenario(name: str, scenario: dict,
         config_snapshot=cfg_snap,
     )
 
+    stances = _diplomacy.init_stances(registry) if config.ENABLE_DIPLOMACY and registry else {}
+
     # Tick 0 snapshot (initial state, no tick_log)
     tlog.snapshots.append(_capture_snapshot(0, w, registry, None))
 
@@ -288,6 +300,7 @@ def run_recorded_scenario(name: str, scenario: dict,
                 noise_offsets=noise_offsets,
                 trigger_state=trigger_state,
                 registry=registry if config.ENABLE_FACTIONS else None,
+                stances=stances if config.ENABLE_DIPLOMACY else None,
             )
             tlog.snapshots.append(_capture_snapshot(t, w, registry, tick_log))
     else:
@@ -327,6 +340,15 @@ def run_recorded_scenario(name: str, scenario: dict,
                             region.fields["economy"] = max(config.ECONOMY_FLOOR, region.fields["economy"] - config.BORDER_FRICTION_ECONOMY)
                             region.recompute_composites()
 
+            if config.ENABLE_DIPLOMACY and registry and stances:
+                betrayals = _diplomacy.check_betrayals(stances, registry, w, w.rng, t)
+                manual_log["betrayals"] = betrayals
+                _diplomacy.update_timers(stances, registry, w, manual_log)
+                diplo_events = _diplomacy.check_peace_formation(
+                    stances, registry, w, w.rng, t, manual_log
+                )
+                manual_log["diplomatic_events"] = diplo_events
+
             for region in w.inhabited_regions():
                 modifier = {}
                 if region.faction_id in registry:
@@ -353,6 +375,9 @@ def run_recorded_scenario(name: str, scenario: dict,
             if config.ENABLE_TECHNOLOGY:
                 for fac in registry.values():
                     _tech.grow_tech(fac, w)
+                if config.ENABLE_DIPLOMACY and stances:
+                    for fac in registry.values():
+                        _tech.apply_convergence(fac, registry, stances)
 
             tlog.snapshots.append(_capture_snapshot(t, w, registry, manual_log))
 

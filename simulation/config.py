@@ -6,7 +6,7 @@ DIAGNOSTIC_PRINTS = True  # Set True for tick-by-tick diagnostic output during t
 ENABLE_TECHNOLOGY = True
 BASE_TECH_RATE = 0.1
 TECH_POPULATION_FLOOR = 0.3
-TECH_CONVERGENCE_RATE = 0.03
+TECH_CONVERGENCE_RATE = 0.1
 ARCHETYPE_STARTING_TECH = {
     "conqueror":           (5,  15),
     "fortifier":           (10, 20),
@@ -41,7 +41,7 @@ ARCHETYPE_PEACE_DISPOSITION = {
     "player_civilization": 1.5,
     "breakaway": 0.8,
 }
-BASE_BETRAYAL_RATE = 0.002
+BASE_BETRAYAL_RATE = 0.005
 ARCHETYPE_BETRAYAL_WEIGHT = {
     "conqueror": 2.5,
     "fortifier": 0.3,
@@ -221,20 +221,20 @@ RECRUITMENT_CEILING      = 90.0   # recruitment approaches zero as military near
 # ── Border friction (Group J2) ────────────────────────────────────────────────
 # Applied per-tick to each region that borders a hostile faction's region.
 # Tuned low: background stress, not active damage (spec intent: "subtle").
-BORDER_FRICTION_TENSION  = 0.1   # tension added per tick from each hostile border (was 0.2, /5 timescale)
-BORDER_FRICTION_ECONOMY  = 0.007   # economy subtracted per tick from each hostile border (was 0.1, /5 timescale)
+BORDER_FRICTION_TENSION  = 0.5   # tension added per tick from each hostile border
+BORDER_FRICTION_ECONOMY  = 0.05   # economy subtracted per tick from each hostile border
 
 # ── Faction agent (Groups K–L) ────────────────────────────────────────────────
-BUDGET_GROWTH_RATE          = 0.012 # budget += sum(owned net economy) * this, per tick (was 0.025, /5 timescale)
+BUDGET_GROWTH_RATE          = 0.025 # budget += sum(owned net economy) * this, per tick
 REGION_MAINTENANCE_COST     = 8.0   # economy subtracted per owned region before growth calculation
 REINFORCE_EFFICIENCY        = 0.5   # fraction of budget spent that converts to military strength
 ATTACK_COMMIT_FRACTION      = 0.70  # fraction of current budget committed per attack
 ATTACK_CONFIDENCE_RANGE = {         # rolled once per faction at creation; stored on entity
-    "conqueror":           (8.0, 14.0),    # aggressive to cautious
-    "player_civilization": (40.0, 60.0),   # always very conservative
-    "breakaway":           (8.0,  14.0),   # scrappy to measured
+    "conqueror":           (2.0, 6.0),     # very aggressive
+    "player_civilization": (20.0, 40.0),   # conservative but not paralyzed
+    "breakaway":           (4.0,  8.0),    # scrappy
 }
-ATTACK_CONFIDENCE_DEFAULT_RANGE = (8.0, 12.0)  # fallback for unknown archetypes
+ATTACK_CONFIDENCE_DEFAULT_RANGE = (4.0, 8.0)  # fallback for unknown archetypes
 REINFORCE_THRESHOLD         = 5.0   # minimum budget to consider reinforcing
 
 # ── Reinforce shortfall model ────────────────────────────────────────────────
@@ -259,7 +259,7 @@ CONQUEROR_VALUE_WEIGHT    = 0.4   # weight on target economic + population value
 # ── Budget pressure (Stage 3 tuning) ────────────────────────────────────────
 # When budget exceeds break-even attack cost by this ratio, confidence starts dropping.
 # At 2x this ratio, confidence is halved. Prevents infinite accumulation.
-BUDGET_PRESSURE_THRESHOLD = 1.5
+BUDGET_PRESSURE_THRESHOLD = 1.2
 
 # ── Attack resolution (Group L2) ─────────────────────────────────────────────
 ATTACK_EFFICIENCY      = 1.0        # multiplier on committed attack budget
@@ -273,10 +273,15 @@ CONQUEST_THRESHOLD     = 5.0        # defender military below this → conquest
 CONQUEST_TENSION_SPIKE      = 8.0   # was 15.0, halved for 5x timescale
 CONQUEST_POPULATION_LOSS    = 2.0   # was 3.0, halved for 5x timescale
 CONQUEST_ECONOMY_DISRUPTION = 5.0   # was 10.0, halved for 5x timescale
-CONQUEST_GARRISON_FRACTION  = 0.30  # fraction of committed budget that becomes garrison military
+CONQUEST_GARRISON_FRACTION  = 0.65  # fraction of committed budget that becomes garrison military
+
+# ── Entrenchment (tenure-based defense bonus) ────────────────────────────────
+ENTRENCHMENT_BASE       = 1.3   # defense multiplier at tick 0 of ownership
+ENTRENCHMENT_MAX        = 2.0   # defense multiplier at full entrenchment
+ENTRENCHMENT_RAMP_TICKS = 3     # ticks to reach max entrenchment
 
 # ── Revolt faction creation (Group L4) ───────────────────────────────────────
-REVOLT_SUCCESS_RANGE  = (0.10, 0.70)  # range of probability for breakaway formation
+REVOLT_SUCCESS_RANGE  = (0.30, 0.85)  # range of probability for breakaway formation
 REVOLT_MILITARY_STEAL = 0.50          # fraction of region military claimed by breakaway
 REVOLT_ECONOMY_STEAL  = 0.30          # fraction of region economy claimed by breakaway
 

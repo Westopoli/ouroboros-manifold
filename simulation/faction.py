@@ -25,7 +25,7 @@ class Faction:
             budget_growth_rate if budget_growth_rate is not None
             else config.BUDGET_GROWTH_RATE
         )
-        # {field: additive per-tick bonus applied in apply_drift, e.g. {"military": 0.02}}
+        # {field: additive per-tick bonus applied in compute_drift_deltas, e.g. {"military": 0.02}}
         self.modifiers = modifiers or {}
         # {faction_id: "hostile" | "neutral" | "allied"}
         self.diplomatic_stance = diplomatic_stance or {}

@@ -13,18 +13,6 @@ def military_drift(fields: dict) -> float:
     return -maintenance_cost * (1.0 - affordable)
 
 
-def economy_drift(fields: dict) -> float:
-    tension_drag      = fields["tension"] / 100.0 * config.ECONOMY_TENSION_PENALTY_RATE
-    population_factor = fields["population"] / 100.0
-    base = config.ECONOMY_BASE_GROWTH * population_factor - tension_drag
-
-    eco_capacity = fields["population"] * config.ECO_POP_RATIO
-    if fields["economy"] > eco_capacity:
-        overcapacity = (fields["economy"] - eco_capacity) / 100.0
-        base -= config.ECO_OVERCAPACITY_DECAY * overcapacity
-
-    return base
-
 
 def tension_drift(fields: dict, composites: dict) -> float:
     # Economic tension: low economy breeds unrest, high economy calms it
@@ -190,47 +178,3 @@ def apply_drift_deltas(region: Region, deltas: dict) -> None:
     region.recompute_composites()
 
 
-def apply_drift(region: Region, faction_modifier: dict | None = None) -> dict:
-    """
-    Legacy single-region drift (Stage 0 path). No oscillation support.
-    """
-    if region.tier == "empty":
-        return {}
-    f = region.fields
-    c = region.composites
-
-    deltas = {
-        "military":   military_drift(f),
-        "economy":    economy_drift(f),
-        "tension":    tension_drift(f, c),
-        "population": population_drift(f),
-    }
-
-    if faction_modifier:
-        for field, bonus in faction_modifier.items():
-            if field in deltas:
-                if field == "military" and config.ENABLE_RECRUITMENT:
-                    mil_headroom = max(0.0, 1.0 - f["military"] / config.RECRUITMENT_CEILING)
-                    deltas[field] += bonus * mil_headroom
-                else:
-                    deltas[field] += bonus
-
-    if config.ENABLE_RECRUITMENT:
-        headroom = max(0.0, 1.0 - f["military"] / config.RECRUITMENT_CEILING)
-        pop_factor = f["population"] / 100.0
-        eco_recruitment = (
-            config.RECRUITMENT_RATE
-            * (f["economy"] / 100.0)
-            * pop_factor
-            * (1.0 - f["tension"] / 100.0)
-        ) if f["economy"] > config.RECRUITMENT_THRESHOLD else 0.0
-        recruitment = (config.RECRUITMENT_BASELINE * pop_factor + eco_recruitment) * headroom
-        deltas["military"] += recruitment
-
-    for field, delta in deltas.items():
-        floor = config.ECONOMY_FLOOR if field == "economy" else 0.0
-        f[field] = max(floor, min(100.0, f[field] + delta))
-
-    region.recompute_composites()
-
-    return deltas

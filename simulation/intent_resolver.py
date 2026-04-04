@@ -3,6 +3,15 @@ import events as _events
 import technology as _tech
 
 
+def _entrenchment(region_data: dict, tick: int) -> float:
+    held_since = region_data.get("held_since_tick")
+    if held_since is None:
+        return config.ENTRENCHMENT_MAX
+    ticks_held = max(0, tick - held_since)
+    ratio = min(1.0, ticks_held / config.ENTRENCHMENT_RAMP_TICKS) if config.ENTRENCHMENT_RAMP_TICKS > 0 else 1.0
+    return config.ENTRENCHMENT_BASE + (config.ENTRENCHMENT_MAX - config.ENTRENCHMENT_BASE) * ratio
+
+
 def resolve(intents: list, snapshot: dict, registry: dict,
             rng, tick: int = 0) -> list:
     """Resolve intents against snapshot. Detects collisions (2+ intents targeting the same
@@ -133,11 +142,12 @@ def _resolve_collision(collision_intents: list, snapshot: dict, registry: dict,
             def_fac = registry.get(target_owner)
             if def_fac:
                 def_mult = _tech.get_tech_multipliers(def_fac.archetype, def_fac.tech_level)["defense"]
+        entrench = _entrenchment(target_data, tick)
         total_mil_dmg = total_eco_dmg = total_ten_dmg = total_pop_dmg = 0.0
 
         for i, intent in enumerate(collision_intents):
             ea  = effective_strengths[i]
-            ed  = mil_before * config.RESISTANCE_FACTOR * def_mult
+            ed  = mil_before * config.RESISTANCE_FACTOR * def_mult * entrench
             net = (ea - ed) * rng.uniform(*config.STOCHASTIC_RANGE)
             if net > config.BREAKTHROUGH_THRESHOLD:
                 total_mil_dmg += net * 0.8
@@ -205,11 +215,12 @@ def _resolve_collision(collision_intents: list, snapshot: dict, registry: dict,
             def_fac = registry.get(target_owner)
             if def_fac:
                 def_mult = _tech.get_tech_multipliers(def_fac.archetype, def_fac.tech_level)["defense"]
+        entrench = _entrenchment(target_data, tick)
         total_mil_dmg = total_eco_dmg = total_ten_dmg = total_pop_dmg = 0.0
 
         for i, intent in enumerate(collision_intents):
             ea  = effective_strengths[i]
-            ed  = mil_before * config.RESISTANCE_FACTOR * def_mult
+            ed  = mil_before * config.RESISTANCE_FACTOR * def_mult * entrench
             net = (ea - ed) * rng.uniform(*config.STOCHASTIC_RANGE)
             if net > config.BREAKTHROUGH_THRESHOLD:
                 total_mil_dmg += net * 0.8
@@ -392,8 +403,9 @@ def _resolve_attack(intent, snapshot, registry, rng, tick):
         if def_fac:
             def_mult = _tech.get_tech_multipliers(def_fac.archetype, def_fac.tech_level)["defense"]
 
+    entrench = _entrenchment(td, tick)
     effective_attack  = commit * config.ATTACK_EFFICIENCY * atk_mult
-    effective_defense = mil_before * config.RESISTANCE_FACTOR * def_mult
+    effective_defense = mil_before * config.RESISTANCE_FACTOR * def_mult * entrench
     raw_net           = effective_attack - effective_defense
     stochastic        = rng.uniform(*config.STOCHASTIC_RANGE)
     net_force         = raw_net * stochastic

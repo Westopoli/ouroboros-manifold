@@ -53,9 +53,9 @@ TEMPLATES = {
         "chain_spawns": [
             {
                 "template_id": "evt_regional_revolt",
-                "delay_range":  [4, 10],
-                "probability":  0.35,
-                "conditions":   {"tension": {"above": 55}},
+                "delay_range":  [3, 6],
+                "probability":  0.60,
+                "conditions":   {"tension": {"above": 40}},
             },
         ],
         "chain_tags":    ["military_crisis"],
@@ -78,21 +78,21 @@ TEMPLATES = {
         "id":                "evt_regional_revolt",
         "name":              "Regional Revolt",
         "trigger_field":     "tension",
-        "trigger_threshold": 60,
+        "trigger_threshold": 45,
         "trigger_direction": "above",
         "immediate_effects": {"military": -2, "economy": -2, "tension": +4},
         "chain_spawns": [
             {
                 "template_id": "evt_revolt_crushed",
-                "delay_range":  [3, 8],
+                "delay_range":  [2, 5],
                 "probability":  0.45,
                 "conditions":   {"military": {"above": 35}},
             },
             {
                 "template_id": "evt_revolt_entrenched",
-                "delay_range":  [5, 12],
-                "probability":  0.30,
-                "conditions":   {"tension": {"above": 65}},
+                "delay_range":  [3, 8],
+                "probability":  0.55,
+                "conditions":   {"tension": {"above": 50}},
             },
         ],
         "chain_tags":    ["political_unrest"],
@@ -192,9 +192,9 @@ TEMPLATES = {
         "chain_spawns": [
             {
                 "template_id": "evt_regional_revolt",
-                "delay_range":  [5, 12],
-                "probability":  0.35,
-                "conditions":   {"tension": {"above": 55}},
+                "delay_range":  [3, 6],
+                "probability":  0.60,
+                "conditions":   {"tension": {"above": 40}},
             },
         ],
         "chain_tags":    ["conquest_aftermath", "political_unrest"],
@@ -298,9 +298,9 @@ TEMPLATES = {
         "chain_spawns": [
             {
                 "template_id": "evt_regional_revolt",
-                "delay_range":  [4, 10],
-                "probability":  0.30,
-                "conditions":   {"tension": {"above": 45}},
+                "delay_range":  [3, 6],
+                "probability":  0.50,
+                "conditions":   {"tension": {"above": 40}},
             },
             {
                 "template_id": "evt_famine_relief",

@@ -9,7 +9,7 @@
 #   3. Run all faction agents  (was: single antagonist)
 #   4. Apply border friction   (new)
 #   5. Apply passive drift     (military now includes recruitment term)
-#   6. Recompute composites    (happens inside apply_drift)
+#   6. Recompute composites    (happens inside apply_drift_deltas)
 #   7. Log everything
 
 import config
@@ -17,6 +17,7 @@ import drift as _drift
 import events as _events
 import intent_resolver as _intent_resolver
 import technology as _technology
+import diplomacy as _diplomacy
 
 _SHORT_NAMES = {
     "player": "pl", "conqueror": "conq", "fortifier": "fort", "opportunist": "opp",
@@ -31,13 +32,15 @@ def _short(fid):
 
 def run_tick(world, tick_num: int, ledger=None,
              pending_queue=None, noise_offsets=None, trigger_state=None,
-             registry=None, antagonist=None) -> dict:
+             registry=None, antagonist=None, stances=None) -> dict:
     log = {
         "tick":            tick_num,
         "events":          [],
         "faction_actions": [],
         "antagonist":      None,
         "border_friction": {},
+        "diplomatic_events": [],
+        "betrayals":       [],
         "tech_growth":     {},
         "drift":           {},
         "revolts":         [],
@@ -170,17 +173,54 @@ def run_tick(world, tick_num: int, ledger=None,
                 ant_log["allocation"], ant_log["applied"]
             )
 
+    # ── Step 3.5: Betrayal checks on cooperative pairs ─────────────────────
+    if config.ENABLE_DIPLOMACY and registry is not None and stances is not None:
+        betrayals = _diplomacy.check_betrayals(stances, registry, world, rng, tick_num)
+        log["betrayals"] = betrayals
+        for b in betrayals:
+            if b["attack_target_region"]:
+                intent = {
+                    "faction_id": b["betrayer"],
+                    "action": "attack",
+                    "target_region": b["attack_target_region"],
+                    "budget_committed": registry[b["betrayer"]].budget,
+                    "is_betrayal": True,
+                }
+                snap = _build_snapshot(world)
+                resolved = _intent_resolver.resolve(
+                    [intent], snap, registry, rng, tick=tick_num
+                )
+                for action in resolved:
+                    action["is_betrayal"] = True
+                    log["faction_actions"].append(action)
+                    _apply_resolved_action(world, registry, action, pending_queue, ledger, tick_num)
+                    if action.get("conquest"):
+                        log["conquests"].append(action["conquest"])
+
     # ── Step 4: Border friction ──────────────────────────────────────────────
     if config.ENABLE_BORDER_FRICTION and registry is not None:
         friction_log = _apply_border_friction(world, registry)
         log["border_friction"] = friction_log
 
-    # ── Step 4.5: Technology growth ──────────────────────────────────────────
+    # ── Step 4.25: Diplomacy — timers + peace formation ─────────────────────
+    if config.ENABLE_DIPLOMACY and registry is not None and stances is not None:
+        _diplomacy.update_timers(stances, registry, world, log)
+        diplo_events = _diplomacy.check_peace_formation(
+            stances, registry, world, rng, tick_num, log
+        )
+        log["diplomatic_events"] = diplo_events
+
+    # ── Step 4.5: Technology growth + convergence ─────────────────────────────
     if config.ENABLE_TECHNOLOGY and registry is not None:
         for faction in registry.values():
             entry = _technology.grow_tech(faction, world)
             if entry is not None:
                 log["tech_growth"][faction.id] = entry
+        if config.ENABLE_DIPLOMACY and stances is not None:
+            for faction in registry.values():
+                conv = _technology.apply_convergence(faction, registry, stances)
+                if conv is not None:
+                    log["tech_growth"].setdefault(faction.id, {})["convergence"] = conv
 
     # ── Step 5: Passive drift (with optional faction modifiers + adjacency) ──
     for region in world.inhabited_regions():
@@ -223,10 +263,10 @@ def run_tick(world, tick_num: int, ledger=None,
 
 def run_ticks(world, n: int, ledger=None,
               pending_queue=None, noise_offsets=None, trigger_state=None,
-              registry=None, antagonist=None) -> list:
+              registry=None, antagonist=None, stances=None) -> list:
     return [
         run_tick(world, t + 1, ledger, pending_queue, noise_offsets, trigger_state,
-                 registry, antagonist)
+                 registry, antagonist, stances)
         for t in range(n)
     ]
 
@@ -239,6 +279,7 @@ def _build_snapshot(world) -> dict:
             "fields":     dict(r.fields),
             "faction_id": r.faction_id,
             "tier":       r.tier,
+            "held_since_tick": r.held_since_tick,
         }
         for rid, r in world.regions.items()
     }
@@ -285,7 +326,12 @@ def _apply_resolved_action(world, registry, action, pending_queue, ledger, tick_
         con_region = world.regions[action["conquest"]["region_id"]]
         garrison = action["conquest"]["garrison"]
         con_region.fields["military"] = min(100.0, con_region.fields["military"] + garrison)
+        con_region.held_since_tick = tick_num
         con_region.recompute_composites()
+
+    if action.get("colonization"):
+        col_region = world.regions[action["colonization"]["region_id"]]
+        col_region.held_since_tick = tick_num
 
     if pending_queue is not None:
         for spawn in action.get("chain_spawns", []):
@@ -364,6 +410,8 @@ def _handle_revolt_faction_creation(evt: dict, world, registry: dict,
         fac.diplomatic_stance[new_id] = "hostile"
 
     registry[new_id] = new_faction
+    if original_faction in registry:
+        new_faction.tech_level = registry[original_faction].tech_level
 
     return {
         "type":             "revolt",

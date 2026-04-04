@@ -25,6 +25,7 @@ class Region:
 
         self.econ_phase_offset = 0.0
         self.tension_phase_offset = 0.0
+        self.held_since_tick = None
 
         self.composites = {"stability": 0.0, "capacity": 0.0}
         if tier != "empty":

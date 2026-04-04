@@ -194,6 +194,24 @@ SCENARIOS = {
         },
         "overrides": {},
     },
+    "06_diplomacy": {
+        "template":     "four_way",
+        "ticks":        500,
+        "seed":         1,
+        "description":  "Full stack + diplomacy — peace formation enabled",
+        "use_tick_engine": True,
+        "features": {
+            "events":          True,
+            "factions":        True,
+            "border_friction": True,
+            "recruitment":     True,
+            "adjacency_bonus": True,
+            "oscillation":     True,
+            "technology":      True,
+            "diplomacy":       True,
+        },
+        "overrides": {},
+    },
 }
 
 

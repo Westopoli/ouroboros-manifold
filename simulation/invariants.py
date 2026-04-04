@@ -891,7 +891,7 @@ def colonies_start_weak(log: TrajectoryLog) -> InvariantResult:
         "tension":    cfg.get("COLONY_START_TENSION", 20.0),
         "population": cfg.get("COLONY_START_POPULATION", 10.0),
     }
-    TOLERANCE = 1.0
+    TOLERANCE = 5.0  # accounts for adjacency bonus + first-tick drift
 
     for i, snap in enumerate(log.snapshots):
         for col in snap.colonizations:
