@@ -366,6 +366,7 @@ def run_scenario(name: str, scenario: dict, seed_override: int | None = None) ->
     # ── Main simulation loop ─────────────────────────────────────────────────
     if scenario.get("use_tick_engine", False):
         # Full tick engine — agents, attacks, conquests, the works
+        pending_telegraphs = []
         for t in range(1, ticks + 1):
             log = _tick.run_tick(
                 w, t,
@@ -373,6 +374,7 @@ def run_scenario(name: str, scenario: dict, seed_override: int | None = None) ->
                 noise_offsets=noise_offsets,
                 trigger_state=trigger_state,
                 registry=registry if config.ENABLE_FACTIONS else None,
+                pending_telegraphs=pending_telegraphs,
             )
             total_events += len(log.get("events", []))
             for evt in log.get("events", []):

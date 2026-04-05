@@ -236,18 +236,27 @@ ATTACK_CONFIDENCE_RANGE = {         # rolled once per faction at creation; store
     "breakaway":           (4.0,  8.0),    # scrappy
 }
 ATTACK_CONFIDENCE_DEFAULT_RANGE = (4.0, 8.0)  # fallback for unknown archetypes
-REINFORCE_THRESHOLD         = 5.0   # minimum budget to consider reinforcing
+# ── Telegraph vs Surprise attack system ─────────────────────────────────────
+SURPRISE_EFFICIENCY_MULT   = 0.5    # attack strength multiplier for surprise attacks
+TELEGRAPH_PREP_TICKS       = 1      # ticks between telegraph declaration and execution
 
-# ── Reinforce shortfall model ────────────────────────────────────────────────
-REINFORCE_SHORTFALL_FLOOR       = 3.0   # minimum enemy military advantage to trigger reinforce candidate
-REINFORCE_SPEND_FRACTION        = 0.25  # max fraction of budget spent per reinforce tick
-REINFORCE_SHORTFALL_SPEND_SCALE = 0.5   # max spend = shortfall * this (caps spend to match threat size)
+ARCHETYPE_TELEGRAPH_PREFERENCE = {
+    "conqueror":           0.7,   # prefers overwhelming force (telegraph)
+    "warlord":             0.3,   # prefers raids (surprise)
+    "fortifier":           0.8,   # methodical when it attacks (telegraph)
+    "opportunist":         0.4,   # reads the situation, leans surprise
+    "schism":              0.3,   # chaotic, prefers surprise
+    "player_civilization": 0.6,   # moderate preference for telegraph
+    "breakaway":           0.2,   # desperate, can't afford to be countered
+}
+
+# Reactive reinforce: defender response to telegraphed attacks
+REACTIVE_REINFORCE_BUDGET_FRACTION = 0.30   # max fraction of budget for reactive reinforce
+
+# Reinforce resolution (used for reactive reinforce)
+REINFORCE_EFFICIENCY        = 0.5   # fraction of budget spent that converts to military strength
 REINFORCE_VARIANCE_BASE     = (0.85, 1.15)  # base variance multiplier range (±15%)
 REINFORCE_VARIANCE_TENSION_SCALE = 0.20     # tension/100 * this extends each side of range
-
-# Reinforcement capacity ceiling per region tier.
-# Reinforcement military gain scales down (headroom) as military approaches this ceiling.
-# Does NOT hard-cap the military field — events and Emergency Levy can exceed it.
 REINFORCE_MIL_CAP = {
     "home":     100,   # Home regions: no reinforcement penalty
     "frontier":  60,   # Frontiers: reinforcement tapers off approaching 60
@@ -363,7 +372,6 @@ EXPANSION_POTENTIAL          = 0.15  # score given to uninhabited neighbors of a
 # Normalization ranges (maps raw score to 0–1 before weighting)
 ATTACK_NORM_RANGE    = (0.0, 40.0)
 COLONIZE_NORM_RANGE  = (0.0, 1.0)
-REINFORCE_NORM_RANGE = (0.0, 25.0)
 
 # Minimum weighted score to act; below this → accumulate
 MIN_ACTION_THRESHOLD = 0.05

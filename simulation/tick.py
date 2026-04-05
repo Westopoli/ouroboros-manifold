@@ -32,7 +32,8 @@ def _short(fid):
 
 def run_tick(world, tick_num: int, ledger=None,
              pending_queue=None, noise_offsets=None, trigger_state=None,
-             registry=None, antagonist=None, stances=None) -> dict:
+             registry=None, antagonist=None, stances=None,
+             pending_telegraphs=None) -> dict:
     log = {
         "tick":            tick_num,
         "events":          [],
@@ -83,20 +84,70 @@ def run_tick(world, tick_num: int, ledger=None,
                         if ledger is not None:
                             ledger.log_revolt(tick_num, revolt_log)
 
-    # ── Step 3: Faction agents — snapshot-based intent-resolution ────────────
+    # ── Step 3: Faction agents — two-phase telegraph/surprise resolution ─────
+    if pending_telegraphs is None:
+        pending_telegraphs = []
+
     if registry is not None and config.ENABLE_FACTIONS:
         # 3a: Snapshot (before any mutations this tick)
         snapshot = _build_snapshot(world)
-        # 3b: Accumulate budget, then decide against snapshot
+        # 3b: Accumulate budget
         for faction in list(registry.values()):
             faction.accumulate_budget(world)
+
+        # 3c: Resolve pending telegraphed attacks from previous tick(s)
+        due_now = [t for t in pending_telegraphs if t["due_tick"] <= tick_num]
+        for t in due_now:
+            pending_telegraphs.remove(t)
+        if due_now:
+            fresh_snap = _build_snapshot(world)
+            due_intents = [t["intent"] for t in due_now]
+            resolved_due = _intent_resolver.resolve(due_intents, fresh_snap, registry, rng, tick=tick_num)
+            for action in resolved_due:
+                log["faction_actions"].append(action)
+                _apply_resolved_action(world, registry, action, pending_queue, ledger, tick_num)
+                if action.get("conquest"):
+                    log["conquests"].append(action["conquest"])
+                if action.get("colonization"):
+                    log["colonizations"].append(action["colonization"])
+                if action.get("significance") == "collision" and action.get("outcome_band") == "collision":
+                    log["collisions"].append(action["log"])
+
+        # 3d: Normal faction decisions (attack/colonize/accumulate)
         intents = []
         for faction in list(registry.values()):
             intent = faction.decide(snapshot, world.adjacency, registry, rng, tick_num)
             intents.append(intent)
-        # 3c: Resolve
-        resolved = _intent_resolver.resolve(intents, snapshot, registry, rng, tick=tick_num)
-        # 3d: Apply
+
+        # Split intents: surprise attacks resolve now, telegraphed go to pending
+        immediate_intents = []
+        new_telegraphs = []
+        for intent in intents:
+            if intent["action"] == "attack" and intent.get("attack_mode") == "telegraph":
+                target_rid = intent["target_region"]
+                target_faction = snapshot[target_rid]["faction_id"] if target_rid in snapshot else None
+                new_telegraphs.append({
+                    "faction_id":       intent["faction_id"],
+                    "target_region":    target_rid,
+                    "target_faction":   target_faction,
+                    "budget_committed": intent["budget_committed"],
+                    "due_tick":         tick_num + config.TELEGRAPH_PREP_TICKS,
+                    "source_region":    intent.get("source_region"),
+                    "intent":           intent,
+                })
+            else:
+                immediate_intents.append(intent)
+
+        # 3e: Reactive reinforce phase — defenders respond to new telegraphs
+        if new_telegraphs:
+            for faction in list(registry.values()):
+                reactive = faction.decide_reactive(new_telegraphs, snapshot, rng)
+                if reactive is not None:
+                    immediate_intents.append(reactive)
+            pending_telegraphs.extend(new_telegraphs)
+
+        # 3f: Resolve immediate intents (surprise attacks, colonize, accumulate, reactive reinforce)
+        resolved = _intent_resolver.resolve(immediate_intents, snapshot, registry, rng, tick=tick_num)
         for action in resolved:
             log["faction_actions"].append(action)
             _apply_resolved_action(world, registry, action, pending_queue, ledger, tick_num)
@@ -112,20 +163,28 @@ def run_tick(world, tick_num: int, ledger=None,
             in_window   = tick_num <= 5 or (248 <= tick_num <= 252) or tick_num >= 496
             is_round    = tick_num in (5, 252, 500)
 
+            all_intents = intents  # includes both immediate and telegraphed
             sig_factions = [
                 faction.id for faction in registry.values()
-                if next((i for i in intents if i["faction_id"] == faction.id), {}).get("action")
+                if next((i for i in all_intents if i["faction_id"] == faction.id), {}).get("action")
                    in ("attack", "colonize")
             ]
-            any_significant = bool(sig_factions) or bool(log.get("conquests")) or bool(log.get("revolts"))
+            any_significant = (bool(sig_factions) or bool(log.get("conquests"))
+                               or bool(log.get("revolts")) or bool(due_now))
 
             if in_window or any_significant or is_round:
                 print(f"\n── t={tick_num} ──")
 
+                # Show due telegraphed attacks that resolved this tick
+                for t in due_now:
+                    fid = t["faction_id"]
+                    tgt = t["target_region"].replace("region_", "")
+                    print(f"  t={tick_num:>4} {_short(fid):<5}  TELEGRAPH LANDS  → {tgt}")
+
                 for faction in list(registry.values()):
-                    mi = next((i for i in intents if i["faction_id"] == faction.id), None)
+                    mi = next((i for i in all_intents if i["faction_id"] == faction.id), None)
                     mr = next((a for a in resolved if a["faction_id"] == faction.id), None)
-                    if not mi or not mr:
+                    if not mi:
                         continue
                     if not in_window and faction.id not in sig_factions:
                         continue
@@ -136,21 +195,27 @@ def run_tick(world, tick_num: int, ledger=None,
 
                     suffix = ""
                     if act == "attack":
-                        band = mr.get("outcome_band", "")
-                        suffix = f" <<< {band}"
-                        if mr.get("conquest"):
-                            suffix += " CONQUEST!"
-                        tgt_mil = snapshot[tgt_rid]["fields"]["military"] if tgt_rid and tgt_rid in snapshot else None
-                        if tgt_mil is not None:
-                            suffix += f"  def_mil={tgt_mil:.1f}"
+                        mode = mi.get("attack_mode", "surprise")
+                        if mode == "telegraph":
+                            suffix = f" [TELEGRAPH → t={tick_num + config.TELEGRAPH_PREP_TICKS}]"
+                        else:
+                            band = mr.get("outcome_band", "") if mr else ""
+                            suffix = f" [surprise] <<< {band}"
+                            if mr and mr.get("conquest"):
+                                suffix += " CONQUEST!"
+                            tgt_mil = snapshot[tgt_rid]["fields"]["military"] if tgt_rid and tgt_rid in snapshot else None
+                            if tgt_mil is not None:
+                                suffix += f"  def_mil={tgt_mil:.1f}"
                     elif act == "colonize":
                         suffix = " <<<"
 
+                    budget_before = faction.budget + (mr['budget_spent'] if mr else 0)
+                    spent = mr['budget_spent'] if mr else 0
                     print(
                         f"  t={tick_num:>4} {_short(faction.id):<5}"
-                        f"  b={faction.budget + mr['budget_spent']:>6.1f}"
+                        f"  b={budget_before:>6.1f}"
                         f"  {act:<10}"
-                        f"  spent={mr['budget_spent']:>5.1f}"
+                        f"  spent={spent:>5.1f}"
                         f"  rem={faction.budget:>6.1f}"
                         f"  {tgt}{suffix}"
                     )
@@ -264,11 +329,14 @@ def run_tick(world, tick_num: int, ledger=None,
 def run_ticks(world, n: int, ledger=None,
               pending_queue=None, noise_offsets=None, trigger_state=None,
               registry=None, antagonist=None, stances=None) -> list:
-    return [
-        run_tick(world, t + 1, ledger, pending_queue, noise_offsets, trigger_state,
-                 registry, antagonist, stances)
-        for t in range(n)
-    ]
+    pending_telegraphs = []
+    logs = []
+    for t in range(n):
+        log = run_tick(world, t + 1, ledger, pending_queue, noise_offsets, trigger_state,
+                       registry, antagonist, stances,
+                       pending_telegraphs=pending_telegraphs)
+        logs.append(log)
+    return logs
 
 
 # ── F3: Snapshot builder ─────────────────────────────────────────────────────

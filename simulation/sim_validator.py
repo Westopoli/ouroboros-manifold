@@ -293,6 +293,7 @@ def run_recorded_scenario(name: str, scenario: dict,
     tlog.snapshots.append(_capture_snapshot(0, w, registry, None))
 
     if scenario.get("use_tick_engine", False):
+        pending_telegraphs = []
         for t in range(1, ticks + 1):
             tick_log = _tick.run_tick(
                 w, t,
@@ -301,6 +302,7 @@ def run_recorded_scenario(name: str, scenario: dict,
                 trigger_state=trigger_state,
                 registry=registry if config.ENABLE_FACTIONS else None,
                 stances=stances if config.ENABLE_DIPLOMACY else None,
+                pending_telegraphs=pending_telegraphs,
             )
             tlog.snapshots.append(_capture_snapshot(t, w, registry, tick_log))
     else:

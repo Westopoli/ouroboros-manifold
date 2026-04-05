@@ -108,7 +108,7 @@ Small broad flat futuristic spaceship, prominent sensor array hardware on top, s
 
 ### T3
 **Prompt:**
-Broad smooth disc futuristic spaceship, wide and flat, abstract sensor platform. Flat angular faces, sharp clean edges, simple geometric shapes. No rockets, no landing gear, no exhaust, minimal detail.
+Broad smooth disc futuristic spaceship, wide and flat, abstract sensor platform. Flat angular faces, sharp clean edges, simple geometric shapes. No rockets, no landing gear, no exhaust, minimal detail.  
 
 **Look for:** Broad disc, reads as detection field. Must be clearly smaller than Vanguard.
 

@@ -74,7 +74,8 @@ def _resolve_collision(collision_intents: list, snapshot: dict, registry: dict,
             fac = registry.get(fid)
             if fac:
                 atk_mult = _tech.get_tech_multipliers(fac.archetype, fac.tech_level)["attack"]
-        effective_strengths.append(commit * config.ATTACK_EFFICIENCY * factor * atk_mult)
+        surprise_mult = config.SURPRISE_EFFICIENCY_MULT if intent.get("attack_mode") == "surprise" else 1.0
+        effective_strengths.append(commit * config.ATTACK_EFFICIENCY * factor * atk_mult * surprise_mult)
 
     # 2. Weighted probability draw
     total_str = sum(effective_strengths)
@@ -349,6 +350,7 @@ def _base(intent, budget_spent, deltas, outcome_band=None, net_force=None,
         "outcome_band":  outcome_band,
         "net_force":     net_force,
         "significance":  significance,
+        "attack_mode":   intent.get("attack_mode"),
         "log":           log or {},
     }
 
@@ -404,7 +406,8 @@ def _resolve_attack(intent, snapshot, registry, rng, tick):
             def_mult = _tech.get_tech_multipliers(def_fac.archetype, def_fac.tech_level)["defense"]
 
     entrench = _entrenchment(td, tick)
-    effective_attack  = commit * config.ATTACK_EFFICIENCY * atk_mult
+    surprise_mult = config.SURPRISE_EFFICIENCY_MULT if intent.get("attack_mode") == "surprise" else 1.0
+    effective_attack  = commit * config.ATTACK_EFFICIENCY * atk_mult * surprise_mult
     effective_defense = mil_before * config.RESISTANCE_FACTOR * def_mult * entrench
     raw_net           = effective_attack - effective_defense
     stochastic        = rng.uniform(*config.STOCHASTIC_RANGE)

@@ -409,12 +409,15 @@ def conquest_changes_ownership(log: TrajectoryLog) -> InvariantResult:
                 continue
             actual_owner = log.region_faction_at(rid, next_tick)
             if actual_owner != new_fid:
-                # Skip if the region was re-conquered at tick T+1 (legitimate back-to-back conquest)
-                reconquered = any(
+                # Skip if the region was re-conquered same tick or next tick
+                same_tick_reconquest = sum(
+                    1 for c in snap.conquests if c.get("region_id") == rid
+                ) > 1
+                next_tick_reconquest = any(
                     c.get("region_id") == rid
                     for c in log.snapshots[next_tick].conquests
                 ) if next_tick < len(log.snapshots) else False
-                if reconquered:
+                if same_tick_reconquest or next_tick_reconquest:
                     continue
                 return InvariantResult(
                     "E2_conquest_ownership", False, "critical",

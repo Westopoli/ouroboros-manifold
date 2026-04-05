@@ -148,26 +148,7 @@ class Faction:
                > effective_confidence
         }
 
-        # ── 3. Threatened border regions for reinforce ────────────────────────
-        # Uses military shortfall (absolute gap) instead of threat ratio.
-        threatened = []
-        for rid in owned_rids:
-            own_mil = snapshot[rid]["fields"]["military"]
-            worst_shortfall = 0.0
-            for nid in adjacency.get(rid, []):
-                nd = snapshot.get(nid)
-                if nd is None or nd["faction_id"] is None or nd["faction_id"] == self.id:
-                    continue
-                our_stance   = self.diplomatic_stance.get(nd["faction_id"], "neutral")
-                their_fac    = registry.get(nd["faction_id"])
-                their_stance = their_fac.diplomatic_stance.get(self.id, "neutral") if their_fac else "neutral"
-                if our_stance == "hostile" or their_stance == "hostile":
-                    shortfall = nd["fields"]["military"] - own_mil
-                    worst_shortfall = max(worst_shortfall, shortfall)
-            if worst_shortfall > config.REINFORCE_SHORTFALL_FLOOR:
-                threatened.append((rid, worst_shortfall))
-
-        # ── 4. Compute three weighted scores ──────────────────────────────────
+        # ── 3. Compute two weighted scores (attack and colonize) ─────────────
         def _norm(val, lo, hi):
             return max(0.0, min(1.0, (val - lo) / (hi - lo))) if val is not None else 0.0
 
@@ -178,45 +159,40 @@ class Faction:
         best_attack_val    = viable_attacks[best_attack_rid]               if best_attack_rid else None
         best_colonize_rid  = max(colonize_candidates, key=colonize_candidates.get) if colonize_candidates else None
         best_colonize_val  = colonize_candidates[best_colonize_rid]        if best_colonize_rid else None
-        best_reinforce_rid, best_reinforce_val = (
-            max(threatened, key=lambda x: x[1]) if threatened else (None, None)
-        )
 
         attack_score   = _norm(best_attack_val,   *config.ATTACK_NORM_RANGE)   * dweights["attack"]  if best_attack_val   is not None else None
         colonize_score = _norm(best_colonize_val, *config.COLONIZE_NORM_RANGE) * dweights["expand"]  if best_colonize_val is not None else None
-        reinforce_score= _norm(best_reinforce_val,*config.REINFORCE_NORM_RANGE)* dweights["defend"]  if best_reinforce_val is not None else None
 
-
-        # ── 5. Pick winning action ────────────────────────────────────────────
+        # ── 4. Pick winning action ────────────────────────────────────────────
         scored = {}
         if attack_score   is not None: scored["attack"]   = attack_score
         if colonize_score is not None: scored["colonize"] = colonize_score
-        if reinforce_score is not None: scored["reinforce"] = reinforce_score
 
         best_action = max(scored, key=scored.get) if scored else "accumulate"
         if scored.get(best_action, 0.0) < config.MIN_ACTION_THRESHOLD:
             best_action = "accumulate"
 
         # ── 6. Build Intent ───────────────────────────────────────────────────
+        attack_mode = None
         if best_action == "attack":
             target    = best_attack_rid
             committed = potential_commit
             source    = max(owned_rids, key=lambda r: snapshot[r]["fields"]["military"]) if owned_rids else None
             expected  = best_attack_val
+
+            telegraph_pref = config.ARCHETYPE_TELEGRAPH_PREFERENCE.get(self.archetype, 0.5)
+            target_mil = snapshot[best_attack_rid]["fields"]["military"]
+            if target_mil > 60:
+                telegraph_pref += 0.2
+            elif target_mil < 30:
+                telegraph_pref -= 0.2
+            telegraph_pref = max(0.0, min(1.0, telegraph_pref))
+            attack_mode = "telegraph" if rng.random() < telegraph_pref else "surprise"
         elif best_action == "colonize":
             target    = best_colonize_rid
             committed = config.COLONIZE_COST
             source    = next((r for r in owned_rids if target in adjacency.get(r, [])), owned_rids[0] if owned_rids else None)
             expected  = best_colonize_val
-        elif best_action == "reinforce":
-            target    = best_reinforce_rid
-            committed = min(
-                self.budget * config.REINFORCE_SPEND_FRACTION,
-                best_reinforce_val * config.REINFORCE_SHORTFALL_SPEND_SCALE,
-            )
-            committed = max(0.0, committed)
-            source    = None
-            expected  = best_reinforce_val
         else:
             target, committed, source, expected = None, 0.0, None, None
 
@@ -227,10 +203,10 @@ class Faction:
             "budget_committed": committed,
             "source_region":   source,
             "expected_outcome": expected,
+            "attack_mode":     attack_mode,
             "scores": {
                 "attack":   attack_score,
                 "colonize": colonize_score,
-                "reinforce": reinforce_score,
             },
         }
 
@@ -243,7 +219,6 @@ class Faction:
             )
             atk_raw = _norm(best_attack_val,    *config.ATTACK_NORM_RANGE)    if best_attack_val    is not None else None
             col_raw = _norm(best_colonize_val,  *config.COLONIZE_NORM_RANGE)  if best_colonize_val  is not None else None
-            ren_raw = _norm(best_reinforce_val, *config.REINFORCE_NORM_RANGE) if best_reinforce_val is not None else None
             intent["diag"] = {
                 "n_attack_candidates":  len(attack_candidates),
                 "n_colonize_candidates": len(colonize_candidates),
@@ -251,6 +226,7 @@ class Faction:
                 "potential_commit":     round(potential_commit, 3),
                 "attack_confidence":    round(self.attack_confidence, 3),
                 "effective_confidence": round(effective_confidence, 3),
+                "attack_mode":          attack_mode,
                 "best_attack_any": {
                     "rid":          best_any_rid,
                     "attractiveness": round(attack_candidates[best_any_rid], 4) if best_any_rid else None,
@@ -262,23 +238,47 @@ class Faction:
                     "rid":          best_colonize_rid,
                     "attractiveness": round(best_colonize_val, 4) if best_colonize_val is not None else None,
                 } if best_colonize_rid else None,
-                "best_reinforce": {
-                    "rid":      best_reinforce_rid,
-                    "shortfall": round(best_reinforce_val, 4) if best_reinforce_val is not None else None,
-                } if best_reinforce_rid else None,
                 "raw_normalized": {
                     "attack":   round(atk_raw, 4) if atk_raw is not None else None,
                     "colonize": round(col_raw, 4) if col_raw is not None else None,
-                    "reinforce":round(ren_raw, 4) if ren_raw is not None else None,
                 },
                 "weighted_scores": {
                     "attack":   round(attack_score,    4) if attack_score    is not None else None,
                     "colonize": round(colonize_score,  4) if colonize_score  is not None else None,
-                    "reinforce":round(reinforce_score, 4) if reinforce_score is not None else None,
                 },
             }
 
         return intent
+
+    # ── Reactive reinforce (telegraph defense) ─────────────────────────────────
+
+    def decide_reactive(self, pending_telegraphs: list, snapshot: dict,
+                        rng: random.Random) -> dict | None:
+        my_threats = [t for t in pending_telegraphs if t["target_faction"] == self.id]
+        if not my_threats:
+            return None
+
+        worst = max(my_threats, key=lambda t: t["budget_committed"])
+
+        dweights = config.ARCHETYPE_DECISION_WEIGHTS.get(self.archetype, config.DEFAULT_DECISION_WEIGHTS)
+        reinforce_prob = min(1.0, dweights["defend"] / 1.5)
+
+        if rng.random() > reinforce_prob:
+            return None
+
+        committed = min(
+            self.budget * config.REACTIVE_REINFORCE_BUDGET_FRACTION,
+            worst["budget_committed"] * 0.5,
+        )
+        if committed < 1.0:
+            return None
+
+        return {
+            "faction_id": self.id,
+            "action": "reinforce",
+            "target_region": worst["target_region"],
+            "budget_committed": committed,
+        }
 
     # ── I1: Economic output and military capacity ─────────────────────────────
 
