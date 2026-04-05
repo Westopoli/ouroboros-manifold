@@ -230,6 +230,32 @@ The recommended order for producing the Settled Reach asset set, optimized for l
 
 **Estimated total production time:** 18 unit models at ~45 min cleanup each = ~13.5 hours. 9 structure models at ~30 min each = ~4.5 hours. 6–8 environment models at ~15 min each = ~1.5–2 hours. Total: ~20 hours of Blender work spread across the production phases, plus generation time (negligible — minutes per asset in 3D-Agent/Meshy). One month of Meshy Pro ($20) covers all generation credits for structures and environment. 3D-Agent free tier (15 prompts/month) may require 2 months for all 18 unit models if generating 3–4 variations per unit to select from, or one month on a paid tier.
 
+#### Humanoid Unit Animation Pipeline — Weapon Separation Pattern
+
+> **RESOLVED (v2.02).** This section defines the production workflow for era packs containing humanoid units (infantry, cavalry, standard bearers, etc.) that require skeletal animation. The Settled Reach era's spaceship units do not require this workflow — they use code-driven transform animation in Godot (translation, rotation, scale tweens) and VFX particles for ability feedback. This section applies to all non-spaceship eras: Roman, Medieval, Viking, Feudal Japan, WW2, and all future humanoid eras.
+
+**The problem.** Humanoid units carrying weapons (swords, shields, spears, bows, standards) need skeletal animation for walk cycles, attack swings, idle poses, and death animations. AI 3D generation tools (Sloyd, Meshy) produce static meshes without rigs. Mixamo (Adobe, free) auto-rigs humanoid meshes and provides a library of pre-made animations — but Mixamo's auto-rigger treats weapon geometry as part of the body, assigning skin weights across multiple bones and producing warped, broken weapon deformation during animation.
+
+**The solution — weapon separation.** Humanoid units are generated and rigged as bare bodies (no weapons, no shields). Weapons and shields are generated as separate standalone prop assets. Animation is applied to the bare body only. Weapons are attached at runtime in Godot via `BoneAttachment3D` nodes parented to hand bones exposed by the Mixamo skeleton (`RightHand`, `LeftHand`). The weapon mesh follows the hand bone perfectly through every animation frame.
+
+**Production workflow per humanoid era:**
+
+1. **Sloyd: Generate bare bodies.** Each humanoid unit type at each tier is generated in T-pose (arms spread, no weapons, no shields). T-pose is required for Mixamo's auto-rigger to correctly identify joint positions.
+2. **Sloyd: Generate weapon props.** Swords, shields, spears, bows, standards, etc. are generated as standalone objects — one per weapon type per tier. Weapon props are shared across unit types (e.g., all T2 sword-wielding units use the same T2 gladius mesh).
+3. **Mixamo: Auto-rig and animate.** Upload each bare body as FBX or OBJ. Mixamo auto-rigs the humanoid and applies animations from its library (walk, idle, sword swing, death, etc.). Download as FBX Binary at 30fps with skin.
+4. **Blender: Cleanup and materials.** Import rigged/animated FBX. Apply era-appropriate materials, fix any topology issues, verify animation playback. Export as GLB.
+5. **Godot: Runtime weapon attachment.** Import the animated GLB. Create `BoneAttachment3D` nodes on `RightHand` and `LeftHand` bones. Parent weapon prop meshes to these attachments. Weapons follow hand bones through all animations automatically.
+
+**Weapon prop reuse.** Weapons are shared across units within a tier. A T2 Roman gladius is used by the Legionary, Equites, and any other T2 sword-wielding unit. This means weapon props per era are a small fixed set (typically 10–15 total across all tiers), not a per-unit cost.
+
+**Animation state machine.** Godot's AnimationTree with a state machine manages transitions between clips (idle → walk → attack → death). Cross-fade blending over 0.2s prevents hard snapping between poses. Most humanoid units need only 3–4 animation states. The Mixamo animation library provides all common states; custom animations are not required for launch.
+
+**Spaceship eras do not use this workflow.** Spaceship units (Settled Reach and any future space-themed eras) use rigid body movement — code-driven position/rotation transforms in Godot. Abilities (Brace, Surge, Barrage, etc.) are communicated through VFX (particle effects, shader flashes, scale pulses), not skeletal animation. No rigging, no Mixamo, no animation files. This keeps the spaceship pipeline fast and simple.
+
+**Performance note.** At RTS camera distance, humanoid animation detail is barely perceptible. 30fps animation data with Godot's built-in interpolation produces smooth playback at 60fps game framerate. Humanoid models at ~5,000 polys with skeletal animation are well within performance budgets even at 200–400 units on screen simultaneously, provided instancing (MultiMeshInstance3D) is used for repeated squad members.
+
+---
+
 ### Dynamic Naming System
 
 The naming system generates names for all named entities in the game: people, places, units, and factions. It uses a variable-driven prompt architecture that produces massive output diversity through combinatorial variety, drawing from historical human naming conventions, Tolkien-esque construction, ancient Greek, Sumerian, invented linguistic roots, and beyond.

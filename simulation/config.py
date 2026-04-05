@@ -4,7 +4,7 @@ DIAGNOSTIC_PRINTS = True  # Set True for tick-by-tick diagnostic output during t
 
 # ── Technology (Stage 3.5 A) ─────────────────────────────────────────────────
 ENABLE_TECHNOLOGY = True
-BASE_TECH_RATE = 0.1
+BASE_TECH_RATE = 0.35
 TECH_POPULATION_FLOOR = 0.3
 TECH_CONVERGENCE_RATE = 0.1
 ARCHETYPE_STARTING_TECH = {
@@ -59,6 +59,9 @@ STARTING_STANCE_OVERRIDES = {
     ("conqueror", "warlord"):             "hostile",
     ("conqueror", "schism"):              "hostile",
     ("conqueror", "breakaway"):           "hostile",
+    ("fortifier", "player_civilization"): "hostile",
+    ("fortifier", "opportunist"):         "hostile",
+    ("opportunist", "player_civilization"): "hostile",
     ("schism", "player_civilization"):    "hostile",
     ("schism", "fortifier"):              "hostile",
     ("schism", "opportunist"):            "hostile",
@@ -104,8 +107,8 @@ STARTING_FIELD_JITTER  = 5.0   # ±5 random jitter applied after derivation
 STARTING_TECH_RATIO    = 0.25  # pop 60 → tech 15
 
 # ── Economy-population capacity coupling ─────────────────────────────────────
-ECO_POP_RATIO        = 1.45   # pop 50 supports eco 65; above this → overcapacity decay
-ECO_OVERCAPACITY_DECAY = 0.4  # rate at which economy decays when above capacity
+ECO_POP_RATIO        = 0.85   # pop 50 supports eco 42.5; above this → overcapacity decay
+ECO_OVERCAPACITY_DECAY = 15.0  # rate at which economy decays when above capacity
 
 # ── Composite axis weights ───────────────────────────────────────────────────
 # stability = (military * W_STAB_MILITARY) + ((100 - tension) * W_STAB_TENSION) + (population * W_STAB_POPULATION)
@@ -143,7 +146,7 @@ TENSION_FLOOR = 12.0
 
 # ── Economic output drift ────────────────────────────────────────────────────
 # drift = (ECONOMY_BASE_GROWTH * population/100) - (tension/100 * ECONOMY_TENSION_PENALTY_RATE)
-ECONOMY_BASE_GROWTH          = 3  # max growth per tick at full population, no tension (was 0.8, /5 timescale)
+ECONOMY_BASE_GROWTH          = 2.0  # max growth per tick at full population, no tension
 ECONOMY_TENSION_PENALTY_RATE = 0.40  # drag applied per unit of tension/100 (was 1.5, /5 timescale)
 
 # ── Factional tension drift ──────────────────────────────────────────────────
@@ -154,14 +157,14 @@ TENSION_ECONOMY_RATE       = 0.5   # how strongly economy deviation drives tensi
 TENSION_ECONOMY_MIDPOINT   = 50.0   # economy level with zero economic pressure on tension
 TENSION_STRESS_RATE        = 0.008  # scales how much instability breeds tension (was 0.04, /5 timescale)
 TENSION_STRESS_THRESHOLD   = 40.0   # stability below this triggers stress pressure
-TENSION_NATURAL_DECAY_RATE = 0.20   # proportional decay: decay = rate * (tension / 100) (was 1.0, /5 timescale)
+TENSION_NATURAL_DECAY_RATE = 0.20   # proportional decay: decay = rate * (tension / 100)
                                     # higher tension → stronger decay force → real equilibrium
 
 # ── Population drift ─────────────────────────────────────────────────────────
 # if economy > POPULATION_SUBSISTENCE: drift = POPULATION_GROWTH_RATE * (1 - population/100)
 # else: drift = -(POPULATION_SUBSISTENCE - economy) * POPULATION_DECLINE_RATE
 POPULATION_SUBSISTENCE   = 15.0   # economy below this causes population decline
-POPULATION_GROWTH_RATE   = 3   # logistic growth coefficient (was 0.25, /5 timescale)
+POPULATION_GROWTH_RATE   = 2.0   # logistic growth coefficient
 POPULATION_DECLINE_RATE  = 0.2  # decline per unit of economy deficit (was 0.015, /5 timescale)
 
 # ── Subsistence crisis (economy near floor) ─────────────────────────────────
@@ -223,16 +226,16 @@ RECRUITMENT_CEILING      = 90.0   # recruitment approaches zero as military near
 # Applied per-tick to each region that borders a hostile faction's region.
 # Tuned low: background stress, not active damage (spec intent: "subtle").
 BORDER_FRICTION_TENSION  = 0.5   # tension added per tick from each hostile border
-BORDER_FRICTION_ECONOMY  = 0.05   # economy subtracted per tick from each hostile border
+BORDER_FRICTION_ECONOMY  = 0.15   # economy subtracted per tick from each hostile border
 
 # ── Faction agent (Groups K–L) ────────────────────────────────────────────────
 BUDGET_GROWTH_RATE          = 0.025 # budget += sum(owned net economy) * this, per tick
 REGION_MAINTENANCE_COST     = 8.0   # economy subtracted per owned region before growth calculation
-REINFORCE_EFFICIENCY        = 0.5   # fraction of budget spent that converts to military strength
 ATTACK_COMMIT_FRACTION      = 0.70  # fraction of current budget committed per attack
 ATTACK_CONFIDENCE_RANGE = {         # rolled once per faction at creation; stored on entity
     "conqueror":           (2.0, 6.0),     # very aggressive
-    "player_civilization": (20.0, 40.0),   # conservative but not paralyzed
+    "fortifier":           (4.0, 10.0),    # methodical but willing
+    "player_civilization": (3.0, 8.0),      # similar to other factions
     "breakaway":           (4.0,  8.0),    # scrappy
 }
 ATTACK_CONFIDENCE_DEFAULT_RANGE = (4.0, 8.0)  # fallback for unknown archetypes
@@ -262,14 +265,10 @@ REINFORCE_MIL_CAP = {
     "frontier":  60,   # Frontiers: reinforcement tapers off approaching 60
 }
 
-# ── Conqueror attractiveness weights (Group K2) ───────────────────────────────
-CONQUEROR_WEAKNESS_WEIGHT = 0.6   # weight on target military weakness
-CONQUEROR_VALUE_WEIGHT    = 0.4   # weight on target economic + population value
-
 # ── Budget pressure (Stage 3 tuning) ────────────────────────────────────────
 # When budget exceeds break-even attack cost by this ratio, confidence starts dropping.
 # At 2x this ratio, confidence is halved. Prevents infinite accumulation.
-BUDGET_PRESSURE_THRESHOLD = 1.2
+BUDGET_PRESSURE_THRESHOLD = 0.8
 
 # ── Attack resolution (Group L2) ─────────────────────────────────────────────
 ATTACK_EFFICIENCY      = 1.0        # multiplier on committed attack budget
@@ -291,14 +290,18 @@ ENTRENCHMENT_MAX        = 2.0   # defense multiplier at full entrenchment
 ENTRENCHMENT_RAMP_TICKS = 3     # ticks to reach max entrenchment
 
 # ── Revolt probability (replaces threshold trigger) ─────────────────────────
-REVOLT_BASE_PROBABILITY  = 0.01    # per-region per-tick base probability of revolt
+REVOLT_BASE_PROBABILITY  = 0.015   # per-region per-tick base probability of revolt
 REVOLT_TENSION_EXPONENT  = 0.8     # tension scaling curve (higher = low-tension revolts rarer)
-REVOLT_COOLDOWN_TICKS    = 20      # minimum ticks between revolts on same region
+REVOLT_COOLDOWN_TICKS    = 12      # minimum ticks between revolts on same region
 
 # ── Revolt faction creation (Group L4) ───────────────────────────────────────
-REVOLT_SUCCESS_RANGE  = (0.30, 0.85)  # range of probability for breakaway formation
-REVOLT_MILITARY_STEAL = 0.50          # fraction of region military claimed by breakaway
-REVOLT_ECONOMY_STEAL  = 0.30          # fraction of region economy claimed by breakaway
+REVOLT_SUCCESS_RANGE  = (0.50, 0.95)  # range of probability for breakaway formation
+REVOLT_MILITARY_STEAL = 0.60          # fraction of region military claimed by breakaway
+REVOLT_ECONOMY_STEAL  = 0.40          # fraction of region economy claimed by breakaway
+
+# ── Latent loyalty (revolt reversion) ───────────────────────────────────────
+LATENT_LOYALTY_TICKS = 20          # ticks after conquest where revolts can restore previous faction
+LATENT_LOYALTY_REVERT_CHANCE = 0.5 # probability a revolt restores previous faction vs new breakaway
 
 # ── Breakaway starting field buffs ───────────────────────────────────────────
 REVOLT_BREAKAWAY_TENSION_CAP = 40.0   # cap tension — revolt succeeded, people are mobilized
@@ -356,7 +359,7 @@ DEFAULT_ATTRACT_WEIGHTS = {
 ARCHETYPE_DECISION_WEIGHTS = {
     "conqueror":           {"attack": 1.2, "expand": 1.0, "defend": 0.4},
     "warlord":             {"attack": 1.4, "expand": 0.6, "defend": 0.3},
-    "fortifier":           {"attack": 0.5, "expand": 0.8, "defend": 1.5},
+    "fortifier":           {"attack": 0.8, "expand": 0.8, "defend": 1.5},
     "opportunist":         {"attack": 1.0, "expand": 0.7, "defend": 0.6},
     "schism":              {"attack": 1.3, "expand": 0.0, "defend": 0.5},
     "player_civilization": {"attack": 0.3, "expand": 0.5, "defend": 1.5},
@@ -382,3 +385,27 @@ COLONY_START_MILITARY     = 10.0   # starter military for a new colony
 COLONY_START_ECONOMY      = 15.0   # starter economy
 COLONY_START_TENSION      = 20.0   # starter tension
 COLONY_START_POPULATION   = 10.0   # starter population
+
+# ── Administrative revolts (Stage 4) ─────────────────────────────────────────
+ENABLE_ADMIN_REVOLTS           = True
+ADMIN_REVOLT_BASE_RATE         = 0.001   # per-region per-tick base probability
+ADMIN_REVOLT_SCALING_RATE      = 0.0005  # quadratic scaling coefficient above inflection
+ADMIN_REVOLT_INFLECTION_POINT  = 4       # territory count where quadratic scaling begins
+ADMIN_REVOLT_CHAIN_LENGTH_RANGE = (3, 8) # total ticks for separatist chain to complete
+
+# ── Lifecycle phase classification (Stage 4) ─────────────────────────────────
+LIFECYCLE_EXPANSION_EMPTY_THRESHOLD  = 0.3   # >30% of accessible regions empty → expansion
+LIFECYCLE_CONFLICT_ATTACK_RATE       = 0.05  # attacks per tick threshold → conflict
+LIFECYCLE_OVEREXTENSION_DRAIN_RATIO  = 0.4   # maintenance/income ratio → overextended
+LIFECYCLE_FRAGMENTATION_REVOLT_RATE  = 0.02  # revolts per tick → fragmenting
+
+# ── Time jump (Stage 4) ─────────────────────────────────────────────────────
+TIME_JUMP_MIN_TICKS = 20
+TIME_JUMP_MAX_TICKS = 100
+
+# ── Generational / lineage (Stage 4) ────────────────────────────────────────
+LINEAGE_MIN_CHAPTERS    = 2      # minimum chapters before rotation considered
+LINEAGE_HARD_CAP        = 6      # forced rotation after this many chapters
+LINEAGE_DELTA_LOW       = 10.0   # regional delta below this → high rotation probability
+LINEAGE_DELTA_HIGH      = 40.0   # regional delta above this → low rotation probability
+CRISIS_VETO_STABILITY   = 25.0   # stability below this vetoes rotation

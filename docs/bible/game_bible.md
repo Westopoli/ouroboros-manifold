@@ -430,7 +430,7 @@ The library builder architecture (offline generation, JSON storage, caching cont
 
 ### 9. Region Tier Promotion (RESOLVED — v1.21)
 
-*Fully resolved.* The binary home/frontier tier distinction is replaced by a **continuous reinforcement capacity cap** that floats based on the region's economy and population: `effective_cap = cap_floor + (economy * w_econ) + (population * w_pop)`, clamped to a floor and ceiling. The cap reads raw oscillated economy (not de-oscillated), creating genuine micro-windows of vulnerability during economic troughs. Reversibility is automatic — a conquered region's economy craters and the cap drops with it. No discrete promotion events, no demotion logic, no per-region tier tracking. Weights and floor/ceiling are config values tuned empirically. See `bible_simulation.md`.
+*Fully resolved.* Regions use a **discrete tier system** — home, frontier, and empty — each with a configured military capacity cap (home: 100, frontier: 60). As a region's military approaches its tier cap, reinforcement efficiency drops toward zero. Colonized empty regions become frontiers. The tier distinction creates natural asymmetry: home regions can sustain full military strength while frontiers cap out lower, making them structurally easier to attack. Home regions are still vulnerable — their military decays without economic support, and conquest resets entrenchment. No tier promotion mechanic exists (frontiers don't become home regions). See `bible_simulation.md`.
 
 ### 10. Revolt Probability Scaling with Faction Size (RESOLVED — v1.21)
 
@@ -438,7 +438,7 @@ The library builder architecture (offline generation, JSON storage, caching cont
 
 ### 11. Home Region Vulnerability (RESOLVED — v1.21)
 
-*Resolved emergently through Q9 + Q10 interaction — no additional mechanic needed.* The continuous reinforcement cap (Q9) means home regions are strong but not invincible — their cap floats with their economy and population rather than being hard-coded at 100. The administrative revolt system (Q10) guarantees that large empires shed territory, which collapses the empire's budget, which eliminates reinforcement spending, which allows natural military decay, which degrades the home region's fields, which lowers the continuous cap, which makes the home region crackable by external attackers. Home regions don't need a special vulnerability mechanic — they have a special *dependency* on the empire around them. Kill the empire, the capital follows. The entrenchment bolt-on (noted as a tuning consideration in the attack resolution section) remains available if testing shows defenders need additional advantage, but should be evaluated carefully against the home vulnerability requirement.
+*Resolved emergently through Q9 + Q10 interaction — no additional mechanic needed.* Home regions have a high military cap (100) but are not invincible — their military decays without economic support, and the administrative revolt system (Q10) guarantees that large empires shed territory, which collapses the empire's budget, which eliminates reinforcement spending, which allows natural military decay, which makes the home region crackable by external attackers. Home regions don't need a special vulnerability mechanic — they have a special *dependency* on the empire around them. Kill the empire, the capital follows. Entrenchment (tenure-based defense bonus) provides additional defender advantage that resets on conquest.
 
 ---
 

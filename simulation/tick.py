@@ -18,6 +18,7 @@ import events as _events
 import intent_resolver as _intent_resolver
 import technology as _technology
 import diplomacy as _diplomacy
+import admin_revolt as _admin_revolt
 
 _SHORT_NAMES = {
     "player": "pl", "conqueror": "conq", "fortifier": "fort", "opportunist": "opp",
@@ -45,6 +46,7 @@ def run_tick(world, tick_num: int, ledger=None,
         "tech_growth":     {},
         "drift":           {},
         "revolts":         [],
+        "admin_revolts":   [],
         "conquests":       [],
         "colonizations":   [],
         "collisions":      [],
@@ -267,6 +269,13 @@ def run_tick(world, tick_num: int, ledger=None,
         friction_log = _apply_border_friction(world, registry)
         log["border_friction"] = friction_log
 
+    # ── Step 4.1: Admin revolt checks ───────────────────────────────────────
+    if config.ENABLE_ADMIN_REVOLTS and registry is not None:
+        admin_log = _admin_revolt.check_admin_revolts(
+            world, registry, pending_queue, rng, tick_num
+        )
+        log["admin_revolts"] = admin_log
+
     # ── Step 4.25: Diplomacy — timers + peace formation ─────────────────────
     if config.ENABLE_DIPLOMACY and registry is not None and stances is not None:
         _diplomacy.update_timers(stances, registry, world, log)
@@ -348,6 +357,7 @@ def _build_snapshot(world) -> dict:
             "faction_id": r.faction_id,
             "tier":       r.tier,
             "held_since_tick": r.held_since_tick,
+            "previous_faction_id": r.previous_faction_id,
         }
         for rid, r in world.regions.items()
     }
@@ -371,6 +381,7 @@ def _apply_resolved_action(world, registry, action, pending_queue, ledger, tick_
     if action.get("conquest"):
         con    = action["conquest"]
         region = world.regions[con["region_id"]]
+        region.previous_faction_id = con["old_faction_id"]
         region.faction_id = con["new_faction_id"]
 
     bypass_floor = action.get("log", {}).get("bypass_floor", False)
@@ -454,32 +465,69 @@ def _handle_revolt_faction_creation(evt: dict, world, registry: dict,
         return None  # revolt didn't produce a lasting faction
 
     original_faction = region.faction_id
-    new_id   = f"breakaway_{tick}_{region.id}"
-    new_name = f"Breakaway of {region.name}"
 
-    # Steal resources from the region
+    # Steal resources from the region (applies to both reversion and breakaway)
     mil_stolen = region.fields["military"] * config.REVOLT_MILITARY_STEAL
     eco_stolen = region.fields["economy"]  * config.REVOLT_ECONOMY_STEAL
     region.fields["military"] = max(0.0, region.fields["military"] - mil_stolen)
     region.fields["economy"]  = max(0.0, region.fields["economy"]  - eco_stolen)
     region.recompute_composites()
 
-    # Transfer ownership
+    # Latent loyalty: recently conquered regions may revert to previous faction
+    restore_previous = False
+    if (region.previous_faction_id is not None
+            and region.previous_faction_id != region.faction_id
+            and region.held_since_tick is not None
+            and (tick - region.held_since_tick) <= config.LATENT_LOYALTY_TICKS
+            and rng.random() < config.LATENT_LOYALTY_REVERT_CHANCE):
+        if region.previous_faction_id in registry:
+            restore_previous = True
+
+    if restore_previous:
+        restored_fid = region.previous_faction_id
+        region.faction_id = restored_fid
+        region.previous_faction_id = None
+        region.held_since_tick = tick
+
+        region.fields["tension"] = min(region.fields["tension"], config.REVOLT_BREAKAWAY_TENSION_CAP)
+        region.fields["population"] = max(region.fields["population"], config.REVOLT_BREAKAWAY_POP_FLOOR)
+        region.fields["economy"] = max(region.fields["economy"], config.REVOLT_BREAKAWAY_ECO_FLOOR)
+        region.recompute_composites()
+
+        return {
+            "type":             "reversion",
+            "tick":             tick,
+            "region":           region.id,
+            "original_faction": original_faction,
+            "restored_faction": restored_fid,
+            "success_rate":     round(success_rate, 3),
+            "military_stolen":  round(mil_stolen, 2),
+            "economy_stolen":   round(eco_stolen, 2),
+        }
+
+    # Standard breakaway creation
+    new_id   = f"breakaway_{tick}_{region.id}"
+    new_name = f"Breakaway of {region.name}"
+
+    region.previous_faction_id = original_faction
     region.faction_id = new_id
 
-    # Buff fields — breakaway starts viable, not in crisis
     region.fields["tension"] = min(region.fields["tension"], config.REVOLT_BREAKAWAY_TENSION_CAP)
     region.fields["population"] = max(region.fields["population"], config.REVOLT_BREAKAWAY_POP_FLOOR)
     region.fields["economy"] = max(region.fields["economy"], config.REVOLT_BREAKAWAY_ECO_FLOOR)
     region.recompute_composites()
 
-    # Create the new faction (hostile toward all current factions by default)
+    if evt.get("admin_revolt"):
+        pool = ["conqueror", "fortifier", "warlord", "opportunist", "schism"]
+        archetype = rng.choice(pool)
+    else:
+        archetype = "breakaway"
+
     new_faction = Faction(
-        new_id, new_name, "breakaway",
+        new_id, new_name, archetype,
         budget=0.0,
         diplomatic_stance={fid: "hostile" for fid in registry},
     )
-    # Existing factions become hostile toward the breakaway
     for fac in registry.values():
         fac.diplomatic_stance[new_id] = "hostile"
 

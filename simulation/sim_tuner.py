@@ -230,6 +230,7 @@ def _apply_features(features: dict):
     config.ENABLE_EVENTS_STAGE2   = features.get("events", False)
     config.ENABLE_TECHNOLOGY      = features.get("technology", False)
     config.ENABLE_DIPLOMACY       = features.get("diplomacy", False)
+    config.ENABLE_ADMIN_REVOLTS   = features.get("admin_revolts", False)
     config.DIAGNOSTIC_PRINTS      = False
 
 

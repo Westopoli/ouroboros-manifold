@@ -26,6 +26,7 @@ class Region:
         self.econ_phase_offset = 0.0
         self.tension_phase_offset = 0.0
         self.held_since_tick = None
+        self.previous_faction_id = None
 
         self.composites = {"stability": 0.0, "capacity": 0.0}
         if tier != "empty":
@@ -66,6 +67,7 @@ class Region:
             "name":       self.name,
             "tier":       self.tier,
             "faction_id": self.faction_id,
+            "previous_faction_id": self.previous_faction_id,
             "fields":     {k: round(v, 2) for k, v in self.fields.items()},
             "composites": dict(self.composites),
         }

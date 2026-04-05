@@ -202,7 +202,7 @@ Small futuristic space asteroid, irregular rocky form, angular facets. Flat angu
 
 ### Asteroid (medium)
 **Prompt:**
-Medium futuristic space asteroid, irregular rocky form with crater indentations. Flat angular faces, sharp clean edges, simple geometric shapes.
+Medium futuristic space asteroid, rocky form with crater indentations. Flat angular faces, sharp clean edges, simple geometric shapes.
 
 ### Asteroid (large cluster)
 **Prompt:**

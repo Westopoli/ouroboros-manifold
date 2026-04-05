@@ -174,6 +174,7 @@ def _capture_snapshot(tick: int, world, registry: dict, tick_log: dict | None) -
             "tier": r.tier,
             "composites": dict(r.composites) if r.composites else {},
             "held_since_tick": r.held_since_tick,
+            "previous_faction_id": r.previous_faction_id,
         }
 
     factions = {}
@@ -245,6 +246,7 @@ def _apply_features(features: dict):
     config.ENABLE_EVENTS_STAGE2   = features.get("events", False)
     config.ENABLE_TECHNOLOGY      = features.get("technology", False)
     config.ENABLE_DIPLOMACY       = features.get("diplomacy", False)
+    config.ENABLE_ADMIN_REVOLTS   = features.get("admin_revolts", False)
     config.DIAGNOSTIC_PRINTS      = False
 
 

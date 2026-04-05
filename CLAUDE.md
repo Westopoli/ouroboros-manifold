@@ -122,6 +122,7 @@ The simulation validator (`simulation/sim_validator.py` / `simulation/test_valid
 - **You may** narrow an invariant's scope without approval — skipping cases it was never meant to check (empty regions, factions with zero territory, runs shorter than the invariant's window).
 - **You may not** widen thresholds, extend time windows, or loosen tolerances without presenting the change to Westley first. This includes any change that makes the invariant more permissive for cases it IS supposed to catch.
 - **You may never** reclassify a real finding as a skip. If the simulation has a bug and the invariant caught it, the answer is escalate — not adjust the invariant to stop catching it.
+- **You may never** weaken test criteria to make the current implementation pass. If tests fail, the implementation needs to change — not the tests. The only exception is the scope-narrowing rule above (skipping cases the test was never meant to check).
 
 This replaces the manual checkpoint loop for simulation work. Westley reviews the final validator report, not intermediate terminal output.
 

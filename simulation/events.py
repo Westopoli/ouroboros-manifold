@@ -350,6 +350,98 @@ TEMPLATES = {
         "exclusion_tags": [],
         "significance_tier": 2,
     },
+
+    # ── Admin revolt chain (Stage 4) — non-interruptible ────────────────────
+    "evt_admin_separatist": {
+        "id":                "evt_admin_separatist",
+        "name":              "Separatist Movement",
+        "trigger_field":     None,
+        "trigger_threshold": None,
+        "trigger_direction": None,
+        "immediate_effects": {"tension": +3, "economy": -1},
+        "chain_spawns": [
+            {
+                "template_id": "evt_admin_political_crisis",
+                "delay_range":  [1, 1],
+                "probability":  1.0,
+                "conditions":   {},
+            },
+        ],
+        "chain_tags":    ["admin_revolt"],
+        "exclusion_tags": [],
+        "significance_tier": 5,
+    },
+    "evt_admin_political_crisis": {
+        "id":                "evt_admin_political_crisis",
+        "name":              "Political Crisis",
+        "trigger_field":     None,
+        "trigger_threshold": None,
+        "trigger_direction": None,
+        "immediate_effects": {"tension": +4, "economy": -2, "military": -1},
+        "chain_spawns": [
+            {
+                "template_id": "evt_admin_popular_support",
+                "delay_range":  [1, 1],
+                "probability":  1.0,
+                "conditions":   {},
+            },
+        ],
+        "chain_tags":    ["admin_revolt"],
+        "exclusion_tags": [],
+        "significance_tier": 5,
+    },
+    "evt_admin_popular_support": {
+        "id":                "evt_admin_popular_support",
+        "name":              "Popular Support Shifts",
+        "trigger_field":     None,
+        "trigger_threshold": None,
+        "trigger_direction": None,
+        "immediate_effects": {"tension": +2, "population": -1},
+        "chain_spawns": [
+            {
+                "template_id": "evt_admin_military_defection",
+                "delay_range":  [1, 1],
+                "probability":  1.0,
+                "conditions":   {},
+            },
+        ],
+        "chain_tags":    ["admin_revolt"],
+        "exclusion_tags": [],
+        "significance_tier": 5,
+    },
+    "evt_admin_military_defection": {
+        "id":                "evt_admin_military_defection",
+        "name":              "Military Defection",
+        "trigger_field":     None,
+        "trigger_threshold": None,
+        "trigger_direction": None,
+        "immediate_effects": {"military": -3, "tension": +2},
+        "chain_spawns": [
+            {
+                "template_id": "evt_admin_breakaway",
+                "delay_range":  [1, 1],
+                "probability":  1.0,
+                "conditions":   {},
+            },
+        ],
+        "chain_tags":    ["admin_revolt"],
+        "exclusion_tags": [],
+        "significance_tier": 5,
+    },
+    "evt_admin_breakaway": {
+        "id":                "evt_admin_breakaway",
+        "name":              "Administrative Breakaway",
+        "trigger_field":     None,
+        "trigger_threshold": None,
+        "trigger_direction": None,
+        "immediate_effects": {"military": -4, "economy": -3, "tension": +5, "population": -2},
+        "chain_spawns": [],
+        "chain_tags":    ["admin_revolt"],
+        "exclusion_tags": [],
+        "significance_tier": 6,
+        "creates_faction":   True,
+        "admin_revolt":      True,
+    },
 }
 
 
@@ -475,6 +567,7 @@ def fire_event(template_id: str, region, tick: int, chain_tag: str, rng: random.
         "spawns":           spawns,
         "exclusion_tags":   tmpl["exclusion_tags"],
         "creates_faction":  tmpl.get("creates_faction", False),
+        "admin_revolt":     tmpl.get("admin_revolt", False),
     }
 
 
@@ -562,6 +655,7 @@ def resolve_pending(queue: PendingQueue, world, tick: int, rng: random.Random) -
                 "spawns":         [],
                 "exclusion_tags": tmpl["exclusion_tags"],
                 "creates_faction": tmpl.get("creates_faction", False),
+                "admin_revolt":    tmpl.get("admin_revolt", False),
             }
             # Queue chain spawns
             for spawn in tmpl["chain_spawns"]:
