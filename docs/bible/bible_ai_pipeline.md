@@ -305,3 +305,15 @@ Names assigned to active characters in the coherence ledger are unavailable for 
 #### Coherence Ledger Interface
 
 The ledger calls the naming system on character creation with a thin interface: `get_name(faction_id, category)` → string. The naming system returns a name from the appropriate pool and marks it as used. Clean separation of concerns — the ledger doesn't know about linguistic roots or variable subsets; the naming system doesn't know about characters, roles, or lifespans. The naming system needs faction IDs at initialization (minor coupling to world generation).
+
+---
+
+### AI-Generated Unit Stat Variation — Design Status
+
+> **ON HOLD (v2.02).** The bible's "AI-Generated Unit Variety" section in `bible_combat.md` describes a system where AI generates per-civilization stat profiles for unit classes within hand-designed mechanical constraints. This system is architecturally supported — unit stats are data (config values), not code — but the generation pipeline, stat range definitions, trait pool, and generation prompts are deferred.
+
+**Why on hold.** AI-generated stat variation depends on a working tactical layer with concrete stats that have been tuned through playtesting. You cannot meaningfully generate stat profiles until you know what the stats *do* mechanically — what "firepower: 45" means in terms of DPS, what range values produce the intended engagement distances, what HP values produce the target fight durations. The Tier 2 baseline stats in `bible_combat.md` must be validated through Stage 6 balance testing before stat variation can be designed on top of them.
+
+**What exists now.** Hand-designed Tier 2 baseline stat profiles for all 6 unit types (see `bible_combat.md` "Unit Stat Baselines — Tier 2"). One fixed profile per unit type. Tier 1 and Tier 3 are config-level variants of the same profiles (lower/higher stats). The power rating formula in `bible_combat.md` scores any stat profile into a single strength value for force parity.
+
+**What the generation pipeline will eventually need.** Per-unit-type stat ranges (min/max for each stat), a trait pool (passive characteristics like "hardened hull" or "long-range sensors"), generation prompts for the library builder, and a validation step that ensures generated profiles produce balanced engagements (the automated balance testing pipeline described in "Automated Balance Testing via Self-Play" above). All of this is post-tactical-layer work.

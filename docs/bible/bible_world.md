@@ -425,3 +425,50 @@ The galaxy view is not a separate screen — it is a zoom level. The player is a
 **Layer 6 — Asset production spec.** Concrete 3D-Agent/Meshy prompts, polygon budgets, color palettes per tier, material direction. Reference images and silhouette guides. This is the final layer before production begins.
 
 **The constraint:** Every era must map onto the same engine abstractions (6 unit types with fixed RPS relationships, spine + gradient maps with 5 property types, abstract structure types, tech tiers with uniform boundaries). The era creation template ensures the creative work stays within these constraints while maximizing visual and narrative variety.
+
+---
+
+### Tactical Spatial Model
+
+> **RESOLVED (v2.02).** The tactical engine uses continuous 2D coordinates with discrete vertical layers. All spatial values are measured in "world units" (wu) — an abstract unit that scales with canvas dimensions.
+
+**Coordinate system.** Unit position = `(x: float, y: float, layer: int)`. Continuous floats for x/y (no tile grid, no hex grid). Layers are integers (1 through N, typically 3–5 per map). The map is a rectangular play area defined by `(width, height)` in world units.
+
+**Canvas dimensions.** Each mission archetype specifies a base canvas size (small, medium, large) with a ±30% simulation modifier (per the canvas sizing section above). The concrete dimensions:
+
+| Canvas Size | Dimensions (world units) | Raider crossing time | Bastion crossing time |
+|---|---|---|---|
+| Small | 4,000 × 4,000 | ~27 sec | ~100 sec |
+| Medium | 8,000 × 8,000 | ~53 sec | ~200 sec |
+| Large | 12,000 × 12,000 | ~80 sec | ~300 sec |
+
+Crossing times assume Raider speed 150 wu/sec and Bastion speed 40 wu/sec (Tier 2 baseline stats from `bible_combat.md`). The large canvas is deliberately vast — the bible's "Continuous Movement and No Loading Screens" section describes forces traversing large operational spaces over the course of a 30–60 minute mission, with battles happening en route. Moving a Bastion across a large canvas is a 5-minute commitment.
+
+**Formation width reference.** The Strategic Layout Authoring Framework references chokepoint width as a ratio to "standard unit formation width." Standard formation width = 200 world units (approximately one Vanguard's attack range). A "2.0× formation width" chokepoint (400 wu) allows two Vanguards abreast; a "1.2× formation width" chokepoint (240 wu) forces single file.
+
+---
+
+### Cross-Layer Visibility — Combined Cone and Pulse Model
+
+> **RESOLVED (v2.02).** Cross-layer detection uses two complementary systems: passive degraded detection (cone) and active full-range snapshots (pulse). This combines baseline awareness with proactive information warfare.
+
+**Passive cone detection.** Units detect enemies on adjacent layers at degraded sensor range. Detection radius degrades with layer distance:
+- Layer distance 1 (adjacent): sensor radius × 0.50
+- Layer distance 2: sensor radius × 0.20
+- Layer distance 3+: no passive detection
+
+Vantage spine nodes double these factors and extend passive detection by one additional layer.
+
+**Active sensor pulse.** Designated sensor-capable units can trigger a pulse that reveals all layers within a large radius for a short duration (2 seconds default). After the reveal expires, the information is gone — the player knows what was there, but the engine state returns to "not visible." Pulse has a cooldown (20 seconds default). This creates information warfare: the player must decide when to spend their pulse (scouting before committing forces vs. saving it for mid-engagement intel).
+
+**Interaction with sensor interference.** Both cone detection and pulse are subject to the multiplicative sensor_interference reduction. A unit in a high-interference zone has reduced cone detection range and reduced pulse radius. Hiding in a nebula (space era) or dense forest (land era) degrades cross-layer detection as well as same-layer detection.
+
+---
+
+### Elevation in the Space Era — Sensor Advantage Only
+
+> **RESOLVED (v2.02).** For the base sci-fi era ("The Settled Reach"), elevation provides sensor and visibility advantages only — no combat damage bonus. The `elevation` gradient affects sensor radius (higher elevation = bonus to sensor coverage) but does not modify damage dealt or received.
+
+This is an **era-specific config setting**, not a code distinction. The engine supports elevation combat bonuses generically through a config flag (`ELEVATION_DAMAGE_BONUS_ENABLED`). The space era sets this to false. Future land-based eras (Roman, Medieval, etc.) set it to true, gaining the range, damage, and defensive bonuses that elevation provides on physical terrain. The engine code is identical — the config determines behavior.
+
+**Rationale.** In space, "elevation" maps to orbital plane advantage — a higher orbital plane gives better sensor coverage over the volume below, but energy weapons and projectiles work identically regardless of relative orbital position. On land, height advantage is a fundamental military principle (range, gravity, visibility) and should be mechanically rewarded.

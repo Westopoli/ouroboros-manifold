@@ -215,3 +215,138 @@ Enemy units run the identical decision loop as player units. They acquire the ne
 What makes each mission archetype *feel* different from the enemy's side is not AI micro behavior but **mission setup**: where enemy units are placed, what scripted macro objectives they pursue (advance toward player position, hold defensive positions, hide and ambush, patrol routes), and what composition they have. The mission generator authors these macro-level behaviors per archetype at generation time. The unit-level AI is always the same — the variety comes from the tactical situation the setup creates.
 
 **Enemy macro objectives are a separate design question** from unit behavior AI and will be specified when the mission-level AI system is designed. The unit behavior system described here is the foundation that macro objectives build on top of.
+
+---
+
+### Tactical Simulation Architecture — SC2-Style Sim/Renderer Split
+
+> **RESOLVED (v2.02).** The tactical combat system uses a strict separation between simulation and rendering, modeled on StarCraft 2's replay architecture. The simulation is the ground truth; the renderer is a visualization layer with zero gameplay logic.
+
+**Layer 1 — Tactical Simulation Engine (Python, headless).** A deterministic, tick-based combat engine that owns all ground truth: unit positions on a continuous 2D coordinate space with vertical layers, HP, damage, ability cooldowns, movement, the unit behavior AI decision loop, objective tracking, and outcome band classification. Runs at a fixed tick rate (20 ticks/sec, config value). Every tick, it processes player commands from an input queue, runs the unit decision loop for all units, resolves damage, updates positions, and emits a state delta. Fully testable in Python with no visual dependencies — headless validation of hundreds of engagements per hour, automated balance testing, and deterministic replay reproduction.
+
+**Layer 2 — Command Interface (the "replay feed").** A thin protocol carrying player commands into the simulation and state updates out. During live play, Godot captures player inputs and translates them into simulation commands. During replay, the same commands are read from a saved file. The simulation does not know or care which source commands come from.
+
+**Layer 3 — Renderer (Godot).** Reads simulation state and draws it. Interpolates between tick states for smooth visuals (simulation at 20 ticks/sec, Godot at 60fps = 3 render frames per tick). Plays animations, particle effects, sound. Handles camera. Zero gameplay logic.
+
+**Determinism guarantee.** Given the same initial state (map seed, unit positions/stats, objectives) and the same command stream (player inputs with tick numbers), the engine reproduces any engagement tick-for-tick, bit-identically. Replay files store only initial state + command stream; the engine re-derives everything else.
+
+---
+
+### Damage Model
+
+> **RESOLVED (v2.02).** Multiplicative category multipliers inspired by Age of Empires 3's tag-based system, adapted for the simpler 3-category RPS triangle. Flat HP pools.
+
+**Damage formula:**
+
+```
+damage_per_attack = base_damage × category_multiplier × (1.0 - cover_density_at_position)
+```
+
+**Category multiplier matrix** (era-agnostic — uses Strike/Line/Siege categories):
+
+|  | Target: Strike | Target: Line | Target: Siege |
+|---|---|---|---|
+| **Attacker: Strike** | 1.0× | 0.75× | 1.5× |
+| **Attacker: Line** | 1.5× | 1.0× | 0.75× |
+| **Attacker: Siege** | 0.75× | 1.5× | 1.0× |
+
+The RPS is **soft**: 1.5× provides a meaningful advantage (~30–40% faster time-to-kill) without being a death sentence. Positioning, abilities, and numbers can overcome an unfavorable matchup. Units within each category are differentiated by stats, not by multiplier exceptions — the Bastion survives Strike flanking because of its HP pool (1400), not a special multiplier.
+
+**Attack timing.** Each unit has `base_damage` (per attack) and `attack_interval` (seconds between attacks). DPS = base_damage / attack_interval.
+
+**Range.** Constant damage within weapon range. No distance falloff.
+
+**Area damage (Bombard).** Circle AoE centered on target position. Full damage to every enemy within `aoe_radius`. Damage cap: total AoE damage per attack ≤ `base_damage × aoe_damage_cap_multiplier` (default 4.0×).
+
+**Cover.** `cover_density` gradient at target unit's position reduces incoming damage as a percentage. Cover_density 0.4 → unit takes 60% damage. Era-agnostic.
+
+**Elevation damage bonus.** Config flag `ELEVATION_DAMAGE_BONUS_ENABLED`. When enabled (land-based eras), higher elevation → bonus damage per tier. **Disabled for space era** — elevation affects sensor coverage only. The engine computes elevation difference always; the flag controls whether it modifies damage.
+
+---
+
+### Stat Philosophy — Long Engagements with Category-Specific Rhythm
+
+> **RESOLVED (v2.02).** Engagement pacing follows an A+C hybrid: all fights are long enough for positioning and abilities to matter, but different categories fight at different tempos.
+
+**Pacing targets:**
+- Small skirmishes (5v5): minimum 10–15 seconds
+- Medium engagements (25v25): 30–50 seconds
+- Large battles (100+ per side): well over 60 seconds
+- Mirror 50v50 (balanced composition): 45–75 seconds
+
+HP pools create tempo differences. Strike has the lowest HP (fastest fights, ~10–15 sec minimum). Line has moderate HP (baseline, ~20–30 sec). Siege has the highest HP (slowest, ~30–45 sec). DPS is moderate across all categories; HP is the primary differentiator. In large battles, flanks resolve first (Strike), the center grinds next (Line + Warden), and Siege duels continue longest — creating layered attention-management gameplay.
+
+---
+
+### Unit Stat Baselines — Tier 2
+
+> **RESOLVED (v2.02).** Hand-designed Tier 2 baseline stats. Tier 1/Tier 3 are config-level variants. AI-generated per-civilization stat variation is **on hold** — engine supports it, generation pipeline deferred. All values are config parameters.
+
+| Stat | Raider | Interceptor | Vanguard | Warden | Bombard | Bastion |
+|---|---|---|---|---|---|---|
+| **Category** | Strike | Strike | Line | Line | Siege | Siege |
+| **HP** | 250 | 350 | 800 | 600 | 700 | 1400 |
+| **Base Damage** | 18 | 12 | 15 | 8 | 35 | 14 |
+| **Attack Interval (sec)** | 0.8 | 1.0 | 1.2 | 1.5 | 3.0 | 1.8 |
+| **DPS** | 22.5 | 12.0 | 12.5 | 5.3 | 11.7 | 7.8 |
+| **Attack Range (wu)** | 200 | 250 | 300 | 350 | 600 | 400 |
+| **Speed (wu/sec)** | 150 | 130 | 80 | 90 | 50 | 40 |
+| **Sensor Radius (wu)** | 400 | 500 | 350 | 400 | 300 | 300 |
+| **Layer Transition (sec)** | 1.0 | 1.2 | 2.5 | 2.0 | 4.0 | 5.0 |
+| **AoE Radius (wu)** | — | — | — | — | 150 | — |
+
+"wu" = world units. See canvas sizing in `bible_world.md`.
+
+---
+
+### Command Vocabulary
+
+> **RESOLVED (v2.02).** Five commands. No patrol, no follow, no hold position, no stop.
+
+- **`move`** — move to position
+- **`attack_move`** — move to position, engaging enemies in range along the way
+- **`attack_target`** — attack a specific enemy unit
+- **`activate_ability`** — trigger the unit's active ability (toggle for Brace)
+- **`group_move`** — all selected units move together to target position
+
+Commands are recorded with tick numbers for replay. The engine processes all commands for the current tick before advancing state.
+
+---
+
+### Squad Mechanics — Visual Only
+
+> **RESOLVED (v2.02).** Strike units (Raider, Interceptor) are "commanded as squads" — this is purely visual. In the simulation, each squad is one entity with one HP pool, one position, one set of stats. Godot renders it as 3–5 small ships in formation. The simulation does not track individual squad members.
+
+---
+
+### Supply and Non-Combat Units
+
+> **RESOLVED (v2.02).** Supply units, evacuation convoys, and non-combat assets are entities in the tactical simulation with HP but no attack capability. Their decision loop skips auto-engage (check 3). Primary survival: flinch retreat (check 1). They are objective targets for evacuation and escort missions.
+
+---
+
+### Pathfinding — Hierarchical A* with Steering
+
+> **RESOLVED (v2.02).** Two-level movement: coarse A* pathfinding for route planning, fine steering behaviors for organic movement between waypoints.
+
+**Coarse level:** A* on a precomputed navmesh per layer, generated from the map's `obstacle_density` gradient. Path caching for shared destinations.
+
+**Fine level:** Steering behaviors between waypoints — seek, obstacle avoidance, separation from friendlies. Produces smooth movement without single-file corridors.
+
+**Layer transitions.** Unit enters transition state lasting `layer_transition_time` ticks (Strike fastest, Siege slowest). During transition, unit cannot attack or be targeted by same-layer units.
+
+---
+
+### Power Rating Formula
+
+> **RESOLVED (v2.02).** Single strength value per unit for force parity.
+
+`power = effective_hp × dps × range_factor × mobility_factor × ability_bonus`
+
+- `effective_hp` = max_hp adjusted for typical cover
+- `dps` = base_damage / attack_interval
+- `range_factor` = logarithmic range bonus (diminishing returns)
+- `mobility_factor` = speed / normalization constant
+- `ability_bonus` = flat percentage per unit type (e.g., Surge +15%, Brace +20%)
+
+AoE units (Bombard) receive an additional multiplier. Force total = sum of all unit power ratings.

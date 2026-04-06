@@ -104,7 +104,7 @@ class Faction:
                     attractiveness *= 1.0 + dmg * boost
 
                 if nf is None:
-                    if can_col and self.budget >= config.COLONIZE_COST:
+                    if can_col:
                         colonize_candidates[nid] = attractiveness
                 else:
                     our_stance   = self.diplomatic_stance.get(nf, "neutral")
@@ -170,6 +170,8 @@ class Faction:
 
         best_action = max(scored, key=scored.get) if scored else "accumulate"
         if scored.get(best_action, 0.0) < config.MIN_ACTION_THRESHOLD:
+            best_action = "accumulate"
+        if best_action == "colonize" and self.budget < config.COLONIZE_COST:
             best_action = "accumulate"
 
         # ── 6. Build Intent ───────────────────────────────────────────────────

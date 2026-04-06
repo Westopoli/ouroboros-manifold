@@ -349,3 +349,29 @@ This proportional scaling means consequences feel appropriate to the situation. 
 **Scope: mission region only.** The consequence bundle is field deltas applied to the mission region. There is no separate world-wide momentum, vector nudge, or ripple system. The simulation handles world-wide propagation naturally: improved stability in one region affects neighboring regions through existing inter-region dependencies (trade, military support, faction dynamics) as the time jump runs forward. The world "learns" about the mission outcome organically through hundreds of ticks of simulation, not through an artificial broadcast.
 
 **Why no vector nudge:** The bible previously referenced "a direct vector nudge for intangible civilizational effect" as part of consequence bundles. This has been simplified away. Region stat changes applied to the mission region, processed through the simulation's existing composite axes and inter-region mechanics during the time jump, already capture the full civilizational impact. A military victory that boosts military strength and drops factional tension in a key region IS the civilizational impact — the composite axes propagate it, and the time jump's hundreds of ticks let it ripple through the world's interconnected systems.
+
+---
+
+### Objective Tracking — Tactical Engine Implementation
+
+> **RESOLVED (v2.02).** This section specifies how mission objectives are represented and evaluated in the headless tactical simulation engine. The objective system bridges between the mission generator (which defines what the player must accomplish) and the outcome band classification system (which evaluates how well they did).
+
+**Objective data model.** Each mission instance carries an ordered list of objectives. Each objective has:
+- **Type** — one of: `hold_zone` (defend an area for a duration), `destroy_targets` (eliminate specific enemy units or a percentage of enemy force), `escort_to_extraction` (get designated units to an extraction point alive), `survive_duration` (keep player force alive for a time period), `eliminate_force` (destroy a percentage of total enemy HP).
+- **Weight** — contribution to the objective completion score. One primary objective carries dominant weight (e.g., 0.6). Zero to three secondary objectives split the remaining weight. All weights sum to 1.0.
+- **Parameters** — type-specific: zone center/radius and hold duration for `hold_zone`, target unit IDs for `destroy_targets`, extraction point position for `escort_to_extraction`, duration in ticks for `survive_duration`.
+- **Completion value** — 0.0 to 1.0, updated per tick. Binary objectives produce 0 or 1. Graduated objectives scale linearly (e.g., 60% of targets destroyed = 0.6 completion).
+
+**Per-tick evaluation.** The tactical engine evaluates all objectives every tick:
+- `hold_zone`: timer advances while the zone contains no enemy units. Enemies entering the zone pause the timer. Completion = elapsed hold time / required hold time.
+- `destroy_targets`: completion = fraction of designated targets destroyed.
+- `escort_to_extraction`: completion = fraction of escort units that reached extraction alive.
+- `survive_duration`: completion = elapsed time / required time. Fails to 0.0 if all player units die before time expires.
+- `eliminate_force`: completion = fraction of total enemy force HP destroyed.
+
+**Terminal conditions.** The mission ends when any of these is met:
+1. All objectives are resolved (primary objective complete or definitively failed).
+2. The mission's time deadline expires — whatever objective state exists becomes the final score.
+3. The player's entire force is eliminated — objective completion freezes at current values.
+
+Time is a constraint, not a scoring input. Completing objectives faster does not improve the score. The deadline is pass/fail — either objectives are resolved before time runs out, or the current state at deadline becomes the final assessment.

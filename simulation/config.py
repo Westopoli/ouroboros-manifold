@@ -225,8 +225,8 @@ RECRUITMENT_CEILING      = 90.0   # recruitment approaches zero as military near
 # ── Border friction (Group J2) ────────────────────────────────────────────────
 # Applied per-tick to each region that borders a hostile faction's region.
 # Tuned low: background stress, not active damage (spec intent: "subtle").
-BORDER_FRICTION_TENSION  = 0.5   # tension added per tick from each hostile border
-BORDER_FRICTION_ECONOMY  = 0.15   # economy subtracted per tick from each hostile border
+BORDER_FRICTION_TENSION  = 0.15  # tension added per tick from each hostile border
+BORDER_FRICTION_ECONOMY  = 0.05   # economy subtracted per tick from each hostile border
 
 # ── Faction agent (Groups K–L) ────────────────────────────────────────────────
 BUDGET_GROWTH_RATE          = 0.025 # budget += sum(owned net economy) * this, per tick
@@ -236,7 +236,7 @@ ATTACK_CONFIDENCE_RANGE = {         # rolled once per faction at creation; store
     "conqueror":           (2.0, 6.0),     # very aggressive
     "fortifier":           (4.0, 10.0),    # methodical but willing
     "player_civilization": (3.0, 8.0),      # similar to other factions
-    "breakaway":           (4.0,  8.0),    # scrappy
+    "breakaway":           (2.0,  5.0),    # scrappy — lowered so breakaways act sooner
 }
 ATTACK_CONFIDENCE_DEFAULT_RANGE = (4.0, 8.0)  # fallback for unknown archetypes
 # ── Telegraph vs Surprise attack system ─────────────────────────────────────
@@ -272,7 +272,7 @@ BUDGET_PRESSURE_THRESHOLD = 0.8
 
 # ── Attack resolution (Group L2) ─────────────────────────────────────────────
 ATTACK_EFFICIENCY      = 1.0        # multiplier on committed attack budget
-RESISTANCE_FACTOR      = 0.65       # how strongly defender military reduces attack
+RESISTANCE_FACTOR      = 0.55       # how strongly defender military reduces attack
 STOCHASTIC_RANGE       = (0.7, 1.3) # (min, max) random multiplier on net_force
 BREAKTHROUGH_THRESHOLD = 15.0       # net_force_mod must exceed this for breakthrough
                                     # below this but > 0 → contested; ≤ 0 → repelled
@@ -287,10 +287,10 @@ CONQUEST_GARRISON_FRACTION  = 0.65  # fraction of committed budget that becomes 
 # ── Entrenchment (tenure-based defense bonus) ────────────────────────────────
 ENTRENCHMENT_BASE       = 1.0   # defense multiplier at tick 0 of ownership
 ENTRENCHMENT_MAX        = 2.0   # defense multiplier at full entrenchment
-ENTRENCHMENT_RAMP_TICKS = 3     # ticks to reach max entrenchment
+ENTRENCHMENT_RAMP_TICKS = 100   # ticks to reach max entrenchment
 
 # ── Revolt probability (replaces threshold trigger) ─────────────────────────
-REVOLT_BASE_PROBABILITY  = 0.015   # per-region per-tick base probability of revolt
+REVOLT_BASE_PROBABILITY  = 0.007   # per-region per-tick base probability of revolt (lowered from 0.015 for admin revolt coexistence)
 REVOLT_TENSION_EXPONENT  = 0.8     # tension scaling curve (higher = low-tension revolts rarer)
 REVOLT_COOLDOWN_TICKS    = 12      # minimum ticks between revolts on same region
 

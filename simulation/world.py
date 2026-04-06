@@ -317,10 +317,13 @@ def _four_way(rng: random.Random) -> World:
     o_home = _make_region("region_o_home", f_names[5], "frontier", rng, faction_id="opportunist")
     o_f0   = _make_region("region_o_f0",   "Wayward Post", "frontier", rng, faction_id="opportunist")
 
-    e0_name = rng.choice(theme.REGION_NAMES["empty"]).replace("{n}", "1")
-    e1_name = rng.choice(theme.REGION_NAMES["empty"]).replace("{n}", "2")
-    e0 = Region("region_e0", e0_name, "empty")
-    e1 = Region("region_e1", e1_name, "empty")
+    e_pool = theme.REGION_NAMES["empty"]
+    e0  = Region("region_e0",  rng.choice(e_pool).replace("{n}", "1"), "empty")
+    e1  = Region("region_e1",  rng.choice(e_pool).replace("{n}", "2"), "empty")
+    pe0 = Region("region_pe0", rng.choice(e_pool).replace("{n}", "3"), "empty")
+    ce0 = Region("region_ce0", rng.choice(e_pool).replace("{n}", "4"), "empty")
+    fe0 = Region("region_fe0", rng.choice(e_pool).replace("{n}", "5"), "empty")
+    oe0 = Region("region_oe0", rng.choice(e_pool).replace("{n}", "6"), "empty")
 
     regions = {
         "region_p_home":  p_home,
@@ -333,6 +336,10 @@ def _four_way(rng: random.Random) -> World:
         "region_o_f0":    o_f0,
         "region_e0":      e0,
         "region_e1":      e1,
+        "region_pe0":     pe0,
+        "region_ce0":     ce0,
+        "region_fe0":     fe0,
+        "region_oe0":     oe0,
     }
     adjacency  = {rid: [] for rid in regions}
     edge_types = {}
@@ -357,6 +364,11 @@ def _four_way(rng: random.Random) -> World:
     link("region_f_f0", "region_e0")
     link("region_c_f0", "region_e1")
     link("region_o_f0", "region_e1")
+
+    link("region_p_f0", "region_pe0")   # player exclusive empty
+    link("region_c_f0", "region_ce0")   # conqueror exclusive empty
+    link("region_f_f0", "region_fe0")   # fortifier exclusive empty
+    link("region_o_f0", "region_oe0")   # opportunist exclusive empty
 
     return World(regions, adjacency, edge_types, seed=rng.randint(0, 2**31))
 
