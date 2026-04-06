@@ -12,11 +12,12 @@ TICKS = 500
 SEED = 1
 
 HOTSPOT_REGIONS = [
-    "region_e0", "region_e1", "region_c_f0", "region_f_f0",
-    "region_p_f0", "region_pe0", "region_ce0", "region_fe0", "region_oe0",
+    "region_p_f0", "region_c_f0", "region_f_f0", "region_o_f0",
+    "region_e01", "region_e06", "region_e11", "region_e16",
+    "region_e29", "region_e30",
 ]
 
-EMPTY_REGION_MARKERS = {"_e0", "_e1", "ce0", "fe0", "oe0", "pe0"}
+EMPTY_REGION_MARKERS = {"region_e"}
 
 
 def is_empty_origin(rid):
@@ -26,7 +27,7 @@ def is_empty_origin(rid):
 def run():
     scenario = {
         "name": "autopsy_full_stack",
-        "template": "four_way",
+        "template": "full_game_50",
         "ticks": TICKS,
         "seed": SEED,
         "use_tick_engine": True,
@@ -143,7 +144,7 @@ def print_report(ownership_changes, region_snapshots, breakaway_origins, agent_d
 
     # ── SECTION C ─────────────────────────────────────────────────────────
     print("\n── C. TENSION TRAJECTORY (sampled every 25 ticks) ─────────")
-    for target in ["region_e0", "region_e1", "region_f_f0", "region_p_f0"]:
+    for target in ["region_p_f0", "region_c_f0", "region_e29", "region_e30"]:
         if target not in region_snapshots:
             continue
         snaps = region_snapshots[target]
@@ -209,11 +210,8 @@ def print_report(ownership_changes, region_snapshots, breakaway_origins, agent_d
     print("    economy -= BORDER_FRICTION_ECONOMY * (neighbor_military / 100)")
     print("    (Scales by neighbor military — weak neighbors cause less friction)")
     print()
-    print("  ADDITIONAL DIFFERENCE — default diplomatic stance:")
-    print("    tick.py defaults unknown stances to 'hostile'")
-    print("    border_friction.py defaults unknown stances to 'neutral'")
-    print("    This means tick.py treats ALL cross-faction borders as hostile")
-    print("    unless explicitly overridden by the diplomacy system.")
+    print("  Default diplomatic stance: 'neutral' (changed from 'hostile' via Fix D)")
+    print("    border_friction.py also defaults to 'neutral' — now consistent.")
 
 
 if __name__ == "__main__":

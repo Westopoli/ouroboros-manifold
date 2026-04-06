@@ -656,6 +656,7 @@ def resolve_pending(queue: PendingQueue, world, tick: int, rng: random.Random) -
                 "exclusion_tags": tmpl["exclusion_tags"],
                 "creates_faction": tmpl.get("creates_faction", False),
                 "admin_revolt":    tmpl.get("admin_revolt", False),
+                "source_faction_id": entry.get("source_faction_id"),
             }
             # Queue chain spawns
             for spawn in tmpl["chain_spawns"]:
@@ -667,6 +668,7 @@ def resolve_pending(queue: PendingQueue, world, tick: int, rng: random.Random) -
                     "probability": spawn["probability"],
                     "conditions":  spawn["conditions"],
                     "chain_tag":   entry["chain_tag"],
+                    "source_faction_id": entry.get("source_faction_id"),
                 }
                 queue.enqueue(spawn_entry)
                 result["spawns"].append(f"{spawn['template_id']}@tick_{tick + delay}")

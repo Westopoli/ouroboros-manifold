@@ -160,8 +160,8 @@ def collect_early_scoring(n_ticks=50, seed=SEED):
     config.ENABLE_ADMIN_REVOLTS = True
     config.DIAGNOSTIC_PRINTS = False
 
-    w = world_mod.generate("four_way", seed=seed)
-    factions = faction_mod.generate_starting_factions("four_way", rng=w.rng, world=w)
+    w = world_mod.generate("full_game_50", seed=seed)
+    factions = faction_mod.generate_starting_factions("full_game_50", rng=w.rng, world=w)
     registry = faction_mod.make_registry(*factions)
     noise_offsets = _events.roll_noise_offsets(list(w.regions.keys()), w.rng)
     trigger_state = {}
@@ -587,7 +587,7 @@ if __name__ == "__main__":
     print("=" * 40)
 
     scenario = {
-        "template":     "four_way",
+        "template":     "full_game_50",
         "ticks":        TICKS,
         "seed":         SEED,
         "use_tick_engine": True,

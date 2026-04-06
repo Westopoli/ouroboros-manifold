@@ -305,8 +305,12 @@ LATENT_LOYALTY_REVERT_CHANCE = 0.5 # probability a revolt restores previous fact
 
 # ── Breakaway starting field buffs ───────────────────────────────────────────
 REVOLT_BREAKAWAY_TENSION_CAP = 40.0   # cap tension — revolt succeeded, people are mobilized
-REVOLT_BREAKAWAY_POP_FLOOR   = 30.0   # minimum population — revolt needed people
+REVOLT_BREAKAWAY_POP_FLOOR   = 25.0   # minimum population — matches COLONY_START_POPULATION
 REVOLT_BREAKAWAY_ECO_FLOOR   = 20.0   # minimum economy — seized infrastructure
+
+MIN_ATTACK_VALUE       = 0.05   # don't attack regions worth less than this (eco+pop component)
+ATTRACT_VALUE_MULTIPLIER = 2.0  # amplify value component so developed regions outscore wastelands
+ZOMBIE_CLEANUP_TICKS   = 50     # ticks before zombie breakaway can be absorbed
 
 # ── Unified agent scoring (Stage 3 F1) ───────────────────────────────────────
 #
@@ -382,9 +386,9 @@ MIN_ACTION_THRESHOLD = 0.05
 # ── Colonization (Stage 3 E1) ─────────────────────────────────────────────────
 COLONIZE_COST             = 20.0   # budget spent to claim an uninhabited region
 COLONY_START_MILITARY     = 10.0   # starter military for a new colony
-COLONY_START_ECONOMY      = 15.0   # starter economy
+COLONY_START_ECONOMY      = 20.0   # starter economy
 COLONY_START_TENSION      = 20.0   # starter tension
-COLONY_START_POPULATION   = 10.0   # starter population
+COLONY_START_POPULATION   = 25.0   # starter population
 
 # ── Administrative revolts (Stage 4) ─────────────────────────────────────────
 ENABLE_ADMIN_REVOLTS           = True

@@ -50,6 +50,7 @@ def run_tick(world, tick_num: int, ledger=None,
         "conquests":       [],
         "colonizations":   [],
         "collisions":      [],
+        "factions_absorbed": [],
     }
 
     rng = world.rng
@@ -306,7 +307,7 @@ def run_tick(world, tick_num: int, ledger=None,
             for nr in world.allied_inhabited_neighbors(region.id):
                 adj_bonus += config.NEIGHBOR_ECONOMY_BONUS * (nr.fields["economy"] / 100.0)
             # Cooperative-faction neighbors also contribute adjacency bonus
-            if config.ENABLE_DIPLOMACY and registry and region.faction_id:
+            if config.ENABLE_DIPLOMACY and registry and region.faction_id and region.faction_id in registry:
                 for nid in world.get_neighbors(region.id):
                     nr = world.regions.get(nid)
                     if (nr and nr.tier != "empty" and nr.faction_id
@@ -321,6 +322,10 @@ def run_tick(world, tick_num: int, ledger=None,
         )
         _drift.apply_drift_deltas(region, deltas)
         log["drift"][region.id] = deltas
+
+    # ── Step 6: Zombie faction cleanup ─────────────────────────────────────
+    if registry is not None:
+        log["factions_absorbed"] = _cleanup_zombie_factions(world, registry, tick_num)
 
     # ── Step 7: Log ──────────────────────────────────────────────────────────
     if ledger is not None:
@@ -406,6 +411,10 @@ def _apply_resolved_action(world, registry, action, pending_queue, ledger, tick_
         garrison = action["conquest"]["garrison"]
         con_region.fields["military"] = min(100.0, con_region.fields["military"] + garrison)
         con_region.held_since_tick = tick_num
+        if con_region.fields["population"] < config.COLONY_START_POPULATION:
+            con_region.fields["population"] = config.COLONY_START_POPULATION
+        if con_region.fields["economy"] < config.COLONY_START_ECONOMY:
+            con_region.fields["economy"] = config.COLONY_START_ECONOMY
         con_region.recompute_composites()
 
     if action.get("colonization"):
@@ -432,8 +441,8 @@ def _apply_border_friction(world, registry: dict) -> dict:
                 continue
             our_faction  = registry.get(region.faction_id)
             their_faction = registry.get(neighbor.faction_id)
-            our_stance   = our_faction.diplomatic_stance.get(neighbor.faction_id, "hostile") if our_faction else "hostile"
-            their_stance = their_faction.diplomatic_stance.get(region.faction_id, "hostile") if their_faction else "hostile"
+            our_stance   = our_faction.diplomatic_stance.get(neighbor.faction_id, "neutral") if our_faction else "neutral"
+            their_stance = their_faction.diplomatic_stance.get(region.faction_id, "neutral") if their_faction else "neutral"
             if our_stance == "hostile" or their_stance == "hostile":
                 total_ten += config.BORDER_FRICTION_TENSION
                 total_eco += config.BORDER_FRICTION_ECONOMY
@@ -458,11 +467,22 @@ def _handle_revolt_faction_creation(evt: dict, world, registry: dict,
     if region is None or region.faction_id is None:
         return None
 
-    # Roll for breakaway formation
-    lo, hi = config.REVOLT_SUCCESS_RANGE
-    success_rate = rng.uniform(lo, hi)
-    if rng.random() > success_rate:
-        return None  # revolt didn't produce a lasting faction
+    is_admin = evt.get("admin_revolt", False)
+
+    if is_admin:
+        # Admin revolts: prune if originating faction no longer owns the region
+        source_fid = evt.get("source_faction_id")
+        if source_fid and region.faction_id != source_fid:
+            return None
+        success_rate = 1.0
+    else:
+        # Tension revolts: roll for breakaway formation
+        lo, hi = config.REVOLT_SUCCESS_RANGE
+        success_rate = rng.uniform(lo, hi)
+        if rng.random() > success_rate:
+            return None
+        if region.fields["population"] < config.REVOLT_BREAKAWAY_POP_FLOOR:
+            return None
 
     original_faction = region.faction_id
 
@@ -545,3 +565,66 @@ def _handle_revolt_faction_creation(evt: dict, world, registry: dict,
         "military_stolen":  round(mil_stolen, 2),
         "economy_stolen":   round(eco_stolen, 2),
     }
+
+
+def _cleanup_zombie_factions(world, registry, tick):
+    absorbed = []
+    to_remove = []
+
+    # Pass 1: Remove ghost factions (0 regions for 5+ ticks)
+    for fid, fac in list(registry.items()):
+        if not fid.startswith("breakaway_"):
+            continue
+        owned = world.regions_by_faction(fid)
+        if len(owned) == 0:
+            parts = fid.split("_")
+            spawn_tick = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else 0
+            if (tick - spawn_tick) >= 5:
+                to_remove.append(fid)
+                absorbed.append({
+                    "tick": tick, "faction": fid, "region": None,
+                    "absorbed_by": None,
+                })
+
+    # Pass 2: Absorb single-region zombies
+    for fid, fac in list(registry.items()):
+        if not fid.startswith("breakaway_") or fid in to_remove:
+            continue
+        owned = world.regions_by_faction(fid)
+        if len(owned) != 1:
+            continue
+        parts = fid.split("_")
+        spawn_tick = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else 0
+        if (tick - spawn_tick) < config.ZOMBIE_CLEANUP_TICKS:
+            continue
+        if fac.budget >= config.COLONIZE_COST:
+            continue
+        region = owned[0]
+        best_absorber = None
+        best_strength = 0
+        for nid in world.get_neighbors(region.id):
+            nb = world.regions.get(nid)
+            if nb and nb.faction_id and nb.faction_id != fid and nb.faction_id in registry:
+                strength = len(world.regions_by_faction(nb.faction_id))
+                if strength > best_strength:
+                    best_strength = strength
+                    best_absorber = nb.faction_id
+        if best_absorber is None:
+            continue
+        region.previous_faction_id = fid
+        region.faction_id = best_absorber
+        region.held_since_tick = tick
+        to_remove.append(fid)
+        absorbed.append({
+            "tick": tick, "faction": fid, "region": region.id,
+            "absorbed_by": best_absorber,
+        })
+    for fid in to_remove:
+        for fac in registry.values():
+            fac.diplomatic_stance.pop(fid, None)
+        del registry[fid]
+        for region in world.regions.values():
+            if region.faction_id == fid:
+                region.faction_id = None
+                region.held_since_tick = None
+    return absorbed

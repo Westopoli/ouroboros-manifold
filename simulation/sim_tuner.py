@@ -212,6 +212,25 @@ SCENARIOS = {
         },
         "overrides": {},
     },
+    "07_full_game_50": {
+        "template":     "full_game_50",
+        "ticks":        500,
+        "seed":         1,
+        "description":  "50-region map — 4 factions, corridors, central hub",
+        "use_tick_engine": True,
+        "features": {
+            "events":          True,
+            "factions":        True,
+            "border_friction": True,
+            "recruitment":     True,
+            "adjacency_bonus": True,
+            "oscillation":     True,
+            "technology":      True,
+            "diplomacy":       True,
+            "admin_revolts":   True,
+        },
+        "overrides": {},
+    },
 }
 
 

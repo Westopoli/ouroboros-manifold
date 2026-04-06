@@ -66,6 +66,8 @@ def generate(template: str = "isolated_start", seed: int | None = None) -> World
         return _contested_border(rng)
     elif template == "four_way":
         return _four_way(rng)
+    elif template == "full_game_50":
+        return _full_game_50(rng)
     else:
         raise ValueError(f"Unknown world template: {template}")
 
@@ -397,5 +399,138 @@ def _archipelago(rng: random.Random) -> World:
     for fid in frontiers:
         link("region_home", fid)
     link("region_f0", "region_f1")
+
+    return World(regions, adjacency, edge_types, seed=rng.randint(0, 2**31))
+
+
+def _full_game_50(rng: random.Random) -> World:
+    # 50 regions: 8 inhabited (4 factions × 2), 42 empty
+    # Layout: 4 corners connected by corridors through a central hub
+    # Avg degree ~2.2, center degree 5, min 6 empties between any two factions
+
+    # ── Faction regions (same field ranges as four_way) ─────────────────────
+    p_home = _make_region("region_p_home", rng.choice(theme.REGION_NAMES["home"]),
+                          "home", rng, faction_id="player")
+    f_names = rng.sample(theme.REGION_NAMES["frontier"], 6)
+    p_f0   = _make_region("region_p_f0",   f_names[0], "frontier", rng, faction_id="player")
+    c_home = _make_region("region_c_home", f_names[1], "frontier", rng, faction_id="conqueror")
+    c_f0   = _make_region("region_c_f0",   f_names[2], "frontier", rng, faction_id="conqueror")
+    f_home = _make_region("region_f_home", f_names[3], "frontier", rng, faction_id="fortifier")
+    f_f0   = _make_region("region_f_f0",   f_names[4], "frontier", rng, faction_id="fortifier")
+    o_home = _make_region("region_o_home", f_names[5], "frontier", rng, faction_id="opportunist")
+    o_f0   = _make_region("region_o_f0",   "Wayward Post", "frontier", rng, faction_id="opportunist")
+
+    # ── 42 empty regions ────────────────────────────────────────────────────
+    e_pool = theme.REGION_NAMES["empty"]
+    empties = {}
+    for i in range(1, 43):
+        rid = f"region_e{i:02d}"
+        name = rng.choice(e_pool).replace("{n}", str(i))
+        empties[rid] = Region(rid, name, "empty")
+
+    def e(n):
+        return f"region_e{n:02d}"
+
+    regions = {
+        "region_p_home": p_home, "region_p_f0": p_f0,
+        "region_c_home": c_home, "region_c_f0": c_f0,
+        "region_f_home": f_home, "region_f_f0": f_f0,
+        "region_o_home": o_home, "region_o_f0": o_f0,
+    }
+    regions.update(empties)
+
+    adjacency = {rid: [] for rid in regions}
+    edge_types = {}
+
+    def link(a, b, etype="both"):
+        adjacency[a].append(b)
+        adjacency[b].append(a)
+        edge_types[(a, b)] = etype
+        edge_types[(b, a)] = etype
+
+    # ── NW corner (Player) ──────────────────────────────────────────────────
+    #   p_home ─ p_f0 ─┬─ e01 ─ e03 ─ e05(spur)
+    #                   └─ e02 ─ e04
+    link("region_p_home", "region_p_f0")
+    link("region_p_f0", e(1))
+    link("region_p_f0", e(2))
+    link(e(1), e(3))
+    link(e(2), e(4))
+    link(e(3), e(5))    # spur
+
+    # ── NE corner (Conqueror) ───────────────────────────────────────────────
+    #   c_home ─ c_f0 ─┬─ e06 ─ e08 ─ e10(spur)
+    #                   └─ e07 ─ e09
+    link("region_c_home", "region_c_f0")
+    link("region_c_f0", e(6))
+    link("region_c_f0", e(7))
+    link(e(6), e(8))
+    link(e(7), e(9))
+    link(e(8), e(10))   # spur
+
+    # ── SW corner (Fortifier) ───────────────────────────────────────────────
+    #   f_home ─ f_f0 ─┬─ e11 ─ e13 ─ e15(spur)
+    #                   └─ e12 ─ e14
+    link("region_f_home", "region_f_f0")
+    link("region_f_f0", e(11))
+    link("region_f_f0", e(12))
+    link(e(11), e(13))
+    link(e(12), e(14))
+    link(e(13), e(15))  # spur
+
+    # ── SE corner (Opportunist) ─────────────────────────────────────────────
+    #   o_home ─ o_f0 ─┬─ e16 ─ e18 ─ e20(spur)
+    #                   └─ e17 ─ e19
+    link("region_o_home", "region_o_f0")
+    link("region_o_f0", e(16))
+    link("region_o_f0", e(17))
+    link(e(16), e(18))
+    link(e(17), e(19))
+    link(e(18), e(20))  # spur
+
+    # ── North corridor (NW ↔ NE): e03 ─ e21 ─ e22 ─ e08 ───────────────────
+    link(e(3), e(21))
+    link(e(21), e(22))
+    link(e(22), e(8))
+    link(e(21), e(37))  # spur off north corridor
+
+    # ── West corridor (NW ↔ SW): e04 ─ e23 ─ e24 ─ e14 ────────────────────
+    link(e(4), e(23))
+    link(e(23), e(24))
+    link(e(24), e(14))
+    link(e(23), e(39))  # spur off west corridor
+
+    # ── East corridor (NE ↔ SE): e09 ─ e25 ─ e26 ─ e18 ────────────────────
+    link(e(9), e(25))
+    link(e(25), e(26))
+    link(e(26), e(18))
+    link(e(25), e(40))  # spur off east corridor
+
+    # ── South corridor (SW ↔ SE): e13 ─ e27 ─ e28 ─ e19 ───────────────────
+    link(e(13), e(27))
+    link(e(27), e(28))
+    link(e(28), e(19))
+    link(e(27), e(38))  # spur off south corridor
+
+    # ── Center hub (most connected area) ────────────────────────────────────
+    # e29 (center-NW) and e30 (center-SE) form the core
+    link(e(22), e(29))   # north corridor → center
+    link(e(24), e(29))   # west corridor → center
+    link(e(26), e(30))   # east corridor → center
+    link(e(28), e(30))   # south corridor → center
+    link(e(29), e(30))   # center core link
+    link(e(22), e(35))   # north inland connector
+    link(e(35), e(29))   # inland → center
+    link(e(28), e(36))   # south inland connector
+    link(e(36), e(30))   # inland → center
+
+    # ── Center branches ─────────────────────────────────────────────────────
+    link(e(29), e(31))
+    link(e(30), e(32))
+    link(e(31), e(32))   # cross-link center branches
+    link(e(31), e(33))
+    link(e(32), e(34))
+    link(e(33), e(41))   # deep center spur
+    link(e(34), e(42))   # deep center spur
 
     return World(regions, adjacency, edge_types, seed=rng.randint(0, 2**31))

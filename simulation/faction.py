@@ -78,6 +78,7 @@ class Faction:
                     current_value = 0.0
                 else:
                     current_value = (nfields["economy"] * we + nfields["population"] * wp) / 100.0
+                    current_value *= config.ATTRACT_VALUE_MULTIPLIER
 
                 nb_of_target = adjacency.get(nid, [])
                 non_owned    = [n for n in nb_of_target
@@ -111,7 +112,8 @@ class Faction:
                     their_fac    = registry.get(nf)
                     their_stance = their_fac.diplomatic_stance.get(self.id, "neutral") if their_fac else "neutral"
                     if our_stance == "hostile" or their_stance == "hostile":
-                        attack_candidates[nid] = attractiveness
+                        if current_value >= config.MIN_ATTACK_VALUE:
+                            attack_candidates[nid] = attractiveness
 
         # ── 2. Filter attack candidates by expected_net > confidence ──────────
         potential_commit = self.budget * config.ATTACK_COMMIT_FRACTION
@@ -139,14 +141,21 @@ class Faction:
             )
         else:
             attack_floor = None
-        viable_attacks = {
-            rid: potential_commit * config.ATTACK_EFFICIENCY
-                 - snapshot[rid]["fields"]["military"] * config.RESISTANCE_FACTOR
-            for rid in attack_candidates
-            if (potential_commit * config.ATTACK_EFFICIENCY
-                - snapshot[rid]["fields"]["military"] * config.RESISTANCE_FACTOR)
-               > effective_confidence
-        }
+        def _target_entrenchment(rid):
+            held_since = snapshot[rid].get("held_since_tick")
+            if held_since is None:
+                return config.ENTRENCHMENT_MAX
+            ticks_held = max(0, tick - held_since)
+            ratio = min(1.0, ticks_held / config.ENTRENCHMENT_RAMP_TICKS) if config.ENTRENCHMENT_RAMP_TICKS > 0 else 1.0
+            return config.ENTRENCHMENT_BASE + (config.ENTRENCHMENT_MAX - config.ENTRENCHMENT_BASE) * ratio
+
+        viable_attacks = {}
+        for rid in attack_candidates:
+            entrench = _target_entrenchment(rid)
+            net = (potential_commit * config.ATTACK_EFFICIENCY
+                   - snapshot[rid]["fields"]["military"] * config.RESISTANCE_FACTOR * entrench)
+            if net > effective_confidence:
+                viable_attacks[rid] = net
 
         # ── 3. Compute two weighted scores (attack and colonize) ─────────────
         def _norm(val, lo, hi):
@@ -407,6 +416,36 @@ def generate_starting_factions(template: str,
             rng=rng,
         )
         factions = [player, conqueror]
+    elif template == "full_game_50":
+        player = Faction(
+            "player", theme.FACTION_DISPLAY_NAMES["player_civilization"], "player_civilization",
+            budget=0.0,
+            modifiers={},
+            diplomatic_stance={"conqueror": "hostile", "fortifier": "hostile", "opportunist": "hostile"},
+            rng=rng,
+        )
+        conqueror = Faction(
+            "conqueror", theme.FACTION_DISPLAY_NAMES["conqueror"], "conqueror",
+            budget=0.0,
+            modifiers={"military": 0.05},
+            diplomatic_stance={"player": "hostile", "fortifier": "hostile", "opportunist": "hostile"},
+            rng=rng,
+        )
+        fortifier = Faction(
+            "fortifier", "The Fortifier", "fortifier",
+            budget=0.0,
+            modifiers={},
+            diplomatic_stance={"player": "hostile", "conqueror": "hostile", "opportunist": "hostile"},
+            rng=rng,
+        )
+        opportunist = Faction(
+            "opportunist", "The Opportunist", "opportunist",
+            budget=0.0,
+            modifiers={},
+            diplomatic_stance={"player": "hostile", "conqueror": "hostile", "fortifier": "hostile"},
+            rng=rng,
+        )
+        factions = [player, conqueror, fortifier, opportunist]
     else:
         raise ValueError(f"No starting factions defined for template: {template!r}")
     if world is not None:
