@@ -1,0 +1,122 @@
+{
+  "openings": [
+    {
+      "id": "CCS_O_001",
+      "text": "The conflict in {region_name} settled into a posture that resembled neither war nor peace, only the slow erosion of both sides' willingness to continue.",
+      "slots_used": ["{region_name}"],
+      "word_count": 24
+    },
+    {
+      "id": "CCS_O_002",
+      "text": "{duration_prose}, the struggle for {region_name} ground on without resolution, each season indistinguishable from the last.",
+      "slots_used": ["{duration_prose}", "{region_name}"],
+      "word_count": 16
+    },
+    {
+      "id": "CCS_O_003",
+      "text": "In {region_name}, what had begun as decisive action calcified into something worse — a stalemate that consumed resources without producing outcomes.",
+      "slots_used": ["{region_name}"],
+      "word_count": 20
+    },
+    {
+      "id": "CCS_O_004",
+      "text": "No one could say precisely when the war in {region_name} stopped being fought and began simply being endured.",
+      "slots_used": ["{region_name}"],
+      "word_count": 18
+    },
+    {
+      "id": "CCS_O_005",
+      "text": "By the time exhaustion replaced ambition in {region_name}, the original aims of the conflict had become difficult to recall with any conviction.",
+      "slots_used": ["{region_name}"],
+      "word_count": 22
+    },
+    {
+      "id": "CCS_O_006",
+      "text": "The front lines across {region_name} held, though the word suggested a firmness that no one on either side still felt.",
+      "slots_used": ["{region_name}"],
+      "word_count": 20
+    }
+  ],
+  "details": [
+    {
+      "id": "CCS_D_001",
+      "text": "Skirmishes in {region_name} followed a rhythm that owed more to habit than strategy. Ground was taken and surrendered in the same week, positions traded like debts neither party could afford to settle.",
+      "slots_used": ["{region_name}"],
+      "word_count": 32
+    },
+    {
+      "id": "CCS_D_002",
+      "text": "{character_name} held command in {region_name} through the worst of the grinding, issuing orders that grew more conservative with each passing month. Victory was no longer discussed; the vocabulary had narrowed to holding and enduring.",
+      "slots_used": ["{character_name}", "{region_name}"],
+      "word_count": 34
+    },
+    {
+      "id": "CCS_D_003",
+      "text": "In {region_name}, {field_delta_summary}. The stalemate exacted its toll not in single catastrophes but in the steady, undramatic depletion of everything that sustains a prolonged contest.",
+      "slots_used": ["{region_name}", "{field_delta_summary}"],
+      "word_count": 25
+    },
+    {
+      "id": "CCS_D_004",
+      "text": "{faction_name} and its adversaries in {region_name} maintained positions that neither could afford to abandon nor reinforce. Messengers traveled between camps with proposals that arrived already obsolete.",
+      "slots_used": ["{faction_name}", "{region_name}"],
+      "word_count": 27
+    },
+    {
+      "id": "CCS_D_005",
+      "text": "The garrison towns of {region_name} adapted to indefinite conflict with the grim practicality of people who have stopped expecting resolution. Markets reopened under guard; children grew up measuring time by which siege was which.",
+      "slots_used": ["{region_name}"],
+      "word_count": 33
+    },
+    {
+      "id": "CCS_D_006",
+      "text": "Tension across {region_name} remained {tension_level}, though the character of that tension had shifted — less the sharp anticipation of battle than the dull weight of a quarrel no one could finish.",
+      "slots_used": ["{region_name}", "{tension_level}"],
+      "word_count": 31
+    },
+    {
+      "id": "CCS_D_007",
+      "text": "{duration_prose}, the forces arrayed across {region_name} exchanged neither decisive blows nor terms. {character_name} reportedly described the situation as a wound that refused to either heal or kill.",
+      "slots_used": ["{duration_prose}", "{region_name}", "{character_name}"],
+      "word_count": 27
+    },
+    {
+      "id": "CCS_D_008",
+      "text": "Supply lines into {region_name} thinned to a trickle, yet the commitments they sustained could not be withdrawn without conceding what months of sacrifice had purchased — which, by most honest reckonings, was very little.",
+      "slots_used": ["{region_name}"],
+      "word_count": 33
+    }
+  ],
+  "closings": [
+    {
+      "id": "CCS_C_001",
+      "text": "The stalemate in {region_name} would not end so much as expire — outlasted by the patience of those who had the least invested in its continuation.",
+      "slots_used": ["{region_name}"],
+      "word_count": 25
+    },
+    {
+      "id": "CCS_C_002",
+      "text": "What {region_name} needed was a resolution. What it received, instead, was the particular cruelty of a conflict that had forgotten its own purpose but not yet learned how to stop.",
+      "slots_used": ["{region_name}"],
+      "word_count": 31
+    },
+    {
+      "id": "CCS_C_003",
+      "text": "In {region_name}, the cost of the stalemate would be tallied not in battles lost but in the years spent standing still — years that could not be recovered or repurposed.",
+      "slots_used": ["{region_name}"],
+      "word_count": 30
+    },
+    {
+      "id": "CCS_C_004",
+      "text": "Neither side in {region_name} would claim the deadlock as a success, though both would eventually claim its end. The truth lay somewhere in the exhausted middle.",
+      "slots_used": ["{region_name}"],
+      "word_count": 27
+    },
+    {
+      "id": "CCS_C_005",
+      "text": "The unresolved tension in {region_name} settled into the region's foundations like damp into stone. Whatever came next would be built atop it, whether anyone acknowledged that fact or not.",
+      "slots_used": ["{region_name}"],
+      "word_count": 29
+    }
+  ]
+}

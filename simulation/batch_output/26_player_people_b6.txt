@@ -1,0 +1,20 @@
+{
+  "names": [
+    "Korveth Shaeln",
+    "Druanel",
+    "Sikhran Veth",
+    "Thraebal Morn",
+    "Yelkath",
+    "Zuvrak Cleth",
+    "Baenor Skrel",
+    "Sruvael",
+    "Talikh Drenn",
+    "Morvek Shaen",
+    "Cherath Vryn",
+    "Dulkhan",
+    "Raenval Sketh",
+    "Ghovrek",
+    "Nalaek Vreln",
+    "Skorthael"
+  ]
+}

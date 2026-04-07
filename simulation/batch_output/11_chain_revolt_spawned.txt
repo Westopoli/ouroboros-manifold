@@ -1,0 +1,122 @@
+{
+  "openings": [
+    {
+      "id": "CRS_O_001",
+      "text": "What fractured {region_name} in those years was not conquest from without, but the slow, irreconcilable divergence of belief within.",
+      "slots_used": ["{region_name}"],
+      "word_count": 26
+    },
+    {
+      "id": "CRS_O_002",
+      "text": "The {faction_name} had governed {region_name} for a generation before the ideology that built them began to consume them.",
+      "slots_used": ["{faction_name}", "{region_name}"],
+      "word_count": 22
+    },
+    {
+      "id": "CRS_O_003",
+      "text": "In the season that {event_description} came to pass in {region_name}, no wall fell — yet everything was broken.",
+      "slots_used": ["{event_description}", "{region_name}"],
+      "word_count": 21
+    },
+    {
+      "id": "CRS_O_004",
+      "text": "The rupture in {region_name} announced itself not with fire, but with silence — old allies ceasing, overnight, to speak the same language.",
+      "slots_used": ["{region_name}"],
+      "word_count": 26
+    },
+    {
+      "id": "CRS_O_005",
+      "text": "There had been warnings in {region_name} long before the break came — dissenters dismissed, grievances filed away, tension left to ferment.",
+      "slots_used": ["{region_name}"],
+      "word_count": 27
+    },
+    {
+      "id": "CRS_O_006",
+      "text": "Generations of historians have traced the dissolution of {region_name}'s internal order to a single, unresolved question of legitimacy.",
+      "slots_used": ["{region_name}"],
+      "word_count": 22
+    }
+  ],
+  "details": [
+    {
+      "id": "CRS_D_001",
+      "text": "{character_name} had not set out to lead a revolt. The record suggests a man — or woman — driven past patience by {tension_level} tension that the administration of {region_name} neither acknowledged nor addressed.",
+      "slots_used": ["{character_name}", "{tension_level}", "{region_name}"],
+      "word_count": 36
+    },
+    {
+      "id": "CRS_D_002",
+      "text": "The {faction_name} split in {region_name} was not merely political. It was doctrinal — two readings of the same foundational compact, each convinced the other had betrayed it, neither willing to concede the original text's ambiguity.",
+      "slots_used": ["{faction_name}", "{region_name}"],
+      "word_count": 40
+    },
+    {
+      "id": "CRS_D_003",
+      "text": "What records survive from {region_name} describe {field_delta_summary} — not as consequence of the revolt, but as its cause. Deprivation had made the theoretical feel urgent and the moderate feel cowardly.",
+      "slots_used": ["{region_name}", "{field_delta_summary}"],
+      "word_count": 36
+    },
+    {
+      "id": "CRS_D_004",
+      "text": "The commanders who remained loyal to {faction_name} in {region_name} were, by most accounts, sincerely loyal — and sincerely unable to comprehend how their sincerity had become indistinguishable from complicity.",
+      "slots_used": ["{faction_name}", "{region_name}"],
+      "word_count": 33
+    },
+    {
+      "id": "CRS_D_005",
+      "text": "{character_name}'s influence in {region_name} had rested on the assumption that the center would hold. When it did not, there was no position left to occupy — the moderate ground had been swallowed by the fracture itself.",
+      "slots_used": ["{character_name}", "{region_name}"],
+      "word_count": 40
+    },
+    {
+      "id": "CRS_D_006",
+      "text": "The circulars that passed between cells in {region_name} during those months were remarkable less for their radicalism than for their grief — written, as they were, by people who had once believed in the order they now meant to end.",
+      "slots_used": ["{region_name}"],
+      "word_count": 44
+    },
+    {
+      "id": "CRS_D_007",
+      "text": "By the time {event_description} had fully run its course through {region_name}, the vocabulary of governance had itself become contested — the same words meaning opposite things depending on who spoke them and where.",
+      "slots_used": ["{event_description}", "{region_name}"],
+      "word_count": 35
+    },
+    {
+      "id": "CRS_D_008",
+      "text": "The {tension_level} tensions that preceded the break in {region_name} had been visible to any observer willing to look. That so few looked remains the most damning fact of the period.",
+      "slots_used": ["{tension_level}", "{region_name}"],
+      "word_count": 33
+    }
+  ],
+  "closings": [
+    {
+      "id": "CRS_C_001",
+      "text": "{region_name} recovered, in time, the outward forms of order. The underlying fracture was papered over rather than healed, and those who remembered what had been believed — on both sides — did not forgive.",
+      "slots_used": ["{region_name}"],
+      "word_count": 37
+    },
+    {
+      "id": "CRS_C_002",
+      "text": "The chroniclers of {region_name} were left with the uncomfortable task of explaining how people of evident conviction had arrived at such irreconcilable conclusions from the same inherited principles.",
+      "slots_used": ["{region_name}"],
+      "word_count": 30
+    },
+    {
+      "id": "CRS_C_003",
+      "text": "What endured in {region_name} was not the faction that prevailed, nor even the ideology it carried — but the habit of suspicion, passed quietly from one generation to the next.",
+      "slots_used": ["{region_name}"],
+      "word_count": 33
+    },
+    {
+      "id": "CRS_C_004",
+      "text": "{field_delta_summary} in the aftermath, and {region_name} wore its new quietude the way a city wears the silence after a fire — grateful, but altered in ways that would not show for years.",
+      "slots_used": ["{field_delta_summary}", "{region_name}"],
+      "word_count": 36
+    },
+    {
+      "id": "CRS_C_005",
+      "text": "The revolt in {region_name} produced no heroes that either side could cleanly claim. It produced only survivors, each carrying a private account of how the world had been made worse by people who had meant to improve it.",
+      "slots_used": ["{region_name}"],
+      "word_count": 41
+    }
+  ]
+}

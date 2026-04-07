@@ -1,0 +1,122 @@
+{
+  "openings": [
+    {
+      "id": "LMA_O_001",
+      "text": "When the call to arms came, the {lineage_name} household answered without deliberation, as though the obligation had never truly been in question.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 22
+    },
+    {
+      "id": "LMA_O_002",
+      "text": "The {lineage_name} committed their forces to the defense of {region_name} under circumstances that left little room for hesitation.",
+      "slots_used": ["{lineage_name}", "{region_name}"],
+      "word_count": 18
+    },
+    {
+      "id": "LMA_O_003",
+      "text": "It fell to {character_name} to lead the {lineage_name} levy into a campaign that would test the family's resolve in full measure.",
+      "slots_used": ["{character_name}", "{lineage_name}"],
+      "word_count": 22
+    },
+    {
+      "id": "LMA_O_004",
+      "text": "With {faction_name} pressing hard along the frontier, the {lineage_name} had no choice but to marshal what strength remained.",
+      "slots_used": ["{faction_name}", "{lineage_name}"],
+      "word_count": 18
+    },
+    {
+      "id": "LMA_O_005",
+      "text": "The {lineage_name} name had long carried obligations to {region_name}, and the season's hostilities demanded those obligations be honored in blood.",
+      "slots_used": ["{lineage_name}", "{region_name}"],
+      "word_count": 19
+    },
+    {
+      "id": "LMA_O_006",
+      "text": "There was no ceremony to the {lineage_name} mobilization — only the grim arithmetic of how many could be spared and how quickly.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 20
+    }
+  ],
+  "details": [
+    {
+      "id": "LMA_D_001",
+      "text": "The {lineage_name} fielded their garrison under {character_name}, whose {character_rank} carried enough authority to hold the line but not enough to dictate the broader campaign. They fought where they were placed and held what they were given.",
+      "slots_used": ["{lineage_name}", "{character_name}", "{character_rank}"],
+      "word_count": 38
+    },
+    {
+      "id": "LMA_D_002",
+      "text": "Across {region_name}, the {lineage_name} forces engaged in a series of contested actions that yielded no single decisive moment but collectively {field_delta_summary}.",
+      "slots_used": ["{region_name}", "{lineage_name}", "{field_delta_summary}"],
+      "word_count": 22
+    },
+    {
+      "id": "LMA_D_003",
+      "text": "The {lineage_name} committed their reserves earlier than prudence would have counseled, but the pressure from {faction_name} left few alternatives. What followed was costly, methodical, and without glory.",
+      "slots_used": ["{lineage_name}", "{faction_name}"],
+      "word_count": 28
+    },
+    {
+      "id": "LMA_D_004",
+      "text": "{character_name} organized the {lineage_name} detachments with the economy of someone who understood that replacements would not come. Every position was chosen for defensibility, every withdrawal timed to preserve what could not be rebuilt.",
+      "slots_used": ["{character_name}", "{lineage_name}"],
+      "word_count": 33
+    },
+    {
+      "id": "LMA_D_005",
+      "text": "The {lineage_name} contribution to the campaign was not the stuff of ballads — supply trains guarded, flanks screened, garrisons rotated through thankless postings in {region_name} — but it was the work that kept the effort standing.",
+      "slots_used": ["{lineage_name}", "{region_name}"],
+      "word_count": 34
+    },
+    {
+      "id": "LMA_D_006",
+      "text": "When {faction_name} struck in force, the {lineage_name} units absorbed the worst of the initial assault. The toll was severe, and {field_delta_summary} in the weeks that followed.",
+      "slots_used": ["{faction_name}", "{lineage_name}", "{field_delta_summary}"],
+      "word_count": 27
+    },
+    {
+      "id": "LMA_D_007",
+      "text": "The {lineage_name} fought as their position demanded: without retreat, without reinforcement, and with the particular stubbornness of a household that understood what defeat would cost them beyond the battlefield.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 28
+    },
+    {
+      "id": "LMA_D_008",
+      "text": "Under {character_name}'s command, the {lineage_name} forces held their assigned corridor through {region_name} at considerable expense. The ground was kept, though the household would feel the cost for years afterward.",
+      "slots_used": ["{character_name}", "{lineage_name}", "{region_name}"],
+      "word_count": 30
+    }
+  ],
+  "closings": [
+    {
+      "id": "LMA_C_001",
+      "text": "The {lineage_name} had done what was asked of them, and the record would show it. Whether the sacrifice had been necessary or merely expected was a question no one in authority cared to answer.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 34
+    },
+    {
+      "id": "LMA_C_002",
+      "text": "For the {lineage_name}, the campaign left scars that no commendation could address. They had proven their loyalty; the open question was what loyalty had cost them.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 27
+    },
+    {
+      "id": "LMA_C_003",
+      "text": "The {lineage_name} withdrew from the field with their obligations fulfilled and their ranks thinned. In {region_name}, their name now carried a weight that owed nothing to commerce or politics.",
+      "slots_used": ["{lineage_name}", "{region_name}"],
+      "word_count": 30
+    },
+    {
+      "id": "LMA_C_004",
+      "text": "What the {lineage_name} purchased with that season's blood was not victory but credibility — the kind that is acknowledged in silence and repaid, if at all, in future considerations.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 29
+    },
+    {
+      "id": "LMA_C_005",
+      "text": "The ledger of the {lineage_name} household grew heavier that year. Duty had been met, but duty of that magnitude leaves a family changed in ways that peacetime seldom repairs.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 29
+    }
+  ]
+}

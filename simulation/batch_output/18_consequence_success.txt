@@ -1,0 +1,122 @@
+{
+  "openings": [
+    {
+      "id": "CS_O_001",
+      "text": "What followed {mission_outcome} at {mission_region} was not fortune — it was consequence, arriving precisely where the effort had been directed.",
+      "slots_used": ["{mission_outcome}", "{mission_region}"],
+      "word_count": 23
+    },
+    {
+      "id": "CS_O_002",
+      "text": "The accounts of {mission_outcome} reached the capital before the dust had settled, and with them came the first serious reappraisal of the {lineage_name} household's standing.",
+      "slots_used": ["{mission_outcome}", "{lineage_name}"],
+      "word_count": 30
+    },
+    {
+      "id": "CS_O_003",
+      "text": "In the months that followed {mission_outcome}, the shape of things in {mission_region} began, quietly and then unmistakably, to change.",
+      "slots_used": ["{mission_outcome}", "{mission_region}"],
+      "word_count": 24
+    },
+    {
+      "id": "CS_O_004",
+      "text": "{mission_outcome} was, by any measure, the turning point — the moment at which effort and circumstance converged into something irreversible.",
+      "slots_used": ["{mission_outcome}"],
+      "word_count": 22
+    },
+    {
+      "id": "CS_O_005",
+      "text": "The records are unusually clear on the matter: {mission_outcome} produced effects that could be traced, named, and attributed without ambiguity.",
+      "slots_used": ["{mission_outcome}"],
+      "word_count": 23
+    },
+    {
+      "id": "CS_O_006",
+      "text": "{duration_prose} after {mission_outcome}, the changes that had seemed merely possible had become, one by one, actual.",
+      "slots_used": ["{duration_prose}", "{mission_outcome}"],
+      "word_count": 19
+    }
+  ],
+  "details": [
+    {
+      "id": "CS_D_001",
+      "text": "{character_name} had staked considerable reputation on the {mission_archetype} that ended in {mission_outcome}. The vindication was not merely personal — it restructured the assumptions of every commander who had counseled against the attempt.",
+      "slots_used": ["{character_name}", "{mission_archetype}", "{mission_outcome}"],
+      "word_count": 35
+    },
+    {
+      "id": "CS_D_002",
+      "text": "The {mission_archetype} had been called reckless by those who did not understand it and unnecessary by those who feared what success would demand of them. {mission_outcome} answered both objections in the same stroke.",
+      "slots_used": ["{mission_archetype}", "{mission_outcome}"],
+      "word_count": 36
+    },
+    {
+      "id": "CS_D_003",
+      "text": "{field_delta_summary} in the wake of {mission_outcome} — not as incidental benefit but as the direct yield of what had been done at {mission_region}. The connection was apparent to anyone reviewing the sequence of events.",
+      "slots_used": ["{field_delta_summary}", "{mission_outcome}", "{mission_region}"],
+      "word_count": 38
+    },
+    {
+      "id": "CS_D_004",
+      "text": "The {lineage_name} name appeared in the official dispatches describing {mission_outcome} with a frequency that did not go unnoticed. Credit, in such matters, tends to consolidate around those who have earned the right to it.",
+      "slots_used": ["{lineage_name}", "{mission_outcome}"],
+      "word_count": 37
+    },
+    {
+      "id": "CS_D_005",
+      "text": "What {mission_outcome} secured in {mission_region} was not simply territory or advantage — it was the proof of a method. Those who had carried out the {mission_archetype} had demonstrated something that could not easily be dismissed or forgotten.",
+      "slots_used": ["{mission_outcome}", "{mission_region}", "{mission_archetype}"],
+      "word_count": 41
+    },
+    {
+      "id": "CS_D_006",
+      "text": "The population of {mission_region} registered {mission_outcome} in practical terms before the political class had finished debating its significance. Supply lines reopened. Markets resumed. The gap between what had been and what now was spoke clearly enough.",
+      "slots_used": ["{mission_region}", "{mission_outcome}"],
+      "word_count": 38
+    },
+    {
+      "id": "CS_D_007",
+      "text": "{character_name} received no formal decoration for the {mission_archetype} that produced {mission_outcome}. The altered conditions it left behind were, by most accounts, decoration enough.",
+      "slots_used": ["{character_name}", "{mission_archetype}", "{mission_outcome}"],
+      "word_count": 28
+    },
+    {
+      "id": "CS_D_008",
+      "text": "The {lineage_name} household's involvement in the events leading to {mission_outcome} was documented carefully — by allies wishing to associate themselves with the result, and by rivals seeking to understand how it had been achieved.",
+      "slots_used": ["{lineage_name}", "{mission_outcome}"],
+      "word_count": 36
+    }
+  ],
+  "closings": [
+    {
+      "id": "CS_C_001",
+      "text": "{mission_outcome} did not close the matter — it opened a larger one. But it opened it from a position of strength, which is the only position worth occupying when the larger matter arrives.",
+      "slots_used": ["{mission_outcome}"],
+      "word_count": 36
+    },
+    {
+      "id": "CS_C_002",
+      "text": "The {lineage_name} household had, by the close of the period, made itself difficult to ignore. {mission_outcome} was not the whole of the reason — but it was the clearest part of it.",
+      "slots_used": ["{lineage_name}", "{mission_outcome}"],
+      "word_count": 36
+    },
+    {
+      "id": "CS_C_003",
+      "text": "What had been risked in pursuit of {mission_outcome} was considerable. What had been returned was more. The ledger, for once, balanced in the right direction.",
+      "slots_used": ["{mission_outcome}"],
+      "word_count": 29
+    },
+    {
+      "id": "CS_C_004",
+      "text": "{field_delta_summary} — and the chroniclers who recorded it were careful to trace the line back to {mission_outcome}, because the line was straight and the evidence was plain.",
+      "slots_used": ["{field_delta_summary}", "{mission_outcome}"],
+      "word_count": 31
+    },
+    {
+      "id": "CS_C_005",
+      "text": "Futures are rarely guaranteed by a single act. {mission_outcome} did not guarantee one either — but it made several futures possible that had not been possible before, and that is the more honest measure of such things.",
+      "slots_used": ["{mission_outcome}"],
+      "word_count": 40
+    }
+  ]
+}

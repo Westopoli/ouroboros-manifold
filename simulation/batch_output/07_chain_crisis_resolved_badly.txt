@@ -1,0 +1,122 @@
+{
+  "openings": [
+    {
+      "id": "CCRB_O_001",
+      "text": "What befell {region_name} in those years was not a single catastrophe but a sequence of failures, each compounding the last beyond recovery.",
+      "slots_used": ["{region_name}"],
+      "word_count": 22
+    },
+    {
+      "id": "CCRB_O_002",
+      "text": "The crisis that gripped {region_name} {duration_prose} left behind damage that no subsequent administration would fully repair.",
+      "slots_used": ["{region_name}", "{duration_prose}"],
+      "word_count": 16
+    },
+    {
+      "id": "CCRB_O_003",
+      "text": "By the time the worst had passed in {region_name}, the word 'resolution' carried a bitter irony that contemporaries did not miss.",
+      "slots_used": ["{region_name}"],
+      "word_count": 20
+    },
+    {
+      "id": "CCRB_O_004",
+      "text": "There were opportunities to arrest the decline in {region_name}, and the historical record is clear that each one was squandered.",
+      "slots_used": ["{region_name}"],
+      "word_count": 19
+    },
+    {
+      "id": "CCRB_O_005",
+      "text": "{duration_prose}, the troubles in {region_name} deepened past the threshold where competent leadership alone could have mattered.",
+      "slots_used": ["{duration_prose}", "{region_name}"],
+      "word_count": 15
+    },
+    {
+      "id": "CCRB_O_006",
+      "text": "Later chroniclers would mark {event_description} as the moment {region_name} crossed from crisis into something more permanent.",
+      "slots_used": ["{event_description}", "{region_name}"],
+      "word_count": 15
+    }
+  ],
+  "details": [
+    {
+      "id": "CCRB_D_001",
+      "text": "The chain of events that tore through {region_name} ran {chain_length} links deep, each one narrowing the range of possible outcomes until nothing remained but the worst of them.",
+      "slots_used": ["{region_name}", "{chain_length}"],
+      "word_count": 29
+    },
+    {
+      "id": "CCRB_D_002",
+      "text": "{character_name} attempted to hold {region_name} together through improvisation and personal authority, but the underlying conditions had already moved beyond what any single figure could contain. {field_delta_summary}, and the collapse proceeded with its own momentum.",
+      "slots_used": ["{character_name}", "{region_name}", "{field_delta_summary}"],
+      "word_count": 36
+    },
+    {
+      "id": "CCRB_D_003",
+      "text": "With stability at {stability_level} levels across {region_name}, the decisions made under pressure proved ruinous in hindsight. Resources were committed to the wrong positions, alliances sought with the wrong parties, and the cost of each error multiplied.",
+      "slots_used": ["{stability_level}", "{region_name}"],
+      "word_count": 35
+    },
+    {
+      "id": "CCRB_D_004",
+      "text": "The damage to {region_name} was not merely material. Institutional knowledge was lost, administrative continuity severed, and {field_delta_summary} in ways that would constrain every subsequent effort at reconstruction.",
+      "slots_used": ["{region_name}", "{field_delta_summary}"],
+      "word_count": 26
+    },
+    {
+      "id": "CCRB_D_005",
+      "text": "What began as {event_description} in {region_name} metastasized through a chain of dependent failures. Each intervention arrived too late and addressed the wrong symptom, until intervention itself became part of the problem.",
+      "slots_used": ["{event_description}", "{region_name}"],
+      "word_count": 31
+    },
+    {
+      "id": "CCRB_D_006",
+      "text": "Across {region_name}, the population that survived the crisis emerged into circumstances so diminished that the distinction between endurance and defeat became largely academic.",
+      "slots_used": ["{region_name}"],
+      "word_count": 22
+    },
+    {
+      "id": "CCRB_D_007",
+      "text": "{character_name} bore the brunt of later blame for {region_name}'s unraveling, though the honest assessment is that the situation had already passed the point where individual competence could alter the trajectory.",
+      "slots_used": ["{character_name}", "{region_name}"],
+      "word_count": 29
+    },
+    {
+      "id": "CCRB_D_008",
+      "text": "{duration_prose}, {region_name} shed what had taken generations to build. Granaries emptied, trade routes contracted, and {field_delta_summary} with a finality that left no ambiguity about what had been lost.",
+      "slots_used": ["{duration_prose}", "{region_name}", "{field_delta_summary}"],
+      "word_count": 28
+    }
+  ],
+  "closings": [
+    {
+      "id": "CCRB_C_001",
+      "text": "The {region_name} that emerged from the crisis bore its old name and little else. What had been broken would be rebuilt, if at all, on entirely different foundations.",
+      "slots_used": ["{region_name}"],
+      "word_count": 28
+    },
+    {
+      "id": "CCRB_C_002",
+      "text": "Historians would debate whether {region_name}'s collapse was inevitable or merely unresisted. For those who lived through it, the distinction offered no comfort whatsoever.",
+      "slots_used": ["{region_name}"],
+      "word_count": 23
+    },
+    {
+      "id": "CCRB_C_003",
+      "text": "With stability at {stability_level} levels and the old structures in ruin, {region_name} entered a period that later writers would describe only by what it lacked.",
+      "slots_used": ["{stability_level}", "{region_name}"],
+      "word_count": 25
+    },
+    {
+      "id": "CCRB_C_004",
+      "text": "The losses sustained in {region_name} were of the kind that reshape a society's sense of what is possible. Ambitions contracted, horizons narrowed, and memory itself became a burden.",
+      "slots_used": ["{region_name}"],
+      "word_count": 28
+    },
+    {
+      "id": "CCRB_C_005",
+      "text": "In {region_name}, the crisis did not end so much as exhaust itself, leaving behind a silence that the survivors understood as permanent.",
+      "slots_used": ["{region_name}"],
+      "word_count": 21
+    }
+  ]
+}

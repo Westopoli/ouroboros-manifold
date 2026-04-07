@@ -1,0 +1,122 @@
+{
+  "openings": [
+    {
+      "id": "RFS_O_001",
+      "text": "The old arrangements in {region_name} did not collapse — they were replaced, carefully and without apology, by those who had grown tired of waiting for permission.",
+      "slots_used": ["{region_name}"],
+      "word_count": 28
+    },
+    {
+      "id": "RFS_O_002",
+      "text": "In the years that reshaped {region_name}, the question was never whether power would change hands but only which hands would receive it and on what terms.",
+      "slots_used": ["{region_name}"],
+      "word_count": 28
+    },
+    {
+      "id": "RFS_O_003",
+      "text": "The political settlement of {region_name} that had held for a generation gave way, over {duration_prose}, to one that bore almost no resemblance to its predecessor.",
+      "slots_used": ["{region_name}", "{duration_prose}"],
+      "word_count": 27
+    },
+    {
+      "id": "RFS_O_004",
+      "text": "What the {faction_name} accomplished in {region_name} during this period was less a conquest than a reorganization — the same territory, different loyalties, different logic.",
+      "slots_used": ["{faction_name}", "{region_name}"],
+      "word_count": 26
+    },
+    {
+      "id": "RFS_O_005",
+      "text": "A new order settled over {region_name} in these years, and those who had prospered under the previous one learned, at varying speeds, to adapt or diminish.",
+      "slots_used": ["{region_name}"],
+      "word_count": 28
+    },
+    {
+      "id": "RFS_O_006",
+      "text": "The realignment of {region_name} was remembered differently by those who gained from it and those who did not — as it always is.",
+      "slots_used": ["{region_name}"],
+      "word_count": 24
+    }
+  ],
+  "details": [
+    {
+      "id": "RFS_D_001",
+      "text": "The {faction_name} moved carefully in {region_name}, replacing key appointments before announcing any broader intention. By the time the shift was publicly visible, it had already been accomplished in every practical sense.",
+      "slots_used": ["{faction_name}", "{region_name}"],
+      "word_count": 33
+    },
+    {
+      "id": "RFS_D_002",
+      "text": "{character_name} became the recognizable face of the new arrangement in {region_name} — present at the right moments, absent from the awkward ones, and careful never to say more than the situation required.",
+      "slots_used": ["{character_name}", "{region_name}"],
+      "word_count": 34
+    },
+    {
+      "id": "RFS_D_003",
+      "text": "The transition of authority in {region_name} was conducted, by the standards of such things, with restraint. Old obligations were discharged; new ones were incurred. The exchange was transactional in form, if not always in spirit.",
+      "slots_used": ["{region_name}"],
+      "word_count": 36
+    },
+    {
+      "id": "RFS_D_004",
+      "text": "{field_delta_summary} across {region_name} as the political order shifted — a pattern familiar to those who had watched such transitions before. Resources follow power; power follows will; and will, in this case, belonged to the newcomers.",
+      "slots_used": ["{field_delta_summary}", "{region_name}"],
+      "word_count": 37
+    },
+    {
+      "id": "RFS_D_005",
+      "text": "The {faction_name} did not govern {region_name} as it had governed elsewhere. The region had particular characteristics — particular loyalties, particular grievances — and those who managed it wisely attended to them rather than importing assumptions from other territories.",
+      "slots_used": ["{faction_name}", "{region_name}"],
+      "word_count": 40
+    },
+    {
+      "id": "RFS_D_006",
+      "text": "The families that had defined {region_name}'s political life for decades found themselves, not dispossessed exactly, but repositioned — consulted rather than commanding, accommodated rather than deferred to.",
+      "slots_used": ["{region_name}"],
+      "word_count": 28
+    },
+    {
+      "id": "RFS_D_007",
+      "text": "{character_name} understood that {region_name} could not simply be administered from outside — it had to be persuaded, and persuasion required concessions that pure authority would never have offered.",
+      "slots_used": ["{character_name}", "{region_name}"],
+      "word_count": 30
+    },
+    {
+      "id": "RFS_D_008",
+      "text": "The new order in {region_name} announced itself not through proclamation but through the replacement of small courtesies — who was greeted first, whose name appeared in which documents, who sat where at formal gatherings.",
+      "slots_used": ["{region_name}"],
+      "word_count": 36
+    }
+  ],
+  "closings": [
+    {
+      "id": "RFS_C_001",
+      "text": "Whether the new arrangement in {region_name} was better than the one it replaced depended, as such judgments usually do, entirely on where one had stood in the arrangement it replaced.",
+      "slots_used": ["{region_name}"],
+      "word_count": 33
+    },
+    {
+      "id": "RFS_C_002",
+      "text": "The {faction_name} had remade {region_name} in its own image — or close enough that the difference would only become apparent to those who lived there long enough to notice what had quietly vanished.",
+      "slots_used": ["{faction_name}", "{region_name}"],
+      "word_count": 35
+    },
+    {
+      "id": "RFS_C_003",
+      "text": "{field_delta_summary} in the years following the transition — a practical measure of how thoroughly the new order had taken hold in {region_name}, and how little appetite remained for reversing it.",
+      "slots_used": ["{field_delta_summary}", "{region_name}"],
+      "word_count": 32
+    },
+    {
+      "id": "RFS_C_004",
+      "text": "The political life of {region_name} had been remade, and those who would shape its next chapter would do so from within a framework they had not designed and could not entirely see.",
+      "slots_used": ["{region_name}"],
+      "word_count": 35
+    },
+    {
+      "id": "RFS_C_005",
+      "text": "What {region_name} had been before this period remained visible, if one looked carefully — in the architecture, in the surnames, in the older forms of address still used by those who remembered. But the center had moved.",
+      "slots_used": ["{region_name}"],
+      "word_count": 39
+    }
+  ]
+}

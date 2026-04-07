@@ -1,0 +1,122 @@
+{
+  "openings": [
+    {
+      "id": "CCRW_O_001",
+      "text": "The crisis in {region_name} did not end so much as exhaust itself, leaving behind a stillness that no one yet trusted.",
+      "slots_used": ["{region_name}"],
+      "word_count": 20
+    },
+    {
+      "id": "CCRW_O_002",
+      "text": "{duration_prose}, {region_name} clawed its way back from the edge — not triumphantly, but with the grim patience of survivors.",
+      "slots_used": ["{duration_prose}", "{region_name}"],
+      "word_count": 18
+    },
+    {
+      "id": "CCRW_O_003",
+      "text": "By the time the worst had passed in {region_name}, those who remembered its beginning could scarcely believe the holding together.",
+      "slots_used": ["{region_name}"],
+      "word_count": 19
+    },
+    {
+      "id": "CCRW_O_004",
+      "text": "What saved {region_name} was not brilliance but endurance, and the outcome owed more to stubbornness than to any single decision.",
+      "slots_used": ["{region_name}"],
+      "word_count": 18
+    },
+    {
+      "id": "CCRW_O_005",
+      "text": "When stability finally returned to {region_name}, it arrived not as a proclamation but as a slow unclenching of ordinary life.",
+      "slots_used": ["{region_name}"],
+      "word_count": 18
+    },
+    {
+      "id": "CCRW_O_006",
+      "text": "The chronicles of {region_name} record the season the granaries reopened with the same gravity others reserve for battles won.",
+      "slots_used": ["{region_name}"],
+      "word_count": 17
+    }
+  ],
+  "details": [
+    {
+      "id": "CCRW_D_001",
+      "text": "The chain of failures that had threatened {region_name} — {chain_length} crises deep before the turn — was arrested not by intervention from without but by a series of unglamorous local compromises that, taken together, amounted to rescue.",
+      "slots_used": ["{region_name}", "{chain_length}"],
+      "word_count": 37
+    },
+    {
+      "id": "CCRW_D_002",
+      "text": "{character_name} earned no songs for what was done in {region_name}. The work was administrative: rationing enforced, debts restructured, old grievances quietly shelved. Yet it held, and that was enough.",
+      "slots_used": ["{character_name}", "{region_name}"],
+      "word_count": 30
+    },
+    {
+      "id": "CCRW_D_003",
+      "text": "In {region_name}, {field_delta_summary}. The reversal came unevenly — some districts recovered within seasons while others nursed their wounds for years — but the trajectory, at last, pointed upward.",
+      "slots_used": ["{region_name}", "{field_delta_summary}"],
+      "word_count": 29
+    },
+    {
+      "id": "CCRW_D_004",
+      "text": "The {event_description} that had set {region_name} spiraling proved, in the end, survivable. Roads reopened. Markets resumed their old rhythms. The damage was real, but it was not terminal.",
+      "slots_used": ["{event_description}", "{region_name}"],
+      "word_count": 28
+    },
+    {
+      "id": "CCRW_D_005",
+      "text": "Conditions across {region_name} steadied to {stability_level} levels — not the prosperity anyone had hoped for, but a foundation solid enough to build upon, and after what had come before, no one complained.",
+      "slots_used": ["{region_name}", "{stability_level}"],
+      "word_count": 31
+    },
+    {
+      "id": "CCRW_D_006",
+      "text": "{duration_prose}, the cascading troubles in {region_name} were unwound one by one. Each resolution was partial, each compromise imperfect, but the accumulation of small repairs proved greater than the sum of its parts.",
+      "slots_used": ["{duration_prose}", "{region_name}"],
+      "word_count": 32
+    },
+    {
+      "id": "CCRW_D_007",
+      "text": "The people of {region_name} did not celebrate. They audited. Stores were counted, walls inspected, obligations tallied. Relief, where it existed, expressed itself as vigilance rather than joy.",
+      "slots_used": ["{region_name}"],
+      "word_count": 26
+    },
+    {
+      "id": "CCRW_D_008",
+      "text": "{character_name} oversaw the restoration of {region_name} with the demeanor of someone still expecting the next blow. Granaries were filled beyond need, reserves doubled, as though prosperity itself could not yet be believed.",
+      "slots_used": ["{character_name}", "{region_name}"],
+      "word_count": 32
+    }
+  ],
+  "closings": [
+    {
+      "id": "CCRW_C_001",
+      "text": "{region_name} had survived, though the scars would govern its choices for a generation. Caution had become the region's defining inheritance, and no one saw fit to question it.",
+      "slots_used": ["{region_name}"],
+      "word_count": 27
+    },
+    {
+      "id": "CCRW_C_002",
+      "text": "In later years, the recovery of {region_name} would be cited as proof that ruin is not inevitable — though those who lived through it preferred not to test the thesis twice.",
+      "slots_used": ["{region_name}"],
+      "word_count": 30
+    },
+    {
+      "id": "CCRW_C_003",
+      "text": "The lesson {region_name} carried forward was simple and unromantic: that the difference between collapse and continuity is often nothing more than one correct decision made under duress.",
+      "slots_used": ["{region_name}"],
+      "word_count": 27
+    },
+    {
+      "id": "CCRW_C_004",
+      "text": "Stability returned to {region_name}, but it was the wary kind — the stability of people who had seen how quickly the ground could shift, and who slept lightly because of it.",
+      "slots_used": ["{region_name}"],
+      "word_count": 30
+    },
+    {
+      "id": "CCRW_C_005",
+      "text": "What {region_name} reclaimed was not what it had lost. The old order was gone. But what replaced it functioned, and in the arithmetic of survival, that counted as victory.",
+      "slots_used": ["{region_name}"],
+      "word_count": 28
+    }
+  ]
+}

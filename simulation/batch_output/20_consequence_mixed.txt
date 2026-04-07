@@ -1,0 +1,183 @@
+{
+  "openings": [
+    {
+      "id": "CM_O_001",
+      "text": "The chronicles of {mission_region} record {mission_outcome}, though the men who survived it rarely spoke of victory.",
+      "slots_used": [
+        "{mission_region}",
+        "{mission_outcome}"
+      ],
+      "word_count": 18
+    },
+    {
+      "id": "CM_O_002",
+      "text": "What history would later name {mission_outcome} cost the {lineage_name} more than the ledgers ever captured.",
+      "slots_used": [
+        "{mission_outcome}",
+        "{lineage_name}"
+      ],
+      "word_count": 16
+    },
+    {
+      "id": "CM_O_003",
+      "text": "In the months after {mission_outcome} was declared at {mission_region}, the grief arrived on a slower schedule than the celebration.",
+      "slots_used": [
+        "{mission_outcome}",
+        "{mission_region}"
+      ],
+      "word_count": 21
+    },
+    {
+      "id": "CM_O_004",
+      "text": "{duration_prose}, the campaign at {mission_region} ground toward what the dispatches would call {mission_outcome} \u2014 a conclusion that satisfied no one completely.",
+      "slots_used": [
+        "{duration_prose}",
+        "{mission_region}",
+        "{mission_outcome}"
+      ],
+      "word_count": 24
+    },
+    {
+      "id": "CM_O_005",
+      "text": "The {lineage_name} household received news of {mission_outcome} with the particular silence that accompanies results too tangled to celebrate.",
+      "slots_used": [
+        "{lineage_name}",
+        "{mission_outcome}"
+      ],
+      "word_count": 20
+    },
+    {
+      "id": "CM_O_006",
+      "text": "Later generations would argue endlessly about the meaning of {mission_outcome}, each reading the same record and arriving at opposite conclusions.",
+      "slots_used": [
+        "{mission_outcome}"
+      ],
+      "word_count": 21
+    }
+  ],
+  "details": [
+    {
+      "id": "CM_D_001",
+      "text": "What had been intended as {mission_outcome} instead became something harder to name \u2014 not failure, not triumph, but the kind of result that reshaped {mission_region} without satisfying anyone.",
+      "slots_used": [
+        "{mission_archetype}",
+        "{field_delta_summary}",
+        "{mission_outcome}"
+      ],
+      "word_count": 28
+    },
+    {
+      "id": "CM_D_002",
+      "text": "{character_name} returned from {mission_region} carrying the honors appropriate to {mission_outcome} and a reserve about the whole affair that deepened with every retelling. Those who asked direct questions received careful answers.",
+      "slots_used": [
+        "{character_name}",
+        "{mission_region}",
+        "{mission_outcome}"
+      ],
+      "word_count": 33
+    },
+    {
+      "id": "CM_D_003",
+      "text": "The {character_name} campaign yielded {mission_outcome}, though the word 'yielded' perhaps overstated the certainty of it \u2014 the consequences would take a generation to fully understand.",
+      "slots_used": [
+        "{mission_archetype}",
+        "{mission_outcome}"
+      ],
+      "word_count": 25
+    },
+    {
+      "id": "CM_D_004",
+      "text": "{field_delta_summary} \u2014 that much was undeniable. Whether this represented the cost of {mission_outcome} or its substance was a question the court historians debated for years without consensus.",
+      "slots_used": [
+        "{field_delta_summary}",
+        "{mission_outcome}"
+      ],
+      "word_count": 30
+    },
+    {
+      "id": "CM_D_005",
+      "text": "The {lineage_name} had pressed hard for {mission_outcome}, and the record shows they received it. What the record does not show is what {character_name} said to the household in private, on the night the dispatches arrived.",
+      "slots_used": [
+        "{lineage_name}",
+        "{mission_outcome}",
+        "{character_name}"
+      ],
+      "word_count": 38
+    },
+    {
+      "id": "CM_D_006",
+      "text": "At {mission_region}, the terms of {mission_outcome} were ratified under a sky that offered no comment. The people who had lived through the campaign signed where they were told to sign.",
+      "slots_used": [
+        "{mission_region}",
+        "{mission_outcome}"
+      ],
+      "word_count": 32
+    },
+    {
+      "id": "CM_D_007",
+      "text": "In {mission_region}, what the commanders called {mission_outcome} looked rather different to those who lived through it, the {lineage_name} household among them.",
+      "slots_used": [
+        "{duration_prose}",
+        "{mission_archetype}",
+        "{field_delta_summary}",
+        "{mission_outcome}"
+      ],
+      "word_count": 21
+    },
+    {
+      "id": "CM_D_008",
+      "text": "The official account of {mission_outcome} omitted the auxiliary losses, the broken agreements with the local governors, and the promise {character_name} had made before the campaign commenced \u2014 a promise that circumstances had made impossible to keep.",
+      "slots_used": [
+        "{mission_outcome}",
+        "{character_name}"
+      ],
+      "word_count": 36
+    }
+  ],
+  "closings": [
+    {
+      "id": "CM_C_001",
+      "text": "History would not resolve the question of whether {mission_outcome} was worth its cost. It rarely does, for campaigns whose wounds and gains arrive in equal measure.",
+      "slots_used": [
+        "{mission_outcome}"
+      ],
+      "word_count": 28
+    },
+    {
+      "id": "CM_C_002",
+      "text": "Whether {mission_outcome} had been worth the cost was a question the {lineage_name} family would debate for generations.",
+      "slots_used": [
+        "{lineage_name}",
+        "{mission_outcome}"
+      ],
+      "word_count": 17
+    },
+    {
+      "id": "CM_C_003",
+      "text": "The ledger of {mission_outcome} balanced only if one squinted \u2014 and the {lineage_name} name was written on both sides.",
+      "slots_used": [
+        "{character_name}",
+        "{mission_region}",
+        "{mission_outcome}"
+      ],
+      "word_count": 19
+    },
+    {
+      "id": "CM_C_004",
+      "text": "The generation that came after accepted {mission_outcome} as inheritance \u2014 the debts and the gains both, without the memory of choosing either.",
+      "slots_used": [
+        "{mission_outcome}"
+      ],
+      "word_count": 22
+    },
+    {
+      "id": "CM_C_005",
+      "text": "History would record {mission_outcome}, though history, as always, would leave out the parts that mattered most to those who lived it.",
+      "slots_used": [
+        "{mission_region}",
+        "{mission_outcome}"
+      ],
+      "word_count": 21
+    }
+  ]
+}

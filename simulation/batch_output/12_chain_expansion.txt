@@ -1,0 +1,122 @@
+{
+  "openings": [
+    {
+      "id": "CE_O_001",
+      "text": "In the years following the settlement of {region_name}, the first cautious signs of lasting order began to take root.",
+      "slots_used": ["{region_name}"],
+      "word_count": 21
+    },
+    {
+      "id": "CE_O_002",
+      "text": "A generation after the {faction_name} extended its reach into {region_name}, the land had begun to answer back with unexpected generosity.",
+      "slots_used": ["{faction_name}", "{region_name}"],
+      "word_count": 22
+    },
+    {
+      "id": "CE_O_003",
+      "text": "What had begun as a frontier venture in {region_name} slowly revealed itself, over {duration_prose}, to be something more enduring.",
+      "slots_used": ["{region_name}", "{duration_prose}"],
+      "word_count": 21
+    },
+    {
+      "id": "CE_O_004",
+      "text": "The chronicles of {region_name} from this period carry a tone rarely found in older annals — measured hope, held carefully.",
+      "slots_used": ["{region_name}"],
+      "word_count": 22
+    },
+    {
+      "id": "CE_O_005",
+      "text": "Those who first pushed into {region_name} did not expect to stay; their descendants would not understand why anyone had ever considered leaving.",
+      "slots_used": ["{region_name}"],
+      "word_count": 24
+    },
+    {
+      "id": "CE_O_006",
+      "text": "In the long interval between crisis and consolidation, {region_name} entered a season of tentative but unmistakable growth.",
+      "slots_used": ["{region_name}"],
+      "word_count": 18
+    }
+  ],
+  "details": [
+    {
+      "id": "CE_D_001",
+      "text": "Roads that had once served only the movement of soldiers began carrying grain and timber outward from {region_name} toward {adjacent_region}, and the traffic did not stop.",
+      "slots_used": ["{region_name}", "{adjacent_region}"],
+      "word_count": 29
+    },
+    {
+      "id": "CE_D_002",
+      "text": "The {faction_name} administrators in {region_name} were cautious men by training, and cautious men, when given stable ground, tend to build carefully and build well.",
+      "slots_used": ["{faction_name}", "{region_name}"],
+      "word_count": 28
+    },
+    {
+      "id": "CE_D_003",
+      "text": "Settlers arrived in {region_name} not in great waves but in a steady, unhurried flow — families and tradespeople who had heard reliable reports and chosen to believe them. They found those reports, on the whole, accurate.",
+      "slots_used": ["{region_name}"],
+      "word_count": 38
+    },
+    {
+      "id": "CE_D_004",
+      "text": "The capacity of {region_name} to sustain its new population had been {capacity_level} by early reckoning, and the years proved that estimate neither optimistic nor wrong — only incomplete.",
+      "slots_used": ["{region_name}", "{capacity_level}"],
+      "word_count": 30
+    },
+    {
+      "id": "CE_D_005",
+      "text": "What the surveyors recorded as marginal land was revealed, through patient labor, to be something richer. {field_delta_summary} across {region_name} in this period, and the balance of confidence shifted with it.",
+      "slots_used": ["{field_delta_summary}", "{region_name}"],
+      "word_count": 33
+    },
+    {
+      "id": "CE_D_006",
+      "text": "The connection between {region_name} and {adjacent_region} deepened gradually — first through necessity, then through habit, and finally through something that functioned, if not in law then in practice, like mutual interest.",
+      "slots_used": ["{region_name}", "{adjacent_region}"],
+      "word_count": 33
+    },
+    {
+      "id": "CE_D_007",
+      "text": "The expansion of {region_name} was accomplished, over {duration_prose}, without the grand gestures of conquest — only the slow accumulation of small decisions, each defensible on its own terms.",
+      "slots_used": ["{region_name}", "{duration_prose}"],
+      "word_count": 31
+    },
+    {
+      "id": "CE_D_008",
+      "text": "The {faction_name} held {region_name} not through force of arms in this period but through the more durable grip of usefulness — supplying what neighboring territories could not easily produce themselves.",
+      "slots_used": ["{faction_name}", "{region_name}"],
+      "word_count": 31
+    }
+  ],
+  "closings": [
+    {
+      "id": "CE_C_001",
+      "text": "Whether this prosperity would endure remained, for the careful observer, an open question. But the foundations laid in {region_name} during these years would prove harder to undo than anyone then anticipated.",
+      "slots_used": ["{region_name}"],
+      "word_count": 34
+    },
+    {
+      "id": "CE_C_002",
+      "text": "The progress of {region_name} was never inevitable — those who built it knew this better than the historians who later described it as such. That knowledge was, perhaps, the source of its strength.",
+      "slots_used": ["{region_name}"],
+      "word_count": 36
+    },
+    {
+      "id": "CE_C_003",
+      "text": "{field_delta_summary} — and with it, the expectations of what {region_name} might yet become quietly expanded beyond what its founders had dared to record in writing.",
+      "slots_used": ["{field_delta_summary}", "{region_name}"],
+      "word_count": 27
+    },
+    {
+      "id": "CE_C_004",
+      "text": "The eyes of {adjacent_region} turned toward {region_name} in this period not with appetite but with something closer to study, as if reconsidering what the future might reasonably contain.",
+      "slots_used": ["{adjacent_region}", "{region_name}"],
+      "word_count": 31
+    },
+    {
+      "id": "CE_C_005",
+      "text": "What {region_name} had been at the start of this account and what it was at the close were separated not by catastrophe but by the quieter distance of accumulated effort.",
+      "slots_used": ["{region_name}"],
+      "word_count": 32
+    }
+  ]
+}

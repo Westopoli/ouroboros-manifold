@@ -427,5 +427,140 @@ REGIONAL_COMMANDER_DEATH_PROB  = 0.3    # probability regional commander dies on
 NATURAL_DEATH_BASE_AGE         = 200    # tick-age at which natural death probability begins
 NATURAL_DEATH_RATE             = 0.01   # per-tick death probability above base age
 CHARACTER_ATTACHMENT_TIER_THRESHOLD = 3  # minimum event significance tier for character attachment
+
+# ── Library builder / validator (Stage 5) ──────────────────────────────────
+FRAGMENT_DEDUP_THRESHOLD       = 3      # minimum Levenshtein distance between fragments in same pool
+BUILDER_DEDUP_LOSS_FLAG        = 0.30   # flag category if >30% lost to dedup
+BUILDER_NAME_OVERSHOOT         = 1.10   # generate 10% extra names to absorb dedup losses
 LIFESPAN_MIN                   = 150    # minimum lifespan in ticks
 LIFESPAN_MAX                   = 350    # maximum lifespan in ticks
+
+# ── Tactical engine core (Stage 6) ──────────────────────────────────────────
+TACTICAL_TICK_RATE             = 20      # ticks per second
+TACTICAL_TICK_DURATION         = 0.05    # seconds per tick (1 / TICK_RATE)
+
+# ── Canvas sizing (Stage 6) ─────────────────────────────────────────────────
+CANVAS_SMALL                   = (4000, 4000)
+CANVAS_MEDIUM                  = (8000, 8000)
+CANVAS_LARGE                   = (12000, 12000)
+CANVAS_SIMULATION_MODIFIER_RANGE = 0.30  # ±30% canvas size variation
+
+# ── Category multiplier matrix (Stage 6) ────────────────────────────────────
+CATEGORY_MULTIPLIER = {
+    "Strike": {"Strike": 1.0, "Line": 0.75, "Siege": 1.5},
+    "Line":   {"Strike": 1.5, "Line": 1.0,  "Siege": 0.75},
+    "Siege":  {"Strike": 0.75, "Line": 1.5,  "Siege": 1.0},
+}
+
+# ── Unit stat baselines — Tier 2 (Stage 6) ──────────────────────────────────
+UNIT_STATS = {
+    "Raider":      {"category": "Strike", "hp": 250,  "base_damage": 18, "attack_interval": 0.8,
+                    "attack_range": 200, "speed": 150, "sensor_radius": 400,
+                    "layer_transition_time": 1.0, "aoe_radius": 0},
+    "Interceptor": {"category": "Strike", "hp": 350,  "base_damage": 12, "attack_interval": 1.0,
+                    "attack_range": 250, "speed": 130, "sensor_radius": 500,
+                    "layer_transition_time": 1.2, "aoe_radius": 0},
+    "Vanguard":    {"category": "Line",   "hp": 800,  "base_damage": 15, "attack_interval": 1.2,
+                    "attack_range": 300, "speed": 80,  "sensor_radius": 350,
+                    "layer_transition_time": 2.5, "aoe_radius": 0},
+    "Warden":      {"category": "Line",   "hp": 600,  "base_damage": 8,  "attack_interval": 1.5,
+                    "attack_range": 350, "speed": 90,  "sensor_radius": 400,
+                    "layer_transition_time": 2.0, "aoe_radius": 0},
+    "Bombard":     {"category": "Siege",  "hp": 700,  "base_damage": 35, "attack_interval": 3.0,
+                    "attack_range": 600, "speed": 50,  "sensor_radius": 300,
+                    "layer_transition_time": 4.0, "aoe_radius": 150},
+    "Bastion":     {"category": "Siege",  "hp": 1400, "base_damage": 14, "attack_interval": 1.8,
+                    "attack_range": 400, "speed": 40,  "sensor_radius": 300,
+                    "layer_transition_time": 5.0, "aoe_radius": 0},
+}
+
+# ── AoE damage cap (Stage 6) ────────────────────────────────────────────────
+AOE_DAMAGE_CAP_MULTIPLIER      = 4.0
+
+# ── Elevation (Stage 6, era-configurable) ────────────────────────────────────
+ELEVATION_DAMAGE_BONUS_ENABLED = False   # disabled for space era
+ELEVATION_DAMAGE_BONUS_PER_TIER = 0.10
+ELEVATION_SENSOR_BONUS_PER_TIER = 0.15
+
+# ── Ability parameters (Stage 6) ────────────────────────────────────────────
+SURGE_SPEED_MULTIPLIER         = 2.5
+SURGE_DAMAGE_MULTIPLIER        = 2.0
+SURGE_DURATION_TICKS           = 60      # 3 sec
+SURGE_COOLDOWN_TICKS           = 1500    # 75 sec
+
+INTERCEPT_DETECTION_RADIUS     = 350
+INTERCEPT_SPEED_MULTIPLIER     = 1.8
+INTERCEPT_DAMAGE_MULTIPLIER    = 1.5
+INTERCEPT_COOLDOWN_TICKS       = 600     # 30 sec
+
+BRACE_WINDUP_TICKS             = 40      # 2 sec
+BRACE_DAMAGE_REDUCTION         = 0.50
+BRACE_DAMAGE_MULTIPLIER        = 1.3
+BRACE_COOLDOWN_TICKS           = 700     # 35 sec
+
+RALLY_RADIUS                   = 400
+RALLY_HEAL_AMOUNT              = 150
+RALLY_COOLDOWN_TICKS           = 1500    # 75 sec
+
+WARDEN_AURA_RADIUS             = 300
+WARDEN_AURA_DAMAGE_REDUCTION   = 0.10
+WARDEN_AURA_REPAIR_RATE        = 0.5     # HP per tick
+
+BARRAGE_DAMAGE_MULTIPLIER      = 3.0
+BARRAGE_RADIUS                 = 100
+BARRAGE_TELEGRAPH_TICKS        = 30      # 1.5 sec
+BARRAGE_COOLDOWN_TICKS         = 1800    # 90 sec
+
+FORTIFY_RADIUS                 = 350
+FORTIFY_DAMAGE_REDUCTION       = 0.20
+FORTIFY_DURATION_TICKS         = 400     # 20 sec
+FORTIFY_SPEED_MULTIPLIER       = 0.4
+FORTIFY_COOLDOWN_TICKS         = 1400    # 70 sec
+
+# ── Fog of war (Stage 6) ────────────────────────────────────────────────────
+CONE_LAYER_1_FACTOR            = 0.50
+CONE_LAYER_2_FACTOR            = 0.20
+CONE_LAYER_3_FACTOR            = 0.0
+VANTAGE_CONE_MULTIPLIER        = 2.0
+VANTAGE_EXTRA_LAYER            = 1
+
+PULSE_RADIUS                   = 500
+PULSE_REVEAL_TICKS             = 40      # 2 sec
+PULSE_COOLDOWN_TICKS           = 400     # 20 sec
+
+# ── Pathfinding (Stage 6) ───────────────────────────────────────────────────
+NAVMESH_OBSTACLE_THRESHOLD     = 0.7
+NAVMESH_CELL_SIZE              = 100
+STEERING_SEPARATION_RADIUS     = 30
+STEERING_OBSTACLE_AVOIDANCE_RANGE = 50
+UNIT_COLLISION_RADIUS          = 15
+
+# ── Objectives and outcome classification (Stage 6) ─────────────────────────
+OUTCOME_WEIGHT_OBJECTIVE       = 0.75
+OUTCOME_WEIGHT_RETENTION       = 0.25
+
+OUTCOME_THRESHOLDS = {
+    "defensive_stand":     [0.20, 0.40, 0.60, 0.80],
+    "siege_breaking":      [0.20, 0.40, 0.60, 0.80],
+    "reconquest":          [0.25, 0.45, 0.65, 0.82],
+    "assault":             [0.25, 0.45, 0.65, 0.82],
+    "suppression":         [0.20, 0.40, 0.60, 0.80],
+    "multi_front_defense": [0.15, 0.35, 0.55, 0.75],
+    "interception":        [0.20, 0.40, 0.60, 0.80],
+    "evacuation":          [0.30, 0.50, 0.65, 0.80],
+    "containment":         [0.20, 0.40, 0.60, 0.80],
+    "counterinsurgency":   [0.20, 0.40, 0.60, 0.80],
+}
+
+# ── Power rating (Stage 6) ──────────────────────────────────────────────────
+POWER_RATING_COVER_ASSUMPTION  = 0.15    # average cover density assumption for effective HP
+RANGE_NORMALIZATION            = 600
+SPEED_NORMALIZATION            = 150
+ABILITY_POWER_BONUS = {
+    "Raider": 0.15, "Interceptor": 0.12, "Vanguard": 0.20,
+    "Warden": 0.25, "Bombard": 0.18, "Bastion": 0.20,
+}
+AOE_POWER_MULTIPLIER           = 1.5
+
+# ── Replay (Stage 6) ────────────────────────────────────────────────────────
+REPLAY_FORMAT                  = "json"

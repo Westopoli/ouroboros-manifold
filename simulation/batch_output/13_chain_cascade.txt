@@ -1,0 +1,122 @@
+{
+  "openings": [
+    {
+      "id": "CC_O_001",
+      "text": "The troubles of {region_name} did not arrive in sequence, as troubles are supposed to — they arrived together, and all at once.",
+      "slots_used": ["{region_name}"],
+      "word_count": 24
+    },
+    {
+      "id": "CC_O_002",
+      "text": "What the chroniclers of {region_name} struggled most to convey was not any single calamity but the suffocating simultaneity of them all.",
+      "slots_used": ["{region_name}"],
+      "word_count": 22
+    },
+    {
+      "id": "CC_O_003",
+      "text": "In the period following {event_description}, {region_name} entered a span of compounding disorder that no single account has ever fully untangled.",
+      "slots_used": ["{event_description}", "{region_name}"],
+      "word_count": 22
+    },
+    {
+      "id": "CC_O_004",
+      "text": "The administrators of {region_name} were not incompetent men — they were simply faced, {duration_prose}, with more than administration was ever designed to hold.",
+      "slots_used": ["{region_name}", "{duration_prose}"],
+      "word_count": 26
+    },
+    {
+      "id": "CC_O_005",
+      "text": "Later generations would look back at {region_name} in this era and search for the moment things began to unravel; they never agreed on one.",
+      "slots_used": ["{region_name}"],
+      "word_count": 27
+    },
+    {
+      "id": "CC_O_006",
+      "text": "The tension in {region_name} had been building for long enough that when it finally broke, it broke in several directions at once.",
+      "slots_used": ["{region_name}"],
+      "word_count": 23
+    }
+  ],
+  "details": [
+    {
+      "id": "CC_D_001",
+      "text": "The {event_description} had not yet resolved when new pressures announced themselves in {region_name} — first at the borders, then in the granaries, then in the streets. Each demanded priority. None would wait.",
+      "slots_used": ["{event_description}", "{region_name}"],
+      "word_count": 34
+    },
+    {
+      "id": "CC_D_002",
+      "text": "The tension across {region_name} had reached {tension_level} by any measure available to its governors, and {field_delta_summary} — a combination that left little room for the careful response the situation technically required.",
+      "slots_used": ["{region_name}", "{tension_level}", "{field_delta_summary}"],
+      "word_count": 33
+    },
+    {
+      "id": "CC_D_003",
+      "text": "Dispatches from {region_name} during this period share a common quality of exhaustion — not the exhaustion of men who have fought hard, but of men who cannot identify which fight is the one that matters.",
+      "slots_used": ["{region_name}"],
+      "word_count": 37
+    },
+    {
+      "id": "CC_D_004",
+      "text": "What had begun as {event_description} in {region_name} extended its consequences outward in ways the original event gave no warning of. Each response spawned a new requirement, and each new requirement arrived before the last had been met.",
+      "slots_used": ["{event_description}", "{region_name}"],
+      "word_count": 40
+    },
+    {
+      "id": "CC_D_005",
+      "text": "{field_delta_summary} across {region_name}, and the instability this produced was not the clean instability of a single fracture but the grinding, directionless kind that comes from too many things failing at once.",
+      "slots_used": ["{field_delta_summary}", "{region_name}"],
+      "word_count": 33
+    },
+    {
+      "id": "CC_D_006",
+      "text": "The chain of events that consumed {region_name} in this period numbered, by later count, {chain_length} distinct crises — each real, each pressing, and each drawing resources and attention away from all the others.",
+      "slots_used": ["{region_name}", "{chain_length}"],
+      "word_count": 35
+    },
+    {
+      "id": "CC_D_007",
+      "text": "There was no shortage of capable men in {region_name}. There was a shortage of hours, of messengers who arrived before decisions had already aged past usefulness, of quiet in which to think.",
+      "slots_used": ["{region_name}"],
+      "word_count": 34
+    },
+    {
+      "id": "CC_D_008",
+      "text": "The factional tension within {region_name} had reached {tension_level}, and what might have been manageable in isolation became, amid the wider disorder, something closer to a slow collapse of the ordinary compact between governed and governor.",
+      "slots_used": ["{region_name}", "{tension_level}"],
+      "word_count": 38
+    }
+  ],
+  "closings": [
+    {
+      "id": "CC_C_001",
+      "text": "The record of {region_name} from these years is incomplete not because the scribes were negligent but because events outpaced the capacity of any one account to follow them. Some things were simply never written down.",
+      "slots_used": ["{region_name}"],
+      "word_count": 37
+    },
+    {
+      "id": "CC_C_002",
+      "text": "That {region_name} emerged from this period at all is, on reflection, the more remarkable fact. The forces arrayed against its continuity were not small, and they did not act one at a time.",
+      "slots_used": ["{region_name}"],
+      "word_count": 35
+    },
+    {
+      "id": "CC_C_003",
+      "text": "{field_delta_summary} — and with that, whatever remained of confidence in the governing order of {region_name} quietly withdrew from public expression, surviving only in private correspondence and careful silences.",
+      "slots_used": ["{field_delta_summary}", "{region_name}"],
+      "word_count": 30
+    },
+    {
+      "id": "CC_C_004",
+      "text": "The weight of this era on {region_name} was not the weight of a single blow but of accumulated pressure — the kind that does not break things cleanly but leaves them permanently misaligned.",
+      "slots_used": ["{region_name}"],
+      "word_count": 34
+    },
+    {
+      "id": "CC_C_005",
+      "text": "Those who had administered {region_name} through {duration_prose} of compound crisis aged, it was said, as men age in war — not by years but by the specific weight of unresolvable things.",
+      "slots_used": ["{region_name}", "{duration_prose}"],
+      "word_count": 34
+    }
+  ]
+}

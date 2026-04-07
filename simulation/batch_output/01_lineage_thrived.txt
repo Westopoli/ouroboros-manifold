@@ -1,0 +1,122 @@
+{
+  "openings": [
+    {
+      "id": "LT_O_001",
+      "text": "In the generations that followed, the {lineage_name} household emerged as one of {region_name}'s most respected families.",
+      "slots_used": ["{lineage_name}", "{region_name}"],
+      "word_count": 17
+    },
+    {
+      "id": "LT_O_002",
+      "text": "{duration_prose}, the {lineage_name} name became synonymous with steady prosperity and quiet influence.",
+      "slots_used": ["{duration_prose}", "{lineage_name}"],
+      "word_count": 14
+    },
+    {
+      "id": "LT_O_003",
+      "text": "It was during this period that the {lineage_name} line secured the foundations of what later chroniclers would call their golden age.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 22
+    },
+    {
+      "id": "LT_O_004",
+      "text": "The fortunes of the {lineage_name} household rose with a patience that distinguished them from the era's more reckless aspirants.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 20
+    },
+    {
+      "id": "LT_O_005",
+      "text": "By the time {character_name} assumed stewardship, the {lineage_name} name already carried considerable weight across {region_name}.",
+      "slots_used": ["{character_name}", "{lineage_name}", "{region_name}"],
+      "word_count": 16
+    },
+    {
+      "id": "LT_O_006",
+      "text": "What the {lineage_name} family built in those years was not dramatic but enduring, the kind of success measured in generations.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 21
+    }
+  ],
+  "details": [
+    {
+      "id": "LT_D_001",
+      "text": "The {lineage_name} estates grew not through conquest but through the careful accumulation of obligations owed and favors granted, until their ledgers read like a census of the region's debts.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 32
+    },
+    {
+      "id": "LT_D_002",
+      "text": "Under {character_name}'s guidance, the {lineage_name} household extended its reach into {region_name}'s administrative councils, occupying posts that others considered thankless but that proved, in time, indispensable.",
+      "slots_used": ["{character_name}", "{lineage_name}", "{region_name}"],
+      "word_count": 28
+    },
+    {
+      "id": "LT_D_003",
+      "text": "Where rival houses spent lavishly on spectacle, the {lineage_name} invested in granaries, roads, and the quieter instruments of lasting influence. The returns compounded in ways their competitors understood only too late.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 32
+    },
+    {
+      "id": "LT_D_004",
+      "text": "The {lineage_name} name appeared with increasing frequency in trade contracts across {region_name}, a presence so gradual that no single rival thought to challenge it until the pattern was already irreversible.",
+      "slots_used": ["{lineage_name}", "{region_name}"],
+      "word_count": 31
+    },
+    {
+      "id": "LT_D_005",
+      "text": "Marriages were arranged with precision, alliances cultivated through shared harvests rather than shared enemies, and {duration_prose} the {lineage_name} household had woven itself into the fabric of {region_name}'s stability.",
+      "slots_used": ["{duration_prose}", "{lineage_name}", "{region_name}"],
+      "word_count": 30
+    },
+    {
+      "id": "LT_D_006",
+      "text": "With conditions holding at {stability_level} levels, the {lineage_name} found space to consolidate rather than merely survive. It was a rare luxury, and they spent it wisely.",
+      "slots_used": ["{stability_level}", "{lineage_name}"],
+      "word_count": 28
+    },
+    {
+      "id": "LT_D_007",
+      "text": "{character_name} proved less a visionary than a reliable steward, and for the {lineage_name} line, that distinction mattered more than posterity might credit. The household prospered precisely because no one thought to watch it.",
+      "slots_used": ["{character_name}", "{lineage_name}"],
+      "word_count": 34
+    },
+    {
+      "id": "LT_D_008",
+      "text": "The {lineage_name} coffers deepened, their circle of dependents widened, and a generation that had inherited uncertainty left behind something closer to an institution.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 23
+    }
+  ],
+  "closings": [
+    {
+      "id": "LT_C_001",
+      "text": "Later generations of the {lineage_name} line would look back on this period as proof that fortune favors not the bold, but the patient. Whether that patience would endure was another question entirely.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 33
+    },
+    {
+      "id": "LT_C_002",
+      "text": "The {lineage_name} prosperity was real, but so was the weight of expectation it created. Houses that rise must eventually choose what they are willing to spend to remain standing.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 31
+    },
+    {
+      "id": "LT_C_003",
+      "text": "In {region_name}, the {lineage_name} name became one of those quiet certainties that people stopped questioning — the kind of permanence that invites complacency as readily as confidence.",
+      "slots_used": ["{region_name}", "{lineage_name}"],
+      "word_count": 27
+    },
+    {
+      "id": "LT_C_004",
+      "text": "What the {lineage_name} had built was admirable, perhaps even enviable. But no chronicle of enduring success has ever ended without a chapter on what came next.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 27
+    },
+    {
+      "id": "LT_C_005",
+      "text": "For now, the {lineage_name} household stood on ground of its own making, {stability_level} in its position and certain of its purpose — a certainty that history rarely leaves undisturbed.",
+      "slots_used": ["{lineage_name}", "{stability_level}"],
+      "word_count": 29
+    }
+  ]
+}

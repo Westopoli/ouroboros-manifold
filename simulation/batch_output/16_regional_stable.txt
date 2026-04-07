@@ -1,0 +1,122 @@
+{
+  "openings": [
+    {
+      "id": "RS_O_001",
+      "text": "For much of this period, {region_name} presented little of note to those keeping the broader record.",
+      "slots_used": ["{region_name}"],
+      "word_count": 17
+    },
+    {
+      "id": "RS_O_002",
+      "text": "The affairs of {region_name} during these years were, by most accounts, unremarkable.",
+      "slots_used": ["{region_name}"],
+      "word_count": 13
+    },
+    {
+      "id": "RS_O_003",
+      "text": "{duration_prose}, {region_name} continued largely as it had — administered, taxed, and otherwise undisturbed.",
+      "slots_used": ["{duration_prose}", "{region_name}"],
+      "word_count": 14
+    },
+    {
+      "id": "RS_O_004",
+      "text": "The chronicles of {region_name} offer little drama for this stretch — which is, in its own way, a kind of record.",
+      "slots_used": ["{region_name}"],
+      "word_count": 22
+    },
+    {
+      "id": "RS_O_005",
+      "text": "In the years that concern us here, {region_name} remained {stability_level} and largely outside the current of larger events.",
+      "slots_used": ["{region_name}", "{stability_level}"],
+      "word_count": 19
+    },
+    {
+      "id": "RS_O_006",
+      "text": "A generation passed in {region_name} without incident sufficient to warrant more than routine notation.",
+      "slots_used": ["{region_name}"],
+      "word_count": 14
+    }
+  ],
+  "details": [
+    {
+      "id": "RS_D_001",
+      "text": "Harvests in {region_name} were adequate. The administrative rolls show no unusual levies, no recorded disputes of consequence, no petitions that reached higher authority.",
+      "slots_used": ["{region_name}"],
+      "word_count": 25
+    },
+    {
+      "id": "RS_D_002",
+      "text": "The condition of {region_name} during this period is best described as {stability_level}. Roads were maintained, obligations met, and the succession of local officials passed without disruption.",
+      "slots_used": ["{region_name}", "{stability_level}"],
+      "word_count": 29
+    },
+    {
+      "id": "RS_D_003",
+      "text": "Trade moved through {region_name} at its customary pace. The ledgers from this era show neither the surpluses of a prosperous season nor the shortfalls that might prompt inquiry from above.",
+      "slots_used": ["{region_name}"],
+      "word_count": 32
+    },
+    {
+      "id": "RS_D_004",
+      "text": "There is little in the surviving record to distinguish one year from the next in {region_name} during this time. The region endured — competently, quietly, without distinction.",
+      "slots_used": ["{region_name}"],
+      "word_count": 29
+    },
+    {
+      "id": "RS_D_005",
+      "text": "{region_name} appears in the dispatch records of this period only in inventory summaries and routine census figures. No military movements were logged. No factional complaints were forwarded.",
+      "slots_used": ["{region_name}"],
+      "word_count": 28
+    },
+    {
+      "id": "RS_D_006",
+      "text": "The stability of {region_name} was not celebrated — it was simply expected. {duration_prose}, that expectation was met without notable exception.",
+      "slots_used": ["{region_name}", "{duration_prose}"],
+      "word_count": 21
+    },
+    {
+      "id": "RS_D_007",
+      "text": "Local governance in {region_name} functioned within its ordinary tolerances. Disputes were resolved at the local level; appeals to higher authority were rare and, when made, largely procedural.",
+      "slots_used": ["{region_name}"],
+      "word_count": 30
+    },
+    {
+      "id": "RS_D_008",
+      "text": "The population of {region_name} neither grew nor contracted with any urgency in this period. Movement in and out of the region followed seasonal patterns and left no structural mark on the record.",
+      "slots_used": ["{region_name}"],
+      "word_count": 33
+    }
+  ],
+  "closings": [
+    {
+      "id": "RS_C_001",
+      "text": "In this, {region_name} was useful — not as a subject of history, but as a foundation beneath it.",
+      "slots_used": ["{region_name}"],
+      "word_count": 18
+    },
+    {
+      "id": "RS_C_002",
+      "text": "The quiet of {region_name} during these years would not last indefinitely, but while it held, it required nothing and asked for nothing in return.",
+      "slots_used": ["{region_name}"],
+      "word_count": 25
+    },
+    {
+      "id": "RS_C_003",
+      "text": "Regions like {region_name} do not often appear in the histories written afterward. Their contribution was the negative space — the absence of crisis that allowed attention to be directed elsewhere.",
+      "slots_used": ["{region_name}"],
+      "word_count": 31
+    },
+    {
+      "id": "RS_C_004",
+      "text": "What {region_name} offered during this period was continuity. Whether that continuity would prove a foundation or merely a pause remained, for now, an open question.",
+      "slots_used": ["{region_name}"],
+      "word_count": 27
+    },
+    {
+      "id": "RS_C_005",
+      "text": "The record of {region_name} for these years closes without ceremony — as it opened, and as it was conducted throughout.",
+      "slots_used": ["{region_name}"],
+      "word_count": 20
+    }
+  ]
+}

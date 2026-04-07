@@ -1,0 +1,122 @@
+{
+  "openings": [
+    {
+      "id": "CCD_O_001",
+      "text": "The defeat at {region_name} did not come suddenly — it came in stages, each one quieter than the last.",
+      "slots_used": ["{region_name}"],
+      "word_count": 21
+    },
+    {
+      "id": "CCD_O_002",
+      "text": "In the years that followed the collapse of {region_name}, those who had governed it spoke of the end only in euphemism.",
+      "slots_used": ["{region_name}"],
+      "word_count": 22
+    },
+    {
+      "id": "CCD_O_003",
+      "text": "What {region_name} had taken generations to build, {duration_prose} of sustained pressure was enough to undo.",
+      "slots_used": ["{region_name}", "{duration_prose}"],
+      "word_count": 17
+    },
+    {
+      "id": "CCD_O_004",
+      "text": "The chronicles of {region_name} record no single hour of ruin — only the accumulated weight of diminishing returns.",
+      "slots_used": ["{region_name}"],
+      "word_count": 19
+    },
+    {
+      "id": "CCD_O_005",
+      "text": "A generation after {character_name} last held the lines at {region_name}, the memory of that stand had calcified into myth.",
+      "slots_used": ["{character_name}", "{region_name}"],
+      "word_count": 21
+    },
+    {
+      "id": "CCD_O_006",
+      "text": "The withdrawal from {region_name} was orderly in the official dispatches and catastrophic in every other account that survived.",
+      "slots_used": ["{region_name}"],
+      "word_count": 19
+    }
+  ],
+  "details": [
+    {
+      "id": "CCD_D_001",
+      "text": "The forces arrayed against {region_name} were not exceptional in number; what distinguished them was patience. They waited until {field_delta_summary}, then moved with deliberate calm.",
+      "slots_used": ["{region_name}", "{field_delta_summary}"],
+      "word_count": 27
+    },
+    {
+      "id": "CCD_D_002",
+      "text": "{character_name} had warned that {region_name} could not sustain another season of attrition. The warning was noted, filed, and not acted upon. By the time circumstances vindicated the assessment, there was no longer anyone positioned to act on it.",
+      "slots_used": ["{character_name}", "{region_name}"],
+      "word_count": 42
+    },
+    {
+      "id": "CCD_D_003",
+      "text": "The population of {region_name} did not resist the new order so much as accommodate it. Survival had long since displaced loyalty as the governing instinct, and {field_delta_summary} had ensured there was little left worth defending with conviction.",
+      "slots_used": ["{region_name}", "{field_delta_summary}"],
+      "word_count": 39
+    },
+    {
+      "id": "CCD_D_004",
+      "text": "{faction_name} moved into {region_name} without ceremony. There were no proclamations, no formal transfers of authority — only the gradual replacement of one administration's symbols with another's, and the unspoken understanding that protest would be futile.",
+      "slots_used": ["{faction_name}", "{region_name}"],
+      "word_count": 36
+    },
+    {
+      "id": "CCD_D_005",
+      "text": "The garrison at {region_name} held for longer than anyone had expected and less long than anyone had hoped. When the end came, it was marked not by a final battle but by an absence — of supply, of reinforcement, of any signal that relief was still possible.",
+      "slots_used": ["{region_name}"],
+      "word_count": 48
+    },
+    {
+      "id": "CCD_D_006",
+      "text": "Accounts from {region_name} during those final months describe a peculiar stillness — the kind that descends when the outcome is known but not yet spoken aloud. {field_delta_summary}, and those with means enough to leave had already done so.",
+      "slots_used": ["{region_name}", "{field_delta_summary}"],
+      "word_count": 40
+    },
+    {
+      "id": "CCD_D_007",
+      "text": "The loss of {region_name} was, by most measures, not a surprise. The pattern had been visible for some time: each concession slightly larger than the last, each line drawn slightly closer to the center.",
+      "slots_used": ["{region_name}"],
+      "word_count": 36
+    },
+    {
+      "id": "CCD_D_008",
+      "text": "{duration_prose}, the position at {region_name} had been quietly reclassified — first from essential to strategic, then from strategic to symbolic, and finally from symbolic to untenable. The reclassifications were administrative; the losses they described were not.",
+      "slots_used": ["{duration_prose}", "{region_name}"],
+      "word_count": 37
+    }
+  ],
+  "closings": [
+    {
+      "id": "CCD_C_001",
+      "text": "The name of {region_name} would continue to appear in documents for some years afterward — in inventories, in border agreements, in the footnotes of treaties that referenced what had once been held there. Eventually, even those mentions ceased.",
+      "slots_used": ["{region_name}"],
+      "word_count": 39
+    },
+    {
+      "id": "CCD_C_002",
+      "text": "What {region_name} had represented — as a buffer, as a source of revenue, as a proof of reach — was not easily replaced. The absence reshaped expectations in ways that would take years to fully account for.",
+      "slots_used": ["{region_name}"],
+      "word_count": 37
+    },
+    {
+      "id": "CCD_C_003",
+      "text": "{character_name} did not speak publicly of {region_name} again. Whether this was grief, or prudence, or simply the habit of those who have outlived the causes they served, the record does not say.",
+      "slots_used": ["{character_name}", "{region_name}"],
+      "word_count": 34
+    },
+    {
+      "id": "CCD_C_004",
+      "text": "The lesson drawn from {region_name} differed depending on who was drawing it. For some, it was a case study in overextension. For others, in betrayal. The disagreement outlasted the loss itself.",
+      "slots_used": ["{region_name}"],
+      "word_count": 32
+    },
+    {
+      "id": "CCD_C_005",
+      "text": "History would record the fall of {region_name} in a single sentence. Those who had been present understood, without needing to explain it to anyone, why that sentence was insufficient.",
+      "slots_used": ["{region_name}"],
+      "word_count": 30
+    }
+  ]
+}

@@ -1,0 +1,122 @@
+{
+  "openings": [
+    {
+      "id": "SU_O_001",
+      "text": "The mantle of the {lineage_name} household passed, as it always had, not with ceremony but with necessity.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 17
+    },
+    {
+      "id": "SU_O_002",
+      "text": "In {region_name}, a new generation of the {lineage_name} stepped into roles their predecessors had held for as long as anyone could recall.",
+      "slots_used": ["{region_name}", "{lineage_name}"],
+      "word_count": 22
+    },
+    {
+      "id": "SU_O_003",
+      "text": "{duration_prose}, the elder {lineage_name} relinquished what authority remained to them, and younger hands took up the family's obligations.",
+      "slots_used": ["{duration_prose}", "{lineage_name}"],
+      "word_count": 18
+    },
+    {
+      "id": "SU_O_004",
+      "text": "The {lineage_name} succession unfolded as such things do — quietly, imperfectly, and with the weight of everything left unsaid between parent and child.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 23
+    },
+    {
+      "id": "SU_O_005",
+      "text": "When the time came for the {lineage_name} to entrust their affairs to the next generation, the transition was neither swift nor painless.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 22
+    },
+    {
+      "id": "SU_O_006",
+      "text": "A chapter closed for the {lineage_name}, though the household itself continued — altered in voice, if not in name.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 18
+    }
+  ],
+  "details": [
+    {
+      "id": "SU_D_001",
+      "text": "{character_name} assumed stewardship of the {lineage_name} holdings with a demeanor that suggested long preparation, though those close to the family knew the appointment had come sooner than anyone intended.",
+      "slots_used": ["{character_name}", "{lineage_name}"],
+      "word_count": 30
+    },
+    {
+      "id": "SU_D_002",
+      "text": "The {lineage_name} heir inherited not merely property and title but a web of obligations — debts of loyalty owed and owed to, alliances maintained through habit, and enemies whose grievances predated their birth.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 32
+    },
+    {
+      "id": "SU_D_003",
+      "text": "In {region_name}, the {lineage_name} succession was observed with the particular attentiveness that neighbors reserve for any shift in a familiar household. Old arrangements were quietly reassessed; new courtesies extended.",
+      "slots_used": ["{region_name}", "{lineage_name}"],
+      "word_count": 30
+    },
+    {
+      "id": "SU_D_004",
+      "text": "The younger {lineage_name} kept what customs they could and discarded what no longer served. Certain traditions survived intact; others were amended beyond recognition, though the family would not have described it that way.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 33
+    },
+    {
+      "id": "SU_D_005",
+      "text": "{character_name} of the {lineage_name} brought a different temperament to the family's affairs — less cautious, perhaps, but no less deliberate. The household's priorities shifted in ways that only became legible with time.",
+      "slots_used": ["{character_name}", "{lineage_name}"],
+      "word_count": 32
+    },
+    {
+      "id": "SU_D_006",
+      "text": "{duration_prose}, the {lineage_name} completed a generational transfer that left the family's outward position largely intact. What changed was interior — a matter of instinct, emphasis, and which debts the new steward chose to honor first.",
+      "slots_used": ["{duration_prose}", "{lineage_name}"],
+      "word_count": 35
+    },
+    {
+      "id": "SU_D_007",
+      "text": "The retiring {lineage_name} patriarch offered counsel that was received with public gratitude and private reservation. The young do not refuse their elders' wisdom; they simply reinterpret it until it resembles their own.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 30
+    },
+    {
+      "id": "SU_D_008",
+      "text": "Among the {lineage_name}, the succession was remembered less for who assumed authority than for what was preserved in the passage — certain letters, a way of conducting business, an instinct for when to speak and when to wait.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 36
+    }
+  ],
+  "closings": [
+    {
+      "id": "SU_C_001",
+      "text": "The {lineage_name} name endured, carried now by voices that had not yet learned all its inflections. Whether they would prove faithful stewards or restless inheritors remained to be seen.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 29
+    },
+    {
+      "id": "SU_C_002",
+      "text": "Every generation of the {lineage_name} believed itself the rightful custodian of the family's legacy. History would adjudicate, as it always does — slowly, and without appeal.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 26
+    },
+    {
+      "id": "SU_C_003",
+      "text": "In {region_name}, the {lineage_name} transition occasioned neither celebration nor mourning, but something more durable: the quiet recognition that continuity demands its own kind of courage.",
+      "slots_used": ["{region_name}", "{lineage_name}"],
+      "word_count": 25
+    },
+    {
+      "id": "SU_C_004",
+      "text": "What the new {lineage_name} steward would make of their inheritance was, for the moment, less important than the simple fact of its survival. The name persisted. That alone was not nothing.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 31
+    },
+    {
+      "id": "SU_C_005",
+      "text": "The {lineage_name} had weathered the passage from one generation to the next, as they had before. The question was never whether the family would continue, but what it would become.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 30
+    }
+  ]
+}

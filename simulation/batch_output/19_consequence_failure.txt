@@ -1,0 +1,122 @@
+{
+  "openings": [
+    {
+      "id": "CF_O_001",
+      "text": "What had been attempted at {mission_region} ended as {mission_outcome}, and the reckoning that followed was neither swift nor merciful.",
+      "slots_used": ["{mission_region}", "{mission_outcome}"],
+      "word_count": 21
+    },
+    {
+      "id": "CF_O_002",
+      "text": "The {mission_archetype} concluded as {mission_outcome} — a result that demanded explanation from those who had authorized it.",
+      "slots_used": ["{mission_archetype}", "{mission_outcome}"],
+      "word_count": 17
+    },
+    {
+      "id": "CF_O_003",
+      "text": "In the weeks that followed {mission_outcome}, the {lineage_name} household found itself answering for decisions made under very different expectations.",
+      "slots_used": ["{mission_outcome}", "{lineage_name}"],
+      "word_count": 21
+    },
+    {
+      "id": "CF_O_004",
+      "text": "The outcome at {mission_region} was recorded as {mission_outcome}, and no subsequent account has found reason to soften that assessment.",
+      "slots_used": ["{mission_region}", "{mission_outcome}"],
+      "word_count": 21
+    },
+    {
+      "id": "CF_O_005",
+      "text": "{duration_prose} after {mission_outcome}, the full weight of what had been lost was still being measured.",
+      "slots_used": ["{duration_prose}", "{mission_outcome}"],
+      "word_count": 16
+    },
+    {
+      "id": "CF_O_006",
+      "text": "Those who commissioned the {mission_archetype} had not prepared for {mission_outcome}, and it showed in everything that came after.",
+      "slots_used": ["{mission_archetype}", "{mission_outcome}"],
+      "word_count": 19
+    }
+  ],
+  "details": [
+    {
+      "id": "CF_D_001",
+      "text": "The {mission_archetype} at {mission_region} had required considerable outlay — in material, in lives, in the credibility of those who had staked their judgment on a different result. {mission_outcome} erased that investment without ceremony.",
+      "slots_used": ["{mission_archetype}", "{mission_region}", "{mission_outcome}"],
+      "word_count": 34
+    },
+    {
+      "id": "CF_D_002",
+      "text": "{character_name} bore most of the formal responsibility for {mission_outcome}. Whether that attribution was just is a matter the record leaves unresolved, though it did not leave {character_name}'s standing unaffected.",
+      "slots_used": ["{character_name}", "{mission_outcome}"],
+      "word_count": 31
+    },
+    {
+      "id": "CF_D_003",
+      "text": "The consequences of {mission_outcome} were not confined to {mission_region}. {field_delta_summary} in the months that followed, tracing a line of damage that extended well beyond the original theater of effort.",
+      "slots_used": ["{mission_outcome}", "{mission_region}", "{field_delta_summary}"],
+      "word_count": 32
+    },
+    {
+      "id": "CF_D_004",
+      "text": "Internally, {mission_outcome} produced the kind of silence that precedes reorganization. Reports were reviewed, assignments reassigned, and certain names that had appeared prominently in planning documents began to appear less prominently in subsequent ones.",
+      "slots_used": ["{mission_outcome}"],
+      "word_count": 33
+    },
+    {
+      "id": "CF_D_005",
+      "text": "The {lineage_name} name had been attached to the {mission_archetype} from its earliest stages. {mission_outcome} did not sever that attachment — if anything, it made the association more durable, and less flattering.",
+      "slots_used": ["{lineage_name}", "{mission_archetype}", "{mission_outcome}"],
+      "word_count": 33
+    },
+    {
+      "id": "CF_D_006",
+      "text": "At {mission_region}, the gap between the anticipated result and {mission_outcome} was wide enough that simple misfortune could not account for it. The assessments that circulated afterward were careful in their language and unsparing in their conclusions.",
+      "slots_used": ["{mission_region}", "{mission_outcome}"],
+      "word_count": 37
+    },
+    {
+      "id": "CF_D_007",
+      "text": "{field_delta_summary} in the aftermath of {mission_outcome}. Those who had projected otherwise were not disciplined for optimism — optimism, after all, had been the official posture — but they were not consulted again on comparable matters.",
+      "slots_used": ["{field_delta_summary}", "{mission_outcome}"],
+      "word_count": 37
+    },
+    {
+      "id": "CF_D_008",
+      "text": "The dispatches from {mission_region} following {mission_outcome} were terse and factual in the way that dispatches become when there is nothing left to manage impressions of.",
+      "slots_used": ["{mission_region}", "{mission_outcome}"],
+      "word_count": 28
+    }
+  ],
+  "closings": [
+    {
+      "id": "CF_C_001",
+      "text": "{mission_outcome} was not forgotten quickly. It became instead a reference point — the kind that gets invoked in later arguments without needing explanation, because everyone present already knows what it cost.",
+      "slots_used": ["{mission_outcome}"],
+      "word_count": 32
+    },
+    {
+      "id": "CF_C_002",
+      "text": "What {mission_outcome} ultimately produced was a revision — of expectations, of alliances, of the confidence with which certain kinds of action would be proposed in the future.",
+      "slots_used": ["{mission_outcome}"],
+      "word_count": 28
+    },
+    {
+      "id": "CF_C_003",
+      "text": "{character_name} would not hold the same position again. {mission_outcome} had made certain of that, whatever the official accounting eventually said.",
+      "slots_used": ["{character_name}", "{mission_outcome}"],
+      "word_count": 23
+    },
+    {
+      "id": "CF_C_004",
+      "text": "The {lineage_name} household absorbed {mission_outcome} without public rupture. The private accounting was another matter, and its effects would surface in decisions made {duration_prose} later, when circumstances allowed for correction.",
+      "slots_used": ["{lineage_name}", "{mission_outcome}", "{duration_prose}"],
+      "word_count": 31
+    },
+    {
+      "id": "CF_C_005",
+      "text": "History does not always offer clean lessons, but {mission_outcome} at {mission_region} offered one clearly enough: the distance between intention and result is not bridged by confidence alone.",
+      "slots_used": ["{mission_outcome}", "{mission_region}"],
+      "word_count": 29
+    }
+  ]
+}

@@ -1,0 +1,122 @@
+{
+  "openings": [
+    {
+      "id": "CCV_O_001",
+      "text": "The contest for {region_name} ended not in negotiation but in the silence that follows a decisive blow.",
+      "slots_used": ["{region_name}"],
+      "word_count": 17
+    },
+    {
+      "id": "CCV_O_002",
+      "text": "{duration_prose}, the balance of power in {region_name} shifted irreversibly, and the maps were redrawn to match.",
+      "slots_used": ["{duration_prose}", "{region_name}"],
+      "word_count": 16
+    },
+    {
+      "id": "CCV_O_003",
+      "text": "When the fighting around {region_name} ceased, the borders it left behind bore no resemblance to those that had provoked it.",
+      "slots_used": ["{region_name}"],
+      "word_count": 19
+    },
+    {
+      "id": "CCV_O_004",
+      "text": "The campaign that broke {faction_name} hold on {region_name} was swift enough that even the victors seemed surprised by its completeness.",
+      "slots_used": ["{faction_name}", "{region_name}"],
+      "word_count": 18
+    },
+    {
+      "id": "CCV_O_005",
+      "text": "The fall of {region_name} to new masters was the kind of outcome that later generations would call inevitable, though it had not felt so at the time.",
+      "slots_used": ["{region_name}"],
+      "word_count": 27
+    },
+    {
+      "id": "CCV_O_006",
+      "text": "{region_name} changed hands in a season, and with it the strategic calculus of every neighboring power.",
+      "slots_used": ["{region_name}"],
+      "word_count": 15
+    }
+  ],
+  "details": [
+    {
+      "id": "CCV_D_001",
+      "text": "{character_name} committed forces along the full breadth of {region_name}, leaving no corridor for withdrawal. The defending garrisons, cut off from resupply and reinforcement, capitulated piecemeal over a matter of weeks.",
+      "slots_used": ["{character_name}", "{region_name}"],
+      "word_count": 30
+    },
+    {
+      "id": "CCV_D_002",
+      "text": "The {faction_name} position in {region_name} collapsed from the flanks inward. Supply lines from {adjacent_region} were severed early, and what followed was less a battle than a methodical enclosure.",
+      "slots_used": ["{faction_name}", "{region_name}", "{adjacent_region}"],
+      "word_count": 29
+    },
+    {
+      "id": "CCV_D_003",
+      "text": "Three engagements decided {region_name}: one at its northern approaches, one at its river crossings, and one — the briefest and most consequential — at the gates of its administrative center. Each was won convincingly.",
+      "slots_used": ["{region_name}"],
+      "word_count": 31
+    },
+    {
+      "id": "CCV_D_004",
+      "text": "In {region_name}, {field_delta_summary}. The victors inherited a territory whose shape had changed less than its loyalties, and the transfer of authority proceeded with the cold efficiency of a foregone conclusion.",
+      "slots_used": ["{region_name}", "{field_delta_summary}"],
+      "word_count": 30
+    },
+    {
+      "id": "CCV_D_005",
+      "text": "{character_name} accepted the surrender of {region_name}'s remaining garrison without ceremony. Terms were dictated, not negotiated, and the occupying force was installed before the emissaries had returned home.",
+      "slots_used": ["{character_name}", "{region_name}"],
+      "word_count": 27
+    },
+    {
+      "id": "CCV_D_006",
+      "text": "The {faction_name} armies quit {region_name} in disorder, abandoning stores and fortifications intact. {duration_prose}, a territory that had been bitterly contested became unambiguously held, its former defenders scattered beyond {adjacent_region}.",
+      "slots_used": ["{faction_name}", "{region_name}", "{duration_prose}", "{adjacent_region}"],
+      "word_count": 30
+    },
+    {
+      "id": "CCV_D_007",
+      "text": "Control of {region_name} was established through a campaign remarkable for its discipline. No sacking, no reprisals — only the systematic replacement of one authority with another, carried out with a conqueror's patience.",
+      "slots_used": ["{region_name}"],
+      "word_count": 30
+    },
+    {
+      "id": "CCV_D_008",
+      "text": "The road through {region_name} to {adjacent_region} now lay open, and the strategic implications were immediately understood by every power with interests in the corridor. What had been a frontier was now a thoroughfare.",
+      "slots_used": ["{region_name}", "{adjacent_region}"],
+      "word_count": 33
+    }
+  ],
+  "closings": [
+    {
+      "id": "CCV_C_001",
+      "text": "The new order in {region_name} would prove durable, not because it was just, but because those who might have contested it no longer possessed the means.",
+      "slots_used": ["{region_name}"],
+      "word_count": 26
+    },
+    {
+      "id": "CCV_C_002",
+      "text": "{region_name} settled into its new allegiance with the resignation of a territory that had learned the cost of resistance. The old banners came down. No one replaced them for a long while.",
+      "slots_used": ["{region_name}"],
+      "word_count": 31
+    },
+    {
+      "id": "CCV_C_003",
+      "text": "With {region_name} secured, the victors turned their attention outward. The momentum of conquest is its own argument, and neighboring powers understood what the new borders implied.",
+      "slots_used": ["{region_name}"],
+      "word_count": 25
+    },
+    {
+      "id": "CCV_C_004",
+      "text": "Histories written by the victors would call {region_name} a liberation. Histories written by the vanquished would call it something else. The territory itself simply endured, as territories do, under new management.",
+      "slots_used": ["{region_name}"],
+      "word_count": 30
+    },
+    {
+      "id": "CCV_C_005",
+      "text": "The taking of {region_name} redrew more than borders. It redrew expectations — of what could be held, what could be taken, and how quickly the world's arrangements could be unmade.",
+      "slots_used": ["{region_name}"],
+      "word_count": 29
+    }
+  ]
+}

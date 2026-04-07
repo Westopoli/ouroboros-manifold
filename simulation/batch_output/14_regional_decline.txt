@@ -1,0 +1,122 @@
+{
+  "openings": [
+    {
+      "id": "RD_O_001",
+      "text": "The decline of {region_name} was not the kind that announces itself — it was the kind that is noticed only after it is complete.",
+      "slots_used": ["{region_name}"],
+      "word_count": 29
+    },
+    {
+      "id": "RD_O_002",
+      "text": "{duration_prose}, the condition of {region_name} worsened by increments too small for any single season's record to capture.",
+      "slots_used": ["{duration_prose}", "{region_name}"],
+      "word_count": 21
+    },
+    {
+      "id": "RD_O_003",
+      "text": "Those who had known {region_name} in better times returned to find it not ruined, exactly, but diminished — as a fire is diminished when the wood runs low.",
+      "slots_used": ["{region_name}"],
+      "word_count": 32
+    },
+    {
+      "id": "RD_O_004",
+      "text": "In the long years that followed, {region_name} continued to exist — continued, even, to function — but something essential had quietly left it.",
+      "slots_used": ["{region_name}"],
+      "word_count": 27
+    },
+    {
+      "id": "RD_O_005",
+      "text": "The historians who later wrote of {region_name}'s contraction struggled to name a turning point, because there had been none — only the accumulation of small surrenders.",
+      "slots_used": ["{region_name}"],
+      "word_count": 29
+    },
+    {
+      "id": "RD_O_006",
+      "text": "A generation passed before the people of {region_name} allowed themselves the word they had long been avoiding.",
+      "slots_used": ["{region_name}"],
+      "word_count": 19
+    }
+  ],
+  "details": [
+    {
+      "id": "RD_D_001",
+      "text": "The roads of {region_name} were the first to show it — maintained, then merely passable, then quietly abandoned to the encroachment of grass and mud. No edict marked the change. It simply happened.",
+      "slots_used": ["{region_name}"],
+      "word_count": 36
+    },
+    {
+      "id": "RD_D_002",
+      "text": "{field_delta_summary} across {region_name}, and the administrative apparatus that had once managed the region's affairs grew thinner with each cycle of appointments — posts left vacant, correspondence unanswered, decisions deferred until they ceased to matter.",
+      "slots_used": ["{field_delta_summary}", "{region_name}"],
+      "word_count": 38
+    },
+    {
+      "id": "RD_D_003",
+      "text": "The {stability_level} stability that characterized {region_name} in those years was not the stability of strength but of exhaustion — a population too depleted by prior hardship to mount either resistance or renewal.",
+      "slots_used": ["{stability_level}", "{region_name}"],
+      "word_count": 35
+    },
+    {
+      "id": "RD_D_004",
+      "text": "Craftsmen left {region_name} first, drawn by steadier commissions elsewhere. Merchants followed, then the minor officials whose salaries had become irregular. What remained was not a community in crisis but a community slowly becoming something smaller than itself.",
+      "slots_used": ["{region_name}"],
+      "word_count": 40
+    },
+    {
+      "id": "RD_D_005",
+      "text": "The {capacity_level} capacity that defined {region_name}'s productive life had not been destroyed by any single event — it had been borrowed against, season after season, until the borrowing outpaced any hope of repayment.",
+      "slots_used": ["{capacity_level}", "{region_name}"],
+      "word_count": 36
+    },
+    {
+      "id": "RD_D_006",
+      "text": "Surveying records from {region_name} during the period document the same pattern in village after village: fields contracted at the margins, orchards unpruned, irrigation channels silting without being cleared. The center held while the edges retreated.",
+      "slots_used": ["{region_name}"],
+      "word_count": 37
+    },
+    {
+      "id": "RD_D_007",
+      "text": "There were, in {region_name}, men and women who saw clearly what was happening and said so — in petitions, in sermons, in letters that went unreturned. Their clarity changed nothing. It rarely does.",
+      "slots_used": ["{region_name}"],
+      "word_count": 35
+    },
+    {
+      "id": "RD_D_008",
+      "text": "{duration_prose}, the population of {region_name} contracted — not through catastrophe but through the quiet arithmetic of departures exceeding arrivals, births failing to replace deaths, and a general sense that the future lay elsewhere.",
+      "slots_used": ["{duration_prose}", "{region_name}"],
+      "word_count": 36
+    }
+  ],
+  "closings": [
+    {
+      "id": "RD_C_001",
+      "text": "{region_name} did not vanish from the maps. It persisted, hollowed, recognizable in outline but no longer in substance — the name outlasting the thing it had named.",
+      "slots_used": ["{region_name}"],
+      "word_count": 30
+    },
+    {
+      "id": "RD_C_002",
+      "text": "What {field_delta_summary} left behind in {region_name} was not ruin but irrelevance — and irrelevance, the chronicles suggest, was the harder condition to recover from.",
+      "slots_used": ["{field_delta_summary}", "{region_name}"],
+      "word_count": 27
+    },
+    {
+      "id": "RD_C_003",
+      "text": "The people who remained in {region_name} were not, by any account, without dignity. They had simply inherited a situation that no amount of dignity could fully redress.",
+      "slots_used": ["{region_name}"],
+      "word_count": 31
+    },
+    {
+      "id": "RD_C_004",
+      "text": "Later administrations would attempt revivals of {region_name} — some earnest, some merely rhetorical. None recovered what the long erosion had taken, because erosion does not leave the original shape intact beneath its work.",
+      "slots_used": ["{region_name}"],
+      "word_count": 35
+    },
+    {
+      "id": "RD_C_005",
+      "text": "The {stability_level} condition of {region_name} at the close of the period was, in its way, a kind of stability — the stability of a thing that has finished falling and lies where it landed.",
+      "slots_used": ["{stability_level}", "{region_name}"],
+      "word_count": 38
+    }
+  ]
+}

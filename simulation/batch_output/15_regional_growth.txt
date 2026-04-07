@@ -1,0 +1,122 @@
+{
+  "openings": [
+    {
+      "id": "RG_O_001",
+      "text": "The progress of {region_name} in this period was not the kind that announces itself — it was the kind that is noticed only in retrospect.",
+      "slots_used": ["{region_name}"],
+      "word_count": 27
+    },
+    {
+      "id": "RG_O_002",
+      "text": "In the years that followed, {region_name} did what stable ground eventually does — it began, without ceremony, to produce.",
+      "slots_used": ["{region_name}"],
+      "word_count": 20
+    },
+    {
+      "id": "RG_O_003",
+      "text": "Over {duration_prose}, the slow work of building gathered in {region_name} into something that could no longer be called tentative.",
+      "slots_used": ["{duration_prose}", "{region_name}"],
+      "word_count": 20
+    },
+    {
+      "id": "RG_O_004",
+      "text": "The annals of {region_name} from this era record no great battles, no sudden reversals — only the unhurried accumulation of well-made decisions.",
+      "slots_used": ["{region_name}"],
+      "word_count": 24
+    },
+    {
+      "id": "RG_O_005",
+      "text": "A generation passed quietly over {region_name}, and when it lifted, the land beneath was measurably different from the land it had covered.",
+      "slots_used": ["{region_name}"],
+      "word_count": 24
+    },
+    {
+      "id": "RG_O_006",
+      "text": "Those who governed {region_name} through this period left behind no celebrated edicts — only the evidence of their work, which outlasted the records of their names.",
+      "slots_used": ["{region_name}"],
+      "word_count": 28
+    }
+  ],
+  "details": [
+    {
+      "id": "RG_D_001",
+      "text": "The capacity of {region_name} had reached {capacity_level} by the close of this period — not through any single investment but through the patient repair of what had been neglected and the quiet extension of what had proven sound.",
+      "slots_used": ["{region_name}", "{capacity_level}"],
+      "word_count": 41
+    },
+    {
+      "id": "RG_D_002",
+      "text": "{field_delta_summary} across {region_name}, and with it came the particular confidence of people who have watched their labor compound — not dramatically, but reliably, season after season.",
+      "slots_used": ["{field_delta_summary}", "{region_name}"],
+      "word_count": 29
+    },
+    {
+      "id": "RG_D_003",
+      "text": "The stability of {region_name} held at {stability_level} through this span, and that steadiness proved its own reward: investment that had waited for calmer conditions began, at last, to arrive.",
+      "slots_used": ["{region_name}", "{stability_level}"],
+      "word_count": 31
+    },
+    {
+      "id": "RG_D_004",
+      "text": "The workshops and waterways of {region_name} expanded without fanfare, each addition following from the last with the logic of a structure built by people who intended to use it themselves.",
+      "slots_used": ["{region_name}"],
+      "word_count": 32
+    },
+    {
+      "id": "RG_D_005",
+      "text": "What {region_name} required above all else was time undisturbed, and {duration_prose} it received that rare gift. The effects were not spectacular. They were, instead, durable.",
+      "slots_used": ["{region_name}", "{duration_prose}"],
+      "word_count": 28
+    },
+    {
+      "id": "RG_D_006",
+      "text": "The population of {region_name} grew slowly and settled well — not the restless growth of a frontier but the consolidating kind, where people build as though they plan to remain.",
+      "slots_used": ["{region_name}"],
+      "word_count": 32
+    },
+    {
+      "id": "RG_D_007",
+      "text": "The fields and storehouses of {region_name} did not overflow, but they did not fall short either. That equilibrium, modest as it sounds, was the foundation on which everything else in this period was built.",
+      "slots_used": ["{region_name}"],
+      "word_count": 36
+    },
+    {
+      "id": "RG_D_008",
+      "text": "{field_delta_summary} in {region_name}, steadily and without the reversals that had marked earlier decades. The people who lived through it mostly did not remark upon it — which was, in its way, the surest sign of success.",
+      "slots_used": ["{field_delta_summary}", "{region_name}"],
+      "word_count": 38
+    }
+  ],
+  "closings": [
+    {
+      "id": "RG_C_001",
+      "text": "The quiet growth of {region_name} in these years would not find its way into songs or speeches. It would find its way, instead, into the improved circumstances of those who came after.",
+      "slots_used": ["{region_name}"],
+      "word_count": 34
+    },
+    {
+      "id": "RG_C_002",
+      "text": "The capacity built in {region_name} during this period would prove, in the crises that followed, to be neither excess nor luxury — only the margin that made recovery possible.",
+      "slots_used": ["{region_name}"],
+      "word_count": 31
+    },
+    {
+      "id": "RG_C_003",
+      "text": "That {region_name} had grown stronger was, by the end of this period, beyond dispute. That it had done so without drawing attention to itself was, perhaps, the greatest part of the achievement.",
+      "slots_used": ["{region_name}"],
+      "word_count": 35
+    },
+    {
+      "id": "RG_C_004",
+      "text": "The stability of {region_name} at {stability_level} was not the stasis of a place that had stopped moving — it was the balance of a place that had learned how to move without stumbling.",
+      "slots_used": ["{region_name}", "{stability_level}"],
+      "word_count": 36
+    },
+    {
+      "id": "RG_C_005",
+      "text": "There are eras that teach through catastrophe and eras that teach through example. {region_name} in this period was the latter kind, and its lessons were all the more lasting for being unforced.",
+      "slots_used": ["{region_name}"],
+      "word_count": 34
+    }
+  ]
+}

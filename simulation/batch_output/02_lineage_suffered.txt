@@ -1,0 +1,122 @@
+{
+  "openings": [
+    {
+      "id": "LS_O_001",
+      "text": "The years that followed were not kind to the {lineage_name} name.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 13
+    },
+    {
+      "id": "LS_O_002",
+      "text": "In {region_name}, where the {lineage_name} had once walked with authority, a quieter era of diminishment began.",
+      "slots_used": ["{region_name}", "{lineage_name}"],
+      "word_count": 16
+    },
+    {
+      "id": "LS_O_003",
+      "text": "{duration_prose}, the {lineage_name} household endured what later chroniclers would describe only as a period of loss.",
+      "slots_used": ["{duration_prose}", "{lineage_name}"],
+      "word_count": 16
+    },
+    {
+      "id": "LS_O_004",
+      "text": "No single disaster unmade the {lineage_name} — it was a slow accumulation of wounds, each compounding the last.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 17
+    },
+    {
+      "id": "LS_O_005",
+      "text": "What befell the {lineage_name} in those years left few records and fewer witnesses willing to speak of it.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 17
+    },
+    {
+      "id": "LS_O_006",
+      "text": "A generation later, those who remembered the {lineage_name} at their height could scarcely reconcile it with what remained.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 17
+    }
+  ],
+  "details": [
+    {
+      "id": "LS_D_001",
+      "text": "The {lineage_name} buried three of their own before the season turned. No battles claimed them — only the particular cruelties of a world grown indifferent to old loyalties.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 29
+    },
+    {
+      "id": "LS_D_002",
+      "text": "{character_name} was the last of the {lineage_name} to hold any post of consequence, and even that was stripped away quietly, without ceremony or explanation, as though the family had simply ceased to matter.",
+      "slots_used": ["{character_name}", "{lineage_name}"],
+      "word_count": 33
+    },
+    {
+      "id": "LS_D_003",
+      "text": "In {region_name}, {field_delta_summary}. The {lineage_name} bore the weight of this collapse more than most, their holdings shrinking to what could be maintained by a skeleton household.",
+      "slots_used": ["{region_name}", "{field_delta_summary}", "{lineage_name}"],
+      "word_count": 28
+    },
+    {
+      "id": "LS_D_004",
+      "text": "Debts mounted against the {lineage_name} estate. Properties were sold at unfavorable terms. Servants departed without being dismissed. By the end, the family's presence in the district was more rumor than fact.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 32
+    },
+    {
+      "id": "LS_D_005",
+      "text": "The {lineage_name} sent petitions to every authority that would receive them, but the replies — when they came at all — offered sympathy without substance. {duration_prose}, the family learned the difference between allies and acquaintances.",
+      "slots_used": ["{lineage_name}", "{duration_prose}"],
+      "word_count": 35
+    },
+    {
+      "id": "LS_D_006",
+      "text": "{character_name} of the {lineage_name} kept meticulous accounts through the worst of it, as though recording each loss might somehow contain it. The ledgers survive. They make for difficult reading.",
+      "slots_used": ["{character_name}", "{lineage_name}"],
+      "word_count": 30
+    },
+    {
+      "id": "LS_D_007",
+      "text": "What remained of the {lineage_name} influence in {region_name} could be measured in silences — seats left empty at council, invitations no longer extended, debts called in by creditors who once would not have dared.",
+      "slots_used": ["{lineage_name}", "{region_name}"],
+      "word_count": 33
+    },
+    {
+      "id": "LS_D_008",
+      "text": "The {lineage_name} name still appeared in the registries, but it carried a different weight now. Children of the household were raised on stories of what had been, and the silence of what was.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 33
+    }
+  ],
+  "closings": [
+    {
+      "id": "LS_C_001",
+      "text": "Whether the {lineage_name} could recover from such losses remained an open question. But survival itself, in those circumstances, constituted a kind of defiance that later generations would need to decide how to spend.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 33
+    },
+    {
+      "id": "LS_C_002",
+      "text": "The {lineage_name} endured, though the word felt hollow. What persisted was not strength but habit — the slow insistence of a name that had forgotten how to disappear.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 28
+    },
+    {
+      "id": "LS_C_003",
+      "text": "In {region_name}, the memory of the {lineage_name} decline served as cautionary scripture. Families who had once envied them now invoked their name as proof that nothing was guaranteed.",
+      "slots_used": ["{region_name}", "{lineage_name}"],
+      "word_count": 29
+    },
+    {
+      "id": "LS_C_004",
+      "text": "Grief, for the {lineage_name}, became a kind of inheritance — passed from parent to child not in words but in the careful way they held what little remained.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 28
+    },
+    {
+      "id": "LS_C_005",
+      "text": "The {lineage_name} would carry the scars of this period long after the material losses were tallied. Some wounds do not appear in ledgers.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 23
+    }
+  ]
+}

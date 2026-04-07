@@ -112,15 +112,21 @@ _ALL_VALUES = {
         "invented liquid-heavy", "invented guttural-aspirated", "Sanskrit-derived",
         "Bantu agglutinative", "Gaelic consonant-cluster", "Persian flowing",
         "Nahuatl compound", "Japanese mora-based", "Slavic palatalized",
+        "Khmer sesquisyllabic", "Quechua suffixing", "Yoruba tonal",
+        "Finnish agglutinative", "Georgian consonant-clustered", "Maori CV-open",
+        "Tibetan aspirated", "Basque ergative", "Swahili noun-class",
     ],
     "phoneme_patterns": [
         "patronymic", "place-derived", "title-prefix", "two-part compound",
         "single name only", "three-syllable cadence", "consonant-final",
         "vowel-final", "reduplicative", "honorific-suffix", "clan-prefix",
+        "syllable-initial stress", "alternating long-short", "nasal-onset",
+        "glottal-stop midword",
     ],
     "cultural_flavor_tags": [
         "martial", "pastoral", "mercantile", "priestly", "frontier/rough",
         "imperial/formal", "scholarly", "nomadic", "maritime", "aristocratic",
-        "revolutionary", "ancient/archaic",
+        "revolutionary", "ancient/archaic", "subterranean", "riverine",
+        "artisan/guild", "oracular", "exilic/diaspora", "volcanic/forge",
     ],
 }

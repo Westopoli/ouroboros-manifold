@@ -1,0 +1,122 @@
+{
+  "openings": [
+    {
+      "id": "LQ_O_001",
+      "text": "For a time, the {lineage_name} household knew something rare in {region_name}: years that passed without crisis.",
+      "slots_used": ["{lineage_name}", "{region_name}"],
+      "word_count": 17
+    },
+    {
+      "id": "LQ_O_002",
+      "text": "The records of the {lineage_name} family grow sparse here, not from neglect, but from the gentle poverty of uneventful years.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 20
+    },
+    {
+      "id": "LQ_O_003",
+      "text": "{duration_prose}, the {lineage_name} name appeared in no dispatches, no treaties, and no eulogies.",
+      "slots_used": ["{duration_prose}", "{lineage_name}"],
+      "word_count": 14
+    },
+    {
+      "id": "LQ_O_004",
+      "text": "What followed for the {lineage_name} household was not peace so much as the simple absence of catastrophe.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 17
+    },
+    {
+      "id": "LQ_O_005",
+      "text": "In {region_name}, the {lineage_name} family settled into a rhythm that later generations would remember only as warmth.",
+      "slots_used": ["{region_name}", "{lineage_name}"],
+      "word_count": 17
+    },
+    {
+      "id": "LQ_O_006",
+      "text": "History has little to say about the {lineage_name} household during these years, and perhaps that is the point.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 18
+    }
+  ],
+  "details": [
+    {
+      "id": "LQ_D_001",
+      "text": "Children were born into the {lineage_name} name and grew old enough to be bored by it. Harvests came and went. The eldest repaired a wall their grandparents had built, and no one thought it worth recording.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 35
+    },
+    {
+      "id": "LQ_D_002",
+      "text": "The {lineage_name} estates in {region_name} produced modestly and consistently, enough to keep creditors away and ambition dormant. Neighbors borrowed tools and returned them. Small disputes were settled before they earned names.",
+      "slots_used": ["{lineage_name}", "{region_name}"],
+      "word_count": 32
+    },
+    {
+      "id": "LQ_D_003",
+      "text": "With conditions across {region_name} holding at {stability_level} levels, the {lineage_name} household occupied itself with the slow business of living — marriages arranged without urgency, debts repaid in full, land neither gained nor lost.",
+      "slots_used": ["{region_name}", "{stability_level}", "{lineage_name}"],
+      "word_count": 34
+    },
+    {
+      "id": "LQ_D_004",
+      "text": "The {lineage_name} family traded no blows and signed no pacts. {duration_prose}, their most consequential act was the planting of an orchard that would not bear fruit for another decade.",
+      "slots_used": ["{lineage_name}", "{duration_prose}"],
+      "word_count": 30
+    },
+    {
+      "id": "LQ_D_005",
+      "text": "A younger branch of the {lineage_name} line took up letters; an elder cousin kept bees. The family's holdings in {region_name} neither expanded nor contracted, and the ledgers from this period are notable mainly for their tidiness.",
+      "slots_used": ["{lineage_name}", "{region_name}"],
+      "word_count": 37
+    },
+    {
+      "id": "LQ_D_006",
+      "text": "No one tested the {lineage_name} household during these years. Whether this owed to respect, irrelevance, or mere fortune, the sources do not say. The family simply endured, which is its own accomplishment.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 32
+    },
+    {
+      "id": "LQ_D_007",
+      "text": "The {lineage_name} household observed the usual rites, settled the usual quarrels among cousins, and buried the usual number of old men and women. Stability in {region_name} held at {stability_level} levels, and life asked nothing extraordinary of them.",
+      "slots_used": ["{lineage_name}", "{region_name}", "{stability_level}"],
+      "word_count": 38
+    },
+    {
+      "id": "LQ_D_008",
+      "text": "{duration_prose}, the {lineage_name} name carried quietly forward — not celebrated, not threatened, simply present. A son learned his father's trade. A daughter married into a neighboring family and was, by all accounts, content.",
+      "slots_used": ["{duration_prose}", "{lineage_name}"],
+      "word_count": 33
+    }
+  ],
+  "closings": [
+    {
+      "id": "LQ_C_001",
+      "text": "It would be easy to skip past these years in the {lineage_name} chronicle. But those who lived them would not have traded them for glory.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 25
+    },
+    {
+      "id": "LQ_C_002",
+      "text": "Later, when the {lineage_name} name was spoken in harder contexts, some would look back on this period and wonder whether peace had been a gift or merely a pause.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 29
+    },
+    {
+      "id": "LQ_C_003",
+      "text": "The {lineage_name} household emerged from these quiet years neither stronger nor weaker — only older, and perhaps wiser for having wanted nothing they did not already possess.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 27
+    },
+    {
+      "id": "LQ_C_004",
+      "text": "In {region_name}, the {lineage_name} family had become part of the landscape — expected, unremarkable, and more deeply rooted than anyone, including themselves, quite realized.",
+      "slots_used": ["{region_name}", "{lineage_name}"],
+      "word_count": 24
+    },
+    {
+      "id": "LQ_C_005",
+      "text": "These were the years the {lineage_name} household would not think to mention in their own histories. Contentment seldom makes it into the record. That does not make it less real.",
+      "slots_used": ["{lineage_name}"],
+      "word_count": 30
+    }
+  ]
+}

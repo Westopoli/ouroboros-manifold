@@ -307,8 +307,187 @@ def run_manual_chronicle(output_dir="prompts"):
     print(f"Created batch_output/ directory for responses.")
 
 
-def run_manual_naming(output_dir="prompts"):
-    print("Naming pool generation not yet implemented (Step F).")
+NAME_CATEGORIES = ["people", "places", "units", "factions"]
+NAME_TARGETS = {"people": 500, "places": 200, "units": 200, "factions": 100}
+
+FACTION_IDS = [
+    "player", "conqueror", "fortifier", "opportunist",
+    "faction_05", "faction_06", "faction_07", "faction_08",
+    "faction_09", "faction_10",
+]
+
+from naming_system import _ALL_VALUES
+import config
+import random
+
+
+def _generate_variable_subsets(seed=42, locked_factions=None):
+    rng = random.Random(seed)
+    subsets = {}
+    used_roots = set()
+
+    if locked_factions:
+        for fid, sub in locked_factions.items():
+            subsets[fid] = sub
+            used_roots.update(sub["linguistic_roots"])
+
+    for fid in FACTION_IDS:
+        if fid in subsets:
+            continue
+
+        if fid == "player":
+            n_roots, n_patterns, n_tags = config.PLAYER_FACTION_SUBSET_WIDTH
+        else:
+            n_roots, n_patterns, n_tags = config.DEFAULT_FACTION_SUBSET_WIDTH
+
+        available_roots = [r for r in _ALL_VALUES["linguistic_roots"] if r not in used_roots]
+        if len(available_roots) < n_roots:
+            available_roots = list(_ALL_VALUES["linguistic_roots"])
+        roots = rng.sample(available_roots, min(n_roots, len(available_roots)))
+        used_roots.update(roots)
+
+        patterns = rng.sample(_ALL_VALUES["phoneme_patterns"],
+                              min(n_patterns, len(_ALL_VALUES["phoneme_patterns"])))
+        tags = rng.sample(_ALL_VALUES["cultural_flavor_tags"],
+                          min(n_tags, len(_ALL_VALUES["cultural_flavor_tags"])))
+
+        subsets[fid] = {
+            "linguistic_roots": roots,
+            "phoneme_patterns": patterns,
+            "cultural_flavor_tags": tags,
+        }
+    return subsets
+
+
+def _build_naming_system_prompt():
+    return """You are a name generator for a civilization simulation game. You generate names that feel culturally coherent within a faction and distinct across factions.
+
+Rules:
+1. Names must feel like they belong to the same culture — consistent phonetic patterns, syllable structures, and aesthetic.
+2. Draw freely from real human history and linguistic traditions. Names inspired by or adapted from historical cultures are encouraged. The only restriction: no names from Isaac Asimov's Foundation series.
+3. Names should work across any time period — avoid era-specific modifiers (no "cyber-", no "Sir").
+4. People names: first + last name (two parts). Place names: evocative single or compound names. Unit names: military-flavored compound names. Faction names: organization or polity names.
+5. Vary syllable count (2-4 syllables), name structure, and phonetic shape across the batch. Not every name should follow the same template.
+
+CRITICAL — Do NOT:
+- Generate names by combining roots and suffixes systematically (e.g. Aath, Baath, Caath, Daath...)
+- Enumerate through the alphabet
+- Reuse the same first-name or last-name component more than 3 times in a batch
+- Produce names that are just permutations of the same phoneme set
+Each name should feel individually crafted, as if pulled from a real historical record.
+
+Output Format:
+Return a JSON object with a single key "names" containing an array of name strings.
+Example: {"names": ["Kaelith Vorn", "Suranna Deshkov", "Toryn Ashemark"]}"""
+
+
+BATCH_SIZE = 75
+BATCH_SIZE_FACTIONS = 55
+
+def _build_naming_user_message(faction_id, category, subset, count, batch_num=1, total_batches=1, existing_names=None):
+    roots = ", ".join(subset["linguistic_roots"])
+    patterns = ", ".join(subset["phoneme_patterns"])
+    tags = ", ".join(subset["cultural_flavor_tags"])
+
+    msg = f"""Faction: {faction_id}
+Name category: {category}
+Generate: {count} names (batch {batch_num} of {total_batches})
+
+This faction's cultural profile:
+- Linguistic roots: {roots}
+- Phoneme patterns: {patterns}
+- Cultural flavor tags: {tags}
+
+Every name should reflect this faction's cultural profile. Names should feel like they come from a real civilization's historical records — varied, organic, individually crafted."""
+
+    if existing_names:
+        sample = existing_names[:30]
+        msg += f"\n\nPreviously generated names for this faction (avoid duplicates and stay consistent with the established style): {', '.join(sample)}"
+        if len(existing_names) > 30:
+            msg += f" ... and {len(existing_names) - 30} more"
+
+    msg += f'\n\nReturn as JSON: {{"names": [...]}}'
+    return msg
+
+
+ARCHETYPE_FACTIONS = ["player", "conqueror", "fortifier", "opportunist"]
+
+ORIGINAL_ARCHETYPE_SUBSETS = {
+    "player": {
+        "linguistic_roots": ["Sino-monosyllabic", "Semitic triconsonantal", "Gaelic consonant-cluster"],
+        "phoneme_patterns": ["single name only", "two-part compound", "honorific-suffix", "title-prefix"],
+        "cultural_flavor_tags": ["ancient/archaic", "pastoral", "maritime", "revolutionary"],
+    },
+    "conqueror": {
+        "linguistic_roots": ["Nahuatl compound", "Semitic triconsonantal"],
+        "phoneme_patterns": ["patronymic", "place-derived", "two-part compound"],
+        "cultural_flavor_tags": ["priestly", "maritime", "aristocratic"],
+    },
+    "fortifier": {
+        "linguistic_roots": ["Semitic triconsonantal", "invented guttural-aspirated"],
+        "phoneme_patterns": ["two-part compound", "reduplicative", "consonant-final"],
+        "cultural_flavor_tags": ["priestly", "nomadic", "aristocratic"],
+    },
+    "opportunist": {
+        "linguistic_roots": ["invented guttural-aspirated", "Persian flowing"],
+        "phoneme_patterns": ["patronymic", "title-prefix", "consonant-final"],
+        "cultural_flavor_tags": ["imperial/formal", "frontier/rough", "mercantile"],
+    },
+}
+
+def run_manual_naming(output_dir="prompts", start_num=21, locked_factions=None):
+    os.makedirs(output_dir, exist_ok=True)
+    os.makedirs("batch_output", exist_ok=True)
+
+    subsets = _generate_variable_subsets(locked_factions=locked_factions)
+    subsets_path = os.path.join(output_dir, "variable_subsets.json")
+    with open(subsets_path, "w") as f:
+        json.dump(subsets, f, indent=2)
+    print(f"  Variable subsets written to {subsets_path}")
+
+    system_prompt = _build_naming_system_prompt()
+    prompt_num = start_num - 1
+
+    import math
+    for fid in ARCHETYPE_FACTIONS:
+        subset = subsets[fid]
+        for cat in NAME_CATEGORIES:
+            target = NAME_TARGETS[cat]
+            overshoot = int(target * config.BUILDER_NAME_OVERSHOOT)
+            batch_size = BATCH_SIZE_FACTIONS if cat == "factions" else BATCH_SIZE
+            num_batches = math.ceil(overshoot / batch_size)
+
+            for b in range(num_batches):
+                prompt_num += 1
+                batch_count = min(batch_size, overshoot - b * batch_size)
+                user_msg = _build_naming_user_message(
+                    fid, cat, subset, batch_count,
+                    batch_num=b + 1, total_batches=num_batches,
+                )
+
+                if num_batches == 1:
+                    filename = f"{prompt_num:02d}_{fid}_{cat}.txt"
+                else:
+                    filename = f"{prompt_num:02d}_{fid}_{cat}_b{b+1}.txt"
+                filepath = os.path.join(output_dir, filename)
+                divider = "\u2500" * 56
+
+                with open(filepath, "w") as f:
+                    f.write(f"=== PROMPT {prompt_num:02d} "
+                            f"— Faction: {fid}, Category: {cat}, "
+                            f"Batch {b+1}/{num_batches} ===\n")
+                    f.write(f"Copy everything below the line into Claude (claude.ai).\n")
+                    f.write(f"Save Claude's complete response to: "
+                            f"batch_output/{filename}\n")
+                    f.write(f"{divider}\n\n")
+                    f.write(f"[SYSTEM PROMPT]\n\n{system_prompt}\n\n")
+                    f.write(f"[USER MESSAGE]\n\n{user_msg}\n")
+
+                print(f"  [{prompt_num:02d}] {filepath}")
+
+    total = prompt_num - start_num + 1
+    print(f"\nGenerated {total} naming prompt files in {output_dir}/")
+    print(f"Variable subsets: {subsets_path}")
 
 
 def run_api_chronicle():
@@ -323,20 +502,22 @@ def main():
     parser = argparse.ArgumentParser(description="Library Builder — offline content generation")
     parser.add_argument("--mode", choices=["api", "manual", "api-review"],
                         required=True, help="Operating mode")
-    parser.add_argument("--content", choices=["chronicle", "naming"],
+    parser.add_argument("--content", choices=["chronicle", "naming", "all"],
                         required=True, help="Content type to generate")
     args = parser.parse_args()
 
-    if args.content == "chronicle":
+    if args.content in ("chronicle", "all"):
         if args.mode == "manual":
             run_manual_chronicle()
         elif args.mode == "api":
             run_api_chronicle()
         elif args.mode == "api-review":
             run_api_review_chronicle()
-    elif args.content == "naming":
+
+    if args.content in ("naming", "all"):
         if args.mode == "manual":
-            run_manual_naming()
+            start = 21 if args.content == "all" else 1
+            run_manual_naming(start_num=start, locked_factions=ORIGINAL_ARCHETYPE_SUBSETS)
         else:
             print(f"Mode {args.mode} for naming not yet implemented.")
 
