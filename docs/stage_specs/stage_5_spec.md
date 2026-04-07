@@ -103,6 +103,132 @@ The mission generator, mission outcome resolver, force allocation algorithm, and
 
 ---
 
+## Mandatory Checkpoints
+
+> **REMINDER — THIS IS NON-NEGOTIABLE.** Each lettered step below is a mandatory checkpoint. After completing each step, run the specified test, show the output to Westley, and **stop executing. Do not continue to the next step until Westley approves.** Do not evaluate output yourself and decide to proceed. Do not batch multiple steps. Do not "fix" something and continue without showing the fix. Each checkpoint requires Westley's explicit approval before the next step begins. See dev_rules.md "Mandatory Checkpoints — STOP AND WAIT" for the full policy.
+
+## Implementation Steps
+
+### A — Naming System (standalone, no dependencies)
+
+Build `naming_system.py` with the runtime interface (`get_name`, `release_name`, `is_available`), pool loading from JSON, usage tracking, and 500-tick reuse cooldown. Use a small hardcoded test pool (10 names per category for 2 test factions) — the real pools come from the library builder later.
+
+**Test:** Create 2 test factions with 10-name pools. Draw 8 names from faction 1 — confirm all unique. Draw a 9th — confirm it's different from the first 8. Release a name at tick 100. Confirm `is_available()` returns False at tick 599, True at tick 601. Draw from faction 2 — confirm names come from faction 2's pool, not faction 1's. Print all draws, releases, and availability checks.
+
+**🛑 CHECKPOINT A — Stop executing. Show output to Westley. Wait for approval before continuing.**
+
+---
+
+### B — Coherence Ledger (standalone, depends on naming system)
+
+Build `coherence_ledger.py` with character records, creation, death, lineage tracking, event attachment, and all query methods. Wire it to the naming system for name assignment.
+
+**Test:** Create 2 factions. Confirm each gets a supreme_commander with a name from the naming system. Create a region — confirm a regional_commander is assigned. Kill the regional_commander — confirm status changes to "dead", death_tick recorded, name enters cooldown. Create 3 lineage members for a test lineage — confirm parent-child links, region assignments, and unique names. Simulate event attachment: fire a test event in a region with a named character, confirm the character is attached to the event log entry. Print all character records, lineage tree, and the event attachment.
+
+**🛑 CHECKPOINT B — Stop executing. Show output to Westley. Wait for approval before continuing.**
+
+---
+
+### C — Coherence Ledger Integration (wire into tick loop and faction creation)
+
+Modify `tick.py` to add the per-tick ledger step (character attachment to significant events). Modify `faction.py` to assign supreme_commanders on faction creation and mark them dead on faction collapse.
+
+**Test:** Run scenario `08_lifecycle_2faction` for 300 ticks with the ledger enabled. Print: total characters created, total characters dead, total event attachments, faction leaders at tick 300 (name, faction, status for each). Confirm every faction with ≥1 region has an active supreme_commander. Confirm at least 1 event attachment occurred (a significant event had a named character in its region).
+
+**🛑 CHECKPOINT C — Stop executing. Show output to Westley. Wait for approval before continuing.**
+
+---
+
+### D — Library Builder: Chronicle Fragment Generation
+
+Build `library_builder.py` with mode selection (`--mode api`, `--mode manual`, `--mode api-review`). Implement the chronicle fragment generation workflow (system prompt construction, per-category user messages, response parsing).
+
+**Test (manual mode):** Run `library_builder.py --mode manual --content chronicle`. Confirm it generates 20 numbered prompt files in `prompts/`. Open prompt file 01 — confirm it contains the system prompt with all 8 fragment rules, the slot vocabulary, and the per-category instructions. Confirm the output format specification asks for JSON. Print the prompt file count and the first prompt's category name and required slots.
+
+**🛑 CHECKPOINT D — Stop executing. Show output to Westley. Wait for approval before continuing.**
+
+---
+
+### E — Library Validator
+
+Build `library_validator.py` with all three validation layers: structural (slot checking, word limits, mechanical language rejection), dedup (Levenshtein within pools, cross-category opening dedup, diminishing returns flag), and tone/coherence (AI-assisted classification on fragments, sampled assembly coherence).
+
+**Test:** Create a small test fragment library (3 categories, 5 fragments each) with deliberate errors: one fragment using an invalid slot, one exceeding the word limit, two near-duplicate fragments, one with mechanical language ("stability dropped to 23"). Run all three validation layers. Print the validation report: structural failures with reasons, dedup matches with edit distances, mechanical language rejections. Confirm all deliberate errors are caught.
+
+**🛑 CHECKPOINT E — Stop executing. Show output to Westley. Wait for approval before continuing.**
+
+---
+
+### F — Library Builder: Naming Pool Generation
+
+Add the naming pool generation workflow to `library_builder.py` (variable subset generation, per-faction per-category name generation, response parsing).
+
+**Test (manual mode):** Run `library_builder.py --mode manual --content naming`. Confirm it generates variable subsets for 10 factions (written to `variable_subsets.json`) and 40 numbered prompt files. Open `variable_subsets.json` — confirm each faction has 2–3 roots, 3–4 patterns, 3–4 tags, and that the player faction has a wider subset. Open one naming prompt — confirm it includes the faction's variable subset, the category, and the count with 10% overshoot. Print subset summary (faction ID → root count, pattern count, tag count) and prompt file count.
+
+**🛑 CHECKPOINT F — Stop executing. Show output to Westley. Wait for approval before continuing.**
+
+---
+
+### G — Generate Production Library Content
+
+Run the library builder (manual or API mode — Westley's choice) to generate the full production library: 380 chronicle fragments across 20 categories, and 10,000 names across 10 factions × 4 categories. Run the full validation pipeline on the output.
+
+**Test:** Print the validation report summary: fragments per category (confirm 19 per category — 6 openings, 8 details, 5 closings), dedup losses per category, any thin pool flags, any diminishing returns flags, structural failure count (should be 0 after clean generation). For naming: names per faction per category (should be ≥ target after dedup), cross-faction dedup results, any pool exhaustion warnings. Print 3 sample fragments from 3 different categories and 5 sample names from 3 different factions for Westley to eyeball quality.
+
+**🛑 CHECKPOINT G — Stop executing. Show output AND the sample content to Westley. This is a quality gate — Westley evaluates prose quality and naming coherence. Wait for approval before continuing.**
+
+---
+
+### H — Chronicle Distiller (standalone)
+
+Build `chronicle_distiller.py` with all three passes (significance scoring, lineage-first clustering, template selection) and `chronicle_assembler.py` (fragment pool loading, slot resolution, assembly). Wire the assembler to use the production fragment library generated in step G.
+
+**Test:** Construct a mock event log (30 events across 5 regions, including: 2 events in a lineage-occupied region, 1 chain of 3 linked events, 5 standalone events, 1 conquest event with a named character attached). Run the distiller. Print the full Pass 1 significance scores (all 30 events ranked). Print the Pass 2 clustering output (which events went into which clusters, cluster types, category assignments). Print all assembled scroll entries with base_text, expanded_text, fragment_ids, and resolved slots. Confirm: 5–10 entries produced, lineage cluster present, chain cluster present, all slots resolved to non-empty strings, word counts within limits.
+
+**🛑 CHECKPOINT H — Stop executing. Show the assembled scroll entries to Westley. This is a prose quality gate. Wait for approval before continuing.**
+
+---
+
+### I — Chronicle Distiller Integration (wire into time jump)
+
+Modify `time_jump.py` to invoke lineage member generation and the chronicle distiller after running N ticks. Add significance tiers to all existing event templates in `events.py`. Wire the distiller to read from the coherence ledger and simulation state.
+
+**Test:** Run scenario `09_chronicle_2faction` for 1000 ticks with chronicle review at ticks 300, 600, 900. Print the Chronicle Review Report for each time jump (full format as specified in the Validation section — event log summary, top significance scores, clusters formed, all scroll entries with base and expanded text). Confirm: each jump produces 5–10 entries, lineage clusters appear in every jump, slot resolution produces natural prose, no empty slots.
+
+**🛑 CHECKPOINT I — Stop executing. Show the Chronicle Review Report to Westley. This is the primary prose quality gate. Wait for approval before continuing.**
+
+---
+
+### J — Schism Cultural Drift and Naming Edge Cases
+
+Implement Schism cultural drift in `naming_system.py` (breakaway inherits parent subset with one value swapped). Wire into `faction.py` breakaway creation.
+
+**Test:** Create a parent faction with a known variable subset. Create 3 breakaway factions from it. Print each breakaway's subset alongside the parent's — confirm exactly 1 value differs per breakaway, and the differing value is in a random category each time. Draw 5 names from the parent and 5 from each breakaway — print them side by side. Confirm they sound related but distinct (Westley evaluates).
+
+**🛑 CHECKPOINT J — Stop executing. Show the naming comparison to Westley. Wait for approval before continuing.**
+
+---
+
+### K — Invariants and Full Validation
+
+Add all K1–K12 invariants to `invariants.py`. Add scenarios 09, 10, 11 to `sim_tuner.py`.
+
+**Test:** Run scenario `10_chronicle_4faction` with seeds 1–3. Print the invariant results table for all K1–K12 plus regression check K12 (all A–J invariants). Print any failures or warnings with full detail. Run scenario `11_naming_stress` (3000 ticks) — confirm no naming pool exhaustion.
+
+**🛑 CHECKPOINT K — Stop executing. Show the full invariant report to Westley. Wait for approval before continuing.**
+
+---
+
+### L — Chronicle Review Report: Final Quality Gate
+
+Run `sim_tuner.py --chronicle-review` on scenario `10_chronicle_4faction` with seeds 1, 2, 3. Generate the full Chronicle Review Reports.
+
+**Test:** Present all 3 review reports to Westley. This is the final subjective quality gate — Westley reads the scroll entries across multiple seeds and multiple time jumps, evaluates prose quality, fragment coherence, naming consistency, lineage entanglement, and significance scoring.
+
+**🛑 CHECKPOINT L — Stop executing. Show all Chronicle Review Reports to Westley. This is the Stage 5 sign-off gate. Do not proceed to any further work until Westley explicitly approves Stage 5 as complete.**
+
+---
+
 ## Library Builder Architecture
 
 The library builder is the offline content generation tool that produces the JSON libraries the game reads at runtime. It makes Claude API calls (or accepts manual input) to generate chronicle fragments and naming pools, then runs a validation pipeline on the output. All generated content is **production-quality and ships with the game**. This is not test content.

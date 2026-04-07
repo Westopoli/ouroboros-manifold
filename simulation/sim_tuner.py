@@ -231,6 +231,64 @@ SCENARIOS = {
         },
         "overrides": {},
     },
+
+    # ── Stage 4: Lifecycle & time jump validation ───────────────────────────
+
+    "08_lifecycle_2faction": {
+        "template":     "full_game_50",
+        "ticks":        300,
+        "seed":         1,
+        "description":  "Lifecycle — admin revolts, 300 ticks, prove fragmentation",
+        "use_tick_engine": True,
+        "features": {
+            "events":          True,
+            "factions":        True,
+            "border_friction": True,
+            "recruitment":     True,
+            "adjacency_bonus": True,
+            "oscillation":     True,
+            "technology":      True,
+            "diplomacy":       True,
+            "admin_revolts":   True,
+        },
+    },
+    "09_lifecycle_4faction": {
+        "template":     "full_game_50",
+        "ticks":        300,
+        "seed":         1,
+        "description":  "Full lifecycle — all systems, 300 ticks",
+        "use_tick_engine": True,
+        "features": {
+            "events":          True,
+            "factions":        True,
+            "border_friction": True,
+            "recruitment":     True,
+            "adjacency_bonus": True,
+            "oscillation":     True,
+            "technology":      True,
+            "diplomacy":       True,
+            "admin_revolts":   True,
+        },
+    },
+    "10_time_jump": {
+        "template":     "full_game_50",
+        "ticks":        480,
+        "seed":         1,
+        "description":  "Time jump test — 300 base + 3 jumps (30, 50, 100 ticks)",
+        "use_tick_engine": True,
+        "features": {
+            "events":          True,
+            "factions":        True,
+            "border_friction": True,
+            "recruitment":     True,
+            "adjacency_bonus": True,
+            "oscillation":     True,
+            "technology":      True,
+            "diplomacy":       True,
+            "admin_revolts":   True,
+            "time_jumps":      [300, 330, 380],
+        },
+    },
 }
 
 

@@ -7,6 +7,9 @@ import drift as _drift
 import technology as _tech
 import tick as _tick
 import diplomacy as _diplomacy
+import generational as _gen
+import naming_system as _naming_mod
+import coherence_ledger as _ledger_mod
 
 
 @dataclass
@@ -24,6 +27,7 @@ class TickSnapshot:
     collisions: list       # [collision log dicts]
     diplomatic_events: list  # [{event_type, tick, factions, result, ...}]
     betrayals: list          # [{event_type, tick, betrayer, victim, ...}]
+    player_faction_id: str | None = None
 
 
 @dataclass
@@ -35,6 +39,8 @@ class TrajectoryLog:
     features: dict
     config_snapshot: dict
     snapshots: list = field(default_factory=list)
+    player_deaths: list = field(default_factory=list)  # [{tick, old_faction_id, new_faction_id}]
+    coherence_ledger: object = None
 
     # ── Query helpers ────────────────────────────────────────────────────────
 
@@ -165,7 +171,8 @@ def _snapshot_config() -> dict:
 
 # ── Snapshot capture ─────────────────────────────────────────────────────────
 
-def _capture_snapshot(tick: int, world, registry: dict, tick_log: dict | None) -> TickSnapshot:
+def _capture_snapshot(tick: int, world, registry: dict, tick_log: dict | None,
+                      player_faction_id: str | None = None) -> TickSnapshot:
     regions = {}
     for rid, r in world.regions.items():
         regions[rid] = {
@@ -231,6 +238,7 @@ def _capture_snapshot(tick: int, world, registry: dict, tick_log: dict | None) -
         collisions=collisions,
         diplomatic_events=diplomatic_events,
         betrayals=betrayals,
+        player_faction_id=player_faction_id,
     )
 
 
@@ -291,8 +299,28 @@ def run_recorded_scenario(name: str, scenario: dict,
 
     stances = _diplomacy.init_stances(registry) if config.ENABLE_DIPLOMACY and registry else {}
 
+    # ── Coherence ledger + naming system (Stage 5) ──────────────────────────
+    coherence_ledger = None
+    if scenario["features"].get("coherence_ledger"):
+        ns = _naming_mod.NamingSystem()
+        _load_test_naming_pools(ns, registry, w)
+        coherence_ledger = _ledger_mod.CoherenceLedger(ns)
+        for fid, fac in registry.items():
+            home_regions = [r for r in w.regions.values() if r.faction_id == fid]
+            home_rid = home_regions[0].id if home_regions else None
+            if home_rid:
+                coherence_ledger.assign_faction_leader(fid, home_rid, 0, w.rng)
+
+    player_fid = None
+    for fid, fac in registry.items():
+        if fac.archetype == "player_civilization":
+            player_fid = fid
+            break
+    gen_state = _gen.GenerationalState(player_fid, start_tick=0) if player_fid else None
+
     # Tick 0 snapshot (initial state, no tick_log)
-    tlog.snapshots.append(_capture_snapshot(0, w, registry, None))
+    tlog.snapshots.append(_capture_snapshot(0, w, registry, None,
+                                           player_faction_id=player_fid))
 
     if scenario.get("use_tick_engine", False):
         pending_telegraphs = []
@@ -305,8 +333,18 @@ def run_recorded_scenario(name: str, scenario: dict,
                 registry=registry if config.ENABLE_FACTIONS else None,
                 stances=stances if config.ENABLE_DIPLOMACY else None,
                 pending_telegraphs=pending_telegraphs,
+                coherence_ledger=coherence_ledger,
             )
-            tlog.snapshots.append(_capture_snapshot(t, w, registry, tick_log))
+            if gen_state and _gen.check_player_collapse(gen_state, w, registry):
+                result = _gen.reassign_player(gen_state, w, registry, w.rng, t)
+                if result and result["type"] == "reassignment":
+                    tlog.player_deaths.append({
+                        "tick": t,
+                        "old_faction_id": result["old_faction"],
+                        "new_faction_id": result["new_faction"],
+                    })
+            tlog.snapshots.append(_capture_snapshot(t, w, registry, tick_log,
+                                                    player_faction_id=gen_state.player_faction_id if gen_state else None))
     else:
         for t in range(1, ticks + 1):
             manual_log = {"events": [], "faction_actions": [], "conquests": [],
@@ -383,6 +421,40 @@ def run_recorded_scenario(name: str, scenario: dict,
                     for fac in registry.values():
                         _tech.apply_convergence(fac, registry, stances)
 
-            tlog.snapshots.append(_capture_snapshot(t, w, registry, manual_log))
+            if gen_state and _gen.check_player_collapse(gen_state, w, registry):
+                result = _gen.reassign_player(gen_state, w, registry, w.rng, t)
+                if result and result["type"] == "reassignment":
+                    tlog.player_deaths.append({
+                        "tick": t,
+                        "old_faction_id": result["old_faction"],
+                        "new_faction_id": result["new_faction"],
+                    })
+            tlog.snapshots.append(_capture_snapshot(t, w, registry, manual_log,
+                                                    player_faction_id=gen_state.player_faction_id if gen_state else None))
 
+    tlog.coherence_ledger = coherence_ledger
     return tlog
+
+
+_TEST_NAME_POOL = [
+    "Kaelith Vorn", "Suranna Deshkov", "Toryn Ashemark", "Velan Koss",
+    "Mireth Solane", "Draven Thurik", "Olenna Brask", "Fendric Hale",
+    "Cassia Vrenn", "Aldric Mourne", "Zhara Okun", "Brin Tasev",
+    "Lunara Chelk", "Demaris Vyth", "Korren Sable", "Ithara Goss",
+    "Tyven Marsh", "Sariel Donn", "Quillon Pask", "Elanda Rieve",
+    "Dareth Kayn", "Solvei Hask", "Orill Vandre", "Maelis Thorn",
+    "Kavi Rennic", "Tallis Obren", "Yenara Stross", "Firek Dallow",
+    "Jessamine Kael", "Ulric Voss", "Petra Holm", "Neven Drask",
+    "Caris Aldune", "Roshan Mevek", "Liri Ashfall", "Gavin Torr",
+    "Xandri Pell", "Osen Kraith", "Emira Vael", "Jorik Stenn",
+    "Halla Birsk", "Renn Calder", "Savin Oreth", "Devan Falk",
+    "Ilya Maren", "Theron Gale", "Anise Drava", "Kellan Ruud",
+    "Brynn Solvar", "Ondri Tavish",
+]
+
+
+def _load_test_naming_pools(ns, registry, world):
+    for fid in registry:
+        shuffled = list(_TEST_NAME_POOL)
+        world.rng.shuffle(shuffled)
+        ns.load_pool(fid, "people", shuffled)

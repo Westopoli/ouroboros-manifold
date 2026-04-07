@@ -214,7 +214,7 @@ Enemy units run the identical decision loop as player units. They acquire the ne
 
 What makes each mission archetype *feel* different from the enemy's side is not AI micro behavior but **mission setup**: where enemy units are placed, what scripted macro objectives they pursue (advance toward player position, hold defensive positions, hide and ambush, patrol routes), and what composition they have. The mission generator authors these macro-level behaviors per archetype at generation time. The unit-level AI is always the same — the variety comes from the tactical situation the setup creates.
 
-**Enemy macro objectives are a separate design question** from unit behavior AI and will be specified when the mission-level AI system is designed. The unit behavior system described here is the foundation that macro objectives build on top of.
+**Enemy macro objectives are specified in the "Enemy Macro Behavior System" section below.** The macro behavior system issues commands to enemy unit groups using the same 5-command protocol as the player. The unit behavior system described here is the foundation that macro behavior builds on top of — the macro layer controls force-level intent, the unit layer executes commands through this decision loop.
 
 ---
 
@@ -266,15 +266,19 @@ The RPS is **soft**: 1.5× provides a meaningful advantage (~30–40% faster tim
 
 ### Stat Philosophy — Long Engagements with Category-Specific Rhythm
 
-> **RESOLVED (v2.02).** Engagement pacing follows an A+C hybrid: all fights are long enough for positioning and abilities to matter, but different categories fight at different tempos.
+> **RESOLVED (v2.02, updated v2.03).** Engagement pacing follows an A+C hybrid: all fights are long enough for positioning, abilities, and retreat decisions to matter, but different categories fight at different tempos.
 
-**Pacing targets:**
-- Small skirmishes (5v5): minimum 10–15 seconds
-- Medium engagements (25v25): 30–50 seconds
-- Large battles (100+ per side): well over 60 seconds
-- Mirror 50v50 (balanced composition): 45–75 seconds
+**Pacing targets (updated v2.03):**
+- Minimum brawl (force-on-force, no tactics): 45 seconds
+- Tactical engagement (positioning, abilities, retreat and re-engage): ~2 minutes
+- Large battles (100+ per side): well over 2 minutes
+- Mirror 50v50 (balanced composition): 90–150 seconds
 
-HP pools create tempo differences. Strike has the lowest HP (fastest fights, ~10–15 sec minimum). Line has moderate HP (baseline, ~20–30 sec). Siege has the highest HP (slowest, ~30–45 sec). DPS is moderate across all categories; HP is the primary differentiator. In large battles, flanks resolve first (Strike), the center grinds next (Line + Warden), and Siege duels continue longest — creating layered attention-management gameplay.
+**[OPEN — v2.03]:** The current Tier 2 stat baselines produce engagements significantly shorter than these targets. A stat rebalance is needed — either HP increase, DPS decrease, or hybrid. See Open Design Question #14 in the hub. The rebalance must preserve RPS ratios and relative matchups while lengthening all engagements proportionally. Until the rebalance is resolved, the Tier 2 stat table below represents the pre-adjustment values.
+
+HP pools create tempo differences. Strike has the lowest HP (fastest fights within a category). Line has moderate HP (baseline). Siege has the highest HP (slowest). DPS is moderate across all categories; HP is the primary differentiator. In large battles, flanks resolve first (Strike), the center grinds next (Line + Warden), and Siege duels continue longest — creating layered attention-management gameplay.
+
+The longer engagement floor (45 seconds minimum) serves a critical design purpose: it gives the player time to read the battle, recognize when they're losing, and execute a retreat. Retreat is a real tactical option, not a panic button — the player has time to recognize "this fight isn't going my way, the enemy has more units and is decreasing my HP faster" and pull back to regroup. This supports the 30–60 minute mission pacing and the "deliberate, not frantic" philosophy.
 
 ---
 
@@ -350,3 +354,123 @@ Commands are recorded with tick numbers for replay. The engine processes all com
 - `ability_bonus` = flat percentage per unit type (e.g., Surge +15%, Brace +20%)
 
 AoE units (Bombard) receive an additional multiplier. Force total = sum of all unit power ratings.
+
+---
+
+### Enemy Macro Behavior System
+
+> **RESOLVED (v2.03).** The enemy macro behavior system sits on top of the Unit Behavior AI (the per-unit decision loop) and the tactical engine's command protocol. It controls *what enemy forces do at the force level* — where they go, what they're trying to accomplish, and how they respond to player actions. The system is universal across all mission archetypes; differentiation comes from how the behavior script is authored per archetype, not from different AI systems.
+
+#### Architecture — Shared Behavior Scripts with Reactive Hooks
+
+Each mission instance includes a **behavior script** that defines the enemy's plan. The script is a state machine composed from a shared vocabulary of behaviors. Each enemy force group (a named set of unit IDs) runs its own script instance. The script moves through states based on transition conditions. Layered on top of the state machine are **reactive hooks** — condition → action pairs that fire when the player does something the script's base flow didn't anticipate. The script is the skeleton (authored pacing); the hooks are the muscles (authored reactivity).
+
+The behavior script issues Stage 6 commands (`move`, `attack_move`, `attack_target`, `group_move`, `activate_ability`) to groups of enemy units. Individual units then execute those commands through their existing decision loop. The macro layer re-evaluates its state and issues updated commands at a regular cadence (config value, targeting every 2 seconds). Between evaluations, units rely on their existing auto-engage and flinch behaviors.
+
+**This replaces the earlier roadmap concept of "per-archetype enemy scripted behaviors."** The macro behavior system is a single shared system. Each archetype authors a script using the shared vocabulary — the archetype provides the *content* (which states, which transitions, which hooks), the system provides the *infrastructure* (how states execute, how transitions evaluate, how hooks fire). Adding a new archetype requires authoring a new script, not writing new AI code.
+
+#### Behavior Vocabulary — 5 Base Behaviors + 3 Modifiers
+
+The behavior vocabulary is **compositional**: 5 base behaviors combined with 3 modifiers that adjust execution parameters. A script state is specified as a `behavior_modifier` pair (e.g., `advance_cautious`, `defend_aggressive`). The modifier adjusts speed multipliers, engagement thresholds, spacing, and break-off conditions — not the behavior's fundamental logic.
+
+**Base behaviors:**
+
+- **`advance`** — move the force group toward a target position, engaging enemies along the way. The group issues `attack_move` commands toward the target. The target can be a map position, a spine node, or a unit group.
+- **`defend`** — hold a position and engage enemies that enter range. The group holds at its assigned position. Units auto-engage per the existing decision loop. The force does not pursue enemies that retreat out of range.
+- **`patrol`** — move between a sequence of waypoints, engaging enemies on contact. The group issues `move` commands cycling through waypoints. On contact, units auto-engage. After the engagement resolves, the group resumes patrol.
+- **`ambush`** — hold at a hidden position (ideally in a sensor interference zone or behind cover). When enemy units enter a trigger zone (config radius around the ambush position), the force activates — transitioning to `advance_aggressive` toward the triggering units. The ambush is a one-shot state: once triggered, it doesn't reset.
+- **`retreat`** — move the force group away from the engagement toward a designated fallback position. The group issues `move` commands (not `attack_move`) toward the fallback point. Units still auto-engage if enemies pursue into range, but the group prioritizes disengagement over fighting.
+
+**Modifiers:**
+
+- **`cautious`** — slower movement speed (config multiplier, e.g., 0.6×), wider unit spacing, the force breaks off and transitions to `retreat` or `defend` on first significant contact (contact threshold: config percentage of force HP lost). Approximates probing behavior when combined with `advance`.
+- **`aggressive`** — faster movement speed (config multiplier, e.g., 1.2×), tighter unit spacing, the force presses through losses and does not break off unless a retreat transition fires. The committed posture.
+- **`phased`** — the force advances in echelons. The group is internally divided into 2–3 sub-groups. The first sub-group advances while the rest hold. When the first engages or reaches its waypoint, the next sub-group advances. Creates a staggered arrival that prevents the entire force from being committed simultaneously.
+
+The combinatorial space (5 behaviors × 3 modifiers = 15 distinct behavior flavors) provides enough variety to compose diverse mission scripts from a small code base. Not all combinations are used — `ambush_phased` and `retreat_cautious` are unlikely to appear in practice — but the system supports them without special cases.
+
+#### Behavior Transitions — Timer + Threshold + Noise
+
+Each state in the behavior script defines its transition conditions. Transitions fire from two independent systems: **thresholds** (reactive to tactical state) and **timers** (pacing-driven). Both are subject to **noise** — random offsets rolled at mission start that persist for the mission's duration.
+
+**Threshold transitions.** Each transition has a condition evaluated against current tactical state: "force HP below X% of starting," "player units within Y wu of objective," "force has advanced past map position Z." The threshold value has a noise range (e.g., 30% ± 10%), rolled once at mission start. When the condition is met against the noised threshold, the transition fires.
+
+**Timer transitions.** Each state has a duration range (e.g., 60–90 seconds). A specific duration is rolled from the range at mission start. When the timer expires, the transition fires regardless of tactical state. Timers ensure the mission keeps moving even if the player is passive — the bible's "static = broken" principle enforced at the tactical level.
+
+**Conflict resolution.** When both a timer and a threshold fire on the same evaluation tick, the threshold transition takes priority — reacting to the player is always more important than following the schedule. Exception: if the timer transition leads to a more aggressive state (escalation) while the threshold leads to retreat, retreat wins. The precedence rule is: **survival transitions override all, then threshold transitions, then timer transitions.**
+
+**Noise philosophy.** The noise offsets use the same pattern as the simulation's event threshold noise (rolled once, persists for the duration, applied as an offset to a base value). This means the same mission archetype on the same map plays differently each time — the enemy's decision points shift by 10–20%, creating the "genuine stochasticity" the bible demands without producing degenerate behavior.
+
+#### Multi-Force Coordination — Independent with Trigger Bus
+
+When a mission involves multiple enemy force groups (Multi-Front Defense, Containment, etc.), each force runs its own behavior script instance independently. Coordination uses two mechanisms:
+
+**Timer-staggered synchronization.** The archetype's script authors the relative timing of each force's actions: "Force A begins `advance_cautious` at T+0, Force B at T+30 sec, Force C at T+60 sec." Timer noise means the actual timing varies per run (each force's timer is rolled independently). This creates the appearance of coordinated multi-vector pressure through authored timing.
+
+**Shared trigger bus for key moments.** A lightweight shared state — a dictionary of named boolean flags — exists for the mission. When something significant happens to one force, it sets a flag on the bus: `force_a_routed`, `objective_alpha_contested`, `player_force_split`. Other forces' scripts include reactive hooks that read these flags: "if `force_a_routed`, transition from `advance_cautious` to `advance_aggressive`." Forces don't communicate directly — they react to shared state.
+
+The trigger bus fires rarely — typically 2–5 times per mission. Most of the time, forces operate independently and that's fine. The trigger moments create memorable beats where the enemy visibly adapts ("they noticed I destroyed the northern force and now the southern force is pushing harder"). Each archetype defines its trigger vocabulary as part of its script — simple archetypes may have 1–2 triggers, complex multi-front archetypes may have 4–5.
+
+#### Pacing and Reinforcement
+
+**In-mission pacing** comes primarily from the behavior script's timer-driven state transitions (ensuring the enemy escalates over time) and the tactical reinforcement system (ensuring both sides receive replacement units). The combination creates a natural pacing arc: early mission is probing and positioning, mid-mission is committed engagement, late mission is escalation with depleted forces supplemented by reinforcements.
+
+**External reinforcement events** are rare authored complications — approximately 1 in 10–20 missions. When an external reinforcement event fires, additional enemy forces arrive from map-edge spawn points during the mission. This is pre-determined at mission generation (not reactive to player performance) and foreshadowed in the mission briefing: the player knows reinforcements may arrive, knows roughly which direction, but not exactly when. External reinforcement arrival is a trigger bus event that other forces can react to. The rarity ensures reinforcement events feel like memorable disruptions, not routine occurrences.
+
+Most reinforcements come from the **tactical reinforcement system** (see below) — both the player and enemy produce replacement units from local military infrastructure throughout the mission. External reinforcement events are a separate, much rarer system layered on top.
+
+#### Relationship to Unit Behavior AI
+
+The macro behavior system and the Unit Behavior AI (per-unit decision loop) are cleanly separated:
+
+- The **macro layer** decides force-level intent: where a group should go, what posture to adopt, when to transition between states. It issues commands to unit groups.
+- The **unit layer** executes those commands through the existing priority-ordered decision loop: flinch → command → auto-engage. The unit layer does not know about behavior states, transitions, or the trigger bus.
+- The **interface** between them is the Stage 6 command protocol. The macro layer issues the same 5 commands the player does. No special enemy-only commands exist. This means enemy macro behavior is fully replayable — the replay file captures enemy commands alongside player commands.
+
+---
+
+### Tactical Reinforcement System
+
+> **RESOLVED (v2.03).** In-mission unit production through local military infrastructure. The player's starting force is roughly half of what they'll field over a full mission. The other half comes from reinforcement structures that both sides capture, hold, and produce units from.
+
+#### Narrative Frame
+
+The player is a commander operating in a region that has its own military infrastructure — garrison posts, militia stations, forward operating bases. These structures represent the local population's military capacity. Capturing and holding them gives the commander access to local reinforcements — militia, reserves, garrison troops rallied to the cause. This is not base-building and not economy management. The infrastructure already exists in the region. The commander leverages what's there.
+
+The enemy has access to the same system. Enemy-held structures produce enemy reinforcements. Structures in contested areas are strategic assets — capturing one denies the enemy production while increasing your own.
+
+#### Structure Properties
+
+Reinforcement structures are **fixed-placement entities on the tactical map**, placed by the map generation system as a spine node type (alongside objectives, chokepoints, vantage points, etc.). Each structure has:
+
+- **Owner** — player faction, enemy faction, or neutral at mission start. Ownership can change through capture.
+- **HP** — structures can be destroyed. A destroyed structure is gone for the rest of the mission (no rebuilding). Destruction is a deliberate strategic choice: the player (or enemy) can destroy a structure they can't hold to deny it to the other side. Structure HP is high enough that destruction requires a committed attack, not accidental splash damage.
+- **Capture mechanic** — move friendly units near the structure with no enemy units in the capture zone and hold for a duration (config value). The structure flips ownership. Same mechanic as zone-based objectives.
+- **Production rate** — each structure produces one reinforcement unit at a fixed interval (config value, targeting roughly one unit per 45–60 seconds per structure). The owning side chooses which unit type is produced. Production is automatic and continuous while the structure is held.
+
+#### Simulation-Driven Capacity
+
+The **total reinforcement capacity** across all structures on a mission map is derived from the mission region's military field value in the simulation. A region with high military strength has more productive local infrastructure (more structures, or faster production, or both — the specific mapping is a tuning question). A region with depleted military has fewer and slower structures.
+
+This creates the direct link between strategic simulation and tactical experience that the bible demands: commanding forces in a thriving, well-militarized region means abundant local reinforcements. Commanding forces in a depleted frontier means scraping together whatever the local garrison can spare. The player feels the simulation's state through the tactical experience without needing to read numbers.
+
+The chronicle briefing communicates the expected reinforcement level as part of the mission context: "Local military infrastructure is extensive — expect steady reinforcement from regional garrisons" vs. "The region's military capacity has been gutted — local reinforcements will be sparse." In rare situations where intelligence is incomplete, the briefing may understate or omit reinforcement information, creating surprise (positive or negative) during the mission.
+
+#### Player and Enemy Production
+
+**Player production.** The player selects which unit type each structure produces. This is a simple UI interaction — click a held structure, pick from the 6 unit types. The player can change production type at any time. Newly produced units spawn at the structure's location and await orders. The player's freedom to produce any unit type creates composition flexibility: a player who lost all their Strike units can shift production to replace them, or double down on Line if the situation calls for it.
+
+**Enemy production.** The enemy AI uses a **target ratio** — a desired composition expressed as percentages across the 6 unit types (e.g., 40% Line, 25% Strike, 20% Siege, 15% support). The ratio is defined per archetype's behavior script. Each production cycle, the AI compares its current force composition to the target ratio and produces the unit type that is most underrepresented. This is simpler than the player's free choice but produces coherent force compositions that align with the archetype's tactical approach. The AI does not deviate from its ratio — it always produces toward the target composition. This creates a predictable (but not exploitable) production pattern: the player can observe what the enemy is building and adapt.
+
+#### Open Tuning Questions
+
+The following tuning values are open and will be resolved during Stage 7 implementation:
+
+- **Production rate per structure** — units per minute. Too fast and the mission becomes a production race; too slow and structures don't matter enough.
+- **Structure count per map size** — how many structures per canvas size category. Probably 2–4 for small, 3–6 for medium, 4–8 for large.
+- **Region military → capacity mapping** — the formula that converts the simulation's military field value to total reinforcement throughput. Linear? Stepped? Floor and ceiling values?
+- **Unit cost model** — flat cost per unit regardless of type? Scaled by power rating? Per-type costs? This determines whether the player is incentivized to produce cheap units or expensive ones.
+- **Baseline trickle** — should there be a minimum reinforcement rate even with zero structures held, representing the civilization's supply line to the mission area? If yes, how slow?
+- **Structure placement strategy per archetype** — see Open Design Question #12 in the hub.
+
+See Open Design Questions #12, #13, and #14 in the hub for the full set of unresolved reinforcement and rebalance questions.

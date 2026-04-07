@@ -28,8 +28,8 @@ This section documents how Stage 6 relates to all other stages, providing a refe
 - **Stage 3.5** established diplomacy and technology. Tech tiers (0–33 / 34–66 / 67–100) determine which unit stat profiles are available — a Tier 1 faction fields Tier 1 units. Stage 6 defines Tier 2 baseline stats only (the middle tier); Tier 1 and Tier 3 variants are a config-level extension of the same system.
 - **Stage 4** established admin revolts, lifecycle phases, time jumps, and the generational structure. Time jumps are the gaps between missions. The lifecycle phase classifier (Stage 4) informs the mission generator (Stage 5.5).
 - **Stage 5** established the chronicle pipeline, coherence ledger, naming system, and library builder. Named characters from the ledger appear in mission briefings. Commander death during a mission is logged in the ledger.
-- **Stage 5.5** (future) establishes the mission generator, outcome resolver, and force allocation algorithm. Stage 5.5 *creates* missions from simulation state and *processes* their results. Stage 6's outcome band classification feeds directly into Stage 5.5's outcome resolver. Stage 5.5's force allocation uses Stage 6's power rating system.
-- **Stage 7** (future) establishes map generation and enemy macro objectives. Stage 7 builds the spine + gradient pipeline that produces tactical maps, and the per-archetype enemy scripted behaviors. Stage 6 validates combat on hand-authored test maps; Stage 7 generates maps procedurally.
+- **Stage 5.5** (parallel) establishes the mission generator, outcome resolver, and force allocation algorithm. Stage 5.5 *creates* missions from simulation state and *processes* their results. Stage 6's outcome band classification feeds directly into Stage 5.5's outcome resolver. Stage 5.5's force allocation uses Stage 6's power rating system. **Both stages import shared data structures from `mission_contracts.py`** — the single source of truth for data crossing the 5.5 ↔ 6 boundary. Stage 6's `power_rating.py` is built here but imported by Stage 5.5's force allocator. Stage 6's `objectives.py` returns a `MissionResult` (from contracts). Stage 6's `tactical_engine.py` accepts a `MissionSetup` (from contracts) to initialize missions. See "Parallel Development with Stage 5.5" section below.
+- **Stage 7** (future) establishes map generation and enemy macro behavior script content. Stage 7 builds the spine + gradient pipeline that produces tactical maps, and authors the per-archetype behavior scripts using the shared behavior script system with reactive hooks (defined in `bible_combat.md`). Stage 6 validates combat on hand-authored test maps; Stage 7 generates maps procedurally.
 - **Stage 8** (future) establishes the Godot renderer, command interface, and replay system. Stage 8 reads Stage 6's simulation state and renders it. The command protocol defined in Stage 6 is the interface between player input and the tactical engine.
 
 ## What to Build
@@ -40,7 +40,7 @@ This section documents how Stage 6 relates to all other stages, providing a refe
 - Tick loop: advance simulation by one tick (1/20th of a second). Process command queue → update all units (decision loop) → resolve damage → update abilities → check objectives → emit state delta.
 - Deterministic execution: fixed-point or controlled floating-point arithmetic. Same seed + same commands = same result, always.
 - State snapshot emission: per-tick delta of all changed unit state (position, HP, status, ability cooldowns) for the renderer/replay system.
-- Mission lifecycle: initialize from mission setup (map + units + objectives), run ticks until terminal condition (all objectives resolved, time expired, or player force eliminated), classify outcome.
+- Mission lifecycle: initialize from a `MissionSetup` (imported from `mission_contracts.py`) containing map parameters, player/enemy forces, objectives, reinforcement spec, and behavior script ID. Run ticks until terminal condition (all objectives resolved, time expired, or player force eliminated), classify outcome, return a `MissionResult` (from `mission_contracts.py`).
 - Configuration: tick rate (20/sec default), all tuning values loaded from config.
 
 **`unit.py`** — Unit state model and behavior. Contains:
@@ -141,10 +141,10 @@ class Objective:
   - **Component 2 — Force retention ratio (0.0–1.0):** Total surviving player unit power rating / total deployed player unit power rating.
   - **Final score:** `final_score = (objective_score × W_OBJ) + (retention_ratio × W_RET)` where W_OBJ = 0.75, W_RET = 0.25 (config values).
   - **Band mapping:** Final score maps to one of 5 bands (total_success, strong_success, partial_success, partial_failure, total_failure) through per-archetype threshold boundaries (config values per archetype).
-- Output: the outcome band, objective scores, force retention, and per-objective completion details. This output feeds into Stage 5.5's mission outcome resolver.
+- Output: a `MissionResult` (imported from `mission_contracts.py`) containing the outcome band, objective scores, force retention, per-objective completion details, commander survival status, and ticks elapsed. The `commander_survived` field is computed from whether the player's designated commander unit (flagged in `MissionSetup.metadata`) has HP > 0 at mission end. This `MissionResult` is the thin interface that Stage 5.5's outcome resolver consumes.
 
-**`power_rating.py`** — Unit strength scoring for force parity. Contains:
-- Power rating formula: computes a single strength value for any unit based on its stats. Used by force allocation (Stage 5.5) to ensure missions present winnable fights.
+**`power_rating.py`** — Unit strength scoring for force parity. **This module is a shared dependency** — it is built in Stage 6 and imported by Stage 5.5's `force_allocator.py`. It has zero dependencies on the tactical engine and is a pure function of unit stats. Contains:
+- Power rating formula: computes a single strength value for any unit based on its stats. Function signature is part of the cross-stage contract: `compute_power_rating(stats: dict) → float`. Used by force allocation (Stage 5.5) to ensure missions present winnable fights, and by outcome classification (Stage 6) for the force retention component.
 - Formula: `power = (effective_hp × dps × range_factor × mobility_factor)` where:
   - `effective_hp = max_hp / (1.0 - average_cover_assumption)` — HP adjusted for typical cover
   - `dps = base_damage / attack_interval` — raw damage per second
@@ -193,7 +193,271 @@ class Command:
 
 ### Files NOT to create or modify
 
-The map generation pipeline (spine + gradient procedural generation, Strategic Layout Authoring Framework, archetype compatibility filters, fairness evaluator) is Stage 7. Stage 6 uses hand-authored test maps. The Godot renderer, camera system, UI, and visual feedback are Stage 8. The mission generator, mission outcome resolver, force allocation algorithm, and mission briefing templates are Stage 5.5. Enemy macro objectives (scripted per-archetype enemy behavior — advance, defend, patrol, ambush) are Stage 7. Moving battlefields (drifting spine nodes, moving gradient sources) are Stage 7. AI-generated unit stat variation is on hold — Stage 6 uses hand-designed baseline stats.
+The map generation pipeline (spine + gradient procedural generation, Strategic Layout Authoring Framework, archetype compatibility filters, fairness evaluator) is Stage 7. Stage 6 uses hand-authored test maps. The Godot renderer, camera system, UI, and visual feedback are Stage 8. The mission generator, mission outcome resolver, force allocation algorithm, and mission briefing templates are Stage 5.5 — Stage 6 imports shared data structures from `mission_contracts.py` (authored by Stage 5.5) but does not build the mission pipeline. Enemy macro behavior script content (the authored per-archetype scripts using the shared behavior script system with reactive hooks) is Stage 7. Moving battlefields (drifting spine nodes, moving gradient sources) are Stage 7. AI-generated unit stat variation is on hold — Stage 6 uses hand-designed baseline stats.
+
+---
+
+## Parallel Development with Stage 5.5
+
+Stage 5.5 (Mission Generation Pipeline) and Stage 6 (Tactical Simulation Engine) are built in parallel by separate Claude Code sessions. This section defines the shared interface and coordination rules.
+
+### Shared Contracts Module
+
+`mission_contracts.py` is authored by the Stage 5.5 workstream and imported by both stages. It contains the dataclasses that cross the boundary:
+
+- **`MissionSetup`** — emitted by Stage 5.5's mission generator, consumed by Stage 6's `tactical_engine.py` to initialize a mission. Contains: archetype, region ID, map parameters, player force composition, enemy force compositions, objectives, reinforcement spec, time limit, behavior script ID, briefing data, difficulty, and metadata.
+- **`MissionResult`** — emitted by Stage 6's `objectives.py` after outcome classification, consumed by Stage 5.5's outcome resolver. Contains: outcome band (enum string), objective score, force retention ratio, per-objective completion details, commander survival status, and ticks elapsed.
+- **`ForceUnit`**, **`ForceComposition`**, **`ObjectiveSpec`**, **`ReinforcementSpec`** — supporting structures used by both sides.
+
+### What Stage 6 Imports
+
+- **`mission_contracts.py`** — all shared dataclasses. Stage 6 constructs `MissionResult` instances and accepts `MissionSetup` instances.
+- Stage 6 does NOT import anything from Stage 5.5's mission generator, force allocator, outcome resolver, or briefing builder. The dependency is one-directional through contracts only.
+
+### What Stage 5.5 Imports from Stage 6
+
+- **`power_rating.py`** — the `compute_power_rating(stats: dict) → float` function. This is a pure function with no tactical engine dependencies. Stage 5.5's force allocator calls it to compute unit strength values for force parity.
+- Stage 5.5 does NOT import the tactical engine, damage system, abilities, or any other Stage 6 module.
+
+### Coordination Rules
+
+1. **The contracts module is the interface.** If a field needs to be added, renamed, or removed, Westley reviews the change before either side implements it.
+2. **`power_rating.py` is built early** (Stage 6 Checkpoint A) because Stage 5.5 depends on it. It is a standalone module with no engine dependencies — it can exist before the tactical engine does.
+3. **During Stage 6 validation, missions are initialized from hand-authored test setups**, not from Stage 5.5's generator. Integration testing (a real `MissionSetup` from the generator flowing into the engine) happens after both stages pass their respective stage gates.
+4. **Outcome bands are the only tactical result Stage 5.5 cares about.** Stage 5.5 mocks outcome bands for its own validation. Stage 6 produces real outcome bands. Neither side needs the other to be complete for its own validation to work.
+
+---
+
+## Implementation Checkpoints
+
+> **MANDATORY: STOP AND WAIT AT EVERY CHECKPOINT.** Each checkpoint below is a hard stop. Run the test, show the output to Westley, and **stop executing. Do not continue to the next checkpoint.** Do not evaluate the output yourself and decide to proceed. Do not batch multiple checkpoints. Present the output and wait for Westley to say "yes, continue" or "no, fix this." The next checkpoint begins only after explicit approval.
+>
+> **What "STOP" means:** Stop generating code. Stop running tests. Stop planning the next checkpoint. Present the output and wait for input. If you are unsure whether output is correct, that is Westley's judgment to make, not yours.
+
+### Checkpoint A — Contracts, Power Rating, and Tactical Map (Isolation)
+
+**Build:** `mission_contracts.py` — all shared dataclasses (copy from Stage 5.5 spec, this is the shared source of truth). `power_rating.py` — the full power rating formula as a pure function. `tactical_map.py` — canvas, gradient field sampling, spine node data, spatial partitioning. `test_maps.py` — the `open_field` test map only (simplest possible map, no gradients, no obstacles).
+
+**Test:** Write a standalone test script.
+- Construct all contract dataclasses with placeholder data — confirm they instantiate cleanly.
+- Compute power ratings for all 6 unit types using Tier 2 stats. Print a table: unit type, HP, DPS, range, speed, computed power rating.
+- Load the `open_field` test map. Query gradient values at several positions — confirm all return 0 (no gradients on open field). Query the spatial hash with a test position and radius — confirm it returns empty (no units placed yet).
+
+**Print:**
+- Power rating table for all 6 unit types with relative ranking
+- Contract dataclass instantiation confirmation
+- Map gradient queries at 3+ positions showing expected values
+- Spatial hash query results
+
+**Verify:** Power rating ranking makes intuitive sense (Vanguard/Bastion highest, Warden lowest). Map queries return correct values for a flat open field. All dataclasses instantiate without error.
+
+**⛔ STOP. Show output. Wait for Westley.**
+
+---
+
+### Checkpoint B — Unit State and Movement (Isolation)
+
+**Build:** `unit.py` — unit data model (numpy arrays), unit creation from stat profiles. `movement.py` — per-tick position updates, steering behaviors (seek, separation, obstacle avoidance). No pathfinding yet — direct movement toward target position with steering.
+
+**Test:** Write a standalone test script. Place 20 units on the `open_field` map (10 per side, spread across starting positions). Issue `move` commands to all units toward the center. Run 200 ticks.
+
+**Print:**
+- Initial unit positions (all 20 units)
+- Positions at tick 50, 100, 150, 200
+- Speed verification: confirm each unit moved at its configured speed (distance per tick matches `speed × tick_duration`)
+- Separation verification: no two units closer than `UNIT_COLLISION_RADIUS` at any sampled tick
+- A simple ASCII or text-based position dump showing unit spread at each sample tick
+
+**Verify:** Units move at correct speeds. Strike units arrive first, Siege units last. Separation steering prevents stacking. Movement is smooth (no teleporting, no oscillation).
+
+**⛔ STOP. Show output. Wait for Westley.**
+
+---
+
+### Checkpoint C — Damage Model and RPS Triangle (Isolation)
+
+**Build:** `damage.py` — damage formula, category multiplier matrix, attack timing, range check. Wire into `unit.py` decision loop (auto-engage only — no commands, no flinch, no abilities yet). Wire into `tactical_engine.py` tick loop (process damage after unit updates).
+
+**Test:** Write a standalone test script. Run all 6 RPS matchups on `open_field`: Strike vs Siege, Siege vs Line, Line vs Strike, and the 3 mirror matches. 10 units per side, equal power rating, 5 seeds each.
+
+**Print:**
+- For each matchup × seed: winner, duration (ticks and seconds), surviving unit count, force retention ratio
+- Summary table: average win rate and average retention for each matchup across seeds
+- Confirmation that Strike > Siege, Siege > Line, Line > Strike with >60% retention for the winner
+- Mirror matches showing roughly 50/50 splits
+
+**Verify:** The soft RPS triangle works — favored side wins consistently but not with 100% dominance. Mirror matches are close to even. Engagement durations are in the right ballpark (not instant, not infinite). The multiplier matrix is producing the expected damage relationships.
+
+**⛔ STOP. Show output. Wait for Westley.**
+
+---
+
+### Checkpoint D — Engagement Duration Tuning (Tuning)
+
+**Build:** No new systems — this is a tuning checkpoint on the existing damage model. Run the duration validation scenarios: 5v5 (all type permutations), 50v50 mirror, 100v100 mixed.
+
+**Test:** Run engagement duration scenarios from the spec (scenario 13 structure).
+
+**Print:**
+- 5v5 results: duration for every type permutation (Strike vs Strike, Strike vs Line, etc.) — confirm all ≥ 10 seconds (L5)
+- 50v50 mirror: duration — confirm 45–75 seconds (L7)
+- 100v100 mixed: duration — confirm > 60 seconds (L6)
+- Kill timeline for the 50v50 mirror: deaths per 5-second bucket showing attrition curve shape
+
+**Verify:** All duration claims (L5, L6, L7) pass. If any fail, identify which stat needs adjustment (HP too low? DPS too high?) — but do not adjust yet. Present the failure and the diagnosis to Westley.
+
+**⛔ STOP. Show output. Wait for Westley. If duration claims fail, Westley decides whether to adjust stats now or proceed and tune later.**
+
+---
+
+### Checkpoint E — Abilities (Isolation, then Integration)
+
+**Build:** `ability.py` — all 6 ability definitions (Surge, Intercept, Brace, Rally, Warden Aura, Barrage, Fortify). Wire into `unit.py` decision loop (ability activation for player commands; threshold-based activation for enemy units).
+
+**Test:** Run the ability impact scenarios from the spec (scenario 14 structure). Each ability tested in isolation against a control (ability used vs. not used).
+
+**Print:**
+- **Brace:** Vanguard survival time braced vs. unbraced against each attacker type. Confirm ≥ 1.5× improvement (L8).
+- **Rally:** 10 Vanguards at 50% HP, Warden activates Rally. Print HP before and after. Confirm ≥ 15% of max HP restored per unit (L9).
+- **Surge:** 3 Raiders vs. Bombard, with and without Surge. Print time to kill. Confirm ≥ 30% faster with Surge (L10).
+- **Fortify:** Bastion activates Fortify near a group of Line units under fire. Print damage taken with and without Fortify active.
+- **Intercept:** Raider enters Interceptor detection radius. Print whether Intercept triggered, speed and damage bonuses applied.
+- **Barrage:** Bombard fires Barrage at clustered Line units. Print units hit, damage dealt, telegraph delay timing.
+- **Warden Aura:** Units inside vs. outside aura radius under identical fire. Print damage difference and repair tick accumulation.
+
+**Verify:** Each ability produces measurable, meaningful impact. No ability is broken (trivially overpowered or negligible). Threshold-based enemy activation fires at sensible moments.
+
+**⛔ STOP. Show output. Wait for Westley.**
+
+---
+
+### Checkpoint F — Pathfinding and Navmesh (Isolation)
+
+**Build:** `movement.py` — hierarchical A* pathfinding (coarse navmesh layer + fine steering layer), navmesh generation from obstacle density gradients, path caching. `test_maps.py` — add `chokepoint` and `cover_heavy` maps.
+
+**Test:** Write a standalone test script. Place units on the `chokepoint` map. Issue move commands that require pathfinding through the chokepoint. Also test a direct path on `open_field` to confirm pathfinding doesn't degrade simple cases.
+
+**Print:**
+- Navmesh generation time for each test map (target: <500ms for large canvas)
+- Path from start to end on `chokepoint`: waypoint sequence, total path length, number of A* nodes explored
+- Unit positions at 5 sampled ticks showing units navigating through the chokepoint (not walking through walls)
+- Path on `open_field`: confirm it's a near-straight line (no unnecessary waypoints)
+- Path caching: confirm 10 units moving to the same destination share the coarse path (print cache hit count)
+
+**Verify:** Navmesh generates within time budget. Paths navigate around obstacles. Chokepoint forces units through the narrow passage. Open field produces simple paths. Path caching works.
+
+**⛔ STOP. Show output. Wait for Westley.**
+
+---
+
+### Checkpoint G — Fog of War (Isolation)
+
+**Build:** `fog_of_war.py` — per-unit sensor radius with interference, same-layer visibility, cross-layer cone detection, active sensor pulse, vantage node bonus. `test_maps.py` — add `sensor_interference`, `multi_layer`, and `vantage_point` maps.
+
+**Test:** Run the fog of war scenarios from the spec (scenario 15 structure).
+
+**Print:**
+- **Interference reduction:** For each interference intensity (0.0, 0.2, 0.5, 0.8, 1.0), print base sensor radius and effective sensor radius. Confirm 0.8 interference → ~20% of base (L11).
+- **Cross-layer cone:** Unit on layer 1 with enemies on layers 1, 2, 3. Print detection radius per layer. Confirm layer 2 ≈ 50% of base, layer 3 ≈ 20% (L12).
+- **Vantage bonus:** Unit at vantage vs. not at vantage. Print cone factors and detection range for each. Confirm doubled factors and +1 layer extension.
+- **Pulse:** Activate sensor pulse. Print revealed units before, during, and after the pulse duration. Confirm reveal expires after `PULSE_REVEAL_TICKS`.
+- **Instant vanish:** Enemy exits all sensor coverage. Print visibility status on the exit tick. Confirm immediate disappearance (no ghost).
+
+**Verify:** All fog of war claims (L11, L12) pass. Vantage bonus and pulse work as specified. Visibility is binary — no partial states.
+
+**⛔ STOP. Show output. Wait for Westley.**
+
+---
+
+### Checkpoint H — Objectives and Outcome Classification (Isolation)
+
+**Build:** `objectives.py` — objective data model, per-tick evaluation for all 5 objective types, terminal conditions, outcome band classification, `MissionResult` construction (from `mission_contracts.py`). `test_maps.py` — add `large_operational` and `evacuation` maps.
+
+**Test:** Run the outcome band scenarios from the spec (scenario 16 structure). Scripted command sequences that produce each of the 5 outcome bands.
+
+**Print:**
+- For each scripted scenario: objective completion values per tick (sampled at key moments), final objective score, force retention ratio, final score, classified outcome band
+- Confirmation that all 5 bands are produced across the scenario set (L13)
+- Paired comparison: two scenarios with identical objective completion but different force retention. Print both final scores and bands (L14).
+- Terminal condition tests: mission ending by objective completion, time expiry, and force elimination — one example of each, print the trigger and final state
+- `MissionResult` construction: print the full dataclass for one scenario to confirm all fields are populated correctly
+
+**Verify:** All 5 outcome bands are produced (L13). Force retention affects scoring (L14). Terminal conditions fire correctly. `MissionResult` matches the contract structure.
+
+**⛔ STOP. Show output. Wait for Westley.**
+
+---
+
+### Checkpoint I — Command Protocol and Replay (Integration)
+
+**Build:** `command.py` — command data model, command queue, replay recording (initial state + command stream + outcome). Wire the full tick loop in `tactical_engine.py`: command processing → unit decision loop → damage → abilities → fog of war → objectives → state delta emission.
+
+**Test:** Run a full mission on `large_operational`: two forces, scripted commands, objectives. Record the replay. Then replay it: load initial state, feed the command stream, verify identical final state.
+
+**Print:**
+- Mission summary: map, force sizes, objectives, duration
+- Timeline: key events (first contact, first kill, ability activations, objective progress milestones)
+- Final outcome: band, objective score, force retention, `MissionResult` fields
+- Replay comparison: final state hash from the live run vs. replay run. Print tick-by-tick state hash at 5 sampled ticks to confirm identity.
+- Determinism check: run the same scenario 5 times, print final state hash for each (L15)
+
+**Verify:** The full tick loop runs end-to-end. Replay produces identical results. Determinism holds across 5 runs (L15). The `MissionResult` is correctly populated and matches contract structure. All previously validated claims (L1–L14) still hold — quick spot-check, not full re-run.
+
+**⛔ STOP. Show output. Wait for Westley.**
+
+---
+
+### Checkpoint J — Soft RPS with Positioning (Integration)
+
+**Build:** No new systems — this is a validation checkpoint combining damage, pathfinding, and map terrain. Run the soft RPS scenario (L4) on the `chokepoint` map.
+
+**Test:** Strike vs Line (unfavorable for Strike), equal power, 20+ engagements. Half with Strike using the direct approach, half with Strike using the flank route.
+
+**Print:**
+- Direct approach results: Strike win rate across 20+ seeds (should be low — Line has the advantage)
+- Flank approach results: Strike win rate across 20+ seeds (should be >30% — positioning overcomes the RPS disadvantage) (L4)
+- Comparison table: direct vs. flank win rates, average engagement duration, average force retention
+
+**Verify:** Positioning matters. The flank route gives the disadvantaged side a real chance (L4). This validates that terrain + pathfinding + damage interact correctly — not just that individual systems work in isolation.
+
+**⛔ STOP. Show output. Wait for Westley.**
+
+---
+
+### Checkpoint K — Performance (Stress Test)
+
+**Build:** No new systems — performance validation on the existing engine.
+
+**Test:** Run the performance scenario from the spec (scenario 18): 200v200 on large canvas, all units engaged, sustained for 1000+ ticks.
+
+**Print:**
+- Per-tick processing time: min, max, mean, p95, p99 across the full run
+- Tick budget compliance: what percentage of ticks processed within 50ms (L16)
+- Breakdown by subsystem: time spent in damage resolution, ability updates, pathfinding, fog of war, objective evaluation, state delta emission
+- Memory usage: peak during the engagement
+
+**Verify:** p95 tick time is under 50ms (L16). If it's not, the subsystem breakdown identifies the bottleneck. Do not optimize prematurely — present the bottleneck to Westley and discuss whether optimization is needed now or can wait.
+
+**⛔ STOP. Show output. Wait for Westley.**
+
+---
+
+### Checkpoint L — Tactical Review Reports and Invariants (Final)
+
+**Build:** `sim_tuner.py` — tactical engine scenarios and `--tactical-review` report generation. `invariants.py` — all Group L invariants (L1–L17). Full scenario suite (scenarios 12–18).
+
+**Test:** Run all scenarios across 3+ seeds. Run the full invariant suite. Generate Tactical Review Reports.
+
+**Print:**
+- L1–L17 pass/fail for each scenario × seed
+- Any invariant failures with the specific values that violated the constraint
+- Regression check: all prior invariants (A through K) passing
+- Full Tactical Review Reports for scenarios 12–16 (the report format from the Validation section)
+- Summary: total invariants checked, total passed, total failed
+
+**Verify:** All L1–L17 pass. All prior invariants pass. If any fail, the specific failure is diagnosed before proceeding — do not patch around failures.
+
+**⛔ STOP. Show output. Wait for Westley. This is the stage gate — Westley reviews the full Tactical Review Reports across 3+ seeds and signs off before Stage 6 is complete.**
 
 ---
 
@@ -686,6 +950,8 @@ REPLAY_FORMAT                     = "json"  # "json" for debugging, "binary" fut
 - All 5 outcome bands are produced across the scripted scenario set (L13)
 - Determinism verified — 5 identical runs produce bit-identical results (L15)
 - Performance: 400 units at 20 ticks/sec processes within 50ms/tick budget (L16)
+- `MissionResult` output matches `mission_contracts.py` structure — all fields populated, importable by Stage 5.5 without modification
+- `power_rating.py` is a standalone module with no tactical engine imports — importable by Stage 5.5's force allocator directly
 - Tactical Review Reports reviewed by Westley across 3 seeds for scenarios 12–16
 - Balance feel evaluated: does the RPS triangle feel right? Do fights last the right amount of time? Do abilities feel impactful?
 - Westley signs off on the Tactical Review Reports and balance feel
@@ -700,3 +966,4 @@ All validation criteria met. Westley signs off on:
 5. The final validator report (all L1–L17 invariants passing)
 6. Determinism verified (replay foundation is solid)
 7. Performance verified (engine handles target unit counts within tick budget)
+8. The shared contracts interface (`mission_contracts.py` imported cleanly, `MissionResult` populated correctly, `power_rating.py` standalone) — ready for Stage 5.5 integration

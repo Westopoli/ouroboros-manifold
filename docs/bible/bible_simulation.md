@@ -402,6 +402,8 @@ Each intermediate event applies field effects to the revolting region (tension s
 
 **Coexistence with tension revolts.** Administrative revolts and tension-triggered revolts are independent systems that coexist. A large, high-tension empire gets hit by both — tension revolts in stressed regions and admin revolts everywhere. They represent different failure modes (popular unrest vs. institutional fracture) that share the same consequence: new factions appearing on the map. A large faction in crisis can cascade rapidly as both systems fire simultaneously, producing the dramatic civilizational collapse the bible's pacing model requires.
 
+**Latent loyalty.** Recently conquered regions retain loyalty to their previous faction. If a revolt fires in a region that was conquered within a config window and the previous faction still exists, there is a probability the region reverts to the previous faction instead of creating a new breakaway. The reverted region receives the same viability buffs as a standard breakaway (tension capped, population and economy floored). This creates a "reconquest" dynamic — conquering territory near a surviving faction is riskier than conquering territory from a faction you've already eliminated, because successful revolts can restore the old owner's borders.
+
 ### Uninhabited Region Mechanics
 
 Uninhabited regions exist in the world at generation (defined by the starting template) with no field values and no faction ownership. They are activated through **colonization events** fired by faction agents.

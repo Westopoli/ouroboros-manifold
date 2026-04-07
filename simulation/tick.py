@@ -34,7 +34,8 @@ def _short(fid):
 def run_tick(world, tick_num: int, ledger=None,
              pending_queue=None, noise_offsets=None, trigger_state=None,
              registry=None, antagonist=None, stances=None,
-             pending_telegraphs=None) -> dict:
+             pending_telegraphs=None,
+             coherence_ledger=None) -> dict:
     log = {
         "tick":            tick_num,
         "events":          [],
@@ -51,6 +52,7 @@ def run_tick(world, tick_num: int, ledger=None,
         "colonizations":   [],
         "collisions":      [],
         "factions_absorbed": [],
+        "event_attachments": [],
     }
 
     rng = world.rng
@@ -86,6 +88,10 @@ def run_tick(world, tick_num: int, ledger=None,
                         log["revolts"].append(revolt_log)
                         if ledger is not None:
                             ledger.log_revolt(tick_num, revolt_log)
+                        if coherence_ledger is not None and revolt_log.get("new_faction"):
+                            new_fid = revolt_log["new_faction"]
+                            rid = revolt_log["region"]
+                            coherence_ledger.assign_faction_leader(new_fid, rid, tick_num, rng)
 
     # ── Step 3: Faction agents — two-phase telegraph/surprise resolution ─────
     if pending_telegraphs is None:
@@ -327,6 +333,23 @@ def run_tick(world, tick_num: int, ledger=None,
     if registry is not None:
         log["factions_absorbed"] = _cleanup_zombie_factions(world, registry, tick_num)
 
+    # ── Step 6.5: Coherence ledger — character attachment + leader cleanup ──
+    if coherence_ledger is not None:
+        for absorbed in log["factions_absorbed"]:
+            leader = coherence_ledger.get_faction_leader(absorbed["faction"])
+            if leader:
+                coherence_ledger.kill_character(leader.id, tick_num)
+        for evt in log["events"]:
+            attached = coherence_ledger.attach_event(evt, evt["region_id"], tick_num)
+            if attached:
+                log["event_attachments"].append({
+                    "character_id": attached.id,
+                    "character_name": attached.name,
+                    "rank": attached.rank,
+                    "event_template": evt.get("template_id"),
+                    "region_id": evt["region_id"],
+                })
+
     # ── Step 7: Log ──────────────────────────────────────────────────────────
     if ledger is not None:
         for evt in log["events"]:
@@ -470,9 +493,14 @@ def _handle_revolt_faction_creation(evt: dict, world, registry: dict,
     is_admin = evt.get("admin_revolt", False)
 
     if is_admin:
-        # Admin revolts: prune if originating faction no longer owns the region
         source_fid = evt.get("source_faction_id")
         if source_fid and region.faction_id != source_fid:
+            return None
+        # Prune if ownership changed mid-chain (lost and re-conquered)
+        chain_start = evt.get("chain_start_tick")
+        if (chain_start is not None
+                and region.held_since_tick is not None
+                and region.held_since_tick > chain_start):
             return None
         success_rate = 1.0
     else:

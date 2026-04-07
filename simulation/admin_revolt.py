@@ -29,6 +29,7 @@ def check_admin_revolts(world, registry, pending_queue, rng, tick):
                 "conditions":  {},
                 "chain_tag":   chain_tag,
                 "source_faction_id": fid,
+                "chain_start_tick": tick,
             })
 
             log.append({

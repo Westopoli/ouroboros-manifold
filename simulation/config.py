@@ -413,3 +413,19 @@ LINEAGE_HARD_CAP        = 6      # forced rotation after this many chapters
 LINEAGE_DELTA_LOW       = 10.0   # regional delta below this → high rotation probability
 LINEAGE_DELTA_HIGH      = 40.0   # regional delta above this → low rotation probability
 CRISIS_VETO_STABILITY   = 25.0   # stability below this vetoes rotation
+
+# ── Naming system (Stage 5) ────────────────────────────────────────────────
+NAME_REUSE_COOLDOWN_TICKS      = 500    # ticks after death before name returns to pool
+NAME_DEDUP_THRESHOLD           = 3      # minimum Levenshtein distance between names in same faction
+PLAYER_FACTION_SUBSET_WIDTH    = (3, 4, 4)  # (roots, patterns, tags) — wider than default
+DEFAULT_FACTION_SUBSET_WIDTH   = (2, 3, 3)  # (roots, patterns, tags) — standard width
+
+# ── Coherence ledger (Stage 5) ─────────────────────────────────────────────
+LINEAGE_FERTILITY_RATE         = 0.03   # descendants per lineage member per tick during time jumps
+LINEAGE_SPREAD_PROBABILITY     = 0.1    # probability a new descendant is placed in an adjacent region
+REGIONAL_COMMANDER_DEATH_PROB  = 0.3    # probability regional commander dies on conquest
+NATURAL_DEATH_BASE_AGE         = 200    # tick-age at which natural death probability begins
+NATURAL_DEATH_RATE             = 0.01   # per-tick death probability above base age
+CHARACTER_ATTACHMENT_TIER_THRESHOLD = 3  # minimum event significance tier for character attachment
+LIFESPAN_MIN                   = 150    # minimum lifespan in ticks
+LIFESPAN_MAX                   = 350    # maximum lifespan in ticks

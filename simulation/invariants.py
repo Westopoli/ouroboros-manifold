@@ -1072,6 +1072,548 @@ def tech_grows_with_economy(log: TrajectoryLog) -> InvariantResult:
 
 
 # ═════════════════════════════════════════════════════════════════════════════
+#  GROUP J: Stage 4 — Admin Revolts, Lifecycle, Time Jumps, Player Mortality
+# ═════════════════════════════════════════════════════════════════════════════
+
+def _all_faction_ids_ever(log: TrajectoryLog) -> set[str]:
+    ids = set()
+    for snap in log.snapshots:
+        ids.update(snap.factions.keys())
+    return ids
+
+
+def _regions_owned_by(snap, fid: str) -> list[str]:
+    return [rid for rid, rdata in snap.regions.items() if rdata["faction_id"] == fid]
+
+
+def admin_revolts_fire_for_large(log: TrajectoryLog) -> InvariantResult:
+    """J1: A faction holding 8+ regions should see at least 1 admin revolt within 50 ticks."""
+    WINDOW = 50
+    THRESHOLD = 8
+
+    if not log.features.get("admin_revolts"):
+        return InvariantResult("J1_admin_revolts_fire_large", True, "info",
+                               "Skipped — admin_revolts not enabled")
+    if log.total_ticks < WINDOW:
+        return InvariantResult("J1_admin_revolts_fire_large", True, "info",
+                               f"Skipped — only {log.total_ticks} ticks (need {WINDOW})")
+
+    all_fids = _all_faction_ids_ever(log)
+    found_window = False
+
+    for fid in all_fids:
+        streak = 0
+        streak_start = 0
+        for t, snap in enumerate(log.snapshots):
+            fac = snap.factions.get(fid)
+            count = fac["owned_region_count"] if fac else 0
+            if count >= THRESHOLD:
+                if streak == 0:
+                    streak_start = t
+                streak += 1
+            else:
+                streak = 0
+
+            if streak >= WINDOW:
+                found_window = True
+                owned_rids = set()
+                for tt in range(streak_start, streak_start + WINDOW):
+                    owned_rids.update(_regions_owned_by(log.snapshots[tt], fid))
+                revolt_count = 0
+                for tt in range(streak_start, streak_start + WINDOW):
+                    for evt in log.snapshots[tt].events_fired:
+                        if evt.get("template_id") == "evt_admin_separatist" and evt.get("region_id") in owned_rids:
+                            revolt_count += 1
+                if revolt_count == 0:
+                    return InvariantResult(
+                        "J1_admin_revolts_fire_large", False, "critical",
+                        f"{fid} held {THRESHOLD}+ regions for {WINDOW} ticks (t={streak_start}–{streak_start + WINDOW}) with 0 admin revolts",
+                        details={"faction_id": fid, "window_start": streak_start,
+                                 "governing_configs": ["ADMIN_REVOLT_BASE_RATE", "ADMIN_REVOLT_SCALING_RATE", "ADMIN_REVOLT_INFLECTION_POINT"]})
+                break
+        if found_window:
+            break
+
+    if not found_window:
+        return InvariantResult("J1_admin_revolts_fire_large", True, "info",
+                               f"Skipped — no faction held {THRESHOLD}+ regions for {WINDOW} consecutive ticks")
+
+    return InvariantResult("J1_admin_revolts_fire_large", True, "critical",
+                           "Admin revolts fire for large factions")
+
+
+def admin_revolts_rare_for_small(log: TrajectoryLog) -> InvariantResult:
+    """J2: A faction holding ≤3 regions should see ≤2 admin revolts per 100 ticks."""
+    WINDOW = 100
+    MAX_REVOLTS = 2
+    SIZE_CAP = 3
+
+    if not log.features.get("admin_revolts"):
+        return InvariantResult("J2_admin_revolts_rare_small", True, "info",
+                               "Skipped — admin_revolts not enabled")
+    if log.total_ticks < WINDOW:
+        return InvariantResult("J2_admin_revolts_rare_small", True, "info",
+                               f"Skipped — only {log.total_ticks} ticks (need {WINDOW})")
+
+    all_fids = _all_faction_ids_ever(log)
+
+    for fid in all_fids:
+        small_ticks = []
+        for t, snap in enumerate(log.snapshots):
+            fac = snap.factions.get(fid)
+            count = fac["owned_region_count"] if fac else 0
+            if 1 <= count <= SIZE_CAP:
+                small_ticks.append(t)
+
+        if len(small_ticks) < WINDOW:
+            continue
+
+        for start_idx in range(0, len(small_ticks) - WINDOW + 1, WINDOW):
+            window_ticks = small_ticks[start_idx:start_idx + WINDOW]
+            tick_set = set(window_ticks)
+            revolt_count = 0
+            for t in window_ticks:
+                owned = set(_regions_owned_by(log.snapshots[t], fid))
+                for evt in log.snapshots[t].events_fired:
+                    if evt.get("template_id") == "evt_admin_separatist" and evt.get("region_id") in owned:
+                        revolt_count += 1
+            if revolt_count > MAX_REVOLTS:
+                return InvariantResult(
+                    "J2_admin_revolts_rare_small", False, "warning",
+                    f"{fid} (≤{SIZE_CAP} regions) had {revolt_count} admin revolts in {WINDOW} small-faction ticks",
+                    details={"faction_id": fid, "revolt_count": revolt_count,
+                             "governing_configs": ["ADMIN_REVOLT_BASE_RATE"]})
+
+    return InvariantResult("J2_admin_revolts_rare_small", True, "warning",
+                           "Admin revolts rare for small factions")
+
+
+def admin_revolt_chains_complete(log: TrajectoryLog) -> InvariantResult:
+    """J3: Admin revolt chains should always complete (separatist → breakaway)."""
+    if not log.features.get("admin_revolts"):
+        return InvariantResult("J3_admin_revolt_chains_complete", True, "info",
+                               "Skipped — admin_revolts not enabled")
+
+    separatist_count = 0
+    breakaway_count = 0
+    for snap in log.snapshots:
+        for evt in snap.events_fired:
+            tid = evt.get("template_id", "")
+            if tid == "evt_admin_separatist":
+                separatist_count += 1
+            elif tid == "evt_admin_breakaway":
+                breakaway_count += 1
+
+    if separatist_count == 0:
+        return InvariantResult("J3_admin_revolt_chains_complete", True, "info",
+                               "Skipped — no admin separatist events fired")
+
+    ratio = breakaway_count / separatist_count
+    if ratio < 0.8:
+        return InvariantResult(
+            "J3_admin_revolt_chains_complete", False, "critical",
+            f"Only {breakaway_count}/{separatist_count} admin chains completed ({ratio:.0%})",
+            details={"separatist_count": separatist_count, "breakaway_count": breakaway_count})
+
+    return InvariantResult("J3_admin_revolt_chains_complete", True, "critical",
+                           f"{breakaway_count}/{separatist_count} admin chains completed ({ratio:.0%})")
+
+
+def admin_revolts_produce_breakaways(log: TrajectoryLog) -> InvariantResult:
+    """J4: Admin breakaway events should produce new breakaway factions."""
+    if not log.features.get("admin_revolts"):
+        return InvariantResult("J4_admin_revolt_breakaways", True, "info",
+                               "Skipped — admin_revolts not enabled")
+
+    breakaway_events = 0
+    for snap in log.snapshots:
+        for evt in snap.events_fired:
+            if evt.get("template_id") == "evt_admin_breakaway":
+                breakaway_events += 1
+
+    if breakaway_events == 0:
+        return InvariantResult("J4_admin_revolt_breakaways", True, "info",
+                               "Skipped — no admin breakaway events fired")
+
+    new_factions = set()
+    prev_fids = set()
+    for snap in log.snapshots:
+        current_fids = set(snap.factions.keys())
+        new_factions.update(fid for fid in current_fids - prev_fids if fid.startswith("breakaway_"))
+        prev_fids = current_fids
+
+    if len(new_factions) == 0:
+        return InvariantResult(
+            "J4_admin_revolt_breakaways", False, "critical",
+            f"{breakaway_events} admin breakaway events fired but 0 new breakaway factions appeared")
+
+    return InvariantResult("J4_admin_revolt_breakaways", True, "critical",
+                           f"{breakaway_events} breakaway events → {len(new_factions)} new factions")
+
+
+def no_total_domination(log: TrajectoryLog) -> InvariantResult:
+    """J5: No faction holds all inhabited regions for 50+ consecutive ticks."""
+    MAX_STREAK = 50
+
+    if log.total_ticks < MAX_STREAK:
+        return InvariantResult("J5_no_total_domination", True, "info",
+                               f"Skipped — only {log.total_ticks} ticks (need {MAX_STREAK})")
+
+    streak = 0
+    dominator = None
+
+    for snap in log.snapshots:
+        inhabited = {rid: rdata["faction_id"] for rid, rdata in snap.regions.items() if rdata["faction_id"]}
+        if not inhabited:
+            streak = 0
+            continue
+        owners = set(inhabited.values())
+        if len(owners) == 1:
+            fid = next(iter(owners))
+            if fid == dominator:
+                streak += 1
+            else:
+                dominator = fid
+                streak = 1
+        else:
+            streak = 0
+            dominator = None
+
+        if streak >= MAX_STREAK:
+            return InvariantResult(
+                "J5_no_total_domination", False, "critical",
+                f"{dominator} held all {len(inhabited)} inhabited regions for {streak}+ ticks ending at tick {snap.tick}",
+                details={"faction_id": dominator, "tick": snap.tick,
+                         "governing_configs": ["ADMIN_REVOLT_SCALING_RATE", "ADMIN_REVOLT_INFLECTION_POINT"]})
+
+    return InvariantResult("J5_no_total_domination", True, "critical",
+                           "No faction achieved total domination for 50+ ticks")
+
+
+def admin_revolt_quadratic_scaling(log: TrajectoryLog) -> InvariantResult:
+    """J6: Revolt rate for 7-9 region factions should be ≥2× the rate for 4-6 region factions."""
+    if not log.features.get("admin_revolts"):
+        return InvariantResult("J6_quadratic_scaling", True, "info",
+                               "Skipped — admin_revolts not enabled")
+
+    small_ticks = 0
+    small_revolts = 0
+    large_ticks = 0
+    large_revolts = 0
+
+    all_fids = _all_faction_ids_ever(log)
+
+    for snap in log.snapshots:
+        for fid in all_fids:
+            fac = snap.factions.get(fid)
+            if not fac:
+                continue
+            count = fac["owned_region_count"]
+            if 4 <= count <= 6:
+                small_ticks += 1
+                owned = set(_regions_owned_by(snap, fid))
+                for evt in snap.events_fired:
+                    if evt.get("template_id") == "evt_admin_separatist" and evt.get("region_id") in owned:
+                        small_revolts += 1
+            elif 7 <= count <= 9:
+                large_ticks += 1
+                owned = set(_regions_owned_by(snap, fid))
+                for evt in snap.events_fired:
+                    if evt.get("template_id") == "evt_admin_separatist" and evt.get("region_id") in owned:
+                        large_revolts += 1
+
+    if large_ticks < 20:
+        return InvariantResult("J6_quadratic_scaling", True, "info",
+                               f"Skipped — only {large_ticks} faction-ticks at 7-9 regions (need 20)")
+
+    if small_ticks < 20:
+        return InvariantResult("J6_quadratic_scaling", True, "info",
+                               f"Skipped — only {small_ticks} faction-ticks at 4-6 regions (need 20)")
+
+    rate_small = small_revolts / small_ticks if small_ticks else 0
+    rate_large = large_revolts / large_ticks if large_ticks else 0
+
+    if rate_small == 0:
+        if rate_large > 0:
+            return InvariantResult("J6_quadratic_scaling", True, "warning",
+                                   f"Scaling confirmed: 0 revolts at 4-6 regions, {large_revolts} at 7-9")
+        return InvariantResult("J6_quadratic_scaling", True, "info",
+                               "Skipped — no revolts observed in either size band")
+
+    ratio = rate_large / rate_small
+    if ratio < 2.0:
+        return InvariantResult(
+            "J6_quadratic_scaling", False, "warning",
+            f"Revolt rate ratio {ratio:.1f}× (need ≥2×): small={rate_small:.4f}/tick, large={rate_large:.4f}/tick",
+            details={"small_ticks": small_ticks, "small_revolts": small_revolts,
+                     "large_ticks": large_ticks, "large_revolts": large_revolts,
+                     "governing_configs": ["ADMIN_REVOLT_SCALING_RATE", "ADMIN_REVOLT_INFLECTION_POINT"]})
+
+    return InvariantResult("J6_quadratic_scaling", True, "warning",
+                           f"Quadratic scaling confirmed: ratio {ratio:.1f}× (small={rate_small:.4f}, large={rate_large:.4f})")
+
+
+def expansion_phase_early(log: TrajectoryLog) -> InvariantResult:
+    """J7: In first 50 ticks, colonizations should outnumber attacks."""
+    WINDOW = 50
+
+    if log.total_ticks < WINDOW:
+        return InvariantResult("J7_expansion_early", True, "info",
+                               f"Skipped — only {log.total_ticks} ticks (need {WINDOW})")
+
+    colonizations = 0
+    attacks = 0
+    for t in range(min(WINDOW, len(log.snapshots))):
+        snap = log.snapshots[t]
+        colonizations += len(snap.colonizations)
+        for a in snap.faction_actions:
+            if a.get("action") == "attack":
+                attacks += 1
+
+    if colonizations == 0 and attacks == 0:
+        return InvariantResult("J7_expansion_early", True, "info",
+                               "Skipped — no colonizations or attacks in first 50 ticks")
+
+    if colonizations <= attacks:
+        return InvariantResult(
+            "J7_expansion_early", False, "warning",
+            f"First {WINDOW} ticks: {colonizations} colonizations ≤ {attacks} attacks (expansion should lead)",
+            details={"colonizations": colonizations, "attacks": attacks,
+                     "governing_configs": ["COLONIZE_COST", "ATTACK_CONFIDENCE_RANGE", "BUDGET_GROWTH_RATE"]})
+
+    return InvariantResult("J7_expansion_early", True, "warning",
+                           f"Expansion confirmed: {colonizations} colonizations > {attacks} attacks in first {WINDOW} ticks")
+
+
+def conflict_follows_expansion(log: TrajectoryLog) -> InvariantResult:
+    """J8: Attack rate should increase after the last colonization."""
+    WINDOW = 50
+    RATIO = 1.5
+
+    last_col_tick = None
+    for snap in log.snapshots:
+        if snap.colonizations:
+            last_col_tick = snap.tick
+
+    if last_col_tick is None:
+        return InvariantResult("J8_conflict_after_expansion", True, "info",
+                               "Skipped — no colonizations in the run")
+
+    if last_col_tick + 30 > log.total_ticks:
+        return InvariantResult("J8_conflict_after_expansion", True, "info",
+                               f"Skipped — last colonization at tick {last_col_tick}, <30 ticks remain")
+
+    pre_start = max(0, last_col_tick - WINDOW)
+    pre_attacks = 0
+    post_attacks = 0
+    post_end = min(last_col_tick + WINDOW, log.total_ticks)
+
+    for snap in log.snapshots:
+        atk_count = sum(1 for a in snap.faction_actions if a.get("action") == "attack")
+        if pre_start <= snap.tick < last_col_tick:
+            pre_attacks += atk_count
+        elif last_col_tick <= snap.tick < post_end:
+            post_attacks += atk_count
+
+    pre_ticks = last_col_tick - pre_start
+    post_ticks = post_end - last_col_tick
+    pre_rate = pre_attacks / pre_ticks if pre_ticks else 0
+    post_rate = post_attacks / post_ticks if post_ticks else 0
+
+    if pre_rate == 0:
+        if post_rate > 0:
+            return InvariantResult("J8_conflict_after_expansion", True, "warning",
+                                   f"Conflict follows expansion: 0 pre-attacks → {post_attacks} post-attacks")
+        return InvariantResult("J8_conflict_after_expansion", True, "info",
+                               "Skipped — no attacks near the expansion→conflict transition")
+
+    ratio = post_rate / pre_rate
+    if ratio < RATIO:
+        return InvariantResult(
+            "J8_conflict_after_expansion", False, "warning",
+            f"Attack rate ratio {ratio:.1f}× (need ≥{RATIO}×): pre={pre_rate:.2f}/tick, post={post_rate:.2f}/tick (last colonization tick {last_col_tick})",
+            details={"last_colonization_tick": last_col_tick, "pre_rate": pre_rate, "post_rate": post_rate,
+                     "governing_configs": ["ATTACK_CONFIDENCE_RANGE", "BUDGET_GROWTH_RATE"]})
+
+    return InvariantResult("J8_conflict_after_expansion", True, "warning",
+                           f"Conflict follows expansion: attack rate {ratio:.1f}× after last colonization (tick {last_col_tick})")
+
+
+def fragmentation_after_overextension(log: TrajectoryLog) -> InvariantResult:
+    """J9: A faction reaching peak territory ≥6 should lose ≥1 region within 100 ticks."""
+    PEAK_THRESHOLD = 6
+    WINDOW = 100
+
+    if not log.features.get("admin_revolts"):
+        return InvariantResult("J9_fragmentation", True, "info",
+                               "Skipped — admin_revolts not enabled")
+
+    all_fids = _all_faction_ids_ever(log)
+    found_peak = False
+
+    for fid in all_fids:
+        series = []
+        for snap in log.snapshots:
+            fac = snap.factions.get(fid)
+            series.append(fac["owned_region_count"] if fac else 0)
+
+        peak = max(series)
+        if peak < PEAK_THRESHOLD:
+            continue
+
+        peak_tick = series.index(peak)
+        found_peak = True
+        check_end = min(peak_tick + WINDOW, len(series))
+        lost_territory = any(series[t] < peak for t in range(peak_tick, check_end))
+
+        if not lost_territory:
+            return InvariantResult(
+                "J9_fragmentation", False, "warning",
+                f"{fid} peaked at {peak} regions (tick {peak_tick}) and held them for {WINDOW}+ ticks without losing any",
+                details={"faction_id": fid, "peak": peak, "peak_tick": peak_tick,
+                         "governing_configs": ["ADMIN_REVOLT_SCALING_RATE", "CONQUEST_TENSION_SPIKE"]})
+
+    if not found_peak:
+        return InvariantResult("J9_fragmentation", True, "info",
+                               f"Skipped — no faction reached {PEAK_THRESHOLD} regions")
+
+    return InvariantResult("J9_fragmentation", True, "warning",
+                           "Fragmentation confirmed: overextended factions lose territory")
+
+
+def faction_diversity_maintained(log: TrajectoryLog) -> InvariantResult:
+    """J10: After tick 100, the world should always have ≥2 active factions."""
+    START_TICK = 100
+
+    if log.total_ticks < START_TICK:
+        return InvariantResult("J10_faction_diversity", True, "info",
+                               f"Skipped — only {log.total_ticks} ticks (need {START_TICK})")
+
+    initial_factions = len([fid for fid, fdata in log.snapshots[0].factions.items()
+                           if fdata["owned_region_count"] > 0])
+    if initial_factions < 2:
+        return InvariantResult("J10_faction_diversity", True, "info",
+                               "Skipped — fewer than 2 factions at start")
+
+    for snap in log.snapshots:
+        if snap.tick < START_TICK:
+            continue
+        active = sum(1 for fdata in snap.factions.values() if fdata["owned_region_count"] > 0)
+        if active < 2:
+            return InvariantResult(
+                "J10_faction_diversity", False, "critical",
+                f"Only {active} active faction(s) at tick {snap.tick}",
+                details={"tick": snap.tick,
+                         "governing_configs": ["ADMIN_REVOLT_BASE_RATE", "ADMIN_REVOLT_SCALING_RATE"]})
+
+    return InvariantResult("J10_faction_diversity", True, "critical",
+                           "Faction diversity maintained (≥2 active factions after tick 100)")
+
+
+def time_jumps_meaningful(log: TrajectoryLog) -> InvariantResult:
+    """J11: Each time jump window should produce ≥1 territory change and ≥1 faction birth/death."""
+    jumps = log.features.get("time_jumps")
+    if not jumps:
+        return InvariantResult("J11_time_jumps_meaningful", True, "info",
+                               "Skipped — no time_jumps in features")
+
+    boundaries = list(jumps) + [log.total_ticks]
+
+    for i in range(len(jumps)):
+        t_start = boundaries[i]
+        t_end = boundaries[i + 1]
+
+        if t_start >= len(log.snapshots) or t_end >= len(log.snapshots):
+            continue
+
+        start_ownership = {rid: rdata["faction_id"] for rid, rdata in log.snapshots[t_start].regions.items()}
+        end_ownership = {rid: rdata["faction_id"] for rid, rdata in log.snapshots[t_end].regions.items()}
+        territory_changes = sum(1 for rid in start_ownership if start_ownership[rid] != end_ownership.get(rid))
+
+        start_fids = {fid for fid, fdata in log.snapshots[t_start].factions.items() if fdata["owned_region_count"] > 0}
+        end_fids = {fid for fid, fdata in log.snapshots[t_end].factions.items() if fdata["owned_region_count"] > 0}
+        births = len(end_fids - start_fids)
+        deaths = len(start_fids - end_fids)
+
+        if territory_changes < 1 or (births + deaths < 1 and territory_changes < 2):
+            return InvariantResult(
+                "J11_time_jumps_meaningful", False, "warning",
+                f"Jump window [{t_start}–{t_end}]: {territory_changes} territory changes, {births} births, {deaths} deaths",
+                details={"window": [t_start, t_end], "territory_changes": territory_changes,
+                         "births": births, "deaths": deaths,
+                         "governing_configs": ["BUDGET_GROWTH_RATE", "ATTACK_CONFIDENCE_RANGE"]})
+
+    return InvariantResult("J11_time_jumps_meaningful", True, "warning",
+                           "All time jump windows produced meaningful change")
+
+
+def time_jumps_safe(log: TrajectoryLog) -> InvariantResult:
+    """J12: After all time jumps, ≥2 factions survive and player faction owns ≥1 region."""
+    jumps = log.features.get("time_jumps")
+    if not jumps:
+        return InvariantResult("J12_time_jumps_safe", True, "info",
+                               "Skipped — no time_jumps in features")
+
+    final_snap = log.snapshots[-1]
+    active = {fid: fdata for fid, fdata in final_snap.factions.items() if fdata["owned_region_count"] > 0}
+
+    if len(active) < 2:
+        return InvariantResult(
+            "J12_time_jumps_safe", False, "critical",
+            f"Only {len(active)} active faction(s) after time jumps at tick {final_snap.tick}")
+
+    player_fid = None
+    for fid, fdata in log.snapshots[0].factions.items():
+        if fdata.get("archetype") == "player_civilization":
+            player_fid = fid
+            break
+
+    if player_fid and player_fid not in active:
+        return InvariantResult(
+            "J12_time_jumps_safe", False, "critical",
+            f"Player faction {player_fid} owns 0 regions after time jumps at tick {final_snap.tick}")
+
+    return InvariantResult("J12_time_jumps_safe", True, "critical",
+                           f"{len(active)} factions active after time jumps, player faction alive")
+
+
+def player_faction_can_die(log: TrajectoryLog) -> InvariantResult:
+    """J13: Player faction should be able to die. Pass if player_deaths is non-empty."""
+    if not log.player_deaths:
+        return InvariantResult("J13_player_can_die", True, "info",
+                               f"Player survived all {log.total_ticks} ticks (needs multi-seed to confirm)")
+
+    first = log.player_deaths[0]
+    return InvariantResult("J13_player_can_die", True, "warning",
+                           f"Player died at tick {first['tick']}, reassigned to {first['new_faction_id']} "
+                           f"({len(log.player_deaths)} death(s) total)")
+
+
+def player_collapse_triggers_reassignment(log: TrajectoryLog) -> InvariantResult:
+    """J14: Every player death triggers immediate reassignment to a faction with ≥1 region."""
+    if not log.player_deaths:
+        return InvariantResult("J14_player_collapse_reassignment", True, "info",
+                               "Skipped — player never collapsed in this run")
+
+    for death in log.player_deaths:
+        t = death["tick"]
+        new_fid = death["new_faction_id"]
+        snap = log.snapshots[t]
+        new_fac = snap.factions.get(new_fid)
+        if not new_fac or new_fac["owned_region_count"] == 0:
+            return InvariantResult(
+                "J14_player_collapse_reassignment", False, "critical",
+                f"Player died at tick {t}, reassigned to {new_fid} which owns 0 regions")
+        if snap.player_faction_id != new_fid:
+            return InvariantResult(
+                "J14_player_collapse_reassignment", False, "critical",
+                f"Player died at tick {t}, but snapshot player_faction_id={snap.player_faction_id} != {new_fid}")
+
+    return InvariantResult("J14_player_collapse_reassignment", True, "critical",
+                           f"All {len(log.player_deaths)} player death(s) triggered valid reassignment")
+
+
+# ═════════════════════════════════════════════════════════════════════════════
 #  REGISTRY
 # ═════════════════════════════════════════════════════════════════════════════
 
@@ -1111,6 +1653,21 @@ ALL_INVARIANTS = [
     stochastic_divergence_across_seeds,
     # Group I — Technology
     tech_grows_with_economy,
+    # Group J — Stage 4 Lifecycle (J15 excluded — re-runs A–I)
+    admin_revolts_fire_for_large,
+    admin_revolts_rare_for_small,
+    admin_revolt_chains_complete,
+    admin_revolts_produce_breakaways,
+    no_total_domination,
+    admin_revolt_quadratic_scaling,
+    expansion_phase_early,
+    conflict_follows_expansion,
+    fragmentation_after_overextension,
+    faction_diversity_maintained,
+    time_jumps_meaningful,
+    time_jumps_safe,
+    player_faction_can_die,
+    player_collapse_triggers_reassignment,
 ]
 
 GROUP_MAP = {
@@ -1123,7 +1680,36 @@ GROUP_MAP = {
     "G": [colonization_happens, colonies_start_weak],
     "H": [oscillation_present, no_universal_convergence, stochastic_divergence_across_seeds],
     "I": [tech_grows_with_economy],
+    "J": [
+        admin_revolts_fire_for_large, admin_revolts_rare_for_small,
+        admin_revolt_chains_complete, admin_revolts_produce_breakaways,
+        no_total_domination, admin_revolt_quadratic_scaling,
+        expansion_phase_early, conflict_follows_expansion,
+        fragmentation_after_overextension, faction_diversity_maintained,
+        time_jumps_meaningful, time_jumps_safe,
+        player_faction_can_die, player_collapse_triggers_reassignment,
+    ],
 }
+
+
+def stage3_regression(log: TrajectoryLog) -> InvariantResult:
+    """J15: All Stage 3/3.5 critical invariants should still pass."""
+    failures = []
+    for group_name in ["A", "B", "C", "D", "E", "F", "G", "H", "I"]:
+        for fn in GROUP_MAP.get(group_name, []):
+            result = fn(log)
+            if not result.passed and result.severity == "critical":
+                failures.append(result.name)
+    if failures:
+        return InvariantResult(
+            "J15_stage3_regression", False, "critical",
+            f"{len(failures)} Stage 3 critical invariant(s) failed: {', '.join(failures)}",
+            details={"failed": failures})
+    return InvariantResult("J15_stage3_regression", True, "critical",
+                           "All Stage 3 critical invariants pass")
+
+
+GROUP_MAP["J"].append(stage3_regression)
 
 
 def run_invariants(log: TrajectoryLog, groups: list | None = None) -> list[InvariantResult]:
