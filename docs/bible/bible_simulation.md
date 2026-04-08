@@ -554,9 +554,40 @@ The coherence ledger is a **character registry with lifecycle management**. It t
 
 **Succession.** When a named character dies, their role is filled by a new named character. For faction leaders (`supreme_commander`), succession produces a new character in the same faction. For regional commanders, succession produces a new character in the same region. The new character is created with a fresh name from the library, a new lifespan roll, and the same faction and region assignments. Succession is automatic — the ledger handles it as part of its lifecycle management during each tick's logging step. Succession events that are narratively significant (a faction leader dying during a critical war) surface through the chronicle distiller's normal significance scoring of events in the event log.
 
-**Lineage generation is a separate module.** The lineage generator runs during time jumps and produces new lineage member records. It hands these to the ledger for registration. The ledger does not contain lineage generation logic — it just files the new characters. See "The Generational Structure — Character Selector Algorithm — Step 3" for lineage generation details.
+### Character Selector Data Contract
 
-**Nemesis detection.** The ledger does not track rivalries as a first-class relationship. Nemesis relationships are detected by the character selector at query time: scan the event log for combat events where two named characters were on opposing sides. Characters who appear on opposite sides of multiple combat events are nemesis candidates. This keeps the ledger simple and avoids maintaining a relationship graph that duplicates information already in the event log.
+> **RESOLVED (v2.05).** This section specifies the implementation-level data structures and mechanisms for the character selector algorithm described in game_bible.md. The design intent (2–4 chapter lineage persistence, three-pool selection, cross-faction rotation) is documented in the hub. This section documents how those mechanisms interact with the coherence ledger.
+
+**CommanderSelection record.** The character selector returns a structured record after each selection:
+
+```python
+@dataclass
+class CommanderSelection:
+    character_id: str           # Coherence ledger character ID
+    lineage_id: str             # Lineage ID (new or continued)
+    faction_id: str             # Faction the commander serves
+    rotated: bool               # True if lineage rotation occurred
+    rotation_reason: str | None # "forced", "hard_cap", "delta_roll", None if no rotation
+    pool_used: str | None       # "previous_descendant", "nemesis_descendant", "unrelated", None if continued
+```
+
+This record is consumed by the generational loop (`generational.py`) to set up the next mission's commander identity, and by the chronicle distiller to frame rotation events in the scroll ("a new family takes up the burden").
+
+**Nemesis tagging.** When the player completes a mission, the enemy faction's named characters in the mission region gain a `rival_of` tag in the coherence ledger, linking them to the player's current commander. This is the mechanism that populates the character selector's Priority 2 (nemesis/rival descendant) pool. The tag is a lightweight annotation on the character record — it does not create a bidirectional relationship graph or duplicate event log data. The character selector queries these tags at selection time to find rival descendants in or near the mission region.
+
+**Chapter counter.** The coherence ledger tracks a `chapter_counter` per lineage — incremented each time the character selector continues or begins a lineage. The counter is read by the selector's rotation decision cascade (minimum stay check, hard cap check) and reset to 1 when a new lineage begins.
+
+**Generational loop position.** The character selector runs after the mission generator in the generational loop:
+
+```
+mission → outcome resolver → time jump (N ticks + chronicle distiller) → mission generator → character selector → next mission
+```
+
+The selector runs *after* the mission generator because it needs the mission region to make its selection. The mission generator selects based on simulation pressure; the character selector finds the best person to send to the already-selected mission.
+
+**Lineage generation is a separate module.** The lineage generator runs during time jumps and produces new lineage member records. It hands these to the ledger for registration. The ledger does not contain lineage generation logic — it just files the new characters. See "The Generational Structure — Character Selector Algorithm — Step 4" in game_bible.md for lineage generation details.
+
+**Nemesis detection.** Nemesis relationships are tracked via the `rival_of` tag described above — a lightweight annotation applied during mission resolution. The character selector queries these tags at selection time rather than scanning the event log. This keeps nemesis detection fast (tag lookup vs. event log scan) while maintaining the principle that the ledger stores only identity and lifecycle data, not duplicated event history. The tag is the minimum viable annotation needed to support the Priority 2 nemesis pool.
 
 **Cause-and-effect thread tracking.** The ledger does NOT maintain a separate chain index or thread tracker. The event log's chain tags (generated when chains start, propagated to all chain spawns) are the complete causal thread record. Consumers — the chronicle distiller, the mission generator, the character selector — query the event log by chain tag when they need causal thread data. This avoids redundancy between the ledger and the event log.
 

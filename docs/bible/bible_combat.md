@@ -143,6 +143,22 @@ Combat uses **3–5 vertical layers** rather than a flat 2D plane or full 3D mov
 
 **Layer design is part of map generation.** The spine + gradient system includes layer accessibility as a gradient property. See "Map Generation System" for how the Strategic Layout Authoring Framework and per-archetype compatibility filters use layer blocking to create tactical terrain. Layer accessibility, like all gradient properties, can vary spatially (an area might have all 5 layers open while an adjacent area has layers 1–2 blocked) and can overlap with environmental hazards (a sensor interference zone on layer 3 but clear visibility on layers 1–2).
 
+**Era-specific unit-type layer restrictions.** The engine supports an optional **per-unit-type layer restriction mask** configured at the era-skin level. When an era defines layer restrictions, each unit type has a set of layers it is permitted to occupy. The engine enforces this alongside the map's layer accessibility mask — a unit can only be on a layer that is both accessible at its position AND permitted for its unit type. Eras that do not define restrictions (e.g., the Settled Reach sci-fi era, where all units are spacecraft capable of any altitude) leave the mask unrestricted and the system behaves exactly as designed above. Eras that define restrictions use them to create thematic layer assignments: a 1980s-era expansion might restrict submarines to layers 4–5 (underwater), ships and land units to layer 3 (surface), and aircraft to layers 1–2 (airspace). A Roman-era expansion might restrict all units to the top layer only (ground combat, no vertical movement). This is a skin-level decision — the engine behavior is identical regardless of whether restrictions are active. The restriction mask is part of the era pack's JSON config, not hardcoded.
+
+### Layer Assignment Hotkey
+
+> **RESOLVED (v2.05).** Two layer-interaction commands accessible through the layer UI and keyboard shortcuts. Part of the Stage 8 command interface.
+
+The player has two distinct ways to control unit layer behavior:
+
+**Hard layer transfer** — an immediate command to move selected units to a specific layer. The unit transitions to the target layer as soon as it reaches a position where the layer is accessible (per the map's layer accessibility mask and any era-specific unit-type layer restrictions). If the unit is already at an accessible position, it transitions immediately. This is a one-time command, not a persistent setting. Issued via clicking a layer on the layer UI panel or via a keyboard shortcut (implementation TBD, Stage 8).
+
+**Layer preference assignment** — a persistent preference that tells selected units to favor a specific layer whenever accessible. A modifier hotkey (user-rebindable, default TBD) temporarily remaps keys 1–5 to layer assignment. While held, pressing 1–5 sets the selected units' layer preference to that layer. The same assignment can be made by clicking the corresponding layer on the visual layer panel while the modifier is held. Units with a layer preference will transition to their preferred layer whenever the map's accessibility mask and era-specific restrictions permit it at their current position. When the preferred layer is inaccessible (terrain obstacle, layer blocked at that position), the unit continues executing its current orders on whatever layer it occupies — it does not stop or get stuck. It transitions to the preferred layer as soon as it reaches a position where the preference can be fulfilled. Layer preference persists until the player clears it (re-assign with the modifier, or a "clear preference" action) or issues a hard layer transfer, which overrides the preference.
+
+**Interaction with control groups.** The modifier key remapping is temporary — it only applies while the modifier is held. Releasing the modifier restores the standard 1–0 control group bindings. The two systems (control groups and layer assignment) share no keys during normal play.
+
+**Visual feedback.** Units with an active layer preference display a small layer-color indicator (consistent with the layer indicator ring system described in Open Design Question #16) showing which layer they prefer. This is distinct from the indicator showing which layer they are currently on.
+
 ### Camera and Player View
 
 The player controls a **standard RTS camera** — free pan and zoom at all times. No automatic anchoring, no camera modes, no forced following. The player manages their own viewport like Age of Empires 3 or StarCraft 2. A minimap provides strategic awareness of the broader tactical space.
@@ -305,15 +321,28 @@ The longer engagement floor (45 seconds minimum) serves a critical design purpos
 
 ### Command Vocabulary
 
-> **RESOLVED (v2.02).** Five commands. No patrol, no follow, no hold position, no stop.
+> **RESOLVED (v2.02, updated v2.03).** Six commands. No patrol, no follow, no hold position, no stop.
 
 - **`move`** — move to position
 - **`attack_move`** — move to position, engaging enemies in range along the way
 - **`attack_target`** — attack a specific enemy unit
 - **`activate_ability`** — trigger the unit's active ability (toggle for Brace)
-- **`group_move`** — all selected units move together to target position
+- **`group_move`** — all selected units move together to target position, speed-matched to the slowest unit in the selection
+- **`fast_move`** — all selected units move to target position at individual speeds (equivalent to issuing individual `move` commands)
 
 Commands are recorded with tick numbers for replay. The engine processes all commands for the current tick before advancing state.
+
+### Group Move Speed Matching
+
+When a `group_move` command is issued, all selected units move toward the target position at the speed of the **slowest unit in the selection**. This keeps mixed-composition forces coherent during approach — frontline, support, and fire support arrive together as a functional army rather than strung out by speed differential.
+
+**Fast-move override:** The player can issue a **fast move** variant (hotkey TBD, Stage 8) that releases all units to move at their individual speeds toward the same destination. This is the opt-in "break formation" command. Fast move is the same as issuing individual `move` commands to every unit in the selection simultaneously — no speed matching, no cohesion enforcement. The intent is that group_move is the safe default and fast-move is always one keypress away, never buried or annoying to access.
+
+**Individual move commands are never speed-matched.** A `move` command issued to a single unit (or to a selection where the player wants independent movement) always uses that unit's native speed. Speed matching applies exclusively to `group_move`.
+
+**AI forces use group_move by default** for approach movement, so enemy armies also arrive as coherent forces rather than trickling in by speed tier. AI fast-move behavior is governed by the enemy macro behavior system (behavior scripts can issue fast-move when tactically appropriate, e.g., sending Raiders ahead to scout or screen).
+
+**Design rationale:** The 4:1 speed ratio between the fastest unit (Raider, 150 wu/s) and slowest (Bastion, 40 wu/s) means an ungrouped mixed force arrives over a window longer than the target engagement duration. Combined-arms tactics require units to fight together. The player opts into splitting when they want to — scouting with Raiders, screening with Interceptors — rather than being forced to micro around an incoherent default.
 
 ---
 

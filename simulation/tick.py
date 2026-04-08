@@ -91,7 +91,15 @@ def run_tick(world, tick_num: int, ledger=None,
                         if coherence_ledger is not None and revolt_log.get("new_faction"):
                             new_fid = revolt_log["new_faction"]
                             rid = revolt_log["region"]
-                            coherence_ledger.assign_faction_leader(new_fid, rid, tick_num, rng)
+                            parent_fid = revolt_log.get("original_faction")
+                            coherence_ledger.assign_faction_leader(
+                                new_fid, rid, tick_num, rng,
+                                parent_faction_id=parent_fid)
+                            fname = coherence_ledger.get_faction_name(new_fid, tick_num, rng)
+                            if fname and registry and new_fid in registry:
+                                registry[new_fid].name = fname
+                            if parent_fid:
+                                coherence_ledger.derive_schism_subset(parent_fid, new_fid, rng)
 
     # ── Step 3: Faction agents — two-phase telegraph/surprise resolution ─────
     if pending_telegraphs is None:

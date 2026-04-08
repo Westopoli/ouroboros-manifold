@@ -1,10 +1,14 @@
 import config
 import tick as _tick
+from chronicle_distiller import distill
+from chronicle_assembler import assemble_scroll
 
 
 def run_time_jump(world, n_ticks, registry, pending_queue, noise_offsets,
                   trigger_state, stances, pending_telegraphs, rng,
-                  start_tick=0):
+                  start_tick=0, coherence_ledger=None, naming_system=None,
+                  player_lineage_id=None, last_mission_region=None,
+                  last_mission_outcome=None, mission_info=None):
     n_ticks = max(config.TIME_JUMP_MIN_TICKS, min(config.TIME_JUMP_MAX_TICKS, n_ticks))
 
     start_ownership = {}
@@ -38,10 +42,15 @@ def run_time_jump(world, n_ticks, registry, pending_queue, noise_offsets,
             registry=registry,
             stances=stances,
             pending_telegraphs=pending_telegraphs,
+            coherence_ledger=coherence_ledger,
         )
 
         for evt in tick_log.get("events", []):
-            all_events.append({**evt, "tick": t})
+            enriched = {**evt, "tick": t}
+            enriched.setdefault("character_id", None)
+            enriched.setdefault("chain_length", 0)
+            enriched.setdefault("mission_consequence", False)
+            all_events.append(enriched)
 
         for c in tick_log.get("conquests", []):
             conquests.append({**c, "tick": t})
@@ -59,6 +68,12 @@ def run_time_jump(world, n_ticks, registry, pending_queue, noise_offsets,
         for nid in new_ids:
             faction_births.append({"faction_id": nid, "tick": t})
             start_faction_ids.add(nid)
+
+    # Coherence ledger: lineage growth + natural deaths
+    if coherence_ledger and player_lineage_id:
+        coherence_ledger.generate_lineage_members(
+            player_lineage_id, n_ticks, world, start_tick + n_ticks, rng)
+        coherence_ledger.process_natural_deaths(start_tick + n_ticks, rng, world=world)
 
     end_ownership = {rid: r.faction_id for rid, r in world.regions.items()}
     for rid in start_ownership:
@@ -90,6 +105,36 @@ def run_time_jump(world, n_ticks, registry, pending_queue, noise_offsets,
                 start_avg[f] = sum(vals) / len(vals) if vals else 0.0
             field_deltas[fid] = {f: round(end_avg[f] - start_avg.get(f, 0.0), 2) for f in end_avg}
 
+    # Chronicle distiller
+    scroll_entries = []
+    chronicle_warnings = []
+    if all_events:
+        clusters = distill(
+            all_events, coherence_ledger, player_lineage_id,
+            last_mission_region, last_mission_outcome, world)
+        scroll_entries, chronicle_warnings = assemble_scroll(
+            clusters, coherence_ledger, player_lineage_id, world,
+            mission_info, seed=start_tick, registry=registry)
+
+    post_jump_factions = {}
+    for fid, fac in registry.items():
+        owned = world.regions_by_faction(fid)
+        avg_fields = {}
+        if owned:
+            for f in ["military", "economy", "tension", "population"]:
+                avg_fields[f] = sum(r.fields[f] for r in owned) / len(owned)
+        post_jump_factions[fid] = {
+            "owned_region_count": len(owned),
+            "avg_fields": avg_fields,
+            "name": getattr(fac, "name", fid),
+        }
+    post_jump_regions = {}
+    for rid, r in world.regions.items():
+        post_jump_regions[rid] = {
+            "faction_id": r.faction_id,
+            "name": getattr(r, "name", rid),
+        }
+
     return {
         "ticks_run":          n_ticks,
         "start_tick":         start_tick,
@@ -101,6 +146,13 @@ def run_time_jump(world, n_ticks, registry, pending_queue, noise_offsets,
         "colonizations":      colonizations,
         "admin_revolts":      admin_revolts,
         "revolts":            revolts,
+        "events":             all_events,
         "events_total":       len(all_events),
         "field_deltas":       field_deltas,
+        "scroll_entries":     scroll_entries,
+        "chronicle_warnings": chronicle_warnings,
+        "post_jump_snapshot": {
+            "factions": post_jump_factions,
+            "regions": post_jump_regions,
+        },
     }

@@ -49,6 +49,50 @@ def _parse_naming_filename(filename):
     return faction_id, category
 
 
+def _is_eponym(name):
+    parts = name.strip().split()
+    return len(parts) == 2 and parts[0] == parts[1]
+
+
+def _filter_quality(batch_names, original_names, max_component_reuse=10):
+    from collections import Counter
+    first_count = Counter()
+    last_count = Counter()
+    kept = []
+
+    for n in batch_names:
+        if _is_eponym(n):
+            continue
+        parts = n.strip().split()
+        first = parts[0] if parts else ""
+        last = parts[-1] if len(parts) >= 2 else ""
+        if first_count[first] >= max_component_reuse:
+            continue
+        if last and last_count[last] >= max_component_reuse:
+            continue
+        first_count[first] += 1
+        if last:
+            last_count[last] += 1
+        kept.append(n)
+
+    for n in original_names:
+        if _is_eponym(n):
+            continue
+        parts = n.strip().split()
+        first = parts[0] if parts else ""
+        last = parts[-1] if len(parts) >= 2 else ""
+        if first_count[first] >= max_component_reuse:
+            continue
+        if last and last_count[last] >= max_component_reuse:
+            continue
+        first_count[first] += 1
+        if last:
+            last_count[last] += 1
+        kept.append(n)
+
+    return kept
+
+
 def ingest_chronicle():
     os.makedirs(os.path.join(LIBRARY_DIR, "chronicle"), exist_ok=True)
     all_fragments = []
@@ -71,11 +115,10 @@ def ingest_chronicle():
 
         category = re.sub(r"_b\d+$", "", matches[0].replace(f"{i:02d}_", "").replace(".txt", ""))
         count = 0
+        type_map = {"openings": "opening", "details": "detail", "closings": "closing"}
         for ftype in ("openings", "details", "closings"):
             for frag in data.get(ftype, []):
-                frag["type"] = ftype.rstrip("s")
-                if ftype == "closings":
-                    frag["type"] = "closing"
+                frag["type"] = type_map[ftype]
                 frag["category"] = category
                 all_fragments.append(frag)
                 count += 1
@@ -93,13 +136,12 @@ def ingest_chronicle():
 
 def ingest_naming():
     os.makedirs(os.path.join(LIBRARY_DIR, "naming"), exist_ok=True)
-    all_names = {}
+    batch_names = {}   # (faction_id, category) -> [names from _b files]
+    original_names = {} # (faction_id, category) -> [names from non-_b files]
     errors = 0
 
-    for f in sorted(os.listdir(BATCH_DIR)):
-        if not f.endswith(".txt") or not _is_naming_file(f):
-            continue
-
+    all_files = sorted(f for f in os.listdir(BATCH_DIR) if f.endswith(".txt") and _is_naming_file(f))
+    for f in all_files:
         filepath = os.path.join(BATCH_DIR, f)
         data = parse_response(filepath)
         if data is None:
@@ -109,12 +151,12 @@ def ingest_naming():
 
         names = data.get("names", [])
         faction_id, category = _parse_naming_filename(f)
+        key = (faction_id, category)
+        is_batch = "_b" in f
 
-        all_names.setdefault(faction_id, {})
-        if category in all_names[faction_id]:
-            all_names[faction_id][category].extend(names)
-        else:
-            all_names[faction_id][category] = list(names)
+        target = batch_names if is_batch else original_names
+        target.setdefault(key, [])
+        target[key].extend(names)
 
         batch_label = ""
         batch_match = re.search(r"_b(\d+)\.txt$", f)
@@ -122,13 +164,32 @@ def ingest_naming():
             batch_label = f" (batch {batch_match.group(1)})"
         print(f"  {faction_id}/{category}{batch_label}: {len(names)} names")
 
-    for fid in all_names:
-        for cat in all_names[fid]:
-            before = len(all_names[fid][cat])
-            all_names[fid][cat] = list(dict.fromkeys(all_names[fid][cat]))
-            after = len(all_names[fid][cat])
-            if before != after:
-                print(f"  {fid}/{cat}: deduped {before} → {after}")
+    all_keys = set(batch_names.keys()) | set(original_names.keys())
+    all_names = {}
+
+    for key in sorted(all_keys):
+        fid, cat = key
+        b_names = list(dict.fromkeys(batch_names.get(key, [])))
+        o_names = list(dict.fromkeys(original_names.get(key, [])))
+
+        b_set = set(n.lower() for n in b_names)
+        o_names = [n for n in o_names if n.lower() not in b_set]
+
+        total_before = len(b_names) + len(o_names)
+        merged = _filter_quality(b_names, o_names)
+        removed = total_before - len(merged)
+
+        all_names.setdefault(fid, {})
+        all_names[fid][cat] = merged
+
+        parts = []
+        if b_names:
+            parts.append(f"{len(b_names)} batch")
+        if o_names:
+            parts.append(f"{len(o_names)} original")
+        source = " + ".join(parts)
+        filter_note = f", quality filter removed {removed}" if removed else ""
+        print(f"  {fid}/{cat}: {source} → {len(merged)} kept{filter_note}")
 
     outpath = os.path.join(LIBRARY_DIR, "naming", "names.json")
     with open(outpath, "w") as f:

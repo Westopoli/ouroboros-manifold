@@ -279,7 +279,7 @@ TEMPLATES = {
     },
     "evt_cultural_renaissance": {
         "id":                "evt_cultural_renaissance",
-        "name":              "Cultural Renaissance",
+        "name":              "Cultural Upheaval",
         "trigger_field":     "economy",
         "trigger_threshold": 60,
         "trigger_direction": "above",

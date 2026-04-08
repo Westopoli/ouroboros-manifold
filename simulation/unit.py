@@ -41,6 +41,14 @@ class UnitStore:
         self.target_x = np.zeros(MAX_UNITS, dtype=np.float64)
         self.target_y = np.zeros(MAX_UNITS, dtype=np.float64)
         self.has_move_target = np.zeros(MAX_UNITS, dtype=np.bool_)
+        self.effective_speed = np.zeros(MAX_UNITS, dtype=np.float64)
+        self.auto_engage_target = np.full(MAX_UNITS, -1, dtype=np.int32)
+        self.ability_target_x = np.zeros(MAX_UNITS, dtype=np.float64)
+        self.ability_target_y = np.zeros(MAX_UNITS, dtype=np.float64)
+        self.waypoints = {}
+        self.pulse_remaining = np.zeros(MAX_UNITS, dtype=np.int32)
+        self.pulse_cooldown = np.zeros(MAX_UNITS, dtype=np.int32)
+        self.blocked_ticks = np.zeros(MAX_UNITS, dtype=np.int32)
 
     def spawn(self, unit_type, faction_id, x, y, layer=0, stats=None):
         if self.count >= MAX_UNITS:
@@ -93,9 +101,16 @@ class UnitStore:
         self.target_x[uid] = tx
         self.target_y[uid] = ty
         self.has_move_target[uid] = True
+        self.waypoints.pop(uid, None)
 
     def clear_move_target(self, uid):
         self.has_move_target[uid] = False
+
+    def set_effective_speed(self, uid, speed):
+        self.effective_speed[uid] = speed
+
+    def clear_effective_speed(self, uid):
+        self.effective_speed[uid] = 0.0
 
     def active_ids(self):
         return [uid for uid in range(self.count) if self.alive[uid]]

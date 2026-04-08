@@ -10,6 +10,18 @@ VALID_SLOTS = {
     "{previous_event_reference}", "{lineage_history_note}",
 }
 
+IDENTITY_SLOTS = {
+    "{faction_name}", "{region_name}", "{character_name}",
+    "{lineage_name}", "{adjacent_region}", "{character_faction}",
+    "{mission_region}",
+}
+
+ARTICLE_BEFORE_SLOT_RE = re.compile(
+    r"\b(?:The|the|A|a|An|an) ("
+    + "|".join(re.escape(s) for s in sorted(IDENTITY_SLOTS))
+    + r")"
+)
+
 WORD_LIMITS = {"opening": 30, "detail": 60, "closing": 50}
 
 MECHANICAL_PATTERNS = [
@@ -85,6 +97,11 @@ def validate_structural(fragments, category_required_slots=None):
                 issues.append({"id": fid, "issue": "mechanical_language",
                                "detail": f"Matched: '{match.group()}'"})
                 break
+
+        article_match = ARTICLE_BEFORE_SLOT_RE.search(text)
+        if article_match:
+            issues.append({"id": fid, "issue": "article_before_identity_slot",
+                           "detail": f"Article before identity slot: '{article_match.group()}'"})
 
         if category_required_slots and category in category_required_slots:
             required = set(category_required_slots[category])

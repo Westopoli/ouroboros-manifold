@@ -8,8 +8,11 @@ import technology as _tech
 import tick as _tick
 import diplomacy as _diplomacy
 import generational as _gen
+import json
+import os
 import naming_system as _naming_mod
 import coherence_ledger as _ledger_mod
+import time_jump as _time_jump
 
 
 @dataclass
@@ -41,6 +44,8 @@ class TrajectoryLog:
     snapshots: list = field(default_factory=list)
     player_deaths: list = field(default_factory=list)  # [{tick, old_faction_id, new_faction_id}]
     coherence_ledger: object = None
+    naming_system: object = None
+    time_jump_results: list = field(default_factory=list)  # [run_time_jump() return dicts]
 
     # ── Query helpers ────────────────────────────────────────────────────────
 
@@ -301,15 +306,24 @@ def run_recorded_scenario(name: str, scenario: dict,
 
     # ── Coherence ledger + naming system (Stage 5) ──────────────────────────
     coherence_ledger = None
+    ns = None
     if scenario["features"].get("coherence_ledger"):
         ns = _naming_mod.NamingSystem()
-        _load_test_naming_pools(ns, registry, w)
+        if scenario["features"].get("real_naming_pools"):
+            _load_real_naming_pools(ns)
+        else:
+            _load_test_naming_pools(ns, registry, w)
         coherence_ledger = _ledger_mod.CoherenceLedger(ns)
         for fid, fac in registry.items():
             home_regions = [r for r in w.regions.values() if r.faction_id == fid]
             home_rid = home_regions[0].id if home_regions else None
             if home_rid:
                 coherence_ledger.assign_faction_leader(fid, home_rid, 0, w.rng)
+        if scenario["features"].get("real_naming_pools"):
+            for fid, fac in registry.items():
+                fname = ns.get_name(fid, "factions", current_tick=0, rng=w.rng)
+                if fname:
+                    fac.name = fname
 
     player_fid = None
     for fid, fac in registry.items():
@@ -432,7 +446,56 @@ def run_recorded_scenario(name: str, scenario: dict,
             tlog.snapshots.append(_capture_snapshot(t, w, registry, manual_log,
                                                     player_faction_id=gen_state.player_faction_id if gen_state else None))
 
+    # ── Time jumps (Stage 5 chronicle) ──────────────────────────────────────
+    chronicle_reviews = scenario["features"].get("chronicle_reviews", [])
+    if chronicle_reviews and coherence_ledger:
+        player_lineage_id = None
+        if player_fid:
+            for cid, char in coherence_ledger._characters.items():
+                if char.faction_id == player_fid and char.lineage_id:
+                    player_lineage_id = char.lineage_id
+                    break
+            if not player_lineage_id:
+                leader = coherence_ledger.assign_faction_leader(
+                    player_fid, None, 0, w.rng)
+                if leader:
+                    player_lineage_id = coherence_ledger.create_lineage(leader.id)
+
+        player_regions = w.regions_by_faction(player_fid) if player_fid else []
+        last_mission_region = player_regions[0].id if player_regions else None
+
+        jump_duration = scenario["features"].get("chronicle_jump_duration", 100)
+        for jump_tick in chronicle_reviews:
+            result = _time_jump.run_time_jump(
+                world=w,
+                n_ticks=jump_duration,
+                registry=registry,
+                pending_queue=pending_queue,
+                noise_offsets=noise_offsets,
+                trigger_state=trigger_state,
+                stances=stances if config.ENABLE_DIPLOMACY else None,
+                pending_telegraphs=pending_telegraphs if scenario.get("use_tick_engine") else [],
+                rng=w.rng,
+                start_tick=jump_tick,
+                coherence_ledger=coherence_ledger,
+                naming_system=ns,
+                player_lineage_id=player_lineage_id,
+                last_mission_region=last_mission_region,
+                last_mission_outcome="mixed",
+                mission_info={
+                    "outcome": "a hard-won engagement whose costs became clear only afterward",
+                    "archetype": "defensive_stand",
+                    "region": last_mission_region or "unknown",
+                },
+            )
+            result["jump_tick"] = jump_tick
+            tlog.time_jump_results.append(result)
+
+            player_regions = w.regions_by_faction(player_fid) if player_fid else []
+            last_mission_region = player_regions[0].id if player_regions else last_mission_region
+
     tlog.coherence_ledger = coherence_ledger
+    tlog.naming_system = ns
     return tlog
 
 
@@ -458,3 +521,27 @@ def _load_test_naming_pools(ns, registry, world):
         shuffled = list(_TEST_NAME_POOL)
         world.rng.shuffle(shuffled)
         ns.load_pool(fid, "people", shuffled)
+
+
+def _load_real_naming_pools(ns):
+    names_path = os.path.join("library", "naming", "names.json")
+    if not os.path.exists(names_path):
+        return
+    with open(names_path) as f:
+        all_names = json.load(f)
+    for fid, cats in all_names.items():
+        for cat, names in cats.items():
+            ns.load_pool(fid, cat, names)
+    ns.load_pool("player_civilization", "people",
+                 all_names.get("player", {}).get("people", []))
+    ns.load_pool("player_civilization", "places",
+                 all_names.get("player", {}).get("places", []))
+    ns.load_pool("player_civilization", "factions",
+                 all_names.get("player", {}).get("factions", []))
+
+    subsets_path = os.path.join("prompts", "variable_subsets.json")
+    if os.path.exists(subsets_path):
+        with open(subsets_path) as f:
+            subsets = json.load(f)
+        for fid, subset in subsets.items():
+            ns.set_variable_subset(fid, subset)

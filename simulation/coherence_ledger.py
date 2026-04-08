@@ -63,13 +63,30 @@ class CoherenceLedger:
             self._lineages[lineage_id]["member_ids"].append(char_id)
         return rec
 
-    def kill_character(self, char_id, tick):
+    def kill_character(self, char_id, tick, world=None, rng=None):
         rec = self._characters.get(char_id)
         if rec is None or rec.status == "historical":
             return
         rec.status = "historical"
         rec.death_tick = tick
         self._naming.release_name(rec.name, tick)
+        if world and rng and rec.rank in ("supreme_commander", "regional_commander"):
+            self._succeed(rec, tick, world, rng)
+
+    def _succeed(self, dead_rec, tick, world, rng):
+        faction_regions = world.regions_by_faction(dead_rec.faction_id)
+        if not faction_regions:
+            return
+        if dead_rec.rank == "supreme_commander":
+            self.create_character(
+                dead_rec.faction_id, faction_regions[0].id,
+                "supreme_commander", tick, rng)
+        elif dead_rec.rank == "regional_commander":
+            region = world.regions.get(dead_rec.region_id)
+            if region and region.faction_id == dead_rec.faction_id:
+                self.create_character(
+                    dead_rec.faction_id, dead_rec.region_id,
+                    "regional_commander", tick, rng)
 
     def create_lineage(self, root_character_id) -> str:
         lineage_id = self._gen_lineage_id()
@@ -82,8 +99,19 @@ class CoherenceLedger:
             rec.lineage_id = lineage_id
         return lineage_id
 
-    def assign_faction_leader(self, faction_id, region_id, tick, rng) -> CharacterRecord | None:
+    def assign_faction_leader(self, faction_id, region_id, tick, rng,
+                              parent_faction_id=None) -> CharacterRecord | None:
+        if parent_faction_id:
+            self._naming.ensure_pool(faction_id, "people", parent_faction_id)
+            self._naming.ensure_pool(faction_id, "places", parent_faction_id)
+            self._naming.ensure_pool(faction_id, "factions", parent_faction_id)
         return self.create_character(faction_id, region_id, "supreme_commander", tick, rng)
+
+    def get_faction_name(self, faction_id, tick, rng):
+        return self._naming.get_name(faction_id, "factions", current_tick=tick, rng=rng)
+
+    def derive_schism_subset(self, parent_faction_id, child_faction_id, rng):
+        self._naming.derive_schism_subset(parent_faction_id, child_faction_id, rng)
 
     def assign_regional_commander(self, faction_id, region_id, tick, rng) -> CharacterRecord | None:
         return self.create_character(faction_id, region_id, "regional_commander", tick, rng)
@@ -135,14 +163,14 @@ class CoherenceLedger:
                 new_members.append(child)
         return new_members
 
-    def process_natural_deaths(self, tick, rng):
+    def process_natural_deaths(self, tick, rng, world=None):
         deaths = []
         for rec in list(self._characters.values()):
             if rec.status != "active":
                 continue
             age = tick - rec.born_tick
             if age >= rec.lifespan_ticks:
-                self.kill_character(rec.id, tick)
+                self.kill_character(rec.id, tick, world=world, rng=rng)
                 deaths.append(rec)
         return deaths
 

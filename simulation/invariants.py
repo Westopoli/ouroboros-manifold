@@ -1614,6 +1614,311 @@ def player_collapse_triggers_reassignment(log: TrajectoryLog) -> InvariantResult
 
 
 # ═════════════════════════════════════════════════════════════════════════════
+#  GROUP K: Chronicle Pipeline (Stage 5)
+# ═════════════════════════════════════════════════════════════════════════════
+
+def chronicle_entry_count(log: TrajectoryLog) -> InvariantResult:
+    if not log.time_jump_results:
+        return InvariantResult("K1_entry_count", True, "info",
+                               "No time jumps — skipped")
+    failures = []
+    for tj in log.time_jump_results:
+        n = len(tj.get("scroll_entries", []))
+        tick = tj.get("jump_tick", "?")
+        if n < 5 or n > 10:
+            failures.append(f"jump@{tick}: {n} entries (expected 5-10)")
+    if failures:
+        return InvariantResult("K1_entry_count", False, "critical",
+                               f"{len(failures)} jump(s) outside 5-10 range",
+                               details={"failures": failures})
+    return InvariantResult("K1_entry_count", True, "critical",
+                           f"All {len(log.time_jump_results)} jumps have 5-10 entries")
+
+
+def chronicle_lineage_present(log: TrajectoryLog) -> InvariantResult:
+    if not log.time_jump_results:
+        return InvariantResult("K2_lineage_present", True, "info",
+                               "No time jumps — skipped")
+    failures = []
+    for tj in log.time_jump_results:
+        entries = tj.get("scroll_entries", [])
+        has_lineage = any(e.cluster_type == "lineage" for e in entries)
+        if not has_lineage:
+            failures.append(f"jump@{tj.get('jump_tick', '?')}: no lineage entry")
+    if failures:
+        return InvariantResult("K2_lineage_present", False, "critical",
+                               f"{len(failures)} jump(s) missing lineage cluster",
+                               details={"failures": failures})
+    return InvariantResult("K2_lineage_present", True, "critical",
+                           "All jumps have lineage entries")
+
+
+def chronicle_consequence_first(log: TrajectoryLog) -> InvariantResult:
+    if not log.time_jump_results:
+        return InvariantResult("K3_consequence_first", True, "info",
+                               "No time jumps — skipped")
+    failures = []
+    for tj in log.time_jump_results:
+        entries = tj.get("scroll_entries", [])
+        has_consequence = any(e.cluster_type == "consequence" for e in entries)
+        if has_consequence and entries and entries[0].cluster_type != "consequence":
+            failures.append(f"jump@{tj.get('jump_tick', '?')}: "
+                            f"first entry is {entries[0].cluster_type}, not consequence")
+    if failures:
+        return InvariantResult("K3_consequence_first", False, "critical",
+                               f"{len(failures)} jump(s) have consequence not first",
+                               details={"failures": failures})
+    return InvariantResult("K3_consequence_first", True, "critical",
+                           "Consequence entries always appear first when present")
+
+
+def chronicle_word_limits(log: TrajectoryLog) -> InvariantResult:
+    if not log.time_jump_results:
+        return InvariantResult("K4_word_limits", True, "info",
+                               "No time jumps — skipped")
+    failures = []
+    for tj in log.time_jump_results:
+        for entry in tj.get("scroll_entries", []):
+            base_wc = len(entry.base_text.split())
+            exp_wc = len(entry.expanded_text.split())
+            if base_wc >= 90:
+                failures.append(f"jump@{tj.get('jump_tick', '?')} "
+                                f"{entry.category}: base {base_wc}w (limit 90)")
+            if exp_wc >= 140:
+                failures.append(f"jump@{tj.get('jump_tick', '?')} "
+                                f"{entry.category}: expanded {exp_wc}w (limit 140)")
+    if failures:
+        return InvariantResult("K4_word_limits", False, "critical",
+                               f"{len(failures)} word limit violation(s)",
+                               details={"failures": failures})
+    return InvariantResult("K4_word_limits", True, "critical",
+                           "All entries within word limits")
+
+
+def chronicle_slots_resolved(log: TrajectoryLog) -> InvariantResult:
+    import re
+    if not log.time_jump_results:
+        return InvariantResult("K5_slots_resolved", True, "info",
+                               "No time jumps — skipped")
+    failures = []
+    for tj in log.time_jump_results:
+        for entry in tj.get("scroll_entries", []):
+            unresolved = re.findall(r"\{[a-z_]+\}", entry.expanded_text)
+            if unresolved:
+                failures.append(f"jump@{tj.get('jump_tick', '?')} "
+                                f"{entry.category}: unresolved {unresolved}")
+    if failures:
+        return InvariantResult("K5_slots_resolved", False, "critical",
+                               f"{len(failures)} entries with unresolved slots",
+                               details={"failures": failures})
+    return InvariantResult("K5_slots_resolved", True, "critical",
+                           "All slots resolved in all entries")
+
+
+def fragment_library_no_dupes(log: TrajectoryLog) -> InvariantResult:
+    import json
+    import os
+    path = os.path.join("library", "chronicle", "fragments.json")
+    if not os.path.exists(path):
+        return InvariantResult("K6_no_fragment_dupes", True, "info",
+                               "Fragment library not found — skipped")
+    with open(path) as f:
+        frags = json.load(f)
+
+    from library_validator import validate_dedup
+    result = validate_dedup(frags)
+    dupes = result["matches"]
+    if dupes:
+        return InvariantResult("K6_no_fragment_dupes", False, "warning",
+                               f"{len(dupes)} near-duplicate fragment pair(s)",
+                               details={"dupes": dupes[:10]})
+    return InvariantResult("K6_no_fragment_dupes", True, "warning",
+                           "No duplicate fragments found")
+
+
+def every_faction_has_leader(log: TrajectoryLog) -> InvariantResult:
+    if not log.coherence_ledger:
+        return InvariantResult("K7_faction_leaders", True, "info",
+                               "No coherence ledger — skipped")
+    ledger = log.coherence_ledger
+    failures = []
+
+    # Check at end of each time jump
+    check_points = []
+    for tj in log.time_jump_results:
+        check_points.append(("jump@" + str(tj.get("jump_tick", "?")),
+                             tj.get("end_tick", 0)))
+    # Also check at end of full run
+    if log.snapshots:
+        check_points.append(("end_of_run", log.snapshots[-1].tick))
+
+    for label, tick in check_points:
+        snap = None
+        for s in log.snapshots:
+            if s.tick == tick:
+                snap = s
+                break
+        if not snap:
+            if log.snapshots:
+                snap = log.snapshots[-1]
+            else:
+                continue
+
+        for fid, fdata in snap.factions.items():
+            if fdata["owned_region_count"] == 0:
+                continue
+            has_leader = False
+            for cid, char in ledger._characters.items():
+                if (char.faction_id == fid
+                        and char.rank == "supreme_commander"
+                        and char.status == "active"):
+                    has_leader = True
+                    break
+            if not has_leader:
+                failures.append(f"{label}: {fid} has {fdata['owned_region_count']} "
+                                f"regions but no active supreme_commander")
+
+    if failures:
+        return InvariantResult("K7_faction_leaders", False, "critical",
+                               f"{len(failures)} faction(s) missing leader",
+                               details={"failures": failures})
+    return InvariantResult("K7_faction_leaders", True, "critical",
+                           "All factions with regions have leaders at every checkpoint")
+
+
+def lineage_grows_during_jumps(log: TrajectoryLog) -> InvariantResult:
+    if not log.time_jump_results or not log.coherence_ledger:
+        return InvariantResult("K8_lineage_growth", True, "info",
+                               "No time jumps or ledger — skipped")
+    ledger = log.coherence_ledger
+    failures = []
+    for tj in log.time_jump_results:
+        if tj.get("ticks_run", 0) <= 50:
+            continue
+        # Count lineage members born during this jump
+        start = tj.get("start_tick", 0)
+        end = tj.get("end_tick", 0)
+        new_members = sum(1 for c in ledger._characters.values()
+                         if c.lineage_id and start < c.born_tick <= end)
+        if new_members < 1:
+            failures.append(f"jump@{tj.get('jump_tick', '?')}: "
+                            f"0 new lineage members in {tj.get('ticks_run', 0)} ticks")
+    if failures:
+        return InvariantResult("K8_lineage_growth", False, "warning",
+                               f"{len(failures)} jump(s) with no lineage growth",
+                               details={"failures": failures})
+    return InvariantResult("K8_lineage_growth", True, "warning",
+                           "Lineage grew during all long jumps")
+
+
+def dead_names_become_available(log: TrajectoryLog) -> InvariantResult:
+    if not log.coherence_ledger or not log.naming_system:
+        return InvariantResult("K9_name_reuse", True, "info",
+                               "No ledger or naming system — skipped")
+    ledger = log.coherence_ledger
+    ns = log.naming_system
+    final_tick = log.total_ticks
+    failures = []
+    checked = 0
+    for cid, char in ledger._characters.items():
+        if char.status != "historical" or char.death_tick is None:
+            continue
+        if (final_tick - char.death_tick) <= config.NAME_REUSE_COOLDOWN_TICKS:
+            continue
+        checked += 1
+        if not ns.is_available(char.name, final_tick):
+            failures.append(f"{char.name} (died tick {char.death_tick}, "
+                            f"checked tick {final_tick})")
+    if failures:
+        return InvariantResult("K9_name_reuse", False, "critical",
+                               f"{len(failures)}/{checked} dead names still unavailable "
+                               f"after cooldown",
+                               details={"failures": failures[:10]})
+    return InvariantResult("K9_name_reuse", True, "critical",
+                           f"All {checked} checked dead names are available after cooldown")
+
+
+def no_duplicate_active_names(log: TrajectoryLog) -> InvariantResult:
+    if not log.coherence_ledger:
+        return InvariantResult("K10_unique_names", True, "info",
+                               "No coherence ledger — skipped")
+    ledger = log.coherence_ledger
+    by_faction = {}
+    for cid, char in ledger._characters.items():
+        if char.status != "active":
+            continue
+        by_faction.setdefault(char.faction_id, []).append(char)
+    failures = []
+    for fid, chars in by_faction.items():
+        names = [c.name for c in chars]
+        seen = set()
+        for n in names:
+            if n in seen:
+                failures.append(f"{fid}: duplicate active name '{n}'")
+            seen.add(n)
+    if failures:
+        return InvariantResult("K10_unique_names", False, "critical",
+                               f"{len(failures)} duplicate active name(s)",
+                               details={"failures": failures})
+    return InvariantResult("K10_unique_names", True, "critical",
+                           "All active character names unique within factions")
+
+
+def schism_subsets_differ(log: TrajectoryLog) -> InvariantResult:
+    if not log.naming_system:
+        return InvariantResult("K11_schism_drift", True, "info",
+                               "No naming system — skipped")
+    ns = log.naming_system
+    checked = 0
+    failures = []
+    for fid in list(ns._subsets.keys()):
+        if not fid.startswith("breakaway_"):
+            continue
+        child_subset = ns.get_variable_subset(fid)
+        if not child_subset:
+            continue
+        # Find parent — look through all non-breakaway factions
+        for parent_fid in ns._subsets:
+            if parent_fid.startswith("breakaway_"):
+                continue
+            parent_subset = ns.get_variable_subset(parent_fid)
+            if not parent_subset:
+                continue
+            # Count differences
+            diff_count = 0
+            for cat in parent_subset:
+                if set(parent_subset[cat]) != set(child_subset.get(cat, [])):
+                    diff_count += 1
+            if diff_count == 1:
+                checked += 1
+                break
+        else:
+            failures.append(f"{fid}: no parent found with exactly 1 category diff")
+    if failures:
+        return InvariantResult("K11_schism_drift", False, "warning",
+                               f"{len(failures)} breakaway(s) with invalid subset drift",
+                               details={"failures": failures})
+    return InvariantResult("K11_schism_drift", True, "warning",
+                           f"{checked} breakaway subset(s) validated (1-category diff)")
+
+
+def stage5_regression(log: TrajectoryLog) -> InvariantResult:
+    failures = []
+    for group_name in ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]:
+        for fn in GROUP_MAP.get(group_name, []):
+            result = fn(log)
+            if not result.passed and result.severity == "critical":
+                failures.append(result.name)
+    if failures:
+        return InvariantResult(
+            "K12_stage5_regression", False, "critical",
+            f"{len(failures)} prior critical invariant(s) failed: {', '.join(failures)}",
+            details={"failed": failures})
+    return InvariantResult("K12_stage5_regression", True, "critical",
+                           "All prior critical invariants pass")
+
+
+# ═════════════════════════════════════════════════════════════════════════════
 #  REGISTRY
 # ═════════════════════════════════════════════════════════════════════════════
 
@@ -1668,6 +1973,19 @@ ALL_INVARIANTS = [
     time_jumps_safe,
     player_faction_can_die,
     player_collapse_triggers_reassignment,
+    # Group K — Stage 5 Chronicle & Naming
+    chronicle_entry_count,
+    chronicle_lineage_present,
+    chronicle_consequence_first,
+    chronicle_word_limits,
+    chronicle_slots_resolved,
+    fragment_library_no_dupes,
+    every_faction_has_leader,
+    lineage_grows_during_jumps,
+    dead_names_become_available,
+    no_duplicate_active_names,
+    schism_subsets_differ,
+    stage5_regression,
 ]
 
 GROUP_MAP = {
@@ -1710,6 +2028,21 @@ def stage3_regression(log: TrajectoryLog) -> InvariantResult:
 
 
 GROUP_MAP["J"].append(stage3_regression)
+
+GROUP_MAP["K"] = [
+    chronicle_entry_count,
+    chronicle_lineage_present,
+    chronicle_consequence_first,
+    chronicle_word_limits,
+    chronicle_slots_resolved,
+    fragment_library_no_dupes,
+    every_faction_has_leader,
+    lineage_grows_during_jumps,
+    dead_names_become_available,
+    no_duplicate_active_names,
+    schism_subsets_differ,
+    stage5_regression,
+]
 
 
 def run_invariants(log: TrajectoryLog, groups: list | None = None) -> list[InvariantResult]:
