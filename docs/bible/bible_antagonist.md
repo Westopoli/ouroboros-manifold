@@ -39,6 +39,8 @@ Not every threat comes from outside. The simulation generates **internal antagon
 
 **Player-initiated revolts:** Occasionally, the mission briefing or the tactical situation presents the player with the option to support or trigger a revolt. This is not a menu choice — it emerges from mission context. If the player is sent to stabilize a region ruled by a corrupt or incompetent faction, they may have the option to overthrow it instead of propping it up. The consequences feed back into the simulation: the new faction may be better or worse, and the civilization's trust in the player's lineage may shift.
 
+**Implementation target: Stage 7 or later.** Requires working mission generator and outcome resolver. Player-initiated revolt is a special outcome band or mission modifier that the outcome resolver processes — the revolt fires through the existing simulation revolt mechanics.
+
 ### Spatial Manifestation
 
 Each archetype creates a different war story because their strategic priorities differ. The Conqueror produces border wars and territorial conquest. The Warlord produces grinding attrition and raiding. The Fortifier produces tense standoffs that erupt into sudden devastating strikes. The Opportunist produces betrayals and scavenging in the wake of other factions' conflicts. The Schism produces civil wars and ideological fracture from within.

@@ -312,6 +312,10 @@ The briefing comes from the civilization, not from a game menu. Delivered as if 
 
 The player reads, then accepts. No negotiation, no loadout screen — you get what the civilization gives you. The only choice is whether to refuse the mission entirely (rare, with consequences — the simulation treats refusal as a failed mission with its own consequence bundle).
 
+### Mission Time Limits
+
+Each archetype has a base time limit (in tactical ticks at 20/sec) scaled by urgency. Higher urgency compresses the time limit by up to 20%. The time limit never drops below 60% of the base. Formula: `time_limit = base_time * (1.0 - urgency * TIME_PRESSURE_SCALING)`, clamped at `base_time * TIME_LIMIT_FLOOR_PCT`. See `config.py` `ARCHETYPE_TIME_LIMITS` for per-archetype base values. Implemented in `objectives.compute_time_limit()`.
+
 ### Complications (Deferred — implement after core missions work)
 
 Mid-mission complications are **rare and pre-computed, not driven by a live simulation.** The simulation is stopped during missions. When a mission is generated, the archetype's complication table identifies what *could* go wrong based on the current world state. Probability determines whether a complication actually fires — roughly every third mission, not every mission. If one fires, the timing and nature are determined at generation, not dynamically.
@@ -319,6 +323,8 @@ Mid-mission complications are **rare and pre-computed, not driven by a live simu
 This means complications feel like memorable disruptions, not background noise. A faction collapsing mid-evacuation is a story the player tells later. It shouldn't happen often enough to become routine.
 
 **This entire system is implemented after missions work end-to-end without complications. Missions on their own should be a complete, satisfying experience first.**
+
+**Implementation target: Stage 7 or later.** Depends on working core missions (Stages 5.5 + 6).
 
 ### Outcome Band Classification System
 

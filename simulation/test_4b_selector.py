@@ -89,14 +89,14 @@ def setup_full_scenario():
         ledger.create_character("faction_b", "r_south", "lineage_member", 150, rng,
                                 lineage_id=lin2, parent_id=cmd2.id, generation=1)
 
-    # Create a nemesis: enemy in r_east tagged as rival of cmd2
-    nemesis = ledger.create_character("faction_b", "r_east", "regional_commander", 100, rng)
+    # Create a nemesis: faction_a officer in r_east tagged as rival of cmd2 (faction_b)
+    nemesis = ledger.create_character("faction_a", "r_east", "regional_commander", 100, rng)
     nem_lin = ledger.create_lineage(nemesis.id)
     ledger.tag_rivals("r_east", cmd2.id, "faction_b")
     # Nemesis descendants in r_east and r_center
-    ledger.create_character("faction_b", "r_east", "lineage_member", 200, rng,
+    ledger.create_character("faction_a", "r_east", "lineage_member", 200, rng,
                             lineage_id=nem_lin, parent_id=nemesis.id, generation=1)
-    ledger.create_character("faction_b", "r_center", "lineage_member", 200, rng,
+    ledger.create_character("faction_a", "r_center", "lineage_member", 200, rng,
                             lineage_id=nem_lin, parent_id=nemesis.id, generation=1)
 
     # Chapter 3 (current): commander in r_west (faction_c), lineage_3

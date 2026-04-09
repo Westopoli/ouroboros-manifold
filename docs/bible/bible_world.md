@@ -58,6 +58,17 @@ The graph is defined at world generation (part of the starting template) and gro
 
 **Implementation approach (Stage 0):** Start with plain untyped adjacency — all edges are "both." Get passive drift, event propagation, and faction interactions working through simple adjacency. Then add edge types as a second step and verify that separating military and economic connections produces meaningfully different simulation behavior. If the distinction doesn't matter in practice, simplify back to untyped.
 
+**Implemented (bible-spec reconciliation Phase 2, April 2026).** All adjacency queries specify edge type. Edge type assignment rules:
+
+| Event | Edge type assigned |
+|---|---|
+| Cooperative peace formed | Shared edges → "both" |
+| Betrayal | Shared edges → "border" |
+| Conquest | Conqueror's same-faction neighbors → "both"; former owner's neighbors → "border"; cooperative partner's neighbors → "both" |
+| Colonization | Same-faction neighbors → "both"; cooperative partner's neighbors → "both" |
+
+Dynamic updates via `world.set_edge_type()` and `world.update_faction_pair_edges()`. Queries via `world.get_neighbors(rid, edge_type=)` with filter support for "border", "trade", "both", or None (all edges).
+
 ### World Evolution — Per-Faction Lifecycle
 
 The world does not have global eras. Individual factions have lifecycles, and multiple factions at different lifecycle stages coexist simultaneously. A young breakaway faction expanding into empty space exists alongside a centuries-old empire in decline. The player experiences whatever lifecycle stage their current faction is in — the "era feeling" comes from faction state, not from a global game clock or chapter number.

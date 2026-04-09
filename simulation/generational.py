@@ -1,4 +1,5 @@
 import config
+import character_selector
 
 
 class GenerationalState:
@@ -76,7 +77,7 @@ def should_rotate(state, world, registry, tick):
     chapters_in_lineage = state.chapter_count
 
     if chapters_in_lineage >= config.LINEAGE_HARD_CAP:
-        return True
+        return "hard_cap"
 
     if chapters_in_lineage < config.LINEAGE_MIN_CHAPTERS:
         return False
@@ -100,10 +101,127 @@ def should_rotate(state, world, registry, tick):
     regional_delta = abs(avg_economy - 50.0) + abs(avg_military - 50.0)
 
     if regional_delta < config.LINEAGE_DELTA_LOW:
-        return True
+        return "normal"
     if regional_delta > config.LINEAGE_DELTA_HIGH:
         return False
 
     t = (regional_delta - config.LINEAGE_DELTA_LOW) / (config.LINEAGE_DELTA_HIGH - config.LINEAGE_DELTA_LOW)
     rotation_prob = 1.0 - t
-    return world.rng.random() < rotation_prob * 0.1
+    if world.rng.random() < rotation_prob * 0.1:
+        return "normal"
+    return False
+
+
+def rotate_lineage(state, ledger, world, region_id, rng, tick, reason="rotation"):
+    # PHASE 6A PENDING (Stage 5.5): When reason == "hard_cap", the mission generator
+    # should run with cross_faction=True BEFORE this function is called, so that
+    # region_id already points to the winning mission region (which may belong to any
+    # faction). The character selector then picks from that region as normal, and the
+    # faction reassignment below handles the cross-faction switch.
+    # See: docs/random/bible_spec_reconciliation_plan.md, Phase 6A (line ~303).
+    # Currently region_id is always in the player's faction — cross-faction mission
+    # selection is deferred until mission_generator.py exists.
+
+    state.current_chapter["end_tick"] = tick
+    state.current_chapter["end_reason"] = reason
+
+    result = character_selector.select_commander(state, ledger, world, region_id, rng)
+    if not result:
+        return {"type": "rotation_failed", "reason": "no_candidates_anywhere"}
+
+    old_faction = state.player_faction_id
+    new_faction = result["faction_id"]
+
+    new_chapter = state._start_chapter(new_faction, tick)
+    new_chapter["character_id"] = result["character_id"]
+
+    rotation_result = {
+        "type": "rotation",
+        "reason": reason,
+        "tick": tick,
+        "old_faction": old_faction,
+        "new_faction": new_faction,
+        "new_character_id": result["character_id"],
+        "new_lineage_id": result["lineage_id"],
+        "pool_used": result["pool_used"],
+        "pool_rolled": result["pool_rolled"],
+        "chapter_number": new_chapter["chapter_number"],
+        "cross_faction": old_faction != new_faction,
+    }
+
+    return rotation_result
+
+
+def handle_commander_death(state, ledger, world, region_id, rng, tick):
+    chapter = state.current_chapter
+    char_id = chapter.get("character_id")
+    if not char_id:
+        return {"type": "no_op", "reason": "no_character_in_chapter"}
+
+    rec = ledger.get_character_by_id(char_id)
+    if not rec:
+        return {"type": "no_op", "reason": "character_not_found"}
+
+    if rec.status == "active":
+        return {"type": "no_op", "reason": "commander_alive"}
+
+    lineage_id = rec.lineage_id
+    chapters_in_lineage = _count_lineage_chapters(state, ledger, lineage_id)
+    below_minimum = chapters_in_lineage < config.LINEAGE_MIN_CHAPTERS
+
+    successor = _find_lineage_successor(ledger, world, lineage_id, region_id,
+                                        global_search=below_minimum)
+    if successor:
+        successor.rank = "supreme_commander"
+        chapter["character_id"] = successor.id
+        return {
+            "type": "succession",
+            "successor_id": successor.id,
+            "successor_name": successor.name,
+            "lineage_id": lineage_id,
+            "dead_commander_id": char_id,
+            "dead_commander_name": rec.name,
+            "search_scope": "global" if below_minimum else "nearby",
+        }
+
+    # No successor found — force rotation
+    rot = rotate_lineage(state, ledger, world, region_id, rng, tick, reason="commander_death")
+    if rot["type"] == "rotation":
+        rot["death_reason"] = "bloodline_extinct" if below_minimum else "no_nearby_heir"
+    return rot
+
+
+def _count_lineage_chapters(state, ledger, lineage_id):
+    count = 0
+    for ch in state.chapters:
+        ch_char = ledger.get_character_by_id(ch.get("character_id"))
+        if ch_char and ch_char.lineage_id == lineage_id:
+            count += 1
+    return count
+
+
+def _find_lineage_successor(ledger, world, lineage_id, region_id, global_search=False):
+    if not lineage_id:
+        return None
+    members = ledger.get_lineage_members(lineage_id)
+    living = [m for m in members if m.status == "active"
+              and m.rank != "supreme_commander"]
+    if not living:
+        return None
+
+    # (a) Living members in the mission region
+    local = [m for m in living if m.region_id == region_id]
+    if local:
+        return local[0]
+
+    # (b) Living members in adjacent regions
+    adjacent_rids = set(world.get_neighbors(region_id))
+    adjacent = [m for m in living if m.region_id in adjacent_rids]
+    if adjacent:
+        return adjacent[0]
+
+    # (c) Global search — only if below minimum chapter count
+    if global_search and living:
+        return living[0]
+
+    return None

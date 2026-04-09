@@ -408,7 +408,7 @@ TIME_JUMP_MIN_TICKS = 20
 TIME_JUMP_MAX_TICKS = 100
 
 # ── Generational / lineage (Stage 4) ────────────────────────────────────────
-LINEAGE_MIN_CHAPTERS    = 2      # minimum chapters before rotation considered
+LINEAGE_MIN_CHAPTERS    = 3      # minimum chapters before rotation considered
 LINEAGE_HARD_CAP        = 6      # forced rotation after this many chapters
 LINEAGE_POOL_WEIGHTS    = {"previous_descendant": 0.70, "nemesis_descendant": 0.20, "unrelated": 0.10}
 NEMESIS_HOP_RANGE       = 2      # max adjacency hops for "near the mission region"
@@ -416,6 +416,23 @@ LINEAGE_RECENCY_PENALTY_CHAPTERS = 2  # skip lineages played within last N chapt
 LINEAGE_DELTA_LOW       = 10.0   # regional delta below this → high rotation probability
 LINEAGE_DELTA_HIGH      = 40.0   # regional delta above this → low rotation probability
 CRISIS_VETO_STABILITY   = 25.0   # stability below this vetoes rotation
+
+# ── Mission (Stage 5.5 / reconciliation Phase 7) ─────────────────────────
+REFUSAL_TENSION_PENALTY_PCT = 8   # tension +8% of deficit when player refuses a mission
+ARCHETYPE_TIME_LIMITS = {         # base time limits in tactical ticks (20/sec)
+    "defensive_stand":      3600,  # 3 min
+    "siege_breaking":       5400,  # 4.5 min
+    "assault":              4800,  # 4 min
+    "reconquest":           6000,  # 5 min
+    "counterinsurgency":    4200,  # 3.5 min
+    "suppression":          3600,  # 3 min
+    "containment":          5400,  # 4.5 min
+    "multi_front_defense":  4800,  # 4 min
+    "interception":         3000,  # 2.5 min
+    "evacuation":           2400,  # 2 min
+}
+TIME_PRESSURE_SCALING = 0.2       # urgency scales time limit down by up to 20%
+TIME_LIMIT_FLOOR_PCT  = 0.6       # time limit never drops below 60% of base
 
 # ── Chronicle distiller (Stage 5) ─────────────────────────────────────────
 CHRONICLE_MIN_ENTRIES                = 5

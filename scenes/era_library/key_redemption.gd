@@ -174,25 +174,22 @@ func _play_redemption_animation(result: Dictionary) -> void:
 	anim_bg.mouse_filter = Control.MOUSE_FILTER_STOP
 	_anim_container.add_child(anim_bg)
 
-	var anim_script = load("res://assets/ascii_animations/key_redemption_anims.gd")
+	var anim_script = load("res://assets/celebrations/key_redemption.gd")
 	var anim := Control.new()
 	anim.set_script(anim_script)
 	anim.set_anchors_preset(Control.PRESET_FULL_RECT)
-
-	var era_ids: Array = result.get("era_ids", [])
-	var accent := ThemeConstants.DEFAULT_ACCENT
-	if era_ids.size() > 0:
-		accent = ThemeConstants.get_era_accent(era_ids[0])
-	anim.set_accent_color(accent)
 	_anim_container.add_child(anim)
 
 	anim.animation_finished.connect(func():
 		_show_confirmation(result)
 	)
 
+	var era_ids: Array = result.get("era_ids", [])
+	var era_id: String = era_ids[0] if era_ids.size() > 0 else "roman"
+
 	# Wait a frame for size to propagate, then play
 	await get_tree().process_frame
-	anim.play_random()
+	anim.play_key_redemption(era_id, anim.size / 2.0, _input_field.text)
 
 
 func _show_confirmation(result: Dictionary) -> void:

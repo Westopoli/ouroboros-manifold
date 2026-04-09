@@ -204,3 +204,34 @@ def build_mission_result(mission_id, objectives, store, player_faction,
         commander_survived=commander_survived,
         ticks_elapsed=tick,
     )
+
+
+def build_refusal_result(mission_id):
+    return MissionResult(
+        mission_id=mission_id,
+        outcome_band="refusal",
+        objective_score=0.0,
+        force_retention=1.0,
+        per_objective=[],
+        commander_survived=True,
+        ticks_elapsed=0,
+    )
+
+
+def compute_refusal_deltas(region):
+    tension = region.fields["tension"]
+    deficit = 100.0 - tension
+    tension_increase = deficit * (config.REFUSAL_TENSION_PENALTY_PCT / 100.0)
+    return {
+        "military": 0.0,
+        "economy": 0.0,
+        "tension": tension_increase,
+        "population": 0.0,
+    }
+
+
+def compute_time_limit(archetype, urgency):
+    base = config.ARCHETYPE_TIME_LIMITS.get(archetype, 3600)
+    scaled = base * (1.0 - urgency * config.TIME_PRESSURE_SCALING)
+    floor = base * config.TIME_LIMIT_FLOOR_PCT
+    return max(scaled, floor)

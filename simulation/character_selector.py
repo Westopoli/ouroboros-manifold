@@ -1,5 +1,11 @@
 import config
 
+# PHASE 6A PENDING (Stage 5.5): This module does NOT need changes for cross-faction
+# rotation. The mission generator is responsible for selecting the mission region
+# (which may belong to any faction when cross_faction=True at hard cap). This module
+# receives that region_id and selects a character from it — faction falls out naturally.
+# See: generational.rotate_lineage() and docs/random/bible_spec_reconciliation_plan.md Phase 6.
+
 
 def select_commander(gen_state, coherence_ledger, world, region_id, rng):
     pool_weights = config.LINEAGE_POOL_WEIGHTS
@@ -129,7 +135,7 @@ def _select_from_previous(lineage_ids, gen_state, coherence_ledger,
         chapters_ago = current_chapter_num - last_chapter
 
         # Recency penalty: don't immediately return to a lineage just left
-        if chapters_ago <= config.LINEAGE_RECENCY_PENALTY_CHAPTERS:
+        if chapters_ago < config.LINEAGE_RECENCY_PENALTY_CHAPTERS:
             continue
 
         # Score: prefer moderate gap (not too recent, not too distant)

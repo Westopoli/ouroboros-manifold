@@ -933,3 +933,11 @@ All validation criteria met. Westley signs off on:
 3. The force allocation producing winnable-feeling force compositions across difficulty levels
 4. The final validator report (all M1–M13 invariants passing)
 5. The shared contracts module (`mission_contracts.py`) reviewed and approved for Stage 6 integration
+
+## Post-Core Features (owned by Stage 7+, blocked on this stage)
+
+These features are designed in the bible but depend on the mission pipeline built here. They are **not** part of Stage 5.5's done condition. Implementations and breadcrumbs were added during bible-spec reconciliation (Phases 6–7):
+
+- **Cross-faction mission selection (Phase 6A):** At lineage hard cap, mission_generator.py should accept `cross_faction=True` and scan ALL factions' regions. The faction reassignment wiring already exists in `generational.rotate_lineage()`. See `bible_spec_reconciliation_plan.md` Phase 6A.
+- **Complications system:** Mid-mission pre-computed disruptions. Owned by Stage 7+. See `bible_missions.md` "Complications (Deferred)".
+- **Player-initiated revolts:** Special outcome band / mission modifier. Owned by Stage 7+. See `bible_antagonist.md` "Player-initiated revolts".

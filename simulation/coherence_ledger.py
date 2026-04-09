@@ -296,3 +296,22 @@ class CoherenceLedger:
                 seen.add(nem.id)
                 candidates.append(nem)
         return candidates
+
+    # ── Inheritance detection (Phase 7B) ───────────────────────────────────
+
+    def check_inheritance_connection(self, lineage_ids, region_id) -> dict | None:
+        # PHASE 7B PENDING (Stage 5.5): The mission generator calls this after
+        # selecting a (region, archetype) pair to check if a previous lineage
+        # commander operated in this region. If so, it sets inheritance_flag on
+        # MissionSetup.metadata. See: docs/random/bible_spec_reconciliation_plan.md Phase 7B.
+        for lid in lineage_ids:
+            members = self.get_lineage_members(lid)
+            for m in members:
+                if m.region_id == region_id and m.rank in ("supreme_commander", "regional_commander"):
+                    return {
+                        "lineage_id": lid,
+                        "ancestor_id": m.id,
+                        "ancestor_name": m.name,
+                        "ancestor_rank": m.rank,
+                    }
+        return None
