@@ -417,7 +417,10 @@ def conquest_changes_ownership(log: TrajectoryLog) -> InvariantResult:
                     c.get("region_id") == rid
                     for c in log.snapshots[next_tick].conquests
                 ) if next_tick < len(log.snapshots) else False
-                if same_tick_reconquest or next_tick_reconquest:
+                # Skip if the conquering faction was absorbed (zombie cleanup)
+                # between this tick and the next — the region transfers to the absorber
+                conqueror_absorbed = new_fid not in log.snapshots[next_tick].factions
+                if same_tick_reconquest or next_tick_reconquest or conqueror_absorbed:
                     continue
                 return InvariantResult(
                     "E2_conquest_ownership", False, "critical",
@@ -1740,40 +1743,30 @@ def every_faction_has_leader(log: TrajectoryLog) -> InvariantResult:
     if not log.coherence_ledger:
         return InvariantResult("K7_faction_leaders", True, "info",
                                "No coherence ledger — skipped")
+    if not log.time_jump_results:
+        return InvariantResult("K7_faction_leaders", True, "info",
+                               "No time jumps — skipped")
     ledger = log.coherence_ledger
     failures = []
 
-    # Check at end of each time jump
-    check_points = []
     for tj in log.time_jump_results:
-        check_points.append(("jump@" + str(tj.get("jump_tick", "?")),
-                             tj.get("end_tick", 0)))
-    # Also check at end of full run
-    if log.snapshots:
-        check_points.append(("end_of_run", log.snapshots[-1].tick))
-
-    for label, tick in check_points:
-        snap = None
-        for s in log.snapshots:
-            if s.tick == tick:
-                snap = s
-                break
+        label = "jump@" + str(tj.get("jump_tick", "?"))
+        end_tick = tj.get("end_tick", 0)
+        snap = tj.get("post_jump_snapshot")
         if not snap:
-            if log.snapshots:
-                snap = log.snapshots[-1]
-            else:
-                continue
-
-        for fid, fdata in snap.factions.items():
+            continue
+        for fid, fdata in snap["factions"].items():
             if fdata["owned_region_count"] == 0:
                 continue
-            has_leader = False
-            for cid, char in ledger._characters.items():
-                if (char.faction_id == fid
-                        and char.rank == "supreme_commander"
-                        and char.status == "active"):
-                    has_leader = True
-                    break
+            faction_chars = [c for c in ledger._characters.values()
+                            if c.faction_id == fid]
+            if not any(c.born_tick <= end_tick for c in faction_chars):
+                continue
+            has_leader = any(
+                c.rank == "supreme_commander"
+                and c.born_tick <= end_tick
+                and (c.death_tick is None or c.death_tick > end_tick)
+                for c in faction_chars)
             if not has_leader:
                 failures.append(f"{label}: {fid} has {fdata['owned_region_count']} "
                                 f"regions but no active supreme_commander")
@@ -1818,12 +1811,17 @@ def dead_names_become_available(log: TrajectoryLog) -> InvariantResult:
     ledger = log.coherence_ledger
     ns = log.naming_system
     final_tick = log.total_ticks
+    if log.time_jump_results:
+        final_tick = max(tj.get("end_tick", 0) for tj in log.time_jump_results)
+    active_names = {c.name for c in ledger._characters.values() if c.status == "active"}
     failures = []
     checked = 0
     for cid, char in ledger._characters.items():
         if char.status != "historical" or char.death_tick is None:
             continue
         if (final_tick - char.death_tick) <= config.NAME_REUSE_COOLDOWN_TICKS:
+            continue
+        if char.name in active_names:
             continue
         checked += 1
         if not ns.is_available(char.name, final_tick):

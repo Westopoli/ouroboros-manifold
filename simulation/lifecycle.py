@@ -35,7 +35,7 @@ def classify_phase(faction_id, world, registry, recent_events=None):
 
     empty_neighbors = set()
     for r in owned:
-        for nid in world.get_neighbors(r.id):
+        for nid in world.get_neighbors(r.id, edge_type="border"):
             nr = world.regions.get(nid)
             if nr and nr.tier == "empty":
                 empty_neighbors.add(nid)

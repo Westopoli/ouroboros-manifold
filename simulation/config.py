@@ -410,6 +410,9 @@ TIME_JUMP_MAX_TICKS = 100
 # ── Generational / lineage (Stage 4) ────────────────────────────────────────
 LINEAGE_MIN_CHAPTERS    = 2      # minimum chapters before rotation considered
 LINEAGE_HARD_CAP        = 6      # forced rotation after this many chapters
+LINEAGE_POOL_WEIGHTS    = {"previous_descendant": 0.70, "nemesis_descendant": 0.20, "unrelated": 0.10}
+NEMESIS_HOP_RANGE       = 2      # max adjacency hops for "near the mission region"
+LINEAGE_RECENCY_PENALTY_CHAPTERS = 2  # skip lineages played within last N chapters
 LINEAGE_DELTA_LOW       = 10.0   # regional delta below this → high rotation probability
 LINEAGE_DELTA_HIGH      = 40.0   # regional delta above this → low rotation probability
 CRISIS_VETO_STABILITY   = 25.0   # stability below this vetoes rotation

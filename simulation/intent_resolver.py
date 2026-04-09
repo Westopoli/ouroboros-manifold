@@ -25,7 +25,7 @@ def resolve(intents: list, snapshot: dict, registry: dict,
         if tgt is not None:
             by_target.setdefault(tgt, []).append(intent)
 
-    collision_targets = {tgt for tgt, group in by_target.items() if len(group) >= 2}
+    collision_targets = sorted(tgt for tgt, group in by_target.items() if len(group) >= 2)
 
     resolved = []
     for intent in intents:

@@ -81,7 +81,7 @@ def _factions_share_border(fid_a: str, fid_b: str, world) -> bool:
     for region in world.regions.values():
         if region.faction_id != fid_a:
             continue
-        for nid in world.get_neighbors(region.id):
+        for nid in world.get_neighbors(region.id, edge_type="border"):
             nr = world.regions.get(nid)
             if nr and nr.faction_id == fid_b:
                 return True
@@ -95,7 +95,7 @@ def _avg_border_stability(fid: str, partner_fid: str, world) -> float:
             continue
         borders_partner = any(
             world.regions[nid].faction_id == partner_fid
-            for nid in world.get_neighbors(region.id)
+            for nid in world.get_neighbors(region.id, edge_type="border")
             if nid in world.regions
         )
         if borders_partner:
@@ -111,7 +111,7 @@ def _border_military(fid: str, partner_fid: str, world) -> float:
             continue
         borders_partner = any(
             world.regions[nid].faction_id == partner_fid
-            for nid in world.get_neighbors(region.id)
+            for nid in world.get_neighbors(region.id, edge_type="border")
             if nid in world.regions
         )
         if borders_partner:
@@ -135,7 +135,7 @@ def _weakest_border_region(victim_fid: str, betrayer_fid: str, world) -> str | N
             continue
         borders_betrayer = any(
             world.regions[nid].faction_id == betrayer_fid
-            for nid in world.get_neighbors(region.id)
+            for nid in world.get_neighbors(region.id, edge_type="border")
             if nid in world.regions
         )
         if borders_betrayer and region.fields.get("military", 0.0) < best_mil:
@@ -238,6 +238,8 @@ def check_peace_formation(stances: dict, registry: dict, world, rng, tick: int,
         if success:
             set_stance(stances, fid_a, fid_b, "cooperative", tick=tick)
             sync_to_factions(stances, registry)
+            # 2E: Cooperative peace upgrades shared edges to "both" (enables trade)
+            world.update_faction_pair_edges(fid_a, fid_b, "both")
         else:
             entry["non_aggression_ticks"] = 0
 
@@ -280,6 +282,8 @@ def check_betrayals(stances: dict, registry: dict, world, rng,
 
             set_stance(stances, betrayer_id, victim_id, "hostile", tick=tick)
             sync_to_factions(stances, registry)
+            # 2E: Betrayal downgrades shared edges to "border" (severs trade)
+            world.update_faction_pair_edges(betrayer_id, victim_id, "border")
 
             events.append({
                 "event_type": "betrayal",

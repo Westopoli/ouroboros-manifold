@@ -24,13 +24,29 @@ class World:
         return [n for n in neighbors
                 if self.edge_types.get((region_id, n)) in (edge_type, "both")]
 
-    def allied_inhabited_neighbors(self, region_id: str) -> list:
+    def allied_inhabited_neighbors(self, region_id: str, edge_type: str | None = None) -> list:
         region = self.regions[region_id]
         if region.faction_id is None:
             return []
-        return [self.regions[nid] for nid in self.get_neighbors(region_id)
+        return [self.regions[nid] for nid in self.get_neighbors(region_id, edge_type=edge_type)
                 if self.regions[nid].tier != "empty"
                 and self.regions[nid].faction_id == region.faction_id]
+
+    def set_edge_type(self, a: str, b: str, edge_type: str) -> None:
+        self.edge_types[(a, b)] = edge_type
+        self.edge_types[(b, a)] = edge_type
+
+    def update_faction_pair_edges(self, fid_a: str, fid_b: str, edge_type: str) -> int:
+        count = 0
+        for region in self.regions.values():
+            if region.faction_id != fid_a:
+                continue
+            for nid in self.adjacency.get(region.id, []):
+                nr = self.regions.get(nid)
+                if nr and nr.faction_id == fid_b:
+                    self.set_edge_type(region.id, nid, edge_type)
+                    count += 1
+        return count
 
     def inhabited_regions(self) -> list:
         return [r for r in self.regions.values() if r.tier != "empty"]
@@ -70,6 +86,16 @@ def generate(template: str = "isolated_start", seed: int | None = None) -> World
         return _full_game_50(rng)
     else:
         raise ValueError(f"Unknown world template: {template}")
+
+
+def _assign_edge_types(regions: dict, edge_types: dict) -> None:
+    for (a, b) in edge_types:
+        ra, rb = regions.get(a), regions.get(b)
+        if (ra and rb and ra.faction_id and rb.faction_id
+                and ra.faction_id == rb.faction_id):
+            edge_types[(a, b)] = "both"
+        else:
+            edge_types[(a, b)] = "border"
 
 
 def _make_region(region_id: str, name: str, tier: str, rng: random.Random,
@@ -153,6 +179,7 @@ def _isolated_start(rng: random.Random) -> World:
     link("region_cf0", far_e0)
     link("region_cf1", far_e1)
 
+    _assign_edge_types(regions, edge_types)
     return World(regions, adjacency, edge_types, seed=rng.randint(0, 2**31))
 
 
@@ -221,6 +248,7 @@ def _s1_isolated_start(rng: random.Random) -> World:
         for i in range(len(group) - 1):
             link(group[i], group[i + 1])
 
+    _assign_edge_types(regions, edge_types)
     return World(regions, adjacency, edge_types, seed=rng.randint(0, 2**31))
 
 
@@ -256,6 +284,7 @@ def _twin_colony(rng: random.Random) -> World:
     # Shared frontier connecting the two cores
     link("region_fa1", "region_fb0")
 
+    _assign_edge_types(regions, edge_types)
     return World(regions, adjacency, edge_types, seed=rng.randint(0, 2**31))
 
 
@@ -303,6 +332,7 @@ def _contested_border(rng: random.Random) -> World:
     link("region_p_f1",   "region_e0")
     link("region_c_f1",   "region_e1")
 
+    _assign_edge_types(regions, edge_types)
     return World(regions, adjacency, edge_types, seed=rng.randint(0, 2**31))
 
 
@@ -372,6 +402,7 @@ def _four_way(rng: random.Random) -> World:
     link("region_f_f0", "region_fe0")   # fortifier exclusive empty
     link("region_o_f0", "region_oe0")   # opportunist exclusive empty
 
+    _assign_edge_types(regions, edge_types)
     return World(regions, adjacency, edge_types, seed=rng.randint(0, 2**31))
 
 
@@ -400,6 +431,7 @@ def _archipelago(rng: random.Random) -> World:
         link("region_home", fid)
     link("region_f0", "region_f1")
 
+    _assign_edge_types(regions, edge_types)
     return World(regions, adjacency, edge_types, seed=rng.randint(0, 2**31))
 
 
@@ -533,4 +565,5 @@ def _full_game_50(rng: random.Random) -> World:
     link(e(33), e(41))   # deep center spur
     link(e(34), e(42))   # deep center spur
 
+    _assign_edge_types(regions, edge_types)
     return World(regions, adjacency, edge_types, seed=rng.randint(0, 2**31))

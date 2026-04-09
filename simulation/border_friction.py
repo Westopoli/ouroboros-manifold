@@ -12,7 +12,7 @@ def compute_friction(region, world, registry) -> dict | None:
         return None
 
     hostile_edges = []
-    for nb_id in world.adjacency.get(region.id, []):
+    for nb_id in world.get_neighbors(region.id, edge_type="border"):
         nb = world.regions[nb_id]
         if nb.faction_id is None or nb.faction_id == region.faction_id:
             continue

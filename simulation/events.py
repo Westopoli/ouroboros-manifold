@@ -705,7 +705,7 @@ def _resolve_exclusions(entries: list, tick: int, rng: random.Random):
         tmpl = TEMPLATES[e["template_id"]]
         all_excl_tags.update(tmpl["exclusion_tags"])
 
-    for tag in all_excl_tags:
+    for tag in sorted(all_excl_tags):
         conflicting = [
             e for e in resolved if tag in TEMPLATES[e["template_id"]]["exclusion_tags"]
         ]

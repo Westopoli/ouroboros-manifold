@@ -11,8 +11,25 @@ config_version=5
 [application]
 
 config/name="Ouroboros"
+run/main_scene="res://scenes/main_menu/main_menu.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
+
+[autoload]
+
+ThemeConstants="*res://autoload/theme_constants.gd"
+SceneRouter="*res://autoload/scene_router.gd"
+UIDataBus="*res://autoload/ui_data_bus.gd"
+ScanlineOverlay="*res://autoload/scanline_overlay.gd"
+InputSanitizer="*res://autoload/input_sanitizer.gd"
+
+[display]
+
+window/size/viewport_width=1920
+window/size/viewport_height=1080
+window/size/mode=3
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
 
 [physics]
 

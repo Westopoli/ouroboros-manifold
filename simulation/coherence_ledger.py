@@ -7,7 +7,7 @@ class CharacterRecord:
     __slots__ = ("id", "name", "faction_id", "region_id", "rank",
                  "born_tick", "death_tick", "lifespan_ticks", "lineage_id",
                  "status", "event_history", "parent_id", "children_ids",
-                 "generation")
+                 "generation", "rival_of")
 
     def __init__(self, char_id, name, faction_id, region_id, rank,
                  born_tick, lifespan_ticks, lineage_id=None, parent_id=None,
@@ -26,6 +26,7 @@ class CharacterRecord:
         self.parent_id = parent_id
         self.children_ids = []
         self.generation = generation
+        self.rival_of = []
 
 
 class CoherenceLedger:
@@ -224,3 +225,74 @@ class CoherenceLedger:
 
     def total_event_attachments(self) -> int:
         return sum(len(c.event_history) for c in self._characters.values())
+
+    # ── Nemesis detection (Phase 3) ─────────────────────────────────────────
+
+    def tag_rivals(self, region_id: str, commander_id: str,
+                   commander_faction_id: str) -> list[CharacterRecord]:
+        tagged = []
+        for c in self._characters.values():
+            if (c.region_id == region_id and c.status == "active"
+                    and c.faction_id != commander_faction_id
+                    and commander_id not in c.rival_of):
+                c.rival_of.append(commander_id)
+                tagged.append(c)
+        return tagged
+
+    def get_nemesis_candidates(self, commander_ids: list[str]) -> list[CharacterRecord]:
+        if not commander_ids:
+            return []
+        cmd_set = set(commander_ids)
+        rivals = []
+        for c in self._characters.values():
+            if cmd_set.intersection(c.rival_of):
+                rivals.append(c)
+        return rivals
+
+    def _get_descendants(self, char_id: str) -> list[CharacterRecord]:
+        descendants = []
+        stack = [char_id]
+        while stack:
+            cid = stack.pop()
+            rec = self._characters.get(cid)
+            if rec is None:
+                continue
+            for child_id in rec.children_ids:
+                child = self._characters.get(child_id)
+                if child:
+                    descendants.append(child)
+                    stack.append(child_id)
+        return descendants
+
+    def get_nemesis_descendants_in_region(self, commander_ids: list[str],
+                                          region_id: str, world,
+                                          hop_range: int = 2) -> list[CharacterRecord]:
+        nemeses = self.get_nemesis_candidates(commander_ids)
+        if not nemeses:
+            return []
+
+        nearby_rids = {region_id}
+        frontier = [region_id]
+        for _ in range(hop_range):
+            next_frontier = []
+            for rid in frontier:
+                for nid in world.get_neighbors(rid):
+                    if nid not in nearby_rids:
+                        nearby_rids.add(nid)
+                        next_frontier.append(nid)
+            frontier = next_frontier
+
+        candidates = []
+        seen = set()
+        for nem in nemeses:
+            for desc in self._get_descendants(nem.id):
+                if (desc.status == "active" and desc.region_id in nearby_rids
+                        and desc.id not in seen):
+                    seen.add(desc.id)
+                    candidates.append(desc)
+            # The nemesis character itself is also a candidate if alive and nearby
+            if (nem.status == "active" and nem.region_id in nearby_rids
+                    and nem.id not in seen):
+                seen.add(nem.id)
+                candidates.append(nem)
+        return candidates

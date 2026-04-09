@@ -131,9 +131,10 @@ def run_tick(world, tick_num: int, ledger=None,
                     log["collisions"].append(action["log"])
 
         # 3d: Normal faction decisions (attack/colonize/accumulate)
+        border_adj = {rid: world.get_neighbors(rid, edge_type="border") for rid in world.adjacency}
         intents = []
         for faction in list(registry.values()):
-            intent = faction.decide(snapshot, world.adjacency, registry, rng, tick_num)
+            intent = faction.decide(snapshot, border_adj, registry, rng, tick_num)
             intents.append(intent)
 
         # Split intents: surprise attacks resolve now, telegraphed go to pending
@@ -318,11 +319,11 @@ def run_tick(world, tick_num: int, ledger=None,
             modifier = registry[region.faction_id].modifiers
         adj_bonus = 0.0
         if config.ENABLE_ADJACENCY_BONUS:
-            for nr in world.allied_inhabited_neighbors(region.id):
+            for nr in world.allied_inhabited_neighbors(region.id, edge_type="trade"):
                 adj_bonus += config.NEIGHBOR_ECONOMY_BONUS * (nr.fields["economy"] / 100.0)
             # Cooperative-faction neighbors also contribute adjacency bonus
             if config.ENABLE_DIPLOMACY and registry and region.faction_id and region.faction_id in registry:
-                for nid in world.get_neighbors(region.id):
+                for nid in world.get_neighbors(region.id, edge_type="trade"):
                     nr = world.regions.get(nid)
                     if (nr and nr.tier != "empty" and nr.faction_id
                             and nr.faction_id != region.faction_id):
@@ -339,7 +340,7 @@ def run_tick(world, tick_num: int, ledger=None,
 
     # ── Step 6: Zombie faction cleanup ─────────────────────────────────────
     if registry is not None:
-        log["factions_absorbed"] = _cleanup_zombie_factions(world, registry, tick_num)
+        log["factions_absorbed"] = _cleanup_zombie_factions(world, registry, tick_num, log["conquests"])
 
     # ── Step 6.5: Coherence ledger — character attachment + leader cleanup ──
     if coherence_ledger is not None:
@@ -419,6 +420,19 @@ def _apply_resolved_action(world, registry, action, pending_queue, ledger, tick_
         region = world.regions[con["region_id"]]
         region.previous_faction_id = con["old_faction_id"]
         region.faction_id = con["new_faction_id"]
+        # 2E: Update edges — same-faction and cooperative partners get trade,
+        # former owner loses trade
+        conqueror_fac = registry.get(con["new_faction_id"])
+        for nid in world.adjacency.get(region.id, []):
+            nr = world.regions.get(nid)
+            if not nr or not nr.faction_id:
+                continue
+            if nr.faction_id == con["new_faction_id"]:
+                world.set_edge_type(region.id, nid, "both")
+            elif nr.faction_id == con["old_faction_id"]:
+                world.set_edge_type(region.id, nid, "border")
+            elif conqueror_fac and conqueror_fac.diplomatic_stance.get(nr.faction_id) == "cooperative":
+                world.set_edge_type(region.id, nid, "both")
 
     bypass_floor = action.get("log", {}).get("bypass_floor", False)
     for rid, deltas in action["deltas"].items():
@@ -451,6 +465,16 @@ def _apply_resolved_action(world, registry, action, pending_queue, ledger, tick_
     if action.get("colonization"):
         col_region = world.regions[action["colonization"]["region_id"]]
         col_region.held_since_tick = tick_num
+        # 2E: New colony trades with same-faction and cooperative partner neighbors
+        colonizer_fac = registry.get(col_region.faction_id)
+        for nid in world.adjacency.get(col_region.id, []):
+            nr = world.regions.get(nid)
+            if not nr or not nr.faction_id:
+                continue
+            if nr.faction_id == col_region.faction_id:
+                world.set_edge_type(col_region.id, nid, "both")
+            elif colonizer_fac and colonizer_fac.diplomatic_stance.get(nr.faction_id) == "cooperative":
+                world.set_edge_type(col_region.id, nid, "both")
 
     if pending_queue is not None:
         for spawn in action.get("chain_spawns", []):
@@ -583,6 +607,7 @@ def _handle_revolt_faction_creation(evt: dict, world, registry: dict,
         new_id, new_name, archetype,
         budget=0.0,
         diplomatic_stance={fid: "hostile" for fid in registry},
+        rng=rng,
     )
     for fac in registry.values():
         fac.diplomatic_stance[new_id] = "hostile"
@@ -603,7 +628,7 @@ def _handle_revolt_faction_creation(evt: dict, world, registry: dict,
     }
 
 
-def _cleanup_zombie_factions(world, registry, tick):
+def _cleanup_zombie_factions(world, registry, tick, tick_conquests=None):
     absorbed = []
     to_remove = []
 
@@ -626,6 +651,10 @@ def _cleanup_zombie_factions(world, registry, tick):
     for fid, fac in list(registry.items()):
         if not fid.startswith("breakaway_") or fid in to_remove:
             continue
+        # Skip factions that just conquered a region this tick — give them at least
+        # one tick of ownership before zombie cleanup can absorb them
+        if tick_conquests and any(c.get("new_faction_id") == fid for c in tick_conquests):
+            continue
         owned = world.regions_by_faction(fid)
         if len(owned) != 1:
             continue
@@ -638,7 +667,7 @@ def _cleanup_zombie_factions(world, registry, tick):
         region = owned[0]
         best_absorber = None
         best_strength = 0
-        for nid in world.get_neighbors(region.id):
+        for nid in world.get_neighbors(region.id, edge_type="border"):
             nb = world.regions.get(nid)
             if nb and nb.faction_id and nb.faction_id != fid and nb.faction_id in registry:
                 strength = len(world.regions_by_faction(nb.faction_id))
@@ -654,6 +683,7 @@ def _cleanup_zombie_factions(world, registry, tick):
         absorbed.append({
             "tick": tick, "faction": fid, "region": region.id,
             "absorbed_by": best_absorber,
+            "is_absorption": True,
         })
     for fid in to_remove:
         for fac in registry.values():

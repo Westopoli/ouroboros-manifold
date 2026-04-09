@@ -531,7 +531,7 @@ def run_scenario(name: str, scenario: dict, seed_override: int | None = None) ->
                 for region in w.inhabited_regions():
                     if region.faction_id is None:
                         continue
-                    for neighbor_id in w.get_neighbors(region.id):
+                    for neighbor_id in w.get_neighbors(region.id, edge_type="border"):
                         neighbor = w.regions[neighbor_id]
                         if neighbor.faction_id is None or neighbor.faction_id == region.faction_id:
                             continue
@@ -551,10 +551,10 @@ def run_scenario(name: str, scenario: dict, seed_override: int | None = None) ->
                     modifier = registry[region.faction_id].modifiers
                 adj_bonus = 0.0
                 if config.ENABLE_ADJACENCY_BONUS:
-                    for nr in w.allied_inhabited_neighbors(region.id):
+                    for nr in w.allied_inhabited_neighbors(region.id, edge_type="trade"):
                         adj_bonus += config.NEIGHBOR_ECONOMY_BONUS * (nr.fields["economy"] / 100.0)
                     if config.ENABLE_DIPLOMACY and region.faction_id:
-                        for nid in w.get_neighbors(region.id):
+                        for nid in w.get_neighbors(region.id, edge_type="trade"):
                             nr = w.regions.get(nid)
                             if (nr and nr.tier != "empty" and nr.faction_id
                                     and nr.faction_id != region.faction_id):
