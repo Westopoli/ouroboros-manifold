@@ -1814,18 +1814,24 @@ def dead_names_become_available(log: TrajectoryLog) -> InvariantResult:
     if log.time_jump_results:
         final_tick = max(tj.get("end_tick", 0) for tj in log.time_jump_results)
     active_names = {c.name for c in ledger._characters.values() if c.status == "active"}
-    failures = []
-    checked = 0
+    # Use the most recent death tick per name (names can be reused after cooldown)
+    latest_death_by_name = {}
     for cid, char in ledger._characters.items():
         if char.status != "historical" or char.death_tick is None:
             continue
-        if (final_tick - char.death_tick) <= config.NAME_REUSE_COOLDOWN_TICKS:
+        prev = latest_death_by_name.get(char.name)
+        if prev is None or char.death_tick > prev:
+            latest_death_by_name[char.name] = char.death_tick
+    failures = []
+    checked = 0
+    for name, death_tick in latest_death_by_name.items():
+        if (final_tick - death_tick) <= config.NAME_REUSE_COOLDOWN_TICKS:
             continue
-        if char.name in active_names:
+        if name in active_names:
             continue
         checked += 1
-        if not ns.is_available(char.name, final_tick):
-            failures.append(f"{char.name} (died tick {char.death_tick}, "
+        if not ns.is_available(name, final_tick):
+            failures.append(f"{name} (last died tick {death_tick}, "
                             f"checked tick {final_tick})")
     if failures:
         return InvariantResult("K9_name_reuse", False, "critical",
@@ -1868,39 +1874,57 @@ def schism_subsets_differ(log: TrajectoryLog) -> InvariantResult:
                                "No naming system — skipped")
     ns = log.naming_system
     checked = 0
+    no_subset = 0
+    no_parent = 0
     failures = []
-    for fid in list(ns._subsets.keys()):
-        if not fid.startswith("breakaway_"):
-            continue
-        child_subset = ns.get_variable_subset(fid)
+    for child_fid, parent_fid in ns._schism_parents.items():
+        child_subset = ns.get_variable_subset(child_fid)
         if not child_subset:
+            no_subset += 1
             continue
-        # Find parent — look through all non-breakaway factions
-        for parent_fid in ns._subsets:
-            if parent_fid.startswith("breakaway_"):
-                continue
-            parent_subset = ns.get_variable_subset(parent_fid)
-            if not parent_subset:
-                continue
-            # Count differences
-            diff_count = 0
-            for cat in parent_subset:
-                if set(parent_subset[cat]) != set(child_subset.get(cat, [])):
-                    diff_count += 1
-            if diff_count == 1:
-                checked += 1
+        # Walk up the chain to find the nearest ancestor with a subset
+        ancestor_fid = parent_fid
+        parent_subset = ns.get_variable_subset(ancestor_fid)
+        visited = {child_fid}
+        while not parent_subset and ancestor_fid in ns._schism_parents:
+            ancestor_fid = ns._schism_parents[ancestor_fid]
+            if ancestor_fid in visited:
                 break
+            visited.add(ancestor_fid)
+            parent_subset = ns.get_variable_subset(ancestor_fid)
+        if not parent_subset:
+            no_parent += 1
+            continue
+        # Count category differences between child and nearest ancestor with subset
+        # Each generation swaps 1 value, so multi-gen breakaways may differ by more than 1
+        # from a distant ancestor. But the child was derived from its direct parent (or
+        # the nearest ancestor that had a subset), so exactly 1 diff is expected per hop.
+        # Since derive_schism_subset walks up to the same ancestor, 1 diff is correct.
+        diff_count = 0
+        for cat in parent_subset:
+            if set(parent_subset[cat]) != set(child_subset.get(cat, [])):
+                diff_count += 1
+        if diff_count == 1:
+            checked += 1
         else:
-            failures.append(f"{fid}: no parent found with exactly 1 category diff")
+            failures.append(f"{child_fid}: {diff_count} category diffs from {ancestor_fid} (expected 1)")
+    info_parts = [f"{checked} validated"]
+    if no_subset:
+        info_parts.append(f"{no_subset} without subset")
+    if no_parent:
+        info_parts.append(f"{no_parent} without parent subset")
     if failures:
         return InvariantResult("K11_schism_drift", False, "warning",
-                               f"{len(failures)} breakaway(s) with invalid subset drift",
+                               f"{len(failures)} breakaway(s) with invalid subset drift ({', '.join(info_parts)})",
                                details={"failures": failures})
     return InvariantResult("K11_schism_drift", True, "warning",
-                           f"{checked} breakaway subset(s) validated (1-category diff)")
+                           f"Schism drift: {', '.join(info_parts)}")
 
 
 def stage5_regression(log: TrajectoryLog) -> InvariantResult:
+    if log.time_jump_results:
+        return InvariantResult("K12_stage5_regression", True, "info",
+                               "Skipped — time jumps mutate world state, use a non-chronicle scenario for regression")
     failures = []
     for group_name in ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]:
         for fn in GROUP_MAP.get(group_name, []):

@@ -5,7 +5,6 @@ from unit import UnitStore, FIELD_X, FIELD_Y, FIELD_HP, FIELD_ATTACK_RANGE, FIEL
 from tactical_engine import TacticalEngine
 from command import Command, CommandQueue
 from test_maps import open_field, chokepoint, cover_heavy
-from damage import _friendly_blocks_shot
 
 FACTION_A = 0  # Strike
 FACTION_B = 1  # Line
@@ -37,7 +36,7 @@ def _spawn_line(store, faction, center_x, center_y, count, rng):
     return uids
 
 
-def _firing_pct(store, uids, active):
+def _firing_pct(store, uids):
     alive = [u for u in uids if store.alive[u]]
     if not alive:
         return 0.0
@@ -45,8 +44,6 @@ def _firing_pct(store, uids, active):
     for uid in alive:
         tgt = store.auto_engage_target[uid]
         if tgt < 0 or not store.alive[tgt]:
-            continue
-        if _friendly_blocks_shot(store, uid, tgt, active):
             continue
         ax, ay = store.data[uid, FIELD_X], store.data[uid, FIELD_Y]
         tx, ty = store.data[tgt, FIELD_X], store.data[tgt, FIELD_Y]
@@ -171,8 +168,8 @@ def _run_scenario(name, seed):
             any_engaged = any(store.auto_engage_target[u] >= 0
                               for u in active if store.alive[u])
             if any_engaged:
-                firing_samples_a.append(_firing_pct(store, strike_uids, active))
-                firing_samples_b.append(_firing_pct(store, line_uids, active))
+                firing_samples_a.append(_firing_pct(store, strike_uids))
+                firing_samples_b.append(_firing_pct(store, line_uids))
                 last_sample = engine.tick
 
         if engine.is_terminal():

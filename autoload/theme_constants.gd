@@ -4,10 +4,10 @@ extends Node
 const IS_RELEASE_BUILD: bool = false
 
 # --- Background colors ---
-const BASE := Color("#0a0a0c")
-const SURFACE := Color("#111114")
-const CARD := Color("#18181c")
-const ELEVATED := Color("#1f1f24")
+const BASE := Color("#0A0D12")
+const SURFACE := Color("#10141A")
+const CARD := Color("#171C24")
+const ELEVATED := Color("#1E242E")
 
 # --- Text colors ---
 const PRIMARY := Color("#e8e6e1")

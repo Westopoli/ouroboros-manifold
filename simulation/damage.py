@@ -32,22 +32,10 @@ def resolve_damage(store: UnitStore, tactical_map, dt: float):
         if dist > attack_range:
             continue
 
-        blocked = False
-
-        if config.LINE_OF_FIRE_ENABLED:
-            if _friendly_blocks_shot(store, uid, target, active):
-                blocked = True
-
-        if not blocked and navmesh is not None and navmesh.has_obstacles:
+        if navmesh is not None and navmesh.has_obstacles:
             if not has_combat_los(navmesh, ax, ay, tx, ty):
-                blocked = True
+                continue
 
-        if blocked:
-            store.data[uid, FIELD_ATTACK_TIMER] = 0.0
-            store.blocked_ticks[uid] += 1
-            continue
-
-        store.blocked_ticks[uid] = 0
         store.data[uid, FIELD_ATTACK_TIMER] = store.data[uid, FIELD_ATTACK_INTERVAL]
 
         attacker_cat = CATEGORY_NAMES[store.category[uid]]
@@ -73,45 +61,6 @@ def resolve_damage(store: UnitStore, tactical_map, dt: float):
         store.kill(dead_uid)
 
     return deaths, kill_sources
-
-
-def _friendly_blocks_shot(store, attacker_uid, target_uid, active):
-    ax = store.data[attacker_uid, FIELD_X]
-    ay = store.data[attacker_uid, FIELD_Y]
-    tx = store.data[target_uid, FIELD_X]
-    ty = store.data[target_uid, FIELD_Y]
-    my_faction = store.faction[attacker_uid]
-    my_layer = store.data[attacker_uid, FIELD_LAYER]
-    radius = config.UNIT_COLLISION_RADIUS
-
-    seg_dx = tx - ax
-    seg_dy = ty - ay
-    seg_len_sq = seg_dx * seg_dx + seg_dy * seg_dy
-    if seg_len_sq < 0.001:
-        return False
-
-    for uid in active:
-        if uid == attacker_uid or uid == target_uid:
-            continue
-        if store.faction[uid] != my_faction:
-            continue
-        if store.data[uid, FIELD_LAYER] != my_layer:
-            continue
-
-        px = store.data[uid, FIELD_X] - ax
-        py = store.data[uid, FIELD_Y] - ay
-
-        t = (px * seg_dx + py * seg_dy) / seg_len_sq
-        if t < 0.05 or t > 0.95:
-            continue
-
-        closest_x = t * seg_dx
-        closest_y = t * seg_dy
-        dist_sq = (px - closest_x) ** 2 + (py - closest_y) ** 2
-        if dist_sq < radius * radius:
-            return True
-
-    return False
 
 
 def _accumulate_single(store, attacker, target, base_dmg, attacker_cat, tactical_map, pending):
@@ -180,10 +129,6 @@ def _accumulate_aoe(store, attacker, primary_target, base_dmg, attacker_cat, aoe
 def update_targeting(store: UnitStore, rng=None):
     active = store.active_ids()
     for uid in active:
-        if config.LINE_OF_FIRE_ENABLED and store.blocked_ticks[uid] > config.BLOCKED_RETARGET_TICKS:
-            store.auto_engage_target[uid] = -1
-            store.blocked_ticks[uid] = 0
-
         current = store.auto_engage_target[uid]
         if current >= 0 and store.alive[current]:
             dx = store.data[uid, FIELD_X] - store.data[current, FIELD_X]

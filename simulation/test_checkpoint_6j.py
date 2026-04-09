@@ -7,7 +7,6 @@ from command import Command, CommandQueue
 from movement import apply_group_move
 from power_rating import compute_power_rating
 from test_maps import chokepoint
-from damage import _friendly_blocks_shot
 
 FACTION_A = 0  # Strike (disadvantaged)
 FACTION_B = 1  # Line (advantaged)
@@ -51,7 +50,6 @@ def _bounding_box(store, uids):
 def _force_snapshot(store, uids, label, tick, active, verbose=False):
     alive = [u for u in uids if store.alive[u]]
     valid_target = 0
-    blocked = 0
     no_target = 0
     pathing = 0
 
@@ -65,7 +63,6 @@ def _force_snapshot(store, uids, label, tick, active, verbose=False):
                 pathing += 1
             else:
                 no_target += 1
-            los_blocked = False
             dist = -1.0
         else:
             ax = store.data[uid, FIELD_X]
@@ -73,11 +70,7 @@ def _force_snapshot(store, uids, label, tick, active, verbose=False):
             tx = store.data[tgt, FIELD_X]
             ty = store.data[tgt, FIELD_Y]
             dist = math.sqrt((tx - ax) ** 2 + (ty - ay) ** 2)
-            los_blocked = _friendly_blocks_shot(store, uid, tgt, active)
-            if los_blocked:
-                blocked += 1
-            else:
-                valid_target += 1
+            valid_target += 1
 
         if verbose:
             px = store.data[uid, FIELD_X]
@@ -85,17 +78,16 @@ def _force_snapshot(store, uids, label, tick, active, verbose=False):
             lines.append(
                 f"      uid={uid:>3} {store.unit_type[uid]:>12} "
                 f"pos=({px:7.1f},{py:7.1f}) "
-                f"tgt={tgt:>3} LOS-blk={los_blocked!s:>5} "
-                f"dist={dist:7.1f}"
+                f"tgt={tgt:>3} dist={dist:7.1f}"
             )
 
     print(f"    {label} @ tick {tick}: "
-          f"alive={len(alive)} firing={valid_target} blocked={blocked} "
+          f"alive={len(alive)} firing={valid_target} "
           f"no_tgt={no_target} pathing={pathing}")
     for line in lines:
         print(line)
 
-    return len(alive), valid_target, blocked, no_target, pathing
+    return len(alive), valid_target, 0, no_target, pathing
 
 
 def _run_engagement(seed, flank, verbose=False):

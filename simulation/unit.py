@@ -48,7 +48,6 @@ class UnitStore:
         self.waypoints = {}
         self.pulse_remaining = np.zeros(MAX_UNITS, dtype=np.int32)
         self.pulse_cooldown = np.zeros(MAX_UNITS, dtype=np.int32)
-        self.blocked_ticks = np.zeros(MAX_UNITS, dtype=np.int32)
 
     def spawn(self, unit_type, faction_id, x, y, layer=0, stats=None):
         if self.count >= MAX_UNITS:

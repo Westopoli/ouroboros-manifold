@@ -567,8 +567,6 @@ STEERING_OBSTACLE_AVOIDANCE_RANGE = 50
 UNIT_COLLISION_RADIUS          = 15
 HARD_COLLISION_ENABLED         = True
 COLLISION_RESOLUTION_ITERATIONS = 3
-LINE_OF_FIRE_ENABLED           = True
-BLOCKED_RETARGET_TICKS         = 40    # 2 sec before retargeting around blocker
 
 # ── Objectives and outcome classification (Stage 6) ─────────────────────────
 OUTCOME_WEIGHT_OBJECTIVE       = 0.75
@@ -599,3 +597,93 @@ AOE_POWER_MULTIPLIER           = 1.5
 
 # ── Replay (Stage 6) ────────────────────────────────────────────────────────
 REPLAY_FORMAT                  = "json"
+
+# ── Mission generator trigger thresholds (Stage 5.5) ────────────────────────
+SIEGE_BREAKING_MIN_TICKS            = 200
+SUPPRESSION_MAX_AGE                 = 300
+EVAC_MILITARY_THRESHOLD             = 15
+EVAC_ECONOMY_THRESHOLD              = 20
+EVAC_STABILITY_THRESHOLD            = 15
+CONTAINMENT_EXPANSION_THRESHOLD     = 2
+
+# ── Mission generator scoring (Stage 5.5) ───────────────────────────────────
+GENERATOR_URGENCY_WEIGHT            = 0.5
+GENERATOR_RELEVANCE_WEIGHT          = 0.3
+GENERATOR_PREFERENCE_WEIGHT         = 0.2
+GENERATOR_TOP_N_CANDIDATES          = 5
+GENERATOR_DEFAULT_PREFERENCE        = 0.5
+GENERATOR_RARE_PREFERENCE           = 0.1
+
+# ── Urgency scoring (Stage 5.5) ─────────────────────────────────────────────
+URGENCY_FIELD_WEIGHT                = 0.4
+URGENCY_CONFLICT_WEIGHT             = 0.4
+URGENCY_CHAIN_WEIGHT                = 0.2
+
+# ── Relevance scoring (Stage 5.5) ───────────────────────────────────────────
+RELEVANCE_LINEAGE_WEIGHT            = 0.4
+RELEVANCE_PROXIMITY_WEIGHT          = 0.3
+RELEVANCE_ARCHETYPE_WEIGHT          = 0.3
+RELEVANCE_MAX_HOPS                  = 5
+RELEVANCE_ARCHETYPE_FIT_THRESHOLD   = 3
+
+# ── Force allocation (Stage 5.5) ────────────────────────────────────────────
+BUDGET_TO_POWER_SCALE               = 15.0
+MILITARY_TO_POWER_SCALE             = 60.0
+PARITY_BREAKPOINTS                  = [
+    (0.0, 0.80),
+    (0.3, 0.85),
+    (0.5, 0.90),
+    (0.7, 0.95),
+    (1.0, 1.00),
+]
+PARITY_EASY_FLOOR                   = 0.95
+PARITY_HARD_CEILING                 = 0.85
+CAPACITY_SHORTFALL_THRESHOLD        = 0.4
+CAPACITY_SHORTFALL_REDUCTION        = 0.20
+
+# ── Asset profiles (Stage 5.5) ──────────────────────────────────────────────
+ASSET_PROFILES = {
+    "defensive_stand":     {"Raider": 0.05, "Interceptor": 0.10, "Vanguard": 0.15, "Warden": 0.15, "Bombard": 0.15, "Bastion": 0.40},
+    "siege_breaking":      {"Raider": 0.15, "Interceptor": 0.10, "Vanguard": 0.25, "Warden": 0.10, "Bombard": 0.20, "Bastion": 0.20},
+    "reconquest":          {"Raider": 0.20, "Interceptor": 0.10, "Vanguard": 0.30, "Warden": 0.10, "Bombard": 0.20, "Bastion": 0.10},
+    "assault":             {"Raider": 0.15, "Interceptor": 0.15, "Vanguard": 0.25, "Warden": 0.10, "Bombard": 0.25, "Bastion": 0.10},
+    "suppression":         {"Raider": 0.25, "Interceptor": 0.20, "Vanguard": 0.25, "Warden": 0.10, "Bombard": 0.05, "Bastion": 0.15},
+    "multi_front_defense": {"Raider": 0.10, "Interceptor": 0.15, "Vanguard": 0.20, "Warden": 0.15, "Bombard": 0.15, "Bastion": 0.25},
+    "interception":        {"Raider": 0.25, "Interceptor": 0.20, "Vanguard": 0.25, "Warden": 0.10, "Bombard": 0.10, "Bastion": 0.10},
+    "evacuation":          {"Raider": 0.10, "Interceptor": 0.05, "Vanguard": 0.10, "Warden": 0.15, "Bombard": 0.05, "Bastion": 0.55},
+    "containment":         {"Raider": 0.05, "Interceptor": 0.15, "Vanguard": 0.15, "Warden": 0.20, "Bombard": 0.10, "Bastion": 0.35},
+    "counterinsurgency":   {"Raider": 0.25, "Interceptor": 0.25, "Vanguard": 0.20, "Warden": 0.15, "Bombard": 0.05, "Bastion": 0.10},
+}
+
+# ── Canvas size and reinforcements (Stage 5.5) ──────────────────────────────
+CANVAS_SIZE_RANGES = {
+    "small":  (4000, 6000),
+    "medium": (6000, 10000),
+    "large":  (10000, 14000),
+}
+ARCHETYPE_BASE_CANVAS = {
+    "defensive_stand": "medium", "siege_breaking": "large", "reconquest": "medium",
+    "assault": "large", "suppression": "small", "multi_front_defense": "large",
+    "interception": "medium", "evacuation": "medium", "containment": "large",
+    "counterinsurgency": "small",
+}
+MILITARY_TO_STRUCTURES_SCALE        = 0.06
+STRUCTURE_COUNT_RANGE = {
+    "small":  (2, 4),
+    "medium": (3, 6),
+    "large":  (4, 8),
+}
+STRUCTURE_PRODUCTION_RATE           = 0.022
+# Player/enemy/neutral structure split per archetype: (player_frac, enemy_frac, neutral_frac)
+ARCHETYPE_STRUCTURE_SPLIT = {
+    "defensive_stand":     (0.50, 0.25, 0.25),
+    "siege_breaking":      (0.33, 0.33, 0.34),
+    "reconquest":          (0.25, 0.50, 0.25),
+    "assault":             (0.25, 0.50, 0.25),
+    "suppression":         (0.40, 0.30, 0.30),
+    "multi_front_defense": (0.40, 0.35, 0.25),
+    "interception":        (0.33, 0.34, 0.33),
+    "evacuation":          (0.50, 0.25, 0.25),
+    "containment":         (0.33, 0.34, 0.33),
+    "counterinsurgency":   (0.40, 0.30, 0.30),
+}

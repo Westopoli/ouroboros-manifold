@@ -1,1 +1,1 @@
-{"names": ["Ghazrun Phalvesh", "Dhorvakhan", "Rakhzul Ghomdar", "Pherzovan", "Khurvesh Dhazmal", "Ghomrakh Phazdul", "Dhulvaran", "Rakhghal Zhurmesh", "Phozurkhan", "Ghavzul Dhorvesh"]}
+{"names": ["Vazhal Khorresh", "Dhrukun Phezal", "Gharmul Taveesh", "Khozvan Dareful", "Rakhshan Phelvor", "Dhuzmal Ghavrun", "Thavrun Kerzhal", "Phakvel Ghosun", "Khorshan Druvel", "Ghazmal Fethun"]}

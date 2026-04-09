@@ -1,9 +1,12 @@
 extends Control
 
 var _menu_items: Array[Control] = []
+var _bg_celebration: Control
+var _title_heartbeat: Control
 
 func _ready() -> void:
 	_build_ui()
+	_setup_title_heartbeat()
 	_animate_entrance()
 
 
@@ -12,6 +15,8 @@ func _build_ui() -> void:
 	bg.color = ThemeConstants.BASE
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
+
+	_setup_bg_celebration()
 
 	var content := VBoxContainer.new()
 	content.set_anchors_preset(Control.PRESET_CENTER_LEFT)
@@ -27,23 +32,22 @@ func _build_ui() -> void:
 	add_child(content)
 
 	var classification := Label.new()
-	classification.text = "OUROBOROS MANIFOLD"
+	classification.text = "A WESTOPOLI GAME"
 	classification.uppercase = true
 	classification.add_theme_font_override("font", ThemeConstants.font_mono_regular)
-	classification.add_theme_font_size_override("font_size", ThemeConstants.CLASSIFICATION_LABEL_SIZE)
+	classification.add_theme_font_size_override("font_size", 10)
 	classification.add_theme_color_override("font_color", ThemeConstants.TERTIARY)
+	classification.add_theme_constant_override("letter_spacing", 5)
 	content.add_child(classification)
 
 	var spacer1 := Control.new()
 	spacer1.custom_minimum_size.y = 8
 	content.add_child(spacer1)
 
-	var title := Label.new()
-	title.text = "Ouroboros Manifold"
-	title.add_theme_font_override("font", ThemeConstants.font_serif_regular)
-	title.add_theme_font_size_override("font_size", ThemeConstants.TITLE_SIZE)
-	title.add_theme_color_override("font_color", ThemeConstants.PRIMARY)
-	content.add_child(title)
+	var title_placeholder := Control.new()
+	title_placeholder.custom_minimum_size.y = ThemeConstants.TITLE_SIZE + 12
+	title_placeholder.name = "TitlePlaceholder"
+	content.add_child(title_placeholder)
 
 	var spacer2 := Control.new()
 	spacer2.custom_minimum_size.y = 40
@@ -88,6 +92,31 @@ func _build_ui() -> void:
 	version.offset_top = -30
 	version.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	add_child(version)
+
+
+func _setup_bg_celebration() -> void:
+	var bg_scene := load("res://scenes/main_menu/menu_bg_celebration.gd")
+	_bg_celebration = Control.new()
+	_bg_celebration.set_script(bg_scene)
+	add_child(_bg_celebration)
+
+
+func _setup_title_heartbeat() -> void:
+	var heartbeat_script := load("res://scenes/main_menu/menu_title_heartbeat.gd")
+	_title_heartbeat = Control.new()
+	_title_heartbeat.set_script(heartbeat_script)
+	add_child(_title_heartbeat)
+
+	get_tree().process_frame.connect(_position_heartbeat_deferred, CONNECT_ONE_SHOT)
+
+	if _bg_celebration:
+		_title_heartbeat.connect_to_celebration(_bg_celebration)
+
+
+func _position_heartbeat_deferred() -> void:
+	var placeholder := find_child("TitlePlaceholder", true, false)
+	if placeholder and _title_heartbeat:
+		_title_heartbeat.set_title_origin(placeholder.global_position)
 
 
 func _create_menu_item(label_text: String, action: String) -> Control:

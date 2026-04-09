@@ -1,10 +1,19 @@
+#!/usr/bin/env python3
+"""Stage 5.5 Checkpoint A — Shared Contracts & Power Rating verification.
+
+Also preserves Stage 6 map/spatial hash tests (run with --stage6).
+"""
+import os
+import sys
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
 import config
+from collections import Counter
 from mission_contracts import (
     ForceUnit, ForceComposition, ObjectiveSpec,
     ReinforcementSpec, MissionSetup, MissionResult,
 )
-from power_rating import compute_power_rating
-from test_maps import open_field
+from power_rating import compute_power_rating, compute_force_power
 
 
 def test_contracts():
@@ -61,8 +70,8 @@ def test_power_ratings():
     print("=" * 60)
     print("POWER RATING TABLE — Tier 2 Baselines")
     print("=" * 60)
-    print(f"  {'Unit':<14} {'HP':>6} {'DPS':>7} {'Range':>6} {'Speed':>6} {'Power':>10}")
-    print(f"  {'-'*14} {'-'*6} {'-'*7} {'-'*6} {'-'*6} {'-'*10}")
+    print(f"  {'Unit':<14} {'Cat':<8} {'HP':>5} {'DPS':>7} {'Range':>6} {'Speed':>6} {'AoE':>4} {'Power':>10}")
+    print(f"  {'-'*14} {'-'*8} {'-'*5} {'-'*7} {'-'*6} {'-'*6} {'-'*4} {'-'*10}")
 
     ratings = {}
     for unit_type, stats in config.UNIT_STATS.items():
@@ -71,7 +80,8 @@ def test_power_ratings():
         dps = s["base_damage"] / s["attack_interval"]
         pr = compute_power_rating(s)
         ratings[unit_type] = pr
-        print(f"  {unit_type:<14} {s['hp']:>6} {dps:>7.1f} {s['attack_range']:>6} {s['speed']:>6} {pr:>10.1f}")
+        print(f"  {unit_type:<14} {s['category']:<8} {s['hp']:>5} {dps:>7.1f} "
+              f"{s['attack_range']:>6} {s['speed']:>6} {s['aoe_radius']:>4} {pr:>10.1f}")
 
     print()
     ranked = sorted(ratings.items(), key=lambda x: -x[1])
@@ -81,7 +91,47 @@ def test_power_ratings():
     print()
 
 
-def test_map():
+def test_force_composition():
+    print("=" * 60)
+    print("SAMPLE FORCE COMPOSITION")
+    print("=" * 60)
+
+    sample_force_def = [
+        ("Bastion", 4), ("Vanguard", 3), ("Warden", 2),
+        ("Bombard", 2), ("Interceptor", 2), ("Raider", 1),
+    ]
+
+    force_units = []
+    for unit_type, count in sample_force_def:
+        stats = dict(config.UNIT_STATS[unit_type])
+        stats["unit_type"] = unit_type
+        pr = compute_power_rating(stats)
+        for i in range(count):
+            fu = ForceUnit(
+                unit_type=unit_type, category=stats["category"],
+                stats=stats, power_rating=pr,
+                faction_id="player_civ", name=f"{unit_type}-{i+1}",
+            )
+            force_units.append(fu)
+
+    total_power = sum(u.power_rating for u in force_units)
+    fc = ForceComposition(units=force_units, total_power=total_power, faction_id="player_civ")
+
+    print(f"  Units: {len(fc.units)}  |  Total power: {fc.total_power:.1f}")
+    type_counts = Counter(u.unit_type for u in fc.units)
+    for ut, cnt in sorted(type_counts.items(), key=lambda x: -x[1]):
+        unit_power = next(u.power_rating for u in fc.units if u.unit_type == ut)
+        print(f"    {cnt}x {ut:<14} ({unit_power:.1f} each, {cnt * unit_power:.1f} total)")
+
+    stat_list = [dict(u.stats, unit_type=u.unit_type) for u in force_units]
+    cfp = compute_force_power(stat_list)
+    print(f"  compute_force_power() = {cfp:.1f}  (matches manual sum: {abs(cfp - total_power) < 0.01})")
+    print()
+
+
+def test_stage6_maps():
+    from test_maps import open_field
+
     print("=" * 60)
     print("OPEN FIELD MAP — Gradient Queries")
     print("=" * 60)
@@ -93,11 +143,7 @@ def test_map():
     print(f"  Spine nodes: {len(tmap.spine_nodes)}")
     print()
 
-    positions = [
-        (0, 0),
-        (2000, 2000),
-        (3999, 3999),
-    ]
+    positions = [(0, 0), (2000, 2000), (3999, 3999)]
     print(f"  {'Position':<18} {'sensor_int':>10} {'elevation':>10} {'obstacle':>10} {'cover':>10}")
     print(f"  {'-'*18} {'-'*10} {'-'*10} {'-'*10} {'-'*10}")
     for pos in positions:
@@ -108,14 +154,11 @@ def test_map():
         print(f"  ({pos[0]:>5}, {pos[1]:>5})   {si:>10.2f} {el:>10.2f} {ob:>10.2f} {co:>10.2f}")
     print()
 
-
-def test_spatial_hash():
     print("=" * 60)
     print("SPATIAL HASH — Query Test")
     print("=" * 60)
 
     tmap = open_field()
-
     result_empty = tmap.spatial_hash.query(2000, 2000, 500)
     print(f"  Query (2000, 2000) r=500, no units: {len(result_empty)} results (expected 0)")
 
@@ -134,8 +177,13 @@ def test_spatial_hash():
 
 
 if __name__ == "__main__":
+    stage6 = "--stage6" in sys.argv
+
     test_contracts()
     test_power_ratings()
-    test_map()
-    test_spatial_hash()
+    test_force_composition()
+
+    if stage6:
+        test_stage6_maps()
+
     print("Checkpoint A complete.")

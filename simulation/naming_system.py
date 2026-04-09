@@ -9,6 +9,7 @@ class NamingSystem:
         self._in_use = {}       # {name: faction_id}
         self._cooldowns = {}    # {name: release_tick}
         self._subsets = {}      # {faction_id: {linguistic_roots, phoneme_patterns, cultural_flavor_tags}}
+        self._schism_parents = {}  # {child_faction_id: parent_faction_id}
 
     def load_pool(self, faction_id: str, category: str, names: list[str]):
         self._pools[(faction_id, category)] = list(names)
@@ -76,11 +77,23 @@ class NamingSystem:
         if name in self._in_use:
             return False
         if name in self._cooldowns:
-            return current_tick > self._cooldowns[name] + config.NAME_REUSE_COOLDOWN_TICKS
+            return current_tick >= self._cooldowns[name] + config.NAME_REUSE_COOLDOWN_TICKS
         return True
 
     def derive_schism_subset(self, parent_faction_id: str, child_faction_id: str, rng):
+        self._schism_parents[child_faction_id] = parent_faction_id
         parent = self._subsets.get(parent_faction_id)
+        if not parent:
+            ancestor = parent_faction_id
+            visited = {ancestor}
+            while ancestor in self._schism_parents:
+                ancestor = self._schism_parents[ancestor]
+                if ancestor in visited:
+                    break
+                visited.add(ancestor)
+                parent = self._subsets.get(ancestor)
+                if parent:
+                    break
         if not parent:
             return
         child_subset = {k: list(v) for k, v in parent.items()}
