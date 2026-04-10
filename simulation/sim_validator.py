@@ -10,9 +10,15 @@ import diplomacy as _diplomacy
 import generational as _gen
 import json
 import os
+import random
 import naming_system as _naming_mod
 import coherence_ledger as _ledger_mod
 import time_jump as _time_jump
+import mission_generator as _mission_gen
+import outcome_resolver as _outcome_res
+import character_selector as _char_sel
+from force_allocator import allocate_forces as _allocate_forces
+from mission_contracts import MissionResult
 
 
 @dataclass
@@ -46,6 +52,7 @@ class TrajectoryLog:
     coherence_ledger: object = None
     naming_system: object = None
     time_jump_results: list = field(default_factory=list)  # [run_time_jump() return dicts]
+    mission_reviews: list = field(default_factory=list)    # [_run_mission_reviews() entries]
 
     # ── Query helpers ────────────────────────────────────────────────────────
 
@@ -496,7 +503,223 @@ def run_recorded_scenario(name: str, scenario: dict,
 
     tlog.coherence_ledger = coherence_ledger
     tlog.naming_system = ns
+
+    # ── Mission reviews (Checkpoint H) ──────────────────────────────────────
+    if scenario["features"].get("missions") and coherence_ledger and player_fid:
+        _run_mission_reviews(
+            tlog, scenario, w, registry, player_fid, coherence_ledger, ns,
+            pending_queue, noise_offsets, trigger_state, stances, gen_state,
+        )
+
     return tlog
+
+
+def _run_mission_reviews(tlog, scenario, w, registry, player_fid, coherence_ledger, ns,
+                         pending_queue, noise_offsets, trigger_state, stances, gen_state):
+    jump_indices    = scenario.get("mission_review_jumps", [])
+    mock_bands      = scenario.get("mock_outcome_bands", [])
+    difficulty      = scenario.get("difficulty", "medium")
+    player_prefs    = scenario.get("player_preferences")
+    test_all_arches = scenario.get("test_all_archetypes", False)
+    test_diffs      = scenario.get("test_difficulties")
+    jump_duration   = scenario["features"].get("chronicle_jump_duration", 100)
+
+    # Flatten event / action / conquest logs from all recorded snapshots.
+    event_log   = []
+    action_log  = []
+    conquest_log = []
+    for snap in tlog.snapshots:
+        for evt in snap.events_fired:
+            event_log.append({**evt, "tick": snap.tick})
+        for act in snap.faction_actions:
+            action_log.append({**act, "tick": snap.tick})
+        for con in snap.conquests:
+            conquest_log.append({**con, "tick": snap.tick})
+
+    current_tick = tlog.total_ticks
+    current_lineage_id = None
+    if gen_state:
+        char_id = gen_state.current_chapter.get("character_id")
+        if char_id:
+            rec = coherence_ledger.get_character_by_id(char_id)
+            if rec:
+                current_lineage_id = rec.lineage_id
+
+    pending_telegraphs = []
+    review_rng = random.Random(tlog.seed + 9000)  # deterministic, separate from world rng
+
+    for jump_idx, _ in enumerate(jump_indices):
+        mock_band = mock_bands[jump_idx] if jump_idx < len(mock_bands) else "partial_success"
+
+        mission_raw = _mission_gen.generate_mission(
+            world=w,
+            registry=registry,
+            player_faction_id=player_fid,
+            event_log=event_log,
+            action_log=action_log,
+            conquest_log=conquest_log,
+            current_tick=current_tick,
+            difficulty=difficulty,
+            rng=review_rng,
+            ledger=coherence_ledger,
+            current_lineage_id=current_lineage_id,
+            player_preferences=player_prefs,
+        )
+
+        setup             = mission_raw["setup"] if mission_raw else None
+        scored_candidates = mission_raw["scored_candidates"] if mission_raw else []
+
+        # Commander selection
+        cmdr_sel           = None
+        chapter_count_at_sel = None
+        if setup and gen_state:
+            if current_lineage_id:
+                chapter_count_at_sel = coherence_ledger.get_chapter_count(current_lineage_id)
+            cmdr_sel = _char_sel.run_selection(
+                gen_state, coherence_ledger, w, setup.region_id,
+                review_rng, current_tick,
+                current_lineage_id=current_lineage_id,
+            )
+            if cmdr_sel and cmdr_sel.lineage_id:
+                current_lineage_id = cmdr_sel.lineage_id
+                gen_state.current_chapter["character_id"] = cmdr_sel.character_id
+
+        # Outcome resolution — apply to world so next jump inherits consequences,
+        # but record the deltas.
+        outcome_result = None
+        if setup:
+            mock_result = MissionResult(
+                mission_id=setup.mission_id,
+                outcome_band=mock_band,
+                objective_score=0.7,
+                force_retention=0.8,
+                per_objective=[],
+                commander_survived=True,
+                ticks_elapsed=200,
+            )
+            commander_id = cmdr_sel.character_id if cmdr_sel else None
+            outcome_result = _outcome_res.resolve_outcome(
+                mock_result, setup.archetype, setup.region_id,
+                w, player_fid, ledger=coherence_ledger, commander_id=commander_id,
+            )
+
+        # Scenario 15: non-mutating all-bands preview for M9 / M10
+        all_bands_preview = _build_all_bands_preview(w, player_fid) if test_all_arches else None
+
+        # Scenario 16: fixed-snapshot difficulty variants for M8
+        difficulty_variants = None
+        if test_diffs and setup:
+            difficulty_variants = _build_difficulty_variants(
+                setup, w, player_fid, test_diffs)
+
+        tlog.mission_reviews.append({
+            "jump_index":            jump_idx,
+            "setup":                 setup,
+            "scored_candidates":     scored_candidates,
+            "outcome_band":          mock_band,
+            "outcome_result":        outcome_result,
+            "commander_selection":   cmdr_sel,
+            "chapter_count_at_sel":  chapter_count_at_sel,
+            "all_bands_preview":     all_bands_preview,
+            "difficulty_variants":   difficulty_variants,
+        })
+
+        # Advance world via time jump before next mission generation
+        tj_result = _time_jump.run_time_jump(
+            world=w,
+            n_ticks=jump_duration,
+            registry=registry,
+            pending_queue=pending_queue,
+            noise_offsets=noise_offsets,
+            trigger_state=trigger_state,
+            stances=stances if config.ENABLE_DIPLOMACY else None,
+            pending_telegraphs=pending_telegraphs,
+            rng=w.rng,
+            start_tick=current_tick,
+            coherence_ledger=coherence_ledger,
+            naming_system=ns,
+            player_lineage_id=current_lineage_id,
+            last_mission_region=setup.region_id if setup else None,
+            last_mission_outcome=mock_band,
+            mission_info={
+                "outcome": mock_band,
+                "archetype": setup.archetype if setup else "unknown",
+                "region": setup.region_id if setup else "unknown",
+            },
+        )
+        tlog.time_jump_results.append({**tj_result, "jump_tick": current_tick})
+        current_tick += jump_duration
+
+
+def _build_all_bands_preview(w, player_fid):
+    """Non-mutating sweep: for each archetype × band, compute deltas on a low- and
+    high-stat player region. Returns None if no contrasting pair exists (min 10 mil gap)."""
+    BANDS = ["total_success", "strong_success", "partial_success",
+             "partial_failure", "total_failure"]
+
+    player_regions = [r for r in w.regions.values()
+                      if r.faction_id == player_fid and r.tier != "empty"]
+    if not player_regions:
+        return None
+
+    low_r  = min(player_regions, key=lambda r: r.fields.get("military", 50))
+    high_r = max(player_regions, key=lambda r: r.fields.get("military", 50))
+    if low_r.id == high_r.id or high_r.fields.get("military", 50) - low_r.fields.get("military", 50) < 10:
+        return None
+
+    result = []
+    for archetype, table in config.CONSEQUENCE_TABLES.items():
+        entry = {
+            "archetype":     archetype,
+            "low_region_id": low_r.id,
+            "high_region_id": high_r.id,
+            "bands": {},
+        }
+        for band in BANDS:
+            low_deltas  = {}
+            high_deltas = {}
+            for delta_spec in table.get(band, []):
+                if delta_spec["target"] not in ("mission", "home", "exposed"):
+                    continue
+                f    = delta_spec["field"]
+                form = delta_spec["form"]
+                pct  = delta_spec["pct"]
+                low_deltas[f]  = _outcome_res.compute_delta(low_r.fields.get(f, 50),  form, pct)
+                high_deltas[f] = _outcome_res.compute_delta(high_r.fields.get(f, 50), form, pct)
+            entry["bands"][band] = {"low": low_deltas, "high": high_deltas}
+        result.append(entry)
+    return result
+
+
+def _build_difficulty_variants(setup, w, player_fid, test_difficulties):
+    """Run allocate_forces at each difficulty from a frozen field snapshot.
+    Uses a fixed seed per call so enemy forces are comparable across difficulties (M8)."""
+    region = w.regions.get(setup.region_id)
+    if not region:
+        return None
+
+    archetype   = setup.archetype
+    trigger_ctx = setup.metadata.get("trigger_context", {})
+    capacity    = region.composites.get("capacity", 0.5) if hasattr(region, "composites") else 0.5
+    cap_norm    = capacity / 100.0 if capacity > 1.0 else capacity
+    enemy_fid   = setup.enemy_forces[0].faction_id if setup.enemy_forces else "enemy_faction"
+    frozen      = dict(region.fields)
+
+    variants = []
+    for diff in test_difficulties:
+        region.fields.update(frozen)          # same field state for every call
+        call_rng = random.Random(42)          # same rng state for every call → M8 comparable
+        alloc = _allocate_forces(archetype, trigger_ctx, region, cap_norm,
+                                 diff, player_fid, enemy_fid, call_rng)
+        variants.append({
+            "difficulty":   diff,
+            "player_force": alloc["player_force"],
+            "enemy_force":  alloc["enemy_force"],
+            "parity_ratio": alloc["parity_ratio"],
+        })
+
+    region.fields.update(frozen)              # final restore
+    return variants
 
 
 _TEST_NAME_POOL = [

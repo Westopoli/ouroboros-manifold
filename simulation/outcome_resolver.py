@@ -70,6 +70,7 @@ def resolve_outcome(mission_result, archetype, mission_region_id,
             "region_id": mission_region_id,
             "archetype": archetype,
             "outcome_band": mission_result.outcome_band,
+            "mission_consequence": True,
         })
         if ledger is not None and commander_id is not None:
             ledger.record_commander_death(commander_id, mission_region_id,

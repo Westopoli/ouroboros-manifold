@@ -51,7 +51,7 @@ func connect_to_celebration(bg_celebration: Control) -> void:
 
 func _build_title_labels() -> void:
 	var font: Font = ThemeConstants.font_serif_regular
-	var font_size: int = ThemeConstants.TITLE_SIZE
+	var font_size: int = int(ThemeConstants.TITLE_SIZE * 1.5)
 
 	var x_offset := 0.0
 	for i in range(TITLE_TEXT.length()):

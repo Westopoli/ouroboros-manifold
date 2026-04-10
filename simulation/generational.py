@@ -59,6 +59,7 @@ def run_character_selection(gen_state, ledger, world, mission_setup, rng, tick,
     )
 
     if selection and selection.lineage_id:
+        gen_state.current_chapter["character_id"] = selection.character_id
         if selection.rotation_reason is None:
             # Staying in current lineage — increment its chapter counter
             ledger.increment_chapter(selection.lineage_id)

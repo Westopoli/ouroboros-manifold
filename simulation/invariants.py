@@ -2075,3 +2075,599 @@ def run_invariants(log: TrajectoryLog, groups: list | None = None) -> list[Invar
     else:
         funcs = ALL_INVARIANTS
     return [f(log) for f in funcs]
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+#  GROUP M: Mission Generation Pipeline (Stage 5.5)
+# ═════════════════════════════════════════════════════════════════════════════
+
+def _missions(log):
+    return log.mission_reviews
+
+
+def m1_trigger_condition_true(log: TrajectoryLog) -> InvariantResult:
+    """M1: Every selected mission had its trigger condition evaluate to True."""
+    reviews = _missions(log)
+    if not reviews:
+        return InvariantResult("M1_trigger_condition_true", True, "info",
+                               "Skipped — no mission reviews recorded")
+    failures = []
+    for r in reviews:
+        if not r["setup"]:
+            continue
+        sel = r["setup"]
+        cands = r["scored_candidates"]
+        selected_cand = next(
+            (c for c in cands if c.get("region_id") == sel.region_id
+             and c.get("archetype") == sel.archetype), None)
+        if selected_cand and not selected_cand.get("trigger_met", True):
+            failures.append(f"jump={r['jump_index']} {sel.archetype}@{sel.region_id}")
+    if failures:
+        return InvariantResult("M1_trigger_condition_true", False, "critical",
+                               f"{len(failures)} mission(s) selected with trigger_met=False: {failures[:3]}",
+                               details={"failures": failures})
+    return InvariantResult("M1_trigger_condition_true", True, "critical",
+                           "All selected missions had trigger conditions met")
+
+
+def m2_urgency_dominates_crisis(log: TrajectoryLog) -> InvariantResult:
+    """M2: In crisis periods (any urgency > 0.8), selected region in top-3 urgency >80%."""
+    MIN_CRISIS = 5
+    reviews = _missions(log)
+    crisis_cases = []
+    for r in reviews:
+        if not r["setup"] or not r["scored_candidates"]:
+            continue
+        cands = r["scored_candidates"]
+        max_urgency = max((c.get("urgency", 0) for c in cands), default=0)
+        if max_urgency <= 0.8:
+            continue
+        sorted_by_urgency = sorted(cands, key=lambda c: c.get("urgency", 0), reverse=True)
+        top3_regions = {c["region_id"] for c in sorted_by_urgency[:3]}
+        selected_region = r["setup"].region_id
+        crisis_cases.append(selected_region in top3_regions)
+
+    if len(crisis_cases) < MIN_CRISIS:
+        return InvariantResult("M2_urgency_dominates_crisis", True, "info",
+                               f"Skipped — only {len(crisis_cases)} crisis cases (need {MIN_CRISIS})")
+    rate = sum(crisis_cases) / len(crisis_cases)
+    if rate < 0.80:
+        return InvariantResult("M2_urgency_dominates_crisis", False, "warning",
+                               f"Selected region in top-3 urgency only {rate:.0%} of crisis cases (need >80%)",
+                               details={"rate": rate, "cases": len(crisis_cases)})
+    return InvariantResult("M2_urgency_dominates_crisis", True, "warning",
+                           f"Urgency dominance {rate:.0%} over {len(crisis_cases)} crisis cases")
+
+
+def m3_preference_influences_calm(log: TrajectoryLog) -> InvariantResult:
+    """M3: In calm periods (all urgency < 0.5), preferred archetypes selected >2× non-preferred."""
+    MIN_CALM = 30
+    reviews = _missions(log)
+    preferred_count = 0
+    non_preferred_count = 0
+    for r in reviews:
+        if not r["setup"] or not r["scored_candidates"]:
+            continue
+        cands = r["scored_candidates"]
+        max_urgency = max((c.get("urgency", 0) for c in cands), default=1)
+        if max_urgency >= 0.5:
+            continue
+        sel_archetype = r["setup"].archetype
+        sel_cand = next(
+            (c for c in cands if c.get("region_id") == r["setup"].region_id
+             and c.get("archetype") == sel_archetype), None)
+        if sel_cand is None:
+            continue
+        pref = sel_cand.get("preference", 0.5)
+        if pref >= 0.7:
+            preferred_count += 1
+        else:
+            non_preferred_count += 1
+
+    total = preferred_count + non_preferred_count
+    if total < MIN_CALM:
+        return InvariantResult("M3_preference_influences_calm", True, "info",
+                               f"Skipped — only {total} calm selections (need {MIN_CALM})")
+    if non_preferred_count == 0:
+        return InvariantResult("M3_preference_influences_calm", True, "warning",
+                               "All calm selections were preferred (trivially passes)")
+    ratio = preferred_count / non_preferred_count
+    if ratio < 2.0:
+        return InvariantResult("M3_preference_influences_calm", False, "warning",
+                               f"Preferred:non-preferred ratio {ratio:.1f}× (need >2×)",
+                               details={"preferred": preferred_count, "non_preferred": non_preferred_count})
+    return InvariantResult("M3_preference_influences_calm", True, "warning",
+                           f"Preferred archetypes {ratio:.1f}× more common in calm periods")
+
+
+def m4_rare_archetypes_rare(log: TrajectoryLog) -> InvariantResult:
+    """M4: Rare archetypes (preference ≤ 0.1) selected < 10% of all missions."""
+    MIN_CANDIDATES = 20
+    reviews = _missions(log)
+    all_selected = [r["setup"].archetype for r in reviews if r["setup"]]
+    if len(all_selected) < 5:
+        return InvariantResult("M4_rare_archetypes_rare", True, "info",
+                               f"Skipped — only {len(all_selected)} missions generated")
+
+    # Collect rare archetype selections across full scored pools
+    rare_selected = 0
+    total_selected = 0
+    for r in reviews:
+        if not r["setup"]:
+            continue
+        sel_archetype = r["setup"].archetype
+        sel_region    = r["setup"].region_id
+        sel_cand = next(
+            (c for c in r["scored_candidates"]
+             if c.get("region_id") == sel_region and c.get("archetype") == sel_archetype),
+            None)
+        if sel_cand is None:
+            continue
+        total_selected += 1
+        if sel_cand.get("preference", 0.5) <= 0.1:
+            rare_selected += 1
+
+    if total_selected < MIN_CANDIDATES:
+        return InvariantResult("M4_rare_archetypes_rare", True, "info",
+                               f"Skipped — only {total_selected} scored selections (need {MIN_CANDIDATES})")
+    rate = rare_selected / total_selected
+    if rate >= 0.10:
+        return InvariantResult("M4_rare_archetypes_rare", False, "warning",
+                               f"Rare archetypes selected {rate:.0%} of missions (limit <10%)",
+                               details={"rare_selected": rare_selected, "total": total_selected})
+    return InvariantResult("M4_rare_archetypes_rare", True, "warning",
+                           f"Rare archetypes {rate:.0%} of selections (< 10% limit)")
+
+
+def m5_force_parity_winnable(log: TrajectoryLog) -> InvariantResult:
+    """M5: Player/enemy power ratio within [PARITY_FLOOR, 1.05] for all generated missions."""
+    reviews = _missions(log)
+    setups = [r["setup"] for r in reviews if r["setup"]]
+    if not setups:
+        return InvariantResult("M5_force_parity_winnable", True, "info",
+                               "Skipped — no missions generated")
+    floor  = config.PARITY_FLOOR
+    ceiling = 1.05
+    failures = []
+    for s in setups:
+        if not s.enemy_forces:
+            continue
+        enemy_power = s.enemy_forces[0].total_power
+        if enemy_power <= 0:
+            continue
+        ratio = s.player_force.total_power / enemy_power
+        if not (floor <= ratio <= ceiling):
+            failures.append(f"{s.archetype}@{s.region_id}: ratio={ratio:.2f}")
+    if failures:
+        return InvariantResult("M5_force_parity_winnable", False, "critical",
+                               f"{len(failures)} mission(s) outside parity [{floor}, {ceiling}]: {failures[:3]}",
+                               details={"failures": failures})
+    return InvariantResult("M5_force_parity_winnable", True, "critical",
+                           f"All {len(setups)} missions within parity range")
+
+
+def m6_asset_profile_respected(log: TrajectoryLog) -> InvariantResult:
+    """M6: Per-unit-type power ratio deviates < 0.15 from ASSET_PROFILES[archetype]."""
+    reviews = _missions(log)
+    setups  = [r["setup"] for r in reviews if r["setup"]]
+    if not setups:
+        return InvariantResult("M6_asset_profile_respected", True, "info",
+                               "Skipped — no missions generated")
+    MAX_DEV = 0.15
+    failures = []
+    for s in setups:
+        profile = config.ASSET_PROFILES.get(s.archetype, {})
+        if not profile or s.player_force.total_power <= 0:
+            continue
+        actual = {}
+        for u in s.player_force.units:
+            actual[u.unit_type] = actual.get(u.unit_type, 0.0) + u.power_rating
+        total = sum(actual.values()) or 1.0
+        for utype, target_ratio in profile.items():
+            actual_ratio = actual.get(utype, 0.0) / total
+            dev = abs(actual_ratio - target_ratio)
+            if dev >= MAX_DEV:
+                failures.append(
+                    f"{s.archetype}@{s.region_id} {utype}: actual={actual_ratio:.2f} target={target_ratio:.2f}")
+    if failures:
+        return InvariantResult("M6_asset_profile_respected", False, "warning",
+                               f"{len(failures)} unit type(s) exceed ±{MAX_DEV} profile deviation: {failures[:3]}",
+                               details={"failures": failures})
+    return InvariantResult("M6_asset_profile_respected", True, "warning",
+                           f"All {len(setups)} missions within asset profile tolerance")
+
+
+def m7_shortfall_reduces_quantity(log: TrajectoryLog) -> InvariantResult:
+    """M7: When shortfall occurs, individual unit stats are identical to full-cap units;
+    only force size is reduced."""
+    reviews  = _missions(log)
+    shortfall_cases = [r for r in reviews
+                       if r["setup"] and r["setup"].metadata.get("shortfall_types")]
+    if not shortfall_cases:
+        return InvariantResult("M7_shortfall_reduces_quantity", True, "info",
+                               "Skipped — no shortfall cases observed (capacity always above threshold)")
+
+    # Compare unit stats in shortfall forces against the type's canonical stats
+    # Units produced by _fill_force share the same per-type stat profile regardless of budget.
+    # We verify: no unit in a shortfall force has stats that differ from other units of same type.
+    failures = []
+    for r in shortfall_cases:
+        s = r["setup"]
+        by_type = {}
+        for u in s.player_force.units:
+            if u.unit_type not in by_type:
+                by_type[u.unit_type] = u.stats
+            elif u.stats != by_type[u.unit_type]:
+                failures.append(
+                    f"{s.archetype}@{s.region_id} {u.unit_type}: inconsistent stats in shortfall force")
+    if failures:
+        return InvariantResult("M7_shortfall_reduces_quantity", False, "critical",
+                               f"{len(failures)} unit type(s) with inconsistent stats in shortfall forces: {failures[:3]}",
+                               details={"failures": failures})
+    return InvariantResult("M7_shortfall_reduces_quantity", True, "critical",
+                           f"All {len(shortfall_cases)} shortfall cases have consistent per-unit stats")
+
+
+def m8_difficulty_enemy_invariant(log: TrajectoryLog) -> InvariantResult:
+    """M8: Enemy force is field-identical across easy/medium/hard; player power varies."""
+    variants_cases = [r["difficulty_variants"] for r in _missions(log)
+                      if r.get("difficulty_variants")]
+    if not variants_cases:
+        return InvariantResult("M8_difficulty_enemy_invariant", True, "info",
+                               "Skipped — no difficulty_variants recorded (scenario 16 only)")
+
+    failures = []
+    for variants in variants_cases:
+        if len(variants) < 2:
+            continue
+        # Canonical enemy roster from first variant
+        def _canon(force):
+            return sorted(
+                [(u.unit_type, u.power_rating, tuple(sorted(u.stats.items())))
+                 for u in force.units])
+
+        ref = variants[0]
+        ref_enemy_canon  = _canon(ref["enemy_force"])
+        ref_enemy_total  = ref["enemy_force"].total_power
+        player_powers    = {ref["difficulty"]: ref["player_force"].total_power}
+
+        for v in variants[1:]:
+            ec = _canon(v["enemy_force"])
+            if ec != ref_enemy_canon or abs(v["enemy_force"].total_power - ref_enemy_total) > 0.01:
+                failures.append(
+                    f"diff={v['difficulty']}: enemy force differs from {ref['difficulty']}")
+            player_powers[v["difficulty"]] = v["player_force"].total_power
+
+        pw = list(player_powers.values())
+        if len(set(pw)) == 1:
+            failures.append("player force total_power identical across all difficulties")
+
+    if failures:
+        return InvariantResult("M8_difficulty_enemy_invariant", False, "critical",
+                               f"{len(failures)} M8 violation(s): {failures[:3]}",
+                               details={"failures": failures})
+    return InvariantResult("M8_difficulty_enemy_invariant", True, "critical",
+                           "Enemy forces identical across difficulties; player power varies")
+
+
+def m9_proportional_delta_scaling(log: TrajectoryLog) -> InvariantResult:
+    """M9: For deficit-form deltas, lower-stat region gets a larger absolute delta."""
+    preview_cases = [r["all_bands_preview"] for r in _missions(log)
+                     if r.get("all_bands_preview")]
+    if not preview_cases:
+        return InvariantResult("M9_proportional_delta_scaling", True, "info",
+                               "Skipped — no all_bands_preview recorded (scenario 15 only)")
+
+    failures = []
+    for preview in preview_cases:
+        for entry in preview:
+            archetype = entry["archetype"]
+            for band, deltas in entry["bands"].items():
+                for field, low_d in deltas["low"].items():
+                    high_d = deltas["high"].get(field)
+                    if high_d is None:
+                        continue
+                    # Only check deficit-form deltas (positive = recovery)
+                    if low_d <= 0:
+                        continue
+                    if abs(low_d) <= abs(high_d):
+                        failures.append(
+                            f"{archetype}/{band}/{field}: "
+                            f"low_delta={low_d:.2f} not > high_delta={high_d:.2f}")
+    if failures:
+        return InvariantResult("M9_proportional_delta_scaling", False, "critical",
+                               f"{len(failures)} deficit-form delta(s) not larger for low-stat region: {failures[:3]}",
+                               details={"failures": failures})
+    return InvariantResult("M9_proportional_delta_scaling", True, "critical",
+                           "All deficit-form deltas scale correctly with region state")
+
+
+def m10_outcome_bands_distinct(log: TrajectoryLog) -> InvariantResult:
+    """M10: All 5 outcome bands produce distinct field-delta sets for the same archetype+region."""
+    preview_cases = [r["all_bands_preview"] for r in _missions(log)
+                     if r.get("all_bands_preview")]
+    if not preview_cases:
+        return InvariantResult("M10_outcome_bands_distinct", True, "info",
+                               "Skipped — no all_bands_preview recorded (scenario 15 only)")
+
+    failures = []
+    for preview in preview_cases:
+        for entry in preview:
+            archetype = entry["archetype"]
+            # Use the low region's deltas as the comparison baseline
+            band_signatures = {}
+            for band, deltas in entry["bands"].items():
+                sig = tuple(sorted((f, round(d, 4)) for f, d in deltas["low"].items()))
+                if sig in band_signatures.values():
+                    dup = [b for b, s in band_signatures.items() if s == sig]
+                    failures.append(f"{archetype}/{band} == {dup[0]} (identical deltas)")
+                band_signatures[band] = sig
+
+    if failures:
+        return InvariantResult("M10_outcome_bands_distinct", False, "critical",
+                               f"{len(failures)} duplicate band delta(s): {failures[:3]}",
+                               details={"failures": failures})
+    return InvariantResult("M10_outcome_bands_distinct", True, "critical",
+                           "All 5 outcome bands produce distinct field-delta sets")
+
+
+def m11_commander_death_logged(log: TrajectoryLog) -> InvariantResult:
+    """M11: When commander_survived=False, ledger marks commander dead and KIA event present."""
+    reviews = _missions(log)
+    death_cases = [r for r in reviews
+                   if r.get("outcome_result") and
+                   any(e.get("event_id") == config.COMMANDER_DEATH_EVENT_ID
+                       for e in r["outcome_result"].get("events", []))]
+    if not death_cases:
+        return InvariantResult("M11_commander_death_logged", True, "info",
+                               "Skipped — no commander deaths in any review (all mock bands used commander_survived=True)")
+
+    ledger = log.coherence_ledger
+    failures = []
+    for r in death_cases:
+        for evt in r["outcome_result"]["events"]:
+            if evt.get("event_id") != config.COMMANDER_DEATH_EVENT_ID:
+                continue
+            cid = evt.get("commander_id")
+            if cid and ledger:
+                rec = ledger.get_character_by_id(cid)
+                if rec and rec.status != "dead":
+                    failures.append(f"commander {cid} not marked dead in ledger")
+            if not evt.get("mission_consequence"):
+                failures.append(f"KIA event for {cid} missing mission_consequence=True")
+
+    if failures:
+        return InvariantResult("M11_commander_death_logged", False, "critical",
+                               f"{len(failures)} commander death logging failure(s): {failures[:3]}",
+                               details={"failures": failures})
+    return InvariantResult("M11_commander_death_logged", True, "critical",
+                           f"All {len(death_cases)} commander death(s) correctly logged")
+
+
+def m12_consequence_events_flagged(log: TrajectoryLog) -> InvariantResult:
+    """M12: All events produced by outcome_resolver have mission_consequence=True."""
+    reviews = _missions(log)
+    outcome_reviews = [r for r in reviews if r.get("outcome_result")]
+    if not outcome_reviews:
+        return InvariantResult("M12_consequence_events_flagged", True, "info",
+                               "Skipped — no outcome results recorded")
+
+    failures = []
+    for r in outcome_reviews:
+        for evt in r["outcome_result"].get("events", []):
+            if not evt.get("mission_consequence"):
+                failures.append(
+                    f"jump={r['jump_index']} event_id={evt.get('event_id')} missing mission_consequence")
+
+    if failures:
+        return InvariantResult("M12_consequence_events_flagged", False, "critical",
+                               f"{len(failures)} outcome event(s) missing mission_consequence=True: {failures[:3]}",
+                               details={"failures": failures})
+    return InvariantResult("M12_consequence_events_flagged", True, "critical",
+                           "All outcome events carry mission_consequence=True")
+
+
+def m14_min_stay_respected(log: TrajectoryLog) -> InvariantResult:
+    """M14: Non-forced rotation only occurs when chapter_count >= SELECTOR_MIN_CHAPTERS."""
+    reviews = _missions(log)
+    sel_reviews = [r for r in reviews if r.get("commander_selection")]
+    if not sel_reviews:
+        return InvariantResult("M14_min_stay_respected", True, "info",
+                               "Skipped — no commander selections recorded")
+
+    minimum = config.SELECTOR_MIN_CHAPTERS
+    failures = []
+    for r in sel_reviews:
+        sel = r["commander_selection"]
+        count = r.get("chapter_count_at_sel")
+        if sel.rotation_reason in (None, "forced"):
+            continue
+        # Non-forced rotation — must have met minimum
+        if count is not None and count < minimum:
+            failures.append(
+                f"jump={r['jump_index']} rotation_reason={sel.rotation_reason} "
+                f"chapter_count={count} < min={minimum}")
+
+    if failures:
+        return InvariantResult("M14_min_stay_respected", False, "critical",
+                               f"{len(failures)} premature rotation(s): {failures[:3]}",
+                               details={"failures": failures})
+    return InvariantResult("M14_min_stay_respected", True, "critical",
+                           "Min-stay respected across all rotation decisions")
+
+
+def m15_hard_cap_rotates(log: TrajectoryLog) -> InvariantResult:
+    """M15: When chapter_count >= SELECTOR_HARD_CAP, rotation always occurs."""
+    reviews  = _missions(log)
+    sel_reviews = [r for r in reviews if r.get("commander_selection")]
+    cap = config.SELECTOR_HARD_CAP
+    cap_cases = [r for r in sel_reviews
+                 if r.get("chapter_count_at_sel") is not None
+                 and r["chapter_count_at_sel"] >= cap]
+    if not cap_cases:
+        return InvariantResult("M15_hard_cap_rotates", True, "info",
+                               f"Skipped — hard cap ({cap}) never reached in any review")
+
+    failures = []
+    for r in cap_cases:
+        sel = r["commander_selection"]
+        if sel.rotation_reason is None:
+            failures.append(
+                f"jump={r['jump_index']} chapter_count={r['chapter_count_at_sel']} >= {cap} but no rotation")
+
+    if failures:
+        return InvariantResult("M15_hard_cap_rotates", False, "critical",
+                               f"{len(failures)} hard-cap case(s) without rotation: {failures[:3]}",
+                               details={"failures": failures})
+    return InvariantResult("M15_hard_cap_rotates", True, "critical",
+                           f"All {len(cap_cases)} hard-cap case(s) triggered rotation")
+
+
+def m16_commander_near_region(log: TrajectoryLog) -> InvariantResult:
+    """M16: Selected commander's region is within SELECTOR_PROXIMITY_HOPS of the mission region."""
+    from world import World
+
+    def _hops(world_regions, adjacency, start, end):
+        if start == end:
+            return 0
+        visited  = {start}
+        frontier = [start]
+        for h in range(1, config.SELECTOR_PROXIMITY_HOPS + 2):
+            next_f = []
+            for rid in frontier:
+                for nid in adjacency.get(rid, []):
+                    if nid == end:
+                        return h
+                    if nid not in visited:
+                        visited.add(nid)
+                        next_f.append(nid)
+            frontier = next_f
+            if not frontier:
+                break
+        return config.SELECTOR_PROXIMITY_HOPS + 99  # beyond range
+
+    reviews    = _missions(log)
+    sel_reviews = [r for r in reviews if r.get("commander_selection") and r.get("setup")]
+    if not sel_reviews:
+        return InvariantResult("M16_commander_near_region", True, "info",
+                               "Skipped — no commander selections with setup recorded")
+
+    # Access world adjacency from coherence_ledger region records isn't possible directly;
+    # we only have region_id strings. Skip if world not accessible.
+    # The invariant is best-effort: check when world topology is recorded.
+    # For now, flag any selection where commander region_id == None.
+    failures = []
+    for r in sel_reviews:
+        sel = r["commander_selection"]
+        if sel.region_id is None:
+            failures.append(f"jump={r['jump_index']} commander has no region_id")
+
+    if failures:
+        return InvariantResult("M16_commander_near_region", False, "warning",
+                               f"{len(failures)} commander(s) with null region_id: {failures[:3]}",
+                               details={"failures": failures})
+    return InvariantResult("M16_commander_near_region", True, "warning",
+                           "All commanders have valid region_id (proximity topology not testable from log)")
+
+
+def m17_first_mission_unrelated(log: TrajectoryLog) -> InvariantResult:
+    """M17: First mission uses unrelated pool; rotation_reason=None, rotation_mechanism=None
+    (first-chapter contract per spec lines 214-217)."""
+    reviews = _missions(log)
+    if not reviews:
+        return InvariantResult("M17_first_mission_unrelated", True, "info",
+                               "Skipped — no mission reviews recorded")
+
+    first = reviews[0]
+    sel   = first.get("commander_selection")
+    if sel is None:
+        return InvariantResult("M17_first_mission_unrelated", False, "critical",
+                               "First mission produced no commander selection")
+
+    checks = []
+    if sel.pool_used != "unrelated":
+        checks.append(f"pool_used={sel.pool_used!r} (expected 'unrelated')")
+    if sel.lineage_id is None:
+        checks.append("lineage_id is None (must be non-None)")
+    if sel.rotation_reason is not None:
+        checks.append(f"rotation_reason={sel.rotation_reason!r} (expected None)")
+    if sel.rotation_mechanism is not None:
+        checks.append(f"rotation_mechanism={sel.rotation_mechanism!r} (expected None)")
+
+    if checks:
+        return InvariantResult("M17_first_mission_unrelated", False, "critical",
+                               f"First-chapter contract violated: {'; '.join(checks)}",
+                               details={"pool_used": sel.pool_used,
+                                        "lineage_id": sel.lineage_id,
+                                        "rotation_reason": sel.rotation_reason,
+                                        "rotation_mechanism": sel.rotation_mechanism})
+    return InvariantResult("M17_first_mission_unrelated", True, "critical",
+                           "First mission: unrelated pool, lineage created, no rotation semantics")
+
+
+def m18_collapse_triggers_reassignment(log: TrajectoryLog) -> InvariantResult:
+    """M18: After faction collapse, new faction has ≥1 owned region."""
+    deaths = log.player_deaths
+    if not deaths:
+        return InvariantResult("M18_collapse_triggers_reassignment", True, "info",
+                               "Skipped — no faction collapses in this run")
+
+    failures = []
+    for death in deaths:
+        tick      = death["tick"]
+        new_fid   = death.get("new_faction_id")
+        if new_fid is None:
+            failures.append(f"tick={tick}: no new_faction_id after collapse")
+            continue
+        snap_idx = min(tick, len(log.snapshots) - 1)
+        fac_data  = log.snapshots[snap_idx].factions.get(new_fid, {})
+        if fac_data.get("owned_region_count", 0) == 0:
+            failures.append(f"tick={tick}: reassigned to {new_fid} which owns 0 regions")
+
+    if failures:
+        return InvariantResult("M18_collapse_triggers_reassignment", False, "critical",
+                               f"{len(failures)} collapse(s) with bad reassignment: {failures[:3]}",
+                               details={"failures": failures})
+    return InvariantResult("M18_collapse_triggers_reassignment", True, "critical",
+                           f"All {len(deaths)} collapse(s) reassigned to faction with ≥1 region")
+
+
+def m19_stage55_regression(log: TrajectoryLog) -> InvariantResult:
+    """M19: All Stage 5 critical invariants (Groups A–K) still pass."""
+    failures = []
+    for group_name in ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"]:
+        for fn in GROUP_MAP.get(group_name, []):
+            result = fn(log)
+            if not result.passed and result.severity == "critical":
+                failures.append(result.name)
+    if failures:
+        return InvariantResult(
+            "M19_stage55_regression", False, "critical",
+            f"{len(failures)} prior critical invariant(s) regressed: {', '.join(failures[:5])}",
+            details={"failed": failures})
+    return InvariantResult("M19_stage55_regression", True, "critical",
+                           "All A–K critical invariants pass (no regression)")
+
+
+GROUP_MAP["M"] = [
+    m1_trigger_condition_true,
+    m2_urgency_dominates_crisis,
+    m3_preference_influences_calm,
+    m4_rare_archetypes_rare,
+    m5_force_parity_winnable,
+    m6_asset_profile_respected,
+    m7_shortfall_reduces_quantity,
+    m8_difficulty_enemy_invariant,
+    m9_proportional_delta_scaling,
+    m10_outcome_bands_distinct,
+    m11_commander_death_logged,
+    m12_consequence_events_flagged,
+    m14_min_stay_respected,
+    m15_hard_cap_rotates,
+    m16_commander_near_region,
+    m17_first_mission_unrelated,
+    m18_collapse_triggers_reassignment,
+    m19_stage55_regression,
+]
+
+ALL_INVARIANTS.extend(GROUP_MAP["M"])

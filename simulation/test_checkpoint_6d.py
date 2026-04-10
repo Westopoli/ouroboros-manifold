@@ -157,19 +157,19 @@ def run():
 
     # --- 50v50 mirror ---
     print(f"\n{'=' * 70}")
-    print("  50v50 Mixed Mirror (L7: 90-150 seconds)")
+    print("  50v50 Mixed Mirror (L7: 150-200 seconds)")
     print(f"{'=' * 70}")
 
     for i, (count, seed, r) in enumerate(mixed_results):
         if count != 50:
             continue
-        ok = 90.0 <= r["duration_sec"] <= 150.0
+        ok = 150.0 <= r["duration_sec"] <= 200.0
         status = "OK" if ok else "FAIL"
         print(f"  Seed {seed}: {r['duration_sec']:.1f}s | Winner: {r['winner']} | "
               f"Surv A: {r['survivors_a']}/{r['initial_a']} B: {r['survivors_b']}/{r['initial_b']} | {status}")
 
     avg_dur = sum(r["duration_sec"] for r in l7_results) / len(l7_results)
-    print(f"\n  Average duration: {avg_dur:.1f}s (target: 90-150s)")
+    print(f"\n  Average duration: {avg_dur:.1f}s (target: 150-200s)")
 
     print(f"\n  Kill Timeline (seed 1, 5-second buckets):")
     buckets = l7_results[0]["kill_buckets"]

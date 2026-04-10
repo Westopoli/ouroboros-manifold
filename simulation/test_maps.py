@@ -96,6 +96,16 @@ def vantage_point():
     )
 
 
+def open_field_large():
+    return TacticalMap(
+        width=12000,
+        height=12000,
+        gradient_sources=[],
+        spine_nodes=[],
+        layers=1,
+    )
+
+
 def large_operational():
     sources = []
     for x in [1200, 2800]:

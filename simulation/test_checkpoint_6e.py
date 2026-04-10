@@ -16,7 +16,7 @@ def run_until_dead(store, tmap, target_uid, max_ticks=10000):
     rng = random.Random(42)
     for tick in range(max_ticks):
         update_movement(store, tmap, DT)
-        update_targeting(store, rng)
+        update_targeting(store, tmap, rng)
         deaths, _ = resolve_damage(store, tmap, DT)
         update_abilities(store, DT)
         if not store.alive[target_uid]:
@@ -63,7 +63,7 @@ def _brace_trial(attacker_type, braced):
     rng = random.Random(42)
     for _ in range(200):
         update_movement(store, tmap, DT)
-        update_targeting(store, rng)
+        update_targeting(store, tmap, rng)
         resolve_damage(store, tmap, DT)
         update_abilities(store, DT)
 
@@ -139,7 +139,7 @@ def _surge_trial(use_surge):
     rng = random.Random(42)
     for tick in range(10000):
         update_movement(store, tmap, DT)
-        update_targeting(store, rng)
+        update_targeting(store, tmap, rng)
 
         if use_surge and tick == 0:
             for uid in raiders:
@@ -188,7 +188,7 @@ def _fortify_trial(use_fortify):
     rng = random.Random(42)
     for tick in range(200):
         update_movement(store, tmap, DT)
-        update_targeting(store, rng)
+        update_targeting(store, tmap, rng)
         resolve_damage(store, tmap, DT)
         update_abilities(store, DT)
 
@@ -210,7 +210,7 @@ def test_intercept():
     rng = random.Random(42)
     for tick in range(100):
         update_movement(store, tmap, DT)
-        update_targeting(store, rng)
+        update_targeting(store, tmap, rng)
         resolve_damage(store, tmap, DT)
         update_abilities(store, DT)
         if store.data[interceptor, FIELD_ABILITY_COOLDOWN] > 0:
@@ -250,7 +250,7 @@ def test_barrage():
 
     for tick in range(100):
         update_movement(store, tmap, DT)
-        update_targeting(store, rng)
+        update_targeting(store, tmap, rng)
         resolve_damage(store, tmap, DT)
         barrage_events = update_abilities(store, DT)
         if barrage_events:
@@ -333,7 +333,7 @@ def _aura_damage_trial(with_warden):
     rng = random.Random(42)
     for _ in range(200):
         update_movement(store, tmap, DT)
-        update_targeting(store, rng)
+        update_targeting(store, tmap, rng)
         resolve_damage(store, tmap, DT)
         update_abilities(store, DT)
 

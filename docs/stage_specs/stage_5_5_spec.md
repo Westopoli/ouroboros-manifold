@@ -160,6 +160,18 @@ class MissionResult:
 
 - **Step 1 — Rotation decision.** The coherence ledger tracks a chapter counter for the current lineage. The rotation decision evaluates four conditions in order:
   - **Forced rotation:** if the current bloodline has no living members, or the commander died and no immediate family successor exists, rotation is forced immediately regardless of all other factors.
+  0. BLOODLINE SUCCESSION (pre-cascade)
+   - If the current commander died and a living family member of the same
+     lineage exists in or near the mission region:
+     - The lineage continues with the successor as the new commander.
+     - Decision: STAY (same lineage_id, new character_id).
+     - rotation_reason: None (this is not a rotation).
+     - pool_used: None (no pool roll).
+   - This path runs before the forced rotation check. Forced rotation
+     on commander KIA fires only when no successor exists.
+   - Rationale: aligns with bible_chronicle.md line 66, which defines
+     `lineage_succession` as a continuity beat ("a key family member
+     died and was succeeded"), not a rotation event.
   - **Minimum stay:** if chapter counter is below the eligible rotation range (config, default 2), stay with the current lineage. The family's story needs at least 2 chapters to develop.
   - **Hard cap:** if chapter counter is at or above the maximum (config, default ~6), rotate regardless of delta score or crisis state. This prevents a single lineage from dominating the playthrough.
   - **Delta-based probability:** compute the total field delta in the lineage's home region (and adjacent regions) during the time jump. High delta → low rotation chance (the family's story is in motion). Low delta → high rotation chance (natural exit point). The delta maps to a rotation probability via a configurable curve. Roll against the probability. If rotation triggers, check the crisis veto: if the lineage's home region has stability below a config threshold or an active event chain in a critical stage, veto the rotation — the family stays because their story isn't done. If not vetoed, rotate.

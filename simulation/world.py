@@ -84,6 +84,10 @@ def generate(template: str = "isolated_start", seed: int | None = None) -> World
         return _four_way(rng)
     elif template == "full_game_50":
         return _full_game_50(rng)
+    elif template == "pressure_cooker":
+        return _pressure_cooker(rng)
+    elif template == "stable_world":
+        return _stable_world(rng)
     else:
         raise ValueError(f"Unknown world template: {template}")
 
@@ -564,6 +568,136 @@ def _full_game_50(rng: random.Random) -> World:
     link(e(32), e(34))
     link(e(33), e(41))   # deep center spur
     link(e(34), e(42))   # deep center spur
+
+    _assign_edge_types(regions, edge_types)
+    return World(regions, adjacency, edge_types, seed=rng.randint(0, 2**31))
+
+
+def _pressure_cooker(rng: random.Random) -> World:
+    # 4-faction crucible: all frontiers in a direct hostile ring.
+    # Starting fields are already stressed; all 6 archetype pairs are hostile via
+    # STARTING_STANCE_OVERRIDES, so border friction fires from tick 1.
+    def make(rid, name, tier, faction_id):
+        mil = rng.uniform(10, 20)
+        eco = rng.uniform(8,  18)
+        ten = rng.uniform(75, 85)
+        pop = rng.uniform(20, 35)
+        r = Region(rid, name, tier,
+                   {"military": mil, "economy": eco, "tension": ten, "population": pop},
+                   faction_id=faction_id)
+        r.econ_phase_offset    = rng.uniform(0, 2 * math.pi)
+        r.tension_phase_offset = rng.uniform(0, 2 * math.pi)
+        return r
+
+    h_name  = rng.choice(theme.REGION_NAMES["home"])
+    f_names = rng.sample(theme.REGION_NAMES["frontier"], 7)
+    p_home = make("region_p_home", h_name,     "home",     "player")
+    p_f0   = make("region_p_f0",   f_names[0], "frontier", "player")
+    c_home = make("region_c_home", f_names[1], "frontier", "conqueror")
+    c_f0   = make("region_c_f0",   f_names[2], "frontier", "conqueror")
+    f_home = make("region_f_home", f_names[3], "frontier", "fortifier")
+    f_f0   = make("region_f_f0",   f_names[4], "frontier", "fortifier")
+    o_home = make("region_o_home", f_names[5], "frontier", "opportunist")
+    o_f0   = make("region_o_f0",   f_names[6], "frontier", "opportunist")
+
+    e_pool = theme.REGION_NAMES["empty"]
+    e0 = Region("region_e0", rng.choice(e_pool).replace("{n}", "1"), "empty")
+    e1 = Region("region_e1", rng.choice(e_pool).replace("{n}", "2"), "empty")
+
+    regions = {
+        "region_p_home": p_home, "region_p_f0": p_f0,
+        "region_c_home": c_home, "region_c_f0": c_f0,
+        "region_f_home": f_home, "region_f_f0": f_f0,
+        "region_o_home": o_home, "region_o_f0": o_f0,
+        "region_e0": e0, "region_e1": e1,
+    }
+    adjacency  = {rid: [] for rid in regions}
+    edge_types = {}
+
+    def link(a, b):
+        adjacency[a].append(b)
+        adjacency[b].append(a)
+        edge_types[(a, b)] = "both"
+        edge_types[(b, a)] = "both"
+
+    link("region_p_home", "region_p_f0")
+    link("region_c_home", "region_c_f0")
+    link("region_f_home", "region_f_f0")
+    link("region_o_home", "region_o_f0")
+
+    link("region_p_f0", "region_c_f0")
+    link("region_c_f0", "region_o_f0")
+    link("region_o_f0", "region_f_f0")
+    link("region_f_f0", "region_p_f0")
+
+    link("region_p_f0", "region_e0")
+    link("region_c_f0", "region_e0")
+    link("region_f_f0", "region_e1")
+    link("region_o_f0", "region_e1")
+    link("region_e0",   "region_e1")
+
+    _assign_edge_types(regions, edge_types)
+    return World(regions, adjacency, edge_types, seed=rng.randint(0, 2**31))
+
+
+def _stable_world(rng: random.Random) -> World:
+    # 4-faction breadbasket: 2-empty corridors between all faction pairs.
+    # Starting fields are healthy; scenario 14 overrides STARTING_STANCE_OVERRIDES={}
+    # so all pairs start neutral — no friction, no attacks.
+    def make(rid, name, tier, faction_id):
+        mil = rng.uniform(55, 75)
+        eco = rng.uniform(55, 75)
+        ten = rng.uniform(8,  22)
+        pop = rng.uniform(60, 80)
+        r = Region(rid, name, tier,
+                   {"military": mil, "economy": eco, "tension": ten, "population": pop},
+                   faction_id=faction_id)
+        r.econ_phase_offset    = rng.uniform(0, 2 * math.pi)
+        r.tension_phase_offset = rng.uniform(0, 2 * math.pi)
+        return r
+
+    h_name  = rng.choice(theme.REGION_NAMES["home"])
+    f_names = rng.sample(theme.REGION_NAMES["frontier"], 7)
+    p_home = make("region_p_home", h_name,     "home",     "player")
+    p_f0   = make("region_p_f0",   f_names[0], "frontier", "player")
+    c_home = make("region_c_home", f_names[1], "frontier", "conqueror")
+    c_f0   = make("region_c_f0",   f_names[2], "frontier", "conqueror")
+    f_home = make("region_f_home", f_names[3], "frontier", "fortifier")
+    f_f0   = make("region_f_f0",   f_names[4], "frontier", "fortifier")
+    o_home = make("region_o_home", f_names[5], "frontier", "opportunist")
+    o_f0   = make("region_o_f0",   f_names[6], "frontier", "opportunist")
+
+    e_pool = theme.REGION_NAMES["empty"]
+    empties = {}
+    for i in range(8):
+        rid = f"region_e{i}"
+        empties[rid] = Region(rid, rng.choice(e_pool).replace("{n}", str(i + 1)), "empty")
+
+    regions = {
+        "region_p_home": p_home, "region_p_f0": p_f0,
+        "region_c_home": c_home, "region_c_f0": c_f0,
+        "region_f_home": f_home, "region_f_f0": f_f0,
+        "region_o_home": o_home, "region_o_f0": o_f0,
+    }
+    regions.update(empties)
+    adjacency  = {rid: [] for rid in regions}
+    edge_types = {}
+
+    def link(a, b):
+        adjacency[a].append(b)
+        adjacency[b].append(a)
+        edge_types[(a, b)] = "both"
+        edge_types[(b, a)] = "both"
+
+    link("region_p_home", "region_p_f0")
+    link("region_c_home", "region_c_f0")
+    link("region_f_home", "region_f_f0")
+    link("region_o_home", "region_o_f0")
+
+    link("region_p_f0", "region_e0"); link("region_e0", "region_e1"); link("region_e1", "region_c_f0")
+    link("region_p_f0", "region_e2"); link("region_e2", "region_e3"); link("region_e3", "region_f_f0")
+    link("region_c_f0", "region_e4"); link("region_e4", "region_e5"); link("region_e5", "region_o_f0")
+    link("region_f_f0", "region_e6"); link("region_e6", "region_e7"); link("region_e7", "region_o_f0")
 
     _assign_edge_types(regions, edge_types)
     return World(regions, adjacency, edge_types, seed=rng.randint(0, 2**31))

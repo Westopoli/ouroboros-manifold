@@ -62,10 +62,10 @@ class CommanderSelection:
     faction_id: str
     region_id: str
     chapter_number: int
-    pool_used: str | None        # "previous_descendant"|"nemesis_descendant"|"unrelated"; None on STAY or bloodline succession
+    pool_used: str | None        # "previous_descendant"|"nemesis_descendant"|"unrelated"; None on STAY
     pool_rolled: str | None      # which pool was rolled before fallthrough; None when no roll occurred
-    rotation_reason: str | None  # None=stayed, "hard_cap"|"normal"|"commander_death"|"forced"
-    rotation_mechanism: str | None  # "pool_roll"|"bloodline_succession"; None on STAY
+    rotation_reason: str | None  # None=stayed (incl. bloodline succession), "hard_cap"|"normal"|"commander_death"|"forced"
+    rotation_mechanism: str | None  # "pool_roll"; None on STAY (STAY = same lineage, may be bloodline successor)
 
 
 @dataclass

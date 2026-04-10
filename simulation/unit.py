@@ -49,6 +49,11 @@ class UnitStore:
         self.pulse_remaining = np.zeros(MAX_UNITS, dtype=np.int32)
         self.pulse_cooldown = np.zeros(MAX_UNITS, dtype=np.int32)
 
+        self.attack_moving = np.zeros(MAX_UNITS, dtype=np.bool_)
+        self.engage_anchor_x = np.zeros(MAX_UNITS, dtype=np.float64)
+        self.engage_anchor_y = np.zeros(MAX_UNITS, dtype=np.float64)
+        self.engage_anchor_set = np.zeros(MAX_UNITS, dtype=np.bool_)
+
     def spawn(self, unit_type, faction_id, x, y, layer=0, stats=None):
         if self.count >= MAX_UNITS:
             return -1

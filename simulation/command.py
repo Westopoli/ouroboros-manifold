@@ -41,6 +41,7 @@ def process_commands(queue, store, tick):
             for uid in cmd.unit_ids:
                 if store.alive[uid]:
                     store.set_move_target(uid, tx, ty)
+                    store.attack_moving[uid] = False
 
         elif cmd.type == "attack_move":
             tx = cmd.params["target_x"]
@@ -48,6 +49,8 @@ def process_commands(queue, store, tick):
             for uid in cmd.unit_ids:
                 if store.alive[uid]:
                     store.set_move_target(uid, tx, ty)
+                    store.attack_moving[uid] = True
+                    store.engage_anchor_set[uid] = False
 
         elif cmd.type == "attack_target":
             target_uid = cmd.params["target_uid"]
@@ -66,6 +69,8 @@ def process_commands(queue, store, tick):
             alive = [uid for uid in cmd.unit_ids if store.alive[uid]]
             if alive:
                 apply_group_move(store, alive, tx, ty)
+                for uid in alive:
+                    store.attack_moving[uid] = False
 
         elif cmd.type == "fast_move":
             tx = cmd.params["target_x"]
@@ -73,6 +78,8 @@ def process_commands(queue, store, tick):
             alive = [uid for uid in cmd.unit_ids if store.alive[uid]]
             if alive:
                 apply_fast_move(store, alive, tx, ty)
+                for uid in alive:
+                    store.attack_moving[uid] = False
 
 
 def compute_state_hash(store):

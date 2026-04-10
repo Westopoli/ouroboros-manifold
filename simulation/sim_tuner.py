@@ -331,6 +331,96 @@ SCENARIOS = {
             "real_naming_pools": True,
         },
     },
+
+    "12_mission_basic": {
+        "template":     "four_way",
+        "ticks":        1500,
+        "seed":         1,
+        "description":  "Basic mission generation — 4 factions, 1500 ticks, generate missions at each time jump",
+        "use_tick_engine": True,
+        "features": {
+            "events": True, "factions": True, "border_friction": True,
+            "recruitment": True, "adjacency_bonus": True, "oscillation": True,
+            "technology": True, "diplomacy": True, "admin_revolts": True,
+            "chronicle": True, "coherence_ledger": True, "naming": True,
+            "missions": True,
+        },
+        "mission_review_jumps": [1, 2, 3],
+        "mock_outcome_bands": ["strong_success", "partial_success", "partial_failure"],
+    },
+
+    "13_mission_crisis": {
+        "template":     "pressure_cooker",
+        "ticks":        1000,
+        "seed":         1,
+        "description":  "Crisis mission generation — aggressive factions, high urgency, verify urgency dominance",
+        "use_tick_engine": True,
+        "features": {
+            "events": True, "factions": True, "border_friction": True,
+            "recruitment": True, "adjacency_bonus": True, "oscillation": True,
+            "technology": True, "diplomacy": True, "admin_revolts": True,
+            "chronicle": True, "coherence_ledger": True, "naming": True,
+            "missions": True,
+        },
+        "mission_review_jumps": [1, 2, 3],
+        "mock_outcome_bands": ["partial_failure", "total_failure", "partial_success"],
+    },
+
+    "14_mission_calm": {
+        "template":     "stable_world",
+        "ticks":        2000,
+        "seed":         1,
+        "description":  "Calm-state mission generation — stable factions, verify preference/relevance influence",
+        "use_tick_engine": True,
+        "features": {
+            "events": True, "factions": True, "border_friction": True,
+            "recruitment": True, "adjacency_bonus": True, "oscillation": True,
+            "technology": True, "diplomacy": True, "admin_revolts": True,
+            "chronicle": True, "coherence_ledger": True, "naming": True,
+            "missions": True,
+        },
+        "overrides": {
+            "STARTING_STANCE_OVERRIDES": {},
+        },
+        "mission_review_jumps": [1, 2, 3, 4, 5],
+        "mock_outcome_bands": ["total_success", "strong_success", "strong_success", "partial_success", "strong_success"],
+        "player_preferences": {"defensive_stand": 0.9, "assault": 0.8},
+    },
+
+    "15_outcome_resolver": {
+        "template":     "four_way",
+        "ticks":        500,
+        "seed":         1,
+        "description":  "Outcome resolver validation — apply all 5 bands to varied region states, verify proportional scaling",
+        "use_tick_engine": True,
+        "features": {
+            "events": True, "factions": True, "border_friction": True,
+            "recruitment": True, "adjacency_bonus": True, "oscillation": True,
+            "chronicle": True, "coherence_ledger": True, "naming": True,
+            "missions": True,
+        },
+        "mission_review_jumps": [1],
+        "mock_outcome_bands": ["strong_success"],
+        "test_all_bands": True,
+        "test_all_archetypes": True,
+    },
+
+    "16_force_allocation_difficulty": {
+        "template":     "four_way",
+        "ticks":        500,
+        "seed":         1,
+        "description":  "Force allocation difficulty test — same state, all 3 difficulties, verify enemy invariance and player scaling",
+        "use_tick_engine": True,
+        "features": {
+            "events": True, "factions": True, "border_friction": True,
+            "recruitment": True, "adjacency_bonus": True, "oscillation": True,
+            "chronicle": True, "coherence_ledger": True, "naming": True,
+            "missions": True,
+        },
+        "mission_review_jumps": [1],
+        "mock_outcome_bands": ["strong_success"],
+        "test_difficulties": ["easy", "medium", "hard"],
+    },
 }
 
 

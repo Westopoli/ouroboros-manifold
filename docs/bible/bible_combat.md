@@ -370,6 +370,8 @@ This produces natural **concave formations**: units flowing toward an enemy grou
 
 **No friendly line-of-fire blocking.** Ranged units fire through friendly units. There is no friendly unit occlusion check on attacks. This matches StarCraft 2's model. Formation advantages come from collision-driven concave geometry (more units in firing position = more effective DPS), not from shot blocking. Terrain obstacles still block line of sight (units cannot fire through navmesh obstacles).
 
+**Known engine property — stationary unit overlap.** ORCA is a predictive avoidance system: it only adjusts velocities for units that are currently trying to move. Stationary units (preferred velocity = zero) produce no ORCA constraints on their neighbors and will not push each other apart. In practice, units that halt in tight clusters — such as a large group all stopping to engage the same target — may visually overlap. This is not a bug; it is a fundamental property of velocity-obstacle algorithms. The overlap has no gameplay effect (damage, targeting, and pathfinding all operate correctly). If visual polish later demands non-overlap for stationary units, a separate position-correction pass (spring/penalty forces) would need to be added alongside ORCA. That work is deferred.
+
 **Layer transitions.** Unit enters transition state lasting `layer_transition_time` ticks (Strike fastest, Siege slowest). During transition, unit cannot attack or be targeted by same-layer units.
 
 ---

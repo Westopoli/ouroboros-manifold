@@ -301,7 +301,7 @@ Stage 5.5 (Mission Generation Pipeline) and Stage 6 (Tactical Simulation Engine)
 
 **Print:**
 - 5v5 results: duration for every type permutation (Strike vs Strike, Strike vs Line, etc.) — confirm all ≥ 10 seconds (L5)
-- 50v50 mirror: duration — confirm 45–75 seconds (L7)
+- 50v50 mirror: duration — confirm 150–200 seconds (L7)
 - 100v100 mixed: duration — confirm > 60 seconds (L6)
 - Kill timeline for the 50v50 mirror: deaths per 5-second bucket showing attrition curve shape
 
@@ -467,7 +467,7 @@ All stats are hand-designed baseline values for Tier 2 ("Establishment") units. 
 
 **Design philosophy: A+C hybrid — long engagements with category-specific rhythm.** All fights last long enough for positioning and abilities to matter. HP pools create tempo differences: Strike fights resolve fastest (still 10–15 seconds minimum), Line fights are the baseline (20–30 seconds), Siege fights are the longest (30–45 seconds). Large battles (100+ units per side) last well over a minute. DPS is in a moderate range across all categories; HP is the primary differentiator.
 
-**Tuning target:** Two equally-sized forces with mirror composition (same unit types, same numbers) should fight for approximately 45–75 seconds before one side is eliminated. A 1.5× favorable RPS matchup should reduce the losing side's fight duration by roughly 30–40%. A small skirmish (5v5) should last at least 10–15 seconds even in the fastest matchup (Strike vs Strike).
+**Tuning target:** Two equally-sized forces with mirror composition (same unit types, same numbers) should fight for approximately 150–200 seconds before one side is eliminated. A 1.5× favorable RPS matchup should reduce the losing side's fight duration by roughly 30–40%. A small skirmish (5v5) should last at least 10–15 seconds even in the fastest matchup (Strike vs Strike).
 
 ### Stat Profiles (Tier 2 Baseline)
 
@@ -544,9 +544,9 @@ All speed values assume medium canvas (8000×8000). All range/radius values are 
 - Pattern: threshold bound
 - Severity: critical
 
-**Claim L7: Mirror match baseline.** Two identical 50-unit balanced forces should fight for 45–75 seconds.
+**Claim L7: Mirror match baseline.** Two identical 50-unit balanced forces should fight for 150–200 seconds.
 - When: 50v50, identical composition, open field
-- Then: engagement duration between 900 and 1500 ticks (45–75 sec)
+- Then: engagement duration between 3000 and 4000 ticks (150–200 sec)
 - Over: 10+ engagements
 - Pattern: threshold bound
 - Severity: warning (the range is a tuning target)
@@ -945,7 +945,7 @@ REPLAY_FORMAT                     = "json"  # "json" for debugging, "binary" fut
 - Soft RPS validated — positioning creates measurable behavioral gradient across scenario tiers (L4)
 - Small engagements (5v5) last ≥ 10 seconds in all matchups (L5)
 - Large engagements (100v100) last > 60 seconds (L6)
-- Mirror 50v50 lasts 45–75 seconds (L7)
+- Mirror 50v50 lasts 150–200 seconds (L7)
 - All 6 abilities produce measurable impact in their designed scenarios (L8–L10)
 - Fog of war correctly reduces visibility in interference zones (L11)
 - Cross-layer detection degrades correctly with distance (L12)

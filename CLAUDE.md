@@ -96,26 +96,9 @@ One confirmed diagnosis is worth ten guesses.
 
 ## Test Checkpoints
 
-**Never run tests yourself. Never self-verify test output.**
+Run tests yourself and analyze the output directly. After any code change that requires a test run, run it, read the results, and proceed.
 
-After any code change that requires a test run:
-1. Stop.
-2. Tell the user exactly what command to run.
-3. Wait for the user to run it and paste or share the output.
-4. Only proceed after the user has seen the output and given sign-off.
-
-This applies to every test at every stage — unit tests, integration tests, one-off diagnostic scripts. The user's eyes on the output is a hard requirement, not a courtesy.
-
-### Exception: Simulation Validator
-
-The simulation validator (`simulation/sim_validator.py` / `simulation/test_validate.py`) is the one test system you run yourself. After implementing or changing simulation code:
-1. Run the validator yourself.
-2. Analyze the results.
-3. If invariants fail: diagnose and adjust `config.py` values within defined bounds, then re-run. Iterate until the report is clean. **`config.py` is the only engine file you may modify during validator tuning.** All other engine files (see protected list below) require Westley's approval.
-4. If you find a bug or design flaw that you can't resolve through config tuning, **escalate to Westley** — don't silently work around it.
-5. When all invariants pass, present the final report to Westley for sign-off.
-
-**Protected engine files.** These files are read-only during validator tuning. If a fix requires changing one of them, escalate to Westley:
+**Protected engine files.** These files require Westley's approval before changes:
 `tick.py`, `drift.py`, `faction.py`, `region.py`, `events.py`, `event_engine.py`, `intent_resolver.py`, `border_friction.py`, `technology.py`, `diplomacy.py`, `world.py`, `templates.py`, `theme_scifi.py`
 
 **Invariant modification rules.** When an invariant fails, there are three valid responses: adjust config, escalate a real bug, or recalibrate the invariant. Rules for the third:
@@ -123,8 +106,6 @@ The simulation validator (`simulation/sim_validator.py` / `simulation/test_valid
 - **You may not** widen thresholds, extend time windows, or loosen tolerances without presenting the change to Westley first. This includes any change that makes the invariant more permissive for cases it IS supposed to catch.
 - **You may never** reclassify a real finding as a skip. If the simulation has a bug and the invariant caught it, the answer is escalate — not adjust the invariant to stop catching it.
 - **You may never** weaken test criteria to make the current implementation pass. If tests fail, the implementation needs to change — not the tests. The only exception is the scope-narrowing rule above (skipping cases the test was never meant to check).
-
-This replaces the manual checkpoint loop for simulation work. Westley reviews the final validator report, not intermediate terminal output.
 
 ## Tone
 

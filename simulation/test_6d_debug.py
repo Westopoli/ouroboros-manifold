@@ -79,7 +79,7 @@ def run():
 
     for tick in range(3000):
         update_movement(store, tmap, DT)
-        update_targeting(store, engine_rng)
+        update_targeting(store, tmap, engine_rng)
         deaths, kill_sources = resolve_damage(store, tmap, DT)
 
         alive_a = len(store.active_ids_for_faction(FACTION_A))

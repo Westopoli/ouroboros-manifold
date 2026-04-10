@@ -15,12 +15,12 @@ const MOOD_NAMES := {
 }
 
 const MOOD_DURATIONS := {
-	CameraMood.WIDE_ORBIT: Vector2(25.0, 40.0),
-	CameraMood.RING_FOLLOW: Vector2(20.0, 35.0),
-	CameraMood.APPROACH: Vector2(25.0, 35.0),
-	CameraMood.DRIFT: Vector2(20.0, 30.0),
-	CameraMood.PULLBACK: Vector2(20.0, 30.0),
-	CameraMood.UNDERSIDE: Vector2(15.0, 25.0),
+	CameraMood.WIDE_ORBIT: Vector2(10.0, 18.0),
+	CameraMood.RING_FOLLOW: Vector2(8.0, 14.0),
+	CameraMood.APPROACH: Vector2(10.0, 16.0),
+	CameraMood.DRIFT: Vector2(8.0, 14.0),
+	CameraMood.PULLBACK: Vector2(10.0, 16.0),
+	CameraMood.UNDERSIDE: Vector2(8.0, 12.0),
 }
 
 const TRANSITION_DURATION := 5.0
@@ -30,30 +30,38 @@ var _central_point: MeshInstance3D
 var _stream_pivot: Node3D
 var _grid_mesh: MeshInstance3D
 
+const BASE_ORBIT_SPEED := 0.012
+
 var _auto_camera := false
 var _current_mood: CameraMood = CameraMood.WIDE_ORBIT
 var _mood_timer := 0.0
 var _mood_duration := 30.0
-var _transitioning := false
-var _transition_timer := 0.0
-var _transition_from_pos := Vector3.ZERO
-var _transition_from_target := Vector3.ZERO
-var _transition_to_pos := Vector3.ZERO
-var _transition_to_target := Vector3.ZERO
-
-var _camera_pos := Vector3(0, 45, 65)
-var _camera_target := Vector3.ZERO
-var _target_pos := Vector3(0, 45, 65)
-
 var _mood_time := 0.0
-var _mood_azimuth := 0.0
-var _mood_start_pos := Vector3.ZERO
-var _mood_end_pos := Vector3.ZERO
 var _pullback_signaled := false
-var _mood_orbit_dist := 80.0
-var _mood_orbit_elev := 0.6
-var _mood_orbit_speed := 0.02
-var _mood_ring_y := 3.5
+
+var _base_azimuth := 0.0
+var _offset_dist := 80.0
+var _offset_elev := 0.6
+var _offset_azimuth := 0.0
+var _offset_target := Vector3.ZERO
+
+var _mood_target_dist := 80.0
+var _mood_target_elev := 0.6
+var _mood_target_azimuth_speed := 0.02
+var _mood_target_target := Vector3.ZERO
+
+var _blend_from_dist := 80.0
+var _blend_from_elev := 0.6
+var _blend_from_target := Vector3.ZERO
+var _blend_timer := 0.0
+var _blend_duration := 6.0
+
+var _mood_approach_start_dist := 80.0
+var _mood_approach_end_dist := 15.0
+var _mood_approach_start_elev := 0.5
+var _mood_approach_end_elev := deg_to_rad(15.0)
+var _mood_pullback_end_dist := 90.0
+var _mood_pullback_end_elev := deg_to_rad(35.0)
 
 func _ready() -> void:
 	_build_camera()
@@ -89,158 +97,123 @@ func _process(delta: float) -> void:
 	if not _auto_camera:
 		return
 
-	if _transitioning:
-		_transition_timer += delta
-		var t := clampf(_transition_timer / TRANSITION_DURATION, 0.0, 1.0)
-		var ease_t := _smooth_step(t)
-		_camera_pos = _transition_from_pos.lerp(_transition_to_pos, ease_t)
-		_camera_target = _transition_from_target.lerp(_transition_to_target, ease_t)
-		if t >= 1.0:
-			_transitioning = false
-			_mood_time = 0.0
-			_enter_mood(_current_mood)
-	else:
-		_mood_timer -= delta
-		_mood_time += delta
-		_update_mood(delta)
-		if _mood_timer <= 0.0:
-			_transition_to_next_mood()
+	_base_azimuth += BASE_ORBIT_SPEED * delta
+	_mood_time += delta
+	_mood_timer -= delta
+	_blend_timer += delta
 
-	_camera.global_position = _camera_pos
-	if _camera_target.distance_to(_camera.global_position) > 0.1:
-		_camera.look_at(_camera_target)
+	_update_mood_targets()
+
+	var blend_t := clampf(_blend_timer / _blend_duration, 0.0, 1.0)
+	var ease_t := _smooth_step(blend_t)
+	_offset_dist = lerpf(_blend_from_dist, _mood_target_dist, ease_t)
+	_offset_elev = lerpf(_blend_from_elev, _mood_target_elev, ease_t)
+	_offset_azimuth += _mood_target_azimuth_speed * delta
+	_offset_target = _blend_from_target.lerp(_mood_target_target, ease_t)
+
+	var total_azimuth := _base_azimuth + _offset_azimuth
+	_camera.global_position = _orbit_pos(total_azimuth, _offset_elev, _offset_dist)
+
+	if _offset_target.distance_to(_camera.global_position) > 0.1:
+		_camera.look_at(_offset_target)
+
+	if not _pullback_signaled and _current_mood == CameraMood.PULLBACK and _offset_dist > 75.0:
+		_pullback_signaled = true
+		structure_revealed.emit()
+
+	if _mood_timer <= 0.0:
+		_switch_mood()
 
 
 func _smooth_step(t: float) -> float:
 	return t * t * (3.0 - 2.0 * t)
 
 
-func _enter_mood(mood: CameraMood) -> void:
-	_mood_time = 0.0
-	_pullback_signaled = false
-	var dur_range: Vector2 = MOOD_DURATIONS[mood]
-	_mood_duration = randf_range(dur_range.x, dur_range.y)
-	_mood_timer = _mood_duration
-
-	# Derive azimuth from current camera position to avoid jumps
-	var current_azimuth := atan2(_camera_pos.z, _camera_pos.x)
-	var current_dist := Vector2(_camera_pos.x, _camera_pos.z).length()
-
-	match mood:
-		CameraMood.WIDE_ORBIT:
-			_mood_orbit_dist = maxf(current_dist, 70.0)
-			_mood_orbit_elev = randf_range(deg_to_rad(25.0), deg_to_rad(45.0))
-			_mood_orbit_speed = randf_range(0.015, 0.025)
-			_mood_azimuth = current_azimuth
-		CameraMood.RING_FOLLOW:
-			_mood_azimuth = current_azimuth
-			_mood_ring_y = _camera_pos.y
-		CameraMood.APPROACH:
-			_mood_start_pos = _camera_pos
-			_mood_end_pos = _orbit_pos(current_azimuth + 0.3, deg_to_rad(15.0), 15.0)
-		CameraMood.DRIFT:
-			_mood_start_pos = _camera_pos
-			var drift_dir := Vector3(randf_range(-1.0, 1.0), 0.0, randf_range(-1.0, 1.0)).normalized()
-			_mood_end_pos = _mood_start_pos + drift_dir * 20.0
-		CameraMood.PULLBACK:
-			_mood_start_pos = _camera_pos
-			_mood_end_pos = _orbit_pos(current_azimuth + 0.4, deg_to_rad(35.0), randf_range(80.0, 100.0))
-		CameraMood.UNDERSIDE:
-			_target_pos = _camera_pos
-
-
-func _update_mood(delta: float) -> void:
+func _update_mood_targets() -> void:
 	var progress := clampf(_mood_time / _mood_duration, 0.0, 1.0)
 
 	match _current_mood:
-		CameraMood.WIDE_ORBIT:
-			_mood_azimuth += _mood_orbit_speed * delta
-			_camera_pos = _orbit_pos(_mood_azimuth, _mood_orbit_elev, _mood_orbit_dist)
-			_camera_target = Vector3.ZERO
-
-		CameraMood.RING_FOLLOW:
-			_mood_azimuth += 0.11 * delta
-			_camera_pos = Vector3(cos(_mood_azimuth) * 27.5, _mood_ring_y, sin(_mood_azimuth) * 27.5)
-			_camera_target = Vector3.ZERO
-
 		CameraMood.APPROACH:
 			var ease_p := _smooth_step(progress)
-			_camera_pos = _mood_start_pos.lerp(_mood_end_pos, ease_p)
-			_camera_target = Vector3.ZERO
-
-		CameraMood.DRIFT:
-			_camera_pos = _mood_start_pos.lerp(_mood_end_pos, progress)
-			var target_drift := Vector3(sin(_mood_time * 0.1) * 3.0, 0.0, cos(_mood_time * 0.1) * 3.0)
-			_camera_target = target_drift
-
+			var target_dist := lerpf(_mood_approach_start_dist, _mood_approach_end_dist, ease_p)
+			var target_elev := lerpf(_mood_approach_start_elev, _mood_approach_end_elev, ease_p)
+			_mood_target_dist = target_dist
+			_mood_target_elev = target_elev
+			_blend_from_dist = target_dist
+			_blend_from_elev = target_elev
 		CameraMood.PULLBACK:
 			var ease_p := _smooth_step(progress)
-			_camera_pos = _mood_start_pos.lerp(_mood_end_pos, ease_p)
-			_camera_target = Vector3.ZERO
-			if not _pullback_signaled and _camera_pos.length() > 75.0:
-				_pullback_signaled = true
-				structure_revealed.emit()
-
-		CameraMood.UNDERSIDE:
-			var sway := sin(_mood_time * 0.2) * 5.0
-			_camera_pos = _target_pos + Vector3(sway, 0.0, cos(_mood_time * 0.15) * 3.0)
-			_camera_target = Vector3(0.0, 5.0, 0.0)
+			var target_dist := lerpf(_mood_approach_start_dist, _mood_pullback_end_dist, ease_p)
+			var target_elev := lerpf(_mood_approach_start_elev, _mood_pullback_end_elev, ease_p)
+			_mood_target_dist = target_dist
+			_mood_target_elev = target_elev
+			_blend_from_dist = target_dist
+			_blend_from_elev = target_elev
+		CameraMood.DRIFT:
+			_mood_target_target = Vector3(sin(_mood_time * 0.1) * 3.0, 0.0, cos(_mood_time * 0.1) * 3.0)
 
 
-func _transition_to_next_mood() -> void:
+func _switch_mood() -> void:
 	var available: Array[int] = []
 	for mood_val in CameraMood.values():
 		if mood_val != _current_mood:
 			available.append(mood_val)
-
 	var next_mood: CameraMood = available[randi() % available.size()] as CameraMood
-
-	_transition_from_pos = _camera_pos
-	_transition_from_target = _camera_target
 	_current_mood = next_mood
+	_mood_time = 0.0
+	_pullback_signaled = false
+
+	_blend_from_dist = _offset_dist
+	_blend_from_elev = _offset_elev
+	_blend_from_target = _offset_target
+	_blend_timer = 0.0
+
+	var dur_range: Vector2 = MOOD_DURATIONS[next_mood]
+	_mood_duration = randf_range(dur_range.x, dur_range.y)
+	_mood_timer = _mood_duration
 
 	match next_mood:
 		CameraMood.WIDE_ORBIT:
-			var dist := randf_range(70.0, 90.0)
-			var elev := randf_range(deg_to_rad(25.0), deg_to_rad(45.0))
-			_mood_azimuth = randf() * TAU
-			_transition_to_pos = _orbit_pos(_mood_azimuth, elev, dist)
-			_transition_to_target = Vector3.ZERO
+			_mood_target_dist = randf_range(70.0, 90.0)
+			_mood_target_elev = randf_range(deg_to_rad(25.0), deg_to_rad(45.0))
+			_mood_target_azimuth_speed = randf_range(0.015, 0.025)
+			_mood_target_target = Vector3.ZERO
+			_blend_duration = 6.0
 		CameraMood.RING_FOLLOW:
-			_mood_azimuth = randf() * TAU
-			_transition_to_pos = Vector3(cos(_mood_azimuth) * 27.5, 3.5, sin(_mood_azimuth) * 27.5)
-			_transition_to_target = Vector3.ZERO
+			_mood_target_dist = 27.5
+			_mood_target_elev = deg_to_rad(5.0)
+			_mood_target_azimuth_speed = 0.10
+			_mood_target_target = Vector3.ZERO
+			_blend_duration = 5.0
 		CameraMood.APPROACH:
-			var start_dist := randf_range(70.0, 85.0)
-			var start_elev := randf_range(deg_to_rad(20.0), deg_to_rad(40.0))
-			_mood_azimuth = randf() * TAU
-			_mood_start_pos = _orbit_pos(_mood_azimuth, start_elev, start_dist)
-			_mood_end_pos = _orbit_pos(_mood_azimuth + 0.3, deg_to_rad(15.0), 15.0)
-			_transition_to_pos = _mood_start_pos
-			_transition_to_target = Vector3.ZERO
+			_mood_approach_start_dist = _offset_dist
+			_mood_approach_start_elev = _offset_elev
+			_mood_approach_end_dist = 15.0
+			_mood_approach_end_elev = deg_to_rad(15.0)
+			_mood_target_azimuth_speed = 0.01
+			_mood_target_target = Vector3.ZERO
+			_blend_duration = 4.0
 		CameraMood.DRIFT:
-			var dist := randf_range(30.0, 50.0)
-			var angle := randf() * TAU
-			_mood_start_pos = Vector3(cos(angle) * dist, randf_range(5.0, 20.0), sin(angle) * dist)
-			var drift_dir := Vector3(randf_range(-1.0, 1.0), 0.0, randf_range(-1.0, 1.0)).normalized()
-			_mood_end_pos = _mood_start_pos + drift_dir * 20.0
-			_transition_to_pos = _mood_start_pos
-			_transition_to_target = Vector3.ZERO
+			_mood_target_dist = randf_range(30.0, 50.0)
+			_mood_target_elev = randf_range(deg_to_rad(10.0), deg_to_rad(25.0))
+			_mood_target_azimuth_speed = 0.005
+			_mood_target_target = Vector3(0.0, 0.0, 3.0)
+			_blend_duration = 5.0
 		CameraMood.PULLBACK:
-			var angle := randf() * TAU
-			_mood_start_pos = _orbit_pos(angle, deg_to_rad(15.0), randf_range(15.0, 20.0))
-			_mood_end_pos = _orbit_pos(angle + 0.4, deg_to_rad(35.0), randf_range(80.0, 100.0))
-			_transition_to_pos = _mood_start_pos
-			_transition_to_target = Vector3.ZERO
+			_mood_approach_start_dist = _offset_dist
+			_mood_approach_start_elev = _offset_elev
+			_mood_pullback_end_dist = randf_range(80.0, 100.0)
+			_mood_pullback_end_elev = deg_to_rad(35.0)
+			_mood_target_azimuth_speed = 0.01
+			_mood_target_target = Vector3.ZERO
+			_blend_duration = 4.0
 		CameraMood.UNDERSIDE:
-			var dist := randf_range(30.0, 50.0)
-			var angle := randf() * TAU
-			_target_pos = Vector3(cos(angle) * dist * 0.5, randf_range(-20.0, -35.0), sin(angle) * dist * 0.5)
-			_transition_to_pos = _target_pos
-			_transition_to_target = Vector3(0.0, 5.0, 0.0)
+			_mood_target_dist = randf_range(30.0, 50.0)
+			_mood_target_elev = randf_range(deg_to_rad(-30.0), deg_to_rad(-45.0))
+			_mood_target_azimuth_speed = 0.005
+			_mood_target_target = Vector3(0.0, 5.0, 0.0)
+			_blend_duration = 6.0
 
-	_transitioning = true
-	_transition_timer = 0.0
 	camera_mood_changed.emit(MOOD_NAMES[next_mood])
 
 
@@ -525,10 +498,26 @@ func _make_additive_material(albedo: Color, emission: Color, energy: float) -> S
 
 func start_auto_camera() -> void:
 	_auto_camera = true
-	_camera_pos = _camera.global_position
-	_camera_target = Vector3.ZERO
+	var start_pos := _camera.global_position
+	_base_azimuth = atan2(start_pos.z, start_pos.x)
+	var dist_3d := start_pos.length()
+	_offset_dist = maxf(dist_3d, 70.0)
+	_offset_elev = asin(clampf(start_pos.y / maxf(dist_3d, 0.1), -1.0, 1.0))
+	_offset_azimuth = 0.0
+	_offset_target = Vector3.ZERO
+	_mood_target_dist = _offset_dist
+	_mood_target_elev = _offset_elev
+	_mood_target_azimuth_speed = randf_range(0.015, 0.025)
+	_mood_target_target = Vector3.ZERO
+	_blend_from_dist = _offset_dist
+	_blend_from_elev = _offset_elev
+	_blend_from_target = Vector3.ZERO
+	_blend_timer = 0.0
+	_blend_duration = 6.0
 	_current_mood = CameraMood.WIDE_ORBIT
-	_enter_mood(_current_mood)
+	_mood_time = 0.0
+	_mood_duration = 30.0
+	_mood_timer = 5.0
 	camera_mood_changed.emit(MOOD_NAMES[_current_mood])
 
 func stop_auto_camera() -> void:
@@ -536,17 +525,15 @@ func stop_auto_camera() -> void:
 
 func move_camera_to(target_position: Vector3, look_at_target: Vector3, duration: float) -> void:
 	_auto_camera = false
-	_transitioning = true
-	_transition_timer = 0.0
-	_transition_from_pos = _camera_pos
-	_transition_from_target = _camera_target
-	_transition_to_pos = target_position
-	_transition_to_target = look_at_target
-	# Re-enable _process for the transition
-	_auto_camera = true
-	var tw := create_tween()
-	tw.tween_interval(duration)
-	tw.tween_callback(func(): _auto_camera = false)
+	var start_pos := _camera.global_position
+	var start_target := _offset_target
+	var tw := create_tween().set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_CUBIC)
+	tw.tween_method(func(t: float):
+		_camera.global_position = start_pos.lerp(target_position, t)
+		var current_target := start_target.lerp(look_at_target, t)
+		if current_target.distance_to(_camera.global_position) > 0.1:
+			_camera.look_at(current_target)
+	, 0.0, 1.0, duration)
 
 func enable_manual_orbit() -> void:
 	pass # TODO: World view stage
@@ -558,7 +545,7 @@ func get_camera_position() -> Vector3:
 	return _camera.global_position
 
 func get_camera_target() -> Vector3:
-	return _camera_target
+	return _offset_target
 
 func set_opacity(_alpha: float) -> void:
 	pass

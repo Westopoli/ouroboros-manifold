@@ -126,8 +126,15 @@ def _accumulate_aoe(store, attacker, primary_target, base_dmg, attacker_cat, aoe
         total_dealt += dmg
 
 
-def update_targeting(store: UnitStore, rng=None):
+def update_targeting(store: UnitStore, tmap, rng=None):
     active = store.active_ids()
+
+    # Rebuild spatial hash (cell_size=NAVMESH_CELL_SIZE wu; ~1 unit/cell in clustered combat).
+    # Query returns candidates in uid order (sorted) for deterministic tie-breaking.
+    tmap.spatial_hash.clear()
+    for uid in active:
+        tmap.spatial_hash.insert(uid, store.data[uid, FIELD_X], store.data[uid, FIELD_Y])
+
     for uid in active:
         current = store.auto_engage_target[uid]
         if current >= 0 and store.alive[current]:
@@ -143,7 +150,7 @@ def update_targeting(store: UnitStore, rng=None):
         mx, my_ = store.data[uid, FIELD_X], store.data[uid, FIELD_Y]
         engage_range = store.data[uid, FIELD_ATTACK_RANGE]
 
-        for other in active:
+        for other in sorted(tmap.spatial_hash.query(mx, my_, engage_range)):
             if store.faction[other] == my_faction:
                 continue
             if store.data[other, FIELD_LAYER] != my_layer:

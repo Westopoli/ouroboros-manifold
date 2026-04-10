@@ -196,18 +196,52 @@ def _ensure_path_cache(tactical_map):
     return tactical_map._path_cache
 
 
+_ATTACK_MOVE_LEASH_SQ = 200.0 * 200.0
+
+
+def _update_attack_move_state(store, active):
+    # Called after update_targeting; sets anchor on first engagement and enforces leash.
+    for uid in active:
+        if not store.attack_moving[uid]:
+            continue
+        tgt = store.auto_engage_target[uid]
+        if tgt >= 0 and store.alive[tgt]:
+            if not store.engage_anchor_set[uid]:
+                store.engage_anchor_x[uid] = store.data[uid, FIELD_X]
+                store.engage_anchor_y[uid] = store.data[uid, FIELD_Y]
+                store.engage_anchor_set[uid] = True
+            dx = store.data[tgt, FIELD_X] - store.engage_anchor_x[uid]
+            dy = store.data[tgt, FIELD_Y] - store.engage_anchor_y[uid]
+            if dx * dx + dy * dy > _ATTACK_MOVE_LEASH_SQ:
+                store.auto_engage_target[uid] = -1
+                store.engage_anchor_set[uid] = False
+        else:
+            store.engage_anchor_set[uid] = False
+
+
 def _compute_preferred_velocities(store, active, dt):
     preferred = {}
     for uid in active:
-        if not store.has_move_target[uid] or is_immobile(store, uid):
+        if is_immobile(store, uid):
+            preferred[uid] = (0.0, 0.0, 0.0)
+            continue
+
+        eff = store.effective_speed[uid]
+        speed = (eff if eff > 0 else store.data[uid, FIELD_SPEED]) * get_speed_multiplier(store, uid)
+
+        # attack_move: hold position and fight when a valid target is in range
+        if store.attack_moving[uid]:
+            tgt = store.auto_engage_target[uid]
+            if tgt >= 0 and store.alive[tgt]:
+                preferred[uid] = (0.0, 0.0, speed)
+                continue
+
+        if not store.has_move_target[uid]:
             preferred[uid] = (0.0, 0.0, 0.0)
             continue
 
         px = store.data[uid, FIELD_X]
         py = store.data[uid, FIELD_Y]
-        eff = store.effective_speed[uid]
-        speed = eff if eff > 0 else store.data[uid, FIELD_SPEED]
-        speed *= get_speed_multiplier(store, uid)
 
         if uid in store.waypoints and store.waypoints[uid]:
             tx, ty = store.waypoints[uid][0]
@@ -384,13 +418,19 @@ def _solve_lp_2d_safe(lines, pref_vx, pref_vy, max_speed):
     return (best_x, best_y)
 
 
-def compute_rvo_velocities(store, active, dt):
+def compute_rvo_velocities(store, active, dt, tmap):
     agent_radius = config.UNIT_COLLISION_RADIUS
     neighbor_dist = config.RVO_NEIGHBOR_DIST
     time_horizon = config.RVO_TIME_HORIZON
     max_neighbors = config.RVO_MAX_NEIGHBORS
     combined_radius = agent_radius * 2.0
     neighbor_dist_sq = neighbor_dist * neighbor_dist
+
+    # Rebuild spatial hash for neighbor lookup (fresh per subsystem call).
+    # sorted() on query results ensures deterministic tie-breaking at max_neighbors trim.
+    tmap.spatial_hash.clear()
+    for uid in active:
+        tmap.spatial_hash.insert(uid, store.data[uid, FIELD_X], store.data[uid, FIELD_Y])
 
     preferred = _compute_preferred_velocities(store, active, dt)
     adjusted = {}
@@ -407,10 +447,10 @@ def compute_rvo_velocities(store, active, dt):
         my_layer = store.data[uid, FIELD_LAYER]
 
         neighbors = []
-        for other in active:
+        for other in sorted(tmap.spatial_hash.query(px, py, neighbor_dist)):
             if other == uid:
                 continue
-            if store.data[other, FIELD_LAYER] != my_layer:
+            if store.data[other, FIELD_LAYER] != my_layer:  # keep layer filter
                 continue
             ox = store.data[other, FIELD_X]
             oy = store.data[other, FIELD_Y]
@@ -470,36 +510,40 @@ def update_movement(store: UnitStore, tactical_map, dt: float):
             if path:
                 store.waypoints[uid] = path
 
-    rvo_velocities = compute_rvo_velocities(store, active, dt)
+    _update_attack_move_state(store, active)
+    rvo_velocities = compute_rvo_velocities(store, active, dt, tactical_map)
 
     for uid in active:
-        if not store.has_move_target[uid]:
-            continue
         if is_immobile(store, uid):
             continue
 
         px = store.data[uid, FIELD_X]
         py = store.data[uid, FIELD_Y]
 
-        if uid in store.waypoints and store.waypoints[uid]:
-            tx, ty = store.waypoints[uid][0]
-        else:
-            tx = store.target_x[uid]
-            ty = store.target_y[uid]
+        # Destination-arrival check: only for units that are actually navigating
+        # (has a move target and is not held by attack_move engagement)
+        held = store.attack_moving[uid] and store.auto_engage_target[uid] >= 0 and store.alive[store.auto_engage_target[uid]]
+        if not held and store.has_move_target[uid]:
+            if uid in store.waypoints and store.waypoints[uid]:
+                tx, ty = store.waypoints[uid][0]
+            else:
+                tx = store.target_x[uid]
+                ty = store.target_y[uid]
 
-        dx = tx - px
-        dy = ty - py
-        dist = math.sqrt(dx * dx + dy * dy)
+            dx = tx - px
+            dy = ty - py
+            dist = math.sqrt(dx * dx + dy * dy)
 
-        if dist < collision_radius:
-            if uid in store.waypoints:
-                store.waypoints[uid].pop(0)
-                if store.waypoints[uid]:
-                    continue
-                del store.waypoints[uid]
-            store.has_move_target[uid] = False
-            store.effective_speed[uid] = 0.0
-            continue
+            if dist < collision_radius:
+                if uid in store.waypoints:
+                    store.waypoints[uid].pop(0)
+                    if store.waypoints[uid]:
+                        continue
+                    del store.waypoints[uid]
+                store.has_move_target[uid] = False
+                store.effective_speed[uid] = 0.0
+                store.attack_moving[uid] = False
+                continue
 
         vx, vy = rvo_velocities.get(uid, (0.0, 0.0))
 

@@ -37,7 +37,7 @@ def run_selection(gen_state, ledger, world, region_id, rng, tick,
         if not successor:
             forced_rotate = True
         else:
-            # Successor found via deterministic bloodline lookup — no pool roll
+            # Successor found — same lineage continues, not a rotation
             return CommanderSelection(
                 character_id=successor.id,
                 character_name=successor.name,
@@ -47,8 +47,8 @@ def run_selection(gen_state, ledger, world, region_id, rng, tick,
                 chapter_number=chapter_number,
                 pool_used=None,
                 pool_rolled=None,
-                rotation_reason="commander_death",
-                rotation_mechanism="bloodline_succession",
+                rotation_reason=None,
+                rotation_mechanism=None,
             )
 
     if forced_rotate:
@@ -123,6 +123,10 @@ def _do_rotate(gen_state, ledger, world, region_id, rng, tick,
     raw = select_commander(gen_state, ledger, world, region_id, rng)
     if not raw:
         return None
+    assert raw["lineage_id"] is not None, (
+        f"_do_rotate: pool={raw.get('pool_used')} returned lineage_id=None"
+        f" for character={raw['character_id']}"
+    )
     char = ledger.get_character_by_id(raw["character_id"])
     return CommanderSelection(
         character_id=raw["character_id"],
@@ -203,6 +207,11 @@ def select_commander(gen_state, coherence_ledger, world, region_id, rng):
             candidate = _select_from_nemesis(
                 commander_ids, coherence_ledger, world, region_id, rng)
             if candidate:
+                if candidate.lineage_id is None:
+                    raise ValueError(
+                        f"nemesis descendant {candidate.id} has lineage_id=None"
+                        " — upstream lineage enrollment is broken"
+                    )
                 return {
                     "character_id": candidate.id,
                     "lineage_id": candidate.lineage_id,
@@ -324,8 +333,12 @@ def _select_from_nemesis(commander_ids, coherence_ledger, world, region_id, rng)
     if not commander_ids:
         return None
 
-    candidates = coherence_ledger.get_nemesis_descendants_in_region(
+    nemesis_ids = {n.id for n in coherence_ledger.get_nemesis_candidates(commander_ids)}
+    all_candidates = coherence_ledger.get_nemesis_descendants_in_region(
         commander_ids, region_id, world, hop_range=config.SELECTOR_PROXIMITY_HOPS)
+
+    # Rivals themselves are not eligible — only their descendants
+    candidates = [c for c in all_candidates if c.id not in nemesis_ids]
 
     if not candidates:
         return None

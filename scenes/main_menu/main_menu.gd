@@ -5,6 +5,7 @@ const HOVER_GLYPHS := ["✦", "·"]
 const HOVER_GLYPH_COUNTS := {
 	"NEW GAME": 4, "CONTINUE": 3, "ERA LIBRARY": 3, "SETTINGS": 2, "QUIT": 2,
 }
+const GLYPH_COLOR := Color("#FFFFFF")
 
 var _menu_items: Array[Control] = []
 var _galaxy: Node
@@ -43,22 +44,22 @@ func _build_ui() -> void:
 	classification.text = "A WESTOPOLI GAME"
 	classification.uppercase = true
 	classification.add_theme_font_override("font", ThemeConstants.font_mono_regular)
-	classification.add_theme_font_size_override("font_size", 10)
+	classification.add_theme_font_size_override("font_size", 20)
 	classification.add_theme_color_override("font_color", ThemeConstants.TERTIARY)
-	classification.add_theme_constant_override("letter_spacing", 5)
+	classification.add_theme_constant_override("letter_spacing", 7)
 	content.add_child(classification)
 
 	var spacer1 := Control.new()
-	spacer1.custom_minimum_size.y = 8
+	spacer1.custom_minimum_size.y = 10
 	content.add_child(spacer1)
 
 	var title_placeholder := Control.new()
-	title_placeholder.custom_minimum_size.y = ThemeConstants.TITLE_SIZE + 12
+	title_placeholder.custom_minimum_size.y = int(ThemeConstants.TITLE_SIZE * 1.5) + 20
 	title_placeholder.name = "TitlePlaceholder"
 	content.add_child(title_placeholder)
 
 	var spacer2 := Control.new()
-	spacer2.custom_minimum_size.y = 40
+	spacer2.custom_minimum_size.y = 52
 	content.add_child(spacer2)
 
 	var menu_data := [
@@ -80,14 +81,14 @@ func _build_ui() -> void:
 		_menu_items.append(item)
 
 	var spacer3 := Control.new()
-	spacer3.custom_minimum_size.y = 40
+	spacer3.custom_minimum_size.y = 52
 	content.add_child(spacer3)
 
 	var key_hint := Label.new()
 	key_hint.text = "Have an access key? Visit the Era Library to redeem it."
 	key_hint.add_theme_font_override("font", ThemeConstants.font_mono_regular)
-	key_hint.add_theme_font_size_override("font_size", ThemeConstants.HINT_TEXT_SIZE)
-	key_hint.add_theme_color_override("font_color", ThemeConstants.TERTIARY)
+	key_hint.add_theme_font_size_override("font_size", 20)
+	key_hint.add_theme_color_override("font_color", Color("#D4A017"))
 	content.add_child(key_hint)
 
 	_hover_layer = Control.new()
@@ -98,7 +99,7 @@ func _build_ui() -> void:
 	var version := Label.new()
 	version.text = "v0.9.0"
 	version.add_theme_font_override("font", ThemeConstants.font_mono_regular)
-	version.add_theme_font_size_override("font_size", ThemeConstants.HINT_TEXT_SIZE)
+	version.add_theme_font_size_override("font_size", 20)
 	version.add_theme_color_override("font_color", ThemeConstants.TERTIARY)
 	version.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
 	version.offset_left = -80
@@ -153,7 +154,7 @@ func _position_heartbeat_deferred() -> void:
 
 func _create_menu_item(label_text: String, action: String) -> Control:
 	var container := HBoxContainer.new()
-	container.custom_minimum_size.y = 48
+	container.custom_minimum_size.y = 62
 	container.add_theme_constant_override("separation", 12)
 
 	var accent_line := ColorRect.new()
@@ -165,20 +166,20 @@ func _create_menu_item(label_text: String, action: String) -> Control:
 	var label := Label.new()
 	label.text = label_text
 	label.add_theme_font_override("font", ThemeConstants.font_mono_regular)
-	label.add_theme_font_size_override("font_size", 21)
-	label.add_theme_color_override("font_color", ThemeConstants.SECONDARY)
+	label.add_theme_font_size_override("font_size", 27)
+	label.add_theme_color_override("font_color", ThemeConstants.PRIMARY)
 	container.add_child(label)
 
 	container.mouse_filter = Control.MOUSE_FILTER_STOP
 	container.mouse_entered.connect(func():
-		label.add_theme_color_override("font_color", ThemeConstants.PRIMARY)
+		label.add_theme_color_override("font_color", Color("#D4A017"))
 		var tw := create_tween()
 		tw.tween_property(accent_line, "custom_minimum_size:x", 16.0, 0.15)
 		tw.parallel().tween_property(accent_line, "modulate:a", 1.0, 0.15)
 		_spawn_hover_bloom(container, label_text)
 	)
 	container.mouse_exited.connect(func():
-		label.add_theme_color_override("font_color", ThemeConstants.SECONDARY)
+		label.add_theme_color_override("font_color", ThemeConstants.PRIMARY)
 		var tw := create_tween()
 		tw.tween_property(accent_line, "custom_minimum_size:x", 0.0, 0.15)
 		tw.parallel().tween_property(accent_line, "modulate:a", 0.0, 0.15)
@@ -208,8 +209,8 @@ func _spawn_hover_bloom(container: Control, label_text: String) -> void:
 		var lbl := Label.new()
 		lbl.text = glyph_text
 		lbl.add_theme_font_override("font", ThemeConstants.font_mono_regular)
-		lbl.add_theme_font_size_override("font_size", 11)
-		lbl.add_theme_color_override("font_color", Color("#D4A017"))
+		lbl.add_theme_font_size_override("font_size", 14)
+		lbl.add_theme_color_override("font_color", GLYPH_COLOR)
 		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		lbl.modulate.a = 0.0
 
@@ -223,7 +224,7 @@ func _spawn_hover_bloom(container: Control, label_text: String) -> void:
 
 		var tw := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
 		tw.tween_interval(delay)
-		tw.tween_property(lbl, "modulate:a", 0.25, 0.1)
+		tw.tween_property(lbl, "modulate:a", 0.45, 0.1)
 		tw.parallel().tween_property(lbl, "position", lbl.position + Vector2(drift_x, drift_y), 0.5)
 		tw.tween_property(lbl, "modulate:a", 0.0, 0.3)
 		tw.tween_callback(func():
@@ -235,7 +236,6 @@ func _spawn_hover_bloom(container: Control, label_text: String) -> void:
 
 func _spawn_click_burst(container: Control) -> void:
 	var center := container.global_position + Vector2(0, container.size.y * 0.5)
-	var gold := Color("#D4A017")
 
 	for i in range(6):
 		var angle := (float(i) / 6.0) * TAU
@@ -246,15 +246,15 @@ func _spawn_click_burst(container: Control) -> void:
 		var lbl := Label.new()
 		lbl.text = glyph_text
 		lbl.add_theme_font_override("font", ThemeConstants.font_mono_regular)
-		lbl.add_theme_font_size_override("font_size", 11)
-		lbl.add_theme_color_override("font_color", gold)
+		lbl.add_theme_font_size_override("font_size", 14)
+		lbl.add_theme_color_override("font_color", GLYPH_COLOR)
 		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		lbl.modulate.a = 0.0
 		lbl.position = start_pos
 		_hover_layer.add_child(lbl)
 
 		var tw := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
-		tw.tween_property(lbl, "modulate:a", 0.30, 0.08)
+		tw.tween_property(lbl, "modulate:a", 0.50, 0.08)
 		tw.parallel().tween_property(lbl, "position", end_pos, 0.3)
 		tw.tween_property(lbl, "modulate:a", 0.0, 0.15)
 		tw.tween_callback(func():

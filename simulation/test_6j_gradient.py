@@ -182,12 +182,11 @@ def _setup_t2a(seed):
     rng = random.Random(seed)
     tmap = chokepoint()
     store = UnitStore()
-    # Strike: wide arc south of corridor, spread along X within walkable zone [1700-2300]
+    # Strike: wide arc south of corridor, holding position
     strike_uids = _spawn_strike_arc_x(store, FACTION_STRIKE, 2000.0, 2900.0, 10, rng)
-    # Line: tight formation north of corridor
+    # Line: tight formation north of corridor, marches south through gap
     line_uids = _spawn_line_formed(store, FACTION_LINE, 2000.0, 1100.0, 10, rng)
     queue = CommandQueue()
-    # Line marches south through the corridor toward Strike
     queue.add(Command(tick=0, type="group_move", unit_ids=line_uids,
                       params={"target_x": 2000.0, "target_y": 2900.0}))
     return _run_engagement(store, tmap, queue, strike_uids, line_uids, seed)
@@ -197,9 +196,9 @@ def _setup_t2b(seed):
     rng = random.Random(seed)
     tmap = chokepoint()
     store = UnitStore()
-    # Strike: wide arc south of corridor
+    # Strike: wide arc south of corridor, holding position
     strike_uids = _spawn_strike_arc_x(store, FACTION_STRIKE, 2000.0, 2900.0, 10, rng)
-    # Line: 15 units north of corridor
+    # Line: 15 units north of corridor, marches south through gap
     line_uids = _spawn_line_formed(store, FACTION_LINE, 2000.0, 1100.0, 15, rng)
     queue = CommandQueue()
     queue.add(Command(tick=0, type="group_move", unit_ids=line_uids,
