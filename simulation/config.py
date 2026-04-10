@@ -407,15 +407,26 @@ LIFECYCLE_FRAGMENTATION_REVOLT_RATE  = 0.02  # revolts per tick → fragmenting
 TIME_JUMP_MIN_TICKS = 20
 TIME_JUMP_MAX_TICKS = 100
 
-# ── Generational / lineage (Stage 4) ────────────────────────────────────────
-LINEAGE_MIN_CHAPTERS    = 3      # minimum chapters before rotation considered
-LINEAGE_HARD_CAP        = 6      # forced rotation after this many chapters
-LINEAGE_POOL_WEIGHTS    = {"previous_descendant": 0.70, "nemesis_descendant": 0.20, "unrelated": 0.10}
-NEMESIS_HOP_RANGE       = 2      # max adjacency hops for "near the mission region"
-LINEAGE_RECENCY_PENALTY_CHAPTERS = 2  # skip lineages played within last N chapters
-LINEAGE_DELTA_LOW       = 10.0   # regional delta below this → high rotation probability
-LINEAGE_DELTA_HIGH      = 40.0   # regional delta above this → low rotation probability
-CRISIS_VETO_STABILITY   = 25.0   # stability below this vetoes rotation
+
+# ── Character selector (Stage 5.5) ──────────────────────────────────────────
+SELECTOR_MIN_CHAPTERS          = 2      # minimum chapters before rotation is eligible
+SELECTOR_HARD_CAP              = 6      # maximum chapters before forced rotation
+SELECTOR_DELTA_SAFE            = 200.0  # total region delta above which rotation probability is minimal
+SELECTOR_MAX_ROTATION_PROB     = 0.8    # rotation probability when delta == 0 (quiet jump)
+SELECTOR_MIN_ROTATION_PROB     = 0.1    # rotation probability when delta >= DELTA_SAFE
+SELECTOR_CRISIS_THRESHOLD      = 20.0   # stability below this vetoes rotation
+SELECTOR_POOL_PREVIOUS_WEIGHT  = 0.70   # probability of drawing from previous lineage pool
+SELECTOR_POOL_NEMESIS_WEIGHT   = 0.20   # probability of drawing from nemesis pool
+SELECTOR_POOL_UNRELATED_WEIGHT = 0.10   # probability of drawing from unrelated pool
+SELECTOR_RECENCY_PENALTY_WINDOW = 1     # lineages played within this many rotations get 0 recency score
+SELECTOR_GAP_BONUS_PEAK        = 4      # chapters ago at which gap bonus peaks
+SELECTOR_PROXIMITY_HOPS        = 2      # max adjacency hops for "near mission region" candidate search
+# Pool weights dict derived from the three authoritative constants above.
+LINEAGE_POOL_WEIGHTS = {
+    "previous_descendant": SELECTOR_POOL_PREVIOUS_WEIGHT,
+    "nemesis_descendant":  SELECTOR_POOL_NEMESIS_WEIGHT,
+    "unrelated":           SELECTOR_POOL_UNRELATED_WEIGHT,
+}
 
 # ── Mission (Stage 5.5 / reconciliation Phase 7) ─────────────────────────
 REFUSAL_TENSION_PENALTY_PCT = 8   # tension +8% of deficit when player refuses a mission
@@ -480,27 +491,27 @@ CANVAS_SIMULATION_MODIFIER_RANGE = 0.30  # ±30% canvas size variation
 CATEGORY_MULTIPLIER = {
     "Strike": {"Strike": 1.0, "Line": 0.75, "Siege": 1.5},
     "Line":   {"Strike": 1.5, "Line": 1.0,  "Siege": 0.75},
-    "Siege":  {"Strike": 0.75, "Line": 1.5,  "Siege": 1.0},
+    "Siege":  {"Strike": 0.20, "Line": 1.5,  "Siege": 1.0},
 }
 
 # ── Unit stat baselines — Tier 2 (Stage 6) ──────────────────────────────────
 UNIT_STATS = {
-    "Raider":      {"category": "Strike", "hp": 375,  "base_damage": 18, "attack_interval": 0.8,
+    "Raider":      {"category": "Strike", "hp": 500,  "base_damage": 9,    "attack_interval": 0.8,
                     "attack_range": 200, "speed": 150, "sensor_radius": 400,
                     "layer_transition_time": 1.0, "aoe_radius": 0},
-    "Interceptor": {"category": "Strike", "hp": 525,  "base_damage": 12, "attack_interval": 1.0,
+    "Interceptor": {"category": "Strike", "hp": 650,  "base_damage": 6,    "attack_interval": 1.0,
                     "attack_range": 250, "speed": 130, "sensor_radius": 500,
                     "layer_transition_time": 1.2, "aoe_radius": 0},
-    "Vanguard":    {"category": "Line",   "hp": 1200, "base_damage": 15, "attack_interval": 1.2,
+    "Vanguard":    {"category": "Line",   "hp": 1000, "base_damage": 7.5,  "attack_interval": 1.2,
                     "attack_range": 300, "speed": 80,  "sensor_radius": 350,
                     "layer_transition_time": 2.5, "aoe_radius": 0},
-    "Warden":      {"category": "Line",   "hp": 900,  "base_damage": 8,  "attack_interval": 1.5,
+    "Warden":      {"category": "Line",   "hp": 750,  "base_damage": 4,    "attack_interval": 1.5,
                     "attack_range": 350, "speed": 70,  "sensor_radius": 400,
                     "layer_transition_time": 2.0, "aoe_radius": 0},
-    "Bombard":     {"category": "Siege",  "hp": 1050, "base_damage": 35, "attack_interval": 3.0,
+    "Bombard":     {"category": "Siege",  "hp": 800,  "base_damage": 17.5, "attack_interval": 3.0,
                     "attack_range": 600, "speed": 50,  "sensor_radius": 300,
                     "layer_transition_time": 4.0, "aoe_radius": 150},
-    "Bastion":     {"category": "Siege",  "hp": 2100, "base_damage": 14, "attack_interval": 1.8,
+    "Bastion":     {"category": "Siege",  "hp": 2100, "base_damage": 7,    "attack_interval": 1.8,
                     "attack_range": 400, "speed": 40,  "sensor_radius": 300,
                     "layer_transition_time": 5.0, "aoe_radius": 0},
 }
@@ -530,12 +541,12 @@ BRACE_DAMAGE_MULTIPLIER        = 1.3
 BRACE_COOLDOWN_TICKS           = 700     # 35 sec
 
 RALLY_RADIUS                   = 400
-RALLY_HEAL_AMOUNT              = 225
+RALLY_HEAL_AMOUNT              = 112
 RALLY_COOLDOWN_TICKS           = 1500    # 75 sec
 
 WARDEN_AURA_RADIUS             = 300
 WARDEN_AURA_DAMAGE_REDUCTION   = 0.10
-WARDEN_AURA_REPAIR_RATE        = 0.75    # HP per tick
+WARDEN_AURA_REPAIR_RATE        = 0.15    # HP per tick
 
 BARRAGE_DAMAGE_MULTIPLIER      = 3.0
 BARRAGE_RADIUS                 = 100
@@ -562,11 +573,13 @@ PULSE_COOLDOWN_TICKS           = 400     # 20 sec
 # ── Pathfinding (Stage 6) ───────────────────────────────────────────────────
 NAVMESH_OBSTACLE_THRESHOLD     = 0.7
 NAVMESH_CELL_SIZE              = 100
-STEERING_SEPARATION_RADIUS     = 30
 STEERING_OBSTACLE_AVOIDANCE_RANGE = 50
 UNIT_COLLISION_RADIUS          = 15
-HARD_COLLISION_ENABLED         = True
-COLLISION_RESOLUTION_ITERATIONS = 3
+
+# ── RVO Local Steering ──────────────────────────────────────────────────────
+RVO_NEIGHBOR_DIST              = 200
+RVO_TIME_HORIZON               = 3.0
+RVO_MAX_NEIGHBORS              = 10
 
 # ── Objectives and outcome classification (Stage 6) ─────────────────────────
 OUTCOME_WEIGHT_OBJECTIVE       = 0.75
@@ -613,6 +626,12 @@ GENERATOR_PREFERENCE_WEIGHT         = 0.2
 GENERATOR_TOP_N_CANDIDATES          = 5
 GENERATOR_DEFAULT_PREFERENCE        = 0.5
 GENERATOR_RARE_PREFERENCE           = 0.1
+ARCHETYPE_TIME_LIMITS = {
+    "defensive_stand": 300, "siege_breaking": 400, "reconquest": 350,
+    "assault": 400, "suppression": 250, "multi_front_defense": 450,
+    "interception": 300, "evacuation": 250, "containment": 400,
+    "counterinsurgency": 300,
+}
 
 # ── Urgency scoring (Stage 5.5) ─────────────────────────────────────────────
 URGENCY_FIELD_WEIGHT                = 0.4
@@ -627,8 +646,8 @@ RELEVANCE_MAX_HOPS                  = 5
 RELEVANCE_ARCHETYPE_FIT_THRESHOLD   = 3
 
 # ── Force allocation (Stage 5.5) ────────────────────────────────────────────
-BUDGET_TO_POWER_SCALE               = 15.0
-MILITARY_TO_POWER_SCALE             = 60.0
+BUDGET_TO_POWER_SCALE               = 150.0   # budget=400 → ~60k power → ~8-10 units
+MILITARY_TO_POWER_SCALE             = 1000.0  # military=50 → ~50k power → ~7-8 units
 PARITY_BREAKPOINTS                  = [
     (0.0, 0.80),
     (0.3, 0.85),
@@ -638,8 +657,15 @@ PARITY_BREAKPOINTS                  = [
 ]
 PARITY_EASY_FLOOR                   = 0.95
 PARITY_HARD_CEILING                 = 0.85
+PARITY_FLOOR                        = 0.75    # hard floor — skilled player can always win
 CAPACITY_SHORTFALL_THRESHOLD        = 0.4
 CAPACITY_SHORTFALL_REDUCTION        = 0.20
+
+# ── Insurgent force sizing (Stage 5.5) ──────────────────────────────────────
+INSURGENT_MIL_HIGH_POP_RANGE        = (40, 70)
+INSURGENT_MIL_LOW_POP_RANGE         = (20, 50)
+INSURGENT_POP_HIGH_THRESHOLD        = 70       # population >= this uses high range
+INSURGENT_POP_LOW_THRESHOLD         = 25       # population <= this uses low range
 
 # ── Asset profiles (Stage 5.5) ──────────────────────────────────────────────
 ASSET_PROFILES = {
@@ -687,3 +713,227 @@ ARCHETYPE_STRUCTURE_SPLIT = {
     "containment":         (0.33, 0.34, 0.33),
     "counterinsurgency":   (0.40, 0.30, 0.30),
 }
+
+# ── Outcome Resolver ──
+# Consequence tables: transcribed from bible_missions.md success spectrums.
+# Each delta: field, form ("deficit" = +pct of (100-current), "current" = pct of current), pct, target.
+# Positive pct = field increases. Negative pct = field decreases.
+CONSEQUENCE_TABLES = {
+    "defensive_stand": {
+        "total_success": [
+            {"field": "military",  "form": "deficit",  "pct": 15,  "target": "mission"},
+            {"field": "tension",   "form": "current",  "pct": -10, "target": "mission"},
+            {"field": "economy",   "form": "current",  "pct": -2,  "target": "mission"},
+        ],
+        "strong_success": [
+            {"field": "military",  "form": "deficit",  "pct": 8,   "target": "mission"},
+            {"field": "tension",   "form": "current",  "pct": -5,  "target": "mission"},
+            {"field": "economy",   "form": "current",  "pct": -5,  "target": "mission"},
+        ],
+        "partial_success": [
+            {"field": "military",  "form": "current",  "pct": -5,  "target": "mission"},
+            {"field": "tension",   "form": "deficit",  "pct": 5,   "target": "mission"},
+            {"field": "economy",   "form": "current",  "pct": -10, "target": "mission"},
+        ],
+        "partial_failure": [
+            {"field": "military",  "form": "current",  "pct": -15, "target": "mission"},
+            {"field": "tension",   "form": "deficit",  "pct": 10,  "target": "mission"},
+            {"field": "economy",   "form": "current",  "pct": -15, "target": "mission"},
+        ],
+        "total_failure": [
+            {"field": "military",   "form": "current",  "pct": -30, "target": "mission"},
+            {"field": "tension",    "form": "deficit",  "pct": 20,  "target": "mission"},
+            {"field": "economy",    "form": "current",  "pct": -20, "target": "mission"},
+            {"field": "population", "form": "current",  "pct": -5,  "target": "mission"},
+        ],
+    },
+    "siege_breaking": {
+        "total_success": [
+            {"field": "military",  "form": "deficit",  "pct": 10,  "target": "mission"},
+            {"field": "tension",   "form": "current",  "pct": -15, "target": "mission"},
+            {"field": "economy",   "form": "deficit",  "pct": 10,  "target": "mission"},
+        ],
+        "strong_success": [
+            {"field": "military",  "form": "deficit",  "pct": 5,   "target": "mission"},
+            {"field": "tension",   "form": "current",  "pct": -10, "target": "mission"},
+            {"field": "economy",   "form": "deficit",  "pct": 5,   "target": "mission"},
+        ],
+        "partial_success": [
+            {"field": "military",  "form": "current",  "pct": -3,  "target": "mission"},
+            {"field": "tension",   "form": "current",  "pct": -5,  "target": "mission"},
+            {"field": "economy",   "form": "deficit",  "pct": 3,   "target": "mission"},
+        ],
+        "partial_failure": [
+            {"field": "military",  "form": "current",  "pct": -10, "target": "mission"},
+            {"field": "tension",   "form": "deficit",  "pct": 5,   "target": "mission"},
+            {"field": "economy",   "form": "current",  "pct": -5,  "target": "mission"},
+        ],
+        "total_failure": [
+            {"field": "military",  "form": "current",  "pct": -20, "target": "mission"},
+            {"field": "tension",   "form": "deficit",  "pct": 15,  "target": "mission"},
+            {"field": "economy",   "form": "current",  "pct": -10, "target": "mission"},
+        ],
+    },
+    "reconquest": {
+        "total_success": [
+            {"field": "tension",   "form": "current",  "pct": -10, "target": "mission"},
+            {"field": "economy",   "form": "deficit",  "pct": 5,   "target": "mission"},
+        ],
+        "strong_success": [
+            {"field": "tension",   "form": "current",  "pct": -5,  "target": "mission"},
+            {"field": "economy",   "form": "current",  "pct": -5,  "target": "mission"},
+        ],
+        "partial_success": [
+            {"field": "tension",   "form": "deficit",  "pct": 5,   "target": "mission"},
+            {"field": "economy",   "form": "current",  "pct": -15, "target": "mission"},
+        ],
+        "partial_failure": [
+            {"field": "tension",   "form": "deficit",  "pct": 5,   "target": "adjacent_player"},
+        ],
+        "total_failure": [
+            {"field": "tension",   "form": "deficit",  "pct": 10,  "target": "adjacent_player"},
+            {"field": "military",  "form": "current",  "pct": -5,  "target": "adjacent_player"},
+        ],
+    },
+    "assault": {
+        "total_success": [],
+        "strong_success": [],
+        "partial_success": [
+            {"field": "military",  "form": "current",  "pct": -30, "target": "mission"},
+        ],
+        "partial_failure": [
+            {"field": "military",  "form": "current",  "pct": -10, "target": "mission"},
+            {"field": "tension",   "form": "deficit",  "pct": 5,   "target": "home"},
+        ],
+        "total_failure": [
+            {"field": "military",  "form": "current",  "pct": -3,  "target": "mission"},
+            {"field": "tension",   "form": "deficit",  "pct": 15,  "target": "home"},
+            {"field": "military",  "form": "current",  "pct": -10, "target": "home"},
+        ],
+    },
+    "suppression": {
+        "total_success": [
+            {"field": "tension",   "form": "current",  "pct": -15, "target": "mission"},
+            {"field": "economy",   "form": "deficit",  "pct": 5,   "target": "mission"},
+        ],
+        "strong_success": [
+            {"field": "tension",   "form": "current",  "pct": -8,  "target": "mission"},
+        ],
+        "partial_success": [],
+        "partial_failure": [
+            {"field": "tension",   "form": "deficit",  "pct": 5,   "target": "adjacent_player"},
+        ],
+        "total_failure": [
+            {"field": "tension",   "form": "deficit",  "pct": 10,  "target": "adjacent_player"},
+        ],
+    },
+    "multi_front_defense": {
+        "total_success": [
+            {"field": "military",  "form": "deficit",  "pct": 10,  "target": "mission"},
+            {"field": "tension",   "form": "current",  "pct": -10, "target": "mission"},
+            {"field": "economy",   "form": "current",  "pct": -5,  "target": "mission"},
+        ],
+        "strong_success": [
+            {"field": "tension",   "form": "current",  "pct": -5,  "target": "mission"},
+            {"field": "economy",   "form": "current",  "pct": -10, "target": "mission"},
+        ],
+        "partial_success": [
+            {"field": "military",  "form": "current",  "pct": -10, "target": "mission"},
+            {"field": "tension",   "form": "deficit",  "pct": 5,   "target": "mission"},
+            {"field": "economy",   "form": "current",  "pct": -15, "target": "mission"},
+        ],
+        "partial_failure": [
+            {"field": "military",   "form": "current",  "pct": -20, "target": "mission"},
+            {"field": "tension",    "form": "deficit",  "pct": 15,  "target": "mission"},
+            {"field": "economy",    "form": "current",  "pct": -20, "target": "mission"},
+            {"field": "population", "form": "current",  "pct": -5,  "target": "mission"},
+        ],
+        "total_failure": [
+            {"field": "military",   "form": "current",  "pct": -35, "target": "mission"},
+            {"field": "tension",    "form": "deficit",  "pct": 25,  "target": "mission"},
+            {"field": "economy",    "form": "current",  "pct": -25, "target": "mission"},
+            {"field": "population", "form": "current",  "pct": -10, "target": "mission"},
+        ],
+    },
+    "interception": {
+        "total_success": [
+            {"field": "tension",   "form": "current",  "pct": -5,  "target": "mission"},
+        ],
+        "strong_success": [
+            {"field": "military",  "form": "current",  "pct": -3,  "target": "mission"},
+        ],
+        "partial_success": [],
+        "partial_failure": [],
+        "total_failure": [
+            {"field": "military",  "form": "current",  "pct": -15, "target": "mission"},
+        ],
+    },
+    "evacuation": {
+        "total_success": [
+            {"field": "economy",    "form": "deficit",  "pct": 5,  "target": "adjacent_player"},
+            {"field": "population", "form": "deficit",  "pct": 3,  "target": "adjacent_player"},
+        ],
+        "strong_success": [
+            {"field": "economy",    "form": "deficit",  "pct": 3,  "target": "adjacent_player"},
+            {"field": "population", "form": "deficit",  "pct": 2,  "target": "adjacent_player"},
+        ],
+        "partial_success": [
+            {"field": "economy",    "form": "deficit",  "pct": 1,  "target": "adjacent_player"},
+            {"field": "population", "form": "deficit",  "pct": 1,  "target": "adjacent_player"},
+        ],
+        "partial_failure": [],
+        "total_failure": [
+            {"field": "tension",   "form": "deficit",  "pct": 10, "target": "adjacent_player"},
+        ],
+    },
+    "containment": {
+        "total_success": [
+            {"field": "tension",   "form": "current",  "pct": -5,  "target": "adjacent_player"},
+        ],
+        "strong_success": [
+            {"field": "tension",   "form": "current",  "pct": -3,  "target": "adjacent_player"},
+        ],
+        "partial_success": [
+            {"field": "tension",   "form": "deficit",  "pct": 5,   "target": "exposed"},
+        ],
+        "partial_failure": [
+            {"field": "tension",   "form": "deficit",  "pct": 10,  "target": "exposed"},
+            {"field": "economy",   "form": "current",  "pct": -5,  "target": "exposed"},
+        ],
+        "total_failure": [
+            {"field": "tension",   "form": "deficit",  "pct": 15,  "target": "adjacent_player"},
+            {"field": "economy",   "form": "current",  "pct": -10, "target": "adjacent_player"},
+        ],
+    },
+    "counterinsurgency": {
+        "total_success": [
+            {"field": "tension",   "form": "current",  "pct": -20, "target": "mission"},
+            {"field": "military",  "form": "deficit",  "pct": 5,   "target": "mission"},
+        ],
+        "strong_success": [
+            {"field": "tension",   "form": "current",  "pct": -12, "target": "mission"},
+            {"field": "military",  "form": "deficit",  "pct": 3,   "target": "mission"},
+            {"field": "economy",   "form": "current",  "pct": -3,  "target": "mission"},
+        ],
+        "partial_success": [
+            {"field": "tension",   "form": "current",  "pct": -5,  "target": "mission"},
+            {"field": "economy",   "form": "current",  "pct": -8,  "target": "mission"},
+        ],
+        "partial_failure": [
+            {"field": "tension",   "form": "deficit",  "pct": 5,   "target": "mission"},
+            {"field": "economy",   "form": "current",  "pct": -12, "target": "mission"},
+        ],
+        "total_failure": [
+            {"field": "tension",   "form": "deficit",  "pct": 15,  "target": "mission"},
+            {"field": "economy",   "form": "current",  "pct": -15, "target": "mission"},
+            {"field": "military",  "form": "current",  "pct": -5,  "target": "mission"},
+        ],
+    },
+}
+# Special outcomes that trigger region transfer (conquest resolution)
+REGION_TRANSFER_OUTCOMES = {
+    "reconquest": {"total_success", "strong_success", "partial_success"},
+    "assault": {"total_success", "strong_success"},
+    "suppression": {"total_success", "strong_success"},
+}
+COMMANDER_DEATH_EVENT_ID = "evt_commander_killed_in_action"

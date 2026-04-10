@@ -1,5 +1,6 @@
 import config
 import character_selector
+from mission_contracts import CommanderSelection
 
 
 class GenerationalState:
@@ -30,6 +31,42 @@ class GenerationalState:
     @property
     def chapter_count(self):
         return len(self.chapters)
+
+
+def run_character_selection(gen_state, ledger, world, mission_setup, rng, tick,
+                            current_lineage_id=None, region_field_delta=0.0):
+    """
+    Runs after mission generation. Tags enemy-side characters as rivals, then
+    runs the full rotation decision + commander selection. Increments the
+    per-lineage chapter counter in the ledger on a stay (rotation increments
+    via the new chapter in gen_state).
+    """
+    region_id = mission_setup.region_id
+
+    # Tag characters in the mission region belonging to hostile factions as rivals
+    # of the current commander — feeds the nemesis pool for future rotations.
+    chapter = gen_state.current_chapter
+    cmdr_id = chapter.get("character_id")
+    if cmdr_id:
+        enemy_faction_ids = {ef.faction_id for ef in mission_setup.enemy_forces}
+        for efid in enemy_faction_ids:
+            ledger.tag_rivals(region_id, cmdr_id, gen_state.player_faction_id)
+
+    selection = character_selector.run_selection(
+        gen_state, ledger, world, region_id, rng, tick,
+        current_lineage_id=current_lineage_id,
+        region_field_delta=region_field_delta,
+    )
+
+    if selection and selection.lineage_id:
+        if selection.rotation_reason is None:
+            # Staying in current lineage — increment its chapter counter
+            ledger.increment_chapter(selection.lineage_id)
+        else:
+            # Rotated — start chapter counter for new lineage
+            ledger.increment_chapter(selection.lineage_id)
+
+    return selection
 
 
 def check_player_collapse(state, world, registry):
@@ -71,45 +108,6 @@ def reassign_player(state, world, registry, rng, tick):
         "character_id":    chapter["character_id"],
     }
 
-
-def should_rotate(state, world, registry, tick):
-    chapter = state.current_chapter
-    chapters_in_lineage = state.chapter_count
-
-    if chapters_in_lineage >= config.LINEAGE_HARD_CAP:
-        return "hard_cap"
-
-    if chapters_in_lineage < config.LINEAGE_MIN_CHAPTERS:
-        return False
-
-    fid = state.player_faction_id
-    owned = world.regions_by_faction(fid)
-    if not owned:
-        return False
-
-    avg_tension = sum(r.fields["tension"] for r in owned) / len(owned)
-    stability = 100.0 - avg_tension
-    if stability < config.CRISIS_VETO_STABILITY:
-        return False
-
-    chapter_duration = tick - chapter["start_tick"]
-    if chapter_duration < 50:
-        return False
-
-    avg_economy = sum(r.fields["economy"] for r in owned) / len(owned)
-    avg_military = sum(r.fields["military"] for r in owned) / len(owned)
-    regional_delta = abs(avg_economy - 50.0) + abs(avg_military - 50.0)
-
-    if regional_delta < config.LINEAGE_DELTA_LOW:
-        return "normal"
-    if regional_delta > config.LINEAGE_DELTA_HIGH:
-        return False
-
-    t = (regional_delta - config.LINEAGE_DELTA_LOW) / (config.LINEAGE_DELTA_HIGH - config.LINEAGE_DELTA_LOW)
-    rotation_prob = 1.0 - t
-    if world.rng.random() < rotation_prob * 0.1:
-        return "normal"
-    return False
 
 
 def rotate_lineage(state, ledger, world, region_id, rng, tick, reason="rotation"):
@@ -167,7 +165,7 @@ def handle_commander_death(state, ledger, world, region_id, rng, tick):
 
     lineage_id = rec.lineage_id
     chapters_in_lineage = _count_lineage_chapters(state, ledger, lineage_id)
-    below_minimum = chapters_in_lineage < config.LINEAGE_MIN_CHAPTERS
+    below_minimum = chapters_in_lineage < config.SELECTOR_MIN_CHAPTERS
 
     successor = _find_lineage_successor(ledger, world, lineage_id, region_id,
                                         global_search=below_minimum)

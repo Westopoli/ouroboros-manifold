@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Phase 6 — Cross-faction lineage rotation tests.
 
-Tests the implementable portions of Phase 6: should_rotate reason strings,
-rotate_lineage faction reassignment, and cross_faction flag.
+Tests rotate_lineage faction reassignment and cross_faction flag.
+handle_commander_death succession path.
 
 PHASE 6A DEFERRED (Stage 5.5): The mission generator does not exist yet.
 When mission_generator.py is built, add a cross_faction=True parameter to its
@@ -21,7 +21,7 @@ import world as world_mod
 from region import Region
 from coherence_ledger import CoherenceLedger
 from naming_system import NamingSystem
-from generational import GenerationalState, should_rotate, rotate_lineage
+from generational import GenerationalState, rotate_lineage
 
 
 def make_test_world():
@@ -61,54 +61,13 @@ def make_ledger():
     return CoherenceLedger(ns)
 
 
-def test_should_rotate_returns_reason():
-    """should_rotate returns 'hard_cap', 'normal', or False."""
-    print("\n=== Test 1: should_rotate returns reason strings ===")
-    world = make_test_world()
-    registry = {"faction_a": None}
-
-    # Below minimum — should return False
-    gen = GenerationalState("faction_a", start_tick=0)
-    result = should_rotate(gen, world, registry, tick=100)
-    assert result is False, f"Below min should be False, got {result}"
-    print(f"  1 chapter, tick=100: {result} (below min)")
-
-    # At hard cap — should return "hard_cap"
-    gen2 = GenerationalState("faction_a", start_tick=0)
-    for i in range(config.LINEAGE_HARD_CAP - 1):
-        gen2.current_chapter["end_tick"] = (i + 1) * 100
-        gen2.current_chapter["end_reason"] = "rotation"
-        gen2._start_chapter("faction_a", (i + 1) * 100)
-
-    assert gen2.chapter_count >= config.LINEAGE_HARD_CAP
-    result2 = should_rotate(gen2, world, registry, tick=10000)
-    assert result2 == "hard_cap", f"At hard cap should be 'hard_cap', got {result2}"
-    print(f"  {gen2.chapter_count} chapters (hard cap={config.LINEAGE_HARD_CAP}): {result2}")
-
-    # Normal rotation — force conditions: above min, low delta, long chapter
-    gen3 = GenerationalState("faction_a", start_tick=0)
-    for i in range(config.LINEAGE_MIN_CHAPTERS - 1):
-        gen3.current_chapter["end_tick"] = (i + 1) * 100
-        gen3.current_chapter["end_reason"] = "rotation"
-        gen3._start_chapter("faction_a", (i + 1) * 100)
-
-    # Set fields to exactly 50 (delta=0, below LINEAGE_DELTA_LOW → always rotate)
-    for r in world.regions.values():
-        r.fields["economy"] = 50.0
-        r.fields["military"] = 50.0
-        r.fields["tension"] = 10.0
-
-    tick = gen3.current_chapter["start_tick"] + 100
-    result3 = should_rotate(gen3, world, registry, tick)
-    assert result3 == "normal", f"Low delta above min should be 'normal', got {result3}"
-    print(f"  {gen3.chapter_count} chapters, low delta: {result3}")
-
-    # Callers can still use truthiness: both "hard_cap" and "normal" are truthy
-    assert result2  # "hard_cap" is truthy
-    assert result3  # "normal" is truthy
-    assert not False  # False is falsy
-    print("  Truthiness preserved: 'hard_cap' and 'normal' are truthy, False is falsy")
-    print("  PASSED")
+# TODO(stage-4-legacy): test_should_rotate_returns_reason tested the now-deleted
+# should_rotate() function from generational.py. That function was a Stage-4
+# implementation of the rotation decision using LINEAGE_* config constants. It has
+# been superseded by character_selector.run_selection() in Stage 5.5, which uses
+# the SELECTOR_* constants and the full spec cascade. The equivalent coverage now
+# lives in test_checkpoint_g5.py's generational cycle assertions.
+# def test_should_rotate_returns_reason(): ...
 
 
 def test_rotate_lineage_same_faction():
@@ -218,7 +177,6 @@ def test_death_still_works_after_refactor():
 
 
 if __name__ == "__main__":
-    test_should_rotate_returns_reason()
     test_rotate_lineage_same_faction()
     test_rotate_lineage_cross_faction()
     test_rotate_lineage_chapter_tracking()

@@ -20,18 +20,20 @@ The reference point is Claude Code's thinking spinner: six glyphs (`·`, `✢`, 
 
 Every animation in the game uses two layers that composite together:
 
-### Layer 1 — Shader Atmosphere (Background)
+### Layer 1 — Background Atmosphere
 
-A full-screen Godot fragment shader creates the emotional mood. The shader runs dimmed (20–30% opacity over the dark `BASE` background) so it provides warmth and depth without competing with foreground elements.
+The background layer creates the emotional mood. Two approaches exist depending on context:
 
-**Why shaders for background:** Mathematical functions produce inherently smooth motion — sine waves, noise fields, particle simulations. There are no discrete characters trying to be water or stars. The result is organic and impossible to make cheesy. Shaders also run on the GPU with zero performance concern.
+**Shader atmosphere (era celebrations, unlock screens):** A full-screen Godot fragment shader runs dimmed (20–30% opacity over the dark `BASE` background). Mathematical functions produce inherently smooth motion — sine waves, noise fields, particle simulations. Shaders run on the GPU with zero performance concern.
 
-**Design rules for atmosphere shaders:**
-- Keep the visual density low. The shader should feel like ambient light, not a screensaver.
-- Use only the era's accent color (or a tinted variant) as the shader's color palette. No secondary colors.
+**3D particle structure (main menu):** The main menu uses a 3D particle galaxy rendered in a SubViewport behind the 2D UI at 70% opacity. The galaxy is built from ~5,200 particles across multiple GPUParticles3D nodes (12 orbital rings on tilted planes, 6 radial inflow streams, ambient dust, static starfield, central glow). Custom particle shaders drive orbital motion entirely on the GPU. An autonomous camera state machine cycles through 6 moods (Wide Orbit, Ring Follow, Approach, Drift, Pullback, Underside) with smooth 5-second transitions. The structure is a reusable scene (`scenes/shared/galaxy/galaxy_structure.tscn`) designed to also serve as the world view background during inter-mission time jumps. See `docs/stage_specs/main_menu_galaxy_spec.md` for full details.
+
+**Design rules for atmosphere layers:**
+- Keep the visual density low. The atmosphere should feel like ambient light, not a screensaver.
+- Use only the era's accent color (or a tinted variant) as the color palette. No secondary colors. Exception: the galaxy uses 85% gold / 15% blue-white for depth.
 - Motion should be slow and continuous. Nothing should snap, flash, or jitter. If you can perceive individual frames, it's too fast.
-- The shader should be beautiful on its own at full opacity, but it runs at 20–30%. Design for that dimmed state — what reads at low opacity? Contrast and motion read. Fine detail does not.
-- Parameterize everything. Every shader exposes uniforms for color, speed, density, and opacity so values can be tuned without editing shader code.
+- Design for the dimmed state — what reads at low opacity? Contrast and motion read. Fine detail does not.
+- Parameterize everything. Shaders expose uniforms for color, speed, density, and opacity. The galaxy exposes a public API for opacity, color, and camera control.
 
 **Existing atmosphere shaders (as templates for new ones):**
 

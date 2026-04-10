@@ -358,13 +358,17 @@ When a `group_move` command is issued, all selected units move toward the target
 
 ---
 
-### Pathfinding — Hierarchical A* with Steering
+### Pathfinding — Hierarchical A* with RVO Local Steering
 
-> **RESOLVED (v2.02).** Two-level movement: coarse A* pathfinding for route planning, fine steering behaviors for organic movement between waypoints.
+> **RESOLVED (v2.02, updated v2.06).** Two-level movement: coarse A* pathfinding for route planning, ORCA/RVO local steering for collision-free movement between waypoints. Updated v2.06: fine-level steering changed from simple separation forces to ORCA (Optimal Reciprocal Collision Avoidance), matching StarCraft 2's local steering model. Friendly line-of-fire blocking was tested and removed — ranged units fire through friendly units, and formation geometry emerges from collision avoidance, not shot occlusion.
 
 **Coarse level:** A* on a precomputed navmesh per layer, generated from the map's `obstacle_density` gradient. Path caching for shared destinations.
 
-**Fine level:** Steering behaviors between waypoints — seek, obstacle avoidance, separation from friendlies. Produces smooth movement without single-file corridors.
+**Fine level — RVO/ORCA local steering.** Each unit computes a preferred velocity (direction to next waypoint × speed), then adjusts it to avoid collisions with all nearby units (friendly and enemy) using reciprocal velocity obstacles. Each pair of units shares the responsibility of avoiding each other 50/50, producing smooth lateral flow around obstacles and other units without post-hoc push-apart correction. The algorithm is deterministic (preserves replay determinism) and scales linearly with neighbor count.
+
+This produces natural **concave formations**: units flowing toward an enemy group are steered laterally by ORCA constraints from friendlies ahead of them, fanning out around the engagement perimeter. Faster units (Strike) resolve avoidance constraints faster than slower units (Line/Siege), meaning Strike forms its concave first — creating a speed-dependent positioning advantage that is the mechanical basis for the bible's "positioning matters" design.
+
+**No friendly line-of-fire blocking.** Ranged units fire through friendly units. There is no friendly unit occlusion check on attacks. This matches StarCraft 2's model. Formation advantages come from collision-driven concave geometry (more units in firing position = more effective DPS), not from shot blocking. Terrain obstacles still block line of sight (units cannot fire through navmesh obstacles).
 
 **Layer transitions.** Unit enters transition state lasting `layer_transition_time` ticks (Strike fastest, Siege slowest). During transition, unit cannot attack or be targeted by same-layer units.
 

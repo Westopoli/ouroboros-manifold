@@ -36,6 +36,8 @@ class CoherenceLedger:
         self._lineages = {}     # {lineage_id: {"root_id": str, "member_ids": [str]}}
         self._next_char_id = 0
         self._next_lineage_id = 0
+        self._archetype_history = {}
+        self._chapter_counts = {}   # {lineage_id: int}
 
     def _gen_char_id(self):
         self._next_char_id += 1
@@ -296,6 +298,29 @@ class CoherenceLedger:
                 seen.add(nem.id)
                 candidates.append(nem)
         return candidates
+
+    # ── Archetype history (Stage 5.5) ─────────────────────────────────────
+
+    def increment_chapter(self, lineage_id) -> int:
+        self._chapter_counts[lineage_id] = self._chapter_counts.get(lineage_id, 0) + 1
+        return self._chapter_counts[lineage_id]
+
+    def get_chapter_count(self, lineage_id) -> int:
+        return self._chapter_counts.get(lineage_id, 0)
+
+    def record_archetype(self, lineage_id, archetype):
+        if lineage_id not in self._archetype_history:
+            self._archetype_history[lineage_id] = {}
+        hist = self._archetype_history[lineage_id]
+        hist[archetype] = hist.get(archetype, 0) + 1
+
+    def get_lineage_archetype_history(self, lineage_id):
+        return dict(self._archetype_history.get(lineage_id, {}))
+
+    def record_commander_death(self, commander_id, region_id, outcome_band):
+        rec = self.get_character_by_id(commander_id)
+        if rec and rec.status == "active":
+            self.kill_character(commander_id, rec.born_tick + rec.lifespan_ticks)
 
     # ── Inheritance detection (Phase 7B) ───────────────────────────────────
 

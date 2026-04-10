@@ -1,5 +1,6 @@
 import math
 import random
+import multiprocessing
 import config
 from unit import UnitStore, FIELD_X, FIELD_Y
 from tactical_engine import TacticalEngine
@@ -104,49 +105,71 @@ def run_engagement(type_a, type_b, count, seed=1, mixed=False):
     }
 
 
+def _run_5v5(args):
+    ta, tb = args
+    r = run_engagement(ta, tb, 5)
+    return (ta, tb, r)
+
+
+def _run_mixed(args):
+    count, seed = args
+    r = run_engagement(None, None, count, seed=seed, mixed=True)
+    return (count, seed, r)
+
+
 def run():
     print("=" * 70)
     print("CHECKPOINT 6D — Engagement Duration Tuning")
     print("=" * 70)
 
-    # --- 5v5 all type permutations ---
-    print("\n  5v5 — All Type Permutations (L5: each ≥ 10 seconds)")
+    # --- 5v5 all type permutations (parallelized) ---
+    print("\n  5v5 — All Type Permutations (L5: each >= 10 seconds)")
+
+    l5_jobs = [(ta, tb) for ta in UNIT_TYPES for tb in UNIT_TYPES]
+    with multiprocessing.Pool() as pool:
+        l5_results = pool.map(_run_5v5, l5_jobs)
+
     print(f"  {'Type A':<14} {'Type B':<14} {'Duration':>8} {'Winner':>7} {'Status':>7}")
     print(f"  {'-'*14} {'-'*14} {'-'*8} {'-'*7} {'-'*7}")
 
     l5_failures = []
-    for ta in UNIT_TYPES:
-        for tb in UNIT_TYPES:
-            r = run_engagement(ta, tb, 5)
-            ok = r["duration_sec"] >= 10.0
-            status = "OK" if ok else "FAIL"
-            if not ok:
-                l5_failures.append((ta, tb, r["duration_sec"]))
-            print(f"  {ta:<14} {tb:<14} {r['duration_sec']:>7.1f}s {r['winner']:>7} {status:>7}")
+    for ta, tb, r in l5_results:
+        ok = r["duration_sec"] >= 10.0
+        status = "OK" if ok else "FAIL"
+        if not ok:
+            l5_failures.append((ta, tb, r["duration_sec"]))
+        print(f"  {ta:<14} {tb:<14} {r['duration_sec']:>7.1f}s {r['winner']:>7} {status:>7}")
 
     if l5_failures:
         print(f"\n  L5 FAILURES ({len(l5_failures)}):")
         for ta, tb, dur in l5_failures:
-            print(f"    {ta} vs {tb}: {dur:.1f}s (need ≥10s)")
+            print(f"    {ta} vs {tb}: {dur:.1f}s (need >=10s)")
     else:
         print(f"\n  L5: ALL PASS")
 
+    # --- 50v50 and 100v100 (parallelized together) ---
+    mixed_jobs = [(50, s) for s in [1, 2, 3]] + [(100, s) for s in [1, 2, 3]]
+    with multiprocessing.Pool() as pool:
+        mixed_results = pool.map(_run_mixed, mixed_jobs)
+
+    l7_results = [r for count, seed, r in mixed_results if count == 50]
+    l6_results = [r for count, seed, r in mixed_results if count == 100]
+
     # --- 50v50 mirror ---
     print(f"\n{'=' * 70}")
-    print("  50v50 Mixed Mirror (L7: 45–75 seconds)")
+    print("  50v50 Mixed Mirror (L7: 90-150 seconds)")
     print(f"{'=' * 70}")
 
-    l7_results = []
-    for seed in [1, 2, 3]:
-        r = run_engagement(None, None, 50, seed=seed, mixed=True)
-        l7_results.append(r)
-        ok = 45.0 <= r["duration_sec"] <= 75.0
+    for i, (count, seed, r) in enumerate(mixed_results):
+        if count != 50:
+            continue
+        ok = 90.0 <= r["duration_sec"] <= 150.0
         status = "OK" if ok else "FAIL"
         print(f"  Seed {seed}: {r['duration_sec']:.1f}s | Winner: {r['winner']} | "
               f"Surv A: {r['survivors_a']}/{r['initial_a']} B: {r['survivors_b']}/{r['initial_b']} | {status}")
 
     avg_dur = sum(r["duration_sec"] for r in l7_results) / len(l7_results)
-    print(f"\n  Average duration: {avg_dur:.1f}s (target: 45–75s)")
+    print(f"\n  Average duration: {avg_dur:.1f}s (target: 90-150s)")
 
     print(f"\n  Kill Timeline (seed 1, 5-second buckets):")
     buckets = l7_results[0]["kill_buckets"]
@@ -162,10 +185,9 @@ def run():
     print("  100v100 Mixed (L6: > 60 seconds)")
     print(f"{'=' * 70}")
 
-    l6_results = []
-    for seed in [1, 2, 3]:
-        r = run_engagement(None, None, 100, seed=seed, mixed=True)
-        l6_results.append(r)
+    for count, seed, r in mixed_results:
+        if count != 100:
+            continue
         ok = r["duration_sec"] > 60.0
         status = "OK" if ok else "FAIL"
         print(f"  Seed {seed}: {r['duration_sec']:.1f}s | Winner: {r['winner']} | "

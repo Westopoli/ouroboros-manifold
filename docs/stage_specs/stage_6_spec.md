@@ -94,14 +94,15 @@ Attacker:
 
 **`movement.py`** — Unit movement and pathfinding. Contains:
 - Continuous 2D coordinates (floats) per layer. Unit position = `(x: float, y: float, layer: int)`.
-- Movement: per-tick position update. `new_position = current_position + direction × speed × tick_duration`. Speed in world units per second, converted to per-tick delta.
+- Movement: per-tick position update. Each unit's preferred velocity (direction to waypoint × speed) is adjusted by the ORCA/RVO local steering system to produce a collision-free velocity, then applied: `new_position = current_position + adjusted_velocity × tick_duration`.
+- **RVO/ORCA local steering:** Before each position update, each unit computes ORCA half-plane constraints from nearby units (friendly and enemy, same layer, within `RVO_NEIGHBOR_DIST`). A 2D linear program finds the collision-free velocity closest to the unit's preferred velocity. This replaces both the old separation steering and the post-movement push-apart collision resolution. Produces smooth lateral flow and natural concave formations. Faster units resolve avoidance faster, creating speed-dependent formation advantage.
 - Hierarchical pathfinding (Option D):
   - **Coarse layer:** A* on a precomputed navmesh per layer. Navmesh generated from the map's `obstacle_density` gradient (high density = blocked polygon, walkable = open polygon). Produces a sequence of waypoints from current position to target.
-  - **Fine layer:** Steering behaviors between waypoints. Seek toward next waypoint, avoid nearby obstacles (obstacle avoidance steering), separate from nearby friendly units (prevents stacking). Smooth, organic movement between waypoints.
+  - **Fine layer:** ORCA local steering between waypoints. Seek toward next waypoint via preferred velocity, avoid collisions with nearby units via ORCA constraints, avoid terrain obstacles via navmesh walkability checks on adjusted velocity.
   - **Path caching:** Multiple units moving to the same destination share the coarse A* path. Each unit independently steers along the shared waypoint sequence.
 - Layer transition: when a unit's command targets a position on a different layer, and the `layer_accessibility_mask` at the unit's current position permits the target layer, the unit enters a transition state. Transition takes `layer_transition_time` ticks (per-unit-type config value — Strike faster than Siege). During transition, the unit cannot attack or be targeted by same-layer units (it's "between" layers). At transition end, the unit's layer updates.
 - Navmesh generation: runs once per mission at initialization. Takes the map's obstacle_density gradient, discretizes it into blocked/open regions, and builds a navigation mesh per layer. Fast enough to not delay mission start (target: <500ms for a large canvas).
-- Collision: units have a radius. No overlap — steering behaviors include separation force. Units do not physically block each other but steer around each other naturally.
+- Collision: units have a radius. No overlap — ORCA prevents overlaps proactively by adjusting velocities before movement. Both friendly and enemy units are physical obstacles to each other.
 
 **`tactical_map.py`** — Map representation for the tactical engine. Contains:
 - Canvas: rectangular play area defined by `(width, height)` in world units. Canvas sizes: small 4000×4000, medium 8000×8000, large 12000×12000 (config values).
@@ -257,7 +258,7 @@ Stage 5.5 (Mission Generation Pipeline) and Stage 6 (Tactical Simulation Engine)
 
 ### Checkpoint B — Unit State and Movement (Isolation)
 
-**Build:** `unit.py` — unit data model (numpy arrays), unit creation from stat profiles. `movement.py` — per-tick position updates, steering behaviors (seek, separation, obstacle avoidance). No pathfinding yet — direct movement toward target position with steering.
+**Build:** `unit.py` — unit data model (numpy arrays), unit creation from stat profiles. `movement.py` — per-tick position updates, ORCA/RVO local steering for collision-free movement. No pathfinding yet — direct movement toward target position with RVO avoidance.
 
 **Test:** Write a standalone test script. Place 20 units on the `open_field` map (10 per side, spread across starting positions). Issue `move` commands to all units toward the center. Run 200 ticks.
 
@@ -268,7 +269,7 @@ Stage 5.5 (Mission Generation Pipeline) and Stage 6 (Tactical Simulation Engine)
 - Separation verification: no two units closer than `UNIT_COLLISION_RADIUS` at any sampled tick
 - A simple ASCII or text-based position dump showing unit spread at each sample tick
 
-**Verify:** Units move at correct speeds. Strike units arrive first, Siege units last. Separation steering prevents stacking. Movement is smooth (no teleporting, no oscillation).
+**Verify:** Units move at correct speeds. Strike units arrive first, Siege units last. ORCA local steering prevents stacking. Movement is smooth (no teleporting, no oscillation).
 
 **⛔ STOP. Show output. Wait for Westley.**
 
@@ -333,7 +334,7 @@ Stage 5.5 (Mission Generation Pipeline) and Stage 6 (Tactical Simulation Engine)
 
 ### Checkpoint F — Pathfinding and Navmesh (Isolation)
 
-**Build:** `movement.py` — hierarchical A* pathfinding (coarse navmesh layer + fine steering layer), navmesh generation from obstacle density gradients, path caching. `test_maps.py` — add `chokepoint` and `cover_heavy` maps.
+**Build:** `movement.py` — hierarchical A* pathfinding (coarse navmesh layer + ORCA/RVO local steering layer), navmesh generation from obstacle density gradients, path caching. `test_maps.py` — add `chokepoint` and `cover_heavy` maps.
 
 **Test:** Write a standalone test script. Place units on the `chokepoint` map. Issue move commands that require pathfinding through the chokepoint. Also test a direct path on `open_field` to confirm pathfinding doesn't degrade simple cases.
 
@@ -409,16 +410,15 @@ Stage 5.5 (Mission Generation Pipeline) and Stage 6 (Tactical Simulation Engine)
 
 ### Checkpoint J — Soft RPS with Positioning (Integration)
 
-**Build:** No new systems — this is a validation checkpoint combining damage, pathfinding, and map terrain. Run the soft RPS scenario (L4) on the `chokepoint` map.
+**Build:** No new systems — this is a validation checkpoint combining damage, RVO local steering, and map terrain. Run the soft RPS behavioral gradient test (L4) across four scenario tiers with increasing defender disadvantage.
 
-**Test:** Strike vs Line (unfavorable for Strike), equal power, 20+ engagements. Half with Strike using the direct approach, half with Strike using the flank route.
+**Test:** Strike vs Line (unfavorable for Strike), equal power, 25 engagements per tier (same seeds across tiers). Four tiers: T1 (head-on, both formed), T2 (one side terrain-constrained, other has open arc), T3a (flank vs march column), T3b (flank vs Line already engaged with Siege).
 
 **Print:**
-- Direct approach results: Strike win rate across 20+ seeds (should be low — Line has the advantage)
-- Flank approach results: Strike win rate across 20+ seeds (should be >30% — positioning overcomes the RPS disadvantage) (L4)
-- Comparison table: direct vs. flank win rates, average engagement duration, average force retention
+- Per-tier: Strike win rate, TTW (mean ± stddev), TTW ratio vs T1, damage dealt ratio, firing% asymmetry, first Strike kill tick
+- Gradient checks: TTW ratio T2/T1 ≥1.3, TTW ratio T3/T1 ≥1.6, T1 win rate ≤5%, monotonic increase in win rate/damage ratio/firing% from T1→T3
 
-**Verify:** Positioning matters. The flank route gives the disadvantaged side a real chance (L4). This validates that terrain + pathfinding + damage interact correctly — not just that individual systems work in isolation.
+**Verify:** Positioning creates a measurable behavioral gradient (L4). The gradient shape — not any single win-rate number — validates that terrain + RVO steering + damage interact correctly. T1 should be near-hopeless for Strike, T3 should show meaningful Strike advantage, and all metrics should improve monotonically across tiers.
 
 **⛔ STOP. Show output. Wait for Westley.**
 
@@ -519,13 +519,13 @@ All speed values assume medium canvas (8000×8000). All range/radius values are 
 - Then: Line force wins with >60% force retention
 - Severity: critical
 
-**Claim L4: Soft RPS — the disadvantaged side can win with positioning.** A force of Strike units fighting Line (unfavorable) on a map with a chokepoint should win >30% of engagements when the Strike force uses the flank route to engage from behind.
-- When: Strike-only vs Line-only (equal power), chokepoint map, Strike uses flank route
-- Then: Strike wins >30% of engagements
-- Over: 20+ engagements
-- Pattern: relational constraint
-- Governing configs: unit speed values, map layout
-- Severity: warning (the specific percentage is a tuning target, not a hard constraint)
+**Claim L4 (revised v2.06): Soft RPS — positioning creates a measurable gradient in Strike vs Line outcomes.** The soft RPS system exhibits correct behavior when outcomes improve monotonically across scenario tiers representing increasing defender disadvantage: (T1) head-on against formed Line, (T2) engagement where one side has terrain-constrained arc, (T3a) flank against Line in march column, (T3b) flank against Line already engaged with Siege. The tuning target is the gradient shape — T1 should be near-zero Strike wins, T3 should show meaningful Strike wins, and all metrics (TTW, damage ratio, firing%) should increase monotonically from T1 through T3.
+- When: Strike-only vs Line-only (equal power), multiple scenario tiers with increasing defender disadvantage
+- Then: Monotonic improvement in TTW ratio, damage ratio, and firing% from T1→T3. T1 win rate ≤5%. TTW ratio T2/T1 ≥1.3, T3/T1 ≥1.6.
+- Over: 25 engagements per tier (same seeds across tiers for paired comparison)
+- Pattern: behavioral gradient (shape of curve across tiers, not single threshold)
+- Governing configs: unit speed values, map layout, RVO parameters
+- Severity: warning (specific percentages are tuning targets, not hard constraints — the gradient shape is what matters)
 
 ### Engagement Duration
 
@@ -895,12 +895,14 @@ PULSE_RADIUS                      = 500     # world units — full-range snapsho
 PULSE_REVEAL_TICKS                = 40      # 2 sec reveal duration
 PULSE_COOLDOWN_TICKS              = 400     # 20 sec
 
-# ── Pathfinding (Stage 6) ────────────────────────────────────────
+# ── Pathfinding and Local Steering (Stage 6, updated v2.06) ──────
 NAVMESH_OBSTACLE_THRESHOLD        = 0.7     # obstacle_density above this = blocked
 NAVMESH_CELL_SIZE                 = 100     # world units — spatial hash cell size
-STEERING_SEPARATION_RADIUS        = 30      # world units — units steer apart within this
-STEERING_OBSTACLE_AVOIDANCE_RANGE = 50      # world units — obstacle detection range
-UNIT_COLLISION_RADIUS             = 15      # world units — unit physical radius
+STEERING_OBSTACLE_AVOIDANCE_RANGE = 50      # world units — terrain obstacle detection range
+UNIT_COLLISION_RADIUS             = 15      # world units — unit physical radius (ORCA agent radius)
+RVO_NEIGHBOR_DIST                 = 200     # world units — ORCA neighbor search radius
+RVO_TIME_HORIZON                  = 3.0     # seconds — ORCA collision prediction horizon
+RVO_MAX_NEIGHBORS                 = 10      # max neighbors per unit per tick
 
 # ── Objectives and outcome classification (Stage 6) ──────────────
 OUTCOME_WEIGHT_OBJECTIVE          = 0.75    # weight of objective score in final score
@@ -940,7 +942,7 @@ REPLAY_FORMAT                     = "json"  # "json" for debugging, "binary" fut
 - All L1–L17 invariants pass across 3+ seeds for all scenarios
 - All existing invariants (A through K) still pass (L17 regression check)
 - RPS triangle produces expected winners in all 6 matchups (L1–L3) across 5 seeds
-- Soft RPS validated — disadvantaged side wins >30% with positioning advantage (L4)
+- Soft RPS validated — positioning creates measurable behavioral gradient across scenario tiers (L4)
 - Small engagements (5v5) last ≥ 10 seconds in all matchups (L5)
 - Large engagements (100v100) last > 60 seconds (L6)
 - Mirror 50v50 lasts 45–75 seconds (L7)

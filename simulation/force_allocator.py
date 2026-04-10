@@ -5,6 +5,19 @@ from mission_contracts import ForceUnit, ForceComposition, ReinforcementSpec
 
 
 BUDGET_ARCHETYPES = {"defensive_stand", "multi_front_defense", "interception"}
+INSURGENT_ARCHETYPES = {"counterinsurgency", "suppression"}
+
+
+def _roll_insurgent_military(region, rng):
+    pop = region.fields.get("population", 50) if hasattr(region, 'fields') else 50
+    lo_thresh = config.INSURGENT_POP_LOW_THRESHOLD
+    hi_thresh = config.INSURGENT_POP_HIGH_THRESHOLD
+    t = max(0.0, min(1.0, (pop - lo_thresh) / (hi_thresh - lo_thresh)))
+    lo_range = config.INSURGENT_MIL_LOW_POP_RANGE
+    hi_range = config.INSURGENT_MIL_HIGH_POP_RANGE
+    range_lo = lo_range[0] + t * (hi_range[0] - lo_range[0])
+    range_hi = lo_range[1] + t * (hi_range[1] - lo_range[1])
+    return rng.uniform(range_lo, range_hi)
 
 
 def _lerp_parity(capacity):
@@ -25,24 +38,29 @@ def _lerp_parity(capacity):
 def compute_parity_ratio(capacity, difficulty):
     base = _lerp_parity(capacity)
     if difficulty == "easy":
-        return max(base, config.PARITY_EASY_FLOOR)
+        parity = max(base, config.PARITY_EASY_FLOOR)
     elif difficulty == "hard":
-        return min(base, config.PARITY_HARD_CEILING)
-    return base
+        parity = min(base, config.PARITY_HARD_CEILING)
+    else:
+        parity = base
+    return max(parity, config.PARITY_FLOOR)
 
 
-def determine_enemy_power(archetype, trigger_context, region):
+def determine_enemy_power(archetype, trigger_context, region, rng=None):
     if archetype in BUDGET_ARCHETYPES:
         budget = trigger_context.get("budget_committed", 0)
-        return budget * config.BUDGET_TO_POWER_SCALE
-    elif archetype == "suppression":
-        mil = trigger_context.get("breakaway_military",
-                                  region.fields.get("military", 30)
-                                  if hasattr(region, 'fields') else 30)
-        return mil * config.MILITARY_TO_POWER_SCALE
+        return budget * config.BUDGET_TO_POWER_SCALE, {}
+    elif archetype in INSURGENT_ARCHETYPES:
+        # Use pre-rolled value from trigger context if available, otherwise roll now
+        insurgent_mil = trigger_context.get("insurgent_military")
+        if insurgent_mil is None:
+            insurgent_mil = _roll_insurgent_military(region, rng)
+        return insurgent_mil * config.MILITARY_TO_POWER_SCALE, {
+            "insurgent_military": insurgent_mil,
+        }
     else:
         mil = region.fields.get("military", 50) if hasattr(region, 'fields') else 50
-        return mil * config.MILITARY_TO_POWER_SCALE
+        return mil * config.MILITARY_TO_POWER_SCALE, {}
 
 
 def _get_unit_roster():
@@ -155,7 +173,7 @@ def allocate_forces(archetype, trigger_context, region, capacity,
     roster = _get_unit_roster()
     asset_profile = config.ASSET_PROFILES.get(archetype, {})
 
-    enemy_power = determine_enemy_power(archetype, trigger_context, region)
+    enemy_power, extra_ctx = determine_enemy_power(archetype, trigger_context, region, rng)
     enemy_force = _fill_force(enemy_power, asset_profile, roster, enemy_faction_id, rng)
 
     parity = compute_parity_ratio(capacity, difficulty)
@@ -166,6 +184,25 @@ def allocate_forces(archetype, trigger_context, region, capacity,
     shortfall_types = []
     if capacity < config.CAPACITY_SHORTFALL_THRESHOLD:
         player_force, shortfall_types = apply_shortfall(player_force, capacity, rng)
+
+    if enemy_force.total_power > 0:
+        actual_parity = player_force.total_power / enemy_force.total_power
+        if actual_parity < config.PARITY_FLOOR:
+            cheapest = min(roster.values(), key=lambda r: r["power_rating"])
+            units = list(player_force.units)
+            total = player_force.total_power
+            while total / enemy_force.total_power < config.PARITY_FLOOR:
+                units.append(ForceUnit(
+                    unit_type=cheapest["stats"]["unit_type"],
+                    category=cheapest["category"],
+                    stats=cheapest["stats"],
+                    power_rating=cheapest["power_rating"],
+                    faction_id=player_faction_id,
+                    name=f"{cheapest['stats']['unit_type']}-floor-{len(units)+1}",
+                ))
+                total += cheapest["power_rating"]
+            player_force = ForceComposition(units=units, total_power=total,
+                                            faction_id=player_faction_id)
 
     region_mil = region.fields.get("military", 50) if hasattr(region, 'fields') else 50
     reinforcements = compute_reinforcement_spec(archetype, region_mil)
@@ -178,4 +215,5 @@ def allocate_forces(archetype, trigger_context, region, capacity,
         "player_budget": player_budget,
         "shortfall_types": shortfall_types,
         "reinforcements": reinforcements,
+        **extra_ctx,
     }

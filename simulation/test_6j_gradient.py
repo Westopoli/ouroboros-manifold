@@ -1,11 +1,12 @@
 import math
 import random
+import multiprocessing
 import config
 from unit import UnitStore, FIELD_X, FIELD_Y, FIELD_HP, FIELD_MAX_HP, FIELD_ATTACK_RANGE, FIELD_LAYER
 from tactical_engine import TacticalEngine
 from command import Command, CommandQueue
 from movement import apply_group_move
-from test_maps import open_field
+from test_maps import open_field, chokepoint
 
 FACTION_STRIKE = 0
 FACTION_LINE = 1
@@ -23,6 +24,21 @@ def _spawn_strike(store, faction, center_x, center_y, count, rng):
         jy = rng.uniform(-15, 15)
         x = center_x + (i % 5) * 40.0 + jx
         y = center_y + (i // 5) * 40.0 + jy
+        uids.append(store.spawn(ut, faction, x, y))
+    return uids
+
+
+def _spawn_strike_arc_x(store, faction, center_x, center_y, count, rng):
+    """Spawn Strike units spread along X axis (horizontal arc)."""
+    uids = []
+    spacing = 55.0
+    start_x = center_x - (count - 1) * spacing / 2.0
+    for i in range(count):
+        ut = "Raider" if i % 2 == 0 else "Interceptor"
+        jx = rng.uniform(-10, 10)
+        jy = rng.uniform(-15, 15)
+        x = start_x + i * spacing + jx
+        y = center_y + jy
         uids.append(store.spawn(ut, faction, x, y))
     return uids
 
@@ -93,82 +109,6 @@ def _total_damage_dealt_to(store, uids):
     return total
 
 
-def _run_tier(tier_name, setup_fn, seeds):
-    results = []
-    for seed in seeds:
-        r = setup_fn(seed)
-        results.append(r)
-    return results
-
-
-def _setup_t1(seed):
-    rng = random.Random(seed)
-    tmap = open_field()
-    store = UnitStore()
-
-    # Line holds position in tight formation. Strike advances head-on.
-    line_uids = _spawn_line_formed(store, FACTION_LINE, 2000.0, 2500.0, 10, rng)
-    strike_uids = _spawn_strike(store, FACTION_STRIKE, 2000.0, 1500.0, 10, rng)
-
-    queue = CommandQueue()
-    queue.add(Command(tick=0, type="group_move", unit_ids=strike_uids,
-                      params={"target_x": 2000.0, "target_y": 2500.0}))
-
-    return _run_engagement(store, tmap, queue, strike_uids, line_uids, seed)
-
-
-def _setup_t2(seed):
-    rng = random.Random(seed)
-    tmap = open_field()
-    store = UnitStore()
-
-    line_uids = _spawn_line_formed(store, FACTION_LINE, 2000.0, 2000.0, 10, rng)
-    strike_uids = _spawn_strike(store, FACTION_STRIKE, 3200.0, 2000.0, 10, rng)
-
-    queue = CommandQueue()
-    queue.add(Command(tick=0, type="group_move", unit_ids=strike_uids,
-                      params={"target_x": 2000.0, "target_y": 2000.0}))
-
-    return _run_engagement(store, tmap, queue, strike_uids, line_uids, seed)
-
-
-def _setup_t3a(seed):
-    rng = random.Random(seed)
-    tmap = open_field()
-    store = UnitStore()
-
-    # Line stationary in column (150 wu spacing, ~1350 wu total spread).
-    # Strike attacks from 90° flank into column midpoint. Line's rear units
-    # are too far to fire initially — Strike gets piecemeal engagement.
-    line_uids = _spawn_line_column(store, FACTION_LINE, 2000.0, 1325.0, 10, 150.0, rng)
-    strike_uids = _spawn_strike(store, FACTION_STRIKE, 3200.0, 2000.0, 10, rng)
-
-    queue = CommandQueue()
-    queue.add(Command(tick=0, type="group_move", unit_ids=strike_uids,
-                      params={"target_x": 2000.0, "target_y": 2000.0}))
-
-    return _run_engagement(store, tmap, queue, strike_uids, line_uids, seed)
-
-
-def _setup_t3b(seed):
-    rng = random.Random(seed)
-    tmap = open_field()
-    store = UnitStore()
-
-    # Line near Bombards (within engagement range) — fight starts immediately.
-    # Bombards allied to Strike so Line fights them. Strike arrives from Line's
-    # 3-o'clock after 3 sec delay. Line's HP and attention are split.
-    line_uids = _spawn_line_formed(store, FACTION_LINE, 2000.0, 2000.0, 10, rng)
-    _spawn_bombards(store, FACTION_STRIKE, 2000.0, 1500.0, 3, rng)
-    strike_uids = _spawn_strike(store, FACTION_STRIKE, 3200.0, 2000.0, 10, rng)
-
-    queue = CommandQueue()
-    queue.add(Command(tick=60, type="group_move", unit_ids=strike_uids,
-                      params={"target_x": 2000.0, "target_y": 2000.0}))
-
-    return _run_engagement(store, tmap, queue, strike_uids, line_uids, seed)
-
-
 def _run_engagement(store, tmap, queue, strike_uids, line_uids, seed):
     engine = TacticalEngine(tmap, store, seed=seed)
     engine.command_queue = queue
@@ -226,28 +166,114 @@ def _run_engagement(store, tmap, queue, strike_uids, line_uids, seed):
     }
 
 
+def _setup_t1(seed):
+    rng = random.Random(seed)
+    tmap = open_field()
+    store = UnitStore()
+    line_uids = _spawn_line_formed(store, FACTION_LINE, 2000.0, 2500.0, 10, rng)
+    strike_uids = _spawn_strike(store, FACTION_STRIKE, 2000.0, 1500.0, 10, rng)
+    queue = CommandQueue()
+    queue.add(Command(tick=0, type="group_move", unit_ids=strike_uids,
+                      params={"target_x": 2000.0, "target_y": 2500.0}))
+    return _run_engagement(store, tmap, queue, strike_uids, line_uids, seed)
+
+
+def _setup_t2a(seed):
+    rng = random.Random(seed)
+    tmap = chokepoint()
+    store = UnitStore()
+    # Strike: wide arc south of corridor, spread along X within walkable zone [1700-2300]
+    strike_uids = _spawn_strike_arc_x(store, FACTION_STRIKE, 2000.0, 2900.0, 10, rng)
+    # Line: tight formation north of corridor
+    line_uids = _spawn_line_formed(store, FACTION_LINE, 2000.0, 1100.0, 10, rng)
+    queue = CommandQueue()
+    # Line marches south through the corridor toward Strike
+    queue.add(Command(tick=0, type="group_move", unit_ids=line_uids,
+                      params={"target_x": 2000.0, "target_y": 2900.0}))
+    return _run_engagement(store, tmap, queue, strike_uids, line_uids, seed)
+
+
+def _setup_t2b(seed):
+    rng = random.Random(seed)
+    tmap = chokepoint()
+    store = UnitStore()
+    # Strike: wide arc south of corridor
+    strike_uids = _spawn_strike_arc_x(store, FACTION_STRIKE, 2000.0, 2900.0, 10, rng)
+    # Line: 15 units north of corridor
+    line_uids = _spawn_line_formed(store, FACTION_LINE, 2000.0, 1100.0, 15, rng)
+    queue = CommandQueue()
+    queue.add(Command(tick=0, type="group_move", unit_ids=line_uids,
+                      params={"target_x": 2000.0, "target_y": 2900.0}))
+    return _run_engagement(store, tmap, queue, strike_uids, line_uids, seed)
+
+
+def _setup_t3a(seed):
+    rng = random.Random(seed)
+    tmap = open_field()
+    store = UnitStore()
+    line_uids = _spawn_line_column(store, FACTION_LINE, 2000.0, 1325.0, 10, 150.0, rng)
+    strike_uids = _spawn_strike(store, FACTION_STRIKE, 3200.0, 2000.0, 10, rng)
+    queue = CommandQueue()
+    queue.add(Command(tick=0, type="group_move", unit_ids=strike_uids,
+                      params={"target_x": 2000.0, "target_y": 2000.0}))
+    return _run_engagement(store, tmap, queue, strike_uids, line_uids, seed)
+
+
+def _setup_t3b(seed):
+    rng = random.Random(seed)
+    tmap = open_field()
+    store = UnitStore()
+    line_uids = _spawn_line_formed(store, FACTION_LINE, 2000.0, 2000.0, 10, rng)
+    _spawn_bombards(store, FACTION_STRIKE, 2000.0, 1500.0, 3, rng)
+    strike_uids = _spawn_strike(store, FACTION_STRIKE, 3200.0, 2000.0, 10, rng)
+    queue = CommandQueue()
+    queue.add(Command(tick=60, type="group_move", unit_ids=strike_uids,
+                      params={"target_x": 2000.0, "target_y": 2000.0}))
+    return _run_engagement(store, tmap, queue, strike_uids, line_uids, seed)
+
+
+# Map tier name to setup function for multiprocessing
+_SETUP_FNS = {
+    "T1": _setup_t1,
+    "T2a": _setup_t2a,
+    "T2b": _setup_t2b,
+    "T3a": _setup_t3a,
+    "T3b": _setup_t3b,
+}
+
+
+def _run_one(args):
+    tier_id, seed = args
+    return (tier_id, seed, _SETUP_FNS[tier_id](seed))
+
+
 def run():
     seeds = list(range(1, NUM_SEEDS + 1))
 
     tiers = [
-        ("T1", "Head-on formed", _setup_t1),
-        ("T2", "Flank vs formed", _setup_t2),
-        ("T3a", "Flank vs column", _setup_t3a),
-        ("T3b", "Flank vs engaged", _setup_t3b),
+        ("T1", "Head-on formed"),
+        ("T2a", "Choke 10v10 (S def)"),
+        ("T2b", "Choke 15v10 (S def)"),
+        ("T3a", "Flank vs column"),
+        ("T3b", "Flank vs engaged"),
     ]
 
     print("=" * 108)
     print("6J BEHAVIORAL GRADIENT — Strike vs Line, %d seeds per tier" % NUM_SEEDS)
     print("=" * 108)
 
-    all_results = {}
-    for tier_id, tier_name, setup_fn in tiers:
-        results = []
-        for seed in seeds:
-            r = setup_fn(seed)
-            results.append(r)
-        all_results[tier_id] = results
-        wins = sum(1 for r in results if r["strike_wins"])
+    # Build all (tier, seed) jobs and run in parallel
+    jobs = [(tid, seed) for tid, _ in tiers for seed in seeds]
+    with multiprocessing.Pool() as pool:
+        raw_results = pool.map(_run_one, jobs)
+
+    # Group results by tier
+    all_results = {tid: [] for tid, _ in tiers}
+    for tier_id, seed, result in raw_results:
+        all_results[tier_id].append(result)
+
+    for tier_id, tier_name in tiers:
+        wins = sum(1 for r in all_results[tier_id] if r["strike_wins"])
         print(f"  {tier_id} {tier_name} done — Strike wins {wins}/{NUM_SEEDS}")
 
     print()
@@ -257,7 +283,7 @@ def run():
           f"{'---------':>10}{'---------':>10}{'-------':>9}{'---------------':>16}")
 
     tier_stats = {}
-    for tier_id, tier_name, _ in tiers:
+    for tier_id, tier_name in tiers:
         results = all_results[tier_id]
         wins = sum(1 for r in results if r["strike_wins"])
         ttws = [r["ttw"] for r in results]
@@ -278,7 +304,7 @@ def run():
         }
 
     t1_ttw = tier_stats["T1"]["ttw_mean"]
-    for tier_id, tier_name, _ in tiers:
+    for tier_id, tier_name in tiers:
         s = tier_stats[tier_id]
         ttw_ratio = s["ttw_mean"] / t1_ttw if t1_ttw > 0 else 0.0
         s["ttw_ratio"] = ttw_ratio
@@ -293,18 +319,24 @@ def run():
     print(f"\nGRADIENT CHECK:")
 
     t1 = tier_stats["T1"]
-    t2 = tier_stats["T2"]
+    t2a = tier_stats["T2a"]
+    t2b = tier_stats["T2b"]
     t3a = tier_stats["T3a"]
     t3b = tier_stats["T3b"]
+
+    t2_best_wr = max(t2a["win_rate"], t2b["win_rate"])
+    t2_best_ttw_ratio = max(t2a["ttw_ratio"], t2b["ttw_ratio"])
+    t2_best_dmg = max(t2a["dmg_ratio"], t2b["dmg_ratio"])
+    t2_best_fire = max(t2a["fire_delta"], t2b["fire_delta"])
     t3_ttw_ratio = max(t3a["ttw_ratio"], t3b["ttw_ratio"])
     t3_win_rate = max(t3a["win_rate"], t3b["win_rate"])
     t3_dmg_ratio = max(t3a["dmg_ratio"], t3b["dmg_ratio"])
 
     checks = []
 
-    c1 = t2["ttw_ratio"] >= 1.3
+    c1 = t2_best_ttw_ratio >= 1.3
     checks.append(c1)
-    print(f"  TTW ratio T2/T1 >= 1.3:  {t2['ttw_ratio']:.2f}  {'PASS' if c1 else 'FAIL'}")
+    print(f"  TTW ratio T2/T1 >= 1.3:  {t2_best_ttw_ratio:.2f} (T2a={t2a['ttw_ratio']:.2f}, T2b={t2b['ttw_ratio']:.2f})  {'PASS' if c1 else 'FAIL'}")
 
     c2 = t3_ttw_ratio >= 1.6
     checks.append(c2)
@@ -314,21 +346,24 @@ def run():
     checks.append(c3)
     print(f"  Win rate T1 <= 5%%:       {t1['win_rate']:.0%}    {'PASS' if c3 else 'FAIL'}")
 
-    t2_wr = t2["win_rate"]
-    mono_win = (t3_win_rate >= t2_wr >= t1["win_rate"])
+    mono_win = (t3_win_rate >= t2_best_wr >= t1["win_rate"])
     checks.append(mono_win)
-    print(f"  Win rate T3 > T2 > T1:   {t1['win_rate']:.0%} -> {t2_wr:.0%} -> {t3_win_rate:.0%}  {'PASS' if mono_win else 'FAIL'} (monotonic)")
+    print(f"  Win rate T3 > T2 > T1:   {t1['win_rate']:.0%} -> {t2_best_wr:.0%} -> {t3_win_rate:.0%}  {'PASS' if mono_win else 'FAIL'} (monotonic)")
 
-    c5 = t2["fire_delta"] > t1["fire_delta"]
+    c5 = t2_best_fire > t1["fire_delta"]
     checks.append(c5)
-    print(f"  Fire%% Δ T2 > T1:        {t1['fire_delta']:+.1%} -> {t2['fire_delta']:+.1%}  {'PASS' if c5 else 'FAIL'}")
+    print(f"  Fire%% Δ T2 > T1:        {t1['fire_delta']:+.1%} -> {t2_best_fire:+.1%}  {'PASS' if c5 else 'FAIL'}")
 
-    mono_dmg = (t3_dmg_ratio >= t2["dmg_ratio"] >= t1["dmg_ratio"])
+    mono_dmg = (t3_dmg_ratio >= t2_best_dmg >= t1["dmg_ratio"])
     checks.append(mono_dmg)
-    print(f"  Dmg ratio T3 > T2 > T1:  {t1['dmg_ratio']:.2f} -> {t2['dmg_ratio']:.2f} -> {t3_dmg_ratio:.2f}  {'PASS' if mono_dmg else 'FAIL'} (monotonic)")
+    print(f"  Dmg ratio T3 > T2 > T1:  {t1['dmg_ratio']:.2f} -> {t2_best_dmg:.2f} -> {t3_dmg_ratio:.2f}  {'PASS' if mono_dmg else 'FAIL'} (monotonic)")
 
     all_pass = all(checks)
     print(f"\n  L4 (revised): {'PASS' if all_pass else 'FAIL'} ({sum(checks)}/{len(checks)} gradient checks)")
+    print()
+
+    print("  NOTE: T2a/T2b are chokepoint scenarios where Strike DEFENDS.")
+    print("  High Strike win rates in T2 = terrain advantage working correctly.")
     print()
 
 

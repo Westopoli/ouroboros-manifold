@@ -55,6 +55,20 @@ class MissionSetup:
 
 
 @dataclass
+class CommanderSelection:
+    character_id: str
+    character_name: str
+    lineage_id: str | None
+    faction_id: str
+    region_id: str
+    chapter_number: int
+    pool_used: str | None        # "previous_descendant"|"nemesis_descendant"|"unrelated"; None on STAY or bloodline succession
+    pool_rolled: str | None      # which pool was rolled before fallthrough; None when no roll occurred
+    rotation_reason: str | None  # None=stayed, "hard_cap"|"normal"|"commander_death"|"forced"
+    rotation_mechanism: str | None  # "pool_roll"|"bloodline_succession"; None on STAY
+
+
+@dataclass
 class MissionResult:
     mission_id: str
     outcome_band: str

@@ -1,4 +1,7 @@
 import config
+from force_allocator import allocate_forces
+from mission_contracts import MissionSetup, ObjectiveSpec
+from mission_briefing import assemble_briefing
 
 
 REVOLT_EVENT_IDS = {
@@ -80,6 +83,9 @@ def trigger_defensive_stand(region, world, registry, player_faction_id,
         return False, {}
     attacks = _recent_actions(action_log, target_region=region.id,
                               action_types=ATTACK_ACTIONS)
+    # Exclude stale log entries where the player attacked this region when it was
+    # enemy-owned — after territory flips those entries name the player as attacker.
+    attacks = [a for a in attacks if a.get("faction_id") != player_faction_id]
     if not attacks:
         return False, {}
     top = max(attacks, key=lambda a: a.get("budget_committed", 0))
@@ -179,8 +185,8 @@ def trigger_multi_front_defense(region, world, registry, player_faction_id,
                                 event_log, action_log, conquest_log, current_tick):
     if region.faction_id != player_faction_id:
         return False, {}
-    attacks = _recent_actions(action_log, target_region=region.id,
-                              action_types=ATTACK_ACTIONS)
+    attacks = [a for a in _recent_actions(action_log, target_region=region.id,
+               action_types=ATTACK_ACTIONS) if a.get("faction_id") != player_faction_id]
     hostiles = _hostile_neighbors(world, region, registry)
     high_mil_hostiles = [h for h in hostiles if h.fields["military"] > 50]
     attacking_factions = {a.get("faction_id") for a in attacks}
@@ -198,8 +204,8 @@ def trigger_interception(region, world, registry, player_faction_id,
                          event_log, action_log, conquest_log, current_tick):
     if region.faction_id != player_faction_id:
         return False, {}
-    attacks = _recent_actions(action_log, target_region=region.id,
-                              action_types=ATTACK_ACTIONS)
+    attacks = [a for a in _recent_actions(action_log, target_region=region.id,
+               action_types=ATTACK_ACTIONS) if a.get("faction_id") != player_faction_id]
     if not attacks:
         return False, {}
     for attack in attacks:
@@ -457,3 +463,183 @@ def score_candidates(candidates, world, registry, player_faction_id,
 
     scored.sort(key=lambda x: -x["score"])
     return scored
+
+
+def select_mission(scored_candidates, rng):
+    top_n = config.GENERATOR_TOP_N_CANDIDATES
+    pool = scored_candidates[:top_n]
+    if not pool:
+        return None
+    weights = [c["score"] for c in pool]
+    total = sum(weights)
+    if total <= 0:
+        return rng.choice(pool)
+    r = rng.random() * total
+    cumulative = 0.0
+    for c in pool:
+        cumulative += c["score"]
+        if r <= cumulative:
+            return c
+    return pool[-1]
+
+
+ARCHETYPE_OBJECTIVES = {
+    "defensive_stand":     [("defend_region", 0.6, True), ("destroy_attackers", 0.4, False)],
+    "siege_breaking":      [("destroy_positions", 0.5, True), ("reopen_supply", 0.3, False), ("hold_ground", 0.2, False)],
+    "reconquest":          [("destroy_garrison", 0.5, True), ("secure_region", 0.3, False), ("preserve_infrastructure", 0.2, False)],
+    "assault":             [("destroy_defenders", 0.5, True), ("capture_region", 0.3, True), ("breach_fortifications", 0.2, False)],
+    "suppression":         [("destroy_rebels", 0.6, True), ("secure_region", 0.4, False)],
+    "multi_front_defense": [("hold_all_fronts", 0.4, True), ("destroy_primary_threat", 0.3, False), ("minimize_losses", 0.3, False)],
+    "interception":        [("destroy_enemy_force", 0.6, True), ("prevent_breakthrough", 0.4, False)],
+    "evacuation":          [("extract_assets", 0.5, True), ("delay_enemy", 0.3, False), ("protect_convoys", 0.2, False)],
+    "containment":         [("hold_boundary", 0.5, True), ("prevent_expansion", 0.3, False), ("maintain_positions", 0.2, False)],
+    "counterinsurgency":   [("eliminate_insurgents", 0.5, True), ("minimize_collateral", 0.3, False), ("restore_order", 0.2, False)],
+}
+
+
+def _build_objectives(archetype):
+    specs = ARCHETYPE_OBJECTIVES.get(archetype, [("generic_objective", 1.0, True)])
+    objectives = []
+    for i, (obj_type, weight, is_primary) in enumerate(specs):
+        objectives.append(ObjectiveSpec(
+            id=f"obj_{archetype}_{i}",
+            type=obj_type,
+            weight=weight,
+            params={},
+            is_primary=is_primary,
+        ))
+    return objectives
+
+
+def _field_descriptor(value):
+    if value < 20:
+        return "critically low"
+    elif value < 35:
+        return "dangerously low"
+    elif value < 50:
+        return "weakened"
+    elif value < 65:
+        return "moderate"
+    elif value < 80:
+        return "strong"
+    return "robust"
+
+
+def _build_variable_slots(candidate, region, world, registry, player_faction_id):
+    slots = {
+        "region_name": getattr(region, 'display_name', region.id),
+        "region_id": region.id,
+        "archetype": candidate["archetype"],
+        "military_desc": _field_descriptor(region.fields.get("military", 50)),
+        "economy_desc": _field_descriptor(region.fields.get("economy", 50)),
+        "tension_desc": _field_descriptor(region.fields.get("tension", 50)),
+        "military_value": region.fields.get("military", 50),
+        "economy_value": region.fields.get("economy", 50),
+        "tension_value": region.fields.get("tension", 50),
+        "player_faction": player_faction_id,
+    }
+    player_faction = registry.get(player_faction_id)
+    if player_faction:
+        slots["player_faction_name"] = getattr(player_faction, 'display_name',
+                                                getattr(player_faction, 'id', player_faction_id))
+
+    ctx = candidate.get("trigger_context", {})
+    enemy_fid = ctx.get("attacker_faction") or ctx.get("target_faction") or \
+                ctx.get("conquering_faction") or ctx.get("breakaway_faction") or \
+                ctx.get("expanding_faction")
+    if enemy_fid:
+        enemy_faction = registry.get(enemy_fid)
+        slots["enemy_faction_name"] = getattr(enemy_faction, 'display_name',
+                                               enemy_fid) if enemy_faction else enemy_fid
+        slots["enemy_faction_id"] = enemy_fid
+
+    for k, v in ctx.items():
+        if k not in slots:
+            slots[k] = v
+
+    return slots
+
+
+def generate_mission(world, registry, player_faction_id, event_log, action_log,
+                     conquest_log, current_tick, difficulty, rng,
+                     ledger=None, current_lineage_id=None,
+                     player_preferences=None):
+    candidates = build_candidate_pool(
+        world, registry, player_faction_id, event_log, action_log,
+        conquest_log, current_tick)
+    if not candidates:
+        return None
+
+    scored = score_candidates(
+        candidates, world, registry, player_faction_id,
+        event_log, action_log, conquest_log, current_tick,
+        ledger=ledger, current_lineage_id=current_lineage_id,
+        player_preferences=player_preferences)
+
+    selected = select_mission(scored, rng)
+    if not selected:
+        return None
+
+    region = world.regions[selected["region_id"]]
+    archetype = selected["archetype"]
+    trigger_ctx = selected.get("trigger_context", {})
+
+    capacity = region.composites.get("capacity", 0.5) if hasattr(region, 'composites') else 0.5
+    capacity_norm = capacity / 100.0 if capacity > 1.0 else capacity
+
+    enemy_fid = trigger_ctx.get("attacker_faction") or \
+                trigger_ctx.get("target_faction") or \
+                trigger_ctx.get("conquering_faction") or \
+                trigger_ctx.get("breakaway_faction") or \
+                trigger_ctx.get("expanding_faction") or \
+                "enemy_faction"
+
+    allocation = allocate_forces(
+        archetype, trigger_ctx, region, capacity_norm,
+        difficulty, player_faction_id, enemy_fid, rng)
+
+    objectives = _build_objectives(archetype)
+    variable_slots = _build_variable_slots(
+        selected, region, world, registry, player_faction_id)
+
+    variable_slots["player_units"] = len(allocation["player_force"].units)
+    variable_slots["enemy_units"] = len(allocation["enemy_force"].units)
+    variable_slots["player_power"] = allocation["player_force"].total_power
+    variable_slots["enemy_power"] = allocation["enemy_force"].total_power
+    variable_slots["parity_ratio"] = allocation["parity_ratio"]
+    variable_slots["shortfall_types"] = allocation["shortfall_types"]
+    variable_slots["reinforcements"] = allocation["reinforcements"]
+
+    briefing = assemble_briefing(archetype, variable_slots)
+
+    mission_id = f"mission_{archetype}_{selected['region_id']}_{current_tick}"
+
+    setup = MissionSetup(
+        mission_id=mission_id,
+        archetype=archetype,
+        region_id=selected["region_id"],
+        map_params={},
+        player_force=allocation["player_force"],
+        enemy_forces=[allocation["enemy_force"]],
+        objectives=objectives,
+        reinforcements=allocation["reinforcements"],
+        time_limit_ticks=config.ARCHETYPE_TIME_LIMITS.get(archetype, 300),
+        behavior_script_id=f"behavior_{archetype}",
+        briefing=briefing,
+        difficulty=difficulty,
+        metadata={
+            "score": selected["score"],
+            "urgency": selected["urgency"],
+            "relevance": selected["relevance"],
+            "preference": selected["preference"],
+            "trigger_context": trigger_ctx,
+            "parity_ratio": allocation["parity_ratio"],
+        },
+    )
+
+    return {
+        "setup": setup,
+        "scored_candidates": scored,
+        "selected": selected,
+        "allocation": allocation,
+    }

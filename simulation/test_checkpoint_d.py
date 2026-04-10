@@ -5,7 +5,7 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)))
 import random
 from collections import Counter
 import config
-from force_allocator import allocate_forces, compute_reinforcement_spec
+from force_allocator import allocate_forces, compute_reinforcement_spec, _roll_insurgent_military
 
 
 class MockRegion:
@@ -38,6 +38,10 @@ def main():
     difficulties = ["easy", "medium", "hard"]
 
     for arch_key, arch_label, trigger_ctx, region in archetypes:
+        if arch_key in ("counterinsurgency", "suppression") and "insurgent_military" not in trigger_ctx:
+            insurgent_mil = _roll_insurgent_military(region, rng)
+            trigger_ctx["insurgent_military"] = insurgent_mil
+
         print(f"\n{'─'*70}")
         print(f"  ARCHETYPE: {arch_key} ({arch_label})")
         print(f"  Trigger context: {trigger_ctx}")

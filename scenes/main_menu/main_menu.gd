@@ -1,8 +1,16 @@
 extends Control
 
+const HOVER_GLYPH_CAP := 12
+const HOVER_GLYPHS := ["✦", "·"]
+const HOVER_GLYPH_COUNTS := {
+	"NEW GAME": 4, "CONTINUE": 3, "ERA LIBRARY": 3, "SETTINGS": 2, "QUIT": 2,
+}
+
 var _menu_items: Array[Control] = []
-var _bg_celebration: Control
+var _galaxy: Node
 var _title_heartbeat: Control
+var _hover_layer: Control
+var _active_hover_glyphs := 0
 
 func _ready() -> void:
 	_build_ui()
@@ -16,7 +24,7 @@ func _build_ui() -> void:
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 
-	_setup_bg_celebration()
+	_setup_galaxy_viewport()
 
 	var content := VBoxContainer.new()
 	content.set_anchors_preset(Control.PRESET_CENTER_LEFT)
@@ -82,6 +90,11 @@ func _build_ui() -> void:
 	key_hint.add_theme_color_override("font_color", ThemeConstants.TERTIARY)
 	content.add_child(key_hint)
 
+	_hover_layer = Control.new()
+	_hover_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_hover_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_hover_layer)
+
 	var version := Label.new()
 	version.text = "v0.9.0"
 	version.add_theme_font_override("font", ThemeConstants.font_mono_regular)
@@ -94,11 +107,30 @@ func _build_ui() -> void:
 	add_child(version)
 
 
-func _setup_bg_celebration() -> void:
-	var bg_scene := load("res://scenes/main_menu/menu_bg_celebration.gd")
-	_bg_celebration = Control.new()
-	_bg_celebration.set_script(bg_scene)
-	add_child(_bg_celebration)
+func _setup_galaxy_viewport() -> void:
+	var container := SubViewportContainer.new()
+	container.set_anchors_preset(Control.PRESET_FULL_RECT)
+	container.stretch = true
+	container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(container)
+
+	var viewport := SubViewport.new()
+	viewport.transparent_bg = true
+	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	viewport.msaa_3d = Viewport.MSAA_DISABLED
+	viewport.use_hdr_2d = false
+	container.add_child(viewport)
+
+	var galaxy_scene := load("res://scenes/shared/galaxy/galaxy_structure.tscn")
+	var galaxy: Node3D = galaxy_scene.instantiate()
+	viewport.add_child(galaxy)
+
+	galaxy.start_auto_camera()
+	_galaxy = galaxy
+
+	container.modulate = Color(1, 1, 1, 0.0)
+	var tw := create_tween()
+	tw.tween_property(container, "modulate:a", 0.7, 2.0)
 
 
 func _setup_title_heartbeat() -> void:
@@ -109,8 +141,8 @@ func _setup_title_heartbeat() -> void:
 
 	get_tree().process_frame.connect(_position_heartbeat_deferred, CONNECT_ONE_SHOT)
 
-	if _bg_celebration:
-		_title_heartbeat.connect_to_celebration(_bg_celebration)
+	if _galaxy and _galaxy.has_signal("structure_revealed"):
+		_galaxy.structure_revealed.connect(_title_heartbeat._on_climax)
 
 
 func _position_heartbeat_deferred() -> void:
@@ -143,6 +175,7 @@ func _create_menu_item(label_text: String, action: String) -> Control:
 		var tw := create_tween()
 		tw.tween_property(accent_line, "custom_minimum_size:x", 16.0, 0.15)
 		tw.parallel().tween_property(accent_line, "modulate:a", 1.0, 0.15)
+		_spawn_hover_bloom(container, label_text)
 	)
 	container.mouse_exited.connect(func():
 		label.add_theme_color_override("font_color", ThemeConstants.SECONDARY)
@@ -152,9 +185,82 @@ func _create_menu_item(label_text: String, action: String) -> Control:
 	)
 	container.gui_input.connect(func(event: InputEvent):
 		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			if action != "quit":
+				_spawn_click_burst(container)
 			_on_menu_action(action)
 	)
 	return container
+
+
+func _spawn_hover_bloom(container: Control, label_text: String) -> void:
+	var count: int = HOVER_GLYPH_COUNTS.get(label_text, 2)
+	if _active_hover_glyphs >= HOVER_GLYPH_CAP:
+		return
+
+	var origin := container.global_position + Vector2(0, container.size.y * 0.5)
+
+	for i in range(count):
+		if _active_hover_glyphs >= HOVER_GLYPH_CAP:
+			break
+		_active_hover_glyphs += 1
+
+		var glyph_text: String = HOVER_GLYPHS[randi() % HOVER_GLYPHS.size()]
+		var lbl := Label.new()
+		lbl.text = glyph_text
+		lbl.add_theme_font_override("font", ThemeConstants.font_mono_regular)
+		lbl.add_theme_font_size_override("font_size", 11)
+		lbl.add_theme_color_override("font_color", Color("#D4A017"))
+		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		lbl.modulate.a = 0.0
+
+		var y_offset := randf_range(-8.0, 8.0)
+		lbl.position = origin + Vector2(0, y_offset)
+		_hover_layer.add_child(lbl)
+
+		var drift_x := randf_range(-25.0, -40.0)
+		var drift_y := randf_range(-6.0, 6.0)
+		var delay := randf() * 0.1
+
+		var tw := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+		tw.tween_interval(delay)
+		tw.tween_property(lbl, "modulate:a", 0.25, 0.1)
+		tw.parallel().tween_property(lbl, "position", lbl.position + Vector2(drift_x, drift_y), 0.5)
+		tw.tween_property(lbl, "modulate:a", 0.0, 0.3)
+		tw.tween_callback(func():
+			_active_hover_glyphs -= 1
+			if is_instance_valid(lbl):
+				lbl.queue_free()
+		)
+
+
+func _spawn_click_burst(container: Control) -> void:
+	var center := container.global_position + Vector2(0, container.size.y * 0.5)
+	var gold := Color("#D4A017")
+
+	for i in range(6):
+		var angle := (float(i) / 6.0) * TAU
+		var start_pos := center + Vector2(cos(angle), sin(angle)) * 30.0
+		var end_pos := center + Vector2(cos(angle), sin(angle)) * 60.0
+
+		var glyph_text: String = HOVER_GLYPHS[randi() % HOVER_GLYPHS.size()]
+		var lbl := Label.new()
+		lbl.text = glyph_text
+		lbl.add_theme_font_override("font", ThemeConstants.font_mono_regular)
+		lbl.add_theme_font_size_override("font_size", 11)
+		lbl.add_theme_color_override("font_color", gold)
+		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		lbl.modulate.a = 0.0
+		lbl.position = start_pos
+		_hover_layer.add_child(lbl)
+
+		var tw := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+		tw.tween_property(lbl, "modulate:a", 0.30, 0.08)
+		tw.parallel().tween_property(lbl, "position", end_pos, 0.3)
+		tw.tween_property(lbl, "modulate:a", 0.0, 0.15)
+		tw.tween_callback(func():
+			if is_instance_valid(lbl):
+				lbl.queue_free()
+		)
 
 
 func _on_menu_action(action: String) -> void:

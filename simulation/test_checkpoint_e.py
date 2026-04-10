@@ -1,126 +1,210 @@
-from library_validator import validate_all
+#!/usr/bin/env python3
+import os
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-test_fragments = [
-    # ── Category A: lineage_thrived (5 fragments) ──
-    {
-        "id": "LT_O_001", "type": "opening", "category": "lineage_thrived",
-        "text": "In the years that followed, the {lineage_name} family found new footing in {region_name}.",
-    },
-    {
-        "id": "LT_D_001", "type": "detail", "category": "lineage_thrived",
-        "text": "The {lineage_name} household prospered as trade routes shifted in their favor, drawing wealth and influence to their holdings.",
-    },
-    # DELIBERATE ERROR: invalid slot {mood_rating}
-    {
-        "id": "LT_D_002", "type": "detail", "category": "lineage_thrived",
-        "text": "Their standing improved markedly, the {lineage_name} name spoken with a {mood_rating} that surprised even their allies.",
-    },
-    {
-        "id": "LT_C_001", "type": "closing", "category": "lineage_thrived",
-        "text": "What the {lineage_name} built in those years would outlast the generation that built it.",
-    },
-    # DELIBERATE ERROR: mechanical language
-    {
-        "id": "LT_C_002", "type": "closing", "category": "lineage_thrived",
-        "text": "Stability dropped to 23 across the {lineage_name} holdings, though few noticed at first.",
-    },
+import config
+from mission_contracts import MissionResult
+from outcome_resolver import resolve_outcome, compute_delta
 
-    # ── Category B: chain_conflict_victory (5 fragments) ──
-    {
-        "id": "CCV_O_001", "type": "opening", "category": "chain_conflict_victory",
-        "text": "The campaign for {region_name} ended as swiftly as it had begun.",
-    },
-    # DELIBERATE ERROR: word limit exceeded (opening > 30 words)
-    {
-        "id": "CCV_O_002", "type": "opening", "category": "chain_conflict_victory",
-        "text": "After long months of siege and counter-siege across the disputed territories surrounding {region_name}, "
-                "the defenders finally broke and the gates were thrown open to the advancing columns of the victorious army.",
-    },
-    {
-        "id": "CCV_D_001", "type": "detail", "category": "chain_conflict_victory",
-        "text": "The {faction_name} forces swept through {region_name}, establishing control before the defenders could regroup.",
-    },
-    # DELIBERATE ERROR: near-duplicate of CCV_D_001 (edit distance < 3)
-    {
-        "id": "CCV_D_002", "type": "detail", "category": "chain_conflict_victory",
-        "text": "The {faction_name} forces swept through {region_name}, establishing control before the defenders could re-group.",
-    },
-    {
-        "id": "CCV_C_001", "type": "closing", "category": "chain_conflict_victory",
-        "text": "The new border held, though the cost of holding it would be measured in generations, not campaigns.",
-    },
 
-    # ── Category C: regional_decline (5 fragments) ──
-    {
-        "id": "RD_O_001", "type": "opening", "category": "regional_decline",
-        "text": "The slow erosion of {region_name} began without fanfare.",
-    },
-    {
-        "id": "RD_D_001", "type": "detail", "category": "regional_decline",
-        "text": "Fields lay fallow and the young departed for more promising lands, leaving {region_name} to age in silence.",
-    },
-    {
-        "id": "RD_D_002", "type": "detail", "category": "regional_decline",
-        "text": "What had once been a {stability_level} province now showed cracks in every institution.",
-    },
-    {
-        "id": "RD_C_001", "type": "closing", "category": "regional_decline",
-        "text": "No single event marked {region_name}'s decline — it was the accumulation of a hundred small surrenders.",
-    },
-    {
-        "id": "RD_C_002", "type": "closing", "category": "regional_decline",
-        "text": "The land endured, as it always had, though fewer remained to tend it.",
-    },
-]
+class MockRegion:
+    def __init__(self, id, faction_id, fields=None):
+        self.id = id
+        self.faction_id = faction_id
+        self.fields = dict(fields) if fields else {}
 
-required_slots = {
-    "lineage_thrived": {"{lineage_name}"},
-    "chain_conflict_victory": {"{region_name}"},
-    "regional_decline": {"{region_name}"},
-}
 
-report = validate_all(test_fragments, category_required_slots=required_slots)
+class MockWorld:
+    def __init__(self, regions, adjacency=None):
+        self.regions = {r.id: r for r in regions}
+        self._adjacency = adjacency or {}
 
-print("=== Checkpoint E: Library Validator ===")
-print(f"  Total fragments: {report['summary']['total_fragments']}")
+    def get_neighbors(self, region_id, edge_type=None):
+        return self._adjacency.get(region_id, [])
 
-print(f"\n=== Layer 1: Structural ({report['summary']['structural_failures']} issues) ===")
-for issue in report["structural"]:
-    print(f"  [{issue['id']}] {issue['issue']}: {issue['detail']}")
 
-print(f"\n=== Layer 2: Dedup ({report['summary']['dedup_matches']} matches) ===")
-for match in report["dedup"]["matches"]:
-    print(f"  {match['id_a']} <-> {match['id_b']} "
-          f"(pool={match['pool']}, distance={match['distance']})")
-for tp in report["dedup"]["thin_pools"]:
-    print(f"  THIN POOL: {tp['pool']} — {tp['dupes']}/{tp['total']} "
-          f"({tp['loss_pct']}% loss)")
+class MockLedger:
+    def __init__(self):
+        self.deaths = []
 
-print(f"\n=== Layer 3: Tone ({report['summary']['tone_flags']} flags) ===")
-for flag in report["tone"]:
-    print(f"  [{flag['id']}] {flag['issue']}: {flag['detail']}")
+    def record_commander_death(self, commander_id, region_id, outcome_band):
+        self.deaths.append({
+            "commander_id": commander_id,
+            "region_id": region_id,
+            "outcome_band": outcome_band,
+        })
 
-print("\n=== Error Detection Summary ===")
-errors_expected = {
-    "invalid_slot ({mood_rating})": any(
-        i["issue"] == "invalid_slot" and "mood_rating" in i["detail"]
-        for i in report["structural"]),
-    "word_limit (CCV_O_002)": any(
-        i["issue"] == "word_limit_exceeded" and i["id"] == "CCV_O_002"
-        for i in report["structural"]),
-    "mechanical_language (stability dropped to 23)": any(
-        i["issue"] == "mechanical_language" and i["id"] == "LT_C_002"
-        for i in report["structural"]),
-    "near-duplicate (CCV_D_001/CCV_D_002)": any(
-        (m["id_a"] == "CCV_D_001" and m["id_b"] == "CCV_D_002") or
-        (m["id_a"] == "CCV_D_002" and m["id_b"] == "CCV_D_001")
-        for m in report["dedup"]["matches"]),
-}
-all_caught = True
-for desc, caught in errors_expected.items():
-    status = "CAUGHT" if caught else "MISSED"
-    if not caught:
-        all_caught = False
-    print(f"  {desc}: {status}")
 
-print(f"\n  All deliberate errors caught: {'YES' if all_caught else 'NO'}")
+def make_result(outcome_band, commander_survived=True):
+    return MissionResult(
+        mission_id="test_mission",
+        outcome_band=outcome_band,
+        objective_score=0.5,
+        force_retention=0.5,
+        per_objective=[],
+        commander_survived=commander_survived,
+        ticks_elapsed=100,
+    )
+
+
+def fresh_region(id, faction_id, fields):
+    return MockRegion(id, faction_id, fields)
+
+
+BANDS = ["total_success", "strong_success", "partial_success", "partial_failure", "total_failure"]
+
+
+def main():
+    print(f"\n{'═'*70}")
+    print(f"  Stage 5.5 Checkpoint E — Outcome Resolver")
+    print(f"{'═'*70}")
+
+    region_a_base = {"military": 23, "economy": 41, "tension": 72, "stability": 18, "population": 50}
+    region_b_base = {"military": 75, "economy": 82, "tension": 25, "stability": 71, "population": 80}
+
+    # ── Delta computation verification ──
+    print(f"\n{'─'*70}")
+    print(f"  Delta Computation Verification")
+    print(f"{'─'*70}")
+    print(f"  {'Form':<18} {'Field':<10} {'Current':>8} {'Pct':>6} {'Delta':>8} {'New':>8}")
+    print(f"  {'─'*18} {'─'*10} {'─'*8} {'─'*6} {'─'*8} {'─'*8}")
+    for current, label in [(23, "mil@23"), (75, "mil@75")]:
+        for form, pct in [("deficit", 15), ("current", -10), ("deficit", 5), ("current", -30)]:
+            delta = compute_delta(current, form, pct)
+            new = max(0, min(100, current + delta))
+            print(f"  {form:<18} {label:<10} {current:>8} {pct:>+6} {delta:>+8.2f} {new:>8.2f}")
+
+    # ── Defensive Stand: all 5 bands × 2 regions ──
+    print(f"\n{'─'*70}")
+    print(f"  Defensive Stand — All 5 Outcome Bands")
+    print(f"{'─'*70}")
+
+    for band in BANDS:
+        print(f"\n  ── {band.upper().replace('_', ' ')} ──")
+        print(f"  {'Region':<12} {'Field':<12} {'Old':>8} {'Delta':>8} {'New':>8} {'Form':<10} {'Pct':>5}")
+        print(f"  {'─'*12} {'─'*12} {'─'*8} {'─'*8} {'─'*8} {'─'*10} {'─'*5}")
+
+        for region_label, base_fields in [("Region A", region_a_base), ("Region B", region_b_base)]:
+            r = fresh_region("test_region", "player_civ", base_fields)
+            world = MockWorld([r])
+            result = make_result(band)
+            outcome = resolve_outcome(result, "defensive_stand", "test_region",
+                                      world, "player_civ")
+            for d in outcome["applied_deltas"]:
+                print(f"  {region_label:<12} {d['field']:<12} {d['old_value']:>8.1f} "
+                      f"{d['delta']:>+8.2f} {d['new_value']:>8.2f} {d['form']:<10} {d['pct']:>+5}")
+
+    # ── Side-by-side comparison ──
+    print(f"\n{'─'*70}")
+    print(f"  Side-by-Side: Region A (desperate) vs Region B (thriving)")
+    print(f"{'─'*70}")
+    print(f"  Region A: mil={region_a_base['military']}, eco={region_a_base['economy']}, "
+          f"ten={region_a_base['tension']}, pop={region_a_base['population']}")
+    print(f"  Region B: mil={region_b_base['military']}, eco={region_b_base['economy']}, "
+          f"ten={region_b_base['tension']}, pop={region_b_base['population']}")
+
+    print(f"\n  {'Band':<20} {'Field':<10} {'A delta':>8} {'B delta':>8} {'A bigger?':<12}")
+    print(f"  {'─'*20} {'─'*10} {'─'*8} {'─'*8} {'─'*12}")
+
+    for band in BANDS:
+        for region_label, base_fields in [("A", region_a_base), ("B", region_b_base)]:
+            r = fresh_region("test_region", "player_civ", base_fields)
+            world = MockWorld([r])
+            result = make_result(band)
+            outcome = resolve_outcome(result, "defensive_stand", "test_region",
+                                      world, "player_civ")
+            if region_label == "A":
+                a_deltas = {d["field"]: d["delta"] for d in outcome["applied_deltas"]}
+            else:
+                b_deltas = {d["field"]: d["delta"] for d in outcome["applied_deltas"]}
+
+        for field in sorted(set(list(a_deltas.keys()) + list(b_deltas.keys()))):
+            ad = a_deltas.get(field, 0)
+            bd = b_deltas.get(field, 0)
+            if ad == 0 and bd == 0:
+                continue
+            a_bigger = abs(ad) > abs(bd)
+            note = ""
+            if field == "military" and band in ("total_success", "strong_success"):
+                note = "(deficit → desperate gains more)" if a_bigger else "(unexpected)"
+            elif field == "military" and band in ("total_failure", "partial_failure"):
+                note = "(current → thriving loses more)" if not a_bigger else "(unexpected)"
+            print(f"  {band:<20} {field:<10} {ad:>+8.2f} {bd:>+8.2f} {'YES' if a_bigger else 'no':<12} {note}")
+
+    # ── Commander death ──
+    print(f"\n{'─'*70}")
+    print(f"  Commander Death Handling")
+    print(f"{'─'*70}")
+
+    r = fresh_region("crisis_zone", "player_civ", dict(region_a_base))
+    world = MockWorld([r])
+    ledger = MockLedger()
+    result = make_result("partial_failure", commander_survived=False)
+    outcome = resolve_outcome(result, "defensive_stand", "crisis_zone",
+                              world, "player_civ",
+                              ledger=ledger, commander_id="cmd_voss_003")
+
+    print(f"\n  Commander survived: {result.commander_survived}")
+    print(f"  Events generated: {len(outcome['events'])}")
+    for evt in outcome["events"]:
+        print(f"    event_id: {evt['event_id']}")
+        print(f"    commander_id: {evt['commander_id']}")
+        print(f"    region_id: {evt['region_id']}")
+        print(f"    outcome_band: {evt['outcome_band']}")
+    print(f"  Ledger deaths recorded: {len(ledger.deaths)}")
+    for d in ledger.deaths:
+        print(f"    {d}")
+
+    # ── Region transfer (Reconquest) ──
+    print(f"\n{'─'*70}")
+    print(f"  Region Transfer — Reconquest")
+    print(f"{'─'*70}")
+
+    for band in BANDS:
+        r = fresh_region("lost_territory", "iron_dominion",
+                         {"military": 40, "economy": 35, "tension": 55, "stability": 30, "population": 45})
+        world = MockWorld([r])
+        result = make_result(band)
+        outcome = resolve_outcome(result, "reconquest", "lost_territory",
+                                  world, "player_civ")
+        transfer = outcome["region_transfer"]
+        owner_after = world.regions["lost_territory"].faction_id
+        print(f"  {band:<20} → transfer: {'YES' if transfer else 'no':<5} "
+              f"owner: {owner_after}")
+
+    # ── Adjacent player target (Evacuation) ──
+    print(f"\n{'─'*70}")
+    print(f"  Adjacent Player Targets — Evacuation Total Success")
+    print(f"{'─'*70}")
+
+    r_doomed = fresh_region("doomed", "player_civ",
+                            {"military": 10, "economy": 15, "tension": 80, "population": 20})
+    r_adj1 = fresh_region("safe_harbor", "player_civ",
+                          {"military": 60, "economy": 55, "tension": 30, "population": 65})
+    r_adj2 = fresh_region("refugee_camp", "player_civ",
+                          {"military": 45, "economy": 40, "tension": 35, "population": 50})
+    r_enemy = fresh_region("enemy_land", "iron_dominion",
+                           {"military": 80, "economy": 70, "tension": 20, "population": 75})
+    adjacency = {
+        "doomed": ["safe_harbor", "refugee_camp", "enemy_land"],
+    }
+    world = MockWorld([r_doomed, r_adj1, r_adj2, r_enemy], adjacency)
+    result = make_result("total_success")
+    outcome = resolve_outcome(result, "evacuation", "doomed", world, "player_civ")
+
+    print(f"\n  Mission region: doomed (player)")
+    print(f"  Adjacent: safe_harbor (player), refugee_camp (player), enemy_land (enemy)")
+    print(f"  Deltas applied to adjacent player regions only:")
+    for d in outcome["applied_deltas"]:
+        print(f"    {d['region_id']:<16} {d['field']:<12} {d['old_value']:>6.1f} → {d['new_value']:>6.2f} "
+              f"(delta {d['delta']:>+6.2f})")
+    enemy_touched = any(d["region_id"] == "enemy_land" for d in outcome["applied_deltas"])
+    print(f"  Enemy region touched: {enemy_touched} (should be False)")
+
+    print(f"\n{'═'*70}")
+    print(f"  Checkpoint E — Complete")
+    print(f"{'═'*70}\n")
+
+
+if __name__ == "__main__":
+    main()
