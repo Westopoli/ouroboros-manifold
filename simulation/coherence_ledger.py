@@ -38,6 +38,7 @@ class CoherenceLedger:
         self._next_lineage_id = 0
         self._archetype_history = {}
         self._chapter_counts = {}   # {lineage_id: int}
+        self._main_character_ids: set = set()  # chars who have served as player's main commander
 
     def _gen_char_id(self):
         self._next_char_id += 1
@@ -66,13 +67,21 @@ class CoherenceLedger:
             self._lineages[lineage_id]["member_ids"].append(char_id)
         return rec
 
+    def mark_main_character(self, char_id: str):
+        self._main_character_ids.add(char_id)
+
     def kill_character(self, char_id, tick, world=None, rng=None):
         rec = self._characters.get(char_id)
         if rec is None or rec.status == "historical":
             return
         rec.status = "historical"
         rec.death_tick = tick
-        self._naming.release_name(rec.name, tick)
+        if char_id in self._main_character_ids:
+            self._naming.release_name(rec.name, tick,
+                                      cooldown_ticks=config.NAME_REUSE_MAIN_CHARACTER_COOLDOWN_TICKS)
+            self._main_character_ids.discard(char_id)
+        else:
+            self._naming.release_name(rec.name, tick)
         if world and rng and rec.rank in ("supreme_commander", "regional_commander"):
             self._succeed(rec, tick, world, rng)
 

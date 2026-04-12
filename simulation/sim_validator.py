@@ -17,7 +17,7 @@ import time_jump as _time_jump
 import mission_generator as _mission_gen
 import outcome_resolver as _outcome_res
 import character_selector as _char_sel
-from force_allocator import allocate_forces as _allocate_forces
+from force_allocator import allocate_forces as _allocate_forces, BUDGET_ARCHETYPES as _BUDGET_ARCHETYPES
 from mission_contracts import MissionResult
 
 
@@ -667,6 +667,14 @@ def _build_all_bands_preview(w, player_fid):
     if low_r.id == high_r.id or high_r.fields.get("military", 50) - low_r.fields.get("military", 50) < 10:
         return None
 
+    def _adj_player(base_region):
+        """Return a player-owned neighbor of base_region, or base_region if none exists."""
+        for nid in w.get_neighbors(base_region.id):
+            nr = w.regions.get(nid)
+            if nr and nr.faction_id == player_fid:
+                return nr
+        return base_region
+
     result = []
     for archetype, table in config.CONSEQUENCE_TABLES.items():
         entry = {
@@ -674,19 +682,52 @@ def _build_all_bands_preview(w, player_fid):
             "low_region_id": low_r.id,
             "high_region_id": high_r.id,
             "bands": {},
+            "deficit_check": {},
         }
         for band in BANDS:
             low_deltas  = {}
             high_deltas = {}
             for delta_spec in table.get(band, []):
-                if delta_spec["target"] not in ("mission", "home", "exposed"):
+                target = delta_spec["target"]
+                if target not in ("mission", "home", "exposed", "adjacent_player"):
                     continue
                 f    = delta_spec["field"]
                 form = delta_spec["form"]
                 pct  = delta_spec["pct"]
-                low_deltas[f]  = _outcome_res.compute_delta(low_r.fields.get(f, 50),  form, pct)
-                high_deltas[f] = _outcome_res.compute_delta(high_r.fields.get(f, 50), form, pct)
+                if target == "adjacent_player":
+                    eff_low  = _adj_player(low_r)
+                    eff_high = _adj_player(high_r)
+                else:
+                    eff_low  = low_r
+                    eff_high = high_r
+                # Floor field values at 1.0 so "current"-form deltas are never all-zero
+                # (prevents degenerate band signatures when a region has field=0).
+                low_val  = max(eff_low.fields.get(f, 50),  1.0)
+                high_val = max(eff_high.fields.get(f, 50), 1.0)
+                low_deltas[f]  = _outcome_res.compute_delta(low_val,  form, pct)
+                high_deltas[f] = _outcome_res.compute_delta(high_val, form, pct)
             entry["bands"][band] = {"low": low_deltas, "high": high_deltas}
+
+            # Per-field deficit pairs for M9: find the actual low/high region per field
+            fc = {}
+            for delta_spec in table.get(band, []):
+                if delta_spec["form"] != "deficit" or delta_spec["pct"] <= 0:
+                    continue
+                f   = delta_spec["field"]
+                pct = delta_spec["pct"]
+                fvals  = [(r.fields.get(f, 50), r) for r in player_regions]
+                fl_r   = min(fvals, key=lambda x: x[0])[1]
+                fh_r   = max(fvals, key=lambda x: x[0])[1]
+                if abs(fl_r.fields.get(f, 50) - fh_r.fields.get(f, 50)) < 5:
+                    continue
+                fc[f] = {
+                    "low_delta":  _outcome_res.compute_delta(fl_r.fields.get(f, 50),  "deficit", pct),
+                    "high_delta": _outcome_res.compute_delta(fh_r.fields.get(f, 50), "deficit", pct),
+                    "low_val":    fl_r.fields.get(f, 50),
+                    "high_val":   fh_r.fields.get(f, 50),
+                }
+            entry["deficit_check"][band] = fc
+
         result.append(entry)
     return result
 
@@ -699,11 +740,20 @@ def _build_difficulty_variants(setup, w, player_fid, test_difficulties):
         return None
 
     archetype   = setup.archetype
-    trigger_ctx = setup.metadata.get("trigger_context", {})
+    trigger_ctx = dict(setup.metadata.get("trigger_context", {}))
     capacity    = region.composites.get("capacity", 0.5) if hasattr(region, "composites") else 0.5
     cap_norm    = capacity / 100.0 if capacity > 1.0 else capacity
     enemy_fid   = setup.enemy_forces[0].faction_id if setup.enemy_forces else "enemy_faction"
     frozen      = dict(region.fields)
+
+    # Budget archetypes derive enemy power from budget_committed, which is missing from
+    # the snapshot trigger_context. Inject a synthetic value representative of a mid-game
+    # attack commit (faction budget ~200 * ATTACK_COMMIT_FRACTION=0.70 ≈ 140, rounded to 150).
+    synthetic_budget = None
+    if archetype in _BUDGET_ARCHETYPES and not trigger_ctx.get("budget_committed"):
+        synthetic_budget = region.fields.get("military", 50) * config.MILITARY_TO_POWER_SCALE / config.BUDGET_TO_POWER_SCALE
+        trigger_ctx = dict(trigger_ctx)
+        trigger_ctx["budget_committed"] = synthetic_budget
 
     variants = []
     for diff in test_difficulties:
@@ -712,10 +762,11 @@ def _build_difficulty_variants(setup, w, player_fid, test_difficulties):
         alloc = _allocate_forces(archetype, trigger_ctx, region, cap_norm,
                                  diff, player_fid, enemy_fid, call_rng)
         variants.append({
-            "difficulty":   diff,
-            "player_force": alloc["player_force"],
-            "enemy_force":  alloc["enemy_force"],
-            "parity_ratio": alloc["parity_ratio"],
+            "difficulty":         diff,
+            "player_force":       alloc["player_force"],
+            "enemy_force":        alloc["enemy_force"],
+            "parity_ratio":       alloc["parity_ratio"],
+            "synthetic_budget":   synthetic_budget,
         })
 
     region.fields.update(frozen)              # final restore
@@ -736,6 +787,46 @@ _TEST_NAME_POOL = [
     "Halla Birsk", "Renn Calder", "Savin Oreth", "Devan Falk",
     "Ilya Maren", "Theron Gale", "Anise Drava", "Kellan Ruud",
     "Brynn Solvar", "Ondri Tavish",
+    # Extended pool — prevents exhaustion in longer test scenarios (1500+ ticks, many breakaways)
+    "Kaelith Vorn II", "Suranna Deshkov II", "Toryn Ashemark II", "Velan Koss II",
+    "Mireth Solane II", "Draven Thurik II", "Olenna Brask II", "Fendric Hale II",
+    "Cassia Vrenn II", "Aldric Mourne II", "Zhara Okun II", "Brin Tasev II",
+    "Lunara Chelk II", "Demaris Vyth II", "Korren Sable II", "Ithara Goss II",
+    "Tyven Marsh II", "Sariel Donn II", "Quillon Pask II", "Elanda Rieve II",
+    "Dareth Kayn II", "Solvei Hask II", "Orill Vandre II", "Maelis Thorn II",
+    "Kavi Rennic II", "Tallis Obren II", "Yenara Stross II", "Firek Dallow II",
+    "Jessamine Kael II", "Ulric Voss II", "Petra Holm II", "Neven Drask II",
+    "Caris Aldune II", "Roshan Mevek II", "Liri Ashfall II", "Gavin Torr II",
+    "Xandri Pell II", "Osen Kraith II", "Emira Vael II", "Jorik Stenn II",
+    "Halla Birsk II", "Renn Calder II", "Savin Oreth II", "Devan Falk II",
+    "Ilya Maren II", "Theron Gale II", "Anise Drava II", "Kellan Ruud II",
+    "Brynn Solvar II", "Ondri Tavish II",
+    "Kaelith Vorn III", "Suranna Deshkov III", "Toryn Ashemark III", "Velan Koss III",
+    "Mireth Solane III", "Draven Thurik III", "Olenna Brask III", "Fendric Hale III",
+    "Cassia Vrenn III", "Aldric Mourne III", "Zhara Okun III", "Brin Tasev III",
+    "Lunara Chelk III", "Demaris Vyth III", "Korren Sable III", "Ithara Goss III",
+    "Tyven Marsh III", "Sariel Donn III", "Quillon Pask III", "Elanda Rieve III",
+    "Dareth Kayn III", "Solvei Hask III", "Orill Vandre III", "Maelis Thorn III",
+    "Kavi Rennic III", "Tallis Obren III", "Yenara Stross III", "Firek Dallow III",
+    "Jessamine Kael III", "Ulric Voss III", "Petra Holm III", "Neven Drask III",
+    "Caris Aldune III", "Roshan Mevek III", "Liri Ashfall III", "Gavin Torr III",
+    "Xandri Pell III", "Osen Kraith III", "Emira Vael III", "Jorik Stenn III",
+    "Halla Birsk III", "Renn Calder III", "Savin Oreth III", "Devan Falk III",
+    "Ilya Maren III", "Theron Gale III", "Anise Drava III", "Kellan Ruud III",
+    "Brynn Solvar III", "Ondri Tavish III",
+    "Kaelith Vorn IV", "Suranna Deshkov IV", "Toryn Ashemark IV", "Velan Koss IV",
+    "Mireth Solane IV", "Draven Thurik IV", "Olenna Brask IV", "Fendric Hale IV",
+    "Cassia Vrenn IV", "Aldric Mourne IV", "Zhara Okun IV", "Brin Tasev IV",
+    "Lunara Chelk IV", "Demaris Vyth IV", "Korren Sable IV", "Ithara Goss IV",
+    "Tyven Marsh IV", "Sariel Donn IV", "Quillon Pask IV", "Elanda Rieve IV",
+    "Dareth Kayn IV", "Solvei Hask IV", "Orill Vandre IV", "Maelis Thorn IV",
+    "Kavi Rennic IV", "Tallis Obren IV", "Yenara Stross IV", "Firek Dallow IV",
+    "Jessamine Kael IV", "Ulric Voss IV", "Petra Holm IV", "Neven Drask IV",
+    "Caris Aldune IV", "Roshan Mevek IV", "Liri Ashfall IV", "Gavin Torr IV",
+    "Xandri Pell IV", "Osen Kraith IV", "Emira Vael IV", "Jorik Stenn IV",
+    "Halla Birsk IV", "Renn Calder IV", "Savin Oreth IV", "Devan Falk IV",
+    "Ilya Maren IV", "Theron Gale IV", "Anise Drava IV", "Kellan Ruud IV",
+    "Brynn Solvar IV", "Ondri Tavish IV",
 ]
 
 

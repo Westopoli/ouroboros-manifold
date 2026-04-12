@@ -24,6 +24,23 @@ def run_selection(gen_state, ledger, world, region_id, rng, tick,
     rec = ledger.get_character_by_id(char_id) if char_id else None
     lineage_id = current_lineage_id or (rec.lineage_id if rec else None)
 
+    # No real lineage yet (placeholder char_id has no ledger record) — first chapter init.
+    # Not a rotation: must not stamp rotation_reason or rotation_mechanism.
+    if not lineage_id and not rec:
+        raw = select_commander(gen_state, ledger, world, region_id, rng)
+        if not raw:
+            return None
+        ledger.mark_main_character(raw["character_id"])
+        char = ledger.get_character_by_id(raw["character_id"])
+        return CommanderSelection(
+            character_id=raw["character_id"],
+            character_name=char.name if char else raw["character_id"],
+            lineage_id=raw["lineage_id"], faction_id=raw["faction_id"],
+            region_id=raw["region_id"], chapter_number=chapter_number + 1,
+            pool_used=raw["pool_used"], pool_rolled=raw["pool_rolled"],
+            rotation_reason=None, rotation_mechanism=None,
+        )
+
     # ── Step 1: Forced rotation ──────────────────────────────────────────────
     forced_rotate = False
     if lineage_id:
@@ -38,6 +55,7 @@ def run_selection(gen_state, ledger, world, region_id, rng, tick,
             forced_rotate = True
         else:
             # Successor found — same lineage continues, not a rotation
+            ledger.mark_main_character(successor.id)
             return CommanderSelection(
                 character_id=successor.id,
                 character_name=successor.name,
@@ -127,6 +145,7 @@ def _do_rotate(gen_state, ledger, world, region_id, rng, tick,
         f"_do_rotate: pool={raw.get('pool_used')} returned lineage_id=None"
         f" for character={raw['character_id']}"
     )
+    ledger.mark_main_character(raw["character_id"])
     char = ledger.get_character_by_id(raw["character_id"])
     return CommanderSelection(
         character_id=raw["character_id"],

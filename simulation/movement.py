@@ -219,29 +219,44 @@ def _update_attack_move_state(store, active):
             store.engage_anchor_set[uid] = False
 
 
-def _compute_preferred_velocities(store, active, dt):
-    preferred = {}
+def update_movement(store: UnitStore, tactical_map, dt: float):
+    sep_radius = config.STEERING_SEPARATION_RADIUS
+    sep_radius_sq = sep_radius * sep_radius
+    obstacle_range = config.STEERING_OBSTACLE_AVOIDANCE_RANGE
+    collision_radius = config.UNIT_COLLISION_RADIUS
+
+    navmesh = _ensure_navmesh(tactical_map)
+    path_cache = _ensure_path_cache(tactical_map)
+
+    active = store.active_ids()
+    positions = {}
     for uid in active:
-        if is_immobile(store, uid):
-            preferred[uid] = (0.0, 0.0, 0.0)
-            continue
+        positions[uid] = (store.data[uid, FIELD_X], store.data[uid, FIELD_Y])
 
-        eff = store.effective_speed[uid]
-        speed = (eff if eff > 0 else store.data[uid, FIELD_SPEED]) * get_speed_multiplier(store, uid)
+    _update_attack_move_state(store, active)
 
-        # attack_move: hold position and fight when a valid target is in range
-        if store.attack_moving[uid]:
-            tgt = store.auto_engage_target[uid]
-            if tgt >= 0 and store.alive[tgt]:
-                preferred[uid] = (0.0, 0.0, speed)
-                continue
-
+    for uid in active:
         if not store.has_move_target[uid]:
-            preferred[uid] = (0.0, 0.0, 0.0)
+            continue
+        if is_immobile(store, uid):
+            continue
+        # attack_move: hold position while engaged with a live target
+        if store.attack_moving[uid] and store.auto_engage_target[uid] >= 0 and store.alive[store.auto_engage_target[uid]]:
             continue
 
         px = store.data[uid, FIELD_X]
         py = store.data[uid, FIELD_Y]
+
+        eff = store.effective_speed[uid]
+        speed = eff if eff > 0 else store.data[uid, FIELD_SPEED]
+        speed *= get_speed_multiplier(store, uid)
+
+        if navmesh is not None and navmesh.has_obstacles and uid not in store.waypoints:
+            final_tx = store.target_x[uid]
+            final_ty = store.target_y[uid]
+            path = path_cache.get(navmesh, px, py, final_tx, final_ty)
+            if path:
+                store.waypoints[uid] = path
 
         if uid in store.waypoints and store.waypoints[uid]:
             tx, ty = store.waypoints[uid][0]
@@ -253,315 +268,62 @@ def _compute_preferred_velocities(store, active, dt):
         dy = ty - py
         dist = math.sqrt(dx * dx + dy * dy)
 
-        if dist < 0.001:
-            preferred[uid] = (0.0, 0.0, speed)
+        if dist < collision_radius:
+            if uid in store.waypoints:
+                store.waypoints[uid].pop(0)
+                if store.waypoints[uid]:
+                    continue
+                del store.waypoints[uid]
+            store.has_move_target[uid] = False
+            store.effective_speed[uid] = 0.0
+            store.attack_moving[uid] = False
             continue
 
-        vx = (dx / dist) * min(speed, dist / dt)
-        vy = (dy / dist) * min(speed, dist / dt)
-        preferred[uid] = (vx, vy, speed)
+        seek_x = dx / dist
+        seek_y = dy / dist
 
-    return preferred
-
-
-def _compute_orca_line(pa_x, pa_y, pb_x, pb_y, va_x, va_y, vb_x, vb_y, combined_radius, time_horizon):
-    rel_x = pb_x - pa_x
-    rel_y = pb_y - pa_y
-    rel_vel_x = va_x - vb_x
-    rel_vel_y = va_y - vb_y
-    dist_sq = rel_x * rel_x + rel_y * rel_y
-    combined_r_sq = combined_radius * combined_radius
-
-    if dist_sq > combined_r_sq:
-        w_x = rel_vel_x - rel_x / time_horizon
-        w_y = rel_vel_y - rel_y / time_horizon
-        w_dot_rel = w_x * rel_x + w_y * rel_y
-        w_len_sq = w_x * w_x + w_y * w_y
-
-        leg_sq = dist_sq - combined_r_sq
-        if w_dot_rel < 0.0 and w_dot_rel * w_dot_rel > combined_r_sq * w_len_sq:
-            w_len = math.sqrt(w_len_sq) if w_len_sq > 0 else 0.001
-            unit_w_x = w_x / w_len
-            unit_w_y = w_y / w_len
-            line_dir_x = unit_w_y
-            line_dir_y = -unit_w_x
-            u_x = (combined_radius / time_horizon - w_len) * unit_w_x
-            u_y = (combined_radius / time_horizon - w_len) * unit_w_y
-        else:
-            leg = math.sqrt(max(leg_sq, 0.0))
-            dist = math.sqrt(dist_sq)
-            if dist < 0.001:
-                return None
-
-            if rel_x * rel_vel_y - rel_y * rel_vel_x >= 0.0:
-                line_dir_x = (rel_x * leg - rel_y * combined_radius) / dist_sq
-                line_dir_y = (rel_y * leg + rel_x * combined_radius) / dist_sq
-            else:
-                line_dir_x = -(rel_x * leg + rel_y * combined_radius) / dist_sq
-                line_dir_y = -(rel_y * leg - rel_x * combined_radius) / dist_sq
-
-            dot_rv_dir = rel_vel_x * line_dir_x + rel_vel_y * line_dir_y
-            u_x = dot_rv_dir * line_dir_x - rel_vel_x
-            u_y = dot_rv_dir * line_dir_y - rel_vel_y
-    else:
-        inv_dt = 1.0 / time_horizon
-        w_x = rel_vel_x - rel_x * inv_dt
-        w_y = rel_vel_y - rel_y * inv_dt
-        w_len = math.sqrt(w_x * w_x + w_y * w_y)
-        if w_len < 0.001:
-            return None
-        unit_w_x = w_x / w_len
-        unit_w_y = w_y / w_len
-        line_dir_x = unit_w_y
-        line_dir_y = -unit_w_x
-        u_x = (combined_radius * inv_dt - w_len) * unit_w_x
-        u_y = (combined_radius * inv_dt - w_len) * unit_w_y
-
-    pt_x = va_x + u_x * 0.5
-    pt_y = va_y + u_y * 0.5
-    return (pt_x, pt_y, line_dir_x, line_dir_y)
-
-
-def _solve_lp_2d(lines, pref_vx, pref_vy, max_speed):
-    result_x = pref_vx
-    result_y = pref_vy
-
-    for i, (pt_x, pt_y, dir_x, dir_y) in enumerate(lines):
-        det = dir_x * (pt_y - result_y) - dir_y * (pt_x - result_x)
-        if det >= 0.0:
-            continue
-
-        t_num = dir_x * (pt_y - pref_vy) - dir_y * (pt_x - pref_vx)
-        t_min = -1e9
-        t_max = 1e9
-
-        for j in range(i):
-            jpt_x, jpt_y, jdir_x, jdir_y = lines[j]
-            denom = dir_x * jdir_y - dir_y * jdir_x
-            numer = jdir_x * (pt_y - jpt_y) - jdir_y * (pt_x - jpt_x)
-
-            if abs(denom) < 1e-10:
-                if numer < 0.0:
-                    return None
+        sep_x = 0.0
+        sep_y = 0.0
+        for other_uid in active:
+            if other_uid == uid:
                 continue
-
-            t = numer / denom
-            if denom > 0.0:
-                t_min = max(t_min, t)
-            else:
-                t_max = min(t_max, t)
-
-            if t_min > t_max:
-                return None
-
-        speed_denom = dir_x * dir_x + dir_y * dir_y
-        if speed_denom < 1e-10:
-            continue
-        dp = (pref_vx - pt_x) * dir_x + (pref_vy - pt_y) * dir_y
-        t_opt = dp / speed_denom
-
-        disc = max_speed * max_speed * speed_denom - (dir_x * (pt_y) - dir_y * (pt_x)) ** 2
-        if disc < 0.0:
-            disc = 0.0
-        sqrt_disc = math.sqrt(disc) / speed_denom
-        speed_t_center = (dir_x * (-pt_x) + dir_y * (-pt_y)) / speed_denom
-        t_speed_min = speed_t_center - sqrt_disc
-        t_speed_max = speed_t_center + sqrt_disc
-        t_min = max(t_min, t_speed_min)
-        t_max = min(t_max, t_speed_max)
-
-        if t_min > t_max:
-            return None
-
-        t = max(t_min, min(t_max, t_opt))
-        result_x = pt_x + t * dir_x
-        result_y = pt_y + t * dir_y
-
-    mag_sq = result_x * result_x + result_y * result_y
-    if mag_sq > max_speed * max_speed:
-        mag = math.sqrt(mag_sq)
-        result_x = result_x / mag * max_speed
-        result_y = result_y / mag * max_speed
-
-    return (result_x, result_y)
-
-
-def _solve_lp_2d_safe(lines, pref_vx, pref_vy, max_speed):
-    result = _solve_lp_2d(lines, pref_vx, pref_vy, max_speed)
-    if result is not None:
-        return result
-
-    best_x = pref_vx
-    best_y = pref_vy
-    mag = math.sqrt(best_x * best_x + best_y * best_y)
-    if mag > max_speed:
-        best_x = best_x / mag * max_speed
-        best_y = best_y / mag * max_speed
-
-    min_penalty = float('inf')
-    for pt_x, pt_y, dir_x, dir_y in lines:
-        det = dir_x * (pt_y - best_y) - dir_y * (pt_x - best_x)
-        if det < 0:
-            penalty = -det
-            if penalty < min_penalty:
-                dp = (best_x - pt_x) * dir_x + (best_y - pt_y) * dir_y
-                proj_x = pt_x + dp * dir_x
-                proj_y = pt_y + dp * dir_y
-                mag_p = math.sqrt(proj_x * proj_x + proj_y * proj_y)
-                if mag_p > max_speed:
-                    proj_x = proj_x / mag_p * max_speed
-                    proj_y = proj_y / mag_p * max_speed
-                best_x = proj_x
-                best_y = proj_y
-                min_penalty = penalty
-
-    return (best_x, best_y)
-
-
-def compute_rvo_velocities(store, active, dt, tmap):
-    agent_radius = config.UNIT_COLLISION_RADIUS
-    neighbor_dist = config.RVO_NEIGHBOR_DIST
-    time_horizon = config.RVO_TIME_HORIZON
-    max_neighbors = config.RVO_MAX_NEIGHBORS
-    combined_radius = agent_radius * 2.0
-    neighbor_dist_sq = neighbor_dist * neighbor_dist
-
-    # Rebuild spatial hash for neighbor lookup (fresh per subsystem call).
-    # sorted() on query results ensures deterministic tie-breaking at max_neighbors trim.
-    tmap.spatial_hash.clear()
-    for uid in active:
-        tmap.spatial_hash.insert(uid, store.data[uid, FIELD_X], store.data[uid, FIELD_Y])
-
-    preferred = _compute_preferred_velocities(store, active, dt)
-    adjusted = {}
-
-    current_vel = {}
-    for uid in active:
-        pv = preferred[uid]
-        current_vel[uid] = (pv[0], pv[1])
-
-    for uid in active:
-        pref_vx, pref_vy, max_speed = preferred[uid]
-        px = store.data[uid, FIELD_X]
-        py = store.data[uid, FIELD_Y]
-        my_layer = store.data[uid, FIELD_LAYER]
-
-        neighbors = []
-        for other in sorted(tmap.spatial_hash.query(px, py, neighbor_dist)):
-            if other == uid:
+            if store.data[other_uid, FIELD_LAYER] != store.data[uid, FIELD_LAYER]:
                 continue
-            if store.data[other, FIELD_LAYER] != my_layer:  # keep layer filter
-                continue
-            ox = store.data[other, FIELD_X]
-            oy = store.data[other, FIELD_Y]
-            dx = ox - px
-            dy = oy - py
-            d_sq = dx * dx + dy * dy
-            if d_sq < neighbor_dist_sq:
-                neighbors.append((other, d_sq))
+            ox = positions[other_uid][0]
+            oy = positions[other_uid][1]
+            sdx = px - ox
+            sdy = py - oy
+            d_sq = sdx * sdx + sdy * sdy
+            if d_sq < sep_radius_sq and d_sq > 0.001:
+                d = math.sqrt(d_sq)
+                weight = 1.0 - (d / sep_radius)
+                sep_x += (sdx / d) * weight
+                sep_y += (sdy / d) * weight
 
-        neighbors.sort(key=lambda x: x[1])
-        if len(neighbors) > max_neighbors:
-            neighbors = neighbors[:max_neighbors]
-
-        if not neighbors:
-            adjusted[uid] = (pref_vx, pref_vy)
-            continue
-
-        orca_lines = []
-        va_x, va_y = current_vel[uid]
-        for other, _ in neighbors:
-            ob_x = store.data[other, FIELD_X]
-            ob_y = store.data[other, FIELD_Y]
-            vb_x, vb_y = current_vel[other]
-
-            line = _compute_orca_line(px, py, ob_x, ob_y, va_x, va_y, vb_x, vb_y, combined_radius, time_horizon)
-            if line is not None:
-                orca_lines.append(line)
-
-        if not orca_lines:
-            adjusted[uid] = (pref_vx, pref_vy)
-            continue
-
-        result = _solve_lp_2d_safe(orca_lines, pref_vx, pref_vy, max_speed)
-        adjusted[uid] = result
-
-    return adjusted
-
-
-def update_movement(store: UnitStore, tactical_map, dt: float):
-    obstacle_range = config.STEERING_OBSTACLE_AVOIDANCE_RANGE
-    collision_radius = config.UNIT_COLLISION_RADIUS
-
-    navmesh = _ensure_navmesh(tactical_map)
-    path_cache = _ensure_path_cache(tactical_map)
-
-    active = store.active_ids()
-
-    for uid in active:
-        if not store.has_move_target[uid]:
-            continue
-        if is_immobile(store, uid):
-            continue
-        if navmesh is not None and navmesh.has_obstacles and uid not in store.waypoints:
-            final_tx = store.target_x[uid]
-            final_ty = store.target_y[uid]
-            path = path_cache.get(navmesh, store.data[uid, FIELD_X], store.data[uid, FIELD_Y], final_tx, final_ty)
-            if path:
-                store.waypoints[uid] = path
-
-    _update_attack_move_state(store, active)
-    rvo_velocities = compute_rvo_velocities(store, active, dt, tactical_map)
-
-    for uid in active:
-        if is_immobile(store, uid):
-            continue
-
-        px = store.data[uid, FIELD_X]
-        py = store.data[uid, FIELD_Y]
-
-        # Destination-arrival check: only for units that are actually navigating
-        # (has a move target and is not held by attack_move engagement)
-        held = store.attack_moving[uid] and store.auto_engage_target[uid] >= 0 and store.alive[store.auto_engage_target[uid]]
-        if not held and store.has_move_target[uid]:
-            if uid in store.waypoints and store.waypoints[uid]:
-                tx, ty = store.waypoints[uid][0]
-            else:
-                tx = store.target_x[uid]
-                ty = store.target_y[uid]
-
-            dx = tx - px
-            dy = ty - py
-            dist = math.sqrt(dx * dx + dy * dy)
-
-            if dist < collision_radius:
-                if uid in store.waypoints:
-                    store.waypoints[uid].pop(0)
-                    if store.waypoints[uid]:
-                        continue
-                    del store.waypoints[uid]
-                store.has_move_target[uid] = False
-                store.effective_speed[uid] = 0.0
-                store.attack_moving[uid] = False
-                continue
-
-        vx, vy = rvo_velocities.get(uid, (0.0, 0.0))
-
+        obs_x = 0.0
+        obs_y = 0.0
         if tactical_map is not None:
-            dir_x = vx
-            dir_y = vy
-            mag = math.sqrt(dir_x * dir_x + dir_y * dir_y)
-            if mag > 0.001:
-                probe_x = px + (dir_x / mag) * obstacle_range
-                probe_y = py + (dir_y / mag) * obstacle_range
-                if tactical_map.in_bounds(probe_x, probe_y):
-                    density = tactical_map.obstacle_density(probe_x, probe_y)
-                    if density > 0.3:
-                        vx -= (dir_x / mag) * density * mag
-                        vy -= (dir_y / mag) * density * mag
+            probe_x = px + seek_x * obstacle_range
+            probe_y = py + seek_y * obstacle_range
+            if tactical_map.in_bounds(probe_x, probe_y):
+                density = tactical_map.obstacle_density(probe_x, probe_y)
+                if density > 0.3:
+                    obs_x = -seek_x * density
+                    obs_y = -seek_y * density
 
-        new_x = px + vx * dt
-        new_y = py + vy * dt
+        steer_x = seek_x + sep_x * 0.5 + obs_x * 1.0
+        steer_y = seek_y + sep_y * 0.5 + obs_y * 1.0
+        mag = math.sqrt(steer_x * steer_x + steer_y * steer_y)
+        if mag > 0.001:
+            steer_x /= mag
+            steer_y /= mag
+
+        move_dist = speed * dt
+        if move_dist > dist:
+            move_dist = dist
+
+        new_x = px + steer_x * move_dist
+        new_y = py + steer_y * move_dist
 
         if tactical_map is not None:
             new_x = max(0.0, min(tactical_map.width, new_x))
@@ -569,6 +331,75 @@ def update_movement(store: UnitStore, tactical_map, dt: float):
 
         store.data[uid, FIELD_X] = new_x
         store.data[uid, FIELD_Y] = new_y
+
+    if config.HARD_COLLISION_ENABLED:
+        _resolve_collisions(store, active, tactical_map, navmesh)
+
+
+def _resolve_collisions(store, active, tactical_map, navmesh):
+    radius = config.UNIT_COLLISION_RADIUS
+    min_dist = 2.0 * radius
+    min_dist_sq = min_dist * min_dist
+
+    for _ in range(config.COLLISION_RESOLUTION_ITERATIONS):
+        for i in range(len(active)):
+            uid_a = active[i]
+            ax = store.data[uid_a, FIELD_X]
+            ay = store.data[uid_a, FIELD_Y]
+            layer_a = store.data[uid_a, FIELD_LAYER]
+
+            for j in range(i + 1, len(active)):
+                uid_b = active[j]
+                if store.data[uid_b, FIELD_LAYER] != layer_a:
+                    continue
+
+                bx = store.data[uid_b, FIELD_X]
+                by = store.data[uid_b, FIELD_Y]
+                dx = ax - bx
+                dy = ay - by
+                d_sq = dx * dx + dy * dy
+
+                if d_sq >= min_dist_sq:
+                    continue
+
+                if d_sq < 0.001:
+                    # Deterministic fallback: lower uid pushes left
+                    dx = -1.0 if uid_a < uid_b else 1.0
+                    dy = 0.0
+                    d = 0.001
+                else:
+                    d = math.sqrt(d_sq)
+
+                overlap = min_dist - d
+                push = overlap * 0.5
+                nx = dx / d
+                ny = dy / d
+
+                new_ax = ax + nx * push
+                new_ay = ay + ny * push
+                new_bx = bx - nx * push
+                new_by = by - ny * push
+
+                if tactical_map is not None:
+                    new_ax = max(0.0, min(tactical_map.width, new_ax))
+                    new_ay = max(0.0, min(tactical_map.height, new_ay))
+                    new_bx = max(0.0, min(tactical_map.width, new_bx))
+                    new_by = max(0.0, min(tactical_map.height, new_by))
+
+                if navmesh is not None:
+                    ra, ca = navmesh.cell(new_ax, new_ay)
+                    if not navmesh.is_walkable(ra, ca):
+                        new_ax, new_ay = ax, ay
+                    rb, cb = navmesh.cell(new_bx, new_by)
+                    if not navmesh.is_walkable(rb, cb):
+                        new_bx, new_by = bx, by
+
+                store.data[uid_a, FIELD_X] = new_ax
+                store.data[uid_a, FIELD_Y] = new_ay
+                ax = new_ax
+                ay = new_ay
+                store.data[uid_b, FIELD_X] = new_bx
+                store.data[uid_b, FIELD_Y] = new_by
 
 
 def has_combat_los(navmesh, x1, y1, x2, y2):

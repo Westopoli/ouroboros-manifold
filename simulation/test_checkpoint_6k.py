@@ -1,8 +1,10 @@
 import time
 import random
+import math
 import tracemalloc
 import config
-from unit import UnitStore, FIELD_X, FIELD_Y
+from unit import UnitStore, FIELD_X, FIELD_Y, FIELD_ABILITY_ACTIVE
+from ability import ABILITY_INACTIVE
 from tactical_engine import TacticalEngine
 from movement import apply_group_move
 from test_maps import open_field_large
@@ -111,6 +113,24 @@ def run():
         engine.tick += 1
 
         tick_times.append((time.perf_counter() - t0) * 1000.0)
+
+        if engine.tick % 100 == 0:
+            active = engine.store.active_ids()
+            surv_a = sum(1 for u in active if engine.store.faction[u] == FACTION_A)
+            surv_b = sum(1 for u in active if engine.store.faction[u] == FACTION_B)
+            cx, cy = 6000.0, 6000.0
+            avg_dist = sum(math.sqrt((engine.store.data[u, FIELD_X] - cx)**2 +
+                                     (engine.store.data[u, FIELD_Y] - cy)**2)
+                           for u in active) / max(len(active), 1)
+            with_target = sum(1 for u in active if engine.store.auto_engage_target[u] >= 0)
+            print(f"  t={engine.tick:>4}  A={surv_a} B={surv_b}  avg_dist={avg_dist:.0f}wu  targets_set={with_target}/{len(active)}")
+
+        if engine.tick == 500:
+            active = engine.store.active_ids()
+            n_inactive = sum(1 for u in active if engine.store.data[u, FIELD_ABILITY_ACTIVE] == ABILITY_INACTIVE)
+            tgt_set   = sum(1 for u in active if engine.store.auto_engage_target[u] >= 0)
+            tgt_unset = sum(1 for u in active if engine.store.auto_engage_target[u] < 0)
+            print(f"  [t=500] ability_inactive={n_inactive}/{len(active)}  target_set={tgt_set}  target_unset={tgt_unset}")
 
         if engine.is_terminal():
             print(f"  Combat resolved early at tick {engine.tick} — one side eliminated.")

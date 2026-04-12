@@ -149,6 +149,32 @@ Used for auditing — if a file isn't on this list, it shouldn't exist.
 ```
 
 ---
+### Performance regression discipline
+
+Algorithm replacements must include a performance budget check at the
+checkpoint where they land. A test that verifies correctness without
+verifying cost is incomplete.
+
+When a checkpoint replaces a subsystem's algorithm (movement, targeting,
+pathfinding, damage resolution, agent decision, etc.), the checkpoint's
+test set must include at least one scenario that:
+
+1. Exercises the replaced subsystem at representative load (not a toy case).
+2. Asserts a hard millisecond ceiling on that subsystem's per-tick cost.
+3. Fails the checkpoint if the ceiling is exceeded.
+
+The ceiling is set from the pre-replacement baseline measured on the same
+scenario, with a documented margin. A 2x regression is a budget failure
+even if all correctness tests pass. Performance is a correctness property
+of this simulation — the deterministic replay system, batch sim, and
+chronicle distillation all assume real-time-or-faster execution, and a
+subsystem that silently runs 10x slower breaks downstream pipelines as
+surely as a subsystem that returns wrong values.
+
+This rule exists because Stage 6J replaced steering with ORCA/RVO under
+a correctness-only test and the resulting ~100x regression lived in the
+codebase across multiple subsequent checkpoints before being detected.
+---
 
 ## Rules for Claude Code Sessions
 

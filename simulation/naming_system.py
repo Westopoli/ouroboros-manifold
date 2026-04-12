@@ -7,7 +7,7 @@ class NamingSystem:
     def __init__(self):
         self._pools = {}        # {(faction_id, category): [name, ...]}
         self._in_use = {}       # {name: faction_id}
-        self._cooldowns = {}    # {name: release_tick}
+        self._cooldowns = {}    # {name: expiry_tick}
         self._subsets = {}      # {faction_id: {linguistic_roots, phoneme_patterns, cultural_flavor_tags}}
         self._schism_parents = {}  # {child_faction_id: parent_faction_id}
 
@@ -66,9 +66,9 @@ class NamingSystem:
         self._in_use[name] = faction_id
         return name
 
-    def release_name(self, name: str, death_tick: int):
+    def release_name(self, name: str, death_tick: int, cooldown_ticks=None):
         self._in_use.pop(name, None)
-        self._cooldowns[name] = death_tick
+        self._cooldowns[name] = death_tick + (cooldown_ticks or config.NAME_REUSE_COOLDOWN_TICKS)
 
     def is_available(self, name: str, current_tick: int = 0) -> bool:
         return self._is_available(name, current_tick)
@@ -77,7 +77,7 @@ class NamingSystem:
         if name in self._in_use:
             return False
         if name in self._cooldowns:
-            return current_tick >= self._cooldowns[name] + config.NAME_REUSE_COOLDOWN_TICKS
+            return current_tick >= self._cooldowns[name]
         return True
 
     def derive_schism_subset(self, parent_faction_id: str, child_faction_id: str, rng):

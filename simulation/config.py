@@ -457,7 +457,8 @@ CHAIN_LENGTH_CAP                     = 5
 SIGNIFICANCE_LINEAGE_REGION_BONUS    = 0.8
 
 # ── Naming system (Stage 5) ────────────────────────────────────────────────
-NAME_REUSE_COOLDOWN_TICKS      = 500    # ticks after death before name returns to pool
+NAME_REUSE_COOLDOWN_TICKS                  = 500   # ticks after death before name returns to pool
+NAME_REUSE_MAIN_CHARACTER_COOLDOWN_TICKS   = 4500  # extended cooldown for player's active commanders
 NAME_DEDUP_THRESHOLD           = 3      # minimum Levenshtein distance between names in same faction
 PLAYER_FACTION_SUBSET_WIDTH    = (3, 4, 4)  # (roots, patterns, tags) — wider than default
 DEFAULT_FACTION_SUBSET_WIDTH   = (2, 3, 3)  # (roots, patterns, tags) — standard width
@@ -575,11 +576,9 @@ NAVMESH_OBSTACLE_THRESHOLD     = 0.7
 NAVMESH_CELL_SIZE              = 100
 STEERING_OBSTACLE_AVOIDANCE_RANGE = 50
 UNIT_COLLISION_RADIUS          = 15
-
-# ── RVO Local Steering ──────────────────────────────────────────────────────
-RVO_NEIGHBOR_DIST              = 200
-RVO_TIME_HORIZON               = 3.0
-RVO_MAX_NEIGHBORS              = 10
+STEERING_SEPARATION_RADIUS     = 30
+HARD_COLLISION_ENABLED         = True
+COLLISION_RESOLUTION_ITERATIONS = 3
 
 # ── Objectives and outcome classification (Stage 6) ─────────────────────────
 OUTCOME_WEIGHT_OBJECTIVE       = 0.75

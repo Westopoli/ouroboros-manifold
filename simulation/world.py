@@ -590,7 +590,7 @@ def _pressure_cooker(rng: random.Random) -> World:
         return r
 
     h_name  = rng.choice(theme.REGION_NAMES["home"])
-    f_names = rng.sample(theme.REGION_NAMES["frontier"], 7)
+    f_names = rng.sample(theme.REGION_NAMES["frontier"], 6)
     p_home = make("region_p_home", h_name,     "home",     "player")
     p_f0   = make("region_p_f0",   f_names[0], "frontier", "player")
     c_home = make("region_c_home", f_names[1], "frontier", "conqueror")
@@ -598,7 +598,7 @@ def _pressure_cooker(rng: random.Random) -> World:
     f_home = make("region_f_home", f_names[3], "frontier", "fortifier")
     f_f0   = make("region_f_f0",   f_names[4], "frontier", "fortifier")
     o_home = make("region_o_home", f_names[5], "frontier", "opportunist")
-    o_f0   = make("region_o_f0",   f_names[6], "frontier", "opportunist")
+    o_f0   = make("region_o_f0",   "Crucible Reach",    "frontier", "opportunist")
 
     e_pool = theme.REGION_NAMES["empty"]
     e0 = Region("region_e0", rng.choice(e_pool).replace("{n}", "1"), "empty")
@@ -657,7 +657,7 @@ def _stable_world(rng: random.Random) -> World:
         return r
 
     h_name  = rng.choice(theme.REGION_NAMES["home"])
-    f_names = rng.sample(theme.REGION_NAMES["frontier"], 7)
+    f_names = rng.sample(theme.REGION_NAMES["frontier"], 6)
     p_home = make("region_p_home", h_name,     "home",     "player")
     p_f0   = make("region_p_f0",   f_names[0], "frontier", "player")
     c_home = make("region_c_home", f_names[1], "frontier", "conqueror")
@@ -665,7 +665,7 @@ def _stable_world(rng: random.Random) -> World:
     f_home = make("region_f_home", f_names[3], "frontier", "fortifier")
     f_f0   = make("region_f_f0",   f_names[4], "frontier", "fortifier")
     o_home = make("region_o_home", f_names[5], "frontier", "opportunist")
-    o_f0   = make("region_o_f0",   f_names[6], "frontier", "opportunist")
+    o_f0   = make("region_o_f0",   "The Stillwater",    "frontier", "opportunist")
 
     e_pool = theme.REGION_NAMES["empty"]
     empties = {}
