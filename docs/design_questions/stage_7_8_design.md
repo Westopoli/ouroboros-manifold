@@ -18,15 +18,15 @@
 - Moving battlefields resolved: drifting spine nodes only, no moving gradients (S7-3)
 - Structure ownership distribution resolved: archetype baseline + simulation delta (S7-5)
 - Behavior script data format resolved: JSON state machine + shared Python runner (S75-1)
+- Prototype archetypes selected: Defensive Stand, Assault, Multi-Front Defense, Counterinsurgency (S75-2)
 
 **Next session should:**
-- Continue with Stage 7.5 (S75-2 next — prototype archetype selection)
-- Work through Stage 8 questions
+- Move to Stage 8 (S8-1 next — save scope)
 - Once all [ANSWERED], promote decisions into bible/specs and delete this file
 
 **Current state summary:**
 - Stage 7: all design questions resolved, engineering defaults flagged for spec review
-- Stage 7.5: 1 design question [OPEN] (S75-2)
+- Stage 7.5: all design questions resolved
 - Stage 8: 3 design questions [OPEN]
 
 ---
@@ -74,6 +74,7 @@ These have already been decided. Listed here for reference — do not re-ask.
 ### Stage 7.5
 
 - **Behavior script data format (S75-1)** → JSON state machine files consumed by a shared Python runner (`behavior_runner.py`). Each script is a `.json` file specifying forces, states (behavior + modifier + position), transitions (with conditions), and reactive hooks (with when-conditions and actions). Conditions use a small restricted expression language over trigger bus flags, tactical state predicates (e.g., `force_hp_fraction < 0.5`), and timers — not arbitrary Python. The runner loads JSON, validates against a schema (catches dead states, missing transitions, stale flag references before runtime), and executes the state machine against the tactical engine's command protocol. Adding a new archetype means creating a new JSON file, no engine code changes. The expression language vocabulary is authored alongside the runner and extended when a new class of condition is genuinely needed.
+- **Prototype archetype selection (S75-2)** → Four prototype behavior scripts authored in Stage 7.5: **Defensive Stand**, **Assault**, **Multi-Front Defense**, and **Counterinsurgency**. These four cover all five base behaviors (`advance`, `defend`, `patrol`, `ambush`, `retreat`) and exercise the trigger bus / multi-force coordination (Multi-Front Defense) plus the hidden-enemy-in-sensor-interference pattern (Counterinsurgency). The remaining six archetype scripts (Siege Breaking, Reconquest, Suppression, Interception, Evacuation, Containment) are authored in a follow-up pass once the prototype set validates the vocabulary. The reinforcement structure ownership baselines (S7-5) are also authored only for these four prototypes in Stage 7.5; the remaining six use the neutral fallback until their scripts land.
 
 ---
 
@@ -94,12 +95,6 @@ Reclassified as a tuning value. The bible establishes the derivation (region mil
 ---
 
 ### Stage 7.5 — Enemy Macro Behavior Scripts
-
-#### S75-2 — Prototype Archetype Selection [OPEN]
-
-We decided to author 3–4 prototype behavior scripts first. Which ones? Candidates: Defensive Stand (simplest single-force defense), Assault (simplest single-force offense), Multi-Front Defense (multi-force coordination / trigger bus), Counterinsurgency (ambush + scattered forces). Selection determines which behaviors and hooks get tested first.
-
----
 
 ### Stage 8 — Godot Renderer, Command Interface, Game State Persistence
 
