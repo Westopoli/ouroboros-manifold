@@ -272,17 +272,27 @@ def update_movement(store: UnitStore, tactical_map, dt: float):
             if path:
                 store.waypoints[uid] = path
 
-        if uid in store.waypoints and store.waypoints[uid]:
+        has_waypoints = uid in store.waypoints and store.waypoints[uid]
+        if has_waypoints:
             tx, ty = store.waypoints[uid][0]
+            arrival_radius = collision_radius
         else:
             tx = store.target_x[uid]
             ty = store.target_y[uid]
+            # At the final slot, use a wider arrival radius so formation units
+            # don't endlessly seek a point blocked by collision. Gated on the
+            # formation flag so flag-off behavior is bit-identical.
+            # See also: apply_group_move — assigns per-unit slot targets.
+            if config.FORMATION_MOVE_ENABLED:
+                arrival_radius = collision_radius * config.ARRIVAL_TOLERANCE_MULT
+            else:
+                arrival_radius = collision_radius
 
         dx = tx - px
         dy = ty - py
         dist = math.sqrt(dx * dx + dy * dy)
 
-        if dist < collision_radius:
+        if dist < arrival_radius:
             if uid in store.waypoints:
                 store.waypoints[uid].pop(0)
                 if store.waypoints[uid]:
@@ -290,8 +300,19 @@ def update_movement(store: UnitStore, tactical_map, dt: float):
                 del store.waypoints[uid]
             store.has_move_target[uid] = False
             store.effective_speed[uid] = 0.0
-            store.attack_moving[uid] = False
+            # attack_moving is intentionally NOT cleared here — it is a command-
+            # level flag that should persist until a new command (move,
+            # attack_target, activate_ability) replaces it. Clearing it on
+            # arrival left units unable to pursue enemies they could see but
+            # not yet shoot after their move target was consumed.
+            store.plain_moving[uid] = False
             store.detour_remaining[uid] = 0.0
+            # Remove from formation group's moving set on slot arrival.
+            # _update_move_groups (Step 4) uses this set for centroid-arrival check.
+            gid = store.move_group_id[uid]
+            if gid >= 0 and gid in store.move_groups:
+                store.move_groups[gid]["moving"].discard(uid)
+            store.move_group_id[uid] = -1
             continue
 
         seek_x = dx / dist
@@ -350,8 +371,68 @@ def update_movement(store: UnitStore, tactical_map, dt: float):
         if store.detour_remaining[uid] > 0:
             store.detour_remaining[uid] = max(0.0, store.detour_remaining[uid] - move_dist)
 
+    if config.FORMATION_MOVE_ENABLED:
+        _update_move_groups(store)
+
     if config.HARD_COLLISION_ENABLED:
         _resolve_collisions(store, active, tactical_map, navmesh)
+
+
+def _update_move_groups(store):
+    """Terminate formation groups by centroid arrival or empty moving set.
+
+    Called from update_movement after the per-unit loop. See apply_group_move
+    for group creation, and unit.py kill/set_move_target for moving-set cleanup.
+    """
+    if not store.move_groups:
+        return
+
+    group_arrival_sq = config.GROUP_ARRIVAL_RADIUS ** 2
+    completed = []
+
+    for gid, group in store.move_groups.items():
+        tx = group["target_x"]
+        ty = group["target_y"]
+        moving = group["moving"]
+
+        cx = cy = 0.0
+        count = 0
+        for uid in list(moving):
+            if not store.alive[uid]:
+                moving.discard(uid)
+                continue
+            engaged = (store.auto_engage_target[uid] >= 0
+                       and store.alive[store.auto_engage_target[uid]])
+            if engaged or not store.has_move_target[uid]:
+                moving.discard(uid)
+                continue
+            cx += store.data[uid, FIELD_X]
+            cy += store.data[uid, FIELD_Y]
+            count += 1
+
+        if count == 0:
+            completed.append(gid)
+            continue
+
+        cx /= count
+        cy /= count
+        if (cx - tx) ** 2 + (cy - ty) ** 2 <= group_arrival_sq:
+            completed.append(gid)
+
+    for gid in completed:
+        group = store.move_groups.pop(gid)
+        for uid in group["uids"]:
+            if not store.alive[uid]:
+                continue
+            store.has_move_target[uid] = False
+            store.effective_speed[uid] = 0.0
+            store.detour_remaining[uid] = 0.0
+            store.waypoints.pop(uid, None)
+            # Do NOT clear attack_moving — units that were attack-moving stay in
+            # attack mode after the group dissolves so they can still acquire
+            # targets.
+            store.plain_moving[uid] = False
+            store.move_group_id[uid] = -1
 
 
 def _resolve_collisions(store, active, tactical_map, navmesh):
@@ -441,11 +522,60 @@ def has_combat_los(navmesh, x1, y1, x2, y2):
     return _has_los(navmesh, (x1, y1), (x2, y2))
 
 
-def apply_group_move(store: UnitStore, unit_ids, tx, ty):
-    min_speed = min(store.data[uid, FIELD_SPEED] for uid in unit_ids)
-    for uid in unit_ids:
-        store.set_move_target(uid, tx, ty)
-        store.set_effective_speed(uid, min_speed)
+def apply_group_move(store, unit_ids, tx, ty, tactical_map=None):
+    """Issue a move order for a group of units.
+
+    When FORMATION_MOVE_ENABLED is True and len > 1, each unit gets a personal
+    offset slot derived from the group's current centroid. Group is registered in
+    store.move_groups so _update_move_groups can terminate it by centroid arrival.
+    See command.py move/attack_move handlers — they call this function.
+
+    When flag is False (or single-unit), falls back to the old shared-target path
+    so behavior is bit-identical to pre-formation code.
+    """
+    alive_ids = [uid for uid in unit_ids if store.alive[uid]]
+    if not alive_ids:
+        return
+
+    if not config.FORMATION_MOVE_ENABLED or len(alive_ids) == 1:
+        for uid in alive_ids:
+            store.set_move_target(uid, tx, ty)
+        return
+
+    cx = sum(store.data[uid, FIELD_X] for uid in alive_ids) / len(alive_ids)
+    cy = sum(store.data[uid, FIELD_Y] for uid in alive_ids) / len(alive_ids)
+
+    navmesh = _ensure_navmesh(tactical_map) if tactical_map is not None else None
+
+    gid = store._next_move_group_id
+    store._next_move_group_id += 1
+
+    offsets = {}
+    moving_set = set()
+
+    for uid in alive_ids:
+        ox = store.data[uid, FIELD_X] - cx
+        oy = store.data[uid, FIELD_Y] - cy
+        slot_x = tx + ox
+        slot_y = ty + oy
+
+        if navmesh is not None:
+            tr, tc = navmesh.cell(slot_x, slot_y)
+            if not navmesh.is_walkable(tr, tc):
+                slot_x, slot_y = tx, ty
+
+        offsets[uid] = (slot_x - tx, slot_y - ty)
+        store.set_move_target(uid, slot_x, slot_y)
+        store.move_group_id[uid] = gid
+        moving_set.add(uid)
+
+    store.move_groups[gid] = {
+        "uids": list(alive_ids),
+        "target_x": tx,
+        "target_y": ty,
+        "offsets": offsets,
+        "moving": moving_set,
+    }
 
 
 def apply_fast_move(store: UnitStore, unit_ids, tx, ty):

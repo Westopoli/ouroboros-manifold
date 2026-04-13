@@ -10,16 +10,26 @@ import theme_scifi as theme
 
 
 class Faction:
+    _ARCHETYPE_COLORS = {
+        "player_civilization": "#4a9eff",
+        "conqueror":           "#ff4a4a",
+        "fortifier":           "#4aff9e",
+        "opportunist":         "#ffd04a",
+        "breakaway":           "#cc88ff",
+    }
+
     def __init__(self, faction_id: str, name: str, archetype: str,
                  budget: float = 0.0,
                  budget_growth_rate: float | None = None,
                  modifiers: dict | None = None,
                  diplomatic_stance: dict | None = None,
+                 color: str | None = None,
                  rng: random.Random | None = None) -> None:
         self.id = faction_id
         self.name = name
         # "player_civilization" | "conqueror" | "breakaway"
         self.archetype = archetype
+        self.color = color if color is not None else self._ARCHETYPE_COLORS.get(archetype, "#888888")
         self.budget = budget
         self.budget_growth_rate = (
             budget_growth_rate if budget_growth_rate is not None

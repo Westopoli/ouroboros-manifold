@@ -58,6 +58,16 @@ class UnitStore:
         self.detour_dy = np.zeros(MAX_UNITS, dtype=np.float64)
         self.detour_remaining = np.zeros(MAX_UNITS, dtype=np.float64)
 
+        # plain_moving: set when a "move" command is issued (non-combat — no target
+        # acquisition, no auto-halt). Cleared on arrival or when any combat command
+        # (attack_move, attack_target, activate_ability) is issued.
+        self.plain_moving = np.zeros(MAX_UNITS, dtype=np.bool_)
+
+        # Formation movement fields — see movement.py _update_move_groups.
+        self.move_group_id = np.full(MAX_UNITS, -1, dtype=np.int32)
+        self.move_groups: dict = {}
+        self._next_move_group_id: int = 0
+
     def spawn(self, unit_type, faction_id, x, y, layer=0, stats=None):
         if self.count >= MAX_UNITS:
             return -1
@@ -94,6 +104,12 @@ class UnitStore:
 
     def kill(self, uid):
         self.alive[uid] = False
+        # Drop uid from its move group so _update_move_groups sees the correct
+        # moving-set size. See movement.py _update_move_groups.
+        gid = self.move_group_id[uid]
+        if gid >= 0 and gid in self.move_groups:
+            self.move_groups[gid]["moving"].discard(uid)
+        self.move_group_id[uid] = -1
 
     def get_position(self, uid):
         return (self.data[uid, FIELD_X], self.data[uid, FIELD_Y])
@@ -106,6 +122,13 @@ class UnitStore:
         return result
 
     def set_move_target(self, uid, tx, ty):
+        # Drop uid from any current group before assigning a new target.
+        # apply_group_move re-adds it to the new group. See movement.py _update_move_groups.
+        gid = self.move_group_id[uid]
+        if gid >= 0 and gid in self.move_groups:
+            self.move_groups[gid]["moving"].discard(uid)
+        self.move_group_id[uid] = -1
+
         self.target_x[uid] = tx
         self.target_y[uid] = ty
         self.has_move_target[uid] = True

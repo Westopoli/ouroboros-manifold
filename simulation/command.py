@@ -38,19 +38,25 @@ def process_commands(queue, store, tick):
         if cmd.type == "move":
             tx = cmd.params["target_x"]
             ty = cmd.params["target_y"]
-            for uid in cmd.unit_ids:
-                if store.alive[uid]:
-                    store.set_move_target(uid, tx, ty)
-                    store.attack_moving[uid] = False
+            alive_ids = [uid for uid in cmd.unit_ids if store.alive[uid]]
+            # apply_group_move is the single entry point for multi-unit target orders.
+            # Formation offsets and group registration live there. See movement.py.
+            apply_group_move(store, alive_ids, tx, ty)
+            for uid in alive_ids:
+                store.attack_moving[uid] = False
+                store.plain_moving[uid] = True
 
         elif cmd.type == "attack_move":
             tx = cmd.params["target_x"]
             ty = cmd.params["target_y"]
-            for uid in cmd.unit_ids:
-                if store.alive[uid]:
-                    store.set_move_target(uid, tx, ty)
-                    store.attack_moving[uid] = True
-                    store.engage_anchor_set[uid] = False
+            alive_ids = [uid for uid in cmd.unit_ids if store.alive[uid]]
+            # apply_group_move is the single entry point for multi-unit target orders.
+            # Formation offsets and group registration live there. See movement.py.
+            apply_group_move(store, alive_ids, tx, ty)
+            for uid in alive_ids:
+                store.attack_moving[uid] = True
+                store.engage_anchor_set[uid] = False
+                store.plain_moving[uid] = False
 
         elif cmd.type == "attack_target":
             target_uid = cmd.params["target_uid"]

@@ -498,22 +498,22 @@ CATEGORY_MULTIPLIER = {
 # ── Unit stat baselines — Tier 2 (Stage 6) ──────────────────────────────────
 UNIT_STATS = {
     "Raider":      {"category": "Strike", "hp": 500,  "base_damage": 9,    "attack_interval": 0.8,
-                    "attack_range": 200, "speed": 150, "sensor_radius": 400,
+                    "attack_range": 200, "speed": 150, "sensor_radius": 800,
                     "layer_transition_time": 1.0, "aoe_radius": 0},
     "Interceptor": {"category": "Strike", "hp": 650,  "base_damage": 6,    "attack_interval": 1.0,
-                    "attack_range": 250, "speed": 130, "sensor_radius": 500,
+                    "attack_range": 250, "speed": 130, "sensor_radius": 1000,
                     "layer_transition_time": 1.2, "aoe_radius": 0},
     "Vanguard":    {"category": "Line",   "hp": 1000, "base_damage": 7.5,  "attack_interval": 1.2,
-                    "attack_range": 300, "speed": 80,  "sensor_radius": 350,
+                    "attack_range": 300, "speed": 80,  "sensor_radius": 700,
                     "layer_transition_time": 2.5, "aoe_radius": 0},
     "Warden":      {"category": "Line",   "hp": 750,  "base_damage": 4,    "attack_interval": 1.5,
-                    "attack_range": 350, "speed": 70,  "sensor_radius": 400,
+                    "attack_range": 350, "speed": 70,  "sensor_radius": 800,
                     "layer_transition_time": 2.0, "aoe_radius": 0},
     "Bombard":     {"category": "Siege",  "hp": 800,  "base_damage": 17.5, "attack_interval": 3.0,
-                    "attack_range": 600, "speed": 50,  "sensor_radius": 300,
+                    "attack_range": 1200, "speed": 50,  "sensor_radius": 300,
                     "layer_transition_time": 4.0, "aoe_radius": 150},
     "Bastion":     {"category": "Siege",  "hp": 2100, "base_damage": 7,    "attack_interval": 1.8,
-                    "attack_range": 400, "speed": 40,  "sensor_radius": 300,
+                    "attack_range": 800, "speed": 40,  "sensor_radius": 300,
                     "layer_transition_time": 5.0, "aoe_radius": 0},
 }
 
@@ -580,6 +580,11 @@ STEERING_PROBE_DIST            = 40
 STEERING_DETOUR_MIN_DIST       = 60
 HARD_COLLISION_ENABLED         = True
 COLLISION_RESOLUTION_ITERATIONS = 3
+
+# ── Formation movement (formation_move_spec) ─────────────────────────────────
+FORMATION_MOVE_ENABLED         = False   # flipped to True in Step 7
+ARRIVAL_TOLERANCE_MULT         = 1.5     # per-unit slot arrival radius multiplier
+GROUP_ARRIVAL_RADIUS           = 2.0 * UNIT_COLLISION_RADIUS  # centroid-arrival threshold
 
 # ── Objectives and outcome classification (Stage 6) ─────────────────────────
 OUTCOME_WEIGHT_OBJECTIVE       = 0.75

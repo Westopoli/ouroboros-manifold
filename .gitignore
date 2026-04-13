@@ -11,3 +11,4 @@ __pycache__/
 
 # Simulation generated output
 simulation/tuning_output/
+simulation/viewer_dumps/

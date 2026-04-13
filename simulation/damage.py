@@ -3,7 +3,7 @@ import config
 from unit import (
     UnitStore, FIELD_X, FIELD_Y, FIELD_HP, FIELD_BASE_DAMAGE,
     FIELD_ATTACK_INTERVAL, FIELD_ATTACK_RANGE, FIELD_AOE_RADIUS,
-    FIELD_ATTACK_TIMER, FIELD_LAYER, CATEGORY_NAMES,
+    FIELD_ATTACK_TIMER, FIELD_LAYER, FIELD_SENSOR_RADIUS, CATEGORY_NAMES,
 )
 from ability import get_damage_output_multiplier, get_damage_reduction
 from movement import has_combat_los, _ensure_navmesh
@@ -136,6 +136,8 @@ def update_targeting(store: UnitStore, tmap, rng=None):
         tmap.spatial_hash.insert(uid, store.data[uid, FIELD_X], store.data[uid, FIELD_Y])
 
     for uid in active:
+        if store.plain_moving[uid]:   # plain move is non-combat: skip targeting entirely
+            continue
         current = store.auto_engage_target[uid]
         if current >= 0 and store.alive[current]:
             dx = store.data[uid, FIELD_X] - store.data[current, FIELD_X]
@@ -163,6 +165,29 @@ def update_targeting(store: UnitStore, tmap, rng=None):
 
         if not candidates:
             store.auto_engage_target[uid] = -1
+            # Attack-move pursuit: if the unit is attack_moving and found
+            # nothing in attack range, scan sensor radius for enemies and walk
+            # toward the closest one. Fires during march (has_move_target=True)
+            # and after slot arrival, so units break off toward enemies as soon
+            # as they enter sensor range rather than waiting to finish the march.
+            if store.attack_moving[uid]:
+                sensor_r = store.data[uid, FIELD_SENSOR_RADIUS]
+                best_d = float("inf")
+                best_uid = -1
+                for other in sorted(tmap.spatial_hash.query(mx, my_, sensor_r)):
+                    if store.faction[other] == my_faction:
+                        continue
+                    if store.data[other, FIELD_LAYER] != my_layer:
+                        continue
+                    dx = store.data[other, FIELD_X] - mx
+                    dy = store.data[other, FIELD_Y] - my_
+                    d = math.sqrt(dx * dx + dy * dy)
+                    if d < sensor_r and d < best_d:
+                        best_d, best_uid = d, other
+                if best_uid >= 0:
+                    store.set_move_target(uid,
+                                          store.data[best_uid, FIELD_X],
+                                          store.data[best_uid, FIELD_Y])
             continue
 
         min_dist = min(d for _, d in candidates)
