@@ -18,10 +18,13 @@ This spec was originally authored against an early stat baseline and the v2.06 b
 
 - Checkpoints A through I — **PASS** (approved by Westley).
 - Checkpoint J — **IN PROGRESS**. Sub-claims status:
-  - L1 Strike beats Siege — **FAIL** (0% Strike wins). Bombard AoE clusters on Strike spawn formations and Bastion HP is too high to crack inside the test window. Open question: whether to fix via stats, AoE cap, Strike kit, or category multiplier.
+  - L1 Strike beats Siege — **FAIL** (0% Strike wins). Root causes from diagnostic runs:
+    1. Bombard AoE with `AOE_DAMAGE_CAP_MULTIPLIER = 4.0` saturates on Strike spawn formations and front-loads kills before Strike closes range. AoE saturation — not single-shot damage — is the actual killing mechanism.
+    2. Bastion HP (2100) is too high for Strike effective DPS to crack inside the test window. Raider squad effective DPS against Bastion = 11.25 × 1.5 = 16.9, time-to-kill ≈ 124 sec per Bastion.
+    3. The 0.20× Siege→Strike multiplier in `config.py` softens Bombard-on-Strike single-shot damage but doesn't help against the AoE saturation that does the actual killing.
   - L2 Siege beats Line — PASS.
   - L3 Line beats Strike — PASS.
-  - L4 Soft RPS gradient — **FAIL**. The directional-probe + hard-collision steering does produce the designed firing-percentage suppression on flanks (~57% of Line firing in flank scenarios vs. baseline), but the HP gap between current Strike and Line stats means the geometric advantage doesn't convert into wins. Open question: stat adjustment vs. additional mechanism.
+  - L4 Soft RPS gradient — **FAIL**. The mechanism works: firing-percentage data from the gradient test shows Line firing % drops to ~57% in flank scenarios (T2/T3a/T3b) vs head-on baseline, which means the directional-probe + stationary-immovable rule is producing the designed concave geometry and a ~43% firing suppression on Line. The stats don't reward the geometry: Vanguard 1000 HP vs Raider 500 HP × Line→Strike 1.5× damage means Strike is out-traded even when Line is only firing 57% of the time. The HP gap eats the firing-percentage win.
 - Checkpoints K and L — not started. Blocked on J.
 
 **Movement model history:**
@@ -36,10 +39,25 @@ This spec was originally authored against an early stat baseline and the v2.06 b
 - Original Tier 2 baselines (v2.02 spec) produced engagements far shorter than the bible's pacing targets.
 - The current `config.UNIT_STATS` reflect a non-uniform rebalance (HP up across the board, base damage down across the board, but not at the same ratios per unit type — see the updated Tier 2 table below). The bible (Open Design Question #14) was marked resolved at v2.07, but the stat values themselves are not yet final because the L1 and L4 failures above point at further adjustment.
 
-**Code-vs-design gaps to fix during J resume:**
+**Checkpoint J resume work:**
 
-- `movement.py:244` halts any unit with a move target the moment auto-engage acquires a target. Per the bible's clarified Command Vocabulary, plain `move` is non-combat (no auto-engage) and should keep moving regardless. Only `attack_move` should halt-to-engage. The current code applies attack-move semantics to both. Fix by gating the halt on `store.attack_moving[uid]`.
-- `config.CATEGORY_MULTIPLIER["Siege"]["Strike"] = 0.20` was inserted during earlier J work to soften Bombard-on-Strike damage. It's a tuning value, not a design decision — the bible (v2.07) treats the multiplier matrix as a tuning surface where specific cells can deviate from the canonical 1.0/0.75/1.5 pattern. Whether this specific value stays is a balance question for the J resume pass, not a bible question.
+*1. Code cleanup — remove `group_move` / `fast_move`.* The bible (v2.07) dropped both commands. The command vocabulary is now four: `move`, `attack_move`, `attack_target`, `activate_ability`. All movement commands apply to a single unit or a selection; when applied to a selection, each unit moves at its own native speed — no speed matching, no cohesion primitive. Code changes:
+  - Remove `apply_group_move` and `apply_fast_move` from `movement.py`.
+  - Remove `"group_move"` and `"fast_move"` from the `Command` type enum in `command.py`.
+  - Rewrite the test files that currently issue these commands (`test_checkpoint_6j.py`, `test_sweep_debug.py`, `test_6j_mixed.py`, `test_t2_diagnostic.py`, `test_checkpoint_6k_engine_step.py`) to issue plain `move` commands to unit ID lists. Individual speeds are the new default; tests that depended on speed-matched approach will produce different arrival patterns and may need adjusted expectations.
+
+*2. Code fix — `move` command should not halt on engagement.* `movement.py:244` currently halts any unit with a move target the moment it acquires an `auto_engage_target`. Per the bible's clarified Command Vocabulary, plain `move` is non-combat: the unit does not acquire targets, does not return fire, does not stop if attacked. Only `attack_move` should halt-to-engage. The simplest implementation: skip `update_targeting` for units whose current command is a plain `move`, so `auto_engage_target` stays at -1 and the halt branch never fires. Verify with the relevant tests before deciding on the exact flag plumbing (may need a `store.plain_moving[uid]` or equivalent).
+
+*3. Stat rebalance pass.* After the code fixes are in, run a tuning pass that:
+  - Closes the L1 Strike-vs-Siege gap. Tuning surfaces include the Siege→Strike multiplier (currently 0.20, originally 0.75 — the bible treats the matrix as a tuning surface), Bastion HP, Bombard `aoe_radius`, `AOE_DAMAGE_CAP_MULTIPLIER`, Surge parameters, and Raider/Interceptor HP. Given that AoE saturation is the dominant killing mechanism per the L1 diagnosis, the AoE damage cap and Bombard AoE radius are likely the highest-leverage levers.
+  - Closes the L4 flank-gradient gap. The 2× HP gap between Strike and Line is the proximate cause — options are Strike HP up, Line HP down, Line→Strike multiplier reduction, or a Strike-side burst buff (Surge multiplier/duration).
+  - Preserves L5/L6/L7 duration targets and L2/L3 RPS results.
+
+  Expect this to be iterative. Use `test_checkpoint_6j.py` for L4 gradient, `test_checkpoint_6c.py` for L1/L2/L3, `test_checkpoint_6d.py` for L5/L6/L7.
+
+*4. Re-run all of J.* Once L1 and L4 pass alongside the still-passing L2/L3 and L5–L7, run the full Tactical Review Report for J and present to Westley.
+
+*5. After J passes.* Proceed to Checkpoint K (performance stress test) and Checkpoint L (final invariants + Tactical Review Reports across the full scenario set).
 
 ---
 
