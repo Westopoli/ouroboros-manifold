@@ -13,16 +13,17 @@
 **Last session accomplished:**
 - Initial audit complete — identified all open questions across Stages 7, 7.5, and 8
 - Stage 7 foundational decisions resolved (see "Resolved Decisions" below)
-- Library hints deferred out of Stage 7 (Question L1)
+- Library hints deferred out of Stage 7 (S7-1)
+- Layer count resolved: fixed at 5 (S7-2)
 
 **Next session should:**
-- Continue with Stage 7 open questions in the order presented below (S7-2 next)
+- Continue with Stage 7 open questions in the order presented below (S7-3 next — moving battlefields)
 - Work through Stage 7.5 questions
 - Work through Stage 8 questions
 - Once all [ANSWERED], promote decisions into bible/specs and delete this file
 
 **Current state summary:**
-- Stage 7: 4 design questions remain [OPEN], numerous [ENGINEERING-DEFAULT] items flagged
+- Stage 7: 3 design questions remain [OPEN], numerous [ENGINEERING-DEFAULT] items flagged
 - Stage 7.5: 2 design questions [OPEN]
 - Stage 8: 3 design questions [OPEN]
 
@@ -63,7 +64,8 @@ These have already been decided. Listed here for reference — do not re-ask.
 - **Strategic Layout Library size** → 8 authored layouts in the first pass.
 - **Complications** → Deferred. Not part of Stage 7. Implement in a later stage after core missions are playable.
 - **Stage split** → Three stages: Stage 7 (map gen + reinforcement), Stage 7.5 (behavior scripts), Stage 8 (Godot renderer + command interface + persistence).
-- **Library hints (L1)** → Deferred. Stage 7 ships without hints. The base pipeline (8 layouts × canvas scaling × positional jitter × simulation flavoring) already produces sufficient variety. Hints can be added later as a content addition via the library builder.
+- **Library hints (S7-1)** → Deferred. Stage 7 ships without hints. The base pipeline (8 layouts × canvas scaling × positional jitter × simulation flavoring) already produces sufficient variety. Hints can be added later as a content addition via the library builder.
+- **Layer count per map (S7-2)** → Fixed at 5 layers at the engine level for all eras. This is required by the era-agnostic architecture (revenue principle): expansion packs must be content-only, not engine changes. The bible's examples (e.g., the 1980s era with submarines at layers 4–5, surface at layer 3, aircraft at layers 1–2) assume 5. The Settled Reach space era does not restrict units to specific layers — all spacecraft can occupy any layer — but the engine still supports 5. Visual presentation per era is a renderer concern (see hub Open Design Question #16), not an engine concern. Per-map variation in how the vertical dimension plays comes from the `layer_accessibility_mask` gradient, not from varying the layer count.
 
 ---
 
@@ -76,14 +78,6 @@ Answered questions stay in this file (with the answer) until they are captured i
 ---
 
 ### Stage 7 — Map Generation + Tactical Reinforcement
-
-#### S7-2 — Layer Count Per Map [OPEN]
-
-The bible specifies vertical layers (3–5 per the abstract spec, 2–3 may work best for space). Procedurally generated maps need to decide how many layers to generate per map.
-
-Options to present: fixed per-era, variable per-archetype, variable per-canvas-size.
-
----
 
 #### S7-3 — Moving Battlefields [OPEN]
 
