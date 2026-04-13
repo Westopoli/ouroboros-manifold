@@ -13,17 +13,20 @@
 **Last session accomplished:**
 - Initial audit complete — identified all open questions across Stages 7, 7.5, and 8
 - Stage 7 foundational decisions resolved (see "Resolved Decisions" below)
-- Library hints deferred out of Stage 7 (Question L1)
+- Library hints deferred out of Stage 7 (S7-1)
+- Layer count resolved: fixed at 5 (S7-2)
+- Moving battlefields resolved: drifting spine nodes only, no moving gradients (S7-3)
+- Structure ownership distribution resolved: archetype baseline + simulation delta (S7-5)
+- Behavior script data format resolved: JSON state machine + shared Python runner (S75-1)
+- Prototype archetypes selected: Defensive Stand, Assault, Multi-Front Defense, Counterinsurgency (S75-2)
 
 **Next session should:**
-- Continue with Stage 7 open questions in the order presented below (S7-2 next)
-- Work through Stage 7.5 questions
-- Work through Stage 8 questions
+- Move to Stage 8 (S8-1 next — save scope)
 - Once all [ANSWERED], promote decisions into bible/specs and delete this file
 
 **Current state summary:**
-- Stage 7: 4 design questions remain [OPEN], numerous [ENGINEERING-DEFAULT] items flagged
-- Stage 7.5: 2 design questions [OPEN]
+- Stage 7: all design questions resolved, engineering defaults flagged for spec review
+- Stage 7.5: all design questions resolved
 - Stage 8: 3 design questions [OPEN]
 
 ---
@@ -63,7 +66,15 @@ These have already been decided. Listed here for reference — do not re-ask.
 - **Strategic Layout Library size** → 8 authored layouts in the first pass.
 - **Complications** → Deferred. Not part of Stage 7. Implement in a later stage after core missions are playable.
 - **Stage split** → Three stages: Stage 7 (map gen + reinforcement), Stage 7.5 (behavior scripts), Stage 8 (Godot renderer + command interface + persistence).
-- **Library hints (L1)** → Deferred. Stage 7 ships without hints. The base pipeline (8 layouts × canvas scaling × positional jitter × simulation flavoring) already produces sufficient variety. Hints can be added later as a content addition via the library builder.
+- **Library hints (S7-1)** → Deferred. Stage 7 ships without hints. The base pipeline (8 layouts × canvas scaling × positional jitter × simulation flavoring) already produces sufficient variety. Hints can be added later as a content addition via the library builder.
+- **Layer count per map (S7-2)** → Fixed at 5 layers at the engine level for all eras. This is required by the era-agnostic architecture (revenue principle): expansion packs must be content-only, not engine changes. The bible's examples (e.g., the 1980s era with submarines at layers 4–5, surface at layer 3, aircraft at layers 1–2) assume 5. The Settled Reach space era does not restrict units to specific layers — all spacecraft can occupy any layer — but the engine still supports 5. Visual presentation per era is a renderer concern (see hub Open Design Question #16), not an engine concern. Per-map variation in how the vertical dimension plays comes from the `layer_accessibility_mask` gradient, not from varying the layer count.
+- **Moving battlefields (S7-3)** → Drifting spine nodes only. Stage 7 supports objective and capture-point spine nodes drifting along authored paths, but gradient sources remain static. Navmesh is computed once at mission initialization and never regenerates. Moving gradient sources (drifting nebulae, shifting debris fields) are deferred for a later addition once the renderer exists to visualize them and the base procedural map system is proven. For archetypes whose design calls for environmental motion (Evacuation's collapsing perimeter, Interception's in-transit enemy, Containment's flowing enemy), the motion is implemented through enemy force behavior against a static map — forces advancing through spine zones, wave-style spawns, behavior-script-driven territorial pressure — not through the map literally changing.
+- **Reinforcement structure ownership distribution (S7-5)** → Hybrid: archetype-authored baseline + simulation-state delta, bounded. Each archetype authors a default ownership distribution (player / neutral / enemy percentages) reflecting its tactical intent. The mission region's simulation state then applies a bounded delta on top of the baseline — **military field** drives the player/enemy axis (high military shifts toward player-owned, low military shifts toward enemy-owned), and **tension field** drives the neutral share (high tension increases the neutral/contested share). Economy and population do not drive ownership. Specific delta magnitudes are tuning values. Baselines are authored only for the 3–4 prototype archetypes selected in Stage 7.5; the remaining archetypes use a neutral-leaning fallback (~33/33/33) until their behavior scripts are authored and their baselines can be designed alongside. This pattern (authored baseline + bounded simulation delta) intentionally mirrors the existing simulation flavoring approach in the map generation pipeline.
+
+### Stage 7.5
+
+- **Behavior script data format (S75-1)** → JSON state machine files consumed by a shared Python runner (`behavior_runner.py`). Each script is a `.json` file specifying forces, states (behavior + modifier + position), transitions (with conditions), and reactive hooks (with when-conditions and actions). Conditions use a small restricted expression language over trigger bus flags, tactical state predicates (e.g., `force_hp_fraction < 0.5`), and timers — not arbitrary Python. The runner loads JSON, validates against a schema (catches dead states, missing transitions, stale flag references before runtime), and executes the state machine against the tactical engine's command protocol. Adding a new archetype means creating a new JSON file, no engine code changes. The expression language vocabulary is authored alongside the runner and extended when a new class of condition is genuinely needed.
+- **Prototype archetype selection (S75-2)** → Four prototype behavior scripts authored in Stage 7.5: **Defensive Stand**, **Assault**, **Multi-Front Defense**, and **Counterinsurgency**. These four cover all five base behaviors (`advance`, `defend`, `patrol`, `ambush`, `retreat`) and exercise the trigger bus / multi-force coordination (Multi-Front Defense) plus the hidden-enemy-in-sensor-interference pattern (Counterinsurgency). The remaining six archetype scripts (Siege Breaking, Reconquest, Suppression, Interception, Evacuation, Containment) are authored in a follow-up pass once the prototype set validates the vocabulary. The reinforcement structure ownership baselines (S7-5) are also authored only for these four prototypes in Stage 7.5; the remaining six use the neutral fallback until their scripts land.
 
 ---
 
@@ -77,47 +88,13 @@ Answered questions stay in this file (with the answer) until they are captured i
 
 ### Stage 7 — Map Generation + Tactical Reinforcement
 
-#### S7-2 — Layer Count Per Map [OPEN]
+#### S7-4 — Default Structure Count Per Canvas Size [RECLASSIFIED: TUNING]
 
-The bible specifies vertical layers (3–5 per the abstract spec, 2–3 may work best for space). Procedurally generated maps need to decide how many layers to generate per map.
-
-Options to present: fixed per-era, variable per-archetype, variable per-canvas-size.
-
----
-
-#### S7-3 — Moving Battlefields [OPEN]
-
-The bible mentions drifting spine nodes and moving gradient sources as a design concept. Significant engineering complexity (navmesh regeneration). Several archetypes' map characters imply motion (Evacuation's collapsing perimeter, Interception's in-transit enemy, Containment's flowing enemy). Question: include in Stage 7 or defer?
-
----
-
-#### S7-4 — Default Structure Count Per Canvas Size [OPEN]
-
-The bible says structure count is derived from region military field value, clamped to the archetype's canvas size range. The Stage 5.5 spec already has placeholder values (small 2–4, medium 3–6, large 4–8). Question: are these the right ranges? Since "always ≥1 structure" was decided, the floor should be at least 1.
-
-This might be pure tuning and not need a design decision. Flag for Westley to confirm.
-
----
-
-#### S7-5 — Reinforcement Structure Ownership Distribution [OPEN]
-
-When a map is generated, structures need initial ownership (player / enemy / neutral). Archetype-dependent? Defensive archetypes give the player more starting structures; offensive archetypes give the enemy more; contested archetypes start neutral. Question: is this rule per-archetype, or per-layout, or a general default with archetype overrides?
+Reclassified as a tuning value. The bible establishes the derivation (region military → total capacity, clamped to archetype canvas size range). The specific range per canvas size is a number that will be adjusted through playtesting. Initial proposed defaults (small 1–3, medium 2–5, large 3–7 — floor adjusted to 1 to honor the "always ≥1 structure" decision from S7 prior session) will ship in the stage spec as config values. No design input required.
 
 ---
 
 ### Stage 7.5 — Enemy Macro Behavior Scripts
-
-#### S75-1 — Behavior Script Data Format [OPEN]
-
-The bible describes the abstract architecture (state machine with reactive hooks, 5 behaviors × 3 modifiers) but not the concrete representation. Options: JSON state machine definitions consumed by a shared Python runner, Python classes per script, hybrid. Affects how easy it is to author new scripts vs. run them efficiently.
-
----
-
-#### S75-2 — Prototype Archetype Selection [OPEN]
-
-We decided to author 3–4 prototype behavior scripts first. Which ones? Candidates: Defensive Stand (simplest single-force defense), Assault (simplest single-force offense), Multi-Front Defense (multi-force coordination / trigger bus), Counterinsurgency (ambush + scattered forces). Selection determines which behaviors and hooks get tested first.
-
----
 
 ### Stage 8 — Godot Renderer, Command Interface, Game State Persistence
 
