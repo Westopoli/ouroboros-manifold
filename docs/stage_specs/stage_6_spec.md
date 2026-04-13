@@ -202,9 +202,9 @@ class Objective:
 class Command:
     tick: int               # Tick number this command executes
     command_type: str       # "move", "attack_move", "attack_target",
-                            # "activate_ability", "group_move"
-    unit_ids: list[int]     # Target unit(s) — single for most, multiple for group_move
-    target_position: tuple  # (x, y) for move/attack_move/group_move, None for others
+                            # "activate_ability"
+    unit_ids: list[int]     # Target unit(s) — single unit or a selection; multi-unit commands apply to each unit independently at its own speed
+    target_position: tuple  # (x, y) for move/attack_move, None for others
     target_unit_id: int     # For attack_target, None for others
 ```
 - Command queue: ordered by tick. The engine processes all commands for the current tick before advancing unit state.

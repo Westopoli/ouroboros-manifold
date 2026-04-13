@@ -307,7 +307,7 @@ The longer engagement floor (45 seconds minimum) serves a critical design purpos
 The design constraints the stat table must satisfy:
 
 - Each unit type's category assignment (Strike / Line / Siege) is fixed and matches the role description above.
-- Relative mobility is preserved: Strike fastest, Line middle, Siege slowest. Speed spread is wide enough that mixed forces fall out of cohesion on individual-move commands (this is what `group_move` exists to prevent — see Command Vocabulary).
+- Relative mobility is preserved: Strike fastest, Line middle, Siege slowest. Speed spread is wide by design — every unit always moves at its own native speed (no speed matching, no group-move), so mixed forces arrive strung out by speed tier. Maintaining combined-arms cohesion is a player skill, not an engine guarantee.
 - Relative durability is preserved: Bastion is the highest-HP unit in the game by a wide margin; Strike units have the lowest HP pools.
 - Sensor radius roughly tracks category (Strike units see further than Siege units) — the screen role depends on this.
 - Bombard is the only AoE unit in the base roster.
@@ -318,30 +318,16 @@ The design constraints the stat table must satisfy:
 
 ### Command Vocabulary
 
-> **RESOLVED (v2.02, updated v2.03, clarified v2.07).** Six commands. No patrol, no follow, no hold position, no stop.
+> **RESOLVED (v2.02, updated v2.03, clarified v2.07).** Four commands. No patrol, no follow, no hold position, no stop, no group-move, no speed matching.
 
 - **`move`** — move to position. **Pure displacement, non-combat.** The unit does not acquire targets, does not return fire, and does not stop if attacked along the way. This is the player explicitly choosing movement over engagement — a retreat, a reposition, a sprint through a contested zone. If the player wants the unit to fight on the way, they use `attack_move` instead.
 - **`attack_move`** — move to position, **stopping to engage any enemy that enters weapon range**. The unit halts at the point of first engagement, fires at the nearest in-range enemy, and resumes movement toward the commanded point when the target dies or leaves range. Attack-move uses an **engagement leash**: when the unit first acquires a target, it sets an anchor at its current position; if the engaged target moves beyond a bounded distance from that anchor, the unit drops the target and resumes movement rather than chasing indefinitely. The leash prevents an attack-moving force from peeling apart to chase a fleeing target far from its commanded path.
 - **`attack_target`** — attack a specific enemy unit.
 - **`activate_ability`** — trigger the unit's active ability (toggle for Brace).
-- **`group_move`** — all selected units move together to target position, speed-matched to the slowest unit in the selection.
-- **`fast_move`** — all selected units move to target position at individual speeds (equivalent to issuing individual `move` commands).
+
+All movement commands accept a single unit or a selection. When issued to a selection, the command is applied to each unit independently — every unit travels at its own speed. There is no cohesion enforcement, no speed matching to the slowest unit, no group-move primitive. A mixed force commanded to a point will arrive strung out by speed tier: Strike first, Line middle, Siege last. This is intentional — combined-arms cohesion is the player's responsibility, achieved through command timing (sending Siege ahead, sending Strike later) rather than an engine-enforced group pace. The player's tools for keeping a force together are smaller selections, staggered commands, and waypointing — not a speed-matched group move.
 
 Commands are recorded with tick numbers for replay. The engine processes all commands for the current tick before advancing state.
-
-### Group Move Speed Matching
-
-When a `group_move` command is issued, all selected units move toward the target position at the speed of the **slowest unit in the selection**. This keeps mixed-composition forces coherent during approach — frontline, support, and fire support arrive together as a functional army rather than strung out by speed differential.
-
-**Fast-move override:** The player can issue a **fast move** variant (hotkey TBD, Stage 8) that releases all units to move at their individual speeds toward the same destination. This is the opt-in "break formation" command. Fast move is the same as issuing individual `move` commands to every unit in the selection simultaneously — no speed matching, no cohesion enforcement. The intent is that group_move is the safe default and fast-move is always one keypress away, never buried or annoying to access.
-
-**Individual move commands are never speed-matched.** A `move` command issued to a single unit (or to a selection where the player wants independent movement) always uses that unit's native speed. Speed matching applies exclusively to `group_move`.
-
-**AI forces use group_move by default** for approach movement, so enemy armies also arrive as coherent forces rather than trickling in by speed tier. AI fast-move behavior is governed by the enemy macro behavior system (behavior scripts can issue fast-move when tactically appropriate, e.g., sending Raiders ahead to scout or screen).
-
-**Design rationale:** The 4:1 speed ratio between the fastest unit (Raider, 150 wu/s) and slowest (Bastion, 40 wu/s) means an ungrouped mixed force arrives over a window longer than the target engagement duration. Combined-arms tactics require units to fight together. The player opts into splitting when they want to — scouting with Raiders, screening with Interceptors — rather than being forced to micro around an incoherent default.
-
----
 
 ### Squad Mechanics — Visual Only
 
@@ -403,7 +389,7 @@ AoE units (Bombard) receive an additional multiplier. Force total = sum of all u
 
 Each mission instance includes a **behavior script** that defines the enemy's plan. The script is a state machine composed from a shared vocabulary of behaviors. Each enemy force group (a named set of unit IDs) runs its own script instance. The script moves through states based on transition conditions. Layered on top of the state machine are **reactive hooks** — condition → action pairs that fire when the player does something the script's base flow didn't anticipate. The script is the skeleton (authored pacing); the hooks are the muscles (authored reactivity).
 
-The behavior script issues Stage 6 commands (`move`, `attack_move`, `attack_target`, `group_move`, `activate_ability`) to groups of enemy units. Individual units then execute those commands through their existing decision loop. The macro layer re-evaluates its state and issues updated commands at a regular cadence (config value, targeting every 2 seconds). Between evaluations, units rely on their existing auto-engage and flinch behaviors.
+The behavior script issues Stage 6 commands (`move`, `attack_move`, `attack_target`, `activate_ability`) to groups of enemy units. Individual units then execute those commands through their existing decision loop. The macro layer re-evaluates its state and issues updated commands at a regular cadence (config value, targeting every 2 seconds). Between evaluations, units rely on their existing auto-engage and flinch behaviors.
 
 **This replaces the earlier roadmap concept of "per-archetype enemy scripted behaviors."** The macro behavior system is a single shared system. Each archetype authors a script using the shared vocabulary — the archetype provides the *content* (which states, which transitions, which hooks), the system provides the *infrastructure* (how states execute, how transitions evaluate, how hooks fire). Adding a new archetype requires authoring a new script, not writing new AI code.
 

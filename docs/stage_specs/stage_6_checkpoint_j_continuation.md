@@ -51,16 +51,25 @@ The fine-layer steering and collision system is the v2.07 model described in `bi
 
 The bible has been updated (v2.07) to ratify the current movement model and to mark the engagement-duration rebalance as resolved at the design level. The remaining work for J is balance, plus one code fix.
 
-### 1. Code fix — `move` command should not halt on engagement
+### 1. Code cleanup — remove `group_move` / `fast_move`
+
+The bible (v2.07) dropped the `group_move` and `fast_move` commands. The command vocabulary is now four commands: `move`, `attack_move`, `attack_target`, `activate_ability`. All movement commands apply to a single unit or a selection; when applied to a selection, each unit moves at its own native speed — no speed matching, no cohesion primitive.
+
+Code changes during resume:
+- Remove `apply_group_move` and `apply_fast_move` from `movement.py`.
+- Remove `"group_move"` and `"fast_move"` from the `Command` type enum in `command.py`.
+- Rewrite the test files that currently issue `group_move` / `fast_move` commands (`test_checkpoint_6j.py`, `test_sweep_debug.py`, `test_6j_mixed.py`, `test_t2_diagnostic.py`, `test_checkpoint_6k_engine_step.py`) to issue plain `move` commands to unit ID lists. Individual speeds are the new default; tests that depended on speed-matched approach will produce different arrival patterns and may need adjusted expectations.
+
+### 2. Code fix — `move` command should not halt on engagement
 
 `movement.py:244` currently halts any unit with a move target the moment it acquires an `auto_engage_target`. Per the bible's clarified Command Vocabulary (v2.07):
 
 - `move` — pure displacement. Unit does not acquire targets, does not return fire, does not stop if attacked.
 - `attack_move` — moves toward target, halts to engage when an enemy enters range, resumes on target death or leash break.
 
-Fix: gate the engagement-halt on `store.attack_moving[uid]`. Plain `move` units should continue moving regardless of `auto_engage_target` state. May also need to suppress `update_targeting` from setting `auto_engage_target` on plain-`move` units (so they don't even pick targets) — verify with the relevant test before deciding.
+Fix: gate the engagement-halt on `store.attack_moving[uid]`. Plain `move` units should continue moving regardless of `auto_engage_target` state. Additionally, `move` is defined as non-combat — the unit should not acquire targets, not return fire. Simplest implementation: skip `update_targeting` for units whose current command is a plain `move`, so `auto_engage_target` stays at -1. Verify with the relevant test before deciding on the exact flag plumbing.
 
-### 2. Stat rebalance pass
+### 3. Stat rebalance pass
 
 Run a tuning pass that:
 - Closes the L1 Strike-vs-Siege gap. Tuning surfaces include the Siege→Strike multiplier (currently 0.20, originally 0.75), Bastion HP, Bombard `aoe_radius`, `AOE_DAMAGE_CAP_MULTIPLIER`, Surge parameters, and Raider/Interceptor HP.
@@ -69,11 +78,11 @@ Run a tuning pass that:
 
 Expect this to be iterative. Use `test_checkpoint_6j.py` for L4 gradient, `test_checkpoint_6c.py` for L1/L2/L3, `test_checkpoint_6d.py` for L5/L6/L7.
 
-### 3. Re-run all of J
+### 4. Re-run all of J
 
 Once L1 and L4 pass alongside the still-passing L2/L3 and L5–L7, run the full Tactical Review Report for J and present to Westley.
 
-### 4. After J passes
+### 5. After J passes
 
 Proceed to Checkpoint K (performance stress test) and Checkpoint L (final invariants + Tactical Review Reports across the full scenario set).
 
