@@ -22,7 +22,7 @@ ratio = {"Vanguard": 0.3, "Warden": 0.2, "Raider": 0.2, "Interceptor": 0.1, "Bom
 for faction, cx in [(0, 5000.0), (1, 7000.0)]:
     placed = 0
     for ut, frac in ratio.items():
-        n = max(1, round(50 * frac))
+        n = max(1, round(100 * frac))
         for i in range(n):
             x = cx + rng.uniform(-200, 200)
             y = 6000.0 + (placed - 25) * 60.0 + rng.uniform(-15, 15)

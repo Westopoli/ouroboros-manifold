@@ -54,6 +54,10 @@ class UnitStore:
         self.engage_anchor_y = np.zeros(MAX_UNITS, dtype=np.float64)
         self.engage_anchor_set = np.zeros(MAX_UNITS, dtype=np.bool_)
 
+        self.detour_dx = np.zeros(MAX_UNITS, dtype=np.float64)
+        self.detour_dy = np.zeros(MAX_UNITS, dtype=np.float64)
+        self.detour_remaining = np.zeros(MAX_UNITS, dtype=np.float64)
+
     def spawn(self, unit_type, faction_id, x, y, layer=0, stats=None):
         if self.count >= MAX_UNITS:
             return -1

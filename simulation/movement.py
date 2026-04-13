@@ -180,6 +180,22 @@ def _bresenham(r1, c1, r2, c2):
             c += sc
 
 
+def _probe_is_blocked(positions, uid, px, py, dx, dy, probe_dist, block_r_sq, store):
+    ppx = px + dx * probe_dist
+    ppy = py + dy * probe_dist
+    my_layer = store.data[uid, FIELD_LAYER]
+    for other_uid, (ox, oy) in positions.items():
+        if other_uid == uid:
+            continue
+        if store.data[other_uid, FIELD_LAYER] != my_layer:
+            continue
+        ddx = ox - ppx
+        ddy = oy - ppy
+        if ddx * ddx + ddy * ddy < block_r_sq:
+            return True
+    return False
+
+
 def _ensure_navmesh(tactical_map):
     if tactical_map is None:
         return None
@@ -220,8 +236,6 @@ def _update_attack_move_state(store, active):
 
 
 def update_movement(store: UnitStore, tactical_map, dt: float):
-    sep_radius = config.STEERING_SEPARATION_RADIUS
-    sep_radius_sq = sep_radius * sep_radius
     obstacle_range = config.STEERING_OBSTACLE_AVOIDANCE_RANGE
     collision_radius = config.UNIT_COLLISION_RADIUS
 
@@ -277,42 +291,44 @@ def update_movement(store: UnitStore, tactical_map, dt: float):
             store.has_move_target[uid] = False
             store.effective_speed[uid] = 0.0
             store.attack_moving[uid] = False
+            store.detour_remaining[uid] = 0.0
             continue
 
         seek_x = dx / dist
         seek_y = dy / dist
 
-        sep_x = 0.0
-        sep_y = 0.0
-        for other_uid in active:
-            if other_uid == uid:
-                continue
-            if store.data[other_uid, FIELD_LAYER] != store.data[uid, FIELD_LAYER]:
-                continue
-            ox = positions[other_uid][0]
-            oy = positions[other_uid][1]
-            sdx = px - ox
-            sdy = py - oy
-            d_sq = sdx * sdx + sdy * sdy
-            if d_sq < sep_radius_sq and d_sq > 0.001:
-                d = math.sqrt(d_sq)
-                weight = 1.0 - (d / sep_radius)
-                sep_x += (sdx / d) * weight
-                sep_y += (sdy / d) * weight
+        probe_dist = config.STEERING_PROBE_DIST
+        block_r_sq = (config.UNIT_COLLISION_RADIUS * 2) ** 2
 
-        obs_x = 0.0
-        obs_y = 0.0
+        if store.detour_remaining[uid] > 0:
+            steer_x, steer_y = store.detour_dx[uid], store.detour_dy[uid]
+        elif _probe_is_blocked(positions, uid, px, py, seek_x, seek_y, probe_dist, block_r_sq, store):
+            steer_x, steer_y = seek_x, seek_y
+            heading_angle = math.atan2(seek_y, seek_x)
+            for deg in [30, -30, 60, -60, 90, -90]:
+                a = heading_angle + math.radians(deg)
+                ax, ay = math.cos(a), math.sin(a)
+                if not _probe_is_blocked(positions, uid, px, py, ax, ay, probe_dist, block_r_sq, store):
+                    steer_x, steer_y = ax, ay
+                    store.detour_dx[uid] = ax
+                    store.detour_dy[uid] = ay
+                    store.detour_remaining[uid] = config.STEERING_DETOUR_MIN_DIST
+                    break
+        else:
+            steer_x, steer_y = seek_x, seek_y
+
+        obs_x, obs_y = 0.0, 0.0
         if tactical_map is not None:
-            probe_x = px + seek_x * obstacle_range
-            probe_y = py + seek_y * obstacle_range
+            probe_x = px + steer_x * obstacle_range
+            probe_y = py + steer_y * obstacle_range
             if tactical_map.in_bounds(probe_x, probe_y):
                 density = tactical_map.obstacle_density(probe_x, probe_y)
                 if density > 0.3:
-                    obs_x = -seek_x * density
-                    obs_y = -seek_y * density
+                    obs_x = -steer_x * density
+                    obs_y = -steer_y * density
 
-        steer_x = seek_x + sep_x * 0.9 + obs_x * 1.0
-        steer_y = seek_y + sep_y * 0.9 + obs_y * 1.0
+        steer_x += obs_x
+        steer_y += obs_y
         mag = math.sqrt(steer_x * steer_x + steer_y * steer_y)
         if mag > 0.001:
             steer_x /= mag
@@ -331,6 +347,8 @@ def update_movement(store: UnitStore, tactical_map, dt: float):
 
         store.data[uid, FIELD_X] = new_x
         store.data[uid, FIELD_Y] = new_y
+        if store.detour_remaining[uid] > 0:
+            store.detour_remaining[uid] = max(0.0, store.detour_remaining[uid] - move_dist)
 
     if config.HARD_COLLISION_ENABLED:
         _resolve_collisions(store, active, tactical_map, navmesh)
