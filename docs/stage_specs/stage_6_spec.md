@@ -8,7 +8,40 @@ This is the stage where the simulation starts producing *gameplay* rather than j
 
 **Architecture: SC2-style simulation/renderer split.** The tactical engine built in this stage is the ground truth for all combat. It owns unit positions, health, damage, abilities, objectives, and outcomes. The Godot frontend (Stage 8) is a pure renderer — it reads engine state and draws it. The command interface (Stage 8) translates player inputs into engine commands. Replay files store initial state + command stream; the engine re-derives everything else. This split means all gameplay logic is testable, tunable, and validatable in Python with no visual dependencies.
 
-**Pacing target: deliberate, not frantic.** Engagements are long enough for positioning and abilities to matter. Small skirmishes (a Raider squad vs. a Bombard) last at least 10–15 seconds. Large battles (100+ units per side) last over a minute. The player commands heavy military assets, reads the situation, and makes committed positioning decisions — not twitch micro.
+**Pacing target: deliberate, not frantic.** Engagements are long enough for positioning and abilities to matter. A 5v5 force-on-force brawl with no tactical play still lasts at least 45 seconds — enough time for the player to read the situation, recognize a losing trade, and order a retreat. Tactical engagements (positioning, abilities, retreat and re-engage) last around 2 minutes. Large battles (100+ units per side) last well over 2 minutes. Mirror 50v50 with balanced composition: 150–200 seconds. The player commands heavy military assets, reads the situation, and makes committed positioning decisions — not twitch micro.
+
+## Current Status (as of v2.07 spec rewrite)
+
+This spec was originally authored against an early stat baseline and the v2.06 bible's ORCA/RVO movement model. Both have since changed. This section captures where the implementation actually is so future sessions don't have to reverse-engineer it.
+
+**Implementation progress:**
+
+- Checkpoints A through I — **PASS** (approved by Westley).
+- Checkpoint J — **IN PROGRESS**. Sub-claims status:
+  - L1 Strike beats Siege — **FAIL** (0% Strike wins). Bombard AoE clusters on Strike spawn formations and Bastion HP is too high to crack inside the test window. Open question: whether to fix via stats, AoE cap, Strike kit, or category multiplier.
+  - L2 Siege beats Line — PASS.
+  - L3 Line beats Strike — PASS.
+  - L4 Soft RPS gradient — **FAIL**. The directional-probe + hard-collision steering does produce the designed firing-percentage suppression on flanks (~57% of Line firing in flank scenarios vs. baseline), but the HP gap between current Strike and Line stats means the geometric advantage doesn't convert into wins. Open question: stat adjustment vs. additional mechanism.
+- Checkpoints K and L — not started. Blocked on J.
+
+**Movement model history:**
+
+- v1 (original spec): hierarchical A* + simple separation steering + post-hoc push-apart. This is what landed when checkpoints A–I passed.
+- v2 (Checkpoint J first attempt): added friendly line-of-fire blocking + hard collision. Friendly LOS blocking was removed when testing showed it produced perverse formation effects (flanking Strike units LOS-blocked *each other*).
+- v3 (Checkpoint J / bible v2.06): full ORCA/RVO local steering replacement.
+- v4 (current / bible v2.07): ORCA reverted (could not express the immovable engaged unit rule and produced unstable formations at our unit counts). Steering replaced with a custom **directional-probe + detour-commitment** model paired with deterministic **hard-collision push-apart** and a **stationary-immovable** rule. Plus an **engagement leash** on `attack_move`. See the bible's Pathfinding and Movement section for the design.
+
+**Stat rebalance status:**
+
+- Original Tier 2 baselines (v2.02 spec) produced engagements far shorter than the bible's pacing targets.
+- The current `config.UNIT_STATS` reflect a non-uniform rebalance (HP up across the board, base damage down across the board, but not at the same ratios per unit type — see the updated Tier 2 table below). The bible (Open Design Question #14) was marked resolved at v2.07, but the stat values themselves are not yet final because the L1 and L4 failures above point at further adjustment.
+
+**Code-vs-design gaps to fix during J resume:**
+
+- `movement.py:244` halts any unit with a move target the moment auto-engage acquires a target. Per the bible's clarified Command Vocabulary, plain `move` is non-combat (no auto-engage) and should keep moving regardless. Only `attack_move` should halt-to-engage. The current code applies attack-move semantics to both. Fix by gating the halt on `store.attack_moving[uid]`.
+- `config.CATEGORY_MULTIPLIER["Siege"]["Strike"] = 0.20` was inserted during earlier J work to soften Bombard-on-Strike damage. It's a tuning value, not a design decision — the bible (v2.07) treats the multiplier matrix as a tuning surface where specific cells can deviate from the canonical 1.0/0.75/1.5 pattern. Whether this specific value stays is a balance question for the J resume pass, not a bible question.
+
+---
 
 ## Bible References
 
@@ -94,15 +127,22 @@ Attacker:
 
 **`movement.py`** — Unit movement and pathfinding. Contains:
 - Continuous 2D coordinates (floats) per layer. Unit position = `(x: float, y: float, layer: int)`.
-- Movement: per-tick position update. Each unit's preferred velocity (direction to waypoint × speed) is adjusted by the ORCA/RVO local steering system to produce a collision-free velocity, then applied: `new_position = current_position + adjusted_velocity × tick_duration`.
-- **RVO/ORCA local steering:** Before each position update, each unit computes ORCA half-plane constraints from nearby units (friendly and enemy, same layer, within `RVO_NEIGHBOR_DIST`). A 2D linear program finds the collision-free velocity closest to the unit's preferred velocity. This replaces both the old separation steering and the post-movement push-apart collision resolution. Produces smooth lateral flow and natural concave formations. Faster units resolve avoidance faster, creating speed-dependent formation advantage.
-- Hierarchical pathfinding (Option D):
-  - **Coarse layer:** A* on a precomputed navmesh per layer. Navmesh generated from the map's `obstacle_density` gradient (high density = blocked polygon, walkable = open polygon). Produces a sequence of waypoints from current position to target.
-  - **Fine layer:** ORCA local steering between waypoints. Seek toward next waypoint via preferred velocity, avoid collisions with nearby units via ORCA constraints, avoid terrain obstacles via navmesh walkability checks on adjusted velocity.
-  - **Path caching:** Multiple units moving to the same destination share the coarse A* path. Each unit independently steers along the shared waypoint sequence.
-- Layer transition: when a unit's command targets a position on a different layer, and the `layer_accessibility_mask` at the unit's current position permits the target layer, the unit enters a transition state. Transition takes `layer_transition_time` ticks (per-unit-type config value — Strike faster than Siege). During transition, the unit cannot attack or be targeted by same-layer units (it's "between" layers). At transition end, the unit's layer updates.
-- Navmesh generation: runs once per mission at initialization. Takes the map's obstacle_density gradient, discretizes it into blocked/open regions, and builds a navigation mesh per layer. Fast enough to not delay mission start (target: <500ms for a large canvas).
-- Collision: units have a radius. No overlap — ORCA prevents overlaps proactively by adjusting velocities before movement. Both friendly and enemy units are physical obstacles to each other.
+- Hierarchical pathfinding:
+  - **Coarse layer:** A* on a precomputed navmesh per layer. Navmesh generated from the map's `obstacle_density` gradient (cells above `NAVMESH_OBSTACLE_THRESHOLD` are blocked, others walkable). Produces a sequence of waypoints from current position to target.
+  - **Fine layer:** directional probe steering between waypoints (see below).
+  - **Path caching:** Multiple units moving to the same destination share the coarse A* path keyed on (start_cell, goal_cell). Each unit independently steers along the shared waypoint sequence.
+- **Fine-layer steering — directional probe + detour commitment.** Each moving unit seeks toward its next waypoint at its configured speed. Before applying the seek vector, the unit probes a short distance along its heading (`STEERING_PROBE_DIST`) to check whether any same-layer ally would block its forward path (collision-radius circle test). If clear, the unit moves straight — no steering force is applied at all (no separation vector, no obstacle-avoidance fudge). If blocked, the unit sweeps a fixed deterministic set of alternate angles (±30°, ±60°, ±90° from heading) and takes the first probe direction that's clear. When a deflected angle is chosen, the unit commits to traveling `STEERING_DETOUR_MIN_DIST` world units in that direction before re-probing. Commitment prevents per-tick oscillation between symmetric probe results.
+- **Hard collision (deterministic push-apart).** After the per-unit movement loop, `_resolve_collisions()` runs `COLLISION_RESOLUTION_ITERATIONS` passes over same-layer unit pairs. For any pair within `2 × UNIT_COLLISION_RADIUS` of each other, the two are pushed apart along the unit-to-unit vector until separated. Push distribution depends on motion state:
+  - Both moving → 50/50 split, each takes `overlap × 0.5`.
+  - Only one moving → moving unit takes the full overlap, stationary unit absorbs zero push.
+  - Neither moving → 50/50 split (rare; happens only if two halted units start within radius).
+  A unit counts as "stationary" if it has no active move target, OR if it is held in place by attack-move engagement (`auto_engage_target` set to a live unit). The stationary-immovable rule is what produces concave formations: the front rank halts on engagement and becomes immovable, so later arrivals deflect around it via probe steering rather than shunting it out of firing position.
+  Push results are clamped to map bounds and rejected if they'd land in a non-walkable navmesh cell. Deterministic tie-break for zero-distance overlap: the lower unit ID pushes left.
+- **Attack-move engagement leash.** `_update_attack_move_state(store, active)` runs each tick before the movement loop. For any unit with `attack_moving=True` that has acquired a live `auto_engage_target`, the unit sets an anchor at its current position on first engagement. If the engaged target's position drifts more than `_ATTACK_MOVE_LEASH_SQ` (200 wu²) from that anchor, the unit clears its target and resumes movement toward the original commanded destination. The leash prevents an attack-moving force from peeling apart to chase fleeing targets across the map.
+- **Command halting semantics.** A unit's per-tick movement is skipped if any of: no move target, the unit is immobile due to ability state (e.g., Vanguard Brace), OR the unit is `attack_moving` AND has a live `auto_engage_target` in range. **Plain `move` does not halt on engagement** — it is pure displacement. (See "Code-vs-design gaps" in Current Status — the current code does not yet honor this distinction and halts on engagement for any move command. Fix during J resume.)
+- Layer transition: when a unit's command targets a position on a different layer, and the `layer_accessibility_mask` at the unit's current position permits the target layer, the unit enters a transition state. Transition takes `layer_transition_time` ticks (per-unit-type config value — Strike faster than Siege). During transition, the unit cannot attack or be targeted by same-layer units. At transition end, the unit's layer updates.
+- Navmesh generation: runs once per mission at initialization. Takes the map's obstacle_density gradient, discretizes it into blocked/open cells (`NAVMESH_CELL_SIZE` per cell), and builds a per-layer grid. Target: <500ms for a large canvas.
+- Combat LOS export: `has_combat_los(navmesh, x1, y1, x2, y2)` — Bresenham walk along navmesh cells, returns True if all cells along the segment are walkable. Used by `damage.py` to block shots through terrain obstacles. **Friendly unit occlusion is not checked** — units fire through allies (see bible Pathfinding and Movement section).
 
 **`tactical_map.py`** — Map representation for the tactical engine. Contains:
 - Canvas: rectangular play area defined by `(width, height)` in world units. Canvas sizes: small 4000×4000, medium 8000×8000, large 12000×12000 (config values).
@@ -258,18 +298,18 @@ Stage 5.5 (Mission Generation Pipeline) and Stage 6 (Tactical Simulation Engine)
 
 ### Checkpoint B — Unit State and Movement (Isolation)
 
-**Build:** `unit.py` — unit data model (numpy arrays), unit creation from stat profiles. `movement.py` — per-tick position updates, ORCA/RVO local steering for collision-free movement. No pathfinding yet — direct movement toward target position with RVO avoidance.
+**Build:** `unit.py` — unit data model (numpy arrays), unit creation from stat profiles. `movement.py` — per-tick position updates, directional probe steering, hard-collision push-apart, stationary-immovable rule. No pathfinding yet — direct movement toward target position with steering + collision.
 
 **Test:** Write a standalone test script. Place 20 units on the `open_field` map (10 per side, spread across starting positions). Issue `move` commands to all units toward the center. Run 200 ticks.
 
 **Print:**
 - Initial unit positions (all 20 units)
 - Positions at tick 50, 100, 150, 200
-- Speed verification: confirm each unit moved at its configured speed (distance per tick matches `speed × tick_duration`)
-- Separation verification: no two units closer than `UNIT_COLLISION_RADIUS` at any sampled tick
+- Speed verification: confirm each unit moved at its configured speed (distance per tick matches `speed × tick_duration`) within steering tolerance
+- Separation verification: no two units closer than `2 × UNIT_COLLISION_RADIUS` at any sampled tick (hard collision must hold)
 - A simple ASCII or text-based position dump showing unit spread at each sample tick
 
-**Verify:** Units move at correct speeds. Strike units arrive first, Siege units last. ORCA local steering prevents stacking. Movement is smooth (no teleporting, no oscillation).
+**Verify:** Units move at correct speeds. Strike units arrive first, Siege units last. Probe steering deflects units around blockers without jitter. Hard collision prevents overlap. No oscillation between probe directions (detour commitment doing its job).
 
 **⛔ STOP. Show output. Wait for Westley.**
 
@@ -300,9 +340,9 @@ Stage 5.5 (Mission Generation Pipeline) and Stage 6 (Tactical Simulation Engine)
 **Test:** Run engagement duration scenarios from the spec (scenario 13 structure).
 
 **Print:**
-- 5v5 results: duration for every type permutation (Strike vs Strike, Strike vs Line, etc.) — confirm all ≥ 10 seconds (L5)
+- 5v5 results: duration for every type permutation (Strike vs Strike, Strike vs Line, etc.) — confirm all ≥ 45 seconds (L5, revised v2.07)
 - 50v50 mirror: duration — confirm 150–200 seconds (L7)
-- 100v100 mixed: duration — confirm > 60 seconds (L6)
+- 100v100 mixed: duration — confirm > 120 seconds (L6, revised v2.07)
 - Kill timeline for the 50v50 mirror: deaths per 5-second bucket showing attrition curve shape
 
 **Verify:** All duration claims (L5, L6, L7) pass. If any fail, identify which stat needs adjustment (HP too low? DPS too high?) — but do not adjust yet. Present the failure and the diagnosis to Westley.
@@ -334,7 +374,7 @@ Stage 5.5 (Mission Generation Pipeline) and Stage 6 (Tactical Simulation Engine)
 
 ### Checkpoint F — Pathfinding and Navmesh (Isolation)
 
-**Build:** `movement.py` — hierarchical A* pathfinding (coarse navmesh layer + ORCA/RVO local steering layer), navmesh generation from obstacle density gradients, path caching. `test_maps.py` — add `chokepoint` and `cover_heavy` maps.
+**Build:** `movement.py` — hierarchical A* pathfinding (coarse navmesh layer + the directional-probe fine-layer steering from Checkpoint B), navmesh generation from obstacle density gradients, path caching. `test_maps.py` — add `chokepoint` and `cover_heavy` maps.
 
 **Test:** Write a standalone test script. Place units on the `chokepoint` map. Issue move commands that require pathfinding through the chokepoint. Also test a direct path on `open_field` to confirm pathfinding doesn't degrade simple cases.
 
@@ -410,7 +450,7 @@ Stage 5.5 (Mission Generation Pipeline) and Stage 6 (Tactical Simulation Engine)
 
 ### Checkpoint J — Soft RPS with Positioning (Integration)
 
-**Build:** No new systems — this is a validation checkpoint combining damage, RVO local steering, and map terrain. Run the soft RPS behavioral gradient test (L4) across four scenario tiers with increasing defender disadvantage.
+**Build:** No new systems — this is a validation checkpoint combining damage, the directional-probe + hard-collision steering, the stationary-immovable rule, and map terrain. The mechanism by which flanking is supposed to produce an advantage: when Strike approaches a Line force from a flank, the Line front rank halts on engagement and becomes immovable; later-arriving Line units deflect via probe steering rather than reaching firing position; the result is reduced Line firing % compared to a head-on engagement, plus more Strike units in firing position against a smaller subset of Line units. This is the only mechanical source of flanking advantage (no friendly LOS blocking, no RPS-aware targeting, no special-case rules).
 
 **Test:** Strike vs Line (unfavorable for Strike), equal power, 25 engagements per tier (same seeds across tiers). Four tiers: T1 (head-on, both formed), T2 (one side terrain-constrained, other has open arc), T3a (flank vs march column), T3b (flank vs Line already engaged with Siege).
 
@@ -418,7 +458,9 @@ Stage 5.5 (Mission Generation Pipeline) and Stage 6 (Tactical Simulation Engine)
 - Per-tier: Strike win rate, TTW (mean ± stddev), TTW ratio vs T1, damage dealt ratio, firing% asymmetry, first Strike kill tick
 - Gradient checks: TTW ratio T2/T1 ≥1.3, TTW ratio T3/T1 ≥1.6, T1 win rate ≤5%, monotonic increase in win rate/damage ratio/firing% from T1→T3
 
-**Verify:** Positioning creates a measurable behavioral gradient (L4). The gradient shape — not any single win-rate number — validates that terrain + RVO steering + damage interact correctly. T1 should be near-hopeless for Strike, T3 should show meaningful Strike advantage, and all metrics should improve monotonically across tiers.
+**Verify:** Positioning creates a measurable behavioral gradient (L4). The gradient shape — not any single win-rate number — validates that terrain + steering + collision + damage interact correctly. T1 should be near-hopeless for Strike, T3 should show meaningful Strike advantage, and all metrics should improve monotonically across tiers.
+
+**Current state (see Status section above):** the firing% suppression mechanism works (~57% Line firing in flanks vs head-on), but the HP gap between current Strike and Line stats prevents the geometric advantage from converting to wins. Resume work needs to address the stat side of L4 before this checkpoint can pass.
 
 **⛔ STOP. Show output. Wait for Westley.**
 
@@ -465,35 +507,44 @@ Stage 5.5 (Mission Generation Pipeline) and Stage 6 (Tactical Simulation Engine)
 
 All stats are hand-designed baseline values for Tier 2 ("Establishment") units. Tier 1 and Tier 3 are config-level variants of the same profiles (lower/higher stats respectively). AI-generated per-civilization variation is on hold.
 
-**Design philosophy: A+C hybrid — long engagements with category-specific rhythm.** All fights last long enough for positioning and abilities to matter. HP pools create tempo differences: Strike fights resolve fastest (still 10–15 seconds minimum), Line fights are the baseline (20–30 seconds), Siege fights are the longest (30–45 seconds). Large battles (100+ units per side) last well over a minute. DPS is in a moderate range across all categories; HP is the primary differentiator.
+The values listed below are the **current live values in `config.UNIT_STATS`** as of the v2.07 spec rewrite. They reflect the engagement-duration rebalance applied in response to bible Open Design Question #14 (now resolved). They are not final — the Strike-vs-Siege and L4 flank gradient failures noted in Current Status indicate further adjustment is needed.
 
-**Tuning target:** Two equally-sized forces with mirror composition (same unit types, same numbers) should fight for approximately 150–200 seconds before one side is eliminated. A 1.5× favorable RPS matchup should reduce the losing side's fight duration by roughly 30–40%. A small skirmish (5v5) should last at least 10–15 seconds even in the fastest matchup (Strike vs Strike).
+**Design philosophy: A+C hybrid — long engagements with category-specific rhythm.** All fights last long enough for positioning and abilities to matter. HP pools create tempo differences: Strike fights are the fastest within the new pacing window, Line fights are the baseline, Siege fights are the longest. Large battles (100+ units per side) last well over 2 minutes. DPS is moderate across all categories; HP is the primary differentiator.
 
-### Stat Profiles (Tier 2 Baseline)
+**Tuning target (per bible, v2.07):** Two equally-sized forces with mirror composition should fight for 150–200 seconds before one side is eliminated. A 5v5 force-on-force brawl in any matchup should last at least 45 seconds. A 1.5× favorable RPS matchup should reduce the losing side's fight duration by roughly 30–40%.
+
+### Stat Profiles (Tier 2 Baseline — current live values)
 
 All speed values assume medium canvas (8000×8000). All range/radius values are world units.
 
 | Stat | Raider | Interceptor | Vanguard | Warden | Bombard | Bastion |
 |------|--------|-------------|----------|--------|---------|---------|
 | **Category** | Strike | Strike | Line | Line | Siege | Siege |
-| **HP** | 250 | 350 | 800 | 600 | 700 | 1400 |
-| **Base Damage** | 18 | 12 | 15 | 8 | 35 | 14 |
+| **HP** | 500 | 650 | 1000 | 750 | 800 | 2100 |
+| **Base Damage** | 9 | 6 | 7.5 | 4 | 17.5 | 7 |
 | **Attack Interval (sec)** | 0.8 | 1.0 | 1.2 | 1.5 | 3.0 | 1.8 |
-| **DPS** | 22.5 | 12.0 | 12.5 | 5.3 | 11.7 | 7.8 |
+| **DPS** | 11.25 | 6.0 | 6.25 | 2.67 | 5.83 | 3.89 |
 | **Attack Range** | 200 | 250 | 300 | 350 | 600 | 400 |
-| **Speed (wu/sec)** | 150 | 130 | 80 | 90 | 50 | 40 |
+| **Speed (wu/sec)** | 150 | 130 | 80 | 70 | 50 | 40 |
 | **Sensor Radius** | 400 | 500 | 350 | 400 | 300 | 300 |
 | **Layer Trans. (sec)** | 1.0 | 1.2 | 2.5 | 2.0 | 4.0 | 5.0 |
 | **AoE Radius** | — | — | — | — | 150 | — |
 
-**Stat rationale:**
+**Stat rationale (and where it currently breaks down):**
 
-- **Raider:** Fastest, highest DPS, lowest HP. Glass cannon. A Raider squad catches a Bombard alone (1.5× multiplier): effective DPS = 22.5 × 1.5 = 33.75. Bombard HP 700 / 33.75 = ~21 sec to kill. Bombard firing back at Raider (0.75× multiplier): effective DPS = 11.7 × 0.75 = 8.8. Raider HP 250 / 8.8 = ~28 sec. Raider wins with ~7 sec to spare — decisive but not instant.
-- **Interceptor:** Faster sensor radius (the screen), moderate durability for Strike, lower damage. Intercept passive makes it lethal against Raiders specifically.
-- **Vanguard:** The wall. High HP, balanced DPS. Two Vanguards trading at 1.0×: each doing 12.5 DPS, each has 800 HP = ~64 sec per unit. With positioning and abilities, the fight lasts well over a minute.
+- **Raider:** Fastest, highest DPS, lowest HP among Strike. Glass cannon role. A Raider squad catching a Bombard alone (1.5× multiplier): effective DPS = 11.25 × 1.5 = 16.9. Bombard HP 800 / 16.9 = ~47 sec to kill. Bombard firing back at Raider (currently 0.20× multiplier — see flag below): effective DPS = 5.83 × 0.20 = 1.17. Raider HP 500 / 1.17 = ~430 sec. Raider survives the dive easily 1v1 — but Bombard AoE against multiple clustered Raiders is what ends the fight.
+- **Interceptor:** Faster sensor radius (the screen), more durable than Raider, lower damage. Intercept passive makes it lethal against Raiders specifically.
+- **Vanguard:** The wall. High HP, baseline DPS. Two Vanguards trading at 1.0×: 6.25 DPS each, 1000 HP each = ~160 sec per unit. With positioning and abilities, fights run well over the 2-minute target.
 - **Warden:** Low damage, moderate HP, but passive aura + Rally make nearby units significantly tougher. The Warden's value is multiplicative, not direct.
-- **Bombard:** Long range, high per-shot damage, slow fire rate, AoE. Against clustered Line: 35 × 1.5 × (number in AoE) per shot. Devastating against formations, vulnerable alone.
-- **Bastion:** Highest HP in the game by a wide margin. Low DPS but survives everything. A Raider squad attacking a Bastion (1.5× multiplier): effective DPS = 33.75. Bastion HP 1400 / 33.75 = ~41 sec. The Bastion absorbs the dive and lives — unlike the Bombard.
+- **Bombard:** Long range, high per-shot damage, slow fire rate, AoE. Against clustered Line at 1.5×: 17.5 × 1.5 × (units in AoE) per shot, capped at `AOE_DAMAGE_CAP_MULTIPLIER × base_damage` per attack. Devastating against formations.
+- **Bastion:** Highest HP in the game by a wide margin (2.1× the next-highest). Low DPS but survives everything. A Raider squad against a Bastion (1.5×): 16.9 DPS effective. Bastion HP 2100 / 16.9 = ~124 sec. Strike struggles to crack a Bastion inside the test window — this is the proximate cause of the L1 (Strike beats Siege) failure.
+
+**Open balance issues exposed by this stat table (deferred — not blocking the spec rewrite):**
+
+1. **L1 — Strike vs Siege failing.** Bastion HP gap (2100 vs Strike's 500–650) plus Bombard AoE clustering on Strike formations. The Siege→Strike multiplier is currently 0.20 (down from the spec's 0.75) but it doesn't fully close the gap because Strike still has to break Siege HP pools.
+2. **L4 — flank gradient failing.** Vanguard 1000 HP vs Raider 500 HP × Line→Strike 1.5× damage means Line out-trades Strike even when geometry cuts Line firing % to ~57%. The HP gap eats the firing-percentage win.
+
+Both are tuning problems for the J resume pass, not design questions.
 
 **Formation width reference:** The bible's Strategic Layout Authoring Framework references chokepoint width as a ratio to "standard unit formation width." Standard formation width = 200 world units (approximately one Vanguard's attack range). A "2.0× formation width" chokepoint allows two Vanguards abreast.
 
@@ -529,17 +580,17 @@ All speed values assume medium canvas (8000×8000). All range/radius values are 
 
 ### Engagement Duration
 
-**Claim L5: Small skirmishes last at least 10 seconds.** A 5v5 engagement of any unit type combination should take at least 10 seconds to resolve.
+**Claim L5 (revised v2.07): Small skirmishes last at least 45 seconds.** A 5v5 engagement of any unit type combination should take at least 45 seconds to resolve. Threshold bumped from the original 10-second target per bible v2.07 pacing rebalance.
 - When: 5 units vs 5 units, any type matchup, open field
-- Then: time from first damage to last unit death ≥ 200 ticks (10 sec)
+- Then: time from first damage to last unit death ≥ 900 ticks (45 sec)
 - Over: all unit type permutations (Strike vs Strike, Strike vs Line, etc.)
 - Pattern: threshold bound
 - Governing configs: HP values, DPS values, category multipliers
 - Severity: critical
 
-**Claim L6: Large battles last over a minute.** A 100v100 engagement with mixed composition should take over 60 seconds.
+**Claim L6 (revised v2.07): Large battles last well over 2 minutes.** A 100v100 engagement with mixed composition should take more than 120 seconds.
 - When: 100 units vs 100 units, balanced composition (40% Line, 30% Strike, 30% Siege per side), open field
-- Then: time from first damage to last unit death ≥ 1200 ticks (60 sec)
+- Then: time from first damage to last unit death ≥ 2400 ticks (120 sec)
 - Over: 10+ engagements across seeds
 - Pattern: threshold bound
 - Severity: critical
@@ -799,33 +850,39 @@ CANVAS_MEDIUM                     = (8000, 8000)
 CANVAS_LARGE                      = (12000, 12000)
 CANVAS_SIMULATION_MODIFIER_RANGE  = 0.30            # ±30% per bible
 
-# ── Category multiplier matrix (Stage 6) ──────────────────────────
+# ── Category multiplier matrix (Stage 6, current live values) ─────
 # Indexed as CATEGORY_MULTIPLIER[attacker_category][target_category]
+# NOTE: Siege→Strike is currently 0.20, deviating from the canonical 0.75
+# in the original spec. This is a tuning value — the bible (v2.07) treats
+# the matrix as a tuning surface, not fixed at 1.0/0.75/1.5.
 CATEGORY_MULTIPLIER = {
-    "Strike": {"Strike": 1.0, "Line": 0.75, "Siege": 1.5},
-    "Line":   {"Strike": 1.5, "Line": 1.0,  "Siege": 0.75},
-    "Siege":  {"Strike": 0.75, "Line": 1.5,  "Siege": 1.0},
+    "Strike": {"Strike": 1.0,  "Line": 0.75, "Siege": 1.5},
+    "Line":   {"Strike": 1.5,  "Line": 1.0,  "Siege": 0.75},
+    "Siege":  {"Strike": 0.20, "Line": 1.5,  "Siege": 1.0},
 }
 
-# ── Unit stat baselines — Tier 2 (Stage 6) ────────────────────────
+# ── Unit stat baselines — Tier 2 (Stage 6, current live values) ───
 # Format: {unit_type: {stat: value}}
+# These are the post-rebalance values applied in response to bible
+# Open Design Question #14 (resolved v2.07). Non-uniform scaling
+# from the original spec values. Not final — see Current Status.
 UNIT_STATS = {
-    "Raider":      {"category": "Strike", "hp": 250,  "base_damage": 18, "attack_interval": 0.8,
+    "Raider":      {"category": "Strike", "hp": 500,  "base_damage": 9,    "attack_interval": 0.8,
                     "attack_range": 200, "speed": 150, "sensor_radius": 400,
                     "layer_transition_time": 1.0, "aoe_radius": 0},
-    "Interceptor": {"category": "Strike", "hp": 350,  "base_damage": 12, "attack_interval": 1.0,
+    "Interceptor": {"category": "Strike", "hp": 650,  "base_damage": 6,    "attack_interval": 1.0,
                     "attack_range": 250, "speed": 130, "sensor_radius": 500,
                     "layer_transition_time": 1.2, "aoe_radius": 0},
-    "Vanguard":    {"category": "Line",   "hp": 800,  "base_damage": 15, "attack_interval": 1.2,
+    "Vanguard":    {"category": "Line",   "hp": 1000, "base_damage": 7.5,  "attack_interval": 1.2,
                     "attack_range": 300, "speed": 80,  "sensor_radius": 350,
                     "layer_transition_time": 2.5, "aoe_radius": 0},
-    "Warden":      {"category": "Line",   "hp": 600,  "base_damage": 8,  "attack_interval": 1.5,
-                    "attack_range": 350, "speed": 90,  "sensor_radius": 400,
+    "Warden":      {"category": "Line",   "hp": 750,  "base_damage": 4,    "attack_interval": 1.5,
+                    "attack_range": 350, "speed": 70,  "sensor_radius": 400,
                     "layer_transition_time": 2.0, "aoe_radius": 0},
-    "Bombard":     {"category": "Siege",  "hp": 700,  "base_damage": 35, "attack_interval": 3.0,
+    "Bombard":     {"category": "Siege",  "hp": 800,  "base_damage": 17.5, "attack_interval": 3.0,
                     "attack_range": 600, "speed": 50,  "sensor_radius": 300,
                     "layer_transition_time": 4.0, "aoe_radius": 150},
-    "Bastion":     {"category": "Siege",  "hp": 1400, "base_damage": 14, "attack_interval": 1.8,
+    "Bastion":     {"category": "Siege",  "hp": 2100, "base_damage": 7,    "attack_interval": 1.8,
                     "attack_range": 400, "speed": 40,  "sensor_radius": 300,
                     "layer_transition_time": 5.0, "aoe_radius": 0},
 }
@@ -863,13 +920,13 @@ BRACE_COOLDOWN_TICKS              = 700     # 35 sec after deactivation
 
 # Warden — Rally (active)
 RALLY_RADIUS                      = 400     # world units
-RALLY_HEAL_AMOUNT                 = 150     # flat HP restored
+RALLY_HEAL_AMOUNT                 = 112     # flat HP restored (current live value)
 RALLY_COOLDOWN_TICKS              = 1500    # 75 sec
 
 # Warden — Passive Aura
 WARDEN_AURA_RADIUS                = 300     # world units
 WARDEN_AURA_DAMAGE_REDUCTION      = 0.10    # 10% less damage for units in aura
-WARDEN_AURA_REPAIR_RATE           = 0.5     # HP per tick (10 HP/sec)
+WARDEN_AURA_REPAIR_RATE           = 0.15    # HP per tick (3 HP/sec — current live value)
 
 # Bombard — Barrage
 BARRAGE_DAMAGE_MULTIPLIER         = 3.0
@@ -895,14 +952,20 @@ PULSE_RADIUS                      = 500     # world units — full-range snapsho
 PULSE_REVEAL_TICKS                = 40      # 2 sec reveal duration
 PULSE_COOLDOWN_TICKS              = 400     # 20 sec
 
-# ── Pathfinding and Local Steering (Stage 6, updated v2.06) ──────
+# ── Pathfinding and Movement (Stage 6, rewritten v2.07) ──────────
+# Coarse pathfinding (unchanged from spec original)
 NAVMESH_OBSTACLE_THRESHOLD        = 0.7     # obstacle_density above this = blocked
-NAVMESH_CELL_SIZE                 = 100     # world units — spatial hash cell size
+NAVMESH_CELL_SIZE                 = 100     # world units — navmesh cell size
 STEERING_OBSTACLE_AVOIDANCE_RANGE = 50      # world units — terrain obstacle detection range
-UNIT_COLLISION_RADIUS             = 15      # world units — unit physical radius (ORCA agent radius)
-RVO_NEIGHBOR_DIST                 = 200     # world units — ORCA neighbor search radius
-RVO_TIME_HORIZON                  = 3.0     # seconds — ORCA collision prediction horizon
-RVO_MAX_NEIGHBORS                 = 10      # max neighbors per unit per tick
+UNIT_COLLISION_RADIUS             = 15      # world units — unit physical radius
+
+# Directional probe steering (replaces ORCA from v2.06)
+STEERING_PROBE_DIST               = 40      # world units — how far ahead to probe for ally blockers
+STEERING_DETOUR_MIN_DIST          = 60      # world units — committed travel distance after picking a deflected angle
+
+# Hard collision push-apart (deterministic post-movement pass)
+HARD_COLLISION_ENABLED            = True
+COLLISION_RESOLUTION_ITERATIONS   = 3       # iterations of pair-wise push-apart per tick
 
 # ── Objectives and outcome classification (Stage 6) ──────────────
 OUTCOME_WEIGHT_OBJECTIVE          = 0.75    # weight of objective score in final score
@@ -943,8 +1006,8 @@ REPLAY_FORMAT                     = "json"  # "json" for debugging, "binary" fut
 - All existing invariants (A through K) still pass (L17 regression check)
 - RPS triangle produces expected winners in all 6 matchups (L1–L3) across 5 seeds
 - Soft RPS validated — positioning creates measurable behavioral gradient across scenario tiers (L4)
-- Small engagements (5v5) last ≥ 10 seconds in all matchups (L5)
-- Large engagements (100v100) last > 60 seconds (L6)
+- Small engagements (5v5) last ≥ 45 seconds in all matchups (L5, revised v2.07)
+- Large engagements (100v100) last > 120 seconds (L6, revised v2.07)
 - Mirror 50v50 lasts 150–200 seconds (L7)
 - All 6 abilities produce measurable impact in their designed scenarios (L8–L10)
 - Fog of war correctly reduces visibility in interference zones (L11)

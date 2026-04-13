@@ -268,7 +268,7 @@ damage_per_attack = base_damage × category_multiplier × (1.0 - cover_density_a
 | **Attacker: Line** | 1.5× | 1.0× | 0.75× |
 | **Attacker: Siege** | 0.75× | 1.5× | 1.0× |
 
-The RPS is **soft**: 1.5× provides a meaningful advantage (~30–40% faster time-to-kill) without being a death sentence. Positioning, abilities, and numbers can overcome an unfavorable matchup. Units within each category are differentiated by stats, not by multiplier exceptions — the Bastion survives Strike flanking because of its large HP pool, not a special multiplier.
+The RPS is **soft**: 1.5× provides a meaningful advantage (~30–40% faster time-to-kill) without being a death sentence. Positioning, abilities, and numbers can overcome an unfavorable matchup. Stat differentiation within a category (e.g., the Bastion's large HP pool letting it survive Strike flanking where the Bombard cannot) is the primary tool for matchup nuance, but the matrix itself is also a tuning surface — specific cells can deviate from the canonical 1.0/0.75/1.5 pattern when the design needs it.
 
 **Attack timing.** Each unit has `base_damage` (per attack) and `attack_interval` (seconds between attacks). DPS = base_damage / attack_interval.
 
