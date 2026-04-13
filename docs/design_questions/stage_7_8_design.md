@@ -17,15 +17,16 @@
 - Layer count resolved: fixed at 5 (S7-2)
 - Moving battlefields resolved: drifting spine nodes only, no moving gradients (S7-3)
 - Structure ownership distribution resolved: archetype baseline + simulation delta (S7-5)
+- Behavior script data format resolved: JSON state machine + shared Python runner (S75-1)
 
 **Next session should:**
-- All Stage 7 design questions are now resolved. Move to Stage 7.5 (S75-1 next — behavior script data format)
+- Continue with Stage 7.5 (S75-2 next — prototype archetype selection)
 - Work through Stage 8 questions
 - Once all [ANSWERED], promote decisions into bible/specs and delete this file
 
 **Current state summary:**
 - Stage 7: all design questions resolved, engineering defaults flagged for spec review
-- Stage 7.5: 2 design questions [OPEN]
+- Stage 7.5: 1 design question [OPEN] (S75-2)
 - Stage 8: 3 design questions [OPEN]
 
 ---
@@ -70,6 +71,10 @@ These have already been decided. Listed here for reference — do not re-ask.
 - **Moving battlefields (S7-3)** → Drifting spine nodes only. Stage 7 supports objective and capture-point spine nodes drifting along authored paths, but gradient sources remain static. Navmesh is computed once at mission initialization and never regenerates. Moving gradient sources (drifting nebulae, shifting debris fields) are deferred for a later addition once the renderer exists to visualize them and the base procedural map system is proven. For archetypes whose design calls for environmental motion (Evacuation's collapsing perimeter, Interception's in-transit enemy, Containment's flowing enemy), the motion is implemented through enemy force behavior against a static map — forces advancing through spine zones, wave-style spawns, behavior-script-driven territorial pressure — not through the map literally changing.
 - **Reinforcement structure ownership distribution (S7-5)** → Hybrid: archetype-authored baseline + simulation-state delta, bounded. Each archetype authors a default ownership distribution (player / neutral / enemy percentages) reflecting its tactical intent. The mission region's simulation state then applies a bounded delta on top of the baseline — **military field** drives the player/enemy axis (high military shifts toward player-owned, low military shifts toward enemy-owned), and **tension field** drives the neutral share (high tension increases the neutral/contested share). Economy and population do not drive ownership. Specific delta magnitudes are tuning values. Baselines are authored only for the 3–4 prototype archetypes selected in Stage 7.5; the remaining archetypes use a neutral-leaning fallback (~33/33/33) until their behavior scripts are authored and their baselines can be designed alongside. This pattern (authored baseline + bounded simulation delta) intentionally mirrors the existing simulation flavoring approach in the map generation pipeline.
 
+### Stage 7.5
+
+- **Behavior script data format (S75-1)** → JSON state machine files consumed by a shared Python runner (`behavior_runner.py`). Each script is a `.json` file specifying forces, states (behavior + modifier + position), transitions (with conditions), and reactive hooks (with when-conditions and actions). Conditions use a small restricted expression language over trigger bus flags, tactical state predicates (e.g., `force_hp_fraction < 0.5`), and timers — not arbitrary Python. The runner loads JSON, validates against a schema (catches dead states, missing transitions, stale flag references before runtime), and executes the state machine against the tactical engine's command protocol. Adding a new archetype means creating a new JSON file, no engine code changes. The expression language vocabulary is authored alongside the runner and extended when a new class of condition is genuinely needed.
+
 ---
 
 ## Open Design Questions
@@ -89,12 +94,6 @@ Reclassified as a tuning value. The bible establishes the derivation (region mil
 ---
 
 ### Stage 7.5 — Enemy Macro Behavior Scripts
-
-#### S75-1 — Behavior Script Data Format [OPEN]
-
-The bible describes the abstract architecture (state machine with reactive hooks, 5 behaviors × 3 modifiers) but not the concrete representation. Options: JSON state machine definitions consumed by a shared Python runner, Python classes per script, hybrid. Affects how easy it is to author new scripts vs. run them efficiently.
-
----
 
 #### S75-2 — Prototype Archetype Selection [OPEN]
 
