@@ -85,6 +85,8 @@ This section documents how Stage 6 relates to all other stages, providing a refe
 
 ## What to Build
 
+> **Implementation state:** All files listed under "Files to create" below **exist in `simulation/`** and have been implemented to the depth described in their sections. Checkpoints A through I were run against these implementations and approved by Westley. The descriptions here are therefore a mix of "what the system is supposed to do" (design intent) and "what it already does" (documentation of landed code). Where the two diverge — the move-halts-on-engage gap, the group_move/fast_move removal, ongoing stat tuning — the Current Status section flags the delta. Future sessions: treat this section as reference documentation, not a to-do list, except for the items explicitly called out in Current Status → Checkpoint J resume work.
+
 ### Files to create
 
 **`tactical_engine.py`** — The core tick-based combat simulation. The top-level controller. Contains:
@@ -295,6 +297,8 @@ Stage 5.5 (Mission Generation Pipeline) and Stage 6 (Tactical Simulation Engine)
 
 ### Checkpoint A — Contracts, Power Rating, and Tactical Map (Isolation)
 
+> **Status: COMPLETED.** Approved by Westley. Section retained as reference for the systems built.
+
 **Build:** `mission_contracts.py` — all shared dataclasses (copy from Stage 5.5 spec, this is the shared source of truth). `power_rating.py` — the full power rating formula as a pure function. `tactical_map.py` — canvas, gradient field sampling, spine node data, spatial partitioning. `test_maps.py` — the `open_field` test map only (simplest possible map, no gradients, no obstacles).
 
 **Test:** Write a standalone test script.
@@ -316,6 +320,8 @@ Stage 5.5 (Mission Generation Pipeline) and Stage 6 (Tactical Simulation Engine)
 
 ### Checkpoint B — Unit State and Movement (Isolation)
 
+> **Status: COMPLETED.** Approved by Westley. Movement implementation has since evolved (see Current Status → Movement model history) — the current `movement.py` reflects the v2.07 directional-probe model, not the simple separation-steering model that this checkpoint originally validated.
+
 **Build:** `unit.py` — unit data model (numpy arrays), unit creation from stat profiles. `movement.py` — per-tick position updates, directional probe steering, hard-collision push-apart, stationary-immovable rule. No pathfinding yet — direct movement toward target position with steering + collision.
 
 **Test:** Write a standalone test script. Place 20 units on the `open_field` map (10 per side, spread across starting positions). Issue `move` commands to all units toward the center. Run 200 ticks.
@@ -335,6 +341,8 @@ Stage 5.5 (Mission Generation Pipeline) and Stage 6 (Tactical Simulation Engine)
 
 ### Checkpoint C — Damage Model and RPS Triangle (Isolation)
 
+> **Status: COMPLETED.** Approved by Westley at the time. Note: the original RPS pass had different stat values; the checkpoint will need to be re-validated as part of the J resume stat rebalance, since L1 (Strike beats Siege) currently fails under the rebalanced stats.
+
 **Build:** `damage.py` — damage formula, category multiplier matrix, attack timing, range check. Wire into `unit.py` decision loop (auto-engage only — no commands, no flinch, no abilities yet). Wire into `tactical_engine.py` tick loop (process damage after unit updates).
 
 **Test:** Write a standalone test script. Run all 6 RPS matchups on `open_field`: Strike vs Siege, Siege vs Line, Line vs Strike, and the 3 mirror matches. 10 units per side, equal power rating, 5 seeds each.
@@ -353,6 +361,8 @@ Stage 5.5 (Mission Generation Pipeline) and Stage 6 (Tactical Simulation Engine)
 
 ### Checkpoint D — Engagement Duration Tuning (Tuning)
 
+> **Status: COMPLETED at the time, partially superseded.** The original duration thresholds were 10/60/150 sec. The bible v2.07 pacing rebalance bumped the targets (L5 to 45s, L6 to 120s, L7 to 150–200s). The current stat values were chosen to hit the new targets, but the J stat rebalance pass will revisit and re-validate.
+
 **Build:** No new systems — this is a tuning checkpoint on the existing damage model. Run the duration validation scenarios: 5v5 (all type permutations), 50v50 mirror, 100v100 mixed.
 
 **Test:** Run engagement duration scenarios from the spec (scenario 13 structure).
@@ -370,6 +380,8 @@ Stage 5.5 (Mission Generation Pipeline) and Stage 6 (Tactical Simulation Engine)
 ---
 
 ### Checkpoint E — Abilities (Isolation, then Integration)
+
+> **Status: COMPLETED.** Approved by Westley. All six abilities implemented in `ability.py`. Some flat-value parameters (Rally heal, Warden aura repair) drifted from the original spec values during later tuning — the current values are documented in the Config Values section below.
 
 **Build:** `ability.py` — all 6 ability definitions (Surge, Intercept, Brace, Rally, Warden Aura, Barrage, Fortify). Wire into `unit.py` decision loop (ability activation for player commands; threshold-based activation for enemy units).
 
@@ -392,6 +404,8 @@ Stage 5.5 (Mission Generation Pipeline) and Stage 6 (Tactical Simulation Engine)
 
 ### Checkpoint F — Pathfinding and Navmesh (Isolation)
 
+> **Status: COMPLETED.** Approved by Westley. Coarse A* + path caching landed and verified. Fine-layer steering description has been updated to reflect the v2.07 directional-probe model that replaced the original separation steering.
+
 **Build:** `movement.py` — hierarchical A* pathfinding (coarse navmesh layer + the directional-probe fine-layer steering from Checkpoint B), navmesh generation from obstacle density gradients, path caching. `test_maps.py` — add `chokepoint` and `cover_heavy` maps.
 
 **Test:** Write a standalone test script. Place units on the `chokepoint` map. Issue move commands that require pathfinding through the chokepoint. Also test a direct path on `open_field` to confirm pathfinding doesn't degrade simple cases.
@@ -410,6 +424,8 @@ Stage 5.5 (Mission Generation Pipeline) and Stage 6 (Tactical Simulation Engine)
 ---
 
 ### Checkpoint G — Fog of War (Isolation)
+
+> **Status: COMPLETED.** Approved by Westley.
 
 **Build:** `fog_of_war.py` — per-unit sensor radius with interference, same-layer visibility, cross-layer cone detection, active sensor pulse, vantage node bonus. `test_maps.py` — add `sensor_interference`, `multi_layer`, and `vantage_point` maps.
 
@@ -430,6 +446,8 @@ Stage 5.5 (Mission Generation Pipeline) and Stage 6 (Tactical Simulation Engine)
 
 ### Checkpoint H — Objectives and Outcome Classification (Isolation)
 
+> **Status: COMPLETED.** Approved by Westley. `MissionResult` shape matches `mission_contracts.py` and is consumed by Stage 5.5's outcome resolver.
+
 **Build:** `objectives.py` — objective data model, per-tick evaluation for all 5 objective types, terminal conditions, outcome band classification, `MissionResult` construction (from `mission_contracts.py`). `test_maps.py` — add `large_operational` and `evacuation` maps.
 
 **Test:** Run the outcome band scenarios from the spec (scenario 16 structure). Scripted command sequences that produce each of the 5 outcome bands.
@@ -448,6 +466,8 @@ Stage 5.5 (Mission Generation Pipeline) and Stage 6 (Tactical Simulation Engine)
 ---
 
 ### Checkpoint I — Command Protocol and Replay (Integration)
+
+> **Status: COMPLETED.** Approved by Westley. Note: the command type enum in `command.py` still includes `"group_move"` and `"fast_move"`; those entries are scheduled for removal as part of the J resume code cleanup (see Current Status → Checkpoint J resume work step 1).
 
 **Build:** `command.py` — command data model, command queue, replay recording (initial state + command stream + outcome). Wire the full tick loop in `tactical_engine.py`: command processing → unit decision loop → damage → abilities → fog of war → objectives → state delta emission.
 
@@ -468,6 +488,8 @@ Stage 5.5 (Mission Generation Pipeline) and Stage 6 (Tactical Simulation Engine)
 
 ### Checkpoint J — Soft RPS with Positioning (Integration)
 
+> **Status: IN PROGRESS.** Movement model in place. L2 (Siege beats Line) and L3 (Line beats Strike) PASS. L1 (Strike beats Siege) FAILS at 0% Strike wins. L4 (soft RPS gradient) FAILS — geometry mechanism produces ~43% Line firing suppression in flanks, but stat HP gap eats the win. See Current Status → Checkpoint J resume work for the five-step path to completion.
+
 **Build:** No new systems — this is a validation checkpoint combining damage, the directional-probe + hard-collision steering, the stationary-immovable rule, and map terrain. The mechanism by which flanking is supposed to produce an advantage: when Strike approaches a Line force from a flank, the Line front rank halts on engagement and becomes immovable; later-arriving Line units deflect via probe steering rather than reaching firing position; the result is reduced Line firing % compared to a head-on engagement, plus more Strike units in firing position against a smaller subset of Line units. This is the only mechanical source of flanking advantage (no friendly LOS blocking, no RPS-aware targeting, no special-case rules).
 
 **Test:** Strike vs Line (unfavorable for Strike), equal power, 25 engagements per tier (same seeds across tiers). Four tiers: T1 (head-on, both formed), T2 (one side terrain-constrained, other has open arc), T3a (flank vs march column), T3b (flank vs Line already engaged with Siege).
@@ -486,6 +508,8 @@ Stage 5.5 (Mission Generation Pipeline) and Stage 6 (Tactical Simulation Engine)
 
 ### Checkpoint K — Performance (Stress Test)
 
+> **Status: NOT STARTED.** Blocked on J. Some performance-related test scaffolding exists (`profile_6k_single_tick.py`, `test_checkpoint_6k_engine_step.py`) but the full L16 stress test has not been run.
+
 **Build:** No new systems — performance validation on the existing engine.
 
 **Test:** Run the performance scenario from the spec (scenario 18): 200v200 on large canvas, all units engaged, sustained for 1000+ ticks.
@@ -503,6 +527,8 @@ Stage 5.5 (Mission Generation Pipeline) and Stage 6 (Tactical Simulation Engine)
 ---
 
 ### Checkpoint L — Tactical Review Reports and Invariants (Final)
+
+> **Status: NOT STARTED.** Blocked on J and K. Some L1–L17 invariant scaffolding exists in `invariants.py`, but the full Group L invariant suite has not been run end-to-end.
 
 **Build:** `sim_tuner.py` — tactical engine scenarios and `--tactical-review` report generation. `invariants.py` — all Group L invariants (L1–L17). Full scenario suite (scenarios 12–18).
 
@@ -766,7 +792,9 @@ Map: open_field (4000×4000) | Units: 30 Strike vs 30 Siege
 
 ---
 
-## Scenarios to Add
+## Scenarios
+
+> **Status: not yet wired into `sim_tuner.py`.** The scenarios below were spec'd as the Checkpoint L scenario suite but have not been registered in the tuner. Earlier checkpoints (A–I) used standalone test scripts (`test_checkpoint_6*.py`) rather than the tuner scenario harness. Wiring these in is part of Checkpoint L work.
 
 ```python
 "12_rps_triangle": {
@@ -855,7 +883,9 @@ Map: open_field (4000×4000) | Units: 30 Strike vs 30 Siege
 },
 ```
 
-## Config Values to Add
+## Config Values (current)
+
+> All values below exist in `simulation/config.py`. This section documents the current live values, not work to be done. Where the live value diverges from the original spec value (stat rebalance, ability flat values, the directional-probe config that replaced the RVO config, the Siege→Strike multiplier), the inline comment flags it.
 
 ```python
 # ── Tactical engine core (Stage 6) ────────────────────────────────
