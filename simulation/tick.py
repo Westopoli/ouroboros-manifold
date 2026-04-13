@@ -347,7 +347,7 @@ def run_tick(world, tick_num: int, ledger=None,
         for absorbed in log["factions_absorbed"]:
             leader = coherence_ledger.get_faction_leader(absorbed["faction"])
             if leader:
-                coherence_ledger.kill_character(leader.id, tick_num)
+                coherence_ledger.kill_character(leader.id, tick_num, world=world, rng=rng)
         for evt in log["events"]:
             attached = coherence_ledger.attach_event(evt, evt["region_id"], tick_num)
             if attached:

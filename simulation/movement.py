@@ -241,7 +241,7 @@ def update_movement(store: UnitStore, tactical_map, dt: float):
         if is_immobile(store, uid):
             continue
         # attack_move: hold position while engaged with a live target
-        if store.attack_moving[uid] and store.auto_engage_target[uid] >= 0 and store.alive[store.auto_engage_target[uid]]:
+        if store.auto_engage_target[uid] >= 0 and store.alive[store.auto_engage_target[uid]]:
             continue
 
         px = store.data[uid, FIELD_X]
@@ -311,8 +311,8 @@ def update_movement(store: UnitStore, tactical_map, dt: float):
                     obs_x = -seek_x * density
                     obs_y = -seek_y * density
 
-        steer_x = seek_x + sep_x * 0.5 + obs_x * 1.0
-        steer_y = seek_y + sep_y * 0.5 + obs_y * 1.0
+        steer_x = seek_x + sep_x * 0.9 + obs_x * 1.0
+        steer_y = seek_y + sep_y * 0.9 + obs_y * 1.0
         mag = math.sqrt(steer_x * steer_x + steer_y * steer_y)
         if mag > 0.001:
             steer_x /= mag
@@ -371,14 +371,29 @@ def _resolve_collisions(store, active, tactical_map, navmesh):
                     d = math.sqrt(d_sq)
 
                 overlap = min_dist - d
-                push = overlap * 0.5
                 nx = dx / d
                 ny = dy / d
 
-                new_ax = ax + nx * push
-                new_ay = ay + ny * push
-                new_bx = bx - nx * push
-                new_by = by - ny * push
+                moving_a = store.has_move_target[uid_a] and not (
+                    store.auto_engage_target[uid_a] >= 0 and store.alive[store.auto_engage_target[uid_a]]
+                )
+                moving_b = store.has_move_target[uid_b] and not (
+                    store.auto_engage_target[uid_b] >= 0 and store.alive[store.auto_engage_target[uid_b]]
+                )
+
+                if moving_a and moving_b:
+                    push_a, push_b = overlap * 0.5, overlap * 0.5
+                elif moving_a:
+                    push_a, push_b = overlap, 0.0
+                elif moving_b:
+                    push_a, push_b = 0.0, overlap
+                else:
+                    push_a, push_b = overlap * 0.5, overlap * 0.5
+
+                new_ax = ax + nx * push_a
+                new_ay = ay + ny * push_a
+                new_bx = bx - nx * push_b
+                new_by = by - ny * push_b
 
                 if tactical_map is not None:
                     new_ax = max(0.0, min(tactical_map.width, new_ax))
