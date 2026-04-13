@@ -16,15 +16,15 @@
 - Library hints deferred out of Stage 7 (S7-1)
 - Layer count resolved: fixed at 5 (S7-2)
 - Moving battlefields resolved: drifting spine nodes only, no moving gradients (S7-3)
+- Structure ownership distribution resolved: archetype baseline + simulation delta (S7-5)
 
 **Next session should:**
-- Continue with Stage 7 open questions in the order presented below (S7-5 next — structure ownership distribution; S7-4 reclassified as tuning, no design input needed)
-- Work through Stage 7.5 questions
+- All Stage 7 design questions are now resolved. Move to Stage 7.5 (S75-1 next — behavior script data format)
 - Work through Stage 8 questions
 - Once all [ANSWERED], promote decisions into bible/specs and delete this file
 
 **Current state summary:**
-- Stage 7: 1 design question remains [OPEN] (S7-5), numerous [ENGINEERING-DEFAULT] items flagged
+- Stage 7: all design questions resolved, engineering defaults flagged for spec review
 - Stage 7.5: 2 design questions [OPEN]
 - Stage 8: 3 design questions [OPEN]
 
@@ -68,6 +68,7 @@ These have already been decided. Listed here for reference — do not re-ask.
 - **Library hints (S7-1)** → Deferred. Stage 7 ships without hints. The base pipeline (8 layouts × canvas scaling × positional jitter × simulation flavoring) already produces sufficient variety. Hints can be added later as a content addition via the library builder.
 - **Layer count per map (S7-2)** → Fixed at 5 layers at the engine level for all eras. This is required by the era-agnostic architecture (revenue principle): expansion packs must be content-only, not engine changes. The bible's examples (e.g., the 1980s era with submarines at layers 4–5, surface at layer 3, aircraft at layers 1–2) assume 5. The Settled Reach space era does not restrict units to specific layers — all spacecraft can occupy any layer — but the engine still supports 5. Visual presentation per era is a renderer concern (see hub Open Design Question #16), not an engine concern. Per-map variation in how the vertical dimension plays comes from the `layer_accessibility_mask` gradient, not from varying the layer count.
 - **Moving battlefields (S7-3)** → Drifting spine nodes only. Stage 7 supports objective and capture-point spine nodes drifting along authored paths, but gradient sources remain static. Navmesh is computed once at mission initialization and never regenerates. Moving gradient sources (drifting nebulae, shifting debris fields) are deferred for a later addition once the renderer exists to visualize them and the base procedural map system is proven. For archetypes whose design calls for environmental motion (Evacuation's collapsing perimeter, Interception's in-transit enemy, Containment's flowing enemy), the motion is implemented through enemy force behavior against a static map — forces advancing through spine zones, wave-style spawns, behavior-script-driven territorial pressure — not through the map literally changing.
+- **Reinforcement structure ownership distribution (S7-5)** → Hybrid: archetype-authored baseline + simulation-state delta, bounded. Each archetype authors a default ownership distribution (player / neutral / enemy percentages) reflecting its tactical intent. The mission region's simulation state then applies a bounded delta on top of the baseline — **military field** drives the player/enemy axis (high military shifts toward player-owned, low military shifts toward enemy-owned), and **tension field** drives the neutral share (high tension increases the neutral/contested share). Economy and population do not drive ownership. Specific delta magnitudes are tuning values. Baselines are authored only for the 3–4 prototype archetypes selected in Stage 7.5; the remaining archetypes use a neutral-leaning fallback (~33/33/33) until their behavior scripts are authored and their baselines can be designed alongside. This pattern (authored baseline + bounded simulation delta) intentionally mirrors the existing simulation flavoring approach in the map generation pipeline.
 
 ---
 
@@ -84,12 +85,6 @@ Answered questions stay in this file (with the answer) until they are captured i
 #### S7-4 — Default Structure Count Per Canvas Size [RECLASSIFIED: TUNING]
 
 Reclassified as a tuning value. The bible establishes the derivation (region military → total capacity, clamped to archetype canvas size range). The specific range per canvas size is a number that will be adjusted through playtesting. Initial proposed defaults (small 1–3, medium 2–5, large 3–7 — floor adjusted to 1 to honor the "always ≥1 structure" decision from S7 prior session) will ship in the stage spec as config values. No design input required.
-
----
-
-#### S7-5 — Reinforcement Structure Ownership Distribution [OPEN]
-
-When a map is generated, structures need initial ownership (player / enemy / neutral). Archetype-dependent? Defensive archetypes give the player more starting structures; offensive archetypes give the enemy more; contested archetypes start neutral. Question: is this rule per-archetype, or per-layout, or a general default with archetype overrides?
 
 ---
 
