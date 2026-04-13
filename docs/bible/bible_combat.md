@@ -212,7 +212,9 @@ Every unit evaluates three checks each frame, in priority order. The first check
 
 **2. Do I have a player-issued order?** If the unit has an active order (move, attack-move, hold position, target specific enemy), it executes that order. Player orders always override autonomous behavior. A manual target order persists until the target dies, moves out of range, or the player issues a new order.
 
-**3. Is there an enemy in my engagement range?** If yes, the unit attacks the **nearest enemy**. No RPS-aware targeting, no priority lists — closest threat gets shot. If the unit is already engaged with a target that is still alive and in range, it continues engaging that target rather than switching (no target ping-ponging). If no enemy is in range, the unit holds position.
+**Move orders are non-combat.** A unit executing a plain `move` command is in pure-displacement mode: it does not acquire targets, does not return fire, and does not stop if attacked. The player has explicitly chosen movement over engagement. This is what makes `move` distinct from `attack_move` — `attack_move` halts to engage enemies in range, `move` does not. Check 3 (auto-engage) is suppressed while a `move` order is active. If the player wants the unit to shoot back, they issue `attack_move` or `attack_target` instead.
+
+**3. Is there an enemy in my engagement range?** If yes, the unit attacks the **nearest enemy**. No RPS-aware targeting, no priority lists — closest threat gets shot. If the unit is already engaged with a target that is still alive and in range, it continues engaging that target rather than switching (no target ping-ponging). If no enemy is in range, the unit holds position. This check is the default behavior for halted units and for units executing `attack_move`; it is suppressed under a plain `move` order (see check 2).
 
 **Supply unit exception.** Supply units have no attack capability, so check 3 for them is simply "hold position." Their primary survival mechanism is check 1's retreat behavior — they flinch away from any damage source since they can never fight back.
 
@@ -266,7 +268,7 @@ damage_per_attack = base_damage × category_multiplier × (1.0 - cover_density_a
 | **Attacker: Line** | 1.5× | 1.0× | 0.75× |
 | **Attacker: Siege** | 0.75× | 1.5× | 1.0× |
 
-The RPS is **soft**: 1.5× provides a meaningful advantage (~30–40% faster time-to-kill) without being a death sentence. Positioning, abilities, and numbers can overcome an unfavorable matchup. Units within each category are differentiated by stats, not by multiplier exceptions — the Bastion survives Strike flanking because of its HP pool (1400), not a special multiplier.
+The RPS is **soft**: 1.5× provides a meaningful advantage (~30–40% faster time-to-kill) without being a death sentence. Positioning, abilities, and numbers can overcome an unfavorable matchup. Stat differentiation within a category (e.g., the Bastion's large HP pool letting it survive Strike flanking where the Bombard cannot) is the primary tool for matchup nuance, but the matrix itself is also a tuning surface — specific cells can deviate from the canonical 1.0/0.75/1.5 pattern when the design needs it.
 
 **Attack timing.** Each unit has `base_damage` (per attack) and `attack_interval` (seconds between attacks). DPS = base_damage / attack_interval.
 
@@ -282,15 +284,15 @@ The RPS is **soft**: 1.5× provides a meaningful advantage (~30–40% faster tim
 
 ### Stat Philosophy — Long Engagements with Category-Specific Rhythm
 
-> **RESOLVED (v2.02, updated v2.03).** Engagement pacing follows an A+C hybrid: all fights are long enough for positioning, abilities, and retreat decisions to matter, but different categories fight at different tempos.
+> **RESOLVED (v2.02, updated v2.03, rebalance applied v2.07).** Engagement pacing follows an A+C hybrid: all fights are long enough for positioning, abilities, and retreat decisions to matter, but different categories fight at different tempos.
 
-**Pacing targets (updated v2.03):**
+**Pacing targets:**
 - Minimum brawl (force-on-force, no tactics): 45 seconds
 - Tactical engagement (positioning, abilities, retreat and re-engage): ~2 minutes
 - Large battles (100+ per side): well over 2 minutes
-- Mirror 50v50 (balanced composition): 90–150 seconds
+- Mirror 50v50 (balanced composition): 150–200 seconds
 
-**[OPEN — v2.03]:** The current Tier 2 stat baselines produce engagements significantly shorter than these targets. A stat rebalance is needed — either HP increase, DPS decrease, or hybrid. See Open Design Question #14 in the hub. The rebalance must preserve RPS ratios and relative matchups while lengthening all engagements proportionally. Until the rebalance is resolved, the Tier 2 stat table below represents the pre-adjustment values.
+**Stat rebalance (v2.07):** The stats originally specified for Tier 2 produced engagements significantly shorter than these targets, and the rebalance was tracked as Open Design Question #14. The rebalance has been applied. HP and damage values were adjusted together to lengthen engagements. The rebalance is **non-uniform across unit types** — not a flat multiplier — because the original ratios produced degenerate matchups at the new durations (e.g., Strike's HP pool vs Siege burst). Specific HP and damage values are implementation parameters and live in the engine config, not in the bible. The design contract the rebalance preserves is: engagements hit the pacing targets above, the soft RPS triangle still produces the expected winners, and positioning/abilities remain decisive within a matchup.
 
 HP pools create tempo differences. Strike has the lowest HP (fastest fights within a category). Line has moderate HP (baseline). Siege has the highest HP (slowest). DPS is moderate across all categories; HP is the primary differentiator. In large battles, flanks resolve first (Strike), the center grinds next (Line + Warden), and Siege duels continue longest — creating layered attention-management gameplay.
 
@@ -300,20 +302,15 @@ The longer engagement floor (45 seconds minimum) serves a critical design purpos
 
 ### Unit Stat Baselines — Tier 2
 
-> **RESOLVED (v2.02).** Hand-designed Tier 2 baseline stats. Tier 1/Tier 3 are config-level variants. AI-generated per-civilization stat variation is **on hold** — engine supports it, generation pipeline deferred. All values are config parameters.
+> **RESOLVED (v2.02, values moved to config v2.07).** The bible does not carry the discrete Tier 2 stat values. Hand-designed baseline stats (HP, base damage, attack interval, attack range, speed, sensor radius, layer transition time, AoE radius per unit type) live in the engine config as the single source of truth, so tuning passes do not require bible edits. Tier 1 and Tier 3 are config-level variants of the same profiles. AI-generated per-civilization stat variation is **on hold** — the engine supports it, the generation pipeline is deferred.
 
-| Stat | Raider | Interceptor | Vanguard | Warden | Bombard | Bastion |
-|---|---|---|---|---|---|---|
-| **Category** | Strike | Strike | Line | Line | Siege | Siege |
-| **HP** | 250 | 350 | 800 | 600 | 700 | 1400 |
-| **Base Damage** | 18 | 12 | 15 | 8 | 35 | 14 |
-| **Attack Interval (sec)** | 0.8 | 1.0 | 1.2 | 1.5 | 3.0 | 1.8 |
-| **DPS** | 22.5 | 12.0 | 12.5 | 5.3 | 11.7 | 7.8 |
-| **Attack Range (wu)** | 200 | 250 | 300 | 350 | 600 | 400 |
-| **Speed (wu/sec)** | 150 | 130 | 80 | 90 | 50 | 40 |
-| **Sensor Radius (wu)** | 400 | 500 | 350 | 400 | 300 | 300 |
-| **Layer Transition (sec)** | 1.0 | 1.2 | 2.5 | 2.0 | 4.0 | 5.0 |
-| **AoE Radius (wu)** | — | — | — | — | 150 | — |
+The design constraints the stat table must satisfy:
+
+- Each unit type's category assignment (Strike / Line / Siege) is fixed and matches the role description above.
+- Relative mobility is preserved: Strike fastest, Line middle, Siege slowest. Speed spread is wide by design — every unit always moves at its own native speed (no speed matching, no group-move), so mixed forces arrive strung out by speed tier. Maintaining combined-arms cohesion is a player skill, not an engine guarantee.
+- Relative durability is preserved: Bastion is the highest-HP unit in the game by a wide margin; Strike units have the lowest HP pools.
+- Sensor radius roughly tracks category (Strike units see further than Siege units) — the screen role depends on this.
+- Bombard is the only AoE unit in the base roster.
 
 "wu" = world units. See canvas sizing in `bible_world.md`.
 
@@ -321,30 +318,16 @@ The longer engagement floor (45 seconds minimum) serves a critical design purpos
 
 ### Command Vocabulary
 
-> **RESOLVED (v2.02, updated v2.03).** Six commands. No patrol, no follow, no hold position, no stop.
+> **RESOLVED (v2.02, updated v2.03, clarified v2.07).** Four commands. No patrol, no follow, no hold position, no stop, no group-move, no speed matching.
 
-- **`move`** — move to position
-- **`attack_move`** — move to position, engaging enemies in range along the way
-- **`attack_target`** — attack a specific enemy unit
-- **`activate_ability`** — trigger the unit's active ability (toggle for Brace)
-- **`group_move`** — all selected units move together to target position, speed-matched to the slowest unit in the selection
-- **`fast_move`** — all selected units move to target position at individual speeds (equivalent to issuing individual `move` commands)
+- **`move`** — move to position. **Pure displacement, non-combat.** The unit does not acquire targets, does not return fire, and does not stop if attacked along the way. This is the player explicitly choosing movement over engagement — a retreat, a reposition, a sprint through a contested zone. If the player wants the unit to fight on the way, they use `attack_move` instead.
+- **`attack_move`** — move to position, **stopping to engage any enemy that enters weapon range**. The unit halts at the point of first engagement, fires at the nearest in-range enemy, and resumes movement toward the commanded point when the target dies or leaves range. Attack-move uses an **engagement leash**: when the unit first acquires a target, it sets an anchor at its current position; if the engaged target moves beyond a bounded distance from that anchor, the unit drops the target and resumes movement rather than chasing indefinitely. The leash prevents an attack-moving force from peeling apart to chase a fleeing target far from its commanded path.
+- **`attack_target`** — attack a specific enemy unit.
+- **`activate_ability`** — trigger the unit's active ability (toggle for Brace).
+
+All movement commands accept a single unit or a selection. When issued to a selection, the command is applied to each unit independently — every unit travels at its own speed. There is no cohesion enforcement, no speed matching to the slowest unit, no group-move primitive. A mixed force commanded to a point will arrive strung out by speed tier: Strike first, Line middle, Siege last. This is intentional — combined-arms cohesion is the player's responsibility, achieved through command timing (sending Siege ahead, sending Strike later) rather than an engine-enforced group pace. The player's tools for keeping a force together are smaller selections, staggered commands, and waypointing — not a speed-matched group move.
 
 Commands are recorded with tick numbers for replay. The engine processes all commands for the current tick before advancing state.
-
-### Group Move Speed Matching
-
-When a `group_move` command is issued, all selected units move toward the target position at the speed of the **slowest unit in the selection**. This keeps mixed-composition forces coherent during approach — frontline, support, and fire support arrive together as a functional army rather than strung out by speed differential.
-
-**Fast-move override:** The player can issue a **fast move** variant (hotkey TBD, Stage 8) that releases all units to move at their individual speeds toward the same destination. This is the opt-in "break formation" command. Fast move is the same as issuing individual `move` commands to every unit in the selection simultaneously — no speed matching, no cohesion enforcement. The intent is that group_move is the safe default and fast-move is always one keypress away, never buried or annoying to access.
-
-**Individual move commands are never speed-matched.** A `move` command issued to a single unit (or to a selection where the player wants independent movement) always uses that unit's native speed. Speed matching applies exclusively to `group_move`.
-
-**AI forces use group_move by default** for approach movement, so enemy armies also arrive as coherent forces rather than trickling in by speed tier. AI fast-move behavior is governed by the enemy macro behavior system (behavior scripts can issue fast-move when tactically appropriate, e.g., sending Raiders ahead to scout or screen).
-
-**Design rationale:** The 4:1 speed ratio between the fastest unit (Raider, 150 wu/s) and slowest (Bastion, 40 wu/s) means an ungrouped mixed force arrives over a window longer than the target engagement duration. Combined-arms tactics require units to fight together. The player opts into splitting when they want to — scouting with Raiders, screening with Interceptors — rather than being forced to micro around an incoherent default.
-
----
 
 ### Squad Mechanics — Visual Only
 
@@ -358,19 +341,25 @@ When a `group_move` command is issued, all selected units move toward the target
 
 ---
 
-### Pathfinding — Hierarchical A* with RVO Local Steering
+### Pathfinding and Movement — Hierarchical A* with Directional Probe Steering
 
-> **RESOLVED (v2.02, updated v2.06).** Two-level movement: coarse A* pathfinding for route planning, ORCA/RVO local steering for collision-free movement between waypoints. Updated v2.06: fine-level steering changed from simple separation forces to ORCA (Optimal Reciprocal Collision Avoidance), matching StarCraft 2's local steering model. Friendly line-of-fire blocking was tested and removed — ranged units fire through friendly units, and formation geometry emerges from collision avoidance, not shot occlusion.
+> **RESOLVED (v2.02, updated v2.06, rewritten v2.07).** Two-level movement: coarse A* pathfinding for route planning, local steering for collision-free movement between waypoints. The v2.06 attempt to use ORCA/RVO for fine-layer steering was reverted — reciprocal velocity obstacles produced unstable formations at our unit counts and could not express the "immovable engaged unit" behavior the combat design requires. The current fine-layer system is a custom directional-probe steering model paired with a deterministic hard-collision pass. Friendly line-of-fire blocking was tested and removed — ranged units fire through friendly units, and formation geometry emerges from physical collision, not shot occlusion.
 
 **Coarse level:** A* on a precomputed navmesh per layer, generated from the map's `obstacle_density` gradient. Path caching for shared destinations.
 
-**Fine level — RVO/ORCA local steering.** Each unit computes a preferred velocity (direction to next waypoint × speed), then adjusts it to avoid collisions with all nearby units (friendly and enemy) using reciprocal velocity obstacles. Each pair of units shares the responsibility of avoiding each other 50/50, producing smooth lateral flow around obstacles and other units without post-hoc push-apart correction. The algorithm is deterministic (preserves replay determinism) and scales linearly with neighbor count.
+**Fine level — directional probe steering.** Each moving unit seeks toward its next waypoint. Before committing to the straight-ahead direction, it probes a short distance along its heading to check whether an ally is in the way. If the path is clear, the unit moves straight — no steering force is applied. If the path is blocked by an ally, the unit sweeps a small set of alternate angles to either side of its heading and takes the first clear direction. This produces deliberate, legible lateral flow around obstacles without the jitter of a continuously-accumulated separation vector.
 
-This produces natural **concave formations**: units flowing toward an enemy group are steered laterally by ORCA constraints from friendlies ahead of them, fanning out around the engagement perimeter. Faster units (Strike) resolve avoidance constraints faster than slower units (Line/Siege), meaning Strike forms its concave first — creating a speed-dependent positioning advantage that is the mechanical basis for the bible's "positioning matters" design.
+**Detour commitment.** When a unit picks a deflected angle, it commits to traveling a bounded distance in that direction before re-evaluating. Commitment prevents the per-tick oscillation failure mode where a unit sees two symmetric probe results, alternates between them each tick, and makes no lateral progress. Commitment distance is a tuning value.
 
-**No friendly line-of-fire blocking.** Ranged units fire through friendly units. There is no friendly unit occlusion check on attacks. This matches StarCraft 2's model. Formation advantages come from collision-driven concave geometry (more units in firing position = more effective DPS), not from shot blocking. Terrain obstacles still block line of sight (units cannot fire through navmesh obstacles).
+**Hard collision (deterministic push-apart).** After each movement tick, a collision-resolution pass iterates over same-layer unit pairs. Any pair within two collision radii is separated along the vector between them until no longer overlapping. The pass runs multiple iterations per tick (tuning value) to resolve chain overlaps. Both friendly and enemy units physically collide — a unit cannot walk through another unit of either faction.
 
-**Known engine property — stationary unit overlap.** ORCA is a predictive avoidance system: it only adjusts velocities for units that are currently trying to move. Stationary units (preferred velocity = zero) produce no ORCA constraints on their neighbors and will not push each other apart. In practice, units that halt in tight clusters — such as a large group all stopping to engage the same target — may visually overlap. This is not a bug; it is a fundamental property of velocity-obstacle algorithms. The overlap has no gameplay effect (damage, targeting, and pathfinding all operate correctly). If visual polish later demands non-overlap for stationary units, a separate position-correction pass (spring/penalty forces) would need to be added alongside ORCA. That work is deferred.
+**Stationary units are immovable.** A unit that is not moving — because it has no move target, or because it is held in place by engagement (see `attack_move` in the command vocabulary) — absorbs **zero** push from the collision pass. The moving unit on the other side of the overlap takes the full displacement. This is the mechanical backbone of the combat design: a unit that has committed to fire cannot be shunted out of firing position by allies walking into it. Concave formations emerge from this rule — the front rank halts on engagement and becomes immovable, so later arrivals have to flow around rather than through it, and they deflect via the probe steering into the next open firing slot.
+
+**Speed-dependent positioning.** Because probing and detour commitment are per-unit, faster units resolve their lateral movement around blockers sooner than slower units. A Strike wing approaching an engaged Line force flows around the Line's flanks faster than a mirrored Line force would — the positioning advantage that Strike needs to exploit formation breaks is produced by the speed differential through the same steering system, not by special-case rules.
+
+**No friendly line-of-fire blocking.** Ranged units fire through friendly units. There is no friendly unit occlusion check on attacks. Formation advantages come from collision-driven concave geometry (immovable front rank forcing later units into flanking positions), not from shot blocking. Terrain obstacles still block line of sight — units cannot fire through navmesh obstacles.
+
+**Determinism.** Probe sweep order, detour commitment, and collision resolution all use deterministic tie-breaking (fixed probe angle order; lower unit ID pushes in a canonical direction on zero-distance overlap). Given identical initial state and command stream, the engine reproduces movement tick-for-tick.
 
 **Layer transitions.** Unit enters transition state lasting `layer_transition_time` ticks (Strike fastest, Siege slowest). During transition, unit cannot attack or be targeted by same-layer units.
 
@@ -400,7 +389,7 @@ AoE units (Bombard) receive an additional multiplier. Force total = sum of all u
 
 Each mission instance includes a **behavior script** that defines the enemy's plan. The script is a state machine composed from a shared vocabulary of behaviors. Each enemy force group (a named set of unit IDs) runs its own script instance. The script moves through states based on transition conditions. Layered on top of the state machine are **reactive hooks** — condition → action pairs that fire when the player does something the script's base flow didn't anticipate. The script is the skeleton (authored pacing); the hooks are the muscles (authored reactivity).
 
-The behavior script issues Stage 6 commands (`move`, `attack_move`, `attack_target`, `group_move`, `activate_ability`) to groups of enemy units. Individual units then execute those commands through their existing decision loop. The macro layer re-evaluates its state and issues updated commands at a regular cadence (config value, targeting every 2 seconds). Between evaluations, units rely on their existing auto-engage and flinch behaviors.
+The behavior script issues Stage 6 commands (`move`, `attack_move`, `attack_target`, `activate_ability`) to groups of enemy units. Individual units then execute those commands through their existing decision loop. The macro layer re-evaluates its state and issues updated commands at a regular cadence (config value, targeting every 2 seconds). Between evaluations, units rely on their existing auto-engage and flinch behaviors.
 
 **This replaces the earlier roadmap concept of "per-archetype enemy scripted behaviors."** The macro behavior system is a single shared system. Each archetype authors a script using the shared vocabulary — the archetype provides the *content* (which states, which transitions, which hooks), the system provides the *infrastructure* (how states execute, how transitions evaluate, how hooks fire). Adding a new archetype requires authoring a new script, not writing new AI code.
 
