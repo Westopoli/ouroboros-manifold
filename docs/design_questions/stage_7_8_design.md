@@ -20,8 +20,7 @@
 - This session: **Audit #0 applied** — closed the unclosed code fence in the Stage 7 spec (commit `e1023ca`).
 - This session: **Audit — spec markdown restored** — `##`/`###` section headers, `**file**` label bolding, and missing `python` code fences around the `config.py` and I/O-shape snippets were stripped during original authoring; all restored (commit `b129472`).
 - This session: **Audit #1 applied — S7-5 ownership rule spelled out** — linear centered mapping (Option A). Military drives the player↔enemy axis, tension drives the neutral share, economy/population do not participate. Stage 7 ships with uniform `33/33/33` baseline for all archetypes; 4 prototype baselines are added in Stage 7.5 per S75-2. New config constants `OWNERSHIP_MILITARY_COEFF` and `OWNERSHIP_TENSION_COEFF` both default to `0.15` (tuning).
-- **Bible override flagged:** S8-1 partially overrides hub Open Question #15 (journaling/rollback deferral). Bible hub §15 needs update at capture time — awaiting Westley approval of exact wording.
-- **Bible capture also pending:** hub Stage 7 roadmap entry — currently describes pre-split scope, needs update to reflect Stage 7 / 7.5 / 8 split.
+- This session: **Bible hub captured** (v2.07 → v2.08) — Stage 7 roadmap split into 7 / 7.5 / 8; Stage 8 roadmap expanded with rewind-with-re-seed persistence; Open Questions #12 (structure placement), #13 (economy tuning in shape), and #15 (journaling, partially) resolved; "Beyond Stage 9" deferral list updated.
 
 **Next session should:**
 - **First:** apply the Stage 7 spec audit fixes. Order:
