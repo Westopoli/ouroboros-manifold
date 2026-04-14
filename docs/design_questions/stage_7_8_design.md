@@ -14,6 +14,7 @@
 - Prior session: Stage 7 + 7.5 fully resolved (S7-1 through S75-2 — see "Resolved Decisions")
 - This session: **S8-1 save scope resolved** — sim state + tactical mid-mission state + onboarding prefs; replays excluded; sim rewind-with-re-seed is in scope
 - This session: **S8-1a sim snapshot cadence resolved** — boundary-only (every time jump + every mission start/end); periodic snapshots flagged as "maybe later"
+- This session: **S8-1b rewind branching model resolved** — linear default + explicit "fork from here" action; forked slots appear in Stage 9 save-slot browser as sibling slots
 - **Bible override flagged:** S8-1 partially overrides hub Open Question #15 (journaling/rollback deferral). Bible hub §15 needs update at capture time — awaiting Westley approval of exact wording.
 - Surfaced the sub-questions that #15 had been bundling (S8-1a through S8-1d below) plus the tactical-state scope question (S8-1e)
 
@@ -80,6 +81,8 @@ These have already been decided. Listed here for reference — do not re-ask.
 
 - **Sim snapshot cadence (S8-1a)** → Event-driven boundary-only. Snapshots are written at every time jump boundary + every mission start and end. No per-tick periodic snapshots, no manual player-triggered save points. Each snapshot lands on a semantically meaningful narrative boundary the rewind UI can label (chapter name + mission). Rationale: matches the bible's generational/chapter-based structure, keeps the rewind primitive aligned with "run this chapter again, differently," bounds storage predictably. **Post-Stage-8 follow-up noted:** adding periodic intermediate snapshots during inter-mission sim (Option B from S8-1a) is a candidate future enhancement if boundary-only rewind feels too coarse once the game is playable. Recorded as a "maybe later" — do not build in Stage 8.
 
+- **Rewind branching model (S8-1b)** → Linear default + explicit fork. Rewinding a save slot truncates by default: snapshots after the rewind point are discarded and replaced by the new divergent run (one timeline per slot, simple mental model). In addition, a separate **"fork from here"** action duplicates the save slot at the rewind point into a second slot before rewinding the original, giving the player a safety valve to preserve an alternate timeline without making tree navigation a first-class concept. The Stage 9 save-slot browser is reused as the "timeline browser" — forks are just sibling slots with player-chosen names (e.g., "Year 312 rewind"). Rationale: keeps the common case simple, reuses existing Stage 9 UI, avoids the tree-UI scope of full branching. Forks always land on S8-1a's semantic boundaries (time jump / mission start / mission end).
+
 ---
 
 ## Open Design Questions
@@ -101,12 +104,6 @@ Reclassified as a tuning value. The bible establishes the derivation (region mil
 ### Stage 7.5 — Enemy Macro Behavior Scripts
 
 ### Stage 8 — Godot Renderer, Command Interface, Game State Persistence
-
-#### S8-1b — Rewind Branching Model [OPEN]
-
-When the player rewinds to a past snapshot and simulation diverges from there, what happens to the "original" timeline? Linear model: rewinding truncates — everything after the rewind point is discarded, replaced by the new divergent run. Tree model: the game tracks both branches and lets the player switch between them. Hybrid: linear by default but a manual "fork" action that preserves the old branch.
-
----
 
 #### S8-1c — Chronicle Behavior On Rewind [OPEN]
 
