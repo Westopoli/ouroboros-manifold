@@ -32,7 +32,9 @@
   - (4) ~~Define `RegionState` dataclass shape~~ — DONE (Option B: 6 numeric driver fields + `region_id` + `tier`; debug/label fields are not read by generation logic, only by output helpers)
   - (5) ~~Clarify spawn_point node usage~~ — DONE (added "Spawn Point vs Reinforcement Structure Placement" subsection)
   - (6) ~~Archetype-aware fairness~~ — DONE (Option B: per-archetype `FairnessTargetProfile` with `(target_ratio, tolerance)` per metric; direction-preserving ratios replace 0–1 symmetry scores; 4 prototype archetypes get authored profiles, other 6 use symmetric default; obsolete `FAIRNESS_ACCEPTABLE_SCORE` removed; Checkpoint H test plan updated)
-  - (7–9, minor) complications-deferred note, gradient property count reconciliation with bible (5 vs 4+masks), explicit I8 measurement mechanism
+  - (7) ~~Complications-deferred note~~ — DONE (added to "Not in scope" line)
+  - (8) ~~Gradient property count reconciliation~~ — DONE (gradient_placer.py entry documents the 4 continuous + 1 layer-mask-with-5-channels decomposition matching the bible's 5)
+  - (9) ~~I8 measurement mechanism~~ — DONE (navmesh exposes `generation_count` counter; Checkpoint L/M assert == 1)
 - Several of these have implementation shapes worth confirming with Westley as mini-questions (especially 1, 4, 6). Present per `design_rules.md` format.
 - **After Stage 7 spec audit:** resume Stage 8 design with S8-1c (chronicle behavior on rewind — already presented in prior chat with options A erase / B preserve dimmed / C save-metadata tombstones; recommendation was A, never answered). Then S8-1d (retention), S8-1e (tactical-state scope), S8-2 (onboarding UI), S8-3 (mid-mission UI density).
 - Once all [ANSWERED], promote decisions into bible/specs and delete this file.

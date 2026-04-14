@@ -4,7 +4,7 @@
 
 Prove that procedurally generated tactical maps — produced by the spine + gradient pipeline from authored strategic layouts, flavored by region simulation state, and validated by a fairness evaluator — are gameplay-valid maps that the Stage 6 tactical engine runs on without modification. Prove that tactical reinforcement structures (a new spine node type) handle capture, production, destruction, and enemy composition reactivity correctly during missions. Stage 7 is the bridge that lets the tactical engine consume any mission the simulation can generate, instead of only the hand-authored test maps from Stage 6.
 
-**Not in scope:** enemy macro behavior scripts (Stage 7.5), Godot renderer or command UI (Stage 8), moving gradient sources (deferred post-Stage 7 per S7-3), save scope / rewind persistence (Stage 8).
+**Not in scope:** enemy macro behavior scripts (Stage 7.5), Godot renderer or command UI (Stage 8), moving gradient sources (deferred post-Stage 7 per S7-3), save scope / rewind persistence (Stage 8), mission complications (deferred per Stage 7 design session — implemented in a later stage after core missions are playable).
 
 **Architecture.** The map generator is a pure function: `(archetype, region_state, canvas_size, seed) → TacticalMap`. It sits between mission generation (Stage 5.5) and the tactical engine (Stage 6). Reinforcement structures are a runtime extension of the engine: a new spine node type with per-tick behavior (capture state machine, production timer, destruction) wired into the existing tick loop.
 
@@ -63,6 +63,7 @@ Do NOT read `bible_missions.md`, `bible_antagonist.md`, or `bible_chronicle.md` 
 **`gradient_placer.py`** — Deterministic gradient sources tied to spine node types.
 - Per-node-type rules: `chokepoint` → `obstacle_density`, `staging` → `cover_density`, `vantage` → `elevation`, `hazard zone anchor` → `sensor_interference`, etc.
 - Output: `list[GradientSource]` per property type. Config-tunable intensities and radii.
+- **Gradient property count reconciliation:** `bible_world.md` refers to "5 gradient properties." The engine decomposes this as **4 continuous properties** placed here (`obstacle_density`, `cover_density`, `sensor_interference`, `elevation`) plus the **layer accessibility mask**, which is one conceptual property with 5 per-layer channels implemented in `layer_masks.py`. Total matches the bible's 5.
 
 **`layer_masks.py`** — 5-layer `layer_block_N` accessibility gradients.
 - Takes layout + canvas dims, emits 5 mask sources. Layout zones may specify layer restrictions (e.g., `staging` accessible on layers 1–3 only). Default all-accessible where unspecified.
@@ -476,7 +477,7 @@ Each checkpoint is a hard stop. Run test, show output (terminal + PNG paths + vi
 - **I5** — Minimum structure: No generated map has zero reinforcement structures (generator guarantees ≥1).
 - **I6** — Capture duration: Uncontested completes in `REINFORCEMENT_CAPTURE_DURATION_SEC` ± 1 tick.
 - **I7** — Composition reactivity: 70% skew triggers; 50% skew does not.
-- **I8** — Navmesh stability: Exactly one navmesh generation per mission, no regeneration on drift.
+- **I8** — Navmesh stability: Exactly one navmesh generation per mission, no regeneration on drift. **Measurement:** the navmesh module exposes a monotonic `generation_count` counter incremented on every build; Checkpoint L and Checkpoint M assert `generation_count == 1` after the mission completes (regardless of tick count or drift activity).
 - **I9** — Engine performance parity: Generated-map per-tick time within 15% of Stage 6 hand-authored baseline.
 - **I10** — Protected files untouched: `git diff` shows no protected-file modifications across the stage.
 
