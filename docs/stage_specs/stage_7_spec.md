@@ -92,6 +92,7 @@ def generate_map(generator_input: GeneratorInput, layout_library: dict) -> MapGe
 
 - `ReinforcementStructure` dataclass: structure_uid, position, layer, hp, max_hp, owner_faction, capture_progress (0–1), production_timer_sec, production_target_unit_type, capture_radius.
 - `step_reinforcement(engine, dt)` — per tick: evaluate capture zone occupancy per faction, advance/reset capture_progress, flip ownership on completion; if owned, advance production_timer; on production complete, spawn unit at structure position.
+- Production time is power-rating-scaled: `production_time_sec = BASE_PRODUCTION_TIME_SEC × (unit_power_rating / POWER_NORMALIZATION)`. More powerful units take proportionally longer. Both constants are tuning values from `config.py`.
 - `select_enemy_unit_type(target_ratio, current_composition, player_composition)` — applies 70/15 skew rule: player category > 70% → shift 15% of enemy target ratio toward counter category.
 - Damage routed through existing damage resolution system (structure as immobile damage target). On HP ≤ 0, removed from active list.
 **`spine_drift.py`** (avoid name collision with protected `simulation/drift.py`) — per-tick drifting node positions.
