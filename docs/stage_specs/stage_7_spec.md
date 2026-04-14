@@ -86,6 +86,7 @@ def generate_map(generator_input: GeneratorInput, layout_library: dict) -> MapGe
     # 7. Apply simulation flavoring
     # 8. Fairness evaluate; retry with new seed if below threshold
     # 9. Construct TacticalMap, return MapGenerationResult
+```
 
 reinforcement.py — Tactical reinforcement runtime.
 
