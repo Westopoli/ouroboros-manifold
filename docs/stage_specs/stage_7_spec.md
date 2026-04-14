@@ -134,6 +134,8 @@ BASE_PRODUCTION_TIME_SEC = 30.0
 POWER_NORMALIZATION = <baseline unit power>  # tune from Stage 6
 COMPOSITION_SKEW_THRESHOLD = 0.70
 COMPOSITION_SHIFT_MAGNITUDE = 0.15
+OWNERSHIP_MILITARY_COEFF = 0.15   # S7-5 delta: military → player/enemy axis
+OWNERSHIP_TENSION_COEFF = 0.15    # S7-5 delta: tension → neutral share
 FAIRNESS_ACCEPTABLE_SCORE = 0.60
 FAIRNESS_MAX_RETRIES = 5
 # Per-node-type gradient intensity and radius constants (one per node type, documented inline)
@@ -205,6 +207,32 @@ tactical_map.current_spine_node_positions(tick=1200)
 #   "reinforcement_2": (5200.0, 4100.0),
 # }
 ```
+
+### S7-5 Ownership Rule
+
+Reinforcement structure initial ownership = **archetype-authored baseline + bounded simulation-state delta**, per S7-5.
+
+**Baseline (Stage 7 scope).** All 10 archetypes use the uniform fallback `{player: 0.33, neutral: 0.34, enemy: 0.33}` in Stage 7. The 4 prototype archetypes (Defensive Stand, Assault, Multi-Front Defense, Counterinsurgency) receive authored baselines in Stage 7.5 per S75-2; they plug into the same resolver and the other 6 keep the fallback until their scripts land.
+
+**Delta (Stage 7 scope).** The mission region's simulation state produces a smooth signed shift on top of the baseline:
+
+```python
+player_shift  = OWNERSHIP_MILITARY_COEFF * (region.military - 50) / 50
+neutral_shift = OWNERSHIP_TENSION_COEFF  * (region.tension  - 50) / 50
+
+player  = baseline.player  + player_shift  - neutral_shift / 2
+enemy   = baseline.enemy   - player_shift  - neutral_shift / 2
+neutral = baseline.neutral + neutral_shift
+
+# clamp each to [0, 1], then renormalize so the three sum to 1
+```
+
+- Military drives the player↔enemy axis: `military=100` maximally favors player-owned, `military=0` maximally favors enemy-owned, `military=50` produces zero shift.
+- Tension drives the neutral share: `tension=100` pulls weight into neutral, `tension=0` pulls it out (distributing equally between player and enemy).
+- **Economy and population do NOT influence ownership.**
+- The per-field coefficients `OWNERSHIP_MILITARY_COEFF` and `OWNERSHIP_TENSION_COEFF` are the full tuning surface; both are tuning values. Proposed defaults: `0.15` each (max ±15% shift per field at its extremes, yielding ≤~30% total deviation from baseline). Clamp + renormalize ensures the result is always a valid distribution regardless of coefficient choice.
+
+This mirrors the `sim_flavoring.py` pattern (linear, continuous) S7-5 explicitly cited as its model — the same simulation state that flavors gradient intensities also flavors starting ownership, by analogous math.
 
 ## Implementation Checkpoints
 

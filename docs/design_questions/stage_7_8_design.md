@@ -8,22 +8,25 @@
 
 ## Session Handoff
 
-**Last updated:** 2026-04-14 (end of session, handing off to new chat)
+**Last updated:** 2026-04-14 (audit session in progress)
 
 **Last session accomplished:**
 - Prior session: Stage 7 + 7.5 fully resolved (S7-1 through S75-2 — see "Resolved Decisions")
-- This session: **S8-1 save scope resolved** — sim state + tactical mid-mission state + onboarding prefs; replays excluded; sim rewind-with-re-seed is in scope
-- This session: **S8-1a sim snapshot cadence resolved** — boundary-only (every time jump + every mission start/end); periodic snapshots flagged as "maybe later"
-- This session: **S8-1b rewind branching model resolved** — linear default + explicit "fork from here" action; forked slots appear in Stage 9 save-slot browser as sibling slots
-- This session: **Stage 7 spec drafted and committed** to `docs/stage_specs/stage_7_spec.md` on main
-- This session: **Stage 7 spec audit complete** — 9 items identified (1 formatting, 6 design gaps, 2 minor). Not yet applied — handed off to next chat.
+- Prior session: **S8-1 save scope resolved** — sim state + tactical mid-mission state + onboarding prefs; replays excluded; sim rewind-with-re-seed is in scope
+- Prior session: **S8-1a sim snapshot cadence resolved** — boundary-only (every time jump + every mission start/end); periodic snapshots flagged as "maybe later"
+- Prior session: **S8-1b rewind branching model resolved** — linear default + explicit "fork from here" action; forked slots appear in Stage 9 save-slot browser as sibling slots
+- Prior session: **Stage 7 spec drafted and committed** to `docs/stage_specs/stage_7_spec.md` on main
+- Prior session: **Stage 7 spec audit complete** — 9 items identified (1 formatting, 6 design gaps, 2 minor).
+- This session: **Audit #0 applied** — closed the unclosed code fence in the Stage 7 spec (commit `e1023ca`).
+- This session: **Audit — spec markdown restored** — `##`/`###` section headers, `**file**` label bolding, and missing `python` code fences around the `config.py` and I/O-shape snippets were stripped during original authoring; all restored (commit `b129472`).
+- This session: **Audit #1 applied — S7-5 ownership rule spelled out** — linear centered mapping (Option A). Military drives the player↔enemy axis, tension drives the neutral share, economy/population do not participate. Stage 7 ships with uniform `33/33/33` baseline for all archetypes; 4 prototype baselines are added in Stage 7.5 per S75-2. New config constants `OWNERSHIP_MILITARY_COEFF` and `OWNERSHIP_TENSION_COEFF` both default to `0.15` (tuning).
 - **Bible override flagged:** S8-1 partially overrides hub Open Question #15 (journaling/rollback deferral). Bible hub §15 needs update at capture time — awaiting Westley approval of exact wording.
 - **Bible capture also pending:** hub Stage 7 roadmap entry — currently describes pre-split scope, needs update to reflect Stage 7 / 7.5 / 8 split.
 
 **Next session should:**
 - **First:** apply the Stage 7 spec audit fixes. Order:
-  - (0) Fix the unclosed code fence at line 78 of `docs/stage_specs/stage_7_spec.md` — cosmetic bug, breaks GitHub rendering of lines 90–386
-  - (1) Add S7-5 ownership rule (military → player↔enemy axis; tension → neutral share; economy/pop do NOT drive ownership; baselines only for 4 prototype archetypes, other 6 use ~33/33/33 fallback)
+  - (0) ~~Fix the unclosed code fence~~ — DONE (commit `e1023ca`)
+  - (1) ~~Add S7-5 ownership rule~~ — DONE (linear centered mapping, Option A; commit pending this turn)
   - (2) Add `STRUCTURE_COUNT_RANGES` to the config block (small 1–3, medium 2–5, large 3–7)
   - (3) Add production time formula (`production_time_sec = BASE_PRODUCTION_TIME_SEC × (unit_power_rating / POWER_NORMALIZATION)`)
   - (4) Define `RegionState` dataclass shape (new dataclass in `map_gen_contracts.py` packaging the needed fields)
