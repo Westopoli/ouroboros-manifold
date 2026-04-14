@@ -29,7 +29,7 @@
   - (1) ~~Add S7-5 ownership rule~~ — DONE (linear centered mapping, Option A; commit pending this turn)
   - (2) ~~Add `STRUCTURE_COUNT_RANGES` to the config block~~ — DONE (small 1–3, medium 2–5, large 3–7)
   - (3) ~~Add production time formula~~ — DONE (embedded in the `reinforcement.py` bullet list)
-  - (4) Define `RegionState` dataclass shape (new dataclass in `map_gen_contracts.py` packaging the needed fields)
+  - (4) ~~Define `RegionState` dataclass shape~~ — DONE (Option B: 6 numeric driver fields + `region_id` + `tier`; debug/label fields are not read by generation logic, only by output helpers)
   - (5) Clarify spawn_point node usage (initial enemy force spawns there; reinforcement structures produce additional units at structure positions)
   - (6) Archetype-aware fairness (asymmetric archetypes like Defensive Stand / Counterinsurgency should not fail the evaluator — needs per-archetype thresholds or asymmetry weights)
   - (7–9, minor) complications-deferred note, gradient property count reconciliation with bible (5 vs 4+masks), explicit I8 measurement mechanism

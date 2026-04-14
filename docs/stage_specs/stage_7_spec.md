@@ -42,7 +42,8 @@ Do NOT read `bible_missions.md`, `bible_antagonist.md`, or `bible_chronicle.md` 
 - `ZoneSpec`: zone_id, position_ratio (x, y as 0.0–1.0 of canvas), node_type, properties dict.
 - `EdgeSpec`: from_zone, to_zone, edge_type (`path` / `restricted` / `flank`).
 - `DriftPathSpec`: zone_id, waypoints (position_ratio tuples), period_ticks, mode (`ping_pong` / `loop`).
-- `GeneratorInput`: archetype, region_state (stability, capacity, economy, tension, military, population), canvas_size, seed.
+- `RegionState`: frozen dataclass, the generator's view of a region. **Six numeric driver fields** (these shape the generated map): `stability`, `capacity`, `economy`, `tension`, `military`, `population`. **Two debug/label fields** (not read by generation logic, carried for `map_batch_png.py` filenames, `generation_metadata` entries, and log lines): `region_id: str`, `tier: int`. Stage 5.5 constructs a `RegionState` from the live `Region` immediately before calling `generate_map()` — the generator never imports or touches `region.py`.
+- `GeneratorInput`: archetype, region_state (`RegionState`), canvas_size, seed.
 - `MapGenerationResult`: tactical_map, chosen_layout_id, fairness_score, generation_metadata.
 
 **`layout_library/`** — 8 authored layouts as JSON (`layout_01_*.json` through `layout_08_*.json`). Each covers at least one prototype archetype. Working titles: Fortress Ridge, Open Plains Assault, Three-Front Valley, Dense Urban Grid, Coastal Wedge, Flanking Pass, Scattered Outposts, Elevated Strongpoint.
@@ -158,6 +159,7 @@ GeneratorInput(
     region_state=RegionState(
         stability=0.7, capacity=0.6,
         economy=45.0, tension=62.0, military=58.0, population=72.0,
+        region_id="region_07", tier=2,  # debug/label only
     ),
     canvas_size="medium",
     seed=0x4a7f2c,
