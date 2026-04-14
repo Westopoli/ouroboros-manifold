@@ -5,6 +5,7 @@
 # No sci-fi-specific terms.
 
 import random
+import colorsys
 import config
 import theme_scifi as theme
 
@@ -16,7 +17,32 @@ class Faction:
         "fortifier":           "#4aff9e",
         "opportunist":         "#ffd04a",
         "breakaway":           "#cc88ff",
+        "warlord":             "#ff8c4a",
+        "schism":              "#ff4adc",
     }
+
+    @staticmethod
+    def _unique_revolt_color(rng, avoid_colors):
+        def hue_of(hex_color):
+            h = hex_color.lstrip("#")
+            r, g, b = int(h[0:2], 16) / 255, int(h[2:4], 16) / 255, int(h[4:6], 16) / 255
+            return colorsys.rgb_to_hsv(r, g, b)[0]
+
+        avoid_hues = [hue_of(c) for c in avoid_colors if c and c.startswith("#")]
+
+        def angular_dist(a, b):
+            d = abs(a - b)
+            return min(d, 1.0 - d)
+
+        for _ in range(30):
+            hue = rng.random()
+            if all(angular_dist(hue, h) > 0.08 for h in avoid_hues):
+                r, g, b = colorsys.hsv_to_rgb(hue, 0.75, 0.90)
+                return "#{:02x}{:02x}{:02x}".format(int(r * 255), int(g * 255), int(b * 255))
+
+        # fallback: just take a random vivid color if no gap found
+        r, g, b = colorsys.hsv_to_rgb(rng.random(), 0.75, 0.90)
+        return "#{:02x}{:02x}{:02x}".format(int(r * 255), int(g * 255), int(b * 255))
 
     def __init__(self, faction_id: str, name: str, archetype: str,
                  budget: float = 0.0,
@@ -24,12 +50,18 @@ class Faction:
                  modifiers: dict | None = None,
                  diplomatic_stance: dict | None = None,
                  color: str | None = None,
+                 avoid_colors: set | None = None,
                  rng: random.Random | None = None) -> None:
         self.id = faction_id
         self.name = name
         # "player_civilization" | "conqueror" | "breakaway"
         self.archetype = archetype
-        self.color = color if color is not None else self._ARCHETYPE_COLORS.get(archetype, "#888888")
+        if color is not None:
+            self.color = color
+        elif avoid_colors is not None and rng is not None:
+            self.color = Faction._unique_revolt_color(rng, avoid_colors)
+        else:
+            self.color = self._ARCHETYPE_COLORS.get(archetype, "#888888")
         self.budget = budget
         self.budget_growth_rate = (
             budget_growth_rate if budget_growth_rate is not None

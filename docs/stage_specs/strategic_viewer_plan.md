@@ -2,7 +2,7 @@
 
 > **Type:** Debug tool, not a stage. Follows `dev_rules.md` (isolation, prove-before-integrate, thin interfaces, kill switch, STOP-after-each-step). Read this file plus `CLAUDE.md` before starting.
 >
-> **Status:** Complete through Checkpoint 7. Checkpoint 8 (hand-authored layout) is optional.
+> **Status:** Complete. All 8 checkpoints done. Additional features added beyond original spec — see "Additions" section below.
 
 ## Goal
 
@@ -203,22 +203,40 @@ Kill switch: delete the three new files and `simulation/viewer_dumps/`. Nothing 
 
 **STOP.** Westley confirms faction-level view tells the story he wants.
 
-### Checkpoint 8 (OPTIONAL) — Hand-authored layout coords
+### Checkpoint 8 — Hand-authored layout coords ✓
 
-1. Add a `layout` dict to `s1_isolated`, `contested_border`, `four_way` templates so the standard scenarios always render the same way.
-2. Logger picks coords up if present, else falls back to auto-layout.
+1. Added `TEMPLATE_LAYOUTS` dict to `strategic_logger.py` with hand-authored [x, y] coordinates for `s1_isolated`, `contested_border`, and `four_way` templates.
+2. Logger passes template name through and embeds coords in the header's `regions[].layout` field.
+3. Viewer's existing `compute_layout()` already handled the `if all(r.get("layout"))` branch — no viewer changes needed.
 
-This is OPTIONAL per `CLAUDE.md` rules. Only build if checkpoint 7 passed cleanly. If it causes any instability, remove and leave a `# OPTIONAL: hand-authored layout — not implemented` comment.
+## Additions (beyond original spec)
 
-## Done Condition
+These were built during the session after all 8 checkpoints passed.
 
-Westley runs:
-```
-python3 simulation/run_strategic_viewer.py 04_four_way --ticks 300
-```
-…sees the four factions evolve over 300 ticks, can scrub backwards to find a moment where a region's tension spiked, click that region, see military / economy / tension / population sparklines confirming the spike, click an event in the log to jump to the tick where it happened, and toggle to a faction view to see how that faction's tech grew across the run.
+### Faction territory overlay
 
-If he can do all of that and says "yes, this works" — done.
+A convex hull polygon is drawn behind edges and nodes for each faction, showing its territorial extent at the current tick:
+- Semi-transparent fill (alpha 35) in the faction's color
+- Bright border line (alpha 210) in the faction's color
+- Single region → circle; two regions → rectangle; three or more → convex hull expanded outward from centroid
+- Redrawn every tick as the scrubber moves
+- Implemented as `draw_faction_territories()` in `strategic_viewer.py`, called first in `draw_map()` so nodes and edges render on top
+
+### Revolt faction unique colors
+
+Previously, every breakaway/revolt faction rendered gray (unknown archetype fallback) or shared the same `#cc88ff` purple. Fixed in two parts:
+
+**Simulation-level:** `Faction.__init__` now accepts `avoid_colors: set | None`. When provided along with an `rng`, `_unique_revolt_color()` picks a random HSV hue with saturation=0.75 / value=0.90, retrying up to 30 times to find a hue with at least 29° of angular separation from every living faction's color. `tick.py` passes `avoid_colors={f.color for f in registry.values()}` at revolt creation time.
+
+**Archetype completeness:** `warlord` (`#ff8c4a`) and `schism` (`#ff4adc`) were missing from `_ARCHETYPE_COLORS` in `faction.py` and fell back to gray. Both added.
+
+### Transient revolt faction capture in logger
+
+The original `close(registry=registry)` patch only captured factions alive at end-of-run. Factions that were born and absorbed mid-sim were missing from the header, causing "Unclaimed" in the viewer for those ticks. Fixed by initializing `self._all_factions` in `StrategicLogger.__init__` and accumulating new entries in every `log_tick()` call. `close()` now patches the header from this running set instead of the final registry state.
+
+## Done Condition ✓
+
+Verified on `07_full_game_50` at 1000 ticks. All systems confirmed working: scrubber, click-to-pick, sparklines, event log jump, faction track mode, territory overlay, revolt faction colors, transient faction capture.
 
 ## Files Created
 

@@ -607,6 +607,7 @@ def _handle_revolt_faction_creation(evt: dict, world, registry: dict,
         new_id, new_name, archetype,
         budget=0.0,
         diplomatic_stance={fid: "hostile" for fid in registry},
+        avoid_colors={f.color for f in registry.values()},
         rng=rng,
     )
     for fac in registry.values():

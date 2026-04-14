@@ -191,6 +191,102 @@ def node_fill_color(faction_color_rgb, composites):
     return lerp_color(dark, faction_color_rgb, 0.25 + 0.75 * t)
 
 
+# ── Faction territory overlay ─────────────────────────────────────────────────
+
+def _convex_hull(points):
+    pts = sorted(set(map(tuple, points)))
+    if len(pts) <= 1:
+        return pts
+    def cross(O, A, B):
+        return (A[0]-O[0])*(B[1]-O[1]) - (A[1]-O[1])*(B[0]-O[0])
+    lower = []
+    for p in pts:
+        while len(lower) >= 2 and cross(lower[-2], lower[-1], p) <= 0:
+            lower.pop()
+        lower.append(p)
+    upper = []
+    for p in reversed(pts):
+        while len(upper) >= 2 and cross(upper[-2], upper[-1], p) <= 0:
+            upper.pop()
+        upper.append(p)
+    return lower[:-1] + upper[:-1]
+
+
+def _expand_hull(hull, pad):
+    cx = sum(p[0] for p in hull) / len(hull)
+    cy = sum(p[1] for p in hull) / len(hull)
+    out = []
+    for px, py in hull:
+        dx, dy = px - cx, py - cy
+        dist = math.hypot(dx, dy)
+        if dist < 1:
+            out.append((px, py))
+        else:
+            out.append((px + dx / dist * pad, py + dy / dist * pad))
+    return out
+
+
+def draw_faction_territories(surface, tick_data, layout, faction_colors, cam_x, cam_y, zoom):
+    faction_regions = {}
+    for rid, rdata in tick_data["regions"].items():
+        fid = rdata.get("faction_id")
+        if fid and rid in layout:
+            faction_regions.setdefault(fid, []).append(rid)
+
+    pad = max(NODE_R_MAX * zoom + 12, 18)
+
+    for fid, rids in faction_regions.items():
+        color = faction_colors.get(fid)
+        if not color:
+            continue
+
+        spts = [world_to_screen(*layout[rid], cam_x, cam_y, zoom) for rid in rids]
+
+        if len(spts) == 1:
+            sx, sy = spts[0]
+            r = int(pad)
+            s = pygame.Surface((r * 2 + 4, r * 2 + 4), pygame.SRCALPHA)
+            pygame.draw.circle(s, (*color, 35), (r + 2, r + 2), r)
+            pygame.draw.circle(s, (*color, 210), (r + 2, r + 2), r, 2)
+            surface.blit(s, (sx - r - 2, sy - r - 2))
+            continue
+
+        if len(spts) == 2:
+            ax, ay = spts[0]
+            bx, by = spts[1]
+            dx, dy = bx - ax, by - ay
+            length = math.hypot(dx, dy)
+            if length < 1:
+                continue
+            nx, ny = -dy / length * pad, dx / length * pad
+            poly = [
+                (int(ax + nx), int(ay + ny)),
+                (int(bx + nx), int(by + ny)),
+                (int(bx - nx), int(by - ny)),
+                (int(ax - nx), int(ay - ny)),
+            ]
+        else:
+            hull = _convex_hull(spts)
+            if len(hull) < 3:
+                continue
+            expanded = _expand_hull(hull, pad)
+            poly = [(int(x), int(y)) for x, y in expanded]
+
+        min_x = min(p[0] for p in poly) - 4
+        min_y = min(p[1] for p in poly) - 4
+        max_x = max(p[0] for p in poly) + 4
+        max_y = max(p[1] for p in poly) + 4
+        w, h = max_x - min_x, max_y - min_y
+        if w <= 0 or h <= 0:
+            continue
+
+        local = [(p[0] - min_x, p[1] - min_y) for p in poly]
+        s = pygame.Surface((w, h), pygame.SRCALPHA)
+        pygame.draw.polygon(s, (*color, 35), local)
+        pygame.draw.polygon(s, (*color, 210), local, 2)
+        surface.blit(s, (min_x, min_y))
+
+
 # ── Drawing helpers ───────────────────────────────────────────────────────────
 
 def draw_edge(surface, pos_a, pos_b, a_id, b_id, friction, cam_x, cam_y, zoom):
@@ -292,7 +388,10 @@ def draw_map(surface, tick_data, header, layout, faction_colors,
     friction   = tick_data.get("friction", {})
     event_rids = {e["region_id"] for e in tick_data.get("events", []) if e.get("region_id")}
 
-    # Edges first
+    # Territory overlays (behind edges and nodes)
+    draw_faction_territories(surface, tick_data, layout, faction_colors, cam_x, cam_y, zoom)
+
+    # Edges
     for a_id, b_id, _ in header["adjacency"]:
         if a_id in layout and b_id in layout:
             draw_edge(surface, layout[a_id], layout[b_id], a_id, b_id, friction, cam_x, cam_y, zoom)

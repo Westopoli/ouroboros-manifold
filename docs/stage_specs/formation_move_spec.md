@@ -1,4 +1,5 @@
 # Formation Movement — Group Offsets + Group-Level Completion
+# COMPLETE — implemented and signed off. FORMATION_MOVE_ENABLED = True (live default).
 
 > **Note on filing:** This is a sub-spec, not a roadmap stage. It targets a specific bug surfaced during Stage 6 attack_move debugging (units pile on a shared target pixel and oscillate). Filed here because `docs/stage_specs/` is the project's canonical home for implementation specs; `dev_rules.md` says stage specs are disposable once complete.
 

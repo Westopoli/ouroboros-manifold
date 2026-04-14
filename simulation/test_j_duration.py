@@ -33,12 +33,12 @@ DUMP_SEED = 1
 DUMP_PATH = "/tmp/j_duration_50v50.jsonl"
 
 MIXED_RATIO = {
-    "Vanguard":    0.25,
+    "Vanguard":    0.325,
     "Warden":      0.15,
     "Raider":      0.20,
     "Interceptor": 0.10,
     "Bombard":     0.15,
-    "Bastion":     0.15,
+    "Bastion":     0.075,
 }
 
 

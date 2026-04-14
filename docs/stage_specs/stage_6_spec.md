@@ -32,7 +32,8 @@ This spec was originally authored against an early stat baseline and the v2.06 b
 - v1 (original spec): hierarchical A* + simple separation steering + post-hoc push-apart. This is what landed when checkpoints A–I passed.
 - v2 (Checkpoint J first attempt): added friendly line-of-fire blocking + hard collision. Friendly LOS blocking was removed when testing showed it produced perverse formation effects (flanking Strike units LOS-blocked *each other*).
 - v3 (Checkpoint J / bible v2.06): full ORCA/RVO local steering replacement.
-- v4 (current / bible v2.07): ORCA reverted (could not express the immovable engaged unit rule and produced unstable formations at our unit counts). Steering replaced with a custom **directional-probe + detour-commitment** model paired with deterministic **hard-collision push-apart** and a **stationary-immovable** rule. Plus an **engagement leash** on `attack_move`. See the bible's Pathfinding and Movement section for the design.
+- v4 (bible v2.07): ORCA reverted (could not express the immovable engaged unit rule and produced unstable formations at our unit counts). Steering replaced with a custom **directional-probe + detour-commitment** model paired with deterministic **hard-collision push-apart** and a **stationary-immovable** rule. Plus an **engagement leash** on `attack_move`. See the bible's Pathfinding and Movement section for the design.
+- v5 (current / formation_move_spec): SC2-style **formation movement** — each unit in a group order receives a personal offset slot derived from the group centroid at order time. Group terminates when the centroid reaches the click target (not when every straggler arrives). Implemented in `apply_group_move` + `_update_move_groups`. `FORMATION_MOVE_ENABLED = True` (live default). Kill switch: set `False` to restore v4 behavior bit-for-bit.
 
 **Stat rebalance status:**
 
@@ -41,12 +42,9 @@ This spec was originally authored against an early stat baseline and the v2.06 b
 
 **Checkpoint J resume work:**
 
-*1. Code cleanup — remove `group_move` / `fast_move`.* The bible (v2.07) dropped both commands. The command vocabulary is now four: `move`, `attack_move`, `attack_target`, `activate_ability`. All movement commands apply to a single unit or a selection; when applied to a selection, each unit moves at its own native speed — no speed matching, no cohesion primitive. Code changes:
-  - Remove `apply_group_move` and `apply_fast_move` from `movement.py`.
-  - Remove `"group_move"` and `"fast_move"` from the `Command` type enum in `command.py`.
-  - Rewrite the test files that currently issue these commands (`test_checkpoint_6j.py`, `test_sweep_debug.py`, `test_6j_mixed.py`, `test_t2_diagnostic.py`, `test_checkpoint_6k_engine_step.py`) to issue plain `move` commands to unit ID lists. Individual speeds are the new default; tests that depended on speed-matched approach will produce different arrival patterns and may need adjusted expectations.
+*1. Code cleanup — remove `group_move` / `fast_move`.* The bible (v2.07) dropped both commands. The command vocabulary is now four: `move`, `attack_move`, `attack_target`, `activate_ability`. `apply_group_move` was **kept** and repurposed as the formation movement entry point (v5 movement model). `apply_fast_move` and the `"group_move"` / `"fast_move"` command types still exist in `command.py` and `movement.py` — they are dead code and should be removed in a future cleanup pass. The test files that issued these commands (`test_checkpoint_6j.py`, `test_sweep_debug.py`, `test_6j_mixed.py`, `test_t2_diagnostic.py`, `test_checkpoint_6k_engine_step.py`) still use the old call sites and may need updating.
 
-*2. Code fix — `move` command should not halt on engagement.* `movement.py:244` currently halts any unit with a move target the moment it acquires an `auto_engage_target`. Per the bible's clarified Command Vocabulary, plain `move` is non-combat: the unit does not acquire targets, does not return fire, does not stop if attacked. Only `attack_move` should halt-to-engage. The simplest implementation: skip `update_targeting` for units whose current command is a plain `move`, so `auto_engage_target` stays at -1 and the halt branch never fires. Verify with the relevant tests before deciding on the exact flag plumbing (may need a `store.plain_moving[uid]` or equivalent).
+*2. Code fix — `move` command should not halt on engagement.* **DONE.** `store.plain_moving[uid]` flag added to `unit.py`. `move` commands set it `True`; `attack_move` sets it `False`. `update_targeting` in `damage.py` skips units where `plain_moving` is set, so plain-move units never acquire `auto_engage_target` and never halt mid-move. Sensor-radius pursuit logic also skips plain-moving units.
 
 *3. Stat rebalance pass.* After the code fixes are in, run a tuning pass that:
   - Closes the L1 Strike-vs-Siege gap. Tuning surfaces include the Siege→Strike multiplier (currently 0.20, originally 0.75 — the bible treats the matrix as a tuning surface), Bastion HP, Bombard `aoe_radius`, `AOE_DAMAGE_CAP_MULTIPLIER`, Surge parameters, and Raider/Interceptor HP. Given that AoE saturation is the dominant killing mechanism per the L1 diagnosis, the AoE damage cap and Bombard AoE radius are likely the highest-leverage levers.
@@ -568,9 +566,9 @@ All speed values assume medium canvas (8000×8000). All range/radius values are 
 | **Base Damage** | 9 | 6 | 7.5 | 4 | 17.5 | 7 |
 | **Attack Interval (sec)** | 0.8 | 1.0 | 1.2 | 1.5 | 3.0 | 1.8 |
 | **DPS** | 11.25 | 6.0 | 6.25 | 2.67 | 5.83 | 3.89 |
-| **Attack Range** | 200 | 250 | 300 | 350 | 600 | 400 |
+| **Attack Range** | 200 | 250 | 300 | 350 | 1200 | 800 |
 | **Speed (wu/sec)** | 150 | 130 | 80 | 70 | 50 | 40 |
-| **Sensor Radius** | 400 | 500 | 350 | 400 | 300 | 300 |
+| **Sensor Radius** | 800 | 1000 | 700 | 800 | 300 | 300 |
 | **Layer Trans. (sec)** | 1.0 | 1.2 | 2.5 | 2.0 | 4.0 | 5.0 |
 | **AoE Radius** | — | — | — | — | 150 | — |
 

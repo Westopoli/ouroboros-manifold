@@ -48,7 +48,7 @@ def run(scenario_name, ticks_override, seed_override, launch):
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     dump_path = os.path.join(DUMPS_DIR, f"{scenario_name}_{timestamp}.jsonl")
 
-    logger = StrategicLogger(dump_path, scenario_name, w, registry)
+    logger = StrategicLogger(dump_path, scenario_name, w, registry, template=scenario["template"])
     logger.log_tick(0, w, registry, [], {})
 
     for t in range(1, ticks + 1):
