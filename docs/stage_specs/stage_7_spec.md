@@ -126,6 +126,7 @@ def generate_map(generator_input: GeneratorInput, layout_library: dict) -> MapGe
 
 ```python
 CANVAS_SIZES = {"small": (4000, 4000), "medium": (8000, 8000), "large": (12000, 12000)}
+STRUCTURE_COUNT_RANGES = {"small": (1, 3), "medium": (2, 5), "large": (3, 7)}  # S7-4 tuning
 LAYOUT_JITTER_PERCENT = 0.03
 REINFORCEMENT_CAPTURE_RADIUS = 300
 REINFORCEMENT_CAPTURE_DURATION_SEC = 10.0

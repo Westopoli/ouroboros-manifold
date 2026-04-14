@@ -27,7 +27,7 @@
 - **First:** apply the Stage 7 spec audit fixes. Order:
   - (0) ~~Fix the unclosed code fence~~ — DONE (commit `e1023ca`)
   - (1) ~~Add S7-5 ownership rule~~ — DONE (linear centered mapping, Option A; commit pending this turn)
-  - (2) Add `STRUCTURE_COUNT_RANGES` to the config block (small 1–3, medium 2–5, large 3–7)
+  - (2) ~~Add `STRUCTURE_COUNT_RANGES` to the config block~~ — DONE (small 1–3, medium 2–5, large 3–7)
   - (3) Add production time formula (`production_time_sec = BASE_PRODUCTION_TIME_SEC × (unit_power_rating / POWER_NORMALIZATION)`)
   - (4) Define `RegionState` dataclass shape (new dataclass in `map_gen_contracts.py` packaging the needed fields)
   - (5) Clarify spawn_point node usage (initial enemy force spawns there; reinforcement structures produce additional units at structure positions)
