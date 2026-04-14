@@ -88,42 +88,43 @@ def generate_map(generator_input: GeneratorInput, layout_library: dict) -> MapGe
     # 9. Construct TacticalMap, return MapGenerationResult
 ```
 
-reinforcement.py — Tactical reinforcement runtime.
+**`reinforcement.py`** — Tactical reinforcement runtime.
 
-ReinforcementStructure dataclass: structure_uid, position, layer, hp, max_hp, owner_faction, capture_progress (0–1), production_timer_sec, production_target_unit_type, capture_radius.
-step_reinforcement(engine, dt) — per tick: evaluate capture zone occupancy per faction, advance/reset capture_progress, flip ownership on completion; if owned, advance production_timer; on production complete, spawn unit at structure position.
-select_enemy_unit_type(target_ratio, current_composition, player_composition) — applies 70/15 skew rule: player category > 70% → shift 15% of enemy target ratio toward counter category.
-Damage routed through existing damage resolution system (structure as immobile damage target). On HP ≤ 0, removed from active list.
-spine_drift.py (avoid name collision with protected simulation/drift.py) — per-tick drifting node positions.
+- `ReinforcementStructure` dataclass: structure_uid, position, layer, hp, max_hp, owner_faction, capture_progress (0–1), production_timer_sec, production_target_unit_type, capture_radius.
+- `step_reinforcement(engine, dt)` — per tick: evaluate capture zone occupancy per faction, advance/reset capture_progress, flip ownership on completion; if owned, advance production_timer; on production complete, spawn unit at structure position.
+- `select_enemy_unit_type(target_ratio, current_composition, player_composition)` — applies 70/15 skew rule: player category > 70% → shift 15% of enemy target ratio toward counter category.
+- Damage routed through existing damage resolution system (structure as immobile damage target). On HP ≤ 0, removed from active list.
+**`spine_drift.py`** (avoid name collision with protected `simulation/drift.py`) — per-tick drifting node positions.
 
-Only objective and reinforcement_structure node types may drift (S7-3).
-update_drifting_nodes(engine, tick) — walks drift paths, interpolates by tick % period_ticks.
-Navmesh not regenerated: drifting nodes carry their own position-at-tick function; engine samples on demand.
-map_viewer.py — Interactive pygame viewer.
+- Only `objective` and `reinforcement_structure` node types may drift (S7-3).
+- `update_drifting_nodes(engine, tick)` — walks drift paths, interpolates by `tick % period_ticks`.
+- Navmesh not regenerated: drifting nodes carry their own position-at-tick function; engine samples on demand.
+**`map_viewer.py`** — Interactive pygame viewer.
 
-CLI: python -m simulation.map_viewer <map_json> [--tick N].
-Renders: canvas bounds, spine nodes (color-coded), edges (style by edge_type), gradient heatmaps (toggle per property), layer masks (toggle per layer), fairness overlay, reinforcement markers + capture zones + ownership colors, drift path overlays with tick slider.
-Hover shows gradient samples at cursor; click shows spine node metadata.
-map_batch_png.py — Batch PNG generator.
+- CLI: `python -m simulation.map_viewer <map_json> [--tick N]`.
+- Renders: canvas bounds, spine nodes (color-coded), edges (style by edge_type), gradient heatmaps (toggle per property), layer masks (toggle per layer), fairness overlay, reinforcement markers + capture zones + ownership colors, drift path overlays with tick slider.
+- Hover shows gradient samples at cursor; click shows spine node metadata.
+**`map_batch_png.py`** — Batch PNG generator.
 
-CLI: python -m simulation.map_batch_png --archetype <name> --count N --out <dir>.
-Generates N maps (varied region states), writes per-map PNG + contact sheet to tuning_output/stage7/<run_name>/.
-Per-map PNG shows spine, edges, 2 key gradients (obstacle_density + cover_density), layer 1 accessibility, reinforcement positions + ownership.
-Test files (alongside each system):
+- CLI: `python -m simulation.map_batch_png --archetype <name> --count N --out <dir>`.
+- Generates N maps (varied region states), writes per-map PNG + contact sheet to `tuning_output/stage7/<run_name>/`.
+- Per-map PNG shows spine, edges, 2 key gradients (obstacle_density + cover_density), layer 1 accessibility, reinforcement positions + ownership.
 
-test_layout_library.py, test_archetype_filters.py, test_layout_instantiator.py, test_gradient_placer.py, test_layer_masks.py, test_sim_flavoring.py, test_fairness_evaluator.py, test_map_generator.py, test_reinforcement.py, test_spine_drift.py, test_stage7_integration.py.
-Files to modify
-mission_contracts.py — Extend MissionSetup.map_params dict schema: archetype, region_id, canvas_size, seed, generated (bool). Possibly extend ReinforcementSpec for S7-5 ownership baseline parameters. Document the schema change in docs/architecture.md before code lands (per CLAUDE.md rule; MissionSetup is the mission-shape contract).
+**Test files** (alongside each system): `test_layout_library.py`, `test_archetype_filters.py`, `test_layout_instantiator.py`, `test_gradient_placer.py`, `test_layer_masks.py`, `test_sim_flavoring.py`, `test_fairness_evaluator.py`, `test_map_generator.py`, `test_reinforcement.py`, `test_spine_drift.py`, `test_stage7_integration.py`.
+### Files to modify
 
-tactical_map.py — Add drifting_nodes list + current_spine_node_positions(tick) → dict[node_id, (x, y)]. Static-only maps unaffected. Engine code reading positions uses tick-dependent accessor only where drift matters (objectives and capture points).
+**`mission_contracts.py`** — Extend `MissionSetup.map_params` dict schema: `archetype`, `region_id`, `canvas_size`, `seed`, `generated` (bool). Possibly extend `ReinforcementSpec` for S7-5 ownership baseline parameters. Document the schema change in `docs/architecture.md` before code lands (per CLAUDE.md rule; `MissionSetup` is the mission-shape contract).
 
-tactical_engine.py — Tick loop extended:
+**`tactical_map.py`** — Add `drifting_nodes` list + `current_spine_node_positions(tick) → dict[node_id, (x, y)]`. Static-only maps unaffected. Engine code reading positions uses tick-dependent accessor only where drift matters (objectives and capture points).
 
-update_drifting_nodes(self, self.tick) + step_reinforcement(self, self.dt) after unit decision loop, before objective evaluation.
-self.reinforcement_structures: list[ReinforcementStructure] initialized from MissionSetup.reinforcements + TacticalMap.spine_nodes of type reinforcement_structure.
-get_reinforcement_structures() exposed for future UI consumption.
-config.py — New constants (all tuning defaults, expect playtest adjustment):
+**`tactical_engine.py`** — Tick loop extended:
 
+- `update_drifting_nodes(self, self.tick)` + `step_reinforcement(self, self.dt)` after unit decision loop, before objective evaluation.
+- `self.reinforcement_structures: list[ReinforcementStructure]` initialized from `MissionSetup.reinforcements` + `TacticalMap.spine_nodes` of type `reinforcement_structure`.
+- `get_reinforcement_structures()` exposed for future UI consumption.
+**`config.py`** — New constants (all tuning defaults, expect playtest adjustment):
+
+```python
 CANVAS_SIZES = {"small": (4000, 4000), "medium": (8000, 8000), "large": (12000, 12000)}
 LAYOUT_JITTER_PERCENT = 0.03
 REINFORCEMENT_CAPTURE_RADIUS = 300
@@ -136,14 +137,18 @@ COMPOSITION_SHIFT_MAGNITUDE = 0.15
 FAIRNESS_ACCEPTABLE_SCORE = 0.60
 FAIRNESS_MAX_RETRIES = 5
 # Per-node-type gradient intensity and radius constants (one per node type, documented inline)
+```
 
-Files NOT to modify
-Protected engine files (CLAUDE.md): tick.py, drift.py (→ use spine_drift.py), faction.py, region.py, events.py, event_engine.py, intent_resolver.py, border_friction.py, technology.py, diplomacy.py, world.py, templates.py, theme_scifi.py. None touched in Stage 7.
-socket_server.py — requires explicit user confirmation.
-test_maps.py — Stage 6 hand-authored maps. Keep for regression tests. Do not delete / deprecate.
-Input/Output Shapes
+### Files NOT to modify
+
+- Protected engine files (CLAUDE.md): `tick.py`, `drift.py` (→ use `spine_drift.py`), `faction.py`, `region.py`, `events.py`, `event_engine.py`, `intent_resolver.py`, `border_friction.py`, `technology.py`, `diplomacy.py`, `world.py`, `templates.py`, `theme_scifi.py`. None touched in Stage 7.
+- `socket_server.py` — requires explicit user confirmation.
+- `test_maps.py` — Stage 6 hand-authored maps. Keep for regression tests. Do not delete / deprecate.
+### Input/Output Shapes
+
 Generator input:
 
+```python
 GeneratorInput(
     archetype="defensive_stand",
     region_state=RegionState(
@@ -153,9 +158,11 @@ GeneratorInput(
     canvas_size="medium",
     seed=0x4a7f2c,
 )
+```
 
 Generator output:
 
+```python
 MapGenerationResult(
     tactical_map=TacticalMap(...),  # ready for TacticalEngine
     chosen_layout_id="layout_03_three_front_valley",
@@ -172,9 +179,11 @@ MapGenerationResult(
         "reinforcement_ownership": {"player": 2, "neutral": 1, "enemy": 1},
     },
 )
+```
 
 Reinforcement structure in engine state:
 
+```python
 ReinforcementStructure(
     structure_uid=103,
     position=(4200.0, 3100.0), layer=1,
@@ -185,211 +194,235 @@ ReinforcementStructure(
     production_target_unit_type="vanguard",
     capture_radius=300.0,
 )
+```
 
 Drifting node position at tick:
 
+```python
 tactical_map.current_spine_node_positions(tick=1200)
 # {
 #   "obj_alpha": (4500.0, 3100.0),
 #   "reinforcement_2": (5200.0, 4100.0),
 # }
+```
 
-Implementation Checkpoints
+## Implementation Checkpoints
+
 Each checkpoint is a hard stop. Run test, show output (terminal + PNG paths + viewer launch command), wait for Westley approval. Do not batch. Do not continue without explicit approval.
 
-Checkpoint A — Contracts + Sample Layout + Viewer Scaffolding
-Build: map_gen_contracts.py, layout_library.py, one sample layout JSON (layout_01_fortress_ridge.json), map_viewer.py scaffolding (zones + edges, no gradients yet).
+### Checkpoint A — Contracts + Sample Layout + Viewer Scaffolding
 
-Test: test_layout_library.py — load sample, validate, print zone/edge breakdown.
+**Build:** `map_gen_contracts.py`, `layout_library.py`, one sample layout JSON (`layout_01_fortress_ridge.json`), `map_viewer.py` scaffolding (zones + edges, no gradients yet).
 
-Print: Layout ID, name, canvas_class, zone count by node type, edge count by edge type, validation status, viewer launch command.
+**Test:** `test_layout_library.py` — load sample, validate, print zone/edge breakdown.
 
-Verify: Sample loads clean. Viewer shows zones in correct relative positions, edges correct, types color-coded. Visually Fortress Ridge looks like a fortress ridge.
+**Print:** Layout ID, name, canvas_class, zone count by node type, edge count by edge type, validation status, viewer launch command.
+
+**Verify:** Sample loads clean. Viewer shows zones in correct relative positions, edges correct, types color-coded. Visually Fortress Ridge looks like a fortress ridge.
 
 ⛔ STOP. Show output. Wait for Westley.
 
-Checkpoint B — Archetype Compatibility Filter Language
-Build: archetype_filters.py — primitives, operators, evaluate_filter(), full filters for 4 prototype archetypes, stubs for other 6.
+### Checkpoint B — Archetype Compatibility Filter Language
 
-Test: test_archetype_filters.py — evaluate each prototype filter against sample layout; pathological test layouts (no chokepoints / no flank / no vantage) verified rejected by correct filters.
+**Build:** `archetype_filters.py` — primitives, operators, `evaluate_filter()`, full filters for 4 prototype archetypes, stubs for other 6.
 
-Print: Human-readable filter rules per archetype; evaluation results on sample; pathological rejection table.
+**Test:** `test_archetype_filters.py` — evaluate each prototype filter against sample layout; pathological test layouts (no chokepoints / no flank / no vantage) verified rejected by correct filters.
 
-Verify: Filter language expresses bible's map-character prose. False-positive / false-negative behavior matches intent.
+**Print:** Human-readable filter rules per archetype; evaluation results on sample; pathological rejection table.
 
-⛔ STOP.
-
-Checkpoint C — Full 8-Layout Library + Compatibility Matrix
-Build: Author remaining 7 layouts. At least one layout per prototype archetype; ≥3 layouts with 2+ archetype compatibility.
-
-Test: Load all 8, validate, run all 10 archetype filters → 8×10 compatibility matrix.
-
-Print: Compatibility matrix, per-archetype coverage, cross-pollination count. PNG contact sheet of all 8 layouts → tuning_output/stage7/checkpoint_c/.
-
-Verify: Each prototype archetype has ≥1 compatible layout. Contact sheet shows 8 visually distinct layouts (not variations of same shape).
+**Verify:** Filter language expresses bible's map-character prose. False-positive / false-negative behavior matches intent.
 
 ⛔ STOP.
 
-Checkpoint D — Layout Instantiation
-Build: layout_instantiator.py — canvas scaling, seeded jitter, SpineNode construction.
+### Checkpoint C — Full 8-Layout Library + Compatibility Matrix
 
-Test: Instantiate one layout at each canvas size; 5-seed determinism + variety check.
+**Build:** Author remaining 7 layouts. At least one layout per prototype archetype; ≥3 layouts with 2+ archetype compatibility.
 
-Print: Per canvas size: zone positions, min/max edge lengths. Determinism hash comparison. Jitter variety stats.
+**Test:** Load all 8, validate, run all 10 archetype filters → 8×10 compatibility matrix.
 
-Visual: PNGs — 3 canvas sizes + 5 jitter seeds → tuning_output/stage7/checkpoint_d/.
+**Print:** Compatibility matrix, per-archetype coverage, cross-pollination count. PNG contact sheet of all 8 layouts → `tuning_output/stage7/checkpoint_c/`.
 
-Verify: Canvas scaling preserves topology. Jitter visible but bounded. Determinism holds.
-
-⛔ STOP.
-
-Checkpoint E — Gradient Placer
-Build: gradient_placer.py — per-node-type placement for 4 continuous properties.
-
-Test: For each layout, place gradients; sample at each spine node; assert expected magnitudes.
-
-Print: Per-layout gradient source counts by property; sampled values at node positions; anomalies.
-
-Visual: PNGs — each layout × 4 heatmap overlays → tuning_output/stage7/checkpoint_e/.
-
-Verify: Chokepoints → high obstacle_density; staging → cover_density; vantage → elevation; hazard anchor → sensor_interference. Heatmaps match spine intent.
+**Verify:** Each prototype archetype has ≥1 compatible layout. Contact sheet shows 8 visually distinct layouts (not variations of same shape).
 
 ⛔ STOP.
 
-Checkpoint F — Layer Accessibility Masks
-Build: layer_masks.py — 5-layer layer_block_N sources; per-zone restrictions honored.
+### Checkpoint D — Layout Instantiation
 
-Test: Sample layer_accessibility(x, y, layer) grid for each layout × 5 layers; verify restrictions + default.
+**Build:** `layout_instantiator.py` — canvas scaling, seeded jitter, `SpineNode` construction.
 
-Print: Per-layout layer restriction summary; accessibility pass rate per layer.
+**Test:** Instantiate one layout at each canvas size; 5-seed determinism + variety check.
 
-Visual: PNGs — each layout × 5 layer overlays → tuning_output/stage7/checkpoint_f/.
+**Print:** Per canvas size: zone positions, min/max edge lengths. Determinism hash comparison. Jitter variety stats.
 
-Verify: All maps support 5 layers. Restrictions at intended zones. Default accessible.
+**Visual:** PNGs — 3 canvas sizes + 5 jitter seeds → `tuning_output/stage7/checkpoint_d/`.
 
-⛔ STOP.
-
-Checkpoint G — Simulation Flavoring
-Build: sim_flavoring.py — composite axis mappings + individual field deltas.
-
-Test: Pick one layout; flavor with "prosperous core" / "war-torn frontier" / "mid-tier baseline" region states.
-
-Print: Modifier bundles per flavoring; delta tables across region states per property.
-
-Visual: PNG triptych — same layout × 3 region states → tuning_output/stage7/checkpoint_g/.
-
-Verify: Visible qualitative differences. Prosperous → smoother, less interference. War-torn → more cover, more hazards. No state produces unplayable map.
+**Verify:** Canvas scaling preserves topology. Jitter visible but bounded. Determinism holds.
 
 ⛔ STOP.
 
-Checkpoint H — Fairness Evaluator
-Build: fairness_evaluator.py — 4 metrics + aggregate + is_acceptable().
+### Checkpoint E — Gradient Placer
 
-Test: Score all 8 library layouts; construct 2 deliberately-unfair test layouts (verified rejected) + 1 deliberately-fair (verified accepted).
+**Build:** `gradient_placer.py` — per-node-type placement for 4 continuous properties.
 
-Print: All 8 library: per-metric + aggregate + pass/fail. Unfair constructions: scores showing which metric caught it.
+**Test:** For each layout, place gradients; sample at each spine node; assert expected magnitudes.
 
-Visual: PNGs — each library layout with fairness annotations → tuning_output/stage7/checkpoint_h/.
+**Print:** Per-layout gradient source counts by property; sampled values at node positions; anomalies.
 
-Verify: All library layouts pass. Unfair cases fail with right metric. Threshold not tight enough to reject reasonable, not loose enough to accept egregious.
+**Visual:** PNGs — each layout × 4 heatmap overlays → `tuning_output/stage7/checkpoint_e/`.
 
-⛔ STOP.
-
-Checkpoint I — End-to-End Map Generator
-Build: map_generator.py — full pipeline wiring A–H.
-
-Test: 100 maps × 4 prototype archetypes (400 total), varied region states. Measure fairness pass rate, retry distribution, generation time, cache behavior, filter pass rate.
-
-Print: Per-archetype: 100-map summary. Pipeline timing breakdown per stage. 10-rerun determinism check.
-
-Visual: 4 × 100-up contact sheets + 10 detail PNGs per archetype → tuning_output/stage7/checkpoint_i/.
-
-Verify: Fairness pass rate ≥90% first-try. p95 generation time <250ms small / <500ms large. Determinism holds. Contact sheets show variety + expected per-archetype character.
+**Verify:** Chokepoints → high `obstacle_density`; staging → `cover_density`; vantage → `elevation`; hazard anchor → `sensor_interference`. Heatmaps match spine intent.
 
 ⛔ STOP.
 
-Checkpoint J — Reinforcement Structure Mechanics (capture + HP)
-Build: reinforcement.py capture state machine + HP/destruction. Wire into tactical_engine.py tick loop (structures only, NOT production yet).
+### Checkpoint F — Layer Accessibility Masks
 
-Test: Capture scenarios (uncontested / contested / abandoned / flipped). HP scenarios (damage to zero → removal).
+**Build:** `layer_masks.py` — 5-layer `layer_block_N` sources; per-zone restrictions honored.
 
-Print: Per-tick progress for each capture scenario; capture time; ownership flip tick. HP over time; destruction tick; removal verification.
+**Test:** Sample `layer_accessibility(x, y, layer)` grid for each layout × 5 layers; verify restrictions + default.
 
-Visual: Pygame demo recording (GIF or PNG sequence) of capture + destruction → tuning_output/stage7/checkpoint_j/.
+**Print:** Per-layout layer restriction summary; accessibility pass rate per layer.
 
-Verify: Capture completes in REINFORCEMENT_CAPTURE_DURATION_SEC. Contested stalls. Abandoned resets. HP destruction removes cleanly. Ownership transitions clean.
+**Visual:** PNGs — each layout × 5 layer overlays → `tuning_output/stage7/checkpoint_f/`.
 
-⛔ STOP.
-
-Checkpoint K — Production + Composition Reactivity
-Build: Production timer + unit spawning + select_enemy_unit_type() with 70/15 skew.
-
-Test: Production timing across unit tiers (verify power-rating scaling). Composition scenarios: 40/30/20/10 (no trigger), 70/15/10/5 (trigger), 75/15/5/5 (stronger skew).
-
-Print: Per-unit-type spawn time vs expected. Per-scenario: player composition → pre-skew ratio → post-skew ratio → shift magnitude.
-
-Verify: Timing matches formula. 70% threshold fires. 15% shift applied. <70% no trigger. Shift direction is toward counter category.
+**Verify:** All maps support 5 layers. Restrictions at intended zones. Default accessible.
 
 ⛔ STOP.
 
-Checkpoint L — Drifting Spine Nodes
-Build: spine_drift.py — update_drifting_nodes(), ping_pong + loop modes. Extend tactical_map.py with current_spine_node_positions(tick). Wire update into engine tick loop.
+### Checkpoint G — Simulation Flavoring
 
-Test: Test layout with 2 drifting objectives (ping_pong, different periods) + 1 drifting capture point (loop). 1000 ticks, sample every 10 ticks.
+**Build:** `sim_flavoring.py` — composite axis mappings + individual field deltas.
 
-Print: Per drifting node: waypoints, period, sampled positions (first 200 ticks). Navmesh generation count (must equal 1).
+**Test:** Pick one layout; flavor with "prosperous core" / "war-torn frontier" / "mid-tier baseline" region states.
 
-Visual: Pygame tick slider; PNG sequence → tuning_output/stage7/checkpoint_l/.
+**Print:** Modifier bundles per flavoring; delta tables across region states per property.
 
-Verify: Drift follows authored paths. Ping_pong reverses. Loop cycles. Period matches config. Navmesh static.
+**Visual:** PNG triptych — same layout × 3 region states → `tuning_output/stage7/checkpoint_g/`.
 
-⛔ STOP.
-
-Checkpoint M — Engine Integration + Performance (Final)
-Build: Final wiring.
-
-Test: Full mission pipeline: Stage 5.5 calls map generator → Stage 6 engine runs mission → reinforcements capture/produce/destroy → drifting objective moves → MissionResult. Performance: 200v200 on large generated map vs Stage 6 hand-authored baseline.
-
-Print: Mission run: generation time, tick count, reinforcement events, drift distance, outcome band. Performance breakdown per subsystem. Regression check vs Stage 6 baseline (>15% fails per dev_rules performance regression discipline).
-
-Visual: PNG sequence of mission at sampled ticks → tuning_output/stage7/checkpoint_m/.
-
-Verify: Full pipeline works end-to-end. Performance parity within 15%. No protected-file edits (check git diff).
+**Verify:** Visible qualitative differences. Prosperous → smoother, less interference. War-torn → more cover, more hazards. No state produces unplayable map.
 
 ⛔ STOP.
 
-Invariants
-I1 — Fairness pass rate: ≥90% first-try across 400-map batch.
-I2 — Generation time p95: <250ms small, <500ms large.
-I3 — Determinism: Same GeneratorInput → byte-identical MapGenerationResult across 10 re-runs.
-I4 — Layer count: All generated maps have exactly 5 layers (S7-2).
-I5 — Minimum structure: No generated map has zero reinforcement structures (generator guarantees ≥1).
-I6 — Capture duration: Uncontested completes in REINFORCEMENT_CAPTURE_DURATION_SEC ± 1 tick.
-I7 — Composition reactivity: 70% skew triggers; 50% skew does not.
-I8 — Navmesh stability: Exactly one navmesh generation per mission, no regeneration on drift.
-I9 — Engine performance parity: Generated-map per-tick time within 15% of Stage 6 hand-authored baseline.
-I10 — Protected files untouched: git diff shows no protected-file modifications across the stage.
+### Checkpoint H — Fairness Evaluator
+
+**Build:** `fairness_evaluator.py` — 4 metrics + aggregate + `is_acceptable()`.
+
+**Test:** Score all 8 library layouts; construct 2 deliberately-unfair test layouts (verified rejected) + 1 deliberately-fair (verified accepted).
+
+**Print:** All 8 library: per-metric + aggregate + pass/fail. Unfair constructions: scores showing which metric caught it.
+
+**Visual:** PNGs — each library layout with fairness annotations → `tuning_output/stage7/checkpoint_h/`.
+
+**Verify:** All library layouts pass. Unfair cases fail with right metric. Threshold not tight enough to reject reasonable, not loose enough to accept egregious.
+
+⛔ STOP.
+
+### Checkpoint I — End-to-End Map Generator
+
+**Build:** `map_generator.py` — full pipeline wiring A–H.
+
+**Test:** 100 maps × 4 prototype archetypes (400 total), varied region states. Measure fairness pass rate, retry distribution, generation time, cache behavior, filter pass rate.
+
+**Print:** Per-archetype: 100-map summary. Pipeline timing breakdown per stage. 10-rerun determinism check.
+
+**Visual:** 4 × 100-up contact sheets + 10 detail PNGs per archetype → `tuning_output/stage7/checkpoint_i/`.
+
+**Verify:** Fairness pass rate ≥90% first-try. p95 generation time <250ms small / <500ms large. Determinism holds. Contact sheets show variety + expected per-archetype character.
+
+⛔ STOP.
+
+### Checkpoint J — Reinforcement Structure Mechanics (capture + HP)
+
+**Build:** `reinforcement.py` capture state machine + HP/destruction. Wire into `tactical_engine.py` tick loop (structures only, NOT production yet).
+
+**Test:** Capture scenarios (uncontested / contested / abandoned / flipped). HP scenarios (damage to zero → removal).
+
+**Print:** Per-tick progress for each capture scenario; capture time; ownership flip tick. HP over time; destruction tick; removal verification.
+
+**Visual:** Pygame demo recording (GIF or PNG sequence) of capture + destruction → `tuning_output/stage7/checkpoint_j/`.
+
+**Verify:** Capture completes in `REINFORCEMENT_CAPTURE_DURATION_SEC`. Contested stalls. Abandoned resets. HP destruction removes cleanly. Ownership transitions clean.
+
+⛔ STOP.
+
+### Checkpoint K — Production + Composition Reactivity
+
+**Build:** Production timer + unit spawning + `select_enemy_unit_type()` with 70/15 skew.
+
+**Test:** Production timing across unit tiers (verify power-rating scaling). Composition scenarios: 40/30/20/10 (no trigger), 70/15/10/5 (trigger), 75/15/5/5 (stronger skew).
+
+**Print:** Per-unit-type spawn time vs expected. Per-scenario: player composition → pre-skew ratio → post-skew ratio → shift magnitude.
+
+**Verify:** Timing matches formula. 70% threshold fires. 15% shift applied. <70% no trigger. Shift direction is toward counter category.
+
+⛔ STOP.
+
+### Checkpoint L — Drifting Spine Nodes
+
+**Build:** `spine_drift.py` — `update_drifting_nodes()`, ping_pong + loop modes. Extend `tactical_map.py` with `current_spine_node_positions(tick)`. Wire update into engine tick loop.
+
+**Test:** Test layout with 2 drifting objectives (ping_pong, different periods) + 1 drifting capture point (loop). 1000 ticks, sample every 10 ticks.
+
+**Print:** Per drifting node: waypoints, period, sampled positions (first 200 ticks). Navmesh generation count (must equal 1).
+
+**Visual:** Pygame tick slider; PNG sequence → `tuning_output/stage7/checkpoint_l/`.
+
+**Verify:** Drift follows authored paths. Ping_pong reverses. Loop cycles. Period matches config. Navmesh static.
+
+⛔ STOP.
+
+### Checkpoint M — Engine Integration + Performance (Final)
+
+**Build:** Final wiring.
+
+**Test:** Full mission pipeline: Stage 5.5 calls map generator → Stage 6 engine runs mission → reinforcements capture/produce/destroy → drifting objective moves → `MissionResult`. Performance: 200v200 on large generated map vs Stage 6 hand-authored baseline.
+
+**Print:** Mission run: generation time, tick count, reinforcement events, drift distance, outcome band. Performance breakdown per subsystem. Regression check vs Stage 6 baseline (>15% fails per dev_rules performance regression discipline).
+
+**Visual:** PNG sequence of mission at sampled ticks → `tuning_output/stage7/checkpoint_m/`.
+
+**Verify:** Full pipeline works end-to-end. Performance parity within 15%. No protected-file edits (check git diff).
+
+⛔ STOP.
+
+## Invariants
+
+- **I1** — Fairness pass rate: ≥90% first-try across 400-map batch.
+- **I2** — Generation time p95: <250ms small, <500ms large.
+- **I3** — Determinism: Same `GeneratorInput` → byte-identical `MapGenerationResult` across 10 re-runs.
+- **I4** — Layer count: All generated maps have exactly 5 layers (S7-2).
+- **I5** — Minimum structure: No generated map has zero reinforcement structures (generator guarantees ≥1).
+- **I6** — Capture duration: Uncontested completes in `REINFORCEMENT_CAPTURE_DURATION_SEC` ± 1 tick.
+- **I7** — Composition reactivity: 70% skew triggers; 50% skew does not.
+- **I8** — Navmesh stability: Exactly one navmesh generation per mission, no regeneration on drift.
+- **I9** — Engine performance parity: Generated-map per-tick time within 15% of Stage 6 hand-authored baseline.
+- **I10** — Protected files untouched: `git diff` shows no protected-file modifications across the stage.
+
 Per CLAUDE.md: if an invariant fails, you may not widen thresholds or weaken tests to make the implementation pass. Escalate real bugs, or narrow scope (skip-cases never meant to be caught). No other changes without Westley's approval.
 
-Integration Points
-Stage 5.5 → 7: Mission generator calls generate_map(GeneratorInput(...), layout_library) in MissionSetup construction. Behind ENABLE_STAGE7_MAP_GEN flag — default OFF until Checkpoint I passes, then ON.
-Stage 6 → 7: Engine reads TacticalMap from MissionSetup as before. Engine change is tick-loop extension for reinforcement + drift. Kill switch: enable_reinforcement=False in MissionSetup skips reinforcement step (clean pure-Stage-6 fallback). Drift automatic via drifting_nodes; empty list = zero cost.
-Stage 7.5 forward: Behavior scripts use existing TacticalMap.spine_nodes / get_spine_nodes_by_type(). No new API.
-Stage 8 forward: Godot renderer consumes TacticalMap + current_spine_node_positions(tick). Contract is renderer-friendly.
-Done Condition
-All 13 checkpoints (A–M) run, shown, approved by Westley.
-All 10 invariants (I1–I10) pass.
-A full mission generated by Stage 7 pipeline runs to completion in Stage 6 engine with a classified MissionResult.
-Pygame viewer and PNG batch tool functional against any generated map.
-tuning_output/stage7/ contains PNG artifacts from Checkpoints C, D, E, F, G, H, I, J, L, M.
-Bible capture items (hub roadmap entry + hub §15) presented to Westley as proposed diff and applied on approval.
-No protected engine file modified.
-docs/architecture.md reflects MissionSetup.map_params schema change.
-Files Created
+## Integration Points
+
+- **Stage 5.5 → 7:** Mission generator calls `generate_map(GeneratorInput(...), layout_library)` in `MissionSetup` construction. Behind `ENABLE_STAGE7_MAP_GEN` flag — default OFF until Checkpoint I passes, then ON.
+- **Stage 6 → 7:** Engine reads `TacticalMap` from `MissionSetup` as before. Engine change is tick-loop extension for reinforcement + drift. Kill switch: `enable_reinforcement=False` in `MissionSetup` skips reinforcement step (clean pure-Stage-6 fallback). Drift automatic via `drifting_nodes`; empty list = zero cost.
+- **Stage 7.5 forward:** Behavior scripts use existing `TacticalMap.spine_nodes` / `get_spine_nodes_by_type()`. No new API.
+- **Stage 8 forward:** Godot renderer consumes `TacticalMap` + `current_spine_node_positions(tick)`. Contract is renderer-friendly.
+## Done Condition
+
+- All 13 checkpoints (A–M) run, shown, approved by Westley.
+- All 10 invariants (I1–I10) pass.
+- A full mission generated by Stage 7 pipeline runs to completion in Stage 6 engine with a classified `MissionResult`.
+- Pygame viewer and PNG batch tool functional against any generated map.
+- `tuning_output/stage7/` contains PNG artifacts from Checkpoints C, D, E, F, G, H, I, J, L, M.
+- Bible capture items (hub roadmap entry + hub §15) presented to Westley as proposed diff and applied on approval.
+- No protected engine file modified.
+- `docs/architecture.md` reflects `MissionSetup.map_params` schema change.
+
+## Files Created
+
 (Filled in after implementation.)
 
-Notes for the Implementing Session
-Stage 6 Checkpoint J is still in progress. Stage 7 does not depend on J completing — map generator is independent of Strike/Line/Siege tuning. If a Stage 6 stat change breaks a Stage 7 test, the Stage 7 test is the wrong side to adjust — flag to Westley and defer.
-Checkpoint order is tight. A → B → C → D/E/F → G → H → I → J → K. L independent of J/K but depends on D. M is last.
-Pygame viewer and PNG batch tool are throwaway for Stage 8. Do not over-engineer. If Godot ships before Stage 7 wraps, retire them.
-Behavior script runner is Stage 7.5, not Stage 7. Enemy units in Stage 7 integration use Stage 6 command primitives (attack-move). Scripted behaviors arrive in 7.5.
+## Notes for the Implementing Session
+
+- Stage 6 Checkpoint J is still in progress. Stage 7 does not depend on J completing — map generator is independent of Strike/Line/Siege tuning. If a Stage 6 stat change breaks a Stage 7 test, the Stage 7 test is the wrong side to adjust — flag to Westley and defer.
+- Checkpoint order is tight. A → B → C → D/E/F → G → H → I → J → K. L independent of J/K but depends on D. M is last.
+- Pygame viewer and PNG batch tool are throwaway for Stage 8. Do not over-engineer. If Godot ships before Stage 7 wraps, retire them.
+- Behavior script runner is Stage 7.5, not Stage 7. Enemy units in Stage 7 integration use Stage 6 command primitives (attack-move). Scripted behaviors arrive in 7.5.
