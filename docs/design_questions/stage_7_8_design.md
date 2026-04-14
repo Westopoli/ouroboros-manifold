@@ -120,9 +120,9 @@ Reclassified as a tuning value. The bible establishes the derivation (region mil
 
 ### Stage 8 — Godot Renderer, Command Interface, Game State Persistence
 
-#### S8-1c — Chronicle Behavior On Rewind [OPEN]
+#### S8-1c — Chronicle Behavior On Rewind [ANSWERED: A — erase]
 
-The chronicle scroll is generated from simulation events. When the player rewinds, do chronicle entries from the discarded timeline disappear, persist as a parallel/alternate history the player can read, or get flagged as "erased" but remain in a debug/lore archive? Ties to S8-1b (the answer may depend on whether branches are tracked).
+**Answer.** Option A: chronicle entries from the discarded timeline are erased on linear rewind. The chronicle always reflects exactly the canonical (current) timeline. Players who want to preserve the pre-rewind chronicle use S8-1b's **"fork from here"** action before rewinding — that is the explicit preservation mechanism. Two clean tools, two clean intents: fork preserves, rewind resets. Matches the bible's "fragments of a real history" framing (one history at a time, not a tree) and the elegiac tone ("what was lost was always going to be lost").
 
 ---
 
