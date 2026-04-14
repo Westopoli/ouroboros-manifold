@@ -13,11 +13,12 @@
 **Last session accomplished:**
 - Prior session: Stage 7 + 7.5 fully resolved (S7-1 through S75-2 — see "Resolved Decisions")
 - This session: **S8-1 save scope resolved** — sim state + tactical mid-mission state + onboarding prefs; replays excluded; sim rewind-with-re-seed is in scope
+- This session: **S8-1a sim snapshot cadence resolved** — boundary-only (every time jump + every mission start/end); periodic snapshots flagged as "maybe later"
 - **Bible override flagged:** S8-1 partially overrides hub Open Question #15 (journaling/rollback deferral). Bible hub §15 needs update at capture time — awaiting Westley approval of exact wording.
 - Surfaced the sub-questions that #15 had been bundling (S8-1a through S8-1d below) plus the tactical-state scope question (S8-1e)
 
 **Next session should:**
-- Work through S8-1a–e (rewind mechanics sub-questions) before moving to S8-2
+- Work through remaining S8-1 sub-questions (S8-1b branching model next) before moving to S8-2
 - Then S8-2 (onboarding UI) and S8-3 (mid-mission UI density)
 - Once all [ANSWERED], promote decisions into bible/specs and delete this file. At capture time: update bible hub §15 to reflect that rollback-with-re-seed is Stage 8 scope (leave the rest — multi-branch trees, crash recovery, cloud saves — as deferred follow-ups unless answered here).
 
@@ -77,6 +78,8 @@ These have already been decided. Listed here for reference — do not re-ask.
 
 - **Save scope (S8-1)** → Three classes of state persist in Stage 8: **(1) simulation state** between missions and across time jumps, **(2) tactical engine state** mid-mission for quit-and-resume, and **(3) onboarding preferences** (weights + rare-marks + difficulty) as "permanent for the generational arc" per the bible. **Replay files are explicitly excluded** — the game does not support rewatching completed missions. The simulation-state persistence is **rewind-capable**: the player can roll the simulation back to a previous snapshot and the simulation continues forward from that point with fresh stochastic outcomes. This is **re-seeded re-simulation, not deterministic replay** — because the simulation is stochastic, the "second run" diverges from the first, with divergence growing as time progresses and more random rolls accumulate. **Bible conflict flagged:** this partially overrides hub Open Question #15 ("Simulation State Journaling and Rollback — OPEN"), which had explicitly deferred rollback/branching out of Stage 8. The bible hub §15 entry must be updated at capture time to reflect that rewind-with-re-seed is Stage 8 scope; the remaining #15 pieces that are NOT committed here (crash recovery, multi-branch trees, cloud saves, etc.) stay deferred unless resolved by S8-1a–e below. Tuning and shape details (cadence, retention, branching model, chronicle handling, tactical-state scope) are surfaced as S8-1a–e.
 
+- **Sim snapshot cadence (S8-1a)** → Event-driven boundary-only. Snapshots are written at every time jump boundary + every mission start and end. No per-tick periodic snapshots, no manual player-triggered save points. Each snapshot lands on a semantically meaningful narrative boundary the rewind UI can label (chapter name + mission). Rationale: matches the bible's generational/chapter-based structure, keeps the rewind primitive aligned with "run this chapter again, differently," bounds storage predictably. **Post-Stage-8 follow-up noted:** adding periodic intermediate snapshots during inter-mission sim (Option B from S8-1a) is a candidate future enhancement if boundary-only rewind feels too coarse once the game is playable. Recorded as a "maybe later" — do not build in Stage 8.
+
 ---
 
 ## Open Design Questions
@@ -98,12 +101,6 @@ Reclassified as a tuning value. The bible establishes the derivation (region mil
 ### Stage 7.5 — Enemy Macro Behavior Scripts
 
 ### Stage 8 — Godot Renderer, Command Interface, Game State Persistence
-
-#### S8-1a — Sim Snapshot Cadence [OPEN]
-
-Given S8-1 (sim state is rewind-capable), when does the engine write a sim-state snapshot? Candidates: every time jump boundary, every mission boundary (pre-mission + post-mission), every N simulation ticks, manual player-triggered "save points," or some combination. Affects granularity of possible rewind points and storage cost.
-
----
 
 #### S8-1b — Rewind Branching Model [OPEN]
 
