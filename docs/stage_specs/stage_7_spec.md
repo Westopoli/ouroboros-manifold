@@ -212,6 +212,15 @@ tactical_map.current_spine_node_positions(tick=1200)
 # }
 ```
 
+### Spawn Point vs Reinforcement Structure Placement
+
+Two distinct mechanisms put enemy units onto generated maps. They are not interchangeable:
+
+- **`spawn_point` spine nodes** — authored into strategic layouts. Stage 5.5 / the tactical engine uses these as the location(s) where the **initial enemy force** is placed at mission start. Pre-placed units, before the first tick.
+- **Reinforcement structures** — a separate spine node type (S7 resolution). During the mission, each captured-and-owned structure produces **additional units at its own structure position** per the production timer. These are distinct from the spawn_point-seeded initial force.
+
+The generator outputs both node types in the `TacticalMap`; which one drives a given unit's origin depends on whether it's an initial-placement unit or a mid-mission reinforcement. `gradient_placer.py` does not place gradient sources on `spawn_point` nodes (they are pure placement markers, not terrain features).
+
 ### S7-5 Ownership Rule
 
 Reinforcement structure initial ownership = **archetype-authored baseline + bounded simulation-state delta**, per S7-5.
