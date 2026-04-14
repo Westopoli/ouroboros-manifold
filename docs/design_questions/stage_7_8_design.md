@@ -8,26 +8,25 @@
 
 ## Session Handoff
 
-**Last updated:** [update this each session]
+**Last updated:** 2026-04-14 (this session)
 
 **Last session accomplished:**
-- Initial audit complete — identified all open questions across Stages 7, 7.5, and 8
-- Stage 7 foundational decisions resolved (see "Resolved Decisions" below)
-- Library hints deferred out of Stage 7 (S7-1)
-- Layer count resolved: fixed at 5 (S7-2)
-- Moving battlefields resolved: drifting spine nodes only, no moving gradients (S7-3)
-- Structure ownership distribution resolved: archetype baseline + simulation delta (S7-5)
-- Behavior script data format resolved: JSON state machine + shared Python runner (S75-1)
-- Prototype archetypes selected: Defensive Stand, Assault, Multi-Front Defense, Counterinsurgency (S75-2)
+- Prior session: Stage 7 + 7.5 fully resolved (S7-1 through S75-2 — see "Resolved Decisions")
+- This session: **S8-1 save scope resolved** — sim state + tactical mid-mission state + onboarding prefs; replays excluded; sim rewind-with-re-seed is in scope
+- This session: **S8-1a sim snapshot cadence resolved** — boundary-only (every time jump + every mission start/end); periodic snapshots flagged as "maybe later"
+- This session: **S8-1b rewind branching model resolved** — linear default + explicit "fork from here" action; forked slots appear in Stage 9 save-slot browser as sibling slots
+- **Bible override flagged:** S8-1 partially overrides hub Open Question #15 (journaling/rollback deferral). Bible hub §15 needs update at capture time — awaiting Westley approval of exact wording.
+- Surfaced the sub-questions that #15 had been bundling (S8-1a through S8-1d below) plus the tactical-state scope question (S8-1e)
 
 **Next session should:**
-- Move to Stage 8 (S8-1 next — save scope)
-- Once all [ANSWERED], promote decisions into bible/specs and delete this file
+- Work through remaining S8-1 sub-questions (S8-1b branching model next) before moving to S8-2
+- Then S8-2 (onboarding UI) and S8-3 (mid-mission UI density)
+- Once all [ANSWERED], promote decisions into bible/specs and delete this file. At capture time: update bible hub §15 to reflect that rollback-with-re-seed is Stage 8 scope (leave the rest — multi-branch trees, crash recovery, cloud saves — as deferred follow-ups unless answered here).
 
 **Current state summary:**
 - Stage 7: all design questions resolved, engineering defaults flagged for spec review
 - Stage 7.5: all design questions resolved
-- Stage 8: 3 design questions [OPEN]
+- Stage 8: S8-1 resolved (with bible flag); 5 new sub-questions opened (S8-1a–e); S8-2 and S8-3 still [OPEN]
 
 ---
 
@@ -76,6 +75,14 @@ These have already been decided. Listed here for reference — do not re-ask.
 - **Behavior script data format (S75-1)** → JSON state machine files consumed by a shared Python runner (`behavior_runner.py`). Each script is a `.json` file specifying forces, states (behavior + modifier + position), transitions (with conditions), and reactive hooks (with when-conditions and actions). Conditions use a small restricted expression language over trigger bus flags, tactical state predicates (e.g., `force_hp_fraction < 0.5`), and timers — not arbitrary Python. The runner loads JSON, validates against a schema (catches dead states, missing transitions, stale flag references before runtime), and executes the state machine against the tactical engine's command protocol. Adding a new archetype means creating a new JSON file, no engine code changes. The expression language vocabulary is authored alongside the runner and extended when a new class of condition is genuinely needed.
 - **Prototype archetype selection (S75-2)** → Four prototype behavior scripts authored in Stage 7.5: **Defensive Stand**, **Assault**, **Multi-Front Defense**, and **Counterinsurgency**. These four cover all five base behaviors (`advance`, `defend`, `patrol`, `ambush`, `retreat`) and exercise the trigger bus / multi-force coordination (Multi-Front Defense) plus the hidden-enemy-in-sensor-interference pattern (Counterinsurgency). The remaining six archetype scripts (Siege Breaking, Reconquest, Suppression, Interception, Evacuation, Containment) are authored in a follow-up pass once the prototype set validates the vocabulary. The reinforcement structure ownership baselines (S7-5) are also authored only for these four prototypes in Stage 7.5; the remaining six use the neutral fallback until their scripts land.
 
+### Stage 8
+
+- **Save scope (S8-1)** → Three classes of state persist in Stage 8: **(1) simulation state** between missions and across time jumps, **(2) tactical engine state** mid-mission for quit-and-resume, and **(3) onboarding preferences** (weights + rare-marks + difficulty) as "permanent for the generational arc" per the bible. **Replay files are explicitly excluded** — the game does not support rewatching completed missions. The simulation-state persistence is **rewind-capable**: the player can roll the simulation back to a previous snapshot and the simulation continues forward from that point with fresh stochastic outcomes. This is **re-seeded re-simulation, not deterministic replay** — because the simulation is stochastic, the "second run" diverges from the first, with divergence growing as time progresses and more random rolls accumulate. **Bible conflict flagged:** this partially overrides hub Open Question #15 ("Simulation State Journaling and Rollback — OPEN"), which had explicitly deferred rollback/branching out of Stage 8. The bible hub §15 entry must be updated at capture time to reflect that rewind-with-re-seed is Stage 8 scope; the remaining #15 pieces that are NOT committed here (crash recovery, multi-branch trees, cloud saves, etc.) stay deferred unless resolved by S8-1a–e below. Tuning and shape details (cadence, retention, branching model, chronicle handling, tactical-state scope) are surfaced as S8-1a–e.
+
+- **Sim snapshot cadence (S8-1a)** → Event-driven boundary-only. Snapshots are written at every time jump boundary + every mission start and end. No per-tick periodic snapshots, no manual player-triggered save points. Each snapshot lands on a semantically meaningful narrative boundary the rewind UI can label (chapter name + mission). Rationale: matches the bible's generational/chapter-based structure, keeps the rewind primitive aligned with "run this chapter again, differently," bounds storage predictably. **Post-Stage-8 follow-up noted:** adding periodic intermediate snapshots during inter-mission sim (Option B from S8-1a) is a candidate future enhancement if boundary-only rewind feels too coarse once the game is playable. Recorded as a "maybe later" — do not build in Stage 8.
+
+- **Rewind branching model (S8-1b)** → Linear default + explicit fork. Rewinding a save slot truncates by default: snapshots after the rewind point are discarded and replaced by the new divergent run (one timeline per slot, simple mental model). In addition, a separate **"fork from here"** action duplicates the save slot at the rewind point into a second slot before rewinding the original, giving the player a safety valve to preserve an alternate timeline without making tree navigation a first-class concept. The Stage 9 save-slot browser is reused as the "timeline browser" — forks are just sibling slots with player-chosen names (e.g., "Year 312 rewind"). Rationale: keeps the common case simple, reuses existing Stage 9 UI, avoids the tree-UI scope of full branching. Forks always land on S8-1a's semantic boundaries (time jump / mission start / mission end).
+
 ---
 
 ## Open Design Questions
@@ -98,9 +105,21 @@ Reclassified as a tuning value. The bible establishes the derivation (region mil
 
 ### Stage 8 — Godot Renderer, Command Interface, Game State Persistence
 
-#### S8-1 — Save Scope [OPEN]
+#### S8-1c — Chronicle Behavior On Rewind [OPEN]
 
-The bible lists Stage 8 as "Game State Persistence" but doesn't specify what's persisted. Candidates: simulation state (between missions), tactical engine state (mid-mission), replay files, onboarding preferences. Question: what's in scope for Stage 8's persistence work? Note: simulation state journaling/rollback is an open bible question (#15) explicitly deferred "after Stage 8." So full snapshot-and-branch is out. Question is about minimal viable save/load.
+The chronicle scroll is generated from simulation events. When the player rewinds, do chronicle entries from the discarded timeline disappear, persist as a parallel/alternate history the player can read, or get flagged as "erased" but remain in a debug/lore archive? Ties to S8-1b (the answer may depend on whether branches are tracked).
+
+---
+
+#### S8-1d — Snapshot Retention [OPEN]
+
+How many sim-state snapshots are retained per save slot before pruning? Options: unlimited (disk allowing), last-N ring buffer, keep-all-major-boundaries + prune-intermediate, manual prune. Pure tuning in parts, but the policy shape (what gets preserved vs. evicted) is a design decision because it determines how far back a player can meaningfully rewind.
+
+---
+
+#### S8-1e — Tactical Mid-Mission State Scope [OPEN]
+
+S8-1 includes tactical engine state. Is it a simple **single-slot quit-and-resume** (write on quit, load on resume, consume once — no rewind mid-mission), or does the rewind feature extend *into* an active mission (multiple tactical snapshots, rewind to earlier point in the same mission)? Within-mission rewind is significantly more complex (many invariants: unit nav state, ability cooldowns, fog memory, ongoing effects) and may not match the "divergence grows over time" framing since missions are short (~15–30 min).
 
 ---
 
