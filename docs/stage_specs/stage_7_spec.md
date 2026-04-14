@@ -54,6 +54,7 @@ Do NOT read `bible_missions.md`, `bible_antagonist.md`, or `bible_chronicle.md` 
 - Primitives: `count(node_type) >= N`, `count(edge_type) >= N`, `has_zone_with_property(...)`, `layer_accessibility_variety >= N`; composite operators (`all_of`, `any_of`, `not`).
 - Full filter definitions for 4 prototype archetypes (Defensive Stand, Assault, Multi-Front Defense, Counterinsurgency) from `bible_missions.md` map character prose. Stubs for other 6 archetypes (refined in 7.5).
 - `evaluate_filter(filter_spec, layout_spec) → bool`, `matching_layouts(archetype, layout_library)`.
+- **Per-archetype fairness target profiles** (see "Archetype-Aware Fairness" subsection below). Stored as a `FairnessTargetProfile` per archetype alongside its compatibility filter. Same authoring surface: 4 prototype archetypes get intentional profiles in Stage 7; other 6 use a symmetric default (`1.0 ± 0.15` on every metric) until their 7.5 scripts pin their actual intent.
 
 **`layout_instantiator.py`** — `LayoutSpec` + canvas size + seed → concrete spine (list of `SpineNode` with absolute positions + edges with node IDs).
 - Canvas sizes (config): small 4000×4000, medium 8000×8000, large 12000×12000.
@@ -72,8 +73,9 @@ Do NOT read `bible_missions.md`, `bible_antagonist.md`, or `bible_chronicle.md` 
 - All coefficients in `config.py`.
 
 **`fairness_evaluator.py`** — Algorithmic seed scoring.
-- Metrics: path count balance (player-staging → objectives vs enemy-spawn → objectives), travel time balance, vantage accessibility balance, hazard distribution symmetry.
-- `FairnessScore` dataclass with per-metric + aggregate. `is_acceptable(score) → bool` against `FAIRNESS_ACCEPTABLE_SCORE`. Generator regenerates (up to `FAIRNESS_MAX_RETRIES`) on failure.
+- Metrics: path count balance (player-staging → objectives vs enemy-spawn → objectives), travel time balance, vantage accessibility balance, hazard distribution symmetry. Each metric returns a ratio (not a symmetry score): `player_value / enemy_value` clamped to (0, ∞).
+- `FairnessScore` dataclass with per-metric ratios + per-metric pass/fail + aggregate pass/fail.
+- `is_acceptable(score, archetype) → bool` — each metric's ratio is checked against the archetype's authored `FairnessTargetProfile` (target ± tolerance). Aggregate passes when **all four** metrics fall within their per-archetype tolerances. Generator regenerates (up to `FAIRNESS_MAX_RETRIES`) on failure.
 
 **`map_generator.py`** — Top-level pipeline.
 ```python
@@ -139,8 +141,9 @@ COMPOSITION_SKEW_THRESHOLD = 0.70
 COMPOSITION_SHIFT_MAGNITUDE = 0.15
 OWNERSHIP_MILITARY_COEFF = 0.15   # S7-5 delta: military → player/enemy axis
 OWNERSHIP_TENSION_COEFF = 0.15    # S7-5 delta: tension → neutral share
-FAIRNESS_ACCEPTABLE_SCORE = 0.60
 FAIRNESS_MAX_RETRIES = 5
+# FAIRNESS_ACCEPTABLE_SCORE removed — replaced by per-archetype FairnessTargetProfile
+# authored in archetype_filters.py. See "Archetype-Aware Fairness."
 # Per-node-type gradient intensity and radius constants (one per node type, documented inline)
 ```
 
@@ -173,9 +176,13 @@ MapGenerationResult(
     tactical_map=TacticalMap(...),  # ready for TacticalEngine
     chosen_layout_id="layout_03_three_front_valley",
     fairness_score=FairnessScore(
-        path_balance=0.85, travel_time_balance=0.91,
-        vantage_balance=0.78, hazard_balance=0.88,
-        aggregate=0.86,
+        # direction-preserving ratios (player_value / enemy_value)
+        path_balance_ratio=0.63,  target=(0.60, 0.15),  within_tolerance=True,
+        travel_time_ratio=1.04,   target=(1.00, 0.15),  within_tolerance=True,
+        vantage_ratio=1.12,       target=(1.15, 0.15),  within_tolerance=True,
+        hazard_ratio=0.78,        target=(0.75, 0.15),  within_tolerance=True,
+        archetype_profile="defensive_stand",
+        all_metrics_pass=True,
     ),
     generation_metadata={
         "candidate_layouts": ["layout_01", "layout_03", "layout_07"],
@@ -246,6 +253,38 @@ neutral = baseline.neutral + neutral_shift
 - The per-field coefficients `OWNERSHIP_MILITARY_COEFF` and `OWNERSHIP_TENSION_COEFF` are the full tuning surface; both are tuning values. Proposed defaults: `0.15` each (max ±15% shift per field at its extremes, yielding ≤~30% total deviation from baseline). Clamp + renormalize ensures the result is always a valid distribution regardless of coefficient choice.
 
 This mirrors the `sim_flavoring.py` pattern (linear, continuous) S7-5 explicitly cited as its model — the same simulation state that flavors gradient intensities also flavors starting ownership, by analogous math.
+
+### Archetype-Aware Fairness
+
+The fairness evaluator's job is to verify that a generated map **delivers the archetype's intended experience** — not to enforce symmetry. Some archetypes are intentionally asymmetric (Defensive Stand favors the defender, Counterinsurgency has dispersed/hidden enemy positioning), and a symmetric-only evaluator would reject them outright.
+
+Each archetype authors a `FairnessTargetProfile` alongside its compatibility filter in `archetype_filters.py`:
+
+```python
+@dataclass(frozen=True)
+class FairnessTargetProfile:
+    path_balance: tuple[float, float]        # (target_ratio, tolerance)
+    travel_time_balance: tuple[float, float]
+    vantage_balance: tuple[float, float]
+    hazard_balance: tuple[float, float]
+```
+
+Each metric computes a ratio `player_value / enemy_value`. A profile of `(1.0, 0.15)` means "target is symmetric ±15%." A profile of `(0.60, 0.15)` means "I want the player side to have ~60% of what the enemy has — fewer paths in, for instance — within a 15% window." Evaluator passes the metric iff `abs(measured_ratio - target) ≤ tolerance`.
+
+**Prototype archetype profiles (authored in Stage 7):**
+
+| Archetype | path_balance | travel_time_balance | vantage_balance | hazard_balance |
+|---|---|---|---|---|
+| **Defensive Stand** | `(0.60, 0.15)` — fewer enemy ingress routes | `(1.00, 0.15)` | `(1.15, 0.15)` — defender slight vantage edge | `(0.75, 0.15)` — hazards along enemy approach |
+| **Assault** | `(1.70, 0.20)` — inverse of Defensive Stand; attacker paths matter | `(1.00, 0.15)` | `(0.85, 0.15)` | `(1.30, 0.20)` — hazards in defender zone |
+| **Multi-Front Defense** | `(1.00, 0.15)` — symmetric | `(1.00, 0.15)` | `(1.00, 0.15)` | `(1.00, 0.15)` |
+| **Counterinsurgency** | `(1.00, 0.25)` — wide tolerance (dispersed enemy) | `(1.00, 0.20)` | `(1.20, 0.20)` — player has sensor/vantage edge | `(0.60, 0.20)` — interference clusters around enemy |
+
+All target values and tolerances above are tuning defaults. Exact numbers calibrate during Checkpoint H and Checkpoint I playtesting.
+
+**Non-prototype archetypes (all 6):** use a safe symmetric default of `(1.0, 0.15)` on every metric until their Stage 7.5 behavior scripts ship. This preserves today's behavior for them — they're just slightly more permissive than the old single-aggregate threshold, because each metric is now checked independently.
+
+**Why ratios instead of 0–1 scores:** the old formulation ("each metric is a 0–1 symmetry score") threw away direction. A map that's wrong-direction-asymmetric for Defensive Stand (enemy dug in, player attacking) would score the same as a correctly-asymmetric one. Ratios preserve direction, so a Defensive Stand map with `path_balance=1.67` (inverted) fails because it's nowhere near its `0.60` target, even though its "symmetry distance" is the same as the correct `0.60` map. This is the whole point of archetype-aware fairness.
 
 ## Implementation Checkpoints
 
@@ -345,15 +384,18 @@ Each checkpoint is a hard stop. Run test, show output (terminal + PNG paths + vi
 
 ### Checkpoint H — Fairness Evaluator
 
-**Build:** `fairness_evaluator.py` — 4 metrics + aggregate + `is_acceptable()`.
+**Build:** `fairness_evaluator.py` — 4 ratio metrics + archetype-aware `is_acceptable(score, archetype)`. Author `FairnessTargetProfile` for all 4 prototype archetypes in `archetype_filters.py` per the table in "Archetype-Aware Fairness."
 
-**Test:** Score all 8 library layouts; construct 2 deliberately-unfair test layouts (verified rejected) + 1 deliberately-fair (verified accepted).
+**Test:** Score all 8 library layouts against each prototype archetype's profile. Construct **3 classes** of deliberately-unfair test layouts and verify correct per-archetype rejection:
+- Symmetric-broken (e.g., all paths on one side) — must fail under *every* archetype profile.
+- Wrong-direction-asymmetric (e.g., a Defensive-Stand-shaped map but with `path_balance=1.67` instead of `0.60`) — must fail under Defensive Stand specifically, even though the *magnitude* of asymmetry is correct.
+- Right-direction-asymmetric (Defensive-Stand-shaped as intended) — must pass under Defensive Stand, may fail under symmetric archetypes (expected).
 
-**Print:** All 8 library: per-metric + aggregate + pass/fail. Unfair constructions: scores showing which metric caught it.
+**Print:** Per archetype × per library layout: per-metric ratio + target + within-tolerance flag + aggregate pass/fail. For unfair constructions: which archetype rejected it and which metric(s) fired.
 
-**Visual:** PNGs — each library layout with fairness annotations → `tuning_output/stage7/checkpoint_h/`.
+**Visual:** PNGs — each library layout annotated with its per-archetype pass/fail grid → `tuning_output/stage7/checkpoint_h/`.
 
-**Verify:** All library layouts pass. Unfair cases fail with right metric. Threshold not tight enough to reject reasonable, not loose enough to accept egregious.
+**Verify:** All library layouts pass under at least one prototype archetype's profile. Wrong-direction-asymmetric maps fail under their target archetype (direction matters, not just magnitude). Symmetric-broken maps fail universally. Tolerances are neither so tight that correctly-asymmetric generations get rejected, nor so loose that egregious imbalance passes.
 
 ⛔ STOP.
 
