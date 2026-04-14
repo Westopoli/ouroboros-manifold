@@ -8,25 +8,36 @@
 
 ## Session Handoff
 
-**Last updated:** 2026-04-14 (this session)
+**Last updated:** 2026-04-14 (end of session, handing off to new chat)
 
 **Last session accomplished:**
 - Prior session: Stage 7 + 7.5 fully resolved (S7-1 through S75-2 — see "Resolved Decisions")
 - This session: **S8-1 save scope resolved** — sim state + tactical mid-mission state + onboarding prefs; replays excluded; sim rewind-with-re-seed is in scope
 - This session: **S8-1a sim snapshot cadence resolved** — boundary-only (every time jump + every mission start/end); periodic snapshots flagged as "maybe later"
 - This session: **S8-1b rewind branching model resolved** — linear default + explicit "fork from here" action; forked slots appear in Stage 9 save-slot browser as sibling slots
+- This session: **Stage 7 spec drafted and committed** to `docs/stage_specs/stage_7_spec.md` on main
+- This session: **Stage 7 spec audit complete** — 9 items identified (1 formatting, 6 design gaps, 2 minor). Not yet applied — handed off to next chat.
 - **Bible override flagged:** S8-1 partially overrides hub Open Question #15 (journaling/rollback deferral). Bible hub §15 needs update at capture time — awaiting Westley approval of exact wording.
-- Surfaced the sub-questions that #15 had been bundling (S8-1a through S8-1d below) plus the tactical-state scope question (S8-1e)
+- **Bible capture also pending:** hub Stage 7 roadmap entry — currently describes pre-split scope, needs update to reflect Stage 7 / 7.5 / 8 split.
 
 **Next session should:**
-- Work through remaining S8-1 sub-questions (S8-1b branching model next) before moving to S8-2
-- Then S8-2 (onboarding UI) and S8-3 (mid-mission UI density)
-- Once all [ANSWERED], promote decisions into bible/specs and delete this file. At capture time: update bible hub §15 to reflect that rollback-with-re-seed is Stage 8 scope (leave the rest — multi-branch trees, crash recovery, cloud saves — as deferred follow-ups unless answered here).
+- **First:** apply the Stage 7 spec audit fixes. Order:
+  - (0) Fix the unclosed code fence at line 78 of `docs/stage_specs/stage_7_spec.md` — cosmetic bug, breaks GitHub rendering of lines 90–386
+  - (1) Add S7-5 ownership rule (military → player↔enemy axis; tension → neutral share; economy/pop do NOT drive ownership; baselines only for 4 prototype archetypes, other 6 use ~33/33/33 fallback)
+  - (2) Add `STRUCTURE_COUNT_RANGES` to the config block (small 1–3, medium 2–5, large 3–7)
+  - (3) Add production time formula (`production_time_sec = BASE_PRODUCTION_TIME_SEC × (unit_power_rating / POWER_NORMALIZATION)`)
+  - (4) Define `RegionState` dataclass shape (new dataclass in `map_gen_contracts.py` packaging the needed fields)
+  - (5) Clarify spawn_point node usage (initial enemy force spawns there; reinforcement structures produce additional units at structure positions)
+  - (6) Archetype-aware fairness (asymmetric archetypes like Defensive Stand / Counterinsurgency should not fail the evaluator — needs per-archetype thresholds or asymmetry weights)
+  - (7–9, minor) complications-deferred note, gradient property count reconciliation with bible (5 vs 4+masks), explicit I8 measurement mechanism
+- Several of these have implementation shapes worth confirming with Westley as mini-questions (especially 1, 4, 6). Present per `design_rules.md` format.
+- **After Stage 7 spec audit:** resume Stage 8 design with S8-1c (chronicle behavior on rewind — already presented in prior chat with options A erase / B preserve dimmed / C save-metadata tombstones; recommendation was A, never answered). Then S8-1d (retention), S8-1e (tactical-state scope), S8-2 (onboarding UI), S8-3 (mid-mission UI density).
+- Once all [ANSWERED], promote decisions into bible/specs and delete this file.
 
 **Current state summary:**
-- Stage 7: all design questions resolved, engineering defaults flagged for spec review
+- Stage 7: all design questions resolved, spec drafted and committed, audit backlog identified (9 items)
 - Stage 7.5: all design questions resolved
-- Stage 8: S8-1 resolved (with bible flag); 5 new sub-questions opened (S8-1a–e); S8-2 and S8-3 still [OPEN]
+- Stage 8: S8-1, S8-1a, S8-1b resolved; S8-1c (presented, not answered), S8-1d, S8-1e, S8-2, S8-3 still [OPEN]
 
 ---
 
