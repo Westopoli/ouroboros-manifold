@@ -126,11 +126,9 @@ def _accumulate_aoe(store, attacker, primary_target, base_dmg, attacker_cat, aoe
         total_dealt += dmg
 
 
-def update_targeting(store: UnitStore, tmap, rng=None):
+def update_targeting(store: UnitStore, tmap, rng=None, tick=0):
     active = store.active_ids()
 
-    # Rebuild spatial hash (cell_size=NAVMESH_CELL_SIZE wu; ~1 unit/cell in clustered combat).
-    # Query returns candidates in uid order (sorted) for deterministic tie-breaking.
     tmap.spatial_hash.clear()
     for uid in active:
         tmap.spatial_hash.insert(uid, store.data[uid, FIELD_X], store.data[uid, FIELD_Y])
@@ -138,62 +136,64 @@ def update_targeting(store: UnitStore, tmap, rng=None):
     for uid in active:
         if store.plain_moving[uid]:   # plain move is non-combat: skip targeting entirely
             continue
+
+        my_faction = store.faction[uid]
+        my_layer   = store.data[uid, FIELD_LAYER]
+        mx         = store.data[uid, FIELD_X]
+        my_        = store.data[uid, FIELD_Y]
+        atk_range  = store.data[uid, FIELD_ATTACK_RANGE]
+        atk_r_sq   = atk_range * atk_range
+
+        # Early exit: keep current target if still alive and in range.
         current = store.auto_engage_target[uid]
         if current >= 0 and store.alive[current]:
-            dx = store.data[uid, FIELD_X] - store.data[current, FIELD_X]
-            dy = store.data[uid, FIELD_Y] - store.data[current, FIELD_Y]
-            dist = math.sqrt(dx * dx + dy * dy)
-            if dist <= store.data[uid, FIELD_ATTACK_RANGE]:
+            dx = store.data[current, FIELD_X] - mx
+            dy = store.data[current, FIELD_Y] - my_
+            if dx * dx + dy * dy <= atk_r_sq:
                 continue
 
-        candidates = []
-        my_faction = store.faction[uid]
-        my_layer = store.data[uid, FIELD_LAYER]
-        mx, my_ = store.data[uid, FIELD_X], store.data[uid, FIELD_Y]
-        engage_range = store.data[uid, FIELD_ATTACK_RANGE]
+        # Re-targeting stagger: spread queries across multiple ticks.
+        # Siege (range > 600) every 5 ticks; all others every 2 ticks.
+        # Stagger by uid so units don't all skip the same ticks.
+        stagger = 5 if atk_range > 600 else 2
+        if tick % stagger != uid % stagger:
+            continue
 
-        for other in sorted(tmap.spatial_hash.query(mx, my_, engage_range)):
+        # Single query at max(attack_range, sensor_radius) covers both buckets.
+        # Attack-move pursuit: if the unit is attack_moving and found nothing in
+        # attack range, walk toward the closest enemy in sensor range instead.
+        # Fires during march and after slot arrival. See movement.py apply_group_move.
+        sensor_r    = store.data[uid, FIELD_SENSOR_RADIUS] if store.attack_moving[uid] else 0.0
+        query_r     = atk_range if sensor_r <= atk_range else sensor_r
+        sensor_r_sq = sensor_r * sensor_r
+
+        best_atk_d_sq    = float("inf")
+        best_atk_uid     = -1
+        best_sensor_d_sq = float("inf")
+        best_sensor_uid  = -1
+
+        for other in tmap.spatial_hash.query(mx, my_, query_r):
             if store.faction[other] == my_faction:
                 continue
             if store.data[other, FIELD_LAYER] != my_layer:
                 continue
-            dx = store.data[other, FIELD_X] - mx
-            dy = store.data[other, FIELD_Y] - my_
-            d = math.sqrt(dx * dx + dy * dy)
-            if d <= engage_range:
-                candidates.append((other, d))
+            dx   = store.data[other, FIELD_X] - mx
+            dy   = store.data[other, FIELD_Y] - my_
+            d_sq = dx * dx + dy * dy
+            if d_sq <= atk_r_sq:
+                if d_sq < best_atk_d_sq:
+                    best_atk_d_sq = d_sq
+                    best_atk_uid  = other
+            elif sensor_r > 0 and d_sq <= sensor_r_sq:
+                if d_sq < best_sensor_d_sq:
+                    best_sensor_d_sq = d_sq
+                    best_sensor_uid  = other
 
-        if not candidates:
-            store.auto_engage_target[uid] = -1
-            # Attack-move pursuit: if the unit is attack_moving and found
-            # nothing in attack range, scan sensor radius for enemies and walk
-            # toward the closest one. Fires during march (has_move_target=True)
-            # and after slot arrival, so units break off toward enemies as soon
-            # as they enter sensor range rather than waiting to finish the march.
-            if store.attack_moving[uid]:
-                sensor_r = store.data[uid, FIELD_SENSOR_RADIUS]
-                best_d = float("inf")
-                best_uid = -1
-                for other in sorted(tmap.spatial_hash.query(mx, my_, sensor_r)):
-                    if store.faction[other] == my_faction:
-                        continue
-                    if store.data[other, FIELD_LAYER] != my_layer:
-                        continue
-                    dx = store.data[other, FIELD_X] - mx
-                    dy = store.data[other, FIELD_Y] - my_
-                    d = math.sqrt(dx * dx + dy * dy)
-                    if d < sensor_r and d < best_d:
-                        best_d, best_uid = d, other
-                if best_uid >= 0:
-                    store.set_move_target(uid,
-                                          store.data[best_uid, FIELD_X],
-                                          store.data[best_uid, FIELD_Y])
-            continue
-
-        min_dist = min(d for _, d in candidates)
-        tied = [c for c, d in candidates if d - min_dist < 1.0]
-
-        if len(tied) == 1 or rng is None:
-            store.auto_engage_target[uid] = tied[0]
+        if best_atk_uid >= 0:
+            store.auto_engage_target[uid] = best_atk_uid
         else:
-            store.auto_engage_target[uid] = rng.choice(tied)
+            store.auto_engage_target[uid] = -1
+            if best_sensor_uid >= 0:
+                store.set_move_target(uid,
+                                      store.data[best_sensor_uid, FIELD_X],
+                                      store.data[best_sensor_uid, FIELD_Y])

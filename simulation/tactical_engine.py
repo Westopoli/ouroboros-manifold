@@ -28,7 +28,7 @@ class TacticalEngine:
 
     def step(self):
         process_commands(self.command_queue, self.store, self.tick)
-        update_targeting(self.store, self.map, self.rng)  # before movement so attack_move sees current targets
+        update_targeting(self.store, self.map, self.rng, tick=self.tick)  # before movement so attack_move sees current targets
         update_movement(self.store, self.map, self.dt)
         deaths, kill_sources = resolve_damage(self.store, self.map, self.dt)
 

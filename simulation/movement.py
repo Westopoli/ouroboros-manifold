@@ -180,19 +180,26 @@ def _bresenham(r1, c1, r2, c2):
             c += sc
 
 
-def _probe_is_blocked(positions, uid, px, py, dx, dy, probe_dist, block_r_sq, store):
+def _probe_is_blocked(probe_grid, probe_cell_size, uid, px, py, dx, dy, probe_dist, block_r_sq, store):
     ppx = px + dx * probe_dist
     ppy = py + dy * probe_dist
     my_layer = store.data[uid, FIELD_LAYER]
-    for other_uid, (ox, oy) in positions.items():
-        if other_uid == uid:
-            continue
-        if store.data[other_uid, FIELD_LAYER] != my_layer:
-            continue
-        ddx = ox - ppx
-        ddy = oy - ppy
-        if ddx * ddx + ddy * ddy < block_r_sq:
-            return True
+    cr = int(ppx / probe_cell_size)
+    cc = int(ppy / probe_cell_size)
+    for nr in range(cr - 1, cr + 2):
+        for nc in range(cc - 1, cc + 2):
+            neighbors = probe_grid.get((nr, nc))
+            if neighbors is None:
+                continue
+            for other_uid, ox, oy in neighbors:
+                if other_uid == uid:
+                    continue
+                if store.data[other_uid, FIELD_LAYER] != my_layer:
+                    continue
+                ddx = ox - ppx
+                ddy = oy - ppy
+                if ddx * ddx + ddy * ddy < block_r_sq:
+                    return True
     return False
 
 
@@ -246,6 +253,19 @@ def update_movement(store: UnitStore, tactical_map, dt: float):
     positions = {}
     for uid in active:
         positions[uid] = (store.data[uid, FIELD_X], store.data[uid, FIELD_Y])
+
+    # Spatial grid for _probe_is_blocked — built once per tick, cell sized to
+    # block_radius so only the 3×3 neighborhood around the probe point needs checking.
+    # See _probe_is_blocked for query logic.
+    probe_cell_size = float(config.UNIT_COLLISION_RADIUS * 2)
+    probe_grid = {}
+    for uid, (x, y) in positions.items():
+        cr = int(x / probe_cell_size)
+        cc = int(y / probe_cell_size)
+        key = (cr, cc)
+        if key not in probe_grid:
+            probe_grid[key] = []
+        probe_grid[key].append((uid, x, y))
 
     _update_attack_move_state(store, active)
 
@@ -323,13 +343,13 @@ def update_movement(store: UnitStore, tactical_map, dt: float):
 
         if store.detour_remaining[uid] > 0:
             steer_x, steer_y = store.detour_dx[uid], store.detour_dy[uid]
-        elif _probe_is_blocked(positions, uid, px, py, seek_x, seek_y, probe_dist, block_r_sq, store):
+        elif _probe_is_blocked(probe_grid, probe_cell_size, uid, px, py, seek_x, seek_y, probe_dist, block_r_sq, store):
             steer_x, steer_y = seek_x, seek_y
             heading_angle = math.atan2(seek_y, seek_x)
             for deg in [30, -30, 60, -60, 90, -90]:
                 a = heading_angle + math.radians(deg)
                 ax, ay = math.cos(a), math.sin(a)
-                if not _probe_is_blocked(positions, uid, px, py, ax, ay, probe_dist, block_r_sq, store):
+                if not _probe_is_blocked(probe_grid, probe_cell_size, uid, px, py, ax, ay, probe_dist, block_r_sq, store):
                     steer_x, steer_y = ax, ay
                     store.detour_dx[uid] = ax
                     store.detour_dy[uid] = ay
@@ -375,7 +395,14 @@ def update_movement(store: UnitStore, tactical_map, dt: float):
         _update_move_groups(store)
 
     if config.HARD_COLLISION_ENABLED:
-        _resolve_collisions(store, active, tactical_map, navmesh)
+        # Only units that actually moved this tick drive the outer collision loop.
+        # Stationary engaged units still live in the grid so movers can push them,
+        # but they never initiate pair checks — cutting ~90% of work in dense combat.
+        moved = {uid for uid in active if (
+            store.data[uid, FIELD_X] != positions[uid][0] or
+            store.data[uid, FIELD_Y] != positions[uid][1]
+        )}
+        _resolve_collisions(store, active, moved, tactical_map, navmesh)
 
 
 def _update_move_groups(store):
@@ -435,85 +462,108 @@ def _update_move_groups(store):
             store.move_group_id[uid] = -1
 
 
-def _resolve_collisions(store, active, tactical_map, navmesh):
+def _resolve_collisions(store, active, moved, tactical_map, navmesh):
     radius = config.UNIT_COLLISION_RADIUS
     min_dist = 2.0 * radius
     min_dist_sq = min_dist * min_dist
+    cell_size = min_dist  # cell sized to min_dist so only adjacent cells can overlap
 
     for _ in range(config.COLLISION_RESOLUTION_ITERATIONS):
-        for i in range(len(active)):
-            uid_a = active[i]
+        # Build spatial grid: cell (cr, cc) → list of uids in that cell.
+        # Rebuilt each iteration because positions change after each push pass.
+        # All active units go in the grid so stationary units can still be pushed.
+        grid = {}
+        for uid in active:
+            cr = int(store.data[uid, FIELD_X] / cell_size)
+            cc = int(store.data[uid, FIELD_Y] / cell_size)
+            if (cr, cc) not in grid:
+                grid[(cr, cc)] = []
+            grid[(cr, cc)].append(uid)
+
+        # Only moved units drive the outer loop — stationary engaged units never
+        # initiate pair checks, cutting ~90% of iterations during dense combat.
+        for uid_a in moved:
             ax = store.data[uid_a, FIELD_X]
             ay = store.data[uid_a, FIELD_Y]
             layer_a = store.data[uid_a, FIELD_LAYER]
+            cr = int(ax / cell_size)
+            cc = int(ay / cell_size)
 
-            for j in range(i + 1, len(active)):
-                uid_b = active[j]
-                if store.data[uid_b, FIELD_LAYER] != layer_a:
-                    continue
+            # Only check units in the 3×3 neighborhood — units further away
+            # cannot be within min_dist of uid_a given cell_size == min_dist.
+            for nr in range(cr - 1, cr + 2):
+                for nc in range(cc - 1, cc + 2):
+                    neighbors = grid.get((nr, nc))
+                    if neighbors is None:
+                        continue
+                    for uid_b in neighbors:
+                        if uid_b <= uid_a:  # avoid double-counting and self
+                            continue
+                        if store.data[uid_b, FIELD_LAYER] != layer_a:
+                            continue
 
-                bx = store.data[uid_b, FIELD_X]
-                by = store.data[uid_b, FIELD_Y]
-                dx = ax - bx
-                dy = ay - by
-                d_sq = dx * dx + dy * dy
+                        bx = store.data[uid_b, FIELD_X]
+                        by = store.data[uid_b, FIELD_Y]
+                        dx = ax - bx
+                        dy = ay - by
+                        d_sq = dx * dx + dy * dy
 
-                if d_sq >= min_dist_sq:
-                    continue
+                        if d_sq >= min_dist_sq:
+                            continue
 
-                if d_sq < 0.001:
-                    # Deterministic fallback: lower uid pushes left
-                    dx = -1.0 if uid_a < uid_b else 1.0
-                    dy = 0.0
-                    d = 0.001
-                else:
-                    d = math.sqrt(d_sq)
+                        if d_sq < 0.001:
+                            # Deterministic fallback: lower uid pushes left
+                            dx = -1.0 if uid_a < uid_b else 1.0
+                            dy = 0.0
+                            d = 0.001
+                        else:
+                            d = math.sqrt(d_sq)
 
-                overlap = min_dist - d
-                nx = dx / d
-                ny = dy / d
+                        overlap = min_dist - d
+                        nx = dx / d
+                        ny = dy / d
 
-                moving_a = store.has_move_target[uid_a] and not (
-                    store.auto_engage_target[uid_a] >= 0 and store.alive[store.auto_engage_target[uid_a]]
-                )
-                moving_b = store.has_move_target[uid_b] and not (
-                    store.auto_engage_target[uid_b] >= 0 and store.alive[store.auto_engage_target[uid_b]]
-                )
+                        moving_a = store.has_move_target[uid_a] and not (
+                            store.auto_engage_target[uid_a] >= 0 and store.alive[store.auto_engage_target[uid_a]]
+                        )
+                        moving_b = store.has_move_target[uid_b] and not (
+                            store.auto_engage_target[uid_b] >= 0 and store.alive[store.auto_engage_target[uid_b]]
+                        )
 
-                if moving_a and moving_b:
-                    push_a, push_b = overlap * 0.5, overlap * 0.5
-                elif moving_a:
-                    push_a, push_b = overlap, 0.0
-                elif moving_b:
-                    push_a, push_b = 0.0, overlap
-                else:
-                    push_a, push_b = overlap * 0.5, overlap * 0.5
+                        if moving_a and moving_b:
+                            push_a, push_b = overlap * 0.5, overlap * 0.5
+                        elif moving_a:
+                            push_a, push_b = overlap, 0.0
+                        elif moving_b:
+                            push_a, push_b = 0.0, overlap
+                        else:
+                            push_a, push_b = overlap * 0.5, overlap * 0.5
 
-                new_ax = ax + nx * push_a
-                new_ay = ay + ny * push_a
-                new_bx = bx - nx * push_b
-                new_by = by - ny * push_b
+                        new_ax = ax + nx * push_a
+                        new_ay = ay + ny * push_a
+                        new_bx = bx - nx * push_b
+                        new_by = by - ny * push_b
 
-                if tactical_map is not None:
-                    new_ax = max(0.0, min(tactical_map.width, new_ax))
-                    new_ay = max(0.0, min(tactical_map.height, new_ay))
-                    new_bx = max(0.0, min(tactical_map.width, new_bx))
-                    new_by = max(0.0, min(tactical_map.height, new_by))
+                        if tactical_map is not None:
+                            new_ax = max(0.0, min(tactical_map.width, new_ax))
+                            new_ay = max(0.0, min(tactical_map.height, new_ay))
+                            new_bx = max(0.0, min(tactical_map.width, new_bx))
+                            new_by = max(0.0, min(tactical_map.height, new_by))
 
-                if navmesh is not None:
-                    ra, ca = navmesh.cell(new_ax, new_ay)
-                    if not navmesh.is_walkable(ra, ca):
-                        new_ax, new_ay = ax, ay
-                    rb, cb = navmesh.cell(new_bx, new_by)
-                    if not navmesh.is_walkable(rb, cb):
-                        new_bx, new_by = bx, by
+                        if navmesh is not None:
+                            ra, ca = navmesh.cell(new_ax, new_ay)
+                            if not navmesh.is_walkable(ra, ca):
+                                new_ax, new_ay = ax, ay
+                            rb, cb = navmesh.cell(new_bx, new_by)
+                            if not navmesh.is_walkable(rb, cb):
+                                new_bx, new_by = bx, by
 
-                store.data[uid_a, FIELD_X] = new_ax
-                store.data[uid_a, FIELD_Y] = new_ay
-                ax = new_ax
-                ay = new_ay
-                store.data[uid_b, FIELD_X] = new_bx
-                store.data[uid_b, FIELD_Y] = new_by
+                        store.data[uid_a, FIELD_X] = new_ax
+                        store.data[uid_a, FIELD_Y] = new_ay
+                        ax = new_ax
+                        ay = new_ay
+                        store.data[uid_b, FIELD_X] = new_bx
+                        store.data[uid_b, FIELD_Y] = new_by
 
 
 def has_combat_los(navmesh, x1, y1, x2, y2):

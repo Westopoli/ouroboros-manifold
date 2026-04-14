@@ -69,7 +69,7 @@ class TacticalMap:
             if src.property_type not in self._sources_by_type:
                 self._sources_by_type[src.property_type] = []
             self._sources_by_type[src.property_type].append(src)
-        self.spatial_hash = SpatialHash(config.NAVMESH_CELL_SIZE)
+        self.spatial_hash = SpatialHash(config.SPATIAL_HASH_CELL_SIZE)
 
     def _sample_gradient(self, x, y, property_type):
         sources = self._sources_by_type.get(property_type, [])
