@@ -165,6 +165,35 @@ The player controls a **standard RTS camera** — free pan and zoom at all times
 
 The moving battlefield is communicated through **world-space movement under free camera.** Convoys move across the map, environmental features drift, gravitational effects shift unit positions — all happening in the world while the player pans freely to observe and react. The skill is in attention management: watching the convoy's front for incoming threats versus checking the rear for flanking Raiders. No special camera mechanics are needed — movement happens in the world, the player watches from wherever they choose.
 
+### Mid-Mission HUD Layout
+
+> **RESOLVED (v2.13).** Layout reference: Immortal: Gates of Pyre. See `docs/design_questions/igop_hud_reference_alpha.png` and `igop_hud_reference_beta.png`.
+
+The mid-mission HUD inherits IGoP's clustered-bottom-bar layout and restrained UI chrome, with IGoP's economy/production surfaces subtracted (Ouroboros has no resource currency, no tech tree, no unit-production grid — reinforcements come from captured structures) and Ouroboros-specific surfaces added (reinforcement-structure panel, layer selector).
+
+**Top-left — persistent info column.** Stacks (a) the mission objectives list with progress indicators and (b) an event ticker surfacing significant in-mission beats (reinforcement structure captured / lost, force routed, objective threshold hit). Text-forward, low visual weight — the same register as IGoP's event ticker.
+
+**Top-center — banner channel.** Empty by default. Used only for significant alerts (a captured structure falling to the enemy, an objective band crossing a threshold). Matches IGoP's boss-banner slot but is reserved for mission-significance moments, not permanent identity.
+
+**Top-right — game clock, elapsed mission time, and pause/menu button.** Minimal.
+
+**Bottom-center — main command cluster.** Single continuous horizontal bar:
+- **Selected-unit portrait panel** (left-of-center): portraits + summed HP for current selection + ability slots showing cooldown rings. Ability bar is **cooldown-only** per "Abilities — Player-Activated Only" above — no contextual prompts, no "ready" notifications beyond the ring itself.
+- **Minimap** (center or right-of-center): friendly units (bright), visible enemies (dim), terrain contours from the map's obstacle / elevation gradients, objective markers, reinforcement-structure icons colored by ownership.
+- **Reinforcement-structure panel** (right of minimap): replaces IGoP's TRAIN / TECH / BUILD / POWER grid. One row per **player-owned** structure showing production-timer bar + next-unit icon + structure HP bar. Neutral and enemy-owned structures are visible on the world map but are not listed here — the panel is a "what am I producing" view, not a map overview.
+
+**Bottom-center-right — control-group tabs.** Numbered tabs (1..0, with 0 representing group 10) showing unit-type icon + count for each bound group. Mirrors IGoP's exact treatment.
+
+**Bottom-right — commander portrait.** Persistent identity element: the current commander's portrait, name, and lineage marker. Reinforces the named-commander framing that runs through the generational structure.
+
+**Right sidebar — reserved.** IGoP's BUILD ASSIST slot has no Ouroboros equivalent at launch. The vertical strip on the right edge is kept as whitespace for now; future features (the chronicle-as-intelligence-feed line from `game_bible.md §Frontend — Fresh Start`, or event-reaction prompts) can occupy it without an HUD rework.
+
+**Layer selector — new to Ouroboros, no IGoP equivalent.** A vertical 5-layer strip (right edge, above the commander portrait) showing layer indicators with the active layer highlighted. Click or Tab to switch layer focus. Matches Open Design Question #16's tier-1 active-layer treatment.
+
+**In-world chrome** (all layered onto the world view, not HUD panels): thin HP bars above each unit; layer-color indicator rings beneath each unit per Open Design Question #16; selection rings at the base of selected units. Low visual weight throughout — the world is the primary visual focus, the HUD is the edges.
+
+**Scope at launch.** Stage 8 ships all panels above. The event-ticker content is hardcoded to a small beat set (capture / loss / rout / objective threshold) — polished authored content is a Beyond-Stage-9 pass. There is no enemy composition readout (fog of war exists to be played through, not summarized).
+
 ### Moving Battlefields
 
 Engagements are **not static arenas.** The tactical space shifts during combat:
@@ -232,7 +261,7 @@ Enemy units run the identical decision loop as player units. They acquire the ne
 
 What makes each mission archetype *feel* different from the enemy's side is not AI micro behavior but **mission setup**: where enemy units are placed, what scripted macro objectives they pursue (advance toward player position, hold defensive positions, hide and ambush, patrol routes), and what composition they have. The mission generator authors these macro-level behaviors per archetype at generation time. The unit-level AI is always the same — the variety comes from the tactical situation the setup creates.
 
-**Enemy macro objectives are specified in the "Enemy Macro Behavior System" section below.** The macro behavior system issues commands to enemy unit groups using the same 5-command protocol as the player. The unit behavior system described here is the foundation that macro behavior builds on top of — the macro layer controls force-level intent, the unit layer executes commands through this decision loop.
+**Enemy macro objectives are specified in the "Enemy Macro Behavior System" section below.** The macro behavior system issues commands to enemy unit groups using the same 4-command protocol as the player. The unit behavior system described here is the foundation that macro behavior builds on top of — the macro layer controls force-level intent, the unit layer executes commands through this decision loop.
 
 ---
 
@@ -453,7 +482,7 @@ The macro behavior system and the Unit Behavior AI (per-unit decision loop) are 
 
 - The **macro layer** decides force-level intent: where a group should go, what posture to adopt, when to transition between states. It issues commands to unit groups.
 - The **unit layer** executes those commands through the existing priority-ordered decision loop: flinch → command → auto-engage. The unit layer does not know about behavior states, transitions, or the trigger bus.
-- The **interface** between them is the Stage 6 command protocol. The macro layer issues the same 5 commands the player does. No special enemy-only commands exist. This means enemy macro behavior is fully replayable — the replay file captures enemy commands alongside player commands.
+- The **interface** between them is the Stage 6 command protocol. The macro layer issues the same 4 commands the player does. No special enemy-only commands exist. This means enemy macro behavior is fully replayable — the replay file captures enemy commands alongside player commands.
 
 ---
 
