@@ -10,29 +10,24 @@ Stage 8 is the stage where the game becomes **playable for the first time**. Sta
 
 **Architecture.** The Python tactical engine runs as a standalone WebSocket server. Godot is a pure client that subscribes to tick snapshots, renders them, interpolates between ticks for a 60fps presentation, and sends command packets back. No engine logic executes in Godot — it is a presentation layer that happens to also capture input. Persistence is a separate Python-side concern: the save writer serializes simulation state and tactical state to disk; the save loader reconstructs them; rewind is "load snapshot N, discard snapshots >N in this slot (linear), resume simulation from N with fresh seed."
 
-## Design-Doc Conflicts and Gating Open Questions — READ FIRST
+## Bible Capture Pending
 
-> **This section is flagged per the user's request.** Implementation cannot start until the gating questions are resolved in a Claude.ai brainstorming session and the spec is updated.
+These bible edits landed during the Stage 8 write-up session; they do not block implementation but are listed here so an auditor can verify them:
 
-### Bible-internal conflicts (flag to Westley for resolution)
+1. **Hub "Beyond Stage 9" bullet** — removed the stale "onboarding screen" entry; the Stage 8 roadmap paragraph is now the only source of truth for onboarding scope.
+2. **Hub Stage 8 roadmap paragraph** — "5-command vocabulary" replaced with "4-command vocabulary (`move`, `attack_move`, `attack_target`, `activate_ability`) plus the two layer commands."
+3. **`bible_combat.md` L235 and L456** — "5-command protocol" / "same 5 commands" corrected to "4-command protocol" / "same 4 commands." The 5×3 compositional grid in the bible belongs to the **enemy macro behavior system**, not player commands.
 
-1. **Onboarding scope.** `game_bible.md` §"Implementation Stage Roadmap" entry for Stage 8 (lines ~524) lists "Onboarding screen: single screen with difficulty setting and mission preference weights … See 'Onboarding and First Chapter' for the full design." The same hub's "Beyond Stage 9" bullet (line ~528) lists "onboarding screen" among deferred items. The Stage 8 entry is the more recent v2.09 text. **Proposed resolution:** delete "onboarding screen" from the "Beyond Stage 9" bullet (it is already in Stage 8). Flag for Westley approval before the Stage 8 spec goes live.
+## Gating Open Design Questions — READ BEFORE IMPLEMENTATION
 
-2. **Command-vocabulary count.** `bible_combat.md` §Command Vocabulary enumerates **four** commands (`move`, `attack_move`, `attack_target`, `activate_ability`). Other bible passages — `bible_combat.md` line 235 ("5-command protocol"), line 456 ("the same 5 commands the player does"), hub line 524 ("Ability hotkeys mapped to the 5-command vocabulary") — refer to **five** commands. The layer-assignment hotkey system (`bible_combat.md` §"Layer Assignment Hotkey") introduces two more commands (hard layer transfer, layer preference assignment) which are the likely source of the discrepancy, but the count is inconsistent across the text. **Proposed resolution:** Westley picks one:
-   - **(A)** Canonical count is **5** = the four combat commands + a single "layer assignment" command (both hard transfer and preference flow through one command object with a flag). Edit `bible_combat.md` §Command Vocabulary to list all five.
-   - **(B)** Canonical count is **4** for the combat vocabulary; layer commands are a separate channel. Edit L235, L456, and the Stage 8 hub entry to say "4-command combat vocabulary plus layer commands" or similar.
-   - **Stage 8 cannot ship a command protocol until one is picked.** The Stage 8 WebSocket command packet shape depends on this decision.
+> **This section must reach zero entries before implementation begins.** Each open item is a design decision (per `design_rules.md` classification — not an engineering default, not a tuning value) and must be resolved in a Claude.ai brainstorming session, captured into the bible/spec, and deleted from this list.
 
-### Gating open design questions (unanswered — block spec finalization)
+Per `docs/design_questions/stage_7_8_design.md`, these are still [OPEN]:
 
-Per `docs/design_questions/stage_7_8_design.md`, these are still [OPEN] and classified as **design decisions** (not engineering defaults, not tuning):
-
-3. **S8-1d — Snapshot retention policy.** Unlimited / last-N ring buffer / keep-major-prune-intermediate / manual prune. Determines how far back the player can meaningfully rewind and shapes the save-file format. Stage 8 cannot ship a save-writer without this decision — the serializer either writes an unbounded list, a fixed-size circular buffer, or a tagged-keep/tagged-prune structure, and these are not freely interchangeable.
-4. **S8-1e — Tactical mid-mission state scope.** Single-slot quit-and-resume (write on quit, load on resume, consume once) vs rewind-extends-into-missions (multiple tactical snapshots, rewind to earlier mid-mission tick). Within-mission rewind is significantly more complex (unit nav state, ability cooldowns, fog memory, ongoing effects) and changes what `TacticalEngine` must be able to round-trip to disk. Stage 8 cannot ship the tactical-state persister until this scope is fixed.
-5. **S8-2 — Onboarding preference weight UI.** Sliders per archetype / star ratings / like-this + rare checkboxes / drag-to-rank. The onboarding screen itself is in Stage 8 scope, but the interaction model is unanswered. Affects the onboarding scene's structure and the data shape of the preference payload.
-6. **S8-3 — Mid-mission UI information density.** Minimap details, selection info panel, objective tracker, reinforcement-structure status display, enemy composition hints. The ability bar's cooldown-only behavior is specified in the bible; the rest of the HUD is not. Affects what the tactical HUD scene must contain.
-
-**Recommendation to Westley:** resolve questions 1, 3, 4 before Stage 8 implementation begins (they shape contracts). Questions 2, 5, 6 can be pinned with engineering defaults in this spec pending your approval, but they are flagged as design decisions so a default-plus-review is not the same as an answer.
+- **S8-1d — Snapshot retention policy.** Unlimited / last-N ring buffer / keep-major-prune-intermediate / manual prune. Determines how far back the player can meaningfully rewind and shapes the save-file format. Stage 8 cannot ship a save-writer without this decision — the serializer either writes an unbounded list, a fixed-size circular buffer, or a tagged-keep/tagged-prune structure, and these are not freely interchangeable.
+- **S8-1e — Tactical mid-mission state scope.** Single-slot quit-and-resume (write on quit, load on resume, consume once) vs rewind-extends-into-missions (multiple tactical snapshots, rewind to earlier mid-mission tick). Within-mission rewind is significantly more complex (unit nav state, ability cooldowns, fog memory, ongoing effects) and changes what `TacticalEngine` must be able to round-trip to disk. Stage 8 cannot ship the tactical-state persister until this scope is fixed.
+- **S8-2 — Onboarding preference weight UI.** Sliders per archetype / star ratings / like-this + rare checkboxes / drag-to-rank. The onboarding screen is in Stage 8 scope; the interaction model is unanswered. Affects the onboarding scene's structure and the data shape of the preference payload.
+- **S8-3 — Mid-mission UI information density.** Minimap details, selection info panel, objective tracker, reinforcement-structure status display, enemy composition hints. The ability bar's cooldown-only behavior is specified in the bible; the rest of the HUD is not. Affects what the tactical HUD scene must contain.
 
 ### Captured decisions the spec relies on (no change needed)
 
@@ -40,6 +35,8 @@ Per `docs/design_questions/stage_7_8_design.md`, these are still [OPEN] and clas
 - **S8-1a** (cadence): boundary-only — every time-jump boundary + every mission start/end. Captured in hub §15.
 - **S8-1b** (branching): linear default + explicit "fork from here." Captured in hub §15.
 - **S8-1c** (chronicle on rewind): **erase** on linear rewind; fork-from-here is the preservation mechanism. Captured in hub §15.
+- **Onboarding in Stage 8** (Q1 this session): resolved Option A. Bible edited.
+- **Player command count = 4** (Q2 this session): resolved. Bible edited.
 - **S75-* / S7-*** resolutions as documented in the design doc.
 
 ## Bible References
@@ -293,14 +290,20 @@ All wire-format payloads are JSON, line-delimited (one JSON object per line over
 }
 ```
 
-Command `kind` values (pending conflict resolution #2 — command vocabulary count):
+Command `kind` values — the canonical **4-command combat vocabulary** (`bible_combat.md` §Command Vocabulary) plus two layer commands on a separate channel (`bible_combat.md` §Layer Assignment Hotkey):
 
-- `move`, `attack_move`, `attack_target`, `activate_ability` — the four combat commands from `bible_combat.md` §Command Vocabulary.
-- `layer_hard_transfer {unit_uids, target_layer}` — immediate transfer.
+Combat channel (4):
+- `move {unit_uids, target: {pos, layer}}`
+- `attack_move {unit_uids, target: {pos, layer}}`
+- `attack_target {unit_uids, target_uid}`
+- `activate_ability {unit_uids, ability_id, optional target}`
+
+Layer channel (2):
+- `layer_hard_transfer {unit_uids, target_layer}` — immediate one-time transfer.
 - `layer_preference_set {unit_uids, preferred_layer | null}` — persistent preference (null clears).
-- `control_group_bind {group: 1..10, unit_uids}` and `control_group_recall {group: 1..10}` — client-side operations that also publish so reconnect can restore bindings.
 
-If Westley resolves conflict #2 as **(A) canonical 5**, collapse `layer_hard_transfer` and `layer_preference_set` into a single `layer_assign {unit_uids, target_layer, mode: "hard" | "preference"}` packet.
+Session / client bookkeeping (not gameplay commands):
+- `control_group_bind {group: 1..10, unit_uids}` and `control_group_recall {group: 1..10}` — published so reconnect can restore bindings.
 
 ### Persistence — boundary sim snapshot (on time-jump end + mission start + mission end)
 

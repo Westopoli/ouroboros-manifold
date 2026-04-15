@@ -232,7 +232,7 @@ Enemy units run the identical decision loop as player units. They acquire the ne
 
 What makes each mission archetype *feel* different from the enemy's side is not AI micro behavior but **mission setup**: where enemy units are placed, what scripted macro objectives they pursue (advance toward player position, hold defensive positions, hide and ambush, patrol routes), and what composition they have. The mission generator authors these macro-level behaviors per archetype at generation time. The unit-level AI is always the same — the variety comes from the tactical situation the setup creates.
 
-**Enemy macro objectives are specified in the "Enemy Macro Behavior System" section below.** The macro behavior system issues commands to enemy unit groups using the same 5-command protocol as the player. The unit behavior system described here is the foundation that macro behavior builds on top of — the macro layer controls force-level intent, the unit layer executes commands through this decision loop.
+**Enemy macro objectives are specified in the "Enemy Macro Behavior System" section below.** The macro behavior system issues commands to enemy unit groups using the same 4-command protocol as the player. The unit behavior system described here is the foundation that macro behavior builds on top of — the macro layer controls force-level intent, the unit layer executes commands through this decision loop.
 
 ---
 
@@ -453,7 +453,7 @@ The macro behavior system and the Unit Behavior AI (per-unit decision loop) are 
 
 - The **macro layer** decides force-level intent: where a group should go, what posture to adopt, when to transition between states. It issues commands to unit groups.
 - The **unit layer** executes those commands through the existing priority-ordered decision loop: flinch → command → auto-engage. The unit layer does not know about behavior states, transitions, or the trigger bus.
-- The **interface** between them is the Stage 6 command protocol. The macro layer issues the same 5 commands the player does. No special enemy-only commands exist. This means enemy macro behavior is fully replayable — the replay file captures enemy commands alongside player commands.
+- The **interface** between them is the Stage 6 command protocol. The macro layer issues the same 4 commands the player does. No special enemy-only commands exist. This means enemy macro behavior is fully replayable — the replay file captures enemy commands alongside player commands.
 
 ---
 
