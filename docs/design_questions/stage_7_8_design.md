@@ -141,9 +141,11 @@ S8-1c (chronicle on rewind) and S8-1d (snapshot retention) and the history-forma
 
 ---
 
-#### S8-2 — Onboarding Preference Weight UI [OPEN]
+#### S8-2 — Onboarding Preference Weight UI [CAPTURED]
 
-The bible says the onboarding screen lets the player set weights across 10 mission archetypes and mark up to 2 as "rare." The interaction model isn't specified. Options: sliders per archetype, star ratings, checkbox for "like this" + checkbox for "rare," drag-to-rank. Affects how the player perceives the weight system and how much setup time the onboarding takes.
+**Answer (Q4, Stage-8-write-up session):** Binary rare-mark per archetype, any subset allowed except the full set. The player sees 10 archetype rows, each a single "mark as rare" checkbox (or equivalent toggle). No sliders, no ratings, no rankings — the weight is two-valued: unmarked = default preference weight, marked = rare down-weight (0.1 per `bible_missions.md:34`). The player can mark as many as they like, with one validation: at least one archetype must remain unmarked (the onboarding screen disables the "Confirm" button if all 10 are marked, with an inline message). Difficulty is a three-button Easy / Medium / Hard selector above the archetype list.
+
+**Bible edits applied (v2.12):** `game_bible.md:155` and `bible_missions.md:301` rewritten: the "up to two" cap removed; constraint changed to "at least one archetype must remain unmarked"; the binary-per-archetype shape stated explicitly.
 
 ---
 

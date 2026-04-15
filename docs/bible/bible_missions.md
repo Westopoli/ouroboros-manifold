@@ -298,7 +298,7 @@ Unit classes and roles are consistent across eras (there's always a Strike skirm
 
 ### Mission Preference
 
-The player sets a **preference weight** across the 10 mission archetypes at game start. When the simulation has multiple viable pressure points, it biases toward the player's preferred archetypes. The player can also mark up to two archetypes as **"rare"** — the simulation almost never picks them, but reserves the right in extreme world states where no other archetype fits.
+The player marks any subset of the 10 mission archetypes as **"rare"** at game start. Rare-marked archetypes receive a strong down-weight (0.1 in the preference term — see the "Preference" factor above), making the simulation almost never pick them, though it reserves the right in extreme world states where no other archetype fits. Unmarked archetypes share the default preference weight. The interaction is binary per archetype (rare or default) — there is no per-archetype gradation. The player can mark as many archetypes as they want, with one constraint: **at least one archetype must remain unmarked**, so the generator always has a non-rare pool to bias toward. When the simulation has multiple viable pressure points, it biases away from rare-marked archetypes toward the default-weighted ones.
 
 The simulation always has final say. Preferences are a request, not a command. If the world is on fire and only an evacuation mission makes sense, that's what you get. The commander doesn't choose their orders — but command tries to play to their strengths when they can. Preferences are set at game start and not changeable mid-playthrough.
 

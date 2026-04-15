@@ -18,6 +18,7 @@ These bible edits landed during the Stage 8 write-up session; they do not block 
 2. **Hub Stage 8 roadmap paragraph** — "5-command vocabulary" replaced with "4-command vocabulary (`move`, `attack_move`, `attack_target`, `activate_ability`) plus the two layer commands." Persistence language rewritten from "rewind-capable" to "saves, not rewind — rewind is a post-launch feature."
 3. **`bible_combat.md` L235 and L456** — "5-command protocol" / "same 5 commands" corrected to "4-command protocol" / "same 4 commands." The 5×3 compositional grid in the bible belongs to the **enemy macro behavior system**, not player commands.
 4. **Hub §15 (Simulation State Journaling and Rollback)** — rewritten to remove rewind from Stage 8 scope. Stage 8 ships saves only; rewind is a post-launch feature with its own design sketch (pre-mission-selection snapshot boundary, 5-mission minimum gate, mission-generator re-run on rewind, linear-default + fork, chronicle erased on rewind).
+5. **Onboarding rare-mark rule** — `game_bible.md:155` and `bible_missions.md:301` rewritten: the "up to two markable as rare" cap was removed. The rule is now "any subset may be marked rare, provided at least one archetype remains unmarked." The interaction is binary per archetype (rare or default); no sliders or gradation.
 
 ## Gating Open Design Questions — READ BEFORE IMPLEMENTATION
 
@@ -25,7 +26,6 @@ These bible edits landed during the Stage 8 write-up session; they do not block 
 
 Per `docs/design_questions/stage_7_8_design.md`, these are still [OPEN]:
 
-- **S8-2 — Onboarding preference weight UI.** Sliders per archetype / star ratings / like-this + rare checkboxes / drag-to-rank. The onboarding screen is in Stage 8 scope; the interaction model is unanswered. Affects the onboarding scene's structure and the data shape of the preference payload.
 - **S8-3 — Mid-mission UI information density.** Minimap details, selection info panel, objective tracker, reinforcement-structure status display, enemy composition hints. The ability bar's cooldown-only behavior is specified in the bible; the rest of the HUD is not. Affects what the tactical HUD scene must contain.
 
 ### Captured decisions the spec relies on (no change needed)
@@ -35,6 +35,7 @@ Per `docs/design_questions/stage_7_8_design.md`, these are still [OPEN]:
 - **S8-1a, S8-1b, S8-1c, S8-1d** (deferred post-launch): all live under the post-launch rewind feature per Q3. Design notes preserved in the design doc for the eventual rewind design session.
 - **Onboarding in Stage 8** (Q1): resolved Option A. Bible edited.
 - **Player command count = 4** (Q2): resolved. Bible edited.
+- **Onboarding interaction model** (Q4 / S8-2): binary per-archetype "mark as rare" — any subset allowed except all 10. Difficulty is a three-button Easy / Medium / Hard selector. Bible edited.
 - **S75-* / S7-*** resolutions as documented in the design doc.
 
 ## Bible References
@@ -147,7 +148,7 @@ Three concurrent conceptual systems:
 
 Maintains a small interpolation buffer (last 3 ticks) so the renderer can interpolate positions between 20 Hz engine ticks for 60fps smoothness.
 
-**`scenes/onboarding/onboarding.tscn + .gd`** — the single onboarding screen per bible §"Onboarding and First Chapter." **GATED on S8-2** (interaction model). Scaffolding lands early but the weight-UI implementation waits on the answer.
+**`scenes/onboarding/onboarding.tscn + .gd`** — the single onboarding screen per bible §"Onboarding and First Chapter." Per S8-2 resolution: a three-button Easy / Medium / Hard difficulty selector at top, followed by 10 mission-archetype rows each with a single "mark as rare" toggle, and a "Confirm" button at bottom. "Confirm" is disabled (with an inline explanation) until at least one archetype remains unmarked. On confirmation: writes the onboarding payload, triggers the opening time jump, then transitions into the first recon scene. The three-button difficulty selector stores `"easy" | "medium" | "hard"` in the payload.
 
 **`scenes/recon/recon.tscn + .gd`** — pre-mission free-camera view. Terrain visible, enemy positions hidden (per `bible_world.md` §Recon Phase). No time pressure. `Begin Mission` button transitions to `tactical.tscn` and signals the server to start the tick clock.
 
@@ -341,17 +342,12 @@ On resume: `save_loader.load_tactical_state(slot)` rehydrates the engine via `en
 {
   "schema_version": 1,
   "difficulty": "medium",
-  "archetype_weights": {
-    "defensive_stand": 1.0, "assault": 1.0, "multi_front_defense": 1.0,
-    "counterinsurgency": 1.0, "siege_breaking": 1.0, "reconquest": 1.0,
-    "suppression": 1.0, "interception": 1.0, "evacuation": 1.0, "containment": 1.0
-  },
-  "rare_marks": ["counterinsurgency", "evacuation"],
+  "rare_marks": ["counterinsurgency", "evacuation", "suppression"],
   "generational_cycle_id": 1
 }
 ```
 
-Rewritten only at new-cycle events (Exodus / Extinction). Preferences live outside the simulation save file per the bible's "permanent for the generational arc" framing.
+No per-archetype weight field — the interaction is binary per S8-2. Unmarked archetypes carry the default preference weight; archetypes in `rare_marks` carry the rare down-weight (0.1 per `bible_missions.md`). Validation at write time: `len(rare_marks) < 10` (at least one archetype must remain unmarked). Rewritten only at new-cycle events (Exodus / Extinction). Preferences live outside the simulation save file per the bible's "permanent for the generational arc" framing.
 
 ## Integration Points
 
