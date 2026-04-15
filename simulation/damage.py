@@ -222,15 +222,20 @@ def update_targeting(store: UnitStore, tmap, rng=None):
         # Yields unit IDs in ring order with no per-ring allocations; callers just break.
         # See tactical_map.py query_outward for ring traversal order.
         found_atk = False
-        for other in tmap.target_hash.query_outward(mx, my_, atk_range):
+        best_atk_d_sq = float("inf")
+        best_atk_uid = -1
+        for other in tmap.target_hash.query(mx, my_, atk_range):
             if store.faction[other] == my_faction: continue
             if store.data[other, FIELD_LAYER] != my_layer: continue
             dx = store.data[other, FIELD_X] - mx
             dy = store.data[other, FIELD_Y] - my_
-            if dx * dx + dy * dy <= atk_r_sq:
-                store.auto_engage_target[uid] = other
-                found_atk = True
-                break
+            d_sq = dx * dx + dy * dy
+            if d_sq <= atk_r_sq and d_sq < best_atk_d_sq:
+                best_atk_d_sq = d_sq
+                best_atk_uid = other
+        if best_atk_uid >= 0:
+            store.auto_engage_target[uid] = best_atk_uid
+            found_atk = True
 
         if not found_atk:
             store.auto_engage_target[uid] = -1

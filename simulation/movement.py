@@ -154,13 +154,43 @@ def _simplify_path(navmesh, start_x, start_y, path):
 def _has_los(navmesh, p1, p2):
     r1, c1 = navmesh.cell(*p1)
     r2, c2 = navmesh.cell(*p2)
-    for r, c in _bresenham(r1, c1, r2, c2):
+    for r, c in _supercover(r1, c1, r2, c2):
         if not navmesh.is_walkable(r, c):
             return False
     return True
 
 
+def _supercover(r1, c1, r2, c2):
+    # Bresenham + diagonal neighbor check. On each diagonal step, also yields
+    # both orthogonal neighbors so every cell the continuous segment passes
+    # through is checked. Replaces _bresenham in _has_los to prevent
+    # _simplify_path from approving segments that clip wall corners.
+    dr = abs(r2 - r1)
+    dc = abs(c2 - c1)
+    sr = 1 if r1 < r2 else -1
+    sc = 1 if c1 < c2 else -1
+    err = dr - dc
+    r, c = r1, c1
+    while True:
+        yield (r, c)
+        if r == r2 and c == c2:
+            break
+        e2 = 2 * err
+        step_r = e2 > -dc
+        step_c = e2 < dr
+        if step_r and step_c:
+            yield (r + sr, c)
+            yield (r, c + sc)
+        if step_r:
+            err -= dc
+            r += sr
+        if step_c:
+            err += dr
+            c += sc
+
+
 def _bresenham(r1, c1, r2, c2):
+    # Retained for reference. Replaced by _supercover in _has_los.
     dr = abs(r2 - r1)
     dc = abs(c2 - c1)
     sr = 1 if r1 < r2 else -1
@@ -298,7 +328,7 @@ def update_movement(store: UnitStore, tactical_map, dt: float):
         has_waypoints = uid in store.waypoints and store.waypoints[uid]
         if has_waypoints:
             tx, ty = store.waypoints[uid][0]
-            arrival_radius = collision_radius
+            arrival_radius = collision_radius * 2.0
         else:
             tx = store.target_x[uid]
             ty = store.target_y[uid]
@@ -362,7 +392,7 @@ def update_movement(store: UnitStore, tactical_map, dt: float):
             steer_x, steer_y = seek_x, seek_y
 
         obs_x, obs_y = 0.0, 0.0
-        if tactical_map is not None:
+        if tactical_map is not None and not has_waypoints:
             probe_x = px + steer_x * obstacle_range
             probe_y = py + steer_y * obstacle_range
             if tactical_map.in_bounds(probe_x, probe_y):
@@ -556,10 +586,28 @@ def _resolve_collisions(store, active, moved, tactical_map, navmesh):
                         if navmesh is not None:
                             ra, ca = navmesh.cell(new_ax, new_ay)
                             if not navmesh.is_walkable(ra, ca):
-                                new_ax, new_ay = ax, ay
+                                # Try sliding along each axis before full revert.
+                                ra2, ca2 = navmesh.cell(new_ax, ay)
+                                if navmesh.is_walkable(ra2, ca2):
+                                    new_ay = ay
+                                else:
+                                    ra3, ca3 = navmesh.cell(ax, new_ay)
+                                    if navmesh.is_walkable(ra3, ca3):
+                                        new_ax = ax
+                                    else:
+                                        new_ax, new_ay = ax, ay
                             rb, cb = navmesh.cell(new_bx, new_by)
                             if not navmesh.is_walkable(rb, cb):
-                                new_bx, new_by = bx, by
+                                # Try sliding along each axis before full revert.
+                                rb2, cb2 = navmesh.cell(new_bx, by)
+                                if navmesh.is_walkable(rb2, cb2):
+                                    new_by = by
+                                else:
+                                    rb3, cb3 = navmesh.cell(bx, new_by)
+                                    if navmesh.is_walkable(rb3, cb3):
+                                        new_bx = bx
+                                    else:
+                                        new_bx, new_by = bx, by
 
                         store.data[uid_a, FIELD_X] = new_ax
                         store.data[uid_a, FIELD_Y] = new_ay

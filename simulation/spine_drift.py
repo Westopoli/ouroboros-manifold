@@ -53,5 +53,10 @@ def _loop(waypoints, period_ticks, t):
 
 
 def update_drifting_nodes(engine, tick):
+    # Updates SpineNode.position in-place for renderer/map queries.
+    # NOTE: Objective win-condition logic in objectives.py reads static zone_x/zone_y
+    # from params and does not consult SpineNode.position. Drifting objectives move
+    # visually but do not affect capture/hold evaluation until objectives.py is wired
+    # to read the live spine node position. See also: objectives.py _update_hold_zone.
     for dnode in engine.map.drifting_nodes:
         dnode.spine_node.position = dnode.position_at(tick)

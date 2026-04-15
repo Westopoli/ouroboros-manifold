@@ -32,6 +32,11 @@ def update_objectives(objectives, store, player_faction, tick):
 
 
 def _update_hold_zone(obj, store, player_faction):
+    # NOTE: zone_x/zone_y are static — drifting objective spine nodes update
+    # SpineNode.position each tick (spine_drift.py) but that position is never
+    # read back here. Drifting objectives have no gameplay effect until this
+    # function reads from the live spine node position instead of params.
+    # See also: spine_drift.py update_drifting_nodes — updates position but not objectives.
     cx = obj.params["zone_x"]
     cy = obj.params["zone_y"]
     radius = obj.params["zone_radius"]

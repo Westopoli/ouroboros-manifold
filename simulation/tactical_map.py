@@ -84,13 +84,15 @@ class SpatialHash:
 
 class TacticalMap:
     def __init__(self, width, height, gradient_sources=None, spine_nodes=None, layers=1,
-                 drifting_nodes=None):
+                 drifting_nodes=None, edges=None):
         self.width = width
         self.height = height
         self.layers = layers
         self.gradient_sources = gradient_sources or []
         self.spine_nodes = spine_nodes or []
         self.drifting_nodes = drifting_nodes or []
+        # list of (SpineNode_a, SpineNode_b, edge_type_str) — populated by map generator
+        self.edges = edges or []
         self._sources_by_type = {}
         for src in self.gradient_sources:
             if src.property_type not in self._sources_by_type:

@@ -363,6 +363,10 @@ Commands are recorded with tick numbers for replay. The engine processes all com
 
 **Layer transitions.** Unit enters transition state lasting `layer_transition_time` ticks (Strike fastest, Siege slowest). During transition, unit cannot attack or be targeted by same-layer units.
 
+**Gradient obstacle avoidance scope.** In addition to probe steering (unit-to-unit), `update_movement` samples `obstacle_density` ahead of the unit and applies a repulsion force opposing movement when density > 0.3. This fires only for **direct-move units** (no A*-computed waypoints). Units following A*-computed waypoints are exempt: A* already routes them around blocked cells, and applying avoidance on top cancels the waypoint-seek direction when the probe enters a wall boundary cell, freezing the unit.
+
+**Open design question — soft terrain speed effects.** The gradient avoidance force is normalized after application, so it only has a visible effect at density = 1.0 (it freezes the unit). At lower densities the force is normalized away entirely — it does not slow units down. If soft terrain (debris, heavy cover, partial obstruction) should impede movement speed without breaking A* navigation, the right mechanism is a **speed multiplier** sampled from the terrain gradient, applied to `move_dist` for all units including waypoint-following ones. That feature is not built; this note records where it would go.
+
 ---
 
 ### Power Rating Formula

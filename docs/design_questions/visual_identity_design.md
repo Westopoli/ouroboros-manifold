@@ -43,7 +43,42 @@ question must be answered within these limits, not around them.
 
 ---
 
-## Session Handoff — Last Updated: Session 4 (April 14, 2026)
+## Session Handoff — Last Updated: Session 5 (April 14, 2026)
+
+> **Session 5 focus: Q-mon8 research pass on branching progression topology.** Continuing from Session 4, which added Q-mon8 as a carry-forward item. Session 5 prioritized Q-mon8 before Q3 (era card template) on the rationale that Q3 card slots depend on track topology, and designing the card to accommodate either linear or branching topology would produce a template requiring rebuild once Q-mon8 resolved.
+
+**Accomplished this session:**
+
+- **Research pass complete — branching progression topology.** Broader survey across 9 reference games: World of Warships, World of Tanks, Warframe Star Chart, Path of Exile Passive Tree, Fortnite (battle pass as primary lens), Call of Duty weapon camo grind, Destiny 2 subclasses, Stellaris ascension paths, Civ tech/civic trees (sanity check). Ten core lessons synthesized — see Q-mon8 entry in Question Log for full capture.
+- **Q-mon8 structural direction locked in.** Sub-questions Q-mon8.1, Q-mon8.2, Q-mon8.3 pre-answered by Westley based on research. Q-mon8.4 (intra-branch ordering) answered Session 5 by Claude recommendation and confirmed. Q-mon8.5 (cross-branch prestige) and Q-mon8.6 (post-launch branch addition) remain OPEN.
+- **Key structural decisions locked:**
+  - **3 branches × 3 eras at launch**, extending to 5 eras per branch and adding more branches post-launch. Replaces v3.00 "flat 20-era track with hallmarks every ~5 positions."
+  - **Branch mechanical identity via cross-layer ability gradient + supplemental mechanics** drawn from existing game features. No new features — game is already feature-dense. Working sketch: Branch 1 (full cross-layer), Branch 2 (some cross-layer + supplemental mechanic, modern/recent history), Branch 3 (no cross-layer + supplemental mechanic, ancient history).
+  - **Mixed entry gate model.** Free-entry (WoT), expansion-gate (Destiny), and commitment-gate (Stellaris) can all coexist. Player can pay for basically everything.
+  - **Linear sequences within each branch, no sub-splits.** RTS players expect linear campaign ordering. Sub-splits would be a 2× production multiplier. Full branch visible from branch entry (WoWS preview pattern retained).
+
+**Bible edits this session:** None. Component 1 needs rewriting but explicitly deferred until Q-mon8.1, Q-mon8.2, Q-mon8.3 are fully locked in a dedicated design session — avoiding the rewrite-twice failure mode.
+
+**Open carry-forward items (for next session), in priority order:**
+
+1. **Q-mon8 dedicated design session.** Work Q-mon8.1 through Q-mon8.6 in order, one at a time. Focus areas:
+   - **Q-mon8.1 finalization** — exact mechanical allocation for each of the 3 launch branches. What supplemental mechanics does each non-Branch-1 branch get? Which existing game features get elevated as the branch's signature?
+   - **Q-mon8.2 refinement** — Roman free tier relationship to the branching structure. Is Roman inside a branch, outside all branches, or a zero-position across all branches?
+   - **Q-mon8.3 concretization** — which specific entry gate applies to which branch? Is the commitment-gate reserved for the post-launch expansion branches?
+   - **Q-mon8.5 research pass needed** — cross-branch prestige mechanics. Research WoWS Research Bureau, Destiny Prismatic, CoD universal camos more deeply.
+   - **Q-mon8.6 research pass needed** — expansion-driven branch rollout cadence. Research Destiny Stasis/Strand/Prismatic launch playbook and Stellaris Utopia/Machine Age playbook.
+2. **Bible edit — component 1 rewrite** after Q-mon8.1–3 locked. Coordinated with updates to components 2 (production budget), 3 (conditional ownership — verify still compatible), and 4 (starter bundle reframing given 9-era launch catalog).
+3. **Q3 — Era card template.** Can now proceed with confidence. Card slots known: branch_id, branch_position (integer 1–3), era_category, mastery_tier, tutorial_flag. Best tackled after Q-mon8 dedicated session confirms branch_id semantics (number vs name vs color-coded).
+4. **Q4 — Steam page hierarchy.** Downstream of Q3.
+5. **Q5, Q6, Q7** downstream of Q4.
+6. **Q-mon3 through Q-mon7** still deferred to catalog design.
+7. **Component 9 (special editions)** still deferred.
+
+**Session 5 output:** Q-mon8 research captured in design doc. Structural skeleton (3 × 3, linear intra-branch, mixed gates, mechanical differentiation via cross-layer gradient) locked in. Q3 unblocked for future sessions. Bible edit for component 1 held until Q-mon8 sub-questions fully resolve in a dedicated design session.
+
+---
+
+## Session Handoff — Session 4 (April 14, 2026) — archived
 
 > **Session 4 focus: monetization research pass and Q-mon1/Q-mon2 resolution.** No visual identity work this session — all effort went into finalizing the v3.00 ownership-vs-access model and entry fee path per the Session 3 carry-forward list.
 
@@ -436,7 +471,7 @@ be reordered based on what earlier answers surface.
 | Q-mon5 | Roman free tier scope limitations | OPEN |
 | Q-mon6 | Third hallmark era for multi-stage tutorial | OPEN |
 | Q-mon7 | Tutorial sub-objective design — which moments from each hallmark | OPEN |
-| Q-mon8 | Tech tree / branching progression topology (WoWS-style) | OPEN |
+| Q-mon8 | Tech tree / branching progression topology (WoWS-style) | RESEARCH CAPTURED, sub-questions OPEN |
 
 ---
 
@@ -976,6 +1011,190 @@ the starting point is cheap to regenerate if direction shifts.
 
 No bible edit needed — this question resolved internally within the
 production pipeline decision captured under Q-tools.
+
+---
+
+### Q-mon8 — Tech Tree / Branching Progression Topology [RESEARCH CAPTURED, sub-questions OPEN]
+
+**Status:** Research pass complete (Session 5). Structural direction
+confirmed by Westley. Sub-questions Q-mon8.1 through Q-mon8.6 remain
+OPEN and will be worked through one at a time in a dedicated session.
+
+**Framing:** Westley proposed a WoWS-style branching progression model
+in Session 4 — replace the flat linear track of v3.00 with a tree where
+each branch has mechanical as well as visual differences. Research needed
+to establish (a) what "branching" means across successful games, (b) what
+the tradeoffs are, and (c) what structural shape fits Ouroboros Manifold.
+
+**Research pass — games surveyed:** World of Warships, World of Tanks,
+Warframe Star Chart, Path of Exile Passive Tree, Fortnite (battle pass
+primary lens), Call of Duty weapon camo grind, Destiny 2 subclasses,
+Stellaris ascension paths, Civ tech/civic trees (sanity check only).
+
+**Research findings — ten lessons that shape Q-mon8:**
+
+1. **Branch identity must be mechanical, not just thematic.** Every
+   successful branching system (WoWS, WoT, Stellaris, Destiny, PoE)
+   makes branches play differently. Cosmetic-only branching fails to
+   generate the "my branch vs yours" identity that drives retention.
+
+2. **3–5 branches is the sweet spot for strategy-genre branching with
+   mechanical identity.** Stellaris has 4 ascension paths; Destiny 3
+   classes × ~5 subclasses. WoWS has 10+ nations only because history
+   provides free differentiation Ouroboros Manifold won't have. Too
+   many branches dilutes production budget per branch; too few reduces
+   player agency.
+
+3. **Completed branch positions must remain accessible after advancement.**
+   WoWS preserves earlier tiers; Destiny preserves subclass progression;
+   PoE is the outlier and players hate it. For Ouroboros Manifold this
+   means: once an era is earned, it stays earned even if the player
+   advances past it on its branch or switches branches entirely.
+
+4. **Entry choice and commitment are separable design levers.** WoT
+   hands all branches free at Tier I and makes advancement the commitment;
+   Stellaris gates entry behind a scarce ascension perk; Destiny gates
+   via expansion campaigns. These are three distinct structural choices
+   that can be mixed.
+
+5. **New branches should launch as expansion events.** Destiny's Stasis/
+   Strand/Prismatic rollouts and Stellaris's Utopia/Machine Age pattern
+   both use new branches as expansion marquee features. Fits directly
+   with Ouroboros Manifold's hallmark era concept — a hallmark can
+   double as the entry point for a newly-added branch, making branch
+   rollout the expansion's marketing hook.
+
+6. **Branches need a visible apex that rewards commitment.** WoWS
+   Superships, WoT Mastery Tanks, Destiny Exotic class items, Stellaris
+   endgame tradition completion, PoE Keystones, CoD Mastery Camos —
+   every successful branching system has a trophy that says "this
+   player completed this branch." Maps to v3.00 component 8 (mastered
+   UI variants) but suggests per-branch apex rewards on top of per-era
+   mastery.
+
+7. **Cross-branch prestige is a real long-term retention mechanic.**
+   WoWS Research Bureau, Destiny Prismatic, CoD cross-class mastery
+   grinds. The highest-retention players live at "completed multiple
+   branches" — a design slot to fill.
+
+8. **UI: tech tree screen is separate from the play surface.** WoWS
+   has Port (owned ships) separate from Tech Tree (navigation). Destiny
+   has the Director separate from the subclass menu. The branching
+   visualization is a distinct screen — relevant to Q3 because the era
+   card is the atom but the tech tree view is the container, and they
+   are different UI surfaces.
+
+9. **Inspection must be first-class from the tech tree view itself.**
+   Multiple WoWS player complaints cite buried ship previews. Warframe
+   players complain the Codex is useless. v3.00 already has inspection
+   mode as first-class, but the implication is that inspection must be
+   reachable directly from the tech tree view, not just from the era
+   library.
+
+10. **Battle pass lesson that transplants: visible progression bar with
+    known endpoint and valuable apex.** The Fortnite pattern that
+    transfers isn't the time-limited battle pass itself (ill-fitting
+    for a single-player game) but the psychological structure of a
+    visible progression bar with clear endpoint and real reward. Each
+    Ouroboros Manifold branch needs its own visible progression bar
+    ("3/5 eras earned in the Ancient branch") so players see branch
+    scope and commit.
+
+**What the research rules out:**
+
+- Fortnite-style single-track linear progression with branches as
+  decoration only (insufficient mechanical divergence).
+- PoE-style forced commitment with punishing respec (too hostile for
+  single-player where players *will* want to try other branches).
+- More than 5 branches at launch (dilutes per-branch mechanical depth
+  given solo dev budget).
+- Civ-style in-game tech trees (wrong model — Ouroboros Manifold's
+  branches are a meta-catalog navigated across sessions).
+
+**Structural direction confirmed by Westley (Session 5):**
+
+- **Q-mon8.1 — Branch mechanical meaning [PRE-ANSWERED].** Unique
+  mechanics *within the bounds of the game's existing feature set* —
+  no new features, game is already feature-dense. Initial 3 branches
+  stay within current design. Working sketch: *Branch 1* specific era
+  set + full cross-layer ability. *Branch 2* specific era set
+  (modern/recent history) + some cross-layer ability + some supplemental
+  mechanic. *Branch 3* specific era set (ancient history) + no
+  cross-layer ability + some other supplemental mechanic. This is a
+  working sketch, not a final spec — exact mechanical allocations
+  still need a dedicated session to pin down — but the *principle*
+  (differentiate via cross-layer access gradient plus supplemental
+  mechanics drawn from the existing feature set) is locked.
+
+- **Q-mon8.2 — Branch count and era distribution [PRE-ANSWERED].**
+  **3 branches × 3 eras at launch.** Continued development extends to
+  5 eras per branch and adds more branches. Long-term ceiling possibly
+  beyond 5 eras per branch. This replaces the v3.00 "20 eras, flat
+  track with hallmarks every ~5 positions" structure. Total launch
+  eras: 9 (or 10 with Roman free tier — how Roman fits into or
+  outside the branching structure is an additional sub-question).
+
+- **Q-mon8.3 — Entry gate model [PRE-ANSWERED].** **Mix of all three
+  models** (WoT-style free entry, Destiny-style expansion gate,
+  Stellaris-style commitment). Player should be able to pay for
+  basically everything. Direction is deliberately flexible — the exact
+  mix per branch is a Q-mon8.3 design session topic, but no single
+  gate model dominates.
+
+- **Q-mon8.4 — Intra-branch ordering [ANSWERED, Session 5].**
+  **Linear sequences, no sub-splits.** Rationale: (a) RTS players are
+  trained on linear campaign mission order (SC2, AoE, Halo Wars), not
+  collection-grind sub-splits; (b) sub-splits are a 2× production
+  multiplier the solo dev budget can't absorb; (c) linear gives a
+  clean integer "track position" slot for the Q3 era card, where
+  sub-splits would require (branch, sub-branch, position) and
+  complicate card layout. One WoWS pattern retained: **full branch
+  visible from branch entry** — when a player enters a branch, all 3
+  (eventually 5) eras are displayed upfront with inspection available
+  on any regardless of current progress. Commitment driver.
+
+- **Q-mon8.5 — Cross-branch prestige [OPEN].** What does completing
+  multiple branches reward? Does Ouroboros Manifold have a "finished
+  every branch" terminal state? Research surfaced this as a real
+  retention lever but no design direction committed. Dedicated session
+  needed.
+
+- **Q-mon8.6 — Post-launch branch addition mechanics [OPEN].** How
+  does a new branch ship — as an expansion event tied to a new hallmark
+  era (Destiny/Stellaris model), or as a content drop slotting into
+  the existing tree? Additional research pass needed on expansion
+  rollout cadence for branching systems specifically.
+
+**Downstream effects on other questions:**
+
+- **Q3 (era card template)** can now proceed with confidence. Card
+  slots: (branch_id, branch_position 1–3, era_category, mastery_tier,
+  tutorial_flag). Linear intra-branch ordering means track position
+  is a clean integer. Q3 should NOT accommodate sub-split topology —
+  ruled out.
+- **Bible component 1 (multi-peak progression curve)** needs rewriting
+  when Q-mon8.1, Q-mon8.2, Q-mon8.3 are all fully resolved. Current
+  "flat track with hallmarks every ~5 positions" is superseded by
+  "3 branches × 3 eras, hallmarks per branch TBD." Do NOT write this
+  bible edit yet — wait until Q-mon8.1–3 are locked in a dedicated
+  session to avoid re-editing.
+- **v3.00 component 2 (production budget unequal)** still holds but
+  re-interpreted: "hallmark per branch gets 1.5–2× the budget of the
+  work eras in that branch." One hallmark per branch aligns with 3
+  branches × 1 hallmark each.
+- **Q-mon3 (hallmark selection)** reframes: Settled Reach and 1980s
+  are still launch hallmarks, mapping to two of the three launch
+  branches. Third launch hallmark = third branch's hallmark.
+- **Q-mon4 (5-era starter bundle selection)** reframes: with 9 launch
+  eras total, a 5-era starter bundle is more than half the catalog.
+  Bundle size may need reduction, or reframe as "1 full branch + 2
+  sampler eras from other branches" to preserve branch-taste
+  conversion.
+
+**Capture status:** Research findings committed to this design doc
+Session 5. Bible edits deferred until Q-mon8.1–3 are locked in a
+dedicated design session. Q-mon8.5 and Q-mon8.6 remain OPEN pending
+further research and design.
 
 ---
 

@@ -92,12 +92,20 @@ def _assign_reinforcement_ownership(inst, region_state, rng):
 
 
 def _build_result(inst, layout, all_sources, score, attempt, compatible):
+    resolved_edges = []
+    for edge in inst.edges:
+        na = inst.node_id_map.get(edge.from_zone)
+        nb = inst.node_id_map.get(edge.to_zone)
+        if na and nb:
+            resolved_edges.append((na, nb, edge.edge_type))
+
     tm = TacticalMap(
         width            = inst.canvas_w,
         height           = inst.canvas_h,
         gradient_sources = all_sources,
         spine_nodes      = inst.spine_nodes,
         layers           = config.LAYER_COUNT,
+        edges            = resolved_edges,
     )
 
     owner_counts = {"player": 0, "neutral": 0, "enemy": 0}

@@ -946,6 +946,7 @@ REGION_TRANSFER_OUTCOMES = {
 COMMANDER_DEATH_EVENT_ID = "evt_commander_killed_in_action"
 
 # ── Stage 7: Map Generation ──────────────────────────────────────────────────
+ENABLE_STAGE7_MAP_GEN = True   # ON: Checkpoint I passed; see docs/architecture.md
 
 CANVAS_SIZES = {"small": (4000, 4000), "medium": (8000, 8000), "large": (12000, 12000)}
 STRUCTURE_COUNT_RANGES = {"small": (2, 4), "medium": (3, 6), "large": (4, 8)}

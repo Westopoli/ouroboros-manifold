@@ -453,6 +453,8 @@ Each checkpoint is a hard stop. Run test, show output (terminal + PNG paths + vi
 
 **Verify:** Drift follows authored paths. Ping_pong reverses. Loop cycles. Period matches config. Navmesh static.
 
+**Known gap:** `update_drifting_nodes` mutates `SpineNode.position` each tick, but `objectives.py _update_hold_zone` reads static `zone_x/zone_y` from params and never consults the spine node. Drifting objectives currently have no gameplay effect — they move visually but capture/hold evaluation stays anchored to the original position. Wiring objectives to read live spine node positions is deferred; it must land before drifting objectives are used in shipped missions.
+
 ⛔ STOP.
 
 ### Checkpoint M — Engine Integration + Performance (Final)

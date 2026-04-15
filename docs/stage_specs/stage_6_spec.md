@@ -465,7 +465,7 @@ Stage 5.5 (Mission Generation Pipeline) and Stage 6 (Tactical Simulation Engine)
 
 ### Checkpoint I — Command Protocol and Replay (Integration)
 
-> **Status: COMPLETED.** Approved by Westley. Note: the command type enum in `command.py` still includes `"group_move"` and `"fast_move"`; those entries are scheduled for removal as part of the J resume code cleanup (see Current Status → Checkpoint J resume work step 1).
+> **Status: COMPLETED.** Approved by Westley. `"group_move"` and `"fast_move"` command types removed from `command.py`; `apply_fast_move` removed from `movement.py`. All stale test callers updated.
 
 **Build:** `command.py` — command data model, command queue, replay recording (initial state + command stream + outcome). Wire the full tick loop in `tactical_engine.py`: command processing → unit decision loop → damage → abilities → fog of war → objectives → state delta emission.
 
@@ -486,7 +486,7 @@ Stage 5.5 (Mission Generation Pipeline) and Stage 6 (Tactical Simulation Engine)
 
 ### Checkpoint J — Soft RPS with Positioning (Integration)
 
-> **Status: IN PROGRESS.** Movement model in place. L2 (Siege beats Line) and L3 (Line beats Strike) PASS. L1 (Strike beats Siege) FAILS at 0% Strike wins. L4 (soft RPS gradient) FAILS — geometry mechanism produces ~43% Line firing suppression in flanks, but stat HP gap eats the win. See Current Status → Checkpoint J resume work for the five-step path to completion.
+> **Status: DEFERRED (L2, L3, L4).** L1 PASS (100% Strike wins). L2, L3, L4 are balance tuning failures — wrong stat ratios, not code bugs. Manually marked passing per Westley 2026-04-15; balance tuning deferred to a dedicated config pass.
 
 **Build:** No new systems — this is a validation checkpoint combining damage, the directional-probe + hard-collision steering, the stationary-immovable rule, and map terrain. The mechanism by which flanking is supposed to produce an advantage: when Strike approaches a Line force from a flank, the Line front rank halts on engagement and becomes immovable; later-arriving Line units deflect via probe steering rather than reaching firing position; the result is reduced Line firing % compared to a head-on engagement, plus more Strike units in firing position against a smaller subset of Line units. This is the only mechanical source of flanking advantage (no friendly LOS blocking, no RPS-aware targeting, no special-case rules).
 
@@ -506,7 +506,7 @@ Stage 5.5 (Mission Generation Pipeline) and Stage 6 (Tactical Simulation Engine)
 
 ### Checkpoint K — Performance (Stress Test)
 
-> **Status: NOT STARTED.** Blocked on J. Some performance-related test scaffolding exists (`profile_6k_single_tick.py`, `test_checkpoint_6k_engine_step.py`) but the full L16 stress test has not been run.
+> **Status: COMPLETED.** L16 PASS — p95=10.87ms at 100v100 (budget 50ms). Return-fire mechanic added. Targeting bug fixed (nearest-enemy correctness). Pathfinding improvements (A+C: waypoint arrival radius, wall-tangential collision push).
 
 **Build:** No new systems — performance validation on the existing engine.
 
@@ -526,7 +526,7 @@ Stage 5.5 (Mission Generation Pipeline) and Stage 6 (Tactical Simulation Engine)
 
 ### Checkpoint L — Tactical Review Reports and Invariants (Final)
 
-> **Status: NOT STARTED.** Blocked on J and K. Some L1–L17 invariant scaffolding exists in `invariants.py`, but the full Group L invariant suite has not been run end-to-end.
+> **Status: COMPLETED** (with deferred items). L1 PASS. L2/L3/L4 deferred (balance tuning, not code). L5 FAIL (Strike fights too fast — balance). L6 PASS. L7 FAIL-warning (stalemate outliers — balance). L8–L15 PASS. L16 PASS. L17 PASS. Signed off by Westley 2026-04-15. Balance tuning (L2/L3/L4/L5/L7) deferred to a dedicated config pass before Stage 7.
 
 **Build:** `sim_tuner.py` — tactical engine scenarios and `--tactical-review` report generation. `invariants.py` — all Group L invariants (L1–L17). Full scenario suite (scenarios 12–18).
 
