@@ -43,17 +43,68 @@ question must be answered within these limits, not around them.
 
 ---
 
-## Session Handoff — Last Updated: Session 5 (April 14, 2026)
+## Session Handoff — Last Updated: Session 6 (April 15, 2026)
+
+> **Session 6 focus: Q-mon8.2 resolution and Q-mon8.1 full reversal.** Session 6 opened on the Session 5 handoff priority list (Q-mon8.2 refinement first). Q-mon8.2 resolved quickly with Roman as standalone free tier outside the branch structure. **Mid-session, Westley overrode Q-mon8.1's Session 5 resolution entirely** — the full cross-layer gradient (Option D) is withdrawn. All branches (and Roman) have cross-layer capabilities. Q-mon8.1 re-resolved as Option E hybrid: three-axis differentiation (tempo + information warfare + attrition/economy) layered per branch. Launch scope reduced from 3 branches to 2 branches to accelerate time-to-feedback. Branch 3 (ancient history, non-Roman) deferred to first post-launch expansion.
+
+**Accomplished this session:**
+
+- **Q-mon8.2 RESOLVED.** Roman is a **standalone era outside the branching structure** — the free-to-play onboarding experience. The ancient-history branch (Branch 3) is populated with non-Roman ancient civilizations. Roman does not participate in any branch's linear sequence. Roman does not participate in the multi-stage tutorial. Branch-taste conversion funnel is cleaner: free player samples at Roman, then chooses which branch to commit to on equal footing.
+- **Q-mon8.1 FULLY REOPENED AND RE-RESOLVED.** The Session 5 resolution (Option D — full cross-layer gradient with Branch 3 at zero cross-layer capability) is **withdrawn**. All branches and Roman have cross-layer detection, engagement, and movement capabilities. Per design_rules.md anti-pattern #7, this re-open is flagged loudly and explicitly. The prior resolution is preserved below with override notes.
+- **Q-mon8.1 v2 RESOLVED — Option E hybrid (A + B + D).** Three-axis differentiation layered per branch: **A (tempo)** + **B (information warfare)** + **D (attrition/economy)**. Each branch gets a signature stance across all three axes. Combat math is unified across branches (same 6 unit types, same cross-layer capabilities, same vertical layer system). Orthogonal to difficulty.
+- **Launch scope reduced: 2 branches at launch, not 3.** Branch 1 (sci-fi/future) + Branch 2 (modern/recent history) + Roman standalone = **7 launch eras total** (6 branch eras + Roman). Branch 3 (ancient history, non-Roman) deferred to the first post-launch expansion. Rationale: time-to-feedback priority, and Branch 3 is the branch without any captured visual identity (Settled Reach and 1980s hallmarks are both already locked for Branches 1 and 2). Branch 3 is the cleanest cut because it's the least-developed.
+- **Settled Reach combat retcon surfaced as downstream consequence.** Under Branch 1's fast/short-decisive/high-burst tempo stance, Settled Reach's current slow/high-HP/methodical combat identity inverts. HP values likely drop; engagement duration targets shift from 2min+ toward 30–45s; aerospace-precision register shifts from "careful targeting" toward "rapid strike." This is a substantial Stage 6-style rebalance flagged for implementation under dev_rules.
+- **Production architecture parameterization surfaced as downstream consequence.** Current in-mission production (reinforcement structure amount, placement, rate, cost) is era-agnostic. Under axis D (attrition/economy varies by branch), these parameters must move from hardcoded constants to per-era config. This is **compatible with Sacred Principle #3** — branch mechanical variation lives as config-driven content, not code-branched engine logic. No engine knows about branches; the engine consumes per-era parameters uniformly. Detailed analysis below under Q-mon8.1 v2.
+- **Sacred Principle #3 clarification added to game_bible.md hub.** "Minimal functional differences" explicitly permits config-driven per-era parameter variation. Code-branched era logic remains forbidden. No principle change, just pre-empting the misreading.
+
+**Bible edits this session:**
+
+- `bible_monetization.md` Progression Track Redesign (v3.00) — component 1 rewritten. New shape: 2 launch branches × 3 eras + Roman standalone = 7 launch eras. Branch mechanical identity via A+B+D hybrid. Branch 3 deferred to first post-launch expansion. Component 2 (production budget) re-interpreted: 2 launch hallmarks (Settled Reach for Branch 1, 1980s for Branch 2), Roman gets its own production treatment as free-tier onboarding. Component 4 (subscription starter bundle) re-opened via Q-mon4 because a 5-era bundle out of 7 launch eras = 71% of the catalog, not a sampler. Open questions list updated: Q-mon8.1 and Q-mon8.2 resolved, Q-mon8.3 and 8.5 and 8.6 still open. New open question added on Settled Reach combat retcon. New open question added on production architecture parameterization. Explicit note added on branch orthogonality to Sacred Principle #3.
+- `game_bible.md` hub — Sacred Principle #3 gets a clarifying note on config-driven per-era parameter variation being permitted. No principle change.
+- `bible_combat.md` **re-open flags documented as handoff items** for a dedicated combat bible session — see "Combat bible handoff" section below. File was not available in Session 6; edits deferred.
+
+**Combat bible handoff (deferred to combat session):**
+
+The following re-open flags must be written into `bible_combat.md` in a dedicated session. Exact edit specs captured here so the next session can apply them mechanically:
+
+1. **Tactical Reinforcement section:** Flag re-open. Parameters currently global (reinforcement rate, structure density, structure placement rule, structure cost, structure time) become **per-era config**. Engine reads the config uniformly; no branch-aware engine logic. This is a Sacred Principle #3-compatible move toward more flexibility, not less.
+2. **Combat pacing / engagement duration targets section:** Flag re-open. Current global targets (minimum 45s brawl, ~2min tactical, 50v50 mirror 150–200s) become **per-branch targets**. Branch 1 shifts toward 30–45s short-decisive. Branch 2 stays near current 1–2min. Branch 3 (post-launch) extends to 2min+ attritional. Each era within a branch can vary within branch targets.
+3. **Stat philosophy / unit HP section:** Flag re-open. Current global HP multipliers and damage values become **per-era tunable** within branch signature. Specific implication: **Settled Reach HP is retconned downward** for compatibility with Branch 1 fast-burst tempo. The 2× HP multiplier decision from Session 5 combat tuning may need per-branch differentiation.
+4. **Information warfare / fog-of-war / sensor section** (if it exists as a discrete section; otherwise add one): Fog density, sensor range, cross-layer detection range, ECM/counter-stealth mechanics become **per-era config with branch-signature defaults**. Branch 1 = near-total awareness baseline. Branch 2 = partial sensor asymmetry. Branch 3 = heavy fog, scout-dependent.
+
+All four re-opens must be flagged per design_rules.md anti-pattern #7 (loud, not silent). Preserve prior decided values for history; document what changes under v3.00/Q-mon8.1-v2.
+
+**Open carry-forward items (for next session), in priority order:**
+
+1. **Combat bible session** — apply the four re-open flags above to `bible_combat.md`. Must happen before any Stage 6-related dev work touches branch-affected parameters.
+2. **Settled Reach combat retcon planning** — when does the actual rebalance happen? This is a dev_rules workflow, not a design workflow. Recommend scheduling after the combat bible session and before any further Stage 6 work.
+3. **Q-mon4 (starter bundle) re-opened.** A 5-era starter bundle out of a 7-era launch catalog is too much of the catalog. Options: (a) reduce to 3 starter eras; (b) reframe as "1 full branch + sampler era from the other branch" (4 eras); (c) restructure as per-branch starter (Roman + 1 era from each branch = 3 eras). Dedicated design question in next session.
+4. **Q-mon8.3 concretization** — which specific entry gate applies to Branch 1 vs Branch 2? Still open. Was originally planned for this session but the Q-mon8.1 reversal consumed the slot.
+5. **Q-mon8.5 research pass** — cross-branch prestige. Still open.
+6. **Q-mon8.6 research pass** — post-launch branch rollout cadence. Still open. Immediately relevant because Branch 3 is now explicitly a post-launch rollout.
+7. **Q3 era card template.** Still unblocked in principle but now also must accommodate: standalone-Roman card variant, 2-branch structure (not 3), branch-signature color hints (fast-tempo visual treatment for Branch 1 cards vs. slower Branch 2).
+8. **Q4, Q5, Q6, Q7** downstream of Q3.
+9. **Q-mon3 through Q-mon7** still deferred to catalog design.
+10. **Component 9 (special editions)** still deferred.
+
+**Session 6 output:** Q-mon8.1 reopened and re-resolved. Q-mon8.2 resolved. Launch scope reduced to 2 branches. Bible edits applied to `bible_monetization.md` and `game_bible.md`. Combat bible edits deferred to a dedicated session with edit spec captured above.
+
+---
+
+## Session Handoff — Session 5 (April 14, 2026) — archived
 
 > **Session 5 focus: Q-mon8 research pass on branching progression topology.** Continuing from Session 4, which added Q-mon8 as a carry-forward item. Session 5 prioritized Q-mon8 before Q3 (era card template) on the rationale that Q3 card slots depend on track topology, and designing the card to accommodate either linear or branching topology would produce a template requiring rebuild once Q-mon8 resolved.
 
 **Accomplished this session:**
 
 - **Research pass complete — branching progression topology.** Broader survey across 9 reference games: World of Warships, World of Tanks, Warframe Star Chart, Path of Exile Passive Tree, Fortnite (battle pass as primary lens), Call of Duty weapon camo grind, Destiny 2 subclasses, Stellaris ascension paths, Civ tech/civic trees (sanity check). Ten core lessons synthesized — see Q-mon8 entry in Question Log for full capture.
-- **Q-mon8 structural direction locked in.** Sub-questions Q-mon8.1, Q-mon8.2, Q-mon8.3 pre-answered by Westley based on research. Q-mon8.4 (intra-branch ordering) answered Session 5 by Claude recommendation and confirmed. Q-mon8.5 (cross-branch prestige) and Q-mon8.6 (post-launch branch addition) remain OPEN.
+- **Q-mon8 structural direction locked in.** Sub-questions Q-mon8.1, Q-mon8.2, Q-mon8.3 pre-answered by Westley based on research. Q-mon8.4 (intra-branch ordering) answered Session 5 by Claude recommendation and confirmed.
+- **Q-mon8.1 fully resolved.** Option D (full vertical gradient across detection, engagement, movement) adopted. Critical reframe from initial sketch: layers exist universally across all eras — the branch gradient controls tactical capabilities across layers, not layer availability. Staged balancing plan locked (6 stages, Branch 3 → Branch 1 → Branch 2 implementation order). Tuning infrastructure requirements noted (organized test directories, seed-count/CI discipline). Cross-branch faction interaction ruled out of scope for launch — single-era mission scope keeps balancing tractable.
+- **Q-mon8.5 and Q-mon8.6 remain OPEN.** Need dedicated sessions.
 - **Key structural decisions locked:**
   - **3 branches × 3 eras at launch**, extending to 5 eras per branch and adding more branches post-launch. Replaces v3.00 "flat 20-era track with hallmarks every ~5 positions."
-  - **Branch mechanical identity via cross-layer ability gradient + supplemental mechanics** drawn from existing game features. No new features — game is already feature-dense. Working sketch: Branch 1 (full cross-layer), Branch 2 (some cross-layer + supplemental mechanic, modern/recent history), Branch 3 (no cross-layer + supplemental mechanic, ancient history).
+  - **Branch mechanical identity via full cross-layer gradient (Option D)** across detection, engagement, and movement. Symmetric — both player and enemy play under the branch's rules.
+  - **Layers exist universally.** Branch controls capability across layers, not layer existence. All eras get the full 3–5 layer tactical map with vertical terrain.
   - **Mixed entry gate model.** Free-entry (WoT), expansion-gate (Destiny), and commitment-gate (Stellaris) can all coexist. Player can pay for basically everything.
   - **Linear sequences within each branch, no sub-splits.** RTS players expect linear campaign ordering. Sub-splits would be a 2× production multiplier. Full branch visible from branch entry (WoWS preview pattern retained).
 
@@ -61,20 +112,20 @@ question must be answered within these limits, not around them.
 
 **Open carry-forward items (for next session), in priority order:**
 
-1. **Q-mon8 dedicated design session.** Work Q-mon8.1 through Q-mon8.6 in order, one at a time. Focus areas:
-   - **Q-mon8.1 finalization** — exact mechanical allocation for each of the 3 launch branches. What supplemental mechanics does each non-Branch-1 branch get? Which existing game features get elevated as the branch's signature?
+1. **Q-mon8 continued — remaining sub-questions.** Work in order:
    - **Q-mon8.2 refinement** — Roman free tier relationship to the branching structure. Is Roman inside a branch, outside all branches, or a zero-position across all branches?
-   - **Q-mon8.3 concretization** — which specific entry gate applies to which branch? Is the commitment-gate reserved for the post-launch expansion branches?
+   - **Q-mon8.3 concretization** — which specific entry gate applies to which of the 3 launch branches? Is the commitment-gate reserved for post-launch expansion branches?
    - **Q-mon8.5 research pass needed** — cross-branch prestige mechanics. Research WoWS Research Bureau, Destiny Prismatic, CoD universal camos more deeply.
    - **Q-mon8.6 research pass needed** — expansion-driven branch rollout cadence. Research Destiny Stasis/Strand/Prismatic launch playbook and Stellaris Utopia/Machine Age playbook.
-2. **Bible edit — component 1 rewrite** after Q-mon8.1–3 locked. Coordinated with updates to components 2 (production budget), 3 (conditional ownership — verify still compatible), and 4 (starter bundle reframing given 9-era launch catalog).
-3. **Q3 — Era card template.** Can now proceed with confidence. Card slots known: branch_id, branch_position (integer 1–3), era_category, mastery_tier, tutorial_flag. Best tackled after Q-mon8 dedicated session confirms branch_id semantics (number vs name vs color-coded).
+   - **Q-mon8.1-supplemental (deferred)** — whether Branches 2 and 3 need supplemental mechanics beyond the cross-layer gradient. Revisit only if playtesting reveals the gradient alone is insufficient.
+2. **Bible edit — component 1 rewrite** after Q-mon8.2/8.3 locked. Coordinated with updates to components 2 (production budget), 3 (conditional ownership — verify still compatible), and 4 (starter bundle reframing given 9-era launch catalog). Include the "branch vs difficulty orthogonality" framing note from Q-mon8.1.
+3. **Q3 — Era card template.** Can now proceed with confidence. Card slots known: branch_id, branch_position (integer 1–3), era_category, mastery_tier, tutorial_flag. Best tackled after Q-mon8.2/8.3 confirm branch_id semantics (number vs name vs color-coded).
 4. **Q4 — Steam page hierarchy.** Downstream of Q3.
 5. **Q5, Q6, Q7** downstream of Q4.
 6. **Q-mon3 through Q-mon7** still deferred to catalog design.
 7. **Component 9 (special editions)** still deferred.
 
-**Session 5 output:** Q-mon8 research captured in design doc. Structural skeleton (3 × 3, linear intra-branch, mixed gates, mechanical differentiation via cross-layer gradient) locked in. Q3 unblocked for future sessions. Bible edit for component 1 held until Q-mon8 sub-questions fully resolve in a dedicated design session.
+**Session 5 output:** Q-mon8 research captured in design doc. Structural skeleton (3 × 3, linear intra-branch, mixed gates, full cross-layer gradient with layers existing universally) locked in. Q-mon8.1 fully resolved with staged balancing plan and tuning infrastructure requirements. Q3 unblocked for future sessions. Bible edit for component 1 held until Q-mon8.2/8.3 fully resolve in a dedicated design session.
 
 ---
 
@@ -466,12 +517,12 @@ be reordered based on what earlier answers surface.
 | Q7 | In-game era pack merchandising / store layout | OPEN |
 | Q-mon1 | Monetization redesign — ownership-vs-access (resolved as conditional ownership model) | CAPTURED |
 | Q-mon2 | Entry fee path — resolved as no entry fee | CAPTURED |
-| Q-mon3 | Hallmark era selection for 20-era launch catalog | OPEN |
-| Q-mon4 | 5-era subscription starter bundle selection | OPEN |
+| Q-mon3 | Hallmark era selection — now 2 launch hallmarks (Settled Reach, 1980s) | PARTIALLY RESOLVED (catalog design remaining) |
+| Q-mon4 | Subscription starter bundle selection — **RE-OPENED Session 6** (5-era bundle is 71% of 7-era launch catalog, needs resizing) | RE-OPENED |
 | Q-mon5 | Roman free tier scope limitations | OPEN |
-| Q-mon6 | Third hallmark era for multi-stage tutorial | OPEN |
+| Q-mon6 | Third hallmark era for multi-stage tutorial — **deferred** (only 2 hallmarks at launch; third hallmark waits for Branch 3 post-launch) | OPEN (deferred) |
 | Q-mon7 | Tutorial sub-objective design — which moments from each hallmark | OPEN |
-| Q-mon8 | Tech tree / branching progression topology (WoWS-style) | RESEARCH CAPTURED, sub-questions OPEN |
+| Q-mon8 | Tech tree / branching progression topology — 8.1 REVERSED then RE-RESOLVED Session 6 (Option E), 8.2 RESOLVED Session 6, 8.3 OPEN, 8.4 ANSWERED, 8.5/8.6 OPEN | PARTIALLY RESOLVED |
 
 ---
 
@@ -860,6 +911,17 @@ subsection. DONE this session:
   shield's heraldic metalwork is reframed as titanium; the foliate
   scrollwork is replaced by engraved math.
 
+  > **Session 6 note (April 15, 2026):** The *visual* positioning
+  > above (titanium + engraved orbital mechanics + cool steel blue) is
+  > unchanged. The *tactical* positioning shifts: under Q-mon8.1 v2
+  > (Branch 1 = fast tempo + near-total awareness + small-quantities
+  > rapid-recovery), Settled Reach's combat register moves from
+  > "careful targeting / methodical precision" toward "rapid strike /
+  > high-lethality precision." Aerospace precision remains the ornament
+  > tradition; what changes is how fast and how lethally that precision
+  > operates in play. Visual identity work (material, color, ornament)
+  > is unaffected.
+
 **Cool-palette-vs-gold pattern surfaced:** Q1 flagged cool-palette
 eras as the hard case for coexistence with the warm gold brand frame.
 Settled Reach resolved this by *desaturation plus teal-shift*, not
@@ -1113,26 +1175,340 @@ Stellaris ascension paths, Civ tech/civic trees (sanity check only).
 
 **Structural direction confirmed by Westley (Session 5):**
 
-- **Q-mon8.1 — Branch mechanical meaning [PRE-ANSWERED].** Unique
-  mechanics *within the bounds of the game's existing feature set* —
-  no new features, game is already feature-dense. Initial 3 branches
-  stay within current design. Working sketch: *Branch 1* specific era
-  set + full cross-layer ability. *Branch 2* specific era set
-  (modern/recent history) + some cross-layer ability + some supplemental
-  mechanic. *Branch 3* specific era set (ancient history) + no
-  cross-layer ability + some other supplemental mechanic. This is a
-  working sketch, not a final spec — exact mechanical allocations
-  still need a dedicated session to pin down — but the *principle*
-  (differentiate via cross-layer access gradient plus supplemental
-  mechanics drawn from the existing feature set) is locked.
+> ⚠️ **SESSION 6 OVERRIDE NOTE (April 15, 2026):** Q-mon8.1's Session 5 resolution
+> (Option D — cross-layer gradient with Branch 3 having no cross-layer
+> capabilities) has been **fully reversed**. See new Q-mon8.1 v2 resolution
+> immediately below this override block. The original Session 5 content is
+> preserved below the v2 resolution per `design_rules.md` anti-pattern #7
+> ("no silent re-opening") — the override is explicit and archived rather
+> than deleted. Q-mon8.2's Session 5 pre-answer (3 branches × 3 eras) is
+> also superseded — see Q-mon8.2 v2 below for the 2-branch launch decision.
+> Q-mon8.4 (linear intra-branch ordering) survives unchanged. Sub-questions
+> Q-mon8.5 and Q-mon8.6 remain OPEN.
 
-- **Q-mon8.2 — Branch count and era distribution [PRE-ANSWERED].**
-  **3 branches × 3 eras at launch.** Continued development extends to
-  5 eras per branch and adds more branches. Long-term ceiling possibly
-  beyond 5 eras per branch. This replaces the v3.00 "20 eras, flat
-  track with hallmarks every ~5 positions" structure. Total launch
-  eras: 9 (or 10 with Roman free tier — how Roman fits into or
-  outside the branching structure is an additional sub-question).
+---
+
+### Q-mon8.1 v2 — Branch Mechanical Identity, Multi-Axis Hybrid [ANSWERED Session 6]
+
+**Resolution: Option E — multi-axis hybrid across tempo, information
+warfare, and attrition/economy.** Each branch has a signature stance
+across three mechanical axes simultaneously:
+
+- **Axis A — Tempo / pacing.** Engagement duration, movement speeds,
+  action density per unit time.
+- **Axis B — Information warfare.** Fog of war density, sensor range,
+  cross-layer sight, scout-dependency vs. sensor-dominance.
+- **Axis D — Attrition / economy.** Reinforcement rate, production
+  structure density, replacement pace, force preservation value.
+
+**All branches retain cross-layer detection, engagement, and movement
+as capabilities.** The layer system exists universally and every branch
+can act across layers. What varies is how *fast*, how *informed*, and
+with *how much force replacement* each branch fights. This supersedes
+the Session 5 Option D premise that Branch 3 lacks cross-layer
+capabilities entirely.
+
+**Branch signature stances (locked Session 6):**
+
+- **Branch 1 (sci-fi / future).**
+  - Tempo: **fast.** Short decisive engagements (30–45s brawls),
+    rapid maneuver, high burst damage.
+  - Information: **near-total awareness.** Sensor dominance, free
+    cross-layer sight, counter-stealth is the active cost.
+  - Attrition: **small quantities, rapid recovery.** Fewer units,
+    fast replacement. Force preservation matters less because
+    reconstitution is cheap; plan quality matters more.
+  - Player feel: *"Plan the strike, execute it fast, reconstitute
+    and go again."*
+
+- **Branch 2 (modern / recent history).**
+  - Tempo: **medium.** Engagements in the 1–2min range, combined-arms
+    coordination time.
+  - Information: **partial sensor asymmetry.** Radar, intel,
+    reconnaissance all partial; some things seen, some things hidden;
+    ECM and scouts matter.
+  - Attrition: **industrial replacement.** Moderate quantities,
+    moderate replacement pace. Doctrine and logistics decide campaigns.
+  - Player feel: *"Combined arms, manage information, outproduce or
+    outmaneuver."*
+
+- **Branch 3 (ancient history — post-launch, not Roman).**
+  - Tempo: **slow.** Longer engagements (2min+), attritional grind.
+  - Information: **heavy fog, scout-dependent.** Reconnaissance is
+    king; ambush is a real threat; sensor systems largely absent.
+  - Attrition: **slow reinforcement, casualties hurt, force
+    preservation matters.**
+  - Player feel: *"Scout carefully, preserve your force, position
+    decides the fight."*
+
+**Roman (free-tier standalone):** Roman is outside the branch structure
+per Q-mon8.2 v2, but as an ancient-history civilization its mechanical
+signature sits closest to Branch 3. Specific Roman stance is a
+Q-mon5-adjacent decision (Roman scope limitations) and not locked
+here. Working assumption: Roman inherits Branch-3-adjacent tempo and
+attrition with possibly reduced information-warfare depth to keep the
+free tier simpler to onboard into.
+
+**Symmetric ruleset — both player and enemy play under the same branch
+rules.** Branch is a property of the era's tactical ruleset, not a
+player-only restriction. Confirmed from Session 5.
+
+**Cross-branch faction interaction: still out of scope for launch.**
+When the player is in an era, they only fight factions of that same
+era. Single-era mission scope keeps balancing tractable. Confirmed
+from Session 5.
+
+**Sacred Principle #3 compatibility — config-driven, not code-branched.**
+This is a load-bearing implementation constraint that the bible must
+capture. Branch mechanical differentiation is compatible with
+Sacred Principle #3 (era-agnostic engine) **if and only if**:
+
+1. **No engine code branches on era or branch.** No `if branch == "scifi"`,
+   no `if era == "settled_reach"`. Anywhere. The engine is branch-blind.
+2. **All mechanical variation lives in per-era config parameters** the
+   engine consumes uniformly. Relevant parameter families:
+     - Unit stats (HP, damage, speed, range multipliers)
+     - Sensor parameters (cross-layer sight range, fog density, pulse cooldown)
+     - Engagement duration targets (used for balance validation, not
+       engine behavior)
+     - Reinforcement parameters (structure density, production time,
+       capture mechanics, cost scaling)
+     - Movement parameters (cross-layer transition cost, layer-change
+       preconditions)
+3. **Branches are a monetization and progression catalog concept,
+   not an engine concept.** The engine doesn't know what a "branch" is.
+   Each era has its own parameter set, and eras happen to cluster into
+   branches because their parameter sets share a signature.
+4. **The 6 base unit types are present in every era.** The skeleton is
+   preserved. Only their stats differ.
+5. **Production structure *types* are universal.** Barracks-equivalent,
+   factory-equivalent, resource-equivalent. The *amount, placement
+   rule, and production rate* per era are configurable.
+
+This is the era-agnostic engine doing its job — variation is a content
+concern, not a code concern. Branch identity expresses as config
+signatures, not as hardcoded logic.
+
+**Downstream impact: Settled Reach combat retcon.** Settled Reach's
+current combat identity (slow / methodical / high-HP — from Stage 6
+Checkpoints A–J balance work under v2.07 uniform targets) inverts
+under Branch 1's fast/short-decisive/high-burst stance. Unit HP values
+will drop, engagement duration targets shift to 30–45s, prior balance
+validation needs re-running under Branch 1 targets. This is a
+significant dev_rules implementation consequence, not a design
+decision — captured here so a future combat bible edit session and
+a future Stage 6-style rebalance session pick it up.
+
+**Downstream impact: production architecture parameterization.**
+Current tactical reinforcement system (`bible_combat.md` Tactical
+Reinforcement System section, from v2.03 and v2.06) treats structure
+amount, placement rules, and production rate as global constants.
+Under axis D branch differentiation, these become per-era config.
+This is an architecture move in the era-agnostic direction (hardcoded
+constants → config), not a Sacred Principle violation. Captured in
+pending combat bible edits for a dedicated session.
+
+**Tuning infrastructure principle (carried forward from Session 5).**
+Large-scale branch tuning requires organized test directories, staged
+execution, and strict management of modern vs. legacy tests. CC must
+report seed counts and confidence intervals for branch tuning results,
+not point estimates — stochastic noise across the multiplied
+configuration space (per-era HP × per-era sensor range × per-era
+reinforcement rate) is a real risk. A "Strike wins 80% over 10 seeds"
+result is meaningless; 100 seeds with a tight CI is a real signal.
+This principle survived the Option D → Option E reversal because it's
+about test discipline, which applies to any mechanically-differentiated
+branch system. Re-applied to Q-mon8.1 v2 unchanged.
+
+**Bible capture target:** `bible_monetization.md` — new "Branch System"
+subsection after v3.00 components. Component 1 rewritten to reflect
+2-branch launch structure with mechanical identity via A+B+D hybrid.
+Hub Sacred Principle #3 gets clarifying note on config-driven
+per-era variation. Combat bible edits deferred to dedicated session.
+
+---
+
+### Q-mon8.2 v2 — Branch Count and Roman Relationship [ANSWERED Session 6]
+
+**Resolution: 2 launch branches + Roman standalone = 7 launch eras
+total.** Supersedes Session 5's "3 branches × 3 eras + Roman TBD"
+pre-answer.
+
+**Structure:**
+
+- **Branch 1 (sci-fi/future):** 3 eras at launch, including Settled
+  Reach as the Branch 1 hallmark. Extends to 5+ post-launch.
+- **Branch 2 (modern/recent history):** 3 eras at launch, including
+  the 1980s as the Branch 2 hallmark. Extends to 5+ post-launch.
+- **Roman (standalone free tier):** outside the branch structure.
+  Permanent free-to-play onboarding experience. Not part of any
+  branch's linear sequence. Zero-position relative to all branches.
+- **Branch 3 (ancient history, non-Roman):** **deferred to first
+  post-launch expansion.** Populated with *other* ancient
+  civilizations (Han China, Achaemenid Persia, New Kingdom Egypt,
+  Classical Greece, Mauryan India — candidates, not committed).
+
+**Rationale:**
+
+1. **Fastest path to player feedback.** Solo developer, first launch.
+   Shipping 2 branches × 3 eras produces a coherent launch product
+   faster than 3 × 3. Post-launch branch addition is the expansion
+   pipeline the bible's commercial model is designed for.
+2. **Branch 3 is least-developed.** Settled Reach and the 1980s have
+   full captured visual identity (Q2e-SR and Q2e-1980s). Branch 3's
+   launch hallmark has no captured visual identity, no material
+   register, no accent color. Cutting Branch 3 cuts the least
+   committed work.
+3. **Branch 3 becomes the first concrete case study for Q-mon8.6**
+   (post-launch branch rollout cadence). What was abstract becomes
+   concrete: how does the second real branch ship post-launch?
+
+**Roman's role under the 2-branch structure:**
+
+- **Free-tier onboarding.** Primary role — the permanent free tier
+  per v3.00 component 4.
+- **Standalone, not branch-tagged.** `branch_id = null` or `"free_tier"`
+  in data model. Not a Branch 3 era, not a Branch-1-or-2 era.
+- **Q3 era card template implication:** card needs a standalone /
+  free-tier variant distinct from branch-tagged cards.
+- **Q-mon5 (Roman scope) still open** and can now be worked with
+  knowledge of Roman's structural position locked.
+
+**Downstream impacts:**
+
+- **Q3 card slots now include `branch_id` with nullable semantics.**
+  `branch_id = 1` (sci-fi), `branch_id = 2` (modern), `branch_id = null`
+  (Roman / standalone). Plus `branch_position = 1..3` for branch eras,
+  null for Roman. Card template must handle both variants.
+- **Q-mon3 (hallmark selection) narrows sharply.** 2 launch hallmarks =
+  Settled Reach + 1980s. Third hallmark question (Q-mon6 — tutorial
+  third hallmark era) **defers to Branch 3 post-launch**. Tutorial at
+  launch spans only the 2 available hallmarks; third stage reframed
+  or deferred.
+- **Q-mon4 (starter bundle size) re-opens.** 5-era starter out of
+  7-era launch catalog is 71% of the catalog — structurally incoherent
+  as a "starter." Needs resizing. See re-open note in
+  `bible_monetization.md` v3.00 component 4.
+- **v3.00 component 2 hallmark-count language** still says "3–4
+  hallmarks at launch" — needs tightening to "2 at launch" in a
+  future bible edit.
+
+**Bible capture target:** `bible_monetization.md` v3.00 component 1
+rewritten (done Session 6). Component 4 re-open note added
+(done Session 6). Component 2 hallmark count tightening deferred to
+next bible edit session.
+
+---
+
+### Q-mon8.1 — Session 5 Option D Resolution [ARCHIVED — SUPERSEDED Session 6]
+
+> This is the archived Session 5 resolution of Q-mon8.1. It has been
+> reversed by Session 6's Q-mon8.1 v2 (Option E). Preserved here for
+> historical reference per `design_rules.md` anti-pattern #7. **Do not
+> implement against this content — see Q-mon8.1 v2 above.**
+
+- **Q-mon8.1 — Branch mechanical meaning [ANSWERED Session 5].**
+  Unique mechanics within the bounds of the game's existing feature
+  set — no new features, game is already feature-dense.
+
+  **Gradient scope: Option D — full vertical gradient across detection,
+  engagement, and movement.** Each branch differs in its tactical
+  capabilities across the vertical layer system along all three
+  sub-capabilities simultaneously:
+    - *Branch 1 (sci-fi / future):* full cross-layer detection, full
+      cross-layer engagement, full cross-layer movement. Sensor
+      dominance, strikes across layers, free vertical traversal.
+    - *Branch 2 (modern / recent history):* partial across all three.
+      Reduced cross-layer detection range, engagement limited to
+      adjacent layers or gated by unit type, movement gated by unit
+      type or map feature.
+    - *Branch 3 (ancient history):* no cross-layer detection,
+      engagement, or movement as *capabilities*. Layer boundary is a
+      tactical wall — units must physically traverse terrain to change
+      layers, cannot see or engage other layers without moving to them.
+
+  **Critical framing: layers exist universally across all eras.** The
+  branch gradient controls *tactical capability across layers*, not
+  *layer availability*. Every era gets the full 3–5 layer tactical map
+  with mountain passes, canyons, underground passages, elevated
+  positions, orbital tiers as appropriate. A Roman army on a Branch 3
+  map still encounters a mountain pass and must march through the
+  canyon — they simply lack sensor dominance, orbital strikes, and
+  aircraft. Same physical terrain abstraction, different tactical
+  tools. This preserves strategic depth of vertical terrain across all
+  branches and keeps map archetypes era-agnostic (massive production
+  win), and keeps the 6 base unit types consistent across all branches
+  (cross-era silhouette constraint from bible preserved).
+
+  **Staged balancing plan — 6 stages, per-branch before cross-branch:**
+    1. *Per-branch base unit balance* — no abilities, no cross-layer
+       interaction. Just 6 base units fighting on a single layer per
+       branch. Confirm soft RPS holds, engagement durations hit
+       45s/2min targets per branch.
+    2. *Add abilities, still no cross-layer interaction.* Confirm
+       abilities don't break RPS.
+    3. *Add cross-layer detection* — Branch 1 first, then Branch 2.
+       Confirm detection asymmetry doesn't break anything.
+    4. *Add cross-layer engagement* — Branch 1 full, Branch 2 partial.
+       Highest-risk stage; engagement asymmetry can produce degenerate
+       strategies.
+    5. *Add cross-layer movement* — Branch 1 full, Branch 2 partial.
+       Lowest-risk because most legible to the player.
+    6. *Branch-vs-branch tuning* — each branch internally consistent;
+       tune the cross-branch experience.
+
+  **Branch implementation order: Branch 3 → Branch 1 → Branch 2.**
+  Branch 3 is essentially the existing game with a single-layer
+  constraint on capability — simplest, ships first, de-risks everything
+  downstream. Branch 1 is the full-capability version, next. Branch 2
+  is the partial-gradient middle, hardest to tune because it must be
+  balanced against both endpoints, ships last.
+
+  **Tuning infrastructure requirement.** Large-scale branch tuning
+  requires organized test directories, staged execution, and strict
+  management of which tests are modern vs legacy. The current practice
+  of piling all tests in one directory does not scale to this workload.
+  CC must report seed counts and confidence intervals for branch
+  tuning results, not point estimates — stochastic noise across the
+  multiplied configuration space (Branch 1 HP × Branch 2 HP × Branch 3
+  HP) is a real risk. A "Strike wins 80%" result over 10 seeds is
+  meaningless; over 100 seeds with a tight CI it's a real signal.
+  Tuning workflow discipline must match the complexity increase.
+
+  **Bible framing note for component 1 rewrite.** Branch is "which
+  game" (tactical capability set). Difficulty is "how hard the game
+  is" (AI competence, resource pressure). Orthogonal axes. The bible
+  principle "difficulty never changes enemy strength" still holds
+  within a branch — difficulty modulates AI behavior and economy
+  pressure, not the underlying capability set. When component 1 is
+  rewritten, wording should pre-empt any "branches are difficulty
+  tiers" misreading by stating the orthogonality explicitly.
+
+  **Symmetric gradient — both player and enemy play under the same
+  branch rules.** Branch is a property of the era's tactical ruleset,
+  not a player-only restriction.
+
+  **Cross-branch faction interaction: out of scope for launch.** When
+  the player is in an era, they only fight factions of that same era.
+  Single-era mission scope keeps balancing tractable and eliminates
+  the sub-question of "whose branch rules apply when factions from
+  different branches interact" — there is no such interaction at
+  launch. Cross-era antagonist systems are a post-launch question.
+
+  **Supplemental mechanics for Branch 2 and Branch 3 — deferred.** The
+  Session 4 working sketch mentioned "some other supplemental mechanic"
+  for Branches 2 and 3 beyond the cross-layer gradient. With Option D
+  adopted, the cross-layer gradient itself provides strong mechanical
+  identity across all three branches, and supplemental mechanics may
+  not be necessary. Whether to add them, and what they would be, is
+  deferred as an open sub-question (Q-mon8.1-supplemental) to be
+  revisited only if playtesting reveals the gradient alone is
+  insufficient to differentiate Branch 2 from its neighbors.
+
+- **Q-mon8.2 — Branch count and era distribution [PRE-ANSWERED Session 5 — SUPERSEDED Session 6].**
+  ~~3 branches × 3 eras at launch.~~ See Q-mon8.2 v2 above: 2 launch
+  branches + Roman standalone = 7 launch eras; Branch 3 deferred to
+  first post-launch expansion.
 
 - **Q-mon8.3 — Entry gate model [PRE-ANSWERED].** **Mix of all three
   models** (WoT-style free entry, Destiny-style expansion gate,
