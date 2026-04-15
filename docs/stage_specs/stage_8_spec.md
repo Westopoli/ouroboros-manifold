@@ -2,21 +2,22 @@
 
 ## Goal
 
-Prove that the tactical simulation can be played — not just simulated headless. Stage 8 stands up three systems simultaneously and proves they compose: (1) a Godot renderer that consumes tactical engine state over a WebSocket bridge and draws it at 60fps with linear interpolation between 20 Hz engine ticks; (2) a command interface (selection, control groups, movement, abilities, layer assignment) that issues the same command protocol the tactical engine already accepts from enemy macro scripts; (3) a game-state persistence layer covering three classes of state — simulation state between missions/time jumps, tactical-engine state mid-mission for quit-and-resume, and onboarding preferences — with a rewind-with-re-seed primitive that lets the player roll the simulation back to a boundary snapshot and continue forward with fresh stochastic outcomes.
+Prove that the tactical simulation can be played — not just simulated headless. Stage 8 stands up three systems simultaneously and proves they compose: (1) a Godot renderer that consumes tactical engine state over a WebSocket bridge and draws it at 60fps with linear interpolation between 20 Hz engine ticks; (2) a command interface (selection, control groups, movement, abilities, layer assignment) that issues the same command protocol the tactical engine already accepts from enemy macro scripts; (3) a **launch-grade save layer** covering three classes of state — simulation state (single current-state file per slot), tactical-engine state mid-mission for single-slot quit-and-resume, and onboarding preferences — with no rewind, no history, no fork.
 
-Stage 8 is the stage where the game becomes **playable for the first time**. Stages 1–4 proved the simulation. Stage 5 proved the narrative pipeline. Stage 5.5 proved the mission generator. Stage 6 proved the tactical engine headless. Stage 7/7.5 proved procedural maps and enemy macro scripts. Stage 8 proves a human can sit down, receive a mission, study the terrain in a recon phase, command forces in real time, and have their save survive a quit.
+Stage 8 is the stage where the game becomes **playable for the first time**. Stages 1–4 proved the simulation. Stage 5 proved the narrative pipeline. Stage 5.5 proved the mission generator. Stage 6 proved the tactical engine headless. Stage 7/7.5 proved procedural maps and enemy macro scripts. Stage 8 proves a human can sit down, receive a mission, study the terrain in a recon phase, command forces in real time, quit in the middle of a mission and resume later, and pick up the next chapter after a session break.
 
-**Not in scope:** main-menu / new-game / load-game / save-slot-browser UI (Stage 9), mission briefing screen (Stage 9), era library / monetization UI (Stage 9), chronicle scroll UI and animated time-jump map (Beyond Stage 9), mission debrief/outcome screen (Beyond Stage 9), tutorial (Beyond Stage 9), galaxy/system/planet view (Beyond Stage 9), crash recovery, multi-branch tree UI, cloud saves (deferred per open question #15). Stage 8 ships the **tactical scene** plus the **persistence primitive** plus the **onboarding screen** — nothing else.
+**Not in scope:** main-menu / new-game / load-game / save-slot-browser UI (Stage 9), mission briefing screen (Stage 9), era library / monetization UI (Stage 9), chronicle scroll UI and animated time-jump map (Beyond Stage 9), mission debrief/outcome screen (Beyond Stage 9), tutorial (Beyond Stage 9), galaxy/system/planet view (Beyond Stage 9). **Rewind, fork-from-here, boundary-snapshot history, and multi-snapshot timeline browsing are all deferred to a post-launch rewind feature** (see hub §15 for the deferred design sketch). Stage 8 ships the **tactical scene** plus the **save layer** plus the **onboarding screen** — nothing else.
 
-**Architecture.** The Python tactical engine runs as a standalone WebSocket server. Godot is a pure client that subscribes to tick snapshots, renders them, interpolates between ticks for a 60fps presentation, and sends command packets back. No engine logic executes in Godot — it is a presentation layer that happens to also capture input. Persistence is a separate Python-side concern: the save writer serializes simulation state and tactical state to disk; the save loader reconstructs them; rewind is "load snapshot N, discard snapshots >N in this slot (linear), resume simulation from N with fresh seed."
+**Architecture.** The Python tactical engine runs as a standalone WebSocket server. Godot is a pure client that subscribes to tick snapshots, renders them, interpolates between ticks for a 60fps presentation, and sends command packets back. No engine logic executes in Godot — it is a presentation layer that happens to also capture input. Persistence is a separate Python-side concern: the save writer serializes the current simulation state, any in-flight tactical state, and onboarding preferences to disk; the save loader reconstructs them on resume. No snapshot history, no pivot operations, no timeline concept.
 
 ## Bible Capture Pending
 
 These bible edits landed during the Stage 8 write-up session; they do not block implementation but are listed here so an auditor can verify them:
 
 1. **Hub "Beyond Stage 9" bullet** — removed the stale "onboarding screen" entry; the Stage 8 roadmap paragraph is now the only source of truth for onboarding scope.
-2. **Hub Stage 8 roadmap paragraph** — "5-command vocabulary" replaced with "4-command vocabulary (`move`, `attack_move`, `attack_target`, `activate_ability`) plus the two layer commands."
+2. **Hub Stage 8 roadmap paragraph** — "5-command vocabulary" replaced with "4-command vocabulary (`move`, `attack_move`, `attack_target`, `activate_ability`) plus the two layer commands." Persistence language rewritten from "rewind-capable" to "saves, not rewind — rewind is a post-launch feature."
 3. **`bible_combat.md` L235 and L456** — "5-command protocol" / "same 5 commands" corrected to "4-command protocol" / "same 4 commands." The 5×3 compositional grid in the bible belongs to the **enemy macro behavior system**, not player commands.
+4. **Hub §15 (Simulation State Journaling and Rollback)** — rewritten to remove rewind from Stage 8 scope. Stage 8 ships saves only; rewind is a post-launch feature with its own design sketch (pre-mission-selection snapshot boundary, 5-mission minimum gate, mission-generator re-run on rewind, linear-default + fork, chronicle erased on rewind).
 
 ## Gating Open Design Questions — READ BEFORE IMPLEMENTATION
 
@@ -24,19 +25,16 @@ These bible edits landed during the Stage 8 write-up session; they do not block 
 
 Per `docs/design_questions/stage_7_8_design.md`, these are still [OPEN]:
 
-- **S8-1d — Snapshot retention policy.** Unlimited / last-N ring buffer / keep-major-prune-intermediate / manual prune. Determines how far back the player can meaningfully rewind and shapes the save-file format. Stage 8 cannot ship a save-writer without this decision — the serializer either writes an unbounded list, a fixed-size circular buffer, or a tagged-keep/tagged-prune structure, and these are not freely interchangeable.
-- **S8-1e — Tactical mid-mission state scope.** Single-slot quit-and-resume (write on quit, load on resume, consume once) vs rewind-extends-into-missions (multiple tactical snapshots, rewind to earlier mid-mission tick). Within-mission rewind is significantly more complex (unit nav state, ability cooldowns, fog memory, ongoing effects) and changes what `TacticalEngine` must be able to round-trip to disk. Stage 8 cannot ship the tactical-state persister until this scope is fixed.
 - **S8-2 — Onboarding preference weight UI.** Sliders per archetype / star ratings / like-this + rare checkboxes / drag-to-rank. The onboarding screen is in Stage 8 scope; the interaction model is unanswered. Affects the onboarding scene's structure and the data shape of the preference payload.
 - **S8-3 — Mid-mission UI information density.** Minimap details, selection info panel, objective tracker, reinforcement-structure status display, enemy composition hints. The ability bar's cooldown-only behavior is specified in the bible; the rest of the HUD is not. Affects what the tactical HUD scene must contain.
 
 ### Captured decisions the spec relies on (no change needed)
 
-- **S8-1** (save scope): sim + tactical mid-mission + onboarding; replays excluded; sim rewind-with-re-seed in scope. Captured in hub §15.
-- **S8-1a** (cadence): boundary-only — every time-jump boundary + every mission start/end. Captured in hub §15.
-- **S8-1b** (branching): linear default + explicit "fork from here." Captured in hub §15.
-- **S8-1c** (chronicle on rewind): **erase** on linear rewind; fork-from-here is the preservation mechanism. Captured in hub §15.
-- **Onboarding in Stage 8** (Q1 this session): resolved Option A. Bible edited.
-- **Player command count = 4** (Q2 this session): resolved. Bible edited.
+- **S8-1** (save scope — updated by Q3): three classes of state persist at launch: (1) current simulation state (single file, no history); (2) tactical mid-mission state for single-slot quit-and-resume; (3) onboarding preferences. Replays excluded. Rewind deferred post-launch.
+- **S8-1e** (tactical mid-mission state scope — resolved by Q3): single-slot quit-and-resume. No multi-snapshot tactical state, no mid-mission rollback.
+- **S8-1a, S8-1b, S8-1c, S8-1d** (deferred post-launch): all live under the post-launch rewind feature per Q3. Design notes preserved in the design doc for the eventual rewind design session.
+- **Onboarding in Stage 8** (Q1): resolved Option A. Bible edited.
+- **Player command count = 4** (Q2): resolved. Bible edited.
 - **S75-* / S7-*** resolutions as documented in the design doc.
 
 ## Bible References
@@ -68,15 +66,10 @@ Do NOT read `bible_chronicle.md`, `bible_antagonist.md`, `bible_monetization.md`
    disk (saves/) ◄──┤  save_writer.py   save_loader.py      │
                     │          ▲             │              │
                     │          │             ▼              │
-                    │    ┌─────┴─────────────────────┐      │
-                    │    │      rewind_manager.py    │      │
-                    │    │  (snapshot pivot + fork)  │      │
-                    │    └───────────┬───────────────┘      │
-                    │                │                      │
-                    │         ┌──────▼──────┐               │
-                    │         │ simulation  │               │
-                    │         │ (tick loop) │               │
-                    │         └──────┬──────┘               │
+                    │         ┌──────────────┐              │
+                    │         │ simulation   │              │
+                    │         │ (tick loop)  │              │
+                    │         └──────┬───────┘              │
                     │                │ MissionSetup         │
                     │                ▼                      │
                     │         ┌──────────────┐              │
@@ -108,9 +101,9 @@ Do NOT read `bible_chronicle.md`, `bible_antagonist.md`, `bible_monetization.md`
 
 Three concurrent conceptual systems:
 
-1. **Python side (new):** `socket_server.py` (WebSocket loop), snapshot/delta serializer, command packet ingest, `save_writer.py`, `save_loader.py`, `rewind_manager.py`, `onboarding_store.py`. The existing `TacticalEngine` is wrapped; it is not modified beyond the thin accessors it already exposes.
+1. **Python side (new):** `socket_server.py` (WebSocket loop), snapshot/delta serializer, command packet ingest, `save_writer.py`, `save_loader.py`, `onboarding_store.py`. The existing `TacticalEngine` is wrapped; it is not modified beyond the thin accessors it already exposes. **No rewind manager** — rewind is deferred post-launch.
 2. **Godot side (new):** tactical scene + renderer + input router, recon scene, onboarding scene, debug save panel. All scenes read from a `TacticalBridge` autoload (the client-side analogue of Stage 9's `UIDataBus`) that owns the WebSocket connection and publishes tick state to subscribers.
-3. **Persistence side (cross-cutting):** save file format, boundary-snapshot capture, load/restore, rewind (linear), fork-from-here, onboarding preference storage.
+3. **Persistence side (cross-cutting):** save file format (one current-state file per class, no history), load/restore, onboarding preference storage. Rewind primitives are out of scope.
 
 ### Files to create — Python
 
@@ -127,25 +120,21 @@ Three concurrent conceptual systems:
 
 **`command_ingest.py`** — validates command packets from the client and converts them into the tactical engine's existing command types (`move`, `attack_move`, `attack_target`, `activate_ability`, plus whichever layer commands are chosen in conflict resolution #2). Drops malformed packets with a logged warning (gated behind a debug flag — no release-mode logging of client input).
 
-**`save_writer.py`** — serializes all three classes of state.
-- `write_sim_snapshot(slot_id, label, sim_state) → snapshot_id` — writes a boundary snapshot. `label` is a human-readable tag ("chapter_3 — mission start", "time_jump 312→358"). Destination: `user://saves/<slot_id>/sim/<snapshot_id>.json` (Godot-side path; Python maps to the OS-equivalent directory).
-- `write_tactical_state(slot_id, tactical_state)` — writes mid-mission tactical state for quit-and-resume. Single file per slot (S8-1e default pending: "single-slot quit-and-resume" — see open question).
+**`save_writer.py`** — serializes the three launch classes of state. **No history, no snapshot stack, no rewind primitives.** Each class has a single current-state file per slot; writes overwrite the previous file.
+- `write_sim_state(slot_id, sim_state) → None` — writes the current simulation state (regions, factions, coherence ledger, diplomacy, technology, lifecycle, chronicle entries). Called after a successful time-jump completes and after every mission resolution lands. Destination: `user://saves/<slot_id>/sim.json`. The file represents "where the playthrough is right now"; it is not a snapshot history.
+- `write_tactical_state(slot_id, tactical_state) → None` — writes mid-mission tactical state for single-slot quit-and-resume (S8-1e resolution: one file, consumed on resume). Destination: `user://saves/<slot_id>/tactical.json`. Written on quit; deleted on successful resume.
 - `write_onboarding(slot_id, prefs) → None` — writes onboarding preferences (difficulty + archetype weights + rare marks). "Permanent for the generational arc" per bible — overwritten only on new-cycle events (Exodus / Extinction).
 
 **`save_loader.py`** — mirror of the writer.
-- `list_slots() → list[SlotMetadata]` — enumerates save slots on disk.
-- `load_sim_snapshot(slot_id, snapshot_id) → SimState`
-- `load_tactical_state(slot_id) → TacticalState | None`
-- `load_onboarding(slot_id) → OnboardingPrefs | None`
+- `list_slots() → list[SlotMetadata]` — enumerates save slots on disk. Metadata per slot: slot_id, chapter number, last-played timestamp, presence-of-tactical-state flag, onboarding summary (difficulty + count of rare marks).
+- `load_sim_state(slot_id) → SimState` — loads the single current simulation state file.
+- `load_tactical_state(slot_id) → TacticalState | None` — returns `None` if no in-flight mission is saved.
+- `load_onboarding(slot_id) → OnboardingPrefs | None`.
+- `consume_tactical_state(slot_id) → None` — deletes the tactical file after a successful resume transitions into the mission scene. Single-slot semantic: the file exists only while the mission is paused.
 
-**`rewind_manager.py`** — implements linear rewind + fork-from-here per S8-1b.
-- `rewind(slot_id, snapshot_id)` — linear: discards snapshots with `tick > snapshot.tick` in this slot, restores `snapshot_id`, wipes chronicle entries from the discarded window (S8-1c), seeds the simulation RNG with a fresh seed drawn from the system entropy source, resumes simulation.
-- `fork(slot_id, snapshot_id, new_slot_id, label)` — duplicates the slot at `snapshot_id` into `new_slot_id`; the original is unchanged (the caller typically rewinds the original next). Forked slots appear as sibling slots to the Stage 9 save-slot browser; in Stage 8 they appear in the debug save panel.
-- Retention policy (S8-1d) is GATED — the manager's pruning behavior is a stub until the question is resolved. Stage 8 ships the rewind primitive itself; the pruning hook is a `TODO: S8-1d` line in the module.
+**`onboarding_store.py`** — dedicated read/write for the onboarding preference payload (difficulty setting + 10-archetype weight map + up-to-2 "rare" marks). Separate module because preferences outlive individual save operations (they survive Exodus / Extinction cycles) and have their own schema.
 
-**`onboarding_store.py`** — dedicated read/write for the onboarding preference payload (difficulty setting + 10-archetype weight map + up-to-2 "rare" marks). Separate from the simulation save file because preferences outlive individual rewinds.
-
-**Test files:** `test_socket_server.py`, `test_snapshot_serializer.py`, `test_command_ingest.py`, `test_save_writer.py`, `test_save_loader.py`, `test_rewind_manager.py`, `test_onboarding_store.py`, `test_stage8_integration.py`.
+**Test files:** `test_socket_server.py`, `test_snapshot_serializer.py`, `test_command_ingest.py`, `test_save_writer.py`, `test_save_loader.py`, `test_onboarding_store.py`, `test_stage8_integration.py`.
 
 ### Files to create — Godot
 
@@ -170,7 +159,7 @@ Children scenes:
 - `hud.tscn + .gd` — minimap (bottom-right), selection info panel, objective tracker, ability bar (cooldown-only per bible), reinforcement structure status list, **mid-mission HUD is GATED on S8-3**; Stage 8 ships minimap + selection info + ability bar + objective tracker; the density questions (enemy composition hints, reinforcement detail level) are placeholders.
 - `input_router.gd` — keyboard + mouse → command packet. Handles box-select, click-select, right-click → `move` or `attack_move` (Shift modifier), `A`-then-click → `attack_move`, hotkey abilities, control groups (Ctrl+1..0 bind, 1..0 recall), tilde (`~`) all-army hotkey (auto-includes newly produced units per hub Stage 8 roadmap).
 
-**`scenes/debug_save_panel/debug_save_panel.tscn + .gd`** — temporary UI for Stage 8 testing. Lists slots, shows boundary snapshots per slot, buttons for "rewind to here," "fork from here," "quit (write tactical state)," "resume (load tactical state)." Retired when Stage 9's polished save-slot browser ships. The panel calls `TacticalBridge` which calls the Python persistence API over the same WebSocket channel (reuses the socket; does not open a second port).
+**`scenes/debug_save_panel/debug_save_panel.tscn + .gd`** — temporary UI for Stage 8 testing. Lists slots, shows per-slot metadata (chapter number, last played, tactical-state presence), buttons for "save now," "quit (write tactical state)," "resume (load tactical state)," and "new slot." No rewind, no fork, no timeline view — those are post-launch. Retired when Stage 9's polished save-slot browser ships. The panel calls `TacticalBridge` which calls the Python persistence API over the same WebSocket channel (reuses the socket; does not open a second port).
 
 **`autoload/ws_input_sanitizer.gd`** — thin client-side validator that refuses to send malformed command packets (negative positions, unit IDs not in the last snapshot, etc.). Fails closed. Distinct from Stage 9's `InputSanitizer` which handles text fields — this one handles game commands.
 
@@ -205,8 +194,7 @@ CONTROL_GROUP_COUNT = 10  # 1..0 on keyboard (0 = group 10)
 
 # Persistence
 SAVE_ROOT = "user://saves"  # Godot-side; Python maps to OS path
-# S8-1d retention policy: GATED. Stub constant, do not rely on:
-SAVE_RETENTION_POLICY = "unlimited"  # TODO: S8-1d
+# No snapshot history in Stage 8 — rewind is deferred post-launch.
 ```
 
 ### Files to modify — Godot
@@ -305,20 +293,16 @@ Layer channel (2):
 Session / client bookkeeping (not gameplay commands):
 - `control_group_bind {group: 1..10, unit_uids}` and `control_group_recall {group: 1..10}` — published so reconnect can restore bindings.
 
-### Persistence — boundary sim snapshot (on time-jump end + mission start + mission end)
+### Persistence — current simulation state (single file per slot)
 
 ```json
 {
   "schema_version": 1,
-  "snapshot_id": "snap_00042",
   "slot_id": "slot_a",
-  "label": "Chapter 3 — Mission 12 start",
-  "boundary_kind": "mission_start",
-  "tick": 3120,
+  "chapter_number": 12,
   "year": 312,
-  "created_at": "2026-04-15T12:14:03Z",
-  "parent_snapshot_id": "snap_00041",
-  "rng_seed": "0x8a3f...",
+  "last_written_at": "2026-04-15T12:14:03Z",
+  "rng_state": "0x8a3f...",
   "sim_state": {
     "regions": [],
     "factions": [],
@@ -327,16 +311,15 @@ Session / client bookkeeping (not gameplay commands):
     "technology": {},
     "lifecycle": {},
     "chronicle_entries": []
-  },
-  "onboarding_ref": "slot_a/onboarding.json"
+  }
 }
 ```
 
-On linear rewind: all snapshots in `slot_a` with `tick > target.tick` are deleted, including their chronicle entries. On fork: `slot_b` is initialized by copying `slot_a`'s snapshots up to and including `snapshot_id`; the two slots then evolve independently.
+One file per slot at `user://saves/<slot_id>/sim.json`. Overwritten each time the sim state reaches a new stable boundary (time-jump end, mission resolution landed). No history — the previous state is not retained. Rewind, if/when it ships post-launch, will introduce its own history format independently.
 
-### Persistence — tactical mid-mission state (quit-and-resume)
+### Persistence — tactical mid-mission state (single-slot quit-and-resume)
 
-**GATED on S8-1e.** Default shape assuming single-slot quit-and-resume:
+Per S8-1e (resolved by Q3): one file per slot while a mission is paused; deleted on successful resume.
 
 ```json
 {
@@ -350,7 +333,7 @@ On linear rewind: all snapshots in `slot_a` with `tick > target.tick` are delete
 }
 ```
 
-On resume: `save_loader.load_tactical_state(slot)` rehydrates the engine via `engine.restore_from_state()`; the socket server starts the tick clock where it left off; client reconnects and receives a fresh full snapshot.
+On resume: `save_loader.load_tactical_state(slot)` rehydrates the engine via `engine.restore_from_state()`; the socket server starts the tick clock where it left off; the client reconnects and receives a fresh full snapshot. The tactical file is then consumed (deleted) so the next quit writes a clean new file.
 
 ### Persistence — onboarding preferences
 
@@ -368,16 +351,16 @@ On resume: `save_loader.load_tactical_state(slot)` rehydrates the engine via `en
 }
 ```
 
-Rewritten only at new-cycle events (Exodus / Extinction). Rewind does not touch onboarding prefs — they live outside the rewindable simulation state per the bible ("permanent for the generational arc").
+Rewritten only at new-cycle events (Exodus / Extinction). Preferences live outside the simulation save file per the bible's "permanent for the generational arc" framing.
 
 ## Integration Points
 
 - **Engine ↔ server.** `TacticalEngine` is wrapped by `socket_server.py`. Engine code never imports socket or network modules — the wrap is one-directional. Kill switch: `ENABLE_STAGE8_SOCKET = False` in `config.py` runs the engine headless via the existing Stage 6 / Stage 7 harnesses, exactly as today.
 - **Engine ↔ persistence.** `save_writer.py` / `save_loader.py` call `TacticalEngine.export_full_state()` and `restore_from_state()`. They do not reach into engine internals — the contract is the same shape both directions.
 - **Godot ↔ server.** Single WebSocket connection. `TacticalBridge` is the only module that speaks the wire protocol. All scenes subscribe to its signals.
-- **Stage 9 handoff.** Stage 8's `debug_save_panel` is a throwaway UI. When Stage 9 ships, `UIDataBus` calls the same persistence API (`save_loader.list_slots()`, `rewind_manager.rewind()`, etc.) from GDScript → Python over the same WebSocket channel. Stage 9 deletes the debug panel; the Python persistence modules are unchanged.
+- **Stage 9 handoff.** Stage 8's `debug_save_panel` is a throwaway UI. When Stage 9 ships, `UIDataBus` calls the same persistence API (`save_loader.list_slots()`, `save_writer.write_sim_state()`, etc.) from GDScript → Python over the same WebSocket channel. Stage 9 deletes the debug panel; the Python persistence modules are unchanged. The Stage 9 save-slot browser exposes load / delete / new-slot only — rewind and fork operations are not part of its Stage 8-era contract.
+- **Post-launch rewind handoff.** When the rewind feature ships post-launch, it adds its own history writer on top of the Stage 8 save layer, its own retention policy, its own rewind / fork API, and its own Stage 9 UI additions. Stage 8 does not lay groundwork for this; the rewind feature designs its own serializer from scratch.
 - **Kill switches.**
   - `ENABLE_STAGE8_SOCKET` — disables the server; engine remains usable headless.
   - `ENABLE_STAGE8_PERSISTENCE` — disables save writing; game runs mission-to-mission in memory like Stage 7.
-  - `ENABLE_STAGE8_REWIND` — disables rewind and fork (persistence still writes). Defensive flag in case rewind has issues late in the stage.
-  - Default: all OFF at Checkpoint A; flipped ON as each checkpoint is proven.
+  - Default: both OFF at Checkpoint A; flipped ON as each checkpoint is proven.

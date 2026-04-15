@@ -8,7 +8,7 @@
 
 ## Session Handoff
 
-**Last updated:** 2026-04-14 (audit session in progress)
+**Last updated:** 2026-04-15 (Stage 8 spec write-up session in progress)
 
 **Last session accomplished:**
 - Prior session: Stage 7 + 7.5 fully resolved (S7-1 through S75-2 — see "Resolved Decisions")
@@ -35,13 +35,14 @@
   - (8) ~~Gradient property count reconciliation~~ — DONE (gradient_placer.py entry documents the 4 continuous + 1 layer-mask-with-5-channels decomposition matching the bible's 5)
   - (9) ~~I8 measurement mechanism~~ — DONE (navmesh exposes `generation_count` counter; Checkpoint L/M assert == 1)
 - Several of these have implementation shapes worth confirming with Westley as mini-questions (especially 1, 4, 6). Present per `design_rules.md` format.
-- **After Stage 7 spec audit:** resume Stage 8 design with S8-1c (chronicle behavior on rewind — already presented in prior chat with options A erase / B preserve dimmed / C save-metadata tombstones; recommendation was A, never answered). Then S8-1d (retention), S8-1e (tactical-state scope), S8-2 (onboarding UI), S8-3 (mid-mission UI density).
+- Stage-8-write-up session (2026-04-15): **Q1 onboarding scope** resolved (Option A — onboarding ships in Stage 8); **Q2 player command count** resolved (4, not 5); **Q3 save scope / rewind deferral** resolved (rewind is a post-launch feature — Stage 8 ships saves only; sim state is a single current-state file per slot; S8-1e resolved as single-slot quit-and-resume; S8-1a / S8-1b / S8-1c / S8-1d all deferred to the post-launch rewind design session with the earlier captured decisions preserved under "Deferred to post-launch rewind feature"). Bible edits landed: hub §15 rewritten, hub Stage 8 roadmap paragraph rewritten, hub "Beyond Stage 9" bullet, bible_combat.md L235 and L456.
+- **Next session should:** answer S8-2 (onboarding UI interaction model) and S8-3 (mid-mission UI density). Once answered and captured, finish the Stage 8 spec's remaining sections (Checkpoints, Invariants, Done Condition) and push.
 - Once all [ANSWERED], promote decisions into bible/specs and delete this file.
 
 **Current state summary:**
 - Stage 7: all design questions resolved, spec drafted and committed, audit backlog identified (9 items)
 - Stage 7.5: all design questions resolved
-- Stage 8: S8-1, S8-1a, S8-1b resolved; S8-1c (presented, not answered), S8-1d, S8-1e, S8-2, S8-3 still [OPEN]
+- Stage 8: S8-1 (updated), S8-1e, Q1, Q2, Q3 resolved. S8-1a / S8-1b / S8-1c / S8-1d deferred to post-launch rewind feature. S8-2 and S8-3 still [OPEN].
 
 ---
 
@@ -92,15 +93,25 @@ These have already been decided. Listed here for reference — do not re-ask.
 
 ### Stage 8
 
-- **Save scope (S8-1)** → Three classes of state persist in Stage 8: **(1) simulation state** between missions and across time jumps, **(2) tactical engine state** mid-mission for quit-and-resume, and **(3) onboarding preferences** (weights + rare-marks + difficulty) as "permanent for the generational arc" per the bible. **Replay files are explicitly excluded** — the game does not support rewatching completed missions. The simulation-state persistence is **rewind-capable**: the player can roll the simulation back to a previous snapshot and the simulation continues forward from that point with fresh stochastic outcomes. This is **re-seeded re-simulation, not deterministic replay** — because the simulation is stochastic, the "second run" diverges from the first, with divergence growing as time progresses and more random rolls accumulate. **Bible conflict flagged:** this partially overrides hub Open Question #15 ("Simulation State Journaling and Rollback — OPEN"), which had explicitly deferred rollback/branching out of Stage 8. The bible hub §15 entry must be updated at capture time to reflect that rewind-with-re-seed is Stage 8 scope; the remaining #15 pieces that are NOT committed here (crash recovery, multi-branch trees, cloud saves, etc.) stay deferred unless resolved by S8-1a–e below. Tuning and shape details (cadence, retention, branching model, chronicle handling, tactical-state scope) are surfaced as S8-1a–e.
-
-- **Sim snapshot cadence (S8-1a)** → Event-driven boundary-only. Snapshots are written at every time jump boundary + every mission start and end. No per-tick periodic snapshots, no manual player-triggered save points. Each snapshot lands on a semantically meaningful narrative boundary the rewind UI can label (chapter name + mission). Rationale: matches the bible's generational/chapter-based structure, keeps the rewind primitive aligned with "run this chapter again, differently," bounds storage predictably. **Post-Stage-8 follow-up noted:** adding periodic intermediate snapshots during inter-mission sim (Option B from S8-1a) is a candidate future enhancement if boundary-only rewind feels too coarse once the game is playable. Recorded as a "maybe later" — do not build in Stage 8.
-
-- **Rewind branching model (S8-1b)** → Linear default + explicit fork. Rewinding a save slot truncates by default: snapshots after the rewind point are discarded and replaced by the new divergent run (one timeline per slot, simple mental model). In addition, a separate **"fork from here"** action duplicates the save slot at the rewind point into a second slot before rewinding the original, giving the player a safety valve to preserve an alternate timeline without making tree navigation a first-class concept. The Stage 9 save-slot browser is reused as the "timeline browser" — forks are just sibling slots with player-chosen names (e.g., "Year 312 rewind"). Rationale: keeps the common case simple, reuses existing Stage 9 UI, avoids the tree-UI scope of full branching. Forks always land on S8-1a's semantic boundaries (time jump / mission start / mission end).
+- **Save scope (S8-1) [updated Stage-8-write-up session Q3]** → Three classes of state persist **at launch**: (1) **simulation state** — a single current-state file per slot, written so a playthrough survives across sessions (no boundary-snapshot history in Stage 8); (2) **tactical engine state** mid-mission for **single-slot quit-and-resume** (write on quit, load on resume, consume once); (3) **onboarding preferences** (weights + rare-marks + difficulty) as "permanent for the generational arc" per the bible. **Replay files are explicitly excluded.** **Rewind is deferred to a post-launch feature** — see "Deferred to post-launch rewind feature" below. Bible edits applied (v2.11): hub §15 rewritten; hub Stage 8 roadmap paragraph rewrites persistence language to "saves, not rewind."
 
 - **Onboarding scope (Stage-8-write-up session, Q1)** → **Option A: onboarding ships in Stage 8.** The hub's Stage 8 roadmap paragraph already specifies the onboarding screen (difficulty + archetype weights + rare marks + opening time jump + abbreviated chronicle scroll); the conflicting "Beyond Stage 9" bullet was stale text. **Bible edit applied (v2.10):** the phrase "onboarding screen" was removed from the hub's "Beyond Stage 9" list, with a parenthetical note pointing to the Stage 8 entry as authoritative. Interaction-model design (slider vs star-rating vs like+rare-checkbox vs drag-to-rank) remains S8-2 below.
 
 - **Command vocabulary count (Stage-8-write-up session, Q2)** → **Player command set is 4, not 5.** The "5-command" / "5 commands" references in `bible_combat.md` line 235 and line 456, and the "5-command vocabulary" phrase in the hub's Stage 8 roadmap entry, were bugs created by conflating the player command vocabulary with the **enemy macro behavior modifier system** (5 base behaviors × 3 modifiers = 15 flavors — `bible_combat.md` §Enemy Macro Behavior System, lines 401–418). **Bible edits applied (v2.10):** `bible_combat.md` L235 and L456 rewritten to "4-command protocol" / "same 4 commands the player does." Hub Stage 8 entry rewritten to "4-command vocabulary (`move`, `attack_move`, `attack_target`, `activate_ability`) plus the two layer commands from `bible_combat.md` §Layer Assignment Hotkey." No change to the Command Vocabulary section itself — it already correctly listed four commands. The Stage 8 WebSocket command packet shape uses these four combat commands plus a separate layer-command channel (two kinds: hard transfer, preference assignment).
+
+- **Tactical mid-mission state scope (S8-1e) [resolved by Q3]** → **Single-slot quit-and-resume.** Since rewind is deferred post-launch, mid-mission rewind is out of scope for launch. The tactical engine serializes once on quit, loads once on resume, and the on-disk file is consumed (deleted) on successful resume. No multiple tactical snapshots, no mid-mission rollback.
+
+#### Deferred to post-launch rewind feature
+
+Rewind is a distinct post-launch feature. The following captured decisions move with it out of Stage 8 scope. They are preserved here so the post-launch rewind design session has the prior work to build from:
+
+- **Sim snapshot cadence (S8-1a, deferred post-launch):** Boundary is **one per chapter, at the post-time-jump / pre-mission-selection point** (Q3 update). This replaces the earlier S8-1a framing of three-per-chapter (time-jump + mission start + mission end). One snapshot per chapter, taken before the mission generator runs, so rewinding re-invokes the generator and may produce a different mission.
+- **Rewind gating (Q3):** Minimum rewind distance is **at least 5 missions back** (exact value tuning) — the player cannot rewind the mission they just finished. Anti-gaming mechanic; prevents the rewind feature from collapsing into a "try again until I win" loop.
+- **Forward-sim behavior on rewind (Q3):** On rewind, the sim is restored to the pre-mission-selection boundary and the mission generator **re-runs**. The player may get a different mission archetype, region, and character. Not "same mission, new seed" — "new path from this world-state onward."
+- **Branching model (S8-1b, deferred post-launch):** Linear default + explicit "fork from here." Rewinding a slot truncates by default; fork-from-here duplicates the slot at the rewind boundary into a sibling slot, preserving the pre-rewind timeline. The Stage 9 save-slot browser becomes the timeline browser.
+- **Chronicle on rewind (S8-1c, deferred post-launch):** Chronicle entries from the discarded chapter window are **erased** on linear rewind. Fork-from-here is the preservation mechanism.
+- **Snapshot retention policy (S8-1d, deferred post-launch):** Open. Not a Stage 8 concern since Stage 8 writes no history. The post-launch rewind feature designs its own retention policy alongside its history format.
+- **History format (new, Q3):** Stage 8 does not write a boundary-snapshot history. The post-launch rewind feature designs its own history format from scratch. Players who save a slot before the rewind update installs will only be able to rewind to boundaries captured after the update — pre-update chapters are opaque to rewind. This was Option (ii) from Q3.
 
 ---
 
@@ -124,21 +135,9 @@ Reclassified as a tuning value. The bible establishes the derivation (region mil
 
 ### Stage 8 — Godot Renderer, Command Interface, Game State Persistence
 
-#### S8-1c — Chronicle Behavior On Rewind [ANSWERED: A — erase]
+#### S8-1c, S8-1d, S8-1e — RESOLVED / DEFERRED by Q3
 
-**Answer.** Option A: chronicle entries from the discarded timeline are erased on linear rewind. The chronicle always reflects exactly the canonical (current) timeline. Players who want to preserve the pre-rewind chronicle use S8-1b's **"fork from here"** action before rewinding — that is the explicit preservation mechanism. Two clean tools, two clean intents: fork preserves, rewind resets. Matches the bible's "fragments of a real history" framing (one history at a time, not a tree) and the elegiac tone ("what was lost was always going to be lost").
-
----
-
-#### S8-1d — Snapshot Retention [OPEN]
-
-How many sim-state snapshots are retained per save slot before pruning? Options: unlimited (disk allowing), last-N ring buffer, keep-all-major-boundaries + prune-intermediate, manual prune. Pure tuning in parts, but the policy shape (what gets preserved vs. evicted) is a design decision because it determines how far back a player can meaningfully rewind.
-
----
-
-#### S8-1e — Tactical Mid-Mission State Scope [OPEN]
-
-S8-1 includes tactical engine state. Is it a simple **single-slot quit-and-resume** (write on quit, load on resume, consume once — no rewind mid-mission), or does the rewind feature extend *into* an active mission (multiple tactical snapshots, rewind to earlier point in the same mission)? Within-mission rewind is significantly more complex (many invariants: unit nav state, ability cooldowns, fog memory, ongoing effects) and may not match the "divergence grows over time" framing since missions are short (~15–30 min).
+S8-1c (chronicle on rewind) and S8-1d (snapshot retention) and the history-format decision are all deferred to the post-launch rewind feature — see "Deferred to post-launch rewind feature" under Resolved Decisions → Stage 8. S8-1e (tactical mid-mission state scope) is resolved as single-slot quit-and-resume by the same Q3 resolution.
 
 ---
 
