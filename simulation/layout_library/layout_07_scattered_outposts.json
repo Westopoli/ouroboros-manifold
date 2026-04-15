@@ -20,7 +20,7 @@
       "zone_id": "hazard_interference_sw",
       "position_ratio": [0.22, 0.62],
       "node_type": "hazard_zone_anchor",
-      "properties": {"hazard_type": "sensor_interference", "insurgent_hint": true}
+      "properties": {"hazard_type": "sensor_interference", "insurgent_hint": true, "layer_restrictions": [0, 1]}
     },
     {
       "zone_id": "hazard_interference_se",

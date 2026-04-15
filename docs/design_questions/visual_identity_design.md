@@ -43,7 +43,44 @@ question must be answered within these limits, not around them.
 
 ---
 
-## Session Handoff — Last Updated: Session 3 (April 14, 2026)
+## Session Handoff — Last Updated: Session 4 (April 14, 2026)
+
+> **Session 4 focus: monetization research pass and Q-mon1/Q-mon2 resolution.** No visual identity work this session — all effort went into finalizing the v3.00 ownership-vs-access model and entry fee path per the Session 3 carry-forward list.
+
+**Accomplished this session:**
+
+- **Research pass complete.** WoW model (hard subscription gate, MMO precedent only), Paradox optional DLC subscription (closest strategy-genre precedent, hostile fan reaction even at $5/month, "own nothing pay forever" complaint pattern), Steam DLC refund window (14 days / 2 hours, recently tightened), softer-variant landscape. Key finding: **zero single-player precedents for hard-WoW ownership-vs-access**.
+- **Critical context surfaced mid-session:** Paid transactions flow through Westley's external website, not Steam. Only the free Steam version exists on Steam. This neutralizes the Steam refund-cascade risk that was the largest nail in the hard-WoW coffin.
+- **Q-mon1 RESOLVED — Conditional ownership model.** Three era categories in the player's library: Purchased (one-time buy, permanent playable), Earned (grinded past retention threshold while subscribed, permanent playable, survives cancel), Rented (5-era starter bundle, revoked on cancel with progress preserved server-side). Hybrid of WoW, Paradox optional-sub, and Apex Legends earned-currency unlocks.
+- **Retention threshold mechanic defined.** ~15 hours of play at baseline, driven by the same mastery currency that powers the SC2-border UI elaboration system (component 10). Performance bonuses from unit retention and in-mission objectives. Starter bundle eras are eligible for retention on the same rule as grind-earned eras.
+- **Subscription price locked at $2/month.** Deliberately below the Paradox outrage threshold (~$5 triggers strategy-audience hostility) and in coffee-money territory. Working target for launch, revisitable post-launch on data.
+- **Q-mon2 RESOLVED — No entry fee (option a).** Free Roman player goes directly to $2/month subscription. At this price, any intermediate paywall costs more in friction than it gains in conversion.
+- **Q-mon8 ADDED — Tech tree / branching progression topology.** Westley proposed World of Warships-style branching tech tree (sci-fi path, ancient path, 1700s path, WW1/WW2 path, etc.) with mechanical as well as visual differences between branches. Flagged as a major structural change to component 1 and deferred to its own design session. Captured as open question #10 in the v3.00 bible section.
+- **Content distribution / security flagged as open question #11 in the bible.** Two candidate architectures: (a) ship everything locally, gate with account flags — simple but trivially pirateable; (b) download-on-purchase from website CDN — more complex but harder to pirate, smaller base install, cheaper per-era patching. Leaning toward (b), deferred to the webapp architecture spec for a technical design pass.
+
+**Bible edits this session:**
+- `bible_monetization.md` v3.00 section header updated from "Proposed" to current status.
+- Component 3 rewritten from hard-WoW proposal to **conditional ownership model** with three era categories, retention threshold mechanic, and subscription price.
+- Component 7 resolved as no entry fee.
+- Cancellation behavior and expansion packs re-open notes updated to point to the resolved v3.00 model.
+- Open questions list updated: Q-mon1 and Q-mon2 marked resolved with strikethrough; Q-mon8 (tech tree) added as #10; content distribution/security added as #11.
+
+**Open carry-forward items (for next session), in priority order:**
+
+1. **Resume Q3 — Era card template.** The monetization model is now stable enough that the card template design can proceed. The card needs to express: track position, hallmark/work distinction, era category (Purchased / Earned / Rented / Inspection-only), mastery progress toward retention threshold, current mastery tier, tutorial-era flag. **However**, Q-mon8 (tech tree) may change what "track position" means — if progression branches, the card might show a branch identifier. Decide at session start whether to tackle Q-mon8 before Q3 or design Q3 to accommodate either topology.
+2. **Q4 — Steam page hierarchy.** Downstream of Q3.
+3. **Q5 — Research pass on reference studios** (Paradox, Creative Assembly, Supergiant, Hazelight, Hades, Stellaris, Fortnite/CoD).
+4. **Q6 — Canva asset kit.**
+5. **Q7 — In-game era pack merchandising / store layout.**
+6. **Q-mon8 — Tech tree / branching progression.** Either tackled before Q3 (if the topology affects card design meaningfully) or deferred to a dedicated session after Q3/Q4.
+7. **Component 9 (special editions)** still deferred.
+8. **Q-mon3 through Q-mon7** still deferred to catalog design.
+
+**Session 4 output:** Q-mon1 and Q-mon2 resolved and captured. Monetization redesign is now stable. Next session can proceed with visual identity work (Q3 era card template) with confidence that the monetization structure the card presents is not going to shift underneath it — except possibly on tech tree topology, which is surfaced as the remaining foundational uncertainty.
+
+---
+
+## Session Handoff — Session 3 (April 14, 2026) — archived
 
 > **Major pivot this session.** Session 3 began as a straight continuation of
 > Q2e work, completed Q2e-SR and Q-wordmark, opened Q3 (era card template),
@@ -392,13 +429,14 @@ be reordered based on what earlier answers surface.
 | Q5 | Research pass — reference studios and proven single-player DLC marketing strategies | OPEN |
 | Q6 | Canva asset kit — specific templates needed and what goes in each | OPEN |
 | Q7 | In-game era pack merchandising / store layout | OPEN |
-| Q-mon1 | Monetization redesign — ownership-vs-access research pass | OPEN |
-| Q-mon2 | Entry fee path — drop / trial month / lifetime track access / hybrid | OPEN |
+| Q-mon1 | Monetization redesign — ownership-vs-access (resolved as conditional ownership model) | CAPTURED |
+| Q-mon2 | Entry fee path — resolved as no entry fee | CAPTURED |
 | Q-mon3 | Hallmark era selection for 20-era launch catalog | OPEN |
 | Q-mon4 | 5-era subscription starter bundle selection | OPEN |
 | Q-mon5 | Roman free tier scope limitations | OPEN |
 | Q-mon6 | Third hallmark era for multi-stage tutorial | OPEN |
 | Q-mon7 | Tutorial sub-objective design — which moments from each hallmark | OPEN |
+| Q-mon8 | Tech tree / branching progression topology (WoWS-style) | OPEN |
 
 ---
 

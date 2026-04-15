@@ -2,7 +2,7 @@
   "layout_id": "layout_08_elevated_strongpoint",
   "name": "Elevated Strongpoint",
   "canvas_class": "large",
-  "tags": ["defensive_stand", "multi_front_defense"],
+  "tags": ["multi_front_defense"],
   "zones": [
     {
       "zone_id": "staging_summit",

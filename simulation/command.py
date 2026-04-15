@@ -2,7 +2,7 @@ import hashlib
 import numpy as np
 from dataclasses import dataclass, field
 from unit import UnitStore, FIELD_X, FIELD_Y, FIELD_HP, NUM_FIELDS
-from movement import apply_group_move, apply_fast_move
+from movement import apply_group_move
 from ability import activate_ability
 
 
@@ -69,23 +69,6 @@ def process_commands(queue, store, tick):
                 if store.alive[uid]:
                     activate_ability(store, uid)
 
-        elif cmd.type == "group_move":
-            tx = cmd.params["target_x"]
-            ty = cmd.params["target_y"]
-            alive = [uid for uid in cmd.unit_ids if store.alive[uid]]
-            if alive:
-                apply_group_move(store, alive, tx, ty)
-                for uid in alive:
-                    store.attack_moving[uid] = False
-
-        elif cmd.type == "fast_move":
-            tx = cmd.params["target_x"]
-            ty = cmd.params["target_y"]
-            alive = [uid for uid in cmd.unit_ids if store.alive[uid]]
-            if alive:
-                apply_fast_move(store, alive, tx, ty)
-                for uid in alive:
-                    store.attack_moving[uid] = False
 
 
 def compute_state_hash(store):

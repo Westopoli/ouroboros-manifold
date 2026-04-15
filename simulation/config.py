@@ -574,7 +574,8 @@ PULSE_COOLDOWN_TICKS           = 400     # 20 sec
 # ── Pathfinding (Stage 6) ───────────────────────────────────────────────────
 NAVMESH_OBSTACLE_THRESHOLD     = 0.7
 NAVMESH_CELL_SIZE              = 100
-SPATIAL_HASH_CELL_SIZE         = 300  # targeting queries; larger = fewer cells at long attack ranges
+SPATIAL_HASH_CELL_SIZE         = 300  # sensor-pursuit queries — large cells keep long-range march queries cheap
+TARGET_HASH_CELL_SIZE          = 100  # attack-range ring search — finer than sensor hash, coarser than collision
 STEERING_OBSTACLE_AVOIDANCE_RANGE = 50
 UNIT_COLLISION_RADIUS          = 15
 STEERING_PROBE_DIST            = 40
@@ -947,7 +948,7 @@ COMMANDER_DEATH_EVENT_ID = "evt_commander_killed_in_action"
 # ── Stage 7: Map Generation ──────────────────────────────────────────────────
 
 CANVAS_SIZES = {"small": (4000, 4000), "medium": (8000, 8000), "large": (12000, 12000)}
-STRUCTURE_COUNT_RANGES = {"small": (1, 3), "medium": (2, 5), "large": (3, 7)}
+STRUCTURE_COUNT_RANGES = {"small": (2, 4), "medium": (3, 6), "large": (4, 8)}
 LAYOUT_JITTER_PERCENT = 0.03
 
 REINFORCEMENT_CAPTURE_RADIUS = 300.0
@@ -955,6 +956,14 @@ REINFORCEMENT_CAPTURE_DURATION_SEC = 10.0
 REINFORCEMENT_STRUCTURE_HP = 3000
 BASE_PRODUCTION_TIME_SEC = 30.0
 POWER_NORMALIZATION = 100.0           # tune from Stage 6 baseline unit power
+UNIT_POWER_RATINGS = {
+    "Raider":      50,
+    "Interceptor": 60,
+    "Vanguard":    100,
+    "Warden":      80,
+    "Bombard":     150,
+    "Bastion":     200,
+}
 
 COMPOSITION_SKEW_THRESHOLD = 0.70
 COMPOSITION_SHIFT_MAGNITUDE = 0.15
@@ -964,12 +973,36 @@ OWNERSHIP_TENSION_COEFF  = 0.15
 
 FAIRNESS_MAX_RETRIES = 5
 
-# Per-node-type gradient intensity and radius (chokepoint, staging, vantage, hazard_zone_anchor)
-GRADIENT_CHOKEPOINT_INTENSITY   = 0.85
-GRADIENT_CHOKEPOINT_RADIUS      = 600.0
-GRADIENT_STAGING_INTENSITY      = 0.60
-GRADIENT_STAGING_RADIUS         = 800.0
-GRADIENT_VANTAGE_INTENSITY      = 0.90
-GRADIENT_VANTAGE_RADIUS         = 700.0
-GRADIENT_HAZARD_INTENSITY       = 0.75
-GRADIENT_HAZARD_RADIUS          = 500.0
+# Per-node-type gradient intensity and radius
+GRADIENT_CHOKEPOINT_INTENSITY      = 0.85
+GRADIENT_CHOKEPOINT_RADIUS         = 600.0
+GRADIENT_STAGING_INTENSITY         = 0.60
+GRADIENT_STAGING_RADIUS            = 800.0
+GRADIENT_VANTAGE_INTENSITY         = 0.90
+GRADIENT_VANTAGE_RADIUS            = 700.0
+GRADIENT_HAZARD_INTENSITY          = 0.75
+GRADIENT_HAZARD_RADIUS             = 500.0
+# flank_route: mild obstacle + mild cover (hazardous but traversable)
+GRADIENT_FLANK_OBSTACLE_INTENSITY  = 0.35
+GRADIENT_FLANK_OBSTACLE_RADIUS     = 450.0
+GRADIENT_FLANK_COVER_INTENSITY     = 0.40
+GRADIENT_FLANK_COVER_RADIUS        = 450.0
+
+# Layer accessibility masks
+LAYER_COUNT        = 5
+LAYER_MASK_RADIUS  = 600.0   # blocking influence radius per restricting zone
+LAYER_MASK_INTENSITY = 1.0   # always blocks — no partial coverage
+
+# Simulation flavoring — region state → gradient intensity deltas
+# Each coefficient is the maximum signed contribution from that field at extremes.
+# stability (0-1):    instability = 1 - stability
+# capacity  (0-1):    used directly
+# economy, tension, military, population (0-100): normalised to 0-1 internally
+FLAVOR_STABILITY_SI_COEFF     = 0.15   # instability → +sensor_interference
+FLAVOR_STABILITY_COV_COEFF    = 0.10   # instability → +cover_density
+FLAVOR_CAPACITY_OBS_COEFF     = 0.12   # high capacity → -obstacle_density
+FLAVOR_ECONOMY_OBS_COEFF      = 0.10   # high economy → -obstacle_density
+FLAVOR_TENSION_COV_COEFF      = 0.12   # high tension → +cover_density
+FLAVOR_MILITARY_OBS_COEFF     = 0.10   # high military → +obstacle_density
+FLAVOR_POPULATION_SCALE_COEFF = 0.08   # population above/below midpoint → scales all density
+FLAVOR_MAX_DELTA              = 0.20   # per-property absolute delta cap

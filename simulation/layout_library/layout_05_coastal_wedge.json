@@ -37,7 +37,7 @@
     {
       "zone_id": "inland_approach",
       "position_ratio": [0.72, 0.48],
-      "node_type": "transit",
+      "node_type": "flank_route",
       "properties": {"terrain": "open_ground"}
     },
     {
@@ -67,7 +67,7 @@
   ],
   "edges": [
     {"from_zone": "staging_southeast",  "to_zone": "beach_approach",      "edge_type": "path"},
-    {"from_zone": "staging_southeast",  "to_zone": "inland_approach",     "edge_type": "path"},
+    {"from_zone": "staging_southeast",  "to_zone": "inland_approach",     "edge_type": "flank"},
     {"from_zone": "beach_approach",     "to_zone": "hazard_surf_zone",    "edge_type": "restricted"},
     {"from_zone": "beach_approach",     "to_zone": "choke_seawall",       "edge_type": "path"},
     {"from_zone": "choke_seawall",      "to_zone": "cliff_vantage",       "edge_type": "restricted"},

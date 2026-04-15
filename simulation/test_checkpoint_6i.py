@@ -4,7 +4,6 @@ from unit import UnitStore, FIELD_X, FIELD_Y, FIELD_HP
 from tactical_engine import TacticalEngine
 from command import Command, CommandQueue, ReplayRecording, compute_state_hash
 from objectives import Objective
-from movement import apply_group_move
 from power_rating import compute_power_rating
 from test_maps import large_operational
 
@@ -61,9 +60,9 @@ def _build_scenario(seed=1):
     ]
 
     queue = CommandQueue()
-    queue.add(Command(tick=0, type="group_move", unit_ids=uids_a,
+    queue.add(Command(tick=0, type="attack_move", unit_ids=uids_a,
                       params={"target_x": 2000.0, "target_y": 2000.0}))
-    queue.add(Command(tick=0, type="group_move", unit_ids=uids_b,
+    queue.add(Command(tick=0, type="attack_move", unit_ids=uids_b,
                       params={"target_x": 2000.0, "target_y": 2000.0}))
     queue.add(Command(tick=200, type="activate_ability", unit_ids=[uids_a[0]],
                       params={}))
@@ -198,9 +197,9 @@ def test_state_hash_sampling():
     recording.capture_initial_state(store1, seed, "large_operational")
 
     queue1 = CommandQueue()
-    queue1.add(Command(tick=0, type="group_move", unit_ids=uids_a,
+    queue1.add(Command(tick=0, type="attack_move", unit_ids=uids_a,
                        params={"target_x": 2000.0, "target_y": 2000.0}))
-    queue1.add(Command(tick=0, type="group_move", unit_ids=uids_b,
+    queue1.add(Command(tick=0, type="attack_move", unit_ids=uids_b,
                        params={"target_x": 2000.0, "target_y": 2000.0}))
     for cmd in queue1.all_commands():
         recording.record_command(cmd)

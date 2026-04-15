@@ -6,7 +6,7 @@ L16: p95 full tick time < 50ms.
 import math
 import random
 import time
-import tracemalloc
+import resource
 import config
 from unit import UnitStore, FIELD_X, FIELD_Y
 from damage import resolve_damage, update_targeting
@@ -77,13 +77,11 @@ def run():
     t_fog       = []
     t_total     = []
 
-    tracemalloc.start()
-
     for tick in range(TICKS):
         t0 = time.perf_counter()
 
         ts = time.perf_counter(); process_commands(queue, store, tick);             t_commands.append((time.perf_counter() - ts) * 1000)
-        ts = time.perf_counter(); update_targeting(store, tmap, sim_rng, tick=tick); t_targeting.append((time.perf_counter() - ts) * 1000)
+        ts = time.perf_counter(); update_targeting(store, tmap, sim_rng);            t_targeting.append((time.perf_counter() - ts) * 1000)
         ts = time.perf_counter(); update_movement(store, tmap, DT);                t_movement.append((time.perf_counter() - ts) * 1000)
         ts = time.perf_counter(); deaths, ks = resolve_damage(store, tmap, DT);   t_damage.append((time.perf_counter() - ts) * 1000)
 
@@ -108,8 +106,7 @@ def run():
             print(f"  Combat resolved at tick {tick + 1}.")
             break
 
-    _, peak_mem = tracemalloc.get_traced_memory()
-    tracemalloc.stop()
+    peak_mem = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
 
     def stats(times):
         s = sorted(times)

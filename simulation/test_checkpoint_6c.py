@@ -3,7 +3,7 @@ import config
 from unit import UnitStore, FIELD_X, FIELD_Y, FIELD_HP, FIELD_MAX_HP
 from power_rating import compute_power_rating
 from tactical_engine import TacticalEngine
-from movement import apply_group_move
+from command import Command, CommandQueue, process_commands
 from test_maps import open_field
 
 FACTION_A = 0
@@ -65,8 +65,11 @@ def run_matchup(cat_a, cat_b, seed):
     uids_a = build_force(store, cat_a, FACTION_A, 1700.0, 1850.0, rng)
     uids_b = build_force(store, cat_b, FACTION_B, 2100.0, 1850.0, rng)
 
-    apply_group_move(store, uids_a, 2000.0, 2000.0)
-    apply_group_move(store, uids_b, 2000.0, 2000.0)
+    queue = CommandQueue()
+    queue.add(Command(tick=0, type="attack_move", unit_ids=uids_a,
+                      params={"target_x": 2000.0, "target_y": 2000.0}))
+    queue.add(Command(tick=0, type="attack_move", unit_ids=uids_b,
+                      params={"target_x": 2000.0, "target_y": 2000.0}))
 
     power_a = force_power(store, uids_a)
     power_b = force_power(store, uids_b)
@@ -74,6 +77,7 @@ def run_matchup(cat_a, cat_b, seed):
     initial_count_b = len(uids_b)
 
     engine = TacticalEngine(tmap, store)
+    engine.command_queue = queue
     engine.run(MAX_TICKS)
 
     winner = engine.get_winner()

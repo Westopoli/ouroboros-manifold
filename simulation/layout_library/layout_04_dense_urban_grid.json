@@ -41,6 +41,12 @@
       "properties": {"width_hint": "narrow", "feature": "gate"}
     },
     {
+      "zone_id": "flank_route_alley",
+      "position_ratio": [0.12, 0.60],
+      "node_type": "flank_route",
+      "properties": {"feature": "back_alley"}
+    },
+    {
       "zone_id": "block_nw",
       "position_ratio": [0.25, 0.38],
       "node_type": "transit",
@@ -78,19 +84,21 @@
     }
   ],
   "edges": [
-    {"from_zone": "staging_south",       "to_zone": "block_sw",            "edge_type": "path"},
-    {"from_zone": "staging_south",       "to_zone": "block_se",            "edge_type": "path"},
-    {"from_zone": "staging_south",       "to_zone": "choke_central_square","edge_type": "path"},
-    {"from_zone": "block_sw",            "to_zone": "choke_west_gate",     "edge_type": "path"},
-    {"from_zone": "block_se",            "to_zone": "choke_east_gate",     "edge_type": "path"},
-    {"from_zone": "choke_west_gate",     "to_zone": "block_nw",            "edge_type": "path"},
-    {"from_zone": "choke_central_square","to_zone": "hazard_rubble",       "edge_type": "path"},
-    {"from_zone": "choke_east_gate",     "to_zone": "block_ne",            "edge_type": "path"},
-    {"from_zone": "block_nw",            "to_zone": "hazard_rubble",       "edge_type": "flank"},
-    {"from_zone": "block_ne",            "to_zone": "hazard_rubble",       "edge_type": "flank"},
-    {"from_zone": "hazard_rubble",       "to_zone": "reinforcement_north", "edge_type": "path"},
-    {"from_zone": "reinforcement_north", "to_zone": "objective_citadel",   "edge_type": "path"},
-    {"from_zone": "spawn_enemy",         "to_zone": "objective_citadel",   "edge_type": "path"}
+    {"from_zone": "staging_south",       "to_zone": "block_sw",             "edge_type": "path"},
+    {"from_zone": "staging_south",       "to_zone": "block_se",             "edge_type": "path"},
+    {"from_zone": "staging_south",       "to_zone": "choke_central_square", "edge_type": "path"},
+    {"from_zone": "staging_south",       "to_zone": "flank_route_alley",    "edge_type": "flank"},
+    {"from_zone": "block_sw",            "to_zone": "choke_west_gate",      "edge_type": "path"},
+    {"from_zone": "block_se",            "to_zone": "choke_east_gate",      "edge_type": "path"},
+    {"from_zone": "choke_west_gate",     "to_zone": "block_nw",             "edge_type": "path"},
+    {"from_zone": "choke_central_square","to_zone": "hazard_rubble",        "edge_type": "path"},
+    {"from_zone": "choke_east_gate",     "to_zone": "block_ne",             "edge_type": "path"},
+    {"from_zone": "flank_route_alley",   "to_zone": "block_nw",             "edge_type": "flank"},
+    {"from_zone": "block_nw",            "to_zone": "hazard_rubble",        "edge_type": "path"},
+    {"from_zone": "block_ne",            "to_zone": "hazard_rubble",        "edge_type": "path"},
+    {"from_zone": "hazard_rubble",       "to_zone": "reinforcement_north",  "edge_type": "path"},
+    {"from_zone": "reinforcement_north", "to_zone": "objective_citadel",    "edge_type": "path"},
+    {"from_zone": "spawn_enemy",         "to_zone": "objective_citadel",    "edge_type": "path"}
   ],
   "drift_paths": []
 }

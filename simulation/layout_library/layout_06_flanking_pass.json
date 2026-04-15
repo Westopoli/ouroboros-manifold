@@ -37,13 +37,13 @@
     {
       "zone_id": "flank_west_trail",
       "position_ratio": [0.15, 0.48],
-      "node_type": "transit",
+      "node_type": "flank_route",
       "properties": {"terrain": "mountain_trail"}
     },
     {
       "zone_id": "flank_east_trail",
       "position_ratio": [0.85, 0.48],
-      "node_type": "transit",
+      "node_type": "flank_route",
       "properties": {"terrain": "mountain_trail"}
     },
     {

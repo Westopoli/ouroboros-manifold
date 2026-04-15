@@ -54,6 +54,7 @@ Do NOT read `bible_missions.md`, `bible_antagonist.md`, or `bible_chronicle.md` 
 - Primitives: `count(node_type) >= N`, `count(edge_type) >= N`, `has_zone_with_property(...)`, `layer_accessibility_variety >= N`; composite operators (`all_of`, `any_of`, `not`).
 - Full filter definitions for 4 prototype archetypes (Defensive Stand, Assault, Multi-Front Defense, Counterinsurgency) from `bible_missions.md` map character prose. Stubs for other 6 archetypes (refined in 7.5).
 - `evaluate_filter(filter_spec, layout_spec) → bool`, `matching_layouts(archetype, layout_library)`.
+- **Implementation note (Checkpoint B/C audit):** `flank_route` is a spine **node type** (per `bible_world.md` — one of the 10 vocabulary types), not only an edge type. Layout nodes exclusively on flank approaches must be typed `flank_route`, not `transit`. The `defensive_stand` and `assault` filters both require `count_zone_type("flank_route") >= 1` — enforcing the bible rule "generation rules require at least one flank route per chokepoint to prevent pure-grind maps." Multi-Front Defense is exempt: interior lines between corridors serve the flanking function. `layout_08_elevated_strongpoint` carries only the `multi_front_defense` tag for the same reason.
 - **Per-archetype fairness target profiles** (see "Archetype-Aware Fairness" subsection below). Stored as a `FairnessTargetProfile` per archetype alongside its compatibility filter. Same authoring surface: 4 prototype archetypes get intentional profiles in Stage 7; other 6 use a symmetric default (`1.0 ± 0.15` on every metric) until their 7.5 scripts pin their actual intent.
 
 **`layout_instantiator.py`** — `LayoutSpec` + canvas size + seed → concrete spine (list of `SpineNode` with absolute positions + edges with node IDs).
@@ -131,7 +132,7 @@ def generate_map(generator_input: GeneratorInput, layout_library: dict) -> MapGe
 
 ```python
 CANVAS_SIZES = {"small": (4000, 4000), "medium": (8000, 8000), "large": (12000, 12000)}
-STRUCTURE_COUNT_RANGES = {"small": (1, 3), "medium": (2, 5), "large": (3, 7)}  # S7-4 tuning
+STRUCTURE_COUNT_RANGES = {"small": (2, 4), "medium": (3, 6), "large": (4, 8)}  # S7-4 tuning; updated to match bible_combat.md guidance
 LAYOUT_JITTER_PERCENT = 0.03
 REINFORCEMENT_CAPTURE_RADIUS = 300
 REINFORCEMENT_CAPTURE_DURATION_SEC = 10.0

@@ -1,7 +1,7 @@
 import math
 import config
 from unit import UnitStore, FIELD_X, FIELD_Y, FIELD_SPEED
-from movement import update_movement, apply_group_move, apply_fast_move
+from movement import update_movement, apply_group_move
 from test_maps import open_field
 
 
@@ -149,7 +149,6 @@ def run():
 
     print()
     test_group_move()
-    test_fast_move()
     print("\nCheckpoint 6B complete.")
 
 
@@ -204,64 +203,6 @@ def test_group_move():
     print(f"\n  Average distance: {avg_dist:.1f} wu")
     print(f"  Max spread: {max_spread:.1f} wu (cohesion {'OK' if max_spread < expected_dist * 0.10 else 'WARN'})")
     print(f"  Overall: {'PASS' if all_ok else 'FAIL'}")
-    print()
-
-
-def test_fast_move():
-    print("=" * 60)
-    print("FAST MOVE — Individual Speed Test")
-    print("=" * 60)
-
-    tmap = open_field()
-    store = UnitStore()
-    for i, ut in enumerate(UNIT_TYPES_SIDE_A):
-        x = 200.0 + i * 80.0
-        y = 200.0 + i * 40.0
-        store.spawn(ut, FACTION_A, x, y)
-
-    faction_a_ids = list(range(10))
-    target = (2000.0, 2000.0)
-    apply_fast_move(store, faction_a_ids, target[0], target[1])
-
-    start_positions = {}
-    for uid in faction_a_ids:
-        start_positions[uid] = (store.data[uid, FIELD_X], store.data[uid, FIELD_Y])
-
-    for _ in range(100):
-        update_movement(store, tmap, DT)
-
-    print(f"\n    {'ID':>3} {'Type':<14} {'Speed':>6} {'Dist Moved':>10} {'Expected':>10} {'Ratio':>7} {'Status':>7}")
-    print(f"    {'---':>3} {'-'*14:<14} {'-'*6:>6} {'-'*10:>10} {'-'*10:>10} {'-'*7:>7} {'-'*7:>7}")
-
-    dist_by_type = {}
-    all_ok = True
-    for uid in faction_a_ids:
-        sx, sy = start_positions[uid]
-        cx, cy = store.data[uid, FIELD_X], store.data[uid, FIELD_Y]
-        dist = math.sqrt((cx - sx) ** 2 + (cy - sy) ** 2)
-        spd = store.data[uid, FIELD_SPEED]
-        expected = spd * DT * 100
-        ratio = dist / expected if expected > 0 else 0
-        ok = 0.85 <= ratio <= 1.15
-        if not ok:
-            all_ok = False
-        status = "OK" if ok else "WARN"
-        ut = store.unit_type[uid]
-        if ut not in dist_by_type:
-            dist_by_type[ut] = []
-        dist_by_type[ut].append(dist)
-        print(f"    {uid:>3} {ut:<14} {spd:>6.0f} {dist:>10.1f} {expected:>10.1f} {ratio:>7.3f} {status:>7}")
-
-    raider_avg = sum(dist_by_type["Raider"]) / len(dist_by_type["Raider"])
-    bastion_avg = sum(dist_by_type["Bastion"]) / len(dist_by_type["Bastion"])
-    speed_ratio = raider_avg / bastion_avg if bastion_avg > 0 else 0
-    expected_ratio = 150.0 / 40.0  # 3.75
-    ratio_ok = abs(speed_ratio - expected_ratio) / expected_ratio < 0.15
-
-    print(f"\n  Raider avg distance:  {raider_avg:.1f} wu")
-    print(f"  Bastion avg distance: {bastion_avg:.1f} wu")
-    print(f"  Speed ratio: {speed_ratio:.2f} (expected ~{expected_ratio:.2f}, {'OK' if ratio_ok else 'WARN'})")
-    print(f"  Overall: {'PASS' if all_ok and ratio_ok else 'FAIL'}")
     print()
 
 

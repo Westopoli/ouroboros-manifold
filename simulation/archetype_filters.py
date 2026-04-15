@@ -174,12 +174,14 @@ ARCHETYPE_FILTERS: dict[str, dict] = {
 
     # Defensible terrain. Chokepoints between enemy approach vectors and objective.
     # Multiple approach routes. Player starts in position; enemy approaches.
+    # Bible rule: "at least one flank route per chokepoint to prevent pure-grind maps."
     "defensive_stand": _all(
         _zone_gte("staging", 1),
         _zone_gte("chokepoint", 1),
         _zone_gte("spawn_point", 1),
         _zone_gte("objective", 1),
         _edge_gte("path", 3),          # multiple approach routes
+        _zone_gte("flank_route", 1),   # bible: generation rules require at least one flank route
     ),
 
     # Enemy territory. Fortified chokepoints. Multiple approach vectors with
@@ -189,7 +191,7 @@ ARCHETYPE_FILTERS: dict[str, dict] = {
         _zone_gte("chokepoint", 1),
         _zone_gte("spawn_point", 1),
         _zone_gte("objective", 1),
-        _edge_gte("flank", 1),         # at least one flanking approach vector
+        _zone_gte("flank_route", 1),   # multiple approach vectors, one must be a flank route node
     ),
 
     # Multiple enemy approach vectors from different directions. Player central.

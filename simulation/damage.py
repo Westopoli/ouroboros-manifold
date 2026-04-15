@@ -60,7 +60,67 @@ def resolve_damage(store: UnitStore, tactical_map, dt: float):
     for dead_uid in deaths:
         store.kill(dead_uid)
 
+    _apply_return_fire(store, pending)
+
     return deaths, kill_sources
+
+
+_RETURN_FIRE_FLEE_DIST = 200.0  # mirrors _ATTACK_MOVE_LEASH_SQ leash radius in movement.py
+
+
+def _apply_return_fire(store: UnitStore, pending: dict) -> None:
+    for target_uid, hits in pending.items():
+        if not store.alive[target_uid]:
+            continue
+        if store.plain_moving[target_uid]:
+            continue
+        if store.auto_engage_target[target_uid] >= 0:
+            continue
+
+        tx = store.data[target_uid, FIELD_X]
+        ty = store.data[target_uid, FIELD_Y]
+        my_layer = store.data[target_uid, FIELD_LAYER]
+        atk_r_sq = store.data[target_uid, FIELD_ATTACK_RANGE] ** 2
+
+        same_layer_uid = -1
+        cross_layer_uid = -1
+        cross_dx = cross_dy = 0.0
+
+        for attacker_uid, _dmg in hits:
+            if not store.alive[attacker_uid]:
+                continue
+            if store.data[attacker_uid, FIELD_LAYER] == my_layer:
+                if same_layer_uid < 0:
+                    same_layer_uid = attacker_uid
+            else:
+                if cross_layer_uid < 0:
+                    cross_layer_uid = attacker_uid
+                    cross_dx = tx - store.data[attacker_uid, FIELD_X]
+                    cross_dy = ty - store.data[attacker_uid, FIELD_Y]
+
+        if same_layer_uid >= 0:
+            ax = store.data[same_layer_uid, FIELD_X]
+            ay = store.data[same_layer_uid, FIELD_Y]
+            dx = ax - tx
+            dy = ay - ty
+            if dx * dx + dy * dy <= atk_r_sq:
+                store.auto_engage_target[target_uid] = same_layer_uid
+            else:
+                store.attack_moving[target_uid] = True
+                store.engage_anchor_x[target_uid] = tx
+                store.engage_anchor_y[target_uid] = ty
+                store.engage_anchor_set[target_uid] = True
+                store.auto_engage_target[target_uid] = same_layer_uid
+                store.set_move_target(target_uid, ax, ay)
+        elif cross_layer_uid >= 0:
+            length = math.sqrt(cross_dx * cross_dx + cross_dy * cross_dy)
+            if length > 1e-6:
+                nx, ny = cross_dx / length, cross_dy / length
+            else:
+                nx, ny = 1.0, 0.0
+            store.set_move_target(target_uid,
+                                  tx + nx * _RETURN_FIRE_FLEE_DIST,
+                                  ty + ny * _RETURN_FIRE_FLEE_DIST)
 
 
 def _accumulate_single(store, attacker, target, base_dmg, attacker_cat, tactical_map, pending):
@@ -126,12 +186,18 @@ def _accumulate_aoe(store, attacker, primary_target, base_dmg, attacker_cat, aoe
         total_dealt += dmg
 
 
-def update_targeting(store: UnitStore, tmap, rng=None, tick=0):
+def update_targeting(store: UnitStore, tmap, rng=None):
     active = store.active_ids()
 
+    # Rebuild both hashes each tick.
+    # target_hash (small cells): attack-range ring search — fast early exit in dense combat.
+    # spatial_hash (large cells): sensor-pursuit full query — cheap at long range in sparse march.
+    tmap.target_hash.clear()
     tmap.spatial_hash.clear()
     for uid in active:
-        tmap.spatial_hash.insert(uid, store.data[uid, FIELD_X], store.data[uid, FIELD_Y])
+        x, y = store.data[uid, FIELD_X], store.data[uid, FIELD_Y]
+        tmap.target_hash.insert(uid, x, y)
+        tmap.spatial_hash.insert(uid, x, y)
 
     for uid in active:
         if store.plain_moving[uid]:   # plain move is non-combat: skip targeting entirely
@@ -152,48 +218,41 @@ def update_targeting(store: UnitStore, tmap, rng=None, tick=0):
             if dx * dx + dy * dy <= atk_r_sq:
                 continue
 
-        # Re-targeting stagger: spread queries across multiple ticks.
-        # Siege (range > 600) every 5 ticks; all others every 2 ticks.
-        # Stagger by uid so units don't all skip the same ticks.
-        stagger = 5 if atk_range > 600 else 2
-        if tick % stagger != uid % stagger:
-            continue
+        # Outward ring search in target_hash (small cells) — break on first valid hit.
+        # Yields unit IDs in ring order with no per-ring allocations; callers just break.
+        # See tactical_map.py query_outward for ring traversal order.
+        found_atk = False
+        for other in tmap.target_hash.query_outward(mx, my_, atk_range):
+            if store.faction[other] == my_faction: continue
+            if store.data[other, FIELD_LAYER] != my_layer: continue
+            dx = store.data[other, FIELD_X] - mx
+            dy = store.data[other, FIELD_Y] - my_
+            if dx * dx + dy * dy <= atk_r_sq:
+                store.auto_engage_target[uid] = other
+                found_atk = True
+                break
 
-        # Single query at max(attack_range, sensor_radius) covers both buckets.
-        # Attack-move pursuit: if the unit is attack_moving and found nothing in
-        # attack range, walk toward the closest enemy in sensor range instead.
-        # Fires during march and after slot arrival. See movement.py apply_group_move.
-        sensor_r    = store.data[uid, FIELD_SENSOR_RADIUS] if store.attack_moving[uid] else 0.0
-        query_r     = atk_range if sensor_r <= atk_range else sensor_r
-        sensor_r_sq = sensor_r * sensor_r
-
-        best_atk_d_sq    = float("inf")
-        best_atk_uid     = -1
-        best_sensor_d_sq = float("inf")
-        best_sensor_uid  = -1
-
-        for other in tmap.spatial_hash.query(mx, my_, query_r):
-            if store.faction[other] == my_faction:
-                continue
-            if store.data[other, FIELD_LAYER] != my_layer:
-                continue
-            dx   = store.data[other, FIELD_X] - mx
-            dy   = store.data[other, FIELD_Y] - my_
-            d_sq = dx * dx + dy * dy
-            if d_sq <= atk_r_sq:
-                if d_sq < best_atk_d_sq:
-                    best_atk_d_sq = d_sq
-                    best_atk_uid  = other
-            elif sensor_r > 0 and d_sq <= sensor_r_sq:
-                if d_sq < best_sensor_d_sq:
-                    best_sensor_d_sq = d_sq
-                    best_sensor_uid  = other
-
-        if best_atk_uid >= 0:
-            store.auto_engage_target[uid] = best_atk_uid
-        else:
+        if not found_atk:
             store.auto_engage_target[uid] = -1
-            if best_sensor_uid >= 0:
-                store.set_move_target(uid,
-                                      store.data[best_sensor_uid, FIELD_X],
-                                      store.data[best_sensor_uid, FIELD_Y])
+            # Attack-move pursuit: walk toward the nearest visible enemy if none in range.
+            # Uses spatial_hash (large cells) — cheap at long sensor ranges during march.
+            # See movement.py apply_group_move — attack_moving flag set by attack_move command.
+            if store.attack_moving[uid]:
+                sensor_r = store.data[uid, FIELD_SENSOR_RADIUS]
+                if sensor_r > atk_range:
+                    sensor_r_sq = sensor_r * sensor_r
+                    best_d_sq = float("inf")
+                    best_uid  = -1
+                    for other in tmap.spatial_hash.query(mx, my_, sensor_r):
+                        if store.faction[other] == my_faction: continue
+                        if store.data[other, FIELD_LAYER] != my_layer: continue
+                        dx = store.data[other, FIELD_X] - mx
+                        dy = store.data[other, FIELD_Y] - my_
+                        d_sq = dx * dx + dy * dy
+                        if d_sq <= sensor_r_sq and d_sq < best_d_sq:
+                            best_d_sq = d_sq
+                            best_uid  = other
+                    if best_uid >= 0:
+                        store.set_move_target(uid,
+                                              store.data[best_uid, FIELD_X],
+                                              store.data[best_uid, FIELD_Y])

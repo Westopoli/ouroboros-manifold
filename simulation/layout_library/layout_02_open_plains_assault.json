@@ -19,13 +19,13 @@
     {
       "zone_id": "advance_left",
       "position_ratio": [0.18, 0.68],
-      "node_type": "transit",
+      "node_type": "flank_route",
       "properties": {}
     },
     {
       "zone_id": "advance_right",
       "position_ratio": [0.82, 0.68],
-      "node_type": "transit",
+      "node_type": "flank_route",
       "properties": {}
     },
     {
@@ -37,13 +37,13 @@
     {
       "zone_id": "flank_left_exposed",
       "position_ratio": [0.12, 0.44],
-      "node_type": "transit",
+      "node_type": "flank_route",
       "properties": {"exposed": true}
     },
     {
       "zone_id": "flank_right_exposed",
       "position_ratio": [0.88, 0.44],
-      "node_type": "transit",
+      "node_type": "flank_route",
       "properties": {"exposed": true}
     },
     {

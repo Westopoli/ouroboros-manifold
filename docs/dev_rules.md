@@ -174,6 +174,20 @@ surely as a subsystem that returns wrong values.
 This rule exists because Stage 6J replaced steering with ORCA/RVO under
 a correctness-only test and the resulting ~100x regression lived in the
 codebase across multiple subsequent checkpoints before being detected.
+
+### Do not run profiling tools inside the timing hot path
+
+`tracemalloc`, `cProfile`, `memory_profiler`, and similar instrumentation
+tools intercept every allocation or call. Running them across the timed
+tick loop inflates measurements by 3–10× and makes performance tests
+meaningless. This was discovered in Stage 6K: `tracemalloc.start()` before
+the 3000-tick loop caused the benchmark to report 55ms/tick when the real
+cost was 11ms/tick — a 5× overcount that appeared as a budget failure.
+
+**Rule:** memory or call profiling snapshots must be taken *outside* the
+timed section (before the loop begins or after it ends). Never wrap the
+hot path in a profiler to get a single number — run the timed loop clean,
+then run a separate profiling pass if needed.
 ---
 
 ## Rules for Claude Code Sessions

@@ -2,7 +2,7 @@ import numpy as np
 import config
 
 
-MAX_UNITS = 200
+MAX_UNITS = 400
 
 FIELD_X = 0
 FIELD_Y = 1

@@ -4,7 +4,6 @@ import config
 from unit import UnitStore, FIELD_X, FIELD_Y, FIELD_HP, FIELD_ATTACK_RANGE, FIELD_LAYER
 from tactical_engine import TacticalEngine
 from command import Command, CommandQueue
-from movement import apply_group_move
 from power_rating import compute_power_rating
 from test_maps import chokepoint
 
@@ -100,14 +99,14 @@ def _run_engagement(seed, flank, verbose=False):
 
     queue = CommandQueue()
     if flank:
-        queue.add(Command(tick=0, type="group_move", unit_ids=strike_uids,
+        queue.add(Command(tick=0, type="attack_move", unit_ids=strike_uids,
                           params={"target_x": 2000.0, "target_y": 1800.0}))
-        queue.add(Command(tick=150, type="fast_move", unit_ids=strike_uids,
+        queue.add(Command(tick=150, type="move", unit_ids=strike_uids,
                           params={"target_x": 2000.0, "target_y": 3200.0}))
-        queue.add(Command(tick=300, type="group_move", unit_ids=strike_uids,
+        queue.add(Command(tick=300, type="attack_move", unit_ids=strike_uids,
                           params={"target_x": 2000.0, "target_y": 2500.0}))
     else:
-        queue.add(Command(tick=0, type="group_move", unit_ids=strike_uids,
+        queue.add(Command(tick=0, type="attack_move", unit_ids=strike_uids,
                           params={"target_x": 2000.0, "target_y": 2500.0}))
 
     engine = TacticalEngine(tmap, store, seed=seed)

@@ -208,6 +208,9 @@ def _ensure_navmesh(tactical_map):
         return None
     if not hasattr(tactical_map, "_navmesh"):
         tactical_map._navmesh = Navmesh.from_tactical_map(tactical_map)
+        tactical_map._navmesh_generation_count = (
+            getattr(tactical_map, "_navmesh_generation_count", 0) + 1
+        )
     return tactical_map._navmesh
 
 
@@ -628,7 +631,3 @@ def apply_group_move(store, unit_ids, tx, ty, tactical_map=None):
     }
 
 
-def apply_fast_move(store: UnitStore, unit_ids, tx, ty):
-    for uid in unit_ids:
-        store.set_move_target(uid, tx, ty)
-        store.clear_effective_speed(uid)

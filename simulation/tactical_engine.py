@@ -7,6 +7,8 @@ from ability import update_abilities, resolve_barrage
 from fog_of_war import compute_visibility, update_fog_timers
 from command import CommandQueue, process_commands, compute_state_hash
 from objectives import Objective, update_objectives, check_terminal, build_mission_result
+from reinforcement import step_reinforcement
+from spine_drift import update_drifting_nodes
 
 
 class TacticalEngine:
@@ -25,10 +27,12 @@ class TacticalEngine:
         self.archetype = "defensive_stand"
         self.commander_uid = None
         self.event_log = []
+        self.reinforcement_structures = []
+        self.enable_reinforcement = True
 
     def step(self):
         process_commands(self.command_queue, self.store, self.tick)
-        update_targeting(self.store, self.map, self.rng, tick=self.tick)  # before movement so attack_move sees current targets
+        update_targeting(self.store, self.map, self.rng)  # before movement so attack_move sees current targets
         update_movement(self.store, self.map, self.dt)
         deaths, kill_sources = resolve_damage(self.store, self.map, self.dt)
 
@@ -39,6 +43,12 @@ class TacticalEngine:
             kill_sources.update(b_kills)
 
         update_fog_timers(self.store)
+
+        if self.map.drifting_nodes:
+            update_drifting_nodes(self, self.tick)
+
+        if self.enable_reinforcement and self.reinforcement_structures:
+            step_reinforcement(self, self.dt)
 
         if self.objectives:
             update_objectives(self.objectives, self.store, self.player_faction, self.tick)
