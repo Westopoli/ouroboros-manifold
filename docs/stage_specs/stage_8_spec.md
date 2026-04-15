@@ -19,14 +19,13 @@ These bible edits landed during the Stage 8 write-up session; they do not block 
 3. **`bible_combat.md` L235 and L456** — "5-command protocol" / "same 5 commands" corrected to "4-command protocol" / "same 4 commands." The 5×3 compositional grid in the bible belongs to the **enemy macro behavior system**, not player commands.
 4. **Hub §15 (Simulation State Journaling and Rollback)** — rewritten to remove rewind from Stage 8 scope. Stage 8 ships saves only; rewind is a post-launch feature with its own design sketch (pre-mission-selection snapshot boundary, 5-mission minimum gate, mission-generator re-run on rewind, linear-default + fork, chronicle erased on rewind).
 5. **Onboarding rare-mark rule** — `game_bible.md:155` and `bible_missions.md:301` rewritten: the "up to two markable as rare" cap was removed. The rule is now "any subset may be marked rare, provided at least one archetype remains unmarked." The interaction is binary per archetype (rare or default); no sliders or gradation.
+6. **`bible_combat.md` §"Mid-Mission HUD Layout"** — new section added between "Camera and Player View" and "Moving Battlefields." Captures the IGoP-inspired HUD layout adapted for Ouroboros. The hub Stage 8 paragraph's stale "up to 2 markable as rare" phrasing and stale "rewind-with-re-seed" mentions in "Beyond Stage 9" were fixed in the same pass.
 
-## Gating Open Design Questions — READ BEFORE IMPLEMENTATION
+## Gating Open Design Questions — ALL RESOLVED
 
-> **This section must reach zero entries before implementation begins.** Each open item is a design decision (per `design_rules.md` classification — not an engineering default, not a tuning value) and must be resolved in a Claude.ai brainstorming session, captured into the bible/spec, and deleted from this list.
+All Stage 8 design questions are now captured. The list below is preserved for audit; each entry is marked with its resolution. Implementation is unblocked on the design-question front.
 
-Per `docs/design_questions/stage_7_8_design.md`, these are still [OPEN]:
-
-- **S8-3 — Mid-mission UI information density.** Minimap details, selection info panel, objective tracker, reinforcement-structure status display, enemy composition hints. The ability bar's cooldown-only behavior is specified in the bible; the rest of the HUD is not. Affects what the tactical HUD scene must contain.
+- **S8-3 — Mid-mission UI information density.** RESOLVED (Q5): IGoP-inspired layout with Ouroboros substitutions. See `bible_combat.md` §"Mid-Mission HUD Layout." Reference screenshots at `docs/design_questions/igop_hud_reference_alpha.png` and `igop_hud_reference_beta.png`.
 
 ### Captured decisions the spec relies on (no change needed)
 
@@ -36,6 +35,7 @@ Per `docs/design_questions/stage_7_8_design.md`, these are still [OPEN]:
 - **Onboarding in Stage 8** (Q1): resolved Option A. Bible edited.
 - **Player command count = 4** (Q2): resolved. Bible edited.
 - **Onboarding interaction model** (Q4 / S8-2): binary per-archetype "mark as rare" — any subset allowed except all 10. Difficulty is a three-button Easy / Medium / Hard selector. Bible edited.
+- **Mid-mission HUD layout** (Q5 / S8-3): IGoP-inspired clustered bottom bar, Ouroboros-specific reinforcement-structure panel replacing IGoP's build grid, layer selector above commander portrait. See `bible_combat.md` §"Mid-Mission HUD Layout." Bible edited.
 - **S75-* / S7-*** resolutions as documented in the design doc.
 
 ## Bible References
@@ -49,7 +49,7 @@ Do NOT read `bible_chronicle.md`, `bible_antagonist.md`, `bible_monetization.md`
 
 ## Cross-Stage References
 
-- **Stages 1–4** — the save writer serializes `Region`, `Faction`, coherence-ledger, diplomacy, technology, and lifecycle state. The persistence layer reads these; it does not mutate them at runtime. On rewind, the simulation is restored from a snapshot and advanced forward with a fresh RNG seed — the forward simulation uses the existing tick loop unchanged.
+- **Stages 1–4** — the save writer serializes `Region`, `Faction`, coherence-ledger, diplomacy, technology, and lifecycle state. The persistence layer reads these; it does not mutate them at runtime. Forward simulation uses the existing tick loop unchanged. Rewind is deferred post-launch; Stage 8 does not snapshot the sim for rollback.
 - **Stage 5** — coherence-ledger entries belong to the serialized simulation state. Chronicle entries from a discarded timeline are erased on linear rewind (S8-1c capture).
 - **Stage 5.5** — the mission generator's output (`MissionSetup`) is part of the per-mission tactical state. `MissionSetup` is serialized alongside the tactical engine's live state for quit-and-resume.
 - **Stage 6** — the tactical engine runs as a **standalone server process** in Stage 8. The engine code does not change; Stage 8 wraps `TacticalEngine` in a WebSocket server loop and a snapshot/delta serializer. All determinism properties from Stage 6 hold.
@@ -157,7 +157,7 @@ Maintains a small interpolation buffer (last 3 ticks) so the renderer can interp
 Children scenes:
 - `unit_renderer.gd` — per-unit sprite + layer indicator ring + selection halo.
 - `terrain_renderer.gd` — spine nodes, gradient-driven dressing (three tiers per §16), reinforcement structure markers with ownership color + HP bar + production timer.
-- `hud.tscn + .gd` — minimap (bottom-right), selection info panel, objective tracker, ability bar (cooldown-only per bible), reinforcement structure status list, **mid-mission HUD is GATED on S8-3**; Stage 8 ships minimap + selection info + ability bar + objective tracker; the density questions (enemy composition hints, reinforcement detail level) are placeholders.
+- `hud.tscn + .gd` — the IGoP-inspired HUD per `bible_combat.md` §"Mid-Mission HUD Layout." Top-left info column (objectives + event ticker), top-center banner channel, top-right clock + menu, bottom-center command cluster (selection panel + minimap + reinforcement-structure panel), bottom-center-right control-group tabs, bottom-right commander portrait, right-edge layer selector. Ability bar is cooldown-only (per bible §Abilities — Player-Activated Only). Event ticker content at launch is hardcoded to the beat set (capture / loss / rout / objective threshold); no polished authored content in Stage 8.
 - `input_router.gd` — keyboard + mouse → command packet. Handles box-select, click-select, right-click → `move` or `attack_move` (Shift modifier), `A`-then-click → `attack_move`, hotkey abilities, control groups (Ctrl+1..0 bind, 1..0 recall), tilde (`~`) all-army hotkey (auto-includes newly produced units per hub Stage 8 roadmap).
 
 **`scenes/debug_save_panel/debug_save_panel.tscn + .gd`** — temporary UI for Stage 8 testing. Lists slots, shows per-slot metadata (chapter number, last played, tactical-state presence), buttons for "save now," "quit (write tactical state)," "resume (load tactical state)," and "new slot." No rewind, no fork, no timeline view — those are post-launch. Retired when Stage 9's polished save-slot browser ships. The panel calls `TacticalBridge` which calls the Python persistence API over the same WebSocket channel (reuses the socket; does not open a second port).
@@ -360,3 +360,204 @@ No per-archetype weight field — the interaction is binary per S8-2. Unmarked a
   - `ENABLE_STAGE8_SOCKET` — disables the server; engine remains usable headless.
   - `ENABLE_STAGE8_PERSISTENCE` — disables save writing; game runs mission-to-mission in memory like Stage 7.
   - Default: both OFF at Checkpoint A; flipped ON as each checkpoint is proven.
+
+## Implementation Checkpoints
+
+Each checkpoint is a hard stop per `dev_rules.md` § Mandatory Checkpoints. Run test, show output, wait for Westley approval. Do not batch. Do not continue without explicit approval. Stage 8 has more checkpoints than prior stages because three loosely-coupled subsystems (server, renderer, persistence) compose here and each needs its own proof pass.
+
+### Checkpoint A — Socket Server Scaffold
+
+**Protected-file gate.** `socket_server.py` is protected per `CLAUDE.md`. First creation of this file requires Westley's explicit verbal approval before any code lands. No code until that approval.
+
+**Build:** `socket_server.py` bare skeleton — listens on `SOCKET_HOST:SOCKET_PORT`, accepts one client, echoes a single `{"type": "hello"}` packet on connection, disconnects cleanly. No engine wiring yet.
+
+**Test:** `test_socket_server.py` — start server in background, open a client, read hello packet, close.
+
+**Print:** Port, client address on connect, hello packet, disconnect reason.
+
+**Verify:** Clean start / stop / reconnect. No zombie sockets. No port conflicts on rerun.
+
+⛔ STOP.
+
+### Checkpoint B — Snapshot + Delta Wire Format Against a Headless Engine
+
+**Build:** `snapshot_serializer.py` with `full_snapshot(engine)` and `delta(engine, prev_state)`. `socket_server.py` wired to run a Stage 6 test map at 20 Hz, emitting one full snapshot on connect and deltas every tick.
+
+**Test:** `test_snapshot_serializer.py` — run 100 ticks against a hand-authored test map, capture emitted JSON, verify full snapshot matches engine state and deltas replay back into an identical state.
+
+**Print:** Snapshot size (bytes), delta size (bytes, min/avg/max over 100 ticks), per-tick serialization time, reconstruction check (PASS / FAIL).
+
+**Verify:** Deltas shrink relative to full snapshots by an order of magnitude. Reconstruction holds. No serialization failures on any engine tick.
+
+⛔ STOP.
+
+### Checkpoint C — Command Ingest + Loopback Control
+
+**Build:** `command_ingest.py`. Socket server ingests command packets from a test script playing the role of a client. Commands routed to the engine before `engine.step()`.
+
+**Test:** `test_command_ingest.py` — send each of the four combat commands + both layer commands against a running engine, assert the engine's unit state reflects each command one tick later. Send malformed packets; assert they are dropped without crashing.
+
+**Print:** Commands sent, commands accepted, commands dropped (with reason), engine state diff per command.
+
+**Verify:** All six valid command kinds round-trip. Every malformed-packet category (unknown kind, bad uid, missing field) is dropped cleanly with a gated debug log line.
+
+⛔ STOP.
+
+### Checkpoint D — Save Writer / Loader (Sim State + Onboarding)
+
+**Build:** `save_writer.py` + `save_loader.py` + `onboarding_store.py`. No Godot involvement; all tested headless.
+
+**Test:** `test_save_writer.py` + `test_save_loader.py` + `test_onboarding_store.py` — write a simulated playthrough's sim state to `slot_a`, load it back, assert equality. Write onboarding prefs with boundary cases (0 rare marks, 9 rare marks, attempted 10 rare marks — the last must be rejected). Delete slot, verify disk is clean.
+
+**Print:** File sizes, write / load times, round-trip equality check, rare-mark validation results.
+
+**Verify:** Round-trip is byte-identical (after JSON re-serialization) for a 10-chapter simulated slot. Onboarding validator rejects all-10 rare-mark payload. Deletion leaves no leftover files.
+
+⛔ STOP.
+
+### Checkpoint E — Tactical Mid-Mission Quit-and-Resume
+
+**Build:** `TacticalEngine.export_full_state()` + `restore_from_state()` accessors (additive, no logic change). `save_writer.write_tactical_state()` + `save_loader.load_tactical_state()` + `consume_tactical_state()`.
+
+**Test:** `test_stage8_integration.py::test_quit_resume` — run a Stage 6 mission to tick 500, export tactical state, write to disk, load, restore into a fresh engine, step 100 more ticks, compare the result tick-for-tick against an unbroken run of the same mission to tick 600.
+
+**Print:** Tick 500 unit count + checksum, tick 600 unit count + checksum (both branches), equality verdict. File path written, file path consumed (deleted).
+
+**Verify:** Quit-and-resume is tick-identical to an unbroken run. Tactical file is consumed on load.
+
+⛔ STOP.
+
+### Checkpoint F — Godot Client Connection + Snapshot Ingestion
+
+**Build:** Godot project scaffold (if not already present from a Stage 9 start). `autoload/tactical_bridge.gd` + `ws_client.gd`. A minimal `scenes/debug/debug_ws_test.tscn` that connects to the server and prints incoming snapshot metadata (tick number, unit count, structure count) to an on-screen label.
+
+**Test:** Start the server with a test mission, start Godot, verify label updates every tick.
+
+**Print:** On-screen: tick counter ticking at 20 Hz, unit count, structure count. Terminal (Godot side): connection state transitions.
+
+**Verify:** Connection establishes within 1 second. Tick counter advances smoothly at 20 Hz. Disconnect / reconnect works without crashing either side.
+
+⛔ STOP.
+
+### Checkpoint G — Unit + Terrain Rendering (No HUD Yet)
+
+**Build:** `scenes/tactical/tactical.tscn` with `unit_renderer.gd` + `terrain_renderer.gd`. Free-pan / free-zoom camera. Units drawn as simple placeholder sprites colored by faction. Terrain drawn from spine nodes + gradient heatmaps (debug visualization; not final art). Layer indicator rings beneath units per hub §16 tier 1.
+
+**Test:** Load a Stage 7 generated map, run 500 ticks, record screen.
+
+**Print:** Render frame time (p50, p95, p99), interpolation buffer depth over time, dropped-frame count.
+
+**Verify:** 60fps sustained across the full 500 ticks. Unit positions visibly interpolate between engine ticks (smooth, not stepped). Camera pan / zoom responsive. All 5 layers visible via indicator rings.
+
+⛔ STOP.
+
+### Checkpoint H — Command Input System
+
+**Build:** `input_router.gd`. Click-to-select, box-select, right-click → `move` (or `attack_move` with Shift), `A`-then-click → `attack_move`, `Ctrl+1..0` bind control group, `1..0` recall, `~` all-army hotkey, `Q`/`W`/`E`/`R`/`T` ability slots, `Tab` cycle active layer, modifier-held `1..5` → layer-preference-set, dedicated key → layer-hard-transfer.
+
+**Test:** Manual test matrix (one row per command × selection-size). `ws_input_sanitizer.gd` unit tests for malformed packet rejection.
+
+**Print:** Per command row: selection size, command sent, server ACK, engine-state verification (the unit actually moved / attacked / received ability).
+
+**Verify:** Every command in the matrix round-trips cleanly. Control groups persist across unit deaths (bindings auto-shrink when a bound unit dies). All-army hotkey auto-includes newly produced units per hub §Stage 8 entry.
+
+⛔ STOP.
+
+### Checkpoint I — HUD Panels (IGoP Layout)
+
+**Build:** `hud.tscn` + child scenes per `bible_combat.md` §"Mid-Mission HUD Layout." All panels at Stage 8 scope (no polished authored ticker content, no enemy composition, right sidebar empty).
+
+**Test:** Load a Stage 7 generated map with reinforcement structures, run a scripted mission where structures change ownership, objectives progress, forces route. Verify each HUD panel updates in response.
+
+**Print:** Per panel: update cadence, frame time contribution, event-ticker entry list over the mission.
+
+**Verify:** Layout matches reference screenshots. Ability bar shows cooldown rings only (no "ready" prompts). Reinforcement-structure panel lists only player-owned structures. Layer selector highlights active layer and responds to Tab / click. Event ticker shows hardcoded beats at the right moments (capture, loss, rout, threshold).
+
+⛔ STOP.
+
+### Checkpoint J — Onboarding Scene + Opening Time Jump
+
+**Build:** `scenes/onboarding/onboarding.tscn` per S8-2 resolution. Three-button difficulty selector. 10-row rare-mark toggle list. Confirm button disabled until at least one archetype is unmarked (inline message). On confirm: write onboarding prefs, trigger opening time jump (20–50 years), then hand off to the recon scene for the first mission.
+
+**Test:** Click through onboarding with adversarial inputs — 0 marks, 5 marks, 9 marks, 10 marks (blocked). Verify payload on disk matches selections. Verify opening time jump runs and produces a valid first mission.
+
+**Print:** Payload as written to disk, time jump duration, first mission archetype chosen.
+
+**Verify:** All-10-marked case blocked at the UI layer. Payload shape matches the Input/Output Shapes section. Opening time jump produces a valid post-jump sim state and a first mission the player can enter.
+
+⛔ STOP.
+
+### Checkpoint K — Recon Phase
+
+**Build:** `scenes/recon/recon.tscn`. Free-camera view of the mission map per `bible_world.md` §Recon Phase. Terrain visible, enemy positions hidden. No time pressure (no mission clock yet). "Begin Mission" button transitions into `tactical.tscn` and tells the server to unpause the engine.
+
+**Test:** Load a generated mission, enter recon, pan / zoom around, confirm enemy units are hidden. Hit Begin Mission, confirm transition to tactical scene and clock starts.
+
+**Print:** Recon time elapsed, camera extents explored (optional), transition latency from Begin Mission to first tactical tick.
+
+**Verify:** Terrain visible including spine nodes + gradient heatmaps (recon-level detail). Enemy units hidden. Mission clock is 0 during recon, starts on Begin Mission.
+
+⛔ STOP.
+
+### Checkpoint L — End-to-End Playable Loop
+
+**Build:** Final wiring. `debug_save_panel.tscn` for save-slot management in lieu of Stage 9's browser.
+
+**Test:** Play a full session. Onboarding → opening time jump → recon → mission → mission resolution → time jump → next recon → next mission → quit mid-mission → resume mid-mission → finish. Observe the whole loop.
+
+**Print:** Session log: state transitions, save-write events, disk usage per slot, any errors.
+
+**Verify:** Loop works end-to-end without crashes. Quit-and-resume restores the exact tactical state. Sim state carries across mission boundaries. Onboarding prefs persist across the session.
+
+⛔ STOP.
+
+### Checkpoint M — Performance + Stability (Final)
+
+**Build:** No new code. Performance tuning + bug fixes only.
+
+**Test:** 200v200 engagement on a Stage 7 generated large-canvas map. Record: renderer frame time, engine tick time, WebSocket round-trip, snapshot/delta sizes, total session memory. Play three full sessions (different seeds) checking for leaks, interpolation stalls, reconnect issues.
+
+**Print:** Perf table: frame time p50/p95/p99, tick time, RTT, leak check over three sessions.
+
+**Verify:** Renderer holds 60fps at 200v200 load (frame time p95 < 16ms). Engine tick time well under 50ms (one tick at 20 Hz). WebSocket RTT consistently under 5ms on localhost. No memory growth across three sessions. No protected-file edits (git diff clean against protected-file list).
+
+⛔ STOP.
+
+## Invariants
+
+- **I1 — Tick rate fidelity.** Engine ticks at exactly `TICK_HZ` (20). Measured over a 60-second run, tick count is 1200 ± 5.
+- **I2 — Renderer frame time.** Renderer p95 frame time < 16ms at 200v200 load on the Checkpoint M scenario.
+- **I3 — Interpolation smoothness.** No visible unit-position stuttering during a 60-second capture. The interpolation buffer never exceeds `INTERPOLATION_BUFFER_TICKS` depth.
+- **I4 — Determinism preserved.** Engine-side determinism from Stage 6 holds — the server wrapper does not introduce non-determinism. A fixed command stream + seed reproduces tick-for-tick.
+- **I5 — Quit-and-resume round-trip.** Writing tactical state at tick N and restoring produces an engine that steps to tick N+K tick-identical to an unbroken run to tick N+K.
+- **I6 — Save / load round-trip.** Sim-state file round-trips byte-identical (after canonical JSON re-serialization) for any valid sim state.
+- **I7 — Onboarding validation.** `write_onboarding` rejects payloads with `len(rare_marks) == 10`; accepts all other valid subsets.
+- **I8 — Client input sanitization.** `ws_input_sanitizer` refuses to send any packet with a unit uid not in the latest snapshot, a negative position, or an unknown command kind. 100% rejection on a corpus of adversarial inputs.
+- **I9 — Protected files untouched.** `git diff` against the protected-file list (CLAUDE.md) is clean at Checkpoint M. `socket_server.py` is treated as protected from creation onward — no edits after its initial Checkpoint A landing without a fresh approval.
+- **I10 — No rewind code.** `git grep` for rewind-related terms (rewind, fork_from, snapshot_history, timeline_branch) returns zero hits in implementation code. The post-launch rewind feature is a separate stage; Stage 8 must not lay groundwork.
+
+Per CLAUDE.md: if an invariant fails, you may not widen thresholds or weaken tests. Escalate real bugs, or narrow scope (skip-cases never meant to be caught).
+
+## Done Condition
+
+- All 13 checkpoints (A–M) run, shown, approved by Westley.
+- All 10 invariants (I1–I10) pass.
+- A full session (onboarding → recon → mission → quit → resume → finish) runs cleanly on both Linux and Windows Godot builds.
+- `tuning_output/stage8/` contains perf measurements from Checkpoint M.
+- Bible capture items (§"Bible Capture Pending") all applied and verified in a pre-merge diff review.
+- No protected engine file modified. `socket_server.py` is protected from its first edit forward.
+- `docs/architecture.md` reflects the `MissionSetup.generated_at` field addition.
+- IGoP HUD reference images present at `docs/design_questions/igop_hud_reference_alpha.png` and `igop_hud_reference_beta.png`.
+
+## Files Created
+
+(Filled in after implementation.)
+
+## Notes for the Implementing Session
+
+- **Socket server protection.** `socket_server.py` must get explicit verbal approval before Checkpoint A creates it. Once created, any subsequent edit requires another approval. Do not refactor it "while you're in there."
+- **Three loosely-coupled systems, one stage.** Checkpoints split A–C (server), D–E (persistence), F–I (Godot client), J–K (onboarding + recon), L–M (integration + perf). The A–C and D–E groups can be parallelized by a single developer across sessions if useful; F and later depend on A–C.
+- **Godot client is a presentation layer.** No gameplay logic in GDScript. If you find yourself reimplementing a tactical rule in Godot, stop — the rule belongs in the Python engine and the client should read the result via snapshot/delta.
+- **Performance discipline.** Per dev_rules.md § Performance regression discipline, Checkpoint M has a hard frame-time budget. Do not ship a renderer that drops frames at 200v200.
+- **IGoP reference.** The HUD layout and command-input philosophy both cite Immortal: Gates of Pyre. When in doubt about what a panel should look like or how a hotkey should behave, open the reference screenshots.
+- **No rewind.** This is the second-most-important rule in this spec after the socket-server protection. Rewind is a post-launch feature. Do not add rewind hooks "we'll need later." Stage 8 ships saves, not rewind.
