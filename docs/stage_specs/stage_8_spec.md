@@ -6,7 +6,7 @@ Prove that the tactical simulation can be played — not just simulated headless
 
 Stage 8 is the stage where the game becomes **playable for the first time**. Stages 1–4 proved the simulation. Stage 5 proved the narrative pipeline. Stage 5.5 proved the mission generator. Stage 6 proved the tactical engine headless. Stage 7/7.5 proved procedural maps and enemy macro scripts. Stage 8 proves a human can sit down, receive a mission, study the terrain in a recon phase, command forces in real time, quit in the middle of a mission and resume later, and pick up the next chapter after a session break.
 
-**Not in scope:** main-menu / new-game / load-game / save-slot-browser UI (Stage 9), mission briefing screen (Stage 9), era library / monetization UI (Stage 9), chronicle scroll UI and animated time-jump map (Beyond Stage 9), mission debrief/outcome screen (Beyond Stage 9), tutorial (Beyond Stage 9), galaxy/system/planet view (Beyond Stage 9). **Rewind, fork-from-here, boundary-snapshot history, and multi-snapshot timeline browsing are all deferred to a post-launch rewind feature** (see hub §15 for the deferred design sketch). Stage 8 ships the **tactical scene** plus the **save layer** plus the **onboarding screen** — nothing else.
+**Not in scope:** main-menu / new-game / load-game / save-slot-browser UI (Stage 9), mission briefing screen (Stage 9), era library / monetization UI (Stage 9), full chronicle scroll UI for time-jump montages between chapters and animated time-jump map (Beyond Stage 9 — Stage 8 ships ONLY the abbreviated 3–5 entry opening scroll as a minimal text list, no animation, no per-entry expand), mission debrief/outcome screen (Beyond Stage 9), tutorial (Beyond Stage 9), galaxy/system/planet view (Beyond Stage 9). **Rewind, fork-from-here, boundary-snapshot history, and multi-snapshot timeline browsing are all deferred to a post-launch rewind feature** (see hub §15 for the deferred design sketch). Stage 8 ships the **tactical scene** plus the **save layer** plus the **onboarding screen + abbreviated opening scroll** — nothing else.
 
 **Architecture.** The Python tactical engine runs as a standalone WebSocket server. Godot is a pure client that subscribes to tick snapshots, renders them, interpolates between ticks for a 60fps presentation, and sends command packets back. No engine logic executes in Godot — it is a presentation layer that happens to also capture input. Persistence is a separate Python-side concern: the save writer serializes the current simulation state, any in-flight tactical state, and onboarding preferences to disk; the save loader reconstructs them on resume. No snapshot history, no pivot operations, no timeline concept.
 
@@ -20,6 +20,7 @@ These bible edits landed during the Stage 8 write-up session; they do not block 
 4. **Hub §15 (Simulation State Journaling and Rollback)** — rewritten to remove rewind from Stage 8 scope. Stage 8 ships saves only; rewind is a post-launch feature with its own design sketch (pre-mission-selection snapshot boundary, 5-mission minimum gate, mission-generator re-run on rewind, linear-default + fork, chronicle erased on rewind).
 5. **Onboarding rare-mark rule** — `game_bible.md:155` and `bible_missions.md:301` rewritten: the "up to two markable as rare" cap was removed. The rule is now "any subset may be marked rare, provided at least one archetype remains unmarked." The interaction is binary per archetype (rare or default); no sliders or gradation.
 6. **`bible_combat.md` §"Mid-Mission HUD Layout"** — new section added between "Camera and Player View" and "Moving Battlefields." Captures the IGoP-inspired HUD layout adapted for Ouroboros. The hub Stage 8 paragraph's stale "up to 2 markable as rare" phrasing and stale "rewind-with-re-seed" mentions in "Beyond Stage 9" were fixed in the same pass.
+7. **Hub Stage 8 paragraph — recon-phase enemy visibility** — corrected from "enemy positions based on intelligence quality" (stale; the bible never built an intelligence-quality system) to "enemy positions hidden," matching `bible_world.md` §"Recon Phase — Terrain Visibility, Enemy Hidden." Cross-reference added.
 
 ## Gating Open Design Questions — ALL RESOLVED
 
@@ -148,7 +149,9 @@ Three concurrent conceptual systems:
 
 Maintains a small interpolation buffer (last 3 ticks) so the renderer can interpolate positions between 20 Hz engine ticks for 60fps smoothness.
 
-**`scenes/onboarding/onboarding.tscn + .gd`** — the single onboarding screen per bible §"Onboarding and First Chapter." Per S8-2 resolution: a three-button Easy / Medium / Hard difficulty selector at top, followed by 10 mission-archetype rows each with a single "mark as rare" toggle, and a "Confirm" button at bottom. "Confirm" is disabled (with an inline explanation) until at least one archetype remains unmarked. On confirmation: writes the onboarding payload, triggers the opening time jump, then transitions into the first recon scene. The three-button difficulty selector stores `"easy" | "medium" | "hard"` in the payload.
+**`scenes/onboarding/onboarding.tscn + .gd`** — the single onboarding screen per bible §"Onboarding and First Chapter." Per S8-2 resolution: a three-button Easy / Medium / Hard difficulty selector at top, followed by 10 mission-archetype rows each with a single "mark as rare" toggle, and a "Confirm" button at bottom. "Confirm" is disabled (with an inline explanation) until at least one archetype remains unmarked. On confirmation: writes the onboarding payload, triggers the opening time jump, hands off to `scenes/opening_scroll/` for the abbreviated 3–5 entry scroll, then transitions into the first recon scene. The three-button difficulty selector stores `"easy" | "medium" | "hard"` in the payload.
+
+**`scenes/opening_scroll/opening_scroll.tscn + .gd`** — the abbreviated 3–5 entry chronicle scroll the player sees right after the opening time jump completes. Per bible §"Opening time jump" — minimal in-Stage-8 implementation: a vertical text list of 3–5 chronicle entries (all world entries — there is no previous mission so no consequence entries), pre-rendered using the Stage 5 chronicle distiller against the post-jump simulation state. **No animated map view, no per-entry expand interaction, no scroll animations** — those land with the full chronicle scroll UI in Beyond-Stage-9 work. Stage 8 is purely "render the entries the distiller produces, in order, and let the player click `Continue` to proceed to recon." This is the player's introduction to both the world and the chronicle voice; landing them in the first mission cold would undercut the bible's "weight of time" framing.
 
 **`scenes/recon/recon.tscn + .gd`** — pre-mission free-camera view. Terrain visible, enemy positions hidden (per `bible_world.md` §Recon Phase). No time pressure. `Begin Mission` button transitions to `tactical.tscn` and signals the server to start the tick clock.
 
@@ -186,6 +189,7 @@ RECONNECT_GRACE_SEC = 30.0
 INTERPOLATION_BUFFER_TICKS = 3
 
 # Camera / input
+CAMERA_ANGLE_DEGREES = 60.0  # fixed top-down RTS angle from horizontal
 CAMERA_ZOOM_MIN = 0.5
 CAMERA_ZOOM_MAX = 2.0
 CAMERA_PAN_SPEED_WU_PER_SEC = 1500.0
@@ -475,15 +479,15 @@ Each checkpoint is a hard stop per `dev_rules.md` § Mandatory Checkpoints. Run 
 
 ⛔ STOP.
 
-### Checkpoint J — Onboarding Scene + Opening Time Jump
+### Checkpoint J — Onboarding Scene + Opening Time Jump + Opening Scroll
 
-**Build:** `scenes/onboarding/onboarding.tscn` per S8-2 resolution. Three-button difficulty selector. 10-row rare-mark toggle list. Confirm button disabled until at least one archetype is unmarked (inline message). On confirm: write onboarding prefs, trigger opening time jump (20–50 years), then hand off to the recon scene for the first mission.
+**Build:** `scenes/onboarding/onboarding.tscn` per S8-2 resolution. Three-button difficulty selector. 10-row rare-mark toggle list. Confirm button disabled until at least one archetype is unmarked (inline message). `scenes/opening_scroll/opening_scroll.tscn` for the abbreviated 3–5 entry text list. On confirm: write onboarding prefs, trigger opening time jump (20–50 years), invoke the Stage 5 chronicle distiller against the post-jump state to produce 3–5 world entries, render them in `opening_scroll`, then on `Continue` hand off to the recon scene for the first mission.
 
-**Test:** Click through onboarding with adversarial inputs — 0 marks, 5 marks, 9 marks, 10 marks (blocked). Verify payload on disk matches selections. Verify opening time jump runs and produces a valid first mission.
+**Test:** Click through onboarding with adversarial inputs — 0 marks, 5 marks, 9 marks, 10 marks (blocked). Verify payload on disk matches selections. Verify opening time jump runs and produces a valid first mission. Verify the distiller produces 3–5 entries (not more, not fewer) and the scroll renders all of them in order. Verify `Continue` advances to recon.
 
-**Print:** Payload as written to disk, time jump duration, first mission archetype chosen.
+**Print:** Payload as written to disk, time jump duration, distiller entry count, entry text rendered to scroll, first mission archetype chosen.
 
-**Verify:** All-10-marked case blocked at the UI layer. Payload shape matches the Input/Output Shapes section. Opening time jump produces a valid post-jump sim state and a first mission the player can enter.
+**Verify:** All-10-marked case blocked at the UI layer. Payload shape matches the Input/Output Shapes section. Opening time jump produces a valid post-jump sim state. Opening scroll shows 3–5 world-entry chronicle entries (all world-type — no consequence entries since there is no prior mission). Continue button advances to recon.
 
 ⛔ STOP.
 
