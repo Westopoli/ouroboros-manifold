@@ -44,14 +44,6 @@ def make_engine():
 
 
 if __name__ == "__main__":
-    import os as _os
     print("Starting debug server on 127.0.0.1:8765 — open debug_ws_test.tscn in Godot")
     print("Ctrl-C to stop")
-    try:
-        run(engine_factory=make_engine)
-        print("DEBUG: run() returned normally")
-    except BaseException as e:
-        print(f"DEBUG: run() raised {type(e).__name__}: {e}")
-    finally:
-        print("DEBUG: finally block reached — calling _exit")
-        _os._exit(0)
+    run(engine_factory=make_engine)

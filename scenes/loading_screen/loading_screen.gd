@@ -13,6 +13,7 @@ var _current_pct: float = 0.0
 
 var _progress_label: Label
 var _flavor_label: Label
+var _skip_to_main: bool = false
 
 
 func _ready() -> void:
@@ -24,12 +25,11 @@ func _ready() -> void:
 		return
 
 	if SimBridge._ready_received:
-		SceneRouter.go_to("main_menu")
+		_skip_to_main = true
 		return
 
 	SimBridge.progress_updated.connect(_on_progress_updated)
 	SimBridge.sim_ready.connect(_on_sim_ready)
-	SimBridge.sim_error.connect(_on_sim_error)
 
 	_update_progress_display()
 	if not _tips.is_empty():
@@ -37,6 +37,10 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	if _skip_to_main:
+		SceneRouter.go_to("main_menu")
+		return
+
 	_cursor_elapsed += delta
 	if _cursor_elapsed >= ThemeConstants.CURSOR_BLINK_INTERVAL:
 		_cursor_elapsed = 0.0
@@ -171,7 +175,3 @@ func _on_progress_updated(step: String, pct: float) -> void:
 
 func _on_sim_ready(_metadata: Dictionary) -> void:
 	SceneRouter.go_to("main_menu")
-
-
-func _on_sim_error(_info: Dictionary) -> void:
-	SceneRouter.go_to("error_screen")

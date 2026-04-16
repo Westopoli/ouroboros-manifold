@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import os as _os
 import signal
 
 import config
@@ -132,20 +133,15 @@ def run(host=None, port=None, engine_factory=None):
     def _shutdown(signum, frame):
         logger.info("shutdown signal received")
         server.stop()
-        loop.stop()
+        _os._exit(0)  # force-kill; wait_closed() deadlocks with active connections
 
     signal.signal(signal.SIGINT, _shutdown)
     signal.signal(signal.SIGTERM, _shutdown)
 
     try:
         loop.run_until_complete(server.start())
-        print("DEBUG: run_until_complete returned normally")
-    except BaseException as e:
-        print(f"DEBUG: run_until_complete raised {type(e).__name__}: {e}")
     finally:
-        print("DEBUG: loop.close() about to run")
         loop.close()
-        print("DEBUG: loop.close() done — run() returning")
 
 
 if __name__ == "__main__":

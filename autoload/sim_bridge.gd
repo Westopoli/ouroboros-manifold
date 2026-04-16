@@ -32,6 +32,7 @@ const SIM_SCRIPT_PATH := "simulation/pipe_transport.py"
 var _pid: int = -1
 var _startup_elapsed: float = 0.0
 var _ready_received: bool = false
+var _pending_error_screen: bool = false
 
 ## Single bidirectional pipe handle returned as "stdio" by execute_with_pipe.
 ## Reader thread reads (sim stdout); writer thread writes (sim stdin).
@@ -58,6 +59,11 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	if _pending_error_screen and not SceneRouter._transitioning:
+		_pending_error_screen = false
+		SceneRouter.go_to("error_screen")
+		return
+
 	if _pid == -1:
 		return
 
@@ -67,17 +73,18 @@ func _process(delta: float) -> void:
 		if _startup_elapsed >= SIM_STARTUP_TIMEOUT_SEC:
 			sim_error.emit({"kind": "timeout", "message": "Sim startup timed out after %s sec" % SIM_STARTUP_TIMEOUT_SEC})
 			_pid = -1
+			_route_to_error_screen.call_deferred()
 			return
 
 	# Detect unexpected process death
 	if not OS.is_process_running(_pid):
-		print("SimBridge: sim process died unexpectedly — emitting sim_error")
 		sim_error.emit({
 			"kind": "crash",
 			"crash_log_path": "logs/crash_report.txt",
 			"message": "Sim process exited unexpectedly",
 		})
 		_pid = -1
+		_route_to_error_screen.call_deferred()
 		return
 
 	# Drain messages from the reader thread
@@ -93,9 +100,9 @@ func _process(delta: float) -> void:
 func _spawn_sim() -> void:
 	var script := ProjectSettings.globalize_path("res://") + SIM_SCRIPT_PATH
 
-	var result: Dictionary = OS.execute_with_pipe("python3", [script, "--crash"])
+	var result: Dictionary = OS.execute_with_pipe("python3", [script])
 	if result.is_empty() or not result.has("pid"):
-		result = OS.execute_with_pipe("python", [script, "--crash"])
+		result = OS.execute_with_pipe("python", [script])
 	if result.is_empty() or not result.has("pid"):
 		sim_error.emit({"kind": "spawn_failed", "message": "OS.execute_with_pipe failed — python3/python not found"})
 		return
@@ -195,6 +202,10 @@ func _dispatch(msg: Dictionary) -> void:
 			pass
 
 
+func _route_to_error_screen() -> void:
+	_pending_error_screen = true
+
+
 func send_command(cmd_dict: Dictionary) -> void:
 	_outgoing_mutex.lock()
 	_outgoing.append(cmd_dict)
@@ -221,6 +232,7 @@ func restart() -> void:
 	_kill_sim()
 	_startup_elapsed = 0.0
 	_ready_received = false
+	_pending_error_screen = false
 	_spawn_sim()
 
 
