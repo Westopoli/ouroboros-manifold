@@ -45,6 +45,7 @@ def process_commands(queue, store, tick):
             for uid in alive_ids:
                 store.attack_moving[uid] = False
                 store.plain_moving[uid] = True
+                store.auto_engage_target[uid] = -1  # break engagement so unit actually moves
 
         elif cmd.type == "attack_move":
             tx = cmd.params["target_x"]
@@ -57,6 +58,7 @@ def process_commands(queue, store, tick):
                 store.attack_moving[uid] = True
                 store.engage_anchor_set[uid] = False
                 store.plain_moving[uid] = False
+                store.auto_engage_target[uid] = -1  # break engagement; unit re-engages on arrival
 
         elif cmd.type == "attack_target":
             target_uid = cmd.params["target_uid"]

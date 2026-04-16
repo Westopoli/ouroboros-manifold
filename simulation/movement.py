@@ -484,6 +484,7 @@ def _update_move_groups(store):
         for uid in group["uids"]:
             if not store.alive[uid]:
                 continue
+            print(f"[group_cleanup] gid={gid} uid={uid} move_group_id={store.move_group_id[uid]} has_move_target={store.has_move_target[uid]}")
             store.has_move_target[uid] = False
             store.effective_speed[uid] = 0.0
             store.detour_remaining[uid] = 0.0

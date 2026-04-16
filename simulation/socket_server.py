@@ -139,8 +139,13 @@ def run(host=None, port=None, engine_factory=None):
 
     try:
         loop.run_until_complete(server.start())
+        print("DEBUG: run_until_complete returned normally")
+    except BaseException as e:
+        print(f"DEBUG: run_until_complete raised {type(e).__name__}: {e}")
     finally:
+        print("DEBUG: loop.close() about to run")
         loop.close()
+        print("DEBUG: loop.close() done — run() returning")
 
 
 if __name__ == "__main__":

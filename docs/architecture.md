@@ -71,3 +71,60 @@ Unit entries include a `velocity` field (always `[0.0, 0.0]` in the snapshot; up
 |---|---|---|
 | `DR_RESYNC_THRESHOLD` | `3.0` | Position prediction error (world units) before forcing a resync |
 | `DR_VEL_CHANGE_THRESHOLD` | `20.0` | Velocity magnitude change (wu/s) before forcing a resync |
+
+---
+
+## Stage 7.5 — Behavior Runner Integration
+
+### MissionSetup additions
+
+`MissionSetup` (in `mission_contracts.py`) carries one Stage 7.5 field:
+
+```python
+behavior_script_id: str   # e.g. "defensive_stand_v1", "multi_front_defense_3front_v1"
+```
+
+The spec also called for `enemy_force_groups: list[ForceGroupSpec]` on `MissionSetup`. This was **not implemented** — the mission generator (Stage 5.5) does not yet populate force groups from the script manifest. Force group setup is handled ad-hoc by the mission launcher using the script's `forces[]` array directly. This is a known gap to close when Stage 5.5 is wired to the behavior runner in a future pass.
+
+### Script dispatch
+
+`script_loader.load_script(archetype, seed=None, front_count=None)` returns the validated script dict.
+
+- **counterinsurgency** — rolls a fragmentation bucket (`concentrated` / `dispersed` / `fragmented`) using `seed`; dispatches to `counterinsurgency_{bucket}.json`.
+- **multi_front_defense** — dispatches to `multi_front_defense_2front.json` when `front_count == 2`, otherwise `multi_front_defense_3front.json`. The caller (mission launcher) is responsible for counting approach vectors from the `TacticalMap` and passing `front_count`.
+- All other prototypes — loads `{archetype}.json` directly.
+- Non-prototype archetypes — falls back to `_stub_default.json` with a logged warning.
+
+### BehaviorRunner engine hook
+
+`TacticalEngine.step()` calls each runner when `ENABLE_BEHAVIOR_SCRIPTS = True`:
+
+```python
+if config.ENABLE_BEHAVIOR_SCRIPTS and self.behavior_runners:
+    for runner in self.behavior_runners:
+        runner.step(self.tick, self.store, self.command_queue)
+```
+
+Runners self-throttle to `SCRIPT_EVAL_INTERVAL_TICKS` (40 ticks / 2 sec). Commands emitted by the runner flow through the existing engine command path — no new command types.
+
+### Trigger bus serialization
+
+`TriggerBus` state (flags + values dicts) must be included in the Stage 8 `engine_state` snapshot for quit-and-resume. Shape:
+
+```json
+{
+  "trigger_bus": {
+    "flags": {"force_b_broken": true, "inner_breach": false},
+    "values": {}
+  }
+}
+```
+
+### Spec variations
+
+| Item | Spec said | What shipped |
+|---|---|---|
+| `MissionSetup.enemy_force_groups` | Add `ForceGroupSpec` list to `MissionSetup` | Not added — force groups read directly from script `forces[]` at runtime |
+| `multi_front_defense.json` | Single file, 2-force/3-force selected internally | Two files: `multi_front_defense_2front.json` + `multi_front_defense_3front.json`; dispatch in loader |
+| `BehaviorRunnerState` fields | `script_id`, `state_entered_tick`, `timer_noise_pct`, `threshold_noise_pct`, `pending_commands`, `is_terminal` | `force_id`, `current_state`, `mission_start_tick`, `faction_id`, `last_eval_tick`, `trans_noise` — functional equivalents, different names |
+| `test_force_composition.py` | Listed as a test file to create | Not created — composition templates are validated indirectly through per-script tests |

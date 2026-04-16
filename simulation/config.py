@@ -619,7 +619,7 @@ AOE_POWER_MULTIPLIER           = 1.5
 REPLAY_FORMAT                  = "json"
 
 # ── Behavior scripts (Stage 7.5) ────────────────────────────────────────────
-ENABLE_BEHAVIOR_SCRIPTS             = False   # flip True in Checkpoint G after all 4 scripts pass
+ENABLE_BEHAVIOR_SCRIPTS             = True    # flipped True in Stage 7.5 Checkpoint I
 SCRIPT_EVAL_INTERVAL_TICKS          = 40      # 2 sec at 20 Hz
 SCRIPT_NOISE_DEFAULT_PCT            = 0.15    # threshold noise when transition omits noise_pct
 SCRIPT_TIMER_NOISE_DEFAULT_PCT      = 0.20    # timer noise when transition omits noise_pct
@@ -1050,3 +1050,8 @@ DEBUG_COMMAND_LOG          = False  # log dropped packets; noisy in tests, usefu
 # Kill switches — both OFF until their checkpoint passes
 ENABLE_STAGE8_SOCKET       = False
 ENABLE_STAGE8_PERSISTENCE  = False
+
+# ── Stage 10: Pipe transport ──────────────────────────────────────────────────
+CRASH_LOG_PATH   = "logs/crash_report.txt"
+STDERR_LOG_PATH  = "logs/sim_stderr.log"
+IS_RELEASE_BUILD = False

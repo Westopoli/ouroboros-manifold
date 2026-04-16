@@ -61,12 +61,15 @@ def _roll_fragmentation(rng: random.Random) -> str:
     return _FRAGMENTATION_BUCKETS[-1]
 
 
-def load_script(archetype: str, seed: int | None = None) -> dict:
+def load_script(archetype: str, seed: int | None = None,
+                front_count: int | None = None) -> dict:
     """Return the validated script dict for the given archetype.
 
     Prototype archetypes load their dedicated JSON file.
     Counterinsurgency rolls a fragmentation bucket (concentrated / dispersed /
     fragmented) using the provided seed; seed=None defaults to 0.
+    Multi-front defense selects 2front or 3front variant by front_count;
+    front_count=None or >=3 selects the 3-force variant.
     Non-prototype archetypes (and any unknown archetype) fall back to the stub
     with a warning so the engine never blocks on an unwritten script.
     """
@@ -76,6 +79,11 @@ def load_script(archetype: str, seed: int | None = None) -> dict:
         rng = random.Random(seed if seed is not None else 0)
         bucket = _roll_fragmentation(rng)
         path = os.path.join(_SCRIPTS_DIR, f"counterinsurgency_{bucket}.json")
+        return _load_and_validate(path)
+
+    if archetype == "multi_front_defense":
+        variant = "2front" if front_count == 2 else "3front"
+        path = os.path.join(_SCRIPTS_DIR, f"multi_front_defense_{variant}.json")
         return _load_and_validate(path)
 
     if archetype in _PROTOTYPE_ARCHETYPES:
@@ -103,8 +111,15 @@ def load_script(archetype: str, seed: int | None = None) -> dict:
 
 
 def load_all_scripts(counterinsurgency_seed: int = 0) -> dict[str, dict]:
-    """Eager-preload all archetypes. Raises on the first schema error encountered."""
-    return {
-        archetype: load_script(archetype, seed=counterinsurgency_seed)
-        for archetype in sorted(_ALL_ARCHETYPES)
-    }
+    """Eager-preload all archetypes. Raises on the first schema error encountered.
+
+    multi_front_defense loads both variants; keys are "multi_front_defense_2front"
+    and "multi_front_defense_3front" alongside the default "multi_front_defense"
+    (3-front) entry.
+    """
+    scripts = {}
+    for archetype in sorted(_ALL_ARCHETYPES):
+        scripts[archetype] = load_script(archetype, seed=counterinsurgency_seed)
+    scripts["multi_front_defense_2front"] = load_script("multi_front_defense", front_count=2)
+    scripts["multi_front_defense_3front"] = load_script("multi_front_defense", front_count=3)
+    return scripts

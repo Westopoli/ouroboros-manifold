@@ -1,6 +1,8 @@
 extends CanvasLayer
 
 const SCENES := {
+	"loading_screen": "res://scenes/loading_screen/loading_screen.tscn",
+	"error_screen": "res://scenes/error_screen/error_screen.tscn",
 	"main_menu": "res://scenes/main_menu/main_menu.tscn",
 	"new_game": "res://scenes/new_game/new_game.tscn",
 	"load_game": "res://scenes/load_game/load_game.tscn",
@@ -18,7 +20,7 @@ var _transitioning := false
 
 func _ready() -> void:
 	layer = 99
-	_current_scene_name = "main_menu"
+	_current_scene_name = "loading_screen"
 	_overlay = ColorRect.new()
 	_overlay.color = ThemeConstants.BASE
 	_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)

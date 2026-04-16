@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scenes/tactical/tactical.gd" id="1"]
 [ext_resource type="Script" path="res://scenes/tactical/terrain_renderer.gd" id="2"]
 [ext_resource type="Script" path="res://scenes/tactical/unit_renderer.gd" id="3"]
+[ext_resource type="Script" path="res://scenes/tactical/input_router.gd" id="4"]
 
 [node name="Tactical" type="Node2D"]
 script = ExtResource("1")
@@ -16,6 +17,9 @@ script = ExtResource("2")
 
 [node name="UnitRenderer" type="Node2D" parent="."]
 script = ExtResource("3")
+
+[node name="InputRouter" type="Node2D" parent="."]
+script = ExtResource("4")
 
 [node name="DebugLayer" type="CanvasLayer" parent="."]
 layer = 127

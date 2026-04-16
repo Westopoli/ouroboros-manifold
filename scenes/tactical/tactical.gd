@@ -3,10 +3,11 @@
 extends Node2D
 
 # Camera tuning (world units per second at zoom 1.0; scales with zoom level)
-const PAN_SPEED    := 1500.0
-const ZOOM_STEP    := 0.1
-const ZOOM_MIN     := 0.05
-const ZOOM_MAX     := 3.0
+const PAN_SPEED        := 1500.0
+const ZOOM_STEP        := 0.1
+const ZOOM_MIN         := 0.05
+const ZOOM_MAX         := 3.0
+const EDGE_SCROLL_ZONE := 60.0   # pixels from viewport edge that triggers pan
 
 @onready var _camera: Camera2D    = $Camera2D
 @onready var _perf_label: Label   = $DebugLayer/PerfLabel
@@ -38,17 +39,16 @@ func _process(delta: float) -> void:
 
 
 func _handle_camera(delta: float) -> void:
-	# Pan — WASD or arrow keys; speed scales inversely with zoom so feel stays constant
+	# Pan — mouse hits viewport edge (classic RTS edge-scroll)
+	# Speed scales inversely with zoom so feel stays constant at any zoom level
 	var pan_speed: float = PAN_SPEED / _camera.zoom.x
 	var pan := Vector2.ZERO
-	if Input.is_key_pressed(KEY_A) or Input.is_key_pressed(KEY_LEFT):
-		pan.x -= 1.0
-	if Input.is_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT):
-		pan.x += 1.0
-	if Input.is_key_pressed(KEY_W) or Input.is_key_pressed(KEY_UP):
-		pan.y -= 1.0
-	if Input.is_key_pressed(KEY_S) or Input.is_key_pressed(KEY_DOWN):
-		pan.y += 1.0
+	var mouse := get_viewport().get_mouse_position()
+	var vp := get_viewport().get_visible_rect().size
+	if mouse.x < EDGE_SCROLL_ZONE:              pan.x -= 1.0
+	if mouse.x > vp.x - EDGE_SCROLL_ZONE:      pan.x += 1.0
+	if mouse.y < EDGE_SCROLL_ZONE:              pan.y -= 1.0
+	if mouse.y > vp.y - EDGE_SCROLL_ZONE:       pan.y += 1.0
 	if pan != Vector2.ZERO:
 		_camera.position += pan.normalized() * pan_speed * delta
 

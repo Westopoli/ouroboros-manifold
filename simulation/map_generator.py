@@ -10,7 +10,7 @@ from gradient_placer import place_gradients
 from layer_masks import place_layer_masks
 from sim_flavoring import compute_flavoring, apply_flavoring
 from fairness_evaluator import evaluate_fairness, is_acceptable
-from archetype_filters import matching_layouts
+from archetype_filters import matching_layouts, get_baseline_ownership
 from tactical_map import TacticalMap
 
 
@@ -30,7 +30,8 @@ def generate_map(generator_input: GeneratorInput, layout_library: dict) -> MapGe
         inst   = instantiate_layout(layout, generator_input.canvas_size, seed)
 
         _assign_reinforcement_ownership(
-            inst, generator_input.region_state, random.Random(seed ^ 0xABCD)
+            inst, generator_input.region_state, random.Random(seed ^ 0xABCD),
+            generator_input.archetype,
         )
 
         base_sources     = place_gradients(inst)
@@ -58,14 +59,15 @@ def _pass_count(score):
                 score.vantage_pass, score.hazard_pass])
 
 
-def _assign_reinforcement_ownership(inst, region_state, rng):
+def _assign_reinforcement_ownership(inst, region_state, rng, archetype):
     rs = region_state
+    base_p, base_n, base_e = get_baseline_ownership(archetype)
     player_shift  = config.OWNERSHIP_MILITARY_COEFF * (rs.military - 50) / 50
     neutral_shift = config.OWNERSHIP_TENSION_COEFF  * (rs.tension  - 50) / 50
 
-    p = 0.33 + player_shift - neutral_shift / 2
-    e = 0.33 - player_shift - neutral_shift / 2
-    n = 0.34 + neutral_shift
+    p = base_p + player_shift - neutral_shift / 2
+    e = base_e - player_shift - neutral_shift / 2
+    n = base_n + neutral_shift
 
     p = max(0.0, min(1.0, p))
     e = max(0.0, min(1.0, e))
