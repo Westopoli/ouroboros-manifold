@@ -9,6 +9,7 @@ evaluate_filter(filter_spec, layout_spec) -> bool
 matching_layouts(archetype, layout_library)  -> list[LayoutSpec]
 """
 from dataclasses import dataclass
+import config
 from map_gen_contracts import LayoutSpec
 
 
@@ -69,6 +70,30 @@ FAIRNESS_PROFILES: dict[str, FairnessTargetProfile] = {
     "raid":             _SYMMETRIC_DEFAULT("raid"),
     "rear_guard":       _SYMMETRIC_DEFAULT("rear_guard"),
 }
+
+
+# ── Reinforcement ownership baselines (Stage 7.5) ────────────────────────────
+# Each entry: (player_share, neutral_share, enemy_share) at region state 50/50.
+# The S7-5 delta math in map_generator._assign_reinforcement_ownership applies
+# OWNERSHIP_MILITARY_COEFF and OWNERSHIP_TENSION_COEFF on top of these baselines.
+# Non-prototype archetypes use config.SCRIPT_FALLBACK_OWNERSHIP.
+
+BASELINE_OWNERSHIP: dict[str, tuple[float, float, float]] = {
+    # Player holds more territory; enemy has a foothold — attacker scenario.
+    "defensive_stand":   (0.50, 0.20, 0.30),
+    # Enemy holds most territory; player attacking in — assault scenario.
+    "assault":           (0.30, 0.20, 0.50),
+    # Player holds majority; multi-vector enemy pressure — defense scenario.
+    "multi_front_defense": (0.50, 0.20, 0.30),
+    # Player's own territory; neutral infrastructure dominant — insurgency.
+    "counterinsurgency": (0.30, 0.50, 0.20),
+}
+
+def get_baseline_ownership(archetype: str) -> tuple[float, float, float]:
+    """Return (player, neutral, enemy) baseline for the given archetype.
+    Falls back to config.SCRIPT_FALLBACK_OWNERSHIP for non-prototype archetypes.
+    """
+    return BASELINE_OWNERSHIP.get(archetype, config.SCRIPT_FALLBACK_OWNERSHIP)
 
 
 # ── Filter primitives ─────────────────────────────────────────────────────────

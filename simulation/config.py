@@ -618,6 +618,18 @@ AOE_POWER_MULTIPLIER           = 1.5
 # ── Replay (Stage 6) ────────────────────────────────────────────────────────
 REPLAY_FORMAT                  = "json"
 
+# ── Behavior scripts (Stage 7.5) ────────────────────────────────────────────
+ENABLE_BEHAVIOR_SCRIPTS             = False   # flip True in Checkpoint G after all 4 scripts pass
+SCRIPT_EVAL_INTERVAL_TICKS          = 40      # 2 sec at 20 Hz
+SCRIPT_NOISE_DEFAULT_PCT            = 0.15    # threshold noise when transition omits noise_pct
+SCRIPT_TIMER_NOISE_DEFAULT_PCT      = 0.20    # timer noise when transition omits noise_pct
+COUNTERINSURGENCY_FRAGMENTATION_WEIGHTS = {
+    "concentrated": 0.25,   # 3 cells: 2 ambush + 1 patrol
+    "dispersed":    0.50,   # 4 cells: 2 ambush + 1 patrol + 1 sleeper
+    "fragmented":   0.25,   # 6 cells: 3 ambush + 1 patrol + 2 sleepers
+}
+SCRIPT_FALLBACK_OWNERSHIP           = (0.33, 0.33, 0.34)  # (player, neutral, enemy) for non-prototype archetypes
+
 # ── Mission generator trigger thresholds (Stage 5.5) ────────────────────────
 SIEGE_BREAKING_MIN_TICKS            = 200
 SUPPRESSION_MAX_AGE                 = 300
@@ -1007,3 +1019,34 @@ FLAVOR_TENSION_COV_COEFF      = 0.12   # high tension → +cover_density
 FLAVOR_MILITARY_OBS_COEFF     = 0.10   # high military → +obstacle_density
 FLAVOR_POPULATION_SCALE_COEFF = 0.08   # population above/below midpoint → scales all density
 FLAVOR_MAX_DELTA              = 0.20   # per-property absolute delta cap
+
+# ── Stage 8: Socket server / WebSocket bridge ─────────────────────────────────
+SOCKET_HOST                = "127.0.0.1"
+SOCKET_PORT                = 8765
+TICK_HZ                    = 20
+SNAPSHOT_INTERVAL_SEC      = 5.0
+RECONNECT_GRACE_SEC        = 30.0
+INTERPOLATION_BUFFER_TICKS = 3
+
+# Dead-reckoning suppression (snapshot_serializer.py DeadReckoningTracker)
+DR_RESYNC_THRESHOLD        = 3.0   # world units of position prediction error before forcing resync
+DR_VEL_CHANGE_THRESHOLD    = 20.0  # wu/s of velocity magnitude change before forcing resync
+
+# Camera / input (consumed by Godot client via snapshot metadata)
+CAMERA_ANGLE_DEGREES       = 60.0
+CAMERA_ZOOM_MIN            = 0.5
+CAMERA_ZOOM_MAX            = 2.0
+CAMERA_PAN_SPEED_WU_PER_SEC = 1500.0
+
+# Control groups
+CONTROL_GROUP_COUNT        = 10   # keys 1..0 (0 = group 10)
+
+# Persistence
+SAVE_ROOT                  = "user://saves"   # Godot path; Python maps to OS path
+
+# Command ingest
+DEBUG_COMMAND_LOG          = False  # log dropped packets; noisy in tests, useful for debugging
+
+# Kill switches — both OFF until their checkpoint passes
+ENABLE_STAGE8_SOCKET       = False
+ENABLE_STAGE8_PERSISTENCE  = False

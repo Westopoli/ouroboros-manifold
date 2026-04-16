@@ -232,8 +232,9 @@ All wire-format payloads are JSON, line-delimited (one JSON object per line over
   },
   "units": [
     {"uid": 17, "type": "vanguard", "pos": [4200.5, 3100.2], "layer": 1,
-     "hp": 240, "max_hp": 300, "faction": "player",
-     "facing_rad": 1.57, "ability_cd_sec": 4.2, "selection_eligible": true}
+     "hp": 240, "max_hp": 300, "faction": 0,
+     "facing_rad": 0.0, "ability_cd_sec": 4.2, "selection_eligible": true,
+     "velocity": [0.0, 0.0]}
   ],
   "structures": [
     {"uid": 103, "pos": [4200, 3100], "layer": 1,
@@ -254,12 +255,19 @@ All wire-format payloads are JSON, line-delimited (one JSON object per line over
 
 ### Server → client: tick delta (every tick)
 
+**Dead-reckoning protocol (adopted pre-Checkpoint F for 200v200 scalability):** The original spec draft sent a position update for every moving unit every tick. At 200v200 this produced ~320 KB/s in the approach phase — fine on localhost but a parsing burden against the 16ms Godot frame budget. Dead-reckoning suppression was chosen over quantized encoding (insufficient compression) and MessagePack (Godot dependency + breaks JSON debuggability). Full design rationale in `docs/architecture.md` §"Stage 8 WebSocket tick delta shape."
+
+A unit absent from `units_updated` and `units_removed` is on-course — the client extrapolates `pos += velocity * dt` using the last known `velocity`. `pos` + `velocity` appear together only on resyncs (prediction error > `DR_RESYNC_THRESHOLD` or velocity change > `DR_VEL_CHANGE_THRESHOLD`). Non-positional changes (`hp`, `layer`, `ability_cd_sec`) are emitted independently, without position.
+
 ```json
 {
   "type": "delta",
   "tick": 1201,
-  "units_updated": [{"uid": 17, "pos": [4205.1, 3101.0], "hp": 238}],
-  "units_added":   [{"uid": 91, "type": "vanguard", "pos": [4200, 3100], "layer": 1, "hp": 300, "max_hp": 300, "faction": "player"}],
+  "units_updated": [
+    {"uid": 17, "pos": [4205.1, 3101.0], "velocity": [102.0, 18.0], "hp": 238},
+    {"uid": 22, "hp": 195}
+  ],
+  "units_added":   [{"uid": 91, "type": "vanguard", "pos": [4200, 3100], "layer": 1, "hp": 300, "max_hp": 300, "faction": 0, "velocity": [0.0, 0.0]}],
   "units_removed": [45],
   "structures_updated": [{"uid": 103, "capture_progress": 0.1}],
   "objectives_updated": [{"id": "hold_zone_alpha", "progress": 0.43}],
