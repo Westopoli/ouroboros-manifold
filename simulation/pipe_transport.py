@@ -81,6 +81,65 @@ def _strip_abs_paths(text: str) -> str:
     return text
 
 
+def _build_mission_briefing(snapshot: dict, player_faction: int) -> dict:
+    player_by_type: dict = {}
+    enemy_count: int = 0
+    for u in snapshot.get("units", []):
+        if u.get("faction") == player_faction:
+            t = str(u.get("type", "unit")).lower()
+            player_by_type[t] = player_by_type.get(t, 0) + 1
+        else:
+            enemy_count += 1
+    player_units = [
+        {"type_abstract": t, "type_display_name": t.capitalize(), "category": "line", "count": c}
+        for t, c in player_by_type.items()
+    ]
+    total_player = sum(player_by_type.values())
+    parity = int(100 * total_player / max(enemy_count, 1))
+    return {
+        "mission_id_label": "OP-%04d" % snapshot.get("tick", 0),
+        "chapter": 1,
+        "generation": 1,
+        "era_id": "roman",
+        "mission_title": "Field Engagement",
+        "mission_subtitle": "Forces in contact across the operational area",
+        "tick_counter": snapshot.get("tick", 0),
+        "situation_text": "Forces are in contact. Engage and destroy the enemy.",
+        "objective_primary": {
+            "text": "Destroy the enemy force.",
+            "archetype": "Assault",
+            "success_spectrum_label": "TOTAL VICTORY",
+        },
+        "objectives_secondary": [],
+        "enemy_assessment": {
+            "faction_name": "Enemy Force",
+            "archetype_label": "UNKNOWN",
+            "military_stat": min(100, enemy_count * 10),
+            "military_stat_max": 100,
+            "tech_tier": 1,
+            "behavior_tag": "ACTIVE",
+        },
+        "player_force": {
+            "parity_percentage": parity,
+            "units": player_units,
+        },
+        "region_state": {
+            "name": "Operational Area",
+            "tier": "Frontier",
+            "economy": {"value": 50, "max": 100},
+            "military": {"value": 60, "max": 100},
+            "tension": {"value": 80, "max": 100},
+        },
+        "commander_lineage": {
+            "name": "Commander",
+            "generation_number": 1,
+            "predecessor_name": "",
+            "predecessor_status": "",
+        },
+        "reinforcement_note": "",
+    }
+
+
 def _send_message(msg: dict):
     """Write one length-prefixed JSON message to real stdout."""
     encoded = json.dumps(msg).encode("utf-8")
@@ -149,6 +208,10 @@ def run(engine_factory, *, crash_after_ready: bool = False, test_print: bool = F
     dr_tracker = DeadReckoningTracker()
     prev_state = full_snapshot(engine)
     _send_message(prev_state)
+    _send_message({
+        "type": "sim_state",
+        "mission_briefing": _build_mission_briefing(prev_state, getattr(engine, "player_faction", 0)),
+    })
 
     tick_interval = 1.0 / _config.TICK_HZ
     next_snap_at = time.monotonic() + _config.SNAPSHOT_INTERVAL_SEC

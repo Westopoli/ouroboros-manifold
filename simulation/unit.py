@@ -62,6 +62,7 @@ class UnitStore:
         # acquisition, no auto-halt). Cleared on arrival or when any combat command
         # (attack_move, attack_target, activate_ability) is issued.
         self.plain_moving = np.zeros(MAX_UNITS, dtype=np.bool_)
+        self.attack_backswing = np.zeros(MAX_UNITS, dtype=np.float64)
 
         # Formation movement fields — see movement.py _update_move_groups.
         self.move_group_id = np.full(MAX_UNITS, -1, dtype=np.int32)

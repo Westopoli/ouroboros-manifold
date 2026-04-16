@@ -319,7 +319,7 @@ func _build_ring(ring_name: String, count: int, r_min: float, r_max: float,
 	particles.interpolate = true
 
 	var shader_mat := ShaderMaterial.new()
-	shader_mat.shader = load("res://scenes/shared/galaxy/ring_particles.gdshader")
+	shader_mat.shader = load("res://scenes/shared/world_view/ring_particles.gdshader")
 	shader_mat.set_shader_parameter("radius_min", r_min)
 	shader_mat.set_shader_parameter("radius_max", r_max)
 	shader_mat.set_shader_parameter("speed_min", s_min)
@@ -356,7 +356,7 @@ func _build_radial_streams() -> void:
 	particles.interpolate = true
 
 	var shader_mat := ShaderMaterial.new()
-	shader_mat.shader = load("res://scenes/shared/galaxy/stream_particles.gdshader")
+	shader_mat.shader = load("res://scenes/shared/world_view/stream_particles.gdshader")
 	shader_mat.set_shader_parameter("outer_radius", 45.0)
 	shader_mat.set_shader_parameter("inner_radius", 5.0)
 	shader_mat.set_shader_parameter("flow_speed", 0.03)
@@ -384,7 +384,7 @@ func _build_ambient_dust() -> void:
 	particles.interpolate = true
 
 	var shader_mat := ShaderMaterial.new()
-	shader_mat.shader = load("res://scenes/shared/galaxy/dust_particles.gdshader")
+	shader_mat.shader = load("res://scenes/shared/world_view/dust_particles.gdshader")
 	shader_mat.set_shader_parameter("sphere_radius", 60.0)
 	shader_mat.set_shader_parameter("drift_speed", 0.3)
 	shader_mat.set_shader_parameter("blue_fraction", 0.5)
@@ -411,7 +411,7 @@ func _build_starfield() -> void:
 	particles.interpolate = false
 
 	var shader_mat := ShaderMaterial.new()
-	shader_mat.shader = load("res://scenes/shared/galaxy/starfield_particles.gdshader")
+	shader_mat.shader = load("res://scenes/shared/world_view/starfield_particles.gdshader")
 	shader_mat.set_shader_parameter("sphere_radius", 55.0)
 	shader_mat.set_shader_parameter("blue_fraction", 0.4)
 	shader_mat.set_shader_parameter("gold_color", Color(1.0, 0.92, 0.7, 0.4))
@@ -561,16 +561,16 @@ func fade_out(_duration: float) -> void:
 
 # --- World View Integration (STUBBED) ---
 
-func add_system_node(_node_id: String, _pos: Vector3, _size: float, _color: Color) -> void:
+func add_region_node(_node_id: String, _pos: Vector3, _size: float, _color: Color) -> void:
 	pass # TODO: World view stage
 
-func remove_system_node(_node_id: String) -> void:
+func remove_region_node(_node_id: String) -> void:
 	pass # TODO: World view stage
 
-func update_system_node(_node_id: String, _size: float, _color: Color) -> void:
+func update_region_node(_node_id: String, _size: float, _color: Color) -> void:
 	pass # TODO: World view stage
 
-func clear_system_nodes() -> void:
+func clear_region_nodes() -> void:
 	pass # TODO: World view stage
 
 func set_territory(_region_id: String, _center: Vector3, _radius: float, _color: Color) -> void:
@@ -594,7 +594,7 @@ func flash_military_activity(_region_id: String, _intensity: float) -> void:
 func flash_conflict(_from_id: String, _to_id: String, _intensity: float) -> void:
 	pass # TODO: World view stage
 
-func highlight_system(_node_id: String) -> void:
+func highlight_region(_node_id: String) -> void:
 	pass # TODO: World view stage
 
 func clear_highlight() -> void:

@@ -4,7 +4,7 @@ import numpy as np
 import config
 from unit import (
     UnitStore, FIELD_X, FIELD_Y, FIELD_SPEED,
-    FIELD_ABILITY_ACTIVE, FIELD_LAYER,
+    FIELD_ABILITY_ACTIVE, FIELD_LAYER, FIELD_ATTACK_RANGE,
 )
 from ability import is_immobile, get_speed_multiplier
 
@@ -303,16 +303,31 @@ def update_movement(store: UnitStore, tactical_map, dt: float):
     _update_attack_move_state(store, active)
 
     for uid in active:
+        if store.attack_backswing[uid] > 0:
+            store.attack_backswing[uid] = max(0.0, store.attack_backswing[uid] - dt)
+
+    for uid in active:
         if not store.has_move_target[uid]:
             continue
         if is_immobile(store, uid):
             continue
-        # attack_move: hold position while engaged with a live target
-        if store.auto_engage_target[uid] >= 0 and store.alive[store.auto_engage_target[uid]]:
+        if store.attack_backswing[uid] > 0:  # post-attack movement lock (SC2-style backswing)
             continue
 
         px = store.data[uid, FIELD_X]
         py = store.data[uid, FIELD_Y]
+
+        # Hold position only while target is actively within firing range.
+        # When target drifts out of range, unit pursues rather than staying frozen.
+        # See also: damage.py update_targeting — sensor pursuit updates target_x/y
+        # each tick toward the nearest enemy for attack_moving units with large sensor radius.
+        tgt = store.auto_engage_target[uid]
+        if tgt >= 0 and store.alive[tgt]:
+            atk_r = store.data[uid, FIELD_ATTACK_RANGE]
+            dx_t = store.data[tgt, FIELD_X] - px
+            dy_t = store.data[tgt, FIELD_Y] - py
+            if dx_t * dx_t + dy_t * dy_t <= atk_r * atk_r:
+                continue  # target in firing range — hold position
 
         eff = store.effective_speed[uid]
         speed = eff if eff > 0 else store.data[uid, FIELD_SPEED]

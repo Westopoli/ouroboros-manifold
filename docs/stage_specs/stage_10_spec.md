@@ -361,4 +361,53 @@ The game launches, shows a loading screen with progress and flavor text while th
 
 ## Files Created
 
-*(Filled in after implementation)*
+- `simulation/pipe_transport.py` — stdio pipe transport, crash handler, stderr redirect, sim_state/mission_briefing emission
+- `autoload/sim_bridge.gd` — process spawner, reader/writer threads, length-prefix JSON protocol, error routing
+- `autoload/sim_bridge_data_source.gd` — live data source; delegates to SimBridge state
+- `autoload/mock_data_source.gd` — extracted from UIDataBus; used when USE_LIVE_SIM=false
+- `scenes/loading_screen/loading_screen.tscn` + `loading_screen.gd`
+- `scenes/error_screen/error_screen.tscn` + `error_screen.gd`
+- `data/loading_tips.json`
+
+## Files Modified
+
+- `autoload/ui_data_bus.gd` — stripped of inline mock data; now delegates to `_source` (MockDataSource or SimBridgeDataSource)
+- `autoload/scene_router.gd` — added `"loading_screen"`, `"error_screen"`, `"tactical"` to SCENES dict; initial `_current_scene_name` set to `"loading_screen"`; `go_back()` now guards `_transitioning` before popping stack (race-condition fix)
+- `project.godot` — main scene changed from `main_menu.tscn` to `loading_screen.tscn`
+- `scenes/mission_briefing/mission_briefing.gd` — DEPLOY FORCES button now calls `SceneRouter.go_to("tactical")` instead of showing stub modal
+
+---
+
+## ⏸ PAUSED — 2026-04-16
+
+**Cause:** Economic/Galaxy view gap. The tactical pipeline (stdio transport) is complete, but the macro simulation data layer — world state, faction names, region names, chapter/generation tracking — is not yet connected to the Godot UI pipeline. This creates a gap where the mission briefing can only populate from tactical engine unit data rather than full macro sim state. Implementing the remaining Checkpoint F item requires Stage 8 (WebSocket tactical scene) to be signed off first, as both implementations share `tactical.gd` and `input_router.gd` in the same working directory with no branch protection.
+
+**What is complete:**
+- Checkpoints A–F are all passed and signed off by Westley.
+- Loading screen, error screen, UIDataBus delegation, sim process lifecycle all fully functional.
+- Mission briefing populates from real engine data (unit types, counts, force parity, tick counter).
+- DEPLOY FORCES navigates to the tactical scene.
+- `USE_LIVE_SIM=false` kill switch restores full mock behavior cleanly.
+
+**One deferred item (Checkpoint F, item 5):**
+
+Wire the tactical transport from WebSocket (Stage 8) to stdio pipe (Stage 10). Two targeted file changes:
+
+1. **`scenes/tactical/tactical.gd` `_ready()`** — remove `TacticalBridge.connect_to_engine("127.0.0.1", 8765)`. Add `SimBridge.state_updated.connect(TacticalBridge._on_message)` so the existing state machine (dead-reckoning, snapshot/delta apply) is fed from the stdio pipe instead.
+
+2. **`scenes/tactical/input_router.gd` `_send()`** — replace `TacticalBridge.send_command(cmd)` with `SimBridge.send_command({"type": "command", "command": cmd})`.
+
+`socket_server.py`, `WsClient`, and `TacticalBridge.connect_to_engine()` are left intact (not deleted) per spec — they become dead code paths rather than removed files.
+
+**Divergences from spec:**
+
+| Spec said | What was built | Reason |
+|-----------|----------------|--------|
+| `OS.create_process()` for spawning sim | `OS.execute_with_pipe()` | Godot 4.6 API — `execute_with_pipe` returns the stdio pipe handle directly; `create_process` does not expose pipes |
+| `SIM_EXECUTABLE_PATH` config constant | `SIM_SCRIPT_PATH` in `sim_bridge.gd` | Named to reflect that it points to a Python script during development, not a compiled executable |
+| Mission briefing populated from "real simulation state" (implies world/faction/region data) | Populated from tactical engine unit snapshot only (unit types, counts, parity, tick) | Macro sim data (region names, faction names, chapter/generation) is not yet connected to the tactical pipeline — Economic/Galaxy view gap |
+| Recon phase between mission briefing and tactical scene | DEPLOY goes directly to `tactical.tscn` | Recon scene is Stage 8 scope; Stage 10 only wires the navigation entry point |
+| `_pending_error_screen` pattern not in spec | Added to `sim_bridge.gd` | SceneRouter transition guard blocks `go_to("error_screen")` if called mid-transition; retry-in-`_process` pattern needed to guarantee error screen reaches the player |
+| `go_back()` stack pop pattern | Added `_transitioning` guard before pop | Race condition: pressing back during fade-out consumed a stack entry without navigating; fix ensures pop only happens when navigation will succeed |
+
+**To resume:** Wait for Stage 8 sign-off. Make the two targeted changes to `tactical.gd` and `input_router.gd` listed above. Run Checkpoint F prove-it item 5 (units appear, issue move command, verify units respond via stdio). Mark Stage 10 done.

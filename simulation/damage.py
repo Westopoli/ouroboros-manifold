@@ -37,6 +37,7 @@ def resolve_damage(store: UnitStore, tactical_map, dt: float):
                 continue
 
         store.data[uid, FIELD_ATTACK_TIMER] = store.data[uid, FIELD_ATTACK_INTERVAL]
+        store.attack_backswing[uid] = config.ATTACK_BACKSWING_SEC
 
         attacker_cat = CATEGORY_NAMES[store.category[uid]]
         base_dmg = store.data[uid, FIELD_BASE_DAMAGE]

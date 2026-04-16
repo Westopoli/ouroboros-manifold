@@ -81,11 +81,14 @@ func _handle_digit(ke: InputEventKey) -> void:
 	var digit: int = _digit(ke.keycode)
 	if digit < 0:
 		return
-	if ke.ctrl_pressed:
+	# Accept ctrl OR meta (Cmd on macOS, Super on Win/Linux). macOS intercepts
+	# Ctrl+digit for Mission Control desktop-switching; Cmd reaches us instead.
+	var bind_mod: bool = ke.ctrl_pressed or ke.meta_pressed
+	if bind_mod:
 		_bind_group(digit)
 	elif ke.shift_pressed and digit >= 1 and digit <= 5:
 		_cmd_layer_preference(digit)
-	elif not ke.ctrl_pressed and not ke.shift_pressed:
+	elif not ke.shift_pressed:
 		_recall_group(digit)
 
 
@@ -99,6 +102,7 @@ func _handle_ability(ke: InputEventKey) -> void:
 
 func _finish_selection(release_screen: Vector2) -> void:
 	_box_selecting = false
+	queue_redraw()
 	if release_screen.distance_to(_box_start_screen) < 6.0:
 		_click_select(_to_world(release_screen))
 	else:

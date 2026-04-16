@@ -481,6 +481,7 @@ LIFESPAN_MAX                   = 350    # maximum lifespan in ticks
 # ── Tactical engine core (Stage 6) ──────────────────────────────────────────
 TACTICAL_TICK_RATE             = 20      # ticks per second
 TACTICAL_TICK_DURATION         = 0.05    # seconds per tick (1 / TICK_RATE)
+ATTACK_BACKSWING_SEC           = 0.5     # movement pause after firing (SC2-style backswing, prevents chase jitter)
 
 # ── Canvas sizing (Stage 6) ─────────────────────────────────────────────────
 CANVAS_SMALL                   = (4000, 4000)

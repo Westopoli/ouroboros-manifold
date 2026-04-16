@@ -25,6 +25,7 @@ signal sim_error(info: Dictionary)
 
 const USE_LIVE_SIM := true
 const SIM_STARTUP_TIMEOUT_SEC := 30.0
+const ENTITLEMENT_SETTLED_REACH := true
 
 ## Development: python3 + this script. Production: swap to compiled executable.
 const SIM_SCRIPT_PATH := "simulation/pipe_transport.py"

@@ -59,7 +59,7 @@ func _build_ui() -> void:
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 
-	_setup_galaxy_viewport()
+	_setup_world_view_viewport()
 
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -104,7 +104,7 @@ func _build_ui() -> void:
 	vbox.add_child(_flavor_label)
 
 
-func _setup_galaxy_viewport() -> void:
+func _setup_world_view_viewport() -> void:
 	var container := SubViewportContainer.new()
 	container.set_anchors_preset(Control.PRESET_FULL_RECT)
 	container.stretch = true
@@ -119,10 +119,10 @@ func _setup_galaxy_viewport() -> void:
 	viewport.use_hdr_2d = false
 	container.add_child(viewport)
 
-	var galaxy_scene := load("res://scenes/shared/galaxy/galaxy_structure.tscn")
-	var galaxy: Node3D = galaxy_scene.instantiate()
-	viewport.add_child(galaxy)
-	galaxy.start_auto_camera()
+	var world_view_scene := load("res://scenes/shared/world_view/world_view_structure.tscn")
+	var world_view: Node3D = world_view_scene.instantiate()
+	viewport.add_child(world_view)
+	world_view.start_auto_camera()
 
 	var tw := create_tween()
 	tw.tween_property(container, "modulate:a", 0.4, 2.0)

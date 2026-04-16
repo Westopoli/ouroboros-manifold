@@ -547,7 +547,7 @@ func _build_footer(parent: Control) -> void:
 	deploy_btn.text = "DEPLOY FORCES"
 	deploy_btn.accent_color = _accent
 	deploy_btn.pressed.connect(func():
-		_show_stub_modal("Combat deployment will connect to the tactical engine.")
+		SceneRouter.go_to("tactical")
 	)
 	footer.add_child(deploy_btn)
 

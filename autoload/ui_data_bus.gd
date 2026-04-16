@@ -1,335 +1,69 @@
 extends Node
 
-var MOCK_MODE: bool = true
-
 signal purchase_requested(era_id: String, purchase_type: String)
 
-var _save_slots: Array[Dictionary] = []
-var _settings: Dictionary = {}
 const SETTINGS_PATH := "user://settings.cfg"
 const VALID_RESOLUTION_COUNT := 6
 
+var _source: RefCounted
+var _settings: Dictionary = {}
+
+
 func _ready() -> void:
-	_init_mock_save_slots()
+	if SimBridge.USE_LIVE_SIM:
+		_source = load("res://autoload/sim_bridge_data_source.gd").new()
+	else:
+		_source = load("res://autoload/mock_data_source.gd").new()
 	_load_settings()
 
 
-# --- Era data ---
-
 func get_all_eras() -> Array[Dictionary]:
-	return [
-		{
-			"id": "roman",
-			"name": "Roman",
-			"description": "Command the legions of a civilization that conquered the known world. Ground-only warfare across sun-baked provinces — no layers, no air support, just steel and discipline.",
-			"accent_color": "#c9a84c",
-			"is_free": true,
-			"is_owned": true,
-			"is_trial": false,
-			"trial_missions_remaining": 0,
-			"subscription_required": false,
-			"tier_progress": {
-				"current_tier": 2,
-				"progress_to_next": 0.45,
-				"max_tier_unlocked": 2
-			},
-			"mastery_progress": 0.12,
-			"unit_roster": [
-				{"abstract_type": "vanguard", "display_name": "Legionary", "category": "line", "tier": 1, "role_description": "Disciplined frontline infantry. The backbone of the legion."},
-				{"abstract_type": "warden", "display_name": "Medicus", "category": "line", "tier": 1, "role_description": "Field surgeon who stabilizes nearby units under fire."},
-				{"abstract_type": "raider", "display_name": "Velites", "category": "strike", "tier": 1, "role_description": "Fast flanking skirmishers with javelin harassment."},
-				{"abstract_type": "interceptor", "display_name": "Equites", "category": "strike", "tier": 2, "role_description": "Mounted cavalry for rapid encirclement and pursuit."},
-				{"abstract_type": "bombard", "display_name": "Onager", "category": "siege", "tier": 2, "role_description": "Stone-throwing siege engine. Devastating against fortifications."},
-				{"abstract_type": "bastion", "display_name": "Testudo", "category": "siege", "tier": 3, "role_description": "Mobile shield formation. Absorbs punishment while advancing."},
-			],
-			"sample_chronicle_text": "In the autumn of the third year, the Confederation pressed south through the mountain passes. Consul Lucius Aurelius — seventh of his line — ordered the garrison to hold the river crossing at any cost. The legionaries dug in along the northern bank and waited for the dust clouds on the horizon to resolve into spears."
-		},
-		{
-			"id": "settled_reach",
-			"name": "Settled Reach",
-			"description": "Far-future conflict across the void. Full 2.5D layer combat — orbital stations, surface strongholds, and deep-space engagements. The premium sci-fi experience.",
-			"accent_color": "#4a9eb8",
-			"is_free": false,
-			"is_owned": false,
-			"is_trial": false,
-			"trial_missions_remaining": 0,
-			"subscription_required": true,
-			"tier_progress": {
-				"current_tier": 1,
-				"progress_to_next": 0.0,
-				"max_tier_unlocked": 1
-			},
-			"mastery_progress": 0.0,
-			"unit_roster": [
-				{"abstract_type": "vanguard", "display_name": "Lancer", "category": "line", "tier": 1, "role_description": "Standard-issue assault infantry with kinetic rifles."},
-				{"abstract_type": "warden", "display_name": "Apothecary", "category": "line", "tier": 1, "role_description": "Combat medic with nano-restoration field."},
-				{"abstract_type": "raider", "display_name": "Wraith", "category": "strike", "tier": 1, "role_description": "Cloaked infiltrator. Disables systems before the assault."},
-				{"abstract_type": "interceptor", "display_name": "Seraph", "category": "strike", "tier": 2, "role_description": "Atmospheric fighter. Dominates the air layer."},
-				{"abstract_type": "bombard", "display_name": "Basilisk", "category": "siege", "tier": 2, "role_description": "Long-range plasma artillery platform."},
-				{"abstract_type": "bastion", "display_name": "Aegis", "category": "siege", "tier": 3, "role_description": "Heavy shield generator. Protects surrounding units."},
-			],
-			"sample_chronicle_text": "The beacon at Thalassa Relay went dark on the forty-eighth cycle. When the survey corvette arrived, the station was intact — power flowing, atmo nominal — but every console displayed the same message, repeating: THEY REMEMBER WHAT WE BUILT. The Admiralty recalled all frontier patrols within the hour."
-		},
-		{
-			"id": "1980s",
-			"name": "1980s",
-			"description": "Cold War gone hot. Submarines stalk the deep layers, destroyers command the surface, and aircraft dominate the sky. The definitive showcase for 2.5D vertical combat.",
-			"accent_color": "#8b9a3c",
-			"is_free": false,
-			"is_owned": false,
-			"is_trial": true,
-			"trial_missions_remaining": 3,
-			"subscription_required": false,
-			"tier_progress": {
-				"current_tier": 1,
-				"progress_to_next": 0.15,
-				"max_tier_unlocked": 1
-			},
-			"mastery_progress": 0.03,
-			"unit_roster": [
-				{"abstract_type": "vanguard", "display_name": "Destroyer", "category": "line", "tier": 1, "role_description": "Multi-role surface combatant. Anti-sub and anti-surface."},
-				{"abstract_type": "warden", "display_name": "Tender", "category": "line", "tier": 1, "role_description": "Support vessel. Repairs and resupplies nearby ships."},
-				{"abstract_type": "raider", "display_name": "Fast Attack Craft", "category": "strike", "tier": 1, "role_description": "Small, fast torpedo boat for hit-and-run raids."},
-				{"abstract_type": "interceptor", "display_name": "F-14 Tomcat", "category": "strike", "tier": 2, "role_description": "Air superiority fighter. Controls the sky layer."},
-				{"abstract_type": "bombard", "display_name": "Iowa-class", "category": "siege", "tier": 2, "role_description": "Battleship with 16-inch guns. Devastating shore bombardment."},
-				{"abstract_type": "bastion", "display_name": "Typhoon-class", "category": "siege", "tier": 3, "role_description": "Ballistic missile submarine. The deep-layer fortress."},
-			],
-			"sample_chronicle_text": "The sonar contact appeared at 0347, bearing two-seven-zero, depth four hundred meters and descending. Captain Hargrove studied the waterfall display for eleven seconds before speaking. 'That's not one of ours.' The crew of the USS Tallahassee had trained for this moment for three years. None of them had believed it would actually come."
-		},
-	]
+	return _source.get_all_eras()
 
 
 func get_era_detail(era_id: String) -> Dictionary:
-	for era in get_all_eras():
-		if era["id"] == era_id:
-			return era
-	return {}
+	return _source.get_era_detail(era_id)
 
 
 func is_era_accessible(era_id: String) -> bool:
-	var era := get_era_detail(era_id)
-	if era.is_empty():
-		return false
-	return era["is_free"] or era["is_owned"] or era["is_trial"]
-
-
-# --- Save slot data ---
-
-func _init_mock_save_slots() -> void:
-	_save_slots = [
-		{
-			"id": "slot_001",
-			"name": "Roman \u2014 Isolated Start",
-			"era_id": "roman",
-			"era_name": "Roman",
-			"template_id": "isolated_start",
-			"template_name": "Isolated Start",
-			"chapter": 3,
-			"generation": 7,
-			"playtime_seconds": 14520,
-			"last_played_timestamp": "2026-04-05T14:30:00Z",
-			"era_accent_color": "#c9a84c"
-		},
-		{
-			"id": "slot_002",
-			"name": "1980s \u2014 Twin Colony",
-			"era_id": "1980s",
-			"era_name": "1980s",
-			"template_id": "twin_colony",
-			"template_name": "Twin Colony",
-			"chapter": 1,
-			"generation": 2,
-			"playtime_seconds": 4500,
-			"last_played_timestamp": "2026-04-07T09:15:00Z",
-			"era_accent_color": "#8b9a3c"
-		},
-	]
+	return _source.is_era_accessible(era_id)
 
 
 func get_save_slots() -> Array[Dictionary]:
-	return _save_slots
+	return _source.get_save_slots()
 
 
 func create_save_slot(era_id: String, template_id: String, slot_name: String) -> Dictionary:
-	var safe_name := InputSanitizer.sanitize(slot_name, "save_name")
-	var era := get_era_detail(era_id)
-	var templates := get_starting_templates()
-	var template_name := ""
-	for t in templates:
-		if t["id"] == template_id:
-			template_name = t["name"]
-			break
-	if safe_name == "":
-		safe_name = "%s \u2014 %s" % [era.get("name", era_id), template_name]
-
-	var slot := {
-		"id": "slot_%03d" % (_save_slots.size() + 1),
-		"name": safe_name,
-		"era_id": era_id,
-		"era_name": era.get("name", era_id),
-		"template_id": template_id,
-		"template_name": template_name,
-		"chapter": 1,
-		"generation": 1,
-		"playtime_seconds": 0,
-		"last_played_timestamp": Time.get_datetime_string_from_system(true),
-		"era_accent_color": era.get("accent_color", "#888888"),
-	}
-	_save_slots.push_back(slot)
-	return slot
+	return _source.create_save_slot(era_id, template_id, slot_name)
 
 
 func delete_save_slot(slot_id: String) -> bool:
-	for i in range(_save_slots.size()):
-		if _save_slots[i]["id"] == slot_id:
-			_save_slots.remove_at(i)
-			return true
-	return false
+	return _source.delete_save_slot(slot_id)
 
-
-# --- Template data ---
 
 func get_starting_templates() -> Array[Dictionary]:
-	return [
-		{
-			"id": "isolated_start",
-			"name": "Isolated Start",
-			"description": "A single homeland pushing outward into the unknown. Straightforward, good for learning.",
-			"ascii_diagram": "[H]\u2500\u2500[F]\u2500\u2500[F]\u2500\u2500[ ]\u2500\u2500[ ]\u2500\u2500[ ]"
-		},
-		{
-			"id": "twin_colony",
-			"name": "Twin Colony",
-			"description": "Two allied homelands separated by neutral territory. Cooperation is survival.",
-			"ascii_diagram": "[H]\u2500\u2500[ ]\u2500\u2500[ ]\u2500\u2500[ ]\u2500\u2500[H]"
-		},
-		{
-			"id": "archipelago",
-			"name": "Archipelago",
-			"description": "Scattered regions with sparse connections. Every border matters.",
-			"ascii_diagram": "[H]  [F]    [ ]\n  \\  |   / \n   [ ]\u2500[ ]\u2500[F]"
-		},
-	]
+	return _source.get_starting_templates()
 
-
-# --- Mission briefing data ---
 
 func get_mission_briefing(mission_id: String) -> Dictionary:
-	return {
-		"mission_id_label": "OP-2741",
-		"chapter": 3,
-		"generation": 7,
-		"era_id": "roman",
-		"mission_title": "The Siege of Thessalonica",
-		"mission_subtitle": "A Fortifier pushes south with overwhelming force",
-		"tick_counter": 48205,
-		"situation_text": "The {accent}Northern Confederation{/accent} has marshaled {strong}42{/strong} companies along the Thessalonica frontier over the past {strong}1,200{/strong} ticks. Intelligence reports confirm a {accent}Fortifier{/accent}-archetype commander directing the buildup \u2014 defensive posture with rare but devastating committed assaults. Regional military readiness has declined to {strong}28{/strong} following last generation's losses at Naissus. Your predecessor, {accent}Marcus Aurelius{/accent}, fell holding the northern approach. The Confederation appears to be testing whether the new commander has the same resolve.",
-		"objective_primary": {
-			"text": "Hold the southern wall until reinforcements arrive.",
-			"archetype": "Rear Guard",
-			"success_spectrum_label": "EXTRACTION UNDER FIRE"
-		},
-		"objectives_secondary": [
-			{"text": "Preserve the garrison supply depot.", "weight_label": "SECONDARY"},
-		],
-		"enemy_assessment": {
-			"faction_name": "Northern Confederation",
-			"archetype_label": "FORTIFIER",
-			"military_stat": 72,
-			"military_stat_max": 100,
-			"tech_tier": 2,
-			"behavior_tag": "DEFENSIVE POSTURE \u2014 RARE COMMITTED ATTACK"
-		},
-		"player_force": {
-			"parity_percentage": 85,
-			"units": [
-				{"type_abstract": "vanguard", "type_display_name": "Legionary", "category": "line", "count": 4},
-				{"type_abstract": "warden", "type_display_name": "Medicus", "category": "line", "count": 2},
-				{"type_abstract": "raider", "type_display_name": "Velites", "category": "strike", "count": 3},
-				{"type_abstract": "interceptor", "type_display_name": "Equites", "category": "strike", "count": 2},
-				{"type_abstract": "bombard", "type_display_name": "Onager", "category": "siege", "count": 1},
-				{"type_abstract": "bastion", "type_display_name": "Testudo", "category": "siege", "count": 1},
-			]
-		},
-		"region_state": {
-			"name": "Thessalonica",
-			"tier": "Frontier",
-			"economy": {"value": 45, "max": 100},
-			"military": {"value": 28, "max": 100},
-			"tension": {"value": 67, "max": 100}
-		},
-		"commander_lineage": {
-			"name": "Lucius Aurelius",
-			"generation_number": 7,
-			"predecessor_name": "Marcus Aurelius",
-			"predecessor_status": "KIA \u2014 Naissus"
-		},
-		"reinforcement_note": "Local military infrastructure degraded \u2014 expect sparse reinforcements from regional garrisons."
-	}
+	return _source.get_mission_briefing(mission_id)
 
-
-# --- Entitlement data ---
 
 func get_subscription_status() -> Dictionary:
-	return {
-		"active": false,
-		"plan_name": "",
-		"renewal_date": ""
-	}
+	return _source.get_subscription_status()
 
 
 func initiate_purchase(era_id: String, purchase_type: String) -> void:
 	purchase_requested.emit(era_id, purchase_type)
 
 
-# In live mode: polls server for updated entitlements after browser-redirect purchase.
 func refresh_entitlements() -> void:
 	pass
 
 
-# --- Key redemption ---
-
 func redeem_key(code: String) -> Dictionary:
-	code = InputSanitizer.sanitize(code, "key_code")
-	match code:
-		"TESTPERM001":
-			return {
-				"success": true,
-				"key_type": "permanent",
-				"era_ids": ["roman"],
-				"era_names": ["Roman"],
-				"duration_label": "",
-				"missions_granted": 0,
-				"flavor_message": "huh \u2014 you must know somebody"
-			}
-		"TESTTIME001":
-			return {
-				"success": true,
-				"key_type": "time_limited",
-				"era_ids": ["roman", "settled_reach", "1980s"],
-				"era_names": ["Roman", "Settled Reach", "1980s"],
-				"duration_label": "30 days",
-				"missions_granted": 0,
-				"flavor_message": "the clock starts now \u2014 make it count"
-			}
-		"TESTTRIAL01":
-			return {
-				"success": true,
-				"key_type": "mission_limited",
-				"era_ids": ["1980s"],
-				"era_names": ["1980s"],
-				"duration_label": "",
-				"missions_granted": 5,
-				"flavor_message": "five shots \u2014 better make them interesting"
-			}
-		_:
-			return {
-				"success": false,
-				"error_display": "Invalid key. Check the code and try again."
-			}
+	return _source.redeem_key(code)
 
-
-# --- Settings data ---
 
 func _load_settings() -> void:
 	var config := ConfigFile.new()

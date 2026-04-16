@@ -465,7 +465,7 @@ Each checkpoint is a hard stop per `dev_rules.md` § Mandatory Checkpoints. Run 
 
 ### Checkpoint H — Command Input System
 
-**Build:** `input_router.gd`. Click-to-select, box-select, right-click → `move` (or `attack_move` with Shift), `A`-then-click → `attack_move`, `Ctrl+1..0` bind control group, `1..0` recall, `~` all-army hotkey, `Q`/`W`/`E`/`R`/`T` ability slots, `Tab` cycle active layer, modifier-held `1..5` → layer-preference-set, dedicated key → layer-hard-transfer.
+**Build:** `input_router.gd`. Click-to-select, box-select, right-click → `move` (or `attack_move` with Shift), `A`-then-click → `attack_move`, `Ctrl+1..0` (or `Cmd+1..0` on macOS — macOS intercepts Ctrl+digit for Mission Control) bind control group, `1..0` recall, `~` all-army hotkey, `W`/`S`/`D`/`C`/`E` ability slots, `Q` / `Z` cycle active layer forward / backward (Westley's choice — replaces the originally specified `Tab` to avoid future conflict with focus-cycling UI), modifier-held `1..5` → layer-preference-set, `X` → layer-hard-transfer.
 
 **Test:** Manual test matrix (one row per command × selection-size). `ws_input_sanitizer.gd` unit tests for malformed packet rejection.
 
@@ -483,7 +483,7 @@ Each checkpoint is a hard stop per `dev_rules.md` § Mandatory Checkpoints. Run 
 
 **Print:** Per panel: update cadence, frame time contribution, event-ticker entry list over the mission.
 
-**Verify:** Layout matches reference screenshots. Ability bar shows cooldown rings only (no "ready" prompts). Reinforcement-structure panel lists only player-owned structures. Layer selector highlights active layer and responds to Tab / click. Event ticker shows hardcoded beats at the right moments (capture, loss, rout, threshold).
+**Verify:** Layout matches reference screenshots. Ability bar shows cooldown rings only (no "ready" prompts). Reinforcement-structure panel lists only player-owned structures. Layer selector highlights active layer and responds to `Q`/`Z` cycle or click (see Checkpoint H note on the `Tab`→`Q`/`Z` swap). Event ticker shows hardcoded beats at the right moments (capture, loss, rout, threshold).
 
 ⛔ STOP.
 
@@ -573,3 +573,101 @@ Per CLAUDE.md: if an invariant fails, you may not widen thresholds or weaken tes
 - **Performance discipline.** Per dev_rules.md § Performance regression discipline, Checkpoint M has a hard frame-time budget. Do not ship a renderer that drops frames at 200v200.
 - **IGoP reference.** The HUD layout and command-input philosophy both cite Immortal: Gates of Pyre. When in doubt about what a panel should look like or how a hotkey should behave, open the reference screenshots.
 - **No rewind.** This is the second-most-important rule in this spec after the socket-server protection. Rewind is a post-launch feature. Do not add rewind hooks "we'll need later." Stage 8 ships saves, not rewind.
+
+---
+
+## Paused at This State — 2026-04-16
+
+Stage 8 is paused partway through Checkpoint I. The tactical client renders, accepts commands, and round-trips through the socket server cleanly; Checkpoints A–H are signed off; Checkpoint I (HUD Panels) is plumbed but has gaps (see below). Pausing here to address a broader structural issue.
+
+### Cause — Economic / Galaxy View Gap
+
+The tactical layer works in isolation, but there is no surrounding economic / galaxy-level wrapper for missions to flow into or out of. Missions launch from a debug harness, resolve, and end in a void. The macro loop that gives tactical gameplay its *meaning* — galaxy view of factions and territory, time jumps feeding into mission briefings, mission outcomes feeding back into the simulation — does not yet exist in the client. That scaffolding lives in **Stage 9** (UI shell: main menu, era library, mission briefing), **Stage 10** (backend integration of the UI bus with the live sim), **Stage 11** (galaxy view + seamless transition), and **Stage 12** (loop edges: onboarding, debrief, save). Note Ouroboros has **no currency / no tech tree** by design (per `bible_combat.md` §Mid-Mission HUD Layout and `bible_monetization.md`); "economic view" here refers to the *galactic-scale* economy of faction territory, technology level, and field drift — not a resource-management UI.
+
+Resuming Stage 8 ahead of resolving that gap is valid (Checkpoints J–M stand on their own), but the ordering was re-examined and further Stage 8 work was deferred. When resuming, either finish Stage 8 on its own terms or bring the Stage 9 / 11 scaffolding in first so Checkpoint J's onboarding → time jump → recon → mission flow has somewhere to *land*.
+
+### Checkpoint Status at Pause
+
+| Checkpoint | Status | Notes |
+|---|---|---|
+| A — Socket server scaffold | ✅ done | |
+| B — Snapshot + delta wire format | ✅ done | |
+| C — Command ingest + loopback | ✅ done | |
+| D — Save writer / loader | ✅ done | |
+| E — Tactical quit-and-resume | ✅ done | |
+| F — Godot connection + snapshot ingest | ✅ done | |
+| G — Unit + terrain rendering | ✅ done | Tier-1 layer indicator rings under units still TODO per hub §16. |
+| H — Command input system | ✅ done | See divergences below. |
+| I — HUD panels (IGoP layout) | ⚠️ partial | HUD built; event-emission gap on the sim side; hamburger menu is a placeholder. |
+| J — Onboarding + opening time jump + opening scroll | ⏸ not started | |
+| K — Recon phase | ⏸ not started | |
+| L — End-to-end playable loop | ⏸ not started | Blocked by J, K, and the galaxy gap above. |
+| M — Performance + stability | ⏸ not started | |
+
+### Checkpoint I — Remaining Work
+
+1. **Sim-side event emission.** `simulation/snapshot_serializer.py` currently emits one event kind: `unit_destroyed` (line 229). The four additional kinds required by the bible ticker list (`bible_combat.md` §Mid-Mission HUD Layout — "reinforcement structure captured / lost, force routed, objective threshold hit") are *not emitted anywhere*. HUD handlers in `scenes/tactical/hud.gd:72-89` are defensively coded for these kinds but will never fire until the sim emits them. Work needed:
+   - `structure_captured` / `structure_lost` — diff `structure.owner_faction` between snapshots in the serializer; emit from the perspective of each diff.
+   - `force_routed` — threshold on aggregate faction HP fraction or unit-count drop per tick; location TBD (`objectives.py` or a new `events/tactical_events.py`).
+   - `objective_threshold` — emit when an `Objective.progress` crosses a threshold (25/50/75/100%).
+2. **Hamburger menu button** at `hud.gd::_build_clock` (`☰`) is a visual placeholder with no `pressed.connect(...)`. Expected to route to a pause / settings overlay eventually — out of Checkpoint I scope, flagged for later.
+3. **Layer indicator rings** under units (hub §16 Tier 1 — mechanical baseline). Belongs to Checkpoint G/H; not currently rendered. `unit_renderer.gd` would need a per-unit ring draw keyed on `unit["layer"]`.
+4. **Right sidebar empty** — intentional per Checkpoint I build scope ("right sidebar empty"). No action needed.
+
+### Divergences From Spec / Bible
+
+Applied during implementation with Westley's approval. Spec lines already edited in place; listed here so a future session sees them in one view.
+
+**Command input (Checkpoint H, spec line 468):**
+- Ability keys: `W`/`S`/`D`/`C`/`E` (spec originally said `Q`/`W`/`E`/`R`/`T`).
+- Layer cycle: `Q` forward / `Z` backward (spec originally said `Tab`). Westley's call to avoid conflict with Godot's focus-cycling on `Tab`.
+- Layer hard transfer: `X`.
+- Control-group bind: `Ctrl+1..0` **or `Cmd+1..0` on macOS**. macOS intercepts `Ctrl+digit` for Mission Control desktop switching, so Godot never sees it; accepting `meta_pressed` as an alternative modifier lets Mac users bind groups with `Cmd`. Code: `input_router.gd::_handle_digit`.
+- Camera pan: edge-scroll (classic RTS), not WASD. Per `feedback_camera_controls` memory.
+
+**HUD layout (Checkpoint I, diverges from `bible_combat.md` §Mid-Mission HUD Layout *text* in favor of matching the IGoP *reference screenshots*):**
+- Minimap: **bottom-left at 1.5× base** (330×330). Bible text said "center or right-of-center." Westley's call after seeing the reference.
+- Reinforcements panel: immediately right of the minimap. Bible text said "right of minimap" — matches.
+- Selection panel: **bottom-center**. Bible text said "selected-unit portrait panel left-of-center."
+- Commander portrait: **omitted** for now. Placeholder-only art, not needed for Stage 8 functional scope.
+- Control-group strip: bottom-right, left of layer selector. Populates reactively as groups are bound.
+- Layer selector: far right, 5 buttons for L0–L4, active layer highlighted.
+- Ability display: single cooldown ring in the selection panel (see `hud.gd::_AbilityRing`). Bright-green outlined ring when ready, filled dark circle with seconds-remaining text while on cooldown. No "ready" prompts per bible "no ready notifications beyond the ring itself."
+
+**Sim-side fixes applied during Stage 8 work (not strictly Stage 8 scope, but referenced in Stage 8 context):**
+- `simulation/movement.py` — approach-state engagement-lock replaced with in-range guard. Fast units pursue fleeing targets instead of oscillating when the engagement lock drops for a tick. Plan reference: `/Users/westley/.claude/plans/lively-wandering-bear.md`. Known follow-up balance issue: `_ATTACK_MOVE_LEASH_SQ = 200.0 * 200.0` equals Raider attack range; Bastion (range 800) clears `auto_engage_target` before `resolve_damage` can use it. Out of scope here.
+- Attack backswing added (combat polish).
+- Selection-box visual artifact on mouse release fixed in `input_router.gd::_finish_selection` via `queue_redraw()`.
+- Ctrl-C hang on `socket_server.py` shutdown is **known and accepted** (socket server becomes dead code after Stage 10 per `stage_10_spec.md` — stdio transport replaces it). Do not "fix" by refactoring the protected file.
+
+### State to Preserve for Resumption
+
+**How to run:**
+1. `python3 simulation/run_debug_server.py` — starts socket server on `SOCKET_HOST:SOCKET_PORT`, loads a Stage 7 test map.
+2. Open Godot project — tactical scene auto-connects via `TacticalBridge` autoload.
+
+**Autoload map (important — two independent bridges):**
+- `TacticalBridge` (`autoload/tactical_bridge.gd`) — WebSocket client to `simulation/socket_server.py`. **This is what the tactical HUD uses.** Exposes `units`, `structures`, `objectives`, `display_positions`, `current_tick`, `map_data`; signals `snapshot_received`, `tick_delta_received`, `connection_state_changed`.
+- `SimBridge` (`autoload/sim_bridge.gd`) — stdio pipes to `simulation/pipe_transport.py`. **For Stage 9 strategic UI scenes**, auto-spawns a sim child process on project load. Unrelated to tactical. The `"SimBridge: spawned sim pid=..."` line in Godot output is from this and can be ignored during Stage 8 tactical work.
+
+**Integration tests:** `simulation/test_stage8_integration.py` — 4/4 passing at pause. Run before resuming any Stage 8 work.
+
+**Files created in Stage 8 (inventory for "Files Created" section above):**
+- Sim side: `simulation/socket_server.py`, `simulation/snapshot_serializer.py`, `simulation/command_ingest.py`, `simulation/run_debug_server.py`, `simulation/pipe_transport.py`, save / load modules, test files.
+- Godot side: `scenes/tactical/tactical.tscn` + `.gd`, `scenes/tactical/terrain_renderer.gd`, `scenes/tactical/unit_renderer.gd`, `scenes/tactical/input_router.gd`, `scenes/tactical/hud.tscn` + `.gd`. Autoloads: `autoload/tactical_bridge.gd`, `autoload/ws_client.gd`, `autoload/ws_input_sanitizer.gd`, `autoload/sim_bridge.gd`. (Other autoloads predate Stage 8.)
+- Docs: IGoP HUD reference screenshots at `docs/design_questions/Immortal-Gates-of-Pyre-*.jpg` — permanent reference for layout decisions.
+
+### Out-of-Stage-8 Items Surfaced During Implementation
+
+Track separately; **do not fold back into Stage 8**:
+- **Tactical art pass.** Settled Reach GLB assets exist at `docs/blender_stuff/the-settled-reach/` (at least `SetReachBastionT2.glb` imported). No stage spec currently covers importing era art into `tactical.tscn` — the scene is still Node2D with placeholder sprites per Checkpoint G. New design decision required: convert `tactical.tscn` to Node3D with an orthographic 60° camera (the `CAMERA_ANGLE_DEGREES = 60.0` constant anticipates this but is currently unused) vs. pre-render meshes to sprite sheets. Bible update + new stage spec needed if pursued.
+- **Zoom-dependent camera tilt** (top-down at wide zoom → angled at close zoom). Not in any stage spec or bible section; hub §16 explicitly assumes *"the fixed top-down camera angle"*. If desired, belongs in `bible_combat.md` §Camera and Player View first.
+- **Layer visualization Tier 2/3** (`game_bible.md` §16 — light and heavy environmental dressing). Tier 1 (indicator rings) is Checkpoint H territory. Tiers 2/3 are deferred with no current owner.
+
+### When Resuming
+
+Check this section first. Then:
+1. Re-read `CLAUDE.md` (no shotgun fixes rule is especially important mid-implementation).
+2. Confirm `test_stage8_integration.py` still passes.
+3. Decide Checkpoint I disposition: close the sim-side event-emission gap, or explicitly defer with `# DEFERRED:` comments and move to Checkpoint J.
+4. Before starting J, revisit the **Economic / Galaxy View Gap** framing above — if Stage 9 / 11 work landed in the interim, some Checkpoint J integration points (onboarding → time jump → recon handoff) may need to target the new scenes rather than the standalone harness.

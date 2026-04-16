@@ -1,0 +1,536 @@
+## Mid-mission HUD per bible_combat.md §"Mid-Mission HUD Layout" (IGoP-inspired).
+## Layout built in code — no tscn children. Subscribes to TacticalBridge for
+## tick-driven data (units/structures/objectives/events) and reads selection +
+## active_layer from sibling InputRouter each frame.
+extends CanvasLayer
+
+const _PANEL_BG := Color(0.05, 0.08, 0.12, 0.82)
+const _PANEL_BORDER := Color(0.35, 0.45, 0.55, 0.9)
+const _TEXT := Color(0.92, 0.93, 0.95)
+const _DIM  := Color(0.60, 0.62, 0.70)
+const _LAYER_ACTIVE := Color(0.3, 0.85, 1.0)
+const _BANNER_COLOR := Color(1.0, 0.80, 0.40)
+const _FACTION_COLORS := [Color(0.30, 0.70, 1.00), Color(1.00, 0.35, 0.35)]
+const _MAX_EVENTS := 4
+const _BANNER_DURATION := 4.0
+const _MINIMAP_SIZE := Vector2(330, 330)  # 1.5× base; IGoP-scale presence at bottom-left
+const _TICK_HZ := 20.0
+
+var _input_router: Node
+
+var _objectives_list: VBoxContainer
+var _event_ticker_list: VBoxContainer
+var _banner_label: Label
+var _clock_label: Label
+var _minimap: Control
+var _selection_content: VBoxContainer
+var _structure_list: VBoxContainer
+var _control_group_labels: Array = []
+var _layer_buttons: Array = []
+
+var _banner_timer: float = 0.0
+var _start_tick: int = -1
+
+
+func _ready() -> void:
+	layer = 10
+	_input_router = get_node("../InputRouter")
+	_build_ui()
+	TacticalBridge.snapshot_received.connect(_on_snapshot)
+	TacticalBridge.tick_delta_received.connect(_on_delta)
+
+
+func _process(delta: float) -> void:
+	_update_clock()
+	_update_selection_panel()
+	_update_layer_selector()
+	_update_control_groups()
+	if _minimap:
+		_minimap.queue_redraw()
+	if _banner_timer > 0.0:
+		_banner_timer -= delta
+		if _banner_timer <= 0.0:
+			_banner_label.visible = false
+
+
+# ── Signals ──────────────────────────────────────────────────────────────────
+
+func _on_snapshot(snap: Dictionary) -> void:
+	if _start_tick < 0:
+		_start_tick = snap.get("tick", 0)
+	_rebuild_objectives()
+	_rebuild_structure_list()
+
+
+func _on_delta(d: Dictionary) -> void:
+	_rebuild_objectives()
+	_rebuild_structure_list()
+	for ev in d.get("events", []):
+		_handle_event(ev)
+
+
+func _handle_event(ev: Dictionary) -> void:
+	var kind: String = ev.get("kind", "")
+	var text := ""
+	var banner := false
+	match kind:
+		"unit_destroyed":
+			text = "Unit destroyed"
+		"structure_captured":
+			text = "Structure captured"
+			banner = true
+		"structure_lost":
+			text = "Structure lost"
+			banner = true
+		"objective_threshold":
+			text = "Objective threshold crossed"
+			banner = true
+		_:
+			return
+	_append_event(text)
+	if banner:
+		_show_banner(text)
+
+
+func _append_event(text: String) -> void:
+	var lbl := Label.new()
+	lbl.text = text
+	lbl.add_theme_color_override("font_color", _TEXT)
+	_event_ticker_list.add_child(lbl)
+	while _event_ticker_list.get_child_count() > _MAX_EVENTS:
+		_event_ticker_list.get_child(0).queue_free()
+
+
+func _show_banner(text: String) -> void:
+	_banner_label.text = text
+	_banner_label.visible = true
+	_banner_timer = _BANNER_DURATION
+
+
+# ── Per-frame panel updates ──────────────────────────────────────────────────
+
+func _update_clock() -> void:
+	var elapsed_ticks: int = TacticalBridge.current_tick - max(0, _start_tick)
+	var secs: float = max(0.0, elapsed_ticks) / _TICK_HZ
+	var m: int = int(secs) / 60
+	var s: int = int(secs) % 60
+	_clock_label.text = "%02d:%02d" % [m, s]
+
+
+func _update_selection_panel() -> void:
+	var selected: Array = _input_router.selected_uids
+	for child in _selection_content.get_children():
+		child.queue_free()
+	if selected.is_empty():
+		var lbl := Label.new()
+		lbl.text = "(no selection)"
+		lbl.add_theme_color_override("font_color", _DIM)
+		_selection_content.add_child(lbl)
+		return
+	var total_hp := 0
+	var total_max := 0
+	var types := {}
+	var min_cd := INF
+	for uid in selected:
+		if uid not in TacticalBridge.units:
+			continue
+		var u: Dictionary = TacticalBridge.units[uid]
+		total_hp += int(u.get("hp", 0))
+		total_max += int(u.get("max_hp", 0))
+		var t: String = u.get("type", "?")
+		types[t] = types.get(t, 0) + 1
+		var cd: float = u.get("ability_cd_sec", 0.0)
+		if cd < min_cd:
+			min_cd = cd
+	var type_parts: Array[String] = []
+	for t in types.keys():
+		type_parts.append("%s ×%d" % [t, types[t]])
+	var title := Label.new()
+	title.text = ", ".join(type_parts)
+	title.add_theme_color_override("font_color", _TEXT)
+	_selection_content.add_child(title)
+	var hp_lbl := Label.new()
+	hp_lbl.text = "HP %d / %d" % [total_hp, total_max]
+	hp_lbl.add_theme_color_override("font_color", _TEXT)
+	_selection_content.add_child(hp_lbl)
+	# Ability cooldown ring per bible_combat.md §Mid-Mission HUD Layout:
+	# "ability slots showing cooldown rings ... no 'ready' notifications beyond the ring itself."
+	var ring := _AbilityRing.new()
+	ring.set_cd(min_cd if min_cd != INF else 0.0)
+	_selection_content.add_child(ring)
+
+
+func _update_layer_selector() -> void:
+	var active: int = _input_router.active_layer
+	for i in range(_layer_buttons.size()):
+		var btn: Button = _layer_buttons[i]
+		if i == active:
+			btn.add_theme_color_override("font_color", _LAYER_ACTIVE)
+			btn.modulate = Color(1, 1, 1, 1)
+		else:
+			btn.add_theme_color_override("font_color", _DIM)
+			btn.modulate = Color(1, 1, 1, 0.6)
+
+
+func _update_control_groups() -> void:
+	var groups: Dictionary = _input_router._control_groups
+	for i in range(10):
+		var group_id: int = i + 1
+		var lbl: Label = _control_group_labels[i]
+		var uids: Array = groups.get(group_id, [])
+		var live: Array[int] = []
+		for uid in uids:
+			if uid in TacticalBridge.units:
+				live.append(uid)
+		if live.is_empty():
+			lbl.text = "%d\n—" % (group_id % 10)
+			lbl.add_theme_color_override("font_color", _DIM)
+		else:
+			var types := {}
+			for uid in live:
+				var t: String = TacticalBridge.units[uid].get("type", "?")
+				types[t] = types.get(t, 0) + 1
+			var dominant := "?"
+			var dom_n := 0
+			for t in types:
+				if types[t] > dom_n:
+					dom_n = types[t]
+					dominant = t
+			lbl.text = "%d\n%s\n%d" % [group_id % 10, dominant.substr(0, 4), live.size()]
+			lbl.add_theme_color_override("font_color", _TEXT)
+
+
+func _rebuild_objectives() -> void:
+	for child in _objectives_list.get_children():
+		child.queue_free()
+	if TacticalBridge.objectives.is_empty():
+		var lbl := Label.new()
+		lbl.text = "(no objectives)"
+		lbl.add_theme_color_override("font_color", _DIM)
+		_objectives_list.add_child(lbl)
+		return
+	for obj in TacticalBridge.objectives:
+		var lbl := Label.new()
+		var prog: float = obj.get("progress", 0.0)
+		lbl.text = "%s  %d%%  [%s]" % [obj.get("id", "?"), int(prog * 100), obj.get("status", "?")]
+		lbl.add_theme_color_override("font_color", _TEXT)
+		_objectives_list.add_child(lbl)
+
+
+func _rebuild_structure_list() -> void:
+	for child in _structure_list.get_children():
+		child.queue_free()
+	var found := false
+	for uid in TacticalBridge.structures:
+		var s: Dictionary = TacticalBridge.structures[uid]
+		if int(s.get("owner", -1)) != 0:  # player_faction = 0 (see tactical_engine.py)
+			continue
+		found = true
+		var row := Label.new()
+		var hp: int = int(s.get("hp", 0))
+		var max_hp: int = int(s.get("max_hp", 1))
+		var prod_sec: float = s.get("production_timer_sec", 0.0)
+		var prod_target: String = s.get("production_target", "—")
+		row.text = "[%d] HP %d/%d  %s in %ds" % [uid, hp, max_hp, prod_target, int(prod_sec)]
+		row.add_theme_color_override("font_color", _TEXT)
+		_structure_list.add_child(row)
+	if not found:
+		var lbl := Label.new()
+		lbl.text = "(no structures held)"
+		lbl.add_theme_color_override("font_color", _DIM)
+		_structure_list.add_child(lbl)
+
+
+# ── UI construction ──────────────────────────────────────────────────────────
+
+func _styled_panel() -> PanelContainer:
+	var p := PanelContainer.new()
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = _PANEL_BG
+	sb.border_color = _PANEL_BORDER
+	sb.border_width_left = 1
+	sb.border_width_top = 1
+	sb.border_width_right = 1
+	sb.border_width_bottom = 1
+	sb.corner_radius_top_left = 4
+	sb.corner_radius_top_right = 4
+	sb.corner_radius_bottom_left = 4
+	sb.corner_radius_bottom_right = 4
+	sb.content_margin_left = 10
+	sb.content_margin_right = 10
+	sb.content_margin_top = 6
+	sb.content_margin_bottom = 6
+	p.add_theme_stylebox_override("panel", sb)
+	return p
+
+
+func _place_top_left(ctrl: Control, x: float, y: float, w: float, h: float) -> void:
+	ctrl.anchor_left = 0; ctrl.anchor_right = 0
+	ctrl.anchor_top = 0;  ctrl.anchor_bottom = 0
+	ctrl.offset_left = x
+	ctrl.offset_right = x + w
+	ctrl.offset_top = y
+	ctrl.offset_bottom = y + h
+
+
+func _place_top_right(ctrl: Control, x_from_right: float, y: float, w: float, h: float) -> void:
+	ctrl.anchor_left = 1; ctrl.anchor_right = 1
+	ctrl.anchor_top = 0;  ctrl.anchor_bottom = 0
+	ctrl.offset_left = -x_from_right - w
+	ctrl.offset_right = -x_from_right
+	ctrl.offset_top = y
+	ctrl.offset_bottom = y + h
+
+
+func _place_top_center(ctrl: Control, y: float, w: float, h: float) -> void:
+	ctrl.anchor_left = 0.5; ctrl.anchor_right = 0.5
+	ctrl.anchor_top = 0;    ctrl.anchor_bottom = 0
+	ctrl.offset_left = -w / 2.0
+	ctrl.offset_right = w / 2.0
+	ctrl.offset_top = y
+	ctrl.offset_bottom = y + h
+
+
+func _place_bottom_left(ctrl: Control, x: float, y_from_bottom: float, w: float, h: float) -> void:
+	ctrl.anchor_left = 0; ctrl.anchor_right = 0
+	ctrl.anchor_top = 1;  ctrl.anchor_bottom = 1
+	ctrl.offset_left = x
+	ctrl.offset_right = x + w
+	ctrl.offset_top = -y_from_bottom - h
+	ctrl.offset_bottom = -y_from_bottom
+
+
+func _place_bottom_right(ctrl: Control, x_from_right: float, y_from_bottom: float, w: float, h: float) -> void:
+	ctrl.anchor_left = 1; ctrl.anchor_right = 1
+	ctrl.anchor_top = 1;  ctrl.anchor_bottom = 1
+	ctrl.offset_left = -x_from_right - w
+	ctrl.offset_right = -x_from_right
+	ctrl.offset_top = -y_from_bottom - h
+	ctrl.offset_bottom = -y_from_bottom
+
+
+func _build_ui() -> void:
+	_build_info_column()
+	_build_banner()
+	_build_clock()
+	_build_minimap_panel()        # bottom-left
+	_build_structure_panel()      # right of minimap
+	_build_selection_panel()      # bottom-center
+	_build_control_group_bar()    # bottom-right, left of layer selector
+	_build_layer_selector()       # right edge
+
+
+func _build_info_column() -> void:
+	var panel := _styled_panel()
+	_place_top_left(panel, 12, 12, 360, 320)
+
+	var vbox := VBoxContainer.new()
+	panel.add_child(vbox)
+
+	var oh := Label.new(); oh.text = "OBJECTIVES"
+	oh.add_theme_color_override("font_color", _DIM)
+	vbox.add_child(oh)
+	_objectives_list = VBoxContainer.new()
+	vbox.add_child(_objectives_list)
+
+	var spacer := Control.new()
+	spacer.custom_minimum_size = Vector2(0, 14)
+	vbox.add_child(spacer)
+
+	var eh := Label.new(); eh.text = "EVENTS"
+	eh.add_theme_color_override("font_color", _DIM)
+	vbox.add_child(eh)
+	_event_ticker_list = VBoxContainer.new()
+	vbox.add_child(_event_ticker_list)
+
+	add_child(panel)
+
+
+func _build_banner() -> void:
+	_banner_label = Label.new()
+	_place_top_center(_banner_label, 30, 600, 32)
+	_banner_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_banner_label.add_theme_font_size_override("font_size", 22)
+	_banner_label.add_theme_color_override("font_color", _BANNER_COLOR)
+	_banner_label.visible = false
+	add_child(_banner_label)
+
+
+func _build_clock() -> void:
+	var panel := _styled_panel()
+	_place_top_right(panel, 12, 12, 160, 38)
+
+	var hbox := HBoxContainer.new()
+	panel.add_child(hbox)
+
+	_clock_label = Label.new()
+	_clock_label.text = "00:00"
+	_clock_label.add_theme_color_override("font_color", _TEXT)
+	_clock_label.add_theme_font_size_override("font_size", 18)
+	hbox.add_child(_clock_label)
+
+	var spacer := Control.new()
+	spacer.custom_minimum_size = Vector2(12, 0)
+	hbox.add_child(spacer)
+
+	var menu := Button.new()
+	menu.text = "☰"
+	menu.custom_minimum_size = Vector2(32, 0)
+	hbox.add_child(menu)
+
+	add_child(panel)
+
+
+func _build_minimap_panel() -> void:
+	var panel := _styled_panel()
+	var panel_h: float = _MINIMAP_SIZE.y + 24
+	_place_bottom_left(panel, 12, 12, _MINIMAP_SIZE.x + 20, panel_h)
+	_minimap = _Minimap.new()
+	_minimap.custom_minimum_size = _MINIMAP_SIZE
+	panel.add_child(_minimap)
+	add_child(panel)
+
+
+func _build_structure_panel() -> void:
+	# Right of minimap. Stage 8 scope: text rows per player-owned structure.
+	# Future: IGoP-style hotkey-labeled production tiles (TRAIN/TECH/BUILD/POWER analogue).
+	var panel := _styled_panel()
+	var panel_h: float = _MINIMAP_SIZE.y + 24
+	var x_from_left: float = 12 + _MINIMAP_SIZE.x + 20 + 8
+	_place_bottom_left(panel, x_from_left, 12, 360, panel_h)
+	var vbox := VBoxContainer.new()
+	panel.add_child(vbox)
+	var hdr := Label.new(); hdr.text = "REINFORCEMENTS"
+	hdr.add_theme_color_override("font_color", _DIM)
+	vbox.add_child(hdr)
+	_structure_list = VBoxContainer.new()
+	vbox.add_child(_structure_list)
+	add_child(panel)
+
+
+func _build_selection_panel() -> void:
+	var panel := _styled_panel()
+	_place_bottom_center(panel, 12, 360, 180)
+	var vbox := VBoxContainer.new()
+	panel.add_child(vbox)
+	var hdr := Label.new(); hdr.text = "SELECTION"
+	hdr.add_theme_color_override("font_color", _DIM)
+	vbox.add_child(hdr)
+	_selection_content = VBoxContainer.new()
+	vbox.add_child(_selection_content)
+	add_child(panel)
+
+
+func _place_bottom_center(ctrl: Control, y_from_bottom: float, w: float, h: float) -> void:
+	ctrl.anchor_left = 0.5; ctrl.anchor_right = 0.5
+	ctrl.anchor_top = 1;    ctrl.anchor_bottom = 1
+	ctrl.offset_left = -w / 2.0
+	ctrl.offset_right = w / 2.0
+	ctrl.offset_top = -y_from_bottom - h
+	ctrl.offset_bottom = -y_from_bottom
+
+
+class _AbilityRing extends Control:
+	var cd_sec: float = 0.0
+	var _cd_label: Label
+
+	func _init() -> void:
+		custom_minimum_size = Vector2(32, 32)
+		_cd_label = Label.new()
+		_cd_label.anchor_left = 0; _cd_label.anchor_right = 1
+		_cd_label.anchor_top = 0;  _cd_label.anchor_bottom = 1
+		_cd_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_cd_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		_cd_label.add_theme_font_size_override("font_size", 11)
+		_cd_label.add_theme_color_override("font_color", Color(0.88, 0.90, 0.95))
+		add_child(_cd_label)
+
+	func set_cd(sec: float) -> void:
+		cd_sec = sec
+		_cd_label.text = "" if sec <= 0.0 else "%d" % ceil(sec)
+		queue_redraw()
+
+	func _draw() -> void:
+		var r: float = min(size.x, size.y) / 2.0 - 2.0
+		var c: Vector2 = size / 2.0
+		if cd_sec <= 0.0:
+			draw_arc(c, r, 0.0, TAU, 32, Color(0.35, 0.95, 0.55), 2.0, true)
+		else:
+			draw_circle(c, r, Color(0.10, 0.12, 0.15))
+			draw_arc(c, r, 0.0, TAU, 32, Color(0.45, 0.50, 0.58), 1.5, true)
+
+
+class _Minimap extends Control:
+	func _draw() -> void:
+		var canvas_size := Vector2(8000, 8000)
+		var md: Dictionary = TacticalBridge.map_data
+		if "canvas_size" in md:
+			canvas_size = Vector2(md["canvas_size"][0], md["canvas_size"][1])
+		draw_rect(Rect2(Vector2.ZERO, size), Color(0.10, 0.12, 0.16), true)
+		var sx: float = size.x / canvas_size.x
+		var sy: float = size.y / canvas_size.y
+		var faction_colors := [Color(0.30, 0.70, 1.00), Color(1.00, 0.35, 0.35)]
+		for uid in TacticalBridge.display_positions:
+			var pos: Array = TacticalBridge.display_positions[uid]
+			var u: Dictionary = TacticalBridge.units.get(uid, {})
+			var faction: int = int(u.get("faction", 0))
+			var col: Color = faction_colors[faction] if faction < faction_colors.size() else Color.WHITE
+			draw_circle(Vector2(pos[0] * sx, pos[1] * sy), 2.0, col)
+		for uid in TacticalBridge.structures:
+			var s: Dictionary = TacticalBridge.structures[uid]
+			var pos: Array = s.get("pos", [0, 0])
+			var owner: int = int(s.get("owner", -1))  # faction int; 0=player, 1=enemy, -1=neutral
+			var col: Color
+			match owner:
+				0:  col = Color(0.3, 0.9, 0.6)
+				1:  col = Color(1.0, 0.4, 0.3)
+				_:  col = Color(0.65, 0.65, 0.68)
+			var rect_pos := Vector2(pos[0] * sx - 3, pos[1] * sy - 3)
+			draw_rect(Rect2(rect_pos, Vector2(6, 6)), col, true)
+
+
+func _build_control_group_bar() -> void:
+	# Bottom-right, left of the layer selector (64 wide + 12 gap + 12 right margin = 88).
+	var panel := _styled_panel()
+	_place_bottom_right(panel, 88, 12, 268, 56)
+
+	var hbox := HBoxContainer.new()
+	hbox.add_theme_constant_override("separation", 0)
+	panel.add_child(hbox)
+	for i in range(10):
+		var lbl := Label.new()
+		lbl.custom_minimum_size = Vector2(24, 44)
+		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		lbl.autowrap_mode = TextServer.AUTOWRAP_OFF
+		lbl.text = "%d\n—" % ((i + 1) % 10)
+		lbl.add_theme_color_override("font_color", _DIM)
+		lbl.add_theme_font_size_override("font_size", 11)
+		_control_group_labels.append(lbl)
+		hbox.add_child(lbl)
+	add_child(panel)
+
+
+func _build_layer_selector() -> void:
+	var panel := _styled_panel()
+	_place_bottom_right(panel, 12, 12, 64, 220)
+
+	var vbox := VBoxContainer.new()
+	panel.add_child(vbox)
+	var header := Label.new(); header.text = "LYR"
+	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	header.add_theme_color_override("font_color", _DIM)
+	header.add_theme_font_size_override("font_size", 11)
+	vbox.add_child(header)
+	for i in range(5):
+		var btn := Button.new()
+		btn.text = "L%d" % i
+		btn.custom_minimum_size = Vector2(44, 30)
+		btn.pressed.connect(_on_layer_clicked.bind(i))
+		_layer_buttons.append(btn)
+		vbox.add_child(btn)
+	add_child(panel)
+
+
+func _on_layer_clicked(layer_idx: int) -> void:
+	_input_router.active_layer = layer_idx

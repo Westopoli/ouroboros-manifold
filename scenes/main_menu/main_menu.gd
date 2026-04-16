@@ -8,7 +8,7 @@ const HOVER_GLYPH_COUNTS := {
 const GLYPH_COLOR := Color("#FFFFFF")
 
 var _menu_items: Array[Control] = []
-var _galaxy: Node
+var _world_view: Node
 var _title_heartbeat: Control
 var _hover_layer: Control
 var _active_hover_glyphs := 0
@@ -25,7 +25,7 @@ func _build_ui() -> void:
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 
-	_setup_galaxy_viewport()
+	_setup_world_view_viewport()
 
 	var content := VBoxContainer.new()
 	content.set_anchors_preset(Control.PRESET_CENTER_LEFT)
@@ -108,7 +108,7 @@ func _build_ui() -> void:
 	add_child(version)
 
 
-func _setup_galaxy_viewport() -> void:
+func _setup_world_view_viewport() -> void:
 	var container := SubViewportContainer.new()
 	container.set_anchors_preset(Control.PRESET_FULL_RECT)
 	container.stretch = true
@@ -122,12 +122,12 @@ func _setup_galaxy_viewport() -> void:
 	viewport.use_hdr_2d = false
 	container.add_child(viewport)
 
-	var galaxy_scene := load("res://scenes/shared/galaxy/galaxy_structure.tscn")
-	var galaxy: Node3D = galaxy_scene.instantiate()
-	viewport.add_child(galaxy)
+	var world_view_scene := load("res://scenes/shared/world_view/world_view_structure.tscn")
+	var world_view: Node3D = world_view_scene.instantiate()
+	viewport.add_child(world_view)
 
-	galaxy.start_auto_camera()
-	_galaxy = galaxy
+	world_view.start_auto_camera()
+	_world_view = world_view
 
 	container.modulate = Color(1, 1, 1, 0.0)
 	var tw := create_tween()
@@ -142,8 +142,8 @@ func _setup_title_heartbeat() -> void:
 
 	get_tree().process_frame.connect(_position_heartbeat_deferred, CONNECT_ONE_SHOT)
 
-	if _galaxy and _galaxy.has_signal("structure_revealed"):
-		_galaxy.structure_revealed.connect(_title_heartbeat._on_climax)
+	if _world_view and _world_view.has_signal("structure_revealed"):
+		_world_view.structure_revealed.connect(_title_heartbeat._on_climax)
 
 
 func _position_heartbeat_deferred() -> void:

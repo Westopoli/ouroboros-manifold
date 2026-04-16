@@ -10,6 +10,7 @@ const SCENES := {
 	"era_detail": "res://scenes/era_library/era_detail.tscn",
 	"key_redemption": "res://scenes/era_library/key_redemption.tscn",
 	"mission_briefing": "res://scenes/mission_briefing/mission_briefing.tscn",
+	"tactical": "res://scenes/tactical/tactical.tscn",
 	"settings": "res://scenes/settings/settings.tscn",
 }
 
@@ -54,7 +55,7 @@ func go_to(scene_name: String, params: Dictionary = {}) -> void:
 
 
 func go_back() -> void:
-	if _back_stack.is_empty():
+	if _back_stack.is_empty() or _transitioning:
 		return
 	var prev: Dictionary = _back_stack.pop_back()
 	_current_scene_name = ""
