@@ -1,2 +1,3 @@
 INFO pipe transport starting, version=0.10.0
 INFO sent ready message
+INFO stdin closed, exiting

@@ -1,0 +1,96 @@
+{
+  "era_id": "settled_reach",
+  "era_display_name": "The Settled Reach",
+  "era_accent_color": "#4a9eb8",
+
+  "units": {
+    "vanguard":    { "category": "line",   "squad_count": 1, "visual_scale": 1.5, "tiers": {
+      "1": { "scene": "units/vanguard_t1.glb" },
+      "2": { "scene": "units/vanguard_t2.glb" },
+      "3": { "scene": "units/vanguard_t3.glb" }
+    }},
+    "warden":      { "category": "line",   "squad_count": 1, "visual_scale": 200.0, "tiers": {
+      "1": { "scene": "units/warden_t1.glb" },
+      "2": { "scene": "units/warden_t2.glb" },
+      "3": { "scene": "units/warden_t3.glb" }
+    }},
+    "bombard":     { "category": "siege",  "squad_count": 1, "visual_scale": 2.0, "tiers": {
+      "1": { "scene": "units/bombard_t1.glb" },
+      "2": { "scene": "units/bombard_t2.glb" },
+      "3": { "scene": "units/bombard_t3.glb" }
+    }},
+    "bastion":     { "category": "siege",  "squad_count": 1, "visual_scale": 2.0, "tiers": {
+      "1": { "scene": "units/bastion_t1.glb" },
+      "2": { "scene": "units/bastion_t2.glb" },
+      "3": { "scene": "units/bastion_t3.glb" }
+    }},
+    "raider":      { "category": "strike", "squad_count": 4, "visual_scale": 1.0, "tiers": {
+      "1": { "scene": "units/raider_t1.glb" },
+      "2": { "scene": "units/raider_t2.glb" },
+      "3": { "scene": "units/raider_t3.glb" }
+    }},
+    "interceptor": { "category": "strike", "squad_count": 4, "visual_scale": 1.0, "tiers": {
+      "1": { "scene": "units/interceptor_t1.glb" },
+      "2": { "scene": "units/interceptor_t2.glb" },
+      "3": { "scene": "units/interceptor_t3.glb" }
+    }}
+  },
+
+  "structures": {
+    "settlement": { "tiers": {
+      "1": { "scene": "placeholder.glb" },
+      "2": { "scene": "placeholder.glb" },
+      "3": { "scene": "placeholder.glb" }
+    }}
+  },
+
+  "environment": {
+    "obstacle_small":  { "scene": "environment/asteroid_small.glb" },
+    "obstacle_medium": { "scene": "environment/asteroid_medium.glb" },
+    "obstacle_large":  { "scene": "environment/asteroid_large.glb" },
+    "cargo":           { "scene": "placeholder.glb" },
+    "derelict":        { "scene": "placeholder.glb" },
+    "cover_pylon":     { "scene": "placeholder.glb" },
+    "nav_beacon":      { "scene": "placeholder.glb" },
+    "hazard_volume":   { "scene": "placeholder.glb" }
+  },
+
+  "materials": {
+    "1": {
+      "hull_primary":   { "color": "#6B6B6B", "metallic": 0.7, "roughness": 0.7 },
+      "hull_secondary": { "color": "#4A4A4A", "metallic": 0.6, "roughness": 0.8 },
+      "accent":         { "color": "#D4A017", "metallic": 0.0, "roughness": 0.9 },
+      "engine_glow":    { "color": "#FF8844", "emission": 2.0 },
+      "sensor":         { "color": "#88CCFF", "emission": 0.5 },
+      "faction_color_treatment": "matte",
+      "faction_color_metallic": 0.0,
+      "faction_color_roughness": 0.8
+    },
+    "2": {
+      "hull_primary":   { "color": "#C0C0C8", "metallic": 0.9, "roughness": 0.3 },
+      "hull_secondary": { "color": "#E8E8F0", "metallic": 0.8, "roughness": 0.35 },
+      "accent_line":    { "color": "#AAAAAA", "emission": 0.3 },
+      "engine_glow":    { "color": "#66AAFF", "emission": 3.0 },
+      "weapon":         { "color": "#808088", "metallic": 0.9, "roughness": 0.2 },
+      "faction_color_treatment": "metallic",
+      "faction_color_metallic": 0.7,
+      "faction_color_roughness": 0.35
+    },
+    "3": {
+      "hull_primary":   { "color": "#1A1A2E", "metallic": 1.0, "roughness": 0.1 },
+      "hull_secondary": { "color": "#2A2A3E", "metallic": 0.9, "roughness": 0.15 },
+      "engine_glow_whitened": true,
+      "engine_glow_emission": 4.0,
+      "faction_color_treatment": "emissive",
+      "faction_color_emission": 2.0,
+      "faction_edge_emission": 0.8
+    }
+  },
+
+  "faction_colors": {
+    "0": "#4099FF",
+    "1": "#FF4738",
+    "2": "#40E566",
+    "3": "#FFCC33"
+  }
+}

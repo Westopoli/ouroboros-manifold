@@ -52,21 +52,29 @@ identity captures.
 
 **Open work, in priority order:**
 
-1. Combat bible session — apply the four re-open flags below to
-   `bible_combat.md`. Must happen before any Stage 6 work touches
-   branch-affected parameters.
-2. Settled Reach combat retcon planning (dev_rules workflow, schedule
-   after combat bible session).
-3. Q-mon4 starter bundle resize (5-era bundle is 71% of 7-era launch
-   catalog).
-4. Q-mon8.3 — entry gate model per branch.
+1. ~~Combat bible session~~ — **CAPTURED April 17, 2026.** Four re-open
+   flags written to `bible_combat.md`. Implementation deferred to
+   post-Stage 13.
+2. ~~Settled Reach combat retcon planning~~ — **SCHEDULED post-Stage 13.**
+   Flagged in `bible_combat.md` Stat Philosophy and Unit Stat Baselines
+   sections. Listed in `game_bible.md` "Beyond Stage 13."
+3. ~~Q-mon4 starter bundle resize~~ — **RESOLVED April 16, 2026.**
+   Starter bundle concept retired. Subscription grants access to Era 1
+   (entry era) in every branch. See `bible_monetization.md` component 5.
+4. ~~Q-mon8.3 — entry gate model per branch~~ — **RESOLVED April 16,
+   2026.** Per-era gating: entry eras subscription-gated, progression
+   eras grindable to permanent ownership, hallmarks/premium eras
+   one-time purchase. See `bible_monetization.md` component 5 and
+   open question 10.
 5. Q-mon8.5 — cross-branch prestige.
 6. Q-mon8.6 — post-launch branch rollout cadence.
 7. Q3 era card template — now must accommodate standalone-Roman variant
    plus 2-branch (not 3) structure.
 8. Q4–Q7 downstream of Q3.
-9. Q-mon3, Q-mon5, Q-mon6, Q-mon7, Component 9 (special editions) all
-   still deferred to catalog design.
+9. Q-mon3, ~~Q-mon5~~, Q-mon6, Q-mon7, Component 9 (special editions) all
+   still deferred to catalog design. Q-mon5 **RESOLVED April 16, 2026** —
+   Roman free tier: 5/10 archetypes, T2-locked, 3-faction/15-region
+   world. See `bible_monetization.md` component 4.
 
 ---
 
@@ -343,44 +351,22 @@ meta-catalog navigated across sessions).
 
 ## Pending Bible Edits
 
-### Combat bible re-opens (deferred to dedicated combat session)
+### Combat bible re-opens (CAPTURED April 17, 2026)
 
-The following must be written into `bible_combat.md` in a dedicated
-session. All four flags must be loud, not silent (anti-pattern #7 —
-preserve prior decided values for history; document what changes under
-v3.00 / Q-mon8.1 v2).
+All four re-open flags have been written into `bible_combat.md`:
 
-1. **Tactical Reinforcement section.** Reinforcement rate, structure
-   density, structure placement rule, structure cost, structure time
-   become **per-era config**. Engine reads config uniformly; no
-   branch-aware engine logic. Sacred Principle #3-compatible move
-   toward more flexibility, not less.
+1. ✅ **Tactical Reinforcement section** — per-era config flag added.
+2. ✅ **Combat pacing / engagement duration targets** — per-branch targets flag added to Stat Philosophy.
+3. ✅ **Stat philosophy / unit HP** — per-era tunable flag added to Unit Stat Baselines, Settled Reach retcon noted.
+4. ✅ **Information warfare / fog-of-war / sensor** — new discrete section added with per-branch signature defaults.
 
-2. **Combat pacing / engagement duration targets.** Current global
-   targets (45s brawl minimum, ~2min tactical, 50v50 mirror 150–200s)
-   become **per-branch targets**. Branch 1 → 30–45s short-decisive;
-   Branch 2 → near current 1–2min; Branch 3 (post-launch) → 2min+
-   attritional. Each era within a branch can vary within branch
-   targets.
-
-3. **Stat philosophy / unit HP.** Global HP multipliers and damage
-   values become **per-era tunable** within branch signature. Specific
-   implication: **Settled Reach HP is retconned downward** for
-   compatibility with Branch 1 fast-burst tempo. The 2× HP multiplier
-   from Session 5 combat tuning may need per-branch differentiation.
-
-4. **Information warfare / fog-of-war / sensor section** (add as
-   discrete section if it doesn't exist). Fog density, sensor range,
-   cross-layer detection range, ECM / counter-stealth become **per-era
-   config with branch-signature defaults**. Branch 1 = near-total
-   awareness baseline; Branch 2 = partial sensor asymmetry; Branch 3
-   = heavy fog, scout-dependent.
+All four flag implementation as **deferred to post-Stage 13**. Friends-ZIP ships single era with current values unchanged. `game_bible.md` "Beyond Stage 13" updated with branch parameterization and Settled Reach retcon entries (v2.14).
 
 ### Other deferred captures
 
 - **`bible_monetization.md` v3.00 component 2** hallmark count
   language still says "3–4 hallmarks at launch" — needs tightening
-  to "2 at launch."
+  to "2 at launch." (Low priority — does not block any work.)
 
 ---
 
@@ -465,28 +451,18 @@ launch slots) is the remaining open work.
 
 ---
 
-### Q-mon4 — Subscription Starter Bundle Selection [RE-OPENED Session 6]
+### Q-mon4 — Subscription Starter Bundle Selection [RESOLVED April 16, 2026]
 
-The original 5-era starter bundle from v3.00 is **71% of a 7-era launch
-catalog** — structurally incoherent as a "starter."
+~~The original 5-era starter bundle from v3.00 is **71% of a 7-era launch
+catalog** — structurally incoherent as a "starter."~~
 
-**Options to explore:**
-- (a) Reduce to 3 starter eras.
-- (b) Reframe as "1 full branch + sampler era from the other branch"
-  (4 eras).
-- (c) Restructure as per-branch starter (Roman + 1 era from each branch
-  = 3 eras).
+**Resolution:** The starter bundle concept is retired. Subscribing grants access to Era 1 (entry era) in every branch — no separate bundle to select or resize. The "what do I get when I subscribe?" answer is: access to every branch's entry era, plus the ability to grind toward everything else. See `bible_monetization.md` component 5.
 
 ---
 
-### Q-mon5 — Roman Free Tier Scope Limitations [OPEN]
+### Q-mon5 — Roman Free Tier Scope Limitations [RESOLVED April 16, 2026]
 
-What are the gameplay/feature limitations on the Roman free tier?
-Mission count cap, feature gates, mastery progression cap, multiplayer
-exclusion, etc. Now resolvable with knowledge that Roman sits outside
-the branch structure (Q-mon8.2 v2). Working assumption from Q-mon8.1 v2:
-Roman is mechanically Branch-3-adjacent with reduced information-warfare
-depth for onboarding simplicity.
+**Resolution:** Three cuts that reinforce each other: (1) 5/10 mission archetypes (Defensive Stand, Assault, Reconquest, Siege Breaking, Evacuation — excludes Multi-Front Defense, Interception, Containment, Counterinsurgency, Suppression); (2) locked to Tier 2 for all factions (no tier progression visible); (3) capped world size (3 factions, ~15 regions, Isolated Start only). Roman keeps full simulation, full combat, full chronicle, full generational loop, and inspection mode for all paid eras. See `bible_monetization.md` component 4.
 
 ---
 
@@ -507,12 +483,9 @@ Deferred to catalog design.
 
 ---
 
-### Q-mon8.3 — Entry Gate Model Per Branch [OPEN]
+### Q-mon8.3 — Entry Gate Model Per Branch [RESOLVED April 16, 2026]
 
-Mixed gate model is locked (Q-mon8.3 pre-answer). What's still open:
-which specific gate applies to Branch 1 vs. Branch 2 at launch. Is the
-commitment-gate reserved for post-launch expansion branches? Was originally
-planned for Session 6 but the Q-mon8.1 reversal consumed the slot.
+**Resolution:** Per-era gating replaces per-branch gating. Entry eras (Era 1 in each branch) are subscription-gated — accessible while subscribed, revoked on cancel. Progression eras (Era 2+) are grindable to permanent ownership while subscribed (15hr retention threshold). Hallmarks and select premium eras are one-time purchases, permanent ownership. Any era can be tagged premium regardless of branch position. Launch branches use free entry (subscription unlocks both). Post-launch branches follow the same model — no separate expansion gate needed; the branch is open via subscription, hallmark is premium. See `bible_monetization.md` component 5 and open question 10.
 
 ---
 
@@ -536,29 +509,29 @@ launch playbook, Stellaris Utopia/Machine Age playbook.
 
 ---
 
-### Settled Reach combat retcon planning [OPEN — dev_rules workflow]
+### Settled Reach combat retcon planning [SCHEDULED — post-Stage 13]
 
-Not a design question but a downstream consequence of Q-mon8.1 v2 that
-needs scheduling. Settled Reach's current slow/high-HP/methodical combat
-identity inverts under Branch 1 fast/short-decisive tempo. HP values
-likely drop; engagement duration targets shift from 2min+ toward 30–45s;
-aerospace-precision register shifts from "careful targeting" toward
-"rapid strike." Substantial Stage 6-style rebalance flagged for
-implementation. Schedule **after** the combat bible session and **before**
-any further Stage 6 work.
+~~Not a design question but a downstream consequence of Q-mon8.1 v2 that
+needs scheduling.~~ **Scheduled post-Stage 13.** Settled Reach's current
+slow/high-HP/methodical combat identity inverts under Branch 1 fast tempo.
+HP values drop; engagement duration targets shift from 2min+ toward
+30–45s; aerospace-precision register shifts from "careful targeting"
+toward "rapid strike." Flagged in `bible_combat.md` Stat Philosophy and
+Unit Stat Baselines re-open flags. Listed in `game_bible.md` "Beyond
+Stage 13." Friends-ZIP ships with current Settled Reach values unchanged.
 
 ---
 
-### Production architecture parameterization [OPEN — dev_rules workflow]
+### Production architecture parameterization [SCHEDULED — post-Stage 13]
 
-Not a design question but a downstream consequence of Q-mon8.1 v2 axis D.
-Current in-mission production (reinforcement structure amount, placement,
-rate, cost) is era-agnostic / hardcoded. Under axis D (attrition/economy
-varies by branch), these parameters must move from hardcoded constants
-to per-era config. Compatible with Sacred Principle #3 — branch
+~~Not a design question but a downstream consequence of Q-mon8.1 v2 axis D.~~
+**Scheduled post-Stage 13.** Current in-mission production (reinforcement
+structure amount, placement, rate, cost) parameters move from hardcoded
+constants to per-era config. Compatible with Sacred Principle #3 — branch
 mechanical variation lives as config-driven content, not code-branched
 engine logic. No engine knows about branches; the engine consumes per-era
-parameters uniformly.
+parameters uniformly. Flagged in `bible_combat.md` Tactical Reinforcement
+re-open flag. Friends-ZIP ships with current hardcoded values unchanged.
 
 ---
 

@@ -407,6 +407,9 @@ LIFECYCLE_FRAGMENTATION_REVOLT_RATE  = 0.02  # revolts per tick → fragmenting
 TIME_JUMP_MIN_TICKS = 20
 TIME_JUMP_MAX_TICKS = 100
 
+# ── Keyframe selection (Stage 11) ──────────────────────────────────────────
+KEYFRAME_MAX_PER_TIME_JUMP = 12
+
 
 # ── Character selector (Stage 5.5) ──────────────────────────────────────────
 SELECTOR_MIN_CHAPTERS          = 2      # minimum chapters before rotation is eligible
@@ -577,6 +580,7 @@ NAVMESH_OBSTACLE_THRESHOLD     = 0.7
 NAVMESH_CELL_SIZE              = 100
 SPATIAL_HASH_CELL_SIZE         = 300  # sensor-pursuit queries — large cells keep long-range march queries cheap
 TARGET_HASH_CELL_SIZE          = 100  # attack-range ring search — finer than sensor hash, coarser than collision
+TARGETING_COHORT_COUNT         = 4    # stagger acquisition queries across N ticks; validation every tick
 STEERING_OBSTACLE_AVOIDANCE_RANGE = 50
 UNIT_COLLISION_RADIUS          = 15
 STEERING_PROBE_DIST            = 40
@@ -630,6 +634,10 @@ COUNTERINSURGENCY_FRAGMENTATION_WEIGHTS = {
     "fragmented":   0.25,   # 6 cells: 3 ambush + 1 patrol + 2 sleepers
 }
 SCRIPT_FALLBACK_OWNERSHIP           = (0.33, 0.33, 0.34)  # (player, neutral, enemy) for non-prototype archetypes
+
+# ── Debrief and metrics (Stage 12) ──────────────────────────────────────────
+METRICS_SAMPLE_INTERVAL_SEC         = 1.0
+IMPACT_PREVIEW_MAX_SENTENCES        = 3
 
 # ── Mission generator trigger thresholds (Stage 5.5) ────────────────────────
 SIEGE_BREAKING_MIN_TICKS            = 200
@@ -1030,8 +1038,12 @@ RECONNECT_GRACE_SEC        = 30.0
 INTERPOLATION_BUFFER_TICKS = 3
 
 # Dead-reckoning suppression (snapshot_serializer.py DeadReckoningTracker)
-DR_RESYNC_THRESHOLD        = 3.0   # world units of position prediction error before forcing resync
+DR_RESYNC_THRESHOLD        = 1.0   # world units of position prediction error before forcing resync
 DR_VEL_CHANGE_THRESHOLD    = 20.0  # wu/s of velocity magnitude change before forcing resync
+# DR_RESYNC_THRESHOLD tightened from 3.0 to 1.0 in Stage 8.5 H.5 to shrink
+# per-tick backward snap magnitudes (client DR over-prediction was producing
+# p95 270 wu backward corrections with the old 3.0 threshold).
+# See logs/perf_report.md and docs/stage_specs/stage_8_5_spec.md H.5.
 
 # Camera / input (consumed by Godot client via snapshot metadata)
 CAMERA_ANGLE_DEGREES       = 60.0
@@ -1056,3 +1068,43 @@ ENABLE_STAGE8_PERSISTENCE  = False
 CRASH_LOG_PATH   = "logs/crash_report.txt"
 STDERR_LOG_PATH  = "logs/sim_stderr.log"
 IS_RELEASE_BUILD = False
+
+# ── World view / Stage 11 ─────────────────────────────────────────────────
+WORLD_VIEW_ENABLED = True
+CHRONICLE_SCROLL_ENABLED = True
+KEYFRAME_STREAM_ENABLED = True
+
+# Chronicle scroll
+SCROLL_PER_WORD_CADENCE_SEC = 0.08
+SCROLL_PER_WORD_FADE_DURATION_SEC = 0.20
+SCROLL_ENTRY_MIN_DISPLAY_DURATION_SEC = 3.0
+SCROLL_PANEL_SLIDE_IN_DURATION_SEC = 0.40
+SCROLL_PANEL_SLIDE_OUT_DURATION_SEC = 0.40
+SCROLL_PANEL_WIDTH_FRACTION = 0.38
+
+# World view visuals
+WORLD_VIEW_TERRITORY_BUBBLE_OPACITY = 0.25
+WORLD_VIEW_TERRITORY_BUBBLE_RADIUS_SCALE = 1.6
+WORLD_VIEW_CONTOUR_THRESHOLD = 0.08
+WORLD_VIEW_CONTOUR_BRIGHTNESS = 1.4
+WORLD_VIEW_CONTOUR_LINE_THICKNESS_PX = 1.5
+WORLD_VIEW_FLASH_DURATION_SEC = 0.35
+WORLD_VIEW_FLASH_INTENSITY = 0.7
+WORLD_VIEW_TERRITORY_TRANSITION_DURATION_SEC = 1.0
+
+# Camera choreography
+CAMERA_PULL_BACK_DURATION_SEC = 2.5
+CAMERA_WORLD_VIEW_FADE_IN_DURATION_SEC = 1.0
+CAMERA_AMBIENT_ORBIT_SPEED_NARRATION = 0.03
+CAMERA_AMBIENT_ORBIT_SPEED_SETTLED = 0.01
+CAMERA_PUSH_IN_DURATION_SEC = 3.0
+TACTICAL_SCENE_FREE_DELAY_MS = 500
+
+# Ambient liveliness during post-narration hold
+AMBIENT_LIVELINESS_FLICKER_MIN_INTERVAL_SEC = 3.0
+AMBIENT_LIVELINESS_FLICKER_MAX_INTERVAL_SEC = 5.0
+AMBIENT_LIVELINESS_FLICKER_INTENSITY_FRACTION = 0.15
+AMBIENT_LIVELINESS_HIGHLIGHT_PULSE_PERIOD_SEC = 1.5
+
+# Exit
+EXIT_FADE_TO_BLACK_DURATION_SEC = 0.6

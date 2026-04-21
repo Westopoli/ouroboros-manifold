@@ -8,6 +8,7 @@ from unit import (
 from ability import get_damage_output_multiplier, get_damage_reduction
 from movement import has_combat_los, _ensure_navmesh
 
+_targeting_tick = 0
 
 def resolve_damage(store: UnitStore, tactical_map, dt: float):
     active = store.active_ids()
@@ -188,6 +189,9 @@ def _accumulate_aoe(store, attacker, primary_target, base_dmg, attacker_cat, aoe
 
 
 def update_targeting(store: UnitStore, tmap, rng=None):
+    global _targeting_tick
+    _targeting_tick += 1
+    cohort_this_tick = _targeting_tick % config.TARGETING_COHORT_COUNT
     active = store.active_ids()
 
     # Rebuild both hashes each tick.
@@ -211,13 +215,20 @@ def update_targeting(store: UnitStore, tmap, rng=None):
         atk_range  = store.data[uid, FIELD_ATTACK_RANGE]
         atk_r_sq   = atk_range * atk_range
 
+        is_cohort_turn = uid % config.TARGETING_COHORT_COUNT == cohort_this_tick
+
         # Early exit: keep current target if still alive and in range.
+        # On cohort turns, skip this check — re-acquire to find the nearest enemy
+        # (return fire or stale targets may not be optimal).
         current = store.auto_engage_target[uid]
-        if current >= 0 and store.alive[current]:
+        if not is_cohort_turn and current >= 0 and store.alive[current]:
             dx = store.data[current, FIELD_X] - mx
             dy = store.data[current, FIELD_Y] - my_
             if dx * dx + dy * dy <= atk_r_sq:
                 continue
+
+        if not is_cohort_turn:
+            continue
 
         # Outward ring search in target_hash (small cells) — break on first valid hit.
         # Yields unit IDs in ring order with no per-ring allocations; callers just break.

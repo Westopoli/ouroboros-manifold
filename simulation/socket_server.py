@@ -6,7 +6,7 @@ import signal
 
 import config
 import command_ingest
-from snapshot_serializer import full_snapshot, delta, DeadReckoningTracker
+from snapshot_serializer import full_snapshot, delta, delta_baseline, DeadReckoningTracker
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +79,7 @@ class SocketServer:
                 else:
                     pkt = delta(engine, prev, dr_tracker)
 
-                prev = full_snapshot(engine)  # keep prev current for next delta
+                prev = delta_baseline(engine)  # lightweight cache for next delta
 
                 writer.write((json.dumps(pkt) + "\n").encode())
                 await writer.drain()

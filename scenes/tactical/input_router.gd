@@ -1,26 +1,25 @@
 ## Routes keyboard and mouse input to validated command packets.
 ## Owns selection state, control groups, and active-layer tracking.
 ## Sends all commands through WsInputSanitizer before TacticalBridge.send_command().
+## _to_world() intersects the mouse ray with the active layer's horizontal plane.
+## Selection picking and box-select operate in screen space via Camera3D.unproject_position().
 extends Node2D
 
-const _UNIT_PICK_RADIUS := 50.0  # world units — slightly larger than drawn unit
+# Screen-space pick radius in pixels
+const _UNIT_PICK_RADIUS := 30.0
 
-# W S D C E → ability slots 0–4
 const _ABILITY_KEYS: Array[int] = [KEY_W, KEY_S, KEY_D, KEY_C, KEY_E]
 
 var selected_uids: Array[int] = []
-var active_layer: int = 0         # 0 = ground; cycles 0–4 with Q/Z
+var active_layer: int = 0
 
-var _control_groups: Dictionary = {}  # group(1..10) → Array[int]
+var _control_groups: Dictionary = {}
 var _box_selecting: bool = false
 var _box_start_screen: Vector2
-var _box_start_world: Vector2
 
 const _BOX_FILL  := Color(0.3, 0.8, 1.0, 0.08)
 const _BOX_EDGE  := Color(0.3, 0.8, 1.0, 0.75)
 const _BOX_WIDTH := 1.5
-
-@onready var _camera: Camera2D = $"../Camera2D"
 
 
 func _process(_delta: float) -> void:
@@ -31,8 +30,9 @@ func _process(_delta: float) -> void:
 func _draw() -> void:
 	if not _box_selecting:
 		return
-	var current := _to_world(get_viewport().get_mouse_position())
-	var rect := Rect2(_box_start_world, Vector2.ZERO).expand(current)
+	# Draw in screen space — InputRouter sits at (0,0) so local coords = screen coords
+	var current := get_viewport().get_mouse_position()
+	var rect := Rect2(_box_start_screen, Vector2.ZERO).expand(current)
 	draw_rect(rect, _BOX_FILL, true)
 	draw_rect(rect, _BOX_EDGE, false, _BOX_WIDTH)
 
@@ -49,7 +49,6 @@ func _on_mouse_button(mb: InputEventMouseButton) -> void:
 		MOUSE_BUTTON_LEFT:
 			if mb.pressed:
 				_box_start_screen = mb.position
-				_box_start_world = _to_world(mb.position)
 				_box_selecting = true
 			else:
 				_finish_selection(mb.position)
@@ -81,8 +80,6 @@ func _handle_digit(ke: InputEventKey) -> void:
 	var digit: int = _digit(ke.keycode)
 	if digit < 0:
 		return
-	# Accept ctrl OR meta (Cmd on macOS, Super on Win/Linux). macOS intercepts
-	# Ctrl+digit for Mission Control desktop-switching; Cmd reaches us instead.
 	var bind_mod: bool = ke.ctrl_pressed or ke.meta_pressed
 	if bind_mod:
 		_bind_group(digit)
@@ -104,32 +101,45 @@ func _finish_selection(release_screen: Vector2) -> void:
 	_box_selecting = false
 	queue_redraw()
 	if release_screen.distance_to(_box_start_screen) < 6.0:
-		_click_select(_to_world(release_screen))
+		_click_select(release_screen)
 	else:
-		_box_select(_box_start_world, _to_world(release_screen))
+		_box_select(_box_start_screen, release_screen)
 
 
-func _click_select(world_pos: Vector2) -> void:
-	var best_uid: int = -1
-	var best_dist: float = _UNIT_PICK_RADIUS
-	for uid: int in TacticalBridge.display_positions:
+func _click_select(screen_pos: Vector2) -> void:
+	var cam := get_viewport().get_camera_3d()
+	if not cam:
+		return
+	var best_uid  := -1
+	var best_dist := _UNIT_PICK_RADIUS
+	for uid: int in range(TacticalBridge.unit_count):
+		if TacticalBridge.display_alive[uid] == 0:
+			continue
 		if not _is_selectable(uid):
 			continue
-		var d: float = world_pos.distance_to(_unit_pos(uid))
+		var sp := cam.unproject_position(_unit_world_pos(uid))
+		var d  := screen_pos.distance_to(sp)
 		if d < best_dist:
 			best_dist = d
-			best_uid = uid
+			best_uid  = uid
 	selected_uids.clear()
 	if best_uid >= 0:
 		selected_uids.append(best_uid)
 
 
-func _box_select(world_a: Vector2, world_b: Vector2) -> void:
-	var rect := Rect2(world_a, Vector2.ZERO).expand(world_b)
+func _box_select(screen_a: Vector2, screen_b: Vector2) -> void:
+	var cam := get_viewport().get_camera_3d()
+	if not cam:
+		return
+	var rect := Rect2(screen_a, Vector2.ZERO).expand(screen_b)
 	selected_uids.clear()
-	for uid: int in TacticalBridge.display_positions:
-		if _is_selectable(uid) and rect.has_point(_unit_pos(uid)):
-			selected_uids.append(uid)
+	for uid: int in range(TacticalBridge.unit_count):
+		if TacticalBridge.display_alive[uid] == 0:
+			continue
+		if _is_selectable(uid):
+			var sp := cam.unproject_position(_unit_world_pos(uid))
+			if rect.has_point(sp):
+				selected_uids.append(uid)
 
 
 func _select_all_army() -> void:
@@ -183,11 +193,11 @@ func _cmd_layer_preference(layer: int) -> void:
 
 # ── Movement + combat ─────────────────────────────────────────────────────────
 
-func _on_right_click(world_pos: Vector2) -> void:
+func _on_right_click(world_pos: Vector3) -> void:
 	if selected_uids.is_empty():
 		return
 	_send({"kind": "move", "unit_uids": selected_uids.duplicate(),
-		   "target": {"pos": [world_pos.x, world_pos.y], "layer": active_layer}})
+		   "target": {"pos": [world_pos.x, world_pos.z], "layer": active_layer}})
 
 
 func _cmd_attack_move() -> void:
@@ -195,7 +205,7 @@ func _cmd_attack_move() -> void:
 		return
 	var world_pos := _to_world(get_viewport().get_mouse_position())
 	_send({"kind": "attack_move", "unit_uids": selected_uids.duplicate(),
-		   "target": {"pos": [world_pos.x, world_pos.y], "layer": active_layer}})
+		   "target": {"pos": [world_pos.x, world_pos.z], "layer": active_layer}})
 
 
 # ── Abilities ─────────────────────────────────────────────────────────────────
@@ -209,13 +219,22 @@ func _cmd_activate_ability(slot: int) -> void:
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-func _to_world(screen_pos: Vector2) -> Vector2:
-	return get_viewport().get_canvas_transform().affine_inverse() * screen_pos
+func _to_world(screen_pos: Vector2) -> Vector3:
+	var cam := get_viewport().get_camera_3d()
+	if not cam:
+		return Vector3.ZERO
+	var origin := cam.project_ray_origin(screen_pos)
+	var dir    := cam.project_ray_normal(screen_pos)
+	if absf(dir.y) < 0.001:
+		return origin
+	var layer_y := float(active_layer) * EraConfig.LAYER_HEIGHT
+	var t := (layer_y - origin.y) / dir.y
+	return origin + dir * t
 
 
-func _unit_pos(uid: int) -> Vector2:
-	var arr: Array = TacticalBridge.display_positions[uid]
-	return Vector2(float(arr[0]), float(arr[1]))
+func _unit_world_pos(uid: int) -> Vector3:
+	var layer: int = TacticalBridge.units.get(uid, {}).get("layer", 0)
+	return Vector3(TacticalBridge.display_x[uid], float(layer) * EraConfig.LAYER_HEIGHT, TacticalBridge.display_y[uid])
 
 
 func _is_selectable(uid: int) -> bool:
@@ -224,7 +243,11 @@ func _is_selectable(uid: int) -> bool:
 
 func _send(cmd: Dictionary) -> void:
 	if WsInputSanitizer.validate(cmd):
-		TacticalBridge.send_command(cmd)
+		BugReportManager.log_command(cmd)
+		if SimBridge.USE_LIVE_SIM:
+			SimBridge.send_command({"type": "command", "command": cmd})
+		else:
+			TacticalBridge.send_command(cmd)
 
 
 func _digit(keycode: int) -> int:

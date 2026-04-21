@@ -1,0 +1,54 @@
+{
+  "era_id": "test_era",
+  "era_display_name": "Test Era",
+  "era_accent_color": "#ff00ff",
+
+  "units": {
+    "vanguard":    { "category": "line",   "squad_count": 1, "visual_scale": 1.0, "tiers": {
+      "1": { "scene": "units/line_unit.tscn" },
+      "2": { "scene": "units/line_unit.tscn" },
+      "3": { "scene": "units/line_unit.tscn" }
+    }},
+    "warden":      { "category": "line",   "squad_count": 1, "visual_scale": 1.0, "tiers": {
+      "1": { "scene": "units/line_unit.tscn" },
+      "2": { "scene": "units/line_unit.tscn" },
+      "3": { "scene": "units/line_unit.tscn" }
+    }},
+    "bombard":     { "category": "siege",  "squad_count": 1, "visual_scale": 1.0, "tiers": {
+      "1": { "scene": "units/siege_unit.tscn" },
+      "2": { "scene": "units/siege_unit.tscn" },
+      "3": { "scene": "units/siege_unit.tscn" }
+    }},
+    "bastion":     { "category": "siege",  "squad_count": 1, "visual_scale": 1.0, "tiers": {
+      "1": { "scene": "units/siege_unit.tscn" },
+      "2": { "scene": "units/siege_unit.tscn" },
+      "3": { "scene": "units/siege_unit.tscn" }
+    }},
+    "raider":      { "category": "strike", "squad_count": 4, "visual_scale": 1.0, "tiers": {
+      "1": { "scene": "units/strike_unit.tscn" },
+      "2": { "scene": "units/strike_unit.tscn" },
+      "3": { "scene": "units/strike_unit.tscn" }
+    }},
+    "interceptor": { "category": "strike", "squad_count": 4, "visual_scale": 1.0, "tiers": {
+      "1": { "scene": "units/strike_unit.tscn" },
+      "2": { "scene": "units/strike_unit.tscn" },
+      "3": { "scene": "units/strike_unit.tscn" }
+    }}
+  },
+
+  "structures": {},
+  "environment": {},
+
+  "materials": {
+    "1": { "faction_color_treatment": "matte" },
+    "2": { "faction_color_treatment": "metallic" },
+    "3": { "faction_color_treatment": "emissive" }
+  },
+
+  "faction_colors": {
+    "0": "#00ffff",
+    "1": "#ff4444",
+    "2": "#ffff00",
+    "3": "#ff00ff"
+  }
+}

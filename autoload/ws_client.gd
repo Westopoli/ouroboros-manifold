@@ -69,8 +69,11 @@ func _process(_delta: float) -> void:
 	_drain_buffer()
 
 
+const MAX_MESSAGES_PER_FRAME := 2
+
 func _drain_buffer() -> void:
-	while true:
+	var count := 0
+	while count < MAX_MESSAGES_PER_FRAME:
 		var nl: int = _buffer.find(10)  # '\n' = 10
 		if nl == -1:
 			break
@@ -81,5 +84,6 @@ func _drain_buffer() -> void:
 		var json := JSON.new()
 		if json.parse(line) == OK:
 			message_received.emit(json.get_data())
+			count += 1
 		else:
 			push_warning("ws_client: JSON parse failed: %s" % line.left(120))

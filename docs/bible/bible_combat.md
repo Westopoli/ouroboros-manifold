@@ -212,6 +212,27 @@ The base game ships with **one environmental hazard type** as a gradient field p
 
 **[Future expansion:]** Additional hazard types (movement drag zones, damage zones, boost corridors, ability disruption zones) can be added as new gradient property tags without engine changes. The gradient field system is extensible by design — each new hazard type is a new property the engine samples, not a new system. These are noted as natural expansion points once the base game is proven and fun.
 
+### Information Warfare — Fog-of-War and Sensor Model
+
+> **NEW SECTION (v3.00 / Q-mon8.1 v2, April 17, 2026).** This section consolidates the fog-of-war and sensor mechanics that were previously described inline across multiple sections (2.5D layers, environmental hazards, unit behavior AI, stat baselines) into a dedicated design reference, and flags the per-branch parameterization required by the branch system.
+
+The tactical battlefield uses **fog of war** — the player sees only what their units can detect. Everything outside sensor coverage is hidden. The engine resolves combat identically regardless of what the player can see; fog is a player-information constraint, not an engine behavior modifier.
+
+**Sensor model.** Each unit has a `sensor_radius` stat defining how far it can detect enemy units on its own layer. Cross-layer detection uses a separate `cross_layer_sensor_range` — typically shorter than same-layer sensor range, creating vertical blind spots that reward layer transitions for flanking and scouting. Both values are per-unit-type stats in the engine config.
+
+**Sensor interference zones** (see Environmental Hazards above) create localized fog pockets by reducing sensor radius for units inside the zone and reducing detection range for units looking into it. These zones are positioned by the map generation system as gradient field properties.
+
+**Layer visibility** is tied to sensor coverage. Full cross-layer sight means the player can see enemy units on adjacent layers within sensor range. Partial or absent cross-layer sight means units on other layers are invisible until they transition to the player's layer or enter a narrow cross-layer detection cone. The degree of cross-layer visibility is a config value.
+
+**RE-OPEN FLAG (v3.00 / Q-mon8.1 v2).** Fog density, sensor range, cross-layer detection range, and any future ECM / counter-stealth mechanics become **per-era config values with branch-signature defaults**:
+
+- **Branch 1 (sci-fi/future):** near-total awareness baseline. High sensor radius, free cross-layer sight, counter-stealth as an active cost rather than a passive limitation. The player sees almost everything — plan quality and execution speed are the differentiators, not information advantage.
+- **Branch 2 (modern/recent history):** partial sensor asymmetry. Moderate sensor radius, radar/intel/recon all partial, ECM and scouts matter. Information management is a meaningful tactical layer alongside force positioning.
+- **Branch 3 (ancient, post-launch):** heavy fog, scout-dependent. Low sensor radius, cross-layer detection largely absent, recon units (scouts) are the primary information-gathering tool. Ambush is a real and frequent tactical event. The player who scouts better wins.
+- **Roman (standalone free tier):** Branch-3-adjacent fog and sensor values with reduced information-warfare depth for onboarding simplicity. Working assumption — specific values are a post-Stage 13 tuning decision.
+
+The engine is branch-blind. All sensor and fog parameters are consumed uniformly from per-era config. No `if branch == ...` logic anywhere (Sacred Principle #3). **Implementation deferred to post-Stage 13.** The friends-ZIP ships Settled Reach with current sensor values unchanged. The parameterization work (moving sensor/fog values from global constants to per-era manifest entries) is post-ZIP infrastructure.
+
 ### Engagement Scale and Duration
 
 - **Engagement scale** — the player is in the battle. Units are on screen. The player is positioning individual groups and squads.
@@ -247,6 +268,8 @@ Every unit evaluates three checks each frame, in priority order. The first check
 
 **Supply unit exception.** Supply units have no attack capability, so check 3 for them is simply "hold position." Their primary survival mechanism is check 1's retreat behavior — they flinch away from any damage source since they can never fight back.
 
+**Return fire.** When a unit takes damage and has no current target and no active move order, it automatically targets the attacker. This gives idle units basic self-defense without player intervention. Return fire does **not** override an existing engagement — a unit that is already attacking a target (or waiting to re-acquire via the normal targeting cycle) ignores incoming damage for targeting purposes. Only genuinely idle units with no target respond to return fire. The player can always override with an explicit command.
+
 #### Abilities — Player-Activated Only
 
 All unit abilities are **manually activated by the player**. No auto-cast, no smart suggestions, no trigger conditions evaluated by the AI. The ability bar in the UI displays each unit's ability and its cooldown state. The player learns ability timing through gameplay experience.
@@ -263,6 +286,20 @@ What makes each mission archetype *feel* different from the enemy's side is not 
 
 **Enemy macro objectives are specified in the "Enemy Macro Behavior System" section below.** The macro behavior system issues commands to enemy unit groups using the same 4-command protocol as the player. The unit behavior system described here is the foundation that macro behavior builds on top of — the macro layer controls force-level intent, the unit layer executes commands through this decision loop.
 
+#### Unit Facing
+
+> **RESOLVED (April 16, 2026 — combat visual polish design session).** Unit facing uses a target-priority rule. The engine sets `facing_rad` per unit per tick; the renderer interpolates it for smooth visual rotation.
+
+**Facing priority rule:**
+
+1. **If the unit has an active target and is attacking:** `facing_rad` points at the target.
+2. **If the unit is moving with no target** (plain `move` command, or `attack_move` with no enemy in range): `facing_rad` points in the movement direction.
+3. **If the unit is stationary with no target:** `facing_rad` holds its last value.
+
+**Rotation speed cap.** Transitions between facing directions use a rotation speed limit (config value per unit type — Strike rotates fastest, Siege slowest) so units visually turn rather than snapping. The renderer interpolates `facing_rad` between ticks using the same linear interpolation it uses for position.
+
+**Design rationale.** Standard RTS model — units face what they're shooting, face where they're going otherwise. Retreating units face their pursuer (firing while backing away), which reads correctly for military behavior. A unit executing a plain `move` command (non-combat, suppresses auto-engage) faces its movement direction, not any attacker — mechanically correct since the unit is explicitly ignoring combat. The rotation speed cap is the key detail that makes facing feel smooth rather than mechanical.
+
 ---
 
 ### Tactical Simulation Architecture — SC2-Style Sim/Renderer Split
@@ -276,6 +313,34 @@ What makes each mission archetype *feel* different from the enemy's side is not 
 **Layer 3 — Renderer (Godot).** Reads simulation state and draws it. Interpolates between tick states for smooth visuals (simulation at 20 ticks/sec, Godot at 60fps = 3 render frames per tick). Plays animations, particle effects, sound. Handles camera. Zero gameplay logic.
 
 **Determinism guarantee.** Given the same initial state (map seed, unit positions/stats, objectives) and the same command stream (player inputs with tick numbers), the engine reproduces any engagement tick-for-tick, bit-identically. Replay files store only initial state + command stream; the engine re-derives everything else.
+
+#### Attack Event Protocol
+
+> **RESOLVED (April 16, 2026 — combat visual polish design session).** Hybrid model: normal auto-attacks are renderer-inferred; ability activations are engine-emitted events.
+
+**Normal attacks — renderer-inferred.** The Godot renderer tracks each unit's attack interval and target from the state it already receives (target ID, `attack_interval`, `facing_rad`). When the interpolated time crosses an attack boundary, the renderer spawns the appropriate visual effect (projectile, beam, etc.) toward the target. The engine does not emit explicit "attack happened" events for normal attacks. This keeps the delta stream lean — no hundreds of attack events per tick in large battles.
+
+**Ability activations — engine-emitted.** The engine emits an explicit event in the delta stream when an ability activates: `{"type": "ability", "unit_id": ..., "ability_id": ..., "target_pos": [...], ...}`. The renderer receives these events and plays the corresponding ability visual with perfect sync.
+
+**Rationale.** Normal attacks happen at regular, predictable intervals where renderer inference is indistinguishable from perfect sync (inference error <50ms at 20 ticks/sec). Abilities are one-shot dramatic moments on 60–100 second cooldowns where timing precision matters — a Barrage's visual must land exactly when the damage hits, a Surge's glow must begin exactly when the speed burst starts. The hybrid gives precision where it matters and simplicity where it doesn't.
+
+#### Unit Rendering — MultiMesh Batching
+
+> **RESOLVED (April 20, 2026 — Metal driver deadlock investigation).** Unit rendering uses `MultiMeshInstance3D` batching, not individual `MeshInstance3D` nodes per unit. This is a hard architectural constraint, not an optimization toggle.
+
+**Problem.** Individual MeshInstance3D nodes (one per unit model + layer ring + selection ring) cause ~1200 draw calls at 200v200. On macOS Metal, the driver accumulates per-draw GPU state until the render pipeline deadlocks — total main-thread freeze at ~10 seconds with 400 units, ~22 seconds with 100 units. OpenGL3 delays the freeze (~85 seconds) but does not eliminate it. The issue is structural: too many individual draw calls with unique material instances.
+
+**Solution.** All units sharing the same mesh are batched into a single `MultiMeshInstance3D`. One draw call renders all instances of that mesh with different transforms. Grouping key: `(unit_type, tier, faction)` — each combination gets one batch. Squad units (Raider, Interceptor with `squad_count=4`) contribute 4 instances per unit to their batch.
+
+**Draw call budget:** ~30 total (one per active batch + layer ring batches + selection rings) vs ~1200 with individual nodes. Scales to 1000+ units without GPU state growth.
+
+**Per-instance variation.** MultiMesh instances support: transform (position/rotation/scale), instance color, and 4 floats of custom data. This is sufficient for unit rendering (position, layer height, faction tint). Per-instance effects beyond these parameters (death animations, ability glows, damage bloom) use an **escape hatch**: the affected unit temporarily breaks out of its MultiMesh batch into an individual node for the duration of the effect, then returns to the batch. At any given moment, only a handful of units need individual treatment.
+
+**Selection rings.** Rendered as individual MeshInstance3D nodes spawned only for selected units. Selection is typically <20 units — negligible draw call cost.
+
+**Layer rings.** Batched into one `MultiMeshInstance3D` per layer color (4 batches max). All layer-1 rings share one draw call regardless of unit count.
+
+**Debugging.** MultiMesh batches are opaque — no per-unit entries in the scene tree. A uid→(batch_key, instance_index) mapping is maintained internally for debugging. The watchdog in `tactical_bridge.gd` tracks batch counts and instance totals.
 
 ---
 
@@ -314,8 +379,10 @@ The RPS is **soft**: 1.5× provides a meaningful advantage (~30–40% faster tim
 ### Stat Philosophy — Long Engagements with Category-Specific Rhythm
 
 > **RESOLVED (v2.02, updated v2.03, rebalance applied v2.07).** Engagement pacing follows an A+C hybrid: all fights are long enough for positioning, abilities, and retreat decisions to matter, but different categories fight at different tempos.
+>
+> **RE-OPEN FLAG (v3.00 / Q-mon8.1 v2, April 17, 2026).** The pacing targets below become **per-branch targets** rather than global. Branch 1 (sci-fi/future) → 30–45s short-decisive engagements; Branch 2 (modern/recent history) → near current 1–2min; Branch 3 (ancient, post-launch) → 2min+ attritional grind. Each era within a branch can vary within the branch's target range. The design principle ("long enough for positioning, abilities, and retreat decisions to matter") holds universally — Branch 1's shorter engagements compress the decision window rather than eliminating it. The current global targets become the Branch 2 / moderate-tempo defaults. **Settled Reach retcon:** Settled Reach's current slow/high-HP/methodical identity inverts under Branch 1 fast tempo — HP values likely drop, engagement floor shifts from 45s toward 20–30s. This is a substantial rebalance deferred to post-Stage 13 implementation. The friends-ZIP ships with current Settled Reach values unchanged.
 
-**Pacing targets:**
+**Pacing targets (current — global, pending per-branch split):**
 - Minimum brawl (force-on-force, no tactics): 45 seconds
 - Tactical engagement (positioning, abilities, retreat and re-engage): ~2 minutes
 - Large battles (100+ per side): well over 2 minutes
@@ -332,6 +399,8 @@ The longer engagement floor (45 seconds minimum) serves a critical design purpos
 ### Unit Stat Baselines — Tier 2
 
 > **RESOLVED (v2.02, values moved to config v2.07).** The bible does not carry the discrete Tier 2 stat values. Hand-designed baseline stats (HP, base damage, attack interval, attack range, speed, sensor radius, layer transition time, AoE radius per unit type) live in the engine config as the single source of truth, so tuning passes do not require bible edits. Tier 1 and Tier 3 are config-level variants of the same profiles. AI-generated per-civilization stat variation is **on hold** — the engine supports it, the generation pipeline is deferred.
+>
+> **RE-OPEN FLAG (v3.00 / Q-mon8.1 v2, April 17, 2026).** Global HP multipliers and damage values become **per-era tunable** within branch signature ranges. The engine config already holds these values (per v2.07 move); the change is that each era's manifest provides its own stat profile rather than all eras sharing one. Branch 1 eras configure lower HP (faster kills, higher lethality); Branch 2 near current values; Branch 3 higher HP (attritional). The 6 base unit types and the soft RPS triangle are universal — what varies is the absolute scale of HP and damage, which controls engagement tempo. **Settled Reach specifically:** HP is retconned downward for Branch 1 fast-burst compatibility. The v2.07 rebalance's non-uniform HP adjustments remain valid as ratios between unit types; the absolute values shift downward. **Implementation deferred to post-Stage 13.**
 
 The design constraints the stat table must satisfy:
 
@@ -489,6 +558,8 @@ The macro behavior system and the Unit Behavior AI (per-unit decision loop) are 
 ### Tactical Reinforcement System
 
 > **RESOLVED (v2.03).** In-mission unit production through local military infrastructure. The player's starting force is roughly half of what they'll field over a full mission. The other half comes from reinforcement structures that both sides capture, hold, and produce units from.
+>
+> **RE-OPEN FLAG (v3.00 / Q-mon8.1 v2, April 17, 2026).** Under the branch system, reinforcement rate, structure density, structure placement rule, structure cost, and production time become **per-era config values** rather than global constants. The engine continues to consume these parameters uniformly — no branch-aware logic (Sacred Principle #3). Branch-level variation is achieved through the era manifest: Branch 1 eras configure rapid replacement / high structure density; Branch 2 configures moderate industrial replacement; Branch 3 (post-launch) configures slow replacement where casualties matter. The current hardcoded values become the Settled Reach defaults. **Implementation deferred to post-Stage 13** — the friends-ZIP ships a single era, so parameterization has no immediate effect. The design contract is unchanged; only the constants move from global to per-era.
 
 #### Narrative Frame
 
@@ -531,3 +602,110 @@ The following tuning values are open and will be resolved during Stage 7 impleme
 - **Structure placement strategy per archetype** — see Open Design Question #12 in the hub.
 
 See Open Design Questions #12, #13, and #14 in the hub for the full set of unresolved reinforcement and rebalance questions.
+
+---
+
+### Combat Visuals
+
+> **RESOLVED (April 16, 2026 — combat visual polish design session).** This section covers the visual presentation of combat: what attacks look like, how impacts read, and how units die. All systems are era-agnostic — the engine provides abstract events and state, the per-era manifest maps them to visual configs. The aesthetic reference for the Settled Reach is the opening battle of Star Wars: Revenge of the Sith — slow, massive, weighty. Everything conveys mass and scale. Nothing snaps or pops.
+
+#### Attack Visual Categories
+
+Every unit attack visual falls into one of four rendering categories. The era manifest maps each unit type to a category and provides era-specific visual assets.
+
+**1. Projectile** — a single object travels from attacker to target. The workhorse for most unit types. See "Projectile Rendering" below for construction.
+
+**2. Volley** — multiple projectiles fired in a staggered burst. Same rendering behavior as projectile but N objects launched with slight timing and angle offsets. Creates visual density for heavy-hitter and sustained-fire units. Volley count and stagger timing are per-unit-type config values in the era manifest.
+
+**3. Beam** — an instant line connecting attacker to target for a brief duration. Glow, shimmer, thickness variation over the beam's lifetime. Suited for continuous-fire or support/healing visual registers.
+
+**4. Area pulse** — an expanding ring or sphere centered on a position. No travel — blooms outward from the source. Natural fit for Rally (heal pulse), Fortify (defensive zone), and AoE ability impacts.
+
+**Era-agnostic design.** The four categories are engine-level rendering behaviors, not era-specific content. Each era's manifest maps its 6 unit types to categories and provides the visual assets (meshes, particle materials, colors, timing values). Adding a new era requires filling in the manifest, not writing new rendering code.
+
+#### Projectile Rendering
+
+Each projectile (whether fired singly or as part of a volley) consists of two layers:
+
+**Mesh head** — a small 3D mesh providing shape identity. Era-specific: a tiny glowing sphere for Settled Reach, an arrow for Roman, a tracer round for 1980s. The mesh is what makes eras visually distinct at close zoom.
+
+**GPU particle trail** — a `GPUParticles3D` emitter attached to the mesh head, emitting particles along the travel path. Provides atmosphere, trailing glow, and visual continuity with the game's particle-driven aesthetic (the main menu's `world_view_structure.tscn` particle galaxy). The trail is what makes projectiles feel alive.
+
+**Impact burst** — a brief GPU particle burst at the target position on projectile arrival. Separate from the hit reaction on the target unit (see "Impact Feedback" below).
+
+**LOD tiers for performance at scale (200v200):**
+
+- **Close/medium zoom:** full mesh + particle trail.
+- **Far zoom:** mesh replaced by billboard sprite, particle trail continues.
+- **Very far zoom / frame budget pressure:** billboard only, no trail particles.
+- **Extreme density:** projectiles beyond a count threshold are culled entirely. Damage still applies — this is renderer-only.
+
+**Era manifest fields per unit type:** `projectile_mesh_scene`, `trail_particle_material`, `impact_particle_scene`, `visual_travel_speed`, `projectile_scale`, `volley_count` (for volley category), `volley_stagger_sec`. All values are visual-only — they do not affect gameplay. Damage is resolved by the engine independently of visual travel time.
+
+**Settled Reach identity.** The mesh head is a tiny glowing sphere similar to the main menu's particle objects, creating visual continuity between the menu atmosphere and tactical combat. Trail is a warm-toned energy ribbon. Impact is a small radial flash.
+
+#### Ability Visual Treatment
+
+Abilities use their unit's normal attack visual category as a base with enhanced parameters (more projectiles, bigger trails, brighter emission). On top of the enhanced base, a shared library of **overlay effects** creates the visual step-up that says "ability in progress."
+
+**Overlay library — three era-agnostic effect types:**
+
+**1. Ring telegraph** — an expanding ground ring showing the affected area. Used for Barrage (danger zone), Fortify (defensive zone), Rally (heal radius). Color-coded: hostile/offensive abilities use warm/red tones, friendly/defensive abilities use cool/blue tones. Ring persists for the ability's duration, then fades.
+
+**2. Unit glow/aura** — the casting unit receives a brief full-body emission boost via a shader uniform toggle. Used for Surge (speed burst glow), Brace (defensive stance glow). Color matches the ability's hostile/friendly register. Duration matches the ability's active window.
+
+**3. Screen-space distortion** — a subtle post-process ripple centered on the ability's effect point. Reserved for the most dramatic moments only (Barrage impact, large-scale Rally). Brief duration (0.3–0.5s). Tunable intensity — atmospheric, not nauseating.
+
+**Ability-to-overlay mapping:**
+
+- **Raider — Surge:** projectile (enhanced) + unit glow.
+- **Interceptor — Intercept:** projectile (enhanced) + unit glow (on trigger).
+- **Vanguard — Brace:** no attack change, unit glow only.
+- **Warden — Rally:** area pulse + ring telegraph + screen-space distortion.
+- **Bombard — Barrage:** volley (heavy enhanced) + ring telegraph + screen-space distortion.
+- **Bastion — Fortify:** no attack change, ring telegraph (persistent for duration).
+
+**Era-agnostic design.** The three overlay types are engine-level rendering behaviors. Ring color, glow intensity, and distortion strength are config values per era. Eras do not author custom overlay assets — the overlays are abstract visual communication tools that work identically regardless of theme.
+
+#### Impact Feedback
+
+> **Aesthetic reference:** Star Wars: Revenge of the Sith opening battle — turbolaser bolts connecting with capital ships, the glow spreading across the hull, debris drifting away slowly. Not twitchy arcade impacts.
+
+When an attack hits a target, two layers of visual feedback play:
+
+**1. Impact particle burst.** GPU particles spawn at the target's position and drift outward slowly over 0.5–1.0 seconds with gentle deceleration. Small debris-like particles that tumble and fade — energy dissipation, not explosion. Color matches the attacker's projectile trail color. Burst scale varies with damage dealt (Bombard hits produce larger bursts than Raider hits).
+
+**2. Hit reaction — slow emission bloom.** The target unit's material receives a slow additive emission spike: 0.3–0.5 second rise, 0.3 second fade. A warm glow that spreads across the model's surface and dissipates. This is NOT a snappy white-frame flash — the cinematic register demands everything feel massive and deliberate. The bloom is the primary feedback that tells the player "this unit is taking damage" during a battlefield scan.
+
+**Explicitly excluded at this stage:**
+
+- **Micro-jitter / position displacement.** At the cinematic scale and pacing, jitter reads as a rendering bug. Units absorb hits stoically. The bloom is the feedback.
+- **Progressive damage state visuals** (scorch marks, hull breaches at HP thresholds). Deferred to per-era polish passes. The system architecture supports adding damage-state shader overlays later without redesign.
+
+**Timing is per-era config.** The Settled Reach uses the cinematic register (slow blooms, drifting particles). Faster-paced eras (1980s tank combat) can tighten impact timings through the era manifest. The rendering system is the same; the feel varies per era.
+
+#### Unit Destruction Visuals
+
+When a unit reaches 0 HP, the engine removes it from gameplay state. The renderer plays a destruction sequence and manages the resulting wreckage as a renderer-only visual artifact with no gameplay significance.
+
+**Destruction sequence (2–3 seconds):**
+
+1. **Death bloom** (0.5s) — the unit flares with a slow emission burst, brighter than any hit flash. The unmistakable "moment of death."
+2. **Damage onset** — persistent damage particle emitters activate on the model: fire, sparks, venting atmosphere (era-specific particle materials from the manifest). These were not present during combat — they signal the unit is now dead.
+3. **Drift begins** — the unit begins drifting in a direction biased by its last movement heading (so the drift feels physical, not arbitrary). Slow, decelerating. The unit no longer responds to any commands or collision. It becomes a battlefield artifact.
+4. **Darkening** — the unit's material gradually shifts toward a dark, desaturated version of its faction color over 3–5 seconds, signaling its transition from active unit to debris.
+
+**Wreckage lifecycle — LOD demotion ladder:**
+
+- **Fresh wreck (0–5s):** full 3D model, damage particles (fire/sparks), slow drift. Moderate render cost.
+- **Cooling wreck (5–15s):** particles reduced to a single faint emitter (smoke). Material fully darkened. Low cost.
+- **Cold wreck (15s+):** particles off entirely. Dark, drifting mesh only. Near-zero cost.
+
+Cold wrecks persist as dark debris drifting through the battlefield until they leave the visible area plus a buffer distance, then despawn.
+
+**Performance safety — hybrid cull.** When the frame budget is tight, cold wrecks despawn **farthest from camera center first**. Camera-center distance is the metric, not battle-center distance — if the player is zoomed into one flank, cold wrecks on the opposite flank are culled first since no one is looking at them. Fresh and cooling wrecks are never culled (their destruction sequences are active visual events the player may be watching).
+
+**Strike squads.** Individual squad members play abbreviated destruction sequences: bloom + fade over 1.0 second, staggered across members. No drift phase — small ships flare and go dark. A squad wipe reads as a cascade of small fades, not a series of capital-ship death events.
+
+**Fragment breakup (deferred).** Model splitting into 2–4 tumbling fragment meshes is a future per-era polish option. The destruction system architecture supports inserting a fragment phase between bloom and drift without redesign. Not in scope for the friends-ZIP build.
+

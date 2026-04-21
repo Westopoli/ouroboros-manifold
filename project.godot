@@ -17,6 +17,8 @@ config/icon="res://icon.svg"
 
 [autoload]
 
+EraConfig="*res://autoload/era_config.gd"
+EraThemeResolver="*res://autoload/era_theme_resolver.gd"
 ThemeConstants="*res://autoload/theme_constants.gd"
 SceneRouter="*res://autoload/scene_router.gd"
 UIDataBus="*res://autoload/ui_data_bus.gd"
@@ -26,6 +28,8 @@ WsClient="*res://autoload/ws_client.gd"
 TacticalBridge="*res://autoload/tactical_bridge.gd"
 WsInputSanitizer="*res://autoload/ws_input_sanitizer.gd"
 SimBridge="*res://autoload/sim_bridge.gd"
+MissionMetricsRecorder="*res://autoload/mission_metrics_recorder.gd"
+BugReportManager="*res://autoload/bug_report_manager.gd"
 
 [display]
 

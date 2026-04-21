@@ -363,13 +363,29 @@ Each checkpoint is a hard stop per `dev_rules.md`. Run test, show output, wait f
 
 ### Checkpoint H — Performance (Final)
 
-**Build:** No new code. Performance tuning + bug fixes only.
+**Build:** MultiMesh batched rendering. Rewrite `unit_renderer.gd` from individual `MeshInstance3D` nodes per unit to `MultiMeshInstance3D` batching. This is required — individual nodes cause a Metal driver deadlock at 200v200 scale (~10 seconds to freeze). See bible_combat.md "Unit Rendering — MultiMesh Batching" for the resolved architectural decision.
 
-**Test:** 200v200 on large Stage 7 generated map with full 3D models, squads, environment scatter. Measure: frame time, draw calls, instance count, memory. Compare against Stage 8 Checkpoint M baseline.
+**Architecture:**
+```
+UnitRenderer
+├── MultiMeshInstance3D per (type, tier, faction)   — one draw call per batch
+├── MultiMeshInstance3D per layer ring color        — 4 max
+└── Individual MeshInstance3D for selected units    — selection rings only
+```
 
-**Print:** Perf table: frame time p50/p95/p99, draw calls, instances, memory. Stage 8 baseline comparison.
+**Batch key:** `"type_tier_faction"` (e.g. `"vanguard_1_0"`). Each batch holds one MultiMesh using the mesh from `EraThemeResolver.get_unit_scene()`. Squad units (squad_count > 1) contribute N instances per unit with formation offsets baked into transforms.
 
-**Verify:** 60fps at 200v200 (p95 < 16ms). If 3D exceeds budget, implement LOD or MultiMeshInstance3D optimizations. Regression vs Stage 8 must not exceed 25%.
+**Per-frame update:** Write instance transforms from `TacticalBridge.display_x/display_y` flat arrays. One `multimesh.set_instance_transform()` call per instance — C++ method, no scene tree overhead.
+
+**Escape hatch for VFX:** Units needing per-instance effects (death animation, ability glow) temporarily leave their batch into an individual node, then return when the effect completes. Budget: <20 individual nodes at any moment.
+
+**Draw call target:** ~30 (vs ~1200 with individual nodes). Scales to 1000 units.
+
+**Test:** 200v200 on Metal renderer (macOS). Must survive indefinitely (>5 minutes) without visual freeze. Measure: frame time, draw calls, instance count, memory. Compare against Stage 8 Checkpoint M baseline.
+
+**Print:** Perf table: frame time p50/p95/p99, draw calls, instances, memory, batch count. Stage 8 baseline comparison.
+
+**Verify:** 60fps at 200v200 (p95 < 16ms). No Metal driver deadlock. Draw calls < 100. Regression vs Stage 8 must not exceed 25%.
 
 ⛔ STOP.
 
@@ -410,6 +426,26 @@ These bible edits should land alongside or shortly after this stage:
 4. **`bible_world.md` "Recon Phase" section** — correct "enemy positions based on intelligence quality" to "enemy positions hidden" per Stage 8's Bible Capture Pending item #7.
 5. **`game_bible.md` hub** — add Stage 8.5 to the implementation roadmap between Stage 8 and Stage 9.
 6. **`sloyd_prompt_strategy.md`** — replace Station / Military Installation / Resource Node structure prompts with the three settlement prompts from this spec.
+
+## Implementation Notes (Post-Completion)
+
+### Checkpoint H — Root Cause and Resolution
+
+The 200v200 Metal freeze was **not** caused by draw call count. MultiMesh batching reduced draw calls from ~1200 to ~30 but the freeze persisted at identical timing (~10-12 seconds). Binary-search isolation identified the actual cause: `queue_free()` accumulation in `hud.gd`'s `_append_event()` handler. Every `unit_destroyed` event created a Label and `queue_free()`'d the oldest — deferred frees accumulated until Godot's main loop hung.
+
+**Fix:** All UI cleanup now uses `remove_child()` + `free()` for immediate cleanup instead of `queue_free()`. Applied to `hud.gd` (event ticker, objective list, structure list) and `terrain_renderer.gd` (rebuild).
+
+MultiMesh batching was retained as the correct architecture regardless — it reduces draw calls by 40×, scales cleanly to 1000+ units, and is documented in `bible_combat.md` "Unit Rendering — MultiMesh Batching".
+
+### Checkpoint F — Asteroid Scatter
+
+Environment scatter uses `MultiMeshInstance3D` per category. Gradient sources with `obstacle_density` property seed asteroid placement (deterministic via map_seed + source position). Only categories with real GLB assets are scattered — categories pointing at `placeholder.glb` are skipped until real assets exist.
+
+**Tuning values:** `BASE_DENSITY = 0.00015` objects/unit² at intensity 1.0, scale range `[4.0, 12.0]`. Initial values (0.004 density, [80, 200] scale) produced solid masses of overlapping giant asteroids.
+
+### Flat-Array Interpolation Buffer
+
+Replaced per-tick Dictionary-based buffer with `PackedFloat32Array` indexed by `uid*2`. Consumers read `TacticalBridge.display_x[uid]` / `display_y[uid]` / `display_alive[uid]` directly — no per-frame dict allocation. `ws_client.gd` rate-limited to 2 messages per frame to prevent frame-drop feedback loops.
 
 ## Files Created
 

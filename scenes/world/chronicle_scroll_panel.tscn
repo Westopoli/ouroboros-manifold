@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://chronicle_panel_001"]
+
+[ext_resource type="Script" path="res://scenes/world/chronicle_scroll_panel.gd" id="1"]
+
+[node name="ChronicleScrollPanel" type="PanelContainer"]
+script = ExtResource("1")

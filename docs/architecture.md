@@ -59,18 +59,29 @@ Unit entries include a `velocity` field (always `[0.0, 0.0]` in the snapshot; up
 }
 ```
 
-**Dead-reckoning contract:**
-- A unit absent from `units_updated` and `units_removed` is on course — client extrapolates `pos += velocity * dt` each tick using the last known `velocity`.
+**Dead-reckoning contract (server-side — unchanged):**
+- A unit absent from `units_updated` and `units_removed` is on course — the server's `DeadReckoningTracker` predicts the client extrapolates `pos += velocity * dt` each tick using the last known `velocity`.
 - `pos` + `velocity` appear together in `units_updated` only when the server decides a position resync is needed (prediction error > `DR_RESYNC_THRESHOLD` world units, or velocity magnitude change > `DR_VEL_CHANGE_THRESHOLD` wu/s). Non-positional changes (`hp`, `layer`, `ability_cd_sec`) are sent independently with no `pos`/`velocity`.
 - `units_added` always includes `velocity: [0.0, 0.0]` — newly spawned units start stationary.
-- On every full snapshot (`type: "snapshot"`), the client resets all unit velocities to the snapshot values and discards dead-reckoning state.
+- On every full snapshot (`type: "snapshot"`), the server resets its per-unit DR baselines.
+
+**Client-side rendering — interpolation buffer (Stage 8.5 H.5, Option F):**
+
+The Godot client does NOT predict the future. Instead it buffers the last several tick states and renders by interpolating between two known-good past states. Display is always ~150ms (3 ticks) behind the latest received tick. This matches the bible's stated architecture: "Linear interpolation between engine ticks (20/sec) for 60fps rendering."
+
+On each delta arrival, the client builds a complete tick state by advancing all units from the previous state by `vel × TICK_DURATION`, then applying the delta's corrections. This complete state is pushed into a ring buffer. Each render frame, the client finds the two buffer entries bracketing `(latest_time - buffer_delay)` and linearly interpolates all unit positions between them.
+
+Because the client never predicts ahead of the server, there is no over-prediction and no backward correction — eliminating the visible "hitch" that DR-forward architectures produce when units decelerate unexpectedly.
+
+The server's DR protocol is unchanged. It still decides when to send pos updates based on its tracker's comparison of predicted vs actual. The client simply absorbs those corrections into the buffer as part of building each tick's complete state.
 
 **Tuning constants** (in `config.py`):
 
 | Constant | Default | Meaning |
 |---|---|---|
-| `DR_RESYNC_THRESHOLD` | `3.0` | Position prediction error (world units) before forcing a resync |
-| `DR_VEL_CHANGE_THRESHOLD` | `20.0` | Velocity magnitude change (wu/s) before forcing a resync |
+| `DR_RESYNC_THRESHOLD` | `1.0` | Position prediction error (world units) before server forces a resync |
+| `DR_VEL_CHANGE_THRESHOLD` | `20.0` | Velocity magnitude change (wu/s) before server forces a resync |
+| `INTERPOLATION_BUFFER_TICKS` | `3` | Client render delay in ticks (150ms at 20Hz). Higher = more jitter absorption, more input lag |
 
 ---
 

@@ -1,6 +1,10 @@
 extends Node
 
 signal purchase_requested(era_id: String, purchase_type: String)
+signal time_jump_started(time_jump_id: String, span_years: int, total_keyframes: int, total_entries: int)
+signal time_jump_keyframe(keyframe_data: Dictionary)
+signal chronicle_entry(entry_data: Dictionary)
+signal time_jump_ended(time_jump_id: String)
 
 const SETTINGS_PATH := "user://settings.cfg"
 const VALID_RESOLUTION_COUNT := 6
@@ -63,6 +67,14 @@ func refresh_entitlements() -> void:
 
 func redeem_key(code: String) -> Dictionary:
 	return _source.redeem_key(code)
+
+
+func proceed_to_next_mission() -> void:
+	SimBridge.send_command({"type": "command", "cmd": "proceed_to_next_mission"})
+
+
+func exit_to_main_menu() -> void:
+	SceneRouter.go_to("main_menu")
 
 
 func _load_settings() -> void:

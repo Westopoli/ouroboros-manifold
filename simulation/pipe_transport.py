@@ -201,7 +201,7 @@ def run(engine_factory, *, crash_after_ready: bool = False, test_print: bool = F
     reader = threading.Thread(target=_stdin_reader, args=(cmd_queue,), daemon=True)
     reader.start()
 
-    from snapshot_serializer import full_snapshot, delta, DeadReckoningTracker
+    from snapshot_serializer import full_snapshot, delta, delta_baseline, DeadReckoningTracker
     import command_ingest
     import config as _config
 
@@ -240,7 +240,7 @@ def run(engine_factory, *, crash_after_ready: bool = False, test_print: bool = F
         else:
             pkt = delta(engine, prev_state, dr_tracker)
 
-        prev_state = full_snapshot(engine)
+        prev_state = delta_baseline(engine)
         _send_message(pkt)
 
         tick_num += 1

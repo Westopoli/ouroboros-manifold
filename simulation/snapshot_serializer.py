@@ -348,3 +348,24 @@ def _objective_entry(obj) -> dict:
         "progress": round(obj.completion, 4),
         "status": status,
     }
+
+
+def delta_baseline(engine) -> dict:
+    """Lightweight prev-state for delta comparison. Skips fog, map, spine nodes."""
+    store = engine.store
+    units = []
+    for uid in range(store.count):
+        if store.alive[uid]:
+            units.append({
+                "uid": uid,
+                "pos": [
+                    round(float(store.data[uid, FIELD_X]), 4),
+                    round(float(store.data[uid, FIELD_Y]), 4),
+                ],
+                "layer": int(store.data[uid, FIELD_LAYER]),
+                "hp": round(float(store.data[uid, FIELD_HP]), 4),
+                "ability_cd_sec": round(float(store.data[uid, FIELD_ABILITY_COOLDOWN]), 4),
+            })
+    structures = [_structure_entry(s) for s in engine.reinforcement_structures]
+    objectives = [_objective_entry(o) for o in engine.objectives]
+    return {"units": units, "structures": structures, "objectives": objectives}

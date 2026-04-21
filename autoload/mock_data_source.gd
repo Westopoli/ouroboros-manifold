@@ -63,10 +63,10 @@ func get_all_eras() -> Array[Dictionary]:
 			"description": "Far-future conflict across the void. Full 2.5D layer combat — orbital stations, surface strongholds, and deep-space engagements. The premium sci-fi experience.",
 			"accent_color": "#4a9eb8",
 			"is_free": false,
-			"is_owned": false,
+			"is_owned": SimBridge.ENTITLEMENT_SETTLED_REACH,
 			"is_trial": false,
 			"trial_missions_remaining": 0,
-			"subscription_required": true,
+			"subscription_required": not SimBridge.ENTITLEMENT_SETTLED_REACH,
 			"tier_progress": {"current_tier": 1, "progress_to_next": 0.0, "max_tier_unlocked": 1},
 			"mastery_progress": 0.0,
 			"unit_roster": [

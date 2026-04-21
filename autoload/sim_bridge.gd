@@ -23,7 +23,7 @@ signal sim_ready(metadata: Dictionary)
 signal state_updated(state: Dictionary)
 signal sim_error(info: Dictionary)
 
-const USE_LIVE_SIM := true
+const USE_LIVE_SIM := false
 const SIM_STARTUP_TIMEOUT_SEC := 30.0
 const ENTITLEMENT_SETTLED_REACH := true
 
@@ -199,6 +199,18 @@ func _dispatch(msg: Dictionary) -> void:
 			sim_ready.emit(msg)
 		"snapshot", "delta", "sim_state":
 			state_updated.emit(msg)
+		"time_jump_start":
+			UIDataBus.time_jump_started.emit(
+				msg.get("time_jump_id", ""),
+				int(msg.get("span_years", 0)),
+				int(msg.get("total_keyframes", 0)),
+				int(msg.get("total_entries", 0)))
+		"time_jump_end":
+			UIDataBus.time_jump_ended.emit(msg.get("time_jump_id", ""))
+		"keyframe":
+			UIDataBus.time_jump_keyframe.emit(msg)
+		"chronicle_entry":
+			UIDataBus.chronicle_entry.emit(msg)
 		_:
 			pass
 

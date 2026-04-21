@@ -31,6 +31,13 @@ var _layer_buttons: Array = []
 var _banner_timer: float = 0.0
 var _start_tick: int = -1
 
+var _f12_label: Label
+var _f12_age: float = 0.0
+const _F12_FADE_TIME := 30.0
+const _F12_MIN_ALPHA := 0.15
+const _F12_FLASH_DURATION := 0.5
+var _f12_flash_timer: float = 0.0
+
 
 func _ready() -> void:
 	layer = 10
@@ -51,6 +58,7 @@ func _process(delta: float) -> void:
 		_banner_timer -= delta
 		if _banner_timer <= 0.0:
 			_banner_label.visible = false
+	_update_f12_label(delta)
 
 
 # ── Signals ──────────────────────────────────────────────────────────────────
@@ -63,8 +71,8 @@ func _on_snapshot(snap: Dictionary) -> void:
 
 
 func _on_delta(d: Dictionary) -> void:
-	_rebuild_objectives()
-	_rebuild_structure_list()
+	_update_objectives()
+	_update_structure_list()
 	for ev in d.get("events", []):
 		_handle_event(ev)
 
@@ -98,7 +106,9 @@ func _append_event(text: String) -> void:
 	lbl.add_theme_color_override("font_color", _TEXT)
 	_event_ticker_list.add_child(lbl)
 	while _event_ticker_list.get_child_count() > _MAX_EVENTS:
-		_event_ticker_list.get_child(0).queue_free()
+		var old := _event_ticker_list.get_child(0)
+		_event_ticker_list.remove_child(old)
+		old.free()
 
 
 func _show_banner(text: String) -> void:
@@ -201,8 +211,7 @@ func _update_control_groups() -> void:
 
 
 func _rebuild_objectives() -> void:
-	for child in _objectives_list.get_children():
-		child.queue_free()
+	_clear_children(_objectives_list)
 	if TacticalBridge.objectives.is_empty():
 		var lbl := Label.new()
 		lbl.text = "(no objectives)"
@@ -218,27 +227,66 @@ func _rebuild_objectives() -> void:
 
 
 func _rebuild_structure_list() -> void:
-	for child in _structure_list.get_children():
-		child.queue_free()
-	var found := false
+	_clear_children(_structure_list)
+	_update_structure_list()
+
+
+func _update_objectives() -> void:
+	var children := _objectives_list.get_children()
+	if TacticalBridge.objectives.is_empty():
+		if children.size() != 1 or children[0].text != "(no objectives)":
+			_rebuild_objectives()
+		return
+	if children.size() != TacticalBridge.objectives.size():
+		_rebuild_objectives()
+		return
+	for i in TacticalBridge.objectives.size():
+		var obj: Dictionary = TacticalBridge.objectives[i]
+		var prog: float = obj.get("progress", 0.0)
+		children[i].text = "%s  %d%%  [%s]" % [obj.get("id", "?"), int(prog * 100), obj.get("status", "?")]
+
+
+func _update_structure_list() -> void:
+	var player_structs: Array = []
 	for uid in TacticalBridge.structures:
 		var s: Dictionary = TacticalBridge.structures[uid]
-		if int(s.get("owner", -1)) != 0:  # player_faction = 0 (see tactical_engine.py)
+		if int(s.get("owner", -1)) != 0:
 			continue
-		found = true
-		var row := Label.new()
+		player_structs.append({"uid": uid, "data": s})
+
+	var children := _structure_list.get_children()
+
+	if player_structs.is_empty():
+		if children.size() != 1 or children[0].text != "(no structures held)":
+			_clear_children(_structure_list)
+			var lbl := Label.new()
+			lbl.text = "(no structures held)"
+			lbl.add_theme_color_override("font_color", _DIM)
+			_structure_list.add_child(lbl)
+		return
+
+	if children.size() != player_structs.size():
+		_clear_children(_structure_list)
+		for ps in player_structs:
+			var row := Label.new()
+			row.add_theme_color_override("font_color", _TEXT)
+			_structure_list.add_child(row)
+		children = _structure_list.get_children()
+
+	for i in player_structs.size():
+		var uid: int = player_structs[i].uid
+		var s: Dictionary = player_structs[i].data
 		var hp: int = int(s.get("hp", 0))
 		var max_hp: int = int(s.get("max_hp", 1))
 		var prod_sec: float = s.get("production_timer_sec", 0.0)
 		var prod_target: String = s.get("production_target", "—")
-		row.text = "[%d] HP %d/%d  %s in %ds" % [uid, hp, max_hp, prod_target, int(prod_sec)]
-		row.add_theme_color_override("font_color", _TEXT)
-		_structure_list.add_child(row)
-	if not found:
-		var lbl := Label.new()
-		lbl.text = "(no structures held)"
-		lbl.add_theme_color_override("font_color", _DIM)
-		_structure_list.add_child(lbl)
+		children[i].text = "[%d] HP %d/%d  %s in %ds" % [uid, hp, max_hp, prod_target, int(prod_sec)]
+
+
+func _clear_children(container: Container) -> void:
+	for child in container.get_children():
+		container.remove_child(child)
+		child.free()
 
 
 # ── UI construction ──────────────────────────────────────────────────────────
@@ -318,6 +366,7 @@ func _build_ui() -> void:
 	_build_selection_panel()      # bottom-center
 	_build_control_group_bar()    # bottom-right, left of layer selector
 	_build_layer_selector()       # right edge
+	_build_f12_label()
 
 
 func _build_info_column() -> void:
@@ -470,12 +519,15 @@ class _Minimap extends Control:
 		var sx: float = size.x / canvas_size.x
 		var sy: float = size.y / canvas_size.y
 		var faction_colors := [Color(0.30, 0.70, 1.00), Color(1.00, 0.35, 0.35)]
-		for uid in TacticalBridge.display_positions:
-			var pos: Array = TacticalBridge.display_positions[uid]
+		for uid in range(TacticalBridge.unit_count):
+			if TacticalBridge.display_alive[uid] == 0:
+				continue
+			var px: float = TacticalBridge.display_x[uid]
+			var py: float = TacticalBridge.display_y[uid]
 			var u: Dictionary = TacticalBridge.units.get(uid, {})
 			var faction: int = int(u.get("faction", 0))
 			var col: Color = faction_colors[faction] if faction < faction_colors.size() else Color.WHITE
-			draw_circle(Vector2(pos[0] * sx, pos[1] * sy), 2.0, col)
+			draw_circle(Vector2(px * sx, py * sy), 2.0, col)
 		for uid in TacticalBridge.structures:
 			var s: Dictionary = TacticalBridge.structures[uid]
 			var pos: Array = s.get("pos", [0, 0])
@@ -534,3 +586,33 @@ func _build_layer_selector() -> void:
 
 func _on_layer_clicked(layer_idx: int) -> void:
 	_input_router.active_layer = layer_idx
+
+
+func _build_f12_label() -> void:
+	_f12_label = Label.new()
+	_f12_label.text = "F12 — Report Bug"
+	_f12_label.add_theme_font_size_override("font_size", 13)
+	_f12_label.add_theme_color_override("font_color", _DIM)
+	_f12_label.anchor_left = 0
+	_f12_label.anchor_top = 1
+	_f12_label.anchor_bottom = 1
+	_f12_label.offset_left = 12
+	_f12_label.offset_top = -30
+	_f12_label.offset_bottom = -12
+	add_child(_f12_label)
+
+
+func _update_f12_label(delta: float) -> void:
+	if not _f12_label:
+		return
+	if _f12_flash_timer > 0.0:
+		_f12_flash_timer -= delta
+		_f12_label.modulate.a = 1.0
+		return
+	_f12_age += delta
+	var t := clampf(_f12_age / _F12_FADE_TIME, 0.0, 1.0)
+	_f12_label.modulate.a = lerpf(1.0, _F12_MIN_ALPHA, t)
+
+
+func flash_f12() -> void:
+	_f12_flash_timer = _F12_FLASH_DURATION

@@ -3,7 +3,13 @@
 > **Type:** Cross-cutting architectural amendment
 > **Affects:** Stage 9 (rename only — already implemented), Stage 10 (no changes needed), Stage 11 (spec rewrite for world view sections), Stage 12 (ribbon graph galaxy reference update)
 > **Priority:** Must be completed before Stage 11 implementation begins.
-> **Status:** OPEN
+> **Status:** COMPLETED (2026-04-16)
+>
+> **Implementation variations:**
+> - `loading_screen.gd` was updated alongside `main_menu.gd` (not listed in the amendment but required — it also loaded `galaxy_structure.tscn`).
+> - `mission_briefing.gd:573` retains the user-facing hint text "ESC to return to galaxy view" — this is era-specific display text, not implementation code. Deferred to a future era-agnosticism pass.
+> - Part 4 (stage spec amendments to Stage 11/12 docs) was not performed in this pass — those docs still reference the old paths and will be updated when those stages are worked on.
+> - Shader migration to `shaders/` subdirectory was not performed (amendment explicitly marked this as out of scope for this pass).
 
 ---
 

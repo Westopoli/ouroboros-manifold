@@ -313,4 +313,4 @@ func _on_begin() -> void:
 	if slot_name.strip_edges() == "":
 		slot_name = _name_input.placeholder_text
 	UIDataBus.create_save_slot(_selected_era_id, _selected_template_id, slot_name)
-	SceneRouter.go_to("mission_briefing", {"mission_id": "mock_001"})
+	SceneRouter.go_to("onboarding", {"era_id": _selected_era_id, "template_id": _selected_template_id, "slot_name": slot_name})

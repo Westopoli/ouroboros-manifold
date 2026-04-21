@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="EraWorldViewConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/shared/world_view/era_world_view_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+era_configs = {
+"settled_reach": {
+"renderer": "res://scenes/shared/world_view/renderers/settled_reach_renderer.tscn",
+"camera": "res://scenes/shared/world_view/cameras/orbital_camera_3d.tscn"
+}
+}

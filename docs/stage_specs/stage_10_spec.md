@@ -410,4 +410,6 @@ Wire the tactical transport from WebSocket (Stage 8) to stdio pipe (Stage 10). T
 | `_pending_error_screen` pattern not in spec | Added to `sim_bridge.gd` | SceneRouter transition guard blocks `go_to("error_screen")` if called mid-transition; retry-in-`_process` pattern needed to guarantee error screen reaches the player |
 | `go_back()` stack pop pattern | Added `_transitioning` guard before pop | Race condition: pressing back during fade-out consumed a stack entry without navigating; fix ensures pop only happens when navigation will succeed |
 
+**Performance note (Stage 8.5 H.5):** `delta_baseline()` was added to `snapshot_serializer.py` during the interpolation buffer work. Both `pipe_transport.py` and `socket_server.py` now use `delta_baseline(engine)` instead of `full_snapshot(engine)` for the per-tick prev_state cache. This eliminates a 60ms/tick fog-of-war recomputation that was throttling the sim to ~11Hz at 200v200. The full snapshot is still sent to the client on the 5-second interval — only the internal delta-comparison cache was changed.
+
 **To resume:** Wait for Stage 8 sign-off. Make the two targeted changes to `tactical.gd` and `input_router.gd` listed above. Run Checkpoint F prove-it item 5 (units appear, issue move command, verify units respond via stdio). Mark Stage 10 done.
