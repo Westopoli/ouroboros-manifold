@@ -63,25 +63,35 @@ Branch System. Axes 4–8 are new proposals drafted in this session.
    This is about *where units can be*, not about *what they can shoot*
    (which is axis 8).
 
-5. **Force scale** *(new — proposed)* — how many units on the field at
-   mission peak. Squad (10–20) / company (30–50) / legion (60+). This
-   axis controls mission feel in a way nothing else captures — a 15-unit
-   skirmish and an 80-unit campaign are different *games*, not different
-   missions of the same game.
+5. **Force scale** *(new — proposed, refined in Batch 2c)* — how many
+   units on the field at mission peak. Squad (20–60) / company (100–300) /
+   legion (600–1000). The 1000 cap is a long-term target — current engine
+   ceiling is `MAX_UNITS = 400` and the ORCA LP / RVO neighbor pass is
+   the scaling bottleneck. A 15-unit skirmish, a 200-unit operation, and
+   a 1000-unit campaign are different *games*, not different missions of
+   the same game. This axis names a lever the bible has implied but never
+   articulated.
 
-6. **Terrain expressiveness** *(new — proposed)* — how much map geography
-   shapes tactics. Minimum (open space) / mixed (naval archipelago + land
-   corridors) / maximum (passes, rivers, defiles dominate). This is the
-   axis that lets Roman earn a mechanical identity Branch 1 can't touch
-   without contradicting its own branch DNA.
+6. **Terrain expressiveness** *(new — proposed, refined in Batch 2c)* —
+   how much map geography shapes tactics, expressed as a **(midpoint,
+   spread)** pair. Midpoint = average terrain intensity across the era's
+   mission pool. Spread = how far individual missions swing from that
+   midpoint. Some eras are terrain-*predictable* (tight spread — you know
+   what kind of map to expect); others are terrain-*surprising* (wide
+   spread — the mission pool spans very different operational theaters).
+   Both dimensions must be narratively grounded. This is the axis that
+   lets Roman earn a mechanical identity Branch 1 can't touch without
+   contradicting its own branch DNA.
 
-7. **Environmental threat** *(new — proposed, most speculative)* — does
-   the environment itself damage or kill units over time, independent of
-   enemy action? Vacuum breach, radiation, sonar conditions, heat, cold.
-   Low / medium / high. The newest axis and the one I'd most expect you
-   to challenge — it's where SR's "magnum opus" status could genuinely
-   shine, since environmental hazards in space combat are underused in
-   the genre.
+7. **Environmental threat** *(new — refined Batch 2c from persistent state
+   to event-based)* — how often does the environment fire damage-dealing
+   events during a mission? Meteor storms, hurricanes, solar flares,
+   sonar conditions, thermal extremes — discrete events that trigger
+   mid-mission, deal damage-over-time for a bounded window, and revert.
+   Rare / occasional / common. Reframed from a persistent world-state
+   property (my original v1 proposal) to an event-triggered property
+   because the event reframe is cheaper to implement, dramatically more
+   memorable as a player experience, and dovetails with `events.py`.
 
 8. **Cross-layer engagement** *(new — resolved from Batch 2a sub-question)* —
    which (attacker-layer, target-layer) pairs are valid for weapon
@@ -99,8 +109,13 @@ Branch System. Axes 4–8 are new proposals drafted in this session.
 
 - **Batch 1** *(done)* — governance, production constraints, axis list.
 - **Batch 2a** *(done)* — detail for axes 1–4 (locked trio + layer access).
-- **Batch 2b** *(this batch)* — detail for axes 5–8 (force scale, terrain
+- **Batch 2b** *(done)* — detail for axes 5–8 (force scale, terrain
   expressiveness, environmental threat, cross-layer engagement).
+- **Batch 2c** *(done, this batch)* — refinements to axes 5, 6, 7:
+  force scale rescaled to 20–60 / 100–300 / 600–1000 with performance
+  dependency note; terrain expressiveness reframed as (midpoint, spread)
+  pair with narrative-grounding requirement; environmental threat
+  reframed from persistent state to stochastic event firing.
 - **Batch 3** — the 8-axis × 3-era matrix with one-line rationale per cell.
 - **Batch 4** — Branch DNA vs. hallmark-exclusive annotations.
 - **Batch 5** — rejected axes + experimental stretch axes (maximum creativity
@@ -256,55 +271,96 @@ quantity dial, independent of how fast they fight (tempo) or how quickly
 they replace (attrition).
 
 **Positions.**
-- **Squad / taskforce** (Settled Reach, Branch 1 DNA) — 10–20 units. Every
+- **Squad / taskforce** (Settled Reach, Branch 1 DNA) — 20–60 units. Every
   unit has a readable identity on-screen. The player makes per-unit
   tactical decisions. The mission feels like commanding a strike team.
-- **Company / battlegroup** (1980s, Branch 2 DNA) — 30–50 units. Mixed
+- **Company / battlegroup** (1980s, Branch 2 DNA) — 100–300 units. Mixed
   formations across layers. Unit-type roles matter more than individual
   unit identities. The mission feels like commanding a combined-arms
   operation.
-- **Legion / cohort** (Roman, Branch 3 DNA) — 60+ units. Force is massed.
-  Commands issued at group level; individual units blur into formations.
-  The mission feels like commanding an army.
+- **Legion / cohort** (Roman, Branch 3 DNA) — 600–1000 units. Force is
+  massed. Commands issued at group level; individual units blur into
+  formations. The mission feels like commanding an army. The 1000 top-end
+  is a long-term target, not a current-engine number.
 
 **Cross-axis risk.** Visibly overlaps with **tempo** (more units = slower
 decision rhythm per unit) and **attrition** (more units = more to lose).
 Kept distinct by specifying: scale is *concurrent quantity*; tempo is
 *per-engagement rhythm*; attrition is *replacement rate*. A rapid-tempo
-80-unit hypothetical and a slow-tempo 15-unit hypothetical both exist on
+800-unit hypothetical and a slow-tempo 40-unit hypothetical both exist on
 independent dial settings.
 
-**Implementation cost.** **Medium.** Force allocator already exists; current
-parity targets are uniform. Per-era scale requires the allocator to read
-era-scale config and generate larger/smaller forces at the same power
-rating. Mission generator consumes it. UI consequence: selecting 80 units
-vs. 15 units is a different command experience — hotkey group layouts
-and selection paradigms may need per-era polish passes, though the
-4-command vocabulary from `bible_combat.md` works at all scales.
+**Implementation cost.** **Medium** (config) + **high** (engine, for the
+1000 top-end). Force allocator already exists; current parity targets are
+uniform. Per-era scale is a config change the allocator reads — cheap.
+UI polish per scale is medium. But the 1000-unit legion position depends
+on the engine performance work flagged below.
+
+**Performance dependency — 1000-unit target.** Engine currently hardcodes
+`MAX_UNITS = 400` in `unit.py`. `profile_6k_single_tick.py` already exists
+in the codebase and indicates the ORCA LP solver + RVO neighbor pass is
+the scaling bottleneck (O(n²) in neighbor queries, LP solve dominates
+frame time). Per the language-migration analysis: the bounded-scope path
+is a **native extension** (C via ctypes or Rust via pyo3) implementing
+only the RVO neighbor pass and the ORCA LP solve — roughly 500–1000 lines,
+keeps the rest of the engine in Python, plausibly unlocks 2000+ units.
+Authoring Roman as a 1000-unit legion era is not gated on this work
+(per-era config can be written now); *playing* it at scale is. Cheapest
+interim win while the extension is pending: try PyPy on `sim_tuner.py`
+for headless tuning runs — zero code changes, typically 3–10× on
+dict-heavy code.
 
 **Open sub-questions.** At legion scale, do missions need group-level
 command primitives (waypoint chains, formation orders) beyond the current
 4-command set? Not in scope for this matrix, but flagged for the combat
-bible session as a potential Roman-specific consideration.
+bible session as a potential Roman-specific consideration. Also: what is
+the rendering cost of 1000 on-screen units in Godot, and does the
+sim/renderer WebSocket protocol deliver tick deltas fast enough at that
+scale? Out of scope for this doc but a real dependency.
 
-### Axis 6: Terrain expressiveness *(new — proposed)*
+### Axis 6: Terrain expressiveness *(new — proposed, refined Batch 2c)*
 
-**Definition.** How much map geography shapes tactical decisions. The
-"how much does where you are matter" dial. Measured by how often terrain
-features choose where fights happen vs. the player choosing.
+**Definition.** How much map geography shapes tactical decisions, expressed
+as a **(midpoint, spread)** pair. Midpoint is the average terrain intensity
+across the era's mission pool on a normalized 0–100 scale (0 = open void,
+100 = terrain dominates every decision). Spread is how far individual
+missions swing from that midpoint. Terrain is the one axis in this matrix
+where per-mission variance is itself era identity — playing an era where
+every mission feels like a different kind of map is a different experience
+from playing an era where every mission feels the same.
 
 **Positions.**
-- **Minimum** (Settled Reach, Branch 1 DNA) — open space is the default.
-  Obstacles are sparse: debris fields, asteroid belts, station structures.
-  Tactics flow around a few localized hazards. Most of the map is
-  tactically neutral.
-- **Mixed** (1980s, Branch 2 DNA) — land missions get strong terrain
-  (forests, urban, ridges, defiles); naval missions are archipelago-open
-  (islands as waypoints, sea itself is tactically flat). Different mission
-  archetypes sit at different points on the sub-dial.
-- **Maximum** (Roman, Branch 3 DNA) — mountains, rivers, defiles, passes,
-  forests dominate tactics. Geography chooses where fights happen, not
-  the player. The map is the second enemy.
+- **High midpoint, tight spread** (Roman, Branch 3 DNA) — roughly midpoint
+  80 with spread 10–15. Most missions are terrain-rich. Mountains, rivers,
+  defiles, passes dominate. Spread is narrow because Roman's operational
+  theater is a coherent civic world with predictable topology types.
+  Players settle into "this era is *about* terrain." Narrative grounding:
+  Rome's operational theater is the Mediterranean and its hinterlands — a
+  real, finite, topologically coherent landscape.
+- **Mixed midpoint, wide spread** (1980s, Branch 2 DNA) — roughly midpoint
+  50 with spread 30–40. Mission pool spans naval archipelago (terrain-light
+  ocean with island waypoints) to land urban/forest (terrain-heavy). Wide
+  variance is grounded in narrative: the Cold War proxy-war era naturally
+  produces submarine campaigns *and* Eastern European land operations
+  *and* desert intervention *and* jungle counterinsurgency. Players learn
+  to expect the unexpected *mission type*, not to expect the unexpected
+  *within a mission type*.
+- **Low midpoint, moderate spread** (Settled Reach, Branch 1 DNA) —
+  roughly midpoint 25 with spread 15–25. Most missions default to open
+  space. Occasional swings into asteroid fields, nebula-dense regions,
+  station interiors, planetside operations. Moderate rather than tight
+  spread because SR's setting (a civilization across 20–30 solar systems)
+  naturally produces terrain variety without being defined by it.
+
+**Narrative-grounding requirement.** Any era authored with wide terrain
+spread must have a narrative reason for the variance. 1980s has naval +
+land + air + desert + jungle as genuinely distinct operational theaters
+the Cold War world-builds into. A hypothetical era with wide spread but
+no narrative logic ("sometimes the mission is in a desert, sometimes in
+a swamp, for no reason") reads to players as random mission generation,
+not era identity. Spread must be authored, not random. Each spread
+position is answering the question: *why does this era produce this
+range of mission types?*
 
 **Cross-axis risk.** Overlaps with **layer access** (Roman's pseudo-layers
 are terrain) and with **information** (terrain hides units from sensors).
@@ -318,68 +374,108 @@ dials picking up three different properties.
 **Implementation cost.** **Medium.** Gradient vocabulary already exists
 (5 gradients including obstacle_density and cover_density). Strategic
 layout pool already exists (Q4 resolution, 10–20 hand-authored blueprints).
-Setting per-era terrain intensity is config. But *authoring* dense-terrain
-maps vs. open-space maps requires different spine/layout libraries — may
-need more variety at the minimum and maximum ends of the dial.
+Setting per-era (midpoint, spread) is config. Authoring enough layout
+variety to express wide-spread eras (1980s especially) requires more
+strategic blueprints than tight-spread eras do — each "mission theater"
+within a wide-spread era is its own authored layout set.
 
-**Open sub-questions.** Should the authored-layout pool split into
-terrain-intensity variants, or do archetype filters already handle this
-via layout-to-archetype compatibility? My lean: filter-based split, layout
-pool stays unified. But this is a map generation concern that should be
-confirmed with the Stage 7 work before it's locked.
+**Open sub-questions.** Should the authored-layout pool tag blueprints
+with a terrain-intensity score so the mission generator can draw from
+within-spread ranges per era? My lean: yes, small per-blueprint metadata
+field (terrain_intensity: 0–100) plus per-era (midpoint, spread) config,
+generator samples layouts whose scores fall within the era's range. This
+is small work and directly expresses the refined axis. Confirmation from
+the Stage 7 map-gen work before lock.
 
-### Axis 7: Environmental threat *(new — most speculative)*
+### Axis 7: Environmental threat *(new — refined Batch 2c, event-based)*
 
-**Definition.** Does the environment itself damage or kill units over time,
-independent of enemy action? "Hostile to all agents" rather than "hostile
-to one side." This is the axis that's not in the bible yet at all.
+**Definition.** How often does the environment itself fire damage-dealing
+events during a mission? Discrete stochastic events that trigger mid-mission,
+deal damage-over-time for a bounded window, and revert. Meteor storms,
+solar flares, hurricanes, tsunamis, thermal extremes, sonar conditions
+degrading catastrophically. The axis measures *event frequency*, not
+persistent world state. "Hostile to all agents" rather than "hostile to
+one side" — when an event fires, it threatens both sides of the engagement.
 
 **Positions.**
-- **Low** (Roman, Branch 3 DNA) — weather and seasons flavor missions but
-  rarely kill units. Desert crossings and winter campaigns are edge cases
-  in mission generation, not per-mission mechanical dials. Environmental
-  damage is narrative dressing.
-- **Medium** (1980s, Branch 2 DNA) — sonar conditions, sea state,
-  atmospheric conditions affect detection and mobility. Not usually lethal
-  but they shape decisions. Submarine depth limits are the closest thing
-  to direct environmental damage. Environment is a tactical consideration.
-- **High** (Settled Reach, candidate hallmark-exclusive) — radiation belts,
-  vacuum breach, gravity wells, nebula damage. The environment actively
-  kills. Map geography includes "you can't go there without HP loss" zones.
-  Tactics must respect the environment as a first-class opponent.
+- **Rare** (Roman, Branch 3 DNA) — roughly once per 10+ missions. Narrative
+  texture. Players remember the one storm that broke the siege or the
+  eclipse that coincided with the ambush. The event is a chronicle-grade
+  moment when it fires.
+- **Occasional** (1980s, Branch 2 DNA) — roughly 1-in-3 to 1-in-5 missions.
+  Tactical consideration players plan around (check sonar conditions,
+  watch for storm fronts, factor weather into briefing). The event is
+  expected but not guaranteed.
+- **Common** (Settled Reach, candidate hallmark-exclusive) — roughly
+  1-in-2 missions, capped. Environment is an expected co-antagonist.
+  Players develop doctrine for handling environmental events (which units
+  to hold in reserve for environment-hardened duties, which zones to
+  retreat into during flares). **Cap at every-other-mission maximum** —
+  past that frequency, events stop being dramatic and become wallpaper.
 
-**Cross-axis risk.** Overlaps with **terrain** (some environmental hazards
-are terrain: nebulae block movement AND damage) and with **information**
-(nebulae blind sensors AND harm units). Kept distinct by specifying:
-environment is specifically *damage-over-time to all agents*. A nebula is
-a terrain feature (blocks movement), an info feature (blocks sensors),
-and an environmental feature (ionizing radiation). Each dial picks up
-its own slice of the same map object.
+**Why the event reframe improves this axis.** Original v1 proposal was
+persistent environmental damage fields (nebulae always present, always
+damaging). Reframed here as stochastic events firing mid-mission. The
+reframe gains:
+- **Alignment with existing engine.** `events.py` already handles
+  stochastic event firing with threshold triggers, noise, chain spawns,
+  and pending queues. Environmental events are a new event type, not a
+  new subsystem.
+- **Dramatic memorability.** A meteor storm hitting mid-mission is a
+  chronicle moment. A persistent radiation zone is a map color. Players
+  remember events, not backgrounds.
+- **Sacred Principle #1 alignment.** Environmental threat as stochastic
+  event is more authentic to the "genuine stochasticity" principle than
+  environmental threat as static property.
+- **Cost reduction.** Persistent damage fields would have required a new
+  tick-engine subsystem (damage-field representation, zone-to-unit
+  application per tick). Event-based environmental threat is a new event
+  type in an existing event system — much cheaper.
 
-**Implementation cost.** **Medium-high.** This is the most expensive axis
-on the list because the engine doesn't currently have a
-"damage-over-time-in-region" system beyond what combat damage does.
-Implementing it requires:
-- A damage-field representation in the tick engine (which map zones apply
-  periodic damage, at what rate, to which unit categories)
-- Per-unit vulnerability / resistance config (some units are vacuum-rated,
-  some aren't — this is per-unit-type × per-era config)
-- Visual representation for renderer (nebula shader, radiation warning
-  indicators, damage-zone overlays)
-- Chronicle hooks (units lost to environmental damage get different
-  template treatment than units lost in combat)
+**Cross-axis risk.** After the reframe, overlap with axes 2 and 6 is
+minimal. Environmental events are *temporary state during firing*; axes
+2 (information) and 6 (terrain) are *baseline state per mission*. A
+mission's fog level is its baseline sensor configuration; a solar flare
+firing mid-mission temporarily swings sensor range even lower for the
+flare's duration, then reverts. Two separate dials picking up different
+temporal slices of the same mission — the reframe makes this distinction
+cleaner than the persistent-state version had.
 
-Flag for design review: this is the one axis where "cheap to implement"
-is not obviously true. If the cost is wrong, this axis drops out and
-Settled Reach's hallmark-exclusive position shifts to another axis.
+**Implementation cost.** **Low-medium.** Down from medium-high in v1.
+Required engine work:
+- **New event type** in `events.py` — environmental event category with
+  trigger (per-era probability roll at mission start, or tick-rate during
+  mission), duration, affected zone (spatial or global), damage profile.
+  Straightforward addition to an existing system.
+- **Per-unit vulnerability / resistance config** per-era — vacuum-rated
+  units take less damage from vacuum-breach events. Still needed but small.
+- **Renderer visualization** — event-specific overlays when firing (meteor
+  streak, storm clouds, radiation warning, nebula shader). Per-event-type
+  visual authoring cost is real but bounded.
+- **Chronicle hooks** — units lost to environmental events get distinct
+  template treatment ("the storm took the Third Cohort before the battle
+  was joined"). Chronicle framework already supports this.
 
-**Open sub-questions.** Should environmental damage be *uniform* (everyone
-in the zone takes damage equally) or *asymmetric* (some units are
-environmentally hardened)? My lean: asymmetric, because it creates
-tactical expression (sending environment-hardened units into zones others
-can't go creates positional puzzles no other axis generates). But uniform
-is simpler to ship and may be the right v1. Revisit at Stage 7 or a
-dedicated environmental-systems session.
+No new tick-engine subsystem required. Main new work is the damage-during-event
+mechanic and the per-event-type visualizations.
+
+**Open sub-questions.**
+1. **Uniform or asymmetric damage?** When an event fires, does everyone in
+   the zone take equal damage (uniform) or do environmentally-hardened
+   units shrug it off (asymmetric)? Asymmetric creates tactical expression
+   (sending hardened units into zones others can't go creates positional
+   puzzles no other axis generates). Uniform is simpler to ship. Lean:
+   asymmetric, but uniform is an acceptable v1.
+2. **Spatial or global events?** Does an event affect a specific zone on
+   the map (meteor storm hits a quadrant) or the whole map (tsunami
+   floods everywhere)? Lean: mostly spatial (spatial events create
+   tactical expression — retreat to the unaffected zone), with occasional
+   global events reserved for era-specific dramatic moments (SR solar
+   flare = whole map).
+3. **Can environmental events chain?** `events.py` already supports chain
+   spawns with delays and conditions. Should an environmental event be
+   able to spawn a follow-up (meteor storm → ongoing radiation leak →
+   eventual dissipation)? Lean: yes, use existing chain mechanics.
 
 ### Axis 8: Cross-layer engagement *(new — split from axis 4)*
 
