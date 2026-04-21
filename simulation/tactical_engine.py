@@ -4,6 +4,7 @@ import config
 from unit import UnitStore, FIELD_HP
 from damage import resolve_damage, update_targeting
 from movement import update_movement
+from facing import update_facing
 from ability import update_abilities, resolve_barrage
 from fog_of_war import compute_visibility, update_fog_timers
 from command import Command, CommandQueue, process_commands, compute_state_hash
@@ -41,6 +42,7 @@ class TacticalEngine:
         process_commands(self.command_queue, self.store, self.tick)
         update_targeting(self.store, self.map, self.rng)  # before movement so attack_move sees current targets
         update_movement(self.store, self.map, self.dt)
+        update_facing(self.store, self.dt)
         deaths, kill_sources = resolve_damage(self.store, self.map, self.dt)
 
         barrage_events = update_abilities(self.store, self.dt)

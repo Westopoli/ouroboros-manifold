@@ -73,6 +73,21 @@ func proceed_to_next_mission() -> void:
 	SimBridge.send_command({"type": "command", "cmd": "proceed_to_next_mission"})
 
 
+func get_mission_metrics() -> Dictionary:
+	return MissionMetricsRecorder.get_metrics()
+
+
+func get_bug_report_path() -> String:
+	return ProjectSettings.globalize_path(BugReportManager.REPORTS_DIR)
+
+
+func trigger_autosave(loop_phase: String) -> void:
+	if SimBridge.USE_LIVE_SIM:
+		SimBridge.send_command({"type": "autosave", "loop_phase": loop_phase})
+	else:
+		print("UIDataBus: autosave skipped (mock mode, loop_phase=%s)" % loop_phase)
+
+
 func exit_to_main_menu() -> void:
 	SceneRouter.go_to("main_menu")
 

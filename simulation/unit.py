@@ -2,7 +2,7 @@ import numpy as np
 import config
 
 
-MAX_UNITS = 400
+MAX_UNITS = 1024
 
 FIELD_X = 0
 FIELD_Y = 1
@@ -20,7 +20,8 @@ FIELD_ATTACK_TIMER = 12
 FIELD_ABILITY_COOLDOWN = 13
 FIELD_ABILITY_ACTIVE = 14
 FIELD_ABILITY_DURATION = 15
-NUM_FIELDS = 16
+FIELD_FACING_RAD = 16
+NUM_FIELDS = 17
 
 CATEGORY_STRIKE = 0
 CATEGORY_LINE = 1
@@ -94,6 +95,7 @@ class UnitStore:
         self.data[uid, FIELD_ABILITY_COOLDOWN] = 0.0
         self.data[uid, FIELD_ABILITY_ACTIVE] = 0.0
         self.data[uid, FIELD_ABILITY_DURATION] = 0.0
+        self.data[uid, FIELD_FACING_RAD] = 0.0
 
         self.faction[uid] = faction_id
         self.category[uid] = CATEGORY_MAP[stats["category"]]

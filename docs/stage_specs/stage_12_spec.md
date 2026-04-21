@@ -562,9 +562,73 @@ Also: run `report_loader.py replay` against the bug report from step 2. Verify i
 - No Stage 8 persistence logic modified — only new call sites.
 - Settings screen shows bug report log path.
 
+## Implementation Status
+
+**Checkpoints A–I: COMPLETE.** Checkpoints J (end-to-end verification) and K (performance) are blocked on Stage 11 sequencer completion — the full loop playthrough requires the pull-back → galaxy → narration → post-narration flow that Stage 11 provides.
+
+### Variations from spec
+
+1. **`impact_preview.gd` not created as a separate file.** Impact preview logic lives in `debrief.gd` inline (it just displays the pre-assembled prose from the Python-side `impact_preview_templates.py`). No Godot-side computation needed — the debrief scene is a pure renderer as intended.
+
+2. **Ribbon graph does not reuse galaxy camera infrastructure.** The galaxy scene (`scenes/shared/galaxy/galaxy_structure.tscn`) was not available or suitable for the SubViewport embedding. Ribbon graph has its own lightweight orbit camera and emissive materials. Visual polish (chart-style orientation, backface culling fix) deferred — the orbit + glow ribbons work but Westley wants to revisit the look later.
+
+3. **No flash particles on ribbon graphs.** The spec called for "flash particles reusing the galaxy view's particle system" at key battle moments. Not implemented — the ribbon graph renders metric ribbons only. Markers for engagements/captures can be added in a future pass.
+
+4. **Clipboard copies the actual file on macOS (not just the path).** Spec said "Mac/Linux: copy the file path string to clipboard." Implementation uses an AppleScript temp file executed via `osascript` to copy the file itself, so Cmd+V pastes the ZIP directly into Discord. Windows uses `Set-Clipboard -Path`. Linux falls back to path string.
+
+5. **ZIP assembly happens on the Godot side, not Python side.** The spec listed `bug_report_bundler.py` as the primary assembler. In practice, all capture data (ring buffer, command log, screenshot, metrics) lives in Godot memory, so the ZIP is built using Godot's `ZIPPacker` in `bug_report_manager.gd`. The Python `bug_report_bundler.py` exists as a utility for `report_loader.py` and standalone use.
+
+6. **`bug_report_settings_entry.tscn` not created.** The settings screen integration (showing the log path) was not built. `UIDataBus.get_bug_report_path()` exists and returns the globalized path — the settings UI entry can be added when the settings screen is next touched.
+
+7. **Godot-side test files not created** (`test_bug_report_manager.gd`, `test_mission_metrics_recorder.gd`). Both systems were verified via manual testing with debug prints during development. Python-side `test_debrief_data.py` exists and passes (15/15 combinations).
+
+8. **`report_loader.py serve` mode is a placeholder.** Prints state summary but does not start a WebSocket server. Full engine reconstruction from Godot-side snapshots requires mapping back to `TacticalEngine.restore_from_state()` format, which the Godot-side ring buffer doesn't capture. The `info`, `load`, and `replay` modes work against real bug report ZIPs.
+
+9. **Autosave wiring is partial.** Post-debrief trigger wired (`debrief.gd` → `UIDataBus.trigger_autosave("post_debrief")`). Post-narration and mid-mission quit triggers require Stage 11's `time_jump_sequencer.gd` and pause menu, respectively. Integration points are clean — `UIDataBus.trigger_autosave(loop_phase)` sends the command via SimBridge.
+
+10. **Kill switches defined in `config.py` but not wired as runtime guards.** The three `ENABLE_STAGE12_*` flags exist. Godot-side guard checks (skip debrief, skip autosave, disable F12) will be wired during Checkpoint J when the full loop is testable.
+
 ## Files Created
 
-(Filled in after implementation.)
+### Godot
+
+| File | Purpose |
+|------|---------|
+| `scenes/debrief/debrief.tscn` | Debrief scene root (Control + script) |
+| `scenes/debrief/debrief.gd` | Full debrief screen: outcome band, objectives, retention, impact preview, ribbon graph, Continue/Exit |
+| `scenes/debrief/ribbon_graph.tscn` | 3D ribbon visualization subscene (Node3D + script) |
+| `scenes/debrief/ribbon_graph.gd` | Builds ribbon meshes from metric arrays, orbit camera, emissive materials |
+| `scenes/bug_report/bug_report_popup.tscn` | Post-capture popup (CanvasLayer + script) |
+| `scenes/bug_report/bug_report_popup.gd` | "File copied to clipboard" popup with dismiss |
+| `scenes/onboarding/onboarding.tscn` | Onboarding scene root (Control + script) |
+| `scenes/onboarding/onboarding.gd` | Difficulty selection, archetype accordion with rare toggle, era filtering |
+| `autoload/bug_report_manager.gd` | Ring buffer, command log, F12 capture, ZIP bundler, clipboard, popup |
+| `autoload/mission_metrics_recorder.gd` | Per-second tactical state sampling during missions |
+
+### Python
+
+| File | Purpose |
+|------|---------|
+| `simulation/debrief_data.py` | Assembles debrief payload from mission result + consequence tables |
+| `simulation/impact_preview_templates.py` | Field delta → prose templates, forward-look templates |
+| `simulation/bug_report_bundler.py` | ZIP assembly utility (used by report_loader.py) |
+| `simulation/report_loader.py` | CLI tool: info/load/replay/serve modes for bug report ZIPs |
+| `simulation/test_debrief_data.py` | 15 test combinations (5 bands × 3 archetypes), all pass |
+
+### Modified
+
+| File | Change |
+|------|--------|
+| `autoload/scene_router.gd` | Added `"onboarding"` and `"debrief"` to SCENES dict |
+| `autoload/tactical_bridge.gd` | Added `command_sent` signal, emitted from `send_command()` |
+| `autoload/ui_data_bus.gd` | Added `get_mission_metrics()`, `get_bug_report_path()`, `trigger_autosave()` |
+| `scenes/new_game/new_game.gd` | `_on_begin()` routes to `"onboarding"` instead of `"mission_briefing"` |
+| `scenes/tactical/tactical.gd` | Added MissionMetricsRecorder + BugReportManager start/stop, F5 debug debrief |
+| `scenes/tactical/input_router.gd` | Added `BugReportManager.log_command(cmd)` in `_send()` |
+| `scenes/tactical/hud.gd` | Added persistent "F12 — Report Bug" label with 30s fade |
+| `simulation/config.py` | Added Stage 12 constants, bug report config, autosave slot ID, kill switches |
+| `simulation/save_loader.py` | Added `has_tactical_state()` convenience method |
+| `project.godot` | Registered `MissionMetricsRecorder` and `BugReportManager` autoloads |
 
 ## Notes for the Implementing Session
 

@@ -2,7 +2,10 @@ import copy
 import math
 
 import config
-from unit import FIELD_X, FIELD_Y, FIELD_LAYER, FIELD_HP, FIELD_MAX_HP, FIELD_ABILITY_COOLDOWN
+from unit import (
+    FIELD_X, FIELD_Y, FIELD_LAYER, FIELD_HP, FIELD_MAX_HP,
+    FIELD_ABILITY_COOLDOWN, FIELD_FACING_RAD, FIELD_ATTACK_INTERVAL, FIELD_ATTACK_RANGE,
+)
 from fog_of_war import compute_visibility
 
 
@@ -175,6 +178,10 @@ def delta(engine, prev_state: dict, dr_tracker=None) -> dict:
             state_changes["layer"] = cur["layer"]
         if cur["ability_cd_sec"] != prev["ability_cd_sec"]:
             state_changes["ability_cd_sec"] = cur["ability_cd_sec"]
+        if cur["facing_rad"] != prev.get("facing_rad", 0.0):
+            state_changes["facing_rad"] = cur["facing_rad"]
+        if cur["attack_target"] != prev.get("attack_target", -1):
+            state_changes["attack_target"] = cur["attack_target"]
 
         # Positional update: dead-reckon or always send
         pos_update = {}
@@ -313,7 +320,10 @@ def _unit_entry(store, uid, player_faction) -> dict:
         "hp": round(float(store.data[uid, FIELD_HP]), 4),
         "max_hp": round(float(store.data[uid, FIELD_MAX_HP]), 4),
         "faction": int(store.faction[uid]),
-        "facing_rad": 0.0,  # no facing field in current engine — placeholder
+        "facing_rad": round(float(store.data[uid, FIELD_FACING_RAD]), 4),
+        "attack_target": int(store.auto_engage_target[uid]),
+        "attack_interval": round(float(store.data[uid, FIELD_ATTACK_INTERVAL]), 4),
+        "attack_range": round(float(store.data[uid, FIELD_ATTACK_RANGE]), 4),
         "ability_cd_sec": round(float(store.data[uid, FIELD_ABILITY_COOLDOWN]), 4),
         "selection_eligible": int(store.faction[uid]) == int(player_faction),
         "velocity": [0.0, 0.0],  # updated via delta; snapshot always starts at rest
@@ -365,6 +375,8 @@ def delta_baseline(engine) -> dict:
                 "layer": int(store.data[uid, FIELD_LAYER]),
                 "hp": round(float(store.data[uid, FIELD_HP]), 4),
                 "ability_cd_sec": round(float(store.data[uid, FIELD_ABILITY_COOLDOWN]), 4),
+                "facing_rad": round(float(store.data[uid, FIELD_FACING_RAD]), 4),
+                "attack_target": int(store.auto_engage_target[uid]),
             })
     structures = [_structure_entry(s) for s in engine.reinforcement_structures]
     objectives = [_objective_entry(o) for o in engine.objectives]

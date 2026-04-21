@@ -2,6 +2,7 @@ extends Node3D
 
 signal structure_revealed
 signal camera_mood_changed(mood: String)
+signal camera_move_completed
 
 enum CameraMood { WIDE_ORBIT, RING_FOLLOW, APPROACH, DRIFT, PULLBACK, UNDERSIDE }
 
@@ -24,6 +25,14 @@ const MOOD_DURATIONS := {
 }
 
 const TRANSITION_DURATION := 5.0
+
+const VORONOI_RESOLUTION := 512
+const VORONOI_FILL_OPACITY := 0.12
+const VORONOI_FILL_FALLOFF := 0.15
+const VORONOI_EDGE_SOFTNESS := 0.03
+const VORONOI_BORDER_WIDTH := 0.012
+const VORONOI_BORDER_BRIGHTNESS := 1.4
+const MAX_SYSTEMS := 128
 
 var _camera: Camera3D
 var _central_point: MeshInstance3D
@@ -62,6 +71,23 @@ var _mood_approach_start_elev := 0.5
 var _mood_approach_end_elev := deg_to_rad(15.0)
 var _mood_pullback_end_dist := 90.0
 var _mood_pullback_end_elev := deg_to_rad(35.0)
+
+# --- World view integration (active when setup() is called, null otherwise) ---
+var _wv_data: Node
+var _region_visuals: Dictionary = {}
+var _connection_visuals: Dictionary = {}
+var _highlight_tween: Tween
+var _highlighted_node: MeshInstance3D
+var _territory_viewport: SubViewport
+var _territory_color_rect: ColorRect
+var _territory_plane: MeshInstance3D
+var _territory_registry: Dictionary = {}
+var _system_data_image: Image
+var _system_data_texture: ImageTexture
+var _faction_colors_image: Image
+var _faction_colors_texture: ImageTexture
+var _faction_color_to_index: Dictionary = {}
+var _map_bounds: Rect2 = Rect2(-50, -50, 100, 100)
 
 func _ready() -> void:
 	_build_camera()
@@ -494,6 +520,62 @@ func _make_additive_material(albedo: Color, emission: Color, energy: float) -> S
 	return mat
 
 
+# --- World View Integration ---
+
+func setup(data: Node, _container: Node = null) -> void:
+	print("[VORONOI] setup() called, data=%s" % data)
+	_wv_data = data
+	_wv_data.region_added.connect(_on_region_added)
+	_wv_data.region_updated.connect(_on_region_updated)
+	_wv_data.region_removed.connect(_on_region_removed)
+	_wv_data.regions_cleared.connect(_on_regions_cleared)
+	_wv_data.territory_set.connect(_on_territory_set)
+	_wv_data.territory_updated.connect(_on_territory_updated)
+	_wv_data.territory_removed.connect(_on_territory_removed)
+	_wv_data.connection_added.connect(_on_connection_added)
+	_wv_data.connection_removed.connect(_on_connection_removed)
+	_wv_data.flash_region_requested.connect(_on_flash_region_requested)
+	_wv_data.flash_conflict_requested.connect(_on_flash_conflict_requested)
+	_wv_data.highlight_changed.connect(_on_highlight_changed)
+	_setup_territory_voronoi()
+
+
+func teardown() -> void:
+	if _territory_plane:
+		_territory_plane.queue_free()
+		_territory_plane = null
+	if _territory_viewport:
+		_territory_viewport.queue_free()
+		_territory_viewport = null
+	_territory_color_rect = null
+	_territory_registry.clear()
+	_faction_color_to_index.clear()
+	if _highlight_tween:
+		_highlight_tween.kill()
+		_highlight_tween = null
+	_highlighted_node = null
+	if _wv_data:
+		_wv_data.region_added.disconnect(_on_region_added)
+		_wv_data.region_updated.disconnect(_on_region_updated)
+		_wv_data.region_removed.disconnect(_on_region_removed)
+		_wv_data.regions_cleared.disconnect(_on_regions_cleared)
+		_wv_data.territory_set.disconnect(_on_territory_set)
+		_wv_data.territory_updated.disconnect(_on_territory_updated)
+		_wv_data.territory_removed.disconnect(_on_territory_removed)
+		_wv_data.connection_added.disconnect(_on_connection_added)
+		_wv_data.connection_removed.disconnect(_on_connection_removed)
+		_wv_data.flash_region_requested.disconnect(_on_flash_region_requested)
+		_wv_data.flash_conflict_requested.disconnect(_on_flash_conflict_requested)
+		_wv_data.highlight_changed.disconnect(_on_highlight_changed)
+	for node in _region_visuals.values():
+		node.queue_free()
+	_region_visuals.clear()
+	for node in _connection_visuals.values():
+		node.queue_free()
+	_connection_visuals.clear()
+	_wv_data = null
+
+
 # --- Public API ---
 
 func start_auto_camera() -> void:
@@ -534,6 +616,7 @@ func move_camera_to(target_position: Vector3, look_at_target: Vector3, duration:
 		if current_target.distance_to(_camera.global_position) > 0.1:
 			_camera.look_at(current_target)
 	, 0.0, 1.0, duration)
+	tw.tween_callback(func(): camera_move_completed.emit())
 
 func enable_manual_orbit() -> void:
 	pass # TODO: World view stage
@@ -559,43 +642,414 @@ func fade_in(_duration: float) -> void:
 func fade_out(_duration: float) -> void:
 	pass # Fade applied on the SubViewportContainer by the consumer
 
-# --- World View Integration (STUBBED) ---
+# --- Camera interface aliases (for shell compatibility) ---
 
-func add_region_node(_node_id: String, _pos: Vector3, _size: float, _color: Color) -> void:
-	pass # TODO: World view stage
+func move_to_region(region_id: String, duration: float) -> void:
+	var pos := region_id_to_world_position(region_id)
+	var cam_pos := pos + _orbit_pos(_base_azimuth + PI, deg_to_rad(25.0), 30.0)
+	move_camera_to(cam_pos, pos, duration)
 
-func remove_region_node(_node_id: String) -> void:
-	pass # TODO: World view stage
 
-func update_region_node(_node_id: String, _size: float, _color: Color) -> void:
-	pass # TODO: World view stage
+func move_to_overview(duration: float) -> void:
+	var center := Vector3.ZERO
+	if _wv_data and not _wv_data.regions.is_empty():
+		var bounds := get_world_bounds()
+		center = Vector3(bounds.get_center().x, 0.0, bounds.get_center().y)
+	var cam_pos := center + _orbit_pos(_base_azimuth, deg_to_rad(50.0), 80.0)
+	move_camera_to(cam_pos, center, duration)
 
-func clear_region_nodes() -> void:
-	pass # TODO: World view stage
 
-func set_territory(_region_id: String, _center: Vector3, _radius: float, _color: Color) -> void:
-	pass # TODO: World view stage
+func move_to_position(pos: Vector3, look_at_target: Vector3, duration: float) -> void:
+	move_camera_to(pos, look_at_target, duration)
 
-func update_territory(_region_id: String, _radius: float, _color: Color) -> void:
-	pass # TODO: World view stage
 
-func remove_territory(_region_id: String) -> void:
-	pass # TODO: World view stage
+func start_ambient_motion() -> void:
+	start_auto_camera()
 
-func add_connection(_from_id: String, _to_id: String, _connection_type: String, _color: Color) -> void:
-	pass # TODO: World view stage
 
-func remove_connection(_from_id: String, _to_id: String) -> void:
-	pass # TODO: World view stage
+func stop_ambient_motion() -> void:
+	stop_auto_camera()
 
-func flash_military_activity(_region_id: String, _intensity: float) -> void:
-	pass # TODO: World view stage
 
-func flash_conflict(_from_id: String, _to_id: String, _intensity: float) -> void:
-	pass # TODO: World view stage
+func get_current_position() -> Vector3:
+	return get_camera_position()
 
-func highlight_region(_node_id: String) -> void:
-	pass # TODO: World view stage
 
-func clear_highlight() -> void:
-	pass # TODO: World view stage
+func get_current_target() -> Vector3:
+	return get_camera_target()
+
+
+# --- World View Signal Handlers ---
+
+func _setup_territory_voronoi() -> void:
+	_system_data_image = Image.create(MAX_SYSTEMS, 1, false, Image.FORMAT_RGBAF)
+	_system_data_texture = ImageTexture.create_from_image(_system_data_image)
+	_faction_colors_image = Image.create(8, 1, false, Image.FORMAT_RGBAF)
+	_faction_colors_texture = ImageTexture.create_from_image(_faction_colors_image)
+
+	_territory_viewport = SubViewport.new()
+	_territory_viewport.size = Vector2i(VORONOI_RESOLUTION, VORONOI_RESOLUTION)
+	_territory_viewport.transparent_bg = true
+	_territory_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	add_child(_territory_viewport)
+
+	_territory_color_rect = ColorRect.new()
+	_territory_color_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	var shader_mat := ShaderMaterial.new()
+	shader_mat.shader = load("res://scenes/shared/world_view/renderers/territory_voronoi.gdshader")
+	shader_mat.set_shader_parameter("system_data", _system_data_texture)
+	shader_mat.set_shader_parameter("faction_colors", _faction_colors_texture)
+	shader_mat.set_shader_parameter("system_count", 0)
+	shader_mat.set_shader_parameter("fill_opacity", 0.15)
+	shader_mat.set_shader_parameter("fill_falloff", VORONOI_FILL_FALLOFF)
+	shader_mat.set_shader_parameter("border_width", VORONOI_BORDER_WIDTH)
+	shader_mat.set_shader_parameter("border_brightness", 3.0)
+	shader_mat.set_shader_parameter("edge_softness", 0.02)
+	shader_mat.set_shader_parameter("outline_width", 0.01)
+	shader_mat.set_shader_parameter("outline_brightness", 4.0)
+	_territory_color_rect.material = shader_mat
+	_territory_viewport.add_child(_territory_color_rect)
+
+	_territory_plane = MeshInstance3D.new()
+	var pm := PlaneMesh.new()
+	pm.size = Vector2(100, 100)
+	_territory_plane.mesh = pm
+	var plane_mat := StandardMaterial3D.new()
+	plane_mat.albedo_texture = _territory_viewport.get_texture()
+	plane_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	plane_mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	plane_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	plane_mat.render_priority = -1
+	plane_mat.no_depth_test = true
+	plane_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	_territory_plane.material_override = plane_mat
+	_territory_plane.visible = false
+	add_child(_territory_plane)
+
+
+func _rebuild_territory_data() -> void:
+	if _territory_registry.is_empty():
+		_territory_plane.visible = false
+		return
+
+	var min_pos := Vector2(INF, INF)
+	var max_pos := Vector2(-INF, -INF)
+	var max_radius := 1.0
+
+	for entry in _territory_registry.values():
+		var pos_2d := Vector2(entry["center"].x, entry["center"].z)
+		min_pos = min_pos.min(pos_2d)
+		max_pos = max_pos.max(pos_2d)
+		max_radius = maxf(max_radius, entry["radius"])
+
+	var margin := max_radius * 1.5
+	min_pos -= Vector2(margin, margin)
+	max_pos += Vector2(margin, margin)
+	_map_bounds = Rect2(min_pos, max_pos - min_pos)
+
+	print("[VORONOI] registry size=%d  map_bounds=%s  max_radius=%.1f" % [_territory_registry.size(), _map_bounds, max_radius])
+
+	var img := Image.create(MAX_SYSTEMS, 1, false, Image.FORMAT_RGBAF)
+	var idx := 0
+	for rid in _territory_registry:
+		var entry: Dictionary = _territory_registry[rid]
+		if idx >= MAX_SYSTEMS:
+			break
+		var pos_2d := Vector2(entry["center"].x, entry["center"].z)
+		var norm_x := (pos_2d.x - min_pos.x) / _map_bounds.size.x
+		var norm_y := (pos_2d.y - min_pos.y) / _map_bounds.size.y
+		var faction_idx_norm: float = float(entry["faction_index"]) / 8.0
+		var significance := clampf(entry["radius"] / max_radius, 0.0, 1.0)
+		img.set_pixel(idx, 0, Color(norm_x, norm_y, faction_idx_norm, significance))
+		print("[VORONOI]   %s: world=(%.1f, %.1f) uv=(%.3f, %.3f) faction_norm=%.3f sig=%.3f" % [rid, pos_2d.x, pos_2d.y, norm_x, norm_y, faction_idx_norm, significance])
+		idx += 1
+
+	_system_data_image = img
+	_system_data_texture.update(_system_data_image)
+
+	var shader_mat: ShaderMaterial = _territory_color_rect.material
+	shader_mat.set_shader_parameter("system_count", idx)
+	shader_mat.set_shader_parameter("system_data", _system_data_texture)
+
+	# Resize and reposition plane to match map bounds
+	var pm: PlaneMesh = _territory_plane.mesh
+	pm.size = Vector2(_map_bounds.size.x, _map_bounds.size.y)
+
+	var avg_y := 0.0
+	var count := 0
+	for entry in _territory_registry.values():
+		avg_y += entry["center"].y
+		count += 1
+	if count > 0:
+		avg_y /= float(count)
+
+	_territory_plane.position = Vector3(
+		_map_bounds.position.x + _map_bounds.size.x * 0.5,
+		avg_y,
+		_map_bounds.position.y + _map_bounds.size.y * 0.5
+	)
+	print("[VORONOI] plane pos=%s  size=%s  system_count=%d" % [_territory_plane.position, pm.size, idx])
+	_territory_plane.visible = true
+
+	# SubViewport is UPDATE_ALWAYS for now (debug)
+	# Save viewport texture to disk after a short delay (viewport needs a frame to render)
+	get_tree().create_timer(0.5).timeout.connect(func():
+		var vp_img := _territory_viewport.get_texture().get_image()
+		vp_img.save_png("res://logs/voronoi_debug.png")
+		print("[VORONOI] saved viewport texture to logs/voronoi_debug.png (%dx%d)" % [vp_img.get_width(), vp_img.get_height()])
+	)
+
+
+func _register_faction_color(color: Color) -> int:
+	if color in _faction_color_to_index:
+		return _faction_color_to_index[color]
+	var idx: int = _faction_color_to_index.size() + 1
+	print("[VORONOI] register faction color=%s  idx=%d" % [color, idx])
+	if idx > 8:
+		return 1
+	_faction_color_to_index[color] = idx
+	_faction_colors_image.set_pixel(idx - 1, 0, color)
+	_faction_colors_texture.update(_faction_colors_image)
+	var shader_mat: ShaderMaterial = _territory_color_rect.material
+	shader_mat.set_shader_parameter("faction_colors", _faction_colors_texture)
+	return idx
+
+
+func get_world_bounds() -> Rect2:
+	if _region_visuals.is_empty():
+		return Rect2(-50, -50, 100, 100)
+	var min_x := INF
+	var min_z := INF
+	var max_x := -INF
+	var max_z := -INF
+	for id in _wv_data.regions:
+		var pos: Vector3 = _wv_data.regions[id]["position"]
+		min_x = minf(min_x, pos.x)
+		max_x = maxf(max_x, pos.x)
+		min_z = minf(min_z, pos.z)
+		max_z = maxf(max_z, pos.z)
+	var margin := 15.0
+	return Rect2(min_x - margin, min_z - margin, max_x - min_x + margin * 2, max_z - min_z + margin * 2)
+
+
+func region_id_to_world_position(region_id: String) -> Vector3:
+	if _wv_data:
+		var r: Dictionary = _wv_data.get_region(region_id)
+		if not r.is_empty():
+			return r["position"]
+	return Vector3.ZERO
+
+
+func _on_region_added(region_id: String) -> void:
+	var r: Dictionary = _wv_data.get_region(region_id)
+	var node := MeshInstance3D.new()
+	var sphere := SphereMesh.new()
+	sphere.radius = r["size"] * 0.5
+	sphere.height = r["size"]
+	sphere.radial_segments = 16
+	sphere.rings = 8
+	node.mesh = sphere
+	node.material_override = _make_emissive_material(r["color"], 2.5)
+	node.position = r["position"]
+	add_child(node)
+	_region_visuals[region_id] = node
+
+	var halo := MeshInstance3D.new()
+	var quad := QuadMesh.new()
+	quad.size = Vector2(r["size"] * 3.0, r["size"] * 3.0)
+	halo.mesh = quad
+	var halo_mat := StandardMaterial3D.new()
+	halo_mat.albedo_color = Color(r["color"].r, r["color"].g, r["color"].b, 0.25)
+	halo_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	halo_mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	halo_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	halo_mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	halo_mat.no_depth_test = true
+	halo.material_override = halo_mat
+	node.add_child(halo)
+
+
+func _on_region_updated(region_id: String) -> void:
+	if region_id not in _region_visuals:
+		return
+	var r: Dictionary = _wv_data.get_region(region_id)
+	var node: MeshInstance3D = _region_visuals[region_id]
+	var sphere: SphereMesh = node.mesh
+	sphere.radius = r["size"] * 0.5
+	sphere.height = r["size"]
+	node.material_override = _make_emissive_material(r["color"], 2.5)
+	if node.get_child_count() > 0:
+		var halo: MeshInstance3D = node.get_child(0)
+		var halo_quad: QuadMesh = halo.mesh
+		halo_quad.size = Vector2(r["size"] * 3.0, r["size"] * 3.0)
+		halo.material_override.albedo_color = Color(r["color"].r, r["color"].g, r["color"].b, 0.25)
+
+
+func _on_region_removed(region_id: String) -> void:
+	if region_id in _region_visuals:
+		_region_visuals[region_id].queue_free()
+		_region_visuals.erase(region_id)
+
+
+func _on_regions_cleared() -> void:
+	for node in _region_visuals.values():
+		node.queue_free()
+	_region_visuals.clear()
+	_territory_registry.clear()
+	_rebuild_territory_data()
+
+
+func _on_territory_set(region_id: String) -> void:
+	print("[VORONOI] _on_territory_set: %s" % region_id)
+	var t: Dictionary = _wv_data.get_territory(region_id)
+	var faction_idx := _register_faction_color(t["color"])
+	_territory_registry[region_id] = {
+		"center": t["center"],
+		"radius": t["radius"],
+		"color": t["color"],
+		"faction_index": faction_idx,
+	}
+	_rebuild_territory_data()
+
+
+func _on_territory_updated(region_id: String) -> void:
+	var t: Dictionary = _wv_data.get_territory(region_id)
+	var faction_idx := _register_faction_color(t["color"])
+	_territory_registry[region_id] = {
+		"center": t["center"],
+		"radius": t["radius"],
+		"color": t["color"],
+		"faction_index": faction_idx,
+	}
+	_rebuild_territory_data()
+
+
+func _on_territory_removed(region_id: String) -> void:
+	_territory_registry.erase(region_id)
+	_rebuild_territory_data()
+
+
+func _on_connection_added(from_id: String, to_id: String) -> void:
+	var from_r: Dictionary = _wv_data.get_region(from_id)
+	var to_r: Dictionary = _wv_data.get_region(to_id)
+	var conn: Dictionary = _wv_data.get_connection(from_id, to_id)
+	if from_r.is_empty() or to_r.is_empty():
+		return
+
+	var node := MeshInstance3D.new()
+	var im := ImmediateMesh.new()
+	var conn_type: String = conn.get("connection_type", "border")
+	var is_trade: bool = conn_type == "trade"
+	im.surface_begin(Mesh.PRIMITIVE_LINES)
+	if is_trade:
+		var start: Vector3 = from_r["position"]
+		var end: Vector3 = to_r["position"]
+		var seg_count := 9
+		for i in range(seg_count):
+			var t0 := float(i) / float(seg_count)
+			var t1 := (float(i) + 0.6) / float(seg_count)
+			im.surface_add_vertex(start.lerp(end, t0))
+			im.surface_add_vertex(start.lerp(end, t1))
+	else:
+		im.surface_add_vertex(from_r["position"])
+		im.surface_add_vertex(to_r["position"])
+	im.surface_end()
+	node.mesh = im
+	var conn_mat := StandardMaterial3D.new()
+	var base_color: Color = conn["color"]
+	if is_trade:
+		base_color.a = 0.4
+	conn_mat.albedo_color = base_color
+	conn_mat.emission_enabled = true
+	conn_mat.emission = conn["color"]
+	conn_mat.emission_energy_multiplier = 1.0 if not is_trade else 0.5
+	conn_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	conn_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	node.material_override = conn_mat
+	add_child(node)
+
+	var key := _connection_key(from_id, to_id)
+	_connection_visuals[key] = node
+
+
+func _on_connection_removed(from_id: String, to_id: String) -> void:
+	var key := _connection_key(from_id, to_id)
+	if key in _connection_visuals:
+		_connection_visuals[key].queue_free()
+		_connection_visuals.erase(key)
+
+
+func _on_flash_region_requested(region_id: String, intensity: float) -> void:
+	if region_id not in _region_visuals:
+		return
+	var node: MeshInstance3D = _region_visuals[region_id]
+	var flash_mat: StandardMaterial3D = node.material_override
+	var base_energy := 2.5
+	var tw := create_tween()
+	tw.tween_property(flash_mat, "emission_energy_multiplier", base_energy + intensity * 12.0, 0.1)
+	tw.tween_property(flash_mat, "emission_energy_multiplier", base_energy, 0.5).set_ease(Tween.EASE_OUT)
+
+
+func _on_flash_conflict_requested(from_id: String, to_id: String, intensity: float) -> void:
+	var from_r: Dictionary = _wv_data.get_region(from_id)
+	var to_r: Dictionary = _wv_data.get_region(to_id)
+	if from_r.is_empty() or to_r.is_empty():
+		return
+
+	var node := MeshInstance3D.new()
+	var im := ImmediateMesh.new()
+	im.surface_begin(Mesh.PRIMITIVE_LINES)
+	im.surface_add_vertex(from_r["position"])
+	im.surface_add_vertex(to_r["position"])
+	im.surface_end()
+	node.mesh = im
+	var conflict_mat := StandardMaterial3D.new()
+	conflict_mat.albedo_color = Color(1.0, 0.4, 0.1, intensity)
+	conflict_mat.emission_enabled = true
+	conflict_mat.emission = Color(1.0, 0.4, 0.1)
+	conflict_mat.emission_energy_multiplier = intensity * 10.0
+	conflict_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	conflict_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	node.material_override = conflict_mat
+	add_child(node)
+
+	var tw := create_tween()
+	tw.tween_property(conflict_mat, "albedo_color:a", 0.0, 0.6).set_ease(Tween.EASE_OUT)
+	tw.parallel().tween_property(conflict_mat, "emission_energy_multiplier", 0.0, 0.6).set_ease(Tween.EASE_OUT)
+	tw.tween_callback(func(): node.queue_free())
+
+
+func _on_highlight_changed(region_id: String) -> void:
+	if _highlight_tween:
+		_highlight_tween.kill()
+		_highlight_tween = null
+	if _highlighted_node:
+		_highlighted_node.scale = Vector3.ONE
+		_highlighted_node = null
+
+	if region_id.is_empty() or region_id not in _region_visuals:
+		return
+
+	_highlighted_node = _region_visuals[region_id]
+	_highlight_tween = create_tween().set_loops()
+	_highlight_tween.tween_property(_highlighted_node, "scale", Vector3.ONE * 1.4, 0.6) \
+		.set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+	_highlight_tween.tween_property(_highlighted_node, "scale", Vector3.ONE, 0.6) \
+		.set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+
+
+func _make_emissive_material(color: Color, energy: float) -> StandardMaterial3D:
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = color
+	mat.emission_enabled = true
+	mat.emission = color
+	mat.emission_energy_multiplier = energy
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	return mat
+
+
+
+func _connection_key(from_id: String, to_id: String) -> String:
+	if from_id < to_id:
+		return from_id + "::" + to_id
+	return to_id + "::" + from_id

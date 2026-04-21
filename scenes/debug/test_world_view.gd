@@ -10,14 +10,14 @@ const FACTIONS := {
 }
 
 const REGIONS := [
-	{"id": "r_01", "pos": Vector3(-15, 0, -10), "size": 2.0, "faction": "f_player"},
-	{"id": "r_02", "pos": Vector3(-5, 0, -8), "size": 1.5, "faction": "f_player"},
-	{"id": "r_03", "pos": Vector3(5, 0, -5), "size": 1.8, "faction": "f_player"},
-	{"id": "r_04", "pos": Vector3(15, 0, -12), "size": 1.2, "faction": "f_enemy"},
-	{"id": "r_05", "pos": Vector3(10, 0, 5), "size": 2.2, "faction": "f_enemy"},
-	{"id": "r_06", "pos": Vector3(-10, 0, 8), "size": 1.6, "faction": "f_neutral"},
-	{"id": "r_07", "pos": Vector3(0, 0, 10), "size": 1.4, "faction": "f_neutral"},
-	{"id": "r_08", "pos": Vector3(-8, 0, -2), "size": 1.0, "faction": "f_player"},
+	{"id": "r_01", "pos": Vector3(-15, 6, -10), "size": 2.0, "faction": "f_player"},
+	{"id": "r_02", "pos": Vector3(-5, -3, -8), "size": 1.5, "faction": "f_player"},
+	{"id": "r_03", "pos": Vector3(5, 4, -5), "size": 1.8, "faction": "f_player"},
+	{"id": "r_04", "pos": Vector3(15, -5, -12), "size": 1.2, "faction": "f_enemy"},
+	{"id": "r_05", "pos": Vector3(10, 2, 5), "size": 2.2, "faction": "f_enemy"},
+	{"id": "r_06", "pos": Vector3(-10, -4, 8), "size": 1.6, "faction": "f_neutral"},
+	{"id": "r_07", "pos": Vector3(0, 7, 10), "size": 1.4, "faction": "f_neutral"},
+	{"id": "r_08", "pos": Vector3(-8, -1, -2), "size": 1.0, "faction": "f_player"},
 ]
 
 var _step := 0
@@ -50,9 +50,6 @@ func _setup_viewport() -> void:
 	var environment := Environment.new()
 	environment.background_mode = Environment.BG_COLOR
 	environment.background_color = Color(0.03, 0.03, 0.06)
-	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	environment.ambient_light_color = Color(0.3, 0.3, 0.4)
-	environment.ambient_light_energy = 0.5
 	env.environment = environment
 	_viewport.add_child(env)
 

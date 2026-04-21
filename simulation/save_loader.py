@@ -62,6 +62,11 @@ def load_onboarding(slot_id: str, save_root: str = None) -> dict | None:
     return onboarding_store.load_onboarding(slot_id, save_root)
 
 
+def has_tactical_state(slot_id: str, save_root: str = None) -> bool:
+    path = _slot_path(save_root, slot_id, "tactical.json")
+    return os.path.exists(path)
+
+
 def consume_tactical_state(slot_id: str, save_root: str = None) -> None:
     """Delete the tactical save file after a successful resume."""
     path = _slot_path(save_root, slot_id, "tactical.json")

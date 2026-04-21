@@ -24,7 +24,14 @@ var _dropped_frames: int = 0
 var _frame_counter: int = 0
 
 
+var _attack_visuals: Node3D
+
+
 func _ready() -> void:
+	_attack_visuals = preload("res://scenes/tactical/visuals/attack_visual_manager.gd").new()
+	_attack_visuals.name = "AttackVisualManager"
+	add_child(_attack_visuals)
+
 	if SimBridge.USE_LIVE_SIM:
 		# Stage 10: tactical data flows through SimBridge stdio pipe.
 		SimBridge.state_updated.connect(TacticalBridge._on_message)

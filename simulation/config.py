@@ -639,6 +639,25 @@ SCRIPT_FALLBACK_OWNERSHIP           = (0.33, 0.33, 0.34)  # (player, neutral, en
 METRICS_SAMPLE_INTERVAL_SEC         = 1.0
 IMPACT_PREVIEW_MAX_SENTENCES        = 3
 
+# ── Bug report (Stage 12) ─────────────────────────────────────────────────
+BUG_REPORT_BUFFER_SECONDS           = 5
+BUG_REPORT_BUFFER_CADENCE_SEC       = 1.0
+BUG_REPORT_COMMAND_BUFFER_SECONDS   = 5
+BUG_REPORT_OUTPUT_DIR               = "logs/reports"
+
+# ── Autosave (Stage 12) ───────────────────────────────────────────────────
+AUTOSAVE_SLOT_ID                    = "autosave"
+
+# ── Unit facing (Stage 12.5) ──────────────────────────────────────────────
+FACING_ROTATION_SPEED_STRIKE        = 6.0   # rad/s — fastest
+FACING_ROTATION_SPEED_LINE          = 4.0   # rad/s
+FACING_ROTATION_SPEED_SIEGE         = 2.5   # rad/s — slowest
+
+# ── Stage 12 kill switches ────────────────────────────────────────────────
+ENABLE_STAGE12_DEBRIEF              = True
+ENABLE_STAGE12_AUTOSAVE             = True
+ENABLE_STAGE12_BUG_REPORT           = True
+
 # ── Mission generator trigger thresholds (Stage 5.5) ────────────────────────
 SIEGE_BREAKING_MIN_TICKS            = 200
 SUPPRESSION_MAX_AGE                 = 300

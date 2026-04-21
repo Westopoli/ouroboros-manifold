@@ -44,6 +44,7 @@ var _tick_buffer: Array = []
 # Consumers index by uid directly. Scales to MAX_UNITS without Dict overhead.
 var display_x: PackedFloat32Array = PackedFloat32Array()
 var display_y: PackedFloat32Array = PackedFloat32Array()
+var display_facing: PackedFloat32Array = PackedFloat32Array()
 var display_alive: PackedByteArray = PackedByteArray()
 var unit_count: int = 0  # high-water mark: highest uid + 1
 
@@ -53,6 +54,7 @@ var _logger = preload("res://scenes/tactical/perf_logger.gd").new()
 func _ready() -> void:
 	display_x.resize(MAX_UNITS)
 	display_y.resize(MAX_UNITS)
+	display_facing.resize(MAX_UNITS)
 	display_alive.resize(MAX_UNITS)
 	_client = WsClient
 	_client.connected.connect(_on_connected)
@@ -115,6 +117,8 @@ func _process(_delta: float) -> void:
 	# Lerp flat arrays
 	var pa: PackedFloat32Array = entry_a.positions
 	var pb: PackedFloat32Array = entry_b.positions
+	var fa: PackedFloat32Array = entry_a.facings
+	var fb: PackedFloat32Array = entry_b.facings
 	var alive_b: PackedByteArray = entry_b.alive
 	for uid in range(unit_count):
 		if alive_b[uid] == 0:
@@ -124,6 +128,7 @@ func _process(_delta: float) -> void:
 		var idx: int = uid * 2
 		display_x[uid] = pa[idx] + (pb[idx] - pa[idx]) * t
 		display_y[uid] = pa[idx + 1] + (pb[idx + 1] - pa[idx + 1]) * t
+		display_facing[uid] = lerp_angle(fa[uid], fb[uid], t)
 
 	if _logger:
 		_logger.log_frame(display_x, display_y, display_alive, unit_count,
@@ -165,6 +170,8 @@ func _apply_snapshot(snap: Dictionary) -> void:
 	pos.resize(MAX_UNITS * 2)
 	var vel := PackedFloat32Array()
 	vel.resize(MAX_UNITS * 2)
+	var fac := PackedFloat32Array()
+	fac.resize(MAX_UNITS)
 	var alive := PackedByteArray()
 	alive.resize(MAX_UNITS)
 
@@ -180,6 +187,7 @@ func _apply_snapshot(snap: Dictionary) -> void:
 		var v: Array = u.get("velocity", [0.0, 0.0])
 		vel[uid * 2] = float(v[0])
 		vel[uid * 2 + 1] = float(v[1])
+		fac[uid] = float(u.get("facing_rad", 0.0))
 		alive[uid] = 1
 		if uid >= max_uid:
 			max_uid = uid + 1
@@ -197,6 +205,7 @@ func _apply_snapshot(snap: Dictionary) -> void:
 		"time": Time.get_ticks_msec() / 1000.0,
 		"positions": pos,
 		"velocities": vel,
+		"facings": fac,
 		"alive": alive,
 	})
 
@@ -219,17 +228,21 @@ func _apply_delta(d: Dictionary) -> void:
 	# Copy previous arrays (C++-backed memcpy)
 	var pos: PackedFloat32Array
 	var vel: PackedFloat32Array
+	var fac: PackedFloat32Array
 	var alive: PackedByteArray
 	if prev.is_empty():
 		pos = PackedFloat32Array()
 		pos.resize(MAX_UNITS * 2)
 		vel = PackedFloat32Array()
 		vel.resize(MAX_UNITS * 2)
+		fac = PackedFloat32Array()
+		fac.resize(MAX_UNITS)
 		alive = PackedByteArray()
 		alive.resize(MAX_UNITS)
 	else:
 		pos = PackedFloat32Array(prev.positions)
 		vel = PackedFloat32Array(prev.velocities)
+		fac = PackedFloat32Array(prev.facings)
 		alive = PackedByteArray(prev.alive)
 
 	# Advance all alive units by vel × dt
@@ -248,6 +261,7 @@ func _apply_delta(d: Dictionary) -> void:
 		pos[iuid * 2 + 1] = 0.0
 		vel[iuid * 2] = 0.0
 		vel[iuid * 2 + 1] = 0.0
+		fac[iuid] = 0.0
 		units.erase(iuid)
 
 	# Apply units_added
@@ -262,6 +276,7 @@ func _apply_delta(d: Dictionary) -> void:
 		var v: Array = u.get("velocity", [0.0, 0.0])
 		vel[uid * 2] = float(v[0])
 		vel[uid * 2 + 1] = float(v[1])
+		fac[uid] = float(u.get("facing_rad", 0.0))
 
 	# Apply units_updated
 	for upd in d.get("units_updated", []):
@@ -278,12 +293,15 @@ func _apply_delta(d: Dictionary) -> void:
 		elif "velocity" in upd:
 			vel[uid * 2] = float(upd["velocity"][0])
 			vel[uid * 2 + 1] = float(upd["velocity"][1])
+		if "facing_rad" in upd:
+			fac[uid] = float(upd["facing_rad"])
 
 	_tick_buffer.append({
 		"tick": current_tick,
 		"time": Time.get_ticks_msec() / 1000.0,
 		"positions": pos,
 		"velocities": vel,
+		"facings": fac,
 		"alive": alive,
 	})
 
@@ -305,6 +323,7 @@ func _apply_delta(d: Dictionary) -> void:
 
 func _write_display_from_entry(entry: Dictionary) -> void:
 	var pos: PackedFloat32Array = entry.positions
+	var fac: PackedFloat32Array = entry.facings
 	var alive_arr: PackedByteArray = entry.alive
 	for uid in range(unit_count):
 		if alive_arr[uid] == 0:
@@ -313,3 +332,4 @@ func _write_display_from_entry(entry: Dictionary) -> void:
 		display_alive[uid] = 1
 		display_x[uid] = pos[uid * 2]
 		display_y[uid] = pos[uid * 2 + 1]
+		display_facing[uid] = fac[uid]

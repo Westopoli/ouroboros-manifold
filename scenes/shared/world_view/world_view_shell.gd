@@ -24,25 +24,28 @@ func setup_era(era_id: String) -> void:
 	var renderer_path: String = _config.get_renderer_path(era_id)
 	if renderer_path.is_empty():
 		return
-	var renderer_scene := load(renderer_path)
-	_renderer = renderer_scene.instantiate()
+	_renderer = load(renderer_path).instantiate()
 	add_child(_renderer)
 
-	_visual_container = Node3D.new()
-	_visual_container.name = "VisualContainer"
-	add_child(_visual_container)
-
-	_renderer.setup(_data, _visual_container)
-
 	var camera_path: String = _config.get_camera_path(era_id)
+	print("[SHELL] camera_path='%s' renderer=%s" % [camera_path, _renderer])
 	if camera_path.is_empty():
-		return
-	var camera_scene := load(camera_path)
-	_camera = camera_scene.instantiate()
-	add_child(_camera)
+		# Integrated renderer+camera (e.g., world_view_structure for Settled Reach)
+		print("[SHELL] calling _renderer.setup(_data)")
+		_renderer.setup(_data)
+		_camera = _renderer
+	else:
+		# Separate renderer + camera (future non-space eras)
+		_visual_container = Node3D.new()
+		_visual_container.name = "VisualContainer"
+		add_child(_visual_container)
+		_renderer.setup(_data, _visual_container)
+		_camera = load(camera_path).instantiate()
+		add_child(_camera)
+		if _viewport:
+			_camera.setup(_renderer, _viewport)
 
-	if _viewport:
-		_camera.setup(_renderer, _viewport)
+	if _camera and _camera.has_signal("camera_move_completed"):
 		_camera.camera_move_completed.connect(func(): camera_move_completed.emit())
 
 
@@ -51,12 +54,14 @@ func set_viewport(viewport: SubViewport) -> void:
 
 
 func cleanup() -> void:
-	if _camera:
-		_camera.teardown()
+	if _camera and _camera != _renderer:
+		if _camera.has_method("teardown"):
+			_camera.teardown()
 		_camera.queue_free()
-		_camera = null
+	_camera = null
 	if _renderer:
-		_renderer.teardown()
+		if _renderer.has_method("teardown"):
+			_renderer.teardown()
 		_renderer.queue_free()
 		_renderer = null
 	if _visual_container:

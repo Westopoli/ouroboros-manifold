@@ -74,6 +74,12 @@ func get_unit_visual_scale(unit_type: String) -> float:
 	return float(entry.get("visual_scale", EraConfig.UNIT_VISUAL_SCALE))
 
 
+func get_unit_facing_offset(unit_type: String) -> float:
+	var units: Dictionary = _manifest.get("units", {})
+	var entry: Dictionary = units.get(unit_type, {})
+	return float(entry.get("facing_offset_rad", 0.0))
+
+
 func get_era_display() -> Dictionary:
 	return {
 		"era_id":      _manifest.get("era_id", ""),

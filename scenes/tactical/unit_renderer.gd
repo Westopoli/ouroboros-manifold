@@ -114,10 +114,11 @@ func _add_unit(uid: int) -> void:
 	var batch: Dictionary = _batches[batch_key]
 	var squad_count: int = EraThemeResolver.get_squad_count(unit_type)
 	var vscale: float = EraThemeResolver.get_unit_visual_scale(unit_type)
+	var foff: float = EraThemeResolver.get_unit_facing_offset(unit_type)
 
 	for i in squad_count:
 		var offset := _V_OFFSETS[i] if i < _V_OFFSETS.size() else Vector2.ZERO
-		batch.entries.append({"uid": uid, "squad_idx": i, "offset": offset, "vscale": vscale})
+		batch.entries.append({"uid": uid, "squad_idx": i, "offset": offset, "vscale": vscale, "facing_offset": foff})
 
 	_uid_to_batch_key[uid] = batch_key
 
@@ -257,7 +258,8 @@ func _update_transforms() -> void:
 			var offset: Vector2 = entry.offset
 			var vscale: float = entry.vscale
 
-			var basis := Basis().scaled(Vector3(vscale, vscale, vscale))
+			var facing: float = TacticalBridge.display_facing[uid] + entry.facing_offset
+			var basis := Basis(Vector3.UP, facing).scaled(Vector3(vscale, vscale, vscale))
 			var origin := Vector3(px + offset.x, y, py + offset.y)
 			mm.set_instance_transform(write_idx, Transform3D(basis, origin))
 			write_idx += 1
