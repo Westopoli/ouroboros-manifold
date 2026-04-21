@@ -228,7 +228,7 @@ def delta(engine, prev_state: dict, dr_tracker=None) -> dict:
         if cur["progress"] != prev.get("progress") or cur["status"] != prev.get("status"):
             objectives_updated.append(cur)
 
-    # Events: unit deaths
+    # Events: unit deaths + ability activations
     events = []
     for uid in (prev_alive - current_alive):
         prev_u = prev_units[uid]
@@ -238,6 +238,7 @@ def delta(engine, prev_state: dict, dr_tracker=None) -> dict:
             "at": prev_u["pos"],
             "layer": prev_u["layer"],
         })
+    events.extend(store.pending_ability_events)
 
     return {
         "type": "delta",

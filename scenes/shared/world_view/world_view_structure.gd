@@ -486,6 +486,7 @@ func _build_grid_plane() -> void:
 
 	_grid_mesh.mesh = im
 	_grid_mesh.material_override = mat
+	_grid_mesh.visible = false  # DEBUG: hidden to isolate tint source
 	add_child(_grid_mesh)
 
 
@@ -700,13 +701,13 @@ func _setup_territory_voronoi() -> void:
 	shader_mat.set_shader_parameter("system_data", _system_data_texture)
 	shader_mat.set_shader_parameter("faction_colors", _faction_colors_texture)
 	shader_mat.set_shader_parameter("system_count", 0)
-	shader_mat.set_shader_parameter("fill_opacity", 0.15)
+	shader_mat.set_shader_parameter("fill_alpha", 0.04)
 	shader_mat.set_shader_parameter("fill_falloff", VORONOI_FILL_FALLOFF)
-	shader_mat.set_shader_parameter("border_width", VORONOI_BORDER_WIDTH)
-	shader_mat.set_shader_parameter("border_brightness", 3.0)
 	shader_mat.set_shader_parameter("edge_softness", 0.02)
-	shader_mat.set_shader_parameter("outline_width", 0.01)
-	shader_mat.set_shader_parameter("outline_brightness", 4.0)
+	shader_mat.set_shader_parameter("outline_width", 0.015)
+	shader_mat.set_shader_parameter("outline_alpha", 1.0)
+	shader_mat.set_shader_parameter("border_width", 0.018)
+	shader_mat.set_shader_parameter("border_alpha", 1.0)
 	_territory_color_rect.material = shader_mat
 	_territory_viewport.add_child(_territory_color_rect)
 
@@ -724,6 +725,7 @@ func _setup_territory_voronoi() -> void:
 	plane_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	_territory_plane.material_override = plane_mat
 	_territory_plane.visible = false
+	_territory_plane.visible = false  # DEBUG: keep plane hidden to isolate tint source
 	add_child(_territory_plane)
 
 
@@ -789,7 +791,7 @@ func _rebuild_territory_data() -> void:
 		_map_bounds.position.y + _map_bounds.size.y * 0.5
 	)
 	print("[VORONOI] plane pos=%s  size=%s  system_count=%d" % [_territory_plane.position, pm.size, idx])
-	_territory_plane.visible = true
+	_territory_plane.visible = false  # DEBUG: hidden to isolate tint source
 
 	# SubViewport is UPDATE_ALWAYS for now (debug)
 	# Save viewport texture to disk after a short delay (viewport needs a frame to render)
@@ -855,11 +857,12 @@ func _on_region_added(region_id: String) -> void:
 	_region_visuals[region_id] = node
 
 	var halo := MeshInstance3D.new()
+	halo.visible = false  # DEBUG: hidden to isolate tint source
 	var quad := QuadMesh.new()
-	quad.size = Vector2(r["size"] * 3.0, r["size"] * 3.0)
+	quad.size = Vector2(r["size"] * 2.0, r["size"] * 2.0)
 	halo.mesh = quad
 	var halo_mat := StandardMaterial3D.new()
-	halo_mat.albedo_color = Color(r["color"].r, r["color"].g, r["color"].b, 0.25)
+	halo_mat.albedo_color = Color(r["color"].r, r["color"].g, r["color"].b, 0.1)
 	halo_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	halo_mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
 	halo_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED

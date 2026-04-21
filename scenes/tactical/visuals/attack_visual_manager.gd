@@ -110,6 +110,15 @@ func _fire_attack(attacker_uid: int, target_uid: int, unit: Dictionary) -> void:
 		TacticalBridge.display_y[target_uid]
 	)
 
+	var category: String = str(cfg.get("category", "projectile"))
+
+	if category == "beam":
+		var beam_dur: float = float(cfg.get("beam_duration", 0.4))
+		var beam_thick: float = float(cfg.get("beam_thickness", 6.0))
+		_beam_renderer.spawn_beam(from_pos, to_pos, beam_dur, beam_thick, color)
+		_total_spawned += 1
+		return
+
 	var volley_count: int = int(cfg["volley"])
 	var stagger: float = float(cfg["stagger"])
 	var speed: float = float(cfg["speed"])
@@ -150,9 +159,16 @@ func _process_volleys(delta: float) -> void:
 			i += 1
 
 
+func spawn_area_pulse(center: Vector3, max_radius: float, duration: float, color: Color) -> void:
+	_area_pulse_renderer.spawn_pulse(center, max_radius, duration, color)
+	_total_spawned += 1
+
+
 func get_stats() -> Dictionary:
 	return {
-		"active": _projectile_renderer.get_active_count(),
+		"active_projectiles": _projectile_renderer.get_active_count(),
+		"active_beams": _beam_renderer.get_active_count(),
+		"active_pulses": _area_pulse_renderer.get_active_count(),
 		"peak": _peak_active,
 		"total_spawned": _total_spawned,
 		"pending_volleys": _pending_volleys.size(),

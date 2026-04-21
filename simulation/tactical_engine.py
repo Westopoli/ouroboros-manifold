@@ -36,6 +36,7 @@ class TacticalEngine:
         self.behavior_runners = []
 
     def step(self):
+        self.store.pending_ability_events.clear()
         if config.ENABLE_BEHAVIOR_SCRIPTS and self.behavior_runners:
             for runner in self.behavior_runners:
                 runner.step(self.tick, self.store, self.command_queue)

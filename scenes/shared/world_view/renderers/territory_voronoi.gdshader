@@ -3,13 +3,13 @@ shader_type canvas_item;
 uniform sampler2D system_data : filter_nearest;
 uniform sampler2D faction_colors : filter_nearest;
 uniform int system_count = 0;
-uniform float fill_opacity : hint_range(0.0, 1.0) = 0.15;
+uniform float fill_alpha : hint_range(0.0, 1.0) = 0.25;
 uniform float fill_falloff : hint_range(0.01, 0.5) = 0.15;
-uniform float border_width : hint_range(0.001, 0.05) = 0.012;
-uniform float border_brightness : hint_range(0.5, 5.0) = 3.0;
 uniform float edge_softness : hint_range(0.001, 0.1) = 0.02;
 uniform float outline_width : hint_range(0.001, 0.05) = 0.01;
-uniform float outline_brightness : hint_range(0.5, 6.0) = 4.0;
+uniform float outline_alpha : hint_range(0.0, 1.0) = 0.8;
+uniform float border_width : hint_range(0.001, 0.05) = 0.012;
+uniform float border_alpha : hint_range(0.0, 1.0) = 0.9;
 
 void fragment() {
 	float nearest_dist = 1e10;
@@ -40,37 +40,30 @@ void fragment() {
 	}
 
 	if (nearest_faction < 0.001) {
-		COLOR = vec4(0.0, 0.0, 0.0, 0.0);
+		COLOR = vec4(0.0);
 	} else {
 		int faction_idx = int(round(nearest_faction * 8.0)) - 1;
 		float fc_u = (float(faction_idx) + 0.5) / 8.0;
-		vec4 fcolor = texture(faction_colors, vec2(fc_u, 0.5));
-		vec3 base_color = fcolor.rgb;
+		vec3 color = texture(faction_colors, vec2(fc_u, 0.5)).rgb;
 
 		// Territory fill — fades with distance from nearest system
 		float effective_falloff = fill_falloff * (0.5 + nearest_significance * 0.5);
 		float fill_factor = 1.0 - smoothstep(effective_falloff - edge_softness, effective_falloff, nearest_dist);
-		float alpha = fill_opacity * fill_factor;
-		vec3 color = base_color;
+		float alpha = fill_alpha * fill_factor;
 
-		// Territory perimeter outline — bright line at the edge of influence
+		// Territory perimeter outline — bright ring at the edge of influence
 		float outline_center = effective_falloff - edge_softness * 0.5;
 		float outline_dist = abs(nearest_dist - outline_center);
-		float outline_factor = 1.0 - smoothstep(0.0, outline_width, outline_dist);
+		float outline_factor = (1.0 - smoothstep(0.0, outline_width, outline_dist)) * fill_factor;
+		alpha = max(alpha, outline_factor * outline_alpha);
 
-		if (outline_factor > 0.01) {
-			color = base_color * outline_brightness;
-			alpha = max(alpha, outline_factor * 0.7);
-		}
-
-		// Faction border glow — where two different factions meet
+		// Faction border — where two different factions meet
 		if (nearest_faction != second_faction && second_faction > 0.001) {
 			float border_factor = second_dist - nearest_dist;
 			if (border_factor < border_width) {
 				float border_intensity = 1.0 - border_factor / border_width;
 				border_intensity = border_intensity * border_intensity;
-				color = base_color * border_brightness;
-				alpha = max(alpha, border_intensity * 0.8);
+				alpha = max(alpha, border_intensity * border_alpha);
 			}
 		}
 

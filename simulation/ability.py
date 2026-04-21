@@ -46,10 +46,25 @@ def activate_ability(store, uid):
     return False
 
 
+def _emit_ability_event(store, uid, ability_id, target_pos=None, target_uid=-1, duration_ticks=0, radius=0.0):
+    pos = target_pos or [float(store.data[uid, FIELD_X]), float(store.data[uid, FIELD_Y])]
+    store.pending_ability_events.append({
+        "kind": "ability",
+        "uid": uid,
+        "ability_id": ability_id,
+        "target_pos": [round(pos[0], 4), round(pos[1], 4)],
+        "target_uid": target_uid,
+        "duration_ticks": duration_ticks,
+        "radius": radius,
+        "faction": int(store.faction[uid]),
+    })
+
+
 def _activate_surge(store, uid):
     store.data[uid, FIELD_ABILITY_ACTIVE] = ABILITY_ACTIVE
     store.data[uid, FIELD_ABILITY_DURATION] = config.SURGE_DURATION_TICKS
     store.data[uid, FIELD_ABILITY_COOLDOWN] = config.SURGE_COOLDOWN_TICKS
+    _emit_ability_event(store, uid, "surge", duration_ticks=config.SURGE_DURATION_TICKS)
     return True
 
 
@@ -57,12 +72,14 @@ def _activate_brace(store, uid):
     if store.data[uid, FIELD_ABILITY_ACTIVE] == ABILITY_ACTIVE:
         store.data[uid, FIELD_ABILITY_ACTIVE] = ABILITY_WINDUP
         store.data[uid, FIELD_ABILITY_DURATION] = config.BRACE_WINDUP_TICKS
+        _emit_ability_event(store, uid, "brace", duration_ticks=config.BRACE_COOLDOWN_TICKS)
         return True
     if store.data[uid, FIELD_ABILITY_ACTIVE] != ABILITY_INACTIVE:
         return False
     store.data[uid, FIELD_ABILITY_ACTIVE] = ABILITY_WINDUP
     store.data[uid, FIELD_ABILITY_DURATION] = config.BRACE_WINDUP_TICKS
     store.data[uid, FIELD_ABILITY_COOLDOWN] = config.BRACE_COOLDOWN_TICKS
+    _emit_ability_event(store, uid, "brace", duration_ticks=config.BRACE_COOLDOWN_TICKS)
     return True
 
 
@@ -83,6 +100,7 @@ def _activate_rally(store, uid):
             )
 
     store.data[uid, FIELD_ABILITY_COOLDOWN] = config.RALLY_COOLDOWN_TICKS
+    _emit_ability_event(store, uid, "rally", radius=config.RALLY_RADIUS)
     return True
 
 
@@ -90,11 +108,18 @@ def _activate_barrage(store, uid):
     target = store.auto_engage_target[uid]
     if target < 0 or not store.alive[target]:
         return False
-    store.ability_target_x[uid] = store.data[target, FIELD_X]
-    store.ability_target_y[uid] = store.data[target, FIELD_Y]
+    tx = store.data[target, FIELD_X]
+    ty = store.data[target, FIELD_Y]
+    store.ability_target_x[uid] = tx
+    store.ability_target_y[uid] = ty
     store.data[uid, FIELD_ABILITY_ACTIVE] = ABILITY_TELEGRAPH
     store.data[uid, FIELD_ABILITY_DURATION] = config.BARRAGE_TELEGRAPH_TICKS
     store.data[uid, FIELD_ABILITY_COOLDOWN] = config.BARRAGE_COOLDOWN_TICKS
+    _emit_ability_event(store, uid, "barrage",
+                        target_pos=[float(tx), float(ty)],
+                        target_uid=int(target),
+                        duration_ticks=config.BARRAGE_TELEGRAPH_TICKS,
+                        radius=config.BARRAGE_RADIUS)
     return True
 
 
@@ -102,6 +127,9 @@ def _activate_fortify(store, uid):
     store.data[uid, FIELD_ABILITY_ACTIVE] = ABILITY_ACTIVE
     store.data[uid, FIELD_ABILITY_DURATION] = config.FORTIFY_DURATION_TICKS
     store.data[uid, FIELD_ABILITY_COOLDOWN] = config.FORTIFY_COOLDOWN_TICKS
+    _emit_ability_event(store, uid, "fortify",
+                        duration_ticks=config.FORTIFY_DURATION_TICKS,
+                        radius=config.FORTIFY_RADIUS)
     return True
 
 
@@ -181,6 +209,7 @@ def _check_intercept(store, uid):
             store.data[uid, FIELD_ABILITY_DURATION] = 1
             store.data[uid, FIELD_ABILITY_COOLDOWN] = config.INTERCEPT_COOLDOWN_TICKS
             store.auto_engage_target[uid] = other
+            _emit_ability_event(store, uid, "intercept", target_uid=int(other), duration_ticks=1)
             return
 
 

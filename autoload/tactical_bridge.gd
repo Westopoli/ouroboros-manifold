@@ -20,6 +20,7 @@ signal snapshot_received(snapshot: Dictionary)
 signal tick_delta_received(delta: Dictionary)
 signal connection_state_changed(connected: bool)
 signal command_sent(command: Dictionary)
+signal ability_event_received(event: Dictionary)
 
 const BUFFER_DELAY_TICKS := 3
 const BUFFER_DEPTH := 6
@@ -319,6 +320,10 @@ func _apply_delta(d: Dictionary) -> void:
 			if objectives[i].get("id") == upd.get("id"):
 				objectives[i] = upd.duplicate()
 				break
+
+	for evt in d.get("events", []):
+		if str(evt.get("kind", "")) == "ability":
+			ability_event_received.emit(evt)
 
 
 func _write_display_from_entry(entry: Dictionary) -> void:

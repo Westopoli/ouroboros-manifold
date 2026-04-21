@@ -70,6 +70,10 @@ class UnitStore:
         self.move_groups: dict = {}
         self._next_move_group_id: int = 0
 
+        # Ability events emitted this tick — consumed by snapshot_serializer, cleared each step.
+        # See also: ability.py — populates this list on activation.
+        self.pending_ability_events: list = []
+
     def spawn(self, unit_type, faction_id, x, y, layer=0, stats=None):
         if self.count >= MAX_UNITS:
             return -1
