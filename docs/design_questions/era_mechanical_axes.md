@@ -84,33 +84,160 @@ Branch System. Axes 4–7 are new proposals drafted in this session.
 
 ---
 
-## What's Coming In Subsequent Batches
+## Batch Roadmap
 
-Once you react to the axis list (approve / cut / add / rename / reorder):
-
-- **Batch 2:** Flesh out each axis — definition, what different positions
-  produce mechanically, implementation cost estimate per position, cross-axis
-  interaction risks.
-- **Batch 3:** The 7-axis × 3-era matrix. Position Roman / 1980s / Settled
-  Reach on every axis with a one-line rationale per cell.
-- **Batch 4:** Branch DNA vs. hallmark-exclusive annotations. Which axis
-  positions cascade to work eras (Branch 1 DNA) and which are reserved for
-  Settled Reach / 1980s only.
-- **Batch 5:** Rejected axes (candidates I pruned) + experimental stretch
-  axes (ideas that are too novel for the locked set but worth flagging).
-  This is where the maximum-creativity proposals live — temporal distortion,
-  supply-line tactics, civilian presence, reinforcement topology, and a
-  few others.
+- **Batch 1** *(done)* — governance, production constraints, axis list.
+- **Batch 2a** *(this batch)* — detail for axes 1–4 (locked trio + layer access).
+- **Batch 2b** — detail for axes 5–7 (force scale, terrain expressiveness,
+  environmental threat — my new structural proposals).
+- **Batch 3** — the 7-axis × 3-era matrix with one-line rationale per cell.
+- **Batch 4** — Branch DNA vs. hallmark-exclusive annotations.
+- **Batch 5** — rejected axes + experimental stretch axes (maximum creativity
+  bay: temporal distortion, supply-line tactics, civilian presence,
+  reinforcement topology, and a few others).
 
 ---
 
-## Questions For Westley Before I Proceed
+## Axis Detail — Batch 2a
 
-1. **Do all 7 proposed axes survive, or do you want to cut any on sight?**
-   The most speculative is #7 (environmental threat). The most structural
-   is #5 (force scale — it has real force-allocator implications).
-2. **Any axes I missed entirely** that you already have in mind?
-3. **Is the "1 hallmark + 2 work eras" Branch 1 composition the right
-   scope for the DNA vs. hallmark-exclusive annotation**, or should I
-   also speculate about Branch 1 post-launch eras (4th, 5th era) to
-   pressure-test the hallmark-exclusive axis positions?
+Each axis below is specified by: definition, the three canonical positions,
+cross-axis risk (where it overlaps with another axis and how to keep the
+two distinct), implementation cost, and any open sub-questions. Positions
+are canonical stanzas — actual per-era config lives on a continuum, but
+the stanzas are what the player learns to recognize.
+
+### Axis 1: Tempo *(locked)*
+
+**Definition.** The rate at which tactical events happen. Engagement
+duration, unit movement speed, and the density of decisions the player
+makes per minute of play.
+
+**Positions.**
+- **Fast** (Branch 1 DNA) — 30–45s decisive engagements, rapid maneuver,
+  high burst damage. The player issues many orders per minute; missions
+  are short and decisive.
+- **Medium** (Branch 2 DNA) — 1–2 min engagements, combined-arms
+  coordination time. Orders arrive in bursts with planning gaps between.
+- **Slow** (Roman, Branch 3 DNA) — 2 min+ engagements, attritional.
+  Orders less frequent; missions are about positioning and commitment,
+  not micro.
+
+**Cross-axis risk.** Tempo visibly overlaps with **force scale** (a larger
+force mechanically slows mission pace). Kept distinct by specifying:
+tempo is *per-engagement rhythm*; scale is *how many engagements happen
+simultaneously*. A fast-tempo 80-unit mission and a slow-tempo 15-unit
+mission feel noticeably different — tempo is about how fast a single
+fight resolves, not how many units are present.
+
+**Implementation cost.** **Low.** HP / damage / speed multipliers already
+live as per-era config in `bible_combat.md`. Session 6 flagged the Settled
+Reach stat rebalance as the first consumer.
+
+**Open sub-questions.** None — this is the most well-grounded axis.
+
+### Axis 2: Information warfare *(locked)*
+
+**Definition.** How much of the battlefield state the player knows at any
+moment, and the tactical cost of acquiring information.
+
+**Positions.**
+- **Near-total awareness** (Branch 1 DNA) — sensor dominance, free
+  cross-layer sight, counter-stealth is the active cost. The fight is
+  about what to do with perfect information, not about acquiring it.
+- **Partial sensor asymmetry** (Branch 2 DNA) — radar, intel, reconnaissance
+  all partial. Some things seen, some things hidden. ECM and scouts matter.
+  The fight is about managing the gaps in your picture.
+- **Heavy fog** (Roman, Branch 3 DNA) — scout-dependent, ambush is a real
+  threat, sensor systems largely absent. The fight is about *finding* the
+  enemy before they find you.
+
+**Cross-axis risk.** Information visibly overlaps with **terrain expressiveness**
+(terrain hides units) and with **environmental threat** (nebulae blind).
+Kept distinct by specifying: information is about *sensor capability
+configuration*; terrain is about *movement and engagement geometry*;
+environment is about *hostile-to-all-agents damage fields*. A nebula that
+blocks sensors (info), channels movement through gaps (terrain), and
+irradiates anything caught inside (environment) is one map feature
+positioned on three independent dials.
+
+**Implementation cost.** **Low.** Fog density, sensor range, cross-layer
+sight multipliers, and pulse cooldown already live as tuning parameters.
+
+**Open sub-questions.** None — this is well-grounded.
+
+### Axis 3: Attrition / economy *(locked)*
+
+**Definition.** How replaceable units are within and across missions, and
+how much force preservation matters strategically.
+
+**Positions.**
+- **Rapid recovery** (Branch 1 DNA) — few units, fast replacement. Losses
+  are recoverable; plan quality matters more than preservation. The fight
+  is about executing strikes and reconstituting.
+- **Industrial replacement** (Branch 2 DNA) — moderate quantities, moderate
+  replacement pace. Doctrine and logistics decide campaigns. The fight is
+  about outproducing or outmaneuvering.
+- **Slow reinforcement** (Roman, Branch 3 DNA) — casualties hurt, force
+  preservation matters, reinforcement is rare. The fight is about *not*
+  committing your force when you don't have to.
+
+**Cross-axis risk.** Attrition visibly overlaps with **force scale** (more
+units = more to lose = different preservation psychology). Kept distinct
+by specifying: attrition is about *replacement rate*; scale is about
+*concurrent quantity*. A rapid-recovery 80-unit mission (Branch 1 at
+large scale, hypothetical) and a slow-reinforcement 15-unit mission
+(Roman at small scale, hypothetical) feel different in a way neither
+dial captures alone.
+
+**Implementation cost.** **Low.** Reinforcement structure density,
+production time scaling, and retention currency all already exist as
+config.
+
+**Open sub-questions.** None — this is well-grounded.
+
+### Axis 4: Layer access *(new — Westley-introduced)*
+
+**Definition.** Which unit types can physically occupy which of the 3–5
+vertical layers, and how costly layer transitions are for a unit that can
+make them. This is about *where units can be*, not about *what they can
+see* (which is axis 2).
+
+**Positions.**
+- **Free traversal** (Settled Reach, hallmark-exclusive) — all 6 unit
+  types can occupy all layers. Layer transitions are cheap. The fight
+  spans all vertical space simultaneously because there is no atmospheric
+  or medium difference between layers.
+- **Strict layer lock** (1980s, hallmark-exclusive) — hard per-unit-type
+  layer restrictions. Submarines are below-surface-only; surface vessels
+  are surface-only; aircraft are above-surface-only. Transitions are
+  impossible (a submarine does not become a plane). The fight is about
+  how each layer supports or threatens the others.
+- **Terrain-elevation pseudo-layers** (Roman, Branch 3 DNA) — one nominal
+  layer. All units operate on "the ground." But height-varying terrain
+  creates functional elevation differences within that layer — a unit
+  on a ridge sees over a unit in a valley, ranged fire gains elevation
+  bonus, defiles funnel movement. The 2.5D system expresses as map
+  geometry rather than as discrete layer assignment.
+
+**Cross-axis risk.** Layer access visibly overlaps with **force scale**
+(more unit types = more ways to layer-lock) and with **tempo** (cross-layer
+engagements may be slower to resolve than same-layer). Kept distinct by
+specifying: layer access is about *which (unit type, layer) pairs are
+legal*; scale is about *how many units total*; tempo is about *per-engagement
+rhythm*.
+
+**Implementation cost.** **Low.** `layer_accessibility_mask` already lives
+in the map generation gradient vocabulary (Q4 resolution, `bible_world.md`).
+Per-unit layer restriction config exists in the 1980s era spec. Settled
+Reach's free-traversal position is the *absence* of restrictions — it
+ships by default if no mask is applied.
+
+**Open sub-questions.** One important one: **does this axis also carry
+the cross-layer engagement rules** (who can shoot at whom across layers,
+and with what range/damage modifiers), or is cross-layer engagement a
+separate dial? My lean is that it's a sub-parameter of this axis (the
+config that says "air units can strike surface at X range, surface can
+strike air at Y range, surface cannot strike submerged at all" sits
+naturally alongside the access mask). Worth confirming.
+
+---
