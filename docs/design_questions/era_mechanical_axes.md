@@ -111,12 +111,9 @@ Branch System. Axes 4–8 are new proposals drafted in this session.
 - **Batch 2a** *(done)* — detail for axes 1–4 (locked trio + layer access).
 - **Batch 2b** *(done)* — detail for axes 5–8 (force scale, terrain
   expressiveness, environmental threat, cross-layer engagement).
-- **Batch 2c** *(done, this batch)* — refinements to axes 5, 6, 7:
-  force scale rescaled to 20–60 / 100–300 / 600–1000 with performance
-  dependency note; terrain expressiveness reframed as (midpoint, spread)
-  pair with narrative-grounding requirement; environmental threat
-  reframed from persistent state to stochastic event firing.
-- **Batch 3** — the 8-axis × 3-era matrix with one-line rationale per cell.
+- **Batch 2c** *(done)* — refinements to axes 5, 6, 7.
+- **Batch 3** *(this batch)* — the 8-axis × 3-era matrix with one-line
+  rationale per cell, plus "what the matrix reveals" commentary.
 - **Batch 4** — Branch DNA vs. hallmark-exclusive annotations.
 - **Batch 5** — rejected axes + experimental stretch axes (maximum creativity
   bay: temporal distortion, supply-line tactics, civilian presence,
@@ -525,5 +522,142 @@ does not — both are surface-layer aircraft). Per-layer-pair would be
 simpler but underspecified for at least one launch era. Lean: start
 per-layer-pair as the matrix default, allow per-unit-type override
 entries as exceptions.
+
+---
+
+## The Matrix — Batch 3
+
+Eight axes × three launch eras. One position and a one-line rationale
+per cell. Each row is a single axis with three era columns. Positions
+marked *(candidate hallmark-exclusive)* are the ones we'll formally
+lock in Batch 4's DNA-vs-hallmark pass. The rest are either Branch DNA
+(cascades to work eras along the branch) or Roman-specific (standalone,
+no cascade).
+
+### Axis 1 — Tempo
+
+| Era | Position | One-line rationale |
+|---|---|---|
+| **Roman** | Slow (2min+ engagements) | Legion combat is positional and commitment-based; the mission decides who wins over minutes, not seconds. Branch 3 DNA. |
+| **1980s** | Medium (1–2min) | Cold War operations reward doctrine execution with coordination windows — the engagement has room for combined-arms cadence. Branch 2 DNA. |
+| **Settled Reach** | Fast (30–45s) | Space combat with sensor dominance is decisive when engaged — the fight is about *whether to commit*, not whether to survive. Branch 1 DNA. |
+
+### Axis 2 — Information warfare
+
+| Era | Position | One-line rationale |
+|---|---|---|
+| **Roman** | Heavy fog | Information travels on horseback. Scouts and runners carry intel days late. Ambush is a first-class threat. Branch 3 DNA. |
+| **1980s** | Partial sensor asymmetry | Radar, sonar, intel, ECM all exist but all partial — the Cold War sensor-vs-countersensor arms race is the era's tactical signature. Branch 2 DNA. |
+| **Settled Reach** | Near-total awareness | Sensor dominance is technology's default in a post-scarcity sensor regime. Counter-stealth is the cost; the fight is about what to *do* with perfect information. Branch 1 DNA. |
+
+### Axis 3 — Attrition / economy
+
+| Era | Position | One-line rationale |
+|---|---|---|
+| **Roman** | Slow reinforcement | Legionnaires take years to train. Losses hurt strategically and reinforcements arrive by road, when they arrive. Force preservation is a mission-level objective implicit in every fight. Branch 3 DNA. |
+| **1980s** | Industrial replacement | Military-industrial complex produces units at moderate pace. Doctrine and logistics decide campaigns; tactical losses are replaceable over operational timescales. Branch 2 DNA. |
+| **Settled Reach** | Rapid recovery | Shipyards and fabricators produce quickly; small forces reconstitute between strikes. Plan quality matters more than preservation. Branch 1 DNA. |
+
+### Axis 4 — Layer access
+
+| Era | Position | One-line rationale |
+|---|---|---|
+| **Roman** | Terrain-elevation pseudo-layers | No discrete vertical layers. Every unit on "the ground." But mountains, ridges, valleys, defiles create functional elevation differences within the ground plane. 2.5D expresses as terrain, not as layer assignment. Branch 3 DNA. |
+| **1980s** | Strict layer lock *(candidate hallmark-exclusive)* | Submarines can exist only underwater; surface vessels only at water level; aircraft only airborne. Transitions are impossible — a sub does not become a plane. The era's tactical puzzle IS cross-layer coordination. |
+| **Settled Reach** | Free traversal *(candidate hallmark-exclusive)* | All six unit types can occupy any of the 3–5 layers. Layer transitions are cheap. Vacuum is mechanically neutral — there's no medium to be wrong for. The SR magnum-opus distinctive. |
+
+### Axis 5 — Force scale
+
+| Era | Position | One-line rationale |
+|---|---|---|
+| **Roman** | Legion/cohort (600–1000) | Classical warfare is mass warfare. Cohorts, centuries, maniples — the spectacle of a Roman legion in the field is the era's visual identity. 1000 top-end gated on the RVO native-extension engine work. Branch 3 DNA. |
+| **1980s** | Company/battlegroup (100–300) | Cold War operations are combined-arms mixed formations — a carrier group with escorts, a brigade with armor + infantry + aviation support. Platoon/squadron scale. Branch 2 DNA. |
+| **Settled Reach** | Squad/taskforce (20–60) | Post-scarcity sensor dominance + rapid recovery naturally produces precision strike forces over mass fleets. Each unit is a readable high-capability platform. Branch 1 DNA. |
+
+### Axis 6 — Terrain expressiveness (midpoint, spread)
+
+| Era | Position | One-line rationale |
+|---|---|---|
+| **Roman** | (80, 10–15) — high midpoint, tight spread | Mediterranean operational theater is topologically coherent and finite. Most missions are terrain-rich; variance is narrow. Players settle into "Rome is terrain." Branch 3 DNA. |
+| **1980s** | (50, 30–40) — mixed midpoint, wide spread | Cold War proxy-war theater naturally produces naval + land + desert + jungle + urban as genuinely distinct operational environments. The wide spread is narratively grounded in the era's global scope. Branch 2 DNA. |
+| **Settled Reach** | (25, 15–25) — low midpoint, moderate spread | Most missions default to open space. Occasional swings into asteroid fields, nebula-dense regions, station interiors, planetary operations. Spread is moderate rather than tight because 20–30 solar systems produce natural terrain variety. Branch 1 DNA. |
+
+### Axis 7 — Environmental threat
+
+| Era | Position | One-line rationale |
+|---|---|---|
+| **Roman** | Rare (~1 in 10+ missions) | Storms, eclipses, plagues fire rarely but the ones that fire become chronicle-grade moments. "The year the frost came." Branch 3 DNA. |
+| **1980s** | Occasional (1-in-3 to 1-in-5) | Sonar conditions, hurricanes, monsoon, sandstorms, sea state degradation. Tactical consideration players check in briefing and plan around. Branch 2 DNA. |
+| **Settled Reach** | Common (capped at 1-in-2) *(candidate hallmark-exclusive)* | Solar flares, meteor storms, radiation surges, gravity-well disruption. Environment is an expected co-antagonist. Cap at every-other-mission max — past that frequency events stop being dramatic. |
+
+### Axis 8 — Cross-layer engagement
+
+| Era | Position | One-line rationale |
+|---|---|---|
+| **Roman** | Ground-bound | Single-layer engagement; elevation grants ranged-fire bonus but no (attacker, target) pair is mechanically impossible — a ballista on a ridge can still shoot a ballista in a valley. Branch 3 DNA. |
+| **1980s** | Asymmetric matrix *(candidate hallmark-exclusive)* | Submarines cannot engage aircraft. Specialized pairings (ASW helicopter → submarine; anti-air battery → aircraft) handle specific layer-crossings. The engagement matrix is itself a tactical puzzle. |
+| **Settled Reach** | Fully reciprocal *(candidate hallmark-exclusive)* | Any unit can engage any other unit; range and damage may modify but no pair is mechanically impossible. Vacuum is a uniform medium — weapons work across layers by default. |
+
+---
+
+## What The Matrix Reveals
+
+Five observations worth calling out before Batch 4.
+
+### 1. The three launch eras are mechanically distinct on every axis
+
+No two eras share a position on any axis. That's the strongest possible
+signal that the axis selection is load-bearing — if two eras had identical
+positions on (say) 5 of 8 axes, the axes wouldn't actually be
+differentiating eras and the matrix would be overfit. The fact that every
+row produces three distinct answers means each axis is doing work. Keep
+all 8.
+
+### 2. Settled Reach carries three hallmark-exclusive candidates
+
+Axes 4 (free layer traversal), 7 (common environmental events), and 8
+(fully reciprocal engagement) all land at positions no other era occupies
+and where Branch 1 work eras should *not* cascade — if work sci-fi eras
+also had free layer traversal + common environmental events + fully
+reciprocal engagement, Settled Reach would have no distinctive left. Three
+hallmark-exclusive axes is the right order of magnitude for a magnum-opus
+era. Fewer would dilute its identity; more would leave the work eras
+with nothing.
+
+### 3. 1980s carries two hallmark-exclusive candidates
+
+Axes 4 (strict layer lock) and 8 (asymmetric engagement matrix) are 1980s
+distinctives. Branch 2 work eras (to be named) should sit at different
+positions on these axes — maybe "partial layer lock" (helicopters can
+deploy as ground forces, amphibious units cross surface/shallow) or
+"mostly-reciprocal engagement with a few exceptions." The 1980s gets its
+identity from the *full strictness* of both layer systems simultaneously.
+Any work era that is equally strict on both is competing with the hallmark.
+
+### 4. Roman has zero hallmark-exclusive cells — and that's correct
+
+Roman is standalone, outside the branch structure. It has no sibling
+work eras to cascade DNA to, so the DNA-vs-hallmark distinction doesn't
+apply. Every Roman cell is just "Roman." When Branch 3 ships post-launch,
+the Branch 3 work eras will cascade from Roman's positions (with their
+own hallmark picking one or two distinctive cells). But that's a future
+concern.
+
+### 5. Two cells I'd flag as least certain
+
+- **1980s axis 6 (terrain spread 30–40).** The "wide spread" framing
+  works narratively, but 30–40 on a 0–100 scale may be too wide. A mission
+  at midpoint 50 with spread 40 ranges from 10 (terrain-light) to 90
+  (terrain-heavy), which is nearly the full range of the dial. That risks
+  1980s missions feeling like "this mission could be anything," which is
+  the random-generation failure mode the axis warned against. **Might
+  need to narrow to 20–25 during tuning.**
+- **SR axis 7 (common environmental events).** "1-in-2 missions capped"
+  is a real design commitment — players will expect an environmental
+  event every other mission. If the authoring budget can't produce enough
+  event variety, "common" starts to feel like "the same storm every time."
+  **Flag for Stage 7 (map gen / event authoring) review — does the
+  environmental event type pool have enough variety to sustain 1-in-2
+  frequency without repetition fatigue?**
 
 ---
