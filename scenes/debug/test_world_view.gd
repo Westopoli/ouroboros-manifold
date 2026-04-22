@@ -42,14 +42,14 @@ func _setup_viewport() -> void:
 	move_child(container, 0)
 
 	_viewport = SubViewport.new()
-	_viewport.transparent_bg = true
+	_viewport.transparent_bg = false
 	_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	container.add_child(_viewport)
 
 	var env := WorldEnvironment.new()
 	var environment := Environment.new()
 	environment.background_mode = Environment.BG_COLOR
-	environment.background_color = Color(0.03, 0.03, 0.06)
+	environment.background_color = Color(0.0, 0.0, 0.0)
 	env.environment = environment
 	_viewport.add_child(env)
 
@@ -102,6 +102,7 @@ func _setup_ui() -> void:
 
 	_add_button(panel, "Flash r_03 (player)", func(): _shell.flash_military_activity("r_03", 0.8))
 	_add_button(panel, "Flash conflict r_03 ↔ r_05", func(): _shell.flash_conflict("r_03", "r_05", 1.0))
+	_add_button(panel, "Flash burst (rapid fire)", func(): _fire_flash_burst())
 	_add_button(panel, "Highlight r_05 (enemy)", func(): _shell.highlight_region("r_05"))
 	_add_button(panel, "Clear highlight", func(): _shell.clear_highlight())
 	_add_button(panel, "Camera → r_01", func(): _shell.move_camera_to_region("r_01", 2.0))
@@ -126,3 +127,21 @@ func _add_button(parent: Node, label: String, callback: Callable) -> void:
 
 func _conquer_region() -> void:
 	_shell.update_territory("r_07", 7.0, FACTIONS["f_enemy"])
+
+
+func _fire_flash_burst() -> void:
+	var region_ids := ["r_01", "r_02", "r_03", "r_04", "r_05", "r_06", "r_07", "r_08"]
+	var burst_count := randi_range(3, 7)
+	for i in burst_count:
+		var delay := randf() * 0.3
+		var tw := create_tween()
+		tw.tween_callback(func():
+			if randf() < 0.5:
+				var rid: String = region_ids[randi() % region_ids.size()]
+				_shell.flash_military_activity(rid, randf_range(0.4, 1.0))
+			else:
+				var a: String = region_ids[randi() % region_ids.size()]
+				var b: String = region_ids[randi() % region_ids.size()]
+				if a != b:
+					_shell.flash_conflict(a, b, randf_range(0.5, 1.0))
+		).set_delay(delay)

@@ -366,7 +366,7 @@ Build in order (sub-checkpoints C1–C7, each a STOP):
 3. **C3 — Territory bubbles.** `territory_bubbles.gdshader` in `_on_territory_set()` / `_on_territory_updated()` / `_on_territory_removed()`. Additive blend, low opacity, faction color. Radius scales with significance.
 4. **C4 — Border contour.** SubViewport pass + `territory_contour.gdshader`. Per-faction influence → summed texture → contour at equipotential threshold.
 5. **C5 — Flashes.** Particle bursts in `_on_flash_region_requested()` and `_on_flash_conflict_requested()`. Reuse animation-strategy ember/bloom.
-6. **C6 — Highlight.** Pulsed glow in `_on_highlight_changed()`. Heartbeat timing from animation strategy.
+6. **C6 — Highlight.** SKIPPED per Westley's request. Basic scale pulse retained, no heartbeat.
 7. **C7 — Camera position targeting.** Add `move_to_position(position, look_at, duration)` to `orbital_camera_3d.gd`.
 
 Prove-it: test harness (`tests/test_world_view.tscn`) scripts all operations against a mock world state (3 factions, territories, connections, flashes, camera moves). Westley eyeballs.
@@ -432,9 +432,22 @@ Files created:
 
 **Remaining for full B verification:** Run Godot with a scripted sim emitting these messages; confirm signals fire with correct payloads in console. Blocked on map/world-view scene not being testable yet.
 
-### Checkpoints C–H — NOT STARTED (all require visual testing in Godot)
+### Checkpoint C — COMPLETE (renderer enhancement)
 
-C (renderer enhancement), D (chronicle scroll), E (sequencer), F (full loop), G (exit paths), H (performance) all need the world view shell loaded and rendering. Resume when the tactical → world view transition path is runnable.
+C1 (region nodes), C2 (connections — no-op by design), C3/C4 (territory metaball shader replacing Voronoi/contour), C5 (flashes — random white spark bursts), C6 (highlight — SKIPPED per Westley), C7 (camera position targeting — already existed). Tested via `scenes/debug/test_world_view.tscn`.
+
+### Checkpoint D — COMPLETE (chronicle scroll panel)
+
+All files built and tested via `scenes/debug/test_chronicle_scroll.tscn`:
+- `scenes/world/chronicle_scroll_panel.gd` — full API with slide_in/slide_out
+- `scenes/world/chronicle_entry.gd` — word-by-word fade, 3 states, blinking cursor, click-to-expand
+- `scenes/world/chronicle_entry_expansion.gd` — overlay with dismiss
+
+**Tuning note:** Word fade duration is intentionally 3–8s (slow materialization effect), not the 0.20s in config tuning values. The config value `SCROLL_PER_WORD_FADE_DURATION_SEC` is not used — the entry uses its own longer fade for a ghostly slow-reveal feel.
+
+### Checkpoints E–H — NOT STARTED
+
+E (sequencer), F (full loop), G (exit paths), H (performance).
 
 ## Files Created
 

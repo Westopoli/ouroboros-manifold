@@ -22,6 +22,8 @@ var _projectile_renderer: Node3D
 var _beam_renderer: Node3D
 var _area_pulse_renderer: Node3D
 
+var camera_zoom: float = 0.0
+
 var _peak_active: int = 0
 var _total_spawned: int = 0
 
@@ -115,7 +117,7 @@ func _fire_attack(attacker_uid: int, target_uid: int, unit: Dictionary) -> void:
 	if category == "beam":
 		var beam_dur: float = float(cfg.get("beam_duration", 0.4))
 		var beam_thick: float = float(cfg.get("beam_thickness", 6.0))
-		_beam_renderer.spawn_beam(from_pos, to_pos, beam_dur, beam_thick, color)
+		_beam_renderer.spawn_beam(from_pos, to_pos, beam_dur, beam_thick, color, camera_zoom)
 		_total_spawned += 1
 		return
 
@@ -124,7 +126,7 @@ func _fire_attack(attacker_uid: int, target_uid: int, unit: Dictionary) -> void:
 	var speed: float = float(cfg["speed"])
 	var proj_scale: float = float(cfg["scale"])
 
-	_projectile_renderer.spawn_projectile(from_pos, to_pos, speed, proj_scale, color)
+	_projectile_renderer.spawn_projectile(from_pos, to_pos, speed, proj_scale, color, camera_zoom)
 	_total_spawned += 1
 
 	for i in range(1, volley_count):
@@ -152,7 +154,7 @@ func _process_volleys(delta: float) -> void:
 					float(v.to_layer) * EraConfig.LAYER_HEIGHT,
 					TacticalBridge.display_y[to_uid]
 				)
-				_projectile_renderer.spawn_projectile(v.from, to_pos, v.speed, v.scale, v.color)
+				_projectile_renderer.spawn_projectile(v.from, to_pos, v.speed, v.scale, v.color, camera_zoom)
 				_total_spawned += 1
 			_pending_volleys.remove_at(i)
 		else:
@@ -172,4 +174,5 @@ func get_stats() -> Dictionary:
 		"peak": _peak_active,
 		"total_spawned": _total_spawned,
 		"pending_volleys": _pending_volleys.size(),
+		"lod_culled": _projectile_renderer.get_lod_culled(),
 	}

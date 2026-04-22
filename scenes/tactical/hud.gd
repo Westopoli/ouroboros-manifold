@@ -57,7 +57,9 @@ func _process(delta: float) -> void:
 	if _banner_timer > 0.0:
 		_banner_timer -= delta
 		if _banner_timer <= 0.0:
-			_banner_label.visible = false
+			var tw := create_tween()
+			tw.tween_property(_banner_label, "modulate:a", 0.0, 0.4)
+			tw.tween_callback(func(): _banner_label.visible = false)
 	_update_f12_label(delta)
 
 
@@ -104,7 +106,12 @@ func _append_event(text: String) -> void:
 	var lbl := Label.new()
 	lbl.text = text
 	lbl.add_theme_color_override("font_color", _TEXT)
+	lbl.modulate.a = 0.0
+	lbl.position.x = -20.0
 	_event_ticker_list.add_child(lbl)
+	var tw := create_tween().set_parallel(true)
+	tw.tween_property(lbl, "modulate:a", 1.0, 0.3)
+	tw.tween_property(lbl, "position:x", 0.0, 0.3).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
 	while _event_ticker_list.get_child_count() > _MAX_EVENTS:
 		var old := _event_ticker_list.get_child(0)
 		_event_ticker_list.remove_child(old)
@@ -114,6 +121,9 @@ func _append_event(text: String) -> void:
 func _show_banner(text: String) -> void:
 	_banner_label.text = text
 	_banner_label.visible = true
+	_banner_label.modulate.a = 0.0
+	var tw := create_tween()
+	tw.tween_property(_banner_label, "modulate:a", 1.0, 0.25)
 	_banner_timer = _BANNER_DURATION
 
 
@@ -480,6 +490,7 @@ func _place_bottom_center(ctrl: Control, y_from_bottom: float, w: float, h: floa
 
 
 class _AbilityRing extends Control:
+	const MAX_CD := 30.0
 	var cd_sec: float = 0.0
 	var _cd_label: Label
 
@@ -506,7 +517,12 @@ class _AbilityRing extends Control:
 			draw_arc(c, r, 0.0, TAU, 32, Color(0.35, 0.95, 0.55), 2.0, true)
 		else:
 			draw_circle(c, r, Color(0.10, 0.12, 0.15))
-			draw_arc(c, r, 0.0, TAU, 32, Color(0.45, 0.50, 0.58), 1.5, true)
+			draw_arc(c, r, 0.0, TAU, 32, Color(0.25, 0.28, 0.35), 1.5, true)
+			# Sweep: filled arc from top, clockwise, proportional to cooldown elapsed
+			var frac: float = clampf(cd_sec / MAX_CD, 0.0, 1.0)
+			var sweep_angle: float = (1.0 - frac) * TAU
+			if sweep_angle > 0.01:
+				draw_arc(c, r, -PI / 2.0, -PI / 2.0 + sweep_angle, 32, Color(0.35, 0.75, 0.95, 0.8), 2.5, true)
 
 
 class _Minimap extends Control:

@@ -23,7 +23,9 @@ func _ready() -> void:
 		_pool.append({"mi": mi, "mat": null})
 
 
-func spawn_beam(from_pos: Vector3, to_pos: Vector3, duration: float, thickness: float, color: Color) -> void:
+func spawn_beam(from_pos: Vector3, to_pos: Vector3, duration: float, thickness: float, color: Color, camera_zoom: float = 0.0) -> void:
+	if camera_zoom >= 5000.0:
+		return
 	if _pool.is_empty():
 		return
 

@@ -26,7 +26,7 @@ const MOOD_DURATIONS := {
 
 const TRANSITION_DURATION := 5.0
 
-const VORONOI_RESOLUTION := 512
+const VORONOI_RESOLUTION := 2048
 const VORONOI_FILL_OPACITY := 0.12
 const VORONOI_FILL_FALLOFF := 0.15
 const VORONOI_EDGE_SOFTNESS := 0.03
@@ -86,6 +86,8 @@ var _system_data_image: Image
 var _system_data_texture: ImageTexture
 var _faction_colors_image: Image
 var _faction_colors_texture: ImageTexture
+var _faction_borders_image: Image
+var _faction_borders_texture: ImageTexture
 var _faction_color_to_index: Dictionary = {}
 var _map_bounds: Rect2 = Rect2(-50, -50, 100, 100)
 
@@ -486,7 +488,6 @@ func _build_grid_plane() -> void:
 
 	_grid_mesh.mesh = im
 	_grid_mesh.material_override = mat
-	_grid_mesh.visible = false  # DEBUG: hidden to isolate tint source
 	add_child(_grid_mesh)
 
 
@@ -524,7 +525,6 @@ func _make_additive_material(albedo: Color, emission: Color, energy: float) -> S
 # --- World View Integration ---
 
 func setup(data: Node, _container: Node = null) -> void:
-	print("[VORONOI] setup() called, data=%s" % data)
 	_wv_data = data
 	_wv_data.region_added.connect(_on_region_added)
 	_wv_data.region_updated.connect(_on_region_updated)
@@ -538,7 +538,7 @@ func setup(data: Node, _container: Node = null) -> void:
 	_wv_data.flash_region_requested.connect(_on_flash_region_requested)
 	_wv_data.flash_conflict_requested.connect(_on_flash_conflict_requested)
 	_wv_data.highlight_changed.connect(_on_highlight_changed)
-	_setup_territory_voronoi()
+	_setup_territory_metaball()
 
 
 func teardown() -> void:
@@ -682,11 +682,13 @@ func get_current_target() -> Vector3:
 
 # --- World View Signal Handlers ---
 
-func _setup_territory_voronoi() -> void:
+func _setup_territory_metaball() -> void:
 	_system_data_image = Image.create(MAX_SYSTEMS, 1, false, Image.FORMAT_RGBAF)
 	_system_data_texture = ImageTexture.create_from_image(_system_data_image)
 	_faction_colors_image = Image.create(8, 1, false, Image.FORMAT_RGBAF)
 	_faction_colors_texture = ImageTexture.create_from_image(_faction_colors_image)
+	_faction_borders_image = Image.create(8, 1, false, Image.FORMAT_RGBAF)
+	_faction_borders_texture = ImageTexture.create_from_image(_faction_borders_image)
 
 	_territory_viewport = SubViewport.new()
 	_territory_viewport.size = Vector2i(VORONOI_RESOLUTION, VORONOI_RESOLUTION)
@@ -697,17 +699,18 @@ func _setup_territory_voronoi() -> void:
 	_territory_color_rect = ColorRect.new()
 	_territory_color_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
 	var shader_mat := ShaderMaterial.new()
-	shader_mat.shader = load("res://scenes/shared/world_view/renderers/territory_voronoi.gdshader")
+	shader_mat.shader = load("res://scenes/shared/world_view/renderers/territory_metaball.gdshader")
 	shader_mat.set_shader_parameter("system_data", _system_data_texture)
 	shader_mat.set_shader_parameter("faction_colors", _faction_colors_texture)
+	shader_mat.set_shader_parameter("faction_borders", _faction_borders_texture)
 	shader_mat.set_shader_parameter("system_count", 0)
-	shader_mat.set_shader_parameter("fill_alpha", 0.04)
-	shader_mat.set_shader_parameter("fill_falloff", VORONOI_FILL_FALLOFF)
-	shader_mat.set_shader_parameter("edge_softness", 0.02)
-	shader_mat.set_shader_parameter("outline_width", 0.015)
-	shader_mat.set_shader_parameter("outline_alpha", 1.0)
-	shader_mat.set_shader_parameter("border_width", 0.018)
-	shader_mat.set_shader_parameter("border_alpha", 1.0)
+	shader_mat.set_shader_parameter("influence_radius", 0.17)
+	shader_mat.set_shader_parameter("threshold", 0.66)
+	shader_mat.set_shader_parameter("tube_width", 0.04)
+	shader_mat.set_shader_parameter("tube_alpha", 0.95)
+	shader_mat.set_shader_parameter("fill_opacity", 0.55)
+	shader_mat.set_shader_parameter("fill_fade_depth", 0.8)
+	shader_mat.set_shader_parameter("gap_margin", 0.30)
 	_territory_color_rect.material = shader_mat
 	_territory_viewport.add_child(_territory_color_rect)
 
@@ -718,14 +721,13 @@ func _setup_territory_voronoi() -> void:
 	var plane_mat := StandardMaterial3D.new()
 	plane_mat.albedo_texture = _territory_viewport.get_texture()
 	plane_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	plane_mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	plane_mat.blend_mode = BaseMaterial3D.BLEND_MODE_MIX
 	plane_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	plane_mat.render_priority = -1
 	plane_mat.no_depth_test = true
 	plane_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
 	_territory_plane.material_override = plane_mat
 	_territory_plane.visible = false
-	_territory_plane.visible = false  # DEBUG: keep plane hidden to isolate tint source
 	add_child(_territory_plane)
 
 
@@ -749,8 +751,6 @@ func _rebuild_territory_data() -> void:
 	max_pos += Vector2(margin, margin)
 	_map_bounds = Rect2(min_pos, max_pos - min_pos)
 
-	print("[VORONOI] registry size=%d  map_bounds=%s  max_radius=%.1f" % [_territory_registry.size(), _map_bounds, max_radius])
-
 	var img := Image.create(MAX_SYSTEMS, 1, false, Image.FORMAT_RGBAF)
 	var idx := 0
 	for rid in _territory_registry:
@@ -763,7 +763,6 @@ func _rebuild_territory_data() -> void:
 		var faction_idx_norm: float = float(entry["faction_index"]) / 8.0
 		var significance := clampf(entry["radius"] / max_radius, 0.0, 1.0)
 		img.set_pixel(idx, 0, Color(norm_x, norm_y, faction_idx_norm, significance))
-		print("[VORONOI]   %s: world=(%.1f, %.1f) uv=(%.3f, %.3f) faction_norm=%.3f sig=%.3f" % [rid, pos_2d.x, pos_2d.y, norm_x, norm_y, faction_idx_norm, significance])
 		idx += 1
 
 	_system_data_image = img
@@ -790,30 +789,30 @@ func _rebuild_territory_data() -> void:
 		avg_y,
 		_map_bounds.position.y + _map_bounds.size.y * 0.5
 	)
-	print("[VORONOI] plane pos=%s  size=%s  system_count=%d" % [_territory_plane.position, pm.size, idx])
-	_territory_plane.visible = false  # DEBUG: hidden to isolate tint source
-
-	# SubViewport is UPDATE_ALWAYS for now (debug)
-	# Save viewport texture to disk after a short delay (viewport needs a frame to render)
-	get_tree().create_timer(0.5).timeout.connect(func():
-		var vp_img := _territory_viewport.get_texture().get_image()
-		vp_img.save_png("res://logs/voronoi_debug.png")
-		print("[VORONOI] saved viewport texture to logs/voronoi_debug.png (%dx%d)" % [vp_img.get_width(), vp_img.get_height()])
-	)
+	_territory_plane.visible = true
 
 
 func _register_faction_color(color: Color) -> int:
 	if color in _faction_color_to_index:
 		return _faction_color_to_index[color]
 	var idx: int = _faction_color_to_index.size() + 1
-	print("[VORONOI] register faction color=%s  idx=%d" % [color, idx])
 	if idx > 8:
 		return 1
 	_faction_color_to_index[color] = idx
-	_faction_colors_image.set_pixel(idx - 1, 0, color)
+	# Fill color: slightly darkened for interior fill
+	_faction_colors_image.set_pixel(idx - 1, 0, Color(color.r * 0.9, color.g * 0.9, color.b * 0.9, 1.0))
 	_faction_colors_texture.update(_faction_colors_image)
+	# Border color: brightened for the outline
+	_faction_borders_image.set_pixel(idx - 1, 0, Color(
+		minf(color.r * 1.3, 1.0),
+		minf(color.g * 1.3, 1.0),
+		minf(color.b * 1.3, 1.0),
+		1.0
+	))
+	_faction_borders_texture.update(_faction_borders_image)
 	var shader_mat: ShaderMaterial = _territory_color_rect.material
 	shader_mat.set_shader_parameter("faction_colors", _faction_colors_texture)
+	shader_mat.set_shader_parameter("faction_borders", _faction_borders_texture)
 	return idx
 
 
@@ -851,25 +850,31 @@ func _on_region_added(region_id: String) -> void:
 	sphere.radial_segments = 16
 	sphere.rings = 8
 	node.mesh = sphere
-	node.material_override = _make_emissive_material(r["color"], 2.5)
+	node.material_override = _make_emissive_material(Color.WHITE, 4.0)
 	node.position = r["position"]
 	add_child(node)
 	_region_visuals[region_id] = node
 
-	var halo := MeshInstance3D.new()
-	halo.visible = false  # DEBUG: hidden to isolate tint source
-	var quad := QuadMesh.new()
-	quad.size = Vector2(r["size"] * 2.0, r["size"] * 2.0)
-	halo.mesh = quad
-	var halo_mat := StandardMaterial3D.new()
-	halo_mat.albedo_color = Color(r["color"].r, r["color"].g, r["color"].b, 0.1)
-	halo_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	halo_mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-	halo_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	halo_mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
-	halo_mat.no_depth_test = true
-	halo.material_override = halo_mat
-	node.add_child(halo)
+	var shell := MeshInstance3D.new()
+	var shell_sphere := SphereMesh.new()
+	shell_sphere.radius = r["size"] * 0.65
+	shell_sphere.height = r["size"] * 1.3
+	shell_sphere.radial_segments = 24
+	shell_sphere.rings = 12
+	shell.mesh = shell_sphere
+	var shell_mat := StandardMaterial3D.new()
+	shell_mat.albedo_color = Color(r["color"].r, r["color"].g, r["color"].b, 0.15)
+	shell_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	shell_mat.cull_mode = BaseMaterial3D.CULL_FRONT
+	shell_mat.emission_enabled = true
+	shell_mat.emission = r["color"]
+	shell_mat.emission_energy_multiplier = 2.0
+	shell_mat.rim_enabled = true
+	shell_mat.rim = 1.0
+	shell_mat.rim_tint = 0.0
+	shell_mat.render_priority = -1
+	shell.material_override = shell_mat
+	node.add_child(shell)
 
 
 func _on_region_updated(region_id: String) -> void:
@@ -880,12 +885,14 @@ func _on_region_updated(region_id: String) -> void:
 	var sphere: SphereMesh = node.mesh
 	sphere.radius = r["size"] * 0.5
 	sphere.height = r["size"]
-	node.material_override = _make_emissive_material(r["color"], 2.5)
+	node.material_override = _make_emissive_material(Color.WHITE, 4.0)
 	if node.get_child_count() > 0:
-		var halo: MeshInstance3D = node.get_child(0)
-		var halo_quad: QuadMesh = halo.mesh
-		halo_quad.size = Vector2(r["size"] * 3.0, r["size"] * 3.0)
-		halo.material_override.albedo_color = Color(r["color"].r, r["color"].g, r["color"].b, 0.25)
+		var shell: MeshInstance3D = node.get_child(0)
+		var shell_sphere: SphereMesh = shell.mesh
+		shell_sphere.radius = r["size"] * 0.65
+		shell_sphere.height = r["size"] * 1.3
+		shell.material_override.albedo_color = Color(r["color"].r, r["color"].g, r["color"].b, 0.15)
+		shell.material_override.emission = r["color"]
 
 
 func _on_region_removed(region_id: String) -> void:
@@ -903,7 +910,6 @@ func _on_regions_cleared() -> void:
 
 
 func _on_territory_set(region_id: String) -> void:
-	print("[VORONOI] _on_territory_set: %s" % region_id)
 	var t: Dictionary = _wv_data.get_territory(region_id)
 	var faction_idx := _register_faction_color(t["color"])
 	_territory_registry[region_id] = {
@@ -932,47 +938,8 @@ func _on_territory_removed(region_id: String) -> void:
 	_rebuild_territory_data()
 
 
-func _on_connection_added(from_id: String, to_id: String) -> void:
-	var from_r: Dictionary = _wv_data.get_region(from_id)
-	var to_r: Dictionary = _wv_data.get_region(to_id)
-	var conn: Dictionary = _wv_data.get_connection(from_id, to_id)
-	if from_r.is_empty() or to_r.is_empty():
-		return
-
-	var node := MeshInstance3D.new()
-	var im := ImmediateMesh.new()
-	var conn_type: String = conn.get("connection_type", "border")
-	var is_trade: bool = conn_type == "trade"
-	im.surface_begin(Mesh.PRIMITIVE_LINES)
-	if is_trade:
-		var start: Vector3 = from_r["position"]
-		var end: Vector3 = to_r["position"]
-		var seg_count := 9
-		for i in range(seg_count):
-			var t0 := float(i) / float(seg_count)
-			var t1 := (float(i) + 0.6) / float(seg_count)
-			im.surface_add_vertex(start.lerp(end, t0))
-			im.surface_add_vertex(start.lerp(end, t1))
-	else:
-		im.surface_add_vertex(from_r["position"])
-		im.surface_add_vertex(to_r["position"])
-	im.surface_end()
-	node.mesh = im
-	var conn_mat := StandardMaterial3D.new()
-	var base_color: Color = conn["color"]
-	if is_trade:
-		base_color.a = 0.4
-	conn_mat.albedo_color = base_color
-	conn_mat.emission_enabled = true
-	conn_mat.emission = conn["color"]
-	conn_mat.emission_energy_multiplier = 1.0 if not is_trade else 0.5
-	conn_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	conn_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	node.material_override = conn_mat
-	add_child(node)
-
-	var key := _connection_key(from_id, to_id)
-	_connection_visuals[key] = node
+func _on_connection_added(_from_id: String, _to_id: String) -> void:
+	pass
 
 
 func _on_connection_removed(from_id: String, to_id: String) -> void:
@@ -986,11 +953,18 @@ func _on_flash_region_requested(region_id: String, intensity: float) -> void:
 	if region_id not in _region_visuals:
 		return
 	var node: MeshInstance3D = _region_visuals[region_id]
-	var flash_mat: StandardMaterial3D = node.material_override
+	var pos: Vector3 = node.global_position
+	var r: Dictionary = _wv_data.get_region(region_id)
+	var color: Color = r.get("color", Color.WHITE)
 	var base_energy := 2.5
 	var tw := create_tween()
-	tw.tween_property(flash_mat, "emission_energy_multiplier", base_energy + intensity * 12.0, 0.1)
-	tw.tween_property(flash_mat, "emission_energy_multiplier", base_energy, 0.5).set_ease(Tween.EASE_OUT)
+	tw.tween_property(node.material_override, "emission_energy_multiplier", base_energy + intensity * 14.0, 0.02)
+	tw.tween_property(node.material_override, "emission_energy_multiplier", base_energy, 0.15).set_ease(Tween.EASE_OUT)
+	var count := randi_range(3, 3 + int(intensity * 7.0))
+	for i in count:
+		var delay := randf() * 0.20
+		var offset := Vector3(randf_range(-3.0, 3.0), randf_range(-3.0, 3.0), randf_range(-3.0, 3.0))
+		_spawn_flash_spark(pos + offset, color, intensity, delay)
 
 
 func _on_flash_conflict_requested(from_id: String, to_id: String, intensity: float) -> void:
@@ -998,28 +972,46 @@ func _on_flash_conflict_requested(from_id: String, to_id: String, intensity: flo
 	var to_r: Dictionary = _wv_data.get_region(to_id)
 	if from_r.is_empty() or to_r.is_empty():
 		return
+	var from_pos: Vector3 = from_r["position"]
+	var to_pos: Vector3 = to_r["position"]
+	var color := Color(1.0, 0.4, 0.1)
+	var count := randi_range(4, 4 + int(intensity * 8.0))
+	for i in count:
+		var t := randf()
+		var base_pos := from_pos.lerp(to_pos, t)
+		var scatter := Vector3(randf_range(-2.0, 2.0), randf_range(-2.0, 2.0), randf_range(-2.0, 2.0))
+		var delay := randf() * 0.25
+		_spawn_flash_spark(base_pos + scatter, color, intensity, delay)
 
-	var node := MeshInstance3D.new()
-	var im := ImmediateMesh.new()
-	im.surface_begin(Mesh.PRIMITIVE_LINES)
-	im.surface_add_vertex(from_r["position"])
-	im.surface_add_vertex(to_r["position"])
-	im.surface_end()
-	node.mesh = im
-	var conflict_mat := StandardMaterial3D.new()
-	conflict_mat.albedo_color = Color(1.0, 0.4, 0.1, intensity)
-	conflict_mat.emission_enabled = true
-	conflict_mat.emission = Color(1.0, 0.4, 0.1)
-	conflict_mat.emission_energy_multiplier = intensity * 10.0
-	conflict_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	conflict_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	node.material_override = conflict_mat
-	add_child(node)
 
+func _spawn_flash_spark(pos: Vector3, _color: Color, intensity: float, delay: float) -> void:
+	var spark := MeshInstance3D.new()
+	spark.mesh = SphereMesh.new()
+	spark.mesh.radius = randf_range(0.15, 0.4) * (0.5 + intensity * 0.5)
+	spark.mesh.height = spark.mesh.radius * 2.0
+	spark.mesh.radial_segments = 4
+	spark.mesh.rings = 2
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(1.0, 1.0, 1.0, 0.0)
+	mat.emission_enabled = true
+	mat.emission = Color.WHITE
+	mat.emission_energy_multiplier = 30.0
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	spark.material_override = mat
+	spark.position = pos
+	spark.visible = false
+	add_child(spark)
+	var lifespan := randf_range(0.06, 0.16)
 	var tw := create_tween()
-	tw.tween_property(conflict_mat, "albedo_color:a", 0.0, 0.6).set_ease(Tween.EASE_OUT)
-	tw.parallel().tween_property(conflict_mat, "emission_energy_multiplier", 0.0, 0.6).set_ease(Tween.EASE_OUT)
-	tw.tween_callback(func(): node.queue_free())
+	tw.tween_callback(func():
+		spark.visible = true
+		mat.albedo_color.a = 1.0
+	).set_delay(delay)
+	tw.tween_property(mat, "albedo_color:a", 0.0, lifespan).set_ease(Tween.EASE_OUT)
+	tw.parallel().tween_property(mat, "emission_energy_multiplier", 0.0, lifespan).set_ease(Tween.EASE_OUT)
+	tw.tween_callback(func(): spark.queue_free())
 
 
 func _on_highlight_changed(region_id: String) -> void:

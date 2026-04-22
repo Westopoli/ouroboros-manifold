@@ -290,15 +290,16 @@ func _update_selection_rings() -> void:
 			else:
 				ring.visible = false
 		else:
-			# Spawn new ring
+			# Spawn new ring — dimmer, faction-colored per Stage 12.5H
 			var ring := MeshInstance3D.new()
 			ring.mesh = _sel_ring_mesh
 			var mat := StandardMaterial3D.new()
-			mat.albedo_color = Color.WHITE
+			var fc: Color = EraThemeResolver.get_faction_color(0)
+			mat.albedo_color = Color(fc.r, fc.g, fc.b, 0.35)
 			mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 			mat.emission_enabled = true
-			mat.emission = Color.WHITE
-			mat.emission_energy_multiplier = 0.6
+			mat.emission = fc
+			mat.emission_energy_multiplier = 0.3
 			ring.set_surface_override_material(0, mat)
 			add_child(ring)
 			_sel_rings[uid] = ring

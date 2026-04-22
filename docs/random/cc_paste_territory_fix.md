@@ -1,48 +1,56 @@
-# CC Paste — Territory Voronoi Fix
+# CC Paste — Territory Visual Fix Round 3
 
-## Problem
-Shader draws per-system outline rings + thin border lines instead of filled territory regions. The `outline_width`/`outline_alpha` uniforms and the ring-drawing code (lines 54-58 in current shader) are wrong. Fill alpha is set to 0.04 — nearly invisible.
+## What's wrong
 
-## Fix 1: Replace the shader
+Three problems visible in the screenshot:
 
-Replace `scenes/shared/world_view/renderers/territory_voronoi.gdshader` entirely with the uploaded file `territory_voronoi.gdshader`. The new shader:
-- Removes all outline/ring code
-- Fills each faction's Voronoi cells with translucent faction color
-- Fades fill with distance from nearest system (no fill beyond falloff radius)
-- Draws soft luminous glow at faction boundaries only (not between same-faction systems)
-- No per-system circles, no wireframe, just smooth filled regions
+1. **Thick colored outline rings** at each faction's territory perimeter (the bold green/blue/red loops). The reference image has NO outlines — territory fades smoothly to nothing.
+2. **Fill too opaque in the center, too sharp at the edge.** Reference shows soft, gradual fade. Current has a tight smoothstep creating a distinct boundary.
+3. **No faction border glow.** Where blue meets green meets red, the reference shows a bright luminous edge. Current shader has no faction-boundary code.
+
+## Fix 1: Replace shader file
+
+Replace `scenes/shared/world_view/renderers/territory_voronoi.gdshader` with the uploaded `territory_voronoi.gdshader`.
+
+Key changes from the current shader:
+- **Deleted** lines 12-13 (`outline_width`, `outline_alpha` uniforms) — gone entirely
+- **Deleted** lines 57-61 (outline ring calculation) — gone entirely
+- **Added** `border_width`, `border_brightness`, `border_alpha` uniforms for faction boundary glow
+- **Added** faction border glow code (brightens color where two different factions' Voronoi cells meet)
+- **Widened** the smoothstep band: `smoothstep(falloff - softness, falloff + softness, dist)` instead of `smoothstep(falloff - softness, falloff, dist)` — this doubles the fade zone so edges are gradual, not abrupt
+- **Removed** the `proximity_fade` near system centers (line 53 in current) — unnecessary
 
 ## Fix 2: Update uniform values in `_setup_territory_voronoi()`
 
-The shader uniforms changed. Replace the `set_shader_parameter` block with:
+In `world_view_structure.gd`, replace the shader parameter block (around lines 703-709) with:
 
 ```gdscript
 shader_mat.set_shader_parameter("system_data", _system_data_texture)
 shader_mat.set_shader_parameter("faction_colors", _faction_colors_texture)
 shader_mat.set_shader_parameter("system_count", 0)
-shader_mat.set_shader_parameter("fill_opacity", 0.15)
-shader_mat.set_shader_parameter("fill_falloff", 0.18)
-shader_mat.set_shader_parameter("edge_softness", 0.04)
-shader_mat.set_shader_parameter("border_width", 0.02)
-shader_mat.set_shader_parameter("border_brightness", 1.6)
-shader_mat.set_shader_parameter("border_alpha", 0.7)
+shader_mat.set_shader_parameter("fill_opacity", 0.18)
+shader_mat.set_shader_parameter("fill_falloff", 0.22)
+shader_mat.set_shader_parameter("edge_softness", 0.07)
+shader_mat.set_shader_parameter("border_width", 0.025)
+shader_mat.set_shader_parameter("border_brightness", 1.8)
+shader_mat.set_shader_parameter("border_alpha", 0.65)
 ```
 
-Remove any references to `fill_alpha`, `outline_width`, `outline_alpha` — those uniforms no longer exist.
+Delete any lines setting `outline_width` or `outline_alpha` — those uniforms no longer exist.
 
-## Fix 3: Plane material blend mode
+## Fix 3: Plane material
 
-In `_setup_territory_voronoi()`, the plane material currently uses `BLEND_MODE_ADD`. Change to `BLEND_MODE_MIX` so faction colors render correctly against the dark galaxy background without washing out to white:
-
+Verify the plane material uses `BLEND_MODE_MIX` (not ADD):
 ```gdscript
 plane_mat.blend_mode = BaseMaterial3D.BLEND_MODE_MIX
 ```
 
-## Verification
+## Verification checklist
 
-After applying all three fixes:
-1. Each faction's territory should appear as a soft colored translucent region
-2. Galaxy particles must be visible through the territory fill
-3. Where two factions' territory meets, a brighter glowing edge should appear
-4. No per-system circles or rings should be visible
-5. Unclaimed space (no nearby owned systems) should be fully transparent
+After all three fixes:
+- [ ] No outline rings or perimeter loops around any faction's territory
+- [ ] Territory is continuous soft-colored fill that fades gradually at the edges
+- [ ] Galaxy particles visible through the fill (opacity ~18%, not solid)
+- [ ] Where blue meets green (or any two factions), a brighter glowing edge is visible
+- [ ] No internal Voronoi cell edges between same-faction systems
+- [ ] Unclaimed space is fully transparent

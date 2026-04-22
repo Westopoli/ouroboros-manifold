@@ -6,6 +6,12 @@ extends Node3D
 const POOL_SIZE := 128
 const IMPACT_LIFETIME := 0.4
 
+# LOD thresholds (camera zoom distance)
+const LOD_TRAIL_OFF := 2000.0       # beyond this: no trail particles
+const LOD_IMPACT_OFF := 3500.0      # beyond this: no impact flash
+const LOD_CULL := 5000.0            # beyond this: don't spawn projectiles
+const DENSITY_CAP := 96             # skip spawns when active count exceeds this
+
 var _pool: Array[Dictionary] = []
 var _active: Array[Dictionary] = []
 var _impact_pool: Array[MeshInstance3D] = []
@@ -13,6 +19,8 @@ var _active_impacts: Array[Dictionary] = []
 
 var _bolt_mesh: SphereMesh
 var _impact_mesh: SphereMesh
+
+var _lod_culled: int = 0
 
 
 func _ready() -> void:
@@ -75,9 +83,18 @@ func _ready() -> void:
 		_impact_pool.append(imp)
 
 
-func spawn_projectile(from_pos: Vector3, to_pos: Vector3, speed: float, scale: float, color: Color) -> void:
+func spawn_projectile(from_pos: Vector3, to_pos: Vector3, speed: float, scale: float, color: Color, camera_zoom: float = 0.0) -> void:
+	if camera_zoom >= LOD_CULL:
+		_lod_culled += 1
+		return
+	if _active.size() >= DENSITY_CAP:
+		_lod_culled += 1
+		return
 	if _pool.is_empty():
 		return
+
+	var use_trail: bool = camera_zoom < LOD_TRAIL_OFF
+	var use_impact: bool = camera_zoom < LOD_IMPACT_OFF
 
 	var entry: Dictionary = _pool.pop_back()
 	var mi: MeshInstance3D = entry.mi
@@ -91,17 +108,17 @@ func spawn_projectile(from_pos: Vector3, to_pos: Vector3, speed: float, scale: f
 	mi.material_override = mat
 	entry.mat = mat
 
-	var trail_draw_mat: StandardMaterial3D = entry.trail_draw_mat
-	trail_draw_mat.emission = color * 0.7
-	trail_draw_mat.albedo_color = Color(color.r, color.g, color.b, 0.4)
-
-	var trail_proc_mat: ParticleProcessMaterial = entry.trail_proc_mat
-	trail_proc_mat.color = Color(color.r, color.g, color.b, 0.6)
+	if use_trail:
+		var trail_draw_mat: StandardMaterial3D = entry.trail_draw_mat
+		trail_draw_mat.emission = color * 0.7
+		trail_draw_mat.albedo_color = Color(color.r, color.g, color.b, 0.4)
+		var trail_proc_mat: ParticleProcessMaterial = entry.trail_proc_mat
+		trail_proc_mat.color = Color(color.r, color.g, color.b, 0.6)
 
 	mi.scale = Vector3.ONE * scale
 	mi.position = from_pos
 	mi.visible = true
-	trail.emitting = true
+	trail.emitting = use_trail
 
 	var dist := from_pos.distance_to(to_pos)
 	var travel_time := dist / maxf(speed, 1.0)
@@ -113,11 +130,16 @@ func spawn_projectile(from_pos: Vector3, to_pos: Vector3, speed: float, scale: f
 		"elapsed": 0.0,
 		"duration": travel_time,
 		"color": color,
+		"use_impact": use_impact,
 	})
 
 
 func get_active_count() -> int:
 	return _active.size()
+
+
+func get_lod_culled() -> int:
+	return _lod_culled
 
 
 func _process(delta: float) -> void:
@@ -130,7 +152,8 @@ func _process(delta: float) -> void:
 		mi.position = proj.from.lerp(proj.to, t)
 
 		if t >= 1.0:
-			_spawn_impact(proj.to, proj.color)
+			if proj.get("use_impact", true):
+				_spawn_impact(proj.to, proj.color)
 			mi.visible = false
 			proj.entry.trail.emitting = false
 			_pool.append(proj.entry)

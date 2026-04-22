@@ -28,10 +28,8 @@ func setup_era(era_id: String) -> void:
 	add_child(_renderer)
 
 	var camera_path: String = _config.get_camera_path(era_id)
-	print("[SHELL] camera_path='%s' renderer=%s" % [camera_path, _renderer])
 	if camera_path.is_empty():
 		# Integrated renderer+camera (e.g., world_view_structure for Settled Reach)
-		print("[SHELL] calling _renderer.setup(_data)")
 		_renderer.setup(_data)
 		_camera = _renderer
 	else:

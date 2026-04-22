@@ -103,6 +103,7 @@ func _load_settings() -> void:
 			"resolution_index": config.get_value("display", "resolution_index", 2),
 			"fullscreen": config.get_value("display", "fullscreen", false),
 			"vsync": config.get_value("display", "vsync", true),
+			"edge_scroll_speed": config.get_value("camera", "edge_scroll_speed", 1500),
 		}
 	else:
 		_settings = {
@@ -113,6 +114,7 @@ func _load_settings() -> void:
 			"resolution_index": 2,
 			"fullscreen": false,
 			"vsync": true,
+			"edge_scroll_speed": 1500,
 		}
 
 
@@ -129,6 +131,7 @@ func save_settings(settings: Dictionary) -> void:
 		"resolution_index": clampi(int(settings.get("resolution_index", 2)), 0, VALID_RESOLUTION_COUNT - 1),
 		"fullscreen": bool(settings.get("fullscreen", false)),
 		"vsync": bool(settings.get("vsync", true)),
+		"edge_scroll_speed": clampi(int(settings.get("edge_scroll_speed", 1500)), 200, 3000),
 	}
 	_settings = clamped
 	var config := ConfigFile.new()
@@ -139,4 +142,5 @@ func save_settings(settings: Dictionary) -> void:
 	config.set_value("display", "resolution_index", clamped["resolution_index"])
 	config.set_value("display", "fullscreen", clamped["fullscreen"])
 	config.set_value("display", "vsync", clamped["vsync"])
+	config.set_value("camera", "edge_scroll_speed", clamped["edge_scroll_speed"])
 	config.save(SETTINGS_PATH)

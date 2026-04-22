@@ -14,6 +14,7 @@ const _CAM_COS := 0.4226  # cos(65°)
 
 var _zoom_dist: float    = 3000.0
 var _pan_target: Vector3 = Vector3(2000.0, 0.0, 2000.0)
+var _edge_scroll_speed: float = PAN_SPEED
 
 @onready var _camera: Camera3D  = $Camera3D
 @onready var _perf_label: Label = $DebugLayer/PerfPanel/PerfLabel
@@ -26,6 +27,10 @@ var _frame_counter: int = 0
 
 var _attack_visuals: Node3D
 var _ability_overlays: Node3D
+var _impact_feedback: Node3D
+var _destruction: Node3D
+var _ambient: Node3D
+
 
 
 func _ready() -> void:
@@ -37,6 +42,22 @@ func _ready() -> void:
 	_ability_overlays.name = "AbilityOverlayManager"
 	add_child(_ability_overlays)
 	_ability_overlays.setup($Camera3D, 0, _attack_visuals)
+
+	_impact_feedback = preload("res://scenes/tactical/visuals/impact_feedback_manager.gd").new()
+	_impact_feedback.name = "ImpactFeedbackManager"
+	add_child(_impact_feedback)
+
+	_destruction = preload("res://scenes/tactical/visuals/destruction_manager.gd").new()
+	_destruction.name = "DestructionManager"
+	add_child(_destruction)
+	_destruction.setup($Camera3D)
+
+	_ambient = preload("res://scenes/tactical/visuals/ambient_density_manager.gd").new()
+	_ambient.name = "AmbientDensityManager"
+	add_child(_ambient)
+
+	var settings := UIDataBus.get_settings()
+	_edge_scroll_speed = float(settings.get("edge_scroll_speed", PAN_SPEED))
 
 	if SimBridge.USE_LIVE_SIM:
 		# Stage 10: tactical data flows through SimBridge stdio pipe.
@@ -98,6 +119,9 @@ func _on_conn_state(is_connected: bool) -> void:
 
 func _process(delta: float) -> void:
 	_handle_camera(delta)
+	_attack_visuals.camera_zoom = _zoom_dist
+	_impact_feedback.camera_zoom = _zoom_dist
+	_ambient.camera_zoom = _zoom_dist
 	_record_frame(delta)
 	_frame_counter += 1
 	if _frame_counter % 60 == 0:
@@ -105,7 +129,7 @@ func _process(delta: float) -> void:
 
 
 func _handle_camera(delta: float) -> void:
-	var pan_speed := PAN_SPEED * (_zoom_dist / 3000.0)
+	var pan_speed := _edge_scroll_speed * (_zoom_dist / 3000.0)
 	var pan := Vector3.ZERO
 	var mouse := get_viewport().get_mouse_position()
 	var vp    := get_viewport().get_visible_rect().size
@@ -168,10 +192,15 @@ func _update_perf_label() -> void:
 	var obj_count      := int(Performance.get_monitor(Performance.OBJECT_COUNT))
 	var node_count     := int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT))
 	var orphan_count   := int(Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT))
+	var fps := Engine.get_frames_per_second()
+	var atk_stats: Dictionary = _attack_visuals.get_stats()
+	var amb_stats: Dictionary = _ambient.get_stats()
 	_perf_label.text = (
-		"tick %d   units %d   zoom %.0f\n" % [TacticalBridge.current_tick, TacticalBridge.units.size(), _zoom_dist] +
+		"FPS %d   tick %d   units %d   zoom %.0f\n" % [fps, TacticalBridge.current_tick, TacticalBridge.units.size(), _zoom_dist] +
 		"frame  p50 %.1fms  p95 %.1fms  p99 %.1fms\n" % [p50, p95, p99] +
 		"dropped (>16.7ms): %d\n" % _dropped_frames +
+		"proj %d  beam %d  pulse %d  lod_cull %d\n" % [atk_stats.active_projectiles, atk_stats.active_beams, atk_stats.active_pulses, atk_stats.lod_culled] +
+		"flybys %d  haze %s\n" % [amb_stats.active_flybys, "on" if amb_stats.haze_active else "off"] +
 		"mem  static %.1fMB  dynamic %.1fMB\n" % [mem_static_mb, mem_dynamic_mb] +
 		"objects %d   nodes %d   orphans %d" % [obj_count, node_count, orphan_count]
 	)

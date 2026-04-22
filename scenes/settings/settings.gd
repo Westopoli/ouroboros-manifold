@@ -61,6 +61,7 @@ func _build_ui() -> void:
 	scroll.add_child(cards)
 
 	_build_display_card(cards)
+	_build_camera_card(cards)
 	_build_audio_card(cards)
 	_build_keybinds_card(cards)
 
@@ -137,6 +138,17 @@ func _build_display_card(parent: Control) -> void:
 			DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED)
 		else:
 			DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
+	)
+
+
+func _build_camera_card(parent: Control) -> void:
+	var card = load("res://theme/components/tm_card.tscn").instantiate()
+	card.card_title = "CAMERA"
+	parent.add_child(card)
+	var content = card.get_content_container()
+
+	_add_slider(content, "Edge Scroll Speed", _settings.get("edge_scroll_speed", 1500) / 30.0, func(val: float) -> void:
+		_settings["edge_scroll_speed"] = int(val * 30.0)
 	)
 
 
