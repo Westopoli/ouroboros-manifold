@@ -57,11 +57,21 @@ func _ready() -> void:
 	TacticalBridge.snapshot_received.connect(_on_snapshot)
 	TacticalBridge.tick_delta_received.connect(_on_delta)
 
+var _facing_log_frames: int = 0
 
 func _process(_delta: float) -> void:
 	_update_transforms()
 	_update_selection_rings()
 	_update_layer_rings()
+
+	_facing_log_frames += 1
+	if _facing_log_frames % 180 == 0:
+		var sample := ""
+		for uid in range(mini(TacticalBridge.unit_count, 4)):
+			if TacticalBridge.display_alive[uid] == 1:
+				sample += "uid=%d facing=%.3f  " % [uid, TacticalBridge.display_facing[uid]]
+		if sample != "":
+			print("[FACING-GD] ", sample)
 
 
 func _on_snapshot(_snap: Dictionary) -> void:
@@ -258,7 +268,7 @@ func _update_transforms() -> void:
 			var offset: Vector2 = entry.offset
 			var vscale: float = entry.vscale
 
-			var facing: float = TacticalBridge.display_facing[uid] + entry.facing_offset
+			var facing: float = -TacticalBridge.display_facing[uid] - PI / 2.0 + entry.facing_offset
 			var basis := Basis(Vector3.UP, facing).scaled(Vector3(vscale, vscale, vscale))
 			var origin := Vector3(px + offset.x, y, py + offset.y)
 			mm.set_instance_transform(write_idx, Transform3D(basis, origin))

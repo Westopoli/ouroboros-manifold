@@ -382,114 +382,37 @@ def make_registry(*factions) -> dict:
     return {f.id: f for f in factions}
 
 
-def generate_starting_factions(template: str,
-                               rng: random.Random | None = None,
+def generate_starting_factions(rng: random.Random | None = None,
                                world=None) -> list:
-    """
-    Return the starting list of Faction objects for a given world template.
-    rng: seeded RNG used to roll per-faction attack_confidence (pass world.rng for
-         deterministic per-seed personalities). Falls back to random.Random() if None.
-    world: if provided, tech_level is derived from avg population across each faction's
-           starting regions (STARTING_TECH_RATIO). Without world, falls back to the
-           archetype range roll (used for mid-simulation faction creation).
-    Stances are cross-populated; both factions hostile toward each other.
-    """
-    if template == "isolated_start":
-        player = Faction(
-            "player", theme.FACTION_DISPLAY_NAMES["player_civilization"], "player_civilization",
-            budget=0.0,
-            modifiers={},
-            diplomatic_stance={"conqueror": "hostile"},
-            rng=rng,
-        )
-        conqueror = Faction(
-            "conqueror", theme.FACTION_DISPLAY_NAMES["conqueror"], "conqueror",
-            budget=0.0,
-            # Militaristic faction: meaningful military drift bonus offsets maintenance decay.
-            # 0.5/tick per region lets the conqueror sustain moderate military strength.
-            modifiers={"military": 0.05},
-            diplomatic_stance={"player": "hostile"},
-            rng=rng,
-        )
-        factions = [player, conqueror]
-    elif template == "four_way":
-        player = Faction(
-            "player", theme.FACTION_DISPLAY_NAMES["player_civilization"], "player_civilization",
-            budget=0.0,
-            modifiers={},
-            diplomatic_stance={"conqueror": "hostile", "fortifier": "hostile", "opportunist": "hostile"},
-            rng=rng,
-        )
-        conqueror = Faction(
-            "conqueror", theme.FACTION_DISPLAY_NAMES["conqueror"], "conqueror",
-            budget=0.0,
-            modifiers={"military": 0.05},
-            diplomatic_stance={"player": "hostile", "fortifier": "hostile", "opportunist": "hostile"},
-            rng=rng,
-        )
-        fortifier = Faction(
-            "fortifier", "The Fortifier", "fortifier",
-            budget=0.0,
-            modifiers={},
-            diplomatic_stance={"player": "hostile", "conqueror": "hostile", "opportunist": "hostile"},
-            rng=rng,
-        )
-        opportunist = Faction(
-            "opportunist", "The Opportunist", "opportunist",
-            budget=0.0,
-            modifiers={},
-            diplomatic_stance={"player": "hostile", "conqueror": "hostile", "fortifier": "hostile"},
-            rng=rng,
-        )
-        factions = [player, conqueror, fortifier, opportunist]
-    elif template == "contested_border":
-        player = Faction(
-            "player", theme.FACTION_DISPLAY_NAMES["player_civilization"], "player_civilization",
-            budget=0.0,
-            modifiers={},
-            diplomatic_stance={"conqueror": "hostile"},
-            rng=rng,
-        )
-        conqueror = Faction(
-            "conqueror", theme.FACTION_DISPLAY_NAMES["conqueror"], "conqueror",
-            budget=0.0,
-            modifiers={"military": 0.05},
-            diplomatic_stance={"player": "hostile"},
-            rng=rng,
-        )
-        factions = [player, conqueror]
-    elif template == "full_game_50":
-        player = Faction(
-            "player", theme.FACTION_DISPLAY_NAMES["player_civilization"], "player_civilization",
-            budget=0.0,
-            modifiers={},
-            diplomatic_stance={"conqueror": "hostile", "fortifier": "hostile", "opportunist": "hostile"},
-            rng=rng,
-        )
-        conqueror = Faction(
-            "conqueror", theme.FACTION_DISPLAY_NAMES["conqueror"], "conqueror",
-            budget=0.0,
-            modifiers={"military": 0.05},
-            diplomatic_stance={"player": "hostile", "fortifier": "hostile", "opportunist": "hostile"},
-            rng=rng,
-        )
-        fortifier = Faction(
-            "fortifier", "The Fortifier", "fortifier",
-            budget=0.0,
-            modifiers={},
-            diplomatic_stance={"player": "hostile", "conqueror": "hostile", "opportunist": "hostile"},
-            rng=rng,
-        )
-        opportunist = Faction(
-            "opportunist", "The Opportunist", "opportunist",
-            budget=0.0,
-            modifiers={},
-            diplomatic_stance={"player": "hostile", "conqueror": "hostile", "fortifier": "hostile"},
-            rng=rng,
-        )
-        factions = [player, conqueror, fortifier, opportunist]
-    else:
-        raise ValueError(f"No starting factions defined for template: {template!r}")
+    player = Faction(
+        "player", theme.FACTION_DISPLAY_NAMES["player_civilization"], "player_civilization",
+        budget=0.0,
+        modifiers={},
+        diplomatic_stance={"conqueror": "hostile", "fortifier": "hostile", "opportunist": "hostile"},
+        rng=rng,
+    )
+    conqueror = Faction(
+        "conqueror", theme.FACTION_DISPLAY_NAMES["conqueror"], "conqueror",
+        budget=0.0,
+        modifiers={"military": 0.05},
+        diplomatic_stance={"player": "hostile", "fortifier": "hostile", "opportunist": "hostile"},
+        rng=rng,
+    )
+    fortifier = Faction(
+        "fortifier", "The Fortifier", "fortifier",
+        budget=0.0,
+        modifiers={},
+        diplomatic_stance={"player": "hostile", "conqueror": "hostile", "opportunist": "hostile"},
+        rng=rng,
+    )
+    opportunist = Faction(
+        "opportunist", "The Opportunist", "opportunist",
+        budget=0.0,
+        modifiers={},
+        diplomatic_stance={"player": "hostile", "conqueror": "hostile", "fortifier": "hostile"},
+        rng=rng,
+    )
+    factions = [player, conqueror, fortifier, opportunist]
     if world is not None:
         _apply_population_tech(factions, world)
     return factions

@@ -610,9 +610,9 @@ The simulation is built and validated before any other system. No Godot, no UI, 
 
 ### Stage 1 — World Generation and Multi-Region Drift (Prove Regions Interact)
 
-Stage 1 builds on the single-region SD model proven in Stage 0 by introducing a **world graph** — multiple regions connected by adjacency, each running the same drift logic but producing different trajectories based on starting values and connections. The world is generated from the isolated start template (1 home, 2 frontier, 4–6 empty regions). Each region drifts independently through the proven Stage 0 formulas, with three new inter-region mechanics layered on top: baseline recruitment, territorial adjacency bonus, and feedback-isolated economic/tension oscillation.
+Stage 1 builds on the single-region SD model proven in Stage 0 by introducing a **world graph** — multiple regions connected by random adjacency, each running the same drift logic but producing different trajectories based on starting values and connections. The world is generated procedurally: 40-60 regions per game (randomized), with 4 factions each starting with a home region and one frontier region. The remaining regions start empty. The adjacency graph is built from a random spanning tree plus extra edges, ensuring connectivity while maintaining sparse corridors. Faction home regions are separated by a minimum buffer of empty regions. Each region drifts independently through the proven Stage 0 formulas, with three new inter-region mechanics layered on top: baseline recruitment, territorial adjacency bonus, and feedback-isolated economic/tension oscillation.
 
-**What was proven:** Home regions and frontier regions, starting from different field values within the same template, produce meaningfully different drift trajectories. Frontiers show more volatility than home (weaker starting position amplifies sensitivity to drift interactions). Multiple generations from the same template produce variety — different random seeds produce divergent outcomes that amplify over time rather than converging. Long-run behavior (500 ticks) is coherent: no degenerate states, no collapses from healthy starting positions, trajectories are explainable from the underlying mechanics.
+**What was proven:** Home regions and frontier regions, starting from different field values, produce meaningfully different drift trajectories. Frontiers show more volatility than home (weaker starting position amplifies sensitivity to drift interactions). Different random seeds produce divergent outcomes that amplify over time rather than converging. Long-run behavior (500 ticks) is coherent: no degenerate states, no collapses from healthy starting positions, trajectories are explainable from the underlying mechanics.
 
 **Key tuning decisions during Stage 1:**
 
@@ -626,7 +626,7 @@ Stage 1 builds on the single-region SD model proven in Stage 0 by introducing a 
 
 - **Oscillation config values** were tuned iteratively — periods and amplitudes were adjusted from their original starting points to create agent-exploitable windows at the simulation's timescale while keeping long-term trends dominant. See config.py for current values.
 
-**Empty region topology.** The template generator creates empty regions in chains off each frontier (empty_1↔empty_2 off frontier_1, etc.) rather than as independent dead-ends. This creates expansion corridors — chains of uninhabited space that factions can colonize sequentially. The number of empty regions is randomized (4–6) per generation.
+**World topology.** Each new game generates a random connected graph of 40-60 regions. Four factions are placed with separation guarantees — no faction home is adjacent to another faction's territory. Empty regions form natural corridors and chokepoints through the random spanning tree structure. The player does not choose a starting template — every game produces a unique topology.
 
 ### Stage 3 Tuning Observations
 

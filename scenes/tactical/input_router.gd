@@ -10,6 +10,12 @@ const _UNIT_PICK_RADIUS := 30.0
 
 const _ABILITY_KEYS: Array[int] = [KEY_W, KEY_S, KEY_D, KEY_C, KEY_E]
 
+const _CATEGORY_TYPES: Dictionary = {
+	2: ["raider", "interceptor"],
+	3: ["vanguard", "warden"],
+	4: ["bombard", "bastion"],
+}
+
 var selected_uids: Array[int] = []
 var active_layer: int = 0
 
@@ -86,7 +92,12 @@ func _handle_digit(ke: InputEventKey) -> void:
 	elif ke.shift_pressed and digit >= 1 and digit <= 5:
 		_cmd_layer_preference(digit)
 	elif not ke.shift_pressed:
-		_recall_group(digit)
+		if digit == 1:
+			_select_all_army()
+		elif digit >= 2 and digit <= 4:
+			_select_by_category(digit)
+		else:
+			_recall_group(digit)
 
 
 func _handle_ability(ke: InputEventKey) -> void:
@@ -146,6 +157,17 @@ func _select_all_army() -> void:
 	selected_uids.clear()
 	for uid: int in TacticalBridge.units:
 		if TacticalBridge.units[uid].get("selection_eligible", false):
+			selected_uids.append(uid)
+
+
+func _select_by_category(digit: int) -> void:
+	var types: Array = _CATEGORY_TYPES.get(digit, [])
+	selected_uids.clear()
+	for uid: int in TacticalBridge.units:
+		var unit: Dictionary = TacticalBridge.units[uid]
+		if not unit.get("selection_eligible", false):
+			continue
+		if unit.get("type", "").to_lower() in types:
 			selected_uids.append(uid)
 
 

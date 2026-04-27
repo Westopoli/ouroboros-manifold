@@ -6,11 +6,9 @@ func _init() -> void:
 	_save_slots = [
 		{
 			"id": "slot_001",
-			"name": "Roman \u2014 Isolated Start",
+			"name": "Roman",
 			"era_id": "roman",
 			"era_name": "Roman",
-			"template_id": "isolated_start",
-			"template_name": "Isolated Start",
 			"chapter": 3,
 			"generation": 7,
 			"playtime_seconds": 14520,
@@ -19,11 +17,9 @@ func _init() -> void:
 		},
 		{
 			"id": "slot_002",
-			"name": "1980s \u2014 Twin Colony",
+			"name": "1980s",
 			"era_id": "1980s",
 			"era_name": "1980s",
-			"template_id": "twin_colony",
-			"template_name": "Twin Colony",
 			"chapter": 1,
 			"generation": 2,
 			"playtime_seconds": 4500,
@@ -122,23 +118,16 @@ func get_save_slots() -> Array[Dictionary]:
 	return _save_slots
 
 
-func create_save_slot(era_id: String, template_id: String, slot_name: String) -> Dictionary:
+func create_save_slot(era_id: String, slot_name: String) -> Dictionary:
 	var safe_name := InputSanitizer.sanitize(slot_name, "save_name")
 	var era := get_era_detail(era_id)
-	var template_name := ""
-	for t in get_starting_templates():
-		if t["id"] == template_id:
-			template_name = t["name"]
-			break
 	if safe_name == "":
-		safe_name = "%s \u2014 %s" % [era.get("name", era_id), template_name]
+		safe_name = era.get("name", era_id)
 	var slot := {
 		"id": "slot_%03d" % (_save_slots.size() + 1),
 		"name": safe_name,
 		"era_id": era_id,
 		"era_name": era.get("name", era_id),
-		"template_id": template_id,
-		"template_name": template_name,
 		"chapter": 1,
 		"generation": 1,
 		"playtime_seconds": 0,
@@ -155,29 +144,6 @@ func delete_save_slot(slot_id: String) -> bool:
 			_save_slots.remove_at(i)
 			return true
 	return false
-
-
-func get_starting_templates() -> Array[Dictionary]:
-	return [
-		{
-			"id": "isolated_start",
-			"name": "Isolated Start",
-			"description": "A single homeland pushing outward into the unknown. Straightforward, good for learning.",
-			"ascii_diagram": "[H]\u2500\u2500[F]\u2500\u2500[F]\u2500\u2500[ ]\u2500\u2500[ ]\u2500\u2500[ ]"
-		},
-		{
-			"id": "twin_colony",
-			"name": "Twin Colony",
-			"description": "Two allied homelands separated by neutral territory. Cooperation is survival.",
-			"ascii_diagram": "[H]\u2500\u2500[ ]\u2500\u2500[ ]\u2500\u2500[ ]\u2500\u2500[H]"
-		},
-		{
-			"id": "archipelago",
-			"name": "Archipelago",
-			"description": "Scattered regions with sparse connections. Every border matters.",
-			"ascii_diagram": "[H]  [F]    [ ]\n  \\  |   / \n   [ ]\u2500[ ]\u2500[F]"
-		},
-	]
 
 
 func get_mission_briefing(_mission_id: String) -> Dictionary:

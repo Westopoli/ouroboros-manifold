@@ -13,6 +13,7 @@ const SCENES := {
 	"mission_briefing": "res://scenes/mission_briefing/mission_briefing.tscn",
 	"tactical": "res://scenes/tactical/tactical.tscn",
 	"debrief": "res://scenes/debrief/debrief.tscn",
+	"time_jump": "res://scenes/world/time_jump_sequencer.tscn",
 	"settings": "res://scenes/settings/settings.tscn",
 }
 

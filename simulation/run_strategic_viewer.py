@@ -28,10 +28,10 @@ def run(scenario_name, ticks_override, seed_override, launch):
     seed = seed_override if seed_override is not None else scenario["seed"]
     ticks = ticks_override if ticks_override is not None else scenario["ticks"]
 
-    w = world_mod.generate(scenario["template"], seed=seed)
+    w = world_mod.generate_random(seed=seed)
 
     try:
-        factions = faction_mod.generate_starting_factions(scenario["template"], rng=w.rng, world=w)
+        factions = faction_mod.generate_starting_factions(rng=w.rng, world=w)
         registry = faction_mod.make_registry(*factions)
     except ValueError:
         registry = {}
@@ -48,7 +48,7 @@ def run(scenario_name, ticks_override, seed_override, launch):
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     dump_path = os.path.join(DUMPS_DIR, f"{scenario_name}_{timestamp}.jsonl")
 
-    logger = StrategicLogger(dump_path, scenario_name, w, registry, template=scenario["template"])
+    logger = StrategicLogger(dump_path, scenario_name, w, registry, template="")
     logger.log_tick(0, w, registry, [], {})
 
     for t in range(1, ticks + 1):

@@ -172,7 +172,7 @@
   },
   {
     "id": "LT_C_003",
-    "text": "In {region_name}, {lineage_name} name became one of those quiet certainties that people stopped questioning — the kind of permanence that invites complacency as readily as confidence.",
+    "text": "In {region_name}, {lineage_name} name became one of those quiet certainties that people stopped questioning \u2014 the kind of permanence that invites complacency as readily as confidence.",
     "slots_used": [
       "{region_name}",
       "{lineage_name}"
@@ -193,7 +193,7 @@
   },
   {
     "id": "LT_C_005",
-    "text": "For now, {lineage_name} household stood on ground of its own making, {stability_level} in its position and certain of its purpose — a certainty that history rarely leaves undisturbed.",
+    "text": "For now, {lineage_name} household stood on ground of its own making, {stability_level} in its position and certain of its purpose \u2014 a certainty that history rarely leaves undisturbed.",
     "slots_used": [
       "{lineage_name}",
       "{stability_level}"
@@ -236,7 +236,7 @@
   },
   {
     "id": "LS_O_004",
-    "text": "No single disaster unmade {lineage_name} — it was a slow accumulation of wounds, each compounding the last.",
+    "text": "No single disaster unmade {lineage_name} \u2014 it was a slow accumulation of wounds, each compounding the last.",
     "slots_used": [
       "{lineage_name}"
     ],
@@ -266,7 +266,7 @@
   },
   {
     "id": "LS_D_001",
-    "text": "{lineage_name} buried three of their own before the season turned. No battles claimed them — only the particular cruelties of a world grown indifferent to old loyalties.",
+    "text": "{lineage_name} buried three of their own before the season turned. No battles claimed them \u2014 only the particular cruelties of a world grown indifferent to old loyalties.",
     "slots_used": [
       "{lineage_name}"
     ],
@@ -308,7 +308,7 @@
   },
   {
     "id": "LS_D_005",
-    "text": "{lineage_name} sent petitions to every authority that would receive them, but the replies — when they came at all — offered sympathy without substance. {duration_prose}, the family learned the difference between allies and acquaintances.",
+    "text": "{lineage_name} sent petitions to every authority that would receive them, but the replies \u2014 when they came at all \u2014 offered sympathy without substance. {duration_prose}, the family learned the difference between allies and acquaintances.",
     "slots_used": [
       "{lineage_name}",
       "{duration_prose}"
@@ -330,7 +330,7 @@
   },
   {
     "id": "LS_D_007",
-    "text": "What remained of {lineage_name} influence in {region_name} could be measured in silences — seats left empty at council, invitations no longer extended, debts called in by creditors who once would not have dared.",
+    "text": "What remained of {lineage_name} influence in {region_name} could be measured in silences \u2014 seats left empty at council, invitations no longer extended, debts called in by creditors who once would not have dared.",
     "slots_used": [
       "{lineage_name}",
       "{region_name}"
@@ -361,7 +361,7 @@
   },
   {
     "id": "LS_C_002",
-    "text": "{lineage_name} endured, though the word felt hollow. What persisted was not strength but habit — the slow insistence of a name that had forgotten how to disappear.",
+    "text": "{lineage_name} endured, though the word felt hollow. What persisted was not strength but habit \u2014 the slow insistence of a name that had forgotten how to disappear.",
     "slots_used": [
       "{lineage_name}"
     ],
@@ -382,7 +382,7 @@
   },
   {
     "id": "LS_C_004",
-    "text": "Grief, for {lineage_name}, became a kind of inheritance — passed from parent to child not in words but in the careful way they held what little remained.",
+    "text": "Grief, for {lineage_name}, became a kind of inheritance \u2014 passed from parent to child not in words but in the careful way they held what little remained.",
     "slots_used": [
       "{lineage_name}"
     ],
@@ -486,7 +486,7 @@
   },
   {
     "id": "LQ_D_003",
-    "text": "With conditions across {region_name} holding at {stability_level} levels, {lineage_name} household occupied itself with the slow business of living — marriages arranged without urgency, debts repaid in full, land neither gained nor lost.",
+    "text": "With conditions across {region_name} holding at {stability_level} levels, {lineage_name} household occupied itself with the slow business of living \u2014 marriages arranged without urgency, debts repaid in full, land neither gained nor lost.",
     "slots_used": [
       "{region_name}",
       "{stability_level}",
@@ -530,19 +530,19 @@
   },
   {
     "id": "LQ_D_007",
-    "text": "{lineage_name} household observed the usual rites, settled the usual quarrels among cousins, and buried the usual number of old men and women. Stability in {region_name} held at {stability_level} levels, and life asked nothing extraordinary of them.",
+    "text": "{lineage_name} household observed the usual rites, settled the usual quarrels, and buried the usual number of elders. Stability in {region_name} held at {stability_level} levels, and life asked nothing extraordinary.",
     "slots_used": [
-      "{lineage_name}",
       "{region_name}",
+      "{lineage_name}",
       "{stability_level}"
     ],
-    "word_count": 38,
+    "word_count": 29,
     "type": "detail",
     "category": "lineage_quiet"
   },
   {
     "id": "LQ_D_008",
-    "text": "{duration_prose}, {lineage_name} name carried quietly forward — not celebrated, not threatened, simply present. A son learned his father's trade. A daughter married into a neighboring family and was, by all accounts, content.",
+    "text": "{duration_prose}, {lineage_name} name carried quietly forward \u2014 not celebrated, not threatened, simply present. A son learned his father's trade. A daughter married into a neighboring family and was, by all accounts, content.",
     "slots_used": [
       "{duration_prose}",
       "{lineage_name}"
@@ -573,7 +573,7 @@
   },
   {
     "id": "LQ_C_003",
-    "text": "{lineage_name} household emerged from these quiet years neither stronger nor weaker — only older, and perhaps wiser for having wanted nothing they did not already possess.",
+    "text": "{lineage_name} household emerged from these quiet years neither stronger nor weaker \u2014 only older, and perhaps wiser for having wanted nothing they did not already possess.",
     "slots_used": [
       "{lineage_name}"
     ],
@@ -583,7 +583,7 @@
   },
   {
     "id": "LQ_C_004",
-    "text": "In {region_name}, {lineage_name} family had become part of the landscape — expected, unremarkable, and more deeply rooted than anyone, including themselves, quite realized.",
+    "text": "In {region_name}, {lineage_name} family had become part of the landscape \u2014 expected, unremarkable, and more deeply rooted than anyone, including themselves, quite realized.",
     "slots_used": [
       "{region_name}",
       "{lineage_name}"
@@ -658,7 +658,7 @@
   },
   {
     "id": "LMA_O_006",
-    "text": "There was no ceremony to {lineage_name} mobilization — only the grim arithmetic of how many could be spared and how quickly.",
+    "text": "There was no ceremony to {lineage_name} mobilization \u2014 only the grim arithmetic of how many could be spared and how quickly.",
     "slots_used": [
       "{lineage_name}"
     ],
@@ -680,7 +680,7 @@
   },
   {
     "id": "LMA_D_002",
-    "text": "Across {region_name}, {lineage_name} forces engaged in a series of contested actions that yielded no single decisive moment but collectively shaped the ground on which the next season’s campaigns would be fought.",
+    "text": "Across {region_name}, {lineage_name} forces engaged in a series of contested actions that yielded no single decisive moment but collectively shaped the ground on which the next season\u2019s campaigns would be fought.",
     "slots_used": [
       "{region_name}",
       "{lineage_name}"
@@ -713,7 +713,7 @@
   },
   {
     "id": "LMA_D_005",
-    "text": "{lineage_name} contribution to the campaign was not the stuff of ballads — supply trains guarded, flanks screened, garrisons rotated through thankless postings in {region_name} — but it was the work that kept the effort standing.",
+    "text": "{lineage_name} contribution to the campaign was not the stuff of ballads \u2014 supply trains guarded, flanks screened, garrisons rotated through thankless postings in {region_name} \u2014 but it was the work that kept the effort standing.",
     "slots_used": [
       "{lineage_name}",
       "{region_name}"
@@ -789,7 +789,7 @@
   },
   {
     "id": "LMA_C_004",
-    "text": "What {lineage_name} purchased with that season's blood was not victory but credibility — the kind that is acknowledged in silence and repaid, if at all, in future considerations.",
+    "text": "What {lineage_name} purchased with that season's blood was not victory but credibility \u2014 the kind that is acknowledged in silence and repaid, if at all, in future considerations.",
     "slots_used": [
       "{lineage_name}"
     ],
@@ -841,7 +841,7 @@
   },
   {
     "id": "SU_O_004",
-    "text": "{lineage_name} succession unfolded as such things do — quietly, imperfectly, and with the weight of everything left unsaid between parent and child.",
+    "text": "{lineage_name} succession unfolded as such things do \u2014 quietly, imperfectly, and with the weight of everything left unsaid between parent and child.",
     "slots_used": [
       "{lineage_name}"
     ],
@@ -861,7 +861,7 @@
   },
   {
     "id": "SU_O_006",
-    "text": "A chapter closed for {lineage_name}, though the household itself continued — altered in voice, if not in name.",
+    "text": "A chapter closed for {lineage_name}, though the household itself continued \u2014 altered in voice, if not in name.",
     "slots_used": [
       "{lineage_name}"
     ],
@@ -882,7 +882,7 @@
   },
   {
     "id": "SU_D_002",
-    "text": "{lineage_name} heir inherited not merely property and title but a web of obligations — debts of loyalty owed and owed to, alliances maintained through habit, and enemies whose grievances predated their birth.",
+    "text": "{lineage_name} heir inherited not merely property and title but a web of obligations \u2014 debts of loyalty owed and owed to, alliances maintained through habit, and enemies whose grievances predated their birth.",
     "slots_used": [
       "{lineage_name}"
     ],
@@ -913,7 +913,7 @@
   },
   {
     "id": "SU_D_005",
-    "text": "{character_name} of {lineage_name} house brought a different temperament to the family's affairs — less cautious, perhaps, but no less deliberate. The household's priorities shifted in ways that only became legible with time.",
+    "text": "{character_name} of {lineage_name} house brought a different temperament to the family's affairs \u2014 less cautious, perhaps, but no less deliberate. The household's priorities shifted in ways that only became legible with time.",
     "slots_used": [
       "{character_name}",
       "{lineage_name}"
@@ -924,7 +924,7 @@
   },
   {
     "id": "SU_D_006",
-    "text": "{duration_prose}, {lineage_name} completed a generational transfer that left the family's outward position largely intact. What changed was interior — a matter of instinct, emphasis, and which debts the new steward chose to honor first.",
+    "text": "{duration_prose}, {lineage_name} completed a generational transfer that left the family's outward position largely intact. What changed was interior \u2014 a matter of instinct, emphasis, and which debts the new steward chose to honor first.",
     "slots_used": [
       "{duration_prose}",
       "{lineage_name}"
@@ -945,11 +945,11 @@
   },
   {
     "id": "SU_D_008",
-    "text": "Among {lineage_name} kin, the succession was remembered less for who assumed authority than for what was preserved in the passage — certain letters, a way of conducting business, an instinct for when to speak and when to wait.",
+    "text": "Among {lineage_name} kin, the succession was remembered less for who assumed authority than for what was preserved \u2014 certain letters, a way of conducting business, an instinct for timing.",
     "slots_used": [
       "{lineage_name}"
     ],
-    "word_count": 36,
+    "word_count": 29,
     "type": "detail",
     "category": "lineage_succession"
   },
@@ -965,7 +965,7 @@
   },
   {
     "id": "SU_C_002",
-    "text": "Every generation of {lineage_name} house believed itself the rightful custodian of the family's legacy. History would adjudicate, as it always does — slowly, and without appeal.",
+    "text": "Every generation of {lineage_name} house believed itself the rightful custodian of the family's legacy. History would adjudicate, as it always does \u2014 slowly, and without appeal.",
     "slots_used": [
       "{lineage_name}"
     ],
@@ -1016,7 +1016,7 @@
   },
   {
     "id": "CCRW_O_002",
-    "text": "{duration_prose}, {region_name} clawed its way back from the edge — not triumphantly, but with the grim patience of survivors.",
+    "text": "{duration_prose}, {region_name} clawed its way back from the edge \u2014 not triumphantly, but with the grim patience of survivors.",
     "slots_used": [
       "{duration_prose}",
       "{region_name}"
@@ -1067,12 +1067,12 @@
   },
   {
     "id": "CCRW_D_001",
-    "text": "The chain of failures that had threatened {region_name} — {chain_length} crises deep before the turn — was arrested not by intervention from without but by a series of unglamorous local compromises that, taken together, amounted to rescue.",
+    "text": "The chain of failures that had threatened {region_name} \u2014 {chain_length} crises deep \u2014 was arrested not by outside intervention but by a series of unglamorous local compromises that amounted to rescue.",
     "slots_used": [
       "{region_name}",
       "{chain_length}"
     ],
-    "word_count": 37,
+    "word_count": 31,
     "type": "detail",
     "category": "chain_crisis_resolved_well"
   },
@@ -1089,11 +1089,11 @@
   },
   {
     "id": "CCRW_D_003",
-    "text": "In {region_name}, the worst had passed — though it took time for anyone to believe it. The reversal came unevenly — some districts recovered within seasons while others nursed their wounds for years — but the trajectory, at last, pointed upward.",
+    "text": "In {region_name}, the worst had passed \u2014 though it took time for anyone to believe it. Recovery came unevenly, but the trajectory, at last, pointed upward.",
     "slots_used": [
       "{region_name}"
     ],
-    "word_count": 40,
+    "word_count": 26,
     "type": "detail",
     "category": "chain_crisis_resolved_well"
   },
@@ -1110,7 +1110,7 @@
   },
   {
     "id": "CCRW_D_005",
-    "text": "Conditions across {region_name} steadied to {stability_level} levels — not the prosperity anyone had hoped for, but a foundation solid enough to build upon, and after what had come before, no one complained.",
+    "text": "Conditions across {region_name} steadied to {stability_level} levels \u2014 not the prosperity anyone had hoped for, but a foundation solid enough to build upon, and after what had come before, no one complained.",
     "slots_used": [
       "{region_name}",
       "{stability_level}"
@@ -1163,7 +1163,7 @@
   },
   {
     "id": "CCRW_C_002",
-    "text": "In later years, the recovery of {region_name} would be cited as proof that ruin is not inevitable — though those who lived through it preferred not to test the thesis twice.",
+    "text": "In later years, the recovery of {region_name} would be cited as proof that ruin is not inevitable \u2014 though those who lived through it preferred not to test the thesis twice.",
     "slots_used": [
       "{region_name}"
     ],
@@ -1183,7 +1183,7 @@
   },
   {
     "id": "CCRW_C_004",
-    "text": "Stability returned to {region_name}, but it was the wary kind — the stability of people who had seen how quickly the ground could shift, and who slept lightly because of it.",
+    "text": "Stability returned to {region_name}, but it was the wary kind \u2014 the stability of people who had seen how quickly the ground could shift, and who slept lightly because of it.",
     "slots_used": [
       "{region_name}"
     ],
@@ -1289,12 +1289,12 @@
   },
   {
     "id": "CCRB_D_003",
-    "text": "With stability at {stability_level} levels across {region_name}, the decisions made under pressure proved ruinous in hindsight. Resources were committed to the wrong positions, alliances sought with the wrong parties, and the cost of each error multiplied.",
+    "text": "With stability at {stability_level} levels across {region_name}, decisions made under pressure proved ruinous. Resources went to the wrong positions, alliances to the wrong parties, and each error compounded.",
     "slots_used": [
-      "{stability_level}",
-      "{region_name}"
+      "{region_name}",
+      "{stability_level}"
     ],
-    "word_count": 35,
+    "word_count": 28,
     "type": "detail",
     "category": "chain_crisis_resolved_badly"
   },
@@ -1491,7 +1491,7 @@
   },
   {
     "id": "CCV_D_003",
-    "text": "Three engagements decided {region_name}: one at its northern approaches, one at its river crossings, and one — the briefest and most consequential — at the gates of its administrative center. Each was won convincingly.",
+    "text": "Three engagements decided {region_name}: one at its northern approaches, one at its river crossings, and one \u2014 the briefest and most consequential \u2014 at the gates of its administrative center. Each was won convincingly.",
     "slots_used": [
       "{region_name}"
     ],
@@ -1501,11 +1501,11 @@
   },
   {
     "id": "CCV_D_004",
-    "text": "In {region_name}, the transfer was swift and its terms were not negotiated. The victors inherited a territory whose shape had changed less than its loyalties, and the assumption of authority proceeded with the cold efficiency of a foregone conclusion.",
+    "text": "In {region_name}, the transfer was swift and its terms were not negotiated. The victors inherited a territory whose loyalties had shifted, and authority was assumed with cold efficiency.",
     "slots_used": [
       "{region_name}"
     ],
-    "word_count": 40,
+    "word_count": 28,
     "type": "detail",
     "category": "chain_conflict_victory"
   },
@@ -1535,7 +1535,7 @@
   },
   {
     "id": "CCV_D_007",
-    "text": "Control of {region_name} was established through a campaign remarkable for its discipline. No sacking, no reprisals — only the systematic replacement of one authority with another, carried out with a conqueror's patience.",
+    "text": "Control of {region_name} was established through a campaign remarkable for its discipline. No sacking, no reprisals \u2014 only the systematic replacement of one authority with another, carried out with a conqueror's patience.",
     "slots_used": [
       "{region_name}"
     ],
@@ -1596,7 +1596,7 @@
   },
   {
     "id": "CCV_C_005",
-    "text": "The taking of {region_name} redrew more than borders. It redrew expectations — of what could be held, what could be taken, and how quickly the world's arrangements could be unmade.",
+    "text": "The taking of {region_name} redrew more than borders. It redrew expectations \u2014 of what could be held, what could be taken, and how quickly the world's arrangements could be unmade.",
     "slots_used": [
       "{region_name}"
     ],
@@ -1627,7 +1627,7 @@
   },
   {
     "id": "CCS_O_003",
-    "text": "In {region_name}, what had begun as decisive action calcified into something worse — a stalemate that consumed resources without producing outcomes.",
+    "text": "In {region_name}, what had begun as decisive action calcified into something worse \u2014 a stalemate that consumed resources without producing outcomes.",
     "slots_used": [
       "{region_name}"
     ],
@@ -1719,7 +1719,7 @@
   },
   {
     "id": "CCS_D_006",
-    "text": "Tension across {region_name} remained {tension_level}, though the character of that tension had shifted — less the sharp anticipation of battle than the dull weight of a quarrel no one could finish.",
+    "text": "Tension across {region_name} remained {tension_level}, though the character of that tension had shifted \u2014 less the sharp anticipation of battle than the dull weight of a quarrel no one could finish.",
     "slots_used": [
       "{region_name}",
       "{tension_level}"
@@ -1742,7 +1742,7 @@
   },
   {
     "id": "CCS_D_008",
-    "text": "Supply lines into {region_name} thinned to a trickle, yet the commitments they sustained could not be withdrawn without conceding what months of sacrifice had purchased — which, by most honest reckonings, was very little.",
+    "text": "Supply lines into {region_name} thinned to a trickle, yet the commitments they sustained could not be withdrawn without conceding what months of sacrifice had purchased \u2014 which, by most honest reckonings, was very little.",
     "slots_used": [
       "{region_name}"
     ],
@@ -1752,7 +1752,7 @@
   },
   {
     "id": "CCS_C_001",
-    "text": "The stalemate in {region_name} would not end so much as expire — outlasted by the patience of those who had the least invested in its continuation.",
+    "text": "The stalemate in {region_name} would not end so much as expire \u2014 outlasted by the patience of those who had the least invested in its continuation.",
     "slots_used": [
       "{region_name}"
     ],
@@ -1772,7 +1772,7 @@
   },
   {
     "id": "CCS_C_003",
-    "text": "In {region_name}, the cost of the stalemate would be tallied not in battles lost but in the years spent standing still — years that could not be recovered or repurposed.",
+    "text": "In {region_name}, the cost of the stalemate would be tallied not in battles lost but in the years spent standing still \u2014 years that could not be recovered or repurposed.",
     "slots_used": [
       "{region_name}"
     ],
@@ -1802,7 +1802,7 @@
   },
   {
     "id": "CCD_O_001",
-    "text": "The defeat at {region_name} did not come suddenly — it came in stages, each one quieter than the last.",
+    "text": "The defeat at {region_name} did not come suddenly \u2014 it came in stages, each one quieter than the last.",
     "slots_used": [
       "{region_name}"
     ],
@@ -1833,7 +1833,7 @@
   },
   {
     "id": "CCD_O_004",
-    "text": "The chronicles of {region_name} record no single hour of ruin — only the accumulated weight of diminishing returns.",
+    "text": "The chronicles of {region_name} record no single hour of ruin \u2014 only the accumulated weight of diminishing returns.",
     "slots_used": [
       "{region_name}"
     ],
@@ -1875,29 +1875,29 @@
   },
   {
     "id": "CCD_D_002",
-    "text": "{character_name} had warned that {region_name} could not sustain another season of attrition. The warning was noted, filed, and not acted upon. By the time circumstances vindicated the assessment, there was no longer anyone positioned to act on it.",
+    "text": "{character_name} had warned that {region_name} could not sustain another season of attrition. The warning was filed and not acted upon. By the time it was vindicated, no one remained to act on it.",
     "slots_used": [
-      "{character_name}",
-      "{region_name}"
+      "{region_name}",
+      "{character_name}"
     ],
-    "word_count": 42,
+    "word_count": 33,
     "type": "detail",
     "category": "chain_conflict_defeat"
   },
   {
     "id": "CCD_D_003",
-    "text": "The population of {region_name} did not resist the new order so much as accommodate it. Survival had long since displaced loyalty as the governing instinct, and {field_delta_summary} had ensured there was little left worth defending with conviction.",
+    "text": "The population of {region_name} did not resist the new order so much as accommodate it. {field_delta_summary}, and there was little left worth defending with conviction.",
     "slots_used": [
       "{region_name}",
       "{field_delta_summary}"
     ],
-    "word_count": 39,
+    "word_count": 25,
     "type": "detail",
     "category": "chain_conflict_defeat"
   },
   {
     "id": "CCD_D_004",
-    "text": "{faction_name} moved into {region_name} without ceremony. There were no proclamations, no formal transfers of authority — only the gradual replacement of one administration's symbols with another's, and the unspoken understanding that protest would be futile.",
+    "text": "{faction_name} moved into {region_name} without ceremony. There were no proclamations, no formal transfers of authority \u2014 only the gradual replacement of one administration's symbols with another's, and the unspoken understanding that protest would be futile.",
     "slots_used": [
       "{faction_name}",
       "{region_name}"
@@ -1908,22 +1908,22 @@
   },
   {
     "id": "CCD_D_005",
-    "text": "The garrison at {region_name} held for longer than anyone had expected and less long than anyone had hoped. When the end came, it was marked not by a final battle but by an absence — of supply, of reinforcement, of any signal that relief was still possible.",
+    "text": "The garrison at {region_name} held longer than expected. The end came not with a battle but with absence \u2014 of supply, of reinforcement, of any sign that relief was possible.",
     "slots_used": [
       "{region_name}"
     ],
-    "word_count": 48,
+    "word_count": 30,
     "type": "detail",
     "category": "chain_conflict_defeat"
   },
   {
     "id": "CCD_D_006",
-    "text": "Accounts from {region_name} during those final months describe a peculiar stillness — the kind that descends when the outcome is known but not yet spoken aloud. {field_delta_summary}, and those with means enough to leave had already done so.",
+    "text": "Accounts from {region_name} describe a peculiar stillness \u2014 the kind that descends when the outcome is known but not yet spoken. {field_delta_summary}, and those with means to leave had already done so.",
     "slots_used": [
       "{region_name}",
       "{field_delta_summary}"
     ],
-    "word_count": 40,
+    "word_count": 32,
     "type": "detail",
     "category": "chain_conflict_defeat"
   },
@@ -1939,32 +1939,32 @@
   },
   {
     "id": "CCD_D_008",
-    "text": "{duration_prose}, the position at {region_name} had been quietly reclassified — first from essential to strategic, then from strategic to symbolic, and finally from symbolic to untenable. The reclassifications were administrative; the losses they described were not.",
+    "text": "{duration_prose}, the position at {region_name} had been quietly reclassified \u2014 from essential to strategic, then strategic to symbolic, then symbolic to untenable.",
     "slots_used": [
       "{duration_prose}",
       "{region_name}"
     ],
-    "word_count": 37,
+    "word_count": 22,
     "type": "detail",
     "category": "chain_conflict_defeat"
   },
   {
     "id": "CCD_C_001",
-    "text": "The name of {region_name} would continue to appear in documents for some years afterward — in inventories, in border agreements, in the footnotes of treaties that referenced what had once been held there. Eventually, even those mentions ceased.",
+    "text": "The name of {region_name} would appear in documents for some years \u2014 in inventories, in border agreements, in the footnotes of treaties. Eventually, even those mentions ceased.",
     "slots_used": [
       "{region_name}"
     ],
-    "word_count": 39,
+    "word_count": 27,
     "type": "closing",
     "category": "chain_conflict_defeat"
   },
   {
     "id": "CCD_C_002",
-    "text": "What {region_name} had represented — as a buffer, as a source of revenue, as a proof of reach — was not easily replaced. The absence reshaped expectations in ways that would take years to fully account for.",
+    "text": "What {region_name} had represented \u2014 as buffer, as revenue, as proof of reach \u2014 was not easily replaced. The absence reshaped expectations for years to come.",
     "slots_used": [
       "{region_name}"
     ],
-    "word_count": 37,
+    "word_count": 26,
     "type": "closing",
     "category": "chain_conflict_defeat"
   },
@@ -2022,7 +2022,7 @@
   },
   {
     "id": "CRS_O_003",
-    "text": "In the season that {event_description} came to pass in {region_name}, no wall fell — yet everything was broken.",
+    "text": "In the season that {event_description} came to pass in {region_name}, no wall fell \u2014 yet everything was broken.",
     "slots_used": [
       "{event_description}",
       "{region_name}"
@@ -2033,7 +2033,7 @@
   },
   {
     "id": "CRS_O_004",
-    "text": "The rupture in {region_name} announced itself not with fire, but with silence — old allies ceasing, overnight, to speak the same language.",
+    "text": "The rupture in {region_name} announced itself not with fire, but with silence \u2014 old allies ceasing, overnight, to speak the same language.",
     "slots_used": [
       "{region_name}"
     ],
@@ -2043,7 +2043,7 @@
   },
   {
     "id": "CRS_O_005",
-    "text": "There had been warnings in {region_name} long before the break came — dissenters dismissed, grievances filed away, tension left to ferment.",
+    "text": "There had been warnings in {region_name} long before the break came \u2014 dissenters dismissed, grievances filed away, tension left to ferment.",
     "slots_used": [
       "{region_name}"
     ],
@@ -2063,7 +2063,7 @@
   },
   {
     "id": "CRS_D_001",
-    "text": "{character_name} had not set out to lead a revolt. The record suggests a man — or woman — driven past patience by {tension_level} tension that the administration of {region_name} neither acknowledged nor addressed.",
+    "text": "{character_name} had not set out to lead a revolt. The record suggests a man \u2014 or woman \u2014 driven past patience by {tension_level} tension that the administration of {region_name} neither acknowledged nor addressed.",
     "slots_used": [
       "{character_name}",
       "{tension_level}",
@@ -2075,7 +2075,7 @@
   },
   {
     "id": "CRS_D_002",
-    "text": "{faction_name}'s split in {region_name} was not merely political. It was doctrinal — two readings of the same foundational compact, each convinced the other had betrayed it, neither willing to concede the original text's ambiguity.",
+    "text": "{faction_name}'s split in {region_name} was not merely political. It was doctrinal \u2014 two readings of the same foundational compact, each convinced the other had betrayed it, neither willing to concede the original text's ambiguity.",
     "slots_used": [
       "{faction_name}",
       "{region_name}"
@@ -2086,7 +2086,7 @@
   },
   {
     "id": "CRS_D_003",
-    "text": "What records survive from {region_name} describe {field_delta_summary} — not as consequence of the revolt, but as its cause. Deprivation had made the theoretical feel urgent and the moderate feel cowardly.",
+    "text": "What records survive from {region_name} describe {field_delta_summary} \u2014 not as consequence of the revolt, but as its cause. Deprivation had made the theoretical feel urgent and the moderate feel cowardly.",
     "slots_used": [
       "{region_name}",
       "{field_delta_summary}"
@@ -2097,7 +2097,7 @@
   },
   {
     "id": "CRS_D_004",
-    "text": "The commanders who remained loyal to {faction_name} in {region_name} were, by most accounts, sincerely loyal — and sincerely unable to comprehend how their sincerity had become indistinguishable from complicity.",
+    "text": "The commanders who remained loyal to {faction_name} in {region_name} were, by most accounts, sincerely loyal \u2014 and sincerely unable to comprehend how their sincerity had become indistinguishable from complicity.",
     "slots_used": [
       "{faction_name}",
       "{region_name}"
@@ -2108,28 +2108,28 @@
   },
   {
     "id": "CRS_D_005",
-    "text": "{character_name}'s influence in {region_name} had rested on the assumption that the center would hold. When it did not, there was no position left to occupy — the moderate ground had been swallowed by the fracture itself.",
+    "text": "{character_name}'s influence in {region_name} had rested on the assumption that the center would hold. When it did not, the moderate ground was swallowed by the fracture itself.",
     "slots_used": [
-      "{character_name}",
-      "{region_name}"
+      "{region_name}",
+      "{character_name}"
     ],
-    "word_count": 40,
+    "word_count": 27,
     "type": "detail",
     "category": "chain_revolt_spawned"
   },
   {
     "id": "CRS_D_006",
-    "text": "The circulars that passed between cells in {region_name} during those months were remarkable less for their radicalism than for their grief — written, as they were, by people who had once believed in the order they now meant to end.",
+    "text": "The circulars passed between cells in {region_name} were remarkable less for their radicalism than for their grief \u2014 written by people who had once believed in the order they now meant to end.",
     "slots_used": [
       "{region_name}"
     ],
-    "word_count": 44,
+    "word_count": 33,
     "type": "detail",
     "category": "chain_revolt_spawned"
   },
   {
     "id": "CRS_D_007",
-    "text": "By the time {event_description} had fully run its course through {region_name}, the vocabulary of governance had itself become contested — the same words meaning opposite things depending on who spoke them and where.",
+    "text": "By the time {event_description} had fully run its course through {region_name}, the vocabulary of governance had itself become contested \u2014 the same words meaning opposite things depending on who spoke them and where.",
     "slots_used": [
       "{event_description}",
       "{region_name}"
@@ -2151,7 +2151,7 @@
   },
   {
     "id": "CRS_C_001",
-    "text": "{region_name} recovered, in time, the outward forms of order. The underlying fracture was papered over rather than healed, and those who remembered what had been believed — on both sides — did not forgive.",
+    "text": "{region_name} recovered, in time, the outward forms of order. The underlying fracture was papered over rather than healed, and those who remembered what had been believed \u2014 on both sides \u2014 did not forgive.",
     "slots_used": [
       "{region_name}"
     ],
@@ -2171,7 +2171,7 @@
   },
   {
     "id": "CRS_C_003",
-    "text": "What endured in {region_name} was not the faction that prevailed, nor even the ideology it carried — but the habit of suspicion, passed quietly from one generation to the next.",
+    "text": "What endured in {region_name} was not the faction that prevailed, nor even the ideology it carried \u2014 but the habit of suspicion, passed quietly from one generation to the next.",
     "slots_used": [
       "{region_name}"
     ],
@@ -2181,7 +2181,7 @@
   },
   {
     "id": "CRS_C_004",
-    "text": "{field_delta_summary} in the aftermath, and {region_name} wore its new quietude the way a city wears the silence after a fire — grateful, but altered in ways that would not show for years.",
+    "text": "{field_delta_summary} in the aftermath, and {region_name} wore its new quietude the way a city wears the silence after a fire \u2014 grateful, but altered in ways that would not show for years.",
     "slots_used": [
       "{field_delta_summary}",
       "{region_name}"
@@ -2192,11 +2192,11 @@
   },
   {
     "id": "CRS_C_005",
-    "text": "The revolt in {region_name} produced no heroes that either side could cleanly claim. It produced only survivors, each carrying a private account of how the world had been made worse by people who had meant to improve it.",
+    "text": "The revolt in {region_name} produced no heroes either side could cleanly claim \u2014 only survivors, each carrying a private account of how things had gone wrong.",
     "slots_used": [
       "{region_name}"
     ],
-    "word_count": 41,
+    "word_count": 26,
     "type": "closing",
     "category": "chain_revolt_spawned"
   },
@@ -2234,7 +2234,7 @@
   },
   {
     "id": "CE_O_004",
-    "text": "The chronicles of {region_name} from this period carry a tone rarely found in older annals — measured hope, held carefully.",
+    "text": "The chronicles of {region_name} from this period carry a tone rarely found in older annals \u2014 measured hope, held carefully.",
     "slots_used": [
       "{region_name}"
     ],
@@ -2286,17 +2286,17 @@
   },
   {
     "id": "CE_D_003",
-    "text": "Settlers arrived in {region_name} not in great waves but in a steady, unhurried flow — families and tradespeople who had heard reliable reports and chosen to believe them. They found those reports, on the whole, accurate.",
+    "text": "Settlers arrived in {region_name} not in great waves but in a steady flow \u2014 families and tradespeople who had heard reliable reports and found them, on the whole, accurate.",
     "slots_used": [
       "{region_name}"
     ],
-    "word_count": 38,
+    "word_count": 29,
     "type": "detail",
     "category": "chain_expansion"
   },
   {
     "id": "CE_D_004",
-    "text": "The capacity of {region_name} to sustain its new population had been {capacity_level} by early reckoning, and the years proved that estimate neither optimistic nor wrong — only incomplete.",
+    "text": "The capacity of {region_name} to sustain its new population had been {capacity_level} by early reckoning, and the years proved that estimate neither optimistic nor wrong \u2014 only incomplete.",
     "slots_used": [
       "{region_name}",
       "{capacity_level}"
@@ -2318,7 +2318,7 @@
   },
   {
     "id": "CE_D_006",
-    "text": "The connection between {region_name} and {adjacent_region} deepened gradually — first through necessity, then through habit, and finally through something that functioned, if not in law then in practice, like mutual interest.",
+    "text": "The connection between {region_name} and {adjacent_region} deepened gradually \u2014 first through necessity, then through habit, and finally through something that functioned, if not in law then in practice, like mutual interest.",
     "slots_used": [
       "{region_name}",
       "{adjacent_region}"
@@ -2329,7 +2329,7 @@
   },
   {
     "id": "CE_D_007",
-    "text": "The expansion of {region_name} was accomplished, over {duration_prose}, without the grand gestures of conquest — only the slow accumulation of small decisions, each defensible on its own terms.",
+    "text": "The expansion of {region_name} was accomplished, over {duration_prose}, without the grand gestures of conquest \u2014 only the slow accumulation of small decisions, each defensible on its own terms.",
     "slots_used": [
       "{region_name}",
       "{duration_prose}"
@@ -2340,7 +2340,7 @@
   },
   {
     "id": "CE_D_008",
-    "text": "{faction_name} held {region_name} not through force of arms in this period but through the more durable grip of usefulness — supplying what neighboring territories could not easily produce themselves.",
+    "text": "{faction_name} held {region_name} not through force of arms in this period but through the more durable grip of usefulness \u2014 supplying what neighboring territories could not easily produce themselves.",
     "slots_used": [
       "{faction_name}",
       "{region_name}"
@@ -2361,7 +2361,7 @@
   },
   {
     "id": "CE_C_002",
-    "text": "The progress of {region_name} was never inevitable — those who built it knew this better than the historians who later described it as such. That knowledge was, perhaps, the source of its strength.",
+    "text": "The progress of {region_name} was never inevitable \u2014 those who built it knew this better than the historians who later described it as such. That knowledge was, perhaps, the source of its strength.",
     "slots_used": [
       "{region_name}"
     ],
@@ -2371,7 +2371,7 @@
   },
   {
     "id": "CE_C_003",
-    "text": "{field_delta_summary} — and with it, the expectations of what {region_name} might yet become quietly expanded beyond what its founders had dared to record in writing.",
+    "text": "{field_delta_summary} \u2014 and with it, the expectations of what {region_name} might yet become quietly expanded beyond what its founders had dared to record in writing.",
     "slots_used": [
       "{field_delta_summary}",
       "{region_name}"
@@ -2403,7 +2403,7 @@
   },
   {
     "id": "CC_O_001",
-    "text": "The troubles of {region_name} did not arrive in sequence, as troubles are supposed to — they arrived together, and all at once.",
+    "text": "The troubles of {region_name} did not arrive in sequence, as troubles are supposed to \u2014 they arrived together, and all at once.",
     "slots_used": [
       "{region_name}"
     ],
@@ -2434,7 +2434,7 @@
   },
   {
     "id": "CC_O_004",
-    "text": "The administrators of {region_name} were not incompetent men — they were simply faced, {duration_prose}, with more than administration was ever designed to hold.",
+    "text": "The administrators of {region_name} were not incompetent men \u2014 they were simply faced, {duration_prose}, with more than administration was ever designed to hold.",
     "slots_used": [
       "{region_name}",
       "{duration_prose}"
@@ -2465,7 +2465,7 @@
   },
   {
     "id": "CC_D_001",
-    "text": "The {event_description} had not yet resolved when new pressures announced themselves in {region_name} — first at the borders, then in the granaries, then in the streets. Each demanded priority. None would wait.",
+    "text": "The {event_description} had not yet resolved when new pressures announced themselves in {region_name} \u2014 first at the borders, then in the granaries, then in the streets. Each demanded priority. None would wait.",
     "slots_used": [
       "{event_description}",
       "{region_name}"
@@ -2476,7 +2476,7 @@
   },
   {
     "id": "CC_D_002",
-    "text": "The tension across {region_name} had reached {tension_level} by any measure available to its governors, and {field_delta_summary} — a combination that left little room for the careful response the situation technically required.",
+    "text": "The tension across {region_name} had reached {tension_level} by any measure available to its governors, and {field_delta_summary} \u2014 a combination that left little room for the careful response the situation technically required.",
     "slots_used": [
       "{region_name}",
       "{tension_level}",
@@ -2488,7 +2488,7 @@
   },
   {
     "id": "CC_D_003",
-    "text": "Dispatches from {region_name} during this period share a common quality of exhaustion — not the exhaustion of men who have fought hard, but of men who cannot identify which fight is the one that matters.",
+    "text": "Dispatches from {region_name} during this period share a common quality of exhaustion \u2014 not the exhaustion of men who have fought hard, but of men who cannot identify which fight is the one that matters.",
     "slots_used": [
       "{region_name}"
     ],
@@ -2498,12 +2498,12 @@
   },
   {
     "id": "CC_D_004",
-    "text": "What had begun as {event_description} in {region_name} extended its consequences outward in ways the original event gave no warning of. Each response spawned a new requirement, and each new requirement arrived before the last had been met.",
+    "text": "What had begun as {event_description} in {region_name} extended its consequences outward. Each response spawned a new requirement, and each arrived before the last had been met.",
     "slots_used": [
       "{event_description}",
       "{region_name}"
     ],
-    "word_count": 40,
+    "word_count": 26,
     "type": "detail",
     "category": "chain_cascade"
   },
@@ -2520,7 +2520,7 @@
   },
   {
     "id": "CC_D_006",
-    "text": "The chain of events that consumed {region_name} in this period numbered, by later count, {chain_length} distinct crises — each real, each pressing, and each drawing resources and attention away from all the others.",
+    "text": "The chain of events that consumed {region_name} in this period numbered, by later count, {chain_length} distinct crises \u2014 each real, each pressing, and each drawing resources and attention away from all the others.",
     "slots_used": [
       "{region_name}",
       "{chain_length}"
@@ -2572,7 +2572,7 @@
   },
   {
     "id": "CC_C_003",
-    "text": "{field_delta_summary} — and with that, whatever remained of confidence in the governing order of {region_name} quietly withdrew from public expression, surviving only in private correspondence and careful silences.",
+    "text": "{field_delta_summary} \u2014 and with that, whatever remained of confidence in the governing order of {region_name} quietly withdrew from public expression, surviving only in private correspondence and careful silences.",
     "slots_used": [
       "{field_delta_summary}",
       "{region_name}"
@@ -2583,7 +2583,7 @@
   },
   {
     "id": "CC_C_004",
-    "text": "The weight of this era on {region_name} was not the weight of a single blow but of accumulated pressure — the kind that does not break things cleanly but leaves them permanently misaligned.",
+    "text": "The weight of this era on {region_name} was not the weight of a single blow but of accumulated pressure \u2014 the kind that does not break things cleanly but leaves them permanently misaligned.",
     "slots_used": [
       "{region_name}"
     ],
@@ -2593,7 +2593,7 @@
   },
   {
     "id": "CC_C_005",
-    "text": "Those who had administered {region_name} through {duration_prose} of compound crisis aged, it was said, as men age in war — not by years but by the specific weight of unresolvable things.",
+    "text": "Those who had administered {region_name} through {duration_prose} of compound crisis aged, it was said, as men age in war \u2014 not by years but by the specific weight of unresolvable things.",
     "slots_used": [
       "{region_name}",
       "{duration_prose}"
@@ -2604,7 +2604,7 @@
   },
   {
     "id": "RD_O_001",
-    "text": "The decline of {region_name} was not the kind that announces itself — it was the kind that is noticed only after it is complete.",
+    "text": "The decline of {region_name} was not the kind that announces itself \u2014 it was the kind that is noticed only after it is complete.",
     "slots_used": [
       "{region_name}"
     ],
@@ -2625,7 +2625,7 @@
   },
   {
     "id": "RD_O_003",
-    "text": "Those who had known {region_name} in better times returned to find it not ruined, exactly, but diminished — as a fire is diminished when the wood runs low.",
+    "text": "Those who had known {region_name} in better times returned to find it not ruined, exactly, but diminished \u2014 as a fire is diminished when the wood runs low.",
     "slots_used": [
       "{region_name}"
     ],
@@ -2635,7 +2635,7 @@
   },
   {
     "id": "RD_O_004",
-    "text": "In the long years that followed, {region_name} continued to exist — continued, even, to function — but something essential had quietly left it.",
+    "text": "In the long years that followed, {region_name} continued to exist \u2014 continued, even, to function \u2014 but something essential had quietly left it.",
     "slots_used": [
       "{region_name}"
     ],
@@ -2645,7 +2645,7 @@
   },
   {
     "id": "RD_O_005",
-    "text": "The historians who later wrote of {region_name}'s contraction struggled to name a turning point, because there had been none — only the accumulation of small surrenders.",
+    "text": "The historians who later wrote of {region_name}'s contraction struggled to name a turning point, because there had been none \u2014 only the accumulation of small surrenders.",
     "slots_used": [
       "{region_name}"
     ],
@@ -2665,7 +2665,7 @@
   },
   {
     "id": "RD_D_001",
-    "text": "The roads of {region_name} were the first to show it — maintained, then merely passable, then quietly abandoned to the encroachment of grass and mud. No edict marked the change. It simply happened.",
+    "text": "The roads of {region_name} were the first to show it \u2014 maintained, then merely passable, then quietly abandoned to the encroachment of grass and mud. No edict marked the change. It simply happened.",
     "slots_used": [
       "{region_name}"
     ],
@@ -2675,7 +2675,7 @@
   },
   {
     "id": "RD_D_002",
-    "text": "{field_delta_summary} across {region_name}, and the administrative apparatus that had once managed the region's affairs grew thinner with each cycle of appointments — posts left vacant, correspondence unanswered, decisions deferred until they ceased to matter.",
+    "text": "{field_delta_summary} across {region_name}, and the administrative apparatus that had once managed the region's affairs grew thinner with each cycle of appointments \u2014 posts left vacant, correspondence unanswered, decisions deferred until they ceased to matter.",
     "slots_used": [
       "{field_delta_summary}",
       "{region_name}"
@@ -2686,7 +2686,7 @@
   },
   {
     "id": "RD_D_003",
-    "text": "The {stability_level} stability that characterized {region_name} in those years was not the stability of strength but of exhaustion — a population too depleted by prior hardship to mount either resistance or renewal.",
+    "text": "The {stability_level} stability that characterized {region_name} in those years was not the stability of strength but of exhaustion \u2014 a population too depleted by prior hardship to mount either resistance or renewal.",
     "slots_used": [
       "{stability_level}",
       "{region_name}"
@@ -2697,17 +2697,17 @@
   },
   {
     "id": "RD_D_004",
-    "text": "Craftsmen left {region_name} first, drawn by steadier commissions elsewhere. Merchants followed, then the minor officials whose salaries had become irregular. What remained was not a community in crisis but a community slowly becoming something smaller than itself.",
+    "text": "Craftsmen left {region_name} first, drawn by steadier commissions. Merchants followed, then minor officials. What remained was not a community in crisis but one slowly becoming smaller.",
     "slots_used": [
       "{region_name}"
     ],
-    "word_count": 40,
+    "word_count": 26,
     "type": "detail",
     "category": "regional_decline"
   },
   {
     "id": "RD_D_005",
-    "text": "The {capacity_level} capacity that defined {region_name}'s productive life had not been destroyed by any single event — it had been borrowed against, season after season, until the borrowing outpaced any hope of repayment.",
+    "text": "The {capacity_level} capacity that defined {region_name}'s productive life had not been destroyed by any single event \u2014 it had been borrowed against, season after season, until the borrowing outpaced any hope of repayment.",
     "slots_used": [
       "{capacity_level}",
       "{region_name}"
@@ -2728,7 +2728,7 @@
   },
   {
     "id": "RD_D_007",
-    "text": "There were, in {region_name}, men and women who saw clearly what was happening and said so — in petitions, in sermons, in letters that went unreturned. Their clarity changed nothing. It rarely does.",
+    "text": "There were, in {region_name}, men and women who saw clearly what was happening and said so \u2014 in petitions, in sermons, in letters that went unreturned. Their clarity changed nothing. It rarely does.",
     "slots_used": [
       "{region_name}"
     ],
@@ -2738,7 +2738,7 @@
   },
   {
     "id": "RD_D_008",
-    "text": "{duration_prose}, the population of {region_name} contracted — not through catastrophe but through the quiet arithmetic of departures exceeding arrivals, births failing to replace deaths, and a general sense that the future lay elsewhere.",
+    "text": "{duration_prose}, the population of {region_name} contracted \u2014 not through catastrophe but through the quiet arithmetic of departures exceeding arrivals, births failing to replace deaths, and a general sense that the future lay elsewhere.",
     "slots_used": [
       "{duration_prose}",
       "{region_name}"
@@ -2749,7 +2749,7 @@
   },
   {
     "id": "RD_C_001",
-    "text": "{region_name} did not vanish from the maps. It persisted, hollowed, recognizable in outline but no longer in substance — the name outlasting the thing it had named.",
+    "text": "{region_name} did not vanish from the maps. It persisted, hollowed, recognizable in outline but no longer in substance \u2014 the name outlasting the thing it had named.",
     "slots_used": [
       "{region_name}"
     ],
@@ -2759,7 +2759,7 @@
   },
   {
     "id": "RD_C_002",
-    "text": "What the era left behind in {region_name} was not ruin but irrelevance — and irrelevance, the chronicles suggest, was the harder condition to recover from.",
+    "text": "What the era left behind in {region_name} was not ruin but irrelevance \u2014 and irrelevance, the chronicles suggest, was the harder condition to recover from.",
     "slots_used": [
       "{region_name}"
     ],
@@ -2779,7 +2779,7 @@
   },
   {
     "id": "RD_C_004",
-    "text": "Later administrations would attempt revivals of {region_name} — some earnest, some merely rhetorical. None recovered what the long erosion had taken, because erosion does not leave the original shape intact beneath its work.",
+    "text": "Later administrations would attempt revivals of {region_name} \u2014 some earnest, some merely rhetorical. None recovered what the long erosion had taken, because erosion does not leave the original shape intact beneath its work.",
     "slots_used": [
       "{region_name}"
     ],
@@ -2789,7 +2789,7 @@
   },
   {
     "id": "RD_C_005",
-    "text": "The {stability_level} condition of {region_name} at the close of the period was, in its way, a kind of stability — the stability of a thing that has finished falling and lies where it landed.",
+    "text": "The {stability_level} condition of {region_name} at the close of the period was, in its way, a kind of stability \u2014 the stability of a thing that has finished falling and lies where it landed.",
     "slots_used": [
       "{stability_level}",
       "{region_name}"
@@ -2800,7 +2800,7 @@
   },
   {
     "id": "RG_O_001",
-    "text": "The progress of {region_name} in this period was not the kind that announces itself — it was the kind that is noticed only in retrospect.",
+    "text": "The progress of {region_name} in this period was not the kind that announces itself \u2014 it was the kind that is noticed only in retrospect.",
     "slots_used": [
       "{region_name}"
     ],
@@ -2810,7 +2810,7 @@
   },
   {
     "id": "RG_O_002",
-    "text": "In the years that followed, {region_name} did what stable ground eventually does — it began, without ceremony, to produce.",
+    "text": "In the years that followed, {region_name} did what stable ground eventually does \u2014 it began, without ceremony, to produce.",
     "slots_used": [
       "{region_name}"
     ],
@@ -2831,7 +2831,7 @@
   },
   {
     "id": "RG_O_004",
-    "text": "The annals of {region_name} from this era record no great battles, no sudden reversals — only the unhurried accumulation of well-made decisions.",
+    "text": "The annals of {region_name} from this era record no great battles, no sudden reversals \u2014 only the unhurried accumulation of well-made decisions.",
     "slots_used": [
       "{region_name}"
     ],
@@ -2851,7 +2851,7 @@
   },
   {
     "id": "RG_O_006",
-    "text": "Those who governed {region_name} through this period left behind no celebrated edicts — only the evidence of their work, which outlasted the records of their names.",
+    "text": "Those who governed {region_name} through this period left behind no celebrated edicts \u2014 only the evidence of their work, which outlasted the records of their names.",
     "slots_used": [
       "{region_name}"
     ],
@@ -2861,18 +2861,18 @@
   },
   {
     "id": "RG_D_001",
-    "text": "The capacity of {region_name} had reached {capacity_level} by the close of this period — not through any single investment but through the patient repair of what had been neglected and the quiet extension of what had proven sound.",
+    "text": "The capacity of {region_name} had reached {capacity_level} \u2014 not through any single investment but through patient repair of what had been neglected and quiet extension of what had proven sound.",
     "slots_used": [
       "{region_name}",
       "{capacity_level}"
     ],
-    "word_count": 41,
+    "word_count": 30,
     "type": "detail",
     "category": "regional_growth"
   },
   {
     "id": "RG_D_002",
-    "text": "{field_delta_summary} across {region_name}, and with it came the particular confidence of people who have watched their labor compound — not dramatically, but reliably, season after season.",
+    "text": "{field_delta_summary} across {region_name}, and with it came the particular confidence of people who have watched their labor compound \u2014 not dramatically, but reliably, season after season.",
     "slots_used": [
       "{field_delta_summary}",
       "{region_name}"
@@ -2915,7 +2915,7 @@
   },
   {
     "id": "RG_D_006",
-    "text": "The population of {region_name} grew slowly and settled well — not the restless growth of a frontier but the consolidating kind, where people build as though they plan to remain.",
+    "text": "The population of {region_name} grew slowly and settled well \u2014 not the restless growth of a frontier but the consolidating kind, where people build as though they plan to remain.",
     "slots_used": [
       "{region_name}"
     ],
@@ -2935,12 +2935,12 @@
   },
   {
     "id": "RG_D_008",
-    "text": "{field_delta_summary} in {region_name}, steadily and without the reversals that had marked earlier decades. The people who lived through it mostly did not remark upon it — which was, in its way, the surest sign of success.",
+    "text": "{field_delta_summary} in {region_name}, steadily and without the reversals of earlier decades. Those who lived through it mostly did not remark upon it \u2014 the surest sign of success.",
     "slots_used": [
-      "{field_delta_summary}",
-      "{region_name}"
+      "{region_name}",
+      "{field_delta_summary}"
     ],
-    "word_count": 38,
+    "word_count": 28,
     "type": "detail",
     "category": "regional_growth"
   },
@@ -2956,7 +2956,7 @@
   },
   {
     "id": "RG_C_002",
-    "text": "The capacity built in {region_name} during this period would prove, in the crises that followed, to be neither excess nor luxury — only the margin that made recovery possible.",
+    "text": "The capacity built in {region_name} during this period would prove, in the crises that followed, to be neither excess nor luxury \u2014 only the margin that made recovery possible.",
     "slots_used": [
       "{region_name}"
     ],
@@ -2976,7 +2976,7 @@
   },
   {
     "id": "RG_C_004",
-    "text": "The stability of {region_name} at {stability_level} was not the stasis of a place that had stopped moving — it was the balance of a place that had learned how to move without stumbling.",
+    "text": "The stability of {region_name} at {stability_level} was not the stasis of a place that had stopped moving \u2014 it was the balance of a place that had learned how to move without stumbling.",
     "slots_used": [
       "{region_name}",
       "{stability_level}"
@@ -3017,7 +3017,7 @@
   },
   {
     "id": "RS_O_003",
-    "text": "{duration_prose}, {region_name} continued largely as it had — administered, taxed, and otherwise undisturbed.",
+    "text": "{duration_prose}, {region_name} continued largely as it had \u2014 administered, taxed, and otherwise undisturbed.",
     "slots_used": [
       "{duration_prose}",
       "{region_name}"
@@ -3028,7 +3028,7 @@
   },
   {
     "id": "RS_O_004",
-    "text": "The chronicles of {region_name} offer little drama for this stretch — which is, in its own way, a kind of record.",
+    "text": "The chronicles of {region_name} offer little drama for this stretch \u2014 which is, in its own way, a kind of record.",
     "slots_used": [
       "{region_name}"
     ],
@@ -3090,7 +3090,7 @@
   },
   {
     "id": "RS_D_004",
-    "text": "There is little in the surviving record to distinguish one year from the next in {region_name} during this time. The region endured — competently, quietly, without distinction.",
+    "text": "There is little in the surviving record to distinguish one year from the next in {region_name} during this time. The region endured \u2014 competently, quietly, without distinction.",
     "slots_used": [
       "{region_name}"
     ],
@@ -3110,7 +3110,7 @@
   },
   {
     "id": "RS_D_006",
-    "text": "The stability of {region_name} was not celebrated — it was simply expected. {duration_prose}, that expectation was met without notable exception.",
+    "text": "The stability of {region_name} was not celebrated \u2014 it was simply expected. {duration_prose}, that expectation was met without notable exception.",
     "slots_used": [
       "{region_name}",
       "{duration_prose}"
@@ -3141,7 +3141,7 @@
   },
   {
     "id": "RS_C_001",
-    "text": "In this, {region_name} was useful — not as a subject of history, but as a foundation beneath it.",
+    "text": "In this, {region_name} was useful \u2014 not as a subject of history, but as a foundation beneath it.",
     "slots_used": [
       "{region_name}"
     ],
@@ -3161,7 +3161,7 @@
   },
   {
     "id": "RS_C_003",
-    "text": "Regions like {region_name} do not often appear in the histories written afterward. Their contribution was the negative space — the absence of crisis that allowed attention to be directed elsewhere.",
+    "text": "Regions like {region_name} do not often appear in the histories written afterward. Their contribution was the negative space \u2014 the absence of crisis that allowed attention to be directed elsewhere.",
     "slots_used": [
       "{region_name}"
     ],
@@ -3181,7 +3181,7 @@
   },
   {
     "id": "RS_C_005",
-    "text": "The record of {region_name} for these years closes without ceremony — as it opened, and as it was conducted throughout.",
+    "text": "The record of {region_name} for these years closes without ceremony \u2014 as it opened, and as it was conducted throughout.",
     "slots_used": [
       "{region_name}"
     ],
@@ -3191,7 +3191,7 @@
   },
   {
     "id": "RFS_O_001",
-    "text": "The old arrangements in {region_name} did not collapse — they were replaced, carefully and without apology, by those who had grown tired of waiting for permission.",
+    "text": "The old arrangements in {region_name} did not collapse \u2014 they were replaced, carefully and without apology, by those who had grown tired of waiting for permission.",
     "slots_used": [
       "{region_name}"
     ],
@@ -3222,7 +3222,7 @@
   },
   {
     "id": "RFS_O_004",
-    "text": "What {faction_name} accomplished in {region_name} during this period was less a conquest than a reorganization — the same territory, different loyalties, different logic.",
+    "text": "What {faction_name} accomplished in {region_name} during this period was less a conquest than a reorganization \u2014 the same territory, different loyalties, different logic.",
     "slots_used": [
       "{faction_name}",
       "{region_name}"
@@ -3243,7 +3243,7 @@
   },
   {
     "id": "RFS_O_006",
-    "text": "The realignment of {region_name} was remembered differently by those who gained from it and those who did not — as it always is.",
+    "text": "The realignment of {region_name} was remembered differently by those who gained from it and those who did not \u2014 as it always is.",
     "slots_used": [
       "{region_name}"
     ],
@@ -3264,7 +3264,7 @@
   },
   {
     "id": "RFS_D_002",
-    "text": "{character_name} became the recognizable face of the new arrangement in {region_name} — present at the right moments, absent from the awkward ones, and careful never to say more than the situation required.",
+    "text": "{character_name} became the recognizable face of the new arrangement in {region_name} \u2014 present at the right moments, absent from the awkward ones, and careful never to say more than the situation required.",
     "slots_used": [
       "{character_name}",
       "{region_name}"
@@ -3285,7 +3285,7 @@
   },
   {
     "id": "RFS_D_004",
-    "text": "{field_delta_summary} across {region_name} as the political order shifted — a pattern familiar to those who had watched such transitions before. Resources follow power; power follows will; and will, in this case, belonged to the newcomers.",
+    "text": "{field_delta_summary} across {region_name} as the political order shifted \u2014 a pattern familiar to those who had watched such transitions before. Resources follow power; power follows will; and will, in this case, belonged to the newcomers.",
     "slots_used": [
       "{field_delta_summary}",
       "{region_name}"
@@ -3296,18 +3296,18 @@
   },
   {
     "id": "RFS_D_005",
-    "text": "{faction_name} did not govern {region_name} as it had governed elsewhere. The region had particular characteristics — particular loyalties, particular grievances — and those who managed it wisely attended to them rather than importing assumptions from other territories.",
+    "text": "{faction_name} did not govern {region_name} as it had governed elsewhere. The region had particular loyalties and grievances, and those who managed it wisely attended to them.",
     "slots_used": [
       "{faction_name}",
       "{region_name}"
     ],
-    "word_count": 40,
+    "word_count": 26,
     "type": "detail",
     "category": "regional_faction_shift"
   },
   {
     "id": "RFS_D_006",
-    "text": "The families that had defined {region_name}'s political life for decades found themselves, not dispossessed exactly, but repositioned — consulted rather than commanding, accommodated rather than deferred to.",
+    "text": "The families that had defined {region_name}'s political life for decades found themselves, not dispossessed exactly, but repositioned \u2014 consulted rather than commanding, accommodated rather than deferred to.",
     "slots_used": [
       "{region_name}"
     ],
@@ -3317,7 +3317,7 @@
   },
   {
     "id": "RFS_D_007",
-    "text": "{character_name} understood that {region_name} could not simply be administered from outside — it had to be persuaded, and persuasion required concessions that pure authority would never have offered.",
+    "text": "{character_name} understood that {region_name} could not simply be administered from outside \u2014 it had to be persuaded, and persuasion required concessions that pure authority would never have offered.",
     "slots_used": [
       "{character_name}",
       "{region_name}"
@@ -3328,7 +3328,7 @@
   },
   {
     "id": "RFS_D_008",
-    "text": "The new order in {region_name} announced itself not through proclamation but through the replacement of small courtesies — who was greeted first, whose name appeared in which documents, who sat where at formal gatherings.",
+    "text": "The new order in {region_name} announced itself not through proclamation but through the replacement of small courtesies \u2014 who was greeted first, whose name appeared in which documents, who sat where at formal gatherings.",
     "slots_used": [
       "{region_name}"
     ],
@@ -3348,7 +3348,7 @@
   },
   {
     "id": "RFS_C_002",
-    "text": "{faction_name} had remade {region_name} in its own image — or close enough that the difference would only become apparent to those who lived there long enough to notice what had quietly vanished.",
+    "text": "{faction_name} had remade {region_name} in its own image \u2014 or close enough that the difference would only become apparent to those who lived there long enough to notice what had quietly vanished.",
     "slots_used": [
       "{faction_name}",
       "{region_name}"
@@ -3359,7 +3359,7 @@
   },
   {
     "id": "RFS_C_003",
-    "text": "{field_delta_summary} in the years following the transition — a practical measure of how thoroughly the new order had taken hold in {region_name}, and how little appetite remained for reversing it.",
+    "text": "{field_delta_summary} in the years following the transition \u2014 a practical measure of how thoroughly the new order had taken hold in {region_name}, and how little appetite remained for reversing it.",
     "slots_used": [
       "{field_delta_summary}",
       "{region_name}"
@@ -3380,17 +3380,17 @@
   },
   {
     "id": "RFS_C_005",
-    "text": "What {region_name} had been before this period remained visible, if one looked carefully — in the architecture, in the surnames, in the older forms of address still used by those who remembered. But the center had moved.",
+    "text": "What {region_name} had been before remained visible \u2014 in the architecture, in the surnames, in the older forms of address. But the center had moved.",
     "slots_used": [
       "{region_name}"
     ],
-    "word_count": 39,
+    "word_count": 25,
     "type": "closing",
     "category": "regional_faction_shift"
   },
   {
     "id": "CS_O_001",
-    "text": "What followed {mission_outcome} at {mission_region} was not fortune — it was consequence, arriving precisely where the effort had been directed.",
+    "text": "What followed {mission_outcome} at {mission_region} was not fortune \u2014 it was consequence, arriving precisely where the effort had been directed.",
     "slots_used": [
       "{mission_outcome}",
       "{mission_region}"
@@ -3423,7 +3423,7 @@
   },
   {
     "id": "CS_O_004",
-    "text": "{mission_outcome} was, by any measure, the turning point — the moment at which effort and circumstance converged into something irreversible.",
+    "text": "{mission_outcome} was, by any measure, the turning point \u2014 the moment at which effort and circumstance converged into something irreversible.",
     "slots_used": [
       "{mission_outcome}"
     ],
@@ -3454,7 +3454,7 @@
   },
   {
     "id": "CS_D_001",
-    "text": "{character_name} had staked considerable reputation on the {mission_archetype} that ended in {mission_outcome}. The vindication was not merely personal — it restructured the assumptions of every commander who had counseled against the attempt.",
+    "text": "{character_name} had staked considerable reputation on the {mission_archetype} that ended in {mission_outcome}. The vindication was not merely personal \u2014 it restructured the assumptions of every commander who had counseled against the attempt.",
     "slots_used": [
       "{character_name}",
       "{mission_archetype}",
@@ -3477,7 +3477,7 @@
   },
   {
     "id": "CS_D_003",
-    "text": "{field_delta_summary} in the wake of {mission_outcome} — not as incidental benefit but as the direct yield of what had been done at {mission_region}. The connection was apparent to anyone reviewing the sequence of events.",
+    "text": "{field_delta_summary} in the wake of {mission_outcome} \u2014 not as incidental benefit but as the direct yield of what had been done at {mission_region}. The connection was apparent to anyone reviewing the sequence of events.",
     "slots_used": [
       "{field_delta_summary}",
       "{mission_outcome}",
@@ -3500,24 +3500,23 @@
   },
   {
     "id": "CS_D_005",
-    "text": "What {mission_outcome} secured in {mission_region} was not simply territory or advantage — it was the proof of a method. Those who had carried out the {mission_archetype} had demonstrated something that could not easily be dismissed or forgotten.",
+    "text": "What {mission_outcome} secured in {mission_region} was not simply territory \u2014 it was the proof of a method that could not easily be dismissed or forgotten.",
     "slots_used": [
-      "{mission_outcome}",
       "{mission_region}",
-      "{mission_archetype}"
+      "{mission_outcome}"
     ],
-    "word_count": 41,
+    "word_count": 25,
     "type": "detail",
     "category": "consequence_success"
   },
   {
     "id": "CS_D_006",
-    "text": "The population of {mission_region} registered {mission_outcome} in practical terms before the political class had finished debating its significance. Supply lines reopened. Markets resumed. The gap between what had been and what now was spoke clearly enough.",
+    "text": "The population of {mission_region} registered {mission_outcome} in practical terms before the political class finished debating. Supply lines reopened. Markets resumed.",
     "slots_used": [
       "{mission_region}",
       "{mission_outcome}"
     ],
-    "word_count": 38,
+    "word_count": 20,
     "type": "detail",
     "category": "consequence_success"
   },
@@ -3535,7 +3534,7 @@
   },
   {
     "id": "CS_D_008",
-    "text": "{lineage_name} household's involvement in the events leading to {mission_outcome} was documented carefully — by allies wishing to associate themselves with the result, and by rivals seeking to understand how it had been achieved.",
+    "text": "{lineage_name} household's involvement in the events leading to {mission_outcome} was documented carefully \u2014 by allies wishing to associate themselves with the result, and by rivals seeking to understand how it had been achieved.",
     "slots_used": [
       "{lineage_name}",
       "{mission_outcome}"
@@ -3546,7 +3545,7 @@
   },
   {
     "id": "CS_C_001",
-    "text": "{mission_outcome} did not close the matter — it opened a larger one. But it opened it from a position of strength, which is the only position worth occupying when the larger matter arrives.",
+    "text": "{mission_outcome} did not close the matter \u2014 it opened a larger one. But it opened it from a position of strength, which is the only position worth occupying when the larger matter arrives.",
     "slots_used": [
       "{mission_outcome}"
     ],
@@ -3556,7 +3555,7 @@
   },
   {
     "id": "CS_C_002",
-    "text": "{lineage_name} household had, by the close of the period, made itself difficult to ignore. {mission_outcome} was not the whole of the reason — but it was the clearest part of it.",
+    "text": "{lineage_name} household had, by the close of the period, made itself difficult to ignore. {mission_outcome} was not the whole of the reason \u2014 but it was the clearest part of it.",
     "slots_used": [
       "{lineage_name}",
       "{mission_outcome}"
@@ -3577,7 +3576,7 @@
   },
   {
     "id": "CS_C_004",
-    "text": "{field_delta_summary} — and the chroniclers who recorded it were careful to trace the line back to {mission_outcome}, because the line was straight and the evidence was plain.",
+    "text": "{field_delta_summary} \u2014 and the chroniclers who recorded it were careful to trace the line back to {mission_outcome}, because the line was straight and the evidence was plain.",
     "slots_used": [
       "{field_delta_summary}",
       "{mission_outcome}"
@@ -3588,11 +3587,11 @@
   },
   {
     "id": "CS_C_005",
-    "text": "Futures are rarely guaranteed by a single act. {mission_outcome} did not guarantee one either — but it made several futures possible that had not been possible before, and that is the more honest measure of such things.",
+    "text": "{mission_outcome} did not guarantee a future \u2014 but it made several futures possible that had not been possible before, and that is the more honest measure.",
     "slots_used": [
       "{mission_outcome}"
     ],
-    "word_count": 40,
+    "word_count": 26,
     "type": "closing",
     "category": "consequence_success"
   },
@@ -3609,7 +3608,7 @@
   },
   {
     "id": "CF_O_002",
-    "text": "The {mission_archetype} concluded as {mission_outcome} — a result that demanded explanation from those who had authorized it.",
+    "text": "The {mission_archetype} concluded as {mission_outcome} \u2014 a result that demanded explanation from those who had authorized it.",
     "slots_used": [
       "{mission_archetype}",
       "{mission_outcome}"
@@ -3664,7 +3663,7 @@
   },
   {
     "id": "CF_D_001",
-    "text": "The {mission_archetype} at {mission_region} had required considerable outlay — in material, in lives, in the credibility of those who had staked their judgment on a different result. {mission_outcome} erased that investment without ceremony.",
+    "text": "The {mission_archetype} at {mission_region} had required considerable outlay \u2014 in material, in lives, in the credibility of those who had staked their judgment on a different result. {mission_outcome} erased that investment without ceremony.",
     "slots_used": [
       "{mission_archetype}",
       "{mission_region}",
@@ -3709,7 +3708,7 @@
   },
   {
     "id": "CF_D_005",
-    "text": "{lineage_name} name had been attached to the {mission_archetype} from its earliest stages. {mission_outcome} did not sever that attachment — if anything, it made the association more durable, and less flattering.",
+    "text": "{lineage_name} name had been attached to the {mission_archetype} from its earliest stages. {mission_outcome} did not sever that attachment \u2014 if anything, it made the association more durable, and less flattering.",
     "slots_used": [
       "{lineage_name}",
       "{mission_archetype}",
@@ -3721,18 +3720,18 @@
   },
   {
     "id": "CF_D_006",
-    "text": "At {mission_region}, the gap between the anticipated result and {mission_outcome} was wide enough that simple misfortune could not account for it. The assessments that circulated afterward were careful in their language and unsparing in their conclusions.",
+    "text": "At {mission_region}, the gap between the anticipated result and {mission_outcome} was wide enough that misfortune alone could not account for it. The assessments that followed were unsparing.",
     "slots_used": [
       "{mission_region}",
       "{mission_outcome}"
     ],
-    "word_count": 37,
+    "word_count": 27,
     "type": "detail",
     "category": "consequence_failure"
   },
   {
     "id": "CF_D_007",
-    "text": "{field_delta_summary} in the aftermath of {mission_outcome}. Those who had projected otherwise were not disciplined for optimism — optimism, after all, had been the official posture — but they were not consulted again on comparable matters.",
+    "text": "{field_delta_summary} in the aftermath of {mission_outcome}. Those who had projected otherwise were not disciplined for optimism \u2014 optimism, after all, had been the official posture \u2014 but they were not consulted again on comparable matters.",
     "slots_used": [
       "{field_delta_summary}",
       "{mission_outcome}"
@@ -3754,7 +3753,7 @@
   },
   {
     "id": "CF_C_001",
-    "text": "{mission_outcome} was not forgotten quickly. It became instead a reference point — the kind that gets invoked in later arguments without needing explanation, because everyone present already knows what it cost.",
+    "text": "{mission_outcome} was not forgotten quickly. It became instead a reference point \u2014 the kind that gets invoked in later arguments without needing explanation, because everyone present already knows what it cost.",
     "slots_used": [
       "{mission_outcome}"
     ],
@@ -3764,7 +3763,7 @@
   },
   {
     "id": "CF_C_002",
-    "text": "What {mission_outcome} ultimately produced was a revision — of expectations, of alliances, of the confidence with which certain kinds of action would be proposed in the future.",
+    "text": "What {mission_outcome} ultimately produced was a revision \u2014 of expectations, of alliances, of the confidence with which certain kinds of action would be proposed in the future.",
     "slots_used": [
       "{mission_outcome}"
     ],
@@ -3841,7 +3840,7 @@
   },
   {
     "id": "CM_O_004",
-    "text": "{duration_prose}, the campaign at {mission_region} ground toward what the dispatches would call {mission_outcome} — a conclusion that satisfied no one completely.",
+    "text": "{duration_prose}, the campaign at {mission_region} ground toward what the dispatches would call {mission_outcome} \u2014 a conclusion that satisfied no one completely.",
     "slots_used": [
       "{duration_prose}",
       "{mission_region}",
@@ -3874,7 +3873,7 @@
   },
   {
     "id": "CM_D_001",
-    "text": "What had been intended as {mission_outcome} instead became something harder to name — not failure, not triumph, but the kind of result that reshaped {mission_region} without satisfying anyone.",
+    "text": "What had been intended as {mission_outcome} instead became something harder to name \u2014 not failure, not triumph, but the kind of result that reshaped {mission_region} without satisfying anyone.",
     "slots_used": [
       "{mission_archetype}",
       "{field_delta_summary}",
@@ -3898,7 +3897,7 @@
   },
   {
     "id": "CM_D_003",
-    "text": "{character_name}'s campaign yielded {mission_outcome}, though the word 'yielded' perhaps overstated the certainty of it — the consequences would take a generation to fully understand.",
+    "text": "{character_name}'s campaign yielded {mission_outcome}, though the word 'yielded' perhaps overstated the certainty of it \u2014 the consequences would take a generation to fully understand.",
     "slots_used": [
       "{mission_archetype}",
       "{mission_outcome}"
@@ -3909,7 +3908,7 @@
   },
   {
     "id": "CM_D_004",
-    "text": "{field_delta_summary} — that much was undeniable. Whether this represented the cost of {mission_outcome} or its substance was a question the court historians debated for years without consensus.",
+    "text": "{field_delta_summary} \u2014 that much was undeniable. Whether this represented the cost of {mission_outcome} or its substance was a question the court historians debated for years without consensus.",
     "slots_used": [
       "{field_delta_summary}",
       "{mission_outcome}"
@@ -3956,12 +3955,12 @@
   },
   {
     "id": "CM_D_008",
-    "text": "The official account of {mission_outcome} omitted the auxiliary losses, the broken agreements with the local governors, and the promise {character_name} had made before the campaign commenced — a promise that circumstances had made impossible to keep.",
+    "text": "The official account of {mission_outcome} omitted the auxiliary losses and the promise {character_name} had made before the campaign \u2014 a promise circumstances had made impossible to keep.",
     "slots_used": [
       "{mission_outcome}",
       "{character_name}"
     ],
-    "word_count": 36,
+    "word_count": 27,
     "type": "detail",
     "category": "consequence_mixed"
   },
@@ -3988,7 +3987,7 @@
   },
   {
     "id": "CM_C_003",
-    "text": "The ledger of {mission_outcome} balanced only if one squinted — and {lineage_name} name was written on both sides.",
+    "text": "The ledger of {mission_outcome} balanced only if one squinted \u2014 and {lineage_name} name was written on both sides.",
     "slots_used": [
       "{character_name}",
       "{mission_region}",
@@ -4000,7 +3999,7 @@
   },
   {
     "id": "CM_C_004",
-    "text": "The generation that came after accepted {mission_outcome} as inheritance — the debts and the gains both, without the memory of choosing either.",
+    "text": "The generation that came after accepted {mission_outcome} as inheritance \u2014 the debts and the gains both, without the memory of choosing either.",
     "slots_used": [
       "{mission_outcome}"
     ],

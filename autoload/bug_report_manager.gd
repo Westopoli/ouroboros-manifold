@@ -130,7 +130,7 @@ func _build_zip(screenshot: PackedByteArray) -> PackedByteArray:
 		"current_tick": TacticalBridge.current_tick,
 		"buffer_snapshots_count": _snapshot_buffer.size(),
 		"command_log_entries": _command_log.size(),
-		"note": "Paste this file into Discord for Westley.",
+		"note": "Paste this file into Discord for Westopoli.",
 	}
 	_zip_json(writer, "metadata.json", metadata)
 

@@ -133,8 +133,8 @@ def main():
 
     # Setup
     rng = random.Random(SEED)
-    w = world_mod.generate("contested_border", seed=SEED)
-    factions = faction_mod.generate_starting_factions("contested_border", rng=rng, world=w)
+    w = world_mod.generate_random(seed=SEED)
+    factions = faction_mod.generate_starting_factions(rng=rng, world=w)
     registry = faction_mod.make_registry(*factions)
 
     naming = load_naming_system()

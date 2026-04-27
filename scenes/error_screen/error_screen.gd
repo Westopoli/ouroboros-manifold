@@ -31,7 +31,7 @@ func _build_ui() -> void:
 	vbox.add_child(msg)
 
 	var log_hint := Label.new()
-	log_hint.text = "A crash report has been saved to logs/crash_report.txt in your game folder.\nIf you'd like to help, send this file to Westley."
+	log_hint.text = "A crash report has been saved to logs/crash_report.txt in your game folder.\nIf you'd like to help, send this file to Westopoli."
 	log_hint.add_theme_font_override("font", ThemeConstants.font_mono_regular)
 	log_hint.add_theme_font_size_override("font_size", ThemeConstants.HINT_TEXT_SIZE)
 	log_hint.add_theme_color_override("font_color", ThemeConstants.TERTIARY)

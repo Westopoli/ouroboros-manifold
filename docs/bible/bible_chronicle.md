@@ -196,6 +196,77 @@ After generating a batch of fragments for a category, the builder runs a three-l
 
 **Validation output:** The builder produces the fragment library plus a validation report listing flags, rejections, thin pools, and diminishing returns alerts. The report is reviewed before the library ships. Flagged categories get prompt revision and regeneration. Clean categories ship as-is.
 
+### Chronicle Text Assembly Rules
+
+> **Added v2.01.** These rules govern how the assembler transforms raw event data and fragment templates into final scroll prose. They exist because the original output was too esoteric, wordy, and disconnected from the galaxy the player is watching. Any new fragment authoring, slot additions, or assembler changes must respect these rules.
+
+#### Rule 1 — Prose Event Descriptions, Not Labels
+
+Every event template in `events.py` carries a `chronicle_prose` field — a lowercase noun phrase describing the event as it would appear mid-sentence. The `{event_description}` slot resolves to this field, never to the raw template `name`.
+
+**Examples:**
+- `"Garrison Collapse"` → `"the collapse of the garrison"`
+- `"Famine"` → `"a widespread famine"`
+- `"Separatist Movement"` → `"a separatist movement"`
+
+The prose form must read naturally after prepositions and articles: "following **the collapse of the garrison**," "in the wake of **a widespread famine**." If a new event template is added, it must include a `chronicle_prose` field. If the template ID is unknown at assembly time, the assembler falls back to the lowercased `name` field.
+
+#### Rule 2 — Region Grounding on First Mention
+
+The first time a region appears in the scroll, its `{region_name}` slot is enriched with faction context: `"Valen Reach, held by The Dominion"`. Subsequent mentions of the same region use the bare name. This grounds the player in who controls what without repeating it.
+
+The enrichment is tracked per scroll assembly (the `seen_regions` set in `assemble_scroll`). If the region has no controlling faction, no qualifier is added. The qualifier always uses the faction's display name from the registry, never the raw faction ID.
+
+#### Rule 3 — Faction-Attributed Field Deltas
+
+The `{field_delta_summary}` slot weaves in the controlling faction's name where grammatically natural. Instead of "the garrison collapsed," it produces "The Dominion's garrison collapsed." Not every phrase variant includes the faction name — some phrasings are atmospheric and faction-neutral ("armed authority eroded and public fear surged to fill the vacuum"). The faction name appears in roughly half the phrase variants for a given condition, giving the text variety while still grounding most entries to a specific actor.
+
+When authoring new delta summary phrases, follow this pattern: use possessive attribution (`{faction}'s garrison`, `{faction}'s commerce`) in phrases that describe institutional decline or growth. Use faction-neutral language in phrases that describe atmosphere or lived experience ("hardship set in," "a fragile calm settled").
+
+#### Rule 4 — No Word Echo Within an Entry
+
+After fragment assembly and slot resolution, a deduplication pass scans the final text for repeated significant words (4+ characters, excluding stop words). On second occurrence, the word is replaced with a synonym from a curated map (`_ECHO_SYNONYMS` in `chronicle_assembler.py`). If no synonym exists, the word passes through unchanged.
+
+**Examples:**
+- "The **instability** in the region led to further **instability**" → "...led to further **turbulence**"
+- "Rising **tensions** fueled the conflict, and those **tensions** deepened" → "...those **frictions** deepened"
+
+When adding new fragment text, check whether it reuses words that already appear in the echo synonym map. If a new high-frequency word emerges from testing (appears twice in assembled output regularly), add it to `_ECHO_SYNONYMS` with 2–3 alternatives that match the chronicle's register.
+
+#### Rule 5 — No Cross-Entry Repetition
+
+After all entries are assembled, a deduplication pass compares each entry's content words against every previously kept entry. If two entries share 40% or more of their significant content words, the later entry is dropped. The first entry always survives. This prevents the scroll from saying effectively the same thing about two different regions.
+
+The threshold (40%) is tuned to catch near-paraphrases while allowing entries that share a few common words (like faction names or field types) to coexist. If new categories are added that naturally share vocabulary, verify the dedup threshold isn't over-aggressively culling them.
+
+#### Rule 6 — Fragment Length Ceiling
+
+No fragment should exceed 35 words. The original library shipped with fragments up to 47 words, producing entries that were too dense to scan during the time jump animation. The trimming targets:
+
+- **Openings:** max 30 words (unchanged from original spec)
+- **Details:** max 35 words (reduced from original 60-word spec; the original ceiling was never hit, but actual fragments averaged 31 words and the wordiest were 47)
+- **Closings:** max 35 words (reduced from 50; actual fragments averaged 28 and the wordiest were 38)
+
+When trimming, preserve the fragment's core image or insight. Cut qualifiers, parenthetical asides, and clauses that restate what the reader already knows. A trimmed fragment should feel like a tighter version of itself, not a different fragment. See the existing library for calibration — read 5–6 fragments in the target category before writing or editing one.
+
+#### Rule 7 — Slot-Level Echo Prevention Between Fragments
+
+Before the word-level dedup (Rule 4), the assembler checks whether adjacent fragments (opening→detail, detail→closing) both resolve the same long slot value (6+ words). If they do, the second occurrence is replaced with an anaphoric form: `{field_delta_summary}` becomes "what followed" or "the aftermath," `{mission_outcome}` becomes "the outcome" or "what had transpired." This prevents a 10-word delta summary from appearing verbatim twice in the same entry.
+
+The anaphoric forms are defined in `ANAPHORIC_FORMS` in the assembler. If a new slot is added that regularly produces long values (6+ words), add corresponding anaphoric alternatives.
+
+#### Summary for New Fragment Authors
+
+When writing new fragments or expanding the library for new categories:
+
+1. Write `chronicle_prose` for every new event template (Rule 1)
+2. Don't mention region ownership in fragment text — the assembler handles first-mention grounding (Rule 2)
+3. Don't write faction names into fragment text — the `{field_delta_summary}` slot handles attribution (Rule 3)
+4. Avoid repeating significant words within a single fragment; the dedup catches cross-fragment echo but can't fix intra-fragment repetition (Rule 4)
+5. Keep fragments under 35 words for details/closings, 30 for openings (Rule 6)
+6. Don't reference slot values by paraphrase — use the slot itself and let the echo prevention handle duplication (Rule 7)
+7. Read the emotional register for your target category before writing. The register is the contract.
+
 ### Lineage Entanglement
 
 The game revolves around the player living their lineage. The scroll is the player's primary window into their family's ongoing story across generations. To ensure the lineage is consistently woven into the world's events during time jumps, the simulation actively entangles the player's family with significant events.

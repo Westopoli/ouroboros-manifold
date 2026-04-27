@@ -234,6 +234,9 @@ def _probe_is_blocked(probe_grid, probe_cell_size, uid, px, py, dx, dy, probe_di
 
 
 def _ensure_navmesh(tactical_map):
+    # Navmesh build takes ~5s on large (24000x24000) maps. Called eagerly by
+    # TacticalEngine.__init__() so the cost is paid during engine creation (before
+    # first tick). Godot shows tactical_loading_overlay.gd during the wait.
     if tactical_map is None:
         return None
     if not hasattr(tactical_map, "_navmesh"):
@@ -644,9 +647,11 @@ def apply_group_move(store, unit_ids, tx, ty, tactical_map=None):
     """Issue a move order for a group of units.
 
     When FORMATION_MOVE_ENABLED is True and len > 1, each unit gets a personal
-    offset slot derived from the group's current centroid. Group is registered in
-    store.move_groups so _update_move_groups can terminate it by centroid arrival.
-    See command.py move/attack_move handlers — they call this function.
+    offset slot derived from the group's current centroid — UNLESS the group is
+    scattered (any unit farther than MAGIC_BOX_SPREAD_RADIUS from the centroid),
+    in which case all units converge on (tx, ty) directly. Group is always
+    registered in store.move_groups so _update_move_groups can terminate it by
+    centroid arrival. See command.py move/attack_move handlers.
 
     When flag is False (or single-unit), falls back to the old shared-target path
     so behavior is bit-identical to pre-formation code.
@@ -663,6 +668,13 @@ def apply_group_move(store, unit_ids, tx, ty, tactical_map=None):
     cx = sum(store.data[uid, FIELD_X] for uid in alive_ids) / len(alive_ids)
     cy = sum(store.data[uid, FIELD_Y] for uid in alive_ids) / len(alive_ids)
 
+    spread_sq = config.MAGIC_BOX_SPREAD_RADIUS ** 2
+    scattered = any(
+        (store.data[uid, FIELD_X] - cx) ** 2 + (store.data[uid, FIELD_Y] - cy) ** 2
+        > spread_sq
+        for uid in alive_ids
+    )
+
     navmesh = _ensure_navmesh(tactical_map) if tactical_map is not None else None
 
     gid = store._next_move_group_id
@@ -672,15 +684,18 @@ def apply_group_move(store, unit_ids, tx, ty, tactical_map=None):
     moving_set = set()
 
     for uid in alive_ids:
-        ox = store.data[uid, FIELD_X] - cx
-        oy = store.data[uid, FIELD_Y] - cy
-        slot_x = tx + ox
-        slot_y = ty + oy
+        if scattered:
+            slot_x, slot_y = tx, ty
+        else:
+            ox = store.data[uid, FIELD_X] - cx
+            oy = store.data[uid, FIELD_Y] - cy
+            slot_x = tx + ox
+            slot_y = ty + oy
 
-        if navmesh is not None:
-            tr, tc = navmesh.cell(slot_x, slot_y)
-            if not navmesh.is_walkable(tr, tc):
-                slot_x, slot_y = tx, ty
+            if navmesh is not None:
+                tr, tc = navmesh.cell(slot_x, slot_y)
+                if not navmesh.is_walkable(tr, tc):
+                    slot_x, slot_y = tx, ty
 
         offsets[uid] = (slot_x - tx, slot_y - ty)
         store.set_move_target(uid, slot_x, slot_y)

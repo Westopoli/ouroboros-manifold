@@ -3,7 +3,7 @@ import numpy as np
 import config
 from unit import UnitStore, FIELD_HP
 from damage import resolve_damage, update_targeting
-from movement import update_movement
+from movement import update_movement, _ensure_navmesh
 from facing import update_facing
 from ability import update_abilities, resolve_barrage
 from fog_of_war import compute_visibility, update_fog_timers
@@ -16,6 +16,7 @@ from spine_drift import update_drifting_nodes
 class TacticalEngine:
     def __init__(self, tactical_map, store=None, seed=None):
         self.map = tactical_map
+        _ensure_navmesh(tactical_map)
         self.store = store or UnitStore()
         self.tick = 0
         self.dt = config.TACTICAL_TICK_DURATION

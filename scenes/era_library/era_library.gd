@@ -212,12 +212,23 @@ func _add_era_card(parent: Control, era: Dictionary) -> void:
 		price.add_theme_color_override("font_color", ThemeConstants.SECONDARY)
 		content.add_child(price)
 
-	card.mouse_filter = Control.MOUSE_FILTER_STOP
 	var era_id: String = era["id"]
-	card.gui_input.connect(func(event: InputEvent):
-		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-			SceneRouter.go_to("era_detail", {"era_id": era_id})
-	)
+	var playable := era_id == "settled_reach"
+	if not playable:
+		card.modulate = Color(1, 1, 1, 0.35)
+		var coming_soon := Label.new()
+		coming_soon.text = "COMING SOON"
+		coming_soon.add_theme_font_override("font", ThemeConstants.font_mono_regular)
+		coming_soon.add_theme_font_size_override("font_size", ThemeConstants.BODY_DATA_SMALL_SIZE)
+		coming_soon.add_theme_color_override("font_color", ThemeConstants.TERTIARY)
+		coming_soon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		content.add_child(coming_soon)
+	else:
+		card.mouse_filter = Control.MOUSE_FILTER_STOP
+		card.gui_input.connect(func(event: InputEvent):
+			if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+				SceneRouter.go_to("era_detail", {"era_id": era_id})
+		)
 
 
 func _add_key_redemption_card(parent: Control) -> void:

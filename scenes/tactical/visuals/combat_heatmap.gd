@@ -8,10 +8,10 @@ const DECAY_RATE := 0.15
 const ATTACK_SCORE := 1.0
 
 var _grid: Array[float] = []
-var _map_width: float = 4000.0
-var _map_height: float = 4000.0
-var _cell_w: float = 400.0
-var _cell_h: float = 400.0
+var _map_width: float = 8000.0
+var _map_height: float = 8000.0
+var _cell_w: float = 800.0
+var _cell_h: float = 800.0
 
 
 func _init() -> void:

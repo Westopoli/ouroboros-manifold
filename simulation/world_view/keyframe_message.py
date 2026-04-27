@@ -28,13 +28,17 @@ def scroll_entries_to_messages(scroll_entries, keyframes: list[dict], time_jump_
 
 
 def time_jump_lifecycle_messages(time_jump_id: str, span_years: int,
-                                  total_keyframes: int, total_entries: int) -> tuple[dict, dict]:
+                                  total_keyframes: int, total_entries: int,
+                                  faction_names: dict | None = None,
+                                  ownership_timeline: list | None = None) -> tuple[dict, dict]:
     start_msg = {
         "type": "time_jump_start",
         "time_jump_id": time_jump_id,
         "span_years": span_years,
         "total_keyframes": total_keyframes,
         "total_entries": total_entries,
+        "faction_names": faction_names or {},
+        "ownership_timeline": ownership_timeline or [],
     }
     end_msg = {
         "type": "time_jump_end",

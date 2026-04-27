@@ -53,7 +53,7 @@ func _rebuild() -> void:
 		remove_child(c)
 		c.free()
 	var md: Dictionary = TacticalBridge.map_data
-	var canvas: Array  = md.get("canvas_size", [4000, 4000])
+	var canvas: Array  = md.get("canvas_size", [8000, 8000])
 	_build_boundary(float(canvas[0]), float(canvas[1]))
 	_build_gradient_sources(md.get("gradient_sources", []))
 	_build_spine_nodes(md.get("spine_nodes", []))

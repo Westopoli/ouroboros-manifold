@@ -1,7 +1,7 @@
 extends Node
 
 signal purchase_requested(era_id: String, purchase_type: String)
-signal time_jump_started(time_jump_id: String, span_years: int, total_keyframes: int, total_entries: int)
+signal time_jump_started(time_jump_id: String, span_years: int, total_keyframes: int, total_entries: int, faction_names: Dictionary)
 signal time_jump_keyframe(keyframe_data: Dictionary)
 signal chronicle_entry(entry_data: Dictionary)
 signal time_jump_ended(time_jump_id: String)
@@ -37,16 +37,12 @@ func get_save_slots() -> Array[Dictionary]:
 	return _source.get_save_slots()
 
 
-func create_save_slot(era_id: String, template_id: String, slot_name: String) -> Dictionary:
-	return _source.create_save_slot(era_id, template_id, slot_name)
+func create_save_slot(era_id: String, slot_name: String) -> Dictionary:
+	return _source.create_save_slot(era_id, slot_name)
 
 
 func delete_save_slot(slot_id: String) -> bool:
 	return _source.delete_save_slot(slot_id)
-
-
-func get_starting_templates() -> Array[Dictionary]:
-	return _source.get_starting_templates()
 
 
 func get_mission_briefing(mission_id: String) -> Dictionary:
@@ -131,7 +127,7 @@ func save_settings(settings: Dictionary) -> void:
 		"resolution_index": clampi(int(settings.get("resolution_index", 2)), 0, VALID_RESOLUTION_COUNT - 1),
 		"fullscreen": bool(settings.get("fullscreen", false)),
 		"vsync": bool(settings.get("vsync", true)),
-		"edge_scroll_speed": clampi(int(settings.get("edge_scroll_speed", 1500)), 200, 3000),
+		"edge_scroll_speed": clampi(int(settings.get("edge_scroll_speed", 1500)), 200, 6000),
 	}
 	_settings = clamped
 	var config := ConfigFile.new()

@@ -32,8 +32,8 @@ def run():
     for key, val in scenario.get("overrides", {}).items():
         setattr(config, key, val)
 
-    w = world_mod.generate(scenario["template"], seed=seed)
-    factions = faction_mod.generate_starting_factions(scenario["template"], rng=w.rng, world=w)
+    w = world_mod.generate_random(seed=seed)
+    factions = faction_mod.generate_starting_factions(rng=w.rng, world=w)
     registry = faction_mod.make_registry(*factions)
     noise_offsets = _events.roll_noise_offsets(list(w.regions.keys()), w.rng)
     trigger_state = {}

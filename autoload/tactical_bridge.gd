@@ -150,6 +150,9 @@ func _on_disconnected() -> void:
 
 
 func _on_message(payload: Dictionary) -> void:
+	var t: String = payload.get("type", "")
+	if t == "snapshot":
+		print("TacticalBridge: snapshot tick=%d units=%d" % [payload.get("tick", -1), payload.get("units", []).size()])
 	match payload.get("type", ""):
 		"snapshot":
 			_apply_snapshot(payload)

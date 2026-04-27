@@ -445,9 +445,19 @@ All files built and tested via `scenes/debug/test_chronicle_scroll.tscn`:
 
 **Tuning note:** Word fade duration is intentionally 3–8s (slow materialization effect), not the 0.20s in config tuning values. The config value `SCROLL_PER_WORD_FADE_DURATION_SEC` is not used — the entry uses its own longer fade for a ghostly slow-reveal feel.
 
-### Checkpoints E–H — NOT STARTED
+### Checkpoint E — COMPLETE (time jump sequencer)
 
-E (sequencer), F (full loop), G (exit paths), H (performance).
+Files created:
+- `scenes/world/time_jump_sequencer.gd` + `.tscn` — six-phase orchestrator (INIT → NARRATION → SETTLING → PROCEEDING/EXITING)
+- `scenes/debug/test_time_jump.gd` + `.tscn` — test harness with scripted 3-keyframe, 2-entry fake time jump
+
+Wired to UIDataBus signals. World view resizes to left 62% when scroll slides in. Proceed fades to black → main menu (fallback when no live sim). Exit fades to black → main menu. Tested with scripted data.
+
+**Known limitations (expected, addressed in F):** Regions appear on first keyframe, not on time_jump_start. Territory transitions are instant (no smooth animation). Proceed sends `proceed_to_next_mission` only when live sim is running.
+
+### Checkpoints F–H — NOT STARTED
+
+F (full loop), G (exit paths), H (performance).
 
 ## Files Created
 

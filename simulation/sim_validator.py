@@ -280,12 +280,11 @@ def run_recorded_scenario(name: str, scenario: dict,
 
     cfg_snap = _snapshot_config()
 
-    template = scenario["template"]
     ticks = scenario["ticks"]
-    w = world_mod.generate(template, seed=seed_used)
+    w = world_mod.generate_random(seed=seed_used)
 
     try:
-        factions = faction_mod.generate_starting_factions(template, rng=w.rng, world=w)
+        factions = faction_mod.generate_starting_factions(rng=w.rng, world=w)
         registry = faction_mod.make_registry(*factions)
     except ValueError:
         registry = {}
@@ -303,7 +302,7 @@ def run_recorded_scenario(name: str, scenario: dict,
     tlog = TrajectoryLog(
         seed=seed_used,
         scenario_name=name,
-        template=template,
+        template="",
         total_ticks=ticks,
         features=dict(scenario["features"]),
         config_snapshot=cfg_snap,

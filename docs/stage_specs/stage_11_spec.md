@@ -438,6 +438,38 @@ Performance holds 60 FPS at 1920×1080 across a busy time jump.
 
 Westley signs off before Stage 12 begins.
 
+## Implementation Variations
+
+Deviations from spec as built, signed off by Westley during checkpoint reviews.
+
+### Checkpoint F — Full loop integration
+
+- **No continuous pull-back from tactical camera.** Spec calls for a seamless camera pull-back from the tactical view into the galaxy. Actual: mission end → SceneRouter transitions to debrief scene → debrief Continue → SceneRouter transitions to time_jump scene. Scene cuts are masked by SceneRouter's fade transitions, not a continuous camera move.
+- **No push-in to next mission.** Spec calls for camera pushing into the next mission's target system after Proceed. Actual: Proceed fades to black and loads the tactical scene via SceneRouter.
+- **No border contour shader.** `territory_contour.gdshader` not implemented. Territory is visualized with influence bubbles only, no equipotential contour lines between factions.
+- **Connection lines implemented (C2 backfill).** `add_connection`/`remove_connection` renders ImmediateMesh lines between adjacent regions. Border/both edges: alpha 0.4, emission 2.0. Trade edges: alpha 0.15, emission 1.0. Per-keyframe `connections_snapshot` built in `keyframe_selector.py` from `world.adjacency` and `world.edge_types`.
+- **No `config/world_view_config.py`.** Tuning values are inline in the relevant GDScript files rather than centralized in a Python config module.
+- **Camera timing differs from spec defaults.** Spec: pull-back 2.5s, push-in 3.0s. Actual: overview move 4.0s, no push-in. Scroll slide-in 1.0s (spec: 0.4s). Viewport resize 1.2s (spec: not specified separately).
+- **Faction name coloring in chronicle text.** Not in spec. Added: faction display names in chronicle entries are colored to match their territory color on the galaxy view.
+- **Same mission repeats.** No mission generator exists yet. `_make_engine()` always produces the same hardcoded tactical setup. The game loop cycles correctly (tactical → debrief → time jump → proceed → tactical) but the mission content is identical each cycle.
+- **Debrief is an intermediary scene.** Spec describes a six-phase continuous flow. Actual flow inserts the Stage 12 debrief scene between mission end and time jump as a discrete step with its own Continue button.
+- **Continuous ownership timeline (not in spec).** Territory colors update every 2 ticks (configurable via `config.OWNERSHIP_TIMELINE_STRIDE`) instead of only at the 12 discrete keyframe boundaries. Produces 25 ownership snapshots per 50-tick time jump. Sent in the `time_jump_start` message, played back independently of keyframe/chronicle pacing in `_advance_timeline()`. When the timeline is active, keyframes skip color updates on existing regions — the timeline is the sole driver of territory colors. Keyframes still handle adding new regions, connections, and military flashes.
+- **Staggered military flashes on ownership change.** When an ownership timeline tick changes a region's faction, a flash fires with a random delay spread across the tick interval (up to 80% of interval). Prevents all flashes from firing simultaneously. Flash animation is a 5× repeating spike (0.15s up, 0.85s decay = 1.0s per cycle, 5.0s total burst).
+- **Evenly-spaced faction colors.** Spec doesn't specify how faction colors are assigned. Implementation uses evenly-spaced HSV hues (`hue = float(i) / faction_count`) sorted by faction ID for deterministic, visually distinct colors regardless of faction ID hash values.
+- **1v1 fast-test mode.** `SimBridge.SIM_UNITS_PER_SIDE` const (default 1) and `--units` CLI arg allow spawning minimal units close together for rapid iteration. When units ≤ 5, uses weakest unit type on a small 2000×2000 map.
+
+### Checkpoint G — Exit path verification
+
+- **Post-narration Exit works.** Fade-to-black → main menu → clean restart confirmed.
+- **In-mission Exit works.** Pause menu Exit to Main Menu → same treatment confirmed.
+- **No pause menu wiring change needed.** The existing pause menu exit path already routes through `UIDataBus.exit_to_main_menu()`.
+
+### Checkpoint H — Performance budget
+
+- **60 FPS sustained.** Visually confirmed at 1920×1080 during a busy time jump (12 keyframes, 10 chronicle entries, 4 factions, 14 regions, 25 ownership timeline snapshots with staggered military flashes). No frame drops observed.
+- **No separate SubViewport/scroll sub-budget measurements.** Spec calls for isolated SubViewport pass cost (< 4ms) and scroll animation cost (< 0.5ms). Godot's built-in debugger profiler does not surface per-pass GPU timing. Visual confirmation of sustained 60 FPS covers the aggregate budget.
+- **No profiler screenshot.** Spec calls for a Godot profiler screenshot and numerical table. Profiler sub-tabs did not display FPS data in the user's Godot 4.6.1 configuration. Visual confirmation substituted.
+
 ## Files Created
 
 *Filled in after implementation.*

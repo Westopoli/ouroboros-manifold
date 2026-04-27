@@ -15,12 +15,10 @@ import tick as _tick
 
 TICKS = 500
 SEED = 1
-TEMPLATE = "full_game_50"
 
 
 def run_trajectory():
     scenario = {
-        "template": TEMPLATE,
         "ticks": TICKS,
         "seed": SEED,
         "use_tick_engine": True,
@@ -85,8 +83,8 @@ def run_instrumented(target_rid, zombie_fids):
     config.ENABLE_ADMIN_REVOLTS = True
     config.DIAGNOSTIC_PRINTS = False
 
-    w = world_mod.generate(TEMPLATE, seed=SEED)
-    factions = faction_mod.generate_starting_factions(TEMPLATE, rng=w.rng, world=w)
+    w = world_mod.generate_random(seed=SEED)
+    factions = faction_mod.generate_starting_factions(rng=w.rng, world=w)
     registry = faction_mod.make_registry(*factions)
     noise_offsets = _events.roll_noise_offsets(list(w.regions.keys()), w.rng)
     trigger_state = {}

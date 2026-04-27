@@ -48,7 +48,6 @@ SCENARIOS = {
 
     # ── 01: Pure drift — normal vs low economy, side by side ────────────────
     "01_solo_drift": {
-        "template":     "s1_isolated",
         "ticks":        300,
         "seed":         1,
         "description":  "Pure drift — normal vs low economy start (no events/agents/tech)",
@@ -84,7 +83,6 @@ SCENARIOS = {
 
     # ── 01b: Famine stress test — 4 seeds, same brutal start ────────────────
     "01b_famine_stress": {
-        "template":     "s1_isolated",
         "ticks":        300,
         "seed":         1,   # overridden per variant
         "description":  "Famine stress — low eco/pop start, 4 seeds, can they recover?",
@@ -117,7 +115,6 @@ SCENARIOS = {
 
     # ── 02: Solo with events enabled ────────────────────────────────────────
     "02_solo_events": {
-        "template":     "s1_isolated",
         "ticks":        300,
         "seed":         1,
         "description":  "Solo + events — 1 faction, 3 regions, events fire but no agents",
@@ -137,7 +134,6 @@ SCENARIOS = {
 
     # ── 03: Two factions, hostile, with border friction + combat ─────────────
     "03_contested": {
-        "template":     "contested_border",
         "ticks":        50,
         "seed":         1,
         "description":  "Contested border — 2 factions, hostile, agents + attacks, no tech",
@@ -157,7 +153,6 @@ SCENARIOS = {
 
     # ── 04: Four factions, full agent loop ───────────────────────────────────
     "04_four_way": {
-        "template":     "four_way",
         "ticks":        500,
         "seed":         1,
         "description":  "Four-way — 4 factions, full agents + combat, no tech",
@@ -177,7 +172,6 @@ SCENARIOS = {
 
     # ── 05: Full stack — everything including technology ─────────────────────
     "05_full_stack": {
-        "template":     "four_way",
         "ticks":        500,
         "seed":         1,
         "description":  "Full stack — 4 factions, all systems including tech",
@@ -195,7 +189,6 @@ SCENARIOS = {
         "overrides": {},
     },
     "06_diplomacy": {
-        "template":     "four_way",
         "ticks":        500,
         "seed":         1,
         "description":  "Full stack + diplomacy — peace formation enabled",
@@ -213,7 +206,6 @@ SCENARIOS = {
         "overrides": {},
     },
     "07_full_game_50": {
-        "template":     "full_game_50",
         "ticks":        500,
         "seed":         1,
         "description":  "50-region map — 4 factions, corridors, central hub",
@@ -235,7 +227,6 @@ SCENARIOS = {
     # ── Stage 4: Lifecycle & time jump validation ───────────────────────────
 
     "08_lifecycle_2faction": {
-        "template":     "full_game_50",
         "ticks":        300,
         "seed":         1,
         "description":  "Lifecycle — admin revolts, 300 ticks, prove fragmentation",
@@ -253,7 +244,6 @@ SCENARIOS = {
         },
     },
     "09_lifecycle_4faction": {
-        "template":     "full_game_50",
         "ticks":        300,
         "seed":         1,
         "description":  "Full lifecycle — all systems, 300 ticks",
@@ -271,7 +261,6 @@ SCENARIOS = {
         },
     },
     "10_time_jump": {
-        "template":     "full_game_50",
         "ticks":        480,
         "seed":         1,
         "description":  "Time jump test — 300 base + 3 jumps (30, 50, 100 ticks)",
@@ -290,7 +279,6 @@ SCENARIOS = {
         },
     },
     "11_chronicle_4faction": {
-        "template":     "full_game_50",
         "ticks":        2000,
         "seed":         1,
         "description":  "Chronicle pipeline — 4 faction, 2000 ticks, 4 chronicle reviews",
@@ -312,7 +300,6 @@ SCENARIOS = {
         },
     },
     "12_naming_stress": {
-        "template":     "full_game_50",
         "ticks":        3000,
         "seed":         1,
         "description":  "Naming stress — 3000 ticks, verify no pool exhaustion",
@@ -333,7 +320,6 @@ SCENARIOS = {
     },
 
     "12_mission_basic": {
-        "template":     "four_way",
         "ticks":        1500,
         "seed":         1,
         "description":  "Basic mission generation — 4 factions, 1500 ticks, generate missions at each time jump",
@@ -350,7 +336,6 @@ SCENARIOS = {
     },
 
     "13_mission_crisis": {
-        "template":     "pressure_cooker",
         "ticks":        1000,
         "seed":         1,
         "description":  "Crisis mission generation — aggressive factions, high urgency, verify urgency dominance",
@@ -367,7 +352,6 @@ SCENARIOS = {
     },
 
     "14_mission_calm": {
-        "template":     "stable_world",
         "ticks":        2000,
         "seed":         1,
         "description":  "Calm-state mission generation — stable factions, verify preference/relevance influence",
@@ -388,7 +372,6 @@ SCENARIOS = {
     },
 
     "15_outcome_resolver": {
-        "template":     "four_way",
         "ticks":        500,
         "seed":         1,
         "description":  "Outcome resolver validation — apply all 5 bands to varied region states, verify proportional scaling",
@@ -406,7 +389,6 @@ SCENARIOS = {
     },
 
     "16_force_allocation_difficulty": {
-        "template":     "four_way",
         "ticks":        500,
         "seed":         1,
         "description":  "Force allocation difficulty test — same state, all 3 difficulties, verify enemy invariance and player scaling",
@@ -470,7 +452,7 @@ def run_scenario(name: str, scenario: dict, seed_override: int | None = None) ->
     print(f"\n{'─'*60}")
     print(f"  Scenario: {name}")
     print(f"  {scenario['description']}")
-    print(f"  Template: {scenario['template']}  |  Ticks: {scenario['ticks']}  |  Seed: {seed_used}")
+    print(f"  Ticks: {scenario['ticks']}  |  Seed: {seed_used}")
     print(f"{'─'*60}")
 
     # Apply config
@@ -478,14 +460,13 @@ def run_scenario(name: str, scenario: dict, seed_override: int | None = None) ->
     _apply_overrides(scenario.get("overrides", {}))
 
     # Generate world
-    template = scenario["template"]
     seed = seed_used
     ticks = scenario["ticks"]
-    w = world_mod.generate(template, seed=seed)
+    w = world_mod.generate_random(seed=seed)
 
     # Generate factions
     try:
-        factions = faction_mod.generate_starting_factions(template, rng=w.rng, world=w)
+        factions = faction_mod.generate_starting_factions(rng=w.rng, world=w)
         registry = faction_mod.make_registry(*factions)
     except ValueError:
         # Template has no defined factions (e.g. s1_isolated)

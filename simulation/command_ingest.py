@@ -64,9 +64,11 @@ def _ingest(packet, engine):
             return _drop(f"kind={kind}: uid {uid!r} is not an int")
         if uid < 0 or uid >= store.count:
             return _drop(f"kind={kind}: uid {uid} out of range (store has {store.count} units)")
-        if not store.alive[uid]:
-            return _drop(f"kind={kind}: uid {uid} is dead")
-        valid_uids.append(uid)
+        if store.alive[uid]:
+            valid_uids.append(uid)
+
+    if not valid_uids:
+        return _drop(f"kind={kind}: all {len(unit_uids)} units are dead")
 
     if kind == "move":
         return _apply_move(cmd, engine, valid_uids, attack_moving=False)

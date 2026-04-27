@@ -143,7 +143,7 @@ func _add_slot_card(slot: Dictionary) -> void:
 	top_row.add_child(delete_btn)
 
 	var era_line := Label.new()
-	era_line.text = "%s \u2014 %s" % [slot["era_name"], slot["template_name"]]
+	era_line.text = slot["era_name"]
 	era_line.add_theme_font_override("font", ThemeConstants.font_mono_regular)
 	era_line.add_theme_font_size_override("font_size", ThemeConstants.BODY_DATA_SIZE)
 	era_line.add_theme_color_override("font_color", ThemeConstants.SECONDARY)

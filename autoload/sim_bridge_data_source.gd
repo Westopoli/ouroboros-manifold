@@ -105,35 +105,12 @@ func get_save_slots() -> Array[Dictionary]:
 	return []
 
 
-func create_save_slot(_era_id: String, _template_id: String, _slot_name: String) -> Dictionary:
+func create_save_slot(_era_id: String, _slot_name: String) -> Dictionary:
 	return {}
 
 
 func delete_save_slot(_slot_id: String) -> bool:
 	return false
-
-
-func get_starting_templates() -> Array[Dictionary]:
-	return [
-		{
-			"id": "isolated_start",
-			"name": "Isolated Start",
-			"description": "A single homeland pushing outward into the unknown. Straightforward, good for learning.",
-			"ascii_diagram": "[H]\u2500\u2500[F]\u2500\u2500[F]\u2500\u2500[ ]\u2500\u2500[ ]\u2500\u2500[ ]"
-		},
-		{
-			"id": "twin_colony",
-			"name": "Twin Colony",
-			"description": "Two allied homelands separated by neutral territory. Cooperation is survival.",
-			"ascii_diagram": "[H]\u2500\u2500[ ]\u2500\u2500[ ]\u2500\u2500[ ]\u2500\u2500[H]"
-		},
-		{
-			"id": "archipelago",
-			"name": "Archipelago",
-			"description": "Scattered regions with sparse connections. Every border matters.",
-			"ascii_diagram": "[H]  [F]    [ ]\n  \\  |   / \n   [ ]\u2500[ ]\u2500[F]"
-		},
-	]
 
 
 func get_mission_briefing(_mission_id: String) -> Dictionary:

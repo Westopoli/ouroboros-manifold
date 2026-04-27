@@ -23,8 +23,8 @@ var _haze_emitter: GPUParticles3D
 var _flyby_timer: float = 0.0
 var _floor_timer: float = 0.0
 
-var _map_width: float = 4000.0
-var _map_height: float = 4000.0
+var _map_width: float = 8000.0
+var _map_height: float = 8000.0
 
 var camera_zoom: float = 0.0
 
@@ -45,7 +45,7 @@ func _ready() -> void:
 
 func _on_snapshot(snap: Dictionary) -> void:
 	var map_info: Dictionary = snap.get("map", {})
-	var canvas: Array = map_info.get("canvas_size", [4000, 4000])
+	var canvas: Array = map_info.get("canvas_size", [8000, 8000])
 	_map_width = float(canvas[0])
 	_map_height = float(canvas[1])
 	_heatmap.set_map_size(_map_width, _map_height)

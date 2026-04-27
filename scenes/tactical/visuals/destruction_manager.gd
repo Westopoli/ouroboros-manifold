@@ -24,7 +24,7 @@ const PARTICLE_COUNT := 8
 const PARTICLE_LIFETIME := 3.0
 
 const WRECK_POOL_SIZE := 128
-const CULL_DISTANCE_SQ := 4000.0 * 4000.0
+const CULL_DISTANCE_SQ := 8000.0 * 8000.0
 const CULL_CHECK_INTERVAL := 2.0
 
 var _prev_alive: PackedByteArray = PackedByteArray()

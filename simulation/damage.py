@@ -217,11 +217,10 @@ def update_targeting(store: UnitStore, tmap, rng=None):
 
         is_cohort_turn = uid % config.TARGETING_COHORT_COUNT == cohort_this_tick
 
-        # Early exit: keep current target if still alive and in range.
-        # On cohort turns, skip this check — re-acquire to find the nearest enemy
-        # (return fire or stale targets may not be optimal).
+        # Target loyalty: keep current target if still alive and in range.
+        # Cohort re-acquisition only applies when there's no valid current target.
         current = store.auto_engage_target[uid]
-        if not is_cohort_turn and current >= 0 and store.alive[current]:
+        if current >= 0 and store.alive[current]:
             dx = store.data[current, FIELD_X] - mx
             dy = store.data[current, FIELD_Y] - my_
             if dx * dx + dy * dy <= atk_r_sq:

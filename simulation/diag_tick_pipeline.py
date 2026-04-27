@@ -22,10 +22,10 @@ REPORT_EVERY = 50
 
 def make_engine():
     tmap = TacticalMap(
-        width=4000, height=4000, layers=1,
+        width=8000, height=8000, layers=1,
         spine_nodes=[
-            SpineNode(position=(1500.0, 1500.0), node_type="reinforcement_structure", properties={}),
-            SpineNode(position=(2500.0, 2500.0), node_type="reinforcement_structure", properties={}),
+            SpineNode(position=(3000.0, 3000.0), node_type="reinforcement_structure", properties={}),
+            SpineNode(position=(5000.0, 5000.0), node_type="reinforcement_structure", properties={}),
         ],
     )
     engine = TacticalEngine(tmap, seed=42)
@@ -33,26 +33,26 @@ def make_engine():
     cols = 20
     for i in range(UNITS_PER_SIDE):
         ut = UNIT_ROSTER[i % len(UNIT_ROSTER)]
-        x = 200.0 + (i % cols) * 180.0
-        y = 200.0 + (i // cols) * 120.0
+        x = 400.0 + (i % cols) * 180.0
+        y = 400.0 + (i // cols) * 120.0
         engine.store.spawn(ut, 0, x, y)
     for i in range(UNITS_PER_SIDE):
         ut = UNIT_ROSTER[i % len(UNIT_ROSTER)]
-        x = 200.0 + (i % cols) * 180.0
-        y = 3800.0 - (i // cols) * 120.0
+        x = 400.0 + (i % cols) * 180.0
+        y = 7600.0 - (i // cols) * 120.0
         engine.store.spawn(ut, 1, x, y)
     a_ids = engine.store.active_ids_for_faction(0)
     engine.command_queue.add(Command(tick=0, type="attack_move", unit_ids=a_ids,
-                                     params={"target_x": 2000.0, "target_y": 3500.0}))
+                                     params={"target_x": 4000.0, "target_y": 7000.0}))
     b_ids = engine.store.active_ids_for_faction(1)
     engine.command_queue.add(Command(tick=0, type="attack_move", unit_ids=b_ids,
-                                     params={"target_x": 2000.0, "target_y": 500.0}))
+                                     params={"target_x": 4000.0, "target_y": 1000.0}))
     engine.reinforcement_structures = [
-        ReinforcementStructure(structure_uid=9000, position=(1500.0, 1500.0), layer=0,
+        ReinforcementStructure(structure_uid=9000, position=(3000.0, 3000.0), layer=0,
                                hp=100.0, max_hp=100.0, owner_faction=0,
                                capture_progress=0.0, production_timer_sec=0.0,
                                production_target_unit_type="Vanguard", capture_radius=200.0),
-        ReinforcementStructure(structure_uid=9001, position=(2500.0, 2500.0), layer=0,
+        ReinforcementStructure(structure_uid=9001, position=(5000.0, 5000.0), layer=0,
                                hp=75.0, max_hp=100.0, owner_faction=1,
                                capture_progress=0.3, production_timer_sec=0.0,
                                production_target_unit_type="Vanguard", capture_radius=200.0),

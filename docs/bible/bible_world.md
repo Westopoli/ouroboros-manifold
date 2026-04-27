@@ -398,6 +398,8 @@ The galaxy view is the player's primary experience between missions. It renders 
 
 **Faction territory.** Faction ownership reads through **colored regions with clearly defined borders** in 3D space — not just node color, but volumetric territory coloration that gives faction control a visible shape. When a system changes hands, the territory boundaries shift — the colored volume expands or contracts. Conquest reads as territory being nibbled away. Expansion reads as color blooming into neutral space.
 
+> **SUPERSEDED (v2.15).** The implementation technique in the following two paragraphs (2D metaball influence field projected on a plane, SubViewport pipeline, snap transitions) is replaced by the 3D constellation + shell hybrid described in "Territory Visualization — Constellation and Shell Hybrid" below. The design intent (colored regions, clearly defined borders, territory nibbled away, color blooming into neutral space) is preserved and strengthened. The metaball field math (influence summation, gap margin) survives into the 3D shell implementation.
+
 The visualization uses a **metaball influence field** projected on the galactic plane. Each owned system emits a smooth radial influence field; same-faction fields are summed (metaball merge), producing organic blob-shaped territory regions with no internal boundaries between same-faction systems. The result is translucent faction-colored fill so the underlying galaxy particle structure remains visible through it. Fill is brightest near the territory outline and fades to transparent deeper inside. Neutral or unowned systems produce no territory fill — they show only as dim points in unclaimed void.
 
 **Territory outlines** render as smooth glowing tubes at the metaball threshold isoline — bright faction-colored borders with a symmetric gaussian falloff that reads as a 3D pipe in the scene. Where two rival factions' territories approach each other, a gap-margin ensures they don't overlap — both outlines remain visible with dark space between them. When a system changes hands, the territory shape shifts (snap transition, masked by the accompanying combat flash VFX).
@@ -412,9 +414,71 @@ The flashes are driven by **specific combat events** from the time jump's event 
 
 **Ambient particle field.** The space between systems is filled with ambient particles — dust, distant stars, the fabric of the galaxy providing depth cues as the camera orbits. Not gameplay objects — visual atmosphere that makes the 3D volume feel inhabited and real. The particle structure is implemented as a scene (`scenes/shared/world_view/world_view_structure.tscn`) with ~5,200 particles across 12 tilted orbital rings, 6 radial inflow streams, ambient dust, a static starfield, and a central glow. This scene serves as the main menu background (at 70% opacity with autonomous camera choreography) and as the Settled Reach world view during inter-mission time jumps. In the main menu, the galaxy runs without region data — pure ambient atmosphere. During time jumps, the same scene is populated with region nodes, faction territory coloration, connections, and military flashes overlaid on the living galaxy. The particle structure remains visible through the territory visualization (per the low-opacity fill described above). Other space-themed eras may reuse or modify this scene; non-space eras (Roman provinces, 1980s globe) use entirely different renderer scenes coordinated through the same data and shell architecture.
 
+> **UPDATED (v2.15).** The main menu and world view no longer share a scene file. World View Major Modification separates them: the main menu's particle galaxy is `main_menu_galaxy.gd/.tscn` (a frozen copy of the original `world_view_structure.gd/.tscn`), and the world view renderer is the separate `world_view_structure.gd/.tscn` modified for the 3D constellation + shell system. This ensures main menu stability — no world view work can affect the main menu.
+
 **The pivot point.** For the Settled Reach era, the camera orbits around a specific section of the galaxy — a corner or pocket. The edges of the Reach fade into the ambient star field (systems at the frontier are at the visual boundary where settled space meets the unknown). Future eras or late-game expansion pull the camera back further, revealing more galaxy, the pivot shifting to encompass a larger volume.
 
 **No tier progression on this view.** Tier information would be noise at this zoom level. The player gets tier information from the scroll narrative and from the tactical layer during missions. The galaxy view communicates faction geography and the feeling of time passing.
+
+##### Territory Visualization — Constellation and Shell Hybrid (v2.15)
+
+> **Source:** `world_view_disclosure_design.md` Q1. Full design rationale in that document.
+
+Territory is visualized through two layers, both always present, with relative prominence modulated by zoom band:
+
+1. **Constellation (skeleton).** Bright faction-colored luminous filament arcs connecting every pair of adjacent same-faction systems. Rendered as 3D Bézier curves between system nodes, not lines on a plane. Gentle arcs through 3D space so overlapping filaments between different systems don't visually collide. Saturated core + soft bloom halo + slow traveling shimmer suggesting information flow. Border/both connections render as solid bright filaments; trade connections render as thinner, dimmer filaments.
+
+2. **Shell (skin).** Thin translucent 3D membrane wrapping each faction's influence volume. Same-faction systems share one continuous shell, computed as a 3D metaball isosurface (the metaball field math from the superseded 2D implementation generalizes to 3D). Rival shells maintain a visible gap (margin-of-victory, carrying forward the `gap_margin` concept from the original shader). Where rival shells nearly meet, a bright luminous border glow seam appears.
+
+##### Zoom Disclosure — Plateau-and-Edge Ladder (v2.15)
+
+> **Source:** `world_view_disclosure_design.md` Q2.
+
+The camera distance axis is divided into three bands (Overview / Regional / Local), each with a stable plateau interior where visual properties are locked, separated by edge blend zones where properties interpolate continuously. Inside a plateau, the player can zoom freely without triggering visual shift. Only at the edges between bands does interpolation begin. This preserves "no training needed" (transitions are continuous, no pop) while giving art direction three real target states.
+
+**Overview plateau** (dist ≥ ~75): "Who controls what?" Shell-dominant. Shells render at 40–60% opacity — opaque enough to occlude factions behind them, making orbital rotation meaningful. Constellation filaments dim to faint glow. Border glow softens. System nodes shrink. Faction names float at shell center-of-mass for identification.
+
+**Regional plateau** (~40 ≤ dist < ~65, widest — default band): "How do factions interact?" Constellation-dominant, shells subordinate, rival-shell border glow as the signature accent. Visual hierarchy: border glows → constellation filaments → system nodes → faction shells (8–15% opacity) → galaxy particles. Overall impression: four glowing webs of light, each a different color; where they touch, they spark brightly.
+
+**Local plateau** (dist < ~25): "What's happening at this system?" Click-to-focus. Player clicks a system node to center camera and enter Local. The focal system brightens; its direct constellation filaments thicken and brighten, but connected neighbor nodes do not brighten. Shells reduce to subtle ground-fog. Distant systems desaturate and dim but remain visible (soft muted vignette).
+
+All distance thresholds and visual property values per band are tuning parameters.
+
+##### Player Camera Controls (v2.15)
+
+> **Source:** `world_view_disclosure_design.md` Q2.5c + conversation.
+
+- Left-click drag → pan (slides camera look target, no repositioning)
+- Scroll → zoom (moves camera along forward axis toward/away from look target)
+- Right-click drag → orbit (repositions camera around look target)
+- Click system → focus (center camera on system, zoom to Local band)
+
+During time-jump auto-orbit, player input overrides auto-orbit. When not in time-jump, camera is fully player-controlled.
+
+##### Faction List and Data Panels (v2.15)
+
+> **Source:** `world_view_disclosure_design.md` Q2.5b + conversation.
+
+A persistent **faction list panel** is always visible during the world view, listing all factions with color swatches. Hover a faction → that faction's territory brightens, others dim but remain visible. Click a faction → full isolate, all other territory fades to near-invisible. Click again or click elsewhere to deselect. Works identically across all three zoom plateaus. Era-agnostic — reads from faction data, triggers visual filter regardless of renderer.
+
+A **faction data panel** appears on the opposite side of the screen from the faction list. Shows whole-faction data (faction name, total systems, aggregate stats). Region-specific detail deferred. Populated when a faction is hovered/selected or when click-to-focus selects a system.
+
+##### Hover and Focus Interactions (v2.15)
+
+> **Source:** `world_view_disclosure_design.md` Q3.
+
+- **System node hover:** Highlight + tooltip (system name, owner). Hovered system's direct filaments brighten. Connected neighbor nodes do NOT brighten. Tooltip content is band-sensitive (adapts per plateau).
+- **Filament hover:** None. Filaments are visual texture, not interactive targets.
+- **Shell hover:** None. Shells are atmospheric, not interactive. Faction identification goes through the faction list panel.
+
+##### Time-Jump Animation Dynamics (v2.15)
+
+> **Source:** `world_view_disclosure_design.md` Q4.
+
+- **Territory morphing:** Smooth tween. Shell isosurfaces interpolate continuously from old state to new over a tunable duration (~2s). Territory changes are slow and gradual — conquest reads as one color slowly eating into another. No snap transitions.
+- **Chronicle-linked highlight:** The system referenced by the currently-printing chronicle entry brightens subtly (emission boost, not spotlight). Chronicle entry text is tinted in the faction color of the entry's primary subject. Both create a narration-to-world link through the 3D view and the scroll simultaneously.
+- **Ambient conflict flashes:** Combat flashes pulse constantly across the galaxy wherever conflicts are active during time jumps. These are ambient background texture, not tied to specific scroll entries.
+- **Simultaneous events:** All events in a keyframe animate at once. This works because the smooth tween makes simultaneous changes gradual and legible in parallel.
 
 #### Seamless Transition — No Loading Screens
 
@@ -463,11 +527,11 @@ The galaxy view is not a separate screen — it is a zoom level. The player is a
 
 | Canvas Size | Dimensions (world units) | Raider crossing time | Bastion crossing time |
 |---|---|---|---|
-| Small | 4,000 × 4,000 | ~27 sec | ~100 sec |
-| Medium | 8,000 × 8,000 | ~53 sec | ~200 sec |
-| Large | 12,000 × 12,000 | ~80 sec | ~300 sec |
+| Small | 8,000 × 8,000 | ~53 sec | ~200 sec |
+| Medium | 16,000 × 16,000 | ~107 sec | ~400 sec |
+| Large | 24,000 × 24,000 | ~160 sec | ~600 sec |
 
-Crossing times assume Raider speed 150 wu/sec and Bastion speed 40 wu/sec (Tier 2 baseline stats from `bible_combat.md`). The large canvas is deliberately vast — the bible's "Continuous Movement and No Loading Screens" section describes forces traversing large operational spaces over the course of a 30–60 minute mission, with battles happening en route. Moving a Bastion across a large canvas is a 5-minute commitment.
+Crossing times assume Raider speed 150 wu/sec and Bastion speed 40 wu/sec (Tier 2 baseline stats from `bible_combat.md`). The large canvas is deliberately vast — the bible's "Continuous Movement and No Loading Screens" section describes forces traversing large operational spaces over the course of a 30–60 minute mission, with battles happening en route. Moving a Bastion across a large canvas is a 10-minute commitment.
 
 **Formation width reference.** The Strategic Layout Authoring Framework references chokepoint width as a ratio to "standard unit formation width." Standard formation width = 200 world units (approximately one Vanguard's attack range). A "2.0× formation width" chokepoint (400 wu) allows two Vanguards abreast; a "1.2× formation width" chokepoint (240 wu) forces single file.
 

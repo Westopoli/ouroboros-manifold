@@ -527,7 +527,7 @@ class _AbilityRing extends Control:
 
 class _Minimap extends Control:
 	func _draw() -> void:
-		var canvas_size := Vector2(8000, 8000)
+		var canvas_size := Vector2(16000, 16000)
 		var md: Dictionary = TacticalBridge.map_data
 		if "canvas_size" in md:
 			canvas_size = Vector2(md["canvas_size"][0], md["canvas_size"][1])

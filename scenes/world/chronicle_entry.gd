@@ -19,15 +19,19 @@ var _cadence_timer: Timer
 var _text_color: Color
 var _accent: Color
 var _dirty: bool = false
+var _faction_colors: Dictionary = {}
+var _word_colors: PackedColorArray = []
 
 
-func setup(entry_data: Dictionary, accent: Color) -> void:
+func setup(entry_data: Dictionary, accent: Color, faction_colors: Dictionary = {}) -> void:
 	_entry_id = entry_data.get("entry_id", "")
 	_entry_data = entry_data
 	_accent = accent
+	_faction_colors = faction_colors
 	_text_color = ThemeConstants.SECONDARY
 	var text: String = entry_data.get("base_form", "")
 	_words = text.split(" ", false)
+	_assign_word_colors()
 	_build_ui()
 
 
@@ -144,17 +148,44 @@ func _on_cadence_tick() -> void:
 		_schedule_next_tick()
 
 
+func _assign_word_colors() -> void:
+	_word_colors.resize(_words.size())
+	for i in range(_words.size()):
+		_word_colors[i] = _text_color
+
+	if _faction_colors.is_empty():
+		return
+
+	for faction_name: String in _faction_colors:
+		var color: Color = _faction_colors[faction_name]
+		var name_words: PackedStringArray = faction_name.split(" ", false)
+		if name_words.is_empty():
+			continue
+		var name_len := name_words.size()
+		for i in range(_words.size() - name_len + 1):
+			var match_found := true
+			for j in range(name_len):
+				var clean_word := _words[i + j].strip_edges()
+				# Strip trailing punctuation for matching
+				while clean_word.length() > 0 and clean_word[-1] in ".,;:!?—-\"'()[]":
+					clean_word = clean_word.substr(0, clean_word.length() - 1)
+				if clean_word.to_lower() != name_words[j].to_lower():
+					match_found = false
+					break
+			if match_found:
+				for j in range(name_len):
+					_word_colors[i + j] = color
+
+
 func _rebuild_bbcode() -> void:
 	var bbcode := ""
-	var r := int(_text_color.r * 255)
-	var g := int(_text_color.g * 255)
-	var b := int(_text_color.b * 255)
 
 	for i in range(_words.size()):
 		if i > 0:
 			bbcode += " "
-		var a := int(_word_alphas[i] * _text_color.a * 255)
-		bbcode += "[color=#%02x%02x%02x%02x]%s[/color]" % [r, g, b, a, _words[i]]
+		var c: Color = _word_colors[i]
+		var a := int(_word_alphas[i] * c.a * 255)
+		bbcode += "[color=#%02x%02x%02x%02x]%s[/color]" % [int(c.r * 255), int(c.g * 255), int(c.b * 255), a, _words[i]]
 
 	_text_label.text = bbcode
 
@@ -167,7 +198,7 @@ func _finish_printing() -> void:
 			tw.kill()
 	_fade_tweens.clear()
 	_text_label.text = " ".join(_words)
-	_cursor.visible = true
+	_cursor.visible = false
 	finished_printing.emit(_entry_id)
 
 

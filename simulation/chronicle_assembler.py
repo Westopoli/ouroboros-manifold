@@ -4,7 +4,9 @@ import random
 import re
 from dataclasses import dataclass, field
 
-LIBRARY_DIR = "library"
+from events import TEMPLATES as _EVENT_TEMPLATES
+
+LIBRARY_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "library")
 
 
 @dataclass
@@ -58,6 +60,59 @@ def _fix_post_period_caps(text):
     return re.sub(r'(\. )([a-z])', lambda m: m.group(1) + m.group(2).upper(), text)
 
 
+_STOP_WORDS = frozenset({
+    "the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for",
+    "of", "with", "by", "from", "its", "their", "was", "were", "had", "has",
+    "that", "this", "which", "what", "as", "is", "it", "be", "been", "not",
+    "no", "all", "each", "every", "into", "over", "than", "then", "when",
+    "after", "before", "while", "until", "across", "beyond",
+})
+
+_ECHO_SYNONYMS = {
+    "instability": ["unease", "disorder", "turbulence"],
+    "unrest": ["discontent", "agitation", "dissent"],
+    "tensions": ["frictions", "pressures", "strains"],
+    "tension": ["friction", "pressure", "strain"],
+    "collapsed": ["crumbled", "fell apart", "gave way"],
+    "collapse": ["breakdown", "disintegration", "failure"],
+    "deteriorated": ["worsened", "declined", "degraded"],
+    "expanded": ["grew", "increased", "advanced"],
+    "eroded": ["weakened", "diminished", "waned"],
+    "mounted": ["grew", "intensified", "built"],
+    "spread": ["widened", "extended", "advanced"],
+    "surged": ["swelled", "climbed", "rose sharply"],
+    "strengthened": ["solidified", "fortified", "recovered"],
+    "contracted": ["shrank", "diminished", "receded"],
+    "military": ["martial", "armed", "garrison"],
+    "commerce": ["trade", "the markets", "economic activity"],
+}
+
+
+def _deduplicate_echo_words(text, rng):
+    words = text.split()
+    seen = {}
+    result = []
+    for i, word in enumerate(words):
+        clean = re.sub(r'[.,;:!?]$', '', word).lower()
+        if clean in _STOP_WORDS or len(clean) <= 3:
+            result.append(word)
+            continue
+        if clean in seen:
+            alts = _ECHO_SYNONYMS.get(clean, [])
+            if alts:
+                replacement = rng.choice(alts)
+                suffix = word[len(clean):] if len(word) > len(clean) else ""
+                if word[0].isupper():
+                    replacement = replacement[0].upper() + replacement[1:]
+                result.append(replacement + suffix)
+            else:
+                result.append(word)
+        else:
+            seen[clean] = i
+            result.append(word)
+    return " ".join(result)
+
+
 def _duration_prose(tick_range):
     ticks = tick_range[1] - tick_range[0]
     if ticks <= 5:
@@ -71,7 +126,7 @@ def _duration_prose(tick_range):
     return "across the years that followed"
 
 
-def _field_delta_summary(events):
+def _field_delta_summary(events, faction_name=None):
     net = {}
     for e in events:
         for f, d in e.get("field_deltas", {}).items():
@@ -84,31 +139,35 @@ def _field_delta_summary(events):
     tension = net.get("tension", 0)
     pop = net.get("population", 0)
 
+    # Optional possessive prefix: "the Dominion's garrison" vs "the garrison"
+    poss = f"{faction_name}'s " if faction_name else ""
+    the_poss = f"{faction_name}'s " if faction_name else "the "
+
     seed = abs(hash(tuple(sorted(net.items()))))
 
     if mil < -3 and tension > 3:
         phrases = [
-            "the garrison collapsed and unrest spread in its wake",
-            "military order deteriorated sharply while civil tensions climbed",
-            "armed authority eroded and public fear surged to fill the vacuum",
+            f"{the_poss}garrison collapsed and unrest spread in its wake",
+            f"{the_poss}military order deteriorated sharply while civil tensions climbed",
+            f"armed authority eroded and public fear surged to fill the vacuum",
         ]
     elif mil > 3 and tension <= 0:
         phrases = [
-            "the military consolidated its position and confidence returned",
-            "the garrison strengthened and public anxieties began to ease",
-            "martial order was restored and a measure of stability followed",
+            f"{the_poss}military consolidated its position and confidence returned",
+            f"{the_poss}garrison strengthened and public anxieties began to ease",
+            f"martial order was restored and a measure of stability followed",
         ]
     elif eco > 3 and pop > 0:
         phrases = [
-            "commerce expanded and the population grew with it",
-            "trade swelled and drew settlers to the region in growing numbers",
-            "prosperity took hold and compounded with each passing season",
+            f"{poss}commerce expanded and the population grew with it",
+            f"trade swelled and drew settlers to the region in growing numbers",
+            f"prosperity took hold and compounded with each passing season",
         ]
     elif eco < -3 and pop < 0:
         phrases = [
-            "commerce contracted and families began leaving the region",
-            "the economy deteriorated until it could no longer sustain the population",
-            "hardship set in and thinned both the markets and the populace",
+            f"{poss}commerce contracted and families began leaving the region",
+            f"the economy deteriorated until it could no longer sustain {the_poss}population",
+            f"hardship set in and thinned both the markets and the populace",
         ]
     elif tension < -2:
         phrases = [
@@ -118,27 +177,26 @@ def _field_delta_summary(events):
         ]
     elif tension > 5:
         phrases = [
-            "civil unrest mounted beyond what any authority could contain",
+            f"civil unrest mounted beyond what {the_poss}authorities could contain",
             "tensions escalated dangerously across all quarters",
             "discontent spread until it saturated every level of public life",
         ]
     elif abs(eco) <= 2 and abs(mil) <= 2 and abs(tension) <= 2:
         phrases = [
             "conditions remained largely unchanged",
-            "the garrison held steady, the markets neither grew nor shrank, and civil order persisted",
+            f"{the_poss}garrison held steady, the markets neither grew nor shrank, and civil order persisted",
             "military strength, commerce, and public order all held within familiar bounds",
         ]
     else:
-        # Mixed signals — build a concrete clause from the actual deltas
         parts = []
         if mil > 2:
-            parts.append("military strength grew")
+            parts.append(f"{poss}military strength grew")
         elif mil < -2:
-            parts.append("military strength eroded")
+            parts.append(f"{poss}military strength eroded")
         if eco > 2:
-            parts.append("commerce expanded")
+            parts.append(f"{poss}commerce expanded")
         elif eco < -2:
-            parts.append("commerce contracted")
+            parts.append(f"{poss}commerce contracted")
         if tension > 2:
             parts.append("civil tensions rose")
         elif tension < -2:
@@ -206,7 +264,11 @@ def build_slot_values(cluster, ledger, player_lineage_id, world,
         slots["{region_name}"] = region.name
 
     slots["{duration_prose}"] = _duration_prose(cluster.tick_range)
-    slots["{field_delta_summary}"] = _field_delta_summary(events)
+    faction_name = None
+    if region and region.faction_id:
+        if registry and region.faction_id in registry:
+            faction_name = registry[region.faction_id].name
+    slots["{field_delta_summary}"] = _field_delta_summary(events, faction_name)
 
     if region:
         slots["{stability_level}"] = _stability_prose(region, world)
@@ -256,8 +318,12 @@ def build_slot_values(cluster, ledger, player_lineage_id, world,
 
     event_descriptions = []
     for e in events:
-        name = e.get("name", e.get("template_id", "an event"))
-        event_descriptions.append(name)
+        tid = e.get("template_id", "")
+        tmpl = _EVENT_TEMPLATES.get(tid, {})
+        prose = tmpl.get("chronicle_prose", "")
+        if not prose:
+            prose = e.get("name", e.get("template_id", "an event")).lower()
+        event_descriptions.append(prose)
     if event_descriptions:
         slots["{event_description}"] = event_descriptions[0]
 
@@ -357,6 +423,8 @@ def assemble_entry(cluster, slot_values, rng):
     else:
         expanded_text = base_text
 
+    base_text = _deduplicate_echo_words(base_text, rng)
+    expanded_text = _deduplicate_echo_words(expanded_text, rng)
     base_text = _fix_post_period_caps(base_text)
     expanded_text = _fix_post_period_caps(expanded_text)
     if base_text:
@@ -379,15 +447,34 @@ def assemble_entry(cluster, slot_values, rng):
     )
 
 
+def _enrich_first_mention(region_id, slots, world, registry, seen_regions):
+    if region_id in seen_regions or not world:
+        return
+    seen_regions.add(region_id)
+    region = world.regions.get(region_id)
+    if not region:
+        return
+    name = slots.get("{region_name}", region_id)
+    qualifier = ""
+    if region.faction_id and registry and region.faction_id in registry:
+        qualifier = f", held by {registry[region.faction_id].name}"
+    elif region.faction_id:
+        qualifier = f", held by {region.faction_id}"
+    if qualifier:
+        slots["{region_name}"] = name + qualifier
+
+
 def assemble_scroll(clusters, ledger, player_lineage_id, world,
                     mission_info=None, seed=None, registry=None):
     rng = random.Random(seed)
     entries = []
     warnings = []
+    seen_regions = set()
 
     for cluster in clusters:
         slot_values = build_slot_values(cluster, ledger, player_lineage_id,
                                         world, mission_info, registry=registry)
+        _enrich_first_mention(cluster.region_id, slot_values, world, registry, seen_regions)
         entry = assemble_entry(cluster, slot_values, rng)
         if entry is None:
             warnings.append(f"Could not assemble entry for {cluster.category} "
@@ -403,4 +490,35 @@ def assemble_scroll(clusters, ledger, player_lineage_id, world,
 
         entries.append(entry)
 
+    entries = _dedup_cross_entry(entries)
     return entries, warnings
+
+
+_OVERLAP_THRESHOLD = 0.40
+
+def _content_words(text):
+    return {w for w in re.sub(r'[.,;:!?]', '', text.lower()).split()
+            if w not in _STOP_WORDS and len(w) > 3}
+
+
+def _dedup_cross_entry(entries):
+    if len(entries) <= 1:
+        return entries
+    keep = [entries[0]]
+    for entry in entries[1:]:
+        words = _content_words(entry.base_text)
+        if not words:
+            keep.append(entry)
+            continue
+        duplicate = False
+        for kept in keep:
+            kept_words = _content_words(kept.base_text)
+            if not kept_words:
+                continue
+            overlap = len(words & kept_words) / min(len(words), len(kept_words))
+            if overlap >= _OVERLAP_THRESHOLD:
+                duplicate = True
+                break
+        if not duplicate:
+            keep.append(entry)
+    return keep

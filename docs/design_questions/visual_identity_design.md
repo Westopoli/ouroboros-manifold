@@ -38,17 +38,20 @@ be answered within these limits.
 
 ---
 
-## Current State (as of Session 6, April 15, 2026)
+## Current State (as of Steam Page Session, April 24, 2026)
 
 **Locked and captured to bible:** Master shield logo, OUROBOROS MANIFOLD
 wordmark, three launch era variants (Roman, 1980s, Settled Reach),
-production tooling (Recraft V4 + escalation paths), and the v3.00
-monetization framework with 2-launch-branch + Roman-standalone structure
-(Q-mon8.1 v2 / Q-mon8.2 v2).
+production tooling (Recraft V4 + escalation paths), v3.00 monetization
+framework with 2-launch-branch + Roman-standalone structure (Q-mon8.1 v2 /
+Q-mon8.2 v2), conversion strategy (component 11), Era Library
+"Manifold Planes" navigation UI (component 12), era card template (Q3 —
+eight sub-decisions covering glyph design, card layout, hover interaction,
+hallmark differentiation), **Steam page presentation strategy (Q4/Q5 —
+component 14: meta-identity capsule, era-alternating screenshots, era-cut
+trailer, branch infographic, tag strategy).**
 
-**Pending bible capture:** Four combat bible re-opens flowing from the
-branch system decision (see Pending Bible Edits). No deferred visual
-identity captures.
+**Pending bible capture:** No deferred captures.
 
 **Open work, in priority order:**
 
@@ -68,13 +71,24 @@ identity captures.
    open question 10.
 5. Q-mon8.5 — cross-branch prestige.
 6. Q-mon8.6 — post-launch branch rollout cadence.
-7. Q3 era card template — now must accommodate standalone-Roman variant
-   plus 2-branch (not 3) structure.
-8. Q4–Q7 downstream of Q3.
+7. ~~Q3 era card template~~ — **RESOLVED April 22, 2026.** Eight
+   sub-decisions: material-rendered compound-mark glyph (civilization's
+   sacred object), portrait 2:3 ratio, glyph-plus-context layout,
+   radial peek + side-sliding data hover, SC2-border mastery elaboration,
+   hallmark differentiation via gold frame + glyph complexity. See Q3
+   section below.
+8. ~~Q4–Q5~~ resolved April 24, 2026. Q5 research pass completed
+   (7 reference targets). Q4 Steam page hierarchy resolved as
+   component 14 in `bible_monetization.md`. Q6–Q7 now unblocked.
 9. Q-mon3, ~~Q-mon5~~, Q-mon6, Q-mon7, Component 9 (special editions) all
    still deferred to catalog design. Q-mon5 **RESOLVED April 16, 2026** —
    Roman free tier: 5/10 archetypes, T2-locked, 3-faction/15-region
    world. See `bible_monetization.md` component 4.
+10. ~~Conversion strategy~~ — **RESOLVED April 22, 2026.** Tutorial taste +
+    ambient inspection. See `bible_monetization.md` component 11.
+11. ~~Era Library UI layout~~ — **RESOLVED April 22, 2026.** Manifold Planes
+    spatial metaphor. See `bible_monetization.md` component 12. Also
+    resolves open question 12(c) (branch-view UI layout).
 
 ---
 
@@ -372,73 +386,105 @@ All four flag implementation as **deferred to post-Stage 13**. Friends-ZIP ships
 
 ## Open Questions
 
-### Q3 — Era Card Template [OPEN]
+### Q3 — Era Card Template [RESOLVED April 22, 2026]
 
-The reusable visual unit that sells an era. Westley's initial candidates
-(Session 1): art of a unit, a logo, a map. Other possibilities to explore:
-composition/moodboard, chronicle excerpt, simulation screenshot, character
-portrait, faction crest, era-specific environment shot. Westley flagged
-this as needing research into what actually converts for single-player
-strategy DLC — evidence-based, not speculation.
+The era card is the reusable visual unit that represents an era across all surfaces: Manifold Planes nodes, Steam page, social media, in-game Era Library. Eight sub-questions resolved in a single session.
 
-**Card slots known:** `branch_id` (1, 2, or null for Roman/standalone),
-`branch_position` (1–3 for branch eras, null for Roman), `era_category`
-(Purchased / Earned / Rented / Inspection-only), `mastery_tier`,
-`tutorial_flag`. Must accommodate standalone-Roman variant alongside
-branch-tagged variants. Branch-signature color hints (fast-tempo visual
-treatment for Branch 1 cards vs. slower Branch 2) are a likely additional
-slot.
+**Q3-1 — Hero visual element.** The card foregrounds a **per-era symbol** (the era glyph defined below). No cinematic scene, no unit showcase on the card itself. Units, structures, and maps appear only on hover interaction.
 
----
+**Q3-2 — Aspect ratio.** **Portrait 2:3.** Matches Steam Library Capsule (600×900). Crops cleanly to circular/square for Manifold Planes nodes. Trading-card feel reinforces era-as-collectible identity.
 
-### Q4 — Steam Page Hierarchy [OPEN]
+**Q3-3 — Per-era symbol type.** **Era Glyph with Material Rendering.** Abstract geometric mark per era, rendered in the era's signature material (travertine for Roman, canvas for 1980s, etched titanium for Settled Reach). Ties into the existing material-per-era principle from Q2e logo variants. The glyph is the era's "insignia" — the informal identity mark, sibling to the logo variant's formal "coat of arms." Both share material language, serve different purposes.
 
-Capsule art, header, screenshot order, trailer structure, feature list
-hierarchy, DLC page design. Requires research pass on what converts in
-the strategy genre specifically.
+**Q3-4 — Hover interaction.** **Radial Peek + Side-Sliding Data.** On hover: symbol lifts with slight parallax shift; 3–4 asset thumbnails (units, structures, environments) radiate outward from center. Simultaneously, structured era data (name, branch position, mastery progress, ownership status, tagline) slides in from the sides. Full rosters and deep inspection remain behind click-through.
 
----
+**Q3-5 — Glyph design language.** **Compound Mark (geometric core + detail halo).** Bold geometric core shape for small-size readability, surrounded by a fine detail halo of era-specific notations (Roman: architectural measurement lines, Latin fragments; 1980s: stenciled serial numbers, classification markings; Settled Reach: trajectory calculations, coordinate notations). Core carries material rendering; halo gets lighter treatment (etched, faded, ghosted). Two-scale behavior: at Manifold Planes node size the core reads alone; at full card size the halo detail appears. Production via **Recraft V4** — core shape is well within Recraft's vector strengths; halo detail may require Inkscape cleanup. No freelance touchup expected for era glyphs (escalation path reserved for master logo).
 
-### Q5 — Research Pass — Reference Studios [OPEN]
+**Q3-6 — Glyph subject matter.** **Civilization's Sacred Object.** Each glyph depicts what the civilization worshiped through its works — not its weapon, but its aspirational artifact.
 
-**Targets:**
-- Paradox Interactive (DLC-driven long-tail strategy game marketing)
-- Creative Assembly / Total War (historical + fantasy era variety)
-- Supergiant (single-player narrative premium indie presentation)
-- Hazelight (single-player distinctive visual identity)
-- Hades 1 & 2 (indie strategy-adjacent with strong brand)
-- Stellaris (closest competitive neighbor per bible)
-- Fortnite/CoD seasonal model (master brand + chapter variants —
-  relevant to Q1's Westopoli-as-master-brand decision)
+- **Roman:** The arch — Rome's signature architectural form, abstracted to pure geometry. Rome worshiped permanence through engineering.
+- **1980s:** The satellite dish / radar array — the Cold War's sacred instrument of information dominance.
+- **Settled Reach:** The orbital ring / Lagrange point marker — the far-future's sacred geometry of precision and coexistence with gravity.
 
-Output: synthesis doc summarizing what each reference does, what's
-reusable for Ouroboros Manifold, and what's not.
+Material rendering carries instant era recognition; the shape carries deeper thematic meaning. Post-launch eras follow the same principle: ask "what single object would this civilization have put on its own flag?"
+
+**Q3-7 — Card layout.** **Glyph-Plus-Context.** Glyph occupies upper half of card. Lower half: structured metadata panel with era name (Newsreader serif), branch name and position ("Branch 1 — Era 2 of 3"), ownership status badge, mastery progress bar, one-line tagline. Era logo variant at top edge as header mark. Hover interaction expands upon metadata rather than introducing it for the first time.
+
+**SC2 ranked border inspiration.** Mastery progression visibly transforms the card's visual treatment — the difference between a base-tier card and a max-mastery card should feel like the difference between SC2 Gold and Grandmaster borders. Earned, aspirational, a status symbol. Mastery UI elaboration (component 10) applies to the card frame: higher mastery = more elaborate border treatment, richer glow, additional decorative elements. The mastered card is something the player is proud to have.
+
+**Q3-8 — Hallmark vs. work era differentiation.** **Frame Treatment + Glyph Complexity (B+C hybrid).** Two simultaneous differentiators:
+
+- **Frame:** Hallmark cards get a gold brand-color frame treatment (thin gold rule or glow, not heavy border). Work-era cards get no frame or a subtle accent-color hairline. Gold = premium, readable at any size, on any surface.
+- **Glyph complexity:** Hallmark glyphs get a richer compound mark — more detailed halo, finer secondary lines, additional satellite elements. Work-era glyphs are cleaner, simpler versions of the same design language. The distinction lives in the art itself, not just the frame.
+
+The combination ensures the hallmark/work distinction is visible both structurally (frame) and artistically (glyph richness).
+
+**Card data slots (updated):** `branch_id` (1, 2, or null for Roman/standalone), `branch_position` (1–3 for branch eras, null for Roman), `era_category` (Purchased / Earned / Rented / Inspection-only), `mastery_tier` (drives frame elaboration per SC2 border model), `tutorial_flag`, `is_hallmark` (drives gold frame + rich glyph), `era_glyph_asset` (compound mark image ref), `era_tagline` (one-line descriptor).
 
 ---
 
-### Q6 — Canva Asset Kit [OPEN]
+### Q4 — Steam Page Hierarchy [RESOLVED April 24, 2026]
 
-Downstream of everything above. Once visual system is decided, spec the
-specific Canva templates needed: logo variants, era card template, Steam
-capsule, social post templates, Discord assets, trailer thumbnails. Each
-template's purpose, dimensions, and content slots.
+Steam page presentation strategy resolved as component 14 in
+`bible_monetization.md`. Key decisions: meta-identity-first capsule
+art (master shield or composite glyph, not single-era), era-alternating
+screenshots unified by the layer system as visual thread, era-cut
+montage trailer (~60s, hard cuts between eras, works muted), branch
+progression infographic as spatial map (not price list), tag strategy
+prioritizing "Story Rich" and "Atmospheric," "About this game"
+hierarchy (pitch → infographic → features → screenshots → long
+description). No monetization details on Steam page — Steam sells
+the download, external website sells the subscription. See
+`bible_monetization.md` component 14 for full specification.
 
 ---
 
-### Q7 — In-Game Era Pack Merchandising / Store Layout [OPEN]
+### Q5 — Research Pass — Reference Studios [RESOLVED April 24, 2026]
 
-How are era packs presented inside the game itself — within the Era
-Library, on an in-game store page, in the main menu? What visual language
-sells an era pack to a player who is already in the game? How does it
-relate to (but not duplicate) the Steam page presentation?
+Research completed covering all seven targets: Paradox Interactive
+(DLC-driven long-tail, $5/month subscription backlash, community buying
+guide failure mode), Creative Assembly / Total War (era-specific visual
+language, Saga as work-era analog, franchise page as era timeline),
+Supergiant / Hades (25-person studio premium visual identity, consistent
+cross-surface branding, short confident Steam copy), Fortnite / CoD
+(master brand + seasonal variants, battle pass endpoint visibility,
+clear category separation between grindable and purchase-only),
+Stellaris (closest competitor positioning, "Story Rich" tagging, lead
+with feeling not mechanics), Deep Rock Galactic (promotion stars as
+mastery visualization, non-competitive prestige in single-player,
+free players see paid rewards), Steam page best practices 2025–2026
+(capsule CTR as algorithm currency, first 4 screenshots on hover,
+45–75s trailer, mobile readability at 35–45% of visits).
 
-Scheduled downstream of Q3 and Q4 because the in-game store *consumes*
-the visual assets established by the era card template (Q3) and the
-Steam page hierarchy (Q4). The in-game store should reuse or echo the
-era card vocabulary rather than invent a third visual register. Research
-targets: Paradox in-game DLC storefronts, Total War's historical pack
-presentation, Deep Rock Galactic's season/cosmetic merchandising,
-single-player strategy patterns specifically.
+Synthesis captured in `bible_monetization.md` component 14. Full
+research document: `q5_research_synthesis.md` (transient, deletable
+after Q4 capture).
+
+---
+
+### Q6 — Canva Asset Kit [RESOLVED April 24, 2026]
+
+Seven-template full kit captured as component 15 in
+`bible_monetization.md`. Templates: era card (2:3), Steam capsule
+master (4 export sizes), social post (1:1), Discord/profile banner,
+trailer thumbnail, branch progression infographic, screenshot
+annotation overlay. All share gold-frame + dark-background + accent-color
+slot-fill system. Per-era production is ~15 min per template per era.
+Production order: era card → Steam capsule → social post → infographic
+→ remaining four.
+
+---
+
+### Q7 — In-Game Era Pack Merchandising / Store Layout [RESOLVED April 24, 2026]
+
+Inspection mode IS the store page (component 9 content does the selling).
+Three additions for conversion: (1) persistent SC2-Masters-register
+acquisition banner at bottom of inspection screen — compact, metallic
+sheen, animated glow, always visible, adapts label to era access model;
+(2) contrast moments at 2–3 scroll points showing Roman vs. target era
+split comparisons; (3) external website redirect on button click.
+Non-aggressive — no timers, no modals, no FOMO. See component 16 in
+`bible_monetization.md`.
 
 ---
 

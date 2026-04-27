@@ -122,7 +122,7 @@ func _setup_world_view_viewport() -> void:
 	viewport.use_hdr_2d = false
 	container.add_child(viewport)
 
-	var world_view_scene := load("res://scenes/shared/world_view/world_view_structure.tscn")
+	var world_view_scene := load("res://scenes/shared/world_view/main_menu_galaxy.tscn")
 	var world_view: Node3D = world_view_scene.instantiate()
 	viewport.add_child(world_view)
 

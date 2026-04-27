@@ -96,8 +96,8 @@ def setup_world(seed=42):
     config.ENABLE_DIPLOMACY       = False
     config.DIAGNOSTIC_PRINTS      = False   # suppress per-tick drift blocks
 
-    w = world_mod.generate("four_way", seed=seed)
-    factions = faction_mod.generate_starting_factions("four_way", rng=w.rng, world=w)
+    w = world_mod.generate_random(seed=seed)
+    factions = faction_mod.generate_starting_factions(rng=w.rng, world=w)
     registry = faction_mod.make_registry(*factions)
 
     ns = _naming_mod.NamingSystem()

@@ -80,6 +80,10 @@ The game is built in implementation stages defined in the stage docs (`docs/stag
 3. **The base game must be stable before any optional system is added.** A working simple version always beats a broken complex one.
 4. **Do not refactor code without user's (Westley) permission.** If something need to be fixed, flag it and ask for input on what to do.
 
+### No blind git reverts
+
+Never use `git checkout`, `git restore`, or `git stash` to revert files without first asking Westley whether git is up to date. Working tree changes may not be committed — a `git checkout` can destroy in-progress work that only exists locally. Always confirm before reverting.
+
 ## Debugging
 
 **No shotgun fixes.** Don't change values, swap implementations, or try different approaches without first confirming what's actually wrong.

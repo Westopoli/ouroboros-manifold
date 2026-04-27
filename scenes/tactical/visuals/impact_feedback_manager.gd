@@ -124,7 +124,7 @@ func _detect_hits() -> void:
 		var cur_hp: float = float(unit.get("hp", 0.0))
 		var prev: float = _prev_hp[uid]
 
-		if prev > 0.0 and cur_hp < prev:
+		if prev > 0.0 and (prev - cur_hp) >= 0.5:
 			_total_impacts += 1
 
 			if _impact_cooldowns[uid] > 0.0:

@@ -4,9 +4,12 @@ python: 3.14.3 (main, Feb  3 2026, 15:32:20) [Clang 17.0.0 (clang-1700.6.3.2)]
 
 --- traceback ---
 Traceback (most recent call last):
-  File "simulation/pipe_transport.py", line 206, in <module>
-    run(_make_engine, crash_after_ready=_crash, test_print=_test_print)
-    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "simulation/pipe_transport.py", line 139, in run
-    raise RuntimeError("deliberate crash for pipe transport crash-handler test")
-RuntimeError: deliberate crash for pipe transport crash-handler test
+  File "simulation/pipe_transport.py", line 647, in <module>
+    run(_make_engine, sim_env=_sim_env, crash_after_ready=_crash, test_print=_test_print, cmd_file_path=_cmd_file)
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "simulation/pipe_transport.py", line 410, in run
+    engine = engine_factory()
+  File "simulation/pipe_transport.py", line 606, in _make_engine
+    stats = config.UNIT_STATS.get(eng.store.unit_type[uid])
+            ^^^^^^
+NameError: name 'config' is not defined

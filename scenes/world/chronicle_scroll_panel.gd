@@ -12,6 +12,7 @@ var _finished_count: int = 0
 var _paused: bool = false
 var _time_jump_active: bool = false
 var _accent: Color
+var _faction_colors: Dictionary = {}
 
 var _scroll: ScrollContainer
 var _entry_container: VBoxContainer
@@ -70,12 +71,13 @@ func _build_ui() -> void:
 	add_child(_expansion_overlay)
 
 
-func begin_time_jump(total_entries: int) -> void:
+func begin_time_jump(total_entries: int, faction_colors: Dictionary = {}) -> void:
 	_total_expected = total_entries
 	_finished_count = 0
 	_time_jump_active = true
 	_paused = false
 	_printing_id = ""
+	_faction_colors = faction_colors
 	_entries.clear()
 	for child in _entry_container.get_children():
 		child.queue_free()
@@ -86,7 +88,7 @@ func queue_entry(entry_data: Dictionary) -> void:
 	var entry_id: String = entry_data.get("entry_id", "")
 	var entry_scene := load("res://scenes/world/chronicle_entry.tscn")
 	var entry_node: Node = entry_scene.instantiate()
-	entry_node.setup(entry_data, _accent)
+	entry_node.setup(entry_data, _accent, _faction_colors)
 	entry_node.finished_printing.connect(_on_entry_finished)
 	entry_node.expansion_requested.connect(_on_expansion_requested)
 	_entry_container.add_child(entry_node)
@@ -136,8 +138,8 @@ func slide_in() -> void:
 	modulate.a = 0.0
 	visible = true
 	var tw := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
-	tw.tween_property(self, "position:x", _rest_position_x, 0.4)
-	tw.parallel().tween_property(self, "modulate:a", 1.0, 0.4)
+	tw.tween_property(self, "position:x", _rest_position_x, 1.0)
+	tw.parallel().tween_property(self, "modulate:a", 1.0, 1.0)
 
 
 func slide_out() -> void:

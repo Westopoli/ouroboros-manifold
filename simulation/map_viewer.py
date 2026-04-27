@@ -341,7 +341,7 @@ def draw_map(screen, tmap, tf, engine=None,
     for sn in tmap.spine_nodes:
         px, py = tf.w2s(*sn.position)
         col = NODE_COLORS.get(sn.node_type, (160, 160, 160))
-        r = max(3, int(7 * tf.scale / (tmap.width / 4000)))
+        r = max(3, int(7 * tf.scale / (tmap.width / 8000)))
         pygame.draw.circle(screen, col, (px, py), r)
         pygame.draw.circle(screen, (255, 255, 255), (px, py), r, 1)
 
@@ -350,7 +350,7 @@ def draw_map(screen, tmap, tf, engine=None,
         for s in engine.reinforcement_structures:
             px, py = tf.w2s(*s.position)
             owner_col = OWNER_COLORS.get(s.owner_faction, (200, 80, 200))
-            cr = max(4, int(10 * tf.scale / (tmap.width / 4000)))
+            cr = max(4, int(10 * tf.scale / (tmap.width / 8000)))
             # Capture radius ring (very faint)
             cap_r = int(s.capture_radius * tf.scale)
             if cap_r > 3:

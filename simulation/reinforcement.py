@@ -1,4 +1,6 @@
 from dataclasses import dataclass, field
+import math
+import random
 import config
 from unit import FIELD_X, FIELD_Y
 
@@ -64,10 +66,14 @@ def step_reinforcement(engine, dt):
             if structure.production_timer_sec >= prod_time:
                 structure.production_timer_sec -= prod_time
                 sx, sy = structure.position
+                angle = random.random() * math.tau
+                dist = random.random() * structure.capture_radius * 0.5
+                spawn_x = sx + math.cos(angle) * dist
+                spawn_y = sy + math.sin(angle) * dist
                 engine.store.spawn(
                     structure.production_target_unit_type,
                     structure.owner_faction,
-                    sx, sy,
+                    spawn_x, spawn_y,
                     structure.layer,
                 )
 

@@ -21,6 +21,7 @@ TEMPLATES = {
     "evt_garrison_collapse": {
         "id":                "evt_garrison_collapse",
         "name":              "Garrison Collapse",
+        "chronicle_prose":   "the collapse of the garrison",
         "trigger_field":     "military",
         "trigger_threshold": 30,
         "trigger_direction": "below",
@@ -46,6 +47,7 @@ TEMPLATES = {
     "evt_border_incursion": {
         "id":                "evt_border_incursion",
         "name":              "Border Incursion",
+        "chronicle_prose":   "an incursion across the border",
         "trigger_field":     None,
         "trigger_threshold": None,
         "trigger_direction": None,
@@ -65,6 +67,7 @@ TEMPLATES = {
     "evt_emergency_levy": {
         "id":                "evt_emergency_levy",
         "name":              "Emergency Levy",
+        "chronicle_prose":   "an emergency levy",
         "trigger_field":     None,
         "trigger_threshold": None,
         "trigger_direction": None,
@@ -77,6 +80,7 @@ TEMPLATES = {
     "evt_regional_revolt": {
         "id":                "evt_regional_revolt",
         "name":              "Regional Revolt",
+        "chronicle_prose":   "a regional revolt",
         "trigger_field":     None,
         "trigger_threshold": None,
         "trigger_direction": None,
@@ -103,6 +107,7 @@ TEMPLATES = {
     "evt_revolt_crushed": {
         "id":                "evt_revolt_crushed",
         "name":              "Revolt Crushed",
+        "chronicle_prose":   "the crushing of the revolt",
         "trigger_field":     None,
         "trigger_threshold": None,
         "trigger_direction": None,
@@ -115,6 +120,7 @@ TEMPLATES = {
     "evt_revolt_entrenched": {
         "id":                "evt_revolt_entrenched",
         "name":              "Revolt Entrenched",
+        "chronicle_prose":   "the entrenchment of the revolt",
         "trigger_field":     None,
         "trigger_threshold": None,
         "trigger_direction": None,
@@ -128,6 +134,7 @@ TEMPLATES = {
     "evt_trade_boom": {
         "id":                "evt_trade_boom",
         "name":              "Trade Boom",
+        "chronicle_prose":   "a surge in trade",
         "trigger_field":     "economy",
         "trigger_threshold": 55,
         "trigger_direction": "above",
@@ -147,6 +154,7 @@ TEMPLATES = {
     "evt_prosperity_unrest": {
         "id":                "evt_prosperity_unrest",
         "name":              "Prosperity Unrest",
+        "chronicle_prose":   "unrest born of prosperity",
         "trigger_field":     None,
         "trigger_threshold": None,
         "trigger_direction": None,
@@ -159,6 +167,7 @@ TEMPLATES = {
     "evt_population_crisis": {
         "id":                "evt_population_crisis",
         "name":              "Population Crisis",
+        "chronicle_prose":   "a population crisis",
         "trigger_field":     "population",
         "trigger_threshold": 20,
         "trigger_direction": "below",
@@ -173,6 +182,7 @@ TEMPLATES = {
     "evt_resistance_movement": {
         "id":                "evt_resistance_movement",
         "name":              "Resistance Movement",
+        "chronicle_prose":   "a resistance movement",
         "trigger_field":     None,   # chain-only; spawned by conquest follow-up
         "trigger_threshold": None,
         "trigger_direction": None,
@@ -186,6 +196,7 @@ TEMPLATES = {
     "CONQUEST_UNREST": {
         "id":                "CONQUEST_UNREST",
         "name":              "Conquest Unrest",
+        "chronicle_prose":   "unrest following the conquest",
         "trigger_field":     None,
         "trigger_threshold": None,
         "trigger_direction": None,
@@ -206,6 +217,7 @@ TEMPLATES = {
     "evt_labor_shortage": {
         "id":                "evt_labor_shortage",
         "name":              "Labor Shortage",
+        "chronicle_prose":   "a labor shortage",
         "trigger_field":     "population",
         "trigger_threshold": 40,
         "trigger_direction": "below",
@@ -225,6 +237,7 @@ TEMPLATES = {
     "evt_immigration_wave": {
         "id":                "evt_immigration_wave",
         "name":              "Immigration Wave",
+        "chronicle_prose":   "a wave of immigration",
         "trigger_field":     None,
         "trigger_threshold": None,
         "trigger_direction": None,
@@ -237,6 +250,7 @@ TEMPLATES = {
     "evt_infrastructure_decay": {
         "id":                "evt_infrastructure_decay",
         "name":              "Infrastructure Decay",
+        "chronicle_prose":   "the decay of infrastructure",
         "trigger_field":     "economy",
         "trigger_threshold": 40,
         "trigger_direction": "below",
@@ -249,6 +263,7 @@ TEMPLATES = {
     "evt_military_buildup": {
         "id":                "evt_military_buildup",
         "name":              "Military Buildup",
+        "chronicle_prose":   "a military buildup",
         "trigger_field":     "military",
         "trigger_threshold": 50,
         "trigger_direction": "above",
@@ -268,6 +283,7 @@ TEMPLATES = {
     "evt_war_weariness": {
         "id":                "evt_war_weariness",
         "name":              "War Weariness",
+        "chronicle_prose":   "a spreading war weariness",
         "trigger_field":     None,
         "trigger_threshold": None,
         "trigger_direction": None,
@@ -280,6 +296,7 @@ TEMPLATES = {
     "evt_cultural_renaissance": {
         "id":                "evt_cultural_renaissance",
         "name":              "Cultural Upheaval",
+        "chronicle_prose":   "a cultural upheaval",
         "trigger_field":     "economy",
         "trigger_threshold": 60,
         "trigger_direction": "above",
@@ -292,6 +309,7 @@ TEMPLATES = {
     "evt_famine": {
         "id":                "evt_famine",
         "name":              "Famine",
+        "chronicle_prose":   "a widespread famine",
         "trigger_field":     "economy",
         "trigger_threshold": 10,
         "trigger_direction": "below",
@@ -317,6 +335,7 @@ TEMPLATES = {
     "evt_famine_relief": {
         "id":                "evt_famine_relief",
         "name":              "Famine Relief",
+        "chronicle_prose":   "the arrival of famine relief",
         "trigger_field":     None,
         "trigger_threshold": None,
         "trigger_direction": None,
@@ -329,6 +348,7 @@ TEMPLATES = {
     "evt_diplomatic_incident": {
         "id":                "evt_diplomatic_incident",
         "name":              "Diplomatic Incident",
+        "chronicle_prose":   "a diplomatic incident",
         "trigger_field":     "tension",
         "trigger_threshold": 35,
         "trigger_direction": "above",
@@ -341,6 +361,7 @@ TEMPLATES = {
     "evt_harvest_surplus": {
         "id":                "evt_harvest_surplus",
         "name":              "Harvest Surplus",
+        "chronicle_prose":   "a harvest surplus",
         "trigger_field":     "population",
         "trigger_threshold": 50,
         "trigger_direction": "above",
@@ -355,6 +376,7 @@ TEMPLATES = {
     "evt_admin_separatist": {
         "id":                "evt_admin_separatist",
         "name":              "Separatist Movement",
+        "chronicle_prose":   "a separatist movement",
         "trigger_field":     None,
         "trigger_threshold": None,
         "trigger_direction": None,
@@ -374,6 +396,7 @@ TEMPLATES = {
     "evt_admin_political_crisis": {
         "id":                "evt_admin_political_crisis",
         "name":              "Political Crisis",
+        "chronicle_prose":   "a political crisis",
         "trigger_field":     None,
         "trigger_threshold": None,
         "trigger_direction": None,
@@ -393,6 +416,7 @@ TEMPLATES = {
     "evt_admin_popular_support": {
         "id":                "evt_admin_popular_support",
         "name":              "Popular Support Shifts",
+        "chronicle_prose":   "a shift in popular support",
         "trigger_field":     None,
         "trigger_threshold": None,
         "trigger_direction": None,
@@ -412,6 +436,7 @@ TEMPLATES = {
     "evt_admin_military_defection": {
         "id":                "evt_admin_military_defection",
         "name":              "Military Defection",
+        "chronicle_prose":   "a military defection",
         "trigger_field":     None,
         "trigger_threshold": None,
         "trigger_direction": None,
@@ -431,6 +456,7 @@ TEMPLATES = {
     "evt_admin_breakaway": {
         "id":                "evt_admin_breakaway",
         "name":              "Administrative Breakaway",
+        "chronicle_prose":   "an administrative breakaway",
         "trigger_field":     None,
         "trigger_threshold": None,
         "trigger_direction": None,

@@ -5,15 +5,15 @@ extends Node3D
 const PAN_SPEED        := 1500.0
 const ZOOM_STEP        := 300.0
 const ZOOM_MIN         := 150.0
-const ZOOM_MAX         := 6000.0
+const ZOOM_MAX         := 12000.0
 const EDGE_SCROLL_ZONE := 60.0
 
 # Camera offset from pan target: (0, sin65, cos65) * zoom_dist
 const _CAM_SIN := 0.9063  # sin(65°)
 const _CAM_COS := 0.4226  # cos(65°)
 
-var _zoom_dist: float    = 3000.0
-var _pan_target: Vector3 = Vector3(2000.0, 0.0, 2000.0)
+var _zoom_dist: float    = 6000.0
+var _pan_target: Vector3 = Vector3(4000.0, 0.0, 4000.0)
 var _edge_scroll_speed: float = PAN_SPEED
 
 @onready var _camera: Camera3D  = $Camera3D
@@ -30,10 +30,11 @@ var _ability_overlays: Node3D
 var _impact_feedback: Node3D
 var _destruction: Node3D
 var _ambient: Node3D
-
+var _loading_overlay: CanvasLayer
 
 
 func _ready() -> void:
+	print("Tactical: scene _ready()")
 	_attack_visuals = preload("res://scenes/tactical/visuals/attack_visual_manager.gd").new()
 	_attack_visuals.name = "AttackVisualManager"
 	add_child(_attack_visuals)
@@ -56,12 +57,17 @@ func _ready() -> void:
 	_ambient.name = "AmbientDensityManager"
 	add_child(_ambient)
 
+	_loading_overlay = preload("res://scenes/tactical/tactical_loading_overlay.gd").new()
+	add_child(_loading_overlay)
+
 	var settings := UIDataBus.get_settings()
 	_edge_scroll_speed = float(settings.get("edge_scroll_speed", PAN_SPEED))
 
 	if SimBridge.USE_LIVE_SIM:
 		# Stage 10: tactical data flows through SimBridge stdio pipe.
 		SimBridge.state_updated.connect(TacticalBridge._on_message)
+		TacticalBridge._connected = true
+		SimBridge.send_command({"type": "command", "cmd": "ready_for_tactical"})
 	else:
 		# Development fallback: connect via WebSocket to run_debug_server.py
 		TacticalBridge.connect_to_engine("127.0.0.1", 8765)
@@ -78,6 +84,9 @@ func _notification(what: int) -> void:
 
 
 func _on_first_snapshot(_snap: Dictionary) -> void:
+	if _loading_overlay and is_instance_valid(_loading_overlay):
+		_loading_overlay.dismiss()
+		_loading_overlay = null
 	MissionMetricsRecorder.start_recording()
 	BugReportManager.start_buffering()
 	var sum := Vector3.ZERO
@@ -195,11 +204,13 @@ func _update_perf_label() -> void:
 	var fps := Engine.get_frames_per_second()
 	var atk_stats: Dictionary = _attack_visuals.get_stats()
 	var amb_stats: Dictionary = _ambient.get_stats()
+	var imp_stats: Dictionary = _impact_feedback.get_stats()
 	_perf_label.text = (
 		"FPS %d   tick %d   units %d   zoom %.0f\n" % [fps, TacticalBridge.current_tick, TacticalBridge.units.size(), _zoom_dist] +
 		"frame  p50 %.1fms  p95 %.1fms  p99 %.1fms\n" % [p50, p95, p99] +
 		"dropped (>16.7ms): %d\n" % _dropped_frames +
 		"proj %d  beam %d  pulse %d  lod_cull %d\n" % [atk_stats.active_projectiles, atk_stats.active_beams, atk_stats.active_pulses, atk_stats.lod_culled] +
+		"bursts %d  blooms %d  impacts %d\n" % [imp_stats.active_bursts, imp_stats.active_blooms, imp_stats.total_impacts] +
 		"flybys %d  haze %s\n" % [amb_stats.active_flybys, "on" if amb_stats.haze_active else "off"] +
 		"mem  static %.1fMB  dynamic %.1fMB\n" % [mem_static_mb, mem_dynamic_mb] +
 		"objects %d   nodes %d   orphans %d" % [obj_count, node_count, orphan_count]

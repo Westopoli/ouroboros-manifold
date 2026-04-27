@@ -22,6 +22,7 @@ def run_time_jump(world, n_ticks, registry, pending_queue, noise_offsets,
             start_factions.add(fid)
 
     all_events = []
+    all_actions = []
     territory_changes = []
     faction_births = []
     faction_deaths_detected = set()
@@ -31,6 +32,7 @@ def run_time_jump(world, n_ticks, registry, pending_queue, noise_offsets,
     revolts = []
 
     start_faction_ids = set(registry.keys())
+    ownership_timeline = []
 
     for i in range(n_ticks):
         t = start_tick + i + 1
@@ -52,6 +54,9 @@ def run_time_jump(world, n_ticks, registry, pending_queue, noise_offsets,
             enriched.setdefault("mission_consequence", False)
             all_events.append(enriched)
 
+        for act in tick_log.get("faction_actions", []):
+            all_actions.append({**act, "tick": t})
+
         for c in tick_log.get("conquests", []):
             conquests.append({**c, "tick": t})
 
@@ -68,6 +73,11 @@ def run_time_jump(world, n_ticks, registry, pending_queue, noise_offsets,
         for nid in new_ids:
             faction_births.append({"faction_id": nid, "tick": t})
             start_faction_ids.add(nid)
+
+        if (i + 1) % config.OWNERSHIP_TIMELINE_STRIDE == 0 or i == n_ticks - 1:
+            ownership_timeline.append({
+                rid: r.faction_id for rid, r in world.regions.items()
+            })
 
     # Coherence ledger: lineage growth + natural deaths
     if coherence_ledger and player_lineage_id:
@@ -129,16 +139,19 @@ def run_time_jump(world, n_ticks, registry, pending_queue, noise_offsets,
             "name": getattr(fac, "name", fid),
         }
     post_jump_regions = {}
+    region_populations = {}
     for rid, r in world.regions.items():
         post_jump_regions[rid] = {
             "faction_id": r.faction_id,
             "name": getattr(r, "name", rid),
         }
+        region_populations[rid] = r.fields.get("population", 0.0)
 
     return {
         "ticks_run":          n_ticks,
         "start_tick":         start_tick,
         "end_tick":           start_tick + n_ticks,
+        "start_ownership":    start_ownership,
         "territory_changes":  territory_changes,
         "faction_births":     faction_births,
         "faction_deaths":     list(faction_deaths_detected),
@@ -147,6 +160,7 @@ def run_time_jump(world, n_ticks, registry, pending_queue, noise_offsets,
         "admin_revolts":      admin_revolts,
         "revolts":            revolts,
         "events":             all_events,
+        "faction_actions":    all_actions,
         "events_total":       len(all_events),
         "field_deltas":       field_deltas,
         "scroll_entries":     scroll_entries,
@@ -155,4 +169,8 @@ def run_time_jump(world, n_ticks, registry, pending_queue, noise_offsets,
             "factions": post_jump_factions,
             "regions": post_jump_regions,
         },
+        "region_populations": region_populations,
+        "adjacency": world.adjacency,
+        "edge_types": dict(world.edge_types),
+        "ownership_timeline": ownership_timeline,
     }

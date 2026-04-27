@@ -87,6 +87,8 @@ may accept, override, or riff off in a new direction.]
 
 6. **Stop and wait.** After presenting, Claude stops. Does not write the spec, does not start on the next question, does not speculate about the answer. Waits for Westley.
 
+7. **Keep it succinct.** Context should re-explain the concept, not lecture. Pros and cons should be one or two sentences each, not paragraphs. Recommendations should state the reasoning in a sentence or two. If an option description runs past three sentences, it's too long. Only include information that helps Westley make the decision — no filler, no restating things he already knows, no padding.
+
 ### What Westley Might Do
 
 - **Pick an option** — "A" or "Option B" or similar. Write the answer to the design doc.

@@ -27,7 +27,6 @@ def is_empty_origin(rid):
 def run():
     scenario = {
         "name": "autopsy_full_stack",
-        "template": "full_game_50",
         "ticks": TICKS,
         "seed": SEED,
         "use_tick_engine": True,

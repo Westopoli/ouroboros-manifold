@@ -186,8 +186,11 @@ CONQUEROR_ECONOMY_DRAIN_RATE  = 0.10  # fraction that hits economy
 EVENT_NOISE_RANGE  = 10.0  # per-region threshold offset rolled in range [-noise, +noise]
 EVENT_GRACE_PERIOD = 3     # no threshold triggers fire during the first N ticks
 
-# ── World templates ──────────────────────────────────────────────────────────
-ISOLATED_START_EMPTY_REGION_COUNT = (4, 6)  # range for number of empty regions
+# ── World generation ─────────────────────────────────────────────────────────
+WORLD_REGION_COUNT_RANGE = (40, 60)
+WORLD_FACTIONS_PER_GAME = 4
+WORLD_EXTRA_EDGE_RATIO = 0.12
+WORLD_MIN_FACTION_SEPARATION = 3
 
 # ── Stage 1 — Drift-only isolated start (no factions, no conqueror) ─────────
 S1_HOME_MILITARY_RANGE    = (55, 70)
@@ -200,7 +203,6 @@ S1_FRONTIER_ECONOMY_RANGE     = (25, 40)
 S1_FRONTIER_TENSION_RANGE     = (20, 28)
 S1_FRONTIER_POPULATION_RANGE  = (15, 30)
 
-S1_EMPTY_REGION_COUNT = (4, 6)
 
 # ── Territorial adjacency bonus (Stage 1) ───────────────────────────────────
 NEIGHBOR_ECONOMY_BONUS = 0.05  # economy bonus per inhabited same-faction neighbor, scaled by neighbor eco/100
@@ -406,9 +408,11 @@ LIFECYCLE_FRAGMENTATION_REVOLT_RATE  = 0.02  # revolts per tick → fragmenting
 # ── Time jump (Stage 4) ─────────────────────────────────────────────────────
 TIME_JUMP_MIN_TICKS = 20
 TIME_JUMP_MAX_TICKS = 100
+TIME_JUMP_TICKS_PER_CHAPTER = 50
 
 # ── Keyframe selection (Stage 11) ──────────────────────────────────────────
 KEYFRAME_MAX_PER_TIME_JUMP = 12
+OWNERSHIP_TIMELINE_STRIDE = 2  # snapshot every Nth tick; 1 = every tick, 5-10 = smoother transitions
 
 
 # ── Character selector (Stage 5.5) ──────────────────────────────────────────
@@ -487,9 +491,9 @@ TACTICAL_TICK_DURATION         = 0.05    # seconds per tick (1 / TICK_RATE)
 ATTACK_BACKSWING_SEC           = 0.5     # movement pause after firing (SC2-style backswing, prevents chase jitter)
 
 # ── Canvas sizing (Stage 6) ─────────────────────────────────────────────────
-CANVAS_SMALL                   = (4000, 4000)
-CANVAS_MEDIUM                  = (8000, 8000)
-CANVAS_LARGE                   = (12000, 12000)
+CANVAS_SMALL                   = (8000, 8000)
+CANVAS_MEDIUM                  = (16000, 16000)
+CANVAS_LARGE                   = (24000, 24000)
 CANVAS_SIMULATION_MODIFIER_RANGE = 0.30  # ±30% canvas size variation
 
 # ── Category multiplier matrix (Stage 6) ────────────────────────────────────
@@ -592,6 +596,7 @@ COLLISION_RESOLUTION_ITERATIONS = 3
 FORMATION_MOVE_ENABLED         = True    # kill switch: set False to restore pre-formation behavior
 ARRIVAL_TOLERANCE_MULT         = 1.5     # per-unit slot arrival radius multiplier
 GROUP_ARRIVAL_RADIUS           = 2.0 * UNIT_COLLISION_RADIUS  # centroid-arrival threshold
+MAGIC_BOX_SPREAD_RADIUS        = 450.0   # max centroid-to-unit distance before formation offsets are abandoned
 
 # ── Objectives and outcome classification (Stage 6) ─────────────────────────
 OUTCOME_WEIGHT_OBJECTIVE       = 0.75
@@ -730,9 +735,9 @@ ASSET_PROFILES = {
 
 # ── Canvas size and reinforcements (Stage 5.5) ──────────────────────────────
 CANVAS_SIZE_RANGES = {
-    "small":  (4000, 6000),
-    "medium": (6000, 10000),
-    "large":  (10000, 14000),
+    "small":  (8000, 12000),
+    "medium": (12000, 20000),
+    "large":  (20000, 28000),
 }
 ARCHETYPE_BASE_CANVAS = {
     "defensive_stand": "medium", "siege_breaking": "large", "reconquest": "medium",
@@ -988,7 +993,7 @@ COMMANDER_DEATH_EVENT_ID = "evt_commander_killed_in_action"
 # ── Stage 7: Map Generation ──────────────────────────────────────────────────
 ENABLE_STAGE7_MAP_GEN = True   # ON: Checkpoint I passed; see docs/architecture.md
 
-CANVAS_SIZES = {"small": (4000, 4000), "medium": (8000, 8000), "large": (12000, 12000)}
+CANVAS_SIZES = {"small": (8000, 8000), "medium": (16000, 16000), "large": (24000, 24000)}
 STRUCTURE_COUNT_RANGES = {"small": (2, 4), "medium": (3, 6), "large": (4, 8)}
 LAYOUT_JITTER_PERCENT = 0.03
 

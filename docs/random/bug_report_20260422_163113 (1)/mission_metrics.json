@@ -1,0 +1,6118 @@
+{
+  "sample_interval_sec": 1.0,
+  "samples": [
+    {
+      "elapsed_sec": 0.0,
+      "enemy_force_hp": 89500.0,
+      "enemy_unit_count": 200,
+      "enemy_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 89500.0,
+      "player_unit_count": 200,
+      "player_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 0
+    },
+    {
+      "elapsed_sec": 1.0,
+      "enemy_force_hp": 89500.0,
+      "enemy_unit_count": 200,
+      "enemy_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 89500.0,
+      "player_unit_count": 200,
+      "player_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 20
+    },
+    {
+      "elapsed_sec": 2.0,
+      "enemy_force_hp": 89500.0,
+      "enemy_unit_count": 200,
+      "enemy_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 89500.0,
+      "player_unit_count": 200,
+      "player_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 40
+    },
+    {
+      "elapsed_sec": 3.0,
+      "enemy_force_hp": 89500.0,
+      "enemy_unit_count": 200,
+      "enemy_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 89500.0,
+      "player_unit_count": 200,
+      "player_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 60
+    },
+    {
+      "elapsed_sec": 4.0,
+      "enemy_force_hp": 89500.0,
+      "enemy_unit_count": 200,
+      "enemy_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 89500.0,
+      "player_unit_count": 200,
+      "player_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 80
+    },
+    {
+      "elapsed_sec": 5.0,
+      "enemy_force_hp": 89500.0,
+      "enemy_unit_count": 200,
+      "enemy_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 89500.0,
+      "player_unit_count": 200,
+      "player_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 100
+    },
+    {
+      "elapsed_sec": 6.0,
+      "enemy_force_hp": 89500.0,
+      "enemy_unit_count": 200,
+      "enemy_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 89500.0,
+      "player_unit_count": 200,
+      "player_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 120
+    },
+    {
+      "elapsed_sec": 7.0,
+      "enemy_force_hp": 89500.0,
+      "enemy_unit_count": 200,
+      "enemy_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 89500.0,
+      "player_unit_count": 200,
+      "player_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 140
+    },
+    {
+      "elapsed_sec": 8.0,
+      "enemy_force_hp": 89500.0,
+      "enemy_unit_count": 200,
+      "enemy_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 89500.0,
+      "player_unit_count": 200,
+      "player_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 181
+    },
+    {
+      "elapsed_sec": 9.0,
+      "enemy_force_hp": 89500.0,
+      "enemy_unit_count": 200,
+      "enemy_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 89500.0,
+      "player_unit_count": 200,
+      "player_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 200
+    },
+    {
+      "elapsed_sec": 10.0,
+      "enemy_force_hp": 89500.0,
+      "enemy_unit_count": 200,
+      "enemy_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 89500.0,
+      "player_unit_count": 200,
+      "player_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 220
+    },
+    {
+      "elapsed_sec": 11.0,
+      "enemy_force_hp": 89500.0,
+      "enemy_unit_count": 200,
+      "enemy_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 89500.0,
+      "player_unit_count": 200,
+      "player_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 241
+    },
+    {
+      "elapsed_sec": 12.0,
+      "enemy_force_hp": 89500.0,
+      "enemy_unit_count": 200,
+      "enemy_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 89500.0,
+      "player_unit_count": 200,
+      "player_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 261
+    },
+    {
+      "elapsed_sec": 13.0,
+      "enemy_force_hp": 89500.0,
+      "enemy_unit_count": 200,
+      "enemy_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 89500.0,
+      "player_unit_count": 200,
+      "player_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 280
+    },
+    {
+      "elapsed_sec": 14.0,
+      "enemy_force_hp": 89500.0,
+      "enemy_unit_count": 200,
+      "enemy_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 89500.0,
+      "player_unit_count": 200,
+      "player_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 300
+    },
+    {
+      "elapsed_sec": 15.0,
+      "enemy_force_hp": 89500.0,
+      "enemy_unit_count": 200,
+      "enemy_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 89500.0,
+      "player_unit_count": 200,
+      "player_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 321
+    },
+    {
+      "elapsed_sec": 16.0,
+      "enemy_force_hp": 89464.0,
+      "enemy_unit_count": 200,
+      "enemy_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 89464.0,
+      "player_unit_count": 200,
+      "player_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 341
+    },
+    {
+      "elapsed_sec": 17.0,
+      "enemy_force_hp": 89392.0,
+      "enemy_unit_count": 200,
+      "enemy_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 89392.0,
+      "player_unit_count": 200,
+      "player_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 361
+    },
+    {
+      "elapsed_sec": 18.0,
+      "enemy_force_hp": 89284.0,
+      "enemy_unit_count": 200,
+      "enemy_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 89284.0,
+      "player_unit_count": 200,
+      "player_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 380
+    },
+    {
+      "elapsed_sec": 19.0,
+      "enemy_force_hp": 89107.0,
+      "enemy_unit_count": 200,
+      "enemy_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 89107.0,
+      "player_unit_count": 200,
+      "player_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 400
+    },
+    {
+      "elapsed_sec": 20.0,
+      "enemy_force_hp": 88780.0,
+      "enemy_unit_count": 200,
+      "enemy_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 88813.0,
+      "player_unit_count": 200,
+      "player_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 420
+    },
+    {
+      "elapsed_sec": 21.0,
+      "enemy_force_hp": 88516.0,
+      "enemy_unit_count": 200,
+      "enemy_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 80
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 88566.0,
+      "player_unit_count": 199,
+      "player_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 79
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 440
+    },
+    {
+      "elapsed_sec": 22.0,
+      "enemy_force_hp": 88237.0,
+      "enemy_unit_count": 197,
+      "enemy_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 77
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 88311.0,
+      "player_unit_count": 199,
+      "player_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 79
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 460
+    },
+    {
+      "elapsed_sec": 23.0,
+      "enemy_force_hp": 87894.0,
+      "enemy_unit_count": 196,
+      "enemy_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 76
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 88017.0,
+      "player_unit_count": 199,
+      "player_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 79
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 481
+    },
+    {
+      "elapsed_sec": 24.0,
+      "enemy_force_hp": 87495.0,
+      "enemy_unit_count": 196,
+      "enemy_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 76
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 87639.0,
+      "player_unit_count": 199,
+      "player_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 79
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 500
+    },
+    {
+      "elapsed_sec": 25.0,
+      "enemy_force_hp": 87119.0,
+      "enemy_unit_count": 195,
+      "enemy_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 75
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 87286.0,
+      "player_unit_count": 197,
+      "player_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 77
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 521
+    },
+    {
+      "elapsed_sec": 26.0,
+      "enemy_force_hp": 86765.0,
+      "enemy_unit_count": 195,
+      "enemy_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 75
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 86893.0,
+      "player_unit_count": 197,
+      "player_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 77
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 541
+    },
+    {
+      "elapsed_sec": 27.0,
+      "enemy_force_hp": 86343.0,
+      "enemy_unit_count": 193,
+      "enemy_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 73
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 86533.0,
+      "player_unit_count": 197,
+      "player_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 77
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 561
+    },
+    {
+      "elapsed_sec": 28.0,
+      "enemy_force_hp": 85907.0,
+      "enemy_unit_count": 192,
+      "enemy_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 72
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 86115.0,
+      "player_unit_count": 196,
+      "player_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 76
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 581
+    },
+    {
+      "elapsed_sec": 29.0,
+      "enemy_force_hp": 85564.0,
+      "enemy_unit_count": 191,
+      "enemy_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 71
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 85759.0,
+      "player_unit_count": 194,
+      "player_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 74
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 600
+    },
+    {
+      "elapsed_sec": 30.0,
+      "enemy_force_hp": 85673.0,
+      "enemy_unit_count": 191,
+      "enemy_unit_counts_by_category": {
+        "line": 81,
+        "siege": 40,
+        "strike": 70
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 85851.0,
+      "player_unit_count": 195,
+      "player_unit_counts_by_category": {
+        "line": 81,
+        "siege": 40,
+        "strike": 74
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 621
+    },
+    {
+      "elapsed_sec": 31.0,
+      "enemy_force_hp": 85226.65,
+      "enemy_unit_count": 190,
+      "enemy_unit_counts_by_category": {
+        "line": 81,
+        "siege": 40,
+        "strike": 69
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 85476.25,
+      "player_unit_count": 193,
+      "player_unit_counts_by_category": {
+        "line": 81,
+        "siege": 40,
+        "strike": 72
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 641
+    },
+    {
+      "elapsed_sec": 32.0,
+      "enemy_force_hp": 84746.375,
+      "enemy_unit_count": 188,
+      "enemy_unit_counts_by_category": {
+        "line": 81,
+        "siege": 40,
+        "strike": 67
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 85043.975,
+      "player_unit_count": 191,
+      "player_unit_counts_by_category": {
+        "line": 81,
+        "siege": 40,
+        "strike": 70
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 661
+    },
+    {
+      "elapsed_sec": 33.0,
+      "enemy_force_hp": 84290.55,
+      "enemy_unit_count": 186,
+      "enemy_unit_counts_by_category": {
+        "line": 81,
+        "siege": 40,
+        "strike": 65
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 84536.825,
+      "player_unit_count": 191,
+      "player_unit_counts_by_category": {
+        "line": 81,
+        "siege": 40,
+        "strike": 70
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 680
+    },
+    {
+      "elapsed_sec": 34.0,
+      "enemy_force_hp": 83810.425,
+      "enemy_unit_count": 184,
+      "enemy_unit_counts_by_category": {
+        "line": 81,
+        "siege": 40,
+        "strike": 63
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 84007.4,
+      "player_unit_count": 191,
+      "player_unit_counts_by_category": {
+        "line": 81,
+        "siege": 40,
+        "strike": 70
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 700
+    },
+    {
+      "elapsed_sec": 35.0,
+      "enemy_force_hp": 83220.4,
+      "enemy_unit_count": 184,
+      "enemy_unit_counts_by_category": {
+        "line": 81,
+        "siege": 40,
+        "strike": 63
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 83468.55,
+      "player_unit_count": 189,
+      "player_unit_counts_by_category": {
+        "line": 81,
+        "siege": 40,
+        "strike": 68
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 721
+    },
+    {
+      "elapsed_sec": 36.0,
+      "enemy_force_hp": 82671.025,
+      "enemy_unit_count": 184,
+      "enemy_unit_counts_by_category": {
+        "line": 81,
+        "siege": 40,
+        "strike": 63
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 82999.25,
+      "player_unit_count": 185,
+      "player_unit_counts_by_category": {
+        "line": 81,
+        "siege": 40,
+        "strike": 64
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 740
+    },
+    {
+      "elapsed_sec": 37.0,
+      "enemy_force_hp": 82145.925,
+      "enemy_unit_count": 183,
+      "enemy_unit_counts_by_category": {
+        "line": 81,
+        "siege": 40,
+        "strike": 62
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 82460.525,
+      "player_unit_count": 182,
+      "player_unit_counts_by_category": {
+        "line": 81,
+        "siege": 40,
+        "strike": 61
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 761
+    },
+    {
+      "elapsed_sec": 38.0,
+      "enemy_force_hp": 81648.05,
+      "enemy_unit_count": 182,
+      "enemy_unit_counts_by_category": {
+        "line": 81,
+        "siege": 40,
+        "strike": 61
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 81956.575,
+      "player_unit_count": 181,
+      "player_unit_counts_by_category": {
+        "line": 81,
+        "siege": 40,
+        "strike": 60
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 780
+    },
+    {
+      "elapsed_sec": 39.0,
+      "enemy_force_hp": 81095.25,
+      "enemy_unit_count": 181,
+      "enemy_unit_counts_by_category": {
+        "line": 81,
+        "siege": 40,
+        "strike": 60
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 81427.95,
+      "player_unit_count": 180,
+      "player_unit_counts_by_category": {
+        "line": 81,
+        "siege": 40,
+        "strike": 59
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 800
+    },
+    {
+      "elapsed_sec": 40.0,
+      "enemy_force_hp": 80516.45,
+      "enemy_unit_count": 181,
+      "enemy_unit_counts_by_category": {
+        "line": 81,
+        "siege": 40,
+        "strike": 60
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 80916.9,
+      "player_unit_count": 180,
+      "player_unit_counts_by_category": {
+        "line": 81,
+        "siege": 40,
+        "strike": 59
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 821
+    },
+    {
+      "elapsed_sec": 41.0,
+      "enemy_force_hp": 80008.175,
+      "enemy_unit_count": 181,
+      "enemy_unit_counts_by_category": {
+        "line": 81,
+        "siege": 40,
+        "strike": 60
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 80378.175,
+      "player_unit_count": 180,
+      "player_unit_counts_by_category": {
+        "line": 81,
+        "siege": 40,
+        "strike": 59
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 841
+    },
+    {
+      "elapsed_sec": 42.0,
+      "enemy_force_hp": 79477.05,
+      "enemy_unit_count": 180,
+      "enemy_unit_counts_by_category": {
+        "line": 81,
+        "siege": 40,
+        "strike": 59
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 79874.7,
+      "player_unit_count": 180,
+      "player_unit_counts_by_category": {
+        "line": 81,
+        "siege": 40,
+        "strike": 59
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 861
+    },
+    {
+      "elapsed_sec": 43.0,
+      "enemy_force_hp": 78858.875,
+      "enemy_unit_count": 177,
+      "enemy_unit_counts_by_category": {
+        "line": 81,
+        "siege": 40,
+        "strike": 56
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 79366.775,
+      "player_unit_count": 176,
+      "player_unit_counts_by_category": {
+        "line": 81,
+        "siege": 40,
+        "strike": 55
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 881
+    },
+    {
+      "elapsed_sec": 44.0,
+      "enemy_force_hp": 78303.025,
+      "enemy_unit_count": 176,
+      "enemy_unit_counts_by_category": {
+        "line": 81,
+        "siege": 40,
+        "strike": 55
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 78843.35,
+      "player_unit_count": 176,
+      "player_unit_counts_by_category": {
+        "line": 81,
+        "siege": 40,
+        "strike": 55
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 900
+    },
+    {
+      "elapsed_sec": 45.0,
+      "enemy_force_hp": 77712.15,
+      "enemy_unit_count": 175,
+      "enemy_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 55
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 78288.65,
+      "player_unit_count": 173,
+      "player_unit_counts_by_category": {
+        "line": 81,
+        "siege": 40,
+        "strike": 52
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 921
+    },
+    {
+      "elapsed_sec": 46.0,
+      "enemy_force_hp": 77183.575,
+      "enemy_unit_count": 174,
+      "enemy_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 54
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 77818.05,
+      "player_unit_count": 171,
+      "player_unit_counts_by_category": {
+        "line": 81,
+        "siege": 40,
+        "strike": 50
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 941
+    },
+    {
+      "elapsed_sec": 47.0,
+      "enemy_force_hp": 76630.65,
+      "enemy_unit_count": 173,
+      "enemy_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 53
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 77307.525,
+      "player_unit_count": 171,
+      "player_unit_counts_by_category": {
+        "line": 81,
+        "siege": 40,
+        "strike": 50
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 961
+    },
+    {
+      "elapsed_sec": 48.0,
+      "enemy_force_hp": 76088.475,
+      "enemy_unit_count": 171,
+      "enemy_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 51
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 76819.5,
+      "player_unit_count": 171,
+      "player_unit_counts_by_category": {
+        "line": 81,
+        "siege": 40,
+        "strike": 50
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 981
+    },
+    {
+      "elapsed_sec": 49.0,
+      "enemy_force_hp": 75534.275,
+      "enemy_unit_count": 169,
+      "enemy_unit_counts_by_category": {
+        "line": 79,
+        "siege": 40,
+        "strike": 50
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 76238.825,
+      "player_unit_count": 171,
+      "player_unit_counts_by_category": {
+        "line": 81,
+        "siege": 40,
+        "strike": 50
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1000
+    },
+    {
+      "elapsed_sec": 50.0,
+      "enemy_force_hp": 74918.025,
+      "enemy_unit_count": 169,
+      "enemy_unit_counts_by_category": {
+        "line": 79,
+        "siege": 40,
+        "strike": 50
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 75669.05,
+      "player_unit_count": 170,
+      "player_unit_counts_by_category": {
+        "line": 81,
+        "siege": 40,
+        "strike": 49
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1021
+    },
+    {
+      "elapsed_sec": 51.0,
+      "enemy_force_hp": 74264.475,
+      "enemy_unit_count": 169,
+      "enemy_unit_counts_by_category": {
+        "line": 79,
+        "siege": 40,
+        "strike": 50
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 75183.85,
+      "player_unit_count": 169,
+      "player_unit_counts_by_category": {
+        "line": 81,
+        "siege": 40,
+        "strike": 48
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1041
+    },
+    {
+      "elapsed_sec": 52.0,
+      "enemy_force_hp": 73744.7,
+      "enemy_unit_count": 166,
+      "enemy_unit_counts_by_category": {
+        "line": 79,
+        "siege": 40,
+        "strike": 47
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 74593.925,
+      "player_unit_count": 166,
+      "player_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 46
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1061
+    },
+    {
+      "elapsed_sec": 53.0,
+      "enemy_force_hp": 73056.725,
+      "enemy_unit_count": 164,
+      "enemy_unit_counts_by_category": {
+        "line": 78,
+        "siege": 40,
+        "strike": 46
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 73947.65,
+      "player_unit_count": 166,
+      "player_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 46
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1081
+    },
+    {
+      "elapsed_sec": 54.0,
+      "enemy_force_hp": 72448.275,
+      "enemy_unit_count": 164,
+      "enemy_unit_counts_by_category": {
+        "line": 78,
+        "siege": 40,
+        "strike": 46
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 73493.975,
+      "player_unit_count": 166,
+      "player_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 46
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1100
+    },
+    {
+      "elapsed_sec": 55.0,
+      "enemy_force_hp": 71781.675,
+      "enemy_unit_count": 163,
+      "enemy_unit_counts_by_category": {
+        "line": 78,
+        "siege": 40,
+        "strike": 45
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 72791.725,
+      "player_unit_count": 165,
+      "player_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 45
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1121
+    },
+    {
+      "elapsed_sec": 56.0,
+      "enemy_force_hp": 70952.75,
+      "enemy_unit_count": 163,
+      "enemy_unit_counts_by_category": {
+        "line": 78,
+        "siege": 40,
+        "strike": 45
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 72067.65,
+      "player_unit_count": 165,
+      "player_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 45
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1141
+    },
+    {
+      "elapsed_sec": 57.0,
+      "enemy_force_hp": 70345.75,
+      "enemy_unit_count": 162,
+      "enemy_unit_counts_by_category": {
+        "line": 77,
+        "siege": 40,
+        "strike": 45
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 71506.675,
+      "player_unit_count": 164,
+      "player_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 44
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1161
+    },
+    {
+      "elapsed_sec": 58.0,
+      "enemy_force_hp": 69629.075,
+      "enemy_unit_count": 159,
+      "enemy_unit_counts_by_category": {
+        "line": 76,
+        "siege": 40,
+        "strike": 43
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 70815.05,
+      "player_unit_count": 160,
+      "player_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 40
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1181
+    },
+    {
+      "elapsed_sec": 59.0,
+      "enemy_force_hp": 68998.575,
+      "enemy_unit_count": 159,
+      "enemy_unit_counts_by_category": {
+        "line": 76,
+        "siege": 40,
+        "strike": 43
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 70220.625,
+      "player_unit_count": 159,
+      "player_unit_counts_by_category": {
+        "line": 79,
+        "siege": 40,
+        "strike": 40
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1200
+    },
+    {
+      "elapsed_sec": 60.0,
+      "enemy_force_hp": 68733.85,
+      "enemy_unit_count": 158,
+      "enemy_unit_counts_by_category": {
+        "line": 76,
+        "siege": 40,
+        "strike": 42
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 70052.4,
+      "player_unit_count": 158,
+      "player_unit_counts_by_category": {
+        "line": 80,
+        "siege": 40,
+        "strike": 38
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1221
+    },
+    {
+      "elapsed_sec": 61.0,
+      "enemy_force_hp": 68039.075,
+      "enemy_unit_count": 157,
+      "enemy_unit_counts_by_category": {
+        "line": 76,
+        "siege": 40,
+        "strike": 41
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 69233.95,
+      "player_unit_count": 156,
+      "player_unit_counts_by_category": {
+        "line": 79,
+        "siege": 40,
+        "strike": 37
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1241
+    },
+    {
+      "elapsed_sec": 62.0,
+      "enemy_force_hp": 67288.9,
+      "enemy_unit_count": 154,
+      "enemy_unit_counts_by_category": {
+        "line": 76,
+        "siege": 40,
+        "strike": 38
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 68642.725,
+      "player_unit_count": 156,
+      "player_unit_counts_by_category": {
+        "line": 79,
+        "siege": 40,
+        "strike": 37
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1261
+    },
+    {
+      "elapsed_sec": 63.0,
+      "enemy_force_hp": 66549.95,
+      "enemy_unit_count": 152,
+      "enemy_unit_counts_by_category": {
+        "line": 75,
+        "siege": 40,
+        "strike": 37
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 67997.75,
+      "player_unit_count": 156,
+      "player_unit_counts_by_category": {
+        "line": 79,
+        "siege": 40,
+        "strike": 37
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1281
+    },
+    {
+      "elapsed_sec": 64.0,
+      "enemy_force_hp": 65967.425,
+      "enemy_unit_count": 150,
+      "enemy_unit_counts_by_category": {
+        "line": 74,
+        "siege": 40,
+        "strike": 36
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 67349.1,
+      "player_unit_count": 155,
+      "player_unit_counts_by_category": {
+        "line": 79,
+        "siege": 40,
+        "strike": 36
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1300
+    },
+    {
+      "elapsed_sec": 65.0,
+      "enemy_force_hp": 65105.425,
+      "enemy_unit_count": 149,
+      "enemy_unit_counts_by_category": {
+        "line": 74,
+        "siege": 40,
+        "strike": 35
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 66674.925,
+      "player_unit_count": 155,
+      "player_unit_counts_by_category": {
+        "line": 79,
+        "siege": 40,
+        "strike": 36
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1321
+    },
+    {
+      "elapsed_sec": 66.0,
+      "enemy_force_hp": 64248.35,
+      "enemy_unit_count": 147,
+      "enemy_unit_counts_by_category": {
+        "line": 74,
+        "siege": 40,
+        "strike": 33
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 66026.225,
+      "player_unit_count": 154,
+      "player_unit_counts_by_category": {
+        "line": 78,
+        "siege": 40,
+        "strike": 36
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1341
+    },
+    {
+      "elapsed_sec": 67.0,
+      "enemy_force_hp": 63604.125,
+      "enemy_unit_count": 146,
+      "enemy_unit_counts_by_category": {
+        "line": 74,
+        "siege": 40,
+        "strike": 32
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 65313.75,
+      "player_unit_count": 153,
+      "player_unit_counts_by_category": {
+        "line": 78,
+        "siege": 40,
+        "strike": 35
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1361
+    },
+    {
+      "elapsed_sec": 68.0,
+      "enemy_force_hp": 62690.275,
+      "enemy_unit_count": 144,
+      "enemy_unit_counts_by_category": {
+        "line": 74,
+        "siege": 40,
+        "strike": 30
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 64643.425,
+      "player_unit_count": 151,
+      "player_unit_counts_by_category": {
+        "line": 78,
+        "siege": 40,
+        "strike": 33
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1381
+    },
+    {
+      "elapsed_sec": 69.0,
+      "enemy_force_hp": 61884.35,
+      "enemy_unit_count": 142,
+      "enemy_unit_counts_by_category": {
+        "line": 72,
+        "siege": 40,
+        "strike": 30
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 63986.4,
+      "player_unit_count": 151,
+      "player_unit_counts_by_category": {
+        "line": 78,
+        "siege": 40,
+        "strike": 33
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1400
+    },
+    {
+      "elapsed_sec": 70.0,
+      "enemy_force_hp": 61273.85,
+      "enemy_unit_count": 141,
+      "enemy_unit_counts_by_category": {
+        "line": 72,
+        "siege": 40,
+        "strike": 29
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 63331.95,
+      "player_unit_count": 148,
+      "player_unit_counts_by_category": {
+        "line": 78,
+        "siege": 40,
+        "strike": 30
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1421
+    },
+    {
+      "elapsed_sec": 71.0,
+      "enemy_force_hp": 60416.75,
+      "enemy_unit_count": 136,
+      "enemy_unit_counts_by_category": {
+        "line": 71,
+        "siege": 38,
+        "strike": 27
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 62640.25,
+      "player_unit_count": 146,
+      "player_unit_counts_by_category": {
+        "line": 77,
+        "siege": 39,
+        "strike": 30
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1441
+    },
+    {
+      "elapsed_sec": 72.0,
+      "enemy_force_hp": 59592.0,
+      "enemy_unit_count": 134,
+      "enemy_unit_counts_by_category": {
+        "line": 70,
+        "siege": 38,
+        "strike": 26
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 61999.825,
+      "player_unit_count": 142,
+      "player_unit_counts_by_category": {
+        "line": 77,
+        "siege": 39,
+        "strike": 26
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1461
+    },
+    {
+      "elapsed_sec": 73.0,
+      "enemy_force_hp": 59030.3,
+      "enemy_unit_count": 134,
+      "enemy_unit_counts_by_category": {
+        "line": 70,
+        "siege": 38,
+        "strike": 26
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 61346.625,
+      "player_unit_count": 141,
+      "player_unit_counts_by_category": {
+        "line": 77,
+        "siege": 38,
+        "strike": 26
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1481
+    },
+    {
+      "elapsed_sec": 74.0,
+      "enemy_force_hp": 58281.225,
+      "enemy_unit_count": 133,
+      "enemy_unit_counts_by_category": {
+        "line": 70,
+        "siege": 37,
+        "strike": 26
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 60782.625,
+      "player_unit_count": 141,
+      "player_unit_counts_by_category": {
+        "line": 77,
+        "siege": 38,
+        "strike": 26
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1500
+    },
+    {
+      "elapsed_sec": 75.0,
+      "enemy_force_hp": 57434.775,
+      "enemy_unit_count": 130,
+      "enemy_unit_counts_by_category": {
+        "line": 70,
+        "siege": 34,
+        "strike": 26
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 60154.6,
+      "player_unit_count": 139,
+      "player_unit_counts_by_category": {
+        "line": 76,
+        "siege": 38,
+        "strike": 25
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1521
+    },
+    {
+      "elapsed_sec": 76.0,
+      "enemy_force_hp": 56857.525,
+      "enemy_unit_count": 129,
+      "enemy_unit_counts_by_category": {
+        "line": 70,
+        "siege": 34,
+        "strike": 25
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 59310.675,
+      "player_unit_count": 137,
+      "player_unit_counts_by_category": {
+        "line": 76,
+        "siege": 36,
+        "strike": 25
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1541
+    },
+    {
+      "elapsed_sec": 77.0,
+      "enemy_force_hp": 56225.975,
+      "enemy_unit_count": 128,
+      "enemy_unit_counts_by_category": {
+        "line": 70,
+        "siege": 33,
+        "strike": 25
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 58756.0,
+      "player_unit_count": 135,
+      "player_unit_counts_by_category": {
+        "line": 75,
+        "siege": 36,
+        "strike": 24
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1561
+    },
+    {
+      "elapsed_sec": 78.0,
+      "enemy_force_hp": 55452.925,
+      "enemy_unit_count": 125,
+      "enemy_unit_counts_by_category": {
+        "line": 68,
+        "siege": 32,
+        "strike": 25
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 58273.25,
+      "player_unit_count": 135,
+      "player_unit_counts_by_category": {
+        "line": 75,
+        "siege": 36,
+        "strike": 24
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1581
+    },
+    {
+      "elapsed_sec": 79.0,
+      "enemy_force_hp": 54907.225,
+      "enemy_unit_count": 125,
+      "enemy_unit_counts_by_category": {
+        "line": 68,
+        "siege": 32,
+        "strike": 25
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 57647.275,
+      "player_unit_count": 135,
+      "player_unit_counts_by_category": {
+        "line": 75,
+        "siege": 36,
+        "strike": 24
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1600
+    },
+    {
+      "elapsed_sec": 80.0,
+      "enemy_force_hp": 54208.55,
+      "enemy_unit_count": 123,
+      "enemy_unit_counts_by_category": {
+        "line": 67,
+        "siege": 31,
+        "strike": 25
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 57096.825,
+      "player_unit_count": 134,
+      "player_unit_counts_by_category": {
+        "line": 75,
+        "siege": 35,
+        "strike": 24
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1620
+    },
+    {
+      "elapsed_sec": 81.0,
+      "enemy_force_hp": 53567.9,
+      "enemy_unit_count": 123,
+      "enemy_unit_counts_by_category": {
+        "line": 67,
+        "siege": 31,
+        "strike": 25
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 56587.9,
+      "player_unit_count": 132,
+      "player_unit_counts_by_category": {
+        "line": 75,
+        "siege": 34,
+        "strike": 23
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1640
+    },
+    {
+      "elapsed_sec": 82.0,
+      "enemy_force_hp": 53001.025,
+      "enemy_unit_count": 122,
+      "enemy_unit_counts_by_category": {
+        "line": 67,
+        "siege": 30,
+        "strike": 25
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 56070.625,
+      "player_unit_count": 131,
+      "player_unit_counts_by_category": {
+        "line": 75,
+        "siege": 33,
+        "strike": 23
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1660
+    },
+    {
+      "elapsed_sec": 83.0,
+      "enemy_force_hp": 52369.25,
+      "enemy_unit_count": 122,
+      "enemy_unit_counts_by_category": {
+        "line": 67,
+        "siege": 30,
+        "strike": 25
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 55477.6,
+      "player_unit_count": 129,
+      "player_unit_counts_by_category": {
+        "line": 74,
+        "siege": 33,
+        "strike": 22
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1680
+    },
+    {
+      "elapsed_sec": 84.0,
+      "enemy_force_hp": 51776.9,
+      "enemy_unit_count": 119,
+      "enemy_unit_counts_by_category": {
+        "line": 65,
+        "siege": 29,
+        "strike": 25
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 55004.55,
+      "player_unit_count": 128,
+      "player_unit_counts_by_category": {
+        "line": 74,
+        "siege": 33,
+        "strike": 21
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1700
+    },
+    {
+      "elapsed_sec": 85.0,
+      "enemy_force_hp": 51180.725,
+      "enemy_unit_count": 119,
+      "enemy_unit_counts_by_category": {
+        "line": 65,
+        "siege": 29,
+        "strike": 25
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 54549.2,
+      "player_unit_count": 127,
+      "player_unit_counts_by_category": {
+        "line": 73,
+        "siege": 33,
+        "strike": 21
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1720
+    },
+    {
+      "elapsed_sec": 86.0,
+      "enemy_force_hp": 50514.8,
+      "enemy_unit_count": 119,
+      "enemy_unit_counts_by_category": {
+        "line": 65,
+        "siege": 29,
+        "strike": 25
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 53949.225,
+      "player_unit_count": 124,
+      "player_unit_counts_by_category": {
+        "line": 72,
+        "siege": 31,
+        "strike": 21
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1740
+    },
+    {
+      "elapsed_sec": 87.0,
+      "enemy_force_hp": 50057.825,
+      "enemy_unit_count": 119,
+      "enemy_unit_counts_by_category": {
+        "line": 65,
+        "siege": 29,
+        "strike": 25
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 53448.875,
+      "player_unit_count": 121,
+      "player_unit_counts_by_category": {
+        "line": 71,
+        "siege": 31,
+        "strike": 19
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1760
+    },
+    {
+      "elapsed_sec": 88.0,
+      "enemy_force_hp": 49400.85,
+      "enemy_unit_count": 118,
+      "enemy_unit_counts_by_category": {
+        "line": 65,
+        "siege": 29,
+        "strike": 24
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 52988.325,
+      "player_unit_count": 120,
+      "player_unit_counts_by_category": {
+        "line": 71,
+        "siege": 30,
+        "strike": 19
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1780
+    },
+    {
+      "elapsed_sec": 89.0,
+      "enemy_force_hp": 48929.575,
+      "enemy_unit_count": 117,
+      "enemy_unit_counts_by_category": {
+        "line": 64,
+        "siege": 29,
+        "strike": 24
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 52361.45,
+      "player_unit_count": 116,
+      "player_unit_counts_by_category": {
+        "line": 71,
+        "siege": 27,
+        "strike": 18
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1800
+    },
+    {
+      "elapsed_sec": 90.0,
+      "enemy_force_hp": 48964.325,
+      "enemy_unit_count": 115,
+      "enemy_unit_counts_by_category": {
+        "line": 63,
+        "siege": 29,
+        "strike": 23
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 52425.9,
+      "player_unit_count": 116,
+      "player_unit_counts_by_category": {
+        "line": 72,
+        "siege": 26,
+        "strike": 18
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1820
+    },
+    {
+      "elapsed_sec": 91.0,
+      "enemy_force_hp": 48501.075,
+      "enemy_unit_count": 115,
+      "enemy_unit_counts_by_category": {
+        "line": 63,
+        "siege": 29,
+        "strike": 23
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 51899.75,
+      "player_unit_count": 115,
+      "player_unit_counts_by_category": {
+        "line": 71,
+        "siege": 26,
+        "strike": 18
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1840
+    },
+    {
+      "elapsed_sec": 92.0,
+      "enemy_force_hp": 47988.875,
+      "enemy_unit_count": 113,
+      "enemy_unit_counts_by_category": {
+        "line": 62,
+        "siege": 29,
+        "strike": 22
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 51297.3,
+      "player_unit_count": 113,
+      "player_unit_counts_by_category": {
+        "line": 71,
+        "siege": 25,
+        "strike": 17
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1860
+    },
+    {
+      "elapsed_sec": 93.0,
+      "enemy_force_hp": 47528.15,
+      "enemy_unit_count": 113,
+      "enemy_unit_counts_by_category": {
+        "line": 62,
+        "siege": 29,
+        "strike": 22
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 50824.625,
+      "player_unit_count": 112,
+      "player_unit_counts_by_category": {
+        "line": 71,
+        "siege": 25,
+        "strike": 16
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1880
+    },
+    {
+      "elapsed_sec": 94.0,
+      "enemy_force_hp": 47053.05,
+      "enemy_unit_count": 112,
+      "enemy_unit_counts_by_category": {
+        "line": 62,
+        "siege": 28,
+        "strike": 22
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 50428.225,
+      "player_unit_count": 112,
+      "player_unit_counts_by_category": {
+        "line": 71,
+        "siege": 25,
+        "strike": 16
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1900
+    },
+    {
+      "elapsed_sec": 95.0,
+      "enemy_force_hp": 46645.6,
+      "enemy_unit_count": 110,
+      "enemy_unit_counts_by_category": {
+        "line": 61,
+        "siege": 27,
+        "strike": 22
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 49814.075,
+      "player_unit_count": 111,
+      "player_unit_counts_by_category": {
+        "line": 71,
+        "siege": 24,
+        "strike": 16
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1920
+    },
+    {
+      "elapsed_sec": 96.0,
+      "enemy_force_hp": 46165.575,
+      "enemy_unit_count": 110,
+      "enemy_unit_counts_by_category": {
+        "line": 61,
+        "siege": 27,
+        "strike": 22
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 49423.225,
+      "player_unit_count": 109,
+      "player_unit_counts_by_category": {
+        "line": 71,
+        "siege": 23,
+        "strike": 15
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1940
+    },
+    {
+      "elapsed_sec": 97.0,
+      "enemy_force_hp": 45712.45,
+      "enemy_unit_count": 109,
+      "enemy_unit_counts_by_category": {
+        "line": 61,
+        "siege": 27,
+        "strike": 21
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 49028.825,
+      "player_unit_count": 108,
+      "player_unit_counts_by_category": {
+        "line": 71,
+        "siege": 23,
+        "strike": 14
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 1960
+    },
+    {
+      "elapsed_sec": 98.0,
+      "enemy_force_hp": 44907.425,
+      "enemy_unit_count": 104,
+      "enemy_unit_counts_by_category": {
+        "line": 58,
+        "siege": 27,
+        "strike": 19
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 48027.6,
+      "player_unit_count": 107,
+      "player_unit_counts_by_category": {
+        "line": 70,
+        "siege": 23,
+        "strike": 14
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2000
+    },
+    {
+      "elapsed_sec": 99.0,
+      "enemy_force_hp": 44473.8,
+      "enemy_unit_count": 102,
+      "enemy_unit_counts_by_category": {
+        "line": 57,
+        "siege": 27,
+        "strike": 18
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 47674.8,
+      "player_unit_count": 107,
+      "player_unit_counts_by_category": {
+        "line": 70,
+        "siege": 23,
+        "strike": 14
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2020
+    },
+    {
+      "elapsed_sec": 100.0,
+      "enemy_force_hp": 44106.875,
+      "enemy_unit_count": 101,
+      "enemy_unit_counts_by_category": {
+        "line": 56,
+        "siege": 27,
+        "strike": 18
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 47006.65,
+      "player_unit_count": 106,
+      "player_unit_counts_by_category": {
+        "line": 69,
+        "siege": 23,
+        "strike": 14
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2040
+    },
+    {
+      "elapsed_sec": 101.0,
+      "enemy_force_hp": 43662.25,
+      "enemy_unit_count": 101,
+      "enemy_unit_counts_by_category": {
+        "line": 56,
+        "siege": 27,
+        "strike": 18
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 46685.75,
+      "player_unit_count": 106,
+      "player_unit_counts_by_category": {
+        "line": 69,
+        "siege": 23,
+        "strike": 14
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2060
+    },
+    {
+      "elapsed_sec": 102.0,
+      "enemy_force_hp": 43223.25,
+      "enemy_unit_count": 101,
+      "enemy_unit_counts_by_category": {
+        "line": 56,
+        "siege": 27,
+        "strike": 18
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 46288.75,
+      "player_unit_count": 104,
+      "player_unit_counts_by_category": {
+        "line": 68,
+        "siege": 23,
+        "strike": 13
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2080
+    },
+    {
+      "elapsed_sec": 103.0,
+      "enemy_force_hp": 42826.175,
+      "enemy_unit_count": 100,
+      "enemy_unit_counts_by_category": {
+        "line": 55,
+        "siege": 27,
+        "strike": 18
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 45727.025,
+      "player_unit_count": 103,
+      "player_unit_counts_by_category": {
+        "line": 68,
+        "siege": 23,
+        "strike": 12
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2100
+    },
+    {
+      "elapsed_sec": 104.0,
+      "enemy_force_hp": 42415.025,
+      "enemy_unit_count": 99,
+      "enemy_unit_counts_by_category": {
+        "line": 55,
+        "siege": 26,
+        "strike": 18
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 45275.025,
+      "player_unit_count": 103,
+      "player_unit_counts_by_category": {
+        "line": 68,
+        "siege": 23,
+        "strike": 12
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2120
+    },
+    {
+      "elapsed_sec": 105.0,
+      "enemy_force_hp": 42085.575,
+      "enemy_unit_count": 97,
+      "enemy_unit_counts_by_category": {
+        "line": 53,
+        "siege": 26,
+        "strike": 18
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 44975.375,
+      "player_unit_count": 102,
+      "player_unit_counts_by_category": {
+        "line": 67,
+        "siege": 23,
+        "strike": 12
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2140
+    },
+    {
+      "elapsed_sec": 106.0,
+      "enemy_force_hp": 41707.25,
+      "enemy_unit_count": 97,
+      "enemy_unit_counts_by_category": {
+        "line": 53,
+        "siege": 26,
+        "strike": 18
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 44490.1,
+      "player_unit_count": 99,
+      "player_unit_counts_by_category": {
+        "line": 66,
+        "siege": 23,
+        "strike": 10
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2160
+    },
+    {
+      "elapsed_sec": 107.0,
+      "enemy_force_hp": 41283.45,
+      "enemy_unit_count": 93,
+      "enemy_unit_counts_by_category": {
+        "line": 50,
+        "siege": 26,
+        "strike": 17
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 44174.5,
+      "player_unit_count": 99,
+      "player_unit_counts_by_category": {
+        "line": 66,
+        "siege": 23,
+        "strike": 10
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2180
+    },
+    {
+      "elapsed_sec": 108.0,
+      "enemy_force_hp": 40978.0,
+      "enemy_unit_count": 93,
+      "enemy_unit_counts_by_category": {
+        "line": 50,
+        "siege": 26,
+        "strike": 17
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 43775.875,
+      "player_unit_count": 97,
+      "player_unit_counts_by_category": {
+        "line": 64,
+        "siege": 23,
+        "strike": 10
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2200
+    },
+    {
+      "elapsed_sec": 109.0,
+      "enemy_force_hp": 40577.725,
+      "enemy_unit_count": 93,
+      "enemy_unit_counts_by_category": {
+        "line": 50,
+        "siege": 26,
+        "strike": 17
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 43267.775,
+      "player_unit_count": 97,
+      "player_unit_counts_by_category": {
+        "line": 64,
+        "siege": 23,
+        "strike": 10
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2220
+    },
+    {
+      "elapsed_sec": 110.0,
+      "enemy_force_hp": 40174.925,
+      "enemy_unit_count": 93,
+      "enemy_unit_counts_by_category": {
+        "line": 50,
+        "siege": 26,
+        "strike": 17
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 42952.275,
+      "player_unit_count": 97,
+      "player_unit_counts_by_category": {
+        "line": 64,
+        "siege": 23,
+        "strike": 10
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2240
+    },
+    {
+      "elapsed_sec": 111.0,
+      "enemy_force_hp": 39848.325,
+      "enemy_unit_count": 92,
+      "enemy_unit_counts_by_category": {
+        "line": 49,
+        "siege": 26,
+        "strike": 17
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 42559.175,
+      "player_unit_count": 96,
+      "player_unit_counts_by_category": {
+        "line": 63,
+        "siege": 23,
+        "strike": 10
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2260
+    },
+    {
+      "elapsed_sec": 112.0,
+      "enemy_force_hp": 39476.0,
+      "enemy_unit_count": 91,
+      "enemy_unit_counts_by_category": {
+        "line": 48,
+        "siege": 26,
+        "strike": 17
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 42106.175,
+      "player_unit_count": 96,
+      "player_unit_counts_by_category": {
+        "line": 63,
+        "siege": 23,
+        "strike": 10
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2280
+    },
+    {
+      "elapsed_sec": 113.0,
+      "enemy_force_hp": 39101.1,
+      "enemy_unit_count": 90,
+      "enemy_unit_counts_by_category": {
+        "line": 47,
+        "siege": 26,
+        "strike": 17
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 41768.575,
+      "player_unit_count": 96,
+      "player_unit_counts_by_category": {
+        "line": 63,
+        "siege": 23,
+        "strike": 10
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2300
+    },
+    {
+      "elapsed_sec": 114.0,
+      "enemy_force_hp": 38805.95,
+      "enemy_unit_count": 90,
+      "enemy_unit_counts_by_category": {
+        "line": 47,
+        "siege": 26,
+        "strike": 17
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 41368.625,
+      "player_unit_count": 96,
+      "player_unit_counts_by_category": {
+        "line": 63,
+        "siege": 23,
+        "strike": 10
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2320
+    },
+    {
+      "elapsed_sec": 115.0,
+      "enemy_force_hp": 38436.4,
+      "enemy_unit_count": 90,
+      "enemy_unit_counts_by_category": {
+        "line": 47,
+        "siege": 26,
+        "strike": 17
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 40893.975,
+      "player_unit_count": 93,
+      "player_unit_counts_by_category": {
+        "line": 61,
+        "siege": 22,
+        "strike": 10
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2340
+    },
+    {
+      "elapsed_sec": 116.0,
+      "enemy_force_hp": 38061.425,
+      "enemy_unit_count": 90,
+      "enemy_unit_counts_by_category": {
+        "line": 47,
+        "siege": 26,
+        "strike": 17
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 40618.675,
+      "player_unit_count": 91,
+      "player_unit_counts_by_category": {
+        "line": 59,
+        "siege": 22,
+        "strike": 10
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2360
+    },
+    {
+      "elapsed_sec": 117.0,
+      "enemy_force_hp": 37797.675,
+      "enemy_unit_count": 90,
+      "enemy_unit_counts_by_category": {
+        "line": 47,
+        "siege": 26,
+        "strike": 17
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 40262.125,
+      "player_unit_count": 91,
+      "player_unit_counts_by_category": {
+        "line": 59,
+        "siege": 22,
+        "strike": 10
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2380
+    },
+    {
+      "elapsed_sec": 118.0,
+      "enemy_force_hp": 37529.35,
+      "enemy_unit_count": 90,
+      "enemy_unit_counts_by_category": {
+        "line": 47,
+        "siege": 26,
+        "strike": 17
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 39773.275,
+      "player_unit_count": 91,
+      "player_unit_counts_by_category": {
+        "line": 59,
+        "siege": 22,
+        "strike": 10
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2400
+    },
+    {
+      "elapsed_sec": 119.0,
+      "enemy_force_hp": 37628.375,
+      "enemy_unit_count": 89,
+      "enemy_unit_counts_by_category": {
+        "line": 46,
+        "siege": 26,
+        "strike": 17
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 39980.025,
+      "player_unit_count": 89,
+      "player_unit_counts_by_category": {
+        "line": 57,
+        "siege": 22,
+        "strike": 10
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2420
+    },
+    {
+      "elapsed_sec": 120.0,
+      "enemy_force_hp": 37366.7625,
+      "enemy_unit_count": 88,
+      "enemy_unit_counts_by_category": {
+        "line": 46,
+        "siege": 26,
+        "strike": 16
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 39583.19,
+      "player_unit_count": 88,
+      "player_unit_counts_by_category": {
+        "line": 56,
+        "siege": 22,
+        "strike": 10
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2440
+    },
+    {
+      "elapsed_sec": 121.0,
+      "enemy_force_hp": 37104.6,
+      "enemy_unit_count": 88,
+      "enemy_unit_counts_by_category": {
+        "line": 46,
+        "siege": 26,
+        "strike": 16
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 39147.38,
+      "player_unit_count": 88,
+      "player_unit_counts_by_category": {
+        "line": 56,
+        "siege": 22,
+        "strike": 10
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2460
+    },
+    {
+      "elapsed_sec": 122.0,
+      "enemy_force_hp": 36757.2125,
+      "enemy_unit_count": 88,
+      "enemy_unit_counts_by_category": {
+        "line": 46,
+        "siege": 26,
+        "strike": 16
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 38823.575,
+      "player_unit_count": 87,
+      "player_unit_counts_by_category": {
+        "line": 56,
+        "siege": 22,
+        "strike": 9
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2480
+    },
+    {
+      "elapsed_sec": 123.0,
+      "enemy_force_hp": 36460.6375,
+      "enemy_unit_count": 88,
+      "enemy_unit_counts_by_category": {
+        "line": 46,
+        "siege": 26,
+        "strike": 16
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 38495.775,
+      "player_unit_count": 87,
+      "player_unit_counts_by_category": {
+        "line": 56,
+        "siege": 22,
+        "strike": 9
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2500
+    },
+    {
+      "elapsed_sec": 124.0,
+      "enemy_force_hp": 36210.25,
+      "enemy_unit_count": 87,
+      "enemy_unit_counts_by_category": {
+        "line": 45,
+        "siege": 26,
+        "strike": 16
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 38025.975,
+      "player_unit_count": 86,
+      "player_unit_counts_by_category": {
+        "line": 55,
+        "siege": 22,
+        "strike": 9
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2520
+    },
+    {
+      "elapsed_sec": 125.0,
+      "enemy_force_hp": 35849.0125,
+      "enemy_unit_count": 85,
+      "enemy_unit_counts_by_category": {
+        "line": 44,
+        "siege": 25,
+        "strike": 16
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 37751.925,
+      "player_unit_count": 86,
+      "player_unit_counts_by_category": {
+        "line": 55,
+        "siege": 22,
+        "strike": 9
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2540
+    },
+    {
+      "elapsed_sec": 126.0,
+      "enemy_force_hp": 35621.875,
+      "enemy_unit_count": 85,
+      "enemy_unit_counts_by_category": {
+        "line": 44,
+        "siege": 25,
+        "strike": 16
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 37386.325,
+      "player_unit_count": 86,
+      "player_unit_counts_by_category": {
+        "line": 55,
+        "siege": 22,
+        "strike": 9
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2560
+    },
+    {
+      "elapsed_sec": 127.0,
+      "enemy_force_hp": 35396.05,
+      "enemy_unit_count": 84,
+      "enemy_unit_counts_by_category": {
+        "line": 43,
+        "siege": 25,
+        "strike": 16
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 36921.25,
+      "player_unit_count": 84,
+      "player_unit_counts_by_category": {
+        "line": 53,
+        "siege": 22,
+        "strike": 9
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2580
+    },
+    {
+      "elapsed_sec": 128.0,
+      "enemy_force_hp": 35105.425,
+      "enemy_unit_count": 84,
+      "enemy_unit_counts_by_category": {
+        "line": 43,
+        "siege": 25,
+        "strike": 16
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 36662.0,
+      "player_unit_count": 84,
+      "player_unit_counts_by_category": {
+        "line": 53,
+        "siege": 22,
+        "strike": 9
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2600
+    },
+    {
+      "elapsed_sec": 129.0,
+      "enemy_force_hp": 34814.175,
+      "enemy_unit_count": 83,
+      "enemy_unit_counts_by_category": {
+        "line": 42,
+        "siege": 25,
+        "strike": 16
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 36337.275,
+      "player_unit_count": 82,
+      "player_unit_counts_by_category": {
+        "line": 52,
+        "siege": 22,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2620
+    },
+    {
+      "elapsed_sec": 130.0,
+      "enemy_force_hp": 34559.5,
+      "enemy_unit_count": 83,
+      "enemy_unit_counts_by_category": {
+        "line": 42,
+        "siege": 25,
+        "strike": 16
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 35920.25,
+      "player_unit_count": 81,
+      "player_unit_counts_by_category": {
+        "line": 52,
+        "siege": 21,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2640
+    },
+    {
+      "elapsed_sec": 131.0,
+      "enemy_force_hp": 34282.475,
+      "enemy_unit_count": 81,
+      "enemy_unit_counts_by_category": {
+        "line": 41,
+        "siege": 25,
+        "strike": 15
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 35629.9,
+      "player_unit_count": 80,
+      "player_unit_counts_by_category": {
+        "line": 51,
+        "siege": 21,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2660
+    },
+    {
+      "elapsed_sec": 132.0,
+      "enemy_force_hp": 34068.7,
+      "enemy_unit_count": 80,
+      "enemy_unit_counts_by_category": {
+        "line": 41,
+        "siege": 25,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 35303.775,
+      "player_unit_count": 79,
+      "player_unit_counts_by_category": {
+        "line": 50,
+        "siege": 21,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2680
+    },
+    {
+      "elapsed_sec": 133.0,
+      "enemy_force_hp": 33842.415,
+      "enemy_unit_count": 80,
+      "enemy_unit_counts_by_category": {
+        "line": 41,
+        "siege": 25,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 34870.875,
+      "player_unit_count": 77,
+      "player_unit_counts_by_category": {
+        "line": 50,
+        "siege": 19,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2700
+    },
+    {
+      "elapsed_sec": 134.0,
+      "enemy_force_hp": 33619.84,
+      "enemy_unit_count": 79,
+      "enemy_unit_counts_by_category": {
+        "line": 40,
+        "siege": 25,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 34612.05,
+      "player_unit_count": 77,
+      "player_unit_counts_by_category": {
+        "line": 50,
+        "siege": 19,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2720
+    },
+    {
+      "elapsed_sec": 135.0,
+      "enemy_force_hp": 33365.405,
+      "enemy_unit_count": 78,
+      "enemy_unit_counts_by_category": {
+        "line": 40,
+        "siege": 24,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 34328.9625,
+      "player_unit_count": 76,
+      "player_unit_counts_by_category": {
+        "line": 49,
+        "siege": 19,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2740
+    },
+    {
+      "elapsed_sec": 136.0,
+      "enemy_force_hp": 33142.52,
+      "enemy_unit_count": 78,
+      "enemy_unit_counts_by_category": {
+        "line": 40,
+        "siege": 24,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 33856.6375,
+      "player_unit_count": 76,
+      "player_unit_counts_by_category": {
+        "line": 49,
+        "siege": 19,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2760
+    },
+    {
+      "elapsed_sec": 137.0,
+      "enemy_force_hp": 32817.695,
+      "enemy_unit_count": 78,
+      "enemy_unit_counts_by_category": {
+        "line": 40,
+        "siege": 24,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 33551.225,
+      "player_unit_count": 76,
+      "player_unit_counts_by_category": {
+        "line": 49,
+        "siege": 19,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2780
+    },
+    {
+      "elapsed_sec": 138.0,
+      "enemy_force_hp": 32606.61,
+      "enemy_unit_count": 77,
+      "enemy_unit_counts_by_category": {
+        "line": 39,
+        "siege": 24,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 33208.625,
+      "player_unit_count": 76,
+      "player_unit_counts_by_category": {
+        "line": 49,
+        "siege": 19,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2800
+    },
+    {
+      "elapsed_sec": 139.0,
+      "enemy_force_hp": 32380.31,
+      "enemy_unit_count": 75,
+      "enemy_unit_counts_by_category": {
+        "line": 38,
+        "siege": 23,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 32789.6,
+      "player_unit_count": 76,
+      "player_unit_counts_by_category": {
+        "line": 49,
+        "siege": 19,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2820
+    },
+    {
+      "elapsed_sec": 140.0,
+      "enemy_force_hp": 32144.4125,
+      "enemy_unit_count": 75,
+      "enemy_unit_counts_by_category": {
+        "line": 38,
+        "siege": 23,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 32569.5125,
+      "player_unit_count": 75,
+      "player_unit_counts_by_category": {
+        "line": 49,
+        "siege": 18,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2840
+    },
+    {
+      "elapsed_sec": 141.0,
+      "enemy_force_hp": 31874.05,
+      "enemy_unit_count": 75,
+      "enemy_unit_counts_by_category": {
+        "line": 38,
+        "siege": 23,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 32288.3375,
+      "player_unit_count": 74,
+      "player_unit_counts_by_category": {
+        "line": 48,
+        "siege": 18,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2860
+    },
+    {
+      "elapsed_sec": 142.0,
+      "enemy_force_hp": 31625.19,
+      "enemy_unit_count": 74,
+      "enemy_unit_counts_by_category": {
+        "line": 37,
+        "siege": 23,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 31808.4125,
+      "player_unit_count": 73,
+      "player_unit_counts_by_category": {
+        "line": 48,
+        "siege": 17,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2880
+    },
+    {
+      "elapsed_sec": 143.0,
+      "enemy_force_hp": 31350.64,
+      "enemy_unit_count": 73,
+      "enemy_unit_counts_by_category": {
+        "line": 36,
+        "siege": 23,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 31608.8625,
+      "player_unit_count": 72,
+      "player_unit_counts_by_category": {
+        "line": 48,
+        "siege": 16,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2900
+    },
+    {
+      "elapsed_sec": 144.0,
+      "enemy_force_hp": 31146.755,
+      "enemy_unit_count": 72,
+      "enemy_unit_counts_by_category": {
+        "line": 35,
+        "siege": 23,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 31308.875,
+      "player_unit_count": 72,
+      "player_unit_counts_by_category": {
+        "line": 48,
+        "siege": 16,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2920
+    },
+    {
+      "elapsed_sec": 145.0,
+      "enemy_force_hp": 30940.755,
+      "enemy_unit_count": 72,
+      "enemy_unit_counts_by_category": {
+        "line": 35,
+        "siege": 23,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 30933.1125,
+      "player_unit_count": 71,
+      "player_unit_counts_by_category": {
+        "line": 48,
+        "siege": 15,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2940
+    },
+    {
+      "elapsed_sec": 146.0,
+      "enemy_force_hp": 30659.8575,
+      "enemy_unit_count": 72,
+      "enemy_unit_counts_by_category": {
+        "line": 35,
+        "siege": 23,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 30665.0125,
+      "player_unit_count": 71,
+      "player_unit_counts_by_category": {
+        "line": 48,
+        "siege": 15,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2960
+    },
+    {
+      "elapsed_sec": 147.0,
+      "enemy_force_hp": 30400.27,
+      "enemy_unit_count": 71,
+      "enemy_unit_counts_by_category": {
+        "line": 34,
+        "siege": 23,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 30448.775,
+      "player_unit_count": 70,
+      "player_unit_counts_by_category": {
+        "line": 47,
+        "siege": 15,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 2980
+    },
+    {
+      "elapsed_sec": 148.0,
+      "enemy_force_hp": 30151.9975,
+      "enemy_unit_count": 71,
+      "enemy_unit_counts_by_category": {
+        "line": 34,
+        "siege": 23,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 30023.5,
+      "player_unit_count": 69,
+      "player_unit_counts_by_category": {
+        "line": 46,
+        "siege": 15,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3000
+    },
+    {
+      "elapsed_sec": 149.0,
+      "enemy_force_hp": 30399.385,
+      "enemy_unit_count": 71,
+      "enemy_unit_counts_by_category": {
+        "line": 34,
+        "siege": 23,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 30197.5625,
+      "player_unit_count": 69,
+      "player_unit_counts_by_category": {
+        "line": 46,
+        "siege": 15,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3020
+    },
+    {
+      "elapsed_sec": 150.0,
+      "enemy_force_hp": 30228.0375,
+      "enemy_unit_count": 70,
+      "enemy_unit_counts_by_category": {
+        "line": 33,
+        "siege": 23,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 29979.4625,
+      "player_unit_count": 69,
+      "player_unit_counts_by_category": {
+        "line": 46,
+        "siege": 15,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3040
+    },
+    {
+      "elapsed_sec": 151.0,
+      "enemy_force_hp": 30002.975,
+      "enemy_unit_count": 70,
+      "enemy_unit_counts_by_category": {
+        "line": 33,
+        "siege": 23,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 29629.6875,
+      "player_unit_count": 69,
+      "player_unit_counts_by_category": {
+        "line": 46,
+        "siege": 15,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3060
+    },
+    {
+      "elapsed_sec": 152.0,
+      "enemy_force_hp": 29777.0775,
+      "enemy_unit_count": 70,
+      "enemy_unit_counts_by_category": {
+        "line": 33,
+        "siege": 23,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 29303.45,
+      "player_unit_count": 69,
+      "player_unit_counts_by_category": {
+        "line": 46,
+        "siege": 15,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3080
+    },
+    {
+      "elapsed_sec": 153.0,
+      "enemy_force_hp": 29544.0025,
+      "enemy_unit_count": 70,
+      "enemy_unit_counts_by_category": {
+        "line": 33,
+        "siege": 23,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 29097.7625,
+      "player_unit_count": 68,
+      "player_unit_counts_by_category": {
+        "line": 46,
+        "siege": 14,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3100
+    },
+    {
+      "elapsed_sec": 154.0,
+      "enemy_force_hp": 29337.99,
+      "enemy_unit_count": 69,
+      "enemy_unit_counts_by_category": {
+        "line": 32,
+        "siege": 23,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 28794.4625,
+      "player_unit_count": 68,
+      "player_unit_counts_by_category": {
+        "line": 46,
+        "siege": 14,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3120
+    },
+    {
+      "elapsed_sec": 155.0,
+      "enemy_force_hp": 29106.0175,
+      "enemy_unit_count": 68,
+      "enemy_unit_counts_by_category": {
+        "line": 31,
+        "siege": 23,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 28378.15,
+      "player_unit_count": 68,
+      "player_unit_counts_by_category": {
+        "line": 46,
+        "siege": 14,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3140
+    },
+    {
+      "elapsed_sec": 156.0,
+      "enemy_force_hp": 28952.155,
+      "enemy_unit_count": 68,
+      "enemy_unit_counts_by_category": {
+        "line": 31,
+        "siege": 23,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 28139.65,
+      "player_unit_count": 68,
+      "player_unit_counts_by_category": {
+        "line": 46,
+        "siege": 14,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3159
+    },
+    {
+      "elapsed_sec": 157.0,
+      "enemy_force_hp": 28744.6825,
+      "enemy_unit_count": 68,
+      "enemy_unit_counts_by_category": {
+        "line": 31,
+        "siege": 23,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 27871.025,
+      "player_unit_count": 68,
+      "player_unit_counts_by_category": {
+        "line": 46,
+        "siege": 14,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3180
+    },
+    {
+      "elapsed_sec": 158.0,
+      "enemy_force_hp": 28509.92,
+      "enemy_unit_count": 68,
+      "enemy_unit_counts_by_category": {
+        "line": 31,
+        "siege": 23,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 27436.4375,
+      "player_unit_count": 67,
+      "player_unit_counts_by_category": {
+        "line": 46,
+        "siege": 13,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3200
+    },
+    {
+      "elapsed_sec": 159.0,
+      "enemy_force_hp": 28278.01,
+      "enemy_unit_count": 68,
+      "enemy_unit_counts_by_category": {
+        "line": 31,
+        "siege": 23,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 27242.9875,
+      "player_unit_count": 67,
+      "player_unit_counts_by_category": {
+        "line": 46,
+        "siege": 13,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3220
+    },
+    {
+      "elapsed_sec": 160.0,
+      "enemy_force_hp": 28065.1375,
+      "enemy_unit_count": 67,
+      "enemy_unit_counts_by_category": {
+        "line": 30,
+        "siege": 23,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 26934.8,
+      "player_unit_count": 67,
+      "player_unit_counts_by_category": {
+        "line": 46,
+        "siege": 13,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3239
+    },
+    {
+      "elapsed_sec": 161.0,
+      "enemy_force_hp": 27898.05,
+      "enemy_unit_count": 65,
+      "enemy_unit_counts_by_category": {
+        "line": 28,
+        "siege": 23,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 26538.3375,
+      "player_unit_count": 66,
+      "player_unit_counts_by_category": {
+        "line": 46,
+        "siege": 12,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3260
+    },
+    {
+      "elapsed_sec": 162.0,
+      "enemy_force_hp": 27845.9125,
+      "enemy_unit_count": 65,
+      "enemy_unit_counts_by_category": {
+        "line": 28,
+        "siege": 23,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 26390.175,
+      "player_unit_count": 66,
+      "player_unit_counts_by_category": {
+        "line": 46,
+        "siege": 12,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3280
+    },
+    {
+      "elapsed_sec": 163.0,
+      "enemy_force_hp": 27803.7,
+      "enemy_unit_count": 65,
+      "enemy_unit_counts_by_category": {
+        "line": 28,
+        "siege": 23,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 26149.6125,
+      "player_unit_count": 66,
+      "player_unit_counts_by_category": {
+        "line": 46,
+        "siege": 12,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3300
+    },
+    {
+      "elapsed_sec": 164.0,
+      "enemy_force_hp": 27718.1625,
+      "enemy_unit_count": 65,
+      "enemy_unit_counts_by_category": {
+        "line": 28,
+        "siege": 23,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 25817.7125,
+      "player_unit_count": 65,
+      "player_unit_counts_by_category": {
+        "line": 45,
+        "siege": 12,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3320
+    },
+    {
+      "elapsed_sec": 165.0,
+      "enemy_force_hp": 27662.0125,
+      "enemy_unit_count": 64,
+      "enemy_unit_counts_by_category": {
+        "line": 28,
+        "siege": 22,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 25652.475,
+      "player_unit_count": 65,
+      "player_unit_counts_by_category": {
+        "line": 45,
+        "siege": 12,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3340
+    },
+    {
+      "elapsed_sec": 166.0,
+      "enemy_force_hp": 27577.6,
+      "enemy_unit_count": 64,
+      "enemy_unit_counts_by_category": {
+        "line": 28,
+        "siege": 22,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 25468.0375,
+      "player_unit_count": 64,
+      "player_unit_counts_by_category": {
+        "line": 44,
+        "siege": 12,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3360
+    },
+    {
+      "elapsed_sec": 167.0,
+      "enemy_force_hp": 27520.7375,
+      "enemy_unit_count": 64,
+      "enemy_unit_counts_by_category": {
+        "line": 28,
+        "siege": 22,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 25058.75,
+      "player_unit_count": 62,
+      "player_unit_counts_by_category": {
+        "line": 42,
+        "siege": 12,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3380
+    },
+    {
+      "elapsed_sec": 168.0,
+      "enemy_force_hp": 27489.15,
+      "enemy_unit_count": 64,
+      "enemy_unit_counts_by_category": {
+        "line": 28,
+        "siege": 22,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 24874.625,
+      "player_unit_count": 61,
+      "player_unit_counts_by_category": {
+        "line": 42,
+        "siege": 11,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3400
+    },
+    {
+      "elapsed_sec": 169.0,
+      "enemy_force_hp": 27433.0125,
+      "enemy_unit_count": 64,
+      "enemy_unit_counts_by_category": {
+        "line": 28,
+        "siege": 22,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 24560.725,
+      "player_unit_count": 61,
+      "player_unit_counts_by_category": {
+        "line": 42,
+        "siege": 11,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3420
+    },
+    {
+      "elapsed_sec": 170.0,
+      "enemy_force_hp": 27378.675,
+      "enemy_unit_count": 64,
+      "enemy_unit_counts_by_category": {
+        "line": 28,
+        "siege": 22,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 24210.075,
+      "player_unit_count": 61,
+      "player_unit_counts_by_category": {
+        "line": 42,
+        "siege": 11,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3440
+    },
+    {
+      "elapsed_sec": 171.0,
+      "enemy_force_hp": 27314.35,
+      "enemy_unit_count": 64,
+      "enemy_unit_counts_by_category": {
+        "line": 28,
+        "siege": 22,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 24001.95,
+      "player_unit_count": 61,
+      "player_unit_counts_by_category": {
+        "line": 42,
+        "siege": 11,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3460
+    },
+    {
+      "elapsed_sec": 172.0,
+      "enemy_force_hp": 27260.0125,
+      "enemy_unit_count": 64,
+      "enemy_unit_counts_by_category": {
+        "line": 28,
+        "siege": 22,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 23696.3,
+      "player_unit_count": 61,
+      "player_unit_counts_by_category": {
+        "line": 42,
+        "siege": 11,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3480
+    },
+    {
+      "elapsed_sec": 173.0,
+      "enemy_force_hp": 27182.25,
+      "enemy_unit_count": 64,
+      "enemy_unit_counts_by_category": {
+        "line": 28,
+        "siege": 22,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 23299.05,
+      "player_unit_count": 61,
+      "player_unit_counts_by_category": {
+        "line": 42,
+        "siege": 11,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3500
+    },
+    {
+      "elapsed_sec": 174.0,
+      "enemy_force_hp": 27151.0375,
+      "enemy_unit_count": 63,
+      "enemy_unit_counts_by_category": {
+        "line": 28,
+        "siege": 21,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 23096.85,
+      "player_unit_count": 60,
+      "player_unit_counts_by_category": {
+        "line": 42,
+        "siege": 10,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3520
+    },
+    {
+      "elapsed_sec": 175.0,
+      "enemy_force_hp": 27089.45,
+      "enemy_unit_count": 63,
+      "enemy_unit_counts_by_category": {
+        "line": 28,
+        "siege": 21,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 22877.85,
+      "player_unit_count": 60,
+      "player_unit_counts_by_category": {
+        "line": 42,
+        "siege": 10,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3540
+    },
+    {
+      "elapsed_sec": 176.0,
+      "enemy_force_hp": 27031.0125,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 28,
+        "siege": 20,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 22564.925,
+      "player_unit_count": 58,
+      "player_unit_counts_by_category": {
+        "line": 41,
+        "siege": 9,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3560
+    },
+    {
+      "elapsed_sec": 177.0,
+      "enemy_force_hp": 27000.6125,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 28,
+        "siege": 20,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 22483.625,
+      "player_unit_count": 57,
+      "player_unit_counts_by_category": {
+        "line": 40,
+        "siege": 9,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3580
+    },
+    {
+      "elapsed_sec": 178.0,
+      "enemy_force_hp": 26954.4875,
+      "enemy_unit_count": 61,
+      "enemy_unit_counts_by_category": {
+        "line": 28,
+        "siege": 19,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 22284.475,
+      "player_unit_count": 56,
+      "player_unit_counts_by_category": {
+        "line": 40,
+        "siege": 8,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3600
+    },
+    {
+      "elapsed_sec": 179.0,
+      "enemy_force_hp": 27431.3,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 29,
+        "siege": 19,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 22540.575,
+      "player_unit_count": 57,
+      "player_unit_counts_by_category": {
+        "line": 41,
+        "siege": 8,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3620
+    },
+    {
+      "elapsed_sec": 180.0,
+      "enemy_force_hp": 27406.3375,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 29,
+        "siege": 19,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 22388.325,
+      "player_unit_count": 57,
+      "player_unit_counts_by_category": {
+        "line": 41,
+        "siege": 8,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3640
+    },
+    {
+      "elapsed_sec": 181.0,
+      "enemy_force_hp": 27388.2125,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 29,
+        "siege": 19,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 22232.925,
+      "player_unit_count": 57,
+      "player_unit_counts_by_category": {
+        "line": 41,
+        "siege": 8,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3660
+    },
+    {
+      "elapsed_sec": 182.0,
+      "enemy_force_hp": 27348.75,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 29,
+        "siege": 19,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 21997.425,
+      "player_unit_count": 56,
+      "player_unit_counts_by_category": {
+        "line": 40,
+        "siege": 8,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3680
+    },
+    {
+      "elapsed_sec": 183.0,
+      "enemy_force_hp": 27322.775,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 29,
+        "siege": 19,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 21844.025,
+      "player_unit_count": 56,
+      "player_unit_counts_by_category": {
+        "line": 40,
+        "siege": 8,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3700
+    },
+    {
+      "elapsed_sec": 184.0,
+      "enemy_force_hp": 27281.525,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 29,
+        "siege": 19,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 21745.625,
+      "player_unit_count": 55,
+      "player_unit_counts_by_category": {
+        "line": 39,
+        "siege": 8,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3720
+    },
+    {
+      "elapsed_sec": 185.0,
+      "enemy_force_hp": 27276.85,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 29,
+        "siege": 19,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 21603.25,
+      "player_unit_count": 52,
+      "player_unit_counts_by_category": {
+        "line": 38,
+        "siege": 6,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3740
+    },
+    {
+      "elapsed_sec": 186.0,
+      "enemy_force_hp": 27279.35,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 29,
+        "siege": 19,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 21534.95,
+      "player_unit_count": 51,
+      "player_unit_counts_by_category": {
+        "line": 37,
+        "siege": 6,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3760
+    },
+    {
+      "elapsed_sec": 187.0,
+      "enemy_force_hp": 27278.275,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 29,
+        "siege": 19,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 21478.55,
+      "player_unit_count": 51,
+      "player_unit_counts_by_category": {
+        "line": 37,
+        "siege": 6,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3780
+    },
+    {
+      "elapsed_sec": 188.0,
+      "enemy_force_hp": 27279.05,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 29,
+        "siege": 19,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 21354.575,
+      "player_unit_count": 51,
+      "player_unit_counts_by_category": {
+        "line": 37,
+        "siege": 6,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3800
+    },
+    {
+      "elapsed_sec": 189.0,
+      "enemy_force_hp": 27276.475,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 29,
+        "siege": 19,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 21282.075,
+      "player_unit_count": 51,
+      "player_unit_counts_by_category": {
+        "line": 37,
+        "siege": 6,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3820
+    },
+    {
+      "elapsed_sec": 190.0,
+      "enemy_force_hp": 27286.475,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 29,
+        "siege": 19,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 21213.825,
+      "player_unit_count": 50,
+      "player_unit_counts_by_category": {
+        "line": 36,
+        "siege": 6,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3840
+    },
+    {
+      "elapsed_sec": 191.0,
+      "enemy_force_hp": 27307.725,
+      "enemy_unit_count": 61,
+      "enemy_unit_counts_by_category": {
+        "line": 29,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 21056.2,
+      "player_unit_count": 50,
+      "player_unit_counts_by_category": {
+        "line": 36,
+        "siege": 6,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3860
+    },
+    {
+      "elapsed_sec": 192.0,
+      "enemy_force_hp": 27336.39,
+      "enemy_unit_count": 61,
+      "enemy_unit_counts_by_category": {
+        "line": 29,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 21008.725,
+      "player_unit_count": 49,
+      "player_unit_counts_by_category": {
+        "line": 36,
+        "siege": 5,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3880
+    },
+    {
+      "elapsed_sec": 193.0,
+      "enemy_force_hp": 27363.54,
+      "enemy_unit_count": 61,
+      "enemy_unit_counts_by_category": {
+        "line": 29,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 20960.85,
+      "player_unit_count": 49,
+      "player_unit_counts_by_category": {
+        "line": 36,
+        "siege": 5,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3900
+    },
+    {
+      "elapsed_sec": 194.0,
+      "enemy_force_hp": 27388.47,
+      "enemy_unit_count": 61,
+      "enemy_unit_counts_by_category": {
+        "line": 29,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 20835.725,
+      "player_unit_count": 49,
+      "player_unit_counts_by_category": {
+        "line": 36,
+        "siege": 5,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3920
+    },
+    {
+      "elapsed_sec": 195.0,
+      "enemy_force_hp": 27415.92,
+      "enemy_unit_count": 61,
+      "enemy_unit_counts_by_category": {
+        "line": 29,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 20773.525,
+      "player_unit_count": 49,
+      "player_unit_counts_by_category": {
+        "line": 36,
+        "siege": 5,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3940
+    },
+    {
+      "elapsed_sec": 196.0,
+      "enemy_force_hp": 27440.55,
+      "enemy_unit_count": 61,
+      "enemy_unit_counts_by_category": {
+        "line": 29,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 20703.525,
+      "player_unit_count": 49,
+      "player_unit_counts_by_category": {
+        "line": 36,
+        "siege": 5,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3960
+    },
+    {
+      "elapsed_sec": 197.0,
+      "enemy_force_hp": 27465.75,
+      "enemy_unit_count": 61,
+      "enemy_unit_counts_by_category": {
+        "line": 29,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 20564.15,
+      "player_unit_count": 49,
+      "player_unit_counts_by_category": {
+        "line": 36,
+        "siege": 5,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 3980
+    },
+    {
+      "elapsed_sec": 198.0,
+      "enemy_force_hp": 27487.605,
+      "enemy_unit_count": 61,
+      "enemy_unit_counts_by_category": {
+        "line": 29,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 20493.25,
+      "player_unit_count": 49,
+      "player_unit_counts_by_category": {
+        "line": 36,
+        "siege": 5,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4000
+    },
+    {
+      "elapsed_sec": 199.0,
+      "enemy_force_hp": 27510.555,
+      "enemy_unit_count": 61,
+      "enemy_unit_counts_by_category": {
+        "line": 29,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 20426.875,
+      "player_unit_count": 49,
+      "player_unit_counts_by_category": {
+        "line": 36,
+        "siege": 5,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4020
+    },
+    {
+      "elapsed_sec": 200.0,
+      "enemy_force_hp": 27530.985,
+      "enemy_unit_count": 61,
+      "enemy_unit_counts_by_category": {
+        "line": 29,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 20265.0,
+      "player_unit_count": 48,
+      "player_unit_counts_by_category": {
+        "line": 36,
+        "siege": 4,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4040
+    },
+    {
+      "elapsed_sec": 201.0,
+      "enemy_force_hp": 27553.935,
+      "enemy_unit_count": 61,
+      "enemy_unit_counts_by_category": {
+        "line": 29,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 20189.25,
+      "player_unit_count": 48,
+      "player_unit_counts_by_category": {
+        "line": 36,
+        "siege": 4,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4060
+    },
+    {
+      "elapsed_sec": 202.0,
+      "enemy_force_hp": 27575.625,
+      "enemy_unit_count": 61,
+      "enemy_unit_counts_by_category": {
+        "line": 29,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 20074.625,
+      "player_unit_count": 48,
+      "player_unit_counts_by_category": {
+        "line": 36,
+        "siege": 4,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4080
+    },
+    {
+      "elapsed_sec": 203.0,
+      "enemy_force_hp": 27597.315,
+      "enemy_unit_count": 61,
+      "enemy_unit_counts_by_category": {
+        "line": 29,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 19903.0,
+      "player_unit_count": 48,
+      "player_unit_counts_by_category": {
+        "line": 36,
+        "siege": 4,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4100
+    },
+    {
+      "elapsed_sec": 204.0,
+      "enemy_force_hp": 27620.04,
+      "enemy_unit_count": 61,
+      "enemy_unit_counts_by_category": {
+        "line": 29,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 19760.1,
+      "player_unit_count": 48,
+      "player_unit_counts_by_category": {
+        "line": 36,
+        "siege": 4,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4120
+    },
+    {
+      "elapsed_sec": 205.0,
+      "enemy_force_hp": 27640.23,
+      "enemy_unit_count": 61,
+      "enemy_unit_counts_by_category": {
+        "line": 29,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 19645.35,
+      "player_unit_count": 48,
+      "player_unit_counts_by_category": {
+        "line": 36,
+        "siege": 4,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4140
+    },
+    {
+      "elapsed_sec": 206.0,
+      "enemy_force_hp": 27660.72,
+      "enemy_unit_count": 61,
+      "enemy_unit_counts_by_category": {
+        "line": 29,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 19559.225,
+      "player_unit_count": 47,
+      "player_unit_counts_by_category": {
+        "line": 36,
+        "siege": 3,
+        "strike": 8
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4160
+    },
+    {
+      "elapsed_sec": 207.0,
+      "enemy_force_hp": 27687.18,
+      "enemy_unit_count": 61,
+      "enemy_unit_counts_by_category": {
+        "line": 29,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 19487.275,
+      "player_unit_count": 46,
+      "player_unit_counts_by_category": {
+        "line": 36,
+        "siege": 3,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4180
+    },
+    {
+      "elapsed_sec": 208.0,
+      "enemy_force_hp": 27710.16,
+      "enemy_unit_count": 61,
+      "enemy_unit_counts_by_category": {
+        "line": 29,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 19390.15,
+      "player_unit_count": 46,
+      "player_unit_counts_by_category": {
+        "line": 36,
+        "siege": 3,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4200
+    },
+    {
+      "elapsed_sec": 209.0,
+      "enemy_force_hp": 28235.66,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 30,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 19785.9,
+      "player_unit_count": 47,
+      "player_unit_counts_by_category": {
+        "line": 37,
+        "siege": 3,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4220
+    },
+    {
+      "elapsed_sec": 210.0,
+      "enemy_force_hp": 28257.38,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 30,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 19650.9,
+      "player_unit_count": 47,
+      "player_unit_counts_by_category": {
+        "line": 37,
+        "siege": 3,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4240
+    },
+    {
+      "elapsed_sec": 211.0,
+      "enemy_force_hp": 28281.62,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 30,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 19511.025,
+      "player_unit_count": 47,
+      "player_unit_counts_by_category": {
+        "line": 37,
+        "siege": 3,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4260
+    },
+    {
+      "elapsed_sec": 212.0,
+      "enemy_force_hp": 28305.86,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 30,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 19392.9,
+      "player_unit_count": 46,
+      "player_unit_counts_by_category": {
+        "line": 37,
+        "siege": 2,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4280
+    },
+    {
+      "elapsed_sec": 213.0,
+      "enemy_force_hp": 28330.1,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 30,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 19311.525,
+      "player_unit_count": 46,
+      "player_unit_counts_by_category": {
+        "line": 37,
+        "siege": 2,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4300
+    },
+    {
+      "elapsed_sec": 214.0,
+      "enemy_force_hp": 28354.34,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 30,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 19230.15,
+      "player_unit_count": 46,
+      "player_unit_counts_by_category": {
+        "line": 37,
+        "siege": 2,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4320
+    },
+    {
+      "elapsed_sec": 215.0,
+      "enemy_force_hp": 28377.32,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 30,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 19124.025,
+      "player_unit_count": 46,
+      "player_unit_counts_by_category": {
+        "line": 37,
+        "siege": 2,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4340
+    },
+    {
+      "elapsed_sec": 216.0,
+      "enemy_force_hp": 28401.395,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 30,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 19006.65,
+      "player_unit_count": 46,
+      "player_unit_counts_by_category": {
+        "line": 37,
+        "siege": 2,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4360
+    },
+    {
+      "elapsed_sec": 217.0,
+      "enemy_force_hp": 28422.35,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 30,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 18902.775,
+      "player_unit_count": 46,
+      "player_unit_counts_by_category": {
+        "line": 37,
+        "siege": 2,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4380
+    },
+    {
+      "elapsed_sec": 218.0,
+      "enemy_force_hp": 28443.95,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 30,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 18827.4,
+      "player_unit_count": 45,
+      "player_unit_counts_by_category": {
+        "line": 37,
+        "siege": 1,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4400
+    },
+    {
+      "elapsed_sec": 219.0,
+      "enemy_force_hp": 28463.69,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 30,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 18735.3,
+      "player_unit_count": 45,
+      "player_unit_counts_by_category": {
+        "line": 37,
+        "siege": 1,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4420
+    },
+    {
+      "elapsed_sec": 220.0,
+      "enemy_force_hp": 28484.69,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 30,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 18647.7,
+      "player_unit_count": 45,
+      "player_unit_counts_by_category": {
+        "line": 37,
+        "siege": 1,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4440
+    },
+    {
+      "elapsed_sec": 221.0,
+      "enemy_force_hp": 28504.28,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 30,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 18564.75,
+      "player_unit_count": 45,
+      "player_unit_counts_by_category": {
+        "line": 37,
+        "siege": 1,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4460
+    },
+    {
+      "elapsed_sec": 222.0,
+      "enemy_force_hp": 28524.005,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 30,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 18472.125,
+      "player_unit_count": 45,
+      "player_unit_counts_by_category": {
+        "line": 37,
+        "siege": 1,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4480
+    },
+    {
+      "elapsed_sec": 223.0,
+      "enemy_force_hp": 28543.145,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 30,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 18366.0,
+      "player_unit_count": 45,
+      "player_unit_counts_by_category": {
+        "line": 37,
+        "siege": 1,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4500
+    },
+    {
+      "elapsed_sec": 224.0,
+      "enemy_force_hp": 28560.56,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 30,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 18265.125,
+      "player_unit_count": 45,
+      "player_unit_counts_by_category": {
+        "line": 37,
+        "siege": 1,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4520
+    },
+    {
+      "elapsed_sec": 225.0,
+      "enemy_force_hp": 28578.56,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 30,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 18274.625,
+      "player_unit_count": 44,
+      "player_unit_counts_by_category": {
+        "line": 37,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4540
+    },
+    {
+      "elapsed_sec": 226.0,
+      "enemy_force_hp": 28596.56,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 30,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 18298.625,
+      "player_unit_count": 44,
+      "player_unit_counts_by_category": {
+        "line": 37,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4560
+    },
+    {
+      "elapsed_sec": 227.0,
+      "enemy_force_hp": 28615.535,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 30,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 18321.5,
+      "player_unit_count": 44,
+      "player_unit_counts_by_category": {
+        "line": 37,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4580
+    },
+    {
+      "elapsed_sec": 228.0,
+      "enemy_force_hp": 28564.16,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 30,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 18337.025,
+      "player_unit_count": 44,
+      "player_unit_counts_by_category": {
+        "line": 37,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4600
+    },
+    {
+      "elapsed_sec": 229.0,
+      "enemy_force_hp": 28513.46,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 30,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 18351.65,
+      "player_unit_count": 44,
+      "player_unit_counts_by_category": {
+        "line": 37,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4620
+    },
+    {
+      "elapsed_sec": 230.0,
+      "enemy_force_hp": 28463.435,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 30,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 18347.9,
+      "player_unit_count": 44,
+      "player_unit_counts_by_category": {
+        "line": 37,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4640
+    },
+    {
+      "elapsed_sec": 231.0,
+      "enemy_force_hp": 28413.56,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 30,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 18331.475,
+      "player_unit_count": 44,
+      "player_unit_counts_by_category": {
+        "line": 37,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4660
+    },
+    {
+      "elapsed_sec": 232.0,
+      "enemy_force_hp": 28434.56,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 30,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 18287.975,
+      "player_unit_count": 44,
+      "player_unit_counts_by_category": {
+        "line": 37,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4680
+    },
+    {
+      "elapsed_sec": 233.0,
+      "enemy_force_hp": 28384.76,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 30,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 18244.975,
+      "player_unit_count": 44,
+      "player_unit_counts_by_category": {
+        "line": 37,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4700
+    },
+    {
+      "elapsed_sec": 234.0,
+      "enemy_force_hp": 28334.885,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 30,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 18200.85,
+      "player_unit_count": 44,
+      "player_unit_counts_by_category": {
+        "line": 37,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4720
+    },
+    {
+      "elapsed_sec": 235.0,
+      "enemy_force_hp": 28285.01,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 30,
+        "siege": 18,
+        "strike": 14
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 18154.35,
+      "player_unit_count": 44,
+      "player_unit_counts_by_category": {
+        "line": 37,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4740
+    },
+    {
+      "elapsed_sec": 236.0,
+      "enemy_force_hp": 28258.955,
+      "enemy_unit_count": 61,
+      "enemy_unit_counts_by_category": {
+        "line": 30,
+        "siege": 18,
+        "strike": 13
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 18086.35,
+      "player_unit_count": 44,
+      "player_unit_counts_by_category": {
+        "line": 37,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4760
+    },
+    {
+      "elapsed_sec": 237.0,
+      "enemy_force_hp": 28207.655,
+      "enemy_unit_count": 61,
+      "enemy_unit_counts_by_category": {
+        "line": 30,
+        "siege": 18,
+        "strike": 13
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 18032.35,
+      "player_unit_count": 44,
+      "player_unit_counts_by_category": {
+        "line": 37,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4780
+    },
+    {
+      "elapsed_sec": 238.0,
+      "enemy_force_hp": 28226.48,
+      "enemy_unit_count": 61,
+      "enemy_unit_counts_by_category": {
+        "line": 30,
+        "siege": 18,
+        "strike": 13
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 17993.1,
+      "player_unit_count": 43,
+      "player_unit_counts_by_category": {
+        "line": 36,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4800
+    },
+    {
+      "elapsed_sec": 239.0,
+      "enemy_force_hp": 28673.53,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 31,
+        "siege": 18,
+        "strike": 13
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 18435.1,
+      "player_unit_count": 44,
+      "player_unit_counts_by_category": {
+        "line": 37,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4820
+    },
+    {
+      "elapsed_sec": 240.0,
+      "enemy_force_hp": 28619.98,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 31,
+        "siege": 18,
+        "strike": 13
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 18363.6,
+      "player_unit_count": 44,
+      "player_unit_counts_by_category": {
+        "line": 37,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4840
+    },
+    {
+      "elapsed_sec": 241.0,
+      "enemy_force_hp": 28565.605,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 31,
+        "siege": 18,
+        "strike": 13
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 18319.2,
+      "player_unit_count": 44,
+      "player_unit_counts_by_category": {
+        "line": 37,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4860
+    },
+    {
+      "elapsed_sec": 242.0,
+      "enemy_force_hp": 28511.23,
+      "enemy_unit_count": 62,
+      "enemy_unit_counts_by_category": {
+        "line": 31,
+        "siege": 18,
+        "strike": 13
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 18256.7,
+      "player_unit_count": 44,
+      "player_unit_counts_by_category": {
+        "line": 37,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4880
+    },
+    {
+      "elapsed_sec": 243.0,
+      "enemy_force_hp": 28478.805,
+      "enemy_unit_count": 61,
+      "enemy_unit_counts_by_category": {
+        "line": 31,
+        "siege": 18,
+        "strike": 12
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 18194.2,
+      "player_unit_count": 44,
+      "player_unit_counts_by_category": {
+        "line": 37,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4900
+    },
+    {
+      "elapsed_sec": 244.0,
+      "enemy_force_hp": 28493.805,
+      "enemy_unit_count": 61,
+      "enemy_unit_counts_by_category": {
+        "line": 31,
+        "siege": 18,
+        "strike": 12
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 18138.7,
+      "player_unit_count": 44,
+      "player_unit_counts_by_category": {
+        "line": 37,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4920
+    },
+    {
+      "elapsed_sec": 245.0,
+      "enemy_force_hp": 28437.93,
+      "enemy_unit_count": 61,
+      "enemy_unit_counts_by_category": {
+        "line": 31,
+        "siege": 18,
+        "strike": 12
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 18084.2,
+      "player_unit_count": 43,
+      "player_unit_counts_by_category": {
+        "line": 36,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4940
+    },
+    {
+      "elapsed_sec": 246.0,
+      "enemy_force_hp": 28392.18,
+      "enemy_unit_count": 61,
+      "enemy_unit_counts_by_category": {
+        "line": 31,
+        "siege": 18,
+        "strike": 12
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 18026.2,
+      "player_unit_count": 43,
+      "player_unit_counts_by_category": {
+        "line": 36,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4960
+    },
+    {
+      "elapsed_sec": 247.0,
+      "enemy_force_hp": 28370.03,
+      "enemy_unit_count": 60,
+      "enemy_unit_counts_by_category": {
+        "line": 31,
+        "siege": 18,
+        "strike": 11
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 17988.7,
+      "player_unit_count": 43,
+      "player_unit_counts_by_category": {
+        "line": 36,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 4980
+    },
+    {
+      "elapsed_sec": 248.0,
+      "enemy_force_hp": 28322.78,
+      "enemy_unit_count": 60,
+      "enemy_unit_counts_by_category": {
+        "line": 31,
+        "siege": 18,
+        "strike": 11
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 17921.7,
+      "player_unit_count": 43,
+      "player_unit_counts_by_category": {
+        "line": 36,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 5000
+    },
+    {
+      "elapsed_sec": 249.0,
+      "enemy_force_hp": 28275.53,
+      "enemy_unit_count": 60,
+      "enemy_unit_counts_by_category": {
+        "line": 31,
+        "siege": 18,
+        "strike": 11
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 17868.2,
+      "player_unit_count": 43,
+      "player_unit_counts_by_category": {
+        "line": 36,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 5020
+    },
+    {
+      "elapsed_sec": 250.0,
+      "enemy_force_hp": 28289.03,
+      "enemy_unit_count": 60,
+      "enemy_unit_counts_by_category": {
+        "line": 31,
+        "siege": 18,
+        "strike": 11
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 17830.7,
+      "player_unit_count": 43,
+      "player_unit_counts_by_category": {
+        "line": 36,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 5040
+    },
+    {
+      "elapsed_sec": 251.0,
+      "enemy_force_hp": 28249.435,
+      "enemy_unit_count": 59,
+      "enemy_unit_counts_by_category": {
+        "line": 31,
+        "siege": 18,
+        "strike": 10
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 17781.7,
+      "player_unit_count": 43,
+      "player_unit_counts_by_category": {
+        "line": 36,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 5060
+    },
+    {
+      "elapsed_sec": 252.0,
+      "enemy_force_hp": 28201.81,
+      "enemy_unit_count": 59,
+      "enemy_unit_counts_by_category": {
+        "line": 31,
+        "siege": 18,
+        "strike": 10
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 17719.2,
+      "player_unit_count": 43,
+      "player_unit_counts_by_category": {
+        "line": 36,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 5080
+    },
+    {
+      "elapsed_sec": 253.0,
+      "enemy_force_hp": 28215.31,
+      "enemy_unit_count": 59,
+      "enemy_unit_counts_by_category": {
+        "line": 31,
+        "siege": 18,
+        "strike": 10
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 17731.2,
+      "player_unit_count": 43,
+      "player_unit_counts_by_category": {
+        "line": 36,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 5100
+    },
+    {
+      "elapsed_sec": 254.0,
+      "enemy_force_hp": 28228.81,
+      "enemy_unit_count": 59,
+      "enemy_unit_counts_by_category": {
+        "line": 31,
+        "siege": 18,
+        "strike": 10
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 17743.2,
+      "player_unit_count": 43,
+      "player_unit_counts_by_category": {
+        "line": 36,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 5120
+    },
+    {
+      "elapsed_sec": 255.0,
+      "enemy_force_hp": 28242.31,
+      "enemy_unit_count": 59,
+      "enemy_unit_counts_by_category": {
+        "line": 31,
+        "siege": 18,
+        "strike": 10
+      },
+      "objective_progress": {
+
+      },
+      "player_force_hp": 17755.2,
+      "player_unit_count": 43,
+      "player_unit_counts_by_category": {
+        "line": 36,
+        "strike": 7
+      },
+      "structures_enemy": 1,
+      "structures_neutral": 0,
+      "structures_player": 1,
+      "tick": 5140
+    }
+  ]
+}

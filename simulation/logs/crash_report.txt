@@ -1,0 +1,19 @@
+sim_version: 0.10.0
+os: Darwin 25.3.0
+python: 3.14.3 (main, Feb  3 2026, 15:32:20) [Clang 17.0.0 (clang-1700.6.3.2)]
+
+--- traceback ---
+Traceback (most recent call last):
+  File "test_game_loop_harness.py", line 114, in <module>
+    pipe_transport.run(make_engine, sim_env=sim_env)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "pipe_transport.py", line 412, in run
+    result = _run_time_jump_phase(sim_env, cmd_queue, engine, logger)
+  File "pipe_transport.py", line 345, in _run_time_jump_phase
+    messages = build_time_jump_messages(tj_result, tj_id)
+  File "world_view/time_jump_emitter.py", line 11, in build_time_jump_messages
+    keyframes = select_keyframes(time_jump_result)
+  File "world_view/keyframe_selector.py", line 87, in select_keyframes
+    "attacker_region_id": conquest["attacker"],
+                          ~~~~~~~~^^^^^^^^^^^^
+KeyError: 'attacker'

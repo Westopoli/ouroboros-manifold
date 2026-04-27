@@ -383,4 +383,4 @@ func _on_confirm() -> void:
 	}
 	var forward_params := _params.duplicate()
 	forward_params["onboarding"] = onboarding_data
-	SceneRouter.go_to("mission_briefing", forward_params)
+	SceneRouter.go_to("time_jump", forward_params)

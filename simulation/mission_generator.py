@@ -527,7 +527,7 @@ def _field_descriptor(value):
 
 def _build_variable_slots(candidate, region, world, registry, player_faction_id):
     slots = {
-        "region_name": getattr(region, 'display_name', region.id),
+        "region_name": getattr(region, 'name', region.id),
         "region_id": region.id,
         "archetype": candidate["archetype"],
         "military_desc": _field_descriptor(region.fields.get("military", 50)),
@@ -540,7 +540,7 @@ def _build_variable_slots(candidate, region, world, registry, player_faction_id)
     }
     player_faction = registry.get(player_faction_id)
     if player_faction:
-        slots["player_faction_name"] = getattr(player_faction, 'display_name',
+        slots["player_faction_name"] = getattr(player_faction, 'name',
                                                 getattr(player_faction, 'id', player_faction_id))
 
     ctx = candidate.get("trigger_context", {})
@@ -549,7 +549,7 @@ def _build_variable_slots(candidate, region, world, registry, player_faction_id)
                 ctx.get("expanding_faction")
     if enemy_fid:
         enemy_faction = registry.get(enemy_fid)
-        slots["enemy_faction_name"] = getattr(enemy_faction, 'display_name',
+        slots["enemy_faction_name"] = getattr(enemy_faction, 'name',
                                                enemy_fid) if enemy_faction else enemy_fid
         slots["enemy_faction_id"] = enemy_fid
 

@@ -392,9 +392,9 @@ func _debrief() -> Dictionary:
 func _on_continue() -> void:
 	UIDataBus.trigger_autosave("post_debrief")
 	debrief_completed.emit()
-	# Stage 11 sequencer will listen for this signal and trigger pull-back.
-	# For now, go to main menu as fallback.
-	SceneRouter.go_to("main_menu")
+	if SimBridge.USE_LIVE_SIM:
+		SimBridge.send_command({"type": "command", "cmd": "continue_from_debrief"})
+	SceneRouter.go_to("time_jump")
 
 
 func _on_exit() -> void:

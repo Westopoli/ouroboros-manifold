@@ -6,7 +6,6 @@ var _data: Node
 var _renderer: Node
 var _camera: Node
 var _config: Resource
-var _visual_container: Node
 var _viewport: SubViewport
 
 
@@ -29,19 +28,13 @@ func setup_era(era_id: String) -> void:
 
 	var camera_path: String = _config.get_camera_path(era_id)
 	if camera_path.is_empty():
-		# Integrated renderer+camera (e.g., world_view_structure for Settled Reach)
 		_renderer.setup(_data)
 		_camera = _renderer
 	else:
-		# Separate renderer + camera (future non-space eras)
-		_visual_container = Node3D.new()
-		_visual_container.name = "VisualContainer"
-		add_child(_visual_container)
-		_renderer.setup(_data, _visual_container)
+		_renderer.setup(_data)
 		_camera = load(camera_path).instantiate()
 		add_child(_camera)
-		if _viewport:
-			_camera.setup(_renderer, _viewport)
+		_camera.setup(_renderer)
 
 	if _camera and _camera.has_signal("camera_move_completed"):
 		_camera.camera_move_completed.connect(func(): camera_move_completed.emit())
@@ -62,9 +55,6 @@ func cleanup() -> void:
 			_renderer.teardown()
 		_renderer.queue_free()
 		_renderer = null
-	if _visual_container:
-		_visual_container.queue_free()
-		_visual_container = null
 	if _data:
 		_data.queue_free()
 		_data = null

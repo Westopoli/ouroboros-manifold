@@ -3,8 +3,8 @@ class_name EraWorldViewConfig
 
 @export var era_configs: Dictionary = {
 	"settled_reach": {
-		"renderer": "res://scenes/shared/world_view/world_view_structure.tscn",
-		"camera": "",
+		"renderer": "res://scenes/shared/world_view/renderers/settled_reach_renderer.tscn",
+		"camera": "res://scenes/shared/world_view/cameras/orbital_camera_3d.tscn",
 	},
 }
 

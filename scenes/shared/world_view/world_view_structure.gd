@@ -938,8 +938,51 @@ func _on_territory_removed(region_id: String) -> void:
 	_rebuild_territory_data()
 
 
-func _on_connection_added(_from_id: String, _to_id: String) -> void:
-	pass
+func _on_connection_added(from_id: String, to_id: String) -> void:
+	var key := _connection_key(from_id, to_id)
+	if key in _connection_visuals:
+		_connection_visuals[key].queue_free()
+		_connection_visuals.erase(key)
+
+	var from_r: Dictionary = _wv_data.get_region(from_id)
+	var to_r: Dictionary = _wv_data.get_region(to_id)
+	if from_r.is_empty() or to_r.is_empty():
+		return
+
+	var conn: Dictionary = _wv_data.get_connection(from_id, to_id)
+	if conn.is_empty():
+		return
+
+	var from_pos: Vector3 = from_r["position"]
+	var to_pos: Vector3 = to_r["position"]
+	var conn_type: String = conn.get("connection_type", "border")
+	var color: Color = conn.get("color", Color.WHITE)
+
+	var mesh_inst := MeshInstance3D.new()
+	var im := ImmediateMesh.new()
+	im.surface_begin(Mesh.PRIMITIVE_LINES)
+	im.surface_add_vertex(from_pos)
+	im.surface_add_vertex(to_pos)
+	im.surface_end()
+	mesh_inst.mesh = im
+
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.emission_enabled = true
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+
+	if conn_type == "trade":
+		mat.albedo_color = Color(color.r, color.g, color.b, 0.15)
+		mat.emission = color
+		mat.emission_energy_multiplier = 1.0
+	else:
+		mat.albedo_color = Color(color.r, color.g, color.b, 0.4)
+		mat.emission = color
+		mat.emission_energy_multiplier = 2.0
+
+	mesh_inst.material_override = mat
+	add_child(mesh_inst)
+	_connection_visuals[key] = mesh_inst
 
 
 func _on_connection_removed(from_id: String, to_id: String) -> void:
@@ -958,8 +1001,9 @@ func _on_flash_region_requested(region_id: String, intensity: float) -> void:
 	var color: Color = r.get("color", Color.WHITE)
 	var base_energy := 2.5
 	var tw := create_tween()
-	tw.tween_property(node.material_override, "emission_energy_multiplier", base_energy + intensity * 14.0, 0.02)
-	tw.tween_property(node.material_override, "emission_energy_multiplier", base_energy, 0.15).set_ease(Tween.EASE_OUT)
+	for _rep in range(5):
+		tw.tween_property(node.material_override, "emission_energy_multiplier", base_energy + intensity * 14.0, 0.15)
+		tw.tween_property(node.material_override, "emission_energy_multiplier", base_energy, 0.85).set_ease(Tween.EASE_OUT)
 	var count := randi_range(3, 3 + int(intensity * 7.0))
 	for i in count:
 		var delay := randf() * 0.20
