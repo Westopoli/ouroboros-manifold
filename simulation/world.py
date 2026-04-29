@@ -100,13 +100,8 @@ def generate_random(seed: int | None = None) -> World:
     n_regions = rng.randint(*config.WORLD_REGION_COUNT_RANGE)
     min_sep = config.WORLD_MIN_FACTION_SEPARATION
 
-    faction_ids = ["player", "conqueror", "fortifier", "opportunist"]
-    faction_archetypes = {
-        "player": "home",
-        "conqueror": "frontier",
-        "fortifier": "frontier",
-        "opportunist": "frontier",
-    }
+    n_factions = config.WORLD_FACTIONS_PER_GAME
+    faction_ids = ["player"] + [f"faction_{i}" for i in range(1, n_factions)]
 
     regions = {}
     adjacency = {}
@@ -118,7 +113,7 @@ def generate_random(seed: int | None = None) -> World:
         edge_types[(a, b)] = etype
         edge_types[(b, a)] = etype
 
-    # Create faction regions: 1 home + 1 frontier per faction = 8 total
+    # Create faction regions: 1 home + 1 frontier per faction
     faction_regions = {}
     for fid in faction_ids:
         home_name = rng.choice(theme.REGION_NAMES["home"])
@@ -169,7 +164,7 @@ def generate_random(seed: int | None = None) -> World:
             ei += 1
         corridor_ends[fid] = prev
 
-    # Connect the 4 faction components via their corridor ends
+    # Connect faction components via their corridor ends
     component_nodes = list(corridor_ends.values())
     for i in range(1, len(component_nodes)):
         link(component_nodes[i], component_nodes[i - 1])

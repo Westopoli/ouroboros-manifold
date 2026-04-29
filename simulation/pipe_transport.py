@@ -1047,9 +1047,8 @@ def _setup_sim_env(seed=42):
     if os.path.exists(library_path):
         with open(library_path) as _lf:
             _lib_names = json.load(_lf)
-        for fid in registry:
-            lib_key = fid
-            lib_entry = _lib_names.get(lib_key, {})
+        for fid, fac in registry.items():
+            lib_entry = _lib_names.get(fid) or _lib_names.get(fac.archetype, {})
             for cat in ["people", "places", "factions"]:
                 names = lib_entry.get(cat, [])
                 if names:
@@ -1060,6 +1059,11 @@ def _setup_sim_env(seed=42):
         for fid in registry:
             for cat in ["people", "places", "factions"]:
                 ns.ensure_pool(fid, cat)
+    for fid, fac in registry.items():
+        display_name = ns.get_name(fid, "factions", current_tick=0, rng=w.rng)
+        if display_name:
+            fac.name = display_name
+
     ledger = _ledger_mod.CoherenceLedger(ns)
     for fid in registry:
         home_regions = [r for r in w.regions.values() if r.faction_id == fid]

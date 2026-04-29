@@ -228,7 +228,10 @@ func _apply_keyframe(kf: Dictionary) -> void:
 			# Timeline drives colors when active — keyframes only flash military
 			if not timeline_active:
 				_shell.update_region_node(rid, sig * 1.5, color)
-				_shell.update_territory(rid, sig * 6.0, color)
+				if faction_id != "":
+					_shell.update_territory(rid, sig * 6.0, color)
+				else:
+					_shell.remove_territory(rid)
 			var old_faction: String = _regions_state[rid].get("owner_faction_id", "")
 			if old_faction != faction_id:
 				_shell.flash_military_activity(rid, 0.9)
@@ -241,7 +244,8 @@ func _apply_keyframe(kf: Dictionary) -> void:
 				_regions_state[rid]["owner_faction_id"] = current_owner
 		else:
 			_shell.add_region_node(rid, pos, sig * 1.5, color, faction_id)
-			_shell.set_territory(rid, pos, sig * 6.0, color)
+			if faction_id != "":
+				_shell.set_territory(rid, pos, sig * 6.0, color)
 			_regions_state[rid] = r
 
 	var conns: Array = kf.get("connections_snapshot", [])
@@ -251,7 +255,11 @@ func _apply_keyframe(kf: Dictionary) -> void:
 		var etype: String = c.get("edge_type", "border")
 		var color_fid_val = c.get("color_faction_id")
 		var color_fid: String = color_fid_val if color_fid_val is String else ""
-		var color: Color = _get_faction_color(color_fid)
+		var color: Color
+		if color_fid == "":
+			color = Color(1.0, 0.92, 0.6, 0.8)
+		else:
+			color = _get_faction_color(color_fid)
 		_shell.add_connection(fid, tid, etype, color)
 
 	var military: Array = kf.get("military_events", [])
@@ -358,7 +366,10 @@ func _apply_ownership_tick(ownership: Dictionary) -> void:
 				var color: Color = _get_faction_color(faction_id)
 				var sig: float = _regions_state[rid].get("significance", 0.5)
 				_shell.update_region_node(rid, sig * 1.5, color)
-				_shell.update_territory(rid, sig * 6.0, color)
+				if faction_id != "":
+					_shell.update_territory(rid, sig * 6.0, color)
+				else:
+					_shell.remove_territory(rid)
 				_regions_state[rid]["owner_faction_id"] = faction_id
 				changed_rids.append(rid)
 	# Stagger flashes across the tick interval

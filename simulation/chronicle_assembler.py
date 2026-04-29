@@ -447,21 +447,21 @@ def assemble_entry(cluster, slot_values, rng):
     )
 
 
-def _enrich_first_mention(region_id, slots, world, registry, seen_regions):
-    if region_id in seen_regions or not world:
+def _first_mention_qualifier(region_id, world, registry):
+    region = world.regions.get(region_id) if world else None
+    if not region or not region.faction_id:
+        return ""
+    if registry and region.faction_id in registry:
+        return f", held by {registry[region.faction_id].name}"
+    return f", held by {region.faction_id}"
+
+
+def _apply_first_mention(entry, qualifier, region_name):
+    if not qualifier:
         return
-    seen_regions.add(region_id)
-    region = world.regions.get(region_id)
-    if not region:
-        return
-    name = slots.get("{region_name}", region_id)
-    qualifier = ""
-    if region.faction_id and registry and region.faction_id in registry:
-        qualifier = f", held by {registry[region.faction_id].name}"
-    elif region.faction_id:
-        qualifier = f", held by {region.faction_id}"
-    if qualifier:
-        slots["{region_name}"] = name + qualifier
+    enriched = region_name + qualifier
+    entry.base_text = entry.base_text.replace(region_name, enriched, 1)
+    entry.expanded_text = entry.expanded_text.replace(region_name, enriched, 1)
 
 
 def assemble_scroll(clusters, ledger, player_lineage_id, world,
@@ -474,12 +474,22 @@ def assemble_scroll(clusters, ledger, player_lineage_id, world,
     for cluster in clusters:
         slot_values = build_slot_values(cluster, ledger, player_lineage_id,
                                         world, mission_info, registry=registry)
-        _enrich_first_mention(cluster.region_id, slot_values, world, registry, seen_regions)
         entry = assemble_entry(cluster, slot_values, rng)
         if entry is None:
             warnings.append(f"Could not assemble entry for {cluster.category} "
                             f"in {cluster.region_id}")
             continue
+
+        if cluster.region_id not in seen_regions:
+            seen_regions.add(cluster.region_id)
+            faction_name = slot_values.get("{faction_name}", "")
+            already_attributed = (faction_name
+                                  and faction_name in entry.base_text
+                                  and slot_values.get("{region_name}", "") in entry.base_text)
+            if not already_attributed:
+                qualifier = _first_mention_qualifier(cluster.region_id, world, registry)
+                region_name = slot_values.get("{region_name}", cluster.region_id)
+                _apply_first_mention(entry, qualifier, region_name)
 
         base_wc = len(entry.base_text.split())
         expanded_wc = len(entry.expanded_text.split())

@@ -1,25 +1,11 @@
 extends Node3D
 
-const VORONOI_RESOLUTION := 2048
-const MAX_SYSTEMS := 128
-
 var _wv_data: Node
 var _region_visuals: Dictionary = {}
-var _connection_visuals: Dictionary = {}
+var _constellation: Node3D
+var _shell: Node3D
 var _highlight_tween: Tween
 var _highlighted_node: MeshInstance3D
-var _territory_viewport: SubViewport
-var _territory_color_rect: ColorRect
-var _territory_plane: MeshInstance3D
-var _territory_registry: Dictionary = {}
-var _system_data_image: Image
-var _system_data_texture: ImageTexture
-var _faction_colors_image: Image
-var _faction_colors_texture: ImageTexture
-var _faction_borders_image: Image
-var _faction_borders_texture: ImageTexture
-var _faction_color_to_index: Dictionary = {}
-var _map_bounds: Rect2 = Rect2(-50, -50, 100, 100)
 
 var _central_point: MeshInstance3D
 var _stream_pivot: Node3D
@@ -59,50 +45,37 @@ func setup(data: Node, _container: Node = null) -> void:
 	_wv_data.region_updated.connect(_on_region_updated)
 	_wv_data.region_removed.connect(_on_region_removed)
 	_wv_data.regions_cleared.connect(_on_regions_cleared)
-	_wv_data.territory_set.connect(_on_territory_set)
-	_wv_data.territory_updated.connect(_on_territory_updated)
-	_wv_data.territory_removed.connect(_on_territory_removed)
-	_wv_data.connection_added.connect(_on_connection_added)
-	_wv_data.connection_removed.connect(_on_connection_removed)
 	_wv_data.flash_region_requested.connect(_on_flash_region_requested)
 	_wv_data.flash_conflict_requested.connect(_on_flash_conflict_requested)
 	_wv_data.highlight_changed.connect(_on_highlight_changed)
-	_setup_territory_metaball()
+	_setup_constellation()
+	_setup_shell()
 
 
 func teardown() -> void:
-	if _territory_plane:
-		_territory_plane.queue_free()
-		_territory_plane = null
-	if _territory_viewport:
-		_territory_viewport.queue_free()
-		_territory_viewport = null
-	_territory_color_rect = null
-	_territory_registry.clear()
-	_faction_color_to_index.clear()
 	if _highlight_tween:
 		_highlight_tween.kill()
 		_highlight_tween = null
 	_highlighted_node = null
+	if _constellation:
+		_constellation.teardown()
+		_constellation.queue_free()
+		_constellation = null
+	if _shell:
+		_shell.teardown()
+		_shell.queue_free()
+		_shell = null
 	if _wv_data:
 		_wv_data.region_added.disconnect(_on_region_added)
 		_wv_data.region_updated.disconnect(_on_region_updated)
 		_wv_data.region_removed.disconnect(_on_region_removed)
 		_wv_data.regions_cleared.disconnect(_on_regions_cleared)
-		_wv_data.territory_set.disconnect(_on_territory_set)
-		_wv_data.territory_updated.disconnect(_on_territory_updated)
-		_wv_data.territory_removed.disconnect(_on_territory_removed)
-		_wv_data.connection_added.disconnect(_on_connection_added)
-		_wv_data.connection_removed.disconnect(_on_connection_removed)
 		_wv_data.flash_region_requested.disconnect(_on_flash_region_requested)
 		_wv_data.flash_conflict_requested.disconnect(_on_flash_conflict_requested)
 		_wv_data.highlight_changed.disconnect(_on_highlight_changed)
 	for node in _region_visuals.values():
 		node.queue_free()
 	_region_visuals.clear()
-	for node in _connection_visuals.values():
-		node.queue_free()
-	_connection_visuals.clear()
 	_wv_data = null
 
 
@@ -372,27 +345,6 @@ func _on_region_added(region_id: String) -> void:
 	add_child(node)
 	_region_visuals[region_id] = node
 
-	var shell := MeshInstance3D.new()
-	var shell_sphere := SphereMesh.new()
-	shell_sphere.radius = r["size"] * 0.65
-	shell_sphere.height = r["size"] * 1.3
-	shell_sphere.radial_segments = 24
-	shell_sphere.rings = 12
-	shell.mesh = shell_sphere
-	var shell_mat := StandardMaterial3D.new()
-	shell_mat.albedo_color = Color(r["color"].r, r["color"].g, r["color"].b, 0.15)
-	shell_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	shell_mat.cull_mode = BaseMaterial3D.CULL_FRONT
-	shell_mat.emission_enabled = true
-	shell_mat.emission = r["color"]
-	shell_mat.emission_energy_multiplier = 2.0
-	shell_mat.rim_enabled = true
-	shell_mat.rim = 1.0
-	shell_mat.rim_tint = 0.0
-	shell_mat.render_priority = -1
-	shell.material_override = shell_mat
-	node.add_child(shell)
-
 	# Collision shape for click-to-focus raycasting
 	var body := StaticBody3D.new()
 	var col := CollisionShape3D.new()
@@ -411,15 +363,6 @@ func _on_region_updated(region_id: String) -> void:
 	var sphere: SphereMesh = node.mesh
 	sphere.radius = r["size"] * 0.5
 	sphere.height = r["size"]
-	node.material_override = _make_emissive_material(Color.WHITE, 4.0)
-	if node.get_child_count() > 0:
-		var shell_node: MeshInstance3D = node.get_child(0)
-		if shell_node is MeshInstance3D:
-			var shell_sphere: SphereMesh = shell_node.mesh
-			shell_sphere.radius = r["size"] * 0.65
-			shell_sphere.height = r["size"] * 1.3
-			shell_node.material_override.albedo_color = Color(r["color"].r, r["color"].g, r["color"].b, 0.15)
-			shell_node.material_override.emission = r["color"]
 
 
 func _on_region_removed(region_id: String) -> void:
@@ -432,226 +375,41 @@ func _on_regions_cleared() -> void:
 	for node in _region_visuals.values():
 		node.queue_free()
 	_region_visuals.clear()
-	_territory_registry.clear()
-	_rebuild_territory_data()
 
 
-# --- Territory ---
+# --- Constellation ---
 
-func _setup_territory_metaball() -> void:
-	_system_data_image = Image.create(MAX_SYSTEMS, 1, false, Image.FORMAT_RGBAF)
-	_system_data_texture = ImageTexture.create_from_image(_system_data_image)
-	_faction_colors_image = Image.create(8, 1, false, Image.FORMAT_RGBAF)
-	_faction_colors_texture = ImageTexture.create_from_image(_faction_colors_image)
-	_faction_borders_image = Image.create(8, 1, false, Image.FORMAT_RGBAF)
-	_faction_borders_texture = ImageTexture.create_from_image(_faction_borders_image)
-
-	_territory_viewport = SubViewport.new()
-	_territory_viewport.size = Vector2i(VORONOI_RESOLUTION, VORONOI_RESOLUTION)
-	_territory_viewport.transparent_bg = true
-	_territory_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
-	add_child(_territory_viewport)
-
-	_territory_color_rect = ColorRect.new()
-	_territory_color_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
-	var shader_mat := ShaderMaterial.new()
-	shader_mat.shader = load("res://scenes/shared/world_view/renderers/territory_metaball.gdshader")
-	shader_mat.set_shader_parameter("system_data", _system_data_texture)
-	shader_mat.set_shader_parameter("faction_colors", _faction_colors_texture)
-	shader_mat.set_shader_parameter("faction_borders", _faction_borders_texture)
-	shader_mat.set_shader_parameter("system_count", 0)
-	shader_mat.set_shader_parameter("influence_radius", 0.17)
-	shader_mat.set_shader_parameter("threshold", 0.66)
-	shader_mat.set_shader_parameter("tube_width", 0.04)
-	shader_mat.set_shader_parameter("tube_alpha", 0.95)
-	shader_mat.set_shader_parameter("fill_opacity", 0.55)
-	shader_mat.set_shader_parameter("fill_fade_depth", 0.8)
-	shader_mat.set_shader_parameter("gap_margin", 0.30)
-	_territory_color_rect.material = shader_mat
-	_territory_viewport.add_child(_territory_color_rect)
-
-	_territory_plane = MeshInstance3D.new()
-	var pm := PlaneMesh.new()
-	pm.size = Vector2(100, 100)
-	_territory_plane.mesh = pm
-	var plane_mat := StandardMaterial3D.new()
-	plane_mat.albedo_texture = _territory_viewport.get_texture()
-	plane_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	plane_mat.blend_mode = BaseMaterial3D.BLEND_MODE_MIX
-	plane_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	plane_mat.render_priority = -1
-	plane_mat.no_depth_test = true
-	plane_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-	_territory_plane.material_override = plane_mat
-	_territory_plane.visible = false
-	add_child(_territory_plane)
-
-
-func _rebuild_territory_data() -> void:
-	if _territory_registry.is_empty():
-		_territory_plane.visible = false
-		return
-
-	var min_pos := Vector2(INF, INF)
-	var max_pos := Vector2(-INF, -INF)
-	var max_radius := 1.0
-
-	for entry in _territory_registry.values():
-		var pos_2d := Vector2(entry["center"].x, entry["center"].z)
-		min_pos = min_pos.min(pos_2d)
-		max_pos = max_pos.max(pos_2d)
-		max_radius = maxf(max_radius, entry["radius"])
-
-	var margin := max_radius * 1.5
-	min_pos -= Vector2(margin, margin)
-	max_pos += Vector2(margin, margin)
-	_map_bounds = Rect2(min_pos, max_pos - min_pos)
-
-	var img := Image.create(MAX_SYSTEMS, 1, false, Image.FORMAT_RGBAF)
-	var idx := 0
-	for rid in _territory_registry:
-		var entry: Dictionary = _territory_registry[rid]
-		if idx >= MAX_SYSTEMS:
+func _setup_constellation() -> void:
+	var script := load("res://scenes/shared/world_view/renderers/constellation_renderer.gd")
+	_constellation = Node3D.new()
+	_constellation.set_script(script)
+	_constellation.name = "ConstellationRenderer"
+	add_child(_constellation)
+	# Find zoom controller from camera sibling — set up after camera calls setup()
+	var zoom_ctrl: Node = null
+	await get_tree().process_frame
+	for sibling in get_parent().get_children():
+		if sibling.has_method("get_zoom_controller"):
+			zoom_ctrl = sibling.get_zoom_controller()
 			break
-		var pos_2d := Vector2(entry["center"].x, entry["center"].z)
-		var norm_x := (pos_2d.x - min_pos.x) / _map_bounds.size.x
-		var norm_y := (pos_2d.y - min_pos.y) / _map_bounds.size.y
-		var faction_idx_norm: float = float(entry["faction_index"]) / 8.0
-		var significance := clampf(entry["radius"] / max_radius, 0.0, 1.0)
-		img.set_pixel(idx, 0, Color(norm_x, norm_y, faction_idx_norm, significance))
-		idx += 1
-
-	_system_data_image = img
-	_system_data_texture.update(_system_data_image)
-
-	var shader_mat: ShaderMaterial = _territory_color_rect.material
-	shader_mat.set_shader_parameter("system_count", idx)
-	shader_mat.set_shader_parameter("system_data", _system_data_texture)
-
-	var pm: PlaneMesh = _territory_plane.mesh
-	pm.size = Vector2(_map_bounds.size.x, _map_bounds.size.y)
-
-	var avg_y := 0.0
-	var count := 0
-	for entry in _territory_registry.values():
-		avg_y += entry["center"].y
-		count += 1
-	if count > 0:
-		avg_y /= float(count)
-
-	_territory_plane.position = Vector3(
-		_map_bounds.position.x + _map_bounds.size.x * 0.5,
-		avg_y,
-		_map_bounds.position.y + _map_bounds.size.y * 0.5
-	)
-	_territory_plane.visible = true
+	_constellation.setup(_wv_data, zoom_ctrl)
 
 
-func _register_faction_color(color: Color) -> int:
-	if color in _faction_color_to_index:
-		return _faction_color_to_index[color]
-	var idx: int = _faction_color_to_index.size() + 1
-	if idx > 8:
-		return 1
-	_faction_color_to_index[color] = idx
-	_faction_colors_image.set_pixel(idx - 1, 0, Color(color.r * 0.9, color.g * 0.9, color.b * 0.9, 1.0))
-	_faction_colors_texture.update(_faction_colors_image)
-	_faction_borders_image.set_pixel(idx - 1, 0, Color(
-		minf(color.r * 1.3, 1.0),
-		minf(color.g * 1.3, 1.0),
-		minf(color.b * 1.3, 1.0),
-		1.0
-	))
-	_faction_borders_texture.update(_faction_borders_image)
-	var shader_mat: ShaderMaterial = _territory_color_rect.material
-	shader_mat.set_shader_parameter("faction_colors", _faction_colors_texture)
-	shader_mat.set_shader_parameter("faction_borders", _faction_borders_texture)
-	return idx
+# --- Shell ---
 
-
-func _on_territory_set(region_id: String) -> void:
-	var t: Dictionary = _wv_data.get_territory(region_id)
-	var faction_idx := _register_faction_color(t["color"])
-	_territory_registry[region_id] = {
-		"center": t["center"],
-		"radius": t["radius"],
-		"color": t["color"],
-		"faction_index": faction_idx,
-	}
-	_rebuild_territory_data()
-
-
-func _on_territory_updated(region_id: String) -> void:
-	var t: Dictionary = _wv_data.get_territory(region_id)
-	var faction_idx := _register_faction_color(t["color"])
-	_territory_registry[region_id] = {
-		"center": t["center"],
-		"radius": t["radius"],
-		"color": t["color"],
-		"faction_index": faction_idx,
-	}
-	_rebuild_territory_data()
-
-
-func _on_territory_removed(region_id: String) -> void:
-	_territory_registry.erase(region_id)
-	_rebuild_territory_data()
-
-
-# --- Connections ---
-
-func _on_connection_added(from_id: String, to_id: String) -> void:
-	var key := _connection_key(from_id, to_id)
-	if key in _connection_visuals:
-		_connection_visuals[key].queue_free()
-		_connection_visuals.erase(key)
-
-	var from_r: Dictionary = _wv_data.get_region(from_id)
-	var to_r: Dictionary = _wv_data.get_region(to_id)
-	if from_r.is_empty() or to_r.is_empty():
-		return
-
-	var conn: Dictionary = _wv_data.get_connection(from_id, to_id)
-	if conn.is_empty():
-		return
-
-	var from_pos: Vector3 = from_r["position"]
-	var to_pos: Vector3 = to_r["position"]
-	var conn_type: String = conn.get("connection_type", "border")
-	var color: Color = conn.get("color", Color.WHITE)
-
-	var mesh_inst := MeshInstance3D.new()
-	var im := ImmediateMesh.new()
-	im.surface_begin(Mesh.PRIMITIVE_LINES)
-	im.surface_add_vertex(from_pos)
-	im.surface_add_vertex(to_pos)
-	im.surface_end()
-	mesh_inst.mesh = im
-
-	var mat := StandardMaterial3D.new()
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.emission_enabled = true
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-
-	if conn_type == "trade":
-		mat.albedo_color = Color(color.r, color.g, color.b, 0.15)
-		mat.emission = color
-		mat.emission_energy_multiplier = 1.0
-	else:
-		mat.albedo_color = Color(color.r, color.g, color.b, 0.4)
-		mat.emission = color
-		mat.emission_energy_multiplier = 2.0
-
-	mesh_inst.material_override = mat
-	add_child(mesh_inst)
-	_connection_visuals[key] = mesh_inst
-
-
-func _on_connection_removed(from_id: String, to_id: String) -> void:
-	var key := _connection_key(from_id, to_id)
-	if key in _connection_visuals:
-		_connection_visuals[key].queue_free()
-		_connection_visuals.erase(key)
+func _setup_shell() -> void:
+	var script := load("res://scenes/shared/world_view/renderers/shell_renderer.gd")
+	_shell = Node3D.new()
+	_shell.set_script(script)
+	_shell.name = "ShellRenderer"
+	add_child(_shell)
+	var zoom_ctrl: Node = null
+	await get_tree().process_frame
+	for sibling in get_parent().get_children():
+		if sibling.has_method("get_zoom_controller"):
+			zoom_ctrl = sibling.get_zoom_controller()
+			break
+	_shell.setup(_wv_data, zoom_ctrl)
 
 
 # --- Flashes ---
@@ -801,7 +559,3 @@ func _make_emissive_material(color: Color, energy: float) -> StandardMaterial3D:
 	return mat
 
 
-func _connection_key(from_id: String, to_id: String) -> String:
-	if from_id < to_id:
-		return from_id + "::" + to_id
-	return to_id + "::" + from_id

@@ -384,35 +384,30 @@ def make_registry(*factions) -> dict:
 
 def generate_starting_factions(rng: random.Random | None = None,
                                world=None) -> list:
-    player = Faction(
-        "player", theme.FACTION_DISPLAY_NAMES["player_civilization"], "player_civilization",
-        budget=0.0,
-        modifiers={},
-        diplomatic_stance={"conqueror": "hostile", "fortifier": "hostile", "opportunist": "hostile"},
-        rng=rng,
-    )
-    conqueror = Faction(
-        "conqueror", theme.FACTION_DISPLAY_NAMES["conqueror"], "conqueror",
-        budget=0.0,
-        modifiers={"military": 0.05},
-        diplomatic_stance={"player": "hostile", "fortifier": "hostile", "opportunist": "hostile"},
-        rng=rng,
-    )
-    fortifier = Faction(
-        "fortifier", "The Fortifier", "fortifier",
-        budget=0.0,
-        modifiers={},
-        diplomatic_stance={"player": "hostile", "conqueror": "hostile", "opportunist": "hostile"},
-        rng=rng,
-    )
-    opportunist = Faction(
-        "opportunist", "The Opportunist", "opportunist",
-        budget=0.0,
-        modifiers={},
-        diplomatic_stance={"player": "hostile", "conqueror": "hostile", "fortifier": "hostile"},
-        rng=rng,
-    )
-    factions = [player, conqueror, fortifier, opportunist]
+    n_factions = config.WORLD_FACTIONS_PER_GAME
+    archetypes = ["conqueror", "fortifier", "opportunist"]
+    faction_ids = ["player"] + [f"faction_{i}" for i in range(1, n_factions)]
+
+    factions = []
+    for i, fid in enumerate(faction_ids):
+        if i == 0:
+            archetype = "player_civilization"
+            display_name = theme.FACTION_DISPLAY_NAMES.get(archetype, "Player Civilization")
+            modifiers = {}
+        else:
+            archetype = archetypes[(i - 1) % len(archetypes)]
+            display_name = f"Faction {i}"
+            modifiers = {"military": 0.05} if archetype == "conqueror" else {}
+
+        stance = {other: "hostile" for other in faction_ids if other != fid}
+        factions.append(Faction(
+            fid, display_name, archetype,
+            budget=0.0,
+            modifiers=modifiers,
+            diplomatic_stance=stance,
+            rng=rng,
+        ))
+
     if world is not None:
         _apply_population_tech(factions, world)
     return factions

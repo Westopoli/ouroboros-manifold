@@ -138,48 +138,50 @@ func _input(event: InputEvent) -> void:
 		match event.button_index:
 			MOUSE_BUTTON_LEFT:
 				if event.pressed:
-					_dragging_pan = true
-					_last_mouse_pos = event.position
-					_drag_start_pos = event.position
-					_pause_auto_if_needed()
-				else:
-					_dragging_pan = false
-					if not _dragging_orbit:
-						_resume_auto_if_paused()
-					if _drag_start_pos.distance_to(event.position) < 4.0:
-						_try_click_focus(event.position)
-			MOUSE_BUTTON_RIGHT:
-				if event.pressed:
 					_dragging_orbit = true
 					_last_mouse_pos = event.position
+					_drag_start_pos = event.position
 					_pause_auto_if_needed()
 				else:
 					_dragging_orbit = false
 					if not _dragging_pan:
 						_resume_auto_if_paused()
+					if _drag_start_pos.distance_to(event.position) < 4.0:
+						_try_click_focus(event.position)
+			MOUSE_BUTTON_RIGHT:
+				if event.pressed:
+					_dragging_pan = true
+					_last_mouse_pos = event.position
+					_pause_auto_if_needed()
+				else:
+					_dragging_pan = false
+					if not _dragging_orbit:
+						_resume_auto_if_paused()
 			MOUSE_BUTTON_WHEEL_UP:
 				_offset_dist -= ZOOM_SPEED
 				_offset_dist = clampf(_offset_dist, ZOOM_MIN, ZOOM_MAX)
-				print("[ZOOM] wheel_up -> _offset_dist=", _offset_dist)
 			MOUSE_BUTTON_WHEEL_DOWN:
 				_offset_dist += ZOOM_SPEED
 				_offset_dist = clampf(_offset_dist, ZOOM_MIN, ZOOM_MAX)
-				print("[ZOOM] wheel_down -> _offset_dist=", _offset_dist)
+
+	elif event is InputEventPanGesture:
+		_offset_dist += event.delta.y * 2.0
+		_offset_dist = clampf(_offset_dist, ZOOM_MIN, ZOOM_MAX)
 
 	elif event is InputEventMouseMotion:
 		var motion: InputEventMouseMotion = event
-		if _dragging_pan:
-			var delta_mouse: Vector2 = motion.position - _last_mouse_pos
-			_last_mouse_pos = motion.position
-			var right := _camera.global_transform.basis.x
-			_offset_target -= right * delta_mouse.x * PAN_SPEED * 0.1
-			_offset_target += Vector3.UP * delta_mouse.y * PAN_SPEED * 0.1
-		elif _dragging_orbit:
+		if _dragging_orbit:
 			var delta_mouse: Vector2 = motion.position - _last_mouse_pos
 			_last_mouse_pos = motion.position
 			_offset_azimuth -= delta_mouse.x * ORBIT_SPEED
 			_offset_elev += delta_mouse.y * ORBIT_SPEED
 			_offset_elev = clampf(_offset_elev, deg_to_rad(-80.0), deg_to_rad(80.0))
+		elif _dragging_pan:
+			var delta_mouse: Vector2 = motion.position - _last_mouse_pos
+			_last_mouse_pos = motion.position
+			var right := _camera.global_transform.basis.x
+			_offset_target -= right * delta_mouse.x * PAN_SPEED * 0.1
+			_offset_target += Vector3.UP * delta_mouse.y * PAN_SPEED * 0.1
 
 
 func _pause_auto_if_needed() -> void:

@@ -188,9 +188,9 @@ EVENT_GRACE_PERIOD = 3     # no threshold triggers fire during the first N ticks
 
 # ── World generation ─────────────────────────────────────────────────────────
 WORLD_REGION_COUNT_RANGE = (40, 60)
-WORLD_FACTIONS_PER_GAME = 4
+WORLD_FACTIONS_PER_GAME = 15
 WORLD_EXTRA_EDGE_RATIO = 0.12
-WORLD_MIN_FACTION_SEPARATION = 3
+WORLD_MIN_FACTION_SEPARATION = 1
 
 # ── Stage 1 — Drift-only isolated start (no factions, no conqueror) ─────────
 S1_HOME_MILITARY_RANGE    = (55, 70)
