@@ -196,30 +196,6 @@ func _rebuild_faction_shell(faction_id: String) -> void:
 			break
 	var rival_tex := ImageTexture.create_from_image(rival_img)
 
-	# Debug: CPU-side field check at each own system position
-	for entry in systems.values():
-		var p: Vector3 = entry["center"]
-		var own_field := 0.0
-		for own_entry in systems.values():
-			var od: Vector3 = p - own_entry["center"]
-			var or2: float = INFLUENCE_RADIUS * (0.6 + (own_entry["radius"] / maxf(max_sig, 0.01)) * 0.4)
-			var od2: float = od.dot(od)
-			own_field += (or2 * or2) / (od2 + or2 * or2)
-		var rival_field := 0.0
-		for other_fk in _faction_systems:
-			if other_fk == faction_id:
-				continue
-			for rival_entry in _faction_systems[other_fk].values():
-				var rd: Vector3 = p - rival_entry["center"]
-				var rr: float = INFLUENCE_RADIUS * (0.6 + (rival_entry["radius"] / maxf(max_sig, 0.01)) * 0.4)
-				var rd2: float = rd.dot(rd)
-				rival_field = maxf(rival_field, (rr * rr) / (rd2 + rr * rr))
-		var ratio := rival_field / maxf(own_field, 0.001)
-		var gap_factor := 0.5 * smoothstep(0.3, 1.0, ratio)
-		var net := own_field * (1.0 - gap_factor)
-		var vis := "YES" if net >= ISO_THRESHOLD else "NO"
-		print("[FIELD] faction=%s own=%.2f rival=%.2f ratio=%.2f gap=%.2f net=%.2f visible=%s" % [faction_id, own_field, rival_field, ratio, gap_factor, net, vis])
-
 	# Create or update mesh
 	var mesh_inst: MeshInstance3D
 	if faction_id in _faction_meshes:
