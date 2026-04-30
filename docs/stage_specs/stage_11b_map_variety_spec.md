@@ -98,6 +98,16 @@ This is run by checkpoint scripts; it is also useful as a permanent regression c
 
 ## Checkpoints
 
+> **Escalation rule — read this before running any checkpoint.**
+>
+> When a checkpoint's after-state measurement does **not** match this spec's expected outcome — whether a test fails, a baseline doesn't reproduce, a perf number regresses outside the stated tolerance, a schema check rejects something it shouldn't, or any output is unexpected enough that the implementer would be guessing at the cause — **STOP**. Do not modify the implementation, the test, or the spec to make it pass. Do not iterate on a fix.
+>
+> **FLAG the discrepancy and bring it to Westley.** Include: which checkpoint, what was measured, what was expected, what was observed, and the implementer's hypothesis if any. Wait for guidance.
+>
+> The cost of a wrong silent fix is a debugging session three weeks from now without context; the cost of a five-minute escalation is five minutes. Default to escalation.
+>
+> This rule exists per CLAUDE.md ("No shotgun fixes" and "One confirmed diagnosis is worth ten guesses") and applies uniformly to every checkpoint below.
+
 Each checkpoint follows the **measure → change → re-measure** pattern: log the relevant baseline state before the change, make the change, log the new state, confirm the delta matches the expected outcome. A checkpoint is not "passed" until the after-state has been logged and reviewed — making the change without re-measuring leaves a blind spot.
 
 ### Checkpoint A — Baseline confirmation: the bug exists and is shaped as expected
