@@ -1064,6 +1064,18 @@ def _setup_sim_env(seed=42):
         if display_name:
             fac.name = display_name
 
+    # Assign region names from library "places" pools
+    _all_neutral_places = set()
+    for fid in registry:
+        _all_neutral_places.update(ns._pools.get((fid, "places"), []))
+    ns.load_pool("neutral", "places", list(_all_neutral_places))
+
+    for region in w.regions.values():
+        pool_key = region.faction_id if region.faction_id else "neutral"
+        name = ns.get_name(pool_key, "places", current_tick=0, rng=w.rng)
+        if name:
+            region.name = name
+
     ledger = _ledger_mod.CoherenceLedger(ns)
     for fid in registry:
         home_regions = [r for r in w.regions.values() if r.faction_id == fid]

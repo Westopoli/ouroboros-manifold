@@ -1,7 +1,6 @@
 import math
 import random
 import config
-import theme_scifi as theme
 from region import Region
 
 
@@ -116,14 +115,14 @@ def generate_random(seed: int | None = None) -> World:
     # Create faction regions: 1 home + 1 frontier per faction
     faction_regions = {}
     for fid in faction_ids:
-        home_name = rng.choice(theme.REGION_NAMES["home"])
         home_id = f"region_{fid}_home"
+        home_name = home_id
         home = _make_region(home_id, home_name, "home", rng, faction_id=fid)
         regions[home_id] = home
         adjacency[home_id] = []
 
-        f_name = rng.choice(theme.REGION_NAMES["frontier"])
         f_id = f"region_{fid}_f0"
+        f_name = f_id
         frontier = _make_region(f_id, f_name, "frontier", rng, faction_id=fid)
         regions[f_id] = frontier
         adjacency[f_id] = []
@@ -133,11 +132,10 @@ def generate_random(seed: int | None = None) -> World:
 
     # Create empty regions
     n_empty = n_regions - len(regions)
-    e_pool = theme.REGION_NAMES["empty"]
     empty_ids = []
     for i in range(n_empty):
         rid = f"region_e{i:03d}"
-        name = rng.choice(e_pool).replace("{n}", str(i + 1))
+        name = rid
         regions[rid] = Region(rid, name, "empty")
         adjacency[rid] = []
         empty_ids.append(rid)

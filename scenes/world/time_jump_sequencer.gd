@@ -356,28 +356,40 @@ func _advance_timeline(delta: float) -> void:
 
 
 func _apply_ownership_tick(ownership: Dictionary) -> void:
-	var changed_rids: Array[String] = []
+	# Collect changes first, then stagger both flash + territory update together
+	# so changes ripple across the map smoothly within the tick interval.
+	var changes: Array[Dictionary] = []
 	for rid: String in ownership:
 		var faction_id_val = ownership[rid]
 		var faction_id: String = faction_id_val if faction_id_val is String else ""
 		if rid in _regions_state:
 			var old_fid: String = _regions_state[rid].get("owner_faction_id", "")
 			if old_fid != faction_id:
-				var color: Color = _get_faction_color(faction_id)
-				var sig: float = _regions_state[rid].get("significance", 0.5)
-				_shell.update_region_node(rid, sig * 1.5, color)
-				if faction_id != "":
-					_shell.update_territory(rid, sig * 6.0, color)
-				else:
-					_shell.remove_territory(rid)
+				changes.append({
+					"rid": rid,
+					"faction_id": faction_id,
+					"color": _get_faction_color(faction_id),
+					"sig": _regions_state[rid].get("significance", 0.5),
+					"pos": Vector3(
+						_regions_state[rid].get("x", 0.0),
+						_regions_state[rid].get("y", 0.0),
+						_regions_state[rid].get("z", 0.0)),
+				})
 				_regions_state[rid]["owner_faction_id"] = faction_id
-				changed_rids.append(rid)
-	# Stagger flashes across the tick interval
-	for i in range(changed_rids.size()):
-		var flash_rid: String = changed_rids[i]
-		var delay: float = randf_range(0.0, _timeline_interval * 0.8)
+	if changes.is_empty():
+		return
+	var spread := _timeline_interval * 0.8
+	for i in range(changes.size()):
+		var c: Dictionary = changes[i]
+		var delay: float = randf_range(0.0, spread)
 		get_tree().create_timer(delay).timeout.connect(func():
-			_shell.flash_military_activity(flash_rid, 0.7)
+			_shell.flash_military_activity(c["rid"], 0.7)
+			_shell.update_region_node(c["rid"], c["sig"] * 1.5, c["color"])
+			if c["faction_id"] != "":
+				# set_territory handles both create (uninhabited → owned) and update
+				_shell.set_territory(c["rid"], c["pos"], c["sig"] * 6.0, c["color"])
+			else:
+				_shell.remove_territory(c["rid"])
 		)
 
 

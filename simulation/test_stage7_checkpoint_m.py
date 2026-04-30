@@ -47,7 +47,6 @@ PROTECTED_FILES = {
     "tick.py", "drift.py", "faction.py", "region.py", "events.py",
     "event_engine.py", "intent_resolver.py", "border_friction.py",
     "technology.py", "diplomacy.py", "world.py", "templates.py",
-    "theme_scifi.py",
 }
 
 

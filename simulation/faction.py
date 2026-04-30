@@ -7,7 +7,6 @@
 import random
 import colorsys
 import config
-import theme_scifi as theme
 
 
 class Faction:
@@ -392,7 +391,7 @@ def generate_starting_factions(rng: random.Random | None = None,
     for i, fid in enumerate(faction_ids):
         if i == 0:
             archetype = "player_civilization"
-            display_name = theme.FACTION_DISPLAY_NAMES.get(archetype, "Player Civilization")
+            display_name = "Player Civilization"
             modifiers = {}
         else:
             archetype = archetypes[(i - 1) % len(archetypes)]
