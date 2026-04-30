@@ -65,11 +65,12 @@ class DeadReckoningTracker:
 def full_snapshot(engine) -> dict:
     store = engine.store
     tmap = engine.map
+    layer_prefs = getattr(engine, "layer_preferences", {})
 
     units = []
     for uid in range(store.count):
         if store.alive[uid]:
-            units.append(_unit_entry(store, uid, engine.player_faction))
+            units.append(_unit_entry(store, uid, engine.player_faction, layer_prefs))
 
     structures = [_structure_entry(s) for s in engine.reinforcement_structures]
     objectives = [_objective_entry(o) for o in engine.objectives]
@@ -141,6 +142,7 @@ def delta(engine, prev_state: dict, dr_tracker=None) -> dict:
     """
     store = engine.store
     dt = config.TACTICAL_TICK_DURATION
+    layer_prefs = getattr(engine, "layer_preferences", {})
 
     prev_units = {u["uid"]: u for u in prev_state.get("units", [])}
     prev_structures = {s["uid"]: s for s in prev_state.get("structures", [])}
@@ -152,7 +154,7 @@ def delta(engine, prev_state: dict, dr_tracker=None) -> dict:
     # New units — always full entry, velocity = [0, 0]
     units_added = []
     for uid in (current_alive - prev_alive):
-        entry = _unit_entry(store, uid, engine.player_faction)
+        entry = _unit_entry(store, uid, engine.player_faction, layer_prefs)
         entry["velocity"] = [0.0, 0.0]
         if dr_tracker is not None:
             dr_tracker.mark_sent(uid, entry["pos"], [0.0, 0.0], engine.tick)
@@ -167,7 +169,7 @@ def delta(engine, prev_state: dict, dr_tracker=None) -> dict:
     # Changed units
     units_updated = []
     for uid in current_alive & prev_alive:
-        cur = _unit_entry(store, uid, engine.player_faction)
+        cur = _unit_entry(store, uid, engine.player_faction, layer_prefs)
         prev = prev_units[uid]
 
         # Non-positional state changes always sent when they occur
@@ -182,6 +184,8 @@ def delta(engine, prev_state: dict, dr_tracker=None) -> dict:
             state_changes["facing_rad"] = cur["facing_rad"]
         if cur["attack_target"] != prev.get("attack_target", -1):
             state_changes["attack_target"] = cur["attack_target"]
+        if cur["preferred_layer"] != prev.get("preferred_layer", -1):
+            state_changes["preferred_layer"] = cur["preferred_layer"]
 
         # Positional update: dead-reckon or always send
         pos_update = {}
@@ -309,7 +313,7 @@ def apply_delta(snapshot: dict, d: dict) -> dict:
     return result
 
 
-def _unit_entry(store, uid, player_faction) -> dict:
+def _unit_entry(store, uid, player_faction, layer_prefs=None) -> dict:
     return {
         "uid": uid,
         "type": store.unit_type[uid],
@@ -318,6 +322,7 @@ def _unit_entry(store, uid, player_faction) -> dict:
             round(float(store.data[uid, FIELD_Y]), 4),
         ],
         "layer": int(store.data[uid, FIELD_LAYER]),
+        "preferred_layer": (layer_prefs or {}).get(uid, -1),
         "hp": round(float(store.data[uid, FIELD_HP]), 4),
         "max_hp": round(float(store.data[uid, FIELD_MAX_HP]), 4),
         "faction": int(store.faction[uid]),

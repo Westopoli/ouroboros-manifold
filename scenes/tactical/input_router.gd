@@ -259,7 +259,10 @@ func _unit_world_pos(uid: int) -> Vector3:
 	return Vector3(TacticalBridge.display_x[uid], float(layer) * EraConfig.LAYER_HEIGHT, TacticalBridge.display_y[uid])
 
 
+# See also: scripts/tactical/visibility.gd — fog gate
 func _is_selectable(uid: int) -> bool:
+	if not Visibility.is_unit_visible_to_player(uid):
+		return false
 	return TacticalBridge.units.get(uid, {}).get("selection_eligible", false)
 
 

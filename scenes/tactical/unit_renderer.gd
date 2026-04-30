@@ -1,6 +1,7 @@
 ## Renders all units via MultiMeshInstance3D batching.
 ## Grouped by (type, tier, faction) — one draw call per batch.
 ## See bible_combat.md "Unit Rendering — MultiMesh Batching" for design rationale.
+## See also: scripts/tactical/visibility.gd — fog gate in _update_transforms()
 extends Node3D
 
 const MAX_INSTANCES_PER_BATCH := 1024
@@ -17,6 +18,8 @@ const SEL_OUTER := 66.0
 const SEL_INNER := 60.0
 const RING_OUTER := 50.0
 const RING_INNER := 44.0
+const PREF_OUTER := 56.0
+const PREF_INNER := 53.0
 
 const _V_OFFSETS: Array[Vector2] = [
 	Vector2(0.0, 0.0),
@@ -38,9 +41,13 @@ var _sel_rings: Dictionary = {}  # uid → MeshInstance3D
 # Layer ring batches — one MultiMeshInstance3D per layer color
 var _layer_batches: Dictionary = {}  # layer(int) → MultiMeshInstance3D
 
+# Preference ring batches — one per preferred layer, thinner outline style
+var _pref_batches: Dictionary = {}  # layer(int) → MultiMeshInstance3D
+
 # Shared torus mesh for layer rings (all use the same geometry, different materials)
 var _layer_ring_mesh: TorusMesh
 var _sel_ring_mesh: TorusMesh
+var _pref_ring_mesh: TorusMesh
 
 @onready var _input_router = $"../InputRouter"
 
@@ -54,6 +61,10 @@ func _ready() -> void:
 	_sel_ring_mesh.outer_radius = SEL_OUTER
 	_sel_ring_mesh.inner_radius = SEL_INNER
 
+	_pref_ring_mesh = TorusMesh.new()
+	_pref_ring_mesh.outer_radius = PREF_OUTER
+	_pref_ring_mesh.inner_radius = PREF_INNER
+
 	TacticalBridge.snapshot_received.connect(_on_snapshot)
 	TacticalBridge.tick_delta_received.connect(_on_delta)
 
@@ -63,6 +74,7 @@ func _process(_delta: float) -> void:
 	_update_transforms()
 	_update_selection_rings()
 	_update_layer_rings()
+	_update_preference_rings()
 
 	_facing_log_frames += 1
 	if _facing_log_frames % 180 == 0:
@@ -102,6 +114,9 @@ func _full_rebuild() -> void:
 	for layer in _layer_batches:
 		_layer_batches[layer].queue_free()
 	_layer_batches.clear()
+	for layer in _pref_batches:
+		_pref_batches[layer].queue_free()
+	_pref_batches.clear()
 
 	# Add all living units
 	for uid: int in TacticalBridge.units:
@@ -160,6 +175,7 @@ func _create_batch(batch_key: String, unit_type: String, tier: int, faction: int
 
 	var mm := MultiMesh.new()
 	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.use_colors = true
 	mm.instance_count = MAX_INSTANCES_PER_BATCH
 	mm.visible_instance_count = 0
 	mm.mesh = mesh
@@ -224,6 +240,7 @@ func _extract_mesh_with_faction(scene: PackedScene, faction: int, tier: int) -> 
 func _make_faction_mat(faction_color: Color, tier: int) -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = faction_color
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	var treatment := EraThemeResolver.get_faction_color_mode(tier)
 	match treatment:
 		"metallic":
@@ -246,6 +263,11 @@ func _rebuild_all_multimeshes() -> void:
 
 
 func _update_transforms() -> void:
+	var focus_layer: int = _input_router.active_layer
+	var dim_color := Color(1.0, 1.0, 1.0, EraConfig.INACTIVE_LAYER_ALPHA)
+	var full_color := Color(1.0, 1.0, 1.0, 1.0)
+	var hidden_color := Color(1.0, 1.0, 1.0, 0.0)
+
 	for key in _batches:
 		var batch: Dictionary = _batches[key]
 		var entries: Array = batch.entries
@@ -255,8 +277,14 @@ func _update_transforms() -> void:
 		for entry in entries:
 			var uid: int = entry.uid
 			if uid >= TacticalBridge.unit_count or TacticalBridge.display_alive[uid] == 0:
-				# Hide this instance
 				mm.set_instance_transform(write_idx, Transform3D(Basis(), Vector3(0.0, -99999.0, 0.0)))
+				mm.set_instance_color(write_idx, hidden_color)
+				write_idx += 1
+				continue
+			# See also: scripts/tactical/visibility.gd — fog gate
+			if not Visibility.is_unit_visible_to_player(uid):
+				mm.set_instance_transform(write_idx, Transform3D(Basis(), Vector3(0.0, -99999.0, 0.0)))
+				mm.set_instance_color(write_idx, hidden_color)
 				write_idx += 1
 				continue
 
@@ -272,6 +300,7 @@ func _update_transforms() -> void:
 			var basis := Basis(Vector3.UP, facing).scaled(Vector3(vscale, vscale, vscale))
 			var origin := Vector3(px + offset.x, y, py + offset.y)
 			mm.set_instance_transform(write_idx, Transform3D(basis, origin))
+			mm.set_instance_color(write_idx, full_color if layer == focus_layer else dim_color)
 			write_idx += 1
 
 
@@ -329,6 +358,8 @@ func _update_layer_rings() -> void:
 	for uid in range(TacticalBridge.unit_count):
 		if TacticalBridge.display_alive[uid] == 0:
 			continue
+		if not Visibility.is_unit_visible_to_player(uid):
+			continue
 		var unit: Dictionary = TacticalBridge.units.get(uid, {})
 		var layer: int = unit.get("layer", 0)
 		if layer <= 0 or layer >= LAYER_COLORS.size():
@@ -358,11 +389,14 @@ func _update_layer_rings() -> void:
 			add_child(mmi)
 			_layer_batches[layer] = mmi
 
-	# Update transforms
+	# Update transforms + layer-focus dimming on rings
+	var focus_layer: int = _input_router.active_layer
 	for layer in _layer_batches:
 		var mmi: MultiMeshInstance3D = _layer_batches[layer]
 		var uids: Array = layer_entries.get(layer, [])
 		mmi.multimesh.visible_instance_count = uids.size()
+		var ring_alpha: float = 1.0 if layer == focus_layer else EraConfig.INACTIVE_LAYER_ALPHA
+		(mmi.material_override as StandardMaterial3D).albedo_color.a = ring_alpha
 		for i in uids.size():
 			var uid: int = uids[i]
 			var unit: Dictionary = TacticalBridge.units.get(uid, {})
@@ -374,3 +408,63 @@ func _update_layer_rings() -> void:
 	for layer in _layer_batches:
 		if not layer_entries.has(layer):
 			(_layer_batches[layer] as MultiMeshInstance3D).multimesh.visible_instance_count = 0
+
+
+func _update_preference_rings() -> void:
+	# Collect units whose preferred_layer differs from current layer
+	var pref_entries: Dictionary = {}  # preferred_layer → Array of uid
+	for uid in range(TacticalBridge.unit_count):
+		if TacticalBridge.display_alive[uid] == 0:
+			continue
+		if not Visibility.is_unit_visible_to_player(uid):
+			continue
+		var unit: Dictionary = TacticalBridge.units.get(uid, {})
+		var pref: int = int(unit.get("preferred_layer", -1))
+		if pref < 1 or pref >= LAYER_COLORS.size():
+			continue
+		var cur_layer: int = unit.get("layer", 0)
+		if pref == cur_layer:
+			continue
+		if not pref_entries.has(pref):
+			pref_entries[pref] = []
+		pref_entries[pref].append(uid)
+
+	# Ensure MultiMesh exists per preferred layer
+	for pref_layer in pref_entries:
+		if not _pref_batches.has(pref_layer):
+			var mm := MultiMesh.new()
+			mm.transform_format = MultiMesh.TRANSFORM_3D
+			mm.instance_count = MAX_INSTANCES_PER_BATCH
+			mm.visible_instance_count = 0
+			mm.mesh = _pref_ring_mesh
+			var mmi := MultiMeshInstance3D.new()
+			mmi.name = "PrefRings_%d" % pref_layer
+			mmi.multimesh = mm
+			var mat := StandardMaterial3D.new()
+			var col: Color = LAYER_COLORS[pref_layer]
+			mat.albedo_color = Color(col.r, col.g, col.b, 0.5)
+			mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+			mat.emission_enabled = true
+			mat.emission = col
+			mat.emission_energy_multiplier = 0.3
+			mmi.material_override = mat
+			add_child(mmi)
+			_pref_batches[pref_layer] = mmi
+
+	# Update transforms — preference ring sits at unit's current position
+	for pref_layer in _pref_batches:
+		var mmi: MultiMeshInstance3D = _pref_batches[pref_layer]
+		var uids: Array = pref_entries.get(pref_layer, [])
+		mmi.multimesh.visible_instance_count = uids.size()
+		for i in uids.size():
+			var uid: int = uids[i]
+			var unit: Dictionary = TacticalBridge.units.get(uid, {})
+			var cur_layer: int = unit.get("layer", 0)
+			var ly: float = float(cur_layer) * EraConfig.LAYER_HEIGHT + 2.5
+			var xform := Transform3D(Basis(), Vector3(TacticalBridge.display_x[uid], ly, TacticalBridge.display_y[uid]))
+			mmi.multimesh.set_instance_transform(i, xform)
+
+	# Hide unused
+	for pref_layer in _pref_batches:
+		if not pref_entries.has(pref_layer):
+			(_pref_batches[pref_layer] as MultiMeshInstance3D).multimesh.visible_instance_count = 0

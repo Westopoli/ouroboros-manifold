@@ -371,8 +371,12 @@ def _generate_and_build_engine(sim_env, logger):
         tier=getattr(region, "tier", 0),
     )
     canvas_size = _cfg.ARCHETYPE_BASE_CANVAS.get(archetype, "medium")
+    # See also: simulation/mission_generator.py — seed source; current_tick fallback only for pre-Stage-11b saves
+    map_seed = setup.map_params.get("seed", current_tick)
+    seed_source = "map_params" if "seed" in setup.map_params else "current_tick_fallback"
+    logger.debug("map gen seed=%d source=%s", map_seed, seed_source)
     gen_input = GeneratorInput(archetype=archetype, region_state=region_state,
-                                canvas_size=canvas_size, seed=current_tick)
+                                canvas_size=canvas_size, seed=map_seed)
     layout_lib = load_all_layouts()
 
     try:
@@ -568,11 +572,13 @@ def _build_fallback_mission(sim_env, rng, logger):
     briefing = assemble_briefing(archetype, variable_slots)
     mission_id = f"mission_{archetype}_{target_region.id}_{current_tick}"
 
+    # See also: simulation/mission_generator.py — seed source for non-fallback missions
+    map_seed = rng.randint(0, 2**31 - 1)
     setup = MissionSetup(
         mission_id=mission_id,
         archetype=archetype,
         region_id=target_region.id,
-        map_params={},
+        map_params={"seed": map_seed},
         player_force=allocation["player_force"],
         enemy_forces=[allocation["enemy_force"]],
         objectives=objectives,

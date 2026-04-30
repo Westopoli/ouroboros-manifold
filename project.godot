@@ -30,6 +30,7 @@ WsInputSanitizer="*res://autoload/ws_input_sanitizer.gd"
 SimBridge="*res://autoload/sim_bridge.gd"
 MissionMetricsRecorder="*res://autoload/mission_metrics_recorder.gd"
 BugReportManager="*res://autoload/bug_report_manager.gd"
+Visibility="*res://scripts/tactical/visibility.gd"
 
 [display]
 

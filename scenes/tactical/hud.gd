@@ -27,6 +27,8 @@ var _selection_content: VBoxContainer
 var _structure_list: VBoxContainer
 var _control_group_labels: Array = []
 var _layer_buttons: Array = []
+var _layer_readout_label: Label
+var _layer_markers: Array = []  # 5 ColorRect markers
 
 var _banner_timer: float = 0.0
 var _start_tick: int = -1
@@ -51,6 +53,7 @@ func _process(delta: float) -> void:
 	_update_clock()
 	_update_selection_panel()
 	_update_layer_selector()
+	_update_layer_readout()
 	_update_control_groups()
 	if _minimap:
 		_minimap.queue_redraw()
@@ -376,6 +379,7 @@ func _build_ui() -> void:
 	_build_selection_panel()      # bottom-center
 	_build_control_group_bar()    # bottom-right, left of layer selector
 	_build_layer_selector()       # right edge
+	_build_layer_readout()        # above layer selector
 	_build_f12_label()
 
 
@@ -526,6 +530,7 @@ class _AbilityRing extends Control:
 
 
 class _Minimap extends Control:
+	# See also: scripts/tactical/visibility.gd — fog gate
 	func _draw() -> void:
 		var canvas_size := Vector2(16000, 16000)
 		var md: Dictionary = TacticalBridge.map_data
@@ -538,11 +543,15 @@ class _Minimap extends Control:
 		for uid in range(TacticalBridge.unit_count):
 			if TacticalBridge.display_alive[uid] == 0:
 				continue
+			if not Visibility.is_unit_visible_to_player(uid):
+				continue
 			var px: float = TacticalBridge.display_x[uid]
 			var py: float = TacticalBridge.display_y[uid]
 			var u: Dictionary = TacticalBridge.units.get(uid, {})
 			var faction: int = int(u.get("faction", 0))
 			var col: Color = faction_colors[faction] if faction < faction_colors.size() else Color.WHITE
+			if faction != 0:
+				col.a = EraConfig.MINIMAP_ENEMY_DIM_ALPHA
 			draw_circle(Vector2(px * sx, py * sy), 2.0, col)
 		for uid in TacticalBridge.structures:
 			var s: Dictionary = TacticalBridge.structures[uid]
@@ -602,6 +611,57 @@ func _build_layer_selector() -> void:
 
 func _on_layer_clicked(layer_idx: int) -> void:
 	_input_router.active_layer = layer_idx
+
+
+const _LAYER_COLORS: Array[Color] = [
+	Color.TRANSPARENT,
+	Color(0.00, 1.00, 1.00),
+	Color(1.00, 1.00, 0.00),
+	Color(1.00, 0.55, 0.00),
+	Color(0.75, 0.20, 1.00),
+]
+
+
+func _build_layer_readout() -> void:
+	var panel := _styled_panel()
+	# Place above the layer selector (which is at bottom-right 12, 12, 64, 220)
+	_place_bottom_right(panel, 12, 244, 64, 52)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 2)
+	panel.add_child(vbox)
+
+	_layer_readout_label = Label.new()
+	_layer_readout_label.text = "L0 / 5"
+	_layer_readout_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_layer_readout_label.add_theme_font_size_override("font_size", 13)
+	_layer_readout_label.add_theme_color_override("font_color", _TEXT)
+	vbox.add_child(_layer_readout_label)
+
+	var marker_row := HBoxContainer.new()
+	marker_row.add_theme_constant_override("separation", 2)
+	marker_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.add_child(marker_row)
+	for i in range(5):
+		var marker := ColorRect.new()
+		marker.custom_minimum_size = Vector2(8, 8)
+		marker.color = _DIM
+		marker_row.add_child(marker)
+		_layer_markers.append(marker)
+
+	add_child(panel)
+
+
+func _update_layer_readout() -> void:
+	var active: int = _input_router.active_layer
+	var col: Color = _LAYER_COLORS[active] if active < _LAYER_COLORS.size() else _TEXT
+	_layer_readout_label.text = "L%d / 5" % active
+	_layer_readout_label.add_theme_color_override("font_color", col)
+	for i in range(_layer_markers.size()):
+		if i == active:
+			_layer_markers[i].color = _LAYER_COLORS[i] if i < _LAYER_COLORS.size() else _TEXT
+		else:
+			_layer_markers[i].color = _DIM
 
 
 func _build_f12_label() -> void:

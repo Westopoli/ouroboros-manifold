@@ -27,9 +27,13 @@ var _flicker_timer: float = 0.0
 var _flicker_interval: float = 3.0
 
 var _ownership_timeline: Array = []
-var _timeline_index: int = 0
-var _timeline_timer: float = 0.0
-var _timeline_interval: float = 0.6
+var _timeline_batches: Array[Dictionary] = []
+var _batch_index: int = 0
+var _batch_timer: float = 0.0
+var _batch_interval: float = 2.0
+var _batch_pause_remaining: float = 0.0
+const TIMELINE_BATCH_SIZE := 5
+const BATCH_PAUSE_SECS := 2.0
 
 
 func _ready() -> void:
@@ -158,14 +162,15 @@ func _on_time_jump_started(tj_id: String, _span_years: int, _total_kf: int, tota
 		_faction_display_colors[faction_names[fid]] = color
 
 	_ownership_timeline = SimBridge.ownership_timeline
-	_timeline_index = 0
-	_timeline_timer = 0.0
-	if _ownership_timeline.size() > 0 and total_entries > 0:
-		# ~3.5s per chronicle entry; spread timeline evenly across full narration
+	_timeline_batches = _build_timeline_batches(_ownership_timeline)
+	_batch_index = 0
+	_batch_timer = 0.0
+	_batch_pause_remaining = 0.0
+	if _timeline_batches.size() > 0 and total_entries > 0:
 		var estimated_narration_secs: float = total_entries * 3.5
-		_timeline_interval = estimated_narration_secs / _ownership_timeline.size()
+		_batch_interval = estimated_narration_secs / _timeline_batches.size()
 	else:
-		_timeline_interval = 0.6
+		_batch_interval = 2.0
 	# Init scroll BEFORE any await — chronicle entries arrive during the same
 	# dispatch cycle and must not be wiped by a late begin_time_jump().
 	_scroll.begin_time_jump(total_entries, _faction_display_colors)
@@ -202,7 +207,7 @@ func _try_settle() -> void:
 		return
 	if not _keyframe_queue.is_empty() or _waiting_for_entry:
 		return
-	if _timeline_index < _ownership_timeline.size():
+	if _batch_index < _timeline_batches.size():
 		return
 	_phase = Phase.SETTLING
 	if _next_mission_region != "":
@@ -234,6 +239,7 @@ func _apply_keyframe(kf: Dictionary) -> void:
 					_shell.remove_territory(rid)
 			var old_faction: String = _regions_state[rid].get("owner_faction_id", "")
 			if old_faction != faction_id:
+				print("[FLASH-KF] keyframe flash_military_activity: %s  old=%s new=%s" % [rid, old_faction, faction_id])
 				_shell.flash_military_activity(rid, 0.9)
 			# Preserve timeline's owner_faction_id; update other fields only
 			if not timeline_active:
@@ -269,6 +275,7 @@ func _apply_keyframe(kf: Dictionary) -> void:
 			var atk: String = evt.get("attacker_region_id", "")
 			var dfn: String = evt.get("defender_region_id", "")
 			if atk != "" and dfn != "":
+				print("[FLASH-KF] keyframe flash_conflict: %s → %s  kind=%s" % [atk, dfn, kind])
 				_shell.flash_conflict(atk, dfn, 0.8)
 
 
@@ -322,6 +329,7 @@ func _process(delta: float) -> void:
 		_flicker_timer -= delta
 		if _flicker_timer <= 0.0:
 			_flicker_timer = randf_range(3.0, 5.0)
+			print("[FLASH-AMBIENT] firing ambient flicker")
 			_fire_ambient_flicker()
 
 
@@ -344,23 +352,45 @@ func _advance_narration() -> void:
 
 
 func _advance_timeline(delta: float) -> void:
-	if _ownership_timeline.is_empty() or _timeline_index >= _ownership_timeline.size():
+	if _timeline_batches.is_empty() or _batch_index >= _timeline_batches.size():
 		return
-	_timeline_timer += delta
-	while _timeline_timer >= _timeline_interval and _timeline_index < _ownership_timeline.size():
-		_timeline_timer -= _timeline_interval
-		_apply_ownership_tick(_ownership_timeline[_timeline_index])
-		_timeline_index += 1
-	if _timeline_index >= _ownership_timeline.size():
+	# Pause after each batch before advancing
+	if _batch_pause_remaining > 0.0:
+		_batch_pause_remaining -= delta
+		return
+	_batch_timer += delta
+	if _batch_timer >= _batch_interval:
+		_batch_timer -= _batch_interval
+		_apply_ownership_batch(_timeline_batches[_batch_index])
+		_batch_index += 1
+		_batch_pause_remaining = BATCH_PAUSE_SECS
+	if _batch_index >= _timeline_batches.size():
 		_try_settle()
 
 
-func _apply_ownership_tick(ownership: Dictionary) -> void:
-	# Collect changes first, then stagger both flash + territory update together
-	# so changes ripple across the map smoothly within the tick interval.
+func _build_timeline_batches(timeline: Array) -> Array[Dictionary]:
+	# Collapse every TIMELINE_BATCH_SIZE ticks into one snapshot showing
+	# the net ownership at that point. Only regions that changed vs. the
+	# previous batch are included.
+	var batches: Array[Dictionary] = []
+	var prev_ownership: Dictionary = {}
+	for i in range(timeline.size()):
+		var tick_ownership: Dictionary = timeline[i]
+		# Update running state
+		for rid: String in tick_ownership:
+			prev_ownership[rid] = tick_ownership[rid]
+		# Emit a batch at every Nth tick or the final tick
+		if (i + 1) % TIMELINE_BATCH_SIZE == 0 or i == timeline.size() - 1:
+			batches.append(prev_ownership.duplicate())
+	return batches
+
+
+func _apply_ownership_batch(snapshot: Dictionary) -> void:
+	# Compare snapshot against current _regions_state to find net changes,
+	# then stagger flash + territory updates across ~1s.
 	var changes: Array[Dictionary] = []
-	for rid: String in ownership:
-		var faction_id_val = ownership[rid]
+	for rid: String in snapshot:
+		var faction_id_val = snapshot[rid]
 		var faction_id: String = faction_id_val if faction_id_val is String else ""
 		if rid in _regions_state:
 			var old_fid: String = _regions_state[rid].get("owner_faction_id", "")
@@ -378,7 +408,8 @@ func _apply_ownership_tick(ownership: Dictionary) -> void:
 				_regions_state[rid]["owner_faction_id"] = faction_id
 	if changes.is_empty():
 		return
-	var spread := _timeline_interval * 0.8
+	print("[FLASH-BATCH] batch %d: %d changes, rids=%s" % [_batch_index, changes.size(), str(changes.map(func(c): return c["rid"])).substr(0, 200)])
+	var spread := minf(_batch_interval * 0.5, 1.5)
 	for i in range(changes.size()):
 		var c: Dictionary = changes[i]
 		var delay: float = randf_range(0.0, spread)
@@ -386,7 +417,6 @@ func _apply_ownership_tick(ownership: Dictionary) -> void:
 			_shell.flash_military_activity(c["rid"], 0.7)
 			_shell.update_region_node(c["rid"], c["sig"] * 1.5, c["color"])
 			if c["faction_id"] != "":
-				# set_territory handles both create (uninhabited → owned) and update
 				_shell.set_territory(c["rid"], c["pos"], c["sig"] * 6.0, c["color"])
 			else:
 				_shell.remove_territory(c["rid"])

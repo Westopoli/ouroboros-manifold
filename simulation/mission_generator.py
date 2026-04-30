@@ -614,11 +614,13 @@ def generate_mission(world, registry, player_faction_id, event_log, action_log,
 
     mission_id = f"mission_{archetype}_{selected['region_id']}_{current_tick}"
 
+    # See also: simulation/pipe_transport.py — consumes this seed
+    map_seed = rng.randint(0, 2**31 - 1)
     setup = MissionSetup(
         mission_id=mission_id,
         archetype=archetype,
         region_id=selected["region_id"],
-        map_params={},
+        map_params={"seed": map_seed},
         player_force=allocation["player_force"],
         enemy_forces=[allocation["enemy_force"]],
         objectives=objectives,

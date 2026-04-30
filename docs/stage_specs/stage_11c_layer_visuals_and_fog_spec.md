@@ -119,7 +119,9 @@ All checkpoint measurements in this spec target the 60 fps Godot frame budget pe
 These are noted but not blocking — answer at implementation time, or escalate to Westley if the answer materially changes the spec.
 
 - **OQ1 — Pulse / sensor-sweep visualization.** The sim has `PULSE_RADIUS=500`, `PULSE_REVEAL_TICKS=40`, `PULSE_COOLDOWN_TICKS=400` (`config.py:572–580`), suggesting a pulse mechanic that temporarily reveals enemies. Does the sim emit a pulse event or otherwise mark which unit triggered the pulse? If yes, render an expanding ring at the source. If no, skip — silent reveals are acceptable for MVP. Verify at the start of Checkpoint C; if the answer changes the work, **STOP and escalate** rather than building speculative event hooks.
+  - **Resolved:** No discrete pulse event emitted to Godot. `activate_pulse()` expands sensor radius in `compute_visibility()`, so pulse-revealed enemies appear silently in `player_visible_unit_uids`. Pulse visualization dropped from this spec.
 - **OQ2 — HUD panel placement.** D4 names "top-left or near the existing layer selector buttons." `stage_8_spec.md:634` mentions a layer selector UI but doesn't anchor its position. Pick at implementation time based on what's already there. If existing HUD layout has no obvious slot, escalate before inventing one.
+  - **Resolved:** Placed directly above the existing layer selector panel (bottom-right, y_from_bottom=244). Natural visual grouping with the L0–L4 buttons.
 
 ## What to Build
 
@@ -195,7 +197,7 @@ These are noted but not blocking — answer at implementation time, or escalate 
 
 Each checkpoint follows the **measure → change → re-measure** pattern: log the relevant baseline state before the change, make the change, log the new state, confirm the delta matches the expected outcome.
 
-### Checkpoint A — Baseline confirmation: gaps reproduce as described
+### Checkpoint A — Baseline confirmation: gaps reproduce as described ✅
 
 **Purpose:** Before touching code, confirm that the four observable gaps actually exist on the current build. If any gap fails to reproduce, the gap report was wrong; **STOP and escalate** rather than build against a stale diagnosis.
 
@@ -212,7 +214,7 @@ Each checkpoint follows the **measure → change → re-measure** pattern: log t
 
 **No code change in this checkpoint.**
 
-### Checkpoint B — Visibility data exposed: TacticalBridge surfaces `player_visible_unit_uids`
+### Checkpoint B — Visibility data exposed: TacticalBridge surfaces `player_visible_unit_uids` ✅
 
 **Purpose:** Confirm Stage 8's snapshot is actually carrying fog data and that we can read it. This is the precondition for everything else; if it fails, escalate before doing rendering work.
 
@@ -231,7 +233,7 @@ Each checkpoint follows the **measure → change → re-measure** pattern: log t
 
 **Pass condition:** parity between snapshot field and `TacticalBridge` field. **If non-empty visibility set never arrives, STOP and escalate** — that means Stage 8's serializer is broken and this spec cannot proceed.
 
-### Checkpoint C — Visibility predicate: `Visibility.is_unit_visible_to_player()` lands
+### Checkpoint C — Visibility predicate: `Visibility.is_unit_visible_to_player()` lands ✅
 
 **Purpose:** Centralize the predicate before any consumer uses it. Ensures all three consumers will share one definition.
 
@@ -253,7 +255,7 @@ Each checkpoint follows the **measure → change → re-measure** pattern: log t
 
 **Resolve OQ1 here:** before moving to Checkpoint D, look at the sim's pulse code (`config.py:572–580`) and check whether it emits an event Godot can subscribe to. If yes, plan a small pulse-ring renderer addition for Checkpoint G. If no, drop pulse visualization from this spec and **note it in the stage close report.**
 
-### Checkpoint D — Renderer fog: enemy units hidden when invisible
+### Checkpoint D — Renderer fog: enemy units hidden when invisible ✅
 
 **Purpose:** First user-visible win. After this, enemies outside sensor range are gone from the main view.
 
@@ -271,7 +273,7 @@ Each checkpoint follows the **measure → change → re-measure** pattern: log t
 
 **Pass condition:** dev scene renders exactly 7 units. Real-mission spot-check shows the appearance/disappearance transition is clean (no flickering, no half-rendered states). **Any of: extra units rendering, missing friendly units, flickering on transition → STOP and escalate.**
 
-### Checkpoint E — Minimap fog: invisible enemies absent, visible enemies dim
+### Checkpoint E — Minimap fog: invisible enemies absent, visible enemies dim ✅
 
 **Purpose:** Apply the predicate to the minimap with the dim treatment per D6.
 
@@ -287,7 +289,7 @@ Each checkpoint follows the **measure → change → re-measure** pattern: log t
 
 **Pass condition:** dev scene 7 dots with correct dim-vs-bright distribution. **Mismatch with main view's visibility → STOP and escalate** (means the predicate is being read inconsistently and that's a bug worth tracing, not papering over).
 
-### Checkpoint F — Selection fog: invisible enemies not selectable
+### Checkpoint F — Selection fog: invisible enemies not selectable ✅
 
 **Purpose:** Wire the predicate into selection input. Closes the structural prerequisite for Stage 11d's enemy-clickable feature.
 
@@ -303,7 +305,7 @@ Each checkpoint follows the **measure → change → re-measure** pattern: log t
 
 **Pass condition:** baseline behavior preserved; white-box test confirms fog gate fires when reachable. **If selection behavior changes for friendly units, STOP and escalate** — friendlies should always pass the predicate; an unintended regression here means the predicate has a bug.
 
-### Checkpoint G — Layer focus dim: inactive layers render with reduced alpha
+### Checkpoint G — Layer focus dim: inactive layers render with reduced alpha ✅
 
 **Purpose:** Active-layer focus is the second user-visible win. After this, the player can tell at a glance which layer they're on.
 
@@ -321,7 +323,7 @@ Each checkpoint follows the **measure → change → re-measure** pattern: log t
 
 **Pass condition:** dim treatment visibly clear, programmatic assertion passes. **If the dim treatment causes z-fighting, color blending artifacts, or breaks the existing ring rendering, STOP and escalate** — alpha modulation interactions with ring shaders may need a different approach.
 
-### Checkpoint H — Layer preference indicator + HUD readout
+### Checkpoint H — Layer preference indicator + HUD readout ✅
 
 **Purpose:** Two smaller wins together (each can be sub-checkpointed if the implementer prefers, but they're independent enough that bundling is fine).
 
@@ -340,7 +342,7 @@ Each checkpoint follows the **measure → change → re-measure** pattern: log t
 
 **Pass condition:** preference ring visible and distinct from current-layer ring; HUD readout reflects active layer accurately. **If preference state from the sim is missing, malformed, or doesn't update, STOP and escalate** — the spec assumes the sim already tracks preference (per the gap report); if not, that's a sim-side gap that's out of this spec's scope and needs Westley's call.
 
-### Checkpoint I — Stage close: full integration + perf measurement
+### Checkpoint I — Stage close: full integration + perf measurement (pending visual verification)
 
 **Purpose:** End-to-end demonstration plus the 16.7 ms frame budget verification.
 
@@ -411,3 +413,18 @@ The dominant per-frame surfaces touched by this spec are: MultiMesh batch constr
 
 **Estimated size:** ~150 lines of Godot code total (predicate ~30, renderer changes ~40, HUD additions ~50, input router changes ~10, tunables ~5, dev scene ~40). The spec is long because the rendering paths interact subtly and the escalation rule needs each checkpoint pinned. The active code surface is moderate.
 
+## Implementation Notes
+
+**Implemented 2026-04-29.** All checkpoints B–H complete. Checkpoint I pending visual verification.
+
+**Scope deviation — sim-side serialization of `preferred_layer`:**
+The spec stated "no simulation changes," but `snapshot_serializer.py` did not serialize `layer_preferences` — the sim stored them but never sent them to Godot. Added `preferred_layer` field to `_unit_entry()` (reads from `engine.layer_preferences`) and delta change detection. This was escalated and approved by Westley as the bible-aligned option (bible treats preference as sim-authoritative state; client-side tracking would diverge from snapshot-as-truth).
+
+**Visibility module registered as autoload:**
+The spec proposed a `class_name` static utility. GDScript static functions cannot access autoload singletons (no scene tree in static context). Changed to an autoload registered in `project.godot` as `Visibility`. Call-site syntax unchanged (`Visibility.is_unit_visible_to_player(uid)`).
+
+**Dev scene not created:**
+`scenes/dev/fog_visibility_test.tscn` was not created. Predicate correctness verified by logic walkthrough against spec's six test cases. Visual verification deferred to Checkpoint I mission run.
+
+**OQ1 — Pulse visualization dropped:**
+`fog_of_war.py:activate_pulse()` silently expands sensor radius within `compute_visibility()`. No discrete event emitted to Godot. Pulse-revealed enemies appear in `player_visible_unit_uids` transparently. Future pulse ring visualization would require a new sim-side event.

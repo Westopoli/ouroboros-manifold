@@ -36,6 +36,8 @@ var units: Dictionary = {}        # uid (int) → unit dict
 var structures: Dictionary = {}   # uid (int) → structure dict
 var objectives: Array = []
 var map_data: Dictionary = {}
+# See also: scripts/tactical/visibility.gd — fog predicate reads this
+var player_visible_unit_uids: Dictionary = {}  # uid(int) → true; set semantics
 
 # Interpolation buffer: array of tick entries with flat arrays.
 # Each entry: {tick: int, time: float, positions: PFA, velocities: PFA, alive: PBA}
@@ -215,6 +217,14 @@ func _apply_snapshot(snap: Dictionary) -> void:
 
 	# Initialize display
 	_write_display_from_entry(_tick_buffer[0])
+
+	# Fog of war: convert array → dict for O(1) lookup.
+	# Deltas don't carry fog_of_war; this set persists until the next snapshot.
+	var fog: Dictionary = snap.get("fog_of_war", {})
+	var vis_array: Array = fog.get("player_visible_unit_uids", [])
+	player_visible_unit_uids.clear()
+	for uid in vis_array:
+		player_visible_unit_uids[int(uid)] = true
 
 	structures.clear()
 	for s in snap.get("structures", []):

@@ -1,4 +1,14 @@
 from dataclasses import dataclass, field
+from typing import TypedDict
+
+
+# See also: docs/architecture.md — MapParams schema; simulation/pipe_transport.py — consumes seed
+class MapParams(TypedDict, total=False):
+    seed: int
+    archetype: str
+    region_id: str
+    canvas_size: int
+    generated: bool
 
 
 @dataclass
@@ -42,7 +52,7 @@ class MissionSetup:
     mission_id: str
     archetype: str
     region_id: str
-    map_params: dict
+    map_params: MapParams
     player_force: ForceComposition
     enemy_forces: list[ForceComposition]
     objectives: list[ObjectiveSpec]
