@@ -26,3 +26,45 @@ class MapParams(TypedDict, total=False):
 `bible_world.md:196` — *"the map is regenerated with a new random seed"* on fairness failure.
 
 Added in Stage 11b (`stage_11b_map_variety_spec.md`).
+
+## FairnessScore — metric skip semantics (Stage 11e)
+
+`FairnessScore` in `simulation/fairness_evaluator.py` carries a `*_skipped` bool per metric (`path_balance_skipped`, `travel_time_skipped`, `vantage_skipped`, `hazard_skipped`).
+
+When a layout has zero of a fairness-relevant node type on **both sides** (e.g., zero vantage nodes total), the corresponding metric is **skipped** — not counted toward the aggregate pass/fail. `is_acceptable()` passes when all non-skipped metrics fall within their tolerances.
+
+This is a scope-narrowing fix per CLAUDE.md: balance of an absent node type is undefined, not "balanced." One-side-zero (e.g., player has 0 vantage, enemy has 3) is a real imbalance and still fails.
+
+Added in Stage 11e (`stage_11e_fairness_reconciliation_spec.md`).
+
+## Map Generation — Simple Picker (Stage 11e pivot)
+
+`simulation/map_generator.py:generate_map()` uses a single-pass random picker:
+
+1. Run archetype compatibility filter → candidate pool.
+2. Pick one layout uniformly at random (seeded by `GeneratorInput.seed`).
+3. Instantiate, assign reinforcement ownership, place gradients.
+4. Evaluate fairness (score logged to `tuning_output/fairness_log/<date>.jsonl`, **not used for rejection**).
+5. Return result.
+
+No retry loop. `generation_metadata["fairness_retries"]` is always 0. The evaluator infrastructure (`FairnessScore`, `FairnessTargetProfile`, all four metrics) is preserved intact for the future redesign (`stage_11f_fairness_redesign_spec.md`).
+
+## Objective Snapshot Extension (Stage 11d)
+
+Each objective entry in the `objectives` array of a full snapshot now carries two additional fields:
+
+### `is_primary` (bool)
+Whether this is a primary objective. Always present.
+
+### `location` (optional object)
+Present only for objective types with a meaningful geographic center:
+- `hold_zone`, `clear_zone` → `{"x": <zone_x>, "y": <zone_y>}`
+- `escort_to_extraction` → `{"x": <extraction_x>, "y": <extraction_y>}`
+- `eliminate_force` → centroid of living target unit positions; omitted if all targets are dead.
+- `survive_duration`, `destroy_targets` → omitted (no location).
+
+Shape when present: `{"x": float, "y": float}`
+
+Renderer must tolerate missing `location`. Delta objective updates may carry `location` if it has changed since the last update; static-location objective types (`hold_zone`, `escort_to_extraction`) carry it only on full snapshots.
+
+See also: `scenes/tactical/hud.gd` — consumes `objective.location` for marker rendering.

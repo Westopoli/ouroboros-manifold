@@ -11,6 +11,20 @@ const _DIM  := Color(0.60, 0.62, 0.70)
 const _LAYER_ACTIVE := Color(0.3, 0.85, 1.0)
 const _BANNER_COLOR := Color(1.0, 0.80, 0.40)
 const _FACTION_COLORS := [Color(0.30, 0.70, 1.00), Color(1.00, 0.35, 0.35)]
+const _OBJ_PRIMARY_BAR := Color(0.3, 0.85, 1.0)
+const _OBJ_SECONDARY_BAR := Color(0.4, 0.5, 0.6)
+const _OBJ_BAR_BG := Color(0.15, 0.18, 0.22)
+const _OBJ_BAR_HEIGHT := 6.0
+const _OBJ_BAR_WIDTH := 320.0
+# See also: simulation/snapshot_serializer.py — objective type + is_primary source
+const _OBJ_DESCRIPTIONS: Dictionary = {
+	"hold_zone": "Hold the zone",
+	"clear_zone": "Clear the zone",
+	"eliminate_force": "Destroy enemy force",
+	"escort_to_extraction": "Escort to extraction",
+	"survive_duration": "Survive",
+	"destroy_targets": "Destroy targets",
+}
 const _MAX_EVENTS := 4
 const _BANNER_DURATION := 4.0
 const _MINIMAP_SIZE := Vector2(330, 330)  # 1.5× base; IGoP-scale presence at bottom-left
@@ -231,12 +245,36 @@ func _rebuild_objectives() -> void:
 		lbl.add_theme_color_override("font_color", _DIM)
 		_objectives_list.add_child(lbl)
 		return
-	for obj in TacticalBridge.objectives:
-		var lbl := Label.new()
+	var sorted_objs: Array = TacticalBridge.objectives.duplicate()
+	sorted_objs.sort_custom(func(a, b): return a.get("is_primary", false) and not b.get("is_primary", false))
+	for obj in sorted_objs:
+		var is_primary: bool = obj.get("is_primary", false)
 		var prog: float = obj.get("progress", 0.0)
-		lbl.text = "%s  %d%%  [%s]" % [obj.get("id", "?"), int(prog * 100), obj.get("status", "?")]
-		lbl.add_theme_color_override("font_color", _TEXT)
-		_objectives_list.add_child(lbl)
+		var obj_type: String = obj.get("type", "")
+		var status: String = obj.get("status", "in_progress")
+		var desc: String = _OBJ_DESCRIPTIONS.get(obj_type, obj_type)
+		if status == "complete":
+			desc += " — COMPLETE"
+		elif status == "failed":
+			desc += " — FAILED"
+		var row := VBoxContainer.new()
+		row.add_theme_constant_override("separation", 2)
+		row.set_meta("obj_id", obj.get("id", ""))
+		var lbl := Label.new()
+		lbl.text = desc
+		lbl.add_theme_font_size_override("font_size", 15 if is_primary else 12)
+		lbl.add_theme_color_override("font_color", _TEXT if is_primary else _DIM)
+		row.add_child(lbl)
+		var bar_bg := ColorRect.new()
+		bar_bg.custom_minimum_size = Vector2(_OBJ_BAR_WIDTH, _OBJ_BAR_HEIGHT)
+		bar_bg.color = _OBJ_BAR_BG
+		row.add_child(bar_bg)
+		var bar_fill := ColorRect.new()
+		bar_fill.custom_minimum_size = Vector2(_OBJ_BAR_WIDTH * clampf(prog, 0.0, 1.0), _OBJ_BAR_HEIGHT)
+		bar_fill.color = _OBJ_PRIMARY_BAR if is_primary else _OBJ_SECONDARY_BAR
+		bar_fill.position = Vector2.ZERO
+		bar_bg.add_child(bar_fill)
+		_objectives_list.add_child(row)
 
 
 func _rebuild_structure_list() -> void:
@@ -247,16 +285,35 @@ func _rebuild_structure_list() -> void:
 func _update_objectives() -> void:
 	var children := _objectives_list.get_children()
 	if TacticalBridge.objectives.is_empty():
-		if children.size() != 1 or children[0].text != "(no objectives)":
+		if children.size() != 1:
 			_rebuild_objectives()
 		return
 	if children.size() != TacticalBridge.objectives.size():
 		_rebuild_objectives()
 		return
-	for i in TacticalBridge.objectives.size():
-		var obj: Dictionary = TacticalBridge.objectives[i]
+	var obj_by_id: Dictionary = {}
+	for obj in TacticalBridge.objectives:
+		obj_by_id[obj.get("id", "")] = obj
+	for row in children:
+		if not row.has_meta("obj_id"):
+			continue
+		var obj_id: String = row.get_meta("obj_id")
+		var obj: Dictionary = obj_by_id.get(obj_id, {})
+		if obj.is_empty():
+			continue
 		var prog: float = obj.get("progress", 0.0)
-		children[i].text = "%s  %d%%  [%s]" % [obj.get("id", "?"), int(prog * 100), obj.get("status", "?")]
+		var status: String = obj.get("status", "in_progress")
+		var obj_type: String = obj.get("type", "")
+		var desc: String = _OBJ_DESCRIPTIONS.get(obj_type, obj_type)
+		if status == "complete":
+			desc += " — COMPLETE"
+		elif status == "failed":
+			desc += " — FAILED"
+		var lbl: Label = row.get_child(0)
+		lbl.text = desc
+		var bar_bg: ColorRect = row.get_child(1)
+		var bar_fill: ColorRect = bar_bg.get_child(0)
+		bar_fill.custom_minimum_size.x = _OBJ_BAR_WIDTH * clampf(prog, 0.0, 1.0)
 
 
 func _update_structure_list() -> void:
@@ -385,7 +442,7 @@ func _build_ui() -> void:
 
 func _build_info_column() -> void:
 	var panel := _styled_panel()
-	_place_top_left(panel, 12, 12, 360, 320)
+	_place_top_left(panel, 12, 12, 360, 380)
 
 	var vbox := VBoxContainer.new()
 	panel.add_child(vbox)
@@ -564,6 +621,32 @@ class _Minimap extends Control:
 				_:  col = Color(0.65, 0.65, 0.68)
 			var rect_pos := Vector2(pos[0] * sx - 3, pos[1] * sy - 3)
 			draw_rect(Rect2(rect_pos, Vector2(6, 6)), col, true)
+		# Objective markers — always visible regardless of fog (briefing intel)
+		for obj in TacticalBridge.objectives:
+			var loc: Dictionary = obj.get("location", {})
+			if loc.is_empty():
+				continue
+			var status: String = obj.get("status", "in_progress")
+			if status == "complete" or status == "failed":
+				continue
+			var is_primary: bool = obj.get("is_primary", false)
+			var col: Color = _OBJ_PRIMARY_BAR if is_primary else _OBJ_SECONDARY_BAR
+			var mx: float = float(loc.get("x", 0.0)) * sx
+			var my: float = float(loc.get("y", 0.0)) * sy
+			var obj_type: String = obj.get("type", "")
+			if obj_type in ["hold_zone", "clear_zone"]:
+				draw_rect(Rect2(Vector2(mx - 4, my - 4), Vector2(8, 8)), col, true)
+			elif obj_type == "eliminate_force":
+				var pts := PackedVector2Array([
+					Vector2(mx, my - 5), Vector2(mx + 5, my),
+					Vector2(mx, my + 5), Vector2(mx - 5, my)])
+				draw_colored_polygon(pts, col)
+			elif obj_type == "escort_to_extraction":
+				var pts := PackedVector2Array([
+					Vector2(mx, my - 5), Vector2(mx + 4, my + 4), Vector2(mx - 4, my + 4)])
+				draw_colored_polygon(pts, col)
+			else:
+				draw_circle(Vector2(mx, my), 3.0, col)
 
 
 func _build_control_group_bar() -> void:

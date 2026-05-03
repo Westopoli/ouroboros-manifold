@@ -73,7 +73,7 @@ def full_snapshot(engine) -> dict:
             units.append(_unit_entry(store, uid, engine.player_faction, layer_prefs))
 
     structures = [_structure_entry(s) for s in engine.reinforcement_structures]
-    objectives = [_objective_entry(o) for o in engine.objectives]
+    objectives = [_objective_entry(o, store) for o in engine.objectives]
 
     visibility = compute_visibility(store, tmap)
     player_visible = set()
@@ -227,9 +227,11 @@ def delta(engine, prev_state: dict, dr_tracker=None) -> dict:
     # Objectives
     objectives_updated = []
     for obj in engine.objectives:
-        cur = _objective_entry(obj)
+        cur = _objective_entry(obj, engine.store)
         prev = prev_objectives.get(obj.id, {})
-        if cur["progress"] != prev.get("progress") or cur["status"] != prev.get("status"):
+        if (cur["progress"] != prev.get("progress")
+                or cur["status"] != prev.get("status")
+                or cur.get("location") != prev.get("location")):
             objectives_updated.append(cur)
 
     # Events: unit deaths + ability activations
@@ -351,19 +353,42 @@ def _structure_entry(s) -> dict:
     }
 
 
-def _objective_entry(obj) -> dict:
+def _objective_entry(obj, store=None) -> dict:
     if obj.failed:
         status = "failed"
     elif obj.completion >= 1.0:
         status = "complete"
     else:
         status = "in_progress"
-    return {
+    entry = {
         "id": obj.id,
         "type": obj.type,
         "progress": round(obj.completion, 4),
         "status": status,
+        "is_primary": obj.is_primary,
     }
+    loc = _objective_location(obj, store)
+    if loc is not None:
+        entry["location"] = loc
+    return entry
+
+
+def _objective_location(obj, store) -> dict | None:
+    p = obj.params
+    if obj.type in ("hold_zone", "clear_zone"):
+        if "zone_x" in p and "zone_y" in p:
+            return {"x": float(p["zone_x"]), "y": float(p["zone_y"])}
+    elif obj.type == "escort_to_extraction":
+        if "extraction_x" in p and "extraction_y" in p:
+            return {"x": float(p["extraction_x"]), "y": float(p["extraction_y"])}
+    elif obj.type == "eliminate_force":
+        if store is not None and "target_uids" in p:
+            live = [uid for uid in p["target_uids"] if store.alive[uid]]
+            if live:
+                cx = sum(float(store.data[uid, FIELD_X]) for uid in live) / len(live)
+                cy = sum(float(store.data[uid, FIELD_Y]) for uid in live) / len(live)
+                return {"x": round(cx, 4), "y": round(cy, 4)}
+    return None
 
 
 def delta_baseline(engine) -> dict:
@@ -385,5 +410,5 @@ def delta_baseline(engine) -> dict:
                 "attack_target": int(store.auto_engage_target[uid]),
             })
     structures = [_structure_entry(s) for s in engine.reinforcement_structures]
-    objectives = [_objective_entry(o) for o in engine.objectives]
+    objectives = [_objective_entry(o, engine.store) for o in engine.objectives]
     return {"units": units, "structures": structures, "objectives": objectives}

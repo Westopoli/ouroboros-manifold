@@ -453,7 +453,7 @@ Files created:
 
 Wired to UIDataBus signals. World view resizes to left 62% when scroll slides in. Proceed fades to black → main menu (fallback when no live sim). Exit fades to black → main menu. Tested with scripted data.
 
-**Known limitations (expected, addressed in F):** Regions appear on first keyframe, not on time_jump_start. Territory transitions are instant (no smooth animation). Proceed sends `proceed_to_next_mission` only when live sim is running.
+**Known limitations (expected, addressed in F):** Regions appear on first keyframe, not on time_jump_start. Territory transitions are instant (no smooth animation — attempted batched timeline with debounced shell rebuilds, staggered flashes, and cross-fade but the metaball raymarching shader rebuilds the entire mesh per faction on every change, causing visible pops regardless of batching strategy; needs a fundamentally different approach such as animating shader uniforms directly). Proceed sends `proceed_to_next_mission` only when live sim is running.
 
 ### Checkpoints F–H — NOT STARTED
 

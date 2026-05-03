@@ -75,7 +75,7 @@ func disconnect_from_engine() -> void:
 
 func send_command(command: Dictionary) -> void:
 	_client.send({"type": "command", "command": command})
-	command_sent.emit(command)
+	# See also: scenes/tactical/input_router.gd:_send — emits command_sent for both sim paths
 
 
 func _process(_delta: float) -> void:

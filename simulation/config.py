@@ -452,6 +452,11 @@ ARCHETYPE_TIME_LIMITS = {         # base time limits in tactical ticks (20/sec)
 TIME_PRESSURE_SCALING = 0.2       # urgency scales time limit down by up to 20%
 TIME_LIMIT_FLOOR_PCT  = 0.6       # time limit never drops below 60% of base
 
+# ── Objective defaults (Stage 11d) ───────────────────────────────────────
+OBJECTIVE_ZONE_RADIUS_DEFAULT       = 600    # world units
+OBJECTIVE_HOLD_DURATION_TICKS_DEFAULT = 1200  # 60 seconds at 20 ticks/sec
+OBJECTIVE_EXTRACTION_RADIUS_DEFAULT = 200    # world units
+
 # ── Chronicle distiller (Stage 5) ─────────────────────────────────────────
 CHRONICLE_MIN_ENTRIES                = 5
 CHRONICLE_MAX_ENTRIES                = 10

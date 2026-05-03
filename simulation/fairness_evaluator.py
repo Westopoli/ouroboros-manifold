@@ -22,23 +22,28 @@ from layout_instantiator import InstantiatedLayout
 from archetype_filters import get_fairness_profile
 
 
+# See also: docs/stage_specs/stage_11e_fairness_reconciliation_spec.md — D1 zero-count scope-narrowing
 @dataclass
 class FairnessScore:
     path_balance_ratio:   float
     path_balance_target:  tuple
     path_balance_pass:    bool
+    path_balance_skipped: bool
 
     travel_time_ratio:    float
     travel_time_target:   tuple
     travel_time_pass:     bool
+    travel_time_skipped:  bool
 
     vantage_ratio:        float
     vantage_target:       tuple
     vantage_pass:         bool
+    vantage_skipped:      bool
 
     hazard_ratio:         float
     hazard_target:        tuple
     hazard_pass:          bool
+    hazard_skipped:       bool
 
     archetype_profile:    str
     all_metrics_pass:     bool
@@ -69,30 +74,46 @@ def evaluate_fairness(inst: InstantiatedLayout, archetype: str) -> FairnessScore
     vant_ratio   = _proximity_balance(player_nodes, enemy_nodes, vantages)
     haz_ratio    = _proximity_balance(player_nodes, enemy_nodes, hazards)
 
+    # Both-sides-zero → skip (D1: metric undefined when the node type is absent)
+    vant_skipped = len(vantages) == 0
+    haz_skipped  = len(hazards) == 0
+    pb_skipped   = len(objective_ids) == 0
+    tt_skipped   = len(front_ids) == 0
+
     def passes(ratio, profile_field):
         target, tol = profile_field
         return abs(ratio - target) <= tol
 
-    pb_pass = passes(path_ratio,   profile.path_balance)
-    tt_pass = passes(travel_ratio, profile.travel_time_balance)
-    vb_pass = passes(vant_ratio,   profile.vantage_balance)
-    hb_pass = passes(haz_ratio,    profile.hazard_balance)
+    pb_pass = passes(path_ratio,   profile.path_balance) if not pb_skipped else True
+    tt_pass = passes(travel_ratio, profile.travel_time_balance) if not tt_skipped else True
+    vb_pass = passes(vant_ratio,   profile.vantage_balance) if not vant_skipped else True
+    hb_pass = passes(haz_ratio,    profile.hazard_balance) if not haz_skipped else True
+
+    non_skipped = []
+    if not pb_skipped:   non_skipped.append(pb_pass)
+    if not tt_skipped:   non_skipped.append(tt_pass)
+    if not vant_skipped: non_skipped.append(vb_pass)
+    if not haz_skipped:  non_skipped.append(hb_pass)
 
     return FairnessScore(
-        path_balance_ratio  = path_ratio,
-        path_balance_target = profile.path_balance,
-        path_balance_pass   = pb_pass,
-        travel_time_ratio   = travel_ratio,
-        travel_time_target  = profile.travel_time_balance,
-        travel_time_pass    = tt_pass,
-        vantage_ratio       = vant_ratio,
-        vantage_target      = profile.vantage_balance,
-        vantage_pass        = vb_pass,
-        hazard_ratio        = haz_ratio,
-        hazard_target       = profile.hazard_balance,
-        hazard_pass         = hb_pass,
-        archetype_profile   = archetype,
-        all_metrics_pass    = pb_pass and tt_pass and vb_pass and hb_pass,
+        path_balance_ratio   = path_ratio,
+        path_balance_target  = profile.path_balance,
+        path_balance_pass    = pb_pass,
+        path_balance_skipped = pb_skipped,
+        travel_time_ratio    = travel_ratio,
+        travel_time_target   = profile.travel_time_balance,
+        travel_time_pass     = tt_pass,
+        travel_time_skipped  = tt_skipped,
+        vantage_ratio        = vant_ratio,
+        vantage_target       = profile.vantage_balance,
+        vantage_pass         = vb_pass,
+        vantage_skipped      = vant_skipped,
+        hazard_ratio         = haz_ratio,
+        hazard_target        = profile.hazard_balance,
+        hazard_pass          = hb_pass,
+        hazard_skipped       = haz_skipped,
+        archetype_profile    = archetype,
+        all_metrics_pass     = all(non_skipped) if non_skipped else False,
     )
 
 

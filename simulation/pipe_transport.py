@@ -427,16 +427,22 @@ def _generate_and_build_engine(sim_env, logger):
             player_power += compute_power_rating(s)
     eng.initial_power = player_power
 
-    # Objectives
+    # See also: simulation/mission_generator.py:_build_objectives — fills static params;
+    # this fills runtime-known params (enemy HP, zone coords, escort UIDs).
     enemy_hp = sum(eng.store.data[uid, FIELD_HP] for uid in eng.store.active_ids_for_faction(1))
     eng.objectives = []
     for obj_spec in setup.objectives:
         params = dict(obj_spec.params)
-        if obj_spec.type == "eliminate_force" or obj_spec.type in ("destroy_attackers", "destroy_enemy_force",
-            "destroy_garrison", "destroy_defenders", "destroy_rebels", "destroy_primary_threat",
-            "eliminate_insurgents", "destroy_positions"):
+        if obj_spec.type == "eliminate_force":
             params.setdefault("enemy_faction", 1)
             params.setdefault("initial_enemy_hp", enemy_hp)
+        elif obj_spec.type == "hold_zone":
+            params.setdefault("zone_x", map_w * 0.5)
+            params.setdefault("zone_y", map_h * 0.5)
+        elif obj_spec.type == "escort_to_extraction":
+            params.setdefault("extraction_x", map_w * 0.1)
+            params.setdefault("extraction_y", map_h * 0.9)
+            params.setdefault("escort_uids", [uid for uid in eng.store.active_ids_for_faction(0)])
         eng.objectives.append(Objective(
             obj_spec.id, obj_spec.type, obj_spec.weight, params, is_primary=obj_spec.is_primary))
 

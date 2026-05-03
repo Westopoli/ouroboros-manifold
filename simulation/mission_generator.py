@@ -483,32 +483,117 @@ def select_mission(scored_candidates, rng):
     return pool[-1]
 
 
-ARCHETYPE_OBJECTIVES = {
-    "defensive_stand":     [("defend_region", 0.6, True), ("destroy_attackers", 0.4, False)],
-    "siege_breaking":      [("destroy_positions", 0.5, True), ("reopen_supply", 0.3, False), ("hold_ground", 0.2, False)],
-    "reconquest":          [("destroy_garrison", 0.5, True), ("secure_region", 0.3, False), ("preserve_infrastructure", 0.2, False)],
-    "assault":             [("destroy_defenders", 0.5, True), ("capture_region", 0.3, True), ("breach_fortifications", 0.2, False)],
-    "suppression":         [("destroy_rebels", 0.6, True), ("secure_region", 0.4, False)],
-    "multi_front_defense": [("hold_all_fronts", 0.4, True), ("destroy_primary_threat", 0.3, False), ("minimize_losses", 0.3, False)],
-    "interception":        [("destroy_enemy_force", 0.6, True), ("prevent_breakthrough", 0.4, False)],
-    "evacuation":          [("extract_assets", 0.5, True), ("delay_enemy", 0.3, False), ("protect_convoys", 0.2, False)],
-    "containment":         [("hold_boundary", 0.5, True), ("prevent_expansion", 0.3, False), ("maintain_positions", 0.2, False)],
-    "counterinsurgency":   [("eliminate_insurgents", 0.5, True), ("minimize_collateral", 0.3, False), ("restore_order", 0.2, False)],
-}
+# See also: simulation/objectives.py — 5 canonical types consumed here
+# See also: simulation/pipe_transport.py — fills runtime-known params (zone_x/y, enemy HP, escort_uids)
+def _build_objectives(archetype, time_limit_ticks):
+    builders = {
+        "defensive_stand": _obj_defensive_stand,
+        "siege_breaking": _obj_siege_breaking,
+        "reconquest": _obj_reconquest,
+        "assault": _obj_assault,
+        "suppression": _obj_suppression,
+        "multi_front_defense": _obj_multi_front_defense,
+        "interception": _obj_interception,
+        "evacuation": _obj_evacuation,
+        "containment": _obj_containment,
+        "counterinsurgency": _obj_counterinsurgency,
+    }
+    builder = builders.get(archetype, _obj_fallback)
+    return builder(archetype, time_limit_ticks)
 
 
-def _build_objectives(archetype):
-    specs = ARCHETYPE_OBJECTIVES.get(archetype, [("generic_objective", 1.0, True)])
-    objectives = []
-    for i, (obj_type, weight, is_primary) in enumerate(specs):
-        objectives.append(ObjectiveSpec(
-            id=f"obj_{archetype}_{i}",
-            type=obj_type,
-            weight=weight,
-            params={},
-            is_primary=is_primary,
-        ))
-    return objectives
+def _obj(archetype, idx, obj_type, weight, is_primary, params):
+    return ObjectiveSpec(
+        id=f"obj_{archetype}_{idx}",
+        type=obj_type,
+        weight=weight,
+        params=params,
+        is_primary=is_primary,
+    )
+
+
+def _hold_zone_params():
+    return {
+        "zone_radius": config.OBJECTIVE_ZONE_RADIUS_DEFAULT,
+        "hold_duration_ticks": config.OBJECTIVE_HOLD_DURATION_TICKS_DEFAULT,
+    }
+
+
+def _obj_defensive_stand(arch, time_limit):
+    return [
+        _obj(arch, 0, "survive_duration", 0.6, True, {"duration_ticks": time_limit}),
+        _obj(arch, 1, "eliminate_force", 0.4, False, {"enemy_faction": 1}),
+    ]
+
+
+def _obj_siege_breaking(arch, time_limit):
+    return [
+        _obj(arch, 0, "eliminate_force", 0.6, True, {"enemy_faction": 1}),
+        _obj(arch, 1, "hold_zone", 0.4, False, _hold_zone_params()),
+    ]
+
+
+def _obj_reconquest(arch, time_limit):
+    return [
+        _obj(arch, 0, "eliminate_force", 0.6, True, {"enemy_faction": 1}),
+        _obj(arch, 1, "hold_zone", 0.4, False, _hold_zone_params()),
+    ]
+
+
+def _obj_assault(arch, time_limit):
+    return [
+        _obj(arch, 0, "eliminate_force", 0.6, True, {"enemy_faction": 1}),
+        _obj(arch, 1, "hold_zone", 0.4, False, _hold_zone_params()),
+    ]
+
+
+def _obj_suppression(arch, time_limit):
+    return [
+        _obj(arch, 0, "eliminate_force", 0.6, True, {"enemy_faction": 1}),
+        _obj(arch, 1, "hold_zone", 0.4, False, _hold_zone_params()),
+    ]
+
+
+def _obj_multi_front_defense(arch, time_limit):
+    return [
+        _obj(arch, 0, "survive_duration", 0.6, True, {"duration_ticks": time_limit}),
+        _obj(arch, 1, "eliminate_force", 0.4, False, {"enemy_faction": 1}),
+    ]
+
+
+def _obj_interception(arch, time_limit):
+    return [
+        _obj(arch, 0, "eliminate_force", 1.0, True, {"enemy_faction": 1}),
+    ]
+
+
+def _obj_evacuation(arch, time_limit):
+    return [
+        _obj(arch, 0, "escort_to_extraction", 0.6, True, {
+            "extraction_radius": config.OBJECTIVE_EXTRACTION_RADIUS_DEFAULT,
+        }),
+        _obj(arch, 1, "survive_duration", 0.4, False, {"duration_ticks": time_limit}),
+    ]
+
+
+def _obj_containment(arch, time_limit):
+    return [
+        _obj(arch, 0, "hold_zone", 0.6, True, _hold_zone_params()),
+        _obj(arch, 1, "eliminate_force", 0.4, False, {"enemy_faction": 1}),
+    ]
+
+
+def _obj_counterinsurgency(arch, time_limit):
+    return [
+        _obj(arch, 0, "eliminate_force", 0.6, True, {"enemy_faction": 1}),
+        _obj(arch, 1, "hold_zone", 0.4, False, _hold_zone_params()),
+    ]
+
+
+def _obj_fallback(arch, time_limit):
+    return [
+        _obj(arch, 0, "eliminate_force", 1.0, True, {"enemy_faction": 1}),
+    ]
 
 
 def _field_descriptor(value):
@@ -598,7 +683,8 @@ def generate_mission(world, registry, player_faction_id, event_log, action_log,
         archetype, trigger_ctx, region, capacity_norm,
         difficulty, player_faction_id, enemy_fid, rng)
 
-    objectives = _build_objectives(archetype)
+    time_limit_ticks = config.ARCHETYPE_TIME_LIMITS.get(archetype, 3600)
+    objectives = _build_objectives(archetype, time_limit_ticks)
     variable_slots = _build_variable_slots(
         selected, region, world, registry, player_faction_id)
 
@@ -625,7 +711,7 @@ def generate_mission(world, registry, player_faction_id, event_log, action_log,
         enemy_forces=[allocation["enemy_force"]],
         objectives=objectives,
         reinforcements=allocation["reinforcements"],
-        time_limit_ticks=config.ARCHETYPE_TIME_LIMITS.get(archetype, 300),
+        time_limit_ticks=time_limit_ticks,
         behavior_script_id=f"behavior_{archetype}",
         briefing=briefing,
         difficulty=difficulty,

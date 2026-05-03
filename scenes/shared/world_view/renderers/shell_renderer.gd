@@ -109,7 +109,6 @@ func _on_territory_changed(region_id: String) -> void:
 		"color": t["color"],
 	}
 
-	# Rebuild all shells so rival textures stay current
 	if changed_faction:
 		_rebuild_all_shells()
 	else:

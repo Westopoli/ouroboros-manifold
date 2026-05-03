@@ -62,13 +62,50 @@ FAIRNESS_PROFILES: dict[str, FairnessTargetProfile] = {
         hazard_balance      = (0.60, 0.20),   # interference clusters near enemy
         archetype           = "counterinsurgency",
     ),
-    # Non-prototype archetypes: symmetric default until Stage 7.5 scripts land
-    "siege_breaking":   _SYMMETRIC_DEFAULT("siege_breaking"),
-    "reconquest":       _SYMMETRIC_DEFAULT("reconquest"),
-    "suppression":      _SYMMETRIC_DEFAULT("suppression"),
-    "evacuation":       _SYMMETRIC_DEFAULT("evacuation"),
-    "raid":             _SYMMETRIC_DEFAULT("raid"),
-    "rear_guard":       _SYMMETRIC_DEFAULT("rear_guard"),
+    # Non-prototype archetypes: directionally authored per bible_missions.md (Stage 11e).
+    # Intent placeholders; future spec stage_11f will operationalize after playtest data.
+    "siege_breaking": FairnessTargetProfile(
+        path_balance        = (1.20, 0.25),   # relief force needs route options
+        travel_time_balance = (0.85, 0.20),   # besiegers have geometric advantage
+        vantage_balance     = (0.90, 0.20),   # besiegers hold high ground
+        hazard_balance      = (0.85, 0.20),   # siege has had time to fortify
+        archetype           = "siege_breaking",
+    ),
+    "reconquest": FairnessTargetProfile(
+        path_balance        = (1.10, 0.20),   # former infrastructure gives route familiarity
+        travel_time_balance = (1.00, 0.20),   # occupier not fully dug in
+        vantage_balance     = (1.00, 0.20),   # transitional territory
+        hazard_balance      = (0.85, 0.20),   # occupier has begun fortifying
+        archetype           = "reconquest",
+    ),
+    "suppression": FairnessTargetProfile(
+        path_balance        = (1.00, 0.25),   # dispersed enemy, no strong directional lean
+        travel_time_balance = (1.00, 0.25),   # both sides scattered
+        vantage_balance     = (1.10, 0.25),   # player is the organized force
+        hazard_balance      = (1.00, 0.25),   # hazards are environmental
+        archetype           = "suppression",
+    ),
+    "evacuation": FairnessTargetProfile(
+        path_balance        = (1.30, 0.25),   # multiple extraction routes needed
+        travel_time_balance = (0.75, 0.20),   # enemy presses from the front
+        vantage_balance     = (1.00, 0.25),   # collapsing perimeter, no strong initial lean
+        hazard_balance      = (1.00, 0.25),   # situational in retreat
+        archetype           = "evacuation",
+    ),
+    "raid": FairnessTargetProfile(
+        path_balance        = (1.00, 0.30),   # no bible prose; loose symmetric fallback
+        travel_time_balance = (1.00, 0.30),
+        vantage_balance     = (1.00, 0.30),
+        hazard_balance      = (1.00, 0.30),
+        archetype           = "raid",
+    ),
+    "rear_guard": FairnessTargetProfile(
+        path_balance        = (0.80, 0.25),   # attacker has multiple approaches
+        travel_time_balance = (1.00, 0.25),   # meeting engagement
+        vantage_balance     = (1.20, 0.25),   # defender chooses ground
+        hazard_balance      = (1.10, 0.25),   # defender prepared the field
+        archetype           = "rear_guard",
+    ),
 }
 
 

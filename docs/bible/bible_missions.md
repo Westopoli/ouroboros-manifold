@@ -271,6 +271,8 @@ The **variable slots** are what the simulation fills in: which region, which fac
 
 ---
 
+**Fairness target profiles** — each archetype has a `FairnessTargetProfile` controlling what map shapes the fairness evaluator accepts. The 4 prototype archetypes (defensive_stand, assault, multi_front_defense, counterinsurgency) were tuned in Stage 7. The remaining 6 (siege_breaking, reconquest, suppression, evacuation, raid, rear_guard) were given directionally-grounded profiles in Stage 11e based on the bible prose above. All 6 non-prototype profiles may need further tuning after playtesting — tolerances are deliberately wide (±0.20–0.30) pending real gameplay data.
+
 **Inheritance missions** are not a separate archetype — they are a rare narrative modifier the coherence ledger can apply to any of the 10 archetypes. "This is a reconquest mission... reconquering a system your great-grandmother lost." The connection is highlighted in the chronicle, but mechanically it's still a standard mission of its base archetype.
 
 ### Mission Objectives

@@ -1,6 +1,8 @@
+import json
 import random
 import sys
 import os
+from datetime import date
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import config
@@ -9,54 +11,74 @@ from layout_instantiator import instantiate_layout
 from gradient_placer import place_gradients
 from layer_masks import place_layer_masks
 from sim_flavoring import compute_flavoring, apply_flavoring
-from fairness_evaluator import evaluate_fairness, is_acceptable
+from fairness_evaluator import evaluate_fairness
 from archetype_filters import matching_layouts, get_baseline_ownership
 from tactical_map import TacticalMap
 
 
+# See also: docs/stage_specs/stage_11e_fairness_reconciliation_spec.md — interim simple picker;
+# bible's two-layer fairness architecture deferred to stage_11f.
 def generate_map(generator_input: GeneratorInput, layout_library: dict) -> MapGenerationResult:
     compatible = matching_layouts(generator_input.archetype, layout_library)
     if not compatible:
         raise ValueError(f"No layouts compatible with archetype {generator_input.archetype!r}")
 
-    best_score  = None
-    best_result = None
+    seed = generator_input.seed
+    rng  = random.Random(seed)
 
-    for attempt in range(config.FAIRNESS_MAX_RETRIES + 1):
-        seed = generator_input.seed + attempt
-        rng  = random.Random(seed)
+    layout = rng.choice(compatible)
+    inst   = instantiate_layout(layout, generator_input.canvas_size, seed)
 
-        layout = rng.choice(compatible)
-        inst   = instantiate_layout(layout, generator_input.canvas_size, seed)
+    _assign_reinforcement_ownership(
+        inst, generator_input.region_state, random.Random(seed ^ 0xABCD),
+        generator_input.archetype,
+    )
 
-        _assign_reinforcement_ownership(
-            inst, generator_input.region_state, random.Random(seed ^ 0xABCD),
-            generator_input.archetype,
-        )
+    base_sources     = place_gradients(inst)
+    deltas           = compute_flavoring(generator_input.region_state)
+    flavored_sources = apply_flavoring(base_sources, deltas)
+    mask_sources     = place_layer_masks(inst)
+    all_sources      = flavored_sources + mask_sources
 
-        base_sources     = place_gradients(inst)
-        deltas           = compute_flavoring(generator_input.region_state)
-        flavored_sources = apply_flavoring(base_sources, deltas)
-        mask_sources     = place_layer_masks(inst)
-        all_sources      = flavored_sources + mask_sources
+    score = evaluate_fairness(inst, generator_input.archetype)
+    _log_fairness(generator_input, layout, score)
 
-        score = evaluate_fairness(inst, generator_input.archetype)
-
-        if best_score is None or _pass_count(score) > _pass_count(best_score):
-            best_score = score
-            best_result = _build_result(inst, layout, all_sources, score, attempt, compatible)
-
-        if is_acceptable(score):
-            break
-
-    return best_result
+    return _build_result(inst, layout, all_sources, score, 0, compatible)
 
 
 # ── Internals ─────────────────────────────────────────────────────────────────
 
-def _pass_count(score):
-    return sum([score.path_balance_pass, score.travel_time_pass,
-                score.vantage_pass, score.hazard_pass])
+_FAIRNESS_LOG_DIR = os.path.join(os.path.dirname(__file__), "..", "tuning_output", "fairness_log")
+
+
+def _log_fairness(generator_input, layout, score):
+    try:
+        os.makedirs(_FAIRNESS_LOG_DIR, exist_ok=True)
+        log_path = os.path.join(_FAIRNESS_LOG_DIR, f"{date.today().isoformat()}.jsonl")
+        entry = {
+            "archetype": generator_input.archetype,
+            "layout_id": layout.layout_id,
+            "seed": generator_input.seed,
+            "fairness_score": {
+                "path_balance_ratio": score.path_balance_ratio,
+                "path_balance_pass": score.path_balance_pass,
+                "path_balance_skipped": score.path_balance_skipped,
+                "travel_time_ratio": score.travel_time_ratio,
+                "travel_time_pass": score.travel_time_pass,
+                "travel_time_skipped": score.travel_time_skipped,
+                "vantage_ratio": score.vantage_ratio,
+                "vantage_pass": score.vantage_pass,
+                "vantage_skipped": score.vantage_skipped,
+                "hazard_ratio": score.hazard_ratio,
+                "hazard_pass": score.hazard_pass,
+                "hazard_skipped": score.hazard_skipped,
+                "all_metrics_pass": score.all_metrics_pass,
+            },
+        }
+        with open(log_path, "a") as f:
+            f.write(json.dumps(entry) + "\n")
+    except OSError:
+        pass
 
 
 def _assign_reinforcement_ownership(inst, region_state, rng, archetype):

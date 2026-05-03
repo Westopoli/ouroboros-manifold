@@ -273,6 +273,7 @@ func _send(cmd: Dictionary) -> void:
 			SimBridge.send_command({"type": "command", "command": cmd})
 		else:
 			TacticalBridge.send_command(cmd)
+		TacticalBridge.command_sent.emit(cmd)
 
 
 func _digit(keycode: int) -> int:

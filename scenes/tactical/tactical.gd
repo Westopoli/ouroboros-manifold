@@ -31,6 +31,11 @@ var _impact_feedback: Node3D
 var _destruction: Node3D
 var _ambient: Node3D
 var _loading_overlay: CanvasLayer
+# See also: scenes/tactical/mission_marker.gd — in-world objective beacons
+var _mission_markers: Node3D
+var _marker_instances: Dictionary = {}  # obj_id → MissionMarker node
+# See also: scenes/tactical/command_indicator.gd — transient command decals
+var _command_indicators: Node3D
 
 
 func _ready() -> void:
@@ -60,6 +65,14 @@ func _ready() -> void:
 	_loading_overlay = preload("res://scenes/tactical/tactical_loading_overlay.gd").new()
 	add_child(_loading_overlay)
 
+	_mission_markers = Node3D.new()
+	_mission_markers.name = "MissionMarkers"
+	add_child(_mission_markers)
+
+	_command_indicators = Node3D.new()
+	_command_indicators.name = "CommandIndicators"
+	add_child(_command_indicators)
+
 	var settings := UIDataBus.get_settings()
 	_edge_scroll_speed = float(settings.get("edge_scroll_speed", PAN_SPEED))
 
@@ -73,6 +86,9 @@ func _ready() -> void:
 		TacticalBridge.connect_to_engine("127.0.0.1", 8765)
 	TacticalBridge.connection_state_changed.connect(_on_conn_state)
 	TacticalBridge.snapshot_received.connect(_on_first_snapshot, CONNECT_ONE_SHOT)
+	TacticalBridge.snapshot_received.connect(_sync_mission_markers)
+	TacticalBridge.tick_delta_received.connect(_on_delta_markers)
+	TacticalBridge.command_sent.connect(_on_command_sent)
 	_setup_environment()
 	_update_camera()
 
@@ -245,3 +261,56 @@ func _debug_debrief() -> void:
 		"mission_duration_seconds": 1800.0,
 	}
 	SceneRouter.go_to("debrief", {"debrief": mock_debrief, "era_id": "settled_reach"})
+
+
+func _sync_mission_markers(_snap: Dictionary) -> void:
+	var active_ids: Dictionary = {}
+	for obj in TacticalBridge.objectives:
+		var obj_id: String = obj.get("id", "")
+		var status: String = obj.get("status", "in_progress")
+		var loc: Dictionary = obj.get("location", {})
+		if loc.is_empty() or status == "complete" or status == "failed":
+			if obj_id in _marker_instances:
+				_marker_instances[obj_id].queue_free()
+				_marker_instances.erase(obj_id)
+			continue
+		active_ids[obj_id] = true
+		if obj_id in _marker_instances:
+			_marker_instances[obj_id].update_objective(obj)
+		else:
+			var marker: Node3D = preload("res://scenes/tactical/mission_marker.gd").new()
+			marker.setup(obj)
+			_mission_markers.add_child(marker)
+			_marker_instances[obj_id] = marker
+	for existing_id in _marker_instances.keys():
+		if existing_id not in active_ids:
+			_marker_instances[existing_id].queue_free()
+			_marker_instances.erase(existing_id)
+
+
+func _on_delta_markers(_d: Dictionary) -> void:
+	for obj in TacticalBridge.objectives:
+		var obj_id: String = obj.get("id", "")
+		var status: String = obj.get("status", "in_progress")
+		if status == "complete" or status == "failed":
+			if obj_id in _marker_instances:
+				_marker_instances[obj_id].queue_free()
+				_marker_instances.erase(obj_id)
+			continue
+		if obj_id in _marker_instances:
+			_marker_instances[obj_id].update_objective(obj)
+
+
+func _on_command_sent(cmd: Dictionary) -> void:
+	var kind: String = cmd.get("kind", "")
+	if kind != "move" and kind != "attack_move":
+		return
+	var target: Dictionary = cmd.get("target", {})
+	var pos: Array = target.get("pos", [])
+	if pos.size() < 2:
+		return
+	var layer_y: float = float(target.get("layer", 0)) * EraConfig.LAYER_HEIGHT
+	var world_pos := Vector3(float(pos[0]), layer_y, float(pos[1]))
+	var indicator: Node3D = preload("res://scenes/tactical/command_indicator.gd").new()
+	indicator.setup(world_pos, kind == "attack_move")
+	_command_indicators.add_child(indicator)

@@ -415,7 +415,6 @@ func _setup_shell() -> void:
 # --- Flashes ---
 
 func _on_flash_region_requested(region_id: String, intensity: float) -> void:
-	print("[FLASH-RECV] region=%s intensity=%.1f" % [region_id, intensity])
 	if region_id not in _region_visuals:
 		return
 	var node: MeshInstance3D = _region_visuals[region_id]
@@ -424,19 +423,17 @@ func _on_flash_region_requested(region_id: String, intensity: float) -> void:
 	var color: Color = r.get("color", Color.WHITE)
 	var base_energy := 2.5
 	var tw := create_tween()
-	# 3 pulses over ~1.5s total
-	for _rep in range(3):
+	for _rep in range(5):
 		tw.tween_property(node.material_override, "emission_energy_multiplier", base_energy + intensity * 14.0, 0.15)
-		tw.tween_property(node.material_override, "emission_energy_multiplier", base_energy, 0.35).set_ease(Tween.EASE_OUT)
-	var count := randi_range(4, 4 + int(intensity * 8.0))
+		tw.tween_property(node.material_override, "emission_energy_multiplier", base_energy, 0.85).set_ease(Tween.EASE_OUT)
+	var count := randi_range(3, 3 + int(intensity * 7.0))
 	for i in count:
-		var spark_delay := randf() * 1.0
+		var delay := randf() * 0.20
 		var offset := Vector3(randf_range(-3.0, 3.0), randf_range(-3.0, 3.0), randf_range(-3.0, 3.0))
-		_spawn_flash_spark(pos + offset, color, intensity, spark_delay)
+		_spawn_flash_spark(pos + offset, color, intensity, delay)
 
 
 func _on_flash_conflict_requested(from_id: String, to_id: String, intensity: float) -> void:
-	print("[FLASH-RECV] conflict %s→%s intensity=%.1f" % [from_id, to_id, intensity])
 	var from_r: Dictionary = _wv_data.get_region(from_id)
 	var to_r: Dictionary = _wv_data.get_region(to_id)
 	if from_r.is_empty() or to_r.is_empty():
@@ -444,13 +441,13 @@ func _on_flash_conflict_requested(from_id: String, to_id: String, intensity: flo
 	var from_pos: Vector3 = from_r["position"]
 	var to_pos: Vector3 = to_r["position"]
 	var color := Color(1.0, 0.4, 0.1)
-	var count := randi_range(5, 5 + int(intensity * 10.0))
+	var count := randi_range(4, 4 + int(intensity * 8.0))
 	for i in count:
 		var t := randf()
 		var base_pos := from_pos.lerp(to_pos, t)
 		var scatter := Vector3(randf_range(-2.0, 2.0), randf_range(-2.0, 2.0), randf_range(-2.0, 2.0))
-		var spark_delay := randf() * 0.8
-		_spawn_flash_spark(base_pos + scatter, color, intensity, spark_delay)
+		var delay := randf() * 0.25
+		_spawn_flash_spark(base_pos + scatter, color, intensity, delay)
 
 
 func _spawn_flash_spark(pos: Vector3, _color: Color, intensity: float, delay: float) -> void:
@@ -472,7 +469,7 @@ func _spawn_flash_spark(pos: Vector3, _color: Color, intensity: float, delay: fl
 	spark.position = pos
 	spark.visible = false
 	add_child(spark)
-	var lifespan := randf_range(0.3, 0.6)
+	var lifespan := randf_range(0.06, 0.16)
 	var tw := create_tween()
 	tw.tween_callback(func():
 		spark.visible = true
