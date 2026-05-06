@@ -1128,6 +1128,19 @@ def _setup_sim_env(seed=42):
 if __name__ == "__main__":
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+    # Stage 13 — when run from a frozen/exported build, Godot passes
+    # `--root <game_root>` so file I/O (logs/, saves, crash report) lands next
+    # to the game executable instead of inside the PyInstaller bundle. In dev
+    # mode (running this file directly with Python) `--root` is absent and we
+    # fall through to os.getcwd(). This must happen before _setup_io() runs,
+    # since that creates logs/ and opens the stderr log file.
+    if "--root" in sys.argv:
+        _root = sys.argv[sys.argv.index("--root") + 1]
+        try:
+            os.chdir(_root)
+        except OSError as _e:
+            sys.stderr.write(f"[pipe] failed to chdir to --root {_root!r}: {_e}\n")
+
     import config
     from tactical_engine import TacticalEngine
     from tactical_map import TacticalMap, SpineNode, GradientSource

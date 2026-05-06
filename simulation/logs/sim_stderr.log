@@ -1,16 +1,2 @@
 INFO pipe transport starting, version=0.10.0
 INFO sent ready message
-WARNING timeout waiting for initial ready_for_tactical, proceeding anyway
-INFO === TACTICAL PHASE (chapter 1) ===
-INFO mission terminal at tick 1612, winner=0
-INFO === DEBRIEF PHASE ===
-INFO sent debrief, band=total_failure
-INFO received expected command: continue_from_debrief
-INFO === TIME JUMP PHASE ===
-INFO received expected command: ready_for_time_jump
-INFO sent 24 time jump messages for tj_0001
-INFO === WAITING PHASE ===
-INFO received expected command: proceed_to_next_mission
-INFO new engine created for chapter 2
-INFO received expected command: ready_for_tactical
-INFO === TACTICAL PHASE (chapter 2) ===
