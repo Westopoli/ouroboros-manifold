@@ -1,0 +1,33 @@
+Ouroboros Manifold — Playtest Feedback
+=======================================
+
+Name:
+Date played:
+Build version:        (visible in Settings)
+OS / hardware:        (Windows version, GPU, rough RAM)
+
+
+How long did you play?
+
+
+What did you play through?
+(Onboarding? How many missions? Did you get to a time jump? Did you reach a
+debrief? Did you exit cleanly?)
+
+
+What worked / felt good?
+
+
+What didn't work / felt off?
+
+
+Crashes or hangs?
+(If yes, attach the F12 bug report ZIP from data/logs/reports/. Even without
+a F12 capture, a description plus data/logs/sim_stderr.log and
+data/logs/godot.log helps a lot.)
+
+
+Anything you wanted to do but couldn't figure out?
+
+
+General impressions — anything you want to say. Loose, unfiltered.
