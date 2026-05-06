@@ -113,6 +113,14 @@ func end_time_jump() -> void:
 	_time_jump_active = false
 
 
+func skip_all() -> void:
+	for entry_id in _entries:
+		var entry_node: Node = _entries[entry_id]
+		if entry_node.get_current_state() != 2:  # not PRINTED
+			entry_node.start_printing()
+			entry_node._finish_printing()
+
+
 func pause() -> void:
 	_paused = true
 	if _printing_id != "" and _entries.has(_printing_id):

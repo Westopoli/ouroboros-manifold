@@ -377,13 +377,20 @@ def _objective_location(obj, store) -> dict | None:
     p = obj.params
     if obj.type in ("hold_zone", "clear_zone"):
         if "zone_x" in p and "zone_y" in p:
-            return {"x": float(p["zone_x"]), "y": float(p["zone_y"])}
+            loc = {"x": float(p["zone_x"]), "y": float(p["zone_y"])}
+            if "zone_radius" in p:
+                loc["radius"] = float(p["zone_radius"])
+            else:
+                loc["radius"] = float(config.OBJECTIVE_ZONE_RADIUS_DEFAULT)
+            return loc
     elif obj.type == "escort_to_extraction":
         if "extraction_x" in p and "extraction_y" in p:
             return {"x": float(p["extraction_x"]), "y": float(p["extraction_y"])}
     elif obj.type == "eliminate_force":
-        if store is not None and "target_uids" in p:
-            live = [uid for uid in p["target_uids"] if store.alive[uid]]
+        if store is not None:
+            enemy_faction = p.get("enemy_faction", 1)
+            live = [uid for uid in range(store.count)
+                    if store.alive[uid] and int(store.faction[uid]) == enemy_faction]
             if live:
                 cx = sum(float(store.data[uid, FIELD_X]) for uid in live) / len(live)
                 cy = sum(float(store.data[uid, FIELD_Y]) for uid in live) / len(live)

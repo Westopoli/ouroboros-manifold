@@ -8,6 +8,7 @@ var _scroll: Node
 var _world_viewport: SubViewportContainer
 var _world_sub_viewport: SubViewport
 var _footer: HBoxContainer
+var _skip_btn: Button
 var _fade_overlay: ColorRect
 var _accent: Color
 
@@ -93,6 +94,22 @@ func _build_layout() -> void:
 	_fade_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_fade_overlay)
 
+	_skip_btn = Button.new()
+	_skip_btn.text = "SKIP ▶▶"
+	_skip_btn.add_theme_font_override("font", ThemeConstants.font_mono_regular)
+	_skip_btn.add_theme_font_size_override("font_size", 14)
+	_skip_btn.pressed.connect(_on_skip)
+	_skip_btn.anchor_left = 0.0
+	_skip_btn.anchor_right = 0.0
+	_skip_btn.anchor_top = 1.0
+	_skip_btn.anchor_bottom = 1.0
+	_skip_btn.offset_left = 20
+	_skip_btn.offset_top = -50
+	_skip_btn.offset_bottom = -16
+	_skip_btn.offset_right = 130
+	_skip_btn.visible = false
+	add_child(_skip_btn)
+
 	_footer = HBoxContainer.new()
 	_footer.anchor_left = 0.0
 	_footer.anchor_right = 0.62
@@ -170,6 +187,7 @@ func _on_time_jump_started(tj_id: String, _span_years: int, _total_kf: int, tota
 	_scroll.begin_time_jump(total_entries, _faction_display_colors)
 	_scroll.visible = true
 	_scroll.slide_in()
+	_skip_btn.visible = true
 
 	var tw := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
 	tw.tween_property(_world_viewport, "anchor_right", 0.62, 1.2)
@@ -204,6 +222,7 @@ func _try_settle() -> void:
 	if _timeline_index < _ownership_timeline.size():
 		return
 	_phase = Phase.SETTLING
+	_skip_btn.visible = false
 	if _next_mission_region != "":
 		_shell.highlight_region(_next_mission_region)
 	_footer.visible = true
@@ -383,7 +402,22 @@ func _fire_ambient_flicker() -> void:
 	_shell.flash_military_activity(rid, randf_range(0.1, 0.2))
 
 
-# --- Proceed / Exit ---
+# --- Skip / Proceed / Exit ---
+
+func _on_skip() -> void:
+	if _phase != Phase.NARRATION:
+		return
+	_skip_btn.visible = false
+	while not _keyframe_queue.is_empty():
+		_apply_keyframe(_keyframe_queue.pop_front())
+	for i in range(_timeline_index, _ownership_timeline.size()):
+		_apply_ownership_tick(_ownership_timeline[i])
+	_timeline_index = _ownership_timeline.size()
+	_scroll.skip_all()
+	_waiting_for_entry = false
+	_current_entry_id = ""
+	_try_settle()
+
 
 func _on_proceed() -> void:
 	if _phase != Phase.SETTLING:

@@ -470,35 +470,26 @@ def _generate_and_build_engine(sim_env, logger):
         except Exception as e:
             logger.warning("failed to load behavior script for %s: %s", archetype, e)
 
-    # Reinforcement structures
+    # Reinforcement structures — placed at spine node positions so terrain_renderer
+    # can match them for 3D model rendering.
+    # See also: scenes/tactical/terrain_renderer.gd:_build_structure_node — matches by position key.
     eng.reinforcement_structures = []
-    if setup.reinforcements and setup.reinforcements.structure_count > 0:
-        rs = setup.reinforcements
-        struct_id = 0
-        structures_to_place = []
-        for _ in range(rs.player_structures):
-            structures_to_place.append(0)
-        for _ in range(rs.enemy_structures):
-            structures_to_place.append(1)
-        for _ in range(rs.neutral_structures):
-            structures_to_place.append(-1)
-        rng.shuffle(structures_to_place)
-        for idx, owner in enumerate(structures_to_place):
-            sx = map_w * 0.2 + (idx % 4) * (map_w * 0.2)
-            sy = map_h * 0.3 + (idx // 4) * (map_h * 0.2)
-            eng.reinforcement_structures.append(ReinforcementStructure(
-                structure_uid=struct_id,
-                position=(sx, sy),
-                layer=0,
-                hp=_cfg.REINFORCEMENT_STRUCTURE_HP,
-                max_hp=_cfg.REINFORCEMENT_STRUCTURE_HP,
-                owner_faction=owner,
-                capture_progress=0.0,
-                production_timer_sec=0.0,
-                production_target_unit_type="Raider",
-                capture_radius=_cfg.REINFORCEMENT_CAPTURE_RADIUS,
-            ))
-            struct_id += 1
+    reinf_spine = [sn for sn in tmap.spine_nodes if sn.node_type == "reinforcement_structure"]
+    _OWNER_MAP = {"player": 0, "enemy": 1, "neutral": -1}
+    for struct_id, sn in enumerate(reinf_spine):
+        owner = _OWNER_MAP.get(sn.properties.get("initial_owner", "neutral"), -1)
+        eng.reinforcement_structures.append(ReinforcementStructure(
+            structure_uid=struct_id,
+            position=sn.position,
+            layer=int(sn.properties.get("layer", 0)),
+            hp=_cfg.REINFORCEMENT_STRUCTURE_HP,
+            max_hp=_cfg.REINFORCEMENT_STRUCTURE_HP,
+            owner_faction=owner,
+            capture_progress=0.0,
+            production_timer_sec=0.0,
+            production_target_unit_type="Raider",
+            capture_radius=_cfg.REINFORCEMENT_CAPTURE_RADIUS,
+        ))
 
     # Build and attach the rich briefing data
     eng.mission_briefing_data = _mission_setup_to_briefing(setup, sim_env, cmdr_selection)

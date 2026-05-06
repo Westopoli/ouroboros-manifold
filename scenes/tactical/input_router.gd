@@ -200,42 +200,47 @@ func _cycle_layer(dir: int) -> void:
 
 
 func _cmd_layer_hard_transfer() -> void:
-	if selected_uids.is_empty():
+	var friendly: Array[int] = _friendly_only(selected_uids)
+	if friendly.is_empty():
 		return
-	_send({"kind": "layer_hard_transfer", "unit_uids": selected_uids.duplicate(),
+	_send({"kind": "layer_hard_transfer", "unit_uids": friendly,
 		   "target_layer": active_layer})
 
 
 func _cmd_layer_preference(layer: int) -> void:
-	if selected_uids.is_empty():
+	var friendly: Array[int] = _friendly_only(selected_uids)
+	if friendly.is_empty():
 		return
-	_send({"kind": "layer_preference_set", "unit_uids": selected_uids.duplicate(),
+	_send({"kind": "layer_preference_set", "unit_uids": friendly,
 		   "preferred_layer": layer})
 
 
 # ── Movement + combat ─────────────────────────────────────────────────────────
 
 func _on_right_click(world_pos: Vector3) -> void:
-	if selected_uids.is_empty():
+	var friendly: Array[int] = _friendly_only(selected_uids)
+	if friendly.is_empty():
 		return
-	_send({"kind": "move", "unit_uids": selected_uids.duplicate(),
+	_send({"kind": "move", "unit_uids": friendly,
 		   "target": {"pos": [world_pos.x, world_pos.z], "layer": active_layer}})
 
 
 func _cmd_attack_move() -> void:
-	if selected_uids.is_empty():
+	var friendly: Array[int] = _friendly_only(selected_uids)
+	if friendly.is_empty():
 		return
 	var world_pos := _to_world(get_viewport().get_mouse_position())
-	_send({"kind": "attack_move", "unit_uids": selected_uids.duplicate(),
+	_send({"kind": "attack_move", "unit_uids": friendly,
 		   "target": {"pos": [world_pos.x, world_pos.z], "layer": active_layer}})
 
 
 # ── Abilities ─────────────────────────────────────────────────────────────────
 
 func _cmd_activate_ability(slot: int) -> void:
-	if selected_uids.is_empty():
+	var friendly: Array[int] = _friendly_only(selected_uids)
+	if friendly.is_empty():
 		return
-	_send({"kind": "activate_ability", "unit_uids": selected_uids.duplicate(),
+	_send({"kind": "activate_ability", "unit_uids": friendly,
 		   "ability_id": "slot_%d" % slot})
 
 
@@ -254,16 +259,24 @@ func _to_world(screen_pos: Vector2) -> Vector3:
 	return origin + dir * t
 
 
+func _friendly_only(uids: Array[int]) -> Array[int]:
+	var result: Array[int] = []
+	for uid: int in uids:
+		if TacticalBridge.units.get(uid, {}).get("selection_eligible", false):
+			result.append(uid)
+	return result
+
+
 func _unit_world_pos(uid: int) -> Vector3:
 	var layer: int = TacticalBridge.units.get(uid, {}).get("layer", 0)
 	return Vector3(TacticalBridge.display_x[uid], float(layer) * EraConfig.LAYER_HEIGHT, TacticalBridge.display_y[uid])
 
 
 # See also: scripts/tactical/visibility.gd — fog gate
+# Friendly-only gate lifted per stage_11d D5; fog gate remains.
+# Visible enemies are selectable for inspection; commands filter to friendlies.
 func _is_selectable(uid: int) -> bool:
-	if not Visibility.is_unit_visible_to_player(uid):
-		return false
-	return TacticalBridge.units.get(uid, {}).get("selection_eligible", false)
+	return Visibility.is_unit_visible_to_player(uid)
 
 
 func _send(cmd: Dictionary) -> void:

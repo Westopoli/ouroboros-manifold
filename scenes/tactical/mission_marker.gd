@@ -55,6 +55,7 @@ func setup(obj: Dictionary) -> void:
 	add_child(_label)
 
 	_apply_position(obj)
+	_build_zone_ring(obj, col)
 
 
 func update_objective(obj: Dictionary) -> void:
@@ -66,3 +67,29 @@ func _apply_position(obj: Dictionary) -> void:
 	if loc.is_empty():
 		return
 	position = Vector3(float(loc.get("x", 0.0)), 0.0, float(loc.get("y", 0.0)))
+
+
+func _build_zone_ring(obj: Dictionary, col: Color) -> void:
+	var obj_type: String = obj.get("type", "")
+	if obj_type != "hold_zone" and obj_type != "clear_zone":
+		return
+	var loc: Dictionary = obj.get("location", {})
+	var radius: float = float(loc.get("radius", 600.0))
+	var ring := MeshInstance3D.new()
+	var torus := TorusMesh.new()
+	torus.inner_radius = radius - 6.0
+	torus.outer_radius = radius
+	torus.rings = 64
+	torus.ring_segments = 64
+	ring.mesh = torus
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(col.r, col.g, col.b, 0.25)
+	mat.emission_enabled = true
+	mat.emission = col
+	mat.emission_energy_multiplier = 0.6
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.no_depth_test = true
+	ring.material_override = mat
+	ring.position.y = 4.0
+	add_child(ring)
