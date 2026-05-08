@@ -703,8 +703,8 @@ RELEVANCE_MAX_HOPS                  = 5
 RELEVANCE_ARCHETYPE_FIT_THRESHOLD   = 3
 
 # ── Force allocation (Stage 5.5) ────────────────────────────────────────────
-BUDGET_TO_POWER_SCALE               = 150.0
-MILITARY_TO_POWER_SCALE             = 1000.0
+BUDGET_TO_POWER_SCALE               = 300.0   # A1 — 2× to put mission unit counts in 30–100 band
+MILITARY_TO_POWER_SCALE             = 2000.0  # A1 — same
 PARITY_BREAKPOINTS                  = [
     (0.0, 0.80),
     (0.3, 0.85),

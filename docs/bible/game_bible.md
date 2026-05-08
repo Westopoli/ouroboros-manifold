@@ -550,3 +550,28 @@ The game is built in numbered stages, each with its own spec document (`stage_N_
 **Stage 13** — Friends-ZIP Build, Bundling, and Distribution Hygiene. Self-contained Windows ZIP a friend can extract and double-click. Python sim bundled as a subprocess via PyInstaller (or Nuitka/Cython if startup time demands it — decide in spec). `IS_RELEASE_BUILD = true`, debug output suppressed. First-launch privacy modal disclosing scope ("private playtest, no automatic data collection"). Optional crash log written next to executable for manual email return. Pre-distribution checklist: clean install on a second machine, full loop verification, no leaked dev paths. ZIP delivered to a small group of personally-known playtesters. **This is not a commercial release** — no Steam, no monetization, no webapp, no entitlement. The build is retired when public beta begins. See `friends_zip_plan.md` for the full integration plan.
 
 **Beyond Stage 13** — Multi-stage tutorial across hallmark eras (`bible_monetization.md` v3.00 component 8), inspection mode for non-owned eras, Era Library multi-era support (Roman free tier, 1980s, additional eras), Steam integration (Steamworks SDK, depots, branches, achievements, public beta), webapp + entitlement server + Stripe (commercial monetization per `bible_monetization.md`), sound design, music, era pack tooling for skeleton/skin expansion model, mission complications, remaining simulation-state journaling pieces not covered by Stage 8's rewind-with-re-seed (crash recovery, multi-branch tree UI, cloud saves — see open question #15), UI layout customization (a settings mode where the player can reposition HUD elements such as minimap, hotkeys bar, etc., flip map orientation, and preview changes live within the settings screen), **branch combat parameterization** (move reinforcement rates, structure density, engagement duration targets, HP/damage values, fog density, sensor range, and cross-layer detection from global constants to per-era manifest config — see re-open flags in `bible_combat.md` sections: Tactical Reinforcement, Stat Philosophy, Unit Stat Baselines, Information Warfare), **Settled Reach combat retcon** (rebalance Settled Reach HP and engagement timings downward for Branch 1 fast-burst tempo — substantial Stage-6-scale tuning pass). Scoped as needed.
+
+---
+
+## Operational TODOs
+
+Tasks blocked on host or environment availability, not design. Cleared once the blocker is resolved.
+
+### Stage 13 Checkpoint A — Windows PyInstaller pass
+
+**Logged:** 2026-05-08 18:33 EDT
+**Commit at logging:** `a41eeb67234ddd6cf40110c7be8ad40476c317b2`
+**Blocker:** macOS host cannot cross-compile a Windows `.exe` via PyInstaller; no Windows host available right now.
+
+**State at handoff (validated on darwin/arm64):**
+- `build/pyinstaller_spec.spec` builds cleanly. Bundle: 32 MB. Cold ready: 5.60 s. Warm ready: 0.25 s. Smoke test passes: 4 messages received, command roundtrip `ready_for_tactical` → `snapshot` works, `--root <tmpdir>/logs/` created (not inside the bundle), no leaked dev paths in the bundled files.
+- `build/build_zip.py` updated to reference `pyinstaller_spec.spec` (was `.py` — PyInstaller treats `.py` as an entry script, not a spec; renamed).
+- `hidden_imports` extended by 11 modules: `command_ingest`, `mission_contracts`, `map_gen_contracts`, `debrief_data`, `power_rating`, `unit`, `world`, `faction`, `events`, `time_jump`, `world_view`, `world_view.time_jump_emitter`.
+- PyInstaller 6.20.0 installed into `simulation/.venv` (Python 3.14.3, alongside existing `numpy 2.4.4`).
+
+**To do on a Windows host:**
+1. `python -m pip install pyinstaller` in the project venv.
+2. `python -m PyInstaller --noconfirm --clean --workpath build/_pyi_work --distpath build/_pyi_dist build/pyinstaller_spec.spec`
+3. Smoke test: `build\_pyi_dist\ouroboros_sim\ouroboros_sim.exe --root C:\path\to\test_dir` — confirm length-prefixed JSON progress messages, ready under 15 s, no console window, `<test_dir>\logs\` created, command roundtrip via stdin works.
+4. Iterate `hidden_imports` if any `ImportError` surfaces in stderr. (Numpy hooks usually picked up automatically by PyInstaller; Windows-specific quirks unlikely but possible.)
+5. Update Track C Checkpoint A in `docs/ai_status.md` with the Windows results.

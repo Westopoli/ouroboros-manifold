@@ -40,6 +40,9 @@ const BLOOM_CULL_ZOOM := 3000.0
 var _total_impacts: int = 0
 var _peak_active: int = 0
 
+# See also: scenes/tactical/unit_renderer.gd — squad-pos formula source
+@onready var _unit_renderer: Node3D = $"../UnitRenderer"
+
 
 func _ready() -> void:
 	_prev_hp.resize(TacticalBridge.MAX_UNITS)
@@ -133,11 +136,7 @@ func _detect_hits() -> void:
 			_impact_cooldowns[uid] = IMPACT_COOLDOWN
 
 			var damage: float = prev - cur_hp
-			var pos := Vector3(
-				TacticalBridge.display_x[uid],
-				0.0,
-				TacticalBridge.display_y[uid]
-			)
+			var pos: Vector3 = _unit_renderer.get_squad_world_position(uid)
 
 			var defender_faction: int = int(unit.get("faction", 0))
 

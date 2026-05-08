@@ -22,6 +22,9 @@ var _projectile_renderer: Node3D
 var _beam_renderer: Node3D
 var _area_pulse_renderer: Node3D
 
+# See also: scenes/tactical/unit_renderer.gd — squad-pos formula source
+@onready var _unit_renderer: Node3D = $"../UnitRenderer"
+
 var camera_zoom: float = 0.0
 
 var _peak_active: int = 0
@@ -97,20 +100,8 @@ func _fire_attack(attacker_uid: int, target_uid: int, unit: Dictionary) -> void:
 	var faction: int = int(unit.get("faction", 0))
 	var color: Color = EraThemeResolver.get_faction_color(faction)
 
-	var a_layer: int = int(unit.get("layer", 0))
-	var target_unit: Dictionary = TacticalBridge.units.get(target_uid, {})
-	var t_layer: int = int(target_unit.get("layer", 0))
-
-	var from_pos := Vector3(
-		TacticalBridge.display_x[attacker_uid],
-		float(a_layer) * EraConfig.LAYER_HEIGHT,
-		TacticalBridge.display_y[attacker_uid]
-	)
-	var to_pos := Vector3(
-		TacticalBridge.display_x[target_uid],
-		float(t_layer) * EraConfig.LAYER_HEIGHT,
-		TacticalBridge.display_y[target_uid]
-	)
+	var from_pos: Vector3 = _unit_renderer.get_squad_world_position(attacker_uid)
+	var to_pos: Vector3 = _unit_renderer.get_squad_world_position(target_uid)
 
 	var category: String = str(cfg.get("category", "projectile"))
 
@@ -134,7 +125,6 @@ func _fire_attack(attacker_uid: int, target_uid: int, unit: Dictionary) -> void:
 			"delay": stagger * float(i),
 			"from": from_pos,
 			"to_uid": target_uid,
-			"to_layer": t_layer,
 			"speed": speed,
 			"scale": proj_scale,
 			"color": color,
@@ -149,11 +139,7 @@ func _process_volleys(delta: float) -> void:
 		if v.delay <= 0.0:
 			var to_uid: int = int(v.to_uid)
 			if to_uid < TacticalBridge.unit_count and TacticalBridge.display_alive[to_uid] == 1:
-				var to_pos := Vector3(
-					TacticalBridge.display_x[to_uid],
-					float(v.to_layer) * EraConfig.LAYER_HEIGHT,
-					TacticalBridge.display_y[to_uid]
-				)
+				var to_pos: Vector3 = _unit_renderer.get_squad_world_position(to_uid)
 				_projectile_renderer.spawn_projectile(v.from, to_pos, v.speed, v.scale, v.color, camera_zoom)
 				_total_spawned += 1
 			_pending_volleys.remove_at(i)

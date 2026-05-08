@@ -2,6 +2,10 @@ extends Node3D
 
 signal camera_move_completed
 signal camera_mood_changed(mood: String)
+# Stage 11g — additive click signals. _focus_on_region behavior is gated on
+# FeatureFlags.ENABLE_INSPECTION_PANELS so existing flow is preserved with flag off.
+signal region_clicked(region_id: String)
+signal empty_space_clicked()
 
 enum CameraMood { WIDE_ORBIT, RING_FOLLOW, APPROACH, DRIFT, PULLBACK, UNDERSIDE }
 
@@ -209,12 +213,20 @@ func _try_click_focus(screen_pos: Vector2) -> void:
 	var query := PhysicsRayQueryParameters3D.create(from, from + dir * 500.0)
 	var result := state.intersect_ray(query)
 	if result.is_empty():
+		empty_space_clicked.emit()
 		return
 	var collider: Node = result["collider"]
 	var node: Node = collider.get_parent()
 	if node and node.has_meta("region_id"):
 		var region_id: String = node.get_meta("region_id")
-		_focus_on_region(region_id)
+		region_clicked.emit(region_id)
+		# Preserve today's auto-focus behavior when inspection panels aren't wired up.
+		# When ENABLE_INSPECTION_PANELS is true, the sequencer drives camera moves via
+		# the region_clicked signal — see scenes/world/time_jump_sequencer.gd.
+		if not FeatureFlags.ENABLE_INSPECTION_PANELS:
+			_focus_on_region(region_id)
+	else:
+		empty_space_clicked.emit()
 
 
 func _focus_on_region(region_id: String) -> void:

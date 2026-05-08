@@ -41,10 +41,11 @@ func open_region(region_id: String, region_meta: Dictionary, faction_id: String,
 		return
 
 	var panel := RegionInfoPanelScene.instantiate()
-	panel.bind(region_meta, faction_id, faction_name, faction_color, ownership_line)
 	if panel.has_signal("open_faction_requested"):
 		panel.open_faction_requested.connect(func(fid: String): open_faction_requested.emit(fid))
 	_swap_to(panel, "region", region_id)
+	# bind after add_child so _ready has built the UI
+	panel.bind(region_meta, faction_id, faction_name, faction_color, ownership_line)
 
 
 func open_faction(faction_id: String, faction_meta: Dictionary, faction_color: Color,
@@ -54,10 +55,10 @@ func open_faction(faction_id: String, faction_meta: Dictionary, faction_color: C
 		return
 
 	var panel := FactionInfoPanelScene.instantiate()
-	panel.bind(faction_meta, faction_color, region_rows)
 	if panel.has_signal("open_region_requested"):
 		panel.open_region_requested.connect(func(rid: String): open_region_requested.emit(rid))
 	_swap_to(panel, "faction", faction_id)
+	panel.bind(faction_meta, faction_color, region_rows)
 
 
 func close() -> void:

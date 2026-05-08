@@ -35,7 +35,7 @@ BUILD_DIR = PROJECT_ROOT / "build"
 DIST_DIR = BUILD_DIR / "_dist"
 PYI_WORK = BUILD_DIR / "_pyi_work"
 PYI_DIST = BUILD_DIR / "_pyi_dist"
-SPEC_FILE = BUILD_DIR / "pyinstaller_spec.py"
+SPEC_FILE = BUILD_DIR / "pyinstaller_spec.spec"
 
 DEFAULT_VERSION = "0.13.0"
 DEFAULT_GODOT_PRESET = "Windows Release"

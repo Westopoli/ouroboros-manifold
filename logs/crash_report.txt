@@ -4,17 +4,15 @@ python: 3.14.3 (main, Feb  3 2026, 15:32:20) [Clang 17.0.0 (clang-1700.6.3.2)]
 
 --- traceback ---
 Traceback (most recent call last):
-  File "simulation/pipe_transport.py", line 1229, in <module>
+  File "simulation/pipe_transport.py", line 1227, in <module>
     run(_make_engine, sim_env=_sim_env, crash_after_ready=_crash, test_print=_test_print, cmd_file_path=_cmd_file, use_mission_generator=_use_gen)
     ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "simulation/pipe_transport.py", line 959, in run
-    result = _run_waiting_phase(cmd_queue, engine, logger)
-  File "simulation/pipe_transport.py", line 897, in _run_waiting_phase
-    result = _wait_for_command(cmd_queue, "proceed_to_next_mission", engine, logger)
-  File "simulation/pipe_transport.py", line 682, in _wait_for_command
+  File "simulation/pipe_transport.py", line 949, in run
+    result = _wait_for_command(cmd_queue, "ready_for_time_jump", engine, logger)
+  File "simulation/pipe_transport.py", line 680, in _wait_for_command
     _send_message({"type": "heartbeat"})
     ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-  File "simulation/pipe_transport.py", line 600, in _send_message
+  File "simulation/pipe_transport.py", line 598, in _send_message
     _real_stdout_buffer.flush()
     ~~~~~~~~~~~~~~~~~~~~~~~~~^^
 BrokenPipeError: [Errno 32] Broken pipe

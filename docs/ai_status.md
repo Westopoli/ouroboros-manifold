@@ -65,11 +65,11 @@ A fifth seat — the **overlord** (Opus, summoned by Westley on demand) — medi
 
 - [ ] Stage 11.5 / 11g — World View 3D Territory Visualization — **claimed by: Opus session (world view) [aka C2]** — `claimed` — actively iterating checkpoints. Tracks B and C must respect C2's scope (see track docs).
 
-- [ ] Track B / B2 — Squad-member impact origins — **claimed by: Track B (tactical)** — `claimed` — projectile spawn origin and impact position should sample a squad mesh on the firer/target instead of using the logical unit position. (B1 unit rotation skipped — Westley confirmed it's working in playthrough on 2026-05-08.)
-  - **Files expected to edit:** `scenes/tactical/visuals/projectile_renderer.gd`, `scenes/tactical/visuals/impact_feedback_manager.gd`. Possibly `scenes/tactical/unit_renderer.gd` only if a public accessor for per-squad world positions needs to be exposed (read-only audit first; prefer reuse).
-  - **Files NOT touched:** `simulation/**`, `scenes/world/**`, `scenes/shared/world_view/**`, `autoload/*` (incl. `era_theme_resolver.gd`, `faction_palette.gd`, `sim_bridge.gd`, `theme_constants.gd`, `debug_overlay.gd`), `project.godot`, `scenes/privacy_modal/**`.
-  - **Shared-file impact:** none expected. No edits planned to any file in Rule 9's shared list.
-  - **Test gate:** sim-side facing tests stay green; visual confirm by Westley. Will mark `ready-for-confirm` when code is done.
+- [ ] Track B / B3 — Control groups swapping bug — **claimed by: Track B (tactical)** — `claimed` — `Ctrl+1..0` should assign selected units to a group (replacing prior membership); `1..0` should select that group; once in group N a unit stays there until reassigned. Currently units swap groups unexpectedly.
+  - **Files expected to edit:** `scenes/tactical/input_router.gd` (control-group state + key handling). Read-only audit first to localize the bug before any edit.
+  - **Files NOT touched:** `simulation/**`, `scenes/world/**`, `scenes/shared/world_view/**`, all `autoload/*`, `project.godot`, `scenes/privacy_modal/**`. No shared-list edits planned.
+  - **Test plan:** add a headless input-router test under `tests/` (synthesize InputEventKey events, assert `_control_groups` and `selected_uids` state). Will not modify any existing test file per "no test file modification" rule.
+  - **Possible interaction with B4:** B4 introduces `1..0` as auto unit-type-category selectors. Track doc explicitly orders B3 before B4 to resolve the conflict. Not picking up B4 until B3 is confirmed.
 
 - [ ] Stage 13 — Friends-ZIP packaging (C1–C8) — **claimed by: Track C (packaging)** — `claimed` — Stage 13 spec implementer. Currently on C1 (PyInstaller sim bundle); see Escalations re: macOS host. Files this track will touch across the full spec:
   - **Track C owns (no coordination needed):** `build/pyinstaller_spec.py`, `build/build_zip.py`, `build/README.txt`, `build/feedback.txt`; new `scenes/privacy_modal/privacy_modal.tscn` + `.gd`; new `autoload/debug_overlay.gd`; `autoload/theme_constants.gd` (`IS_RELEASE_BUILD` → `OS.has_feature("release_build")`); `scenes/settings/settings.gd` (additive version label).
@@ -129,3 +129,4 @@ After escalating, stop work on this claim.
 ## Completed
 
 - 2026-05-08 [track-b] B1 — Unit rotation: closed as already-working. Sim-side facing tests (`simulation/test_facing_convergence.py`, `simulation/test_facing_snapshot_propagation.py`) pass clean (5/5 + 9/9). Westley confirmed rotation is visible in playthrough. Prior `Opus session (rotation/visuals)` claim was stale and is removed; closing per Westley's permission.
+- 2026-05-08 [track-b] B2 — Squad-member impact origins: confirmed by Westley. Added public `UnitRenderer.get_squad_world_position(uid, squad_idx=-1)` accessor; `attack_visual_manager.gd` projectile/beam/volley positions and `impact_feedback_manager.gd` burst position now sample a random squad mesh on the firer/target instead of the unit's logical center. Bloom emission glow left unit-centered (unit-wide damage flash, not a localized impact). Burst impact y now follows the squad's layer height (was hardcoded 0). Sim-side facing tests stayed green. Isolated harness scene at `scenes/debug/test_squad_impact_origins.tscn`.

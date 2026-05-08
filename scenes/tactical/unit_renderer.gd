@@ -469,3 +469,28 @@ func _update_preference_rings() -> void:
 	for pref_layer in _pref_batches:
 		if not pref_entries.has(pref_layer):
 			(_pref_batches[pref_layer] as MultiMeshInstance3D).multimesh.visible_instance_count = 0
+
+
+# Public squad-position accessor — same formula as _update_transforms uses to
+# place the squad meshes. squad_idx == -1 picks a random squad. Returns
+# Vector3.ZERO if the unit is dead/missing.
+# See also: visuals/attack_visual_manager.gd, visuals/impact_feedback_manager.gd
+func get_squad_world_position(uid: int, squad_idx: int = -1) -> Vector3:
+	if uid < 0 or uid >= TacticalBridge.unit_count or TacticalBridge.display_alive[uid] != 1:
+		return Vector3.ZERO
+	var unit: Dictionary = TacticalBridge.units.get(uid, {})
+	var unit_type: String = String(unit.get("type", "")).to_lower()
+	var squad_count: int = EraThemeResolver.get_squad_count(unit_type)
+	if squad_count <= 0:
+		squad_count = 1
+	var idx: int = squad_idx
+	if idx < 0 or idx >= squad_count:
+		idx = randi() % squad_count
+	var offset: Vector2 = _V_OFFSETS[idx] if idx < _V_OFFSETS.size() else Vector2.ZERO
+	var layer: int = int(unit.get("layer", 0))
+	var y: float = float(layer) * EraConfig.LAYER_HEIGHT
+	return Vector3(
+		TacticalBridge.display_x[uid] + offset.x,
+		y,
+		TacticalBridge.display_y[uid] + offset.y
+	)
