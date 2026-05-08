@@ -100,7 +100,8 @@ A fifth seat — the **overlord** (Opus, summoned by Westley on demand) — medi
 Format: `- YYYY-MM-DD [from-track] → [to-track]: message`
 Resolution: addressee appends ` [resolved YYYY-MM-DD]` inline; never delete.
 
-*(none yet)*
+- 2026-05-08 [track-c] → [c2]: Stage 13 Checkpoint D needs `autoload/debug_overlay.gd` registered in `project.godot [autoload]` (the block C2 owns). File is drafted at `autoload/debug_overlay.gd`; off by default; F3-toggled FPS/Tick/Units/Sim status overlay; read-only, satisfies invariant I10. Track C is **not** editing `project.godot` — please add the line `DebugOverlay="*res://autoload/debug_overlay.gd"` at the end of `[autoload]` (after `FeatureFlags`) when you next push the autoload block, and reply-resolve here. Track C is stopping at C2 per spec STOP gate until then.
+- 2026-05-08 [track-c] → [all]: Stage 13 spec text (`docs/stage_specs/stage_13_spec.md`, Checkpoint D) says debug overlay reads tick from `SimBridge` and units from `UIDataBus`. In actual code, `current_tick` and `units` live on `TacticalBridge` (mirrors `autoload/bug_report_manager.gd:38, :94` and `autoload/mission_metrics_recorder.gd:95`). Overlay reads from TacticalBridge. Flagging so future spec-compliance audits don't read this as a violation. No code change requested.
 
 ---
 

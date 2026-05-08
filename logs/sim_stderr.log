@@ -1,6 +1,6 @@
 INFO pipe transport starting, version=0.10.0
 INFO sent ready message
-INFO reading commands from file: /Users/westley/ouroboros/logs/sim_cmd_3039262961.jsonl
+INFO reading commands from file: /Users/westley/ouroboros/logs/sim_cmd_3475338381.jsonl
 INFO === OPENING TIME JUMP (waiting for sequencer) ===
 INFO cmd file: received ready_for_time_jump
 INFO received expected command: ready_for_time_jump
@@ -58,7 +58,7 @@ INFO received expected command: ready_for_time_jump
 [pipe:stdout-intercepted] 
 ── t=4 ──
 [pipe:stdout-intercepted]   t=   4 pl     b=   9.7  accumulate  spent=  0.0  rem=   9.7  —
-[pipe:stdout-intercepted]   t=   4 faction_  b=  10.9  accumulate  spent=  0.0  rem=  10.9  —
+[pipe:stdout-intercepted]   t=   4 faction_  b=  11.0  accumulate  spent=  0.0  rem=  11.0  —
 [pipe:stdout-intercepted]   t=   4 faction_  b=   8.9  accumulate  spent=  0.0  rem=   8.9  —
 [pipe:stdout-intercepted]   t=   4 faction_  b=  11.4  accumulate  spent=  0.0  rem=  11.4  —
 [pipe:stdout-intercepted]   t=   4 faction_  b=   8.2  accumulate  spent=  0.0  rem=   8.2  —
@@ -107,12 +107,11 @@ INFO received expected command: ready_for_time_jump
 [pipe:stdout-intercepted]     —     [30]: e000, e001, e002, e003, e004, e005, e006, e007, e008, e009, e010, e011, e012, e013, e014, e015, e016, e017, e018, e019, e020, e021, e022, e023, e024, e025, e026, e027, e028, e029
 [pipe:stdout-intercepted] 
 ── t=7 ──
-[pipe:stdout-intercepted]   t=   7 faction_  b=  20.4  colonize    spent= 20.0  rem=   0.4  e024 <<<
+[pipe:stdout-intercepted]   t=   7 faction_  b=  20.4  colonize    spent= 20.0  rem=   0.4  e003 <<<
 [pipe:stdout-intercepted] 
 ── t=8 ──
-[pipe:stdout-intercepted]   t=   8 faction_  b=  20.3  colonize    spent= 20.0  rem=   0.3  e013 <<<
+[pipe:stdout-intercepted]   t=   8 faction_  b=  20.4  colonize    spent= 20.0  rem=   0.4  e002 <<<
 [pipe:stdout-intercepted]   t=   8 faction_  b=  21.2  colonize    spent= 20.0  rem=   1.2  e016 <<<
-[pipe:stdout-intercepted]   t=   8 faction_  b=  14.9  attack      spent= 10.5  rem=   4.5  e024 [surprise] <<< contested  def_mil=8.0
 [pipe:stdout-intercepted]   t=   8 faction_  b=  21.6  colonize    spent= 20.0  rem=   1.6  e015 <<<
 [pipe:stdout-intercepted] 
 ── t=9 ──
@@ -120,7 +119,7 @@ INFO received expected command: ready_for_time_jump
 [pipe:stdout-intercepted] 
 ── t=10 ──
 [pipe:stdout-intercepted]   t=  10 pl     b=  21.6  colonize    spent= 20.0  rem=   1.6  e008 <<<
-[pipe:stdout-intercepted]   t=  10 faction_  b=  20.2  colonize    spent= 19.2  rem=   0.9  e008 <<<
+[pipe:stdout-intercepted]   t=  10 faction_  b=  20.2  colonize    spent= 18.5  rem=   1.7  e008 <<<
 [pipe:stdout-intercepted]   t=  10 faction_  b=  21.1  colonize    spent= 20.0  rem=   1.1  e023 <<<
 [pipe:stdout-intercepted]   t=  10 faction_  b=  20.9  colonize    spent= 20.0  rem=   0.9  e000 <<<
 [pipe:stdout-intercepted]   t=  10 faction_  b=  20.4  colonize    spent= 20.0  rem=   0.4  e026 <<<
@@ -128,420 +127,437 @@ INFO received expected command: ready_for_time_jump
 [pipe:stdout-intercepted] 
 ── t=11 ──
 [pipe:stdout-intercepted]   t=  11 faction_  b=  22.0  colonize    spent= 20.0  rem=   2.0  e009 <<<
+[pipe:stdout-intercepted]   t=  11 faction_  b=  20.1  colonize    spent= 20.0  rem=   0.1  e024 <<<
 [pipe:stdout-intercepted]   t=  11 faction_  b=  20.3  colonize    spent= 20.0  rem=   0.3  e028 <<<
 [pipe:stdout-intercepted] 
 ── t=12 ──
-[pipe:stdout-intercepted]   t=  12 faction_  b=  10.5  attack      spent=  7.3  rem=   3.1  e009 [surprise] <<< repelled  def_mil=8.6
-[pipe:stdout-intercepted]   t=  12 faction_  b=  11.3  attack      spent=  7.9  rem=   3.4  e024 [surprise] <<< repelled  def_mil=8.5
-[pipe:stdout-intercepted]   t=  12 faction_  b=  20.5  colonize    spent= 20.0  rem=   0.5  e002 <<<
+[pipe:stdout-intercepted]   t=  12 faction_  b=  10.5  attack      spent=  0.0  rem=  10.5  e024 [TELEGRAPH → t=13]
+[pipe:stdout-intercepted]   t=  12 faction_  b=  12.4  attack      spent=  8.6  rem=   3.7  e002 [surprise] <<< repelled  def_mil=8.1
+[pipe:stdout-intercepted]   t=  12 faction_  b=  20.4  colonize    spent= 20.0  rem=   0.4  e014 <<<
+[pipe:stdout-intercepted] 
+── t=13 ──
+[pipe:stdout-intercepted]   t=  13 faction_  TELEGRAPH LANDS  → e024
+[pipe:stdout-intercepted] 
+── t=14 ──
+[pipe:stdout-intercepted]   t=  14 faction_  b=   9.0  attack      spent=  0.0  rem=   9.0  e015 [TELEGRAPH → t=15]
+[pipe:stdout-intercepted]   t=  14 faction_  b=  10.7  attack      spent=  0.0  rem=  10.7  e002 [TELEGRAPH → t=15]
 [pipe:stdout-intercepted] 
 ── t=15 ──
-[pipe:stdout-intercepted]   t=  15 faction_  b=  21.6  colonize    spent= 20.0  rem=   1.6  e003 <<<
-[pipe:stdout-intercepted]   t=  15 faction_  b=  11.3  attack      spent=  0.0  rem=  11.3  e009 [TELEGRAPH → t=16]
-[pipe:stdout-intercepted]   t=  15 faction_  b=  20.5  colonize    spent= 20.0  rem=   0.5  e019 <<<
+[pipe:stdout-intercepted]   t=  15 faction_  TELEGRAPH LANDS  → e015
+[pipe:stdout-intercepted]   t=  15 faction_  TELEGRAPH LANDS  → e002
+[pipe:stdout-intercepted]   t=  15 faction_  b=  21.6  colonize    spent= 20.0  rem=   1.6  e005 <<<
+[pipe:stdout-intercepted]   t=  15 faction_  b=  11.3  attack      spent=  7.9  rem=   3.4  e024 [surprise] <<< repelled  def_mil=8.7
 [pipe:stdout-intercepted] 
 ── t=16 ──
-[pipe:stdout-intercepted]   t=  16 faction_  TELEGRAPH LANDS  → e009
-[pipe:stdout-intercepted]   t=  16 pl     b=  14.3  attack      spent= 10.0  rem=   4.3  e008 [surprise] <<< contested CONQUEST!  def_mil=2.5
-[pipe:stdout-intercepted]   t=  16 faction_  b=  22.5  colonize    spent= 17.9  rem=   4.6  e022 <<<
-[pipe:stdout-intercepted]   t=  16 faction_  b=  21.3  colonize    spent= 20.0  rem=   1.3  e022 <<<
-[pipe:stdout-intercepted]   t=  16 faction_  b=  10.3  attack      spent=  7.2  rem=   3.1  e024 [surprise] <<< repelled  def_mil=6.0
-[pipe:stdout-intercepted]   t=  16 faction_  b=  11.1  attack      spent=  0.0  rem=  11.1  e002 [TELEGRAPH → t=17]
+[pipe:stdout-intercepted]   t=  16 faction_  b=  21.4  colonize    spent= 20.0  rem=   1.4  e022 <<<
+[pipe:stdout-intercepted]   t=  16 faction_  b=  15.3  attack      spent=  0.0  rem=  15.3  e005 [TELEGRAPH → t=17]
+[pipe:stdout-intercepted]   t=  16 faction_  b=   9.5  attack      spent=  6.7  rem=   2.9  e011 [surprise] <<< repelled  def_mil=6.4
+[pipe:stdout-intercepted]   t=  16 faction_  b=  11.2  attack      spent=  7.8  rem=   3.3  e024 [surprise] <<< repelled  def_mil=8.3
+[pipe:stdout-intercepted]   t=  16 faction_  b=  11.9  attack      spent=  7.8  rem=   4.0  e002 [surprise] <<< collision  def_mil=5.7
+[pipe:stdout-intercepted]   t=  16 faction_  b=   8.6  attack      spent=  6.0  rem=   2.6  e002 [surprise] <<< collision_loss  def_mil=5.7
 [pipe:stdout-intercepted] 
 ── t=17 ──
-[pipe:stdout-intercepted]   t=  17 faction_  TELEGRAPH LANDS  → e002
-[pipe:stdout-intercepted]   t=  17 faction_  b=  16.5  attack      spent= 11.6  rem=   5.0  e008 [surprise] <<< contested  def_mil=7.9
-[pipe:stdout-intercepted]   t=  17 faction_  b=   9.1  attack      spent=  0.0  rem=   9.1  e024 [TELEGRAPH → t=18]
+[pipe:stdout-intercepted]   t=  17 faction_  TELEGRAPH LANDS  → e005
+[pipe:stdout-intercepted]   t=  17 faction_  b=  21.5  colonize    spent= 20.0  rem=   1.5  e013 <<<
+[pipe:stdout-intercepted]   t=  17 faction_  b=   9.7  attack      spent=  0.0  rem=   9.7  e015 [TELEGRAPH → t=18]
 [pipe:stdout-intercepted] 
 ── t=18 ──
-[pipe:stdout-intercepted]   t=  18 faction_  TELEGRAPH LANDS  → e024
-[pipe:stdout-intercepted]   t=  18 faction_  b=   7.2  attack      spent=  0.0  rem=   7.2  e022 [TELEGRAPH → t=19]
-[pipe:stdout-intercepted]   t=  18 faction_  b=   6.9  attack      spent=  4.8  rem=   2.1  e022 [surprise] <<< contested CONQUEST!  def_mil=3.0
-[pipe:stdout-intercepted]   t=  18 faction_  b=  21.5  colonize    spent= 20.0  rem=   1.5  e007 <<<
+[pipe:stdout-intercepted]   t=  18 faction_  TELEGRAPH LANDS  → e015
+[pipe:stdout-intercepted]   t=  18 faction_  b=  20.3  colonize    spent= 20.0  rem=   0.3  e021 <<<
+[pipe:stdout-intercepted]   t=  18 faction_  b=   6.5  attack      spent=  6.5  rem=   0.0  e000 [surprise] <<< repelled  def_mil=6.5
+[pipe:stdout-intercepted]   t=  18 faction_  b=   9.1  attack      spent=  0.0  rem=   9.1  e005 [TELEGRAPH → t=19]
+[pipe:stdout-intercepted]   t=  18 faction_  b=  11.8  attack      spent=  0.0  rem=  11.8  e024 [TELEGRAPH → t=19]
+[pipe:stdout-intercepted]   t=  18 faction_  b=   7.2  attack      spent=  5.0  rem=   2.1  e011 [surprise] <<< contested CONQUEST!  def_mil=4.1
+[pipe:stdout-intercepted]   t=  18 faction_  b=   9.8  attack      spent=  0.0  rem=   9.8  e002 [TELEGRAPH → t=19]
 [pipe:stdout-intercepted] 
 ── t=19 ──
-[pipe:stdout-intercepted]   t=  19 faction_  TELEGRAPH LANDS  → e022
-[pipe:stdout-intercepted]   t=  19 faction_  b=  22.1  colonize    spent= 20.0  rem=   2.1  e005 <<<
-[pipe:stdout-intercepted]   t=  19 faction_  b=  21.8  colonize    spent= 17.9  rem=   3.9  e005 <<<
-[pipe:stdout-intercepted]   t=  19 faction_  b=   8.5  attack      spent=  6.0  rem=   2.6  e024 [surprise] <<< collision_loss  def_mil=5.4
-[pipe:stdout-intercepted]   t=  19 faction_  b=   8.6  attack      spent=  5.9  rem=   2.7  e024 [surprise] <<< collision CONQUEST!  def_mil=5.4
-[pipe:stdout-intercepted]   t=  19 faction_  b=  10.1  attack      spent=  0.0  rem=  10.1  e026 [TELEGRAPH → t=20]
-[pipe:stdout-intercepted]   t=  19 faction_  b=  17.5  attack      spent= 14.7  rem=   2.8  e015 [surprise] <<< contested  def_mil=6.8
+[pipe:stdout-intercepted]   t=  19 faction_  TELEGRAPH LANDS  → e005
+[pipe:stdout-intercepted]   t=  19 faction_  TELEGRAPH LANDS  → e024
+[pipe:stdout-intercepted]   t=  19 faction_  TELEGRAPH LANDS  → e002
+[pipe:stdout-intercepted]   t=  19 pl     b=  21.6  colonize    spent= 20.0  rem=   1.6  e006 <<<
+[pipe:stdout-intercepted]   t=  19 faction_  b=  22.1  colonize    spent= 20.0  rem=   2.1  e001 <<<
+[pipe:stdout-intercepted]   t=  19 faction_  b=  10.2  attack      spent=  7.1  rem=   3.0  e024 [surprise] <<< contested  def_mil=5.8
+[pipe:stdout-intercepted]   t=  19 faction_  b=  10.5  attack      spent=  0.0  rem=  10.5  e002 [TELEGRAPH → t=20]
 [pipe:stdout-intercepted] 
 ── t=20 ──
-[pipe:stdout-intercepted]   t=  20 faction_  TELEGRAPH LANDS  → e026
-[pipe:stdout-intercepted]   t=  20 faction_  b=   6.7  attack      spent=  4.7  rem=   2.0  e016 [surprise] <<< contested CONQUEST!  def_mil=2.8
-[pipe:stdout-intercepted]   t=  20 faction_  b=  15.1  attack      spent= 10.6  rem=   4.5  e024 [surprise] <<< contested  def_mil=8.7
-[pipe:stdout-intercepted]   t=  20 faction_  b=  22.3  colonize    spent= 20.0  rem=   2.3  e021 <<<
+[pipe:stdout-intercepted]   t=  20 faction_  TELEGRAPH LANDS  → e002
+[pipe:stdout-intercepted]   t=  20 faction_  b=  22.1  colonize    spent= 20.0  rem=   2.1  e012 <<<
+[pipe:stdout-intercepted]   t=  20 faction_  b=   8.9  attack      spent=  0.0  rem=   8.9  e011 [TELEGRAPH → t=21]
+[pipe:stdout-intercepted]   t=  20 faction_  b=  10.7  attack      spent=  0.0  rem=  10.7  e015 [TELEGRAPH → t=21]
 [pipe:stdout-intercepted] 
 ── t=21 ──
-[pipe:stdout-intercepted]   t=  21 faction_  b=  10.4  attack      spent=  0.0  rem=  10.4  e016 [TELEGRAPH → t=22]
-[pipe:stdout-intercepted]   t=  21 faction_  b=   7.0  attack      spent=  0.0  rem=   7.0  e016 [TELEGRAPH → t=22]
-[pipe:stdout-intercepted]   t=  21 faction_  b=   7.9  attack      spent=  0.0  rem=   7.9  e005 [TELEGRAPH → t=22]
-[pipe:stdout-intercepted]   t=  21 faction_  b=  20.1  colonize    spent= 20.0  rem=   0.1  e025 <<<
+[pipe:stdout-intercepted]   t=  21 faction_  TELEGRAPH LANDS  → e011
+[pipe:stdout-intercepted]   t=  21 faction_  TELEGRAPH LANDS  → e015
+[pipe:stdout-intercepted]   t=  21 faction_  b=  10.8  attack      spent=  7.5  rem=   3.2  e023 [surprise] <<< contested  def_mil=6.0
+[pipe:stdout-intercepted]   t=  21 faction_  b=  11.7  attack      spent=  8.2  rem=   3.5  e002 [surprise] <<< repelled  def_mil=8.2
+[pipe:stdout-intercepted]   t=  21 faction_  b=   8.4  attack      spent=  0.0  rem=   8.4  e015 [TELEGRAPH → t=22]
 [pipe:stdout-intercepted] 
 ── t=22 ──
-[pipe:stdout-intercepted]   t=  22 faction_  TELEGRAPH LANDS  → e016
-[pipe:stdout-intercepted]   t=  22 faction_  TELEGRAPH LANDS  → e016
-[pipe:stdout-intercepted]   t=  22 faction_  TELEGRAPH LANDS  → e005
-[pipe:stdout-intercepted]   t=  22 pl     b=  21.1  colonize    spent= 20.0  rem=   1.1  e029 <<<
-[pipe:stdout-intercepted]   t=  22 faction_  b=  22.4  colonize    spent= 20.0  rem=   2.4  e006 <<<
-[pipe:stdout-intercepted]   t=  22 faction_  b=  11.4  attack      spent=  8.0  rem=   3.4  e024 [surprise] <<< repelled  def_mil=8.4
-[pipe:stdout-intercepted]   t=  22 faction_  b=  21.9  colonize    spent= 20.0  rem=   1.9  e001 <<<
+[pipe:stdout-intercepted]   t=  22 faction_  TELEGRAPH LANDS  → e015
+[pipe:stdout-intercepted]   t=  22 faction_  b=  20.1  colonize    spent= 20.0  rem=   0.1  e007 <<<
+[pipe:stdout-intercepted]   t=  22 faction_  b=  12.3  attack      spent=  8.6  rem=   3.7  e005 [surprise] <<< repelled  def_mil=7.7
+[pipe:stdout-intercepted]   t=  22 faction_  b=  22.2  colonize    spent= 20.0  rem=   2.2  e004 <<<
 [pipe:stdout-intercepted] 
 ── t=23 ──
-[pipe:stdout-intercepted]   t=  23 faction_  b=   7.7  attack      spent=  5.4  rem=   2.3  e005 [surprise] <<< repelled  def_mil=5.5
-[pipe:stdout-intercepted]   t=  23 faction_  b=   9.9  attack      spent=  0.0  rem=   9.9  e011 [TELEGRAPH → t=24]
-[pipe:stdout-intercepted]   t=  23 faction_  b=  12.0  attack      spent=  0.0  rem=  12.0  e026 [TELEGRAPH → t=24]
+[pipe:stdout-intercepted]   t=  23 faction_  b=  10.4  attack      spent=  0.0  rem=  10.4  e023 [TELEGRAPH → t=24]
+[pipe:stdout-intercepted]   t=  23 faction_  b=   9.5  attack      spent=  0.0  rem=   9.5  e011 [TELEGRAPH → t=24]
+[pipe:stdout-intercepted]   t=  23 faction_  b=   3.3  attack      spent=  3.3  rem=   0.0  e024 [surprise] <<< None  def_mil=8.1
+[pipe:stdout-intercepted]   t=  23 faction_  b=  12.1  attack      spent=  0.0  rem=  12.1  e024 [TELEGRAPH → t=24]
+[pipe:stdout-intercepted]   t=  23 faction_  b=  11.6  attack      spent=  8.1  rem=   3.5  e002 [surprise] <<< repelled  def_mil=7.8
+[pipe:stdout-intercepted]   t=  23 faction_  b=   9.0  attack      spent=  6.3  rem=   2.7  e015 [surprise] <<< repelled  def_mil=6.0
 [pipe:stdout-intercepted] 
 ── t=24 ──
+[pipe:stdout-intercepted]   t=  24 faction_  TELEGRAPH LANDS  → e023
 [pipe:stdout-intercepted]   t=  24 faction_  TELEGRAPH LANDS  → e011
-[pipe:stdout-intercepted]   t=  24 faction_  TELEGRAPH LANDS  → e026
-[pipe:stdout-intercepted]   t=  24 faction_  b=   9.2  attack      spent=  0.0  rem=   9.2  e022 [TELEGRAPH → t=25]
-[pipe:stdout-intercepted]   t=  24 faction_  b=  12.3  attack      spent=  8.6  rem=   3.7  e024 [surprise] <<< repelled  def_mil=8.0
-[pipe:stdout-intercepted]   t=  24 faction_  b=  13.3  attack      spent=  9.3  rem=   4.0  e023 [surprise] <<< repelled  def_mil=8.0
+[pipe:stdout-intercepted]   t=  24 faction_  TELEGRAPH LANDS  → e024
+[pipe:stdout-intercepted]   t=  24 faction_  b=  20.1  colonize    spent= 20.0  rem=   0.1  e019 <<<
+[pipe:stdout-intercepted]   t=  24 faction_  b=  11.1  attack      spent=  7.8  rem=   3.3  e011 [surprise] <<< repelled  def_mil=7.8
+[pipe:stdout-intercepted]   t=  24 faction_  b=  10.5  attack      spent=  7.3  rem=   3.1  e015 [surprise] <<< contested  def_mil=5.7
 [pipe:stdout-intercepted] 
 ── t=25 ──
-[pipe:stdout-intercepted]   t=  25 faction_  TELEGRAPH LANDS  → e022
-[pipe:stdout-intercepted]   t=  25 faction_  b=   4.7  attack      spent=  0.0  rem=   4.7  e022 [TELEGRAPH → t=26]
-[pipe:stdout-intercepted]   t=  25 faction_  b=  12.8  attack      spent=  0.0  rem=  12.8  e016 [TELEGRAPH → t=26]
-[pipe:stdout-intercepted]   t=  25 faction_  b=   7.8  attack      spent=  5.5  rem=   2.4  e022 [surprise] <<< contested CONQUEST!  def_mil=0.6
-[pipe:stdout-intercepted]   t=  25 faction_  b=   6.8  attack      spent=  0.0  rem=   6.8  e005 [TELEGRAPH → t=26]
-[pipe:stdout-intercepted]   t=  25 faction_  b=  10.4  attack      spent=  0.0  rem=  10.4  e024 [TELEGRAPH → t=26]
-[pipe:stdout-intercepted]   t=  25 faction_  b=  13.0  attack      spent=  9.1  rem=   3.9  e002 [surprise] <<< repelled  def_mil=8.7
-[pipe:stdout-intercepted]   t=  25 faction_  b=   8.5  attack      spent=  0.0  rem=   8.5  e015 [TELEGRAPH → t=26]
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_player_home  eco=64.3  pop=68.0  ten=14.6  mil=73.1  | eco_drift: growth=+1.360 t_drag=-0.058 overcap=-0.967 osc=-0.222 adj=+0.019 net=+0.131  | ten_drift=-0.0777  | pop_drift=+0.3708
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_player_f0  eco=42.3  pop=47.3  ten=12.8  mil=51.7  | eco_drift: growth=+0.946 t_drag=-0.051 overcap=-0.320 osc=+1.662 adj=+0.040 net=+2.276  | ten_drift=-0.0074  | pop_drift=+0.3389
+[pipe:stdout-intercepted]   t=  25 pl     b=  14.9  attack      spent= 10.5  rem=   4.5  e008 [surprise] <<< contested CONQUEST!  def_mil=3.7
+[pipe:stdout-intercepted]   t=  25 faction_  b=  11.4  attack      spent=  8.0  rem=   3.4  e005 [surprise] <<< repelled  def_mil=7.2
+[pipe:stdout-intercepted]   t=  25 faction_  b=   8.2  attack      spent=  0.0  rem=   8.2  e024 [TELEGRAPH → t=26]
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_player_home  eco=64.3  pop=68.0  ten=14.6  mil=73.1  | eco_drift: growth=+1.360 t_drag=-0.058 overcap=-0.967 osc=-0.222 adj=+0.018 net=+0.131  | ten_drift=-0.0777  | pop_drift=+0.3708
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_player_f0  eco=42.0  pop=47.3  ten=12.8  mil=51.6  | eco_drift: growth=+0.945 t_drag=-0.051 overcap=-0.280 osc=+1.662 adj=+0.043 net=+2.319  | ten_drift=-0.0068  | pop_drift=+0.3355
 [pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_1_home  eco=71.8  pop=75.3  ten=16.5  mil=79.9  | eco_drift: growth=+1.507 t_drag=-0.066 overcap=-1.158 osc=+2.167 adj=+0.025 net=+2.475  | ten_drift=-0.1149  | pop_drift=+0.3294
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_1_f0  eco=54.8  pop=58.4  ten=14.2  mil=63.2  | eco_drift: growth=+1.169 t_drag=-0.057 overcap=-0.764 osc=+2.117 adj=+0.049 net=+2.513  | ten_drift=-0.0423  | pop_drift=+0.3889
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_2_home  eco=74.2  pop=78.5  ten=21.0  mil=80.8  | eco_drift: growth=+1.570 t_drag=-0.084 overcap=-1.124 osc=+2.470 adj=+0.010 net=+2.842  | ten_drift=-0.1370  | pop_drift=+0.2994
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_2_f0  eco=25.2  pop=28.5  ten=19.0  mil=27.5  | eco_drift: growth=+0.569 t_drag=-0.076 overcap=-0.148 osc=-0.588 adj=+0.038 net=-0.205  | ten_drift=-0.0027  | pop_drift=+0.1712
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_3_home  eco=72.8  pop=76.5  ten=23.0  mil=80.4  | eco_drift: growth=+1.530 t_drag=-0.092 overcap=-1.164 osc=-0.728 adj=+0.023 net=-0.430  | ten_drift=-0.1330  | pop_drift=+0.3196
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_3_f0  eco=47.3  pop=51.5  ten=22.1  mil=60.4  | eco_drift: growth=+1.031 t_drag=-0.089 overcap=-0.520 osc=+2.486 adj=+0.034 net=+2.941  | ten_drift=-0.0372  | pop_drift=+0.3680
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_4_home  eco=77.0  pop=80.7  ten=21.5  mil=81.7  | eco_drift: growth=+1.613 t_drag=-0.086 overcap=-1.265 osc=-1.272 adj=+0.016 net=-0.993  | ten_drift=-0.1519  | pop_drift=+0.2820
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_4_f0  eco=30.6  pop=32.4  ten=5.9  mil=34.7  | eco_drift: growth=+0.649 t_drag=-0.024 overcap=-0.458 osc=+2.058 adj=+0.047 net=+2.273  | ten_drift=+0.0195  | pop_drift=+0.2484
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_5_home  eco=77.6  pop=81.4  ten=20.6  mil=82.5  | eco_drift: growth=+1.628 t_drag=-0.082 overcap=-1.269 osc=-2.034 adj=+0.025 net=-1.733  | ten_drift=-0.1535  | pop_drift=+0.2745
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_5_f0  eco=49.9  pop=54.0  ten=15.0  mil=61.1  | eco_drift: growth=+1.080 t_drag=-0.060 overcap=-0.595 osc=-2.389 adj=+0.040 net=-1.924  | ten_drift=-0.0296  | pop_drift=+0.3774
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_6_home  eco=74.0  pop=77.8  ten=21.8  mil=80.5  | eco_drift: growth=+1.556 t_drag=-0.087 overcap=-1.175 osc=-0.409 adj=+0.000 net=-0.114  | ten_drift=-0.1368  | pop_drift=+0.3080
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_6_f0  eco=18.8  pop=30.4  ten=34.1  mil=10.3  | eco_drift: growth=+0.608 t_drag=-0.136 overcap=-0.000 osc=+2.309 adj=+0.000 net=+2.781  | ten_drift=+0.0209  | pop_drift=+0.0620
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_1_f0  eco=54.6  pop=58.4  ten=15.1  mil=63.3  | eco_drift: growth=+1.169 t_drag=-0.060 overcap=-0.733 osc=+2.117 adj=+0.049 net=+2.541  | ten_drift=-0.0435  | pop_drift=+0.3869
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_2_home  eco=74.5  pop=78.5  ten=20.6  mil=80.8  | eco_drift: growth=+1.570 t_drag=-0.083 overcap=-1.161 osc=+2.470 adj=+0.010 net=+2.806  | ten_drift=-0.1373  | pop_drift=+0.3007
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_2_f0  eco=25.0  pop=28.4  ten=19.9  mil=27.4  | eco_drift: growth=+0.569 t_drag=-0.080 overcap=-0.126 osc=-0.588 adj=+0.042 net=-0.183  | ten_drift=-0.0042  | pop_drift=+0.1685
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_3_home  eco=72.9  pop=76.5  ten=15.5  mil=80.5  | eco_drift: growth=+1.530 t_drag=-0.062 overcap=-1.182 osc=-0.728 adj=+0.023 net=-0.419  | ten_drift=-0.1186  | pop_drift=+0.3203
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_3_f0  eco=47.5  pop=51.5  ten=21.2  mil=60.4  | eco_drift: growth=+1.031 t_drag=-0.085 overcap=-0.560 osc=+2.486 adj=+0.045 net=+2.917  | ten_drift=-0.0361  | pop_drift=+0.3711
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_4_home  eco=77.1  pop=80.7  ten=17.0  mil=81.8  | eco_drift: growth=+1.613 t_drag=-0.068 overcap=-1.276 osc=-1.272 adj=+0.016 net=-0.986  | ten_drift=-0.1432  | pop_drift=+0.2823
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_4_f0  eco=30.7  pop=32.4  ten=5.9  mil=34.8  | eco_drift: growth=+0.649 t_drag=-0.024 overcap=-0.462 osc=+2.058 adj=+0.052 net=+2.274  | ten_drift=+0.0195  | pop_drift=+0.2488
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_5_home  eco=78.1  pop=81.4  ten=16.9  mil=82.6  | eco_drift: growth=+1.628 t_drag=-0.067 overcap=-1.336 osc=-2.034 adj=+0.031 net=-1.778  | ten_drift=-0.1481  | pop_drift=+0.2760
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_5_f0  eco=50.0  pop=53.9  ten=15.6  mil=60.9  | eco_drift: growth=+1.078 t_drag=-0.062 overcap=-0.622 osc=-2.389 adj=+0.047 net=-1.948  | ten_drift=-0.0311  | pop_drift=+0.3792
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_6_home  eco=74.0  pop=77.8  ten=21.6  mil=80.5  | eco_drift: growth=+1.556 t_drag=-0.086 overcap=-1.183 osc=-0.409 adj=+0.016 net=-0.106  | ten_drift=-0.1367  | pop_drift=+0.3083
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_6_f0  eco=31.0  pop=33.6  ten=13.2  mil=36.1  | eco_drift: growth=+0.671 t_drag=-0.053 overcap=-0.372 osc=+2.309 adj=+0.048 net=+2.604  | ten_drift=+0.0055  | pop_drift=+0.2501
 [pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_7_home  eco=68.2  pop=71.9  ten=16.4  mil=76.4  | eco_drift: growth=+1.438 t_drag=-0.066 overcap=-1.066 osc=-1.914 adj=+0.015 net=-1.591  | ten_drift=-0.0983  | pop_drift=+0.3517
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_7_f0  eco=30.8  pop=33.3  ten=11.9  mil=37.1  | eco_drift: growth=+0.665 t_drag=-0.048 overcap=-0.373 osc=+2.479 adj=+0.045 net=+2.769  | ten_drift=+0.0082  | pop_drift=+0.2475
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_8_home  eco=69.6  pop=73.5  ten=24.7  mil=77.6  | eco_drift: growth=+1.469 t_drag=-0.099 overcap=-1.071 osc=-0.971 adj=+0.026 net=-0.646  | ten_drift=-0.1214  | pop_drift=+0.3408
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_8_f0  eco=55.5  pop=59.0  ten=14.1  mil=66.3  | eco_drift: growth=+1.180 t_drag=-0.056 overcap=-0.806 osc=+2.236 adj=+0.045 net=+2.598  | ten_drift=-0.0445  | pop_drift=+0.3910
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_9_home  eco=62.0  pop=65.9  ten=17.6  mil=72.1  | eco_drift: growth=+1.318 t_drag=-0.070 overcap=-0.893 osc=-1.974 adj=+0.013 net=-1.607  | ten_drift=-0.0746  | pop_drift=+0.3769
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_9_f0  eco=31.3  pop=33.5  ten=10.5  mil=37.2  | eco_drift: growth=+0.670 t_drag=-0.042 overcap=-0.431 osc=+1.233 adj=+0.037 net=+1.467  | ten_drift=+0.0103  | pop_drift=+0.2558
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_7_f0  eco=30.8  pop=33.3  ten=11.9  mil=37.1  | eco_drift: growth=+0.665 t_drag=-0.048 overcap=-0.372 osc=+2.479 adj=+0.044 net=+2.768  | ten_drift=+0.0082  | pop_drift=+0.2474
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_8_home  eco=69.7  pop=73.5  ten=21.2  mil=77.6  | eco_drift: growth=+1.469 t_drag=-0.085 overcap=-1.080 osc=-0.971 adj=+0.026 net=-0.641  | ten_drift=-0.1147  | pop_drift=+0.3411
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_8_f0  eco=55.2  pop=59.0  ten=15.3  mil=66.3  | eco_drift: growth=+1.180 t_drag=-0.061 overcap=-0.762 osc=+2.236 adj=+0.037 net=+2.630  | ten_drift=-0.0460  | pop_drift=+0.3881
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_9_home  eco=61.9  pop=65.9  ten=21.1  mil=72.1  | eco_drift: growth=+1.318 t_drag=-0.084 overcap=-0.889 osc=-1.974 adj=+0.013 net=-1.617  | ten_drift=-0.0815  | pop_drift=+0.3767
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_9_f0  eco=31.3  pop=33.5  ten=9.7  mil=37.3  | eco_drift: growth=+0.671 t_drag=-0.039 overcap=-0.412 osc=+1.233 adj=+0.032 net=+1.485  | ten_drift=+0.0119  | pop_drift=+0.2543
 [pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_10_home  eco=66.2  pop=70.0  ten=14.7  mil=76.3  | eco_drift: growth=+1.401 t_drag=-0.059 overcap=-1.003 osc=+0.277 adj=+0.013 net=+0.629  | ten_drift=-0.0862  | pop_drift=+0.3612
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_10_f0  eco=31.3  pop=33.4  ten=11.6  mil=38.5  | eco_drift: growth=+0.668 t_drag=-0.046 overcap=-0.436 osc=+1.739 adj=+0.043 net=+1.968  | ten_drift=+0.0080  | pop_drift=+0.2555
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_10_f0  eco=31.3  pop=33.4  ten=11.6  mil=38.5  | eco_drift: growth=+0.668 t_drag=-0.046 overcap=-0.437 osc=+1.739 adj=+0.045 net=+1.969  | ten_drift=+0.0080  | pop_drift=+0.2555
 [pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_11_home  eco=72.1  pop=76.0  ten=18.5  mil=79.9  | eco_drift: growth=+1.520 t_drag=-0.074 overcap=-1.131 osc=-1.909 adj=+0.018 net=-1.576  | ten_drift=-0.1211  | pop_drift=+0.3226
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_11_f0  eco=32.3  pop=34.3  ten=5.6  mil=39.1  | eco_drift: growth=+0.686 t_drag=-0.022 overcap=-0.477 osc=+1.323 adj=+0.042 net=+1.552  | ten_drift=+0.0192  | pop_drift=+0.2679
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_11_f0  eco=32.3  pop=34.3  ten=5.6  mil=39.1  | eco_drift: growth=+0.686 t_drag=-0.022 overcap=-0.478 osc=+1.323 adj=+0.043 net=+1.553  | ten_drift=+0.0192  | pop_drift=+0.2679
 [pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_12_home  eco=78.7  pop=82.1  ten=20.4  mil=83.7  | eco_drift: growth=+1.642 t_drag=-0.082 overcap=-1.339 osc=-1.419 adj=+0.022 net=-1.176  | ten_drift=-0.1587  | pop_drift=+0.2684
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_12_f0  eco=48.5  pop=51.8  ten=12.6  mil=59.4  | eco_drift: growth=+1.035 t_drag=-0.050 overcap=-0.674 osc=+1.832 adj=+0.047 net=+2.190  | ten_drift=-0.0212  | pop_drift=+0.3801
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_12_f0  eco=48.3  pop=51.7  ten=13.3  mil=59.3  | eco_drift: growth=+1.035 t_drag=-0.053 overcap=-0.642 osc=+1.832 adj=+0.042 net=+2.213  | ten_drift=-0.0221  | pop_drift=+0.3777
 [pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_13_home  eco=63.9  pop=67.2  ten=13.4  mil=73.4  | eco_drift: growth=+1.344 t_drag=-0.053 overcap=-1.021 osc=-1.352 adj=+0.013 net=-1.070  | ten_drift=-0.0736  | pop_drift=+0.3775
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_13_f0  eco=29.6  pop=31.5  ten=8.5  mil=31.8  | eco_drift: growth=+0.630 t_drag=-0.034 overcap=-0.422 osc=+2.122 adj=+0.041 net=+2.336  | ten_drift=+0.0151  | pop_drift=+0.2352
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_14_home  eco=71.3  pop=74.9  ten=17.9  mil=79.8  | eco_drift: growth=+1.499 t_drag=-0.072 overcap=-1.135 osc=+1.779 adj=+0.020 net=+2.091  | ten_drift=-0.1155  | pop_drift=+0.3318
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_14_f0  eco=40.2  pop=42.3  ten=11.0  mil=45.6  | eco_drift: growth=+0.846 t_drag=-0.044 overcap=-0.645 osc=+2.398 adj=+0.046 net=+2.601  | ten_drift=-0.0013  | pop_drift=+0.3427
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_e000  eco=15.0  pop=18.3  ten=46.1  mil=5.4  | eco_drift: growth=+0.366 t_drag=-0.184 overcap=-0.000 osc=-1.669 adj=+0.004 net=-1.484  | ten_drift=+0.1523  | pop_drift=-0.0091
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_e001  eco=11.5  pop=19.4  ten=32.5  mil=9.1  | eco_drift: growth=+0.389 t_drag=-0.130 overcap=-0.000 osc=-1.669 adj=+0.007 net=-1.404  | ten_drift=+0.1575  | pop_drift=-0.6947
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_e002  eco=17.1  pop=25.2  ten=49.1  mil=8.3  | eco_drift: growth=+0.504 t_drag=-0.196 overcap=-0.000 osc=-1.669 adj=+0.018 net=-1.344  | ten_drift=+0.1097  | pop_drift=+0.0368
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_e003  eco=18.1  pop=24.7  ten=36.6  mil=6.4  | eco_drift: growth=+0.495 t_drag=-0.147 overcap=-0.000 osc=-1.669 adj=+0.000 net=-1.321  | ten_drift=+0.1131  | pop_drift=+0.0547
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_e005  eco=11.5  pop=14.1  ten=41.9  mil=3.3  | eco_drift: growth=+0.282 t_drag=-0.167 overcap=-0.000 osc=-1.669 adj=+0.005 net=-1.550  | ten_drift=+0.1577  | pop_drift=-0.6947
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_e006  eco=11.7  pop=22.7  ten=28.5  mil=9.1  | eco_drift: growth=+0.454 t_drag=-0.114 overcap=-0.000 osc=-1.669 adj=+0.027 net=-1.303  | ten_drift=+0.1142  | pop_drift=-0.6584
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_e007  eco=11.5  pop=16.9  ten=33.6  mil=6.9  | eco_drift: growth=+0.339 t_drag=-0.134 overcap=-0.000 osc=-1.669 adj=+0.022 net=-1.444  | ten_drift=+0.1584  | pop_drift=-0.6947
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_e008  eco=23.9  pop=28.0  ten=49.8  mil=10.3  | eco_drift: growth=+0.561 t_drag=-0.199 overcap=-0.015 osc=-1.669 adj=+0.024 net=-1.299  | ten_drift=+0.0272  | pop_drift=+0.1513
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_e009  eco=21.9  pop=25.5  ten=38.8  mil=13.6  | eco_drift: growth=+0.509 t_drag=-0.155 overcap=-0.041 osc=-1.669 adj=+0.020 net=-1.336  | ten_drift=+0.0124  | pop_drift=+0.1212
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_e011  eco=18.5  pop=24.4  ten=35.5  mil=6.2  | eco_drift: growth=+0.489 t_drag=-0.142 overcap=-0.000 osc=-1.669 adj=+0.027 net=-1.296  | ten_drift=+0.1129  | pop_drift=+0.0620
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_e013  eco=17.2  pop=23.9  ten=36.8  mil=9.4  | eco_drift: growth=+0.478 t_drag=-0.147 overcap=-0.000 osc=-1.669 adj=+0.027 net=-1.312  | ten_drift=+0.1073  | pop_drift=+0.0388
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_e015  eco=14.8  pop=21.4  ten=38.4  mil=5.1  | eco_drift: growth=+0.428 t_drag=-0.154 overcap=-0.000 osc=-1.669 adj=+0.035 net=-1.360  | ten_drift=+0.1186  | pop_drift=-0.0347
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_e016  eco=16.9  pop=25.1  ten=60.1  mil=7.3  | eco_drift: growth=+0.502 t_drag=-0.240 overcap=-0.000 osc=-1.669 adj=+0.016 net=-1.392  | ten_drift=+0.1116  | pop_drift=+0.0342
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_e018  eco=18.6  pop=19.1  ten=41.6  mil=9.2  | eco_drift: growth=+0.382 t_drag=-0.166 overcap=-0.356 osc=-1.669 adj=+0.022 net=-1.788  | ten_drift=+0.1454  | pop_drift=+0.0689
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_e019  eco=20.0  pop=24.7  ten=32.9  mil=9.3  | eco_drift: growth=+0.493 t_drag=-0.132 overcap=-0.000 osc=-1.669 adj=+0.005 net=-1.303  | ten_drift=+0.1043  | pop_drift=+0.0883
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_e021  eco=11.5  pop=16.0  ten=33.9  mil=9.1  | eco_drift: growth=+0.321 t_drag=-0.136 overcap=-0.000 osc=-1.669 adj=+0.009 net=-1.476  | ten_drift=+0.1538  | pop_drift=-0.6947
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_e022  eco=23.4  pop=25.0  ten=59.2  mil=6.3  | eco_drift: growth=+0.500 t_drag=-0.237 overcap=-0.327 osc=-1.669 adj=+0.006 net=-1.727  | ten_drift=+0.1058  | pop_drift=+0.1487
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_e023  eco=16.5  pop=18.5  ten=46.5  mil=7.5  | eco_drift: growth=+0.370 t_drag=-0.186 overcap=-0.106 osc=-1.669 adj=+0.024 net=-1.567  | ten_drift=+0.1473  | pop_drift=+0.0278
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_e024  eco=13.1  pop=20.4  ten=70.8  mil=8.7  | eco_drift: growth=+0.407 t_drag=-0.283 overcap=-0.000 osc=-1.669 adj=+0.014 net=-1.532  | ten_drift=+0.1107  | pop_drift=-0.3810
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_e025  eco=11.5  pop=19.8  ten=31.2  mil=6.9  | eco_drift: growth=+0.395 t_drag=-0.125 overcap=-0.000 osc=-1.669 adj=+0.005 net=-1.394  | ten_drift=+0.1621  | pop_drift=-0.6947
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_e026  eco=20.0  pop=21.2  ten=41.0  mil=11.5  | eco_drift: growth=+0.425 t_drag=-0.164 overcap=-0.289 osc=-1.669 adj=+0.019 net=-1.679  | ten_drift=+0.0255  | pop_drift=+0.0924
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_e028  eco=17.5  pop=19.1  ten=46.7  mil=9.9  | eco_drift: growth=+0.382 t_drag=-0.187 overcap=-0.189 osc=-1.669 adj=+0.014 net=-1.650  | ten_drift=+0.1426  | pop_drift=+0.0471
-[pipe:stdout-intercepted]   [DRIFT t= 25] region_e029  eco=11.7  pop=19.9  ten=29.5  mil=7.9  | eco_drift: growth=+0.397 t_drag=-0.118 overcap=-0.000 osc=-1.669 adj=+0.010 net=-1.381  | ten_drift=+0.1612  | pop_drift=-0.6640
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_13_f0  eco=29.2  pop=31.4  ten=11.2  mil=31.7  | eco_drift: growth=+0.629 t_drag=-0.045 overcap=-0.373 osc=+2.122 adj=+0.044 net=+2.377  | ten_drift=+0.0103  | pop_drift=+0.2292
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_14_home  eco=71.2  pop=74.9  ten=21.3  mil=79.7  | eco_drift: growth=+1.499 t_drag=-0.085 overcap=-1.124 osc=+1.779 adj=+0.020 net=+2.088  | ten_drift=-0.1221  | pop_drift=+0.3314
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_faction_14_f0  eco=40.2  pop=42.3  ten=11.0  mil=45.6  | eco_drift: growth=+0.846 t_drag=-0.044 overcap=-0.641 osc=+2.398 adj=+0.043 net=+2.602  | ten_drift=-0.0012  | pop_drift=+0.3424
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_e000  eco=20.0  pop=24.0  ten=42.9  mil=7.5  | eco_drift: growth=+0.480 t_drag=-0.171 overcap=-0.000 osc=-1.669 adj=+0.017 net=-1.344  | ten_drift=+0.1078  | pop_drift=+0.0898
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_e001  eco=11.5  pop=14.4  ten=34.9  mil=9.1  | eco_drift: growth=+0.288 t_drag=-0.139 overcap=-0.000 osc=-1.669 adj=+0.018 net=-1.504  | ten_drift=+0.1518  | pop_drift=-0.6947
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_e002  eco=14.2  pop=24.0  ten=63.3  mil=7.4  | eco_drift: growth=+0.480 t_drag=-0.253 overcap=-0.000 osc=-1.669 adj=+0.009 net=-1.434  | ten_drift=+0.1144  | pop_drift=-0.1691
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_e003  eco=15.7  pop=15.3  ten=37.7  mil=5.7  | eco_drift: growth=+0.305 t_drag=-0.151 overcap=-0.416 osc=-1.669 adj=+0.040 net=-1.890  | ten_drift=+0.1536  | pop_drift=+0.0149
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_e004  eco=12.7  pop=22.9  ten=25.5  mil=8.1  | eco_drift: growth=+0.457 t_drag=-0.102 overcap=-0.000 osc=-1.669 adj=+0.010 net=-1.304  | ten_drift=+0.1156  | pop_drift=-0.4635
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_e005  eco=16.3  pop=21.4  ten=47.3  mil=6.8  | eco_drift: growth=+0.428 t_drag=-0.189 overcap=-0.000 osc=-1.669 adj=+0.024 net=-1.407  | ten_drift=+0.1130  | pop_drift=+0.0247
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_e006  eco=11.5  pop=17.7  ten=32.8  mil=6.9  | eco_drift: growth=+0.354 t_drag=-0.131 overcap=-0.000 osc=-1.669 adj=+0.020 net=-1.427  | ten_drift=+0.1596  | pop_drift=-0.6947
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_e007  eco=11.5  pop=22.0  ten=27.6  mil=6.0  | eco_drift: growth=+0.441 t_drag=-0.110 overcap=-0.000 osc=-1.669 adj=+0.025 net=-1.314  | ten_drift=+0.1211  | pop_drift=-0.6947
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_e008  eco=23.4  pop=25.0  ten=54.7  mil=9.0  | eco_drift: growth=+0.500 t_drag=-0.219 overcap=-0.327 osc=-1.669 adj=+0.020 net=-1.695  | ten_drift=+0.0998  | pop_drift=+0.1487
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_e009  eco=20.4  pop=25.3  ten=38.5  mil=10.3  | eco_drift: growth=+0.505 t_drag=-0.154 overcap=-0.000 osc=-1.669 adj=+0.020 net=-1.298  | ten_drift=+0.0245  | pop_drift=+0.0953
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_e011  eco=12.6  pop=22.2  ten=58.1  mil=6.5  | eco_drift: growth=+0.443 t_drag=-0.233 overcap=-0.000 osc=-1.669 adj=+0.000 net=-1.459  | ten_drift=+0.1176  | pop_drift=-0.4877
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_e012  eco=11.5  pop=14.8  ten=36.0  mil=7.1  | eco_drift: growth=+0.297 t_drag=-0.144 overcap=-0.000 osc=-1.669 adj=+0.008 net=-1.509  | ten_drift=+0.1549  | pop_drift=-0.6947
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_e013  eco=11.5  pop=20.9  ten=36.8  mil=7.1  | eco_drift: growth=+0.417 t_drag=-0.147 overcap=-0.000 osc=-1.669 adj=+0.026 net=-1.373  | ten_drift=+0.1174  | pop_drift=-0.6947
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_e014  eco=23.5  pop=25.7  ten=28.7  mil=15.1  | eco_drift: growth=+0.514 t_drag=-0.115 overcap=-0.250 osc=-1.669 adj=+0.018 net=-1.502  | ten_drift=-0.0026  | pop_drift=+0.1491
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_e015  eco=15.0  pop=24.8  ten=55.7  mil=5.5  | eco_drift: growth=+0.495 t_drag=-0.223 overcap=-0.000 osc=-1.669 adj=+0.009 net=-1.388  | ten_drift=+0.1182  | pop_drift=+0.0004
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_e016  eco=18.4  pop=23.4  ten=32.9  mil=8.6  | eco_drift: growth=+0.468 t_drag=-0.132 overcap=-0.000 osc=-1.669 adj=+0.029 net=-1.304  | ten_drift=+0.1077  | pop_drift=+0.0604
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_e018  eco=21.3  pop=24.1  ten=36.0  mil=9.1  | eco_drift: growth=+0.481 t_drag=-0.144 overcap=-0.129 osc=-1.669 adj=+0.026 net=-1.435  | ten_drift=+0.1029  | pop_drift=+0.1129
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_e019  eco=16.7  pop=24.1  ten=25.0  mil=8.5  | eco_drift: growth=+0.482 t_drag=-0.100 overcap=-0.000 osc=-1.669 adj=+0.026 net=-1.261  | ten_drift=+0.1102  | pop_drift=+0.0304
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_e021  eco=11.5  pop=15.8  ten=37.5  mil=6.8  | eco_drift: growth=+0.315 t_drag=-0.150 overcap=-0.000 osc=-1.669 adj=+0.010 net=-1.494  | ten_drift=+0.1555  | pop_drift=-0.6947
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_e022  eco=12.1  pop=21.3  ten=39.5  mil=4.9  | eco_drift: growth=+0.425 t_drag=-0.158 overcap=-0.000 osc=-1.669 adj=+0.007 net=-1.396  | ten_drift=+0.1220  | pop_drift=-0.5789
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_e023  eco=17.2  pop=20.4  ten=45.3  mil=7.2  | eco_drift: growth=+0.408 t_drag=-0.181 overcap=-0.000 osc=-1.669 adj=+0.018 net=-1.425  | ten_drift=+0.1110  | pop_drift=+0.0419
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_e024  eco=12.4  pop=20.3  ten=70.4  mil=6.2  | eco_drift: growth=+0.406 t_drag=-0.282 overcap=-0.000 osc=-1.669 adj=+0.000 net=-1.545  | ten_drift=+0.1170  | pop_drift=-0.5193
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_e026  eco=22.3  pop=24.5  ten=33.0  mil=12.2  | eco_drift: growth=+0.490 t_drag=-0.132 overcap=-0.220 osc=-1.669 adj=+0.024 net=-1.508  | ten_drift=+0.0124  | pop_drift=+0.1295
+[pipe:stdout-intercepted]   [DRIFT t= 25] region_e028  eco=20.9  pop=21.3  ten=41.5  mil=10.9  | eco_drift: growth=+0.425 t_drag=-0.166 overcap=-0.420 osc=-1.669 adj=+0.014 net=-1.816  | ten_drift=+0.0268  | pop_drift=+0.1088
 [pipe:stdout-intercepted] 
 ── t=26 ──
-[pipe:stdout-intercepted]   t=  26 faction_  TELEGRAPH LANDS  → e022
-[pipe:stdout-intercepted]   t=  26 faction_  TELEGRAPH LANDS  → e016
-[pipe:stdout-intercepted]   t=  26 faction_  TELEGRAPH LANDS  → e005
 [pipe:stdout-intercepted]   t=  26 faction_  TELEGRAPH LANDS  → e024
-[pipe:stdout-intercepted]   t=  26 faction_  TELEGRAPH LANDS  → e015
-[pipe:stdout-intercepted]   t=  26 faction_  b=   5.3  attack      spent=  3.7  rem=   1.6  e005 [surprise] <<< repelled  def_mil=3.3
-[pipe:stdout-intercepted]   t=  26 faction_  b=  10.3  attack      spent=  0.0  rem=  10.3  e011 [TELEGRAPH → t=27]
-[pipe:stdout-intercepted]   t=  26 faction_  b=  10.2  attack      spent=  7.2  rem=   3.1  e024 [surprise] <<< repelled  def_mil=6.7
-[pipe:stdout-intercepted]   t=  26 faction_  b=  22.1  attack      spent=  0.0  rem=  22.1  e002 [TELEGRAPH → t=27]
+[pipe:stdout-intercepted]   t=  26 faction_  b=  19.3  attack      spent=  0.0  rem=  19.3  e008 [TELEGRAPH → t=27]
+[pipe:stdout-intercepted]   t=  26 faction_  b=  12.5  attack      spent=  8.8  rem=   3.8  e023 [surprise] <<< repelled  def_mil=7.2
+[pipe:stdout-intercepted]   t=  26 faction_  b=  10.1  attack      spent=  0.0  rem=  10.1  e011 [TELEGRAPH → t=27]
+[pipe:stdout-intercepted]   t=  26 faction_  b=  11.3  attack      spent=  7.9  rem=   3.4  e002 [surprise] <<< contested  def_mil=6.3
+[pipe:stdout-intercepted]   t=  26 faction_  b=  11.1  attack      spent=  7.7  rem=   3.3  e015 [surprise] <<< collision_loss  def_mil=5.5
+[pipe:stdout-intercepted]   t=  26 faction_  b=   8.3  attack      spent=  5.4  rem=   2.9  e015 [surprise] <<< collision CONQUEST!  def_mil=5.5
 [pipe:stdout-intercepted] 
 ── t=27 ──
+[pipe:stdout-intercepted]   t=  27 faction_  TELEGRAPH LANDS  → e008
 [pipe:stdout-intercepted]   t=  27 faction_  TELEGRAPH LANDS  → e011
-[pipe:stdout-intercepted]   t=  27 faction_  TELEGRAPH LANDS  → e002
-[pipe:stdout-intercepted]   t=  27 faction_  b=   9.0  attack      spent=  6.3  rem=   2.7  e016 [surprise] <<< repelled  def_mil=5.5
-[pipe:stdout-intercepted]   t=  27 faction_  b=   9.5  attack      spent=  6.7  rem=   2.9  e005 [surprise] <<< contested CONQUEST!  def_mil=5.2
+[pipe:stdout-intercepted]   t=  27 faction_  b=   7.8  attack      spent=  5.5  rem=   2.4  e022 [surprise] <<< repelled  def_mil=4.9
+[pipe:stdout-intercepted]   t=  27 faction_  b=  10.0  attack      spent=  0.0  rem=  10.0  e011 [TELEGRAPH → t=28]
 [pipe:stdout-intercepted] 
 ── t=28 ──
-[pipe:stdout-intercepted]   t=  28 faction_  b=  20.2  colonize    spent= 20.0  rem=   0.2  e014 <<<
-[pipe:stdout-intercepted]   t=  28 faction_  b=   7.6  attack      spent=  0.0  rem=   7.6  e022 [TELEGRAPH → t=29]
-[pipe:stdout-intercepted]   t=  28 faction_  b=  10.7  attack      spent=  0.0  rem=  10.7  e024 [TELEGRAPH → t=29]
-[pipe:stdout-intercepted]   t=  28 faction_  b=   8.0  attack      spent=  5.6  rem=   2.4  e011 [surprise] <<< repelled  def_mil=5.8
-[pipe:stdout-intercepted]   t=  28 faction_  b=  10.3  attack      spent=  7.2  rem=   3.1  e024 [surprise] <<< contested CONQUEST!  def_mil=5.1
-[pipe:stdout-intercepted]   t=  28 faction_  b=  21.4  attack      spent=  0.0  rem=  21.4  e015 [TELEGRAPH → t=29]
-[pipe:stdout-intercepted]   t=  28 faction_  b=  13.0  attack      spent=  0.0  rem=  13.0  e015 [TELEGRAPH → t=29]
+[pipe:stdout-intercepted]   t=  28 faction_  TELEGRAPH LANDS  → e011
+[pipe:stdout-intercepted]   t=  28 faction_  b=  22.2  colonize    spent= 20.0  rem=   2.2  e017 <<<
+[pipe:stdout-intercepted]   t=  28 faction_  b=  11.2  attack      spent=  7.8  rem=   3.4  e005 [surprise] <<< repelled  def_mil=6.7
+[pipe:stdout-intercepted]   t=  28 faction_  b=   9.7  attack      spent=  6.8  rem=   2.9  e024 [surprise] <<< repelled  def_mil=7.6
 [pipe:stdout-intercepted] 
 ── t=29 ──
-[pipe:stdout-intercepted]   t=  29 faction_  TELEGRAPH LANDS  → e022
-[pipe:stdout-intercepted]   t=  29 faction_  TELEGRAPH LANDS  → e024
-[pipe:stdout-intercepted]   t=  29 faction_  TELEGRAPH LANDS  → e015
-[pipe:stdout-intercepted]   t=  29 faction_  TELEGRAPH LANDS  → e015
-[pipe:stdout-intercepted]   t=  29 faction_  b=   8.2  attack      spent=  0.0  rem=   8.2  e016 [TELEGRAPH → t=30]
-[pipe:stdout-intercepted]   t=  29 faction_  b=  19.4  attack      spent= 13.6  rem=   5.8  e024 [surprise] <<< contested  def_mil=9.8
-[pipe:stdout-intercepted]   t=  29 faction_  b=  10.3  attack      spent=  0.0  rem=  10.3  e025 [TELEGRAPH → t=30]
+[pipe:stdout-intercepted]   t=  29 faction_  b=  12.1  attack      spent=  8.5  rem=   3.6  e023 [surprise] <<< repelled  def_mil=6.9
+[pipe:stdout-intercepted]   t=  29 faction_  b=   5.9  attack      spent=  0.0  rem=   5.9  e002 [TELEGRAPH → t=30]
+[pipe:stdout-intercepted]   t=  29 faction_  b=   7.6  attack      spent=  7.6  rem=   0.0  e024 [surprise] <<< repelled  def_mil=7.8
+[pipe:stdout-intercepted]   t=  29 faction_  b=  12.9  attack      spent=  0.0  rem=  12.9  e011 [TELEGRAPH → t=30]
+[pipe:stdout-intercepted]   t=  29 faction_  b=  10.1  attack      spent=  8.5  rem=   1.6  e000 [surprise] <<< contested  def_mil=5.9
 [pipe:stdout-intercepted] 
 ── t=30 ──
-[pipe:stdout-intercepted]   t=  30 faction_  TELEGRAPH LANDS  → e016
-[pipe:stdout-intercepted]   t=  30 faction_  TELEGRAPH LANDS  → e025
-[pipe:stdout-intercepted]   t=  30 pl     b=  21.4  attack      spent= 15.0  rem=   6.4  e013 [surprise] <<< contested  def_mil=9.5
-[pipe:stdout-intercepted]   t=  30 faction_  b=  12.4  attack      spent=  8.7  rem=   3.7  e005 [surprise] <<< repelled  def_mil=10.8
-[pipe:stdout-intercepted]   t=  30 faction_  b=  12.3  attack      spent=  0.0  rem=  12.3  e024 [TELEGRAPH → t=31]
+[pipe:stdout-intercepted]   t=  30 faction_  TELEGRAPH LANDS  → e002
+[pipe:stdout-intercepted]   t=  30 faction_  TELEGRAPH LANDS  → e011
+[pipe:stdout-intercepted]   t=  30 faction_  b=  23.2  attack      spent= 16.2  rem=   7.0  e013 [surprise] <<< contested  def_mil=7.3
+[pipe:stdout-intercepted]   t=  30 faction_  b=   7.8  attack      spent=  5.4  rem=   2.3  e005 [surprise] <<< repelled  def_mil=4.3
+[pipe:stdout-intercepted]   t=  30 faction_  b=  13.2  attack      spent=  0.0  rem=  13.2  e015 [TELEGRAPH → t=31]
+[pipe:stdout-intercepted]   t=  30 faction_  b=  14.7  attack      spent=  7.1  rem=   7.6  e015 [surprise] <<< collision  def_mil=10.4
+[pipe:stdout-intercepted]   t=  30 faction_  b=  20.9  colonize    spent= 20.0  rem=   0.9  e020 <<<
 [pipe:stdout-intercepted] 
 ── t=31 ──
-[pipe:stdout-intercepted]   t=  31 faction_  TELEGRAPH LANDS  → e024
-[pipe:stdout-intercepted]   t=  31 faction_  b=   9.9  attack      spent=  6.9  rem=   3.0  e016 [surprise] <<< repelled  def_mil=6.6
-[pipe:stdout-intercepted]   t=  31 faction_  b=  10.0  attack      spent=  7.0  rem=   3.0  e011 [surprise] <<< repelled  def_mil=5.5
-[pipe:stdout-intercepted]   t=  31 faction_  b=  14.4  attack      spent= 10.1  rem=   4.3  e002 [surprise] <<< repelled  def_mil=10.4
-[pipe:stdout-intercepted]   t=  31 faction_  b=  22.3  colonize    spent= 20.0  rem=   2.3  e012 <<<
+[pipe:stdout-intercepted]   t=  31 faction_  TELEGRAPH LANDS  → e015
+[pipe:stdout-intercepted]   t=  31 faction_  b=  22.1  colonize    spent= 20.0  rem=   2.1  e010 <<<
+[pipe:stdout-intercepted]   t=  31 faction_  b=  11.7  attack      spent=  0.0  rem=  11.7  e024 [TELEGRAPH → t=32]
+[pipe:stdout-intercepted]   t=  31 faction_  b=   9.5  attack      spent=  6.6  rem=   2.8  e000 [surprise] <<< repelled  def_mil=5.7
+[pipe:stdout-intercepted]   t=  31 faction_  b=   7.1  attack      spent=  5.0  rem=   2.1  e005 [surprise] <<< repelled  def_mil=4.1
+[pipe:stdout-intercepted]   t=  31 faction_  b=  14.5  attack      spent=  0.0  rem=  14.5  e011 [TELEGRAPH → t=32]
 [pipe:stdout-intercepted] 
 ── t=32 ──
-[pipe:stdout-intercepted]   t=  32 faction_  b=  11.8  attack      spent=  8.3  rem=   3.5  e022 [surprise] <<< contested CONQUEST!  def_mil=5.4
-[pipe:stdout-intercepted]   t=  32 faction_  b=   8.6  attack      spent=  6.0  rem=   2.6  e016 [surprise] <<< repelled  def_mil=6.6
-[pipe:stdout-intercepted]   t=  32 faction_  b=  14.7  attack      spent=  8.2  rem=   6.4  e024 [surprise] <<< collision  def_mil=10.3
-[pipe:stdout-intercepted]   t=  32 faction_  b=  11.3  attack      spent=  9.3  rem=   2.0  e023 [surprise] <<< repelled  def_mil=7.7
-[pipe:stdout-intercepted]   t=  32 faction_  b=   5.7  attack      spent=  0.0  rem=   5.7  e000 [TELEGRAPH → t=33]
-[pipe:stdout-intercepted]   t=  32 faction_  b=  11.9  attack      spent=  8.3  rem=   3.6  e024 [surprise] <<< collision_loss  def_mil=10.3
+[pipe:stdout-intercepted]   t=  32 faction_  TELEGRAPH LANDS  → e024
+[pipe:stdout-intercepted]   t=  32 faction_  TELEGRAPH LANDS  → e011
+[pipe:stdout-intercepted]   t=  32 pl     b=  21.9  colonize    spent= 20.0  rem=   1.9  e029 <<<
+[pipe:stdout-intercepted]   t=  32 faction_  b=   8.3  attack      spent=  5.8  rem=   2.5  e005 [surprise] <<< contested CONQUEST!  def_mil=3.8
+[pipe:stdout-intercepted]   t=  32 faction_  b=  10.9  attack      spent=  7.6  rem=   3.3  e024 [surprise] <<< repelled  def_mil=8.9
+[pipe:stdout-intercepted]   t=  32 faction_  b=  13.4  attack      spent=  9.4  rem=   4.0  e015 [surprise] <<< contested  def_mil=8.0
+[pipe:stdout-intercepted]   t=  32 faction_  b=   6.7  attack      spent=  4.7  rem=   2.0  e002 [surprise] <<< collision_loss  def_mil=2.9
+[pipe:stdout-intercepted]   t=  32 faction_  b=  10.3  attack      spent=  5.6  rem=   4.7  e002 [surprise] <<< collision CONQUEST!  def_mil=2.9
 [pipe:stdout-intercepted] 
 ── t=33 ──
-[pipe:stdout-intercepted]   t=  33 faction_  TELEGRAPH LANDS  → e000
-[pipe:stdout-intercepted]   t=  33 faction_  b=   8.1  attack      spent=  5.7  rem=   2.4  e022 [surprise] <<< contested CONQUEST!  def_mil=4.2
-[pipe:stdout-intercepted]   t=  33 faction_  b=   9.5  attack      spent=  0.0  rem=   9.5  e024 [TELEGRAPH → t=34]
-[pipe:stdout-intercepted]   t=  33 faction_  b=  17.6  attack      spent=  0.0  rem=  17.6  e024 [TELEGRAPH → t=34]
-[pipe:stdout-intercepted]   t=  33 faction_  b=  11.2  attack      spent=  0.0  rem=  11.2  e024 [TELEGRAPH → t=34]
-[pipe:stdout-intercepted]   t=  33 faction_  b=  10.0  attack      spent=  0.0  rem=  10.0  e001 [TELEGRAPH → t=34]
+[pipe:stdout-intercepted]   t=  33 faction_  b=  18.3  attack      spent= 12.8  rem=   5.5  e013 [surprise] <<< contested CONQUEST!  def_mil=3.9
+[pipe:stdout-intercepted]   t=  33 faction_  b=  12.0  attack      spent=  8.4  rem=   3.6  e024 [surprise] <<< contested  def_mil=7.1
+[pipe:stdout-intercepted]   t=  33 faction_  b=  10.0  attack      spent=  0.0  rem=  10.0  e011 [TELEGRAPH → t=34]
+[pipe:stdout-intercepted]   t=  33 faction_  b=  12.9  attack      spent=  9.0  rem=   3.9  e011 [surprise] <<< contested  def_mil=6.4
+[pipe:stdout-intercepted]   t=  33 faction_  b=  11.8  attack      spent=  8.3  rem=   3.6  e015 [surprise] <<< repelled  def_mil=8.3
 [pipe:stdout-intercepted] 
 ── t=34 ──
-[pipe:stdout-intercepted]   t=  34 faction_  TELEGRAPH LANDS  → e024
-[pipe:stdout-intercepted]   t=  34 faction_  TELEGRAPH LANDS  → e024
-[pipe:stdout-intercepted]   t=  34 faction_  TELEGRAPH LANDS  → e024
-[pipe:stdout-intercepted]   t=  34 faction_  TELEGRAPH LANDS  → e001
-[pipe:stdout-intercepted]   t=  34 pl     b=  20.1  attack      spent=  0.0  rem=  20.1  e013 [TELEGRAPH → t=35]
-[pipe:stdout-intercepted]   t=  34 faction_  b=  20.0  colonize    spent= 20.0  rem=   0.0  e004 <<<
-[pipe:stdout-intercepted]   t=  34 faction_  b=   6.2  attack      spent=  4.4  rem=   1.9  e024 [surprise] <<< collision_loss  def_mil=2.3
-[pipe:stdout-intercepted]   t=  34 faction_  b=   8.5  attack      spent=  0.0  rem=   8.5  e024 [TELEGRAPH → t=35]
-[pipe:stdout-intercepted]   t=  34 faction_  b=   5.9  attack      spent=  0.0  rem=   5.9  e024 [TELEGRAPH → t=35]
-[pipe:stdout-intercepted]   t=  34 faction_  b=  21.7  colonize    spent= 20.0  rem=   1.7  e027 <<<
-[pipe:stdout-intercepted]   t=  34 faction_  b=  16.7  attack      spent= 11.7  rem=   5.0  e026 [surprise] <<< repelled  def_mil=10.6
-[pipe:stdout-intercepted]   t=  34 faction_  b=  14.0  attack      spent=  9.8  rem=   4.2  e002 [surprise] <<< repelled  def_mil=11.0
-[pipe:stdout-intercepted]   t=  34 breakawa  b=   3.6  attack      spent=  2.6  rem=   1.1  e003 [surprise] <<< contested CONQUEST!  def_mil=1.3
+[pipe:stdout-intercepted]   t=  34 faction_  TELEGRAPH LANDS  → e011
+[pipe:stdout-intercepted]   t=  34 faction_  b=  11.2  attack      spent=  0.0  rem=  11.2  e024 [TELEGRAPH → t=35]
+[pipe:stdout-intercepted]   t=  34 faction_  b=   9.5  attack      spent=  6.6  rem=   2.8  e000 [surprise] <<< repelled  def_mil=5.4
+[pipe:stdout-intercepted]   t=  34 faction_  b=  12.6  attack      spent=  0.0  rem=  12.6  e005 [TELEGRAPH → t=35]
+[pipe:stdout-intercepted]   t=  34 faction_  b=   9.9  attack      spent=  7.0  rem=   3.0  e005 [surprise] <<< contested CONQUEST!  def_mil=3.5
+[pipe:stdout-intercepted]   t=  34 faction_  b=   8.4  attack      spent=  5.9  rem=   2.5  e002 [surprise] <<< contested CONQUEST!  def_mil=2.3
+[pipe:stdout-intercepted]   t=  34 faction_  b=  12.2  attack      spent=  0.0  rem=  12.2  e000 [TELEGRAPH → t=35]
 [pipe:stdout-intercepted] 
 ── t=35 ──
-[pipe:stdout-intercepted]   t=  35 pl     TELEGRAPH LANDS  → e013
 [pipe:stdout-intercepted]   t=  35 faction_  TELEGRAPH LANDS  → e024
-[pipe:stdout-intercepted]   t=  35 faction_  TELEGRAPH LANDS  → e024
-[pipe:stdout-intercepted]   t=  35 faction_  b=  13.7  attack      spent=  9.6  rem=   4.1  e023 [surprise] <<< repelled  def_mil=7.3
-[pipe:stdout-intercepted]   t=  35 faction_  b=  10.3  attack      spent=  0.0  rem=  10.3  e016 [TELEGRAPH → t=36]
-[pipe:stdout-intercepted]   t=  35 faction_  b=  10.9  attack      spent=  0.0  rem=  10.9  e011 [TELEGRAPH → t=36]
-[pipe:stdout-intercepted]   t=  35 faction_  b=  10.8  attack      spent=  7.6  rem=   3.2  e001 [surprise] <<< contested  def_mil=5.7
+[pipe:stdout-intercepted]   t=  35 faction_  TELEGRAPH LANDS  → e005
+[pipe:stdout-intercepted]   t=  35 faction_  TELEGRAPH LANDS  → e000
+[pipe:stdout-intercepted]   t=  35 faction_  b=   9.7  attack      spent=  6.8  rem=   2.9  e011 [surprise] <<< repelled  def_mil=7.8
+[pipe:stdout-intercepted]   t=  35 faction_  b=   9.6  attack      spent=  6.7  rem=   2.9  e024 [surprise] <<< repelled  def_mil=7.7
+[pipe:stdout-intercepted]   t=  35 faction_  b=  12.7  attack      spent=  0.0  rem=  12.7  e015 [TELEGRAPH → t=36]
 [pipe:stdout-intercepted] 
 ── t=36 ──
-[pipe:stdout-intercepted]   t=  36 faction_  TELEGRAPH LANDS  → e016
-[pipe:stdout-intercepted]   t=  36 faction_  TELEGRAPH LANDS  → e011
-[pipe:stdout-intercepted]   t=  36 faction_  b=  10.1  attack      spent=  0.0  rem=  10.1  e016 [TELEGRAPH → t=37]
-[pipe:stdout-intercepted]   t=  36 faction_  b=  10.7  attack      spent=  7.5  rem=   3.2  e000 [surprise] <<< contested  def_mil=6.3
-[pipe:stdout-intercepted]   t=  36 faction_  b=  10.8  attack      spent=  7.6  rem=   3.2  e024 [surprise] <<< repelled  def_mil=7.8
-[pipe:stdout-intercepted]   t=  36 faction_  b=  13.6  attack      spent=  0.0  rem=  13.6  e026 [TELEGRAPH → t=37]
+[pipe:stdout-intercepted]   t=  36 faction_  TELEGRAPH LANDS  → e015
+[pipe:stdout-intercepted]   t=  36 faction_  b=  20.4  colonize    spent= 20.0  rem=   0.4  e025 <<<
+[pipe:stdout-intercepted]   t=  36 faction_  b=   9.5  attack      spent=  6.6  rem=   2.9  e005 [surprise] <<< collision CONQUEST!  def_mil=5.3
+[pipe:stdout-intercepted]   t=  36 faction_  b=  10.8  attack      spent=  0.0  rem=  10.8  e005 [TELEGRAPH → t=37]
+[pipe:stdout-intercepted]   t=  36 faction_  b=  12.1  attack      spent=  0.0  rem=  12.1  e024 [TELEGRAPH → t=37]
+[pipe:stdout-intercepted]   t=  36 faction_  b=   9.2  attack      spent=  9.2  rem=   0.0  e011 [surprise] <<< contested  def_mil=7.5
+[pipe:stdout-intercepted]   t=  36 faction_  b=   8.4  attack      spent=  5.9  rem=   2.5  e005 [surprise] <<< collision_loss  def_mil=5.3
 [pipe:stdout-intercepted] 
 ── t=37 ──
-[pipe:stdout-intercepted]   t=  37 faction_  TELEGRAPH LANDS  → e016
-[pipe:stdout-intercepted]   t=  37 faction_  TELEGRAPH LANDS  → e026
-[pipe:stdout-intercepted]   t=  37 faction_  b=  11.5  attack      spent=  8.1  rem=   3.5  e024 [surprise] <<< repelled  def_mil=7.4
-[pipe:stdout-intercepted]   t=  37 faction_  b=   9.8  attack      spent=  0.0  rem=   9.8  e011 [TELEGRAPH → t=38]
-[pipe:stdout-intercepted]   t=  37 faction_  b=  10.7  attack      spent=  0.0  rem=  10.7  e001 [TELEGRAPH → t=38]
+[pipe:stdout-intercepted]   t=  37 faction_  TELEGRAPH LANDS  → e005
+[pipe:stdout-intercepted]   t=  37 faction_  TELEGRAPH LANDS  → e024
+[pipe:stdout-intercepted]   t=  37 pl     b=  20.0  attack      spent= 14.0  rem=   6.0  e013 [surprise] <<< contested  def_mil=10.0
+[pipe:stdout-intercepted]   t=  37 faction_  b=  22.3  attack      spent= 15.6  rem=   6.7  e008 [surprise] <<< contested  def_mil=8.1
+[pipe:stdout-intercepted]   t=  37 faction_  b=   8.7  attack      spent=  6.1  rem=   2.6  e011 [surprise] <<< repelled  def_mil=7.3
+[pipe:stdout-intercepted]   t=  37 faction_  b=  14.8  attack      spent=  0.0  rem=  14.8  e015 [TELEGRAPH → t=38]
+[pipe:stdout-intercepted]   t=  37 faction_  b=  13.1  attack      spent=  0.0  rem=  13.1  e015 [TELEGRAPH → t=38]
 [pipe:stdout-intercepted] 
 ── t=38 ──
-[pipe:stdout-intercepted]   t=  38 faction_  TELEGRAPH LANDS  → e011
-[pipe:stdout-intercepted]   t=  38 faction_  TELEGRAPH LANDS  → e001
-[pipe:stdout-intercepted]   t=  38 faction_  b=   7.8  attack      spent=  7.8  rem=   0.0  e022 [surprise] <<< contested  def_mil=6.6
-[pipe:stdout-intercepted]   t=  38 faction_  b=  11.3  attack      spent=  0.0  rem=  11.3  e016 [TELEGRAPH → t=39]
-[pipe:stdout-intercepted]   t=  38 faction_  b=  11.7  attack      spent=  0.0  rem=  11.7  e026 [TELEGRAPH → t=39]
-[pipe:stdout-intercepted]   t=  38 faction_  b=  12.3  attack      spent=  8.6  rem=   3.7  e026 [surprise] <<< collision_loss  def_mil=6.3
+[pipe:stdout-intercepted]   t=  38 faction_  TELEGRAPH LANDS  → e015
+[pipe:stdout-intercepted]   t=  38 faction_  TELEGRAPH LANDS  → e015
+[pipe:stdout-intercepted]   t=  38 faction_  b=   7.3  attack      spent=  0.0  rem=   7.3  e002 [TELEGRAPH → t=39]
+[pipe:stdout-intercepted]   t=  38 faction_  b=  12.3  attack      spent=  8.6  rem=   3.7  e008 [surprise] <<< contested  def_mil=6.5
+[pipe:stdout-intercepted]   t=  38 faction_  b=  10.4  attack      spent=  0.0  rem=  10.4  e005 [TELEGRAPH → t=39]
+[pipe:stdout-intercepted]   t=  38 faction_  b=  10.0  attack      spent=  7.0  rem=   3.0  e024 [surprise] <<< collision_loss  def_mil=5.9
+[pipe:stdout-intercepted]   t=  38 faction_  b=   9.4  attack      spent=  6.2  rem=   3.3  e024 [surprise] <<< collision  def_mil=5.9
+[pipe:stdout-intercepted]   t=  38 faction_  b=  12.6  attack      spent=  8.8  rem=   3.8  e015 [surprise] <<< repelled  def_mil=7.9
 [pipe:stdout-intercepted] 
 ── t=39 ──
-[pipe:stdout-intercepted]   t=  39 faction_  TELEGRAPH LANDS  → e016
-[pipe:stdout-intercepted]   t=  39 faction_  TELEGRAPH LANDS  → e026
-[pipe:stdout-intercepted]   t=  39 pl     b=  22.4  attack      spent= 15.7  rem=   6.7  e013 [surprise] <<< contested  def_mil=10.1
-[pipe:stdout-intercepted]   t=  39 faction_  b=  10.0  attack      spent=  0.0  rem=  10.0  e024 [TELEGRAPH → t=40]
-[pipe:stdout-intercepted]   t=  39 faction_  b=   9.8  attack      spent=  0.0  rem=   9.8  e000 [TELEGRAPH → t=40]
-[pipe:stdout-intercepted]   t=  39 faction_  b=   9.1  attack      spent=  2.7  rem=   6.4  e011 [TELEGRAPH → t=40]
-[pipe:stdout-intercepted]   t=  39 faction_  b=   9.7  attack      spent=  6.8  rem=   2.9  e024 [surprise] <<< collision_loss  def_mil=6.9
-[pipe:stdout-intercepted]   t=  39 faction_  b=  15.2  attack      spent=  0.0  rem=  15.2  e002 [TELEGRAPH → t=40]
+[pipe:stdout-intercepted]   t=  39 faction_  TELEGRAPH LANDS  → e002
+[pipe:stdout-intercepted]   t=  39 faction_  TELEGRAPH LANDS  → e005
+[pipe:stdout-intercepted]   t=  39 faction_  b=  10.2  attack      spent=  7.1  rem=   3.1  e000 [surprise] <<< collision_loss  def_mil=8.0
+[pipe:stdout-intercepted]   t=  39 faction_  b=  13.0  attack      spent=  9.1  rem=   3.9  e000 [surprise] <<< collision_loss  def_mil=8.0
+[pipe:stdout-intercepted]   t=  39 faction_  b=   8.2  attack      spent=  0.0  rem=   8.2  e011 [TELEGRAPH → t=40]
+[pipe:stdout-intercepted]   t=  39 faction_  b=  11.1  attack      spent=  0.0  rem=  11.1  e002 [TELEGRAPH → t=40]
+[pipe:stdout-intercepted]   t=  39 faction_  b=  10.2  attack      spent=  7.2  rem=   3.1  e000 [surprise] <<< collision  def_mil=8.0
 [pipe:stdout-intercepted] 
 ── t=40 ──
-[pipe:stdout-intercepted]   t=  40 faction_  TELEGRAPH LANDS  → e024
-[pipe:stdout-intercepted]   t=  40 faction_  TELEGRAPH LANDS  → e000
 [pipe:stdout-intercepted]   t=  40 faction_  TELEGRAPH LANDS  → e011
 [pipe:stdout-intercepted]   t=  40 faction_  TELEGRAPH LANDS  → e002
-[pipe:stdout-intercepted]   t=  40 faction_  b=  23.1  colonize    spent= 20.0  rem=   3.1  e020 <<<
-[pipe:stdout-intercepted]   t=  40 faction_  b=  11.5  attack      spent=  8.1  rem=   3.5  e016 [surprise] <<< repelled  def_mil=7.1
-[pipe:stdout-intercepted]   t=  40 faction_  b=   5.8  attack      spent=  4.1  rem=   1.7  e022 [surprise] <<< contested CONQUEST!  def_mil=0.6
-[pipe:stdout-intercepted]   t=  40 faction_  b=  15.7  attack      spent= 11.0  rem=   4.7  e003 [surprise] <<< contested CONQUEST!  def_mil=0.0
-[pipe:stdout-intercepted]   t=  40 faction_  b=   8.6  attack      spent=  6.0  rem=   2.6  e024 [surprise] <<< repelled  def_mil=5.3
-[pipe:stdout-intercepted]   t=  40 faction_  b=  12.8  attack      spent=  0.0  rem=  12.8  e026 [TELEGRAPH → t=41]
+[pipe:stdout-intercepted]   t=  40 faction_  b=   9.1  attack      spent=  6.4  rem=   2.7  e003 [surprise] <<< repelled  def_mil=5.5
+[pipe:stdout-intercepted]   t=  40 faction_  b=   7.7  attack      spent=  0.0  rem=   7.7  e008 [TELEGRAPH → t=41]
+[pipe:stdout-intercepted]   t=  40 faction_  b=   9.8  attack      spent=  6.9  rem=   2.9  e005 [surprise] <<< repelled  def_mil=7.2
+[pipe:stdout-intercepted]   t=  40 faction_  b=  11.6  attack      spent=  8.1  rem=   3.5  e011 [surprise] <<< contested  def_mil=6.9
+[pipe:stdout-intercepted]   t=  40 faction_  b=  12.9  attack      spent=  0.0  rem=  12.9  e002 [TELEGRAPH → t=41]
 [pipe:stdout-intercepted] 
 ── t=41 ──
-[pipe:stdout-intercepted]   t=  41 faction_  TELEGRAPH LANDS  → e026
-[pipe:stdout-intercepted]   t=  41 faction_  b=  11.8  attack      spent=  0.0  rem=  11.8  e016 [TELEGRAPH → t=42]
-[pipe:stdout-intercepted]   t=  41 faction_  b=  15.0  attack      spent= 10.5  rem=   4.5  e026 [surprise] <<< contested  def_mil=9.2
+[pipe:stdout-intercepted]   t=  41 faction_  TELEGRAPH LANDS  → e008
+[pipe:stdout-intercepted]   t=  41 faction_  TELEGRAPH LANDS  → e002
+[pipe:stdout-intercepted]   t=  41 faction_  b=   6.3  attack      spent=  4.4  rem=   1.9  e000 [surprise] <<< collision_loss  def_mil=2.0
+[pipe:stdout-intercepted]   t=  41 faction_  b=  20.5  attack      spent= 14.3  rem=   6.1  e025 [surprise] <<< contested  def_mil=7.1
+[pipe:stdout-intercepted]   t=  41 faction_  b=   9.3  attack      spent=  6.5  rem=   2.8  e000 [surprise] <<< collision_loss  def_mil=2.0
+[pipe:stdout-intercepted]   t=  41 faction_  b=   9.1  attack      spent=  6.4  rem=   2.7  e000 [surprise] <<< collision CONQUEST!  def_mil=2.0
+[pipe:stdout-intercepted]   t=  41 faction_  b=   7.8  attack      spent=  0.0  rem=   7.8  e011 [TELEGRAPH → t=42]
+[pipe:stdout-intercepted]   t=  41 faction_  b=   3.2  attack      spent=  2.7  rem=   0.4  e024 [surprise] <<< None  def_mil=5.4
+[pipe:stdout-intercepted]   t=  41 faction_  b=   9.7  attack      spent=  6.7  rem=   3.0  e024 [surprise] <<< collision  def_mil=5.4
+[pipe:stdout-intercepted]   t=  41 faction_  b=   9.0  attack      spent=  6.3  rem=   2.7  e002 [surprise] <<< repelled  def_mil=5.9
+[pipe:stdout-intercepted]   t=  41 faction_  b=  12.8  attack      spent=  9.0  rem=   3.8  e015 [surprise] <<< repelled  def_mil=8.2
+[pipe:stdout-intercepted]   t=  41 faction_  b=   8.6  attack      spent=  0.0  rem=   8.6  e002 [TELEGRAPH → t=42]
 [pipe:stdout-intercepted] 
 ── t=42 ──
-[pipe:stdout-intercepted]   t=  42 faction_  TELEGRAPH LANDS  → e016
-[pipe:stdout-intercepted]   t=  42 faction_  b=   7.8  attack      spent=  5.4  rem=   2.3  e022 [surprise] <<< contested CONQUEST!  def_mil=2.7
-[pipe:stdout-intercepted]   t=  42 faction_  b=  11.9  attack      spent=  0.0  rem=  11.9  e024 [TELEGRAPH → t=43]
-[pipe:stdout-intercepted]   t=  42 faction_  b=   9.4  attack      spent=  6.6  rem=   2.8  e024 [surprise] <<< collision_loss  def_mil=6.5
-[pipe:stdout-intercepted]   t=  42 faction_  b=  16.6  attack      spent=  0.0  rem=  16.6  e028 [TELEGRAPH → t=43]
+[pipe:stdout-intercepted]   t=  42 faction_  TELEGRAPH LANDS  → e011
+[pipe:stdout-intercepted]   t=  42 faction_  TELEGRAPH LANDS  → e002
+[pipe:stdout-intercepted]   t=  42 pl     b=  17.2  attack      spent= 12.1  rem=   5.2  e008 [surprise] <<< contested CONQUEST!  def_mil=6.0
+[pipe:stdout-intercepted]   t=  42 faction_  b=   5.8  attack      spent=  0.0  rem=   5.8  e000 [TELEGRAPH → t=43]
+[pipe:stdout-intercepted]   t=  42 faction_  b=   5.0  attack      spent=  3.5  rem=   1.5  e000 [surprise] <<< contested CONQUEST!  def_mil=0.1
+[pipe:stdout-intercepted]   t=  42 faction_  b=   9.0  attack      spent=  6.3  rem=   2.7  e011 [surprise] <<< repelled  def_mil=5.8
 [pipe:stdout-intercepted] 
 ── t=43 ──
-[pipe:stdout-intercepted]   t=  43 faction_  TELEGRAPH LANDS  → e024
-[pipe:stdout-intercepted]   t=  43 faction_  TELEGRAPH LANDS  → e028
-[pipe:stdout-intercepted]   t=  43 pl     b=  18.4  attack      spent=  0.0  rem=  18.4  e013 [TELEGRAPH → t=44]
-[pipe:stdout-intercepted]   t=  43 faction_  b=   9.9  attack      spent=  6.9  rem=   3.0  e022 [surprise] <<< contested  def_mil=5.5
-[pipe:stdout-intercepted]   t=  43 faction_  b=   9.0  attack      spent=  6.3  rem=   2.7  e016 [surprise] <<< repelled  def_mil=5.4
-[pipe:stdout-intercepted]   t=  43 faction_  b=  11.2  attack      spent=  7.8  rem=   3.4  e000 [surprise] <<< repelled  def_mil=6.6
-[pipe:stdout-intercepted]   t=  43 faction_  b=  11.3  attack      spent=  0.0  rem=  11.3  e011 [TELEGRAPH → t=44]
-[pipe:stdout-intercepted]   t=  43 faction_  b=   7.2  attack      spent=  2.2  rem=   5.0  e024 [TELEGRAPH → t=44]
-[pipe:stdout-intercepted]   t=  43 faction_  b=  10.4  attack      spent=  0.0  rem=  10.4  e024 [TELEGRAPH → t=44]
-[pipe:stdout-intercepted]   t=  43 faction_  b=  11.2  attack      spent=  7.8  rem=   3.4  e026 [surprise] <<< repelled  def_mil=7.1
-[pipe:stdout-intercepted]   t=  43 faction_  b=  11.8  attack      spent=  0.0  rem=  11.8  e026 [TELEGRAPH → t=44]
+[pipe:stdout-intercepted]   t=  43 faction_  TELEGRAPH LANDS  → e000
+[pipe:stdout-intercepted]   t=  43 faction_  b=   9.1  attack      spent=  6.4  rem=   2.7  e003 [surprise] <<< repelled  def_mil=6.1
+[pipe:stdout-intercepted]   t=  43 faction_  b=   9.2  attack      spent=  6.4  rem=   2.7  e024 [surprise] <<< repelled  def_mil=5.1
+[pipe:stdout-intercepted]   t=  43 faction_  b=   4.7  attack      spent=  0.0  rem=   4.7  e000 [TELEGRAPH → t=44]
+[pipe:stdout-intercepted]   t=  43 faction_  b=  11.9  attack      spent=  0.0  rem=  11.9  e005 [TELEGRAPH → t=44]
+[pipe:stdout-intercepted]   t=  43 faction_  b=   8.2  attack      spent=  5.7  rem=   2.5  e000 [surprise] <<< contested CONQUEST!  def_mil=2.3
+[pipe:stdout-intercepted]   t=  43 faction_  b=   5.5  attack      spent=  0.0  rem=   5.5  e011 [TELEGRAPH → t=44]
+[pipe:stdout-intercepted]   t=  43 faction_  b=  13.2  attack      spent=  0.0  rem=  13.2  e015 [TELEGRAPH → t=44]
 [pipe:stdout-intercepted] 
 ── t=44 ──
-[pipe:stdout-intercepted]   t=  44 pl     TELEGRAPH LANDS  → e013
+[pipe:stdout-intercepted]   t=  44 faction_  TELEGRAPH LANDS  → e000
+[pipe:stdout-intercepted]   t=  44 faction_  TELEGRAPH LANDS  → e005
 [pipe:stdout-intercepted]   t=  44 faction_  TELEGRAPH LANDS  → e011
-[pipe:stdout-intercepted]   t=  44 faction_  TELEGRAPH LANDS  → e024
-[pipe:stdout-intercepted]   t=  44 faction_  TELEGRAPH LANDS  → e024
-[pipe:stdout-intercepted]   t=  44 faction_  TELEGRAPH LANDS  → e026
-[pipe:stdout-intercepted]   t=  44 faction_  b=  11.4  attack      spent=  0.0  rem=  11.4  e024 [TELEGRAPH → t=45]
-[pipe:stdout-intercepted]   t=  44 faction_  b=  15.6  attack      spent= 10.9  rem=   4.7  e002 [surprise] <<< repelled  def_mil=13.3
+[pipe:stdout-intercepted]   t=  44 faction_  TELEGRAPH LANDS  → e015
+[pipe:stdout-intercepted]   t=  44 faction_  b=   7.0  attack      spent=  3.9  rem=   3.2  e011 [surprise] <<< collision CONQUEST!  def_mil=1.7
+[pipe:stdout-intercepted]   t=  44 faction_  b=   2.6  attack      spent=  1.5  rem=   1.1  e024 [surprise] <<< collision_loss  def_mil=2.8
+[pipe:stdout-intercepted]   t=  44 faction_  b=   9.5  attack      spent=  6.7  rem=   2.9  e024 [surprise] <<< collision_loss  def_mil=2.8
+[pipe:stdout-intercepted]   t=  44 faction_  b=   4.4  attack      spent=  0.0  rem=   4.4  e011 [TELEGRAPH → t=45]
+[pipe:stdout-intercepted]   t=  44 faction_  b=  13.1  attack      spent=  0.0  rem=  13.1  e015 [TELEGRAPH → t=45]
+[pipe:stdout-intercepted]   t=  44 faction_  b=  11.0  attack      spent=  0.0  rem=  11.0  e002 [TELEGRAPH → t=45]
 [pipe:stdout-intercepted] 
 ── t=45 ──
-[pipe:stdout-intercepted]   t=  45 faction_  TELEGRAPH LANDS  → e024
-[pipe:stdout-intercepted]   t=  45 pl     b=  12.2  attack      spent=  0.0  rem=  12.2  e013 [TELEGRAPH → t=46]
-[pipe:stdout-intercepted]   t=  45 faction_  b=  18.6  attack      spent= 16.0  rem=   2.6  e022 [surprise] <<< contested CONQUEST!  def_mil=0.0
-[pipe:stdout-intercepted]   t=  45 faction_  b=  10.1  attack      spent=  6.9  rem=   3.2  e016 [surprise] <<< collision CONQUEST!  def_mil=5.1
-[pipe:stdout-intercepted]   t=  45 faction_  b=   8.0  attack      spent=  5.6  rem=   2.4  e016 [surprise] <<< collision_loss  def_mil=5.1
-[pipe:stdout-intercepted]   t=  45 faction_  b=   9.4  attack      spent=  6.6  rem=   2.8  e024 [surprise] <<< collision_loss  def_mil=6.1
-[pipe:stdout-intercepted]   t=  45 faction_  b=   8.5  attack      spent=  4.9  rem=   3.6  e024 [surprise] <<< collision  def_mil=6.1
-[pipe:stdout-intercepted]   t=  45 faction_  b=   8.3  attack      spent=  5.8  rem=   2.5  e026 [surprise] <<< collision_loss  def_mil=5.1
-[pipe:stdout-intercepted]   t=  45 faction_  b=  11.3  attack      spent=  7.2  rem=   4.2  e026 [surprise] <<< collision CONQUEST!  def_mil=5.1
-[pipe:stdout-intercepted]   t=  45 faction_  b=  15.3  attack      spent= 10.7  rem=   4.6  e028 [surprise] <<< repelled  def_mil=8.2
+[pipe:stdout-intercepted]   t=  45 faction_  TELEGRAPH LANDS  → e011
+[pipe:stdout-intercepted]   t=  45 faction_  TELEGRAPH LANDS  → e015
+[pipe:stdout-intercepted]   t=  45 faction_  TELEGRAPH LANDS  → e002
+[pipe:stdout-intercepted]   t=  45 faction_  b=  10.6  attack      spent=  7.4  rem=   3.2  e003 [surprise] <<< contested CONQUEST!  def_mil=3.8
+[pipe:stdout-intercepted]   t=  45 faction_  b=  20.5  attack      spent= 14.4  rem=   6.2  e025 [surprise] <<< contested CONQUEST!  def_mil=6.1
+[pipe:stdout-intercepted]   t=  45 faction_  b=   9.7  attack      spent=  6.8  rem=   2.9  e000 [surprise] <<< repelled  def_mil=6.1
+[pipe:stdout-intercepted]   t=  45 faction_  b=   8.8  attack      spent=  0.0  rem=   8.8  e015 [TELEGRAPH → t=46]
 [pipe:stdout-intercepted] 
 ── t=46 ──
-[pipe:stdout-intercepted]   t=  46 pl     TELEGRAPH LANDS  → e013
-[pipe:stdout-intercepted]   t=  46 faction_  b=  12.8  attack      spent=  8.9  rem=   3.8  e016 [surprise] <<< repelled  def_mil=9.2
-[pipe:stdout-intercepted]   t=  46 faction_  b=  12.3  attack      spent=  8.6  rem=   3.7  e011 [surprise] <<< repelled  def_mil=8.9
-[pipe:stdout-intercepted]   t=  46 faction_  b=  11.1  attack      spent=  0.0  rem=  11.1  e024 [TELEGRAPH → t=47]
+[pipe:stdout-intercepted]   t=  46 faction_  TELEGRAPH LANDS  → e015
+[pipe:stdout-intercepted]   t=  46 pl     b=  18.8  attack      spent= 13.1  rem=   5.6  e013 [surprise] <<< contested CONQUEST!  def_mil=6.3
+[pipe:stdout-intercepted]   t=  46 faction_  b=  10.1  attack      spent=  0.0  rem=  10.1  e024 [TELEGRAPH → t=47]
+[pipe:stdout-intercepted]   t=  46 faction_  b=   9.3  attack      spent=  0.0  rem=   9.3  e000 [TELEGRAPH → t=47]
+[pipe:stdout-intercepted]   t=  46 faction_  b=   5.7  attack      spent=  5.7  rem=   0.0  e011 [surprise] <<< repelled  def_mil=5.3
+[pipe:stdout-intercepted]   t=  46 faction_  b=   7.3  attack      spent=  5.1  rem=   2.3  e024 [surprise] <<< collision  def_mil=5.5
 [pipe:stdout-intercepted] 
 ── t=47 ──
 [pipe:stdout-intercepted]   t=  47 faction_  TELEGRAPH LANDS  → e024
-[pipe:stdout-intercepted]   t=  47 faction_  b=  11.2  attack      spent=  7.9  rem=   3.4  e000 [surprise] <<< repelled  def_mil=6.4
-[pipe:stdout-intercepted]   t=  47 faction_  b=  13.5  attack      spent=  8.3  rem=   5.2  e028 [surprise] <<< collision  def_mil=7.7
-[pipe:stdout-intercepted]   t=  47 faction_  b=  12.8  attack      spent=  0.0  rem=  12.8  e028 [TELEGRAPH → t=48]
+[pipe:stdout-intercepted]   t=  47 faction_  TELEGRAPH LANDS  → e000
+[pipe:stdout-intercepted]   t=  47 faction_  b=  12.1  attack      spent=  8.5  rem=   3.6  e002 [surprise] <<< collision_loss  def_mil=7.7
+[pipe:stdout-intercepted]   t=  47 faction_  b=  13.6  attack      spent=  0.0  rem=  13.6  e005 [TELEGRAPH → t=48]
+[pipe:stdout-intercepted]   t=  47 faction_  b=  13.8  attack      spent=  8.0  rem=   5.8  e005 [surprise] <<< collision  def_mil=10.0
+[pipe:stdout-intercepted]   t=  47 faction_  b=   9.5  attack      spent=  6.6  rem=   2.8  e024 [surprise] <<< contested CONQUEST!  def_mil=5.0
+[pipe:stdout-intercepted]   t=  47 faction_  b=  11.6  attack      spent=  0.0  rem=  11.6  e015 [TELEGRAPH → t=48]
+[pipe:stdout-intercepted]   t=  47 faction_  b=   4.2  attack      spent=  4.1  rem=   0.1  e002 [surprise] <<< None  def_mil=7.7
+[pipe:stdout-intercepted]   t=  47 faction_  b=  13.1  attack      spent=  0.0  rem=  13.1  e002 [TELEGRAPH → t=48]
+[pipe:stdout-intercepted]   t=  47 faction_  b=  10.0  attack      spent=  3.0  rem=   7.0  e015 [TELEGRAPH → t=48]
 [pipe:stdout-intercepted] 
 ── t=48 ──
-[pipe:stdout-intercepted]   t=  48 faction_  TELEGRAPH LANDS  → e028
-[pipe:stdout-intercepted]   t=  48 faction_  b=  11.9  attack      spent=  0.0  rem=  11.9  e013 [TELEGRAPH → t=49]
-[pipe:stdout-intercepted]   t=  48 faction_  b=  11.5  attack      spent=  0.0  rem=  11.5  e024 [TELEGRAPH → t=49]
-[pipe:stdout-intercepted]   t=  48 faction_  b=  10.5  attack      spent=  0.0  rem=  10.5  e026 [TELEGRAPH → t=49]
+[pipe:stdout-intercepted]   t=  48 faction_  TELEGRAPH LANDS  → e005
+[pipe:stdout-intercepted]   t=  48 faction_  TELEGRAPH LANDS  → e015
+[pipe:stdout-intercepted]   t=  48 faction_  TELEGRAPH LANDS  → e002
+[pipe:stdout-intercepted]   t=  48 faction_  TELEGRAPH LANDS  → e015
+[pipe:stdout-intercepted]   t=  48 faction_  b=  20.4  colonize    spent= 20.0  rem=   0.4  e027 <<<
+[pipe:stdout-intercepted]   t=  48 faction_  b=   6.7  attack      spent=  0.0  rem=   6.7  e011 [TELEGRAPH → t=49]
+[pipe:stdout-intercepted]   t=  48 faction_  b=   5.9  attack      spent=  4.2  rem=   1.8  e011 [surprise] <<< contested CONQUEST!  def_mil=1.2
 [pipe:stdout-intercepted] 
 ── t=49 ──
-[pipe:stdout-intercepted]   t=  49 faction_  TELEGRAPH LANDS  → e013
-[pipe:stdout-intercepted]   t=  49 faction_  TELEGRAPH LANDS  → e024
-[pipe:stdout-intercepted]   t=  49 faction_  TELEGRAPH LANDS  → e026
-[pipe:stdout-intercepted]   t=  49 faction_  b=  23.1  colonize    spent= 20.0  rem=   3.1  e010 <<<
-[pipe:stdout-intercepted]   t=  49 faction_  b=  13.4  attack      spent=  9.4  rem=   4.0  e016 [surprise] <<< collision_loss  def_mil=8.9
-[pipe:stdout-intercepted]   t=  49 faction_  b=  12.8  attack      spent=  8.8  rem=   4.0  e016 [surprise] <<< collision  def_mil=8.9
-[pipe:stdout-intercepted]   t=  49 faction_  b=  13.5  attack      spent=  0.0  rem=  13.5  e011 [TELEGRAPH → t=50]
-[pipe:stdout-intercepted]   t=  49 faction_  b=  12.1  attack      spent=  8.5  rem=   3.6  e024 [surprise] <<< collision_loss  def_mil=9.1
-[pipe:stdout-intercepted]   t=  49 faction_  b=  15.4  attack      spent= 10.8  rem=   4.6  e028 [surprise] <<< repelled  def_mil=10.6
-[pipe:stdout-intercepted]   t=  49 faction_  b=  13.1  attack      spent=  0.0  rem=  13.1  e024 [TELEGRAPH → t=50]
+[pipe:stdout-intercepted]   t=  49 faction_  TELEGRAPH LANDS  → e011
+[pipe:stdout-intercepted]   t=  49 faction_  b=   9.0  attack      spent=  9.0  rem=   0.0  e002 [surprise] <<< repelled  def_mil=9.1
+[pipe:stdout-intercepted]   t=  49 faction_  b=  10.6  attack      spent=  0.0  rem=  10.6  e005 [TELEGRAPH → t=50]
+[pipe:stdout-intercepted]   t=  49 faction_  b=  14.3  attack      spent=  3.2  rem=  11.1  e003 [TELEGRAPH → t=50]
+[pipe:stdout-intercepted]   t=  49 faction_  b=  10.3  attack      spent=  7.2  rem=   3.1  e000 [surprise] <<< contested  def_mil=5.4
+[pipe:stdout-intercepted]   t=  49 faction_  b=  11.4  attack      spent=  8.0  rem=   3.4  e005 [surprise] <<< collision_loss  def_mil=7.0
+[pipe:stdout-intercepted]   t=  49 faction_  b=   9.3  attack      spent=  6.5  rem=   2.8  e024 [surprise] <<< repelled  def_mil=7.7
+[pipe:stdout-intercepted]   t=  49 faction_  b=  11.6  attack      spent=  0.0  rem=  11.6  e015 [TELEGRAPH → t=50]
 [pipe:stdout-intercepted] 
 ── t=50 ──
-[pipe:stdout-intercepted]   t=  50 faction_  TELEGRAPH LANDS  → e011
-[pipe:stdout-intercepted]   t=  50 faction_  TELEGRAPH LANDS  → e024
-[pipe:stdout-intercepted]   t=  50 pl     b=  17.2  attack      spent= 14.3  rem=   2.9  e022 [surprise] <<< contested  def_mil=8.9
-[pipe:stdout-intercepted]   t=  50 faction_  b=   9.4  attack      spent=  0.0  rem=   9.4  e013 [TELEGRAPH → t=51]
-[pipe:stdout-intercepted]   t=  50 faction_  b=   9.7  attack      spent=  6.8  rem=   2.9  e000 [surprise] <<< repelled  def_mil=6.1
-[pipe:stdout-intercepted]   t=  50 faction_  b=   9.6  attack      spent=  6.7  rem=   2.9  e024 [surprise] <<< repelled  def_mil=7.0
-[pipe:stdout-intercepted]   t=  50 faction_  b=  13.4  attack      spent=  9.4  rem=   4.0  e028 [surprise] <<< repelled  def_mil=10.0
-[pipe:stdout-intercepted]   t=  50 faction_  b=  17.9  attack      spent= 12.5  rem=   5.4  e002 [surprise] <<< repelled  def_mil=14.2
+[pipe:stdout-intercepted]   t=  50 faction_  TELEGRAPH LANDS  → e005
+[pipe:stdout-intercepted]   t=  50 faction_  TELEGRAPH LANDS  → e003
+[pipe:stdout-intercepted]   t=  50 faction_  TELEGRAPH LANDS  → e015
+[pipe:stdout-intercepted]   t=  50 pl     b=  19.1  attack      spent= 16.6  rem=   2.6  e025 [surprise] <<< repelled  def_mil=15.6
+[pipe:stdout-intercepted]   t=  50 faction_  b=  12.9  attack      spent=  0.0  rem=  12.9  e008 [TELEGRAPH → t=51]
+[pipe:stdout-intercepted]   t=  50 faction_  b=   8.3  attack      spent=  5.8  rem=   2.5  e011 [surprise] <<< contested  def_mil=5.2
+[pipe:stdout-intercepted]   t=  50 faction_  b=   7.5  attack      spent=  5.2  rem=   2.2  e000 [surprise] <<< repelled  def_mil=5.2
 [pipe:stdout-intercepted]   [DRIFT t= 50] region_player_home  eco=74.1  pop=77.6  ten=9.3  mil=85.2  | eco_drift: growth=+1.551 t_drag=-0.037 overcap=-1.217 osc=-2.041 adj=+0.028 net=-1.716  | ten_drift=-0.1119  | pop_drift=+0.3116
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_player_f0  eco=56.7  pop=59.8  ten=14.2  mil=71.3  | eco_drift: growth=+1.197 t_drag=-0.057 overcap=-0.869 osc=-2.443 adj=+0.055 net=-2.116  | ten_drift=-0.0483  | pop_drift=+0.3937
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_1_home  eco=79.4  pop=82.8  ten=13.2  mil=87.4  | eco_drift: growth=+1.655 t_drag=-0.053 overcap=-1.357 osc=-0.012 adj=+0.032 net=+0.265  | ten_drift=-0.1481  | pop_drift=+0.2612
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_1_f0  eco=66.1  pop=69.9  ten=17.2  mil=80.4  | eco_drift: growth=+1.399 t_drag=-0.069 overcap=-0.992 osc=-2.202 adj=+0.050 net=-1.814  | ten_drift=-0.0905  | pop_drift=+0.3612
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_2_home  eco=80.9  pop=85.2  ten=24.5  mil=87.7  | eco_drift: growth=+1.703 t_drag=-0.098 overcap=-1.280 osc=-1.542 adj=+0.017 net=-1.199  | ten_drift=-0.1807  | pop_drift=+0.2301
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_2_f0  eco=29.3  pop=32.4  ten=26.3  mil=38.7  | eco_drift: growth=+0.648 t_drag=-0.105 overcap=-0.263 osc=-1.806 adj=+0.038 net=-1.488  | ten_drift=-0.0190  | pop_drift=+0.2271
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_3_home  eco=80.1  pop=83.7  ten=22.8  mil=87.4  | eco_drift: growth=+1.673 t_drag=-0.091 overcap=-1.354 osc=-1.703 adj=+0.027 net=-1.448  | ten_drift=-0.1716  | pop_drift=+0.2505
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_3_f0  eco=59.0  pop=63.0  ten=29.1  mil=74.5  | eco_drift: growth=+1.259 t_drag=-0.116 overcap=-0.824 osc=-1.061 adj=+0.042 net=-0.700  | ten_drift=-0.0865  | pop_drift=+0.3836
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_4_home  eco=83.5  pop=86.9  ten=20.8  mil=88.1  | eco_drift: growth=+1.737 t_drag=-0.083 overcap=-1.446 osc=+2.495 adj=+0.014 net=+2.717  | ten_drift=-0.1870  | pop_drift=+0.2115
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_4_f0  eco=33.1  pop=36.9  ten=15.4  mil=48.6  | eco_drift: growth=+0.737 t_drag=-0.062 overcap=-0.273 osc=+0.192 adj=+0.054 net=+0.648  | ten_drift=+0.0002  | pop_drift=+0.2695
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_5_home  eco=83.6  pop=87.4  ten=26.0  mil=88.2  | eco_drift: growth=+1.748 t_drag=-0.104 overcap=-1.406 osc=+2.269 adj=+0.034 net=+2.541  | ten_drift=-0.1989  | pop_drift=+0.2039
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_5_f0  eco=63.1  pop=66.6  ten=18.8  mil=77.3  | eco_drift: growth=+1.332 t_drag=-0.075 overcap=-0.981 osc=+0.573 adj=+0.044 net=+0.892  | ten_drift=-0.0814  | pop_drift=+0.3785
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_6_home  eco=80.2  pop=84.6  ten=25.6  mil=86.7  | eco_drift: growth=+1.692 t_drag=-0.102 overcap=-1.251 osc=+2.336 adj=+0.000 net=+2.675  | ten_drift=-0.1792  | pop_drift=+0.2364
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_6_f0  eco=22.7  pop=29.8  ten=54.9  mil=14.2  | eco_drift: growth=+0.595 t_drag=-0.220 overcap=-0.000 osc=-0.337 adj=+0.000 net=+0.038  | ten_drift=+0.0197  | pop_drift=+0.1278
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_7_home  eco=76.4  pop=80.0  ten=13.5  mil=86.3  | eco_drift: growth=+1.600 t_drag=-0.054 overcap=-1.259 osc=+2.343 adj=+0.014 net=+2.645  | ten_drift=-0.1325  | pop_drift=+0.2890
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_7_f0  eco=33.5  pop=37.7  ten=17.0  mil=51.8  | eco_drift: growth=+0.753 t_drag=-0.068 overcap=-0.221 osc=-0.994 adj=+0.056 net=-0.474  | ten_drift=-0.0029  | pop_drift=+0.2712
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_8_home  eco=77.5  pop=81.2  ten=24.1  mil=86.5  | eco_drift: growth=+1.625 t_drag=-0.097 overcap=-1.270 osc=+2.476 adj=+0.032 net=+2.767  | ten_drift=-0.1600  | pop_drift=+0.2760
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_8_f0  eco=66.9  pop=70.5  ten=10.0  mil=81.4  | eco_drift: growth=+1.410 t_drag=-0.040 overcap=-1.050 osc=-2.077 adj=+0.053 net=-1.703  | ten_drift=-0.0796  | pop_drift=+0.3605
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_9_home  eco=71.7  pop=75.7  ten=29.6  mil=84.2  | eco_drift: growth=+1.515 t_drag=-0.118 overcap=-1.103 osc=+2.308 adj=+0.019 net=+2.621  | ten_drift=-0.1414  | pop_drift=+0.3239
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_9_f0  eco=37.5  pop=40.6  ten=13.7  mil=51.7  | eco_drift: growth=+0.812 t_drag=-0.055 overcap=-0.453 osc=-2.495 adj=+0.038 net=-2.154  | ten_drift=-0.0022  | pop_drift=+0.3149
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_10_home  eco=74.3  pop=78.3  ten=20.8  mil=84.5  | eco_drift: growth=+1.567 t_drag=-0.083 overcap=-1.154 osc=+2.009 adj=+0.018 net=+2.357  | ten_drift=-0.1367  | pop_drift=+0.3021
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_10_f0  eco=37.0  pop=40.4  ten=13.4  mil=54.5  | eco_drift: growth=+0.809 t_drag=-0.053 overcap=-0.397 osc=-2.419 adj=+0.036 net=-2.025  | ten_drift=-0.0005  | pop_drift=+0.3086
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_11_home  eco=79.6  pop=83.3  ten=21.5  mil=87.3  | eco_drift: growth=+1.665 t_drag=-0.086 overcap=-1.330 osc=-0.436 adj=+0.015 net=-0.172  | ten_drift=-0.1665  | pop_drift=+0.2545
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_11_f0  eco=36.5  pop=40.4  ten=14.6  mil=54.5  | eco_drift: growth=+0.807 t_drag=-0.058 overcap=-0.326 osc=+1.170 adj=+0.053 net=+1.646  | ten_drift=-0.0018  | pop_drift=+0.3014
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_12_home  eco=84.7  pop=87.9  ten=19.6  mil=88.5  | eco_drift: growth=+1.759 t_drag=-0.078 overcap=-1.495 osc=+2.487 adj=+0.029 net=+2.701  | ten_drift=-0.1918  | pop_drift=+0.1978
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_12_f0  eco=58.9  pop=62.4  ten=11.9  mil=75.8  | eco_drift: growth=+1.249 t_drag=-0.047 overcap=-0.871 osc=-2.383 adj=+0.059 net=-1.994  | ten_drift=-0.0514  | pop_drift=+0.3878
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_13_home  eco=73.3  pop=77.0  ten=12.0  mil=85.1  | eco_drift: growth=+1.539 t_drag=-0.048 overcap=-1.189 osc=+2.492 adj=+0.015 net=+2.808  | ten_drift=-0.1138  | pop_drift=+0.3163
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_13_f0  eco=30.8  pop=35.7  ten=16.4  mil=46.0  | eco_drift: growth=+0.714 t_drag=-0.065 overcap=-0.066 osc=-2.198 adj=+0.038 net=-1.578  | ten_drift=+0.0016  | pop_drift=+0.2387
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_14_home  eco=79.0  pop=82.4  ten=14.6  mil=87.2  | eco_drift: growth=+1.649 t_drag=-0.058 overcap=-1.332 osc=-2.404 adj=+0.021 net=-2.125  | ten_drift=-0.1486  | pop_drift=+0.2642
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_14_f0  eco=47.6  pop=51.1  ten=12.2  mil=65.2  | eco_drift: growth=+1.023 t_drag=-0.049 overcap=-0.627 osc=-0.604 adj=+0.060 net=-0.196  | ten_drift=-0.0184  | pop_drift=+0.3753
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_e000  eco=19.6  pop=25.2  ten=77.4  mil=5.8  | eco_drift: growth=+0.503 t_drag=-0.310 overcap=-0.000 osc=-0.771 adj=+0.016 net=-0.561  | ten_drift=+0.1109  | pop_drift=+0.0818
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_e001  eco=17.2  pop=24.4  ten=72.6  mil=0.3  | eco_drift: growth=+0.488 t_drag=-0.290 overcap=-0.000 osc=-0.771 adj=+0.013 net=-0.560  | ten_drift=+0.1262  | pop_drift=+0.0391
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_e002  eco=20.2  pop=25.6  ten=90.3  mil=13.6  | eco_drift: growth=+0.511 t_drag=-0.361 overcap=-0.000 osc=-0.771 adj=+0.037 net=-0.584  | ten_drift=+0.0556  | pop_drift=+0.0912
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_e003  eco=25.5  pop=28.5  ten=76.4  mil=11.3  | eco_drift: growth=+0.571 t_drag=-0.306 overcap=-0.187 osc=-0.771 adj=+0.000 net=-0.693  | ten_drift=+0.0428  | pop_drift=+0.1764
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_e004  eco=14.9  pop=16.5  ten=35.8  mil=4.6  | eco_drift: growth=+0.331 t_drag=-0.143 overcap=-0.123 osc=-0.771 adj=+0.000 net=-0.707  | ten_drift=+0.1580  | pop_drift=-0.0234
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_e005  eco=19.1  pop=24.9  ten=88.9  mil=12.9  | eco_drift: growth=+0.498 t_drag=-0.355 overcap=-0.000 osc=-0.771 adj=+0.000 net=-0.629  | ten_drift=+0.0584  | pop_drift=+0.0720
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_e006  eco=20.6  pop=22.4  ten=31.1  mil=10.8  | eco_drift: growth=+0.448 t_drag=-0.124 overcap=-0.236 osc=-0.771 adj=+0.046 net=-0.637  | ten_drift=+0.0184  | pop_drift=+0.1023
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_e007  eco=11.4  pop=9.5  ten=37.5  mil=6.3  | eco_drift: growth=+0.190 t_drag=-0.150 overcap=-0.497 osc=-0.771 adj=+0.032 net=-1.195  | ten_drift=+0.1509  | pop_drift=-0.7185
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_e008  eco=28.0  pop=31.4  ten=57.8  mil=22.9  | eco_drift: growth=+0.628 t_drag=-0.231 overcap=-0.197 osc=-0.771 adj=+0.049 net=-0.521  | ten_drift=-0.0154  | pop_drift=+0.2099
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_e009  eco=26.5  pop=29.4  ten=43.4  mil=26.0  | eco_drift: growth=+0.588 t_drag=-0.173 overcap=-0.224 osc=-0.771 adj=+0.033 net=-0.548  | ten_drift=-0.0327  | pop_drift=+0.1906
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_e010  eco=9.7  pop=23.9  ten=28.8  mil=8.0  | eco_drift: growth=+0.477 t_drag=-0.115 overcap=-0.000 osc=-0.771 adj=+0.015 net=-0.394  | ten_drift=+0.1348  | pop_drift=-1.0898
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_e011  eco=22.3  pop=26.7  ten=57.2  mil=10.8  | eco_drift: growth=+0.534 t_drag=-0.229 overcap=-0.000 osc=-0.771 adj=+0.032 net=-0.435  | ten_drift=+0.0349  | pop_drift=+0.1258
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_e012  eco=16.9  pop=20.3  ten=39.8  mil=7.2  | eco_drift: growth=+0.405 t_drag=-0.159 overcap=-0.000 osc=-0.771 adj=+0.008 net=-0.517  | ten_drift=+0.1115  | pop_drift=+0.0348
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_e013  eco=19.1  pop=25.3  ten=72.8  mil=8.5  | eco_drift: growth=+0.507 t_drag=-0.291 overcap=-0.000 osc=-0.771 adj=+0.017 net=-0.539  | ten_drift=+0.1056  | pop_drift=+0.0729
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_e014  eco=23.8  pop=26.4  ten=31.7  mil=16.9  | eco_drift: growth=+0.527 t_drag=-0.127 overcap=-0.208 osc=-0.771 adj=+0.033 net=-0.546  | ten_drift=-0.0070  | pop_drift=+0.1525
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_e015  eco=25.0  pop=28.2  ten=68.2  mil=19.1  | eco_drift: growth=+0.565 t_drag=-0.273 overcap=-0.145 osc=-0.771 adj=+0.069 net=-0.556  | ten_drift=+0.0122  | pop_drift=+0.1683
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_e016  eco=19.7  pop=25.6  ten=102.0  mil=7.0  | eco_drift: growth=+0.512 t_drag=-0.408 overcap=-0.000 osc=-0.771 adj=+0.000 net=-0.667  | ten_drift=+0.1073  | pop_drift=+0.0818
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_e018  eco=20.6  pop=22.0  ten=46.8  mil=9.0  | eco_drift: growth=+0.440 t_drag=-0.187 overcap=-0.281 osc=-0.771 adj=+0.034 net=-0.765  | ten_drift=+0.1036  | pop_drift=+0.1021
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_e019  eco=25.8  pop=28.2  ten=33.7  mil=21.2  | eco_drift: growth=+0.564 t_drag=-0.135 overcap=-0.271 osc=-0.771 adj=+0.015 net=-0.598  | ten_drift=-0.0231  | pop_drift=+0.1822
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_e020  eco=18.1  pop=24.5  ten=30.3  mil=5.0  | eco_drift: growth=+0.490 t_drag=-0.121 overcap=-0.000 osc=-0.771 adj=+0.015 net=-0.387  | ten_drift=+0.1165  | pop_drift=+0.0545
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_e021  eco=6.3  pop=0.0  ten=43.6  mil=7.5  | eco_drift: growth=+0.000 t_drag=-0.174 overcap=-0.946 osc=-0.771 adj=+0.016 net=-1.876  | ten_drift=+0.1373  | pop_drift=-1.8632
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_e022  eco=19.4  pop=25.6  ten=102.0  mil=8.2  | eco_drift: growth=+0.512 t_drag=-0.408 overcap=-0.000 osc=-0.771 adj=+0.000 net=-0.667  | ten_drift=+0.1050  | pop_drift=+0.0770
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_e023  eco=16.4  pop=18.7  ten=61.7  mil=7.3  | eco_drift: growth=+0.374 t_drag=-0.247 overcap=-0.078 osc=-0.771 adj=+0.014 net=-0.707  | ten_drift=+0.1398  | pop_drift=+0.0274
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_e024  eco=13.8  pop=25.0  ten=102.0  mil=10.1  | eco_drift: growth=+0.500 t_drag=-0.408 overcap=-0.000 osc=-0.771 adj=+0.012 net=-0.667  | ten_drift=+0.0844  | pop_drift=-0.2334
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_e025  eco=16.6  pop=18.0  ten=36.8  mil=5.1  | eco_drift: growth=+0.361 t_drag=-0.147 overcap=-0.190 osc=-0.771 adj=+0.015 net=-0.732  | ten_drift=+0.1561  | pop_drift=+0.0308
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_e026  eco=21.0  pop=27.6  ten=102.0  mil=6.5  | eco_drift: growth=+0.553 t_drag=-0.408 overcap=-0.000 osc=-0.771 adj=+0.015 net=-0.611  | ten_drift=+0.1067  | pop_drift=+0.1014
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_e027  eco=15.3  pop=15.2  ten=34.1  mil=5.7  | eco_drift: growth=+0.305 t_drag=-0.137 overcap=-0.354 osc=-0.771 adj=+0.016 net=-0.940  | ten_drift=+0.1558  | pop_drift=+0.0060
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_e028  eco=18.5  pop=27.0  ten=78.8  mil=9.6  | eco_drift: growth=+0.540 t_drag=-0.315 overcap=-0.000 osc=-0.771 adj=+0.022 net=-0.523  | ten_drift=+0.1041  | pop_drift=+0.0608
-[pipe:stdout-intercepted]   [DRIFT t= 50] region_e029  eco=13.2  pop=13.0  ten=40.5  mil=1.8  | eco_drift: growth=+0.261 t_drag=-0.162 overcap=-0.313 osc=-0.771 adj=+0.017 net=-0.969  | ten_drift=+0.1589  | pop_drift=-0.3658
-INFO opening time jump: 322 events, 10 scroll entries, 30 territory changes
-INFO sending 24 opening time jump messages
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_player_f0  eco=56.6  pop=59.8  ten=14.6  mil=71.2  | eco_drift: growth=+1.196 t_drag=-0.059 overcap=-0.872 osc=-2.443 adj=+0.060 net=-2.117  | ten_drift=-0.0491  | pop_drift=+0.3939
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_1_home  eco=79.3  pop=82.8  ten=20.1  mil=87.3  | eco_drift: growth=+1.655 t_drag=-0.081 overcap=-1.341 osc=-0.012 adj=+0.032 net=+0.254  | ten_drift=-0.1614  | pop_drift=+0.2608
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_1_f0  eco=65.6  pop=69.9  ten=22.5  mil=80.2  | eco_drift: growth=+1.397 t_drag=-0.090 overcap=-0.928 osc=-2.202 adj=+0.078 net=-1.745  | ten_drift=-0.0994  | pop_drift=+0.3585
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_2_home  eco=81.0  pop=85.2  ten=24.0  mil=87.7  | eco_drift: growth=+1.703 t_drag=-0.096 overcap=-1.284 osc=-1.542 adj=+0.017 net=-1.202  | ten_drift=-0.1799  | pop_drift=+0.2301
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_2_f0  eco=29.0  pop=32.2  ten=29.0  mil=38.4  | eco_drift: growth=+0.645 t_drag=-0.116 overcap=-0.246 osc=-1.806 adj=+0.042 net=-1.481  | ten_drift=-0.0243  | pop_drift=+0.2238
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_3_home  eco=80.4  pop=83.7  ten=12.2  mil=87.6  | eco_drift: growth=+1.673 t_drag=-0.049 overcap=-1.385 osc=-1.703 adj=+0.027 net=-1.436  | ten_drift=-0.1513  | pop_drift=+0.2511
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_3_f0  eco=59.7  pop=63.2  ten=22.8  mil=75.9  | eco_drift: growth=+1.263 t_drag=-0.091 overcap=-0.904 osc=-1.061 adj=+0.070 net=-0.722  | ten_drift=-0.0764  | pop_drift=+0.3875
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_4_home  eco=83.5  pop=86.9  ten=19.9  mil=88.2  | eco_drift: growth=+1.738 t_drag=-0.080 overcap=-1.449 osc=+2.495 adj=+0.014 net=+2.717  | ten_drift=-0.1854  | pop_drift=+0.2115
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_4_f0  eco=33.3  pop=36.9  ten=15.4  mil=48.6  | eco_drift: growth=+0.738 t_drag=-0.062 overcap=-0.289 osc=+0.192 adj=+0.075 net=+0.654  | ten_drift=-0.0000  | pop_drift=+0.2714
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_5_home  eco=84.1  pop=87.4  ten=15.2  mil=88.3  | eco_drift: growth=+1.749 t_drag=-0.061 overcap=-1.471 osc=+2.269 adj=+0.034 net=+2.520  | ten_drift=-0.1797  | pop_drift=+0.2043
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_5_f0  eco=63.1  pop=66.5  ten=19.0  mil=77.2  | eco_drift: growth=+1.331 t_drag=-0.076 overcap=-0.979 osc=+0.573 adj=+0.044 net=+0.892  | ten_drift=-0.0815  | pop_drift=+0.3786
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_6_home  eco=81.1  pop=84.7  ten=22.7  mil=87.6  | eco_drift: growth=+1.694 t_drag=-0.091 overcap=-1.366 osc=+2.336 adj=+0.014 net=+2.587  | ten_drift=-0.1770  | pop_drift=+0.2383
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_6_f0  eco=32.7  pop=38.1  ten=19.8  mil=51.4  | eco_drift: growth=+0.763 t_drag=-0.079 overcap=-0.049 osc=-0.337 adj=+0.040 net=+0.337  | ten_drift=-0.0068  | pop_drift=+0.2583
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_7_home  eco=76.4  pop=80.0  ten=17.0  mil=86.3  | eco_drift: growth=+1.600 t_drag=-0.068 overcap=-1.256 osc=+2.343 adj=+0.014 net=+2.633  | ten_drift=-0.1395  | pop_drift=+0.2890
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_7_f0  eco=33.3  pop=37.7  ten=17.6  mil=51.8  | eco_drift: growth=+0.753 t_drag=-0.070 overcap=-0.191 osc=-0.994 adj=+0.040 net=-0.462  | ten_drift=-0.0037  | pop_drift=+0.2682
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_8_home  eco=77.5  pop=81.2  ten=27.3  mil=86.6  | eco_drift: growth=+1.625 t_drag=-0.109 overcap=-1.266 osc=+2.476 adj=+0.032 net=+2.758  | ten_drift=-0.1662  | pop_drift=+0.2758
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_8_f0  eco=66.6  pop=70.4  ten=10.9  mil=81.3  | eco_drift: growth=+1.409 t_drag=-0.044 overcap=-1.017 osc=-2.077 adj=+0.049 net=-1.679  | ten_drift=-0.0804  | pop_drift=+0.3593
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_9_home  eco=70.9  pop=75.7  ten=22.1  mil=84.3  | eco_drift: growth=+1.515 t_drag=-0.089 overcap=-0.975 osc=+2.308 adj=+0.019 net=+2.779  | ten_drift=-0.1233  | pop_drift=+0.3190
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_9_f0  eco=37.6  pop=40.6  ten=13.6  mil=51.8  | eco_drift: growth=+0.813 t_drag=-0.055 overcap=-0.453 osc=-2.495 adj=+0.037 net=-2.152  | ten_drift=-0.0020  | pop_drift=+0.3150
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_10_home  eco=74.8  pop=78.4  ten=12.2  mil=86.0  | eco_drift: growth=+1.568 t_drag=-0.049 overcap=-1.221 osc=+2.009 adj=+0.018 net=+2.326  | ten_drift=-0.1215  | pop_drift=+0.3037
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_10_f0  eco=37.2  pop=40.4  ten=12.9  mil=54.5  | eco_drift: growth=+0.809 t_drag=-0.052 overcap=-0.422 osc=-2.419 adj=+0.050 net=-2.034  | ten_drift=+0.0001  | pop_drift=+0.3110
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_11_home  eco=79.8  pop=83.3  ten=15.0  mil=87.4  | eco_drift: growth=+1.666 t_drag=-0.060 overcap=-1.350 osc=-0.436 adj=+0.016 net=-0.165  | ten_drift=-0.1541  | pop_drift=+0.2549
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_11_f0  eco=36.8  pop=40.4  ten=12.8  mil=54.6  | eco_drift: growth=+0.808 t_drag=-0.051 overcap=-0.373 osc=+1.170 adj=+0.056 net=+1.610  | ten_drift=+0.0011  | pop_drift=+0.3060
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_12_home  eco=84.7  pop=87.9  ten=19.5  mil=88.4  | eco_drift: growth=+1.759 t_drag=-0.078 overcap=-1.493 osc=+2.487 adj=+0.029 net=+2.703  | ten_drift=-0.1915  | pop_drift=+0.1978
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_12_f0  eco=58.5  pop=62.3  ten=13.0  mil=75.5  | eco_drift: growth=+1.247 t_drag=-0.052 overcap=-0.819 osc=-2.383 adj=+0.043 net=-1.964  | ten_drift=-0.0524  | pop_drift=+0.3850
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_13_home  eco=73.2  pop=77.0  ten=18.1  mil=85.0  | eco_drift: growth=+1.539 t_drag=-0.072 overcap=-1.167 osc=+2.492 adj=+0.015 net=+2.806  | ten_drift=-0.1255  | pop_drift=+0.3156
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_13_f0  eco=30.9  pop=35.6  ten=17.9  mil=45.7  | eco_drift: growth=+0.711 t_drag=-0.071 overcap=-0.098 osc=-2.198 adj=+0.065 net=-1.591  | ten_drift=-0.0017  | pop_drift=+0.2408
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_14_home  eco=78.7  pop=82.4  ten=27.5  mil=87.1  | eco_drift: growth=+1.648 t_drag=-0.110 overcap=-1.295 osc=-2.404 adj=+0.021 net=-2.140  | ten_drift=-0.1732  | pop_drift=+0.2634
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_faction_14_f0  eco=47.6  pop=51.1  ten=12.2  mil=65.2  | eco_drift: growth=+1.023 t_drag=-0.049 overcap=-0.622 osc=-0.604 adj=+0.053 net=-0.199  | ten_drift=-0.0182  | pop_drift=+0.3750
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_e000  eco=14.2  pop=25.7  ten=102.0  mil=4.9  | eco_drift: growth=+0.514 t_drag=-0.408 overcap=-0.000 osc=-0.771 adj=+0.000 net=-0.665  | ten_drift=+0.1189  | pop_drift=-0.1549
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_e001  eco=4.0  pop=0.0  ten=46.5  mil=5.6  | eco_drift: growth=+0.000 t_drag=-0.186 overcap=-0.600 osc=-0.771 adj=+0.014 net=-1.544  | ten_drift=+0.1390  | pop_drift=-2.3859
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_e002  eco=15.2  pop=25.0  ten=102.0  mil=8.7  | eco_drift: growth=+0.500 t_drag=-0.408 overcap=-0.000 osc=-0.771 adj=+0.014 net=-0.665  | ten_drift=+0.1090  | pop_drift=+0.0029
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_e003  eco=20.2  pop=25.7  ten=72.4  mil=10.1  | eco_drift: growth=+0.513 t_drag=-0.290 overcap=-0.000 osc=-0.771 adj=+0.031 net=-0.516  | ten_drift=+0.0526  | pop_drift=+0.0918
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_e004  eco=20.8  pop=22.8  ten=28.2  mil=10.4  | eco_drift: growth=+0.455 t_drag=-0.113 overcap=-0.212 osc=-0.771 adj=+0.017 net=-0.624  | ten_drift=+0.0169  | pop_drift=+0.1047
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_e005  eco=14.5  pop=25.0  ten=102.0  mil=8.4  | eco_drift: growth=+0.500 t_drag=-0.408 overcap=-0.000 osc=-0.771 adj=+0.012 net=-0.667  | ten_drift=+0.1106  | pop_drift=-0.1030
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_e006  eco=13.9  pop=14.1  ten=38.7  mil=4.6  | eco_drift: growth=+0.282 t_drag=-0.155 overcap=-0.284 osc=-0.771 adj=+0.027 net=-0.901  | ten_drift=+0.1554  | pop_drift=-0.2240
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_e007  eco=19.4  pop=21.4  ten=35.5  mil=4.9  | eco_drift: growth=+0.427 t_drag=-0.142 overcap=-0.184 osc=-0.771 adj=+0.035 net=-0.635  | ten_drift=+0.1144  | pop_drift=+0.0811
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_e008  eco=18.4  pop=26.1  ten=102.0  mil=10.7  | eco_drift: growth=+0.521 t_drag=-0.408 overcap=-0.000 osc=-0.771 adj=+0.053 net=-0.604  | ten_drift=+0.0764  | pop_drift=+0.0596
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_e009  eco=17.8  pop=25.3  ten=43.4  mil=5.3  | eco_drift: growth=+0.506 t_drag=-0.174 overcap=-0.000 osc=-0.771 adj=+0.000 net=-0.438  | ten_drift=+0.1157  | pop_drift=+0.0487
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_e010  eco=20.5  pop=24.9  ten=32.8  mil=7.6  | eco_drift: growth=+0.497 t_drag=-0.131 overcap=-0.000 osc=-0.771 adj=+0.031 net=-0.373  | ten_drift=+0.1075  | pop_drift=+0.0978
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_e011  eco=14.2  pop=24.8  ten=102.0  mil=5.2  | eco_drift: growth=+0.497 t_drag=-0.408 overcap=-0.000 osc=-0.771 adj=+0.031 net=-0.651  | ten_drift=+0.1180  | pop_drift=-0.1570
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_e012  eco=7.3  pop=2.0  ten=43.4  mil=5.8  | eco_drift: growth=+0.040 t_drag=-0.174 overcap=-0.834 osc=-0.771 adj=+0.000 net=-1.738  | ten_drift=+0.1461  | pop_drift=-1.6452
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_e013  eco=20.0  pop=25.3  ten=83.6  mil=13.1  | eco_drift: growth=+0.507 t_drag=-0.334 overcap=-0.000 osc=-0.771 adj=+0.012 net=-0.587  | ten_drift=+0.0524  | pop_drift=+0.0877
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_e014  eco=27.9  pop=30.2  ten=28.2  mil=28.7  | eco_drift: growth=+0.604 t_drag=-0.113 overcap=-0.334 osc=-0.771 adj=+0.040 net=-0.575  | ten_drift=-0.0230  | pop_drift=+0.2119
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_e015  eco=14.9  pop=25.0  ten=102.0  mil=6.4  | eco_drift: growth=+0.500 t_drag=-0.408 overcap=-0.000 osc=-0.771 adj=+0.014 net=-0.665  | ten_drift=+0.1145  | pop_drift=-0.0211
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_e016  eco=23.8  pop=26.3  ten=37.9  mil=17.2  | eco_drift: growth=+0.525 t_drag=-0.151 overcap=-0.220 osc=-0.771 adj=+0.039 net=-0.578  | ten_drift=-0.0030  | pop_drift=+0.1526
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_e017  eco=24.6  pop=26.8  ten=29.2  mil=21.5  | eco_drift: growth=+0.537 t_drag=-0.117 overcap=-0.261 osc=-0.771 adj=+0.014 net=-0.598  | ten_drift=-0.0243  | pop_drift=+0.1644
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_e018  eco=24.0  pop=26.3  ten=39.3  mil=19.5  | eco_drift: growth=+0.525 t_drag=-0.157 overcap=-0.252 osc=-0.771 adj=+0.021 net=-0.634  | ten_drift=-0.0093  | pop_drift=+0.1560
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_e019  eco=24.2  pop=26.5  ten=29.4  mil=17.1  | eco_drift: growth=+0.529 t_drag=-0.118 overcap=-0.261 osc=-0.771 adj=+0.031 net=-0.589  | ten_drift=-0.0102  | pop_drift=+0.1598
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_e020  eco=19.6  pop=24.8  ten=37.5  mil=6.3  | eco_drift: growth=+0.497 t_drag=-0.150 overcap=-0.000 osc=-0.771 adj=+0.017 net=-0.407  | ten_drift=+0.1113  | pop_drift=+0.0815
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_e021  eco=2.8  pop=0.0  ten=67.2  mil=0.0  | eco_drift: growth=+0.000 t_drag=-0.269 overcap=-0.415 osc=-0.771 adj=+0.016 net=-1.439  | ten_drift=+0.1374  | pop_drift=-2.6656
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_e022  eco=17.2  pop=19.8  ten=50.8  mil=4.5  | eco_drift: growth=+0.396 t_drag=-0.203 overcap=-0.056 osc=-0.771 adj=+0.015 net=-0.619  | ten_drift=+0.1502  | pop_drift=+0.0419
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_e023  eco=18.2  pop=21.1  ten=62.9  mil=7.6  | eco_drift: growth=+0.422 t_drag=-0.252 overcap=-0.034 osc=-0.771 adj=+0.024 net=-0.610  | ten_drift=+0.1086  | pop_drift=+0.0589
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_e024  eco=16.3  pop=25.1  ten=102.0  mil=6.4  | eco_drift: growth=+0.502 t_drag=-0.408 overcap=-0.000 osc=-0.771 adj=+0.013 net=-0.664  | ten_drift=+0.1128  | pop_drift=+0.0230
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_e025  eco=22.7  pop=25.7  ten=49.6  mil=14.8  | eco_drift: growth=+0.513 t_drag=-0.198 overcap=-0.136 osc=-0.771 adj=+0.000 net=-0.592  | ten_drift=+0.0161  | pop_drift=+0.1350
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_e026  eco=21.2  pop=23.4  ten=47.2  mil=22.0  | eco_drift: growth=+0.469 t_drag=-0.189 overcap=-0.189 osc=-0.771 adj=+0.026 net=-0.653  | ten_drift=-0.0058  | pop_drift=+0.1112
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_e027  eco=10.3  pop=20.2  ten=32.4  mil=8.0  | eco_drift: growth=+0.404 t_drag=-0.130 overcap=-0.000 osc=-0.771 adj=+0.012 net=-0.484  | ten_drift=+0.1232  | pop_drift=-0.9478
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_e028  eco=20.6  pop=23.1  ten=53.0  mil=15.4  | eco_drift: growth=+0.462 t_drag=-0.212 overcap=-0.136 osc=-0.771 adj=+0.028 net=-0.629  | ten_drift=+0.0208  | pop_drift=+0.1005
+[pipe:stdout-intercepted]   [DRIFT t= 50] region_e029  eco=20.0  pop=21.9  ten=32.4  mil=7.6  | eco_drift: growth=+0.438 t_drag=-0.130 overcap=-0.212 osc=-0.771 adj=+0.012 net=-0.662  | ten_drift=+0.1078  | pop_drift=+0.0924
+INFO opening time jump: 333 events, 9 scroll entries, 30 territory changes
+INFO sending 23 opening time jump messages
 INFO === WAITING FOR OPENING SCROLL ===

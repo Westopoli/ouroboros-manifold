@@ -12,6 +12,12 @@ var _skip_btn: Button
 var _fade_overlay: ColorRect
 var _accent: Color
 
+# Stage 11g — info panel host. Gated on FeatureFlags.ENABLE_INSPECTION_PANELS.
+# See orbital_camera_3d.gd: when the flag is on the camera skips its own
+# _focus_on_region so the sequencer can drive both panel and camera pan.
+var _info_host: Control
+var _faction_names: Dictionary = {}
+
 var _keyframe_queue: Array[Dictionary] = []
 var _entry_queue: Array[Dictionary] = []
 var _waiting_for_entry: bool = false
@@ -75,6 +81,10 @@ func _build_layout() -> void:
 	_world_sub_viewport.add_child(_shell)
 	_shell.set_viewport(_world_sub_viewport)
 	_shell.setup_era(EraConfig.ACTIVE_ERA_ID)
+	if _shell.has_signal("region_clicked"):
+		_shell.region_clicked.connect(_on_shell_region_clicked)
+	if _shell.has_signal("empty_space_clicked"):
+		_shell.empty_space_clicked.connect(_on_shell_empty_space_clicked)
 
 	_scroll = load("res://scenes/world/chronicle_scroll_panel.tscn").instantiate()
 	_scroll.anchor_left = 0.62
@@ -87,6 +97,22 @@ func _build_layout() -> void:
 	_scroll.entry_expansion_opened.connect(_on_expansion_opened)
 	_scroll.entry_expansion_closed.connect(_on_expansion_closed)
 	add_child(_scroll)
+
+	_info_host = load("res://scenes/world/info_panel_host.tscn").instantiate()
+	# Anchored to the right side of the world viewport area (left 62% during
+	# narration), so it doesn't collide with debug harness buttons (top-left)
+	# or the skip button (bottom-left).
+	_info_host.anchor_left = 0.30
+	_info_host.anchor_right = 0.62
+	_info_host.anchor_top = 0.0
+	_info_host.anchor_bottom = 1.0
+	_info_host.offset_left = 0
+	_info_host.offset_top = 24
+	_info_host.offset_right = -24
+	_info_host.offset_bottom = -80
+	_info_host.open_region_requested.connect(_on_host_open_region_requested)
+	_info_host.open_faction_requested.connect(_on_host_open_faction_requested)
+	add_child(_info_host)
 
 	_fade_overlay = ColorRect.new()
 	_fade_overlay.color = Color(0, 0, 0, 0)
@@ -164,6 +190,7 @@ func _on_time_jump_started(tj_id: String, _span_years: int, _total_kf: int, tota
 	_total_entries = total_entries
 	_entries_printed = 0
 	_phase = Phase.NARRATION
+	_faction_names = faction_names
 	# Assign evenly-spaced hues so factions are always visually distinct
 	var faction_ids: Array = faction_names.keys()
 	faction_ids.sort()
@@ -456,3 +483,104 @@ func _on_exit() -> void:
 		_disconnect_bus_signals()
 		UIDataBus.exit_to_main_menu()
 	)
+
+
+# --- Stage 11g — Inspection panel wiring ---
+
+func _on_shell_region_clicked(region_id: String) -> void:
+	# TEMP — Stage 11g Checkpoint K isolation prints
+	print("[CP-K] shell_region_clicked rid=", region_id,
+		"  panels_flag=", FeatureFlags.ENABLE_INSPECTION_PANELS,
+		"  state_has_rid=", _regions_state.has(region_id))
+	if not FeatureFlags.ENABLE_INSPECTION_PANELS:
+		return
+	if not _regions_state.has(region_id):
+		return
+	var r: Dictionary = _regions_state[region_id]
+	print("[CP-K] region payload keys: ", r.keys(),
+		"  has_name=", r.has("name"),
+		"  has_tier=", r.has("tier"),
+		"  has_military=", r.has("military"))
+	_open_region_panel(region_id)
+	_shell.move_camera_to_region(region_id, 1.5)
+
+
+func _on_shell_empty_space_clicked() -> void:
+	if not FeatureFlags.ENABLE_INSPECTION_PANELS:
+		return
+	if _info_host == null or not _info_host.is_open():
+		return
+	# Don't close if the click was over the panel itself.
+	var hovered: Control = get_viewport().gui_get_hovered_control()
+	if hovered != null and (hovered == _info_host or _info_host.is_ancestor_of(hovered)):
+		return
+	_info_host.close()
+
+
+func _on_host_open_region_requested(region_id: String) -> void:
+	if not _regions_state.has(region_id):
+		return
+	_open_region_panel(region_id)
+	_shell.move_camera_to_region(region_id, 1.5)
+
+
+func _on_host_open_faction_requested(faction_id: String) -> void:
+	print("[CP-K] sequencer received open_faction_requested fid=", faction_id)
+	_open_faction_panel(faction_id)
+
+
+func _open_region_panel(region_id: String) -> void:
+	var r: Dictionary = _regions_state[region_id]
+	var fid: String = r.get("owner_faction_id", "")
+	var fname: String = String(_faction_names.get(fid, fid))
+	var fcolor: Color = _get_faction_color(fid) if fid != "" else Color(0.5, 0.5, 0.5, 0.5)
+	var ownership_line := ""
+	if fid != "":
+		ownership_line = "Held by %s." % fname
+	print("[CP-K] open_region_panel  rid=", region_id, "  fid=", fid, "  fname=", fname,
+		"  host_visible=", _info_host.visible, "  host_size=", _info_host.size)
+	_info_host.open_region(region_id, r, fid, fname, fcolor, ownership_line)
+
+
+func _open_faction_panel(faction_id: String) -> void:
+	if faction_id == "":
+		return
+	var fname: String = String(_faction_names.get(faction_id, faction_id))
+	var fcolor: Color = _get_faction_color(faction_id)
+	var meta: Dictionary = {
+		"id": faction_id,
+		"name": fname,
+		"archetype": "—",
+		"tech_tier": 0,
+		"status": "Stable",
+		"aggregates": _aggregate_for_faction(faction_id),
+	}
+	var rows: Array = _region_rows_for_faction(faction_id)
+	_info_host.open_faction(faction_id, meta, fcolor, rows)
+
+
+func _aggregate_for_faction(faction_id: String) -> Dictionary:
+	var sums := {"military": 0, "economy": 0, "tension": 0, "population": 0}
+	for rid in _regions_state:
+		var r: Dictionary = _regions_state[rid]
+		if String(r.get("owner_faction_id", "")) != faction_id:
+			continue
+		sums["military"]   += int(r.get("military", 0))
+		sums["economy"]    += int(r.get("economy", 0))
+		sums["tension"]    += int(r.get("tension", 0))
+		sums["population"] += int(r.get("population", 0))
+	return sums
+
+
+func _region_rows_for_faction(faction_id: String) -> Array:
+	var rows: Array = []
+	for rid in _regions_state:
+		var r: Dictionary = _regions_state[rid]
+		if String(r.get("owner_faction_id", "")) != faction_id:
+			continue
+		rows.append({
+			"region_id": rid,
+			"name": String(r.get("name", rid)),
+			"tier": String(r.get("tier", "")),
+		})
+	return rows

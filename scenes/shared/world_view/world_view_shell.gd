@@ -1,6 +1,10 @@
 extends Node
 
 signal camera_move_completed()
+# Stage 11g — re-emitted from the camera so the time_jump_sequencer can listen
+# at the shell level instead of reaching into the camera node.
+signal region_clicked(region_id: String)
+signal empty_space_clicked()
 
 var _data: Node
 var _renderer: Node
@@ -38,6 +42,10 @@ func setup_era(era_id: String) -> void:
 
 	if _camera and _camera.has_signal("camera_move_completed"):
 		_camera.camera_move_completed.connect(func(): camera_move_completed.emit())
+	if _camera and _camera.has_signal("region_clicked"):
+		_camera.region_clicked.connect(func(rid: String): region_clicked.emit(rid))
+	if _camera and _camera.has_signal("empty_space_clicked"):
+		_camera.empty_space_clicked.connect(func(): empty_space_clicked.emit())
 
 
 func set_viewport(viewport: SubViewport) -> void:
