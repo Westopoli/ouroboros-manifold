@@ -183,4 +183,36 @@ def select_keyframes(time_jump_result: dict, start_ownership: dict | None = None
             kf["chronicle_entry_id"] = new_id
         kf["entry_id"] = new_id
 
+    # Stage 11g — additive, gated extensions. Flags off → no changes to payload.
+    # See docs/stage_specs/stage_11g_world_view_inspection_spec.md
+    if getattr(config, "ENABLE_INSPECTION_PANELS", False):
+        region_metadata = time_jump_result.get("region_metadata", {})
+        if region_metadata:
+            for kf in keyframes:
+                snap_list = kf.get("regions_snapshot")
+                if not snap_list:
+                    continue
+                for snap in snap_list:
+                    meta = region_metadata.get(snap["region_id"])
+                    if not meta:
+                        continue
+                    for k in ("name", "tier", "military", "economy", "tension", "population"):
+                        if k in meta:
+                            snap[k] = meta[k]
+
+    if getattr(config, "ENABLE_FACTION_PALETTE", False):
+        faction_metadata = time_jump_result.get("faction_metadata", {})
+        if faction_metadata:
+            factions_array = []
+            for fid in sorted(faction_metadata.keys()):
+                meta = faction_metadata[fid]
+                factions_array.append({
+                    "id": fid,
+                    "name": meta.get("name", fid),
+                    "archetype": meta.get("archetype", ""),
+                    "tech_tier": meta.get("tech_tier", 0),
+                })
+            for kf in keyframes:
+                kf["factions"] = factions_array
+
     return keyframes

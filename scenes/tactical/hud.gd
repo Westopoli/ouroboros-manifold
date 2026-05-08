@@ -507,6 +507,7 @@ func _build_minimap_panel() -> void:
 	_place_bottom_left(panel, 12, 12, _MINIMAP_SIZE.x + 20, panel_h)
 	_minimap = _Minimap.new()
 	_minimap.custom_minimum_size = _MINIMAP_SIZE
+	_minimap.camera = get_viewport().get_camera_3d()
 	panel.add_child(_minimap)
 	add_child(panel)
 
@@ -588,6 +589,8 @@ class _AbilityRing extends Control:
 
 class _Minimap extends Control:
 	# See also: scripts/tactical/visibility.gd — fog gate
+	var camera: Camera3D
+
 	func _draw() -> void:
 		var canvas_size := Vector2(16000, 16000)
 		var md: Dictionary = TacticalBridge.map_data
@@ -647,6 +650,26 @@ class _Minimap extends Control:
 				draw_colored_polygon(pts, col)
 			else:
 				draw_circle(Vector2(mx, my), 3.0, col)
+		# Viewport box — project camera frustum corners onto ground plane
+		if not camera:
+			camera = get_viewport().get_camera_3d()
+		if camera and camera.is_inside_tree():
+			var vp_size := camera.get_viewport().get_visible_rect().size
+			var corners := [
+				Vector2(0, 0), Vector2(vp_size.x, 0),
+				Vector2(vp_size.x, vp_size.y), Vector2(0, vp_size.y)]
+			var minimap_pts := PackedVector2Array()
+			for corner in corners:
+				var origin := camera.project_ray_origin(corner)
+				var dir := camera.project_ray_normal(corner)
+				if absf(dir.y) < 0.001:
+					continue
+				var t: float = -origin.y / dir.y
+				var hit := origin + dir * t
+				minimap_pts.append(Vector2(hit.x * sx, hit.z * sy))
+			if minimap_pts.size() == 4:
+				minimap_pts.append(minimap_pts[0])
+				draw_polyline(minimap_pts, Color(1.0, 1.0, 1.0, 0.4), 1.5)
 
 
 func _build_control_group_bar() -> void:

@@ -17,10 +17,20 @@ signal flash_conflict_requested(from_id: String, to_id: String, intensity: float
 
 signal highlight_changed(region_id: String)
 
+# Stage 11g — inspection metadata. See docs/stage_specs/stage_11g_world_view_inspection_spec.md
+signal region_metadata_set(region_id: String)
+signal faction_metadata_set(faction_id: String)
+signal factions_cleared()
+
 var regions: Dictionary = {}
 var connections: Dictionary = {}
 var territories: Dictionary = {}
 var highlight_id: String = ""
+
+# Stage 11g — additive metadata stores. Empty until a producer populates them.
+var regions_metadata: Dictionary = {}  # rid → {name, tier, military, economy, tension, population, previous_owners}
+var factions: Dictionary = {}          # fid → {name, archetype, tech_tier, region_ids, aggregates, history}
+var _faction_centroid_cache: Dictionary = {}
 
 
 func _connection_key(from_id: String, to_id: String) -> String:
@@ -136,3 +146,61 @@ func get_territory(region_id: String) -> Dictionary:
 	if region_id in territories:
 		return territories[region_id]
 	return {}
+
+
+# ── Stage 11g — inspection metadata ──────────────────────────────────────────
+func set_region_metadata(region_id: String, meta: Dictionary) -> void:
+	regions_metadata[region_id] = meta.duplicate(true)
+	region_metadata_set.emit(region_id)
+
+
+func get_region_metadata(region_id: String) -> Dictionary:
+	if region_id in regions_metadata:
+		return regions_metadata[region_id]
+	return {}
+
+
+func set_faction_metadata(faction_id: String, meta: Dictionary) -> void:
+	factions[faction_id] = meta.duplicate(true)
+	_faction_centroid_cache.erase(faction_id)
+	faction_metadata_set.emit(faction_id)
+
+
+func get_faction_metadata(faction_id: String) -> Dictionary:
+	if faction_id in factions:
+		return factions[faction_id]
+	return {}
+
+
+func clear_factions() -> void:
+	factions.clear()
+	_faction_centroid_cache.clear()
+	factions_cleared.emit()
+
+
+func get_faction_region_ids(faction_id: String) -> Array:
+	var owned: Array = []
+	for rid in regions:
+		var r: Dictionary = regions[rid]
+		if r.get("faction_id", "") == faction_id:
+			owned.append(rid)
+	return owned
+
+
+func get_faction_centroid(faction_id: String) -> Vector3:
+	if _faction_centroid_cache.has(faction_id):
+		return _faction_centroid_cache[faction_id]
+	var sum := Vector3.ZERO
+	var count := 0
+	for rid in regions:
+		var r: Dictionary = regions[rid]
+		if r.get("faction_id", "") == faction_id:
+			sum += r.get("position", Vector3.ZERO) as Vector3
+			count += 1
+	var centroid := Vector3.ZERO if count == 0 else sum / float(count)
+	_faction_centroid_cache[faction_id] = centroid
+	return centroid
+
+
+func invalidate_faction_centroids() -> void:
+	_faction_centroid_cache.clear()

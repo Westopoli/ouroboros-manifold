@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/world/region_info_panel.gd" id="1"]
+
+[node name="RegionInfoPanel" type="PanelContainer"]
+script = ExtResource("1")

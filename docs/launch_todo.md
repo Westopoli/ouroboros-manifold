@@ -9,6 +9,7 @@ Tracked bugs and tasks that must be resolved before launch. Mark items `[x]` whe
 - [ ] **Fix unit sizing** — unit visual scales feel off.
 - [ ] **Fix main camera** — pan/zoom feels off, needs tuning.
 - [ ] **Fix unit balance** — combat balance pass needed.
+- [ ] **Tune force allocation scale** — missions consistently produce only 8-10 units; feels too small. `MILITARY_TO_POWER_SCALE` and `BUDGET_TO_POWER_SCALE` in `config.py` need a balance pass. Currently set to 4x temp values for testing (revert markers in code).
 - [x] **Layer visual system** — Stage 11c landed: layer focus visuals (active-layer emphasis, HUD readout) + fog of war (visibility predicate in renderer, minimap, selection). *(2026-05-03)*
 - [ ] **Fix control groups unit swapping** — control group assignments are broken; units swap between groups unexpectedly.
 - [x] **Fix mission briefing empty** — wired mission generator into game loop; briefing now shows real archetype, region, enemy, force composition, objectives, and commander lineage. *(2026-04-24)*
@@ -24,9 +25,12 @@ Tracked bugs and tasks that must be resolved before launch. Mark items `[x]` whe
 - [ ] **Add new version of map view** — redesign the Settled Reach world/map view.
 - [ ] **Improve chronicle output** — current chronicle entries are too wordy. Tighten prose generation.
 - [ ] **Regenerate library names** — current AI-generated names need a quality pass with better prompting/curation.
-- [ ] **Minimap viewport box** — draw a rectangle on the minimap showing the camera's current viewport bounds (like StarCraft 2). *(Stage 11d sub-goal 5)*
+- [x] **Minimap viewport box** — draw a rectangle on the minimap showing the camera's current viewport bounds (like StarCraft 2). *(Stage 11d sub-goal 5)*
 - [ ] **Fog of war terrain darkening** — StarCraft 2-style ground darkening outside player vision range. Currently fog hides enemy units correctly but gives no spatial feedback about where the player can/can't see. Render a vision-radius overlay (transparent within sensor range, darkened outside).
 - [ ] **Command queuing** — allow shift-queuing multiple commands so the player can set waypoints/orders and forget. Units execute queued commands in sequence.
+- [ ] **Color legend for world view** — show which color maps to which faction on the world view.
+- [ ] **Pan/drag invert option in settings** — settings UI toggle for inverting pan/drag direction.
+- [ ] **"Center view" / "zoom out" button on world view** — quick navigation control to reset camera.
 - [x] **Command location indicators** — transient command decals via `command_indicator.gd`. *(Stage 11d)*
 - [ ] **In-game tutorial** — effective explanation of the game and what to do, written in the same artistic style as the chronicle (lore-flavored, not generic UI tooltips).
 - [ ] **Skip button for chronicle entries** — add skip controls for the chronicle scroll: a per-entry skip (advance past the current entry) and a skip-all (jump past the entire chronicle sequence).
@@ -40,17 +44,15 @@ Tracked bugs and tasks that must be resolved before launch. Mark items `[x]` whe
 - [x] **11 E** — Time jump sequencer (6-phase orchestrator)
 - [x] **11b** — Per-mission map seed wiring
 - [x] **11c** — Layer focus visuals + fog of war rendering
-- [x] **11d partial** — Objectives (is_primary, progress bars, descriptions), minimap objective markers, command indicators
+- [x] **11d** — Objectives, minimap markers, command indicators, enemy clickability, minimap viewport box *(signed off 2026-05-03)*
 - [x] **11e** — Fairness pivot: simple random picker + structured JSONL logging (fairness redesign deferred to 11f)
 
-### Remaining
-- [ ] **11 C1** — Border vs trade connection visual distinction (solid vs dashed lines)
-- [ ] **11 C2** — Border contour SubViewport shader pass (deferrable — territory bubbles provide visibility)
-- [ ] **11 F** — Full loop integration: live sim → sequencer → next mission (needs `pipe_transport.py` wiring to `time_jump_emitter`)
-- [ ] **11 G** — Exit path verification (pause menu doesn't exist yet)
-- [ ] **11 H** — Performance budget verification (60 FPS during busy time jump)
-- [ ] **11d: enemy clickability** — lift `selection_eligible` gate for visible enemies (depends on 11c, which is done)
-- [ ] **11d: minimap viewport box** — camera bounds rectangle on minimap
+### Remaining (carried to launch_todo features/bugs)
+- [x] **Stage 11 signed off** — core loop works. Gaps noted below carried forward.
+- [ ] **Smooth territory transitions** — needs shader-uniform animation approach (see spec known limitations)
+- [ ] **Border vs trade connection visual distinction** — solid vs dashed lines
+- [ ] **Pause menu** — in-mission exit path untested
+- [ ] **Performance budget** — no formal profiler measurement yet
 - [ ] **11f** — Fairness redesign (blocked on playtest data corpus)
 
 ## Completed

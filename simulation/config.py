@@ -703,8 +703,8 @@ RELEVANCE_MAX_HOPS                  = 5
 RELEVANCE_ARCHETYPE_FIT_THRESHOLD   = 3
 
 # ── Force allocation (Stage 5.5) ────────────────────────────────────────────
-BUDGET_TO_POWER_SCALE               = 150.0   # budget=400 → ~60k power → ~8-10 units
-MILITARY_TO_POWER_SCALE             = 1000.0  # military=50 → ~50k power → ~7-8 units
+BUDGET_TO_POWER_SCALE               = 150.0
+MILITARY_TO_POWER_SCALE             = 1000.0
 PARITY_BREAKPOINTS                  = [
     (0.0, 0.80),
     (0.3, 0.85),
@@ -1102,6 +1102,15 @@ IS_RELEASE_BUILD = False
 WORLD_VIEW_ENABLED = True
 CHRONICLE_SCROLL_ENABLED = True
 KEYFRAME_STREAM_ENABLED = True
+
+# ── Stage 11g: World view inspection (kill-switch flags, default OFF) ─────
+# Each flag, when False, must leave behavior bit-identical to pre-stage-11g.
+# See docs/stage_specs/stage_11g_world_view_inspection_spec.md
+ENABLE_FACTION_PALETTE     = False  # deterministic faction hue + vivacity scaling
+ENABLE_INSPECTION_PANELS   = False  # region/faction info panels on click
+ENABLE_INSPECTION_PAUSE    = False  # panels pause world view animation
+ENABLE_CHRONICLE_MENTIONS  = False  # clickable region/faction names in chronicle
+ENABLE_OWNERSHIP_HISTORY   = False  # per-faction count history + per-region prior owners
 
 # Chronicle scroll
 SCROLL_PER_WORD_CADENCE_SEC = 0.08

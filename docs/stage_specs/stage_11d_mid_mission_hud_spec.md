@@ -209,7 +209,7 @@ Each checkpoint follows the **measure → change → re-measure** pattern.
 
 **Hard prerequisite:** Stage 11c Checkpoint C (the visibility predicate) must be complete before this spec begins. The predicate is a dependency of Checkpoints F, E (minimap), and H. If 11c hasn't landed, **STOP and escalate** rather than building a duplicate predicate locally.
 
-### Checkpoint A — Baseline confirmation: all five gaps reproduce
+### ✅ Checkpoint A — Baseline confirmation: all five gaps reproduce
 
 **Purpose:** Verify the gap report's findings hold on the current build.
 
@@ -227,7 +227,7 @@ Each checkpoint follows the **measure → change → re-measure** pattern.
 
 **No code change in this checkpoint.**
 
-### Checkpoint B — Sim contract: objective locations on the wire
+### ✅ Checkpoint B — Sim contract: objective locations on the wire
 
 **Purpose:** Land the snapshot extension before any Godot consumer needs it.
 
@@ -244,7 +244,7 @@ Each checkpoint follows the **measure → change → re-measure** pattern.
 
 **Pass condition:** snapshot carries `location` on the right entries; doc reflects the contract. **If the location values look wrong (e.g., always 0, 0), STOP and escalate** — likely indicates the params lookup is missing fields.
 
-### Checkpoint C — Objective panel rendering: description + bar + primary distinction (Sub-goal 1)
+### ✅ Checkpoint C — Objective panel rendering: description + bar + primary distinction (Sub-goal 1)
 
 **Purpose:** First user-visible win. Objective panel becomes readable.
 
@@ -265,7 +265,7 @@ Each checkpoint follows the **measure → change → re-measure** pattern.
 
 **Pass condition:** visual evidence + programmatic progress-fill check both pass. **If the type→description lookup misses an objective type, STOP and escalate** — adding new descriptions on the fly without Westley's approval risks tone mismatch.
 
-### Checkpoint D — Mission markers (in-world + minimap) (Sub-goal 2)
+### ✅ Checkpoint D — Mission markers (in-world + minimap) (Sub-goal 2)
 
 **Purpose:** Player can find the objectives.
 
@@ -285,7 +285,7 @@ Each checkpoint follows the **measure → change → re-measure** pattern.
 
 **Pass condition:** markers in correct positions; primary/secondary distinguishable; marker behavior on completion documented and approved. **If marker positions are visibly wrong (e.g., offset by canvas-scaling factor), STOP and escalate** — likely a coordinate-system mismatch between sim and renderer.
 
-### Checkpoint E — Command location indicators (Sub-goal 3)
+### ✅ Checkpoint E — Command location indicators (Sub-goal 3)
 
 **Purpose:** Player gets visual feedback for issued commands.
 
@@ -306,7 +306,7 @@ Each checkpoint follows the **measure → change → re-measure** pattern.
 
 **Pass condition:** indicators appear, distinguish move vs attack-move, fade properly, stack on rapid input. **If indicators flicker, lag the click, or appear at wrong positions, STOP and escalate.**
 
-### Checkpoint F — Enemy clickability with fog gating (Sub-goal 4)
+### ✅ Checkpoint F — Enemy clickability with fog gating (Sub-goal 4)
 
 **Purpose:** Visible enemies become clickable; invisible enemies remain unselectable.
 
@@ -325,7 +325,7 @@ Each checkpoint follows the **measure → change → re-measure** pattern.
 
 **Pass condition:** visible enemies clickable for inspection; invisible enemies not selectable; mixed selection respects existing command-issuance convention. **If clicking enemies causes commands to fire at them as targets (rather than inspection), STOP and escalate** — this would mean selection's downstream consumers need adjustment that's outside this spec.
 
-### Checkpoint G — Minimap viewport box (Sub-goal 5)
+### ✅ Checkpoint G — Minimap viewport box (Sub-goal 5)
 
 **Purpose:** Player knows where they're looking.
 
@@ -343,7 +343,7 @@ Each checkpoint follows the **measure → change → re-measure** pattern.
 
 **Pass condition:** box tracks camera smoothly; clipping is correct at extremes. **If the box lags the camera by visible frames, STOP and escalate** — likely a draw-order or signal-timing issue; per-frame redraw should be tight.
 
-### Checkpoint H — Stage close: full integration + perf measurement
+### ✅ Checkpoint H — Stage close: full integration + perf measurement
 
 **Purpose:** End-to-end demonstration plus 16.7 ms frame budget verification.
 

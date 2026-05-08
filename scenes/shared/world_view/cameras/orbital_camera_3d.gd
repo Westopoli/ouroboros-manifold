@@ -71,7 +71,6 @@ var _last_mouse_pos := Vector2.ZERO
 var _drag_start_pos := Vector2.ZERO
 var _auto_paused_by_input := false
 var _move_tween: Tween
-var _perf_timer := 0.0
 
 
 func setup(renderer: Node) -> void:
@@ -130,27 +129,6 @@ func _process(delta: float) -> void:
 	if _zoom_controller:
 		_zoom_controller.update_from_distance(_offset_dist)
 
-	_perf_timer += delta
-	if _perf_timer >= 2.0:
-		_perf_timer = 0.0
-		var fps := Engine.get_frames_per_second()
-		var band: String = _zoom_controller.current_band if _zoom_controller else "?"
-		var shell_count := 0
-		var filament_count := 0
-		var region_count := 0
-		var shells_visible := 0
-		if _renderer:
-			if _renderer.get("_shell") and _renderer._shell.get("_faction_meshes"):
-				shell_count = _renderer._shell._faction_meshes.size()
-				for m in _renderer._shell._faction_meshes.values():
-					if m.visible:
-						shells_visible += 1
-			if _renderer.get("_constellation") and _renderer._constellation.get("_filament_visuals"):
-				filament_count = _renderer._constellation._filament_visuals.size()
-			if _renderer.get("_region_visuals"):
-				region_count = _renderer._region_visuals.size()
-		print("[PERF] FPS=%d  dist=%.1f  band=%s  shells=%d/%d visible  filaments=%d  regions=%d" % [
-			fps, _offset_dist, band, shells_visible, shell_count, filament_count, region_count])
 
 
 func _input(event: InputEvent) -> void:

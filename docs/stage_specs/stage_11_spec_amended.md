@@ -455,9 +455,15 @@ Wired to UIDataBus signals. World view resizes to left 62% when scroll slides in
 
 **Known limitations (expected, addressed in F):** Regions appear on first keyframe, not on time_jump_start. Territory transitions are instant (no smooth animation — attempted batched timeline with debounced shell rebuilds, staggered flashes, and cross-fade but the metaball raymarching shader rebuilds the entire mesh per faction on every change, causing visible pops regardless of batching strategy; needs a fundamentally different approach such as animating shader uniforms directly). Proceed sends `proceed_to_next_mission` only when live sim is running.
 
-### Checkpoints F–H — NOT STARTED
+### Checkpoints F–H — COMPLETE (with known gaps)
 
-F (full loop), G (exit paths), H (performance).
+Stage 11 signed off. The core loop works: new game → mission → pull-back → world view with real keyframes/chronicle entries → proceed → next mission. Known gaps carried forward to `launch_todo.md`:
+
+- **Smooth territory transitions** — not implemented. Metaball shader rebuilds entire faction mesh on every change; needs shader-uniform animation approach. Territory updates work but snap instantly.
+- **Border vs trade connection visual distinction** — connections render but all look the same (no solid vs dashed).
+- **Border contour SubViewport shader pass** — deferred; territory bubbles provide adequate visibility.
+- **Pause menu** — does not exist. In-mission exit path untested. Post-narration exit works.
+- **Performance budget** — not formally measured (60 FPS target at 1920×1080 during busy time jump). Shell renderer moved to half-res SubViewport which improved performance but no profiler numbers captured.
 
 ## Files Created
 

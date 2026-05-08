@@ -333,7 +333,8 @@ func _update_selection_rings() -> void:
 			var ring := MeshInstance3D.new()
 			ring.mesh = _sel_ring_mesh
 			var mat := StandardMaterial3D.new()
-			var fc: Color = EraThemeResolver.get_faction_color(0)
+			var unit_faction: int = TacticalBridge.units.get(uid, {}).get("faction", 0)
+			var fc: Color = EraThemeResolver.get_faction_color(unit_faction)
 			mat.albedo_color = Color(fc.r, fc.g, fc.b, 0.35)
 			mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 			mat.emission_enabled = true

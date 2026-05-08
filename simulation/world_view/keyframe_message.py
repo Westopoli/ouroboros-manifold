@@ -7,7 +7,12 @@ def keyframes_to_messages(keyframes: list[dict], time_jump_id: str) -> list[dict
     return messages
 
 
-def scroll_entries_to_messages(scroll_entries, keyframes: list[dict], time_jump_id: str) -> list[dict]:
+def scroll_entries_to_messages(scroll_entries, keyframes: list[dict], time_jump_id: str,
+                               mentions_by_entry: dict | None = None) -> list[dict]:
+    import sys as _sys, os as _os
+    _sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))
+    import config as _config
+
     entry_id_set = {kf["chronicle_entry_id"] for kf in keyframes if kf["chronicle_entry_id"] is not None}
     messages = []
     for i, entry in enumerate(scroll_entries):
@@ -15,7 +20,7 @@ def scroll_entries_to_messages(scroll_entries, keyframes: list[dict], time_jump_
         eid = _entry_id(i)
         if eid not in entry_id_set:
             continue
-        messages.append({
+        msg = {
             "type": "chronicle_entry",
             "time_jump_id": time_jump_id,
             "entry_id": eid,
@@ -23,14 +28,25 @@ def scroll_entries_to_messages(scroll_entries, keyframes: list[dict], time_jump_
             "tick_range_end": entry.tick_range[1],
             "base_form": entry.base_text,
             "expanded_form": entry.expanded_text,
-        })
+        }
+        # Stage 11g — additive, gated. Flag off → key absent (bit-identical).
+        if getattr(_config, "ENABLE_CHRONICLE_MENTIONS", False) and mentions_by_entry:
+            mentions = mentions_by_entry.get(eid)
+            if mentions is not None:
+                msg["mentions"] = mentions
+        messages.append(msg)
     return messages
 
 
 def time_jump_lifecycle_messages(time_jump_id: str, span_years: int,
                                   total_keyframes: int, total_entries: int,
                                   faction_names: dict | None = None,
-                                  ownership_timeline: list | None = None) -> tuple[dict, dict]:
+                                  ownership_timeline: list | None = None,
+                                  ownership_history: dict | None = None) -> tuple[dict, dict]:
+    import sys as _sys, os as _os
+    _sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))
+    import config as _config
+
     start_msg = {
         "type": "time_jump_start",
         "time_jump_id": time_jump_id,
@@ -40,6 +56,9 @@ def time_jump_lifecycle_messages(time_jump_id: str, span_years: int,
         "faction_names": faction_names or {},
         "ownership_timeline": ownership_timeline or [],
     }
+    # Stage 11g — additive, gated. Flag off → key absent (bit-identical).
+    if getattr(_config, "ENABLE_OWNERSHIP_HISTORY", False) and ownership_history is not None:
+        start_msg["ownership_history"] = ownership_history
     end_msg = {
         "type": "time_jump_end",
         "time_jump_id": time_jump_id,

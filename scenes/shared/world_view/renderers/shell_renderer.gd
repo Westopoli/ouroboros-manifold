@@ -22,7 +22,6 @@ var _opacity_overview := 0.50
 var _opacity_regional := 0.12
 var _opacity_local := 0.05
 
-var _diag_timer := 0.0
 
 
 func setup(data: Node, zoom_controller: Node) -> void:
@@ -64,6 +63,9 @@ func _setup_low_res_viewport() -> void:
 	_overlay.stretch_mode = TextureRect.STRETCH_SCALE
 	_overlay.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var overlay_mat := CanvasItemMaterial.new()
+	overlay_mat.blend_mode = CanvasItemMaterial.BLEND_MODE_PREMULT_ALPHA
+	_overlay.material = overlay_mat
 	_canvas_layer.add_child(_overlay)
 
 
@@ -99,7 +101,7 @@ func teardown() -> void:
 	_zoom_controller = null
 
 
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
 	if not _zoom_controller:
 		return
 
@@ -152,21 +154,6 @@ func _process(delta: float) -> void:
 		var label: Label3D = _faction_labels[faction_id]
 		label.modulate.a = label_alpha
 
-	_diag_timer += delta
-	if _diag_timer >= 2.0:
-		_diag_timer = 0.0
-		var diag_cam := get_viewport().get_camera_3d()
-		var cam_match := "no_main_cam"
-		if diag_cam and _sub_camera:
-			var pos_diff := diag_cam.global_position.distance_to(_sub_camera.global_position)
-			cam_match = "pos_diff=%.3f fov=%.1f/%.1f" % [pos_diff, diag_cam.fov, _sub_camera.fov]
-		var sv_size := _sub_viewport.size if _sub_viewport else Vector2i.ZERO
-		var main_size := get_viewport().get_visible_rect().size
-		var overlay_size := _overlay.size if _overlay else Vector2.ZERO
-		var overlay_vis := _overlay.visible if _overlay else false
-		var shell_children := _shell_container.get_child_count() if _shell_container else 0
-		print("[SHELL_DIAG] band=%s opacity=%.3f cam=%s sv_size=%s main_size=%s overlay_size=%s overlay_vis=%s shell_children=%d canvas_layer=%d" % [
-			band, target_opacity, cam_match, sv_size, main_size, overlay_size, overlay_vis, shell_children, _canvas_layer.layer if _canvas_layer else -99])
 
 
 func _on_territory_changed(region_id: String) -> void:
