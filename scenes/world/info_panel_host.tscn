@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenes/world/info_panel_host.gd" id="1"]
+
+[node name="InfoPanelHost" type="Control"]
+script = ExtResource("1")
