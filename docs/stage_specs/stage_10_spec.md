@@ -8,7 +8,8 @@ Replace Stage 9's `UIDataBus` mock layer with a live connection to the Python si
 
 - `game_bible.md` — Stage 10 roadmap entry, Sacred Design Principle #3, "The Cycle" section
 - `bible_combat.md` — Tactical engine tick rate (20 ticks/sec), command vocabulary (move, attack_move, attack_target, activate_ability), snapshot/delta state model
-- `bible_monetization.md` — Entitlement model (Stage 10 hardcodes "Settled Reach owned"), trial/subscription structure (not implemented, context only)
+- `bible_monetization.md` — Entitlement model (Stage 10 hardcodes "Settled Reach owned"), trial/subscription structure (not implemented, context only) <!-- LEGACY 2026-05-09: trial/subscription model scrapped; see bible_monetization.md "Current Monetization Model" section. Hardcoded "Settled Reach owned" entitlement remains valid as a per-era ownership flag. -->
+
 - `animation_strategy.md` — Loading screen animation vocabulary (shader atmospheres, glyph bloom, blinking cursor)
 
 ## Context

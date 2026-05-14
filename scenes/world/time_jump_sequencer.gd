@@ -370,6 +370,10 @@ func _process(delta: float) -> void:
 
 
 func _advance_narration() -> void:
+	# Stage 11g — pause holders block narration advance.
+	# See also: scenes/world/world_view_inspection_state.gd, info_panel_host.gd
+	if FeatureFlags.ENABLE_INSPECTION_PAUSE and InspectionState.is_paused():
+		return
 	if _waiting_for_entry:
 		return
 	if _keyframe_queue.is_empty():
@@ -388,6 +392,8 @@ func _advance_narration() -> void:
 
 
 func _advance_timeline(delta: float) -> void:
+	if FeatureFlags.ENABLE_INSPECTION_PAUSE and InspectionState.is_paused():
+		return
 	if _ownership_timeline.is_empty() or _timeline_index >= _ownership_timeline.size():
 		return
 	_timeline_timer += delta
@@ -488,19 +494,10 @@ func _on_exit() -> void:
 # --- Stage 11g — Inspection panel wiring ---
 
 func _on_shell_region_clicked(region_id: String) -> void:
-	# TEMP — Stage 11g Checkpoint K isolation prints
-	print("[CP-K] shell_region_clicked rid=", region_id,
-		"  panels_flag=", FeatureFlags.ENABLE_INSPECTION_PANELS,
-		"  state_has_rid=", _regions_state.has(region_id))
 	if not FeatureFlags.ENABLE_INSPECTION_PANELS:
 		return
 	if not _regions_state.has(region_id):
 		return
-	var r: Dictionary = _regions_state[region_id]
-	print("[CP-K] region payload keys: ", r.keys(),
-		"  has_name=", r.has("name"),
-		"  has_tier=", r.has("tier"),
-		"  has_military=", r.has("military"))
 	_open_region_panel(region_id)
 	_shell.move_camera_to_region(region_id, 1.5)
 
@@ -525,7 +522,6 @@ func _on_host_open_region_requested(region_id: String) -> void:
 
 
 func _on_host_open_faction_requested(faction_id: String) -> void:
-	print("[CP-K] sequencer received open_faction_requested fid=", faction_id)
 	_open_faction_panel(faction_id)
 
 
@@ -537,8 +533,6 @@ func _open_region_panel(region_id: String) -> void:
 	var ownership_line := ""
 	if fid != "":
 		ownership_line = "Held by %s." % fname
-	print("[CP-K] open_region_panel  rid=", region_id, "  fid=", fid, "  fname=", fname,
-		"  host_visible=", _info_host.visible, "  host_size=", _info_host.size)
 	_info_host.open_region(region_id, r, fid, fname, fcolor, ownership_line)
 
 

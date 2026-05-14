@@ -22,6 +22,18 @@ var _expansion_overlay: Control
 func _ready() -> void:
 	_accent = ThemeConstants.get_era_accent(EraConfig.ACTIVE_ERA_ID)
 	_build_ui()
+	# Stage 11g — listen to the world-view pause coordinator so any holder
+	# (region/faction panel, expansion) halts entry printing.
+	# See also: scenes/world/world_view_inspection_state.gd
+	if FeatureFlags.ENABLE_INSPECTION_PAUSE:
+		InspectionState.pause_changed.connect(_on_inspection_pause_changed)
+
+
+func _on_inspection_pause_changed(paused: bool) -> void:
+	if paused:
+		pause()
+	else:
+		resume()
 
 
 func _build_ui() -> void:
@@ -176,16 +188,25 @@ func _on_expansion_requested(entry_id: String) -> void:
 func _show_expansion(entry_id: String) -> void:
 	_close_expansion()
 
-	if _printing_id != "" and _entries.has(_printing_id):
-		_entries[_printing_id].pause_printing()
+	# Stage 11g — expansion now goes through InspectionState so the rest of
+	# the world view (renderers, narration) pauses too. With the flag off,
+	# fall back to the original ad-hoc pause path.
+	if FeatureFlags.ENABLE_INSPECTION_PAUSE:
+		InspectionState.acquire("expansion")
+	else:
+		if _printing_id != "" and _entries.has(_printing_id):
+			_entries[_printing_id].pause_printing()
 
 	var entry_data: Dictionary = _entries[entry_id].get_entry_data()
 	var expansion: Node = load("res://scenes/world/chronicle_entry_expansion.tscn").instantiate()
 	expansion.setup(entry_data, _accent)
 	expansion.dismissed.connect(func():
 		_close_expansion()
-		if not _paused and _printing_id != "" and _entries.has(_printing_id):
-			_entries[_printing_id].resume_printing()
+		if FeatureFlags.ENABLE_INSPECTION_PAUSE:
+			InspectionState.release("expansion")
+		else:
+			if not _paused and _printing_id != "" and _entries.has(_printing_id):
+				_entries[_printing_id].resume_printing()
 		entry_expansion_closed.emit(entry_id)
 	)
 	_expansion_overlay.add_child(expansion)

@@ -9,6 +9,34 @@
 
 ---
 
+## Current Monetization Model (as of 2026-05-09)
+
+- **Buy-once base game.** Owning the base game grants the **starting (era 1) civilization
+  of every branch** in the branch system.
+- **Paid Steam DLC expansions.** Additional eras within each branch ship as one-time-purchase
+  Steam DLC. There is no subscription, no recurring billing.
+- **No free tier at launch.** Roman is no longer the permanent free era. Its eventual
+  placement inside the branch structure is deferred.
+- **No external website checkout.** No Stripe. No browser-redirect purchase flow.
+- **No in-game key redemption.** The key redemption screen and API have been removed.
+- **In-game "Purchase" buttons open the Steam overlay** to the relevant DLC page (currently
+  stubbed; GodotSteam integration pending).
+- **Trigger for this change:** Steam does not allow linking out to external payment websites
+  from in-game, which broke the subscription model's foundational mechanic.
+
+Content below this section describes the prior subscription / external-checkout model and
+is preserved as historical design context. **It does not reflect the current spec.**
+
+---
+
+> **LEGACY MONETIZATION MODEL — Replaced 2026-05-09**
+>
+> The subscription / external-checkout / access-key model described below has been
+> **scrapped**. See the "Current Monetization Model" section above for the current spec.
+> Everything from this banner to the end of the file is design archive.
+
+---
+
 ## Expansion Packs and Monetization
 
 This section defines how the game makes money. The era-agnostic architecture (Sacred Principle #3) is not just an engineering nicety — it is the commercial engine of the entire project. The game is a **skeleton**. Expansion packs are the **skin**. The simulation, mission generator, event chains, combat system, and game loop are era-neutral machinery. A theme pack plugs into that machinery and reskins every surface the player sees: unit names, art, prose, music, chronicle templates, map aesthetics, cultural flavor. The skeleton ships once. The skins ship forever.

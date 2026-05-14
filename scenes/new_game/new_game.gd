@@ -147,17 +147,11 @@ func _build_era_column(parent: Control) -> void:
 		var badge := Label.new()
 		badge.add_theme_font_override("font", ThemeConstants.font_mono_regular)
 		badge.add_theme_font_size_override("font_size", ThemeConstants.ERA_BADGE_SIZE)
-		if era["is_free"]:
-			badge.text = "FREE"
-			badge.add_theme_color_override("font_color", ThemeConstants.HEALTHY)
-		elif era["is_trial"]:
-			badge.text = "TRIAL \u2014 %d MISSIONS LEFT" % era["trial_missions_remaining"]
-			badge.add_theme_color_override("font_color", Color(era["accent_color"]))
-		elif era["is_owned"]:
+		if era["is_owned"]:
 			badge.text = "OWNED"
 			badge.add_theme_color_override("font_color", Color(era["accent_color"]))
-		elif era["subscription_required"]:
-			badge.text = "SUBSCRIPTION REQUIRED"
+		else:
+			badge.text = "LOCKED"
 			badge.add_theme_color_override("font_color", ThemeConstants.TERTIARY)
 		content.add_child(badge)
 

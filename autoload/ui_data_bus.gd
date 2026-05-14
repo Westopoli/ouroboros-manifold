@@ -1,5 +1,7 @@
 extends Node
 
+# Subscription model removed 2026-05-09 — see docs/bible/bible_monetization.md LEGACY banner.
+# initiate_purchase() now routes to the data source's open_steam_dlc_page() stub.
 signal purchase_requested(era_id: String, purchase_type: String)
 signal time_jump_started(time_jump_id: String, span_years: int, total_keyframes: int, total_entries: int, faction_names: Dictionary)
 signal time_jump_keyframe(keyframe_data: Dictionary)
@@ -49,20 +51,14 @@ func get_mission_briefing(mission_id: String) -> Dictionary:
 	return _source.get_mission_briefing(mission_id)
 
 
-func get_subscription_status() -> Dictionary:
-	return _source.get_subscription_status()
-
-
 func initiate_purchase(era_id: String, purchase_type: String) -> void:
 	purchase_requested.emit(era_id, purchase_type)
+	_source.open_steam_dlc_page(era_id)
 
 
 func refresh_entitlements() -> void:
-	pass
-
-
-func redeem_key(code: String) -> Dictionary:
-	return _source.redeem_key(code)
+	if _source.has_method("refresh_entitlements"):
+		_source.refresh_entitlements()
 
 
 func proceed_to_next_mission() -> void:

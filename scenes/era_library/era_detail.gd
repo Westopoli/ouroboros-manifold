@@ -111,22 +111,12 @@ func _build_ui() -> void:
 
 
 func _set_badge_text(badge: Label, accent: Color) -> void:
-	if _era["is_free"]:
-		badge.text = "FREE"
-		badge.add_theme_color_override("font_color", ThemeConstants.HEALTHY)
-	elif _era["is_owned"]:
+	if _era["is_owned"]:
 		badge.text = "OWNED"
 		badge.add_theme_color_override("font_color", accent)
-	elif _era["is_trial"]:
-		badge.text = "TRIAL \u2014 %d MISSIONS LEFT" % _era["trial_missions_remaining"]
-		badge.add_theme_color_override("font_color", accent)
-	elif _era["subscription_required"]:
-		if UIDataBus.get_subscription_status()["active"]:
-			badge.text = "SUBSCRIBED"
-			badge.add_theme_color_override("font_color", ThemeConstants.INFO)
-		else:
-			badge.text = "LOCKED"
-			badge.add_theme_color_override("font_color", ThemeConstants.TERTIARY)
+	else:
+		badge.text = "LOCKED"
+		badge.add_theme_color_override("font_color", ThemeConstants.TERTIARY)
 
 
 func _build_left_column(parent: Control, accent: Color) -> void:
@@ -311,7 +301,9 @@ func _build_mastery_card(parent: Control, accent: Color) -> void:
 	content.add_child(hint)
 
 
-func _build_access_card(parent: Control, accent: Color) -> void:
+func _build_access_card(parent: Control, _accent: Color) -> void:
+	# Subscription model removed 2026-05-09 — see docs/bible/bible_monetization.md LEGACY banner.
+	# Locked eras now route to Steam DLC overlay (currently stubbed).
 	var card = load("res://theme/components/tm_card.tscn").instantiate()
 	card.card_title = "ACCESS"
 	parent.add_child(card)
@@ -323,43 +315,14 @@ func _build_access_card(parent: Control, accent: Color) -> void:
 	msg.autowrap_mode = TextServer.AUTOWRAP_WORD
 	content.add_child(msg)
 
-	if _era["is_free"]:
-		msg.text = "This era is free for all players."
+	if _era["is_owned"]:
+		msg.text = "You own this era."
 		msg.add_theme_color_override("font_color", ThemeConstants.HEALTHY)
-	elif _era["is_owned"]:
-		msg.text = "You own this era permanently."
-		msg.add_theme_color_override("font_color", ThemeConstants.HEALTHY)
-	elif UIDataBus.get_subscription_status()["active"]:
-		msg.text = "Included with your subscription."
-		msg.add_theme_color_override("font_color", ThemeConstants.INFO)
-		var buy_btn = load("res://theme/components/tm_button.tscn").instantiate()
-		buy_btn.text = "Purchase permanently \u2014 $2.99"
-		buy_btn.style = 1
-		buy_btn.pressed.connect(func(): _show_purchase_modal())
-		content.add_child(buy_btn)
-	elif _era["is_trial"]:
-		msg.text = "Trial \u2014 %d missions remaining." % _era["trial_missions_remaining"]
-		msg.add_theme_color_override("font_color", accent)
-		var sub_btn = load("res://theme/components/tm_button.tscn").instantiate()
-		sub_btn.text = "Subscribe for full access"
-		sub_btn.style = 1
-		sub_btn.pressed.connect(func(): _show_purchase_modal())
-		content.add_child(sub_btn)
-		var buy_btn = load("res://theme/components/tm_button.tscn").instantiate()
-		buy_btn.text = "Purchase \u2014 $2.99"
-		buy_btn.style = 1
-		buy_btn.pressed.connect(func(): _show_purchase_modal())
-		content.add_child(buy_btn)
 	else:
-		msg.text = "This era requires a subscription or purchase."
+		msg.text = "Locked. Available as DLC on Steam."
 		msg.add_theme_color_override("font_color", ThemeConstants.TERTIARY)
-		var sub_btn = load("res://theme/components/tm_button.tscn").instantiate()
-		sub_btn.text = "Subscribe for full access \u2014 $3\u20135/mo"
-		sub_btn.style = 1
-		sub_btn.pressed.connect(func(): _show_purchase_modal())
-		content.add_child(sub_btn)
 		var buy_btn = load("res://theme/components/tm_button.tscn").instantiate()
-		buy_btn.text = "Purchase \u2014 $2.99"
+		buy_btn.text = "View on Steam"
 		buy_btn.style = 1
 		buy_btn.pressed.connect(func(): _show_purchase_modal())
 		content.add_child(buy_btn)
@@ -383,7 +346,7 @@ func _build_purchase_overlay() -> void:
 	var content = card.get_content_container()
 
 	var msg := Label.new()
-	msg.text = "This will open your browser for secure checkout.\n(Mock mode \u2014 no purchase processed.)"
+	msg.text = "This will open the Steam store page for this expansion.\n(Stub \u2014 Steam integration pending.)"
 	msg.add_theme_font_override("font", ThemeConstants.font_mono_regular)
 	msg.add_theme_font_size_override("font_size", ThemeConstants.BODY_DATA_SIZE)
 	msg.add_theme_color_override("font_color", ThemeConstants.PRIMARY)
@@ -398,5 +361,5 @@ func _build_purchase_overlay() -> void:
 
 
 func _show_purchase_modal() -> void:
-	UIDataBus.initiate_purchase(_era_id, "era_pack")
+	UIDataBus.initiate_purchase(_era_id, "dlc")
 	_purchase_overlay.visible = true

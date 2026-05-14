@@ -1,5 +1,14 @@
 # Era Mechanical Axes — Mix-and-Match Identity Matrix
 
+> **LEGACY MONETIZATION CONTEXT — 2026-05-09**
+>
+> This doc references the prior subscription/access-tier framing (e.g., "hallmark
+> exclusivity" tied to purchase tiers). The subscription model has been **scrapped**;
+> the current model is buy-once base game + paid Steam DLC expansions, no subscription.
+> See `docs/bible/bible_monetization.md` "Current Monetization Model" section.
+> The orthogonal mechanical-axis matrix in this document remains useful as design
+> context; only the access-tier annotations are obsolete.
+
 > **Transient working doc.** Drafted to resolve "how do we design hallmark
 > and work eras without inventing a new system per era." The deliverable
 > is a small set of orthogonal mechanical dials, a matrix positioning the

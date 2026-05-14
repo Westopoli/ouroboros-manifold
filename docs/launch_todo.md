@@ -9,7 +9,7 @@ Tracked bugs and tasks that must be resolved before launch. Mark items `[x]` whe
 - [ ] **Fix unit sizing** — unit visual scales feel off.
 - [ ] **Fix main camera** — pan/zoom feels off, needs tuning.
 - [ ] **Fix unit balance** — combat balance pass needed.
-- [ ] **Tune force allocation scale** — missions consistently produce only 8-10 units; feels too small. `MILITARY_TO_POWER_SCALE` and `BUDGET_TO_POWER_SCALE` in `config.py` need a balance pass. Currently set to 4x temp values for testing (revert markers in code).
+- [x] **Tune force allocation scale** — 300/2000, unit counts in 30–100 band. Note: 50v50 engagement duration miss (432s vs 150–200s target) is a combat-balance issue, tracked separately. *(2026-05-08)*
 - [x] **Layer visual system** — Stage 11c landed: layer focus visuals (active-layer emphasis, HUD readout) + fog of war (visibility predicate in renderer, minimap, selection). *(2026-05-03)*
 - [ ] **Fix control groups unit swapping** — control group assignments are broken; units swap between groups unexpectedly.
 - [x] **Fix mission briefing empty** — wired mission generator into game loop; briefing now shows real archetype, region, enemy, force composition, objectives, and commander lineage. *(2026-04-24)*

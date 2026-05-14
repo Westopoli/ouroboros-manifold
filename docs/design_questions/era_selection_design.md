@@ -1,5 +1,16 @@
 # Era Selection Design — Working Document
 
+> **LEGACY MONETIZATION ASSUMPTIONS — 2026-05-09**
+>
+> This doc was written under the **subscription + per-era purchase** model
+> ("Subscription-gated", "free tier", starter bundle, etc.). That model has
+> been **scrapped** — Steam does not permit external payment links from in-game.
+> Current model: **buy-once base game (starting civ of every branch) + paid Steam
+> DLC for additional eras within each branch, no subscription, no free tier**.
+> See `docs/bible/bible_monetization.md` "Current Monetization Model" section.
+> Branch-structure decisions in this document remain useful as design context;
+> the access-tier columns (Free / Subscription-gated) are obsolete.
+
 > **Transient working doc.** Captures design decisions from the era selection
 > brainstorming session (April 22, 2026). Once all decisions are captured
 > into `bible_monetization.md`, this file is deleted.

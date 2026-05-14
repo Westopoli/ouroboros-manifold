@@ -36,7 +36,9 @@ The Stage 13 spec defines 8 checkpoints A → H. Below is the ordered work plan 
 
 ### C1. Stage 13 Checkpoint A — PyInstaller sim bundle
 
-**Build:** iterate `build/pyinstaller_spec.py` (already in tree). Run PyInstaller until the bundle starts on a Windows host without a Python install.
+**Build:** iterate `build/pyinstaller_spec.spec` (renamed from `.py` during the macOS pass — PyInstaller treats `.py` as an entry script). Run PyInstaller until the bundle starts on a Windows host without a Python install.
+
+**Hiddenimports iteration (do this yourself, no cross-track signal needed):** when the Windows PyInstaller pass hits `ModuleNotFoundError` for a sim-side module, append it to the `hiddenimports` list in `build/pyinstaller_spec.spec` and re-run. The macOS pass already added: `command_ingest`, `mission_contracts`, `map_gen_contracts`, `debrief_data`, `power_rating`, `unit`, `world`, `faction`, `events`, `time_jump`, `world_view`, `world_view.time_jump_emitter`. Windows may surface more — add as encountered. This is the only place hiddenimports get edited (was previously folded out of Track A's A3).
 
 **Test:** `sim/ouroboros_sim.exe --root <test_dir>` directly from the command line — verify it starts, writes length-prefixed JSON progress messages, reaches `ready` within 15 s, creates `<test_dir>/logs/` (not inside `sim/`), accepts a command via stdin and responds.
 

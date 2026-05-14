@@ -36,11 +36,7 @@ func get_all_eras() -> Array[Dictionary]:
 			"name": "Roman",
 			"description": "Command the legions of a civilization that conquered the known world. Ground-only warfare across sun-baked provinces — no layers, no air support, just steel and discipline.",
 			"accent_color": "#c9a84c",
-			"is_free": true,
-			"is_owned": true,
-			"is_trial": false,
-			"trial_missions_remaining": 0,
-			"subscription_required": false,
+			"is_owned": false,
 			"tier_progress": {"current_tier": 2, "progress_to_next": 0.45, "max_tier_unlocked": 2},
 			"mastery_progress": 0.12,
 			"unit_roster": [
@@ -58,11 +54,7 @@ func get_all_eras() -> Array[Dictionary]:
 			"name": "Settled Reach",
 			"description": "Far-future conflict across the void. Full 2.5D layer combat — orbital stations, surface strongholds, and deep-space engagements. The premium sci-fi experience.",
 			"accent_color": "#4a9eb8",
-			"is_free": false,
 			"is_owned": SimBridge.ENTITLEMENT_SETTLED_REACH,
-			"is_trial": false,
-			"trial_missions_remaining": 0,
-			"subscription_required": not SimBridge.ENTITLEMENT_SETTLED_REACH,
 			"tier_progress": {"current_tier": 1, "progress_to_next": 0.0, "max_tier_unlocked": 1},
 			"mastery_progress": 0.0,
 			"unit_roster": [
@@ -80,11 +72,7 @@ func get_all_eras() -> Array[Dictionary]:
 			"name": "1980s",
 			"description": "Cold War gone hot. Submarines stalk the deep layers, destroyers command the surface, and aircraft dominate the sky. The definitive showcase for 2.5D vertical combat.",
 			"accent_color": "#8b9a3c",
-			"is_free": false,
 			"is_owned": false,
-			"is_trial": true,
-			"trial_missions_remaining": 3,
-			"subscription_required": false,
 			"tier_progress": {"current_tier": 1, "progress_to_next": 0.15, "max_tier_unlocked": 1},
 			"mastery_progress": 0.03,
 			"unit_roster": [
@@ -111,7 +99,7 @@ func is_era_accessible(era_id: String) -> bool:
 	var era := get_era_detail(era_id)
 	if era.is_empty():
 		return false
-	return era["is_free"] or era["is_owned"] or era["is_trial"]
+	return era["is_owned"]
 
 
 func get_save_slots() -> Array[Dictionary]:
@@ -200,34 +188,6 @@ func get_mission_briefing(_mission_id: String) -> Dictionary:
 	}
 
 
-func get_subscription_status() -> Dictionary:
-	return {"active": false, "plan_name": "", "renewal_date": ""}
-
-
-func redeem_key(code: String) -> Dictionary:
-	code = InputSanitizer.sanitize(code, "key_code")
-	match code:
-		"TESTPERM001":
-			return {
-				"success": true, "key_type": "permanent",
-				"era_ids": ["roman"], "era_names": ["Roman"],
-				"duration_label": "", "missions_granted": 0,
-				"flavor_message": "huh \u2014 you must know somebody"
-			}
-		"TESTTIME001":
-			return {
-				"success": true, "key_type": "time_limited",
-				"era_ids": ["roman", "settled_reach", "1980s"],
-				"era_names": ["Roman", "Settled Reach", "1980s"],
-				"duration_label": "30 days", "missions_granted": 0,
-				"flavor_message": "the clock starts now \u2014 make it count"
-			}
-		"TESTTRIAL01":
-			return {
-				"success": true, "key_type": "mission_limited",
-				"era_ids": ["1980s"], "era_names": ["1980s"],
-				"duration_label": "", "missions_granted": 5,
-				"flavor_message": "five shots \u2014 better make them interesting"
-			}
-		_:
-			return {"success": false, "error_display": "Invalid key. Check the code and try again."}
+func open_steam_dlc_page(era_id: String) -> void:
+	# Stub — mock mode shows a placeholder modal via era_detail.gd. No-op here.
+	print("[stub-mock] open Steam DLC page for ", era_id)

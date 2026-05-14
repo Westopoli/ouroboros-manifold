@@ -232,9 +232,6 @@ func bind(region_meta: Dictionary, faction_id: String, faction_name: String,
 	_faction_name_label.text = faction_name if faction_name != "" else faction_id
 	_faction_button.disabled = (faction_id == "")
 	_history_label.text = ownership_line
-	# TEMP — Stage 11g Checkpoint K diagnostic
-	print("[CP-K] region_panel.bind  rid=", _region_id, "  fid=", _faction_id,
-		"  fname=", faction_name, "  button_disabled=", _faction_button.disabled)
 
 
 func _set_bar(key: String, raw_value: int) -> void:
@@ -271,8 +268,6 @@ func _bar_color(spec: Dictionary, v: int) -> Color:
 
 
 func _on_faction_button_pressed() -> void:
-	# TEMP — Stage 11g Checkpoint K diagnostic
-	print("[CP-K] open_faction button pressed  fid=", _faction_id)
 	if _faction_id != "":
 		open_faction_requested.emit(_faction_id)
 

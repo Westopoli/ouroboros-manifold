@@ -1,5 +1,14 @@
 # Open Design Questions — INDEX
 
+> **LEGACY MONETIZATION CONTEXT — 2026-05-09**
+>
+> Several working docs in this folder (notably `era_selection_design.md`,
+> `visual_identity_design.md`, `era_mechanical_axes.md`) were drafted under the
+> prior subscription/external-checkout monetization model, which has been **scrapped**.
+> Current model: buy-once base game + paid Steam DLC expansions, no subscription.
+> See `docs/bible/bible_monetization.md` "Current Monetization Model" section.
+> Individual docs in this folder carry their own legacy banners where applicable.
+
 > **Folder purpose.** `docs/design_questions/` is the staging area for
 > open design questions — those actively being worked but not yet ready
 > for the bible (`docs/bible/`) or a stage spec (`docs/stage_specs/`).

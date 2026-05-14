@@ -16,6 +16,9 @@ var active_layer: int = 0
 var _control_groups: Dictionary = {}
 var _box_selecting: bool = false
 var _box_start_screen: Vector2
+# Captured at left-button-down so a player who releases shift mid-drag still
+# gets additive behavior (StarCraft-style press-time modifier capture).
+var _box_additive: bool = false
 
 const _BOX_FILL  := Color(0.3, 0.8, 1.0, 0.08)
 const _BOX_EDGE  := Color(0.3, 0.8, 1.0, 0.75)
@@ -48,10 +51,17 @@ func _on_mouse_button(mb: InputEventMouseButton) -> void:
 	match mb.button_index:
 		MOUSE_BUTTON_LEFT:
 			if mb.pressed:
+				if mb.double_click:
+					_double_click_select(mb.position)
+					_box_selecting = false
+					return
 				_box_start_screen = mb.position
 				_box_selecting = true
+				_box_additive = mb.shift_pressed
 			else:
-				_finish_selection(mb.position)
+				if _box_selecting:
+					_finish_selection(mb.position, _box_additive)
+				_box_additive = false
 		MOUSE_BUTTON_RIGHT:
 			if mb.pressed:
 				_on_right_click(_to_world(mb.position))
@@ -97,19 +107,16 @@ func _handle_ability(ke: InputEventKey) -> void:
 
 # ── Selection ─────────────────────────────────────────────────────────────────
 
-func _finish_selection(release_screen: Vector2) -> void:
+func _finish_selection(release_screen: Vector2, additive: bool) -> void:
 	_box_selecting = false
 	queue_redraw()
 	if release_screen.distance_to(_box_start_screen) < 6.0:
-		_click_select(release_screen)
+		_click_select(release_screen, additive)
 	else:
-		_box_select(_box_start_screen, release_screen)
+		_box_select(_box_start_screen, release_screen, additive)
 
 
-func _click_select(screen_pos: Vector2) -> void:
-	var cam := get_viewport().get_camera_3d()
-	if not cam:
-		return
+func _pick_unit_at(screen_pos: Vector2, cam: Camera3D) -> int:
 	var best_uid  := -1
 	var best_dist := _UNIT_PICK_RADIUS
 	for uid: int in range(TacticalBridge.unit_count):
@@ -122,24 +129,73 @@ func _click_select(screen_pos: Vector2) -> void:
 		if d < best_dist:
 			best_dist = d
 			best_uid  = uid
-	selected_uids.clear()
-	if best_uid >= 0:
-		selected_uids.append(best_uid)
+	return best_uid
 
 
-func _box_select(screen_a: Vector2, screen_b: Vector2) -> void:
+func _click_select(screen_pos: Vector2, additive: bool) -> void:
+	var cam := get_viewport().get_camera_3d()
+	if not cam:
+		return
+	var picked := _pick_unit_at(screen_pos, cam)
+	if not additive:
+		selected_uids.clear()
+	if picked >= 0 and not selected_uids.has(picked):
+		selected_uids.append(picked)
+
+
+func _box_select(screen_a: Vector2, screen_b: Vector2, additive: bool) -> void:
 	var cam := get_viewport().get_camera_3d()
 	if not cam:
 		return
 	var rect := Rect2(screen_a, Vector2.ZERO).expand(screen_b)
-	selected_uids.clear()
+	var existing: Dictionary = {}
+	if not additive:
+		selected_uids.clear()
+	else:
+		for uid in selected_uids:
+			existing[uid] = true
 	for uid: int in range(TacticalBridge.unit_count):
 		if TacticalBridge.display_alive[uid] == 0:
 			continue
 		if _is_selectable(uid):
 			var sp := cam.unproject_position(_unit_world_pos(uid))
-			if rect.has_point(sp):
+			if rect.has_point(sp) and not existing.has(uid):
 				selected_uids.append(uid)
+				existing[uid] = true
+
+
+# Selects every friendly unit of the same type whose squad position is on
+# screen and not behind the camera. Triggered by left-button double-click.
+# See also: docs/launch_tracks/track_b_tactical_mechanics.md — B4 spec.
+func _double_click_select(screen_pos: Vector2) -> void:
+	var cam := get_viewport().get_camera_3d()
+	if not cam:
+		return
+	var clicked_uid := _pick_unit_at(screen_pos, cam)
+	if clicked_uid < 0:
+		return
+	var clicked: Dictionary = TacticalBridge.units.get(clicked_uid, {})
+	if not clicked.get("selection_eligible", false):
+		return
+	var target_type: String = String(clicked.get("type", "")).to_lower()
+	if target_type.is_empty():
+		return
+	var vp_rect := Rect2(Vector2.ZERO, get_viewport().get_visible_rect().size)
+	selected_uids.clear()
+	for uid: int in range(TacticalBridge.unit_count):
+		if TacticalBridge.display_alive[uid] == 0:
+			continue
+		var u: Dictionary = TacticalBridge.units.get(uid, {})
+		if not u.get("selection_eligible", false):
+			continue
+		if String(u.get("type", "")).to_lower() != target_type:
+			continue
+		var world_pos := _unit_world_pos(uid)
+		if cam.is_position_behind(world_pos):
+			continue
+		var sp := cam.unproject_position(world_pos)
+		if vp_rect.has_point(sp):
+			selected_uids.append(uid)
 
 
 func _select_all_army() -> void:

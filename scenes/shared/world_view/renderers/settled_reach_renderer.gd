@@ -10,6 +10,11 @@ var _highlighted_node: MeshInstance3D
 var _central_point: MeshInstance3D
 var _stream_pivot: Node3D
 
+# Stage 11g — looping ambient tweens, paused via InspectionState.
+# See also: scenes/world/world_view_inspection_state.gd
+var _pulse_tween: Tween
+var _rotation_tween: Tween
+
 
 func _ready() -> void:
 	_build_central_point()
@@ -37,6 +42,8 @@ func _ready() -> void:
 	_build_grid_plane()
 	_start_central_pulse()
 	_start_stream_rotation()
+	if FeatureFlags.ENABLE_INSPECTION_PAUSE:
+		InspectionState.pause_changed.connect(set_paused)
 
 
 func setup(data: Node, _container: Node = null) -> void:
@@ -317,15 +324,29 @@ func _build_grid_plane() -> void:
 
 
 func _start_central_pulse() -> void:
-	var tw := create_tween().set_loops()
-	tw.tween_property(_central_point, "scale", Vector3.ONE * 1.08, 3.927).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
-	tw.tween_property(_central_point, "scale", Vector3.ONE * 0.92, 3.927).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+	_pulse_tween = create_tween().set_loops()
+	_pulse_tween.tween_property(_central_point, "scale", Vector3.ONE * 1.08, 3.927).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+	_pulse_tween.tween_property(_central_point, "scale", Vector3.ONE * 0.92, 3.927).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
 
 
 func _start_stream_rotation() -> void:
-	var tw := create_tween().set_loops()
-	tw.tween_property(_stream_pivot, "rotation:y", TAU, TAU / 0.01).set_ease(Tween.EASE_IN_OUT)
-	tw.tween_callback(func(): _stream_pivot.rotation.y = 0.0)
+	_rotation_tween = create_tween().set_loops()
+	_rotation_tween.tween_property(_stream_pivot, "rotation:y", TAU, TAU / 0.01).set_ease(Tween.EASE_IN_OUT)
+	_rotation_tween.tween_callback(func(): _stream_pivot.rotation.y = 0.0)
+
+
+# --- Stage 11g — pause coordinator hookup ---
+
+func set_paused(paused: bool) -> void:
+	if _pulse_tween != null and _pulse_tween.is_valid():
+		if paused: _pulse_tween.pause()
+		else:      _pulse_tween.play()
+	if _rotation_tween != null and _rotation_tween.is_valid():
+		if paused: _rotation_tween.pause()
+		else:      _rotation_tween.play()
+	if _highlight_tween != null and _highlight_tween.is_valid():
+		if paused: _highlight_tween.pause()
+		else:      _highlight_tween.play()
 
 
 # --- Region signal handlers ---

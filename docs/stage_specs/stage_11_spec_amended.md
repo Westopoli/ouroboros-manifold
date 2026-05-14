@@ -111,7 +111,7 @@ config/
 
 - No tutorial, no onboarding screen, no mission debrief. Those are Stage 12.
 - No save-on-exit serialization. Exit cleanly terminates the run; Stage 12 wires save-on-exit.
-- No subscription / entitlement changes.
+- No subscription / entitlement changes. <!-- LEGACY 2026-05-09: subscription model scrapped entirely; see docs/bible/bible_monetization.md "Current Monetization Model" section. Per-era ownership flags survive; subscription does not. -->
 
 ## Input/Output Shapes
 

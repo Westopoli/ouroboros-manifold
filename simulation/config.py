@@ -1106,8 +1106,8 @@ KEYFRAME_STREAM_ENABLED = True
 # ── Stage 11g: World view inspection (kill-switch flags, default OFF) ─────
 # Each flag, when False, must leave behavior bit-identical to pre-stage-11g.
 # See docs/stage_specs/stage_11g_world_view_inspection_spec.md
-ENABLE_FACTION_PALETTE     = False  # deterministic faction hue + vivacity scaling
-ENABLE_INSPECTION_PANELS   = False  # region/faction info panels on click
+ENABLE_FACTION_PALETTE     = True   # deterministic faction hue + vivacity scaling
+ENABLE_INSPECTION_PANELS   = True   # region/faction info panels on click
 ENABLE_INSPECTION_PAUSE    = False  # panels pause world view animation
 ENABLE_CHRONICLE_MENTIONS  = False  # clickable region/faction names in chronicle
 ENABLE_OWNERSHIP_HISTORY   = False  # per-faction count history + per-region prior owners

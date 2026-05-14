@@ -788,6 +788,41 @@ def _run_debrief_phase(engine, cmd_queue, logger, debrief=None):
     return "continue"
 
 
+def _inject_world_view_metadata(tj_result: dict, world, registry) -> None:
+    """Stage 11g — populate tj_result with side-car metadata for inspection panels.
+
+    No-op when both flags are off (bit-identical pre-stage-11g payload).
+    Reads world.regions / world.factions only; no engine mutation. The keyframe
+    selector consumes these via tj_result["region_metadata"] / ["faction_metadata"]
+    behind the matching gate. See world_view/keyframe_selector.py.
+    """
+    import config as _config
+    if getattr(_config, "ENABLE_INSPECTION_PANELS", False):
+        rmeta: dict = {}
+        for rid, region in world.regions.items():
+            rmeta[rid] = {
+                "name":       region.name,
+                "tier":       region.tier,
+                "military":   int(round(region.fields.get("military", 0.0))),
+                "economy":    int(round(region.fields.get("economy", 0.0))),
+                "tension":    int(round(region.fields.get("tension", 0.0))),
+                "population": int(round(region.fields.get("population", 0.0))),
+                "stability":  int(round(region.composites.get("stability", 0.0))),
+                "capacity":   int(round(region.composites.get("capacity", 0.0))),
+            }
+        tj_result["region_metadata"] = rmeta
+    if getattr(_config, "ENABLE_FACTION_PALETTE", False):
+        fmeta: dict = {}
+        for fid, faction in registry.items():
+            fmeta[fid] = {
+                "name":      faction.name,
+                "archetype": faction.archetype,
+                # Tech tier not on Faction yet — see stage spec risks; default 0.
+                "tech_tier": getattr(faction, "tech_tier", 0),
+            }
+        tj_result["faction_metadata"] = fmeta
+
+
 def _run_time_jump_phase(sim_env, cmd_queue, engine, logger):
     """Wait for sequencer ready signal, run time jump, send messages. Returns 'done' or 'eof'."""
     from time_jump import run_time_jump
@@ -837,6 +872,7 @@ def _run_time_jump_phase(sim_env, cmd_queue, engine, logger):
     for i, se in enumerate(scroll_entries):
         logger.info("  scroll_entry[%d]: tick_range=%s text=%s", i, getattr(se, "tick_range", "?"), getattr(se, "base_text", "?")[:80])
 
+    _inject_world_view_metadata(tj_result, sim_env["world"], sim_env["registry"])
     messages = build_time_jump_messages(tj_result, tj_id)
     msg_types = {}
     for msg in messages:
@@ -884,6 +920,7 @@ def _run_opening_time_jump(sim_env, logger):
     logger.info("opening time jump: %d events, %d scroll entries, %d territory changes",
                 events_total, len(scroll_entries), len(tj_result.get("territory_changes", [])))
 
+    _inject_world_view_metadata(tj_result, sim_env["world"], sim_env["registry"])
     messages = build_time_jump_messages(tj_result, tj_id)
     logger.info("sending %d opening time jump messages", len(messages))
     for msg in messages:

@@ -575,3 +575,20 @@ Tasks blocked on host or environment availability, not design. Cleared once the 
 3. Smoke test: `build\_pyi_dist\ouroboros_sim\ouroboros_sim.exe --root C:\path\to\test_dir` — confirm length-prefixed JSON progress messages, ready under 15 s, no console window, `<test_dir>\logs\` created, command roundtrip via stdin works.
 4. Iterate `hidden_imports` if any `ImportError` surfaces in stderr. (Numpy hooks usually picked up automatically by PyInstaller; Windows-specific quirks unlikely but possible.)
 5. Update Track C Checkpoint A in `docs/ai_status.md` with the Windows results.
+
+### Track B / B3 — Control groups exclusive membership (untested in-game)
+
+**Logged:** 2026-05-08
+**Blocker:** Code change landed and headless test suite (`tests/test_input_router_control_groups.tscn`) passes 12/12, but the manual in-game checklist has not yet been run by Westley.
+
+**Change summary:**
+- `scenes/tactical/input_router.gd`: removed digit-1..4 hijack in `_handle_digit` (was calling `_select_all_army`/`_select_by_category`, blocking recall for groups 1–4); `1..0` now uniformly recalls. `_bind_group` rewritten for exclusive membership — a uid bound into a new group is removed from any other group it was in. Orphaned `_select_by_category()` and `_CATEGORY_TYPES` deleted.
+- New tests: `tests/test_input_router_control_groups.{gd,tscn}`.
+
+**To do (manual confirm in a live tactical mission):**
+1. Select 5 units → `Ctrl+1` → press `1` → those 5 should reselect (was previously hijacking to "select all army").
+2. Select 3 of those 5 → `Ctrl+2`. Press `1` → only the *other 2* should recall (exclusive membership working).
+3. Press `2` → those 3 should recall.
+4. With nothing selected, press `Ctrl+3` → group 3 should not exist (no-op on empty selection).
+
+**Heads-up for B4:** the `1..0` keys are now exclusively recall keys. B4's category selection feature will need a different keybind.

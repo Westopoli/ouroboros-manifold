@@ -33,6 +33,7 @@ BugReportManager="*res://autoload/bug_report_manager.gd"
 Visibility="*res://scripts/tactical/visibility.gd"
 FactionPalette="*res://autoload/faction_palette.gd"
 FeatureFlags="*res://autoload/feature_flags.gd"
+InspectionState="*res://scenes/world/world_view_inspection_state.gd"
 
 [display]
 

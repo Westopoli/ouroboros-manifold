@@ -1,5 +1,19 @@
 # Visual Identity — Design Questions
 
+> **LEGACY MONETIZATION ASSUMPTIONS — 2026-05-09**
+>
+> The monetization-redesign sections of this document (subscription at $2/month,
+> entry-era subscription gating, starter-bundle retirement, Roman free tier scope
+> cuts, external-website checkout, in-game inspection-as-storefront with external
+> redirect) describe a model that has been **scrapped**. Steam does not allow
+> linking out to external payment websites from in-game. Current model: **buy-once
+> base game (starting civ of every branch) + paid Steam DLC for additional eras,
+> no subscription, no free tier, all transactions via Steam**. See
+> `docs/bible/bible_monetization.md` "Current Monetization Model" section.
+> Visual identity, logo, wordmark, era branding, Canva templates, Steam page
+> presentation, and capsule-art decisions in this document remain valid — only the
+> commerce-flow sections are obsolete.
+
 > **Transient working doc.** Governs the visual identity brainstorming effort
 > (logo, wordmark, era branding, Steam page, Canva asset kit) and the
 > monetization redesign that branched off it. Per `design_rules.md`, this

@@ -1,5 +1,21 @@
 # Stage 9 — UI Shell: Main Menu, Era Library, Mission Briefing, and Game Management
 
+> **LEGACY MONETIZATION MODEL — Replaced 2026-05-09**
+>
+> Subscription, browser-redirect Stripe checkout, "Manage Subscription" UI, "$2.99 /
+> $3–5/mo" pricing, and the key-redemption screen described below have been **scrapped**.
+> Steam does not permit linking out to external payment websites from in-game.
+>
+> **Current model (as of 2026-05-09):**
+> - Buy-once base game grants the starting (era 1) civilization of every branch.
+> - Additional eras within each branch ship as paid Steam DLC.
+> - No subscription, no Stripe, no external website checkout, no in-game key redemption.
+> - In-game "Purchase" buttons open the Steam overlay (currently stubbed).
+>
+> See `docs/bible/bible_monetization.md` "Current Monetization Model" section for the
+> authoritative spec. Stage 9 content below is preserved as implementation history;
+> the runtime no longer matches it.
+
 ## Goal
 
 Prove that the game's non-combat UI screens are fully navigable, visually polished to the "Terminal Meets Glass" aesthetic spec, and structured with clean data interfaces so the Python backend plugs in with zero visual rework. Every screen renders with mock data, transitions smoothly between scenes, and demonstrates the animation philosophy (staggered fade-slide-in, stat bar growth, blinking cursor heartbeat) at production quality. The UI shell is a complete frontend that a player could walk through end-to-end — Main Menu → New Game → Era Library → Mission Briefing → back — without any backend running.

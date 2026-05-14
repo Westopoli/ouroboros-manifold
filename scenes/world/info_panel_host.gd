@@ -21,6 +21,14 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 
+func _holder_for(kind: String) -> String:
+	if kind == "region":
+		return "region_panel"
+	if kind == "faction":
+		return "faction_panel"
+	return ""
+
+
 func is_open() -> bool:
 	return _current_panel != null
 
@@ -66,6 +74,13 @@ func close() -> void:
 		return
 	if _tween != null and _tween.is_valid():
 		_tween.kill()
+
+	# Stage 11g — release the pause holder for whatever was open.
+	if FeatureFlags.ENABLE_INSPECTION_PAUSE:
+		var holder := _holder_for(_current_kind)
+		if holder != "":
+			InspectionState.release(holder)
+
 	_outgoing_panel = _current_panel
 	_current_panel = null
 	_current_kind = ""
@@ -85,6 +100,15 @@ func _swap_to(new_panel: Control, kind: String, id: String) -> void:
 	if _tween != null and _tween.is_valid():
 		_tween.kill()
 
+	# Stage 11g — pause refcount: only release if the kind actually changes,
+	# so region→region or faction→faction swaps don't briefly unpause the world.
+	# See also: scenes/world/world_view_inspection_state.gd
+	if FeatureFlags.ENABLE_INSPECTION_PAUSE:
+		var old_holder := _holder_for(_current_kind)
+		var new_holder := _holder_for(kind)
+		if old_holder != "" and old_holder != new_holder:
+			InspectionState.release(old_holder)
+
 	new_panel.modulate.a = 0.0
 	add_child(new_panel)
 
@@ -92,6 +116,11 @@ func _swap_to(new_panel: Control, kind: String, id: String) -> void:
 	_current_panel = new_panel
 	_current_kind = kind
 	_current_id = id
+
+	if FeatureFlags.ENABLE_INSPECTION_PAUSE:
+		var holder := _holder_for(kind)
+		if holder != "":
+			InspectionState.acquire(holder)
 
 	_tween = create_tween()
 	_tween.set_parallel(true)

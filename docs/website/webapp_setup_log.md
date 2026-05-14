@@ -6,6 +6,25 @@
 
 ---
 
+> **LEGACY — Entire document superseded 2026-05-09**
+>
+> This document describes the Stripe-based subscription/era-purchase webapp scaffold
+> (Stripe Checkout, Stripe Billing Portal, webhook handlers, entitlement DB tables, the
+> `/api/checkout/subscription`, `/api/checkout/era/[eraId]`, `/api/portal`,
+> `/api/keys/redeem`, and `/api/webhooks/stripe` routes).
+>
+> The monetization model has been **scrapped** because Steam does not permit linking out
+> to external payment websites from in-game. The replacement is a **buy-once base game +
+> paid Steam DLC expansions** model. All transactions flow through Steam — Stripe, the
+> webapp, the subscription/purchase/access-key DB tables, and the API routes listed in
+> this document are **no longer part of the shipping product**.
+>
+> See `docs/bible/bible_monetization.md` "Current Monetization Model" section for the
+> authoritative spec. The webapp scaffold under `docs/website/ouroboros-manifold-scaffold/`
+> remains in the tree as historical reference but should not be built or deployed.
+
+---
+
 ## Architecture Decisions
 
 Three design questions were resolved before implementation began. These are permanent decisions — changing them later means re-architecting.

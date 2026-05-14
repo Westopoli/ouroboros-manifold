@@ -16,7 +16,6 @@ Resolve the open simulation-side launch_todo items that gate the friends-ZIP fee
 - `simulation/sim_tuner.py` — scenario sweeps and graph generation. Already exists.
 - `simulation/test_*.py` — diagnostic harnesses. Two new ones from the Stage 13 starter commit: `test_facing_convergence.py` and `test_facing_snapshot_propagation.py`. Both pass — use as templates if more harnesses are needed.
 - `simulation/force_allocator.py`, `simulation/force_composition.py`, `simulation/power_rating.py` — read-only references for understanding allocation. Edit only if the audit demands it.
-- `build/pyinstaller_spec.py` — iterate `hiddenimports` if Track C reports missing modules during PyInstaller checkpoint A.
 
 ## Scope (out — do NOT touch)
 
@@ -64,10 +63,6 @@ During Stage 11d testing these were temporarily set to 4× values; that test was
 ### A2. Per-unit balance follow-on (only if A1 surfaces it)
 
 If A1's mirror sweep shows specific unit types dominating or evaporating, do a targeted stat sweep for the offender(s) via `sim_tuner`. **Do not** touch HP/damage values without confirming the issue with Westley first. Per-unit stat values are config not engine — change is allowed, but only after diagnosis. One unit type at a time.
-
-### A3. Stage 13 PyInstaller hidden_imports follow-on (reactive)
-
-If Track C reports missing imports while running PyInstaller (Stage 13 Checkpoint A iteration), append to the `hiddenimports` list in `build/pyinstaller_spec.py`. This is a reactive item — wait for Track C to ping in `ai_status.md`.
 
 ### A4. Library name regen — DEFER
 

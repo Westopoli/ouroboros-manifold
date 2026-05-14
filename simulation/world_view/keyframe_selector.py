@@ -196,7 +196,7 @@ def select_keyframes(time_jump_result: dict, start_ownership: dict | None = None
                     meta = region_metadata.get(snap["region_id"])
                     if not meta:
                         continue
-                    for k in ("name", "tier", "military", "economy", "tension", "population"):
+                    for k in ("name", "tier", "military", "economy", "tension", "population", "stability", "capacity"):
                         if k in meta:
                             snap[k] = meta[k]
 

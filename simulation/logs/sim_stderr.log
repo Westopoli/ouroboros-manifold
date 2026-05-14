@@ -1,2 +1,17 @@
 INFO pipe transport starting, version=0.10.0
 INFO sent ready message
+INFO === OPENING TIME JUMP (waiting for sequencer) ===
+INFO lifecycle command (unexpected during wait for ready_for_time_jump): continue_from_debrief
+INFO received expected command: ready_for_time_jump
+INFO opening time jump: 192 events, 9 scroll entries, 25 territory changes
+INFO sending 23 opening time jump messages
+INFO === WAITING FOR OPENING SCROLL ===
+INFO received expected command: proceed_to_next_mission
+INFO mission selected: archetype=assault region=region_e008 score=0.525
+INFO commander: player_name_49 (lineage=lineage_1, rotation=None)
+INFO map generated: layout=layout_01_fortress_ridge, size=24000x24000
+INFO behavior script loaded for archetype=assault
+INFO engine built: 9 player units, 5 enemy units, time_limit=340, reinforcements=2
+INFO first mission generated from post-jump world state
+INFO received expected command: ready_for_tactical
+INFO === TACTICAL PHASE (chapter 1) ===

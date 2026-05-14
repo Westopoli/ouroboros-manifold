@@ -8,7 +8,6 @@ const SCENES := {
 	"load_game": "res://scenes/load_game/load_game.tscn",
 	"era_library": "res://scenes/era_library/era_library.tscn",
 	"era_detail": "res://scenes/era_library/era_detail.tscn",
-	"key_redemption": "res://scenes/era_library/key_redemption.tscn",
 	"onboarding": "res://scenes/onboarding/onboarding.tscn",
 	"mission_briefing": "res://scenes/mission_briefing/mission_briefing.tscn",
 	"tactical": "res://scenes/tactical/tactical.tscn",
