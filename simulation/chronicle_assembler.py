@@ -4,6 +4,7 @@ import random
 import re
 from dataclasses import dataclass, field
 
+import config
 from events import TEMPLATES as _EVENT_TEMPLATES
 
 LIBRARY_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "library")
@@ -20,6 +21,12 @@ class ScrollEntry:
     source_events: list = field(default_factory=list)
     region_id: str = ""
     tick_range: tuple = (0, 0)
+    # Stage 11g Checkpoint N — chronicle mention spans.
+    # Each entry: {"kind": "region"|"faction", "id": str, "start": int, "end": int}.
+    # See also: simulation/test_checkpoint_11g_n.py and Checkpoint O on the Godot side
+    # (chronicle_entry.gd wraps these spans with [url=...] BBCode).
+    mentions: list = field(default_factory=list)
+    expanded_mentions: list = field(default_factory=list)
 
 
 _fragment_cache = None
@@ -464,6 +471,34 @@ def _apply_first_mention(entry, qualifier, region_name):
     entry.expanded_text = entry.expanded_text.replace(region_name, enriched, 1)
 
 
+def _compute_mentions(text, world, registry):
+    if not text:
+        return []
+    candidates = []
+    if world is not None:
+        for rid, region in world.regions.items():
+            name = getattr(region, "name", None)
+            if name and len(name) >= 2:
+                candidates.append(("region", rid, name))
+    if registry:
+        for fid, faction in registry.items():
+            name = getattr(faction, "name", None)
+            if name and len(name) >= 2:
+                candidates.append(("faction", fid, name))
+    candidates.sort(key=lambda c: -len(c[2]))
+    mentions = []
+    used = []
+    for kind, eid, name in candidates:
+        for m in re.finditer(r"\b" + re.escape(name) + r"\b", text):
+            s, e = m.span()
+            if any(not (e <= us or s >= ue) for us, ue in used):
+                continue
+            mentions.append({"kind": kind, "id": eid, "start": s, "end": e})
+            used.append((s, e))
+    mentions.sort(key=lambda m: m["start"])
+    return mentions
+
+
 def assemble_scroll(clusters, ledger, player_lineage_id, world,
                     mission_info=None, seed=None, registry=None):
     rng = random.Random(seed)
@@ -497,6 +532,13 @@ def assemble_scroll(clusters, ledger, player_lineage_id, world,
             warnings.append(f"{cluster.category}: base_text {base_wc} words (limit 90)")
         if expanded_wc >= 140:
             warnings.append(f"{cluster.category}: expanded_text {expanded_wc} words (limit 140)")
+
+        # Stage 11g Checkpoint N — emit mention spans after all text mutations
+        # (first-mention enrich, dedup, capitalization). Post-hoc scan is robust
+        # to those transforms.
+        if getattr(config, "ENABLE_CHRONICLE_MENTIONS", False):
+            entry.mentions = _compute_mentions(entry.base_text, world, registry)
+            entry.expanded_mentions = _compute_mentions(entry.expanded_text, world, registry)
 
         entries.append(entry)
 
