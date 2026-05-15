@@ -7,7 +7,10 @@ Tracked bugs and tasks that must be resolved before launch. Mark items `[x]` whe
 - [x] **Fix unit rotation not working** — closed as already-working; sim-side facing tests (`test_facing_convergence.py` 5/5, `test_facing_snapshot_propagation.py` 9/9) pass and Westley confirmed visible rotation in playthrough. *(2026-05-08)*
 - [x] **Fix impact/fire visuals hitting single point in squad** — added `UnitRenderer.get_squad_world_position(uid, squad_idx=-1)`; `attack_visual_manager.gd` and `impact_feedback_manager.gd` now sample a random squad mesh on the firer/target. *(2026-05-08)*
 - [ ] **Fix unit sizing** — unit visual scales feel off.
-- [ ] **Fix main camera** — pan/zoom feels off, needs tuning.
+- [ ] **Fix main camera pan/zoom feel** — separate from movement-speed bug below. Polish-tier feel tuning.
+- [ ] **Mission map movement speed (BETA-BLOCKER)** — currently unplayable in-mission. Promoted out of "fix main camera" 2026-05-15. See `docs/priority_queue.md` Pre-Zip gate.
+- [ ] **Save/resume in-game state (BETA-BLOCKER)** — no way to leave and come back to the same simulation; restarts every launch. Pre-Zip gate item. *(added 2026-05-15)*
+- [ ] **Mission objectives clarity for first-time players (BETA-BLOCKER)** — 11d "Objectives" gate-passed (markers/minimap render) but in-mission UX still unclear to a tester with no context. Re-opened as a UX item, distinct from the 11d stage-gate. *(added 2026-05-15)*
 - [ ] **Fix unit balance** — combat balance pass needed.
 - [x] **Tune force allocation scale** — 300/2000, unit counts in 30–100 band. *(2026-05-08)*
 - [x] **Investigate 50v50 mirror duration miss** — diagnosed 2026-05-15 as ~90% test-fixture contamination (single attack-move + fog/vision); fixture fixed in `simulation/test_j_duration.py`. Residual 131s vs 150–200s target parked POST-BETA per bible v3.00 retcon plan. See `docs/priority_queue.md` Q#4.

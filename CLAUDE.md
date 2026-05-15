@@ -23,17 +23,19 @@ Default to `claude-opus-4-6` for all implementation work.
 
 ## Workflow (active mode)
 
-**One terminal, one queue, one test deliverable at a time.** No more parallel Tracks A/B/C. Single source of truth: `docs/priority_queue.md`. Coordination snapshot: `docs/ai_status.md` (Current Item + Queue summary). Full how-to: `docs/workflow.md`.
+**One terminal, one queue, one test deliverable at a time.** No more parallel Tracks A/B/C. Single source of truth: `docs/priority_queue.md`. Full how-to: `docs/workflow.md`. (`docs/ai_status.md` is a stub pointing here — single-terminal model retired the coordination board.)
+
+**Pre-Zip gate first.** Before picking the next item, read `docs/priority_queue.md` § Pre-Zip Beta Readiness Gate (top of file). Gate BLOCKERs come before anything in the queue body. An `[x]` in `launch_todo.md` does NOT imply "ships to friends OK" — the gate is authoritative.
 
 Per item:
-1. Read top of `docs/priority_queue.md`. Restate in caveman mode. Confirm with Westley.
+1. Read the gate, then top of `docs/priority_queue.md`. Restate in caveman mode. Confirm with Westley.
 2. `git checkout -b wn/<type>-<slug>` off `main` (type ∈ bug, feat, refactor, chore, docs).
 3. **TDD first.** Sim → pytest red, then green, then refactor. Godot → write `test_*.gd` scene test where practical; otherwise document the manual checklist as the test.
 4. Implement in caveman mode. Minimal diff. No stink (see below). Small tasks only — if it feels like 2 items, split.
 5. `git push -u origin wn/<branch>` + `gh pr create`. PR body has the Godot test steps.
 6. Hand Westley: scene to open, ≤5 numbered steps, expected outcome, fail-look-fors.
 7. Westley confirms in Godot. Pass → merge. Fail → one targeted iteration; if still bad, escalate + park.
-8. Update `docs/ai_status.md` + `docs/priority_queue.md`. Next item.
+8. Update `docs/priority_queue.md` (gate checkbox + queue body status). Next item.
 
 Use **Graphify first** for code navigation. Try `/graphify query`, `/graphify path`, `/graphify explain` before cold Grep/Read. Rebuild (`graphify .`) when structural changes land.
 

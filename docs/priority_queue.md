@@ -7,7 +7,31 @@ Single source of truth for what's next. One item active at a time. See `docs/wor
 
 End goal: friends/Steam beta upload.
 
-> ⚠️ **Awaiting Westley sign-off on top-5 ranking before Phase 3 starts.** Classifications below are first-pass — items flagged 🟡 need a call. See "Sign-off questions" at bottom.
+---
+
+## Pre-Zip Beta Readiness Gate
+
+**ZIP cannot ship to friends until every BLOCKER below is closed.** This section supersedes per-item BLOCKER tags in the queue body — read this first.
+
+### BLOCKERS (must close pre-ZIP)
+- [ ] **Save/resume in-game state** — currently no way to leave and come back to the same simulation; restarts every launch. Friends can't tolerate session-restart. *(not previously in launch_todo — surfaced 2026-05-15)*
+- [ ] **Mission map movement speed** — currently unplayable; was loosely filed under "Fix main camera pan/zoom feel" (Q#11) marked NICE. Promoted to BLOCKER.
+- [ ] **Mission objectives clarity (first-time-player)** — 11d "Objectives" gate-passed but in-mission UX still unclear. Re-opened as new BLOCKER row; don't un-check 11d (that's a stage-gate fact, not a UX fact).
+- [ ] **In-game tutorial** — simple, barebones, lore-tone (chronicle voice). NOT a Discord call / README onboarding. Locked as BLOCKER 2026-05-15.
+- [ ] **Stage 11g Checkpoint L** — inspection pause wire-up. Q#1 below.
+- [ ] **B4 in-game confirm** — selection upgrades manual checklist. Q#2 below.
+- [ ] **B3 in-game retest** — control groups. Q#3 below.
+- [ ] **Stage 13 packaging** — PyInstaller mac+win, debug overlay autoload registration, version label, privacy modal, clean-install verification. Currently parked (2026-05-09); unparks when above BLOCKERs close.
+
+### Steam Direct timeline (post-friends-ZIP path, separate from gate)
+- Steam Direct = **$100 app fee**.
+- 30-day waiting period **starts at fee payment**, not at submission. Westley has not paid yet → Steam path cannot ship in <30 days regardless of build readiness.
+- **Implication:** friends-beta ships as the Stage 13 ZIP (PyInstaller bundle). Steam Playtest is post-friends-beta.
+
+### How to use this gate
+- Before picking the next queue item, check this list. Pre-ZIP BLOCKERs come before anything else.
+- An item with `[x]` in `launch_todo.md` does NOT imply "ships to friends OK" — we learned that the hard way with 11d Objectives. The gate above is authoritative.
+- When a gate BLOCKER closes, check it off here AND add the queue-body Q# entry beneath.
 
 ---
 
@@ -62,12 +86,8 @@ Fixture fix lands as a permanent improvement — test now measures real combat d
 
 Memory: `project_a2_duration_test_fixture.md`.
 
-### Q#5 — Chronicle text improvement: capture or re-queue          [status: blocked] [BETA-NICE] 🟡
-Why: 6-step Opus session was running before reorg. State unknown.
-Branch: TBD
-Test deliverable: TBD once state captured.
-Definition of done: Merged + `launch_todo.md` updated, or formally re-queued as fresh item.
-Depends on: Westley confirms what (if anything) survived from Opus session.
+### Q#5 — Chronicle text improvement          [status: skipped — POST-BETA] [WAS BETA-NICE → POST-BETA]
+Skipped 2026-05-15. Chronicle is "better" in current state and the design is changing substantially post-beta — refining further now would be churn against work that'll be redone. Any in-progress edits from the Opus session stay in tree until the post-beta redesign picks them up or discards them.
 
 ---
 
