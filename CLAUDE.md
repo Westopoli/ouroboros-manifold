@@ -21,6 +21,24 @@ If something in any other doc conflicts with the bible (hub or any spoke), the b
 
 Default to `claude-opus-4-6` for all implementation work.
 
+## Workflow (active mode)
+
+**One terminal, one queue, one test deliverable at a time.** No more parallel Tracks A/B/C. Single source of truth: `docs/priority_queue.md`. Coordination snapshot: `docs/ai_status.md` (Current Item + Queue summary). Full how-to: `docs/workflow.md`.
+
+Per item:
+1. Read top of `docs/priority_queue.md`. Restate in caveman mode. Confirm with Westley.
+2. `git checkout -b wn/<type>-<slug>` off `main` (type ∈ bug, feat, refactor, chore, docs).
+3. **TDD first.** Sim → pytest red, then green, then refactor. Godot → write `test_*.gd` scene test where practical; otherwise document the manual checklist as the test.
+4. Implement in caveman mode. Minimal diff. No stink (see below). Small tasks only — if it feels like 2 items, split.
+5. `git push -u origin wn/<branch>` + `gh pr create`. PR body has the Godot test steps.
+6. Hand Westley: scene to open, ≤5 numbered steps, expected outcome, fail-look-fors.
+7. Westley confirms in Godot. Pass → merge. Fail → one targeted iteration; if still bad, escalate + park.
+8. Update `docs/ai_status.md` + `docs/priority_queue.md`. Next item.
+
+Use **Graphify first** for code navigation. Try `/graphify query`, `/graphify path`, `/graphify explain` before cold Grep/Read. Rebuild (`graphify .`) when structural changes land.
+
+**Git guardrails are enforced by `.claude/settings.json` + `.claude/hooks/git-guard.sh`.** Destructive ops, main-branch commits, `--no-verify`, `--amend`, `--force`, `rebase`: denied at the harness layer. If something legit fails the hook, ask Westley.
+
 ## The Rules
 
 ### No runtime API calls during play
@@ -46,6 +64,15 @@ No Asimov character names, place names, or plot elements. All lore is original. 
 ### Tick delta shape is documented first
 
 Any change to the tick delta JSON shape must be posted to `docs/architecture.md` before implementation.
+
+### Sub-agents implement, never design
+
+Sub-agents (Explore, general-purpose, Plan, claude-code-guide, etc.) are scoped to implementation against an existing spec. They may not:
+- Make architectural decisions, API shape choices, or scope expansions
+- Edit `docs/bible/**`, `docs/stage_specs/**`, `docs/launch_*`, `CLAUDE.md`, or any test thresholds
+- Decide what should be tested — they execute the test plan from the orchestrator
+
+When a sub-agent hits ambiguity, it returns findings + a proposed change. The main agent (your terminal Claude) decides.
 
 ## Code Quality
 
@@ -82,7 +109,7 @@ The game is built in implementation stages defined in the stage docs (`docs/stag
 
 ### No blind git reverts
 
-Never use `git checkout`, `git restore`, or `git stash` to revert files without first asking Westley whether git is up to date. Working tree changes may not be committed — a `git checkout` can destroy in-progress work that only exists locally. Always confirm before reverting.
+`.claude/settings.json` deny rules + `.claude/hooks/git-guard.sh` block the worst variants (`reset --hard`, `clean -f`, `checkout -- <path>`, `restore --source`, `branch -D`, `--no-verify`, `--amend`, force push, rebase). Even so: Westley's working-tree changes may not be committed yet. Before any state-mutating git op (checkout another branch, switch, merge, restore), confirm with Westley that his local changes are safe.
 
 ## Debugging
 
@@ -99,6 +126,25 @@ One confirmed diagnosis is worth ten guesses.
 **One fix at a time.** When multiple issues are identified, fix one, have the user run and verify, then move to the next. Batching fixes reduces the ability to isolate which change caused a new problem or resolved an old one.
 
 ## Test Checkpoints
+
+### Testing Rigor Directive
+
+Before asserting on a system's behavior, control for every variable in the test scene. Failing this has burned this project before (combat-balance tests contaminated by stray pathing units; concavity tests with broken obstacle props that didn't actually block line-of-sight).
+
+Every system needs **BOTH levels** of test:
+- **Isolation tests** — system under test alone, every other variable hard-fixtured or disabled. Proves the core mechanic is correct.
+- **Integration tests** — same system in a realistic scene with other actors, full pathing, AI, fog, vision, scale. Proves it survives contact with everything else.
+
+For both:
+1. **List every actor + variable in the test scene** before writing assertions: movement, pathing, obstacle props, spawn timing, fog, vision, AI behavior.
+2. **Know which level you're running.** Isolation result tells you "this system works alone." Integration result tells you "this system works in the game." A bug in one doesn't imply a bug in the other.
+3. **Verify the fixture works before asserting on the system.** Testing concavity? Prove the obstacle actually blocks line-of-sight in a baseline shot first. Same for integration scenes — verify pathing, spawn timing, AI are doing what you expect before measuring the system.
+4. **An assertion that fails is only a system bug if the fixture is proven clean.** Otherwise it's a test bug — fix the test first.
+5. **More tests can't hurt.** If a system has only isolation coverage, add integration. If it has only integration coverage, add isolation. Both reveal different failure modes.
+
+Stage 6 Checkpoint J (RPS) work is governed by this directive when resumed.
+
+### General
 
 Run tests yourself and analyze the output directly. After any code change that requires a test run, run it, read the results, and proceed.
 
