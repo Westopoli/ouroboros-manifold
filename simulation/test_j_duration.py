@@ -29,7 +29,7 @@ DT       = config.TACTICAL_TICK_DURATION
 FACTION_A = 0
 FACTION_B = 1
 
-DUMP_SEED = 1
+DUMP_SEED = 3   # was 1; switched to seed-3 for asymmetric-loss inspection
 DUMP_PATH = "/tmp/j_duration_50v50.jsonl"
 
 MIXED_RATIO = {
@@ -76,29 +76,39 @@ def _spawn_category(store, faction_id, cx, cy, count, cat_types, rng):
     return uids
 
 
-def run_engagement(count_per_side, composition, seed, log_dump=False):
+def run_engagement(count_per_side, composition_a, seed, log_dump=False, composition_b=None):
+    if composition_b is None:
+        composition_b = composition_a
     rng  = random.Random(seed)
     tmap = open_field()
     store = UnitStore()
 
+    # Convergent attack-move: both sides target the same map center point so
+    # units always re-converge regardless of fog/vision (units walking past
+    # each other in opposite columns to a behind-enemy waypoint was the prior
+    # fixture bug — see memory project_a2_duration_test_fixture.md). Spawn
+    # closer to center to keep the measurement focused on combat duration,
+    # not march duration.
+    center_x  = 2000.0
     center_y  = 2000.0
-    offset    = max(400.0, count_per_side * 15.0)
+    offset    = max(150.0, count_per_side * 5.0)
     a_cy      = center_y - offset
     b_cy      = center_y + offset
 
-    if composition == "mixed":
-        uids_a = _spawn_mixed(store, FACTION_A, 1800.0, a_cy, count_per_side, rng)
-        uids_b = _spawn_mixed(store, FACTION_B, 1800.0, b_cy, count_per_side, rng)
+    if composition_a == "mixed":
+        uids_a = _spawn_mixed(store, FACTION_A, center_x, a_cy, count_per_side, rng)
     else:
-        cat_types = composition
-        uids_a = _spawn_category(store, FACTION_A, 1800.0, a_cy, count_per_side, cat_types, rng)
-        uids_b = _spawn_category(store, FACTION_B, 1800.0, b_cy, count_per_side, cat_types, rng)
+        uids_a = _spawn_category(store, FACTION_A, center_x, a_cy, count_per_side, composition_a, rng)
+    if composition_b == "mixed":
+        uids_b = _spawn_mixed(store, FACTION_B, center_x, b_cy, count_per_side, rng)
+    else:
+        uids_b = _spawn_category(store, FACTION_B, center_x, b_cy, count_per_side, composition_b, rng)
 
     queue = CommandQueue()
     queue.add(Command(tick=0, type="attack_move", unit_ids=uids_a,
-                      params={"target_x": 2000.0, "target_y": b_cy}))
+                      params={"target_x": center_x, "target_y": center_y}))
     queue.add(Command(tick=0, type="attack_move", unit_ids=uids_b,
-                      params={"target_x": 2000.0, "target_y": a_cy}))
+                      params={"target_x": center_x, "target_y": center_y}))
 
     engine = TacticalEngine(tmap, store, seed=seed)
     engine.command_queue = queue
@@ -172,7 +182,7 @@ for types_a, name_a in L5_TYPES:
         label = f"{name_a} vs {name_b}"
         durations = []
         for seed in SEEDS_SMALL:
-            r = run_engagement(5, types_a, seed)
+            r = run_engagement(5, types_a, seed, composition_b=types_b)
             durations.append(r["duration_sec"])
         mean_dur = sum(durations) / len(durations)
         min_dur  = min(durations)
@@ -219,6 +229,13 @@ l7_ok   = (min_l7 >= 150.0 and max_l7 <= 200.0)
 print(f"  {'PASS' if l7_ok else 'WARN'}  50v50 mirror: "
       f"min={min_l7:.1f}s  max={max_l7:.1f}s  mean={mean_l7:.1f}s  "
       f"(target 150–200s)  {'✓' if l7_ok else '✗ (warning level)'}")
+# Stall diagnostics: per-seed survivors + winner. If any run hit max_ticks the
+# surviving counts on both sides reveal the stall pattern.
+print(f"    per-seed: " + ", ".join(
+    f"s{r['seed']}={r['duration_sec']:.0f}s "
+    f"(A={r['surv_a']}, B={r['surv_b']}, winner={r['winner']})"
+    for r in l7_results
+))
 
 # ── Summary ───────────────────────────────────────────────────────────────────
 

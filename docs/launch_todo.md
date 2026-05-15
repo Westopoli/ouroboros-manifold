@@ -9,7 +9,8 @@ Tracked bugs and tasks that must be resolved before launch. Mark items `[x]` whe
 - [ ] **Fix unit sizing** — unit visual scales feel off.
 - [ ] **Fix main camera** — pan/zoom feels off, needs tuning.
 - [ ] **Fix unit balance** — combat balance pass needed.
-- [x] **Tune force allocation scale** — 300/2000, unit counts in 30–100 band. Note: 50v50 engagement duration miss (432s vs 150–200s target) is a combat-balance issue, tracked separately. *(2026-05-08)*
+- [x] **Tune force allocation scale** — 300/2000, unit counts in 30–100 band. *(2026-05-08)*
+- [x] **Investigate 50v50 mirror duration miss** — diagnosed 2026-05-15 as ~90% test-fixture contamination (single attack-move + fog/vision); fixture fixed in `simulation/test_j_duration.py`. Residual 131s vs 150–200s target parked POST-BETA per bible v3.00 retcon plan. See `docs/priority_queue.md` Q#4.
 - [x] **Layer visual system** — Stage 11c landed: layer focus visuals (active-layer emphasis, HUD readout) + fog of war (visibility predicate in renderer, minimap, selection). *(2026-05-03)*
 - [ ] **Fix control groups unit swapping** — code landed (digit-1..4 hijack removed; exclusive-membership rebind); headless test 12/12; **pending Westley in-game retest** (queue Q#3).
 - [x] **Fix mission briefing empty** — wired mission generator into game loop; briefing now shows real archetype, region, enemy, force composition, objectives, and commander lineage. *(2026-04-24)*

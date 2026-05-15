@@ -48,15 +48,19 @@ Test deliverable:
 Definition of done: Westley confirms in mission. Mark done in `launch_todo.md`.
 Depends on: nothing.
 
-### Q#4 — Track A2 diagnostic: 50v50 mirror duration miss          [status: queued] [BETA-BLOCKER → may park POST-BETA] 🟡
-Why: `test_j_duration.py` L7 reports 432.7s vs bible target 150–200s. A1 scale tuning physically independent. One session to confirm cause.
-Branch: `wn/bug-a2-duration-diagnostic`
-Test deliverable:
-  - Re-run `python3 simulation/test_j_duration.py`.
-  - Examine `/tmp/j_duration_50v50.jsonl`.
-  - Name offending unit type / mechanic.
-Definition of done: Diagnosis written into queue or escalated. **If cause is in `force_allocator.py` / `power_rating.py` / `damage.py`, park as BLOCKED-POST-BETA.** If `UNIT_STATS` knob, propose to Westley before changing.
-Depends on: nothing.
+### Q#4 — Track A2 diagnostic: 50v50 mirror duration miss          [status: done — parked POST-BETA] [WAS BETA-BLOCKER → POST-BETA]
+Diagnosed 2026-05-15. Original 432.7s WARN was **~90% test-fixture contamination** — single attack-move to behind-enemy spawn + fog/vision meant columns walked past each other, never re-engaged. Fixed in `simulation/test_j_duration.py`: convergent attack-move on map center, spawn closer to center, asymmetric composition support (`types_b` was never used). Diagnostics added (per-seed survivors + winner).
+
+Post-fixture: deterministic 131s mean, low variance, B always wins ~25v0. Real residual signals:
+- 50v50 mirror = 131s vs bible 150–200s (~13% short).
+- L5 Strike-mirror = 42s vs 45s min.
+- L5 Line/Siege mirror = 1000s stall (edge case — real missions use mixed comp).
+
+**Parked POST-BETA because bible v3.00 RE-OPEN FLAG (`bible_combat.md:383`) already plans a per-branch retcon — Branch 1 (Settled Reach / sci-fi) targets 30–45s engagements, HP drops. Tuning now to hit a target the bible plans to discard is wasted work.** Friends-ZIP ships with current values per bible directive.
+
+Fixture fix lands as a permanent improvement — test now measures real combat duration, not pathing contamination.
+
+Memory: `project_a2_duration_test_fixture.md`.
 
 ### Q#5 — Chronicle text improvement: capture or re-queue          [status: blocked] [BETA-NICE] 🟡
 Why: 6-step Opus session was running before reorg. State unknown.
