@@ -2,6 +2,7 @@ extends MarginContainer
 
 signal finished_printing(entry_id: String)
 signal expansion_requested(entry_id: String)
+signal mention_clicked(kind: String, id: String)
 
 enum { QUEUED, PRINTING, PRINTED }
 
@@ -21,6 +22,8 @@ var _accent: Color
 var _dirty: bool = false
 var _faction_colors: Dictionary = {}
 var _word_colors: PackedColorArray = []
+var _word_mentions: Array = []  # parallel to _words; entry is {kind,id} or {}
+var _mention_just_clicked: bool = false
 
 
 func setup(entry_data: Dictionary, accent: Color, faction_colors: Dictionary = {}) -> void:
@@ -32,7 +35,35 @@ func setup(entry_data: Dictionary, accent: Color, faction_colors: Dictionary = {
 	var text: String = entry_data.get("base_form", "")
 	_words = text.split(" ", false)
 	_assign_word_colors()
+	var mentions: Array = entry_data.get("mentions", [])
+	_compute_word_mentions(text, mentions)
 	_build_ui()
+
+
+func _compute_word_mentions(text: String, mentions: Array) -> void:
+	_word_mentions.clear()
+	for i in range(_words.size()):
+		_word_mentions.append({})
+	if mentions.is_empty():
+		return
+	var word_ranges: Array = []
+	var cursor := 0
+	for w: String in _words:
+		var s := text.find(w, cursor)
+		if s < 0:
+			word_ranges.append([cursor, cursor])
+		else:
+			word_ranges.append([s, s + w.length()])
+			cursor = s + w.length()
+	for m in mentions:
+		var ms: int = int(m.get("start", -1))
+		var me: int = int(m.get("end", -1))
+		if ms < 0 or me <= ms:
+			continue
+		for i in range(_words.size()):
+			var wr = word_ranges[i]
+			if wr[0] < me and wr[1] > ms:
+				_word_mentions[i] = {"kind": String(m.get("kind", "")), "id": String(m.get("id", ""))}
 
 
 func _build_ui() -> void:
@@ -67,6 +98,7 @@ func _build_ui() -> void:
 	_text_label.add_theme_font_size_override("normal_font_size", ThemeConstants.BODY_NARRATIVE_SIZE)
 	_text_label.add_theme_color_override("default_color", _text_color)
 	_text_label.text = ""
+	_text_label.meta_clicked.connect(_on_meta_clicked)
 	container.add_child(_text_label)
 
 	_cursor = load("res://theme/components/tm_blinking_cursor.tscn").instantiate()
@@ -185,7 +217,11 @@ func _rebuild_bbcode() -> void:
 			bbcode += " "
 		var c: Color = _word_colors[i]
 		var a := int(_word_alphas[i] * c.a * 255)
-		bbcode += "[color=#%02x%02x%02x%02x]%s[/color]" % [int(c.r * 255), int(c.g * 255), int(c.b * 255), a, _words[i]]
+		var piece := "[color=#%02x%02x%02x%02x]%s[/color]" % [int(c.r * 255), int(c.g * 255), int(c.b * 255), a, _words[i]]
+		var m: Dictionary = _word_mentions[i] if i < _word_mentions.size() else {}
+		if not m.is_empty():
+			piece = "[url=%s:%s]%s[/url]" % [m.get("kind", ""), m.get("id", ""), piece]
+		bbcode += piece
 
 	_text_label.text = bbcode
 
@@ -197,15 +233,35 @@ func _finish_printing() -> void:
 		if tw and tw.is_valid():
 			tw.kill()
 	_fade_tweens.clear()
-	_text_label.text = " ".join(_words)
+	for i in range(_word_alphas.size()):
+		_word_alphas[i] = 1.0
+	_rebuild_bbcode()
 	_cursor.visible = false
 	finished_printing.emit(_entry_id)
 
 
+func _on_meta_clicked(meta: Variant) -> void:
+	if typeof(meta) != TYPE_STRING:
+		return
+	var s := meta as String
+	var colon := s.find(":")
+	if colon <= 0:
+		return
+	var kind := s.substr(0, colon)
+	var id := s.substr(colon + 1)
+	_mention_just_clicked = true
+	mention_clicked.emit(kind, id)
+
+
 func _gui_input(event: InputEvent) -> void:
-	if _state == PRINTED and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		expansion_requested.emit(_entry_id)
-		get_viewport().set_input_as_handled()
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if _mention_just_clicked:
+			_mention_just_clicked = false
+			get_viewport().set_input_as_handled()
+			return
+		if _state == PRINTED:
+			expansion_requested.emit(_entry_id)
+			get_viewport().set_input_as_handled()
 
 
 func get_entry_id() -> String:

@@ -96,6 +96,7 @@ func _build_layout() -> void:
 	_scroll.all_entries_finished.connect(_on_all_entries_finished)
 	_scroll.entry_expansion_opened.connect(_on_expansion_opened)
 	_scroll.entry_expansion_closed.connect(_on_expansion_closed)
+	_scroll.mention_clicked.connect(_on_scroll_mention_clicked)
 	add_child(_scroll)
 
 	_info_host = load("res://scenes/world/info_panel_host.tscn").instantiate()
@@ -523,6 +524,32 @@ func _on_host_open_region_requested(region_id: String) -> void:
 
 func _on_host_open_faction_requested(faction_id: String) -> void:
 	_open_faction_panel(faction_id)
+	_pan_camera_to_faction(faction_id)
+
+
+func _on_scroll_mention_clicked(kind: String, id: String) -> void:
+	# Stage 11g — chronicle mention link clicked.
+	# See also: scenes/world/chronicle_entry.gd, chronicle_entry_expansion.gd
+	if not FeatureFlags.ENABLE_INSPECTION_PANELS:
+		return
+	if kind == "region":
+		if not _regions_state.has(id):
+			return
+		_open_region_panel(id)
+		_shell.move_camera_to_region(id, 1.5)
+	elif kind == "faction":
+		_open_faction_panel(id)
+		_pan_camera_to_faction(id)
+
+
+func _pan_camera_to_faction(faction_id: String) -> void:
+	var rids: PackedStringArray = []
+	for rid in _regions_state:
+		if String(_regions_state[rid].get("owner_faction_id", "")) == faction_id:
+			rids.append(rid)
+	if rids.is_empty():
+		return
+	_shell.move_camera_to_regions(rids, 1.5)
 
 
 func _open_region_panel(region_id: String) -> void:

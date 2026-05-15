@@ -270,6 +270,27 @@ func move_to_region(region_id: String, duration: float) -> void:
 	move_to_position(cam_pos, pos, duration)
 
 
+func move_to_regions(region_ids: PackedStringArray, duration: float) -> void:
+	# Stage 11g — pan to centroid of a faction's regions for mention-click pan.
+	if not _renderer or region_ids.is_empty():
+		return
+	var sum := Vector3.ZERO
+	var count := 0
+	for rid in region_ids:
+		var p: Vector3 = _renderer.region_id_to_world_position(rid)
+		if p == Vector3.ZERO:
+			continue
+		sum += p
+		count += 1
+	if count == 0:
+		return
+	var centroid := sum / float(count)
+	var from_target := _camera.global_position - centroid
+	var approach_az := atan2(from_target.z, from_target.x)
+	var cam_pos := centroid + _orbit_pos(approach_az, deg_to_rad(35.0), 45.0)
+	move_to_position(cam_pos, centroid, duration)
+
+
 func move_to_overview(duration: float) -> void:
 	var center := Vector3.ZERO
 	if _renderer and _renderer.has_method("get_world_bounds"):

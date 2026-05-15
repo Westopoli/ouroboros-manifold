@@ -138,6 +138,11 @@ func move_camera_to_region(region_id: String, duration: float) -> void:
 		_camera.move_to_region(region_id, duration)
 
 
+func move_camera_to_regions(region_ids: PackedStringArray, duration: float) -> void:
+	if _camera and _camera.has_method("move_to_regions"):
+		_camera.move_to_regions(region_ids, duration)
+
+
 func move_camera_to_overview(duration: float) -> void:
 	if _camera:
 		_camera.move_to_overview(duration)
