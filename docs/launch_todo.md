@@ -4,14 +4,14 @@ Tracked bugs and tasks that must be resolved before launch. Mark items `[x]` whe
 
 ## Bugs
 
-- [ ] **Fix unit rotation not working** — facing.py + renderer integration exists (Stage 12.5) but units aren't visually rotating. Investigate facing_rad pipeline.
-- [ ] **Fix impact/fire visuals hitting single point in squad** — when a unit has multiple squad members (squad_count > 1), projectiles and impact effects only target/originate from the root position, not individual squad meshes.
+- [x] **Fix unit rotation not working** — closed as already-working; sim-side facing tests (`test_facing_convergence.py` 5/5, `test_facing_snapshot_propagation.py` 9/9) pass and Westley confirmed visible rotation in playthrough. *(2026-05-08)*
+- [x] **Fix impact/fire visuals hitting single point in squad** — added `UnitRenderer.get_squad_world_position(uid, squad_idx=-1)`; `attack_visual_manager.gd` and `impact_feedback_manager.gd` now sample a random squad mesh on the firer/target. *(2026-05-08)*
 - [ ] **Fix unit sizing** — unit visual scales feel off.
 - [ ] **Fix main camera** — pan/zoom feels off, needs tuning.
 - [ ] **Fix unit balance** — combat balance pass needed.
 - [x] **Tune force allocation scale** — 300/2000, unit counts in 30–100 band. Note: 50v50 engagement duration miss (432s vs 150–200s target) is a combat-balance issue, tracked separately. *(2026-05-08)*
 - [x] **Layer visual system** — Stage 11c landed: layer focus visuals (active-layer emphasis, HUD readout) + fog of war (visibility predicate in renderer, minimap, selection). *(2026-05-03)*
-- [ ] **Fix control groups unit swapping** — control group assignments are broken; units swap between groups unexpectedly.
+- [ ] **Fix control groups unit swapping** — code landed (digit-1..4 hijack removed; exclusive-membership rebind); headless test 12/12; **pending Westley in-game retest** (queue Q#3).
 - [x] **Fix mission briefing empty** — wired mission generator into game loop; briefing now shows real archetype, region, enemy, force composition, objectives, and commander lineage. *(2026-04-24)*
 
 ## Features
