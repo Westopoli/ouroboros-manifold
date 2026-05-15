@@ -159,6 +159,17 @@ The player has two distinct ways to control unit layer behavior:
 
 **Visual feedback.** Units with an active layer preference display a small layer-color indicator (consistent with the layer indicator ring system described in Open Design Question #16) showing which layer they prefer. This is distinct from the indicator showing which layer they are currently on.
 
+### All-Army Hotkey — Re-Open Flag Per Principle 4
+
+The current launch implementation includes a persistent all-army hotkey (per `game_bible.md` Stage 8 roadmap) that selects every player-owned combat unit and auto-includes newly produced units. This feature is **flagged for re-opening** under Foundational Principle 4 in `bible_design_vision.md` (Positional Thinking Over Command Shortcuts), which excludes features that allow the player to command the entire force as a single entity from the design at all difficulty levels.
+
+**Status:**
+- The launch implementation **is not changed** by this flag. The all-army hotkey continues to function as currently specified in Stage 8 until a future stage explicitly addresses the conflict.
+- **Removal is not scheduled.** This flag is a marker that the current design contradicts a binding principle and that a future stage will need to either remove the hotkey, replace it with a non-conflicting alternative (e.g., camera-jump-to-engagement without selection), or formally re-decide the principle.
+- Control group exclusive membership (already implemented per Track B/B3) is the canonical positive instance of Principle 4 and is unaffected by this flag.
+
+**Accessibility implication.** Removing the all-army hotkey raises the effective skill floor of the base game. Principle 3 (Opt-In Complexity) and the existing "low floor, high ceiling" heuristic in `game_bible.md` Design Decision Heuristics both still apply — accessibility for new players must be preserved through other means when this flag is acted on. Possible affordances (none decided): generous Easy-mode parity tuning, simplified opponent behavior at low difficulties, opt-in assistive toggles labeled as accommodations, or a redesigned multi-group control flow that lowers the overhead of managing several groups. The specific solution is part of the future stage that addresses this flag.
+
 ### Camera and Player View
 
 The player controls a **standard RTS camera** — free pan and zoom at all times. No automatic anchoring, no camera modes, no forced following. The player manages their own viewport like Age of Empires 3 or StarCraft 2. A minimap provides strategic awareness of the broader tactical space.
