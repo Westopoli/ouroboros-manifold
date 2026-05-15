@@ -92,6 +92,20 @@ func setup(renderer: Node) -> void:
 	_zoom_controller.name = "ZoomDisclosureController"
 	add_child(_zoom_controller)
 
+	# Stage 11g Checkpoint L — pause ambient drift while any inspection holder
+	# is active (region/faction panel, chronicle expansion). Resume restores
+	# orbit from the current camera position (no auto-pan to overview).
+	# See also: scenes/world/world_view_inspection_state.gd
+	if FeatureFlags.ENABLE_INSPECTION_PAUSE and not InspectionState.pause_changed.is_connected(_on_inspection_pause_changed):
+		InspectionState.pause_changed.connect(_on_inspection_pause_changed)
+
+
+func _on_inspection_pause_changed(paused: bool) -> void:
+	if paused:
+		stop_ambient_motion()
+	else:
+		start_ambient_motion()
+
 
 func teardown() -> void:
 	_renderer = null

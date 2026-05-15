@@ -18,9 +18,9 @@ End goal: friends/Steam beta upload.
 - [ ] **Mission map movement speed** — currently unplayable; was loosely filed under "Fix main camera pan/zoom feel" (Q#11) marked NICE. Promoted to BLOCKER.
 - [ ] **Mission objectives clarity (first-time-player)** — 11d "Objectives" gate-passed but in-mission UX still unclear. Re-opened as new BLOCKER row; don't un-check 11d (that's a stage-gate fact, not a UX fact).
 - [ ] **In-game tutorial** — simple, barebones, lore-tone (chronicle voice). NOT a Discord call / README onboarding. Locked as BLOCKER 2026-05-15.
-- [ ] **Stage 11g Checkpoint L** — inspection pause wire-up. Q#1 below.
-- [ ] **B4 in-game confirm** — selection upgrades manual checklist. Q#2 below.
-- [ ] **B3 in-game retest** — control groups. Q#3 below.
+- [x] **Stage 11g Checkpoint L** — inspection pause wire-up. Q#1 below. *(confirmed 2026-05-15)*
+- [x] **B4 in-game confirm** — selection upgrades manual checklist. Q#2 below. *(confirmed 2026-05-15)*
+- [x] **B3 in-game retest** — control groups. Q#3 below. *(confirmed 2026-05-15)*
 - [ ] **Stage 13 packaging** — PyInstaller mac+win, debug overlay autoload registration, version label, privacy modal, clean-install verification. Currently parked (2026-05-09); unparks when above BLOCKERs close.
 
 ### Steam Direct timeline (post-friends-ZIP path, separate from gate)
@@ -37,30 +37,21 @@ End goal: friends/Steam beta upload.
 
 ## In-flight (close before new queue items start)
 
-### Q#1 — Stage 11g Checkpoint L: pause coordinator wire-up          [status: in-progress] [BETA-BLOCKER]
-Why: Inspection pause flag still off. Without it, region clicks don't actually freeze the chronicle/tweens — system half-built.
+### Q#1 — Stage 11g Checkpoint L: pause coordinator wire-up          [status: done 2026-05-15] [BETA-BLOCKER]
+Why: Inspection pause flag was off; region clicks didn't freeze chronicle/ambient camera.
 Branch: `wn/feat-stage11g-l-pause`
-Test deliverable:
-- Scene: main game, world view.
-- Steps:
-  1. Click a region → chronicle prints stop, tweens freeze.
-  2. Click empty space → resume.
-  3. Double-hold a region → expansion view + region panel.
-  4. Open faction button from region panel → faction view opens cleanly.
-- Expected: pause/resume visible; no missed frames; no ambient camera drift during pause.
-- Fail-look-for: chronicle continues during pause; camera keeps drifting; double-hold broken.
-Definition of done: `orbital_camera_3d.gd` subscribed to `InspectionState.pause_changed`; `ENABLE_INSPECTION_PAUSE = true`; verification passes; PR merged.
-Depends on: nothing.
+Outcome: `orbital_camera_3d.gd` subscribed to `InspectionState.pause_changed` (calls `stop_ambient_motion()` on pause, `start_ambient_motion()` on resume). Flags flipped: `autoload/feature_flags.gd` `ENABLE_INSPECTION_PAUSE = true`, `simulation/config.py` matching. Verified in Godot: region click freezes chronicle + ambient drift; empty-space click resumes; Open-faction button opens faction view cleanly.
+Followup: chronicle colored-mention clickability (panel-from-text) is Checkpoints N + O — separate item (task #11). The original test-deliverable step 3 ("double-hold a region") was confused phrasing for the multi-holder pause refcount; that behavior works (region_panel + expansion holders release independently) but is not user-visible until N+O lands.
 Plan: `/Users/westley/.claude/plans/sunny-stargazing-spark.md`.
 
-### Q#2 — B4 confirm: selection upgrades manual checklist          [status: confirming] [BETA-BLOCKER]
+### Q#2 — B4 confirm: selection upgrades manual checklist          [status: done] [BETA-BLOCKER]
 Why: Code landed (shift-click/drag adds, double-click selects type on-screen). Headless 5/5 pass. Needs Westley's eyes in actual gameplay.
 Branch: n/a (merged; pure verification)
 Test deliverable: Manual checklist (5 steps) preserved in archived track_b doc + queue history.
 Definition of done: All 5 pass in-game. Mark done in `launch_todo.md`.
 Depends on: nothing.
 
-### Q#3 — B3 in-game retest: control groups          [status: confirming] [BETA-BLOCKER]
+### Q#3 — B3 in-game retest: control groups          [status: done] [BETA-BLOCKER]
 Why: Headless 12/12. Untested in actual gameplay. Bug was digit-1..4 hijack — needs proof of fix during a real mission.
 Branch: n/a (merged)
 Test deliverable:

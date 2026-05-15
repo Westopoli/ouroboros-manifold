@@ -15,7 +15,7 @@ Tracked bugs and tasks that must be resolved before launch. Mark items `[x]` whe
 - [x] **Tune force allocation scale** — 300/2000, unit counts in 30–100 band. *(2026-05-08)*
 - [x] **Investigate 50v50 mirror duration miss** — diagnosed 2026-05-15 as ~90% test-fixture contamination (single attack-move + fog/vision); fixture fixed in `simulation/test_j_duration.py`. Residual 131s vs 150–200s target parked POST-BETA per bible v3.00 retcon plan. See `docs/priority_queue.md` Q#4.
 - [x] **Layer visual system** — Stage 11c landed: layer focus visuals (active-layer emphasis, HUD readout) + fog of war (visibility predicate in renderer, minimap, selection). *(2026-05-03)*
-- [ ] **Fix control groups unit swapping** — code landed (digit-1..4 hijack removed; exclusive-membership rebind); headless test 12/12; **pending Westley in-game retest** (queue Q#3).
+- [x] **Fix control groups unit swapping** — code landed + in-game retest passed *(2026-05-15)*. Headless 12/12, digit-1..4 hijack removed, exclusive-membership rebind confirmed.
 - [x] **Fix mission briefing empty** — wired mission generator into game loop; briefing now shows real archetype, region, enemy, force composition, objectives, and commander lineage. *(2026-04-24)*
 
 ## Features
@@ -23,9 +23,9 @@ Tracked bugs and tasks that must be resolved before launch. Mark items `[x]` whe
 - [ ] **Remove static flyby ship animations** — current ambient flyby ships are placeholder. Remove now, replace with something better later.
 - [ ] **Create production building assets** — reinforcement structures need real art.
 - [ ] **Auto-assign unit type hotkeys** — 1 = all army, 2 = all strike, 3 = all line, 4 = all siege. Automatic, not manual.
-- [ ] **Shift-click/drag to add to selection** — hold SHIFT and click or drag a box to add more units to the current selection instead of replacing it.
+- [x] **Shift-click/drag to add to selection** — confirmed in-game *(2026-05-15, Q#2)*.
 - [x] **Allow enemy units to be clickable** — clicking enemy units should select/inspect them (show HP, type, etc). *(Stage 11d sub-goal 4)*
-- [ ] **Double-click to select all of that unit type on screen** — double-clicking a unit selects all visible units of the same type.
+- [x] **Double-click to select all of that unit type on screen** — confirmed in-game *(2026-05-15, Q#2)*.
 - [ ] **Add new version of map view** — redesign the Settled Reach world/map view.
 - [ ] **Improve chronicle output** — current chronicle entries are too wordy. Tighten prose generation.
 - [ ] **Regenerate library names** — current AI-generated names need a quality pass with better prompting/curation.

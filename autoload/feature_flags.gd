@@ -6,6 +6,6 @@ extends Node
 
 var ENABLE_FACTION_PALETTE: bool = true
 var ENABLE_INSPECTION_PANELS: bool = true
-var ENABLE_INSPECTION_PAUSE: bool = false
+var ENABLE_INSPECTION_PAUSE: bool = true
 var ENABLE_CHRONICLE_MENTIONS: bool = false
 var ENABLE_OWNERSHIP_HISTORY: bool = false

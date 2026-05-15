@@ -1108,7 +1108,7 @@ KEYFRAME_STREAM_ENABLED = True
 # See docs/stage_specs/stage_11g_world_view_inspection_spec.md
 ENABLE_FACTION_PALETTE     = True   # deterministic faction hue + vivacity scaling
 ENABLE_INSPECTION_PANELS   = True   # region/faction info panels on click
-ENABLE_INSPECTION_PAUSE    = False  # panels pause world view animation
+ENABLE_INSPECTION_PAUSE    = True   # panels pause world view animation
 ENABLE_CHRONICLE_MENTIONS  = False  # clickable region/faction names in chronicle
 ENABLE_OWNERSHIP_HISTORY   = False  # per-faction count history + per-region prior owners
 
