@@ -14,14 +14,39 @@ End goal: friends/Steam beta upload.
 **ZIP cannot ship to friends until every BLOCKER below is closed.** This section supersedes per-item BLOCKER tags in the queue body — read this first.
 
 ### BLOCKERS (must close pre-ZIP)
-- [ ] **Save/resume in-game state** — currently no way to leave and come back to the same simulation; restarts every launch. Friends can't tolerate session-restart. *(not previously in launch_todo — surfaced 2026-05-15)*
-- [ ] **Mission map movement speed** — currently unplayable; was loosely filed under "Fix main camera pan/zoom feel" (Q#11) marked NICE. Promoted to BLOCKER.
-- [ ] **Mission objectives clarity (first-time-player)** — 11d "Objectives" gate-passed but in-mission UX still unclear. Re-opened as new BLOCKER row; don't un-check 11d (that's a stage-gate fact, not a UX fact).
+
+**Audit pass 2026-05-16:** Every row below was rescoped after combing the codebase. Many items advertised as "build from scratch" are actually wiring jobs on top of Stage 10 + 12 infra. Don't trust the row title — read the **Built / Wired / Missing** block.
+
+- [ ] **Save/resume world-view v1** — currently no way to leave and come back to the same simulation; restarts every launch.
+  - Built: `simulation/save_writer.write_sim_state`, `save_loader.load_sim_state`, `scenes/load_game/`, main menu CONTINUE, `AUTOSAVE_SLOT_ID="autosave"` in config, `UIDataBus.trigger_autosave(loop_phase)` sender.
+  - Wired: nothing end-to-end. UIDataBus sends `{"type":"autosave"}` command; no sim-side handler receives it.
+  - Missing: (a) `World/Region/Faction/stances/chronicle` → JSON-safe dict serializer, (b) reverse dict → entities deserializer, (c) sim-side command handler for `"autosave"` that calls serializer then `write_sim_state("autosave", state)`, (d) Godot boot path that loads `autosave` slot and skips `new_game` if present.
+- [ ] **Save/resume tactical mid-mission state**
+  - Built: `TacticalEngine.export_full_state()` + `restore_from_state()`, `write_tactical_state`, `load_tactical_state`, `consume_tactical_state`, `has_tactical_state`.
+  - Wired: nothing end-to-end (no Godot caller).
+  - Missing: in-mission pause-menu UI (Q#24 overlaps), autosave hook on abandon/quit, resume-on-mission-start branch that loads tactical.json + calls `restore_from_state`.
+- [ ] **Mission map movement speed**
+  - Built: `tactical.gd PAN_SPEED=1500`, `UIDataBus.edge_scroll_speed` setting (clamped 200–6000, persisted via ConfigFile), zoom-scaled pan.
+  - Wired: setting flows into pan but no UI surface to change it.
+  - Missing: either retune the default constant (1-line change after Westley plays a mission with different speeds) OR add a Settings slider. Pick one. Likely retune is enough for ZIP.
+- [ ] **Mission objectives clarity (first-time-player)** — 11d gate-passed but in-mission UX still unclear.
+  - Built: `scenes/tactical/hud.gd` objectives list w/ progress bars + 6 objective-type descriptions, `mission_marker.gd` in-world beacons.
+  - Wired: HUD + beacons populated from snapshot deltas.
+  - Missing: a pre-mission briefing screen that names the objective in plain language, OR a first-time tutorial tooltip on the HUD entry. Overlaps with **In-game tutorial** below — likely solved together.
 - [ ] **In-game tutorial** — simple, barebones, lore-tone (chronicle voice). NOT a Discord call / README onboarding. Locked as BLOCKER 2026-05-15.
+  - Built: `scenes/onboarding/onboarding.gd` (difficulty + archetype picker), `onboarding_store.py`. That's the entire prior surface.
+  - Wired: onboarding runs once before first mission.
+  - Missing: everything else — tutorial content (`simulation/library/tutorial/`), trigger logic on first mission, hint surface in mission scene. Only true "build from scratch" BLOCKER.
 - [x] **Stage 11g Checkpoint L** — inspection pause wire-up. Q#1 below. *(confirmed 2026-05-15)*
 - [x] **B4 in-game confirm** — selection upgrades manual checklist. Q#2 below. *(confirmed 2026-05-15)*
 - [x] **B3 in-game retest** — control groups. Q#3 below. *(confirmed 2026-05-15)*
-- [ ] **Stage 13 packaging** — PyInstaller mac+win, debug overlay autoload registration, version label, privacy modal, clean-install verification. Currently parked (2026-05-09); unparks when above BLOCKERs close.
+- [ ] **Stage 13 packaging**
+  - Built: `build/pyinstaller_spec.spec` (mac), `build/build_zip.py` (full pipeline with `--version`/`--game-name`/`--godot-preset`/`--skip-*` args), `autoload/debug_overlay.gd` (F3-toggle FPS/tick/units, 79 lines fully implemented), main menu version label `v0.9.0`, `IS_RELEASE_BUILD` flag.
+  - Wired: pipeline runs end-to-end on Mac.
+  - Missing: (a) `DebugOverlay="*res://autoload/debug_overlay.gd"` line in `project.godot [autoload]` (one-line fix), (b) Windows PyInstaller spec (`build/pyinstaller_win.spec` scaffold), (c) privacy modal scene + main-menu trigger, (d) clean-install verify on a fresh Mac + Windows host. No drafting from scratch required.
+
+**Dropped from gate (2026-05-16 audit):**
+- ~~State-of-faction summary~~ — already built. `scenes/world/faction_info_panel.gd` shows status (Rising/Stable/Waning/Defeated), archetype, tech tier, region list. `scenes/debrief/debrief.gd` + `simulation/debrief_data.py` cover end-of-mission. Westley should play a session and confirm what's there is sufficient before reopening.
 
 ### Steam Direct timeline (post-friends-ZIP path, separate from gate)
 - Steam Direct = **$100 app fee**.
