@@ -4,6 +4,7 @@ signal entry_finished_printing(entry_id: String)
 signal entry_expansion_opened(entry_id: String)
 signal entry_expansion_closed(entry_id: String)
 signal all_entries_finished()
+signal mention_clicked(kind: String, id: String)
 
 var _entries: Dictionary = {}
 var _printing_id: String = ""
@@ -103,6 +104,7 @@ func queue_entry(entry_data: Dictionary) -> void:
 	entry_node.setup(entry_data, _accent, _faction_colors)
 	entry_node.finished_printing.connect(_on_entry_finished)
 	entry_node.expansion_requested.connect(_on_expansion_requested)
+	entry_node.mention_clicked.connect(_on_mention_clicked)
 	_entry_container.add_child(entry_node)
 	_entries[entry_id] = entry_node
 
@@ -200,6 +202,7 @@ func _show_expansion(entry_id: String) -> void:
 	var entry_data: Dictionary = _entries[entry_id].get_entry_data()
 	var expansion: Node = load("res://scenes/world/chronicle_entry_expansion.tscn").instantiate()
 	expansion.setup(entry_data, _accent)
+	expansion.mention_clicked.connect(_on_mention_clicked)
 	expansion.dismissed.connect(func():
 		_close_expansion()
 		if FeatureFlags.ENABLE_INSPECTION_PAUSE:
@@ -213,6 +216,10 @@ func _show_expansion(entry_id: String) -> void:
 	_expansion_overlay.visible = true
 	_expansion_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	entry_expansion_opened.emit(entry_id)
+
+
+func _on_mention_clicked(kind: String, id: String) -> void:
+	mention_clicked.emit(kind, id)
 
 
 func _close_expansion() -> void:

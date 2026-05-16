@@ -1109,7 +1109,7 @@ KEYFRAME_STREAM_ENABLED = True
 ENABLE_FACTION_PALETTE     = True   # deterministic faction hue + vivacity scaling
 ENABLE_INSPECTION_PANELS   = True   # region/faction info panels on click
 ENABLE_INSPECTION_PAUSE    = True   # panels pause world view animation
-ENABLE_CHRONICLE_MENTIONS  = False  # clickable region/faction names in chronicle
+ENABLE_CHRONICLE_MENTIONS  = True   # clickable region/faction names in chronicle
 ENABLE_OWNERSHIP_HISTORY   = False  # per-faction count history + per-region prior owners
 
 # Chronicle scroll

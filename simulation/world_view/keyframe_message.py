@@ -30,10 +30,18 @@ def scroll_entries_to_messages(scroll_entries, keyframes: list[dict], time_jump_
             "expanded_form": entry.expanded_text,
         }
         # Stage 11g — additive, gated. Flag off → key absent (bit-identical).
-        if getattr(_config, "ENABLE_CHRONICLE_MENTIONS", False) and mentions_by_entry:
-            mentions = mentions_by_entry.get(eid)
-            if mentions is not None:
-                msg["mentions"] = mentions
+        if getattr(_config, "ENABLE_CHRONICLE_MENTIONS", False):
+            base_m = None
+            exp_m = None
+            if mentions_by_entry and eid in mentions_by_entry:
+                base_m = mentions_by_entry.get(eid)
+            else:
+                base_m = getattr(entry, "mentions", None) or None
+                exp_m = getattr(entry, "expanded_mentions", None) or None
+            if base_m:
+                msg["mentions"] = base_m
+            if exp_m:
+                msg["expanded_mentions"] = exp_m
         messages.append(msg)
     return messages
 
