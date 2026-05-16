@@ -823,6 +823,15 @@ def _inject_world_view_metadata(tj_result: dict, world, registry) -> None:
         tj_result["faction_metadata"] = fmeta
 
 
+def _try_autosave(sim_env, logger):
+    """Auto-fire world-view autosave post-time-jump. Never crashes the sim loop."""
+    try:
+        from save.autosave import autosave_world_view
+        autosave_world_view(sim_env)
+    except Exception as e:
+        logger.warning("autosave failed (non-fatal): %s", e)
+
+
 def _run_time_jump_phase(sim_env, cmd_queue, engine, logger):
     """Wait for sequencer ready signal, run time jump, send messages. Returns 'done' or 'eof'."""
     from time_jump import run_time_jump
@@ -882,6 +891,11 @@ def _run_time_jump_phase(sim_env, cmd_queue, engine, logger):
     for msg in messages:
         _send_message(msg)
 
+    # BLOCKER 1 — accumulate chronicle in sim_env (fork 2a) then auto-fire
+    # autosave (fork 1 + 4). See also: simulation/save/autosave.py
+    sim_env.setdefault("chronicle_entries", []).extend(scroll_entries)
+    _try_autosave(sim_env, logger)
+
     return "done"
 
 
@@ -925,6 +939,11 @@ def _run_opening_time_jump(sim_env, logger):
     logger.info("sending %d opening time jump messages", len(messages))
     for msg in messages:
         _send_message(msg)
+
+    # BLOCKER 1 — accumulate chronicle in sim_env (fork 2a) then auto-fire
+    # autosave (fork 1 + 4). See also: simulation/save/autosave.py
+    sim_env.setdefault("chronicle_entries", []).extend(scroll_entries)
+    _try_autosave(sim_env, logger)
 
 
 def _run_waiting_phase(cmd_queue, engine, logger):

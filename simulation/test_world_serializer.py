@@ -69,7 +69,7 @@ def test_empty_world_roundtrip():
     world = _empty_world()
     payload = serialize_world(world, factions={}, chronicle_entries=[],
                               tick=0, era_id="settled_reach")
-    w2, f2, c2, tick2, era2 = deserialize_world(payload)
+    w2, f2, c2, tick2, era2, s2 = deserialize_world(payload)
     assert w2.regions == {}
     assert w2.adjacency == {}
     assert w2.edge_types == {}
@@ -77,6 +77,7 @@ def test_empty_world_roundtrip():
     assert c2 == []
     assert tick2 == 0
     assert era2 == "settled_reach"
+    assert s2 == {}
 
 
 # ── 3. Region fields ──────────────────────────────────────────────────────────
@@ -87,7 +88,7 @@ def test_single_region_full_fields():
     w = World(regions={"ra": r}, adjacency={"ra": []}, edge_types={}, seed=0)
     payload = serialize_world(w, factions={}, chronicle_entries=[],
                               tick=0, era_id="settled_reach")
-    w2, _, _, _, _ = deserialize_world(payload)
+    w2, _, _, _, _, _ = deserialize_world(payload)
     r2 = w2.regions["ra"]
     assert r2.fields == fields
     assert r2.id == "ra"
@@ -100,7 +101,7 @@ def test_region_phase_offsets_and_history_preserved():
     w = _two_region_world()
     payload = serialize_world(w, factions={}, chronicle_entries=[],
                               tick=10, era_id="settled_reach")
-    w2, _, _, _, _ = deserialize_world(payload)
+    w2, _, _, _, _, _ = deserialize_world(payload)
     r = w2.regions["ra"]
     assert r.econ_phase_offset == pytest.approx(1.234)
     assert r.tension_phase_offset == pytest.approx(2.345)
@@ -116,7 +117,7 @@ def test_composites_recomputed_on_load():
     w.regions["ra"].composites = {"stability": -999.0, "capacity": -999.0}
     payload = serialize_world(w, factions={}, chronicle_entries=[],
                               tick=0, era_id="settled_reach")
-    w2, _, _, _, _ = deserialize_world(payload)
+    w2, _, _, _, _, _ = deserialize_world(payload)
     r = w2.regions["ra"]
     assert r.composites["stability"] != -999.0
     assert r.composites["capacity"] != -999.0
@@ -132,7 +133,7 @@ def test_multi_region_adjacency_and_edge_types():
     w = _two_region_world()
     payload = serialize_world(w, factions={}, chronicle_entries=[],
                               tick=0, era_id="settled_reach")
-    w2, _, _, _, _ = deserialize_world(payload)
+    w2, _, _, _, _, _ = deserialize_world(payload)
     assert w2.adjacency == {"ra": ["rb"], "rb": ["ra"]}
     assert w2.edge_types == {("ra", "rb"): "both", ("rb", "ra"): "both"}
 
@@ -149,7 +150,7 @@ def test_multi_faction_with_diplomatic_stances():
     w = _empty_world()
     payload = serialize_world(w, factions=factions, chronicle_entries=[],
                               tick=0, era_id="settled_reach")
-    _, f2, _, _, _ = deserialize_world(payload)
+    _, f2, _, _, _, _ = deserialize_world(payload)
     assert set(f2.keys()) == {"player", "faction_1"}
     p = f2["player"]
     assert p.archetype == "player_civilization"
@@ -189,7 +190,7 @@ def test_chronicle_entries_verbatim():
     w = _empty_world()
     payload = serialize_world(w, factions={}, chronicle_entries=entries,
                               tick=0, era_id="settled_reach")
-    _, _, c2, _, _ = deserialize_world(payload)
+    _, _, c2, _, _, _ = deserialize_world(payload)
     assert len(c2) == 2
     assert c2[0].base_text == entries[0].base_text
     assert c2[0].expanded_text == entries[0].expanded_text
@@ -201,6 +202,46 @@ def test_chronicle_entries_verbatim():
     assert c2[0].mentions == entries[0].mentions
     assert c2[0].expanded_mentions == entries[0].expanded_mentions
     assert c2[1].base_text == "Faction 1 marched."
+
+
+# ── 7b. Stances (full fidelity) ───────────────────────────────────────────────
+
+def test_stances_full_fidelity_roundtrip():
+    stances = {
+        ("player", "faction_1"): {
+            "stance": "cooperative",
+            "non_aggression_ticks": 42,
+            "cooperative_since_tick": 13,
+        },
+        ("player", "faction_2"): {
+            "stance": "hostile",
+            "non_aggression_ticks": 0,
+            "cooperative_since_tick": None,
+        },
+    }
+    payload = serialize_world(_empty_world(), factions={}, chronicle_entries=[],
+                              tick=0, era_id="settled_reach", stances=stances)
+    _, _, _, _, _, s2 = deserialize_world(payload)
+    assert s2 == stances
+
+
+def test_stances_omitted_in_payload_loads_as_empty():
+    payload = serialize_world(_empty_world(), factions={}, chronicle_entries=[],
+                              tick=0, era_id="settled_reach")
+    _, _, _, _, _, s2 = deserialize_world(payload)
+    assert s2 == {}
+
+
+def test_stances_payload_is_json_safe():
+    stances = {
+        ("a", "b"): {"stance": "neutral", "non_aggression_ticks": 5,
+                     "cooperative_since_tick": None},
+    }
+    payload = serialize_world(_empty_world(), factions={}, chronicle_entries=[],
+                              tick=0, era_id="settled_reach", stances=stances)
+    payload2 = json.loads(json.dumps(payload))
+    _, _, _, _, _, s2 = deserialize_world(payload2)
+    assert s2 == stances
 
 
 # ── 8. RNG state ──────────────────────────────────────────────────────────────
@@ -217,7 +258,7 @@ def test_rng_state_preserved():
                               tick=0, era_id="settled_reach")
     # Reset the original to pre-save state to compare apples-to-apples.
     w.rng.setstate(pre_state)
-    w2, _, _, _, _ = deserialize_world(payload)
+    w2, _, _, _, _, _ = deserialize_world(payload)
     # The two RNGs should draw identical sequences from here.
     draws_orig = [w.rng.random() for _ in range(20)]
     draws_loaded = [w2.rng.random() for _ in range(20)]
@@ -240,7 +281,7 @@ def test_payload_is_json_safe():
     s = json.dumps(payload)
     assert isinstance(s, str)
     payload2 = json.loads(s)
-    w2, f2, c2, tick2, era2 = deserialize_world(payload2)
+    w2, f2, c2, tick2, era2, _ = deserialize_world(payload2)
     assert w2.regions["ra"].id == "ra"
     assert set(f2.keys()) == {"player", "faction_1"}
     assert tick2 == 4
@@ -272,7 +313,7 @@ def test_world_roundtrip_after_ticks():
                               tick=7, era_id="settled_reach")
     s = json.dumps(payload)
     payload2 = json.loads(s)
-    w2, f2, _, tick2, _ = deserialize_world(payload2)
+    w2, f2, _, tick2, _, _ = deserialize_world(payload2)
 
     assert tick2 == 7
     assert set(w2.regions.keys()) == set(w.regions.keys())

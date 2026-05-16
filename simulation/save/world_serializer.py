@@ -13,7 +13,8 @@ class SaveVersionError(ValueError):
 
 
 def serialize_world(world: World, factions: dict, chronicle_entries: list,
-                    tick: int, era_id: str) -> dict:
+                    tick: int, era_id: str,
+                    stances: dict | None = None) -> dict:
     return {
         "save_version": SAVE_VERSION,
         "tick": tick,
@@ -21,6 +22,7 @@ def serialize_world(world: World, factions: dict, chronicle_entries: list,
         "world": _world_to_dict(world),
         "factions": [_faction_to_dict(f) for f in factions.values()],
         "chronicle_entries": [_entry_to_dict(e) for e in chronicle_entries],
+        "stances": _stances_to_list(stances or {}),
     }
 
 
@@ -38,7 +40,8 @@ def deserialize_world(payload: dict) -> tuple:
                          for e in payload.get("chronicle_entries", [])]
     tick = int(payload.get("tick", 0))
     era_id = str(payload.get("era_id", ""))
-    return world, factions, chronicle_entries, tick, era_id
+    stances = _stances_from_list(payload.get("stances", []))
+    return world, factions, chronicle_entries, tick, era_id, stances
 
 
 # ── World ─────────────────────────────────────────────────────────────────────
@@ -162,6 +165,37 @@ def _entry_from_dict(d: dict) -> ScrollEntry:
         mentions=list(d.get("mentions", [])),
         expanded_mentions=list(d.get("expanded_mentions", [])),
     )
+
+
+# ── Stances ───────────────────────────────────────────────────────────────────
+
+# Canonical source: diplomacy.py stances dict, pair-keyed by (fid_a, fid_b)
+# with three fields per pair: stance, non_aggression_ticks, cooperative_since_tick.
+# Faction.diplomatic_stance is a derived mirror — restore stances first, then
+# diplomacy.sync_to_factions(stances, registry) repopulates the mirror.
+
+def _stances_to_list(stances: dict) -> list:
+    out = []
+    for (a, b), entry in stances.items():
+        out.append([
+            a, b,
+            entry.get("stance", "neutral"),
+            int(entry.get("non_aggression_ticks", 0)),
+            entry.get("cooperative_since_tick"),
+        ])
+    return out
+
+
+def _stances_from_list(data: list) -> dict:
+    result = {}
+    for row in data:
+        a, b, stance, nat, csince = row
+        result[(a, b)] = {
+            "stance": stance,
+            "non_aggression_ticks": int(nat),
+            "cooperative_since_tick": csince,
+        }
+    return result
 
 
 # ── RNG state ─────────────────────────────────────────────────────────────────
