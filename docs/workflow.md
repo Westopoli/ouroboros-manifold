@@ -28,6 +28,21 @@ If an item feels like two items, split it. Small tasks only.
 
 ---
 
+## Pre-scope audit (do this before writing any spec)
+
+Before scoping a BLOCKER or queue item — and absolutely before dispatching sub-agents — verify what already exists. The gate description in `priority_queue.md` is a player-facing problem statement, not a code inventory. Past stages often shipped partial infrastructure that the gate row doesn't mention.
+
+For each item, sweep these surfaces:
+
+1. `Grep` the keyword across `simulation/`, `autoload/`, `scenes/`, `build/`, `tests/`.
+2. Check `docs/stage_specs/stage_*_spec*.md` for any mention of the feature as "complete" or "shipped".
+3. **For anything a spec calls "complete": verify the production callsite exists**, not just the storage-layer function and not just test fixtures. A `write_*` that's only called by `test_*` is unwired infrastructure, not a working feature.
+4. Read `MEMORY.md` pointers — prior chats may have noted partial state.
+
+Produce a 5-line "what's built / what's wired / what's genuinely missing" before writing the spec. Re-scope the queue item to only the genuinely-missing piece. Past lesson (2026-05-16): nearly dispatched 2 sub-agents to build save infra that already existed in 6 files across Stages 10 + 12; only the converter + sim-side command handler were actually missing.
+
+---
+
 ## Test deliverable format
 
 Every PR includes — in the PR body — exactly this shape:
