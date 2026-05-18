@@ -26,6 +26,13 @@ def autosave_world_view(sim_env: dict) -> None:
         tick=tick,
         era_id=era_id,
         stances=stances,
+        naming_system=sim_env.get("ns"),
+        ledger=sim_env.get("ledger"),
+        gen_state=sim_env.get("gen_state"),
+        pending_queue=sim_env.get("pending_queue"),
+        player_lineage_id=sim_env.get("player_lineage_id"),
+        trigger_state=sim_env.get("trigger_state", {}),
+        noise_offsets=sim_env.get("noise_offsets", {}),
     )
 
     save_writer.write_sim_state(
@@ -35,5 +42,6 @@ def autosave_world_view(sim_env: dict) -> None:
             "year": tick,
             "rng_state": "",
             "sim_state": payload,
+            "last_time_jump_messages": sim_env.get("last_time_jump_messages", []),
         },
     )

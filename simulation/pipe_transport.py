@@ -883,6 +883,7 @@ def _run_time_jump_phase(sim_env, cmd_queue, engine, logger):
 
     _inject_world_view_metadata(tj_result, sim_env["world"], sim_env["registry"])
     messages = build_time_jump_messages(tj_result, tj_id)
+    sim_env["last_time_jump_messages"] = messages
     msg_types = {}
     for msg in messages:
         t = msg.get("type", "?")
@@ -936,6 +937,7 @@ def _run_opening_time_jump(sim_env, logger):
 
     _inject_world_view_metadata(tj_result, sim_env["world"], sim_env["registry"])
     messages = build_time_jump_messages(tj_result, tj_id)
+    sim_env["last_time_jump_messages"] = messages
     logger.info("sending %d opening time jump messages", len(messages))
     for msg in messages:
         _send_message(msg)
@@ -946,6 +948,19 @@ def _run_opening_time_jump(sim_env, logger):
     _try_autosave(sim_env, logger)
 
 
+def _replay_time_jump_messages(sim_env, cmd_queue, logger):
+    """On --load: wait for ready_for_time_jump then re-emit the persisted
+    last_time_jump_messages stream verbatim. Returns 'done' or 'eof'."""
+    result = _wait_for_command(cmd_queue, "ready_for_time_jump", None, logger)
+    if result == "eof":
+        return "eof"
+    messages = sim_env.get("last_time_jump_messages", []) or []
+    logger.info("replaying %d persisted time jump messages on --load", len(messages))
+    for msg in messages:
+        _send_message(msg)
+    return "done"
+
+
 def _run_waiting_phase(cmd_queue, engine, logger):
     """Wait for proceed_to_next_mission. Returns 'proceed' or 'eof'."""
     result = _wait_for_command(cmd_queue, "proceed_to_next_mission", engine, logger)
@@ -954,7 +969,7 @@ def _run_waiting_phase(cmd_queue, engine, logger):
     return "proceed"
 
 
-def run(engine_factory, *, sim_env=None, crash_after_ready: bool = False, test_print: bool = False, cmd_file_path: str | None = None, use_mission_generator: bool = True):
+def run(engine_factory, *, sim_env=None, crash_after_ready: bool = False, test_print: bool = False, cmd_file_path: str | None = None, use_mission_generator: bool = True, is_load: bool = False):
     """
     Main entry point for the pipe transport game loop.
     engine_factory: callable() → TacticalEngine (first mission, used when use_mission_generator=False)
@@ -1000,14 +1015,24 @@ def run(engine_factory, *, sim_env=None, crash_after_ready: bool = False, test_p
     # The player sees an abbreviated opening chronicle scroll before their first mission.
     # No timeout: the player may spend time in menus before reaching the time_jump scene.
     if sim_env is not None and use_mission_generator:
-        sim_env["chapter_num"] = 0  # opening jump is chapter 0
-        logger.info("=== OPENING TIME JUMP (waiting for sequencer) ===")
-        result = _wait_for_command(cmd_queue, "ready_for_time_jump", engine, logger)
-        if result == "eof":
-            logger.info("stdin closed waiting for opening time jump ready")
-            return
-
-        _run_opening_time_jump(sim_env, logger)
+        if is_load:
+            sim_env["chapter_num"] = sim_env.get("chapter_num", 1)
+        else:
+            sim_env["chapter_num"] = 0  # opening jump is chapter 0
+        logger.info("=== %s (waiting for sequencer) ===",
+                    "LOAD RESUME" if is_load else "OPENING TIME JUMP")
+        if is_load:
+            result = _replay_time_jump_messages(sim_env, cmd_queue, logger)
+            if result == "eof":
+                logger.info("stdin closed waiting for --load replay ready")
+                return
+            chapter_num = sim_env.get("chapter_num", 1)
+        else:
+            result = _wait_for_command(cmd_queue, "ready_for_time_jump", engine, logger)
+            if result == "eof":
+                logger.info("stdin closed waiting for opening time jump ready")
+                return
+            _run_opening_time_jump(sim_env, logger)
 
         logger.info("=== WAITING FOR OPENING SCROLL ===")
         result = _run_waiting_phase(cmd_queue, engine, logger)
@@ -1077,6 +1102,54 @@ def run(engine_factory, *, sim_env=None, crash_after_ready: bool = False, test_p
             # No sim environment — single-mission mode, exit after debrief
             logger.info("no sim_env, exiting after debrief")
             return
+
+
+def _load_sim_env(slot_id: str) -> dict | None:
+    """Rehydrate sim_env from autosave slot. Shape matches `_setup_sim_env()`
+    so the event loop can resume cleanly. Returns None if slot missing."""
+    import save_loader
+    from save.world_serializer import deserialize_world
+
+    raw = save_loader.load_sim_state(slot_id)
+    if raw is None:
+        return None
+    payload = raw.get("sim_state", {})
+    r = deserialize_world(payload)
+    chapter_num = int(raw.get("chapter_number", 1))
+    last_tj_messages = raw.get("last_time_jump_messages", [])
+
+    registry = r["factions"]
+    player_fid = None
+    for fid, fac in registry.items():
+        if fac.archetype == "player_civilization":
+            player_fid = fid
+            break
+    if not player_fid and registry:
+        player_fid = next(iter(registry.keys()))
+
+    return {
+        "world": r["world"],
+        "registry": registry,
+        "ledger": r["ledger"],
+        "ns": r["naming_system"],
+        "noise_offsets": r["noise_offsets"],
+        "trigger_state": r["trigger_state"],
+        "pending_queue": r["pending_queue"],
+        "player_fid": player_fid,
+        "player_lineage_id": r["player_lineage_id"],
+        "gen_state": r["gen_state"],
+        "stances": r["stances"],
+        "pending_telegraphs": [],
+        "current_tick": r["tick"],
+        "era_id": r["era_id"],
+        "chronicle_entries": r["chronicle_entries"],
+        "event_log": [],
+        "action_log": [],
+        "conquest_log": [],
+        "difficulty": "medium",
+        "chapter_num": chapter_num,
+        "last_time_jump_messages": last_tj_messages,
+    }
 
 
 def _setup_sim_env(seed=42):
@@ -1198,6 +1271,15 @@ if __name__ == "__main__":
             sys.stderr.write(f"[pipe] failed to chdir to --root {_root!r}: {_e}\n")
 
     import config
+
+    # BLOCKER 1 Step C — Godot passes `--save-root` with the OS-resolved
+    # `user://saves` path so sim writes the autosave where Godot reads it.
+    # Without this, Python resolves `user://` via os.getcwd() which is the
+    # project root in dev mode — Godot looks under ~/Library/Application
+    # Support/Godot/app_userdata/<project>/saves and finds nothing.
+    if "--save-root" in sys.argv:
+        config.SAVE_ROOT = sys.argv[sys.argv.index("--save-root") + 1]
+
     from tactical_engine import TacticalEngine
     from tactical_map import TacticalMap, SpineNode, GradientSource
     from reinforcement import ReinforcementStructure
@@ -1278,6 +1360,18 @@ if __name__ == "__main__":
         eng.reinforcement_structures = []
         return eng
 
-    _sim_env = _setup_sim_env()
+    _load_slot = None
+    if "--load" in sys.argv:
+        _load_slot = sys.argv[sys.argv.index("--load") + 1]
+
+    if _load_slot:
+        _sim_env = _load_sim_env(_load_slot)
+        if _sim_env is None:
+            sys.stderr.write(f"[pipe] --load {_load_slot!r}: slot not found; aborting\n")
+            sys.exit(1)
+        _is_load = True
+    else:
+        _sim_env = _setup_sim_env()
+        _is_load = False
     _use_gen = "--real-missions" in sys.argv
-    run(_make_engine, sim_env=_sim_env, crash_after_ready=_crash, test_print=_test_print, cmd_file_path=_cmd_file, use_mission_generator=_use_gen)
+    run(_make_engine, sim_env=_sim_env, crash_after_ready=_crash, test_print=_test_print, cmd_file_path=_cmd_file, use_mission_generator=_use_gen, is_load=_is_load)

@@ -61,6 +61,19 @@ func _ready() -> void:
 	_spawn_sim()
 
 
+## Restart the sim subprocess with `--load <slot_id>` so it rehydrates from
+## the autosave and replays the persisted time-jump message stream after the
+## `ready_for_time_jump` cmd. Same message types as a live jump — no fan-out
+## shim needed; existing time_jump_started / keyframe / chronicle_entry /
+## time_jump_ended handlers cover it.
+func restart_with_load(slot_id: String) -> void:
+	_kill_sim()
+	_startup_elapsed = 0.0
+	_ready_received = false
+	_pending_error_screen = false
+	_spawn_sim(PackedStringArray(["--load", slot_id]))
+
+
 func _process(delta: float) -> void:
 	if _pending_error_screen and not SceneRouter._transitioning:
 		_pending_error_screen = false
@@ -100,7 +113,7 @@ func _process(delta: float) -> void:
 		_dispatch(msg)
 
 
-func _spawn_sim() -> void:
+func _spawn_sim(extra_args: PackedStringArray = PackedStringArray()) -> void:
 	var script := ProjectSettings.globalize_path("res://") + SIM_SCRIPT_PATH
 
 	# Create a temp file for the command channel (godot→sim).
@@ -109,7 +122,15 @@ func _spawn_sim() -> void:
 	if _cmd_file == null:
 		push_warning("SimBridge: failed to open cmd file at %s" % _cmd_file_path)
 
-	var args: PackedStringArray = [script, "--cmd-file", _cmd_file_path, "--units", str(SIM_UNITS_PER_SIDE), "--real-missions"]
+	# BLOCKER 1 Step C — tell sim where to write saves so they land where
+	# `get_save_slots()` reads. ProjectSettings.globalize_path resolves user://
+	# to the OS user-data dir; without this the sim resolves user:// via
+	# os.getcwd() (project root in dev mode) and the load screen never sees
+	# the file. See simulation/pipe_transport.py `--save-root` parsing.
+	var save_root := ProjectSettings.globalize_path("user://saves")
+	var args: PackedStringArray = [script, "--cmd-file", _cmd_file_path, "--units", str(SIM_UNITS_PER_SIDE), "--real-missions", "--save-root", save_root]
+	for a in extra_args:
+		args.append(a)
 	var result: Dictionary = OS.execute_with_pipe("python3", args)
 	if result.is_empty() or not result.has("pid"):
 		result = OS.execute_with_pipe("python", args)

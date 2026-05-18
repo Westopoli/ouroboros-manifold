@@ -14,6 +14,11 @@ var _current_pct: float = 0.0
 var _progress_label: Label
 var _flavor_label: Label
 var _skip_to_main: bool = false
+var _target_scene: String = "main_menu"
+
+
+func setup(params: Dictionary) -> void:
+	_target_scene = params.get("target", "main_menu")
 
 
 func _ready() -> void:
@@ -21,7 +26,7 @@ func _ready() -> void:
 	_load_tips()
 
 	if not SimBridge.USE_LIVE_SIM:
-		SceneRouter.go_to("main_menu")
+		SceneRouter.go_to(_target_scene)
 		return
 
 	if SimBridge._ready_received:
@@ -38,7 +43,7 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	if _skip_to_main:
-		SceneRouter.go_to("main_menu")
+		SceneRouter.go_to(_target_scene)
 		return
 
 	_cursor_elapsed += delta
@@ -174,4 +179,4 @@ func _on_progress_updated(step: String, pct: float) -> void:
 
 
 func _on_sim_ready(_metadata: Dictionary) -> void:
-	SceneRouter.go_to("main_menu")
+	SceneRouter.go_to(_target_scene)
