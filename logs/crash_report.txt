@@ -4,9 +4,16 @@ python: 3.14.3 (main, Feb  3 2026, 15:32:20) [Clang 17.0.0 (clang-1700.6.3.2)]
 
 --- traceback ---
 Traceback (most recent call last):
-  File "simulation/pipe_transport.py", line 1350, in <module>
-    run(_make_engine, sim_env=_sim_env, crash_after_ready=_crash, test_print=_test_print, cmd_file_path=_cmd_file, use_mission_generator=_use_gen, is_load=_is_load)
-    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "simulation/pipe_transport.py", line 989, in run
-    raise RuntimeError("deliberate crash for pipe transport crash-handler test")
-RuntimeError: deliberate crash for pipe transport crash-handler test
+  File "simulation/pipe_transport.py", line 1264, in <module>
+    run(_make_engine, sim_env=_sim_env, crash_after_ready=_crash, test_print=_test_print, cmd_file_path=_cmd_file, use_mission_generator=_use_gen)
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "simulation/pipe_transport.py", line 991, in run
+    _run_opening_time_jump(sim_env, logger)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "simulation/pipe_transport.py", line 923, in _run_opening_time_jump
+    _inject_world_view_metadata(tj_result, sim_env["world"])
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "simulation/pipe_transport.py", line 816, in _inject_world_view_metadata
+    for fid, faction in world.factions.items():
+                        ^^^^^^^^^^^^^^
+AttributeError: 'World' object has no attribute 'factions'
