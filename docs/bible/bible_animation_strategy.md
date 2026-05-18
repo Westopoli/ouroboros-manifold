@@ -1,5 +1,7 @@
 # Ouroboros Manifold — Animation Strategy Reference
 
+> **⚠ SUPERSEDED BY HUB PIVOT 2026-05-18.** See `game_bible.md ## In Flux ### PIVOT 2026-05-18`. Lieutenant System + multi-era DLC + multiplayer + grand-strategy economy depth KILLED for Phase 1. Pause-tactical reframe locked. Content below preserved for history; not authoritative for Phase 1 ship.
+
 > **Purpose:** This document defines the animation design language for all Ouroboros Manifold UI animations. It is the reference for designing new animations — celebration unlocks, screen transitions, UI feedback moments, or any future visual flourish. If you're creating a new animation, read this first.
 >
 > **Origin:** Developed during Stage 9 (UI Shell) after iterating on era unlock and key redemption celebration animations. The initial approach (building representational ASCII pictures — Roman columns from pipe characters, submarines from tildes) felt cheesy and artificial. The revised approach draws from Claude Code's terminal animations, which feel alive and precise despite extreme simplicity.

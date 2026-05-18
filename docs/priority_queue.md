@@ -9,6 +9,45 @@ End goal: friends/Steam beta upload.
 
 ---
 
+## ⚠ PIVOT 2026-05-18 — Phase 1 Ship Scope (FROZEN)
+
+**This section supersedes everything below.** Plan file: `/Users/westley/.claude/plans/synchronous-stargazing-widget.md`. Bible amend: `docs/bible/game_bible.md ## In Flux ### PIVOT 2026-05-18`.
+
+**Phase 1 ship scope = Pre-Zip BLOCKER gate (below) + Steam launch tasks (this section). EVERYTHING ELSE FROZEN.**
+
+### Frozen until post-launch decision
+
+- BETA-NICE queue (Q#8–Q#25) — all frozen.
+- POST-BETA queue — all stays POST-BETA.
+- Q#7 Stage 6 J RPS — ship-loose acceptable; combat feel is a known launch limitation.
+- All Stage 11g Checkpoints beyond L (M, N, O, P, Q) — frozen.
+- All lieutenant / multi-era / multiplayer / grand-strategy / branch system work — KILLED per bible pivot.
+
+### Steam launch tasks (NEW — added 2026-05-18)
+
+These run in parallel with Pre-Zip BLOCKERs and are required for shipping:
+
+- [ ] **S#1 — Steam page draft** — short + long description, tag list, capsule plate. Tags: Strategy + Tactics + Story-Rich + Sci-fi + Indie. Banned: Real-Time-Strategy / RTS / Real-Time / Competitive / Esports. Capsule copy: "pause-and-command tactical with generational chronicle" framing; never use "RTS." Micro-research at draft moment: 1–2hr scan of CK3/Wildermyth/Battle Brothers/Old World capsule wording.
+- [ ] **S#2 — Capsule plate art** — main capsule + small + header. Use existing Recraft-or-similar subscription. No paid spend.
+- [ ] **S#3 — Screenshots (8–12)** — pause-frame composition, chronicle text overlays, faction map shots. From in-game; no extra art needed.
+- [ ] **S#4 — Trailer (60–90s)** — self-edited (Westley has prior video experience). Pause-frame shots, chronicle text overlays, NO frantic-click footage. Micro-research at cut moment: 1hr watching 5–10 reference trailers in pause-tactical/narrative-strategy space.
+- [ ] **S#5 — Steam Direct $100 fee + 30-day waiting clock start** — mandatory paid spend; only one. Start as soon as S#1 draft is ready.
+- [ ] **S#6 — Next Fest entry** — pick fest in launch window (15min Steam.com check). Submit demo build.
+- [ ] **S#7 — Community outreach posts** — r/grandstrategy, r/4Xgaming, r/IndieGaming, GameDiscoverCo public list. Follow community norms. Micro-research at posting moment: 1hr scan of subreddit posting rules.
+
+### Phase 1 budget rules
+
+- **Total work budget: 2–4 weeks from 2026-05-18.**
+- **Marketing spend: $0 additional default.** Steam Direct $100 is the only mandatory cost.
+- **Walk-away rule:** post-launch = no DLC roadmap, no community management beyond critical bugfix. Attention pivots elsewhere.
+- **Reopen criteria:** revenue beats $25k lifetime ceiling within first 60 days AND Westley re-evaluates side-hustle vehicle stack.
+
+### Q#6 Tutorial — locked as BLOCKER
+
+Westley locked 2026-05-15. Sign-off question in old queue body is closed: tutorial IS a BLOCKER.
+
+---
+
 ## Pre-Zip Beta Readiness Gate
 
 **ZIP cannot ship to friends until every BLOCKER below is closed.** This section supersedes per-item BLOCKER tags in the queue body — read this first.

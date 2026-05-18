@@ -47,7 +47,44 @@
 
 This section holds emerging design that has been resolved but not yet promoted into the main spoke body. Entries here are authoritative — they supersede any conflicting content below. When an In Flux topic is fully locked and its dependent forks resolve, the entry promotes into the relevant section of the hub or a spoke.
 
+### PIVOT 2026-05-18 — Pause-Tactical Reframe + Ship-and-Walk-Away (SUPERSEDES ALL CONFLICTING CONTENT BELOW)
+
+**Context.** Westley reframed goal 2026-05-18: side-hustle income at $500–$1000/mo floor (happy with more), 2–4 weeks max more work on Ouroboros, then walk away. Research (commissioned 2026-05-18) established: indie game hit rate at $500/mo = 1–5%; solo SaaS hit rate at $1k MRR = ~20%; game is wrong vehicle for stated side-hustle goal as primary income; correct framing = ship Ouroboros as closing-out artifact + portfolio piece + tail revenue, then pivot effort to higher-EV vehicles. Side-hustle vehicle (SaaS) lives in a separate chat. This entry governs Ouroboros only.
+
+**Resolved (positioning).** Ouroboros ships as **pause-and-command tactical with chronicle**, NOT as RTS. Same engine, different audience. The tactical engine + pause coordinator (Stage 11g Checkpoint L) + chronicle + faction sim already support this positioning at zero code cost. Steam tags: *Strategy, Tactics, Story-Rich, Sci-fi, Indie*. Tags actively banned: *Real-Time-Strategy, RTS, Real-Time, Competitive, Esports*. Capsule copy, trailer voice-over, screenshot captions, store description, community posts — all use "pause-and-command tactical" / "operational tactical" / "tactical strategy with generational chronicle" framing. No surface contains the string "RTS."
+
+**Resolved (scope kills).** The following are KILLED for Phase 1 ship and remain killed unless a future post-launch decision re-opens them:
+- **Lieutenant System redesign** — killed. The 2026-05-16 In Flux entry below is SUPERSEDED. No tactical-layer code adopts the lieutenant model. The Q1 cost gate is closed by walk-away.
+- **Multi-era DLC ladder** — killed. Roman era only at launch. No DLC ladder. No "7 eras × 6 paid DLC" structure. `bible_monetization.md` "Branch System" + per-era DLC content is non-binding for Phase 1.
+- **Multiplayer / Steam SDR / per-mission co-op** — killed. The 2026-05-16 multiplayer In Flux entry below is SUPERSEDED. Single-player only at launch.
+- **Grand-strategy economy depth** — killed. No Arma-style economy/strategic depth additions. Existing faction sim + chronicle remain at current depth; no expansion.
+- **Any non-BLOCKER queue item** — killed for Phase 1. See `docs/priority_queue.md`.
+
+**Resolved (price).** $10–$15 buy-once. Below niche-king $25–$35 tier because Phase 1 is portfolio piece + tail revenue, not niche-king positioning play.
+
+**Resolved (4-week ship plan).** See `/Users/westley/.claude/plans/synchronous-stargazing-widget.md`. Week 1–2: close Pre-Zip BLOCKERs (save/resume world + tactical, mission objectives clarity, tutorial, mission map speed, Stage 13 packaging) + 2.5D layering visual polish. Week 3–4: Steam page draft, capsule, self-edited trailer, Next Fest entry, Steam Direct $100 fee. Post-launch: walk away. No DLC promised, no community management beyond critical bugfix.
+
+**Resolved (marketing budget).** $0 additional default. Existing tool subscriptions (Sloyd, Recraft-or-similar) + Westley's self-edited trailer cover Phase 1 fully. Steam Direct $100 is the only mandatory paid spend. Open to "very minimal IF high bang for buck" — flag candidates only at decision moments with clear ROI.
+
+**Expected outcome Phase 1.** Lifetime revenue $5–25k; probability $500/mo sustained 15–25%. Steam page becomes audience asset for future projects regardless of revenue.
+
+**Constraints this places on other content.**
+- **`Game Shape at a Glance` (this hub).** Existing "real-time tactical RTS" framing is SUPERSEDED. For all marketing and Steam-facing surfaces, the game is "pause-and-command tactical." Internal code/mechanics remain real-time-tick under the hood (no code change). Internal docs may still describe the mechanic as real-time; external surfaces never use the "RTS" string.
+- **Spoke files** with any of the killed scope (`bible_combat.md`, `bible_monetization.md`, `bible_simulation.md`, `bible_design_vision.md`, `bible_missions.md`, `bible_chronicle.md`, `bible_world.md`, `bible_animation_strategy.md`, `bible_antagonist.md`, `bible_ai_pipeline.md`) carry a one-line "SUPERSEDED BY HUB PIVOT 2026-05-18" header. Their conflicting content is preserved for history but not authoritative for Phase 1.
+- **Bible `## In Flux` 2026-05-16 entries (Lieutenant + Multiplayer).** SUPERSEDED. See banners below.
+- **Stage specs.** Frozen at Pre-Zip BLOCKER scope. No new stages opened during Phase 1.
+- **Open Design Questions section.** Frozen — no new questions resolved during Phase 1.
+
+**Reopen criteria.** This entry can be re-opened only if (a) Phase 1 launches and revenue beats expected $25k lifetime ceiling within first 60 days post-launch, AND (b) Westley re-evaluates side-hustle vehicle stack. Until both conditions met, scope kills stand.
+
+**Cross-refs.** Plan file: `/Users/westley/.claude/plans/synchronous-stargazing-widget.md`. Queue: `docs/priority_queue.md` (current BLOCKERs = entire Phase 1 ship scope). Memory: `project_lieutenant_pivot.md` (to be updated noting kill).
+
+---
+
 ### Tactical-layer identity — Lieutenant System + framing kill-zones (2026-05-16, committed)
+
+**SUPERSEDED BY HUB PIVOT 2026-05-18 — see entry above. Preserved for history. Lieutenant System killed for Phase 1; framing kill (RTS-tag exclusion) carries forward unchanged.**
+
 
 **Resolved (substrate).** The tactical layer is restructured from "direct command of ~20–30 units" to **"command of 3–7 named lieutenants who each command sub-formations."** The player issues intent (objectives, priorities, timing); each lieutenant interprets that intent through their own traits, skill, and personality, then executes against the units assigned to them. The unit count per mission stays in the same range as previously planned; the *decision atom* changes from "unit/squad" to "lieutenant." Lieutenants are named, persistent, and carry traits that produce behavioral variance — not stat-stick modifiers, but actual differences in how the same order is executed (a bold lieutenant pushes when told to screen; a cautious one over-prepares; a glory-seeker breaks formation for a kill). This is the load-bearing system that the rest of the tactical and chronicle design hangs from.
 
@@ -79,6 +116,8 @@ This section holds emerging design that has been resolved but not yet promoted i
 ---
 
 ### Multiplayer — session model (2026-05-16, revised after market validation)
+
+**SUPERSEDED BY HUB PIVOT 2026-05-18 — see entry above. Multiplayer killed for Phase 1. Single-player only at launch. Entry preserved for history.**
 
 **Resolved.** Multiplayer follows a **per-mission co-op** model. The macro simulation layer is single-player always — your campaign, your factions, your generational saga. Tactical missions can optionally become drop-in co-op for invited friends. When the mission ends, friends leave and the simulation resumes solo. Steam Datagram Relay carries the tactical session only; no shared simulation state, no lockstep, no dedicated server.
 

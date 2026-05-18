@@ -1,5 +1,7 @@
 # Ouroboros Manifold — Design Vision
 
+> **⚠ SUPERSEDED BY HUB PIVOT 2026-05-18.** See `game_bible.md ## In Flux ### PIVOT 2026-05-18`. Lieutenant System + multi-era DLC + multiplayer + grand-strategy economy depth KILLED for Phase 1. Pause-tactical reframe locked. Content below preserved for history; not authoritative for Phase 1 ship.
+
 > **Bible spoke. Companion to `game_bible.md`.** This file is part of the bible. The bible-wins-over-spec hierarchy applies. If this file conflicts with `game_bible.md` or another spoke, flag it for Westley — do not silently resolve.
 >
 > **Modification rule:** Same as the master bible — append-only unless Westley approves deletion.
