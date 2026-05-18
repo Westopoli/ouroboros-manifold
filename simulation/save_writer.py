@@ -37,6 +37,7 @@ def write_sim_state(slot_id: str, sim_state: dict, save_root: str = None) -> Non
         "last_written_at": _now_iso(),
         "rng_state": sim_state.get("rng_state", ""),
         "sim_state": sim_state.get("sim_state", {}),
+        "last_time_jump_messages": sim_state.get("last_time_jump_messages", []),
     }
     _write_json(path, payload)
 

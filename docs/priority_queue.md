@@ -17,10 +17,7 @@ End goal: friends/Steam beta upload.
 
 **Audit pass 2026-05-16:** Every row below was rescoped after combing the codebase. Many items advertised as "build from scratch" are actually wiring jobs on top of Stage 10 + 12 infra. Don't trust the row title — read the **Built / Wired / Missing** block.
 
-- [ ] **Save/resume world-view v1** — currently no way to leave and come back to the same simulation; restarts every launch.
-  - Built: `simulation/save_writer.write_sim_state`, `save_loader.load_sim_state`, `scenes/load_game/`, main menu CONTINUE, `AUTOSAVE_SLOT_ID="autosave"` in config, `UIDataBus.trigger_autosave(loop_phase)` sender.
-  - Wired: nothing end-to-end. UIDataBus sends `{"type":"autosave"}` command; no sim-side handler receives it.
-  - Missing: (a) `World/Region/Faction/stances/chronicle` → JSON-safe dict serializer, (b) reverse dict → entities deserializer, (c) sim-side command handler for `"autosave"` that calls serializer then `write_sim_state("autosave", state)`, (d) Godot boot path that loads `autosave` slot and skips `new_game` if present.
+- [x] **Save/resume world-view v1** — DONE 2026-05-18. Autosave fires post-time-jump; CONTINUE on main menu reboots sim with `--load <slot>`; sim replays the persisted time-jump message stream verbatim after `ready_for_time_jump` so narration paints identical to live. Godot confirm: territories + chronicle identical to first run.
 - [ ] **Save/resume tactical mid-mission state**
   - Built: `TacticalEngine.export_full_state()` + `restore_from_state()`, `write_tactical_state`, `load_tactical_state`, `consume_tactical_state`, `has_tactical_state`.
   - Wired: nothing end-to-end (no Godot caller).

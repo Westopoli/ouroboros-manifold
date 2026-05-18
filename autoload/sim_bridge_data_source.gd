@@ -90,7 +90,55 @@ func is_era_accessible(era_id: String) -> bool:
 
 
 func get_save_slots() -> Array[Dictionary]:
-	return []
+	# v1: single autosave slot. Scan user://saves/<slot>/sim.json and parse
+	# metadata for the load screen. Slot name / playtime / generation are
+	# placeholder until a slot-metadata file is introduced.
+	var saves_root := "user://saves"
+	var slots: Array[Dictionary] = []
+	var dir := DirAccess.open(saves_root)
+	if dir == null:
+		return slots
+	dir.list_dir_begin()
+	while true:
+		var name := dir.get_next()
+		if name == "":
+			break
+		if name == "." or name == "..":
+			continue
+		if not dir.current_is_dir():
+			continue
+		var sim_json_path := "%s/%s/sim.json" % [saves_root, name]
+		if not FileAccess.file_exists(sim_json_path):
+			continue
+		var f := FileAccess.open(sim_json_path, FileAccess.READ)
+		if f == null:
+			continue
+		var raw := f.get_as_text()
+		f.close()
+		var json := JSON.new()
+		if json.parse(raw) != OK:
+			continue
+		var data = json.get_data()
+		if not (data is Dictionary):
+			continue
+		var sim_state: Dictionary = data.get("sim_state", {})
+		var era_id: String = sim_state.get("era_id", "settled_reach")
+		var era := get_era_detail(era_id)
+		var era_name: String = era.get("name", era_id) if not era.is_empty() else era_id
+		var era_accent: String = era.get("accent_color", "#888888") if not era.is_empty() else "#888888"
+		slots.append({
+			"id": name,
+			"name": "Autosave",
+			"era_id": era_id,
+			"era_name": era_name,
+			"chapter": int(data.get("chapter_number", 1)),
+			"generation": 1,
+			"playtime_seconds": 0,
+			"last_played_timestamp": "",
+			"era_accent_color": era_accent,
+		})
+	dir.list_dir_end()
+	return slots
 
 
 func create_save_slot(_era_id: String, _slot_name: String) -> Dictionary:

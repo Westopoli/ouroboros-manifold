@@ -159,7 +159,12 @@ func _add_slot_card(slot: Dictionary) -> void:
 	card.mouse_filter = Control.MOUSE_FILTER_STOP
 	card.gui_input.connect(func(event: InputEvent):
 		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-			SceneRouter.go_to("mission_briefing", {"slot_id": slot_id})
+			# BLOCKER 1 Step C: restart sim with --load, then route through the
+			# loading screen which forwards to the world view once sim is ready.
+			# See autoload/sim_bridge.gd: restart_with_load. Sim replays the
+			# persisted time-jump message stream verbatim after ready_for_time_jump.
+			SimBridge.restart_with_load(slot_id)
+			SceneRouter.go_to("loading_screen", {"target": "time_jump"})
 	)
 
 
