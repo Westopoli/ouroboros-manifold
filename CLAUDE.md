@@ -41,6 +41,10 @@ Use **Graphify first** for code navigation. Try `/graphify query`, `/graphify pa
 
 **Git guardrails are enforced by `.claude/settings.json` + `.claude/hooks/git-guard.sh`.** Destructive ops, main-branch commits, `--no-verify`, `--amend`, `--force`, `rebase`: denied at the harness layer. If something legit fails the hook, ask Westley.
 
+## Design Lane
+
+A parallel chat operates as the Design Lane — surfaces design forks, captures Westley's picks into `docs/bible/**`. It is a different chat from the implementer lane. Rules, org model, and active queue: `docs/design_lane.md` + `docs/design_lane_queue.md`.
+
 ## The Rules
 
 ### No runtime API calls during play
@@ -75,6 +79,12 @@ Sub-agents (Explore, general-purpose, Plan, claude-code-guide, etc.) are scoped 
 - Decide what should be tested — they execute the test plan from the orchestrator
 
 When a sub-agent hits ambiguity, it returns findings + a proposed change. The main agent (your terminal Claude) decides.
+
+### Sub-agents use caveman mode for prose
+
+When dispatching a sub-agent, append this directive to the prompt: "Report-back caveman mode (drop articles/filler/hedging, fragments OK). Markdown docs/briefs you write: caveman. Commit messages: caveman. Code, tests, config: normal prose."
+
+Token-save at scale (TDD + Research Lane fan out heavily). Main agent is the only consumer of report-back, so style mix in `docs/**` is fine — graphify indexing is register-agnostic. Code and tests stay normal so test names, assertions, comments, and runtime strings don't degrade.
 
 ## Code Quality
 
