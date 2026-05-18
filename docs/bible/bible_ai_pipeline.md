@@ -1,5 +1,7 @@
 # Ouroboros Manifold — AI Integration Pillar Reference
 
+> **⚠ SUPERSEDED BY HUB PIVOT 2026-05-18.** See `game_bible.md ## In Flux ### PIVOT 2026-05-18`. Lieutenant System + multi-era DLC + multiplayer + grand-strategy economy depth KILLED for Phase 1. Pause-tactical reframe locked. Content below preserved for history; not authoritative for Phase 1 ship.
+
 > **Extracted from game_bible.md v1.23.** This file is authoritative for the library pipeline,
 > dynamic naming system, and asset pipeline. If this file conflicts with game_bible.md,
 > flag it for Westley — do not silently resolve the conflict.
