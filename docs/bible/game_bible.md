@@ -17,15 +17,16 @@
 ### In This File (Hub)
 
 1. [Vision and Identity](#vision-and-identity) — What the game is, what it feels like, what it's not
-2. [Sacred Design Principles](#sacred-design-principles) — Non-negotiable architectural constraints
-3. [The Generational Structure](#the-generational-structure) — Chapters, cycles, character selection, what carries over
-4. [The Player's Toolkit](#the-players-toolkit) — Assets, force composition, economy, commanding forces
-5. [Tone and Feel](#tone-and-feel) — Elegiac, humorous, weighted by time
-6. [What's Unique (Blue Ocean)](#whats-unique-blue-ocean) — The combination no other game offers
-7. [Design Experience Guide](#design-experience-guide) — Quick-reference for design decisions: player identity, phase feelings, heuristics, litmus tests
-8. [Transition from Previous Iteration](#transition-from-previous-iteration) — What survives, what's cut, what changes
-9. [Open Design Questions](#open-design-questions) — Resolved design decisions
-10. [Document Maintenance](#document-maintenance) — Rules, workflow, governance
+2. [Game Shape at a Glance](#game-shape-at-a-glance) — Two-layer structure, cycle, tempo, rewind, where to read more
+3. [Sacred Design Principles](#sacred-design-principles) — Non-negotiable architectural constraints
+4. [The Generational Structure](#the-generational-structure) — Chapters, cycles, character selection, what carries over
+5. [The Player's Toolkit](#the-players-toolkit) — Assets, force composition, economy, commanding forces
+6. [Tone and Feel](#tone-and-feel) — Elegiac, humorous, weighted by time
+7. [What's Unique (Blue Ocean)](#whats-unique-blue-ocean) — The combination no other game offers
+8. [Design Experience Guide](#design-experience-guide) — Quick-reference for design decisions: player identity, phase feelings, heuristics, litmus tests
+9. [Transition from Previous Iteration](#transition-from-previous-iteration) — What survives, what's cut, what changes
+10. [Open Design Questions](#open-design-questions) — Resolved design decisions
+11. [Document Maintenance](#document-maintenance) — Rules, workflow, governance
 
 ### Spoke Files (Full References)
 
@@ -39,6 +40,65 @@
 - [`bible_monetization.md`](bible_monetization.md) — Skeleton/skin model, time period expansions, distribution, pricing, multiplayer considerations
 - [`bible_ai_pipeline.md`](bible_ai_pipeline.md) — Library pipeline, 3D asset pipeline, dynamic naming system
 - [`animation_strategy.md`](animation_strategy.md) — UI animation design language, two-layer atmosphere+glyph architecture (shader atmospheres for celebrations, 3D particle galaxy for main menu), glyph vocabulary, animation primitives, choreography principles
+
+---
+
+## In Flux
+
+This section holds emerging design that has been resolved but not yet promoted into the main spoke body. Entries here are authoritative — they supersede any conflicting content below. When an In Flux topic is fully locked and its dependent forks resolve, the entry promotes into the relevant section of the hub or a spoke.
+
+### Tactical-layer identity — Lieutenant System + framing kill-zones (2026-05-16, committed)
+
+**Resolved (substrate).** The tactical layer is restructured from "direct command of ~20–30 units" to **"command of 3–7 named lieutenants who each command sub-formations."** The player issues intent (objectives, priorities, timing); each lieutenant interprets that intent through their own traits, skill, and personality, then executes against the units assigned to them. The unit count per mission stays in the same range as previously planned; the *decision atom* changes from "unit/squad" to "lieutenant." Lieutenants are named, persistent, and carry traits that produce behavioral variance — not stat-stick modifiers, but actual differences in how the same order is executed (a bold lieutenant pushes when told to screen; a cautious one over-prepares; a glory-seeker breaks formation for a kill). This is the load-bearing system that the rest of the tactical and chronicle design hangs from.
+
+**Resolved (framing).** Ouroboros is **not marketed, tagged, framed, or described as an RTS**. The Steam tag "RTS" / "Real-Time Strategy" is excluded from the storefront. The genre framing is **generational strategy simulation with operational tactical missions**. Tag direction: *Grand Strategy, Sci-fi, Simulation, Procedural Generation, Narrative, Story Rich, Generations, Strategy*. Tags actively avoided: *RTS, Real-Time, Competitive, Esports, MOBA*. Internally the missions remain real-time, but the genre-buyer signal is operational-strategy, not arcade-RTS. The Stormgate / Immortals: Gates of Pyre / ZeroSpace / Homeworld 3 graveyard is the empirical basis: every recent classic-RTS launch has collapsed, and SC2 owns the residual tribe.
+
+**Rationale.** Market research this session converged on three findings: (1) the recent-RTS-launch market is a kill zone — every entrant (Stormgate, IGoP, ZeroSpace, Tempest Rising, Homeworld 3) has flopped commercially; (2) named-character continuity ("lieutenants who outlive your commander," dynasty-style succession) is the strongest under-served mechanic in the strategy space, with CK3, Wildermyth, and Battle Brothers as proof points; (3) the combination "operational commander with personality-driven AI subordinates inside a centuries-long generational sim" has zero direct commercial competition. The lieutenant system is the mechanic that makes all of this real at the tactical layer. The strongest commercial reference points (RimWorld $300M+, CK3 4M units, Battle Brothers ~$31M, Wildermyth, Songs of Syx, HighFleet, Sea Power) share a profile: small team, $25–35 price, 100k–500k passionate buyers, uncompromised authorial voice, no direct competitor in their exact corner.
+
+**Niche target (primary).** The generational/legacy strategy intersection: CK3 + Wildermyth + Battle Brothers + Field of Glory: Empires audience. Reachable passionate buyers ~80k–200k. Discovery surfaces: r/CrusaderKings, r/wildermyth, r/grandstrategy, SsethTzeentach, Quill18, Many a True Nerd. Price tolerance $25–35. They buy for continuity, names that matter, world that lives, simulation depth over polish.
+
+**Niche target (thematic differentiator).** Foundation / hard-SF literary tribe. Reachable ~20k–80k with halo from Apple TV Foundation viewership. Discovery: r/asimov, r/printSF, r/IsaacArthur. This tribe is not the conversion engine — the generational/legacy tribe is — but it is the thematic resonance that lets the project be authored rather than designed-by-committee.
+
+**Niches actively avoided.** SC2 / classic-RTS PvP players (kill zone, every entrant flopped); Warhammer 40K space-opera audience (IP-locked); AAA 4X seats (Civ / Stellaris own them and cannot be displaced); multiplayer-ladder anything (requires CCU that this project will never reach).
+
+**Open sub-fork — Q1: Tactical-layer redesign scope and cost.** The current implementation (Stage 6 tactical engine + Stage 7.5 behavior scripts + Stage 8 mission flow) was built assuming direct unit command. The lieutenant system is conceptually compatible — lieutenants resemble sub-factions inside the player faction, and the existing behavior-script infrastructure can plausibly back lieutenant interpretation — but the tactical UI, order-issuance surface, per-lieutenant trait model, and intent-vs-execution feedback loop are all new. Concrete cost estimate, what survives unchanged versus what gets reworked, and the path-of-least-disruption migration are downstream work and gate any tactical-layer implementation effort. Until this fork closes, no tactical-layer code work should adopt the lieutenant model — the Stage 6/7.5 work in place continues to serve the current solo loop.
+
+**Open sub-fork — Q3: Chronicle and generational scope extension to lieutenants.** Lieutenants should plausibly outlive the player commander, retire, die, become legends, betray, found lineages, and have their grandchildren serve under future commanders. This requires extending the chronicle/naming/coherence systems (Stage 5 / Stage 11g) to track lieutenants as first-class named entities across generations, not just per-mission roster fixtures. **Feasibility under current design and cost are not yet known.** This fork is gated by Q1's cost assessment — if the tactical redesign is feasible, Q3 opens; if it is not, the lieutenant system itself reverts to consideration. Q3 resolution is deferred until Q1 returns concrete numbers.
+
+**Resolved sub-fork — Q2: Kill RTS framing immediately.** RTS framing is killed across all current and future marketing surfaces effective immediately. Any Steam page draft, capsule copy, tag list, trailer voice-over, screenshot caption, or website copy that frames the game as "RTS" / "real-time strategy" / "real-time tactical combat as the lead identity" is non-compliant and must be reworked. This decision is independent of whether Q1 succeeds — even if the lieutenant redesign is rejected, the RTS-tag avoidance stands on the market research alone.
+
+**Constraints this places on other forks.**
+- **Multiplayer F1 (strategic-depth dilution).** Resolved. The depth-dilution fork in the multiplayer entry below has a strong candidate resolution under the lieutenant system: the decision atom is the lieutenant (not the unit), so per-player decision density stays high under co-op even when the unit pool is split — each player commands a subset of the lieutenants. Final wording in the multiplayer entry references this.
+- **WS3 strategic depth.** Reshapes substantially. The lieutenant system becomes the tactical-layer substrate that WS3 designs against. The 11 WS3 forks (decision dimensions, cross-dimensional coupling, decision horizon, intelligence richness, etc.) all reinterpret around lieutenants as the agent of macro-to-tactical translation.
+- **Chronicle / naming (Stage 5, Stage 11g).** Extension under Q3 — gated on Q1.
+- **Game Shape at a Glance (hub).** Will retro-update to describe the lieutenant system, the operational-strategy framing, and the killed RTS framing once Q1 cost assessment lands.
+- **Implementer lane.** No tactical-layer code work adopts the lieutenant model until Q1 cost assessment is delivered and approved. Existing tactical work (Stage 6, 7.5, 8) continues unchanged. Existing pre-Zip BLOCKER work (save/resume, mission objectives, tutorial, mission map speed, packaging, tactical mid-mission save, state-of-faction) is orthogonal to the lieutenant system and continues unchanged. The framing kill (Q2) applies immediately to any marketing surface, Steam-page draft, or capsule copy that lives inside BLOCKER 5 (Stage 13 packaging).
+
+**Cross-refs.** Promotion target: a future `bible_lieutenants.md` spoke (or absorption into `bible_combat.md` + `bible_chronicle.md`, decided after Q1 closes). Multiplayer entry below now resolves its F1 depth-dilution fork via this entry. WS3 substrate work in `bible_simulation.md ## In Flux` will reference this entry as substrate.
+
+---
+
+### Multiplayer — session model (2026-05-16, revised after market validation)
+
+**Resolved.** Multiplayer follows a **per-mission co-op** model. The macro simulation layer is single-player always — your campaign, your factions, your generational saga. Tactical missions can optionally become drop-in co-op for invited friends. When the mission ends, friends leave and the simulation resumes solo. Steam Datagram Relay carries the tactical session only; no shared simulation state, no lockstep, no dedicated server.
+
+**Rationale.** Market-validation research (this session) showed the persistent-shared-world archetype sells via single-player + DLC with multiplayer as a minority feature carrying significant engineering tax (lockstep determinism constrains every simulation system added). The per-mission co-op archetype occupies the highest concurrent-player tier in the comparison matrix (Helldivers 2, Deep Rock Galactic, Vermintide) and places no constraint on the simulation layer. For Ouroboros, this preserves all single-player design freedom — including rewind, library generation, and the entire simulation layer — while still delivering the "fight alongside friends" headline. The earlier persistent-shared-world pick is superseded.
+
+**Trade-off acknowledged.** The "two friends live the same generational saga" headline is gone. Each friend has their own campaign; co-op is a tactical visit. If the unique-experience goal later requires a shared generational saga, this pick must be revisited.
+
+**Sub-fork F1 — Tactical co-op surface (resolved 2026-05-16).** All co-op players command units within the host's player faction (one shared army), under **strict permissions: a player can only issue orders to units assigned to them, not to other players' units**. The mechanism for partitioning the unit pool (pre-mission assignment, role-based, dynamic) is downstream detail. An alternative "temporary ally faction per player" surface was considered and rejected: it would inject a separate AI-equipped faction into the host's simulation, complicating chronicle attribution and breaking the "you and your friends are one army" framing.
+
+**Load-bearing fork — Strategic-depth dilution under unit-splitting (resolution candidate: Lieutenant System).** Single-player tactical missions use a unit count tuned for the strategic-depth ceiling of one human. Splitting that pool across multiple humans under naive unit-allocation lowers per-player decision count below the strategic-depth threshold, reducing the skill ceiling. **Strategic depth is non-negotiable.** The Lieutenant System entry above is the candidate resolution: the decision atom is the lieutenant (not the unit), and each co-op player commands a subset of the host's lieutenant roster — so per-player decision density stays at solo levels (each player still issues intent, reads personality, adapts to interpretation outcomes) even as the unit pool is shared. This fork's full closure depends on the lieutenant tactical-layer redesign succeeding (gated on Q1 above). If Q1 returns "not feasible," this fork reopens and the multiplayer model itself may be scrapped (the candidate resolutions previously listed — scaling total unit pool, role specialization, larger co-op-only missions — are demoted to fallbacks behind the lieutenant approach).
+
+**Constraints this places on other forks.**
+- **WS3 strategic depth.** No simulation-layer multiplayer constraint. AI behavior, cross-dimensional decision coupling, and decision memory all design against a single-player sim. The "player-visible decision surface" fork is unidirectional (player sees and influences; no other humans in the simulation layer).
+- **Rewind.** Survives unchanged. Rewind operates in the simulation layer, which is always single-player. Co-op missions do not rewind — they complete, and the host's solo simulation then resumes.
+- **Save model.** Host owns the save file. Co-op sessions are ephemeral and leave no client-side state.
+- **Monetization.** Base game + DLC model unchanged. DLC parity rules for co-op (client owns / client borrows host's content / mission disabled on mismatch) is a downstream WS4 sub-fork.
+- **WS4 scope.** The multiplayer design surface contracts substantially under this pick. Open downstream sub-forks once the strategic-depth-dilution fork closes: F1 internal permission/role detail, F2 mission eligibility (which missions are co-op-able), F3 invitation model (friends / public lobby / both), F4 mid-mission join/leave, F5 DLC parity, F6 chronicle attribution of co-op participants, F7 mission outcome ownership (cross-campaign rewards), F8 rewind behavior in co-op, F9 disconnect handling.
+- **`Game Shape at a Glance` scope note.** Will retro-update to describe the locked co-op shape (simulation is single-player; tactical is optional drop-in co-op) once WS4 sub-forks lock.
+
+**Cross-refs.** Promotion target: a future `bible_multiplayer.md` spoke (created after WS4 forks lock). Related In Flux entries (when written): WS4 forks in this hub; WS3 substrate forks in `bible_simulation.md ## In Flux`. Hub section `Game Shape at a Glance` carries a forward-pointing scope note. The strategic-depth-dilution fork above gates all further multiplayer work.
 
 ---
 
@@ -74,6 +134,40 @@ The tragedy of understanding something you can't fully control. You can read the
 **Isaac Asimov's Foundation series** is the primary narrative and thematic inspiration for the game. The feeling of vast civilizational arcs, the tension between individual action and historical momentum, the sense of reading currents in a world too large for any one person to control — this is the Foundation feeling translated into interactive form. The game is set thousands of years in the future, in a world of humans, and the player experiences the rise and fall of civilizations from inside, not above.
 
 Immortal: Gates of Pyre is a key source of inspiration for the game's combat and accessibility philosophy — particularly its approach to low skill floor with high skill ceiling, and its RPS-with-exceptions unit design. See the Force and Combat sections for how these ideas are adapted.
+
+---
+
+## Game Shape at a Glance
+
+This game is a real-time tactical RTS wrapped in a batch-processed generational simulation. It is not turn-based. There is no end-turn button, no 4X cadence, no waiting for the world to take its turn while the player thinks. If those phrases are forming a picture, the picture is wrong.
+
+**Two layers.** Play alternates between two layers with distinct tempos:
+
+- **Tactical layer — missions.** Real-time RTS. The player commands force groups on a procedurally laid-out map, fighting one engagement per mission. A mission runs 30–60 minutes of continuous gameplay. The simulation is stopped during missions — the player's attention is on the tactical problem.
+- **Macro layer — the generational sim.** A batch-tick simulation of the world's factions, regions, and history. The sim does not play in real time; it runs forward in deterministic ticks between missions, producing a state snapshot and a chronicle of what happened.
+
+**The cycle.** Each loop of play moves through:
+
+1. **Mission** (real-time tactical, 30–60 minutes).
+2. **Outcome resolver** (batch, instantaneous) — the mission's result is digested into a consequence bundle.
+3. **Time jump** (batch ticks, animated as a chronicle scroll) — the sim runs forward, faction decisions resolve, events fire, the world evolves. The player watches a galaxy view animate and a 5–10 entry chronicle print itself across the scene.
+4. **Character selector + mission generator** (batch) — the next chapter's protagonist and mission are selected from the new world state.
+5. **Mission** (back to step 1, as a new character).
+
+Steps 2–4 are the batch-processed window between real-time missions. Steps 1 and 5 are the player's real-time gameplay.
+
+**Tempo controls.** Missions run in real time. The chronicle scroll between missions plays at a fixed pace; the player can click any entry to expand and read it (the world view holds its state while the player reads), and can skip to the next mission. Per-layer pause and speed behavior is part of the active multiplayer design scope and is not finalized in this summary.
+
+**Rewind.** In single-player, the player can roll the world back to a prior mission or time-jump boundary. The simulation does not deterministically replay; it re-runs forward from the snapshot with fresh stochastic outcomes, so the post-rewind history diverges from the discarded one. Two intents are supported: a linear rewind, which truncates the discarded timeline, and a fork, which preserves the discarded timeline as a sibling save before rewinding the original. Rewind is a single-player tool. Its behavior under multiplayer is open.
+
+**What the player is doing, by layer.**
+
+- **In a mission:** selecting force groups, issuing move / attack-move / target / ability commands, reading the engagement, deciding when to commit or break off. The player commands forces; they do not control individual units.
+- **Between missions:** watching the chronicle scroll, hovering and clicking regions in the galaxy view, reading what their last mission caused, anticipating the next.
+
+**Where to read more.** Simulation backbone and faction decision model: `bible_simulation.md`. Mission generation, archetypes, and per-mission structure: `bible_missions.md`. Tactical engine, combat, force composition: `bible_combat.md`. Chronicle scroll, distillation, narrative entries: `bible_chronicle.md`. World view, galaxy map, between-mission visualization: `bible_world.md`.
+
+**Scope note.** This summary describes the game as currently designed for single-player. Multiplayer is under active design; the multiplayer session model, pause-during-missions behavior, and rewind in multiplayer are open within that scope and will retro-update this section as they resolve.
 
 ---
 
