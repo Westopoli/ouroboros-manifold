@@ -2,6 +2,19 @@ import math
 import config
 from unit import UnitStore, FIELD_X, FIELD_Y, FIELD_LAYER, FIELD_SENSOR_RADIUS
 
+# LAYER_Z fallback — leaf-03 lands these in config.py; use inline literals until then.
+# See also: simulation/config.py — LAYER_Z_FLOORS/CEILINGS added by leaf-03.
+try:
+    _LAYER_Z_FLOORS = config.LAYER_Z_FLOORS
+    _LAYER_Z_CEILINGS = config.LAYER_Z_CEILINGS
+except AttributeError:
+    _LAYER_Z_FLOORS = [0.0, 30.0, 100.0]
+    _LAYER_Z_CEILINGS = [30.0, 100.0, 300.0]
+
+
+def _layer_z_midpoint(layer: int) -> float:
+    return (_LAYER_Z_FLOORS[layer] + _LAYER_Z_CEILINGS[layer]) / 2.0
+
 
 def activate_pulse(store, uid):
     if store.pulse_cooldown[uid] > 0:
@@ -96,6 +109,11 @@ def compute_visibility(store, tactical_map):
 
             detection_radius = effective_radius * factor
             if dist <= detection_radius:
+                if tactical_map is not None and hasattr(tactical_map, "asteroid_field"):
+                    oz = _layer_z_midpoint(min(my_layer, len(_LAYER_Z_FLOORS) - 1))
+                    tz = _layer_z_midpoint(min(other_layer, len(_LAYER_Z_FLOORS) - 1))
+                    if tactical_map.asteroid_blocks_los(mx, my, oz, ox, oy, tz):
+                        continue
                 visible.add(other)
 
         visibility[uid] = visible

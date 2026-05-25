@@ -11,17 +11,30 @@ SITUATION_TEMPLATES = {
     "counterinsurgency": "Insurgent activity in {region_name} has escalated beyond civil security capacity. Tension is {tension_desc} and organized resistance cells are operating throughout the region. Command has authorized military intervention with strict rules of engagement — minimize collateral damage.",
 }
 
-OBJECTIVE_TEMPLATES = {
-    "defensive_stand": "Hold {region_name} against the incoming assault. Destroy or rout the attacking force. Preserve defensive infrastructure where possible.",
-    "siege_breaking": "Break the siege on {region_name}. Destroy enemy forward positions along the perimeter. Reopen supply lines and relieve the garrison.",
-    "reconquest": "Retake {region_name}. Destroy the occupying garrison and secure the region. Preserve civilian infrastructure where tactically feasible.",
-    "assault": "Seize {region_name}. Destroy the defending force and capture key positions. Breach fortifications and establish control.",
-    "suppression": "Destroy the rebel force in {region_name}. Locate and engage scattered rebel positions. Prevent escape and consolidation.",
-    "multi_front_defense": "Defend {region_name} on all fronts. Prioritize threats and allocate forces accordingly. Accept losses where necessary to hold critical positions.",
-    "interception": "Intercept and destroy the enemy force before it reaches {region_name}. Engage in open field. Prevent any breakthrough to the target.",
-    "evacuation": "Cover the evacuation of {region_name}. Extract all designated assets. Delay the enemy advance. Withdraw once extraction is complete — do not attempt to hold.",
-    "containment": "Establish and hold a defensive boundary protecting {region_name} and adjacent territories. Prevent hostile expansion past the line. Garrison chokepoints and cover gaps.",
-    "counterinsurgency": "Locate and neutralize insurgent forces in {region_name}. Clear sector by sector. Minimize damage to civilian infrastructure — collateral damage worsens the underlying instability.",
+OBJECTIVE_TEMPLATES_SHORT = {
+    "defensive_stand": "Hold {region_name}. Break the attacking force.",
+    "siege_breaking": "Break the siege of {region_name}.",
+    "reconquest": "Retake {region_name}.",
+    "assault": "Take {region_name} from the enemy.",
+    "suppression": "Crush the rebels in {region_name}.",
+    "multi_front_defense": "Hold {region_name} against attacks from every direction.",
+    "interception": "Stop the enemy force before it reaches {region_name}.",
+    "evacuation": "{region_name} is lost — buy time for the evacuation.",
+    "containment": "Draw a line in front of {region_name} and hold it.",
+    "counterinsurgency": "Find and destroy the insurgent fighters hidden in {region_name}.",
+}
+
+OBJECTIVE_TEMPLATES_DETAIL = {
+    "defensive_stand": "Destroy them or drive them off the map. The region must remain in our hands when the fighting stops.",
+    "siege_breaking": "Destroy the enemy bases ringing the region until the encirclement collapses and our supply lines are open again.",
+    "reconquest": "Destroy the occupying force and plant our flag before they can dig in. Spare the cities and roads where you can — we want this region back, not a ruin.",
+    "assault": "Destroy the defenders and hold the ground at the end of the battle. The region must change hands.",
+    "suppression": "Find their scattered cells and destroy them before they regroup into a real army. None may escape to fight another day.",
+    "multi_front_defense": "You cannot defend every approach with full strength — choose where to stand and where to give ground. The region must still be ours when the last attacker is beaten.",
+    "interception": "Engage them in open country and destroy them in the field. Not one unit may break through to the region.",
+    "evacuation": "Protect the convoy long enough for it to reach the extraction point, then pull out. Do not try to hold the region; save who and what you can.",
+    "containment": "The enemy is spreading through the borderlands — stop their advance from crossing into our territory. Hold every pass and choke point on the line.",
+    "counterinsurgency": "Sweep the region carefully — every building, every patch of cover. Spare the population and their homes where you can; heavy-handed tactics will only feed the revolt.",
 }
 
 ASSET_TEMPLATE = "Command is deploying {player_units} units ({player_power:.0f} total combat power) against an estimated {enemy_units} enemy units ({enemy_power:.0f} combat power). {parity_prose}"
@@ -47,7 +60,8 @@ def _parity_prose(ratio):
 
 def assemble_briefing(archetype, slots):
     situation = SITUATION_TEMPLATES.get(archetype, "Mission details are classified.")
-    objective = OBJECTIVE_TEMPLATES.get(archetype, "Complete the assigned objective.")
+    objective = OBJECTIVE_TEMPLATES_SHORT.get(archetype, "Complete the assigned objective.")
+    objective_detail = OBJECTIVE_TEMPLATES_DETAIL.get(archetype, "")
 
     try:
         situation = situation.format_map(_SafeSlots(slots))
@@ -55,6 +69,10 @@ def assemble_briefing(archetype, slots):
         pass
     try:
         objective = objective.format_map(_SafeSlots(slots))
+    except (KeyError, ValueError):
+        pass
+    try:
+        objective_detail = objective_detail.format_map(_SafeSlots(slots))
     except (KeyError, ValueError):
         pass
 
@@ -81,6 +99,7 @@ def assemble_briefing(archetype, slots):
     return {
         "situation": situation,
         "objective": objective,
+        "objective_detail": objective_detail,
         "assets": assets,
     }
 

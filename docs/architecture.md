@@ -197,3 +197,33 @@ Each keyframe gains an optional `factions_snapshot` array — one entry per livi
 - Faction color vivacity scaling, sim-pause-on-inspect, and clickable in-text mentions are stage-11g inventions; bible amendments are part of this stage's deliverables.
 
 Added in Stage 11g (`stage_11g_world_view_inspection_spec.md`).
+
+## Map Manifest — `cover_asteroids` field (Wave 2.5R)
+
+`cover_asteroids` is emitted once at map manifest write (i.e., in the first full snapshot for a mission). It is **NOT** in the per-tick delta — asteroids are non-destructible in Phase 1 and static for the lifetime of the mission.
+
+### Shape
+
+```python
+"cover_asteroids": [
+    {
+        "id":      a.asteroid_id,   # int — unique across the whole map
+        "cluster": a.cluster_id,    # int — which spine-node cluster this belongs to
+        "x":       a.x,             # float — world units
+        "y":       a.y,             # float — world units
+        "r":       a.radius_xy,     # float — footprint radius (world units)
+        "h":       a.height,        # float — vertical extent; drives layer-block threshold
+        "class":   a.scale_class,   # str  — "tiny" | "small" | "medium" | "huge"
+    }
+    for a in tactical_map.asteroid_field.asteroids
+]
+```
+
+### Semantics
+
+- Produced by `simulation/snapshot_serializer.py::serialize_cover_asteroids(tactical_map)`.
+- Consumed by `scenes/tactical/terrain_renderer.gd::_scatter_cover_asteroids` at mission load.
+- Layer-block rule: asteroid blocks layer `i` iff `asteroid.height >= LAYER_Z_FLOORS[i]` (see `config.LAYER_Z_FLOORS`).
+- `delta()` never includes this field. Clients must not expect it in tick-delta payloads.
+
+Added in Wave 2.5R (`cover_asteroid_los_spec.md`).

@@ -418,7 +418,7 @@ What makes each mission archetype *feel* different from the enemy's side is not 
 **Damage formula:**
 
 ```
-damage_per_attack = base_damage × category_multiplier × (1.0 - cover_density_at_position)
+damage_per_attack = base_damage × category_multiplier
 ```
 
 **Category multiplier matrix** (era-agnostic — uses Strike/Line/Siege categories):
@@ -437,7 +437,7 @@ The RPS is **soft**: 1.5× provides a meaningful advantage (~30–40% faster tim
 
 **Area damage (Bombard).** Circle AoE centered on target position. Full damage to every enemy within `aoe_radius`. Damage cap: total AoE damage per attack ≤ `base_damage × aoe_damage_cap_multiplier` (default 4.0×).
 
-**Cover.** `cover_density` gradient at target unit's position reduces incoming damage as a percentage. Cover_density 0.4 → unit takes 60% damage. Era-agnostic.
+**Cover & Vision.** Cover is a cluster of asteroid LOS-blockers, not a damage modifier. Visibility is determined by 3D ray-cylinder geometry: a ray from observer center to target center is blocked if any asteroid cylinder intersects the ray within its vertical extent. Each asteroid blocks line of sight at layer i if its height ≥ LAYER_Z_FLOORS[i] — a tiny asteroid blocks only the lowest layer; a tall asteroid blocks all layers it exceeds. There is no fire-reveal — a defender who fires from behind asteroid cover remains hidden to outside observers; the attack lands but its origin is not exposed. Cover does not reduce damage and does not block movement; once an attacker can see a target, full damage applies. Era-agnostic.
 
 **Elevation damage bonus.** Config flag `ELEVATION_DAMAGE_BONUS_ENABLED`. When enabled (land-based eras), higher elevation → bonus damage per tier. **Disabled for space era** — elevation affects sensor coverage only. The engine computes elevation difference always; the flag controls whether it modifies damage.
 
@@ -526,7 +526,7 @@ Commands are recorded with tick numbers for replay. The engine processes all com
 
 **Speed-dependent positioning.** Because probing and detour commitment are per-unit, faster units resolve their lateral movement around blockers sooner than slower units. A Strike wing approaching an engaged Line force flows around the Line's flanks faster than a mirrored Line force would — the positioning advantage that Strike needs to exploit formation breaks is produced by the speed differential through the same steering system, not by special-case rules.
 
-**No friendly line-of-fire blocking.** Ranged units fire through friendly units. There is no friendly unit occlusion check on attacks. Formation advantages come from collision-driven concave geometry (immovable front rank forcing later units into flanking positions), not from shot blocking. Terrain obstacles still block line of sight — units cannot fire through navmesh obstacles.
+**No friendly line-of-fire blocking.** Ranged units fire through friendly units. There is no friendly unit occlusion check on attacks. Formation advantages come from collision-driven concave geometry (immovable front rank forcing later units into flanking positions), not from shot blocking. Terrain obstacles still block line of sight — units cannot fire through navmesh obstacles. Asteroid clusters are additional line-of-sight blockers (per `bible_world.md` `cover_density` and the Cover & Vision section above); they remain distinct from obstacles in that they do not block movement.
 
 **Determinism.** Probe sweep order, detour commitment, and collision resolution all use deterministic tie-breaking (fixed probe angle order; lower unit ID pushes in a canonical direction on zero-distance overlap). Given identical initial state and command stream, the engine reproduces movement tick-for-tick.
 

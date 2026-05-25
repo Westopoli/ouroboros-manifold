@@ -2,7 +2,7 @@
   "layout_id": "layout_03_three_front_valley",
   "name": "Three-Front Valley",
   "canvas_class": "large",
-  "tags": ["multi_front_defense"],
+  "tags": ["multi_front_defense", "siege_breaking", "containment"],
   "zones": [
     {
       "zone_id": "staging_center",

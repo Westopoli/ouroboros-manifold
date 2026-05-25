@@ -58,6 +58,7 @@ func _rebuild() -> void:
 	_build_gradient_sources(md.get("gradient_sources", []))
 	_build_spine_nodes(md.get("spine_nodes", []))
 	_scatter_environment(md.get("gradient_sources", []), md.get("map_seed", 0))
+	_scatter_cover_asteroids(md.get("cover_asteroids", []), md.get("map_seed", 0))
 
 
 func _build_boundary(w: float, h: float) -> void:
@@ -216,7 +217,6 @@ func _build_structure_node(container: Node3D, pos2d: Array, struct_by_pos: Dicti
 
 const PROPERTY_CATEGORIES: Dictionary = {
 	"obstacle_density": ["obstacle_small", "obstacle_medium", "obstacle_large"],
-	# cover_density and sensor_interference use placeholder assets — skip until real GLBs exist
 }
 
 const BASE_DENSITY := 0.00015  # objects per world-unit² at intensity 1.0
@@ -285,6 +285,58 @@ func _scatter_environment(sources: Array, map_seed: int) -> void:
 
 		var mmi := MultiMeshInstance3D.new()
 		mmi.name = "EnvScatter_%s" % cat
+		mmi.multimesh = mm
+		add_child(mmi)
+
+
+# ASSUMPTION: base_glb_radius unknown — using radius_xy / 1.0 as scale placeholder.
+# ASSUMPTION: current_era_id sourced from EraThemeResolver.get_active_era().
+# One MultiMeshInstance3D per scale_class. Each asteroid dict shape:
+#   {id, cluster, x, y, r, h, class}  (spec L8 / cover_asteroid_los_spec.md line 72)
+func _scatter_cover_asteroids(asteroids: Array, _map_seed: int) -> void:
+	if asteroids.is_empty():
+		return
+
+	var era_id: String = EraThemeResolver.get_active_era()
+
+	# Bucket transforms by scale_class
+	var by_class: Dictionary = {}  # scale_class → Array[Transform3D]
+	for ast in asteroids:
+		var cls: String = ast.get("class", "small")
+		var x: float = float(ast.get("x", 0.0))
+		var y: float = float(ast.get("y", 0.0))
+		var radius_xy: float = float(ast.get("r", 1.0))
+		# base_glb_radius unknown — scale = radius_xy / 1.0 (placeholder, see assumption log)
+		var s: float = radius_xy
+		var basis := Basis.IDENTITY.scaled(Vector3(s, s, s))
+		var xform := Transform3D(basis, Vector3(x, 0.0, y))
+		if not by_class.has(cls):
+			by_class[cls] = []
+		by_class[cls].append(xform)
+
+	for cls in by_class:
+		var transforms: Array = by_class[cls]
+		var glb_path: String = EraThemeResolver.get_cover_asset(era_id, cls)
+
+		var mesh: Mesh
+		if glb_path != "" and ResourceLoader.exists(glb_path):
+			var scene: PackedScene = load(glb_path)
+			mesh = _extract_env_mesh(scene)
+		else:
+			var s := SphereMesh.new()
+			s.radius = 1.0
+			s.height = 2.0
+			mesh = s
+
+		var mm := MultiMesh.new()
+		mm.transform_format = MultiMesh.TRANSFORM_3D
+		mm.instance_count = transforms.size()
+		mm.mesh = mesh
+		for i in transforms.size():
+			mm.set_instance_transform(i, transforms[i])
+
+		var mmi := MultiMeshInstance3D.new()
+		mmi.name = "CoverAsteroid_%s" % cls
 		mmi.multimesh = mm
 		add_child(mmi)
 

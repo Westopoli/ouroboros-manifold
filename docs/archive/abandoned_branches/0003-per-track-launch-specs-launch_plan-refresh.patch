@@ -1,0 +1,731 @@
+From ef1fecbd5bad6fcabffc4fec63d663b22961983e Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Fri, 8 May 2026 21:12:23 +0000
+Subject: [PATCH] per-track launch specs + launch_plan refresh
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Three self-contained track specs under docs/launch_tracks/, each readable as
+a complete brief by a fresh Claude Code session:
+- track_a_sim_and_balance.md — sim/headless balance work, priority is force
+  allocation scale tuning
+- track_b_tactical_mechanics.md — tactical scene polish, priority is rotation
+  renderer fix (sim verified clean by the existing facing tests)
+- track_c_stage_13_packaging.md — Stage 13 friends-ZIP build, drives
+  Checkpoints A through H
+
+launch_plan.md trimmed to an index pointing at the per-track specs.
+File-ownership map updated to reflect post-300fc69 state: Stage 11d signed
+off, Stage 11g (C2) at Checkpoint G owning scenes/world/, scenes/shared/
+world_view/, autoload/faction_palette.gd, simulation/world_view/, and
+project.godot [autoload].
+---
+ docs/launch_plan.md                           | 222 +++++++-----------
+ docs/launch_tracks/track_a_sim_and_balance.md | 102 ++++++++
+ .../track_b_tactical_mechanics.md             | 165 +++++++++++++
+ .../track_c_stage_13_packaging.md             | 163 +++++++++++++
+ 4 files changed, 510 insertions(+), 142 deletions(-)
+ create mode 100644 docs/launch_tracks/track_a_sim_and_balance.md
+ create mode 100644 docs/launch_tracks/track_b_tactical_mechanics.md
+ create mode 100644 docs/launch_tracks/track_c_stage_13_packaging.md
+
+diff --git a/docs/launch_plan.md b/docs/launch_plan.md
+index 8847ee3..733a8f2 100644
+--- a/docs/launch_plan.md
++++ b/docs/launch_plan.md
+@@ -1,163 +1,101 @@
+ # Launch Plan — Stage 13 ZIP
+ 
+-Coordinated multi-session push to ship the friends-ZIP build (Stage 13). Closes the remaining Stage 11 sub-goals, drains the launch_todo bug list, and packages everything per `docs/stage_specs/stage_13_spec.md`.
++Coordinated multi-session push to ship the friends-ZIP build. Closes the remaining open work, drains the launch_todo, and packages everything per `docs/stage_specs/stage_13_spec.md`.
+ 
+-This doc is the brief. Each session picks a track, claims items in `docs/ai_status.md`, and works the checkpoints in order. Cross-track collisions are managed by the file-ownership table below — if a session needs to touch a file owned by a different track, claim it explicitly first.
++This doc is the **index**. Each session reads the per-track spec under `docs/launch_tracks/`, claims items in `docs/ai_status.md`, and works the checkpoints in order.
+ 
+-## Status snapshot (2026-05-06)
++## Status snapshot (2026-05-08)
+ 
+-- **Done:** Stages 1–12.5, Stage 11b/c/d (partial)/e.
+-- **Open Stage 11 sub-goals:** 11 C1 (line styling), 11 F (loop integration), 11 G (pause menu / exit path), 11 H (perf budget), 11d minimap viewport box, 11d enemy-clickability gate lift, 11f (deferred — playtest data).
+-- **Open launch_todo bugs:** unit rotation, squad-member impact origins, unit sizing, camera pan/zoom, combat balance, control-group swap.
+-- **Open launch_todo features:** ambient flyby ship removal, production building art, auto-assign unit-type hotkeys (1/2/3/4), shift-add selection, double-click-select-type, world view redesign (in flight per `ai_status.md`), chronicle output (in flight), library name regen, minimap viewport box, fog terrain darkening, command queueing, in-game tutorial, chronicle skip button.
+-- **Stage 13 spec:** ready, no implementation. Eight checkpoints A–H.
++- **Done:** Stages 1–12.5, Stage 11b/c/d/e. Stage 11 main spec signed off (carried gaps tracked in launch_todo).
++- **In flight:**
++  - **Stage 11g (world view inspection)** — at Checkpoint G. Spec: `docs/stage_specs/stage_11g_world_view_inspection_spec.md`. Owner: an existing local Claude Code session ("C2"). Don't dispatch a second window onto Stage 11g.
++- **Not started, ready to dispatch:**
++  - **Track A** (sim & balance) — `docs/launch_tracks/track_a_sim_and_balance.md`
++  - **Track B** (tactical mechanics & polish) — `docs/launch_tracks/track_b_tactical_mechanics.md`
++  - **Track C** (Stage 13 packaging) — `docs/launch_tracks/track_c_stage_13_packaging.md`
++- **Stage 13:** spec at `docs/stage_specs/stage_13_spec.md`, eight checkpoints A–H, no implementation yet. Build skeletons in `build/` already in tree.
+ 
+-## The three tracks
++## Carried-forward gaps from Stage 11 close
+ 
+-### Track A — Sim & headless (Python, pytest-driven)
++These are open and listed inside the track specs that pick them up:
+ 
+-Owner: any session comfortable in `simulation/`.
+-Branch: `claude/survey-game-implementation-VE8jl` (or split per session).
++- **Smooth territory transitions** (shader-uniform animation) — out of friends-ZIP scope; logged.
++- **Border vs trade connection visual distinction** (solid vs dashed) — Track C, held until Stage 11g lands.
++- **Pause menu** (Resume / Settings / Exit to Main Menu) — Track C, held until Stage 11g lands.
++- **Performance budget verification** — Track C, after Stage 13 D debug overlay lands.
+ 
+-Items:
++## Track briefs (one paragraph each)
+ 
+-1. **Rotation pipeline diagnostic test** — `simulation/test_facing_convergence.py` (added in this commit). Confirms `update_facing()` converges to the target bearing within tolerance over N ticks. Run it now (`cd simulation && python3 test_facing_convergence.py`) — **all 4 assertions pass**, so the sim-side rotation pipeline is correct.
+-2. **Snapshot facing propagation** — `simulation/test_facing_snapshot_propagation.py` (added in this commit). Confirms the snapshot serializer surfaces `facing_rad` in `full_snapshot()`, that `delta()` emits the change, and that `apply_delta()` round-trips it. **All 9 assertions pass.**
++**Track A — Sim & headless.** Owns `simulation/config.py` balance, `sim_tuner.py` sweeps, headless test harnesses, reactive Stage 13 PyInstaller hidden_imports support. Priority item is the force-allocation scale tuning (missions producing 8–10 units; bible target is 50v50 mirror @ 150–200s). Avoid `simulation/world_view/` and `simulation/chronicle_assembler.py` (C2 territory).
+ 
+-   Combined finding: **the rotation bug is renderer-side**, not sim. Track B should look at `scenes/tactical/unit_renderer.gd` — specifically how the squad mesh transforms consume `facing_rad` from the snapshot delta. Squads are renderer-only (`EraThemeResolver.get_squad_count`); the sim has one logical unit and is rotating it correctly. The most likely site is the squad mesh loop at `unit_renderer.gd:140-146`.
+-3. **Combat balance pass** — `simulation/sim_tuner.py` already exists with scenario harness + matplotlib graphing. Run a sweep against `config.UNIT_STATS`, read the curves directly. Per `bible_combat.md` engagement targets: minimum 45 s brawl, ~2 min tactical, 50v50 mirror 150–200 s.
+-4. **Stage 13 sim-side `--root` argparse** — added in this commit. `simulation/pipe_transport.py` `__main__` reads `--root` and `os.chdir`s before any file I/O. Verified by `tests/test_pipe_transport.py`-style smoke tests.
+-5. **Chronicle output polish** — already claimed in `ai_status.md` (rotation/chronicle session). Do not double-claim.
+-6. **Library name regen** — offline AI pipeline only. Out of friends-ZIP scope unless playtester feedback demands it; defer.
++**Track B — Tactical mechanics & polish.** Owns `scenes/tactical/**` and `scripts/tactical/**`. Priority item is the unit-rotation renderer fix — Track A has already proven the sim is clean (`test_facing_convergence.py` and `test_facing_snapshot_propagation.py` both pass). Bug is in `unit_renderer.gd` squad mesh transforms. Then squad-impact origins, control-group swap, selection upgrades, command queueing, camera/sizing feel. Westley confirms visual items.
+ 
+-### Track B — Godot mechanics (testable, but visual confirm in the loop)
++**Track C — Stage 13 packaging.** Owns `build/`, `scenes/privacy_modal/` (new), `autoload/debug_overlay.gd` (new), `autoload/sim_bridge.gd`, `autoload/theme_constants.gd`, `project.godot [application]` block (NOT `[autoload]` — C2 owns that), `scenes/settings/settings.gd`. Drives the eight Stage 13 checkpoints A → H. Two carried Stage 11 items (pause menu, line styling) held until Stage 11g lands.
+ 
+-Owner: a session that can launch Godot.
++## File ownership map
+ 
+-Items, in order:
+-
+-1. **Fix rotation in the renderer.** Track A confirmed the sim-side pipeline is correct (Track A items 1 & 2 both pass). The bug is in `scenes/tactical/unit_renderer.gd`. Squads are renderer-only — the sim has one logical unit and `EraThemeResolver.get_squad_count` controls the visible mesh count. Most likely the squad mesh transforms at `unit_renderer.gd:140-146` aren't picking up the per-tick `facing_rad` from the snapshot delta. Verify `facing_rad` is read from the apply_delta'd unit dict, then applied as a Y-axis (or up-axis) rotation on each squad mesh's `Transform3D.basis`.
+-2. **Squad impact origin.** Renderer-only fix. `scenes/tactical/visuals/projectile_renderer.gd` and `impact_feedback_manager.gd` currently spawn from / to the logical unit position. They need to spawn per squad mesh — either round-robin across squad indices or randomized per shot. Same `get_squad_count` API as the unit renderer.
+-3. **Control-group swap bug.** `scenes/tactical/input_router.gd` (recently touched in commit `8844c1d` — read the new logic first). Reproduce, then write a headless test scene that synthesizes input events and asserts selection state.
+-4. **Shift-add selection / double-click-select-type / enemy-clickable gate lift.** `input_router.gd`. Lift the `selection_eligible` gate for visible enemies (visibility comes from `scripts/tactical/visibility.gd`).
+-5. **Auto-assign unit-type hotkeys (1/2/3/4).** Same router. Auto, not manual.
+-6. **Command queueing + queue-state HUD indicator.** New mechanic — needs queue data structure on the unit, shift-modifier handling in router, optional queue rendering. Cheap-to-test queue logic; visual confirmation for the indicator.
+-7. **Camera pan/zoom tuning.** Pure feel. No automated test. Iterate with Westley.
+-8. **Unit sizing pass.** Pure feel. Iterate with Westley.
+-
+-### Track C — Stage 11 closeout + Stage 13 packaging
+-
+-Owner: a session that can launch Godot for the integration test.
+-
+-Items, in order:
+-
+-1. **11 G — pause menu + exit path.** Required for Stage 13 Checkpoint F's "quit mid-mission" test. New scene under `scenes/`, wires through `SceneRouter`. Small scope — Resume / Settings / Exit to Main Menu.
+-2. **11 F — full loop integration.** `pipe_transport.py` → `time_jump_emitter` → `time_jump_sequencer.gd`. Touches the sim entry and the Godot sequencer. Coordinate with Track A — `pipe_transport.py` is shared. **Before changing the tick delta JSON shape, post the proposed shape to `docs/architecture.md` per CLAUDE.md.**
+-3. **11 H — performance budget verification.** Run the busy time-jump scenario with the F3 debug overlay (build it as part of Stage 13 Checkpoint D first, see below). Capture FPS during peak narration. Pass: 60 FPS at medium zoom.
+-4. **11 C1 — connection line styling.** Solid (border) vs dashed (trade) in the world view renderer. `scenes/shared/world_view/renderers/shell_renderer.gd` (also touched in commit `8844c1d`).
+-5. **11d minimap viewport box.** Camera-frustum rectangle on the tactical minimap.
+-6. **Stage 13 Checkpoint A — PyInstaller sim bundle.** `build/pyinstaller_spec.py` and `build/build_zip.py` skeletons added in this commit. Iterate on hidden imports until the bundle starts. Bundle test: `sim/ouroboros_sim.exe --root <test_dir>` reaches `ready` message in <15 s, no Python install required.
+-7. **Stage 13 Checkpoint B — Godot export + sim launch integration.** Configure Godot export preset with the `release_build` feature tag. Modify `autoload/sim_bridge.gd` to resolve `SIM_EXECUTABLE_PATH` per `IS_RELEASE_BUILD`. Configure `project.godot` `use_custom_user_dir` and `custom_user_dir_name`.
+-8. **Stage 13 Checkpoint C — privacy modal.** New `scenes/privacy_modal/`. Disclosure text exact per spec, no rephrasing. Wire as main scene, transitions to existing `loading_screen.tscn`.
+-9. **Stage 13 Checkpoint D — debug overlay.** New `autoload/debug_overlay.gd`. F3 toggle. FPS, tick count, unit count, sim status. Off by default.
+-10. **Stage 13 Checkpoint E — build script polish.** Iterate `build/build_zip.py` until the full pipeline (PyInstaller → Godot export → assemble → ZIP) runs in one command.
+-11. **Stage 13 Checkpoint F — clean install verification.** 20-item checklist on a clean machine or VM. Westley runs this.
+-12. **Stage 13 Checkpoint G — version label** in `scenes/settings/settings.gd`.
+-13. **Stage 13 Checkpoint H — three full sessions, fresh build, different seeds.**
+-
+-## File ownership (avoid collisions)
++Live cross-reference. If you need to touch a file owned by another track, post a heads-up in `docs/ai_status.md` first.
+ 
+ | File / area | Track | Notes |
+ |---|---|---|
+-| `simulation/pipe_transport.py` | A & C share | Track A owns the `__main__` `--root` bits; Track C owns `time_jump_emitter` wiring. Coordinate via ai_status. |
+-| `simulation/config.py` | A | Balance pass lives here. |
+-| `simulation/facing.py`, `damage.py`, `tactical_engine.py` | protected — ask Westley before changes. |
+-| `simulation/socket_server.py` | protected — explicit ask, always. |
+-| `simulation/snapshot_serializer.py` | A | Rotation/snapshot test reads it; balance work doesn't change shape. Tick-delta shape changes go to `docs/architecture.md` first. |
+-| `scenes/tactical/unit_renderer.gd` | B | Squad rotation, sizing, facing. |
+-| `scenes/tactical/visuals/projectile_renderer.gd`, `impact_feedback_manager.gd` | B | Squad-aware impact origins. |
+-| `scenes/tactical/input_router.gd` | B | All input/selection work. Recently touched on main; read it before editing. |
+-| `scenes/tactical/hud.gd`, `hud.tscn` | B | HUD additions (queue indicator, etc). |
+-| `autoload/sim_bridge.gd` | C | `SIM_EXECUTABLE_PATH`, release-build branch. |
+-| `autoload/theme_constants.gd` | C | `IS_RELEASE_BUILD` → `OS.has_feature("release_build")`. |
++| `simulation/socket_server.py` | hard-protected | Explicit Westley approval, always. |
++| `simulation/tick.py`, `drift.py`, `faction.py`, `region.py`, `events.py`, `event_engine.py`, `intent_resolver.py`, `border_friction.py`, `technology.py`, `diplomacy.py`, `world.py`, `templates.py`, `theme_scifi.py` | protected | Westley approval before edits. |
++| `simulation/tactical_engine.py`, `facing.py`, `damage.py` | treat as protected | Westley approval before logic changes. |
++| `simulation/snapshot_serializer.py` | A primarily; C2 extended for 11g | Tick-delta shape changes go to `docs/architecture.md` first. |
++| `simulation/config.py` | A | Balance lives here. C2 added Stage 11g feature flags (off by default) — leave those alone. |
++| `simulation/pipe_transport.py` | A | `--root` argparse already landed. |
++| `simulation/world_view/**` | C2 (Stage 11g) | Hands off. |
++| `simulation/chronicle_assembler.py` | C2 from Checkpoint N | Coordinate via ai_status.md. |
++| `simulation/sim_tuner.py`, `force_allocator.py`, `force_composition.py`, `power_rating.py` | A | Balance work. |
++| `simulation/test_*.py` | A | Diagnostic harnesses. |
++| `scenes/tactical/**`, `scripts/tactical/**` | B | All tactical mechanics. |
++| `scenes/world/**`, `scenes/shared/world_view/**` | C2 (Stage 11g, while in flight) | Hands off until Stage 11g lands. After that, Track C inherits 11C1 line styling and pause menu. |
++| `autoload/faction_palette.gd` | C2 | New, owned by Stage 11g. |
++| `autoload/sim_bridge.gd`, `autoload/theme_constants.gd` | C | Stage 13. |
+ | `autoload/debug_overlay.gd` (new) | C | Stage 13 D. |
+-| `scenes/world/time_jump_sequencer.gd` | C | 11 F. Recently touched on main. |
+-| `scenes/shared/world_view/**` | C | 11 C1 line styling. Recently touched on main. |
++| `autoload/era_theme_resolver.gd` | stable | Don't edit without approval. |
+ | `scenes/privacy_modal/**` (new) | C | Stage 13 C. |
+-| `project.godot` | C | Custom user dir, main scene, export feature tag. |
+-| `build/**` (new) | C | All Stage 13 build tooling. |
+-| `docs/launch_todo.md` | shared | Mark items as you complete them with the date. |
+-| `docs/ai_status.md` | shared | Claim before starting an item. |
+-| `docs/architecture.md` | gated | Tick-delta shape changes go here *before* implementation. |
++| `scenes/settings/settings.gd` | C | Version label. |
++| `project.godot [application]` | C | Custom user dir, main scene. |
++| `project.godot [autoload]` | C2 | C2 added FactionPalette. Coordinate via ai_status.md before any addition. |
++| `build/**` | C | Stage 13 packaging. Track A appends to `pyinstaller_spec.py` `hiddenimports` if asked. |
++| `docs/launch_todo.md` | shared | Mark items closed with date. |
++| `docs/ai_status.md` | shared | Claim before starting. |
++| `docs/architecture.md` | gated | Tick-delta shape changes here *before* implementation. |
+ | `docs/bible/**` | gated | Append-only; bible edits need Westley sign-off. |
+ 
+-## Test strategy by item
+-
+-| Item | Headless test? | Visual confirm needed? |
+-|---|---|---|
+-| Unit rotation (sim) | yes — `tests/test_facing_convergence.py` | no |
+-| Unit rotation (renderer) | partial — facing_rad in snapshot test | yes |
+-| Squad impact origins | no — renderer only | yes |
+-| Unit sizing | no | yes |
+-| Camera pan/zoom | no | yes |
+-| Combat balance | yes — `sim_tuner.py` graph + invariants | yes (final feel pass) |
+-| Control-group swap | yes — input-router fixture | spot check |
+-| Shift-add / double-click | yes — input-router fixture | spot check |
+-| Enemy clickable gate lift | yes — selection-eligible assertion | spot check |
+-| Auto unit-type hotkeys | yes — input-router fixture | spot check |
+-| Command queueing logic | yes — queue-state assertions | yes (queue indicator) |
+-| 11 C1 line styling | no | yes |
+-| 11 F loop integration | partial — sim emit + sequencer state machine | yes (the whole loop) |
+-| 11 G pause menu | partial — scene wiring | yes |
+-| 11 H perf | yes — F3 overlay capture | review |
+-| 11d minimap viewport box | no | yes |
+-| Stage 13 A PyInstaller | yes — bundle starts, --root works | no |
+-| Stage 13 B Godot export | yes — exported `.exe` runs | yes (loads to main menu) |
+-| Stage 13 C privacy modal | partial — flag-file persistence | yes |
+-| Stage 13 D debug overlay | partial — autoload registers | yes |
+-| Stage 13 E build script | yes — single-command ZIP build | review ZIP contents |
+-| Stage 13 F clean install | no — manual checklist | full 20-item run |
+-| Stage 13 G version label | no | yes |
+-| Stage 13 H stability | no — three-session run | yes |
+-
+-## Order of operations (revised)
+-
+-1. **Now:** Track A drops the rotation tests + Stage 13 `--root` + build skeletons (this commit).
+-2. **Concurrent:** Track B picks up rotation diagnosis using the new tests; Track C starts Stage 13 Checkpoint A (PyInstaller) + Checkpoint D (debug overlay) — neither depends on bug fixes.
+-3. **Then:** Track C does 11 G (pause menu) and 11 F (loop integration). Architecture-doc gate on tick-delta shape applies.
+-4. **Then:** Track B works through the input/selection items.
+-5. **Then:** Track A balance pass (sim_tuner sweeps).
+-6. **Then:** Track C Stage 13 B, C, E.
+-7. **Visual confirmation pass with Westley:** camera, sizing, 11 C1, minimap viewport, fog terrain darkening, ambient ship removal, command indicators, queue indicator.
+-8. **Then:** Stage 13 F → H.
+-
+-## Guardrails
+-
+-- **Protected engine files** (require Westley approval): `tick.py`, `drift.py`, `faction.py`, `region.py`, `events.py`, `event_engine.py`, `intent_resolver.py`, `border_friction.py`, `technology.py`, `diplomacy.py`, `world.py`, `templates.py`, `theme_scifi.py`. Note: `tactical_engine.py`, `facing.py`, `damage.py` are not on this list but treat them as protected — ask before editing logic.
+-- **Socket server protected:** `simulation/socket_server.py` — explicit ask before any change.
+-- **Tick delta shape:** any change to the JSON shape goes to `docs/architecture.md` *before* implementation.
+-- **Invariants:** never widen thresholds, extend windows, or loosen tolerances without Westley's approval. Scope-narrowing OK; loosening, never. Never weaken a test to make the implementation pass.
+-- **No blind reverts:** never `git checkout`, `git restore`, or `git stash` files without confirming git is up to date with Westley first. Two parallel sessions are likely writing files concurrently.
+-- **One fix at a time:** when multiple bugs surface, fix one, confirm, then move on. Batched fixes break bisection.
+-- **No shotgun debugging:** form a hypothesis, add logging, get user output, then fix. One confirmed diagnosis beats ten guesses.
+-- **Stage 13 STOP gates:** every checkpoint ends with `⛔ STOP`. Honor it. Wait for Westley before the next.
+-
+-## Cross-session coordination
+-
+-- Claim items in `docs/ai_status.md` before starting. Use the existing format.
+-- If you need to touch a file owned by another track, post a heads-up in `ai_status.md`'s Cross-Session Notes section before editing.
+-- Pull from origin frequently. Two parallel local Claude sessions are also writing files.
+-- Visual-confirm items: do not mark "done" until Westley has confirmed. Mark them "ready for confirm" in `ai_status.md`.
+-
+-## What's in this commit (delivered alongside this doc)
+-
+-- `docs/launch_plan.md` — this file.
+-- `simulation/pipe_transport.py` — `--root` argparse and `os.chdir` at sim entry. Stage 13 Checkpoint A prerequisite.
+-- `build/pyinstaller_spec.py` — skeleton .spec file. Hidden imports list will iterate during Checkpoint A.
+-- `build/build_zip.py` — skeleton build pipeline. Linear, no error recovery beyond printing what failed.
+-- `build/README.txt` — playtester-facing run instructions skeleton. Westley to author final prose.
+-- `build/feedback.txt` — playtester feedback template skeleton.
+-- `simulation/test_facing_convergence.py` — sim-layer rotation convergence test (passes).
+-- `simulation/test_facing_snapshot_propagation.py` — snapshot-serializer facing propagation test (passes).
+-
+-These are starter material. None of the build tooling has been run end-to-end (no Godot export templates configured here, no Windows host); local sessions will iterate.
++## Order of operations
++
++1. **Active right now:** C2 finishes Stage 11g (Checkpoints H–Q).
++2. **Safe to dispatch concurrently with C2:**
++   - **Track A** — start with A1 (force allocation scale tuning).
++   - **Track B** — start with B1 (rotation renderer fix), then B2 (squad impact origins). C1's Stage 11d work is complete and `unit_renderer.gd` is clean.
++   - **Track C** — start with C1 (Stage 13 Checkpoint A — PyInstaller bundle), then C2 (Checkpoint D — debug overlay).
++3. **Once Stage 11g lands** (C2 done):
++   - Track C unblocks 11G pause menu and 11C1 line styling, slots them in before Stage 13 Checkpoint F.
++   - Coordinate any chronicle output polish work that needs `chronicle_assembler.py` (Track A or another claimed session).
++4. **Final:** Stage 13 Checkpoints F (clean install, Westley runs the 20-item checklist) and H (three full sessions, fresh build).
++
++## Guardrails (apply to every track)
++
++- **Protected files** require Westley approval. See ownership map above.
++- **Tick delta shape changes** go to `docs/architecture.md` *before* implementation.
++- **Invariants** — never widen thresholds, loosen tolerances, or weaken a test to make implementation pass. Scope-narrowing only, with the case explicitly out of the invariant's intent.
++- **No blind git reverts** — `git checkout/restore/stash` requires confirming with Westley that working tree is clean.
++- **One fix at a time** — batched fixes break bisection.
++- **No shotgun debugging** — hypothesis → instrument → measure → fix.
++- **Stage 13 ⛔ STOP gates** are absolute. Wait for Westley between checkpoints.
++- **Visual-confirm items** stay "ready for confirm" in ai_status.md until Westley confirms.
++
++## How to dispatch a session
++
++For each track, paste this into a fresh Claude Code window:
++
++```
++Read in order: CLAUDE.md, docs/launch_tracks/<track_file>.md, docs/ai_status.md.
++That track spec is your brief. Follow it strictly. Do not pick up items from
++other tracks. Claim items in ai_status.md before editing. Report your first
++move and wait for my "go" before any code change.
++```
++
++Replace `<track_file>` with `track_a_sim_and_balance`, `track_b_tactical_mechanics`, or `track_c_stage_13_packaging`. One window per track. Do not run two windows on the same track simultaneously — they will race on ai_status.md claims and the same files.
+diff --git a/docs/launch_tracks/track_a_sim_and_balance.md b/docs/launch_tracks/track_a_sim_and_balance.md
+new file mode 100644
+index 0000000..75b8223
+--- /dev/null
++++ b/docs/launch_tracks/track_a_sim_and_balance.md
+@@ -0,0 +1,102 @@
++# Track A — Sim & Headless Balance Work
++
++**Owner:** one Claude Code session.
++**Branch:** `claude/survey-game-implementation-VE8jl` (or split per session, by ai_status.md claim).
++**Reads first (in order):** `CLAUDE.md`, this file, `docs/bible/game_bible.md` hub, `docs/bible/bible_combat.md` (engagement targets and stat philosophy), `docs/ai_status.md` (claim before starting).
++
++This track is for work that lives entirely in `simulation/` and is verifiable headlessly via `python3 simulation/test_*.py` or `python3 simulation/sim_tuner.py`. No Godot launching needed.
++
++## Goal
++
++Resolve the open simulation-side launch_todo items that gate the friends-ZIP feeling right. The biggest one is the force-allocation balance pass — missions are currently producing 8–10 units when the design intent is larger, and the temporary 4× debug values used during Stage 11d testing have been reverted, leaving the sim under-scaled.
++
++## Scope (in)
++
++- `simulation/config.py` — balance tuning parameters.
++- `simulation/sim_tuner.py` — scenario sweeps and graph generation. Already exists.
++- `simulation/test_*.py` — diagnostic harnesses. Two new ones from the Stage 13 starter commit: `test_facing_convergence.py` and `test_facing_snapshot_propagation.py`. Both pass — use as templates if more harnesses are needed.
++- `simulation/force_allocator.py`, `simulation/force_composition.py`, `simulation/power_rating.py` — read-only references for understanding allocation. Edit only if the audit demands it.
++- `build/pyinstaller_spec.py` — iterate `hiddenimports` if Track C reports missing modules during PyInstaller checkpoint A.
++
++## Scope (out — do NOT touch)
++
++| Off-limits | Why |
++|---|---|
++| `simulation/socket_server.py` | Protected. Explicit Westley approval required. |
++| `simulation/world_view/` | C2 (Stage 11g) owns. Checkpoints D, E, etc. |
++| `simulation/chronicle_assembler.py` | C2 will edit at Stage 11g Checkpoint N. Coordinate via ai_status.md if the chronicle-output session is also active. |
++| `simulation/tick.py`, `drift.py`, `faction.py`, `region.py`, `events.py`, `event_engine.py`, `intent_resolver.py`, `border_friction.py`, `technology.py`, `diplomacy.py`, `world.py`, `templates.py`, `theme_scifi.py` | Protected engine files per `CLAUDE.md`. Approval required. |
++| `simulation/tactical_engine.py`, `facing.py`, `damage.py` | Treat as protected. Approval required. |
++| `simulation/pipe_transport.py` | Track C may also touch this for `time_jump_emitter` wiring. Coordinate via ai_status.md before editing. |
++| Anything outside `simulation/` and `build/` | Other tracks' territory. |
++
++## Items in priority order
++
++### A1. Force allocation scale tuning (priority)
++
++**Symptom (per `docs/launch_todo.md`):** missions consistently produce only 8–10 units; feels too small.
++
++**Background:** `simulation/config.py:705-706` currently has:
++```python
++BUDGET_TO_POWER_SCALE  = 150.0
++MILITARY_TO_POWER_SCALE = 1000.0
++```
++During Stage 11d testing these were temporarily set to 4× values; that test was reverted. Bible engagement targets in `bible_combat.md`: minimum 45 s brawl, ~2 min tactical, 50v50 mirror 150–200 s.
++
++**Deliverable:**
++1. Run a controlled `sim_tuner.py` sweep over `BUDGET_TO_POWER_SCALE` and `MILITARY_TO_POWER_SCALE`. Record:
++   - Resulting unit counts (player + enemy) per archetype
++   - 50v50 mirror engagement durations
++   - Outcome-band distribution
++2. Pick values that hit the bible targets without breaking force-composition invariants.
++3. Update `config.py` with chosen values + a one-line comment of intent (no multi-paragraph rationale).
++4. Update `docs/launch_todo.md` to mark "Tune force allocation scale" complete with date.
++
++**Test strategy:**
++- All existing `simulation/test_*.py` stay green.
++- 50v50 mirror invariant: median engagement duration in [150, 200] s with current `bible_combat.md` HP and damage values.
++- Force-composition tests (`force_allocator` direct invocation) still produce expected category mixes per archetype.
++
++**STOP-and-escalate triggers:**
++- Bible targets unattainable with any reasonable scale value (suggests the bug is in `force_allocator.py` or `power_rating.py`, not the scale).
++- 50v50 invariant fails after picking a value (do **not** widen the invariant — escalate).
++
++### A2. Per-unit balance follow-on (only if A1 surfaces it)
++
++If A1's mirror sweep shows specific unit types dominating or evaporating, do a targeted stat sweep for the offender(s) via `sim_tuner`. **Do not** touch HP/damage values without confirming the issue with Westley first. Per-unit stat values are config not engine — change is allowed, but only after diagnosis. One unit type at a time.
++
++### A3. Stage 13 PyInstaller hidden_imports follow-on (reactive)
++
++If Track C reports missing imports while running PyInstaller (Stage 13 Checkpoint A iteration), append to the `hiddenimports` list in `build/pyinstaller_spec.py`. This is a reactive item — wait for Track C to ping in `ai_status.md`.
++
++### A4. Library name regen — DEFER
++
++Out of friends-ZIP scope unless playtester feedback specifically calls out bad names. Don't pull this work into the launch push.
++
++### A5. Chronicle output polish — CHECK ai_status.md
++
++There is (or was) an Opus session claiming this work. If still active, leave alone. If stale (no commits in 7+ days), check with Westley before picking up. Touches `simulation/chronicle_assembler.py`, `simulation/chronicle_distiller.py`, `simulation/events.py`, `simulation/library/chronicle/fragments.json`.
++
++## Workflow
++
++1. `git pull` before starting any item.
++2. Claim in `docs/ai_status.md` before any code edit. Use existing format.
++3. Form hypothesis → measure → change → re-measure (per `CLAUDE.md` debugging discipline).
++4. Run all relevant `simulation/test_*.py` after each change.
++5. Commit with a clear message. Push.
++6. Update `docs/launch_todo.md` to mark items closed with date.
++7. After each item lands, stop and report. Do not chain into the next item without Westley's go.
++
++## Guardrails
++
++- **Never widen an invariant or loosen a tolerance** to make a balance value pass. Either find a value that works or escalate.
++- **One change at a time.** If A1 needs both scale tuning and force-composition adjustment, do the scale first, confirm, then tackle composition separately.
++- **No shotgun debugging.** Form a hypothesis, add logging or instrumentation that confirms or refutes it, then fix.
++- **No blind git reverts.** `git checkout/restore/stash` requires confirming with Westley that working tree is clean first.
++- **No bible edits** without Westley's sign-off. If a tuning result implies a bible change (e.g., engagement target needs to widen), escalate the design question.
++
++## Definition of done
++
++- A1 complete: force allocation scale values landed, 50v50 mirror invariant passes, launch_todo item marked done.
++- All `simulation/test_*.py` green at end of each commit.
++- ai_status.md reflects current claim state.
+diff --git a/docs/launch_tracks/track_b_tactical_mechanics.md b/docs/launch_tracks/track_b_tactical_mechanics.md
+new file mode 100644
+index 0000000..e940baf
+--- /dev/null
++++ b/docs/launch_tracks/track_b_tactical_mechanics.md
+@@ -0,0 +1,165 @@
++# Track B — Tactical Mechanics & Combat Polish
++
++**Owner:** one Claude Code session.
++**Branch:** `claude/survey-game-implementation-VE8jl` (or split per session, by ai_status.md claim).
++**Reads first (in order):** `CLAUDE.md`, this file, `docs/bible/bible_combat.md` (combat visuals, command vocabulary, unit behavior), `docs/ai_status.md` (claim before starting).
++
++This track is the tactical scene polish layer: in-mission rendering, input, selection, command, and unit-feel work. Westley is in the loop for visual confirmation on most items — code the change, ask him to launch the game, mark "ready for confirm" in `ai_status.md` until he confirms.
++
++## Goal
++
++Drain the open tactical-side launch_todo items so the friends-ZIP playthrough feels right at the unit level: rotation visible, impacts where they should be, selection and control groups behaving correctly, hotkeys ergonomic.
++
++## Scope (in)
++
++- `scenes/tactical/**` — input router, unit renderer, HUD, attack/impact/destruction visuals.
++- `scripts/tactical/**` — visibility, etc.
++- `autoload/tactical_bridge.gd` — only if a new field needs to surface at the bridge layer; coordinate via ai_status.md before editing autoloads.
++
++## Scope (out — do NOT touch)
++
++| Off-limits | Why |
++|---|---|
++| `simulation/**` | Track A (or protected). Sim-side rotation pipeline is already verified clean — see `simulation/test_facing_convergence.py` and `simulation/test_facing_snapshot_propagation.py`. |
++| `scenes/world/**`, `scenes/shared/world_view/**` | C2 (Stage 11g) is editing extensively. Hands off until Stage 11g lands. |
++| `scenes/privacy_modal/**`, `autoload/debug_overlay.gd`, `autoload/sim_bridge.gd`, `autoload/theme_constants.gd`, `project.godot` | Track C (Stage 13 packaging). |
++| `autoload/faction_palette.gd` | New, owned by C2 (Stage 11g). |
++| `autoload/era_theme_resolver.gd` | Stable contract; do not edit without Westley's approval. |
++
++## Items in priority order
++
++### B1. Unit rotation (renderer-side) — priority
++
++**Symptom (per `docs/launch_todo.md`):** units don't visually rotate.
++
++**Pre-diagnosis (already done):** Track A's two harnesses prove the sim is correct end to end:
++- `simulation/test_facing_convergence.py` — 4 assertions, all pass. `update_facing()` rotates toward the target bearing, respects rotation speed caps, holds steady when stationary.
++- `simulation/test_facing_snapshot_propagation.py` — 9 assertions, all pass. `full_snapshot()` includes `facing_rad`, `delta()` emits it on change, `apply_delta()` round-trips it.
++
++Run them yourself first to confirm they still pass:
++```
++cd simulation && python3 test_facing_convergence.py && python3 test_facing_snapshot_propagation.py
++```
++
++**Where the bug must live:** `scenes/tactical/unit_renderer.gd`, the squad mesh transform loop around lines 140–146:
++
++```gdscript
++var squad_count: int = EraThemeResolver.get_squad_count(unit_type)
++...
++for i in squad_count:
++    batch.entries.append({"uid": uid, "squad_idx": i, "offset": offset, "vscale": vscale, "facing_offset": foff})
++```
++
++Likely failure modes:
++- The per-frame transform application doesn't read `facing_rad` from the latest snapshot/delta dict.
++- The mesh `Transform3D.basis` is being constructed without the rotation, or with the wrong axis.
++- The `facing_offset` per squad mesh is being applied in place of (rather than added to) the unit's rotation.
++
++**Deliverable:** rotation visible in playthrough. Westley confirms by running the game and watching units face their targets and movement direction.
++
++**Test strategy:**
++- Sim-side tests stay green.
++- Westley confirms visually. Mark "ready for confirm" in ai_status.md until confirmed.
++- Optional: a Godot-side test scene (`tests/test_unit_rotation_visual.tscn` or similar) that loads a fixed snapshot and screenshot-checks the unit orientation. Only worth building if the bug recurs after fix.
++
++### B2. Squad-member impact origins
++
++**Symptom:** projectiles and impact effects fire from / hit a single point even when a unit's `squad_count > 1`.
++
++**Cause:** the sim has no squad concept — squads are renderer-only via `EraThemeResolver.get_squad_count`. `scenes/tactical/visuals/projectile_renderer.gd` and `scenes/tactical/visuals/impact_feedback_manager.gd` both use the logical unit position as the origin/target. They need to read the squad mesh positions instead.
++
++**Deliverable:**
++- Projectiles spawn from a randomized (or round-robin) squad mesh on the firing unit.
++- Impacts spawn at a randomized squad mesh position on the target unit.
++- Visual density is preserved; per-shot positions feel like multiple firing/landing points across the squad footprint.
++
++**Test strategy:** visual confirmation. Westley confirms after fix.
++
++### B3. Control groups swapping bug
++
++**Symptom (per `docs/launch_todo.md`):** control group assignments are broken; units swap between groups unexpectedly.
++
++**Likely site:** `scenes/tactical/input_router.gd` — recently touched in C1's Stage 11d work. Read the full file before editing.
++
++**Deliverable:**
++- `Ctrl+1..0` assigns selected units to a group, replacing prior membership.
++- `1..0` selects the named group.
++- Once a unit is in group N, it stays there until reassigned. No cross-group swapping.
++
++**Test strategy:**
++- Headless input-router test (synthesize input events, assert selection state). Worth writing — input handling is regression-prone.
++- Westley spot-check.
++
++### B4. Selection upgrades (cluster — input_router.gd)
++
++Three small items, batch them:
++
++- **Shift-click / shift-drag adds to selection.** Holding `Shift` while clicking or box-dragging adds to the current selection rather than replacing.
++- **Double-click selects all visible of that unit type on screen.** Read camera frustum from the existing minimap viewport-box code (Stage 11d Checkpoint G) for screen visibility.
++- **Auto-assigned unit-type hotkeys.** `1`/`2`/`3`/`4` automatically select all friendly units of category army/strike/line/siege respectively. Automatic, not user-configured.
++
++**Deliverable:** all three behaviors work, no conflict with control-group `Ctrl+N` assignment. Note: this can conflict with B3 if both touch the `1..0` keybind — coordinate within the same session (do B3 first, then B4 hotkeys).
++
++**Test strategy:** input-router tests where the value justifies. Westley spot-check.
++
++### B5. Command queueing
++
++**Symptom (feature, not bug):** no way to shift-queue commands.
++
++**Deliverable:**
++- Holding `Shift` while issuing a `move` or `attack-move` adds the command to the unit's queue.
++- Units execute queued commands in sequence.
++- A queue-state HUD indicator (small marker per queued command, optional first pass) — Westley confirms visual.
++
++**Implementation notes:** the command queue is unit-side data. Existing `Command` and `CommandQueue` structures live in `simulation/command.py` — do **not** change those (Track A territory). Queueing is a renderer-side intent buffer that emits commands one at a time when the unit completes the current order. Wire through `input_router.gd` and a new per-uid queue dictionary in `tactical.gd` or similar.
++
++**Test strategy:** queue-state assertions in headless. Westley confirms visual indicator.
++
++### B6. Camera pan/zoom tuning
++
++**Symptom:** main tactical camera pan/zoom feels off.
++
++**Deliverable:** Westley says it feels good.
++
++**Implementation:** pure feel. Iterate on speed/acceleration/zoom curves with Westley in the loop. No automated test possible.
++
++### B7. Unit sizing pass
++
++**Symptom:** unit visual scales feel off.
++
++**Deliverable:** Westley confirms sizes look right.
++
++**Implementation:** scales are likely in `EraThemeResolver` per-era manifest or a per-unit-type config. Investigate the scale source first; read-only audit before any change. **Do not touch the manifest schema** without Westley's approval.
++
++### B8. Fog of war terrain darkening
++
++**Symptom (per `docs/launch_todo.md`):** fog hides enemy units correctly but gives no spatial feedback. Need StarCraft 2-style ground darkening outside player vision.
++
++**Implementation:** vision-radius overlay (transparent within sensor range, darkened outside). Likely a screen-space shader pass over the terrain layer, or a projector decal that follows the player force.
++
++**Deliverable:** Westley sees clearly which areas are visible and which aren't.
++
++## Workflow
++
++1. `git pull` before starting any item.
++2. Claim in `docs/ai_status.md` before editing.
++3. **Confirm sim-side is clean before touching the renderer for B1.** Run the two facing tests.
++4. Form hypothesis → instrument → measure → fix. No shotgun changes.
++5. Visual items: do not mark "done" — mark "ready for confirm" in ai_status.md until Westley confirms.
++6. One item at a time. After each, stop and report before picking up the next.
++
++## Guardrails
++
++- **Visual confirmation gate.** Anything that affects appearance, feel, or input timing must be confirmed by Westley before being marked done.
++- **One fix at a time.** Multiple bugs in flight at once breaks bisection if a regression appears.
++- **No protected-file edits.** Even where a tactical scene reads a sim field, the fix lives in the scene — not in the sim.
++- **No blind git reverts.** Multiple sessions are likely writing files concurrently.
++- **No shotgun debugging.** Form a hypothesis, add logging, ask Westley to run, then fix targeted to the confirmed cause.
++
++## Definition of done
++
++- B1 (rotation) and B2 (squad impact origins) both confirmed by Westley in playthrough.
++- B3, B4, B5 behave correctly in playthrough; control-group and selection edge cases tested.
++- B6, B7, B8 confirmed by Westley.
++- `docs/launch_todo.md` updated with each completed item.
++- All `simulation/test_*.py` green (this track shouldn't break sim tests, but verify after any cross-cutting change).
+diff --git a/docs/launch_tracks/track_c_stage_13_packaging.md b/docs/launch_tracks/track_c_stage_13_packaging.md
+new file mode 100644
+index 0000000..1ae33e7
+--- /dev/null
++++ b/docs/launch_tracks/track_c_stage_13_packaging.md
+@@ -0,0 +1,163 @@
++# Track C — Stage 13 Friends-ZIP Packaging
++
++**Owner:** one Claude Code session.
++**Branch:** `claude/survey-game-implementation-VE8jl` (or split per session, by ai_status.md claim).
++**Reads first (in order):** `CLAUDE.md`, this file, `docs/stage_specs/stage_13_spec.md` (the canonical spec — this track is the implementer of that spec), `docs/ai_status.md`.
++
++This track packages the existing game (Stages 1 → 12.5 + Stage 11 closeout) into a self-contained Windows ZIP per Stage 13. Almost everything is wrapping; very little is new game code. Every Stage 13 checkpoint ends with `⛔ STOP`. Honor every one — pause and wait for Westley before the next.
++
++## Goal
++
++Produce `OuroborosManifold-v0.13.0.zip` — a self-contained Windows distributable that a friend can extract and double-click, plays through the full generational loop, and quits cleanly. No Python install, no terminal, no dev environment on the playtester's machine.
++
++## Scope (in)
++
++- `build/**` — packaging tooling. Skeletons already in tree from the launch_plan starter commit (`pyinstaller_spec.py`, `build_zip.py`, `README.txt`, `feedback.txt`). Iterate.
++- `scenes/privacy_modal/` (new) — first-launch privacy disclosure modal.
++- `autoload/debug_overlay.gd` (new) — F3-toggled FPS/tick/unit overlay.
++- `autoload/sim_bridge.gd` — `SIM_EXECUTABLE_PATH` resolution per `IS_RELEASE_BUILD`.
++- `autoload/theme_constants.gd` — `IS_RELEASE_BUILD` becomes `OS.has_feature("release_build")` instead of a hardcoded constant.
++- `project.godot` — `[application]` block only: `use_custom_user_dir=true`, `custom_user_dir_name="data"`, main scene change to `privacy_modal.tscn`. **Do NOT touch the `[autoload]` block** (C2 owns it, having added `FactionPalette` for Stage 11g).
++- `scenes/settings/settings.gd` — version label addition (Stage 13 Checkpoint G).
++
++## Scope (out — do NOT touch)
++
++| Off-limits | Why |
++|---|---|
++| `scenes/tactical/**`, `scripts/tactical/**` | Track B. Do not edit even if a Stage 13 checkpoint seems to need it — escalate instead. |
++| `simulation/**` (except `pipe_transport.py` `__main__` block, already done in starter commit) | Track A or protected. The `--root` argparse already landed; no further sim changes are part of Stage 13. If hidden_imports need additions to PyInstaller spec, that is `build/pyinstaller_spec.py` not sim code. |
++| `scenes/world/**`, `scenes/shared/world_view/**` | C2 (Stage 11g) is editing extensively. |
++| `project.godot [autoload]` | C2 owns this block. Coordinate via ai_status.md if you absolutely need to add an autoload. |
++| `autoload/faction_palette.gd` | C2's. |
++
++## Items in priority order
++
++The Stage 13 spec defines 8 checkpoints A → H. Below is the ordered work plan for this track, with two items held until C2's Stage 11g lands.
++
++### C1. Stage 13 Checkpoint A — PyInstaller sim bundle
++
++**Build:** iterate `build/pyinstaller_spec.py` (already in tree). Run PyInstaller until the bundle starts on a Windows host without a Python install.
++
++**Test:** `sim/ouroboros_sim.exe --root <test_dir>` directly from the command line — verify it starts, writes length-prefixed JSON progress messages, reaches `ready` within 15 s, creates `<test_dir>/logs/` (not inside `sim/`), accepts a command via stdin and responds.
++
++**Print:** startup time, bundle size, first progress message, ready message.
++
++**Verify:** sim starts without Python installed. Bundle < 200 MB. Ready within 15 s.
++
++**Note:** if the build environment doesn't have a Windows host, document the spec changes you would make, run the closest available equivalent (e.g., a Linux PyInstaller bundle to validate hidden_imports list), and stop for Westley to do the Windows iteration. Do not block on environment — ship the spec progress and escalate.
++
++⛔ STOP. Wait for Westley.
++
++### C2. Stage 13 Checkpoint D — debug overlay
++
++**Build:** new `autoload/debug_overlay.gd`. Register as autoload in `project.godot [autoload]` only after coordinating with C2 via `ai_status.md` (C2 added `FactionPalette` in that block recently).
++
++**Behavior:** F3-toggled overlay showing FPS (`Engine.get_frames_per_second()`), tick count (from `SimBridge`), unit count (from `UIDataBus`), sim status (connected/disconnected). Off by default. Top-right corner, monospace, semi-transparent background.
++
++**Test:** launch game. Verify invisible by default. Press F3, verify shows. Start a mission, verify tick/unit counts update live. Press F3 again, verify hides. Verify F3 conflicts with no other hotkey.
++
++**Verify:** off by default. Toggles on F3. No conflict. Renders correctly at 1920×1080 and 1280×720.
++
++⛔ STOP. Wait for Westley.
++
++### C3. Stage 13 Checkpoint B — Godot export + sim launch integration
++
++**Build:**
++- Configure Godot Windows release export preset. The preset must include the custom feature tag `release_build`.
++- Modify `autoload/theme_constants.gd`: `IS_RELEASE_BUILD` becomes `OS.has_feature("release_build")` (read at runtime, not a hardcoded constant).
++- Modify `autoload/sim_bridge.gd`: when `IS_RELEASE_BUILD` is true, resolve the sim path to `sim/ouroboros_sim.exe` relative to the executable directory and spawn with `["--root", game_root]` instead of `[python, sim_script_path]`. When false, behavior is unchanged.
++- Modify `project.godot [application]`: `use_custom_user_dir=true`, `custom_user_dir_name="data"`. Do **not** touch `[autoload]`.
++
++**Test:** export. Place exported `.exe` + `.pck` alongside the `sim/` folder from C1. Run. Verify loading screen appears, sim spawns, progress displays, sim reaches ready, main menu loads with live data. Verify `data/logs/` is created next to the executable.
++
++⛔ STOP. Wait for Westley.
++
++### C4. Stage 13 Checkpoint C — privacy modal
++
++**Build:** new `scenes/privacy_modal/privacy_modal.tscn` + `.gd`. Wire as main scene in `project.godot [application]`.
++
++**Disclosure text — exact, do not modify:**
++> **PRIVATE PLAYTEST BUILD**
++>
++> This build saves logs and crash reports to your machine. Nothing is sent anywhere. If you hit a bug, you can choose to send files to Westley — that's it.
++
++**Visual treatment:** minimal — dark `BASE` background, centered `tm_card`, Newsreader body style, "I Understand" button in standard `tm_button` with gold accent. No scanline overlay, no animations, no galaxy background. Reuse Stage 9 theme components.
++
++**Behavior:** check for `user://privacy_accepted` flag on `_ready`. If present, immediately go to `loading_screen.tscn`. If not, show modal. On button press, write flag, then go to loading screen.
++
++**Test:** first launch — modal appears. Click button. Verify flag file written and transition to loading screen. Second launch — modal skipped. Delete flag file manually — modal reappears.
++
++⛔ STOP. Wait for Westley.
++
++### C5. Stage 13 Checkpoint E — build script polish
++
++**Build:** iterate `build/build_zip.py` until it runs the full pipeline in one command:
++```
++python build/build_zip.py
++```
++Steps: PyInstaller → Godot headless export → assemble folder per Stage 13 spec layout → copy README and feedback.txt → ZIP.
++
++**Test:** run from project root. Verify ZIP contents match the spec's folder structure exactly. No dev-only files (`.import/`, `.godot/`, `__pycache__/`, `.git/`).
++
++**Verify:** ZIP < 500 MB (flag if larger). README and feedback.txt present.
++
++⛔ STOP. Wait for Westley.
++
++### C6. Stage 13 Checkpoint G — version label
++
++**Build:** add a Label at the bottom of `scenes/settings/settings.gd` showing build version (e.g., "Friends Build v0.13.0"). Source from a `VERSION` constant in `theme_constants.gd` or a `version.cfg` — pick one and document.
++
++**Test:** open settings. Version visible. Correct value.
++
++⛔ STOP. Wait for Westley.
++
++### C7. Stage 13 Checkpoint F — clean install verification
++
++**No new code.** Westley runs the 20-item checklist from `stage_13_spec.md` Checkpoint F on a clean machine or VM.
++
++This track's job is to make sure all prior checkpoints landed cleanly and that any blockers Westley hits during the checklist are diagnosed and fixed.
++
++⛔ STOP. Wait for Westley.
++
++### C8. Stage 13 Checkpoint H — final stability
++
++**No new code.** Three full sessions on the clean-install machine, different seeds, 2+ chapters each. Westley runs.
++
++⛔ STOP.
++
++### Held items (waiting on C2's Stage 11g to land)
++
++These are *not* Stage 13, but they're on the launch path and listed here so the track owner doesn't accidentally pick them up too early:
++
++- **11G — pause menu (Resume / Settings / Exit to Main Menu).** New scene. Required for Stage 13 Checkpoint F's quit-mid-mission test. Touches `SceneRouter`. Hold until C2 finishes Stage 11g Checkpoint L (inspection-state pause integration). Different surface from C2's pause, but co-located in the world view / sequencer code path.
++- **11C1 — connection line styling (border vs trade, solid vs dashed).** Touches `scenes/shared/world_view/renderers/shell_renderer.gd`. Hold until C2 finishes Stage 11g Checkpoint M (faction palette integration touches the same file extensively).
++
++When unblocked, these slot in after C6 / before C7.
++
++## Workflow
++
++1. `git pull` before starting any checkpoint.
++2. Claim the checkpoint in `docs/ai_status.md` before editing.
++3. Build the code, run the checkpoint's "Test" section as written.
++4. Print whatever the checkpoint's "Print" section asks for.
++5. Verify against the checkpoint's "Verify" section.
++6. ⛔ STOP. Wait for Westley before the next checkpoint.
++
++## Guardrails
++
++- **`⛔ STOP` gates are absolute.** Never chain checkpoints. Never self-verify and continue.
++- **Stage 13 invariants I1–I12** (in `stage_13_spec.md`) — keep them in mind. The most easily violated:
++  - I3 — sim process invisible (no console window)
++  - I5 — debug output suppressed under `IS_RELEASE_BUILD = true`
++  - I6 — no leaked dev paths (`/home/`, `C:\Users\`, project paths) in saves, logs, or `.pck`
++  - I9 — kill switch functional (`IS_RELEASE_BUILD = false` restores dev mode cleanly)
++- **No game logic in Stage 13.** If you find yourself writing combat/sim/scene logic, stop — it belongs in an earlier stage. This track only packages.
++- **`project.godot [autoload]` — coordinate via ai_status.md.** C2 owns this block right now.
++- **No blind git reverts.**
++
++## Definition of done
++
++- All 8 Stage 13 checkpoints (A → H) approved by Westley.
++- All 12 Stage 13 invariants pass.
++- ZIP delivered to playtest group.
++- `docs/launch_todo.md` and `docs/launch_plan.md` reflect Stage 13 closure.
+-- 
+2.48.1
+

@@ -255,6 +255,18 @@ func _create_objective_card(obj: Dictionary, is_primary: bool) -> PanelContainer
 	obj_text.autowrap_mode = TextServer.AUTOWRAP_WORD
 	vbox.add_child(obj_text)
 
+	var detail_text: String = obj.get("detail", "") if is_primary else ""
+	var detail_label: Label = null
+	if is_primary and detail_text != "":
+		detail_label = Label.new()
+		detail_label.text = detail_text
+		detail_label.add_theme_font_override("font", ThemeConstants.font_serif_light_italic)
+		detail_label.add_theme_font_size_override("font_size", ThemeConstants.BODY_DATA_SMALL_SIZE)
+		detail_label.add_theme_color_override("font_color", ThemeConstants.SECONDARY)
+		detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+		detail_label.visible = false
+		vbox.add_child(detail_label)
+
 	var meta_parts: Array[String] = []
 	if obj.has("archetype"):
 		meta_parts.append(obj["archetype"])
@@ -263,13 +275,40 @@ func _create_objective_card(obj: Dictionary, is_primary: bool) -> PanelContainer
 	if obj.has("weight_label"):
 		meta_parts.append(obj["weight_label"])
 
-	if meta_parts.size() > 0:
-		var meta_label := Label.new()
-		meta_label.text = " // ".join(meta_parts)
-		meta_label.add_theme_font_override("font", ThemeConstants.font_mono_regular)
-		meta_label.add_theme_font_size_override("font_size", ThemeConstants.BODY_DATA_SMALL_SIZE)
-		meta_label.add_theme_color_override("font_color", ThemeConstants.TERTIARY)
-		vbox.add_child(meta_label)
+	var meta_row: HBoxContainer = null
+	if meta_parts.size() > 0 or detail_label != null:
+		meta_row = HBoxContainer.new()
+		meta_row.add_theme_constant_override("separation", 8)
+		vbox.add_child(meta_row)
+
+		if meta_parts.size() > 0:
+			var meta_label := Label.new()
+			meta_label.text = " // ".join(meta_parts)
+			meta_label.add_theme_font_override("font", ThemeConstants.font_mono_regular)
+			meta_label.add_theme_font_size_override("font_size", ThemeConstants.BODY_DATA_SMALL_SIZE)
+			meta_label.add_theme_color_override("font_color", ThemeConstants.TERTIARY)
+			meta_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			meta_row.add_child(meta_label)
+		else:
+			var spacer := Control.new()
+			spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			meta_row.add_child(spacer)
+
+		if detail_label != null:
+			var toggle_btn := Button.new()
+			toggle_btn.text = "[+]"
+			toggle_btn.flat = true
+			toggle_btn.focus_mode = Control.FOCUS_NONE
+			toggle_btn.add_theme_font_override("font", ThemeConstants.font_mono_regular)
+			toggle_btn.add_theme_font_size_override("font_size", ThemeConstants.BODY_DATA_SMALL_SIZE)
+			toggle_btn.add_theme_color_override("font_color", _accent)
+			toggle_btn.add_theme_color_override("font_hover_color", ThemeConstants.PRIMARY)
+			toggle_btn.add_theme_color_override("font_pressed_color", ThemeConstants.PRIMARY)
+			toggle_btn.pressed.connect(func():
+				detail_label.visible = not detail_label.visible
+				toggle_btn.text = "[-]" if detail_label.visible else "[+]"
+			)
+			meta_row.add_child(toggle_btn)
 
 	return panel
 

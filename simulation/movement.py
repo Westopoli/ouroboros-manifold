@@ -28,6 +28,27 @@ class Navmesh:
                 if tmap.obstacle_density(cx, cy) >= threshold:
                     nm.grid[r][c] = False
                     nm.has_obstacles = True
+        if tmap.asteroid_field is not None:
+            r_block = config.ASTEROID_MOVEMENT_BLOCK_RADIUS
+            half_cell = nm.cell_size / 2.0
+            for asteroid in tmap.asteroid_field.asteroids:
+                if asteroid.radius_xy < r_block:
+                    continue
+                block_dist = asteroid.radius_xy + half_cell
+                block_dist_sq = block_dist * block_dist
+                c_min = max(0, int((asteroid.x - block_dist) / nm.cell_size))
+                c_max = min(nm.cols - 1, int((asteroid.x + block_dist) / nm.cell_size))
+                r_min = max(0, int((asteroid.y - block_dist) / nm.cell_size))
+                r_max = min(nm.rows - 1, int((asteroid.y + block_dist) / nm.cell_size))
+                for row in range(r_min, r_max + 1):
+                    for col in range(c_min, c_max + 1):
+                        ccx = (col + 0.5) * nm.cell_size
+                        ccy = (row + 0.5) * nm.cell_size
+                        dx = ccx - asteroid.x
+                        dy = ccy - asteroid.y
+                        if dx * dx + dy * dy <= block_dist_sq:
+                            nm.grid[row][col] = False
+                            nm.has_obstacles = True
         return nm
 
     def cell(self, x, y):
