@@ -1,0 +1,97 @@
+From 15d1adc6fe8be2d5b2ed7dead8864992c4902da0 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 15 Apr 2026 00:33:24 +0000
+Subject: [PATCH] Refresh design doc handoff for next chat
+
+S8-1d (snapshot retention policy) is the next open question.
+All Stage 7 audit work + S8-1c capture summarized; presented
+options for S8-1d listed for the next chat to pick up.
+---
+ docs/design_questions/stage_7_8_design.md | 67 +++++++++++++----------
+ 1 file changed, 37 insertions(+), 30 deletions(-)
+
+diff --git a/docs/design_questions/stage_7_8_design.md b/docs/design_questions/stage_7_8_design.md
+index 6c6bcb5..9a191cf 100644
+--- a/docs/design_questions/stage_7_8_design.md
++++ b/docs/design_questions/stage_7_8_design.md
+@@ -8,40 +8,47 @@
+ 
+ ## Session Handoff
+ 
+-**Last updated:** 2026-04-14 (audit session in progress)
+-
+-**Last session accomplished:**
+-- Prior session: Stage 7 + 7.5 fully resolved (S7-1 through S75-2 — see "Resolved Decisions")
+-- Prior session: **S8-1 save scope resolved** — sim state + tactical mid-mission state + onboarding prefs; replays excluded; sim rewind-with-re-seed is in scope
+-- Prior session: **S8-1a sim snapshot cadence resolved** — boundary-only (every time jump + every mission start/end); periodic snapshots flagged as "maybe later"
+-- Prior session: **S8-1b rewind branching model resolved** — linear default + explicit "fork from here" action; forked slots appear in Stage 9 save-slot browser as sibling slots
+-- Prior session: **Stage 7 spec drafted and committed** to `docs/stage_specs/stage_7_spec.md` on main
+-- Prior session: **Stage 7 spec audit complete** — 9 items identified (1 formatting, 6 design gaps, 2 minor).
+-- This session: **Audit #0 applied** — closed the unclosed code fence in the Stage 7 spec (commit `e1023ca`).
+-- This session: **Audit — spec markdown restored** — `##`/`###` section headers, `**file**` label bolding, and missing `python` code fences around the `config.py` and I/O-shape snippets were stripped during original authoring; all restored (commit `b129472`).
+-- This session: **Audit #1 applied — S7-5 ownership rule spelled out** — linear centered mapping (Option A). Military drives the player↔enemy axis, tension drives the neutral share, economy/population do not participate. Stage 7 ships with uniform `33/33/33` baseline for all archetypes; 4 prototype baselines are added in Stage 7.5 per S75-2. New config constants `OWNERSHIP_MILITARY_COEFF` and `OWNERSHIP_TENSION_COEFF` both default to `0.15` (tuning).
+-- This session: **Bible hub captured** (v2.07 → v2.08) — Stage 7 roadmap split into 7 / 7.5 / 8; Stage 8 roadmap expanded with rewind-with-re-seed persistence; Open Questions #12 (structure placement), #13 (economy tuning in shape), and #15 (journaling, partially) resolved; "Beyond Stage 9" deferral list updated.
++**Last updated:** 2026-04-15 (end of session, handing off to new chat)
++
++**Last session accomplished (this session = audit + S8-1c):**
++- **Stage 7 spec audit fully applied** (PR #5, merged to main as commit `6566b83`):
++  - #0 fence fix, markdown headers/labels/code-fences restored
++  - #1 S7-5 ownership rule — Option A linear centered mapping (military → player/enemy axis, tension → neutral share, no econ/pop). `OWNERSHIP_MILITARY_COEFF = OWNERSHIP_TENSION_COEFF = 0.15`
++  - #2 `STRUCTURE_COUNT_RANGES` config constant (small 1–3, medium 2–5, large 3–7)
++  - #3 production time formula embedded in `reinforcement.py` description
++  - #4 `RegionState` dataclass — Option B (6 driver fields + `region_id` + `tier`; debug fields not read by generation logic)
++  - #5 spawn_point vs reinforcement placement subsection
++  - #6 archetype-aware fairness — Option B (per-archetype `FairnessTargetProfile` with direction-preserving `(target_ratio, tolerance)` per metric; obsolete `FAIRNESS_ACCEPTABLE_SCORE` removed; Checkpoint H extended)
++  - #7–9 minor: complications-deferred note, gradient property count reconciliation, I8 measurement mechanism (`generation_count` counter)
++- **Bible hub captured v2.07 → v2.08** (in PR #5):
++  - Stage 7 roadmap rewritten for post-split scope; Stage 7.5 entry inserted; Stage 8 entry expanded with persistence/rewind
++  - Open Question #12 (structure placement) RESOLVED
++  - Open Question #13 (economy tuning) RESOLVED in shape; numbers remain tuning
++  - Open Question #15 (journaling/rollback) PARTIALLY RESOLVED
++  - "Beyond Stage 9" line updated
++- **S8-1c resolved** (PR #6, merged to main as commit `394d04b`): chronicle behavior on rewind = **Option A, erase**. Linear rewind erases discarded-timeline chronicle entries; chronicle always reflects canonical timeline. S8-1b's fork-from-here is the explicit preservation mechanism. Bible hub bumped v2.08 → v2.09; Open Question #15 updated to remove chronicle-on-rewind from still-open sub-questions.
+ 
+ **Next session should:**
+-- **First:** apply the Stage 7 spec audit fixes. Order:
+-  - (0) ~~Fix the unclosed code fence~~ — DONE (commit `e1023ca`)
+-  - (1) ~~Add S7-5 ownership rule~~ — DONE (linear centered mapping, Option A; commit pending this turn)
+-  - (2) ~~Add `STRUCTURE_COUNT_RANGES` to the config block~~ — DONE (small 1–3, medium 2–5, large 3–7)
+-  - (3) ~~Add production time formula~~ — DONE (embedded in the `reinforcement.py` bullet list)
+-  - (4) ~~Define `RegionState` dataclass shape~~ — DONE (Option B: 6 numeric driver fields + `region_id` + `tier`; debug/label fields are not read by generation logic, only by output helpers)
+-  - (5) ~~Clarify spawn_point node usage~~ — DONE (added "Spawn Point vs Reinforcement Structure Placement" subsection)
+-  - (6) ~~Archetype-aware fairness~~ — DONE (Option B: per-archetype `FairnessTargetProfile` with `(target_ratio, tolerance)` per metric; direction-preserving ratios replace 0–1 symmetry scores; 4 prototype archetypes get authored profiles, other 6 use symmetric default; obsolete `FAIRNESS_ACCEPTABLE_SCORE` removed; Checkpoint H test plan updated)
+-  - (7) ~~Complications-deferred note~~ — DONE (added to "Not in scope" line)
+-  - (8) ~~Gradient property count reconciliation~~ — DONE (gradient_placer.py entry documents the 4 continuous + 1 layer-mask-with-5-channels decomposition matching the bible's 5)
+-  - (9) ~~I8 measurement mechanism~~ — DONE (navmesh exposes `generation_count` counter; Checkpoint L/M assert == 1)
+-- Several of these have implementation shapes worth confirming with Westley as mini-questions (especially 1, 4, 6). Present per `design_rules.md` format.
+-- **After Stage 7 spec audit:** resume Stage 8 design with S8-1c (chronicle behavior on rewind — already presented in prior chat with options A erase / B preserve dimmed / C save-metadata tombstones; recommendation was A, never answered). Then S8-1d (retention), S8-1e (tactical-state scope), S8-2 (onboarding UI), S8-3 (mid-mission UI density).
+-- Once all [ANSWERED], promote decisions into bible/specs and delete this file.
++- **First:** answer **S8-1d (snapshot retention policy)** — it was presented at the end of this session, not yet answered. The presented options were:
++  - A — Unlimited (disk allowing)
++  - B — Last-N ring buffer
++  - C — Keep-all-chapter-boundaries + recent-window for mission-boundaries (recommended; concrete defaults: chapter boundaries unlimited, mission window N = 20)
++  - (D — manual prune was excluded as Stage 9 UI scope)
++- Then in order: **S8-1e** (tactical mid-mission state scope — single-slot quit-resume vs mid-mission rewind), **S8-2** (onboarding preference weight UI), **S8-3** (mid-mission UI information density).
++- After S8-1d is answered, capture into bible §15 (it lists snapshot retention as a still-open sub-question — remove on resolution) and bump version v2.09 → v2.10.
++- Once Stage 8's S8-1d/1e/2/3 are all [ANSWERED] and captured, the design doc has nothing left for Stages 7/7.5/8 — promote any remaining decisions and delete this file.
++- After all design captures land: next implementation work is the **Stage 7.5 spec draft** (using the resolved S75-1/S75-2 decisions plus the Stage 7 spec as the reference format).
+ 
+ **Current state summary:**
+-- Stage 7: all design questions resolved, spec drafted and committed, audit backlog identified (9 items)
+-- Stage 7.5: all design questions resolved
+-- Stage 8: S8-1, S8-1a, S8-1b resolved; S8-1c (presented, not answered), S8-1d, S8-1e, S8-2, S8-3 still [OPEN]
++- Stage 7: ALL design questions resolved + spec audit complete + bible captured. Implementation-ready.
++- Stage 7.5: ALL design questions resolved. Spec not yet drafted.
++- Stage 8: S8-1, S8-1a, S8-1b, S8-1c resolved + captured. **S8-1d [PRESENTED, awaiting answer]**. S8-1e, S8-2, S8-3 still [OPEN].
++
++**Bible hub current version:** v2.09.
++
++**Branch state:**
++- Working branch: `claude/ouroboros-design-stage-7-U3wcx` (up to date with origin)
++- main: includes everything through PR #6 (commit `394d04b`)
+ 
+ ---
+ 
+-- 
+2.48.1
+

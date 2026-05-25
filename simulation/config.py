@@ -1038,6 +1038,22 @@ GRADIENT_FLANK_OBSTACLE_INTENSITY  = 0.35
 GRADIENT_FLANK_OBSTACLE_RADIUS     = 450.0
 GRADIENT_FLANK_COVER_INTENSITY     = 0.40
 GRADIENT_FLANK_COVER_RADIUS        = 450.0
+# A3 Option B (2026-05-20): cover at defensible positions + approach corridors,
+# per bible_world.md:188 ("cover density gradients are placed in defensible
+# positions and approach corridors"). Calibration anchors:
+#   staging cover  = (800, 0.60)  — broad safe area, player rear
+#   flank cover    = (450, 0.40)  — mild concealment along flank
+# Chokepoint cover sits between: tighter than staging, denser than flank, since
+# it's prepared defensive ground. Objective cover is the smallest blob (single
+# focal point with prepared positions). Hazard cover mirrors flank intensity
+# (rebels hide "behind cover" within sensor interference zones per bible_missions
+# counterinsurgency line, but the hazard itself is not the cover — cover is mild).
+GRADIENT_CHOKEPOINT_COVER_INTENSITY = 0.55
+GRADIENT_CHOKEPOINT_COVER_RADIUS    = 550.0
+GRADIENT_OBJECTIVE_COVER_INTENSITY  = 0.50
+GRADIENT_OBJECTIVE_COVER_RADIUS     = 400.0
+GRADIENT_HAZARD_COVER_INTENSITY     = 0.35
+GRADIENT_HAZARD_COVER_RADIUS        = 400.0
 
 # Layer accessibility masks
 LAYER_COUNT        = 5
@@ -1146,3 +1162,13 @@ AMBIENT_LIVELINESS_HIGHLIGHT_PULSE_PERIOD_SEC = 1.5
 
 # Exit
 EXIT_FADE_TO_BLACK_DURATION_SEC = 0.6
+
+# ── Wave 2.5R: Asteroid cover (per-asteroid LOS model) ───────────────────────
+ASTEROID_SPATIAL_HASH_CELL   = 100.0
+LAYER_Z_FLOORS               = [0.0, 30.0, 100.0]
+LAYER_Z_CEILINGS             = [30.0, 100.0, 300.0]
+ASTEROID_BASE_DENSITY        = 0.00090
+ASTEROID_SCALE_DISTRIBUTION  = {"tiny": 0.60, "small": 0.25, "medium": 0.10, "huge": 0.05}
+ASTEROID_SCALE_RANGES        = {"tiny": (1.0, 3.0), "small": (3.0, 8.0), "medium": (8.0, 20.0), "huge": (20.0, 80.0)}
+ASTEROID_HEIGHT_RATIO_RANGE  = (0.5, 2.0)
+ASTEROID_MOVEMENT_BLOCK_RADIUS = 8.0

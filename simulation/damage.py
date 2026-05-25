@@ -7,12 +7,14 @@ from unit import (
 )
 from ability import get_damage_output_multiplier, get_damage_reduction
 from movement import has_combat_los, _ensure_navmesh
+from fog_of_war import compute_visibility
 
 _targeting_tick = 0
 
 def resolve_damage(store: UnitStore, tactical_map, dt: float):
     active = store.active_ids()
     navmesh = _ensure_navmesh(tactical_map)
+    visibility = compute_visibility(store, tactical_map)
     pending = {}
 
     for uid in active:
@@ -31,6 +33,9 @@ def resolve_damage(store: UnitStore, tactical_map, dt: float):
         attack_range = store.data[uid, FIELD_ATTACK_RANGE]
 
         if dist > attack_range:
+            continue
+
+        if target not in visibility.get(uid, ()):
             continue
 
         if navmesh is not None and navmesh.has_obstacles:
@@ -129,11 +134,7 @@ def _accumulate_single(store, attacker, target, base_dmg, attacker_cat, tactical
     target_cat = CATEGORY_NAMES[store.category[target]]
     mult = config.CATEGORY_MULTIPLIER[attacker_cat][target_cat]
 
-    cover = 0.0
-    if tactical_map is not None:
-        cover = tactical_map.cover_density(store.data[target, FIELD_X], store.data[target, FIELD_Y])
-
-    dmg = base_dmg * mult * (1.0 - cover)
+    dmg = base_dmg * mult
     dmg *= get_damage_output_multiplier(store, attacker)
     dmg *= (1.0 - get_damage_reduction(store, target))
     if target not in pending:
@@ -168,11 +169,7 @@ def _accumulate_aoe(store, attacker, primary_target, base_dmg, attacker_cat, aoe
         target_cat = CATEGORY_NAMES[store.category[target]]
         mult = config.CATEGORY_MULTIPLIER[attacker_cat][target_cat]
 
-        cover = 0.0
-        if tactical_map is not None:
-            cover = tactical_map.cover_density(store.data[target, FIELD_X], store.data[target, FIELD_Y])
-
-        dmg = base_dmg * mult * (1.0 - cover)
+        dmg = base_dmg * mult
         dmg *= get_damage_output_multiplier(store, attacker)
         dmg *= (1.0 - get_damage_reduction(store, target))
 
@@ -188,10 +185,11 @@ def _accumulate_aoe(store, attacker, primary_target, base_dmg, attacker_cat, aoe
         total_dealt += dmg
 
 
-def update_targeting(store: UnitStore, tmap, rng=None):
+def update_targeting(store: UnitStore, tmap, rng=None, dt=None):
     global _targeting_tick
     _targeting_tick += 1
     cohort_this_tick = _targeting_tick % config.TARGETING_COHORT_COUNT
+    visibility_map = compute_visibility(store, tmap)
     active = store.active_ids()
 
     # Rebuild both hashes each tick.
@@ -249,7 +247,9 @@ def update_targeting(store: UnitStore, tmap, rng=None):
             found_atk = True
 
         if not found_atk:
-            store.auto_engage_target[uid] = -1
+            pre_acquisition = int(store.auto_engage_target[uid])
+            if pre_acquisition < 0:
+                store.auto_engage_target[uid] = -1
             # Attack-move pursuit: walk toward the nearest visible enemy if none in range.
             # Uses spatial_hash (large cells) — cheap at long sensor ranges during march.
             # See movement.py apply_group_move — attack_moving flag set by attack_move command.
@@ -259,9 +259,11 @@ def update_targeting(store: UnitStore, tmap, rng=None):
                     sensor_r_sq = sensor_r * sensor_r
                     best_d_sq = float("inf")
                     best_uid  = -1
+                    uid_visible = visibility_map.get(uid, set())
                     for other in tmap.spatial_hash.query(mx, my_, sensor_r):
                         if store.faction[other] == my_faction: continue
                         if store.data[other, FIELD_LAYER] != my_layer: continue
+                        if other not in uid_visible: continue
                         dx = store.data[other, FIELD_X] - mx
                         dy = store.data[other, FIELD_Y] - my_
                         d_sq = dx * dx + dy * dy
@@ -269,6 +271,7 @@ def update_targeting(store: UnitStore, tmap, rng=None):
                             best_d_sq = d_sq
                             best_uid  = other
                     if best_uid >= 0:
+                        store.auto_engage_target[uid] = best_uid
                         store.set_move_target(uid,
                                               store.data[best_uid, FIELD_X],
                                               store.data[best_uid, FIELD_Y])

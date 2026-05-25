@@ -92,6 +92,20 @@ FAIRNESS_PROFILES: dict[str, FairnessTargetProfile] = {
         hazard_balance      = (1.00, 0.25),   # situational in retreat
         archetype           = "evacuation",
     ),
+    "interception": FairnessTargetProfile(
+        path_balance        = (1.00, 0.25),   # open terrain, neither side prepared
+        travel_time_balance = (1.00, 0.20),   # meeting engagement
+        vantage_balance     = (1.00, 0.25),   # no fortifications either side
+        hazard_balance      = (1.00, 0.25),   # environmental hazards only
+        archetype           = "interception",
+    ),
+    "containment": FairnessTargetProfile(
+        path_balance        = (1.10, 0.25),   # multiple corridors, defender spread
+        travel_time_balance = (1.00, 0.20),
+        vantage_balance     = (1.10, 0.25),   # defender holds line, slight edge
+        hazard_balance      = (1.00, 0.25),
+        archetype           = "containment",
+    ),
     "raid": FairnessTargetProfile(
         path_balance        = (1.00, 0.30),   # no bible prose; loose symmetric fallback
         travel_time_balance = (1.00, 0.30),
@@ -275,33 +289,70 @@ ARCHETYPE_FILTERS: dict[str, dict] = {
         _zone_gte("objective", 1),
     ),
 
-    # --- Non-prototype archetypes (stubs — refined in Stage 7.5) ---
-    # Minimum structural requirements only: must have staging, spawn, objective.
+    # --- Non-prototype archetypes (A3 Option B — tagged against existing layouts) ---
+    # Bible refs: bible_missions.md §Siege Breaking/§Reconquest/§Suppression/
+    # §Interception/§Evacuation/§Containment/§Counterinsurgency.
 
+    # Bible: player center, enemy positions ring perimeter, multiple targetable
+    # fortified bases. Reuses layouts with chokepoints radiating outward.
     "siege_breaking": _all(
         _zone_gte("staging", 1),
+        _zone_gte("chokepoint", 2),     # multiple enemy forward positions
         _zone_gte("spawn_point", 1),
         _zone_gte("objective", 1),
     ),
 
+    # Bible: former friendly territory with infrastructure, partial fortification.
+    # Defensive positions exist but enemy is partially set up.
     "reconquest": _all(
         _zone_gte("staging", 1),
+        _zone_gte("chokepoint", 1),     # partial enemy fortification
         _zone_gte("spawn_point", 1),
         _zone_gte("objective", 1),
     ),
 
+    # Bible: dispersed rebel positions, sensor interference present, damaged infra.
+    # Multiple small positions rather than one fortified base.
     "suppression": _all(
         _zone_gte("staging", 1),
+        _zone_gte("hazard_zone_anchor", 2),   # sensor interference / dispersal
         _zone_gte("spawn_point", 1),
         _zone_gte("objective", 1),
     ),
 
-    "evacuation": _all(
+    # Bible: open terrain, NO prepared positions for either side, terrain features
+    # provide tactical options (cover, elevation, sensor interference). No
+    # chokepoint requirement — meeting engagement on open ground.
+    "interception": _all(
         _zone_gte("staging", 1),
         _zone_gte("spawn_point", 1),
         _zone_gte("objective", 1),
+        _edge_gte("path", 2),           # transit corridors for moving forces
     ),
 
+    # Bible: collapsing perimeter, defensive position with extraction at rear,
+    # things to protect (evacuation convoys / key infrastructure).
+    "evacuation": _all(
+        _zone_gte("staging", 1),
+        _zone_gte("chokepoint", 1),     # defensive holding position
+        _zone_gte("spawn_point", 1),
+        _zone_gte("objective", 1),      # extraction point / asset to protect
+    ),
+
+    # Bible: wide front, multiple approach corridors, garrison multiple chokepoints
+    # simultaneously, natural defensive positions with gaps between them.
+    "containment": _all(
+        _zone_gte("staging", 1),
+        _zone_gte("chokepoint", 3),     # multiple boundary positions
+        _zone_gte("spawn_point", 1),
+        _zone_gte("objective", 1),
+        _edge_gte("path", 4),           # multiple approach corridors
+    ),
+
+    # NOTE: raid and rear_guard kept (not in canonical 10 per Agent F audit) —
+    # removing them would break test_stage7_checkpoint_c.py, test_stage7_5_*.py,
+    # test_script_schema.py, test_behavior_runner.py which iterate them. Open
+    # question for Westley: delete tests + entries, or keep both?
     "raid": _all(
         _zone_gte("staging", 1),
         _zone_gte("spawn_point", 1),

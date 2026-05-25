@@ -92,6 +92,23 @@ func get_active_era() -> String:
 	return _manifest.get("era_id", EraConfig.ACTIVE_ERA_ID)
 
 
+# Cover asset keys per era. Settled Reach: tiny+small → asteroid_small.glb,
+# medium → asteroid_medium.glb, huge → asteroid_large.glb. Other eras: TODO.
+const _COVER_ASSETS: Dictionary = {
+	"settled_reach": {
+		"tiny":   "res://assets/eras/settled_reach/environment/asteroid_small.glb",
+		"small":  "res://assets/eras/settled_reach/environment/asteroid_small.glb",
+		"medium": "res://assets/eras/settled_reach/environment/asteroid_medium.glb",
+		"huge":   "res://assets/eras/settled_reach/environment/asteroid_large.glb",
+	},
+}
+
+
+func get_cover_asset(era_id: String, scale_class: String) -> String:
+	var era_map: Dictionary = _COVER_ASSETS.get(era_id, {})
+	return era_map.get(scale_class, "")
+
+
 func get_faction_color(faction_id: int) -> Color:
 	var colors: Dictionary = _manifest.get("faction_colors", {})
 	var hex: String = colors.get(str(faction_id), "#888888")

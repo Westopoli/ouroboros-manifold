@@ -145,7 +145,8 @@ func get_mission_briefing(_mission_id: String) -> Dictionary:
 		"tick_counter": 48205,
 		"situation_text": "The {accent}Northern Confederation{/accent} has marshaled {strong}42{/strong} companies along the Thessalonica frontier over the past {strong}1,200{/strong} ticks. Intelligence reports confirm a {accent}Fortifier{/accent}-archetype commander directing the buildup \u2014 defensive posture with rare but devastating committed assaults. Regional military readiness has declined to {strong}28{/strong} following last generation's losses at Naissus. Your predecessor, {accent}Marcus Aurelius{/accent}, fell holding the northern approach. The Confederation appears to be testing whether the new commander has the same resolve.",
 		"objective_primary": {
-			"text": "Hold the southern wall until reinforcements arrive.",
+			"text": "Hold Thessalonica. Break the attacking force.",
+			"detail": "Destroy them or drive them off the map. The region must remain in our hands when the fighting stops.",
 			"archetype": "Rear Guard",
 			"success_spectrum_label": "EXTRACTION UNDER FIRE"
 		},

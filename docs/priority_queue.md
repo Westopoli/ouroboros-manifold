@@ -54,6 +54,11 @@ Westley locked 2026-05-15. Sign-off question in old queue body is closed: tutori
 
 ### BLOCKERS (must close pre-ZIP)
 
+**Cover-LOS rework (added 2026-05-21)** — see `docs/test_specs/cover_los_rework_spec.md` + Wave 2.5 in `docs/phase1_ship_plan.md`. Wave 2 H4 audit surfaced bible-spec conflict; Westley locked SC2-style polygon LOS-blocker model, symmetric blind, non-destructible Phase 1. Leaves L1–L7 dispatch via `/swarm` skill, parallel to Wave 3.
+
+- [~] **Cover semantic rework (Wave 2.5R/2.6M)** — SIM SUBSTRATE DONE 2026-05-24. Pivoted from polygon to per-asteroid 3D ray-cylinder LOS during execution. Wave 2.5R/2.6M leaves L1–L4, L8, L10, L12, L07 all merged via `/swarm-merge`. Umbrella `test_asteroid_umbrella.py` 17/17 GREEN. **OPEN**: L9 Godot render parked w/ parse error (cover invisible to Westley until landed); L6 AI cover-peek deferred post-launch per design lane. Branch `wn/chore-research-paused` carries all sim changes, uncommitted.
+
+
 **Audit pass 2026-05-16:** Every row below was rescoped after combing the codebase. Many items advertised as "build from scratch" are actually wiring jobs on top of Stage 10 + 12 infra. Don't trust the row title — read the **Built / Wired / Missing** block.
 
 - [x] **Save/resume world-view v1** — DONE 2026-05-18. Autosave fires post-time-jump; CONTINUE on main menu reboots sim with `--load <slot>`; sim replays the persisted time-jump message stream verbatim after `ready_for_time_jump` so narration paints identical to live. Godot confirm: territories + chronicle identical to first run.

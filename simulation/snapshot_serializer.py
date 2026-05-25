@@ -119,6 +119,7 @@ def full_snapshot(engine) -> dict:
             "spine_nodes": spine_nodes,
             "gradient_sources": gradient_sources,
             "drifting_nodes": drifting_nodes,
+            "cover_asteroids": serialize_cover_asteroids(tmap),  # static at map load — not in tick delta
         },
         "units": units,
         "structures": structures,
@@ -419,3 +420,18 @@ def delta_baseline(engine) -> dict:
     structures = [_structure_entry(s) for s in engine.reinforcement_structures]
     objectives = [_objective_entry(o, engine.store) for o in engine.objectives]
     return {"units": units, "structures": structures, "objectives": objectives}
+
+
+def serialize_cover_asteroids(tactical_map) -> list[dict]:
+    return [
+        {
+            "id": a.asteroid_id,
+            "cluster": a.cluster_id,
+            "x": a.x,
+            "y": a.y,
+            "r": a.radius_xy,
+            "h": a.height,
+            "class": a.scale_class,
+        }
+        for a in tactical_map.asteroid_field.asteroids
+    ]

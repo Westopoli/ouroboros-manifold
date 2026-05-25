@@ -2,7 +2,7 @@
   "layout_id": "layout_05_coastal_wedge",
   "name": "Coastal Wedge",
   "canvas_class": "medium",
-  "tags": ["assault", "defensive_stand"],
+  "tags": ["assault", "defensive_stand", "evacuation"],
   "zones": [
     {
       "zone_id": "staging_southeast",
