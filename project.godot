@@ -11,7 +11,9 @@ config_version=5
 [application]
 
 config/name="Ouroboros"
-run/main_scene="res://scenes/loading_screen/loading_screen.tscn"
+run/main_scene="res://scenes/privacy_modal/privacy_modal.tscn"
+config/use_custom_user_dir=true
+config/custom_user_dir_name="data"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
 
@@ -34,6 +36,8 @@ Visibility="*res://scripts/tactical/visibility.gd"
 FactionPalette="*res://autoload/faction_palette.gd"
 FeatureFlags="*res://autoload/feature_flags.gd"
 InspectionState="*res://scenes/world/world_view_inspection_state.gd"
+DebugOverlay="*res://autoload/debug_overlay.gd"
+TutorialStateMachine="*res://autoload/tutorial_state_machine.gd"
 
 [display]
 
