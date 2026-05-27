@@ -1,7 +1,7 @@
 extends Node
 
 # Set to true for distribution builds. Gates all print() calls and debug output.
-const IS_RELEASE_BUILD: bool = false
+var IS_RELEASE_BUILD: bool = OS.has_feature("release_build")
 
 # --- Background colors ---
 const BASE := Color("#0A0D12")

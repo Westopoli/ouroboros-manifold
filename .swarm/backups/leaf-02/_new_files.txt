@@ -1,0 +1,3 @@
+scenes/privacy_modal/privacy_modal.tscn
+scenes/privacy_modal/privacy_modal.gd
+tests/test_privacy_modal.gd

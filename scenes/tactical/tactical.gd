@@ -37,6 +37,11 @@ var _marker_instances: Dictionary = {}  # obj_id → MissionMarker node
 # See also: scenes/tactical/command_indicator.gd — transient command decals
 var _command_indicators: Node3D
 
+# See also: autoload/tutorial_state_machine.gd — listens for these triggers
+# to fire TUT_002 (first_unit_visible) and TUT_003 (first_unit_selected).
+var _emitted_first_unit_visible: bool = false
+var _emitted_first_unit_selected: bool = false
+
 
 func _ready() -> void:
 	print("Tactical: scene _ready()")
@@ -117,6 +122,10 @@ func _on_first_snapshot(_snap: Dictionary) -> void:
 		_pan_target = sum / float(count)
 	_zoom_dist = 1000.0
 	_update_camera()
+	# See also: autoload/tutorial_state_machine.gd — TUT_002 fires on first_unit_visible.
+	if not _emitted_first_unit_visible and TacticalBridge.units.size() > 0:
+		_emitted_first_unit_visible = true
+		_notify_tutorial("first_unit_visible")
 
 
 func _setup_environment() -> void:
@@ -151,6 +160,27 @@ func _process(delta: float) -> void:
 	_frame_counter += 1
 	if _frame_counter % 60 == 0:
 		_update_perf_label()
+	_check_first_unit_selected()
+
+
+func _check_first_unit_selected() -> void:
+	if _emitted_first_unit_selected:
+		return
+	var router := get_node_or_null("InputRouter")
+	if router == null:
+		return
+	var selected = router.get("selected_uids")
+	if selected == null:
+		return
+	if selected.size() > 0:
+		_emitted_first_unit_selected = true
+		_notify_tutorial("first_unit_selected")
+
+
+func _notify_tutorial(trigger_event: String) -> void:
+	var tsm := get_node_or_null("/root/TutorialStateMachine")
+	if tsm != null and tsm.has_method("handle_trigger"):
+		tsm.call("handle_trigger", trigger_event)
 
 
 func _handle_camera(delta: float) -> void:

@@ -1,10 +1,10 @@
-# claude-swarm — Ouroboros project config (Wave 2.5R + 2.6 Cover-Asteroid LOS + future waves)
+# claude-swarm — Ouroboros project config (Wave 3 Pre-Zip Wiring)
 
 spec_dir          = "docs/test_specs/"
-briefs_dir        = ".swarm/briefs/wave_2_5R_cover_asteroid/"
-type_contract_path = "docs/test_specs/cover_asteroid_los_spec.md"
+briefs_dir        = ".swarm/briefs/wave_3_pre_zip_wiring/"
+type_contract_path = "docs/test_specs/wave_3_pre_zip_wiring.md"
 
-umbrella_test_cmd = "cd simulation && python3 -m pytest test_asteroid_umbrella.py -v"
+umbrella_test_cmd = "cd simulation && python3 -m pytest test_wave3_blockers_umbrella.py -v && cd .. && bash scripts/run_godot_tests.sh tests/test_wave3_blockers_umbrella.gd"
 graphify_cmd      = ""
 
 parent_owned = [
@@ -17,10 +17,13 @@ parent_owned = [
   "docs/bible/bible_ai_pipeline.md",
   "docs/test_specs/cover_asteroid_los_spec.md",
   "docs/test_specs/cover_los_rework_spec.md",
+  "docs/test_specs/wave_3_pre_zip_wiring.md",
   "docs/phase1_ship_plan.md",
   "docs/priority_queue.md",
   "simulation/test_asteroid_umbrella.py",
   "simulation/test_cover_umbrella.py",
+  "simulation/test_wave3_blockers_umbrella.py",
+  "tests/test_wave3_blockers_umbrella.gd",
   "simulation/tick.py",
   "simulation/drift.py",
   "simulation/faction.py",

@@ -107,6 +107,27 @@ func _build_ui() -> void:
 	version.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	add_child(version)
 
+	var replay_tutorial_button := Button.new()
+	replay_tutorial_button.name = "ReplayTutorialButton"
+	replay_tutorial_button.text = "Replay Tutorial"
+	replay_tutorial_button.add_theme_font_override("font", ThemeConstants.font_mono_regular)
+	replay_tutorial_button.add_theme_font_size_override("font_size", 18)
+	replay_tutorial_button.add_theme_color_override("font_color", ThemeConstants.TERTIARY)
+	replay_tutorial_button.flat = true
+	replay_tutorial_button.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	replay_tutorial_button.offset_left = 30
+	replay_tutorial_button.offset_top = -50
+	replay_tutorial_button.offset_right = 200
+	replay_tutorial_button.offset_bottom = -20
+	replay_tutorial_button.pressed.connect(_on_replay_tutorial_pressed)
+	add_child(replay_tutorial_button)
+
+
+func _on_replay_tutorial_pressed() -> void:
+	var tsm := get_node_or_null("/root/TutorialStateMachine")
+	if tsm != null and tsm.has_method("reset_for_replay"):
+		tsm.call("reset_for_replay")
+
 
 func _setup_world_view_viewport() -> void:
 	var container := SubViewportContainer.new()

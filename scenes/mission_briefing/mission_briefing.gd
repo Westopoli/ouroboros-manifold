@@ -198,6 +198,23 @@ func _build_left_column(parent: Control) -> void:
 	briefing.add_theme_color_override("default_color", ThemeConstants.SECONDARY)
 	inner.add_child(briefing)
 
+	var short_objective_header := RichTextLabel.new()
+	short_objective_header.name = "short_objective_header"
+	short_objective_header.bbcode_enabled = true
+	short_objective_header.fit_content = true
+	short_objective_header.scroll_active = false
+	short_objective_header.add_theme_color_override("default_color", _accent)
+	var header_font_size := int(ThemeConstants.BODY_NARRATIVE_SIZE * 1.6)
+	short_objective_header.add_theme_font_size_override("normal_font_size", header_font_size)
+	short_objective_header.add_theme_font_size_override("bold_font_size", header_font_size)
+	var objective_text: String = _data.get("objective", "")
+	if objective_text == "":
+		short_objective_header.visible = false
+	else:
+		var accent_hex := "#" + _accent.to_html(false)
+		short_objective_header.text = "[color=%s][b]%s[/b][/color]" % [accent_hex, objective_text.to_upper()]
+	inner.add_child(short_objective_header)
+
 	var obj_label := Label.new()
 	obj_label.text = "MISSION OBJECTIVES"
 	obj_label.uppercase = true
