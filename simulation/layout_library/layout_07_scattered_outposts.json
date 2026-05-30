@@ -2,7 +2,7 @@
   "layout_id": "layout_07_scattered_outposts",
   "name": "Scattered Outposts",
   "canvas_class": "medium",
-  "tags": ["counterinsurgency"],
+  "tags": ["counterinsurgency", "suppression"],
   "zones": [
     {
       "zone_id": "staging_base",

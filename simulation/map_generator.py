@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import config
 from map_gen_contracts import GeneratorInput, MapGenerationResult
 from layout_instantiator import instantiate_layout
-from gradient_placer import place_gradients
+from gradient_placer import place_gradients, place_cover_polygons
 from layer_masks import place_layer_masks
 from sim_flavoring import compute_flavoring, apply_flavoring
 from fairness_evaluator import evaluate_fairness
@@ -123,6 +123,7 @@ def _build_result(inst, layout, all_sources, score, attempt, compatible):
         if na and nb:
             resolved_edges.append((na, nb, edge.edge_type))
 
+    cover_polys = place_cover_polygons(inst)
     tm = TacticalMap(
         width            = inst.canvas_w,
         height           = inst.canvas_h,
@@ -130,6 +131,7 @@ def _build_result(inst, layout, all_sources, score, attempt, compatible):
         spine_nodes      = inst.spine_nodes,
         layers           = config.LAYER_COUNT,
         edges            = resolved_edges,
+        cover_polygons   = cover_polys,
     )
 
     owner_counts = {"player": 0, "neutral": 0, "enemy": 0}

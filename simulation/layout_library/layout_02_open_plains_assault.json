@@ -2,7 +2,7 @@
   "layout_id": "layout_02_open_plains_assault",
   "name": "Open Plains Assault",
   "canvas_class": "large",
-  "tags": ["assault"],
+  "tags": ["assault", "interception"],
   "zones": [
     {
       "zone_id": "staging_south",

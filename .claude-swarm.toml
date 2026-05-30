@@ -1,0 +1,52 @@
+# claude-swarm — Ouroboros project config (Wave 3 Pre-Zip Wiring)
+
+spec_dir          = "docs/test_specs/"
+briefs_dir        = ".swarm/briefs/wave_3_pre_zip_wiring/"
+type_contract_path = "docs/test_specs/wave_3_pre_zip_wiring.md"
+
+umbrella_test_cmd = "cd simulation && python3 -m pytest test_wave3_blockers_umbrella.py -v && cd .. && bash scripts/run_godot_tests.sh tests/test_wave3_blockers_umbrella.gd"
+graphify_cmd      = ""
+
+parent_owned = [
+  "docs/bible/game_bible.md",
+  "docs/bible/bible_simulation.md",
+  "docs/bible/bible_missions.md",
+  "docs/bible/bible_chronicle.md",
+  "docs/bible/bible_antagonist.md",
+  "docs/bible/bible_monetization.md",
+  "docs/bible/bible_ai_pipeline.md",
+  "docs/test_specs/cover_asteroid_los_spec.md",
+  "docs/test_specs/cover_los_rework_spec.md",
+  "docs/test_specs/wave_3_pre_zip_wiring.md",
+  "docs/phase1_ship_plan.md",
+  "docs/priority_queue.md",
+  "simulation/test_asteroid_umbrella.py",
+  "simulation/test_cover_umbrella.py",
+  "simulation/test_wave3_blockers_umbrella.py",
+  "tests/test_wave3_blockers_umbrella.gd",
+  "simulation/tick.py",
+  "simulation/drift.py",
+  "simulation/faction.py",
+  "simulation/region.py",
+  "simulation/events.py",
+  "simulation/event_engine.py",
+  "simulation/intent_resolver.py",
+  "simulation/border_friction.py",
+  "simulation/technology.py",
+  "simulation/diplomacy.py",
+  "simulation/world.py",
+  "simulation/templates.py",
+  "simulation/theme_scifi.py",
+]
+
+[invariants]
+max_impl_lines      = 200
+max_test_assertions = 20
+ambiguous_verbs = [
+  "decide", "choose", "design", "determine",
+  "figure out", "resolve", "as appropriate",
+  "use your judgment", "pick", "select an approach",
+]
+
+[gates]
+extra_spec_gate_cmds = []

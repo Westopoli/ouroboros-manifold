@@ -114,8 +114,6 @@ func _process(delta: float) -> void:
 
 
 func _spawn_sim(extra_args: PackedStringArray = PackedStringArray()) -> void:
-	var script := ProjectSettings.globalize_path("res://") + SIM_SCRIPT_PATH
-
 	# Create a temp file for the command channel (godot→sim).
 	_cmd_file_path = ProjectSettings.globalize_path("res://") + "logs/sim_cmd_%d.jsonl" % randi()
 	_cmd_file = FileAccess.open(_cmd_file_path, FileAccess.WRITE)
@@ -128,14 +126,33 @@ func _spawn_sim(extra_args: PackedStringArray = PackedStringArray()) -> void:
 	# os.getcwd() (project root in dev mode) and the load screen never sees
 	# the file. See simulation/pipe_transport.py `--save-root` parsing.
 	var save_root := ProjectSettings.globalize_path("user://saves")
-	var args: PackedStringArray = [script, "--cmd-file", _cmd_file_path, "--units", str(SIM_UNITS_PER_SIDE), "--real-missions", "--save-root", save_root]
+
+	# B5-C release-mode branch. In a packaged build the Python sim is bundled
+	# as a PyInstaller binary at <game_root>/sim/ouroboros_sim[.exe]. game_root
+	# resolves via OS.get_executable_path().get_base_dir() — directory containing
+	# the Godot game binary. pipe_transport.py reads --root to chdir before any
+	# file I/O (see simulation/pipe_transport.py line 1283).
+	# See also: autoload/theme_constants.gd — IS_RELEASE_BUILD source of truth.
+	var exec_target: String
+	var args: PackedStringArray
+	if ThemeConstants.IS_RELEASE_BUILD:
+		var game_root := OS.get_executable_path().get_base_dir()
+		var bin_name := "ouroboros_sim.exe" if OS.has_feature("windows") else "ouroboros_sim"
+		exec_target = game_root + "/sim/" + bin_name
+		args = ["--cmd-file", _cmd_file_path, "--units", str(SIM_UNITS_PER_SIDE), "--real-missions", "--save-root", save_root, "--root", game_root]
+	else:
+		var script := ProjectSettings.globalize_path("res://") + SIM_SCRIPT_PATH
+		exec_target = "python3"
+		args = [script, "--cmd-file", _cmd_file_path, "--units", str(SIM_UNITS_PER_SIDE), "--real-missions", "--save-root", save_root]
+
 	for a in extra_args:
 		args.append(a)
-	var result: Dictionary = OS.execute_with_pipe("python3", args)
-	if result.is_empty() or not result.has("pid"):
+
+	var result: Dictionary = OS.execute_with_pipe(exec_target, args)
+	if (result.is_empty() or not result.has("pid")) and not ThemeConstants.IS_RELEASE_BUILD:
 		result = OS.execute_with_pipe("python", args)
 	if result.is_empty() or not result.has("pid"):
-		sim_error.emit({"kind": "spawn_failed", "message": "OS.execute_with_pipe failed — python3/python not found"})
+		sim_error.emit({"kind": "spawn_failed", "message": "OS.execute_with_pipe failed — exec target %s not found" % exec_target})
 		return
 
 	_pid = result["pid"]

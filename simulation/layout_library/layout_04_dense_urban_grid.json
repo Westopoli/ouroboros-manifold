@@ -2,7 +2,7 @@
   "layout_id": "layout_04_dense_urban_grid",
   "name": "Dense Urban Grid",
   "canvas_class": "medium",
-  "tags": ["assault", "defensive_stand"],
+  "tags": ["assault", "defensive_stand", "reconquest"],
   "zones": [
     {
       "zone_id": "staging_south",

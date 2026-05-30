@@ -201,7 +201,10 @@ def _mission_setup_to_briefing(setup, sim_env, cmdr_selection):
         situation_parts.append(setup.briefing["assets"])
     situation_text = "\n\n".join(situation_parts) if situation_parts else "Mission details are classified."
 
-    # Primary objective from the setup's objectives list
+    # Primary objective from the setup's objectives list.
+    # text/detail come from setup.briefing (short + detail strings from mission_briefing.py templates).
+    briefing_short = setup.briefing.get("objective", "") if setup.briefing else ""
+    briefing_detail = setup.briefing.get("objective_detail", "") if setup.briefing else ""
     primary_obj = None
     secondary_objs = []
     for obj_spec in setup.objectives:
@@ -210,13 +213,21 @@ def _mission_setup_to_briefing(setup, sim_env, cmdr_selection):
             "archetype": setup.archetype.replace("_", " ").title(),
         }
         if obj_spec.is_primary:
+            if briefing_short:
+                obj_entry["text"] = briefing_short
+            obj_entry["detail"] = briefing_detail
             obj_entry["success_spectrum_label"] = "PRIMARY OBJECTIVE"
             primary_obj = obj_entry
         else:
             obj_entry["weight_label"] = "SECONDARY"
             secondary_objs.append(obj_entry)
     if not primary_obj:
-        primary_obj = {"text": "Complete the mission.", "archetype": setup.archetype.replace("_", " ").title(), "success_spectrum_label": "PRIMARY OBJECTIVE"}
+        primary_obj = {
+            "text": briefing_short or "Complete the mission.",
+            "detail": briefing_detail,
+            "archetype": setup.archetype.replace("_", " ").title(),
+            "success_spectrum_label": "PRIMARY OBJECTIVE",
+        }
 
     # Player force unit list — aggregate by type
     unit_counts: dict = {}
@@ -384,7 +395,13 @@ def _generate_and_build_engine(sim_env, logger):
         tmap = map_result.tactical_map
         logger.info("map generated: layout=%s, size=%dx%d", map_result.chosen_layout_id, tmap.width, tmap.height)
     except Exception as e:
-        logger.error("map generation failed (%s), falling back to open field", e)
+        # A3 Option B (2026-05-20): explicit EMPTY_FIELD_FALLBACK marker so
+        # regressions are grep-able. See also: simulation/archetype_filters.py
+        # ARCHETYPE_FILTERS — missing filter or no compatible layout lands here.
+        logger.error(
+            "EMPTY_FIELD_FALLBACK archetype=%s reason=%s: %s — generating empty 4000x4000 field",
+            archetype, type(e).__name__, e,
+        )
         tmap = TacticalMap(width=4000, height=4000, layers=1, spine_nodes=[], gradient_sources=[])
 
     # Create engine

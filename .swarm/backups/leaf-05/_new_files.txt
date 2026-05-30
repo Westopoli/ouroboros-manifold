@@ -1,0 +1,1 @@
+tests/test_b2_briefing_scene.gd
