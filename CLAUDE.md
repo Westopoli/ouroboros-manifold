@@ -2,40 +2,64 @@
 
 **Tech stack:** Godot 4 (Forward+) · Python 3.14 · Cloudflare R2 CDN · `claude-sonnet-4-20250514` (library builder only, offline — never called during play)
 
+This is a long-term project. There is no ship deadline. One feature at a time, done well, before the next one starts.
+
 ## The Bible
 
-The game bible is the single source of truth for what this game is. It uses a **hub-and-spoke architecture** in `docs/bible/`:
+The game bible is the single source of truth for what this game is. It lives in `docs/bible/`:
 
-- **Hub:** `docs/bible/game_bible.md` — vision, principles, generational structure, player toolkit, tone, and summary paragraphs pointing to spokes
-- **Spokes:** `docs/bible/bible_*.md` — full reference for each major system (simulation, missions, combat, world, chronicle, antagonist, monetization, AI pipeline)
+- **Hub:** `docs/bible/game_bible.md` — vision, principles, generational structure, player toolkit, tone, monetization.
+- **Spokes (if any):** `docs/bible/bible_*.md` — full reference for systems too long to fold into the hub. A spoke exists only if the hub got unreadable without it. Most rules belong in the hub.
 
-**Reading discipline:** Read the hub first. Then read only the spoke(s) relevant to your task — stage specs list which spokes to read in their "Bible References" section. Don't read every spoke every time.
+**Reading discipline:** Read the hub first. Read a spoke only if you're touching the system it owns. Don't read every spoke every time.
 
-**Design decisions:** When facing a design fork — "should this feel punishing or dramatic?", "does the player control this or does the civilization?" — check the **Design Experience Guide** section in the hub. It has heuristics and litmus tests for resolving ambiguity without reading 200 lines of vision docs.
+**Previous versions:** Monolithic bible snapshots live in `docs/bible_history/game_bible_X_YY.md`.
 
-**Previous versions:** Monolithic bible versions are archived in `docs/bible_history/game_bible_X_YY.md`.
+If something in any other doc conflicts with the bible, the bible wins.
 
-If something in any other doc conflicts with the bible (hub or any spoke), the bible wins.
+### Bible discipline: rewrite, never append
+
+**Append-only is forbidden.** When game direction changes, the old text is *deleted*, not annotated. Don't add "PIVOT" markers, "In Flux" sections, "as of date X" callouts, or "previously this said Y" footnotes inside the bible. The bible always describes what the game *is* right now.
+
+If you need history, that's what `docs/bible_history/` and `git log` are for. Inside `docs/bible/**`, the only allowed state is "current truth."
+
+This rule exists because the prior failure mode — months of append-only edits — left contradictory directives stacked on top of each other. Stale claims leaked into new chats and produced incorrect implementations.
 
 ## Model Usage
 
 Default to `claude-opus-4-6` for all implementation work.
 
-## Workflow (active mode)
+## Workflow
 
-**One terminal, one queue, one test deliverable at a time.** No more parallel Tracks A/B/C. Single source of truth: `docs/priority_queue.md`. Full how-to: `docs/workflow.md`. (`docs/ai_status.md` is a stub pointing here — single-terminal model retired the coordination board.)
+**One terminal, one queue, one feature at a time.** Single source of truth: `docs/priority_queue.md`. Full how-to: `docs/workflow.md`.
 
-**Pre-Zip gate first.** Before picking the next item, read `docs/priority_queue.md` § Pre-Zip Beta Readiness Gate (top of file). Gate BLOCKERs come before anything in the queue body. An `[x]` in `launch_todo.md` does NOT imply "ships to friends OK" — the gate is authoritative.
+Per feature:
 
-Per item:
-1. Read the gate, then top of `docs/priority_queue.md`. Restate in caveman mode. Confirm with Westley.
+1. Read top of `docs/priority_queue.md` (the NEXT entry). Restate in caveman mode. Confirm with Westley.
 2. `git checkout -b wn/<type>-<slug>` off `main` (type ∈ bug, feat, refactor, chore, docs).
-3. **TDD first.** Sim → pytest red, then green, then refactor. Godot → write `test_*.gd` scene test where practical; otherwise document the manual checklist as the test.
-4. Implement in caveman mode. Minimal diff. No stink (see below). Small tasks only — if it feels like 2 items, split.
-5. `git push -u origin wn/<branch>` + `gh pr create`. PR body has the Godot test steps.
-6. Hand Westley: scene to open, ≤5 numbered steps, expected outcome, fail-look-fors.
-7. Westley confirms in Godot. Pass → merge. Fail → one targeted iteration; if still bad, escalate + park.
-8. Update `docs/priority_queue.md` (gate checkbox + queue body status). Next item.
+3. **TDD first.** Sim → pytest red → green → refactor. Godot → write `test_*.gd` scene test where practical; otherwise document the manual checklist as the test.
+4. Implement in caveman mode. Minimal diff. No stink (see Code Quality below).
+5. **Stale-doc tripwire.** Before pushing: search docs for claims this PR makes wrong. Delete or rewrite them *in the same PR*.
+6. `git push -u origin wn/<branch>` + `gh pr create`. PR body has the test steps.
+7. Hand Westley: scene to open (or pytest path), ≤5 numbered steps, expected outcome, fail-look-fors.
+8. Westley confirms. Pass → merge. Fail → one targeted iteration; if still bad, escalate + park.
+9. Update `docs/priority_queue.md`. Pick next NEXT (or leave empty for Westley to seed).
+
+### Definition of done
+
+A feature is `done` only when ALL of:
+
+1. Working code in `main`.
+2. Isolation test (system under test alone, every other variable hard-fixtured or disabled).
+3. Integration test (same system in a realistic scene with pathing, AI, fog, vision, other actors).
+4. Doc updates in the same PR — every wrong claim deleted or rewritten.
+5. Zero floating TODOs in the changed files. Surviving TODOs must point at a specific named feature in `priority_queue.md`.
+
+If any of these is missing, the feature is not done. Don't pick a new one.
+
+### No batching
+
+No umbrellas. No waves. No closeout PRs that bundle 4 features under one banner. One branch = one feature = one PR = one test deliverable. If something feels like two items, split it.
 
 Use **Graphify first** for code navigation. Try `/graphify query`, `/graphify path`, `/graphify explain` before cold Grep/Read. Rebuild (`graphify .`) when structural changes land.
 
@@ -43,7 +67,11 @@ Use **Graphify first** for code navigation. Try `/graphify query`, `/graphify pa
 
 ## Design Lane
 
-A parallel chat operates as the Design Lane — surfaces design forks, captures Westley's picks into `docs/bible/**`. It is a different chat from the implementer lane. Rules, org model, and active queue: `docs/design_lane.md` + `docs/design_lane_queue.md`.
+A parallel chat operates as the Design Lane — surfaces design forks, captures Westley's picks into `docs/bible/**`. Different chat from the implementer lane. Rules + active queue: `docs/design_lane.md` + `docs/design_lane_queue.md`.
+
+## Research Lane
+
+A parallel chat operates as the Research Lane — gathers intel that feeds Design Lane decisions. Different chat from both implementer and Design Lane. Rules + active queue: `docs/research_lane.md` + `docs/research_lane_queue.md`.
 
 ## The Rules
 
@@ -73,18 +101,24 @@ Any change to the tick delta JSON shape must be posted to `docs/architecture.md`
 
 ### Sub-agents implement, never design
 
-Sub-agents (Explore, general-purpose, Plan, claude-code-guide, etc.) are scoped to implementation against an existing spec. They may not:
+Sub-agents (Explore, general-purpose, Plan, claude-code-guide, cavecrew variants, etc.) are scoped to implementation against an existing spec. They may not:
 - Make architectural decisions, API shape choices, or scope expansions
-- Edit `docs/bible/**`, `docs/stage_specs/**`, `docs/launch_*`, `CLAUDE.md`, or any test thresholds
+- Edit `docs/bible/**`, `docs/stage_specs/**`, `CLAUDE.md`, or any test thresholds
 - Decide what should be tested — they execute the test plan from the orchestrator
 
 When a sub-agent hits ambiguity, it returns findings + a proposed change. The main agent (your terminal Claude) decides.
 
 ### Sub-agents use caveman mode for prose
 
-When dispatching a sub-agent, append this directive to the prompt: "Report-back caveman mode (drop articles/filler/hedging, fragments OK). Markdown docs/briefs you write: caveman. Commit messages: caveman. Code, tests, config: normal prose."
+When dispatching a sub-agent, append this directive to the prompt: *"Report-back caveman mode (drop articles/filler/hedging, fragments OK). Markdown docs/briefs you write: caveman. Commit messages: caveman. Code, tests, config: normal prose."*
 
-Token-save at scale (TDD + Research Lane fan out heavily). Main agent is the only consumer of report-back, so style mix in `docs/**` is fine — graphify indexing is register-agnostic. Code and tests stay normal so test names, assertions, comments, and runtime strings don't degrade.
+Token-save at scale. Main agent is the only consumer of report-back, so style mix in `docs/**` is fine — graphify indexing is register-agnostic. Code and tests stay normal so test names, assertions, comments, and runtime strings don't degrade.
+
+### Stale-doc tripwire is mandatory
+
+A PR that lands a behavior change must also delete or rewrite every doc claim that the change makes wrong. This is part of the Definition of Done; PRs that skip it are not done.
+
+Stale docs are the single biggest leak path for bad rules into future chats. The bible-discipline rule above and this tripwire are the two defenses.
 
 ## Code Quality
 
@@ -96,7 +130,7 @@ Token-save at scale (TDD + Research Lane fan out heavily). Main agent is the onl
 
 ### Traceability
 
-This is critical. If system A isn't working and you build system B to solve the problem, the connection between A and B must be obvious. Specifically:
+This is critical. If system A isn't working and you build system B to solve the problem, the connection between A and B must be obvious:
 
 - If you add a workaround, fix, or secondary system that changes how an existing system behaves, **leave a comment at both sites** pointing to the other. `# See also: path/to/other_file.gd — handles X because Y` is enough.
 - If you disable, bypass, or replace existing code instead of fixing it, say so explicitly. Don't leave dead code that looks like it should work but silently doesn't.
@@ -117,7 +151,7 @@ The game is built in implementation stages defined in the stage docs (`docs/stag
 1. **Complete the current stage before starting the next.** No skipping ahead, no "laying groundwork" for future stages.
 2. **Features marked `[OPTIONAL]` are built only after the stage's core milestone passes cleanly.** If an optional feature causes instability, remove it entirely and leave a `# OPTIONAL: [feature] — not implemented` comment. Never spend more than one session debugging an optional system.
 3. **The base game must be stable before any optional system is added.** A working simple version always beats a broken complex one.
-4. **Do not refactor code without user's (Westley) permission.** If something need to be fixed, flag it and ask for input on what to do.
+4. **Do not refactor code without Westley's permission.** If something needs to be fixed, flag it and ask for input on what to do.
 
 ### No blind git reverts
 
@@ -154,8 +188,6 @@ For both:
 4. **An assertion that fails is only a system bug if the fixture is proven clean.** Otherwise it's a test bug — fix the test first.
 5. **More tests can't hurt.** If a system has only isolation coverage, add integration. If it has only integration coverage, add isolation. Both reveal different failure modes.
 
-Stage 6 Checkpoint J (RPS) work is governed by this directive when resumed.
-
 ### General
 
 Run tests yourself and analyze the output directly. After any code change that requires a test run, run it, read the results, and proceed.
@@ -167,7 +199,7 @@ Run tests yourself and analyze the output directly. After any code change that r
 - **You may** narrow an invariant's scope without approval — skipping cases it was never meant to check (empty regions, factions with zero territory, runs shorter than the invariant's window).
 - **You may not** widen thresholds, extend time windows, or loosen tolerances without presenting the change to Westley first. This includes any change that makes the invariant more permissive for cases it IS supposed to catch.
 - **You may never** reclassify a real finding as a skip. If the simulation has a bug and the invariant caught it, the answer is escalate — not adjust the invariant to stop catching it.
-- **You may never** weaken test criteria to make the current implementation pass. If tests fail, the implementation needs to change — not the tests. The only exception is the scope-narrowing rule above (skipping cases the test was never meant to check).
+- **You may never** weaken test criteria to make the current implementation pass. If tests fail, the implementation needs to change — not the tests. The only exception is the scope-narrowing rule above.
 
 ## Tone
 
@@ -177,7 +209,7 @@ Don't mistake "playful" for "unserious." The civilization is still rising and fa
 
 ## Documentation
 
-Docs are a first-class artifact. If a session changes game behavior, update the relevant docs before closing. The principle: **the docs should always describe what the game actually does right now.** If a bug fix changes documented behavior, update the doc. If a new system is built, it goes in project_state.md and the relevant stage doc.
+Docs are a first-class artifact. **The docs should always describe what the game actually does right now.** If a bug fix changes documented behavior, update the doc. If a new system is built, it goes in the bible hub and any relevant stage spec, all in the same PR (see stale-doc tripwire above).
 
 Don't update docs for: internal refactors with no behavior change, visual tweaks, or bug fixes that don't affect documented behavior.
 
@@ -202,7 +234,7 @@ All simulation code lives in `simulation/`. Here's the live engine:
 - `border_friction.py` — per-region tension/economy drag from hostile borders
 
 ### Theming
-- `theme_scifi.py` — region/faction display names (will expand with era system)
+- `theme_scifi.py` — region/faction display names
 
 ### Tuning & analysis
 - `sim_tuner.py` — scenario runner, config override system, graph generation harness
@@ -213,10 +245,10 @@ All simulation code lives in `simulation/`. Here's the live engine:
 - `__pycache__/` — Python bytecode
 
 ### Docs layout
-- `docs/bible/` — game bible hub + spoke files (active reference)
+- `docs/bible/` — game bible hub (and spokes if any)
 - `docs/bible_history/` — archived monolithic bible versions
 - `docs/stage_specs/` — stage implementation specs
 - `docs/articles/` — design essays
 - `docs/website/` — marketing site
-- `docs/sim_validator_plan.md` — spec for automated validation system (next major feature)
-- `docs/dev_rules.md` — historical dev process doc (largely absorbed into this file)
+- `docs/research/` — Research Lane intel artifacts
+- `docs/design_questions/` — Design Lane fork-tracking artifacts

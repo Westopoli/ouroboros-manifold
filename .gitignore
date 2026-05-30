@@ -12,6 +12,11 @@ __pycache__/
 # Simulation generated output
 simulation/tuning_output/
 simulation/viewer_dumps/
+tuning_output/
+
+# Runtime / debug logs
+logs/
+simulation/logs/
 
 # Graphify knowledge graph (commit graph.json/graph.html/GRAPH_REPORT.md; ignore cache + extraction intermediates)
 graphify-out/cache/

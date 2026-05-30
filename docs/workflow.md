@@ -2,44 +2,59 @@
 
 How a session runs. Single source of truth for "what should Claude be doing right now."
 
-This is the longer-form version of the **Workflow (active mode)** section in `CLAUDE.md`. Read CLAUDE.md first; this file fills in the how.
+Longer-form version of the **Workflow** section in `CLAUDE.md`. Read CLAUDE.md first; this file fills in the how.
 
 ---
 
 ## The shape of a session
 
-One terminal. One queue. One item at a time. Each item ends with a test deliverable Westley can run in Godot (or in pytest) and confirm.
+One terminal. One queue. One feature at a time. Each item ends with a test deliverable Westley can run in Godot (or in pytest) and confirm.
 
 ```
-read top of priority_queue.md
+read top of priority_queue.md (the NEXT entry)
   → restate caveman-style + confirm with Westley
   → git checkout -b wn/<type>-<slug>
   → TDD (red → green → refactor)
   → implement minimal diff
+  → stale-doc tripwire: search docs for now-wrong claims; delete/update them in the same PR
   → git push + gh pr create (PR body has Godot test steps)
   → hand Westley the test deliverable
   → Westley confirms in Godot
   → merge
-  → update ai_status.md + priority_queue.md
+  → update priority_queue.md (status of done item; new NEXT picked)
   → next item
 ```
 
-If an item feels like two items, split it. Small tasks only.
+If an item feels like two items, split it. Small features only. No batching, no umbrellas, no wave closeouts.
+
+---
+
+## Definition of done
+
+A feature lands `done` only when ALL of:
+
+1. **Working code in `main`.**
+2. **Isolation test** covering the core mechanic alone, every other variable hard-fixtured or disabled.
+3. **Integration test** covering the feature in a realistic scene with pathing, AI, fog, vision, scale, other actors.
+4. **Doc updates in the same PR.** Any bible / spec / CLAUDE / priority_queue claim made wrong by this change is deleted or rewritten. New claims added if behavior is new.
+5. **Zero floating TODOs in the changed files.** Any TODO that survives must point to a specific named feature in `priority_queue.md`.
+
+If any of these is missing, the feature is not done. Don't pick a new one.
 
 ---
 
 ## Pre-scope audit (do this before writing any spec)
 
-Before scoping a BLOCKER or queue item — and absolutely before dispatching sub-agents — verify what already exists. The gate description in `priority_queue.md` is a player-facing problem statement, not a code inventory. Past stages often shipped partial infrastructure that the gate row doesn't mention.
+Before scoping a queue item — and absolutely before dispatching sub-agents — verify what already exists. The queue description is a player-facing problem statement, not a code inventory. Past stages often shipped partial infrastructure the queue row doesn't mention.
 
 For each item, sweep these surfaces:
 
 1. `Grep` the keyword across `simulation/`, `autoload/`, `scenes/`, `build/`, `tests/`.
 2. Check `docs/stage_specs/stage_*_spec*.md` for any mention of the feature as "complete" or "shipped".
-3. **For anything a spec calls "complete": verify the production callsite exists**, not just the storage-layer function and not just test fixtures. A `write_*` that's only called by `test_*` is unwired infrastructure, not a working feature.
+3. **For anything a spec calls "complete": verify the production callsite exists**, not just the storage-layer function and not just test fixtures. A `write_*` only called by `test_*` is unwired infrastructure, not a working feature.
 4. Read `MEMORY.md` pointers — prior chats may have noted partial state.
 
-Produce a 5-line "what's built / what's wired / what's genuinely missing" before writing the spec. Re-scope the queue item to only the genuinely-missing piece. Past lesson (2026-05-16): nearly dispatched 2 sub-agents to build save infra that already existed in 6 files across Stages 10 + 12; only the converter + sim-side command handler were actually missing.
+Produce a 5-line "what's built / what's wired / what's genuinely missing" before writing the spec. Re-scope the queue item to only the genuinely-missing piece.
 
 ---
 
@@ -68,7 +83,7 @@ Constraints:
 - ≤ 5 numbered steps
 - testable in ≤ 5 minutes
 - expected outcome is observable (visible on screen, printed by test, written to log)
-- if a step requires Westley to "look closely" or "feel out" something, rewrite it so the pass/fail criteria is objective
+- if a step requires "look closely" or "feel out," rewrite it so pass/fail is objective
 
 ---
 
@@ -83,15 +98,13 @@ Constraints:
 
 **Godot code (GDScript):** scene-level `test_*.gd` where practical.
 - Model: `tests/test_input_router_selection.gd` + `tests/test_input_router_selection.tscn`.
-- If a scene-level test isn't practical (e.g. camera feel, animation timing), document the manual checklist *as* the test in the PR body. The manual checklist is the test deliverable.
+- If a scene-level test isn't practical (camera feel, animation timing), document the manual checklist *as* the test in the PR body. The manual checklist is the test deliverable.
 
 **Both:** the Testing Rigor Directive (below) is non-negotiable.
 
 ---
 
 ## Testing Rigor Directive
-
-Sourced from the 2026-05-14 feedback. Pillar of the new workflow.
 
 Every system needs **both** levels of coverage:
 
@@ -113,8 +126,6 @@ Real failures this directive came from:
 
 This wastes Westley's time, corrupts the priority queue with false bugs, and erodes trust in the test suite.
 
-Stage 6 Checkpoint J (RPS) is governed by this directive when resumed — re-audit every L1–L4 fixture for uncontrolled variables AND add integration-level coverage if missing, before re-running balance assertions.
-
 ---
 
 ## Graphify first for code navigation
@@ -135,9 +146,9 @@ The graph lives in `graphify-out/`:
 **When to rebuild:**
 - After a structural change: new module, big rename, file moves
 - When queries start returning stale or wrong answers
-- After completing a stage (the graph should reflect current truth)
+- After a feature lands (the graph should reflect current truth)
 
-Rebuild: invoke `/graphify` skill. AST extraction (deterministic) reruns immediately; semantic extraction reuses cache for unchanged files. Full rebuild takes ~5 min wall time via ~30 parallel sub-agents.
+Rebuild: invoke `/graphify` skill. AST extraction (deterministic) reruns immediately; semantic extraction reuses cache for unchanged files.
 
 **God nodes are cosmetic.** Top-degree nodes (currently `main()`, `config`) reflect import-graph topology, not architectural centrality. They don't affect `query`/`path`/`explain` results — those are concept-driven BFS.
 
@@ -158,7 +169,7 @@ Examples:
 
 **Always PR against `main`.** Solo merge OK after Westley confirms in Godot. Never commit directly to `main` — the git-guard hook will reject it.
 
-**One PR per item.** If you find an unrelated fix mid-task, note it in the PR description as a follow-up; don't bundle.
+**One PR per feature.** If you find an unrelated fix mid-task, note it in the PR description as a follow-up; don't bundle.
 
 ---
 
@@ -202,22 +213,41 @@ Never silently expand scope. Never refactor code that wasn't part of the task. N
 
 ## Sub-agents implement, never design
 
-Sub-agents (Explore, general-purpose, Plan, claude-code-guide) execute against a spec the main agent (this terminal) has decided on. They cannot:
+Sub-agents (Explore, general-purpose, Plan, claude-code-guide, cavecrew variants) execute against a spec the main agent has decided on. They cannot:
 - Make architectural decisions
 - Change API shapes
-- Edit `docs/bible/**`, `docs/stage_specs/**`, `docs/launch_*`, `CLAUDE.md`
+- Edit `docs/bible/**`, `docs/stage_specs/**`, `CLAUDE.md`
 - Modify test thresholds
 - Decide what should be tested
 
 When a sub-agent hits ambiguity, it returns findings + a proposed change. The main agent decides.
 
+### Sub-agent caveman directive
+
+When dispatching a sub-agent, append: *"Report-back caveman mode (drop articles/filler/hedging, fragments OK). Markdown docs/briefs you write: caveman. Commit messages: caveman. Code, tests, config: normal prose."*
+
+Token-save at scale. Main agent is the only consumer of report-back, so style mix in `docs/**` is fine — graphify indexing is register-agnostic. Code and tests stay normal so test names, assertions, comments, and runtime strings don't degrade.
+
+---
+
+## Stale-doc tripwire (in every PR)
+
+When a feature lands, the implementer searches docs for now-wrong claims and deletes or updates them *in the same PR* that lands the feature.
+
+Suggested searches before merge:
+- `rg -l "<feature-name>" docs/` — does any doc still describe the old behavior?
+- `rg -l "<old-API-name>" docs/` — did a renamed function leave stale callers in docs?
+- Read the bible hub (`docs/bible/game_bible.md`) section that touches this area; rewrite if the new behavior contradicts it.
+
+Stale docs are how bad rules leak into future chats. Catching them in-PR is the only reliable defense.
+
 ---
 
 ## Updating state at end of each item
 
-1. **`docs/ai_status.md`** — move the just-finished item from "Current Item" → "Completed log" with a one-line outcome.
-2. **`docs/priority_queue.md`** — flip status of the finished item to `done`; promote the next item to `in-progress`.
-3. **Memory** — if the session surfaced something durable (a new preference, a non-obvious decision, a stable reference), update the relevant memory file. Don't journal session details — only durable signal.
+1. **`docs/priority_queue.md`** — flip status of the finished item; promote next NEXT from Soon (with a fresh look at whether it's still the right next thing).
+2. **Memory** — if the session surfaced something durable (a new preference, a non-obvious decision, a stable reference), update the relevant memory file. Don't journal session details — only durable signal.
+3. **Bible discipline.** If the feature changed game behavior the bible described, **rewrite the bible**, don't append a "now actually" note. Append-only is forbidden. The bible always describes what the game does *now*; prior versions live in `docs/bible_history/` if needed.
 
 ---
 
@@ -225,7 +255,6 @@ When a sub-agent hits ambiguity, it returns findings + a proposed change. The ma
 
 - `CLAUDE.md` — the rules of the road; read on every session start
 - `docs/priority_queue.md` — what's next
-- `docs/ai_status.md` — what's now (Current Item + Queue summary + Completed log + Escalations)
-- `docs/bible/game_bible.md` — hub for design truth; spokes are `bible_*.md`
-- `docs/stage_specs/` — implementation specs per stage; each lists which bible spokes to read
+- `docs/bible/game_bible.md` — hub for design truth; spokes (if any) are `bible_*.md`
+- `docs/stage_specs/` — implementation specs per stage
 - `graphify-out/` — the knowledge graph (artifacts committed; intermediates gitignored)
