@@ -1,13 +1,8 @@
-# Ouroboros Manifold — Chronicle Reference
+# Chronicle
 
-> **⚠ SUPERSEDED BY HUB PIVOT 2026-05-18.** See `game_bible.md ## In Flux ### PIVOT 2026-05-18`. Lieutenant System + multi-era DLC + multiplayer + grand-strategy economy depth KILLED for Phase 1. Pause-tactical reframe locked. Content below preserved for history; not authoritative for Phase 1 ship.
+Spoke. Authoritative for the chronicle system, distiller, template framework, assembly rules, and lineage entanglement. If this conflicts with `game_bible.md`, the hub wins.
 
-> **Extracted from game_bible.md v1.23.** This file is authoritative for the chronicle system,
-> template framework, and lineage entanglement. If this file conflicts with game_bible.md,
-> flag it for Westley — do not silently resolve the conflict.
->
-> **Modification rule:** Same as the master bible — append-only unless Westley approves
-> deletion. Resolved open questions get written here AND reflected back to the hub.
+Rewrite-not-append, like every bible file.
 
 ---
 
@@ -72,7 +67,7 @@ Each entry has a **base form** and an **expanded form** for the click-to-expand 
 
 ### Chronicle Template Authoring Framework
 
-> **RESOLVED (v1.14).** This section specifies the full authoring framework for chronicle template fragments: the category taxonomy, fragment structure, variable slot vocabulary, generation rules, compatibility model, and validation pipeline. The library builder generates all fragments offline as static data — zero runtime AI dependencies.
+The library builder generates all fragments offline as static data — zero runtime AI dependencies. This section specifies the authoring framework: category taxonomy, fragment structure, variable slot vocabulary, generation rules, compatibility model, validation pipeline.
 
 #### Template Category Taxonomy — 20 Categories
 
@@ -200,7 +195,7 @@ After generating a batch of fragments for a category, the builder runs a three-l
 
 ### Chronicle Text Assembly Rules
 
-> **Added v2.01.** These rules govern how the assembler transforms raw event data and fragment templates into final scroll prose. They exist because the original output was too esoteric, wordy, and disconnected from the galaxy the player is watching. Any new fragment authoring, slot additions, or assembler changes must respect these rules.
+These rules govern how the assembler transforms raw event data and fragment templates into final scroll prose. Any new fragment authoring, slot additions, or assembler changes must respect them.
 
 #### Rule 1 — Prose Event Descriptions, Not Labels
 

@@ -1,13 +1,8 @@
-# Ouroboros Manifold — World Reference
+# The World
 
-> **⚠ SUPERSEDED BY HUB PIVOT 2026-05-18.** See `game_bible.md ## In Flux ### PIVOT 2026-05-18`. Lieutenant System + multi-era DLC + multiplayer + grand-strategy economy depth KILLED for Phase 1. Pause-tactical reframe locked. Content below preserved for history; not authoritative for Phase 1 ship.
+Spoke. Authoritative for world generation, topology, lifecycle, and map generation. If this conflicts with `game_bible.md`, the hub wins.
 
-> **Extracted from game_bible.md v1.23.** This file is authoritative for world generation,
-> topology, lifecycle, and map generation. If this file conflicts with game_bible.md,
-> flag it for Westley — do not silently resolve the conflict.
->
-> **Modification rule:** Same as the master bible — append-only unless Westley approves
-> deletion. Resolved open questions get written here AND reflected back to the hub.
+Rewrite-not-append, like every bible file.
 
 ---
 
@@ -400,15 +395,7 @@ The galaxy view is the player's primary experience between missions. It renders 
 
 **System nodes.** Each system is a luminous point positioned in 3D space. Node size communicates significance (population, economic weight). The player's capital or core systems are the brightest, largest points. A frontier colony is a small dim point at the edge. Uncolonized systems are dim neutral (gray or cool white).
 
-**Faction territory.** Faction ownership reads through **colored regions with clearly defined borders** in 3D space — not just node color, but volumetric territory coloration that gives faction control a visible shape. When a system changes hands, the territory boundaries shift — the colored volume expands or contracts. Conquest reads as territory being nibbled away. Expansion reads as color blooming into neutral space.
-
-> **SUPERSEDED (v2.15).** The implementation technique in the following two paragraphs (2D metaball influence field projected on a plane, SubViewport pipeline, snap transitions) is replaced by the 3D constellation + shell hybrid described in "Territory Visualization — Constellation and Shell Hybrid" below. The design intent (colored regions, clearly defined borders, territory nibbled away, color blooming into neutral space) is preserved and strengthened. The metaball field math (influence summation, gap margin) survives into the 3D shell implementation.
-
-The visualization uses a **metaball influence field** projected on the galactic plane. Each owned system emits a smooth radial influence field; same-faction fields are summed (metaball merge), producing organic blob-shaped territory regions with no internal boundaries between same-faction systems. The result is translucent faction-colored fill so the underlying galaxy particle structure remains visible through it. Fill is brightest near the territory outline and fades to transparent deeper inside. Neutral or unowned systems produce no territory fill — they show only as dim points in unclaimed void.
-
-**Territory outlines** render as smooth glowing tubes at the metaball threshold isoline — bright faction-colored borders with a symmetric gaussian falloff that reads as a 3D pipe in the scene. Where two rival factions' territories approach each other, a gap-margin ensures they don't overlap — both outlines remain visible with dark space between them. When a system changes hands, the territory shape shifts (snap transition, masked by the accompanying combat flash VFX).
-
-Fill opacity, influence radius, threshold, tube width, gap margin, and transition duration are tuning values. The metaball field is computed in a SubViewport and projected onto a plane quad in the 3D scene. At higher system counts (100+), the brute-force per-pixel computation can be replaced with a Jump Flood Algorithm (JFA) pipeline for the same visual output at O(log₂ n) cost — an implementation optimization, not a design change.
+**Faction territory.** Faction ownership reads through **colored regions with clearly defined borders** in 3D space — not just node color, but volumetric territory coloration that gives faction control a visible shape. When a system changes hands, the territory boundaries shift — the colored volume expands or contracts. Conquest reads as territory being nibbled away. Expansion reads as color blooming into neutral space. See "Territory Visualization — Constellation and Shell Hybrid" below for the implementation.
 
 **Connections.** Trade routes and border connections rendered as faint lines between nodes in 3D. Border connections are solid lines in faction color. Trade routes are thinner or dashed. Connection lines provide depth cues during camera orbit (lines receding into space reinforce the 3D volume).
 
@@ -418,7 +405,7 @@ The flashes are driven by **specific combat events** from the time jump's event 
 
 **Ambient particle field.** The space between systems is filled with ambient particles — dust, distant stars, the fabric of the galaxy providing depth cues as the camera orbits. Not gameplay objects — visual atmosphere that makes the 3D volume feel inhabited and real. The particle structure is implemented as a scene (`scenes/shared/world_view/world_view_structure.tscn`) with ~5,200 particles across 12 tilted orbital rings, 6 radial inflow streams, ambient dust, a static starfield, and a central glow. This scene serves as the main menu background (at 70% opacity with autonomous camera choreography) and as the Settled Reach world view during inter-mission time jumps. In the main menu, the galaxy runs without region data — pure ambient atmosphere. During time jumps, the same scene is populated with region nodes, faction territory coloration, connections, and military flashes overlaid on the living galaxy. The particle structure remains visible through the territory visualization (per the low-opacity fill described above). Other space-themed eras may reuse or modify this scene; non-space eras (Roman provinces, 1980s globe) use entirely different renderer scenes coordinated through the same data and shell architecture.
 
-> **UPDATED (v2.15).** The main menu and world view no longer share a scene file. World View Major Modification separates them: the main menu's particle galaxy is `main_menu_galaxy.gd/.tscn` (a frozen copy of the original `world_view_structure.gd/.tscn`), and the world view renderer is the separate `world_view_structure.gd/.tscn` modified for the 3D constellation + shell system. This ensures main menu stability — no world view work can affect the main menu.
+The main menu and world view do not share a scene file: the main menu's particle galaxy lives at `main_menu_galaxy.gd/.tscn` (frozen), and the world view renderer is `world_view_structure.gd/.tscn` (modified for the 3D constellation + shell system). This ensures main menu stability — no world view work can affect the main menu.
 
 **The pivot point.** For the Settled Reach era, the camera orbits around a specific section of the galaxy — a corner or pocket. The edges of the Reach fade into the ambient star field (systems at the frontier are at the visual boundary where settled space meets the unknown). Future eras or late-game expansion pull the camera back further, revealing more galaxy, the pivot shifting to encompass a larger volume.
 

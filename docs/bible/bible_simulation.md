@@ -1,47 +1,8 @@
-# Ouroboros Manifold — Simulation Backbone Reference
+# Simulation Backbone
 
-> **⚠ SUPERSEDED BY HUB PIVOT 2026-05-18.** See `game_bible.md ## In Flux ### PIVOT 2026-05-18`. Lieutenant System + multi-era DLC + multiplayer + grand-strategy economy depth KILLED for Phase 1. Pause-tactical reframe locked. Content below preserved for history; not authoritative for Phase 1 ship.
+Spoke. Authoritative for simulation mechanics — region fields, faction agents, events, drift, diplomacy, technology, coherence ledger. If this conflicts with `game_bible.md`, the hub wins.
 
-> **Extracted from game_bible.md v1.23.** This file is authoritative for simulation
-> mechanics. If this file conflicts with game_bible.md, flag it for Westley — do not
-> silently resolve the conflict.
->
-> **Modification rule:** Same as the master bible — append-only unless Westley approves
-> deletion. Resolved open questions get written here AND reflected back to the hub.
-
----
-
-## In Flux
-
-Emerging design captured here w/ rationale. Promotes into the main body when locked. Cross-refs to other spokes' In Flux entries listed per entry.
-
-### WS3 Fork-B — Sim Dimensions on the Lieutenant Substrate (open, 2026-05-16, secondary spoke)
-
-**REFRAMED 2026-05-16 mid-session.** Original sim-dimensions-first ordering treated *what lieutenants react to* as primary before deciding *how lieutenants think*. Player-experience goal made *lieutenant intelligence* primary. Lieutenant intelligence model now lives at `bible_combat.md ## In Flux` (Fork-A series, primary spoke). This entry holds the downstream sim-dimensions work (Fork-B series, secondary), gated on Fork-A1 + A2 locking.
-
-**Substrate anchor.** Lieutenant System committed in `game_bible.md ## In Flux` (2026-05-16). Fork-B designs *what world state lieutenants perceive and act on*. Pick set is constrained by which decision-points the library indexes against (output of Fork-A2). **Open Fork-B only after Fork-A2 locks.**
-
-**Prior research parked.** Earlier this session: market + implementation research completed for the sim-dimensions question. Synthesis matrix covered intel / morale / legitimacy / cohesion / diplomacy-deepen / ideology / logistics. Recommended package was "Cheap-Wide" (Foundation-core bundle [Legitimacy + Cohesion + Ideology-faction + Diplomacy-deepen] + Logistics-derived + Intel-Lite). Preserved as input to Fork-B1 when reached, not as a current pick.
-
-**Fork-B order (gated on Fork-A2):**
-- **B1.** New decision dimensions to add. Placement: faction scalar / per-region field / lieutenant trait / hybrid.
-- **B2.** Cross-dimensional coupling direction. One-way / bidirectional / full graph w/ cascading triggers. Closes the "downhill seam."
-- **B3.** Decision horizon + memory. Stateless per-tick / short N-tick / persistent multi-gen plans. Cross-refs Fork-A6.
-- **B4.** Faction ↔ Lieutenant decision boundary. What `Faction.decide()` decides vs. what the lieutenant decides.
-- **B5.** `Faction.decide()` shape. Keep 4 intents / expand to N / goal-plan-action hierarchy.
-- **B6.** Fog / intel model. Perfect / imperfect / partial-w/-lieutenant-reporting. Cross-cuts B1.
-- **B7.** Player decision surface. See AI reasoning / influence via doctrine + orders / react only. Reshaped by Fork-A picks.
-- **B8.** Multi-pronged decision rep. Single intent / weighted mix / parallel plans.
-- **B9.** Emergent vs authored cascades. Hand-authored / fully emergent / hybrid.
-
-*Constraint (answer last):*
-- **C1.** Per-tick performance budget. Covers Fork-A library lookup cost + Fork-B drift/intent-resolver cost.
-
-**Rewind cross-cut.** Touches B3 + B8 (does AI remember rewound timelines?). Tracked inside those forks.
-
-**Cross-ref.** Fork-A series (lieutenant intelligence model, primary) at `bible_combat.md ## In Flux`.
-
-**Picks land below this entry as forks resolve.** When B-series + C1 lock, promote into main body and archive this entry per playbook.
+Rewrite-not-append, like every bible file.
 
 ---
 
