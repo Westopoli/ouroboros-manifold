@@ -58,9 +58,9 @@ The live code is Bible-aligned and requires no rework. Cover is working as speci
 
 **However,** a separate issue exists on the tactical map side: map generation today places cover gradients only at `staging` zones and `flank_route` zones (per a3_map_cover_audit.md:19-22), while the Bible directs cover placement at `chokepoint` and `objective` zones in defensive archetypes (bible_missions.md:74, 137, 242, 263). This is a **map-generation gap**, not a damage-code gap. The `place_gradients` function in simulation/gradient_placer.py needs to emit `cover_density` sources at additional zone types to align with Bible's tactical intent. The damage mechanics themselves are correct and require zero changes.
 
-**Westley's stated design intent** (Phase 1 ship work: "cover stops line-of-sight, gives tactical depth via information; NOT a damage-reduction mechanic") is **contradicted by the current Bible spec**. The current published Bible explicitly makes cover a damage-reduction mechanic (bible_combat.md:421, 440) with no LOS-blocking language. This is not a code conflict; it is a **spec conflict that must be resolved by Westley**:
+**Westley's stated design intent** ("cover stops line-of-sight, gives tactical depth via information; NOT a damage-reduction mechanic") is **contradicted by the current Bible spec**. The current published Bible explicitly makes cover a damage-reduction mechanic (bible_combat.md:421, 440) with no LOS-blocking language. This is not a code conflict; it is a **spec conflict that must be resolved by Westley**:
 - Option 1: Update the Bible to remove damage-reduction language and reframe cover as LOS-only + information-tactical depth. Then rebuild the damage formula to use LOS checks instead of cover multipliers.
-- Option 2: Accept the current Bible spec (damage-reduction cover) and update the Phase 1 design intent to match.
+- Option 2: Accept the current Bible spec (damage-reduction cover) and update the cover-LOS design intent to match.
 - Option 3: Implement both (cover reduces damage AND blocks LOS via navmesh integration), aligning spec and code.
 
 The flag for H4 is the spec gap, not the code correctness.
