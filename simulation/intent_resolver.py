@@ -50,6 +50,11 @@ def resolve(intents: list, snapshot: dict, registry: dict,
 
 def _resolve_collision(collision_intents: list, snapshot: dict, registry: dict,
                        rng, tick: int) -> list:
+    outcome = _compute_collision_outcome(collision_intents, snapshot, registry, rng)
+    return _apply_collision_result(outcome, collision_intents, snapshot, registry, rng, tick)
+
+
+def _compute_collision_outcome(collision_intents: list, snapshot: dict, registry: dict, rng) -> dict:
     # 1. Effective strength per participant
     faction_economies = {}
     for intent in collision_intents:
@@ -126,6 +131,38 @@ def _resolve_collision(collision_intents: list, snapshot: dict, registry: dict,
         "player_was_underdog": player_underdog,
         "mission_candidate":  True,
     }
+
+    return {
+        "effective_strengths": effective_strengths,
+        "winner_index":        winner_index,
+        "winner_intent":       winner_intent,
+        "winner_fid":          winner_fid,
+        "winner_commit":       winner_commit,
+        "winner_spent":        winner_spent,
+        "budget_refunded":     budget_refunded,
+        "ret_ceiling":         ret_ceiling,
+        "ret_fraction":        ret_fraction,
+        "opp_ratio":           opp_ratio,
+        "margin_ratio":        margin_ratio,
+        "loser_indices":       loser_indices,
+        "sig":                 sig,
+    }
+
+
+def _apply_collision_result(outcome: dict, collision_intents: list, snapshot: dict,
+                            registry: dict, rng, tick: int) -> list:
+    effective_strengths = outcome["effective_strengths"]
+    winner_intent       = outcome["winner_intent"]
+    winner_fid          = outcome["winner_fid"]
+    winner_commit       = outcome["winner_commit"]
+    winner_spent        = outcome["winner_spent"]
+    budget_refunded     = outcome["budget_refunded"]
+    ret_ceiling         = outcome["ret_ceiling"]
+    ret_fraction        = outcome["ret_fraction"]
+    opp_ratio           = outcome["opp_ratio"]
+    margin_ratio        = outcome["margin_ratio"]
+    loser_indices       = outcome["loser_indices"]
+    sig                 = outcome["sig"]
 
     # 6. Apply consequences
     tid          = winner_intent["target_region"]
