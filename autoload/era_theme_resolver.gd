@@ -93,7 +93,9 @@ func get_active_era() -> String:
 
 
 # Cover asset keys per era. Settled Reach: tiny+small → asteroid_small.glb,
-# medium → asteroid_medium.glb, huge → asteroid_large.glb. Other eras: TODO.
+# medium → asteroid_medium.glb, huge → asteroid_large.glb. Additional eras
+# are research-only (see docs/priority_queue.md "Research-only" §
+# Multi-era catalog) — no per-era asset bindings until multi-era promotes.
 const _COVER_ASSETS: Dictionary = {
 	"settled_reach": {
 		"tiny":   "res://assets/eras/settled_reach/environment/asteroid_small.glb",
