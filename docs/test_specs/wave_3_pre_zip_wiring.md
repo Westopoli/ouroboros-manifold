@@ -1,10 +1,10 @@
-# Wave 3 Pre-Zip Wiring Spec — B2 + B3 + B5
+# Wave 3 Wiring Spec — B2 + B3 + B5 (HISTORICAL)
 
-**Status:** Locked 2026-05-26. Decision-source-of-truth for Wave 3 leaf agents.
+**Status:** Locked 2026-05-26, shipped via PR #24 (2026-05-29). Document preserved as historical reference of what was built. The "Pre-Zip BLOCKER" + "Phase 1 ship plan" framing referenced below is dead per the 2026-05-30 cleanse — the substrate (B2 mission objectives clarity, B3 in-game tutorial, B5 release-mode wiring) shipped and remains live in the codebase.
 
 ## Context
 
-Phase 1 ship plan (`docs/phase1_ship_plan.md`, `/Users/westley/.claude/plans/synchronous-stargazing-widget.md`) closes Pre-Zip BLOCKERs from `docs/priority_queue.md`. Wave 2.5R/2.6M (cover-LOS sim substrate) merged via PR #23. Wave 3 = remaining wiring for friends-ZIP cut:
+Wave 3 closed three substrate gaps for the eventual Steam ship goal (long-term, no near-term deadline). Wave 2.5R/2.6M (cover-LOS sim substrate) merged via PR #23. Wave 3 = remaining wiring at the time of the 2026-05-26 decision:
 
 - **B2 Mission objectives clarity** — sim-side briefing data + scene plain-language header
 - **B3 In-game tutorial** — first-mission 5-beat overlay wiring + replay path

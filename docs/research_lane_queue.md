@@ -2,6 +2,8 @@
 
 This file is the live state of the Research Lane. The playbook (`docs/research_lane.md`) defines how the lane operates; this file tracks what is in flight, what is done, and what is next. Update on every question status change.
 
+> **Post-cleanse framing note (2026-06-02).** The Lieutenant System, Multi-era DLC ladder, Multiplayer, Grand-strategy economy depth, and several other directions originally tagged as "substrate for the locked Lieutenant pivot" are now **research-only / not committed**. The intel below remains valid as design substrate; the artifacts feed any future Design Lane fork that re-opens those directions. Steam submission is the eventual goal (no near-term deadline) — all launch-positioning research stays valid for the eventual push. See `docs/priority_queue.md` "Research-only / not committed" + "Pre-Steam-submission" sections.
+
 ## Active Session Plan
 
 `/Users/westley/.claude/plans/gentle-rising-compass.md` (originally authored as Design Lane plan; in transition — research outputs from prior session belong to this lane, fork enumeration belongs to Design Lane)
@@ -103,7 +105,7 @@ Standing pre-existing capture debt (carries forward, lower priority than fresh D
 - Q3 → vocabulary topic brief — note: `docs/research/topics/foundation_vocabulary.md` exists (same verification before treating as captured).
 - Q5 follow-up game-card batch (cited titles not yet carded): Stormgate, Tempest Rising, Immortal: Gates of Pyre, ZeroSpace, Homeworld 3, Arma Reforger, Field of Glory: Empires, Civilization VI, Hearts of Iron IV, EU4, Deep Rock Galactic, Vermintide 2, Squad, Hell Let Loose, EVE Online, Albion Online, Carrier Command 2, Cold Waters, Command: Modern Operations, Combat Mission, Nexus: The Jupiter Incident, BSG: Deadlock, BFG: Armada 2, Dwarf Fortress (separate from Steam-port card), Total War (already covered as franchise page G-15).
 
-Bible cleanup parked (separate chat): `docs/bible/bible_monetization.md` L274 / L288 / L292 marketing-artifact resolution (Conflicts #1, #2, #3 surfaced across Q14, Q16, Q45, Q47, Q49).
+Bible cleanup obsolete: `docs/bible/bible_monetization.md` was deleted in the 2026-05-31 cleanse (PR2a). The conflicts originally tracked at L274 / L288 / L292 (#1, #2, #3 surfaced across Q14, Q16, Q45, Q47, Q49) no longer have a bible-side target — they belong to the multi-era DLC research direction now (`docs/priority_queue.md` Research-only section). If multi-era DLC ever promotes out of research, those conflicts re-surface against a fresh `bible_monetization.md` rewrite.
 
 Run `/graphify docs/research/` after any capture batch.
 

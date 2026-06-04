@@ -4,7 +4,7 @@ Single source of truth for what to build next. One feature at a time, done well,
 
 This is a **flat ordered list**. Top of the list = current focus. No batches, no waves, no umbrellas. If an item feels like two items, split it.
 
-There is no ship deadline. There is no Pre-Zip gate, no beta wave, no Steam launch milestone. The project is long-term. Each feature lands with isolation tests + integration tests + doc updates + zero floating TODOs before the next one starts.
+The project is long-term. Steam submission is the eventual goal — no near-term deadline, no rushed beta wave, no "ship Phase 1 then walk away." Each feature lands with isolation tests + integration tests + doc updates + zero floating TODOs before the next one starts. Steam launch tasks (page, capsule, trailer, screenshots, Steam Direct fee, Next Fest entry) live in the **Pre-Steam-submission** group below and pick up when the game itself is ready.
 
 ---
 
@@ -110,6 +110,55 @@ Seeded from prior queue + launch_todo harvest. Order below is a starting suggest
 ### Art + placeholder removal
 - Remove static flyby ship animations (placeholder)
 - Create production building assets (reinforcement structures need real art)
+
+---
+
+## Pre-Steam-submission (picks up when game is closer to ready)
+
+Distribution + store-page work. Not active now. Pulled from the dead Phase 1 ship plan but kept here so the inventory isn't lost. Each entry rescoped to "long-term, no rush" framing — no 30-day Steam Direct clock pressure, no Next Fest deadline.
+
+- **Steam page draft** — short + long description, tag list. Tags from `docs/research/topics/steam_tag_overlap_2026.md`. Capsule copy: "pause-and-command tactical with generational chronicle." Avoid "RTS" / "Real-Time" surface strings (per market research at `docs/research/topics/rts_market_kill_zone_2026.md`).
+- **Capsule plate art** — main capsule + small + header. Use existing tool subscriptions (Recraft-or-similar). Research at `docs/research/topics/steam_capsule_ab_norms.md`.
+- **Screenshots (8–12)** — pause-frame compositions, chronicle text overlays, faction map shots. From in-game. Research at `docs/research/topics/screenshot_conversion_patterns.md`.
+- **Trailer (60–90s)** — self-edited. Pause-frame shots, chronicle text overlays. Research at `docs/research/topics/trailer_structure_norms.md`.
+- **Steam Direct $100 fee + 30-day waiting clock** — mandatory paid spend. Triggered when store page draft is ready. Not before.
+- **Next Fest entry** — pick fest in launch window. Research at `docs/research/topics/festival_roster_and_timelines.md` + `docs/research/topics/steam_next_fest_timing.md`.
+- **Community outreach posts** — r/grandstrategy, r/4Xgaming, r/IndieGaming, GameDiscoverCo public list. Research at `docs/research/topics/community_map_subreddit_discord.md`, `docs/research/topics/newsletter_and_curator_surfaces.md`, `docs/research/topics/press_outlet_map.md`.
+- **Stage 13 packaging revival** — PyInstaller spec, Windows pass, privacy modal, clean-install verify. Spec deferred at `docs/stage_specs/_deferred/stage_13_spec.md` — pull back into active stages when this group fires.
+
+---
+
+## Research-only / not committed to implementation
+
+Design directions alive as research, not committed to bible or stage specs. Each opens a fresh Design Lane fork if picked up — not a resurrection of the 2026-05-16 In Flux prose.
+
+### Core gameplay directions
+
+- **Lieutenant System** — personality-driven AI sub-formations the player commands instead of direct unit control. Research: `docs/research/topics/lieutenant_pivot_niche_brief.md` + feeder briefs + research_lane_queue Q4/Q5/Q9/Q11/Q12/Q14/Q24. Precedent: `docs/research/games/menace.md`.
+- **Lieutenant decision-engine architecture** — Utility AI engine + named "intentions" (15–30 pre-authored short ordered plans) + voice library indexed by (personality, intention, phase). Offline pre-gen via existing AI pipeline. Was parked pending player-interaction-loop fork. Coupled to Lieutenant.
+- **Sim depth expansion ("Cheap-Wide" package)** — new decision dimensions added to factions/regions: Legitimacy + Cohesion + Ideology-faction + Diplomacy-deepen + Logistics-derived + Intel-Lite. Foundation-feel substrate.
+- **Multiplayer / per-mission co-op** — drop-in tactical co-op while the macro layer stays single-player. Research: `docs/research/topics/mp_session_model_precedents.md`, `docs/research/topics/delegated_command_precedents.md`.
+- **Grand-strategy economy depth** — Arma-style economy/strategic depth additions beyond current "commander not king" framing. No research artifacts; would start fresh.
+- **Hard Mode difficulty tier** — 4th tier beyond Easy/Medium/Hard. All-army hotkey disabled, tighter timers, tougher enemy comps. Demands genuine multi-front skill.
+
+### Multi-era catalog (all coupled to multi-era decision)
+
+- **Multi-era DLC ladder / per-era pack catalog** — 7-era × 6-DLC progression catalog. Architecture (Sacred Principle #3 era-agnostic engine) supports it. Research: `docs/research/topics/dlc_pricing_ladders.md`, `docs/research/topics/dlc_attach_rates.md`, `docs/research/topics/per_era_dlc_structure.md`, `docs/research/topics/free_tier_paid_dlc_precedents.md`, `docs/research/games/ck3_dlc_ladder.md`, `docs/research/games/stellaris_dlc_ladder.md`, `docs/research/games/rimworld_dlc_ladder.md`.
+- **Branch System** — each era ships multiple "branches" expressing signature mechanical stances across tempo / info-warfare / attrition axes. Settled Reach Branch 1 = fast-burst tempo target.
+- **Branch combat parameterization** — move HP / damage / reinforcement rates / fog density / sensor range / cross-layer detection from global constants to per-era manifest config. Config-driven only — Sacred Principle #3 stays clean (no code-branched era logic).
+- **Settled Reach combat retcon** — rebalance HP and engagement timings downward for Branch 1 fast-burst tempo. Stage-6-scale tuning pass; gated on Branch System + Branch combat parameterization landing first.
+- **Multi-stage tutorial across hallmark eras** — tutorial threaded through multiple eras as design hook. Coupled to multi-era catalog being real.
+- **Era pack tooling** — skeleton/skin expansion toolchain to build era packs at production cadence.
+- **Inspection mode for non-owned eras** — preview locked eras for storefront/upsell. Coupled to multi-era + DLC entitlement.
+
+### Save/rewind robustness
+
+- **Crash recovery, multi-branch save tree, cloud saves** — beyond Stage 8 rewind-with-reseed. Crash recovery is most independent; multi-branch tree UI + cloud saves are bigger lifts.
+
+### Player-facing polish
+
+- **UI layout customization** — settings mode to reposition HUD elements (minimap, hotkeys bar, etc.), flip map orientation, preview live within settings screen.
+- **Sound design, music** — production-quality audio pass. No commitment yet.
 
 ---
 

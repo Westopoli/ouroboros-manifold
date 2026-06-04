@@ -1,10 +1,12 @@
 # Apex E2E Ship Test Spec
 
-> Authoritative spec for the Phase 1 ship-readiness end-to-end test. Master plan: `docs/phase1_ship_plan.md`.
+> Authoritative spec for the end-to-end ship-readiness test. The eventual Steam submission is the long-term ship goal — no near-term deadline; this test exists so that whenever the build *is* ready, there's a single integration test that gates the call.
+
+> **Framing note (2026-06-02):** the original Phase 1 master plan was retired. The substrate (one E2E test that exercises the full user journey on a fresh checkout) is still the right shape. Per-system tests cover their individual mechanics; this is the integration guarantee. "Friends-ZIP" framing below was the original delivery mode — the same test substrate covers a Steam build too.
 
 ## Purpose
 
-One test that exercises the full friends-ZIP user journey end-to-end. If this passes on a fresh checkout, the build is ship-ready. If it regresses, ship is blocked. Per-BLOCKER tests cover individual systems; this is the integration guarantee.
+One test that exercises the full user journey end-to-end. If this passes on a fresh checkout, the build is ship-ready. If it regresses, ship is blocked. Per-system tests cover individual mechanics; this is the integration guarantee.
 
 ## Test files
 

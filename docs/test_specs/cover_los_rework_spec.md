@@ -10,7 +10,7 @@ Polygon-binary symmetric-blind model documented here was implemented in Wave 2.5
 
 ## Context
 
-Phase 1 ship work surfaced spec conflict (`docs/test_specs/cover_semantics_bible_audit.md`). Bible (`bible_combat.md:421,440,529`, `bible_world.md:144`) defines `cover_density` as continuous-gradient damage-reduction multiplier. Live `simulation/damage.py:132-136,171-175` implements that spec. Westley locked new design 2026-05-21:
+Ship-readiness work surfaced spec conflict (`docs/test_specs/cover_semantics_bible_audit.md`). Bible (`bible_combat.md:421,440,529`, `bible_world.md:144`) defines `cover_density` as continuous-gradient damage-reduction multiplier. Live `simulation/damage.py:132-136,171-175` implements that spec. Westley locked new design 2026-05-21:
 
 **Cover = SC2-style binary LOS-blocker. Polygon model. Symmetric blind. No proximity reveal. No fire-reveal. Non-destructible Phase 1. AI peek = audit + minimal fix.**
 
