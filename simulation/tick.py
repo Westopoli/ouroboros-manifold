@@ -57,54 +57,91 @@ def run_tick(world, tick_num: int, ledger=None,
 
     rng = world.rng
 
-    # ── Steps 1–2: Event system ──────────────────────────────────────────────
-    if config.ENABLE_EVENTS:
-        # Step 1: resolve pending events
-        fired = _events.resolve_pending(pending_queue, world, tick_num, rng)
-        log["events"].extend(fired)
-
-        # Step 2: evaluate fresh threshold triggers
-        for region in world.inhabited_regions():
-            triggered_ids = _events.evaluate_triggers(region, noise_offsets, trigger_state, tick=tick_num, rng=rng)
-            for tid in triggered_ids:
-                chain_tag = f"{tid}_{region.id}_t{tick_num}"
-                result    = _events.fire_event(tid, region, tick_num, chain_tag, rng)
-                spawn_dicts = result["spawns"]
-                for spawn in spawn_dicts:
-                    pending_queue.enqueue(spawn)
-                result["spawns"] = [
-                    f"{s['template_id']}@tick_{s['due_tick']}" for s in spawn_dicts
-                ]
-                log["events"].append(result)
-
-        # L4: handle revolt faction creation from any fired event
-        if registry is not None:
-            for evt in log["events"]:
-                if evt.get("creates_faction"):
-                    revolt_log = _handle_revolt_faction_creation(
-                        evt, world, registry, rng, tick_num
-                    )
-                    if revolt_log:
-                        log["revolts"].append(revolt_log)
-                        if ledger is not None:
-                            ledger.log_revolt(tick_num, revolt_log)
-                        if coherence_ledger is not None and revolt_log.get("new_faction"):
-                            new_fid = revolt_log["new_faction"]
-                            rid = revolt_log["region"]
-                            parent_fid = revolt_log.get("original_faction")
-                            coherence_ledger.assign_faction_leader(
-                                new_fid, rid, tick_num, rng,
-                                parent_faction_id=parent_fid)
-                            fname = coherence_ledger.get_faction_name(new_fid, tick_num, rng)
-                            if fname and registry and new_fid in registry:
-                                registry[new_fid].name = fname
-                            if parent_fid:
-                                coherence_ledger.derive_schism_subset(parent_fid, new_fid, rng)
+    _resolve_events(
+        world, tick_num, rng, log, pending_queue, noise_offsets,
+        trigger_state, registry, ledger, coherence_ledger,
+    )
 
     # ── Step 3: Faction agents — two-phase telegraph/surprise resolution ─────
     if pending_telegraphs is None:
         pending_telegraphs = []
 
+    _run_agent_decisions(
+        world, tick_num, rng, log, pending_queue, pending_telegraphs,
+        registry, antagonist, stances, ledger,
+    )
+
+    _apply_mutations(
+        world, tick_num, rng, log, pending_queue, registry,
+        stances, ledger, coherence_ledger,
+    )
+
+    return log
+
+
+def run_ticks(world, n: int, ledger=None,
+              pending_queue=None, noise_offsets=None, trigger_state=None,
+              registry=None, antagonist=None, stances=None) -> list:
+    pending_telegraphs = []
+    logs = []
+    for t in range(n):
+        log = run_tick(world, t + 1, ledger, pending_queue, noise_offsets, trigger_state,
+                       registry, antagonist, stances,
+                       pending_telegraphs=pending_telegraphs)
+        logs.append(log)
+    return logs
+
+
+def _resolve_events(world, tick_num, rng, log, pending_queue, noise_offsets,
+                    trigger_state, registry, ledger, coherence_ledger):
+    if not config.ENABLE_EVENTS:
+        return
+
+    # Step 1: resolve pending events
+    fired = _events.resolve_pending(pending_queue, world, tick_num, rng)
+    log["events"].extend(fired)
+
+    # Step 2: evaluate fresh threshold triggers
+    for region in world.inhabited_regions():
+        triggered_ids = _events.evaluate_triggers(region, noise_offsets, trigger_state, tick=tick_num, rng=rng)
+        for tid in triggered_ids:
+            chain_tag = f"{tid}_{region.id}_t{tick_num}"
+            result    = _events.fire_event(tid, region, tick_num, chain_tag, rng)
+            spawn_dicts = result["spawns"]
+            for spawn in spawn_dicts:
+                pending_queue.enqueue(spawn)
+            result["spawns"] = [
+                f"{s['template_id']}@tick_{s['due_tick']}" for s in spawn_dicts
+            ]
+            log["events"].append(result)
+
+    # L4: handle revolt faction creation from any fired event
+    if registry is not None:
+        for evt in log["events"]:
+            if evt.get("creates_faction"):
+                revolt_log = _handle_revolt_faction_creation(
+                    evt, world, registry, rng, tick_num
+                )
+                if revolt_log:
+                    log["revolts"].append(revolt_log)
+                    if ledger is not None:
+                        ledger.log_revolt(tick_num, revolt_log)
+                    if coherence_ledger is not None and revolt_log.get("new_faction"):
+                        new_fid = revolt_log["new_faction"]
+                        rid = revolt_log["region"]
+                        parent_fid = revolt_log.get("original_faction")
+                        coherence_ledger.assign_faction_leader(
+                            new_fid, rid, tick_num, rng,
+                            parent_faction_id=parent_fid)
+                        fname = coherence_ledger.get_faction_name(new_fid, tick_num, rng)
+                        if fname and registry and new_fid in registry:
+                            registry[new_fid].name = fname
+                        if parent_fid:
+                            coherence_ledger.derive_schism_subset(parent_fid, new_fid, rng)
+
+
+def _run_agent_decisions(world, tick_num, rng, log, pending_queue, pending_telegraphs,
+                         registry, antagonist, stances, ledger):
     if registry is not None and config.ENABLE_FACTIONS:
         # 3a: Snapshot (before any mutations this tick)
         snapshot = _build_snapshot(world)
@@ -280,6 +317,9 @@ def run_tick(world, tick_num: int, ledger=None,
                     if action.get("conquest"):
                         log["conquests"].append(action["conquest"])
 
+
+def _apply_mutations(world, tick_num, rng, log, pending_queue, registry,
+                     stances, ledger, coherence_ledger):
     # ── Step 4: Border friction ──────────────────────────────────────────────
     if config.ENABLE_BORDER_FRICTION and registry is not None:
         friction_log = _apply_border_friction(world, registry)
@@ -368,21 +408,6 @@ def run_tick(world, tick_num: int, ledger=None,
                 evt["chain_tag"], evt["spawns"]
             )
         ledger.log_snapshot(tick_num, world)
-
-    return log
-
-
-def run_ticks(world, n: int, ledger=None,
-              pending_queue=None, noise_offsets=None, trigger_state=None,
-              registry=None, antagonist=None, stances=None) -> list:
-    pending_telegraphs = []
-    logs = []
-    for t in range(n):
-        log = run_tick(world, t + 1, ledger, pending_queue, noise_offsets, trigger_state,
-                       registry, antagonist, stances,
-                       pending_telegraphs=pending_telegraphs)
-        logs.append(log)
-    return logs
 
 
 # ── F3: Snapshot builder ─────────────────────────────────────────────────────
