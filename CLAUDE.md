@@ -91,10 +91,6 @@ library_set(content_type, entry_id, result)
 
 No Asimov character names, place names, or plot elements. All lore is original. Mechanical concepts inspired by the source material (psychohistory-like prediction, hidden-society roles, eternal observer roles) are fine. The game is targeting commercial release.
 
-### Socket server is protected
-
-`simulation/socket_server.py` requires explicit user confirmation before any changes.
-
 ### Tick delta shape is documented first
 
 Any change to the tick delta JSON shape must be posted to `docs/architecture.md` before implementation.
