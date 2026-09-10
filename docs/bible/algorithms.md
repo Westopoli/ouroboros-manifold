@@ -4,7 +4,7 @@ This is the "what stays" contract for the C rewrite. Every formula below was rea
 
 All fields are floats clamped to [0, 100] unless stated. Economy has a floor of `ECONOMY_FLOOR = 8.0` under drift, friction, and standard events; conquest bypasses it. Ticks are integers from 1. Randomness is one seeded stream per world (`random.Random(seed)`); the draw order per tick is the order the formulas appear in the tick sequence below.
 
-Not yet inventoried here: diplomacy timers and peace formation (`diplomacy.py`), civilizational lifecycle (`lifecycle.py`), time jump (`time_jump.py`), coherence ledger and character selector, and the whole tactical layer (`unit.py`, `movement.py`, `damage.py`, `fog_of_war.py`, `facing.py`, `ability.py`). Each gets added when its epic runs the completeness gate.
+Not yet inventoried here: time jump (`time_jump.py`), coherence ledger and character selector, and the whole tactical layer (`unit.py`, `movement.py`, `damage.py`, `fog_of_war.py`, `facing.py`, `ability.py`). Each gets added when its epic runs the completeness gate.
 
 ## Tick sequence (`tick.py`)
 
@@ -19,12 +19,13 @@ One strategic tick, in this order. Feature flags in parentheses are all true at 
    - 3d every faction decides (ALG-11 through ALG-16); an attack in telegraph mode is queued for 3c next tick, everything else is immediate;
    - 3e defenders of newly telegraphed attacks may reactive-reinforce (ALG-18);
    - 3f immediate intents resolve (ALG-19 through ALG-24), collisions first grouped by target.
-4. Border friction on every region with a hostile border (ALG-25) (`ENABLE_BORDER_FRICTION`).
+   - 3.5 betrayal checks on cooperative pairs (ALG-40); a betrayal resolves as an attack at once.
+4. Border friction on every region with a hostile neighbor (ALG-25) (`ENABLE_BORDER_FRICTION`).
    - 4.1 admin revolt roll per owned region (ALG-29) (`ENABLE_ADMIN_REVOLTS`);
-   - 4.25 diplomacy timers and peace formation (`ENABLE_DIPLOMACY`, not inventoried here);
+   - 4.25 diplomacy timers then peace formation (ALG-38, ALG-39) (`ENABLE_DIPLOMACY`);
    - 4.5 technology growth then convergence, per faction (ALG-26 through ALG-28) (`ENABLE_TECHNOLOGY`).
 5. Passive drift on every inhabited region (ALG-01 through ALG-08), applied with clamps, composites recomputed (ALG-09, ALG-10).
-6. Zombie faction cleanup; coherence ledger attachment.
+6. Zombie faction cleanup (ALG-42); coherence ledger attachment.
 7. Log.
 
 ## Per-region drift (`drift.py`)
@@ -108,9 +109,11 @@ Then, if the target is owned by a faction that is not a collider, or is owned by
 
 **ALG-24 Colonize.** Target fields become `COLONY_START_MILITARY = 10.0`, `COLONY_START_ECONOMY = 20.0`, `COLONY_START_TENSION = 20.0`, `COLONY_START_POPULATION = 25.0`; budget spent `COLONIZE_COST = 20.0`.
 
-## Border friction (`border_friction.py`)
+## Border friction (`tick.py`, `_apply_border_friction`)
 
-**ALG-25.** For each region with an owner, over every neighbor across a border edge owned by a different faction where either side's stance is hostile: `tension_f = BORDER_FRICTION_TENSION · (m_neighbor/100)`, `economy_f = BORDER_FRICTION_ECONOMY · (m_neighbor/100)`, constants `0.15` and `0.05`. Sum over hostile edges; `t = min(100, t + Σ tension_f)`, `e = max(ECONOMY_FLOOR, e − Σ economy_f)`; composites recompute.
+**ALG-25.** For each inhabited region with an owner, over every neighbor across any edge type (no edge-type filter) that is owned by a different faction where either side's stance toward the other is hostile: `tension_f = BORDER_FRICTION_TENSION = 0.15` and `economy_f = BORDER_FRICTION_ECONOMY = 0.05`, flat per hostile neighbor, not scaled by the neighbor's military. Sum over hostile neighbors; `t = min(100, t + Σ tension_f)`, `e = max(ECONOMY_FLOOR, e − Σ economy_f)`; composites recompute.
+
+Correction to the Stage 1 algorithm pass (2026-09-10): that pass documented `simulation/border_friction.py`, which scales friction by the neighbor's military and filters to border edges. That module is never imported by the tick loop; the live implementation is the flat, all-edges version above, which is also what `bible_simulation.md` describes. `border_friction.py` is dead code. See flag Q-041-01 for which version is the design.
 
 ## Technology (`technology.py`)
 
@@ -149,6 +152,26 @@ Added in Stage 2 from source (2026-09-10); not part of the Stage 1 algorithm pas
 **ALG-36 Pending resolution.** All entries with `due == tick` are removed from the queue and grouped by region. Per region: exclusion pass (ALG-37); then for each surviving entry in queue order, if conditions fail (`above v` requires `field > v`, `below v` requires `field < v`) skip with no draw; else one draw, fire if `draw ≤ probability`; a fired entry adds its deltas to a per-field sum and queues its own spawns (ALG-35 draw per spawn). After all entries, each nonzero summed delta applies once against the tick-start field with the ALG-35 floors, and composites recompute once.
 
 **ALG-37 Mutual exclusion.** Collect every exclusion tag among the region's due entries; for each tag in sorted order, among entries still resolved that carry the tag, keep the one with the highest probability (ties: the first in queue order, see Q-028-01) and re-queue each other one with `due = tick + randint(1, 2)` (one draw per loser).
+
+## Diplomacy (`diplomacy.py`)
+
+Added in Stage 2 from source (2026-09-10). Stances are stored per unordered pair with a non-aggression counter and a cooperative-since tick. A missing pair reads hostile; a faction toward itself reads cooperative. See Q-042-01: the live game never initializes the table.
+
+**ALG-38 Starting stance and timers.** Starting stance per archetype pair from `STARTING_STANCE_OVERRIDES` (conqueror hostile to every archetype; fortifier hostile to player and opportunist; opportunist hostile to player; schism hostile to player, fortifier, opportunist, warlord), else neutral. Each tick, for each neutral pair that shares at least one border edge: counter = 0 if an attack between them appears in this tick's actions, else counter + 1.
+
+**ALG-39 Peace formation.** For each neutral pair with counter ≥ `PEACE_FORMATION_THRESHOLD = 80`: `stab = min(avg stability of A's regions bordering B, avg of B's bordering A)`; if `stab < PEACE_STABILITY_THRESHOLD = 35.0`, counter = 0, no draw. Else `p = clamp(PEACE_BASE_PROBABILITY · (1 − |avg_e_A − avg_e_B|/100) · (stab/100) · disp_A · disp_B, 0, 1)`, base `0.5`, dispositions `ARCHETYPE_PEACE_DISPOSITION`: conqueror 0.1, fortifier 2.0, warlord 0.2, opportunist 1.0, schism 0.3, player_civilization 1.5, breakaway 0.8. One draw; success if `draw < p`: stance cooperative, cooperative-since = tick, shared edges `both`. Failure: counter = 0.
+
+**ALG-40 Betrayal.** For each cooperative pair, for (A as betrayer, B as victim) then (B, A): `opportunity = min(BETRAYAL_OPPORTUNITY_CAP, max(1, border_mil_A / border_mil_B))` with border military the mean military of the betrayer's regions bordering the victim (cap `3.0` when the victim's is 0); `pressure = max(1, avg_tension_A / 50)`; `p = clamp(BASE_BETRAYAL_RATE · weight_A · opportunity · pressure, 0, 1)`, base `0.005`, weights `ARCHETYPE_BETRAYAL_WEIGHT`: conqueror 2.5, fortifier 0.3, warlord 2.0, opportunist 2.0, schism 1.5, player_civilization 0.5, breakaway 1.0. One draw; betray if `draw < p`: stance hostile, shared edges `border`, and an attack intent on the victim's lowest-military region bordering the betrayer with `commit = betrayer's entire budget`, no attack mode (full efficiency), resolved immediately by ALG-20 through ALG-22. At most one betrayal per pair per tick.
+
+## Lifecycle (`tick.py`, `lifecycle.py`)
+
+**ALG-41 Breakaway creation.** On a faction-creating event in an owned region. Admin revolt: pruned if the region's owner differs from the chain's source faction or the region changed hands after the chain started; success rate 1.0. Tension revolt: `rate = U(REVOLT_SUCCESS_RANGE = (0.50, 0.95))` (one draw), then a second draw must be `≤ rate`, and population must be `≥ REVOLT_BREAKAWAY_POP_FLOOR = 25.0`. Then `military −= military · REVOLT_MILITARY_STEAL = 0.60`, `economy −= economy · REVOLT_ECONOMY_STEAL = 0.40` (the amounts are removed, not transferred). Latent loyalty (ALG-43) may revert instead. Otherwise: new faction `breakaway_<tick>_<region>`, region `previous_faction = old owner`, `tension = min(tension, 40.0)`, `population = max(population, 25.0)`, `economy = max(economy, 20.0)`; archetype `breakaway` for tension revolts, one draw from [conqueror, fortifier, warlord, opportunist, schism] for admin revolts; budget 0; stance hostile both ways with every faction; color drawn to avoid existing hues (up to 30 draws, hue distance > 0.08); tech = parent's current tech.
+
+**ALG-42 Zombie cleanup.** Pass 1: every `breakaway_*` faction with zero regions whose creation tick is ≥ 5 ticks ago is removed. Pass 2: every remaining `breakaway_*` with exactly one region, created ≥ `ZOMBIE_CLEANUP_TICKS = 50` ago, budget < `COLONIZE_COST = 20.0`, and not a conqueror this tick, gives its region to the bordering (border-edge) faction with the most regions (ties: first found), sets `previous_faction` = itself and held-since = tick, and is removed. Removal deletes the faction from every stance table and unowns any remaining regions.
+
+**ALG-43 Latent loyalty.** After the split in ALG-41, if the region has a previous owner different from its current owner, `tick − held_since ≤ LATENT_LOYALTY_TICKS = 20`, one draw `< LATENT_LOYALTY_REVERT_CHANCE = 0.5`, and the previous owner still exists: the region reverts to the previous owner with held-since = tick, previous owner cleared, and the same tension cap and floors as ALG-41.
+
+**ALG-44 Lifecycle phase.** Given a faction's recent event list: fragmentation if (admin events + revolts + reversions) / max(1, len(events)) ≥ `LIFECYCLE_FRAGMENTATION_REVOLT_RATE = 0.02`; else overextension if `regions · REGION_MAINTENANCE_COST / Σ economy > LIFECYCLE_OVEREXTENSION_DRAIN_RATIO = 0.4`; else conflict if attacks / len ≥ `LIFECYCLE_CONFLICT_ATTACK_RATE = 0.05`; else expansion if distinct empty regions bordering the faction / inhabited region count ≥ `LIFECYCLE_EXPANSION_EMPTY_THRESHOLD = 0.3`; else consolidation if any colonization and no attack; else equilibrium (also for zero regions).
 
 ## World generation (`world.py`)
 

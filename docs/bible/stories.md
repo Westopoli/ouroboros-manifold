@@ -35,3 +35,26 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-029 | E-04 | "A tense region faces a rising chance of revolt every tick, a fever not a switch." | Spec'd | `epics/E-04-events-and-chains.md` S-029 |
 | S-030 | E-04 | "The galaxy's crises and booms come from a fixed, authored set." | Spec'd | `epics/E-04-events-and-chains.md` S-030 |
 | S-031 | E-04 | "Every time I come back the galaxy has visibly changed." | Spec'd, blocked on Q-031-01 | `epics/E-04-events-and-chains.md` S-031 |
+| S-032 | E-05 | "Every faction, mine included, runs the same loop with its own personality; no scripted villain." | Spec'd | `epics/E-05-faction-agents-and-conflict.md` S-032 |
+| S-033 | E-05 | "Each region pays for itself before it feeds my war chest." | Spec'd | `epics/E-05-faction-agents-and-conflict.md` S-033 |
+| S-034 | E-05 | "A conqueror and a fortifier want different things from the same map." | Spec'd | `epics/E-05-faction-agents-and-conflict.md` S-034 |
+| S-035 | E-05 | "A faction attacks only when the numbers say it wins by its own margin of comfort." | Spec'd | `epics/E-05-faction-agents-and-conflict.md` S-035 |
+| S-036 | E-05 | "Some attacks are announced a tick ahead at full strength, others sprung at half." | Spec'd | `epics/E-05-faction-agents-and-conflict.md` S-036 |
+| S-037 | E-05 | "An attack's outcome scales with how decisive it was; a strong garrison absorbs the blow." | Spec'd | `epics/E-05-faction-agents-and-conflict.md` S-037 |
+| S-038 | E-05 | "A region changes hands when its defenders are gone, and is hard to hold afterward." | Spec'd | `epics/E-05-faction-agents-and-conflict.md` S-038 |
+| S-039 | E-05 | "When several factions strike one region at once, the strongest hand usually wins, and pays for the contest." | Spec'd | `epics/E-05-faction-agents-and-conflict.md` S-039 |
+| S-040 | E-05 | "A large empire sheds provinces to institutional revolt no matter how calm they are." | Spec'd, blocked on Q-040-01 | `epics/E-05-faction-agents-and-conflict.md` S-040 |
+| S-041 | E-05 | "A region on a hostile border is chronically stressed." | Spec'd, blocked on Q-041-01 | `epics/E-05-faction-agents-and-conflict.md` S-041 |
+| S-042 | E-06 | "Every pair of factions is hostile, neutral, or cooperative, and that decides who fights and who trades." | Spec'd, blocked on Q-042-01 | `epics/E-06-diplomacy-and-technology.md` S-042 |
+| S-043 | E-06 | "Two neutral neighbors who leave each other alone drift into cooperation." | Spec'd | `epics/E-06-diplomacy-and-technology.md` S-043 |
+| S-044 | E-06 | "A cooperative partner can turn on me when it is stronger and under pressure." | Spec'd, blocked on Q-045-01 | `epics/E-06-diplomacy-and-technology.md` S-044 |
+| S-045 | E-06 | "Each faction's technology is one level that grows with its economy." | Spec'd | `epics/E-06-diplomacy-and-technology.md` S-045 |
+| S-046 | E-06 | "A conqueror's technology shows up as firepower, a fortifier's as walls and wealth." | Spec'd | `epics/E-06-diplomacy-and-technology.md` S-046 |
+| S-047 | E-06 | "The weaker partner in a peace catches up toward the stronger, never past it." | Spec'd | `epics/E-06-diplomacy-and-technology.md` S-047 |
+| S-048 | E-06 | "My units change in kind when my technology crosses a tier line, and fall back if it slips." | Spec'd | `epics/E-06-diplomacy-and-technology.md` S-048 |
+| S-049 | E-07 | "A revolt that takes hold creates a new faction from the region." | Spec'd | `epics/E-07-civilizational-lifecycle.md` S-049 |
+| S-050 | E-07 | "A region I took recently can go back to its old owner when it revolts." | Spec'd | `epics/E-07-civilizational-lifecycle.md` S-050 |
+| S-051 | E-07 | "A breakaway that never grows is absorbed; a faction with no land disappears." | Spec'd | `epics/E-07-civilizational-lifecycle.md` S-051 |
+| S-052 | E-07 | "My own civilization can fall." | Spec'd | `epics/E-07-civilizational-lifecycle.md` S-052 |
+| S-053 | E-07 | "The sim knows whether my civilization is expanding, at war, overextended, fragmenting, or settled." | Spec'd | `epics/E-07-civilizational-lifecycle.md` S-053 |
+| S-054 | E-07 | "A civilization's story can end in survival, escape, or extinction with only relics left." | Deferred (Q-054-01) | `epics/E-07-civilizational-lifecycle.md` S-054 |
