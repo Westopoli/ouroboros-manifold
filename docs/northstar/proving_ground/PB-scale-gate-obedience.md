@@ -15,3 +15,8 @@
 **Controls.** Reference: 11 passed at 1.8 ms. Naive: 10 passed, perf gate failed at 408–443 ms (8x over). Margins measured on this machine.
 
 **If it fails.** Tighten the card so the perf test is named explicitly, or raise n. Record.
+
+**Result 2026-09-10, run 1 (build loop, card 108).** Inconclusive for the stated claim: with DeepSeek authoring the brief from the header and tests, the naive nudge in the card is overridden and the brief goes straight to a spatial hash grid. The workers then failed the grid's pair de-duplication and the inclusive distance comparison (best 4/11 over 12 candidates, two hints, no reset). Two consequences for the plan: the obedience claim needs the naive brief forced (`build.py --brief-file`) so a green-but-slow candidate actually appears; and the brief prompt should ask DeepSeek for the simplest algorithm that meets the gate, since a dense grid with counting sort passes at 1.8 ms and is far easier for an 8B–30B worker than a hashed bucket list.
+
+**Result 2026-09-10, runs 2 and 3 (naive brief forced).** Run 2: twelve green-but-slow candidates, none accepted; DeepSeek's single reset restated the naive loop and its correct grid reset was refused by the reset cap. Plan fix: `MAX_RESETS` 1 → 2, `MAX_INTERVENTIONS` 2 → 3, intervene prompt treats a red timing test as a wrong-algorithm signal. Run 3: pass at candidate 9 via a sort-by-x sweep that `gpt-oss:20b` produced on its own after eight naive rejections. The gate half of the claim is proven twice; the steering half is proven by the ladder, not yet by the driver.
+
