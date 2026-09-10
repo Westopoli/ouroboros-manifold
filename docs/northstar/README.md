@@ -71,3 +71,5 @@ Before a story is queued, Claude writes its failing tests from the e2e file: C u
 ### Track R — Research
 
 Four briefs in `research/`: `qa_driving.md` (how the model is the user on forge), `c_rewrite.md` (toolchain, harness, architecture, algorithm inventory, perf targets), `escalation.md` (spiral signals, flag file, notification, start-over protocol, opt-in watcher), `rts_bug_catalog.md` (every bug class with detector tier and evidence). R1 and R2 each end in a spike proof that gates Stage 0.
+
+**Research tooling.** Westley has an unused Gemini Pro subscription. Track R may dispatch scoped deep-research questions (vendor comparisons, exact setup steps, nitty-gritty technical options for a stated use-case) to Gemini via its API, CLI, or Deep Research mode, then Claude verifies the output before it enters `research/`. Wiring Gemini in is a Research Lane task; usage volume is not a constraint.
