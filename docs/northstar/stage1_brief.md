@@ -67,6 +67,8 @@ Ask these one or two at a time. Write the answers into `docs/northstar/vision_v2
 11. What parts of the current bible do you already know you want gone, before we walk it line by line?
 12. What parts do you already know are sacred?
 
+> **Protocol v2 from batch 20 (2026-09-10):** see `stage1_protocol_v2.md`. Whole-file batches, Claude verdicts every row, Westley reviews only flagged rows, lowered flag threshold, two blanket policies (version tags, implementation docs). Step 2 below is the original protocol and is superseded by that file.
+
 ### Step 2 — Item walk
 
 Order: hub first, then `bible_design_vision.md`, then `bible_simulation.md`, `bible_combat.md`, `bible_world.md`, `bible_missions.md`, `bible_chronicle.md`, `bible_antagonist.md`, `bible_ai_pipeline.md`, `bible_animation_strategy.md`, then the priority queue research-only list.

@@ -1,6 +1,6 @@
 # North Star — Agora-Driven Development of Ouroboros Manifold
 
-This directory is the current development method for the project. It overrides the workflow sections of `CLAUDE.md` and `docs/workflow.md` wherever they disagree. The game bible (`docs/bible/`) remains the source of truth for *what the game is*; this directory is the source of truth for *how it gets built*.
+This directory is the current development method for the project. The complete approved plan is `PLAN.md` (canonical; this README is the short form). It overrides the workflow sections of `CLAUDE.md` and `docs/workflow.md` wherever they disagree. The game bible (`docs/bible/`) remains the source of truth for *what the game is*; this directory is the source of truth for *how it gets built*.
 
 ## The north star
 
