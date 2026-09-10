@@ -24,3 +24,8 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-018 | E-02 | "Regions boom and bust on their own cycles, out of step with each other." | Spec'd | `epics/E-02-region-fields-and-drift.md` S-018 |
 | S-019 | E-02 | "A region that hits bottom stays barely alive but keeps hurting until someone helps." | Spec'd | `epics/E-02-region-fields-and-drift.md` S-019 |
 | S-020 | E-02 | "Same seed, same galaxy, on every machine." | Spec'd | `epics/E-02-region-fields-and-drift.md` S-020 |
+| S-021 | E-03 | "A galaxy small enough to learn, large enough to feel vast, different every campaign." | Spec'd, blocked on Q-021-01 | `epics/E-03-world-generation.md` S-021 |
+| S-022 | E-03 | "My home feels established, my frontier feels newly settled." | Spec'd | `epics/E-03-world-generation.md` S-022 |
+| S-023 | E-03 | "A connection carries armies, trade, or both, so a region can be rich but exposed." | Spec'd | `epics/E-03-world-generation.md` S-023 |
+| S-024 | E-03 | "Peace opens trade routes; betrayal and conquest close them." | Spec'd | `epics/E-03-world-generation.md` S-024 |
+| S-025 | E-03 | "Nobody starts on my doorstep; first contact happens, it is not spawned." | Spec'd | `epics/E-03-world-generation.md` S-025 |
