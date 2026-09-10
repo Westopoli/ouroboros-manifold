@@ -29,3 +29,9 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-023 | E-03 | "A connection carries armies, trade, or both, so a region can be rich but exposed." | Spec'd | `epics/E-03-world-generation.md` S-023 |
 | S-024 | E-03 | "Peace opens trade routes; betrayal and conquest close them." | Spec'd | `epics/E-03-world-generation.md` S-024 |
 | S-025 | E-03 | "Nobody starts on my doorstep; first contact happens, it is not spawned." | Spec'd | `epics/E-03-world-generation.md` S-025 |
+| S-026 | E-04 | "Every crisis has a cause I can point to; history reads as consequence, not dice." | Spec'd | `epics/E-04-events-and-chains.md` S-026 |
+| S-027 | E-04 | "A crisis spawns follow-ups that may or may not come, depending on how the region is doing when their time arrives." | Spec'd | `epics/E-04-events-and-chains.md` S-027 |
+| S-028 | E-04 | "Two blows on the same day hurt together; a resolution and a crisis never both happen at once." | Spec'd | `epics/E-04-events-and-chains.md` S-028 |
+| S-029 | E-04 | "A tense region faces a rising chance of revolt every tick, a fever not a switch." | Spec'd | `epics/E-04-events-and-chains.md` S-029 |
+| S-030 | E-04 | "The galaxy's crises and booms come from a fixed, authored set." | Spec'd | `epics/E-04-events-and-chains.md` S-030 |
+| S-031 | E-04 | "Every time I come back the galaxy has visibly changed." | Spec'd, blocked on Q-031-01 | `epics/E-04-events-and-chains.md` S-031 |

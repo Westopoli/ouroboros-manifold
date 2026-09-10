@@ -4,7 +4,7 @@ This is the "what stays" contract for the C rewrite. Every formula below was rea
 
 All fields are floats clamped to [0, 100] unless stated. Economy has a floor of `ECONOMY_FLOOR = 8.0` under drift, friction, and standard events; conquest bypasses it. Ticks are integers from 1. Randomness is one seeded stream per world (`random.Random(seed)`); the draw order per tick is the order the formulas appear in the tick sequence below.
 
-Not yet inventoried here: event threshold triggers with noise (`events.py`), diplomacy timers and peace formation (`diplomacy.py`), civilizational lifecycle (`lifecycle.py`), time jump (`time_jump.py`), coherence ledger and character selector, and the whole tactical layer (`unit.py`, `movement.py`, `damage.py`, `fog_of_war.py`, `facing.py`, `ability.py`). Each gets added when its epic runs the completeness gate.
+Not yet inventoried here: diplomacy timers and peace formation (`diplomacy.py`), civilizational lifecycle (`lifecycle.py`), time jump (`time_jump.py`), coherence ledger and character selector, and the whole tactical layer (`unit.py`, `movement.py`, `damage.py`, `fog_of_war.py`, `facing.py`, `ability.py`). Each gets added when its epic runs the completeness gate.
 
 ## Tick sequence (`tick.py`)
 
@@ -133,6 +133,22 @@ Then, if the target is owned by a faction that is not a collider, or is owned by
 ## Administrative revolts (`admin_revolt.py`)
 
 **ALG-29.** Per faction: `excess = max(0, territory_count − ADMIN_REVOLT_INFLECTION_POINT = 4)`; `chance = ADMIN_REVOLT_BASE_RATE + ADMIN_REVOLT_SCALING_RATE · excess²`, base `0.001`, scaling `0.0005`. One RNG draw per owned region per tick; a draw below `chance` queues an `evt_admin_separatist` chain on that region for the next tick.
+
+## Events (`events.py`)
+
+Added in Stage 2 from source (2026-09-10); not part of the Stage 1 algorithm pass. Template values are in `epics/E-04-events-and-chains.md` S-030.
+
+**ALG-32 Noise offsets.** At the start of each time jump, for every region and every template with a trigger field, one uniform draw in `[−EVENT_NOISE_RANGE, +EVENT_NOISE_RANGE]`, range `10.0`. Draw order: regions in world order, templates in library order.
+
+**ALG-33 Threshold triggers.** For ticks `≤ EVENT_GRACE_PERIOD = 3`: no firing; the per-(region, template) breached flag is set from the current field (`field > threshold + offset` for `above`, `<` for `below`). After the grace period: `now = field > T + offset` (or `<`); fire if `now` and not `was`; store `now`. Fresh triggers are evaluated per region in world order after the pending queue has resolved, and each fired trigger applies its effects immediately (ALG-35) before the next region is evaluated.
+
+**ALG-34 Probability triggers.** Only the regional revolt uses this mode. Skip if `tick − last_fired < REVOLT_COOLDOWN_TICKS = 12`. `p = REVOLT_BASE_PROBABILITY · (tension/100)^REVOLT_TENSION_EXPONENT`, base `0.007`, exponent `0.8`. One draw; fire if `draw < p`; record `last_fired = tick`. Evaluated after the threshold templates for the same region.
+
+**ALG-35 Firing and spawning.** Effects apply per field as `max(floor, min(100, field + delta))` with floors economy `ECONOMY_FLOOR = 8.0`, tension `TENSION_FLOOR = 12.0`, others 0; composites recompute. For each chain spawn, in template order, one integer draw `delay = randint(a, b)` inclusive (uniform, not triangular; see Q-027-01); queue `{template, region, due = tick + delay, probability, conditions, chain_tag}`. A fresh trigger's chain tag is `"{template}_{region}_t{tick}"`; conquest and admin-revolt spawns use the global counter `chain_NNNN`.
+
+**ALG-36 Pending resolution.** All entries with `due == tick` are removed from the queue and grouped by region. Per region: exclusion pass (ALG-37); then for each surviving entry in queue order, if conditions fail (`above v` requires `field > v`, `below v` requires `field < v`) skip with no draw; else one draw, fire if `draw ≤ probability`; a fired entry adds its deltas to a per-field sum and queues its own spawns (ALG-35 draw per spawn). After all entries, each nonzero summed delta applies once against the tick-start field with the ALG-35 floors, and composites recompute once.
+
+**ALG-37 Mutual exclusion.** Collect every exclusion tag among the region's due entries; for each tag in sorted order, among entries still resolved that carry the tag, keep the one with the highest probability (ties: the first in queue order, see Q-028-01) and re-queue each other one with `due = tick + randint(1, 2)` (one draw per loser).
 
 ## World generation (`world.py`)
 
