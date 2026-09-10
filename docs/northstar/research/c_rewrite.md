@@ -8,6 +8,7 @@ How the Python sim becomes a C library without losing the equations or the deter
 - Phase 1 reproduces today's snapshot, delta, and command JSON over the length-prefixed pipe so Godot is untouched.
 - Phase 2 adds a thin GDExtension binding and deletes the pipe.
 - Tests always hit the C library directly.
+- **The C sim is bit-deterministic across Windows, macOS, and Linux** (decided 2026-09-10). Same seed and same command stream produce byte-identical traces on every platform. Required from the first sprint: identical compiler flags per platform, no `-ffast-math`, integer or fixed-point math where feasible, a state checksum hook every N ticks, and a cross-platform trace-diff test. This keeps lockstep co-op over Steam Datagram Relay possible at near-zero transport cost (see `multiplayer_sdr.md`) and cannot be bolted on later.
 
 ## Questions to answer
 
@@ -17,7 +18,7 @@ How the Python sim becomes a C library without losing the equations or the deter
 4. **Serialization.** Phase 1 JSON shapes identical to `simulation/snapshot_serializer.py` (`full_snapshot`, `delta`, `apply_delta`) and the command file format `simulation/pipe_transport.py` polls. Contract tests for both.
 5. **Algorithm inventory.** Every equation quoted with constants and file:line from `drift.py`, `region.py`, `world.py`, `faction.py`, `intent_resolver.py`, `border_friction.py`, `technology.py`, `admin_revolt.py`. Proposed keep, retune, or drop for Stage 1's algorithm pass.
 6. **Perf targets.** Proposed numbers for Stage 3 scale gates: tactical tick time at 1,000 and 10,000 units; strategic tick at 60 regions and 15 factions over 5,000 ticks; path queries per second; memory ceiling.
-7. **Determinism proof.** A test that runs the same seed twice and diffs the traces byte for byte.
+7. **Determinism proof.** A test that runs the same seed twice and diffs the traces byte for byte, on one machine and across platforms. Define the checksum hook (which fields, which cadence, how a desync is reported).
 
 ## Spike proof (gates Stage 0 probes A through C)
 

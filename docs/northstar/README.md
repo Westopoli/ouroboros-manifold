@@ -17,6 +17,7 @@ Principles that persist beyond any chat are in `principles.md`. The agile method
 | QA tiers | T1 state-level QA drives the C sim with no rendering and detects RTS bugs from traces. T2 visual QA drives the real Godot window via xdotool plus screenshots and video. T1 runs first and most; T2 catches render-only bugs. |
 | Claude escalation | Flag file plus evidence bundle; Westley opens a chat by hand. A pinned-chat `/loop` watcher is documented as an opt-in mode, off by default. Agora decision D16 (no unattended Claude) stays. |
 | Method | Agile. Epics, stories, rules. Requirements may change; the change protocol keeps bible, tests, and Agora tasks in sync. |
+| Determinism | The C sim is bit-deterministic across Windows, macOS, and Linux from the first sprint, with a checksum hook. Keeps lockstep co-op over Steam Datagram Relay possible; see `research/c_rewrite.md` and `research/multiplayer_sdr.md`. |
 | Parallelism | Planning and building run in parallel. A story is built only after it passes the Definition of Ready. Deep features need not be fully designed before Agora starts on the earliest, simplest ones. |
 
 ## The cautionary example: the layer system
