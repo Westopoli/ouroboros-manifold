@@ -5,9 +5,10 @@ Verdict key: keep, kill, rewrite, defer, unsure. `unsure` is not allowed to surv
 ## Progress
 
 - Files done: none complete.
-- Files in progress: `game_bible.md` (hub) — batches 1-3 resolved (47/47 rows verdicted, 2 deferred to later files: A-040 tick-step count, A-044 mission complication cadence), batch 4 open.
+- Files in progress: `game_bible.md` (hub) — batches 1-4 resolved (57/57 rows verdicted, 2 deferred to later files: A-040 tick-step count, A-044 mission complication cadence), batch 5 open.
 - Files not started: `bible_design_vision.md`, `bible_simulation.md`, `bible_combat.md`, `bible_world.md`, `bible_missions.md`, `bible_chronicle.md`, `bible_antagonist.md`, `bible_ai_pipeline.md`, `bible_animation_strategy.md`, `priority_queue.md` research-only list, known-stale-claims sweep.
-- Total rows so far: 47 (A-001 through A-047), all verdicted.
+- Total rows so far: 57 (A-001 through A-057), all verdicted.
+- Design decisions made mid-audit (Stage 2 will need these): A-050 rotation hard cap replaced with decaying stay-probability, no fixed chapter cap.
 - Cross-check pass: not started (will run after every file is walked).
 - Algorithm pass: not started.
 
@@ -107,4 +108,22 @@ Same commit stamped every bible spoke (`bible_combat.md`, `bible_simulation.md`,
 
 All of batch 4 is mechanical/algorithmic detail describing HOW the already-approved lineage rotation and character-selector system (A-047) works — no new story/vision claims, nothing here touches the multiplayer/RTS/multi-era reversals. Flagging none as pre-suspect; straightforward keep candidates unless something reads wrong to you.
 
-Reply with verdicts. I'll record and move to batch 5 (Onboarding and First Chapter, What Carries Over, Player Civilization Mortality, Terminal Conditions and the Cycle — lines 168-197, closing out The Generational Structure section).
+## Batch 5 — `game_bible.md`, Onboarding and First Chapter, What Carries Over, Player Civilization Mortality, Terminal Conditions and the Cycle (lines 168-197)
+
+| id | source | type | built | verdict | note |
+|---|---|---|---|---|---|
+| A-058 | game_bible.md:170 | mechanic | built | | Single onboarding screen before chapter 1: two permanent choices — difficulty (Easy/Medium/Hard) and mission preference weights (across 10 archetypes, up to two markable "rare"). Both permanent for the whole generational arc. Same screen fires at the start of each new cycle after Exodus or Extinction. Worth a sanity check against multiplayer (Q1/Q3): are difficulty and mission-preference choices per-player or per-match in a multiplayer session? Not resolving here — flag for Stage 2/3 if it matters, not blocking this row's keep/kill call. |
+| A-059 | game_bible.md:172 | mechanic | built | | Opening time jump after confirmation: generates starting world, runs opening time jump (targeting 20-50 years — narrower/different range than the 20-100 year range for inter-chapter jumps, A-046). Player sees abbreviated chronicle scroll (3-5 entries, all world entries). Mission generator runs against post-jump state; character selector draws from "unrelated person" pool since no previous lineages exist yet. |
+| A-060 | game_bible.md:176 | story | built | | "The world remembers everything" — simulation state carries forward completely; every mission outcome, faction shift, tech advance/cultural collapse persists. Matches Q5 (simulation must be noticeably affected by prior mission outcome). |
+| A-061 | game_bible.md:177 | rule | built | | Player starts mechanically fresh each chapter — new character, new forces, new mission, no persistent "player level" or unlocks. |
+| A-062 | game_bible.md:178 | story | built | | Civilization evolves: technology advances or regresses; tools available in later chapters may differ significantly from early chapters. |
+| A-063 | game_bible.md:179 | mechanic | built | | The Ouroboros: game can cycle. If civilization reaches Extinction with Amnesia, it restarts — player's next character exists in a world containing the ruins of everything that came before. |
+| A-064 | game_bible.md:183 | rule | built | | Player's civilization has no plot armor — can be conquered, fragmented, or ground into extinction by the same simulation forces affecting every other faction. |
+| A-065 | game_bible.md:185 | mechanic | built | | When player's faction collapses (loses all regions, or reduced below viability threshold): chronicle frames the fall as a major scroll entry, character selector reassigns player to a surviving faction via modified lineage logic (prefer narrative connections, else geographic overlap), player continues as commander in the new faction. |
+| A-066 | game_bible.md:187 | mechanic | built | | Cross-faction lineage rotation: even when player's civilization survives, rotation can move the player to a different faction for variety — after the hard cap, selector considers candidates across all factions, not just the player's current one. **Depends on A-050's "hard cap" wording, which was just killed/rewritten to a decaying probability.** Same fix needed here: replace "after the hard cap" with "as stay-probability decays," same mechanism, no separate design call needed — folding into A-050's rewrite unless you want it called out separately. |
+| A-067 | game_bible.md:193 | mechanic | built | | Terminal condition — Exodus: civilization escapes to a new region; simulation resets to an early-era state with chronicle and ledger preserved. |
+| A-068 | game_bible.md:194 | mechanic | built | | Terminal condition — Extinction with Amnesia: civilization dies, cold restart with relics; player remembers what their new character does not; old waypoints exist but inspect panels read "Unknown." |
+| A-069 | game_bible.md:195 | mechanic | built | | Terminal condition — The Unbroken Line: civilization endures through the late era; eventually internal pressures force a transition (Exodus, collapse, or voluntary contraction). |
+| A-070 | game_bible.md:197 | story | built | | Game loops through expansion → conflict → fragmentation → renewal at the faction level, not the global level. Multiple factions cycle independently. Player threads through these cycles via lineage rotation. |
+
+Reply with verdicts. I'll record and move to batch 6 (Missions summary + The Player's Toolkit — What You Command, Commanding Forces, Individual Units, Light Economy — lines 201-241).
