@@ -67,15 +67,34 @@ Ask these one or two at a time. Write the answers into `docs/northstar/vision_v2
 11. What parts of the current bible do you already know you want gone, before we walk it line by line?
 12. What parts do you already know are sacred?
 
-> **Protocol v2 from batch 20 (2026-09-10):** see `stage1_protocol_v2.md`. Whole-file batches, Claude verdicts every row, Westley reviews only flagged rows, lowered flag threshold, two blanket policies (version tags, implementation docs). Step 2 below is the original protocol and is superseded by that file.
+### Step 2 — Item walk (protocol v2, binding from batch 20)
 
-### Step 2 — Item walk
+Westley's words: "fly through the remaining batches and print nothing that doesn't flag."
 
-Order: hub first, then `bible_design_vision.md`, then `bible_simulation.md`, `bible_combat.md`, `bible_world.md`, `bible_missions.md`, `bible_chronicle.md`, `bible_antagonist.md`, `bible_ai_pipeline.md`, `bible_animation_strategy.md`, then the priority queue research-only list.
+1. **One batch = one whole spoke file.** Never split a file into pieces. Never stop mid-file to ask.
+2. **You decide every verdict yourself** using `vision_v2.md`, the code-reality summary, the pivot commit `b0a545b`, prior verdicts, and the blanket policies A-323 and A-324. Write all rows to the ledger before reporting.
+3. **Print only flagged rows.** A row is flagged when ANY holds: conflicts with vision_v2 or an earlier verdict; post-pivot content or pause-and-command / Lieutenant / single-player-only / multi-era-as-research framing; implementation detail; code reality absent or partial for a claim written as built; two possible readings; names a number, cap, cadence, range, or percentage; proposes era-specific mechanics at launch (A-321); your confidence in KEEP is below near-certain. When in doubt, flag. Unflagged KEEP rows appear only as a comma-separated list of ids on one line.
+4. **Do not ask questions inside a batch.** Every question becomes a `Q-` row in `ambiguity_register.md` with candidate answers, the ledger row is marked `unsure`, and you move on. Westley answers the register, not the chat.
+5. **One message per file**, in the template below. Then wait for "approve" or overrides by row id. On approve, apply nothing further (verdicts are already written); on override, edit those rows only.
+6. **Forbidden:** presenting a table of unflagged rows; asking "keep or kill?" on any row; waiting for input before finishing a file; more than one report message per file.
 
-For each file, split it into discrete claims. A claim is one rule, one mechanic, one user-facing behavior, one aspiration, or one implementation statement. A paragraph often holds several. Give each a row.
+Remaining order: `bible_combat.md` from line 244, `bible_world.md`, `bible_missions.md`, `bible_chronicle.md`, `bible_antagonist.md`, `bible_ai_pipeline.md`, `bible_animation_strategy.md`, then the `priority_queue.md` research-only list and the known-stale-claims sweep.
 
-Present each batch as a markdown table with the columns below, verdict blank. Westley replies with verdicts (he may reply tersely: "1 keep, 2 kill, 3 rewrite: make it X"). Record them and move on. Ask for a note on every rewrite and every defer.
+Blanket policies (one ledger row each, then applied silently): **A-323** every version-tag callout ("RESOLVED (vX.XX)", "RE-OPEN FLAG", "NEW SECTION", "as of", "previously") is KILL for the tag, content under it audited normally. **A-324** engine/implementation documentation (tick rates, protocols, batching, driver bugs, file internals, config values, JSON shapes) is REWRITE to behavior-level intent; Stage 2 moves the mechanics to `docs/architecture.md`.
+
+Report template, one per file:
+
+```
+## <file> — rows A-xxx..A-yyy (n rows)
+
+Flagged (recommended verdict in bold):
+| id | line | type | built | **verdict** | why flagged |
+|---|---|---|---|---|---|
+
+Silent KEEP: A-…, A-…, … (n)
+Counts: keep n · rewrite n · defer n · kill n · unsure n
+Register: Q-… added (or none)
+```
 
 ### Step 3 — Cross-check
 

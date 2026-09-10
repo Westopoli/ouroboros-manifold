@@ -117,7 +117,7 @@ Track R  Research (parallel)  R1 QA driving, R2 C rewrite, R3 escalation, R4 RTS
 
 **Method.**
 1. Vision interview first (before any item walk): 8–12 questions on what the game is. Commander-not-king still true? Pause-and-command tactical still true? Generational chapters still true? Single era or multi-era? Sci-fi Settled Reach or something else? Price band? What did the crisis change? Output: `vision_v2.md` draft, confirmed by Westley. Every later verdict is checked against it.
-2. Item walk, spoke by spoke, hub first. The auditor chunks each file into batches of 15–25 discrete claims and presents each batch as a table. Westley answers per row: **keep / kill / rewrite / defer / unsure**. Rewrite rows get a one-line note of the new intent. Defer rows get a "why not now."
+2. Item walk, one whole spoke file per batch. Claude verdicts every row itself against vision_v2, code reality, the pivot commit, prior verdicts, and the blanket policies; prints only flagged rows (conflict, post-pivot framing, implementation detail, built-status mismatch, two readings, any number or cadence, era-specific mechanics at launch, or confidence below near-certain) with a recommended verdict; lists silent KEEPs by id on one line; never asks a question inside a batch (questions go to the ambiguity register as `Q-` rows). Westley replies "approve" or overrides by row id. (Protocol v2, 2026-09-10; the first 19 batches ran row by row and 83% were straight KEEP.)
 3. Cross-check pass: for every keep, confirm it does not contradict vision_v2 or another keep. Contradictions surface as a short list for Westley to resolve.
 4. Algorithm pass: the retained equations (from `drift.py`, `world.py`, `faction.py`, `intent_resolver.py`, `border_friction.py`, `technology.py`, `admin_revolt.py`, `region.py` composites) presented as named formulas with constants. Verdict per formula: keep verbatim / keep with retune / drop. This feeds R2 and Stage 3.
 
@@ -126,7 +126,7 @@ Track R  Research (parallel)  R1 QA driving, R2 C rewrite, R3 escalation, R4 RTS
 - `docs/northstar/vision_v2.md` (one page).
 - A "contradictions resolved" list and a "stale claims to delete" list.
 
-**Done when.** Every heading in every bible file has at least one ledger row; no row is `unsure`; vision_v2 confirmed; algorithm pass complete. Estimated 300–500 rows, 15–25 sessions of batches. This is the slowest stage and it is meant to be.
+**Done when.** Every heading in every bible file has at least one ledger row; no row is `unsure`; vision_v2 confirmed; algorithm pass complete. Estimated 500–700 rows; under protocol v2 the remaining spokes are one batch each.
 
 **Brief for the Sonnet chat.** This chat writes `docs/northstar/stage1_brief.md`: mission, rules (no bible edits, no design decisions, ledger only, caveman off for the ledger table), the input list, the code-reality summary, the batch protocol, the ledger schema, and the vision-interview question list. Westley pastes the brief as the first message.
 
