@@ -1,5 +1,9 @@
 # Ouroboros Manifold
 
+## North Star (read first)
+
+The project is being rebuilt under an autonomous development method. **Agora** (`~/Projects/agora`, local Ollama models plus a dollar-capped DeepSeek driver) implements and QA-tests the game unattended; **Claude designs and tests**: the bible, the end-to-end behavior definitions, the roadmap, the fenced test suite, and the escalation rules. The sim is being rewritten in C with the stochastic equations preserved. Requirements are agile epics, stories, and rules; a story is built only after it passes the Definition of Ready. Full method, stages, and principles: `docs/northstar/README.md`, `docs/northstar/principles.md`, `docs/northstar/agile.md`. Where this file's Workflow section disagrees with `docs/northstar/`, the north star wins; the Workflow section below is rewritten in Stage 2.
+
 **Tech stack:** Godot 4 (Forward+) · Python 3.14 · Cloudflare R2 CDN · `claude-sonnet-4-20250514` (library builder only, offline — never called during play)
 
 This is a long-term project. There is no ship deadline. One feature at a time, done well, before the next one starts.

@@ -30,7 +30,10 @@ If any of the above isn't true, the item is not done.
 
 ## NEXT
 
-*(Empty — Westley to pick from Soon, or seed a new one here.)*
+### Stage 1 — Bible audit (Sonnet chat)
+**What:** Walk every idea in the bible with Westley and record keep / kill / rewrite / defer per row, after a vision interview. Runs in a separate Claude Sonnet 5 chat started from `docs/northstar/stage1_brief.md`.
+**Output:** `docs/northstar/stage1_audit.md`, `docs/northstar/vision_v2.md`.
+**Why next:** First stage of the north star (`docs/northstar/README.md`). Everything downstream (bible reformat, e2e definitions, tests, sprints) depends on it. This queue is retired in Stage 2 in favor of the product backlog.
 
 ---
 
