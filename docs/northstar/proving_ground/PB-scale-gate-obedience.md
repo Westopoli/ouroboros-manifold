@@ -15,3 +15,6 @@
 **Controls.** Reference: 11 passed at 1.8 ms. Naive: 10 passed, perf gate failed at 408–443 ms (8x over). Margins measured on this machine.
 
 **If it fails.** Tighten the card so the perf test is named explicitly, or raise n. Record.
+
+**Result 2026-09-10, run 1 (build loop, card 108).** Inconclusive for the stated claim: with DeepSeek authoring the brief from the header and tests, the naive nudge in the card is overridden and the brief goes straight to a spatial hash grid. The workers then failed the grid's pair de-duplication and the inclusive distance comparison (best 4/11 over 12 candidates, two hints, no reset). Two consequences for the plan: the obedience claim needs the naive brief forced (`build.py --brief-file`) so a green-but-slow candidate actually appears; and the brief prompt should ask DeepSeek for the simplest algorithm that meets the gate, since a dense grid with counting sort passes at 1.8 ms and is far easier for an 8B–30B worker than a hashed bucket list.
+
