@@ -15,3 +15,12 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-009 | E-01 | "I see at a glance which layer every unit is on and which layer I am focused on." | Spec'd | `epics/E-01-layer-system.md` S-009 |
 | S-010 | E-01 | "A unit on a higher layer sits visibly higher on screen, and rises or drops when it changes layer." | Spec'd | `epics/E-01-layer-system.md` S-010 |
 | S-011 | E-01 | "An era pack can restrict which layers a unit type may use; the Settled Reach restricts nothing." | Spec'd | `epics/E-01-layer-system.md` S-011 |
+| S-012 | E-02 | "Each region's condition is four plain numbers and two summaries." | Spec'd | `epics/E-02-region-fields-and-drift.md` S-012 |
+| S-013 | E-02 | "Garrisons decay when the region cannot pay for them and recruit when times are good." | Spec'd | `epics/E-02-region-fields-and-drift.md` S-013 |
+| S-014 | E-02 | "Economy grows with people, shrinks under unrest, and falls back when it outruns its population." | Spec'd | `epics/E-02-region-fields-and-drift.md` S-014 |
+| S-015 | E-02 | "A region next to a booming friendly region develops faster." | Spec'd | `epics/E-02-region-fields-and-drift.md` S-015 |
+| S-016 | E-02 | "Tension rises with hardship and burns itself out faster the higher it gets." | Spec'd | `epics/E-02-region-fields-and-drift.md` S-016 |
+| S-017 | E-02 | "Population is the slowest number: collapse feels permanent, recovery feels earned." | Spec'd | `epics/E-02-region-fields-and-drift.md` S-017 |
+| S-018 | E-02 | "Regions boom and bust on their own cycles, out of step with each other." | Spec'd | `epics/E-02-region-fields-and-drift.md` S-018 |
+| S-019 | E-02 | "A region that hits bottom stays barely alive but keeps hurting until someone helps." | Spec'd | `epics/E-02-region-fields-and-drift.md` S-019 |
+| S-020 | E-02 | "Same seed, same galaxy, on every machine." | Spec'd | `epics/E-02-region-fields-and-drift.md` S-020 |
