@@ -4,7 +4,7 @@ This is the "what stays" contract for the C rewrite. Every formula below was rea
 
 All fields are floats clamped to [0, 100] unless stated. Economy has a floor of `ECONOMY_FLOOR = 8.0` under drift, friction, and standard events; conquest bypasses it. Ticks are integers from 1. Randomness is one seeded stream per world (`random.Random(seed)`); the draw order per tick is the order the formulas appear in the tick sequence below.
 
-Not yet inventoried here: the mission generator and outcome resolver, and the whole tactical layer (`unit.py`, `movement.py`, `damage.py`, `fog_of_war.py`, `facing.py`, `ability.py`). Each gets added when its epic runs the completeness gate.
+Not yet inventoried here: the whole tactical layer (`unit.py`, `movement.py`, `damage.py`, `fog_of_war.py`, `facing.py`, `ability.py`). Each gets added when its epic runs the completeness gate.
 
 ## Tick sequence (`tick.py`)
 
@@ -198,6 +198,22 @@ Added in Stage 2 from source (2026-09-10).
 **ALG-52 Selection.** Order: consequence clusters, then lineage clusters, then the rest by peak score descending, skipping any category already used twice, until `CHRONICLE_MAX_ENTRIES = 10`; if fewer than `CHRONICLE_MIN_ENTRIES = 5`, add skipped clusters in order while a category has fewer than 2.
 
 **ALG-53 Assembly.** RNG seeded with the jump start tick. Per cluster: resolve slot values; draw opening, detail, closing uniformly from the category pools filtered to resolvable slots; slot echo (same value ≥ 6 words in adjacent fragments) replaced by an anaphoric form; word echo (4+ letters, non-stop word, second occurrence) replaced from the synonym map; first mention of a region appends ", held by <faction name>" unless the entry already names both. Then cross-entry dedup: content words (lowercase, > 3 letters, non-stop); drop a later entry whose overlap with any kept entry ≥ `0.40` of the smaller set. Warnings at base ≥ 90 words or expanded ≥ 140.
+
+## Missions (`mission_generator.py`, `objectives.py`, `outcome_resolver.py`, `force_allocator.py`)
+
+Added in Stage 2 from source (2026-09-10).
+
+**ALG-54 Candidate pool.** Regions = the player's regions plus every neighbor (all edge types), excluding empty tier. For each region and each of the 10 archetypes, the archetype's trigger function returns fired plus a context; fired pairs enter the pool.
+
+**ALG-55 Scoring and selection.** `urgency = clamp(URGENCY_FIELD_WEIGHT · deficit + URGENCY_CONFLICT_WEIGHT · conflict + URGENCY_CHAIN_WEIGHT · chain)`, weights `0.4 / 0.4 / 0.2`; `deficit = ((100 − m) + (100 − e) + (100 − stability))/300`; `conflict = clamp(min(1, max_hostile_neighbor_m/70) + 0.5 · min(1, 0.5 · n_attacks + Σ budget/600) + 0.3 · min(1, 0.5 · adjacent_regions_lost))`; `chain = min(1, 0.3 · n_revolt_events_in_region)`. `relevance = clamp(RELEVANCE_LINEAGE_WEIGHT · lineage + RELEVANCE_PROXIMITY_WEIGHT · (1 − hops/RELEVANCE_MAX_HOPS) + RELEVANCE_ARCHETYPE_WEIGHT · min(1, archetype_count/RELEVANCE_ARCHETYPE_FIT_THRESHOLD))`, weights `0.4 / 0.3 / 0.3`, max hops `5`, fit threshold `3`; lineage = 1.0 if a member lives in the region, 0.5 if the region is in the lineage history, else 0; hops from the lineage's first history region by BFS over all edges, capped at 5. `preference = GENERATOR_RARE_PREFERENCE = 0.1` if rare, else the player's weight, default `GENERATOR_DEFAULT_PREFERENCE = 0.5`. `score = 0.5 · urgency + 0.3 · relevance + 0.2 · preference` (`GENERATOR_*_WEIGHT`). Sort descending; pool = top `GENERATOR_TOP_N_CANDIDATES = 5`; one draw `r = U(0, Σ score)`, first candidate whose cumulative score ≥ r.
+
+**ALG-56 Time limit.** `limit = max(B · (1 − urgency · TIME_PRESSURE_SCALING = 0.2), B · TIME_LIMIT_FLOOR_PCT = 0.6)`, B from `ARCHETYPE_TIME_LIMITS` (see Q-076-01: two definitions exist in config; the later one, 250 to 450 ticks, wins at import).
+
+**ALG-57 Force parity.** Enemy power: attack-driven archetypes `budget_committed · BUDGET_TO_POWER_SCALE = 300`; insurgent archetypes `insurgent_m · MILITARY_TO_POWER_SCALE = 2000` with `insurgent_m = U(lo, hi)`, `lo, hi` linearly interpolated from `INSURGENT_MIL_LOW_POP_RANGE = (20, 50)` at population `≤ 25` to `INSURGENT_MIL_HIGH_POP_RANGE = (40, 70)` at `≥ 70`; others `region.m · 2000`. Parity: piecewise linear through `PARITY_BREAKPOINTS = [(0, 0.80), (0.3, 0.85), (0.5, 0.90), (0.7, 0.95), (1.0, 1.00)]` on region capacity/100; easy `max(base, 0.95)`, hard `min(base, 0.85)`; then `max(parity, PARITY_FLOOR = 0.75)`. Fill: for each unit type in descending profile ratio, add units while `allocated < budget · ratio` and `power ≤ 1.15 · remaining`. Shortfall: if capacity `< CAPACITY_SHORTFALL_THRESHOLD = 0.4`, remove `CAPACITY_SHORTFALL_REDUCTION = 0.20` of the units round-robin from the most numerous types, keeping at least 1.
+
+**ALG-58 Outcome.** `objective_score = Σ weight · (0 if failed else completion)`; `retention = min(1, Σ surviving unit power (HP-scaled) / initial power)`; `final = OUTCOME_WEIGHT_OBJECTIVE = 0.75 · objective_score + OUTCOME_WEIGHT_RETENTION = 0.25 · retention`; band by `OUTCOME_THRESHOLDS[archetype]` (E-10 R-077-02), strict less-than. Terminal: every primary complete or failed, or `tick ≥ limit`, or no living player unit. Commander survived = commander unit alive.
+
+**ALG-59 Consequences.** For each row of `CONSEQUENCE_TABLES[archetype][band]`: `delta = (100 − v) · pct/100` for form `deficit`, `v · pct/100` for `current`; targets `mission`, `home`, `exposed` resolve to the mission region (see Q-078-01), `adjacent_player` to player-owned neighbors; clamp [0, 100]. Ownership transfers to the player for bands in `REGION_TRANSFER_OUTCOMES`: reconquest {total, strong, partial success}, assault and suppression {total, strong success}. Refusal: `tension += (100 − tension) · REFUSAL_TENSION_PENALTY_PCT = 8 / 100`. Commander death emits `evt_commander_killed_in_action` flagged as a mission consequence.
 
 ## World generation (`world.py`)
 

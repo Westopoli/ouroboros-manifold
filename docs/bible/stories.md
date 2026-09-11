@@ -75,3 +75,12 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-069 | E-09 | "I watch the map change on the left while the scroll writes itself on the right, and I can stop and read." | Spec'd, needs reference | `epics/E-09-chronicle.md` S-069 |
 | S-070 | E-09 | "Events near my family bubble up into the scroll, as the deeds of a military family." | Spec'd | `epics/E-09-chronicle.md` S-070 |
 | S-071 | E-09 | "The scroll never repeats a sentence word for word in a campaign." | Spec'd | `epics/E-09-chronicle.md` S-071 |
+| S-072 | E-10 | "My missions come from real trouble in the galaxy, weighted toward where I belong and what I do best." | Spec'd, blocked on Q-072-01 | `epics/E-10-missions.md` S-072 |
+| S-073 | E-10 | "Every mission is a recognizable military situation with its own trigger, shape, and map." | Spec'd | `epics/E-10-missions.md` S-073 |
+| S-074 | E-10 | "My force is sized to the enemy and shaved by how weak my civilization is, but never so small I cannot win." | Spec'd, blocked on Q-074-01 | `epics/E-10-missions.md` S-074 |
+| S-075 | E-10 | "One primary objective I can see progressing, up to three secondary ones." | Spec'd | `epics/E-10-missions.md` S-075 |
+| S-076 | E-10 | "A deadline that tightens when things are urgent; time is pressure, never score." | Spec'd, blocked on Q-076-01 | `epics/E-10-missions.md` S-076 |
+| S-077 | E-10 | "The result is a spectrum weighing what I achieved and who I brought home." | Spec'd | `epics/E-10-missions.md` S-077 |
+| S-078 | E-10 | "The outcome changes the region in proportion to how it was doing." | Spec'd | `epics/E-10-missions.md` S-078 |
+| S-079 | E-10 | "I receive my orders as a superior officer would give them, three parts, no haggling." | Spec'd, needs reference | `epics/E-10-missions.md` S-079 |
+| S-080 | E-10 | "Hard mode gives me less to work with, never gives the enemy better units." | Spec'd, blocked on Q-080-01 | `epics/E-10-missions.md` S-080 |
