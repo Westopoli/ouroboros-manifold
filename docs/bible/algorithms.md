@@ -113,7 +113,7 @@ Then, if the target is owned by a faction that is not a collider, or is owned by
 
 **ALG-25.** For each inhabited region with an owner, over every neighbor across any edge type (no edge-type filter) that is owned by a different faction where either side's stance toward the other is hostile: `tension_f = BORDER_FRICTION_TENSION = 0.15` and `economy_f = BORDER_FRICTION_ECONOMY = 0.05`, flat per hostile neighbor, not scaled by the neighbor's military. Sum over hostile neighbors; `t = min(100, t + Σ tension_f)`, `e = max(ECONOMY_FLOOR, e − Σ economy_f)`; composites recompute.
 
-Correction to the Stage 1 algorithm pass (2026-09-10): that pass documented `simulation/border_friction.py`, which scales friction by the neighbor's military and filters to border edges. That module is never imported by the tick loop; the live implementation is the flat, all-edges version above, which is also what `bible_simulation.md` describes. `border_friction.py` is dead code. See flag Q-041-01 for which version is the design.
+Correction to the Stage 1 algorithm pass (2026-09-10): that pass documented `simulation/border_friction.py`, which scales friction by the neighbor's military and filters to border edges. That module is never imported by the tick loop; the live implementation is the flat, all-edges version above, which is also what `docs/bible_history/bible_2_00_simulation.md` describes. `border_friction.py` is dead code. See flag Q-041-01 for which version is the design.
 
 ## Technology (`technology.py`)
 
@@ -269,4 +269,4 @@ Added in Stage 2 from source (2026-09-10).
 
 **ALG-31 Graph.** `n_regions` uniform integer in `WORLD_REGION_COUNT_RANGE = (40, 60)`; `WORLD_FACTIONS_PER_GAME = 15`. For each faction in order: one home and one frontier region, linked. Remaining regions are empty, shuffled. Each faction's frontier gets a corridor of `WORLD_MIN_FACTION_SEPARATION = 1` empties; corridor ends are chained in faction order. Every unassigned empty links to a random already-connected region, re-rolling up to 20 times to avoid homes. Then `max(1, floor(0.12 · n_regions))` extra edges (`WORLD_EXTRA_EDGE_RATIO`) between random distinct non-adjacent regions, never home-to-home, at most 10× that many attempts. Edge type is `both` between two regions of the same faction, else `border`. The world's RNG is reseeded from one final draw.
 
-`bible_world.md`'s three named starting templates are not implemented; this generic generator is what runs (Stage 1 audit A-374, A-375).
+`docs/bible_history/bible_2_00_world.md`'s three named starting templates are not implemented; this generic generator is what runs (Stage 1 audit A-374, A-375).

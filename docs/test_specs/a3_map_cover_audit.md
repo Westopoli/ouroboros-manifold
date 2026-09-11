@@ -19,7 +19,7 @@ Cover on the tactical map is purely a **continuous scalar field** (`cover_densit
 - `staging` zones → `cover_density` radius 800, intensity 0.60 (defensible entry area)
 - `flank_route` zones → `cover_density` radius 450, intensity 0.40 (mild concealment)
 
-That is the entire cover surface. No other zone type contributes cover. There are no discrete cover props on the sim side — units sample `tmap.cover_density(x,y)` and `combat.damage_per_attack` multiplies by `(1 - cover_density)` (per `bible_combat.md:421`). On the Godot side, even the `obstacle_density` field is the only thing that gets visible meshes; cover is currently invisible.
+That is the entire cover surface. No other zone type contributes cover. There are no discrete cover props on the sim side — units sample `tmap.cover_density(x,y)` and `combat.damage_per_attack` multiplies by `(1 - cover_density)` (per `docs/bible_history/bible_2_00_combat.md:421`). On the Godot side, even the `obstacle_density` field is the only thing that gets visible meshes; cover is currently invisible.
 
 ## Per-archetype findings
 
@@ -40,15 +40,15 @@ Cover today = which gradient sources will actually be emitted for layouts compat
 
 ## Bible directives found
 
-- `bible_missions.md:74` (defensive_stand): "Defensible terrain. Chokepoints between enemy approach vectors and the objective. Prepared positions with cover. Multiple approach routes so the player must choose where to concentrate defense."
-- `bible_missions.md:137` (assault): "Enemy territory. The defender has prepared positions, fortified chokepoints, established infrastructure."
-- `bible_missions.md:179` (multi_front_defense): "Multiple enemy approach vectors from different directions. The player's position is central with defensive infrastructure radiating outward."
-- `bible_missions.md:200` (interception): "Open terrain. No prepared positions for either side… Terrain features provide tactical options (cover, elevation, sensor interference) but neither side has fortifications."
-- `bible_missions.md:221` (evacuation): "Collapsing perimeter. The player starts in a defensive position with evacuation points behind them and enemy forces approaching from the front."
-- `bible_missions.md:242` (containment): "Terrain features create natural defensive positions but with gaps between them."
-- `bible_missions.md:263` (counterinsurgency): "Insurgent forces are initially hidden — scattered across the map in sensor interference zones, behind cover, in defensible pockets… Destroying infrastructure (objectives, cover positions) is mechanically possible but counterproductive."
-- `bible_combat.md:421`: damage formula uses `(1.0 - cover_density_at_position)` — so cover already has mechanical bite; the only missing piece is map generation actually placing it.
-- `bible_combat.md:578` (ambush state): "hold at a hidden position (ideally in a sensor interference zone or behind cover)" — enemy AI also assumes cover exists.
+- `docs/bible_history/bible_2_00_missions.md:74` (defensive_stand): "Defensible terrain. Chokepoints between enemy approach vectors and the objective. Prepared positions with cover. Multiple approach routes so the player must choose where to concentrate defense."
+- `docs/bible_history/bible_2_00_missions.md:137` (assault): "Enemy territory. The defender has prepared positions, fortified chokepoints, established infrastructure."
+- `docs/bible_history/bible_2_00_missions.md:179` (multi_front_defense): "Multiple enemy approach vectors from different directions. The player's position is central with defensive infrastructure radiating outward."
+- `docs/bible_history/bible_2_00_missions.md:200` (interception): "Open terrain. No prepared positions for either side… Terrain features provide tactical options (cover, elevation, sensor interference) but neither side has fortifications."
+- `docs/bible_history/bible_2_00_missions.md:221` (evacuation): "Collapsing perimeter. The player starts in a defensive position with evacuation points behind them and enemy forces approaching from the front."
+- `docs/bible_history/bible_2_00_missions.md:242` (containment): "Terrain features create natural defensive positions but with gaps between them."
+- `docs/bible_history/bible_2_00_missions.md:263` (counterinsurgency): "Insurgent forces are initially hidden — scattered across the map in sensor interference zones, behind cover, in defensible pockets… Destroying infrastructure (objectives, cover positions) is mechanically possible but counterproductive."
+- `docs/bible_history/bible_2_00_combat.md:421`: damage formula uses `(1.0 - cover_density_at_position)` — so cover already has mechanical bite; the only missing piece is map generation actually placing it.
+- `docs/bible_history/bible_2_00_combat.md:578` (ambush state): "hold at a hidden position (ideally in a sensor interference zone or behind cover)" — enemy AI also assumes cover exists.
 
 ## Cross-archetype patterns
 

@@ -7,18 +7,18 @@
 > been **scrapped** — Steam does not permit external payment links from in-game.
 > Current model: **buy-once base game (starting civ of every branch) + paid Steam
 > DLC for additional eras within each branch, no subscription, no free tier**.
-> See `docs/bible/bible_monetization.md` "Current Monetization Model" section.
+> See `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` "Current Monetization Model" section.
 > Branch-structure decisions in this document remain useful as design context;
 > the access-tier columns (Free / Subscription-gated) are obsolete.
 
 > **Transient working doc.** Captures design decisions from the era selection
 > brainstorming session (April 22, 2026). Once all decisions are captured
-> into `bible_monetization.md`, this file is deleted.
+> into `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/), this file is deleted.
 >
-> **Capture targets:** `bible_monetization.md` (component 1 rewrite, Branch
+> **Capture targets:** `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/) (component 1 rewrite, Branch
 > System extension, open question 3 resolution, open question 13a resolution).
 >
-> **Source docs consulted:** `game_bible.md`, `bible_monetization.md`,
+> **Source docs consulted:** `game_bible.md`, `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/),
 > `design_rules.md`, `era_mechanical_axes.md`, `visual_identity_design.md`.
 
 ---
@@ -209,7 +209,7 @@ only one. Compatible with Sacred Principle #3.
 
 ## Bible Capture Targets
 
-The following edits need to be applied to `bible_monetization.md`:
+The following edits need to be applied to `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/):
 
 1. **Component 1 — Launch branch catalog section.** Update Branch 1 and
    Branch 2 descriptions to include specific work era names and positions.
@@ -251,8 +251,8 @@ The following edits need to be applied to `bible_monetization.md`:
   session.** The 8-axis framework (axes 4–8: layer access, force scale,
   terrain expressiveness, environmental threat, cross-layer engagement),
   the 8×3 matrix, and the Branch DNA vs. hallmark-exclusive formal
-  annotations all need to be written into `bible_monetization.md` (Branch
-  System extension) and `bible_combat.md` (per-era parameterization
+  annotations all need to be written into `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/) (Branch
+  System extension) and `docs/bible_history/bible_2_00_combat.md` (per-era parameterization
   re-opens). The bible currently only describes 3 axes in the Branch
   System subsection; the actual design uses 8. The graduated ramp
   paragraph references the axes doc but the doc itself is transient.

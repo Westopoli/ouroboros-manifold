@@ -349,7 +349,7 @@ Substrate for the Commercial / Audience-Targeting / Marketing research stream's 
 - Active plan — `/Users/westley/.claude/plans/synchronous-cuddling-lynx.md`
 - Lane playbook — `docs/research_lane.md`
 - Lane queue — `docs/research_lane_queue.md`
-- Bible authority sources — `docs/bible/game_bible.md`, `docs/bible/bible_monetization.md`
+- Bible authority sources — `docs/bible/game_bible.md`, `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)`
 
 Memory cross-refs applied:
 - `feedback_aggregator_independence.md` — single-channel caveat throughout W6/W7

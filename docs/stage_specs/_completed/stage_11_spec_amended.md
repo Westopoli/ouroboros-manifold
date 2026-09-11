@@ -8,10 +8,10 @@ Build the macro-loop visual structure: mission end → camera pulls back → wor
 
 Read the hub (`game_bible.md`) plus these spokes:
 
-- `bible_world.md` → "Galaxy View — The Strategic Layer Between Missions" (including Faction territory, Connections, Military activity visualization, Ambient particle field, The pivot point), and "Seamless Transition — No Loading Screens" (including Chapter-boundary exits and Exit transition treatment).
-- `bible_chronicle.md` → "Chronicle Scroll — Visual Presentation" (split-screen, Word fade-in, Master timeline, Chronicle–keyframe co-occurrence guarantee, Layout — expanding scroll, Entry interaction states).
-- `bible_animation_strategy.md` → full document. Stage 11 reuses the sweep_line / divider primitives, blinking-cursor-as-heartbeat vocabulary, and smooth-fade-over-cuts rule.
-- `bible_simulation.md` → "Time Jump Controller" (already implemented; this stage visualizes its output).
+- `docs/bible_history/bible_2_00_world.md` → "Galaxy View — The Strategic Layer Between Missions" (including Faction territory, Connections, Military activity visualization, Ambient particle field, The pivot point), and "Seamless Transition — No Loading Screens" (including Chapter-boundary exits and Exit transition treatment).
+- `docs/bible_history/bible_2_00_chronicle.md` → "Chronicle Scroll — Visual Presentation" (split-screen, Word fade-in, Master timeline, Chronicle–keyframe co-occurrence guarantee, Layout — expanding scroll, Entry interaction states).
+- `docs/bible_history/bible_2_00_animation_strategy.md` → full document. Stage 11 reuses the sweep_line / divider primitives, blinking-cursor-as-heartbeat vocabulary, and smooth-fade-over-cuts rule.
+- `docs/bible_history/bible_2_00_simulation.md` → "Time Jump Controller" (already implemented; this stage visualizes its output).
 
 Also read these completed amendments (both landed before Stage 11):
 
@@ -111,7 +111,7 @@ config/
 
 - No tutorial, no onboarding screen, no mission debrief. Those are Stage 12.
 - No save-on-exit serialization. Exit cleanly terminates the run; Stage 12 wires save-on-exit.
-- No subscription / entitlement changes. <!-- LEGACY 2026-05-09: subscription model scrapped entirely; see docs/bible/bible_monetization.md "Current Monetization Model" section. Per-era ownership flags survive; subscription does not. -->
+- No subscription / entitlement changes. <!-- LEGACY 2026-05-09: subscription model scrapped entirely; see docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31) "Current Monetization Model" section. Per-era ownership flags survive; subscription does not. -->
 
 ## Input/Output Shapes
 
@@ -271,7 +271,7 @@ Post-process shader in a SubViewport managed by the Settled Reach renderer. Per-
 
 ### Scroll panel slide animation
 
-Reuse `bible_animation_strategy.md`'s sweep_line. Slide-in: 400ms ease-out-cubic from screen right, world view viewport resizes simultaneously. Slide-out on Proceed: mirror. No slide on Exit — fade to black.
+Reuse `docs/bible_history/bible_2_00_animation_strategy.md`'s sweep_line. Slide-in: 400ms ease-out-cubic from screen right, world view viewport resizes simultaneously. Slide-out on Proceed: mirror. No slide on Exit — fade to black.
 
 ### Camera choreography
 

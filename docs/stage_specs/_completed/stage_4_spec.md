@@ -10,8 +10,8 @@ This is the stage where the simulation becomes a *world* rather than a *combat s
 
 Read these spoke sections before implementing:
 
-- **`bible_simulation.md`**: "Administrative revolt system — faction size pressure", "Administrative revolt chain", "Breakaway faction from admin revolt", "Coexistence with tension revolts", "Budget accumulation" (maintenance cost dynamics), "Conquest consequence chain", "Reinforcement diminishing returns — continuous capacity cap"
-- **`bible_world.md`**: "World Evolution — Per-Faction Lifecycle", "Civilizational Lifecycle — Mechanical Drivers" (all 6 phases)
+- **`docs/bible_history/bible_2_00_simulation.md`**: "Administrative revolt system — faction size pressure", "Administrative revolt chain", "Breakaway faction from admin revolt", "Coexistence with tension revolts", "Budget accumulation" (maintenance cost dynamics), "Conquest consequence chain", "Reinforcement diminishing returns — continuous capacity cap"
+- **`docs/bible_history/bible_2_00_world.md`**: "World Evolution — Per-Faction Lifecycle", "Civilizational Lifecycle — Mechanical Drivers" (all 6 phases)
 - **`game_bible.md` (hub)**: "The Generational Structure" (full section — chapters, cycle, character selector, what carries over), "Player Civilization Mortality", "Terminal Conditions and the Cycle", "Simulation Pacing Targets"
 
 ## What to Build

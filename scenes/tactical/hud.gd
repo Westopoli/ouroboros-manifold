@@ -1,4 +1,4 @@
-## Mid-mission HUD per bible_combat.md §"Mid-Mission HUD Layout" (IGoP-inspired).
+## Mid-mission HUD per docs/bible_history/bible_2_00_combat.md §"Mid-Mission HUD Layout" (IGoP-inspired).
 ## Layout built in code — no tscn children. Subscribes to TacticalBridge for
 ## tick-driven data (units/structures/objectives/events) and reads selection +
 ## active_layer from sibling InputRouter each frame.
@@ -190,7 +190,7 @@ func _update_selection_panel() -> void:
 	hp_lbl.text = "HP %d / %d" % [total_hp, total_max]
 	hp_lbl.add_theme_color_override("font_color", _TEXT)
 	_selection_content.add_child(hp_lbl)
-	# Ability cooldown ring per bible_combat.md §Mid-Mission HUD Layout:
+	# Ability cooldown ring per docs/bible_history/bible_2_00_combat.md §Mid-Mission HUD Layout:
 	# "ability slots showing cooldown rings ... no 'ready' notifications beyond the ring itself."
 	var ring := _AbilityRing.new()
 	ring.set_cd(min_cd if min_cd != INF else 0.0)

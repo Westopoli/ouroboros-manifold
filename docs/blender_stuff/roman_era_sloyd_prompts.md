@@ -4,7 +4,7 @@
 >
 > **Era identity:** Ancient Rome. Tier 1 = Republican Grit (plain, utilitarian, earth-toned). Tier 2 = Imperial Might (red and gold, segmented armor, eagles). Tier 3 = Late Imperial / Divine (ornamental excess, gilded, ceremonial decadence).
 >
-> **Humanoid animation workflow:** Bodies are generated in T-pose without weapons. Weapons are separate standalone props. Bodies go through Mixamo (FBX/OBJ upload → auto-rig → pick animations → download FBX at 30fps). Weapons attach at runtime in Godot via BoneAttachment3D on hand bones. See bible_ai_pipeline.md "Humanoid Unit Animation Pipeline" for full spec.
+> **Humanoid animation workflow:** Bodies are generated in T-pose without weapons. Weapons are separate standalone props. Bodies go through Mixamo (FBX/OBJ upload → auto-rig → pick animations → download FBX at 30fps). Weapons attach at runtime in Godot via BoneAttachment3D on hand bones. See docs/bible_history/bible_2_00_ai_pipeline.md "Humanoid Unit Animation Pipeline" for full spec.
 
 ---
 

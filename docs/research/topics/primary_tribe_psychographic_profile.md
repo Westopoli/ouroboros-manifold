@@ -234,6 +234,6 @@ Training-data-only — flag for re-capture w/ live Steam/SteamDB queries when We
   - `docs/research/topics/lieutenant_pivot_niche_brief.md` — parent brief; this one sharpens its audience line
   - `docs/research/topics/blue_ocean_run_shape.md` — collapse-rebuild Tier-1 lock; pacing fork cross-ref
   - `docs/bible/game_bible.md ## In Flux` — Lieutenant System + RTS-framing-kill 2026-05-16 entry
-  - `docs/bible/bible_monetization.md` L274 + L292 — conflict-flag targets
+  - `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` L274 + L292 — conflict-flag targets
 
 **Re-capture stamp.** All review-theme + bounce-pattern + intersection-overlap claims in this brief are training-data-derived as of cutoff. Live Steam scrape + SteamDB CCU pull + 2026 subreddit sampling required to upgrade REPORTED → VERIFIED. Flag for Research Lane re-capture when WebFetch is restored.

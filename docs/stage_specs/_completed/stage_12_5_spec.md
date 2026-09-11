@@ -8,10 +8,10 @@ Make tactical combat visually alive for the friends-ZIP build: units face their 
 
 Read the hub (`game_bible.md`) plus these spokes:
 
-- `bible_combat.md` → "Combat Visuals" section (attack visual categories, projectile rendering, ability visual treatment, impact feedback, unit destruction visuals, ambient battle density). Also "Unit Combat Categories" (Strike/Line/Siege), "Unit Roster" (6 base types), "Abilities — One Per Unit" (ability definitions), "Unit Behavior AI" (unit facing, attack event protocol), "Tactical Simulation Architecture" (tick loop, delta stream).
+- `docs/bible_history/bible_2_00_combat.md` → "Combat Visuals" section (attack visual categories, projectile rendering, ability visual treatment, impact feedback, unit destruction visuals, ambient battle density). Also "Unit Combat Categories" (Strike/Line/Siege), "Unit Roster" (6 base types), "Abilities — One Per Unit" (ability definitions), "Unit Behavior AI" (unit facing, attack event protocol), "Tactical Simulation Architecture" (tick loop, delta stream).
 - `animation_strategy.md` → HUD animation design language (two-layer shader+glyph hybrid, choreography principles). Referenced for HUD animation refinement.
 
-Do not read `bible_simulation.md`, `bible_missions.md`, `bible_chronicle.md`, `bible_world.md`, `bible_antagonist.md`, `bible_monetization.md`, or `bible_ai_pipeline.md` — not relevant to Stage 12.5. Stage 8 spec is consulted for the tactical bridge WebSocket protocol and renderer architecture. Stage 8.5 spec is consulted for `EraThemeResolver` and era manifest structure. Stage 9 spec is consulted for UIDataBus, settings screen, and HUD layout.
+Do not read `docs/bible_history/bible_2_00_simulation.md`, `docs/bible_history/bible_2_00_missions.md`, `docs/bible_history/bible_2_00_chronicle.md`, `docs/bible_history/bible_2_00_world.md`, `docs/bible_history/bible_2_00_antagonist.md`, `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/), or `docs/bible_history/bible_2_00_ai_pipeline.md` — not relevant to Stage 12.5. Stage 8 spec is consulted for the tactical bridge WebSocket protocol and renderer architecture. Stage 8.5 spec is consulted for `EraThemeResolver` and era manifest structure. Stage 9 spec is consulted for UIDataBus, settings screen, and HUD layout.
 
 ## Context
 

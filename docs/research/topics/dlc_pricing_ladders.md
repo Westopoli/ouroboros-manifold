@@ -12,7 +12,7 @@ contributor: Research Lane Wave 3 capture
 
 Per-DLC price ladder survey across six niche-relevant titles: CK3, Stellaris, EU4, HOI4, RimWorld, Wildermyth (Omenroad). Pulls per-SKU price points, tier shapes (expansion / mid-tier / flavor / cosmetic), bundle and pass SKUs, subscription experiments, and reported attach signals. Cross-references the just-landed G-16 (Stellaris), G-17 (CK3), G-18 (Wildermyth Omenroad), G-19 (RimWorld), G-20 (free-anchor precedents) game cards. Feeds T-CL2 (DLC attach rates), T-M2 (per-era 7-tier ladder stress-test), T-P2 (launch discount norms), T-M1 (free-tier precedents), and the 7-era + Roman-free substrate lock pending in `bible_monetization`.
 
-Non-recommendation disclaimer: Research Lane surfaces inputs, does not pick. Anything below that reads like a pick is data preserved from the cited source, not an endorsement. The Design Lane decides what shape Ouroboros' 7-era ladder takes; the bible (`docs/bible/game_bible.md` and `docs/bible/bible_monetization.md`) is the authority on conflicts surfaced below.
+Non-recommendation disclaimer: Research Lane surfaces inputs, does not pick. Anything below that reads like a pick is data preserved from the cited source, not an endorsement. The Design Lane decides what shape Ouroboros' 7-era ladder takes; the bible (`docs/bible/game_bible.md` and `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)`) is the authority on conflicts surfaced below.
 
 ## Method
 
@@ -221,8 +221,8 @@ Roman-free framing as substrate input: flagged as substrate, NOT a Research Lane
 ## Conflict surfaced
 
 Bible context per kickoff brief:
-- `bible_monetization.md` L274 "Free to play. Infinite eras." tagline.
-- `bible_monetization.md` L292 Fortnite "master brand + seasonal variant" reference.
+- `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/) L274 "Free to play. Infinite eras." tagline.
+- `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/) L292 Fortnite "master brand + seasonal variant" reference.
 - Bible-locked monetization: buy-once base @ $25-35 + DLC-per-era (7 eras, Roman free-tier).
 
 Conflict 1: L274 "Free to play" tagline conflicts internally with the paid-base ($25-35) assumption in the bible-locked monetization model. T-P1 is already surfacing this; this brief notes it as substrate. The precedents above (PoE/Warframe pure-F2P vs RimWorld/Paradox premium-DLC) do not bridge cleanly — "free to play" as a marketing tagline does not match the surveyed indie premium-DLC model. Resolution requires either (a) Roman-free as a permanent free tier with sufficient content to honor "free to play" framing while paid eras follow, or (b) tagline revision. Research Lane surfaces; Design Lane + bible authority resolve. Confidence: AMBIGUOUS.
@@ -279,4 +279,4 @@ EU4 and HOI4 inline references in this brief are training-data only — no dedic
 Bible authority sources:
 
 - `docs/bible/game_bible.md` — hub authority on conflict resolution.
-- `docs/bible/bible_monetization.md` (L274 tagline, L292 Fortnite reference, bible-locked 7-era + Roman-free model) — authority on the monetization shape, surfaced as conflict-input only above.
+- `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` (L274 tagline, L292 Fortnite reference, bible-locked 7-era + Roman-free model) — authority on the monetization shape, surfaced as conflict-input only above.

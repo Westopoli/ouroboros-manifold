@@ -23,14 +23,14 @@ These ship together because they share the same files (`unit_renderer.gd`, `hud.
 
 ## Bible References
 
-- **`bible_combat.md`** §"Vertical Layer System" (lines 134–160) — 3–5 vertical layers, layer accessibility mask, layer-tied sensor coverage, hard layer transfer vs persistent layer preference, layer indicator rings, preference indicator.
-- **`bible_combat.md`** §"Information Warfare" / fog (lines 215–234) — sensor radius per unit, cross-layer sensor range asymmetry, sensor interference zones, branch parameterization (deferred post-Stage 13).
-- **`bible_combat.md`** §"Mid-Mission HUD Layout" — confirms terrain stays visible (only enemy units are fogged), minimap shows "visible enemies (dim)" matching this spec's hidden-when-invisible rule.
+- **`docs/bible_history/bible_2_00_combat.md`** §"Vertical Layer System" (lines 134–160) — 3–5 vertical layers, layer accessibility mask, layer-tied sensor coverage, hard layer transfer vs persistent layer preference, layer indicator rings, preference indicator.
+- **`docs/bible_history/bible_2_00_combat.md`** §"Information Warfare" / fog (lines 215–234) — sensor radius per unit, cross-layer sensor range asymmetry, sensor interference zones, branch parameterization (deferred post-Stage 13).
+- **`docs/bible_history/bible_2_00_combat.md`** §"Mid-Mission HUD Layout" — confirms terrain stays visible (only enemy units are fogged), minimap shows "visible enemies (dim)" matching this spec's hidden-when-invisible rule.
 - **`game_bible.md` (hub)** line 534 — Stage 8 layer rendering three-tier system; this spec is Tier 1 (mechanical baseline).
 - **`game_bible.md` (hub)** v2.14 changelog entry — Information Warfare branch parameterization deferred to post-Stage 13.
-- **`bible_combat.md`** line 313 — sim 20 ticks/sec, Godot 60 fps target = 16.7 ms frame budget. Performance framing for all checkpoint measurements.
+- **`docs/bible_history/bible_2_00_combat.md`** line 313 — sim 20 ticks/sec, Godot 60 fps target = 16.7 ms frame budget. Performance framing for all checkpoint measurements.
 
-Do NOT read `bible_world.md` (other than the §"Generation Pipeline" sensor-interference references, already captured in Stage 11b), `bible_missions.md`, `bible_chronicle.md`, `bible_antagonist.md`, `bible_ai_pipeline.md`, or `bible_monetization.md` — not relevant.
+Do NOT read `docs/bible_history/bible_2_00_world.md` (other than the §"Generation Pipeline" sensor-interference references, already captured in Stage 11b), `docs/bible_history/bible_2_00_missions.md`, `docs/bible_history/bible_2_00_chronicle.md`, `docs/bible_history/bible_2_00_antagonist.md`, `docs/bible_history/bible_2_00_ai_pipeline.md`, or `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/) — not relevant.
 
 ## Cross-Stage References
 
@@ -46,7 +46,7 @@ Do NOT read `bible_world.md` (other than the §"Generation Pipeline" sensor-inte
 
 **Decision:** When an enemy unit is not in `player_visible_unit_uids`, it does not render at all. No silhouette. No dimmed marker. No last-known-position ghost. The same rule applies to the minimap.
 
-**Rationale:** Resolves Fork F1 from the design discussion. The bible's fog goal is information asymmetry as a tactical lever; partial-visibility states (silhouettes, ghosts) muddy that lever. Hidden-entirely is the cleanest expression and matches the bible's prose model — *"the player sees only what their units can detect. Everything outside sensor coverage is hidden"* (`bible_combat.md:219`).
+**Rationale:** Resolves Fork F1 from the design discussion. The bible's fog goal is information asymmetry as a tactical lever; partial-visibility states (silhouettes, ghosts) muddy that lever. Hidden-entirely is the cleanest expression and matches the bible's prose model — *"the player sees only what their units can detect. Everything outside sensor coverage is hidden"* (`docs/bible_history/bible_2_00_combat.md:219`).
 
 **Implication for `partial_visibility_uids`:** the snapshot still carries an empty `partial_visibility_uids` array as a future hook. This spec ignores it. If/when partial visibility is reintroduced (post-Stage-13 era variation), it gets a separate visual treatment specced at that time.
 
@@ -100,7 +100,7 @@ Three consumers call it: `unit_renderer.gd` (skip MultiMesh transform write for 
 
 ### D6 — Minimap fog: same predicate, but enemies render dim (not hidden) on the minimap
 
-**Decision wrinkle:** the bible says minimap shows *"visible enemies (dim)"* (`bible_combat.md` §"Mid-Mission HUD Layout"). On the *main view* enemies are hidden when invisible (D1). On the *minimap* visible enemies are rendered dim, invisible enemies are not rendered. The dim treatment is minimap-specific (the main view doesn't dim visible enemies — they render fully).
+**Decision wrinkle:** the bible says minimap shows *"visible enemies (dim)"* (`docs/bible_history/bible_2_00_combat.md` §"Mid-Mission HUD Layout"). On the *main view* enemies are hidden when invisible (D1). On the *minimap* visible enemies are rendered dim, invisible enemies are not rendered. The dim treatment is minimap-specific (the main view doesn't dim visible enemies — they render fully).
 
 The visibility predicate from D5 applies the same way: it returns true → render (dim on minimap, full on main view); it returns false → don't render (anywhere).
 
@@ -112,7 +112,7 @@ The visibility predicate from D5 applies the same way: it returns true → rende
 
 ### D8 — Performance framing: 16.7 ms Godot frame budget
 
-All checkpoint measurements in this spec target the 60 fps Godot frame budget per `bible_combat.md:313`. The simulation already does the visibility computation at snapshot time (~once per few seconds, not per frame), so the per-frame Godot cost of fog rendering is the cost of *skipping* MultiMesh writes — which is faster than rendering them. Layer dimming is a single material parameter change per layer-batch when the active layer changes — also negligible. The HUD panel and ring-style additions are constant-cost. **Expected frame-time impact: zero or slightly negative** (faster, since hidden units aren't rendered). Checkpoint H records actual measurements.
+All checkpoint measurements in this spec target the 60 fps Godot frame budget per `docs/bible_history/bible_2_00_combat.md:313`. The simulation already does the visibility computation at snapshot time (~once per few seconds, not per frame), so the per-frame Godot cost of fog rendering is the cost of *skipping* MultiMesh writes — which is faster than rendering them. Layer dimming is a single material parameter change per layer-batch when the active layer changes — also negligible. The HUD panel and ring-style additions are constant-cost. **Expected frame-time impact: zero or slightly negative** (faster, since hidden units aren't rendered). Checkpoint H records actual measurements.
 
 ## Open Questions
 

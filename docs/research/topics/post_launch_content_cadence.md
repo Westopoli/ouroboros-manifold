@@ -12,7 +12,7 @@ contributor: Research Lane T-CL1 capture
 
 Survey post-launch content cadence across niche-strategy paid-base titles. Pulls per-title release rhythm (months between drops), drop-size mix (expansion / flavor / cosmetic / free patch), studio scale (solo-dev / small-team / Paradox-scale), and observable sustained-cadence ceiling. Feeds T-CL2 attach rates, T-M2 7-tier DLC stress-test, T-L1 localization slate, post-launch operational plan supporting Ouroboros' bible-locked 7-era ladder + Roman-free substrate.
 
-Non-recommendation discipline: Research Lane surfaces inputs, does not pick. Cadence options surfaced at end are substrate for Design Lane; bible (`docs/bible/game_bible.md` + `docs/bible/bible_monetization.md`) is conflict authority.
+Non-recommendation discipline: Research Lane surfaces inputs, does not pick. Cadence options surfaced at end are substrate for Design Lane; bible (`docs/bible/game_bible.md` + `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)`) is conflict authority.
 
 ## Method
 
@@ -323,4 +323,4 @@ Sibling topic brief cross-ref:
 Bible authority sources:
 
 - `docs/bible/game_bible.md` — hub authority on conflict resolution.
-- `docs/bible/bible_monetization.md` — 7-era ladder + Roman-free model, primary tribe generational/legacy directive, base price range, studio-scale assumption. Authority on monetization shape.
+- `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` — 7-era ladder + Roman-free model, primary tribe generational/legacy directive, base price range, studio-scale assumption. Authority on monetization shape.

@@ -193,7 +193,7 @@ Generational/legacy + Foundation/hard-SF OVERLAP on cosmetic skepticism. Both re
 
 ## Conflict #3 — `bible_monetization` L292 Fortnite reference
 
-`bible_monetization.md` L292 cites Fortnite cosmetic model. Sibling brief `dlc_pricing_ladders.md` Conflict 2 flagged this as collision; this brief restates with cosmetic-specific framing.
+`bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/) L292 cites Fortnite cosmetic model. Sibling brief `dlc_pricing_ladders.md` Conflict 2 flagged this as collision; this brief restates with cosmetic-specific framing.
 
 **Fortnite model premises:** very large player base churning seasonal releases; F2P base economics where cosmetic IS revenue; low per-cosmetic commitment (Battle Pass $9.99/season; skins $5-$20); cosmetic = social signal in competitive PvP; seasonal-variant register.
 
@@ -300,7 +300,7 @@ EU4 + HOI4 + MTGA inline only — Wave 4 capture flagged.
 
 Bible authority:
 - `docs/bible/game_bible.md` — hub conflict-resolution authority.
-- `docs/bible/bible_monetization.md` (L274 / L292 / 7-era + Roman-free lock) — monetization shape authority; Conflict #3 input.
+- `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` (L274 / L292 / 7-era + Roman-free lock) — monetization shape authority; Conflict #3 input.
 
 Memory context:
 - `project_lieutenant_pivot` — 2026-05-16 named-lieutenant decision; constrains portrait / ruler-designer categories.

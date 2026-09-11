@@ -29,13 +29,13 @@ These ship together because they all live in `hud.gd`, all share the same UIData
 
 ## Bible References
 
-- **`bible_missions.md`** — mission objective structure (primary objective, success-condition spectrum, outcome bands). Read fully; this spec is the rendering pass for what that spoke specifies.
-- **`bible_combat.md`** §"Mid-Mission HUD Layout" — the HUD's persistent info column with mission objectives list and progress indicators; in-world chrome layered onto the world view (pings, decals, waypoint flags); minimap contents (friendly bright, visible enemies dim, terrain contours, **objective markers**, reinforcement-structure icons).
-- **`bible_combat.md`** §"Information Warfare" / fog (lines 215–234) — visibility model that gates enemy selection; consumed via Stage 11c's predicate.
+- **`docs/bible_history/bible_2_00_missions.md`** — mission objective structure (primary objective, success-condition spectrum, outcome bands). Read fully; this spec is the rendering pass for what that spoke specifies.
+- **`docs/bible_history/bible_2_00_combat.md`** §"Mid-Mission HUD Layout" — the HUD's persistent info column with mission objectives list and progress indicators; in-world chrome layered onto the world view (pings, decals, waypoint flags); minimap contents (friendly bright, visible enemies dim, terrain contours, **objective markers**, reinforcement-structure icons).
+- **`docs/bible_history/bible_2_00_combat.md`** §"Information Warfare" / fog (lines 215–234) — visibility model that gates enemy selection; consumed via Stage 11c's predicate.
 - **`game_bible.md` (hub)** §"Stage 8" line 534 — three-tier layer system mention; only relevant here insofar as the HUD readout from Stage 11c shares HUD real estate with this spec's panels.
-- **`bible_combat.md`** line 313 — sim 20 ticks/sec, Godot 60 fps target = 16.7 ms frame budget. Performance framing.
+- **`docs/bible_history/bible_2_00_combat.md`** line 313 — sim 20 ticks/sec, Godot 60 fps target = 16.7 ms frame budget. Performance framing.
 
-Do NOT read `bible_world.md`, `bible_chronicle.md`, `bible_antagonist.md`, `bible_ai_pipeline.md`, or `bible_monetization.md` — not relevant.
+Do NOT read `docs/bible_history/bible_2_00_world.md`, `docs/bible_history/bible_2_00_chronicle.md`, `docs/bible_history/bible_2_00_antagonist.md`, `docs/bible_history/bible_2_00_ai_pipeline.md`, or `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/) — not relevant.
 
 ## Cross-Stage References
 
@@ -88,7 +88,7 @@ Location is computed from the objective's params at serialization time:
 - **In-world (main view):** a vertical light beam / ground decal at the objective location, colored by primary (vivid accent) vs secondary (muted), with a label floating at the unit's eye level showing the objective short-name. Beam is always visible (not occluded by terrain) per RTS convention.
 - **Minimap:** a small icon at the objective location, same color scheme. Icon shape distinguishes objective types (square = hold/clear zone, triangle = extraction, diamond = eliminate-force-centroid). Always visible on minimap regardless of fog (objectives are intel the player has from the briefing, not perceived through sensors).
 
-**Rationale:** This matches `bible_combat.md` §"Mid-Mission HUD Layout" prose — in-world chrome plus minimap markers — and resolves the bible's ambiguity between "ping" and "decal" by saying "both, in different surfaces." The vertical beam is the dominant RTS convention (StarCraft, Company of Heroes); the minimap icon is the at-a-glance reference.
+**Rationale:** This matches `docs/bible_history/bible_2_00_combat.md` §"Mid-Mission HUD Layout" prose — in-world chrome plus minimap markers — and resolves the bible's ambiguity between "ping" and "decal" by saying "both, in different surfaces." The vertical beam is the dominant RTS convention (StarCraft, Company of Heroes); the minimap icon is the at-a-glance reference.
 
 **Performance:** beams are MeshInstance3D with a simple emission material. One per active objective with a location, typically 1–3 per mission. Negligible cost.
 
@@ -125,7 +125,7 @@ Location is computed from the objective's params at serialization time:
 
 ### D7 — Performance framing
 
-All HUD work targets the 16.7 ms Godot frame budget per `bible_combat.md:313`. Per-frame surfaces touched:
+All HUD work targets the 16.7 ms Godot frame budget per `docs/bible_history/bible_2_00_combat.md:313`. Per-frame surfaces touched:
 - Objective panel: redraws only on objective state change (rare). Effectively zero per-frame cost.
 - Mission marker beams: 1–3 MeshInstance3D draws per frame. Trivial.
 - Command indicators: one decal per active command, ~1.5 second lifetime, typically 0–3 active. Trivial.

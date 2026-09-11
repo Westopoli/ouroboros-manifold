@@ -1,6 +1,6 @@
 # Multiplayer over Steam Datagram Relay — Findings (2026-09-10)
 
-Question: is multiplayer conceivable using the Steam Datagram Relay (SDR) that comes with the Steam partner account? Answer: yes, as peer-to-peer lockstep. Multiplayer itself stays research-only per `docs/priority_queue.md`; the one consequence adopted now is the cross-platform determinism rule in `c_rewrite.md`.
+Question: is multiplayer conceivable using the Steam Datagram Relay (SDR) that comes with the Steam partner account? Answer: yes, as peer-to-peer lockstep. Multiplayer is core to the game (vision_v2 Q1, Q3; epic E-19); the cross-platform determinism rule in `c_rewrite.md` is its first consequence.
 
 ## What SDR is
 
@@ -13,8 +13,8 @@ Question: is multiplayer conceivable using the Steam Datagram Relay (SDR) that c
 ## Fit for this game
 
 - Lockstep P2P is the natural shape: every peer runs the deterministic C sim, peers exchange commands per turn over a reliable channel, no server. The sim already has a seeded RNG, a command stream, and a sim/renderer split.
-- Pause-and-command tempo tolerates 100–200 ms command latency.
-- Cheapest scope is the parked idea in the priority queue: per-mission co-op with 2–4 peers, host is a peer, macro layer stays single-player.
+- Combat is full real-time with no pause; lockstep input delay must absorb 100–200 ms command latency (E-19 Q-140-01).
+- Match shape (co-op, versus, or both; 2–4 peers) is open in the ambiguity register (Q-141-01, Q-141-02).
 
 ## Risks with evidence
 

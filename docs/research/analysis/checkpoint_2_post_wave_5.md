@@ -29,7 +29,7 @@ Source briefs (all 10 W4+W5 inputs + checkpoint #1 substrate):
 - `/Users/westley/ouroboros/docs/research/topics/demo_strategy_norms.md` (T-D1)
 - `/Users/westley/ouroboros/docs/research/topics/steam_next_fest_timing.md` (T-D2)
 
-Plus baseline `/Users/westley/ouroboros/docs/research/analysis/checkpoint_1_post_wave_3.md`, `docs/bible/game_bible.md`, `docs/bible/bible_monetization.md`, `docs/priority_queue.md` Pre-Zip Gate, `CLAUDE.md`.
+Plus baseline `/Users/westley/ouroboros/docs/research/analysis/checkpoint_1_post_wave_3.md`, `docs/bible/game_bible.md`, `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)`, `docs/priority_queue.md` Pre-Zip Gate, `CLAUDE.md`.
 
 ## Bible-locked baseline (continuity from checkpoint #1)
 
@@ -409,7 +409,7 @@ What Waves 6-8 must know before starting.
 
 Tag distribution aggregated across 10 W4-W5 briefs (REPORTED-weighted, ±5% per-brief variance):
 
-- **VERIFIED:** ~1-3% — bible-citation verbatim, Pre-Zip Gate sequencing per `docs/priority_queue.md`, Roman-free monetization lock per `bible_monetization.md`.
+- **VERIFIED:** ~1-3% — bible-citation verbatim, Pre-Zip Gate sequencing per `docs/priority_queue.md`, Roman-free monetization lock per `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/).
 - **REPORTED:** ~35-45% — Next Fest aggregate publisher data, Wildermyth/Manor Lords/Tempest Rising wishlist disclosure partials, "velocity > cumulative" Zukowski framing, niche-strategy stairstep shape, festival quality bifurcation, refund-rate bands, trailer length modal, page conversion patterns, capsule iteration cadence, screenshot slot-1 attention.
 - **ESTIMATED:** ~50-60% — per-milestone numeric breakouts, festival spike magnitudes by tier, trailer-drop spike norms, velocity threshold bands, refund-rate per-vector impact, page conversion lift multipliers, algorithmic visibility quantitative thresholds, demo-played conversion premium quantification, six-vector refund inventory pp-impact, scenario arithmetic.
 - **AMBIGUOUS:** ~3-5% — 2026 Next Fest specifics post-training-window, China + Russia + Argentina post-2022 conversion mix, Foundation-tribe specific velocity behavior, Roman-free-tier × Steam Demo product Steam-side product management specifics.

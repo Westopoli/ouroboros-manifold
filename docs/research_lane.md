@@ -6,9 +6,9 @@ If you are a Claude chat that has been told you are the Research Lane, read this
 
 ## 2. Lane Definition
 
-The Research Lane is a chat that exists to gather, organize, and surface external intelligence — competitor games, audience tribes, Blue Ocean reads, vocabulary scans, market metrics, design precedents — that informs the Design Lane. It is parallel to the Design Lane (which surfaces forks and captures Westley's picks into `docs/bible/**`) and the Implementer Lane (which writes code, tests, and stage specs).
+The Research Lane is a chat that exists to gather, organize, and surface external intelligence — competitor games, audience tribes, Blue Ocean reads, vocabulary scans, market metrics, design precedents — that informs the Design Lane. It is parallel to the Design Lane (which closes flags in `docs/northstar/ambiguity_register.md` and captures Westley's answers into `docs/bible/**`) and the implementer path (Agora, which builds against Claude's fenced tests; see `docs/northstar/README.md`).
 
-The three lanes never touch the same files. Research feeds Design via queryable artifacts in `docs/research/**`. Research never edits `docs/bible/**`, `simulation/**`, `scenes/**`, `tests/**`, or `docs/stage_specs/**`. Research never picks forks, never recommends picks, never makes design decisions.
+The three lanes never touch the same files. Research feeds Design via queryable artifacts in `docs/research/**`. Research never edits `docs/bible/**`, `docs/northstar/ambiguity_register.md`, `simulation/**`, `scenes/**`, or `tests/**`. Research never answers flags, never recommends answers, never makes design decisions. Track R briefs (`docs/northstar/research/`) are the north star's own research questions and may be worked here.
 
 ## 3. Rules
 
@@ -58,7 +58,7 @@ For each research question the Research Lane picks up:
 3. **Parallel fetch.** WebFetch + WebSearch + `/graphify add <url>` for direct corpus ingestion of canonical sources.
 4. **Write artifacts.** Game cards for newly-surfaced games. Topic briefs for cross-cutting findings. Update existing cards if new data lands.
 5. **Graph update.** `/graphify --update docs/research/`.
-6. **Hand-off note to Design Lane.** One paragraph in `research_lane_queue.md` and (if relevant) a row in the topic brief: "Question X answered. See `docs/research/topics/<brief>.md`. Feeds Design Lane WS<N> Fork <M>."
+6. **Hand-off note to Design Lane.** One paragraph in `research_lane_queue.md` and (if relevant) a row in the topic brief: "Question X answered. See `docs/research/topics/<brief>.md`. Feeds flag Q-###-## in the ambiguity register."
 7. **Soft pause every three questions** — fatigue + direction check.
 
 ## 6. Hand-Off to Design Lane
@@ -105,14 +105,12 @@ The live queue is maintained in `docs/research_lane_queue.md`. That file is the 
 
 - This playbook: `docs/research_lane.md`.
 - Active question queue: `docs/research_lane_queue.md`.
-- Per-session plans: `/Users/westley/.claude/plans/<slug>.md`. The active plan is named in the queue file.
 - Game cards: `docs/research/games/<game>.md`.
 - Topic briefs: `docs/research/topics/<topic>.md`.
 - Query artifacts: `docs/research/queries/<question>.md`.
 - Graphify outputs: `docs/research/graphify-out/` (graph.json, GRAPH_REPORT.md, graph.html).
-- Project memory: `/Users/westley/.claude/projects/-Users-westley-ouroboros/memory/MEMORY.md`.
 - Design Lane playbook (consumer): `docs/design_lane.md`.
-- Design Lane queue (consumer): `docs/design_lane_queue.md`.
+- North star research briefs: `docs/northstar/research/`.
 
 ## 12. Changelog
 

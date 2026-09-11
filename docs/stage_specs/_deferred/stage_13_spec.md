@@ -12,7 +12,7 @@ Read the hub (`game_bible.md`) plus:
 
 No spoke files required — this stage covers packaging and distribution, not game systems. Stage 9 spec is consulted for `IS_RELEASE_BUILD` semantics, `ThemeConstants`, `SceneRouter`, and security architecture. Stage 10 spec is consulted for sim process lifecycle (`OS.execute_with_pipe()`, `SIM_SCRIPT_PATH`, `pipe_transport.py`, crash log infrastructure). Stage 12 spec is consulted for bug report system (F12 capture).
 
-Do not read `bible_combat.md`, `bible_simulation.md`, `bible_missions.md`, `bible_chronicle.md`, `bible_world.md`, `bible_antagonist.md`, `bible_monetization.md`, `bible_ai_pipeline.md`, or `animation_strategy.md` — not relevant to Stage 13.
+Do not read `docs/bible_history/bible_2_00_combat.md`, `docs/bible_history/bible_2_00_simulation.md`, `docs/bible_history/bible_2_00_missions.md`, `docs/bible_history/bible_2_00_chronicle.md`, `docs/bible_history/bible_2_00_world.md`, `docs/bible_history/bible_2_00_antagonist.md`, `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/), `docs/bible_history/bible_2_00_ai_pipeline.md`, or `animation_strategy.md` — not relevant to Stage 13.
 
 ## Context
 

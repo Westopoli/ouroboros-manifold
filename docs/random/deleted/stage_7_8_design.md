@@ -35,7 +35,7 @@
   - (8) ~~Gradient property count reconciliation~~ — DONE (gradient_placer.py entry documents the 4 continuous + 1 layer-mask-with-5-channels decomposition matching the bible's 5)
   - (9) ~~I8 measurement mechanism~~ — DONE (navmesh exposes `generation_count` counter; Checkpoint L/M assert == 1)
 - Several of these have implementation shapes worth confirming with Westley as mini-questions (especially 1, 4, 6). Present per `design_rules.md` format.
-- Stage-8-write-up session (2026-04-15): **Q1 onboarding scope** resolved (Option A — onboarding ships in Stage 8); **Q2 player command count** resolved (4, not 5); **Q3 save scope / rewind deferral** resolved (rewind is a post-launch feature — Stage 8 ships saves only; sim state is a single current-state file per slot; S8-1e resolved as single-slot quit-and-resume; S8-1a / S8-1b / S8-1c / S8-1d all deferred to the post-launch rewind design session with the earlier captured decisions preserved under "Deferred to post-launch rewind feature"). Bible edits landed: hub §15 rewritten, hub Stage 8 roadmap paragraph rewritten, hub "Beyond Stage 9" bullet, bible_combat.md L235 and L456.
+- Stage-8-write-up session (2026-04-15): **Q1 onboarding scope** resolved (Option A — onboarding ships in Stage 8); **Q2 player command count** resolved (4, not 5); **Q3 save scope / rewind deferral** resolved (rewind is a post-launch feature — Stage 8 ships saves only; sim state is a single current-state file per slot; S8-1e resolved as single-slot quit-and-resume; S8-1a / S8-1b / S8-1c / S8-1d all deferred to the post-launch rewind design session with the earlier captured decisions preserved under "Deferred to post-launch rewind feature"). Bible edits landed: hub §15 rewritten, hub Stage 8 roadmap paragraph rewritten, hub "Beyond Stage 9" bullet, docs/bible_history/bible_2_00_combat.md L235 and L456.
 - **Next session should:** answer S8-2 (onboarding UI interaction model) and S8-3 (mid-mission UI density). Once answered and captured, finish the Stage 8 spec's remaining sections (Checkpoints, Invariants, Done Condition) and push.
 - Once all [ANSWERED], promote decisions into bible/specs and delete this file.
 
@@ -51,10 +51,10 @@
 Upload or read these files at session start:
 
 1. `docs/bible/game_bible.md` (hub)
-2. `docs/bible/bible_world.md` (map generation system)
-3. `docs/bible/bible_combat.md` (enemy macro behavior, tactical reinforcement)
-4. `docs/bible/bible_missions.md` (mission archetypes)
-5. `docs/bible/bible_antagonist.md` (faction archetypes — referenced by behavior scripts)
+2. `docs/bible_history/bible_2_00_world.md` (map generation system)
+3. `docs/bible_history/bible_2_00_combat.md` (enemy macro behavior, tactical reinforcement)
+4. `docs/bible_history/bible_2_00_missions.md` (mission archetypes)
+5. `docs/bible_history/bible_2_00_antagonist.md` (faction archetypes — referenced by behavior scripts)
 6. `docs/design_rules.md` (process rules)
 7. `docs/dev_rules.md` (for reference on how specs are structured)
 8. `docs/stage_specs/stage_5_5_spec.md` and `stage_6_spec.md` (recent spec examples for format reference)
@@ -105,7 +105,7 @@ These have already been decided. Listed here for reference — do not re-ask.
 
 - **Onboarding scope (Stage-8-write-up session, Q1)** → **Option A: onboarding ships in Stage 8.** The hub's Stage 8 roadmap paragraph already specifies the onboarding screen (difficulty + archetype weights + rare marks + opening time jump + abbreviated chronicle scroll); the conflicting "Beyond Stage 9" bullet was stale text. **Bible edit applied (v2.10):** the phrase "onboarding screen" was removed from the hub's "Beyond Stage 9" list, with a parenthetical note pointing to the Stage 8 entry as authoritative. Interaction-model design (slider vs star-rating vs like+rare-checkbox vs drag-to-rank) remains S8-2 below.
 
-- **Command vocabulary count (Stage-8-write-up session, Q2)** → **Player command set is 4, not 5.** The "5-command" / "5 commands" references in `bible_combat.md` line 235 and line 456, and the "5-command vocabulary" phrase in the hub's Stage 8 roadmap entry, were bugs created by conflating the player command vocabulary with the **enemy macro behavior modifier system** (5 base behaviors × 3 modifiers = 15 flavors — `bible_combat.md` §Enemy Macro Behavior System, lines 401–418). **Bible edits applied (v2.10):** `bible_combat.md` L235 and L456 rewritten to "4-command protocol" / "same 4 commands the player does." Hub Stage 8 entry rewritten to "4-command vocabulary (`move`, `attack_move`, `attack_target`, `activate_ability`) plus the two layer commands from `bible_combat.md` §Layer Assignment Hotkey." No change to the Command Vocabulary section itself — it already correctly listed four commands. The Stage 8 WebSocket command packet shape uses these four combat commands plus a separate layer-command channel (two kinds: hard transfer, preference assignment).
+- **Command vocabulary count (Stage-8-write-up session, Q2)** → **Player command set is 4, not 5.** The "5-command" / "5 commands" references in `docs/bible_history/bible_2_00_combat.md` line 235 and line 456, and the "5-command vocabulary" phrase in the hub's Stage 8 roadmap entry, were bugs created by conflating the player command vocabulary with the **enemy macro behavior modifier system** (5 base behaviors × 3 modifiers = 15 flavors — `docs/bible_history/bible_2_00_combat.md` §Enemy Macro Behavior System, lines 401–418). **Bible edits applied (v2.10):** `docs/bible_history/bible_2_00_combat.md` L235 and L456 rewritten to "4-command protocol" / "same 4 commands the player does." Hub Stage 8 entry rewritten to "4-command vocabulary (`move`, `attack_move`, `attack_target`, `activate_ability`) plus the two layer commands from `docs/bible_history/bible_2_00_combat.md` §Layer Assignment Hotkey." No change to the Command Vocabulary section itself — it already correctly listed four commands. The Stage 8 WebSocket command packet shape uses these four combat commands plus a separate layer-command channel (two kinds: hard transfer, preference assignment).
 
 - **Tactical mid-mission state scope (S8-1e) [resolved by Q3]** → **Single-slot quit-and-resume.** Since rewind is deferred post-launch, mid-mission rewind is out of scope for launch. The tactical engine serializes once on quit, loads once on resume, and the on-disk file is consumed (deleted) on successful resume. No multiple tactical snapshots, no mid-mission rollback.
 
@@ -151,9 +151,9 @@ S8-1c (chronicle on rewind) and S8-1d (snapshot retention) and the history-forma
 
 #### S8-2 — Onboarding Preference Weight UI [CAPTURED]
 
-**Answer (Q4, Stage-8-write-up session):** Binary rare-mark per archetype, any subset allowed except the full set. The player sees 10 archetype rows, each a single "mark as rare" checkbox (or equivalent toggle). No sliders, no ratings, no rankings — the weight is two-valued: unmarked = default preference weight, marked = rare down-weight (0.1 per `bible_missions.md:34`). The player can mark as many as they like, with one validation: at least one archetype must remain unmarked (the onboarding screen disables the "Confirm" button if all 10 are marked, with an inline message). Difficulty is a three-button Easy / Medium / Hard selector above the archetype list.
+**Answer (Q4, Stage-8-write-up session):** Binary rare-mark per archetype, any subset allowed except the full set. The player sees 10 archetype rows, each a single "mark as rare" checkbox (or equivalent toggle). No sliders, no ratings, no rankings — the weight is two-valued: unmarked = default preference weight, marked = rare down-weight (0.1 per `docs/bible_history/bible_2_00_missions.md:34`). The player can mark as many as they like, with one validation: at least one archetype must remain unmarked (the onboarding screen disables the "Confirm" button if all 10 are marked, with an inline message). Difficulty is a three-button Easy / Medium / Hard selector above the archetype list.
 
-**Bible edits applied (v2.12):** `game_bible.md:155` and `bible_missions.md:301` rewritten: the "up to two" cap removed; constraint changed to "at least one archetype must remain unmarked"; the binary-per-archetype shape stated explicitly.
+**Bible edits applied (v2.12):** `game_bible.md:155` and `docs/bible_history/bible_2_00_missions.md:301` rewritten: the "up to two" cap removed; constraint changed to "at least one archetype must remain unmarked"; the binary-per-archetype shape stated explicitly.
 
 ---
 
@@ -162,7 +162,7 @@ S8-1c (chronicle on rewind) and S8-1d (snapshot retention) and the history-forma
 **Answer (Q5, Stage-8-write-up session):** Adapt the Immortal: Gates of Pyre HUD as the layout reference. Reference screenshots saved to `docs/design_questions/igop_hud_reference_alpha.png` and `igop_hud_reference_beta.png`. Ouroboros inherits IGoP's clustered-bottom-bar layout (portraits + minimap + command-adjacent grid + control-group tabs + commander portrait) and subtracts the economy / tech / build-grid surfaces that don't map to this game. Ouroboros-specific panels fill the freed space — reinforcement-structure production list where IGoP has TRAIN/TECH/BUILD/POWER, plus a new layer-selector strip above the commander portrait. Event ticker top-left. Objectives list top-left. Banner channel top-center reserved for significance moments. No enemy composition readout at launch (fog of war is a play element, not a summary). Right sidebar reserved — no content at launch, future features (chronicle intelligence feed, event-reaction prompts) fill it without a rework. Event-ticker content is hardcoded to the beat set at launch (capture / loss / rout / objective threshold); polished authored content deferred to a Beyond-Stage-9 HUD Personality pass.
 
 **Bible edits applied (v2.13):**
-- `bible_combat.md` — new section "Mid-Mission HUD Layout" inserted after "Camera and Player View," before "Moving Battlefields." Full layout captured, IGoP citation and reference-image paths included, launch-scope caveats noted.
+- `docs/bible_history/bible_2_00_combat.md` — new section "Mid-Mission HUD Layout" inserted after "Camera and Player View," before "Moving Battlefields." Full layout captured, IGoP citation and reference-image paths included, launch-scope caveats noted.
 
 **Open sub-items deferred to implementation / later:**
 - Per-element visual spec (exact pixel layout, Terminal-Meets-Glass typography application to combat HUD, colorblind-safe layer color palette). These are rendering-layer choices that land during Stage 8 implementation or post-launch polish. They do not gate the spec.

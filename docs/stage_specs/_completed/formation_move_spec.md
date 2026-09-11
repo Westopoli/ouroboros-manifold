@@ -11,7 +11,7 @@ Replace the current "every unit in a group seeks the same pixel" movement with S
 
 Read:
 - `docs/bible/game_bible.md` — hub, including Design Experience Guide.
-- `docs/bible/bible_combat.md` — only the Unit Roster and movement-related sections. Don't read the whole file.
+- `docs/bible_history/bible_2_00_combat.md` — only the Unit Roster and movement-related sections. Don't read the whole file.
 
 Do not read other spokes. Movement is mechanical; no bible design question is at stake.
 

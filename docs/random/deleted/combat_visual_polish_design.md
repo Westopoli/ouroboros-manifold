@@ -4,7 +4,7 @@
 > during the combat visual polish brainstorming effort. Once all questions
 > are CAPTURED into the bible and/or a stage spec, this file is deleted.
 >
-> **Capture targets:** `bible_combat.md` (unit facing, attack visuals,
+> **Capture targets:** `docs/bible_history/bible_2_00_combat.md` (unit facing, attack visuals,
 > destruction), `game_bible.md` hub (stage roadmap entry), future stage
 > spec (Stage 12.5 or equivalent).
 >
@@ -54,7 +54,7 @@ exactly when damage hits). The hybrid keeps the delta stream lean (no
 hundreds of attack events per tick in large battles) while ensuring the
 flashy moments are perfectly synced.
 
-**Bible capture:** New subsection in `bible_combat.md` under Tactical
+**Bible capture:** New subsection in `docs/bible_history/bible_2_00_combat.md` under Tactical
 Simulation Architecture — "Attack Event Protocol."
 
 ---
@@ -84,7 +84,7 @@ where they're going otherwise. Retreating units face their pursuer (firing
 while backing away), which reads correctly. The rotation speed cap is the
 key detail that makes it feel smooth rather than mechanical.
 
-**Bible capture:** New subsection in `bible_combat.md` under Unit Behavior
+**Bible capture:** New subsection in `docs/bible_history/bible_2_00_combat.md` under Unit Behavior
 AI — "Unit Facing."
 
 ---
@@ -127,7 +127,7 @@ pot-shots. Area pulse handles all support/defensive abilities naturally.
 The combinatorial space (4 categories × 6 unit types) produces real visual
 variety without per-unit custom work.
 
-**Bible capture:** New subsection in `bible_combat.md` — "Attack Visual
+**Bible capture:** New subsection in `docs/bible_history/bible_2_00_combat.md` — "Attack Visual
 Categories." Era-agnostic category definitions only; per-era mappings live
 in the era manifest JSON.
 
@@ -174,7 +174,7 @@ feel alive and connected to the game's visual language. LOD tiers are the
 performance safety valve — the common case in dense battles degrades
 gracefully rather than dropping frames.
 
-**Bible capture:** New subsection in `bible_combat.md` — "Projectile
+**Bible capture:** New subsection in `docs/bible_history/bible_2_00_combat.md` — "Projectile
 Rendering." Category-level rendering spec only; LOD thresholds and particle
 budgets are tuning values in engine config.
 
@@ -231,7 +231,7 @@ whether it's hostile or friendly. Combined with enhanced-parameter base
 attacks, abilities feel like distinct events without requiring per-ability
 custom visual sequences that would scale to 120+ assets across 20+ eras.
 
-**Bible capture:** New subsection in `bible_combat.md` — "Ability Visual
+**Bible capture:** New subsection in `docs/bible_history/bible_2_00_combat.md` — "Ability Visual
 Treatment."
 
 ---
@@ -276,7 +276,7 @@ Turbolaser bolts connecting with capital ships — the glow that spreads
 across the hull, debris drifting away slowly, everything conveying mass
 and scale. Not twitchy arcade impacts.
 
-**Bible capture:** New subsection in `bible_combat.md` — "Impact Feedback."
+**Bible capture:** New subsection in `docs/bible_history/bible_2_00_combat.md` — "Impact Feedback."
 
 ---
 
@@ -335,7 +335,7 @@ into 2–4 tumbling pieces) are deferred as a future per-era polish option.
 The destruction system architecture supports adding a fragment phase
 between bloom and drift without redesign.
 
-**Bible capture:** New subsection in `bible_combat.md` — "Unit Destruction
+**Bible capture:** New subsection in `docs/bible_history/bible_2_00_combat.md` — "Unit Destruction
 Visuals."
 
 ---
@@ -371,7 +371,7 @@ particle haze carries alone. Particle density further reducible via config.
 **Era manifest fields:** `flyby_mesh_scene`, `flyby_trail_material`,
 `ambient_particle_material`.
 
-**Bible capture:** New subsection in `bible_combat.md` — "Ambient Battle
+**Bible capture:** New subsection in `docs/bible_history/bible_2_00_combat.md` — "Ambient Battle
 Density."
 
 ---
@@ -411,7 +411,7 @@ items captured in the Stage 12.5 hub roadmap entry and stage spec.
 ## Pending Bible Edits
 
 All bible captures complete. The following subsections were added to
-`bible_combat.md`:
+`docs/bible_history/bible_2_00_combat.md`:
 
 1. ✅ **"Attack Event Protocol"** — hybrid model.
 2. ✅ **"Unit Facing"** — target-priority rule.
@@ -448,7 +448,7 @@ Polish scope: selection circle recolor (dimmer, faction-colored), HUD
 animation refinement (Stage 9 aesthetic), edge-scroll speed setting
 (player-configurable). Minimap and sound hooks deferred to post-Stage 13.
 
-All bible captures complete. `bible_combat.md` updated with "Ambient
+All bible captures complete. `docs/bible_history/bible_2_00_combat.md` updated with "Ambient
 Battle Density" subsection. `game_bible.md` updated to v2.13 with
 finalized Stage 12.5 roadmap entry.
 

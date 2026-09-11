@@ -11,7 +11,7 @@ Designing fairness targets without playtest data would either homogenize maps (b
 - Checkpoint B (D1 zero-count metric skip) — done, landed in `fairness_evaluator.py`.
 - Simple-random picker in `map_generator.py` — replaces retry/rejection loop.
 - Structured fairness logging to `tuning_output/fairness_log/<date>.jsonl`.
-- Bible updated (`bible_world.md` §"Generation Pipeline") to reflect interim state.
+- Bible updated (`docs/bible_history/bible_2_00_world.md` §"Generation Pipeline") to reflect interim state.
 
 **Deferred to stage_11f:** Checkpoints C (profile operationalization), D/E/F (layout audit and edits), G/H (verification). The audit document is preserved as future-spec input.
 
@@ -19,7 +19,7 @@ Designing fairness targets without playtest data would either homogenize maps (b
 
 ## Goal (original, for reference)
 
-Reconcile three independent gaps in the map-fairness pipeline that surfaced during Stage 11b's Checkpoint D diagnostic. Pre-spec evidence: every (layout, archetype) pair fails fairness 100% of the time across 20 seeds; the map generator never finds an "acceptable" map and always falls back to "best of N retries." The variety the player sees today is determined by which random layout happens to score least-bad during retries — not by the evaluator's stated purpose. This contradicts `bible_world.md:196`, which describes fairness as a two-layer system where hard constraints handle 90% of cases and the evaluator catches the remaining 10% as edge cases.
+Reconcile three independent gaps in the map-fairness pipeline that surfaced during Stage 11b's Checkpoint D diagnostic. Pre-spec evidence: every (layout, archetype) pair fails fairness 100% of the time across 20 seeds; the map generator never finds an "acceptable" map and always falls back to "best of N retries." The variety the player sees today is determined by which random layout happens to score least-bad during retries — not by the evaluator's stated purpose. This contradicts `docs/bible_history/bible_2_00_world.md:196`, which describes fairness as a two-layer system where hard constraints handle 90% of cases and the evaluator catches the remaining 10% as edge cases.
 
 The three reconciled gaps:
 
@@ -46,15 +46,15 @@ This is more design-and-content work than code work. Most of the line count is J
 
 ## Bible References
 
-- **`bible_world.md`** §"Generation Pipeline" (lines 174–211) — fairness evaluator design, hard-constraint vs evaluator division of labor.
-- **`bible_world.md`** line 196 — *"the constraint rules handle 90% of fairness; the evaluator catches edge cases from canvas scaling and gradient interactions."* The current 0% pass rate violates this directly. Bible-authoritative target for this spec: most (layout, archetype) pairs pass first-try.
-- **`bible_world.md`** line 196 — *"Map seeds are tiny... so regenerating a few times is cheap."* Confirms retries are exceptional, not routine. Current behavior (always retrying to exhaustion) violates this.
-- **`bible_world.md`** §"Spine Node Types" — defines the role of each node type (objective, staging, transit, chokepoint, flank route, **vantage**, **hazard zone anchor**, spawn point, extraction, reinforcement structure). Vantage and hazard placement decisions live here.
-- **`bible_missions.md`** (full file) — per-archetype mission character prose. The 6 non-prototype `FairnessTargetProfile` values (Design Decision D2 below) derive their *directional intent* from this spoke. Read fully before drafting profile values.
-- **`bible_combat.md`** §"Vantage Points" / §"Hazard Zones" — tactical role of these node types in combat resolution. Helps inform what "balanced vantage access" means in practice.
+- **`docs/bible_history/bible_2_00_world.md`** §"Generation Pipeline" (lines 174–211) — fairness evaluator design, hard-constraint vs evaluator division of labor.
+- **`docs/bible_history/bible_2_00_world.md`** line 196 — *"the constraint rules handle 90% of fairness; the evaluator catches edge cases from canvas scaling and gradient interactions."* The current 0% pass rate violates this directly. Bible-authoritative target for this spec: most (layout, archetype) pairs pass first-try.
+- **`docs/bible_history/bible_2_00_world.md`** line 196 — *"Map seeds are tiny... so regenerating a few times is cheap."* Confirms retries are exceptional, not routine. Current behavior (always retrying to exhaustion) violates this.
+- **`docs/bible_history/bible_2_00_world.md`** §"Spine Node Types" — defines the role of each node type (objective, staging, transit, chokepoint, flank route, **vantage**, **hazard zone anchor**, spawn point, extraction, reinforcement structure). Vantage and hazard placement decisions live here.
+- **`docs/bible_history/bible_2_00_missions.md`** (full file) — per-archetype mission character prose. The 6 non-prototype `FairnessTargetProfile` values (Design Decision D2 below) derive their *directional intent* from this spoke. Read fully before drafting profile values.
+- **`docs/bible_history/bible_2_00_combat.md`** §"Vantage Points" / §"Hazard Zones" — tactical role of these node types in combat resolution. Helps inform what "balanced vantage access" means in practice.
 - **Stage 7 spec** §"Archetype-Aware Fairness" + §"Files to create" `archetype_filters.py` description — the original `FairnessTargetProfile` design and the explicit placeholder note for the 6 non-prototype archetypes. This spec finishes what Stage 7 specified.
 
-Do NOT read `bible_chronicle.md`, `bible_antagonist.md`, `bible_ai_pipeline.md`, or `bible_monetization.md` — not relevant.
+Do NOT read `docs/bible_history/bible_2_00_chronicle.md`, `docs/bible_history/bible_2_00_antagonist.md`, `docs/bible_history/bible_2_00_ai_pipeline.md`, or `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/) — not relevant.
 
 ## Cross-Stage References
 
@@ -84,7 +84,7 @@ The implementer should re-run the per-(layout, archetype) fairness instrumentati
 
 **Authority:** CLAUDE.md — *"You may narrow an invariant's scope without approval — skipping cases it was never meant to check (empty regions, factions with zero territory, runs shorter than the invariant's window)."* A layout with zero vantage nodes is a "case the invariant was never meant to check" — vantage *balance* is undefined when there's no vantage to balance.
 
-**Why both-sides-zero only, not either-side-zero:** if only one side has zero of a node type (e.g., player has 0 vantage, enemy has 3), that's a real authoring imbalance — one side has access, the other doesn't. The metric correctly returns ratio=0.0 in that case, and that should fail. The bible's hard constraints already require certain features be reachable by both sides (`bible_world.md:196` — *"vantage points must be reachable by both sides"*). Asymmetric *presence* is the layout's problem to solve; the evaluator should surface it, not paper over it.
+**Why both-sides-zero only, not either-side-zero:** if only one side has zero of a node type (e.g., player has 0 vantage, enemy has 3), that's a real authoring imbalance — one side has access, the other doesn't. The metric correctly returns ratio=0.0 in that case, and that should fail. The bible's hard constraints already require certain features be reachable by both sides (`docs/bible_history/bible_2_00_world.md:196` — *"vantage points must be reachable by both sides"*). Asymmetric *presence* is the layout's problem to solve; the evaluator should surface it, not paper over it.
 
 **Implementation shape:** `FairnessScore` gains a `metric_skipped` flag per metric. `is_acceptable()` excludes skipped metrics from the aggregate. Logging surfaces which metrics were skipped per evaluation, so we can spot the case where most metrics are getting skipped (which would itself be a layout-authoring red flag).
 
@@ -92,9 +92,9 @@ The implementer should re-run the per-(layout, archetype) fairness instrumentati
 - *Treat zero-of-both as fail.* Too strict — the bible's hard-constraint layer handles "node type required" cases via the archetype filter. If `assault` requires ≥1 vantage and a layout has zero, the filter excludes it — fairness shouldn't double-fail it.
 - *Treat zero-of-both as pass with ratio=1.0 (current behavior).* Misleading — silently grades absent features as "balanced," masking authoring oversights. The diagnostic that motivated this spec was muddied by exactly this behavior.
 
-### D2 — Author the 6 non-prototype `FairnessTargetProfile`s, directionally per `bible_missions.md`
+### D2 — Author the 6 non-prototype `FairnessTargetProfile`s, directionally per `docs/bible_history/bible_2_00_missions.md`
 
-**Decision:** Each of the 6 non-prototype archetypes (evacuation, raid, rear_guard, reconquest, siege_breaking, suppression) gets a `FairnessTargetProfile` reflecting its tactical character per `bible_missions.md`. The spec pins **directional intent per metric per archetype** — not specific numerical values.
+**Decision:** Each of the 6 non-prototype archetypes (evacuation, raid, rear_guard, reconquest, siege_breaking, suppression) gets a `FairnessTargetProfile` reflecting its tactical character per `docs/bible_history/bible_2_00_missions.md`. The spec pins **directional intent per metric per archetype** — not specific numerical values.
 
 **Why directional, not numerical:** per CLAUDE.md (Stage 6 v2.07 precedent: *"Tier 2 numeric table removed (values live in config)"*), specific numbers are tuning parameters and live in code. The bible-grounded design decision is *which direction each metric leans* and *roughly how tight the tolerance is*. Implementation produces draft numerical values matching the directional intent and presents them for Westley's approval before code lands (see Checkpoint C — there is an explicit hold-for-approval gate).
 
@@ -107,7 +107,7 @@ The implementer should re-run the per-(layout, archetype) fairness instrumentati
 
 **Per-archetype directional draft (subject to bible re-reading and Westley approval at Checkpoint C):**
 
-These are first-pass directional reads. The implementer should re-read `bible_missions.md` for each archetype and refine these before Checkpoint C's approval gate.
+These are first-pass directional reads. The implementer should re-read `docs/bible_history/bible_2_00_missions.md` for each archetype and refine these before Checkpoint C's approval gate.
 
 - **evacuation** — player extracts something under pressure. Travel: `(enemy_advantage)` — enemy spawns close; player must move under threat. Vantage: `(symmetric, loose)` — extraction routes shouldn't be wholly enemy-dominated. Hazard: `(symmetric, loose)` — hazards are situational. Path: `(player_advantage)` — multiple extraction routes is the design intent; one route is a trap.
 - **raid** — fast, asymmetric strike. Travel: `(player_advantage)` slight — strike force benefits from quick approach. Vantage: `(enemy_advantage)` — defender holds the high ground; raider exploits anyway. Hazard: `(symmetric, loose)`. Path: `(symmetric, loose)` — raids work with any path topology.
@@ -134,7 +134,7 @@ These are first-pass directional reads. The implementer should re-read `bible_mi
 
 ### D4 — Hard-constraint enforcement at layout authoring time
 
-**Decision:** Reaffirm and strengthen the bible's two-layer fairness model. Hard constraints (per `bible_world.md:196` — *"vantage points must be reachable by both sides, all player approaches can't be blocked by hazards while enemy approaches are clear"*) are enforced at **layout load time**, not at fairness-evaluation time. The fairness evaluator handles edge cases from canvas scaling and gradient interactions; it does not handle layout-authoring oversights.
+**Decision:** Reaffirm and strengthen the bible's two-layer fairness model. Hard constraints (per `docs/bible_history/bible_2_00_world.md:196` — *"vantage points must be reachable by both sides, all player approaches can't be blocked by hazards while enemy approaches are clear"*) are enforced at **layout load time**, not at fairness-evaluation time. The fairness evaluator handles edge cases from canvas scaling and gradient interactions; it does not handle layout-authoring oversights.
 
 **Implementation shape:** `layout_library.py`'s `load_all_layouts()` validation (which already exists per Stage 7 spec) is extended with hard-constraint checks. Failed checks are loud — the layout fails to load with a clear error pointing to the violated rule. This means an invalid layout never enters the candidate pool, never gets selected, never confuses the fairness evaluator.
 
@@ -146,13 +146,13 @@ These are first-pass directional reads. The implementer should re-read `bible_mi
 
 This spec's runtime cost is sim-side only. The fairness evaluator is called once per mission start and once per fairness retry. With the zero-count fix in place and reauthored layouts, **expected retry count drops from `FAIRNESS_MAX_RETRIES` (current behavior, every mission) to ~0–2 (bible's intended behavior, occasional)**. Net effect on mission generation latency: faster, not slower.
 
-The 16.7 ms Godot frame budget (`bible_combat.md:313`) is not relevant to this spec. The 50 ms sim tick budget is not affected — fairness evaluation is mission-start work, not per-tick work.
+The 16.7 ms Godot frame budget (`docs/bible_history/bible_2_00_combat.md:313`) is not relevant to this spec. The 50 ms sim tick budget is not affected — fairness evaluation is mission-start work, not per-tick work.
 
 Checkpoint G measures end-to-end mission generation time as a sanity check.
 
 ## Open Questions
 
-- **OQ1 — Existing hard-constraint validation.** D4 assumes Stage 7's `load_all_layouts()` already does structural validation but may not enforce all hard constraints from `bible_world.md:196`. Verify at Checkpoint B; if the validator is thinner than the bible specifies, the gap closes here. If full enforcement already exists, D4 is documentary only.
+- **OQ1 — Existing hard-constraint validation.** D4 assumes Stage 7's `load_all_layouts()` already does structural validation but may not enforce all hard constraints from `docs/bible_history/bible_2_00_world.md:196`. Verify at Checkpoint B; if the validator is thinner than the bible specifies, the gap closes here. If full enforcement already exists, D4 is documentary only.
 - **OQ2 — Positional jitter ordering.** Per `layout_instantiator.py`, positional jitter is applied during layout instantiation. Question: does the fairness evaluator score the layout *before* or *after* jitter? If after, jitter could push an authored-fair layout out of tolerance, contributing to the failure pattern. If before, the evaluator sees the authored map directly. Verify at Checkpoint B; if the order is wrong (jitter then evaluate, when it should be evaluate then jitter, or vice versa), escalate — that's a separate fix.
 - **OQ3 — Counterinsurgency pool size.** Counterinsurgency only has 2 layouts in its compatible pool, and the diagnostic showed both fail fairness. Even with this spec's reconciliation, a 2-layout pool produces low diversity. **Out of scope for this spec to fix (no new layouts authored here).** Flagged for a future authoring conversation. The audit at Checkpoint D may surface that one of the 2 layouts genuinely doesn't fit counterinsurgency, in which case Class C narrows the filter and the pool drops to 1 — escalate then; Westley decides whether to ship with a 1-layout pool or author a new layout.
 - **OQ4 — Profile value bounds.** D2 talks about tight (±0.10–0.15) vs loose (±0.20–0.30) tolerances. These ranges are first-pass; if the audit (Checkpoint D) shows a profile is unattainable by any layout no matter how reauthored, the tolerance widens further — but only with Westley's approval, since that's invariant-loosening per CLAUDE.md.
@@ -196,14 +196,14 @@ Checkpoint G measures end-to-end mission generation time as a sanity check.
 - Add a short note at the top of Stage 11b's spec or in a forward-references section: *"Stage 11e (fairness reconciliation) closes the diagnostic gap surfaced at Stage 11b's Checkpoint D escalation. Once 11e ships, the original 0.8 layout-diversity expectation in this spec's earlier draft becomes achievable; Stage 11e Checkpoint H verifies."*
 - Do not alter Stage 11b's recalibrated Checkpoint D pass condition — it's correct for what 11b alone is responsible for.
 
-**`docs/bible/bible_world.md`** — bible reconciliation, only if Checkpoint H surfaces design ambiguity.
+**`docs/bible_history/bible_2_00_world.md`** — bible reconciliation, only if Checkpoint H surfaces design ambiguity.
 - Per CLAUDE.md, bible edits are first-class deliverables when behavior changes the bible's stated promises. If the audit surfaces (e.g.) that "fairness" needs more nuance than the current §"Generation Pipeline" prose conveys, capture that here. Default expectation: no bible edits needed; the bible's existing fairness model is correct, this spec just makes it real.
 
 ### Files NOT to modify
 
 Listing explicitly because the temptation will be there:
 
-- **`simulation/fairness_evaluator.py` algorithm beyond D1.** The four metrics' formulas are correct per `bible_world.md:196`. We change *what counts as acceptable* (skip semantics) and *what acceptable values are per archetype* (D2), not *how the metrics compute*.
+- **`simulation/fairness_evaluator.py` algorithm beyond D1.** The four metrics' formulas are correct per `docs/bible_history/bible_2_00_world.md:196`. We change *what counts as acceptable* (skip semantics) and *what acceptable values are per archetype* (D2), not *how the metrics compute*.
 - **The 4 prototype `FairnessTargetProfile`s.** If a prototype profile is unattainable, **STOP and escalate** per the rule below. Do not silently widen its tolerance.
 - **`simulation/map_generator.py` retry logic.** Once fairness pass-rate is healthy (Checkpoint G expected: most layouts pass first try), the retry logic does what the bible promised — occasional regeneration. No changes needed.
 - **`simulation/sim_flavoring.py`.** Sim-state-driven gradient modifiers are not in scope. They affect rendered terrain detail, not the fairness evaluator's inputs.
@@ -244,7 +244,7 @@ Each checkpoint follows the **measure → change → re-measure** pattern.
 
 **Purpose:** Land the smallest authorized change first (CLAUDE.md authorizes scope-narrowing without approval), and resolve the two open questions about existing infrastructure.
 
-**Resolve OQ1 first.** Read `simulation/layout_library.py` `load_all_layouts()` validation. List exactly which checks are currently enforced. Compare against `bible_world.md:196`'s hard constraints. Document the gap — if any — in a short note appended to this checkpoint's evidence file.
+**Resolve OQ1 first.** Read `simulation/layout_library.py` `load_all_layouts()` validation. List exactly which checks are currently enforced. Compare against `docs/bible_history/bible_2_00_world.md:196`'s hard constraints. Document the gap — if any — in a short note appended to this checkpoint's evidence file.
 
 **Resolve OQ2.** Read `simulation/map_generator.py` and `simulation/layout_instantiator.py` to determine ordering: is fairness evaluated on the jittered map, or the pre-jitter map? Document the answer. **If the order is wrong (e.g., fairness scores the pre-jitter layout, then jitter changes the map after), STOP and escalate** — that's a separate bug.
 
@@ -274,11 +274,11 @@ Each checkpoint follows the **measure → change → re-measure** pattern.
 
 **Process:**
 
-1. **Read `bible_missions.md` fully.** Capture per-archetype tactical character. The directional drafts in D2 are first-pass; refine them by reading the bible's mission-character prose for each of the 6 archetypes.
+1. **Read `docs/bible_history/bible_2_00_missions.md` fully.** Capture per-archetype tactical character. The directional drafts in D2 are first-pass; refine them by reading the bible's mission-character prose for each of the 6 archetypes.
 
 2. **Author draft profile values.** For each of the 6 archetypes, produce concrete numerical `FairnessTargetProfile` values matching the directional intent. Use the existing 4 prototype profiles as numerical reference points (e.g., if defensive_stand uses `vantage = 1.15 ± 0.15` for player-advantage, and reconquest's directional intent is `(symmetric, tight)` on vantage, draft `vantage = 1.0 ± 0.10`).
 
-3. **Document the rationale.** For each profile, write a 1–3 sentence rationale citing the relevant `bible_missions.md` passage.
+3. **Document the rationale.** For each profile, write a 1–3 sentence rationale citing the relevant `docs/bible_history/bible_2_00_missions.md` passage.
 
 4. **Save the draft.** Write to `tuning_output/stage11e/draft_profiles.md`.
 
@@ -394,7 +394,7 @@ Each checkpoint follows the **measure → change → re-measure** pattern.
 
 **Process:**
 
-1. **Bible reconciliation review.** Re-read `bible_world.md` §"Generation Pipeline" and `bible_missions.md` per-archetype prose. Are there any decisions made during this spec's audit (Checkpoint D) or profile authoring (Checkpoint C) that contradict or clarify the bible's prose? If yes, draft a short bible edit proposal and present to Westley for approval. If no, this step is a no-op confirmation.
+1. **Bible reconciliation review.** Re-read `docs/bible_history/bible_2_00_world.md` §"Generation Pipeline" and `docs/bible_history/bible_2_00_missions.md` per-archetype prose. Are there any decisions made during this spec's audit (Checkpoint D) or profile authoring (Checkpoint C) that contradict or clarify the bible's prose? If yes, draft a short bible edit proposal and present to Westley for approval. If no, this step is a no-op confirmation.
 
 2. **Stage close report.** Write `tuning_output/stage11e/stage_close_report.md` summarizing:
    - Initial state (0% pass rate; placeholder profiles; layout-authoring asymmetries).
@@ -408,7 +408,7 @@ Each checkpoint follows the **measure → change → re-measure** pattern.
 
 ## Performance Notes
 
-Sim-side only. The 16.7 ms Godot frame budget (`bible_combat.md:313`) is irrelevant. The sim 50 ms tick budget is unaffected — fairness evaluation is mission-start work.
+Sim-side only. The 16.7 ms Godot frame budget (`docs/bible_history/bible_2_00_combat.md:313`) is irrelevant. The sim 50 ms tick budget is unaffected — fairness evaluation is mission-start work.
 
 Mission-start latency (the only relevant timing surface) is **expected to drop**, not rise:
 
@@ -424,7 +424,7 @@ Checkpoint G measures this directly. If average mission generation time regresse
 - **Per-branch fairness parameterization** — post-Stage 13, when Branch 2 (modern) and Branch 3 (ancient) ship, the `FairnessTargetProfile` values become per-(branch, archetype). The structure built here is the consumer of those branch values; the bible's branch parameterization decision (deferred per `game_bible.md` v2.14) eventually fills in the per-branch axes.
 - **Library hint system** (bible §"What Makes Each Mission Unique" item 3). Hints can bias layout selection via fairness profile adjustments (e.g., "this hint prefers high-vantage layouts" → temporarily tilts the vantage profile). Not in scope here; future content-pipeline spec.
 - **Fairness evaluator algorithm changes**. The four metrics' formulas remain as Stage 7 specified. If future design work reveals a missing metric (e.g., "early-game proximity" — how close enemies are to the player's starting force), that's a separate spec; this one does not modify the metrics.
-- **Learned fairness evaluator** (`bible_world.md:198` — *"A learned evaluator (neural network trained on playtested maps) can supplement or replace the algorithmic evaluator once sufficient playtest data exists. This is a post-launch evolution."*). Far-future. The algorithmic evaluator made real by this spec is the launch vehicle.
+- **Learned fairness evaluator** (`docs/bible_history/bible_2_00_world.md:198` — *"A learned evaluator (neural network trained on playtested maps) can supplement or replace the algorithmic evaluator once sufficient playtest data exists. This is a post-launch evolution."*). Far-future. The algorithmic evaluator made real by this spec is the launch vehicle.
 
 ## Out of Scope (reaffirmed)
 
@@ -452,7 +452,7 @@ Checkpoint G measures this directly. If average mission generation time regresse
 **Modify (docs):**
 - `docs/architecture.md` — `metric_skipped` flag and skip semantics in fairness evaluator.
 - `docs/stage_specs/stage_11b_map_variety_spec.md` — closing forward-reference noting Stage 11e closure.
-- `docs/bible/bible_world.md` — only if Checkpoint I surfaces design ambiguity.
+- `docs/bible_history/bible_2_00_world.md` — only if Checkpoint I surfaces design ambiguity.
 
 **Create:**
 - `tests/diag_fairness_pass_rate.py` — per-(layout, archetype) pass-rate harness used by Checkpoints A, B, C, F.

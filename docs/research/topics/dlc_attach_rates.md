@@ -12,7 +12,7 @@ contributor: Research Lane T-CL2 capture
 
 Per-DLC attach-rate survey across niche-strategy paid-base titles. Pulls first-expansion attach, decay curve across 2nd / 3rd / 4th+ items, cosmetic-tier attach floor, flavor-pack attach, identity-deviation under-attach signal. Cross-references sibling brief `dlc_pricing_ladders.md` (T-P3) which holds the per-SKU price-point map; this brief holds the per-SKU attach signal underneath those price points. Feeds T-M2 7-tier DLC stress-test, monetization revenue model, T-P3 cross-validation, and the Ouroboros 7-era + Roman-free substrate.
 
-Non-recommendation disclaimer: Research Lane surfaces inputs, does not pick. Anything below that reads like a pick is data preserved from cited source, not endorsement. Design Lane decides 7-era ladder shape; bible (`docs/bible/game_bible.md`, `docs/bible/bible_monetization.md`) is authority on conflicts surfaced below.
+Non-recommendation disclaimer: Research Lane surfaces inputs, does not pick. Anything below that reads like a pick is data preserved from cited source, not endorsement. Design Lane decides 7-era ladder shape; bible (`docs/bible/game_bible.md`, `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)`) is authority on conflicts surfaced below.
 
 ## Method
 
@@ -264,7 +264,7 @@ Bundle SKU revenue not modeled separately above — if Ouroboros ships a 6-paid-
 Bible context per kickoff brief:
 - 80-200k base @ $25-35 is the bible-locked sizing target.
 - 7-era ladder + Roman free anchor is bible-locked monetization shape.
-- `bible_monetization.md` L274 "Free to play. Infinite eras." tagline conflicts with the paid-base assumption (already flagged in sibling brief `dlc_pricing_ladders.md`).
+- `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/) L274 "Free to play. Infinite eras." tagline conflicts with the paid-base assumption (already flagged in sibling brief `dlc_pricing_ladders.md`).
 
 Conflict surfaced specific to attach-rate modeling:
 
@@ -332,7 +332,7 @@ EU4 and HOI4 inline references in this brief are training-data only — no dedic
 Bible authority sources:
 
 - `docs/bible/game_bible.md` — hub authority on conflict resolution.
-- `docs/bible/bible_monetization.md` (L274 "Free to play" tagline, L292 Fortnite reference, bible-locked 7-era + Roman-free + 80-200k base @ $25-35) — authority on the monetization shape, surfaced as conflict-input only above.
+- `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` (L274 "Free to play" tagline, L292 Fortnite reference, bible-locked 7-era + Roman-free + 80-200k base @ $25-35) — authority on the monetization shape, surfaced as conflict-input only above.
 
 Memory cross-refs:
 

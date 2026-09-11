@@ -99,7 +99,7 @@ Rules
 
 Inputs: map seed; ownership.
 Outputs: screen.
-Open flags: Q-131-01 (settlement vs station naming: `bible_world.md` says the one capturable structure is a settlement with its own silhouette; `bible_combat.md` says garrison posts, militia stations, FOBs). Reference required: `references/E-15/notes.md`, missing.
+Open flags: Q-131-01 (settlement vs station naming: `docs/bible_history/bible_2_00_world.md` says the one capturable structure is a settlement with its own silhouette; `docs/bible_history/bible_2_00_combat.md` says garrison posts, militia stations, FOBs). Reference required: `references/E-15/notes.md`, missing.
 
 ## Inputs
 
