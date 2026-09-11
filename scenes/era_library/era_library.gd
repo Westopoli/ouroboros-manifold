@@ -27,7 +27,7 @@ func _build_ui() -> void:
 	outer.add_theme_constant_override("separation", 20)
 	margin.add_child(outer)
 
-	# Subscription model removed 2026-05-09 — see docs/bible/bible_monetization.md LEGACY banner.
+	# Subscription model removed 2026-05-09 — see docs/bible_history/game_bible_1_23.md (bible_monetization.md folded into the hub 2026-05-31; hub rewritten 2026-09-10).
 	# Previously this header row held a SUBSCRIBED/FREE TIER badge and a "Manage Subscription" link.
 	var header := Label.new()
 	header.text = "ERA LIBRARY"
