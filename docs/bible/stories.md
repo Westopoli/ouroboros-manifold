@@ -68,3 +68,10 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-062 | E-08 | "When my civilization is gone I keep playing in a surviving one." | Spec'd, blocked on Q-062-01 | `epics/E-08-generational-structure.md` S-062 |
 | S-063 | E-08 | "I pick a difficulty and the missions I prefer before chapter one, and can change my mind later." | Spec'd, needs reference | `epics/E-08-generational-structure.md` S-063 |
 | S-064 | E-08 | "The world remembers everything; my character starts fresh." | Spec'd | `epics/E-08-generational-structure.md` S-064 |
+| S-065 | E-09 | "The scroll opens with what my mission did, always tells me about my family, then the biggest stories of the age." | Spec'd, blocked on Q-065-02 | `epics/E-09-chronicle.md` S-065 |
+| S-066 | E-09 | "A first contact makes the chronicle even if nothing changed; a small event only if it snowballed." | Spec'd | `epics/E-09-chronicle.md` S-066 |
+| S-067 | E-09 | "A famine, its revolt, and the compromise that ended it are one entry." | Spec'd, blocked on Q-067-01 | `epics/E-09-chronicle.md` S-067 |
+| S-068 | E-09 | "Each entry reads like a passage from a real history, different every campaign." | Spec'd | `epics/E-09-chronicle.md` S-068 |
+| S-069 | E-09 | "I watch the map change on the left while the scroll writes itself on the right, and I can stop and read." | Spec'd, needs reference | `epics/E-09-chronicle.md` S-069 |
+| S-070 | E-09 | "Events near my family bubble up into the scroll, as the deeds of a military family." | Spec'd | `epics/E-09-chronicle.md` S-070 |
+| S-071 | E-09 | "The scroll never repeats a sentence word for word in a campaign." | Spec'd | `epics/E-09-chronicle.md` S-071 |

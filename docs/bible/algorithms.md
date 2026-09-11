@@ -4,7 +4,7 @@ This is the "what stays" contract for the C rewrite. Every formula below was rea
 
 All fields are floats clamped to [0, 100] unless stated. Economy has a floor of `ECONOMY_FLOOR = 8.0` under drift, friction, and standard events; conquest bypasses it. Ticks are integers from 1. Randomness is one seeded stream per world (`random.Random(seed)`); the draw order per tick is the order the formulas appear in the tick sequence below.
 
-Not yet inventoried here: the chronicle distiller and assembler, the mission generator and outcome resolver, and the whole tactical layer (`unit.py`, `movement.py`, `damage.py`, `fog_of_war.py`, `facing.py`, `ability.py`). Each gets added when its epic runs the completeness gate.
+Not yet inventoried here: the mission generator and outcome resolver, and the whole tactical layer (`unit.py`, `movement.py`, `damage.py`, `fog_of_war.py`, `facing.py`, `ability.py`). Each gets added when its epic runs the completeness gate.
 
 ## Tick sequence (`tick.py`)
 
@@ -186,6 +186,18 @@ Added in Stage 2 from source (2026-09-10).
 **ALG-48 Lineage generation.** At jump end: `n = max(1, floor(living · LINEAGE_FERTILITY_RATE = 0.03 · jump_ticks))` descendants; each: parent = uniform draw among living members; with probability `LINEAGE_SPREAD_PROBABILITY = 0.1` region = uniform draw among the parent's inhabited neighbors (all edge types), else the parent's region; rank `lineage_member`, generation parent + 1. Draw order per descendant: parent, spread roll, (neighbor draw), name, lifespan.
 
 **ALG-49 Lifespan and succession.** `lifespan = randint(LIFESPAN_MIN = 150, LIFESPAN_MAX = 350)` at creation. At jump end, every active character with `tick − born ≥ lifespan` becomes historical with `death_tick = tick`; its name returns to the pool after `NAME_REUSE_COOLDOWN_TICKS = 500` (`4500` for a main character); a supreme commander is succeeded in the faction's first region and a regional commander in its region if still owned. Event attachment: events of significance tier `≥ CHARACTER_ATTACHMENT_TIER_THRESHOLD = 3` attach the region's characters.
+
+## Chronicle (`chronicle_distiller.py`, `chronicle_assembler.py`)
+
+Added in Stage 2 from source (2026-09-10).
+
+**ALG-50 Significance.** `base = tier + min(|Δ|_sum / SIGNIFICANCE_DELTA_SCALE, SIGNIFICANCE_DELTA_CAP)`, scale `50.0`, cap `3.0`, tier from the template (default 2). `context = 1.0 + 0.5·[region == last mission region] + 0.3·[character attached] + 0.1·min(chain_length, CHAIN_LENGTH_CAP = 5)·[chain_length > 1] + 0.8·[a lineage member lives in the region]` (`SIGNIFICANCE_MISSION_REGION_BONUS`, `_CHARACTER_BONUS`, `_CHAIN_LENGTH_BONUS`, `_LINEAGE_REGION_BONUS`). `score = base · context`.
+
+**ALG-51 Clustering.** (1) Events flagged `mission_consequence` form one consequence cluster, category by outcome: success, failure, else mixed. (2) Lineage events (lineage member in region, or attached character in the lineage, or region == last mission region) cluster by region; category by E-09 R-067-02; if none, one `lineage_quiet` cluster in the lineage's first active member's region, else its last history region, else the mission region. (3) Remaining events with a chain tag cluster by tag, category by R-067-04, then clusters with equal (primary region, category) merge. (4) Remaining untagged events cluster by region, category by R-067-05. Primary region = most common region in the cluster. Peak score = max event score.
+
+**ALG-52 Selection.** Order: consequence clusters, then lineage clusters, then the rest by peak score descending, skipping any category already used twice, until `CHRONICLE_MAX_ENTRIES = 10`; if fewer than `CHRONICLE_MIN_ENTRIES = 5`, add skipped clusters in order while a category has fewer than 2.
+
+**ALG-53 Assembly.** RNG seeded with the jump start tick. Per cluster: resolve slot values; draw opening, detail, closing uniformly from the category pools filtered to resolvable slots; slot echo (same value ≥ 6 words in adjacent fragments) replaced by an anaphoric form; word echo (4+ letters, non-stop word, second occurrence) replaced from the synonym map; first mention of a region appends ", held by <faction name>" unless the entry already names both. Then cross-entry dedup: content words (lowercase, > 3 letters, non-stop); drop a later entry whose overlap with any kept entry ≥ `0.40` of the smaller set. Warnings at base ≥ 90 words or expanded ≥ 140.
 
 ## World generation (`world.py`)
 
