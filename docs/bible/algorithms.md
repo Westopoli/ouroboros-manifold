@@ -4,7 +4,7 @@ This is the "what stays" contract for the C rewrite. Every formula below was rea
 
 All fields are floats clamped to [0, 100] unless stated. Economy has a floor of `ECONOMY_FLOOR = 8.0` under drift, friction, and standard events; conquest bypasses it. Ticks are integers from 1. Randomness is one seeded stream per world (`random.Random(seed)`); the draw order per tick is the order the formulas appear in the tick sequence below.
 
-Not yet inventoried here: time jump (`time_jump.py`), coherence ledger and character selector, and the whole tactical layer (`unit.py`, `movement.py`, `damage.py`, `fog_of_war.py`, `facing.py`, `ability.py`). Each gets added when its epic runs the completeness gate.
+Not yet inventoried here: the chronicle distiller and assembler, the mission generator and outcome resolver, and the whole tactical layer (`unit.py`, `movement.py`, `damage.py`, `fog_of_war.py`, `facing.py`, `ability.py`). Each gets added when its epic runs the completeness gate.
 
 ## Tick sequence (`tick.py`)
 
@@ -172,6 +172,20 @@ Added in Stage 2 from source (2026-09-10). Stances are stored per unordered pair
 **ALG-43 Latent loyalty.** After the split in ALG-41, if the region has a previous owner different from its current owner, `tick − held_since ≤ LATENT_LOYALTY_TICKS = 20`, one draw `< LATENT_LOYALTY_REVERT_CHANCE = 0.5`, and the previous owner still exists: the region reverts to the previous owner with held-since = tick, previous owner cleared, and the same tension cap and floors as ALG-41.
 
 **ALG-44 Lifecycle phase.** Given a faction's recent event list: fragmentation if (admin events + revolts + reversions) / max(1, len(events)) ≥ `LIFECYCLE_FRAGMENTATION_REVOLT_RATE = 0.02`; else overextension if `regions · REGION_MAINTENANCE_COST / Σ economy > LIFECYCLE_OVEREXTENSION_DRAIN_RATIO = 0.4`; else conflict if attacks / len ≥ `LIFECYCLE_CONFLICT_ATTACK_RATE = 0.05`; else expansion if distinct empty regions bordering the faction / inhabited region count ≥ `LIFECYCLE_EXPANSION_EMPTY_THRESHOLD = 0.3`; else consolidation if any colonization and no attack; else equilibrium (also for zero regions).
+
+## Time jump, selector, ledger (`time_jump.py`, `character_selector.py`, `generational.py`, `coherence_ledger.py`)
+
+Added in Stage 2 from source (2026-09-10).
+
+**ALG-45 Time jump.** Length `n = clamp(requested, TIME_JUMP_MIN_TICKS = 20, TIME_JUMP_MAX_TICKS = 100)`; the live game requests `TIME_JUMP_TICKS_PER_CHAPTER = 50` every chapter (see Q-056-01). Runs `n` full ticks from `start_tick + 1`, records an ownership snapshot every `OWNERSHIP_TIMELINE_STRIDE = 2` ticks and at the end, then once at the end tick: lineage member generation (ALG-48), natural deaths (ALG-49), territory and faction diffs, per-faction average field deltas, and the chronicle (E-09).
+
+**ALG-46 Rotation decision.** In order: (1) forced rotation if the lineage has no living member, or the commander is dead and no living non-supreme member is within `SELECTOR_PROXIMITY_HOPS = 2` hops of the mission region; (2) stay if the lineage's chapter counter `< SELECTOR_MIN_CHAPTERS = 2`; (3) [code: rotate if counter `≥ SELECTOR_HARD_CAP = 6`; removed by Stage 1 verdict A-050, replaced by the decay in Q-057-01]; (4) `t = min(1, delta / SELECTOR_DELTA_SAFE = 200)`, `p_rotate = SELECTOR_MAX_ROTATION_PROB + t · (SELECTOR_MIN_ROTATION_PROB − SELECTOR_MAX_ROTATION_PROB)` with `0.8` and `0.1`; one draw; if `draw < p_rotate` and the lineage home region's stability `< SELECTOR_CRISIS_THRESHOLD = 20.0`, stay (veto); else rotate with reason `normal`. Home region = first region in the lineage history. Stay picks the first living member within 2 hops of the mission region, else the current commander.
+
+**ALG-47 Commander pools.** One draw selects a pool: previous-descendant `0.70`, nemesis-descendant `0.20`, unrelated `0.10`; search order is the rolled pool then the others in that priority order. Previous: for each lineage played in an earlier chapter with a living member within 2 hops and last played `≥ SELECTOR_RECENCY_PENALTY_WINDOW = 1` chapters ago, `score = 0.6 · min(chapters_ago, SELECTOR_GAP_BONUS_PEAK = 4)/4 + 0.4 · min(living_nearby, 5)/5`; every nearby member carries its lineage's score; one weighted draw. Nemesis: living descendants within 2 hops of any character tagged rival of a previous commander, excluding the rivals; one uniform draw. Unrelated: create a `lineage_member` in the mission region's owning faction and a new lineage.
+
+**ALG-48 Lineage generation.** At jump end: `n = max(1, floor(living · LINEAGE_FERTILITY_RATE = 0.03 · jump_ticks))` descendants; each: parent = uniform draw among living members; with probability `LINEAGE_SPREAD_PROBABILITY = 0.1` region = uniform draw among the parent's inhabited neighbors (all edge types), else the parent's region; rank `lineage_member`, generation parent + 1. Draw order per descendant: parent, spread roll, (neighbor draw), name, lifespan.
+
+**ALG-49 Lifespan and succession.** `lifespan = randint(LIFESPAN_MIN = 150, LIFESPAN_MAX = 350)` at creation. At jump end, every active character with `tick − born ≥ lifespan` becomes historical with `death_tick = tick`; its name returns to the pool after `NAME_REUSE_COOLDOWN_TICKS = 500` (`4500` for a main character); a supreme commander is succeeded in the faction's first region and a regional commander in its region if still owned. Event attachment: events of significance tier `≥ CHARACTER_ATTACHMENT_TIER_THRESHOLD = 3` attach the region's characters.
 
 ## World generation (`world.py`)
 

@@ -58,3 +58,13 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-052 | E-07 | "My own civilization can fall." | Spec'd | `epics/E-07-civilizational-lifecycle.md` S-052 |
 | S-053 | E-07 | "The sim knows whether my civilization is expanding, at war, overextended, fragmenting, or settled." | Spec'd | `epics/E-07-civilizational-lifecycle.md` S-053 |
 | S-054 | E-07 | "A civilization's story can end in survival, escape, or extinction with only relics left." | Deferred (Q-054-01) | `epics/E-07-civilizational-lifecycle.md` S-054 |
+| S-055 | E-08 | "Each chapter is briefing, recon, mission, resolution, time jump, new commander, always in that order." | Spec'd | `epics/E-08-generational-structure.md` S-055 |
+| S-056 | E-08 | "Decades pass while I am gone, and the world decides how many." | Spec'd, blocked on Q-056-01 | `epics/E-08-generational-structure.md` S-056 |
+| S-057 | E-08 | "I stay with a bloodline while its story is alive and move on when it goes quiet." | Spec'd, blocked on Q-057-01 | `epics/E-08-generational-structure.md` S-057 |
+| S-058 | E-08 | "My next commander is usually family, sometimes an old enemy's heir, rarely a stranger." | Spec'd | `epics/E-08-generational-structure.md` S-058 |
+| S-059 | E-08 | "My bloodline has descendants when I return, spread across nearby regions." | Spec'd | `epics/E-08-generational-structure.md` S-059 |
+| S-060 | E-08 | "The people the chronicle names are born, serve, age, and die, and someone takes their place." | Spec'd | `epics/E-08-generational-structure.md` S-060 |
+| S-061 | E-08 | "A fallen commander's place is taken by a relative nearby if one exists." | Spec'd | `epics/E-08-generational-structure.md` S-061 |
+| S-062 | E-08 | "When my civilization is gone I keep playing in a surviving one." | Spec'd, blocked on Q-062-01 | `epics/E-08-generational-structure.md` S-062 |
+| S-063 | E-08 | "I pick a difficulty and the missions I prefer before chapter one, and can change my mind later." | Spec'd, needs reference | `epics/E-08-generational-structure.md` S-063 |
+| S-064 | E-08 | "The world remembers everything; my character starts fresh." | Spec'd | `epics/E-08-generational-structure.md` S-064 |
