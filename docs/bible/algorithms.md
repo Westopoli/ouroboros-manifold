@@ -4,7 +4,7 @@ This is the "what stays" contract for the C rewrite. Every formula below was rea
 
 All fields are floats clamped to [0, 100] unless stated. Economy has a floor of `ECONOMY_FLOOR = 8.0` under drift, friction, and standard events; conquest bypasses it. Ticks are integers from 1. Randomness is one seeded stream per world (`random.Random(seed)`); the draw order per tick is the order the formulas appear in the tick sequence below.
 
-Not yet inventoried here: the whole tactical layer (`unit.py`, `movement.py`, `damage.py`, `fog_of_war.py`, `facing.py`, `ability.py`). Each gets added when its epic runs the completeness gate.
+Not yet inventoried here: enemy macro behavior scripts, reinforcement structures, map generation, and the renderer. Each gets added when its epic runs the completeness gate.
 
 ## Tick sequence (`tick.py`)
 
@@ -214,6 +214,34 @@ Added in Stage 2 from source (2026-09-10).
 **ALG-58 Outcome.** `objective_score = Σ weight · (0 if failed else completion)`; `retention = min(1, Σ surviving unit power (HP-scaled) / initial power)`; `final = OUTCOME_WEIGHT_OBJECTIVE = 0.75 · objective_score + OUTCOME_WEIGHT_RETENTION = 0.25 · retention`; band by `OUTCOME_THRESHOLDS[archetype]` (E-10 R-077-02), strict less-than. Terminal: every primary complete or failed, or `tick ≥ limit`, or no living player unit. Commander survived = commander unit alive.
 
 **ALG-59 Consequences.** For each row of `CONSEQUENCE_TABLES[archetype][band]`: `delta = (100 − v) · pct/100` for form `deficit`, `v · pct/100` for `current`; targets `mission`, `home`, `exposed` resolve to the mission region (see Q-078-01), `adjacent_player` to player-owned neighbors; clamp [0, 100]. Ownership transfers to the player for bands in `REGION_TRANSFER_OUTCOMES`: reconquest {total, strong, partial success}, assault and suppression {total, strong success}. Refusal: `tension += (100 − tension) · REFUSAL_TENSION_PENALTY_PCT = 8 / 100`. Commander death emits `evt_commander_killed_in_action` flagged as a mission consequence.
+
+## Tactical: units, damage, abilities (`damage.py`, `ability.py`, `unit.py`)
+
+Added in Stage 2 from source (2026-09-10). Tactical ticks run at `TACTICAL_TICK_RATE = 20` per second. Unit stats are the table in `epics/E-11-units-and-combat.md` S-082 (`UNIT_STATS`).
+
+**ALG-60 Damage.** `damage = base · CATEGORY_MULTIPLIER[attacker_cat][target_cat] · output_mult(attacker) · (1 − reduction(target))`. Matrix: Strike {Strike 1.0, Line 0.75, Siege 1.5}; Line {Strike 1.5, Line 1.0, Siege 0.75}; Siege {Strike 0.20, Line 1.5, Siege 1.0} (see Q-081-01). Output multipliers: Surge `2.0`, Intercept `1.5`, Brace `1.3` while active, else 1.0. Reduction: Brace `0.50` + Fortify `0.20` for any friendly within `FORTIFY_RADIUS = 350` of an active Bastion + Warden aura `WARDEN_AURA_DAMAGE_REDUCTION = 0.10` per Warden within `WARDEN_AURA_RADIUS = 300`. An attack fires when the unit's attack timer reaches `attack_interval · 20` ticks with a target in range; after firing the unit's movement pauses `ATTACK_BACKSWING_SEC = 0.5`. No range falloff. Damage is accumulated per target for the tick and applied at once.
+
+**ALG-61 Area damage.** For a Bombard attack on target T: every enemy on the attacker's layer within `aoe_radius = 150` of T's position takes ALG-60 damage in unit-id order until the running total reaches `base · AOE_DAMAGE_CAP_MULTIPLIER = 4.0`; the last hit is truncated to the cap.
+
+**ALG-62 Targeting.** Each tick: units under a plain move skip targeting. A unit keeps its current target if alive and within attack range. Otherwise, on its cohort tick (`uid mod TARGETING_COHORT_COUNT = 4 == tick mod 4`) it acquires the nearest same-layer enemy within attack range; failing that, an attack-moving unit with sensor radius > attack range acquires the nearest visible same-layer enemy within sensor radius and moves toward it. Return fire: an idle unit with no target and no order that takes damage targets the attacker. Flinch: a unit that cannot return fire moves `_RETURN_FIRE_FLEE_DIST = 200` wu away from the attacker.
+
+**ALG-63 Abilities.** One per type (`ABILITY_MAP`). Surge: duration `60` ticks, speed × `2.5`, damage × `2.0`, cooldown `1500`. Intercept: passive; when cooldown is 0 and an enemy Strike unit is within `INTERCEPT_DETECTION_RADIUS = 350` on the same layer, activate for the first engagement with speed × `1.8`, damage × `1.5`, cooldown `600`. Brace: windup `40` ticks immobile without bonus, then active with reduction `0.50` and damage × `1.3`; toggling off repeats the windup; cooldown `700` from activation. Rally: instant `112` HP to every friendly within `400`, capped at max HP; cooldown `1500`. Barrage: `30`-tick telegraph, then ALG-61 at the target with base × `3.0` within radius `100`; cooldown `1800`. Fortify: `400` ticks, reduction `0.20` within `350`, Bastion speed × `0.4`; cooldown `1400`. Warden aura (passive): friendlies within `300` regain `WARDEN_AURA_REPAIR_RATE = 0.075` HP per tick. Cooldowns tick down every tick; activation on cooldown is rejected.
+
+**ALG-64 Squads.** A Strike unit is one entity (one HP, one position); squad membership is rendering only.
+
+## Tactical: fog and sensors (`fog_of_war.py`)
+
+**ALG-65 Visibility.** Per observer: `effective = sensor_radius · (1 − interference(observer position))`; at vantage (within a `vantage_point` node's `radius`, default `100`) cross-layer factors are `min(f · VANTAGE_CONE_MULTIPLIER = 2.0, 1)` for [1.0, `CONE_LAYER_1_FACTOR = 0.50`, `CONE_LAYER_2_FACTOR = 0.20`] plus `VANTAGE_EXTRA_LAYER = 1` extra factor of `min(0.20 · 2.0, 1)`. For each enemy: if the observer's pulse is active and distance ≤ `PULSE_RADIUS = 500`, visible; else `factor = factors[layer_diff]` (0 beyond the list); visible if distance ≤ `effective · factor` and no cover blocks the segment between the units' layer midpoints. Pulse: `PULSE_REVEAL_TICKS = 40`, `PULSE_COOLDOWN_TICKS = 400`. The player-visible set is the union over the player's units. `ELEVATION_SENSOR_BONUS_PER_TIER = 0.15` is defined and unused (Q-092-01).
+
+## Tactical: movement and command (`movement.py`, `command.py`, `facing.py`)
+
+**ALG-66 Group move.** For a selection of 2+ living units with `FORMATION_MOVE_ENABLED`: centroid c; scattered if any unit is farther than `MAGIC_BOX_SPREAD_RADIUS = 450` from c; each unit's slot = click + (unit − c), or the click point if scattered or the slot cell is unwalkable; the group is registered and terminated when the centroid arrives or every unit is within `ARRIVAL_TOLERANCE_MULT = 1.5 · UNIT_COLLISION_RADIUS = 15` of its slot. Slowest-unit pace (A-557) is not implemented (Q-095-01).
+
+**ALG-67 Routing.** Grid cells `NAVMESH_CELL_SIZE = 100` per layer; blocked where obstacle density > `NAVMESH_OBSTACLE_THRESHOLD = 0.7`; A* then line-of-sight simplification (supercover cells); path cache keyed by destination cell.
+
+**ALG-68 Steering and collision.** Probe `STEERING_PROBE_DIST = 40` ahead for allies within blocking radius; if blocked, sweep alternate angles in fixed order and commit `STEERING_DETOUR_MIN_DIST = 60` to the chosen heading. Direct-move units sample obstacle density within `STEERING_OBSTACLE_AVOIDANCE_RANGE = 50` and take a repulsion when > 0.3; waypoint followers are exempt. After movement, same-layer pairs closer than `2 · 15` are pushed apart along their axis; a unit with no move target or halted by engagement takes zero push; equal positions push the lower id along +x. Attack-move leash `200` wu from the acquisition anchor.
+
+**ALG-69 Facing.** Target if attacking, heading if moving, else hold; turn rate capped at `FACING_ROTATION_SPEED_STRIKE = 6.0`, `LINE = 4.0`, `SIEGE = 2.5` rad/s.
 
 ## World generation (`world.py`)
 

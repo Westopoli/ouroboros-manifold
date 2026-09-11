@@ -84,3 +84,25 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-078 | E-10 | "The outcome changes the region in proportion to how it was doing." | Spec'd | `epics/E-10-missions.md` S-078 |
 | S-079 | E-10 | "I receive my orders as a superior officer would give them, three parts, no haggling." | Spec'd, needs reference | `epics/E-10-missions.md` S-079 |
 | S-080 | E-10 | "Hard mode gives me less to work with, never gives the enemy better units." | Spec'd, blocked on Q-080-01 | `epics/E-10-missions.md` S-080 |
+| S-081 | E-11 | "Strike beats Siege, Siege beats Line, Line beats Strike, and none of it is a death sentence." | Spec'd, blocked on Q-081-01 | `epics/E-11-units-and-combat.md` S-081 |
+| S-082 | E-11 | "Six units I can learn by heart, each with one job." | Spec'd | `epics/E-11-units-and-combat.md` S-082 |
+| S-083 | E-11 | "Each unit is its stats plus one or two traits plus one ability." | Spec'd, blocked on Q-083-01 | `epics/E-11-units-and-combat.md` S-083 |
+| S-084 | E-11 | "Damage is simple: base times matchup, full damage in range, area damage capped." | Spec'd | `epics/E-11-units-and-combat.md` S-084 |
+| S-085 | E-11 | "Fights last long enough to read, reposition, and retreat." | Spec'd | `epics/E-11-units-and-combat.md` S-085 |
+| S-086 | E-11 | "Each unit has exactly one ability that amplifies its role and costs something." | Spec'd | `epics/E-11-units-and-combat.md` S-086 |
+| S-087 | E-11 | "Every unit on both sides flinches, obeys, then shoots the nearest thing in range." | Spec'd | `epics/E-11-units-and-combat.md` S-087 |
+| S-088 | E-11 | "A Strike squad reads as a small group, a Siege unit as a heavy asset, every ability has a cue." | Spec'd, needs reference | `epics/E-11-units-and-combat.md` S-088 |
+| S-089 | E-12 | "The map is revealed only around my units." | Spec'd | `epics/E-12-fog-and-sensors.md` S-089 |
+| S-090 | E-12 | "A zone of interference shrinks what units inside it see and what outsiders see into it." | Spec'd, blocked on Q-090-01 | `epics/E-12-fog-and-sensors.md` S-090 |
+| S-091 | E-12 | "An elevated position sees farther." | Spec'd, blocked on Q-092-01 | `epics/E-12-fog-and-sensors.md` S-091 |
+| S-092 | E-12 | "I study the whole map before I commit, then lose sight of all but what my units see." | Spec'd | `epics/E-12-fog-and-sensors.md` S-092 |
+| S-093 | E-12 | "Fog changes what I know, never what happens." | Spec'd | `epics/E-12-fog-and-sensors.md` S-093 |
+| S-094 | E-12 | "Unexplored space, interference, and revealed ground read differently at a glance." | Spec'd, needs reference | `epics/E-12-fog-and-sensors.md` S-094 |
+| S-095 | E-13 | "A selection moves at its slowest member's pace and arrives in its shape; I split off a faster group when I choose." | Spec'd, blocked on Q-095-01 | `epics/E-13-movement-and-command.md` S-095 |
+| S-096 | E-13 | "Move is movement, attack-move fights along the way, attack-target commits, ability is a button." | Spec'd | `epics/E-13-movement-and-command.md` S-096 |
+| S-097 | E-13 | "Units route around terrain and flow around each other; nothing walks through anything." | Spec'd | `epics/E-13-movement-and-command.md` S-097 |
+| S-098 | E-13 | "My back rank shoots over my front rank." | Spec'd | `epics/E-13-movement-and-command.md` S-098 |
+| S-099 | E-13 | "My fast units flow around a stalled front faster than slow ones." | Spec'd | `epics/E-13-movement-and-command.md` S-099 |
+| S-100 | E-13 | "Units face what they shoot and where they go, and turn rather than snap." | Spec'd | `epics/E-13-movement-and-command.md` S-100 |
+| S-101 | E-13 | "I see units turn, slow behind blockers, and settle into their slots." | Spec'd, needs reference | `epics/E-13-movement-and-command.md` S-101 |
+| S-102 | E-13 | "Every peer computes the same movement from the same commands." | Spec'd | `epics/E-13-movement-and-command.md` S-102 |
