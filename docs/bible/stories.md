@@ -106,3 +106,59 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-100 | E-13 | "Units face what they shoot and where they go, and turn rather than snap." | Spec'd | `epics/E-13-movement-and-command.md` S-100 |
 | S-101 | E-13 | "I see units turn, slow behind blockers, and settle into their slots." | Spec'd, needs reference | `epics/E-13-movement-and-command.md` S-101 |
 | S-102 | E-13 | "Every peer computes the same movement from the same commands." | Spec'd | `epics/E-13-movement-and-command.md` S-102 |
+| S-103 | E-16 | "A free camera I manage myself." | Spec'd, blocked on Q-103-01 | `epics/E-16-client-camera-hud-and-world-view.md` S-103 |
+| S-104 | E-16 | "A lean HUD that shows what I need and stays out of the way." | Spec'd, needs reference | `epics/E-16-client-camera-hud-and-world-view.md` S-104 |
+| S-105 | E-16 | "Click, box-select, bind groups, and never an all-army button." | Spec'd, blocked on Q-105-01 | `epics/E-16-client-camera-hud-and-world-view.md` S-105 |
+| S-106 | E-16 | "A 3D star map where territory glows, borders touch, and war flashes." | Spec'd, needs reference | `epics/E-16-client-camera-hud-and-world-view.md` S-106 |
+| S-107 | E-16 | "Pan, zoom, orbit, focus a system, pick out a faction." | Spec'd | `epics/E-16-client-camera-hud-and-world-view.md` S-107 |
+| S-108 | E-16 | "Mission pulls back into the galaxy and pushes into the next mission without a cut." | Spec'd, needs reference | `epics/E-16-client-camera-hud-and-world-view.md` S-108 |
+| S-109 | E-16 | "The screens around a mission read as orders and reports from my civilization." | Spec'd | `epics/E-16-client-camera-hud-and-world-view.md` S-109 |
+| S-110 | E-16 | "A main menu that sets the tone and settings that cover the basics." | Spec'd, blocked on Q-110-01 | `epics/E-16-client-camera-hud-and-world-view.md` S-110 |
+| S-111 | E-16 | "Saved at every chapter boundary without asking." | Spec'd, blocked on Q-111-01 | `epics/E-16-client-camera-hud-and-world-view.md` S-111 |
+| S-112 | E-17 | "Maps built on hand-authored layouts so every map has a chokepoint, a flank, and a reason." | Spec'd, blocked on Q-112-01 | `epics/E-17-map-generation.md` S-112 |
+| S-113 | E-17 | "Every place on the map is one of nine things." | Spec'd | `epics/E-17-map-generation.md` S-113 |
+| S-114 | E-17 | "The space between waypoints feels dense or open, blind or clear, high or low." | Spec'd, blocked on Q-115-01 | `epics/E-17-map-generation.md` S-114 |
+| S-115 | E-17 | "A prosperous region's battlefield is cleaner than a war-torn one's." | Spec'd, blocked on Q-117-01 | `epics/E-17-map-generation.md` S-115 |
+| S-116 | E-17 | "Mission maps sized to the situation." | Spec'd, blocked on Q-118-01 | `epics/E-17-map-generation.md` S-116 |
+| S-117 | E-17 | "Maps that do not cheat me." | Spec'd, blocked on Q-113-01 | `epics/E-17-map-generation.md` S-117 |
+| S-118 | E-17 | "Objectives drift and hazards move during a mission." | Spec'd | `epics/E-17-map-generation.md` S-118 |
+| S-119 | E-17 | "Generated sections blend like real terrain, not tiles." | Spec'd, blocked on Q-119-01 | `epics/E-17-map-generation.md` S-119 |
+| S-120 | E-14 | "Enemy forces advance, hold, patrol, ambush, or retreat, cautiously, aggressively, or in echelons." | Spec'd, blocked on Q-120-01 | `epics/E-14-enemy-macro-behavior.md` S-120 |
+| S-121 | E-14 | "The enemy escalates on a schedule and reacts to me, with the moment shifting each time." | Spec'd, blocked on Q-121-01 | `epics/E-14-enemy-macro-behavior.md` S-121 |
+| S-122 | E-14 | "A second enemy force reacts when I rout the first." | Spec'd, blocked on Q-122-01 | `epics/E-14-enemy-macro-behavior.md` S-122 |
+| S-123 | E-14 | "Enemy behavior replays exactly like mine." | Spec'd | `epics/E-14-enemy-macro-behavior.md` S-123 |
+| S-124 | E-14 | "A foreshadowed reinforcement wave arrives once in a while." | Spec'd, blocked on Q-124-01 | `epics/E-14-enemy-macro-behavior.md` S-124 |
+| S-125 | E-14 | "A difficulty knob changes how much the enemy has, not how well its units fight." | Spec'd, blocked on Q-125-01 | `epics/E-14-enemy-macro-behavior.md` S-125 |
+| S-126 | E-15 | "Half my force comes from the region's garrisons that I capture and hold." | Spec'd, blocked on Q-126-01 | `epics/E-15-reinforcement-supply-and-hazards.md` S-126 |
+| S-127 | E-15 | "I capture a garrison by holding it unopposed and can destroy one I cannot hold." | Spec'd | `epics/E-15-reinforcement-supply-and-hazards.md` S-127 |
+| S-128 | E-15 | "The enemy builds toward a composition I can read and adapt to." | Spec'd | `epics/E-15-reinforcement-supply-and-hazards.md` S-128 |
+| S-129 | E-15 | "Convoys and evacuees are real units that die." | Spec'd, blocked on Q-129-01 | `epics/E-15-reinforcement-supply-and-hazards.md` S-129 |
+| S-130 | E-15 | "Objectives and garrisons drift and hazards travel." | Spec'd | `epics/E-15-reinforcement-supply-and-hazards.md` S-130 |
+| S-131 | E-15 | "A nebula looks like a place I cannot see into; a garrison looks like something I can take." | Spec'd, needs reference | `epics/E-15-reinforcement-supply-and-hazards.md` S-131 |
+| S-132 | E-18 | "Every unit type has a shape I can read at a glance in any era." | Spec'd, needs reference | `epics/E-18-visual-style-and-combat-visuals.md` S-132 |
+| S-133 | E-18 | "A faction's technology tier shows in how its ships look, and shows loss when it falls." | Spec'd, needs reference | `epics/E-18-visual-style-and-combat-visuals.md` S-133 |
+| S-134 | E-18 | "Shots travel, hits bloom, nothing twitches." | Spec'd, blocked on Q-134-01 | `epics/E-18-visual-style-and-combat-visuals.md` S-134 |
+| S-135 | E-18 | "Every ability reads at a glance as an ability in progress." | Spec'd, needs reference | `epics/E-18-visual-style-and-combat-visuals.md` S-135 |
+| S-136 | E-18 | "A dying ship flares, burns, drifts, and darkens." | Spec'd, blocked on Q-136-01 | `epics/E-18-visual-style-and-combat-visuals.md` S-136 |
+| S-137 | E-18 | "Menus and transitions feel alive from simple elements with precise timing." | Spec'd, needs reference | `epics/E-18-visual-style-and-combat-visuals.md` S-137 |
+| S-138 | E-18 | "The whole game looks like one thing, low-poly and stylized." | Spec'd, needs reference | `epics/E-18-visual-style-and-combat-visuals.md` S-138 |
+| S-139 | E-19 | "Every peer computes exactly the same galaxy and battle." | Spec'd | `epics/E-19-multiplayer.md` S-139 |
+| S-140 | E-19 | "My orders reach every peer with no server in the middle." | Spec'd, blocked on Q-140-01 | `epics/E-19-multiplayer.md` S-140 |
+| S-141 | E-19 | "I know what my friends and I are doing together in this galaxy." | Spec'd, blocked on Q-141-01 | `epics/E-19-multiplayer.md` S-141 |
+| S-142 | E-19 | "A match nobody can pause or roll back." | Spec'd, blocked on Q-142-01 | `epics/E-19-multiplayer.md` S-142 |
+| S-143 | E-19 | "A match with friends who own the same packs moves chronologically through eras." | Spec'd | `epics/E-19-multiplayer.md` S-143 |
+| S-144 | E-19 | "Find a match, invite friends, get into the game." | Spec'd, blocked on Q-144-01 | `epics/E-19-multiplayer.md` S-144 |
+| S-145 | E-20 | "The engine never says starship; a new era is content, never code." | Spec'd | `epics/E-20-multi-era-and-monetization.md` S-145 |
+| S-146 | E-20 | "A checklist of exactly what an era pack contains." | Spec'd, blocked on Q-146-01 | `epics/E-20-multi-era-and-monetization.md` S-146 |
+| S-147 | E-20 | "A past, a present, and a future to play, all one game." | Spec'd, blocked on Q-147-01 | `epics/E-20-multi-era-and-monetization.md` S-147 |
+| S-148 | E-20 | "A campaign moves chronologically through the eras I own." | Spec'd, blocked on Q-148-01 | `epics/E-20-multi-era-and-monetization.md` S-148 |
+| S-149 | E-20 | "A fair price and the chance to earn expansions by playing." | Spec'd, blocked on Q-149-02 | `epics/E-20-multi-era-and-monetization.md` S-149 |
+| S-150 | E-20 | "Maps, civilizations, and era systems transfer between eras like skins." | Spec'd, blocked on Q-150-01 | `epics/E-20-multi-era-and-monetization.md` S-150 |
+| S-151 | E-20 | "Someday, eras that feel different." | Deferred (A-321) | `epics/E-20-multi-era-and-monetization.md` S-151 |
+| S-152 | E-21 | "The game works with no network and no model." | Spec'd | `epics/E-21-offline-ai-pipeline.md` S-152 |
+| S-153 | E-21 | "One pipeline produces every text library the game reads." | Spec'd, blocked on Q-153-01 | `epics/E-21-offline-ai-pipeline.md` S-153 |
+| S-154 | E-21 | "People, places, units, and factions have names that sound like they belong together." | Spec'd, blocked on Q-155-01 | `epics/E-21-offline-ai-pipeline.md` S-154 |
+| S-155 | E-21 | "A repeatable pipeline turns concept art into clean low-poly models." | Spec'd | `epics/E-21-offline-ai-pipeline.md` S-155 |
+| S-156 | E-21 | "Headless bot matches flag broken matchups automatically." | Spec'd, blocked on Q-158-01 | `epics/E-21-offline-ai-pipeline.md` S-156 |
+| S-157 | E-21 | "Someday, per-civilization unit variety and generated archetypes." | Deferred (A-278, A-279) | `epics/E-21-offline-ai-pipeline.md` S-157 |
+| S-158 | E-21 | "Agora reads distilled rules derived from these epics, never the bible." | Spec'd | `epics/E-21-offline-ai-pipeline.md` S-158 |

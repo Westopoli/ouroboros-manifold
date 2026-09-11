@@ -4,7 +4,7 @@ This is the "what stays" contract for the C rewrite. Every formula below was rea
 
 All fields are floats clamped to [0, 100] unless stated. Economy has a floor of `ECONOMY_FLOOR = 8.0` under drift, friction, and standard events; conquest bypasses it. Ticks are integers from 1. Randomness is one seeded stream per world (`random.Random(seed)`); the draw order per tick is the order the formulas appear in the tick sequence below.
 
-Not yet inventoried here: enemy macro behavior scripts, reinforcement structures, map generation, and the renderer. Each gets added when its epic runs the completeness gate.
+Not inventoried here: the renderer (E-16, E-18), which owns no gameplay equations.
 
 ## Tick sequence (`tick.py`)
 
@@ -242,6 +242,26 @@ Added in Stage 2 from source (2026-09-10). Tactical ticks run at `TACTICAL_TICK_
 **ALG-68 Steering and collision.** Probe `STEERING_PROBE_DIST = 40` ahead for allies within blocking radius; if blocked, sweep alternate angles in fixed order and commit `STEERING_DETOUR_MIN_DIST = 60` to the chosen heading. Direct-move units sample obstacle density within `STEERING_OBSTACLE_AVOIDANCE_RANGE = 50` and take a repulsion when > 0.3; waypoint followers are exempt. After movement, same-layer pairs closer than `2 · 15` are pushed apart along their axis; a unit with no move target or halted by engagement takes zero push; equal positions push the lower id along +x. Attack-move leash `200` wu from the acquisition anchor.
 
 **ALG-69 Facing.** Target if attacking, heading if moving, else hold; turn rate capped at `FACING_ROTATION_SPEED_STRIKE = 6.0`, `LINE = 4.0`, `SIEGE = 2.5` rad/s.
+
+## Map generation (`map_generator.py`, `layout_instantiator.py`, `gradient_placer.py`, `layer_masks.py`, `fairness_evaluator.py`, `spine_drift.py`)
+
+Added in Stage 2 from source (2026-09-10).
+
+**ALG-70 Layout selection and instantiation.** Candidates = layouts whose tags satisfy any of the archetype's compatibility filters; one uniform draw. Zone positions (percent of canvas) scale to the canvas, jittered by up to `LAYOUT_JITTER_PERCENT = 0.03` of canvas per zone. Canvas dimension is a uniform draw in `CANVAS_SIZE_RANGES` (small (8000, 12000), medium (12000, 20000), large (20000, 28000)) for the archetype's base category (see Q-118-01). Shipped library on 2026-09-10: 8 layouts; per archetype: defensive_stand 3, assault 5, multi_front_defense 2, containment 2, every other archetype 1 (see Q-112-01).
+
+**ALG-71 Gradient sources.** Per instantiated node: chokepoint obstacle (`0.85`, `600`), staging obstacle (`0.60`, `800`), vantage elevation (`0.90`, `700`), hazard anchor interference (`0.75`, `500`), flank obstacle (`0.35`, `450`) and cover (`0.40`, `450`), chokepoint cover (`0.55`, `550`), objective cover (`0.50`, `400`), hazard cover (`0.35`, `400`) (`GRADIENT_*`). Layer masks: for a zone with `layer_restrictions`, one `layer_block_N` source per layer not listed, radius `LAYER_MASK_RADIUS = 600`, intensity `1.0`; accessibility at a point is open unless the sampled block value ≥ 0.5.
+
+**ALG-72 Fairness.** `evaluate_fairness` scores path balance (max-flow staging→objective vs spawn→objective), travel-time balance (BFS hops), vantage proximity balance, and hazard proximity balance; `is_acceptable` compares to thresholds; the live pipeline logs the score and does not regenerate (`FAIRNESS_MAX_RETRIES = 5` exists, unused; see Q-113-01).
+
+**ALG-73 Spine drift.** A drifting node (types objective, reinforcement_structure) with waypoints w[0..n−1], period P, mode: at `t = tick mod P`, ping-pong splits P into 2(n−1) equal segments out and back, loop into n segments around, and the position is the linear interpolation within the current segment.
+
+## Enemy macro behavior (`behavior_runner.py`, `trigger_bus.py`)
+
+**ALG-74 Behavior runner.** Per force at mission start: for every transition and hook, one uniform draw in ±`noise_pct` (default `SCRIPT_NOISE_DEFAULT_PCT = 0.15`, timers `SCRIPT_TIMER_NOISE_DEFAULT_PCT = 0.20`). Every `SCRIPT_EVAL_INTERVAL_TICKS = 40` ticks, for each force with living units: context = force HP fraction (× (1 + noise) for threshold checks), unit count, elapsed seconds since mission start (× (1 + noise) for timers), timer expired, bus flags. Hooks evaluate first, then transitions; the target state's behavior and modifier drive the commands issued. Bus flags are plain named booleans plus named values, saved with the mission. The context functions for player force in zone and enemy in range are stubbed (return 1.0 and False; Q-121-01).
+
+## Reinforcement structures (`reinforcement.py`)
+
+**ALG-75 Capture and production.** Each structure: capture radius `REINFORCEMENT_CAPTURE_RADIUS = 300`, HP `REINFORCEMENT_STRUCTURE_HP = 3000`. Per tick: factions present = factions of living units within the radius; if no non-owner faction, progress = 0; if exactly one non-owner faction and the owner absent, progress += `dt / REINFORCEMENT_CAPTURE_DURATION_SEC = 10`; at ≥ 1.0 ownership flips and progress resets. Owned structures advance a production timer; interval = `BASE_PRODUCTION_TIME_SEC = 30 · power(type) / POWER_NORMALIZATION = 100`; on expiry a unit spawns at a random point within half the capture radius (currently from an unseeded RNG; Q-126-02). Count = clamp(floor(region military · `MILITARY_TO_STRUCTURES_SCALE = 0.06`), `STRUCTURE_COUNT_RANGE[canvas]`); split by `ARCHETYPE_STRUCTURE_SPLIT`. Enemy production target: if any player category share ≥ `COMPOSITION_SKEW_THRESHOLD = 0.70`, shift `COMPOSITION_SHIFT_MAGNITUDE = 0.15` of the target toward the counter category (Strike→Line, Line→Siege, Siege→Strike) proportionally from the others, renormalize; produce the category most below target.
 
 ## World generation (`world.py`)
 
