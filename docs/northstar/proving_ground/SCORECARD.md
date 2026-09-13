@@ -2,6 +2,8 @@
 
 One row per run. Pass means every criterion in the probe file held.
 
+**Go/no-go (2026-09-10 18:20):** A, B, C, D, E pass; F passes; G blocked (director mode pending). Sprint 0 may open per the plan's gate (A–E). Caveats carried forward: D ran on Xvfb software GL, not the GPU virtual screen; B's steering came from the model ladder, not the driver; DeepSeek briefs tend toward over-complex algorithms.
+
 | Probe | Date | Run id | Result | Iterations | DeepSeek $ | Notes |
 |---|---|---|---|---|---|---|
 | C | 2026-09-10 | pytest local | pass | n/a | 0 | 20 passed; controls clean on seeds 1–5 |
@@ -18,5 +20,6 @@ One row per run. Pass means every criterion in the probe file held.
 | E | 2026-09-10 | 101 park 16:08; driver 16:57 | partial pass | n/a | 0.0004 | Flag `escalations/101-probe-a-toy-drift.md` + ntfy sent:200 (park path). DeepSeek escalate move on the 103 stall: diagnosed "missing helper declaration, not a framing problem", parked as class-3 assertion. Budget-halt ntfy wired. Still unrun: the contradiction fixture (card 105) end to end. |
 | E | 2026-09-10 | 109-probe-e-build-20260910-1732 (contradiction fixture) | partial pass | 15 candidates, 3 hints | ~0.001 | Loop never claimed done; stayed within budget; wall 6 min. DeepSeek diagnosed the contradiction in hints 2 and 3 but had no abort action, so nine more candidates ran. Plan fix: add `abort` to the intervene move (ends the run, raises the flag at once). Park + flag expected on run 2. |
 | E | 2026-09-10 | 109 runs 1732 + 1739, park 17:42 | **pass** (park path) | 21 candidates total | ~0.002 | Unsatisfiable task: both runs INCOMPLETE within budget, task parked after 2 runs, `escalations/109-probe-e-build.md` written, ntfy sent:200. Run 2's intervene reply was rejected as non-JSON by the process started before the `abort` action landed (the brief itself names the contradiction). Gap: flag carries no evidence for build runs (no STALLED.json); fix queued. Abort path re-tested as card 111. |
+| E | 2026-09-10 | 111-probe-e-abort-20260910-1744 (abort path) | **pass** | 6 candidates, 1 abort | ~0.001 | Ladder exhausted once, DeepSeek's first intervention was `abort` naming both contradicting tests, run ended UNSATISFIABLE at 1.5 min, `escalations/111-probe-e-abort.md` written with ntfy, dispatcher never re-ran the card. Full ladder-with-a-top proven: worker retries → DeepSeek → abort/park → flag → human. |
 | F | 2026-09-10 | 110-probe-f-build-20260910-1742 | **pass** | 1 candidate | ~0.002 | Story revised (jitter on even steps only), header + fenced tests rewritten (2 red), probe A solution merged to main first, fresh card 110, old branch untouched. qwen3-coder:30b first candidate 18/18; diff touched only the loop body; fence held. Wall 1.0 min. |
 | G | | | blocked | | | needs director mode + desktop tool |

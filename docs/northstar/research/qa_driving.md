@@ -21,4 +21,6 @@ An Agora session launches Godot on the virtual screen, clicks a menu button via 
 
 ## Findings
 
-(empty until the Research Lane fills it)
+**2026-09-10 spike (route 2, live session).** From a plain shell as the same user, `DISPLAY=:0` plus `XAUTHORITY=/run/user/1000/.mutter-Xwaylandauth.*` gives xdotool the live desktop (2560×1440) and Godot 4.6.3 the real GPU: `OpenGL API 3.3.0 NVIDIA 595.84 - Compatibility - Using Device: NVIDIA GeForce RTX 3060`. No Xorg dummy config, no install. Cost: the model shares Westley's mouse and keyboard while a session runs, and a screen lock or logout kills it. The Xorg-virtual-screen route (decided earlier) stays the collision-free option and still needs the nvidia dummy-monitor config; it is no longer required to start T2 work on the GPU.
+
+**Still open for R1:** the desktop QA tool type in Agora (launch, actions, screenshot, debug port, findings) does not exist; `agora-proving-ground/probe_d/run_probe_d.sh` is the seed. Local vision model for T2 judgments untested. `DISPLAY=:1` hangs (second Xwayland socket, not usable).
