@@ -22,8 +22,8 @@ class MapParams(TypedDict, total=False):
 
 ### Design authority
 
-`bible_world.md:178` — *"…and a random seed (ensures reproducibility for replays and bug reports)."*
-`bible_world.md:196` — *"the map is regenerated with a new random seed"* on fairness failure.
+`docs/bible_history/bible_2_00_world.md:178` — *"…and a random seed (ensures reproducibility for replays and bug reports)."*
+`docs/bible_history/bible_2_00_world.md:196` — *"the map is regenerated with a new random seed"* on fairness failure.
 
 Added in Stage 11b (`stage_11b_map_variety_spec.md`).
 
@@ -114,7 +114,7 @@ Each keyframe gains an optional `factions_snapshot` array — one entry per livi
         "faction_id": "f_dominion",
         "name": "The Dominion",
         "archetype": "Conqueror",
-        "tech_tier": 47,             # 0..100; bible_simulation.md:473
+        "tech_tier": 47,             # 0..100; docs/bible_history/bible_2_00_simulation.md:473
     },
     ...
 ]
@@ -191,9 +191,9 @@ Each keyframe gains an optional `factions_snapshot` array — one entry per livi
 
 ### Design authority
 
-- `bible_monetization.md:540–542` — region briefing card and enemy assessment card field lists.
-- `bible_world.md:466` — faction data panel with "name, total systems, aggregate stats."
-- `bible_world.md:481` — chronicle text tinted in entry's primary subject's faction color.
+- `docs/bible/epics/E-16-client-camera-hud-and-world-view.md` S-107 (faction data panel) and E-10 S-079 (briefing) — the region briefing card and enemy assessment card field lists were in `bible_monetization.md`, deleted 2026-05-31; the current design is the player-perception rules in those stories.
+- `docs/bible_history/bible_2_00_world.md:466` — faction data panel with "name, total systems, aggregate stats."
+- `docs/bible_history/bible_2_00_world.md:481` — chronicle text tinted in entry's primary subject's faction color.
 - Faction color vivacity scaling, sim-pause-on-inspect, and clickable in-text mentions are stage-11g inventions; bible amendments are part of this stage's deliverables.
 
 Added in Stage 11g (`stage_11g_world_view_inspection_spec.md`).

@@ -13,8 +13,8 @@
 When starting a new session for prompt work, provide:
 
 1. This strategy document
-2. `bible_combat.md` (unit descriptions, abilities, roles)
-3. `bible_world.md` (tier visual language, sci-fi era creative direction, unit visual designs)
+2. `docs/bible_history/bible_2_00_combat.md` (unit descriptions, abilities, roles)
+3. `docs/bible_history/bible_2_00_world.md` (tier visual language, sci-fi era creative direction, unit visual designs)
 4. `3d_model_outline_all_eras.md` (cross-era unit mapping and silhouette reference)
 
 ---
@@ -74,7 +74,7 @@ After accepting a Sloyd export:
 2. **Poly check** — if wildly over budget, decimate. If way under, the silhouette may be too simple.
 3. **Topology cleanup** — Edit Mode → Select All → Mesh → Clean Up → Delete Loose. Check for non-manifold edges.
 4. **Create `faction_color` face group** — select hull panel faces, create vertex group, assign.
-5. **Apply tier materials** — use the hex/metallic/roughness/emission values from `bible_ai_pipeline.md`.
+5. **Apply tier materials** — use the hex/metallic/roughness/emission values from `docs/bible_history/bible_2_00_ai_pipeline.md`.
 6. **Silhouette check** — zoom way out. Can you identify the unit type? Is it distinct from siblings?
 7. **Origin and orientation** — Set Origin → Center of Mass. Apply all transforms (Ctrl+A).
 8. **Save .blend** to `blender/settled-reach/[category]/[asset]_t[tier].blend`
@@ -104,7 +104,7 @@ After accepting a Sloyd export:
 
 ### Design Override Note
 
-The Vanguard uses the "Manta" design (wide flat manta ray silhouette) across all three tiers. This overrides the bible's original wedge/slab description. See the Completed Prompt Archive below for the full rationale. All other units follow bible_world.md descriptions.
+The Vanguard uses the "Manta" design (wide flat manta ray silhouette) across all three tiers. This overrides the bible's original wedge/slab description. See the Completed Prompt Archive below for the full rationale. All other units follow docs/bible_history/bible_2_00_world.md descriptions.
 
 ---
 

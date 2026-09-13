@@ -14,7 +14,7 @@ T-M1 free-tier-anchor + paid-content monetization precedent scan. Surveys nine p
 
 Cross-axes mapped: free-tier audience-acquisition multiplier vs paid-base trust-signal, friction conversion (free → paid attach %), tribe-tolerance for F2P-feel inside strategy.
 
-Bible context surfaced per kickoff — `bible_monetization.md` L274 "Free to play. Infinite eras." trailer-tagline vs bible-locked "buy-once base @ $25-35 + DLC-per-era (7 eras, Roman free-tier)" model. Conflict #2 downgraded but tracked. Brief enumerates implications without picking.
+Bible context surfaced per kickoff — `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/) L274 "Free to play. Infinite eras." trailer-tagline vs bible-locked "buy-once base @ $25-35 + DLC-per-era (7 eras, Roman free-tier)" model. Conflict #2 downgraded but tracked. Brief enumerates implications without picking.
 
 Feeds T-M2 7-tier ladder stress-test, T-B1 brand capstone, monetization revenue model. Cross-refs T-A1 + T-P1.
 
@@ -177,7 +177,7 @@ Confidence: REPORTED per pattern; AMBIGUOUS which pattern audience maps to absen
 **MANDATORY SURFACE. Downgraded but tracked. Bible cleanup parked.**
 
 Bible context:
-- `bible_monetization.md` L274 references "Free to play. Infinite eras." as trailer tagline. Context: trailer Seconds 55-60 — "Master shield logo resolve. OUROBOROS MANIFOLD wordmark. Tagline. 'Free to play. Infinite eras.'" Verified via direct file read this capture.
+- `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/) L274 references "Free to play. Infinite eras." as trailer tagline. Context: trailer Seconds 55-60 — "Master shield logo resolve. OUROBOROS MANIFOLD wordmark. Tagline. 'Free to play. Infinite eras.'" Verified via direct file read this capture.
 - L274 previously deprecated as marketing artifact (broader scope now per kickoff). Cleanup parked.
 - Bible-locked monetization: buy-once base @ $25-35 + DLC-per-era (7 eras, Roman free-tier).
 
@@ -266,7 +266,7 @@ Topic-brief cross-refs:
 
 Bible authority:
 - `docs/bible/game_bible.md` — hub authority on conflict resolution per `CLAUDE.md`.
-- `docs/bible/bible_monetization.md` (L274 trailer tagline, bible-locked monetization) — Conflict #2 input. Cleanup parked.
+- `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` (L274 trailer tagline, bible-locked monetization) — Conflict #2 input. Cleanup parked.
 
 Publisher communications referenced indirectly (not live-fetched):
 - Grinding Gear ExileCon + community posts (PoE cosmetic-only philosophy).

@@ -1,6 +1,6 @@
 ## Renders all units via MultiMeshInstance3D batching.
 ## Grouped by (type, tier, faction) — one draw call per batch.
-## See bible_combat.md "Unit Rendering — MultiMesh Batching" for design rationale.
+## See docs/bible_history/bible_2_00_combat.md "Unit Rendering — MultiMesh Batching" for design rationale.
 ## See also: scripts/tactical/visibility.gd — fog gate in _update_transforms()
 extends Node3D
 

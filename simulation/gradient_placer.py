@@ -18,7 +18,7 @@ Rules per node type:
                                      from surrounding gradients)
 
 A3 Option B (2026-05-20): chokepoint/objective/hazard_zone_anchor cover
-emissions added per bible_world.md:188 — "cover density gradients are placed
+emissions added per docs/bible_history/bible_2_00_world.md:188 — "cover density gradients are placed
 in defensible positions and approach corridors."
 """
 import sys
@@ -148,7 +148,7 @@ def place_gradients(inst: InstantiatedLayout) -> list[GradientSource]:
                 radius=config.GRADIENT_HAZARD_RADIUS,
                 intensity=config.GRADIENT_HAZARD_INTENSITY,
             ))
-            # A3 Option B: bible_missions.md counterinsurgency — "hidden in sensor
+            # A3 Option B: docs/bible_history/bible_2_00_missions.md counterinsurgency — "hidden in sensor
             # interference zones, behind cover, in defensible pockets." Mild cover
             # overlay within interference zones.
             sources.append(GradientSource(

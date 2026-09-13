@@ -437,7 +437,7 @@ WebFetch + WebSearch denied this session. All sources referenced from training-d
   - `docs/research/topics/pricing_elasticity_niche.md` — per-tier conversion baseline at price; cross-feeds T-W1 ↔ T-P1
   - `docs/research/topics/primary_tribe_psychographic_profile.md` — per-title review-theme inputs + conflict #2 prior surfacing
   - `docs/bible/game_bible.md` — 80-200k @ $25-35 first-month target lock + bible-authority-resolves directive
-  - `docs/bible/bible_monetization.md` L274 (Free-to-play tagline) + L292 (Fortnite reference) — conflict #2 adjacency
+  - `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` L274 (Free-to-play tagline) + L292 (Fortnite reference) — conflict #2 adjacency
 
 **Re-capture stamp.** All per-anchor conversion + per-source delta + sale-event multiplier + decay curve + funnel-math arithmetic claims are training-data-derived as of cutoff. Live GameDiscoverCo + SteamDB + Gamalytic + Steam Next Fest aggregate + publisher-newsletter refresh required to upgrade REPORTED/ESTIMATED → VERIFIED. Flag for Research Lane re-capture when WebFetch is restored.
 

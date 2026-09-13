@@ -109,24 +109,24 @@ def test_umbrella_d_no_cover_mult_in_damage():
 
 def test_umbrella_e_bible_world_says_asteroid_los_blocker():
     path = os.path.join(
-        os.path.dirname(__file__), "..", "docs", "bible", "bible_world.md"
+        os.path.dirname(__file__), "..", "docs", "bible", "docs/bible_history/bible_2_00_world.md"
     )
     with open(path) as f:
         body = f.read().lower()
-    assert "asteroid" in body, "L1: bible_world.md must mention asteroid cover"
+    assert "asteroid" in body, "L1: docs/bible_history/bible_2_00_world.md must mention asteroid cover"
     assert "los" in body or "line of sight" in body or "line-of-sight" in body, (
-        "L1: bible_world.md must describe LOS-blocker semantics"
+        "L1: docs/bible_history/bible_2_00_world.md must describe LOS-blocker semantics"
     )
 
 
 def test_umbrella_e_bible_combat_no_cover_density_mult():
     path = os.path.join(
-        os.path.dirname(__file__), "..", "docs", "bible", "bible_combat.md"
+        os.path.dirname(__file__), "..", "docs", "bible", "docs/bible_history/bible_2_00_combat.md"
     )
     with open(path) as f:
         body = f.read()
     assert not re.search(r"\(1\.0?\s*[-−]\s*cover_density\)", body), (
-        "L1: bible_combat.md still describes cover_density damage multiplier"
+        "L1: docs/bible_history/bible_2_00_combat.md still describes cover_density damage multiplier"
     )
 
 

@@ -76,9 +76,9 @@ Westley locked new design 2026-05-23. Wave 2.5 polygon impl scrapped. Wave 2.5R 
 - `autoload/era_theme_resolver.gd` (or equivalent) — add `cover_tiny/small/medium/huge` asset keys per era. Settled Reach populated; other eras TODO.
 
 ### Bible
-- `docs/bible/bible_world.md:144` — rewrite `cover_density` definition AGAIN: cover = cluster of asteroid LOS-blockers; per-asteroid 3D LOS; continuous size → layer block; non-destructible Phase 1.
-- `docs/bible/bible_combat.md:439-441` — replace "Cover & Vision" section with per-asteroid LOS language; remove "symmetric blind" / "same polygon visible" phrasing.
-- `docs/bible/bible_combat.md:529` — keep cover-as-LOS-blocker mention; phrase as "asteroid cluster" rather than "polygon."
+- `docs/bible_history/bible_2_00_world.md:144` — rewrite `cover_density` definition AGAIN: cover = cluster of asteroid LOS-blockers; per-asteroid 3D LOS; continuous size → layer block; non-destructible Phase 1.
+- `docs/bible_history/bible_2_00_combat.md:439-441` — replace "Cover & Vision" section with per-asteroid LOS language; remove "symmetric blind" / "same polygon visible" phrasing.
+- `docs/bible_history/bible_2_00_combat.md:529` — keep cover-as-LOS-blocker mention; phrase as "asteroid cluster" rather than "polygon."
 
 ### Tests
 - New: `simulation/test_asteroid.py` — `Asteroid` + `AsteroidField` construction, spatial hash insert/query, 3D ray-cylinder intersect math (axis-aligned + diagonal rays, height in/out of range).

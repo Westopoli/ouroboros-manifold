@@ -10,7 +10,7 @@ Polygon-binary symmetric-blind model documented here was implemented in Wave 2.5
 
 ## Context
 
-Ship-readiness work surfaced spec conflict (`docs/test_specs/cover_semantics_bible_audit.md`). Bible (`bible_combat.md:421,440,529`, `bible_world.md:144`) defines `cover_density` as continuous-gradient damage-reduction multiplier. Live `simulation/damage.py:132-136,171-175` implements that spec. Westley locked new design 2026-05-21:
+Ship-readiness work surfaced spec conflict (`docs/test_specs/cover_semantics_bible_audit.md`). Bible (`docs/bible_history/bible_2_00_combat.md:421,440,529`, `docs/bible_history/bible_2_00_world.md:144`) defines `cover_density` as continuous-gradient damage-reduction multiplier. Live `simulation/damage.py:132-136,171-175` implements that spec. Westley locked new design 2026-05-21:
 
 **Cover = SC2-style binary LOS-blocker. Polygon model. Symmetric blind. No proximity reveal. No fire-reveal. Non-destructible Phase 1. AI peek = audit + minimal fix.**
 
@@ -39,7 +39,7 @@ This is a bible revision, not a bug fix.
 
 ### Non-destructible (Phase 1)
 - Cover polygons are static. No HP. Cannot be destroyed.
-- `bible_missions.md:263` line on "destroying cover positions" deferred to post-launch DLC consideration.
+- `docs/bible_history/bible_2_00_missions.md:263` line on "destroying cover positions" deferred to post-launch DLC consideration.
 
 ### AI peek behavior — audit + minimal fix
 - L6 sub-agent audits current AI targeting in `simulation/tactical_engine.py` + behavior scripts.
@@ -64,11 +64,11 @@ This is a bible revision, not a bug fix.
 - New: `simulation/test_cover_integration.py` — apex addendum: 2 attackers + 1 defender in cover, attackers can't see defender, no damage; defender moves out, attackers see + damage resumes.
 
 ### Bible
-- `docs/bible/bible_world.md:142-150` — rewrite `cover_density` definition. New language: polygon LOS-blocker; hides units inside from outside observers; does NOT reduce damage; does NOT block movement.
-- `docs/bible/bible_combat.md:419-425` — strip `(1.0 - cover_density)` from damage formula. Damage = `base × category_multiplier`.
-- `docs/bible/bible_combat.md:439-441` — replace "Cover" paragraph with new "Cover & Vision" section: symmetric blind, no proximity reveal, no fire-reveal.
-- `docs/bible/bible_combat.md:529` — extend obstacle LOS line to mention cover polygons as additional LOS-blockers (still cover-distinct-from-obstacles per `bible_world.md:142`).
-- `docs/bible/bible_missions.md` — spot-check; existing language is behavioral, likely no edits.
+- `docs/bible_history/bible_2_00_world.md:142-150` — rewrite `cover_density` definition. New language: polygon LOS-blocker; hides units inside from outside observers; does NOT reduce damage; does NOT block movement.
+- `docs/bible_history/bible_2_00_combat.md:419-425` — strip `(1.0 - cover_density)` from damage formula. Damage = `base × category_multiplier`.
+- `docs/bible_history/bible_2_00_combat.md:439-441` — replace "Cover" paragraph with new "Cover & Vision" section: symmetric blind, no proximity reveal, no fire-reveal.
+- `docs/bible_history/bible_2_00_combat.md:529` — extend obstacle LOS line to mention cover polygons as additional LOS-blockers (still cover-distinct-from-obstacles per `docs/bible_history/bible_2_00_world.md:142`).
+- `docs/bible_history/bible_2_00_missions.md` — spot-check; existing language is behavioral, likely no edits.
 
 ## Type contract
 

@@ -237,7 +237,7 @@ Per `lieutenant_pivot_niche_brief.md` and `docs/bible/game_bible.md ## In Flux` 
 
 - **"Commander not king."** From `lieutenant_pivot_niche_brief.md` first-ranked-niche paragraph. Strength: pivot-anchored, novel framing, differentiated from CK3 / Old World dynastic-king register. Risk: incomplete as standalone tagline (missing scale + stake); works as sub-tagline or tooltip rather than primary capsule line. Confidence TENTATIVE. Could pair with Shape 3: "Commander not king. Your civilization across centuries."
 - **"The world keeps moving."** From `lieutenant_pivot_niche_brief.md` rare-mechanic paragraph + T-A4 cross-cluster union-pitch paragraph. Strength: highest-leverage cross-anchor primary-tribe-unifying phrase per T-A4 cross-cutting finding #5; Shape 4 inversion-pattern. Risk: incomplete as standalone (reader doesn't know what "the world" is); works as primary-tagline if paired with scale/stake. Could pair: "The world keeps moving. Your civilization is one cycle in it."
-- **"Free to play. Infinite eras."** From `bible_monetization.md` L274. **Fails primary-tribe + T-S1 banned-bundle.** Per T-B1 + T-A1 Conflict-surfaced section: collides with primary-tribe paid-anchor expectation across all six anchors. **AVOID.**
+- **"Free to play. Infinite eras."** From `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/) L274. **Fails primary-tribe + T-S1 banned-bundle.** Per T-B1 + T-A1 Conflict-surfaced section: collides with primary-tribe paid-anchor expectation across all six anchors. **AVOID.**
 
 ## Per-surface implementation cascade
 
@@ -379,6 +379,6 @@ Cross-reference within Ouroboros docs:
 - `docs/research/topics/cosmetic_monetization_niche.md` (T-M3) — L292 Fortnite carry-forward conflict
 - `docs/research/topics/paid_ad_channels_roi.md` (T-C7) — paid-ad headline cascade
 - `docs/bible/game_bible.md ## In Flux` — Lieutenant System + RTS-framing-kill 2026-05-16 entry
-- `docs/bible/bible_monetization.md` L274 + L292 — conflict-flag targets
+- `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` L274 + L292 — conflict-flag targets
 
 **Re-capture stamp.** All tagline pattern + success / failure case + cross-cluster union-phrase claims in this brief are training-data-derived. Live Steam page short-description text + festival pitch deck samples + press-release headline samples + paid-ad A/B test data required to upgrade REPORTED → VERIFIED. Flag for Research Lane re-capture when WebFetch is restored.

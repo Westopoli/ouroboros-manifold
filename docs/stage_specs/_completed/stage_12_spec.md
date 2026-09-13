@@ -8,13 +8,13 @@ Close every open end of the game loop so the friends-ZIP build is a complete, pl
 
 Read the hub (`game_bible.md`) plus these spokes:
 
-- `bible_missions.md` → "Outcome Band Classification System" (two-component scoring, per-archetype thresholds), "Mission Outcome Resolver" (proportional lookup table, field deltas, mission-region-only scope). The debrief screen displays these.
-- `bible_chronicle.md` → "Chronicle Template Authoring Framework" § consequence categories (`consequence_success`, `consequence_failure`, `consequence_mixed`, `consequence_ripple`), fragment structure, variable slot vocabulary. The debrief's simulation impact preview templates follow the same authoring contract.
-- `bible_simulation.md` → "What the Simulation Provides to Missions" (sim stops during missions, digests outcome as consequence bundle), "Character Selector Data Contract" (the generational loop position diagram — debrief sits between mission and time jump).
-- `bible_world.md` → "Seamless Transition — No Loading Screens" (the six-phase flow, chapter-boundary exit points, Exit transition treatment). The debrief inserts between phase 1 and phase 2.
+- `docs/bible_history/bible_2_00_missions.md` → "Outcome Band Classification System" (two-component scoring, per-archetype thresholds), "Mission Outcome Resolver" (proportional lookup table, field deltas, mission-region-only scope). The debrief screen displays these.
+- `docs/bible_history/bible_2_00_chronicle.md` → "Chronicle Template Authoring Framework" § consequence categories (`consequence_success`, `consequence_failure`, `consequence_mixed`, `consequence_ripple`), fragment structure, variable slot vocabulary. The debrief's simulation impact preview templates follow the same authoring contract.
+- `docs/bible_history/bible_2_00_simulation.md` → "What the Simulation Provides to Missions" (sim stops during missions, digests outcome as consequence bundle), "Character Selector Data Contract" (the generational loop position diagram — debrief sits between mission and time jump).
+- `docs/bible_history/bible_2_00_world.md` → "Seamless Transition — No Loading Screens" (the six-phase flow, chapter-boundary exit points, Exit transition treatment). The debrief inserts between phase 1 and phase 2.
 - `game_bible.md` hub → "Onboarding and First Chapter" (single screen, difficulty + rare marks, opening time jump), "The Cycle" step 4 (mission resolution, outcome spectrum, commander fate).
 
-Do not read `bible_antagonist.md`, `bible_monetization.md`, `bible_ai_pipeline.md`, `animation_strategy.md`, or `bible_combat.md` — not relevant to Stage 12. Stage 8 spec is consulted for persistence API shapes. Stage 9 spec is consulted for UIDataBus contract and scene routing. Stage 10 spec is consulted for sim process lifecycle and crash log infrastructure. Stage 11 spec is consulted for the seamless transition sequencer API.
+Do not read `docs/bible_history/bible_2_00_antagonist.md`, `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/), `docs/bible_history/bible_2_00_ai_pipeline.md`, `animation_strategy.md`, or `docs/bible_history/bible_2_00_combat.md` — not relevant to Stage 12. Stage 8 spec is consulted for persistence API shapes. Stage 9 spec is consulted for UIDataBus contract and scene routing. Stage 10 spec is consulted for sim process lifecycle and crash log infrastructure. Stage 11 spec is consulted for the seamless transition sequencer API.
 
 ## Context
 
@@ -368,7 +368,7 @@ Magnitude thresholds (what counts as "large" vs "moderate" vs "small") are confi
 
 ### Checkpoint D — Debrief Scene (Outcome + Objectives + Retention + Impact Preview)
 
-**Build:** `scenes/debrief/debrief.tscn` and `debrief.gd`. Full-screen scene displaying: outcome band (prose phrase prominently, numeric score smaller), objective breakdown (per-objective completion bars with labels and weights), force retention ratio (percentage + visual), and impact preview text (2–3 sentences). Two buttons: "Continue" (emits `debrief_completed`) and "Exit to Main Menu" (fade to black, load main menu per `bible_world.md` Exit transition treatment). Style follows Stage 9's "Terminal Meets Glass" aesthetic.
+**Build:** `scenes/debrief/debrief.tscn` and `debrief.gd`. Full-screen scene displaying: outcome band (prose phrase prominently, numeric score smaller), objective breakdown (per-objective completion bars with labels and weights), force retention ratio (percentage + visual), and impact preview text (2–3 sentences). Two buttons: "Continue" (emits `debrief_completed`) and "Exit to Main Menu" (fade to black, load main menu per `docs/bible_history/bible_2_00_world.md` Exit transition treatment). Style follows Stage 9's "Terminal Meets Glass" aesthetic.
 
 **No ribbon graphs yet** — those land in Checkpoint E. This checkpoint proves the data flows from engine → Python debrief assembly → UIDataBus → Godot debrief scene.
 

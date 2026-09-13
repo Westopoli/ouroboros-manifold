@@ -28,7 +28,7 @@ When the playtest corpus is large enough, this stage will:
 
 - `tuning_output/stage11e/layout_audit.md` — per-(layout, archetype) failure analysis from the Stage 11e audit. Documents why the current metrics fail and classifies root causes.
 - `tuning_output/fairness_log/` — structured JSONL corpus written by `map_generator.py` for every generated map. Schema: `{"archetype", "layout_id", "seed", "fairness_score": {...}}`.
-- `docs/bible/bible_world.md` §"Generation Pipeline" — the bible's two-layer fairness architecture passage and the interim-pivot note.
+- `docs/bible_history/bible_2_00_world.md` §"Generation Pipeline" — the bible's two-layer fairness architecture passage and the interim-pivot note.
 - `simulation/fairness_evaluator.py` — current metric implementations (preserved intact by Stage 11e).
 - `simulation/archetype_filters.py` — current FairnessTargetProfile values (intent placeholders pending this spec).
 - `docs/stage_specs/stage_11e_fairness_reconciliation_spec.md` §"Pivot" — rationale for original 2026-05-03 deferral.

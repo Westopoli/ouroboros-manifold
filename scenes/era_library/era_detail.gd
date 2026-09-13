@@ -302,7 +302,7 @@ func _build_mastery_card(parent: Control, accent: Color) -> void:
 
 
 func _build_access_card(parent: Control, _accent: Color) -> void:
-	# Subscription model removed 2026-05-09 — see docs/bible/bible_monetization.md LEGACY banner.
+	# Subscription model removed 2026-05-09 — see docs/bible_history/game_bible_1_23.md (bible_monetization.md folded into the hub 2026-05-31; hub rewritten 2026-09-10).
 	# Locked eras now route to Steam DLC overlay (currently stubbed).
 	var card = load("res://theme/components/tm_card.tscn").instantiate()
 	card.card_title = "ACCESS"

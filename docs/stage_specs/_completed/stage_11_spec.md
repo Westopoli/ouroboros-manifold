@@ -8,10 +8,10 @@ Build the macro-loop visual structure: mission end → camera pulls back → gal
 
 Read the hub (`game_bible.md`) plus these spokes:
 
-- `bible_world.md` → "Galaxy View — The Strategic Layer Between Missions" (including Faction territory, Connections, Military activity visualization, Ambient particle field, The pivot point), and "Seamless Transition — No Loading Screens" (including Chapter-boundary exits and Exit transition treatment).
-- `bible_chronicle.md` → "Chronicle Scroll — Visual Presentation" (split-screen, Word fade-in, Master timeline, Chronicle–keyframe co-occurrence guarantee, Layout — expanding scroll, Entry interaction states).
-- `bible_animation_strategy.md` → full document. Stage 11 reuses the sweep_line / divider primitives, blinking-cursor-as-heartbeat vocabulary, and smooth-fade-over-cuts rule.
-- `bible_simulation.md` → "Time Jump Controller" (already implemented; this stage visualizes its output).
+- `docs/bible_history/bible_2_00_world.md` → "Galaxy View — The Strategic Layer Between Missions" (including Faction territory, Connections, Military activity visualization, Ambient particle field, The pivot point), and "Seamless Transition — No Loading Screens" (including Chapter-boundary exits and Exit transition treatment).
+- `docs/bible_history/bible_2_00_chronicle.md` → "Chronicle Scroll — Visual Presentation" (split-screen, Word fade-in, Master timeline, Chronicle–keyframe co-occurrence guarantee, Layout — expanding scroll, Entry interaction states).
+- `docs/bible_history/bible_2_00_animation_strategy.md` → full document. Stage 11 reuses the sweep_line / divider primitives, blinking-cursor-as-heartbeat vocabulary, and smooth-fade-over-cuts rule.
+- `docs/bible_history/bible_2_00_simulation.md` → "Time Jump Controller" (already implemented; this stage visualizes its output).
 
 Do not read other spokes. Stage specs for Stages 6, 7, 7.5 are irrelevant here. Stage 8 and Stage 10 specs are consulted for protocol and UIDataBus patterns, see Integration Points.
 
@@ -132,7 +132,7 @@ One keyframe message is emitted per keyframe. Ordered by `tick`. Message type di
 }
 ```
 
-`chronicle_entry_id` is present when this keyframe is paired to a chronicle entry (the co-occurrence guarantee case from `bible_chronicle.md`). It is `null` when the keyframe is an ownership-change-only keyframe (also covered by the guarantee — such keyframes animate silently).
+`chronicle_entry_id` is present when this keyframe is paired to a chronicle entry (the co-occurrence guarantee case from `docs/bible_history/bible_2_00_chronicle.md`). It is `null` when the keyframe is an ownership-change-only keyframe (also covered by the guarantee — such keyframes animate silently).
 
 `regions_snapshot` includes only regions whose `owner_faction_id` or `significance` changed between this keyframe and the previous one. The renderer carries forward unchanged regions from the prior keyframe.
 
@@ -346,7 +346,7 @@ In `time_jump.py`, the order is: run distiller → run keyframe_selector passing
 
 ### Connection edge type rendering
 
-The sim's three edge types (`border`, `trade`, `both` per `bible_world.md`) collapse to two visual treatments in the galaxy view: `border` and `both` both render as solid faction-color lines; `trade` renders as a thinner dashed line. The border-vs-both distinction (economic propagation) is not player-readable at galaxy scale and is deliberately not visualized. `add_connection` accepts all three type values; internally it maps `"both"` to the border visual.
+The sim's three edge types (`border`, `trade`, `both` per `docs/bible_history/bible_2_00_world.md`) collapse to two visual treatments in the galaxy view: `border` and `both` both render as solid faction-color lines; `trade` renders as a thinner dashed line. The border-vs-both distinction (economic propagation) is not player-readable at galaxy scale and is deliberately not visualized. `add_connection` accepts all three type values; internally it maps `"both"` to the border visual.
 
 ### Galaxy scene architecture
 
@@ -358,7 +358,7 @@ Marching-cubes on a discretized influence field is expensive per frame and overk
 
 ### Scroll panel slide animation
 
-Reuse `bible_animation_strategy.md`'s sweep_line primitive. Slide-in: panel enters from screen right with a 400ms ease-out-cubic tween, galaxy viewport resizes simultaneously. Slide-out on Proceed: mirror of slide-in, 400ms ease-in-cubic. No sliding on Exit — the whole screen fades to black.
+Reuse `docs/bible_history/bible_2_00_animation_strategy.md`'s sweep_line primitive. Slide-in: panel enters from screen right with a 400ms ease-out-cubic tween, galaxy viewport resizes simultaneously. Slide-out on Proceed: mirror of slide-in, 400ms ease-in-cubic. No sliding on Exit — the whole screen fades to black.
 
 ### Camera choreography
 

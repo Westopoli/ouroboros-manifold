@@ -10,13 +10,13 @@ Wire the per-mission map seed contract that Stage 7 specified but never implemen
 
 ## Bible References
 
-- **`bible_world.md`** §"Generation Pipeline" (lines 174–211) — confirms the four-axis variety design (layout × canvas scale × library hint × simulation state × gradient texture). Confirms that the seed is the controlling input.
-- **`bible_world.md`** line 178 — *"…and a **random seed** (ensures reproducibility for replays and bug reports)."* The bible explicitly specifies "random seed," which resolves the derivation question (see Design Decisions below).
-- **`bible_world.md`** line 196 — *"the map is regenerated with a **new random seed**"* on fairness failure. Confirms that retries draw a fresh random seed, not a derived one.
+- **`docs/bible_history/bible_2_00_world.md`** §"Generation Pipeline" (lines 174–211) — confirms the four-axis variety design (layout × canvas scale × library hint × simulation state × gradient texture). Confirms that the seed is the controlling input.
+- **`docs/bible_history/bible_2_00_world.md`** line 178 — *"…and a **random seed** (ensures reproducibility for replays and bug reports)."* The bible explicitly specifies "random seed," which resolves the derivation question (see Design Decisions below).
+- **`docs/bible_history/bible_2_00_world.md`** line 196 — *"the map is regenerated with a **new random seed**"* on fairness failure. Confirms that retries draw a fresh random seed, not a derived one.
 - **`game_bible.md` (hub)** lines 534 — sim runs at 20 ticks/sec, Godot at 60fps. Establishes the relevant performance budgets.
-- **`bible_combat.md`** line 313 — same: *"simulation at 20 ticks/sec, Godot at 60fps = 3 render frames per tick."*
+- **`docs/bible_history/bible_2_00_combat.md`** line 313 — same: *"simulation at 20 ticks/sec, Godot at 60fps = 3 render frames per tick."*
 
-Do NOT read `bible_missions.md`, `bible_chronicle.md`, `bible_antagonist.md`, `bible_ai_pipeline.md`, or `bible_monetization.md` — not relevant to map seed wiring.
+Do NOT read `docs/bible_history/bible_2_00_missions.md`, `docs/bible_history/bible_2_00_chronicle.md`, `docs/bible_history/bible_2_00_antagonist.md`, `docs/bible_history/bible_2_00_ai_pipeline.md`, or `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/) — not relevant to map seed wiring.
 
 ## Cross-Stage References
 
@@ -32,7 +32,7 @@ Do NOT read `bible_missions.md`, `bible_chronicle.md`, `bible_antagonist.md`, `b
 
 **Decision:** Each mission generates its own seed via `rng.randint(0, 2**31 - 1)` at mission generation time (Stage 5.5), drawn from the mission generator's existing RNG. The seed is stored in `MissionSetup.map_params["seed"]` and persists with the save file as part of normal `MissionSetup` serialization.
 
-**Bible authority:** `bible_world.md:178` and `:196` both say *"random seed."* The reproducibility clause in `:178` (*"ensures reproducibility for replays and bug reports"*) is satisfied by **storing** the seed at generation time, not by **deriving** it deterministically from a tuple. So long as the seed lives in the save file, the same map can be regenerated on demand — that's the bible's reproducibility contract.
+**Bible authority:** `docs/bible_history/bible_2_00_world.md:178` and `:196` both say *"random seed."* The reproducibility clause in `:178` (*"ensures reproducibility for replays and bug reports"*) is satisfied by **storing** the seed at generation time, not by **deriving** it deterministically from a tuple. So long as the seed lives in the save file, the same map can be regenerated on demand — that's the bible's reproducibility contract.
 
 **Alternatives rejected:**
 - *Deterministic seed derived from `(current_tick, region_id, mission_index)`*: would also work, and was the implementer's first instinct. Rejected because the bible uses the explicit phrase "random seed" twice, and deterministic derivation creates implicit cross-mission coupling (changing how one input is computed retroactively changes all maps). Random + persisted is simpler and matches the bible literal.
@@ -216,9 +216,9 @@ Each checkpoint follows the **measure → change → re-measure** pattern: log t
 
 ## Performance Notes
 
-This spec adds **zero per-frame cost on the Godot side**. Map generation runs once per mission start, on the simulation side, in a separate Python process. The Godot frame budget (16.7 ms at 60 fps target, per `bible_combat.md:313`) is unaffected.
+This spec adds **zero per-frame cost on the Godot side**. Map generation runs once per mission start, on the simulation side, in a separate Python process. The Godot frame budget (16.7 ms at 60 fps target, per `docs/bible_history/bible_2_00_combat.md:313`) is unaffected.
 
-The simulation-side cost of map generation already exists today. With the seed varying per mission, the fairness evaluator may retry slightly more often (varied layouts and gradients hit different fairness profiles), but the bible's design assumes this: *"Map seeds are tiny (~400–500 bytes) and layout instantiation is fast, so regenerating a few times is cheap"* (`bible_world.md:196`). Checkpoint F watches generation time to confirm.
+The simulation-side cost of map generation already exists today. With the seed varying per mission, the fairness evaluator may retry slightly more often (varied layouts and gradients hit different fairness profiles), but the bible's design assumes this: *"Map seeds are tiny (~400–500 bytes) and layout instantiation is fast, so regenerating a few times is cheap"* (`docs/bible_history/bible_2_00_world.md:196`). Checkpoint F watches generation time to confirm.
 
 If Checkpoint F shows a > 10% regression in generation time, the likely cause is fairness retries spiking on certain archetypes due to less-tested layout/sim-state combinations now becoming reachable. The fix in that case is to widen the per-archetype `FairnessTargetProfile` tolerances — but that's a Stage 7 escalation, not a Stage 11b change. Per CLAUDE.md, fairness invariant tolerances may not be widened without approval.
 
@@ -252,7 +252,7 @@ The following are explicitly NOT addressed in this spec, even where adjacent:
 - `tests/diag_map_variety.py` — variety self-test harness.
 - `tuning_output/stage11b/` (gitignored) — checkpoint output directory.
 
-**Bible:** no changes required. Both the seed semantics (`bible_world.md:178`, `:196`) and the perf budget framing (`bible_combat.md:313`) are already documented.
+**Bible:** no changes required. Both the seed semantics (`docs/bible_history/bible_2_00_world.md:178`, `:196`) and the perf budget framing (`docs/bible_history/bible_2_00_combat.md:313`) are already documented.
 
 **Estimated size:** ~30 lines of contract code + ~15 lines per producer/consumer site + ~80 lines of diag harness + architecture.md section. Total active code change is small; the spec is long because the rationale and checkpoint pattern matter more than the diff.
 

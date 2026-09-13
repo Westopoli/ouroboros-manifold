@@ -1,260 +1,58 @@
-# Workflow — TDD + Graphify + Caveman
+# Workflow — the per-epic pipeline
 
-How a session runs. Single source of truth for "what should Claude be doing right now."
+How a session runs under the north star. Read `CLAUDE.md` first, then `docs/northstar/README.md`; this file is the how-to for one cycle. `docs/northstar/PLAN.md` is canonical where the two disagree.
 
-Longer-form version of the **Workflow** section in `CLAUDE.md`. Read CLAUDE.md first; this file fills in the how.
+## Who does what
 
----
+- **Claude (day-side, a human present)** designs: epic files, the ambiguity register, end-to-end definitions, sprint plans, and the fenced tests. Claude never runs in an unattended path (Agora D16).
+- **Agora (night-side, unattended)** builds Tested stories against the fenced tests, runs T1 state QA and T2 visual QA, and escalates to a flag file when stuck.
+- **Westley** answers flags, supplies references, confirms scale numbers, merges, and decides on escalations.
 
-## The shape of a session
+## One cycle for one epic
 
-One terminal. One queue. One feature at a time. Each item ends with a test deliverable Westley can run in Godot (or in pytest) and confirm.
+1. **Stage 2 gate.** The epic file exists and has run the definition-completeness gate (`docs/northstar/agile.md`). Every implied behavior is a `Q-` flag in `docs/northstar/ambiguity_register.md`; every visible-surface story has a reference in `docs/bible/references/E-##/`.
+2. **Flags answered.** Westley answers the epic's flags in the register. Each answer becomes a rule in the epic file; the flag row stays with its answer. Zero open flags for the epic.
+3. **Stage 3, end-to-end definition.** `docs/northstar/e2e/E-##.md`: full input and output space, edge cases, scale gates with numbers Westley confirmed, R4 bug watch-fors assigned to T1 or T2, failure evidence to capture. Exit is the Definition of Ready.
+4. **Stage 4, roadmap.** The epic's stories are placed on the ladder in `docs/northstar/roadmap.md` and the product backlog `docs/northstar/backlog.md`; a sprint file `docs/northstar/sprints/S##.md` names stories, dependencies, tests, scale gates, QA tier, Agora task stubs, exit criteria, and budget.
+5. **Stage 5, tests.** Claude writes the failing tests in fenced paths: C unit and equation tests, invariant and trajectory tests, scale benchmarks, T1 scenarios with positive controls, T2 director missions, contract tests. Every test names its `S-###`/`R-###-##`. Story status becomes Tested.
+6. **Derive rules.** `scripts/derive_agora_rules.py` writes `~/Projects/agora/projects/ouroboros/rules/E-##.md`. It refuses any epic with an open flag.
+7. **Queue.** One Agora task per story, `acceptance:` = the test commands, bounded by `max_impl_lines`. Status Queued, then Building.
+8. **Build and QA (Agora, unattended).** Worker iterates to green; QA runs on every task; stalls climb the escalation ladder; spirals halt and write `docs/northstar/ESCALATION.md`.
+9. **Merge.** Human merge gate. Status Built. The stale-doc tripwire runs on the PR.
+10. **Change protocol** when a story turns out wrong: rewrite the story and rules, update catalog and backlog, revise tests, respec or park the task, regenerate the rules file, one PR.
 
-```
-read top of priority_queue.md (the NEXT entry)
-  → restate caveman-style + confirm with Westley
-  → git checkout -b wn/<type>-<slug>
-  → TDD (red → green → refactor)
-  → implement minimal diff
-  → stale-doc tripwire: search docs for now-wrong claims; delete/update them in the same PR
-  → git push + gh pr create (PR body has Godot test steps)
-  → hand Westley the test deliverable
-  → Westley confirms in Godot
-  → merge
-  → update priority_queue.md (status of done item; new NEXT picked)
-  → next item
-```
+## Sizing
 
-If an item feels like two items, split it. Small features only. No batching, no umbrellas, no wave closeouts.
+One task is one story and fits Agora's `max_impl_lines` (250). If a story cannot fit, split the story in the epic file, never in the queue.
 
----
+## Git
 
-## Definition of done
+- Branch `wn/<type>-<slug>` off `main`, `type ∈ {bug, feat, refactor, chore, docs}`.
+- Plain git and `gh`. PR against `main`. Westley merges.
+- Never commit on `main`. Guardrails: `.claude/settings.json`, `.claude/hooks/git-guard.sh`.
+- One PR carries one epic's design pass, or one story's tests, or one change-protocol pass. No umbrellas.
+- Commit and push each meaningful unit of ledger, register, or epic work; Westley reads on GitHub.
 
-A feature lands `done` only when ALL of:
+## Testing rigor
 
-1. **Working code in `main`.**
-2. **Isolation test** covering the core mechanic alone, every other variable hard-fixtured or disabled.
-3. **Integration test** covering the feature in a realistic scene with pathing, AI, fog, vision, scale, other actors.
-4. **Doc updates in the same PR.** Any bible / spec / CLAUDE / priority_queue claim made wrong by this change is deleted or rewritten. New claims added if behavior is new.
-5. **Zero floating TODOs in the changed files.** Any TODO that survives must point to a specific named feature in `priority_queue.md`.
+Both levels for every system: isolation (system alone, everything else fixtured) and integration (realistic scene). List every actor and variable in the scene; prove the fixture before asserting on the system; a failing assertion is a system bug only when the fixture is proven clean. Never loosen an invariant to pass; narrowing scope is allowed, widening thresholds needs Westley.
 
-If any of these is missing, the feature is not done. Don't pick a new one.
+## Escalation
 
----
+Agora: retry within `max_iterations`; stall at 3 identical failures escalates to DeepSeek (reorganize or solve-direct); spiral signals halt the task, park it, and write the flag file with English summary, failing output, diff, run ids, seed, screenshots. Westley opens Claude and decides: respec, split, revert, or start over. An opt-in `/loop` watcher is documented and off by default.
 
-## Pre-scope audit (do this before writing any spec)
+Claude, in a session: one targeted iteration after a failed confirmation; if it still fails, write up findings and stop.
 
-Before scoping a queue item — and absolutely before dispatching sub-agents — verify what already exists. The queue description is a player-facing problem statement, not a code inventory. Past stages often shipped partial infrastructure the queue row doesn't mention.
+## Sub-agents
 
-For each item, sweep these surfaces:
-
-1. `Grep` the keyword across `simulation/`, `autoload/`, `scenes/`, `build/`, `tests/`.
-2. Check `docs/stage_specs/stage_*_spec*.md` for any mention of the feature as "complete" or "shipped".
-3. **For anything a spec calls "complete": verify the production callsite exists**, not just the storage-layer function and not just test fixtures. A `write_*` only called by `test_*` is unwired infrastructure, not a working feature.
-4. Read `MEMORY.md` pointers — prior chats may have noted partial state.
-
-Produce a 5-line "what's built / what's wired / what's genuinely missing" before writing the spec. Re-scope the queue item to only the genuinely-missing piece.
-
----
-
-## Test deliverable format
-
-Every PR includes — in the PR body — exactly this shape:
-
-```
-## Test deliverable
-
-Scene: scenes/<path>/<scene>.tscn        (or: pytest path::test_name)
-
-Steps:
-1. <step>
-2. <step>
-3. <step>
-4. <step>
-5. <step>
-
-Expected: <one sentence describing what you should see>
-
-Fail-look-fors: <what would indicate the change is broken>
-```
-
-Constraints:
-- ≤ 5 numbered steps
-- testable in ≤ 5 minutes
-- expected outcome is observable (visible on screen, printed by test, written to log)
-- if a step requires "look closely" or "feel out," rewrite it so pass/fail is objective
-
----
-
-## TDD discipline
-
-**Sim code (Python):** pytest first.
-1. Write a failing test that captures the bug or the new behavior.
-2. Run it. Confirm it fails for the right reason (not import error, not fixture issue).
-3. Implement the minimum to make it green.
-4. Refactor only if needed; no opportunistic cleanup.
-5. Re-run the full file (not just the new test) to catch regressions.
-
-**Godot code (GDScript):** scene-level `test_*.gd` where practical.
-- Model: `tests/test_input_router_selection.gd` + `tests/test_input_router_selection.tscn`.
-- If a scene-level test isn't practical (camera feel, animation timing), document the manual checklist *as* the test in the PR body. The manual checklist is the test deliverable.
-
-**Both:** the Testing Rigor Directive (below) is non-negotiable.
-
----
-
-## Testing Rigor Directive
-
-Every system needs **both** levels of coverage:
-
-- **Isolation tests** — system under test alone, every other variable hard-fixtured or disabled. Proves the core mechanic works.
-- **Integration tests** — same system in a realistic scene with pathing, AI, fog, vision, scale, other actors. Proves it survives contact with the rest of the game.
-
-A bug in one doesn't imply a bug in the other. Both reveal different failure modes.
-
-**Before asserting on any system's behavior:**
-
-1. **List every actor + variable in the test scene** — movement, pathing, obstacle props, spawn timing, fog, vision, AI behavior.
-2. **Verify the fixture works before asserting on the system.** Testing concavity? Prove the obstacle is actually blocking line-of-sight in a baseline shot first.
-3. **An assertion that fails is only a system bug if the fixture is proven clean.** Otherwise it's a test bug — fix the test first.
-4. **More tests can't hurt.** If a system has only one level of coverage, add the other.
-
-Real failures this directive came from:
-- Combat-balance test had two unit groups "in open space," but extra units with broken pathing wandered into the engagement zone. Claude flagged a balance bug. Wasn't a balance bug — was uncontrolled pathing contamination.
-- Concavity test depended on obstacle props blocking line-of-sight. Props were broken (not blocking). Claude asserted concavity logic was buggy. Logic was fine — fixture was broken.
-
-This wastes Westley's time, corrupts the priority queue with false bugs, and erodes trust in the test suite.
-
----
-
-## Graphify first for code navigation
-
-Before falling back to cold Grep/Read sweeps, try the graph:
-
-```
-/graphify query "where does tick resolution start"
-/graphify path "TacticalEngine" "Region"
-/graphify explain "InspectionState"
-```
-
-The graph lives in `graphify-out/`:
-- `graph.json` — GraphRAG-ready, what `query` reads
-- `graph.html` — interactive viz (open in browser)
-- `GRAPH_REPORT.md` — plain-language summary, god nodes, surprising connections
-
-**When to rebuild:**
-- After a structural change: new module, big rename, file moves
-- When queries start returning stale or wrong answers
-- After a feature lands (the graph should reflect current truth)
-
-Rebuild: invoke `/graphify` skill. AST extraction (deterministic) reruns immediately; semantic extraction reuses cache for unchanged files.
-
-**God nodes are cosmetic.** Top-degree nodes (currently `main()`, `config`) reflect import-graph topology, not architectural centrality. They don't affect `query`/`path`/`explain` results — those are concept-driven BFS.
-
----
-
-## Branching + PR conventions
-
-**Branch names:** `wn/<type>-<slug>` where `type ∈ {bug, feat, refactor, chore, docs}`.
-
-Examples:
-- `wn/bug-unit-rotation`
-- `wn/feat-camera-pan`
-- `wn/refactor-region-tier`
-- `wn/chore-graphify-rebuild`
-- `wn/docs-stage12-spec`
-
-**Plain git + gh CLI.** No Graphite. No stacked PRs.
-
-**Always PR against `main`.** Solo merge OK after Westley confirms in Godot. Never commit directly to `main` — the git-guard hook will reject it.
-
-**One PR per feature.** If you find an unrelated fix mid-task, note it in the PR description as a follow-up; don't bundle.
-
----
-
-## Caveman mode (default)
-
-Caveman is on by default — terse, fragments OK, drop articles + filler. Switch back to normal for:
-- Security warnings
-- Destructive op confirmations
-- Multi-step sequences where ordering matters and fragments risk misread
-- Commit messages and PR text (write those normally)
-
-Toggle: `/caveman lite | full | ultra | wenyan-full` or `stop caveman` / `normal mode`.
-
----
-
-## Git guardrails
-
-Enforced by `.claude/settings.json` (deny/ask/allow rules) and `.claude/hooks/git-guard.sh` (PreToolUse hook).
-
-**Denied at the harness layer:**
-- `git reset --hard`, `git clean -f/-d`, `git checkout -- <path>`, `git restore .`
-- `git branch -D`, `git push --force`, `git push origin main`
-- `git commit --amend`, `git commit --no-verify`
-- `git rebase`
-- Commits or pushes while HEAD is on `main` or `master`
-
-**If a legit op gets blocked:** ask Westley before working around it. Don't bypass the hook.
-
----
-
-## Escalation rules
-
-An item that won't close cleanly:
-- **One targeted iteration after a failed confirm.** If Westley reports the test deliverable failed, Claude diagnoses, makes one focused change, and asks for a re-test.
-- **If the second iteration still fails:** stop. Write up findings, mark the item BLOCKED in `priority_queue.md`, and ask Westley what to do.
-- **Two-session limit per item.** Anything that has burned >2 sessions gets a fresh look from Westley — usually de-prioritized or split.
-
-Never silently expand scope. Never refactor code that wasn't part of the task. Never decide "this needs a bigger redesign" without Westley's sign-off.
-
----
-
-## Sub-agents implement, never design
-
-Sub-agents (Explore, general-purpose, Plan, claude-code-guide, cavecrew variants) execute against a spec the main agent has decided on. They cannot:
-- Make architectural decisions
-- Change API shapes
-- Edit `docs/bible/**`, `docs/stage_specs/**`, `CLAUDE.md`
-- Modify test thresholds
-- Decide what should be tested
-
-When a sub-agent hits ambiguity, it returns findings + a proposed change. The main agent decides.
-
-### Sub-agent caveman directive
-
-When dispatching a sub-agent, append: *"Report-back caveman mode (drop articles/filler/hedging, fragments OK). Markdown docs/briefs you write: caveman. Commit messages: caveman. Code, tests, config: normal prose."*
-
-Token-save at scale. Main agent is the only consumer of report-back, so style mix in `docs/**` is fine — graphify indexing is register-agnostic. Code and tests stay normal so test names, assertions, comments, and runtime strings don't degrade.
-
----
-
-## Stale-doc tripwire (in every PR)
-
-When a feature lands, the implementer searches docs for now-wrong claims and deletes or updates them *in the same PR* that lands the feature.
-
-Suggested searches before merge:
-- `rg -l "<feature-name>" docs/` — does any doc still describe the old behavior?
-- `rg -l "<old-API-name>" docs/` — did a renamed function leave stale callers in docs?
-- Read the bible hub (`docs/bible/game_bible.md`) section that touches this area; rewrite if the new behavior contradicts it.
-
-Stale docs are how bad rules leak into future chats. Catching them in-PR is the only reliable defense.
-
----
-
-## Updating state at end of each item
-
-1. **`docs/priority_queue.md`** — flip status of the finished item; promote next NEXT from Soon (with a fresh look at whether it's still the right next thing).
-2. **Memory** — if the session surfaced something durable (a new preference, a non-obvious decision, a stable reference), update the relevant memory file. Don't journal session details — only durable signal.
-3. **Bible discipline.** If the feature changed game behavior the bible described, **rewrite the bible**, don't append a "now actually" note. Append-only is forbidden. The bible always describes what the game does *now*; prior versions live in `docs/bible_history/` if needed.
-
----
+Implement, never design. Cannot edit `docs/bible/**`, `docs/northstar/**`, `CLAUDE.md`, or test thresholds. Caveman directive appended to every sub-agent prompt (see `CLAUDE.md`).
 
 ## Reference files
 
-- `CLAUDE.md` — the rules of the road; read on every session start
-- `docs/priority_queue.md` — what's next
-- `docs/bible/game_bible.md` — hub for design truth; spokes (if any) are `bible_*.md`
-- `docs/stage_specs/` — implementation specs per stage
-- `graphify-out/` — the knowledge graph (artifacts committed; intermediates gitignored)
+- `CLAUDE.md` — rules of the road
+- `docs/northstar/README.md`, `PLAN.md`, `principles.md`, `agile.md`
+- `docs/northstar/ambiguity_register.md` — every open question
+- `docs/bible/game_bible.md`, `stories.md`, `epics/`, `references/`, `algorithms.md`
+- `docs/northstar/research/` — R1 to R4 briefs
+- `docs/northstar/proving_ground/` — Stage 0 probes and scorecard
+- `docs/architecture.md` — transport shapes and engine internals

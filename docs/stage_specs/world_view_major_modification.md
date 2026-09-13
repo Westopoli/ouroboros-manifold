@@ -8,9 +8,9 @@ Replace the 2D metaball territory plane with a 3D constellation + shell hybrid t
 
 Read the hub (`game_bible.md`) plus these spokes:
 
-- `bible_world.md` → "Galaxy View — The Strategic Layer Between Missions" (Faction territory, Connections, Military activity visualization, Ambient particle field). Note: the "projected Voronoi influence field" paragraph (lines 399–403) is **superseded** by this spec's constellation + shell hybrid. The metaball field math survives into the 3D shell implementation. The "snap transition, masked by the accompanying combat flash VFX" sentence (line 403) is **superseded** by Q4a's smooth tween — territory changes interpolate continuously, no snapping. The "SubViewport projected onto a plane quad" implementation note (line 405) is **superseded** — the 2D plane is replaced by 3D raymarched shells.
-- `bible_chronicle.md` → "Chronicle Scroll — Visual Presentation" (scroll panel layout, entry interaction states). This spec touches the scroll for faction-colored entry text and chronicle-linked focus highlight.
-- `bible_animation_strategy.md` → full document. Smooth-fade-over-cuts rule applies to all zoom band transitions and territory morphing.
+- `docs/bible_history/bible_2_00_world.md` → "Galaxy View — The Strategic Layer Between Missions" (Faction territory, Connections, Military activity visualization, Ambient particle field). Note: the "projected Voronoi influence field" paragraph (lines 399–403) is **superseded** by this spec's constellation + shell hybrid. The metaball field math survives into the 3D shell implementation. The "snap transition, masked by the accompanying combat flash VFX" sentence (line 403) is **superseded** by Q4a's smooth tween — territory changes interpolate continuously, no snapping. The "SubViewport projected onto a plane quad" implementation note (line 405) is **superseded** — the 2D plane is replaced by 3D raymarched shells.
+- `docs/bible_history/bible_2_00_chronicle.md` → "Chronicle Scroll — Visual Presentation" (scroll panel layout, entry interaction states). This spec touches the scroll for faction-colored entry text and chronicle-linked focus highlight.
+- `docs/bible_history/bible_2_00_animation_strategy.md` → full document. Smooth-fade-over-cuts rule applies to all zoom band transitions and territory morphing.
 - `world_view_disclosure_design.md` → the design doc that produced all decisions implemented here. Authoritative for Q1–Q4 design rationale.
 
 Also read these completed artifacts:
@@ -82,7 +82,7 @@ After this step, `world_view_structure.gd/.tscn` is exclusively the world view r
 > **Files this spec does NOT touch that are chronicle-only:**
 > - `scenes/world/chronicle_entry_expansion.gd`
 > - Chronicle distiller (`simulation/world_view/keyframe_selector.py`, `simulation/world_view/keyframe_message.py`)
-> - `bible_chronicle.md`
+> - `docs/bible_history/bible_2_00_chronicle.md`
 >
 > **Data contract change:** Chronicle entry messages gain a new optional field `faction_color` (hex string or null). The scroll panel uses this to tint the entry text. If the chronicle rework changes the entry message schema, coordinate on this field.
 >
@@ -229,7 +229,7 @@ scenes/shared/world_view/renderers/
 - Chronicle distiller, keyframe selector, keyframe message — no sim-side changes
 - UIDataBus signals — no new signals needed
 - Tactical scene — unaffected
-- `bible_chronicle.md` — no bible changes in this spec (bible capture is a separate step)
+- `docs/bible_history/bible_2_00_chronicle.md` — no bible changes in this spec (bible capture is a separate step)
 
 ---
 

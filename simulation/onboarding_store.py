@@ -3,7 +3,7 @@ Read/write onboarding preferences.
 
 Schema: { schema_version, difficulty, rare_marks, generational_cycle_id }
 Validation: difficulty in {easy, medium, hard}; len(rare_marks) < 10 (at least one
-archetype must remain unmarked — see bible_missions.md §archetype rare weighting).
+archetype must remain unmarked — see docs/bible_history/bible_2_00_missions.md §archetype rare weighting).
 """
 
 import json

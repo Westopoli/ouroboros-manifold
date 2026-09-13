@@ -5,7 +5,7 @@
 > **Started:** 2026-04-21
 > **Scope:** The macro-layer visual and interaction system for the world view between missions — specifically how faction territory, borders, and local detail are presented across camera distances and player intents.
 >
-> **Supersedes (when captured):** The "projected Voronoi influence field" paragraph in `bible_world.md` (lines 399–403) and the associated metaball/plane implementation in `world_view_structure.gd` (`_setup_territory_metaball`, the SubViewport + plane + `territory_voronoi.gdshader` pipeline, and the flat-plane "territory_plane" MeshInstance3D). Design intent ("colored regions with clearly defined borders," "territory being nibbled away," "color blooming into neutral space") is preserved and strengthened. Implementation technique changes from 2D plane projection to 3D constellation + shell hybrid with plateau-and-edge zoom disclosure.
+> **Supersedes (when captured):** The "projected Voronoi influence field" paragraph in `docs/bible_history/bible_2_00_world.md` (lines 399–403) and the associated metaball/plane implementation in `world_view_structure.gd` (`_setup_territory_metaball`, the SubViewport + plane + `territory_voronoi.gdshader` pipeline, and the flat-plane "territory_plane" MeshInstance3D). Design intent ("colored regions with clearly defined borders," "territory being nibbled away," "color blooming into neutral space") is preserved and strengthened. Implementation technique changes from 2D plane projection to 3D constellation + shell hybrid with plateau-and-edge zoom disclosure.
 >
 > **Bible reconciliation:** The bible is append-only. When decisions in this doc are captured, the Voronoi paragraph gets an explicit "supersedes" note pointing to the new sections — not silently rewritten. Existing algorithmic insights (metaball field math, faction gap margin) survive into the new 3D shell implementation.
 
@@ -207,7 +207,7 @@ To be decided when moving to stage spec authoring, not in this design doc:
 
 When this design doc's resolved questions are ready for capture, the bible updates are:
 
-**`bible_world.md`:**
+**`docs/bible_history/bible_2_00_world.md`:**
 - "Galaxy View" section (lines 393–417 area): Add a new subsection titled "Territory Visualization — Constellation and Shell Hybrid" that documents Q1's decision. Mark the existing "projected Voronoi influence field" paragraph (lines 399–403) with an explicit "superseded by [new section]" note — do not delete or rewrite. The append-only rule requires the old text stays in place with a forward-reference.
 - Add a new subsection titled "Zoom Disclosure — Plateau-and-Edge Ladder" documenting Q2.
 - Each Q2.5 sub-decision (Regional, Overview, Local plateau looks) gets a subsection within or adjacent to the zoom disclosure section.
@@ -225,4 +225,4 @@ When this design doc's resolved questions are ready for capture, the bible updat
 
 ## Session Log
 
-**Session 1 — 2026-04-21.** Opened with context gathering (read `bible_world.md`, `game_bible.md`, `amendment_world_view_architecture.md`, `stage_11_amendment.md`, `stage_11_c3c4_territory_redesign.md`, `cc_paste_metaball_territory.md`, `world_view_structure.gd`, `territory_voronoi.gdshader`, current implementation screenshot). Established that current impl uses 2D metaball plane diverging from bible's Voronoi spec — both superseded by this design work. Resolved Q1 (core metaphor — constellation + shell hybrid), Q2 (zoom disclosure — three-band plateau-and-edge), Q2.5a (Regional plateau look — constellation-dominant with shells subordinate and border glow as accent). Open: Q2.5b, Q2.5c, Q3, Q4.
+**Session 1 — 2026-04-21.** Opened with context gathering (read `docs/bible_history/bible_2_00_world.md`, `game_bible.md`, `amendment_world_view_architecture.md`, `stage_11_amendment.md`, `stage_11_c3c4_territory_redesign.md`, `cc_paste_metaball_territory.md`, `world_view_structure.gd`, `territory_voronoi.gdshader`, current implementation screenshot). Established that current impl uses 2D metaball plane diverging from bible's Voronoi spec — both superseded by this design work. Resolved Q1 (core metaphor — constellation + shell hybrid), Q2 (zoom disclosure — three-band plateau-and-edge), Q2.5a (Regional plateau look — constellation-dominant with shells subordinate and border glow as accent). Open: Q2.5b, Q2.5c, Q3, Q4.

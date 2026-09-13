@@ -2432,9 +2432,9 @@
       "norm_label": "docs/bible/game_bible.md (in flux)"
     },
     {
-      "label": "docs/bible/bible_combat.md (In Flux)",
+      "label": "docs/bible_history/bible_2_00_combat.md (In Flux)",
       "file_type": "document",
-      "source_file": "docs/bible/bible_combat.md",
+      "source_file": "docs/bible_history/bible_2_00_combat.md",
       "source_location": "## In Flux",
       "source_url": null,
       "captured_at": null,
@@ -2442,12 +2442,12 @@
       "contributor": null,
       "id": "external_bible_combat",
       "community": 0,
-      "norm_label": "docs/bible/bible_combat.md (in flux)"
+      "norm_label": "docs/bible_history/bible_2_00_combat.md (in flux)"
     },
     {
-      "label": "docs/bible/bible_simulation.md (In Flux)",
+      "label": "docs/bible_history/bible_2_00_simulation.md (In Flux)",
       "file_type": "document",
-      "source_file": "docs/bible/bible_simulation.md",
+      "source_file": "docs/bible_history/bible_2_00_simulation.md",
       "source_location": "## In Flux",
       "source_url": null,
       "captured_at": null,
@@ -2455,7 +2455,7 @@
       "contributor": null,
       "id": "external_bible_simulation",
       "community": 0,
-      "norm_label": "docs/bible/bible_simulation.md (in flux)"
+      "norm_label": "docs/bible_history/bible_2_00_simulation.md (in flux)"
     }
   ],
   "links": [

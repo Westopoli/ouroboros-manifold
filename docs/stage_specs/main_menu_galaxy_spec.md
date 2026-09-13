@@ -448,7 +448,7 @@ The galaxy structure is built as its own standalone scene (`galaxy_structure.tsc
 
 ## Reuse API — Galaxy Structure Public Interface
 
-> **Reference:** `bible_world.md` §"Galaxy View — The Strategic Layer Between Missions" defines the world view requirements. The galaxy structure scene provides the ambient particle field and camera system. System nodes, faction territory, connections, and military activity visualization are layered on top by the world view consumer.
+> **Reference:** `docs/bible_history/bible_2_00_world.md` §"Galaxy View — The Strategic Layer Between Missions" defines the world view requirements. The galaxy structure scene provides the ambient particle field and camera system. System nodes, faction territory, connections, and military activity visualization are layered on top by the world view consumer.
 
 The galaxy structure scene (`galaxy_structure.tscn`) exposes the following public interface. Methods marked **(STUBBED)** have empty implementations in Stage A — they exist so consumers can call them without error, but they do nothing until the world view stages fill them in.
 

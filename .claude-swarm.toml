@@ -9,12 +9,12 @@ graphify_cmd      = ""
 
 parent_owned = [
   "docs/bible/game_bible.md",
-  "docs/bible/bible_simulation.md",
-  "docs/bible/bible_missions.md",
-  "docs/bible/bible_chronicle.md",
-  "docs/bible/bible_antagonist.md",
-  "docs/bible/bible_monetization.md",
-  "docs/bible/bible_ai_pipeline.md",
+  "docs/bible_history/bible_2_00_simulation.md",
+  "docs/bible_history/bible_2_00_missions.md",
+  "docs/bible_history/bible_2_00_chronicle.md",
+  "docs/bible_history/bible_2_00_antagonist.md",
+  "docs/bible_history/game_bible_1_23.md",
+  "docs/bible_history/bible_2_00_ai_pipeline.md",
   "docs/test_specs/cover_asteroid_los_spec.md",
   "docs/test_specs/cover_los_rework_spec.md",
   "docs/test_specs/wave_3_pre_zip_wiring.md",

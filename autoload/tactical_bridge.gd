@@ -1,6 +1,8 @@
 ## Singleton bridge between the Python tactical engine and Godot scenes.
-## Owns the TCP connection, applies snapshots/deltas, and re-publishes state
-## via signals.
+## Owns the pipe transport to the child Python process (stdout length-prefixed
+## JSON in, polled command file out; see docs/architecture.md), applies
+## snapshots/deltas, and re-publishes state via signals. The TCP socket server
+## this comment once described was deleted.
 ##
 ## Flat-array interpolation buffer (Stage 8.5):
 ## Renders the RECENT PAST by interpolating between known-good server tick

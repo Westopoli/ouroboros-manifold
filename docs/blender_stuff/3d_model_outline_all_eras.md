@@ -35,9 +35,9 @@
 ---
 
 ## 1. Sci-Fi — The Settled Reach
-**Base Game — Fully designed in bible_world.md**
+**Base Game — Fully designed in docs/bible_history/bible_2_00_world.md**
 
-*Included here for reference and completeness. See bible_world.md for full tier descriptions.*
+*Included here for reference and completeness. See docs/bible_history/bible_2_00_world.md for full tier descriptions.*
 
 ### Tier Identity
 - **Tier 1 — Frontier:** Boxy, seamed, matte. Bolted-together frontier hardware.

@@ -5,7 +5,7 @@
 > This doc references the prior subscription/access-tier framing (e.g., "hallmark
 > exclusivity" tied to purchase tiers). The subscription model has been **scrapped**;
 > the current model is buy-once base game + paid Steam DLC expansions, no subscription.
-> See `docs/bible/bible_monetization.md` "Current Monetization Model" section.
+> See `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` "Current Monetization Model" section.
 > The orthogonal mechanical-axis matrix in this document remains useful as design
 > context; only the access-tier annotations are obsolete.
 
@@ -15,12 +15,12 @@
 > 3 launch eras on every dial, and an annotation of which dial positions
 > are **Branch DNA** (shared by all eras in a branch) vs. **hallmark-exclusive**
 > (reserved for the branch's apex era). Once the matrix stabilizes, its
-> content lands in `bible_monetization.md` (Branch System extension) and
+> content lands in `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/) (Branch System extension) and
 > feeds work-era design + Sloyd prompts. This file is deleted when captured.
 >
-> **Capture targets:** `bible_monetization.md` (Branch System subsection),
-> `bible_combat.md` (per-era parameterization re-opens from Session 6),
-> `bible_world.md` (map generation gradient consequences).
+> **Capture targets:** `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/) (Branch System subsection),
+> `docs/bible_history/bible_2_00_combat.md` (per-era parameterization re-opens from Session 6),
+> `docs/bible_history/bible_2_00_world.md` (map generation gradient consequences).
 >
 > **Non-goals.** This doc does not invent new engine systems. Every axis
 > proposed here must be expressible as per-era config the engine consumes
@@ -52,7 +52,7 @@ that violates one of these is cut or rewritten.
 
 ## Proposed Axis List (first pass)
 
-Eight candidate axes. First three are already locked in `bible_monetization.md`
+Eight candidate axes. First three are already locked in `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/)
 Branch System. Axes 4–8 are new proposals drafted in this session.
 
 1. **Tempo** *(locked — Branch System)* — engagement duration, movement speed,
@@ -162,7 +162,7 @@ mission feel noticeably different — tempo is about how fast a single
 fight resolves, not how many units are present.
 
 **Implementation cost.** **Low.** HP / damage / speed multipliers already
-live as per-era config in `bible_combat.md`. Session 6 flagged the Settled
+live as per-era config in `docs/bible_history/bible_2_00_combat.md`. Session 6 flagged the Settled
 Reach stat rebalance as the first consumer.
 
 **Open sub-questions.** None — this is the most well-grounded axis.
@@ -259,7 +259,7 @@ legal*; scale is about *how many units total*; tempo is about *per-engagement
 rhythm*.
 
 **Implementation cost.** **Low.** `layer_accessibility_mask` already lives
-in the map generation gradient vocabulary (Q4 resolution, `bible_world.md`).
+in the map generation gradient vocabulary (Q4 resolution, `docs/bible_history/bible_2_00_world.md`).
 Per-unit layer restriction config exists in the 1980s era spec. Settled
 Reach's free-traversal position is the *absence* of restrictions — it
 ships by default if no mask is applied.

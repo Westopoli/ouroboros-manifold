@@ -1,6 +1,6 @@
 extends Node
 
-# Subscription model removed 2026-05-09 — see docs/bible/bible_monetization.md LEGACY banner.
+# Subscription model removed 2026-05-09 — see docs/bible_history/game_bible_1_23.md (bible_monetization.md was folded into the hub 2026-05-31 and the hub rewritten 2026-09-10).
 # initiate_purchase() now routes to the data source's open_steam_dlc_page() stub.
 signal purchase_requested(era_id: String, purchase_type: String)
 signal time_jump_started(time_jump_id: String, span_years: int, total_keyframes: int, total_entries: int, faction_names: Dictionary)

@@ -360,11 +360,11 @@ Niche-strategy titles that ran aggressive discount too early w/ observable negat
 
 ## Conflict surfaced
 
-No direct conflict surfaced between this brief and any bible directive on launch-discount cadence specifically. The bible (`docs/bible/game_bible.md` headline + `docs/bible/bible_monetization.md`) does not currently specify launch-discount policy.
+No direct conflict surfaced between this brief and any bible directive on launch-discount cadence specifically. The bible (`docs/bible/game_bible.md` headline + `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)`) does not currently specify launch-discount policy.
 
-**Adjacent flag (carried forward from T-P1, not resolved by this brief):** `docs/bible/bible_monetization.md` L274 "Free to play. Infinite eras." tagline conflict w/ paid-base bible target ($25-35 / 80-200k units) is unchanged. This brief's discount-cadence findings ARE shaped by the resolution of that conflict — if Ouroboros ships as paid-base w/ Roman free-tier, the discount calendar follows niche-strategy paid-base norms surveyed here. If interpreted literally as F2P, the discount-cadence analysis above does not apply (F2P uses cosmetic-pack pricing + battle-pass cadence, not Steam-sale-event discount %). Surfaced to Westley + Design Lane.
+**Adjacent flag (carried forward from T-P1, not resolved by this brief):** `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` L274 "Free to play. Infinite eras." tagline conflict w/ paid-base bible target ($25-35 / 80-200k units) is unchanged. This brief's discount-cadence findings ARE shaped by the resolution of that conflict — if Ouroboros ships as paid-base w/ Roman free-tier, the discount calendar follows niche-strategy paid-base norms surveyed here. If interpreted literally as F2P, the discount-cadence analysis above does not apply (F2P uses cosmetic-pack pricing + battle-pass cadence, not Steam-sale-event discount %). Surfaced to Westley + Design Lane.
 
-**Adjacent flag:** `docs/bible/bible_monetization.md` L292 Fortnite reference (flagged T-P1, T-M1) similarly intersects — if Fortnite framing is taken as F2P-battle-pass, this brief is not the right analytic lens. If Fortnite framing is purely "live-service expansion cadence" interpreted, this brief's DLC-bundling sections apply. Bible authority resolves.
+**Adjacent flag:** `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` L292 Fortnite reference (flagged T-P1, T-M1) similarly intersects — if Fortnite framing is taken as F2P-battle-pass, this brief is not the right analytic lens. If Fortnite framing is purely "live-service expansion cadence" interpreted, this brief's DLC-bundling sections apply. Bible authority resolves.
 
 No additional conflict surfaced.
 
@@ -445,7 +445,7 @@ WebFetch + WebSearch denied this session. All sources referenced from training-d
   - `docs/research/topics/primary_tribe_psychographic_profile.md` — "wait for sale" review-theme frequency per anchor title
   - `docs/research/topics/dlc_pricing_ladders.md` — DLC-cadence + DLC-discount inheritance pattern from base-game policy
   - `docs/bible/game_bible.md` — 80-200k @ $25-35 lock + bible-authority directive
-  - `docs/bible/bible_monetization.md` L274 (Free-to-play tagline) + L292 (Fortnite reference) — adjacent collision carried from T-P1
+  - `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` L274 (Free-to-play tagline) + L292 (Fortnite reference) — adjacent collision carried from T-P1
 
 **Re-capture stamp.** All discount-percent + sale-event participation + free-weekend uplift + Daily Deal revenue multiplier + bundle inclusion timing claims are training-data-derived as of cutoff. Live SteamDB + Gamalytic + GameDiscoverCo refresh required to upgrade REPORTED/ESTIMATED → VERIFIED. Flag for Research Lane re-capture when WebFetch is restored.
 

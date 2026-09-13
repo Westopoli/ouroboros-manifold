@@ -19,6 +19,7 @@ Principles that persist beyond any chat are in `principles.md`. The agile method
 | Method | Agile. Epics, stories, rules. Requirements may change; the change protocol keeps bible, tests, and Agora tasks in sync. |
 | Determinism | The C sim is bit-deterministic across Windows, macOS, and Linux from the first sprint, with a checksum hook. Keeps lockstep co-op over Steam Datagram Relay possible; see `research/c_rewrite.md` and `research/multiplayer_sdr.md`. |
 | Parallelism | Planning and building run in parallel. A story is built only after it passes the Definition of Ready. Deep features need not be fully designed before Agora starts on the earliest, simplest ones. |
+| Epic end-state (2026-09-12) | Before an epic is queued, Claude or the design chat writes what "done" looks like both technically (fixed-seed trajectories, checksums, perf, trace facts) and visually (what the finished screen shows the player, or an explicit "none direct"). A required Definition-of-Ready gate; mechanics in `agile.md`. Slows queueing a little; buys better tests and a build target to converge on. |
 
 ## The cautionary example: the layer system
 
@@ -58,7 +59,7 @@ The reference-gathering segment: for every epic with a visible surface, Claude a
 
 ### Stage 3 — End-to-end definition (per epic)
 
-For each epic the roadmap pulls: actor and surface; the full input space with ranges and rejection behavior; the full output space; rules as Given/When/Then; edge cases; scale gates with hard numbers; which R4 bug signatures apply and which tier detects each; what evidence to capture on failure. Any question Claude cannot answer becomes a `Q-###-##` flag with candidate answers; Claude never picks silently. Exit is the Definition of Ready in `agile.md`.
+For each epic the roadmap pulls: actor and surface; the full input space with ranges and rejection behavior; the full output space; rules as Given/When/Then; edge cases; scale gates with hard numbers; which R4 bug signatures apply and which tier detects each; what evidence to capture on failure; and the epic's **end-state** — what done looks like technically (fixed-seed trajectories, checksums, perf, trace facts) and visually (what the finished screen shows the player, or an explicit "none direct" for a pure-sim epic). Any question Claude cannot answer becomes a `Q-###-##` flag with candidate answers; Claude never picks silently. Exit is the Definition of Ready in `agile.md`, which now requires the end-state before an epic can be queued.
 
 ### Stage 4 — Roadmap, backlog, sprints
 
