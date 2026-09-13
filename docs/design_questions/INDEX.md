@@ -6,7 +6,7 @@
 > `visual_identity_design.md`, `era_mechanical_axes.md`) were drafted under the
 > prior subscription/external-checkout monetization model, which has been **scrapped**.
 > Current model: buy-once base game + paid Steam DLC expansions, no subscription.
-> See `docs/bible/bible_monetization.md` "Current Monetization Model" section.
+> See `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` "Current Monetization Model" section.
 > Individual docs in this folder carry their own legacy banners where applicable.
 
 > **Folder purpose.** `docs/design_questions/` is the staging area for
@@ -51,9 +51,9 @@ and Batch 5 (rejected axes + experimental stretch axes including temporal
 distortion, supply-line tactics, civilian presence, reinforcement topology)
 pending.
 
-**Capture target.** `bible_monetization.md` (Branch System extension),
-`bible_combat.md` (per-era parameterization flags from Session 6),
-`bible_world.md` (map generation gradient consequences).
+**Capture target.** `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/) (Branch System extension),
+`docs/bible_history/bible_2_00_combat.md` (per-era parameterization flags from Session 6),
+`docs/bible_history/bible_2_00_world.md` (map generation gradient consequences).
 
 ### `visual_identity_design.md`
 **Topic.** Brand visual identity — master shield logo, wordmark, era
@@ -67,7 +67,7 @@ Q3–Q7 explicitly `[OPEN]`: era card template, Steam page hierarchy,
 reference research pass, Canva asset kit, in-game store layout. Deferred
 post-launch but not resolved.
 
-**Capture target.** `bible_monetization.md` (primary), `bible_combat.md`
+**Capture target.** `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/) (primary), `docs/bible_history/bible_2_00_combat.md`
 (pending edits flagged in Session 6), `game_bible.md` hub.
 
 **Associated assets.** `visual_identity_reference_shield.png` (+ `.import`)
@@ -85,7 +85,7 @@ yet captured. Q2.5b (Overview plateau look), Q2.5c (Local plateau look),
 Q3 (hover/focus), Q4 (time-jump animation dynamics) open. Estimated 3–5
 more sessions before capture.
 
-**Capture target.** `bible_world.md` (supersedes the projected-Voronoi
+**Capture target.** `docs/bible_history/bible_2_00_world.md` (supersedes the projected-Voronoi
 paragraph, lines 399–403). Implementation lives in
 `scenes/shared/world_view/world_view_structure.gd` and the associated
 shader pipeline. Possibly a follow-up to the Stage 11 amendment.
@@ -99,7 +99,7 @@ fully captured and the docs were stale. They are not deleted from history —
 they live in `docs/random/` for reference.
 
 - `combat_visual_polish_design.md` → `docs/random/deleted/` — all 9
-  questions captured into `bible_combat.md`; Stage 12.5 spec shipped.
+  questions captured into `docs/bible_history/bible_2_00_combat.md`; Stage 12.5 spec shipped.
 - `stage_7_8_design.md` → `docs/random/deleted/` — all S7 / S7.5 / S8
   questions captured into the respective stage specs and bible.
 - `Immortal-Gates-of-Pyre-*.jpg` (+ imports) → `docs/random/` — HUD

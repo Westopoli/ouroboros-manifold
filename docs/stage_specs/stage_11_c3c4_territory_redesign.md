@@ -426,7 +426,7 @@ After C3/C4 are verified, remove all dead code from the bubble/contour system:
 
 ## Bible Update
 
-Add to `bible_world.md` in the "Faction territory" paragraph (lines 399–403), replacing the influence-bubbles-plus-border-contours description:
+Add to `docs/bible_history/bible_2_00_world.md` in the "Faction territory" paragraph (lines 399–403), replacing the influence-bubbles-plus-border-contours description:
 
 > Territory visualization uses a Voronoi influence field projected on the galactic plane — each system claims the space nearest to it, cells are unioned by faction ownership, and the result renders as translucent faction-colored regions with soft luminous borders emerging where rival factions' territory meets. Fill opacity fades with distance from owned systems so territory does not aggressively claim empty space. The galaxy particle structure remains visible through all territory coloration.
 

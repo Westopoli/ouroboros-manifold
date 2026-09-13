@@ -39,7 +39,7 @@ Verbatim restatement of locks W0-W3 briefs cite as substrate:
 - **RTS framing kill.** "Niches actively avoided: SC2 / classic-RTS PvP players (kill zone)... multiplayer-ladder anything." Source: `game_bible.md ## In Flux` 2026-05-16, verbatim in T-S1 L29-32. VERIFIED.
 - **Unit target.** 80-200k units @ $25-35 paid-base. Source: `game_bible.md` headline cited across T-P1, T-P3, T-P2, T-A3. VERIFIED.
 - **Monetization shape.** Buy-once base + DLC-per-era (7 eras, Roman free-tier). Source: bible_monetization spoke + T-P3 kickoff substrate. VERIFIED.
-- **Tag slate L288.** "Priority tags (highest weight): Strategy, RTS, Sci-fi, Historical, Singleplayer, Story Rich, Atmospheric, Indie. Secondary tags: Sandbox, Replay Value, Grand Strategy, Procedural Generation, Turn-Based." Source: `bible_monetization.md` L288 locked April 24 2026. VERIFIED — but stale on RTS line per In Flux 2026-05-16.
+- **Tag slate L288.** "Priority tags (highest weight): Strategy, RTS, Sci-fi, Historical, Singleplayer, Story Rich, Atmospheric, Indie. Secondary tags: Sandbox, Replay Value, Grand Strategy, Procedural Generation, Turn-Based." Source: `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/) L288 locked April 24 2026. VERIFIED — but stale on RTS line per In Flux 2026-05-16.
 - **In Flux 2026-05-16 RTS-kill.** Supersedes L288 RTS tag. Verbatim T-S1 L33-37. VERIFIED.
 
 ## Hangs-together check — does the slate cohere?
@@ -187,7 +187,7 @@ Full package for bible editor. Bible authority decides.
 
 ### Verbatim citations
 
-**`docs/bible/bible_monetization.md` L274 (verbatim, capsule tagline ending trailer):**
+**`docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` L274 (verbatim, capsule tagline ending trailer):**
 
 > "Free to play. Infinite eras."
 

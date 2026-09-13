@@ -75,7 +75,7 @@ These three games represent the free-anchor + paid-content space that Ouroboros'
 
 **Key structural difference from Ouroboros:** All three games above use free-to-play with microtransactions or subscriptions as the primary revenue model. Ouroboros' planned model is closer to **free base game tier + paid DLC expansions** — a hybrid between the traditional premium-DLC model (RimWorld, CK3) and the F2P free-anchor model. This is a structurally distinct model that none of the three games above perfectly instantiates.
 
-The specific tension this card surfaces: `docs/bible/bible_monetization.md` around L274 (from T-M1 brief) references a free-tier concept that may conflict with the DLC-per-era ladder. The three games above illuminate the two main failure modes:
+The specific tension this card surfaces: `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` around L274 (from T-M1 brief) references a free-tier concept that may conflict with the DLC-per-era ladder. The three games above illuminate the two main failure modes:
 
 1. **PoE/Warframe model failure:** if the free tier is too complete, paid content must be cosmetic-only, limiting DLC revenue ceiling. PoE and Warframe are sustainable at scale because they have massive player bases; Ouroboros' indie scale makes pure cosmetic-only DLC revenue insufficient.
 
@@ -120,7 +120,7 @@ The specific tension this card surfaces: `docs/bible/bible_monetization.md` arou
 - Has Grinding Gear Games disclosed any conversion rate figures in GDC talks? A confirmed PoE conversion percentage would substantially improve the F2P conversion estimates in this card.
 - Albion Online post-F2P transition: did converting from buy-to-play to free-to-play (April 2019) grow the player base and improve or hurt revenue? Sandbox Interactive has discussed this transition in interviews; specific figures would calibrate the "free tier as discovery mechanism" value.
 - Is there any genre-closer F2P strategy game (turn-based, 4X, grand strategy) in a free-to-play model with disclosed conversion or subscription figures? All three games in this card are action-oriented. A strategy-genre F2P precedent would be more directly applicable to Ouroboros.
-- The specific `bible_monetization.md` L274 tagline reference (T-M1): understanding the exact conflict between that tagline and the DLC-per-era model requires reading that document section — this card surfaces the conflict pattern but cannot resolve it without Design Lane reading the relevant bible passage.
+- The specific `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/) L274 tagline reference (T-M1): understanding the exact conflict between that tagline and the DLC-per-era model requires reading that document section — this card surfaces the conflict pattern but cannot resolve it without Design Lane reading the relevant bible passage.
 
 ## Feeds Design Lane
 

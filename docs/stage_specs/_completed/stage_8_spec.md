@@ -16,17 +16,17 @@ These bible edits landed during the Stage 8 write-up session; they do not block 
 
 1. **Hub "Beyond Stage 9" bullet** — removed the stale "onboarding screen" entry; the Stage 8 roadmap paragraph is now the only source of truth for onboarding scope.
 2. **Hub Stage 8 roadmap paragraph** — "5-command vocabulary" replaced with "4-command vocabulary (`move`, `attack_move`, `attack_target`, `activate_ability`) plus the two layer commands." Persistence language rewritten from "rewind-capable" to "saves, not rewind — rewind is a post-launch feature."
-3. **`bible_combat.md` L235 and L456** — "5-command protocol" / "same 5 commands" corrected to "4-command protocol" / "same 4 commands." The 5×3 compositional grid in the bible belongs to the **enemy macro behavior system**, not player commands.
+3. **`docs/bible_history/bible_2_00_combat.md` L235 and L456** — "5-command protocol" / "same 5 commands" corrected to "4-command protocol" / "same 4 commands." The 5×3 compositional grid in the bible belongs to the **enemy macro behavior system**, not player commands.
 4. **Hub §15 (Simulation State Journaling and Rollback)** — rewritten to remove rewind from Stage 8 scope. Stage 8 ships saves only; rewind is a post-launch feature with its own design sketch (pre-mission-selection snapshot boundary, 5-mission minimum gate, mission-generator re-run on rewind, linear-default + fork, chronicle erased on rewind).
-5. **Onboarding rare-mark rule** — `game_bible.md:155` and `bible_missions.md:301` rewritten: the "up to two markable as rare" cap was removed. The rule is now "any subset may be marked rare, provided at least one archetype remains unmarked." The interaction is binary per archetype (rare or default); no sliders or gradation.
-6. **`bible_combat.md` §"Mid-Mission HUD Layout"** — new section added between "Camera and Player View" and "Moving Battlefields." Captures the IGoP-inspired HUD layout adapted for Ouroboros. The hub Stage 8 paragraph's stale "up to 2 markable as rare" phrasing and stale "rewind-with-re-seed" mentions in "Beyond Stage 9" were fixed in the same pass.
-7. **Hub Stage 8 paragraph — recon-phase enemy visibility** — corrected from "enemy positions based on intelligence quality" (stale; the bible never built an intelligence-quality system) to "enemy positions hidden," matching `bible_world.md` §"Recon Phase — Terrain Visibility, Enemy Hidden." Cross-reference added.
+5. **Onboarding rare-mark rule** — `game_bible.md:155` and `docs/bible_history/bible_2_00_missions.md:301` rewritten: the "up to two markable as rare" cap was removed. The rule is now "any subset may be marked rare, provided at least one archetype remains unmarked." The interaction is binary per archetype (rare or default); no sliders or gradation.
+6. **`docs/bible_history/bible_2_00_combat.md` §"Mid-Mission HUD Layout"** — new section added between "Camera and Player View" and "Moving Battlefields." Captures the IGoP-inspired HUD layout adapted for Ouroboros. The hub Stage 8 paragraph's stale "up to 2 markable as rare" phrasing and stale "rewind-with-re-seed" mentions in "Beyond Stage 9" were fixed in the same pass.
+7. **Hub Stage 8 paragraph — recon-phase enemy visibility** — corrected from "enemy positions based on intelligence quality" (stale; the bible never built an intelligence-quality system) to "enemy positions hidden," matching `docs/bible_history/bible_2_00_world.md` §"Recon Phase — Terrain Visibility, Enemy Hidden." Cross-reference added.
 
 ## Gating Open Design Questions — ALL RESOLVED
 
 All Stage 8 design questions are now captured. The list below is preserved for audit; each entry is marked with its resolution. Implementation is unblocked on the design-question front.
 
-- **S8-3 — Mid-mission UI information density.** RESOLVED (Q5): IGoP-inspired layout with Ouroboros substitutions. See `bible_combat.md` §"Mid-Mission HUD Layout." Reference screenshots at `docs/design_questions/igop_hud_reference_alpha.png` and `igop_hud_reference_beta.png`.
+- **S8-3 — Mid-mission UI information density.** RESOLVED (Q5): IGoP-inspired layout with Ouroboros substitutions. See `docs/bible_history/bible_2_00_combat.md` §"Mid-Mission HUD Layout." Reference screenshots at `docs/design_questions/igop_hud_reference_alpha.png` and `igop_hud_reference_beta.png`.
 
 ### Captured decisions the spec relies on (no change needed)
 
@@ -36,17 +36,17 @@ All Stage 8 design questions are now captured. The list below is preserved for a
 - **Onboarding in Stage 8** (Q1): resolved Option A. Bible edited.
 - **Player command count = 4** (Q2): resolved. Bible edited.
 - **Onboarding interaction model** (Q4 / S8-2): binary per-archetype "mark as rare" — any subset allowed except all 10. Difficulty is a three-button Easy / Medium / Hard selector. Bible edited.
-- **Mid-mission HUD layout** (Q5 / S8-3): IGoP-inspired clustered bottom bar, Ouroboros-specific reinforcement-structure panel replacing IGoP's build grid, layer selector above commander portrait. See `bible_combat.md` §"Mid-Mission HUD Layout." Bible edited.
+- **Mid-mission HUD layout** (Q5 / S8-3): IGoP-inspired clustered bottom bar, Ouroboros-specific reinforcement-structure panel replacing IGoP's build grid, layer selector above commander portrait. See `docs/bible_history/bible_2_00_combat.md` §"Mid-Mission HUD Layout." Bible edited.
 - **S75-* / S7-*** resolutions as documented in the design doc.
 
 ## Bible References
 
-- **`bible_combat.md`** — §Layer Assignment Hotkey (layer commands the renderer/input system must support), §Camera and Player View (free pan/zoom, minimap), §Command Vocabulary (command set for the command packet), §Unit Behavior AI / Abilities — Player-Activated Only (ability bar behavior: cooldown-only).
-- **`bible_world.md`** — §Recon Phase (terrain visible, enemies hidden; free camera, no time pressure; mission clock starts on "Begin Mission"), §"The Vertical Dimension" / §§ on layer accessibility (what the renderer must display per layer).
-- **`bible_monetization.md`** — §"Platform: PC-only" (keyboard+mouse-only command design — the renderer does not target controller input in this stage).
+- **`docs/bible_history/bible_2_00_combat.md`** — §Layer Assignment Hotkey (layer commands the renderer/input system must support), §Camera and Player View (free pan/zoom, minimap), §Command Vocabulary (command set for the command packet), §Unit Behavior AI / Abilities — Player-Activated Only (ability bar behavior: cooldown-only).
+- **`docs/bible_history/bible_2_00_world.md`** — §Recon Phase (terrain visible, enemies hidden; free camera, no time pressure; mission clock starts on "Begin Mission"), §"The Vertical Dimension" / §§ on layer accessibility (what the renderer must display per layer).
+- **`bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/)** — §"Platform: PC-only" (keyboard+mouse-only command design — the renderer does not target controller input in this stage).
 - **`game_bible.md` (hub)** — "The Cycle" step 2 (Recon Phase design), "Onboarding and First Chapter" (onboarding screen + opening time jump), §15 Simulation State Journaling and Rollback (persistence + rewind contract), §16 Space Era Vertical Layer Visualization (three-tier layer rendering approach the tactical renderer implements).
 
-Do NOT read `bible_chronicle.md`, `bible_antagonist.md`, `bible_monetization.md` (beyond the PC-only line), `bible_simulation.md` (beyond the field list the save writer serializes), or `bible_ai_pipeline.md` — not relevant to Stage 8.
+Do NOT read `docs/bible_history/bible_2_00_chronicle.md`, `docs/bible_history/bible_2_00_antagonist.md`, `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/) (beyond the PC-only line), `docs/bible_history/bible_2_00_simulation.md` (beyond the field list the save writer serializes), or `docs/bible_history/bible_2_00_ai_pipeline.md` — not relevant to Stage 8.
 
 ## Cross-Stage References
 
@@ -153,14 +153,14 @@ Maintains a small interpolation buffer (last 3 ticks) so the renderer can interp
 
 **`scenes/opening_scroll/opening_scroll.tscn + .gd`** — the abbreviated 3–5 entry chronicle scroll the player sees right after the opening time jump completes. Per bible §"Opening time jump" — minimal in-Stage-8 implementation: a vertical text list of 3–5 chronicle entries (all world entries — there is no previous mission so no consequence entries), pre-rendered using the Stage 5 chronicle distiller against the post-jump simulation state. **No animated map view, no per-entry expand interaction, no scroll animations** — those land with the full chronicle scroll UI in Beyond-Stage-9 work. Stage 8 is purely "render the entries the distiller produces, in order, and let the player click `Continue` to proceed to recon." This is the player's introduction to both the world and the chronicle voice; landing them in the first mission cold would undercut the bible's "weight of time" framing.
 
-**`scenes/recon/recon.tscn + .gd`** — pre-mission free-camera view. Terrain visible, enemy positions hidden (per `bible_world.md` §Recon Phase). No time pressure. `Begin Mission` button transitions to `tactical.tscn` and signals the server to start the tick clock.
+**`scenes/recon/recon.tscn + .gd`** — pre-mission free-camera view. Terrain visible, enemy positions hidden (per `docs/bible_history/bible_2_00_world.md` §Recon Phase). No time pressure. `Begin Mission` button transitions to `tactical.tscn` and signals the server to start the tick clock.
 
-**`scenes/tactical/tactical.tscn + .gd`** — the big one. Top-down RTS camera with free pan/zoom (per `bible_combat.md` §Camera and Player View). Consumes snapshots and deltas from `TacticalBridge`, interpolates unit positions between ticks, renders the three-tier layer system (indicator rings, active-layer focus, dimmed inactive layers per hub §16), sends command packets on player input.
+**`scenes/tactical/tactical.tscn + .gd`** — the big one. Top-down RTS camera with free pan/zoom (per `docs/bible_history/bible_2_00_combat.md` §Camera and Player View). Consumes snapshots and deltas from `TacticalBridge`, interpolates unit positions between ticks, renders the three-tier layer system (indicator rings, active-layer focus, dimmed inactive layers per hub §16), sends command packets on player input.
 
 Children scenes:
 - `unit_renderer.gd` — per-unit sprite + layer indicator ring + selection halo.
 - `terrain_renderer.gd` — spine nodes, gradient-driven dressing (three tiers per §16), reinforcement structure markers with ownership color + HP bar + production timer.
-- `hud.tscn + .gd` — the IGoP-inspired HUD per `bible_combat.md` §"Mid-Mission HUD Layout." Top-left info column (objectives + event ticker), top-center banner channel, top-right clock + menu, bottom-center command cluster (selection panel + minimap + reinforcement-structure panel), bottom-center-right control-group tabs, bottom-right commander portrait, right-edge layer selector. Ability bar is cooldown-only (per bible §Abilities — Player-Activated Only). Event ticker content at launch is hardcoded to the beat set (capture / loss / rout / objective threshold); no polished authored content in Stage 8.
+- `hud.tscn + .gd` — the IGoP-inspired HUD per `docs/bible_history/bible_2_00_combat.md` §"Mid-Mission HUD Layout." Top-left info column (objectives + event ticker), top-center banner channel, top-right clock + menu, bottom-center command cluster (selection panel + minimap + reinforcement-structure panel), bottom-center-right control-group tabs, bottom-right commander portrait, right-edge layer selector. Ability bar is cooldown-only (per bible §Abilities — Player-Activated Only). Event ticker content at launch is hardcoded to the beat set (capture / loss / rout / objective threshold); no polished authored content in Stage 8.
 - `input_router.gd` — keyboard + mouse → command packet. Handles box-select, click-select, right-click → `move` or `attack_move` (Shift modifier), `A`-then-click → `attack_move`, hotkey abilities, control groups (Ctrl+1..0 bind, 1..0 recall), tilde (`~`) all-army hotkey (auto-includes newly produced units per hub Stage 8 roadmap).
 
 **`scenes/debug_save_panel/debug_save_panel.tscn + .gd`** — temporary UI for Stage 8 testing. Lists slots, shows per-slot metadata (chapter number, last played, tactical-state presence), buttons for "save now," "quit (write tactical state)," "resume (load tactical state)," and "new slot." No rewind, no fork, no timeline view — those are post-launch. Retired when Stage 9's polished save-slot browser ships. The panel calls `TacticalBridge` which calls the Python persistence API over the same WebSocket channel (reuses the socket; does not open a second port).
@@ -291,7 +291,7 @@ A unit absent from `units_updated` and `units_removed` is on-course — the clie
 }
 ```
 
-Command `kind` values — the canonical **4-command combat vocabulary** (`bible_combat.md` §Command Vocabulary) plus two layer commands on a separate channel (`bible_combat.md` §Layer Assignment Hotkey):
+Command `kind` values — the canonical **4-command combat vocabulary** (`docs/bible_history/bible_2_00_combat.md` §Command Vocabulary) plus two layer commands on a separate channel (`docs/bible_history/bible_2_00_combat.md` §Layer Assignment Hotkey):
 
 Combat channel (4):
 - `move {unit_uids, target: {pos, layer}}`
@@ -359,7 +359,7 @@ On resume: `save_loader.load_tactical_state(slot)` rehydrates the engine via `en
 }
 ```
 
-No per-archetype weight field — the interaction is binary per S8-2. Unmarked archetypes carry the default preference weight; archetypes in `rare_marks` carry the rare down-weight (0.1 per `bible_missions.md`). Validation at write time: `len(rare_marks) < 10` (at least one archetype must remain unmarked). Rewritten only at new-cycle events (Exodus / Extinction). Preferences live outside the simulation save file per the bible's "permanent for the generational arc" framing.
+No per-archetype weight field — the interaction is binary per S8-2. Unmarked archetypes carry the default preference weight; archetypes in `rare_marks` carry the rare down-weight (0.1 per `docs/bible_history/bible_2_00_missions.md`). Validation at write time: `len(rare_marks) < 10` (at least one archetype must remain unmarked). Rewritten only at new-cycle events (Exodus / Extinction). Preferences live outside the simulation save file per the bible's "permanent for the generational arc" framing.
 
 ## Integration Points
 
@@ -477,7 +477,7 @@ Each checkpoint is a hard stop per `dev_rules.md` § Mandatory Checkpoints. Run 
 
 ### Checkpoint I — HUD Panels (IGoP Layout)
 
-**Build:** `hud.tscn` + child scenes per `bible_combat.md` §"Mid-Mission HUD Layout." All panels at Stage 8 scope (no polished authored ticker content, no enemy composition, right sidebar empty).
+**Build:** `hud.tscn` + child scenes per `docs/bible_history/bible_2_00_combat.md` §"Mid-Mission HUD Layout." All panels at Stage 8 scope (no polished authored ticker content, no enemy composition, right sidebar empty).
 
 **Test:** Load a Stage 7 generated map with reinforcement structures, run a scripted mission where structures change ownership, objectives progress, forces route. Verify each HUD panel updates in response.
 
@@ -501,7 +501,7 @@ Each checkpoint is a hard stop per `dev_rules.md` § Mandatory Checkpoints. Run 
 
 ### Checkpoint K — Recon Phase
 
-**Build:** `scenes/recon/recon.tscn`. Free-camera view of the mission map per `bible_world.md` §Recon Phase. Terrain visible, enemy positions hidden. No time pressure (no mission clock yet). "Begin Mission" button transitions into `tactical.tscn` and tells the server to unpause the engine.
+**Build:** `scenes/recon/recon.tscn`. Free-camera view of the mission map per `docs/bible_history/bible_2_00_world.md` §Recon Phase. Terrain visible, enemy positions hidden. No time pressure (no mission clock yet). "Begin Mission" button transitions into `tactical.tscn` and tells the server to unpause the engine.
 
 **Test:** Load a generated mission, enter recon, pan / zoom around, confirm enemy units are hidden. Hit Begin Mission, confirm transition to tactical scene and clock starts.
 
@@ -582,7 +582,7 @@ Stage 8 is paused partway through Checkpoint I. The tactical client renders, acc
 
 ### Cause — Economic / Galaxy View Gap
 
-The tactical layer works in isolation, but there is no surrounding economic / galaxy-level wrapper for missions to flow into or out of. Missions launch from a debug harness, resolve, and end in a void. The macro loop that gives tactical gameplay its *meaning* — galaxy view of factions and territory, time jumps feeding into mission briefings, mission outcomes feeding back into the simulation — does not yet exist in the client. That scaffolding lives in **Stage 9** (UI shell: main menu, era library, mission briefing), **Stage 10** (backend integration of the UI bus with the live sim), **Stage 11** (galaxy view + seamless transition), and **Stage 12** (loop edges: onboarding, debrief, save). Note Ouroboros has **no currency / no tech tree** by design (per `bible_combat.md` §Mid-Mission HUD Layout and `bible_monetization.md`); "economic view" here refers to the *galactic-scale* economy of faction territory, technology level, and field drift — not a resource-management UI.
+The tactical layer works in isolation, but there is no surrounding economic / galaxy-level wrapper for missions to flow into or out of. Missions launch from a debug harness, resolve, and end in a void. The macro loop that gives tactical gameplay its *meaning* — galaxy view of factions and territory, time jumps feeding into mission briefings, mission outcomes feeding back into the simulation — does not yet exist in the client. That scaffolding lives in **Stage 9** (UI shell: main menu, era library, mission briefing), **Stage 10** (backend integration of the UI bus with the live sim), **Stage 11** (galaxy view + seamless transition), and **Stage 12** (loop edges: onboarding, debrief, save). Note Ouroboros has **no currency / no tech tree** by design (per `docs/bible_history/bible_2_00_combat.md` §Mid-Mission HUD Layout and `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/)); "economic view" here refers to the *galactic-scale* economy of faction territory, technology level, and field drift — not a resource-management UI.
 
 Resuming Stage 8 ahead of resolving that gap is valid (Checkpoints J–M stand on their own), but the ordering was re-examined and further Stage 8 work was deferred. When resuming, either finish Stage 8 on its own terms or bring the Stage 9 / 11 scaffolding in first so Checkpoint J's onboarding → time jump → recon → mission flow has somewhere to *land*.
 
@@ -606,7 +606,7 @@ Resuming Stage 8 ahead of resolving that gap is valid (Checkpoints J–M stand o
 
 ### Checkpoint I — Remaining Work
 
-1. **Sim-side event emission.** `simulation/snapshot_serializer.py` currently emits one event kind: `unit_destroyed` (line 229). The four additional kinds required by the bible ticker list (`bible_combat.md` §Mid-Mission HUD Layout — "reinforcement structure captured / lost, force routed, objective threshold hit") are *not emitted anywhere*. HUD handlers in `scenes/tactical/hud.gd:72-89` are defensively coded for these kinds but will never fire until the sim emits them. Work needed:
+1. **Sim-side event emission.** `simulation/snapshot_serializer.py` currently emits one event kind: `unit_destroyed` (line 229). The four additional kinds required by the bible ticker list (`docs/bible_history/bible_2_00_combat.md` §Mid-Mission HUD Layout — "reinforcement structure captured / lost, force routed, objective threshold hit") are *not emitted anywhere*. HUD handlers in `scenes/tactical/hud.gd:72-89` are defensively coded for these kinds but will never fire until the sim emits them. Work needed:
    - `structure_captured` / `structure_lost` — diff `structure.owner_faction` between snapshots in the serializer; emit from the perspective of each diff.
    - `force_routed` — threshold on aggregate faction HP fraction or unit-count drop per tick; location TBD (`objectives.py` or a new `events/tactical_events.py`).
    - `objective_threshold` — emit when an `Objective.progress` crosses a threshold (25/50/75/100%).
@@ -625,7 +625,7 @@ Applied during implementation with Westley's approval. Spec lines already edited
 - Control-group bind: `Ctrl+1..0` **or `Cmd+1..0` on macOS**. macOS intercepts `Ctrl+digit` for Mission Control desktop switching, so Godot never sees it; accepting `meta_pressed` as an alternative modifier lets Mac users bind groups with `Cmd`. Code: `input_router.gd::_handle_digit`.
 - Camera pan: edge-scroll (classic RTS), not WASD. Per `feedback_camera_controls` memory.
 
-**HUD layout (Checkpoint I, diverges from `bible_combat.md` §Mid-Mission HUD Layout *text* in favor of matching the IGoP *reference screenshots*):**
+**HUD layout (Checkpoint I, diverges from `docs/bible_history/bible_2_00_combat.md` §Mid-Mission HUD Layout *text* in favor of matching the IGoP *reference screenshots*):**
 - Minimap: **bottom-left at 1.5× base** (330×330). Bible text said "center or right-of-center." Westley's call after seeing the reference.
 - Reinforcements panel: immediately right of the minimap. Bible text said "right of minimap" — matches.
 - Selection panel: **bottom-center**. Bible text said "selected-unit portrait panel left-of-center."
@@ -661,7 +661,7 @@ Applied during implementation with Westley's approval. Spec lines already edited
 
 Track separately; **do not fold back into Stage 8**:
 - **Tactical art pass.** Settled Reach GLB assets exist at `docs/blender_stuff/the-settled-reach/` (at least `SetReachBastionT2.glb` imported). No stage spec currently covers importing era art into `tactical.tscn` — the scene is still Node2D with placeholder sprites per Checkpoint G. New design decision required: convert `tactical.tscn` to Node3D with an orthographic 60° camera (the `CAMERA_ANGLE_DEGREES = 60.0` constant anticipates this but is currently unused) vs. pre-render meshes to sprite sheets. Bible update + new stage spec needed if pursued.
-- **Zoom-dependent camera tilt** (top-down at wide zoom → angled at close zoom). Not in any stage spec or bible section; hub §16 explicitly assumes *"the fixed top-down camera angle"*. If desired, belongs in `bible_combat.md` §Camera and Player View first.
+- **Zoom-dependent camera tilt** (top-down at wide zoom → angled at close zoom). Not in any stage spec or bible section; hub §16 explicitly assumes *"the fixed top-down camera angle"*. If desired, belongs in `docs/bible_history/bible_2_00_combat.md` §Camera and Player View first.
 - **Layer visualization Tier 2/3** (`game_bible.md` §16 — light and heavy environmental dressing). Tier 1 (indicator rings) is Checkpoint H territory. Tiers 2/3 are deferred with no current owner.
 
 ### When Resuming

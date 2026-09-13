@@ -10,7 +10,7 @@ contributor: Research Lane Wave 1 capture
 
 ## What this brief is
 
-A characterization of the Steam tag landscape relevant to Ouroboros' two niche-target tribes (generational/legacy strategy + Foundation/hard-SF) in 2026, with explicit attention to the tag-list contradiction between `docs/bible/bible_monetization.md` L288 (locked April 2026) and `docs/bible/game_bible.md ## In Flux` 2026-05-16 RTS-framing kill. The brief catalogs which tags carry signal to which audience, which tags are over-fished kill-zones, which tags are under-fished blue oceans, and which tags have changed status since the bible_monetization tag list was authored. It does not pick a tag slate. The Design Lane decides; this brief surfaces the landscape that informs the decision.
+A characterization of the Steam tag landscape relevant to Ouroboros' two niche-target tribes (generational/legacy strategy + Foundation/hard-SF) in 2026, with explicit attention to the tag-list contradiction between `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` L288 (locked April 2026) and `docs/bible/game_bible.md ## In Flux` 2026-05-16 RTS-framing kill. The brief catalogs which tags carry signal to which audience, which tags are over-fished kill-zones, which tags are under-fished blue oceans, and which tags have changed status since the bible_monetization tag list was authored. It does not pick a tag slate. The Design Lane decides; this brief surfaces the landscape that informs the decision.
 
 This brief feeds the lock of Ouroboros' Steam tag slate. The slate is the primary discovery surface controllable from the Steam page side — wishlist conversion downstream of search depends on the tag pick. Mis-tagging surfaces the page to the wrong tribe (kill-zone tag pull) and starves the right tribe (under-fished tag absence).
 
@@ -22,7 +22,7 @@ Source-scanned: Steam store tag landscape circa 2024–2026 from training data; 
 
 The Steam tag landscape brief is the first artifact in the commercial-stream wave that surfaces a load-bearing bible contradiction. The conflict must be resolved by the bible authority before any downstream commercial brief (T-W1 wishlist conversion, T-S2 capsule A/B, T-F2 festival roster) can cite a stable tag slate.
 
-**`docs/bible/bible_monetization.md` L288 (locked April 24, 2026 per the resolved-date stamp on neighboring components):**
+**`docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` L288 (locked April 24, 2026 per the resolved-date stamp on neighboring components):**
 
 > Priority tags (highest weight): Strategy, RTS, Sci-fi, Historical, Singleplayer, Story Rich, Atmospheric, Indie. Secondary tags: Sandbox, Replay Value, Grand Strategy, Procedural Generation, Turn-Based (for the simulation layer).
 
@@ -38,7 +38,7 @@ The April 24 priority-tag list includes "RTS" as the second-highest-weight tag. 
 
 Adjacent collisions that follow from the same In Flux entry: "Real-Time" as a tag carries the same kill-zone signal the In Flux entry excludes. "Competitive" and "Esports" carry it harder. "MOBA" was not in the L288 list but warrants the same exclusion if any near-tag candidacy emerges. The bible-monetization secondary-tag list ("Sandbox, Replay Value, Grand Strategy, Procedural Generation, Turn-Based") is not in conflict with the In Flux entry, though "Turn-Based" specifically deserves a separate scrutiny — see the Tag-by-tag walk below.
 
-The conflict resolution is the bible authority's call, not this brief's. The Design Lane's Steam-tag-slate fork must update `bible_monetization.md` L288 (or whatever line carries the new tag slate after revision) to reflect the In Flux decision before any subsequent commercial brief can cite a stable list. Until then, downstream briefs cite "the In-Flux-compliant tag slate, to be locked" rather than the L288 priority list.
+The conflict resolution is the bible authority's call, not this brief's. The Design Lane's Steam-tag-slate fork must update `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/) L288 (or whatever line carries the new tag slate after revision) to reflect the In Flux decision before any subsequent commercial brief can cite a stable list. Until then, downstream briefs cite "the In-Flux-compliant tag slate, to be locked" rather than the L288 priority list.
 
 ## Tag landscape — by tribe
 
@@ -125,7 +125,7 @@ Confidence floor for any Steam-side algorithm claim is ESTIMATED — the 2026 al
 
 ## Feeds Design Lane
 
-- The bible authority needs to lock the post-In-Flux tag slate at `bible_monetization.md` L288. The Design Lane's commercial-stream fork on tag-slate-pick reads this brief as input.
+- The bible authority needs to lock the post-In-Flux tag slate at `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/) L288. The Design Lane's commercial-stream fork on tag-slate-pick reads this brief as input.
 - T-S2 (capsule A/B norms), T-S3 (algorithm visibility), T-S4 (page conversion norms): cite the resolved tag slate, not L288.
 - T-W1 (wishlist conversion benchmarks): tribe-yield estimates depend on which slate is locked.
 - T-F2 (festival roster): festival-application tag-fits cite the resolved slate.
@@ -143,7 +143,7 @@ Confidence floor for any Steam-side algorithm claim is ESTIMATED — the 2026 al
 
 ## Sources
 
-- `docs/bible/bible_monetization.md` L288 — verbatim priority and secondary tag lists captured in this brief.
+- `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` L288 — verbatim priority and secondary tag lists captured in this brief.
 - `docs/bible/game_bible.md ## In Flux` Lieutenant System entry (2026-05-16) — verbatim niches-avoided list captured.
 - `docs/research/topics/rts_market_kill_zone_2026.md` — kill-zone substantiation; cited extensively.
 - `docs/research/topics/lieutenant_pivot_niche_brief.md` — tribe-discovery surface list and open-Q4 reference.

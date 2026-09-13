@@ -290,9 +290,9 @@ ARPU/wishlist appears to peak around $19.99-$24.99 in pure-conversion-math terms
 
 ## Conflict surfaced
 
-**Conflict #2 — bible internal: `docs/bible/bible_monetization.md` L274 "Free to play. Infinite eras." vs `docs/bible/game_bible.md` 80-200k units @ $25-35 paid-base lock.**
+**Conflict #2 — bible internal: `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` L274 "Free to play. Infinite eras." vs `docs/bible/game_bible.md` 80-200k units @ $25-35 paid-base lock.**
 
-Verbatim from `docs/bible/bible_monetization.md` L274: "Free to play. Infinite eras." (As surfaced in `docs/research/topics/primary_tribe_psychographic_profile.md ## Conflict surfaced` and per the topic-scope directive for this brief.)
+Verbatim from `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` L274: "Free to play. Infinite eras." (As surfaced in `docs/research/topics/primary_tribe_psychographic_profile.md ## Conflict surfaced` and per the topic-scope directive for this brief.)
 
 The L274 tagline frames the product as free-to-play. The `docs/bible/game_bible.md` headline targets 80-200k units @ $25-35 paid-base + DLC-per-era. These are internally contradictory framings for the same product. A paid-base product cannot be marketed as "free to play" without consumer confusion + Steam review backlash from primary tribe (cross-ref `docs/research/topics/primary_tribe_psychographic_profile.md` — CK3, BB, FoG:E audiences are anti-F2P-framing). A free-to-play product cannot deliver the $25-35 ARPU implied by the unit + revenue target unless the F2P framing is purely tagline-cosmetic (e.g., "Roman era free-tier" reading) and not literal.
 
@@ -300,7 +300,7 @@ The plausible reconciliation is "Roman era is free, subsequent eras are paid DLC
 
 **Research Lane does not resolve.** Bible authority resolves — surface to Westley + Design Lane. Brief flags. Per `docs/research/topics/primary_tribe_psychographic_profile.md` and this brief, the conflict #2 surfaces for at least the third time in Research Lane outputs and should be resolved in the next bible pass.
 
-Adjacent: `docs/bible/bible_monetization.md` L292 Fortnite reference is flagged in `docs/research/topics/primary_tribe_psychographic_profile.md` and is downstream of T-M1 free-tier framing / T-B1 brand positioning. Out of scope for this brief but noted as adjacent collision.
+Adjacent: `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` L292 Fortnite reference is flagged in `docs/research/topics/primary_tribe_psychographic_profile.md` and is downstream of T-M1 free-tier framing / T-B1 brand positioning. Out of scope for this brief but noted as adjacent collision.
 
 No additional conflict surfaced between this brief and the bible's stated $25-35 band.
 
@@ -380,7 +380,7 @@ WebFetch + WebSearch denied this session. All sources referenced from training-d
   - `docs/research/topics/tribe_demographics.md` — income proxy + regional split inputs feeding this brief
   - `docs/research/topics/primary_tribe_psychographic_profile.md` — per-title review-theme inputs + conflict #2 prior surfacing
   - `docs/bible/game_bible.md` — 80-200k @ $25-35 lock + bible-authority-resolves directive
-  - `docs/bible/bible_monetization.md` L274 (Free-to-play tagline) + L292 (Fortnite reference) — conflict #2 + adjacent collision
+  - `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` L274 (Free-to-play tagline) + L292 (Fortnite reference) — conflict #2 + adjacent collision
 
 **Re-capture stamp.** All per-tier wishlist conversion + refund rate + review-score correlation + ARPU arithmetic claims are training-data-derived as of cutoff. Live Steam + SteamDB + Gamalytic + GameDiscoverCo refresh required to upgrade REPORTED/ESTIMATED → VERIFIED. Flag for Research Lane re-capture when WebFetch is restored.
 

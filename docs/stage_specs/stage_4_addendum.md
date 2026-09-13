@@ -54,11 +54,11 @@ fortifier after conquest but belongs to conqueror. Two factions attacked the sam
 on the same tick. The second attack overwrote the first conquest.
 
 **Root cause:** The bible specifies a probabilistic collision resolver for same-tick
-same-target attacks (`bible_simulation.md` → "Contested regions — collision resolution").
+same-target attacks (`docs/bible_history/bible_2_00_simulation.md` → "Contested regions — collision resolution").
 This was never implemented. Stage 3 spec only implemented colonization collisions
 (checkpoint E2: coin-flip winner, loser refunded). Attack collisions were missed.
 
-**Bible spec (verbatim from `bible_simulation.md`):**
+**Bible spec (verbatim from `docs/bible_history/bible_2_00_simulation.md`):**
 
 > "When two or more factions target the same region on the same tick (whether through
 > attacks, colonization, or a mix), the intent resolver runs a collision resolution.

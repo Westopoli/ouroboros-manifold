@@ -26,7 +26,7 @@ Source synthesis (no live fetch; WebFetch denied in this environment):
 - `foundation_vocabulary.md` register characterization (heroic / empire-building vs cyclical / predictive / archival)
 - `lieutenant_pivot_niche_brief.md` niche ranking (primary: generational/legacy strategy intersection, ~80-200k passionate buyers; secondary thematic differentiator: Foundation / hard-SF tribe, ~20-80k initial reach)
 - `docs/bible/game_bible.md ## In Flux` 2026-05-16 Lieutenant System + RTS-framing-kill entry
-- `docs/bible/bible_monetization.md` L274 ("Free to play" tagline), L288 (RTS tag list, contradicted by RTS-kill), L292 (Fortnite reference) — surfaced as known bible conflicts
+- `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` L274 ("Free to play" tagline), L288 (RTS tag list, contradicted by RTS-kill), L292 (Fortnite reference) — surfaced as known bible conflicts
 
 **Exclusions:** No live capsule-text scraping of competitor Steam pages in 2026. No competitive A/B test data. No press-kit text capture beyond training recall. Brief operates at the strategic-positioning level, not the verbatim-capsule-copy level (that is T-B3's domain).
 
@@ -240,7 +240,7 @@ Upstream briefs synthesised:
 Cross-reference within Ouroboros docs:
 
 - `docs/bible/game_bible.md ## In Flux` — Lieutenant System + RTS-framing-kill 2026-05-16 entry
-- `docs/bible/bible_monetization.md` L274 + L288 + L292 — conflict-flag targets
+- `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` L274 + L288 + L292 — conflict-flag targets
 - `docs/research/topics/cosmetic_monetization_niche.md` (T-M3) — Conflict #3 mechanic-side companion brief
 - `docs/research/topics/free_tier_paid_dlc_precedents.md` (T-M1) — Conflict #2 carry-forward
 - `docs/research/topics/per_era_dlc_structure.md` (T-M2) — era-naming + bundle architecture inputs

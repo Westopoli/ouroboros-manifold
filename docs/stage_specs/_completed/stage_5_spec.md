@@ -10,9 +10,9 @@ This is the stage where the simulation starts producing *story* rather than just
 
 Read these spoke sections before implementing:
 
-- **`bible_chronicle.md`**: Full file — chronicle scroll distiller algorithm (three passes), template category taxonomy (20 categories), fragment structure (opening/detail/closing), fragment compatibility rule, variable slot vocabulary, fragment generation rules (8 rules), fragment volume per category, library builder validation pass (3 layers), lineage entanglement
-- **`bible_ai_pipeline.md`**: "Library builder pipeline" (overview), "Dynamic Naming System" (full section — variable-driven prompt architecture, three variable categories, per-faction variable subsets, Schism cultural drift, era-split pools, library sizing, deduplication, name reuse, coherence ledger interface)
-- **`bible_simulation.md`**: "Coherence Ledger" (named character registry, character roles, event attachment)
+- **`docs/bible_history/bible_2_00_chronicle.md`**: Full file — chronicle scroll distiller algorithm (three passes), template category taxonomy (20 categories), fragment structure (opening/detail/closing), fragment compatibility rule, variable slot vocabulary, fragment generation rules (8 rules), fragment volume per category, library builder validation pass (3 layers), lineage entanglement
+- **`docs/bible_history/bible_2_00_ai_pipeline.md`**: "Library builder pipeline" (overview), "Dynamic Naming System" (full section — variable-driven prompt architecture, three variable categories, per-faction variable subsets, Schism cultural drift, era-split pools, library sizing, deduplication, name reuse, coherence ledger interface)
+- **`docs/bible_history/bible_2_00_simulation.md`**: "Coherence Ledger" (named character registry, character roles, event attachment)
 - **`game_bible.md` (hub)**: "The Generational Structure" (lineage persistence, character selector algorithm, lineage member generation during time jumps), "The Chronicle" (summary), "AI Integration Pillar" (summary)
 
 ## What to Build

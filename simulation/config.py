@@ -770,7 +770,7 @@ ARCHETYPE_STRUCTURE_SPLIT = {
 }
 
 # ── Outcome Resolver ──
-# Consequence tables: transcribed from bible_missions.md success spectrums.
+# Consequence tables: transcribed from docs/bible_history/bible_2_00_missions.md success spectrums.
 # Each delta: field, form ("deficit" = +pct of (100-current), "current" = pct of current), pct, target.
 # Positive pct = field increases. Negative pct = field decreases.
 CONSEQUENCE_TABLES = {
@@ -1037,7 +1037,7 @@ GRADIENT_FLANK_OBSTACLE_RADIUS     = 450.0
 GRADIENT_FLANK_COVER_INTENSITY     = 0.40
 GRADIENT_FLANK_COVER_RADIUS        = 450.0
 # A3 Option B (2026-05-20): cover at defensible positions + approach corridors,
-# per bible_world.md:188 ("cover density gradients are placed in defensible
+# per docs/bible_history/bible_2_00_world.md:188 ("cover density gradients are placed in defensible
 # positions and approach corridors"). Calibration anchors:
 #   staging cover  = (800, 0.60)  — broad safe area, player rear
 #   flank cover    = (450, 0.40)  — mild concealment along flank

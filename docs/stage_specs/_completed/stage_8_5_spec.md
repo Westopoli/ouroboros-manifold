@@ -12,14 +12,14 @@ Stage 8.5 is the stage where Sacred Design Principle #3 becomes visually real. A
 
 ## Bible References
 
-- **`bible_ai_pipeline.md`** — §"3D Asset Pipeline" (per-era production workflow, polygon budgets, faction color face groups, tier material specifications with exact hex/metallic/roughness/emission values), §"Sci-Fi Era Production Spec" (asset manifest, Blender workflow, faction color regions).
-- **`bible_world.md`** — §"Three-Tier Visual Progression" (tier visual language: Frontier/Establishment/Zenith), §"Sci-Fi Unit Designs — All 6 Types Across 3 Tiers" (per-unit visual descriptions driving model selection), §"Tactical Map Structures" (structure visual categories), §"Cross-Era Unit Silhouette Archetypes" (hard constraint: silhouette shapes persist across all eras).
-- **`bible_combat.md`** — §"Unit Roster — 6 Base Types" (abstract type names the resolver maps from), §"Squad Mechanics — Visual Only" (Strike units render as 3–5 models per entity), §"Tactical Reinforcement System" (one interactive structure type on the tactical map).
-- **`bible_monetization.md`** — §"Branch System Implementation Notes" (production structure types, per-era configurability), §"Era Pack Delivery" (era packs as JSON + 3D assets downloaded to local content directory).
+- **`docs/bible_history/bible_2_00_ai_pipeline.md`** — §"3D Asset Pipeline" (per-era production workflow, polygon budgets, faction color face groups, tier material specifications with exact hex/metallic/roughness/emission values), §"Sci-Fi Era Production Spec" (asset manifest, Blender workflow, faction color regions).
+- **`docs/bible_history/bible_2_00_world.md`** — §"Three-Tier Visual Progression" (tier visual language: Frontier/Establishment/Zenith), §"Sci-Fi Unit Designs — All 6 Types Across 3 Tiers" (per-unit visual descriptions driving model selection), §"Tactical Map Structures" (structure visual categories), §"Cross-Era Unit Silhouette Archetypes" (hard constraint: silhouette shapes persist across all eras).
+- **`docs/bible_history/bible_2_00_combat.md`** — §"Unit Roster — 6 Base Types" (abstract type names the resolver maps from), §"Squad Mechanics — Visual Only" (Strike units render as 3–5 models per entity), §"Tactical Reinforcement System" (one interactive structure type on the tactical map).
+- **`bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/)** — §"Branch System Implementation Notes" (production structure types, per-era configurability), §"Era Pack Delivery" (era packs as JSON + 3D assets downloaded to local content directory).
 - **`game_bible.md` (hub)** — Sacred Design Principle #3 (era-agnostic architecture — the revenue principle), §"Era Creation Template" (Layer 4: tactical map structures, Layer 6: asset production spec).
 - **`sloyd_prompt_strategy.md`** — full prompt sheet for Settled Reach units and environment assets. Settlement structure prompts are new deliverables for this stage.
 
-Do NOT read `bible_chronicle.md`, `bible_simulation.md`, `bible_antagonist.md`, `bible_missions.md` — not relevant to Stage 8.5.
+Do NOT read `docs/bible_history/bible_2_00_chronicle.md`, `docs/bible_history/bible_2_00_simulation.md`, `docs/bible_history/bible_2_00_antagonist.md`, `docs/bible_history/bible_2_00_missions.md` — not relevant to Stage 8.5.
 
 ## Cross-Stage References
 
@@ -261,7 +261,7 @@ The settlement is the tactical map's one interactive structure type. It represen
 
 **Poly budget:** 400–600 per tier.
 
-**Blender post-export:** Same workflow as units. Create `faction_color` face group on hull surfaces showing ownership. Apply tier materials from `bible_ai_pipeline.md`. Silhouette check at tactical zoom distance.
+**Blender post-export:** Same workflow as units. Create `faction_color` face group on hull surfaces showing ownership. Apply tier materials from `docs/bible_history/bible_2_00_ai_pipeline.md`. Silhouette check at tactical zoom distance.
 
 ## Implementation Checkpoints
 
@@ -363,7 +363,7 @@ Each checkpoint is a hard stop per `dev_rules.md`. Run test, show output, wait f
 
 ### Checkpoint H — Performance (Final)
 
-**Build:** MultiMesh batched rendering. Rewrite `unit_renderer.gd` from individual `MeshInstance3D` nodes per unit to `MultiMeshInstance3D` batching. This is required — individual nodes cause a Metal driver deadlock at 200v200 scale (~10 seconds to freeze). See bible_combat.md "Unit Rendering — MultiMesh Batching" for the resolved architectural decision.
+**Build:** MultiMesh batched rendering. Rewrite `unit_renderer.gd` from individual `MeshInstance3D` nodes per unit to `MultiMeshInstance3D` batching. This is required — individual nodes cause a Metal driver deadlock at 200v200 scale (~10 seconds to freeze). See docs/bible_history/bible_2_00_combat.md "Unit Rendering — MultiMesh Batching" for the resolved architectural decision.
 
 **Architecture:**
 ```
@@ -420,10 +420,10 @@ Per `dev_rules.md`: if an invariant fails, you may not widen thresholds or weake
 
 These bible edits should land alongside or shortly after this stage:
 
-1. **`bible_world.md` "Tactical Map Structures" section** — update to reflect the settlement as the single interactive structure type, replacing the Station/Military Installation/Resource Node breakdown for interactive structures. The three visual categories may persist as non-interactive point-of-interest skins but should be clearly distinguished from the capturable settlement.
-2. **`bible_monetization.md` line 249** — update "barracks-equivalent, factory-equivalent, resource-equivalent" to reflect the single settlement structure type. Per-era configurability (amount, placement, production rate) preserved.
-3. **`bible_ai_pipeline.md` "Asset Manifest" section** — update structure count from "3 types × 3 tiers = 9" to "1 type × 3 tiers = 3 settlement models" per era.
-4. **`bible_world.md` "Recon Phase" section** — correct "enemy positions based on intelligence quality" to "enemy positions hidden" per Stage 8's Bible Capture Pending item #7.
+1. **`docs/bible_history/bible_2_00_world.md` "Tactical Map Structures" section** — update to reflect the settlement as the single interactive structure type, replacing the Station/Military Installation/Resource Node breakdown for interactive structures. The three visual categories may persist as non-interactive point-of-interest skins but should be clearly distinguished from the capturable settlement.
+2. **`bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/) line 249** — update "barracks-equivalent, factory-equivalent, resource-equivalent" to reflect the single settlement structure type. Per-era configurability (amount, placement, production rate) preserved.
+3. **`docs/bible_history/bible_2_00_ai_pipeline.md` "Asset Manifest" section** — update structure count from "3 types × 3 tiers = 9" to "1 type × 3 tiers = 3 settlement models" per era.
+4. **`docs/bible_history/bible_2_00_world.md` "Recon Phase" section** — correct "enemy positions based on intelligence quality" to "enemy positions hidden" per Stage 8's Bible Capture Pending item #7.
 5. **`game_bible.md` hub** — add Stage 8.5 to the implementation roadmap between Stage 8 and Stage 9.
 6. **`sloyd_prompt_strategy.md`** — replace Station / Military Installation / Resource Node structure prompts with the three settlement prompts from this spec.
 
@@ -435,7 +435,7 @@ The 200v200 Metal freeze was **not** caused by draw call count. MultiMesh batchi
 
 **Fix:** All UI cleanup now uses `remove_child()` + `free()` for immediate cleanup instead of `queue_free()`. Applied to `hud.gd` (event ticker, objective list, structure list) and `terrain_renderer.gd` (rebuild).
 
-MultiMesh batching was retained as the correct architecture regardless — it reduces draw calls by 40×, scales cleanly to 1000+ units, and is documented in `bible_combat.md` "Unit Rendering — MultiMesh Batching".
+MultiMesh batching was retained as the correct architecture regardless — it reduces draw calls by 40×, scales cleanly to 1000+ units, and is documented in `docs/bible_history/bible_2_00_combat.md` "Unit Rendering — MultiMesh Batching".
 
 ### Checkpoint F — Asteroid Scatter
 

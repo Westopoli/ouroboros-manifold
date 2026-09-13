@@ -12,7 +12,7 @@
 > - No subscription, no Stripe, no external website checkout, no in-game key redemption.
 > - In-game "Purchase" buttons open the Steam overlay (currently stubbed).
 >
-> See `docs/bible/bible_monetization.md` "Current Monetization Model" section for the
+> See `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` "Current Monetization Model" section for the
 > authoritative spec. Stage 9 content below is preserved as implementation history;
 > the runtime no longer matches it.
 
@@ -30,8 +30,8 @@ This is the stage where the game starts *looking* like a product. Stages 1–7 p
 
 Read these sections before implementing:
 
-- **`bible_monetization.md`**: Full file — "UI Aesthetic — Terminal Meets Glass" (core aesthetic principles, animation philosophy, reference mockup), "UI Personality — Celebration Animations and Flavor Text" (key redemption personality, era unlock celebrations, design principles for personality layer), "In-Game Era Library" (storefront description), "Monetization Model" (free tier, trial, subscription, one-time purchase — needed to understand what the Era Library displays), "Access Key System" (three key types — needed for redemption UI), "Player Progression System" (tier progression, era mastery — needed for Era Library per-era detail display), "Marketing Strategy — Product-Led Growth" (UI as marketing — context for polish expectations)
-- **`bible_missions.md`**: "Mission Briefing" (three-section structure: situation, objective, assets), "Mission Outcome Resolver" (context only — understanding what data the briefing references)
+- **`bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/)**: Full file — "UI Aesthetic — Terminal Meets Glass" (core aesthetic principles, animation philosophy, reference mockup), "UI Personality — Celebration Animations and Flavor Text" (key redemption personality, era unlock celebrations, design principles for personality layer), "In-Game Era Library" (storefront description), "Monetization Model" (free tier, trial, subscription, one-time purchase — needed to understand what the Era Library displays), "Access Key System" (three key types — needed for redemption UI), "Player Progression System" (tier progression, era mastery — needed for Era Library per-era detail display), "Marketing Strategy — Product-Led Growth" (UI as marketing — context for polish expectations)
+- **`docs/bible_history/bible_2_00_missions.md`**: "Mission Briefing" (three-section structure: situation, objective, assets), "Mission Outcome Resolver" (context only — understanding what data the briefing references)
 - **`game_bible.md` (hub)**: "Sacred Design Principles" (era-agnostic architecture — all UI must be theme-neutral with era-specific accent colors injected), "Force and Combat Design" (unit roster summary — needed for mission briefing force display), "Implementation Stage Roadmap" (Stage 9 context)
 - **`dev_rules.md`**: Full file — stage spec format, checkpoint discipline, isolation principles
 
@@ -484,7 +484,7 @@ The error string set is defined in `ThemeConstants` (or a dedicated `error_messa
 
 **`scenes/mission_briefing/mission_briefing.tscn + .gd`** — The hinge screen. Receives `{mission_id}` or `{slot_id}` param. Contains:
 
-This screen is implemented pixel-accurately to the reference mockup in `bible_monetization.md`, section "Reference mockup — Mission Briefing Screen (Roman era)." All values below are from that spec.
+This screen is implemented pixel-accurately to the reference mockup in `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/), section "Reference mockup — Mission Briefing Screen (Roman era)." All values below are from that spec.
 
 *Header zone:*
 - Top-left: "MISSION BRIEFING" in `CLASSIFICATION_LABEL` style (10px mono, letter-spacing 3px, accent color). Below it: "{mission_id} // Chapter {N} // Generation {N}" in 10px mono, `TERTIARY`.

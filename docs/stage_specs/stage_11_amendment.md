@@ -92,7 +92,7 @@ signal all_entries_finished()
 - Click-to-expand shows `expanded_form` text, pauses sequencer, blinking cursor stops
 - Dismiss resumes sequencer and printing
 - Single-expand accordion (opening one closes others)
-- Slide-in: 400ms ease-out-cubic from screen right per `bible_animation_strategy.md` sweep_line
+- Slide-in: 400ms ease-out-cubic from screen right per `docs/bible_history/bible_2_00_animation_strategy.md` sweep_line
 
 **Prove-it:** Harness feeds mock entries, exercises word-by-word fade-in, click-to-expand with pause/resume, state transitions. Westley reviews.
 

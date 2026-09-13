@@ -2,88 +2,53 @@
 
 ## North Star (read first)
 
-The project is being rebuilt under an autonomous development method. **Agora** (`~/Projects/agora`, local Ollama models plus a dollar-capped DeepSeek driver) implements and QA-tests the game unattended; **Claude designs and tests**: the bible, the end-to-end behavior definitions, the roadmap, the fenced test suite, and the escalation rules. The sim is being rewritten in C with the stochastic equations preserved. Requirements are agile epics, stories, and rules; a story is built only after it passes the Definition of Ready. Full method, stages, and principles: `docs/northstar/README.md`, `docs/northstar/principles.md`, `docs/northstar/agile.md`. Where this file's Workflow section disagrees with `docs/northstar/`, the north star wins; the Workflow section below is rewritten in Stage 2.
+The game is rebuilt under an autonomous development method. **Agora** (`~/Projects/agora`, local Ollama models plus a dollar-capped DeepSeek driver) implements and QA-tests the game unattended. **Claude designs and tests**: the bible, the end-to-end behavior definitions, the roadmap, the fenced test suite, and the escalation rules. The simulation is rewritten in C with the stochastic equations preserved verbatim (`docs/bible/algorithms.md`). Requirements are agile epics, stories, and rules; a story is built only after it passes the Definition of Ready.
 
-**Tech stack:** Godot 4 (Forward+) · Python 3.14 · Cloudflare R2 CDN · `claude-sonnet-4-20250514` (library builder only, offline — never called during play)
+Full method: `docs/northstar/README.md` (short form), `docs/northstar/PLAN.md` (canonical), `docs/northstar/principles.md`, `docs/northstar/agile.md`. Where any other doc disagrees with `docs/northstar/`, the north star wins.
 
-This is a long-term project. There is no ship deadline. One feature at a time, done well, before the next one starts.
+**Tech stack:** C simulation library (pipe contract first, GDExtension later) · Godot 4 (Forward+) client · Python 3.14 test harness and library builder · Cloudflare R2 CDN · `claude-sonnet-4-20250514` (library builder only, offline, never called during play)
 
-## The Bible
-
-The game bible is the single source of truth for what this game is. It lives in `docs/bible/`:
-
-- **Hub:** `docs/bible/game_bible.md` — vision, principles, generational structure, player toolkit, tone, monetization.
-- **Spokes (if any):** `docs/bible/bible_*.md` — full reference for systems too long to fold into the hub. A spoke exists only if the hub got unreadable without it. Most rules belong in the hub.
-
-**Reading discipline:** Read the hub first. Read a spoke only if you're touching the system it owns. Don't read every spoke every time.
-
-**Previous versions:** Monolithic bible snapshots live in `docs/bible_history/game_bible_X_YY.md`.
-
-If something in any other doc conflicts with the bible, the bible wins.
-
-### Bible discipline: rewrite, never append
-
-**Append-only is forbidden.** When game direction changes, the old text is *deleted*, not annotated. Don't add "PIVOT" markers, "In Flux" sections, "as of date X" callouts, or "previously this said Y" footnotes inside the bible. The bible always describes what the game *is* right now.
-
-If you need history, that's what `docs/bible_history/` and `git log` are for. Inside `docs/bible/**`, the only allowed state is "current truth."
-
-This rule exists because the prior failure mode — months of append-only edits — left contradictory directives stacked on top of each other. Stale claims leaked into new chats and produced incorrect implementations.
+Long-term project. No ship deadline. One story at a time, done well.
 
 ## Model Usage
 
-Default to `claude-opus-4-6` for all implementation work.
+Default to `claude-opus-4-6` for design and test-authoring work in this repo.
+
+## The Bible
+
+`docs/bible/` is the single source of truth for what the game is:
+
+- `game_bible.md` — hub: vision, sacred principles, game shape, tone, monetization. Human-facing, short.
+- `stories.md` — the story catalog. One row per user-facing behavior (`S-###`), its epic, status, and depth pointer. No design in this file.
+- `epics/E-##-<slug>.md` — one file per feature area: completeness gate result, purpose, end-state (what done looks like technically and visually, authored before the epic is queued), stories with Given/When/Then rules (`R-###-##`), inputs, outputs, invariants, scale requirements, references, ways this could be wrong, open flags, dependencies.
+- `references/E-##/` — screenshots, clips, and `notes.md` naming which games a story should look and feel like. Visual ground truth for T2 QA.
+- `algorithms.md` — the retained equations with constants. The C rewrite reproduces them bit for bit.
+- `docs/northstar/ambiguity_register.md` — every open `[NEEDS WESTLEY]` question (`Q-###-##`) with candidate answers. An epic with an open flag is not built.
+
+Reading discipline: hub first, then only the epic you are touching. Previous versions: `docs/bible_history/` (monolithic snapshots `game_bible_X_YY.md`; the retired spokes as `bible_2_00_*.md`). If anything conflicts with the bible, the bible wins.
+
+### Bible discipline: rewrite, never append
+
+Append-only is forbidden. When direction changes, old text is deleted, not annotated. No "PIVOT" markers, no "In Flux" sections, no "as of" callouts. History is `docs/bible_history/` and `git log`. Months of append-only edits produced stacked contradictions that leaked into new chats; this rule and the stale-doc tripwire are the two defenses.
+
+### Ambiguity is flagged, never guessed
+
+When a behavior is under-defined, add a `Q-` row to the ambiguity register with the concrete question and two or three candidate answers. Never pick silently. Local models never see an open flag; `scripts/derive_agora_rules.py` skips epics that have one.
 
 ## Workflow
 
-**One terminal, one queue, one feature at a time.** Single source of truth: `docs/priority_queue.md`. Full how-to: `docs/workflow.md`.
+How the game gets built lives in `docs/northstar/`, not here. In brief: Stages 0 to 2 are done or in progress once; Stages 3 (end-to-end definition), 4 (roadmap and sprints), and 5 (tests) repeat per epic; Agora builds Tested stories in dependency order; escalation is a ladder with a top (`docs/northstar/escalation.md` once R3 lands). The old one-queue workflow is retired; `docs/priority_queue.md` is a pointer and `docs/northstar/backlog_seed.md` holds what it used to carry until the Stage 4 backlog exists. The Design Lane and Research Lane playbooks (`docs/design_lane.md`, `docs/research_lane.md`) describe how parallel chats feed the register and `docs/research/`.
 
-Per feature:
+Git: `wn/<type>-<slug>` branches off `main`, PR against `main`, Westley merges. Guardrails in `.claude/settings.json` and `.claude/hooks/git-guard.sh` deny destructive ops, main-branch commits, `--no-verify`, `--amend`, force pushes, and rebases. Westley's working-tree changes may be uncommitted: confirm before any state-mutating git op. If a legit op is blocked, ask.
 
-1. Read top of `docs/priority_queue.md` (the NEXT entry). Restate in caveman mode. Confirm with Westley.
-2. `git checkout -b wn/<type>-<slug>` off `main` (type ∈ bug, feat, refactor, chore, docs).
-3. **TDD first.** Sim → pytest red → green → refactor. Godot → write `test_*.gd` scene test where practical; otherwise document the manual checklist as the test.
-4. Implement in caveman mode. Minimal diff. No stink (see Code Quality below).
-5. **Stale-doc tripwire.** Before pushing: search docs for claims this PR makes wrong. Delete or rewrite them *in the same PR*.
-6. `git push -u origin wn/<branch>` + `gh pr create`. PR body has the test steps.
-7. Hand Westley: scene to open (or pytest path), ≤5 numbered steps, expected outcome, fail-look-fors.
-8. Westley confirms. Pass → merge. Fail → one targeted iteration; if still bad, escalate + park.
-9. Update `docs/priority_queue.md`. Pick next NEXT (or leave empty for Westley to seed).
-
-### Definition of done
-
-A feature is `done` only when ALL of:
-
-1. Working code in `main`.
-2. Isolation test (system under test alone, every other variable hard-fixtured or disabled).
-3. Integration test (same system in a realistic scene with pathing, AI, fog, vision, other actors).
-4. Doc updates in the same PR — every wrong claim deleted or rewritten.
-5. Zero floating TODOs in the changed files. Surviving TODOs must point at a specific named feature in `priority_queue.md`.
-
-If any of these is missing, the feature is not done. Don't pick a new one.
-
-### No batching
-
-No umbrellas. No waves. No closeout PRs that bundle 4 features under one banner. One branch = one feature = one PR = one test deliverable. If something feels like two items, split it.
-
-Use **Graphify first** for code navigation. Try `/graphify query`, `/graphify path`, `/graphify explain` before cold Grep/Read. Rebuild (`graphify .`) when structural changes land.
-
-**Git guardrails are enforced by `.claude/settings.json` + `.claude/hooks/git-guard.sh`.** Destructive ops, main-branch commits, `--no-verify`, `--amend`, `--force`, `rebase`: denied at the harness layer. If something legit fails the hook, ask Westley.
-
-## Design Lane
-
-A parallel chat operates as the Design Lane — surfaces design forks, captures Westley's picks into `docs/bible/**`. Different chat from the implementer lane. Rules + active queue: `docs/design_lane.md` + `docs/design_lane_queue.md`.
-
-## Research Lane
-
-A parallel chat operates as the Research Lane — gathers intel that feeds Design Lane decisions. Different chat from both implementer and Design Lane. Rules + active queue: `docs/research_lane.md` + `docs/research_lane_queue.md`.
+Commit and push every ledger, register, or epic update as one meaningful unit; Westley reads them on GitHub.
 
 ## The Rules
 
 ### No runtime API calls during play
 
-`simulation/` never calls the Claude API. No exceptions. Missing library entries fall back to a generic placeholder — never block gameplay to generate content. The library builder pipeline runs offline, generates content, stores it in JSON. Runtime reads from the library. That's the contract.
+The game never calls a model API. Missing library entries fall back to a placeholder; play never blocks. The library builder runs offline, stores JSON, the game reads it. Builder discipline:
 
-Library builder caching — always check before dispatching:
 ```python
 if library_exists(content_type, entry_id):
     return library_get(content_type, entry_id)
@@ -93,162 +58,85 @@ library_set(content_type, entry_id, result)
 
 ### No IP exposure
 
-No Asimov character names, place names, or plot elements. All lore is original. Mechanical concepts inspired by the source material (psychohistory-like prediction, hidden-society roles, eternal observer roles) are fine. The game is targeting commercial release.
+No character names, place names, or plot elements from any existing fiction. Mechanical concepts inspired by source material (psychohistory-like prediction, hidden-society roles, eternal observers) are fine. Commercial release.
 
 ### Tick delta shape is documented first
 
-Any change to the tick delta JSON shape must be posted to `docs/architecture.md` before implementation.
+Any change to the snapshot, delta, or command JSON shape is posted to `docs/architecture.md` before implementation. Phase 1 of the C rewrite reproduces today's shapes exactly so Godot is untouched.
+
+### Determinism is a contract
+
+Same seed, same command stream, byte-identical trace on Windows, macOS, and Linux, with a checksum every 10 ticks. No fast-math, no platform transcendental calls without a deterministic implementation, no hash-order or wall-clock input to the sim. Required from the first sprint; it cannot be added later.
 
 ### Sub-agents implement, never design
 
-Sub-agents (Explore, general-purpose, Plan, claude-code-guide, cavecrew variants, etc.) are scoped to implementation against an existing spec. They may not:
-- Make architectural decisions, API shape choices, or scope expansions
-- Edit `docs/bible/**`, `docs/stage_specs/**`, `CLAUDE.md`, or any test thresholds
-- Decide what should be tested — they execute the test plan from the orchestrator
-
-When a sub-agent hits ambiguity, it returns findings + a proposed change. The main agent (your terminal Claude) decides.
+Sub-agents (Explore, general-purpose, Plan, cavecrew variants) execute against an existing spec. They may not make architectural or API decisions, expand scope, edit `docs/bible/**`, `docs/northstar/**`, `CLAUDE.md`, or any test threshold, or decide what is tested. On ambiguity they return findings plus a proposed change; the main agent decides.
 
 ### Sub-agents use caveman mode for prose
 
-When dispatching a sub-agent, append this directive to the prompt: *"Report-back caveman mode (drop articles/filler/hedging, fragments OK). Markdown docs/briefs you write: caveman. Commit messages: caveman. Code, tests, config: normal prose."*
-
-Token-save at scale. Main agent is the only consumer of report-back, so style mix in `docs/**` is fine — graphify indexing is register-agnostic. Code and tests stay normal so test names, assertions, comments, and runtime strings don't degrade.
+Append to every sub-agent prompt: *"Report-back caveman mode (drop articles/filler/hedging, fragments OK). Markdown docs/briefs you write: caveman. Commit messages: caveman. Code, tests, config: normal prose."* Code and tests stay normal so names, assertions, and runtime strings do not degrade. The bible and its epics are normal prose.
 
 ### Stale-doc tripwire is mandatory
 
-A PR that lands a behavior change must also delete or rewrite every doc claim that the change makes wrong. This is part of the Definition of Done; PRs that skip it are not done.
+A change that lands a behavior change also deletes or rewrites every doc claim it makes wrong, in the same PR. This is part of the Definition of Done.
 
-Stale docs are the single biggest leak path for bad rules into future chats. The bible-discipline rule above and this tripwire are the two defenses.
+### Tests are the spec
+
+Every story exists as failing tests before Agora touches code. Tests live in fenced paths Agora cannot edit. Every test names the `S-###`/`R-###-##` it proves. A test that cannot fail is a defect: every detector ships with a positive control.
 
 ## Code Quality
 
 ### No stink
 
-- No docstrings, inline comments, or block comments unless logic is genuinely non-obvious. No file-level header blocks.
-- No over-engineering. Don't add abstraction layers, wrapper functions, helper classes, or config patterns that weren't asked for. Write the simplest code that does the job. If a pattern is needed, it'll be asked for.
-- No cosmetic refactoring. If you're touching a file to fix or build something, fix or build that thing. Don't reorganize imports, rename variables, split classes, or "improve" unrelated code in the same file. Clean diffs only.
+No docstrings, inline comments, or header blocks unless logic is genuinely non-obvious. No abstraction layers, wrappers, or config patterns that were not asked for. No cosmetic refactoring in a change that fixes or builds something else. Minimal diffs.
 
 ### Traceability
 
-This is critical. If system A isn't working and you build system B to solve the problem, the connection between A and B must be obvious:
-
-- If you add a workaround, fix, or secondary system that changes how an existing system behaves, **leave a comment at both sites** pointing to the other. `# See also: path/to/other_file.gd — handles X because Y` is enough.
-- If you disable, bypass, or replace existing code instead of fixing it, say so explicitly. Don't leave dead code that looks like it should work but silently doesn't.
-- If a new file exists because of a problem in an old file, the old file should make that clear.
-
-The goal: Westley should never have to wonder "why doesn't this work" or "why does this exist" when reading any file. The code should explain its own organizational logic.
+If system A is not working and system B is built to solve it, the connection is obvious at both sites: `# See also: path/to/other — handles X because Y`. If code is disabled, bypassed, or replaced instead of fixed, say so; leave no dead code that looks live. `simulation/border_friction.py` is the standing example of what not to leave behind (dead module the Stage 1 audit mistook for live).
 
 ### Scope discipline
 
-Do what was asked. If you notice something else that needs fixing, mention it — don't fix it. The only exception is if the asked-for change literally cannot work without the other fix, in which case explain the dependency before making both changes.
-
-## Stages and Complexity
-
-The game is built in implementation stages defined in the stage docs (`docs/stage_specs/`). Each stage has specific milestones.
-
-### Stage rules
-
-1. **Complete the current stage before starting the next.** No skipping ahead, no "laying groundwork" for future stages.
-2. **Features marked `[OPTIONAL]` are built only after the stage's core milestone passes cleanly.** If an optional feature causes instability, remove it entirely and leave a `# OPTIONAL: [feature] — not implemented` comment. Never spend more than one session debugging an optional system.
-3. **The base game must be stable before any optional system is added.** A working simple version always beats a broken complex one.
-4. **Do not refactor code without Westley's permission.** If something needs to be fixed, flag it and ask for input on what to do.
-
-### No blind git reverts
-
-`.claude/settings.json` deny rules + `.claude/hooks/git-guard.sh` block the worst variants (`reset --hard`, `clean -f`, `checkout -- <path>`, `restore --source`, `branch -D`, `--no-verify`, `--amend`, force push, rebase). Even so: Westley's working-tree changes may not be committed yet. Before any state-mutating git op (checkout another branch, switch, merge, restore), confirm with Westley that his local changes are safe.
+Do what was asked. Mention what else needs fixing; do not fix it, unless the asked-for change cannot work without it, in which case explain the dependency first.
 
 ## Debugging
 
-**No shotgun fixes.** Don't change values, swap implementations, or try different approaches without first confirming what's actually wrong.
-
-Workflow for any bug:
-1. Form a hypothesis
-2. Add print statements or logging that would confirm or refute it
-3. Have the user run the game and share output
-4. Only then make the fix, targeted to the confirmed cause
-
-One confirmed diagnosis is worth ten guesses.
-
-**One fix at a time.** When multiple issues are identified, fix one, have the user run and verify, then move to the next. Batching fixes reduces the ability to isolate which change caused a new problem or resolved an old one.
+No shotgun fixes. Hypothesis, then logging that would confirm or refute it, then the run, then the targeted fix. One fix at a time.
 
 ## Test Checkpoints
 
-### Testing Rigor Directive
+### Testing rigor
 
-Before asserting on a system's behavior, control for every variable in the test scene. Failing this has burned this project before (combat-balance tests contaminated by stray pathing units; concavity tests with broken obstacle props that didn't actually block line-of-sight).
+Every system has both an isolation test (system alone, everything else hard-fixtured) and an integration test (realistic scene with pathing, AI, fog, vision, scale). Before asserting: list every actor and variable in the scene; verify the fixture works before asserting on the system; a failing assertion is a system bug only when the fixture is proven clean. Both levels; more tests cannot hurt.
 
-Every system needs **BOTH levels** of test:
-- **Isolation tests** — system under test alone, every other variable hard-fixtured or disabled. Proves the core mechanic is correct.
-- **Integration tests** — same system in a realistic scene with other actors, full pathing, AI, fog, vision, scale. Proves it survives contact with everything else.
+### Protected engine files
 
-For both:
-1. **List every actor + variable in the test scene** before writing assertions: movement, pathing, obstacle props, spawn timing, fog, vision, AI behavior.
-2. **Know which level you're running.** Isolation result tells you "this system works alone." Integration result tells you "this system works in the game." A bug in one doesn't imply a bug in the other.
-3. **Verify the fixture works before asserting on the system.** Testing concavity? Prove the obstacle actually blocks line-of-sight in a baseline shot first. Same for integration scenes — verify pathing, spawn timing, AI are doing what you expect before measuring the system.
-4. **An assertion that fails is only a system bug if the fixture is proven clean.** Otherwise it's a test bug — fix the test first.
-5. **More tests can't hurt.** If a system has only isolation coverage, add integration. If it has only integration coverage, add isolation. Both reveal different failure modes.
+Changes to the live Python equations need Westley's approval until the C rewrite replaces them: `tick.py`, `drift.py`, `faction.py`, `region.py`, `events.py`, `intent_resolver.py`, `technology.py`, `diplomacy.py`, `world.py`, `admin_revolt.py`. (`border_friction.py` is dead code; the live friction is in `tick.py`.)
 
-### General
+### Invariant modification rules
 
-Run tests yourself and analyze the output directly. After any code change that requires a test run, run it, read the results, and proceed.
-
-**Protected engine files.** These files require Westley's approval before changes:
-`tick.py`, `drift.py`, `faction.py`, `region.py`, `events.py`, `event_engine.py`, `intent_resolver.py`, `border_friction.py`, `technology.py`, `diplomacy.py`, `world.py`, `templates.py`, `theme_scifi.py`
-
-**Invariant modification rules.** When an invariant fails, there are three valid responses: adjust config, escalate a real bug, or recalibrate the invariant. Rules for the third:
-- **You may** narrow an invariant's scope without approval — skipping cases it was never meant to check (empty regions, factions with zero territory, runs shorter than the invariant's window).
-- **You may not** widen thresholds, extend time windows, or loosen tolerances without presenting the change to Westley first. This includes any change that makes the invariant more permissive for cases it IS supposed to catch.
-- **You may never** reclassify a real finding as a skip. If the simulation has a bug and the invariant caught it, the answer is escalate — not adjust the invariant to stop catching it.
-- **You may never** weaken test criteria to make the current implementation pass. If tests fail, the implementation needs to change — not the tests. The only exception is the scope-narrowing rule above.
+When an invariant fails: adjust config, escalate a real bug, or recalibrate the invariant. You may narrow an invariant's scope without approval (skip cases it was never meant to check). You may not widen thresholds, extend windows, or loosen tolerances without presenting the change to Westley. You may never reclassify a real finding as a skip, and never weaken a test to make the current implementation pass.
 
 ## Tone
 
-The game has a sense of humor. It should feel like someone who enjoys what they're building actually built it — playful, occasionally absurd, never cringe. Easter eggs are welcome. Dry wit is welcome. The chronicle and event writing should still feel like fragments of a real history, but real history is frequently funny.
-
-Don't mistake "playful" for "unserious." The civilization is still rising and falling over centuries. The player still feels the weight of time. But the game winks at you sometimes.
+The game has a sense of humor: playful, occasionally absurd, never cringe. Easter eggs welcome. Dry wit welcome. Chronicle and event writing still read as fragments of a real history, and real history is frequently funny. Playful is not unserious: civilizations still rise and fall over centuries.
 
 ## Documentation
 
-Docs are a first-class artifact. **The docs should always describe what the game actually does right now.** If a bug fix changes documented behavior, update the doc. If a new system is built, it goes in the bible hub and any relevant stage spec, all in the same PR (see stale-doc tripwire above).
-
-Don't update docs for: internal refactors with no behavior change, visual tweaks, or bug fixes that don't affect documented behavior.
+Docs describe what the game does right now. A behavior change updates the epic, the catalog, and any spec, in the same PR. No doc updates for internal refactors, visual tweaks, or fixes that do not touch documented behavior.
 
 ## Simulation File Map
 
-All simulation code lives in `simulation/`. Here's the live engine:
+`simulation/` is the Python reference implementation the C rewrite replaces, and the pytest-via-ctypes harness lives beside it.
 
-### Core loop
-- `tick.py` — 7-step tick resolution sequence (events → agents → friction → drift → composites)
-- `config.py` — all tunable constants, feature flags, archetype definitions
-- `drift.py` — per-region field drift (military decay, economy growth, tension, population)
-- `events.py` — event templates, threshold triggers, chain spawns, PendingQueue, `_next_chain_tag()`
+- Core loop: `tick.py` (tick sequence, live border friction, revolt creation, zombie cleanup), `config.py` (all constants), `drift.py`, `events.py` (26 templates, triggers, pending queue)
+- World and entities: `region.py`, `world.py`, `faction.py`, `technology.py`, `diplomacy.py`, `admin_revolt.py`, `lifecycle.py`
+- Generational: `time_jump.py`, `generational.py`, `character_selector.py`, `coherence_ledger.py`, `naming_system.py`
+- Chronicle: `chronicle_distiller.py`, `chronicle_assembler.py`, `library/`
+- Missions: `mission_generator.py`, `objectives.py`, `outcome_resolver.py`, `force_allocator.py`, `mission_briefing.py`, `onboarding_store.py`
+- Tactical: `tactical_engine.py`, `unit.py`, `movement.py`, `damage.py`, `fog_of_war.py`, `facing.py`, `ability.py`, `command.py`, `command_ingest.py`, `reinforcement.py`, `behavior_runner.py`, `script_schema.py`, `trigger_bus.py`, `spine_drift.py`
+- Map generation: `map_generator.py`, `layout_library.py`, `layout_instantiator.py`, `gradient_placer.py`, `layer_masks.py`, `fairness_evaluator.py`, `archetype_filters.py`, `tactical_map.py`, `sim_flavoring.py`
+- Transport and saves: `pipe_transport.py`, `snapshot_serializer.py`, `save_writer.py`, `save_loader.py`
+- Tuning and analysis: `sim_tuner.py`, `sim_graph.py`, `invariants.py`, `sim_validator.py`
+- Generated (gitignored): `tuning_output/`, `__pycache__/`
 
-### World & entities
-- `region.py` — Region class (fields, composites, tier)
-- `world.py` — World class, template generators (s1_isolated, contested_border, four_way, etc.)
-- `faction.py` — Faction class, agent decision logic, archetype behavior, budget management
-- `technology.py` — per-faction tech growth from economy/population
-
-### Resolution
-- `intent_resolver.py` — resolves faction intents (attack, reinforce, colonize), collision detection
-- `border_friction.py` — per-region tension/economy drag from hostile borders
-
-### Theming
-- `theme_scifi.py` — region/faction display names
-
-### Tuning & analysis
-- `sim_tuner.py` — scenario runner, config override system, graph generation harness
-- `sim_graph.py` — matplotlib graph functions (overlay, side-by-side, field comparison)
-
-### Generated (gitignored)
-- `tuning_output/` — PNGs from sim_tuner runs
-- `__pycache__/` — Python bytecode
-
-### Docs layout
-- `docs/bible/` — game bible hub (and spokes if any)
-- `docs/bible_history/` — archived monolithic bible versions
-- `docs/stage_specs/` — stage implementation specs
-- `docs/articles/` — design essays
-- `docs/website/` — marketing site
-- `docs/research/` — Research Lane intel artifacts
-- `docs/design_questions/` — Design Lane fork-tracking artifacts
+Docs layout: `docs/bible/` (hub, catalog, epics, references, algorithms), `docs/bible_history/`, `docs/northstar/` (method, register, research, proving ground), `docs/architecture.md`, `docs/stage_specs/` (historical stage record), `docs/research/`, `docs/design_questions/` (historical).

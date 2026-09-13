@@ -238,7 +238,7 @@ Cluster: most indie niche-strategy launches do level 2 or 3 for top-5 languages 
 
 ## Conflict surfaced
 
-Bible cross-check against page-shape directives if any. Cross-ref `docs/bible/bible_monetization.md` + `docs/bible/game_bible.md` + active In Flux entries.
+Bible cross-check against page-shape directives if any. Cross-ref `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` + `docs/bible/game_bible.md` + active In Flux entries.
 
 - **bible_monetization.md L274 "Free to play" tagline.** Steam-page short description / capsule copy must comply with monetization framing. If "Free to play" tagline survives bible cleanup, it collides with $25-35 paid-base reality and with primary-tribe expectations per `primary_tribe_psychographic_profile.md` L169 conflict. Short-description copy cannot honestly invoke "Free to play" if game is $25-35 paid. **CONFLICT flagged. Bible authority resolves — cleanup pending per project_current_focus.md.**
 
@@ -328,6 +328,6 @@ Training-data-only — flag for re-capture w/ live crawl of GameDiscoverCo, Chri
   - `docs/research/topics/audience_overlap_map.md` — tag + curator + creator + press overlap; cluster-derived pitch-language list feeds capsule copy
   - `docs/research/topics/primary_tribe_psychographic_profile.md` — per-anchor review themes; "spreadsheet-feel UI" + depth-seeker patterns feed page-build choices
   - `docs/bible/game_bible.md ## In Flux` — Lieutenant System + RTS-framing-kill 2026-05-16 entry
-  - `docs/bible/bible_monetization.md` L274 + L292 — conflict-flag targets
+  - `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` L274 + L292 — conflict-flag targets
 
 **Re-capture stamp.** All conversion-rate magnitudes, word-count clusters, bullet-count optima, GIF/static deltas, About-length distributions, below-fold read-rate estimates, dev-page cross-buy lifts, and localized-page conversion deltas in this brief are training-data-derived as of cutoff. Live Steamworks documentation pull + GameDiscoverCo + Chris Zukowski post crawl + primary-tribe-anchor Steam page snapshot + 2025-2026 indie post-mortem aggregation required to upgrade REPORTED/ESTIMATED → VERIFIED. Flag for Research Lane re-capture when WebFetch is restored.

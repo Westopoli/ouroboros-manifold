@@ -237,30 +237,30 @@ def test_umbrella_d_attack_at_hidden_target_zero_damage():
 
 
 def test_umbrella_e_bible_combat_no_damage_mult_in_formula():
-    """bible_combat.md must not contain the (1.0 - cover_density) damage
+    """docs/bible_history/bible_2_00_combat.md must not contain the (1.0 - cover_density) damage
     formula after L1 lands."""
     here = os.path.dirname(__file__)
-    bible_path = os.path.join(here, "..", "docs", "bible", "bible_combat.md")
+    bible_path = os.path.join(here, "..", "docs", "bible", "docs/bible_history/bible_2_00_combat.md")
     with open(bible_path, "r", encoding="utf-8") as f:
         text = f.read()
     assert "(1.0 - cover_density" not in text, (
-        "L1 not landed: bible_combat.md still contains "
+        "L1 not landed: docs/bible_history/bible_2_00_combat.md still contains "
         "'(1.0 - cover_density)' damage formula language"
     )
 
 
 def test_umbrella_e_bible_world_cover_describes_los_block():
-    """bible_world.md cover_density definition must include LOS-block language
+    """docs/bible_history/bible_2_00_world.md cover_density definition must include LOS-block language
     after L1 lands (the paragraph defining cover_density mentions LOS / blocks
     sight). The current spec defines cover as damage-reduction, not LOS."""
     here = os.path.dirname(__file__)
-    bible_path = os.path.join(here, "..", "docs", "bible", "bible_world.md")
+    bible_path = os.path.join(here, "..", "docs", "bible", "docs/bible_history/bible_2_00_world.md")
     with open(bible_path, "r", encoding="utf-8") as f:
         text = f.read()
     # Find the cover_density definition paragraph.
     # Pattern: starts at backticked `cover_density`, take next ~600 chars.
     m = re.search(r"`cover_density`[\s\S]{0,600}", text)
-    assert m is not None, "bible_world.md cover_density paragraph not found"
+    assert m is not None, "docs/bible_history/bible_2_00_world.md cover_density paragraph not found"
     cover_paragraph = m.group(0).lower()
     assert (
         "line of sight" in cover_paragraph
@@ -269,11 +269,11 @@ def test_umbrella_e_bible_world_cover_describes_los_block():
         or "blocks sight" in cover_paragraph
         or "blocks vision" in cover_paragraph
     ), (
-        "L1 not landed: bible_world.md cover_density paragraph must describe "
+        "L1 not landed: docs/bible_history/bible_2_00_world.md cover_density paragraph must describe "
         "LOS / vision blocking, not damage reduction"
     )
     assert "reduces incoming damage" not in cover_paragraph, (
-        "L1 not landed: bible_world.md cover_density paragraph still says "
+        "L1 not landed: docs/bible_history/bible_2_00_world.md cover_density paragraph still says "
         "'reduces incoming damage' (damage-multiplier language must be removed)"
     )
 

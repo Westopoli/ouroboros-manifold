@@ -12,11 +12,11 @@ Stage 7.5 sits between Stage 7 (procedurally generated maps + reinforcement stru
 
 ## Bible References
 
-- **`bible_combat.md`** — §Enemy Macro Behavior System (full section: 5 base behaviors, 3 modifiers, transitions, trigger bus, multi-force coordination, relationship to Unit Behavior AI), §Command Vocabulary (the 4 commands the runner emits), §Tactical Reinforcement System (structure ownership baselines that the prototype scripts reference).
-- **`bible_missions.md`** — §Mission Archetypes #1 Defensive Stand, #4 Assault, #6 Multi-Front Defense, #10 Counterinsurgency (the four prototype archetype tactical-feel descriptions that drive script content).
+- **`docs/bible_history/bible_2_00_combat.md`** — §Enemy Macro Behavior System (full section: 5 base behaviors, 3 modifiers, transitions, trigger bus, multi-force coordination, relationship to Unit Behavior AI), §Command Vocabulary (the 4 commands the runner emits), §Tactical Reinforcement System (structure ownership baselines that the prototype scripts reference).
+- **`docs/bible_history/bible_2_00_missions.md`** — §Mission Archetypes #1 Defensive Stand, #4 Assault, #6 Multi-Front Defense, #10 Counterinsurgency (the four prototype archetype tactical-feel descriptions that drive script content).
 - **`game_bible.md` (hub)** — Sacred Design Principles (era-agnostic architecture: scripts reference abstract behaviors, never era-specific unit names).
 
-Do NOT read `bible_world.md` (map-gen handled by Stage 7), `bible_chronicle.md`, `bible_simulation.md`, `bible_antagonist.md`, `bible_monetization.md`, `bible_ai_pipeline.md` — not relevant to Stage 7.5.
+Do NOT read `docs/bible_history/bible_2_00_world.md` (map-gen handled by Stage 7), `docs/bible_history/bible_2_00_chronicle.md`, `docs/bible_history/bible_2_00_simulation.md`, `docs/bible_history/bible_2_00_antagonist.md`, `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/), `docs/bible_history/bible_2_00_ai_pipeline.md` — not relevant to Stage 7.5.
 
 ## Cross-Stage References
 
@@ -31,7 +31,7 @@ Do NOT read `bible_world.md` (map-gen handled by Stage 7), `bible_chronicle.md`,
 
 **`behavior_runner.py`** — The shared state-machine orchestrator. One instance per enemy force group per mission.
 - `BehaviorRunner(script: dict, force_id: str, engine: TacticalEngine, trigger_bus: TriggerBus)` — constructor; loads the JSON script, validates against the schema, instantiates the initial state.
-- `evaluate(tick: int) → list[Command]` — called every `SCRIPT_EVAL_INTERVAL_TICKS` (config; ~2 sec at 20 Hz = 40 ticks). Evaluates the active state's transitions in priority order (survival → threshold → timer per `bible_combat.md`); on match, switches state and emits any required commands; otherwise re-emits the active state's commands if the engine-side command queue has drained.
+- `evaluate(tick: int) → list[Command]` — called every `SCRIPT_EVAL_INTERVAL_TICKS` (config; ~2 sec at 20 Hz = 40 ticks). Evaluates the active state's transitions in priority order (survival → threshold → timer per `docs/bible_history/bible_2_00_combat.md`); on match, switches state and emits any required commands; otherwise re-emits the active state's commands if the engine-side command queue has drained.
 - `is_terminal() → bool` — returns True when the script reaches a terminal state (force destroyed, retreated off-map, mission ended).
 - Reactive hooks evaluate independently of state transitions on each `evaluate()` call; a fired hook may trigger an immediate state switch outside the normal transition flow.
 

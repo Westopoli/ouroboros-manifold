@@ -53,7 +53,7 @@
 
 ### Community 0 - "Delegated Command & Tactical Substrate"
 Cohesion: 0.06
-Nodes (42): docs/bible/bible_combat.md (In Flux), docs/bible/bible_simulation.md (In Flux), 3D Volumetric Tactical Space, Ashes of the Singularity II AI sub-commanders, Battle Room Arena Combat, Battlefleet Gothic: Armada 2, Battlestar Galactica: Deadlock, Delegated-Command and Lieutenant-System Precedents (+34 more)
+Nodes (42): docs/bible_history/bible_2_00_combat.md (In Flux), docs/bible_history/bible_2_00_simulation.md (In Flux), 3D Volumetric Tactical Space, Ashes of the Singularity II AI sub-commanders, Battle Room Arena Combat, Battlefleet Gothic: Armada 2, Battlestar Galactica: Deadlock, Delegated-Command and Lieutenant-System Precedents (+34 more)
 
 ### Community 1 - "Generational/Legacy Game Precedents"
 Cohesion: 0.18

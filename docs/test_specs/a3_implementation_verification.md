@@ -112,7 +112,7 @@ All 10 archetypes now generate non-empty maps. No `EMPTY_FIELD_FALLBACK`. Cover 
 
 ## Calibration source (cover radius/intensity)
 
-Per `docs/bible/bible_world.md:188` ("cover density gradients are placed in defensible positions and approach corridors"). Anchored to existing staging/flank cover constants:
+Per `docs/bible_history/bible_2_00_world.md:188` ("cover density gradients are placed in defensible positions and approach corridors"). Anchored to existing staging/flank cover constants:
 
 | zone type | radius | intensity | rationale |
 |---|---|---|---|

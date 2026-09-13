@@ -12,7 +12,7 @@ contributor: Research Lane T-M2 capture
 
 Stress-test of Ouroboros' bible-locked 7-era DLC ladder against extreme precedents in the broader DLC-heavy space. Pulls high-count DLC ecosystems (Train Simulator Classic 1000+ route/loco SKUs, MSFS aircraft/scenery, ETS2/ATS long-tail map DLC, DCS aircraft modules at $40-80) and tiered-strategy precedents (Paradox 4-tier flavor-pack accretion, Total War Warhammer Lord/Race Pack cumulative ~30 SKUs, Civ VI New Frontier Pass 6-stagger, Civ VII era/age plan as closest direct analog, Endless Legend/Space cadence). Cross-references siblings `dlc_pricing_ladders.md` (T-P3 per-SKU price points), `dlc_attach_rates.md` (T-CL2 attach floors), `post_launch_content_cadence.md` (T-CL1 solo-dev throughput ceiling). Feeds monetization revenue model (cumulative gross under 7-era plan), T-CL1 cadence pick, T-P3 per-tier validation, T-B1 brand capstone (bundle architecture as brand surface), engineering scope assessment for 7-era content pipeline.
 
-Non-recommendation disclaimer: Research Lane surfaces inputs, does not pick. Anything below that reads like a pick is data preserved from cited source, not endorsement. Design Lane decides 7-era ladder shape, bundle SKU architecture, per-era pricing pick. Bible (`docs/bible/game_bible.md`, `docs/bible/bible_monetization.md`) is authority on conflicts surfaced.
+Non-recommendation disclaimer: Research Lane surfaces inputs, does not pick. Anything below that reads like a pick is data preserved from cited source, not endorsement. Design Lane decides 7-era ladder shape, bundle SKU architecture, per-era pricing pick. Bible (`docs/bible/game_bible.md`, `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)`) is authority on conflicts surfaced.
 
 ## Method
 
@@ -27,7 +27,7 @@ Cross-refs read before writing this brief:
 - `docs/research/topics/dlc_attach_rates.md` — T-CL2 attach floors and decay curves
 - `docs/research/topics/post_launch_content_cadence.md` — T-CL1 cadence solo-dev ceiling (if present)
 - `docs/research/games/ck3_dlc_ladder.md`, `stellaris_dlc_ladder.md`, `rimworld_dlc_ladder.md`, `wildermyth_omenroad.md` — Paradox / indie cadence game cards
-- Bible: `docs/bible/bible_monetization.md` — 7-era + Roman-free lock
+- Bible: `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` — 7-era + Roman-free lock
 
 Dedicated game cards for Train Simulator, MSFS, ETS2/ATS, DCS World, Total War Warhammer trilogy, Civilization VI, Civilization VII, Endless Legend/Space do not yet exist in `docs/research/games/`. All figures inline below floor at training-data REPORTED. Flag for future Wave capture.
 
@@ -288,9 +288,9 @@ Six bullets, what the precedent set shows about 7-tier DLC ladders:
 ## Conflict surfaced
 
 Bible context per kickoff brief:
-- `bible_monetization.md` 7-era + Roman-free DLC ladder bible-lock.
-- `bible_monetization.md` L274 "Free to play. Infinite eras." tagline.
-- `bible_monetization.md` L292 Fortnite "master brand + seasonal variant" reference.
+- `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/) 7-era + Roman-free DLC ladder bible-lock.
+- `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/) L274 "Free to play. Infinite eras." tagline.
+- `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/) L292 Fortnite "master brand + seasonal variant" reference.
 - T-CL1 cadence solo-dev 1-3 year-per-DLC implication.
 - T-CL2 attach floor/median/ceiling estimates.
 - T-P3 DLC pricing ladders per-tier validation.
@@ -370,4 +370,4 @@ Training-data inline references (no dedicated game cards yet — flag for Wave 4
 
 Bible authority sources:
 - `docs/bible/game_bible.md` — hub authority on conflict resolution.
-- `docs/bible/bible_monetization.md` — 7-era + Roman-free bible-lock, L274 tagline conflict, L292 Fortnite reference, master authority on monetization shape. Surfaced as conflict-input only above.
+- `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` — 7-era + Roman-free bible-lock, L274 tagline conflict, L292 Fortnite reference, master authority on monetization shape. Surfaced as conflict-input only above.

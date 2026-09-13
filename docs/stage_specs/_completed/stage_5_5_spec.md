@@ -12,9 +12,9 @@ This is the stage where the simulation starts producing *gameplay hooks* rather 
 
 Read these spoke sections before implementing:
 
-- **`bible_missions.md`**: Full file — mission generator algorithm (4-step candidate scoring), 10 mission archetypes (triggers, objective shapes, asset profiles, success spectrums), mission objectives, difficulty scaling, era scaling, mission preference, mission briefing structure, outcome band classification system, mission outcome resolver (proportional lookup tables), objective tracking
-- **`bible_combat.md`**: "Unit Power Balancing and Force Parity" (force parity system, capacity-to-parity curve, multi-faction battles), "Force Allocation Algorithm" (4-step allocation: asset profile → parity budget → fill profile → capacity shortfalls), "Power Rating Formula" (resolved formula), "Tactical Reinforcement System" (simulation-driven capacity — reinforcement structure count is derived from mission region's military field)
-- **`bible_simulation.md`**: "Coherence Ledger" (lineage history for relevance scoring), "Composite Axes" (capacity composite for force parity)
+- **`docs/bible_history/bible_2_00_missions.md`**: Full file — mission generator algorithm (4-step candidate scoring), 10 mission archetypes (triggers, objective shapes, asset profiles, success spectrums), mission objectives, difficulty scaling, era scaling, mission preference, mission briefing structure, outcome band classification system, mission outcome resolver (proportional lookup tables), objective tracking
+- **`docs/bible_history/bible_2_00_combat.md`**: "Unit Power Balancing and Force Parity" (force parity system, capacity-to-parity curve, multi-faction battles), "Force Allocation Algorithm" (4-step allocation: asset profile → parity budget → fill profile → capacity shortfalls), "Power Rating Formula" (resolved formula), "Tactical Reinforcement System" (simulation-driven capacity — reinforcement structure count is derived from mission region's military field)
+- **`docs/bible_history/bible_2_00_simulation.md`**: "Coherence Ledger" (lineage history for relevance scoring), "Composite Axes" (capacity composite for force parity)
 - **`game_bible.md` (hub)**: "Sacred Design Principles" (era-agnostic architecture), "The Generational Structure" (mission preference set at game start)
 
 ## Cross-Stage References
@@ -125,7 +125,7 @@ class MissionResult:
   - Difficulty adjustment: Easy = parity floor of 0.95 (near-100% even when weak). Medium = no adjustment (use capacity curve directly). Hard = parity ceiling reduced to 0.85 (a declining civilization hits the penalty harder).
   - Multi-faction missions: player force is sized to match the *combined* enemy strength (with parity adjustment).
 
-- **Step 3 — Fill asset profile.** Each archetype defines a target unit type ratio (from bible_missions.md asset profiles). The allocator spends the player's power budget filling this ratio. For each unit type slot, it selects from the available unit roster for the player's faction at the current tech tier. Units are added one at a time, each consuming its power rating from the remaining budget, until the budget is spent or the ratio is filled. Slight budget overrun is acceptable (the last unit added may push slightly over budget).
+- **Step 3 — Fill asset profile.** Each archetype defines a target unit type ratio (from docs/bible_history/bible_2_00_missions.md asset profiles). The allocator spends the player's power budget filling this ratio. For each unit type slot, it selects from the available unit roster for the player's faction at the current tech tier. Units are added one at a time, each consuming its power rating from the remaining budget, until the budget is spent or the ratio is filled. Slight budget overrun is acceptable (the last unit added may push slightly over budget).
   - Unit roster: at Stage 5.5 validation time, uses Tier 2 baseline stats from Stage 6. The roster is loaded from config — no hardcoded stat values in the allocator.
   - Within each unit type, if multiple stat variants exist (future: AI-generated variants), the allocator picks randomly.
 
@@ -138,7 +138,7 @@ class MissionResult:
 **`outcome_resolver.py`** — Translates tactical results into simulation consequences. Contains:
 
 - **Input:** A `MissionResult` from Stage 6 (or a mock during validation).
-- **Consequence lookup.** Each archetype defines a consequence table: 5 outcome bands → field deltas for the mission region. Deltas are **proportional to the region's current state**, not absolute. The table is loaded from config and matches the success spectrum authored per archetype in bible_missions.md.
+- **Consequence lookup.** Each archetype defines a consequence table: 5 outcome bands → field deltas for the mission region. Deltas are **proportional to the region's current state**, not absolute. The table is loaded from config and matches the success spectrum authored per archetype in docs/bible_history/bible_2_00_missions.md.
   - Proportional delta semantics: "+X% of deficit" means `delta = current_deficit_from_100 × X/100`. "-X% of current" means `delta = -current_value × X/100`. These two forms cover all the authored success spectrums.
   - Field deltas apply to: military, economy, tension, stability, population. Each outcome band specifies which fields change and by how much.
 - **Cross-region consequences.** Some archetypes apply consequences to regions other than the mission region (e.g., Reconquest partial failure applies tension to adjacent player regions; Evacuation success applies economy/population bonuses to adjacent regions). These are also in the per-archetype consequence table.
@@ -169,7 +169,7 @@ class MissionResult:
      - pool_used: None (no pool roll).
    - This path runs before the forced rotation check. Forced rotation
      on commander KIA fires only when no successor exists.
-   - Rationale: aligns with bible_chronicle.md line 66, which defines
+   - Rationale: aligns with docs/bible_history/bible_2_00_chronicle.md line 66, which defines
      `lineage_succession` as a continuity beat ("a key family member
      died and was succeeded"), not a rotation event.
   - **Minimum stay:** if chapter counter is below the eligible rotation range (config, default 2), stay with the current lineage. The family's story needs at least 2 chapters to develop.
@@ -546,7 +546,7 @@ CONSEQUENCE_TABLES = {
 }
 ```
 
-The full consequence tables for all 10 archetypes are transcribed directly from bible_missions.md's success spectrums into this config structure. No interpretation or modification — the bible values are authoritative.
+The full consequence tables for all 10 archetypes are transcribed directly from docs/bible_history/bible_2_00_missions.md's success spectrums into this config structure. No interpretation or modification — the bible values are authoritative.
 
 ### Special Case: Reconquest Region Transfer
 
@@ -590,7 +590,7 @@ Enemy forces follow the same algorithm but skip the parity adjustment — they g
 
 ### Canvas Size Determination
 
-The allocator computes the canvas size category from the archetype's base size plus simulation modifiers, per bible_missions.md:
+The allocator computes the canvas size category from the archetype's base size plus simulation modifiers, per docs/bible_history/bible_2_00_missions.md:
 
 | Archetype | Base Size | Simulation Modifier |
 |-----------|-----------|---------------------|
@@ -1097,7 +1097,7 @@ ASSET_PROFILES = {
 }
 
 # ── Consequence tables (Stage 5.5) ────────────────────────────
-# Full tables transcribed from bible_missions.md — see Outcome Resolver Design section
+# Full tables transcribed from docs/bible_history/bible_2_00_missions.md — see Outcome Resolver Design section
 # CONSEQUENCE_TABLES dict defined in config, one entry per archetype, 5 bands per entry
 
 # ── Character selector (Stage 5.5) ────────────────────────────
@@ -1133,7 +1133,7 @@ The following changes to the Stage 6 spec enable parallel development:
 
 6. **Update Stage 6 Cross-Stage References.** The Stage 5.5 entry should reference the shared contracts module and clarify that `power_rating.py` is built in Stage 6 but imported by Stage 5.5.
 
-7. **Stage 7 Cross-Stage Reference update.** Remove "per-archetype enemy scripted behaviors (advance, defend, patrol, ambush, retreat)" from Stage 7's roadmap description. Enemy macro behavior uses a shared behavior script system with reactive hooks, not per-archetype state machines. Stage 7 builds the behavior script *content* (authored scripts per archetype) using the infrastructure defined in `bible_combat.md`.
+7. **Stage 7 Cross-Stage Reference update.** Remove "per-archetype enemy scripted behaviors (advance, defend, patrol, ambush, retreat)" from Stage 7's roadmap description. Enemy macro behavior uses a shared behavior script system with reactive hooks, not per-archetype state machines. Stage 7 builds the behavior script *content* (authored scripts per archetype) using the infrastructure defined in `docs/bible_history/bible_2_00_combat.md`.
 
 ---
 

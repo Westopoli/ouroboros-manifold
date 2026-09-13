@@ -9,7 +9,7 @@
 > linking out to external payment websites from in-game. Current model: **buy-once
 > base game (starting civ of every branch) + paid Steam DLC for additional eras,
 > no subscription, no free tier, all transactions via Steam**. See
-> `docs/bible/bible_monetization.md` "Current Monetization Model" section.
+> `docs/bible_history/game_bible_1_23.md (formerly bible_monetization.md, folded into the hub 2026-05-31)` "Current Monetization Model" section.
 > Visual identity, logo, wordmark, era branding, Canva templates, Steam page
 > presentation, and capsule-art decisions in this document remain valid — only the
 > commerce-flow sections are obsolete.
@@ -20,7 +20,7 @@
 > file bridges chats. Once all questions are CAPTURED into the bible and/or
 > a stage spec, this file is deleted.
 >
-> **Capture targets:** `bible_monetization.md` (primary), `bible_combat.md`
+> **Capture targets:** `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/) (primary), `docs/bible_history/bible_2_00_combat.md`
 > (pending edits — see Pending Bible Edits below), `game_bible.md` hub.
 >
 > **Production outputs** (logo files, Canva templates, Steam assets) live
@@ -70,18 +70,18 @@ trailer, branch infographic, tag strategy).**
 **Open work, in priority order:**
 
 1. ~~Combat bible session~~ — **CAPTURED April 17, 2026.** Four re-open
-   flags written to `bible_combat.md`. Implementation deferred to
+   flags written to `docs/bible_history/bible_2_00_combat.md`. Implementation deferred to
    post-Stage 13.
 2. ~~Settled Reach combat retcon planning~~ — **SCHEDULED post-Stage 13.**
-   Flagged in `bible_combat.md` Stat Philosophy and Unit Stat Baselines
+   Flagged in `docs/bible_history/bible_2_00_combat.md` Stat Philosophy and Unit Stat Baselines
    sections. Listed in `game_bible.md` "Beyond Stage 13."
 3. ~~Q-mon4 starter bundle resize~~ — **RESOLVED April 16, 2026.**
    Starter bundle concept retired. Subscription grants access to Era 1
-   (entry era) in every branch. See `bible_monetization.md` component 5.
+   (entry era) in every branch. See `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/) component 5.
 4. ~~Q-mon8.3 — entry gate model per branch~~ — **RESOLVED April 16,
    2026.** Per-era gating: entry eras subscription-gated, progression
    eras grindable to permanent ownership, hallmarks/premium eras
-   one-time purchase. See `bible_monetization.md` component 5 and
+   one-time purchase. See `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/) component 5 and
    open question 10.
 5. Q-mon8.5 — cross-branch prestige.
 6. Q-mon8.6 — post-launch branch rollout cadence.
@@ -93,15 +93,15 @@ trailer, branch infographic, tag strategy).**
    section below.
 8. ~~Q4–Q5~~ resolved April 24, 2026. Q5 research pass completed
    (7 reference targets). Q4 Steam page hierarchy resolved as
-   component 14 in `bible_monetization.md`. Q6–Q7 now unblocked.
+   component 14 in `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/). Q6–Q7 now unblocked.
 9. Q-mon3, ~~Q-mon5~~, Q-mon6, Q-mon7, Component 9 (special editions) all
    still deferred to catalog design. Q-mon5 **RESOLVED April 16, 2026** —
    Roman free tier: 5/10 archetypes, T2-locked, 3-faction/15-region
-   world. See `bible_monetization.md` component 4.
+   world. See `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/) component 4.
 10. ~~Conversion strategy~~ — **RESOLVED April 22, 2026.** Tutorial taste +
-    ambient inspection. See `bible_monetization.md` component 11.
+    ambient inspection. See `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/) component 11.
 11. ~~Era Library UI layout~~ — **RESOLVED April 22, 2026.** Manifold Planes
-    spatial metaphor. See `bible_monetization.md` component 12. Also
+    spatial metaphor. See `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/) component 12. Also
     resolves open question 12(c) (branch-view UI layout).
 
 ---
@@ -310,7 +310,7 @@ have considered permanent, valuable, or ceremonial?"*
   > Q-mon8.1 was originally resolved as Option D (full cross-layer
   > gradient with Branch 3 having no cross-layer capabilities) in
   > Session 5; reversed in Session 6 to the Option E hybrid above.
-  > See `bible_monetization.md` for current state.
+  > See `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/) for current state.
 
 - **Q-mon8.2 v2 — Branch count and Roman relationship.** **2 launch
   branches + Roman standalone = 7 launch eras total.**
@@ -381,7 +381,7 @@ meta-catalog navigated across sessions).
 
 ### Combat bible re-opens (CAPTURED April 17, 2026)
 
-All four re-open flags have been written into `bible_combat.md`:
+All four re-open flags have been written into `docs/bible_history/bible_2_00_combat.md`:
 
 1. ✅ **Tactical Reinforcement section** — per-era config flag added.
 2. ✅ **Combat pacing / engagement duration targets** — per-branch targets flag added to Stat Philosophy.
@@ -392,7 +392,7 @@ All four flag implementation as **deferred to post-Stage 13**. Friends-ZIP ships
 
 ### Other deferred captures
 
-- **`bible_monetization.md` v3.00 component 2** hallmark count
+- **`bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/) v3.00 component 2** hallmark count
   language still says "3–4 hallmarks at launch" — needs tightening
   to "2 at launch." (Low priority — does not block any work.)
 
@@ -440,7 +440,7 @@ The combination ensures the hallmark/work distinction is visible both structural
 ### Q4 — Steam Page Hierarchy [RESOLVED April 24, 2026]
 
 Steam page presentation strategy resolved as component 14 in
-`bible_monetization.md`. Key decisions: meta-identity-first capsule
+`bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/). Key decisions: meta-identity-first capsule
 art (master shield or composite glyph, not single-era), era-alternating
 screenshots unified by the layer system as visual thread, era-cut
 montage trailer (~60s, hard cuts between eras, works muted), branch
@@ -449,7 +449,7 @@ prioritizing "Story Rich" and "Atmospheric," "About this game"
 hierarchy (pitch → infographic → features → screenshots → long
 description). No monetization details on Steam page — Steam sells
 the download, external website sells the subscription. See
-`bible_monetization.md` component 14 for full specification.
+`bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/) component 14 for full specification.
 
 ---
 
@@ -470,7 +470,7 @@ free players see paid rewards), Steam page best practices 2025–2026
 (capsule CTR as algorithm currency, first 4 screenshots on hover,
 45–75s trailer, mobile readability at 35–45% of visits).
 
-Synthesis captured in `bible_monetization.md` component 14. Full
+Synthesis captured in `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/) component 14. Full
 research document: `q5_research_synthesis.md` (transient, deletable
 after Q4 capture).
 
@@ -479,7 +479,7 @@ after Q4 capture).
 ### Q6 — Canva Asset Kit [RESOLVED April 24, 2026]
 
 Seven-template full kit captured as component 15 in
-`bible_monetization.md`. Templates: era card (2:3), Steam capsule
+`bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/). Templates: era card (2:3), Steam capsule
 master (4 export sizes), social post (1:1), Discord/profile banner,
 trailer thumbnail, branch progression infographic, screenshot
 annotation overlay. All share gold-frame + dark-background + accent-color
@@ -498,7 +498,7 @@ sheen, animated glow, always visible, adapts label to era access model;
 (2) contrast moments at 2–3 scroll points showing Roman vs. target era
 split comparisons; (3) external website redirect on button click.
 Non-aggressive — no timers, no modals, no FOMO. See component 16 in
-`bible_monetization.md`.
+`bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/).
 
 ---
 
@@ -516,13 +516,13 @@ launch slots) is the remaining open work.
 ~~The original 5-era starter bundle from v3.00 is **71% of a 7-era launch
 catalog** — structurally incoherent as a "starter."~~
 
-**Resolution:** The starter bundle concept is retired. Subscribing grants access to Era 1 (entry era) in every branch — no separate bundle to select or resize. The "what do I get when I subscribe?" answer is: access to every branch's entry era, plus the ability to grind toward everything else. See `bible_monetization.md` component 5.
+**Resolution:** The starter bundle concept is retired. Subscribing grants access to Era 1 (entry era) in every branch — no separate bundle to select or resize. The "what do I get when I subscribe?" answer is: access to every branch's entry era, plus the ability to grind toward everything else. See `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/) component 5.
 
 ---
 
 ### Q-mon5 — Roman Free Tier Scope Limitations [RESOLVED April 16, 2026]
 
-**Resolution:** Three cuts that reinforce each other: (1) 5/10 mission archetypes (Defensive Stand, Assault, Reconquest, Siege Breaking, Evacuation — excludes Multi-Front Defense, Interception, Containment, Counterinsurgency, Suppression); (2) locked to Tier 2 for all factions (no tier progression visible); (3) capped world size (3 factions, ~15 regions, Isolated Start only). Roman keeps full simulation, full combat, full chronicle, full generational loop, and inspection mode for all paid eras. See `bible_monetization.md` component 4.
+**Resolution:** Three cuts that reinforce each other: (1) 5/10 mission archetypes (Defensive Stand, Assault, Reconquest, Siege Breaking, Evacuation — excludes Multi-Front Defense, Interception, Containment, Counterinsurgency, Suppression); (2) locked to Tier 2 for all factions (no tier progression visible); (3) capped world size (3 factions, ~15 regions, Isolated Start only). Roman keeps full simulation, full combat, full chronicle, full generational loop, and inspection mode for all paid eras. See `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/) component 4.
 
 ---
 
@@ -545,7 +545,7 @@ Deferred to catalog design.
 
 ### Q-mon8.3 — Entry Gate Model Per Branch [RESOLVED April 16, 2026]
 
-**Resolution:** Per-era gating replaces per-branch gating. Entry eras (Era 1 in each branch) are subscription-gated — accessible while subscribed, revoked on cancel. Progression eras (Era 2+) are grindable to permanent ownership while subscribed (15hr retention threshold). Hallmarks and select premium eras are one-time purchases, permanent ownership. Any era can be tagged premium regardless of branch position. Launch branches use free entry (subscription unlocks both). Post-launch branches follow the same model — no separate expansion gate needed; the branch is open via subscription, hallmark is premium. See `bible_monetization.md` component 5 and open question 10.
+**Resolution:** Per-era gating replaces per-branch gating. Entry eras (Era 1 in each branch) are subscription-gated — accessible while subscribed, revoked on cancel. Progression eras (Era 2+) are grindable to permanent ownership while subscribed (15hr retention threshold). Hallmarks and select premium eras are one-time purchases, permanent ownership. Any era can be tagged premium regardless of branch position. Launch branches use free entry (subscription unlocks both). Post-launch branches follow the same model — no separate expansion gate needed; the branch is open via subscription, hallmark is premium. See `bible_monetization.md` (deleted 2026-05-31; see docs/bible_history/) component 5 and open question 10.
 
 ---
 
@@ -576,7 +576,7 @@ needs scheduling.~~ **Scheduled post-Stage 13.** Settled Reach's current
 slow/high-HP/methodical combat identity inverts under Branch 1 fast tempo.
 HP values drop; engagement duration targets shift from 2min+ toward
 30–45s; aerospace-precision register shifts from "careful targeting"
-toward "rapid strike." Flagged in `bible_combat.md` Stat Philosophy and
+toward "rapid strike." Flagged in `docs/bible_history/bible_2_00_combat.md` Stat Philosophy and
 Unit Stat Baselines re-open flags. Listed in `game_bible.md` "Beyond
 Stage 13." Friends-ZIP ships with current Settled Reach values unchanged.
 
@@ -590,7 +590,7 @@ structure amount, placement, rate, cost) parameters move from hardcoded
 constants to per-era config. Compatible with Sacred Principle #3 — branch
 mechanical variation lives as config-driven content, not code-branched
 engine logic. No engine knows about branches; the engine consumes per-era
-parameters uniformly. Flagged in `bible_combat.md` Tactical Reinforcement
+parameters uniformly. Flagged in `docs/bible_history/bible_2_00_combat.md` Tactical Reinforcement
 re-open flag. Friends-ZIP ships with current hardcoded values unchanged.
 
 ---

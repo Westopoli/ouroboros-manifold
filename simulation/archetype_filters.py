@@ -62,7 +62,7 @@ FAIRNESS_PROFILES: dict[str, FairnessTargetProfile] = {
         hazard_balance      = (0.60, 0.20),   # interference clusters near enemy
         archetype           = "counterinsurgency",
     ),
-    # Non-prototype archetypes: directionally authored per bible_missions.md (Stage 11e).
+    # Non-prototype archetypes: directionally authored per docs/bible_history/bible_2_00_missions.md (Stage 11e).
     # Intent placeholders; future spec stage_11f will operationalize after playtest data.
     "siege_breaking": FairnessTargetProfile(
         path_balance        = (1.20, 0.25),   # relief force needs route options
@@ -242,7 +242,7 @@ def _has_prop(key, value=None):
 # ── Archetype filter definitions ──────────────────────────────────────────────
 
 # Reading discipline: filter rules translate the map character prose directly.
-# See bible_missions.md per-archetype "Map character" sections.
+# See docs/bible_history/bible_2_00_missions.md per-archetype "Map character" sections.
 
 ARCHETYPE_FILTERS: dict[str, dict] = {
 
@@ -290,7 +290,7 @@ ARCHETYPE_FILTERS: dict[str, dict] = {
     ),
 
     # --- Non-prototype archetypes (A3 Option B — tagged against existing layouts) ---
-    # Bible refs: bible_missions.md §Siege Breaking/§Reconquest/§Suppression/
+    # Bible refs: docs/bible_history/bible_2_00_missions.md §Siege Breaking/§Reconquest/§Suppression/
     # §Interception/§Evacuation/§Containment/§Counterinsurgency.
 
     # Bible: player center, enemy positions ring perimeter, multiple targetable
