@@ -21,7 +21,13 @@ This is the ground the whole simulation stands on. Events, factions, missions, a
 
 ## Obviously working in 60 seconds
 
+The technical end-state: what a fixed-seed run proves when this epic is done.
+
 Run one region alone for 300 ticks from population 60, economy 66, military 42, tension 18 with a fixed seed. Economy climbs toward the mid-50s then oscillates with a 15-tick period; tension settles into a low equilibrium with an 18-tick wobble; military decays a little then recruits back and holds under 90; population creeps up. Run it again with the same seed: every number identical to the last decimal. Cut economy to 9 by hand: tension climbs, population falls, and it does not recover on its own.
+
+## Visual end-state
+
+None direct. This epic produces no pixels of its own; region fields and composites are numbers in the strategic snapshot. The player sees them through the E-16 world view: a system's condition surfaces in the faction data panel and the hover tooltip (stable versus straining), and its drift over time surfaces as chronicle fragments in E-09 ("the border world's economy has not recovered since the blockade"). What "done" looks like on screen is therefore E-16's and E-09's target, not this epic's; this epic's finished picture is the trajectory above, read from a T1 trace. When E-16 is built, its visual end-state names how a straining region must read at a glance so a player never has to open a number to know a world is in trouble.
 
 ## Stories
 

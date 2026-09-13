@@ -20,7 +20,7 @@ Default to `claude-opus-4-6` for design and test-authoring work in this repo.
 
 - `game_bible.md` — hub: vision, sacred principles, game shape, tone, monetization. Human-facing, short.
 - `stories.md` — the story catalog. One row per user-facing behavior (`S-###`), its epic, status, and depth pointer. No design in this file.
-- `epics/E-##-<slug>.md` — one file per feature area: completeness gate result, purpose, stories with Given/When/Then rules (`R-###-##`), inputs, outputs, invariants, scale requirements, references, ways this could be wrong, open flags, dependencies.
+- `epics/E-##-<slug>.md` — one file per feature area: completeness gate result, purpose, end-state (what done looks like technically and visually, authored before the epic is queued), stories with Given/When/Then rules (`R-###-##`), inputs, outputs, invariants, scale requirements, references, ways this could be wrong, open flags, dependencies.
 - `references/E-##/` — screenshots, clips, and `notes.md` naming which games a story should look and feel like. Visual ground truth for T2 QA.
 - `algorithms.md` — the retained equations with constants. The C rewrite reproduces them bit for bit.
 - `docs/northstar/ambiguity_register.md` — every open `[NEEDS WESTLEY]` question (`Q-###-##`) with candidate answers. An epic with an open flag is not built.
