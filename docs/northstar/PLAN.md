@@ -88,6 +88,8 @@ Track R  Research (parallel)  R1 QA driving, R2 C rewrite, R3 escalation, R4 RTS
 
 **Earliest build start.** Agora may begin Sprint 0 (toolchain) as soon as Track R1/R2 spikes pass and Stage 0 probes A–E are green, and may begin the first strategic-sim rungs (region fields, composites, drift equations, world graph) as soon as Stage 1's algorithm pass and the Stage 2 epic files for those rungs are Ready. Tactical, integration, and client epics keep being defined while those build. Nothing waits on the whole bible being e2e-defined; everything waits on its own epic being Ready.
 
+**Layer system (E-01) design phase and its sequencing.** The layer system is the game's most distinctive mechanic and is hard to change once built, so it does not go straight from epic to build. The earliest tactical work ships **basic unit movement on a single layer first** (no layer mechanic), giving a working simple prototype of the game. Only after the first couple of epics have produced that prototype does the layer system enter its design phase: Claude plans and builds several interactive layer-system options in Godot on top of the prototype, Westley plays with them and chooses, and the chosen option becomes E-01's visual end-state. So single-layer movement is an early rung; the full layer mechanic is deliberately deferred behind a working prototype and a real design pass, not defined blind. (Decision 2026-09-13; recorded in `README.md`'s decisions table.)
+
 ## Requirement hierarchy (agile)
 
 | Level | ID | What it is | Lives in |
