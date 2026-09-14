@@ -29,6 +29,7 @@ Principles that persist beyond any chat are in `principles.md`. The agile method
 | Layer system design phase (2026-09-13) | The layer system (E-01) is the game's most distinctive mechanic and hard to change once built, so it gets a real design phase instead of a reference pull. The earliest build epics ship basic unit movement on a **single layer first** (no layer mechanic). On that Godot prototype, Claude builds several interactive layer-system options for Westley to play with and choose between; the chosen option becomes E-01's visual end-state. Sequencing consequence: single-layer movement is an early rung on the tactical ladder, ahead of E-01 proper. |
 | UI surfaces are TBD design, not references (2026-09-13) | Main menu, HUD-beyond-IGoP, mission briefing/debrief (E-10), and generational setup (E-08) are highly modifiable and start simple, iterated on player feedback; they get simple mockups/prototypes, not other-game screenshots. The existing in-game galaxy view (good animation) is reused for E-09. Contrast with the layer system, which is front-loaded because it is hard to change later. |
 | Combined gating test (2026-09-14) | Each story's gating test proves behavior, speed, and scale together in one test — a fast-but-wrong, correct-but-slow, or correct-but-undersized run all fail it. Exact-value algebra rules with no speed/scale axis stay separate single-leg unit tests. Amended into PLAN.md (principle 5, Stage 5 test layers, Done-when) and the Definition of Ready. |
+| Lean MVP loop, Track L (2026-09-14) | Playtest rounds (friends, Discord cohort, Steam Playtest) decide build order. Substrate is the C sim and new Godot client only; the legacy Python slice is not used for playtests. Agora builds client and packaging too, after a GDScript probe (H) and an export probe (I) pass. Stories are cut by omission, never thinned. Rounds open on evidence, not dates. Method, ranking, per-epic cuts, build path, and the experiment log are in `mvp/`; Track L's own flags are `Q-MVP-##`. |
 
 ## The cautionary example: the layer system
 
@@ -46,6 +47,7 @@ Stage 3  E2E definition   Per epic: inputs, outputs, rules, edges, scale, DoR   
 Stage 4  Roadmap          Product backlog, sprints, escalation ladder                 -> roadmap.md, backlog.md, sprints/
 Stage 5  TDD tests        Claude writes the fenced test suite per story               -> tests/
 Track R  Research         R1 QA driving, R2 C rewrite, R3 escalation, R4 RTS bugs     -> research/
+Track L  Lean MVP loop    Rounds to testers; ranks and cuts; owns Stage 3 order     -> mvp/
 ```
 
 Stages 1 and 2 run once, in full, because they produce the source of truth. Track R runs alongside them. Stage 0 runs after the R1 and R2 spikes and before any sprint. Stages 3, 4, and 5 are a per-epic pipeline that repeats for the life of the project: an epic enters Stage 3 when the roadmap prioritizes it, passes the Definition of Ready, gets its tests in Stage 5, and then Agora builds it while Claude runs the next epic through the pipeline.
@@ -83,3 +85,7 @@ Before a story is queued, Claude writes its failing tests from the e2e file: C u
 Four briefs in `research/`: `qa_driving.md` (how the model is the user on forge), `c_rewrite.md` (toolchain, harness, architecture, algorithm inventory, perf targets), `escalation.md` (spiral signals, flag file, notification, start-over protocol, opt-in watcher), `rts_bug_catalog.md` (every bug class with detector tier and evidence). R1 and R2 each end in a spike proof that gates Stage 0.
 
 **Research tooling.** Westley has an unused Gemini Pro subscription. Track R may dispatch scoped deep-research questions (vendor comparisons, exact setup steps, nitty-gritty technical options for a stated use-case) to Gemini via its API, CLI, or Deep Research mode, then Claude verifies the output before it enters `research/`. Wiring Gemini in is a Research Lane task; usage volume is not a constraint.
+
+### Track L — Lean MVP loop
+
+A parallel track that decides which epics and stories enter Stage 3 next by shipping cuts to playtesters in rounds (friends, Discord cohort, Steam Playtest) and measuring what players actually value against what the bible assumes. Cuts are by story omission; gates are unchanged; client and packaging work goes through Agora after probes H and I pass. Full definition in `PLAN.md` Track L; method, the ranked list of what the game offers, per-epic cuts, the build path, and the living experiment log in `mvp/`.
