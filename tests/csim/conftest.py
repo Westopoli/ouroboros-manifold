@@ -19,6 +19,24 @@ import pytest
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 LIB_PATH = REPO_ROOT / "libouroboros.so"
 DBG_LIB_PATH = REPO_ROOT / "libouroboros_dbg.so"
+CSRC_DIR = REPO_ROOT / "csrc"
+
+
+def _build_libs():
+    """Compile the C sim libraries before loading, so any pytest run self-builds
+    (mirrors the proving-ground conftest). A make failure while csrc/*.c exist is
+    a real compile error and the fixtures below turn it red; with no csrc/*.c
+    there is nothing to build yet and they skip."""
+    import subprocess
+    try:
+        subprocess.run(["make", "-s", "libouroboros.so", "libouroboros_dbg.so"],
+                       cwd=str(REPO_ROOT), capture_output=True, text=True, timeout=180)
+    except Exception:
+        pass
+
+
+_HAS_CSRC = CSRC_DIR.exists() and any(CSRC_DIR.glob("*.c"))
+_build_libs()
 
 # The header (csrc/ouroboros_sim.h) does not pin a literal integer anywhere;
 # it only says the harness "asserts this matches what it was written against."
@@ -193,7 +211,10 @@ def _configure_debug(h):
 @pytest.fixture(scope="session")
 def lib():
     if not LIB_PATH.exists():
-        pytest.skip(f"libouroboros.so not built at {LIB_PATH}; run `make` first")
+        if _HAS_CSRC:
+            pytest.fail("csrc/*.c present but libouroboros.so did not build "
+                        "(compile error); run `make` to see the output")
+        pytest.skip("no csrc/*.c implementation yet; nothing to build")
     handle = ctypes.CDLL(str(LIB_PATH))
     _configure_common(handle)
     version = handle.om_abi_version()
@@ -207,7 +228,10 @@ def lib():
 @pytest.fixture(scope="session")
 def dbg():
     if not DBG_LIB_PATH.exists():
-        pytest.skip(f"libouroboros_dbg.so not built at {DBG_LIB_PATH}; run `make` first")
+        if _HAS_CSRC:
+            pytest.fail("csrc/*.c present but libouroboros_dbg.so did not build "
+                        "(compile error); run `make` to see the output")
+        pytest.skip("no csrc/*.c implementation yet; nothing to build")
     handle = ctypes.CDLL(str(DBG_LIB_PATH))
     _configure_common(handle)
     _configure_debug(handle)
