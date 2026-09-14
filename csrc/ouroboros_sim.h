@@ -2,7 +2,7 @@
  *
  * This header is the fenced contract between the fenced test suite
  * (tests/csim/, which calls these functions via ctypes) and the Agora-written
- * implementation (csrc/*.c, which must satisfy them). It is owned by the parent
+ * implementation (the csrc .c files, which must satisfy them). It is owned by the parent
  * (Claude); Agora may not edit it. See docs/northstar/e2e/E-02.md and
  * docs/bible/algorithms.md for the behavior each function must reproduce, and
  * docs/northstar/research/c_rewrite.md for the determinism contract.
