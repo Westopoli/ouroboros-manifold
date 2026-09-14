@@ -12,6 +12,11 @@ The one-queue workflow is retired under the north star. This file preserves the 
 
 Seeded from prior queue + launch_todo harvest. Order below is a starting suggestion, not a decision.
 
+### Fix the current game build error (blocks reference capture)
+**What:** The existing Godot game does not run. Load of `privacy_modal.tscn` fails at `autoload/tactical_bridge.gd:64` — `Parser Error: Identifier "WsClient" not declared in the current scope`. Reported by Westley 2026-09-13 with an editor screenshot.
+**Why:** Blocks capturing the existing in-game galaxy-view animation, which E-09 reuses as its reference (`docs/bible/references/E-09/notes.md`), and blocks any other live reference or playtest on the current build. Not part of the C rewrite; a small fix to the current client.
+**Note:** `tactical_bridge.gd` is a client autoload, not a protected sim equation file.
+
 ### Save/resume tactical mid-mission state
 **What:** Player can quit mid-mission and resume with the same tactical state — units, positions, HP, objectives intact.
 **Built:** `TacticalEngine.export_full_state()` + `restore_from_state()`, `write_tactical_state`, `load_tactical_state`, `consume_tactical_state`, `has_tactical_state` in sim. World-level save/resume v1 already shipped.

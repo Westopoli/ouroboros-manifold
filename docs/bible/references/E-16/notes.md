@@ -1,17 +1,20 @@
 # E-16 Client Camera, HUD, and World View — Look and behavior references
 
-**Not literal.** Ouroboros will not copy any game below. Each row points at ONE aspect of an image that shows a behavior or look we want; read the "Aspect" cell, not the whole picture. "Not wanted" fences off what to ignore in that same image.
+**Not literal.** Ouroboros will not copy any game below. Read the aspect each shot pins, not the art.
 
 **For test-writers and build models:** "Proves / contrast" names the story the shot grounds and what to check the current build against. If the build does not read like the Aspect cell for that story, that is a finding to raise, not a pass.
 
-Note: this epic still has open ambiguity flags. Gather these references in parallel, but the epic is not Ready until the flags close.
+## Provided shot (Westley, 2026-09-13)
 
-Add files here as `E-16-NN-slug.png` (clips `.mp4`/`.gif`) and put NN in the `#` column. Fill Source / Aspect / Not wanted per image; the shot subjects below are the slots.
-
-| # | Story | Shot subject | Source | Aspect — the example | Not wanted | Proves / contrast |
+| # | Story | File | Source | Aspect — the example | Not wanted | Proves / contrast |
 |---|---|---|---|---|---|---|
-| 01 | S-104 | In-game tactical HUD layout | | | | tells the player what is needed and nothing else |
-| 02 | S-106, S-107 | The galaxy/world map between missions | | | | how the strategic galaxy reads at a glance |
-| 03 | S-108 | Strategic-to-tactical transition, clip | | | | one unbroken shot, no hard cut or loading seam |
-| 04 | S-103 | Tactical camera framing (distance and angle) | | | | the camera distance/pitch that keeps a battle readable |
-| 05 | S-110 | Main menu and settings tone | | | | the register of the very first screen |
+| 01 | S-104 | `image.png` | IMMORTAL: Gates of Pyre (IGoP, alpha footage) | The tactical HUD shape: segmented resource bars top-left, minimap bottom-left, a command card (train/tech/build/power) bottom-center with hotkeys, a selected-unit panel bottom-right | the sci-fi/Brood art, exact icons | HUD tells the player what is needed and nothing else; confirms the "IGoP HUD" the bible cites |
+
+## TBD — design phase, not a screenshot
+
+The **main menu, galaxy map, and strategic-to-tactical transition** are not referenced from other games. Westley does not yet know the exact look; these get a design phase (Claude builds simple mockups / a prototype to interact with — a prototype, not the final version). The original in-game UI "looked nice" and is the starting point. The existing in-game galaxy view already has good animation and is reused for E-09 (see `references/E-09/notes.md`), pending the current game build-error fix.
+
+- S-106, S-107 galaxy map — reuse existing in-game galaxy view; screenshots pending build fix.
+- S-108 seamless transition — design phase.
+- S-110 main menu and settings — design phase; original UI is the baseline.
+- S-103 tactical camera — design phase with the E-01 layer prototype.
