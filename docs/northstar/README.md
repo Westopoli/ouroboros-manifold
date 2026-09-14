@@ -8,6 +8,12 @@ Agora (`~/Projects/agora`, an autonomous loop of local Ollama models plus a doll
 
 Principles that persist beyond any chat are in `principles.md`. The agile method, ID scheme, change protocol, and Definition of Ready are in `agile.md`. Open design questions that block building are in `ambiguity_register.md`.
 
+## Current position (2026-09-13)
+
+**Stage 2 complete.** The bible is reformatted into 21 epics, a story catalog, algorithms, and references; CLAUDE.md/workflow rewritten; `priority_queue.md` retired; the rules-derivation script written; all 21 epics ran the completeness gate. Westley's ambiguity-register answers are recorded (64 rows answered/deferred), so E-02, E-04, E-05, E-06, E-08, E-09, E-10, E-11, E-12, E-17 have empty registers.
+
+**Stage 3 active, per epic.** E-02 (region fields, composites, drift) is first: its e2e file `e2e/E-02.md` is authored and its three flags folded. E-02 is one step from Ready — Westley confirms its scale-gate numbers. Then E-03 (world generation). Stage 4 (roadmap/backlog/sprints) and Stage 5 (tests) have not started; no `roadmap.md`, `backlog.md`, or `e2e/` file beyond E-02 yet.
+
 ## Decisions made
 
 | Fork | Decision |

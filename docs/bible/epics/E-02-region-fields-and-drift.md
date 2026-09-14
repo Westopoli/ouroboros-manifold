@@ -11,7 +11,7 @@
 | Every visible-surface story has a reference | Not applicable. No story in this epic has its own visible surface; the world view that shows region state is E-16. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on 3 open flags. All three are narrow; this epic is expected to be the first to reach Ready.
+**Gate verdict: passed (2026-09-13).** The 3 flags (Q-013-01, Q-015-01, Q-019-01) are answered and folded below. Stage 3 e2e is authored (`docs/northstar/e2e/E-02.md`). One item remains before Ready: Westley confirms the scale-gate numbers.
 
 ## Purpose
 
@@ -60,7 +60,7 @@ Rules
 
 Inputs: military, economy, population, tension, faction modifiers.
 Outputs: Δmilitary in the drift log; military field.
-Open flags: Q-013-01 (the bible's "low military near hostile factions accelerates all negative trends" has no formula).
+Open flags: none. Q-013-01 resolved (a): the bible's "low military near hostile factions accelerates all negative trends" is a stale sentence with no formula, deleted; the attack resolver (E-05) already punishes low military. No rule.
 
 ### S-014 — People make money, unrest and overreach cost it
 As a commander, I want a region's economy to grow with its population, shrink under tension, and fall back when it outruns what its people can sustain, so that prosperity has a shape.
@@ -79,14 +79,14 @@ Open flags: none.
 As a commander, I want a region next to a booming friendly region to develop faster, so that a faction's core outproduces its fringe.
 
 Rules
-- R-015-01  Given a region with two same-faction inhabited neighbors across trade edges at economy 80 and 40, When one tick runs, Then adjacency bonus = 0.05·0.8 + 0.05·0.4 = 0.060 added to Δeconomy.
-- R-015-02  Given a neighbor across a border-only edge, When one tick runs, Then it contributes nothing.
-- R-015-03  Given a neighbor owned by a faction this region's owner holds a cooperative stance toward, across a trade edge, When one tick runs, Then it contributes as a friendly neighbor.
+- R-015-01  Given a region with two same-faction inhabited neighbors at economy 80 and 40, When one tick runs, Then adjacency bonus = 0.05·0.8 + 0.05·0.4 = 0.060 added to Δeconomy, regardless of the edge types joining them.
+- R-015-02  Given a same-faction inhabited neighbor across a border-only edge at economy 40, When one tick runs, Then it contributes 0.05·0.4 = 0.020; edge type does not gate the bonus. Whether a neighbor contributes is decided by the relationship (R-015-03), not the edge type.
+- R-015-03  Given a neighbor owned by a faction this region's owner holds a cooperative stance toward, When one tick runs, Then it contributes as a friendly neighbor; a neighbor with no such relationship contributes nothing.
 - R-015-04  Given an empty-tier neighbor, When one tick runs, Then it contributes nothing.
 
-Inputs: neighbor economy (raw, not de-oscillated), edge types, stances.
+Inputs: neighbor economy (raw, not de-oscillated), edge types (recorded but not a filter), stances.
 Outputs: adjacency term in the drift log.
-Open flags: Q-015-01 (bible says all edge types count; code counts trade edges only).
+Open flags: none. Q-015-01 resolved (b): every edge type counts; the C rewrite drops the current trade-only filter. The relationship gates the bonus, not the edge type.
 
 ### S-016 — Hardship breeds unrest, unrest burns itself out
 As a commander, I want tension to rise when a region is poor, unstable, or starving, and to decay faster the higher it is, so that regions settle into a real equilibrium instead of spiraling.
@@ -141,7 +141,7 @@ Rules
 
 Inputs: field values, source of the change (drift, friction, event, conquest).
 Outputs: clamped field values.
-Open flags: Q-019-01 (Q-E02-01 was closed as "verify in C"; this story writes the current code behavior as the rule and asks Westley to confirm it is the intended one).
+Open flags: none. Q-019-01 resolved (a): confirmed as written — event effects floor tension at 12.0, drift alone floors it at 0. R-019-04 stands.
 
 ### S-020 — Same seed, same galaxy
 As a player in a multiplayer match, I want the simulation to produce the identical trace from the same seed on every machine, so that everyone is looking at the same galaxy.
@@ -208,7 +208,7 @@ None required. The player-facing surface for region state is E-16 (world view).
 
 ## Open ambiguity flags
 
-Q-013-01, Q-015-01, Q-019-01. Details in `docs/northstar/ambiguity_register.md`.
+None. Q-013-01 (a), Q-015-01 (b), Q-019-01 (a) all answered 2026-09-13; folded into the stories above. Details in `docs/northstar/ambiguity_register.md`. Stage 3 e2e: `docs/northstar/e2e/E-02.md`.
 
 ## Depends on
 
