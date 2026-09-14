@@ -25,7 +25,7 @@ DEFAULT_OUT = Path(__file__).resolve().parent.parent / "docs" / "northstar" / "p
 TITLE_RE = re.compile(r"^#\s+(\S+)\s+—\s+(\w[\w-]*)", re.M)
 ROW_RE = re.compile(r"^\|\s*\d+\s*\|\s*(\d+)\s*\|\s*([^|]+?)\s*\|\s*([^|]*?)\s*\|"
                     r"\s*(\d+)\s*\|\s*(\d+)\s*\|\s*([^|]*?)\s*\|\s*[0-9a-f]*\s*\|\s*([\d.]+)\s*\|", re.M)
-RUN_DIR_RE = re.compile(r"^(.*)-(\d{8})-(\d{4})$")
+RUN_DIR_RE = re.compile(r"^(.*)-(\d{8})-(\d{4})(?:-\d+)?$")
 
 
 def cost_in_window(start: datetime, end: datetime) -> tuple[int, float]:
