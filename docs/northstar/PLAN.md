@@ -82,6 +82,7 @@ Stage 3  E2E definition       Per epic: inputs, outputs, rules, edges, scale, Do
 Stage 4  Roadmap              Product backlog, sprints, escalation ladder          -> docs/northstar/roadmap.md + sprint files
 Stage 5  TDD tests            Claude writes the fenced test suite per story        -> tests/ (C, Python harness, QA scenarios)
 Track R  Research (parallel)  R1 QA driving, R2 C rewrite, R3 escalation, R4 RTS bug catalog -> docs/northstar/research/*.md
+Track L  Lean MVP loop (parallel) Rank, cut, ship to testers, measure, re-plan; owns Stage 3 order -> docs/northstar/mvp/
 ```
 
 **Global stages vs per-epic pipeline.** Stages 1 and 2 run once, in full, because they produce the source of truth. Track R runs alongside them. Stages 3, 4, 5 are a **per-epic pipeline** that repeats for the life of the project: an epic enters Stage 3 when the roadmap prioritizes it, passes the Definition of Ready, gets its tests in Stage 5, and then Agora builds it while Claude runs the next epic through the pipeline.
@@ -241,6 +242,26 @@ Track R  Research (parallel)  R1 QA driving, R2 C rewrite, R3 escalation, R4 RTS
 **Rules.** Tests live in fenced paths Agora cannot edit. Every test names the `S-###`/`R-###-##` it proves. A test that cannot fail is a defect (positive control required). Test code is normal prose, no caveman.
 
 **Done when (per story).** Every rule has at least one test; the story's gating test proves behavior, speed, and scale together (a fast-but-wrong or correct-but-slow run fails it); every applicable R4 detector has a positive control; the set is red against the current implementation and the Agora task spec references the exact commands. The story moves to Tested in the backlog.
+
+---
+
+## Track L — Lean MVP loop (parallel with Stages 3–5, owns their order)
+
+**Goal.** Get a playable cut into testers' hands as early as the C/Agora path allows, in rounds, and let measured player response decide what is built next. The point is to stop spending build time on ideas players do not value, and to learn what player satisfaction actually is for this game rather than what the bible assumes it is.
+
+**Decisions (2026-09-14).** Substrate is the C sim and the new Godot client only; the legacy Python slice is not used for playtests. Client and packaging are Agora work like everything else, gated on a proving-ground probe that shows Agora can build GDScript against fenced Godot tests. Testers come in three rounds: friends, then a Discord cohort, then Steam Playtest. The first round's bet is recorded as an open flag (`Q-MVP-01`) with a recommendation, not decided here.
+
+**What Track L changes.** It owns the *order* in which epics enter Stage 3 and which stories of each epic are pulled first. It does not change what Ready, Tested, or Built mean. Stories cut from a round are omitted, never thinned: a rule that is in a round keeps its full Given/When/Then and its full test. Where an epic is needed for a round but not built, a stand-in is a prototype story under Stage 4's prototype rule: marked as such in the backlog, replaced not extended when the real story is Ready.
+
+**Rounds.** Round 0 is planning and instrumentation (hypotheses, metrics, feedback instruments, a two-week Agora velocity baseline). Round 1 ships to friends. Round 2 ships to a Discord cohort. Round 3 ships to Steam Playtest. Each round has hypotheses with kill criteria, a metric set, feedback instruments, a build gate, and a gap review. Rounds open on evidence, never on dates: Agora's throughput on this project is unmeasured (zero cards done at the time of writing), so the plan states sequence and gates only.
+
+**Gates that still apply.** Definition of Ready, fenced tests, Agora-only builds, no runtime model calls, determinism, scale gates set by Claude with Westley. Probe H (GDScript build to fenced Godot tests) and probe I (headless export card) must pass before any client or packaging card opens.
+
+**The lean step: gap review.** After each round, a table with one row per hypothesis: what the bible assumed players value, what testers said and did, the gap, and the action. Every gap row becomes exactly one of: a change-protocol PR (story rewritten, tests revised, card respec'd), a new `Q-` flag, or a kill. Killed ideas are recorded in `mvp/experiments.md` so they do not return silently. Confirmed ideas are recorded too, so the bible's claims accumulate evidence.
+
+**What Track L may not do.** Weaken a rule or a test to fit a round; loosen a scale gate; build on the legacy slice; call a model at runtime; put a human in the build loop; claim Ready for a story that is outside a round's scope.
+
+**Files.** `mvp/README.md` (method, rounds, metrics, instruments, gap-review template); `mvp/distinctiveness.md` (ranked list of what the game offers, with a falsifiable hypothesis per item); `mvp/feature_mvps.md` (per-epic cut by round); `mvp/build_path.md` (how Agora builds the cut compared with the current backlog ladder, new probes, throughput gate); `mvp/experiments.md` (living hypothesis and result log).
 
 ---
 
