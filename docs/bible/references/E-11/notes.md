@@ -1,8 +1,8 @@
-# E-11 Units, Abilities, and Damage — Look and behavior references
+# E-11 Units and Combat — Look and behavior references
 
-Stub. Story S-088 is not Ready until this file has real entries.
+**No external shots provided (not needed / TBD).** Unit look and scale are informed by the E-18 visual register (toy, blocky, Art of Rally) and the E-13 grouping reference (Halo Wars, `references/E-13/image.png`), where one unit reads as a cluster of several models under one bar.
 
-Needed from Westley, 2 to 5 items, one sentence on the target and one on what is not wanted: unit silhouettes and scale by category (Strike small, Line medium, Siege large), squad rendering for Strike units, ability cues (Barrage telegraph, Fortify zone, Brace planted state).
+- S-082, S-088 silhouettes and scale — derive from E-18 register; a unit is a group of models (E-13), readable by silhouette.
+- S-086 ability cues — design phase with the E-18 ability-signature target (S-135).
 
-| # | File | Game | Target | Not wanted |
-|---|---|---|---|---|
+No shots required at this stage; the register lives in E-18 and E-13.

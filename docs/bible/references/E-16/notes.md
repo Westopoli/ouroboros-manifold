@@ -1,10 +1,20 @@
-# E-16 Client: Camera, HUD, World View, Screens — Look and behavior references
+# E-16 Client Camera, HUD, and World View — Look and behavior references
 
-Stub. Every story in this epic is a visible surface; none is Ready until this file has real entries.
+**Not literal.** Ouroboros will not copy any game below. Read the aspect each shot pins, not the art.
 
-Candidate first entries, pending Westley's confirmation: the Immortal: Gates of Pyre HUD screenshots the bible cites (`docs/design_questions/igop_hud_reference_alpha.png`, `igop_hud_reference_beta.png`).
+**For test-writers and build models:** "Proves / contrast" names the story the shot grounds and what to check the current build against. If the build does not read like the Aspect cell for that story, that is a finding to raise, not a pass.
 
-Needed from Westley, 2 to 5 items each: mid-mission HUD; 3D strategic map with territory; a seamless scale transition (No Man's Sky is the named model); main menu tone; the multi-perspective camera direction (A-145, research pending).
+## Provided shot (Westley, 2026-09-13)
 
-| # | File | Game | Target | Not wanted |
-|---|---|---|---|---|
+| # | Story | File | Source | Aspect — the example | Not wanted | Proves / contrast |
+|---|---|---|---|---|---|---|
+| 01 | S-104 | `image.png` | IMMORTAL: Gates of Pyre (IGoP, alpha footage) | The tactical HUD shape: segmented resource bars top-left, minimap bottom-left, a command card (train/tech/build/power) bottom-center with hotkeys, a selected-unit panel bottom-right | the sci-fi/Brood art, exact icons | HUD tells the player what is needed and nothing else; confirms the "IGoP HUD" the bible cites |
+
+## TBD — design phase, not a screenshot
+
+The **main menu, galaxy map, and strategic-to-tactical transition** are not referenced from other games. Westley does not yet know the exact look; these get a design phase (Claude builds simple mockups / a prototype to interact with — a prototype, not the final version). The original in-game UI "looked nice" and is the starting point. The existing in-game galaxy view already has good animation and is reused for E-09 (see `references/E-09/notes.md`), pending the current game build-error fix.
+
+- S-106, S-107 galaxy map — reuse existing in-game galaxy view; screenshots pending build fix.
+- S-108 seamless transition — design phase.
+- S-110 main menu and settings — design phase; original UI is the baseline.
+- S-103 tactical camera — design phase with the E-01 layer prototype.

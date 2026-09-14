@@ -1,12 +1,16 @@
 # E-09 Chronicle — Look and behavior references
 
-Stub. Story S-069 (split-screen scroll presentation) is not Ready until this file has real entries.
+**Reuse existing, not an external pull.** The galaxy view already built in the game has good animation for the "watching history happen" map, and Westley wants to reuse what exists rather than reference another game.
 
-Needed from Westley, 2 to 5 items, one sentence on what in the image is the target and one on what is not wanted:
+## Status (Westley, 2026-09-13)
 
-1. Streaming word-by-word text presentation that reads the way the scroll should.
-2. An animated strategic map showing borders shifting over time.
-3. A split-screen layout pairing the two.
+- **Source is the existing in-game galaxy view.** Its map animation is the target for S-069.
+- **Screenshots pending a build fix.** The game currently does not run — a build error (`tactical_bridge.gd`: `Identifier "WsClient" not declared`, in `privacy_modal.tscn` load) blocks it. Westley will capture the galaxy-view references once the build errors are solved. See the project note recorded this session.
 
-| # | File | Game or source | Target | Not wanted |
+## Slots to fill once the build runs
+
+| # | Story | Shot subject | Aspect — the example | Proves / contrast |
 |---|---|---|---|---|
+| 01 | S-069 | The existing galaxy-view map animation, clip | the pace and legibility of the map replaying events | reuse this, do not redesign it |
+| 02 | S-065, S-069 | Split view: streaming text beside the animated map | narrated history and moving map read together | — |
+| 03 | S-067 | One chronicle entry's typography | reads as a fragment of history, not a log line | — |

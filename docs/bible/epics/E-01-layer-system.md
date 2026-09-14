@@ -8,7 +8,7 @@
 | Every input listed with range and rejection behavior | Yes, see Inputs. Two rejection behaviors are open (Q-002-02, Q-003-01). |
 | Every output listed with where it is observable | Yes, see Outputs. On-screen elevation is open (Q-E01-01). |
 | Implied-but-unstated behavior turned into flags | 14 new flags raised, Q-001-01 through Q-009-01. |
-| Every visible-surface story has a reference | **No.** `references/E-01/notes.md` is a stub awaiting Westley's screenshots. Blocks S-009, S-010, S-006. |
+| Every visible-surface story has a reference | **No — by design a Godot design phase, not a screenshot pull.** `references/E-01/notes.md` records the plan: basic single-layer movement ships first, then Claude builds several interactive layer-system options in Godot for Westley to choose between; the choice fills the references. Blocks S-009, S-010, S-006 until then. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
 **Gate verdict: not passed.** Blocked on 15 open flags (Q-E01-01 plus 14 new) and on references. Stories are Spec'd, not Ready.

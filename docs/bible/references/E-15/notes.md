@@ -1,8 +1,3 @@
-# E-15 Reinforcement, Non-Combat Units, Hazards — Look and behavior references
+# E-15 Reinforcement, Supply, and Hazards — Look and behavior references
 
-Stub. Story S-131 is not Ready until this file has real entries.
-
-Needed from Westley, 2 to 5 items: a capturable structure that reads as capturable and owner-colored; a non-combat convoy that reads as non-combat; an obscuring hazard volume (nebula, fog bank).
-
-| # | File | Game | Target | Not wanted |
-|---|---|---|---|---|
+**TBD on design/testing.** No references provided; Westley considers this not-needed-yet. The epic also still has open ambiguity flags. Revisit for references after the flags close and a first pass exists.
