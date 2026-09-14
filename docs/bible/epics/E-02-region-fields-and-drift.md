@@ -11,7 +11,7 @@
 | Every visible-surface story has a reference | Not applicable. No story in this epic has its own visible surface; the world view that shows region state is E-16. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: passed (2026-09-13).** The 3 flags (Q-013-01, Q-015-01, Q-019-01) are answered and folded below. Stage 3 e2e is authored (`docs/northstar/e2e/E-02.md`). One item remains before Ready: Westley confirms the scale-gate numbers.
+**Gate verdict: passed (2026-09-13). Ready (2026-09-14).** The 3 flags (Q-013-01, Q-015-01, Q-019-01) are answered and folded below. Stage 3 e2e is authored (`docs/northstar/e2e/E-02.md`); scale gates confirmed by Westley. All Definition-of-Ready items met; stories S-012 … S-020 are Ready for Stage 5 tests.
 
 ## Purpose
 
@@ -189,7 +189,7 @@ No player input reaches this epic directly. Missions change fields through the o
 
 ## Scale requirements
 
-Proposed for Westley to confirm in Stage 3: 60 regions drift in under 50 µs per tick total; 5,000 ticks of drift alone for 60 regions in under 0.5 s; memory per region under 256 bytes.
+Confirmed by Westley 2026-09-14: 60 regions drift in under 50 µs per tick total; 5,000 ticks of drift alone for 60 regions in under 0.5 s; memory per region under 256 bytes. Not loosened by Agora; a miss is escalated.
 
 ## Look and behavior references
 
