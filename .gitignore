@@ -24,3 +24,8 @@ graphify-out/.graphify_*
 graphify-out/memory/
 graphify-out/raw/
 .claude/settings.local.json
+
+# C sim build + Python test env (Sprint 0)
+.venv/
+*.so
+*.o

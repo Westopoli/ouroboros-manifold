@@ -4,7 +4,7 @@
 
 | Check | Result |
 |---|---|
-| Every story has at least one Given/When/Then rule with concrete values | Yes, 9 stories, 31 rules, all numbers from `algorithms.md` ALG-01 through ALG-10. |
+| Every story has at least one Given/When/Then rule with concrete values | Yes, 9 stories, 43 rules, all numbers from `algorithms.md` ALG-01 through ALG-10. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. No player inputs; every input is sim-internal. |
 | Every output listed with where it is observable | Yes, see Outputs. |
 | Implied-but-unstated behavior turned into flags | 3 new flags, Q-013-01, Q-015-01, Q-019-01. |

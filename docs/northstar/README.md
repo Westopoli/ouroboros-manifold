@@ -12,7 +12,7 @@ Principles that persist beyond any chat are in `principles.md`. The agile method
 
 **Stage 2 complete.** The bible is reformatted into 21 epics, a story catalog, algorithms, and references; CLAUDE.md/workflow rewritten; `priority_queue.md` retired; the rules-derivation script written; all 21 epics ran the completeness gate. Westley's ambiguity-register answers are recorded (64 rows answered/deferred), so E-02, E-04, E-05, E-06, E-08, E-09, E-10, E-11, E-12, E-17 have empty registers.
 
-**Stage 3 active, per epic.** E-02 (region fields, composites, drift) is **Ready** (2026-09-14): e2e file `e2e/E-02.md` authored, three flags folded, scale gates confirmed, stories S-012 … S-020 Ready. Next: Stage 5 writes E-02's 31 failing tests, which first needs the C sim-core test-harness contract defined (the pytest-via-ctypes ABI and T1 trace format). E-03 (world generation) is the next epic through Stage 3, once its register answers are on main (PR #40) and its last open flag is answered. Stage 4 (roadmap/backlog/sprints) has not started.
+**Stage 3 active, per epic.** E-02 (region fields, composites, drift) is **Ready** (2026-09-14): e2e file `e2e/E-02.md` authored, three flags folded, scale gates confirmed, stories S-012 … S-020 Ready. Next: Stage 5 writes E-02's 43 failing tests, which first needs the C sim-core test-harness contract defined (the pytest-via-ctypes ABI and T1 trace format). E-03 (world generation) is the next epic through Stage 3, once its register answers are on main (PR #40) and its last open flag is answered. Stage 4 (roadmap/backlog/sprints) has not started.
 
 ## Decisions made
 
