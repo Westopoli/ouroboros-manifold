@@ -62,7 +62,7 @@ These go into `docs/northstar/principles.md` and get a pointer from CLAUDE.md.
 2. **Claude does judgment, day-side only.** Claude designs the bible, the E2E behavior definitions, the roadmap, the tests, and the escalation rules. Claude never runs in an unattended path by default (Agora D16). Opt-in loop watcher is a documented exception Westley enables by hand.
 3. **Tests are the spec.** Every feature exists as failing tests before Agora touches code. Tests are fenced; Agora cannot edit them. A failing test always has a reason and the loop keeps iterating until green. Every detector has a positive control proving it can fail.
 4. **Small bites, upward.** Sprints feed tiny features in dependency order. One task = one feature = one acceptance command set, bounded by Agora's `max_impl_lines`. QA runs on every task, not at the end.
-5. **Scale is a test.** Tests induce high input (units, regions, ticks) with hard thresholds. Under-threshold means the sprint is not done.
+5. **Scale is a test, together with behavior and speed.** Tests induce high input (units, regions, ticks) with hard thresholds. Under-threshold means the sprint is not done. Scale is never measured apart from behavior: a story's gating test runs at the confirmed scale and asserts, in one test, that the result is behaviorally correct, within the speed budget, and at the required scale. A fast-but-wrong, a correct-but-slow, and a correct-but-undersized run all fail the same test.
 6. **C for speed, equations preserved.** The sim is rewritten in C. The stochastic equations (drift, world gen, faction scoring, attack resolution, friction, tech) are retained verbatim as named formulas unless Stage 1 kills them. Determinism via seeded RNG is a contract.
 7. **The model is the user.** QA drives the game the way a player does and watches for what a player hates (rubber-banding, stuck units, backwards walking, dropped orders, and the rest of the RTS bug catalog). Two tiers: T1 state traces, T2 visual.
 8. **Escalation is a ladder with a top.** Local model stalls, DeepSeek escalates (solve-direct or reorganize), spiral detection halts and writes an English flag with evidence for Westley. "Start over" is a defined protocol, not a panic.
@@ -174,7 +174,7 @@ Track R  Research (parallel)  R1 QA driving, R2 C rewrite, R3 escalation, R4 RTS
 
 **Inputs.** The epic's Stage 2 file (gate passed, flags answered), its references, R1 (what QA can observe), R2 (C architecture, algorithm contract, determinism rules), R4 (RTS bug catalog mapped to epics).
 
-**Definition of Ready (exit of Stage 3, entry to Stage 5).** An epic's stories are Ready when: the e2e file has no empty section; every input and output is mapped; the ambiguity register has zero open flags for the epic; scale gates have numbers Westley confirmed; every visible-surface story has a reference; R4 watch-fors are assigned. Only Ready stories may have tests written and only tested stories may be queued to Agora.
+**Definition of Ready (exit of Stage 3, entry to Stage 5).** An epic's stories are Ready when: the completeness gate passed; the epic's end-state is written and complete (technical end-state with concrete values, and a visual end-state authored or an explicit "none direct" naming the rendering epic); the e2e file has no empty section; every input and output is mapped; the ambiguity register has zero open flags for the epic; scale gates have numbers Westley confirmed; every visible-surface story has a reference; R4 watch-fors are assigned. Only Ready stories may have tests written and only tested stories may be queued to Agora. (`agile.md` carries the same list.)
 
 **Per-epic content** (`docs/northstar/e2e/E-##.md`):
 - Actor and surface: player action (click, drag, hotkey, command), sim event, or time-jump batch.
@@ -233,14 +233,14 @@ Track R  Research (parallel)  R1 QA driving, R2 C rewrite, R3 escalation, R4 RTS
 **Test layers.**
 - **Unit (C).** Per function and per equation; determinism (same seed → identical trace); boundary and clamp behavior.
 - **Invariant / trajectory.** Port the intent of `simulation/invariants.py` (~70 invariants) to the C sim: run N ticks, assert on the trace. Same modification rules as CLAUDE.md today: narrow scope allowed, loosen thresholds forbidden.
-- **Scale gates.** Benchmarks with hard thresholds from Stage 3. Fail = not done.
+- **Combined gating test (behavior + speed + scale in one).** Each story's gating test is the integration run that exercises the bulk loop at the confirmed scale and asserts, in a single test, that the result is behaviorally correct (its rules and invariants hold), within the speed budget, and at the required scale. A fast-but-wrong, a correct-but-slow, and a correct-but-undersized run all fail the same test — you cannot pass by being any one of them. Exact-value unit rules with no meaningful speed or scale axis (a pure-function algebra identity on one entity) stay as separate single-leg unit tests above; do not wrap them in a scaled run. The scale thresholds and speed budgets come from Stage 3 and are never loosened by Agora.
 - **T1 QA scenarios.** Scripted player sessions against the C sim (command stream + trace assertions): rubber-band detector, stuck detector, backwards-walk detector, dropped-order detector, and the rest of R4. Each detector ships with a positive control (a seeded scenario that must trigger it).
 - **T2 QA scenarios.** Agora director-mode missions for the Godot client: ordered directives + expected observations (screenshot diff regions, HUD text, unit counts via debug port).
 - **Contract tests.** Snapshot/delta/command JSON shape (Phase 1 pipe) and later GDExtension API.
 
 **Rules.** Tests live in fenced paths Agora cannot edit. Every test names the `S-###`/`R-###-##` it proves. A test that cannot fail is a defect (positive control required). Test code is normal prose, no caveman.
 
-**Done when (per story).** Every rule has at least one test; every scale gate has a benchmark; every applicable R4 detector has a positive control; the set is red against the current implementation and the Agora task spec references the exact commands. The story moves to Tested in the backlog.
+**Done when (per story).** Every rule has at least one test; the story's gating test proves behavior, speed, and scale together (a fast-but-wrong or correct-but-slow run fails it); every applicable R4 detector has a positive control; the set is red against the current implementation and the Agora task spec references the exact commands. The story moves to Tested in the backlog.
 
 ---
 
