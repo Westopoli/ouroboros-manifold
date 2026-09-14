@@ -26,4 +26,17 @@ A toy `libtoy.so` with a seeded PRNG and one drift equation builds with the chos
 
 ## Findings
 
-(empty until the Research Lane fills it)
+Sprint 0 decisions (2026-09-14). These resolve the open "Questions to answer" above for the sim core; recorded in `README.md`'s decisions table.
+
+- **Build: plain `make`.** Forge has gcc + make, not cmake. A hand-written Makefile gives the exact per-platform flag control determinism needs. Phase 2 will use SCons for godot-cpp; cmake buys nothing now. See `Makefile` (parent-owned).
+- **Determinism flags:** `-O2 -fno-fast-math -ffp-contract=off -fexcess-precision=standard -msse2 -mfpmath=sse -fno-math-errno`. Two targets: `libouroboros.so` and `libouroboros_dbg.so` (`-DOM_DEBUG_INJECT`).
+- **RNG: PCG32** (pure integer ops, bit-identical cross-platform; state `{uint64 state, uint64 inc}`). The C trace is its own truth — it does not match Python's Mersenne Twister. Phase 1 mirrors JSON shapes, not draw values.
+- **Transcendental: `om_sin`.** ALG-01's oscillator uses `sin` with an irrational (RNG-drawn) phase, so it cannot be tabulated, and CLAUDE.md forbids platform transcendentals. Ship a portable minimax-polynomial `om_sin` compiled identically everywhere; gate it with a cross-platform value test. The sim never calls libm `sin`.
+- **Checksum: FNV-1a 64-bit**, over the little-endian IEEE-754 bits of every inhabited region's six numbers (military, economy, tension, population, plus 2-dp stability, capacity) in region-index order, folded with the tick. **Cadence N = 10 ticks.** Empty regions excluded. Exposed as `om_world_checksum` / `om_checksum_cadence`.
+- **Test harness: pytest via ctypes** against `libouroboros.so`, keeping Agora's existing pytest acceptance path and `max_impl_lines` sizing. No separate C runner. Tests live fenced in `tests/csim/`.
+- **T1 debug port: none needed.** The in-process ctypes ABI is the debug port for T1 (deterministic, fast) — commands are ABI calls, observations are `om_region_field` / `om_region_drift` / `om_trace_read`. Only T2 (Godot) uses the existing length-prefixed pipe, unchanged. No new socket protocol for the sim core.
+- **The ABI contract** is `csrc/ouroboros_sim.h` (parent-owned): opaque `om_world`, a hard-fixture path (`om_region_set*`) so E-02 tests in isolation, `om_world_step` / `om_world_run`, per-term `om_drift_row`, and a fixed-width `om_trace_row` that diffs by `memcmp` for the cross-platform determinism test (R-020-01).
+
+### Spike proof (to record on execution)
+
+Build a toy `.so` = PCG32 + one drift equation + `om_sin`, pass one pytest-via-ctypes, and paste the exact build + test command here once run.

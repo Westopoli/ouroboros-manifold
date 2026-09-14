@@ -37,6 +37,9 @@ parent_owned = [
   "simulation/world.py",
   "simulation/templates.py",
   "simulation/theme_scifi.py",
+  "csrc/ouroboros_sim.h",
+  "Makefile",
+  "tests/csim/**",
 ]
 
 [invariants]
