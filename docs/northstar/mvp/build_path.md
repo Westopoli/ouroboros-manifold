@@ -16,29 +16,40 @@ Every forecast built on this is a guess. The plan therefore states sequence and 
 1. **A Round column** on every story row in `../backlog.md`: 1, 2, 3, or later, from `feature_mvps.md`. Prototype stories (`S-P##`) get rows too, marked prototype.
 2. **Round-major ordering.** Today's ladders are dependency-major: the whole strategic sim, then the whole tactical sim, then integration, then the client last. Under Track L the order is round-major, dependency-minor: every Round 1 story across its epics goes through Stage 3, Stage 5, and Agora before any Round 2 story, in dependency order within the round.
 3. **Concrete differences from today's ladder.**
-   - E-06 (diplomacy and technology) drops out of the first pass entirely; a fixed-stance stand-in takes its place in Round 1.
-   - The client is no longer "only after the sim ladders are green." Round 1 has a minimal client slice (galaxy view, chronicle page, decision screen, main menu, autosave) because a tester cannot play a trace.
-   - E-10 enters Round 1 with a stand-in mission instead of waiting for the whole tactical ladder.
+   - Every epic except E-19 has Round 1 work, because Round 1 is every major feature at its smallest (`Q-MVP-01`). Today's ladder finishes the whole strategic sim before touching tactical, and the client last; Round 1 instead takes the thinnest slice of each ladder in order: sim core, then tactical, then client.
+   - E-01 enters Round 1 as a two-layer prototype (`S-P10`), which is the first option in the layer design phase rather than something built after it (README decision revised 2026-09-14).
+   - E-16 enters Round 1 with three prototypes (camera, HUD, selection) plus the galaxy view, menu, and autosave, because a tester cannot play a trace.
+   - E-17 enters Round 1 as a prototype generator (`S-P06`), not the layout library.
+   - E-10 carries an auto-resolved mission card (`S-P01`, `Q-MVP-02`) only until the tactical slice is Built inside Round 1.
    - E-22 (playtest delivery and telemetry) is new and sits in Round 1.
    - E-21's pipeline stories move to Round 2; Round 1 reuses the existing chronicle corpus.
-4. **Round 1 story set**, in the order they would enter Stage 3 (dependency order within the round):
+4. **Round 1 story set**, in the order it enters Stage 3 (dependency order within the round):
    - E-02 (Ready, tests red): S-012 to S-020.
-   - E-03: S-021, S-022, S-025.
+   - E-03: S-021 (or `S-P14`), S-022, S-025.
    - E-04: S-026, S-027, S-030.
-   - E-05: S-032, S-035, S-037, S-038, stand-in personality.
-   - E-07: S-049, S-052, stand-in `S-P03`.
-   - E-06 stand-in `S-P02`.
-   - E-08: S-055, S-058, S-059, S-064, stand-ins `S-P04`, `S-P05`.
-   - E-10: S-073, S-077, S-078, stand-in `S-P01`.
-   - E-09: S-065, S-066, S-068, S-071.
+   - E-05: S-032, S-035, S-036, S-037, S-038.
+   - E-06: S-043, S-045.
+   - E-07: S-049, S-052, S-053, `S-P03`.
+   - E-08: S-055, S-058, S-059, S-063 (minimal), S-064, `S-P04`.
+   - E-10: S-073, S-075, S-077, S-078, S-079 (minimal), `S-P01`.
+   - E-09: S-065, S-066, S-068, S-069 (minimal), S-071.
    - E-21: S-152, S-158.
-   - E-16: S-106, S-107, S-110, S-111, stand-in `S-P09`.
-   - E-22: the five Round 1 stories.
-   That is 42 real stories, 9 prototype stories, and 8 epics with Stage 3 work to do (E-02 is done).
+   - E-11: S-082, S-084, S-085, S-087.
+   - E-13: S-096, S-097, S-100, S-102.
+   - E-12: S-089, S-092, S-093.
+   - E-17: S-113, `S-P06`.
+   - E-14: S-123, `S-P07`.
+   - E-15: S-127, `S-P08`.
+   - E-01: `S-P10`.
+   - E-16: S-106, S-107, S-110, S-111, `S-P11`, `S-P12`, `S-P13`.
+   - E-18: S-132, S-138 (minimal).
+   - E-20: S-145 (by construction).
+   - E-22: five Round 1 stories.
+   That is 63 real stories, 11 prototype stories, and 19 epics with Stage 3 work to do (E-02 is done, E-19 has none). Open flags on Round 1 stories that Westley must answer or accept a prototype for: Q-021-01, Q-065-02, Q-111-01.
 
 ## Stage 3 cost, honestly
 
-E-02's e2e file is 111 lines for 43 rules on the simplest, flag-free, UI-free epic. Round 1 needs e2e work on seven more epics plus E-22, and E-16 has visible surfaces that need references. Two rules keep this tractable:
+E-02's e2e file is 111 lines for 43 rules on the simplest, flag-free, UI-free epic. Round 1 needs e2e work on eighteen more epics plus E-22, and E-16, E-18, E-01, and E-09 have visible surfaces that need references or prototype end-states. This is the cost of "every major feature, minimal": Stage 3 throughput, not Agora throughput, is the likely bottleneck for Round 1, and the two rules below exist to keep each e2e file small. Two rules keep this tractable:
 
 - **Round-scoped e2e files are allowed.** An e2e file may cover only the round's stories, provided it lists the epic's other stories under a heading "Not in this file" so nobody reads Ready onto them. When a later round pulls those stories, the file is rewritten, not appended.
 - **Open flags are excluded, not answered in a hurry.** Where a Round 1 story carries an open flag (S-021, S-065), Westley answers it or the story moves to Round 2 and a stand-in takes its place. Track L never guesses to hit a round.

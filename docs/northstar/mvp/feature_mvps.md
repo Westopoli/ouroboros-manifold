@@ -1,145 +1,142 @@
 # Per-epic MVP cuts
 
-Status: proposal, 2026-09-14. One block per epic. A cut names which stories are in which round; everything not named is "later." Cuts are by omission: a story in a round keeps every rule and every test. A stand-in is a prototype story under Stage 4's prototype rule, marked `S-P##`, replaced (not extended) when the real story is Ready. Story texts are in `../../bible/stories.md`; the round assignments here are the only new information. Rewritten, not annotated, after each gap review.
+Status: Round 1 cut set by Westley's answer to `Q-MVP-01` on 2026-09-14: every major feature is in Round 1 in the most minimal capacity possible, including a prototype camera, a prototype two-layer layer system, and a prototype map generator. Rounds 2 and 3 are still proposals. One block per epic. A cut names which stories are in which round; everything not named is "later." Cuts are by omission: a story in a round keeps every rule and every test. A stand-in is a prototype story under Stage 4's prototype rule, marked `S-P##`, replaced (not extended) when the real story is Ready. Story texts are in `../../bible/stories.md`; the round assignments here are the only new information. Rewritten, not annotated, after each gap review.
 
-Round 1 in one sentence: a chapter loop with a real galaxy, a real chronicle, a real commander rotation, and a stand-in mission, on the C sim and a minimal Godot client, packaged by Agora.
+Round 1 in one sentence: one thin chapter loop with every system present at its smallest, on the C sim and a new Godot client, packaged by Agora: a real galaxy, a real chronicle, a real commander rotation, one small real-time mission on a generated two-layer map with six units and fog, and everything a tester needs to send feedback back.
+
+Where a story a round needs carries an open flag, Westley answers it or a prototype story stands in. Track L never guesses to hit a round.
+
+## Build order inside Round 1
+
+The sim ladder builds and T1-tests first (E-02, E-03, E-04, E-05, E-06, E-07, E-08, E-09, E-10, E-21), then the tactical sim (E-11, E-13, E-12, E-17, E-14, E-15, E-01 prototype), then the client (E-16, E-18, E-22), which waits on probes H and I. While the tactical slice is unbuilt, `S-P01` resolves missions so the macro loop can be tested end to end early; it is removed the day the tactical slice is Built.
 
 ## Sim core
 
 ### E-02 Region fields and drift
-- Round 1: S-012, S-013, S-014, S-015, S-016, S-017, S-018, S-019, S-020 (all nine; already Ready, tests red in `tests/csim/`).
-- Validates: the ground truth under H1. Nothing player-facing on its own.
-- Stand-in: none. Splits: none.
+- Round 1: S-012 to S-020 (all nine; Ready, tests red in `tests/csim/`).
+- Validates: the ground truth under H1.
 
 ### E-03 World generation
-- Round 1: S-021 (a galaxy to learn, blocked on Q-021-01), S-022 (home versus frontier), S-025 (nobody starts on my doorstep).
-- Round 2: S-023 (edge types), S-024 (peace opens trade, conquest closes it).
-- Validates: H1's "vast but learnable" feel through the galaxy view.
-- Stand-in for Round 1: all edges carry both armies and trade (S-023's default), so S-024 has nothing to close.
+- Round 1: S-021 (blocked on Q-021-01; answer or prototype `S-P14` fixed region count), S-022, S-025.
+- Round 2: S-023, S-024.
+- Round 1 default: every edge carries both armies and trade until S-023.
 
 ### E-04 Events and chains
-- Round 1: S-026 (every crisis has a cause), S-027 (follow-ups that may or may not come), S-030 (fixed authored set).
-- Round 2: S-028 (same-day stacking), S-029 (revolt as a fever), S-031 (visibly changed on return, blocked on Q-031-01).
-- Validates: H1 (change the player did not cause) and H3 (chronicle entries have causes to cite).
-- Note: S-031 is the story closest to H1's wording, but its flag is open; Round 1 measures H1 through the interview question instead and S-031's rule is written from what testers actually report.
+- Round 1: S-026, S-027, S-030.
+- Round 2: S-028, S-029, S-031 (Q-031-01).
+- Validates: H1 and H3 (entries have causes to cite).
 
 ### E-05 Faction agents and conflict
-- Round 1: S-032 (same loop, own personality), S-035 (attack only when the numbers say so), S-037 (outcome scales with decisiveness), S-038 (region changes hands).
-- Round 2: S-033 (region pays for itself first), S-034 (conqueror versus fortifier), S-036 (telegraphed versus surprise), S-039 (multi-faction contests).
-- Later: S-040, S-041 (open flags Q-040-01, Q-041-01).
-- Validates: H1. Factions must visibly gain and lose regions across one jump or the galaxy reads as static.
-- Stand-in for Round 1: one shared personality profile until S-034 lands; the loop still runs per faction.
+- Round 1: S-032, S-035, S-037, S-038, S-036 (telegraphed versus surprise, because missions come from telegraphed attacks).
+- Round 2: S-033, S-034, S-039.
+- Later: S-040, S-041 (open flags).
+- Round 1 default: one shared personality profile until S-034.
 
 ### E-06 Diplomacy and technology
-- Round 2: S-042 (stances, blocked on Q-042-01), S-043 (neutral neighbors drift to cooperation), S-045 (one tech level per faction).
-- Round 3: S-044, S-046, S-047, S-048.
-- Stand-in for Round 1: `S-P02` fixed stances (every pair hostile or neutral by a seeded table, never cooperative) and constant technology. Marked prototype; replaced by S-042 and S-045.
-- Validates: nothing directly in Round 1. Deliberately excluded so Round 1's galaxy has fewer moving parts to attribute change to.
+- Round 1: S-043 (neutral neighbors drift to cooperation), S-045 (one tech level per faction). Stances exist through S-043's rules; S-042 itself waits on Q-042-01.
+- Round 2: S-042, S-046, S-047, S-048.
+- Round 3: S-044.
+- Validates: H1 (peace and war visibly shift between chapters).
 
 ### E-07 Civilizational lifecycle
-- Round 1: S-049 (a revolt creates a new faction), S-052 (my own civilization can fall).
-- Round 2: S-050 (region returns to old owner), S-051 (absorption and disappearance), S-053 (phase label).
-- Deferred: S-054 (Q-054-01).
-- Validates: H1 at its strongest. A faction born or dead between chapters is the most legible "the world moved" signal available.
-- Note: S-052 in Round 1 needs E-08 S-062's "keep playing in a surviving one" or the campaign ends. Round 1 takes the simpler path: the campaign ends with a final chronicle page and a "your line ended" screen. That is a stand-in for S-062 (`S-P03`) and is itself a test of H2's emotional weight.
+- Round 1: S-049, S-052, S-053 (phase label; it drives the five feelings the hub names).
+- Round 2: S-050, S-051.
+- Deferred: S-054.
+- Stand-in `S-P03`: when the player's civilization falls in Round 1, the campaign ends on a final chronicle page and a "your line ended" screen. Replaced by E-08 S-062 when Q-062-01 is answered.
 
 ## Generational and narrative
 
 ### E-08 Generational structure
-- Round 1: S-055 (chapter order), S-058 (next commander is usually family), S-059 (descendants spread nearby), S-064 (world remembers, character starts fresh).
-- Round 2: S-056 (the world decides how many decades, Q-056-01), S-057 (stay with a bloodline, Q-057-01), S-060 (named people are born, serve, age, die), S-061 (relative takes a fallen commander's place).
-- Round 3: S-062 (Q-062-01), S-063 (onboarding preferences, needs reference).
-- Stand-in for Round 1: `S-P04` fixed jump length (one value, seeded jitter of plus or minus 10 percent) until S-056's flag is answered. `S-P05` onboarding is one screen: pick a difficulty, nothing else.
-- Validates: H2 directly. The commander rotation is the carry-forward mechanism.
-- Splits: S-055 names six phases; the Round 1 rule set for S-055 covers briefing, resolution, time jump, and new commander, with "recon" and "mission" satisfied by the E-10 stand-in. Split in the epic file if the rules exceed one card.
+- Round 1: S-055, S-058, S-059, S-064, S-063 in minimal form (pick a difficulty; mission preferences wait).
+- Round 2: S-056 (Q-056-01), S-057 (Q-057-01), S-060, S-061.
+- Round 3: S-062 (Q-062-01).
+- Stand-in `S-P04`: fixed jump length with seeded jitter of plus or minus 10 percent until S-056's flag is answered.
+- Validates: H2.
 
 ### E-09 Chronicle
-- Round 1: S-065 (opens with my mission, then my family, then the age; Q-065-02 open), S-066 (first contact always makes it, small events only if they snowballed), S-068 (reads like a passage from a real history), S-071 (never repeats a sentence).
-- Round 2: S-067 (a chain is one entry; Q-067-01), S-069 (split-screen scroll, needs reference), S-070 (family deeds bubble up).
-- Validates: H3 and H8. This epic is where "personality-load in the first 30 minutes" lives.
-- Library source for Round 1: the existing corpus in `simulation/library/chronicle/fragments.json`, passed through E-21's validator, is the Round 1 library. No new prose generation before Round 1. If the validator rejects more than the batch threshold, that is a Round 0 finding, not a reason to generate.
-- Stand-in for S-069 in Round 1: the scroll is a full-screen text page with the galaxy view reachable by one key. Split-screen waits for its reference.
+- Round 1: S-065 (Q-065-02 open; answer or the opening order is fixed as mission, family, age with no exceptions), S-066, S-068, S-069 in minimal form (galaxy on one side, scroll on the other, no animation choreography), S-071.
+- Round 2: S-067 (Q-067-01), S-070.
+- Library for Round 1: the existing corpus in `simulation/library/chronicle/fragments.json`, passed through E-21's validator. No new prose generation before Round 1.
+- Validates: H3, H8.
 
 ### E-10 Missions
-- Round 1: S-073 (a recognizable military situation with its own trigger and shape), S-077 (result is a spectrum), S-078 (outcome changes the region in proportion), plus stand-in `S-P01`.
-- Round 2: S-072 (missions from real trouble, Q-072-01), S-075 (one primary, up to three secondary), S-076 (deadline as pressure, Q-076-01), S-079 (orders as a superior gives them, needs reference).
-- Round 3: S-074 (force sizing, Q-074-01), S-080 (hard mode, Q-080-01).
-- **Stand-in `S-P01`, the Round 1 mission.** The tactical engagement is replaced by one screen: the briefing states the situation and the force ratio; the player chooses commit, hold, or withdraw; the outcome resolver's band math takes the force parity, the choice's modifier, and one seeded roll, and returns a band on S-077's spectrum. The screen shows the band and the casualties. Shape options are `Q-MVP-02`. This is a prototype story: it exists so Round 1 can test H2 and H1 without tactical, and it is deleted when E-11, E-13, and E-12's Round 2 stories are Built.
-- Validates: H2 (the outcome must change the region, S-078), H9 partially (S-073's shape and trigger are visible in the briefing).
-- Deliberately does not validate: anything about how a mission feels to play. Testers are told this in the Round 1 README.
+- Round 1: S-073, S-075 (one primary objective, no secondaries), S-077, S-078, S-079 in minimal form (three-part orders as plain text, no voice, no art).
+- Round 2: S-072 (Q-072-01), S-076 (Q-076-01).
+- Round 3: S-074 (Q-074-01), S-080 (Q-080-01).
+- Stand-in `S-P01`, per `Q-MVP-02`: an auto-resolved card. The briefing states the situation; the outcome resolver's band math takes force parity and one seeded roll and returns a band on S-077's spectrum; the card shows the band and casualties. No player choice, exactly as the real game gives no choice about orders. Used only while the Round 1 tactical slice is unbuilt, then deleted.
+- Validates: H2, H9.
 
 ## Tactical
 
 ### E-11 Units, abilities, and damage
-- Round 2: S-081 (soft rock-paper-scissors; Q-081-01 open), S-082 (six units, one job each), S-084 (damage is simple), S-085 (fights last long enough to read), S-087 (flinch, obey, shoot the nearest).
-- Round 3: S-083 (Q-083-01), S-086 (one ability each), S-088 (needs reference).
+- Round 1: S-082 (six units), S-084 (damage), S-085 (fights last long enough to read), S-087 (flinch, obey, shoot the nearest). Abilities off.
+- Round 2: S-081 (Q-081-01), S-086, S-083 (Q-083-01).
+- Round 3: S-088.
 - Validates: H4, H6, H5.
-- Splits: S-087's three-check loop is one card; S-084's damage table is one card. Confirm against the 250-line sizing rule in Stage 3.
 
 ### E-13 Movement, pathing, and command
-- Round 2: S-096 (four commands), S-097 (route around, flow around), S-100 (face what you shoot), S-102 (every peer computes the same movement).
-- Round 3: S-095 (Q-095-01), S-098, S-099, S-101 (all flagged or need reference).
-- Validates: H6, and the R4 catalog's stuck, rubber-band, and backwards-walk detectors get their first real target.
-- Note: this epic carries five open flags today. Round 2 cannot open until the four Round 2 stories are Ready; the flagged ones are excluded rather than guessed.
+- Round 1: S-096 (four commands; ability is a no-op until S-086), S-097, S-100, S-102.
+- Round 2: S-095 (Q-095-01), S-098, S-099.
+- Round 3: S-101.
+- Validates: H6; first real target for the R4 stuck, rubber-band, and backwards-walk detectors.
 
 ### E-12 Fog and sensors
-- Round 2: S-089 (revealed only around my units), S-092 (study the whole map, then lose it), S-093 (fog changes what I know, never what happens).
-- Round 3: S-090 (Q-090-01), S-091 (Q-092-01), S-094 (needs reference).
-- Validates: H6 (reading the field is a skill only if the field is partly hidden).
+- Round 1: S-089, S-092, S-093.
+- Round 2: S-090 (Q-090-01), S-091 (Q-092-01).
+- Round 3: S-094.
+- Validates: H6.
 
 ### E-17 Map generation
-- Round 2: S-112 (hand-authored layouts; Q-112-01 open), S-113 (nine place types), S-117 (maps that do not cheat; Q-113-01 open).
-- Round 3: S-114, S-115, S-116, S-118, S-119.
-- Stand-in for Round 2 if S-112's flag stays open: `S-P06` one hand-authored layout, fixed, with seeded flavoring off. A fixed map is enough to test H6 on a scripted scenario and is arguably better for it.
-- Validates: H6's "smaller force with a surround" needs a chokepoint and a flank that exist on purpose.
+- Round 1: S-113 (nine place types) and prototype `S-P06`: a seeded generator that lays a spine of waypoints from one layout family, places two chokepoints and one flank, assigns place types, and marks which cells are blocked on layer 2. No gradient flavoring, no fairness gate, no blending. Replaced by S-112, S-114, S-117, S-119 when their flags are answered.
+- Round 2: S-112 (Q-112-01), S-117 (Q-113-01), S-116 (Q-118-01).
+- Round 3: S-114, S-115, S-118, S-119.
+- Validates: H6, and whether a generated map reads as intentional at all.
 
 ### E-14 Enemy macro behavior
-- Round 2: S-120 restricted to advance and hold (Q-120-01 covers the full list), S-123 (replays exactly).
-- Round 3: S-121, S-122, S-124, S-125.
-- Stand-in for Round 2: the two-behavior enemy is `S-P07`, replaced when S-120's flag is answered and the full set lands.
-- Validates: H4. A loss must have a cause the tester can see, which needs an enemy that does something legible.
+- Round 1: S-123 (replays exactly) and prototype `S-P07`: an enemy that advances toward the objective and holds when it has the numbers; nothing else. Replaced by S-120 when Q-120-01 is answered.
+- Round 2: S-120, S-121, S-125.
+- Round 3: S-122, S-124.
+- Validates: H4.
 
 ### E-15 Reinforcement, supply, and hazards
-- Round 2: S-127 (capture by holding unopposed).
-- Round 3: S-126 (Q-126-01), S-128, S-129 (Q-129-01), S-130, S-131 (needs reference).
-- Stand-in for Round 2: `S-P08` fixed starting force, no reinforcement structures beyond one capturable garrison for S-127.
-- Validates: H5 (the garrison is the "no base, but something to take" answer).
+- Round 1: S-127 (capture by holding unopposed) and prototype `S-P08`: a fixed starting force plus one capturable garrison; no convoys, no hazards, no drift.
+- Round 2: S-126 (Q-126-01), S-128, S-130.
+- Round 3: S-129, S-131.
+- Validates: H5.
 
 ### E-01 Layer system
-- Round 3 only, with the option chosen in the design phase (README decision 2026-09-13). Single layer in Rounds 1 and 2.
-- Validates: H7.
-- Nothing from E-01 is cut here; the whole epic waits on its design phase, which is itself run as an experiment with Westley as the first tester.
+- Round 1: prototype `S-P10`, the two-layer prototype (README decision, revised 2026-09-14): exactly two layers; a selected unit can be ordered to the other layer and visibly rises or drops to it over a per-type duration; terrain marks some cells blocked on layer 2; a unit sees the other layer at a shorter range than its own; the HUD shows each unit's layer and which layer the player is focused on. Drawn from S-002, S-004, S-005, S-009, S-010 at their smallest, without claiming any of them Ready. This prototype is the first option in the layer design phase; testers' reactions feed that phase. Replaced by E-01's stories once the design phase picks an option.
+- Round 2: further design-phase options on the same prototype.
+- Round 3: E-01's stories proper, with the chosen option.
+- Validates: H7 (measure only in Round 1).
 
 ## Client and cross-cutting
 
 ### E-16 Camera, HUD, world view, and screens
-- Round 1: S-106 (star map where territory glows; needs reference, minimal form), S-107 (pan, zoom, focus), S-110 (main menu; Q-110-01 open, minimal form), S-111 (autosave at chapter boundaries; Q-111-01 open), plus the chronicle page and the `S-P01` decision screen as surfaces.
-- Round 2: S-103 (free camera; Q-103-01), S-104 (lean HUD; needs reference), S-105 (click, box-select, groups; Q-105-01).
-- Round 3: S-108 (mission pulls back into the galaxy without a cut), S-109 (screens read as orders and reports).
-- Stand-in for Round 1: `S-P09` minimal galaxy view: regions as points, edges as lines, owner as color, pan and zoom, one click to inspect. The existing in-game galaxy animation is the reference (README decision 2026-09-13), not the code.
-- Validates: H1 needs the galaxy to be looked at; H3 needs the chronicle to be read. Both are this epic's surfaces.
-- Gate: every Round 1 story here is a client card and waits on probe H.
+- Round 1: S-106 and S-107 in minimal form (regions as points, edges as lines, owner as color, pan, zoom, click to inspect; the existing in-game galaxy animation is the reference), S-110 in minimal form (title, new campaign, continue, quit), S-111 (autosave at chapter boundaries; Q-111-01 answered or one slot), and three prototypes: `S-P11` camera (pan, zoom, rotate on a fixed tilt; the free-camera rules wait on Q-103-01), `S-P12` HUD (selection panel, one objective line with progress, layer indicator, mission clock; the lean-HUD reference wait is for S-104 proper), `S-P13` selection (click, box-select, control groups 1 to 5 with exclusive membership; Q-105-01 wait is for S-105 proper).
+- Round 2: S-103, S-104, S-105 replacing the three prototypes; S-109.
+- Round 3: S-108.
+- Validates: every hypothesis needs these surfaces; the UI-bounce metrics live here.
+- Gate: every Round 1 client card waits on probe H.
 
 ### E-18 Visual style and combat visuals
-- Round 2: S-132 (a readable shape per unit type; needs reference), S-138 (one look, low-poly; needs reference), both in minimal form: six silhouettes, one palette, no combat effects.
-- Round 3: S-133, S-134, S-135, S-136, S-137.
-- Round 1: nothing. The galaxy view uses flat shapes.
-- Validates: H12. Also H6 indirectly: testers cannot position what they cannot tell apart.
+- Round 1: S-132 and S-138 in minimal form: six distinct silhouettes, one palette, faction color, no combat effects beyond a hit flash.
+- Round 2: S-134 (Q-134-01), S-135, S-136 (Q-136-01).
+- Round 3: S-133, S-137.
+- Validates: H12.
 
 ### E-19 Multiplayer
-- Later. S-139 (every peer computes the same galaxy) is carried by E-02 S-020 and E-13 S-102; no separate Round work.
+- Later. S-139 is carried by E-02 S-020 and E-13 S-102.
 
 ### E-20 Multi-era and monetization
-- Round 1: S-145 (the engine never says starship) holds by construction and is tested by grep in E-02's suite.
-- Round 3 (survey): S-149 (a fair price and earnable expansions) as a survey question only.
+- Round 1: S-145 holds by construction and is tested by grep in E-02's suite.
+- Round 3 (survey): S-149.
 - Later: S-146, S-147, S-148, S-150.
-- Validates: H10, survey only.
 
 ### E-21 Offline AI pipeline
-- Round 1: S-152 (works with no network and no model), S-158 (Agora reads distilled rules).
-- Round 2: S-153 (one pipeline for every text library; Q-153-01), S-154 (names that belong together; Q-155-01).
+- Round 1: S-152, S-158, and the validator run on the existing chronicle corpus.
+- Round 2: S-153 (Q-153-01), S-154 (Q-155-01).
 - Round 3: S-155, S-156.
-- Round 1 uses the existing chronicle corpus (see E-09) and existing names; the pipeline's own stories wait.
 
 ## Proposed epic E-22 Playtest delivery and telemetry
 
@@ -155,6 +152,22 @@ Not in the bible yet. Proposed here; the epic file and catalog rows are a follow
 - "The Steam Playtest build asks the same questions in-game." (Round 3.)
 
 Every one of these is an Agora card, gated on probes H and I.
+
+## Prototype stories in Round 1
+
+| Id | Stands in for | Removed when |
+|---|---|---|
+| S-P01 | the tactical mission, as an auto-resolved card | the Round 1 tactical slice is Built |
+| S-P03 | E-08 S-062 (keep playing in a surviving civilization) | Q-062-01 answered and S-062 Built |
+| S-P04 | E-08 S-056 (world decides the jump length) | Q-056-01 answered and S-056 Built |
+| S-P06 | E-17 generator stories | S-112, S-114, S-117, S-119 Built |
+| S-P07 | E-14 S-120 behaviors | Q-120-01 answered and S-120 Built |
+| S-P08 | E-15 reinforcement structures | S-126 Built |
+| S-P10 | E-01, two-layer prototype | the layer design phase picks an option and E-01's stories are Built |
+| S-P11 | E-16 S-103 camera | Q-103-01 answered and S-103 Built |
+| S-P12 | E-16 S-104 HUD | S-104's reference attached and Built |
+| S-P13 | E-16 S-105 selection | Q-105-01 answered and S-105 Built |
+| S-P14 | E-03 S-021 galaxy size | Q-021-01 answered and S-021 Built |
 
 ## Stories cut from every round on purpose
 

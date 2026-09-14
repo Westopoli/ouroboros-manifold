@@ -1,6 +1,6 @@
 # Track L — Lean MVP loop: method
 
-Status: exploratory. Approved as a track on 2026-09-14 (`PLAN.md` Track L, `README.md` decisions table). The ranking, cuts, and thresholds in this directory are proposals for Westley to review; none of them has reordered the backlog yet. Open questions for this track are `Q-MVP-##` rows in `../ambiguity_register.md`.
+Status: approved as a track on 2026-09-14 (`PLAN.md` Track L, `README.md` decisions table). Round 1's cut is decided (`Q-MVP-01`: every major feature at its most minimal; `Q-MVP-02`: auto-resolved mission card while the tactical slice is unbuilt). The Round 2 and 3 cuts and the thresholds are proposals for Westley to review. The backlog's Round column is the next follow-up. Open questions for this track are `Q-MVP-##` rows in `../ambiguity_register.md`.
 
 ## Why this track exists
 
