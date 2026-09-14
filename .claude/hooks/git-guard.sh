@@ -44,14 +44,7 @@ if [[ "$CMD" =~ git[[:space:]]+rebase ]]; then
   deny "git rebase is blocked by git-guard (rewriting history needs human review)"
 fi
 
-# Branch-guard: block commit/push on protected branches.
-if [[ "$CMD" =~ git[[:space:]]+(commit|push) ]]; then
-  CURRENT_BRANCH="$(git -C "${CLAUDE_PROJECT_DIR:-.}" symbolic-ref --short HEAD 2>/dev/null || echo "")"
-  case "$CURRENT_BRANCH" in
-    main|master)
-      deny "you are on protected branch '$CURRENT_BRANCH' — create a feature branch via 'git checkout -b wn/<slug>' first"
-      ;;
-  esac
-fi
+# Branch-guard removed 2026-09-14 (Westley): committing directly to main is
+# allowed. Destructive-op denies above stay. Parallel sub-agents use worktrees.
 
 exit 0
