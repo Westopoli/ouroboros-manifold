@@ -1,8 +1,17 @@
-# E-18 Visual Style, Combat Visuals, Animation — Look and behavior references
+# E-18 Visual Style and Combat Visuals — Look and behavior references
 
-Stub. The whole epic is a visible surface; nothing in it is Ready until this file has real entries.
+**Not literal.** Ouroboros will not copy any game below. Each row points at ONE aspect of an image that shows a behavior or look we want; read the "Aspect" cell, not the whole picture. "Not wanted" fences off what to ignore in that same image.
 
-Named by the bible and vision_v2: Art of Rally (look), the opening battle of Star Wars: Revenge of the Sith (combat weight), Halo CE (world-building), the Claude Code thinking spinner (glyph animation). Needed from Westley: 2 to 5 screenshots or clips per item, one sentence on the target, one on what is not wanted.
+**For test-writers and build models:** "Proves / contrast" names the story the shot grounds and what to check the current build against. If the build does not read like the Aspect cell for that story, that is a finding to raise, not a pass.
 
-| # | File | Source | Target | Not wanted |
-|---|---|---|---|---|
+Note: this epic still has open ambiguity flags (including how "matches the register" becomes a T2 check). Gather these references in parallel; they are also the reference set those checks will score against.
+
+The bible already names the sources below. Add files here as `E-18-NN-slug.png` (clips `.mp4`/`.gif`) and put NN in the `#` column. Fill Source / Aspect / Not wanted per image; the shot subjects below are the slots.
+
+| # | Story | Shot subject | Source (named by the bible) | Aspect — the example | Not wanted | Proves / contrast |
+|---|---|---|---|---|---|---|
+| 01 | S-138 | Overall art register and palette | Art of Rally | | | the flat, warm, low-detail look we want the game to sit in |
+| 02 | S-134 | Combat weight and scale | Revenge of the Sith opening battle | | | forces colliding read as mass, not sparse skirmishers |
+| 03 | S-133 | World-building and environment feel | Halo CE | | | a place that feels real and lived-in |
+| 04 | S-135, S-137 | Small looping glyph animation | Claude Code spinner | | | the character of a tiny animated glyph |
+| 05 | S-137 | Menus and transitions that breathe | No Man's Sky | | | transition pacing and easing, not the sci-fi content |

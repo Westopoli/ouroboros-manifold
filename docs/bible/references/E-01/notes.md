@@ -1,15 +1,14 @@
 # E-01 Layer System — Look and behavior references
 
-Stub. Stories S-006, S-009, and S-010 are not Ready until this file has real entries (flag Q-E01-08).
+**Not literal.** Ouroboros will not copy any game below. Each row points at ONE aspect of an image that shows a behavior or look we want; read the "Aspect" cell, not the whole picture. "Not wanted" fences off what to ignore in that same image.
 
-Needed from Westley, 2 to 5 items each, one sentence on what in the image is the target and one on what is not wanted:
+**For test-writers and build models:** "Proves / contrast" names the story the shot grounds and what to check the current build against. If the build does not read like the Aspect cell for that story, that is a finding to raise, not a pass.
 
-1. How a stack of 3 to 5 layers reads on screen at normal camera distance.
-2. How a unit changing height looks (rise or drop over one to five seconds).
-3. How the layer-color ring under a unit and the layer strip on the HUD should look.
-4. How a sensor pulse reveal should look and how the reveal fading out should look.
+Add files here as `E-01-NN-slug.png` (clips `.mp4`/`.gif`) and put NN in the `#` column. Fill Source / Aspect / Not wanted per image; the shot subjects below are the slots. Closes flag Q-E01-08; stories S-006, S-009, S-010 are not Ready until every row has an Aspect.
 
-Format per item once supplied:
-
-| # | File | Game | Target | Not wanted |
-|---|---|---|---|---|
+| # | Story | Shot subject | Source | Aspect — the example | Not wanted | Proves / contrast |
+|---|---|---|---|---|---|---|
+| 01 | S-009, S-010 | Layer stack (3 to 5 layers) at normal camera distance | | | | how depth layers read at once without clutter |
+| 02 | S-002, S-004 | Unit changing height, clip (rise or drop over 1 to 5 s) | | | | the transition motion reads as a height change, not a teleport |
+| 03 | S-009 | Layer-color ring under a unit + the HUD layer strip | | | | current layer legible at a glance, per unit and globally |
+| 04 | S-006 | Sensor pulse reveal and its fade-out, clip | | | | the reveal sweep and how revealed enemies decay after it |

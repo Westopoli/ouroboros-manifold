@@ -1,11 +1,12 @@
 # E-10 Missions — Look and behavior references
 
-Stub. Story S-079 (briefing and debrief screens) is not Ready until this file has real entries.
+**Not literal.** Ouroboros will not copy any game below. Each row points at ONE aspect of an image that shows a behavior or look we want; read the "Aspect" cell, not the whole picture. "Not wanted" fences off what to ignore in that same image.
 
-Needed from Westley, 2 to 5 items, one sentence on what in the image is the target and one on what is not wanted:
+**For test-writers and build models:** "Proves / contrast" names the story the shot grounds and what to check the current build against. If the build does not read like the Aspect cell for that story, that is a finding to raise, not a pass.
 
-1. A mission briefing screen delivered as orders from a superior (Situation, Objective, Assets).
-2. A post-mission debrief screen showing outcome, objectives, and losses.
+Add files here as `E-10-NN-slug.png` (clips `.mp4`/`.gif`) and put NN in the `#` column. Fill Source / Aspect / Not wanted per image; the shot subjects below are the slots.
 
-| # | File | Game | Target | Not wanted |
-|---|---|---|---|---|
+| # | Story | Shot subject | Source | Aspect — the example | Not wanted | Proves / contrast |
+|---|---|---|---|---|---|---|
+| 01 | S-079, S-072 | Mission briefing / orders screen | | | | reads as orders from a world in trouble, not a level-select menu |
+| 02 | S-078, S-077 | Debrief / results screen | | | | how an outcome reads and turns into a line of history |

@@ -1,10 +1,17 @@
-# E-16 Client: Camera, HUD, World View, Screens — Look and behavior references
+# E-16 Client Camera, HUD, and World View — Look and behavior references
 
-Stub. Every story in this epic is a visible surface; none is Ready until this file has real entries.
+**Not literal.** Ouroboros will not copy any game below. Each row points at ONE aspect of an image that shows a behavior or look we want; read the "Aspect" cell, not the whole picture. "Not wanted" fences off what to ignore in that same image.
 
-Candidate first entries, pending Westley's confirmation: the Immortal: Gates of Pyre HUD screenshots the bible cites (`docs/design_questions/igop_hud_reference_alpha.png`, `igop_hud_reference_beta.png`).
+**For test-writers and build models:** "Proves / contrast" names the story the shot grounds and what to check the current build against. If the build does not read like the Aspect cell for that story, that is a finding to raise, not a pass.
 
-Needed from Westley, 2 to 5 items each: mid-mission HUD; 3D strategic map with territory; a seamless scale transition (No Man's Sky is the named model); main menu tone; the multi-perspective camera direction (A-145, research pending).
+Note: this epic still has open ambiguity flags. Gather these references in parallel, but the epic is not Ready until the flags close.
 
-| # | File | Game | Target | Not wanted |
-|---|---|---|---|---|
+Add files here as `E-16-NN-slug.png` (clips `.mp4`/`.gif`) and put NN in the `#` column. Fill Source / Aspect / Not wanted per image; the shot subjects below are the slots.
+
+| # | Story | Shot subject | Source | Aspect — the example | Not wanted | Proves / contrast |
+|---|---|---|---|---|---|---|
+| 01 | S-104 | In-game tactical HUD layout | | | | tells the player what is needed and nothing else |
+| 02 | S-106, S-107 | The galaxy/world map between missions | | | | how the strategic galaxy reads at a glance |
+| 03 | S-108 | Strategic-to-tactical transition, clip | | | | one unbroken shot, no hard cut or loading seam |
+| 04 | S-103 | Tactical camera framing (distance and angle) | | | | the camera distance/pitch that keeps a battle readable |
+| 05 | S-110 | Main menu and settings tone | | | | the register of the very first screen |
