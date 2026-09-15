@@ -22,17 +22,32 @@ DBG_LIB_PATH = REPO_ROOT / "libouroboros_dbg.so"
 CSRC_DIR = REPO_ROOT / "csrc"
 
 
+BUILD_ERROR = None
+
+
 def _build_libs():
     """Compile the C sim libraries before loading, so any pytest run self-builds
     (mirrors the proving-ground conftest). A make failure while csrc/*.c exist is
-    a real compile error and the fixtures below turn it red; with no csrc/*.c
-    there is nothing to build yet and they skip."""
+    a real compile error: the stale libraries are removed so no test can run
+    against the previous build, and the compiler output is kept so every test
+    fails with it (the build harness feeds that failure text back to the worker).
+    With no csrc/*.c there is nothing to build yet and the fixtures skip."""
+    global BUILD_ERROR
     import subprocess
     try:
-        subprocess.run(["make", "-s", "libouroboros.so", "libouroboros_dbg.so"],
-                       cwd=str(REPO_ROOT), capture_output=True, text=True, timeout=180)
-    except Exception:
-        pass
+        res = subprocess.run(["make", "-s", "libouroboros.so", "libouroboros_dbg.so"],
+                             cwd=str(REPO_ROOT), capture_output=True, text=True, timeout=180)
+    except Exception as exc:  # make missing or timed out: same treatment as a failed build
+        res = None
+        BUILD_ERROR = f"make could not run: {exc}"
+    if res is not None and res.returncode != 0:
+        BUILD_ERROR = (res.stderr or res.stdout)[-4000:]
+    if BUILD_ERROR:
+        for lib_path in (LIB_PATH, DBG_LIB_PATH):
+            try:
+                lib_path.unlink()
+            except FileNotFoundError:
+                pass
 
 
 _HAS_CSRC = CSRC_DIR.exists() and any(CSRC_DIR.glob("*.c"))
@@ -212,8 +227,8 @@ def _configure_debug(h):
 def lib():
     if not LIB_PATH.exists():
         if _HAS_CSRC:
-            pytest.fail("csrc/*.c present but libouroboros.so did not build "
-                        "(compile error); run `make` to see the output")
+            pytest.fail("COMPILE ERROR: csrc/*.c present but libouroboros.so did not build:\n"
+                        + (BUILD_ERROR or "(no compiler output captured; run `make`)"))
         pytest.skip("no csrc/*.c implementation yet; nothing to build")
     handle = ctypes.CDLL(str(LIB_PATH))
     _configure_common(handle)
@@ -229,8 +244,8 @@ def lib():
 def dbg():
     if not DBG_LIB_PATH.exists():
         if _HAS_CSRC:
-            pytest.fail("csrc/*.c present but libouroboros_dbg.so did not build "
-                        "(compile error); run `make` to see the output")
+            pytest.fail("COMPILE ERROR: csrc/*.c present but libouroboros_dbg.so did not build:\n"
+                        + (BUILD_ERROR or "(no compiler output captured; run `make`)")); run `make` to see the output")
         pytest.skip("no csrc/*.c implementation yet; nothing to build")
     handle = ctypes.CDLL(str(DBG_LIB_PATH))
     _configure_common(handle)
