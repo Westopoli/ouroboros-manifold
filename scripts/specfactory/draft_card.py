@@ -28,6 +28,8 @@ AGORA = Path.home() / "Projects" / "agora"
 PROMPT = REPO / "docs/northstar/spec_factory/prompts/card_brief.md"
 SCHEMA = REPO / "docs/northstar/spec_factory/schemas/brief.json"
 WRAPPER = REPO / "scripts/agy_task.sh"
+sys.path.insert(0, str(REPO / "scripts" / "specfactory"))
+from agy_json import payload_from_envelope  # noqa: E402
 PYTEST = f"{AGORA}/.venv/bin/python -m pytest -q -p no:cacheprovider"
 
 
@@ -82,10 +84,9 @@ def main() -> int:
                              cwd=REPO, capture_output=True, text=True)
         (args.out / f"{args.num}-{args.slug}.raw.json").write_text(res.stdout, encoding="utf-8")
         try:
-            env = json.loads(res.stdout)
-            payload = env.get("response", env)
-            if isinstance(payload, str):
-                payload = json.loads(payload)
+            payload = payload_from_envelope(res.stdout, ("brief", "expected_lines", "questions", "assumptions"))
+            if payload is None:
+                raise ValueError("unusable agy output")
             brief = payload["brief"]
             expected_lines = int(payload["expected_lines"])
             notes = ("Questions\n" + "\n".join(f"- {q}" for q in payload["questions"])

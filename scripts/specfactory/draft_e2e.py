@@ -19,6 +19,8 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(REPO / "scripts"))
 from derive_agora_rules import EPICS_DIR, EPIC_FILE_RE  # noqa: E402
+sys.path.insert(0, str(REPO / "scripts" / "specfactory"))
+from agy_json import payload_from_envelope  # noqa: E402
 
 PROMPT = REPO / "docs/northstar/spec_factory/prompts/draft_e2e.md"
 SCHEMA = REPO / "docs/northstar/spec_factory/schemas/e2e.json"
@@ -57,10 +59,10 @@ def main() -> int:
         sys.stderr.write(res.stderr[-2000:])
         return res.returncode
 
-    envelope = json.loads(res.stdout)
-    payload = envelope.get("response", envelope)
-    if isinstance(payload, str):
-        payload = json.loads(payload)
+    payload = payload_from_envelope(res.stdout, ("e2e_markdown", "questions", "assumptions"))
+    if payload is None:
+        sys.stderr.write(f"unusable agy output; raw saved at {raw_path}\n")
+        return 1
     (args.out / f"{args.epic}.md").write_text(payload["e2e_markdown"], encoding="utf-8")
     (args.out / f"{args.epic}_questions.md").write_text(
         "\n".join(f"- {q}" for q in payload["questions"]) + "\n\nAssumptions\n"

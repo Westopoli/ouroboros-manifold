@@ -20,6 +20,8 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(REPO / "scripts"))
 from derive_agora_rules import EPICS_DIR, EPIC_FILE_RE  # noqa: E402
+sys.path.insert(0, str(REPO / "scripts" / "specfactory"))
+from agy_json import payload_from_envelope  # noqa: E402
 
 PROMPT_TESTS = REPO / "docs/northstar/spec_factory/prompts/fill_tests.md"
 PROMPT_CONTROLS = REPO / "docs/northstar/spec_factory/prompts/fill_controls.md"
@@ -54,18 +56,10 @@ def fill_one(epic_id: str, ef: Path, alg: str, skeleton: Path, out: Path,
             sys.stderr.write(f"{skeleton.name}: attempt {attempt} agy exit {res.returncode}, "
                              f"{len(res.stdout)} bytes stdout\n{res.stderr[-1500:]}\n")
             continue
-        try:
-            envelope = json.loads(res.stdout)
-            payload = envelope.get("response", envelope)
-            if isinstance(payload, str):
-                payload = json.loads(payload)
-            if "content" in payload:
-                break
-            sys.stderr.write(f"{skeleton.name}: attempt {attempt} JSON lacks content: {str(payload)[:200]}\n")
-            payload = None
-        except json.JSONDecodeError as exc:
-            sys.stderr.write(f"{skeleton.name}: attempt {attempt} not JSON ({exc}); head: {res.stdout[:200]!r}\n")
-            payload = None
+        payload = payload_from_envelope(res.stdout, ("path", "content", "questions", "assumptions"))
+        if payload is not None:
+            break
+        sys.stderr.write(f"{skeleton.name}: attempt {attempt} unusable output; head: {res.stdout[:200]!r}\n")
     if payload is None:
         print(f"FAILED {skeleton.name}: no usable output after 2 attempts", flush=True)
         return 0, 0
