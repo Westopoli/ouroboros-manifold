@@ -8,6 +8,8 @@ here is the spec, not a bug in the test.
 import pytest
 
 from conftest import (
+    OMFeature,
+    add_damage,
     OMArchetype,
     OMCandKind,
     OMEdge,
@@ -370,9 +372,51 @@ def test_R_034_06_it_excluded(lib, world_factory):
 
 def test_R_034_07_score_multiplied_by_1_30(lib, world_factory):
     """Given an opportunist evaluating an enemy region that lost 20 military and 10 economy to attacks within the last 150 ticks, When attractiveness is computed, Then the score is multiplied by 1 + (30/100) · 1.5 = 1.45; losses older than 150 ticks count for nothing, and every other archetype multiplies by 1."""
-    pytest.fail(
-        "ABI gap: csrc/ouroboros_sim.h declares no fixture to inject or query per-region recent attack damage history "
-        "(e.g. `void om_region_record_attack_damage(om_world *w, uint32_t idx, double military_loss, double economy_loss, uint64_t tick)` "
-        "or `void om_region_set_damage_history(om_world *w, uint32_t idx, double military_loss, double economy_loss, uint64_t tick)`), "
-        "and combat resolution under ALG-21 cannot produce the rule's exact 20 military / 10 economy damage split."
-    )
+    # Same geometry as R-034-01 (target military 30 / economy 60 / population 50,
+    # neighbors: one enemy region economy 40 / population 50 and one empty region),
+    # so the unboosted opportunist score is 0.35 * 0.70 + 0.30 * 1.12 + 0.35 * 0.295 = 0.68425.
+    def build(archetype, damage_tick, ticks_before_decision):
+        w = world_factory(n_regions=4)
+        isolate_agents(lib, w)
+        set_faction(lib, w, 0, archetype, budget=100.0, confidence=5.0)
+        set_faction(lib, w, 1, OMArchetype.DEFAULT, budget=0.0, confidence=5.0)
+        set_stance(lib, w, 0, 1, OMStance.HOSTILE)  # unstated stance: hostile
+        set_tech_multipliers(lib, w, 0, 1.0, 1.0, 1.0)  # unstated tech: none
+        set_tech_multipliers(lib, w, 1, 1.0, 1.0, 1.0)
+        set_region(lib, w, 0, tier=OMTier.HOME, military=50.0, economy=50.0, tension=0.0, population=50.0, faction_id=0)
+        set_owner(lib, w, 0, 0, held_since=-1)
+        set_region(lib, w, 1, tier=OMTier.HOME, military=30.0, economy=60.0, tension=0.0, population=50.0, faction_id=1)
+        set_owner(lib, w, 1, 1, held_since=-1)
+        set_region(lib, w, 2, tier=OMTier.HOME, military=50.0, economy=40.0, tension=0.0, population=50.0, faction_id=1)
+        set_owner(lib, w, 2, 1, held_since=-1)
+        set_region(lib, w, 3, tier=OMTier.EMPTY, military=0.0, economy=0.0, tension=0.0, population=0.0, faction_id=-1)
+        set_edge(lib, w, 0, 1, OMEdge.BOTH)
+        set_edge(lib, w, 1, 2, OMEdge.BOTH)
+        set_edge(lib, w, 1, 3, OMEdge.BOTH)
+        # the target lost 20 military and 10 economy to an attack on damage_tick
+        add_damage(lib, w, 1, 20.0, 10.0, damage_tick)
+        # advance the clock with agents off so faction 0 acts only on the measured step
+        if ticks_before_decision:
+            lib.om_world_set_feature(w, OMFeature.FACTIONS, 0)
+            lib.om_world_run(w, ticks_before_decision)
+            lib.om_world_set_feature(w, OMFeature.FACTIONS, 1)
+        force_draws(lib, w, [0.5])
+        lib.om_world_step(w)
+        cands = read_candidates(lib, w, 0)
+        return [c for c in cands if c.region_idx == 1 and c.kind == OMCandKind.ATTACK][0]
+
+    # loss recorded on tick 1, decision on tick 2: inside the window, boost 1.45
+    boosted = build(OMArchetype.OPPORTUNIST, 1, 1)
+    assert boosted.attractiveness == pytest.approx(0.68425 * 1.45, abs=1e-6)
+
+    # decision 151 ticks after the loss: older than 150, no boost
+    aged = build(OMArchetype.OPPORTUNIST, 1, 151)
+    assert aged.attractiveness == pytest.approx(0.68425, abs=1e-6)
+
+    # exactly 150 ticks later still counts (the window is inclusive)
+    edge = build(OMArchetype.OPPORTUNIST, 1, 150)
+    assert edge.attractiveness == pytest.approx(0.68425 * 1.45, abs=1e-6)
+
+    # a conqueror with the same loss on record multiplies by 1 (R-034-01's 0.66325)
+    other = build(OMArchetype.CONQUEROR, 1, 1)
+    assert other.attractiveness == pytest.approx(0.66325, abs=1e-6)

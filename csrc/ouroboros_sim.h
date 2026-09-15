@@ -250,6 +250,16 @@ int64_t om_region_held_since(const om_world *w, uint32_t idx);   /* < 0 if never
 void    om_region_set_edge(om_world *w, uint32_t a, uint32_t b, om_edge_type t);
 int     om_region_edge(const om_world *w, uint32_t a, uint32_t b, om_edge_type *out); /* 0 if no edge */
 
+/* ---- damage history (fixture and reader) ----
+ * ALG-11's opportunist boost reads the military plus economy a region lost to
+ * attack resolutions in the last DAMAGE_HISTORY_WINDOW = 150 ticks. The resolver
+ * records losses itself; this fixture records one as if an attack had landed on
+ * tick `tick`, so a test can plant exact amounts. A loss counts while
+ * now - tick <= 150 and is dropped after. om_region_damage_history returns the
+ * current windowed sum as the agent would read it on the next step. */
+void   om_region_add_damage(om_world *w, uint32_t idx, double military_loss, double economy_loss, uint64_t tick);
+double om_region_damage_history(const om_world *w, uint32_t idx);
+
 /* ---- the world RNG contract (every card that draws follows this exactly) ----
  * One PCG32 stream per world (O'Neill PCG-XSH-RR 64/32, the reference
  * pcg32_random_r): state {uint64 state, uint64 inc}. Seeding from

@@ -576,6 +576,8 @@ def _bind_e05(lib):
     lib.om_region_set_edge.argtypes = [V, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_int]; lib.om_region_set_edge.restype = None
     lib.om_region_edge.argtypes = [V, ctypes.c_uint32, ctypes.c_uint32, P(ctypes.c_int)]; lib.om_region_edge.restype = ctypes.c_int
     lib.om_rng_force.argtypes = [V, P(ctypes.c_double), ctypes.c_uint32]; lib.om_rng_force.restype = None
+    lib.om_region_add_damage.argtypes = [V, ctypes.c_uint32, ctypes.c_double, ctypes.c_double, ctypes.c_uint64]; lib.om_region_add_damage.restype = None
+    lib.om_region_damage_history.argtypes = [V, ctypes.c_uint32]; lib.om_region_damage_history.restype = ctypes.c_double
     lib.om_rng_forced_remaining.argtypes = [V]; lib.om_rng_forced_remaining.restype = ctypes.c_uint32
     lib.om_faction_candidates.argtypes = [V, ctypes.c_int32, P(OmCandidate), ctypes.c_uint32]; lib.om_faction_candidates.restype = ctypes.c_uint32
     lib.om_intent_inject.argtypes = [V, ctypes.c_int32, ctypes.c_int, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_double, ctypes.c_int]; lib.om_intent_inject.restype = ctypes.c_int
@@ -631,6 +633,12 @@ def set_owner(lib, w, idx, faction_id, held_since=-1):
 def set_edge(lib, w, a, b, edge=OMEdge.BOTH):
     _bind_e05(lib)
     lib.om_region_set_edge(w, a, b, edge)
+
+
+def add_damage(lib, w, idx, military_loss, economy_loss, tick):
+    """Plant an attack loss on a region as if resolved on `tick` (ALG-11 damage history)."""
+    _bind_e05(lib)
+    lib.om_region_add_damage(w, idx, military_loss, economy_loss, tick)
 
 
 def force_draws(lib, w, draws):

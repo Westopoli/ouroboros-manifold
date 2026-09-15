@@ -66,3 +66,14 @@ int om_intent_inject(om_world *w, int32_t faction_id, om_action action, uint32_t
     (void)w; (void)faction_id; (void)action; (void)target_idx; (void)source_idx; (void)commit; (void)mode;
     return -1;
 }
+
+void om_region_add_damage(om_world *w, uint32_t idx, double military_loss, double economy_loss, uint64_t tick) {
+    /* STUB */
+    (void)w; (void)idx; (void)military_loss; (void)economy_loss; (void)tick;
+}
+
+double om_region_damage_history(const om_world *w, uint32_t idx) {
+    /* STUB */
+    (void)w; (void)idx;
+    return 0.0;
+}
