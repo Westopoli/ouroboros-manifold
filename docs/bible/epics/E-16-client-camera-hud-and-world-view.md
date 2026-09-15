@@ -178,7 +178,7 @@ Open flags: none.
 
 ## Scale requirements
 
-Proposed for Westley to confirm: 60 fps with 1,000 units on screen and the HUD live; galaxy view at 60 fps with 60 systems, shells, and particles; transition never drops below 30 fps.
+Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): 60 fps with 1,000 units on screen and the HUD live; galaxy view at 60 fps with 60 systems, shells, and particles; transition never drops below 30 fps. Reference machine for frame-rate gates: the forge RTX 3060 at 1920×1080; a minimum-spec target is set after the first playtest round reports tester hardware.
 
 ## Look and behavior references
 

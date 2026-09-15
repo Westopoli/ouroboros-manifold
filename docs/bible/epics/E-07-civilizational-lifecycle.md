@@ -135,7 +135,7 @@ Open flags: Q-054-01 (Stage 1 deferred the Survival / Exodus / Extinction-with-A
 
 ## Scale requirements
 
-Proposed for Westley to confirm: cleanup over 60 factions in under 50 µs per tick.
+Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): cleanup over 60 factions in under 50 µs per tick.
 
 ## Look and behavior references
 

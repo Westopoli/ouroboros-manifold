@@ -206,7 +206,7 @@ No player input reaches this epic in single-player; the player's faction runs th
 
 ## Scale requirements
 
-Proposed for Westley to confirm: 15 factions deciding over 60 regions in under 200 µs per tick; 5,000 ticks with full agents in under 5 s.
+Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): 15 factions deciding over 60 regions in under 200 µs per tick; 5,000 ticks with full agents in under 5 s.
 
 ## Look and behavior references
 

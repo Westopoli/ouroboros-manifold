@@ -157,7 +157,7 @@ Open flags: none. Generation and validation run offline in E-21; this story is t
 
 ## Scale requirements
 
-Proposed for Westley to confirm: distill and assemble 2,000 events in under 200 ms; the scroll panel renders 10 entries at 60 fps while the map animates.
+Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): distill and assemble 2,000 events in under 200 ms; the scroll panel renders 10 entries at 60 fps while the map animates.
 
 ## Look and behavior references
 

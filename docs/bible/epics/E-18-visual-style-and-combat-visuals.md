@@ -140,7 +140,7 @@ Open flags: none. Reference required: `references/E-18/notes.md`, missing.
 
 ## Scale requirements
 
-Proposed for Westley to confirm: 60 fps at 200 v 200 with full effects at medium zoom; 30 fps floor at 1,000 units with LOD.
+Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): 60 fps at 200 v 200 with full effects at medium zoom; 30 fps floor at 1,000 units with LOD.
 
 ## Look and behavior references
 

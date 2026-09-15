@@ -168,7 +168,7 @@ Open flags: Q-031-01 (Westley confirms the exact numbers).
 
 ## Scale requirements
 
-Proposed for Westley to confirm: trigger evaluation for 60 regions × 26 templates in under 20 µs per tick; queue resolution O(due entries).
+Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): trigger evaluation for 60 regions × 26 templates in under 20 µs per tick; queue resolution O(due entries).
 
 ## Look and behavior references
 

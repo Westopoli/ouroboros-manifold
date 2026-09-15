@@ -179,7 +179,7 @@ Open flags: none beyond the missing reference. Reference required: `references/E
 
 ## Scale requirements
 
-Proposed for Westley to confirm: targeting and damage for 1,000 units in under 2 ms per tick, 10,000 in under 25 ms.
+Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): targeting and damage for 1,000 units in under 2 ms per tick, 10,000 in under 25 ms.
 
 ## Look and behavior references
 

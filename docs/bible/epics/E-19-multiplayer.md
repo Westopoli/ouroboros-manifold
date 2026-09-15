@@ -125,7 +125,7 @@ Open flags: Q-144-01, Q-144-02. Reference required: `references/E-19/notes.md`, 
 
 ## Scale requirements
 
-Proposed for Westley to confirm: 4 peers; 200 ms command latency tolerated with input delay; 5,000-tick jump identical across peers.
+Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): 4 peers; 200 ms command latency tolerated with input delay; 5,000-tick jump identical across peers.
 
 ## Look and behavior references
 

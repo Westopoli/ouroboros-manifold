@@ -156,7 +156,7 @@ Open flags: none.
 
 ## Scale requirements
 
-Proposed for Westley to confirm: movement and collision for 1,000 units in under 3 ms per tick, 10,000 in under 30 ms; route queries under 1,000 per second at 60 wu cells.
+Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): movement and collision for 1,000 units in under 3 ms per tick, 10,000 in under 30 ms; route queries under 1,000 per second at 60 wu cells.
 
 ## Look and behavior references
 

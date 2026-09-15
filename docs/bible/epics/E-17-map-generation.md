@@ -155,7 +155,7 @@ Open flags: Q-119-01. Reference required: `references/E-17/notes.md`, missing (M
 
 ## Scale requirements
 
-Proposed for Westley to confirm: generation under 50 ms; field sampling under 1 µs per query with a precomputed grid at 100 wu.
+Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): generation under 50 ms; field sampling under 1 µs per query with a precomputed grid at 100 wu.
 
 ## Look and behavior references
 

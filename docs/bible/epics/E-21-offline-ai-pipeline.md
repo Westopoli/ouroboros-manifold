@@ -142,7 +142,7 @@ Open flags: none. The script is Stage 2 deliverable work.
 
 ## Scale requirements
 
-Proposed for Westley to confirm: builder produces one chronicle category in under 5 minutes; naming for 15 factions in under 30 minutes; balance harness 1,000 matchups per hour on forge.
+Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): builder produces one chronicle category in under 5 minutes; naming for 15 factions in under 30 minutes; balance harness 1,000 matchups per hour on forge.
 
 ## Look and behavior references
 

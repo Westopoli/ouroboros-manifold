@@ -129,7 +129,7 @@ Open flags: Q-131-01 (settlement vs station naming: `docs/bible_history/bible_2_
 
 ## Scale requirements
 
-Proposed for Westley to confirm: capture and production for 8 structures in under 0.2 ms per tick.
+Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): capture and production for 8 structures in under 0.2 ms per tick.
 
 ## Look and behavior references
 
