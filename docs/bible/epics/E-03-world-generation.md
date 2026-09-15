@@ -1,17 +1,17 @@
 # E-03 — World Generation and Topology
 
-## Definition-completeness gate (run 2026-09-10, re-checked 2026-09-14 after the Q-021/Q-022/Q-024/Q-025 fold, again after Q-021-03/Q-022-02 closed, and again after Q-021-04 closed)
+## Definition-completeness gate (run 2026-09-10, re-checked 2026-09-14 and 2026-09-15 through the full Q-021/Q-022/Q-024/Q-025 fold chain)
 
 | Check | Result |
 |---|---|
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 5 stories, 28 rules (S-021 grew from 8 to 10 rules folding the per-template shapes in; R-025-04 added folding Q-025-01; the original gate's "22 rules" count was stale even before either fold), numbers from `algorithms.md` ALG-30 and ALG-31. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | Original 5 flags (Q-021-01 through Q-025-01) closed and folded. Folding those surfaced Q-021-03 and Q-022-02, both answered and folded. Folding Q-021-03 surfaced Q-021-04 (template region counts vs. the fixed two-regions invariant), answered and folded. Folding Q-021-04 surfaced one more, Q-021-05 (the widened region-count range is Claude's number, not yet confirmed) — still open. |
+| Implied-but-unstated behavior turned into flags | 9 flags total across this epic's life (Q-021-01 through Q-021-05, Q-022-01, Q-022-02, Q-024-01, Q-025-01), all closed and folded. |
 | Every visible-surface story has a reference | Not applicable; the galaxy view that draws the graph is E-16. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on 1 open flag, Q-021-05 — a number check, not a design fork: confirm or adjust the [60, 110] galaxy region-count range now that every faction's template can need 3 to 6 regions instead of a fixed 2. Every design question this epic raised (which templates, how they map to 15 factions, how they resolve against the fixed-region invariant) is answered and folded.
+**Gate verdict: passed, 2026-09-15.** Zero open flags. Every story is folded and consistent with the register.
 
 ## Purpose
 
@@ -42,7 +42,7 @@ Rules
 
 Inputs: seed (64-bit integer); config ranges; player template preference (optional).
 Outputs: world graph in the strategic snapshot; galaxy view (E-16); each faction's rolled template (T1 trace, save file).
-Open flags: Q-021-05 (the [60, 110] region-count range in R-021-01 is Claude's proposed number, not yet confirmed). Q-021-03 and Q-021-04 (Westley, 2026-09-14 and 2026-09-15) are closed and folded above: every faction independently rolls one of the three named templates, keeping the templates' own region counts (3 for Isolated, 4 to 6 for Twin Colony, 4 for Archipelago) rather than rescaling to a fixed two regions.
+Open flags: none. Q-021-01 through Q-021-05 are all closed and folded: every faction independently rolls one of the three named templates, keeping the templates' own region counts (3 for Isolated, 4 to 6 for Twin Colony, 4 for Archipelago) rather than rescaling to a fixed two regions; the galaxy region-count range is [60, 110], confirmed.
 
 ### S-022 — Homes are strong, frontiers are new
 As a commander, I want my home region to feel established and my frontier to feel recently settled, so that the starting shape of my civilization tells a story.
@@ -103,7 +103,7 @@ Open flags: none. Closed by Q-025-01 (Westley, 2026-09-12): the buffer is player
 | Input | Source | Range | Rejection |
 |---|---|---|---|
 | Seed | Campaign start | any 64-bit integer | none |
-| Region count range | Config | (60, 110), proposed [Q-021-05] | count < sum of every rolled faction's template size + 1 fails generation |
+| Region count range | Config | (60, 110), confirmed | count < sum of every rolled faction's template size + 1 fails generation |
 | Factions per game | Config | 15 at launch | < 2 fails generation |
 | Extra edge ratio | Config | 0.12 | < 0 fails generation |
 | Population ranges, ratios, jitter | Config | as ALG-30, per-archetype home ranges as R-022-05 | ranges outside [0, 100] fail generation |
@@ -128,7 +128,7 @@ Open flags: none. Closed by Q-025-01 (Westley, 2026-09-12): the buffer is player
 
 ## Scale requirements
 
-Confirmed by Westley, 2026-09-14, at the region-count range's old max: generate a 60-region world in under 5 ms; generation is O(N + E). The range widened to [60, 110] folding Q-021-04 (variable per-template region counts); 60 is now the new range's *minimum*, not its max — retiming at 110 regions is part of Q-021-05, open above. Never loosened by Agora regardless; a miss is escalated.
+Confirmed by Westley, 2026-09-15 (never loosened by Agora; a miss is escalated): generate a 110-region world in under 5 ms; generation is O(N + E). Re-timed from the original 60-region figure (2026-09-14) after the region-count range widened to [60, 110] folding Q-021-04 (variable per-template region counts) — 110 is the new range's max, per Q-021-05.
 
 ## Look and behavior references
 
@@ -148,7 +148,7 @@ None required in this epic. The galaxy view is E-16.
 
 ## Open ambiguity flags
 
-Q-021-05 (the widened region-count range and the scale gate's untimed upper end — a number to confirm, not a design fork). Details in `docs/northstar/ambiguity_register.md`. Q-021-01 through Q-021-04, Q-022-01, Q-022-02, Q-024-01, Q-025-01 are closed and folded above.
+None. Q-021-01 through Q-021-05, Q-022-01, Q-022-02, Q-024-01, Q-025-01 are closed and folded above.
 
 ## Depends on
 
