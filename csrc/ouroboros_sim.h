@@ -537,7 +537,13 @@ uint32_t om_region_faction_creation_pending(const om_world *w, uint32_t region_i
 /* ---- external spawns (E-05 calls these; tests may too) ---- */
 int om_event_queue_external(om_world *w, uint32_t region_idx, uint32_t template_id,
                             uint64_t due_tick, double probability, int32_t source_faction,
-                            uint32_t chain_length);   /* returns the chain tag assigned, or -1 */
+                            uint32_t chain_length);
+/* Returns the chain tag assigned, or -1 and queues nothing when: template_id is
+ * not loaded, region_idx is out of range or empty-tier, due_tick <= the current
+ * tick, probability is outside [0, 1], or the template is an admin chain step
+ * and chain_length is outside [3, 8]. A spawn that would exceed the queue
+ * capacity (2,000 entries) is dropped and recorded as a pruned record with
+ * cond_kind OM_COND_NONE (the overflow marker). */
 
 /* ---- tick-log readers for steps 1 and 2 (last step only) ---- */
 typedef struct om_fired_event {
