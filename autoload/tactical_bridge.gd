@@ -1,8 +1,10 @@
-## Singleton bridge between the Python tactical engine and Godot scenes.
-## Owns the pipe transport to the child Python process (stdout length-prefixed
-## JSON in, polled command file out; see docs/architecture.md), applies
-## snapshots/deltas, and re-publishes state via signals. The TCP socket server
-## this comment once described was deleted.
+## Singleton bridge between the tactical engine and Godot scenes.
+## Does not own a transport itself: autoload/sim_bridge.gd spawns and reads
+## simulation/pipe_transport.py and forwards decoded payloads into _on_message
+## via SimBridge.state_updated (see scenes/tactical/tactical.gd). Applies
+## snapshots/deltas and re-publishes state via signals + flat display arrays.
+## The WebSocket client (WsClient) this used to also support was deleted along
+## with the debug server it talked to; that path is gone, not stubbed.
 ##
 ## Flat-array interpolation buffer (Stage 8.5):
 ## Renders the RECENT PAST by interpolating between known-good server tick
@@ -29,7 +31,6 @@ const BUFFER_DEPTH := 6
 const TICK_DURATION := 0.05  # 1.0 / 20Hz
 const MAX_UNITS := 1024
 
-var _client: Node
 var _connected := false
 
 # Current authoritative state (non-positional, applied immediately)
@@ -61,23 +62,6 @@ func _ready() -> void:
 	display_y.resize(MAX_UNITS)
 	display_facing.resize(MAX_UNITS)
 	display_alive.resize(MAX_UNITS)
-	_client = WsClient
-	_client.connected.connect(_on_connected)
-	_client.disconnected.connect(_on_disconnected)
-	_client.message_received.connect(_on_message)
-
-
-func connect_to_engine(host: String = "127.0.0.1", port: int = 8765) -> void:
-	_client.connect_to_server(host, port)
-
-
-func disconnect_from_engine() -> void:
-	_client.disconnect_from_server()
-
-
-func send_command(command: Dictionary) -> void:
-	_client.send({"type": "command", "command": command})
-	# See also: scenes/tactical/input_router.gd:_send — emits command_sent for both sim paths
 
 
 func _process(_delta: float) -> void:
@@ -138,19 +122,6 @@ func _process(_delta: float) -> void:
 	if _logger:
 		_logger.log_frame(display_x, display_y, display_alive, unit_count,
 						  entry_b.positions, current_tick)
-
-
-func _on_connected() -> void:
-	_connected = true
-	_tick_buffer.clear()
-	connection_state_changed.emit(true)
-	print("TacticalBridge: connected to engine")
-
-
-func _on_disconnected() -> void:
-	_connected = false
-	connection_state_changed.emit(false)
-	print("TacticalBridge: disconnected from engine")
 
 
 func _on_message(payload: Dictionary) -> void:

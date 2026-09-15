@@ -1,6 +1,6 @@
 ## Client-side command validator. Refuses malformed packets before they reach the server.
 ## Fails closed: unknown kind, dead/unknown unit UIDs, and negative positions are all rejected.
-## See also: input_router.gd — calls validate() before every TacticalBridge.send_command()
+## See also: input_router.gd — calls validate() before every SimBridge.send_command()
 extends Node
 
 const _KNOWN_KINDS := [
