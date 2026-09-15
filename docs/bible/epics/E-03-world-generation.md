@@ -7,11 +7,11 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 5 stories, 28 rules (S-021 grew from 8 to 10 rules folding the per-template shapes in; R-025-04 added folding Q-025-01; the original gate's "22 rules" count was stale even before either fold), numbers from `algorithms.md` ALG-30 and ALG-31. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 9 flags total across this epic's life (Q-021-01 through Q-021-05, Q-022-01, Q-022-02, Q-024-01, Q-025-01), all closed and folded. |
+| Implied-but-unstated behavior turned into flags | 10 flags total across this epic's life (Q-021-01 through Q-021-06, Q-022-01, Q-022-02, Q-024-01, Q-025-01), all closed and folded. A Sonnet test audit caught what the first gate re-check missed: R-021-03/04 said the player's preference "raises" their chosen template's weight without giving the exact number (Q-021-06) — closed, configurable, default 2:1:1. |
 | Every visible-surface story has a reference | Not applicable; the galaxy view that draws the graph is E-16. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: passed, 2026-09-15.** Zero open flags. Every story is folded and consistent with the register.
+**Gate verdict: passed, 2026-09-15.** Zero open flags. Every story is folded and consistent with the register and with `algorithms.md`'s ALG-30/ALG-31 (the first pass at this verdict missed that ALG-31 still described the retired fixed-2-region generator; both ALG-30 and ALG-31 are now rewritten to match this epic).
 
 ## Purpose
 
@@ -32,7 +32,7 @@ Rules
 - R-021-01  Given a seed, When the world is generated, Then the region count is an integer drawn uniformly from [60, 110] and the faction count is 15.
 - R-021-02  Given generation, When factions are placed, Then faction 0 is the player civilization and factions 1 through 14 cycle conqueror, fortifier, opportunist in that order.
 - R-021-03  Given a faction, When its template is rolled, Then it draws independently from Isolated, Twin Colony, Archipelago with equal weight by default; the player faction's weights are swayed toward their chosen preference (R-021-04) and every NPC faction always uses equal weight.
-- R-021-04  Given the player, When they set a template preference before generation, Then it is one of Isolated, Twin Colony, Archipelago, or no preference, and a set preference raises that template's weight in the player faction's own roll only; it never locks the outcome and never affects any NPC faction's roll.
+- R-021-04  Given the player, When they set a template preference before generation, Then it is one of Isolated, Twin Colony, Archipelago, or no preference; a set preference gives that template probability `WORLD_PLAYER_PREFERENCE_WEIGHT`, default 0.50, and the other two templates split the remainder equally (default 0.25 each), in the player faction's own roll only — configurable for playtesting, never locking the outcome, never affecting any NPC faction's roll.
 - R-021-05  Given a faction's rolled template, When its regions are placed, Then: Isolated is one home region plus two frontier regions, both adjacent to the home; Twin Colony is two home regions adjacent to each other, each with its own count of 1 or 2 frontier regions (drawn uniformly per home) adjacent to that home; Archipelago is one home region plus three frontier regions, arranged so at least one frontier is not adjacent to the home or to another frontier (reached only through a chain of frontiers). Every region outside a faction's template is empty with no owner and no fields.
 - R-021-06  Given a faction's template is placed, When corridors are laid, Then its highest-numbered frontier region (Isolated/Archipelago: numbered in placement order; Twin Colony: the second home's highest-numbered frontier) links to a chain of exactly 1 empty region, and the 15 factions' corridor ends are linked in faction order into one chain.
 - R-021-07  Given generation, When the remaining empties are attached, Then each links to one already-connected region chosen uniformly at random, re-rolling up to 20 times to avoid a home region.
@@ -42,7 +42,7 @@ Rules
 
 Inputs: seed (64-bit integer); config ranges; player template preference (optional).
 Outputs: world graph in the strategic snapshot; galaxy view (E-16); each faction's rolled template (T1 trace, save file).
-Open flags: none. Q-021-01 through Q-021-05 are all closed and folded: every faction independently rolls one of the three named templates, keeping the templates' own region counts (3 for Isolated, 4 to 6 for Twin Colony, 4 for Archipelago) rather than rescaling to a fixed two regions; the galaxy region-count range is [60, 110], confirmed.
+Open flags: none. Q-021-01 through Q-021-06 are closed and folded: every faction independently rolls one of the three named templates, keeping the templates' own region counts (3 for Isolated, 4 to 6 for Twin Colony, 4 for Archipelago) rather than rescaling to a fixed two regions; the galaxy region-count range is [60, 110], confirmed; the player's preference weight is a configurable parameter, default 2:1:1 (0.50/0.25/0.25).
 
 ### S-022 — Homes are strong, frontiers are new
 As a commander, I want my home region to feel established and my frontier to feel recently settled, so that the starting shape of my civilization tells a story.
@@ -107,7 +107,7 @@ Open flags: none. Closed by Q-025-01 (Westley, 2026-09-12): the buffer is player
 | Factions per game | Config | 15 at launch | < 2 fails generation |
 | Extra edge ratio | Config | 0.12 | < 0 fails generation |
 | Population ranges, ratios, jitter | Config | as ALG-30, per-archetype home ranges as R-022-05 | ranges outside [0, 100] fail generation |
-| Template choice | Config: Isolated, Twin Colony, Archipelago | equal weight per faction by default | player's optional preference (R-021-04) only reweights their own faction's roll |
+| Template choice | Config: Isolated, Twin Colony, Archipelago | equal weight (1/3 each) per faction by default | player's optional preference (R-021-04) reweights only their own roll: preferred 0.50 (configurable), others 0.25 each; never affects NPC rolls |
 
 ## Outputs
 
@@ -148,7 +148,7 @@ None required in this epic. The galaxy view is E-16.
 
 ## Open ambiguity flags
 
-None. Q-021-01 through Q-021-05, Q-022-01, Q-022-02, Q-024-01, Q-025-01 are closed and folded above.
+None. Q-021-01 through Q-021-06, Q-022-01, Q-022-02, Q-024-01, Q-025-01 are closed and folded above.
 
 ## Depends on
 
