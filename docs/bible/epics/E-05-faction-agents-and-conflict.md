@@ -89,7 +89,7 @@ As a commander, I want some attacks announced a tick ahead at full strength and 
 Rules
 - R-036-01  Given a conqueror attacking a target with military 70, When mode is chosen, Then telegraph preference = 0.7 + 0.2 = 0.9, and one draw below 0.9 selects telegraph.
 - R-036-02  Given a warlord attacking a target with military 20, When chosen, Then preference = 0.3 − 0.2 = 0.1.
-- R-036-03  Given a telegraphed attack declared on tick t, When tick t + 3 runs, Then it resolves in step 3c before any new decisions, at full efficiency; on ticks t + 1 and t + 2 it sits in the pending list and the defender may reinforce against it each tick.
+- R-036-03  Given a telegraphed attack declared on tick t, When tick t + 3 runs, Then it resolves in step 3c before any new decisions, at full efficiency; on ticks t + 1 and t + 2 it sits in the pending list; the defender's one reactive reinforce (R-036-05) happens in step 3e of tick t, the tick of declaration, not again on the waiting ticks.
 - R-036-04  Given a surprise attack, When it resolves, Then effective attack is multiplied by 0.5 and it resolves in the same tick's step 3f.
 - R-036-05  Given a telegraphed attack is pending against a faction, When that faction's reactive window runs, Then with probability min(1, defend weight / 1.5) it commits min(budget · 0.30, attacker commit · 0.5) to reinforce the target, and commits nothing if that is below 1.0.
 - R-036-06  Given a reinforce of commit 10 on a frontier region with military 30 and tension 50, When resolved, Then base = 10 · 0.5 · (60 − 30)/60 = 2.5 and Δmilitary = 2.5 · U(0.75, 1.25).
