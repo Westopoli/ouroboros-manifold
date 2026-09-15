@@ -1,0 +1,10 @@
+{
+  "type": "object",
+  "properties": {
+    "e2e_markdown": {"type": "string"},
+    "questions": {"type": "array", "items": {"type": "string"}},
+    "assumptions": {"type": "array", "items": {"type": "string"}}
+  },
+  "required": ["e2e_markdown", "questions", "assumptions"],
+  "additionalProperties": false
+}

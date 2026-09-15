@@ -15,7 +15,7 @@ One strategic tick, in this order. Feature flags in parentheses are all true at 
 3. Faction agents (`ENABLE_FACTIONS`):
    - 3a snapshot every region before any mutation this tick;
    - 3b every faction accumulates budget (ALG-17);
-   - 3c telegraphed attacks declared `TELEGRAPH_PREP_TICKS = 1` tick ago resolve now;
+   - 3c telegraphed attacks declared `TELEGRAPH_PREP_TICKS = 3` ticks ago resolve now;
    - 3d every faction decides (ALG-11 through ALG-16); an attack in telegraph mode is queued for 3c next tick, everything else is immediate;
    - 3e defenders of newly telegraphed attacks may reactive-reinforce (ALG-18);
    - 3f immediate intents resolve (ALG-19 through ALG-24), collisions first grouped by target.
@@ -75,7 +75,7 @@ Per faction per tick, reading the 3a snapshot only. Archetypes at launch: `playe
 | breakaway | 0.45 | 0.30 | 0.25 | no | yes | 0 |
 | default | 0.40 | 0.30 | 0.30 | no | yes | 0 |
 
-`factor_1 = t_n / 100` if tension-primary else `1 − m_n / 100`. `current_value = 0` if n is unowned, else `((e_n · 0.60 + p_n · 0.40) / 100) · ATTRACT_VALUE_MULTIPLIER`, multiplier `2.0`, subweights `ATTRACT_ECONOMY_SUBWEIGHT = 0.60`, `ATTRACT_POPULATION_SUBWEIGHT = 0.40`. `strategic_position` = mean over n's neighbors not owned by this faction of `(e · 0.60 + p · 0.40)/100` for owned ones and `EXPANSION_POTENTIAL = 0.15` for unowned ones; 0 if none. `attractiveness = w_weakness · factor_1 + w_value · current_value + w_position · strategic_position`, then `×(1 + damage_history[n] · boost)` if the archetype has a boost. Unowned n with can-colonize goes to the colonize candidates. Owned n goes to the attack candidates only if either side's stance is hostile and `current_value ≥ MIN_ATTACK_VALUE = 0.05`. Each neighbor is scored once even if adjacent to several owned regions.
+`factor_1 = t_n / 100` if tension-primary else `1 − m_n / 100`. `current_value = 0` if n is unowned, else `((e_n · 0.60 + p_n · 0.40) / 100) · ATTRACT_VALUE_MULTIPLIER`, multiplier `2.0`, subweights `ATTRACT_ECONOMY_SUBWEIGHT = 0.60`, `ATTRACT_POPULATION_SUBWEIGHT = 0.40`. `strategic_position` = mean over n's neighbors not owned by this faction of `(e · 0.60 + p · 0.40)/100` for owned ones and `EXPANSION_POTENTIAL = 0.15` for unowned ones; 0 if none. `attractiveness = w_weakness · factor_1 + w_value · current_value + w_position · strategic_position`, then `×(1 + (damage_history[n] / 100) · boost)` if the archetype has a boost, where `damage_history[n]` is the military plus economy region n lost to attack resolutions (ALG-21, ALG-22 damage deltas, not friction or drift) in the last `DAMAGE_HISTORY_WINDOW = 150` ticks (Q-035-01, 2026-09-12; the Python code never fed it). Unowned n with can-colonize goes to the colonize candidates. Owned n goes to the attack candidates only if either side's stance is hostile and `current_value ≥ MIN_ATTACK_VALUE = 0.05`. Each neighbor is scored once even if adjacent to several owned regions.
 
 **ALG-12 Budget pressure.** `potential_commit = budget · ATTACK_COMMIT_FRACTION`, fraction `0.70`. With `weakest = min m_n over attack candidates`, `break_even = (weakest · RESISTANCE_FACTOR) / (ATTACK_COMMIT_FRACTION · ATTACK_EFFICIENCY)`, `RESISTANCE_FACTOR = 0.55`, `ATTACK_EFFICIENCY = 1.0`. If `break_even > 0` and `budget / break_even > BUDGET_PRESSURE_THRESHOLD = 0.8`: `effective_confidence = attack_confidence · (0.8 / (budget / break_even))`; else `effective_confidence = attack_confidence`. `attack_confidence` is rolled once at faction creation, uniform in `ATTACK_CONFIDENCE_RANGE[archetype]`: conqueror (2.0, 6.0), fortifier (4.0, 10.0), player_civilization (3.0, 8.0), breakaway (2.0, 5.0), otherwise `ATTACK_CONFIDENCE_DEFAULT_RANGE = (4.0, 8.0)`.
 
@@ -83,7 +83,7 @@ Per faction per tick, reading the 3a snapshot only. Archetypes at launch: `playe
 
 **ALG-14 Viability and scoring.** For each attack candidate: `net = potential_commit · ATTACK_EFFICIENCY − m_n · RESISTANCE_FACTOR · entrenchment(n)`; viable if `net > effective_confidence`. Best attack = the viable candidate with the highest attractiveness; its value is its `net`. Best colonize = the colonize candidate with the highest attractiveness. `norm(v, lo, hi) = clamp((v − lo)/(hi − lo), 0, 1)`. `attack_score = norm(best_net, ATTACK_NORM_RANGE = (0, 40)) · w_attack`; `colonize_score = norm(best_attract, COLONIZE_NORM_RANGE = (0, 1)) · w_expand`; decision weights from `ARCHETYPE_DECISION_WEIGHTS` (attack, expand, defend): conqueror 1.2/1.0/0.4, warlord 1.4/0.6/0.3, fortifier 0.8/0.8/1.5, opportunist 1.0/0.7/0.6, schism 1.3/0.0/0.5, player_civilization 0.3/0.5/1.5, default 0.8/0.6/0.8. Highest score wins; below `MIN_ACTION_THRESHOLD = 0.05` or no candidates: accumulate. Colonize with `budget < COLONIZE_COST = 20.0`: accumulate.
 
-**ALG-15 Attack intent.** Commit `potential_commit`; source region = the owned region with the highest military. Telegraph preference `ARCHETYPE_TELEGRAPH_PREFERENCE`: conqueror 0.7, warlord 0.3, fortifier 0.8, opportunist 0.4, schism 0.3, player_civilization 0.6, default 0.5; `+0.2` if `m_target > 60`, `−0.2` if `m_target < 30`, clamped [0, 1]. One RNG draw: telegraph if `rng.random() < pref`, else surprise. A telegraphed attack is declared now and resolves at `tick + TELEGRAPH_PREP_TICKS = 1`.
+**ALG-15 Attack intent.** Commit `potential_commit`; source region = the owned region with the highest military. Telegraph preference `ARCHETYPE_TELEGRAPH_PREFERENCE`: conqueror 0.7, warlord 0.3, fortifier 0.8, opportunist 0.4, schism 0.3, player_civilization 0.6, default 0.5; `+0.2` if `m_target > 60`, `−0.2` if `m_target < 30`, clamped [0, 1]. One RNG draw: telegraph if `rng.random() < pref`, else surprise. A telegraphed attack is declared now and resolves at `tick + TELEGRAPH_PREP_TICKS = 3` (Q-036-01, 2026-09-12; the Python code used 1).
 
 **ALG-16 Colonize intent.** Commit `COLONIZE_COST = 20.0`; source = the first owned region adjacent to the target.
 
@@ -111,9 +111,9 @@ Then, if the target is owned by a faction that is not a collider, or is owned by
 
 ## Border friction (`tick.py`, `_apply_border_friction`)
 
-**ALG-25.** For each inhabited region with an owner, over every neighbor across any edge type (no edge-type filter) that is owned by a different faction where either side's stance toward the other is hostile: `tension_f = BORDER_FRICTION_TENSION = 0.15` and `economy_f = BORDER_FRICTION_ECONOMY = 0.05`, flat per hostile neighbor, not scaled by the neighbor's military. Sum over hostile neighbors; `t = min(100, t + Σ tension_f)`, `e = max(ECONOMY_FLOOR, e − Σ economy_f)`; composites recompute.
+**ALG-25.** For each inhabited region with an owner, over every neighbor across a `border` or `both` edge (trade-only edges contribute nothing; Q-041-01, 2026-09-13) that is owned by a different faction where either side's stance toward the other is hostile: `tension_f = BORDER_FRICTION_TENSION = 0.15` and `economy_f = BORDER_FRICTION_ECONOMY = 0.05`, flat per hostile neighbor, not scaled by the neighbor's military. Sum over hostile neighbors; `t = min(100, t + Σ tension_f)`, `e = max(ECONOMY_FLOOR, e − Σ economy_f)`; composites recompute.
 
-Correction to the Stage 1 algorithm pass (2026-09-10): that pass documented `simulation/border_friction.py`, which scales friction by the neighbor's military and filters to border edges. That module is never imported by the tick loop; the live implementation is the flat, all-edges version above, which is also what `docs/bible_history/bible_2_00_simulation.md` describes. `border_friction.py` is dead code. See flag Q-041-01 for which version is the design.
+The Python code counted every edge type; the dead module `simulation/border_friction.py` scaled by military. Neither is the design; the C rewrite implements the version above.
 
 ## Technology (`technology.py`)
 
@@ -135,7 +135,7 @@ Correction to the Stage 1 algorithm pass (2026-09-10): that pass documented `sim
 
 ## Administrative revolts (`admin_revolt.py`)
 
-**ALG-29.** Per faction: `excess = max(0, territory_count − ADMIN_REVOLT_INFLECTION_POINT = 4)`; `chance = ADMIN_REVOLT_BASE_RATE + ADMIN_REVOLT_SCALING_RATE · excess²`, base `0.001`, scaling `0.0005`. One RNG draw per owned region per tick; a draw below `chance` queues an `evt_admin_separatist` chain on that region for the next tick.
+**ALG-29.** Per faction: `excess = max(0, territory_count − ADMIN_REVOLT_INFLECTION_POINT = 4)`; `chance = ADMIN_REVOLT_BASE_RATE + ADMIN_REVOLT_SCALING_RATE · excess²`, base `0.001`, scaling `0.0005`. One RNG draw per owned region per tick; a draw below `chance` takes one more integer draw `L` uniform in [3, 8] and queues an `evt_admin_separatist` chain of length `L` ticks on that region for the next tick (short chain for L in [3, 4], medium [5, 6], long [7, 8]; E-05 R-040-03, E-04 S-030; Q-040-01, 2026-09-12).
 
 ## Events (`events.py`)
 

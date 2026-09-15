@@ -48,7 +48,7 @@ Rules
 - R-027-02  Given a queued event whose tick arrives and whose condition is not met (for `above` v: field ≤ v; for `below` v: field ≥ v), When resolved, Then it is dropped without firing and without a probability roll.
 - R-027-03  Given a queued event whose condition is met, When resolved, Then one RNG draw r is made and it fires only if r ≤ p.
 - R-027-04  Given "Famine" fires on tick 50 in a region, When tick 53 to 56 arrives with tension above 40, Then "Regional Revolt" may fire with probability 0.5 carrying Famine's chain tag.
-- R-027-05  Given a chain of admin-revolt events, When each fires, Then the next queues for exactly the next tick with probability 1.0 and no condition, so the five-step chain completes in five consecutive ticks.
+- R-027-05  Given an admin-revolt chain of length L in [3, 8] (E-05 R-040-03), When each event fires, Then the next queues with probability 1.0 and no condition, at a delay of 1 tick plus one surplus tick for the earliest gaps until the surplus L minus the step count is spent, so the Breakaway fires exactly L ticks after the roll; the short chain skips Political Crisis and Popular Support, the medium chain skips Popular Support.
 - R-027-06  Given any spawned event, When it is read from the log, Then its chain tag equals the root event's tag, and the tag is unique per chain start (`chain_NNNN`, sequential).
 
 Inputs: template chain spawns; region fields at resolution time.
@@ -114,10 +114,10 @@ Rules
 | Famine Relief | spawn only | 0, +3, −3, +2 | | |
 | Diplomatic Incident | tension above 35 | +1, −1, +3, 0 | | |
 | Harvest Surplus | population above 50 | 0, +2, −1, +1 | | |
-| Admin Separatist | spawn only (from ALG-29) | 0, −1, +3, 0 | Admin Political Crisis [1,1] 1.0 | |
-| Admin Political Crisis | spawn only | −1, −2, +4, 0 | Admin Popular Support [1,1] 1.0 | |
-| Admin Popular Support | spawn only | 0, 0, +2, −1 | Admin Military Defection [1,1] 1.0 | |
-| Admin Military Defection | spawn only | −3, 0, +2, 0 | Admin Breakaway [1,1] 1.0 | |
+| Admin Separatist | spawn only (from ALG-29), carries chain length L | 0, −1, +3, 0 | next step of the L-variant chain, delay per R-027-05, 1.0 | |
+| Admin Political Crisis | spawn only (medium and long chains) | −1, −2, +4, 0 | next step of the L-variant chain, delay per R-027-05, 1.0 | |
+| Admin Popular Support | spawn only (long chain) | 0, 0, +2, −1 | Admin Military Defection, delay per R-027-05, 1.0 | |
+| Admin Military Defection | spawn only | −3, 0, +2, 0 | Admin Breakaway, delay per R-027-05, 1.0 | |
 | Admin Breakaway | spawn only, creates faction, admin revolt | −4, −3, +5, −2 | | |
 
 Inputs: the library file.

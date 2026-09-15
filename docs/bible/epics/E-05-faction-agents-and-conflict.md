@@ -1,27 +1,27 @@
 # E-05 — Faction Agents and Conflict
 
-## Definition-completeness gate (run 2026-09-10)
+## Definition-completeness gate (run 2026-09-10, flags folded 2026-09-14)
 
 | Check | Result |
 |---|---|
-| Every story has at least one Given/When/Then rule with concrete values | Yes, 10 stories, 44 rules, numbers from `algorithms.md` ALG-11 through ALG-25 and ALG-29. |
+| Every story has at least one Given/When/Then rule with concrete values | Yes, 10 stories, 58 rules, numbers from `algorithms.md` ALG-11 through ALG-25 and ALG-29. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
 | Implied-but-unstated behavior turned into flags | 5 new flags, Q-035-01, Q-036-01, Q-040-01, Q-041-01. |
 | Every visible-surface story has a reference | Not applicable; conflict reaches the player through the world view (E-16), chronicle (E-09), and missions (E-10). |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on 5 open flags. Two are bible-vs-code disagreements on attack consequences and the admin revolt chain; one is dead code (the Opportunist's recent-damage boost never receives data).
+**Gate verdict: passed 2026-09-14.** The five flags raised at the gate (Q-035-01, Q-036-01, Q-037-01, Q-040-01, Q-041-01) are answered and folded into the rules below.
 
 ## Purpose
 
-Fifteen factions share the galaxy and none of them is the protagonist. Every faction, the player's included, runs the same agent: each tick it looks at its neighbors, scores them, and either saves its budget, attacks the most attractive enemy region it can beat, or colonizes the most attractive empty one. Attacks are telegraphed a tick ahead at full strength or sprung at once at half strength. Defenders who see an attack coming may reinforce. When two or more factions want the same region on the same tick, they collide and the stronger economy usually wins, but not always.
+Fifteen factions share the galaxy and none of them is the protagonist. Every faction, the player's included, runs the same agent: each tick it looks at its neighbors, scores them, and either saves its budget, attacks the most attractive enemy region it can beat, or colonizes the most attractive empty one. Attacks are telegraphed three ticks ahead at full strength or sprung at once at half strength. Defenders who see an attack coming may reinforce. When two or more factions want the same region on the same tick, they collide and the stronger economy usually wins, but not always.
 
 Conflict has consequences that outlast the battle: a conquered region seethes, an overextended empire fractures, and a hostile border wears both sides down every tick. Faction personality is a roll at birth, so the same archetype fights a different war every campaign. The player's civilization is cautious by design; it fights back far more often than it starts fights.
 
 ## Obviously working in 60 seconds
 
-Generate seed 7 and run 300 ticks. By tick 100 at least one attack has resolved and the log shows telegraphed attacks resolving a tick after declaration and surprise attacks resolving at once with half strength. By tick 300 at least one region has changed hands, its new owner placed a garrison, and a Conquest Unrest event fired there a few ticks later. Some faction with more than four regions has had an admin separatist chain start. Same seed twice: identical intents, identical outcomes.
+Generate seed 7 and run 300 ticks. By tick 100 at least one attack has resolved and the log shows telegraphed attacks resolving three ticks after declaration and surprise attacks resolving at once with half strength. By tick 300 at least one region has changed hands, its new owner placed a garrison, and a Conquest Unrest event fired there a few ticks later. Some faction with more than four regions has had an admin separatist chain start. Same seed twice: identical intents, identical outcomes.
 
 ## Stories
 
@@ -60,10 +60,11 @@ Rules
 - R-034-04  Given an enemy region with economy 3 and population 4, When evaluated, Then value = ((1.8 + 1.6)/100) · 2 = 0.068 and it is a candidate; Given economy 2 and population 2, Then value = 0.040 and it is not a candidate (minimum attack value 0.05).
 - R-034-05  Given a region adjacent to two of the faction's owned regions, When candidates are gathered, Then it is scored once.
 - R-034-06  Given an enemy region whose owner is neutral or cooperative with the faction and the faction is neutral or cooperative back, When candidates are gathered, Then it is excluded.
+- R-034-07  Given an opportunist evaluating an enemy region that lost 20 military and 10 economy to attacks within the last 150 ticks, When attractiveness is computed, Then the score is multiplied by 1 + (30/100) · 1.5 = 1.45; losses older than 150 ticks count for nothing, and every other archetype multiplies by 1.
 
 Inputs: snapshot fields of neighbors; stances; archetype weights.
 Outputs: candidate scores in the decision diagnostics.
-Open flags: Q-035-01 (Opportunist recent-damage boost is dead code).
+Open flags: none.
 
 ### S-035 — Attack only when it adds up
 As a commander, I want a faction to attack only when the numbers say it will win by its own margin of comfort, so that wars are choices and not spasms.
@@ -88,14 +89,14 @@ As a commander, I want some attacks announced a tick ahead at full strength and 
 Rules
 - R-036-01  Given a conqueror attacking a target with military 70, When mode is chosen, Then telegraph preference = 0.7 + 0.2 = 0.9, and one draw below 0.9 selects telegraph.
 - R-036-02  Given a warlord attacking a target with military 20, When chosen, Then preference = 0.3 − 0.2 = 0.1.
-- R-036-03  Given a telegraphed attack declared on tick t, When tick t + 1 runs, Then it resolves in step 3c before any new decisions, at full efficiency.
+- R-036-03  Given a telegraphed attack declared on tick t, When tick t + 3 runs, Then it resolves in step 3c before any new decisions, at full efficiency; on ticks t + 1 and t + 2 it sits in the pending list and the defender may reinforce against it each tick.
 - R-036-04  Given a surprise attack, When it resolves, Then effective attack is multiplied by 0.5 and it resolves in the same tick's step 3f.
 - R-036-05  Given a telegraphed attack is pending against a faction, When that faction's reactive window runs, Then with probability min(1, defend weight / 1.5) it commits min(budget · 0.30, attacker commit · 0.5) to reinforce the target, and commits nothing if that is below 1.0.
 - R-036-06  Given a reinforce of commit 10 on a frontier region with military 30 and tension 50, When resolved, Then base = 10 · 0.5 · (60 − 30)/60 = 2.5 and Δmilitary = 2.5 · U(0.75, 1.25).
 
 Inputs: archetype preference; target military; defend weight; budget.
 Outputs: attack mode; pending telegraph list; reinforce record.
-Open flags: Q-036-01 (a one-tick telegraph window is what the code does; confirm it is the design).
+Open flags: none.
 
 ### S-037 — Battles have a shape
 As a commander, I want an attack's outcome to scale with how decisive it was, and a strong garrison to genuinely absorb a blow, so that fights feel like fights.
@@ -150,27 +151,27 @@ As a commander, I want a large empire to shed provinces to institutional revolt 
 Rules
 - R-040-01  Given a faction with 4 regions, When the admin revolt roll runs, Then each region rolls at chance 0.001.
 - R-040-02  Given a faction with 10 regions, When the roll runs, Then each region rolls at chance 0.001 + 0.0005 · 36 = 0.019.
-- R-040-03  Given a region's roll succeeds on tick t, When resolved, Then an Admin Separatist event is queued for tick t + 1 with probability 1.0 and no condition, and the chain runs Separatist, Political Crisis, Popular Support, Military Defection, Breakaway on five consecutive ticks [Q-040-01].
+- R-040-03  Given a region's roll succeeds on tick t, When resolved, Then one integer draw L uniform in [3, 8] sets the chain length in ticks and an Admin Separatist event is queued for tick t + 1 with probability 1.0, no condition, and chain length L; L in [3, 4] runs the short chain (Separatist, Military Defection, Breakaway), L in [5, 6] the medium chain (Separatist, Political Crisis, Military Defection, Breakaway), L in [7, 8] the long chain (Separatist, Political Crisis, Popular Support, Military Defection, Breakaway); the Breakaway fires on tick t + L, with the surplus ticks beyond one per step added, one each, to the earliest gaps first.
 - R-040-04  Given the chain is running, When the owner reinforces the region or its fields improve, Then the chain still completes; nothing interrupts it.
 - R-040-05  Given the Admin Breakaway event fires, When resolved, Then E-07 creates a new faction holding the region.
 
 Inputs: territory count; RNG.
 Outputs: admin revolt record; queued chain.
-Open flags: Q-040-01 (bible says the chain is 3 to 8 ticks with three variants; code is a fixed 5-tick chain).
+Open flags: none.
 
 ### S-041 — Hostile borders wear you down
 As a commander, I want a region on a hostile border to be chronically stressed, so that frontiers feel like frontiers and are easier to crack.
 
 Rules
 - R-041-01  Given a region with two hostile neighbors, When friction applies, Then Δtension = +0.30 and Δeconomy = −0.10, regardless of the neighbors' military.
-- R-041-02  Given a hostile neighbor across a trade-only edge, When friction applies, Then it counts like any other hostile neighbor [Q-041-01].
+- R-041-02  Given a hostile neighbor across a trade-only edge, When friction applies, Then it contributes nothing; a hostile neighbor across a border or both edge contributes the full amount.
 - R-041-03  Given a neighbor whose faction is neutral or cooperative both ways, When friction applies, Then it contributes nothing.
 - R-041-04  Given friction would push economy below 8.0, When applied, Then economy stays 8.0.
 - R-041-05  Given an empty neighbor or a same-faction neighbor, When friction applies, Then it contributes nothing.
 
 Inputs: neighbor ownership; edge types; stances.
 Outputs: friction record per region in the tick log.
-Open flags: Q-041-01 (the live code and the bible agree on flat friction, but the live code counts hostile neighbors across every edge type while the bible's own typed-graph section says friction flows through border edges; a dead module in the repo implements the border-only, military-scaled variant the Stage 1 algorithm pass mistook for live).
+Open flags: none.
 
 ## Inputs
 
@@ -200,7 +201,7 @@ No player input reaches this epic in single-player; the player's faction runs th
 - Budget never negative; committed budget is always spent (minus a collision refund).
 - No attack on a neutral or cooperative faction's region.
 - Conquest only when post-damage military < 5.0 and outcome not repelled.
-- Every telegraph declared on tick t resolves on tick t + 1 or is dropped if the attacker no longer owns a region.
+- Every telegraph declared on tick t resolves on tick t + 3 or is dropped if the attacker no longer owns a region.
 - Same seed, same decisions, all platforms.
 - Over 5,000 ticks, no faction holds more than 20 regions for more than 500 consecutive ticks (admin revolts working).
 
@@ -226,7 +227,7 @@ None required in this epic.
 
 ## Open ambiguity flags
 
-Q-035-01, Q-036-01, Q-040-01, Q-041-01. Details in `docs/northstar/ambiguity_register.md`.
+None. Q-035-01, Q-036-01, Q-037-01, Q-040-01, Q-041-01 are closed and folded (2026-09-14).
 
 ## Depends on
 
