@@ -74,6 +74,7 @@ the run's hour window (approximate attribution).
 | 110-probe-f-build-20260910-1742 | 2026-09-10 17:42 | **DONE** | 1 | 18/18 | qwen3-coder:30b | 59.0 | 0 | 4 | 0.0043 |
 | 111-probe-e-abort-20260910-1744 | 2026-09-10 17:44 | **UNSATISFIABLE** | 6 | 1/2 | gpt-oss:20b, qwen3-coder:30b | 81.5 | 1 | 3 | 0.0021 |
 | 112-probe-h-gd-build-20260914-1942-2 |  | **DONE** | 1 | 1/1 | qwen3-coder:30b | 23.4 | 0 | 0 | 0.0 |
+| 112-probe-h-gd-build-20260914-1942-2 | 2026-09-14 19:42 | **DONE** | 1 | 1/1 | qwen3-coder:30b | 23.4 | 0 | 1 | 0.0007 |
 | 200-e02-region-state-20260914-1737 | 2026-09-14 17:37 | **INCOMPLETE** | 18 | 0/7 | gpt-oss:20b, qwen3-coder:30b | 1611.9 | 2 | 7 | 0.0164 |
 | 200-e02-region-state-20260914-1806 | 2026-09-14 18:06 | **DONE** | 18 | 7/7 | gpt-oss:20b, qwen3-coder:30b | 1547.2 | 2 | 4 | 0.006 |
 | 900-boot-smoke-20260907-1224 | 2026-09-07 12:24 | **DONE** | 0 | - | - | 0 | 0 | 0 | 0.0 |
@@ -110,6 +111,31 @@ DeepSeek reads the rules files) — or make `build.py` use the card's own `## Br
 section rather than reverse-engineering one from the header and tests. Until then,
 a card must carry the exact formulas and the exact enum names in a form the brief
 generator cannot override.
+
+### 2026-09-14 — Card 112 (probe H): Agora's first GDScript build, DONE on the first candidate
+
+Proves Agora can build the Godot client, not just the C simulation library.
+`build.py` gained a third "gd" language path (mirrors the C whole-file path: no
+header, prompts in GDScript terms, `parse_pytest` and the exit-code gates
+untouched — the card's `test_file` is a pytest wrapper that shells `godot
+--headless --script ... --quit-after N` and asserts the exit code). `probe_h/`
+(agora-proving-ground) stubs a `Label`'s `update_region`/`_ready`; the fenced
+test is `extends SceneTree`, three assertions, `quit(0/1)`.
+
+Real run: `qwen3-coder:30b`'s first candidate wrote the correct format
+expression, headless Godot gated it 1/1, the fence held (only `region_label.gd`
+changed), DONE. Cost $0.0007, worker wall 23.4 s.
+
+**Sequencing lesson (self-healed, no cost):** the card was moved into Agora's
+active `queue/` before the `probe_h` skeleton was committed in
+agora-proving-ground. Agora's own 60-second dispatcher (`next.py`) picked the
+card up in that window and crashed twice (`FileNotFoundError` on
+`probe_h/region_label.gd`, base commit predating the skeleton) — the same class
+of pre-skeleton race the card-200 finding above flagged. No DeepSeek/Ollama cost
+was incurred (the crash is before any model call); once the skeleton commit
+landed, a clean run went DONE and the dispatcher will not retry a task with a
+DONE run dir. Lesson: commit the skeleton before activating a card, every time,
+not just for C.
 
 **Also:** the card hit the 2-run cap partly because a pre-skeleton race produced a
 SPEC-INVALID run. `csrc/region.c` must exist as a compiling skeleton before the card
