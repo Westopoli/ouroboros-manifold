@@ -1,6 +1,6 @@
 # Spec factory
 
-Reorganizes how a story goes from a closed register flag to a Tested test suite, naming the owner of every step and automating the transcription-class ones. Claude's role shrinks from writing every artifact to reviewing three diffs per epic (e2e, tests, card). `agy` (Antigravity CLI, `docs/northstar/research/gemini_compute.md`) is the drafting sub-agent; it never designs, never edits `docs/bible/**` or `docs/northstar/**` directly, and returns findings plus a proposed change on ambiguity, per `CLAUDE.md`'s sub-agent rules.
+Reorganizes how a story goes from a closed register flag to a Tested test suite, naming the owner of every step and automating the transcription-class ones. Claude's role shrinks from writing every artifact to reviewing three diffs per epic (e2e, tests, card) and judging one Sonnet sub-agent's audit of the filled tests per story. `agy` (Antigravity CLI, `docs/northstar/research/gemini_compute.md`) is the drafting sub-agent; it never designs, never edits `docs/bible/**` or `docs/northstar/**` directly, and returns findings plus a proposed change on ambiguity, per `CLAUDE.md`'s sub-agent rules.
 
 ## Budget check before any model batch
 
@@ -18,6 +18,7 @@ Every runner that calls a model (`draft_e2e.py`, `fill_tests.py`, `draft_card.py
 | DoR check | script: every section non-empty, zero open flags for the epic, references present for visible-surface stories, scale gates dated | `scripts/specfactory/dor_check.py` |
 | Test skeleton per rule | script emits one `def test_R_###_##_<slug>` per rule with docstring and fixture signature; `agy` fills arrange/act/assert from the rule's numbers and `conftest.py`'s helpers | `scripts/specfactory/gen_test_skeleton.py` |
 | Positive controls | script emits one skeleton per "Ways this could be wrong" item, naming the `OM_BUG_*` enum member it expects | `scripts/specfactory/gen_controls.py` |
+| Audit filled tests | one Sonnet sub-agent (Claude Code, Max sub — not `agy`) per filled test file; audits the filled bodies against the epic, e2e, ABI, and `algorithms.md`; returns a verdict + per-rule findings + escalations; never edits the suite; no file audited twice | `docs/northstar/spec_factory/prompts/audit_tests.md`; Claude spawns the sub-agent, no runner script |
 | Red check | script runs pytest on the new files; every one must fail or error, none may pass | `scripts/specfactory/red_check.py` |
 | Rules file | existing derivation script | `scripts/derive_agora_rules.py` (already scripted, unchanged) |
 | Card | script for the YAML frontmatter (acceptance command, allowed files, rules_file, test_file); `agy` drafts the prose brief from the rules file only, never from tests (the E-02 finding: a brief written from tests leaks implementation instead of intent) | `scripts/specfactory/gen_card.py` |
@@ -26,6 +27,7 @@ Every runner that calls a model (`draft_e2e.py`, `fill_tests.py`, `draft_card.py
 
 ## Claude's review checklist (per epic)
 
+- The Sonnet audit runs first and hands you findings; your review judges them — accept the must-fix, escalate the real ambiguities into register flags, reject the noise — rather than re-deriving every test from scratch. The audit is one Sonnet sub-agent per filled file, never a second pass over the same file: at this test volume, TDD depth plus `red_check` catch what a second auditor would.
 - Every rule has a test. Every number in a test traces to a rule, not to a guess.
 - No generated test can pass today (`red_check.py` proves this mechanically; still read the failures — an error for the wrong reason, e.g. a typo'd fixture name, is not the same as a red test proving the rule is unbuilt).
 - Controls invert a real, named fixture — not a strawman.
