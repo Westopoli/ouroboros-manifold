@@ -129,7 +129,7 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-123 | E-14 | "Enemy behavior replays exactly like mine." | Spec'd | `epics/E-14-enemy-macro-behavior.md` S-123 |
 | S-124 | E-14 | "A foreshadowed reinforcement wave arrives once in a while." | Spec'd, blocked on Q-124-01 | `epics/E-14-enemy-macro-behavior.md` S-124 |
 | S-125 | E-14 | "A difficulty knob changes how much the enemy has, not how well its units fight." | Spec'd, blocked on Q-125-01 | `epics/E-14-enemy-macro-behavior.md` S-125 |
-| S-126 | E-15 | "Half my force comes from the region's garrisons that I capture and hold." | Spec'd, blocked on Q-126-01 | `epics/E-15-reinforcement-supply-and-hazards.md` S-126 |
+| S-126 | E-15 | "A fifth of my force is given; the rest I take from the region's garrisons and hold." | Spec'd, blocked on Q-126-01 | `epics/E-15-reinforcement-supply-and-hazards.md` S-126 |
 | S-127 | E-15 | "I capture a garrison by holding it unopposed and can destroy one I cannot hold." | Spec'd | `epics/E-15-reinforcement-supply-and-hazards.md` S-127 |
 | S-128 | E-15 | "The enemy builds toward a composition I can read and adapt to." | Spec'd | `epics/E-15-reinforcement-supply-and-hazards.md` S-128 |
 | S-129 | E-15 | "Convoys and evacuees are real units that die." | Spec'd, blocked on Q-129-01 | `epics/E-15-reinforcement-supply-and-hazards.md` S-129 |

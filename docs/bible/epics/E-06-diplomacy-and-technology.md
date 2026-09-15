@@ -7,7 +7,7 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 7 stories, 30 rules, numbers from `algorithms.md` ALG-26 through ALG-28 and ALG-38 through ALG-40. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 5 new flags, Q-042-01, Q-043-01, Q-045-01, Q-046-01, Q-048-01. |
+| Implied-but-unstated behavior turned into flags | 5 new flags, Q-042-01, Q-043-01, Q-045-01, Q-048-01. |
 | Every visible-surface story has a reference | Not applicable. Tech tiers change unit look; that reference belongs to E-11. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
@@ -82,10 +82,13 @@ Rules
 - R-045-04  Given a faction with no regions, When tech grows, Then nothing changes.
 - R-045-05  Given a starting faction, When tech is set, Then it equals the average starting population of its regions · 0.25.
 - R-045-06  Given a breakaway is created, When its tech is set, Then it equals the parent's tech at that tick.
+- R-045-07  Given a faction whose average economy over its inhabited regions is below 20.0, or whose average population has fallen by 10.0 or more over the last 50 ticks, When the technology step runs on a tick at least 100 ticks after its last Knowledge Lost, Then one uniform draw is made and if it is below 0.03 a Knowledge Lost event fires: tech −5.0 (floored at 0), a fired-event record with template Knowledge Lost, the faction's highest-population region, and the next chain tag, and the faction's last-Knowledge-Lost tick set to now.
+- R-045-08  Given a faction not eligible under R-045-07, When the technology step runs, Then no draw is made and tech never falls.
+- R-045-09  Given a 5,000-tick run with 50 factions and the launch config, When Knowledge Lost events are counted per 50-tick window, Then the mean over all windows is between 1.0 and 2.0; individual windows may be far outside that (the rate is stochastic and only the mean is asserted).
 
 Inputs: owned regions' economy and population.
 Outputs: tech level in the faction entry.
-Open flags: Q-046-01 (technology loss events are described in the bible; no launch template lowers tech).
+Open flags: none. Knowledge Lost is stochastic and its constants (eligibility 20.0 economy or a 10.0 population fall over 50 ticks, probability 0.03 per eligible tick, tech −5.0, cooldown 100) are a first tuning; R-045-09 is the target Westley set and the number to retune against.
 
 ### S-046 — Archetypes spend tech differently
 As a commander, I want a conqueror's technology to show up as firepower and a fortifier's as walls and wealth, so that the same number tells different stories.
@@ -174,7 +177,7 @@ None required in this epic.
 
 ## Open ambiguity flags
 
-Q-042-01, Q-043-01, Q-045-01, Q-046-01, Q-048-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-042-01, Q-043-01, Q-045-01, Q-048-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

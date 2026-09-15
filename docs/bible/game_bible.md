@@ -84,7 +84,7 @@ The player receives a variable set of assets per mission, shaped by simulation s
 
 Units feel real but are not deep characters. They have names. Losing one stings, especially a heavy Siege unit, but attachment is to the mission and the civilization, not to individuals.
 
-The player does not manage an economy or build a base. The civilization allocates a starting force by mission type and its own state; roughly half of what the player fields comes from local reinforcement structures captured and held during the mission. A thriving civilization gives a well-equipped force. A declining one gives scraps. The gap is where the drama lives.
+The player does not manage an economy or build a base. The civilization allocates a starting force by mission type and its own state; about a fifth of what a full mission can field; the rest, up to and beyond the whole, comes from local reinforcement structures captured and held during the mission, so a player who holds production ends with more than they started with and one who loses it fights with a fifth A thriving civilization gives a well-equipped force. A declining one gives scraps. The gap is where the drama lives.
 
 Onboarding asks two things before the first chapter, difficulty and mission-type preferences, and both can be changed later. The only progression unlock is era unlocks.
 

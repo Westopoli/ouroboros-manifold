@@ -23,20 +23,20 @@ Start a medium Defensive Stand in a region with military 60: 3 to 6 structures, 
 
 ## Stories
 
-### S-126 — Half my force is out there
+### S-126 — Most of my force is out there
 As a commander, I want reinforcements to come from the region's own garrisons that I capture and hold, so that the map is a resource I fight over without ever building a base.
 
 Rules
 - R-126-01  Given a mission, When structures are placed, Then count = clamp(floor(region military × 0.06), small [2, 4], medium [3, 6], large [4, 8]) and the archetype's split assigns player, enemy, and neutral owners (defensive stand 50/25/25, siege 33/33/34, reconquest and assault 25/50/25, suppression and counterinsurgency 40/30/30, multi-front 40/35/25, interception and containment 33/34/33, evacuation 50/25/25), player at least 1.
 - R-126-02  Given a held structure with a chosen unit type, When its production timer reaches 30 s × (that type's power / 100), Then one unit of that type spawns within half the capture radius of the structure on the structure's layer (position from two world-stream draws, angle then distance; never from any other generator) and the timer subtracts the interval.
 - R-126-03  Given the player clicks a held structure, When they pick a type, Then production switches to it at once and the current timer continues.
-- R-126-04  Given the whole mission, When forces are counted, Then the starting force is roughly half of what the player fields over a full mission [Q-127-01].
+- R-126-04  Given a mission's expected full force F (E-10 force sizing), When forces are allocated, Then the starting force is 0.20 · F, and the reinforcement structures on the map can together produce at least 0.80 · F over the mission's time limit when all are held from the start; a player who holds every structure the whole mission fields at least F, and one who holds none fields 0.20 · F.
 - R-126-05  Given a structure, When its production is read on the HUD, Then the player sees the timer bar, next unit, and HP (E-16 R-104-06).
 - R-126-06  Given any mission, When production is read, Then units have no cost, and a player holding zero structures receives no trickle; the only reinforcement is R-126-02's structure production.
 
 Inputs: region military; archetype; player type choice.
 Outputs: structures (owner, HP, timer, type) in the tick delta; spawns.
-Open flags: Q-127-01.
+Open flags: none.
 
 ### S-127 — Taking a garrison
 As a commander, I want to capture a structure by holding it unopposed, and to be able to destroy one I cannot hold, so that garrisons are contested ground.
@@ -148,7 +148,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-127-01, Q-129-01, Q-131-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-129-01, Q-131-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

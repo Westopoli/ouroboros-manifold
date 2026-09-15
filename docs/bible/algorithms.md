@@ -131,6 +131,8 @@ The Python code counted every edge type; the dead module `simulation/border_fric
 
 **ALG-27 Growth.** Over owned inhabited regions: `growth = BASE_TECH_RATE · (avg_e/100) · max(TECH_POPULATION_FLOOR, avg_p/100)`, rate `0.35`, floor `0.3`; `tech = min(100, tech + growth)`. Starting tech = `avg starting population · STARTING_TECH_RATIO = 0.25`; `ARCHETYPE_STARTING_TECH` ranges apply only to factions created mid-game.
 
+**ALG-27b Knowledge Lost** (added 2026-09-15, Q-046-01; no Python precedent). After growth, per faction: eligible if `avg_e < KNOWLEDGE_LOST_ECONOMY = 20.0` or `avg_p(now) ≤ avg_p(tick − 50) − KNOWLEDGE_LOST_POP_DROP = 10.0`, and `tick − last_knowledge_lost ≥ KNOWLEDGE_LOST_COOLDOWN = 100`. One uniform draw; fire if `draw < KNOWLEDGE_LOST_P = 0.03`: `tech = max(0, tech − KNOWLEDGE_LOST_DELTA = 5.0)`, a fired-event record (template Knowledge Lost, the faction's highest-population region, next chain tag), `last_knowledge_lost = tick`. Target rate (E-06 R-045-09): mean 1 to 2 events per 50-tick window across 50 factions over a 5,000-tick run; retune the constants, never the rule's shape.
+
 **ALG-28 Convergence.** Among factions this faction holds a cooperative stance toward, take the one with the highest tech above its own; `bonus = TECH_CONVERGENCE_RATE · max(0, partner_tech − tech)/100`, rate `0.1`; `tech = min(100, tech + bonus)`.
 
 ## Administrative revolts (`admin_revolt.py`)
