@@ -21,6 +21,9 @@ Up to 14 per generation. Use what's relevant to the page:
 
 ## Per-page prompts
 
+The order these appear on the site, and which concept each home-page beat needs, is fixed in `narrative.md` (this directory) — its per-beat "concept moment" lines are the seeds the prompts below fill.
+
+
 One offer page per row in `docs/northstar/mvp/distinctiveness.md`. Each prompt is the shared style block plus the line below; 2 to 4 images per page is enough.
 
 | Page | Prompt line |
