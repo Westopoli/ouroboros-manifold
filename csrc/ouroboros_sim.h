@@ -604,6 +604,90 @@ typedef enum {
 } om_bug_e04;
 #endif
 
+
+/* ======================================================================
+ * E-03: world generation and topology (epics/E-03-world-generation.md,
+ * e2e/E-03.md, algorithms.md ALG-30..ALG-31). Appended 2026-09-15. Nothing
+ * above this line changes. This block turns om_world_generate() from the E-02
+ * placeholder into a specified, seed-deterministic generator: it fixes the
+ * region count, rolls each of the 15 factions a template, places and fields
+ * their regions, lays corridors, attaches empties, adds extra edges, and types
+ * every edge. Every draw follows the world RNG contract (the PCG32 block above)
+ * in the e2e file's documented order (R-022-04, R-021-10). The generator owns
+ * faction, region, ownership, and edge state; the om_faction_set* / om_region_set*
+ * fixture setters remain for isolation tests of later epics.
+ * ====================================================================== */
+
+/* Faction template (R-021-05). OM_TMPL_NONE is the player "no preference"
+ * sentinel for om_gen_set_player_preference; it is never a rolled result. */
+typedef enum {
+    OM_TMPL_ISOLATED    = 0,   /* 1 home + 2 frontiers, both adjacent to the home (3 regions) */
+    OM_TMPL_TWIN_COLONY = 1,   /* 2 adjacent homes, each + 1 or 2 frontiers (4-6 regions) */
+    OM_TMPL_ARCHIPELAGO = 2,   /* 1 home + 3 frontiers, >=1 reached only through a frontier chain (4 regions) */
+    OM_TMPL_NONE        = 3
+} om_template;
+
+/* ---- generation config (set before om_world_generate; each has a launch default) ----
+ * om_world_new(n_regions, seed): n_regions > 0 pins the count (the E-02 path);
+ * pass n_regions == 0 to draw it uniformly from [region_min, region_max] at
+ * generation (R-021-01). A pinned or drawn count below the minimum feasible
+ * total (sum of every rolled template's size + one corridor empty per faction)
+ * makes generation fail its feasibility check (om_world_generated() == 0). */
+void om_gen_set_region_range(om_world *w, uint32_t lo, uint32_t hi);   /* default [60, 110] (Q-021-05) */
+void om_gen_set_faction_count(om_world *w, uint32_t n);                /* default 15 (R-021-01) */
+void om_gen_set_extra_edge_ratio(om_world *w, double ratio);          /* default 0.12 (R-021-08) */
+/* Player faction (id 0) template preference (R-021-04): raises that template's
+ * weight in the player roll only, never locks it, and consumes no RNG that would
+ * shift any NPC roll. OM_TMPL_NONE (default) = equal weight, same as an NPC. */
+void om_gen_set_player_preference(om_world *w, om_template pref);
+/* Per-archetype home military/economy ranges (R-022-05). Defaults are the epic's
+ * numbers (Conqueror mil 50-65/eco 40-55; Fortifier 40-50/50-65; Opportunist
+ * 45-55/45-55). archetype in {CONQUEROR, FORTIFIER, OPPORTUNIST}; PLAYER homes and
+ * every faction's tension/population keep R-022-01/R-022-02's general ranges, and
+ * frontier regions are archetype-independent regardless of this call. */
+void om_gen_set_home_range(om_world *w, om_archetype archetype,
+                           double mil_lo, double mil_hi, double eco_lo, double eco_hi);
+
+/* ---- generation result and report (valid after om_world_generate) ----
+ * om_world_generated returns 1 when the last om_world_generate succeeded, 0 when
+ * it failed the feasibility check (the world is then left empty). The report
+ * accessors below back the T1 generation trace: seed, region count, edge count,
+ * and each faction's rolled template. Adjacency, edge types, tiers, owners, and
+ * fields are read with om_region_neighbors / om_region_edge / om_region_tier /
+ * om_region_owner / om_region_field (declared above). */
+int         om_world_generated(const om_world *w);
+uint64_t    om_world_seed(const om_world *w);
+uint32_t    om_world_edge_count(const om_world *w);
+om_template om_faction_template(const om_world *w, int32_t faction_id);   /* the rolled template */
+
+/* Enumerate a region's neighbors (undirected). Copies up to max neighbor ids into
+ * out[] in ascending id order and returns the total neighbor count (which may
+ * exceed max; call again with a larger buffer). Pair each id with om_region_edge()
+ * for its type. This is the O(degree) accessor connectivity and adjacency tests
+ * use instead of an O(N^2) om_region_edge sweep. */
+uint32_t    om_region_neighbors(const om_world *w, uint32_t idx, uint32_t *out, uint32_t max);
+
+/* ---- positive-control fault injection for E-03 (debug build only) ----
+ * One bug per E-03 e2e "QA watch-for", so each generation detector ships with a
+ * planted control. Injected before om_world_generate; the generator then
+ * reproduces exactly that flaw. */
+#ifdef OM_DEBUG_INJECT
+typedef enum {
+    OM_BUG_RNG_ORDER_SWAPPED     = 300, /* draws fields out of the R-022-04 order: seed no longer reproduces */
+    OM_BUG_EXTRA_EDGE_TO_PLAYER  = 301, /* R-025-04 rejection skipped: an extra edge may touch a player region */
+    OM_BUG_HOME_TO_HOME_EDGE     = 302, /* R-021-08 "never between two homes" skipped */
+    OM_BUG_CORRIDOR_SKIPPED      = 303, /* corridor chain not laid: a faction can be unreachable */
+    OM_BUG_EMPTY_EDGE_BOTH       = 304, /* an edge touching an empty region typed both/trade, not border */
+    OM_BUG_FRONTIER_FROM_HOME    = 305, /* a frontier's fields rolled from the home/archetype range */
+    OM_BUG_RESEED_PER_REGION     = 306, /* RNG reseeded per region: factions share phase offsets */
+    OM_BUG_TWIN_SECOND_HOME_LOW  = 307, /* Twin Colony's second home rolled from the frontier range */
+    OM_BUG_ARCHIPELAGO_DENSE     = 308, /* all Archipelago frontiers wired to the home (no sparse frontier) */
+    OM_BUG_BUDGET_DRIFT          = 309, /* a late template roll changes the already-fixed region budget */
+    OM_BUG_ARCHETYPE_RANGE_MISS  = 310, /* a home's mil/eco rolled outside its R-022-05 archetype range */
+    OM_BUG_E03_SLOW              = 311  /* deliberate O(N^2) slowdown for the 110-region scale gate */
+} om_bug_e03;
+#endif
+
 #ifdef __cplusplus
 }
 #endif
