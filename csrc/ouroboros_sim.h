@@ -199,6 +199,25 @@ typedef enum {
     OM_EDGE_BOTH   = 2
 } om_edge_type;
 
+/* ---- feature switches (fixture) ----
+ * Mirror the tick sequence's launch flags (algorithms.md "Tick sequence"), all
+ * on by default, plus DRIFT so a step can be isolated: an E-05 test switches
+ * drift, events, diplomacy, and technology off and reads exactly what the
+ * agents and the resolver did. Switching a feature off skips its step
+ * entirely; it never changes what an enabled step computes. */
+typedef enum {
+    OM_FEAT_EVENTS        = 0,  /* tick steps 1 and 2 (E-04) */
+    OM_FEAT_FACTIONS      = 1,  /* tick step 3 (E-05) */
+    OM_FEAT_FRICTION      = 2,  /* tick step 4 (E-05, ALG-25) */
+    OM_FEAT_ADMIN_REVOLTS = 3,  /* tick step 4.1 (E-05, ALG-29) */
+    OM_FEAT_DIPLOMACY     = 4,  /* tick step 4.25 (E-06) */
+    OM_FEAT_TECHNOLOGY    = 5,  /* tick step 4.5 (E-06) */
+    OM_FEAT_DRIFT         = 6,  /* tick step 5 (E-02) */
+    OM_FEAT_LIFECYCLE     = 7   /* tick step 6 (E-07) */
+} om_feature;
+void om_world_set_feature(om_world *w, om_feature f, int on);
+int  om_world_feature(const om_world *w, om_feature f);
+
 /* ---- faction fixture ----
  * Creates or replaces faction faction_id (0..OM_MAX_FACTIONS-1). budget and tech
  * are the starting values. attack_confidence < 0 means "roll it once from the

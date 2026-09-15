@@ -311,6 +311,17 @@ OM_MAX_COLLIDERS = 8
 UINT32_NONE = 0xFFFFFFFF
 
 
+class OMFeature:
+    EVENTS = 0
+    FACTIONS = 1
+    FRICTION = 2
+    ADMIN_REVOLTS = 3
+    DIPLOMACY = 4
+    TECHNOLOGY = 5
+    DRIFT = 6
+    LIFECYCLE = 7
+
+
 class OMArchetype:
     PLAYER = 0
     CONQUEROR = 1
@@ -526,6 +537,8 @@ def _bind_e05(lib):
         return
     P = ctypes.POINTER
     V = ctypes.c_void_p
+    lib.om_world_set_feature.argtypes = [V, ctypes.c_int, ctypes.c_int]; lib.om_world_set_feature.restype = None
+    lib.om_world_feature.argtypes = [V, ctypes.c_int]; lib.om_world_feature.restype = ctypes.c_int
     lib.om_faction_set.argtypes = [V, ctypes.c_int32, ctypes.c_int, ctypes.c_double, ctypes.c_double, ctypes.c_double]
     lib.om_faction_set.restype = ctypes.c_int
     lib.om_faction_set_stance.argtypes = [V, ctypes.c_int32, ctypes.c_int32, ctypes.c_int]
@@ -559,6 +572,19 @@ def _bind_e05(lib):
 
 
 # ---- E-05 helpers (plain functions, imported by the E-05 story test modules) ----
+
+def isolate_agents(lib, w, *, friction=False, admin=False):
+    """Leave only the faction step (3a-3f) on, plus friction / admin rolls when
+    asked, so a single om_world_step reads as pure E-05 behavior: no drift,
+    no events, no diplomacy, no technology, no lifecycle."""
+    _bind_e05(lib)
+    for feat in (OMFeature.EVENTS, OMFeature.DIPLOMACY, OMFeature.TECHNOLOGY,
+                 OMFeature.DRIFT, OMFeature.LIFECYCLE):
+        lib.om_world_set_feature(w, feat, 0)
+    lib.om_world_set_feature(w, OMFeature.FACTIONS, 1)
+    lib.om_world_set_feature(w, OMFeature.FRICTION, 1 if friction else 0)
+    lib.om_world_set_feature(w, OMFeature.ADMIN_REVOLTS, 1 if admin else 0)
+
 
 def set_faction(lib, w, faction_id, archetype, *, budget=0.0, tech=0.0, confidence=-1.0):
     _bind_e05(lib)

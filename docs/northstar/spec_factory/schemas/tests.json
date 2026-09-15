@@ -1,0 +1,11 @@
+{
+  "type": "object",
+  "properties": {
+    "path": {"type": "string"},
+    "content": {"type": "string"},
+    "questions": {"type": "array", "items": {"type": "string"}},
+    "assumptions": {"type": "array", "items": {"type": "string"}}
+  },
+  "required": ["path", "content", "questions", "assumptions"],
+  "additionalProperties": false
+}
