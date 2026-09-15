@@ -117,7 +117,7 @@ These appeared in earlier mockups and are wrong or invented. Remove them whereve
 
 All of it, visually. Theme and palette direction (start from `DESIGN.md`; that brief is open and invites bold options, so do not treat this file as re-litigating it), layout, typography, spacing, motion — and the main deliverable, **the concept image or animation for each beat's concept moment above**. The arc, the sequence, and the facts are fixed; how they look is the design's to invent.
 
-A note on the images: each *concept moment* is a seed, not a finished prompt. Full, specific per-image prompts — composition, mood, reference images, negative lists — are authored deliberately in a separate pass, one per moment. The seeds here tell that pass what each section needs to show.
+A note on the images: each *concept moment* is a seed. The full per-moment prompts — medium, references, composition, negative lists — are authored in the companion prompts file (`CONCEPT_PROMPTS.md` in the site repo; `docs/northstar/mvp/site/concept_prompts.md` in the game repo), one per moment, with the fixed choices (static baseline plus five animations, the game's low-poly register, world-only, no text in images).
 
 ---
 
