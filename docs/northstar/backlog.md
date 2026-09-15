@@ -23,7 +23,7 @@ Sprint 0 (toolchain) precedes all game epics. Then:
 | Sprint 0 toolchain | 4 | Building | Contract + tests landing; C impl + installs + Agora project remain |
 | E-02 region fields & drift | 5 | Ready → Tested (in progress) | none — tests being authored |
 | E-03 world generation | 3 | Register-clean | Stage-3 pass (fold 2026-09-14 answers, author e2e, confirm scale) |
-| E-04 events & chains | 3 | Register-clean | Stage-3 pass; Q-026-01 rule deferred/not locked |
+| E-04 events & chains | 5 | Tested (2026-09-14), S-031 Spec'd | S-026..S-030: 31 rules, 44 tests red; S-031 waits on the Python pacing measurement |
 | E-06 diplomacy & technology | 3 | Register-clean | Stage-3 pass; confirm deferrals safe |
 | E-17 map generation | 3 | Register-clean | Stage-3 pass |
 | E-08 generational structure | 3 | Register-clean (mixed) | Stage-3 pass; setup UI TBD-design (non-blocking for sim) |

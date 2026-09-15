@@ -29,6 +29,10 @@ def test_control_raw_not_trend_trips_the_trend_detector(dbg, dbg_world_factory):
     dbg.om_world_step(w)  # tick 2: trend e' should be 60.0 if trend is read correctly
     _, row = read_drift(dbg, w, 0)
 
+    # Guard: the detector only means something once the overcap leg is computed
+    # at all; against an unbuilt library every leg is 0.0 and the inverted
+    # assertion below would pass for the wrong reason.
+    assert row.economy_overcap != 0.0, "overcap leg not computed; control cannot judge the detector"
     assert abs(row.economy_overcap - (-2.625)) > 1e-6, (
         "OM_BUG_RAW_NOT_TREND injected but overcap still matches the "
         "trend-based expectation of -2.625 -- the raw-vs-trend detector did "
