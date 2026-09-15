@@ -22,9 +22,9 @@ The stage pipeline builds the game epic by epic and has no way to learn from a p
 | Round | Testers | Delivery | Instruments | Gate to open the round |
 |---|---|---|---|---|
 | 0 | none | none | Hypotheses written, metrics defined, feedback instruments drafted, and a two-week Agora velocity baseline recorded in `../proving_ground/BUILD_LEDGER.md`. | This track merged. |
-| 1 | 3 to 8 friends, Windows | ZIP built by an Agora export card; `README.txt` with hotkeys and where logs go; structured feedback form; bug-report capture hotkey. | Scripted 30-minute interview per tester; feedback form; local session telemetry file the tester sends back. | Every Round 1 story Built; probes H and I passed; one cold-machine smoke test by a friend with no dev tools. |
-| 2 | 10 to 30 people in a Discord server | ZIP posted to Discord; a bug channel; a pinned survey. | Same as Round 1 plus aggregated telemetry and a weekly digest written offline from the files. | Round 1 gap review done and its actions landed; every Round 2 story Built. |
-| 3 | Steam Playtest | Steam build: store page, export presets, store copy positioned per `Q-MVP-06`. | Steam retention and wishlist numbers, in-game survey, Discord. | Round 2 gap review done; the layer-system option chosen in its design phase; onboarding passes the 30-minute personality-load check (below). |
+| 1 | 3 to 8 friends, Windows, in a small Discord server | ZIP posted to Discord; `README.txt` with hotkeys and where logs go; structured feedback form; bug-report capture hotkey; a bug channel. | Scripted 30-minute interview per tester; feedback form; local session telemetry file with opt-in upload. | Every Round 1 story Built; probes H and I passed; one cold-machine smoke test by a friend with no dev tools. |
+| 2 | 10 to 30 people, the Round 1 Discord widened | ZIP posted to Discord; bug channel; a pinned survey. | Same as Round 1 plus aggregated telemetry and a weekly digest written offline from the files. | Round 1 gap review done and its actions landed; every Round 2 story Built. |
+| 3 | Steam Playtest | Steam build: store page, export presets, store copy worded in Round 2 testers' own words (`Q-MVP-06`). | Steam retention and wishlist numbers, in-game survey, Discord. | Round 2 gap review done; the layer-system option chosen in its design phase; onboarding passes the 30-minute personality-load check (below). |
 
 Rounds open on evidence. No round has a date, because Agora's throughput on this project is unmeasured: at the time of writing it has completed zero cards for Ouroboros. `build_path.md` defines the velocity measurement that must exist before any forecast is shown to Westley.
 
@@ -56,15 +56,15 @@ Each metric ties to a hypothesis in `distinctiveness.md`. Everything below is me
 **Intent to continue**
 - Would you play another chapter? Would you pay $12 for this? Both yes/no, asked last.
 
-The thresholds attached to these in `distinctiveness.md` are proposals; `Q-MVP-04` asks whether Round 1 should carry thresholds at all or only measure.
+The thresholds attached to these in `distinctiveness.md` are live kill criteria from Round 1 for every hypothesis, prototypes included (`Q-MVP-04`, answered 2026-09-14). A threshold miss on a prototype surface is still a finding; the gap review decides whether the idea or the stand-in failed.
 
 ## Feedback instruments
 
 - **Feedback form.** A rewrite of the existing `build/feedback.txt` template so that every question maps to one metric above. Free text where the metric is a scored free answer; yes/no where it is a count. Delivered inside the ZIP as a text file for Round 1, as a pinned form for Round 2, in-game for Round 3.
 - **Interview script.** Ten questions in fixed order, thirty minutes, after the tester's second session. Recorded with consent. The scored questions are asked verbatim so answers are comparable across testers.
-- **Telemetry file.** Local, plain JSON, written by the client: session start and end, chapter index, mission outcome band, orders issued per mission, chronicle read time and expand-clicks, screens visited, first-order latency. No network. The tester sends the file back with the form. Consent is asked in the first-launch notice, following the pattern the legacy client's privacy modal used. Storage and upload options are `Q-MVP-03`.
+- **Telemetry file.** Local, plain JSON, written by the client: session start and end, chapter index, mission outcome band, orders issued per mission, chronicle read time and expand-clicks, screens visited, first-order latency. Stored locally; the tester may send it back with the form or opt in, from the first-launch notice, to an upload to the project's R2 bucket (`Q-MVP-03`, answered 2026-09-14). Consent follows the pattern the legacy client's privacy modal used; nothing uploads without the opt-in.
 - **Bug capture.** A hotkey that zips logs, the telemetry file, and a screenshot, and copies the path to the clipboard. The legacy client's F12 flow is the reference for behavior, not for code.
-- **Discord (Round 2).** One bug channel, one feedback channel, one pinned survey, a weekly digest written by Claude from the files. The research names this "support-shaped" Discord as the norm for small strategy teams. Opening timing is `Q-MVP-05`.
+- **Discord (from Round 1).** Opens with the friends round and widens for Round 2 (`Q-MVP-05`, answered 2026-09-14). One bug channel, one feedback channel, one pinned survey, a weekly digest written by Claude from the files. The research names this "support-shaped" Discord as the norm for small strategy teams.
 
 All of the above are stories in the proposed epic E-22 (`feature_mvps.md`), built by Agora like anything else.
 
