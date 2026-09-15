@@ -525,7 +525,10 @@ class OmQueuedEvent(ctypes.Structure):
         ("chain_tag", ctypes.c_int32),
         ("source_faction", ctypes.c_int32),
         ("chain_length", ctypes.c_uint32),
-        ("_pad", ctypes.c_uint32),
+        ("cond_kind", ctypes.c_uint32),
+        ("cond_field", ctypes.c_uint32),
+        ("exclusion_tag", ctypes.c_uint32),
+        ("cond_value", ctypes.c_double),
     ]
 
 
@@ -668,3 +671,228 @@ def read_admin_rolls(lib, w):
 
 def read_event_queue(lib, w):
     return _read_records(lib, w, "om_event_queue", OmQueuedEvent)
+
+
+# ======================================================================
+# ---- E-04: events and chains (appended 2026-09-14) ----
+# Mirrors the E-04 block of csrc/ouroboros_sim.h exactly.
+# ======================================================================
+
+OM_MAX_TEMPLATES = 64
+OM_MAX_SPAWNS = 2
+OM_TEMPLATE_NAME = 32
+
+
+class OMTrigger:
+    NONE = 0
+    ABOVE = 1
+    BELOW = 2
+    PROBABILITY = 3
+
+
+class OMCond:
+    NONE = 0
+    ABOVE = 1
+    BELOW = 2
+
+
+class OMExcl:
+    NONE = 0
+    MILITARY_RELIEF = 1
+    POLITICAL_RESOLUTION = 2
+    REVOLT_OUTCOME = 3
+
+
+class OMSource:
+    TRIGGER = 0
+    SPAWN = 1
+    EXTERNAL = 2
+
+
+class OMBugE04:
+    FIRES_EVERY_TICK = 200
+    NOISE_REROLLED = 201
+    NO_GRACE_PERIOD = 202
+    COND_AT_SPAWN = 203
+    SEQUENTIAL_DELTAS = 204
+    EXCLUSION_CANCELS = 205
+    DRAW_BEFORE_CONDITION = 206
+    CHAIN_COUNTER_UNSAVED = 207
+    TRIGGERS_READ_LIVE = 208
+    E04_SLOW = 209
+
+
+class OmSpawn(ctypes.Structure):
+    _fields_ = [
+        ("template_id", ctypes.c_uint32),
+        ("delay_min", ctypes.c_uint32),
+        ("delay_max", ctypes.c_uint32),
+        ("cond_kind", ctypes.c_uint32),
+        ("cond_field", ctypes.c_uint32),
+        ("_pad", ctypes.c_uint32),
+        ("probability", ctypes.c_double),
+        ("cond_value", ctypes.c_double),
+    ]
+
+
+class OmEventTemplate(ctypes.Structure):
+    _fields_ = [
+        ("id", ctypes.c_uint32),
+        ("name", ctypes.c_char * OM_TEMPLATE_NAME),
+        ("trigger_kind", ctypes.c_uint32),
+        ("trigger_field", ctypes.c_uint32),
+        ("threshold", ctypes.c_double),
+        ("prob_base", ctypes.c_double),
+        ("prob_exponent", ctypes.c_double),
+        ("cooldown_ticks", ctypes.c_uint32),
+        ("n_spawns", ctypes.c_uint32),
+        ("effect", ctypes.c_double * OMField.COUNT),
+        ("spawns", OmSpawn * OM_MAX_SPAWNS),
+        ("exclusion_tag", ctypes.c_uint32),
+        ("creates_faction", ctypes.c_uint32),
+        ("admin_chain_step", ctypes.c_uint32),
+        ("_pad", ctypes.c_uint32),
+    ]
+
+
+class OmFiredEvent(ctypes.Structure):
+    _fields_ = [
+        ("tick", ctypes.c_uint64),
+        ("region_idx", ctypes.c_uint32),
+        ("template_id", ctypes.c_uint32),
+        ("chain_tag", ctypes.c_int32),
+        ("source", ctypes.c_uint32),
+        ("delta", ctypes.c_double * OMField.COUNT),
+        ("draw", ctypes.c_double),
+        ("creates_faction", ctypes.c_uint32),
+        ("n_spawned", ctypes.c_uint32),
+    ]
+
+
+class OmPrunedEvent(ctypes.Structure):
+    _fields_ = [
+        ("tick", ctypes.c_uint64),
+        ("region_idx", ctypes.c_uint32),
+        ("template_id", ctypes.c_uint32),
+        ("chain_tag", ctypes.c_int32),
+        ("cond_kind", ctypes.c_uint32),
+        ("cond_field", ctypes.c_uint32),
+        ("_pad", ctypes.c_uint32),
+        ("cond_value", ctypes.c_double),
+        ("field_value", ctypes.c_double),
+    ]
+
+
+class OmDelayedEvent(ctypes.Structure):
+    _fields_ = [
+        ("tick", ctypes.c_uint64),
+        ("region_idx", ctypes.c_uint32),
+        ("template_id", ctypes.c_uint32),
+        ("chain_tag", ctypes.c_int32),
+        ("exclusion_tag", ctypes.c_uint32),
+        ("kept_template_id", ctypes.c_uint32),
+        ("_pad", ctypes.c_uint32),
+        ("new_due", ctypes.c_uint64),
+    ]
+
+
+def _bind_e04(lib):
+    if getattr(lib, "_e04_bound", False):
+        return
+    _bind_e05(lib)
+    P = ctypes.POINTER
+    V = ctypes.c_void_p
+    lib.om_events_load_launch.argtypes = [V]; lib.om_events_load_launch.restype = None
+    lib.om_events_load.argtypes = [V, P(OmEventTemplate), ctypes.c_uint32]; lib.om_events_load.restype = ctypes.c_int
+    lib.om_event_template_count.argtypes = [V]; lib.om_event_template_count.restype = ctypes.c_uint32
+    lib.om_event_template_get.argtypes = [V, ctypes.c_uint32, P(OmEventTemplate)]; lib.om_event_template_get.restype = ctypes.c_int
+    lib.om_event_template_by_name.argtypes = [V, ctypes.c_char_p]; lib.om_event_template_by_name.restype = ctypes.c_int32
+    lib.om_event_roll_noise.argtypes = [V]; lib.om_event_roll_noise.restype = None
+    lib.om_event_set_noise.argtypes = [V, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_double]; lib.om_event_set_noise.restype = None
+    lib.om_event_noise.argtypes = [V, ctypes.c_uint32, ctypes.c_uint32]; lib.om_event_noise.restype = ctypes.c_double
+    lib.om_event_breached.argtypes = [V, ctypes.c_uint32, ctypes.c_uint32]; lib.om_event_breached.restype = ctypes.c_int
+    lib.om_event_last_fired.argtypes = [V, ctypes.c_uint32, ctypes.c_uint32]; lib.om_event_last_fired.restype = ctypes.c_int64
+    lib.om_chain_counter.argtypes = [V]; lib.om_chain_counter.restype = ctypes.c_int32
+    lib.om_region_faction_creation_pending.argtypes = [V, ctypes.c_uint32]; lib.om_region_faction_creation_pending.restype = ctypes.c_uint32
+    lib.om_event_queue_external.argtypes = [V, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint64, ctypes.c_double, ctypes.c_int32, ctypes.c_uint32]
+    lib.om_event_queue_external.restype = ctypes.c_int
+    lib.om_region_event_delta.argtypes = [V, ctypes.c_uint32, ctypes.c_double * OMField.COUNT]; lib.om_region_event_delta.restype = ctypes.c_int
+    for name, st in (("om_tick_events", OmFiredEvent), ("om_tick_pruned", OmPrunedEvent), ("om_tick_delayed", OmDelayedEvent)):
+        fn = getattr(lib, name)
+        fn.argtypes = [V, P(st), ctypes.c_uint32]
+        fn.restype = ctypes.c_uint32
+    lib._e04_bound = True
+
+
+# ---- E-04 helpers ----
+
+def isolate_events(lib, w):
+    """Only tick steps 1 and 2 (the event queue and fresh triggers) run; no
+    drift, agents, friction, admin rolls, diplomacy, technology, lifecycle."""
+    _bind_e04(lib)
+    for feat in (OMFeature.FACTIONS, OMFeature.FRICTION, OMFeature.ADMIN_REVOLTS,
+                 OMFeature.DIPLOMACY, OMFeature.TECHNOLOGY, OMFeature.DRIFT, OMFeature.LIFECYCLE):
+        lib.om_world_set_feature(w, feat, 0)
+    lib.om_world_set_feature(w, OMFeature.EVENTS, 1)
+
+
+def load_launch_events(lib, w):
+    _bind_e04(lib)
+    lib.om_events_load_launch(w)
+
+
+def template_id(lib, w, name):
+    _bind_e04(lib)
+    tid = lib.om_event_template_by_name(w, name.encode("utf-8"))
+    assert tid >= 0, f"no template named {name!r}"
+    return tid
+
+
+def get_template(lib, w, tid):
+    _bind_e04(lib)
+    t = OmEventTemplate()
+    rc = lib.om_event_template_get(w, tid, ctypes.byref(t))
+    assert rc == 0, f"om_event_template_get({tid}) rc={rc}"
+    return t
+
+
+def set_noise(lib, w, region_idx, tid, offset):
+    _bind_e04(lib)
+    lib.om_event_set_noise(w, region_idx, tid, offset)
+
+
+def zero_all_noise(lib, w):
+    """Pin every (region, template) offset to 0 so thresholds read as the table."""
+    _bind_e04(lib)
+    n_regions = lib.om_region_count(w)
+    n_templates = lib.om_event_template_count(w)
+    for r in range(n_regions):
+        for tid in range(n_templates):
+            lib.om_event_set_noise(w, r, tid, 0.0)
+
+
+def queue_external(lib, w, region_idx, tid, due_tick, probability=1.0, source_faction=-1, chain_length=0):
+    _bind_e04(lib)
+    return lib.om_event_queue_external(w, region_idx, tid, due_tick, probability, source_faction, chain_length)
+
+
+def read_events(lib, w):
+    _bind_e04(lib)
+    return _read_records(lib, w, "om_tick_events", OmFiredEvent)
+
+
+def read_pruned(lib, w):
+    _bind_e04(lib)
+    return _read_records(lib, w, "om_tick_pruned", OmPrunedEvent)
+
+
+def read_delayed(lib, w):
+    _bind_e04(lib)
+    return _read_records(lib, w, "om_tick_delayed", OmDelayedEvent)
+
+
+def read_event_delta(lib, w, region_idx):
+    _bind_e04(lib)
+    out = (ctypes.c_double * OMField.COUNT)()
+    rc = lib.om_region_event_delta(w, region_idx, out)
+    return rc, list(out)

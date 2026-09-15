@@ -431,7 +431,10 @@ typedef struct om_queued_event {
     int32_t  chain_tag;       /* chain_NNNN sequential, E-04 R-027-06 */
     int32_t  source_faction;  /* the faction that queued it, or -1 */
     uint32_t chain_length;    /* admin chains: L in [3, 8]; 0 otherwise */
-    uint32_t _pad;
+    uint32_t cond_kind;       /* om_condition_kind (E-04): checked at resolution, not at spawn */
+    uint32_t cond_field;      /* om_field the condition reads; unused when cond_kind is NONE */
+    uint32_t exclusion_tag;   /* om_exclusion_tag (E-04) */
+    double   cond_value;
 } om_queued_event;
 uint32_t om_event_queue(const om_world *w, om_queued_event *out, uint32_t max);
 
@@ -449,6 +452,150 @@ typedef enum {
     OM_BUG_FRICTION_COUNTS_TRADE     = 108, /* trade-only edges count (Q-041-01 answered: border and both only) */
     OM_BUG_E05_SLOW                  = 109  /* deliberate slowdown for the scale gate */
 } om_bug_e05;
+#endif
+
+
+/* ======================================================================
+ * E-04: events and chains (epics/E-04-events-and-chains.md, e2e/E-04.md,
+ * algorithms.md ALG-32..ALG-37). Appended 2026-09-14. Tick steps 1 and 2:
+ * resolve the due queue, then evaluate fresh triggers on every inhabited
+ * region against the tick-start fields, sum each region's deltas, apply once.
+ * E-08 rolls the noise offsets at each time jump; here they are a fixture.
+ * Faction creation on "creates_faction" events is E-07's; E-04 only marks
+ * the region. Queue entries use om_queued_event from the E-05 block.
+ * ====================================================================== */
+
+#define OM_MAX_TEMPLATES 64
+#define OM_MAX_SPAWNS    2
+#define OM_TEMPLATE_NAME 32
+
+typedef enum { OM_TRIG_NONE = 0, OM_TRIG_ABOVE = 1, OM_TRIG_BELOW = 2, OM_TRIG_PROBABILITY = 3 } om_trigger_kind;
+typedef enum { OM_COND_NONE = 0, OM_COND_ABOVE = 1, OM_COND_BELOW = 2 } om_condition_kind;
+typedef enum {
+    OM_EXCL_NONE                 = 0,
+    OM_EXCL_MILITARY_RELIEF      = 1,
+    OM_EXCL_POLITICAL_RESOLUTION = 2,
+    OM_EXCL_REVOLT_OUTCOME       = 3
+} om_exclusion_tag;
+typedef enum { OM_SRC_TRIGGER = 0, OM_SRC_SPAWN = 1, OM_SRC_EXTERNAL = 2 } om_event_source;
+
+typedef struct om_spawn {
+    uint32_t template_id;
+    uint32_t delay_min;       /* inclusive, ticks; delay = clamp(round(triangular(min, max, mid)), min, max) */
+    uint32_t delay_max;
+    uint32_t cond_kind;       /* om_condition_kind */
+    uint32_t cond_field;      /* om_field */
+    uint32_t _pad;
+    double   probability;
+    double   cond_value;
+} om_spawn;
+
+typedef struct om_event_template {
+    uint32_t id;                       /* index in the loaded library; stable for the world's life */
+    char     name[OM_TEMPLATE_NAME];   /* exactly the S-030 table name */
+    uint32_t trigger_kind;             /* om_trigger_kind; NONE = spawn only */
+    uint32_t trigger_field;            /* om_field for ABOVE/BELOW/PROBABILITY */
+    double   threshold;                /* ABOVE/BELOW */
+    double   prob_base;                /* PROBABILITY: p = base * (field/100)^exponent */
+    double   prob_exponent;
+    uint32_t cooldown_ticks;           /* PROBABILITY */
+    uint32_t n_spawns;
+    double   effect[OM_F_COUNT];       /* military, economy, tension, population */
+    om_spawn spawns[OM_MAX_SPAWNS];
+    uint32_t exclusion_tag;            /* om_exclusion_tag */
+    uint32_t creates_faction;          /* 1 for Revolt Entrenched and Admin Breakaway */
+    uint32_t admin_chain_step;         /* 0 none; 1 Separatist, 2 Political Crisis, 3 Popular Support, 4 Military Defection, 5 Breakaway */
+    uint32_t _pad;
+} om_event_template;
+
+/* ---- library ----
+ * om_events_load_launch installs the 26-template launch library exactly as the
+ * S-030 table (R-030-01's contract test reads it back). om_events_load replaces
+ * the library from a caller-supplied array (fixture) and returns non-zero on any
+ * rejected template per the epic's Inputs table: an out-of-range field id, an
+ * unknown trigger or condition kind, delay_max < delay_min, probability outside
+ * [0, 1], a spawn naming a template id >= n. The world starts with no library
+ * loaded; with none loaded, tick steps 1 and 2 do nothing. */
+void     om_events_load_launch(om_world *w);
+int      om_events_load(om_world *w, const om_event_template *templates, uint32_t n);
+uint32_t om_event_template_count(const om_world *w);
+int      om_event_template_get(const om_world *w, uint32_t id, om_event_template *out); /* 0 on success */
+int32_t  om_event_template_by_name(const om_world *w, const char *name);               /* id, or -1 */
+
+/* ---- noise offsets and trigger state ----
+ * ALG-32: om_event_roll_noise draws one offset per (region in index order,
+ * template with a threshold trigger in id order) uniform in [-10, 10]. E-08
+ * calls it at each time jump; tests either call it or pin offsets directly. */
+void   om_event_roll_noise(om_world *w);
+void   om_event_set_noise(om_world *w, uint32_t region_idx, uint32_t template_id, double offset);
+double om_event_noise(const om_world *w, uint32_t region_idx, uint32_t template_id);
+int     om_event_breached(const om_world *w, uint32_t region_idx, uint32_t template_id);  /* the stored 'was' flag */
+int64_t om_event_last_fired(const om_world *w, uint32_t region_idx, uint32_t template_id); /* -1 if never (cooldown) */
+int32_t om_chain_counter(const om_world *w);   /* next chain_NNNN; saved with the world */
+uint32_t om_region_faction_creation_pending(const om_world *w, uint32_t region_idx); /* template id + 1 that marked it this tick, 0 if none */
+
+/* ---- external spawns (E-05 calls these; tests may too) ---- */
+int om_event_queue_external(om_world *w, uint32_t region_idx, uint32_t template_id,
+                            uint64_t due_tick, double probability, int32_t source_faction,
+                            uint32_t chain_length);   /* returns the chain tag assigned, or -1 */
+
+/* ---- tick-log readers for steps 1 and 2 (last step only) ---- */
+typedef struct om_fired_event {
+    uint64_t tick;
+    uint32_t region_idx;
+    uint32_t template_id;
+    int32_t  chain_tag;
+    uint32_t source;          /* om_event_source */
+    double   delta[OM_F_COUNT];   /* this event's own deltas before the per-region sum and clamp */
+    double   draw;            /* the probability draw used for a spawn, -1.0 for a trigger */
+    uint32_t creates_faction;
+    uint32_t n_spawned;       /* queue entries this firing added */
+} om_fired_event;
+uint32_t om_tick_events(const om_world *w, om_fired_event *out, uint32_t max);
+
+typedef struct om_pruned_event {
+    uint64_t tick;
+    uint32_t region_idx;
+    uint32_t template_id;
+    int32_t  chain_tag;
+    uint32_t cond_kind;
+    uint32_t cond_field;
+    uint32_t _pad;
+    double   cond_value;
+    double   field_value;     /* the field as read at resolution */
+} om_pruned_event;
+uint32_t om_tick_pruned(const om_world *w, om_pruned_event *out, uint32_t max);
+
+typedef struct om_delayed_event {
+    uint64_t tick;
+    uint32_t region_idx;
+    uint32_t template_id;     /* the loser re-queued */
+    int32_t  chain_tag;
+    uint32_t exclusion_tag;
+    uint32_t kept_template_id;
+    uint32_t _pad;
+    uint64_t new_due;         /* tick + randint(1, 2) */
+} om_delayed_event;
+uint32_t om_tick_delayed(const om_world *w, om_delayed_event *out, uint32_t max);
+
+/* Per-region applied sum for the last step: the once-applied event delta per field
+ * after floors and ceiling (R-026-06, R-028-01). Zero for regions with no event. */
+int om_region_event_delta(const om_world *w, uint32_t region_idx, double out[OM_F_COUNT]);
+
+/* ---- positive-control fault injection for E-04 (debug build only) ---- */
+#ifdef OM_DEBUG_INJECT
+typedef enum {
+    OM_BUG_FIRES_EVERY_TICK        = 200, /* fires while past the threshold, not on the crossing */
+    OM_BUG_NOISE_REROLLED          = 201, /* offsets re-rolled every tick */
+    OM_BUG_NO_GRACE_PERIOD         = 202,
+    OM_BUG_COND_AT_SPAWN           = 203, /* spawn condition checked at spawn time */
+    OM_BUG_SEQUENTIAL_DELTAS       = 204, /* same-tick deltas applied one after another */
+    OM_BUG_EXCLUSION_CANCELS       = 205, /* loser cancelled instead of delayed */
+    OM_BUG_DRAW_BEFORE_CONDITION   = 206, /* probability draw consumed before the condition check */
+    OM_BUG_CHAIN_COUNTER_UNSAVED   = 207,
+    OM_BUG_TRIGGERS_READ_LIVE      = 208, /* fresh triggers read another region's post-event field */
+    OM_BUG_E04_SLOW                = 209
+} om_bug_e04;
 #endif
 
 #ifdef __cplusplus
