@@ -22,6 +22,7 @@ sys.path.insert(0, str(REPO / "scripts"))
 from derive_agora_rules import EPICS_DIR, EPIC_FILE_RE  # noqa: E402
 sys.path.insert(0, str(REPO / "scripts" / "specfactory"))
 from agy_json import payload_from_envelope  # noqa: E402
+from budget_gate import require_budget  # noqa: E402
 
 PROMPT_TESTS = REPO / "docs/northstar/spec_factory/prompts/fill_tests.md"
 PROMPT_CONTROLS = REPO / "docs/northstar/spec_factory/prompts/fill_controls.md"
@@ -73,6 +74,7 @@ def fill_one(epic_id: str, ef: Path, alg: str, skeleton: Path, out: Path,
 
 
 def main() -> int:
+    require_budget()
     ap = argparse.ArgumentParser()
     ap.add_argument("epic")
     ap.add_argument("--skeletons", type=Path, required=True)

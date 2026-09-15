@@ -2,6 +2,10 @@
 
 Reorganizes how a story goes from a closed register flag to a Tested test suite, naming the owner of every step and automating the transcription-class ones. Claude's role shrinks from writing every artifact to reviewing three diffs per epic (e2e, tests, card). `agy` (Antigravity CLI, `docs/northstar/research/gemini_compute.md`) is the drafting sub-agent; it never designs, never edits `docs/bible/**` or `docs/northstar/**` directly, and returns findings plus a proposed change on ambiguity, per `CLAUDE.md`'s sub-agent rules.
 
+## Budget check before any model batch
+
+Every runner that calls a model (`draft_e2e.py`, `fill_tests.py`, `draft_card.py`) refuses to start until `FACTORY_BUDGET` is set to `gemini` or `claude` (`scripts/specfactory/budget_gate.py`). Before setting it, the chat asks Westley for his current Claude usage and reads `agy`'s `/credits`. Rule from 2026-09-14: test authoring emptied Antigravity's Gemini five-hour window in about twenty minutes across two chats, so `gemini` is for short bursts only; `claude` means Claude Code Sonnet sub-agents on the Claude Max subscription, which Westley wants to see running in his terminal. Night-side Agora use of `agy` is a separate decision recorded on the `spec` tool when it exists.
+
 ## The pipeline
 
 | Step | Owner | Automation |

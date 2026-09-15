@@ -21,6 +21,7 @@ sys.path.insert(0, str(REPO / "scripts"))
 from derive_agora_rules import EPICS_DIR, EPIC_FILE_RE  # noqa: E402
 sys.path.insert(0, str(REPO / "scripts" / "specfactory"))
 from agy_json import payload_from_envelope  # noqa: E402
+from budget_gate import require_budget  # noqa: E402
 
 PROMPT = REPO / "docs/northstar/spec_factory/prompts/draft_e2e.md"
 SCHEMA = REPO / "docs/northstar/spec_factory/schemas/e2e.json"
@@ -36,6 +37,7 @@ def epic_file(epic_id: str) -> Path:
 
 
 def main() -> int:
+    require_budget()
     ap = argparse.ArgumentParser()
     ap.add_argument("epic")
     ap.add_argument("--alg", required=True, help="human-readable ALG id range for the prompt")

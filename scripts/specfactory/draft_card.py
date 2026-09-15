@@ -30,10 +30,12 @@ SCHEMA = REPO / "docs/northstar/spec_factory/schemas/brief.json"
 WRAPPER = REPO / "scripts/agy_task.sh"
 sys.path.insert(0, str(REPO / "scripts" / "specfactory"))
 from agy_json import payload_from_envelope  # noqa: E402
+from budget_gate import require_budget  # noqa: E402
 PYTEST = f"{AGORA}/.venv/bin/python -m pytest -q -p no:cacheprovider"
 
 
 def main() -> int:
+    require_budget()
     ap = argparse.ArgumentParser()
     ap.add_argument("epic")
     ap.add_argument("--num", required=True)
