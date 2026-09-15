@@ -34,6 +34,11 @@ STORY_HEAD_RE = re.compile(r"^### (S-\d{3}) — (.+)$")
 RULE_RE = re.compile(r"^- (R-\d{3}-\d{2})\s+(.+)$")
 SECTION_RE = re.compile(r"^## (.+)$")
 FLAG_ROW_RE = re.compile(r"^\| (Q-[A-Za-z0-9]+-\d{2}) \| ([^|]+) \|.*\| (open|closed) \|")
+# A flag is resolved-in-place when Westley answered or deferred it, even if the
+# status column still reads "open" (the register is inconsistent about flipping it,
+# and deferral notes land in different columns). These phrases are the reliable
+# signal; a bare "needs Westley"/"Pending" note is NOT a resolution and still blocks.
+_RESOLVED_RE = re.compile(r"answered by westley|deferred by westley|stays deferred", re.IGNORECASE)
 
 
 def open_flags_by_epic(register_text: str) -> dict[str, list[str]]:
@@ -43,7 +48,8 @@ def open_flags_by_epic(register_text: str) -> dict[str, list[str]]:
         if not m:
             continue
         flag, scope, status = m.group(1), m.group(2).strip(), m.group(3)
-        if status != "open":
+        # Blocks only when open AND not resolved-in-place (answered or deferred).
+        if status != "open" or _RESOLVED_RE.search(line):
             continue
         epic = scope.split("/")[0].strip()
         if not re.match(r"^E-\d{2}$", epic):
