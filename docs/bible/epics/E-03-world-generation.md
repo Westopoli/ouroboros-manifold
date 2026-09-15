@@ -1,27 +1,27 @@
 # E-03 — World Generation and Topology
 
-## Definition-completeness gate (run 2026-09-10, re-checked 2026-09-14 after the Q-021/Q-022/Q-024/Q-025 fold, and again after Q-021-03/Q-022-02 closed)
+## Definition-completeness gate (run 2026-09-10, re-checked 2026-09-14 after the Q-021/Q-022/Q-024/Q-025 fold, again after Q-021-03/Q-022-02 closed, and again after Q-021-04 closed)
 
 | Check | Result |
 |---|---|
-| Every story has at least one Given/When/Then rule with concrete values | Yes, 5 stories, 26 rules (R-025-04 added folding Q-025-01; the original gate's "22 rules" count was stale even before this fold), numbers from `algorithms.md` ALG-30 and ALG-31. |
+| Every story has at least one Given/When/Then rule with concrete values | Yes, 5 stories, 28 rules (S-021 grew from 8 to 10 rules folding the per-template shapes in; R-025-04 added folding Q-025-01; the original gate's "22 rules" count was stale even before either fold), numbers from `algorithms.md` ALG-30 and ALG-31. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | Original 5 flags (Q-021-01 through Q-025-01) closed and folded. Folding Q-021-01 and Q-022-01 surfaced 2 new flags, Q-021-03 and Q-022-02; both answered. Q-022-02's fold is complete (R-022-05). Folding Q-021-03 surfaced one more, Q-021-04 (template region counts vs. the fixed two-regions invariant), still open. |
+| Implied-but-unstated behavior turned into flags | Original 5 flags (Q-021-01 through Q-025-01) closed and folded. Folding those surfaced Q-021-03 and Q-022-02, both answered and folded. Folding Q-021-03 surfaced Q-021-04 (template region counts vs. the fixed two-regions invariant), answered and folded. Folding Q-021-04 surfaced one more, Q-021-05 (the widened region-count range is Claude's number, not yet confirmed) — still open. |
 | Every visible-surface story has a reference | Not applicable; the galaxy view that draws the graph is E-16. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on 1 open flag, Q-021-04: whether the three named templates rescale to this epic's fixed two-regions-per-faction shape, or that invariant changes to fit the templates' own region counts. Decides whether R-021-03/R-021-04 get rewritten in place or the epic's region-count model changes more broadly. S-022 is otherwise fully folded and Ready on its own.
+**Gate verdict: not passed.** Blocked on 1 open flag, Q-021-05 — a number check, not a design fork: confirm or adjust the [60, 110] galaxy region-count range now that every faction's template can need 3 to 6 regions instead of a fixed 2. Every design question this epic raised (which templates, how they map to 15 factions, how they resolve against the fixed-region invariant) is answered and folded.
 
 ## Purpose
 
-The galaxy the player is born into is generated once per campaign and persists across every chapter and time jump. It is a graph: regions are nodes, connections are edges, and each edge says whether armies, trade, or both can flow along it. Fifteen factions each start with a small, established home and one weaker frontier, separated from each other by dark, empty space that nobody owns yet. Everything after that is earned by the simulation: colonies push into the dark, conquests redraw borders, and peace or betrayal opens or closes routes.
+The galaxy the player is born into is generated once per campaign and persists across every chapter and time jump. It is a graph: regions are nodes, connections are edges, and each edge says whether armies, trade, or both can flow along it. Fifteen factions each start from one of three named templates — Isolated (one home, two frontiers), Twin Colony (two homes, one or two frontiers per home), or Archipelago (one home, three sparsely-linked frontiers) — separated from each other by dark, empty space that nobody owns yet. Everything after that is earned by the simulation: colonies push into the dark, conquests redraw borders, and peace or betrayal opens or closes routes.
 
-Two things this epic guarantees: every start is playable (no faction is boxed in, the player's home does not touch any NPC's home), and every start is different (region count, layout, and starting numbers are rolled from the seed).
+Two things this epic guarantees: every start is playable (no faction is boxed in, the player's home does not touch any NPC's home), and every start is different (each faction's template, the region count, layout, and starting numbers are all rolled from the seed).
 
 ## Obviously working in 60 seconds
 
-Generate three worlds from seeds 1, 2, 3. Each has between 40 and 60 regions, 15 factions, 30 inhabited regions, and the rest empty. No two homes are adjacent. Every region is reachable from every other. Each faction's home has the higher population of its pair. Regenerate seed 1: identical graph and identical starting numbers.
+Generate three worlds from seeds 1, 2, 3. Each has between 60 and 110 regions and 15 factions, each faction on one of the three templates (some Isolated at 3 regions, some Twin Colony at 4 to 6, some Archipelago at 4), 45 to 90 inhabited regions total depending on the roll, and the rest empty. No two homes are adjacent. Every region is reachable from every other. Every home has the higher population of its faction's regions. Regenerate seed 1: identical graph, identical template rolls, and identical starting numbers.
 
 ## Stories
 
@@ -29,18 +29,20 @@ Generate three worlds from seeds 1, 2, 3. Each has between 40 and 60 regions, 15
 As a commander starting a campaign, I want a galaxy that is small enough to learn and large enough to feel vast, different every time, so that no two campaigns share a map.
 
 Rules
-- R-021-01  Given a seed, When the world is generated, Then the region count is an integer drawn uniformly from [40, 60] and the faction count is 15.
+- R-021-01  Given a seed, When the world is generated, Then the region count is an integer drawn uniformly from [60, 110] and the faction count is 15.
 - R-021-02  Given generation, When factions are placed, Then faction 0 is the player civilization and factions 1 through 14 cycle conqueror, fortifier, opportunist in that order.
-- R-021-03  Given generation, When tiers are assigned, Then each faction owns exactly one home and one frontier region linked to each other, and every remaining region is empty with no owner and no fields.
-- R-021-04  Given generation, When corridors are laid, Then each faction's frontier links to a chain of exactly 1 empty region, and the 15 corridor ends are linked in faction order into one chain.
-- R-021-05  Given generation, When the remaining empties are attached, Then each links to one already-connected region chosen uniformly at random, re-rolling up to 20 times to avoid a home region.
-- R-021-06  Given a world of N regions, When extra edges are added, Then exactly max(1, floor(0.12 · N)) extra edges are attempted between distinct non-adjacent regions, never home to home, with at most 10 times that many draws.
-- R-021-07  Given any generated world, When connectivity is checked, Then every region is reachable from every other.
-- R-021-08  Given the same seed, When generated twice, Then the region ids, adjacency lists, edge types, and starting fields are identical.
+- R-021-03  Given a faction, When its template is rolled, Then it draws independently from Isolated, Twin Colony, Archipelago with equal weight by default; the player faction's weights are swayed toward their chosen preference (R-021-04) and every NPC faction always uses equal weight.
+- R-021-04  Given the player, When they set a template preference before generation, Then it is one of Isolated, Twin Colony, Archipelago, or no preference, and a set preference raises that template's weight in the player faction's own roll only; it never locks the outcome and never affects any NPC faction's roll.
+- R-021-05  Given a faction's rolled template, When its regions are placed, Then: Isolated is one home region plus two frontier regions, both adjacent to the home; Twin Colony is two home regions adjacent to each other, each with its own count of 1 or 2 frontier regions (drawn uniformly per home) adjacent to that home; Archipelago is one home region plus three frontier regions, arranged so at least one frontier is not adjacent to the home or to another frontier (reached only through a chain of frontiers). Every region outside a faction's template is empty with no owner and no fields.
+- R-021-06  Given a faction's template is placed, When corridors are laid, Then its highest-numbered frontier region (Isolated/Archipelago: numbered in placement order; Twin Colony: the second home's highest-numbered frontier) links to a chain of exactly 1 empty region, and the 15 factions' corridor ends are linked in faction order into one chain.
+- R-021-07  Given generation, When the remaining empties are attached, Then each links to one already-connected region chosen uniformly at random, re-rolling up to 20 times to avoid a home region.
+- R-021-08  Given a world of N regions, When extra edges are added, Then exactly max(1, floor(0.12 · N)) extra edges are attempted between distinct non-adjacent regions, never between two home regions, with at most 10 times that many draws.
+- R-021-09  Given any generated world, When connectivity is checked, Then every region is reachable from every other.
+- R-021-10  Given the same seed, When generated twice, Then every faction's template roll, the region ids, adjacency lists, edge types, and starting fields are identical.
 
-Inputs: seed (64-bit integer); config ranges.
-Outputs: world graph in the strategic snapshot; galaxy view (E-16).
-Open flags: Q-021-04. Q-021-03 (Westley, 2026-09-14) confirmed every faction — player and all 14 NPCs — independently rolls one of the three named templates (Isolated, Twin Colony, Archipelago) for its own shape. But the templates' retired region counts (`docs/bible_history/bible_2_00_world.md`: Isolated 1 home + 2 frontiers, Twin Colony 2 homes + 1–2 frontiers each, Archipelago 1 home + 3 frontiers) conflict with this epic's fixed two-regions-per-faction invariant and R-021-03/R-021-04 below — Q-021-04 asks whether templates rescale to fit two regions or the invariant changes. R-021-03 through R-021-06 stay as the last-known-good (generic, pre-template) design until Q-021-04 answers; Q-021-02 (player preference sways template choice) is answered but not folded in for the same reason.
+Inputs: seed (64-bit integer); config ranges; player template preference (optional).
+Outputs: world graph in the strategic snapshot; galaxy view (E-16); each faction's rolled template (T1 trace, save file).
+Open flags: Q-021-05 (the [60, 110] region-count range in R-021-01 is Claude's proposed number, not yet confirmed). Q-021-03 and Q-021-04 (Westley, 2026-09-14 and 2026-09-15) are closed and folded above: every faction independently rolls one of the three named templates, keeping the templates' own region counts (3 for Isolated, 4 to 6 for Twin Colony, 4 for Archipelago) rather than rescaling to a fixed two regions.
 
 ### S-022 — Homes are strong, frontiers are new
 As a commander, I want my home region to feel established and my frontier to feel recently settled, so that the starting shape of my civilization tells a story.
@@ -90,7 +92,7 @@ Rules
 - R-025-01  Given generation is complete, When the player's inhabited regions and any NPC faction's inhabited regions are checked, Then they are not adjacent. NPC-to-NPC inhabited regions may be adjacent.
 - R-025-02  Given generation is complete, When the player's home region and any NPC faction's home region are checked, Then they are not adjacent. NPC-to-NPC home regions may be adjacent.
 - R-025-03  Given generation is complete, When the shortest path from the player's inhabited regions to any NPC faction's inhabited regions is computed, Then it passes through at least one empty region.
-- R-025-04  Given an extra edge would be drawn between the player's home or frontier and any NPC faction's home or frontier during generation, Then that draw is rejected and re-rolled (R-021-06's re-roll budget applies); this check does not apply between two NPC factions.
+- R-025-04  Given an extra edge would be drawn between the player's home or frontier and any NPC faction's home or frontier during generation, Then that draw is rejected and re-rolled (R-021-08's re-roll budget applies); this check does not apply between two NPC factions.
 
 Inputs: generated graph.
 Outputs: adjacency; a generation-time check that rejects and re-rolls a violating extra edge (R-025-04).
@@ -101,11 +103,11 @@ Open flags: none. Closed by Q-025-01 (Westley, 2026-09-12): the buffer is player
 | Input | Source | Range | Rejection |
 |---|---|---|---|
 | Seed | Campaign start | any 64-bit integer | none |
-| Region count range | Config | (40, 60) | count < 2 · factions + 1 fails generation |
+| Region count range | Config | (60, 110), proposed [Q-021-05] | count < sum of every rolled faction's template size + 1 fails generation |
 | Factions per game | Config | 15 at launch | < 2 fails generation |
 | Extra edge ratio | Config | 0.12 | < 0 fails generation |
-| Population ranges, ratios, jitter | Config | as ALG-30 | ranges outside [0, 100] fail generation |
-| Template choice | Player preference sways weighted-random pick per faction; player's own preference applies to their faction only | [Q-021-04] | not applicable until Q-021-04 answers |
+| Population ranges, ratios, jitter | Config | as ALG-30, per-archetype home ranges as R-022-05 | ranges outside [0, 100] fail generation |
+| Template choice | Config: Isolated, Twin Colony, Archipelago | equal weight per faction by default | player's optional preference (R-021-04) only reweights their own faction's roll |
 
 ## Outputs
 
@@ -119,14 +121,14 @@ Open flags: none. Closed by Q-025-01 (Westley, 2026-09-12): the buffer is player
 ## Invariants
 
 - Every region reachable from every other.
-- No home adjacent to a home; no foreign inhabited regions adjacent at generation.
-- Each faction owns exactly two regions at tick 0.
-- Same seed, same world, all platforms.
+- The player's home is never adjacent to any NPC's home; the player's inhabited regions are never adjacent to any NPC's inhabited regions at generation (NPC-to-NPC may be).
+- Each faction owns exactly the regions its rolled template defines at tick 0: 3 for Isolated, 4 to 6 for Twin Colony, 4 for Archipelago.
+- Same seed, same world (including every faction's template roll), all platforms.
 - Empty regions carry no fields and no owner until colonized.
 
 ## Scale requirements
 
-Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): generate a 60-region world in under 5 ms; generation is O(N + E).
+Confirmed by Westley, 2026-09-14, at the region-count range's old max: generate a 60-region world in under 5 ms; generation is O(N + E). The range widened to [60, 110] folding Q-021-04 (variable per-template region counts); 60 is now the new range's *minimum*, not its max — retiming at 110 regions is part of Q-021-05, open above. Never loosened by Agora regardless; a miss is escalated.
 
 ## Look and behavior references
 
@@ -140,10 +142,13 @@ None required in this epic. The galaxy view is E-16.
 - Edge type defaults to `both` for empty-region edges, letting empties count as trade neighbors.
 - Frontier rolled from the home range.
 - Factions all get the same phase offsets because the RNG was reseeded per region.
+- Twin Colony's second home rolls from the frontier population range instead of the home range.
+- Archipelago's "at least one sparse frontier" requirement is skipped, generating a fully-adjacent cluster indistinguishable from Isolated with an extra region.
+- A faction's own template roll changes the region-count budget after the total has already been fixed, silently over- or under-filling the galaxy.
 
 ## Open ambiguity flags
 
-Q-021-04 (template region counts vs. the fixed two-regions-per-faction invariant). Details in `docs/northstar/ambiguity_register.md`. Q-021-01, Q-021-02, Q-021-03, Q-022-01, Q-022-02, Q-024-01, Q-025-01 are closed and folded above (Q-021-02 and the R-021-03 through R-021-06 template rewrite wait on Q-021-04).
+Q-021-05 (the widened region-count range and the scale gate's untimed upper end — a number to confirm, not a design fork). Details in `docs/northstar/ambiguity_register.md`. Q-021-01 through Q-021-04, Q-022-01, Q-022-02, Q-024-01, Q-025-01 are closed and folded above.
 
 ## Depends on
 
