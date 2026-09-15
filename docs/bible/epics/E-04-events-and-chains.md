@@ -1,21 +1,21 @@
 # E-04 — Events and Chains
 
-## Definition-completeness gate (run 2026-09-10)
+## Definition-completeness gate (run 2026-09-10, flags folded 2026-09-14)
 
 | Check | Result |
 |---|---|
-| Every story has at least one Given/When/Then rule with concrete values | Yes, 6 stories, 27 rules, values from `algorithms.md` ALG-32 through ALG-36 and the launch library table. |
+| Every story has at least one Given/When/Then rule with concrete values | Yes, 6 stories, 31 rules, values from `algorithms.md` ALG-32 through ALG-37 and the launch library table. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
 | Implied-but-unstated behavior turned into flags | 5 new flags, Q-026-01, Q-027-01, Q-027-02, Q-028-01, Q-031-01. |
 | Every visible-surface story has a reference | Not applicable; events reach the player through the chronicle (E-09) and world view (E-16). |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on 5 open flags. Three of them are places where the code and the bible disagree on a detail (delay distribution, tie-break, same-tick ordering); Westley picks which is the design.
+**Gate verdict: passed 2026-09-14.** The five flags raised at the gate are answered and folded: simultaneous same-tick triggers (Q-026-01, Westley's direction, designed here), triangular spawn delays (Q-027-01), pruned entries logged (Q-027-02), coin-flip tie-break (Q-028-01), S-031 pacing thresholds measured from the Python reference sim (Q-031-01).
 
 ## Purpose
 
-Drift is the slow hum. Events are the things that happen. A famine, a garrison collapse, a trade boom, a revolt: each is a discrete moment that jolts a region's numbers and can set off follow-ups days or years later. Events do not roll dice out of nowhere. A new chain starts when a field crosses a threshold that region is sensitive to, so every crisis has a traceable cause. Follow-ups are scheduled with a delay, a probability, and a condition, so a chain can fizzle if the world moves on, and a mission that heals a region can stop the revolt that was coming. Same-tick events land together and compound, except when they contradict, in which case the likelier one goes first.
+Drift is the slow hum. Events are the things that happen. A famine, a garrison collapse, a trade boom, a revolt: each is a discrete moment that jolts a region's numbers and can set off follow-ups days or years later. Events do not roll dice out of nowhere. A new chain starts when a field crosses a threshold that region is sensitive to, so every crisis has a traceable cause. Follow-ups are scheduled with a delay, a probability, and a condition, so a chain can fizzle if the world moves on, and a mission that heals a region can stop the revolt that was coming. Same-tick events land together and compound, except when they contradict, in which case the likelier one goes first. When several regions cross thresholds on the same tick, every crossing is judged against the tick-start fields, so two crises can begin at once and neither hides the other.
 
 This is the layer that turns graphs into history. The chronicle reads chain tags to tell cause from effect.
 
@@ -34,26 +34,28 @@ Rules
 - R-026-03  Given F returns across the threshold and later crosses it again, When the second crossing happens, Then the template fires again as a new chain with a new chain tag.
 - R-026-04  Given a time jump starts, When noise offsets are rolled, Then each (region, threshold template) pair gets one uniform offset in [−10, 10] that persists for the whole jump.
 - R-026-05  Given ticks 1 through 3 of a run, When triggers are evaluated, Then nothing fires; the trigger state is primed from the current fields so that a field already past its threshold at tick 3 does not fire at tick 4.
-- R-026-06  Given a threshold template fires, When its effects apply, Then each field delta applies immediately with floors economy 8.0, tension 12.0, others 0, ceiling 100, and composites recompute.
+- R-026-06  Given a threshold template fires, When its effects apply, Then each field delta applies with floors economy 8.0, tension 12.0, others 0, ceiling 100, and composites recompute, through the same per-region delta sum as S-028 R-028-01.
+- R-026-07  Given regions A and B both cross a threshold on tick t, When triggers are evaluated, Then both are judged against the tick-start fields (A's effects never change what B's crossing reads, in either region order), both fire on tick t, and each region's fired deltas are summed with that region's due-queue deltas and applied once; a region that crosses only because a same-tick event moved its field fires on tick t + 1, not t.
 
 Inputs: fields; template table; noise offsets; tick.
 Outputs: fired event records with chain tag in the tick log; field changes.
-Open flags: Q-026-01 (several regions crossing thresholds on one tick: simultaneous against tick-start fields, per Westley's direction, or sequential as coded; resolution designed at Stage 3).
+Open flags: none.
 
 ### S-027 — One thing leads to another
 As a commander, I want a crisis to spawn follow-ups that may or may not come, depending on how the region is doing when their time arrives, so that intervention matters.
 
 Rules
-- R-027-01  Given a fired event with a chain spawn (template X, delay range [a, b], probability p, condition C), When it fires on tick t, Then one integer delay d is drawn in [a, b] and X is queued for tick t + d with probability p, condition C, and the parent's chain tag [Q-027-01 decides uniform vs triangular].
+- R-027-01  Given a fired event with a chain spawn (template X, delay range [a, b], probability p, condition C), When it fires on tick t, Then one delay d = clamp(round(triangular(a, b, mode (a + b)/2)), a, b) is drawn (one uniform draw, the contract in `ouroboros_sim.h`) and X is queued for tick t + d with probability p, condition C, and the parent's chain tag.
 - R-027-02  Given a queued event whose tick arrives and whose condition is not met (for `above` v: field ≤ v; for `below` v: field ≥ v), When resolved, Then it is dropped without firing and without a probability roll.
 - R-027-03  Given a queued event whose condition is met, When resolved, Then one RNG draw r is made and it fires only if r ≤ p.
 - R-027-04  Given "Famine" fires on tick 50 in a region, When tick 53 to 56 arrives with tension above 40, Then "Regional Revolt" may fire with probability 0.5 carrying Famine's chain tag.
 - R-027-05  Given an admin-revolt chain of length L in [3, 8] (E-05 R-040-03), When each event fires, Then the next queues with probability 1.0 and no condition, at a delay of 1 tick plus one surplus tick for the earliest gaps until the surplus L minus the step count is spent, so the Breakaway fires exactly L ticks after the roll; the short chain skips Political Crisis and Popular Support, the medium chain skips Popular Support.
 - R-027-06  Given any spawned event, When it is read from the log, Then its chain tag equals the root event's tag, and the tag is unique per chain start (`chain_NNNN`, sequential).
+- R-027-07  Given a queued event dropped by R-027-02, When the tick log is read, Then it holds a `pruned` record with the template, region, tick, chain tag, and the condition that failed, so the chronicle (E-09) can tell the revolt that almost happened.
 
 Inputs: template chain spawns; region fields at resolution time.
-Outputs: pending queue; fired records; pruned records [Q-027-02].
-Open flags: Q-027-01 (delay distribution), Q-027-02 (pruned branches logged or silent).
+Outputs: pending queue; fired records; pruned records.
+Open flags: none.
 
 ### S-028 — Disasters stack, contradictions do not
 As a commander, I want two blows landing the same day to hurt together, but a resolution and a crisis never to both happen at once, so that the world compounds without contradicting itself.
@@ -61,13 +63,13 @@ As a commander, I want two blows landing the same day to hurt together, but a re
 Rules
 - R-028-01  Given two queued events due the same tick in the same region, both passing conditions and probability, When they resolve, Then each delta is computed against the tick-start fields, the deltas sum, and the sum applies once with floors and ceilings.
 - R-028-02  Given "Revolt Crushed" (p 0.45) and "Revolt Entrenched" (p 0.55) both due the same tick in the same region, When resolved, Then Entrenched is kept and Crushed is re-queued for tick + 1 or tick + 2 (one draw).
-- R-028-03  Given two mutually exclusive events with equal probability, When resolved, Then [Q-028-01 decides: coin flip, or the earlier-queued one wins].
+- R-028-03  Given two mutually exclusive events with equal probability, When resolved, Then one uniform draw decides: below 0.5 the earlier-queued one is kept, otherwise the later one; the other is re-queued as in R-028-02.
 - R-028-04  Given two same-tick events with no shared exclusion tag, When resolved, Then both fire and neither is delayed.
 - R-028-05  Given exclusion tags are evaluated, When multiple tags are present, Then they are processed in sorted tag order, and an event removed by one tag is not considered for later tags.
 
 Inputs: queued events due this tick; exclusion tags.
 Outputs: fired and delayed records.
-Open flags: Q-028-01.
+Open flags: none.
 
 ### S-029 — Some pressures never stop
 As a commander, I want a tense region to face a rising chance of revolt every tick rather than a single trip-wire, so that unrest feels like a fever, not a switch.
@@ -128,14 +130,14 @@ Open flags: none. Growing the library is E-21 (offline AI pipeline) work; every 
 As a commander watching the chronicle scroll, I want the galaxy to have changed visibly every time I come back, so that the time jump feels like history and not a pause.
 
 Rules
-- R-031-01  Given a 5,000-tick run with the launch config and any seed, When every 30-tick window is scored, Then at least 2 attacks resolve in at least 90 percent of windows [Q-031-01].
-- R-031-02  Given the same run, When windows are scored, Then at least one conquest or colonization occurs in at least 70 percent of windows [Q-031-01].
+- R-031-01  Given a 5,000-tick run with the launch config and any seed, When every 30-tick window is scored, Then attacks resolve in at least as many windows as the Python reference sim's measured rate, recorded in `docs/northstar/e2e/E-04.md` from ten seeds before this story's tests are written (Q-031-01: measure first).
+- R-031-02  Given the same run, When windows are scored, Then conquests or colonizations occur in at least as many windows as the measured reference rate, recorded the same way.
 - R-031-03  Given the same run, When counted, Then at least one faction is created and at least one faction is absorbed or removed over the run.
 - R-031-04  Given any 30-tick window, When the chronicle distiller runs on it, Then it finds at least 5 candidate entries.
 
 Inputs: full sim run.
 Outputs: window statistics in the T1 trace; trajectory invariants.
-Open flags: Q-031-01 (Westley confirms the exact numbers).
+Open flags: none. The reference measurement is a Stage 3 task for this story (Round 2); until it exists S-031 is not Ready.
 
 ## Inputs
 
@@ -154,7 +156,7 @@ Open flags: Q-031-01 (Westley confirms the exact numbers).
 | Fired events (template, region, tick, deltas, chain tag, spawns) | Tick log `events`; chronicle input (E-09) |
 | Pending queue contents | Save file; T1 trace |
 | Trigger state per region | Save file |
-| Delayed and pruned entries | Tick log [Q-027-02] |
+| Delayed and pruned entries | Tick log `delayed` and `pruned` records |
 | Region field changes | E-02 outputs |
 
 ## Invariants
@@ -181,13 +183,14 @@ None required in this epic.
 - Grace period dropped, so half the map fires on tick 1.
 - Spawn conditions checked at spawn time instead of at resolution time.
 - Same-tick deltas applied sequentially so the second event reads the first's result.
+- Fresh triggers evaluated region by region against live fields, so one region's crisis hides or causes another's on the same tick.
 - Exclusion loser cancelled instead of delayed.
 - Probability roll made before the condition check, consuming RNG and breaking determinism.
 - Chain tag counter not saved, so loading a save reuses tags.
 
 ## Open ambiguity flags
 
-Q-026-01, Q-027-01, Q-027-02, Q-028-01, Q-031-01. Details in `docs/northstar/ambiguity_register.md`.
+None. Q-026-01, Q-027-01, Q-027-02, Q-028-01, Q-031-01 are closed and folded (2026-09-14).
 
 ## Depends on
 
