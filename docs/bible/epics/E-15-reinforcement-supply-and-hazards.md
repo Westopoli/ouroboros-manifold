@@ -32,10 +32,11 @@ Rules
 - R-126-03  Given the player clicks a held structure, When they pick a type, Then production switches to it at once and the current timer continues.
 - R-126-04  Given the whole mission, When forces are counted, Then the starting force is roughly half of what the player fields over a full mission [Q-127-01].
 - R-126-05  Given a structure, When its production is read on the HUD, Then the player sees the timer bar, next unit, and HP (E-16 R-104-06).
+- R-126-06  Given any mission, When production is read, Then units have no cost, and a player holding zero structures receives no trickle; the only reinforcement is R-126-02's structure production.
 
 Inputs: region military; archetype; player type choice.
 Outputs: structures (owner, HP, timer, type) in the tick delta; spawns.
-Open flags: Q-126-01 (production rate, unit cost model, baseline trickle with zero structures, placement strategy: the bible lists them as open and never closed them; code has 30 s scaled by power, no cost, no trickle), Q-126-02 (structure spawn position is random and not seeded from the world RNG in code, breaking determinism), Q-127-01.
+Open flags: Q-126-02 (structure spawn position is random and not seeded from the world RNG in code, breaking determinism), Q-127-01.
 
 ### S-127 — Taking a garrison
 As a commander, I want to capture a structure by holding it unopposed, and to be able to destroy one I cannot hold, so that garrisons are contested ground.

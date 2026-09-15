@@ -31,12 +31,12 @@ As a commander, I want a free camera I manage myself, so that attention is my sk
 Rules
 - R-103-01  Given a mission, When the player pans, zooms, or edge-scrolls, Then the camera moves freely with no auto-anchoring, no forced follow, and no camera modes.
 - R-103-02  Given any zoom level, When the viewport is read, Then the mission canvas edges bound the camera; it never leaves the map.
-- R-103-03  Given the launch build, When the camera angle is read, Then it is the fixed top-down interim (A-145) [Q-103-01: the multi-perspective camera is committed launch scope pending research].
+- R-103-03  Given the launch build, When the camera angle is read, Then it is the fixed top-down interim (A-145); the multi-perspective camera (top-down, 45° overhead, horizontal, 45° upward, unit POV) is committed later scope behind a Track R research task, and the interim ships in every playtest round regardless of that task's state.
 - R-103-04  Given the camera, When it moves, Then it is never bound to a layer; the layer strip changes focus, not the camera.
 
 Inputs: mouse, keyboard, edge scroll.
 Outputs: viewport transform.
-Open flags: Q-103-01.
+Open flags: none.
 
 ### S-104 — The HUD tells me what I need and nothing else
 As a commander, I want a lean HUD that shows objectives, my selection, my groups, my structures, the clock, and my commander, and stays out of the way, so that the world is what I look at.
@@ -61,7 +61,8 @@ Open flags: Q-104-01. Reference: IGoP HUD screenshots, pending confirmation.
 As a commander, I want to click, box-select, and bind groups, and never to have an all-army button, so that positional thinking is the whole game.
 
 Rules
-- R-105-01  Given the player clicks a friendly unit, When released, Then it is the selection; Given a drag box, Then every friendly unit inside it on [Q-105-01: the focused layer, or any layer] is the selection.
+- R-105-01  Given the player clicks a friendly unit, When released, Then it is the selection; Given a drag box, Then every friendly unit inside it on every layer is the selection.
+- R-105-06  Given a selection that spans layers, When the player presses the hotkey for layer N, Then the selection narrows to its units on layer N; the layer strip's focus is unchanged by this.
 - R-105-02  Given a selection and Ctrl plus a digit, When pressed, Then the group is bound to that digit and the units leave any other group (exclusive membership); pressing the digit recalls the group; pressing it twice centers the camera on it.
 - R-105-03  Given the player presses Tab, When the layer strip has focus, Then focus cycles to the next layer.
 - R-105-04  Given the client, When any input is checked, Then no select-all, select-all-army, or select-all-of-type command exists (Principle 4; A-300 killed the hotkey).
@@ -69,7 +70,7 @@ Rules
 
 Inputs: mouse, keyboard.
 Outputs: selection set; control group state.
-Open flags: Q-105-01 (box-select and layer focus, same as Q-009-01), Q-106-01 (A-301: which accessibility affordance replaces the all-army hotkey's convenience).
+Open flags: Q-106-01 (A-301: which accessibility affordance replaces the all-army hotkey's convenience).
 
 ### S-106 — The galaxy between missions
 As a player, I want to orbit a 3D star map where territory glows, borders touch, and war flashes, so that the world reads at a glance.
@@ -186,6 +187,8 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Ways this could be wrong
 
+- Control-group depth. Westley's target (2026-09-14): a talented player runs three armies with two or three layers inside each, so control groups need sub-groups per layer without violating exclusive membership (Principle 4). Open research item RL-Q75; no story yet. The risk is that R-105-02's flat digit groups make multi-layer armies unmanageable and players ask for the all-army button we refuse.
+
 - Camera anchors to the selection.
 - Box-select ignores layer focus (or honors it) contrary to Q-105-01's answer.
 - A select-all binding survives from Stage 8.
@@ -197,7 +200,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-103-01, Q-104-01, Q-105-01, Q-106-01, Q-108-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-104-01, Q-106-01, Q-108-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
