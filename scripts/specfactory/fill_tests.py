@@ -6,6 +6,7 @@ red_check.py on them and copies them in.
 
 Usage:
     scripts/specfactory/fill_tests.py E-05 --skeletons DIR --alg "ALG-11 through ALG-25 and ALG-29" --out DIR
+    scripts/specfactory/fill_tests.py E-05 --controls --skeletons CTRL_DIR --filled-dir DIR --alg "..." --out CTRL_OUT
 """
 
 from __future__ import annotations
@@ -20,7 +21,8 @@ REPO = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(REPO / "scripts"))
 from derive_agora_rules import EPICS_DIR, EPIC_FILE_RE  # noqa: E402
 
-PROMPT = REPO / "docs/northstar/spec_factory/prompts/fill_tests.md"
+PROMPT_TESTS = REPO / "docs/northstar/spec_factory/prompts/fill_tests.md"
+PROMPT_CONTROLS = REPO / "docs/northstar/spec_factory/prompts/fill_controls.md"
 SCHEMA = REPO / "docs/northstar/spec_factory/schemas/tests.json"
 WRAPPER = REPO / "scripts/agy_task.sh"
 
@@ -33,12 +35,14 @@ def epic_file(epic_id: str) -> Path:
     sys.exit(f"no epic file for {epic_id}")
 
 
-def fill_one(epic_id: str, ef: Path, alg: str, skeleton: Path, out: Path) -> tuple[int, int]:
-    prompt = (PROMPT.read_text(encoding="utf-8")
+def fill_one(epic_id: str, ef: Path, alg: str, skeleton: Path, out: Path,
+             prompt_file: Path, filled_dir: Path | None) -> tuple[int, int]:
+    prompt = (prompt_file.read_text(encoding="utf-8")
               .replace("{{EPIC_ID}}", epic_id)
               .replace("{{EPIC_FILE}}", str(ef.relative_to(REPO)))
               .replace("{{ALG_RANGE}}", alg)
-              .replace("{{SKELETON_FILE}}", str(skeleton)))
+              .replace("{{SKELETON_FILE}}", str(skeleton))
+              .replace("{{FILLED_DIR}}", str(filled_dir) if filled_dir else ""))
     prompt_path = out / (skeleton.stem + ".prompt.md")
     prompt_path.write_text(prompt, encoding="utf-8")
     res = subprocess.run([str(WRAPPER), str(prompt_path), str(SCHEMA)],
@@ -67,6 +71,8 @@ def main() -> int:
     ap.add_argument("--alg", required=True)
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--only", nargs="*", default=None, help="skeleton file names to fill")
+    ap.add_argument("--controls", action="store_true", help="use the positive-control prompt")
+    ap.add_argument("--filled-dir", type=Path, default=None, help="filled story tests the controls reuse")
     args = ap.parse_args()
 
     ef = epic_file(args.epic)
@@ -76,7 +82,8 @@ def main() -> int:
         files = [f for f in files if f.name in set(args.only)]
     total_q = 0
     for f in files:
-        q, _ = fill_one(args.epic, ef, args.alg, f, args.out)
+        q, _ = fill_one(args.epic, ef, args.alg, f, args.out,
+                        PROMPT_CONTROLS if args.controls else PROMPT_TESTS, args.filled_dir)
         total_q += q
     print(f"done: {len(files)} files, {total_q} questions")
     return 0
