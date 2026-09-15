@@ -4,13 +4,14 @@
 #
 # Usage: scripts/agy_task.sh <prompt-file> <schema-file> [extra agy args...]
 #
-# Model and effort are overridable by env, both defaulting to the original
-# behavior (agy's own default model = Gemini Flash; effort high):
-#   AGY_MODEL   agy model id (e.g. claude-sonnet-4-6) — draws on that model's
-#               quota group. Unset = agy default. `agy models` lists ids.
-#   AGY_EFFORT  low|medium|high (default high).
-# The Claude group (claude-sonnet-4-6, claude-opus-4-6-thinking) has a separate
-# quota from Gemini; route transcription work there when Gemini's is drained.
+# Model is selectable so the factory can move between the two quota groups agy
+# exposes (`agy models`): the Gemini group and the Claude/GPT group, which have
+# separate limits. Default is Claude Sonnet — the Gemini five-hour window drains
+# fast under parallel fills (2026-09-14).
+#   AGY_MODEL   agy model id (default claude-sonnet-4-6). `agy models` lists ids.
+#   AGY_EFFORT  low|medium|high (default high). GEMINI ONLY: the Claude/GPT models
+#               are fixed "thinking" tiers and reject --effort, so it is passed
+#               only when the model is a Gemini one.
 #
 # Prints agy's JSON result on stdout. Non-zero exit if agy itself errors; the
 # caller still has to check the JSON's "status" field for tool-level failures
@@ -34,16 +35,19 @@ unset SSH_CONNECTION SSH_CLIENT SSH_TTY
 
 export PATH="$HOME/.local/bin:$PATH"
 
-# Default to Claude Sonnet through agy's Claude/GPT quota group (see `agy models`):
-# the Gemini five-hour window drains fast under parallel fills (2026-09-14).
 AGY_MODEL="${AGY_MODEL:-claude-sonnet-4-6}"
 
-exec agy \
-  --prompt "$(cat "$PROMPT_FILE")" \
-  --output-format json \
-  --json-schema "$SCHEMA_FILE" \
-  --effort "${AGY_EFFORT:-high}" \
-  ${AGY_MODEL:+--model "$AGY_MODEL"} \
-  --dangerously-skip-permissions \
-  --sandbox \
-  "$@"
+args=(--model "$AGY_MODEL"
+      --prompt "$(cat "$PROMPT_FILE")"
+      --output-format json
+      --json-schema "$SCHEMA_FILE"
+      --dangerously-skip-permissions
+      --sandbox)
+
+# --effort is a Gemini-only flag; the Claude/GPT models reject it.
+case "$AGY_MODEL" in
+  claude-*|gpt-*) : ;;
+  *) args+=(--effort "${AGY_EFFORT:-high}") ;;
+esac
+
+exec agy "${args[@]}" "$@"
