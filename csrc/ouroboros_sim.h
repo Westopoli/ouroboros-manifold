@@ -250,10 +250,27 @@ int64_t om_region_held_since(const om_world *w, uint32_t idx);   /* < 0 if never
 void    om_region_set_edge(om_world *w, uint32_t a, uint32_t b, om_edge_type t);
 int     om_region_edge(const om_world *w, uint32_t a, uint32_t b, om_edge_type *out); /* 0 if no edge */
 
-/* ---- forced RNG draws (fixture) ----
- * Rules quote exact stochastic draws ("a draw of 1.0", "draw 0.7"). The world
- * RNG is one PCG32 stream; this queues values that the next n uniform draws
- * return instead of the stream, in order, then the stream resumes. Every
+/* ---- the world RNG contract (every card that draws follows this exactly) ----
+ * One PCG32 stream per world (O'Neill PCG-XSH-RR 64/32, the reference
+ * pcg32_random_r): state {uint64 state, uint64 inc}. Seeding from
+ * om_world_new(seed) / om_world_set_seed(seed): inc = (seed ^ 0xDA3E39CB94B95BDBULL) << 1 | 1;
+ * state = 0; step; state += seed; step. next32() is the reference output.
+ * u = uniform in [0, 1) with 53 bits: a = next32() >> 5, b = next32() >> 6,
+ * u = (a * 67108864.0 + b) * (1.0 / 9007199254740992.0)  (two 32-bit outputs, a then b).
+ * U(lo, hi) = lo + (hi - lo) * u. randint(a, b) inclusive: n = b - a + 1,
+ * threshold = (uint32_t)(-n) % n, loop r = next32() until r >= threshold,
+ * return a + (r % n). triangular(lo, hi, mode): u = uniform; c = (mode - lo)/(hi - lo);
+ * if u > c { u = 1 - u; c = 1 - c; swap(lo, hi); } return lo + (hi - lo) * sqrt(u * c)
+ * (IEEE sqrt is correctly rounded on every platform, so it is allowed).
+ * round(x) = floor(x + 0.5). Every draw consumes the stream in the order the
+ * e2e file's "Draw order" paragraph states; nothing else touches the stream.
+ *
+ * ---- forced RNG draws (fixture) ----
+ * Rules quote exact stochastic draws ("a draw of 1.0", "draw 0.7"). This queues
+ * values that the next n uniform draws (u above, so also every U/randint/
+ * triangular that consumes one u) return instead of the stream, in order; when
+ * the queue empties the stream resumes. A forced randint takes its value as
+ * a + floor(u * n). Every
  * consumer of the stream (agents, resolution, friction, admin roll, drift
  * oscillator does not draw) takes from the same queue, so tests set draws in
  * the documented draw order (algorithms.md). Draw order is part of the contract. */
