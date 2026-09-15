@@ -16,7 +16,7 @@ Priority is distinctiveness times risk, divided by cost. High-distinctiveness, h
 
 | # | Offer | Epics | Dist | Risk | Cost | Priority | Hypothesis | Earliest round |
 |---|---|---|---|---|---|---|---|---|
-| 1 | A living galaxy that moves without the player | E-02, E-03, E-04, E-05, E-07 | 5 | 3 | 2 | 7.5 | H1: after the first time jump, at least 70 percent of testers name a galaxy change they did not cause, and call it interesting rather than random. | 1 |
+| 1 | A living galaxy that moves without the player | E-02, E-03, E-04, E-05, E-07, E-16 | 5 | 3 | 2 | 7.5 | H1: after the first time jump, at least 70 percent of testers name a galaxy change they did not cause, and call it interesting rather than random. | 1 |
 | 2 | Generational carry-forward: return as someone new, consequences persist | E-08, E-10 (outcome), E-09 | 5 | 5 | 3 | 8.3 | H2: after three chapters, at least 60 percent name a consequence of a mission they played earlier. | 1 |
 | 3 | A chronicle that reads as real history, different every campaign | E-09, E-21 | 4 | 4 | 2 | 8.0 | H3: median read time per jump at least 60 seconds; at least half recall one entry unprompted; nobody calls the text filler. | 1 |
 | 4 | Elegiac tone with dry, earned humor | E-09, E-21 | 3 | 2 | 1 | 6.0 | H8: at least one line quoted per tester in interview; no tester describes the writing as trying too hard. | 1 |
