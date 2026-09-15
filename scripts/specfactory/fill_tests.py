@@ -45,16 +45,30 @@ def fill_one(epic_id: str, ef: Path, alg: str, skeleton: Path, out: Path,
               .replace("{{FILLED_DIR}}", str(filled_dir) if filled_dir else ""))
     prompt_path = out / (skeleton.stem + ".prompt.md")
     prompt_path.write_text(prompt, encoding="utf-8")
-    res = subprocess.run([str(WRAPPER), str(prompt_path), str(SCHEMA)],
-                         cwd=REPO, capture_output=True, text=True)
-    (out / (skeleton.stem + ".raw.json")).write_text(res.stdout, encoding="utf-8")
-    if res.returncode != 0:
-        sys.stderr.write(f"{skeleton.name}: agy exit {res.returncode}\n{res.stderr[-1500:]}\n")
+    payload = None
+    for attempt in (1, 2):
+        res = subprocess.run([str(WRAPPER), str(prompt_path), str(SCHEMA)],
+                             cwd=REPO, capture_output=True, text=True)
+        (out / (skeleton.stem + f".raw{attempt}.json")).write_text(res.stdout, encoding="utf-8")
+        if res.returncode != 0 or not res.stdout.strip():
+            sys.stderr.write(f"{skeleton.name}: attempt {attempt} agy exit {res.returncode}, "
+                             f"{len(res.stdout)} bytes stdout\n{res.stderr[-1500:]}\n")
+            continue
+        try:
+            envelope = json.loads(res.stdout)
+            payload = envelope.get("response", envelope)
+            if isinstance(payload, str):
+                payload = json.loads(payload)
+            if "content" in payload:
+                break
+            sys.stderr.write(f"{skeleton.name}: attempt {attempt} JSON lacks content: {str(payload)[:200]}\n")
+            payload = None
+        except json.JSONDecodeError as exc:
+            sys.stderr.write(f"{skeleton.name}: attempt {attempt} not JSON ({exc}); head: {res.stdout[:200]!r}\n")
+            payload = None
+    if payload is None:
+        print(f"FAILED {skeleton.name}: no usable output after 2 attempts", flush=True)
         return 0, 0
-    envelope = json.loads(res.stdout)
-    payload = envelope.get("response", envelope)
-    if isinstance(payload, str):
-        payload = json.loads(payload)
     (out / skeleton.name).write_text(payload["content"], encoding="utf-8")
     notes = out / (skeleton.stem + ".notes.md")
     notes.write_text("Questions\n" + "\n".join(f"- {q}" for q in payload["questions"])
