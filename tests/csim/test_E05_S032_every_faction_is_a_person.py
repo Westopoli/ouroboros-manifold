@@ -157,18 +157,20 @@ def test_R_032_03_it_uses_attack_weight_0(lib, world_factory):
     # score = 0.60 * 0.70 + 0.25 * 1.12 + 0.15 * 0.295 = 0.74425
     assert cand_1.attractiveness == pytest.approx(0.74425, abs=1e-6)
 
-    # Empty region 3 colonize candidate attractiveness: position 0.56 -> 0.15 * 0.56 = 0.084
+    # Empty region 3 colonize candidate: ALG-11 applies the weakness factor to every candidate,
+    # 1 - 0/100 = 1.0 for an empty region; value 0 (unowned); position 0.56:
+    # 0.60 * 1.0 + 0.25 * 0 + 0.15 * 0.56 = 0.684
     cand_3 = next(c for c in candidates if c.kind == OMCandKind.COLONIZE and c.region_idx == 3)
-    assert cand_3.attractiveness == pytest.approx(0.084, abs=1e-6)
+    assert cand_3.attractiveness == pytest.approx(0.684, abs=1e-6)
 
     # Verify decision weights: attack weight 0.3, expand weight 0.5
     # potential commit = 70.0; net = 70 - 30 * 0.55 * 2.0 = 37.0
     # attack_score = (37.0 / 40.0) * 0.3 = 0.2775
-    # colonize_score = 0.084 * 0.5 = 0.042
+    # colonize_score = 0.684 * 0.5 = 0.342
     decisions = read_decisions(lib, w)
     player_dec = next(d for d in decisions if d.faction_id == 0)
     assert player_dec.attack_score == pytest.approx(0.2775, abs=1e-6)
-    assert player_dec.colonize_score == pytest.approx(0.042, abs=1e-6)
+    assert player_dec.colonize_score == pytest.approx(0.342, abs=1e-6)
 
 
 def test_R_032_04_it_hostile_toward_every_other(lib, world_factory):
