@@ -59,8 +59,50 @@ def open_flags_by_epic(register_text: str) -> dict[str, list[str]]:
     return result
 
 
+ALG_ID_RE = re.compile(r"ALG-(\d+)")
+ALG_BLOCK_RE = re.compile(r"^\*\*ALG-(\d+)[^\n]*$", re.M)
+ALGORITHMS = EPICS_DIR.parent / "algorithms.md"
+
+
+def cited_alg_ids(epic_text: str) -> list[int]:
+    ids: set[int] = set()
+    for m in re.finditer(r"ALG-(\d+)\s+(?:through|to|\u2026|\.\.\.)\s+ALG-(\d+)", epic_text):
+        a, b = int(m.group(1)), int(m.group(2))
+        ids.update(range(min(a, b), max(a, b) + 1))
+    ids.update(int(x) for x in ALG_ID_RE.findall(epic_text))
+    return sorted(ids)
+
+
+def alg_blocks(alg_text: str) -> dict[int, str]:
+    out: dict[int, str] = {}
+    starts = [(m.start(), int(m.group(1))) for m in ALG_BLOCK_RE.finditer(alg_text)]
+    for i, (pos, aid) in enumerate(starts):
+        end = starts[i + 1][0] if i + 1 < len(starts) else len(alg_text)
+        chunk = alg_text[pos:end]
+        h = re.search(r"^## ", chunk, re.M)
+        if h:
+            chunk = chunk[:h.start()]
+        out[aid] = chunk.rstrip() + "\n"
+    return out
+
+
+def render_equations(epic_text: str) -> list[str]:
+    ids = cited_alg_ids(epic_text)
+    if not ids or not ALGORITHMS.exists():
+        return []
+    blocks = alg_blocks(ALGORITHMS.read_text(encoding="utf-8"))
+    parts = [blocks[i] for i in ids if i in blocks]
+    if not parts:
+        return []
+    return ["## Retained equations and tables",
+            "",
+            "Copied from docs/bible/algorithms.md for the ALG ids this epic cites. These are the constants, formulas, and archetype tables the rules above assume. Reproduce them exactly; never re-derive a constant from a test value.",
+            ""] + parts
+
+
 def parse_epic(path: Path) -> dict:
     text = path.read_text(encoding="utf-8")
+    _raw_text = text
     lines = text.splitlines()
     title = lines[0].lstrip("# ").strip() if lines else path.stem
     sections: dict[str, list[str]] = {}
@@ -95,6 +137,7 @@ def parse_epic(path: Path) -> dict:
         if not s["rules"]:
             raise ValueError(f"{path.name}: story {s['id']} has no rules")
     return {
+        "text": _raw_text,
         "title": title,
         "purpose": "\n".join(sections.get("Purpose", [])).strip(),
         "obvious": "\n".join(sections.get("Obviously working in 60 seconds", [])).strip(),
@@ -134,6 +177,7 @@ def render(epic_id: str, rel_path: str, epic: dict) -> str:
         out += ["## Invariants", "", epic["invariants"], ""]
     if epic["wrong"]:
         out += ["## Ways this could be wrong — worth trying", "", epic["wrong"], ""]
+    out += render_equations(epic.get("text", ""))
     return "\n".join(out)
 
 
