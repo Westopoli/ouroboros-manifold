@@ -12,9 +12,9 @@
 
 ## TBD — design phase, not a screenshot
 
-The **main menu, galaxy map, and strategic-to-tactical transition** are not referenced from other games. Westley does not yet know the exact look; these get a design phase (Claude builds simple mockups / a prototype to interact with — a prototype, not the final version). The original in-game UI "looked nice" and is the starting point. The existing in-game galaxy view already has good animation and is reused for E-09 (see `references/E-09/notes.md`), pending the current game build-error fix.
+The **main menu, galaxy map, and strategic-to-tactical transition** are not referenced from other games. Westley does not yet know the exact look; these get a design phase (Claude builds simple mockups / a prototype to interact with — a prototype, not the final version). The original in-game UI "looked nice" and is the starting point. The existing in-game galaxy view already has good animation and is reused for E-09 (see `references/E-09/notes.md`), captured 2026-09-14 as `references/E-09/time_jump_galaxy_and_scroll.png`.
 
-- S-106, S-107 galaxy map — reuse existing in-game galaxy view; screenshots pending build fix.
+- S-106, S-107 galaxy map — reuse existing in-game galaxy view; reference `references/E-09/time_jump_galaxy_and_scroll.png` (captured 2026-09-14).
 - S-108 seamless transition — design phase.
 - S-110 main menu and settings — design phase; original UI is the baseline.
 - S-103 tactical camera — design phase with the E-01 layer prototype.
