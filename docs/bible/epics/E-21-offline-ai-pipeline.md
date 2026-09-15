@@ -32,11 +32,11 @@ Rules
 - R-152-01  Given the game binary, When it runs, Then it makes no network request to any model API; a contract test runs a full chapter with networking disabled.
 - R-152-02  Given a library entry is missing at play time, When requested, Then a generic placeholder is used and logged; play never blocks.
 - R-152-03  Given the library builder, When it runs, Then it checks the library for an existing entry before dispatching a generation and stores every result.
-- R-152-04  Given the builder, When it calls a model, Then it uses the model named in the project instructions (currently `claude-sonnet-4-20250514` for the builder) [Q-152-01].
+- R-152-04  Given the builder, When it calls a model, Then it uses the model named in the project instructions (currently `claude-sonnet-4-20250514` for the builder).
 
 Inputs: library files.
 Outputs: contract test; logs.
-Open flags: Q-152-01 (builder model id; and Stage 1 A-118's research flag on a small local model for story quality, which would require amending the no-runtime rule if server-side).
+Open flags: none. The small-local-model idea (Stage 1 A-118) stays a research item, not a story.
 
 ### S-153 — What the builder makes
 As a designer, I want one pipeline to produce every text library the game reads, so that content scales without me.
@@ -142,7 +142,7 @@ Open flags: none. The script is Stage 2 deliverable work.
 
 ## Scale requirements
 
-Proposed for Westley to confirm: builder produces one chronicle category in under 5 minutes; naming for 15 factions in under 30 minutes; balance harness 1,000 matchups per hour on forge.
+Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): builder produces one chronicle category in under 5 minutes; naming for 15 factions in under 30 minutes; balance harness 1,000 matchups per hour on forge.
 
 ## Look and behavior references
 
@@ -158,7 +158,7 @@ Not applicable.
 
 ## Open ambiguity flags
 
-Q-152-01, Q-153-01, Q-155-01, Q-156-01, Q-158-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-153-01, Q-155-01, Q-156-01, Q-158-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

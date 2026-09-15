@@ -96,6 +96,10 @@ One Agora task is one story and must fit Agora's `max_impl_lines` (250 at time o
 
 Any question Claude cannot answer from the epic file, the references, or `vision_v2.md` becomes a `Q-###-##` in the register with the concrete question and two or three candidate answers. Claude never picks silently. Flags are batched and presented to Westley per epic. Local models never see an open flag; the rules-derivation script skips epics with open flags.
 
+Before a flag is raised, Claude checks that it is not already answered: `docs/bible/algorithms.md` (constants and equations kept verbatim in Stage 1), the Stage 1 ledger verdicts in `stage1_audit.md`, and closed rows in the register. A flag that duplicates one of these is a defect in the flag, not a question for Westley.
+
+**Trivial decisions (Westley, 2026-09-14).** When the candidates differ only in a way no player would notice and no other story depends on (a strict versus inclusive comparison, a tie-break order, an internal constant with no stated design intent), Claude decides, writes the rule, and records the choice in the epic's rule text with no flag. If in doubt whether a choice is trivial, it is not.
+
 ### Register protocol v3 (2026-09-14)
 
 Every flag's candidate-answers column names one candidate as **recommended** — Claude's best guess at the answer, marked inline (e.g. `(b) [recommended] ...`). Westley answers a batch one of two ways:

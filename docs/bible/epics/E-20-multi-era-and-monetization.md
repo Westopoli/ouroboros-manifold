@@ -137,7 +137,7 @@ Open flags: none; deferred by Westley's Stage 1 decision, reopen only if built e
 
 ## Scale requirements
 
-Proposed for Westley to confirm: pack load under 2 s; era switch in a campaign under 5 s.
+Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): pack load under 2 s; era switch in a campaign under 5 s.
 
 ## Look and behavior references
 

@@ -7,7 +7,7 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 8 stories, 41 rules, numbers from `algorithms.md` ALG-66 through ALG-69 and config. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 5 new flags, Q-095-01, Q-097-01, Q-098-01, Q-099-01, Q-101-01. |
+| Implied-but-unstated behavior turned into flags | 5 new flags, Q-095-01, Q-098-01, Q-099-01, Q-101-01. |
 | Every visible-surface story has a reference | **No.** S-101 (how movement reads: turning, flow around blockers, formation arrival) has a visible surface and no reference. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
@@ -46,14 +46,14 @@ Rules
 - R-096-01  Given a plain move, When the unit travels, Then it acquires no target, returns no fire, and does not stop when hit.
 - R-096-02  Given an attack-move, When an enemy enters attack range on the unit's layer, Then the unit halts and fires; when the target dies or leaves range it resumes toward the point.
 - R-096-03  Given an attack-move engagement, When the target moves more than 200 wu from the unit's anchor (its position at acquisition), Then the unit drops the target and resumes.
-- R-096-04  Given attack-target on enemy E, When issued, Then the unit moves toward E if out of range and attacks E in range until E dies or a new order arrives; if E becomes invisible the unit moves to E's last known position [Q-097-01].
+- R-096-04  Given attack-target on enemy E, When issued, Then the unit moves toward E if out of range and attacks E in range until E dies or a new order arrives; if E becomes invisible the unit moves to E's last known position and idles there.
 - R-096-05  Given activate-ability, When issued to a selection, Then each unit with its ability ready activates it; Brace toggles.
 - R-096-06  Given any other command name (patrol, hold, stop, follow), When received, Then it is rejected with a reason and no state changes.
 - R-096-07  Given commands for tick t, When the tick runs, Then all of them are applied before any state advances, in arrival order, and recorded with the tick number for replay.
 
 Inputs: command packets (kind, unit ids, target point or unit).
 Outputs: acknowledgement with reason in the tick delta; unit order state.
-Open flags: Q-097-01 (attack-target on a target that goes invisible).
+Open flags: none.
 
 ### S-097 — Around, not through
 As a commander, I want units to route around terrain and flow around each other, and never to walk through anything, so that formations are real.
@@ -63,7 +63,8 @@ Rules
 - R-097-02  Given a destination shared by several units, When routes are computed, Then the route is computed once and cached.
 - R-097-03  Given a moving unit, When it steps, Then it probes 40 wu ahead; if an ally blocks the probe it sweeps alternate angles left and right in a fixed order and takes the first clear one; if none, it waits.
 - R-097-04  Given a unit that took a deflected angle, When it moves, Then it keeps that heading for at least 60 wu before re-evaluating.
-- R-097-05  Given two units on the same layer within 30 wu (2 × radius 15), When the collision pass runs, Then they are pushed apart along the line between them until 30 wu apart, over up to N iterations per tick [Q-098-01: N unspecified in the bible].
+- R-097-05  Given two units on the same layer within 30 wu (2 × radius 15), When the collision pass runs, Then they are pushed apart along the line between them until 30 wu apart, over up to 3 iterations per tick.
+- R-097-06  Given a unit moving through terrain with obstacle density d, When d is in [0.3, 0.7], Then its speed is multiplied by (1 − 0.5 · d); below 0.3 speed is unchanged; at 0.7 and above the cell is blocked (R-097-01). The multiplier is era-uniform; an era pack may not switch it off.
 - R-097-06  Given one unit of the pair is stationary (no move target, or halted by engagement), When pushed, Then it moves 0 and the other takes the full displacement.
 - R-097-07  Given two units at exactly the same position, When pushed, Then the lower unit id moves in the canonical direction (+x).
 - R-097-08  Given enemy units, When colliding, Then they collide like allies; nobody passes through anybody.
@@ -71,7 +72,7 @@ Rules
 
 Inputs: map grid; unit positions, targets, states.
 Outputs: positions; route cache; collision log (T1).
-Open flags: Q-098-01 (iterations per tick), Q-099-01 (soft terrain speed: bible says not built and names a speed multiplier as the right mechanism; build it or leave it).
+Open flags: none.
 
 ### S-098 — Firing through friends
 As a commander, I want my back rank to shoot over my front rank, so that formation depth is an advantage and not a jam.
@@ -155,7 +156,7 @@ Open flags: none.
 
 ## Scale requirements
 
-Proposed for Westley to confirm: movement and collision for 1,000 units in under 3 ms per tick, 10,000 in under 30 ms; route queries under 1,000 per second at 60 wu cells.
+Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): movement and collision for 1,000 units in under 3 ms per tick, 10,000 in under 30 ms; route queries under 1,000 per second at 60 wu cells.
 
 ## Look and behavior references
 
@@ -174,7 +175,7 @@ Proposed for Westley to confirm: movement and collision for 1,000 units in under
 
 ## Open ambiguity flags
 
-Q-095-01, Q-097-01, Q-098-01, Q-099-01, Q-101-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-095-01, Q-101-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

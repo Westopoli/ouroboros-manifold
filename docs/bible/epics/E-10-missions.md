@@ -197,7 +197,7 @@ Open flags: Q-080-01 (the bible's constraint compression across generations, tim
 
 ## Scale requirements
 
-Proposed for Westley to confirm: candidate pool and scoring over 60 regions × 10 archetypes in under 20 ms; force allocation for 100-unit forces in under 5 ms.
+Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): candidate pool and scoring over 60 regions × 10 archetypes in under 20 ms; force allocation for 100-unit forces in under 5 ms.
 
 ## Look and behavior references
 

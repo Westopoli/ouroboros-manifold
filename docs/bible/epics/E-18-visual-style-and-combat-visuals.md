@@ -36,7 +36,7 @@ Rules
 
 Inputs: era manifest models.
 Outputs: screen.
-Open flags: Q-132-01 (silhouette test is stated for humans; define the T2 check, proposed: a classifier trained on the six reference silhouettes must score 95 percent on screenshots).
+Open flags: none. The readability check is manual review plus the playtest silhouette-naming question (Track L hypothesis H12); no automated classifier at launch.
 
 ### S-133 — Three tiers you can read
 As a commander, I want a faction's technology tier to show in how its ships look, and to show loss when it falls, so that history is visible on the battlefield.
@@ -110,12 +110,12 @@ As a player, I want the whole game to look like one thing, low-poly and stylized
 
 Rules
 - R-138-01  Given any scene, When rendered, Then models are flat or minimally shaded low-poly with clean geometric forms; no photoreal textures; no PBR detail passes.
-- R-138-02  Given a T2 screenshot from any screen, When compared against the reference set, Then it matches the Art of Rally register [Q-138-01: define the measurable check].
+- R-138-02  Given a T2 screenshot from any screen, When compared against the reference set, Then it passes a manual review against the reference set; there is no automated register check at launch.
 - R-138-03  Given the Settled Reach, When rendered, Then the tactical space reads as a lived-in frontier: asteroids, derelicts, cargo, nebula volumes, beacons.
 
 Inputs: era manifests; reference set.
 Outputs: screen.
-Open flags: Q-138-01. Reference required: `references/E-18/notes.md`, missing.
+Open flags: none. Reference required: `references/E-18/notes.md`, missing.
 
 ## Inputs
 
@@ -140,7 +140,7 @@ Open flags: Q-138-01. Reference required: `references/E-18/notes.md`, missing.
 
 ## Scale requirements
 
-Proposed for Westley to confirm: 60 fps at 200 v 200 with full effects at medium zoom; 30 fps floor at 1,000 units with LOD.
+Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): 60 fps at 200 v 200 with full effects at medium zoom; 30 fps floor at 1,000 units with LOD.
 
 ## Look and behavior references
 
@@ -157,7 +157,7 @@ Proposed for Westley to confirm: 60 fps at 200 v 200 with full effects at medium
 
 ## Open ambiguity flags
 
-Q-132-01, Q-134-01, Q-136-01, Q-138-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-134-01, Q-136-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

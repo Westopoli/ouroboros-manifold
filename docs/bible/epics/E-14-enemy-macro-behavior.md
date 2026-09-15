@@ -127,7 +127,7 @@ Open flags: Q-125-01.
 
 ## Scale requirements
 
-Proposed for Westley to confirm: macro evaluation for 10 forces over 1,000 units in under 1 ms per evaluation tick.
+Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): macro evaluation for 10 forces over 1,000 units in under 1 ms per evaluation tick.
 
 ## Look and behavior references
 

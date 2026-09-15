@@ -130,7 +130,7 @@ Open flags: Q-094-01 (is the sensor circle drawn at all; the HUD section never s
 
 ## Scale requirements
 
-Proposed for Westley to confirm: visibility for 1,000 units in under 2 ms per tick (shared with E-01); 10,000 in under 20 ms; must use spatial hashing, not all-pairs.
+Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): visibility for 1,000 units in under 2 ms per tick (shared with E-01); 10,000 in under 20 ms; must use spatial hashing, not all-pairs.
 
 ## Look and behavior references
 

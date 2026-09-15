@@ -126,7 +126,7 @@ Open flags: none. Closed by Q-025-01 (Westley, 2026-09-12): the buffer is player
 
 ## Scale requirements
 
-Proposed for Westley to confirm: generate a 60-region world in under 5 ms; generation is O(N + E).
+Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): generate a 60-region world in under 5 ms; generation is O(N + E).
 
 ## Look and behavior references
 

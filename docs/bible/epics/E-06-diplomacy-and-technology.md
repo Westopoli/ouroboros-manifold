@@ -156,7 +156,7 @@ Open flags: none. The per-tier unit profiles are E-11 content.
 
 ## Scale requirements
 
-Proposed for Westley to confirm: stance updates for 105 pairs (15 factions) in under 50 µs per tick; betrayal and peace checks O(pairs · border regions).
+Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): stance updates for 105 pairs (15 factions) in under 50 µs per tick; betrayal and peace checks O(pairs · border regions).
 
 ## Look and behavior references
 

@@ -196,7 +196,7 @@ Open flags: none.
 
 ## Scale requirements
 
-Proposed for Westley to confirm: a 100-tick jump on 60 regions and 15 factions completes, including chronicle distillation, in under 2 s; ledger with 5,000 characters selects a commander in under 5 ms.
+Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): a 100-tick jump on 60 regions and 15 factions completes, including chronicle distillation, in under 2 s; ledger with 5,000 characters selects a commander in under 5 ms.
 
 ## Look and behavior references
 

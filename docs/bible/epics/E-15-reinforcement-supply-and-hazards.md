@@ -7,7 +7,7 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 6 stories, 33 rules, numbers from `algorithms.md` ALG-75 and config. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 6 new flags, Q-126-01, Q-126-02, Q-127-01, Q-128-01, Q-129-01, Q-131-01. |
+| Implied-but-unstated behavior turned into flags | 6 new flags, Q-126-02, Q-127-01, Q-128-01, Q-129-01, Q-131-01. |
 | Every visible-surface story has a reference | **No.** S-131 (how structures, convoys, and hazards read on screen) has a visible surface and no reference. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
@@ -32,10 +32,11 @@ Rules
 - R-126-03  Given the player clicks a held structure, When they pick a type, Then production switches to it at once and the current timer continues.
 - R-126-04  Given the whole mission, When forces are counted, Then the starting force is roughly half of what the player fields over a full mission [Q-127-01].
 - R-126-05  Given a structure, When its production is read on the HUD, Then the player sees the timer bar, next unit, and HP (E-16 R-104-06).
+- R-126-06  Given any mission, When production is read, Then units have no cost, and a player holding zero structures receives no trickle; the only reinforcement is R-126-02's structure production.
 
 Inputs: region military; archetype; player type choice.
 Outputs: structures (owner, HP, timer, type) in the tick delta; spawns.
-Open flags: Q-126-01 (production rate, unit cost model, baseline trickle with zero structures, placement strategy: the bible lists them as open and never closed them; code has 30 s scaled by power, no cost, no trickle), Q-126-02 (structure spawn position is random and not seeded from the world RNG in code, breaking determinism), Q-127-01.
+Open flags: Q-126-02 (structure spawn position is random and not seeded from the world RNG in code, breaking determinism), Q-127-01.
 
 ### S-127 — Taking a garrison
 As a commander, I want to capture a structure by holding it unopposed, and to be able to destroy one I cannot hold, so that garrisons are contested ground.
@@ -45,11 +46,11 @@ Rules
 - R-127-02  Given units of two or more non-owner factions inside, or the owner also present, When ticks pass, Then progress resets to 0.
 - R-127-03  Given a structure at HP 3,000, When attacked, Then it takes damage like a unit with no matchup multiplier; at 0 HP it is removed for the rest of the mission and never rebuilt.
 - R-127-04  Given a structure changes owner, When the ticker runs, Then "structure captured" or "structure lost" appears (E-16 R-104-01).
-- R-127-05  Given a structure's HP, When read, Then Bombard splash alone should not destroy it in one engagement [Q-128-01: 3,000 HP vs Bombard 70 per attack].
+- R-127-05  Given a structure's HP, When read, Then it is 3,000 (ALG-75) with no category multiplier applied to structures; a single Bombard at 70 per attack needs about 43 attacks, so splash alone does not destroy it in one engagement.
 
 Inputs: unit positions and factions; damage.
 Outputs: ownership, progress, HP in the delta; ticker.
-Open flags: Q-128-01.
+Open flags: none.
 
 ### S-128 — What the enemy builds
 As a commander, I want the enemy to build toward a composition I can read and adapt to, so that watching its production is a skill.
@@ -129,7 +130,7 @@ Open flags: Q-131-01 (settlement vs station naming: `docs/bible_history/bible_2_
 
 ## Scale requirements
 
-Proposed for Westley to confirm: capture and production for 8 structures in under 0.2 ms per tick.
+Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): capture and production for 8 structures in under 0.2 ms per tick.
 
 ## Look and behavior references
 
@@ -147,7 +148,7 @@ Proposed for Westley to confirm: capture and production for 8 structures in unde
 
 ## Open ambiguity flags
 
-Q-126-01, Q-126-02, Q-127-01, Q-128-01, Q-129-01, Q-131-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-126-02, Q-127-01, Q-129-01, Q-131-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
