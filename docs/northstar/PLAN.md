@@ -169,9 +169,9 @@ Track L  Lean MVP loop (parallel) Rank, cut, ship to testers, measure, re-plan; 
 
 ---
 
-## Stage 3 — End-to-end behavior definition (per epic, repeating)
+## Stage 3 — End-to-end behavior definition (per epic, repeating; Claude judges, the spec factory drafts the transcription)
 
-**Goal.** For each epic the roadmap pulls, define exhaustively what the user can do, what the system must do in response, every rule, every edge, and the scale each must survive. This is the document the local models read to know what "correct" means, and the document Stage 5 turns into tests. Runs per epic, in roadmap order, in parallel with Agora building earlier epics.
+**Goal.** For each epic the roadmap pulls, define exhaustively what the user can do, what the system must do in response, every rule, every edge, and the scale each must survive. This is the document the local models read to know what "correct" means, and the document Stage 5 turns into tests. Runs per epic, in roadmap order, in parallel with Agora building earlier epics. Claude still authors the epic, runs the completeness gate, and raises flags — the judgment steps `docs/northstar/spec_factory.md` never delegates. Folding Westley's answers into rule text and drafting the e2e file are transcription-class once the epic carries concrete numbers; `agy` (Antigravity CLI, `docs/northstar/research/gemini_compute.md`) drafts those, Claude reviews every diff.
 
 **Inputs.** The epic's Stage 2 file (gate passed, flags answered), its references, R1 (what QA can observe), R2 (C architecture, algorithm contract, determinism rules), R4 (RTS bug catalog mapped to epics).
 
@@ -225,9 +225,9 @@ Track L  Lean MVP loop (parallel) Rank, cut, ship to testers, measure, re-plan; 
 
 ---
 
-## Stage 5 — TDD test authoring (Claude writes, Agora obeys)
+## Stage 5 — TDD test authoring (spec factory drafts, Claude reviews and owns the suite, Agora obeys)
 
-**Goal.** Before a story is queued, Claude writes its full failing test set from the Stage 3 e2e file. Tests are the task's `acceptance:` commands. Agora iterates until green. Repeats per story for the life of the project, and re-runs under the change protocol whenever a story is revised.
+**Goal.** Before a story is queued, its full failing test set exists from the Stage 3 e2e file. Tests are the task's `acceptance:` commands. Agora iterates until green. Repeats per story for the life of the project, and re-runs under the change protocol whenever a story is revised. `docs/northstar/spec_factory.md`'s scripts generate the test and control skeletons per rule and per QA watch-for; `agy` fills the arrange/act/assert bodies from the rules file; Claude reviews every generated test before it ships and is the only one who decides what gets tested. `red_check.py` proves every new test fails or errors before Agora ever sees the card.
 
 **Tests as the anti-layer-system guard.** A story like "units on different layers have different vision" gets tests that make the behavior *observable*: a unit on layer 2 sees a target on layer 1 at range X and not at range Y; the unit's world position changes by the layer's elevation within N ticks of a layer command; a T2 screenshot at a fixed camera shows the unit at the expected screen height. If a test like that cannot be written, the story is not Ready and goes back to Stage 3 with a flag.
 

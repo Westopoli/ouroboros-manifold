@@ -1,23 +1,23 @@
 # E-03 — World Generation and Topology
 
-## Definition-completeness gate (run 2026-09-10)
+## Definition-completeness gate (run 2026-09-10, re-checked 2026-09-14 after the Q-021/Q-022/Q-024/Q-025 fold)
 
 | Check | Result |
 |---|---|
-| Every story has at least one Given/When/Then rule with concrete values | Yes, 5 stories, 22 rules, numbers from `algorithms.md` ALG-30 and ALG-31. |
+| Every story has at least one Given/When/Then rule with concrete values | Yes, 5 stories, 26 rules (R-025-04 added folding Q-025-01; the original gate's "22 rules" count was stale even before this fold), numbers from `algorithms.md` ALG-30 and ALG-31. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 5 new flags, Q-021-01 through Q-025-01. |
+| Implied-but-unstated behavior turned into flags | Original 5 flags (Q-021-01 through Q-025-01) closed and folded. Folding Q-021-01 and Q-022-01 surfaced 2 new flags, Q-021-03 and Q-022-02, not yet answered. |
 | Every visible-surface story has a reference | Not applicable; the galaxy view that draws the graph is E-16. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on 5 open flags. Q-021-01 (named templates vs the generic generator) decides the shape of S-021 and must be answered before this epic is Ready.
+**Gate verdict: not passed.** Blocked on 2 open flags. Q-021-03 (how the three named templates apply across 15 factions) decides whether R-021-03 through R-021-06 get rewritten or stay as the per-faction generic shape; Q-022-02 (Fortifier and Opportunist starting ranges) blocks finishing R-022-05's fold. Both need Westley's answer before this epic is Ready.
 
 ## Purpose
 
 The galaxy the player is born into is generated once per campaign and persists across every chapter and time jump. It is a graph: regions are nodes, connections are edges, and each edge says whether armies, trade, or both can flow along it. Fifteen factions each start with a small, established home and one weaker frontier, separated from each other by dark, empty space that nobody owns yet. Everything after that is earned by the simulation: colonies push into the dark, conquests redraw borders, and peace or betrayal opens or closes routes.
 
-Two things this epic guarantees: every start is playable (no faction is boxed in, no home touches another home), and every start is different (region count, layout, and starting numbers are rolled from the seed).
+Two things this epic guarantees: every start is playable (no faction is boxed in, the player's home does not touch any NPC's home), and every start is different (region count, layout, and starting numbers are rolled from the seed).
 
 ## Obviously working in 60 seconds
 
@@ -40,7 +40,7 @@ Rules
 
 Inputs: seed (64-bit integer); config ranges.
 Outputs: world graph in the strategic snapshot; galaxy view (E-16).
-Open flags: Q-021-01 (named starting templates vs this generic generator), Q-021-02 (player choice of template).
+Open flags: Q-021-03. R-021-03 through R-021-06 below describe the generic per-faction generator, which Q-021-01 (Westley, 2026-09-14) retired in favor of three named templates (Isolated, Twin Colony, Archipelago) — but how those templates apply across 15 factions is not yet answered (Q-021-03), so these rules are the last-known-good design, not yet rewritten. Q-021-02 (player preference sways template choice) is answered but not folded in below pending Q-021-03, since the weighting mechanism depends on how many factions roll a template.
 
 ### S-022 — Homes are strong, frontiers are new
 As a commander, I want my home region to feel established and my frontier to feel recently settled, so that the starting shape of my civilization tells a story.
@@ -54,7 +54,7 @@ Rules
 
 Inputs: tier, RNG.
 Outputs: starting fields per region; starting tech per faction.
-Open flags: Q-022-01 (bible_world gives NPC archetypes their own starting ranges; bible_simulation and code give everyone the same).
+Open flags: Q-022-02. Q-022-01 (Westley, 2026-09-14) confirmed per-archetype starting ranges are the design (Conqueror home military 50–65, economy 40–55), but Fortifier's and Opportunist's ranges are not specified anywhere (Q-022-02). R-022-05 below still describes the old same-ranges-for-everyone behavior until both archetypes' ranges are known.
 
 ### S-023 — Routes carry armies, trade, or both
 As a commander, I want a connection between two regions to be a military route, a trade route, or both, so that a region can be rich but exposed, or safe but poor.
@@ -81,19 +81,20 @@ Rules
 
 Inputs: peace, betrayal, conquest, colonization events (E-05, E-06).
 Outputs: edge types in the strategic snapshot.
-Open flags: Q-024-01 (bible says routes can also open or collapse from regional instability; nothing implements it).
+Open flags: none. Closed by Q-024-01 (Westley, 2026-09-12): instability-driven edge collapse is a future story, not this epic's Round 1 scope — no rule here implements it. Proposed trigger for that future story: an edge collapses `both`/`trade` → `border` when either endpoint's stability is below 20 for 50 consecutive ticks.
 
 ### S-025 — Nobody starts on your doorstep
 As a commander, I want empty space between me and every other faction at the start, so that first contact is something that happens, not something I spawn into.
 
 Rules
-- R-025-01  Given generation is complete, When any two inhabited regions of different factions are checked, Then they are not adjacent.
-- R-025-02  Given generation is complete, When any two home regions are checked, Then they are not adjacent.
-- R-025-03  Given a faction, When the shortest path from its inhabited regions to any other faction's inhabited regions is computed, Then it passes through at least one empty region.
+- R-025-01  Given generation is complete, When the player's inhabited regions and any NPC faction's inhabited regions are checked, Then they are not adjacent. NPC-to-NPC inhabited regions may be adjacent.
+- R-025-02  Given generation is complete, When the player's home region and any NPC faction's home region are checked, Then they are not adjacent. NPC-to-NPC home regions may be adjacent.
+- R-025-03  Given generation is complete, When the shortest path from the player's inhabited regions to any NPC faction's inhabited regions is computed, Then it passes through at least one empty region.
+- R-025-04  Given an extra edge would be drawn between the player's home or frontier and any NPC faction's home or frontier during generation, Then that draw is rejected and re-rolled (R-021-06's re-roll budget applies); this check does not apply between two NPC factions.
 
 Inputs: generated graph.
-Outputs: adjacency; a generation-time check that fails the world if violated [Q-025-01].
-Open flags: Q-025-01 (extra edges in the current generator can link a home to a foreign frontier, violating this story; the story is written as the bible intends, and the C generator must enforce it).
+Outputs: adjacency; a generation-time check that rejects and re-rolls a violating extra edge (R-025-04).
+Open flags: none. Closed by Q-025-01 (Westley, 2026-09-12): the buffer is player-to-NPC only, checked at generation time only — NPC factions may end generation adjacent to each other, and any faction pair may become adjacent later through conquest or colonization (E-05, E-06).
 
 ## Inputs
 
@@ -142,7 +143,7 @@ None required in this epic. The galaxy view is E-16.
 
 ## Open ambiguity flags
 
-Q-021-01, Q-021-02, Q-022-01, Q-024-01, Q-025-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-021-03 (how the three named templates apply across 15 factions), Q-022-02 (Fortifier and Opportunist starting field ranges). Details in `docs/northstar/ambiguity_register.md`. Q-021-01, Q-021-02, Q-022-01, Q-024-01, Q-025-01 are closed and folded above.
 
 ## Depends on
 

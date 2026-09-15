@@ -95,3 +95,14 @@ One Agora task is one story and must fit Agora's `max_impl_lines` (250 at time o
 ## Ambiguity handling
 
 Any question Claude cannot answer from the epic file, the references, or `vision_v2.md` becomes a `Q-###-##` in the register with the concrete question and two or three candidate answers. Claude never picks silently. Flags are batched and presented to Westley per epic. Local models never see an open flag; the rules-derivation script skips epics with open flags.
+
+### Register protocol v3 (2026-09-14)
+
+Every flag's candidate-answers column names one candidate as **recommended** — Claude's best guess at the answer, marked inline (e.g. `(b) [recommended] ...`). Westley answers a batch one of two ways:
+
+- **"Approve defaults"** — every recommended candidate in the batch becomes the answer, in one line, no per-flag typing.
+- **Override by id** — `Q-021-01: c` (or free text) answers that one flag differently; every other flag in the batch still takes its recommended default.
+
+This does not lower the bar for what counts as a genuine flag (still: never guess, never pick silently) — it lowers the cost of answering once Claude has already formed a recommendation. A flag with no safe recommendation (a real fork with no clear default, or one where guessing wrong is expensive) carries no `[recommended]` marker and needs Westley's explicit pick regardless of "approve defaults."
+
+Folding an answer into the epic's rule text is transcription once the answer is a clean letter-pick whose candidate text is itself sufficient rule content; `scripts/specfactory/fold_answers.py` handles that mechanically. A closed answer that implies new rule content beyond its candidate phrasing (a design decision, not a restatement) stays Claude's to fold by hand, optionally with an `agy` draft first — and if folding it surfaces a *new* gap the candidate didn't cover, that gap is a new flag, not a guess (see the E-03 Q-021-01/Q-021-03 pair, `docs/northstar/spec_factory.md`, for a worked example).

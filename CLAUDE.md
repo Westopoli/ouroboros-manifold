@@ -70,7 +70,7 @@ Same seed, same command stream, byte-identical trace on Windows, macOS, and Linu
 
 ### Sub-agents implement, never design
 
-Sub-agents (Explore, general-purpose, Plan, cavecrew variants) execute against an existing spec. They may not make architectural or API decisions, expand scope, edit `docs/bible/**`, `docs/northstar/**`, `CLAUDE.md`, or any test threshold, or decide what is tested. On ambiguity they return findings plus a proposed change; the main agent decides.
+Sub-agents (Explore, general-purpose, Plan, cavecrew variants, and `agy`/Antigravity CLI — see `docs/northstar/research/gemini_compute.md`) execute against an existing spec. They may not make architectural or API decisions, expand scope, edit `docs/bible/**`, `docs/northstar/**`, `CLAUDE.md`, or any test threshold, or decide what is tested. On ambiguity they return findings plus a proposed change; the main agent decides.
 
 ### Sub-agents use caveman mode for prose
 
