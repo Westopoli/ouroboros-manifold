@@ -968,6 +968,8 @@ def _bind_e03(lib):
     lib.om_gen_set_faction_count.argtypes = [V, ctypes.c_uint32]; lib.om_gen_set_faction_count.restype = None
     lib.om_gen_set_extra_edge_ratio.argtypes = [V, ctypes.c_double]; lib.om_gen_set_extra_edge_ratio.restype = None
     lib.om_gen_set_player_preference.argtypes = [V, ctypes.c_int]; lib.om_gen_set_player_preference.restype = None
+    lib.om_gen_set_preference_weight.argtypes = [V, ctypes.c_double]; lib.om_gen_set_preference_weight.restype = None
+    lib.om_gen_set_extra_edges_enabled.argtypes = [V, ctypes.c_int]; lib.om_gen_set_extra_edges_enabled.restype = None
     lib.om_gen_set_home_range.argtypes = [V, ctypes.c_int, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double]
     lib.om_gen_set_home_range.restype = None
     lib.om_world_generated.argtypes = [V]; lib.om_world_generated.restype = ctypes.c_int
@@ -999,6 +1001,19 @@ def gen_set_extra_edge_ratio(lib, w, ratio):
 def gen_set_player_preference(lib, w, template):
     _bind_e03(lib)
     lib.om_gen_set_player_preference(w, template)
+
+
+def gen_set_preference_weight(lib, w, preferred):
+    _bind_e03(lib)
+    lib.om_gen_set_preference_weight(w, preferred)
+
+
+def gen_set_extra_edges_enabled(lib, w, on):
+    """Fixture isolation: pass 0 to skip the extra-edge step entirely (it cannot be
+    turned off via ratio, whose floor is 1), so placement / empty-attachment tests
+    read a graph with no stray extra edges. Default on."""
+    _bind_e03(lib)
+    lib.om_gen_set_extra_edges_enabled(w, 1 if on else 0)
 
 
 def gen_set_home_range(lib, w, archetype, mil_lo, mil_hi, eco_lo, eco_hi):

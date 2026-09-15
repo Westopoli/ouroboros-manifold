@@ -654,6 +654,19 @@ void om_gen_set_extra_edge_ratio(om_world *w, double ratio);          /* default
  * weight in the player roll only, never locks it, and consumes no RNG that would
  * shift any NPC roll. OM_TMPL_NONE (default) = equal weight, same as an NPC. */
 void om_gen_set_player_preference(om_world *w, om_template pref);
+/* Player-preference weight (Q-021-06, configurable): the probability the player's
+ * own template roll gives the preferred template when a preference is set; the
+ * other two split the remainder equally. Default WORLD_PLAYER_PREFERENCE_WEIGHT
+ * = 0.50 (so 0.50 / 0.25 / 0.25). No effect without a preference; never touches an
+ * NPC roll. In [0, 1]; a value < 1/3 is accepted (a preference may de-weight). */
+void om_gen_set_preference_weight(om_world *w, double preferred);
+/* Fixture isolation switch for the extra-edge step (R-021-08). Extra edges cannot
+ * be turned off by ratio — the count is max(1, floor(ratio·N)), a floor of 1 — so
+ * this boolean skips the whole step for isolation tests of placement (R-021-05),
+ * empty attachment (R-021-07), and edge typing, exactly like a feature switch: it
+ * removes the step, it never changes what the step computes. Default on (1). A
+ * test of R-021-08 itself leaves it on. */
+void om_gen_set_extra_edges_enabled(om_world *w, int on);
 /* Per-archetype home military/economy ranges (R-022-05). Defaults are the epic's
  * numbers (Conqueror mil 50-65/eco 40-55; Fortifier 40-50/50-65; Opportunist
  * 45-55/45-55). archetype in {CONQUEROR, FORTIFIER, OPPORTUNIST}; PLAYER homes and
