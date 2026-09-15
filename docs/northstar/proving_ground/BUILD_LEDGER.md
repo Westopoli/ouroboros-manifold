@@ -73,8 +73,9 @@ the run's hour window (approximate attribution).
 | 109-probe-e-build-20260910-1739 | 2026-09-10 17:39 | **INCOMPLETE** | 6 | 1/2 | gpt-oss:20b, qwen3-coder:30b | 113.2 | 0 | 7 | 0.0053 |
 | 110-probe-f-build-20260910-1742 | 2026-09-10 17:42 | **DONE** | 1 | 18/18 | qwen3-coder:30b | 59.0 | 0 | 4 | 0.0043 |
 | 111-probe-e-abort-20260910-1744 | 2026-09-10 17:44 | **UNSATISFIABLE** | 6 | 1/2 | gpt-oss:20b, qwen3-coder:30b | 81.5 | 1 | 3 | 0.0021 |
-| 200-e02-region-state-20260914-1004 | 2026-09-14 10:04 | **SPEC-INVALID** | 0 | - | - | 0 | 0 | 7 | 0.0129 |
-| 200-e02-region-state-20260914-1009 | 2026-09-14 10:09 | **INCOMPLETE** | 18 | 0/7 | gpt-oss:20b, qwen3-coder:30b | 1512.2 | 2 | 4 | 0.0098 |
+| 112-probe-h-gd-build-20260914-1942-2 |  | **DONE** | 1 | 1/1 | qwen3-coder:30b | 23.4 | 0 | 0 | 0.0 |
+| 200-e02-region-state-20260914-1737 | 2026-09-14 17:37 | **INCOMPLETE** | 18 | 0/7 | gpt-oss:20b, qwen3-coder:30b | 1611.9 | 2 | 7 | 0.0164 |
+| 200-e02-region-state-20260914-1806 | 2026-09-14 18:06 | **DONE** | 18 | 7/7 | gpt-oss:20b, qwen3-coder:30b | 1547.2 | 2 | 4 | 0.006 |
 | 900-boot-smoke-20260907-1224 | 2026-09-07 12:24 | **DONE** | 0 | - | - | 0 | 0 | 0 | 0.0 |
 <!-- AUTO:END -->
 
