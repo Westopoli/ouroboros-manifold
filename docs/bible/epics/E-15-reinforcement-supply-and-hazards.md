@@ -147,7 +147,7 @@ Proposed for Westley to confirm: capture and production for 8 structures in unde
 
 ## Open ambiguity flags
 
-Q-126-01, Q-126-02, Q-127-01, Q-128-01, Q-129-01, Q-131-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-126-01, Q-126-02, Q-127-01, Q-129-01, Q-131-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
