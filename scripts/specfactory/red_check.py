@@ -57,6 +57,15 @@ def main(argv: list[str]) -> int:
         print("RED CHECK FAILED: nothing was collected", file=sys.stderr)
         return 1
 
+    skipped = 0
+    m_skip = re.search(r"(\d+) skipped", output)
+    if m_skip:
+        skipped = int(m_skip.group(1))
+    ran = len(re.findall(r"(\d+) (?:failed|error)", output)) > 0
+    if skipped > 0 and not ran:
+        print(f"RED CHECK FAILED: {skipped} test(s) skipped and none ran; a skipped suite is not red "
+              f"(run from tests/csim so conftest finds the library)", file=sys.stderr)
+        return 1
     if passed > 0:
         print(f"RED CHECK FAILED: {passed} test(s) passed; every new test must fail or error", file=sys.stderr)
         return 1
