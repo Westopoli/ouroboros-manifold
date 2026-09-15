@@ -25,12 +25,12 @@ Every forecast built on this is a guess. The plan therefore states sequence and 
    - E-21's pipeline stories move to Round 2; Round 1 reuses the existing chronicle corpus.
 4. **Round 1 story set**, in the order it enters Stage 3 (dependency order within the round):
    - E-02 (Ready, tests red): S-012 to S-020.
-   - E-03: S-021 (or `S-P14`), S-022, S-025.
+   - E-03: S-021, S-022, S-025.
    - E-04: S-026, S-027, S-030.
    - E-05: S-032, S-035, S-036, S-037, S-038.
    - E-06: S-043, S-045.
-   - E-07: S-049, S-052, S-053, `S-P03`.
-   - E-08: S-055, S-058, S-059, S-063 (minimal), S-064, `S-P04`.
+   - E-07: S-049, S-052, S-053.
+   - E-08: S-055, S-056, S-058, S-059, S-062, S-063 (minimal), S-064.
    - E-10: S-073, S-075, S-077, S-078, S-079 (minimal), `S-P01`.
    - E-09: S-065, S-066, S-068, S-069 (minimal), S-071.
    - E-21: S-152, S-158.
@@ -45,7 +45,7 @@ Every forecast built on this is a guess. The plan therefore states sequence and 
    - E-18: S-132, S-138 (minimal).
    - E-20: S-145 (by construction).
    - E-22: five Round 1 stories.
-   That is 66 real stories, 8 prototype stories, and 19 epics with Stage 3 work to do (E-02 is done, E-19 has none). Every flag on a Round 1 real story is answered as of 2026-09-14 except Q-026-01 (direction given, resolution at Stage 3) and Q-046-01 (deferred to the E-06 spec).
+   That is 68 real stories, 5 prototype stories, and 19 epics with Stage 3 work to do (E-02 is done, E-19 has none). Every flag on a Round 1 real story is answered as of 2026-09-14 except Q-026-01 (direction given, resolution at Stage 3) and Q-046-01 (deferred to the E-06 spec).
 
 ## Stage 3 cost, honestly
 

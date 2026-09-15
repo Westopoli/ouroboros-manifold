@@ -17,7 +17,7 @@ The sim ladder builds and T1-tests first (E-02, E-03, E-04, E-05, E-06, E-07, E-
 - Validates: the ground truth under H1.
 
 ### E-03 World generation
-- Round 1: S-021 (blocked on Q-021-01; answer or prototype `S-P14` fixed region count), S-022, S-025.
+- Round 1: S-021, S-022, S-025 (Q-021-01, Q-021-03, Q-021-04, Q-021-05 answered).
 - Round 2: S-023, S-024.
 - Round 1 default: every edge carries both armies and trade until S-023.
 
@@ -39,18 +39,15 @@ The sim ladder builds and T1-tests first (E-02, E-03, E-04, E-05, E-06, E-07, E-
 - Validates: H1 (peace and war visibly shift between chapters).
 
 ### E-07 Civilizational lifecycle
-- Round 1: S-049, S-052, S-053 (phase label; it drives the five feelings the hub names).
+- Round 1: S-049, S-052, S-053 (phase label; it drives the five feelings the hub names), and E-08 S-062 (Q-062-01 answered) so a fallen civilization hands the player to a survivor instead of ending the campaign.
 - Round 2: S-050, S-051.
 - Deferred: S-054.
-- Stand-in `S-P03`: when the player's civilization falls in Round 1, the campaign ends on a final chronicle page and a "your line ended" screen. Replaced by E-08 S-062 when Q-062-01 is answered.
 
 ## Generational and narrative
 
 ### E-08 Generational structure
-- Round 1: S-055, S-058, S-059, S-064, S-063 in minimal form (pick a difficulty; mission preferences wait).
-- Round 2: S-056 (Q-056-01), S-057 (Q-057-01), S-060, S-061.
-- Round 3: S-062 (Q-062-01).
-- Stand-in `S-P04`: fixed jump length with seeded jitter of plus or minus 10 percent until S-056's flag is answered.
+- Round 1: S-055, S-056 (Q-056-01 answered: uniform 20 to 100), S-058, S-059, S-062, S-064, S-063 in minimal form (pick a difficulty; mission preferences wait).
+- Round 2: S-057 (Q-057-01), S-060, S-061.
 - Validates: H2.
 
 ### E-09 Chronicle
@@ -158,13 +155,10 @@ Every one of these is an Agora card, gated on probes H and I.
 | Id | Stands in for | Removed when |
 |---|---|---|
 | S-P01 | the tactical mission, as an auto-resolved card | the Round 1 tactical slice is Built |
-| S-P03 | E-08 S-062 (keep playing in a surviving civilization) | Q-062-01 answered and S-062 Built |
-| S-P04 | E-08 S-056 (world decides the jump length) | Q-056-01 answered and S-056 Built |
 | S-P06 | E-17 generator stories | S-112, S-114, S-117, S-119 Built |
 | S-P07 | E-14 S-120 behaviors | Q-120-01 answered and S-120 Built |
 | S-P10 | E-01, two-layer prototype | the layer design phase picks an option and E-01's stories are Built |
 | S-P12 | E-16 S-104 HUD | S-104's reference attached and Built |
-| S-P14 | E-03 S-021 galaxy size | Q-021-01 answered and S-021 Built |
 
 ## Stories cut from every round on purpose
 
