@@ -68,3 +68,23 @@ All under `scripts/specfactory/`, Python 3.14 stdlib only (no new dependencies),
 - `gen_card.py` — emits an Agora card's YAML frontmatter in the existing `agora/queue/*.md` shape.
 
 Prompts and schemas for the `agy`-drafted steps (e2e draft, test-body fill, card brief, findings) are not yet written — none of E-03's blocked flags needed them this session (the fold's design gaps needed Claude's judgment, not `agy`'s drafting), and writing a prompt against a step that hasn't run for real yet risks specifying the wrong shape. Written when the next epic clears its register and reaches the draft-e2e step for real.
+
+
+## Audit experiment (Westley, 2026-09-15)
+
+The per-file Sonnet audit step is on trial. Only one wave ran; the rest of the filled files ship unaudited on purpose, so the two groups can be compared on what Agora does with them: candidates to green, INCOMPLETE and reset counts per card, and whether a card's failure traces to a test defect. Compare when the E-04 and E-05 cards have run.
+
+| File | Audited | Findings |
+|---|---|---|
+| tests/csim/test_E05_S032_every_faction_is_a_person.py | yes | MUST-FIX: R-032-03 dropped the weakness term on the empty candidate (0.084 became 0.684, colonize score 0.342); fixed |
+| tests/csim/test_E05_S033_territory_pays_or_costs.py | yes | clean |
+| tests/csim/test_E05_S034_who_looks_worth_taking.py | yes | clean; R-034-07 was a hard ABI-gap failure, fixed by adding the damage-history fixture |
+| tests/csim/test_E05_S035_attack_only_when_it_adds_up.py | yes | minor: two unused imports |
+| tests/csim/test_E05_S036_declared_or_sprung.py | yes | see register of findings when the audit returns |
+| tests/csim/test_E05_S037 to S-041 (5 files) | no | control group |
+| tests/csim/controls/test_control_e05_* (9 files) | no | control group |
+| tests/csim/test_E04_S026 to S-030 (5 files) | no | control group |
+| tests/csim/controls/test_control_e04_* (9 files) | no | control group |
+| E-03 files | yes (build-brief chat) | that chat's audit caught a weakened determinism assert, a fabricated register citation, and a stale-equation root cause |
+
+Cards that draw on audited files: 202, 203, 204a (S-036). Cards on unaudited files: 204b, 205, 206, 207, 208a, 208b, 209, 210.
