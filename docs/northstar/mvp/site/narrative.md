@@ -40,7 +40,7 @@ One line of the core fantasy, and a quiet tease of the crescendo: this is a game
 
 You are one person handed a task force and an impossible job by a civilization with its own plans, its own politics, and its own momentum. A force, a mission, a deadline. There is no base to build and no economy to manage; what you hold, you hold with what you brought and what you capture on the ground. The world does not revolve around you.
 
-**Concept moment:** a small force accepting orders from a civilization's command screen — the force and its objective, and no base-building interface anywhere.
+**Concept moment:** the task force in the field, its objective visible in the distance, the deadline told by the failing light — a force, an objective, a deadline, and no interface anywhere.
 
 ### 3. The mission is won on the ground you read
 
@@ -52,13 +52,13 @@ The tactical showcase, and the deepest section of the page. Two halves.
 
 **Layers and vision.** Every map is a stack of three to five vertical layers. Vision falls off with layer distance: a unit sees its own layer fully, an adjacent layer at half its sensor range, a layer two away at a fifth, and nothing three or more layers away. Surrounds and high ground decide fights; a smaller force that reads the layers beats a larger one that does not. This section links to the **live layer demo** at `/layers/`, which runs those real vision numbers.
 
-**Concept moment:** a cutaway side view of stacked layers, one unit on a layer and a faint, degraded view of another unit two layers away — vision visibly thinning with distance.
+**Concept moment:** none — the live demo at `/layers/` shows this better than a still could; this half of the beat frames the demo.
 
 ### 4. For the diehards — how the units balance
 
 A deliberately smaller, deeper aside for the RTS crowd. Six unit types, two per role, in a soft rock-paper-scissors: Strike flanks Siege, Siege crushes Line, Line absorbs Strike — a triangle with exceptions, never a hard counter table. Each unit has exactly one ability. Every silhouette is readable on its own. A fight with the same seed plays out the same way, tick for tick, so what you learn from a loss is real.
 
-**Concept moment:** the six low-poly unit silhouettes side by side, each instantly distinguishable by shape, with the Strike → Siege → Line triangle.
+**Concept moment:** the balance as positional geometry — wedges, blocks, and arrows, no units: the three relationships as a legend, one side reading the ground against one that doesn't, and the showpiece animation of both sides trading moves like a chess game.
 
 ### 5. The galaxy is alive
 
@@ -76,7 +76,7 @@ Each mission is a chapter. Between chapters, twenty to a hundred years pass and 
 
 The headline. The game ships across multiple eras built on one shared skeleton: maps, civilizations, and era systems are transferable, not bespoke content. A campaign can move chronologically through eras. And it is multiplayer: players who own the same eras meet on one shared map, in deterministic lockstep across Windows, macOS, and Linux, and a match can cross eras. The Settled Reach — the sci-fi, future era — is where the launch sits; other eras carry the same structure into other times.
 
-**Concept moment:** the same galaxy-map layout rendered in two different eras side by side — same structure, different dress — and two commanders' screens from different eras meeting on one shared map.
+**Concept moment:** two friends' task forces from two different eras meeting on one shared map, each era read entirely from the dress of its ships — same terrain, same strategic shape, two ages sharing it. No interface.
 
 ### 8. Join the playtest
 
