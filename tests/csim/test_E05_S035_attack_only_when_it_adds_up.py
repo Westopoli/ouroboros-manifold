@@ -61,7 +61,7 @@ def test_R_035_01_potential_commit_70_net_70(lib, world_factory):
     assert c.viable == 1
 
     decisions = read_decisions(lib, w)
-    assert len(decisions) == 1
+    assert len(decisions) >= 1  # one record per faction that ran 3d; faction 0 is first (ascending id)
     d = decisions[0]
     assert d.faction_id == 0
     # Potential commit = 100 * 0.70 = 70.0
@@ -175,7 +175,7 @@ def test_R_035_02_entrenchment_1_5_net_70(lib, world_factory):
     assert c.viable == 1
 
     decisions = read_decisions(lib, w)
-    assert len(decisions) == 1
+    assert len(decisions) >= 1  # one record per faction that ran 3d; faction 0 is first (ascending id)
     d = decisions[0]
     assert d.action == OMAction.ATTACK
     assert d.target_idx == 1
@@ -206,7 +206,7 @@ def test_R_035_03_break_even_20_0_55(lib, world_factory):
     lib.om_world_step(w)
 
     decisions = read_decisions(lib, w)
-    assert len(decisions) == 1
+    assert len(decisions) >= 1  # one record per faction that ran 3d; faction 0 is first (ascending id)
     d = decisions[0]
     assert d.faction_id == 0
 
@@ -251,7 +251,7 @@ def test_R_035_04_ratio_0_636_0_8(lib, world_factory):
     lib.om_world_step(w)
 
     decisions = read_decisions(lib, w)
-    assert len(decisions) == 1
+    assert len(decisions) >= 1  # one record per faction that ran 3d; faction 0 is first (ascending id)
     d = decisions[0]
     assert d.faction_id == 0
 
@@ -340,7 +340,7 @@ def test_R_035_05_attack_score_clamp_26_40(lib, world_factory):
     assert c.viable == 1
 
     decisions = read_decisions(lib, w)
-    assert len(decisions) == 1
+    assert len(decisions) >= 1  # one record per faction that ran 3d; faction 0 is first (ascending id)
     d = decisions[0]
     assert d.faction_id == 0
     # Attack score = clamp(26/40, 0, 1) * 1.2 = 0.65 * 1.2 = 0.78
@@ -385,7 +385,7 @@ def test_R_035_06_colonize_score_0_30_1(lib, world_factory):
     assert att_cand.net == pytest.approx(26.0, abs=1e-6)
 
     decisions = read_decisions(lib, w)
-    assert len(decisions) == 1
+    assert len(decisions) >= 1  # one record per faction that ran 3d; faction 0 is first (ascending id)
     d = decisions[0]
     # Colonize score = 0.30 * 1.0 = 0.30; Attack score = 0.78; attack wins
     assert d.colonize_score == pytest.approx(0.30, abs=1e-6)
@@ -418,7 +418,7 @@ def test_R_035_07_faction_accumulates(lib, world_factory):
     lib.om_world_step(w)
 
     decisions = read_decisions(lib, w)
-    assert len(decisions) == 1
+    assert len(decisions) >= 1  # one record per faction that ran 3d; faction 0 is first (ascending id)
     d = decisions[0]
     assert d.faction_id == 0
     assert d.attack_score == pytest.approx(0.04, abs=1e-6)
@@ -487,7 +487,7 @@ def test_R_035_08_faction_accumulates_colonize_costs_20(lib, world_factory):
     lib.om_world_step(w)
 
     decisions = read_decisions(lib, w)
-    assert len(decisions) == 1
+    assert len(decisions) >= 1  # one record per faction that ran 3d; faction 0 is first (ascending id)
     d = decisions[0]
     assert d.faction_id == 0
     # Colonize score = 0.40 * 1.0 = 0.40; attack score = 0.0; colonize wins scoring

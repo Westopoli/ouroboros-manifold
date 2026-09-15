@@ -67,7 +67,7 @@ def test_R_033_01_budget_66_8_40_8(lib, world_factory):
 
     # With no enemies or uncolonized regions, faction accumulates and commits 0
     decisions = read_decisions(lib, w)
-    assert len(decisions) == 1
+    assert len(decisions) >= 1  # one record per faction that ran 3d; faction 0 is first (ascending id)
     assert decisions[0].faction_id == 0
     assert decisions[0].action == OMAction.ACCUMULATE
     assert decisions[0].commit == pytest.approx(0.0, abs=1e-6)

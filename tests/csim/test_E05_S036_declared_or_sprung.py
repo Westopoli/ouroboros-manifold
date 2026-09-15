@@ -54,7 +54,7 @@ def test_R_036_01_telegraph_preference_0_7_0(lib, world_factory):
     lib.om_world_step(w)
 
     decisions = read_decisions(lib, w)
-    assert len(decisions) == 1
+    assert len(decisions) >= 1  # one record per faction that ran 3d; faction 0 is first (ascending id)
     d = decisions[0]
     assert d.faction_id == 0
     assert d.action == OMAction.ATTACK
@@ -122,7 +122,7 @@ def test_R_036_02_preference_0_3_0_2(lib, world_factory):
     lib.om_world_step(w)
 
     decisions = read_decisions(lib, w)
-    assert len(decisions) == 1
+    assert len(decisions) >= 1  # one record per faction that ran 3d; faction 0 is first (ascending id)
     d = decisions[0]
     assert d.faction_id == 0
     assert d.action == OMAction.ATTACK

@@ -80,7 +80,7 @@ The per-file Sonnet audit step is on trial. Only one wave ran; the rest of the f
 | tests/csim/test_E05_S033_territory_pays_or_costs.py | yes | clean |
 | tests/csim/test_E05_S034_who_looks_worth_taking.py | yes | clean; R-034-07 was a hard ABI-gap failure, fixed by adding the damage-history fixture |
 | tests/csim/test_E05_S035_attack_only_when_it_adds_up.py | yes | minor: two unused imports |
-| tests/csim/test_E05_S036_declared_or_sprung.py | yes | see register of findings when the audit returns |
+| tests/csim/test_E05_S036_declared_or_sprung.py | yes | MUST-FIX: `len(decisions) == 1` asserted where the ABI records one decision per faction (systemic, fixed in 11 places across the E-05 files); ESCALATE: Q-036-02 budget reservation while a telegraph waits |
 | tests/csim/test_E05_S037 to S-041 (5 files) | no | control group |
 | tests/csim/controls/test_control_e05_* (9 files) | no | control group |
 | tests/csim/test_E04_S026 to S-030 (5 files) | no | control group |

@@ -96,7 +96,7 @@ Rules
 
 Inputs: archetype preference; target military; defend weight; budget.
 Outputs: attack mode; pending telegraph list; reinforce record.
-Open flags: none.
+Open flags: Q-036-02 (budget reservation and re-targeting while a telegraph waits).
 
 ### S-037 — Battles have a shape
 As a commander, I want an attack's outcome to scale with how decisive it was, and a strong garrison to genuinely absorb a blow, so that fights feel like fights.
@@ -227,7 +227,7 @@ None required in this epic.
 
 ## Open ambiguity flags
 
-None. Q-035-01, Q-036-01, Q-037-01, Q-040-01, Q-041-01 are closed and folded (2026-09-14).
+Q-036-02 (raised 2026-09-15 by the S-036 audit; the tests assume candidate (a)). Q-035-01, Q-036-01, Q-037-01, Q-040-01, Q-041-01 are closed and folded (2026-09-14).
 
 ## Depends on
 
