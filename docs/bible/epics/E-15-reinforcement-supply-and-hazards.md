@@ -7,7 +7,7 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 6 stories, 33 rules, numbers from `algorithms.md` ALG-75 and config. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 6 new flags, Q-126-01, Q-126-02, Q-127-01, Q-128-01, Q-129-01, Q-131-01. |
+| Implied-but-unstated behavior turned into flags | 6 new flags, Q-126-02, Q-127-01, Q-128-01, Q-129-01, Q-131-01. |
 | Every visible-surface story has a reference | **No.** S-131 (how structures, convoys, and hazards read on screen) has a visible surface and no reference. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
@@ -148,7 +148,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-126-01, Q-126-02, Q-127-01, Q-129-01, Q-131-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-126-02, Q-127-01, Q-129-01, Q-131-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

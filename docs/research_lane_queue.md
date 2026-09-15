@@ -90,6 +90,7 @@ This file is the live state of the Research Lane. The playbook (`docs/research_l
 | Q72 | Checkpoint #1 — post-Wave 3 synthesis | done | `docs/research/analysis/checkpoint_1_post_wave_3.md` | mid-stream conflict-tracking + fork-substrate snapshot | 2026-05-18 |
 | Q73 | Checkpoint #2 — post-Wave 5 synthesis | done | `docs/research/analysis/checkpoint_2_post_wave_5.md` | funnel/demo conflict tracking; C14 (Pre-Zip vs Next Fest lead-time) surfaced | 2026-05-18 |
 | Q74 | Checkpoint #3 — post-Wave 7 capstone synthesis (W1-W7 cross-validation, 4+ conflict ledger, fork-substrate roll-up) | done | `docs/research/analysis/checkpoint_3_post_wave_7.md` | Design Lane commercial-fork omnibus pick | 2026-05-18 |
+| Q75 | Control-group depth and camera for multi-layer armies: how a player runs three armies with two or three layers each (sub-groups inside control groups, per-layer recall, layer hotkeys) without an all-army command (Principle 4) and without flattening space; plus the multi-perspective camera presets (A-145 to A-148). Precedents: SC2 subgroup tab-cycling, Halo Wars group handling, Supreme Commander hierarchical groups, IGoP control scheme. Deliverable: topic brief with 2 to 3 candidate control schemes, each with the hotkey table and the E-16 rules it would change. | open, requested by Westley 2026-09-14 | `docs/research/topics/control_group_depth.md` | E-16 S-105, E-01, E-13 | 2026-09-14 |
 
 ## Next Up
 
