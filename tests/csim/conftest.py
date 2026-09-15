@@ -245,7 +245,7 @@ def dbg():
     if not DBG_LIB_PATH.exists():
         if _HAS_CSRC:
             pytest.fail("COMPILE ERROR: csrc/*.c present but libouroboros_dbg.so did not build:\n"
-                        + (BUILD_ERROR or "(no compiler output captured; run `make`)")); run `make` to see the output")
+                        + (BUILD_ERROR or "(no compiler output captured; run `make`)"))
         pytest.skip("no csrc/*.c implementation yet; nothing to build")
     handle = ctypes.CDLL(str(DBG_LIB_PATH))
     _configure_common(handle)
