@@ -4,6 +4,14 @@
 #
 # Usage: scripts/agy_task.sh <prompt-file> <schema-file> [extra agy args...]
 #
+# Model and effort are overridable by env, both defaulting to the original
+# behavior (agy's own default model = Gemini Flash; effort high):
+#   AGY_MODEL   agy model id (e.g. claude-sonnet-4-6) — draws on that model's
+#               quota group. Unset = agy default. `agy models` lists ids.
+#   AGY_EFFORT  low|medium|high (default high).
+# The Claude group (claude-sonnet-4-6, claude-opus-4-6-thinking) has a separate
+# quota from Gemini; route transcription work there when Gemini's is drained.
+#
 # Prints agy's JSON result on stdout. Non-zero exit if agy itself errors; the
 # caller still has to check the JSON's "status" field for tool-level failures
 # (denied_actions, empty response) since agy exits 0 on those.
@@ -26,11 +34,16 @@ unset SSH_CONNECTION SSH_CLIENT SSH_TTY
 
 export PATH="$HOME/.local/bin:$PATH"
 
+# Default to Claude Sonnet through agy's Claude/GPT quota group (see `agy models`):
+# the Gemini five-hour window drains fast under parallel fills (2026-09-14).
+AGY_MODEL="${AGY_MODEL:-claude-sonnet-4-6}"
+
 exec agy \
   --prompt "$(cat "$PROMPT_FILE")" \
   --output-format json \
   --json-schema "$SCHEMA_FILE" \
-  --effort high \
+  --effort "${AGY_EFFORT:-high}" \
+  ${AGY_MODEL:+--model "$AGY_MODEL"} \
   --dangerously-skip-permissions \
   --sandbox \
   "$@"
