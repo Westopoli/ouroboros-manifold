@@ -38,7 +38,7 @@ Rules
 
 Inputs: fields; template table; noise offsets; tick.
 Outputs: fired event records with chain tag in the tick log; field changes.
-Open flags: Q-026-01 (strict vs at-or-above crossing, grace period, and fresh-trigger ordering are code behaviors the bible does not state).
+Open flags: Q-026-01 (several regions crossing thresholds on one tick: simultaneous against tick-start fields, per Westley's direction, or sequential as coded; resolution designed at Stage 3).
 
 ### S-027 — One thing leads to another
 As a commander, I want a crisis to spawn follow-ups that may or may not come, depending on how the region is doing when their time arrives, so that intervention matters.

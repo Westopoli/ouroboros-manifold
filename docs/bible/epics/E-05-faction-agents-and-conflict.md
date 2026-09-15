@@ -7,7 +7,7 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 10 stories, 44 rules, numbers from `algorithms.md` ALG-11 through ALG-25 and ALG-29. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 5 new flags, Q-035-01, Q-036-01, Q-037-01, Q-040-01, Q-041-01. |
+| Implied-but-unstated behavior turned into flags | 5 new flags, Q-035-01, Q-036-01, Q-040-01, Q-041-01. |
 | Every visible-surface story has a reference | Not applicable; conflict reaches the player through the world view (E-16), chronicle (E-09), and missions (E-10). |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
@@ -108,10 +108,11 @@ Rules
 - R-037-05  Given a defender with military 80 and an attacker committing 50, When resolved at draw 1.0, Then net = 50 − 88 = −38 and the region loses only 5.0 military.
 - R-037-06  Given a surprise attack with commit 50, When resolved, Then effective attack = 25.
 - R-037-07  Given any attack, When it resolves, Then the attacker's committed budget is spent in full.
+- R-037-08  Given any attack of any outcome, When it resolves, Then the attacker's own regions' fields are unchanged by the resolution; only the committed budget is spent.
 
 Inputs: commit; defender fields; tech multipliers; entrenchment; mode; RNG.
 Outputs: outcome band, net force, deltas in the tick log; region fields.
-Open flags: Q-037-01 (bible gives the attacker's home region a tension hit on contested and repelled attacks; code never touches the attacker's regions).
+Open flags: none.
 
 ### S-038 — Taking a region
 As a commander, I want a region to change hands when its defenders are gone, whoever attacked and however it went, and to be hard to hold afterward, so that conquest is a beginning and not an end.
@@ -225,7 +226,7 @@ None required in this epic.
 
 ## Open ambiguity flags
 
-Q-035-01, Q-036-01, Q-037-01, Q-040-01, Q-041-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-035-01, Q-036-01, Q-040-01, Q-041-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

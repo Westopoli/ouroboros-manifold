@@ -7,7 +7,7 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 8 stories, 41 rules, numbers from `algorithms.md` ALG-66 through ALG-69 and config. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 5 new flags, Q-095-01, Q-097-01, Q-098-01, Q-099-01, Q-101-01. |
+| Implied-but-unstated behavior turned into flags | 5 new flags, Q-095-01, Q-098-01, Q-099-01, Q-101-01. |
 | Every visible-surface story has a reference | **No.** S-101 (how movement reads: turning, flow around blockers, formation arrival) has a visible surface and no reference. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
@@ -46,14 +46,14 @@ Rules
 - R-096-01  Given a plain move, When the unit travels, Then it acquires no target, returns no fire, and does not stop when hit.
 - R-096-02  Given an attack-move, When an enemy enters attack range on the unit's layer, Then the unit halts and fires; when the target dies or leaves range it resumes toward the point.
 - R-096-03  Given an attack-move engagement, When the target moves more than 200 wu from the unit's anchor (its position at acquisition), Then the unit drops the target and resumes.
-- R-096-04  Given attack-target on enemy E, When issued, Then the unit moves toward E if out of range and attacks E in range until E dies or a new order arrives; if E becomes invisible the unit moves to E's last known position [Q-097-01].
+- R-096-04  Given attack-target on enemy E, When issued, Then the unit moves toward E if out of range and attacks E in range until E dies or a new order arrives; if E becomes invisible the unit moves to E's last known position and idles there.
 - R-096-05  Given activate-ability, When issued to a selection, Then each unit with its ability ready activates it; Brace toggles.
 - R-096-06  Given any other command name (patrol, hold, stop, follow), When received, Then it is rejected with a reason and no state changes.
 - R-096-07  Given commands for tick t, When the tick runs, Then all of them are applied before any state advances, in arrival order, and recorded with the tick number for replay.
 
 Inputs: command packets (kind, unit ids, target point or unit).
 Outputs: acknowledgement with reason in the tick delta; unit order state.
-Open flags: Q-097-01 (attack-target on a target that goes invisible).
+Open flags: none.
 
 ### S-097 — Around, not through
 As a commander, I want units to route around terrain and flow around each other, and never to walk through anything, so that formations are real.
@@ -174,7 +174,7 @@ Proposed for Westley to confirm: movement and collision for 1,000 units in under
 
 ## Open ambiguity flags
 
-Q-095-01, Q-097-01, Q-098-01, Q-099-01, Q-101-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-095-01, Q-098-01, Q-099-01, Q-101-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
