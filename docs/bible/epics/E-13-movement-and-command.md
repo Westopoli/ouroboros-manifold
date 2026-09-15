@@ -63,7 +63,8 @@ Rules
 - R-097-02  Given a destination shared by several units, When routes are computed, Then the route is computed once and cached.
 - R-097-03  Given a moving unit, When it steps, Then it probes 40 wu ahead; if an ally blocks the probe it sweeps alternate angles left and right in a fixed order and takes the first clear one; if none, it waits.
 - R-097-04  Given a unit that took a deflected angle, When it moves, Then it keeps that heading for at least 60 wu before re-evaluating.
-- R-097-05  Given two units on the same layer within 30 wu (2 × radius 15), When the collision pass runs, Then they are pushed apart along the line between them until 30 wu apart, over up to N iterations per tick [Q-098-01: N unspecified in the bible].
+- R-097-05  Given two units on the same layer within 30 wu (2 × radius 15), When the collision pass runs, Then they are pushed apart along the line between them until 30 wu apart, over up to 3 iterations per tick.
+- R-097-06  Given a unit moving through terrain with obstacle density d, When d is in [0.3, 0.7], Then its speed is multiplied by (1 − 0.5 · d); below 0.3 speed is unchanged; at 0.7 and above the cell is blocked (R-097-01). The multiplier is era-uniform; an era pack may not switch it off.
 - R-097-06  Given one unit of the pair is stationary (no move target, or halted by engagement), When pushed, Then it moves 0 and the other takes the full displacement.
 - R-097-07  Given two units at exactly the same position, When pushed, Then the lower unit id moves in the canonical direction (+x).
 - R-097-08  Given enemy units, When colliding, Then they collide like allies; nobody passes through anybody.
@@ -71,7 +72,7 @@ Rules
 
 Inputs: map grid; unit positions, targets, states.
 Outputs: positions; route cache; collision log (T1).
-Open flags: Q-098-01 (iterations per tick), Q-099-01 (soft terrain speed: bible says not built and names a speed multiplier as the right mechanism; build it or leave it).
+Open flags: none.
 
 ### S-098 — Firing through friends
 As a commander, I want my back rank to shoot over my front rank, so that formation depth is an advantage and not a jam.
@@ -174,7 +175,7 @@ Proposed for Westley to confirm: movement and collision for 1,000 units in under
 
 ## Open ambiguity flags
 
-Q-095-01, Q-098-01, Q-099-01, Q-101-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-095-01, Q-101-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

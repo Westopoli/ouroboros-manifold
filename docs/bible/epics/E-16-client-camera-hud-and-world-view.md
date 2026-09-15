@@ -133,12 +133,12 @@ As a player, I want a main menu that sets the tone and a settings screen that co
 
 Rules
 - R-110-01  Given launch, When the main menu shows, Then the galaxy particle structure runs behind it at 70 percent opacity with an autonomous camera cycling six moods with 5 s transitions, and the menu offers New Campaign, Continue, Settings, and Quit.
-- R-110-02  Given Settings, When opened, Then it offers at least resolution, fullscreen, master and music volume, key rebinding for the layer modifier and control groups, and edge-scroll on or off [Q-110-01].
+- R-110-02  Given Settings, When opened, Then it offers resolution, fullscreen, master and music volume, key rebinding for the layer modifier and control groups, and edge-scroll on or off; accessibility options (colorblind palette, UI scale) are a later story, not in the first playtest rounds.
 - R-110-03  Given Continue, When pressed with a save at a chapter boundary, Then the campaign resumes at that boundary.
 
 Inputs: menu input.
 Outputs: screens.
-Open flags: Q-110-01 (settings scope), Q-111-01 (save slots: how many, and whether a mid-mission save exists; the bible names chapter boundaries as the save points).
+Open flags: none.
 
 ### S-111 — Saving
 As a player, I want the game saved at every chapter boundary without asking, and to be able to leave at those boundaries, so that I never lose an evening.
@@ -147,10 +147,11 @@ Rules
 - R-111-01  Given a mission start, a mission end, or a time jump end, When reached, Then an autosave is written before the player can continue.
 - R-111-02  Given a load, When the campaign resumes, Then the world, ledger, chapter, onboarding, RNG state, and chain counter are restored such that the next jump is deterministic (E-08 R-064-04).
 - R-111-03  Given a save from a different game version, When loaded, Then it is refused with a message naming the versions.
+- R-111-04  Given the campaign list, When the player starts a new campaign, Then a new campaign slot is created with no fixed limit on the number of campaigns; there is no save of any kind during a mission, and quitting mid-mission returns the campaign to its last chapter-boundary autosave.
 
 Inputs: game state.
 Outputs: save files; menu.
-Open flags: Q-111-01.
+Open flags: none.
 
 ## Inputs
 
@@ -196,7 +197,7 @@ Proposed for Westley to confirm: 60 fps with 1,000 units on screen and the HUD l
 
 ## Open ambiguity flags
 
-Q-103-01, Q-104-01, Q-105-01, Q-106-01, Q-108-01, Q-110-01, Q-111-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-103-01, Q-104-01, Q-105-01, Q-106-01, Q-108-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

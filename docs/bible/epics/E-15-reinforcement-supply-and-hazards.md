@@ -45,11 +45,11 @@ Rules
 - R-127-02  Given units of two or more non-owner factions inside, or the owner also present, When ticks pass, Then progress resets to 0.
 - R-127-03  Given a structure at HP 3,000, When attacked, Then it takes damage like a unit with no matchup multiplier; at 0 HP it is removed for the rest of the mission and never rebuilt.
 - R-127-04  Given a structure changes owner, When the ticker runs, Then "structure captured" or "structure lost" appears (E-16 R-104-01).
-- R-127-05  Given a structure's HP, When read, Then Bombard splash alone should not destroy it in one engagement [Q-128-01: 3,000 HP vs Bombard 70 per attack].
+- R-127-05  Given a structure's HP, When read, Then it is 3,000 (ALG-75) with no category multiplier applied to structures; a single Bombard at 70 per attack needs about 43 attacks, so splash alone does not destroy it in one engagement.
 
 Inputs: unit positions and factions; damage.
 Outputs: ownership, progress, HP in the delta; ticker.
-Open flags: Q-128-01.
+Open flags: none.
 
 ### S-128 — What the enemy builds
 As a commander, I want the enemy to build toward a composition I can read and adapt to, so that watching its production is a skill.
