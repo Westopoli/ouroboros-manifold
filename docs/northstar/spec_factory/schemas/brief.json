@@ -1,0 +1,11 @@
+{
+  "type": "object",
+  "properties": {
+    "brief": {"type": "string"},
+    "expected_lines": {"type": "integer"},
+    "questions": {"type": "array", "items": {"type": "string"}},
+    "assumptions": {"type": "array", "items": {"type": "string"}}
+  },
+  "required": ["brief", "expected_lines", "questions", "assumptions"],
+  "additionalProperties": false
+}
