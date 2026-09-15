@@ -86,9 +86,8 @@ func _ready() -> void:
 		SimBridge.state_updated.connect(TacticalBridge._on_message)
 		TacticalBridge._connected = true
 		SimBridge.send_command({"type": "command", "cmd": "ready_for_tactical"})
-	else:
-		# Development fallback: connect via WebSocket to run_debug_server.py
-		TacticalBridge.connect_to_engine("127.0.0.1", 8765)
+	# See also: autoload/tactical_bridge.gd — the WebSocket dev fallback this
+	# branched to (TacticalBridge.connect_to_engine) was removed with WsClient.
 	TacticalBridge.connection_state_changed.connect(_on_conn_state)
 	TacticalBridge.snapshot_received.connect(_on_first_snapshot, CONNECT_ONE_SHOT)
 	TacticalBridge.snapshot_received.connect(_sync_mission_markers)

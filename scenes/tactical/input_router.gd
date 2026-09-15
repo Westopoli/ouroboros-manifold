@@ -1,6 +1,6 @@
 ## Routes keyboard and mouse input to validated command packets.
 ## Owns selection state, control groups, and active-layer tracking.
-## Sends all commands through WsInputSanitizer before TacticalBridge.send_command().
+## Sends all commands through WsInputSanitizer before SimBridge.send_command().
 ## _to_world() intersects the mouse ray with the active layer's horizontal plane.
 ## Selection picking and box-select operate in screen space via Camera3D.unproject_position().
 extends Node2D
@@ -330,10 +330,10 @@ func _is_selectable(uid: int) -> bool:
 func _send(cmd: Dictionary) -> void:
 	if WsInputSanitizer.validate(cmd):
 		BugReportManager.log_command(cmd)
+		# See also: autoload/tactical_bridge.gd — TacticalBridge.send_command,
+		# the WebSocket dev-fallback this branched to, was removed with WsClient.
 		if SimBridge.USE_LIVE_SIM:
 			SimBridge.send_command({"type": "command", "command": cmd})
-		else:
-			TacticalBridge.send_command(cmd)
 		TacticalBridge.command_sent.emit(cmd)
 
 
