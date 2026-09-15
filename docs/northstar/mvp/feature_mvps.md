@@ -99,8 +99,8 @@ The sim ladder builds and T1-tests first (E-02, E-03, E-04, E-05, E-06, E-07, E-
 - Validates: H4.
 
 ### E-15 Reinforcement, supply, and hazards
-- Round 1: S-127 (capture by holding unopposed) and prototype `S-P08`: a fixed starting force plus one capturable garrison; no convoys, no hazards, no drift.
-- Round 2: S-126 (Q-126-01), S-128, S-130.
+- Round 1: S-126 (Q-126-01 answered 2026-09-14: code values, no cost, no trickle) and S-127 (capture by holding unopposed); no convoys, no hazards, no drift.
+- Round 2: S-128, S-130.
 - Round 3: S-129, S-131.
 - Validates: H5.
 
@@ -113,8 +113,8 @@ The sim ladder builds and T1-tests first (E-02, E-03, E-04, E-05, E-06, E-07, E-
 ## Client and cross-cutting
 
 ### E-16 Camera, HUD, world view, and screens
-- Round 1: S-106 and S-107 in minimal form (regions as points, edges as lines, owner as color, pan, zoom, click to inspect; the existing in-game galaxy animation is the reference), S-110 in minimal form (title, new campaign, continue, quit), S-111 (autosave at chapter boundaries; Q-111-01 answered or one slot), and three prototypes: `S-P11` camera (pan, zoom, rotate on a fixed tilt; the free-camera rules wait on Q-103-01), `S-P12` HUD (selection panel, one objective line with progress, layer indicator, mission clock; the lean-HUD reference wait is for S-104 proper), `S-P13` selection (click, box-select, control groups 1 to 5 with exclusive membership; Q-105-01 wait is for S-105 proper).
-- Round 2: S-103, S-104, S-105 replacing the three prototypes; S-109.
+- Round 1: S-106 and S-107 in minimal form (regions as points, edges as lines, owner as color, pan, zoom, click to inspect; the existing in-game galaxy animation is the reference), S-110 in minimal form (title, new campaign, continue, quit), S-111 (autosave at chapter boundaries; Q-111-01 answered or one slot), S-103 (fixed top-down interim, Q-103-01 answered 2026-09-14), S-105 (click, box-select across every layer, layer hotkeys narrow, control groups with exclusive membership; Q-105-01 answered 2026-09-14), and one prototype: `S-P12` HUD (selection panel, one objective line with progress, layer indicator, mission clock; the lean-HUD reference wait is for S-104 proper).
+- Round 2: S-104 replacing `S-P12`; S-109.
 - Round 3: S-108.
 - Validates: every hypothesis needs these surfaces; the UI-bounce metrics live here.
 - Gate: every Round 1 client card waits on probe H.
@@ -162,11 +162,8 @@ Every one of these is an Agora card, gated on probes H and I.
 | S-P04 | E-08 S-056 (world decides the jump length) | Q-056-01 answered and S-056 Built |
 | S-P06 | E-17 generator stories | S-112, S-114, S-117, S-119 Built |
 | S-P07 | E-14 S-120 behaviors | Q-120-01 answered and S-120 Built |
-| S-P08 | E-15 reinforcement structures | S-126 Built |
 | S-P10 | E-01, two-layer prototype | the layer design phase picks an option and E-01's stories are Built |
-| S-P11 | E-16 S-103 camera | Q-103-01 answered and S-103 Built |
 | S-P12 | E-16 S-104 HUD | S-104's reference attached and Built |
-| S-P13 | E-16 S-105 selection | Q-105-01 answered and S-105 Built |
 | S-P14 | E-03 S-021 galaxy size | Q-021-01 answered and S-021 Built |
 
 ## Stories cut from every round on purpose
