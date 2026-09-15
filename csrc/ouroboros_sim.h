@@ -288,6 +288,20 @@ typedef enum { OM_MODE_TELEGRAPH = 0, OM_MODE_SURPRISE = 1 } om_attack_mode;
 typedef enum { OM_OUT_BREAKTHROUGH = 0, OM_OUT_CONTESTED = 1, OM_OUT_REPELLED = 2 } om_outcome;
 typedef enum { OM_CAND_ATTACK = 0, OM_CAND_COLONIZE = 1 } om_candidate_kind;
 
+/* ---- intent injection (fixture) ----
+ * Places an intent into the next om_world_step exactly as if faction_id had
+ * decided it in step 3d: an attack (with mode; a telegraphed one enters the
+ * pending list and resolves at tick + 3), a colonize, or a reinforce. A faction
+ * with an injected intent this tick skips its own 3d decision, so a test
+ * controls exactly which intents collide. commit is taken as given (a colonize
+ * may carry any commit here, unlike ALG-16's fixed 20). Returns 0 on success,
+ * -1 if faction_id is unknown, source_idx is not owned by it, target_idx is out
+ * of range, or commit exceeds its budget. Injected intents are consumed by the
+ * step and never persist past it. */
+int om_intent_inject(om_world *w, int32_t faction_id, om_action action, uint32_t target_idx,
+                     uint32_t source_idx, double commit, om_attack_mode mode);
+
+
 /* ALG-11..ALG-14 per-candidate diagnostics for one faction (S-034, S-035). */
 typedef struct om_candidate {
     uint32_t region_idx;

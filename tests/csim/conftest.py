@@ -563,6 +563,7 @@ def _bind_e05(lib):
     lib.om_rng_force.argtypes = [V, P(ctypes.c_double), ctypes.c_uint32]; lib.om_rng_force.restype = None
     lib.om_rng_forced_remaining.argtypes = [V]; lib.om_rng_forced_remaining.restype = ctypes.c_uint32
     lib.om_faction_candidates.argtypes = [V, ctypes.c_int32, P(OmCandidate), ctypes.c_uint32]; lib.om_faction_candidates.restype = ctypes.c_uint32
+    lib.om_intent_inject.argtypes = [V, ctypes.c_int32, ctypes.c_int, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_double, ctypes.c_int]; lib.om_intent_inject.restype = ctypes.c_int
     for name, st in (("om_tick_decisions", OmDecision), ("om_pending_telegraphs", OmTelegraph),
                      ("om_tick_attacks", OmAttackResult), ("om_tick_collisions", OmCollision),
                      ("om_tick_reinforces", OmReinforce), ("om_tick_colonizations", OmColonizeResult),
@@ -621,6 +622,14 @@ def force_draws(lib, w, draws):
     _bind_e05(lib)
     arr = (ctypes.c_double * len(draws))(*draws)
     lib.om_rng_force(w, arr, len(draws))
+
+
+def inject_intent(lib, w, faction_id, action, target_idx, source_idx, commit, mode=OMMode.SURPRISE):
+    """Place an intent into the next step as if the faction decided it (the
+    faction then skips its own 3d decision this tick)."""
+    _bind_e05(lib)
+    rc = lib.om_intent_inject(w, faction_id, action, target_idx, source_idx, commit, mode)
+    assert rc == 0, f"om_intent_inject failed for faction {faction_id}: rc={rc}"
 
 
 def _read_records(lib, w, name, struct_type, max_records=256):
