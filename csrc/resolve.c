@@ -30,3 +30,10 @@ uint32_t om_event_queue(const om_world *w, om_queued_event *out, uint32_t max) {
     (void)w; (void)out; (void)max;
     return 0;
 }
+
+int om_intent_inject(om_world *w, int32_t faction_id, om_action action, uint32_t target_idx,
+                     uint32_t source_idx, double commit, om_attack_mode mode) {
+    /* STUB */
+    (void)w; (void)faction_id; (void)action; (void)target_idx; (void)source_idx; (void)commit; (void)mode;
+    return -1;
+}
