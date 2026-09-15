@@ -1,34 +1,10 @@
 /* csrc/region.c — E-02 region state and composites (build card 200). */
 #include "ouroboros_sim.h"
+#include "om_internal.h"
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 
-#define OM_MAX_NEIGHBORS 32
-#define OM_MAX_FACTIONS 64
-
-typedef struct {
-    om_tier  tier;
-    double   military, economy, tension, population;
-    double   econ_phase, tension_phase;
-    double   prev_econ_osc, prev_tension_osc;
-    int32_t  faction_id;
-    uint32_t neighbors[OM_MAX_NEIGHBORS];
-    uint32_t n_neighbors;
-    om_drift_row last_drift;
-} om_region;
-
-struct om_world {
-    uint32_t n_regions;
-    uint64_t seed;
-    uint64_t tick;
-    int      trace_on;
-    int      inject;
-    om_region *regions;
-    double   faction_mod[OM_MAX_FACTIONS][OM_F_COUNT];
-    om_trace_row *trace;
-    uint64_t trace_len, trace_cap;
-};
 
 om_world *om_world_new(uint32_t n_regions, uint64_t seed) {
     if (n_regions == 0) return NULL;
