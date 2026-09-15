@@ -896,3 +896,120 @@ def read_event_delta(lib, w, region_idx):
     out = (ctypes.c_double * OMField.COUNT)()
     rc = lib.om_region_event_delta(w, region_idx, out)
     return rc, list(out)
+
+
+# ======================================================================
+# ---- E-03: world generation and topology (appended 2026-09-15) ----
+# Mirrors the E-03 block of csrc/ouroboros_sim.h exactly. Nothing above changes.
+# World generation has no "other tick steps to switch off": a test sets the
+# generation config, calls generate(), checks it succeeded, then reads the graph
+# with region_neighbors / faction_template / the E-02 and E-05 readers
+# (om_region_tier, om_region_field, om_region_owner, om_region_edge). The E-02
+# om_world_new(n_regions, seed) still applies: pass n_regions=0 to draw the count
+# from the configured range, or a positive count to pin it.
+# ======================================================================
+
+
+class OMTemplate:
+    ISOLATED = 0
+    TWIN_COLONY = 1
+    ARCHIPELAGO = 2
+    NONE = 3
+
+
+class OMBugE03:
+    RNG_ORDER_SWAPPED = 300
+    EXTRA_EDGE_TO_PLAYER = 301
+    HOME_TO_HOME_EDGE = 302
+    CORRIDOR_SKIPPED = 303
+    EMPTY_EDGE_BOTH = 304
+    FRONTIER_FROM_HOME = 305
+    RESEED_PER_REGION = 306
+    TWIN_SECOND_HOME_LOW = 307
+    ARCHIPELAGO_DENSE = 308
+    BUDGET_DRIFT = 309
+    ARCHETYPE_RANGE_MISS = 310
+    E03_SLOW = 311
+
+
+def _bind_e03(lib):
+    """Declare argtypes/restypes for the E-03 block. Called lazily by the E-03
+    helpers so a library built before E-03 (missing symbols) turns E-03 tests
+    red at first use, exactly like the E-02 and E-05 blocks do."""
+    if getattr(lib, "_e03_bound", False):
+        return
+    P = ctypes.POINTER
+    V = ctypes.c_void_p
+    lib.om_gen_set_region_range.argtypes = [V, ctypes.c_uint32, ctypes.c_uint32]; lib.om_gen_set_region_range.restype = None
+    lib.om_gen_set_faction_count.argtypes = [V, ctypes.c_uint32]; lib.om_gen_set_faction_count.restype = None
+    lib.om_gen_set_extra_edge_ratio.argtypes = [V, ctypes.c_double]; lib.om_gen_set_extra_edge_ratio.restype = None
+    lib.om_gen_set_player_preference.argtypes = [V, ctypes.c_int]; lib.om_gen_set_player_preference.restype = None
+    lib.om_gen_set_home_range.argtypes = [V, ctypes.c_int, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double]
+    lib.om_gen_set_home_range.restype = None
+    lib.om_world_generated.argtypes = [V]; lib.om_world_generated.restype = ctypes.c_int
+    lib.om_world_seed.argtypes = [V]; lib.om_world_seed.restype = ctypes.c_uint64
+    lib.om_world_edge_count.argtypes = [V]; lib.om_world_edge_count.restype = ctypes.c_uint32
+    lib.om_faction_template.argtypes = [V, ctypes.c_int32]; lib.om_faction_template.restype = ctypes.c_int
+    lib.om_region_neighbors.argtypes = [V, ctypes.c_uint32, P(ctypes.c_uint32), ctypes.c_uint32]
+    lib.om_region_neighbors.restype = ctypes.c_uint32
+    lib._e03_bound = True
+
+
+# ---- E-03 helpers (plain functions, imported by the E-03 story test modules) ----
+
+def gen_set_region_range(lib, w, lo, hi):
+    _bind_e03(lib)
+    lib.om_gen_set_region_range(w, lo, hi)
+
+
+def gen_set_faction_count(lib, w, n):
+    _bind_e03(lib)
+    lib.om_gen_set_faction_count(w, n)
+
+
+def gen_set_extra_edge_ratio(lib, w, ratio):
+    _bind_e03(lib)
+    lib.om_gen_set_extra_edge_ratio(w, ratio)
+
+
+def gen_set_player_preference(lib, w, template):
+    _bind_e03(lib)
+    lib.om_gen_set_player_preference(w, template)
+
+
+def gen_set_home_range(lib, w, archetype, mil_lo, mil_hi, eco_lo, eco_hi):
+    _bind_e03(lib)
+    lib.om_gen_set_home_range(w, archetype, mil_lo, mil_hi, eco_lo, eco_hi)
+
+
+def generate(lib, w):
+    """Run world generation and return 1 on success, 0 on a failed feasibility
+    check (om_world_generated). Force draws with force_draws (E-05 helper) before
+    calling this when a rule pins a stochastic value in the generation draw order."""
+    _bind_e03(lib)
+    lib.om_world_generate(w)
+    return lib.om_world_generated(w)
+
+
+def faction_template(lib, w, faction_id):
+    _bind_e03(lib)
+    return lib.om_faction_template(w, faction_id)
+
+
+def world_seed(lib, w):
+    _bind_e03(lib)
+    return lib.om_world_seed(w)
+
+
+def world_edge_count(lib, w):
+    _bind_e03(lib)
+    return lib.om_world_edge_count(w)
+
+
+def region_neighbors(lib, w, idx, max_records=256):
+    """Neighbor ids of region idx in ascending order. Pair each with the E-05
+    om_region_edge reader for its type."""
+    _bind_e03(lib)
+    buf = (ctypes.c_uint32 * max_records)()
+    n = lib.om_region_neighbors(w, idx, buf, max_records)
+    return [buf[i] for i in range(min(n, max_records))]
