@@ -6,7 +6,7 @@
 
 ## Provided shots (Westley, 2026-09-13)
 
-`image.png`, `image copy.png`, `image copy 2.png`, `image copy 3.png` — Age of Empires Online.
+`E-17-1.png`, `E-17-2.png`, `E-17-3.png`, `E-17-4.png` — Age of Empires Online.
 
 | # | Story | Source | Aspect — the example | Not wanted | Proves / contrast |
 |---|---|---|---|---|---|

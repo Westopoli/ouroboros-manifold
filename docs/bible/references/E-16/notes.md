@@ -8,7 +8,7 @@
 
 | # | Story | File | Source | Aspect — the example | Not wanted | Proves / contrast |
 |---|---|---|---|---|---|---|
-| 01 | S-104 | `image.png` | IMMORTAL: Gates of Pyre (IGoP, alpha footage) | The tactical HUD shape: segmented resource bars top-left, minimap bottom-left, a command card (train/tech/build/power) bottom-center with hotkeys, a selected-unit panel bottom-right | the sci-fi/Brood art, exact icons | HUD tells the player what is needed and nothing else; confirms the "IGoP HUD" the bible cites |
+| 01 | S-104 | `E-16.png` | IMMORTAL: Gates of Pyre (IGoP, alpha footage) | The tactical HUD shape: segmented resource bars top-left, minimap bottom-left, a command card (train/tech/build/power) bottom-center with hotkeys, a selected-unit panel bottom-right | the sci-fi/Brood art, exact icons | HUD tells the player what is needed and nothing else; confirms the "IGoP HUD" the bible cites |
 
 ## TBD — design phase, not a screenshot
 

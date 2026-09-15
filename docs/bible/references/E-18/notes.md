@@ -6,7 +6,7 @@
 
 ## Provided shots (Westley, 2026-09-13)
 
-`image.png`, `image copy.png` — Age of Empires Online. (More AoE shots sit in `references/E-17/`; same source, shared register.)
+`E-18-1.png`, `E-18-2.png` — Age of Empires Online. (More AoE shots sit in `references/E-17/`; same source, shared register.)
 
 | # | Story | Source | Aspect — the example | Not wanted | Proves / contrast |
 |---|---|---|---|---|---|
