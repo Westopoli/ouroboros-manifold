@@ -1,17 +1,17 @@
 # E-03 — World Generation and Topology
 
-## Definition-completeness gate (run 2026-09-10, re-checked 2026-09-14 after the Q-021/Q-022/Q-024/Q-025 fold)
+## Definition-completeness gate (run 2026-09-10, re-checked 2026-09-14 after the Q-021/Q-022/Q-024/Q-025 fold, and again after Q-021-03/Q-022-02 closed)
 
 | Check | Result |
 |---|---|
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 5 stories, 26 rules (R-025-04 added folding Q-025-01; the original gate's "22 rules" count was stale even before this fold), numbers from `algorithms.md` ALG-30 and ALG-31. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | Original 5 flags (Q-021-01 through Q-025-01) closed and folded. Folding Q-021-01 and Q-022-01 surfaced 2 new flags, Q-021-03 and Q-022-02, not yet answered. |
+| Implied-but-unstated behavior turned into flags | Original 5 flags (Q-021-01 through Q-025-01) closed and folded. Folding Q-021-01 and Q-022-01 surfaced 2 new flags, Q-021-03 and Q-022-02; both answered. Q-022-02's fold is complete (R-022-05). Folding Q-021-03 surfaced one more, Q-021-04 (template region counts vs. the fixed two-regions invariant), still open. |
 | Every visible-surface story has a reference | Not applicable; the galaxy view that draws the graph is E-16. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on 2 open flags. Q-021-03 (how the three named templates apply across 15 factions) decides whether R-021-03 through R-021-06 get rewritten or stay as the per-faction generic shape; Q-022-02 (Fortifier and Opportunist starting ranges) blocks finishing R-022-05's fold. Both need Westley's answer before this epic is Ready.
+**Gate verdict: not passed.** Blocked on 1 open flag, Q-021-04: whether the three named templates rescale to this epic's fixed two-regions-per-faction shape, or that invariant changes to fit the templates' own region counts. Decides whether R-021-03/R-021-04 get rewritten in place or the epic's region-count model changes more broadly. S-022 is otherwise fully folded and Ready on its own.
 
 ## Purpose
 
@@ -40,7 +40,7 @@ Rules
 
 Inputs: seed (64-bit integer); config ranges.
 Outputs: world graph in the strategic snapshot; galaxy view (E-16).
-Open flags: Q-021-03. R-021-03 through R-021-06 below describe the generic per-faction generator, which Q-021-01 (Westley, 2026-09-14) retired in favor of three named templates (Isolated, Twin Colony, Archipelago) — but how those templates apply across 15 factions is not yet answered (Q-021-03), so these rules are the last-known-good design, not yet rewritten. Q-021-02 (player preference sways template choice) is answered but not folded in below pending Q-021-03, since the weighting mechanism depends on how many factions roll a template.
+Open flags: Q-021-04. Q-021-03 (Westley, 2026-09-14) confirmed every faction — player and all 14 NPCs — independently rolls one of the three named templates (Isolated, Twin Colony, Archipelago) for its own shape. But the templates' retired region counts (`docs/bible_history/bible_2_00_world.md`: Isolated 1 home + 2 frontiers, Twin Colony 2 homes + 1–2 frontiers each, Archipelago 1 home + 3 frontiers) conflict with this epic's fixed two-regions-per-faction invariant and R-021-03/R-021-04 below — Q-021-04 asks whether templates rescale to fit two regions or the invariant changes. R-021-03 through R-021-06 stay as the last-known-good (generic, pre-template) design until Q-021-04 answers; Q-021-02 (player preference sways template choice) is answered but not folded in for the same reason.
 
 ### S-022 — Homes are strong, frontiers are new
 As a commander, I want my home region to feel established and my frontier to feel recently settled, so that the starting shape of my civilization tells a story.
@@ -50,11 +50,11 @@ Rules
 - R-022-02  Given population p, When the other fields derive, Then economy = clamp(p · 1.1 + j₁), military = clamp(p · 0.7 + j₂), tension = clamp(p · 0.3 + j₃), each jᵢ an independent uniform draw in [−5, 5], clamp to [0, 100].
 - R-022-03  Given a region, When phase offsets are drawn, Then economy phase and tension phase are independent uniform draws in [0, 2π).
 - R-022-04  Given the draw order population, j₁, j₂, j₃, economy phase, tension phase, When a region is generated, Then the RNG is consumed in exactly that order (determinism contract).
-- R-022-05  Given any faction, When its starting fields are rolled, Then it uses the same ranges and ratios as every other faction; starting tech = average starting population of its regions · 0.25.
+- R-022-05  Given a home region, When its military and economy are rolled, Then the archetype's own range replaces R-022-02's general clamp targets: Conqueror military 50–65, economy 40–55; Fortifier military 40–50, economy 50–65; Opportunist military 45–55, economy 45–55; the player faction and tension/population keep R-022-01/R-022-02's general ranges. Frontier regions keep R-022-01's newly-settled ranges regardless of archetype. Starting tech = average starting population of its regions · 0.25.
 
-Inputs: tier, RNG.
+Inputs: tier, RNG, faction archetype.
 Outputs: starting fields per region; starting tech per faction.
-Open flags: Q-022-02. Q-022-01 (Westley, 2026-09-14) confirmed per-archetype starting ranges are the design (Conqueror home military 50–65, economy 40–55), but Fortifier's and Opportunist's ranges are not specified anywhere (Q-022-02). R-022-05 below still describes the old same-ranges-for-everyone behavior until both archetypes' ranges are known.
+Open flags: none. Closed by Q-022-01 and Q-022-02 (Westley, 2026-09-14): per-archetype home ranges are the design, numbers above; frontier regions are archetype-independent.
 
 ### S-023 — Routes carry armies, trade, or both
 As a commander, I want a connection between two regions to be a military route, a trade route, or both, so that a region can be rich but exposed, or safe but poor.
@@ -105,7 +105,7 @@ Open flags: none. Closed by Q-025-01 (Westley, 2026-09-12): the buffer is player
 | Factions per game | Config | 15 at launch | < 2 fails generation |
 | Extra edge ratio | Config | 0.12 | < 0 fails generation |
 | Population ranges, ratios, jitter | Config | as ALG-30 | ranges outside [0, 100] fail generation |
-| Template choice | Player or random | [Q-021-02] | not applicable until Q-021-01 answers |
+| Template choice | Player preference sways weighted-random pick per faction; player's own preference applies to their faction only | [Q-021-04] | not applicable until Q-021-04 answers |
 
 ## Outputs
 
@@ -143,7 +143,7 @@ None required in this epic. The galaxy view is E-16.
 
 ## Open ambiguity flags
 
-Q-021-03 (how the three named templates apply across 15 factions), Q-022-02 (Fortifier and Opportunist starting field ranges). Details in `docs/northstar/ambiguity_register.md`. Q-021-01, Q-021-02, Q-022-01, Q-024-01, Q-025-01 are closed and folded above.
+Q-021-04 (template region counts vs. the fixed two-regions-per-faction invariant). Details in `docs/northstar/ambiguity_register.md`. Q-021-01, Q-021-02, Q-021-03, Q-022-01, Q-022-02, Q-024-01, Q-025-01 are closed and folded above (Q-021-02 and the R-021-03 through R-021-06 template rewrite wait on Q-021-04).
 
 ## Depends on
 
