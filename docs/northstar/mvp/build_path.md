@@ -39,13 +39,13 @@ Every forecast built on this is a guess. The plan therefore states sequence and 
    - E-12: S-089, S-092, S-093.
    - E-17: S-113, `S-P06`.
    - E-14: S-123, `S-P07`.
-   - E-15: S-127, `S-P08`.
+   - E-15: S-126, S-127.
    - E-01: `S-P10`.
-   - E-16: S-106, S-107, S-110, S-111, `S-P11`, `S-P12`, `S-P13`.
+   - E-16: S-103, S-105, S-106, S-107, S-110, S-111, `S-P12`.
    - E-18: S-132, S-138 (minimal).
    - E-20: S-145 (by construction).
    - E-22: five Round 1 stories.
-   That is 63 real stories, 11 prototype stories, and 19 epics with Stage 3 work to do (E-02 is done, E-19 has none). Open flags on Round 1 stories that Westley must answer or accept a prototype for: Q-021-01, Q-065-02, Q-111-01.
+   That is 66 real stories, 8 prototype stories, and 19 epics with Stage 3 work to do (E-02 is done, E-19 has none). Every flag on a Round 1 real story is answered as of 2026-09-14 except Q-026-01 (direction given, resolution at Stage 3) and Q-046-01 (deferred to the E-06 spec).
 
 ## Stage 3 cost, honestly
 
