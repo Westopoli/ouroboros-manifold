@@ -32,7 +32,7 @@ Sprint 0 (toolchain) precedes all game epics. Then:
 | E-11 units & combat | 3 | Register-clean (mixed) | Stage-3 pass; references derive from E-18/E-13 |
 | E-12 fog & sensors | 3 | Register-clean (mixed) | Stage-3 pass; fold fog-memory-toggle into a story |
 | E-01 layer system | — | TBD | Single-layer prototype + layer-options design phase; Q-E01-08 |
-| E-05 faction agents | — | TBD | Q-037-01 |
+| E-05 faction agents | 5 | Tested (2026-09-14) | none — 58 rules, 67 tests red in `tests/csim/`, cards 202–207 queued behind 201 |
 | E-07 civilizational lifecycle | — | TBD | Q-054-01 (terminal conditions, deferred) |
 | E-13 movement & command | — | TBD | 5 flags |
 | E-14 enemy macro behavior | — | TBD | 2 flags |

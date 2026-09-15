@@ -35,16 +35,16 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-029 | E-04 | "A tense region faces a rising chance of revolt every tick, a fever not a switch." | Spec'd | `epics/E-04-events-and-chains.md` S-029 |
 | S-030 | E-04 | "The galaxy's crises and booms come from a fixed, authored set." | Spec'd | `epics/E-04-events-and-chains.md` S-030 |
 | S-031 | E-04 | "Every time I come back the galaxy has visibly changed." | Spec'd, blocked on Q-031-01 | `epics/E-04-events-and-chains.md` S-031 |
-| S-032 | E-05 | "Every faction, mine included, runs the same loop with its own personality; no scripted villain." | Spec'd | `epics/E-05-faction-agents-and-conflict.md` S-032 |
-| S-033 | E-05 | "Each region pays for itself before it feeds my war chest." | Spec'd | `epics/E-05-faction-agents-and-conflict.md` S-033 |
-| S-034 | E-05 | "A conqueror and a fortifier want different things from the same map." | Spec'd | `epics/E-05-faction-agents-and-conflict.md` S-034 |
-| S-035 | E-05 | "A faction attacks only when the numbers say it wins by its own margin of comfort." | Spec'd | `epics/E-05-faction-agents-and-conflict.md` S-035 |
-| S-036 | E-05 | "Some attacks are announced a tick ahead at full strength, others sprung at half." | Spec'd | `epics/E-05-faction-agents-and-conflict.md` S-036 |
-| S-037 | E-05 | "An attack's outcome scales with how decisive it was; a strong garrison absorbs the blow." | Spec'd | `epics/E-05-faction-agents-and-conflict.md` S-037 |
-| S-038 | E-05 | "A region changes hands when its defenders are gone, and is hard to hold afterward." | Spec'd | `epics/E-05-faction-agents-and-conflict.md` S-038 |
-| S-039 | E-05 | "When several factions strike one region at once, the strongest hand usually wins, and pays for the contest." | Spec'd | `epics/E-05-faction-agents-and-conflict.md` S-039 |
-| S-040 | E-05 | "A large empire sheds provinces to institutional revolt no matter how calm they are." | Spec'd, blocked on Q-040-01 | `epics/E-05-faction-agents-and-conflict.md` S-040 |
-| S-041 | E-05 | "A region on a hostile border is chronically stressed." | Spec'd, blocked on Q-041-01 | `epics/E-05-faction-agents-and-conflict.md` S-041 |
+| S-032 | E-05 | "Every faction, mine included, runs the same loop with its own personality; no scripted villain." |  Tested | `epics/E-05-faction-agents-and-conflict.md` S-032 |
+| S-033 | E-05 | "Each region pays for itself before it feeds my war chest." |  Tested | `epics/E-05-faction-agents-and-conflict.md` S-033 |
+| S-034 | E-05 | "A conqueror and a fortifier want different things from the same map." |  Tested | `epics/E-05-faction-agents-and-conflict.md` S-034 |
+| S-035 | E-05 | "A faction attacks only when the numbers say it wins by its own margin of comfort." |  Tested | `epics/E-05-faction-agents-and-conflict.md` S-035 |
+| S-036 | E-05 | "Some attacks are announced a tick ahead at full strength, others sprung at half." |  Tested | `epics/E-05-faction-agents-and-conflict.md` S-036 |
+| S-037 | E-05 | "An attack's outcome scales with how decisive it was; a strong garrison absorbs the blow." |  Tested | `epics/E-05-faction-agents-and-conflict.md` S-037 |
+| S-038 | E-05 | "A region changes hands when its defenders are gone, and is hard to hold afterward." |  Tested | `epics/E-05-faction-agents-and-conflict.md` S-038 |
+| S-039 | E-05 | "When several factions strike one region at once, the strongest hand usually wins, and pays for the contest." |  Tested | `epics/E-05-faction-agents-and-conflict.md` S-039 |
+| S-040 | E-05 | "A large empire sheds provinces to institutional revolt no matter how calm they are." |  Spec'd, blocked on Q-040-01 | `epics/E-05-faction-agents-and-conflict.md` S-040 |
+| S-041 | E-05 | "A region on a hostile border is chronically stressed." |  Spec'd, blocked on Q-041-01 | `epics/E-05-faction-agents-and-conflict.md` S-041 |
 | S-042 | E-06 | "Every pair of factions is hostile, neutral, or cooperative, and that decides who fights and who trades." | Spec'd, blocked on Q-042-01 | `epics/E-06-diplomacy-and-technology.md` S-042 |
 | S-043 | E-06 | "Two neutral neighbors who leave each other alone drift into cooperation." | Spec'd | `epics/E-06-diplomacy-and-technology.md` S-043 |
 | S-044 | E-06 | "A cooperative partner can turn on me when it is stronger and under pressure." | Spec'd, blocked on Q-045-01 | `epics/E-06-diplomacy-and-technology.md` S-044 |
