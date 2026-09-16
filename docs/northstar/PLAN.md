@@ -210,14 +210,18 @@ Track L  Lean MVP loop (parallel) Rank, cut, ship to testers, measure, re-plan; 
 - **Integration ladder.** Pipe contract in C (snapshot, delta, commands) → Godot binding unchanged → save/load → GDExtension binding → pipe removed.
 - **Client ladder.** Only after sim ladders are green: HUD, selection, camera, world view, chronicle scroll, onboarding, debrief. Each with T2 visual QA.
 - Per sprint file: stories in scope, dependencies, tests required (pointer to Stage 5), scale gates, QA tier, Agora task spec stubs (`queue/NNN-*.md` bodies), exit criteria, budget (`max_iterations`, `max_wall_minutes`, DeepSeek cap).
-- **Sizing rule.** One task = one story ≤ Agora `max_impl_lines` (250 today). If a story needs more, split the story in the epic file, never in the queue.
+- **Sizing rule (The 30B Sizing Contract).** One task = one micro-behavior:
+  1. **Public API / Symbol Cap**: A single card must define or implement no more than 3 to 5 public C functions/symbols.
+  2. **Algorithm Family Isolation**: Exactly ONE mathematical formula or discrete algorithm per card. Never mix state mutations, RNG draws, and multi-entity matrix updates in one card.
+  3. **Implementation Line Budget**: `expected_lines` must not exceed 40–80 lines (diluted down from 250). If a story requires more, split the story in the epic file into sub-stories (e.g. S-032a, S-032b).
+  4. **Acceptance Test Scope**: 5 to 15 focused test assertions directly covering the card's single behavior. Acceptance suites must not span unrelated modules.
 - **Parallel rule.** A sprint may open while later epics are still in Stage 2 or 3, provided every story in the sprint is Tested and its epic's dependencies are Built. The first sprints (toolchain, region fields, drift, world graph) are chosen precisely because they depend on almost nothing and can be Ready early.
 - **Prototype rule.** Early sprints may target throwaway prototypes (e.g. a headless C world that only drifts, a Godot scene that only draws unit dots on layers) when that is the fastest way to validate a story's rules against reality. Prototype stories are marked as such in the backlog and are replaced, not extended, when the real story is Ready.
 
 **Escalation ladder** (`docs/northstar/escalation.md`, from R3):
-1. Worker fails acceptance → retry within `max_iterations`.
-2. Same failure 3× (`stall_threshold`) → DeepSeek `reorganize` (economy) or `solve-direct` (fast).
-3. Spiral signals (test pass count decreasing across attempts, diff churn on the same file, same fingerprint N times, budget burn rate, verify lanes red after a "fix") → halt task, park, write `docs/northstar/ESCALATION.md`: English summary, what was tried, failing test output, diff, run ids, seed, screenshots, last lessons. Notify Westley (push/email; mechanism from R3).
+1. **Runs 1–2 (Fast Local Ladder)**: Unassisted local models (`qwen3-coder:30b`, `gpt-oss:20b`). Solves well-sized cards cheaply with 0 API cost.
+2. **Runs 3–9 (Cross-Run Guided Ladder)**: If a card fails 2 runs, Agora invokes Gemini via `agy` CLI to examine failed candidate outputs and generate a concise 2–3 line diagnostic hint (stored in `advisor_hint.md` and fed into subsequent run prompts).
+3. **Run 10 (Final Cap)**: If a card fails 10 runs, task is parked; `escalate.py` logs `ESCALATION.md` with evidence and notifies Westley.
 4. Westley opens Claude, ssh in, decides: respec, split, revert branch, or "start over" (defined: discard `agora/` branch, restore task to queue with new spec).
 5. Opt-in: pinned Claude chat on `/loop` polling the flag at a long interval. Documented, off by default.
 

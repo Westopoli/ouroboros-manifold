@@ -30,6 +30,24 @@ struct om_world {
     double   faction_mod[OM_MAX_FACTIONS][OM_F_COUNT];
     om_trace_row *trace;
     uint64_t trace_len, trace_cap;
+
+    /* E-05 faction, ownership, typed edges, and RNG state */
+    int          features[8];
+    double       faction_budget[OM_MAX_FACTIONS];
+    double       faction_tech[OM_MAX_FACTIONS];
+    double       faction_confidence[OM_MAX_FACTIONS];
+    om_archetype faction_archetype[OM_MAX_FACTIONS];
+    om_stance    faction_stance[OM_MAX_FACTIONS][OM_MAX_FACTIONS];
+    double       faction_tech_attack[OM_MAX_FACTIONS];
+    double       faction_tech_defense[OM_MAX_FACTIONS];
+    double       faction_tech_economy[OM_MAX_FACTIONS];
+    int          faction_used[OM_MAX_FACTIONS];
+    uint32_t     faction_n;
+    int64_t     *region_held_since;
+    om_edge_type region_edge[64][64];
+    uint64_t     rng_state, rng_inc;
+    double       rng_forced[4096];
+    uint32_t     rng_forced_head, rng_forced_len;
 };
 
 #endif /* OM_INTERNAL_H */
