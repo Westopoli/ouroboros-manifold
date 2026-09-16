@@ -5,14 +5,32 @@
 #include <stdlib.h>
 
 void om_world_set_feature(om_world *w, om_feature f, int on) {
-    /* STUB */
-    (void)w; (void)f; (void)on;
+    if (w == NULL || (unsigned)f >= 8)
+        return;
+    w->features[f] = on != 0;
 }
 
 int om_world_feature(const om_world *w, om_feature f) {
-    /* STUB */
-    (void)w; (void)f;
-    return 0;
+    if (w == NULL || (unsigned)f >= 8)
+        return 0;
+    return w->features[f];
+}
+
+void om_region_set_edge(om_world *w, uint32_t a, uint32_t b, om_edge_type t) {
+    if (w == NULL || a >= 64 || b >= 64)
+        return;
+    w->region_edge[a][b] = t;
+    w->region_edge[b][a] = t;
+}
+
+int om_region_edge(const om_world *w, uint32_t a, uint32_t b, om_edge_type *out) {
+    if (w == NULL || a >= 64 || b >= 64)
+        return 0;
+    if ((int)w->region_edge[a][b] < 0)
+        return 0;
+    if (out != NULL)
+        *out = w->region_edge[a][b];
+    return 1;
 }
 
 int om_faction_set(om_world *w, int32_t faction_id, om_archetype archetype, double budget, double tech, double attack_confidence) {
@@ -156,17 +174,6 @@ int64_t om_region_held_since(const om_world *w, uint32_t idx) {
         return 0;
     
     return w->region_held_since[idx];
-}
-
-void om_region_set_edge(om_world *w, uint32_t a, uint32_t b, om_edge_type t) {
-    /* STUB */
-    (void)w; (void)a; (void)b; (void)t;
-}
-
-int om_region_edge(const om_world *w, uint32_t a, uint32_t b, om_edge_type *out) {
-    /* STUB */
-    (void)w; (void)a; (void)b; (void)out;
-    return 0;
 }
 
 void om_rng_force(om_world *w, const double *draws, uint32_t n) {
