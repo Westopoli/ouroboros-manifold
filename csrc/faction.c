@@ -2,6 +2,7 @@
 #include "om_internal.h"
 #include <stddef.h>
 #include <string.h>
+#include <stdlib.h>
 
 void om_world_set_feature(om_world *w, om_feature f, int on) {
     /* STUB */
@@ -131,20 +132,30 @@ uint32_t om_faction_territory(const om_world *w, int32_t faction_id) {
 }
 
 void om_region_set_owner(om_world *w, uint32_t idx, int32_t faction_id, int64_t held_since_tick) {
-    /* STUB */
-    (void)w; (void)idx; (void)faction_id; (void)held_since_tick;
+    if (w == NULL || idx >= w->n_regions)
+        return;
+    
+    w->regions[idx].faction_id = faction_id;
+    
+    if (w->region_held_since == NULL) {
+        w->region_held_since = calloc(w->n_regions, sizeof(int64_t));
+    }
+    
+    w->region_held_since[idx] = held_since_tick;
 }
 
 int32_t om_region_owner(const om_world *w, uint32_t idx) {
-    /* STUB */
-    (void)w; (void)idx;
-    return 0;
+    if (w == NULL || idx >= w->n_regions)
+        return -1;
+    
+    return w->regions[idx].faction_id;
 }
 
 int64_t om_region_held_since(const om_world *w, uint32_t idx) {
-    /* STUB */
-    (void)w; (void)idx;
-    return 0;
+    if (w == NULL || idx >= w->n_regions || w->region_held_since == NULL)
+        return 0;
+    
+    return w->region_held_since[idx];
 }
 
 void om_region_set_edge(om_world *w, uint32_t a, uint32_t b, om_edge_type t) {
