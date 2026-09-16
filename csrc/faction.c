@@ -159,12 +159,18 @@ int om_region_edge(const om_world *w, uint32_t a, uint32_t b, om_edge_type *out)
 }
 
 void om_rng_force(om_world *w, const double *draws, uint32_t n) {
-    /* STUB */
-    (void)w; (void)draws; (void)n;
+    if (w == NULL || draws == NULL)
+        return;
+
+    for (uint32_t i = 0; i < n; i++) {
+        w->rng_forced[(w->rng_forced_head + w->rng_forced_len + i) % 4096] = draws[i];
+    }
+    w->rng_forced_len += n;
 }
 
 uint32_t om_rng_forced_remaining(const om_world *w) {
-    /* STUB */
-    (void)w;
-    return 0;
+    if (w == NULL)
+        return 0;
+    
+    return w->rng_forced_len;
 }
