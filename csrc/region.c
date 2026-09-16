@@ -20,6 +20,9 @@ om_world *om_world_new(uint32_t n_regions, uint64_t seed) {
         free(w);
         return NULL;
     }
+    for (uint32_t i = 0; i < n_regions; i++) {
+        w->regions[i].faction_id = -1;
+    }
     w->trace = NULL;
     w->trace_len = 0;
     w->trace_cap = 0;
