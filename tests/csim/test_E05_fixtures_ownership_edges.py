@@ -3,7 +3,7 @@ Dedicated focused tests for micro-cards 202a3 (ownership) and 202a4 (edges & fea
 """
 import ctypes
 import pytest
-from conftest import OMEdge, OMFeature, OMTier, set_region
+from conftest import OMEdge, OMFeature, OMTier, force_draws, set_region
 
 
 def test_region_ownership_setting_and_query(lib, world_factory):
@@ -50,3 +50,12 @@ def test_world_feature_switches(lib, world_factory):
 
     lib.om_world_set_feature(w, OMFeature.FACTIONS, 0)
     assert lib.om_world_feature(w, OMFeature.FACTIONS) == 0
+
+
+def test_forced_rng_queue(lib, world_factory):
+    """om_rng_force appends draws to forced queue; om_rng_forced_remaining returns queue depth."""
+    w = world_factory(n_regions=2)
+    assert lib.om_rng_forced_remaining(w) == 0
+    force_draws(lib, w, [0.25, 0.5, 0.75])
+    assert lib.om_rng_forced_remaining(w) == 3
+
