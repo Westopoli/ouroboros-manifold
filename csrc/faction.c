@@ -1,36 +1,3 @@
-/* csrc/faction.c — E-05 faction state, ownership, typed edges, feature switches, forced RNG, budget accumulation (build card 202).
- * Skeleton written by the parent so the fenced suite fails red on assertions,
- * not on a missing symbol, and so the build harness has a file to read; every
- * body below is a STUB the build card replaces. */
-/* PRIVATE LAYOUT, verbatim from csrc/om_internal.h (already included below).
- * Use exactly these member names; there are no others. Inventing a member
- * (previous_economy_osc, region_state, trace_enabled, adjacencies, faction_modifiers)
- * is a compile error and fails every test.
- * #define OM_MAX_NEIGHBORS 32
- * 
- * typedef struct {
- *     om_tier  tier;
- *     double   military, economy, tension, population;
- *     double   econ_phase, tension_phase;
- *     double   prev_econ_osc, prev_tension_osc;
- *     int32_t  faction_id;
- *     uint32_t neighbors[OM_MAX_NEIGHBORS];
- *     uint32_t n_neighbors;
- *     om_drift_row last_drift;
- * } om_region;
- * 
- * struct om_world {
- *     uint32_t n_regions;
- *     uint64_t seed;
- *     uint64_t tick;
- *     int      trace_on;
- *     int      inject;
- *     om_region *regions;
- *     double   faction_mod[OM_MAX_FACTIONS][OM_F_COUNT];
- *     om_trace_row *trace;
- *     uint64_t trace_len, trace_cap;
- * };
- */
 #include "ouroboros_sim.h"
 #include "om_internal.h"
 #include <stddef.h>
@@ -48,55 +15,113 @@ int om_world_feature(const om_world *w, om_feature f) {
 }
 
 int om_faction_set(om_world *w, int32_t faction_id, om_archetype archetype, double budget, double tech, double attack_confidence) {
-    /* STUB */
-    (void)w; (void)faction_id; (void)archetype; (void)budget; (void)tech; (void)attack_confidence;
+    if (w == NULL || faction_id < 0 || faction_id >= OM_MAX_FACTIONS)
+        return -1;
+    
+    w->faction_archetype[faction_id] = archetype;
+    w->faction_budget[faction_id] = budget;
+    w->faction_tech[faction_id] = tech;
+    
+    if (w->faction_used[faction_id] == 0) {
+        w->faction_used[faction_id] = 1;
+        w->faction_n++;
+    }
+    
+    if (attack_confidence < 0) {
+        double lo, hi;
+        switch (archetype) {
+            case OM_ARCH_CONQUEROR:     lo = 2.0; hi = 6.0; break;
+            case OM_ARCH_FORTIFIER:     lo = 4.0; hi = 10.0; break;
+            case OM_ARCH_PLAYER:        lo = 3.0; hi = 8.0; break;
+            case OM_ARCH_BREAKAWAY:     lo = 2.0; hi = 5.0; break;
+            default:                    lo = 4.0; hi = 8.0; break;
+        }
+        
+        double u;
+        if (w->rng_forced_len > 0) {
+            u = w->rng_forced[w->rng_forced_head];
+            w->rng_forced_head++;
+            w->rng_forced_len--;
+        } else {
+            uint32_t next32 = (uint32_t)((w->rng_state >> 12) + w->rng_inc);
+            w->rng_state = next32 * 6364136223846793005ULL + w->rng_inc;
+            uint32_t a = next32 >> 5;
+            next32 = (uint32_t)((w->rng_state >> 12) + w->rng_inc);
+            w->rng_state = next32 * 6364136223846793005ULL + w->rng_inc;
+            uint32_t b = next32 >> 6;
+            u = (a * 67108864.0 + b) * (1.0 / 9007199254740992.0);
+        }
+        w->faction_confidence[faction_id] = lo + (hi - lo) * u;
+    } else {
+        w->faction_confidence[faction_id] = attack_confidence;
+    }
+    
+    for (int j = 0; j < OM_MAX_FACTIONS; j++) {
+        if (j == faction_id)
+            w->faction_stance[faction_id][j] = OM_STANCE_COOPERATIVE;
+        else
+            w->faction_stance[faction_id][j] = OM_STANCE_HOSTILE;
+    }
+    
     return 0;
 }
 
 void om_faction_set_stance(om_world *w, int32_t from, int32_t toward, om_stance s) {
-    /* STUB */
-    (void)w; (void)from; (void)toward; (void)s;
+    if (w == NULL || from < 0 || from >= OM_MAX_FACTIONS || toward < 0 || toward >= OM_MAX_FACTIONS)
+        return;
+    
+    w->faction_stance[from][toward] = s;
 }
 
 void om_faction_set_tech_multipliers(om_world *w, int32_t faction_id, double attack, double defense, double economy) {
-    /* STUB */
-    (void)w; (void)faction_id; (void)attack; (void)defense; (void)economy;
+    if (w == NULL || faction_id < 0 || faction_id >= OM_MAX_FACTIONS)
+        return;
+    
+    w->faction_tech_attack[faction_id] = attack;
+    w->faction_tech_defense[faction_id] = defense;
+    w->faction_tech_economy[faction_id] = economy;
 }
 
 uint32_t om_faction_count(const om_world *w) {
-    /* STUB */
-    (void)w;
-    return 0;
+    if (w == NULL)
+        return 0;
+    
+    return w->faction_n;
 }
 
 om_archetype om_faction_archetype(const om_world *w, int32_t faction_id) {
-    /* STUB */
-    (void)w; (void)faction_id;
-    return 0;
+    if (w == NULL || faction_id < 0 || faction_id >= OM_MAX_FACTIONS)
+        return OM_ARCH_DEFAULT;
+    
+    return w->faction_archetype[faction_id];
 }
 
 double om_faction_budget(const om_world *w, int32_t faction_id) {
-    /* STUB */
-    (void)w; (void)faction_id;
-    return 0.0;
+    if (w == NULL || faction_id < 0 || faction_id >= OM_MAX_FACTIONS)
+        return 0.0;
+    
+    return w->faction_budget[faction_id];
 }
 
 double om_faction_confidence(const om_world *w, int32_t faction_id) {
-    /* STUB */
-    (void)w; (void)faction_id;
-    return 0.0;
+    if (w == NULL || faction_id < 0 || faction_id >= OM_MAX_FACTIONS)
+        return 0.0;
+    
+    return w->faction_confidence[faction_id];
 }
 
 double om_faction_tech(const om_world *w, int32_t faction_id) {
-    /* STUB */
-    (void)w; (void)faction_id;
-    return 0.0;
+    if (w == NULL || faction_id < 0 || faction_id >= OM_MAX_FACTIONS)
+        return 0.0;
+    
+    return w->faction_tech[faction_id];
 }
 
 om_stance om_faction_stance(const om_world *w, int32_t from, int32_t toward) {
-    /* STUB */
-    (void)w; (void)from; (void)toward;
-    return 0;
+    if (w == NULL || from < 0 || from >= OM_MAX_FACTIONS || toward < 0 || toward >= OM_MAX_FACTIONS)
+        return OM_STANCE_HOSTILE;
+    
+    return w->faction_stance[from][toward];
 }
 
 uint32_t om_faction_territory(const om_world *w, int32_t faction_id) {
