@@ -108,6 +108,31 @@ uint64_t om_world_step(om_world *w) {
     }
 #endif
 
+    /* Step 3: Factions (E-05) */
+    if (om_world_feature(w, OM_FEAT_FACTIONS)) {
+        om_faction_step_budget(w);     /* 3b */
+        om_step_telegraphs(w);         /* 3c */
+        om_step_decisions(w);          /* 3d */
+        om_step_reinforce(w);          /* 3e */
+        om_step_resolve(w);            /* 3f */
+    }
+
+    /* Step 4: Friction & Admin Revolts (E-05) */
+    if (om_world_feature(w, OM_FEAT_FRICTION)) {
+        om_step_friction(w);           /* 4 */
+    }
+    if (om_world_feature(w, OM_FEAT_ADMIN_REVOLTS)) {
+        om_step_admin_revolts(w);      /* 4.1 */
+    }
+
+    /* Step 5: Drift (E-02), gated on OM_FEAT_DRIFT and run after
+     * factions/friction/admin-revolts (docs/bible/algorithms.md:9-29). */
+#ifdef OM_DEBUG_INJECT
+    int drift_gate_ignored = (w->inject == OM_BUG_DRIFT_GATE_IGNORED);
+#else
+    int drift_gate_ignored = 0;
+#endif
+    if (om_world_feature(w, OM_FEAT_DRIFT) || drift_gate_ignored) {
     for (uint32_t i = 0; i < w->n_regions; i++) {
         om_region *r = &w->regions[i];
         int inhabited = (r->tier != OM_TIER_EMPTY);
@@ -277,22 +302,6 @@ uint64_t om_world_step(om_world *w) {
             om_trace_append(w, &row);
         }
     }
-
-    /* Step 3: Factions (E-05) */
-    if (om_world_feature(w, OM_FEAT_FACTIONS)) {
-        om_faction_step_budget(w);     /* 3b */
-        om_step_telegraphs(w);         /* 3c */
-        om_step_decisions(w);          /* 3d */
-        om_step_reinforce(w);          /* 3e */
-        om_step_resolve(w);            /* 3f */
-    }
-
-    /* Step 4: Friction & Admin Revolts (E-05) */
-    if (om_world_feature(w, OM_FEAT_FRICTION)) {
-        om_step_friction(w);           /* 4 */
-    }
-    if (om_world_feature(w, OM_FEAT_ADMIN_REVOLTS)) {
-        om_step_admin_revolts(w);      /* 4.1 */
     }
 
     return w->tick;
