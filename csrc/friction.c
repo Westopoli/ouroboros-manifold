@@ -47,3 +47,13 @@ uint32_t om_tick_admin_rolls(const om_world *w, om_admin_roll *out, uint32_t max
     (void)w; (void)out; (void)max;
     return 0;
 }
+
+void om_step_friction(om_world *w) {
+    /* STUB */
+    (void)w;
+}
+
+void om_step_admin_revolts(om_world *w) {
+    /* STUB */
+    (void)w;
+}

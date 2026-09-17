@@ -280,7 +280,19 @@ uint64_t om_world_step(om_world *w) {
 
     /* Step 3: Factions (E-05) */
     if (om_world_feature(w, OM_FEAT_FACTIONS)) {
-        om_faction_step_budget(w);
+        om_faction_step_budget(w);     /* 3b */
+        om_step_telegraphs(w);         /* 3c */
+        om_step_decisions(w);          /* 3d */
+        om_step_reinforce(w);          /* 3e */
+        om_step_resolve(w);            /* 3f */
+    }
+
+    /* Step 4: Friction & Admin Revolts (E-05) */
+    if (om_world_feature(w, OM_FEAT_FRICTION)) {
+        om_step_friction(w);           /* 4 */
+    }
+    if (om_world_feature(w, OM_FEAT_ADMIN_REVOLTS)) {
+        om_step_admin_revolts(w);      /* 4.1 */
     }
 
     return w->tick;

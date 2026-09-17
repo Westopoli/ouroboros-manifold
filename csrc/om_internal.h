@@ -48,9 +48,29 @@ struct om_world {
     uint64_t     rng_state, rng_inc;
     double       rng_forced[4096];
     uint32_t     rng_forced_head, rng_forced_len;
+
+    /* E-05 decision and resolution state */
+    om_decision        decisions[64];
+    uint32_t           decisions_n;
+    om_telegraph       telegraphs[64];
+    uint32_t           telegraphs_n;
+    om_attack_result   attacks[64];
+    uint32_t           attacks_n;
+    om_collision       collisions[64];
+    uint32_t           collisions_n;
+    om_reinforce       reinforces[64];
+    uint32_t           reinforces_n;
+    om_colonize_result colonizations[64];
+    uint32_t           colonizations_n;
 };
 
 /* Internal step hooks */
 void om_faction_step_budget(om_world *w);
+void om_step_telegraphs(om_world *w);
+void om_step_decisions(om_world *w);
+void om_step_reinforce(om_world *w);
+void om_step_resolve(om_world *w);
+void om_step_friction(om_world *w);
+void om_step_admin_revolts(om_world *w);
 
 #endif /* OM_INTERNAL_H */

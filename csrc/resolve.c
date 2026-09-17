@@ -77,3 +77,18 @@ double om_region_damage_history(const om_world *w, uint32_t idx) {
     (void)w; (void)idx;
     return 0.0;
 }
+
+void om_step_telegraphs(om_world *w) {
+    /* STUB */
+    (void)w;
+}
+
+void om_step_reinforce(om_world *w) {
+    /* STUB */
+    (void)w;
+}
+
+void om_step_resolve(om_world *w) {
+    /* STUB */
+    (void)w;
+}

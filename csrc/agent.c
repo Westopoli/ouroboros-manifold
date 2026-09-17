@@ -53,3 +53,8 @@ uint32_t om_pending_telegraphs(const om_world *w, om_telegraph *out, uint32_t ma
     (void)w; (void)out; (void)max;
     return 0;
 }
+
+void om_step_decisions(om_world *w) {
+    /* STUB */
+    (void)w;
+}
