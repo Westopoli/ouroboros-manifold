@@ -20,6 +20,7 @@ Every runner that calls a model (`draft_e2e.py`, `fill_tests.py`, `draft_card.py
 | Positive controls | script emits one skeleton per "Ways this could be wrong" item, naming the `OM_BUG_*` enum member it expects | `scripts/specfactory/gen_controls.py` |
 | Audit filled tests | one Sonnet sub-agent (Claude Code, Max sub — not `agy`) per filled test file; audits the filled bodies against the epic, e2e, ABI, and `algorithms.md`; returns a verdict + per-rule findings + escalations; never edits the suite; no file audited twice | `docs/northstar/spec_factory/prompts/audit_tests.md`; Claude spawns the sub-agent, no runner script |
 | Red check | script runs pytest on the new files; every one must fail or error, none may pass | `scripts/specfactory/red_check.py` |
+| Green check | script proves a reference implementation (`tests/csim/references/<card-id>.c`) flips a card's acceptance commands from failing to passing, applied inside a scratch git worktree at HEAD; refuses (exit 2) if acceptance already passes on the unmodified project | `scripts/specfactory/green_check.py` |
 | Rules file | existing derivation script | `scripts/derive_agora_rules.py` (already scripted, unchanged) |
 | Card | script for the YAML frontmatter (acceptance command, allowed files, rules_file, test_file); `agy` drafts the prose brief from the rules file only, never from tests (the E-02 finding: a brief written from tests leaks implementation instead of intent) | `scripts/specfactory/gen_card.py` |
 | Run card, ledger | Agora, `build_ledger.py` | already scripted |
@@ -65,6 +66,7 @@ All under `scripts/specfactory/`, Python 3.14 stdlib only (no new dependencies),
 - `gen_test_skeleton.py` — one pytest stub per rule.
 - `gen_controls.py` — one control stub per "Ways this could be wrong" item.
 - `red_check.py` — proves a batch of new tests is all-red.
+- `green_check.py` — proves a reference implementation, whose body lives at `tests/csim/references/<card-id>.c`, makes a card's acceptance commands pass in a scratch git worktree, after confirming they fail on the untouched project.
 - `gen_card.py` — emits an Agora card's YAML frontmatter in the existing `agora/queue/*.md` shape.
 
 Prompts and schemas for the `agy`-drafted steps (e2e draft, test-body fill, card brief, findings) are not yet written — none of E-03's blocked flags needed them this session (the fold's design gaps needed Claude's judgment, not `agy`'s drafting), and writing a prompt against a step that hasn't run for real yet risks specifying the wrong shape. Written when the next epic clears its register and reaches the draft-e2e step for real.
