@@ -62,9 +62,22 @@ uint32_t om_event_queue(const om_world *w, om_queued_event *out, uint32_t max) {
 
 int om_intent_inject(om_world *w, int32_t faction_id, om_action action, uint32_t target_idx,
                      uint32_t source_idx, double commit, om_attack_mode mode) {
-    /* STUB */
-    (void)w; (void)faction_id; (void)action; (void)target_idx; (void)source_idx; (void)commit; (void)mode;
-    return -1;
+    if (!w || faction_id < 0 || faction_id >= OM_MAX_FACTIONS || !w->faction_used[faction_id]) return -1;
+    if (target_idx >= w->n_regions || source_idx >= w->n_regions) return -1;
+    if (w->regions[source_idx].faction_id != faction_id) return -1;
+    if (commit > w->faction_budget[faction_id]) return -1;
+
+    if (w->decisions_n >= 64) return -1;
+    om_decision *d = &w->decisions[w->decisions_n++];
+    memset(d, 0, sizeof(*d));
+    d->tick = w->tick;
+    d->faction_id = faction_id;
+    d->action = (uint32_t)action;
+    d->target_idx = target_idx;
+    d->source_idx = source_idx;
+    d->commit = commit;
+    d->mode = (uint32_t)mode;
+    return 0;
 }
 
 void om_region_add_damage(om_world *w, uint32_t idx, double military_loss, double economy_loss, uint64_t tick) {
