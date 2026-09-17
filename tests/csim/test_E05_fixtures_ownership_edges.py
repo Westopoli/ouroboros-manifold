@@ -59,3 +59,18 @@ def test_forced_rng_queue(lib, world_factory):
     force_draws(lib, w, [0.25, 0.5, 0.75])
     assert lib.om_rng_forced_remaining(w) == 3
 
+
+def test_faction_territory_counting(lib, world_factory):
+    """om_faction_territory counts the number of regions owned by a given faction."""
+    w = world_factory(n_regions=4)
+    assert lib.om_faction_territory(w, 0) == 0
+
+    lib.om_region_set_owner(w, 0, 0, -1)
+    lib.om_region_set_owner(w, 1, 0, -1)
+    lib.om_region_set_owner(w, 2, 0, -1)
+    lib.om_region_set_owner(w, 3, 1, -1)
+
+    assert lib.om_faction_territory(w, 0) == 3
+    assert lib.om_faction_territory(w, 1) == 1
+    assert lib.om_faction_territory(w, 2) == 0
+
