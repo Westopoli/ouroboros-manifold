@@ -88,6 +88,7 @@ class OMBug:
     EMPTY_DRIFTS = 3
     GE_NOT_GT = 4
     SLOW = 5
+    DRIFT_GATE_IGNORED = 6
 
 
 # ---- struct mirrors (field order/types must match the header exactly) ----

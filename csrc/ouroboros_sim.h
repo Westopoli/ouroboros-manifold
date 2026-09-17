@@ -158,7 +158,8 @@ typedef enum {
     OM_BUG_COMPOSITE_PRE_CLAMP = 2,/* composites computed before the clamp */
     OM_BUG_EMPTY_DRIFTS      = 3,  /* empty-tier region drifts */
     OM_BUG_GE_NOT_GT         = 4,  /* threshold uses >= where the source uses > */
-    OM_BUG_SLOW              = 5   /* deliberate slowdown, to prove the speed leg can fail */
+    OM_BUG_SLOW              = 5,  /* deliberate slowdown, to prove the speed leg can fail */
+    OM_BUG_DRIFT_GATE_IGNORED = 6  /* drift runs even with OM_FEAT_DRIFT off (S-160) */
 } om_bug;
 void om_debug_inject(om_world *w, om_bug bug);
 #endif
@@ -200,11 +201,14 @@ typedef enum {
 } om_edge_type;
 
 /* ---- feature switches (fixture) ----
- * Mirror the tick sequence's launch flags (algorithms.md "Tick sequence"), all
- * on by default, plus DRIFT so a step can be isolated: an E-05 test switches
- * drift, events, diplomacy, and technology off and reads exactly what the
- * agents and the resolver did. Switching a feature off skips its step
- * entirely; it never changes what an enabled step computes. */
+ * Mirror the tick sequence's launch flags (algorithms.md "Tick sequence").
+ * om_world_new() switches only DRIFT on by default (S-160); every other
+ * switch starts off until its own epic decides its launch default (A4,
+ * open). A fixture turns on exactly the steps a test needs isolated: an
+ * E-05 test turns on FACTIONS (and FRICTION/ADMIN_REVOLTS as needed) and
+ * leaves DRIFT, EVENTS, DIPLOMACY, and TECHNOLOGY off, so it reads exactly
+ * what the agents and the resolver did. Switching a feature off skips its
+ * step entirely; it never changes what an enabled step computes. */
 typedef enum {
     OM_FEAT_EVENTS        = 0,  /* tick steps 1 and 2 (E-04) */
     OM_FEAT_FACTIONS      = 1,  /* tick step 3 (E-05) */

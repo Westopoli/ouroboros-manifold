@@ -4,14 +4,14 @@
 
 | Check | Result |
 |---|---|
-| Every story has at least one Given/When/Then rule with concrete values | Yes, 9 stories, 43 rules, all numbers from `algorithms.md` ALG-01 through ALG-10. |
+| Every story has at least one Given/When/Then rule with concrete values | Yes, 10 stories, 47 rules, all numbers from `algorithms.md` ALG-01 through ALG-10. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. No player inputs; every input is sim-internal. |
 | Every output listed with where it is observable | Yes, see Outputs. |
 | Implied-but-unstated behavior turned into flags | 3 new flags, Q-013-01, Q-015-01, Q-019-01. |
 | Every visible-surface story has a reference | Not applicable. No story in this epic has its own visible surface; the world view that shows region state is E-16. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: passed (2026-09-13). Ready (2026-09-14).** The 3 flags (Q-013-01, Q-015-01, Q-019-01) are answered and folded below. Stage 3 e2e is authored (`docs/northstar/e2e/E-02.md`); scale gates confirmed by Westley. All Definition-of-Ready items met; stories S-012 … S-020 are Ready for Stage 5 tests.
+**Gate verdict: passed (2026-09-13). Ready (2026-09-14).** The 3 flags (Q-013-01, Q-015-01, Q-019-01) are answered and folded below. Stage 3 e2e is authored (`docs/northstar/e2e/E-02.md`); scale gates confirmed by Westley. All Definition-of-Ready items met; stories S-012 … S-020 are Ready for Stage 5 tests. S-160 (drift feature-switch correctness) added 2026-09-17 from the harness defect investigation; its ID is out of epic-local sequence because S-021 … S-159 are already assigned elsewhere in the catalog.
 
 ## Purpose
 
@@ -155,6 +155,20 @@ Inputs: seed, tick count, platform.
 Outputs: trace, checksums.
 Open flags: none. Depends on the determinism decision in `docs/northstar/research/c_rewrite.md`.
 
+### S-160 — Drift can be switched off, and off means off
+
+As the C rewrite's test harness, I want the drift step to obey its own feature switch, so that E-05 and later epics can isolate their own steps without drift silently running underneath them.
+
+Rules
+- R-160-01  Given `OM_FEAT_DRIFT` switched off, When one tick runs, Then all four fields on every region are byte-identical to their pre-tick values; the drift step does not execute at all.
+- R-160-02  Given a world made by `om_world_new`, When its feature switches are read before anything else touches them, Then `OM_FEAT_DRIFT` is on; every other feature switch is off (E-05 through E-07's own defaults are that epic's open flag, A4).
+- R-160-03  Given `OM_FEAT_FACTIONS` and `OM_FEAT_DRIFT` both on, When one tick runs, Then the faction budget step (ALG-17, tick sequence step 3b) reads each region's economy as it stood before this tick's drift, matching `tick.py`'s step order (drift is step 5, after faction agents at step 3).
+- R-160-04  Given trace recording is enabled, When one tick runs, Then trace-row and checksum emission execute only as part of the (now-gated) drift step: `OM_FEAT_DRIFT` off emits no trace row at all for that tick; `OM_FEAT_DRIFT` on emits a row per region with a checksum exactly every `om_checksum_cadence()` ticks, unchanged from before this story.
+
+Inputs: the `OM_FEAT_DRIFT` switch; tick sequence position; trace-enable state.
+Outputs: whether the drift step executed; which economy value the same-tick budget step saw; whether a trace row (and its checksum) was emitted for the tick.
+Open flags: none. A4 (whether EVENTS/FACTIONS/FRICTION/ADMIN_REVOLTS/DIPLOMACY/TECHNOLOGY default on or off in `om_world_new`) is separately flagged and out of this story's scope; this story only fixes `OM_FEAT_DRIFT`'s own switch being ignored and the drift step's position in the tick.
+
 ## Inputs
 
 | Input | Source | Range | Rejection |
@@ -205,6 +219,7 @@ None required. The player-facing surface for region state is E-16 (world view).
 - Empty regions drift because the tier check was dropped.
 - Threshold comparisons use ≥ where the source uses >.
 - Float summation order differs from the source, breaking cross-platform checksums.
+- Drift runs regardless of the `OM_FEAT_DRIFT` switch, so a caller that means to isolate a later step (E-05 and up) gets drift underneath it uninvited.
 
 ## Open ambiguity flags
 
