@@ -1,0 +1,57 @@
+Sep 17 11:41:50 agora ollama[2308]: load_tensors: offloaded 49/49 layers to GPU
+Sep 17 11:42:04 agora ollama[2308]: slot   operator(): id  0 | task 0 | new prompt, n_ctx_slot = 16384, n_keep = 4, task.n_tokens = 14958
+Sep 17 11:50:48 agora ollama[2308]: slot   operator(): id  0 | task 260 | new prompt, n_ctx_slot = 16384, n_keep = 4, task.n_tokens = 15095
+Sep 17 11:52:45 agora ollama[2308]: load_tensors: offloaded 25/25 layers to GPU
+Sep 17 11:52:59 agora ollama[2308]: slot   operator(): id  0 | task 0 | new prompt, n_ctx_slot = 16384, n_keep = 4, task.n_tokens = 14497
+Sep 17 11:54:33 agora ollama[2308]: slot   operator(): id  0 | task 1917 | new prompt, n_ctx_slot = 16384, n_keep = 4, task.n_tokens = 14419
+Sep 17 11:55:43 agora ollama[2308]: slot   operator(): id  0 | task 3884 | new prompt, n_ctx_slot = 16384, n_keep = 4, task.n_tokens = 14419
+Sep 17 11:57:16 agora ollama[2308]: slot   operator(): id  0 | task 5879 | new prompt, n_ctx_slot = 16384, n_keep = 4, task.n_tokens = 14419
+Sep 17 12:09:33 agora ollama[2308]: load_tensors: offloaded 49/49 layers to GPU
+Sep 17 12:09:49 agora ollama[2308]: slot   operator(): id  0 | task 0 | new prompt, n_ctx_slot = 16384, n_keep = 4, task.n_tokens = 14960
+Sep 17 12:18:30 agora ollama[2308]: slot   operator(): id  0 | task 256 | new prompt, n_ctx_slot = 16384, n_keep = 4, task.n_tokens = 15097
+Sep 17 12:20:26 agora ollama[2308]: load_tensors: offloaded 25/25 layers to GPU
+Sep 17 12:20:39 agora ollama[2308]: slot   operator(): id  0 | task 0 | new prompt, n_ctx_slot = 16384, n_keep = 4, task.n_tokens = 14505
+Sep 17 12:22:11 agora ollama[2308]: slot   operator(): id  0 | task 1909 | new prompt, n_ctx_slot = 16384, n_keep = 4, task.n_tokens = 14427
+Sep 17 12:23:21 agora ollama[2308]: slot   operator(): id  0 | task 3868 | new prompt, n_ctx_slot = 16384, n_keep = 4, task.n_tokens = 14427
+Sep 17 12:24:52 agora ollama[2308]: slot   operator(): id  0 | task 5855 | new prompt, n_ctx_slot = 16384, n_keep = 4, task.n_tokens = 14427
+Sep 17 12:41:58 agora ollama[2308]: load_tensors: offloaded 49/49 layers to GPU
+Sep 17 12:42:12 agora ollama[2308]: slot   operator(): id  0 | task 0 | new prompt, n_ctx_slot = 16384, n_keep = 4, task.n_tokens = 14984
+Sep 17 12:50:56 agora ollama[2308]: slot   operator(): id  0 | task 265 | new prompt, n_ctx_slot = 16384, n_keep = 4, task.n_tokens = 15121
+Sep 17 12:58:36 agora ollama[2308]: slot   operator(): id  0 | task 265 | slot context shift, n_keep = 4, n_left = 16379, n_discard = 8189
+Sep 17 13:03:02 agora ollama[2308]: [GIN] 2026/09/17 - 13:03:02 | 499 |        10m29s |       127.0.0.1 | POST     "/api/chat"
+Sep 17 13:03:04 agora ollama[2308]: load_tensors: offloaded 37/37 layers to GPU
+Sep 17 13:03:08 agora ollama[2308]: [GIN] 2026/09/17 - 13:03:08 | 499 |         1m38s |       127.0.0.1 | POST     "/api/chat"
+Sep 17 13:03:39 agora ollama[2308]: load_tensors: offloaded 25/25 layers to GPU
+Sep 17 13:03:54 agora ollama[2308]: slot   operator(): id  0 | task 0 | new prompt, n_ctx_slot = 16384, n_keep = 4, task.n_tokens = 14513
+Sep 17 13:05:58 agora ollama[2308]: [GIN] 2026/09/17 - 13:05:58 | 499 |         2m14s |       127.0.0.1 | POST     "/api/chat"
+Sep 17 13:06:27 agora ollama[2308]: load_tensors: offloaded 25/25 layers to GPU
+Sep 17 13:06:40 agora ollama[2308]: slot   operator(): id  0 | task 0 | new prompt, n_ctx_slot = 16384, n_keep = 4, task.n_tokens = 14444
+Sep 17 13:08:14 agora ollama[2308]: slot   operator(): id  0 | task 1970 | new prompt, n_ctx_slot = 16384, n_keep = 4, task.n_tokens = 14444
+Sep 17 13:09:42 agora ollama[2308]: slot   operator(): id  0 | task 3940 | new prompt, n_ctx_slot = 16384, n_keep = 4, task.n_tokens = 14444
+Sep 17 13:26:46 agora ollama[2308]: load_tensors: offloaded 49/49 layers to GPU
+Sep 17 13:27:00 agora ollama[2308]: slot   operator(): id  0 | task 0 | new prompt, n_ctx_slot = 16384, n_keep = 4, task.n_tokens = 14953
+Sep 17 13:35:27 agora ollama[2308]: slot   operator(): id  0 | task 255 | new prompt, n_ctx_slot = 16384, n_keep = 4, task.n_tokens = 15090
+Sep 17 13:37:16 agora ollama[2308]: load_tensors: offloaded 25/25 layers to GPU
+Sep 17 13:37:30 agora ollama[2308]: slot   operator(): id  0 | task 0 | new prompt, n_ctx_slot = 16384, n_keep = 4, task.n_tokens = 14495
+Sep 17 13:39:04 agora ollama[2308]: slot   operator(): id  0 | task 1919 | new prompt, n_ctx_slot = 16384, n_keep = 4, task.n_tokens = 14417
+Sep 17 13:41:08 agora ollama[2308]: slot   operator(): id  0 | task 3888 | new prompt, n_ctx_slot = 16384, n_keep = 4, task.n_tokens = 14417
+Sep 17 13:42:55 agora ollama[2308]: [GIN] 2026/09/17 - 13:42:55 | 500 |         1m47s |       127.0.0.1 | POST     "/api/chat"
+Sep 17 13:57:51 agora ollama[2308]: load_tensors: offloaded 49/49 layers to GPU
+Sep 17 13:58:06 agora ollama[2308]: slot   operator(): id  0 | task 0 | new prompt, n_ctx_slot = 16384, n_keep = 4, task.n_tokens = 14946
+Sep 17 14:06:18 agora ollama[2308]: slot   operator(): id  0 | task 254 | new prompt, n_ctx_slot = 16384, n_keep = 4, task.n_tokens = 15083
+Sep 17 14:07:59 agora ollama[2308]: load_tensors: offloaded 25/25 layers to GPU
+Sep 17 14:08:13 agora ollama[2308]: slot   operator(): id  0 | task 0 | new prompt, n_ctx_slot = 16384, n_keep = 4, task.n_tokens = 14486
+Sep 17 14:09:42 agora ollama[2308]: slot   operator(): id  0 | task 1928 | new prompt, n_ctx_slot = 16384, n_keep = 4, task.n_tokens = 14408
+Sep 17 14:10:51 agora ollama[2308]: slot   operator(): id  0 | task 3906 | new prompt, n_ctx_slot = 16384, n_keep = 4, task.n_tokens = 14408
+Sep 17 14:12:49 agora ollama[2308]: slot   operator(): id  0 | task 5912 | new prompt, n_ctx_slot = 16384, n_keep = 4, task.n_tokens = 14408
+Sep 17 14:15:15 agora ollama[2308]: load_tensors: offloaded 49/49 layers to GPU
+Sep 17 14:15:29 agora ollama[2308]: slot   operator(): id  0 | task 0 | new prompt, n_ctx_slot = 16384, n_keep = 4, task.n_tokens = 15015
+Sep 17 14:28:04 agora ollama[2308]: slot   operator(): id  0 | task 0 | slot context shift, n_keep = 4, n_left = 16379, n_discard = 8189
+Sep 17 14:30:52 agora ollama[2308]: load_tensors: offloaded 25/25 layers to GPU
+Sep 17 14:31:06 agora ollama[2308]: slot   operator(): id  0 | task 0 | new prompt, n_ctx_slot = 16384, n_keep = 4, task.n_tokens = 14505
+Sep 17 14:32:37 agora ollama[2308]: slot   operator(): id  0 | task 1909 | new prompt, n_ctx_slot = 16384, n_keep = 4, task.n_tokens = 14436
+Sep 17 14:34:52 agora ollama[2308]: load_tensors: offloaded 49/49 layers to GPU
+Sep 17 14:35:06 agora ollama[2308]: slot   operator(): id  0 | task 0 | new prompt, n_ctx_slot = 16384, n_keep = 4, task.n_tokens = 15019
+Sep 17 14:48:06 agora ollama[2308]: slot   operator(): id  0 | task 0 | slot context shift, n_keep = 4, n_left = 16379, n_discard = 8189
+Sep 17 14:51:47 agora ollama[2308]: slot   operator(): id  0 | task 2201 | new prompt, n_ctx_slot = 16384, n_keep = 4, task.n_tokens = 14960
+Sep 17 14:57:44 agora ollama[2308]: [GIN] 2026/09/17 - 14:57:44 | 500 |         5m58s |       127.0.0.1 | POST     "/api/chat"

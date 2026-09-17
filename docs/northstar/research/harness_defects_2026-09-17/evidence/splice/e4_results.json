@@ -1,0 +1,1181 @@
+[
+  {
+    "run": "202b2-e05-faction-budget-20260917-1357",
+    "n": 1,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(21 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 2.4449064893841093 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed  || Obtained: 2.4449064893841093"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260917-1357",
+    "n": 2,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(21 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 2.4449064893841093 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed  || Obtained: 2.4449064893841093"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260917-1357",
+    "n": 3,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260917-1357",
+    "n": 4,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260917-1357",
+    "n": 5,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260917-1357",
+    "n": 6,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260917-1357",
+    "n": 7,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(22 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 97.79625957536436 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed | || Obtained: 97.79625957536436"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260917-1357",
+    "n": 8,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260917-1357",
+    "n": 9,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260917-1357",
+    "n": 10,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(22 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 2.4449064893841093 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed  || Obtained: 2.4449064893841093"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260917-1141",
+    "n": 1,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(21 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 2.4449064893841093 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed  || Obtained: 2.4449064893841093"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260917-1141",
+    "n": 2,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(21 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 2.4449064893841093 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed  || Obtained: 2.4449064893841093"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260917-1141",
+    "n": 3,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260917-1141",
+    "n": 4,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260917-1141",
+    "n": 5,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260917-1141",
+    "n": 6,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260917-1208",
+    "n": 1,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(21 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 2.4449064893841093 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed  || Obtained: 2.4449064893841093"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260917-1208",
+    "n": 2,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(25 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 2.4449064893841093 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed  || Obtained: 2.4449064893841093"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260917-1208",
+    "n": 3,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260917-1208",
+    "n": 4,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260917-1208",
+    "n": 5,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260917-1208",
+    "n": 6,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260917-1236",
+    "n": 1,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(23 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 2.4449064893841093 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed  || Obtained: 2.4449064893841093"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260917-1236",
+    "n": 2,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(22 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 97.79625957536436 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed | || Obtained: 97.79625957536436"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260917-1236",
+    "n": 3,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260917-1236",
+    "n": 4,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260917-1236",
+    "n": 5,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260917-1236",
+    "n": 6,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260917-1321",
+    "n": 1,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(20 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 2.4449064893841093 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed  || Obtained: 2.4449064893841093"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260917-1321",
+    "n": 2,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(21 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 2.4449064893841093 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed  || Obtained: 2.4449064893841093"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260917-1321",
+    "n": 3,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260917-1321",
+    "n": 4,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2054-2",
+    "n": 1,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(22 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 2.4449064893841093 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed  || Obtained: 2.4449064893841093"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2054-2",
+    "n": 2,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(22 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 2.4449064893841093 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed  || Obtained: 2.4449064893841093"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2054-2",
+    "n": 3,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2054-2",
+    "n": 4,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2054-2",
+    "n": 5,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2054-2",
+    "n": 6,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2054-2",
+    "n": 7,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(22 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 0.0 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed | E         Obt || Obtained: 0.0"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2054-2",
+    "n": 8,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(22 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 2.4449064893841093 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed  || Obtained: 2.4449064893841093"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2054-2",
+    "n": 9,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2054-2",
+    "n": 10,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2054-2",
+    "n": 11,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(22 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 0.0 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed | E         Obt || Obtained: 0.0"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2054",
+    "n": 1,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(21 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 2.4449064893841093 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed  || Obtained: 2.4449064893841093"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2054",
+    "n": 2,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(21 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 97.79625957536436 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed | || Obtained: 97.79625957536436"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2054",
+    "n": 3,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2054",
+    "n": 4,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2054",
+    "n": 5,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2054",
+    "n": 6,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2054",
+    "n": 7,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(20 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 2.4449064893841093 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed  || Obtained: 2.4449064893841093"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2054",
+    "n": 8,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2054",
+    "n": 9,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2054",
+    "n": 10,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(21 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 9.779625957536437 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed | || Obtained: 9.779625957536437"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2054",
+    "n": 11,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2054",
+    "n": 12,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2054",
+    "n": 13,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(21 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 2.4449064893841093 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed  || Obtained: 2.4449064893841093"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2054",
+    "n": 14,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2054",
+    "n": 15,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2129",
+    "n": 1,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(20 lines)",
+    "splice_result": "compile-error",
+    "detail": "x(0.0, w->faction_budget[f] + delta);\n      |                                ^~~~\ncsrc/faction.c:6:1: note: include \u2018<math.h>\u2019 or provide a declaration of \u2018fmax\u2019\n    5 | #include <stdlib.h>\n  +++ |+#include <math.h>\n    6 | \ncsrc/faction.c:219:32: warning: incompatible implicit declaration of built-in function \u2018fmax\u2019 [-Wbuiltin-declaration-mismatch]\n  219 |         w->faction_budget[f] = fmax(0.0, w->faction_budget[f] + delta);\n      |                                ^~~~\ncsrc/faction.c:219:32: note: include \u2018<math.h>\u2019 or provide a declaration of \u2018fmax\u2019\ncsrc/sim.c:31:21: warning: \u2018OM_PI\u2019 defined but not used [-Wunused-const-variable=]\n   31 | static const double OM_PI = 3.14159265358979323846264338327950288;\n      |                     ^~~~~\nmake: *** [Makefile:25: libouroboros.so] Error 1\n"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2129",
+    "n": 2,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(19 lines)",
+    "splice_result": "compile-error",
+    "detail": "x(0.0, w->faction_budget[f] + delta);\n      |                                ^~~~\ncsrc/faction.c:6:1: note: include \u2018<math.h>\u2019 or provide a declaration of \u2018fmax\u2019\n    5 | #include <stdlib.h>\n  +++ |+#include <math.h>\n    6 | \ncsrc/faction.c:218:32: warning: incompatible implicit declaration of built-in function \u2018fmax\u2019 [-Wbuiltin-declaration-mismatch]\n  218 |         w->faction_budget[f] = fmax(0.0, w->faction_budget[f] + delta);\n      |                                ^~~~\ncsrc/faction.c:218:32: note: include \u2018<math.h>\u2019 or provide a declaration of \u2018fmax\u2019\ncsrc/sim.c:31:21: warning: \u2018OM_PI\u2019 defined but not used [-Wunused-const-variable=]\n   31 | static const double OM_PI = 3.14159265358979323846264338327950288;\n      |                     ^~~~~\nmake: *** [Makefile:25: libouroboros.so] Error 1\n"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2129",
+    "n": 3,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2129",
+    "n": 4,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2129",
+    "n": 5,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2129",
+    "n": 6,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2129",
+    "n": 7,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(22 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 0.0 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed | E         Obt || Obtained: 0.0"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2129",
+    "n": 8,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2129",
+    "n": 9,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2129",
+    "n": 10,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(19 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 2.4449064893841093 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed  || Obtained: 2.4449064893841093"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2129",
+    "n": 11,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2129",
+    "n": 12,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2129",
+    "n": 13,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(22 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 9.779625957536437 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed | || Obtained: 9.779625957536437"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2129",
+    "n": 14,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2129",
+    "n": 15,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2207",
+    "n": 1,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(19 lines)",
+    "splice_result": "compile-error",
+    "detail": "x(0.0, w->faction_budget[f] + delta);\n      |                                ^~~~\ncsrc/faction.c:6:1: note: include \u2018<math.h>\u2019 or provide a declaration of \u2018fmax\u2019\n    5 | #include <stdlib.h>\n  +++ |+#include <math.h>\n    6 | \ncsrc/faction.c:218:32: warning: incompatible implicit declaration of built-in function \u2018fmax\u2019 [-Wbuiltin-declaration-mismatch]\n  218 |         w->faction_budget[f] = fmax(0.0, w->faction_budget[f] + delta);\n      |                                ^~~~\ncsrc/faction.c:218:32: note: include \u2018<math.h>\u2019 or provide a declaration of \u2018fmax\u2019\ncsrc/sim.c:31:21: warning: \u2018OM_PI\u2019 defined but not used [-Wunused-const-variable=]\n   31 | static const double OM_PI = 3.14159265358979323846264338327950288;\n      |                     ^~~~~\nmake: *** [Makefile:25: libouroboros.so] Error 1\n"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2207",
+    "n": 2,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(19 lines)",
+    "splice_result": "compile-error",
+    "detail": "x(0.0, w->faction_budget[f] + delta);\n      |                                ^~~~\ncsrc/faction.c:6:1: note: include \u2018<math.h>\u2019 or provide a declaration of \u2018fmax\u2019\n    5 | #include <stdlib.h>\n  +++ |+#include <math.h>\n    6 | \ncsrc/faction.c:218:32: warning: incompatible implicit declaration of built-in function \u2018fmax\u2019 [-Wbuiltin-declaration-mismatch]\n  218 |         w->faction_budget[f] = fmax(0.0, w->faction_budget[f] + delta);\n      |                                ^~~~\ncsrc/faction.c:218:32: note: include \u2018<math.h>\u2019 or provide a declaration of \u2018fmax\u2019\ncsrc/sim.c:31:21: warning: \u2018OM_PI\u2019 defined but not used [-Wunused-const-variable=]\n   31 | static const double OM_PI = 3.14159265358979323846264338327950288;\n      |                     ^~~~~\nmake: *** [Makefile:25: libouroboros.so] Error 1\n"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2207",
+    "n": 3,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2207",
+    "n": 4,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2207",
+    "n": 5,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2207",
+    "n": 6,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2207",
+    "n": 7,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(23 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 0.0 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed | E         Obt || Obtained: 0.0"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2207",
+    "n": 8,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2207",
+    "n": 9,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2207",
+    "n": 10,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(21 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 2.4449064893841093 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed  || Obtained: 2.4449064893841093"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2207",
+    "n": 11,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2207",
+    "n": 12,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2207",
+    "n": 13,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(22 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 2.4449064893841093 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed  || Obtained: 2.4449064893841093"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2207",
+    "n": 14,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2207",
+    "n": 15,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2236",
+    "n": 1,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(21 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 2.4449064893841093 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed  || Obtained: 2.4449064893841093"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2236",
+    "n": 2,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(21 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 2.4449064893841093 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed  || Obtained: 2.4449064893841093"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2236",
+    "n": 3,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2236",
+    "n": 4,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2236",
+    "n": 5,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2236",
+    "n": 6,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2236",
+    "n": 7,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(22 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 0.0 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed | E         Obt || Obtained: 0.0"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2236",
+    "n": 8,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(22 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 2.4449064893841093 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed  || Obtained: 2.4449064893841093"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2236",
+    "n": 9,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(22 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 2.4449064893841093 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed  || Obtained: 2.4449064893841093"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2236",
+    "n": 10,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2236",
+    "n": 11,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2236",
+    "n": 12,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2236",
+    "n": 13,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2300",
+    "n": 1,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(22 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 9.179625957536436 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed | || Obtained: 9.179625957536436"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2300",
+    "n": 2,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(21 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 2.4449064893841093 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed  || Obtained: 2.4449064893841093"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2300",
+    "n": 3,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2300",
+    "n": 4,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2300",
+    "n": 5,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2300",
+    "n": 6,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2314",
+    "n": 1,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(21 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 2.4449064893841093 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed  || Obtained: 2.4449064893841093"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2314",
+    "n": 2,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(21 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 2.4449064893841093 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed  || Obtained: 2.4449064893841093"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2314",
+    "n": 3,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2314",
+    "n": 4,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2314",
+    "n": 5,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2314",
+    "n": 6,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2332",
+    "n": 1,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(21 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 2.4449064893841093 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed  || Obtained: 2.4449064893841093"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2332",
+    "n": 2,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(19 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 97.79625957536436 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed | || Obtained: 97.79625957536436"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2332",
+    "n": 3,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2332",
+    "n": 4,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2332",
+    "n": 5,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2332",
+    "n": 6,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2352",
+    "n": 1,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(23 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 2.4449064893841093 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed  || Obtained: 2.4449064893841093"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2352",
+    "n": 2,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(24 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 9.779625957536437 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed | || Obtained: 9.779625957536437"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2352",
+    "n": 3,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2352",
+    "n": 4,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2352",
+    "n": 5,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260916-2352",
+    "n": 6,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260917-0012",
+    "n": 1,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(23 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 2.4449064893841093 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed  || Obtained: 2.4449064893841093"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260917-0012",
+    "n": 2,
+    "model": "qwen3-coder:30b",
+    "cand_reason": "tests",
+    "extract": "ok(21 lines)",
+    "splice_result": "fail",
+    "detail": ">       assert delta_budget == pytest.approx(2.275, abs=1e-6) | E       assert 0.17962595753643606 == 2.275 \u00b1 1.0e-06 | E          | E         comparison failed || Obtained: 0.17962595753643606"
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260917-0012",
+    "n": 3,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260917-0012",
+    "n": 4,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260917-0012",
+    "n": 5,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  },
+  {
+    "run": "202b2-e05-faction-budget-20260917-0012",
+    "n": 6,
+    "model": "gpt-oss:20b",
+    "cand_reason": "snippet-format",
+    "extract": "no-function-found",
+    "splice_result": null,
+    "detail": ""
+  }
+]
