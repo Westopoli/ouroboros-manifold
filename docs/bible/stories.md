@@ -162,4 +162,5 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-156 | E-21 | "Headless bot matches flag broken matchups automatically." | Spec'd, blocked on Q-158-01 | `epics/E-21-offline-ai-pipeline.md` S-156 |
 | S-157 | E-21 | "Someday, per-civilization unit variety and generated archetypes." | Deferred (A-278, A-279) | `epics/E-21-offline-ai-pipeline.md` S-157 |
 | S-158 | E-21 | "Agora reads distilled rules derived from these epics, never the bible." | Spec'd | `epics/E-21-offline-ai-pipeline.md` S-158 |
-| S-159 | E-19 | "Someday, a paired command-and-economy multiplayer mode." | Deferred (Q-159-01) | `epics/E-19-multiplayer.md` S-159 |
+| S-159 | E-19 | "Someday, a visible, growing economy: player-run in pairs, or running itself alone." | Deferred (Q-159-01, Q-159-02) | `epics/E-19-multiplayer.md` S-159 |
+| S-160 | E-02 | "A feature I switch off actually skips its step; a fresh world drifts by default." | Ready | `epics/E-02-region-fields-and-drift.md` S-160 |

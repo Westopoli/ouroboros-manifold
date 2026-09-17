@@ -101,16 +101,17 @@ Inputs: Steam friends; lobby.
 Outputs: lobby screen; match start.
 Open flags: Q-144-01, Q-144-02. Reference required: `references/E-19/notes.md`, missing.
 
-### S-159 — Someday: a paired command-and-economy multiplayer mode
+### S-159 — Someday: a visible, growing economy, player-run in pairs or running itself alone
 
-As a group of friends, we may someday want a match where each team of two splits military and economic command, so that mastering the economy is as deep and demanding as mastering the fight, and building a city feels as grand as commanding an army.
+As a commander, I may someday want to watch a real city grow behind my war, built for me when I fight alone and built with me by a partner when I choose to, so that the civilization feels alive and its growth is something I want to watch, not just a number.
 
 Rules
 - R-159-01  Deferred (Q-159-01). No rule at launch. Recorded so the idea is not lost: an optional multiplayer mode, separate from the core commander game, where players queue in pairs and teams of 2, 4, or 6 form from one or more pairs; within a pair, one player commands the pair's military force using the existing tactical and layer system, and the other manages the pair's economy (production, resources, construction, base layout); the economy role's target system complexity is roughly two to three times a proficient StarCraft 2 economy's, so that mastering it demands as much depth as the military role. Building placement, base customization, and construction detail are a major point of this mode: the target is a strong sense of scale, building cities larger and more complex than Age of Empires Online's, not a thin resource-tick abstraction. Exact economy mechanics are unspecified; the reference games (StarCraft 2 for supply and production pressure, Age of Empires 2 and Age of Empires Online for multi-resource gathering and city building) are starting points for research, not a design. This mode does not change the core single-commander game (hub "The Player's Toolkit": no economy, no base building); it is an additional mode that sits beside it.
+- R-159-02  Deferred (Q-159-02). No rule at launch. Recorded so the idea is not lost: the same economy and its city are present in every match, including the core single-commander game where no second player has opted into the pairing; when nobody is managing it, it runs itself, driven by the region's existing simulated economic state (E-02), not by a real decision-making agent — a scripted or rule-based growth process is acceptable and preferred over an intelligent agent. The visible result is a deliberate spectacle, not a side effect: buildings rise, infrastructure spreads, and activity visibly increases as the region's economy grows, cheaply enough to keep the screen busy at scale without heavy rendering cost, in the spirit of the procedural, authored-pieces approach named elsewhere for the tactical map (E-17 S-119) and the LOD and culling discipline named for combat visuals (E-18 S-134, S-136). The self-running city should be something a player is drawn to and wants to watch, and something they can also choose to influence and grow, not merely observe, even outside the paired mode; the extent of that influence outside the paired mode is unspecified. This does not change the core single-commander game's rule that the player does not manage an economy (hub "The Player's Toolkit"); the player may see and be drawn to it without administering it.
 
 Inputs: none yet.
 Outputs: none yet.
-Open flags: Q-159-01.
+Open flags: Q-159-01, Q-159-02.
 
 ## Inputs
 
@@ -153,8 +154,9 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-140-01, Q-140-02, Q-141-01, Q-141-02, Q-142-01, Q-142-02, Q-144-01, Q-144-02, Q-159-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-140-01, Q-140-02, Q-141-01, Q-141-02, Q-142-01, Q-142-02, Q-144-01, Q-144-02, Q-159-01, Q-159-02. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
 - Every sim epic (determinism), E-08 and E-10 (match flow and missions), E-16 (lobby, pause), E-20 (era packs).
+- S-159's self-running economy (R-159-02) also touches E-02 (region economic field, the data it grows from), E-16 (world view, where it would render), and E-17 and E-18 (the cheap, procedural, LOD-disciplined visual approach it should follow). It is recorded here because the idea started as a multiplayer-mode question, not because E-19 is necessarily its final home; a later Stage 2 pass may move S-159 or split it once it is scoped for real.

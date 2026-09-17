@@ -86,7 +86,7 @@ Units feel real but are not deep characters. They have names. Losing one stings,
 
 The player does not manage an economy or build a base. The civilization allocates a starting force by mission type and its own state; about a fifth of what a full mission can field; the rest, up to and beyond the whole, comes from local reinforcement structures captured and held during the mission, so a player who holds production ends with more than they started with and one who loses it fights with a fifth A thriving civilization gives a well-equipped force. A declining one gives scraps. The gap is where the drama lives.
 
-A separate, deferred multiplayer mode is under exploration where paired players split military and economic command (`E-19` S-159, speculative, open flag `Q-159-01`). It does not change this rule for the core commander game described above.
+A visible, growing economy and city are under exploration as a deferred idea (`E-19` S-159, speculative, open flags `Q-159-01`, `Q-159-02`): a paired multiplayer mode where one player commands the city while the other commands the military, and, even in the core single-commander game, the same economy and city present but running themselves, unmanaged, as a visual draw. Neither changes this rule for the core commander game described above; the player watches and may someday nudge it, but does not administer it.
 
 Onboarding asks two things before the first chapter, difficulty and mission-type preferences, and both can be changed later. The only progression unlock is era unlocks.
 
