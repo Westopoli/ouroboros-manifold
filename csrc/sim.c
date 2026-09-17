@@ -278,6 +278,11 @@ uint64_t om_world_step(om_world *w) {
         }
     }
 
+    /* Step 3: Factions (E-05) */
+    if (om_world_feature(w, OM_FEAT_FACTIONS)) {
+        om_faction_step_budget(w);
+    }
+
     return w->tick;
 }
 

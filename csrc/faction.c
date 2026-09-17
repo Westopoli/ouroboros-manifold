@@ -192,3 +192,9 @@ uint32_t om_rng_forced_remaining(const om_world *w) {
     
     return w->rng_forced_len;
 }
+
+void om_faction_step_budget(om_world *w) {
+    /* STUB: implemented by card 202b2 */
+    (void)w;
+}
+

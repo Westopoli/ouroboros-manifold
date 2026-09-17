@@ -50,4 +50,7 @@ struct om_world {
     uint32_t     rng_forced_head, rng_forced_len;
 };
 
+/* Internal step hooks */
+void om_faction_step_budget(om_world *w);
+
 #endif /* OM_INTERNAL_H */
