@@ -1,6 +1,8 @@
 # Decisions on the harness defect investigation (Westley, 2026-09-17)
 
-These answer the decision list that followed `README.md` in this directory. They are recorded only; none has been executed. `agora-dispatcher.service` stays stopped until Westley says otherwise.
+These answer the decision list that followed `README.md` in this directory. `agora-dispatcher.service` stays stopped until Westley says otherwise.
+
+**Execution status (2026-09-17, Cascade 1 of the harness-fix plan):** A1, A2, A3, and B1 are done and merged to `main` (`5b0eaaa`, `ff47fc9`, integration merges `6adf83b`/`18706ba`, records commit `df961d2`). The E-02 baseline (`tests/csim/test_E02_S0*.py` + `test_E02_gate_drift_trajectory.py`) is unchanged at 42 passed / 4 failed / 4 skipped, same four failing ids as before. `csrc/faction.c`'s budget body was hand-committed separately (`d641ea2`), ahead of the cascade, with the user's approval — its `om_faction_step_budget` assertions in `test_E05_S033_...::test_R_033_01_budget_66_8_40_8` now pass; that test's later, unrelated `om_step_decisions` assertion (a separate unimplemented `csrc/agent.c` stub, card 202a-series) stays red, out of this cascade's scope. Card 202b2's queue-side retirement and Cascade 2 (agora repo, C1/C2/C4/C5/C7) did not start this session — `~/Projects/agora` on `wn/qa-director` has ~690 lines of uncommitted/untracked state (including a deleted tracked card file), far more than the ~13 files Step 0.2 of the plan expected, and needs Westley's input before anything there is touched.
 
 ## Game side (ouroboros repo)
 
@@ -38,10 +40,10 @@ These answer the decision list that followed `README.md` in this directory. They
 - The second half of C7 was not answered: whether the "earlier suites stay green" clause in card goals becomes a real harness check or is removed from the card text.
 - Stage numbering. Westley's understanding is that Stage 4 is writing tests and Stage 5 is mapping cards, which was meant to be a `PLAN.md` edit made when the new card-organization strategy was defined. `CLAUDE.md` and the current northstar docs still describe Stage 4 as roadmap and sprints and Stage 5 as tests. The edit appears not to have fully landed. Worth a small investigation: what `PLAN.md`, `README.md`, `agile.md`, `spec_factory.md` and `PLAN_CARD_DECOMPOSITION.md` each say, and where they disagree. C2 above was phrased as "card author in Stage 4" under the old numbering; read it as "at the card-writing stage", whichever number that is.
 
-## Agreed order of work (not started)
+## Agreed order of work
 
-1. A1 rule, then A2 test, control and hand patch; A3 alongside.
-2. B1 green check.
-3. C1, C2, C4, C5, C7.
-4. B3 sweep, then the C6 re-benchmark.
-5. Then the high-level harness configuration comparison that prompted the investigation.
+1. **[DONE]** A1 rule, then A2 test, control and hand patch; A3 alongside.
+2. **[DONE]** B1 green check.
+3. **[NOT STARTED]** C1, C2, C4, C5, C7 — agora repo, blocked on the uncommitted-state question above.
+4. **[NOT STARTED]** B3 sweep, then the C6 re-benchmark.
+5. **[NOT STARTED]** Then the high-level harness configuration comparison that prompted the investigation.
