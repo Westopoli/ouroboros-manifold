@@ -200,6 +200,19 @@ uint32_t om_rng_forced_remaining(const om_world *w) {
 }
 
 void om_faction_step_budget(om_world *w) {
-    /* STUB: implemented by card 202b2 */
-    (void)w;
+    if (!w) return;
+    for (int32_t f = 0; f < OM_MAX_FACTIONS; f++) {
+        if (w->faction_used[f] == 0) continue;
+        double delta = 0.0;
+        for (uint32_t i = 0; i < w->n_regions; i++) {
+            if (w->regions[i].faction_id == (int32_t)f) {
+                delta += (w->regions[i].economy - 8.0) * 0.025;
+            }
+        }
+        delta *= w->faction_tech_economy[f];
+        w->faction_budget[f] += delta;
+        if (w->faction_budget[f] < 0.0) {
+            w->faction_budget[f] = 0.0;
+        }
+    }
 }
