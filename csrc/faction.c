@@ -144,9 +144,15 @@ om_stance om_faction_stance(const om_world *w, int32_t from, int32_t toward) {
 }
 
 uint32_t om_faction_territory(const om_world *w, int32_t faction_id) {
-    /* STUB */
-    (void)w; (void)faction_id;
-    return 0;
+    if (w == NULL || faction_id < 0 || faction_id >= OM_MAX_FACTIONS)
+        return 0;
+    
+    uint32_t count = 0;
+    for (uint32_t i = 0; i < w->n_regions; i++) {
+        if (w->regions[i].faction_id == faction_id)
+            count++;
+    }
+    return count;
 }
 
 void om_region_set_owner(om_world *w, uint32_t idx, int32_t faction_id, int64_t held_since_tick) {
@@ -197,4 +203,3 @@ void om_faction_step_budget(om_world *w) {
     /* STUB: implemented by card 202b2 */
     (void)w;
 }
-
