@@ -101,6 +101,17 @@ Inputs: Steam friends; lobby.
 Outputs: lobby screen; match start.
 Open flags: Q-144-01, Q-144-02. Reference required: `references/E-19/notes.md`, missing.
 
+### S-159 — Someday: a paired command-and-economy multiplayer mode
+
+As a group of friends, we may someday want a match where each team of two splits military and economic command, so that mastering the economy takes as much sustained effort as mastering the fight.
+
+Rules
+- R-159-01  Deferred (Q-159-01). No rule at launch. Recorded so the idea is not lost: an optional multiplayer mode, separate from the core commander game, where players queue in pairs and teams of 2, 4, or 6 form from one or more pairs; within a pair, one player commands the pair's military force using the existing tactical and layer system, and the other manages the pair's economy (production, resources, construction, base layout); the economy role's target complexity is roughly two to three times the sustained workload of a proficient StarCraft 2 economy player, so that it demands as much of the player's attention as the military role demands of theirs. Exact economy mechanics are unspecified; the reference games (StarCraft 2 for supply and production pressure, Age of Empires 2 for multi-resource and building management) are starting points for research, not a design. This mode does not change the core single-commander game (hub "The Player's Toolkit": no economy, no base building); it is an additional mode that sits beside it.
+
+Inputs: none yet.
+Outputs: none yet.
+Open flags: Q-159-01.
+
 ## Inputs
 
 | Input | Source | Range | Rejection |
@@ -142,7 +153,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-140-01, Q-140-02, Q-141-01, Q-141-02, Q-142-01, Q-142-02, Q-144-01, Q-144-02. Details in `docs/northstar/ambiguity_register.md`.
+Q-140-01, Q-140-02, Q-141-01, Q-141-02, Q-142-01, Q-142-02, Q-144-01, Q-144-02, Q-159-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
