@@ -14,7 +14,7 @@ config/name="Ouroboros"
 run/main_scene="res://scenes/privacy_modal/privacy_modal.tscn"
 config/use_custom_user_dir=true
 config/custom_user_dir_name="data"
-config/features=PackedStringArray("4.6", "Forward Plus")
+config/features=PackedStringArray("4.7", "Forward Plus")
 config/icon="res://icon.svg"
 
 [autoload]
@@ -45,6 +45,10 @@ window/size/viewport_height=1080
 window/size/mode=3
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
+
+[filesystem]
+
+import/blender/enabled=false
 
 [physics]
 

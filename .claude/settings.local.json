@@ -4,7 +4,9 @@
       "Bash(python3:*)",
       "Bash(ls:*)",
       "Bash(grep -l \"done\\\\|complete\\\\|in.*progress\\\\|future\\\\|deferred\" /Users/westley/ouroboros/docs/stage_specs/stage_*.md)",
-      "Bash(xargs -I {} sh -c 'echo \"=== $\\(basename {}\\) ===\" && head -2 {} | tail -1')"
+      "Bash(xargs -I {} sh -c 'echo \"=== $\\(basename {}\\) ===\" && head -2 {} | tail -1')",
+      "Bash(git switch *)",
+      "Bash(git pull *)"
     ]
   }
 }

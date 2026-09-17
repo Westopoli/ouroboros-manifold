@@ -142,13 +142,16 @@ func _spawn_sim(extra_args: PackedStringArray = PackedStringArray()) -> void:
 		args = ["--cmd-file", _cmd_file_path, "--units", str(SIM_UNITS_PER_SIDE), "--real-missions", "--save-root", save_root, "--root", game_root]
 	else:
 		var script := ProjectSettings.globalize_path("res://") + SIM_SCRIPT_PATH
-		exec_target = "python3"
+		var venv_python := ProjectSettings.globalize_path("res://") + ".venv/bin/python3"
+		exec_target = venv_python if FileAccess.file_exists(venv_python) else "python3"
 		args = [script, "--cmd-file", _cmd_file_path, "--units", str(SIM_UNITS_PER_SIDE), "--real-missions", "--save-root", save_root]
 
 	for a in extra_args:
 		args.append(a)
 
 	var result: Dictionary = OS.execute_with_pipe(exec_target, args)
+	if (result.is_empty() or not result.has("pid")) and not ThemeConstants.IS_RELEASE_BUILD:
+		result = OS.execute_with_pipe("python3", args)
 	if (result.is_empty() or not result.has("pid")) and not ThemeConstants.IS_RELEASE_BUILD:
 		result = OS.execute_with_pipe("python", args)
 	if result.is_empty() or not result.has("pid"):

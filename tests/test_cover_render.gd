@@ -8,7 +8,7 @@
 extends SceneTree
 
 func _init() -> void:
-	var renderer := load("res://scenes/tactical/terrain_renderer.gd").new()
+	var renderer: Node = load("res://scenes/tactical/terrain_renderer.gd").new()
 	get_root().add_child(renderer)
 
 	var asteroids: Array = [

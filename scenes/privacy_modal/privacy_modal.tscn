@@ -1,35 +1,42 @@
-[gd_scene load_steps=2 format=3 uid="uid://b0p1r2v3y4privacy"]
+[gd_scene format=3 uid="uid://cnsn4edrqhsd5"]
 
-[ext_resource type="Script" path="res://scenes/privacy_modal/privacy_modal.gd" id="1_privacy_script"]
+[ext_resource type="Script" uid="uid://1wl4b0jiy0gd" path="res://scenes/privacy_modal/privacy_modal.gd" id="1_privacy_script"]
 
-[node name="PrivacyModal" type="Control"]
+[node name="PrivacyModal" type="Control" unique_id=686869396]
+layout_mode = 3
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 script = ExtResource("1_privacy_script")
 
-[node name="Background" type="ColorRect" parent="."]
+[node name="Background" type="ColorRect" parent="." unique_id=1475366688]
+layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 color = Color(0.05, 0.05, 0.07, 1)
 
-[node name="CenterContainer" type="CenterContainer" parent="."]
+[node name="CenterContainer" type="CenterContainer" parent="." unique_id=820187594]
+layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 
-[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer" unique_id=544512095]
 custom_minimum_size = Vector2(640, 0)
+layout_mode = 2
 theme_override_constants/separation = 24
 
-[node name="PrivacyText" type="Label" parent="CenterContainer/VBoxContainer"]
-horizontal_alignment = 1
-autowrap_mode = 2
+[node name="PrivacyText" type="Label" parent="CenterContainer/VBoxContainer" unique_id=878046561]
+layout_mode = 2
 text = "PRIVATE PLAYTEST BUILD
 
 This build saves logs and crash reports to your machine.
 Nothing is sent anywhere. If you hit a bug, you can choose
 to send files to Westley — that's it."
+horizontal_alignment = 1
+autowrap_mode = 2
 
-[node name="AcceptButton" type="Button" parent="CenterContainer/VBoxContainer"]
+[node name="AcceptButton" type="Button" parent="CenterContainer/VBoxContainer" unique_id=1174317168]
 custom_minimum_size = Vector2(240, 48)
+layout_mode = 2
 size_flags_horizontal = 4
 text = "Accept & Continue"
