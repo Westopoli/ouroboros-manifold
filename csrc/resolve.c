@@ -121,67 +121,84 @@ void om_step_telegraphs(om_world *w) {
         
         om_region *target = &w->regions[t->target_idx];
         int32_t defender = target->faction_id;
-        
+
         double tech_attack = w->faction_tech_attack[t->attacker];
         double tech_defense = w->faction_tech_defense[defender];
-        double entrenchment = (target->faction_id >= 0) ? 2.0 : 1.0;
-        
+        int64_t held_since = om_region_held_since(w, t->target_idx);
+        double entrenchment = (held_since < 0) ? 2.0
+            : 1.0 + fmin(1.0, (double)((int64_t)w->tick - held_since) / 100.0);
+
         double reinforce_commit = 0.0;
         for (uint32_t r = 0; r < w->reinforces_n; ++r) {
             if (w->reinforces[r].target_idx == t->target_idx && w->reinforces[r].tick == w->tick) {
-                reinforce_commit += w->reinforces[r].d_military;
+                reinforce_commit += w->reinforces[r].commit;
             }
         }
-        
+
         double effective_attack = t->commit * 1.0 * tech_attack * 1.0;
         double effective_defense = target->military * 0.55 * tech_defense * entrenchment + reinforce_commit;
-        
-        double u;
+
+        double stochastic;
         if (w->rng_forced_len > 0) {
-            u = w->rng_forced[w->rng_forced_head];
+            /* A forced draw stands for the already-scaled U(0.7, 1.3) stochastic value
+             * itself (confirmed against test_R_037_01/02/05: forcing 0.7 or 1.0 makes
+             * net come out as exactly (effective_attack - effective_defense) * 0.7 or
+             * * 1.0, not the 0.7-1.3 rescale of a raw [0,1) input). */
+            stochastic = w->rng_forced[w->rng_forced_head];
             w->rng_forced_head++;
             w->rng_forced_len--;
         } else {
             uint32_t a = (uint32_t)(w->rng_state >> 5);
             uint32_t b = (uint32_t)(w->rng_state >> 6);
-            u = (a * 67108864.0 + b) * (1.0 / 9007199254740992.0);
+            double u = (a * 67108864.0 + b) * (1.0 / 9007199254740992.0);
             w->rng_state = w->rng_state * 6364136223846793005ULL + w->rng_inc;
+            stochastic = 0.7 + 0.6 * u;
         }
-        
-        double stochastic = 0.7 + (1.3 - 0.7) * u;
-        
-        double net_advantage = effective_attack - effective_defense;
-        double d_military = 0.0, d_economy = 0.0, d_tension = 0.0;
-        uint32_t outcome = 0;
-        double garrison = 0.0;
-        double budget_spent = t->commit;
-        int32_t conquered = 0;
-        
-        if (net_advantage > effective_defense * 1.5) {
-            d_military = target->military * 0.75;
-            d_economy = target->economy * 0.35;
-            d_tension = target->tension * 0.25;
-            outcome = 0; /* breakthrough */
-        } else if (net_advantage > effective_defense * 0.5) {
-            d_military = target->military * 0.45;
-            d_economy = target->economy * 0.15;
-            d_tension = target->tension * 0.10;
-            outcome = 1; /* contested */
+        double net = (effective_attack - effective_defense) * stochastic;
+
+        double d_military, d_economy, d_tension;
+        uint32_t outcome;
+        if (net > 15.0) {
+            outcome = OM_OUT_BREAKTHROUGH;
+            d_military = -0.8 * net;
+            d_economy = -0.3 * net;
+            d_tension = fmin(0.5 * net, 30.0);
+        } else if (net > 0.0) {
+            outcome = OM_OUT_CONTESTED;
+            d_military = -0.5 * net;
+            d_economy = -0.2 * net;
+            d_tension = 0.4 * net;
         } else {
-            d_military = target->military * 0.15;
-            d_economy = target->economy * 0.05;
-            d_tension = target->tension * 0.05;
-            outcome = 2; /* repelled */
+            outcome = OM_OUT_REPELLED;
+            d_military = -0.10 * effective_attack;
+            d_economy = 0.0;
+            d_tension = 2.0;
         }
-        
-        if (target->faction_id >= 0 && net_advantage > effective_defense * 1.5) {
-            conquered = 1;
-            garrison = t->commit * 0.65;
-            d_military = target->military;
-            d_economy = target->economy;
-            d_tension = target->tension;
+
+        double garrison = 0.0;
+        int32_t conquered = 0;
+        if (outcome != OM_OUT_REPELLED) {
+            /* OM_BUG_CONQUEST_ON_BAND (105): conquest checked on the outcome band
+             * instead of post-damage military (ALG-22). */
+            conquered = (w->inject == 105)
+                ? (outcome == OM_OUT_BREAKTHROUGH)
+                : (target->military + d_military < 5.0);
         }
-        
+        if (conquered) garrison = t->commit * 0.65;
+
+        /* Garrison and the fuller ALG-22 conquest effects (economy disruption,
+         * tension spike, population loss, the unrest chain) belong to card
+         * 204b1-e05-conquest-garrison, not this card; only the basic conquest
+         * flag and a simple post-damage garrison add are this function's job,
+         * matching what R-037's own tests actually check. */
+        target->military = fmax(0.0, target->military + d_military);
+        target->economy = fmax(8.0, target->economy + d_economy);
+        target->tension = fmin(100.0, fmax(0.0, target->tension + d_tension));
+        if (conquered) {
+            target->military += garrison;
+            target->faction_id = t->attacker;
+        }
+
         if (w->attacks_n < 64) {
             om_attack_result *r = &w->attacks[w->attacks_n];
             r->tick = w->tick;
@@ -195,12 +212,12 @@ void om_step_telegraphs(om_world *w) {
             r->effective_attack = effective_attack;
             r->effective_defense = effective_defense;
             r->stochastic = stochastic;
-            r->net = net_advantage;
+            r->net = net;
             r->d_military = d_military;
             r->d_economy = d_economy;
             r->d_tension = d_tension;
             r->garrison = garrison;
-            r->budget_spent = budget_spent;
+            r->budget_spent = t->commit;
             r->collision = 0;
             w->attacks_n++;
         }
