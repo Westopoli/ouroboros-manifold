@@ -311,6 +311,122 @@ void om_step_reinforce(om_world *w) {
 }
 
 void om_step_resolve(om_world *w) {
-    /* STUB */
-    (void)w;
+    if (!w) return;
+
+    for (uint32_t i = 0; i < w->decisions_n; ++i) {
+        om_decision *d = &w->decisions[i];
+        if (d->action != OM_ACT_ATTACK) continue;
+        
+        if (d->mode == OM_MODE_TELEGRAPH) {
+            /* Skip telegraphs that are not matured yet (matured ones are dispatched by step 3c / om_step_telegraphs) */
+            if (w->tick < d->tick + 3) continue;
+        }
+
+        int32_t attacker = d->faction_id;
+        uint32_t target_idx = d->target_idx;
+        double commit = d->commit;
+
+        int32_t defender = w->regions[target_idx].faction_id;
+        double surprise_mult = (d->mode == OM_MODE_SURPRISE) ? 0.5 : 1.0;
+
+        /* Fault injection: if w->inject == 102, apply 0.5 to defense instead of attack */
+        double effective_attack, effective_defense;
+        if (w->inject == 102) {
+            effective_attack = commit * 1.0 * w->faction_tech_attack[attacker] * 1.0;
+            effective_defense = w->regions[target_idx].military * 0.55 * w->faction_tech_defense[defender] * (w->inject == 102 ? 0.5 : 1.0);
+        } else {
+            effective_attack = commit * 1.0 * w->faction_tech_attack[attacker] * surprise_mult;
+            effective_defense = w->regions[target_idx].military * 0.55 * w->faction_tech_defense[defender];
+        }
+
+        /* Entrenchment (ALG-13) */
+        int64_t held_since = om_region_held_since(w, target_idx);
+        double ent;
+        if (held_since < 0) {
+            ent = 2.0;
+        } else {
+            ent = 1.0 + fmin(1.0, (double)((int64_t)w->tick - held_since) / 100.0);
+        }
+
+        effective_defense *= ent;
+
+        /* Add defender reinforce commit if reactive reinforcement landed this tick */
+        double reinforce_commit = 0.0;
+        for (uint32_t r = 0; r < w->reinforces_n; ++r) {
+            if (w->reinforces[r].target_idx == target_idx && w->reinforces[r].tick == w->tick) {
+                reinforce_commit += w->reinforces[r].commit;
+            }
+        }
+        effective_defense += reinforce_commit;
+
+        /* Draw stochastic factor u ~ U(0.7, 1.3) */
+        double u;
+        if (w->rng_forced_len > 0) {
+            u = w->rng_forced[w->rng_forced_head];
+            w->rng_forced_head++;
+            w->rng_forced_len--;
+        } else {
+            uint32_t a = (uint32_t)(w->rng_state >> 5);
+            uint32_t b = (uint32_t)(w->rng_state >> 6);
+            double unif = (a * 67108864.0 + b) * (1.0 / 9007199254740992.0);
+            w->rng_state = w->rng_state * 6364136223846793005ULL + w->rng_inc;
+            u = 0.7 + 0.6 * unif;
+        }
+
+        double net = (effective_attack - effective_defense) * u;
+
+        /* Damage bands (ALG-21) */
+        double d_military, d_economy, d_tension;
+        uint32_t outcome;
+        if (net > 15.0) {
+            outcome = OM_OUT_BREAKTHROUGH;
+            d_military = -0.8 * net;
+            d_economy = -0.3 * net;
+            d_tension = fmin(0.5 * net, 30.0);
+        } else if (net > 0.0) {
+            outcome = OM_OUT_CONTESTED;
+            d_military = -0.5 * net;
+            d_economy = -0.2 * net;
+            d_tension = 0.4 * net;
+        } else {
+            outcome = OM_OUT_REPELLED;
+            d_military = -0.10 * effective_attack;
+            d_economy = 0.0;
+            d_tension = 2.0;
+        }
+
+        /* Apply damage deltas to defender target region */
+        double military = w->regions[target_idx].military + d_military;
+        double economy = fmax(8.0, w->regions[target_idx].economy + d_economy);
+        double tension = fmin(100.0, fmax(0.0, w->regions[target_idx].tension + d_tension));
+
+        /* Update region state */
+        w->regions[target_idx].military = military;
+        w->regions[target_idx].economy = economy;
+        w->regions[target_idx].tension = tension;
+
+        /* Record in w->attacks */
+        if (w->attacks_n < 64) {
+            om_attack_result *r = &w->attacks[w->attacks_n];
+            r->tick = w->tick;
+            r->attacker = attacker;
+            r->defender = defender;
+            r->target_idx = target_idx;
+            r->mode = d->mode;
+            r->outcome = outcome;
+            r->conquest = 0; /* Will be set later if conquest occurs */
+            r->commit = commit;
+            r->effective_attack = effective_attack;
+            r->effective_defense = effective_defense;
+            r->stochastic = u;
+            r->net = net;
+            r->d_military = d_military;
+            r->d_economy = d_economy;
+            r->d_tension = d_tension;
+            r->garrison = 0.0;
+            r->budget_spent = commit;
+            r->collision = 0;
+            w->attacks_n++;
+        }
+    }
 }
