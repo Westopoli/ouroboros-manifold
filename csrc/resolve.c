@@ -38,9 +38,13 @@
 #include <string.h>
 
 uint32_t om_tick_attacks(const om_world *w, om_attack_result *out, uint32_t max) {
-    /* STUB */
-    (void)w; (void)out; (void)max;
-    return 0;
+    if (!w || !out || max == 0) return 0;
+    
+    uint32_t count = fmin(w->attacks_n, max);
+    for (uint32_t i = 0; i < count; ++i) {
+        out[i] = w->attacks[i];
+    }
+    return count;
 }
 
 uint32_t om_tick_reinforces(const om_world *w, om_reinforce *out, uint32_t max) {
@@ -97,8 +101,112 @@ double om_region_damage_history(const om_world *w, uint32_t idx) {
 }
 
 void om_step_telegraphs(om_world *w) {
-    /* STUB */
-    (void)w;
+    if (!w) return;
+    
+    w->attacks_n = 0;
+    
+    uint32_t write_idx = 0;
+    for (uint32_t i = 0; i < w->telegraphs_n; ++i) {
+        om_telegraph *t = &w->telegraphs[i];
+        
+        if (w->tick < t->declared_tick + 3) {
+            w->telegraphs[write_idx] = *t;
+            write_idx++;
+            continue;
+        }
+        
+        if (om_faction_territory(w, t->attacker) == 0) {
+            continue;
+        }
+        
+        om_region *target = &w->regions[t->target_idx];
+        int32_t defender = target->faction_id;
+        
+        double tech_attack = w->faction_tech_attack[t->attacker];
+        double tech_defense = w->faction_tech_defense[defender];
+        double entrenchment = (target->faction_id >= 0) ? 2.0 : 1.0;
+        
+        double reinforce_commit = 0.0;
+        for (uint32_t r = 0; r < w->reinforces_n; ++r) {
+            if (w->reinforces[r].target_idx == t->target_idx && w->reinforces[r].tick == w->tick) {
+                reinforce_commit += w->reinforces[r].d_military;
+            }
+        }
+        
+        double effective_attack = t->commit * 1.0 * tech_attack * 1.0;
+        double effective_defense = target->military * 0.55 * tech_defense * entrenchment + reinforce_commit;
+        
+        double u;
+        if (w->rng_forced_len > 0) {
+            u = w->rng_forced[w->rng_forced_head];
+            w->rng_forced_head++;
+            w->rng_forced_len--;
+        } else {
+            uint32_t a = (uint32_t)(w->rng_state >> 5);
+            uint32_t b = (uint32_t)(w->rng_state >> 6);
+            u = (a * 67108864.0 + b) * (1.0 / 9007199254740992.0);
+            w->rng_state = w->rng_state * 6364136223846793005ULL + w->rng_inc;
+        }
+        
+        double stochastic = 0.7 + (1.3 - 0.7) * u;
+        
+        double net_advantage = effective_attack - effective_defense;
+        double d_military = 0.0, d_economy = 0.0, d_tension = 0.0;
+        uint32_t outcome = 0;
+        double garrison = 0.0;
+        double budget_spent = t->commit;
+        int32_t conquered = 0;
+        
+        if (net_advantage > effective_defense * 1.5) {
+            d_military = target->military * 0.75;
+            d_economy = target->economy * 0.35;
+            d_tension = target->tension * 0.25;
+            outcome = 0; /* breakthrough */
+        } else if (net_advantage > effective_defense * 0.5) {
+            d_military = target->military * 0.45;
+            d_economy = target->economy * 0.15;
+            d_tension = target->tension * 0.10;
+            outcome = 1; /* contested */
+        } else {
+            d_military = target->military * 0.15;
+            d_economy = target->economy * 0.05;
+            d_tension = target->tension * 0.05;
+            outcome = 2; /* repelled */
+        }
+        
+        if (target->faction_id >= 0 && net_advantage > effective_defense * 1.5) {
+            conquered = 1;
+            garrison = t->commit * 0.65;
+            d_military = target->military;
+            d_economy = target->economy;
+            d_tension = target->tension;
+        }
+        
+        if (w->attacks_n < 64) {
+            om_attack_result *r = &w->attacks[w->attacks_n];
+            r->tick = w->tick;
+            r->attacker = t->attacker;
+            r->defender = defender;
+            r->target_idx = t->target_idx;
+            r->mode = OM_MODE_TELEGRAPH;
+            r->outcome = outcome;
+            r->conquest = conquered;
+            r->commit = t->commit;
+            r->effective_attack = effective_attack;
+            r->effective_defense = effective_defense;
+            r->stochastic = stochastic;
+            r->net = net_advantage;
+            r->d_military = d_military;
+            r->d_economy = d_economy;
+            r->d_tension = d_tension;
+            r->garrison = garrison;
+            r->budget_spent = budget_spent;
+            r->collision = 0;
+            w->attacks_n++;
+        }
+    }
+    
+    w->telegraphs_n = write_idx;
 }
 
 void om_step_reinforce(om_world *w) {
