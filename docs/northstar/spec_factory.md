@@ -72,9 +72,9 @@ All under `scripts/specfactory/`, Python 3.14 stdlib only (no new dependencies),
 Prompts and schemas for the `agy`-drafted steps (e2e draft, test-body fill, card brief, findings) are not yet written — none of E-03's blocked flags needed them this session (the fold's design gaps needed Claude's judgment, not `agy`'s drafting), and writing a prompt against a step that hasn't run for real yet risks specifying the wrong shape. Written when the next epic clears its register and reaches the draft-e2e step for real.
 
 
-## Audit experiment (Westley, 2026-09-15)
+## Audit experiment (Westley, 2026-09-15; closed 2026-09-17)
 
-The per-file Sonnet audit step is on trial. Only one wave ran; the rest of the filled files ship unaudited on purpose, so the two groups can be compared on what Agora does with them: candidates to green, INCOMPLETE and reset counts per card, and whether a card's failure traces to a test defect. Compare when the E-04 and E-05 cards have run.
+One wave of per-file Sonnet audits ran (the table below); everything after it shipped unaudited. Westley closed the trial on 2026-09-17: filled test files stay unaudited, and the step returns only if a consistent class of test defect shows up in Agora's runs. The deciding evidence was card 202b2: its test file was audited "clean" and is in fact correct, but the card was impassable because `sim.c` ignored a feature switch the shared fixture relies on. A static review of one test file cannot see that class of defect; the green check (reference implementation must pass) can, and now runs before a card is queued. The audited-versus-unaudited comparison was never readable, because harness faults dominated every card's outcome (`docs/northstar/research/harness_defects_2026-09-17/`).
 
 | File | Audited | Findings |
 |---|---|---|
