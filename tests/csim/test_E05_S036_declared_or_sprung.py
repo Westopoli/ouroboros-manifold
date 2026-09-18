@@ -304,6 +304,12 @@ def test_R_036_05_with_probability_min_1_defend(lib, world_factory):
 
     # Case 2: Attacker commit * 0.5 < defender budget * 0.30
     # Attacker commit = 28.0 (28 * 0.5 = 14.0); Defender budget = 100.0 (100 * 0.30 = 30.0) -> commit = 14.0
+    # Defender's own budget (100) clears its own attack-candidate viability bar here (it does not
+    # in the other sub-cases below, whose defender budgets are much lower), so it also declares its
+    # own attack against faction 0 this tick -- E-05 runs the same decision loop for every faction,
+    # no scripted villain (bible S-032). Filter to the record the rule is actually testing (faction
+    # 1 defending region 1) instead of assuming it is the only reinforce this tick, the same way
+    # R-036-01/02 index decisions[0] instead of asserting len(decisions) == 1.
     w_alt = world_factory(n_regions=2)
     isolate_agents(lib, w_alt)
     set_faction(lib, w_alt, 0, OMArchetype.CONQUEROR, budget=40.0, confidence=2.0)
@@ -318,7 +324,7 @@ def test_R_036_05_with_probability_min_1_defend(lib, world_factory):
     set_edge(lib, w_alt, 0, 1, OMEdge.BOTH)
     force_draws(lib, w_alt, [0.1, 0.5, 0.5])
     lib.om_world_step(w_alt)
-    reinforces_alt = read_reinforces(lib, w_alt)
+    reinforces_alt = [r for r in read_reinforces(lib, w_alt) if r.target_idx == 1]
     assert len(reinforces_alt) == 1
     assert reinforces_alt[0].commit == pytest.approx(14.0, abs=1e-6)
 
@@ -437,9 +443,17 @@ def test_R_036_06_base_10_0_5_60(lib, world_factory):
     assert lib.om_region_field(w, 1, OMField.MILITARY) == pytest.approx(30.0 + r.d_military, abs=1e-6)
 
     # Tier ceiling boundary: frontier region at military 60.0 has headroom 0, receiving base = 0 and delta = 0
+    # Attacker budget raised from 50/0.7: at that budget the attacker's own candidate against a
+    # military-60 target falls below the attack-viability bar (no candidate is generated at all,
+    # unlike the base case above against military 30), so no telegraph is ever declared and the
+    # scenario cannot exercise the reinforce headroom cap it is meant to test. 200/0.7 (the same
+    # order of budget R-036-01 already proves viable against an even tougher military-70 target)
+    # clears the bar; the defender's reinforce commit is still floored by its own budget * 0.30, so
+    # this does not change what R-036-06 actually asserts (commit, headroom, base, delta all
+    # unaffected by the attacker's exact commit above the floor).
     w_cap = world_factory(n_regions=2)
     isolate_agents(lib, w_cap)
-    set_faction(lib, w_cap, 0, OMArchetype.CONQUEROR, budget=50.0 / 0.70, confidence=2.0)
+    set_faction(lib, w_cap, 0, OMArchetype.CONQUEROR, budget=200.0 / 0.70, confidence=2.0)
     set_faction(lib, w_cap, 1, OMArchetype.FORTIFIER, budget=10.0 / 0.30)
     set_stance(lib, w_cap, 0, 1, OMStance.HOSTILE)
     set_tech_multipliers(lib, w_cap, 0, 1.0, 1.0, 1.0)
