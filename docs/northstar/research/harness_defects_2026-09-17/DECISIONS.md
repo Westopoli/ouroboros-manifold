@@ -30,6 +30,18 @@ Flagged for Westley, not acted on: 203b1 (170 lines) and 203b2 (125 lines) excee
 | Q7 | Do isolation-green cards compose, and do speed/scale hold at story and epic level? | Yes, enforced: per story, after its last micro-card, one gate card runs the story's whole test file plus the epic's scale/speed gate test together; per epic, one gate card runs every story file. Gate cards run no model: green = DONE, red = escalation. (`PLAN.md` Principle 5, which no card had exercised.) | Harness `kind: gate` being built; gate cards for S-032..S-035 next. |
 | Q8 | Auditor experiment ratio. | Cards run so far: 10 on audited files, 2 on the fixtures file, 0 on unaudited story files. No control data yet. Leave B2 (no new audits); 204b/205 (S-037, S-038, unaudited) supply the control arm; read the comparison after 205. | Waiting on the chain. |
 
+## Third round (Claude, 2026-09-18 afternoon): E-05 re-cut
+
+The executor chat prepared 204-207 with `card_lint.py`; six cards failed SPANS_ANOTHER_CARD. A dependency map (`evidence/recut/`, tables 01-05) shows why: the micro-cards were cut by rule pair, so their tests reach stubs in other files, and `203b2` was parked as satisfied while `om_pending_telegraphs` (its real job) stayed a stub. Decisions, mine unless marked:
+
+| ID | Decision |
+|---|---|
+| R1 | Re-cut the E-05 remainder by file and algorithm family in the order of `evidence/recut/04_proposed_recut.md`: 203e agent.c telegraph declare/draw/queue (replaces 203b2, retired); 204a3 resolve.c core attack; 204a2 reactive reinforce; 204a1 telegraph maturation; 204b1 conquest; 204b3 damage history (`om_region_add_damage`, `om_region_damage_history`, acceptance R-034-07; the map's "dead ABI" claim is wrong, `test_R_034_07` calls `add_damage`); 204b2 conquest-unrest queue and solo colonize; 207 sim.c step-order fault only; 205a collision lottery and unowned colonize; 205b owned-target combat; 206a border friction; 206b admin revolts. Story gates: S-037 after 204a3, S-036 after 204a1, S-034 after 204b3, S-038 after 204b2, S-039 after 205b, S-041 after 206a, S-040 after 206b. |
+| R2 | Storage prerequisite: `om_internal.h` gains event queue, friction log, admin-roll log and per-region damage history (parent patch, no logic), because a one-file card cannot add struct fields. |
+| R3 | Assertion cap (5-15) is advisory for E-05: its test functions bundle several scenarios per rule and predate the contract; splitting fenced tests is Stage 5 work, not a card re-cut. Symbol and line caps stay hard. |
+| R4 | `card_lint.py` blind spots fixed: conftest resolution for `controls/`, test-local helpers, dynamic `getattr` through helpers. Known remaining blind spot: it sees STUB markers, not functional incompleteness (card 207 read clean while three E-05 controls fail). |
+| R5 | Flags for Westley, not acted on: no test exercises the solo (non-collision) colonize path of `om_tick_colonizations`; R-040-05 stays xfail until E-07. |
+
 ## Game side (ouroboros repo)
 
 | ID | Question | Decision |

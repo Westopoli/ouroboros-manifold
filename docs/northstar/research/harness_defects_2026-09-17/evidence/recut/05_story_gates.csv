@@ -1,0 +1,7 @@
+story,test_file,gate_after_card,notes
+S-036,test_E05_S036_declared_or_sprung.py,CARD 4 (RESOLVE-3 telegraph maturation),needs CARD1+CARD2+CARD3+CARD4 all landed; R_036_03 is the binding test
+S-037,test_E05_S037_battles_have_a_shape.py,CARD 2 (RESOLVE-1, all sub-splits 1a/1b/1c),all 8 tests owned by this one card family
+S-038,test_E05_S038_taking_a_region.py,CARD 6 (RESOLVE-5),needs CARD5(4a/4b)+CARD6; R_038_04 is the binding test
+S-039,test_E05_S039_when_everyone_wants_the_same_region.py,CARD 9 (COLLISION-2),needs CARD8(1a/1b)+CARD9; R_039_05 is the binding test
+S-040,test_E05_S040_empires_fracture.py,CARD 11 (FRICTION-2),"needs CARD6+CARD11; R_040_05 stays xfail(strict) pending E-07 -- does not block green"
+S-041,test_E05_S041_hostile_borders_wear_you_down.py,CARD 10 (FRICTION-1, all sub-splits 1a/1b),independent of every resolve.c/collision.c card -- could be built in parallel with CARD2-9
