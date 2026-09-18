@@ -20,6 +20,8 @@ Every runner that calls a model (`draft_e2e.py`, `fill_tests.py`, `draft_card.py
 | Positive controls | script emits one skeleton per "Ways this could be wrong" item, naming the `OM_BUG_*` enum member it expects | `scripts/specfactory/gen_controls.py` |
 | Audit filled tests | one Sonnet sub-agent (Claude Code, Max sub — not `agy`) per filled test file; audits the filled bodies against the epic, e2e, ABI, and `algorithms.md`; returns a verdict + per-rule findings + escalations; never edits the suite; no file audited twice | `docs/northstar/spec_factory/prompts/audit_tests.md`; Claude spawns the sub-agent, no runner script |
 | Red check | script runs pytest on the new files; every one must fail or error, none may pass | `scripts/specfactory/red_check.py` |
+| Card lint | script proves, without any model or implementation, that a card's acceptance tests can reach green inside its `allowed_files`: every `om_*` symbol the tests call (directly or through conftest helpers) must be defined, and any STUB it depends on must live in the card's own file; also checks `snippet_symbol` presence, node ids, the sizing cap, and whether a test spans another card's stub (the 202b2 class). Runs before a card leaves `queue/parked/` | `scripts/specfactory/card_lint.py` |
+| Header slice | script writes the card's `## Header slice` from the declarations its tests, brief and target functions actually reference, verbatim from `csrc/ouroboros_sim.h`, so the worker never reads the whole 38 KB header | `scripts/specfactory/card_slice.py` |
 | Green check | script proves a reference implementation (`tests/csim/references/<card-id>.c`) flips a card's acceptance commands from failing to passing, applied inside a scratch git worktree at HEAD; refuses (exit 2) if acceptance already passes on the unmodified project | `scripts/specfactory/green_check.py` |
 | Rules file | existing derivation script | `scripts/derive_agora_rules.py` (already scripted, unchanged) |
 | Card | script for the YAML frontmatter (acceptance command, allowed files, rules_file, test_file); `agy` drafts the prose brief from the rules file only, never from tests (the E-02 finding: a brief written from tests leaks implementation instead of intent) | `scripts/specfactory/gen_card.py` |
@@ -66,6 +68,8 @@ All under `scripts/specfactory/`, Python 3.14 stdlib only (no new dependencies),
 - `gen_test_skeleton.py` — one pytest stub per rule.
 - `gen_controls.py` — one control stub per "Ways this could be wrong" item.
 - `red_check.py` — proves a batch of new tests is all-red.
+- `card_lint.py` — mechanical pre-queue gate: acceptance tests' symbol dependencies versus `allowed_files` and STUB markers, sizing cap, cross-card spans. Exit 1 blocks the card.
+- `card_slice.py` — generates the `## Header slice` section from the symbols a card's tests, brief and target functions use.
 - `green_check.py` — proves a reference implementation, whose body lives at `tests/csim/references/<card-id>.c`, makes a card's acceptance commands pass in a scratch git worktree, after confirming they fail on the untouched project.
 - `gen_card.py` — emits an Agora card's YAML frontmatter in the existing `agora/queue/*.md` shape.
 
