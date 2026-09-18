@@ -8,6 +8,7 @@
 #include "ouroboros_sim.h"
 
 #define OM_MAX_NEIGHBORS 32
+#define OM_DAMAGE_HISTORY_CAP 64
 
 typedef struct {
     om_tier  tier;
@@ -18,6 +19,17 @@ typedef struct {
     uint32_t neighbors[OM_MAX_NEIGHBORS];
     uint32_t n_neighbors;
     om_drift_row last_drift;
+
+    /* ALG-11 damage history (om_region_add_damage / om_region_damage_history,
+     * ouroboros_sim.h ~line 254): a ring of (tick, military_loss, economy_loss)
+     * entries, one per recorded attack-resolution loss, oldest overwritten past
+     * OM_DAMAGE_HISTORY_CAP. Persists across ticks; never reset in sim.c. The
+     * reader sums entries with tick within DAMAGE_HISTORY_WINDOW = 150 of the
+     * current world tick (docs/bible/algorithms.md ALG-11; R-034-07). */
+    uint64_t damage_tick[OM_DAMAGE_HISTORY_CAP];
+    double   damage_military[OM_DAMAGE_HISTORY_CAP];
+    double   damage_economy[OM_DAMAGE_HISTORY_CAP];
+    uint32_t damage_head, damage_len;
 } om_region;
 
 struct om_world {
@@ -63,6 +75,16 @@ struct om_world {
     uint32_t           reinforces_n;
     om_colonize_result colonizations[64];
     uint32_t           colonizations_n;
+    om_friction        frictions[64];
+    uint32_t           frictions_n;
+    om_admin_roll      admin_rolls[64];
+    uint32_t           admin_rolls_n;
+
+    /* event queue, shared with E-04 (ouroboros_sim.h ~line 454): entries are
+     * queued by E-05 (conquest-unrest, admin-separatist chains) and resolved
+     * by E-04 (ALG-36). Persists across ticks; never reset in sim.c. */
+    om_queued_event    event_queue[64];
+    uint32_t           event_queue_n;
 };
 
 /* Internal step hooks */
