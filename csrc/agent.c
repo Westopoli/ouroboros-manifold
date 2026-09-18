@@ -221,9 +221,17 @@ uint32_t om_tick_decisions(const om_world *w, om_decision *out, uint32_t max) {
 }
 
 uint32_t om_pending_telegraphs(const om_world *w, om_telegraph *out, uint32_t max) {
-    /* STUB */
-    (void)w; (void)out; (void)max;
-    return 0;
+    if (!w || !out || max == 0) return 0;
+    
+    uint32_t count = 0;
+    uint32_t limit = (w->telegraphs_n < max) ? w->telegraphs_n : max;
+    
+    for (uint32_t i = 0; i < limit; ++i) {
+        out[count] = w->telegraphs[i];
+        count++;
+    }
+    
+    return count;
 }
 
 void om_step_decisions(om_world *w) {
@@ -312,6 +320,52 @@ void om_step_decisions(om_world *w) {
                 }
             }
             d.source_idx = src;
+
+            // ALG-15 telegraph preference calculation
+            double pref = 0.0;
+            switch (w->faction_archetype[f]) {
+                case OM_ARCH_CONQUEROR: pref = 0.70; break;
+                case OM_ARCH_WARLORD:   pref = 0.30; break;
+                case OM_ARCH_FORTIFIER: pref = 0.80; break;
+                case OM_ARCH_OPPORTUNIST: pref = 0.40; break;
+                case OM_ARCH_SCHISM:    pref = 0.30; break;
+                case OM_ARCH_PLAYER:    pref = 0.60; break;
+                default:                pref = 0.50; break;
+            }
+
+            double target_military = w->regions[best_attack->region_idx].military;
+            if (target_military > 60.0) {
+                pref += 0.20;
+            } else if (target_military < 30.0) {
+                pref -= 0.20;
+            }
+
+            pref = clamp(pref, 0.0, 1.0);
+            d.telegraph_preference = pref;
+
+            // Draw random u ~ U(0, 1)
+            uint64_t rng_state = w->rng_state;
+            uint64_t rng_inc = w->rng_inc;
+            uint32_t a = (uint32_t)(rng_state >> 5);
+            uint32_t b = (uint32_t)(rng_state >> 6);
+            double u = (a * 67108864.0 + b) * (1.0 / 9007199254740992.0);
+            w->rng_state += rng_inc;
+
+            om_attack_mode mode = OM_MODE_SURPRISE;
+            if (u < pref) {
+                mode = OM_MODE_TELEGRAPH;
+                // Enqueue into telegraphs if space available
+                if (w->telegraphs_n < 64) {
+                    w->telegraphs[w->telegraphs_n].declared_tick = w->tick;
+                    w->telegraphs[w->telegraphs_n].attacker = f;
+                    w->telegraphs[w->telegraphs_n].target_idx = best_attack->region_idx;
+                    w->telegraphs[w->telegraphs_n].source_idx = src;
+                    w->telegraphs[w->telegraphs_n].commit = potential_commit;
+                    w->telegraphs_n++;
+                }
+            }
+
+            d.mode = mode;
         } else if (colonize_score > attack_score && colonize_score >= 0.05 &&
                    best_colonize && w->faction_budget_snapshot[f] >= 20.0) {
             d.action = OM_ACT_COLONIZE;
@@ -335,5 +389,13 @@ void om_step_decisions(om_world *w) {
         }
 
         w->decisions[w->decisions_n++] = d;
+        
+        // Deduct commit from faction budget
+        if (d.action == OM_ACT_ATTACK || d.action == OM_ACT_COLONIZE) {
+            w->faction_budget[f] -= d.commit;
+            if (w->faction_budget[f] < 0.0) {
+                w->faction_budget[f] = 0.0;
+            }
+        }
     }
 }
