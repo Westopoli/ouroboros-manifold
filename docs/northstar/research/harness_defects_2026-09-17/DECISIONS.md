@@ -16,6 +16,17 @@ These answer the decision list that followed `README.md` in this directory. `ago
 
 Flagged for Westley, not acted on: 203b1 (170 lines) and 203b2 (125 lines) exceed the 30B sizing contract; `csrc/faction.c`'s RNG step does not follow the header's PCG32 contract; `csrc/resolve.c` damage-history stubs block R-034-07; `om_step_decisions` is an `om_internal.h` hook with no public prototype, so it reaches the worker only through the extra-context file.
 
+## Second round (Westley, 2026-09-18, 02:00-03:00 EDT)
+
+| ID | Question | Decision | Status |
+|---|---|---|---|
+| Q1 | Regression gate: a later card broke an earlier card's test and merged. | (a) `build.py` re-runs the acceptance of every DONE predecessor sharing the card's `snippet_file` before finalize; failure = `regression` reject. | Done, agora `finalize_pass`, six tests. |
+| Q2 | Repair the S-034 regression on `main`. | (a) Repair card 203c through the harness, acceptance on rules 01, 02, 05, 06. | Card authored, chain updated, running. |
+| Q3 | Tests no card owned (R-034-03, 04, 07). | (a) Card 203d for 03 and 04; 07 waits for the damage-history card. | Card authored, chain updated. |
+| Q4 | Prepare the remaining E-05 cards? | Westley challenged the cost: having Sonnet write a full reference per card is Claude doing Agora's job, against Principles 1 and 2 of `PLAN.md`. Revised procedure proposed: a mechanical dependency lint (test's symbols versus `allowed_files` and stub markers), a mechanical header-slice generator, and a Sonnet read-only brief check; references and the green check only as diagnosis after a card fails three runs. | Awaiting Westley's approval of the revision. |
+| Q5 | Sizing contract after 203b1 (170 lines) and 203b2 (125) passed over the cap. | (a) Keep the cap, split future cards, enforce it loudly. Draft: harness refuses oversize cards as SPEC-INVALID before any model call, SPEC-INVALID becomes terminal for a card in `next.py`, a suite test scans every queued card, the factory refuses to emit oversize cards, the green check reports oversize references. | Draft proposed, not built. |
+| Q6 | gpt-oss rungs. | (c) Dropped. Ladder is qwen3-coder:30b, three attempts. | Done. |
+
 ## Game side (ouroboros repo)
 
 | ID | Question | Decision |
@@ -57,5 +68,5 @@ Flagged for Westley, not acted on: 203b1 (170 lines) and 203b2 (125 lines) excee
 1. **[DONE]** A1 rule, then A2 test, control and hand patch; A3 alongside.
 2. **[DONE]** B1 green check.
 3. **[DONE]** C1, C2, C4, C5, C7 (agora `12ac7f2` + `1448de9`).
-4. **[IN PROGRESS]** B3 sweep runs card by card through the green check as cards are prepared; C6 data accrues from tonight's ladder runs.
+4. **[DONE]** C6 decided (gpt-oss dropped). B3 sweep folds into the Q4 dependency lint once approved.
 5. **[NOT STARTED]** Then the high-level harness configuration comparison that prompted the investigation.
