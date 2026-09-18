@@ -181,7 +181,13 @@ uint32_t om_faction_candidates(const om_world *w, int32_t faction_id, om_candida
         }
     }
 
-    double potential_commit = w->faction_budget_snapshot[faction_id] * 0.70;
+    double potential_commit;
+    if (w->inject == 100) { // OM_BUG_AGENT_READS_LIVE
+        potential_commit = w->faction_budget[faction_id] * 0.70;
+    } else {
+        potential_commit = w->faction_budget_snapshot[faction_id] * 0.70;
+    }
+
     double break_even = 0.0;
     if (weakest_mil != DBL_MAX) {
         break_even = (weakest_mil * 0.55) / 0.70;
@@ -201,7 +207,12 @@ uint32_t om_faction_candidates(const om_world *w, int32_t faction_id, om_candida
             c->net = 0.0;
             c->viable = 0;
         } else {
-            int64_t held_since = om_region_held_since(w, c->region_idx);
+            int64_t held_since;
+            if (w->inject == 103) { // OM_BUG_ENTRENCH_CURRENT_TICK
+                held_since = w->tick; // use live tick instead of held_since
+            } else {
+                held_since = om_region_held_since(w, c->region_idx);
+            }
             double ent = (held_since < 0) ? 2.0
                                           : 1.0 + clamp((w->tick - held_since) / 100.0, 0.0, 1.0);
             c->entrenchment = ent;
