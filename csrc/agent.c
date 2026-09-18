@@ -354,13 +354,21 @@ void om_step_decisions(om_world *w) {
             pref = clamp(pref, 0.0, 1.0);
             d.telegraph_preference = pref;
 
-            // Draw random u ~ U(0, 1)
-            uint64_t rng_state = w->rng_state;
-            uint64_t rng_inc = w->rng_inc;
-            uint32_t a = (uint32_t)(rng_state >> 5);
-            uint32_t b = (uint32_t)(rng_state >> 6);
-            double u = (a * 67108864.0 + b) * (1.0 / 9007199254740992.0);
-            w->rng_state += rng_inc;
+            // Draw random u ~ U(0, 1) (forced-draws queue first, per the header's RNG contract)
+            double u;
+            if (w->rng_forced_len > 0) {
+                u = w->rng_forced[w->rng_forced_head];
+                w->rng_forced_head++;
+                w->rng_forced_len--;
+            } else {
+                uint32_t next32 = (uint32_t)((w->rng_state >> 12) + w->rng_inc);
+                w->rng_state = next32 * 6364136223846793005ULL + w->rng_inc;
+                uint32_t a = next32 >> 5;
+                next32 = (uint32_t)((w->rng_state >> 12) + w->rng_inc);
+                w->rng_state = next32 * 6364136223846793005ULL + w->rng_inc;
+                uint32_t b = next32 >> 6;
+                u = (a * 67108864.0 + b) * (1.0 / 9007199254740992.0);
+            }
 
             om_attack_mode mode = OM_MODE_SURPRISE;
             if (u < pref) {
