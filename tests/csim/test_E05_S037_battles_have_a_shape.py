@@ -603,7 +603,12 @@ def test_R_037_08_attacker_s_own_regions_fields(lib, world_factory):
     assert lib.om_region_field(w_bt, 0, OMField.ECONOMY) == pytest.approx(45.0, abs=1e-6)
     assert lib.om_region_field(w_bt, 0, OMField.TENSION) == pytest.approx(15.0, abs=1e-6)
     assert lib.om_region_field(w_bt, 0, OMField.POPULATION) == pytest.approx(35.0, abs=1e-6)
-    assert lib.om_faction_budget(w_bt, 0) == pytest.approx(30.0, abs=1e-6)
+    # Budget: 100 - 70 committed + one tick of ALG-17 passive accumulation from this
+    # region's own economy (45.0 - 8.0) * 0.025 = 0.925 -- the attacker's economy is
+    # deliberately not 8.0 here (unlike every other R-037 sub-case) so this test can
+    # also prove the attacker's economy field itself is untouched by combat, and that
+    # choice means step 3b's ordinary per-tick growth is live in this scenario too.
+    assert lib.om_faction_budget(w_bt, 0) == pytest.approx(30.925, abs=1e-6)
 
     # Outcome 2: Contested
     w_ct = world_factory(n_regions=2)
@@ -625,7 +630,8 @@ def test_R_037_08_attacker_s_own_regions_fields(lib, world_factory):
     assert lib.om_region_field(w_ct, 0, OMField.ECONOMY) == pytest.approx(45.0, abs=1e-6)
     assert lib.om_region_field(w_ct, 0, OMField.TENSION) == pytest.approx(15.0, abs=1e-6)
     assert lib.om_region_field(w_ct, 0, OMField.POPULATION) == pytest.approx(35.0, abs=1e-6)
-    assert lib.om_faction_budget(w_ct, 0) == pytest.approx(30.0, abs=1e-6)
+    # Same one tick of ALG-17 accumulation as the breakthrough case above: +0.925.
+    assert lib.om_faction_budget(w_ct, 0) == pytest.approx(30.925, abs=1e-6)
 
     # Outcome 3: Repelled (confirming Q-037-01: attacker regions untouched even when repelled)
     w_rp = world_factory(n_regions=2)
@@ -655,4 +661,11 @@ def test_R_037_08_attacker_s_own_regions_fields(lib, world_factory):
     assert lib.om_region_field(w_rp, 0, OMField.ECONOMY) == pytest.approx(45.0, abs=1e-6)
     assert lib.om_region_field(w_rp, 0, OMField.TENSION) == pytest.approx(15.0, abs=1e-6)
     assert lib.om_region_field(w_rp, 0, OMField.POPULATION) == pytest.approx(35.0, abs=1e-6)
-    assert lib.om_faction_budget(w_rp, 0) == pytest.approx(30.0, abs=1e-6)
+    # Telegraph mode spans 4 ticks (declare, sit, sit, resolve); ALG-17 accumulation on
+    # this region (+0.925) fires every one of them regardless of the pending attack, so
+    # 4 * 0.925 = 3.7 accumulates before the 70 commit is spent on tick 4 (verified by
+    # direct measurement: an otherwise-identical world with a neutral stance, so no
+    # attack ever fires, reads budget 100.925 / 101.85 / 102.775 / 103.7 after ticks
+    # 1-4 in turn).
+    assert lib.om_faction_budget(w_rp, 0) == pytest.approx(33.7, abs=1e-6)
+
