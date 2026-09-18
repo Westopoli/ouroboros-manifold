@@ -155,8 +155,10 @@ def _collect_from_node(node: ast.AST, bindings: dict[str, str],
     return found
 
 
-def helper_defs_of(conftest_path: Path) -> dict[str, ast.FunctionDef]:
-    tree = ast.parse(conftest_path.read_text(), filename=str(conftest_path))
+def helper_defs_of(py_path: Path) -> dict[str, ast.FunctionDef]:
+    """Every module-level function defined in `py_path` (a conftest.py, or a
+    test module itself -- both are just a bag of possible helpers)."""
+    tree = ast.parse(py_path.read_text(), filename=str(py_path))
     return {n.name: n for n in tree.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))}
 
 
@@ -171,21 +173,35 @@ def parse_node_id(node_id: str) -> tuple[str, str | None]:
     return node_id, None
 
 
-def resolve_test_targets(test_path: Path, test_name: str | None) -> list[ast.FunctionDef]:
-    tree = ast.parse(test_path.read_text(), filename=str(test_path))
-    by_name = {n.name: n for n in tree.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))}
-    if test_name is None:
-        return [n for name, n in by_name.items() if name.startswith("test_")]
-    base_name = test_name.split("[", 1)[0]
-    if base_name not in by_name:
-        raise KeyError(base_name)
-    return [by_name[base_name]]
-
-
 def acceptance_node_id_tokens(cmd: str) -> list[str]:
     if not PYTEST_RE.search(cmd):
         return []
     return [tok for tok in cmd.split() if ".py" in tok]
+
+
+def conftest_chain_helpers(start_dir: Path, project_root: Path,
+                            cache: dict[Path, dict[str, ast.FunctionDef]]) -> dict[str, ast.FunctionDef]:
+    """Merges helpers from every conftest.py between `start_dir` and
+    `project_root` inclusive, nearest-last (so a nearer conftest's helper
+    wins a same-name collision) -- pytest applies tests/csim/conftest.py to
+    tests/csim/controls/*.py the same way, walking the whole subtree, not
+    just a test file's own directory."""
+    chain: list[Path] = []
+    d = start_dir.resolve()
+    while True:
+        chain.append(d)
+        if d == project_root:
+            break
+        d = d.parent
+    chain.reverse()
+
+    merged: dict[str, ast.FunctionDef] = {}
+    for d in chain:
+        conftest_path = d / "conftest.py"
+        if conftest_path not in cache:
+            cache[conftest_path] = helper_defs_of(conftest_path) if conftest_path.is_file() else {}
+        merged.update(cache[conftest_path])
+    return merged
 
 
 def collect_acceptance_symbols(card: dict, project: Path) -> tuple[set[str], list[str]]:
@@ -193,7 +209,9 @@ def collect_acceptance_symbols(card: dict, project: Path) -> tuple[set[str], lis
     test file or test function that does not exist (rule e)."""
     symbols: set[str] = set()
     bad_node_ids: list[str] = []
-    helper_cache: dict[Path, dict[str, ast.FunctionDef]] = {}
+    conftest_cache: dict[Path, dict[str, ast.FunctionDef]] = {}
+    module_cache: dict[Path, dict[str, ast.FunctionDef]] = {}
+    project_root = project.resolve()
 
     for cmd in card.get("acceptance") or []:
         for tok in acceptance_node_id_tokens(cmd):
@@ -202,17 +220,26 @@ def collect_acceptance_symbols(card: dict, project: Path) -> tuple[set[str], lis
             if not test_path.is_file():
                 bad_node_ids.append(tok)
                 continue
-            conftest_dir = test_path.parent
-            if conftest_dir not in helper_cache:
-                conftest_path = conftest_dir / "conftest.py"
-                helper_cache[conftest_dir] = helper_defs_of(conftest_path) if conftest_path.is_file() else {}
-            helper_defs = helper_cache[conftest_dir]
-            try:
-                funcs = resolve_test_targets(test_path, test_name)
-            except KeyError:
-                bad_node_ids.append(tok)
-                continue
-            for func in funcs:
+
+            if test_path not in module_cache:
+                module_cache[test_path] = helper_defs_of(test_path)
+            module_defs = module_cache[test_path]
+
+            if test_name is None:
+                targets = [n for name, n in module_defs.items() if name.startswith("test_")]
+            else:
+                base_name = test_name.split("[", 1)[0]
+                if base_name not in module_defs:
+                    bad_node_ids.append(tok)
+                    continue
+                targets = [module_defs[base_name]]
+
+            conftest_helpers = conftest_chain_helpers(test_path.parent, project_root, conftest_cache)
+            # module-level functions in the test file itself are helpers too
+            # (a local def shadows a same-named conftest import, same as
+            # Python's own name resolution would).
+            helper_defs = {**conftest_helpers, **module_defs}
+            for func in targets:
                 symbols |= symbols_of_function(func, helper_defs)
 
     return symbols, bad_node_ids

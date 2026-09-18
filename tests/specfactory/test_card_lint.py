@@ -323,6 +323,163 @@ def test_exit_2_on_empty_acceptance(tmp_path):
     assert proc.returncode == 2, proc.stdout + proc.stderr
 
 
+NESTED_CONFTEST = '''
+def isolate_agents(lib, w):
+    lib.om_world_set_feature(w, 1, 1)
+
+
+def reach_stub_via_conftest(lib, w):
+    lib.om_pending_telegraphs(w, None, 0)
+'''
+
+NESTED_CONTROLS_TEST = '''
+from conftest import reach_stub_via_conftest
+
+
+def test_R_900_01_via_conftest_helper(lib, world_factory):
+    w = world_factory()
+    reach_stub_via_conftest(lib, w)
+'''
+
+LOCAL_HELPER_TEST = '''
+def _reach_stub_locally(lib, w):
+    lib.om_pending_telegraphs(w, None, 0)
+
+
+def test_R_901_01_via_local_helper(lib, world_factory):
+    w = world_factory()
+    _reach_stub_locally(lib, w)
+'''
+
+CHAIN_CONFTEST = '''
+def isolate_agents(lib, w):
+    lib.om_world_set_feature(w, 1, 1)
+
+
+def reach_stub_from_conftest(lib, w):
+    lib.om_pending_telegraphs(w, None, 0)
+'''
+
+CHAIN_CONTROLS_TEST = '''
+from conftest import reach_stub_from_conftest
+
+
+def _wrapper_local(lib, w):
+    reach_stub_from_conftest(lib, w)
+
+
+def test_R_902_01_chained_local_then_conftest(lib, world_factory):
+    w = world_factory()
+    _wrapper_local(lib, w)
+'''
+
+LOCAL_GETATTR_TEST = '''
+def _read_dynamic(lib, w, name, max_records=8):
+    buf = [0] * max_records
+    n = getattr(lib, name)(w, buf, max_records)
+    return buf[:n]
+
+
+def _read_decisions_local(lib, w):
+    return _read_dynamic(lib, w, "om_tick_decisions")
+
+
+def test_R_903_01_local_helper_getattr(lib, world_factory):
+    w = world_factory()
+    rows = _read_decisions_local(lib, w)
+    assert rows is not None
+'''
+
+
+def _init_nested_project(tmp_path: Path, *, subdir: str, conftest_src: str, test_src: str,
+                          test_filename: str = "test_control_thing.py") -> Path:
+    """Like _init_project, but the test lives at tests/<subdir>/controls/ with
+    its conftest.py one directory up at tests/<subdir>/ -- there is no
+    conftest.py in the controls/ directory itself, mirroring
+    tests/csim/controls/ in the real repo."""
+    project = tmp_path / "project"
+    (project / "csrc").mkdir(parents=True)
+    controls_dir = project / "tests" / subdir / "controls"
+    controls_dir.mkdir(parents=True)
+    (project / "csrc" / "ouroboros_sim.h").write_text("/* synthetic header */\n")
+    (project / "csrc" / "live.c").write_text(LIVE_C)
+    (project / "csrc" / "elsewhere.c").write_text(STUB_ELSEWHERE_C)
+    (project / "csrc" / "agent.c").write_text(AGENT_C)
+    (project / "tests" / subdir / "conftest.py").write_text(conftest_src)
+    (controls_dir / test_filename).write_text(test_src)
+    return f"tests/{subdir}/controls/{test_filename}", project
+
+
+def test_stub_reached_only_via_conftest_two_dirs_up_fails(tmp_path):
+    node_path, project = _init_nested_project(
+        tmp_path, subdir="x", conftest_src=NESTED_CONFTEST, test_src=NESTED_CONTROLS_TEST,
+    )
+    card = _write_card(tmp_path, project, acceptance=[
+        f"{sys.executable} -m pytest -q {node_path}::test_R_900_01_via_conftest_helper"
+    ])
+    proc = _run(card)
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert "STUB_OUTSIDE_ALLOWED" in proc.stdout
+    assert "om_pending_telegraphs" in proc.stdout
+    assert "LINT FAILED (1)" in proc.stdout
+
+
+def test_stub_reached_only_via_module_local_helper_fails(tmp_path):
+    project = _init_project(tmp_path)
+    (project / "tests" / "csim" / "test_local_helper.py").write_text(LOCAL_HELPER_TEST)
+    card = _write_card(tmp_path, project, acceptance=[
+        f"{sys.executable} -m pytest -q tests/csim/test_local_helper.py::test_R_901_01_via_local_helper"
+    ])
+    proc = _run(card)
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert "STUB_OUTSIDE_ALLOWED" in proc.stdout
+    assert "om_pending_telegraphs" in proc.stdout
+    assert "LINT FAILED (1)" in proc.stdout
+
+
+def test_stub_reached_via_chained_local_then_conftest_helper_fails(tmp_path):
+    node_path, project = _init_nested_project(
+        tmp_path, subdir="y", conftest_src=CHAIN_CONFTEST, test_src=CHAIN_CONTROLS_TEST,
+    )
+    card = _write_card(tmp_path, project, acceptance=[
+        f"{sys.executable} -m pytest -q {node_path}::test_R_902_01_chained_local_then_conftest"
+    ])
+    proc = _run(card)
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert "STUB_OUTSIDE_ALLOWED" in proc.stdout
+    assert "om_pending_telegraphs" in proc.stdout
+    assert "LINT FAILED (1)" in proc.stdout
+
+
+def test_transitive_dynamic_getattr_through_local_helper_is_resolved(tmp_path):
+    # Same shape as test_transitive_dynamic_getattr_symbol_is_resolved, but
+    # the getattr(lib, name) call chain is two module-local helpers in the
+    # test file itself, not tests/csim/conftest.py's _read_records.
+    project = _init_project(tmp_path)
+    (project / "tests" / "csim" / "test_local_getattr.py").write_text(LOCAL_GETATTR_TEST)
+    card = _write_card(tmp_path, project, acceptance=[
+        f"{sys.executable} -m pytest -q tests/csim/test_local_getattr.py::test_R_903_01_local_helper_getattr"
+    ])
+    proc = _run(card, "--json")
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+
+    (project / "csrc" / "live.c").write_text(
+        LIVE_C.replace(
+            'int om_tick_decisions(const om_world *w, void *out, int max) { (void)w; (void)out; (void)max; return 0; }',
+            'int om_tick_decisions(const om_world *w, void *out, int max) {\n'
+            "    /* STUB */\n"
+            "    (void)w; (void)out; (void)max;\n"
+            "    return 0;\n"
+            "}\n",
+        )
+    )
+    proc = _run(card, "--json")
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    data = json.loads(proc.stdout)
+    codes = {(f["code"], f["message"]) for f in data["findings"]}
+    assert any("om_tick_decisions" in msg for _code, msg in codes), data
+
+
 def test_json_output_shape(tmp_path):
     project = _init_project(tmp_path)
     card = _write_card(tmp_path, project)
