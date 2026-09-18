@@ -45,16 +45,56 @@ static inline double clamp(double v, double lo, double hi) {
     return v;
 }
 uint32_t om_faction_candidates(const om_world *w, int32_t faction_id, om_candidate *out, uint32_t max) {
-    if (!w || !out || max == 0 || faction_id < 0 || faction_id >= OM_MAX_FACTIONS) {
+    if (!w || faction_id < 0 || faction_id >= OM_MAX_FACTIONS || !w->faction_used[faction_id] || !out || max == 0) {
         return 0;
     }
 
     om_archetype archetype = w->faction_archetype[faction_id];
+    double w_weakness, w_value, w_position;
+    int tension_primary, can_colonize;
+    double boost = 0.0;
+
+    switch (archetype) {
+        case OM_ARCH_CONQUEROR:
+            w_weakness = 0.40; w_value = 0.25; w_position = 0.35;
+            tension_primary = 0; can_colonize = 1;
+            break;
+        case OM_ARCH_WARLORD:
+            w_weakness = 0.20; w_value = 0.35; w_position = 0.45;
+            tension_primary = 0; can_colonize = 1;
+            break;
+        case OM_ARCH_FORTIFIER:
+            w_weakness = 0.25; w_value = 0.20; w_position = 0.55;
+            tension_primary = 0; can_colonize = 1;
+            break;
+        case OM_ARCH_OPPORTUNIST:
+            w_weakness = 0.35; w_value = 0.30; w_position = 0.35;
+            tension_primary = 0; can_colonize = 1;
+            boost = 1.5;
+            break;
+        case OM_ARCH_SCHISM:
+            w_weakness = 0.20; w_value = 0.30; w_position = 0.50;
+            tension_primary = 1; can_colonize = 0;
+            break;
+        case OM_ARCH_PLAYER:
+            w_weakness = 0.60; w_value = 0.25; w_position = 0.15;
+            tension_primary = 0; can_colonize = 1;
+            break;
+        case OM_ARCH_BREAKAWAY:
+            w_weakness = 0.45; w_value = 0.30; w_position = 0.25;
+            tension_primary = 0; can_colonize = 1;
+            break;
+        default:
+            w_weakness = 0.40; w_value = 0.30; w_position = 0.30;
+            tension_primary = 0; can_colonize = 1;
+            break;
+    }
+
     uint32_t count = 0;
     int seen[64] = {0};
 
-    // First pass: enumerate candidates, compute attractiveness, track weakest military among attacks
     double weakest_mil = DBL_MAX;
+
     for (uint32_t i = 0; i < w->n_regions && count < max; ++i) {
         if (w->regions[i].faction_id != faction_id) continue;
 
@@ -62,26 +102,31 @@ uint32_t om_faction_candidates(const om_world *w, int32_t faction_id, om_candida
             om_edge_type edge_type;
             if (i == j || !om_region_edge(w, i, j, &edge_type) || seen[j]) continue;
 
-            int32_t target_owner = w->regions[j].faction_id;
-            if (target_owner == faction_id) continue;
-
+            int32_t owner = w->regions[j].faction_id;
             om_candidate_kind kind = OM_CAND_ATTACK;
-            int can_colonize = 1;
-            if (target_owner == -1) {
+
+            if (owner < 0) {
                 if (!can_colonize) continue;
                 kind = OM_CAND_COLONIZE;
+            } else {
+                om_stance stance1 = w->faction_stance[faction_id][owner];
+                om_stance stance2 = w->faction_stance[owner][faction_id];
+                if (stance1 != OM_STANCE_HOSTILE && stance2 != OM_STANCE_HOSTILE) continue;
             }
 
             double factor_1 = 0.0;
-            if (archetype == OM_ARCH_SCHISM) {
+            if (tension_primary) {
                 factor_1 = w->regions[j].tension / 100.0;
             } else {
-                factor_1 = (100.0 - w->regions[j].military) / 100.0;
+                factor_1 = 1.0 - w->regions[j].military / 100.0;
             }
 
-            double current_value = (w->regions[j].economy * 0.60 + w->regions[j].population * 0.40) / 100.0 * 2.0;
+            double current_value = 0.0;
+            if (owner >= 0) {
+                current_value = ((w->regions[j].economy * 0.60 + w->regions[j].population * 0.40) / 100.0) * 2.0;
+            }
 
-            if (target_owner != -1 && current_value < 0.05) continue;
+            if (owner >= 0 && current_value < 0.05) continue;
 
             double strategic_position = 0.0;
             uint32_t neighbor_count = 0;
@@ -93,8 +138,8 @@ uint32_t om_faction_candidates(const om_world *w, int32_t faction_id, om_candida
                 if (neighbor_owner == faction_id) continue;
 
                 double score = 0.0;
-                if (neighbor_owner == -1) {
-                    score = 0.15;
+                if (neighbor_owner < 0) {
+                    score = 0.15; // EXPANSION_POTENTIAL
                 } else {
                     score = (w->regions[k].economy * 0.60 + w->regions[k].population * 0.40) / 100.0;
                 }
@@ -108,19 +153,12 @@ uint32_t om_faction_candidates(const om_world *w, int32_t faction_id, om_candida
                 strategic_position = 0.0;
             }
 
-            double w_weakness = 0.40, w_value = 0.30, w_position = 0.30;
-            switch (archetype) {
-                case OM_ARCH_CONQUEROR: w_weakness = 0.40; w_value = 0.25; w_position = 0.35; break;
-                case OM_ARCH_WARLORD:   w_weakness = 0.20; w_value = 0.35; w_position = 0.45; break;
-                case OM_ARCH_FORTIFIER: w_weakness = 0.25; w_value = 0.20; w_position = 0.55; break;
-                case OM_ARCH_OPPORTUNIST: w_weakness = 0.35; w_value = 0.30; w_position = 0.35; break;
-                case OM_ARCH_SCHISM:    w_weakness = 0.20; w_value = 0.30; w_position = 0.50; break;
-                case OM_ARCH_PLAYER:    w_weakness = 0.60; w_value = 0.25; w_position = 0.15; break;
-                case OM_ARCH_BREAKAWAY: w_weakness = 0.45; w_value = 0.30; w_position = 0.25; break;
-                default:                w_weakness = 0.40; w_value = 0.30; w_position = 0.30; break;
-            }
-
             double attractiveness = w_weakness * factor_1 + w_value * current_value + w_position * strategic_position;
+
+            if (boost != 0.0 && owner >= 0) {
+                double damage = om_region_damage_history(w, j);
+                attractiveness *= 1.0 + (damage / 100.0) * boost;
+            }
 
             out[count].region_idx = j;
             out[count].kind = kind;
@@ -143,7 +181,6 @@ uint32_t om_faction_candidates(const om_world *w, int32_t faction_id, om_candida
         }
     }
 
-    // Compute potential_commit, break_even, effective_confidence
     double potential_commit = w->faction_budget_snapshot[faction_id] * 0.70;
     double break_even = 0.0;
     if (weakest_mil != DBL_MAX) {
@@ -157,21 +194,20 @@ uint32_t om_faction_candidates(const om_world *w, int32_t faction_id, om_candida
         }
     }
 
-    // Second pass: compute entrenchment, net, viable
     for (uint32_t i = 0; i < count; ++i) {
         om_candidate *c = &out[i];
         if (c->kind == OM_CAND_COLONIZE) {
             c->entrenchment = 0.0;
             c->net = 0.0;
             c->viable = 0;
-            continue;
+        } else {
+            int64_t held_since = om_region_held_since(w, c->region_idx);
+            double ent = (held_since < 0) ? 2.0
+                                          : 1.0 + clamp((w->tick - held_since) / 100.0, 0.0, 1.0);
+            c->entrenchment = ent;
+            c->net = potential_commit - w->regions[c->region_idx].military * 0.55 * ent;
+            c->viable = (c->net > effective_confidence) ? 1 : 0;
         }
-        int64_t held_since = om_region_held_since(w, c->region_idx);
-        double ent = (held_since < 0) ? 2.0
-                                      : 1.0 + clamp((w->tick - held_since) / 100.0, 0.0, 1.0);
-        c->entrenchment = ent;
-        c->net = potential_commit - w->regions[c->region_idx].military * 0.55 * ent;
-        c->viable = (c->net > effective_confidence) ? 1 : 0;
     }
 
     return count;
