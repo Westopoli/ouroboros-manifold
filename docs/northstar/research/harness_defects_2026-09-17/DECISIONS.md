@@ -2,7 +2,15 @@
 
 These answer the decision list that followed `README.md` in this directory. `agora-dispatcher.service` stays stopped until Westley says otherwise.
 
-**Execution status (2026-09-17, Cascade 1 of the harness-fix plan):** A1, A2, A3, and B1 are done and merged to `main` (`5b0eaaa`, `ff47fc9`, integration merges `6adf83b`/`18706ba`, records commit `df961d2`). The E-02 baseline (`tests/csim/test_E02_S0*.py` + `test_E02_gate_drift_trajectory.py`) is unchanged at 42 passed / 4 failed / 4 skipped, same four failing ids as before. `csrc/faction.c`'s budget body was hand-committed separately (`d641ea2`), ahead of the cascade, with the user's approval — its `om_faction_step_budget` assertions in `test_E05_S033_...::test_R_033_01_budget_66_8_40_8` now pass; that test's later, unrelated `om_step_decisions` assertion (a separate unimplemented `csrc/agent.c` stub, card 202a-series) stays red, out of this cascade's scope. Card 202b2's queue-side retirement and Cascade 2 (agora repo, C1/C2/C4/C5/C7) did not start this session — `~/Projects/agora` on `wn/qa-director` has ~690 lines of uncommitted/untracked state (including a deleted tracked card file), far more than the ~13 files Step 0.2 of the plan expected, and needs Westley's input before anything there is touched.
+**Execution status (2026-09-18, 00:56 EDT):** both cascades are merged and verified; the queue is running again.
+
+- Cascade 1 (ouroboros `main`, `5b0eaaa`..`e027eb9`): drift gated on `OM_FEAT_DRIFT`, drift moved after the faction/friction/admin block, DRIFT on by default in `om_world_new`, story S-160 with tests and a positive control, `scripts/specfactory/green_check.py`. Verified: S-160 7/7, E-02 baseline unchanged (same four pre-existing failures), DRIFT off leaves fields byte-identical. `csrc/faction.c`'s budget body landed as `d641ea2`; card 202b2 retired (its acceptance test also asserts on `om_step_decisions`, so it could never pass alone).
+- Cascade 2 (agora `wn/qa-director`, `79f1ffd`..`12ac7f2`, run by a Gemini session): `chat_full` with `done_reason`/thinking, `shift`/`truncate` false (verified live on Ollama 0.32.14: HTTP 400 instead of silent truncation), function-level C splice, `## Header slice` card section, verbatim card briefs, `truncated`/`dlopen` reasons, `thinking-N.md`. Review found two defects, fixed in `1448de9`: the C signature check rejected whitespace variants, and `static` helpers or `#include` lines the model added were silently dropped. Replay of the 131 archived 202b2 replies: 47 now merge and compile, 0 compile errors.
+- Also landed: tick step 3a budget snapshot (`54a4ec3`), which the bible lists and `sim.c` lacked; reference bodies for 203a1..203b2 under `tests/csim/references/`, all green-checked; the four cards got header slices, corrected briefs (203a2's ALG-11 table was wrong for five archetypes) and real `snippet_symbol` lists (`5013cfc`).
+- First run on the fixed harness, card 203a1: qwen3-coder attempt 1, 2/2 tests, 54 s, DONE, auto-merged as `c4596ed`. The same card class took 570-980 s per attempt and never passed before.
+- `agora-dispatcher.service` restarted 00:55; the release chain runs 203a2, 203b1, 203b2 tonight and stops at 204a1 (held as `.hold.unprepared` until it has a slice, a reference and a checked brief).
+
+Flagged for Westley, not acted on: 203b1 (170 lines) and 203b2 (125 lines) exceed the 30B sizing contract; `csrc/faction.c`'s RNG step does not follow the header's PCG32 contract; `csrc/resolve.c` damage-history stubs block R-034-07; `om_step_decisions` is an `om_internal.h` hook with no public prototype, so it reaches the worker only through the extra-context file.
 
 ## Game side (ouroboros repo)
 
@@ -44,6 +52,6 @@ These answer the decision list that followed `README.md` in this directory. `ago
 
 1. **[DONE]** A1 rule, then A2 test, control and hand patch; A3 alongside.
 2. **[DONE]** B1 green check.
-3. **[NOT STARTED]** C1, C2, C4, C5, C7 — agora repo, blocked on the uncommitted-state question above.
-4. **[NOT STARTED]** B3 sweep, then the C6 re-benchmark.
+3. **[DONE]** C1, C2, C4, C5, C7 (agora `12ac7f2` + `1448de9`).
+4. **[IN PROGRESS]** B3 sweep runs card by card through the green check as cards are prepared; C6 data accrues from tonight's ladder runs.
 5. **[NOT STARTED]** Then the high-level harness configuration comparison that prompted the investigation.
