@@ -34,6 +34,7 @@ struct om_world {
     /* E-05 faction, ownership, typed edges, and RNG state */
     int          features[8];
     double       faction_budget[OM_MAX_FACTIONS];
+    double       faction_budget_snapshot[OM_MAX_FACTIONS];
     double       faction_tech[OM_MAX_FACTIONS];
     double       faction_confidence[OM_MAX_FACTIONS];
     om_archetype faction_archetype[OM_MAX_FACTIONS];

@@ -110,6 +110,8 @@ uint64_t om_world_step(om_world *w) {
 
     /* Step 3: Factions (E-05) */
     if (om_world_feature(w, OM_FEAT_FACTIONS)) {
+        /* 3a snapshot */
+        memcpy(w->faction_budget_snapshot, w->faction_budget, sizeof(w->faction_budget));
         om_faction_step_budget(w);     /* 3b */
         om_step_telegraphs(w);         /* 3c */
         om_step_decisions(w);          /* 3d */
