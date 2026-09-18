@@ -44,9 +44,13 @@ uint32_t om_tick_attacks(const om_world *w, om_attack_result *out, uint32_t max)
 }
 
 uint32_t om_tick_reinforces(const om_world *w, om_reinforce *out, uint32_t max) {
-    /* STUB */
-    (void)w; (void)out; (void)max;
-    return 0;
+    if (!w || !out || max == 0) return 0;
+    
+    uint32_t count = fmin(w->reinforces_n, max);
+    for (uint32_t i = 0; i < count; ++i) {
+        out[i] = w->reinforces[i];
+    }
+    return count;
 }
 
 uint32_t om_tick_colonizations(const om_world *w, om_colonize_result *out, uint32_t max) {
@@ -98,8 +102,87 @@ void om_step_telegraphs(om_world *w) {
 }
 
 void om_step_reinforce(om_world *w) {
-    /* STUB */
-    (void)w;
+    if (!w) return;
+    w->reinforces_n = 0;
+    
+    for (uint32_t i = 0; i < w->telegraphs_n; ++i) {
+        om_telegraph *t = &w->telegraphs[i];
+        if (t->declared_tick != w->tick) continue;
+        
+        int32_t f = w->regions[t->target_idx].faction_id;
+        if (f < 0) continue;
+        
+        double w_defend;
+        switch (w->faction_archetype[f]) {
+            case OM_ARCH_CONQUEROR:   w_defend = 0.4; break;
+            case OM_ARCH_WARLORD:     w_defend = 0.3; break;
+            case OM_ARCH_FORTIFIER:   w_defend = 1.5; break;
+            case OM_ARCH_OPPORTUNIST: w_defend = 0.6; break;
+            case OM_ARCH_SCHISM:      w_defend = 0.5; break;
+            case OM_ARCH_PLAYER:      w_defend = 1.5; break;
+            case OM_ARCH_BREAKAWAY:   w_defend = 0.8; break;
+            default:                  w_defend = 0.8; break;
+        }
+        
+        double reinforce_prob = fmin(1.0, w_defend / 1.5);
+        
+        double u;
+        if (w->rng_forced_len > 0) {
+            u = w->rng_forced[w->rng_forced_head];
+            w->rng_forced_head++;
+            w->rng_forced_len--;
+        } else {
+            uint32_t a = (uint32_t)(w->rng_state >> 5);
+            uint32_t b = (uint32_t)(w->rng_state >> 6);
+            u = (a * 67108864.0 + b) * (1.0 / 9007199254740992.0);
+            w->rng_state = w->rng_state * 6364136223846793005ULL + w->rng_inc;
+        }
+        
+        if (u > reinforce_prob) continue;
+        
+        double commit = fmin(w->faction_budget_snapshot[f] * 0.30, t->commit * 0.5);
+        if (commit < 1.0) continue;
+        
+        w->faction_budget[f] -= commit;
+        
+        double tier_cap = (w->regions[t->target_idx].tier == OM_TIER_HOME) ? 100.0 : 60.0;
+        double headroom = fmax(0.0, (tier_cap - w->regions[t->target_idx].military) / tier_cap);
+        double base = commit * 0.5 * headroom;
+        
+        double tension = w->regions[t->target_idx].tension;
+        double lo = 0.85 - (tension / 100.0) * 0.20;
+        double hi = 1.15 + (tension / 100.0) * 0.20;
+        
+        double u2;
+        if (w->rng_forced_len > 0) {
+            u2 = w->rng_forced[w->rng_forced_head];
+            w->rng_forced_head++;
+            w->rng_forced_len--;
+        } else {
+            uint32_t a = (uint32_t)(w->rng_state >> 5);
+            uint32_t b = (uint32_t)(w->rng_state >> 6);
+            u2 = (a * 67108864.0 + b) * (1.0 / 9007199254740992.0);
+            w->rng_state = w->rng_state * 6364136223846793005ULL + w->rng_inc;
+        }
+        
+        double variance = lo + (hi - lo) * u2;
+        double d_military = base * variance;
+        
+        if (w->reinforces_n < 64) {
+            om_reinforce *r = &w->reinforces[w->reinforces_n];
+            r->tick = w->tick;
+            r->faction_id = f;
+            r->target_idx = t->target_idx;
+            r->commit = commit;
+            r->headroom = headroom;
+            r->base = base;
+            r->variance = variance;
+            r->d_military = d_military;
+            w->reinforces_n++;
+        }
+        
+        w->regions[t->target_idx].military += d_military;
+    }
 }
 
 void om_step_resolve(om_world *w) {
