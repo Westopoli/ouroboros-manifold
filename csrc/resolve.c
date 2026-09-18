@@ -33,6 +33,7 @@
  */
 #include "ouroboros_sim.h"
 #include "om_internal.h"
+#include <math.h>
 #include <stddef.h>
 #include <string.h>
 
