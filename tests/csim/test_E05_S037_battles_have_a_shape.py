@@ -649,10 +649,17 @@ def test_R_037_08_attacker_s_own_regions_fields(lib, world_factory):
     set_edge(lib, w_rp, 0, 1, OMEdge.BOTH)
     force_draws(lib, w_rp, [0.1, 0.5])
     lib.om_world_step(w_rp)
-    lib.om_world_step(w_rp)
-    # Target military set to 80 held from start before resolution on tick 4
+    # Target military raised to 80 right after declaration (not after sitting a tick at
+    # 10.0): a region that stays weak for a full tick with no forced draws gives the
+    # attacker's own step-3d decision loop a second look at the same still-viable
+    # target (verified directly: leaving it at 10.0 through tick 2 does declare a
+    # second telegraph there, commit ~21.65, off real RNG since that tick forces no
+    # draws) -- an accidental second attack the test never intended, not the single
+    # repelled attack it is testing. Raising it immediately keeps the target
+    # unattractive from tick 2 onward, so only the one declared telegraph ever exists.
     set_region(lib, w_rp, 1, tier=OMTier.HOME, military=80.0, economy=50.0, tension=10.0, population=50.0, faction_id=1)
     set_owner(lib, w_rp, 1, 1, held_since=-1)
+    lib.om_world_step(w_rp)
     lib.om_world_step(w_rp)
     force_draws(lib, w_rp, [1.0])
     lib.om_world_step(w_rp)
@@ -668,4 +675,7 @@ def test_R_037_08_attacker_s_own_regions_fields(lib, world_factory):
     # attack ever fires, reads budget 100.925 / 101.85 / 102.775 / 103.7 after ticks
     # 1-4 in turn).
     assert lib.om_faction_budget(w_rp, 0) == pytest.approx(33.7, abs=1e-6)
+
+
+
 
