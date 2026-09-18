@@ -19,11 +19,11 @@ Every existing DONE E-05 card kept allowed_files to a single .c file BECAUSE om_
 Replaces: 203b2-e05-intent-telegraph-queue.md.satisfied-by-203b1 (WRONGLY marked satisfied -- its acceptance tests R-035-07/08 pass because 203b1 already built the accumulate fallback; the telegraph logic it was supposed to add was never built and om_pending_telegraphs is still STUB. Re-open with corrected acceptance below.)
 snippet_file: csrc/agent.c
 snippet_symbol: om_pending_telegraphs, om_step_decisions  (2 symbols; om_step_decisions is NOT stub today but must be re-edited to add ALG-15's RNG draw + telegraph enqueue -- ALLOWED, same pattern as 203b1->203b2 both touching this symbol)
-acceptance: test_R_036_01_telegraph_preference_0_7_0, test_R_036_02_preference_0_3_0_2, test_control_e05_agent_reads_live, test_control_e05_entrench_current_tick
-  (the two controls need only a `w->inject==100` / `w->inject==103` branch inside the already-built om_faction_candidates/om_step_decisions -- no new symbol, small addition)
-expected_lines: ~45 (pref calc+clamp ~10, RNG draw+mode branch ~10, telegraph append ~8, om_pending_telegraphs reader ~8, 2 bug branches ~6)
-assertions: 8+7+2+2 = 19 (over the 15 cap -- see Sizing Flags)
-ALG/R: ALG-15, R-036-01, R-036-02; OM_BUG_AGENT_READS_LIVE, OM_BUG_ENTRENCH_CURRENT_TICK
+acceptance: test_R_036_01_telegraph_preference_0_7_0, test_R_036_02_preference_0_3_0_2
+  (Rule: a bug-inject control belongs to the card whose file makes the detector observable; when the branch and the observation live in different files, the later file owns it. test_control_e05_entrench_current_tick is owned by new card 208+e05-spawn-fault-branches in csrc/agent.c for om_faction_candidates; test_control_e05_agent_reads_live is owned by CARD 2 204a3 in csrc/resolve.c since its observation requires attack resolution to mutate military in step 3f.)
+expected_lines: ~45 (pref calc+clamp ~10, RNG draw+mode branch ~10, telegraph append ~8, om_pending_telegraphs reader ~8)
+assertions: 8+7 = 15 (within the 15 cap)
+ALG/R: ALG-15, R-036-01, R-036-02
 
 ### CARD 2 (RESOLVE-1) -- resolve.c: core attack resolution (ALG-20/21)
 Replaces: 204a3-e05-battle-damage-bands.md.hold.blocked (fixes its SPANS_ANOTHER_CARD by sequencing after CARD 1)
