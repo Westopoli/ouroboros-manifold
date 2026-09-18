@@ -42,6 +42,18 @@ The executor chat prepared 204-207 with `card_lint.py`; six cards failed SPANS_A
 | R4 | `card_lint.py` blind spots fixed: conftest resolution for `controls/`, test-local helpers, dynamic `getattr` through helpers. Known remaining blind spot: it sees STUB markers, not functional incompleteness (card 207 read clean while three E-05 controls fail). |
 | R5 | Flags for Westley, not acted on: no test exercises the solo (non-collision) colonize path of `om_tick_colonizations`; R-040-05 stays xfail until E-07. |
 
+## Fourth round (2026-09-18): the QA phase after the epics (Westley's goal: 24/7 unattended)
+
+Westley: "get the harness/queue up and running so we can leave it alone and queue up items on the local 30B for 24/7 work; double check that MVP has a significant QA testing phase after all the epics have been built, given we built a whole system for the 30B to drive Godot itself." A peer session (jarvis-3d) checked and the Fable session verified: `RELEASE_CHAIN` holds 169 build cards, E-03 through E-17 (E-16 absent), all sim-side; gate cards exist only for four E-05 stories; QA runs by campaign cadence, not chain position; no Ouroboros director/QA campaign exists (`campaigns/todo/` has only salesmen and proving-ground); `projects/ouroboros/qa.toml` is scaffolding pending a T2 harness scene (`scenes/harness/e02_harness.tscn`) that does not exist; the Godot driver is proven only on the proving-ground toy scene. So the 30B would build 169 cards and stop; the Godot-driving QA would never point at the game.
+
+| ID | Decision |
+|---|---|
+| Q9a | Per-epic T1 gate cards for every epic in the chain (E-03..E-17), `kind: gate`, acceptance = the epic's whole `tests/csim/test_E##_*.py` set plus its scale/speed gate test, inserted after the epic's last card; plus one chain-end gate running all of `tests/csim` (minus known xfails). Executor authors them, same shape as `202z1`. |
+| Q9b | Ouroboros QA campaigns: `campaigns/todo/006-ouroboros-director.md` (tool qa-director, profile `projects/ouroboros/qa.toml`, budgets set, status pending) and `007-ouroboros-qa.md` (tool qa-fix-loop, converge_after_sessions set). Executor writes them from the proving-ground campaign files as templates. |
+| Q9c | Chain-end trigger in `next.py::release_ready_parked_cards`: when the last `RELEASE_CHAIN` card has DONE, flip 006 to active; when 006 converges, flip 007 to active. Tests-first in agora. Manual flips are the opposite of unattended. |
+| Q9d | T2 harness scene: a GDScript build card (build.py already has whole-file `.gd` mode) for `scenes/harness/e02_harness.tscn` + script implementing `docs/desktop-qa-protocol.md` (debug port, one full snapshot rendered), acceptance = `scripts/qa_control.py`'s positive control against it. Placed early in the chain (after E-05's gates) so T2 is proven on the real repo long before the chain ends. Card spec drafted by a Sonnet doer from the protocol docs, reviewed by the Fable session. |
+| Q9e | Flag for Westley: the chain has no client cards at all; PLAN.md's client ladder (HUD, selection, camera, world view...) comes after the sim ladders and Track L says Agora builds the client after probes H/I. T2 QA on "the game" needs those cards queued; until then T2 exercises the harness scene only. E-16 has no cards in the chain: check whether its stories are Tested. |
+
 ## Game side (ouroboros repo)
 
 | ID | Question | Decision |
