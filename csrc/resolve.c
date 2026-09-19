@@ -404,7 +404,7 @@ void om_step_resolve(om_world *w) {
             r->target_idx = target_idx;
             r->mode = d->mode;
             r->outcome = outcome;
-            r->conquest = 0; /* Will be set later if conquest occurs */
+            r->conquest = 0; /* set below, in the unified conquest pass */
             r->commit = commit;
             r->effective_attack = effective_attack;
             r->effective_defense = effective_defense;
@@ -418,5 +418,59 @@ void om_step_resolve(om_world *w) {
             r->collision = 0;
             w->attacks_n++;
         }
+    }
+
+    /* Conquest and garrison (ALG-22, Story S-038), in one pass over every
+     * attack this tick -- both the ones om_step_telegraphs (step 3c) already
+     * appended and the ones this function just appended above (step 3f).
+     * Checked on post-damage military, never on the outcome band
+     * (OM_BUG_CONQUEST_ON_BAND, 105). This runs after the region's ALG-21
+     * damage is already applied (by whichever function produced the record),
+     * so "post-damage" here just means the region's current field. */
+    for (uint32_t i = 0; i < w->attacks_n; ++i) {
+        om_attack_result *r = &w->attacks[i];
+        if (r->outcome == OM_OUT_REPELLED) continue;
+
+        uint32_t target_idx = r->target_idx;
+        om_region *target = &w->regions[target_idx];
+        int32_t attacker = r->attacker;
+        int32_t defender = r->defender;
+
+        int32_t conquered = (w->inject == 105)
+            ? (r->outcome == OM_OUT_BREAKTHROUGH)
+            : (target->military < 5.0);
+        if (!conquered) continue;
+
+        double garrison = r->commit * 0.65;
+        target->military += garrison;
+        /* The economy floor (8.0) is bypassed for the conquest disruption
+         * itself, even though it already applied to the base ALG-21 damage. */
+        target->economy -= 5.0;
+        target->tension = fmin(100.0, target->tension + 8.0);
+        target->population = fmax(0.0, target->population - 2.0);
+
+        om_region_set_owner(w, target_idx, attacker, w->tick);
+
+        /* S-024 R-024-03: the conquered region's edges to the conqueror's own
+         * regions and its cooperative partners' regions become BOTH; its
+         * edges to the former owner's remaining regions become BORDER. Every
+         * other edge (a neutral third party, say) is left as it was -- the
+         * rule only names these three relations. */
+        for (uint32_t j = 0; j < w->n_regions; ++j) {
+            if (j == target_idx) continue;
+            om_edge_type et;
+            if (!om_region_edge(w, target_idx, j, &et)) continue;
+            int32_t nbr = w->regions[j].faction_id;
+            if (nbr == attacker) {
+                om_region_set_edge(w, target_idx, j, OM_EDGE_BOTH);
+            } else if (nbr == defender) {
+                om_region_set_edge(w, target_idx, j, OM_EDGE_BORDER);
+            } else if (nbr >= 0 && w->faction_stance[attacker][nbr] == OM_STANCE_COOPERATIVE) {
+                om_region_set_edge(w, target_idx, j, OM_EDGE_BOTH);
+            }
+        }
+
+        r->conquest = 1;
+        r->garrison = garrison;
     }
 }
