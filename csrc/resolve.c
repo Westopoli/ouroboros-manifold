@@ -90,14 +90,42 @@ int om_intent_inject(om_world *w, int32_t faction_id, om_action action, uint32_t
 }
 
 void om_region_add_damage(om_world *w, uint32_t idx, double military_loss, double economy_loss, uint64_t tick) {
-    /* STUB */
-    (void)w; (void)idx; (void)military_loss; (void)economy_loss; (void)tick;
+    if (!w || idx >= w->n_regions) return;
+    
+    om_region *r = &w->regions[idx];
+    uint32_t slot;
+    
+    if (r->damage_len < OM_DAMAGE_HISTORY_CAP) {
+        slot = (r->damage_head + r->damage_len) % OM_DAMAGE_HISTORY_CAP;
+        r->damage_len++;
+    } else {
+        slot = r->damage_head;
+        r->damage_head = (r->damage_head + 1) % OM_DAMAGE_HISTORY_CAP;
+    }
+    
+    r->damage_tick[slot] = tick;
+    r->damage_military[slot] = military_loss;
+    r->damage_economy[slot] = economy_loss;
 }
 
 double om_region_damage_history(const om_world *w, uint32_t idx) {
-    /* STUB */
-    (void)w; (void)idx;
-    return 0.0;
+    if (!w || idx >= w->n_regions) return 0.0;
+    
+    const om_region *r = &w->regions[idx];
+    double sum = 0.0;
+    const uint64_t current_tick = w->tick;
+    const uint64_t window = 150; // DAMAGE_HISTORY_WINDOW
+    
+    for (uint32_t i = 0; i < r->damage_len; ++i) {
+        uint32_t slot = (r->damage_head + i) % OM_DAMAGE_HISTORY_CAP;
+        uint64_t tick = r->damage_tick[slot];
+        
+        if (current_tick >= tick && (current_tick - tick) <= window) {
+            sum += r->damage_military[slot] + r->damage_economy[slot];
+        }
+    }
+    
+    return sum;
 }
 
 void om_step_telegraphs(om_world *w) {
