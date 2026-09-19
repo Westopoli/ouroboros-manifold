@@ -376,17 +376,23 @@ def test_R_037_04_tension_capped_at_30(lib, world_factory):
     assert att.d_tension == pytest.approx(30.0, abs=1e-6)
     assert lib.om_region_field(w, 1, OMField.TENSION) == pytest.approx(20.0 + 30.0, abs=1e-6)
 
-    # Boundary check: Above cap at net 70.0 (commit = 136.0 -> 0.5 * 70 = 35 capped at 30.0)
+    # Boundary check: Above cap at net 70.0 (commit = 147.0 -> 0.5 * 70 = 35 capped at 30.0)
+    # Defender military raised to 70.0 (effective defense = 70 * 0.55 * 2.0 = 77.0) so that
+    # post-damage military = 70 - 0.8*70 = 14.0 stays >= 5.0 -- at the original military 60.0
+    # (post-damage 4.0 < 5.0) this same breakthrough also tripped the R-038-01 conquest
+    # threshold and added its own +8.0 tension spike on top of the capped +30.0, which this
+    # rule's own math never accounted for (real engine behavior, not a re-declaration bug:
+    # only one attack fires here, len(attacks) == 1, confirmed by direct instrumentation).
     w_above = world_factory(n_regions=2)
     isolate_agents(lib, w_above)
-    set_faction(lib, w_above, 0, OMArchetype.CONQUEROR, budget=136.0 / 0.70, confidence=2.0)
+    set_faction(lib, w_above, 0, OMArchetype.CONQUEROR, budget=147.0 / 0.70, confidence=2.0)
     set_faction(lib, w_above, 1, OMArchetype.FORTIFIER, budget=0.0)
     set_stance(lib, w_above, 0, 1, OMStance.HOSTILE)
     set_tech_multipliers(lib, w_above, 0, 1.0, 1.0, 1.0)
     set_tech_multipliers(lib, w_above, 1, 1.0, 1.0, 1.0)
     set_region(lib, w_above, 0, tier=OMTier.HOME, military=50.0, economy=8.0, tension=0.0, population=50.0, faction_id=0)
     set_owner(lib, w_above, 0, 0, held_since=-1)
-    set_region(lib, w_above, 1, tier=OMTier.HOME, military=60.0, economy=50.0, tension=20.0, population=50.0, faction_id=1)
+    set_region(lib, w_above, 1, tier=OMTier.HOME, military=70.0, economy=50.0, tension=20.0, population=50.0, faction_id=1)
     set_owner(lib, w_above, 1, 1, held_since=-1)
     set_edge(lib, w_above, 0, 1, OMEdge.BOTH)
     force_draws(lib, w_above, [0.1, 0.5])
