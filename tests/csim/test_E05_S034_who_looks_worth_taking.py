@@ -400,7 +400,14 @@ def test_R_034_07_score_multiplied_by_1_30(lib, world_factory):
             lib.om_world_set_feature(w, OMFeature.FACTIONS, 0)
             lib.om_world_run(w, ticks_before_decision)
             lib.om_world_set_feature(w, OMFeature.FACTIONS, 1)
-        force_draws(lib, w, [0.5])
+        # ALG-15's telegraph-vs-surprise draw belongs to this very attack (opportunist
+        # pref 0.40, target military 30 so no +-0.20 adjustment); a draw >= 0.40 picks
+        # surprise mode, which resolves the attack immediately (om_step_resolve, same
+        # tick) and mutates region 1's live military/economy before read_candidates
+        # below recomputes attractiveness from them. Forcing a draw < 0.40 keeps the
+        # attack in telegraph mode (matures at tick+3, ALG-15), so region 1 is still
+        # at its pre-decision baseline when we read the candidate's attractiveness.
+        force_draws(lib, w, [0.1])
         lib.om_world_step(w)
         cands = read_candidates(lib, w, 0)
         return [c for c in cands if c.region_idx == 1 and c.kind == OMCandKind.ATTACK][0]
