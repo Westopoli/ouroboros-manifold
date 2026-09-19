@@ -6,6 +6,8 @@ fields floor at 0). Event-effect floors (tension 12.0) and the conquest
 bypass are E-04/E-05 mechanics with no apply-function in this header's E-02
 scope -- see the skipped tests below for the ABI gap.
 """
+import math
+
 import pytest
 
 from conftest import OMField, OMTier, OmTraceRow, read_drift, set_region
@@ -13,8 +15,13 @@ from conftest import OMField, OMTier, OmTraceRow, read_drift, set_region
 
 def test_R_019_01_economy_floor_holds_under_drift(lib, world_factory):
     w = world_factory(n_regions=1)
+    # econ_phase=pi: at tick 1 the default phase 0.0 gives Δosc_econ = +2.44
+    # (ALG-01), which on its own outweighs the -1.6 base drift below and
+    # leaves economy at 8.84 -- never touching the floor this test exists to
+    # check. Phase pi flips the same oscillator leg negative so the floor is
+    # actually exercised.
     set_region(lib, w, 0, tier=OMTier.HOME, military=0.0, economy=8.0,
-               tension=100.0, population=0.0)
+               tension=100.0, population=0.0, econ_phase=math.pi)
     lib.om_world_step(w)
     assert lib.om_region_field(w, 0, OMField.ECONOMY) == 8.0
 

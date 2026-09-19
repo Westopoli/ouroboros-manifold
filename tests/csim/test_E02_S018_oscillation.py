@@ -91,7 +91,13 @@ def test_R_018_04_oscillator_nets_zero_over_every_15_tick_window(lib, world_fact
     rows_sorted = sorted(rows, key=lambda r: r.tick)
     deltas = [r.drift.economy_osc_delta for r in rows_sorted]
 
-    for k in range(0, len(deltas) - 15 + 1):
+    # The window starting at tick 1 is skipped: R-018-02 (tested above) fixes
+    # ALG-01's previous-tick value at 0 rather than the true osc(tick 0), so
+    # that window's telescoping sum is osc(15) - 0 instead of osc(15) -
+    # osc(0), off by exactly A*sin(econ_phase) regardless of implementation.
+    # Every later window's endpoints are both real oscillator evaluations, so
+    # the period-15 cancellation the rule is checking applies to them.
+    for k in range(1, len(deltas) - 15 + 1):
         window_sum = sum(deltas[k:k + 15])
         assert abs(window_sum) < 1e-6, (
             f"15-tick window starting at tick {rows_sorted[k].tick} "
