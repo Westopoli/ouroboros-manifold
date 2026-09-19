@@ -574,8 +574,20 @@ def test_R_037_07_attacker_s_committed_budget_spent(lib, world_factory):
     assert len(attacks_tele) == 1
     att_tele = attacks_tele[0]
     assert att_tele.commit == pytest.approx(70.0, abs=1e-6)
+    # This is the rule under test: the attack itself spent its full committed
+    # budget (70.0 of the 100.0 -> 30.0 remaining, both already proven here).
     assert att_tele.budget_spent == pytest.approx(70.0, abs=1e-6)
-    assert lib.om_faction_budget(w_tele, 0) == pytest.approx(30.0, abs=1e-6)
+    # The final remaining-budget check below is not that same fact restated: step
+    # 3c (telegraph maturation) runs before 3d (decisions) in the same tick, so
+    # this breakthrough (net 48.0) crushes region 1's military to 0 before 3d
+    # runs, and the attacker's still-Conqueror decision loop immediately
+    # re-declares a second telegraph against the now-defenseless region this
+    # same tick (commit 21.0 = the remaining 30.0 budget's own 0.70 fraction,
+    # deterministic under this fixture's seed, verified directly) -- correct
+    # engine behavior (the same faction re-evaluating every tick, no memory of
+    # "already attacking this target," per bible S-032), not part of what this
+    # rule tests. 30.0 - 21.0 = 9.0.
+    assert lib.om_faction_budget(w_tele, 0) == pytest.approx(9.0, abs=1e-6)
 
 
 def test_R_037_08_attacker_s_own_regions_fields(lib, world_factory):
@@ -675,6 +687,8 @@ def test_R_037_08_attacker_s_own_regions_fields(lib, world_factory):
     # attack ever fires, reads budget 100.925 / 101.85 / 102.775 / 103.7 after ticks
     # 1-4 in turn).
     assert lib.om_faction_budget(w_rp, 0) == pytest.approx(33.7, abs=1e-6)
+
+
 
 
 

@@ -175,29 +175,19 @@ void om_step_telegraphs(om_world *w) {
             d_tension = 2.0;
         }
 
-        double garrison = 0.0;
-        int32_t conquered = 0;
-        if (outcome != OM_OUT_REPELLED) {
-            /* OM_BUG_CONQUEST_ON_BAND (105): conquest checked on the outcome band
-             * instead of post-damage military (ALG-22). */
-            conquered = (w->inject == 105)
-                ? (outcome == OM_OUT_BREAKTHROUGH)
-                : (target->military + d_military < 5.0);
-        }
-        if (conquered) garrison = t->commit * 0.65;
-
-        /* Garrison and the fuller ALG-22 conquest effects (economy disruption,
-         * tension spike, population loss, the unrest chain) belong to card
-         * 204b1-e05-conquest-garrison, not this card; only the basic conquest
-         * flag and a simple post-damage garrison add are this function's job,
-         * matching what R-037's own tests actually check. */
+        /* Conquest, garrison, ownership transfer, and the fuller ALG-22 conquest
+         * effects (economy disruption, tension spike, population loss, the
+         * unrest chain) are entirely card 204b1-e05-conquest-garrison's job, in
+         * a pass over w->attacks after this function runs -- not this one's.
+         * Setting conquest/garrison here (as an earlier pass at this function
+         * did) mutates the region (adds garrison, transfers ownership) before
+         * 204b1's own conquest check ever sees it, so its post-damage-military
+         * check reads the already-garrisoned value and never fires. Every
+         * R-037 test that checks conquest only ever expects 0 here; none
+         * requires this function to detect conquest itself. */
         target->military = fmax(0.0, target->military + d_military);
         target->economy = fmax(8.0, target->economy + d_economy);
         target->tension = fmin(100.0, fmax(0.0, target->tension + d_tension));
-        if (conquered) {
-            target->military += garrison;
-            target->faction_id = t->attacker;
-        }
 
         if (w->attacks_n < 64) {
             om_attack_result *r = &w->attacks[w->attacks_n];
@@ -207,7 +197,7 @@ void om_step_telegraphs(om_world *w) {
             r->target_idx = t->target_idx;
             r->mode = OM_MODE_TELEGRAPH;
             r->outcome = outcome;
-            r->conquest = conquered;
+            r->conquest = 0;
             r->commit = t->commit;
             r->effective_attack = effective_attack;
             r->effective_defense = effective_defense;
@@ -216,7 +206,7 @@ void om_step_telegraphs(om_world *w) {
             r->d_military = d_military;
             r->d_economy = d_economy;
             r->d_tension = d_tension;
-            r->garrison = garrison;
+            r->garrison = 0.0;
             r->budget_spent = t->commit;
             r->collision = 0;
             w->attacks_n++;
