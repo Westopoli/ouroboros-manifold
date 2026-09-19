@@ -159,7 +159,14 @@ def test_R_034_03_factor_one_0_80_tension(lib, world_factory):
     set_edge(lib, w, 0, 1, OMEdge.BOTH)
     set_edge(lib, w, 0, 2, OMEdge.BOTH)
 
-    force_draws(lib, w, [0.5])
+    # ALG-15's telegraph-vs-surprise draw belongs to this very schism-vs-region-1
+    # attack (schism pref 0.3, target military 30 so no +-0.20 adjustment); a
+    # draw >= 0.3 picks surprise mode, which resolves the attack immediately
+    # (om_step_resolve, same tick) and adds ALG-21 combat tension to region 1
+    # before read_candidates below recomputes its factor_1 from live state.
+    # Forcing a draw < 0.3 keeps the attack in telegraph mode (matures at
+    # tick+3, ALG-15), so region 1's tension is still 80 at read time.
+    force_draws(lib, w, [0.1])
     lib.om_world_step(w)
 
     candidates = read_candidates(lib, w, 0)
