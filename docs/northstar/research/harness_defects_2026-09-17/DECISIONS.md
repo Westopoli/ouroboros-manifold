@@ -182,6 +182,18 @@ Found by PX-15. `OM_BUG_OSC_AS_LEVEL = 0` (`csrc/ouroboros_sim.h:156`), `om_worl
 
 C work, so it belongs to the session that owns `csrc/`. Options: reserve `OM_BUG_NONE` outside the id space and initialise `w->inject` to it, or renumber the E-02 block to start at 1. Either way the fix needs the E-02 controls re-run, since some of their expectations may have been set against the faulted default.
 
+## R12 (2026-09-20): a repaired test silently kills the control that copies its detector
+
+After R11 landed, the liveness gate was re-run on `test_control_osc_as_level` and reported `DEAD` again, with a different symptom: before the fix both runs failed, now **both runs pass**. Cause, verified: the control's docstring says it "reuses the exact detector" from `test_E02_S018_oscillation.py::test_R_018_04`, and it does, by copying the loop. That test was repaired earlier the same night (`93b9525`) to start its window at `k=1`, because window `k=0` is off by `A*sin(econ_phase)` for every implementation, correct or buggy, from how ALG-01 seeds the previous-tick value. The control still loops from `k=0`, so it trips on the clean build as well and can no longer distinguish anything.
+
+The failure mode is general and new to the table: **a control that copies a test's detector goes vacuous the moment that test is repaired**, silently, with no failing test anywhere to announce it. The drift check already designed covers epic to spec to test; it does not cover test to control.
+
+Decisions:
+1. A control must **import** the detector it mirrors rather than copy it (a shared helper in `conftest.py` or a detector module), so one repair fixes both. Where a copy is unavoidable, the control names the test it mirrors in a machine-readable field, not only in prose.
+2. The drift check extends to test-to-control pairs: changing a test file requires re-running liveness for the controls that mirror it, in the same commit.
+3. This is the first defect the liveness gate found on its own, hours after an unrelated repair created it, with nobody looking. That is the argument for running it as a gate rather than a diagnostic.
+4. The fix itself is a `test-defect` under C6: the executor session repairs the control to match the repaired detector; Westley is not involved.
+
 ## Proving the factory (2026-09-19 onward)
 
 | Experiment | Result | Design change |
