@@ -144,6 +144,12 @@ Questions as put (short form) and Westley's answers (verbatim), with resolutions
 
 **C3 nuance as sent to Westley.** The incidents (R7i, R7k, 204b3) are exactly Westley's description with one addition: in surprise mode the follow-up attack is declared in step 3d and resolves in step 3f of the *same* tick, so one region can take two resolved attacks in one tick and the attacker spends two commits. If that is acceptable as "more motivated", no rule change; the sim already behaves this way and only the tests change. If a second resolution in the same tick is too fast, the rule would be "follow-up declarations allowed, but at most one resolution per target per tick" (the follow-up waits for the next tick).
 
+## Proving the factory (2026-09-19 onward)
+
+| Experiment | Result | Design change |
+|---|---|---|
+| PX-08 tick-stage closure and plateau (`proving_ground/PX-08-*.md`) | H1 pass: closure rejects both circular 204a1/204a3 cuts and accepts the final order; residual shared-buffer WARN is a real hazard. H2 fail as stated: a plain plateau stop has 3-4 false stops at every K. | Plateau (K=3) forces an escalator diagnosis call; only a named cause ends the run. Residual shared-buffer flags are WARN and quoted into the brief. |
+
 ## Game side (ouroboros repo)
 
 | ID | Question | Decision |
