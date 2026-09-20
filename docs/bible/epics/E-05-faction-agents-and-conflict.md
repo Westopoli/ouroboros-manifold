@@ -93,6 +93,7 @@ Rules
 - R-036-04  Given a surprise attack, When it resolves, Then effective attack is multiplied by 0.5 and it resolves in the same tick's step 3f.
 - R-036-05  Given a telegraphed attack is pending against a faction, When that faction's reactive window runs, Then with probability min(1, defend weight / 1.5) it commits min(budget · 0.30, attacker commit · 0.5) to reinforce the target, and commits nothing if that is below 1.0.
 - R-036-06  Given a reinforce of commit 10 on a frontier region with military 30 and tension 50, When resolved, Then base = 10 · 0.5 · (60 − 30)/60 = 2.5 and Δmilitary = 2.5 · U(0.75, 1.25).
+- R-036-07  Given a faction already has a resolved attack against a target this tick (step 3c's telegraph maturation, or an earlier attack this same step), When step 3d evaluates its candidates, Then that target is excluded from viability and the faction does not re-declare against it; a failed attack may be repeated against the same target starting the next tick (C3, DECISIONS.md Seventh round, 2026-09-19).
 
 Inputs: archetype preference; target military; defend weight; budget.
 Outputs: attack mode; pending telegraph list; reinforce record.

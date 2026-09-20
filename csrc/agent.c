@@ -257,6 +257,28 @@ void om_step_decisions(om_world *w) {
         om_candidate *best_colonize = NULL;
         for (uint32_t i = 0; i < n; ++i) {
             if (candidates[i].kind == OM_CAND_ATTACK && candidates[i].viable) {
+                /* ALG-14/15 (C3, DECISIONS.md Seventh round): at most one
+                 * resolved attack per attacker-target pair per tick. A target
+                 * this faction already has a resolved attack against this
+                 * tick (from step 3c's telegraph maturation, which runs
+                 * before this step) is not re-declared against; the
+                 * follow-up waits for the next tick. */
+                int already_resolved = 0;
+#ifdef OM_DEBUG_INJECT
+                if (w->inject != OM_BUG_SAME_TICK_REDECLARE) {
+#endif
+                    for (uint32_t k = 0; k < w->attacks_n; ++k) {
+                        if (w->attacks[k].tick == w->tick &&
+                            w->attacks[k].attacker == f &&
+                            w->attacks[k].target_idx == candidates[i].region_idx) {
+                            already_resolved = 1;
+                            break;
+                        }
+                    }
+#ifdef OM_DEBUG_INJECT
+                }
+#endif
+                if (already_resolved) continue;
                 if (!best_attack || candidates[i].attractiveness > best_attack->attractiveness)
                     best_attack = &candidates[i];
             } else if (candidates[i].kind == OM_CAND_COLONIZE) {

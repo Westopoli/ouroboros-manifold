@@ -400,6 +400,7 @@ class OMBugE05:
     ADMIN_ROLL_PER_FACTION = 107
     FRICTION_COUNTS_TRADE = 108
     E05_SLOW = 109
+    SAME_TICK_REDECLARE = 110
 
 
 class OmCandidate(ctypes.Structure):

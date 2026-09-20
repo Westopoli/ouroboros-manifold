@@ -478,7 +478,9 @@ typedef enum {
     OM_BUG_GARRISON_BEFORE_DAMAGE    = 106,
     OM_BUG_ADMIN_ROLL_PER_FACTION    = 107, /* one roll per faction, not per region */
     OM_BUG_FRICTION_COUNTS_TRADE     = 108, /* trade-only edges count (Q-041-01 answered: border and both only) */
-    OM_BUG_E05_SLOW                  = 109  /* deliberate slowdown for the scale gate */
+    OM_BUG_E05_SLOW                  = 109, /* deliberate slowdown for the scale gate */
+    OM_BUG_SAME_TICK_REDECLARE       = 110  /* 3d re-declares against a target this faction
+                                              * already resolved an attack against this tick */
 } om_bug_e05;
 #endif
 
