@@ -113,9 +113,20 @@ uint64_t om_world_step(om_world *w) {
         /* 3a snapshot */
         memcpy(w->faction_budget_snapshot, w->faction_budget, sizeof(w->faction_budget));
         om_faction_step_budget(w);     /* 3b */
-        om_step_telegraphs(w);         /* 3c */
-        om_step_decisions(w);          /* 3d */
-        om_step_reinforce(w);          /* 3e */
+#ifdef OM_DEBUG_INJECT
+        if (w->inject == OM_BUG_TELEGRAPH_AFTER_REINFORCE) {
+            /* Fault: 3c (telegraph maturation) runs after 3e (reactive
+             * reinforcement) instead of before it. */
+            om_step_decisions(w);          /* 3d */
+            om_step_reinforce(w);          /* 3e */
+            om_step_telegraphs(w);         /* 3c */
+        } else
+#endif
+        {
+            om_step_telegraphs(w);         /* 3c */
+            om_step_decisions(w);          /* 3d */
+            om_step_reinforce(w);          /* 3e */
+        }
         om_step_resolve(w);            /* 3f */
     }
 
