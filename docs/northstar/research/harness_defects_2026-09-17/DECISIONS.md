@@ -148,6 +148,7 @@ Questions as put (short form) and Westley's answers (verbatim), with resolutions
 
 | Experiment | Result | Design change |
 |---|---|---|
+| PX-02 actor vocabulary and pause/step (`proving_ground/PX-02-*.md`) | Pass on the real toy scene: eleven verbs, `pause`/`step` while paused, missing verb rejected as a harness condition. | None; carry the Godot `mouse_filter` and `PROCESS_MODE_ALWAYS` findings into the game-side hook spec. |
 | PX-08 tick-stage closure and plateau (`proving_ground/PX-08-*.md`) | H1 pass: closure rejects both circular 204a1/204a3 cuts and accepts the final order; residual shared-buffer WARN is a real hazard. H2 fail as stated: a plain plateau stop has 3-4 false stops at every K. | Plateau (K=3) forces an escalator diagnosis call; only a named cause ends the run. Residual shared-buffer flags are WARN and quoted into the brief. |
 
 ## Game side (ouroboros repo)
