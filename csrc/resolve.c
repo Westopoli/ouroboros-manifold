@@ -58,15 +58,23 @@ uint32_t om_tick_reinforces(const om_world *w, om_reinforce *out, uint32_t max) 
 }
 
 uint32_t om_tick_colonizations(const om_world *w, om_colonize_result *out, uint32_t max) {
-    /* STUB */
-    (void)w; (void)out; (void)max;
-    return 0;
+    if (!w || !out || max == 0) return 0;
+    
+    uint32_t count = fmin(w->colonizations_n, max);
+    for (uint32_t i = 0; i < count; ++i) {
+        out[i] = w->colonizations[i];
+    }
+    return count;
 }
 
 uint32_t om_event_queue(const om_world *w, om_queued_event *out, uint32_t max) {
-    /* STUB */
-    (void)w; (void)out; (void)max;
-    return 0;
+    if (!w || !out || max == 0) return 0;
+    
+    uint32_t count = fmin(w->event_queue_n, max);
+    for (uint32_t i = 0; i < count; ++i) {
+        out[i] = w->event_queue[i];
+    }
+    return count;
 }
 
 int om_intent_inject(om_world *w, int32_t faction_id, om_action action, uint32_t target_idx,
@@ -500,5 +508,90 @@ void om_step_resolve(om_world *w) {
 
         r->conquest = 1;
         r->garrison = garrison;
+
+        /* ALG-22 Conquest Unrest */
+        double u_draw;
+        if (w->rng_forced_len > 0) {
+            u_draw = w->rng_forced[w->rng_forced_head];
+            w->rng_forced_head++;
+            w->rng_forced_len--;
+        } else {
+            uint32_t a = (uint32_t)(w->rng_state >> 5);
+            uint32_t b = (uint32_t)(w->rng_state >> 6);
+            double unif = (a * 67108864.0 + b) * (1.0 / 9007199254740992.0);
+            w->rng_state = w->rng_state * 6364136223846793005ULL + w->rng_inc;
+            u_draw = unif;
+        }
+        
+        if (u_draw <= 0.6) {
+            double delay_draw;
+            if (w->rng_forced_len > 0) {
+                delay_draw = w->rng_forced[w->rng_forced_head];
+                w->rng_forced_head++;
+                w->rng_forced_len--;
+            } else {
+                uint32_t a = (uint32_t)(w->rng_state >> 5);
+                uint32_t b = (uint32_t)(w->rng_state >> 6);
+                double unif = (a * 67108864.0 + b) * (1.0 / 9007199254740992.0);
+                w->rng_state = w->rng_state * 6364136223846793005ULL + w->rng_inc;
+                delay_draw = unif;
+            }
+            
+            double triangular = 4.0 + (8.0 - 4.0) * sqrt(delay_draw * (6.0 - 4.0) / (8.0 - 4.0));
+            int32_t delay = (int32_t)round(triangular);
+            
+            if (w->event_queue_n < 64) {
+                om_queued_event *ev = &w->event_queue[w->event_queue_n++];
+                ev->due_tick = w->tick + delay;
+                ev->region_idx = target_idx;
+                ev->template_id = OM_EVT_CONQUEST_UNREST;
+                ev->probability = 1.0;
+                ev->source_faction = attacker;
+                ev->chain_length = 0;
+                ev->chain_tag = 0;
+            }
+        }
+    }
+
+    /* Solo Colonize (ALG-24) */
+    for (uint32_t i = 0; i < w->decisions_n; ++i) {
+        om_decision *d = &w->decisions[i];
+        if (d->action != OM_ACT_COLONIZE) continue;
+        
+        uint32_t target_idx = d->target_idx;
+        int32_t f = d->faction_id;
+        
+        /* Check if region is unowned */
+        if (w->regions[target_idx].faction_id >= 0) continue;
+        
+        /* Deduct COLONIZE_COST from faction budget */
+        w->faction_budget[f] -= 20.0;
+        
+        /* Set owner */
+        om_region_set_owner(w, target_idx, f, w->tick);
+        
+        /* Set tier to OM_TIER_FRONTIER */
+        w->regions[target_idx].tier = OM_TIER_FRONTIER;
+        
+        /* Initialize starter fields */
+        double military = 10.0;  /* COLONY_START_MILITARY */
+        double economy = 20.0;   /* COLONY_START_ECONOMY */
+        double tension = 20.0;   /* COLONY_START_TENSION */
+        double population = 25.0; /* COLONY_START_POPULATION */
+        
+        w->regions[target_idx].military = military;
+        w->regions[target_idx].economy = economy;
+        w->regions[target_idx].tension = tension;
+        w->regions[target_idx].population = population;
+        
+        /* Record in w->colonizations */
+        if (w->colonizations_n < 64) {
+            om_colonize_result *c = &w->colonizations[w->colonizations_n++];
+            c->tick = w->tick;
+            c->faction_id = f;
+            c->target_idx = target_idx;
+            c->start_military = military;
+            c->budget_spent = 20.0;
+        }
     }
 }
