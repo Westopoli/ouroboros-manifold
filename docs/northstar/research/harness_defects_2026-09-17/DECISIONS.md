@@ -144,6 +144,10 @@ Questions as put (short form) and Westley's answers (verbatim), with resolutions
 
 **C3 nuance as sent to Westley.** The incidents (R7i, R7k, 204b3) are exactly Westley's description with one addition: in surprise mode the follow-up attack is declared in step 3d and resolves in step 3f of the *same* tick, so one region can take two resolved attacks in one tick and the attacker spends two commits. If that is acceptable as "more motivated", no rule change; the sim already behaves this way and only the tests change. If a second resolution in the same tick is too fast, the rule would be "follow-up declarations allowed, but at most one resolution per target per tick" (the follow-up waits for the next tick).
 
+## Throughput (2026-09-19): why 34 hours shipped six cards
+
+`research/factory/A9-throughput-timeline.md`. Idle with nothing eligible 19.8 h (57.7%), building 11.2 h (32.7%, most of it on defective cards, 204b1 alone 5.6 h and never DONE through Agora), stopped by hand 3.3 h (9.6%, 1.85 h of it Westley's own pause). Building time per shipped card averaged 52 minutes, inside the 20-60 minute expectation; the multi-hour per-card walls (204a3 6h41, 204b3 6h27) are idle and stops. Five missing properties, now in PLAN.md's pipelining rule: a chain that continues past a blocked head; a plateau diagnosis instead of a ten-run cap; a cap that actually stops (204b1 ran eleven more attempts after the cap line fired, to be verified as a harness bug); an overnight escalation path (4h08 of silence waiting for Westley); an automatic root-cause path for UNSATISFIABLE (204b3 sat five hours). Counterfactuals from the data: no idle on a blocked head takes the window to about 14.5 h; adding the plateau diagnosis to 8-10 h; removing human stops saves only 3.3 h. These five are the first implementation cascade, ahead of anything QA-side.
+
 ## Proving the factory (2026-09-19 onward)
 
 | Experiment | Result | Design change |
