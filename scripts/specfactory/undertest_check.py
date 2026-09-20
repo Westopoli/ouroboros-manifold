@@ -211,7 +211,7 @@ def shadow_fixture(test_file: str, node_id: str, perturbation: dict,
 # ---------------------------------------------------------------------------
 
 _COMPARISON_FLIPS = {"<=": "<", "<": "<=", ">=": ">", ">": ">=", "==": "!=", "!=": "=="}
-_COMPARISON_RE = re.compile(r"<=|>=|==|!=|<|>")
+_COMPARISON_RE = re.compile(r"<=|>=|==|!=|<|(?<!-)>")
 _ARITH_FLIPS = {"+": "-", "-": "+", "*": "/", "/": "*"}
 _ARITH_RE = re.compile(r"(?<![+\-*/=])\s([+\-*/])\s(?![+\-*/=])")
 _NUMBER_RE = re.compile(r"\b\d+\.\d+\b|\b\d+\b")
