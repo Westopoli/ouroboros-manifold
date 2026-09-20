@@ -401,6 +401,7 @@ class OMBugE05:
     FRICTION_COUNTS_TRADE = 108
     E05_SLOW = 109
     SAME_TICK_REDECLARE = 110
+    INJECT_IGNORED = 111
 
 
 class OmCandidate(ctypes.Structure):

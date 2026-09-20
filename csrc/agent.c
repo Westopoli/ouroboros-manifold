@@ -247,10 +247,38 @@ uint32_t om_pending_telegraphs(const om_world *w, om_telegraph *out, uint32_t ma
 
 void om_step_decisions(om_world *w) {
     if (!w) return;
+
+    /* R8 (DECISIONS.md): om_intent_inject writes directly into w->decisions
+     * before this step runs, stamped with the tick it applies to (w->tick,
+     * here, since om_intent_inject reads w->tick before the increment). A
+     * faction with such an entry skips its own recompute below (the header's
+     * documented om_intent_inject contract); preserve those entries instead
+     * of wiping them with the rest. */
+    om_decision preserved[64];
+    uint32_t n_preserved = 0;
+    int injected_faction[OM_MAX_FACTIONS] = {0};
+#ifdef OM_DEBUG_INJECT
+    if (w->inject != OM_BUG_INJECT_IGNORED) {
+#endif
+        for (uint32_t i = 0; i < w->decisions_n && n_preserved < 64; ++i) {
+            if (w->decisions[i].tick == w->tick) {
+                preserved[n_preserved++] = w->decisions[i];
+                int32_t fid = w->decisions[i].faction_id;
+                if (fid >= 0 && fid < OM_MAX_FACTIONS) injected_faction[fid] = 1;
+            }
+        }
+#ifdef OM_DEBUG_INJECT
+    }
+#endif
     w->decisions_n = 0;
+    for (uint32_t i = 0; i < n_preserved; ++i) {
+        w->decisions[w->decisions_n++] = preserved[i];
+    }
+
     om_candidate candidates[64];
     for (int f = 0; f < OM_MAX_FACTIONS && w->decisions_n < 64; ++f) {
         if (!w->faction_used[f]) continue;
+        if (injected_faction[f]) continue;
         uint32_t n = om_faction_candidates(w, f, candidates, 64);
 
         om_candidate *best_attack = NULL;

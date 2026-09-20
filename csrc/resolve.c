@@ -84,10 +84,28 @@ int om_intent_inject(om_world *w, int32_t faction_id, om_action action, uint32_t
     if (w->regions[source_idx].faction_id != faction_id) return -1;
     if (commit > w->faction_budget[faction_id]) return -1;
 
+    /* R8 (DECISIONS.md): an injected intent applies to the NEXT om_world_step
+     * (header contract), i.e. the tick om_world_step is about to advance to,
+     * not the tick w->tick reads right now. */
+    uint64_t apply_tick = w->tick + 1;
+
+    if (action == OM_ACT_ATTACK && mode == OM_MODE_TELEGRAPH) {
+        /* A telegraphed injection enters the pending list exactly like a
+         * declared one (om_step_decisions), so it matures at tick + 3 via
+         * om_step_telegraphs, not through this decision record. */
+        if (w->telegraphs_n >= 64) return -1;
+        om_telegraph *t = &w->telegraphs[w->telegraphs_n++];
+        t->declared_tick = apply_tick;
+        t->attacker = faction_id;
+        t->target_idx = target_idx;
+        t->source_idx = source_idx;
+        t->commit = commit;
+    }
+
     if (w->decisions_n >= 64) return -1;
     om_decision *d = &w->decisions[w->decisions_n++];
     memset(d, 0, sizeof(*d));
-    d->tick = w->tick;
+    d->tick = apply_tick;
     d->faction_id = faction_id;
     d->action = (uint32_t)action;
     d->target_idx = target_idx;
