@@ -176,11 +176,12 @@ def shadow_fixture(test_file: str, node_id: str, perturbation: dict,
             )
         perturbed_source = original_source.replace(find, replace)
         for rfind, rreplace in perturbation.get("recompute", []):
-            if perturbed_source.count(rfind) != 1:
-                raise ValueError(
-                    f"recompute find={rfind!r} must occur exactly once, "
-                    f"found {perturbed_source.count(rfind)}"
-                )
+            # Every occurrence is rewritten (unlike `find`/`replace` above,
+            # which targets one specific input literal): a docstring formula
+            # and its own assertions typically repeat the same old answer
+            # more than once, and all of them must move to the new answer.
+            if perturbed_source.count(rfind) < 1:
+                raise ValueError(f"recompute find={rfind!r} not found")
             perturbed_source = perturbed_source.replace(rfind, rreplace)
 
         test_path.write_text(perturbed_source)
