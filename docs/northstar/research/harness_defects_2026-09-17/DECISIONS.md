@@ -162,6 +162,20 @@ Card `207-e05-step-order-fault` (`csrc/sim.c` step-order fault injection for `OM
 
 The literal reorder itself is still the objectively correct implementation of the documented fault-injection point (ouroboros `787a7f2`) and lands anyway -- harmless under normal (non-injected) play, and available once a redesigned control can actually observe something. Card retired from `RELEASE_CHAIN` (agora, same class as 202b2/204b1); nothing else to fix here without inventing a new, currently-undiscovered distinguishing scenario, which is design-lane work, not a guessable follow-up.
 
+## R10 (2026-09-20): three dead controls, one mechanical check that catches all of them
+
+R7h, R7l and R9 are the same failure with three different causes: a positive control that cannot tell the correct implementation from the planted bug. R7h could not observe in time (the reading step runs before the mutating step). R7l's own numbers never reached the branch it tested (the clamp never engaged, so both orders gave 31.3). R9's reorder changed nothing observable, because the write it reorders is synchronous (verified by the executor with two independent scenarios, not argued). Each cost a card its full attempt budget and a human diagnosis; each was found by hand, after the fact.
+
+PX-13 built detectors for the first two, and they work, but they read docstring and naming conventions, and they would not have caught R9 at all.
+
+**The check that catches all three, mechanically and without conventions: a control must be able to fail.** Run each control against the clean build and against the debug build with its own `OM_BUG_*` injected. If the outcome is identical either way, the control is dead, whatever the cause. This is Principle 3 ("every detector ships with a positive control") applied to the controls themselves, and it is cheap: both libraries are already built, and a control run is a fraction of a second.
+
+Decisions:
+1. **Control liveness becomes a gate**, not a lint: a control that does not flip between the clean and injected builds fails the story's Definition of Done and blocks its card from queueing. It runs in the CPU slot with the rest of the pre-queue checks.
+2. PX-13's tick-order and vacuous-numbers detectors are **kept as diagnostics**: they say *why* a control is dead, which is what a human or the escalator needs in order to fix it. Liveness says *that* it is dead.
+3. A dead control is a `test-defect` under C6: the escalator redesigns the fixture (PX-13 already computes the distinguishing value for the vacuous class, e.g. military 15.0 for R7l), and Westley is not involved.
+4. `OM_BUG_*` ids whose control is dead are not evidence of anything; the epic's "ways this could be wrong" item they came from is still unproven and stays open.
+
 ## Proving the factory (2026-09-19 onward)
 
 | Experiment | Result | Design change |
