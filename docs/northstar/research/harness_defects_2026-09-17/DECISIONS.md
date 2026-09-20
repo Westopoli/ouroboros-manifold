@@ -176,10 +176,17 @@ Decisions:
 3. A dead control is a `test-defect` under C6: the escalator redesigns the fixture (PX-13 already computes the distinguishing value for the vacuous class, e.g. military 15.0 for R7l), and Westley is not involved.
 4. `OM_BUG_*` ids whose control is dead are not evidence of anything; the epic's "ways this could be wrong" item they came from is still unproven and stays open.
 
+## R11 (2026-09-20): bug id zero collides with "no bug"
+
+Found by PX-15. `OM_BUG_OSC_AS_LEVEL = 0` (`csrc/ouroboros_sim.h:156`), `om_world_new` sets `w->inject = 0` (`csrc/region.c:17`), and `csrc/sim.c:176` tests `w->inject == OM_BUG_OSC_AS_LEVEL`. Every debug-build world therefore runs with the oscillator-as-level fault active unless another bug is injected, and injecting any other bug incidentally clears it. Confirmed by comparing release, debug-without-injection and debug-with-another-bug. Consequences: `test_control_osc_as_level` can never observe a clean state, and any debug-build test that injects nothing has been running against a faulted oscillator.
+
+C work, so it belongs to the session that owns `csrc/`. Options: reserve `OM_BUG_NONE` outside the id space and initialise `w->inject` to it, or renumber the E-02 block to start at 1. Either way the fix needs the E-02 controls re-run, since some of their expectations may have been set against the faulted default.
+
 ## Proving the factory (2026-09-19 onward)
 
 | Experiment | Result | Design change |
 |---|---|---|
+| PX-15 control liveness (`proving_ground/PX-15-*.md`) | Pass: one check flags all three dead controls; sweep of 119 finds 10 LIVE, 17 DEAD, 92 placeholder skeletons; 241 ms per control; found R11. | Liveness required at queue time for the story's own controls only (a control whose feature is unbuilt is PENDING, not defective; requiring it repo-wide would false-stop cards behind later features). DEAD with the feature built is a `test-defect` for the escalator. |
 | PX-06 under-test detection (`proving_ground/PX-06-*.md`) | Mutation gate pass on the real R7g diff: 26 of 40 mutants survive its single acceptance test and name the five formulas that were wrong. Shadow fixture inconclusive (its card is red at HEAD). Tool mutates C comments. | Mutation gate adopted with three properties: skip comments and strings; report per-line survivors; run in the CPU slot before merge (50-95 s per card). A survivor set confined to one formula is a `test-defect` for the escalator. Shadow fixture stays but unproven. New finding: aged entrenchment untested across E-05. |
 | PX-05 desync detector (`proving_ground/PX-05-*.md`) | Pass: clean pair identical, bit flip named within ten ticks, under a second per pair at 60 regions. Side finding: `om_intent_inject` appears erased by 3d's `decisions_n = 0` before 3f; verification running. | Desync detector in every C card's acceptance from P0; the injection contract or the code needs fixing once verified. |
 | PX-13 fixture-defect detectors (`proving_ground/PX-13-*.md`) | Pass on R7h, R7l, R7e; clean counterparts silent; one new flag on R-040-04. Detectors lean on suite conventions. | Conventions become declarations in the Stage 5 test template (attacker/defender marker; formula pair per control generated with its skeleton); detectors join card lint (WARN, FAIL for the two classes with no false positive). New flag for Westley: does a self-initiated SURPRISE `REINFORCE` resolve in 3f like an attack, and is it built? |
