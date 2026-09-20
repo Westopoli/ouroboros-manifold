@@ -189,10 +189,11 @@ After R11 landed, the liveness gate was re-run on `test_control_osc_as_level` an
 The failure mode is general and new to the table: **a control that copies a test's detector goes vacuous the moment that test is repaired**, silently, with no failing test anywhere to announce it. The drift check already designed covers epic to spec to test; it does not cover test to control.
 
 Decisions:
-1. A control must **import** the detector it mirrors rather than copy it (a shared helper in `conftest.py` or a detector module), so one repair fixes both. Where a copy is unavoidable, the control names the test it mirrors in a machine-readable field, not only in prose.
+1. A control that mirrors a test's detector declares that link **machine-readably**: a module-level constant (`MIRRORS = "tests/csim/test_E02_S018_oscillation.py::test_R_018_04"`) or a pytest marker, never only a sentence in the docstring. Importing a shared detector is better where the shared surface is worth the indirection, but that is a judgement per control: when the executor fixed this one (`1f81182`) it kept the copy, reasonably, because the shared part was a single loop line. Copies are allowed; undeclared copies are not, because the drift check in decision 2 can only find what is declared. Grepping docstrings is the convention-dependence PX-13 already named as its own weakness.
 2. The drift check extends to test-to-control pairs: changing a test file requires re-running liveness for the controls that mirror it, in the same commit.
 3. This is the first defect the liveness gate found on its own, hours after an unrelated repair created it, with nobody looking. That is the argument for running it as a gate rather than a diagnostic.
-4. The fix itself is a `test-defect` under C6: the executor session repairs the control to match the repaired detector; Westley is not involved.
+4. The fix itself is a `test-defect` under C6: the executor session repairs the control to match the repaired detector; Westley is not involved. Done in `1f81182`; liveness now reports `LIVE` for it ("as-written=passed, neutralized=failed").
+5. `test_control_composite_pre_clamp` remains the one dead control in E-02 (both runs fail on its own guard assertion before reaching the injected check). It is a `test-defect` awaiting the same treatment, tracked here so it is not mistaken for a passing control.
 
 ## Proving the factory (2026-09-19 onward)
 
