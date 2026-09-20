@@ -30,9 +30,13 @@ def test_control_osc_as_level_trips_the_oscillator_window_detector(dbg, dbg_worl
     rows_sorted = sorted(rows, key=lambda r: r.tick)
     deltas = [r.drift.economy_osc_delta for r in rows_sorted]
 
+    # k=0 is skipped: R-018-02 fixes ALG-01's previous-tick value at 0
+    # rather than the true osc(tick 0), so that window is off by exactly
+    # A*sin(econ_phase) for every implementation, correct or buggy (see
+    # test_R_018_04's own comment, tests/csim/test_E02_S018_oscillation.py).
     tripped = any(
         abs(sum(deltas[k:k + 15])) >= 1e-6
-        for k in range(0, len(deltas) - 15 + 1)
+        for k in range(1, len(deltas) - 15 + 1)
     )
     assert tripped, (
         "OM_BUG_OSC_AS_LEVEL injected but every 15-tick window still nets to "
