@@ -14,7 +14,10 @@ om_world *om_world_new(uint32_t n_regions, uint64_t seed) {
     w->seed = seed;
     w->tick = 0;
     w->trace_on = 0;
-    w->inject = 0;
+    /* R11 (DECISIONS.md): -1, not 0 -- OM_BUG_OSC_AS_LEVEL is bug id 0, so a
+     * default of 0 collided with it and every debug-build world ran with
+     * that fault active until some other bug was deliberately injected. */
+    w->inject = -1;
     w->regions = calloc(n_regions, sizeof(om_region));
     if (!w->regions) {
         free(w);
