@@ -65,12 +65,14 @@ These go into `docs/northstar/principles.md` and get a pointer from CLAUDE.md.
 5. **Scale is a test, together with behavior and speed.** Tests induce high input (units, regions, ticks) with hard thresholds. Under-threshold means the sprint is not done. Scale is never measured apart from behavior: a story's gating test runs at the confirmed scale and asserts, in one test, that the result is behaviorally correct, within the speed budget, and at the required scale. A fast-but-wrong, a correct-but-slow, and a correct-but-undersized run all fail the same test.
 6. **C for speed, equations preserved.** The sim is rewritten in C. The stochastic equations (drift, world gen, faction scoring, attack resolution, friction, tech) are retained verbatim as named formulas unless Stage 1 kills them. Determinism via seeded RNG is a contract.
 7. **The model is the user.** QA drives the game the way a player does and watches for what a player hates (rubber-banding, stuck units, backwards walking, dropped orders, and the rest of the RTS bug catalog). Two tiers: T1 state traces, T2 visual.
-8. **Escalation is a ladder with a top.** Local model stalls, DeepSeek escalates (solve-direct or reorganize), spiral detection halts and writes an English flag with evidence for Westley. "Start over" is a defined protocol, not a panic.
+8. **Escalation is a ladder with a top.** The local model stalls; the escalator (Gemini via `agy`) hints, resets, or declares the card unsatisfiable; a plateau (distinct candidates, identical failing set) stops the run early; an upstream defect named by the escalator becomes its own fix task; the cap parks the card and writes an English flag with evidence. Only design decisions reach Westley. "Start over" is a defined protocol, not a panic.
 9. **Bible describes now.** Rewrite, never append. Machine-consumable structure (stable IDs, story catalog, per-epic rules) so Agora artifacts derive from it by script.
 10. **Agile, not waterfall.** Requirements are epics → stories → rules. They may change while building. A change runs the change protocol (story revised → bible rewritten → tests revised by Claude → Agora task respec'd) in one pass, never partially.
 11. **Definition of Ready gates building.** Nothing enters a sprint until its inputs and outputs are fully mapped, its ambiguity register is empty, its look-and-behavior references are attached, and its tests exist. A story that fails the gate is a planning task, not a build task.
 12. **Ambiguity is flagged, never guessed.** When Claude finds an under-defined behavior, it raises a `[NEEDS WESTLEY]` flag in the ambiguity register with the concrete question and candidate answers. Local models never see an open flag; they only see resolved rules.
 13. **Prove the tool before trusting it.** Before Agora touches the game, it passes toy probes with planted defects: build to fenced tests, obey a scale gate, catch each RTS bug class, drive a real Godot window, escalate to a flag, absorb a requirement change. A capability that has not been shown to fail on a planted defect is not a capability the plan may rely on.
+14. **The harness is a tenant of the project, never the reverse.** Everything that names the game lives in the project or its profile; Agora stays product-blind so a second project onboards with data, not a fork, and an undefined future feature needs no harness code.
+15. **A QA pass that cannot fail is not a QA pass.** Every session proves its inputs land, every scenario has a planted variant where it must fail, a session whose actions never mutate state ends `harness-error` and never counts as clean, and a planted-build campaign with zero findings is a harness failure.
 
 ## Stage overview
 
@@ -90,6 +92,100 @@ Track L  Lean MVP loop (parallel) Rank, cut, ship to testers, measure, re-plan; 
 **Earliest build start.** Agora may begin Sprint 0 (toolchain) as soon as Track R1/R2 spikes pass and Stage 0 probes A–E are green, and may begin the first strategic-sim rungs (region fields, composites, drift equations, world graph) as soon as Stage 1's algorithm pass and the Stage 2 epic files for those rungs are Ready. Tactical, integration, and client epics keep being defined while those build. Nothing waits on the whole bible being e2e-defined; everything waits on its own epic being Ready.
 
 **Layer system (E-01) design phase and its sequencing.** The layer system is the game's most distinctive mechanic and is hard to change once built, so it does not go straight from epic to build. The earliest tactical work ships **basic unit movement on a single layer first** (no layer mechanic), giving a working simple prototype of the game. Only after the first couple of epics have produced that prototype does the layer system enter its design phase: Claude plans and builds several interactive layer-system options in Godot on top of the prototype, Westley plays with them and chooses, and the chosen option becomes E-01's visual end-state. So single-layer movement is an early rung; the full layer mechanic is deliberately deferred behind a working prototype and a real design pass, not defined blind. (Decision 2026-09-13; recorded in `README.md`'s decisions table.)
+
+## The Factory — how Agora builds and verifies autonomously
+
+This section is the operating model for everything after Stage 2. It was designed on 2026-09-17 to 19 from the harness defect investigation, seven research memos and the mining of 77 real runs (`research/harness_defects_2026-09-17/`, `research/factory/`); the decisions behind each line are in `research/harness_defects_2026-09-17/DECISIONS.md`. Two requirements shape it beyond the principles: it must absorb features nobody has defined yet without harness code changes, and it must serve a second project with a profile and a bible, not a fork.
+
+### One chain, nine artifacts
+
+Every artifact has a schema, one owner, a fence (who may not edit it) and a positive control (a way to show it can be wrong). No schema names Ouroboros.
+
+| Artifact | Owner | Fence | Positive control |
+|---|---|---|---|
+| Story: rules as Given/When/Then, visual end-state, "ways this could be wrong", references | Claude, Westley confirms | Agora never reads the bible | Definition of Ready |
+| Expectation spec: per rule, `given` (fixture, seed, switches), `when` (directives), `then` (state checks; invariant ids; visual claims, declared empty when none), scale gate | Script, generated from the story, never hand-edited | Drift check: a test whose rule has no entry, or a fenced test changed without its epic, fails | A wrong number in the spec must make its test red |
+| Tests and controls, fenced | Skeletons by script, bodies by agy, Claude owns | The worker cannot edit; fence check on every diff | red check; every control trips on its planted build |
+| Card: kind (build, gate, content), one file, symbols, acceptance commands, allowed files, brief, header slice, size | Script; lint gates | Worker sees brief, slice and skeleton only | Card lint; fail-first gate |
+| Candidate: the worker's reply and its spliced diff | Local 30B, Gemini hints | Only the named function(s) in one file change | Diff-revert, shadow fixture, diff-scoped mutation |
+| Merge | Harness | Whole headless suite stays green | A known-bad merge replayed must be rejected |
+| Gate result: story, epic or rung gate, no model | Harness | Red stops the chain | A planted-bug build turns a gate red |
+| QA mission and finding: mission from the spec, session log, evidence, verdict, fingerprint, replay bundle | Scripted actor first, 30B on escalation; verifier separate | The actor never writes verdicts; `harness-error` never counts as clean | A planted-build campaign must produce findings |
+| Revision and proposal: change-protocol PR; refiner proposal, never auto-applied | Claude; Gemini proposes; Westley applies | Thresholds, fences, allowed files, controls move only through Westley | A proposal that stops a control tripping is disqualified |
+
+### Roles
+
+| Role | Who | May change | May not |
+|---|---|---|---|
+| Specifier | Claude, day-side | Bible, stories, e2e, tests, controls, gate lists, chain order, profile data | Anything at runtime |
+| Transcriber | Scripts, Claude-triggered until rung P2 is proven, then an Agora scheduled step that drains Tested stories into cards | Generated caches, cards, rules files | Their sources |
+| Implementer | The local model (a profile setting; qwen3-coder:30b today) | The named function(s) in the card's file | Everything else; sees no tests |
+| Escalator | Gemini via agy | The next brief; may declare a card unsatisfiable; may fix one named upstream function under the parent-patch fence; may fix a test or a mission when a finding is classed `test-defect` or `false_positive`, with a ledger row reviewed at the epic architecture review | Cards, thresholds, allowed files, story text |
+| Verifier and refiner | Gemini via agy, never the actor of the same mission | Verdicts, findings, replay bundles; proposal files per epic | Live prompts, config, fences |
+| Judge of last resort | Westley | Everything, through flags and applied proposals | — |
+
+Routing rule: only design decisions reach Westley (a story is a design decision, so a `story-defect` does; a `test-defect` or `false_positive` does not). Smarter models clear the path so the local model keeps moving.
+
+### Three homes
+
+If it names the game, it is not Agora's.
+
+- `agora/`: dispatch and the release chain mechanics, the build loop (card parser, sizing constants, ladder, splice per language, fail-first, baseline, diff-revert, fence, regression gate, escalation, archive), the QA loop (action vocabulary, backends, protocol client, oracle framework, fingerprints, verifier, replay, refiner, harness positive controls), and lint tools that read a project only through its profile.
+- `agora/projects/<slug>/`: profile, rules files, expectation specs, detector plugins, personas, planted-bug catalog, the chain order, campaigns. Data only. (The chain currently hard-coded in `next.py` moves here.)
+- The project repo: bible, tests and controls, the code Agora edits, the dev-only debug hook, and the generators that emit the profile's data.
+
+The boundary test is onboarding a second project with zero Agora code changes; a change that turns out to be needed goes into Agora generically (a new backend, language table entry or oracle class), never a project branch.
+
+### Gates the worker cannot move
+
+Fail-first (the tests must fail before), baseline, card lint (symbol closure and tick-stage closure: when a test calls an orchestrator such as `om_world_step`, every hook it runs joins the closure, and the chain is ordered by hook stage), control-coverage lint (a function's card carries the controls for the rules that function owns), sizing cap (five symbols, eighty lines; content cards sized by pack entry count), diff-revert (the diff must matter), shadow fixture (a hard-coded answer fails a perturbed fixture), diff-scoped mutation (mutating the candidate's changed lines must break a test, or the card is under-tested and does not merge), fence (one file), whole-suite regression after every DONE with revert on any new failure, story and epic gates, sanitizer builds (UBSan; ASan via preload; sampled memcheck; never MSan through ctypes), determinism gates on every C card (repeat seed, traced versus untraced, gcc versus clang, -O0 versus -O2). Plateau early-stop: several distinct candidates failing on an identical test set ends the run and escalates to fixture diagnosis instead of spending the cap. A hint that identifies an upstream defect aborts and hands the escalator a fix task. Parent patches obey the same ownership check as cards; hand-implementing a card is an escalation recorded in the ledger and signed off by Westley.
+
+### QA architecture
+
+- **Game-side hook**, one dev-only autoload daemon speaking the desktop-QA protocol: `state` (canonical, from the sim, not the UI), `tree`, `nav`, `seed`, `fixture`, `pause`, `step <n>`, `screenshot`, `inject <bug-id>` (planted bugs, present only when the debug port is enabled), `input` fallback. A web app or CLI implements the subset it has.
+- **Actor**: scripted scenarios and personas first; the local model only translates a directive scripting cannot express; vocabulary `click fill goto reload back submit press drag wait read_state screenshot hotkey box_select camera_pan`, allowed per project and mission; the game is paused while the model thinks and stepped by tick between actions; step budgets; state-hash loop detection; a directive needing a verb the mission does not allow is a harness condition, never a product finding.
+- **Oracles, in order of trust**: state checks from the spec; T1 trace detectors and invariants over the trace API; metamorphic relations (save and load, two seeds, replay determinism, desync as two sim instances in one process); visual claims judged by Gemini vision via agy, capped, a local model only if it measurably fits beside the worker. A finding needs at least one deterministic oracle; a vision-only claim files as `held` and asks for Westley's eyes.
+- **Verifier**: replays the action log from the seed before filing; classifies `harness-error` (input never mutated state, verb unavailable, scene not loaded, port dead) as its own terminal status that never counts toward convergence. Every session writes a replay bundle (seed, fixture, action log, state reads, screenshots, mission and verdict text) and a one-command replay that reproduces the same scene and steps on Westley's display: what the model saw, he can see.
+- **Harness positive controls**: input-liveness precheck every session; every scenario has a planted-build variant where it must fail; a planted-build campaign producing zero findings is a harness failure and blocks convergence.
+- **Scheduling**: a per-epic QA campaign activates when the epic's gate card is DONE; a nightly explorer campaign runs on the latest merged rung; a rung cannot close without its QA mission having run.
+- **Regression tiers**: per candidate, the whole headless suite (seconds); per rung gate, the earlier rungs' QA missions (minutes); per epic gate, everything including planted-build campaigns (hours, off-peak).
+
+### The prototype ladder
+
+The order of entry into Stage 3 is a ladder of small, observable increments, never a jump to the MVP. Each rung has a functional expectation (T1, exact numbers), a visual expectation (T2), a QA target with planted bugs, and a gate that re-runs every earlier rung. A rung opens when the previous rung's gate is green on a clean build and red on its planted build. Track L's rounds attach to rungs.
+
+| Rung | Built | Gate |
+|---|---|---|
+| P0 Sim runs | C sim headless: regions, drift, factions; determinism trace | 5,000 ticks under budget; same seed same checksum; invariants hold; T1 detectors trip on planted builds |
+| P1 Galaxy view | Thin C pipe server over the sim library; the galaxy view rewritten as small fresh GDScript files (points, edges, owner colour, pan, zoom, click to inspect; theme, palette and shaders reused; main menu kept); GDScript function-level splice lands first | State read through the hook equals the sim's snapshot; a region's colour matches its owner; planted client bugs caught; input liveness |
+| P2 Landscape | Opens with a design phase Westley joins (biome and landscape generation and its sister system: economy, buildings, civilisation cities) and a Godot mockup he approves before any test is authored; then map generation with biomes and palette | Fairness within bounds over a seed sweep (failures logged until the generator is tuned); a generated map reads as terrain |
+| P3 Objectives | Mission generator places objectives | Objectives satisfiable; markers visible and named |
+| P4 Units | Six units, movement and combat on one layer | RTS bug-catalog T1 rows clean over scripted command streams; units move where sent, face travel, die visibly; planted rubber-band, stuck, dropped order |
+| P5 Fog | Fog and sensors | Visibility set matches state; unseen units not drawn |
+| P6 Layers | Two-layer prototype (the layer design phase) | Layer changes elevation and vision per rule; ring height and dimming; planted wrong-height |
+| P7 Chronicle | Time jump and chronicle, once E-04, E-06, E-07 exist | Entries reference real state; deterministic per seed; readable pace |
+| P8 Eras as data | A second era pack differing only in art, names and prose | Mechanics tests identical across packs; content validators as acceptance; content positive control |
+| P9 Multiplayer | Two clients, lockstep | Checksums agree per tick; desync detector silent; two-window QA session |
+
+Strategic-sim epics not needed for a rung keep building in the chain's background slots; rung order only fixes what must be green before the next rung's QA opens.
+
+### Content and multiplayer are not special cases
+
+A content card's acceptance commands are validators and a fenced content diff (byte-identical mechanical config across packs for the MVP, swappable to within-band later); content is authored by the offline library builder (E-21) and only verified by Agora, sized by pack entry count. Determinism is a T1 detector class from rung P0: the desync detector runs two sim instances in one process with a bit-flip positive control; the game later gains a peer-command injection hook for transport QA.
+
+### Self-improvement, bounded
+
+The refiner generalises the existing propose-only move: it reads the run archive (per candidate: model, reason, tests, wall, tokens, prompt hash, hint used, regression result) and writes a proposal file per epic under `agora/proposals/`, never live config. Three tiers: prompt and hint wording (propose, Westley applies); strategy knobs such as ladder attempts and when to call Gemini (held-out A/B, and the planted controls must still trip); thresholds, fences and the definition of done (never). Metrics: candidates to green, wall per DONE card, escalator calls per card, QA false-positive rate, regression escapes, cost per story; each checked against the fixed control set and capped, not merely measured.
+
+### Failure modes the factory guards against
+
+From the incidents of 2026-09-17 to 19: a reply outgrowing the context (function-level splice, measured prompts); dropped includes (skeletons carry them); dead input read as product bugs (`harness-error`); stale run markers (archived by the recut tool); tests spanning another card's stub by symbol or by tick order (lint closures); cards already satisfied (fail-first); a function whose card tests one field of it (control coverage, mutation); controls unsatisfiable by construction or vacuous in their numbers, two-agent confounds (fixture-defect detectors, plateau early-stop); merged code violating a documented contract (mutation, whole-suite regression); parent patches implementing another card's scope (fence); hints that name an upstream defect and route around it (`upstream_defect` aborts); briefs with wrong numbers (verbatim from the spec, read-only check); tests edited without their epic (drift check); an open flag taxing card after card (flag-aware queueing holds a card whose tests touch an open `Q-`); no QA ever pointed at the game (per-epic campaign trigger). The full table with detectors and owners is `research/factory/B-design-draft.md` §B.7.
+
+### Proving the factory before trusting it
+
+Principle 13 applies to the factory itself. Each load-bearing claim above has a toy-scale experiment (`proving_ground/PF-*.md`, results on the scorecard) with a hypothesis, a fixture, a pass number, and positive and negative controls: harness-error on dead input; verbs and pause/step; spec to mission; tick-stage closure and the plateau stop replayed over the real Round 5 runs; T1 detectors on the C trace; the desync detector; under-test detection by shadow fixture and mutation; whole-suite regression replayed over a known-bad merge; the refiner scored offline against a held-out card; a content card with a broken pack; a second project onboarded through the profile alone; the vision judge measured on planted rendering defects; fixture-defect detectors and the parent-patch fence replayed over their incidents. A claim that fails its experiment changes the design, not the experiment.
+
+---
 
 ## Requirement hierarchy (agile)
 
@@ -218,12 +314,14 @@ Track L  Lean MVP loop (parallel) Rank, cut, ship to testers, measure, re-plan; 
 - **Parallel rule.** A sprint may open while later epics are still in Stage 2 or 3, provided every story in the sprint is Tested and its epic's dependencies are Built. The first sprints (toolchain, region fields, drift, world graph) are chosen precisely because they depend on almost nothing and can be Ready early.
 - **Prototype rule.** Early sprints may target throwaway prototypes (e.g. a headless C world that only drifts, a Godot scene that only draws unit dots on layers) when that is the fastest way to validate a story's rules against reality. Prototype stories are marked as such in the backlog and are replaced, not extended, when the real story is Ready.
 
-**Escalation ladder** (`docs/northstar/escalation.md`, from R3):
-1. **Runs 1–2 (Fast Local Ladder)**: Unassisted local models (`qwen3-coder:30b`, `gpt-oss:20b`). Solves well-sized cards cheaply with 0 API cost.
-2. **Runs 3–9 (Cross-Run Guided Ladder)**: If a card fails 2 runs, Agora invokes Gemini via `agy` CLI to examine failed candidate outputs and generate a concise 2–3 line diagnostic hint (stored in `advisor_hint.md` and fed into subsequent run prompts).
-3. **Run 10 (Final Cap)**: If a card fails 10 runs, task is parked; `escalate.py` logs `ESCALATION.md` with evidence and notifies Westley.
-4. Westley opens Claude, ssh in, decides: respec, split, revert branch, or "start over" (defined: discard `agora/` branch, restore task to queue with new spec).
-5. Opt-in: pinned Claude chat on `/loop` polling the flag at a long interval. Documented, off by default.
+**Escalation ladder** (`docs/northstar/research/escalation.md`, from R3; the Factory section above holds the gates):
+1. **Runs 1-2, fast local ladder**: the local model alone (qwen3-coder:30b, three attempts). Plateau early-stop ends a run whose distinct candidates keep failing on one identical test set.
+2. **Runs 3-9, guided**: the escalator (Gemini via `agy`) reads the failed candidates and writes a terse hint into the next brief; a hint that names an upstream defect aborts the run and becomes a fix task for the escalator under the parent-patch fence; a contradiction in the tests aborts as unsatisfiable and routes the finding (`story-defect` to Westley, `test-defect` to the escalator).
+3. **Run 10, cap**: the card parks, `escalate.py` writes `ESCALATION.md` with evidence, Westley is notified.
+4. Westley decides: respec, split, revert, or "start over" (discard the `agora/` branch, restore the card with a new spec). Hand-implementing a card is this rung, recorded in the ledger.
+5. Opt-in: a pinned chat on `/loop` polling the flag at a long interval. Documented, off by default.
+
+**The backlog is the chain.** `RELEASE_CHAIN` (moving from `next.py` into the project profile) is the living backlog: cards in dependency order, one released per tick when its predecessor is DONE; story gates after a story's last card, epic gates after an epic's, rung gates per the prototype ladder; a QA campaign activates when an epic's gate is DONE. Sprint files and `backlog.md` describe intent; the chain is what runs.
 
 **Done when (initial).** Every epic sits on the ladder; the product backlog exists with every story from Stage 2; the first three sprints are fully specified with exit criteria and task stubs; Sprint 0 has a checklist Westley can run; escalation doc complete; Westley confirms the ladder and the first sprints. After that the roadmap is a living document, re-planned each time a sprint closes or a requirement changes.
 
@@ -231,7 +329,7 @@ Track L  Lean MVP loop (parallel) Rank, cut, ship to testers, measure, re-plan; 
 
 ## Stage 5 — TDD test authoring (spec factory drafts, Claude reviews and owns the suite, Agora obeys)
 
-**Goal.** Before a story is queued, its full failing test set exists from the Stage 3 e2e file. Tests are the task's `acceptance:` commands. Agora iterates until green. Repeats per story for the life of the project, and re-runs under the change protocol whenever a story is revised. `docs/northstar/spec_factory.md`'s scripts generate the test and control skeletons per rule and per QA watch-for; `agy` fills the arrange/act/assert bodies from the rules file; every filled test file is then audited by exactly one Sonnet sub-agent — one auditor per filled file (per story), never a second pass over the same tests (our TDD depth and `red_check` catch the rest, so double-auditing is wasted at this volume). The auditor checks each filled test against the epic, the e2e file, the ABI header, and `algorithms.md`: rule-fidelity (the exact numbers), no invented ABI, correct isolation and RNG draw order, no weakened or non-failing assertion, and whether any assumption the drafter made is really a silent design decision that must become a register flag. It returns findings only and never edits the suite. Claude reviews the findings, applies the fixes or re-drafts, and is the only one who decides what gets tested. `red_check.py` proves every new test fails or errors before Agora ever sees the card.
+**Goal.** Before a story is queued, its full failing test set exists from the Stage 3 e2e file. Tests are the task's `acceptance:` commands. Agora iterates until green. Repeats per story for the life of the project, and re-runs under the change protocol whenever a story is revised. `docs/northstar/spec_factory.md`'s scripts generate the test and control skeletons per rule and per QA watch-for; `agy` fills the arrange/act/assert bodies from the rules file; Claude reviews the filled tests and is the only one who decides what gets tested (the per-file Sonnet audit was trialled and closed on 2026-09-17; it could not see the defect classes that mattered). Before Agora sees a card, scripts prove what a review cannot: `red_check.py` (every new test fails on the stub), `card_lint.py` (symbol and tick-stage closure, sizing, control coverage), the fixture-defect detectors (a control unsatisfiable by tick order, a control whose numbers never reach its branch, a two-agent confound), the drift check between epic, expectation spec and tests, and flag-aware queueing (a card whose tests touch an open `Q-` is held). `green_check.py` exists for diagnosis after a card fails, never as a routine pre-queue step: Claude does not write a card's implementation to prove it passable.
 
 **Tests as the anti-layer-system guard.** A story like "units on different layers have different vision" gets tests that make the behavior *observable*: a unit on layer 2 sees a target on layer 1 at range X and not at range Y; the unit's world position changes by the layer's elevation within N ticks of a layer command; a T2 screenshot at a fixed camera shows the unit at the expected screen height. If a test like that cannot be written, the story is not Ready and goes back to Stage 3 with a flag.
 
@@ -245,7 +343,7 @@ Track L  Lean MVP loop (parallel) Rank, cut, ship to testers, measure, re-plan; 
 
 **Rules.** Tests live in fenced paths Agora cannot edit. Every test names the `S-###`/`R-###-##` it proves. A test that cannot fail is a defect (positive control required). Test code is normal prose, no caveman.
 
-**Done when (per story).** Every rule has at least one test; the story's gating test proves behavior, speed, and scale together (a fast-but-wrong or correct-but-slow run fails it); every applicable R4 detector has a positive control; the filled tests passed their single Sonnet-sub-agent audit with every must-fix resolved, and any genuine ambiguity the audit surfaced is a register flag closed before the story ships; the set is red against the current implementation and the Agora task spec references the exact commands. The story moves to Tested in the backlog.
+**Done when (per story).** Every rule has at least one test; the story's gating test proves behavior, speed, and scale together (a fast-but-wrong or correct-but-slow run fails it); every applicable R4 detector has a positive control; the pre-queue checks pass (red, lint closures, control coverage, fixture-defect detectors, drift); the story's expectation spec is generated and its QA mission derived from it, with a planted-bug variant where the mission must fail; the set is red against the current implementation and the Agora task spec references the exact commands. The story moves to Tested in the backlog.
 
 ---
 
@@ -255,7 +353,7 @@ Track L  Lean MVP loop (parallel) Rank, cut, ship to testers, measure, re-plan; 
 
 **Decisions (2026-09-14).** Substrate is the C sim and the new Godot client only; the legacy Python slice is not used for playtests. Client and packaging are Agora work like everything else, gated on a proving-ground probe that shows Agora can build GDScript against fenced Godot tests. Testers come in three rounds: friends, then a Discord cohort, then Steam Playtest. The first round's bet is recorded as an open flag (`Q-MVP-01`) with a recommendation, not decided here.
 
-**What Track L changes.** It owns the *order* in which epics enter Stage 3 and which stories of each epic are pulled first. It does not change what Ready, Tested, or Built mean. Stories cut from a round are omitted, never thinned: a rule that is in a round keeps its full Given/When/Then and its full test. Where an epic is needed for a round but not built, a stand-in is a prototype story under Stage 4's prototype rule: marked as such in the backlog, replaced not extended when the real story is Ready.
+**What Track L changes.** It maps its rounds onto the prototype ladder (Factory section, "The prototype ladder"), which fixes the order of entry into Stage 3 rung by rung; within a rung it picks which stories are pulled first. It does not change what Ready, Tested, or Built mean. Stories cut from a round are omitted, never thinned: a rule that is in a round keeps its full Given/When/Then and its full test. Where an epic is needed for a round but not built, a stand-in is a prototype story under Stage 4's prototype rule: marked as such in the backlog, replaced not extended when the real story is Ready.
 
 **Rounds.** Round 0 is planning and instrumentation (hypotheses, metrics, feedback instruments, a two-week Agora velocity baseline). Round 1 ships to friends. Round 2 ships to a Discord cohort. Round 3 ships to Steam Playtest. Each round has hypotheses with kill criteria, a metric set, feedback instruments, a build gate, and a gap review. Rounds open on evidence, never on dates: Agora's throughput on this project is unmeasured (zero cards done at the time of writing), so the plan states sequence and gates only.
 

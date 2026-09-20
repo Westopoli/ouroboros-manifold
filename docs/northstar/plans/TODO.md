@@ -1,7 +1,7 @@
 # MVP Scope Decisions & Single-Chat Capability Assessment
 
 **Date**: 2026-09-16  
-**Context**: Following the completion of Stage 4 (411 red tests across 12 epics) and Stage 5 (136 Agora micro-cards queued in `~/Projects/agora/queue/parked/`), this document records:
+**Context**: Following the completion of the test authoring pass (411 red tests across 12 epics; PLAN.md calls this Stage 5) and the card generation pass (136 Agora micro-cards queued; part of PLAN.md's Stage 4). This file's earlier "Stage 4 / Stage 5" labels were swapped relative to PLAN.md and are corrected here. Following the completion of Stage 5 tests and Stage 4 cards in `~/Projects/agora/queue/parked/`), this document records:
 1. What remains to be decided for the Round 1 Lean MVP scope.
 2. An empirical assessment of a single chat's capabilities, throughput, and boundaries.
 

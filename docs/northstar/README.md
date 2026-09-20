@@ -46,7 +46,7 @@ Stage 0  Proving ground   Toy tasks + planted bugs; Agora must pass before Sprin
 Stage 1  Bible audit      Sonnet 5 chat, Westley confirms keep/kill per idea          -> stage1_audit.md, vision_v2.md
 Stage 2  Bible reformat   Rewrite bible as epics/stories/rules + references           -> docs/bible/**, generated Agora rules
 Stage 3  E2E definition   Per epic: inputs, outputs, rules, edges, scale, DoR         -> e2e/E-##.md
-Stage 4  Roadmap          Product backlog, sprints, escalation ladder                 -> roadmap.md, backlog.md, sprints/
+Stage 4  Roadmap          Prototype ladder, the chain as backlog, escalation ladder    -> PLAN.md Factory section, sprints/
 Stage 5  TDD tests        Claude writes the fenced test suite per story               -> tests/
 Track R  Research         R1 QA driving, R2 C rewrite, R3 escalation, R4 RTS bugs     -> research/
 Track L  Lean MVP loop    Rounds to testers; ranks and cuts; owns Stage 3 order     -> mvp/
