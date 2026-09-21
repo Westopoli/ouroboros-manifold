@@ -214,7 +214,11 @@ _OUTPUT_CONTRACT = """\
 Output contract: reply with JSON matching this schema exactly, nothing else:
 {"functions": [{"name": "<exact fence label>", "text": "<complete replacement text>"}], "rationale": "<one sentence>"}
 - Return one entry per fenced target listed above, in the order listed, and no others.
-- Each entry's "name" must be exactly the fence label given (not a guess, not a rephrasing).
+- Each entry's "name" must be EXACTLY the quoted string after name= in that target's heading
+  below -- copy it character for character. It is never the file path, never the file path
+  combined with the label, and never anything after "in ...". For example if a heading reads
+  ### name="om_step_decisions" (in csrc/agent.c), the JSON "name" is exactly om_step_decisions,
+  not csrc/agent.c, and not "csrc/agent.c :: om_step_decisions".
 - Each entry's "text" is the COMPLETE replacement text for that one fenced target: for a
   named function, the entire function from its signature/return type through its closing
   brace, nothing before or after it; for an explicit line range, exactly the replacement
@@ -232,7 +236,7 @@ def build_prompt(case: Case, targets: list[FenceTarget], current_texts: dict[str
         parts += ["", "## Pattern already used elsewhere in this codebase", case.pattern_reference]
     parts += ["", "## Fenced target(s) -- current text"]
     for t in targets:
-        parts += [f"### {t.file} :: {t.label}", "```", current_texts[t.label].rstrip("\n"), "```"]
+        parts += [f'### name="{t.label}" (in {t.file})', "```", current_texts[t.label].rstrip("\n"), "```"]
     parts += ["", "## Failing test output (current, before your fix)", "```", failing_output.strip()[-4000:], "```"]
     if previous_feedback:
         parts += ["", "## Previous attempt failed -- feedback", previous_feedback.strip()[-4000:]]
