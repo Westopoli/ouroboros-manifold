@@ -142,16 +142,4 @@ Every incident since 2026-09-17, by class, with the control that fires before a 
 
 ## B.8 Scenario traces
 
-(a) **A feature nobody defined, month 6, touching sim, client and content.** Claude writes the story with rules, visual end-state, ways-it-could-be-wrong, references; DoR passes; spec cache regenerates; skeleton tests and controls generate; agy fills; Claude reviews; cards generate per file and function family (sim cards C, client cards GDScript, a content card if it adds pack fields); lint runs symbol and tick closures against the current stubs; chain positions follow hook stage; the story gate and its QA mission are generated from the spec. Agora code untouched. Passes, provided the client card kind (GDScript function-level splice) exists by then: today GDScript is whole-file, so that is a design change to schedule before the first client rung, not a gap in the pipeline shape.
-
-(b) **Era pack twelve.** Library builder (Claude-side) emits the manifest; content card with validators and the diff fence as acceptance; chapter-loop QA mission with the pack loaded; chronicle validator; visual claims judged on sampled screenshots; win-rate matrix diffed. No code card. Passes; scale is linear in validator runs only.
-
-(c) **A multiplayer desync report from a tester.** Replay bundle (seed, command stream) attached to the finding; two-instance detector reproduces the divergence tick; T1 test written from the bundle joins the suite as a regression; gcc/clang and -O0/-O2 gates localise the cause class; a card fixes the function the trace names. Passes once P9's injection hook exists; before that the two-instance detector still runs on the sim alone.
-
-(d) **A QA finding that is really not a code defect.** Triage classifies it: `story-defect` (the rule itself is wrong or missing) goes to Westley through the change protocol; `test-defect` (fixture or assertion wrong relative to the rule) goes to the escalator, which fixes the test, logs the edit, and the epic architecture review checks it; `false_positive` (harness or judge error) goes to the escalator, which fixes the mission or harness. Only design decisions reach Westley; smarter models clear the path for the local model. Design change: the three statuses added to the ledger; the escalator gains fix tasks for tests and missions under the parent-patch fence.
-
-(e) **A second project with no game (a web app).** Profile with browser backend, rules from its own story source, spec cache, tests in its repo, no daemon needed, no T1 trace detectors, generic detectors plus its own plugin, planted bugs via its own env flag. Every step is data. The one Agora change it would force today: `RELEASE_CHAIN` lives in `next.py`; moving it to the profile is already listed as a smell to fix. After that, zero.
-
-(f) **Agora idle because Tested runs dry.** Dispatcher logs idle; the refiner and the nightly explorer still run; a flag row tells Westley the pipeline is starved at Stage 5, with the count of Spec'd stories waiting. Passes; the transcription step (Claude-triggered or scheduled) is the lever.
-
-Traces (a) and (e) each produced a design change (GDScript function-level splice before the client rung; chain into the profile); (d) produced a status addition. The rest end green.
+Rewritten 2026-09-21 as `B8-scenario-traces.md` (full walk of six scenarios against the current Factory text; seven design changes applied to `PLAN.md`; three questions in DECISIONS.md Round 8). The 2026-09-18 first pass that stood here said "passes" for every scenario and was replaced.
