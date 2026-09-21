@@ -1,0 +1,39 @@
+# PX-18 — Escalator fixes a test defect alone (proving the factory)
+
+Run 2026-09-21 (ouroboros `5f98cef`/`de26615`/`b3be0d2`, `scripts/specfactory/escalator_fix_probe.py`). Claim (Factory section, C6): when a finding is that a test (not a story) is defective, the escalator can redesign the fixture alone, unattended, and the gate is stricter than green -- it must not "fix" the test by weakening what it asserts.
+
+**Model note.** Same substitution as PX-17: every `agy` quota group (Gemini, Claude/GPT) was exhausted at run time on two different Google accounts sharing one backend clock; Westley authorized a swap to `deepseek-v4-flash` through Agora's own direct DeepSeek API. Real deviation from the plan's named Gemini models, same claim under a different model.
+
+Result: **1 of 2 cases fixed on the first real attempt with a test-quality gate that would have caught a weakened rewrite; 1 case failed all 3 attempts, submitting the same insufficient fix each time.**
+
+| Case | Verdict | Attempts | Equivalence to human fix | Stricter gates |
+|---|---|---|---|---|
+| R7f (two confounded sub-cases in `test_R_036_05`/`06`) | **fixed-first-try** | 1 | **Functionally byte-identical** to the human fix (`d3273fa`) in both functions -- exact same `target_idx == 1` filter, exact same `200.0 / 0.70` budget. Only difference: DeepSeek didn't add the human fix's explanatory comment blocks. | `assertions_preserved` (every original assert survived), `red_at_stub` (still red against the unbuilt `om_step_reinforce` stub, for the right reason), `two_agent_confound` (PX-13's detector no longer flags it) -- all passed on the real reply. |
+| R7l (vacuous control, both clamp orders give 31.3) | **failed** | 3 | N/A -- never passed. | `vacuous_clears` failed all 3 attempts. |
+
+## R7f in detail
+
+The escalator call needed a setup step beyond the plan's literal case description: `test_R_036_05`/`06` exercise `om_step_reinforce`, which is still an unbuilt stub at the case's own pre-fix commit (`3f183d7`) -- the real implementation (card 204a2) doesn't land until later the same day (`d3273fa`+). The harness splices HEAD's real, already-merged `om_step_reinforce`/`om_tick_reinforces` into the case's own worktree before any escalator call (`apply_reference_splice`, one-time setup, never touched by the model), mechanically reproducing what the executor did by hand for real verification (DECISIONS.md: "Verified both tests pass against the reference reinforce logic ... reverted from resolve.c before this commit"). A **separate, unspliced** worktree (`red_at_stub`) keeps the "still red against nothing built" check honest.
+
+This setup step was validated against known-correct content (the real human fix, and a deliberate no-op reply that changes nothing) before spending any model budget: the human fix passes every gate; the unmodified original file fails at the `target_tests` gate for the expected reason (the confound is still live against real reinforce logic). Both checks are in `docs/northstar/proving_ground/evidence/px18/` only as the real DeepSeek run's records; the validation runs themselves were dry-runs against known content, not part of this experiment's scored attempts.
+
+DeepSeek's real reply reconstructed both fixes independently, matching the human diagnosis exactly: filter Case 2's `read_reinforces` to `target_idx == 1` (the defender's own unrelated counter-declaration is otherwise counted), and raise `w_cap`'s attacker budget to `200.0 / 0.70` (the original `50.0 / 0.70` never clears the attack-viability bar against a military-60 target, so no telegraph is ever declared and the headroom-cap path is never exercised).
+
+## R7l in detail
+
+The fence here is the **whole file**, not one function -- found necessary after the first attempt (against the *human fix's own content*, during harness validation, before any real DeepSeek call) revealed that `fixture_defects.branch_coverage_of_control`'s number extraction reads the **module docstring**, not the executed test body (`_extract_defender_military_and_delta` needs the literal phrase `"military from X to Y"`; `_extract_garrison` needs `.garrison == pytest.approx(NUM`). A function-only fence can't reach the docstring, so the case fences the file and the diagnosis tells the model the exact phrasing its own tooling checks for.
+
+DeepSeek's actual reply, unchanged across all 3 attempts: lower the defender's military from 20.0 to 10.0, leave the attacker's commit/budget exactly as the original fixture had it (`budget=60.0`, unstated commit still 42.0). Its own rationale claims "correct (27.3) vs buggy (21.3)" -- **the exact number pair from this case's own diagnosis text**, which gives that pair as a worked example for a *different, self-consistent* commit/military combination (commit 31.0, resolved by the harness author by hand to keep the scenario a clean breakthrough+conquest). DeepSeek copied the example's numbers without re-deriving `effective_defense`/`net`/`garrison` for its own unchanged commit -- and the diagnosis explicitly warns against exactly this ("not a one-line number swap ... the commit/effective_attack/effective_defense inputs ... have to be reworked together, not just the military literal"). All 3 attempts produced the identical fixture; the retry feedback (the real, differing assertion failure text each time -- `27.3 != 27.3` at `abs=1e-6`) did not change the reply at all. This is the plateau pattern the Round 5 audit named (several distinct attempts failing identically should escalate rather than exhaust the retry budget) except here it's the *same* candidate resubmitted, not distinct ones -- the retry-feedback text alone wasn't enough to break the anchor on the example numbers.
+
+`gate_vacuous_clears` correctly failed all 3: `branch_coverage_of_control` on the real reply reports `correct=31.3, buggy=31.3` (both orders identical, because the unreworked commit/defense math reproduces the exact numbers the original defective fixture had), so the control would still never trip. `liveness_report` (informational, never blocks) reports `DEAD` on every attempt regardless -- `OM_BUG_GARRISON_BEFORE_DAMAGE` has no C branch yet (R10/PX-15's own documented limit), so liveness cannot pass no matter what the fixture says; that is expected, not part of the failure.
+
+## Limits
+
+- One model, one run, no fallback (same quota-exhaustion cause as PX-17).
+- `gate_vacuous_clears`'s own extraction is convention-dependent (PX-13's already-documented limitation): it needed the diagnosis to spell out the exact phrasing its regex looks for, which is real prompt-engineering the escalator role would need built in generally, not case-specific to R7l.
+- R7l's fixture-defect class (vacuous numbers requiring a multi-variable rework, not a single value change) is real and harder than R7f's (a filter + one budget number); one data point each is not enough to say whether the model class fails on "needs algebra" defects generally or failed on this one under-specified diagnosis.
+- The reference-splice setup step (R7f) is itself new harness machinery, exercised for the first time this run; PX-17/PX-18 validate it, but it hasn't been generalized to other cases with the same shape.
+
+## Design consequences
+
+(left for the design lane)
