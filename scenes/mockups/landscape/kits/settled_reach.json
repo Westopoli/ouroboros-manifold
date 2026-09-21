@@ -1,0 +1,23 @@
+{
+  "name": "settled_reach",
+  "palette": {"sky": "#0a0e1a", "water": "#000814", "zone_a": "#6b6459", "zone_b": "#5c6b78", "zone_c": "#b8d4dc", "cliff": "#5a5550"},
+  "water_is": "void",
+  "terrain": [
+    {"when": {"obstacle": [0.6, 1.0]}, "piece": "ore_chunk",  "density": 0.8, "mesh": "ore_chunk", "size": [120, 200], "color": "#6e7580"},
+    {"when": {"cover": [0.4, 1.0], "zone": "zone_a"}, "piece": "derelict_hulk", "density": 1.0, "mesh": "derelict", "size": [60, 110], "color": "#4a4640"},
+    {"when": {"zone": "zone_b", "district": 0}, "piece": "ore_vein", "density": 0.3, "mesh": "flat_box", "size": [200, 60], "color": "#7c8a9c"}
+  ],
+  "city": [
+    {"when": {"district": 1}, "piece": "hab_pod",     "density": 0.25, "mesh": "hab_pod",     "size": [60, 40],  "color": "#8a94a0"},
+    {"when": {"district": 2}, "piece": "hab_ring",    "density": 0.5,  "mesh": "hab_ring",    "size": [80, 60],  "color": "#9aa4b0"},
+    {"when": {"district": 3}, "piece": "hull_cluster","density": 0.6,  "mesh": "hull_segment","size": [120, 80], "color": "#a8b4c0"},
+    {"when": {"district": 4}, "piece": "spire_core",  "density": 0.3,  "mesh": "spire",       "size": [240, 140],"color": "#4a9eb8"}
+  ],
+  "borders": {
+    "wall":  {"mesh": "hull_segment", "height": 90,  "color": "#7d8a96", "crossing": {"gate":   {"mesh": "airlock",       "color": "#9ab4c2"}}},
+    "coast": {"mesh": "none",        "crossing": {"bridge": {"mesh": "docking_spine", "color": "#8a94a0"}}},
+    "cliff": {"mesh": "cliff_face",  "height": 0,   "color": "#5a5550", "crossing": {"pass":   {"mesh": "stair_ramp",     "color": "#7c8a90"}}}
+  },
+  "nodes": {"objective": {"mesh": "spire", "color": "#4a9eb8"}, "staging": {"mesh": "hab_ring", "color": "#6e7580"}},
+  "backdrop": {"mesh": "asteroid_backdrop", "color": "#3a2a4a", "distance": 30000}
+}

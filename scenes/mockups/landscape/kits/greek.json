@@ -1,0 +1,23 @@
+{
+  "name": "greek",
+  "palette": {"sky": "#8fd3ff", "water": "#2aa7d6", "zone_a": "#4f9a3c", "zone_b": "#c9c04a", "zone_c": "#9c8f7a", "cliff": "#7d6d5a"},
+  "water_is": "surface",
+  "terrain": [
+    {"when": {"obstacle": [0.6, 1.0]}, "piece": "rock",  "density": 0.8, "mesh": "prism", "size": [120, 200], "color": "#8a7f70"},
+    {"when": {"cover": [0.4, 1.0], "zone": "zone_a"}, "piece": "cypress", "density": 1.0, "mesh": "cone_on_stick", "size": [60, 110], "color": "#2f7a2f"},
+    {"when": {"zone": "zone_b", "district": 0}, "piece": "wheat_row", "density": 0.3, "mesh": "flat_box", "size": [200, 60], "color": "#e0c84a"}
+  ],
+  "city": [
+    {"when": {"district": 1}, "piece": "hut",    "density": 0.25, "mesh": "box",      "size": [60, 40],  "color": "#c86a3c"},
+    {"when": {"district": 2}, "piece": "house",  "density": 0.5,  "mesh": "box_gable","size": [80, 60],  "color": "#d9773f"},
+    {"when": {"district": 3}, "piece": "villa",  "density": 0.6,  "mesh": "box_gable","size": [120, 80], "color": "#e28a4a"},
+    {"when": {"district": 4}, "piece": "temple", "density": 0.3,  "mesh": "colonnade","size": [240, 140],"color": "#f2e9d0"}
+  ],
+  "borders": {
+    "wall":  {"mesh": "wall_segment", "height": 90,  "color": "#bfb39a", "crossing": {"gate":   {"mesh": "gate_arch",  "color": "#a89a7a"}}},
+    "coast": {"mesh": "none",        "crossing": {"bridge": {"mesh": "bridge_arches", "color": "#bfb39a"}}},
+    "cliff": {"mesh": "cliff_face",  "height": 0,   "color": "#7d6d5a", "crossing": {"pass":   {"mesh": "stair_ramp", "color": "#9c8f7a"}}}
+  },
+  "nodes": {"objective": {"mesh": "acropolis", "color": "#f2e9d0"}, "staging": {"mesh": "camp_ring", "color": "#8a4a3c"}},
+  "backdrop": {"mesh": "mountain_range", "color": "#e8eef5", "distance": 30000}
+}
