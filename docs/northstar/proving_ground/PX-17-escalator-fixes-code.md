@@ -29,4 +29,11 @@ The build-error output (real compiler diagnostics naming the bad symbols) was fe
 
 ## Design consequences
 
-(left for the design lane)
+Filled by the design lane, 2026-09-21.
+
+1. **The routing rule is real for one-function code defects with a precise diagnosis.** R7a and R7d landed first try and match the human fix byte for byte. The escalator keeps that job; Westley is not in that loop.
+2. **The parent-patch prompt carries the header slice.** R8's invented names (`OM_ACTION_ATTACK`, `->faction_id`) are what a prompt without the referenced enums and structs invites. The fix task is built the way a card is: `card_slice.py`'s header slice (every type and symbol the fenced function references) goes into the prompt beside the function body and the contract text. Same tool, same rule as the worker.
+3. **A diagnosis naming more than one function is a repair card, not an escalator patch.** R8 needed two functions and, as the human fix showed, a third change found only by running tests. That is the shape of work the worker does against a fenced test, not a one-shot patch. The B.8 trace already added repair cards; PX-17 confirms the boundary: one function, escalator; more than one, or a diagnosis that names a symptom rather than a function, repair card with the failing test as acceptance. A reply that returns more than the fenced function is rejected and the case becomes a repair card rather than a second attempt.
+4. **The escalator is a seat, not a model.** Every `agy` quota group was empty for the whole run, shared across two Google accounts. The profile lists the seat's models in order with a dollar cap each (`gemini-3.7-flash-high` via agy, `deepseek-v4-flash` via the direct API, then a Claude model); a call falls through on quota or timeout and the ledger names which model answered. `deepseek-v4-flash` did this job for $0.06 over nine calls, so cost is not the constraint.
+5. **Escalator prompts get a positive control.** The heading bug turned four of five first-run cases into false fence violations. Before any real fix task, the seat runs one canned case (R7a's shape: known diagnosis, known fix) that must land; a failing canned case is a harness error, never a model finding. Joins the harness positive controls in the Factory section.
+6. **Scheduling cascade.** PX-16 said the autonomous-fix seat is worth more than the graph and plateau diagnosis together. With the seat proven for its narrow class, the cascade builds it with the repair-card path from the start, since the cases the seat cannot take still need to leave the GPU busy.

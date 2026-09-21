@@ -36,4 +36,11 @@ DeepSeek's actual reply, unchanged across all 3 attempts: lower the defender's m
 
 ## Design consequences
 
-(left for the design lane)
+Filled by the design lane, 2026-09-21.
+
+1. **The stricter-than-green gate works and is required.** `assertions_preserved`, `red_at_stub` and `two_agent_confound` fired on real replies and gave the right verdict each time. Every escalator test edit runs them before the edit lands; a test-defect fix that turns a test green without passing them is rejected. Adopted into the Factory section as the test-fix gate.
+2. **Fixture defects that need algebra are test authoring, not escalation.** R7l needs the commit, attack and defence reworked together so the scenario still lands where the rule says; three attempts resubmitted the same fixture and anchored on the example numbers in the diagnosis. Fixture numbers are test design, and tests are Claude's. So the classes split: a `test-defect` whose fix is a filter, a guard or one budget number (R7f) goes to the escalator; one whose fix needs the scenario re-derived (R7l) goes to the day-side test-authoring ledger as a task for Claude, with the detector's report attached. Neither reaches Westley.
+3. **Identical resubmission is a plateau of one.** The same reply hash twice ends the attempt; the retry budget is for distinct candidates. Joins the plateau rule in the Factory section.
+4. **Diagnoses carry no worked numbers for another configuration.** The diagnosis text is generated from the detector's report on the actual fixture, never from a human write-up with a different example, and the reply's JSON must include the pair the fix is meant to separate (`expected_correct`, `expected_buggy`) so the gate rejects a claim that does not match the harness's own computation before anything is applied.
+5. **Conventions become declarations.** The extraction in `fixture_defects.py` depends on docstring phrasing (PX-13's limit); the Stage 5 test template already turns those conventions into declarations, and this run shows the escalator needs them too, since it had to be told the phrasing.
+6. **The reference-splice setup is a probe artefact.** In the live factory a test-defect fix happens at HEAD where the target function is built; the setup exists only because the cases were replayed at their historical commits. Kept in the probe, not in the design.
