@@ -167,6 +167,47 @@ def call_gemini(model: str, prompt_text: str, *, timeout: int = 300) -> tuple[di
     return payload, wall
 
 
+DEEPSEEK_CAMPAIGN = "px17-px18-escalator-probe"
+DEEPSEEK_SYSTEM = "Follow the fence and the output contract exactly. Reply with JSON only, nothing else."
+
+
+def DEEPSEEK_CHAT_JSON(model: str, system: str, user: str, **kwargs):
+    """The one function in this module that calls DeepSeek. Module-level
+    hook by design -- tests monkeypatch this attribute with a fake, same
+    pattern as RUN_AGY."""
+    if str(AGORA_SCRIPTS) not in sys.path:
+        sys.path.insert(0, str(AGORA_SCRIPTS))
+    import deepseek_client
+    return deepseek_client.chat_json(model, system, user, **kwargs)
+
+
+def call_deepseek(model: str, prompt_text: str, *, timeout: int = 300) -> tuple[dict, float]:
+    """One escalator call through DeepSeek's direct API (Agora's driver
+    model, not agy) -- swapped in 2026-09-21 when every agy quota group
+    (Gemini ~45h, Claude/GPT ~4h) was exhausted at run time. Returns the
+    same (payload, wall_seconds) contract as call_gemini; agy_client.py's
+    own docstring notes it was built as a drop-in for this same
+    deepseek_client.chat() reply shape."""
+    t0 = time.monotonic()
+    try:
+        payload = DEEPSEEK_CHAT_JSON(model, DEEPSEEK_SYSTEM, prompt_text,
+                                      json_schema={"type": "object"}, timeout=timeout,
+                                      campaign=DEEPSEEK_CAMPAIGN, purpose="escalator-fix-probe")
+    except Exception as exc:
+        raise AgyCallError(f"deepseek call failed: {exc}") from exc
+    wall = time.monotonic() - t0
+    if not isinstance(payload, dict) or "functions" not in payload or "rationale" not in payload:
+        raise AgyCallError(f"deepseek reply did not match the expected schema: {payload!r}")
+    return payload, wall
+
+
+def call_escalator(model: str, prompt_text: str, *, timeout: int = 300) -> tuple[dict, float]:
+    """Dispatches to DeepSeek's direct API or agy by model name."""
+    if model.startswith("deepseek"):
+        return call_deepseek(model, prompt_text, timeout=timeout)
+    return call_gemini(model, prompt_text, timeout=timeout)
+
+
 # ================================================================ prompt ==
 
 _OUTPUT_CONTRACT = """\
@@ -745,7 +786,7 @@ def _run_agy_call(case: Case, model: str, worktree: pathlib.Path, targets: list[
         current_texts[t.label] = span.body
 
     prompt = build_prompt(case, targets, current_texts, failing_output, previous_feedback)
-    payload, wall = call_gemini(model, prompt, timeout=300)
+    payload, wall = call_escalator(model, prompt, timeout=300)
     record.setdefault("agy_calls", []).append({
         "targets": [t.label for t in targets], "wall_seconds": round(wall, 2),
         "rationale": payload.get("rationale", "")})

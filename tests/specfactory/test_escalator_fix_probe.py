@@ -63,6 +63,48 @@ def test_call_gemini_raises_on_schema_mismatch(monkeypatch):
         efp.call_gemini("gemini-3.7-flash-high", "prompt", timeout=5)
 
 
+def test_call_deepseek_parses_canned_reply(monkeypatch):
+    calls = {}
+
+    def fake_chat_json(model, system, user, **kwargs):
+        calls["model"] = model
+        calls["kwargs"] = kwargs
+        return {"functions": [{"name": "om_step_reinforce", "text": "void om_step_reinforce(om_world *w) {}\n"}],
+                "rationale": "deepseek reply"}
+
+    monkeypatch.setattr(efp, "DEEPSEEK_CHAT_JSON", fake_chat_json)
+    payload, wall = efp.call_deepseek("deepseek-v4-flash", "some prompt", timeout=5)
+    assert payload["rationale"] == "deepseek reply"
+    assert calls["model"] == "deepseek-v4-flash"
+    assert calls["kwargs"]["campaign"] == efp.DEEPSEEK_CAMPAIGN
+    assert wall >= 0
+
+
+def test_call_deepseek_raises_on_schema_mismatch(monkeypatch):
+    monkeypatch.setattr(efp, "DEEPSEEK_CHAT_JSON", lambda *a, **k: {"not": "the schema"})
+    with pytest.raises(efp.AgyCallError):
+        efp.call_deepseek("deepseek-v4-flash", "prompt", timeout=5)
+
+
+def test_call_deepseek_wraps_underlying_exception(monkeypatch):
+    def boom(*a, **k):
+        raise RuntimeError("budget exceeded")
+
+    monkeypatch.setattr(efp, "DEEPSEEK_CHAT_JSON", boom)
+    with pytest.raises(efp.AgyCallError):
+        efp.call_deepseek("deepseek-v4-flash", "prompt", timeout=5)
+
+
+def test_call_escalator_dispatches_by_model_name(monkeypatch):
+    seen = []
+    monkeypatch.setattr(efp, "call_gemini", lambda model, prompt, **kw: (seen.append(("gemini", model)), ({}, 0.0))[1])
+    monkeypatch.setattr(efp, "call_deepseek", lambda model, prompt, **kw: (seen.append(("deepseek", model)), ({}, 0.0))[1])
+
+    efp.call_escalator("deepseek-v4-flash", "prompt")
+    efp.call_escalator("gemini-3.7-flash-high", "prompt")
+    assert seen == [("deepseek", "deepseek-v4-flash"), ("gemini", "gemini-3.7-flash-high")]
+
+
 def test_call_gemini_builds_the_documented_argv(monkeypatch):
     captured = {}
 
