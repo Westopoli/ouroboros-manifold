@@ -23,7 +23,7 @@
   ["state", "focus2"],
   ["call", "qa_transfer", 1, 1],
   ["call", "qa_tick", 20],
-  ["call", "qa_move", 1, 2000, 2000],
+  ["call", "qa_move", 1, 2000, 2300],
   ["call", "qa_tick", 130],
   ["call", "qa_transfer", 1, 2],
   ["call", "qa_tick", 30],
