@@ -1,47 +1,69 @@
 # HUD mockup QA checklist
 
-Real measured numbers from `scripts/mockup_qa.sh` and `scripts/mockup_verify.sh` runs, Godot 4.6.3, llvmpipe, 1280x720 unless noted. TBD until the clean and planted runs land.
+Real measured numbers from `scripts/mockup_qa.sh` and `scripts/mockup_verify.sh` runs on 2026-09-22, Godot 4.6.3, llvmpipe, 1280x720 unless noted. Two harness defects were found and fixed on `main` during this pass (not by this brief's implementor): an Xvfb screensaver blanking after 600s (`a98c47f`), and the real cause — `qa_boot.gd` left the project's autoloads running, so `SimBridge`'s dead child sim routed `SceneRouter` to the error screen and froze the driver (`b65afa8`). Both merged into this branch before the runs below. Two real bugs were found and fixed *in this mockup* during the pass; both are documented under their oracle below.
 
 ## Verify checks (`verify.gd`)
 
 | id | check | clean result | plant | planted result |
 |---|---|---|---|---|
-| DET-1 | 300 ticks twice give equal hashes; seed 12 differs | TBD | none | n/a |
-| BOX-2 | box over both layers selects all friendlies | TBD | `box-one-layer` | TBD |
-| NARROW-3 | narrow(2) keeps layer-2 only, `focus_layer` unchanged | TBD | `narrow-moves-focus` | TBD |
-| GROUP-4 | bind exclusivity; recall(2) selects exactly group 2 | TBD | `group-shared` | TBD |
-| CENTRE-5 | recall twice within 0.4s reports centre_requested | TBD | none | n/a |
-| NOALL-6 | no select-all-like command anywhere | TBD | `select-all-exists` | TBD |
-| SHIFT-7 | shift-click adds/removes | TBD | none | n/a |
-| BOUND-8 | camera clamp, pitch 90, focus_layer doesn't move camera | TBD | `camera-unbounded` | TBD |
-| CLOCK-9 | clock_s from tick, not wall time | TBD | `clock-wallclock` | TBD |
-| PANEL-10 | panel rows, focus_mode, overlay mouse_filter | TBD | none | n/a |
-| JSON-11 | qa_state round-trips; qa_plant contract | TBD | none | n/a |
+| DET-1 | 300 ticks twice give equal hashes; seed 12 differs | hash_a=719549438 == hash_b=719549438; hash_c=2639692586 differs | none | n/a (self-test, no plant) |
+| BOX-2 | box over both layers selects all friendlies | 3 uids selected (both layers, enemy excluded) | `box-one-layer` | 1 uid selected ("box selected [1], want 3 uids across both layers") |
+| NARROW-3 | narrow(2) keeps layer-2 only, `focus_layer` unchanged | selected=[2,3], focus_layer=1 (unchanged) | `narrow-moves-focus` | selected=[2,3], focus_layer=2 (moved) |
+| GROUP-4 | bind exclusivity; recall(2) selects exactly group 2 | groups={1:[],2:[1,2]}, selected=[1,2] (uid1 stripped from group1) | `group-shared` | groups={1:[1],2:[1,2]}, selected=[1,2] (uid1 kept in both) |
+| CENTRE-5 | recall twice within 0.4s reports centre_requested; once (or >0.4s later) does not | r1(Δ=1000ms from cold)=false, r2(Δ=300ms)=true, r3(Δ=700ms)=false | none | n/a |
+| NOALL-6 | no select-all-like command anywhere (commands() + input_router.mapped_commands()) | `[]` (no match) | `select-all-exists` | `["select_all", "select_all"]` (both sources) |
+| SHIFT-7 | shift-click adds an unselected unit, removes a selected one | added=true, removed=true | none | n/a |
+| BOUND-8 | camera clamp at every height; pitch 90°; focus_layer doesn't move camera | qa_camera(3000, 999999, -999999) → cam={x:3000,z:3000} clamped inside bounds{0,6000,0,6000}; pitch_ok=true; cam unchanged by qa_set(focus_layer,2) | `camera-unbounded` | cam={x:999999,z:-999999} (outside bounds); pitch still 90° (unaffected) |
+| CLOCK-9 | after qa_tick(1200), clock_s==60 regardless of wall time | c1=60.000, c2=60.000 (0.5s apart, equal) | `clock-wallclock` | c1=1.125, c2=1.626 (wall-clock seconds since process start, not 60, and not equal to each other) |
+| PANEL-10 | after qa_select of 3 units of 2 types: 2 rows, right counts/HP; every Control `focus_mode==NONE`; overlay `mouse_filter==IGNORE` | rows=[{type:"line",count:2,hp:200.0},{type:"scout",count:1,hp:100.0}]; all Controls FOCUS_NONE; overlay MOUSE_FILTER_IGNORE | none | n/a |
+| JSON-11 | qa_state() round-trips through JSON with every contract key; qa_plant("nope") false; every PLANTS id true | text_ok=true, keys_ok=true, plants_ok=true | none | n/a |
+
+`scripts/mockup_verify.sh hud` → `VERIFY OK`, exit 0. `scripts/mockup_verify.sh hud --plant <id>` → `PLANT <id> LIVE` for all 6 ids, confirmed individually (each plant run shows exactly its own named check FAIL and nothing else — see full plant sweep below).
+
+## Full plant sweep (each run in isolation, only the smoke script's other 10 checks as control)
+
+| plant | FAIL lines | verdict |
+|---|---|---|
+| `box-one-layer` | `BOX-2: box selected [1], want 3 uids across both layers` | LIVE, isolated to BOX-2 |
+| `group-shared` | `GROUP-4: groups={ 1: [1], 2: [1, 2] } selected=[1, 2]` | LIVE, isolated to GROUP-4 |
+| `select-all-exists` | `NOALL-6: found select-all-like command(s) ["select_all", "select_all"]` | LIVE, isolated to NOALL-6 |
+| `camera-unbounded` | `BOUND-8: cam={...999999...} bounds={0,6000,0,6000} pitch_ok=true cam2={...999999...}` | LIVE, isolated to BOUND-8 |
+| `clock-wallclock` | `CLOCK-9: c1=1.125 c2=1.626` | LIVE, isolated to CLOCK-9 |
+| `narrow-moves-focus` | `NARROW-3: selected=[2, 3] focus_layer=2` | LIVE, isolated to NARROW-3 |
 
 ## Xvfb oracles
 
 | id | oracle | threshold (candidate; Westley owns) | measured clean | measured planted | plant |
 |---|---|---|---|---|---|
-| ERR-0 | `errors.txt` count, `exit.txt`, no `UNIFORM` | TBD | TBD | — | none |
-| GPU-0 | `_qa.adapter` contains llvmpipe | exact | TBD | — | none |
-| BOX-X | `qa/box.json` drag selects expected uids | exact match | TBD | TBD | `box-one-layer` |
-| TAB-X | `diff recall_none.png recall_2.png` over tabs crop | TBD | TBD | TBD | `group-shared` |
-| EDGE-X | two shots at east bound identical | < 0.001 | TBD | TBD | `camera-unbounded` |
-| DRAG-X | box overlay differs from boot.png | TBD | TBD | n/a | none |
+| ERR-0 | `errors.txt` count, `exit.txt`, no `UNIFORM` | count 0; exit 0; no UNIFORM | count=0, exit=0, no UNIFORM, across every run (2 clean smoke, 6 plant smoke, 2 box, 1 review batch = 11 runs) | same | none |
+| GPU-0 | `_qa.adapter` contains `llvmpipe`, `_qa.method == "gl_compatibility"` | exact | `llvmpipe (LLVM 21.1.8, 256 bits)`, `gl_compatibility`, display `X11` | — | none |
+| DET-1 (pixel) | two clean runs: every `state` hash equal; every screenshot `diff` | hash equal; diff < 0.005 | 9/9 state hashes equal across clean1/clean2; `diff` 0.000000 on boot/selected_mixed/recall_2/east_a (fuzz 5, default) | — | none |
+| BOX-X | `qa/box.json` drag (written from real `units_px` in boot state, box x:[280,1020] y:[-20,620]) selects the expected uids | exact match; under `box-one-layer` only one layer's | clean: `[2,4,6,14,15,16]` (5 layer-2 + 1 layer-1, both layers present) | `[15]` (the box's only layer-1 uid, focus_layer=1) | `box-one-layer` |
+| TAB-X | `diff recall_none.png recall_2.png` over the tabs crop; under `group-shared` the group-2 count differs from clean | (revised) see note below — this smoke script's single `qa_bind(2)` call has no prior group to leak from, so it cannot discriminate `group-shared` on its own; GROUP-4 (headless) is the live oracle for this fault, confirmed above | groups={'2':[1,2,3]} identical between clean and `group-shared` runs at this exact script point | identical to clean (see note) | `group-shared` |
+| EDGE-X | two shots 60 frames apart at the east bound, `key_down D` held | (revised) see note below | east_a vs east_b within the same clean run: diff 0.001749 (units keep wandering + clock ticks even though camera is static — not zero, but small); camera.x=6000.0 exactly (clamped) in both `at_bound.json` states | east_a(clean) vs east_a(camera-unbounded) at the identical script point: diff **0.499449** — camera really did fly off; clean shows the sharp canvas-edge boundary, planted shows solid void (see pass1/at_bound.png and the report's Q5) | `camera-unbounded` |
+| DRAG-X | box overlay differs from boot.png while dragging; gone after release | overlay must not persist after release | **found and fixed a real bug**: `boxed.png` (state after a *completed* drag) still showed the selection rectangle — `BoxOverlay._process()` only called `queue_redraw()` while `box_active` was true, so the last mid-drag `_draw()` call's rect never got told to redraw as empty once the drag ended. Fixed with an edge-triggered final redraw in `hud.gd`. Re-verified: `boxed.png` now shows only the 6 selected units' rings, no stray rectangle (`docs/northstar/research/mockups/hud/pass1/boxed.png`) | n/a (not plant-gated; this was a genuine implementation bug, not a fault-site question) | none |
+
+**Why TAB-X and EDGE-X were revised, with the evidence.**
+
+**TAB-X.** The brief's own smoke script (which I transcribed verbatim into `qa/smoke.json`) calls `qa_bind(2)` exactly once, on a selection that was never in any other group. `group-shared`'s fault ("skips removal from other groups on bind") has nothing to skip in that situation — clean and planted produce byte-identical `groups` dictionaries at `recall_2`/`state recall_2` (verified: both `{'2': [1, 2, 3]}`). The pixel-diff oracle as specified therefore cannot discriminate this fault with this script; I did not invent a second bind call to force it to discriminate, since the brief's own template is the fixed script. GROUP-4's headless check (which does bind into group 1, then group 2, and checks group 1) is the real, already-live oracle for this fault — see the plant sweep table above.
+
+**EDGE-X.** The brief's candidate reads "two screenshots after `key_down D` for 60 frames at the east bound are identical, `diff` < 0.001 excluding the clock crop; under `camera-unbounded` they differ." Measured: clean `east_a` vs `east_b` (within one run) is 0.001749, not under 0.001 — because units keep wandering during the 60+60 held frames and the clock keeps ticking, and the diff tool has no crop option to exclude either. This is real simulation motion, not camera drift (`camera.x` reads exactly 6000.0, clamped, in both frames' `state` dumps). More surprising: under `camera-unbounded`, `east_a` vs `east_b` (within that run) measured **smaller** (0.000119) than clean, not larger — because once the camera is far enough past the finite 6000×6000 ground plane, both frames are looking at empty void and differ from each other. The dimension that discriminates the fault is not east_a-vs-east_b within a run; it's the same checkpoint across runs: clean `east_a` vs planted `east_a` differs by **0.499449** (roughly half the frame), and the screenshots show why — clean shows a sharp static boundary between world and void at the clamped edge, planted shows solid void with the camera already having flown past the entire canvas. Recommend the oracle compare `east_a(clean)` to `east_a(plant)` directly rather than `east_a` to `east_b` within a run.
 
 ## Visual questions
 
 | q | question | proves | answer | proving screenshot |
 |---|---|---|---|---|
-| Q1 | Is the HUD lean: only objective line, clock, selection panel, group tabs, layer strip? | S-P12, R-104-09 | TBD | TBD |
-| Q2 | Is selection state obvious at a glance? | S-105 | TBD | TBD |
-| Q3 | Does the layer strip read as focus; does narrowing read as selection change not focus change? | R-105-06, R-009-03 | TBD | TBD |
-| Q4 | Is the box overlay visible while dragging and gone after? | R-105-01 | TBD | TBD |
-| Q5 | Does the camera stop cleanly at the bound? | R-103-02 | TBD | TBD |
-| Q6 | Is all text legible at 720p; anything clipped? | hygiene | TBD | TBD |
+| Q1 | Is the HUD lean: only the objective line, clock, selection panel, group tabs and layer strip, and nothing that competes with the world? | S-P12, R-104-09 | **Yes.** `pass1/boot.png` — five elements only, generous empty space, nothing else drawn. | `pass1/boot.png` |
+| Q2 | Is the selection state obvious at a glance (rings on units, panel, tab highlight)? | S-105 | **Yes.** `pass1/selected_mixed.png` shows enlarged cyan rings on the 3 selected units plus the panel text; `pass1/recall_2.png` additionally shows group tab "2" lit up with its count "3" in the active colour. | `pass1/selected_mixed.png`, `pass1/recall_2.png` |
+| Q3 | Does the layer strip read as focus, and does narrowing read as a change of selection and not of focus? | R-105-06, R-009-03 | **Held, partially.** The strip's L1/L2 labels change colour on focus (verified via `qa_set`/Tab in headless `BOUND-8`/`NARROW-3` and the strip is visible in every screenshot), but no captured screenshot happens to show the *focused* slot highlighted mid-narrow next to a narrowed panel in the same frame, so the "narrowing doesn't move the highlighted slot" claim is verified by data (`NARROW-3`) but not by a single proving picture. | `pass1/narrowed.png` (panel narrows; strip visually present but focus highlight not contrastively shown in this shot) — **HELD** |
+| Q4 | Is the box overlay visible while dragging and gone after? | R-105-01 | **Gone-after: yes, verified and fixed.** Found a real bug (overlay persisted after release, see DRAG-X above), fixed it, and `pass1/boxed.png` now shows no stray rectangle. **Visible-during: HELD** — the driver's `drag` verb is atomic (move, press, N lerped moves, release with no pause), and there is no standalone mouse-down-only verb in `qa_driver.gd`'s verb table, so a mid-drag screenshot cannot be captured through the documented harness contract. Not worked around outside the fixed verb set, per the brief's own allowance to list this. | `pass1/boxed.png` (after); mid-drag — **HELD, harness limitation, not a code gap** |
+| Q5 | Does the camera stop cleanly at the bound without a jolt? | R-103-02 | **Yes, cleanly.** `pass1/at_bound.png` shows a crisp static vertical boundary: world content on the left half, solid background void on the right half, at 1920×1080 — the camera sits exactly at canvas edge x=6000 with no distortion, tearing, or partial geometry. Contrast: the same checkpoint under `camera-unbounded` (not in pass1, in `<scratch>/plant-camera-unbounded`) shows solid void with no world visible at all — the camera flew straight past the map. | `pass1/at_bound.png` |
+| Q6 | Is all text legible at 720p; any clipped or overlapping element? | hygiene | **Legible, one minor collision noted.** All HUD text is readable at both 720p and 1080p in every screenshot. In `pass1/clock.png` a world-space unit's projected dot happens to render very close to group tab "1"'s count row at this particular camera position — not clipped or unreadable, just a coincidental visual overlap between a 3D unit and 2D HUD chrome; noted as a polish item, not a defect. | `pass1/clock.png` |
 
-**HELD:** TBD
+**HELD:** Q3 (narrow-focus-independence proven by data, not by a single contrastive screenshot), Q4-during (box-drag mid-frame screenshot — harness has no verb to pause a drag).
 
 ## Timings
 
-TBD (`timing_ms.tick_avg`, `_qa.fps_ms` under llvmpipe at 720p with 24 units).
+- `timing_ms.tick_avg` (sim step cost, from `qa_state()`): 0.06-0.14ms per tick across samples — trivial, 24 units with 4-waypoint loops is not a real workload.
+- `_qa.fps_ms` (`Performance.TIME_PROCESS`, llvmpipe, 1280x720, 24 units + HUD): 29.5-135ms per frame across runs, heavily dependent on concurrent load on the shared build machine during this pass (see report section 4 for the full story — several other Godot/Xvfb QA processes from sibling mockup branches were running throughout).
+- One full 8-screenshot `qa/smoke.json` clean run (1280x720): well under the 600s harness timeout once the two upstream harness bugs (screensaver, dead-autoload SimBridge/SceneRouter freeze) were fixed on `main` and merged in.
