@@ -55,8 +55,10 @@ _build_libs()
 
 # The header (csrc/ouroboros_sim.h) does not pin a literal integer anywhere;
 # it only says the harness "asserts this matches what it was written against."
-# This suite is written against the first revision of the header, version 1.
-EXPECTED_ABI_VERSION = 1
+# Bumped to 2 at freeze/F2 (OM_FEAT_TACTICAL, the E-06/E-07/E-11 tick-order
+# bug ids, and om_world_get_state_checksum / om_world_set_tick /
+# om_abi_layout_check are new since version 1).
+EXPECTED_ABI_VERSION = 2
 
 
 # ---- enum mirrors (om_field / om_composite / om_tier / om_bug) ----
@@ -204,6 +206,15 @@ def _configure_common(h):
 
     h.om_world_checksum.argtypes = [OMWorldP]
     h.om_world_checksum.restype = ctypes.c_uint64
+
+    h.om_world_get_state_checksum.argtypes = [OMWorldP]
+    h.om_world_get_state_checksum.restype = ctypes.c_uint64
+
+    h.om_world_set_tick.argtypes = [OMWorldP, ctypes.c_uint64]
+    h.om_world_set_tick.restype = None
+
+    h.om_abi_layout_check.argtypes = [ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint32]
+    h.om_abi_layout_check.restype = ctypes.c_int
 
     h.om_checksum_cadence.argtypes = []
     h.om_checksum_cadence.restype = ctypes.c_uint32

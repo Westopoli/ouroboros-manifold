@@ -527,6 +527,24 @@ uint64_t om_world_checksum(const om_world *w) {
     return h;
 }
 
+/* Second entry point for the same value om_world_checksum returns; see the
+ * header comment (T1's pipe and E-12/E-13's tests name this symbol instead). */
+uint64_t om_world_get_state_checksum(const om_world *w) {
+    return om_world_checksum(w);
+}
+
+void om_world_set_tick(om_world *w, uint64_t tick) {
+    if (!w) return;
+    w->tick = tick;
+}
+
+int om_abi_layout_check(uint32_t sizeof_trace_row, uint32_t sizeof_drift_row,
+                        uint32_t sizeof_collision) {
+    return sizeof_trace_row == (uint32_t)sizeof(om_trace_row)
+        && sizeof_drift_row == (uint32_t)sizeof(om_drift_row)
+        && sizeof_collision == (uint32_t)sizeof(om_collision);
+}
+
 /* ---------------------------------------------------------------- debug inject */
 
 #ifdef OM_DEBUG_INJECT
