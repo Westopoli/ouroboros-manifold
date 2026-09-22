@@ -119,7 +119,11 @@ func _update_camera() -> void:
 	var pitch := deg_to_rad(_pitch_degrees())
 	var dist := _height / sin(pitch)
 	_camera.position = Vector3(0.0, _height, cos(pitch) * dist)
-	_camera.look_at(global_position, Vector3.UP)
+	# look_at(rig_origin, Vector3.UP) degenerates at pitch=90 (max zoom, looking straight
+	# down): the view direction and the UP reference become parallel, so look_at's basis
+	# flips unpredictably ("map inverts itself" at max zoom). Setting rotation directly from
+	# the known pitch has no such case since it never depends on an external up reference.
+	_camera.rotation = Vector3(-pitch, 0.0, 0.0)
 
 
 func get_current_band() -> String:
