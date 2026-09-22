@@ -1,11 +1,14 @@
 {
   "name": "settled_reach",
-  "palette": {"sky": "#0a0e1a", "water": "#000814", "zone_a": "#6b6459", "zone_b": "#5c6b78", "zone_c": "#b8d4dc", "cliff": "#5a5550"},
+  "palette": {"sky": "#0a0e1a", "water": "#000814", "zone_a": "#6b6459", "zone_b": "#5c6b78", "zone_c": "#7c8a6a", "zone_d": "#b8d4dc", "zone_e": "#c8d8e8", "cliff": "#5a5550"},
   "water_is": "void",
   "terrain": [
     {"when": {"obstacle": [0.6, 1.0]}, "piece": "ore_chunk",  "density": 0.8, "mesh": "ore_chunk", "size": [120, 200], "color": "#6e7580"},
-    {"when": {"cover": [0.2, 1.0], "zone": "zone_a"}, "piece": "derelict_hulk", "density": 0.6, "mesh": "derelict", "size": [60, 110], "color": "#4a4640"},
-    {"when": {"zone": "zone_b", "district": 0}, "piece": "ore_vein", "density": 0.05, "mesh": "flat_box", "size": [200, 60], "color": "#7c8a9c"},
+    {"when": {"zone": "zone_a"}, "piece": "dust_plain_edge", "density": 0.4, "mesh": "flat_box", "size": [180, 20], "color": "#7c7264"},
+    {"when": {"cover": [0.2, 1.0], "zone": "zone_c"}, "piece": "derelict_hulk", "density": 0.6, "mesh": "derelict", "size": [60, 110], "color": "#4a4640"},
+    {"when": {"zone": "zone_b", "district": 0}, "piece": "ore_field", "density": 0.05, "mesh": "flat_box", "size": [200, 60], "color": "#7c8a9c"},
+    {"when": {"zone": "zone_d"}, "piece": "ice_shelf", "density": 0.35, "mesh": "flat_box", "size": [160, 30], "color": "#cfe6ee"},
+    {"when": {"zone": "zone_e"}, "piece": "spire_rock", "density": 0.3, "mesh": "prism", "size": [90, 180], "color": "#e8f2f8"},
     {"when": {"interference": [0.2, 1.0]}, "piece": "signal_buoy", "density": 0.5, "mesh": "hab_ring", "size": [50, 40], "color": "#e0523f"}
   ],
   "city": [

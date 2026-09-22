@@ -1,11 +1,14 @@
 {
   "name": "greek",
-  "palette": {"sky": "#8fd3ff", "water": "#2aa7d6", "zone_a": "#4f9a3c", "zone_b": "#c9c04a", "zone_c": "#9c8f7a", "cliff": "#7d6d5a"},
+  "palette": {"sky": "#8fd3ff", "water": "#2aa7d6", "zone_a": "#8ba86a", "zone_b": "#c9c04a", "zone_c": "#6e8f4a", "zone_d": "#8a7f70", "zone_e": "#eef2f5", "cliff": "#7d6d5a"},
   "water_is": "surface",
   "terrain": [
     {"when": {"obstacle": [0.6, 1.0]}, "piece": "rock",  "density": 0.8, "mesh": "prism", "size": [120, 200], "color": "#8a7f70"},
-    {"when": {"cover": [0.2, 1.0], "zone": "zone_a"}, "piece": "cypress", "density": 0.6, "mesh": "cone_on_stick", "size": [60, 110], "color": "#2f7a2f"},
+    {"when": {"zone": "zone_a"}, "piece": "reeds", "density": 0.4, "mesh": "cone_on_stick", "size": [30, 60], "color": "#8ba86a"},
+    {"when": {"cover": [0.2, 1.0], "zone": "zone_c"}, "piece": "olive_cypress", "density": 0.6, "mesh": "cone_on_stick", "size": [60, 110], "color": "#4a6a2f"},
     {"when": {"zone": "zone_b", "district": 0}, "piece": "wheat_row", "density": 0.05, "mesh": "flat_box", "size": [200, 60], "color": "#e0c84a"},
+    {"when": {"zone": "zone_d"}, "piece": "highland_rock", "density": 0.35, "mesh": "prism", "size": [100, 160], "color": "#7d7266"},
+    {"when": {"zone": "zone_e"}, "piece": "snow_cap", "density": 0.3, "mesh": "ice_shard", "size": [80, 140], "color": "#f5f8fa"},
     {"when": {"interference": [0.2, 1.0]}, "piece": "warning_cairn", "density": 0.5, "mesh": "camp_ring", "size": [50, 40], "color": "#c94f3f"}
   ],
   "city": [
