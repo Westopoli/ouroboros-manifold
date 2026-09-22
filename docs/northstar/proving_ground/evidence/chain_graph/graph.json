@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-22T03:25:10Z",
+  "generated_at": "2026-09-22T03:32:34Z",
   "project": "/home/westopoli/Projects/ouroboros-manifold",
   "nodes": [
     {
@@ -16,7 +16,8 @@
         "om_trace_read"
       ],
       "epic": "E-02",
-      "story": "019"
+      "story": "019",
+      "done": true
     },
     {
       "card": "201b-e02-drift-trace",
@@ -27,7 +28,8 @@
         "om_debug_inject"
       ],
       "epic": "E-02",
-      "story": null
+      "story": null,
+      "done": true
     },
     {
       "card": "202a1-e05-faction-basics",
@@ -44,7 +46,8 @@
         "om_faction_stance"
       ],
       "epic": "E-05",
-      "story": "032"
+      "story": "032",
+      "done": true
     },
     {
       "card": "202a2-e05-faction-confidence-rng",
@@ -55,7 +58,8 @@
         "om_rng_forced_remaining"
       ],
       "epic": "E-05",
-      "story": null
+      "story": null,
+      "done": true
     },
     {
       "card": "202a3-e05-region-ownership",
@@ -67,7 +71,8 @@
         "om_region_held_since"
       ],
       "epic": "E-05",
-      "story": null
+      "story": null,
+      "done": true
     },
     {
       "card": "202a4-e05-region-edges-features",
@@ -80,7 +85,8 @@
         "om_world_feature"
       ],
       "epic": "E-05",
-      "story": null
+      "story": null,
+      "done": true
     },
     {
       "card": "202b1-e05-faction-territory",
@@ -90,7 +96,8 @@
         "om_faction_territory"
       ],
       "epic": "E-05",
-      "story": null
+      "story": null,
+      "done": true
     },
     {
       "card": "202z1-e05-s032-gate",
@@ -98,7 +105,8 @@
       "file": "",
       "symbols": [],
       "epic": null,
-      "story": "032"
+      "story": "032",
+      "done": true
     },
     {
       "card": "202z2-e05-s033-gate",
@@ -106,7 +114,8 @@
       "file": "",
       "symbols": [],
       "epic": null,
-      "story": "033"
+      "story": "033",
+      "done": true
     },
     {
       "card": "203a1-e05-candidate-enumeration",
@@ -116,7 +125,8 @@
         "om_faction_candidates"
       ],
       "epic": "E-05",
-      "story": "034"
+      "story": "034",
+      "done": true
     },
     {
       "card": "203a2-e05-candidate-scoring",
@@ -126,7 +136,8 @@
         "om_faction_candidates"
       ],
       "epic": "E-05",
-      "story": "034"
+      "story": "034",
+      "done": true
     },
     {
       "card": "203b1-e05-viability-scoring",
@@ -138,7 +149,8 @@
         "om_tick_decisions"
       ],
       "epic": "E-05",
-      "story": "035"
+      "story": "035",
+      "done": true
     },
     {
       "card": "203c-e05-candidate-regression-repair",
@@ -148,7 +160,8 @@
         "om_faction_candidates"
       ],
       "epic": "E-05",
-      "story": "034"
+      "story": "034",
+      "done": true
     },
     {
       "card": "203e-e05-telegraph-declare-draw-queue",
@@ -159,7 +172,8 @@
         "om_step_decisions"
       ],
       "epic": "E-05",
-      "story": "036"
+      "story": "036",
+      "done": true
     },
     {
       "card": "203z-e05-s035-gate",
@@ -167,7 +181,8 @@
       "file": "",
       "symbols": [],
       "epic": null,
-      "story": "035"
+      "story": "035",
+      "done": true
     },
     {
       "card": "204a1-e05-telegraph-maturation",
@@ -178,7 +193,8 @@
         "om_tick_attacks"
       ],
       "epic": "E-05",
-      "story": "036"
+      "story": "036",
+      "done": true
     },
     {
       "card": "204a2-e05-reactive-reinforcement",
@@ -189,7 +205,8 @@
         "om_tick_reinforces"
       ],
       "epic": "E-05",
-      "story": "036"
+      "story": "036",
+      "done": true
     },
     {
       "card": "204a3-e05-core-attack",
@@ -199,7 +216,8 @@
         "om_step_resolve"
       ],
       "epic": "E-05",
-      "story": "037"
+      "story": "037",
+      "done": true
     },
     {
       "card": "204b2-e05-unrest-colonize",
@@ -210,7 +228,8 @@
         "om_event_queue"
       ],
       "epic": "E-05",
-      "story": "038"
+      "story": "038",
+      "done": true
     },
     {
       "card": "204b3-e05-damage-history",
@@ -221,7 +240,8 @@
         "om_region_damage_history"
       ],
       "epic": "E-05",
-      "story": "034"
+      "story": "034",
+      "done": true
     },
     {
       "card": "204z-e05-s034-gate",
@@ -229,7 +249,8 @@
       "file": "",
       "symbols": [],
       "epic": null,
-      "story": "034"
+      "story": "034",
+      "done": true
     },
     {
       "card": "204z1-e05-s037-gate",
@@ -237,7 +258,8 @@
       "file": "",
       "symbols": [],
       "epic": null,
-      "story": "037"
+      "story": "037",
+      "done": true
     },
     {
       "card": "204z2-e05-s036-gate",
@@ -245,7 +267,8 @@
       "file": "",
       "symbols": [],
       "epic": null,
-      "story": "036"
+      "story": "036",
+      "done": true
     },
     {
       "card": "204z3-e05-s038-gate",
@@ -253,7 +276,8 @@
       "file": "",
       "symbols": [],
       "epic": null,
-      "story": "038"
+      "story": "038",
+      "done": true
     },
     {
       "card": "205a-e05-collision-lottery",
@@ -264,7 +288,8 @@
         "om_tick_collisions"
       ],
       "epic": "E-05",
-      "story": "039"
+      "story": "039",
+      "done": false
     },
     {
       "card": "208+e05-spawn-fault-branches",
@@ -274,7 +299,8 @@
         "om_faction_candidates"
       ],
       "epic": "E-05",
-      "story": null
+      "story": null,
+      "done": true
     },
     {
       "card": "TEMPLATE",
@@ -282,7 +308,8 @@
       "file": "",
       "symbols": [],
       "epic": null,
-      "story": null
+      "story": null,
+      "done": false
     },
     {
       "card": "103-probe-a-toy-drift-r2",
@@ -290,7 +317,8 @@
       "file": "",
       "symbols": [],
       "epic": null,
-      "story": null
+      "story": null,
+      "done": false
     },
     {
       "card": "104-probe-a-toy-drift-r3",
@@ -298,7 +326,8 @@
       "file": "",
       "symbols": [],
       "epic": null,
-      "story": null
+      "story": null,
+      "done": false
     },
     {
       "card": "107-probe-a-build",
@@ -312,7 +341,8 @@
         "toy_drift_economy_n"
       ],
       "epic": null,
-      "story": null
+      "story": null,
+      "done": true
     },
     {
       "card": "108-probe-b-build",
@@ -322,7 +352,8 @@
         "nb_count_pairs_within"
       ],
       "epic": null,
-      "story": null
+      "story": null,
+      "done": false
     },
     {
       "card": "109-probe-e-build",
@@ -332,7 +363,8 @@
         "contra_f"
       ],
       "epic": null,
-      "story": null
+      "story": null,
+      "done": false
     },
     {
       "card": "110-probe-f-build",
@@ -346,7 +378,8 @@
         "toy_drift_economy_n"
       ],
       "epic": null,
-      "story": null
+      "story": null,
+      "done": true
     },
     {
       "card": "111-probe-e-abort",
@@ -356,7 +389,8 @@
         "contra_f"
       ],
       "epic": null,
-      "story": null
+      "story": null,
+      "done": false
     },
     {
       "card": "112-probe-h-gd-build",
@@ -367,7 +401,8 @@
         "update_region"
       ],
       "epic": null,
-      "story": null
+      "story": null,
+      "done": true
     },
     {
       "card": "203b-e05-decision-arbitration",
@@ -378,7 +413,8 @@
         "om_pending_telegraphs"
       ],
       "epic": "E-05",
-      "story": "035"
+      "story": "035",
+      "done": false
     },
     {
       "card": "205z-e05-s039-gate",
@@ -386,7 +422,8 @@
       "file": "",
       "symbols": [],
       "epic": null,
-      "story": "039"
+      "story": "039",
+      "done": false
     },
     {
       "card": "206a-e05-border-friction",
@@ -397,7 +434,8 @@
         "om_tick_friction"
       ],
       "epic": "E-05",
-      "story": "041"
+      "story": "041",
+      "done": false
     },
     {
       "card": "206b-e05-admin-revolts",
@@ -408,7 +446,8 @@
         "om_tick_admin_rolls"
       ],
       "epic": "E-05",
-      "story": "040"
+      "story": "040",
+      "done": false
     },
     {
       "card": "206z1-e05-s041-gate",
@@ -416,7 +455,8 @@
       "file": "",
       "symbols": [],
       "epic": null,
-      "story": "041"
+      "story": "041",
+      "done": false
     },
     {
       "card": "206z2-e05-s040-gate",
@@ -424,7 +464,8 @@
       "file": "",
       "symbols": [],
       "epic": null,
-      "story": "040"
+      "story": "040",
+      "done": false
     },
     {
       "card": "208a-e04-library-load-readback",
@@ -438,7 +479,8 @@
         "om_events_load"
       ],
       "epic": "E-04",
-      "story": "030"
+      "story": "030",
+      "done": false
     },
     {
       "card": "208b1-e04-noise-offsets",
@@ -450,7 +492,8 @@
         "om_event_noise"
       ],
       "epic": "E-04",
-      "story": "026"
+      "story": "026",
+      "done": false
     },
     {
       "card": "208b2-e04-threshold-triggers",
@@ -460,7 +503,8 @@
         "om_event_breached"
       ],
       "epic": "E-04",
-      "story": "026"
+      "story": "026",
+      "done": false
     },
     {
       "card": "208b3-e04-revolts-and-deltas",
@@ -471,7 +515,8 @@
         "om_region_event_delta"
       ],
       "epic": "E-04",
-      "story": "029"
+      "story": "029",
+      "done": false
     },
     {
       "card": "209a-e04-queue-exclusion",
@@ -481,7 +526,8 @@
         "om_tick_delayed"
       ],
       "epic": "E-04",
-      "story": "028"
+      "story": "028",
+      "done": false
     },
     {
       "card": "209b-e04-queue-resolution",
@@ -491,7 +537,8 @@
         "om_tick_pruned"
       ],
       "epic": "E-04",
-      "story": "027"
+      "story": "027",
+      "done": false
     },
     {
       "card": "209c-e04-chain-spawns",
@@ -501,7 +548,8 @@
         "om_event_queue_external"
       ],
       "epic": "E-04",
-      "story": "027"
+      "story": "027",
+      "done": false
     },
     {
       "card": "210-e04-fault-injection",
@@ -511,7 +559,8 @@
         "om_step_events"
       ],
       "epic": "E-04",
-      "story": null
+      "story": null,
+      "done": false
     },
     {
       "card": "211a1-e03-worldgen-a_fresh_galaxy_from_a_se",
@@ -521,7 +570,8 @@
         "om_world_generate"
       ],
       "epic": "E-03",
-      "story": "021"
+      "story": "021",
+      "done": false
     },
     {
       "card": "211a2-e03-worldgen-a_fresh_galaxy_from_a_se",
@@ -531,7 +581,8 @@
         "om_world_generate"
       ],
       "epic": "E-03",
-      "story": "021"
+      "story": "021",
+      "done": false
     },
     {
       "card": "211a3-e03-worldgen-a_fresh_galaxy_from_a_se",
@@ -541,7 +592,8 @@
         "om_world_generate"
       ],
       "epic": "E-03",
-      "story": "021"
+      "story": "021",
+      "done": false
     },
     {
       "card": "211a4-e03-worldgen-a_fresh_galaxy_from_a_se",
@@ -551,7 +603,8 @@
         "om_world_generate"
       ],
       "epic": "E-03",
-      "story": "021"
+      "story": "021",
+      "done": false
     },
     {
       "card": "212a1-e03-worldgen-homes_are_strong_frontie",
@@ -561,7 +614,8 @@
         "om_world_generate"
       ],
       "epic": "E-03",
-      "story": "022"
+      "story": "022",
+      "done": false
     },
     {
       "card": "212a2-e03-worldgen-homes_are_strong_frontie",
@@ -571,7 +625,8 @@
         "om_world_generate"
       ],
       "epic": "E-03",
-      "story": "022"
+      "story": "022",
+      "done": false
     },
     {
       "card": "213a-e03-worldgen-routes_carry_armies_trad",
@@ -581,7 +636,8 @@
         "om_world_generate"
       ],
       "epic": "E-03",
-      "story": "023"
+      "story": "023",
+      "done": false
     },
     {
       "card": "214a1-e03-worldgen-politics_redraws_the_rou",
@@ -591,7 +647,8 @@
         "om_world_generate"
       ],
       "epic": "E-03",
-      "story": "024"
+      "story": "024",
+      "done": false
     },
     {
       "card": "214a2-e03-worldgen-politics_redraws_the_rou",
@@ -601,7 +658,8 @@
         "om_world_generate"
       ],
       "epic": "E-03",
-      "story": "024"
+      "story": "024",
+      "done": false
     },
     {
       "card": "215a-e03-worldgen-nobody_starts_on_your_do",
@@ -611,7 +669,8 @@
         "om_world_generate"
       ],
       "epic": "E-03",
-      "story": "025"
+      "story": "025",
+      "done": false
     },
     {
       "card": "220a1-e06-diplomacy-three_ways_to_feel_about",
@@ -621,7 +680,8 @@
         "om_diplomacy_step"
       ],
       "epic": "E-06",
-      "story": "042"
+      "story": "042",
+      "done": false
     },
     {
       "card": "220a2-e06-diplomacy-three_ways_to_feel_about",
@@ -631,7 +691,8 @@
         "om_diplomacy_step"
       ],
       "epic": "E-06",
-      "story": "042"
+      "story": "042",
+      "done": false
     },
     {
       "card": "221a1-e06-diplomacy-peace_grows_out_of_quiet",
@@ -641,7 +702,8 @@
         "om_diplomacy_step"
       ],
       "epic": "E-06",
-      "story": "043"
+      "story": "043",
+      "done": false
     },
     {
       "card": "221a2-e06-diplomacy-peace_grows_out_of_quiet",
@@ -651,7 +713,8 @@
         "om_diplomacy_step"
       ],
       "epic": "E-06",
-      "story": "043"
+      "story": "043",
+      "done": false
     },
     {
       "card": "222a1-e06-diplomacy-peace_is_never_safe",
@@ -661,7 +724,8 @@
         "om_diplomacy_step"
       ],
       "epic": "E-06",
-      "story": "044"
+      "story": "044",
+      "done": false
     },
     {
       "card": "222a2-e06-diplomacy-peace_is_never_safe",
@@ -671,7 +735,8 @@
         "om_diplomacy_step"
       ],
       "epic": "E-06",
-      "story": "044"
+      "story": "044",
+      "done": false
     },
     {
       "card": "223a1-e06-diplomacy-a_faction_s_technology_i",
@@ -681,7 +746,8 @@
         "om_tech_step"
       ],
       "epic": "E-06",
-      "story": "045"
+      "story": "045",
+      "done": false
     },
     {
       "card": "223a2-e06-diplomacy-a_faction_s_technology_i",
@@ -691,7 +757,8 @@
         "om_tech_step"
       ],
       "epic": "E-06",
-      "story": "045"
+      "story": "045",
+      "done": false
     },
     {
       "card": "223a3-e06-diplomacy-a_faction_s_technology_i",
@@ -701,7 +768,8 @@
         "om_tech_step"
       ],
       "epic": "E-06",
-      "story": "045"
+      "story": "045",
+      "done": false
     },
     {
       "card": "224a1-e06-diplomacy-archetypes_spend_tech_di",
@@ -711,7 +779,8 @@
         "om_tech_step"
       ],
       "epic": "E-06",
-      "story": "046"
+      "story": "046",
+      "done": false
     },
     {
       "card": "224a2-e06-diplomacy-archetypes_spend_tech_di",
@@ -721,7 +790,8 @@
         "om_tech_step"
       ],
       "epic": "E-06",
-      "story": "046"
+      "story": "046",
+      "done": false
     },
     {
       "card": "225a-e06-diplomacy-friends_share_knowledge",
@@ -731,7 +801,8 @@
         "om_diplomacy_step"
       ],
       "epic": "E-06",
-      "story": "047"
+      "story": "047",
+      "done": false
     },
     {
       "card": "226a-e06-diplomacy-three_tiers_of_technolog",
@@ -741,7 +812,8 @@
         "om_tech_step"
       ],
       "epic": "E-06",
-      "story": "048"
+      "story": "048",
+      "done": false
     },
     {
       "card": "230a1-e07-lifecycle-a_revolt_can_birth_a_nat",
@@ -751,7 +823,8 @@
         "om_lifecycle_step"
       ],
       "epic": "E-07",
-      "story": "049"
+      "story": "049",
+      "done": false
     },
     {
       "card": "230a2-e07-lifecycle-a_revolt_can_birth_a_nat",
@@ -761,7 +834,8 @@
         "om_lifecycle_step"
       ],
       "epic": "E-07",
-      "story": "049"
+      "story": "049",
+      "done": false
     },
     {
       "card": "231a1-e07-lifecycle-old_loyalties",
@@ -771,7 +845,8 @@
         "om_lifecycle_step"
       ],
       "epic": "E-07",
-      "story": "050"
+      "story": "050",
+      "done": false
     },
     {
       "card": "231a2-e07-lifecycle-old_loyalties",
@@ -781,7 +856,8 @@
         "om_lifecycle_step"
       ],
       "epic": "E-07",
-      "story": "050"
+      "story": "050",
+      "done": false
     },
     {
       "card": "232a1-e07-lifecycle-nations_that_never_were",
@@ -791,7 +867,8 @@
         "om_lifecycle_step"
       ],
       "epic": "E-07",
-      "story": "051"
+      "story": "051",
+      "done": false
     },
     {
       "card": "232a2-e07-lifecycle-nations_that_never_were",
@@ -801,7 +878,8 @@
         "om_lifecycle_step"
       ],
       "epic": "E-07",
-      "story": "051"
+      "story": "051",
+      "done": false
     },
     {
       "card": "233a-e07-lifecycle-no_plot_armor",
@@ -811,7 +889,8 @@
         "om_lifecycle_step"
       ],
       "epic": "E-07",
-      "story": "052"
+      "story": "052",
+      "done": false
     },
     {
       "card": "234a1-e07-lifecycle-every_faction_has_an_age",
@@ -821,7 +900,8 @@
         "om_lifecycle_step"
       ],
       "epic": "E-07",
-      "story": "053"
+      "story": "053",
+      "done": false
     },
     {
       "card": "234a2-e07-lifecycle-every_faction_has_an_age",
@@ -831,7 +911,8 @@
         "om_lifecycle_step"
       ],
       "epic": "E-07",
-      "story": "053"
+      "story": "053",
+      "done": false
     },
     {
       "card": "235a-e07-lifecycle-where_a_civilization_end",
@@ -841,7 +922,8 @@
         "om_lifecycle_step"
       ],
       "epic": "E-07",
-      "story": "054"
+      "story": "054",
+      "done": false
     },
     {
       "card": "240a1-e08-generational-one_commander_one_missio",
@@ -851,7 +933,8 @@
         "om_generational_step"
       ],
       "epic": "E-08",
-      "story": "055"
+      "story": "055",
+      "done": false
     },
     {
       "card": "240a2-e08-generational-one_commander_one_missio",
@@ -861,7 +944,8 @@
         "om_generational_step"
       ],
       "epic": "E-08",
-      "story": "055"
+      "story": "055",
+      "done": false
     },
     {
       "card": "241a1-e08-generational-decades_pass_while_i_am_",
@@ -871,7 +955,8 @@
         "om_generational_step"
       ],
       "epic": "E-08",
-      "story": "056"
+      "story": "056",
+      "done": false
     },
     {
       "card": "241a2-e08-generational-decades_pass_while_i_am_",
@@ -881,7 +966,8 @@
         "om_generational_step"
       ],
       "epic": "E-08",
-      "story": "056"
+      "story": "056",
+      "done": false
     },
     {
       "card": "242a1-e08-generational-stay_with_the_family_or_",
@@ -891,7 +977,8 @@
         "om_generational_step"
       ],
       "epic": "E-08",
-      "story": "057"
+      "story": "057",
+      "done": false
     },
     {
       "card": "242a2-e08-generational-stay_with_the_family_or_",
@@ -901,7 +988,8 @@
         "om_generational_step"
       ],
       "epic": "E-08",
-      "story": "057"
+      "story": "057",
+      "done": false
     },
     {
       "card": "243a1-e08-generational-who_i_come_back_as",
@@ -911,7 +999,8 @@
         "om_generational_step"
       ],
       "epic": "E-08",
-      "story": "058"
+      "story": "058",
+      "done": false
     },
     {
       "card": "243a2-e08-generational-who_i_come_back_as",
@@ -921,7 +1010,8 @@
         "om_generational_step"
       ],
       "epic": "E-08",
-      "story": "058"
+      "story": "058",
+      "done": false
     },
     {
       "card": "244a-e08-generational-the_family_grows_while_i",
@@ -931,7 +1021,8 @@
         "om_generational_step"
       ],
       "epic": "E-08",
-      "story": "059"
+      "story": "059",
+      "done": false
     },
     {
       "card": "245a1-e08-generational-named_leaders_live_and_d",
@@ -941,7 +1032,8 @@
         "om_generational_step"
       ],
       "epic": "E-08",
-      "story": "060"
+      "story": "060",
+      "done": false
     },
     {
       "card": "245a2-e08-generational-named_leaders_live_and_d",
@@ -951,7 +1043,8 @@
         "om_generational_step"
       ],
       "epic": "E-08",
-      "story": "060"
+      "story": "060",
+      "done": false
     },
     {
       "card": "246a-e08-generational-when_my_commander_dies",
@@ -961,7 +1054,8 @@
         "om_generational_step"
       ],
       "epic": "E-08",
-      "story": "061"
+      "story": "061",
+      "done": false
     },
     {
       "card": "247a-e08-generational-when_my_civilization_fal",
@@ -971,7 +1065,8 @@
         "om_generational_step"
       ],
       "epic": "E-08",
-      "story": "062"
+      "story": "062",
+      "done": false
     },
     {
       "card": "248a-e08-generational-my_two_choices_at_the_st",
@@ -981,7 +1076,8 @@
         "om_generational_step"
       ],
       "epic": "E-08",
-      "story": "063"
+      "story": "063",
+      "done": false
     },
     {
       "card": "249a-e08-generational-what_carries_over",
@@ -991,7 +1087,8 @@
         "om_generational_step"
       ],
       "epic": "E-08",
-      "story": "064"
+      "story": "064",
+      "done": false
     },
     {
       "card": "250a1-e09-chronicle-five_to_ten_entries_in_t",
@@ -1001,7 +1098,8 @@
         "om_chronicle_step"
       ],
       "epic": "E-09",
-      "story": "065"
+      "story": "065",
+      "done": false
     },
     {
       "card": "250a2-e09-chronicle-five_to_ten_entries_in_t",
@@ -1011,7 +1109,8 @@
         "om_chronicle_step"
       ],
       "epic": "E-09",
-      "story": "065"
+      "story": "065",
+      "done": false
     },
     {
       "card": "251a1-e09-chronicle-what_counts_as_notable",
@@ -1021,7 +1120,8 @@
         "om_chronicle_step"
       ],
       "epic": "E-09",
-      "story": "066"
+      "story": "066",
+      "done": false
     },
     {
       "card": "251a2-e09-chronicle-what_counts_as_notable",
@@ -1031,7 +1131,8 @@
         "om_chronicle_step"
       ],
       "epic": "E-09",
-      "story": "066"
+      "story": "066",
+      "done": false
     },
     {
       "card": "252a1-e09-chronicle-stories_not_events",
@@ -1041,7 +1142,8 @@
         "om_chronicle_step"
       ],
       "epic": "E-09",
-      "story": "067"
+      "story": "067",
+      "done": false
     },
     {
       "card": "252a2-e09-chronicle-stories_not_events",
@@ -1051,7 +1153,8 @@
         "om_chronicle_step"
       ],
       "epic": "E-09",
-      "story": "067"
+      "story": "067",
+      "done": false
     },
     {
       "card": "253a1-e09-chronicle-written_from_fragments_n",
@@ -1061,7 +1164,8 @@
         "om_chronicle_step"
       ],
       "epic": "E-09",
-      "story": "068"
+      "story": "068",
+      "done": false
     },
     {
       "card": "253a2-e09-chronicle-written_from_fragments_n",
@@ -1071,7 +1175,8 @@
         "om_chronicle_step"
       ],
       "epic": "E-09",
-      "story": "068"
+      "story": "068",
+      "done": false
     },
     {
       "card": "254a1-e09-chronicle-watching_history_happen",
@@ -1081,7 +1186,8 @@
         "om_chronicle_step"
       ],
       "epic": "E-09",
-      "story": "069"
+      "story": "069",
+      "done": false
     },
     {
       "card": "254a2-e09-chronicle-watching_history_happen",
@@ -1091,7 +1197,8 @@
         "om_chronicle_step"
       ],
       "epic": "E-09",
-      "story": "069"
+      "story": "069",
+      "done": false
     },
     {
       "card": "255a-e09-chronicle-my_family_is_always_in_t",
@@ -1101,7 +1208,8 @@
         "om_chronicle_step"
       ],
       "epic": "E-09",
-      "story": "070"
+      "story": "070",
+      "done": false
     },
     {
       "card": "256a-e09-chronicle-the_fragment_library_con",
@@ -1111,7 +1219,8 @@
         "om_chronicle_step"
       ],
       "epic": "E-09",
-      "story": "071"
+      "story": "071",
+      "done": false
     },
     {
       "card": "260a1-e10-missions-orders_come_from_where_t",
@@ -1121,7 +1230,8 @@
         "om_mission_step"
       ],
       "epic": "E-10",
-      "story": "072"
+      "story": "072",
+      "done": false
     },
     {
       "card": "260a2-e10-missions-orders_come_from_where_t",
@@ -1131,7 +1241,8 @@
         "om_mission_step"
       ],
       "epic": "E-10",
-      "story": "072"
+      "story": "072",
+      "done": false
     },
     {
       "card": "261a-e10-missions-ten_kinds_of_trouble",
@@ -1141,7 +1252,8 @@
         "om_mission_step"
       ],
       "epic": "E-10",
-      "story": "073"
+      "story": "073",
+      "done": false
     },
     {
       "card": "262a1-e10-missions-you_get_what_the_civiliz",
@@ -1151,7 +1263,8 @@
         "om_mission_step"
       ],
       "epic": "E-10",
-      "story": "074"
+      "story": "074",
+      "done": false
     },
     {
       "card": "262a2-e10-missions-you_get_what_the_civiliz",
@@ -1161,7 +1274,8 @@
         "om_mission_step"
       ],
       "epic": "E-10",
-      "story": "074"
+      "story": "074",
+      "done": false
     },
     {
       "card": "263a1-e10-missions-hold_destroy_escort_surv",
@@ -1171,7 +1285,8 @@
         "om_mission_step"
       ],
       "epic": "E-10",
-      "story": "075"
+      "story": "075",
+      "done": false
     },
     {
       "card": "263a2-e10-missions-hold_destroy_escort_surv",
@@ -1181,7 +1296,8 @@
         "om_mission_step"
       ],
       "epic": "E-10",
-      "story": "075"
+      "story": "075",
+      "done": false
     },
     {
       "card": "264a-e10-missions-the_clock",
@@ -1191,7 +1307,8 @@
         "om_mission_step"
       ],
       "epic": "E-10",
-      "story": "076"
+      "story": "076",
+      "done": false
     },
     {
       "card": "265a-e10-missions-five_ways_it_can_go",
@@ -1201,7 +1318,8 @@
         "om_mission_step"
       ],
       "epic": "E-10",
-      "story": "077"
+      "story": "077",
+      "done": false
     },
     {
       "card": "266a1-e10-missions-a_battle_becomes_history",
@@ -1211,7 +1329,8 @@
         "om_mission_step"
       ],
       "epic": "E-10",
-      "story": "078"
+      "story": "078",
+      "done": false
     },
     {
       "card": "266a2-e10-missions-a_battle_becomes_history",
@@ -1221,7 +1340,8 @@
         "om_mission_step"
       ],
       "epic": "E-10",
-      "story": "078"
+      "story": "078",
+      "done": false
     },
     {
       "card": "267a-e10-missions-orders_not_menus",
@@ -1231,7 +1351,8 @@
         "om_mission_step"
       ],
       "epic": "E-10",
-      "story": "079"
+      "story": "079",
+      "done": false
     },
     {
       "card": "268a-e10-missions-difficulty_is_scarcity_n",
@@ -1241,7 +1362,8 @@
         "om_mission_step"
       ],
       "epic": "E-10",
-      "story": "080"
+      "story": "080",
+      "done": false
     },
     {
       "card": "270a-e11-combat-three_categories_a_soft_",
@@ -1251,7 +1373,8 @@
         "om_unit_step"
       ],
       "epic": "E-11",
-      "story": "081"
+      "story": "081",
+      "done": false
     },
     {
       "card": "271a1-e11-combat-the_six",
@@ -1261,7 +1384,8 @@
         "om_unit_step"
       ],
       "epic": "E-11",
-      "story": "082"
+      "story": "082",
+      "done": false
     },
     {
       "card": "271a2-e11-combat-the_six",
@@ -1271,7 +1395,8 @@
         "om_unit_step"
       ],
       "epic": "E-11",
-      "story": "082"
+      "story": "082",
+      "done": false
     },
     {
       "card": "272a-e11-combat-stats_traits_ability",
@@ -1281,7 +1406,8 @@
         "om_unit_step"
       ],
       "epic": "E-11",
-      "story": "083"
+      "story": "083",
+      "done": false
     },
     {
       "card": "273a1-e11-combat-flat_damage",
@@ -1291,7 +1417,8 @@
         "om_unit_step"
       ],
       "epic": "E-11",
-      "story": "084"
+      "story": "084",
+      "done": false
     },
     {
       "card": "273a2-e11-combat-flat_damage",
@@ -1301,7 +1428,8 @@
         "om_unit_step"
       ],
       "epic": "E-11",
-      "story": "084"
+      "story": "084",
+      "done": false
     },
     {
       "card": "274a1-e11-combat-long_enough_to_think",
@@ -1311,7 +1439,8 @@
         "om_unit_step"
       ],
       "epic": "E-11",
-      "story": "085"
+      "story": "085",
+      "done": false
     },
     {
       "card": "274a2-e11-combat-long_enough_to_think",
@@ -1321,7 +1450,8 @@
         "om_unit_step"
       ],
       "epic": "E-11",
-      "story": "085"
+      "story": "085",
+      "done": false
     },
     {
       "card": "275a1-e11-combat-one_ability_each",
@@ -1331,7 +1461,8 @@
         "om_unit_step"
       ],
       "epic": "E-11",
-      "story": "086"
+      "story": "086",
+      "done": false
     },
     {
       "card": "275a2-e11-combat-one_ability_each",
@@ -1341,7 +1472,8 @@
         "om_unit_step"
       ],
       "epic": "E-11",
-      "story": "086"
+      "story": "086",
+      "done": false
     },
     {
       "card": "275a3-e11-combat-one_ability_each",
@@ -1351,7 +1483,8 @@
         "om_unit_step"
       ],
       "epic": "E-11",
-      "story": "086"
+      "story": "086",
+      "done": false
     },
     {
       "card": "276a1-e11-combat-every_unit_thinks_the_sa",
@@ -1361,7 +1494,8 @@
         "om_unit_step"
       ],
       "epic": "E-11",
-      "story": "087"
+      "story": "087",
+      "done": false
     },
     {
       "card": "276a2-e11-combat-every_unit_thinks_the_sa",
@@ -1371,7 +1505,8 @@
         "om_unit_step"
       ],
       "epic": "E-11",
-      "story": "087"
+      "story": "087",
+      "done": false
     },
     {
       "card": "277a-e11-combat-reading_units_on_screen",
@@ -1381,7 +1516,8 @@
         "om_unit_step"
       ],
       "epic": "E-11",
-      "story": "088"
+      "story": "088",
+      "done": false
     },
     {
       "card": "280a1-e12-fog-i_see_what_my_units_see",
@@ -1391,7 +1527,8 @@
         "om_fog_step"
       ],
       "epic": "E-12",
-      "story": "089"
+      "story": "089",
+      "done": false
     },
     {
       "card": "280a2-e12-fog-i_see_what_my_units_see",
@@ -1401,7 +1538,8 @@
         "om_fog_step"
       ],
       "epic": "E-12",
-      "story": "089"
+      "story": "089",
+      "done": false
     },
     {
       "card": "281a1-e12-fog-hiding_in_the_storm",
@@ -1411,7 +1549,8 @@
         "om_fog_step"
       ],
       "epic": "E-12",
-      "story": "090"
+      "story": "090",
+      "done": false
     },
     {
       "card": "281a2-e12-fog-hiding_in_the_storm",
@@ -1421,7 +1560,8 @@
         "om_fog_step"
       ],
       "epic": "E-12",
-      "story": "090"
+      "story": "090",
+      "done": false
     },
     {
       "card": "282a-e12-fog-standing_high",
@@ -1431,7 +1571,8 @@
         "om_fog_step"
       ],
       "epic": "E-12",
-      "story": "091"
+      "story": "091",
+      "done": false
     },
     {
       "card": "283a-e12-fog-recon_then_fog",
@@ -1441,7 +1582,8 @@
         "om_fog_step"
       ],
       "epic": "E-12",
-      "story": "092"
+      "story": "092",
+      "done": false
     },
     {
       "card": "284a-e12-fog-fog_is_for_the_player_no",
@@ -1451,7 +1593,8 @@
         "om_fog_step"
       ],
       "epic": "E-12",
-      "story": "093"
+      "story": "093",
+      "done": false
     },
     {
       "card": "285a-e12-fog-how_fog_looks",
@@ -1461,7 +1604,8 @@
         "om_fog_step"
       ],
       "epic": "E-12",
-      "story": "094"
+      "story": "094",
+      "done": false
     },
     {
       "card": "290a1-e13-movement-a_force_moves_as_one",
@@ -1471,7 +1615,8 @@
         "om_movement_step"
       ],
       "epic": "E-13",
-      "story": "095"
+      "story": "095",
+      "done": false
     },
     {
       "card": "290a2-e13-movement-a_force_moves_as_one",
@@ -1481,7 +1626,8 @@
         "om_movement_step"
       ],
       "epic": "E-13",
-      "story": "095"
+      "story": "095",
+      "done": false
     },
     {
       "card": "291a1-e13-movement-four_commands",
@@ -1491,7 +1637,8 @@
         "om_movement_step"
       ],
       "epic": "E-13",
-      "story": "096"
+      "story": "096",
+      "done": false
     },
     {
       "card": "291a2-e13-movement-four_commands",
@@ -1501,7 +1648,8 @@
         "om_movement_step"
       ],
       "epic": "E-13",
-      "story": "096"
+      "story": "096",
+      "done": false
     },
     {
       "card": "292a1-e13-movement-around_not_through",
@@ -1511,7 +1659,8 @@
         "om_movement_step"
       ],
       "epic": "E-13",
-      "story": "097"
+      "story": "097",
+      "done": false
     },
     {
       "card": "292a2-e13-movement-around_not_through",
@@ -1521,7 +1670,8 @@
         "om_movement_step"
       ],
       "epic": "E-13",
-      "story": "097"
+      "story": "097",
+      "done": false
     },
     {
       "card": "292a3-e13-movement-around_not_through",
@@ -1531,7 +1681,8 @@
         "om_movement_step"
       ],
       "epic": "E-13",
-      "story": "097"
+      "story": "097",
+      "done": false
     },
     {
       "card": "292a4-e13-movement-around_not_through",
@@ -1541,7 +1692,8 @@
         "om_movement_step"
       ],
       "epic": "E-13",
-      "story": "097"
+      "story": "097",
+      "done": false
     },
     {
       "card": "293a-e13-movement-firing_through_friends",
@@ -1551,7 +1703,8 @@
         "om_movement_step"
       ],
       "epic": "E-13",
-      "story": "098"
+      "story": "098",
+      "done": false
     },
     {
       "card": "294a-e13-movement-speed_is_position",
@@ -1561,7 +1714,8 @@
         "om_movement_step"
       ],
       "epic": "E-13",
-      "story": "099"
+      "story": "099",
+      "done": false
     },
     {
       "card": "295a-e13-movement-facing",
@@ -1571,7 +1725,8 @@
         "om_movement_step"
       ],
       "epic": "E-13",
-      "story": "100"
+      "story": "100",
+      "done": false
     },
     {
       "card": "296a-e13-movement-movement_that_reads",
@@ -1581,7 +1736,8 @@
         "om_movement_step"
       ],
       "epic": "E-13",
-      "story": "101"
+      "story": "101",
+      "done": false
     },
     {
       "card": "297a-e13-movement-same_commands_same_battl",
@@ -1591,7 +1747,8 @@
         "om_movement_step"
       ],
       "epic": "E-13",
-      "story": "102"
+      "story": "102",
+      "done": false
     },
     {
       "card": "300a-e14-enemy-five_behaviors_three_moo",
@@ -1601,7 +1758,8 @@
         "om_enemy_macro_step"
       ],
       "epic": "E-14",
-      "story": "120"
+      "story": "120",
+      "done": false
     },
     {
       "card": "301a1-e14-enemy-timers_and_thresholds_wi",
@@ -1611,7 +1769,8 @@
         "om_enemy_macro_step"
       ],
       "epic": "E-14",
-      "story": "121"
+      "story": "121",
+      "done": false
     },
     {
       "card": "301a2-e14-enemy-timers_and_thresholds_wi",
@@ -1621,7 +1780,8 @@
         "om_enemy_macro_step"
       ],
       "epic": "E-14",
-      "story": "121"
+      "story": "121",
+      "done": false
     },
     {
       "card": "302a1-e14-enemy-forces_that_notice_each_",
@@ -1631,7 +1791,8 @@
         "om_enemy_macro_step"
       ],
       "epic": "E-14",
-      "story": "122"
+      "story": "122",
+      "done": false
     },
     {
       "card": "302a2-e14-enemy-forces_that_notice_each_",
@@ -1641,7 +1802,8 @@
         "om_enemy_macro_step"
       ],
       "epic": "E-14",
-      "story": "122"
+      "story": "122",
+      "done": false
     },
     {
       "card": "303a-e14-enemy-the_enemy_replays_like_i",
@@ -1651,7 +1813,8 @@
         "om_enemy_macro_step"
       ],
       "epic": "E-14",
-      "story": "123"
+      "story": "123",
+      "done": false
     },
     {
       "card": "304a-e14-enemy-rare_surprises",
@@ -1661,7 +1824,8 @@
         "om_enemy_macro_step"
       ],
       "epic": "E-14",
-      "story": "124"
+      "story": "124",
+      "done": false
     },
     {
       "card": "305a-e14-enemy-how_hard_the_enemy_tries",
@@ -1671,7 +1835,8 @@
         "om_enemy_macro_step"
       ],
       "epic": "E-14",
-      "story": "125"
+      "story": "125",
+      "done": false
     },
     {
       "card": "310a1-e15-support-most_of_my_force_is_out_",
@@ -1681,7 +1846,8 @@
         "om_support_step"
       ],
       "epic": "E-15",
-      "story": "126"
+      "story": "126",
+      "done": false
     },
     {
       "card": "310a2-e15-support-most_of_my_force_is_out_",
@@ -1691,7 +1857,8 @@
         "om_support_step"
       ],
       "epic": "E-15",
-      "story": "126"
+      "story": "126",
+      "done": false
     },
     {
       "card": "311a1-e15-support-taking_a_garrison",
@@ -1701,7 +1868,8 @@
         "om_support_step"
       ],
       "epic": "E-15",
-      "story": "127"
+      "story": "127",
+      "done": false
     },
     {
       "card": "311a2-e15-support-taking_a_garrison",
@@ -1711,7 +1879,8 @@
         "om_support_step"
       ],
       "epic": "E-15",
-      "story": "127"
+      "story": "127",
+      "done": false
     },
     {
       "card": "312a-e15-support-what_the_enemy_builds",
@@ -1721,7 +1890,8 @@
         "om_support_step"
       ],
       "epic": "E-15",
-      "story": "128"
+      "story": "128",
+      "done": false
     },
     {
       "card": "313a-e15-support-units_that_cannot_fight",
@@ -1731,7 +1901,8 @@
         "om_support_step"
       ],
       "epic": "E-15",
-      "story": "129"
+      "story": "129",
+      "done": false
     },
     {
       "card": "314a1-e15-support-the_battlefield_moves",
@@ -1741,7 +1912,8 @@
         "om_support_step"
       ],
       "epic": "E-15",
-      "story": "130"
+      "story": "130",
+      "done": false
     },
     {
       "card": "314a2-e15-support-the_battlefield_moves",
@@ -1751,7 +1923,8 @@
         "om_support_step"
       ],
       "epic": "E-15",
-      "story": "130"
+      "story": "130",
+      "done": false
     },
     {
       "card": "315a-e15-support-reading_hazards_and_stru",
@@ -1761,7 +1934,8 @@
         "om_support_step"
       ],
       "epic": "E-15",
-      "story": "131"
+      "story": "131",
+      "done": false
     },
     {
       "card": "320a1-e17-mapgen-bones_from_the_library",
@@ -1771,7 +1945,8 @@
         "om_mapgen_step"
       ],
       "epic": "E-17",
-      "story": "112"
+      "story": "112",
+      "done": false
     },
     {
       "card": "320a2-e17-mapgen-bones_from_the_library",
@@ -1781,7 +1956,8 @@
         "om_mapgen_step"
       ],
       "epic": "E-17",
-      "story": "112"
+      "story": "112",
+      "done": false
     },
     {
       "card": "321a1-e17-mapgen-nine_kinds_of_place",
@@ -1791,7 +1967,8 @@
         "om_mapgen_step"
       ],
       "epic": "E-17",
-      "story": "113"
+      "story": "113",
+      "done": false
     },
     {
       "card": "321a2-e17-mapgen-nine_kinds_of_place",
@@ -1801,7 +1978,8 @@
         "om_mapgen_step"
       ],
       "epic": "E-17",
-      "story": "113"
+      "story": "113",
+      "done": false
     },
     {
       "card": "322a1-e17-mapgen-texture_from_gradients",
@@ -1811,7 +1989,8 @@
         "om_mapgen_step"
       ],
       "epic": "E-17",
-      "story": "114"
+      "story": "114",
+      "done": false
     },
     {
       "card": "322a2-e17-mapgen-texture_from_gradients",
@@ -1821,7 +2000,8 @@
         "om_mapgen_step"
       ],
       "epic": "E-17",
-      "story": "114"
+      "story": "114",
+      "done": false
     },
     {
       "card": "323a-e17-mapgen-the_region_shapes_the_te",
@@ -1831,7 +2011,8 @@
         "om_mapgen_step"
       ],
       "epic": "E-17",
-      "story": "115"
+      "story": "115",
+      "done": false
     },
     {
       "card": "324a-e17-mapgen-canvas",
@@ -1841,7 +2022,8 @@
         "om_mapgen_step"
       ],
       "epic": "E-17",
-      "story": "116"
+      "story": "116",
+      "done": false
     },
     {
       "card": "325a-e17-mapgen-fair_enough",
@@ -1851,7 +2033,8 @@
         "om_mapgen_step"
       ],
       "epic": "E-17",
-      "story": "117"
+      "story": "117",
+      "done": false
     },
     {
       "card": "326a-e17-mapgen-the_battlefield_moves",
@@ -1861,7 +2044,8 @@
         "om_mapgen_step"
       ],
       "epic": "E-17",
-      "story": "118"
+      "story": "118",
+      "done": false
     },
     {
       "card": "327a-e17-mapgen-terrain_that_reads_like_",
@@ -1871,7 +2055,8 @@
         "om_mapgen_step"
       ],
       "epic": "E-17",
-      "story": "119"
+      "story": "119",
+      "done": false
     }
   ],
   "edges": [
@@ -2192,81 +2377,6 @@
     }
   ],
   "errors": [
-    {
-      "kind": "double_owner",
-      "cards": [
-        "203a1-e05-candidate-enumeration",
-        "203a2-e05-candidate-scoring",
-        "203b1-e05-viability-scoring",
-        "203c-e05-candidate-regression-repair",
-        "208+e05-spawn-fault-branches"
-      ],
-      "symbol": "om_faction_candidates"
-    },
-    {
-      "kind": "double_owner",
-      "cards": [
-        "203b1-e05-viability-scoring",
-        "203e-e05-telegraph-declare-draw-queue"
-      ],
-      "symbol": "om_step_decisions"
-    },
-    {
-      "kind": "double_owner",
-      "cards": [
-        "203b-e05-decision-arbitration",
-        "203b1-e05-viability-scoring"
-      ],
-      "symbol": "om_tick_decisions"
-    },
-    {
-      "kind": "double_owner",
-      "cards": [
-        "203b-e05-decision-arbitration",
-        "203e-e05-telegraph-declare-draw-queue"
-      ],
-      "symbol": "om_pending_telegraphs"
-    },
-    {
-      "kind": "double_owner",
-      "cards": [
-        "107-probe-a-build",
-        "110-probe-f-build"
-      ],
-      "symbol": "toy_rng_seed"
-    },
-    {
-      "kind": "double_owner",
-      "cards": [
-        "107-probe-a-build",
-        "110-probe-f-build"
-      ],
-      "symbol": "toy_rng_next"
-    },
-    {
-      "kind": "double_owner",
-      "cards": [
-        "107-probe-a-build",
-        "110-probe-f-build"
-      ],
-      "symbol": "toy_rng_uniform"
-    },
-    {
-      "kind": "double_owner",
-      "cards": [
-        "107-probe-a-build",
-        "110-probe-f-build"
-      ],
-      "symbol": "toy_drift_economy"
-    },
-    {
-      "kind": "double_owner",
-      "cards": [
-        "107-probe-a-build",
-        "110-probe-f-build"
-      ],
-      "symbol": "toy_drift_economy_n"
-    },
     {
       "kind": "double_owner",
       "cards": [

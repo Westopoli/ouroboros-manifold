@@ -7,7 +7,18 @@ module itself.
 
 Usage:
     scripts/specfactory/chain_graph.py --queue <agora queue dir> --project <path>
-        [--orchestrators om_world_step ...] [--out graph.json]
+        [--orchestrators om_world_step ...] [--runs-dir <agora runs dir>] [--out graph.json]
+
+`--runs-dir` (default `~/Projects/agora/runs`) is the agora runs directory
+`agora/scripts/next.py`'s `_card_done` already reads: a card with a `DONE`
+marker under it (`{runs_dir}/{card_id}-*/DONE`, same glob and same marker
+check as `_card_done`) is treated as built, not claimed (R21 addendum,
+Q2 "R19-R21 resolutions" paragraph, DECISIONS.md 2026-09-21 night): its
+node stays in the graph (`"done": true`), but its `snippet_symbol` claims
+are dropped before symbol ownership is computed, so a DONE card can never
+be one half of a `double_owner` finding. RELEASE_CHAIN list order is never
+used as evidence for this (that door was explicitly left closed by the
+same resolution).
 
 `--orchestrators` names the tick-step entry function(s) whose call order
 inside its own source defines the hook-closure edges (PX-08's
@@ -27,7 +38,7 @@ commit without a DECISIONS.md row per CLAUDE.md's stale-doc discipline):
     {
       "generated_at": ISO-8601 UTC,
       "project": "<project path>",
-      "nodes": [{"card", "kind", "file", "symbols", "epic", "story"}, ...],
+      "nodes": [{"card", "kind", "file", "symbols", "epic", "story", "done"}, ...],
       "edges": [{"from", "to", "symbol"}, ...],
       "errors": [{"kind": "cycle"|"double_owner"|"missing_file"|"abi_gap",
                   "cards": [...], "symbol": <str or null>}, ...],
@@ -74,6 +85,13 @@ except ModuleNotFoundError:  # Python < 3.11 fallback: no toml default, CLI-only
     tomllib = None
 
 DEFAULT_ORCHESTRATORS = ["om_world_step"]
+DEFAULT_RUNS_DIR = "~/Projects/agora/runs"
+
+
+def card_is_done(runs_dir: Path, card_id: str) -> bool:
+    """Same lookup as agora/scripts/next.py's `_card_done`: a `DONE` marker
+    under any `{runs_dir}/{card_id}-*` run directory."""
+    return any((d / "DONE").exists() for d in runs_dir.glob(f"{card_id}-*"))
 
 
 def load_orchestrators_from_toml(project: Path) -> list[str] | None:
@@ -218,7 +236,7 @@ def build_direct_symbol_dag(card_ids: list[str], cards: dict[str, dict], project
     return {"nodes": list(card_ids), "edges": edge_list, "duplicate_owners": duplicate_owners}
 
 
-def node_record(cid: str, card: dict) -> dict:
+def node_record(cid: str, card: dict, done: bool) -> dict:
     return {
         "card": cid,
         "kind": "gate" if is_gate(card) else "build",
@@ -226,25 +244,36 @@ def node_record(cid: str, card: dict) -> dict:
         "symbols": _split_list(card.get("snippet_symbol", "")),
         "epic": epic_of_card(card),
         "story": chain_sim.story_number_of(card),
+        "done": done,
     }
 
 
-def build_graph(queue: Path, project: Path, orchestrators: list[str]) -> dict:
+def build_graph(queue: Path, project: Path, orchestrators: list[str], runs_dir: Path) -> dict:
     card_ids, cards = load_all_cards(queue)
     csrc_dir = project / "csrc"
     csrc_texts = {p.name: p.read_text() for p in csrc_dir.glob("*.c")} if csrc_dir.is_dir() else {}
 
+    done_ids = {cid for cid in card_ids if card_is_done(runs_dir, cid)}
+    # A DONE card's symbols are built, not claimed: drop its snippet_symbol
+    # claims before ownership is computed (R21 addendum), but only for the
+    # DAG-building calls below -- node_record still reports its real
+    # symbols and its own `done` flag from the untouched `cards` dict.
+    cards_for_dag = {
+        cid: (dict(card, snippet_symbol="") if cid in done_ids else card)
+        for cid, card in cards.items()
+    }
+
     if set(orchestrators) == {"om_world_step"}:
-        dag = chain_sim.build_dag(card_ids, cards, project, csrc_texts)
+        dag = chain_sim.build_dag(card_ids, cards_for_dag, project, csrc_texts)
     elif not orchestrators:
-        dag = build_direct_symbol_dag(card_ids, cards, project)
+        dag = build_direct_symbol_dag(card_ids, cards_for_dag, project)
     else:
         # Any other named orchestrator: same direct-symbol fallback, since
         # tick_closure.hooks_in_order/expand_closure are only proven against
         # om_world_step's own call convention in csrc/sim.c.
-        dag = build_direct_symbol_dag(card_ids, cards, project)
+        dag = build_direct_symbol_dag(card_ids, cards_for_dag, project)
 
-    nodes = [node_record(cid, cards[cid]) for cid in card_ids]
+    nodes = [node_record(cid, cards[cid], cid in done_ids) for cid in card_ids]
 
     edges: list[dict] = []
     for e in dag["edges"]:
@@ -327,14 +356,16 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--queue", required=True)
     ap.add_argument("--project", required=True)
     ap.add_argument("--orchestrators", nargs="*", default=None)
+    ap.add_argument("--runs-dir", default=DEFAULT_RUNS_DIR)
     ap.add_argument("--out", default=None)
     args = ap.parse_args(argv)
 
     queue = Path(args.queue).expanduser()
     project = Path(args.project).expanduser()
+    runs_dir = Path(args.runs_dir).expanduser()
     orchestrators = resolve_orchestrators(args.orchestrators, project)
 
-    graph = build_graph(queue, project, orchestrators)
+    graph = build_graph(queue, project, orchestrators, runs_dir)
     text = json.dumps(graph, indent=2)
 
     if args.out:

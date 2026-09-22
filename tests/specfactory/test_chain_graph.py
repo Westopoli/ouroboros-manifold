@@ -285,6 +285,37 @@ def test_no_orchestrators_falls_back_to_direct_symbol_dag(tmp_path):
     assert data["errors"] == []
 
 
+def test_done_card_claims_are_dropped_and_double_owner_clears(tmp_path):
+    """R21 addendum ("R19-R21 resolutions" paragraph, DECISIONS.md
+    2026-09-21 night, question 2): a DONE card's symbols are built, not
+    claimed. Two cards claim the same still-stub symbol -- ordinarily a
+    real `double_owner` conflict (see test_double_owner_and_cycle_are_reported)
+    -- but card-b1 has a DONE marker under --runs-dir, so its claim is
+    dropped before ownership is computed and the conflict clears to zero
+    errors. card-b1's node still reports its real symbol and `done: true`;
+    card-b2's node reports `done: false`."""
+    project = _init_project(tmp_path)
+    queue = tmp_path / "queue"
+    queue.mkdir()
+    _write_card(queue / "card-b1.md", project, snippet_symbol="om_step_beta",
+                snippet_file="csrc/beta.c", test_call="tests/csim/test_b.py::test_R_002_01",
+                allowed_files="csrc/beta.c")
+    _write_card(queue / "card-b2.md", project, snippet_symbol="om_step_beta",
+                snippet_file="csrc/beta.c", test_call="tests/csim/test_b.py::test_R_002_01",
+                allowed_files="csrc/beta.c")
+    runs_dir = tmp_path / "runs"
+    (runs_dir / "card-b1-20260921-000000").mkdir(parents=True)
+    (runs_dir / "card-b1-20260921-000000" / "DONE").write_text("")
+    proc = _run(queue, project, "--runs-dir", str(runs_dir))
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    data = json.loads(proc.stdout)
+    assert data["errors"] == []
+    by_card = {n["card"]: n for n in data["nodes"]}
+    assert by_card["card-b1"]["done"] is True
+    assert by_card["card-b1"]["symbols"] == ["om_step_beta"]
+    assert by_card["card-b2"]["done"] is False
+
+
 def test_missing_project_or_queue_still_runs_cleanly_on_empty_queue(tmp_path):
     project = _init_project(tmp_path)
     queue = tmp_path / "empty_queue"
