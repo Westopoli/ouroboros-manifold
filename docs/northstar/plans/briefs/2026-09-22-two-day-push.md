@@ -8,7 +8,7 @@ Two other chats run in parallel: one builds nine placeholder-data client mockups
 
 Inputs: `docs/northstar/plans/work_inventory_2026-09-22.md`; a three-angle design panel with two judges (integration-first, parallelism-first, risk-first); an adversarial pass of three refuters plus per-finding verification (64 confirmed findings, all folded in below; journals under this session's `subagents/workflows/`, copied to `docs/northstar/proving_ground/evidence/push_2026-09-22/panel/` at F0); the overnight factory (merge queue in a bare clone, whole-suite regression tooling, escalator seat, graph scheduler).
 
-Westley's answers (2026-09-22): three manager chats; `symbol_modules.toml` accepted with the additions; the design lane authors the twelve window controls; D1 conftest-only now, signature form after the window.
+Westley's answers (2026-09-22): three manager chats, each on the updated manager-mode skill with Sonnet overlords and Sonnet shard testers (his instruction after approval); workflows launched one at a time on his go-ahead (session limit); `symbol_modules.toml` accepted with the additions; the design lane authors the twelve window controls; D1 conftest-only now, signature form after the window.
 
 Standing rule suspended for the window and recorded (Twelfth round): Claude never writes a card's implementation. Rules that stay: tests are the spec and are fenced (leaves never edit `tests/**`); determinism contract; no runtime API calls; no stink; sub-agents implement, never design; stale-doc tripwire; nobody stages Westley's dirty files; every manager and leaf works in its own clean clone or worktree.
 
@@ -128,9 +128,9 @@ Every attach also runs the gate list in decision 8, `systemctl --user is-active 
 | Manager | Where | Owns | Pieces |
 |---|---|---|---|
 | M0 design lane + integrator | this session; `~/Projects/om-push/m0`; Workflow tool for its own leaves | `docs/**`, `tests/**`, `csrc/ouroboros_sim.h`, `om_internal.h`, `om_constants.h`, `sim.c`, `region.c`, `Makefile`, `project.godot`, `scripts/specfactory/**`, `scripts/qa/**` tests, `origin/main` | F0..F6, every attach and revert, K1, K2, Q1, T2 tests, Q2 tests, ledger, register rows, mockup merges |
-| M1 strategic sim | Opus or Fable chat, manager-mode, `~/Projects/om-push/m1` | `csrc/{events,collision,friction,worldgen,diplomacy,lifecycle,generational,chronicle,save}.c` | B1..B8, B5b, B7b, T2c |
-| M2 tactical sim | Opus or Fable chat, manager-mode, `~/Projects/om-push/m2` | `csrc/{unit,mission,fog,tactical_move,enemy_macro,tactical_support,tactical_mapgen}.c`, `scripts/qa/rts_detectors.py` | B9..B15m, B10b, B12b, Q2 impl |
-| M3 transport + client | Opus or Fable chat, manager-mode, `~/Projects/om-push/m3` | `csrc/pipe/**`, `autoload/{qa_daemon,c_bridge}.gd`, `scenes/harness/**`, `scripts/qa_harness.sh` (after F6), `scenes/galaxy/**`, `scenes/tactical_c/**`, `scenes/world/chronicle_*`, `scenes/mission_briefing/**`, `scenes/debrief/**`, `scenes/load_game/**` | C7, T1, C2, C3, C4, C5, T2g |
+| M1 strategic sim | Sonnet chat, updated manager-mode (overlord and shard testers Sonnet), `~/Projects/om-push/m1` | `csrc/{events,collision,friction,worldgen,diplomacy,lifecycle,generational,chronicle,save}.c` | B1..B8, B5b, B7b, T2c |
+| M2 tactical sim | Sonnet chat, updated manager-mode (overlord and shard testers Sonnet), `~/Projects/om-push/m2` | `csrc/{unit,mission,fog,tactical_move,enemy_macro,tactical_support,tactical_mapgen}.c`, `scripts/qa/rts_detectors.py` | B9..B15m, B10b, B12b, Q2 impl |
+| M3 transport + client | Sonnet chat, updated manager-mode (overlord and shard testers Sonnet), `~/Projects/om-push/m3` | `csrc/pipe/**`, `autoload/{qa_daemon,c_bridge}.gd`, `scenes/harness/**`, `scripts/qa_harness.sh` (after F6), `scenes/galaxy/**`, `scenes/tactical_c/**`, `scenes/world/chronicle_*`, `scenes/mission_briefing/**`, `scenes/debrief/**`, `scenes/load_game/**` | C7, T1, C2, C3, C4, C5, T2g |
 
 Concurrency: with the VM stopped, 8 C leaves per manager and 4 Godot leaves, Godot QA capped at 2 at 1280x720; with the VM running, 4 C leaves per manager and 2 Godot processes total. Leaves run only their acceptance ids locally. Per-leaf briefs: card path(s), `card_slice` header slice, control fault site, owns list, acceptance ids, the constants and determinism rules verbatim, the caveman report-back line.
 
