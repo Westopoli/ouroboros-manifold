@@ -10,15 +10,23 @@ seed)`, turns on the requested `om_feature` ids, steps it `n_ticks` times, and
 serializes regions/factions/edges/telegraphs exactly as the spec's key set and
 rounding say: the four `om_region_field` values and the two `om_region_composite`
 values are rounded to two decimals; faction budget/tech and telegraph commit are
-not (the spec does not ask for it). No world generation runs (om_world_generate
-is not called) -- this mirrors the pipe's own "set_seed" + "step" script in
-tests/transport/test_pipe_shapes.py, so a fresh, ungenerated world's regions
-have no owner, tier EMPTY, and zeroed fields; `om_region_neighbors` is declared
-in ouroboros_sim.h (E-03) but not yet exported by every build, and an
-ungenerated world has no adjacency to report regardless, so a build lacking
-the symbol reports an empty edge list rather than raising.
+not (the spec does not ask for it). Edges are read back with `om_region_neighbors`
+when a build exports it (E-03/worldgen.c), else with the O(N^2) `om_region_edge`
+sweep the header itself names as the fallback.
 
-Deterministic: same seed/regions/ticks/features, byte-identical JSON, every run.
+By default (no `--populate`) no world generation and no fixture setter runs
+either -- this mirrors the pipe's own "set_seed" + "step" script in
+tests/transport/test_pipe_shapes.py, so a fresh, ungenerated world's regions
+have no owner, tier EMPTY, and zeroed fields, and (with `om_region_neighbors`
+unexported and no adjacency ever set) an empty edge list.
+
+`--populate` builds a deterministic populated stand-in instead (see
+`populate_world`'s docstring): 4 factions each owning a contiguous block of
+regions, a ring plus periodic chords, and seed-derived, distinct per-region
+fields -- so the fixture exercises owners/edges/tiers, not an all-zero galaxy.
+
+Deterministic: same seed/regions/ticks/features/populate flag, byte-identical
+JSON, every run.
 """
 from __future__ import annotations
 
@@ -36,6 +44,11 @@ import conftest as csim  # noqa: E402
 
 DEFAULT_FEATURES = "1,2,3,6"  # FACTIONS, FRICTION, ADMIN_REVOLTS, DRIFT (0 EVENTS is a stub, left off)
 MAX_TELEGRAPHS = 4096
+
+POPULATE_N_REGIONS = 60
+POPULATE_FACTION_COUNT = 4
+POPULATE_BLOCK_SIZE = 12   # contiguous regions owned per faction (4*12=48, 12 left unowned)
+POPULATE_CHORD_STEP = 5    # a chord every 5 regions, connecting it to the next waypoint 5 on
 
 
 def load_lib() -> ctypes.CDLL:
@@ -60,24 +73,108 @@ def parse_features(raw: str) -> list[int]:
     return [int(tok) for tok in raw.split(",") if tok.strip()]
 
 
-def _region_neighbors(lib: ctypes.CDLL, w, idx: int, max_n: int) -> list[int]:
-    if not hasattr(lib, "om_region_neighbors"):
-        return []
-    lib.om_region_neighbors.argtypes = [
-        ctypes.c_void_p, ctypes.c_uint32, ctypes.POINTER(ctypes.c_uint32), ctypes.c_uint32,
-    ]
-    lib.om_region_neighbors.restype = ctypes.c_uint32
-    buf = (ctypes.c_uint32 * max_n)()
-    n = min(lib.om_region_neighbors(w, idx, buf, max_n), max_n)
-    return [buf[i] for i in range(n)]
+def _edges(lib: ctypes.CDLL, w, region_count: int) -> list[tuple[int, int, int]]:
+    """[(a, b, t)] with a<b: `om_region_neighbors` (O(degree)) paired with
+    `om_region_edge` for the type when a build exports the former, else the
+    O(N^2) `om_region_edge` sweep ouroboros_sim.h names as the alternative
+    (E-03/worldgen.c, which implements om_region_neighbors, is not landed in
+    every build; om_region_edge itself is E-05 and always present)."""
+    pairs: list[tuple[int, int, int]] = []
+    if hasattr(lib, "om_region_neighbors"):
+        lib.om_region_neighbors.argtypes = [
+            ctypes.c_void_p, ctypes.c_uint32, ctypes.POINTER(ctypes.c_uint32), ctypes.c_uint32,
+        ]
+        lib.om_region_neighbors.restype = ctypes.c_uint32
+        for i in range(region_count):
+            buf = (ctypes.c_uint32 * region_count)()
+            n = min(lib.om_region_neighbors(w, i, buf, region_count), region_count)
+            for k in range(n):
+                j = buf[k]
+                if j <= i:
+                    continue
+                edge_type = ctypes.c_int()
+                if lib.om_region_edge(w, i, j, ctypes.byref(edge_type)):
+                    pairs.append((i, j, edge_type.value))
+    else:
+        for i in range(region_count):
+            for j in range(i + 1, region_count):
+                edge_type = ctypes.c_int()
+                if lib.om_region_edge(w, i, j, ctypes.byref(edge_type)):
+                    pairs.append((i, j, edge_type.value))
+    pairs.sort()
+    return pairs
 
 
-def build_snapshot(seed: int, n_regions: int, n_ticks: int, features: list[int]) -> dict:
+class _Lcg:
+    """Small 64-bit LCG (MMIX/Knuth constants), seeded from --seed, used only
+    to spread `--populate`'s region fields so every region differs. Has
+    nothing to do with the sim's own RNG (`w->rng_state` / `om_rng_force`)."""
+
+    def __init__(self, seed: int):
+        self.state = seed & 0xFFFFFFFFFFFFFFFF
+
+    def next_unit(self) -> float:
+        self.state = (self.state * 6364136223846793005 + 1442695040888963407) & 0xFFFFFFFFFFFFFFFF
+        return (self.state >> 11) * (1.0 / (1 << 53))
+
+
+def populate_world(lib: ctypes.CDLL, w, seed: int, n_regions: int) -> None:
+    """Deterministic populated stand-in for the galaxy view (an all-zero,
+    all-unowned world exercises none of the transport's owner/edge/tier
+    shape): 4 factions, archetypes 0..3, each a contiguous
+    POPULATE_BLOCK_SIZE-region block (the block's first region tier HOME,
+    the rest FRONTIER); the remaining POPULATE_N_REGIONS - 4*POPULATE_BLOCK_SIZE
+    regions are unowned, tier EMPTY. A ring edge 0-1-2-..-(n-1)-0 (type 2,
+    BOTH) plus, every POPULATE_CHORD_STEP regions, a chord to the next
+    waypoint POPULATE_CHORD_STEP steps around the ring (type 1, TRADE) --
+    at n=60/step=5 that is 60 ring edges + 12 chords = 72, all distinct.
+    Every region's four fields is drawn from a small seeded LCG so they
+    differ; built entirely with the E-05 hard-fixture setters (om_region_set,
+    om_faction_set, om_region_set_edge) -- no om_world_generate call."""
+    if n_regions != POPULATE_N_REGIONS:
+        raise ValueError(
+            f"--populate is sized for exactly {POPULATE_N_REGIONS} regions "
+            f"({POPULATE_FACTION_COUNT} factions x {POPULATE_BLOCK_SIZE}-region blocks "
+            f"+ a {POPULATE_N_REGIONS - POPULATE_FACTION_COUNT * POPULATE_BLOCK_SIZE}-region "
+            f"unowned tail), got --regions {n_regions}"
+        )
+
+    lcg = _Lcg(seed)
+    owned = POPULATE_FACTION_COUNT * POPULATE_BLOCK_SIZE
+    for i in range(n_regions):
+        military = 10.0 + lcg.next_unit() * 50.0
+        economy = 10.0 + lcg.next_unit() * 50.0
+        tension = lcg.next_unit() * 40.0
+        population = 10.0 + lcg.next_unit() * 70.0
+        if i < owned:
+            faction_id = i // POPULATE_BLOCK_SIZE
+            tier = csim.OMTier.HOME if i % POPULATE_BLOCK_SIZE == 0 else csim.OMTier.FRONTIER
+        else:
+            faction_id = -1
+            tier = csim.OMTier.EMPTY
+        rc = lib.om_region_set(w, i, tier, military, economy, tension, population, 0.0, 0.0, faction_id)
+        assert rc == 0, f"om_region_set failed for region {i}: rc={rc}"
+
+    for fid in range(POPULATE_FACTION_COUNT):
+        rc = lib.om_faction_set(w, fid, fid, 100.0 + fid * 10.0, 1.0 + fid * 0.1, 5.0)
+        assert rc == 0, f"om_faction_set failed for faction {fid}: rc={rc}"
+
+    for i in range(n_regions):
+        lib.om_region_set_edge(w, i, (i + 1) % n_regions, csim.OMEdge.BOTH)
+    for i in range(0, n_regions, POPULATE_CHORD_STEP):
+        lib.om_region_set_edge(w, i, (i + POPULATE_CHORD_STEP) % n_regions, csim.OMEdge.TRADE)
+
+
+def build_snapshot(seed: int, n_regions: int, n_ticks: int, features: list[int],
+                    populate: bool = False) -> dict:
     lib = load_lib()
     w = lib.om_world_new(n_regions, seed)
     if not w:
         raise RuntimeError("om_world_new returned NULL")
     try:
+        if populate:
+            populate_world(lib, w, seed, n_regions)
+
         for f in features:
             lib.om_world_set_feature(w, f, 1)
 
@@ -111,15 +208,7 @@ def build_snapshot(seed: int, n_regions: int, n_ticks: int, features: list[int])
                 "stance": [lib.om_faction_stance(w, fid, k) for k in range(faction_count)],
             })
 
-        edges = []
-        for i in range(region_count):
-            for j in _region_neighbors(lib, w, i, region_count):
-                if j <= i:
-                    continue
-                edge_type = ctypes.c_int()
-                if lib.om_region_edge(w, i, j, ctypes.byref(edge_type)):
-                    edges.append({"a": i, "b": j, "t": edge_type.value})
-        edges.sort(key=lambda e: (e["a"], e["b"]))
+        edges = [{"a": a, "b": b, "t": t} for a, b, t in _edges(lib, w, region_count)]
 
         tel_buf = (csim.OmTelegraph * MAX_TELEGRAPHS)()
         n_tel = min(lib.om_pending_telegraphs(w, tel_buf, MAX_TELEGRAPHS), MAX_TELEGRAPHS)
@@ -146,8 +235,9 @@ def build_snapshot(seed: int, n_regions: int, n_ticks: int, features: list[int])
         lib.om_world_free(w)
 
 
-def write_snapshot(out_path: Path, seed: int, n_regions: int, n_ticks: int, features: list[int]) -> dict:
-    snapshot = build_snapshot(seed, n_regions, n_ticks, features)
+def write_snapshot(out_path: Path, seed: int, n_regions: int, n_ticks: int, features: list[int],
+                    populate: bool = False) -> dict:
+    snapshot = build_snapshot(seed, n_regions, n_ticks, features, populate=populate)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with open(out_path, "w") as f:
         json.dump(snapshot, f, indent=2)
@@ -162,10 +252,13 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--ticks", type=int, required=True)
     ap.add_argument("--features", default=DEFAULT_FEATURES,
                     help=f"comma-separated om_feature ids (default {DEFAULT_FEATURES})")
+    ap.add_argument("--populate", action="store_true",
+                    help="deterministic populated world (4 factions, ring+chords) instead of an all-zero one")
     ap.add_argument("--out", required=True)
     args = ap.parse_args(argv)
 
-    write_snapshot(Path(args.out), args.seed, args.regions, args.ticks, parse_features(args.features))
+    write_snapshot(Path(args.out), args.seed, args.regions, args.ticks, parse_features(args.features),
+                   populate=args.populate)
     return 0
 
 
