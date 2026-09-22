@@ -102,7 +102,7 @@ func _check_noall6() -> void:
 	if router.has_method("mapped_commands"):
 		all_cmds += router.mapped_commands()
 	var bad: Array = all_cmds.filter(func(c): return String(c).findn("select_all") != -1)
-	_assert(bad.is_empty(), "NOALL-6: found select-all-like command(s) %s" % bad)
+	_assert(bad.is_empty(), "NOALL-6: found select-all-like command(s) %s" % [bad])
 
 func _check_shift7() -> void:
 	var cls = _load_class(SEL_PATH)
