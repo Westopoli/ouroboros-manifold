@@ -264,3 +264,5 @@ Decisions:
 4. **[DONE]** C6 decided (gpt-oss dropped). B3 sweep done (Seventh round).
 5. **[NOT STARTED]** Then the high-level harness configuration comparison that prompted the investigation.
 6. **[NOT STARTED]** R8e/R8f's same-tick-suppression / `om_intent_inject` decision.
+7. **[NOT STARTED, executor]** D1 (eighth round): `om_world_new` takes an explicit feature set and refuses a call without one; `region.c`'s DRIFT-on default and the "all on" wording in the header and `algorithms.md` go; every `tests/csim` caller passes its set (isolation tests their own system, integration tests the MVP set as data); one test proves the default path is gone. Tests first, change protocol, own R-row. Schedule when the chain allows.
+8. **[NOT STARTED, executor]** PX-16: the E-04 cut is cyclic (208a2, 208b1, 209c read stubs owned by 208a1 and 208a2; `om_step_resolve` and `om_tick_collisions` each have two owning cards). Re-cut with `scripts/specfactory/chain_sim.py`'s DAG beside `card_lint` before 208a1 releases.
