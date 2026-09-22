@@ -224,3 +224,9 @@ sensor-ring ratio was measured precisely this pass (`ring_px` added to `qa_state
 world radii are exactly 50% by construction; the screen ratio runs 0.40–0.62 depending on
 which layer the unit occupies, a perspective-distance effect of the fixed camera, not the
 reviewer's guessed 35% nor a code defect — see `qa/checklist.md`, "Item 5."
+
+## Mockup review 1 (Westley, 2026-09-22)
+
+Verbatim: "The layers one doesn't appear to work at all. The buttons do not move the units when I click them, changing the seed doesn't do anything, reset doesn't do anything, step doesn't appear to do anything other than tick forward."
+
+Pass 2 brief: `docs/northstar/plans/briefs/2026-09-22-p6-layers-mockup-pass2.md` (sim starts paused so transfers never progress; click selection and edge scroll compare coordinate spaces that differ on a large screen; the map fixture ignores the seed; a self-running demo of the epic's paragraph on launch).
