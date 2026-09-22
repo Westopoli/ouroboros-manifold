@@ -223,6 +223,15 @@ def ensure_scratch_tree(scratch_root: Path) -> Path:
     conftest_src = (REPO_ROOT / "tests" / "csim" / "conftest.py").read_text()
     conftest_dst = tree / "tests" / "csim" / "conftest.py"
     conftest_dst.write_text(conftest_src + NEUTRALIZE_SNIPPET)
+
+    # conftest.py's world_factory reads the feature-set tables relative to
+    # REPO_ROOT (D1, conftest-only): mirror docs/northstar/spec_factory/*.toml
+    # into the scratch tree so the fixtures resolve there too.
+    spec_src = REPO_ROOT / "docs" / "northstar" / "spec_factory"
+    spec_dst = tree / "docs" / "northstar" / "spec_factory"
+    spec_dst.mkdir(parents=True, exist_ok=True)
+    for toml in spec_src.glob("*.toml"):
+        shutil.copyfile(toml, spec_dst / toml.name)
     return tree
 
 
