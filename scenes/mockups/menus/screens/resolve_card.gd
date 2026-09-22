@@ -62,6 +62,7 @@ func _build() -> void:
 	_continue_btn = Button.new()
 	_continue_btn.text = "Continue"
 	_continue_btn.focus_mode = Control.FOCUS_NONE
+	_continue_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_continue_btn.visible = false
 	_continue_btn.add_theme_font_override("font", Palette.mono_medium())
 	_continue_btn.pressed.connect(func(): root.qa_go("resolve_continue"))
@@ -88,7 +89,7 @@ func refresh(state: Dictionary) -> void:
 
 
 func _process(delta: float) -> void:
-	if not _fading:
+	if not visible or not _fading:
 		return
 	_t += delta
 	if _t >= 2.0:

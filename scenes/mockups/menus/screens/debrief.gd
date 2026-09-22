@@ -82,6 +82,7 @@ func _build() -> void:
 	var proceed := Button.new()
 	proceed.text = "Proceed"
 	proceed.focus_mode = Control.FOCUS_NONE
+	proceed.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	proceed.add_theme_font_override("font", Palette.mono_medium())
 	proceed.pressed.connect(func(): root.qa_go("proceed"))
 	content.add_child(proceed)

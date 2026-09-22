@@ -36,6 +36,7 @@ func _build() -> void:
 	back.text = "Back"
 	back.flat = true
 	back.focus_mode = Control.FOCUS_NONE
+	back.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	back.add_theme_font_override("font", Palette.mono_regular())
 	back.pressed.connect(func(): root.qa_go("back"))
 	content.add_child(back)

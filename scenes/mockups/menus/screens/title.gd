@@ -95,6 +95,8 @@ func refresh(state: Dictionary) -> void:
 
 
 func _process(delta: float) -> void:
+	if not visible:
+		return
 	_t += delta
 	for i in range(_title_labels.size()):
 		var phase: float = float(i) * 0.4

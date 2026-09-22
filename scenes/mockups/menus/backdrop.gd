@@ -36,6 +36,8 @@ func _generate(n: int) -> void:
 
 
 func _process(delta: float) -> void:
+	if not visible:
+		return
 	_t += delta
 	queue_redraw()
 
