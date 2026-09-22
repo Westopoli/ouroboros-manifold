@@ -16,6 +16,7 @@
   ["call", "qa_tick", 50],
   ["screenshot", "slow_mid"],
   ["state", "slow_mid"],
+  ["call", "qa_set", "focus_layer", 2],
   ["call", "qa_set", "focus_layer", 1],
   ["screenshot", "focus1"],
   ["call", "qa_set", "focus_layer", 2],
