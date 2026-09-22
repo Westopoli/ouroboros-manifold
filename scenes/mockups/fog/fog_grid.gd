@@ -1,6 +1,8 @@
 class_name FogCellGrid
 extends RefCounted
 
+const QaPlants := preload("res://scenes/mockups/_shared/qa_plants.gd")
+
 const NEVER_SEEN := 0
 const EXPLORED := 1
 const VISIBLE := 2
@@ -43,8 +45,32 @@ func state_name(state: int) -> String:
 			return "never_seen"
 
 
-func update(_circles: Array) -> void:
-	pass
+func update(circles: Array) -> void:
+	var mem_on: bool = memory and not QaPlants.is_active("no-memory")
+	var now_visible := PackedByteArray()
+	now_visible.resize(cells.size())
+	for c in circles:
+		var r: float = c.radius_eff
+		if r <= 0.0:
+			continue
+		var pos: Vector2 = c.pos
+		var min_gx: int = clampi(int((pos.x - r) / cell_size), 0, dim - 1)
+		var max_gx: int = clampi(int((pos.x + r) / cell_size), 0, dim - 1)
+		var min_gy: int = clampi(int((pos.y - r) / cell_size), 0, dim - 1)
+		var max_gy: int = clampi(int((pos.y + r) / cell_size), 0, dim - 1)
+		for gy in range(min_gy, max_gy + 1):
+			for gx in range(min_gx, max_gx + 1):
+				var cell_center := Vector2((gx + 0.5) * cell_size, (gy + 0.5) * cell_size)
+				if cell_center.distance_to(pos) <= r:
+					now_visible[gy * dim + gx] = 1
+
+	for i in range(cells.size()):
+		if now_visible[i] == 1:
+			cells[i] = VISIBLE
+		elif cells[i] == VISIBLE:
+			cells[i] = EXPLORED if mem_on else NEVER_SEEN
+		elif cells[i] == EXPLORED and not mem_on:
+			cells[i] = NEVER_SEEN
 
 
 func counts() -> Dictionary:
