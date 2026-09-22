@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="460" viewBox="0 0 960 460">
+  <rect x="0" y="0" width="960" height="460" fill="#f6f4ee"/>
+  <text x="480" y="30" font-family="Georgia, serif" font-size="20" fill="#1a1a1a" text-anchor="middle">Option A — The Conflict Roster</text>
+  <text x="480" y="50" font-family="sans-serif" font-size="13" fill="#444" text-anchor="middle">Same battlefield moment, two eras: the categories match, the units do not.</text>
+
+  <!-- Left panel: older era -->
+  <rect x="30" y="70" width="430" height="360" fill="#ffffff" stroke="#333333" stroke-width="2"/>
+  <text x="245" y="95" font-family="sans-serif" font-size="14" fill="#1a1a1a" text-anchor="middle">Older era — spear-and-shield rivalry</text>
+
+  <rect x="60" y="120" width="150" height="50" rx="6" fill="#dbe4f0" stroke="#33455c" stroke-width="1.5"/>
+  <text x="135" y="140" font-family="sans-serif" font-size="12" fill="#1a1a1a" text-anchor="middle">Strike</text>
+  <text x="135" y="156" font-family="sans-serif" font-size="11" fill="#33455c" text-anchor="middle">Skirmisher</text>
+
+  <rect x="230" y="120" width="150" height="50" rx="6" fill="#ecdccb" stroke="#6b4a2b" stroke-width="1.5"/>
+  <text x="305" y="140" font-family="sans-serif" font-size="12" fill="#1a1a1a" text-anchor="middle">Line</text>
+  <text x="305" y="156" font-family="sans-serif" font-size="11" fill="#6b4a2b" text-anchor="middle">Shield-wall</text>
+
+  <rect x="145" y="200" width="150" height="50" rx="6" fill="#e6dbf0" stroke="#4a2f6b" stroke-width="1.5"/>
+  <text x="220" y="220" font-family="sans-serif" font-size="12" fill="#1a1a1a" text-anchor="middle">Siege</text>
+  <text x="220" y="236" font-family="sans-serif" font-size="11" fill="#4a2f6b" text-anchor="middle">Catapult crew</text>
+
+  <text x="245" y="300" font-family="sans-serif" font-size="12" fill="#333333" text-anchor="middle">Enemy Line: spear phalanx</text>
+  <text x="245" y="320" font-family="sans-serif" font-size="11" fill="#555555" text-anchor="middle">beats your shield-wall's flank</text>
+
+  <rect x="60" y="360" width="370" height="50" rx="6" fill="#f0f0f0" stroke="#888888" stroke-width="1"/>
+  <text x="245" y="382" font-family="sans-serif" font-size="11" fill="#333333" text-anchor="middle">Fog, pace, reinforcement rate: identical to every other era</text>
+  <text x="245" y="398" font-family="sans-serif" font-size="11" fill="#333333" text-anchor="middle">Roster: leaned hard toward one named rivalry</text>
+
+  <!-- Right panel: newer era -->
+  <rect x="500" y="70" width="430" height="360" fill="#ffffff" stroke="#333333" stroke-width="2"/>
+  <text x="715" y="95" font-family="sans-serif" font-size="14" fill="#1a1a1a" text-anchor="middle">Newer era — wide fleet cast</text>
+
+  <rect x="530" y="120" width="150" height="50" rx="6" fill="#dbe4f0" stroke="#33455c" stroke-width="1.5"/>
+  <text x="605" y="140" font-family="sans-serif" font-size="12" fill="#1a1a1a" text-anchor="middle">Strike</text>
+  <text x="605" y="156" font-family="sans-serif" font-size="11" fill="#33455c" text-anchor="middle">Interceptor</text>
+
+  <rect x="700" y="120" width="150" height="50" rx="6" fill="#ecdccb" stroke="#6b4a2b" stroke-width="1.5"/>
+  <text x="775" y="140" font-family="sans-serif" font-size="12" fill="#1a1a1a" text-anchor="middle">Line</text>
+  <text x="775" y="156" font-family="sans-serif" font-size="11" fill="#6b4a2b" text-anchor="middle">Vanguard hull</text>
+
+  <rect x="615" y="200" width="150" height="50" rx="6" fill="#e6dbf0" stroke="#4a2f6b" stroke-width="1.5"/>
+  <text x="690" y="220" font-family="sans-serif" font-size="12" fill="#1a1a1a" text-anchor="middle">Siege</text>
+  <text x="690" y="236" font-family="sans-serif" font-size="11" fill="#4a2f6b" text-anchor="middle">Bombard platform</text>
+
+  <text x="715" y="300" font-family="sans-serif" font-size="12" fill="#333333" text-anchor="middle">Roster spread across many factions</text>
+  <text x="715" y="320" font-family="sans-serif" font-size="11" fill="#555555" text-anchor="middle">no single rivalry dominates the list</text>
+
+  <rect x="530" y="360" width="370" height="50" rx="6" fill="#f0f0f0" stroke="#888888" stroke-width="1"/>
+  <text x="715" y="382" font-family="sans-serif" font-size="11" fill="#333333" text-anchor="middle">Fog, pace, reinforcement rate: identical to every other era</text>
+  <text x="715" y="398" font-family="sans-serif" font-size="11" fill="#333333" text-anchor="middle">Roster: forty types, no single conflict favored</text>
+
+  <text x="480" y="445" font-family="sans-serif" font-size="12" fill="#333333" text-anchor="middle">Same category icons, same counters, same tiers in both panels — only the units filling each category differ.</text>
+</svg>
