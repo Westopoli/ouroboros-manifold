@@ -1,0 +1,12 @@
+{
+  "name": "greek",
+  "palette": {"ground": "#c9b98a", "faction_0": "#4099FF", "faction_1": "#FF4738", "flash": "#FFFFFF", "wreck": "#332e28"},
+  "roles": {
+    "flanker": {"display_name": "Peltast", "stats": {"hp": 250, "damage": 9, "interval_s": 0.8, "range_wu": 200, "speed_wu_s": 150, "sensor_wu": 800, "category": "Strike"}, "silhouette": {"shape": "swept_dart", "size": [18, 6, 4], "squad": 5}},
+    "screen": {"display_name": "Skirmisher", "stats": {"hp": 325, "damage": 6, "interval_s": 1.0, "range_wu": 250, "speed_wu_s": 130, "sensor_wu": 1000, "category": "Strike"}, "silhouette": {"shape": "flat_wing", "size": [22, 16, 5], "squad": 4}},
+    "frontliner": {"display_name": "Hoplite", "stats": {"hp": 500, "damage": 7.5, "interval_s": 1.2, "range_wu": 300, "speed_wu_s": 80, "sensor_wu": 700, "category": "Line"}, "silhouette": {"shape": "wedge_slab", "size": [28, 20, 10], "squad": 1}},
+    "support": {"display_name": "Priest", "stats": {"hp": 375, "damage": 4, "interval_s": 1.5, "range_wu": 350, "speed_wu_s": 70, "sensor_wu": 800, "category": "Line"}, "silhouette": {"shape": "spire_radial", "size": [20, 20, 18], "squad": 1}},
+    "artillery": {"display_name": "Ballista", "stats": {"hp": 400, "damage": 17.5, "interval_s": 3.0, "range_wu": 1200, "speed_wu_s": 50, "sensor_wu": 300, "category": "Siege"}, "silhouette": {"shape": "long_barrel", "size": [64, 10, 8], "squad": 1}},
+    "anchor": {"display_name": "Phalanx", "stats": {"hp": 1050, "damage": 7, "interval_s": 1.8, "range_wu": 800, "speed_wu_s": 40, "sensor_wu": 300, "category": "Siege"}, "silhouette": {"shape": "wide_block", "size": [26, 38, 14], "squad": 1}}
+  }
+}
