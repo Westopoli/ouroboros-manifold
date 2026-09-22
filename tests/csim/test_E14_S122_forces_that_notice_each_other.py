@@ -96,4 +96,7 @@ def test_R_122_05_each_force_s_timer_noise(lib, world_factory):
     # Assert noise values are independent draws
     assert -0.20 <= ctypes.c_double(noise_a).value <= 0.20
     assert -0.20 <= ctypes.c_double(noise_b).value <= 0.20
+    # Both getters hard-stubbed to 0.0 would pass the range checks above with
+    # identical values for every force. Independence requires they differ.
+    assert ctypes.c_double(noise_a).value != ctypes.c_double(noise_b).value
 

@@ -54,6 +54,9 @@ def test_R_125_02_their_decision_loop_stats_abilities(lib, world_factory):
         # Stats must match
         hp_p = lib.om_unit_get_base_hp(unit_type, 0)
         hp_e = lib.om_unit_get_base_hp(unit_type, 1)
+        # Getters hard-stubbed to 0.0 for both sides make "identical" trivially
+        # true. Require a real (nonzero) roster value first.
+        assert ctypes.c_double(hp_p).value > 0
         assert ctypes.c_double(hp_p).value == ctypes.c_double(hp_e).value
 
 

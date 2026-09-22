@@ -79,3 +79,15 @@ Row skipped: `test_E08_S064_what_carries_over.py::test_R_064_01_every_region_fie
 | `test_E13_S101_movement_that_reads.py::test_R_101_02_position_facing_linearly_interpolated_from` | added `assert p1_x != p0_x` before the interpolation checks | 7 -> 8 | `assert 0.0 != 0.0` |
 | `test_E13_S102_same_commands_same_battle.py::test_R_102_01_every_position_facing_target_identical` | added `assert pos1_w1 != (0.0, 0.0)` inside the checkpoint loop before the cross-machine equality | 10 -> 11 | `assert (0.0, 0.0) != (0.0, 0.0)` |
 
+### E-14
+
+| Test | Edit | asserts before -> after | New failure |
+|---|---|---|---|
+| `test_E14_S121...::test_R_121_01_condition_compared_against_its_noised` | added `assert t_noise != 0.0` and `assert timer_noise != 0.0` | 11 -> 14 (shared w/ R_121_05) | `assert 0.0 != 0.0` |
+| `test_E14_S121...::test_R_121_05_q_121_01_code_returns` | added `assert om_macro_validate_condition_name(b"timer_expired") == 1` (R-121-01 keeps "timer expired" in vocabulary) | 11 -> 14 (shared) | `assert 0 == 1` |
+| `test_E14_S122_forces_that_notice_each_other.py::test_R_122_05_each_force_s_timer_noise` | added `assert noise_a != noise_b` | 12 -> 13 | `assert 0.0 != 0.0` |
+| `test_E14_S123_the_enemy_replays_like_i_do.py::test_R_123_01_every_enemy_command_identical_on` | added `assert count1 > 0` before the per-command comparison loop | 12 -> 13 | `assert 0 > 0` |
+| `test_E14_S125_how_hard_the_enemy_tries.py::test_R_125_02_their_decision_loop_stats_abilities` | added `assert hp_p > 0` before the cross-side equality | 10 -> 11 | `assert 0.0 > 0` |
+
+Row skipped: `test_E14_S123_the_enemy_replays_like_i_do.py::test_R_123_03_it_never_reads_player_s` -- see skip list at end.
+
