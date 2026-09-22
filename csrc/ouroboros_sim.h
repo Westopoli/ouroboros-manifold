@@ -811,6 +811,18 @@ typedef enum {
 #endif
 
 /* ---- generated from signatures.toml: structs ---- */
+typedef struct om_ability_event {
+    uint64_t tick;
+    uint32_t unit_id;
+    int32_t ability_id;
+    double target_x;
+    double target_y;
+    uint32_t duration;
+    uint32_t telegraph_ticks;
+    uint32_t cue_id;
+    double radius;
+} om_ability_event;
+
 typedef struct om_absorption_record {
     uint64_t tick;
     int32_t absorbed_faction;
@@ -872,6 +884,11 @@ typedef struct om_chronicle_entry {
     uint64_t start_tick;
     uint64_t end_tick;
 } om_chronicle_entry;
+
+typedef struct om_client_unit {
+    uint32_t id;
+    int32_t faction_id;
+} om_client_unit;
 
 typedef struct om_composition_ratio {
     double line;
@@ -1017,6 +1034,11 @@ typedef struct om_vec2 {
     double x;
     double y;
 } om_vec2;
+
+typedef struct om_client_snapshot {
+    uint32_t unit_count;
+    om_client_unit units[256];
+} om_client_snapshot;
 /* ---- end generated: structs ---- */
 
 /* ---- generated from signatures.toml: chronicle.c ---- */
@@ -1179,6 +1201,7 @@ uint32_t om_event_get_attached_character(const om_world *w, uint32_t event, uint
 /* ---- end generated: events.c ---- */
 
 /* ---- generated from signatures.toml: fog.c ---- */
+om_client_snapshot *om_client_snapshot_read(const om_world *w);
 double om_fog_get_drawn_sensor_circle_radius(const om_world *w, uint32_t unit);
 int om_fog_get_treatment_at(const om_world *w, double x, double y, uint32_t layer);
 uint32_t om_map_add_hazard_zone(om_world *w, double x, double y, double p2);
@@ -1317,6 +1340,7 @@ uint64_t om_world_strategic_tick(const om_world *w);
 /* ---- generated from signatures.toml: lifecycle.c ---- */
 int om_faction_is_active(const om_world *w, int32_t faction_id);
 void om_faction_mark_conquered_this_tick(om_world *w, int32_t faction_id);
+int om_faction_phase(const om_world *w, int32_t faction_id);
 void om_faction_remove(om_world *w, int32_t faction_id);
 void om_faction_set_created_tick(om_world *w, int32_t faction_id, uint64_t tick);
 void om_faction_set_event_window_counts(om_world *w, int32_t faction_id, uint32_t total_events, uint32_t revolts, uint32_t attacks, uint32_t colonizations);
@@ -1598,7 +1622,7 @@ int om_tactical_telegraph_active(om_world *w, double x, double y);
 uint64_t om_tactical_tick(om_world *w);
 uint64_t om_tactical_tick_to(om_world *w, uint64_t tick);
 int om_tactical_zone_visible_to_enemy(om_world *w, uint32_t unit_id);
-uint32_t om_tick_read_ability_events(om_world *w);
+uint32_t om_tick_read_ability_events(om_world *w, om_ability_event *out, uint32_t max);
 int om_unit_ability_active(om_world *w, uint32_t unit_id);
 double om_unit_ability_cooldown(om_world *w, uint32_t unit_id);
 int om_unit_alive(om_world *w, uint32_t unit_id);

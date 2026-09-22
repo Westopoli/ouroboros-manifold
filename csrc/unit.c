@@ -149,12 +149,6 @@ int om_tactical_zone_visible_to_enemy(om_world *w, uint32_t unit_id) {
     return 0;
 }
 
-uint32_t om_tick_read_ability_events(om_world *w) {
-    /* STUB */
-    (void)w;
-    return 0;
-}
-
 int om_unit_ability_active(om_world *w, uint32_t unit_id) {
     /* STUB */
     (void)w; (void)unit_id;
@@ -399,6 +393,11 @@ int32_t om_unit_target(om_world *w, uint32_t unit_id) {
 uint32_t om_unit_targeting_cohort(om_world *w, uint32_t unit_id) {
     /* STUB */
     (void)w; (void)unit_id;
+    return 0;
+}
+uint32_t om_tick_read_ability_events(om_world *w, om_ability_event *out, uint32_t max) {
+    /* STUB */
+    (void)w; (void)out; (void)max;
     return 0;
 }
 /* ---- end generated stubs ---- */

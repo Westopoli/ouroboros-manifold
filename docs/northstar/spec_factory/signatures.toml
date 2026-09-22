@@ -1011,7 +1011,8 @@ restype = "om_client_snapshot*"
 params = [{ name = "w", ctype = "const om_world*" }]
 epics = ["E-12"]
 confidence = "likely"
-note = "1 site. Test iterates client_data.units, reads u.id and u.faction_id; no ctypes Structure mirror defined anywhere. Readings: (a) restype pointer to struct with units array + count plus Python wrapper;"
+wrapper = "client_snapshot"
+note = "1 site. Test iterates client_data.units, reads u.id and u.faction_id. Reading taken: pointer to om_client_snapshot (unit_count + om_client_unit units[256], struct rows below); conftest wrapper 'client_snapshot' returns an object whose .units is the live slice, [] on NULL."
 
 [[symbols]]
 name = "om_collision_pass"
@@ -1400,11 +1401,11 @@ note = "Not in header. 2 sites, preferred branch of hasattr fork: (w, 0) == 2. A
 [[symbols]]
 name = "om_faction_phase"
 module = "lifecycle.c"
-restype = "om_phase"
+restype = "int"
 params = [{ name = "w", ctype = "const om_world*" }, { name = "faction_id", ctype = "int32_t" }]
 epics = ["E-07"]
 confidence = "likely"
-note = "New. 9 positional sites; return compared to OMPhase constants. Enum om_phase not in header yet; test mirror OMPhase: FRAGMENTATION=0, OVEREXTENSION=1, CONFLICT=2, EXPANSION=3, CONSOLIDATION=4, EQUILIB"
+note = "New. 9 positional sites (w, 0), return compared == OMPhase constants. C enum undeclared; test mirror OMPhase: FRAGMENTATION=0, OVEREXTENSION=1, CONFLICT=2, EXPANSION=3, CONSOLIDATION=4, EQUILIBRIUM=5. int restype per om_mission_get_phase precedent."
 
 [[symbols]]
 name = "om_faction_remove"
@@ -4031,6 +4032,7 @@ restype = "int"
 params = [{ name = "w", ctype = "const om_world*" }, { name = "p0", ctype = "uint32_t" }, { name = "p1", ctype = "double" }, { name = "p2", ctype = "double*" }, { name = "p3", ctype = "double*" }]
 epics = ["E-13"]
 confidence = "likely"
+wrapper = "out_pair"
 note = "Tuple unpack `rx, ry = ...(w, u, 0.5)`; same two readings as om_unit_get_pos. Inferred p0=unit_id, p1=alpha, p2=out_x, p3=out_y."
 
 [[symbols]]
@@ -4282,6 +4284,7 @@ restype = "int"
 params = [{ name = "w", ctype = "const om_world*" }, { name = "p0", ctype = "uint32_t" }, { name = "p1", ctype = "double*" }, { name = "p2", ctype = "double*" }]
 epics = ["E-13"]
 confidence = "likely"
+wrapper = "out_pair"
 note = "Tuple unpack `rx, ry = ...`; same two readings as om_unit_get_pos. Queried right after command, no step. Inferred p0=unit_id, p1=out_x, p2=out_y."
 
 [[symbols]]
@@ -4738,10 +4741,11 @@ note = "Header verbatim. toml [symbols] -> friction.c (E-05). Reached via confte
 name = "om_tick_read_ability_events"
 module = "unit.c"
 restype = "uint32_t"
-params = [{ name = "w", ctype = "om_world*" }]
+params = [{ name = "w", ctype = "om_world*" }, { name = "out", ctype = "om_ability_event*" }, { name = "max", ctype = "uint32_t" }]
 epics = ["E-11"]
 confidence = "likely"
-note = "Called (w) only; result used as Python list (len, [0], iteration) of records with .tick .unit_id .ability_id .duration .telegraph_ticks .cue_id .radius. Raw ctypes call cannot return list. Reading A: "
+wrapper = "records"
+note = "Called (w) only; result used as Python list (len, [0], iteration) of records with .tick .unit_id .ability_id .duration .telegraph_ticks .cue_id .radius. Reader pattern (w, out, max) -> count written, same shape as om_tick_events; conftest wrapper 'records' owns the buffer and returns the list."
 
 [[symbols]]
 name = "om_tick_reversions"
@@ -5049,6 +5053,7 @@ restype = "int"
 params = [{ name = "w", ctype = "const om_world*" }, { name = "p0", ctype = "uint32_t" }, { name = "p1", ctype = "double*" }, { name = "p2", ctype = "double*" }]
 epics = ["E-13"]
 confidence = "likely"
+wrapper = "out_pair"
 note = "Tuple unpack `dx, dy = ...`; same two readings as om_unit_get_pos. Inferred p0=unit_id, p1=out_x, p2=out_y."
 
 [[symbols]]
@@ -5665,6 +5670,11 @@ confidence = "likely"
 note = "12 sites, pytest.approx float compare. Needs explicit restype c_double; default ctypes int restype would break every S-090 assert."
 
 [[structs]]
+name = "OMAbilityEvent"
+source_test = "tests/csim/test_E11_S086_one_ability_each.py"
+fields = [{ name = "tick", ctype = "uint64_t" }, { name = "unit_id", ctype = "uint32_t" }, { name = "ability_id", ctype = "int32_t" }, { name = "target_x", ctype = "double" }, { name = "target_y", ctype = "double" }, { name = "duration", ctype = "uint32_t" }, { name = "telegraph_ticks", ctype = "uint32_t" }, { name = "cue_id", ctype = "uint32_t" }, { name = "radius", ctype = "double" }]
+
+[[structs]]
 name = "OMArchetypeMetadata"
 source_test = "tests/csim/test_E10_S073_ten_kinds_of_trouble.py"
 fields = [{ name = "id", ctype = "uint32_t" }, { name = "canvas_category", ctype = "uint32_t" }, { name = "primary_objective", ctype = "uint32_t" }, { name = "transfer_on_total", ctype = "uint32_t" }, { name = "transfer_on_strong", ctype = "uint32_t" }, { name = "transfer_on_partial", ctype = "uint32_t" }]
@@ -5803,6 +5813,16 @@ fields = [{ name = "type", ctype = "uint32_t" }, { name = "category", ctype = "u
 name = "om_chronicle_entry"
 source_test = "tests/csim/test_E09_S068_written_from_fragments_never_the_same_twice.py"
 fields = [{ name = "id", ctype = "uint32_t" }, { name = "category", ctype = "uint32_t" }, { name = "region", ctype = "uint32_t" }, { name = "base_text", ctype = "char[512]" }, { name = "expanded_text", ctype = "char[1024]" }, { name = "start_tick", ctype = "uint64_t" }, { name = "end_tick", ctype = "uint64_t" }]
+
+[[structs]]
+name = "om_client_snapshot"
+source_test = "tests/csim/test_E12_S089_i_see_what_my_units_see.py"
+fields = [{ name = "unit_count", ctype = "uint32_t" }, { name = "units", ctype = "om_client_unit[256]" }]
+
+[[structs]]
+name = "om_client_unit"
+source_test = "tests/csim/test_E12_S089_i_see_what_my_units_see.py"
+fields = [{ name = "id", ctype = "uint32_t" }, { name = "faction_id", ctype = "int32_t" }]
 
 [[structs]]
 name = "om_composition_ratio"

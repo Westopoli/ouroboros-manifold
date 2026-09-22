@@ -85,4 +85,69 @@ Proposed (not done, shared lint): let `find_function_span`'s prefix accept `__at
 ## Notes for the design lane
 
 - `worldgen.c` was created (3 STUBs: `om_gen_set_faction_count`, `om_gen_set_region_range`, `om_world_generated`) because the table names it as a module; B4 owns that file, so B4's branch will meet an add/add on attach unless it starts from the freeze.
-- Struct pointers bind as `c_void_p`: the story tests carry their own `ctypes.Structure` classes and a typed `POINTER()` rejects a `byref` of a foreign class; the 23 mirrors plus `STRUCT_C_NAMES` in conftest serve the wrappers and future tests.
+- Struct pointers bind as `c_void_p`: the story tests carry their own `ctypes.Structure` classes and a typed `POINTER()` rejects a `byref` of a foreign class; the mirrors (26 after the corrections below) plus `STRUCT_C_NAMES` in conftest serve the wrappers and future tests.
+
+## Corrections landed (tag `freeze/F1b`, 2026-09-22)
+
+Each checked at its file:line before applying. Table edits in `signatures.toml`; regenerated with `sig_table.py --emit` (second `--emit` changes nothing). Generator gained two struct-owning adapters in `WRAPPERS` (`records`, `client_snapshot`, set `STRUCT_WRAPPERS`): the emitted call passes the row's struct mirror, `_wrap_<name>(lib, "<symbol>", <Mirror>)`, and a row whose struct pointer has no `[[structs]]` row is blocked, not guessed (`tests/specfactory/test_sig_table.py::test_struct_wrappers_pass_the_mirror_and_block_without_one`). Adapters `_wrap_records`, `_wrap_client_snapshot` hand-written in `tests/csim/conftest.py` beside `_wrap_out_pair`.
+
+Applied (8):
+
+| Symbol | Change | Unblocks |
+|---|---|---|
+| `om_faction_phase` (E-07, lifecycle.c) | restype `om_phase` -> `int` (test mirror `OMPhase` 0..5; precedent `om_mission_get_phase`) | 7 `test_E07_S053` AttributeError |
+| `om_tick_read_ability_events` (E-11, unit.c) | params `(w)` -> `(w, out om_ability_event*, max uint32_t)`, `wrapper = "records"`; stale STUB in `csrc/unit.c` dropped, regenerated | `test_E11_S086::test_R_086_09`, `test_E11_S088::test_R_088_02` TypeError |
+| `OMAbilityEvent` struct row | tick u64, unit_id u32, ability_id i32, target_x/target_y f64, duration/telegraph_ticks/cue_id u32, radius f64. `target_x`/`target_y` read by no test; kept because R-086-09 names 'target'; design lane may drop | same |
+| `om_client_snapshot_read` (E-12, fog.c) | struct rows `om_client_unit` {id u32, faction_id i32}, `om_client_snapshot` {unit_count u32, units om_client_unit[256]}; `wrapper = "client_snapshot"` (`.units` = `units[:unit_count]`, `[]` on NULL) | `test_E12_S089::test_R_089_03` AttributeError |
+| `om_unit_get_destination`, `om_steering_get_obstacle_repulsion`, `om_renderer_interpolate_position` (E-13, tactical_move.c) | `wrapper = "out_pair"` | `test_E13_S096::test_R_096_03`, `test_E13_S097::test_R_097_09`, `test_E13_S101::test_R_101_02` TypeError |
+
+Rejected (1): `om_debug_inject` / `om_bug` members for E-06..E-17 (83 placeholder controls). Evidence holds: `tests/csim/controls/test_control_e14_hooks_evaluated_after_base_transitions.py:18` -> `AttributeError: type object 'OMBug' has no attribute 'HOOKS_EVALUATED_AFTER_BASE_TRANSITIONS'`; header enum holds 0-7, 100-112, 200-210, 300-311, 400-401, 500, 900; conftest `OMBug` 0-7. The fix emits into the hand-written `om_bug` typedef inside `#ifdef OM_DEBUG_INJECT` (`csrc/ouroboros_sim.h:173-183`), needs a `[[enums]]` table kind the generator lacks, and a value scheme the proposal leaves to the main agent. Out of bounds for this pass; the 83 stay excluded from the freeze control by `placeholder_controls.txt`.
+
+No E-03/E-04/E-05 row and no hand-written declaration touched (`test_conftest_bindings.py` byte-identical control green). Renamed-params list unchanged (5).
+
+### Gates after
+
+| Check | Result |
+|---|---|
+| `sig_table.py --emit` / `--check` | header declarations 591, struct typedefs 26, bindings 618, stubs +3 (`fog.c`, `lifecycle.c`, `unit.c`); blocked 0; `--check` exit 0 |
+| `make -s OPT=-O2 WERROR=1 libouroboros.so libouroboros_dbg.so` | clean, both link; `nm -D` exports 680 `om_*` (678 + `om_faction_phase` + `om_client_snapshot_read`) |
+| `libm_lint.py csrc` / `alg_constants.py --lint csrc` | LIBM LINT OK / CONSTANTS LINT OK |
+| E-02 baseline `tests/csim/test_E02_*.py` before / after | 64 passed, 4 skipped / 64 passed, 4 skipped |
+| `tests/specfactory` | 394 passed |
+| `red_check.py --forbid TypeError,ArgumentError,AttributeError` over `tests/csim/test_E0[6-9]*.py tests/csim/test_E1*.py` | `passed=69 failed=332 errors=0 skipped=0 crashes=0 placeholders_excluded=0 forbidden=4` (was 17) |
+| Whole-suite `tests/csim` | 513 failed / 193 passed / 5 skipped / 1 xfailed (was 516 / 190 / 5 / 1) |
+
+Remaining 4 forbidden, all test defects (listed below), no table or generator row among them: `test_E10_S078` x3 (`read_drift()` 4 args), `test_E12_S093::test_R_093_03` (`set_region()` 4 positional).
+
+Passed 66 -> 69: three vacuous greens on STUB, each opened by a correction, same class as the existing 66: `test_E07_S053::test_R_053_01_its_phase_fragmentation` (STUB 0 == `OMPhase.FRAGMENTATION`), `test_E12_S089::test_R_089_03` (NULL snapshot -> `units == []`), `test_E13_S101::test_R_101_02` (`(0.0, 0.0)` equals the lerp of two zero positions).
+
+Pre-existing, unrelated: `tests/csim/controls/test_control_composite_pre_clamp.py` red on its own fixture (`tension 86.5 != 100.0`) on HEAD before this change; outside the `test_E02_*` baseline glob.
+
+### Test defects for the design lane (tests untouched)
+
+E-06, E-07, E-08, E-11, E-14, E-15, E-17, and the E-06..E-17 controls: none.
+
+E-09 (vacuous green on STUB, not freeze defects):
+- `test_E09_S065_five_to_ten_entries_in_the_right_order.py:70-71` `test_R_065_02`: green because `CONSEQUENCE=0` and `SUCCESS=0` match the zeroed `OmChronicleCluster`; cannot fail until enums re-ordered or STUB returns non-zero.
+- `test_E09_S065_five_to_ten_entries_in_the_right_order.py:128-147` `test_R_065_05`: `0 <= 2` cap check passes with zero selected.
+- `test_E09_S068_written_from_fragments_never_the_same_twice.py:50-61` `test_R_068_02`: empty text has 0 words < 90/140.
+- `test_E09_S068_written_from_fragments_never_the_same_twice.py:64-76` `test_R_068_03`: empty text has no digits.
+- `test_E09_S068_written_from_fragments_never_the_same_twice.py:141-153` `test_R_068_08`: empty scroll == empty scroll.
+- `test_E09_S069_watching_history_happen.py:94-102` `test_R_069_06`: 0 rendered == 0 distilled.
+
+E-10:
+- `test_E10_S078_a_battle_becomes_history.py:52-54, 65-67, 139-143`: `read_drift(lib, w, 0, OMField.MILITARY)` with 4 args, result compared to a scalar; conftest helper is `read_drift(lib, w, idx) -> (rc, OmDriftRow)` (`conftest.py:376`), used 3-arg/tuple-form by 5 E-02/E-03 files. Intended symbol is `lib.om_region_field(w, idx, field) -> c_double` (already bound; header `csrc/ouroboros_sim.h:136`). TypeError in `test_R_078_02`, `test_R_078_03`, `test_R_078_07`.
+- `test_E10_S076_the_clock.py:18, 59`: `ctypes.c_double` with no `import ctypes` (`test_R_076_01`, `test_R_076_03`). NameError.
+
+E-12:
+- `test_E12_S093_fog_is_for_the_player_not_the_engine.py:96`: `set_region(w, 1, OMField.MILITARY, 0.42)` (4 positional, no lib); helper is `set_region(lib, w, idx, *, tier=..., military=..., ...)` (`conftest.py:366-373`, 555 keyword sites elsewhere). Consistent form `set_region(lib, w, 1, military=0.42)`. TypeError.
+- `test_E12_S092_recon_then_fog.py:121`: `set_region(w2, 0, OMField.MILITARY, 0.95)`, same shape; latent (fails first at :117 on the STUB `om_recon_get_terrain_visibility_ratio`), surfaces once that symbol lands.
+
+E-13:
+- `test_E13_S095_a_force_moves_as_one.py:31, 53, 84, 111, 133, 156`: `ctypes.c_uint32 * 2` with no `import ctypes`; 6 tests NameError.
+- `test_E13_S096_four_commands.py:140`: same, `test_R_096_05`.
+- `test_E13_S097_around_not_through.py:87-88, 114, 134, 231`: `math.radians/cos/sin/hypot` with no `import math`; `test_R_097_04`, `test_R_097_05`, `test_R_097_08`.
+- `test_E13_S099_speed_is_position.py:50, 52, 72, 80`: `math.hypot`, no `import math`; 2 tests.
+- `test_E13_S100_facing.py:48`: `math.pi`, no `import math`; `test_R_100_01`.
+- `test_E13_S101_movement_that_reads.py:33, 52, 59, 66`: `ctypes.c_uint32 * 20` and `math.hypot`, neither imported; `test_R_101_01`.
+- `test_E13_S097_around_not_through.py:110-116` `test_R_097_04`: `while dist_covered < 55.0: lib.om_world_step(w)` has no tick cap; against the STUB (unit never moves) it loops forever once `import math` lands (scratch copy hung >300 s; every other file finishes <1 s). Needs a bounded loop or the whole run wedges.

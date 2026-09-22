@@ -109,4 +109,9 @@ int om_world_is_terminal(const om_world *w) {
     (void)w;
     return 0;
 }
+int om_faction_phase(const om_world *w, int32_t faction_id) {
+    /* STUB */
+    (void)w; (void)faction_id;
+    return 0;
+}
 /* ---- end generated stubs ---- */

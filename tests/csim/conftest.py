@@ -1263,6 +1263,42 @@ def _wrap_out_pair(lib, name):
     _replace(lib, name, call)
 
 
+def _wrap_records(lib, name, struct_type):
+    """(w, max_records=256) -> [record, ...]: the (out, max) reader pair
+    becomes a buffer the adapter owns, so om_tick_read_ability_events(w)
+    returns the list the tests iterate (the _read_records shape)."""
+    if not hasattr(lib, name):
+        return
+    raw = getattr(lib, name)
+
+    def call(w, max_records=256):
+        buf = (struct_type * max_records)()
+        n = raw(w, buf, max_records)
+        return [buf[i] for i in range(n)]
+
+    _replace(lib, name, call)
+
+
+def _wrap_client_snapshot(lib, name, struct_type):
+    """(w) -> view whose .units is units[:unit_count] of the returned
+    om_client_snapshot*, [] when the C side returns NULL (the STUB), so
+    client_data.units iterates either way."""
+    if not hasattr(lib, name):
+        return
+    raw = getattr(lib, name)
+    raw.restype = ctypes.POINTER(struct_type)
+
+    class Snapshot:
+        def __init__(self, p):
+            self.unit_count = p.contents.unit_count if p else 0
+            self.units = list(p.contents.units[:self.unit_count]) if p else []
+
+    def call(w):
+        return Snapshot(raw(w))
+
+    _replace(lib, name, call)
+
+
 def _bind_generated(lib):
     for binder in _GENERATED_BINDERS:
         binder(lib)
@@ -1275,6 +1311,20 @@ def _bind_generated(lib):
 # ctypes.Structure classes, so a typed POINTER() would reject them. The
 # mirrors below serve the wrappers and future tests; STRUCT_C_NAMES maps
 # each Python name to its C typedef.
+
+class OMAbilityEvent(ctypes.Structure):
+    _fields_ = [
+        ("tick", ctypes.c_uint64),
+        ("unit_id", ctypes.c_uint32),
+        ("ability_id", ctypes.c_int32),
+        ("target_x", ctypes.c_double),
+        ("target_y", ctypes.c_double),
+        ("duration", ctypes.c_uint32),
+        ("telegraph_ticks", ctypes.c_uint32),
+        ("cue_id", ctypes.c_uint32),
+        ("radius", ctypes.c_double),
+    ]
+
 
 class OmAbsorptionRecord(ctypes.Structure):
     _fields_ = [
@@ -1363,6 +1413,16 @@ class OmChronicleEntry(ctypes.Structure):
 
 
 om_chronicle_entry = OmChronicleEntry
+
+
+class OmClientUnit(ctypes.Structure):
+    _fields_ = [
+        ("id", ctypes.c_uint32),
+        ("faction_id", ctypes.c_int32),
+    ]
+
+
+om_client_unit = OmClientUnit
 
 
 class OMCompositionRatio(ctypes.Structure):
@@ -1574,7 +1634,18 @@ class OMVec2(ctypes.Structure):
 om_vec2 = OMVec2
 
 
+class OmClientSnapshot(ctypes.Structure):
+    _fields_ = [
+        ("unit_count", ctypes.c_uint32),
+        ("units", OmClientUnit * 256),
+    ]
+
+
+om_client_snapshot = OmClientSnapshot
+
+
 STRUCT_C_NAMES = {
+    "OMAbilityEvent": "om_ability_event",
     "OmAbsorptionRecord": "om_absorption_record",
     "om_absorption_record": "om_absorption_record",
     "OMArchetypeMetadata": "om_archetype_metadata",
@@ -1586,6 +1657,8 @@ STRUCT_C_NAMES = {
     "om_chronicle_cluster": "om_chronicle_cluster",
     "OmChronicleEntry": "om_chronicle_entry",
     "om_chronicle_entry": "om_chronicle_entry",
+    "OmClientUnit": "om_client_unit",
+    "om_client_unit": "om_client_unit",
     "OMCompositionRatio": "om_composition_ratio",
     "om_composition_ratio": "om_composition_ratio",
     "OMDebrief": "om_debrief",
@@ -1613,6 +1686,8 @@ STRUCT_C_NAMES = {
     "om_unit_profile": "om_unit_profile",
     "OMVec2": "om_vec2",
     "om_vec2": "om_vec2",
+    "OmClientSnapshot": "om_client_snapshot",
+    "om_client_snapshot": "om_client_snapshot",
 }
 
 
@@ -1679,6 +1754,7 @@ def _bind_e07(lib):
     _bind(lib, "om_faction_confidence", [W, ctypes.c_int32], ctypes.c_double, ("w", "faction_id"))
     _bind(lib, "om_faction_is_active", [W, ctypes.c_int32], ctypes.c_int, ("w", "faction_id"))
     _bind(lib, "om_faction_mark_conquered_this_tick", [W, ctypes.c_int32], None, ("w", "faction_id"))
+    _bind(lib, "om_faction_phase", [W, ctypes.c_int32], ctypes.c_int, ("w", "faction_id"))
     _bind(lib, "om_faction_remove", [W, ctypes.c_int32], None, ("w", "faction_id"))
     _bind(lib, "om_faction_set_created_tick", [W, ctypes.c_int32, ctypes.c_uint64], None, ("w", "faction_id", "tick"))
     _bind(lib, "om_faction_set_event_window_counts", [W, ctypes.c_int32, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "faction_id", "total_events", "revolts", "attacks", "colonizations"), kw=True)
@@ -2001,7 +2077,8 @@ def _bind_e11(lib):
     _bind(lib, "om_tactical_target_validation_runs_every_tick", [W], ctypes.c_int, ("w",))
     _bind(lib, "om_tactical_telegraph_active", [W, ctypes.c_double, ctypes.c_double], ctypes.c_int, ("w", "x", "y"))
     _bind(lib, "om_tactical_zone_visible_to_enemy", [W, ctypes.c_uint32], ctypes.c_int, ("w", "unit_id"))
-    _bind(lib, "om_tick_read_ability_events", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_tick_read_ability_events", [W, V, ctypes.c_uint32], ctypes.c_uint32, ("w", "out", "max"))
+    _wrap_records(lib, "om_tick_read_ability_events", OMAbilityEvent)
     _bind(lib, "om_unit_ability_active", [W, ctypes.c_uint32], ctypes.c_int, ("w", "unit_id"))
     _bind(lib, "om_unit_ability_cooldown", [W, ctypes.c_uint32], ctypes.c_double, ("w", "unit_id"))
     _bind(lib, "om_unit_alive", [W, ctypes.c_uint32], ctypes.c_int, ("w", "unit_id"))
@@ -2051,6 +2128,8 @@ def _bind_e12(lib):
     P = ctypes.POINTER
     V = ctypes.c_void_p
     W = OMWorldP
+    _bind(lib, "om_client_snapshot_read", [W], V, ("w",))
+    _wrap_client_snapshot(lib, "om_client_snapshot_read", OmClientSnapshot)
     _bind(lib, "om_fog_get_drawn_sensor_circle_radius", [W, ctypes.c_uint32], ctypes.c_double, ("w", "unit"))
     _bind(lib, "om_fog_get_treatment_at", [W, ctypes.c_double, ctypes.c_double, ctypes.c_uint32], ctypes.c_int, ("w", "x", "y", "layer"))
     _bind(lib, "om_map_add_hazard_zone", [W, ctypes.c_double, ctypes.c_double, ctypes.c_double], ctypes.c_uint32, ("w", "x", "y", "p2"))
@@ -2117,8 +2196,10 @@ def _bind_e13(lib):
     _bind(lib, "om_navmesh_is_path_straightened", [W], ctypes.c_int, ("w",))
     _bind(lib, "om_renderer_interpolate_facing", [W, ctypes.c_uint32, ctypes.c_double], ctypes.c_double, ("w", "p0", "p1"))
     _bind(lib, "om_renderer_interpolate_position", [W, ctypes.c_uint32, ctypes.c_double, P(ctypes.c_double), P(ctypes.c_double)], ctypes.c_int, ("w", "p0", "p1", "p2", "p3"))
+    _wrap_out_pair(lib, "om_renderer_interpolate_position")
     _bind(lib, "om_replay_get_command_count_at_tick", [W, ctypes.c_uint64], ctypes.c_uint32, ("w", "p0"))
     _bind(lib, "om_steering_get_obstacle_repulsion", [W, ctypes.c_uint32, P(ctypes.c_double), P(ctypes.c_double)], ctypes.c_int, ("w", "p0", "p1", "p2"))
+    _wrap_out_pair(lib, "om_steering_get_obstacle_repulsion")
     _bind(lib, "om_steering_get_sweep_angle_at", [W, ctypes.c_uint32], ctypes.c_double, ("w", "p0"))
     _bind(lib, "om_steering_get_sweep_angle_count", [W], ctypes.c_uint32, ("w",))
     _bind(lib, "om_unit_clear_orders", [W, ctypes.c_uint32], None, ("w", "p0"))
@@ -2126,6 +2207,7 @@ def _bind_e13(lib):
     _bind(lib, "om_unit_engage", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "p0", "p1"))
     _bind(lib, "om_unit_get_current_speed", [W, ctypes.c_uint32], ctypes.c_double, ("w", "p0"))
     _bind(lib, "om_unit_get_destination", [W, ctypes.c_uint32, P(ctypes.c_double), P(ctypes.c_double)], ctypes.c_int, ("w", "p0", "p1", "p2"))
+    _wrap_out_pair(lib, "om_unit_get_destination")
     _bind(lib, "om_unit_get_facing", [W, ctypes.c_uint32], ctypes.c_double, ("w", "p0"))
     _bind(lib, "om_unit_get_order_kind", [W, ctypes.c_uint32], ctypes.c_int, ("w", "p0"))
     _bind(lib, "om_unit_has_active_buff", [W, ctypes.c_uint32, ctypes.c_char_p], ctypes.c_int, ("w", "p0", "p1"))

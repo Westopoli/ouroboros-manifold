@@ -75,7 +75,13 @@ WRAPPERS = {
     "ids_list_optional_target": "_wrap_ids_list_optional_target",
     "optional_trailing_null": "_wrap_optional_trailing_null",
     "out_pair": "_wrap_out_pair",
+    "records": "_wrap_records",
+    "client_snapshot": "_wrap_client_snapshot",
 }
+# Adapters that own a buffer of the row's struct: the emitted call also passes
+# that struct's conftest mirror (the first struct pointer in restype, then
+# params, om_world excluded), and a row without one is blocked.
+STRUCT_WRAPPERS = {"records", "client_snapshot"}
 
 
 # ---- names and types ----
@@ -338,6 +344,15 @@ def sanitize_param_names(row: dict) -> tuple[list[str], list[dict]]:
     return names, renamed
 
 
+def wrapper_mirror(row: dict) -> str | None:
+    for ctype in [row["restype"], *(p["ctype"] for p in row["params"])]:
+        base, _const, depth = parse_ctype(ctype)
+        base = c_base(base)
+        if depth == 1 and base != "om_world" and base in STRUCT_PY_NAMES:
+            return STRUCT_PY_NAMES[base]
+    return None
+
+
 def resolve_symbols(table: dict, types: Types) -> tuple[list[dict], list[dict], list[dict]]:
     ok: list[dict] = []
     blocked: list[dict] = []
@@ -348,6 +363,9 @@ def resolve_symbols(table: dict, types: Types) -> tuple[list[dict], list[dict], 
         py_ret = ctypes_for(row["restype"], types)
         if py_ret is None:
             reason = f"restype {row['restype']} has no C definition"
+        mirror = wrapper_mirror(row) if row.get("wrapper") in STRUCT_WRAPPERS else None
+        if row.get("wrapper") in STRUCT_WRAPPERS and mirror is None:
+            reason = reason or f"wrapper {row['wrapper']} needs a [[structs]] row for its struct pointer"
         names, renamed = sanitize_param_names(row)
         if len(set(names)) != len(names):
             reason = reason or f"kwargs row repeats a parameter name: {names}"
@@ -369,7 +387,7 @@ def resolve_symbols(table: dict, types: Types) -> tuple[list[dict], list[dict], 
             "c_ret": c_ret, "py_ret": py_ret, "params": params,
             "ret_default": ret_default(row["restype"], types),
             "epics": sorted(row["epics"], key=epic_num),
-            "kwargs": row.get("kwargs"), "wrapper": row.get("wrapper"),
+            "kwargs": row.get("kwargs"), "wrapper": row.get("wrapper"), "wrapper_mirror": mirror,
         })
     return ok, blocked, renamed_all
 
@@ -487,7 +505,8 @@ def render_conftest_region(structs: list[dict], symbols: list[dict], existing_mi
             out.append(render_bind_line(sym))
             bindings += 1
             if sym.get("wrapper"):
-                out.append(f'    {WRAPPERS[sym["wrapper"]]}(lib, "{sym["name"]}")')
+                mirror = f', {sym["wrapper_mirror"]}' if sym.get("wrapper_mirror") else ""
+                out.append(f'    {WRAPPERS[sym["wrapper"]]}(lib, "{sym["name"]}"{mirror})')
         out.append(f"    lib._{tag}_bound = True")
         out.append("")
         out.append("")

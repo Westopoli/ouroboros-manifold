@@ -362,3 +362,65 @@ def test_check_mode_exits_nonzero_when_stale(tmp_path):
     emit(project)
     fresh = run(project, "--check")
     assert fresh.returncode == 0, fresh.stdout + fresh.stderr
+
+
+STRUCT_WRAPPER_ROWS = """
+[[symbols]]
+name = "om_tick_read_things"
+module = "generational.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "om_world*" }, { name = "out", ctype = "om_thing*" }, { name = "max", ctype = "uint32_t" }]
+epics = ["E-08"]
+confidence = "likely"
+wrapper = "records"
+note = ""
+
+[[symbols]]
+name = "om_view_read"
+module = "generational.c"
+restype = "om_view*"
+params = [{ name = "w", ctype = "const om_world*" }]
+epics = ["E-08"]
+confidence = "likely"
+wrapper = "client_snapshot"
+note = ""
+
+[[symbols]]
+name = "om_tick_read_unknown"
+module = "generational.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "om_world*" }, { name = "out", ctype = "om_only_header*" }, { name = "max", ctype = "uint32_t" }]
+epics = ["E-08"]
+confidence = "likely"
+wrapper = "records"
+note = ""
+
+[[structs]]
+name = "OMThing"
+source_test = "tests/csim/test_fixture.py"
+fields = [{ name = "id", ctype = "uint32_t" }]
+
+[[structs]]
+name = "om_view"
+source_test = "tests/csim/test_fixture.py"
+fields = [{ name = "unit_count", ctype = "uint32_t" }, { name = "units", ctype = "om_thing[4]" }]
+"""
+
+
+def test_struct_wrappers_pass_the_mirror_and_block_without_one(tmp_path):
+    project = make_project(tmp_path, TABLE + STRUCT_WRAPPER_ROWS)
+    header_path = project / "csrc" / "ouroboros_sim.h"
+    header_path.write_text(HEADER.replace(
+        "} om_existing;", "} om_existing;\n\ntypedef struct om_only_header {\n    uint32_t z;\n} om_only_header;"))
+    report = emit(project)
+    conftest = (project / "tests" / "csim" / "conftest.py").read_text()
+    header = (project / "csrc" / "ouroboros_sim.h").read_text()
+    assert '_wrap_records(lib, "om_tick_read_things", OMThing)' in conftest
+    assert '_wrap_client_snapshot(lib, "om_view_read", OmView)' in conftest
+    assert '_wrap_out_pair(lib, "om_unit_get_pos")' in conftest, "a scalar-only adapter still gets no mirror"
+    assert "typedef struct om_view {\n    uint32_t unit_count;\n    om_thing units[4];\n} om_view;" in header
+    assert '("units", OMThing * 4)' in conftest
+    blocked = {b["name"]: b["reason"] for b in report["blocked"]}
+    assert "om_tick_read_unknown" in blocked, "a records row whose struct has no table mirror is blocked, not guessed"
+    assert "wrapper records" in blocked["om_tick_read_unknown"]
+    assert "om_tick_read_unknown" not in conftest

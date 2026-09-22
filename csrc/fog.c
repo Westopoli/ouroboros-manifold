@@ -280,4 +280,9 @@ double om_zone_sample_interference(const om_world *w, double x, double y, uint32
     (void)w; (void)x; (void)y; (void)layer;
     return 0.0;
 }
+om_client_snapshot *om_client_snapshot_read(const om_world *w) {
+    /* STUB */
+    (void)w;
+    return NULL;
+}
 /* ---- end generated stubs ---- */
