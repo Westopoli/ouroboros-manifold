@@ -36,3 +36,7 @@ Every one of these was built as the simplest thing that shows the question, per 
 ## Next step
 
 Pass-1 screenshots are in `pass1/`. The mockup awaits your look.
+
+## Fresh-eyes review (2026-09-22, Sonnet reviewer, screenshots only)
+
+Verdict: fix first. The camera clamp bounds the camera centre, not the viewport's half extent, so at the east bound half the screen is flat void with a razor edge at the centre line; the checklist's "stops cleanly" does not match `at_bound.png`. The checklist's BOX-X row claims a six-unit box selection while the committed `boxed.png` shows four, which has to be reconciled before the report can be trusted. Promote Q3 (narrowing changes the selection, not the focus) from held to yes: `selected_mixed.png` and `narrowed.png` already prove it. Nits: no shot shows layer 2 focused (add a screenshot after the existing Tab key); the layer-2 accent is close in hue to the enemy colour; a mid-drag frame stays held because the driver's drag verb is atomic. The TAB-X and EDGE-X oracle revisions are sound; GROUP-4 headless and a cross-run comparison are the live oracles for those faults.
