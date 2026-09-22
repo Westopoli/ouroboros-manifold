@@ -94,4 +94,10 @@ Reading these together with §1: for the fast/back-to-back cards (the case the b
 - `build.py` has no pre-call token counter to "reuse" for prompt assembly (§2); `OllamaReply` only carries post-call `prompt_eval_count`/`eval_count`. The chars/4 estimate in this probe's own tool is a labelled approximation, not a reproduction.
 - File line numbers the brief cited in `build.py` (691-693 worktree, 747-756 baseline, 870-877 prompt, 886-888 first model call) were checked against the current file and match exactly — no drift.
 
-Design consequences are left for the design lane review.
+## Design consequences
+
+Filled by the design lane, 2026-09-21.
+
+1. `keep_alive: -1` is sent on every worker call (one line in `ollama_client.py`); prefetch is dropped from the cascade (2.2 s of prep against a 60 s dispatcher floor).
+2. The dispatcher's `sleep 60` becomes the next target after keep-alive, not before: an event-driven loop, later.
+3. Telemetry before projections: every candidate row records its start and end timestamps and the reply's `load_duration`, `prompt_eval_count` and `eval_count`, so the next throughput claim is measured, not inferred from `cron.log`. Joins the cascade's first wave.

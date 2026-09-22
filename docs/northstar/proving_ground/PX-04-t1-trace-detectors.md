@@ -38,3 +38,12 @@ Each detector: **fires on its own planted build, silent on the clean build, sile
 ## Trace-schema finding
 
 Neither detector needed anything the trace API doesn't already expose (tick, region_idx, tier, the four fields, the drift sub-struct's `*_osc_delta` fields). The one real gap found is not in the schema, it's in what the schema's own `tier` field means once a bug is running: it reflects LIVE state, not the fixture's original intent, so any future trace-based detector that wants to classify rows by "what kind of region is this" must carry its own ground truth rather than trusting `row.tier` — noted here for the design lane, not fixed in the trace API (out of scope; `csrc/` is untouched by this probe).
+
+## Design consequences
+
+Filled by the design lane, 2026-09-21.
+
+1. T1 detectors over `om_trace_row` are an oracle class from rung P0, as designed; the two built here join the P0 gate with their planted builds as controls.
+2. R11 (bug id 0 means both "no bug" and `OSC_AS_LEVEL`) is fixed before any detector control runs on a debug build; until then the clean baseline is the release library.
+3. Detector constants come from one source: the oscillator periods (15 and 18 ticks, ALG-01) are read from `algorithms.md`'s constants table by the test template, never hard-coded in a detector; the tension false positive was a constant copied from the wrong field.
+4. A detector's gate condition must be shown non-vacuous on the clean build (a row it could match exists) before its planted control counts; the tier gate that was silent on both builds is the standing example.

@@ -43,3 +43,12 @@ Check 2's combined pytest invocation: 33.13s before + 33.78s after = **66.9s** f
 ## Pass criteria, against the brief
 
 (a) rejected, 204b1 named — **yes**, alongside two additional legitimate-unblock captures (limitation 3). (b), (c) accepted — **yes**. (d) rejected — **yes**, via synthetic fixture per the Build section's own instruction, and the same fixture separately proves the real mechanism (check 1 blind, check 2 catches).
+
+## Design consequences
+
+Filled by the design lane, 2026-09-21.
+
+1. The parent-patch fence is both checks: function ownership, then scope capture over every other card's acceptance.
+2. A capture is classified mechanically: if the captured test's owning symbol still carries a STUB marker at the time of the patch, the patch did that card's job (violation, as 204b1 in `a493cfd`); if the owning symbol is implemented, the patch unblocked a downstream card (allowed, as 204a3 here). The two captures the probe could not separate split cleanly under this rule; it is written into the fence, with the a493cfd replay as its positive control and the 204a3 captures as its negative.
+3. Include-only diffs have no owner and are allowed only for standard headers; a `"..."` include is rejected (audit item 5).
+4. Check 2 runs in the CPU slot (67 s here); the acceptance runner must filter cards by project and treat a pytest abort as an error, never as 0 failed (the false 0/0 the probe found is the same class as PX-03's dead-input sessions).
