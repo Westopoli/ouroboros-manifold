@@ -51,3 +51,7 @@ Built the simplest thing that shows each question; no candidate was picked silen
 ## Next step
 
 Pass-1 screenshots are in `pass1/`. The mockup awaits Westley's look.
+
+## Fresh-eyes review (2026-09-22, Sonnet reviewer, screenshots only)
+
+Verdict: fix first. The toy sim's checks are green, but the render and the camera framing fail three of the epic's "obviously working" claims on direct inspection. Blockers: the artillery silhouette renders as the smallest blob on screen although its kit size is the longest (a mesh-scale defect the size-only check SIL-3 cannot catch); mid-fight and end-of-fight shots are identical with no hit visible; the flank shot clips the Bombards at the frame edge before contact; the death pair is indistinguishable at that camera height. Should-fix: the support silhouette reads as a plain disc; the two Strike squads are indistinguishable at the lineup camera; black void bars at the map-zoom edges; low-contrast HUD on the first frame; the facing shots were never committed. Held for Westley: with the table's numbers (Bombard sensor 300 wu, range 1,200 wu, area 150 wu) four Raiders funnelled single-file by the obstacle lose to four Bombards, the opposite of the E-11 paragraph; the fix pass spreads the approach first and escalates the sensor-versus-range interaction as a rule question if the Bombards still win.
