@@ -86,6 +86,33 @@ def is_stub_body(body_text: str) -> bool:
     return re.search(r"\bSTUB\b", body_text) is not None
 
 
+def function_signature(text: str, name: str) -> str | None:
+    """The verbatim `ret name(params)` text of a top-level definition of
+    `name` in `text` (up to, not including, the opening `{`), or None if it
+    is not defined there."""
+    pattern = re.compile(
+        r"^[ \t]*(?:static\s+|inline\s+)*[A-Za-z_][\w\s\*]*?\b" + re.escape(name) + r"\s*\([^;{}]*\)(?=\s*\{)",
+        re.M,
+    )
+    m = pattern.search(text)
+    return m.group(0) if m else None
+
+
+def _first_param(signature: str) -> str | None:
+    m = re.search(r"\(([^)]*)\)\s*$", signature)
+    if not m:
+        return None
+    params = m.group(1).split(",")
+    return params[0] if params else None
+
+
+def takes_nonconst_world_first(signature: str) -> bool:
+    """True if `signature`'s first parameter is a plain (non-const)
+    `om_world *` -- a function that can structurally mutate the world."""
+    p = _first_param(signature)
+    return p is not None and re.match(r"\s*om_world\s*\*", p) is not None
+
+
 def all_defined_symbols(text: str) -> list[str]:
     return [m.group(1) for m in _C_TOPLEVEL_DEF.finditer(text)]
 
@@ -304,6 +331,7 @@ def lint(card_path: Path, project: Path, queue: Path) -> tuple[list[Finding], li
     findings: list[Finding] = []
     allowed_files = set(_split_list(card.get("allowed_files", "")))
     snippet_file = card.get("snippet_file", "")
+    snippet_files = _split_list(snippet_file)
     snippet_symbols = _split_list(card.get("snippet_symbol", ""))
 
     symbols, bad_node_ids = collect_acceptance_symbols(card, project)
@@ -328,16 +356,22 @@ def lint(card_path: Path, project: Path, queue: Path) -> tuple[list[Finding], li
             f"expected_lines {expected_lines} > max {MAX_EXPECTED_LINES}",
         ))
 
-    # (c) snippet_symbol not defined in snippet_file
-    snippet_path = project / snippet_file if snippet_file else None
-    snippet_text = ""
-    if snippet_path is not None:
-        if snippet_path.is_file():
-            snippet_text = snippet_path.read_text()
+    # (c) snippet_symbol not defined in any listed snippet_file. snippet_file
+    # may name more than one file, comma-separated like allowed_files, when a
+    # card's snippet_symbols genuinely live in different .c files (e.g. a new
+    # step function in one file plus a narrow deferral change to an existing
+    # function in another) -- a single file is still the common case and
+    # works exactly as before.
+    snippet_texts: dict[str, str] = {}
+    for sf in snippet_files:
+        sp = project / sf
+        if sp.is_file():
+            snippet_texts[sf] = sp.read_text()
         else:
-            findings.append(Finding("FAIL", "SNIPPET_FILE_MISSING", f"snippet_file does not exist: {snippet_file}"))
+            findings.append(Finding("FAIL", "MISSING_SNIPPET_FILE", f"snippet_file does not exist: {sf}"))
+    snippet_text = "\n".join(snippet_texts.values())  # combined, for the CONST_ONLY/WARN scans below
     for sym in snippet_symbols:
-        if snippet_text and find_function_span(snippet_text, sym) is None:
+        if snippet_texts and not any(find_function_span(t, sym) is not None for t in snippet_texts.values()):
             findings.append(Finding(
                 "FAIL", "SNIPPET_SYMBOL_UNDEFINED",
                 f"snippet_symbol {sym!r} is not defined in {snippet_file}",
@@ -367,6 +401,29 @@ def lint(card_path: Path, project: Path, queue: Path) -> tuple[list[Finding], li
                     "FAIL", "STUB_OUTSIDE_ALLOWED",
                     f"{sym} is a STUB in {d['file']}, which is outside allowed_files {sorted(allowed_files)}",
                 ))
+
+    # (g) CONST_ONLY: the card's snippet_file defines no function that can
+    # mutate the world (every top-level definition takes `const om_world *`
+    # first, or no om_world* at all), yet the acceptance tests drive
+    # om_world_step and assert on the state it produces. This is the 205a
+    # class of defect: the card's entire writable surface is a read-back, so
+    # nothing in the file it owns can ever produce the mutated state its own
+    # acceptance asserts on. Checked over the whole file, not just the
+    # declared snippet_symbol(s) -- a card whose file also defines a real
+    # mutating step function (e.g. agent.c's om_step_decisions alongside its
+    # const om_faction_candidates reader) is a normal, valid shape.
+    if snippet_symbols and snippet_text and "om_world_step" in symbols:
+        file_symbols = all_defined_symbols(snippet_text)
+        signatures = [function_signature(snippet_text, sym) for sym in file_symbols]
+        has_mutator = any(sig and takes_nonconst_world_first(sig) for sig in signatures if sig)
+        if not has_mutator:
+            findings.append(Finding(
+                "FAIL", "CONST_ONLY",
+                f"{snippet_file} defines no function that can mutate the world "
+                f"(every definition takes `const om_world *` or no om_world* at "
+                f"all), but acceptance calls om_world_step and asserts on world "
+                f"state afterwards -- snippet_symbol {snippet_symbols}",
+            ))
 
     # warn: a stub in the card's own snippet_file that this card does not name
     if snippet_text:

@@ -36,6 +36,11 @@
 #include <stddef.h>
 #include <string.h>
 
+void om_step_collisions(om_world *w) {
+    /* STUB */
+    (void)w;
+}
+
 uint32_t om_tick_collisions(const om_world *w, om_collision *out, uint32_t max) {
     /* STUB */
     (void)w; (void)out; (void)max;

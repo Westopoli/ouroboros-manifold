@@ -254,6 +254,70 @@ def test_rule_f_spans_another_card(tmp_path):
     assert "OTHER-card" in proc.stdout
 
 
+def _write_raw_card(tmp_path: Path, project: Path, *, snippet_file: str, snippet_symbol: str,
+                     acceptance: list[str]) -> Path:
+    card = tmp_path / "card.md"
+    lines = ["---", f"project: {project}", "acceptance:"]
+    lines += [f'  - "{a}"' for a in acceptance]
+    lines += [
+        f'allowed_files: "{snippet_file}"',
+        f"snippet_file: {snippet_file}",
+        f'snippet_symbol: "{snippet_symbol}"',
+        "expected_lines: 40",
+        "---",
+        "",
+        "## Brief for DeepSeek",
+        "Synthetic card, not real.",
+        "",
+    ]
+    card.write_text("\n".join(lines))
+    return card
+
+
+def test_rule_g_const_only_symbol_with_world_step_fails(tmp_path):
+    # The 205a class of defect: the card's snippet_file (elsewhere.c) defines
+    # only a `const om_world *` read-back (om_pending_telegraphs) and nothing
+    # that can mutate the world, but acceptance drives om_world_step and
+    # expects mutated world state -- exactly collision.c's real shape before
+    # this fix (om_tick_collisions was its only exported symbol).
+    project = _init_project(tmp_path)
+    (project / "tests" / "csim" / "test_widgets.py").write_text(
+        TEST_FILE + "\n\n"
+        "def test_R_001_03_reads_stub(lib, world_factory):\n"
+        "    w = world_factory()\n"
+        "    lib.om_pending_telegraphs(w, None, 0)\n"
+    )
+    card = _write_raw_card(
+        tmp_path, project, snippet_file="csrc/elsewhere.c", snippet_symbol="om_pending_telegraphs",
+        acceptance=[
+            f"{sys.executable} -m pytest -q "
+            "tests/csim/test_widgets.py::test_R_001_02_other "
+            "tests/csim/test_widgets.py::test_R_001_03_reads_stub"
+        ],
+    )
+    proc = _run(card)
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert "CONST_ONLY" in proc.stdout
+
+
+def test_rule_g_mutating_symbol_with_world_step_passes(tmp_path):
+    # 204a3's shape: the snippet_symbol (om_world_step itself here, standing
+    # in for a real mutating step function) takes a non-const om_world *, so
+    # CONST_ONLY must not fire even though acceptance also drives om_world_step.
+    project = _init_project(tmp_path)
+    card = _write_raw_card(
+        tmp_path, project, snippet_file="csrc/live.c", snippet_symbol="om_world_step",
+        acceptance=[
+            f"{sys.executable} -m pytest -q "
+            "tests/csim/test_widgets.py::test_R_001_01_basic "
+            "tests/csim/test_widgets.py::test_R_001_02_other"
+        ],
+    )
+    proc = _run(card)
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert "CONST_ONLY" not in proc.stdout
+
+
 def test_warn_own_file_stub_not_named_does_not_fail(tmp_path):
     project = _init_project(tmp_path)
     card = _write_card(tmp_path, project)  # agent.c has an unnamed stub helper

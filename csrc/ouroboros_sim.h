@@ -481,8 +481,11 @@ typedef enum {
     OM_BUG_E05_SLOW                  = 109, /* deliberate slowdown for the scale gate */
     OM_BUG_SAME_TICK_REDECLARE       = 110, /* 3d re-declares against a target this faction
                                               * already resolved an attack against this tick */
-    OM_BUG_INJECT_IGNORED            = 111  /* 3d wipes an om_intent_inject entry and
+    OM_BUG_INJECT_IGNORED            = 111, /* 3d wipes an om_intent_inject entry and
                                               * recomputes the faction's decision naturally */
+    OM_BUG_COLLISION_AFTER_RESOLVE   = 112  /* the collision step (3f-minus, S-039) runs
+                                              * after om_step_resolve instead of before it,
+                                              * so 3f double-resolves the colliding intents */
 } om_bug_e05;
 #endif
 

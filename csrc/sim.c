@@ -127,7 +127,19 @@ uint64_t om_world_step(om_world *w) {
             om_step_decisions(w);          /* 3d */
             om_step_reinforce(w);          /* 3e */
         }
-        om_step_resolve(w);            /* 3f */
+#ifdef OM_DEBUG_INJECT
+        if (w->inject == OM_BUG_COLLISION_AFTER_RESOLVE) {
+            /* Fault: the collision step runs after 3f resolves individual
+             * intents, so 3f has already double-resolved the colliding
+             * ones before the collision step ever groups them. */
+            om_step_resolve(w);        /* 3f */
+            om_step_collisions(w);
+        } else
+#endif
+        {
+            om_step_collisions(w);     /* S-039: grouped-target resolution, before 3f */
+            om_step_resolve(w);        /* 3f */
+        }
     }
 
     /* Step 4: Friction & Admin Revolts (E-05) */

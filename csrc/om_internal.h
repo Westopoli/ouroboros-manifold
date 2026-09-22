@@ -87,11 +87,18 @@ struct om_world {
     uint32_t           event_queue_n;
 };
 
-/* Internal step hooks */
+/* Internal step hooks. om_step_collisions runs between om_step_reinforce
+ * (3e) and om_step_resolve (3f): it groups this tick's pending intents in
+ * w->decisions[] by target, resolves every target with two or more intents
+ * (ALG-23/24, S-039), writes w->collisions[]/w->collisions_n, and removes
+ * the colliding intents from w->decisions[] so om_step_resolve never
+ * double-resolves them. See docs/bible/epics/E-05-faction-agents-and-conflict.md
+ * R-039-01..06 and csrc/sim.c's tick-order wiring in om_world_step. */
 void om_faction_step_budget(om_world *w);
 void om_step_telegraphs(om_world *w);
 void om_step_decisions(om_world *w);
 void om_step_reinforce(om_world *w);
+void om_step_collisions(om_world *w);
 void om_step_resolve(om_world *w);
 void om_step_friction(om_world *w);
 void om_step_admin_revolts(om_world *w);

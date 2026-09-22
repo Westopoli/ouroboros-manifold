@@ -402,6 +402,7 @@ class OMBugE05:
     E05_SLOW = 109
     SAME_TICK_REDECLARE = 110
     INJECT_IGNORED = 111
+    COLLISION_AFTER_RESOLVE = 112
 
 
 class OmCandidate(ctypes.Structure):
