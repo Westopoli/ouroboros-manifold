@@ -4,8 +4,9 @@
   "water_is": "surface",
   "terrain": [
     {"when": {"obstacle": [0.6, 1.0]}, "piece": "rock",  "density": 0.8, "mesh": "prism", "size": [120, 200], "color": "#8a7f70"},
-    {"when": {"cover": [0.4, 1.0], "zone": "zone_a"}, "piece": "cypress", "density": 1.0, "mesh": "cone_on_stick", "size": [60, 110], "color": "#2f7a2f"},
-    {"when": {"zone": "zone_b", "district": 0}, "piece": "wheat_row", "density": 0.3, "mesh": "flat_box", "size": [200, 60], "color": "#e0c84a"}
+    {"when": {"cover": [0.2, 1.0], "zone": "zone_a"}, "piece": "cypress", "density": 0.6, "mesh": "cone_on_stick", "size": [60, 110], "color": "#2f7a2f"},
+    {"when": {"zone": "zone_b", "district": 0}, "piece": "wheat_row", "density": 0.05, "mesh": "flat_box", "size": [200, 60], "color": "#e0c84a"},
+    {"when": {"interference": [0.2, 1.0]}, "piece": "warning_cairn", "density": 0.5, "mesh": "camp_ring", "size": [50, 40], "color": "#c94f3f"}
   ],
   "city": [
     {"when": {"district": 1}, "piece": "hut",    "density": 0.25, "mesh": "box",      "size": [60, 40],  "color": "#c86a3c"},

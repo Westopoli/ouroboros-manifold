@@ -4,8 +4,9 @@
   "water_is": "void",
   "terrain": [
     {"when": {"obstacle": [0.6, 1.0]}, "piece": "ore_chunk",  "density": 0.8, "mesh": "ore_chunk", "size": [120, 200], "color": "#6e7580"},
-    {"when": {"cover": [0.4, 1.0], "zone": "zone_a"}, "piece": "derelict_hulk", "density": 1.0, "mesh": "derelict", "size": [60, 110], "color": "#4a4640"},
-    {"when": {"zone": "zone_b", "district": 0}, "piece": "ore_vein", "density": 0.3, "mesh": "flat_box", "size": [200, 60], "color": "#7c8a9c"}
+    {"when": {"cover": [0.2, 1.0], "zone": "zone_a"}, "piece": "derelict_hulk", "density": 0.6, "mesh": "derelict", "size": [60, 110], "color": "#4a4640"},
+    {"when": {"zone": "zone_b", "district": 0}, "piece": "ore_vein", "density": 0.05, "mesh": "flat_box", "size": [200, 60], "color": "#7c8a9c"},
+    {"when": {"interference": [0.2, 1.0]}, "piece": "signal_buoy", "density": 0.5, "mesh": "hab_ring", "size": [50, 40], "color": "#e0523f"}
   ],
   "city": [
     {"when": {"district": 1}, "piece": "hab_pod",     "density": 0.25, "mesh": "hab_pod",     "size": [60, 40],  "color": "#8a94a0"},
