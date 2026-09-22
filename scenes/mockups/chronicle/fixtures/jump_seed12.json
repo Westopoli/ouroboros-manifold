@@ -7,7 +7,8 @@
     "total_entries": 6,
     "faction_names": {
       "f_ostrel": "The Ostrel Concord",
-      "f_kaine": "The Kaine Dominion"
+      "f_kaine": "The Kaine Dominion",
+      "f_dray": "The Dray League"
     },
     "ownership_timeline": [
       {
@@ -380,99 +381,75 @@
       },
       {
         "id": "t00",
-        "x": 450.9,
-        "y": 164.6,
+        "x": 560.0,
+        "y": 0.0,
         "owner": "f_kaine"
       },
       {
         "id": "t01",
-        "x": 353.6,
-        "y": 324.6,
+        "x": 591.7,
+        "y": 183.0,
         "owner": "f_ostrel"
       },
       {
         "id": "t02",
-        "x": 202.5,
-        "y": 435.2,
+        "x": 280.0,
+        "y": 259.8,
         "owner": ""
       },
       {
         "id": "t03",
-        "x": 20.5,
-        "y": 479.6,
+        "x": 0.0,
+        "y": 234.0,
         "owner": "f_kaine"
       },
       {
         "id": "t04",
-        "x": -164.6,
-        "y": 450.9,
+        "x": -280.0,
+        "y": 259.8,
         "owner": "f_ostrel"
       },
       {
         "id": "t05",
-        "x": -324.6,
-        "y": 353.6,
-        "owner": "f_kaine"
+        "x": -591.7,
+        "y": 183.0,
+        "owner": "f_dray"
       },
       {
         "id": "t06",
-        "x": -435.2,
-        "y": 202.5,
-        "owner": "f_ostrel"
+        "x": -560.0,
+        "y": 0.0,
+        "owner": ""
       },
       {
         "id": "t07",
-        "x": -479.6,
-        "y": 20.5,
-        "owner": ""
+        "x": -378.3,
+        "y": -117.0,
+        "owner": "f_ostrel"
       },
       {
         "id": "t08",
-        "x": -450.9,
-        "y": -164.6,
-        "owner": "f_kaine"
+        "x": -280.0,
+        "y": -259.8,
+        "owner": "f_dray"
       },
       {
         "id": "t09",
-        "x": -353.6,
-        "y": -324.6,
-        "owner": "f_ostrel"
+        "x": -0.0,
+        "y": -366.0,
+        "owner": "f_kaine"
       },
       {
         "id": "t10",
-        "x": -202.5,
-        "y": -435.2,
-        "owner": "f_kaine"
-      },
-      {
-        "id": "t11",
-        "x": -20.5,
-        "y": -479.6,
-        "owner": "f_ostrel"
-      },
-      {
-        "id": "t12",
-        "x": 164.6,
-        "y": -450.9,
+        "x": 280.0,
+        "y": -259.8,
         "owner": ""
       },
       {
-        "id": "t13",
-        "x": 324.6,
-        "y": -353.6,
-        "owner": "f_kaine"
-      },
-      {
-        "id": "t14",
-        "x": 435.2,
-        "y": -202.5,
-        "owner": "f_ostrel"
-      },
-      {
-        "id": "t15",
-        "x": 479.6,
-        "y": -20.5,
-        "owner": "f_kaine"
+        "id": "t11",
+        "x": 378.3,
+        "y": -117.0,
+        "owner": "f_dray"
       }
     ],
     "edges": [
@@ -546,47 +523,31 @@
       ],
       [
         "t11",
-        "t12"
-      ],
-      [
-        "t12",
-        "t13"
-      ],
-      [
-        "t13",
-        "t14"
-      ],
-      [
-        "t14",
-        "t15"
-      ],
-      [
-        "t15",
         "t00"
       ],
       [
         "r_varlow",
         "t00"
+      ],
+      [
+        "r_ambervale",
+        "t02"
+      ],
+      [
+        "r_greymoor",
+        "t04"
       ],
       [
         "r_saltmere",
-        "t03"
-      ],
-      [
-        "r_varlow",
         "t06"
       ],
       [
-        "r_saltmere",
-        "t09"
+        "r_farrow",
+        "t08"
       ],
       [
-        "r_varlow",
-        "t12"
-      ],
-      [
-        "r_saltmere",
-        "t15"
+        "r_windle",
+        "t10"
       ]
     ]
   },

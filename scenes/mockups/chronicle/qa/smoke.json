@@ -9,7 +9,7 @@
   ["call", "qa_tick", 400],
   ["state", "printed"],
   ["call", "qa_click_entry", 1],
-  ["wait_frames", 2],
+  ["wait_frames", 6],
   ["screenshot", "expanded"],
   ["state", "expanded"],
   ["wait_frames", 60],

@@ -17,6 +17,12 @@ var _rest_x_known: bool = false
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
+	var panel_bg := ColorRect.new()
+	panel_bg.color = Color(0.0627451, 0.0784314, 0.101961, 1)
+	panel_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	panel_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(panel_bg)
+
 	_scroll_container = ScrollContainer.new()
 	_scroll_container.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_scroll_container.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -36,7 +42,7 @@ func _ready() -> void:
 	add_child(_expansion)
 
 	var bg := ColorRect.new()
-	bg.color = Color(0.04, 0.05, 0.07, 0.94)
+	bg.color = Color(0.04, 0.05, 0.07, 1.0)
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_expansion.add_child(bg)

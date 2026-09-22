@@ -2,6 +2,7 @@ extends Node3D
 
 const QaPlants := preload("res://scenes/mockups/_shared/qa_plants.gd")
 const MORPH_TICKS := 40
+const SALIENCE_TICKS := 80
 const ORBIT_RATE := 0.0006
 const STARFIELD_SEED := 20260922
 
@@ -69,6 +70,36 @@ func set_data(systems: Array, edges: Array) -> void:
 		_ring_materials[sid] = rmat
 
 	_build_edges(edges)
+	_build_polar_grid()
+
+
+func _build_polar_grid() -> void:
+	var im := ImmediateMesh.new()
+	var mi := MeshInstance3D.new()
+	mi.mesh = im
+	mi.position.y = -1.0
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.35, 0.42, 0.55, 0.14)
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mi.material_override = mat
+	im.surface_begin(Mesh.PRIMITIVE_LINES)
+	var rings := [200.0, 400.0, 600.0, 800.0]
+	var segments := 48
+	for r in rings:
+		for i in range(segments):
+			var a0 := TAU * float(i) / float(segments)
+			var a1 := TAU * float(i + 1) / float(segments)
+			im.surface_add_vertex(Vector3(r * cos(a0), 0.0, r * sin(a0)))
+			im.surface_add_vertex(Vector3(r * cos(a1), 0.0, r * sin(a1)))
+	var spokes := 12
+	var max_r: float = rings[rings.size() - 1]
+	for i in range(spokes):
+		var ang := TAU * float(i) / float(spokes)
+		im.surface_add_vertex(Vector3(0.0, 0.0, 0.0))
+		im.surface_add_vertex(Vector3(max_r * cos(ang), 0.0, max_r * sin(ang)))
+	im.surface_end()
+	_orbit_root.add_child(mi)
 
 
 func _build_edges(edges: Array) -> void:
@@ -100,18 +131,19 @@ func _build_starfield() -> void:
 	var quad := QuadMesh.new()
 	quad.size = Vector2(2.5, 2.5)
 	mm.mesh = quad
-	var n := 260
+	var n := 900
 	mm.instance_count = n
 	var rng := RandomNumberGenerator.new()
 	rng.seed = STARFIELD_SEED
 	for i in range(n):
-		var r := rng.randf_range(500.0, 1500.0)
+		var r := rng.randf_range(300.0, 2200.0)
 		var ang := rng.randf_range(0.0, TAU)
 		var x := r * cos(ang)
 		var z := r * sin(ang)
-		var y := rng.randf_range(-60.0, 260.0)
-		mm.set_instance_transform(i, Transform3D(Basis(), Vector3(x, y, z)))
-		var b := rng.randf_range(0.45, 1.0)
+		var y := rng.randf_range(-80.0, 320.0)
+		var s := rng.randf_range(0.5, 1.6)
+		mm.set_instance_transform(i, Transform3D(Basis().scaled(Vector3(s, s, s)), Vector3(x, y, z)))
+		var b := rng.randf_range(0.35, 1.0)
 		mm.set_instance_color(i, Color(b, b, b, 1.0))
 	mmi.multimesh = mm
 	var mat := StandardMaterial3D.new()
@@ -136,6 +168,7 @@ func update_tick(t: int) -> void:
 		var color := _owner_color(owner)
 		var ring_alpha := 0.0
 		var ring_scale := 1.0
+		var sphere_scale := 1.0
 		if _morph_by_system.has(sid):
 			var ev: Dictionary = _morph_by_system[sid]
 			var start := int(ev.get("tick", 0))
@@ -147,15 +180,18 @@ func update_tick(t: int) -> void:
 					prog = clampf(float(t - start) / float(MORPH_TICKS), 0.0, 1.0)
 				color = from_c.lerp(to_c, prog)
 				owner = String(ev.get("to_owner", ""))
-				if prog < 1.0:
-					ring_alpha = (1.0 - prog) * 0.65
-					ring_scale = lerpf(1.0, 2.6, prog)
+				var salience := 1.0 - clampf(float(t - start) / float(SALIENCE_TICKS), 0.0, 1.0)
+				if salience > 0.0:
+					ring_alpha = salience * 0.65
+					ring_scale = lerpf(1.0, 2.6, 1.0 - salience)
+					sphere_scale = 1.0 + salience * 0.7
 		_owners[sid] = owner
 		_materials[sid].albedo_color = color
 		var rmat: StandardMaterial3D = _ring_materials[sid]
 		rmat.albedo_color = Color(1, 1, 1, ring_alpha)
 		_rings[sid].visible = ring_alpha > 0.001
 		_rings[sid].scale = Vector3.ONE * ring_scale
+		_spheres[sid].scale = Vector3.ONE * sphere_scale
 
 
 func get_owners() -> Dictionary:
