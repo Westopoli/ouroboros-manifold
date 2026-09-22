@@ -1,0 +1,11 @@
+{
+  "bug": "clean",
+  "n_regions": 60,
+  "ticks": 500,
+  "wall_s": 0.0156,
+  "n_rows": 29500,
+  "findings": {
+    "empty_region_drifted": [],
+    "oscillator_as_level": []
+  }
+}

@@ -1,0 +1,838 @@
+{
+  "bug": "osc_as_level",
+  "n_regions": 60,
+  "ticks": 500,
+  "wall_s": 0.0159,
+  "n_rows": 29500,
+  "findings": {
+    "empty_region_drifted": [],
+    "oscillator_as_level": [
+      [
+        "oscillator_as_level",
+        1,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        1,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        2,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        2,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        3,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        3,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        4,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        4,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        5,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        5,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        6,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        6,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        7,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        7,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        8,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        8,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        9,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        9,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        10,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        10,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        11,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        11,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        12,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        12,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        13,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        13,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        14,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        14,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        15,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        15,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        16,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        16,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        17,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        17,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        18,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        18,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        19,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        19,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        20,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        20,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        21,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        21,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        22,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        22,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        23,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        23,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        24,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        24,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        25,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        25,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        26,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        26,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        27,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        27,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        28,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        28,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        29,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        29,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        30,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        30,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        31,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        31,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        32,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        32,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        33,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        33,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        34,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        34,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        35,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        35,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        36,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        36,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        37,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        37,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        38,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        38,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        39,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        39,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        40,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        40,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        41,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        41,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        42,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        42,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        43,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        43,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        44,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        44,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        45,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        45,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        46,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        46,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        47,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        47,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        48,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        48,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        49,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        49,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        50,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        50,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        51,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        51,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        52,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        52,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        53,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        53,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        54,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        54,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        55,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        55,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        56,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        56,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        57,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        57,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        58,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        58,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        59,
+        {
+          "osc_field": "economy_osc_delta"
+        }
+      ],
+      [
+        "oscillator_as_level",
+        59,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ]
+    ]
+  }
+}

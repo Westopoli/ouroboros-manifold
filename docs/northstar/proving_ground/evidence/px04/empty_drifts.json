@@ -1,0 +1,38 @@
+{
+  "bug": "empty_drifts",
+  "n_regions": 60,
+  "ticks": 500,
+  "wall_s": 0.016,
+  "n_rows": 30000,
+  "findings": {
+    "empty_region_drifted": [
+      [
+        "empty_region_drifted",
+        0,
+        {
+          "field": "economy",
+          "first": 8.0,
+          "last": 8.0
+        }
+      ],
+      [
+        "empty_region_drifted",
+        0,
+        {
+          "field": "tension",
+          "first": 0.8570402866513372,
+          "last": 74.03546819546203
+        }
+      ]
+    ],
+    "oscillator_as_level": [
+      [
+        "oscillator_as_level",
+        0,
+        {
+          "osc_field": "tension_osc_delta"
+        }
+      ]
+    ]
+  }
+}
