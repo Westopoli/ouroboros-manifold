@@ -266,3 +266,13 @@ Decisions:
 6. **[NOT STARTED]** R8e/R8f's same-tick-suppression / `om_intent_inject` decision.
 7. **[NOT STARTED, executor]** D1 (eighth round): `om_world_new` takes an explicit feature set and refuses a call without one; `region.c`'s DRIFT-on default and the "all on" wording in the header and `algorithms.md` go; every `tests/csim` caller passes its set (isolation tests their own system, integration tests the MVP set as data); one test proves the default path is gone. Tests first, change protocol, own R-row. Schedule when the chain allows.
 8. **[NOT STARTED, executor]** PX-16: the E-04 cut is cyclic (208a2, 208b1, 209c read stubs owned by 208a1 and 208a2; `om_step_resolve` and `om_tick_collisions` each have two owning cards). Re-cut with `scripts/specfactory/chain_sim.py`'s DAG beside `card_lint` before 208a1 releases.
+
+## Ninth round (Claude, 2026-09-21 night): adversarial audit of the Factory and the fast-track
+
+Two independent Fable reviewers, same prompt (`research/factory/audit_2026-09-21/`): 127 findings, 23 flagged by both, all 23 verified or read against code. Headline: the GPU is not the bottleneck, the day side is (about 20 buildable cards; 142 of 169 parked cards name a missing file; 594 test-called symbols exist nowhere). The chain head 205a is unsatisfiable (const signature, no hook). `pow()` at `sim.c:206` breaks the determinism contract. All cloud routes down burned 205a's whole cap on 2026-09-20. PX-16's 4-6 h was a hypothesis, the evidenced number is 11.5 h. Design changes and the re-ordered plan are in the audit README; the fast-track is replaced by ouroboros-side fixes first, then a three-wave agora cascade with the dispatcher stopped throughout.
+
+| # | Question | Candidates | Westley | Resolution |
+|---|---|---|---|---|
+| E1 | D2 amendment: Windows determinism as an epic-gate blocker caps epic cadence at two per week and puts Westley in every close (no MSVC build exists yet). | (a) weekly platform gate with a runbook, not an epic blocker; (b) keep as epic blocker; (c) no gate until a dedicated Windows machine | | |
+| E2 | The honest interrupt list (audit item 18): twelve cases reach Westley today. Which to automate first? | (a) seat outage, harness-error cap, gate red, merge conflict get machine owners now; the rest stay; (b) all twelve automated before restart; (c) accept the list as is | | |
+| E3 | The day-side plan: 92 placeholder controls, 100 skeleton test files, 12 missing C files. Who writes them, at what cadence, and does the Anthropic API (not agy) author test bodies? | (a) Claude sessions with Sonnet doers, one epic per day, Anthropic API for bodies; (b) agy when quota allows, Claude otherwise; (c) Westley decides per epic | | |
