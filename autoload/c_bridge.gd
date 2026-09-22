@@ -166,7 +166,10 @@ func _read_live_frame(stdio: FileAccess) -> Variant:
 	# off the wire text and store the exact value as its int64 two's-
 	# complement bit pattern instead (the same bits the C uint64_t has),
 	# since GDScript has no native unsigned 64-bit type to hold it directly.
-	if data is Dictionary and data.get("type", "") == "snapshot":
+	# "delta" frames carry the same "checksum" field (nonzero on cadence
+	# ticks, per docs/architecture.md "C transport v1"), so the same
+	# precision-loss bug and fix apply there too.
+	if data is Dictionary and (data.get("type", "") == "snapshot" or data.get("type", "") == "delta"):
 		var raw_checksum := _extract_raw_checksum(text)
 		if raw_checksum != "":
 			data["checksum"] = _decimal_to_i64(raw_checksum)
