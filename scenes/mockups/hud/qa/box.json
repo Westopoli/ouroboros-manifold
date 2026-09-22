@@ -1,0 +1,7 @@
+[
+  ["seed", 11],
+  ["call", "qa_camera", 3000, 3000, 3000],
+  ["drag", 280, -20, 1020, 620, 12],
+  ["state", "boxed"],
+  ["screenshot", "boxed"]
+]
