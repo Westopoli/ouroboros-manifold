@@ -245,6 +245,29 @@ def undertest_warn(candidate_dir: Path, base_ref: str, piece_id: str, *,
             f"{result['killed']}/{result['total_mutants']} mutants killed"]
 
 
+def acceptance_ids(piece_id: str, *, pieces_path: Path = DEFAULT_PIECES) -> tuple[list[str], list[str]]:
+    """(pytest_ids, godot_ids) for a piece's acceptance list. A pytest id is
+    anything pytest can collect directly (a `.py` path, a `::`-qualified node
+    id, or one of the three bare directory names the gate already runs
+    whole) -- the exact filter merge_gate.sh's step 7 used inline before this
+    function existed. A `.gd` id is a Godot test script, run through
+    scripts/run_godot_tests.sh instead: pytest cannot collect it, so before
+    this split it was silently never run for a client piece (C2, C7) whose
+    acceptance is entirely Godot tests (2026-09-22 defect)."""
+    pieces = _load_pieces(pieces_path)
+    piece = pieces.get(piece_id)
+    if piece is None:
+        return [], []
+    pytest_ids: list[str] = []
+    godot_ids: list[str] = []
+    for a in piece.get("acceptance") or []:
+        if a.endswith(".gd"):
+            godot_ids.append(a)
+        elif a.endswith(".py") or "::" in a or a in ("tests/transport", "tests/qa/t1", "tests/csim"):
+            pytest_ids.append(a)
+    return pytest_ids, godot_ids
+
+
 def _normalize_worktree_paths(text: str, *roots: Path) -> str:
     for root in roots:
         text = text.replace(str(root), "<WORKTREE>")
@@ -332,6 +355,10 @@ def main(argv: list[str]) -> int:
     sy.add_argument("--signatures", default=str(DEFAULT_SIGNATURES))
     sy.add_argument("--symbol-modules", default=str(DEFAULT_SYMBOL_MODULES))
 
+    ai = sub.add_parser("acceptance-ids")
+    ai.add_argument("piece_id")
+    ai.add_argument("--pieces", default=str(DEFAULT_PIECES))
+
     ut = sub.add_parser("undertest")
     ut.add_argument("candidate_dir")
     ut.add_argument("base_ref")
@@ -352,6 +379,13 @@ def main(argv: list[str]) -> int:
     if args.cmd == "footprint":
         ok, detail = footprint_check(Path(args.candidate_dir), args.base_ref, args.piece_id,
                                       pieces_path=Path(args.pieces))
+    elif args.cmd == "acceptance-ids":
+        pytest_ids, godot_ids = acceptance_ids(args.piece_id, pieces_path=Path(args.pieces))
+        for i in pytest_ids:
+            print(f"PY {i}")
+        for i in godot_ids:
+            print(f"GD {i}")
+        return 0
     elif args.cmd == "symbols":
         ok, detail = symbol_ownership_check(Path(args.candidate_dir), args.base_ref,
                                              signatures_path=Path(args.signatures),
