@@ -156,7 +156,7 @@ func is_playing() -> bool:
 
 
 func cycle_focus_layer() -> void:
-	pass
+	set_focus_layer_direct(2 if _focus_layer == 1 else 1)
 
 
 func set_focus_layer_direct(n: int) -> void:
