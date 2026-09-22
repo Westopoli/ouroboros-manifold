@@ -97,3 +97,12 @@ Row skipped: `test_E14_S123_the_enemy_replays_like_i_do.py::test_R_123_03_it_nev
 |---|---|---|---|
 | `test_E15_S126_most_of_my_force_is_out_there.py::test_R_126_06_units_have_no_cost_player` | tied the check to R-126-02's real production flow (init structure, tick production, pop spawn) and asserted `spawned == 1` before re-checking trickle stays 0 | 21 -> 23 | `assert 0 == 1` |
 
+### E-16
+
+Note: both rows' local `_bind_save` casts the C `void om_load_state_read(...)` to ctypes `restype=c_int` (T2's binding lane, not touched here per instruction).
+
+| Test | Edit | asserts before -> after | New failure |
+|---|---|---|---|
+| `test_E16_S111_saving.py::test_R_111_02_second_write_is_byte_identical` | added `assert size1 > 0` right after the two `_save` calls | 36 -> 38 (shared) | `assert 0 > 0` |
+| `test_E16_S111_saving.py::test_R_111_02_save_load_save_gives_identical_bytes` | added `assert size1 > 0` right after the first `_save` call | 36 -> 38 (shared) | `assert 0 > 0` |
+

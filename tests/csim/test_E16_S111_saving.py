@@ -149,6 +149,9 @@ def test_R_111_02_second_write_is_byte_identical(lib, world_factory):
         lib.om_world_step(w)
     buf1, size1 = _save(lib, w)
     buf2, size2 = _save(lib, w)
+    # A hard-stub om_save_state_size of 0 would make both buffers empty and
+    # the two checks below trivially true.
+    assert size1 > 0
     assert size1 == size2
     assert bytes(buf1) == bytes(buf2)
 
@@ -299,6 +302,9 @@ def test_R_111_02_save_load_save_gives_identical_bytes(lib, world_factory):
     for _ in range(5):
         lib.om_world_step(w1)
     buf1, size1 = _save(lib, w1)
+    # A hard-stub om_save_state_size of 0 would make the buffer empty and the
+    # write/load/second-save below no-ops, matching trivially.
+    assert size1 > 0
 
     w2 = world_factory(n_regions=4, seed=2020)
     rc = _load(lib, w2, buf1, size1)
