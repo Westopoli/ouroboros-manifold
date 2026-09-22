@@ -12,14 +12,25 @@ var _count_label: Label
 
 func _ready() -> void:
 	_root = get_parent()
+	var panel := PanelContainer.new()
+	panel.name = "HUDPanel"
+	panel.position = Vector2(16, 16)
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.04, 0.05, 0.07, 0.85)
+	style.content_margin_left = 6
+	style.content_margin_right = 6
+	style.content_margin_top = 6
+	style.content_margin_bottom = 6
+	panel.add_theme_stylebox_override("panel", style)
+	add_child(panel)
+
 	var box := VBoxContainer.new()
 	box.name = "VBoxContainer"
-	box.position = Vector2(16, 16)
 	box.add_theme_constant_override("separation", 6)
 	var t := Theme.new()
 	t.default_font = MONO_FONT
 	box.theme = t
-	add_child(box)
+	panel.add_child(box)
 
 	_skip_btn = Button.new()
 	_skip_btn.name = "SkipButton"
