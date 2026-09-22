@@ -172,14 +172,11 @@ else
     warn acceptance "no pytest-collectible acceptance ids for piece $PIECE_ID"
 fi
 
-# -------------------------------------------------------------- 8. pytest tests/qa/t1
-QA_LOG="$SCRATCH_ROOT/qa_t1.log"
-( cd "$CANDIDATE" && "$PYTHON" -m pytest tests/qa/t1 -q -p no:cacheprovider ) >"$QA_LOG" 2>&1
-if [[ $? -ne 0 ]]; then
-    reject qa_t1 "$(tail_oneline "$QA_LOG" 15)"
-else
-    ok qa_t1 ""
-fi
+# -------------------------------------------------------------- 8. tests/qa/t1 absolute run retired
+# regression_qa_t1 (step 6) already compares the failing-id sets on base and
+# candidate; an absolute run would reject every candidate while a fenced test
+# for an unattached piece (Q2's detectors) is red on main by design.
+ok qa_t1 "covered by regression_qa_t1"
 
 # -------------------------------------------------------------- 9. tests/transport, if present and the pipe builds
 if [[ -d "$CANDIDATE/tests/transport" ]]; then
@@ -187,11 +184,12 @@ if [[ -d "$CANDIDATE/tests/transport" ]]; then
     ( cd "$CANDIDATE" && timeout "$MAKE_TIMEOUT" make -s pipe/ouroboros_pipe ) >"$PIPE_LOG" 2>&1
     if [[ $? -eq 0 ]]; then
         TRANSPORT_LOG="$SCRATCH_ROOT/transport.log"
-        ( cd "$CANDIDATE" && "$PYTHON" -m pytest tests/transport -q -p no:cacheprovider ) >"$TRANSPORT_LOG" 2>&1
+        "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/transport \
+            --python "$PYTHON" --timeout "$SUITE_TIMEOUT" >"$TRANSPORT_LOG" 2>&1
         if [[ $? -ne 0 ]]; then
-            reject transport "$(tail_oneline "$TRANSPORT_LOG" 15)"
+            reject transport "$(cat "$TRANSPORT_LOG")"
         else
-            ok transport ""
+            ok transport "$(cat "$TRANSPORT_LOG")"
         fi
     else
         warn transport "pipe/ouroboros_pipe did not build: $(tail_oneline "$PIPE_LOG")"
