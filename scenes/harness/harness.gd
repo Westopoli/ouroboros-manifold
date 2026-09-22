@@ -11,3 +11,10 @@ extends Control
 
 func _ready() -> void:
 	DisplayServer.window_set_title("QA:" + name)
+
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed:
+		print("QA_INPUT mouse_button %d,%d" % [int(event.position.x), int(event.position.y)])
+	elif event is InputEventKey and event.pressed:
+		print("QA_INPUT key 0,0")

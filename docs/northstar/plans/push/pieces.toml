@@ -332,7 +332,7 @@ acceptance = [
     "tests/test_qa_daemon.gd",
 ]
 depends_on = []
-status = "pending"
+status = { state = "attached", attach_sha = "9782557" }
 size_estimate = "new daemon autoload plus harness scene; first client piece, everything else attaches through it"
 
 [[piece]]
@@ -344,7 +344,7 @@ acceptance = [
     "tests/transport",
 ]
 depends_on = ["freeze"]
-status = "pending"
+status = { state = "attached", attach_sha = "5296b14" }
 size_estimate = "thin stdio pipe server over libouroboros.so; shapes fixed by F4"
 
 [[piece]]
