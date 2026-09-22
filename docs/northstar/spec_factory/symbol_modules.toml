@@ -48,6 +48,9 @@ om_world_generated                  = "worldgen.c"
 # core fixture and trace helpers: sim.c
 om_world_set_tick                   = "sim.c"
 om_world_get_state_checksum         = "sim.c"
+# region topology accessor, core: lives in faction.c beside om_region_edge,
+# called by every epic that reads adjacency (no single owning epic)
+om_region_neighbors                 = "faction.c"
 # missions and objectives: E-10
 om_mission_compute_parity           = "mission.c"
 om_mission_end                      = "mission.c"

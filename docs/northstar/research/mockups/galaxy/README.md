@@ -37,3 +37,9 @@ The pass-1 screenshots are in `pass1/` (10 shots: overview, regional, local, hov
 ## Fresh-eyes review (2026-09-22, Sonnet reviewer, screenshots only)
 
 Verdict: fine to show Westley now; no blockers. Two should-fix gaps for pass 2, both on open bible rules: the Local band frames one or two spheres filling the screen with no distant systems in view, so R-106-03's "distant systems desaturate" cannot be seen and the band reads as flying into a planet rather than focusing (widen the Local plateau or cap the point scale so neighbours stay in frame); and no screenshot shows the conquest flash of R-106-04 (a single-step-then-screenshot script is needed before it counts as visually proven). Nits: faceted spheres up close, a system point rendering under the HUD legend at Overview, faction name labels sitting on a system point. The revised BAND-X threshold is sound; the FLASH-X change to a data-only oracle hides a real visual gap and stays open.
+
+## Mockup review 1 (Westley, 2026-09-22)
+
+Verbatim: "galaxy mockup looks good, but it looks like it didn't pull from the existing galaxy mockup. Really the galaxy from the original game was truley the 'foundation/prototype' I wanted in terms of looks, it just needed polish/speed increases. Let's redo that prototype to be almost a copy of what already exists. However, the generation system is awesome and worked great, let's keep that (the old one was always the same layout). 'Play' also only lasts a few seconds and then stops and doesn't do anything if I keep clicking (don't know if that's expected behavior or not)."
+
+Pass 2 brief: `docs/northstar/plans/briefs/2026-09-22-p1-galaxy-mockup-pass2.md` (legacy renderer copied onto the seeded generator, shells included, Play restarts and shows a counter, Local band framing).
