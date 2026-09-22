@@ -48,3 +48,10 @@ Row skipped: `test_E08_S064_what_carries_over.py::test_R_064_01_every_region_fie
 | `test_E09_S068...::test_R_068_08_text_identical` | added `assert len(ctypes.string_at(text1)) > 0` before comparison | 14 -> 18 (shared) | `assert 0 > 0` |
 | `test_E09_S069_watching_history_happen.py::test_R_069_06_number_entries_on_screen_equals` | added `om_chronicle_mock_populate_events(w, n_events=20)` call + `assert distilled_count > 0` | 14 -> 15 | `assert 0 > 0` |
 
+### E-10
+
+| Test | Edit | asserts before -> after | New failure |
+|---|---|---|---|
+| `test_E10_S079_orders_not_menus.py::test_R_079_03_it_shows_band_objectives_with` | forced outcome: `om_mission_build_objectives(w,0)`, set every objective's completion to 1.0, then `assert debrief.objective_score == pytest.approx(1.0)` (ALG-58: weights sum to 1.0 per R-075-01, none failed) | 21 -> 22 | `assert 0.0 == 1.0 ± 1.0e-05` |
+| `test_E10_S080_difficulty_is_scarcity_not_stronger_enemies.py::test_R_080_01_both_sides_draw_from_same` | added `assert prof_easy.hp > 0` before the cross-difficulty equality | 12 -> 13 | `AssertionError: unit profile must be a real (nonzero) roster baseline` / `assert 0.0 > 0` |
+
