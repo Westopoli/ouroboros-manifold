@@ -47,10 +47,24 @@ func _unhandled_input(event: InputEvent) -> void:
 			_sync_view()
 
 
+func _viewport_scale() -> Vector2:
+	var vp_size: Vector2 = get_viewport().get_visible_rect().size
+	var win_size := Vector2(DisplayServer.window_get_size())
+	if vp_size.x <= 0.0 or vp_size.y <= 0.0:
+		return Vector2.ONE
+	return win_size / vp_size
+
+
+func _unproject_to_window_px(camera: Camera3D, world_pos: Vector3) -> Array:
+	var px: Vector2 = camera.unproject_position(world_pos) * _viewport_scale()
+	return [px.x, px.y]
+
+
 func _project_to_ground(screen_pos: Vector2) -> Vector2:
 	var camera: Camera3D = _camera_rig.get_camera()
-	var from: Vector3 = camera.project_ray_origin(screen_pos)
-	var dir: Vector3 = camera.project_ray_normal(screen_pos)
+	var vp_pos: Vector2 = screen_pos / _viewport_scale()
+	var from: Vector3 = camera.project_ray_origin(vp_pos)
+	var dir: Vector3 = camera.project_ray_normal(vp_pos)
 	if absf(dir.y) < 0.0001:
 		return Vector2(from.x, from.z)
 	var t: float = -from.y / dir.y
@@ -132,8 +146,7 @@ func qa_state() -> Dictionary:
 	var enemies_px := {}
 	for e in _truth.enemies:
 		if camera != null:
-			var px: Vector2 = camera.unproject_position(Vector3(e.pos.x, 0.0, e.pos.y))
-			enemies_px[str(e.uid)] = [px.x, px.y]
+			enemies_px[str(e.uid)] = _unproject_to_window_px(camera, Vector3(e.pos.x, 0.0, e.pos.y))
 		else:
 			enemies_px[str(e.uid)] = [0.0, 0.0]
 
