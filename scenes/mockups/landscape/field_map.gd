@@ -32,7 +32,12 @@ func generate(p_seed: int, p_canvas: float = 24000.0, p_stability: float = 60.0)
 	dim = int(canvas / SPACING) + 1
 	_rng.seed = p_seed
 
-	var noise_continent := _make_noise(p_seed + 0, 60.0 / canvas)
+	# FastNoiseLite frequency is ~1/wavelength: N/canvas gives N cycles across the whole
+	# map. This was previously backwards (continent at 60/canvas -- 60 cycles, ~400wu
+	# features -- was finer than "detail" at 40/canvas), confirmed by an actual screenshot
+	# reading as a field of tight spikes rather than a few broad landmasses; numbers below
+	# are the corrected ordering (continent broadest, hills medium, detail finest).
+	var noise_continent := _make_noise(p_seed + 0, 1.5 / canvas)
 	var noise_hills := _make_noise(p_seed + 1, 8.0 / canvas)
 	var noise_detail := _make_noise(p_seed + 2, 40.0 / canvas)
 	var noise_boundary := _make_noise(p_seed + 3, 14.0 / canvas)
@@ -262,18 +267,25 @@ func _build_elevation(noise_continent: FastNoiseLite, noise_hills: FastNoiseLite
 	raw.resize(dim * dim)
 	var min_raw := INF
 	var max_raw := -INF
+	# Only continent+hills feed the normalized macro shape. Detail was folded into the same
+	# normalized signal in a first attempt and, once that signal was rescaled to reach
+	# dramatic 3000-5000wu peaks, its amplitude scaled right along with it -- confirmed by
+	# actually looking at a render: the terrain read as a field of giant jagged spikes, not
+	# rolling texture, because a noise octave meant to be a small ripple was rescaled to
+	# thousands of world units of amplitude. Detail is added below in fixed, absolute wu
+	# instead, decoupled from peak height.
 	for gy in range(dim):
 		for gx in range(dim):
 			var wpos := Vector2(gx * SPACING, gy * SPACING)
-			var n := noise_continent.get_noise_2d(wpos.x, wpos.y) * 0.6 \
-				+ noise_hills.get_noise_2d(wpos.x, wpos.y) * 0.3 \
-				+ noise_detail.get_noise_2d(wpos.x, wpos.y) * 0.1
+			var n := noise_continent.get_noise_2d(wpos.x, wpos.y) * 0.7 \
+				+ noise_hills.get_noise_2d(wpos.x, wpos.y) * 0.3
 			raw[gy * dim + gx] = n
 			min_raw = min(min_raw, n)
 			max_raw = max(max_raw, n)
 
 	var peak_target: float = PEAK_HEIGHT_WU * _rng.randf_range(0.6, 1.0)
 	var sea_depth_target: float = -PEAK_HEIGHT_WU * 0.3
+	var detail_amplitude_wu := 80.0
 
 	var out := PackedFloat32Array()
 	out.resize(dim * dim)
@@ -287,6 +299,7 @@ func _build_elevation(noise_continent: FastNoiseLite, noise_hills: FastNoiseLite
 			elif n < 0.0 and min_raw < 0.0:
 				h = (n / min_raw) * sea_depth_target
 			var wpos := Vector2(gx * SPACING, gy * SPACING)
+			h += noise_detail.get_noise_2d(wpos.x, wpos.y) * detail_amplitude_wu
 			var edge_bias: float = smoothstep(canvas * 0.72, canvas, wpos.y) * -(peak_target * 0.5 + 800.0)
 			out[idx] = h + edge_bias
 	return out
