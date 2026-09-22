@@ -128,3 +128,18 @@ func get_current_band() -> String:
 
 func get_height() -> float:
 	return _height
+
+
+# For the screenshot driver: jump straight to a height/look-at point instead of
+# animating there via input, so a batch of shots can be taken deterministically.
+func set_height(h: float) -> void:
+	_height = clampf(h, ZOOM_MIN, ZOOM_MAX)
+	_update_band()
+	_update_camera()
+
+
+func pan_to(world_pos: Vector3) -> void:
+	_pan_target = Vector3(world_pos.x, 0.0, world_pos.z)
+	_clamp_pan_target()
+	position = _pan_target
+	_update_camera()
