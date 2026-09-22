@@ -52,3 +52,7 @@ Every Xvfb run with more than one screenshot hung indefinitely for most of this 
 ## Next step
 
 Pass-1 screenshots (1920x1080, 6 shots: title, setup, briefing, resolve, debrief, campaigns) are in `pass1/`. The mockup awaits Westley's look.
+
+## Fresh-eyes review (2026-09-22, Sonnet reviewer, screenshots only)
+
+No blockers; ready for Westley's look. Polish list for pass 2: the title's bright core renders as two hard-edged discs rather than a soft glow blending into the field (fake a radial gradient with concentric circles of falling alpha); the Hard difficulty card speaks in the second person while Easy and Medium are impersonal (one voice for all three); the debrief's second line appends "Objective fully achieved" as a status tag rather than a sentence of prose; the menu list is mixed case where the reference is bold capitals and the star field has no swirl or cluster structure (taste calls for Westley, not defects). Q5 (dry wit) leans no: the prose is dry and functional, not witty.
