@@ -2,6 +2,7 @@ extends Node3D
 
 const QaPlants := preload("res://scenes/mockups/_shared/qa_plants.gd")
 const MORPH_TICKS := 40
+const SALIENCE_TICKS := 80
 const ORBIT_RATE := 0.0006
 const STARFIELD_SEED := 20260922
 
@@ -136,6 +137,7 @@ func update_tick(t: int) -> void:
 		var color := _owner_color(owner)
 		var ring_alpha := 0.0
 		var ring_scale := 1.0
+		var sphere_scale := 1.0
 		if _morph_by_system.has(sid):
 			var ev: Dictionary = _morph_by_system[sid]
 			var start := int(ev.get("tick", 0))
@@ -147,15 +149,18 @@ func update_tick(t: int) -> void:
 					prog = clampf(float(t - start) / float(MORPH_TICKS), 0.0, 1.0)
 				color = from_c.lerp(to_c, prog)
 				owner = String(ev.get("to_owner", ""))
-				if prog < 1.0:
-					ring_alpha = (1.0 - prog) * 0.65
-					ring_scale = lerpf(1.0, 2.6, prog)
+				var salience := 1.0 - clampf(float(t - start) / float(SALIENCE_TICKS), 0.0, 1.0)
+				if salience > 0.0:
+					ring_alpha = salience * 0.65
+					ring_scale = lerpf(1.0, 2.6, 1.0 - salience)
+					sphere_scale = 1.0 + salience * 0.7
 		_owners[sid] = owner
 		_materials[sid].albedo_color = color
 		var rmat: StandardMaterial3D = _ring_materials[sid]
 		rmat.albedo_color = Color(1, 1, 1, ring_alpha)
 		_rings[sid].visible = ring_alpha > 0.001
 		_rings[sid].scale = Vector3.ONE * ring_scale
+		_spheres[sid].scale = Vector3.ONE * sphere_scale
 
 
 func get_owners() -> Dictionary:
