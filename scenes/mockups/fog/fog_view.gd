@@ -106,8 +106,9 @@ func _build_nodes(nodes: Array) -> void:
 		_nodes_node.add_child(mi)
 		var label := Label3D.new()
 		label.text = String(n.type)
-		label.position = Vector3(n.pos.x, 220.0, n.pos.y)
-		label.font_size = 48
+		label.position = Vector3(n.pos.x, 260.0, n.pos.y)
+		label.font_size = 64
+		label.pixel_size = 2.2
 		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 		label.modulate = NODE_LABEL_COLOR
 		_nodes_node.add_child(label)
