@@ -140,6 +140,10 @@ uint32_t om_checksum_cadence(void);   /* returns 10 (R-020-03) */
 /* The one platform-independent sine used by the ALG-01 oscillator. Compiled
  * identically on every platform; the sim never calls libm sin(). */
 double om_sin(double x);
+/* Deterministic pow(base, exp) for base >= 0 (ALG-03's headroom^0.3 term);
+ * base <= 0 returns 0.0, exp == 0 returns 1.0. Compiled identically on
+ * every platform; the sim never calls libm pow(). */
+double om_pow(double base, double exp);
 
 /* ---- T1 trace ---- */
 void     om_trace_enable(om_world *w, int on);   /* record one row per (tick, region) while on */
@@ -159,7 +163,9 @@ typedef enum {
     OM_BUG_EMPTY_DRIFTS      = 3,  /* empty-tier region drifts */
     OM_BUG_GE_NOT_GT         = 4,  /* threshold uses >= where the source uses > */
     OM_BUG_SLOW              = 5,  /* deliberate slowdown, to prove the speed leg can fail */
-    OM_BUG_DRIFT_GATE_IGNORED = 6  /* drift runs even with OM_FEAT_DRIFT off (S-160) */
+    OM_BUG_DRIFT_GATE_IGNORED = 6, /* drift runs even with OM_FEAT_DRIFT off (S-160) */
+    OM_BUG_LIBM_POW          = 7  /* om_pow's deterministic polynomial swapped for libm pow(),
+                                    * breaking the cross-platform determinism contract */
 } om_bug;
 void om_debug_inject(om_world *w, om_bug bug);
 #endif

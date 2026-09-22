@@ -89,6 +89,7 @@ class OMBug:
     GE_NOT_GT = 4
     SLOW = 5
     DRIFT_GATE_IGNORED = 6
+    LIBM_POW = 7
 
 
 # ---- struct mirrors (field order/types must match the header exactly) ----
@@ -206,6 +207,9 @@ def _configure_common(h):
 
     h.om_sin.argtypes = [ctypes.c_double]
     h.om_sin.restype = ctypes.c_double
+
+    h.om_pow.argtypes = [ctypes.c_double, ctypes.c_double]
+    h.om_pow.restype = ctypes.c_double
 
     h.om_trace_enable.argtypes = [OMWorldP, ctypes.c_int]
     h.om_trace_enable.restype = None

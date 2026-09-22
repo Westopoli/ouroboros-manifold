@@ -30,6 +30,7 @@
 
 static const double OM_PI = 3.14159265358979323846264338327950288;
 static const double OM_TWO_PI = 6.28318530717958647692528676655900577;
+static const double OM_LN2 = 0.69314718055994530941723212145817657;
 
 /* Deterministic, portable sine: range-reduce into [-pi, pi], then a
  * minimax-style Taylor polynomial. Never calls libm sin() so the trace is
@@ -50,6 +51,62 @@ double om_sin(double x) {
     term *= -r2 / (8.0 * 9.0);  sum += term;   /* +x^9/9! */
     term *= -r2 / (10.0 * 11.0); sum += term;  /* -x^11/11! */
     return sum;
+}
+
+/* ---------------------------------------------------------------- om_pow */
+
+/* Deterministic natural log via range reduction into [1, 2) (repeated
+ * doubling/halving, no libm frexp/ldexp) then the atanh-based series
+ * ln(m) = 2*atanh((m-1)/(m+1)), which converges quickly for m in [1, 2)
+ * (the series argument is at most 1/3). x must be > 0. */
+static double om_log(double x) {
+    int k = 0;
+    double m = x;
+    while (m < 1.0) { m *= 2.0; k--; }
+    while (m >= 2.0) { m *= 0.5; k++; }
+    double y = (m - 1.0) / (m + 1.0);
+    double y2 = y * y;
+    double term = y;
+    double sum = y;
+    for (int i = 1; i <= 15; i++) {
+        term *= y2;
+        sum += term / (2.0 * i + 1.0);
+    }
+    return (double)k * OM_LN2 + 2.0 * sum;
+}
+
+/* Deterministic exp via range reduction to r in [-ln2/2, ln2/2] (round to
+ * nearest multiple of ln2, no libm calls) then a 12-term Taylor series,
+ * rescaled by 2^k via repeated doubling/halving. */
+static double om_exp(double x) {
+    double kf = floor(x / OM_LN2 + 0.5);
+    double r = x - kf * OM_LN2;
+    double sum = 1.0;
+    double term = 1.0;
+    for (int i = 1; i <= 12; i++) {
+        term *= r / (double)i;
+        sum += term;
+    }
+    long k = (long)kf;
+    double scale = 1.0;
+    if (k >= 0) {
+        for (long i = 0; i < k; i++) scale *= 2.0;
+    } else {
+        for (long i = 0; i < -k; i++) scale *= 0.5;
+    }
+    return sum * scale;
+}
+
+/* Deterministic pow(base, exp) for base >= 0 (the only domain ALG-03's
+ * headroom^0.3 term ever calls with): base <= 0 returns 0.0 (matches
+ * pow(0, positive) and the range this sim ever exercises), exp == 0
+ * returns 1.0, else exp(exp * log(base)). Never calls libm pow() so the
+ * trace is identical bit-for-bit across platforms, same contract as
+ * om_sin. */
+double om_pow(double base, double exp) {
+    if (base <= 0.0) return 0.0;
+    if (exp == 0.0) return 1.0;
+    return om_exp(exp * om_log(base));
 }
 
 static double om_osc(double amplitude, double period, double phase, uint64_t tick) {
@@ -231,8 +288,15 @@ uint64_t om_world_step(om_world *w) {
         int recruit_gate = ge_not_gt ? (trend_economy >= 20.0) : (trend_economy > 20.0);
         double eco_term = 0.0;
         if (recruit_gate) {
+#ifdef OM_DEBUG_INJECT
+            double tension_headroom_pow = (w->inject == OM_BUG_LIBM_POW)
+                ? pow(1.0 - r->tension / 100.0, 0.3)
+                : om_pow(1.0 - r->tension / 100.0, 0.3);
+#else
+            double tension_headroom_pow = om_pow(1.0 - r->tension / 100.0, 0.3);
+#endif
             eco_term = 12.0 * (trend_economy / 100.0) * (trend_population / 100.0)
-                       * pow(1.0 - r->tension / 100.0, 0.3);
+                       * tension_headroom_pow;
         }
         d.military_recruit = (0.1 * (trend_population / 100.0) + eco_term) * headroom;
 
