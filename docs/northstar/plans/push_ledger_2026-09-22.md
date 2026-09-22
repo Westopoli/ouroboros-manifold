@@ -17,3 +17,7 @@ One row per event: freeze steps, attaches, reverts, parks, rung gates, harness e
 | day1 | Q2 tests | `tests/qa/t1/test_rts_detectors.py` 14 tests plus 9 fixtures, thresholds cited to rules, red on the missing `scripts/qa/rts_detectors.py` (`fe6166a`) |
 | day1 | T2 tests | `tests/csim/test_E16_S111_saving.py` 9 tests, all red on the missing `om_save_state_*` symbols; `Q-111-01` (buffer layout) and `Q-111-02` (version refusal accessor) opened (`8e59e86`) |
 | day1 | briefs | manager briefs M1, M2, M3 and common rules committed (`675db1b`); M1 and M3 may open now, M2 waits for `freeze/F1b` |
+| day1 | allowlist fix | constants allowlist token-keyed (`ad1a0e8`), line shifts no longer break the lint |
+| day1 | F4b | `snapshot_fixture.py` plus `tests/transport/fixtures/snapshot_seed1_tick10.json` (empty world, checksum 16038372209008516879; populated mode with 4 factions and 72 edges in progress) (`c6a918a`) |
+| day1 | C2 tests | `tests/test_c_bridge.gd`, `tests/test_galaxy_view.gd` red on the missing script and scene; six galaxy-mockup plant ids reused; `tests/test_c_bridge.gd` must join C2's acceptance in `pieces.toml` (`25b05b5`) |
+| day1 | Q1 done | agora `wn/qa-director`: 14 epic gate cards (`-k E<EE>_`, controls advisory since 92 placeholders fail by design), `planted_bugs.toml` (48 ids, ranges), campaigns 006 director and 007 qa (pending on C7 and T1), `project_lint.py` (21 tests); agora suite 18 failing at HEAD, a subset of the 19 pre-existing (`7ee8c3d`..`e2fbaf1`) |
