@@ -106,3 +106,27 @@ Note: both rows' local `_bind_save` casts the C `void om_load_state_read(...)` t
 | `test_E16_S111_saving.py::test_R_111_02_second_write_is_byte_identical` | added `assert size1 > 0` right after the two `_save` calls | 36 -> 38 (shared) | `assert 0 > 0` |
 | `test_E16_S111_saving.py::test_R_111_02_save_load_save_gives_identical_bytes` | added `assert size1 > 0` right after the first `_save` call | 36 -> 38 (shared) | `assert 0 > 0` |
 
+### E-17
+
+| Test | Edit | asserts before -> after | New failure |
+|---|---|---|---|
+| `test_E17_S113_nine_kinds_of_place.py::test_R_113_03_at_least_one_flank_route` | added `assert choke_count > 0` before the loop | 10 -> 12 (shared w/ R_113_04) | `assert 0 > 0` |
+| `test_E17_S113_nine_kinds_of_place.py::test_R_113_04_it_reachable_from_both_staging` | added `assert vantage_count > 0` before the loop | 10 -> 12 (shared) | `assert 0 > 0` |
+| `test_E17_S114_texture_from_gradients.py::test_R_114_01_each_obstacle_density_cover_density` | accumulate `any_nonzero` across the 3 sample points, `assert any_nonzero` after the loop | 20 -> 21 | `assert False` |
+| `test_E17_S117_fair_enough.py::test_R_117_03_it_passes_hard_constraints_no` | added `assert total_layouts > 0` before the loop | 10 -> 11 | `assert 0 > 0` |
+| `test_E17_S119_terrain_that_reads_like_a_place.py::test_R_119_01_no_repeated_tile_boundary_visible` | sampled gradients at the two boundary-adjacent points, assert each has a nonzero obstacle/cover density before trusting the smoothness verdict | 6 -> 8 | `assert (0.0 != 0.0 or 0.0 != 0.0)` |
+
+## Rows skipped (3 of 44)
+
+| Test | Reason |
+|---|---|
+| `test_E07_S054_where_a_civilization_ends_up.py::test_R_054_01_deferred_with_feature_no_rule` | `om_world_is_terminal` hard-stubs `0` regardless of input, and the interim spec itself (A-071, Q-054-01 deferred) also mandates permanent 0 ("the final era continues indefinitely; no terminal state is reached") -- the stub and the correct behavior are bit-identical for every input. Advancing 1000 ticks before re-asserting was tried and confirmed empirically still passing (0 == 0 either way); no existing accessor distinguishes them. Test left byte-identical to its pre-audit state. |
+| `test_E08_S064_what_carries_over.py::test_R_064_01_every_region_field_ownership_faction` | Audit's own suggested check (`om_chapter_current_phase(w) == BRIEFING` post-transition) does not actually fail: every `om_chapter_*` accessor in `csrc/generational.c` is a hard `0`/void stub, and `BRIEFING == 0`, so the check passes by the same coincidence it was meant to catch (confirmed by running it). No other existing accessor in the chapter-transition namespace (no chapter-number getter, no other side-effect query) can distinguish stub from real behavior. Test left byte-identical to its pre-audit state. |
+| `test_E14_S123_the_enemy_replays_like_i_do.py::test_R_123_03_it_never_reads_player_s` | `om_macro_reads_player_visibility_set` / `_mutates_unit_stats` / `_issues_illegal_command` each take only `om_world *w` -- no parameter, setter, or `OM_BUG_*` control exists anywhere in `csrc/ouroboros_sim.h` to force a genuine positive (`1`) case, so there is no way to prove these detectors can ever fire versus being permanently-0 constants, using only existing accessors. Test left byte-identical to its pre-audit state. |
+
+## Totals
+
+- Rows in stub_green_audit.md class (a): 44
+- Rows applied (test file edited, now fails on assertion for its own reason): 41
+- Rows skipped (no existing accessor can force a genuine failure without inventing a new symbol): 3
+- Every edited file's `grep -c "assert "` count is >= its pre-edit count (never decreased); see per-epic tables above.

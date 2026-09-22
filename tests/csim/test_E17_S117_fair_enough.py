@@ -63,6 +63,9 @@ def test_R_117_03_it_passes_hard_constraints_no(lib, world_factory):
     """Given a layout in the library, When authored, Then it passes the hard constraints: no side's every approach blocked by hazards while the other's is clear; every vantage reachable by both sides."""
     # Check all authored layouts in the library
     total_layouts = lib.om_map_library_total_layouts()
+    # A hard-stub count of 0 would make the loop below run 0 times, proving
+    # nothing about any authored layout's constraints.
+    assert total_layouts > 0
     for layout_id in range(total_layouts):
         passes_hazards = lib.om_map_layout_check_hazard_approaches(layout_id)
         assert passes_hazards == 1

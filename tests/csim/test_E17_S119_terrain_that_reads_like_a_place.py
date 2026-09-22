@@ -12,10 +12,32 @@ from conftest import OMField, OMTier, read_drift, set_region  # adjust imports t
 
 import ctypes
 
+
+class OMGradientProperties(ctypes.Structure):
+    _fields_ = [
+        ("obstacle_density", ctypes.c_double),
+        ("cover_density", ctypes.c_double),
+        ("sensor_interference", ctypes.c_double),
+        ("elevation", ctypes.c_double),
+        ("layer_accessibility_0", ctypes.c_uint32),
+        ("layer_accessibility_1", ctypes.c_uint32),
+    ]
+
+
 def test_R_119_01_no_repeated_tile_boundary_visible(lib, world_factory):
     """Given a T2 screenshot of any generated map, When inspected, Then no repeated tile boundary is visible and gradient regions blend without hard edges."""
     w = world_factory(n_regions=1)
     lib.om_map_generate(w, 0, 42)
+
+    # Both metrics below hard-stub 0, which would pass "smooth"/"not repeated"
+    # by coincidence with no gradient field ever sampled. Confirm the two
+    # boundary-adjacent points themselves carry real (nonzero) gradient data.
+    props_left = OMGradientProperties()
+    props_right = OMGradientProperties()
+    lib.om_map_sample_gradients(w, ctypes.c_double(990.0), ctypes.c_double(500.0), ctypes.byref(props_left))
+    lib.om_map_sample_gradients(w, ctypes.c_double(1010.0), ctypes.c_double(500.0), ctypes.byref(props_right))
+    assert props_left.obstacle_density != 0.0 or props_left.cover_density != 0.0
+    assert props_right.obstacle_density != 0.0 or props_right.cover_density != 0.0
 
     # Inspect gradient blending across adjacent tile grid boundaries
     # Samples across boundary x = 1000.0 from 990 to 1010

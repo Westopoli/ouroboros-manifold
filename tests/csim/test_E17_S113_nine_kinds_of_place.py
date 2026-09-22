@@ -67,6 +67,9 @@ def test_R_113_03_at_least_one_flank_route(lib, world_factory):
     lib.om_map_generate_spine(w, 0, 42)
 
     choke_count = lib.om_map_count_nodes_of_type(w, OMSpineNodeType.CHOKEPOINT)
+    # A hard-stub count of 0 would make the loop below run 0 times, proving
+    # nothing about the flank-bypass property it claims to check.
+    assert choke_count > 0
     for c_idx in range(choke_count):
         choke_node_id = lib.om_map_get_nth_node_of_type(w, OMSpineNodeType.CHOKEPOINT, c_idx)
         has_flank_bypass = lib.om_map_has_flank_bypass(w, choke_node_id)
@@ -79,6 +82,8 @@ def test_R_113_04_it_reachable_from_both_staging(lib, world_factory):
     lib.om_map_generate_spine(w, 0, 42)
 
     vantage_count = lib.om_map_count_nodes_of_type(w, OMSpineNodeType.VANTAGE)
+    # Same empty-loop issue as R-113-03: a hard-stub count of 0 proves nothing.
+    assert vantage_count > 0
     for v_idx in range(vantage_count):
         v_id = lib.om_map_get_nth_node_of_type(w, OMSpineNodeType.VANTAGE, v_idx)
 
