@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="480" viewBox="0 0 960 480">
+  <rect x="0" y="0" width="960" height="480" fill="#f6f4ee"/>
+  <text x="480" y="34" font-family="Georgia, serif" font-size="20" fill="#1a1a1a" text-anchor="middle">Option B — The Anchor Ring</text>
+  <text x="480" y="56" font-family="sans-serif" font-size="13" fill="#444" text-anchor="middle">One continuous crane from overhead to eye level, with player-set bookmarks along the way</text>
+
+  <!-- Arc representing continuous pitch from top-down (left) to horizontal (right) -->
+  <path d="M 140 380 A 340 340 0 0 1 820 380" fill="none" stroke="#33455c" stroke-width="3"/>
+
+  <!-- Arc end labels -->
+  <circle cx="140" cy="380" r="6" fill="#33455c"/>
+  <text x="140" y="410" font-family="sans-serif" font-size="13" fill="#1a1a1a" text-anchor="middle">Top-down</text>
+  <text x="140" y="426" font-family="sans-serif" font-size="11" fill="#555" text-anchor="middle">pitch 0°</text>
+
+  <circle cx="820" cy="380" r="6" fill="#33455c"/>
+  <text x="820" y="410" font-family="sans-serif" font-size="13" fill="#1a1a1a" text-anchor="middle">Horizontal</text>
+  <text x="820" y="426" font-family="sans-serif" font-size="11" fill="#555" text-anchor="middle">pitch 90°</text>
+
+  <!-- Home marker on arc (near top-down side, at classic-ish angle) -->
+  <circle cx="300" cy="200" r="8" fill="#dbe4f0" stroke="#33455c" stroke-width="2"/>
+  <text x="300" y="180" font-family="sans-serif" font-size="12" fill="#1a1a1a" text-anchor="middle">Home</text>
+  <text x="300" y="230" font-family="sans-serif" font-size="10" fill="#555" text-anchor="middle">classic auto-anchor</text>
+
+  <!-- Anchor bookmarks on arc -->
+  <circle cx="460" cy="106" r="7" fill="#e8dcc8" stroke="#7a5c2e" stroke-width="2"/>
+  <text x="460" y="90" font-family="sans-serif" font-size="12" fill="#1a1a1a" text-anchor="middle">Anchor 1</text>
+
+  <circle cx="620" cy="150" r="7" fill="#e8dcc8" stroke="#7a5c2e" stroke-width="2"/>
+  <text x="620" y="134" font-family="sans-serif" font-size="12" fill="#1a1a1a" text-anchor="middle">Anchor 2</text>
+
+  <circle cx="720" cy="250" r="7" fill="#e8dcc8" stroke="#7a5c2e" stroke-width="2"/>
+  <text x="750" y="248" font-family="sans-serif" font-size="12" fill="#1a1a1a" text-anchor="middle">Anchor 3</text>
+
+  <!-- Current framing marker -->
+  <circle cx="540" cy="130" r="9" fill="#c8524a" stroke="#5a1a16" stroke-width="2"/>
+  <text x="540" y="112" font-family="sans-serif" font-size="12" fill="#5a1a16" text-anchor="middle">You are here</text>
+
+  <!-- Crane arm from ground point to current framing -->
+  <line x1="480" y1="380" x2="540" y2="130" stroke="#888888" stroke-width="2" stroke-dasharray="4,4"/>
+
+  <text x="480" y="440" font-family="sans-serif" font-size="12" fill="#333333" text-anchor="middle">Enter: hold modifier, right-drag to crane freely. Set anchor: Ctrl+Shift+number at any framing. Recall: Ctrl+number.</text>
+  <text x="480" y="458" font-family="sans-serif" font-size="12" fill="#333333" text-anchor="middle">Steer: right-drag orbits, scroll changes distance, left-drag pans. Return home: double-tap the mode key or Home.</text>
+</svg>

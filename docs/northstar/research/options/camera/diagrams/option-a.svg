@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="480" viewBox="0 0 960 480">
+  <rect x="0" y="0" width="960" height="480" fill="#f6f4ee"/>
+  <text x="480" y="34" font-family="Georgia, serif" font-size="20" fill="#1a1a1a" text-anchor="middle">Option A — The Angle Rack</text>
+  <text x="480" y="56" font-family="sans-serif" font-size="13" fill="#444" text-anchor="middle">Five fixed vantage angles, hopped between at will. Home is the classic default view.</text>
+
+  <!-- Home node -->
+  <rect x="410" y="200" width="140" height="60" rx="8" fill="#dbe4f0" stroke="#33455c" stroke-width="2"/>
+  <text x="480" y="226" font-family="sans-serif" font-size="14" fill="#1a1a1a" text-anchor="middle">Classic view</text>
+  <text x="480" y="244" font-family="sans-serif" font-size="12" fill="#33455c" text-anchor="middle">(auto-anchor home)</text>
+
+  <!-- Angle nodes around home, pentagon layout -->
+  <!-- Top-down -->
+  <rect x="410" y="70" width="140" height="56" rx="8" fill="#ffffff" stroke="#333333" stroke-width="2"/>
+  <text x="480" y="94" font-family="sans-serif" font-size="13" fill="#1a1a1a" text-anchor="middle">1  Top-down</text>
+  <text x="480" y="112" font-family="sans-serif" font-size="11" fill="#555555" text-anchor="middle">ring color reads layers</text>
+
+  <!-- 45 overhead -->
+  <rect x="150" y="150" width="150" height="56" rx="8" fill="#ffffff" stroke="#333333" stroke-width="2"/>
+  <text x="225" y="174" font-family="sans-serif" font-size="13" fill="#1a1a1a" text-anchor="middle">2  45° overhead</text>
+  <text x="225" y="192" font-family="sans-serif" font-size="11" fill="#555555" text-anchor="middle">height + ring both read</text>
+
+  <!-- Horizontal -->
+  <rect x="150" y="300" width="150" height="56" rx="8" fill="#ffffff" stroke="#333333" stroke-width="2"/>
+  <text x="225" y="324" font-family="sans-serif" font-size="13" fill="#1a1a1a" text-anchor="middle">3  Horizontal</text>
+  <text x="225" y="342" font-family="sans-serif" font-size="11" fill="#555555" text-anchor="middle">clearest layer gap</text>
+
+  <!-- 45 upward -->
+  <rect x="660" y="150" width="150" height="56" rx="8" fill="#ffffff" stroke="#333333" stroke-width="2"/>
+  <text x="735" y="174" font-family="sans-serif" font-size="13" fill="#1a1a1a" text-anchor="middle">4  45° upward</text>
+  <text x="735" y="192" font-family="sans-serif" font-size="11" fill="#555555" text-anchor="middle">far layers can occlude</text>
+
+  <!-- Unit POV -->
+  <rect x="660" y="300" width="150" height="56" rx="8" fill="#ffffff" stroke="#333333" stroke-width="2"/>
+  <text x="735" y="324" font-family="sans-serif" font-size="13" fill="#1a1a1a" text-anchor="middle">5  Unit POV</text>
+  <text x="735" y="342" font-family="sans-serif" font-size="11" fill="#555555" text-anchor="middle">one engagement, sharp</text>
+
+  <!-- Arrows from home to each, double-headed -->
+  <defs>
+    <marker id="arrA" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#555555"/>
+    </marker>
+  </defs>
+  <line x1="480" y1="200" x2="480" y2="130" stroke="#555555" stroke-width="1.5" marker-end="url(#arrA)"/>
+  <line x1="480" y1="126" x2="480" y2="196" stroke="#555555" stroke-width="1.5" marker-end="url(#arrA)"/>
+
+  <line x1="415" y1="215" x2="305" y2="180" stroke="#555555" stroke-width="1.5" marker-end="url(#arrA)"/>
+  <line x1="300" y1="184" x2="410" y2="219" stroke="#555555" stroke-width="1.5" marker-end="url(#arrA)"/>
+
+  <line x1="415" y1="245" x2="305" y2="308" stroke="#555555" stroke-width="1.5" marker-end="url(#arrA)"/>
+  <line x1="300" y1="304" x2="410" y2="241" stroke="#555555" stroke-width="1.5" marker-end="url(#arrA)"/>
+
+  <line x1="545" y1="215" x2="655" y2="180" stroke="#555555" stroke-width="1.5" marker-end="url(#arrA)"/>
+  <line x1="660" y1="184" x2="550" y2="219" stroke="#555555" stroke-width="1.5" marker-end="url(#arrA)"/>
+
+  <line x1="545" y1="245" x2="655" y2="308" stroke="#555555" stroke-width="1.5" marker-end="url(#arrA)"/>
+  <line x1="660" y1="304" x2="550" y2="241" stroke="#555555" stroke-width="1.5" marker-end="url(#arrA)"/>
+
+  <text x="480" y="420" font-family="sans-serif" font-size="12" fill="#333333" text-anchor="middle">Enter: hold V, land on nearest angle. Switch: 1–5 or Tab. Steer: classic pan/zoom/edge-scroll on the current angle. Return: tap V or Backspace.</text>
+  <text x="480" y="440" font-family="sans-serif" font-size="12" fill="#333333" text-anchor="middle">Height-above-ground floor holds in every angle. Camera never bound to a layer; the layer strip only changes focus.</text>
+</svg>

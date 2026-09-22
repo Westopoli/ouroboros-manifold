@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="480" viewBox="0 0 960 480">
+  <rect x="0" y="0" width="960" height="480" fill="#f6f4ee"/>
+  <text x="480" y="34" font-family="Georgia, serif" font-size="20" fill="#1a1a1a" text-anchor="middle">Option C — Layer Peel (wild)</text>
+  <text x="480" y="56" font-family="sans-serif" font-size="13" fill="#444" text-anchor="middle">The five layers fan open like a hand of cards around your focus point</text>
+
+  <!-- Fanned planes, as parallelograms, layers 1 (bottom, left-most) to 5 (top, right-most) -->
+  <!-- Layer 1 -->
+  <polygon points="120,360 340,360 300,420 80,420" fill="#ffffff" fill-opacity="0.55" stroke="#333333" stroke-width="1.5"/>
+  <text x="210" y="395" font-family="sans-serif" font-size="13" fill="#1a1a1a" text-anchor="middle">Layer 1</text>
+
+  <!-- Layer 2 -->
+  <polygon points="220,300 440,300 400,360 180,360" fill="#ffffff" fill-opacity="0.6" stroke="#333333" stroke-width="1.5"/>
+  <text x="310" y="335" font-family="sans-serif" font-size="13" fill="#1a1a1a" text-anchor="middle">Layer 2</text>
+
+  <!-- Layer 3 (focused, enlarged, brighter) -->
+  <polygon points="330,190 650,190 590,300 270,300" fill="#dbe4f0" fill-opacity="0.95" stroke="#33455c" stroke-width="3"/>
+  <text x="460" y="245" font-family="sans-serif" font-size="18" fill="#1a1a1a" text-anchor="middle">Layer 3 — focused</text>
+  <text x="460" y="268" font-family="sans-serif" font-size="12" fill="#33455c" text-anchor="middle">brightened, enlarged; raiding party visible here</text>
+
+  <!-- Layer 4 -->
+  <polygon points="560,140 780,140 740,190 520,190" fill="#ffffff" fill-opacity="0.6" stroke="#333333" stroke-width="1.5"/>
+  <text x="650" y="168" font-family="sans-serif" font-size="13" fill="#1a1a1a" text-anchor="middle">Layer 4</text>
+
+  <!-- Layer 5 -->
+  <polygon points="660,90 880,90 840,140 620,140" fill="#ffffff" fill-opacity="0.55" stroke="#333333" stroke-width="1.5"/>
+  <text x="750" y="118" font-family="sans-serif" font-size="13" fill="#1a1a1a" text-anchor="middle">Layer 5</text>
+
+  <!-- Ghost line marking true stacked height -->
+  <line x1="60" y1="440" x2="900" y2="70" stroke="#999999" stroke-width="1" stroke-dasharray="3,5"/>
+  <text x="860" y="60" font-family="sans-serif" font-size="11" fill="#777777" text-anchor="middle">true stacked height (ghost line)</text>
+
+  <!-- Focus arrows -->
+  <defs>
+    <marker id="arrC" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#33455c"/>
+    </marker>
+  </defs>
+  <line x1="460" y1="330" x2="460" y2="305" stroke="#33455c" stroke-width="2" marker-end="url(#arrC)"/>
+  <text x="460" y="350" font-family="sans-serif" font-size="11" fill="#33455c" text-anchor="middle">scroll to move focus up/down the fan</text>
+
+  <text x="480" y="440" font-family="sans-serif" font-size="12" fill="#333333" text-anchor="middle">Enter: hold or toggle L, fan opens over ~0.5s. Switch: scroll or arrows walk focus between planes.</text>
+  <text x="480" y="458" font-family="sans-serif" font-size="12" fill="#333333" text-anchor="middle">Steer: pan/zoom move the whole fan together. Return home: release L; planes close to true height, then classic angle returns.</text>
+</svg>

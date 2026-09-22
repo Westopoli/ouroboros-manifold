@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="480" viewBox="0 0 960 480">
+  <rect x="0" y="0" width="960" height="480" fill="#f6f4ee"/>
+  <text x="480" y="34" font-family="Georgia, serif" font-size="20" fill="#1a1a1a" text-anchor="middle">Option D — Ghost Walk (wild)</text>
+  <text x="480" y="56" font-family="sans-serif" font-size="13" fill="#444" text-anchor="middle">An intangible eye that walks the layer stack at human height; it cannot act or be targeted</text>
+
+  <!-- Classic home node -->
+  <rect x="380" y="80" width="200" height="56" rx="8" fill="#dbe4f0" stroke="#33455c" stroke-width="2"/>
+  <text x="480" y="104" font-family="sans-serif" font-size="14" fill="#1a1a1a" text-anchor="middle">Classic view</text>
+  <text x="480" y="122" font-family="sans-serif" font-size="11" fill="#33455c" text-anchor="middle">(auto-anchor home, overhead)</text>
+
+  <!-- Layer stack column, layers 5 (top) to 1 (bottom) -->
+  <rect x="380" y="180" width="200" height="46" fill="#ffffff" stroke="#333333" stroke-width="1.5"/>
+  <text x="480" y="208" font-family="sans-serif" font-size="13" fill="#1a1a1a" text-anchor="middle">Layer 5</text>
+
+  <rect x="380" y="226" width="200" height="46" fill="#ffffff" stroke="#333333" stroke-width="1.5"/>
+  <text x="480" y="254" font-family="sans-serif" font-size="13" fill="#1a1a1a" text-anchor="middle">Layer 4</text>
+
+  <rect x="380" y="272" width="200" height="46" fill="#e8dcc8" stroke="#7a5c2e" stroke-width="2.5"/>
+  <text x="480" y="300" font-family="sans-serif" font-size="14" fill="#1a1a1a" text-anchor="middle">Layer 3 — ghost eye is here</text>
+
+  <rect x="380" y="318" width="200" height="46" fill="#ffffff" stroke="#333333" stroke-width="1.5"/>
+  <text x="480" y="346" font-family="sans-serif" font-size="13" fill="#1a1a1a" text-anchor="middle">Layer 2</text>
+
+  <rect x="380" y="364" width="200" height="46" fill="#ffffff" stroke="#333333" stroke-width="1.5"/>
+  <text x="480" y="392" font-family="sans-serif" font-size="13" fill="#1a1a1a" text-anchor="middle">Layer 1</text>
+
+  <!-- Enter arrow from Classic down to Layer 3 -->
+  <defs>
+    <marker id="arrD" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#5a1a16"/>
+    </marker>
+  </defs>
+  <line x1="330" y1="108" x2="330" y2="295" stroke="#5a1a16" stroke-width="2" marker-end="url(#arrD)"/>
+  <text x="270" y="200" font-family="sans-serif" font-size="12" fill="#5a1a16" text-anchor="middle">hold G:</text>
+  <text x="270" y="216" font-family="sans-serif" font-size="12" fill="#5a1a16" text-anchor="middle">falls into</text>
+  <text x="270" y="232" font-family="sans-serif" font-size="12" fill="#5a1a16" text-anchor="middle">the crowd</text>
+
+  <!-- Return arrow from Layer 3 back up to Classic -->
+  <line x1="640" y1="295" x2="640" y2="108" stroke="#33455c" stroke-width="2" marker-end="url(#arrD)"/>
+  <text x="705" y="200" font-family="sans-serif" font-size="12" fill="#33455c" text-anchor="middle">release G:</text>
+  <text x="705" y="216" font-family="sans-serif" font-size="12" fill="#33455c" text-anchor="middle">rises back,</text>
+  <text x="705" y="232" font-family="sans-serif" font-size="12" fill="#33455c" text-anchor="middle">reassembles</text>
+
+  <!-- Climb / drop arrows within the stack -->
+  <line x1="480" y1="272" x2="480" y2="230" stroke="#444444" stroke-width="1.5" marker-end="url(#arrD)"/>
+  <text x="480" y="222" font-family="sans-serif" font-size="10" fill="#444444" text-anchor="middle">modifier+scroll up: climbs one layer</text>
+
+  <line x1="480" y1="318" x2="480" y2="360" stroke="#444444" stroke-width="1.5" marker-end="url(#arrD)"/>
+  <text x="480" y="424" font-family="sans-serif" font-size="10" fill="#444444" text-anchor="middle">modifier+scroll down: drops one layer</text>
+
+  <text x="480" y="450" font-family="sans-serif" font-size="12" fill="#333333" text-anchor="middle">Steer within a layer: mouse-look, free movement, no collision. Only the current layer is seen at full detail and eye level.</text>
+</svg>
