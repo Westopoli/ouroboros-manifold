@@ -64,3 +64,10 @@ Row skipped: `test_E08_S064_what_carries_over.py::test_R_064_01_every_region_fie
 | `test_E11_S087_every_unit_thinks_the_same_way.py::test_R_087_03_it_attacks_nearest_such_enemy` | added `assert len({vanguard,e_near,e_far}) == 3` (distinct spawn ids) | 16 -> 18 (shared w/ R_087_06) | `assert 1 == 3` |
 | `test_E11_S087_every_unit_thinks_the_same_way.py::test_R_087_06_it_targets_attacker_return_fire` | added `assert len({unit,attacker1,attacker2}) == 3` (distinct spawn ids) | 16 -> 18 (shared) | `assert 1 == 3` |
 
+### E-12
+
+| Test | Edit | asserts before -> after | New failure |
+|---|---|---|---|
+| `test_E12_S089_i_see_what_my_units_see.py::test_R_089_03_it_not_drawn_its_hp` | captured `friendly` id, added `assert friendly in all_ids_in_client` before the exclusion check | 19 -> 20 | `assert 0 in []` |
+| `test_E12_S093_fog_is_for_the_player_not_the_engine.py::test_R_093_01_traces_identical` | added `assert om_unit_get_hp(w1,f1) > 0` before the cross-world checksum/hp comparisons | 9 -> 10 | `assert 0.0 > 0` |
+

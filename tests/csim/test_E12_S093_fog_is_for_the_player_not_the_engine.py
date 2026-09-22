@@ -44,6 +44,11 @@ def test_R_093_01_traces_identical(lib, world_factory):
         lib.om_world_step(w1)
         lib.om_world_step(w2)
 
+    # No real combat occurring (om_unit_spawn/om_command_attack_move stubs,
+    # om_unit_get_hp hard-stubbed 0.0) would make both worlds match trivially.
+    # Require a real, live unit before trusting the cross-world comparison.
+    assert lib.om_unit_get_hp(w1, f1) > 0, "combat must actually have happened"
+
     # Assert battle traces and state checksums are identical
     cs1 = lib.om_world_get_state_checksum(w1)
     cs2 = lib.om_world_get_state_checksum(w2)

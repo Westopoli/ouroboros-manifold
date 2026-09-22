@@ -82,7 +82,7 @@ def test_R_089_03_it_not_drawn_its_hp(lib, world_factory):
     w = world_factory(n_regions=1)
 
     # Friendly unit at (0, 0), enemy at (5000, 5000)
-    lib.om_unit_spawn(w, OMUnitType.VANGUARD, 0, 0.0, 0.0, 0)
+    friendly = lib.om_unit_spawn(w, OMUnitType.VANGUARD, 0, 0.0, 0.0, 0)
     unseen_enemy = lib.om_unit_spawn(w, OMUnitType.RAIDER, 1, 5000.0, 5000.0, 0)
 
     lib.om_visibility_compute(w)
@@ -90,6 +90,10 @@ def test_R_089_03_it_not_drawn_its_hp(lib, world_factory):
 
     # Verify client snapshot excludes unseen enemy position and HP
     client_data = lib.om_client_snapshot_read(w)
+    # A stub giving an empty `.units` list would make "not in []" trivially
+    # true for any id. Prove the snapshot isn't always empty first.
+    all_ids_in_client = [u.id for u in client_data.units]
+    assert friendly in all_ids_in_client, "snapshot must include the visible friendly unit"
     enemy_ids_in_client = [u.id for u in client_data.units if u.faction_id == 1]
     assert unseen_enemy not in enemy_ids_in_client
 
