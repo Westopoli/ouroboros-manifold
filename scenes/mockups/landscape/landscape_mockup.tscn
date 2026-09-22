@@ -45,14 +45,29 @@ position = Vector2(16, 16)
 [node name="SeedLabel" type="Label" parent="HUD/VBoxContainer"]
 text = "Seed: —"
 
+[node name="SeedSpinBox" type="SpinBox" parent="HUD/VBoxContainer"]
+min_value = 0.0
+max_value = 999999.0
+step = 1.0
+value = 11.0
+
 [node name="BandLabel" type="Label" parent="HUD/VBoxContainer"]
 text = "Band: —"
 
 [node name="RegenerateButton" type="Button" parent="HUD/VBoxContainer"]
+focus_mode = 0
 text = "Regenerate"
 
 [node name="KitToggleButton" type="Button" parent="HUD/VBoxContainer"]
+focus_mode = 0
 text = "Kit: —"
 
 [node name="PieceCountLabel" type="Label" parent="HUD/VBoxContainer"]
 text = "Pieces: —"
+
+[node name="StabilitySlider" type="HSlider" parent="HUD/VBoxContainer"]
+custom_minimum_size = Vector2(160, 0)
+min_value = 0.0
+max_value = 100.0
+step = 1.0
+value = 60.0
