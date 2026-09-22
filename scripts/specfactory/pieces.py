@@ -139,13 +139,24 @@ _ERROR_FILE_RE = re.compile(r"^ERROR (?:collecting )?(\S+?)(?:::.*)?\s*$", re.M)
 
 def check_acceptance(pieces: list[dict], project: Path, *, python_exe: str = DEFAULT_PYTHON,
                       timeout: int = 300, collector=None) -> list[tuple[str, str, str]]:
+    """`tests_pending = true` on a piece means its acceptance is not
+    expected to be green yet in EITHER of two ways: the file may not exist
+    at all, or (the more common case once the design lane authors a fenced
+    test ahead of the piece's own build) the file exists but fails to
+    COLLECT because it imports the piece's own not-yet-built module (e.g.
+    tests/qa/t1/test_rts_detectors.py's own `from scripts.qa.rts_detectors
+    import ...  # expected red: module does not exist yet`) -- both are
+    WARN, never FAIL, for such a piece; a collection failure on a piece
+    WITHOUT tests_pending set is a real defect (FAIL)."""
     collector = collector or (lambda node_ids, root: _real_collect(python_exe, project, node_ids, timeout))
     findings: list[tuple[str, str, str]] = []
     by_root: dict[str, list[tuple[str, str]]] = {}
+    pending_by_pid: dict[str, bool] = {}
 
     for p in pieces:
         pid = p.get("id", "?")
         pending = bool(p.get("tests_pending"))
+        pending_by_pid[pid] = pending
         for entry in p.get("acceptance", []) or []:
             if entry.endswith(".gd"):
                 if not (project / entry).is_file():
@@ -172,7 +183,8 @@ def check_acceptance(pieces: list[dict], project: Path, *, python_exe: str = DEF
         for pid, entry in entries:
             file_part = entry.split("::", 1)[0]
             if not bad_files or file_part in bad_files or any(file_part in b or b in file_part for b in bad_files):
-                findings.append(("FAIL", pid, f"acceptance id did not collect ({root} batch rc={rc}): {entry}"))
+                level = "WARN" if pending_by_pid.get(pid) else "FAIL"
+                findings.append((level, pid, f"acceptance id did not collect ({root} batch rc={rc}): {entry}"))
 
     return findings
 

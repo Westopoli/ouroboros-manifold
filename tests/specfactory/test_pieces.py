@@ -155,6 +155,23 @@ def test_acceptance_collector_injected_success(tmp_path):
     assert calls == [(("tests/csim/test_a.py",), "tests/csim")]
 
 
+def test_collector_collection_error_warns_when_tests_pending(tmp_path):
+    """A fenced test the design lane writes ahead of a piece's own build
+    (e.g. it imports scripts.qa.rts_detectors, which does not exist yet)
+    fails to COLLECT, not just fails an assertion -- for a tests_pending
+    piece this is expected redness, not a defect."""
+    csim = tmp_path / "tests" / "csim"
+    csim.mkdir(parents=True)
+    (csim / "test_a.py").write_text("def test_a(): pass\n")
+    pieces = [{"id": "Q2", "acceptance": ["tests/csim/test_a.py"], "tests_pending": True}]
+
+    def fake_collector(node_ids, root):
+        return 2, "ERROR tests/csim/test_a.py\n"
+
+    findings = pc.check_acceptance(pieces, tmp_path, collector=fake_collector)
+    assert findings == [("WARN", "Q2", "acceptance id did not collect (tests/csim batch rc=2): tests/csim/test_a.py")]
+
+
 def test_positive_control_collector_reports_collection_error(tmp_path):
     csim = tmp_path / "tests" / "csim"
     csim.mkdir(parents=True)
