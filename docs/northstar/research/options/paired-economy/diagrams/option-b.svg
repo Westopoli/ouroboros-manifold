@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 960 560" width="960" height="560">
+  <rect x="0" y="0" width="960" height="560" fill="#f4f1e8"/>
+  <text x="480" y="30" font-family="Georgia, serif" font-size="20" fill="#1a1a1a" text-anchor="middle">The Two Clocks — one mission, two tempos on one map</text>
+
+  <defs>
+    <marker id="arrowb" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#2f4d1e"/>
+    </marker>
+  </defs>
+
+  <!-- commander's continuous lane -->
+  <text x="40" y="90" font-family="Georgia, serif" font-size="14" fill="#7a3a1a">Commander — uninterrupted real time</text>
+  <rect x="40" y="100" width="880" height="50" fill="#e8dcc0" stroke="#8a7245" stroke-width="2"/>
+  <text x="480" y="130" font-family="Georgia, serif" font-size="12" fill="#1a1a1a" text-anchor="middle">fighting continuously — never stops, never waits on the economy player</text>
+
+  <!-- economy player's shift lane -->
+  <text x="40" y="200" font-family="Georgia, serif" font-size="14" fill="#2f4d1e">Economy player — shift clock</text>
+
+  <!-- shift 1 -->
+  <rect x="40" y="210" width="180" height="70" fill="#dfe7d3" stroke="#5b7a3a" stroke-width="2"/>
+  <text x="130" y="232" font-family="Georgia, serif" font-size="11" fill="#1a1a1a" text-anchor="middle">Window: plan shift 1</text>
+  <text x="130" y="250" font-family="Georgia, serif" font-size="9" fill="#1a1a1a" text-anchor="middle">60s: workers, queue,</text>
+  <text x="130" y="264" font-family="Georgia, serif" font-size="9" fill="#1a1a1a" text-anchor="middle">wall placement, levy</text>
+
+  <rect x="230" y="210" width="180" height="70" fill="#eee8d8" stroke="#8a7245" stroke-width="2" stroke-dasharray="4 3"/>
+  <text x="320" y="232" font-family="Georgia, serif" font-size="11" fill="#1a1a1a" text-anchor="middle">Shift 1 plays out</text>
+  <text x="320" y="250" font-family="Georgia, serif" font-size="9" fill="#1a1a1a" text-anchor="middle">wall rises, unit rolls out</text>
+  <text x="320" y="264" font-family="Georgia, serif" font-size="9" fill="#7a3a1a" text-anchor="middle">1 override available</text>
+
+  <!-- shift 2 -->
+  <rect x="420" y="210" width="180" height="70" fill="#dfe7d3" stroke="#5b7a3a" stroke-width="2"/>
+  <text x="510" y="232" font-family="Georgia, serif" font-size="11" fill="#1a1a1a" text-anchor="middle">Window: plan shift 2</text>
+  <text x="510" y="250" font-family="Georgia, serif" font-size="9" fill="#1a1a1a" text-anchor="middle">Foremen now handle</text>
+  <text x="510" y="264" font-family="Georgia, serif" font-size="9" fill="#4a7a2a" text-anchor="middle">routine hauling</text>
+
+  <rect x="610" y="210" width="180" height="70" fill="#eee8d8" stroke="#8a7245" stroke-width="2" stroke-dasharray="4 3"/>
+  <text x="700" y="232" font-family="Georgia, serif" font-size="11" fill="#1a1a1a" text-anchor="middle">Shift 2 plays out</text>
+  <text x="700" y="250" font-family="Georgia, serif" font-size="9" fill="#1a1a1a" text-anchor="middle">levy raised mid-siege</text>
+  <text x="700" y="264" font-family="Georgia, serif" font-size="9" fill="#7a3a1a" text-anchor="middle">override spent: rescue quarry</text>
+
+  <rect x="800" y="210" width="120" height="70" fill="#dfe7d3" stroke="#5b7a3a" stroke-width="2"/>
+  <text x="860" y="232" font-family="Georgia, serif" font-size="11" fill="#1a1a1a" text-anchor="middle">Window:</text>
+  <text x="860" y="248" font-family="Georgia, serif" font-size="11" fill="#1a1a1a" text-anchor="middle">plan shift 3</text>
+
+  <!-- arrows between shift boxes -->
+  <line x1="220" y1="245" x2="228" y2="245" stroke="#2f4d1e" stroke-width="2" marker-end="url(#arrowb)"/>
+  <line x1="410" y1="245" x2="418" y2="245" stroke="#2f4d1e" stroke-width="2" marker-end="url(#arrowb)"/>
+  <line x1="600" y1="245" x2="608" y2="245" stroke="#2f4d1e" stroke-width="2" marker-end="url(#arrowb)"/>
+  <line x1="790" y1="245" x2="798" y2="245" stroke="#2f4d1e" stroke-width="2" marker-end="url(#arrowb)"/>
+
+  <!-- one shared map beneath both lanes -->
+  <text x="480" y="330" font-family="Georgia, serif" font-size="14" fill="#1a1a1a" text-anchor="middle">One shared, unpaused tactical map underneath both lanes</text>
+  <rect x="200" y="350" width="560" height="160" fill="#dfe7d3" stroke="#5b7a3a" stroke-width="2"/>
+  <rect x="230" y="375" width="80" height="50" fill="#c9b98a" stroke="#8a7245"/>
+  <text x="270" y="405" font-family="Georgia, serif" font-size="9" fill="#1a1a1a" text-anchor="middle">wall segment</text>
+  <rect x="340" y="375" width="80" height="50" fill="#d7c9a0" stroke="#8a7245"/>
+  <text x="380" y="405" font-family="Georgia, serif" font-size="9" fill="#1a1a1a" text-anchor="middle">barracks</text>
+  <circle cx="500" cy="400" r="10" fill="#7a1a1a" opacity="0.5"/>
+  <text x="500" y="425" font-family="Georgia, serif" font-size="9" fill="#7a1a1a" text-anchor="middle">assault, flank</text>
+  <rect x="580" y="375" width="80" height="50" fill="#c9b98a" stroke="#8a7245"/>
+  <text x="620" y="405" font-family="Georgia, serif" font-size="9" fill="#1a1a1a" text-anchor="middle">quarry (rescued)</text>
+
+  <text x="480" y="540" font-family="Georgia, serif" font-size="12" fill="#1a1a1a" text-anchor="middle">Only the economy player's decisions are periodic; the map, the clock, and the commander never pause.</text>
+</svg>

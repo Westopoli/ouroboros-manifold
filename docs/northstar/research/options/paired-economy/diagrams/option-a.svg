@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 960 640" width="960" height="640">
+  <rect x="0" y="0" width="960" height="640" fill="#f4f1e8"/>
+  <text x="480" y="30" font-family="Georgia, serif" font-size="20" fill="#1a1a1a" text-anchor="middle">The Works — the economy player's screen, one moment</text>
+
+  <!-- resource bar -->
+  <rect x="20" y="50" width="920" height="40" fill="#e8dcc0" stroke="#8a7245" stroke-width="2"/>
+  <text x="40" y="75" font-family="Georgia, serif" font-size="13" fill="#1a1a1a">Ore: 340</text>
+  <text x="150" y="75" font-family="Georgia, serif" font-size="13" fill="#1a1a1a">Biomass: 210</text>
+  <text x="290" y="75" font-family="Georgia, serif" font-size="13" fill="#1a1a1a">Alloy: 88</text>
+  <text x="400" y="75" font-family="Georgia, serif" font-size="13" fill="#7a3a1a">Supply: 46 / 50</text>
+  <text x="560" y="75" font-family="Georgia, serif" font-size="13" fill="#1a1a1a">Tech tier: III</text>
+  <text x="720" y="75" font-family="Georgia, serif" font-size="13" fill="#2f4d1e">Autoharvesters: 2 active</text>
+
+  <!-- shared tactical map, center -->
+  <rect x="240" y="110" width="480" height="300" fill="#dfe7d3" stroke="#5b7a3a" stroke-width="2"/>
+  <text x="480" y="130" font-family="Georgia, serif" font-size="13" fill="#1a1a1a" text-anchor="middle">Shared Tactical Map</text>
+
+  <rect x="270" y="150" width="90" height="60" fill="#c9b98a" stroke="#8a7245"/>
+  <text x="315" y="185" font-family="Georgia, serif" font-size="10" fill="#1a1a1a" text-anchor="middle">Foundry</text>
+  <text x="315" y="197" font-family="Georgia, serif" font-size="9" fill="#4a7a2a" text-anchor="middle">queue: 2 units</text>
+
+  <rect x="390" y="150" width="90" height="60" fill="#d7c9a0" stroke="#8a7245" stroke-dasharray="4 3"/>
+  <text x="435" y="185" font-family="Georgia, serif" font-size="10" fill="#1a1a1a" text-anchor="middle">Wall segment</text>
+  <text x="435" y="197" font-family="Georgia, serif" font-size="9" fill="#7a3a1a" text-anchor="middle">placing...</text>
+
+  <rect x="510" y="150" width="90" height="60" fill="#c9b98a" stroke="#8a7245"/>
+  <text x="555" y="185" font-family="Georgia, serif" font-size="10" fill="#1a1a1a" text-anchor="middle">Granary</text>
+  <text x="555" y="197" font-family="Georgia, serif" font-size="9" fill="#4a7a2a" text-anchor="middle">queued</text>
+
+  <polygon points="260,345 270,365 250,365" fill="#8a7245"/>
+  <text x="260" y="382" font-family="Georgia, serif" font-size="9" fill="#1a1a1a" text-anchor="middle">ore vein</text>
+
+  <circle cx="355" cy="348" r="8" fill="#7a3a1a"/>
+  <circle cx="383" cy="344" r="8" fill="#7a3a1a"/>
+  <circle cx="380" cy="368" r="8" fill="#7a3a1a"/>
+  <text x="369" y="396" font-family="Georgia, serif" font-size="9" fill="#1a1a1a" text-anchor="middle">worker carts</text>
+
+  <circle cx="600" cy="330" r="14" fill="#7a1a1a" opacity="0.5"/>
+  <text x="600" y="355" font-family="Georgia, serif" font-size="9" fill="#7a1a1a" text-anchor="middle">smoking crater</text>
+  <rect x="620" y="300" width="60" height="20" fill="#c9b98a" stroke="#8a7245"/>
+  <text x="650" y="314" font-family="Georgia, serif" font-size="8" fill="#1a1a1a" text-anchor="middle">rerouted convoy</text>
+
+  <!-- production queue panel, left -->
+  <rect x="20" y="110" width="200" height="300" fill="#eee8d8" stroke="#8a7245" stroke-width="2"/>
+  <text x="120" y="130" font-family="Georgia, serif" font-size="13" fill="#1a1a1a" text-anchor="middle">Production Queues</text>
+  <rect x="35" y="145" width="170" height="26" fill="#d7c9a0" stroke="#8a7245"/>
+  <text x="120" y="163" font-family="Georgia, serif" font-size="10" fill="#1a1a1a" text-anchor="middle">Foundry: Line unit 40%</text>
+  <rect x="35" y="178" width="170" height="26" fill="#d7c9a0" stroke="#8a7245"/>
+  <text x="120" y="196" font-family="Georgia, serif" font-size="10" fill="#1a1a1a" text-anchor="middle">Foundry: armor plating</text>
+  <rect x="35" y="211" width="170" height="26" fill="#d7c9a0" stroke="#8a7245"/>
+  <text x="120" y="229" font-family="Georgia, serif" font-size="10" fill="#1a1a1a" text-anchor="middle">Granary: housing tier 3</text>
+  <text x="120" y="270" font-family="Georgia, serif" font-size="11" fill="#1a1a1a" text-anchor="middle">Tech ladder</text>
+  <rect x="35" y="280" width="170" height="20" fill="#e0dcc8" stroke="#8a7245"/>
+  <text x="120" y="294" font-family="Georgia, serif" font-size="9" fill="#1a1a1a" text-anchor="middle">Tier III unlocked</text>
+  <rect x="35" y="304" width="170" height="20" fill="#f2eedd" stroke="#8a7245" stroke-dasharray="3 2"/>
+  <text x="120" y="318" font-family="Georgia, serif" font-size="9" fill="#4a4a4a" text-anchor="middle">Tier IV researching</text>
+
+  <!-- commander's ticker, right -->
+  <rect x="740" y="110" width="200" height="300" fill="#eee8d8" stroke="#8a7245" stroke-width="2"/>
+  <text x="840" y="130" font-family="Georgia, serif" font-size="13" fill="#1a1a1a" text-anchor="middle">Commander's Ticker</text>
+  <text x="755" y="155" font-family="Georgia, serif" font-size="10" fill="#7a3a1a">"need Line units"</text>
+  <text x="755" y="175" font-family="Georgia, serif" font-size="10" fill="#7a3a1a">"hold the north gate"</text>
+  <text x="755" y="195" font-family="Georgia, serif" font-size="10" fill="#1a1a1a">2 units lost, east ridge</text>
+  <line x1="740" y1="215" x2="940" y2="215" stroke="#8a7245"/>
+  <text x="840" y="235" font-family="Georgia, serif" font-size="11" fill="#1a1a1a" text-anchor="middle">visible to both players</text>
+
+  <text x="480" y="440" font-family="Georgia, serif" font-size="12" fill="#1a1a1a" text-anchor="middle">Worker carts, queues, and the wall segment are on the same map the commander is fighting on.</text>
+  <text x="480" y="465" font-family="Georgia, serif" font-size="12" fill="#1a1a1a" text-anchor="middle">Foundry output feeds the garrison the commander draws replacements from.</text>
+</svg>
