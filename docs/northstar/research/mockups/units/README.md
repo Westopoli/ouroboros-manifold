@@ -65,3 +65,9 @@ All nine items from the fresh-eyes review addressed; full before/after evidence 
 - **Flank clipped at frame edge (blocker).** Camera now follows the two forces' actual midpoint at capture time; raiders repositioned into a two-pronged spread approach (see below).
 - **Support disc, Strike squads indistinguishable, void bars, HUD contrast, uncommitted facing shots (should-fix, all five).** All fixed; see checklist items 2, 3, 7, 8, 9.
 - **Held: flank outcome.** The spread, two-pronged approach (four independent attack-move commands instead of one shared group command that preserved the tight start-cluster to the destination) measurably changed the fight — 1 Bombard now dies before the Raiders are wiped, was 0 — but Bombards still win the full engagement. Per the brief's instruction, stats were not tuned; recorded in Questions for Westley above with three candidates (artillery minimum range; the E-11 paragraph may assume an unseen approach that this toy has no sensor/fog model to test; or the toy's numbers stand and the paragraph needs revising).
+
+## Mockup review 1 (Westley, 2026-09-22)
+
+Verbatim: "Units prototype: waypoints stay forever (never fade), there's no visible box that indicates the size I'm clicking and dragging over units to select (though it does work, when I click and drag and right click the units I selected output the command). Units do not move or do anything. Moving my mouse to the top left to select the drop down moves the screen that way because it's close enough to the edge of the screen to move the view."
+
+Pass 2 brief: `docs/northstar/plans/briefs/2026-09-22-p4-units-mockup-pass2.md` (the sim starts paused so nothing ticks and pings never expire; no drag rectangle is drawn; edge scroll compares canvas-space mouse against a non-canvas size and fires over the HUD).

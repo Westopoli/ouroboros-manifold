@@ -35,3 +35,9 @@ All in `qa/checklist.md` next to the scene: the full check table (clean/plant/pl
 ## Next step
 
 The pass-1 screenshots (`recon`, `begin`, `mission_t100`, `mission_t300`, `memory_off`, `memory_off_full`, `in_interference`, `close_ring`, `map_zoom`, all 1920x1080) are committed under `pass1/`, refreshed after a fresh-eyes pass fixed the HUD readout, node label size, and standard camera framing (see "Pass-2 fixes" above). The mockup awaits Westley's look, especially on the five questions above.
+
+## Mockup review 1 (Westley, 2026-09-22)
+
+Verbatim: "Can't move down/right on fog prototype either, bug is consistent across multiple prototypes. Changing seed doesn't do anything, otherwise it works well."
+
+Pass 2 brief: `docs/northstar/plans/briefs/2026-09-22-p5-fog-mockup-pass2.md` (edge scroll compares canvas-space mouse against window pixels; the seed only jitters patrol phases while the map is a fixed fixture).
