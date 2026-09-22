@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="420" viewBox="0 0 960 420">
+  <rect x="0" y="0" width="960" height="420" fill="#f6f4ee"/>
+  <text x="480" y="34" font-family="Georgia, serif" font-size="20" fill="#1a1a1a" text-anchor="middle">Option B — The Echo</text>
+  <text x="480" y="56" font-family="sans-serif" font-size="13" fill="#444" text-anchor="middle">From the mission being set to the story it leaves behind</text>
+
+  <defs>
+    <marker id="arrB" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#555555"/>
+    </marker>
+  </defs>
+
+  <!-- Step 1 -->
+  <rect x="20" y="130" width="150" height="90" rx="8" fill="#ffffff" stroke="#333333" stroke-width="2"/>
+  <text x="95" y="158" font-family="sans-serif" font-size="13" fill="#1a1a1a" text-anchor="middle">Mission is set</text>
+  <text x="95" y="176" font-family="sans-serif" font-size="11" fill="#555555" text-anchor="middle">A 1-in-100 chance</text>
+  <text x="95" y="192" font-family="sans-serif" font-size="11" fill="#555555" text-anchor="middle">fixes one detail as</text>
+  <text x="95" y="208" font-family="sans-serif" font-size="11" fill="#555555" text-anchor="middle">an overlay in advance</text>
+
+  <!-- Step 2 -->
+  <rect x="205" y="130" width="150" height="90" rx="8" fill="#ffffff" stroke="#333333" stroke-width="2"/>
+  <text x="280" y="158" font-family="sans-serif" font-size="13" fill="#1a1a1a" text-anchor="middle">Briefing</text>
+  <text x="280" y="176" font-family="sans-serif" font-size="11" fill="#555555" text-anchor="middle">Situation, Objective,</text>
+  <text x="280" y="192" font-family="sans-serif" font-size="11" fill="#555555" text-anchor="middle">Assets — no hint of</text>
+  <text x="280" y="208" font-family="sans-serif" font-size="11" fill="#555555" text-anchor="middle">what may come</text>
+
+  <!-- Step 3 -->
+  <rect x="390" y="130" width="150" height="90" rx="8" fill="#ffffff" stroke="#333333" stroke-width="2"/>
+  <text x="465" y="158" font-family="sans-serif" font-size="13" fill="#1a1a1a" text-anchor="middle">Mission plays</text>
+  <text x="465" y="176" font-family="sans-serif" font-size="11" fill="#555555" text-anchor="middle">Ordinary orders,</text>
+  <text x="465" y="192" font-family="sans-serif" font-size="11" fill="#555555" text-anchor="middle">ordinary fight, no</text>
+  <text x="465" y="208" font-family="sans-serif" font-size="11" fill="#555555" text-anchor="middle">sign anything is off</text>
+
+  <!-- Step 4: the surprise, highlighted, wireframe of overlay moment -->
+  <rect x="575" y="100" width="190" height="150" rx="8" fill="#e2e6f4" stroke="#2a3a8a" stroke-width="3"/>
+  <text x="670" y="122" font-family="sans-serif" font-size="13" fill="#1a2a5a" text-anchor="middle">The field doubles</text>
+  <rect x="588" y="132" width="164" height="60" rx="4" fill="#ffffff" stroke="#2a3a8a" stroke-width="1.5" opacity="0.9"/>
+  <rect x="600" y="140" width="140" height="44" rx="4" fill="none" stroke="#2a3a8a" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="670" y="164" font-family="sans-serif" font-size="10" fill="#2a3a8a" text-anchor="middle">your line (solid)</text>
+  <text x="670" y="178" font-family="sans-serif" font-size="10" fill="#2a3a8a" text-anchor="middle">+ a version to come (dashed)</text>
+  <text x="670" y="206" font-family="sans-serif" font-size="11" fill="#1a2a5a" text-anchor="middle">4 seconds, unmistakable,</text>
+  <text x="670" y="222" font-family="sans-serif" font-size="11" fill="#1a2a5a" text-anchor="middle">gone as fast as it came</text>
+  <text x="670" y="238" font-family="sans-serif" font-size="11" fill="#1a2a5a" text-anchor="middle">one shown detail becomes real</text>
+
+  <!-- Step 5 -->
+  <rect x="795" y="130" width="145" height="90" rx="8" fill="#ffffff" stroke="#333333" stroke-width="2"/>
+  <text x="867" y="152" font-family="sans-serif" font-size="13" fill="#1a1a1a" text-anchor="middle">Debrief names</text>
+  <text x="867" y="170" font-family="sans-serif" font-size="11" fill="#555555" text-anchor="middle">what appeared</text>
+  <text x="867" y="186" font-family="sans-serif" font-size="11" fill="#555555" text-anchor="middle">and what came</text>
+  <text x="867" y="202" font-family="sans-serif" font-size="11" fill="#555555" text-anchor="middle">true, side by side</text>
+
+  <!-- arrows across top row -->
+  <line x1="170" y1="175" x2="203" y2="175" stroke="#555555" stroke-width="2" marker-end="url(#arrB)"/>
+  <line x1="355" y1="175" x2="388" y2="175" stroke="#555555" stroke-width="2" marker-end="url(#arrB)"/>
+  <line x1="540" y1="175" x2="573" y2="175" stroke="#555555" stroke-width="2" marker-end="url(#arrB)"/>
+  <line x1="765" y1="175" x2="793" y2="175" stroke="#555555" stroke-width="2" marker-end="url(#arrB)"/>
+
+  <!-- Step 6: chronicle -->
+  <rect x="700" y="300" width="230" height="90" rx="8" fill="#eaeadb" stroke="#5c5a33" stroke-width="2"/>
+  <text x="815" y="326" font-family="sans-serif" font-size="13" fill="#3a3a1a" text-anchor="middle">Chronicle entry</text>
+  <text x="815" y="344" font-family="sans-serif" font-size="11" fill="#4a4a2a" text-anchor="middle">A commander said to</text>
+  <text x="815" y="360" font-family="sans-serif" font-size="11" fill="#4a4a2a" text-anchor="middle">have seen the fight</text>
+  <text x="815" y="376" font-family="sans-serif" font-size="11" fill="#4a4a2a" text-anchor="middle">before it happened</text>
+
+  <line x1="867" y1="220" x2="825" y2="298" stroke="#555555" stroke-width="2" marker-end="url(#arrB)"/>
+
+  <text x="480" y="405" font-family="sans-serif" font-size="12" fill="#666" text-anchor="middle">Decided once, at the start; the field never simulates ahead of the player, it only ever shows what was already set.</text>
+</svg>

@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="420" viewBox="0 0 960 420">
+  <rect x="0" y="0" width="960" height="420" fill="#f6f4ee"/>
+  <text x="480" y="34" font-family="Georgia, serif" font-size="20" fill="#1a1a1a" text-anchor="middle">Option A — Crossed Signals</text>
+  <text x="480" y="56" font-family="sans-serif" font-size="13" fill="#444" text-anchor="middle">From the mission being set to the story it leaves behind</text>
+
+  <defs>
+    <marker id="arrA" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#555555"/>
+    </marker>
+  </defs>
+
+  <!-- Step 1 -->
+  <rect x="20" y="130" width="150" height="90" rx="8" fill="#ffffff" stroke="#333333" stroke-width="2"/>
+  <text x="95" y="158" font-family="sans-serif" font-size="13" fill="#1a1a1a" text-anchor="middle">Mission is set</text>
+  <text x="95" y="176" font-family="sans-serif" font-size="11" fill="#555555" text-anchor="middle">A 1-in-100 chance</text>
+  <text x="95" y="192" font-family="sans-serif" font-size="11" fill="#555555" text-anchor="middle">is decided, silently,</text>
+  <text x="95" y="208" font-family="sans-serif" font-size="11" fill="#555555" text-anchor="middle">before the briefing</text>
+
+  <!-- Step 2 -->
+  <rect x="205" y="130" width="150" height="90" rx="8" fill="#ffffff" stroke="#333333" stroke-width="2"/>
+  <text x="280" y="158" font-family="sans-serif" font-size="13" fill="#1a1a1a" text-anchor="middle">Briefing</text>
+  <text x="280" y="176" font-family="sans-serif" font-size="11" fill="#555555" text-anchor="middle">Situation, Objective,</text>
+  <text x="280" y="192" font-family="sans-serif" font-size="11" fill="#555555" text-anchor="middle">Assets — no hint of</text>
+  <text x="280" y="208" font-family="sans-serif" font-size="11" fill="#555555" text-anchor="middle">what may come</text>
+
+  <!-- Step 3 -->
+  <rect x="390" y="130" width="150" height="90" rx="8" fill="#ffffff" stroke="#333333" stroke-width="2"/>
+  <text x="465" y="158" font-family="sans-serif" font-size="13" fill="#1a1a1a" text-anchor="middle">Mission plays</text>
+  <text x="465" y="176" font-family="sans-serif" font-size="11" fill="#555555" text-anchor="middle">Ordinary orders,</text>
+  <text x="465" y="192" font-family="sans-serif" font-size="11" fill="#555555" text-anchor="middle">ordinary fight, no</text>
+  <text x="465" y="208" font-family="sans-serif" font-size="11" fill="#555555" text-anchor="middle">sign anything is off</text>
+
+  <!-- Step 4: the surprise, highlighted -->
+  <rect x="575" y="120" width="170" height="110" rx="8" fill="#f4dede" stroke="#8a2a2a" stroke-width="3"/>
+  <text x="660" y="148" font-family="sans-serif" font-size="13" fill="#5a1a1a" text-anchor="middle">Signal crosses</text>
+  <text x="660" y="166" font-family="sans-serif" font-size="11" fill="#5a1a1a" text-anchor="middle">A report, status, or</text>
+  <text x="660" y="182" font-family="sans-serif" font-size="11" fill="#5a1a1a" text-anchor="middle">asset turns out false —</text>
+  <text x="660" y="198" font-family="sans-serif" font-size="11" fill="#5a1a1a" text-anchor="middle">no warning, one field</text>
+  <text x="660" y="214" font-family="sans-serif" font-size="11" fill="#5a1a1a" text-anchor="middle">change, a choice forced</text>
+
+  <!-- Step 5 -->
+  <rect x="775" y="130" width="165" height="90" rx="8" fill="#ffffff" stroke="#333333" stroke-width="2"/>
+  <text x="857" y="152" font-family="sans-serif" font-size="13" fill="#1a1a1a" text-anchor="middle">Debrief names it</text>
+  <text x="857" y="170" font-family="sans-serif" font-size="11" fill="#555555" text-anchor="middle">apart from the</text>
+  <text x="857" y="186" font-family="sans-serif" font-size="11" fill="#555555" text-anchor="middle">score, like a</text>
+  <text x="857" y="202" font-family="sans-serif" font-size="11" fill="#555555" text-anchor="middle">citation</text>
+
+  <!-- arrows across top row -->
+  <line x1="170" y1="175" x2="203" y2="175" stroke="#555555" stroke-width="2" marker-end="url(#arrA)"/>
+  <line x1="355" y1="175" x2="388" y2="175" stroke="#555555" stroke-width="2" marker-end="url(#arrA)"/>
+  <line x1="540" y1="175" x2="573" y2="175" stroke="#555555" stroke-width="2" marker-end="url(#arrA)"/>
+  <line x1="745" y1="175" x2="773" y2="175" stroke="#555555" stroke-width="2" marker-end="url(#arrA)"/>
+
+  <!-- Step 6: chronicle, below, celebrated -->
+  <rect x="700" y="290" width="220" height="90" rx="8" fill="#eaeadb" stroke="#5c5a33" stroke-width="2"/>
+  <text x="810" y="316" font-family="sans-serif" font-size="13" fill="#3a3a1a" text-anchor="middle">Chronicle entry</text>
+  <text x="810" y="334" font-family="sans-serif" font-size="11" fill="#4a4a2a" text-anchor="middle">Its own line, told once,</text>
+  <text x="810" y="350" font-family="sans-serif" font-size="11" fill="#4a4a2a" text-anchor="middle">like a story a veteran</text>
+  <text x="810" y="366" font-family="sans-serif" font-size="11" fill="#4a4a2a" text-anchor="middle">tells once</text>
+
+  <line x1="857" y1="220" x2="820" y2="288" stroke="#555555" stroke-width="2" marker-end="url(#arrA)"/>
+
+  <text x="480" y="400" font-family="sans-serif" font-size="12" fill="#666" text-anchor="middle">Decided once, at the start; the only surprise step is the crossed signal — everything else plays out as any mission would.</text>
+</svg>
