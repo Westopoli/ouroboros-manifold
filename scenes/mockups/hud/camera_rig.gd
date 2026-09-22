@@ -48,15 +48,33 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _zoom_by(amount: float) -> void:
-	_height = clampf(_height - amount, HEIGHT_MIN, HEIGHT_MAX)
-	_update_camera()
+	set_height(_height - amount)
+
+
+func get_ground_half_extent() -> Vector2:
+	var fov_rad := deg_to_rad(_camera.fov if _camera != null else 55.0)
+	var half_z := _height * tan(fov_rad * 0.5)
+	var aspect := 16.0 / 9.0
+	var vp := DisplayServer.window_get_size()
+	if vp.y > 0:
+		aspect = float(vp.x) / float(vp.y)
+	return Vector2(half_z * aspect, half_z)
+
+
+func _clamp_axis(v: float, half_extent: float) -> float:
+	var lo := half_extent
+	var hi := CANVAS_SIZE - half_extent
+	if lo <= hi:
+		return clampf(v, lo, hi)
+	return CANVAS_SIZE * 0.5
 
 
 func _clamp_pan() -> void:
 	if QaPlants.is_active("camera-unbounded"):
 		return
-	_pan.x = clampf(_pan.x, 0.0, CANVAS_SIZE)
-	_pan.z = clampf(_pan.z, 0.0, CANVAS_SIZE)
+	var extent := get_ground_half_extent()
+	_pan.x = _clamp_axis(_pan.x, extent.x)
+	_pan.z = _clamp_axis(_pan.z, extent.y)
 
 
 func _update_camera() -> void:
@@ -72,6 +90,7 @@ func centre_on(pos: Vector2) -> void:
 
 func set_height(h: float) -> void:
 	_height = clampf(h, HEIGHT_MIN, HEIGHT_MAX)
+	_clamp_pan()
 	_update_camera()
 
 

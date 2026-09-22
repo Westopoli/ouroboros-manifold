@@ -121,16 +121,34 @@ func _check_bound8() -> void:
 	var root = await _instantiate_root()
 	if root == null or not root.has_method("qa_camera"):
 		_assert(false, "BOUND-8: cannot instantiate or missing qa_camera"); return
-	root.qa_seed(11); root.qa_camera(3000.0, 999999.0, -999999.0)
-	var s: Dictionary = root.qa_state()
-	var b: Dictionary = s.bounds; var cam: Dictionary = s.camera
-	var inside: bool = cam.x >= b.min_x and cam.x <= b.max_x and cam.z >= b.min_z and cam.z <= b.max_z
+	root.qa_seed(11)
 	var rig: Node = root.get_node_or_null("CameraRig")
 	var cam3d: Camera3D = rig.get_camera() if rig and rig.has_method("get_camera") else null
 	var pitch_ok: bool = cam3d != null and is_equal_approx(rad_to_deg(-cam3d.rotation.x), 90.0)
+	var b: Dictionary = root.qa_state().bounds
+	var cx: float = (b.min_x + b.max_x) * 0.5
+	var cz: float = (b.min_z + b.max_z) * 0.5
+	var all_ok := true
+	var last_cam: Dictionary = {}
+	var report := ""
+	for h in [150.0, 3000.0, 12000.0]:
+		root.qa_camera(h, 999999.0, -999999.0)
+		var cam: Dictionary = root.qa_state().camera
+		last_cam = cam
+		var extent: Vector2 = rig.get_ground_half_extent()
+		var fits: bool = extent.x <= (b.max_x - b.min_x) * 0.5 and extent.y <= (b.max_z - b.min_z) * 0.5
+		var ok: bool
+		if fits:
+			var x0: float = cam.x - extent.x; var x1: float = cam.x + extent.x
+			var z0: float = cam.z - extent.y; var z1: float = cam.z + extent.y
+			ok = x0 >= b.min_x - 0.5 and x1 <= b.max_x + 0.5 and z0 >= b.min_z - 0.5 and z1 <= b.max_z + 0.5
+		else:
+			ok = is_equal_approx(cam.x, cx) and is_equal_approx(cam.z, cz)
+		all_ok = all_ok and ok
+		report += "h=%d fits=%s cam=(%.1f,%.1f) extent=(%.1f,%.1f) ok=%s " % [int(h), fits, cam.x, cam.z, extent.x, extent.y, ok]
 	root.qa_set("focus_layer", 2)
 	var cam2: Dictionary = root.qa_state().camera
-	_assert(inside and pitch_ok and cam2 == cam, "BOUND-8: cam=%s bounds=%s pitch_ok=%s cam2=%s" % [cam, b, pitch_ok, cam2])
+	_assert(all_ok and pitch_ok and cam2 == last_cam, "BOUND-8: %spitch_ok=%s cam2=%s" % [report, pitch_ok, cam2])
 
 func _check_clock9() -> void:
 	var root = await _instantiate_root()

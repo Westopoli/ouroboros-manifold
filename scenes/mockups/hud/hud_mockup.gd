@@ -255,8 +255,8 @@ func qa_set(name: String, value) -> void:
 func qa_camera(height: float, x: float, z: float) -> void:
 	if _camera_rig == null:
 		return
-	_camera_rig.centre_on(Vector2(x, z))
 	_camera_rig.set_height(height)
+	_camera_rig.centre_on(Vector2(x, z))
 
 
 func qa_tick(n: int) -> void:
