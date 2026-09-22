@@ -1,0 +1,457 @@
+# F1 ambiguity report (2026-09-22)
+
+Symbols: 618; ambiguous: 253; structs: 38; struct conflicts: 0
+
+## struct-track E06-E17
+- 27 Structure definitions found, 23 unique names. Expected 23 names: OmRevoltRecord, OmReversionRecord, OmAbsorptionRecord, OmTimeJumpReport, OmSelectionRecord, OmCharacterRecord, OmOnboardingConfig, OmChronicleCluster, OmChronicleEntry, OmFragmentPoolCounts, OMMissionCandidate, OMArchetypeMetadata, OMObjectiveSpec, OMBriefing, OMDebrief, OMUnitProfile, OMReplayCommand, OMReinforcementWave, OMStructureHUD, OMCompositionRatio, OMVec2, OMGradientProperties, OMFairnessScore.
+- Duplicate names, NO field differences: OmSelectionRecord (S057 line 34, S061 line 35) byte-identical; OmCharacterRecord (S059 line 23, S060 line 34) byte-identical; OMVec2 (S130 line 20, S112 line 15, S118 line 15) byte-identical. Zero conflicting definitions.
+- Naming convention split: E07-E09 use Om* prefix, E10-E17 use OM* prefix. Header uses snake_case om_* typedefs. Header C name mapping (e.g. om_revolt_record vs om_vec2) not given by tests; generator must choose.
+- OmSelectionRecord has explicit _pad uint32_t field, 8 x uint32 = 32 bytes. Other structs mixing uint32/uint64/double rely on natural C alignment (ctypes default matches). No _pack_ set anywhere.
+- OmCharacterRecord: name is char[32]; ctypes c_char*32 read as bytes. OmChronicleEntry base_text char[512], expanded_text char[1024]; OMBriefing three char[1024]; OMDebrief text char[2048]. OmOnboardingConfig arrays: weights double[10], rare_marks uint32_t[10].
+- tests/csim/controls/ contains zero ctypes.Structure subclasses. None of the 23 names declared in csrc/ouroboros_sim.h or tests/csim/conftest.py.
+
+## E-07
+- Struct C names invented from test class names (OmRevoltRecord -> om_revolt_record etc); tests never name C type. Header naming pattern om_attack_result / om_admin_roll; pick one.
+- Structs lack explicit _pad fields unlike header convention. om_revolt_record: implicit 4-byte trailing pad after reverted_faction. om_reversion_record: implicit 4-byte pad after restored_faction before military_stolen. om_absorption_record: implicit 4-byte trailing pad. ctypes and C natural alignment agree, so ABI-safe as is; header gen may add explicit _pad only if test mirror also changes (fenced).
+- Card 230a names om_event_queue_external and om_tick_pruned as lifecycle.c snippet symbols, but symbol_modules.toml owns both in events.c (E-04) and header already declares them. E-07 tests reach them only via conftest helpers queue_external / read_pruned (no direct lib.om_* call in E-07 files), so no row here. report.md 'Cross-epic symbol ownership: none' wrong on this point.
+- Control tests (6 files) reference OMBug.ABSORPTION_PICKS_THE_NEIGHBOR_WITH_THE, BREAKAWAY_COLORS_COLLIDE_WITH_AN_EXISTING, GHOST_REMOVAL_COUNTS_FROM_CREATION_TICK, PHASE_ORDER_EVALUATED_DIFFERENTLY_SO_AN, REVERSION_DRAW_MADE_WHEN_THE_PREVIOUS, SUCCESS_ROLL_MADE_BEFORE_THE_POPULATION. None exist in conftest OMBug class nor header om_bug enums; no numeric values anywhere. Controls raise AttributeError before om_debug_inject call. Need an om_bug_e07 enum (values TBD, E-03 used 300-311 so 400+ free) plus conftest mirror; both fenced, parent decides.
+- om_faction_phase restype: om_phase enum absent from header; test mirror OMPhase gives 6 values 0..5. Header gen must declare typedef enum om_phase before the prototype.
+- om_faction_set_created_tick third param: uint64_t per header tick rule; int64_t alt if a negative 'unknown' sentinel is wanted (om_region_set_owner precedent). Test passes literal 1 only.
+- om_faction_remove and om_faction_mark_conquered_this_tick return values never used: void chosen; int status equally consistent.
+- om_faction_stance expected to return -1 for a removed faction (R-051-01); header declares om_stance enum restype with no -1 member. Works via ctypes c_int; header comment should document sentinel.
+- call_site_count counts only direct lib.om_* / dbg.om_* calls in E-07 test files and controls (198). Helper-wrapped calls (set_faction -> om_faction_set, set_region -> om_region_set, set_owner, set_edge, set_tech_multipliers, force_draws, inject_intent, queue_external, read_pruned, isolate_agents -> om_world_set_feature) live in conftest and are not counted nor rowed; all those symbols already declared in header.
+- S-052 test_R_052_01 calls om_player_faction_collapsed after a conquest via E-05 attack path with LIFECYCLE on; depends on E-05 resolver being live (friction.c / resolve.c), not a lifecycle.c-only fixture.
+
+## E-12
+- No _bind_e12 in tests/csim/conftest.py and no E-12 test declares argtypes/restype. ctypes default restype is c_int: every double-returning symbol (om_zone_sample_interference, om_unit_get_hp, om_unit_get_cross_layer_factor, om_unit_get_effective_sensor_radius_to_target_elevation, om_recon_get_terrain_visibility_ratio, om_fog_get_drawn_sensor_circle_radius, om_strategic_agent_read_region_field) and om_world_get_state_checksum (uint64) read garbage until bindings generated. Generated bindings must cover all 48 symbols.
+- Zero kwarg call sites in E-12; every param name here comes from test comments or header pattern, none from kwargs. Treat all 'likely' names as proposals.
+- om_unit_get_pos: test does 'x, y = lib.om_unit_get_pos(w, u)'. Needs either out-pointer signature + conftest wrapper or a 2-double Structure restype. E-13 owns it (tactical_move.c); E-12 test cannot run as written without wrapper.
+- om_client_snapshot_read: test reads .units, u.id, u.faction_id from return; no Structure mirror exists in any E-12 file or conftest. Struct shape and access pattern undefined.
+- Test fixture bug: tests/csim/test_E12_S092_recon_then_fog.py line 121 and test_E12_S093 line 95 call set_region(w2, 0, OMField.MILITARY, 0.95) / set_region(w, 1, OMField.MILITARY, 0.42). conftest set_region signature is set_region(lib, w, idx, *, tier=..., military=...) -- lib omitted, 4th positional hits keyword-only barrier -> TypeError before any om_ call. R-092-04 state-2 leg and R-093-03 unrunnable as written.
+- Six E-12 controls reference OMBug.ENEMY_AI_READS_THE_PLAYER_S, FOG_APPLIED_DURING_RECON_OR_TERRAIN, INTERFERENCE_SAMPLED_AT_THE_TARGET_INSTEAD, LAST_SEEN_MARKERS_IMPLEMENTED_AS_LIVE, UNION_COMPUTED_FROM_ENEMY_UNITS_SETS, VISIBILITY_COMPUTED_ALL_PAIRS_AND_FALLS. None in conftest OMBug nor header om_bug enums; all six are TODO stubs raising NotImplementedError. No E-12 om_bug values to transcribe.
+- Module ownership for unlisted symbols defaults to fog.c per cards, but several smell like other modules: om_mission_set_phase/get_phase/get_clock/is_started/begin (mission.c E-10), om_map_add_hazard_zone/spine_node/structure/spawn_point (tactical_mapgen.c E-17), om_unit_acquire_target and om_unit_spawn_with_elevation (unit.c E-11), om_set_era_flag/om_set_era_name (sim.c core). symbol_modules.toml silent on all; reported as fog.c, flag for decision.
+- om_world_get_state_checksum vs header's existing uint64_t om_world_checksum(const om_world*): two symbols for one fact. toml lists get_state_checksum under sim.c; header declares only om_world_checksum.
+- om_player_can_see(w, unit) and om_player_can_see_unit(w, 0, unit) both read player visibility; second-arg 0 of the latter unnamed (faction id 0 most plausible).
+- om_map_add_cover / om_map_add_obstacle / om_map_add_hazard_zone / om_map_add_spine_node trailing params unnamed (p2/p3); E-11/E-13/E-17 tests may carry kwargs that settle them.
+- Unit ids typed uint32_t on header 'indices are uint32_t' pattern plus om_unit_get_target == 0 meaning none; int32_t equally consistent with tests. Enum params (unit_type, phase, treatment) typed int because C enum names undeclared in header.
+- Card 283a1-e12-fog-recon_then_fog has five symbols and zero acceptance tests (report.md flags it); symbols still transcribed here from their S-092 call sites.
+- Return types of void-marked mutators (om_visibility_compute, om_map_add_interference_zone, om_map_add_moving_interference_zone, om_map_add_vantage_node, om_unit_attack, om_command_move, om_command_attack_move, om_unit_acquire_target, om_tactical_step) inferred from unused returns only; other epics' tests may read them.
+
+## E-13
+- Zero keyword-argument call sites in E-13 (286 positional sites). Cards list symbol names only, no param names; header has no E-13 block. Per rule every unbuilt symbol gets p0.. names + 'ambiguous'; inferred names from test comments given in each note.
+- Tuple-return symbols: om_unit_get_pos, om_unit_get_destination, om_steering_get_obstacle_repulsion, om_renderer_interpolate_position all unpacked `x, y = lib.om_x(...)`. ctypes cannot return tuple. Reading A: double* out_x, double* out_y + int rc + conftest helper (tests then need rewrite to call helper). Reading B: small Structure restype {double x, y} (tests still need `.x, .y`). Either way tests as written cannot pass unbound; harness must add _bind_e13 + helpers.
+- Test files use `ctypes` (S095, S096, S101) and `math` (S097, S099, S100, S101) without importing them; NameError before any lib call. Test-file defect, not signature.
+- No _bind_e13 in conftest: no argtypes/restype set for any E-13 symbol. Without binding, double args/returns are truncated by ctypes defaults; every symbol needs a binding block.
+- Controls reference OMBug.LEASH_MEASURED_FROM_THE_TARGET_S, OFFSETS_RECOMPUTED_PER_TICK_SO_FORMATIONS, PLAIN_MOVE_RETURNS_FIRE, PROBE_ANGLE_ORDER_DIFFERS_BETWEEN_PLATFORMS, ROUTE_GRID_SHARED_ACROSS_LAYERS, SCATTER_FALLBACK_TRIGGERED_BY_ANY_UNIT, SLOWEST_UNIT_PACE_CAPPED_PER_TICK, STATIONARY_RULE_IGNORED_SO_ENGAGED_UNITS: none in header om_bug enums or conftest OMBug. Need om_bug_e13 enum (next free block, e.g. 400+) + conftest mirror. All 8 controls are gen_controls stubs that raise NotImplementedError; only om_debug_inject + om_world_step called.
+- om_unit_get_target()==0 means 'no target' (S-096, S-102), so unit ids from om_unit_spawn must start at 1. Header convention elsewhere is UINT32_MAX for none. Cross-epic with E-11 (owns om_unit_spawn/om_unit_get_target).
+- om_unit_spawn 6th arg always literal 0; layer inferred from S-097 cell calls (cx, cy, layer). Type uint32_t vs int undecided; E-11 owns.
+- Module ownership per toml: om_unit_spawn, om_unit_get_hp, om_unit_set_hp, om_unit_attack, om_unit_get_target, om_command_attack_move, om_command_attack_target, om_command_activate_ability -> unit.c; om_visibility_compute -> fog.c; om_map_add_cover, om_map_add_obstacle -> tactical_mapgen.c; om_world_get_state_checksum, om_world_step, om_debug_inject -> sim.c; om_command_move, om_unit_get_pos -> tactical_move.c. Cards 290a1/291a1/291a2/291a3/293a/297a list these under tactical_move.c; card regen should drop them as prerequisites.
+- om_unit_set_visible_to_faction not in toml; card 291a2 gives it to tactical_move.c but it is fog/visibility state (E-12 fog.c). Design lane call.
+- om_map_set_obstacle_density not in toml; card 292a1 gives tactical_move.c, but it is a map fixture (E-17 tactical_mapgen.c domain, sibling of om_map_add_obstacle/om_map_add_cover). Design lane call.
+- om_unit_set_pos (called) vs om_unit_teleport (toml, tactical_move.c): same concept, two names. Pick one.
+- om_world_get_state_checksum (toml sim.c) vs existing header om_world_checksum: near-duplicate; either alias or fold tactical state into existing.
+- Return types for command setters (om_command_move, om_command_attack_move, om_command_attack_target, om_command_direct_move, om_command_queue_*, om_command_attack_target_kiting, om_command_activate_ability): return never used -> void per rule; int status (om_intent_inject pattern) equally consistent with header.
+- om_navmesh_get_cache_hits: count compared with >; uint32_t per count rule, uint64_t plausible for monotone counter.
+- om_replay_get_command_count_at_tick(w, 0) expects 2 after one step: commands queued pre-step count as tick 0, while om_world_step auto-increments from 1 (header). Tick numbering for replay undefined.
+- om_command_attack_target_kiting (S-100 R-100-03) is a fifth command not in R-096's four-command set; scope flag.
+- om_map_add_cover 3rd/4th doubles (20.0, 5.0): only comment 'height >= layer line'; radius/height reading unconfirmed. E-11/E-12 call sites should settle.
+- S-097 has two tests both tagged R-097-06 (terrain speed and stationary push); rule numbering collision in test names, not signatures.
+
+## E-14
+- Zero kwarg call sites in E-14. No E-14 header comments, no card-brief param names. Every non-world param named p0/p1..; world ptr named w by header pattern. Local var names / inline comments at call site recorded in each note (force_id, seed, unit_type, side, etc.) for parent to adopt.
+- No _bind_e14 in tests/csim/conftest.py: no argtypes/restype declared for any E-14 symbol. Six double-returning symbols (om_macro_get_speed_multiplier, om_macro_get_threshold_noise, om_macro_get_timer_noise, om_mission_get_external_reinforcement_prob, om_mission_compute_parity, om_unit_get_base_hp) wrapped as ctypes.c_double(raw).value in tests; raw return defaults to c_int -> garbage unless binder added. om_unit_get_decision_loop_ptr returns pointer, c_int default truncates. Test-side defect, report only.
+- Module ownership vs cards: symbol_modules.toml assigns om_mission_compute_parity and om_mission_end to mission.c (E-10), om_tactical_tick and om_tactical_tick_to to unit.c (E-11). Cards 303a1, 304a1, 305a1, 305a2 list them under enemy_macro.c snippet_symbol. Rows report toml module.
+- Prefix-mismatched symbols not in toml, only E-14 calls them, cards place in enemy_macro.c: om_mission_init_seed, om_mission_get_external_reinforcement_prob, om_mission_schedule_external_reinforcement, om_mission_get_reinforcement_foreshadow_text, om_mission_set_external_reinforcement, om_mission_check_external_reinforcements, om_mission_is_reinforcement_spawned, om_mission_get_reinforcement_spawn_pos (mission.c?), om_unit_get_decision_loop_ptr, om_unit_get_base_hp (unit.c?), om_map_is_edge_coord (tactical_mapgen.c?). Reported as enemy_macro.c per card; parent decides whether toml claims them.
+- Seven control stubs reference OMBug.AMBUSH_RESETS_AFTER_THE_TRIGGER_LEAVES, BUS_FLAGS_NEVER_SET_SO_MULTI, CAUTIOUS_BREAK_OFF_MEASURED_AGAINST_MISSION, HOOKS_EVALUATED_AFTER_BASE_TRANSITIONS, MACRO_READS_TRUE_ENEMY_POSITIONS_THE, NOISE_RE_ROLLED_PER_EVALUATION_SO, TIMER_MEASURED_FROM_MISSION_START_INSTEAD. No such om_bug values in header (blocks used: 0-7, 100-112, 200-210, 300-311) nor conftest. All 7 raise NotImplementedError. E-14 bug enum block unassigned.
+- om_macro_init_force(w, 0, 100) / (w, 1, 101): third arg meaning unknown. Guessed int32_t faction id from R-122-01 wording; could be script id or per-force seed.
+- om_macro_eval_timer_transition(100, 90, c_double(0.10)): duration and elapsed passed as int literals; typed uint64_t (ticks). uint32_t or double also plausible.
+- om_macro_resolve_conflict(THRESHOLD, TIMER) and om_macro_resolve_conflict_types(ESCALATE, RETREAT): two symbols, identical (int,int)->int shape, both take OMTransitionKind values. Likely one redundant; both kept since both called.
+- om_macro_get_eval_interval(difficulty) and om_macro_evaluation_interval_ticks(): both return 40. Overlap.
+- om_macro_tick(w, 39) then (w, 40): p1 absolute tick vs ticks-to-advance not determinable from call site; assertions read as absolute.
+- Out-writer restypes guessed where return ignored: om_replay_get_commands, om_mission_get_reinforcement_foreshadow_text, om_session_capture_read -> uint32_t (header reader pattern); om_tactical_tick_to -> uint64_t (om_world_run pattern); om_mission_schedule_external_reinforcement, om_mission_end -> void. void satisfies every test for all of these.
+- test_R_122_05 reads om_macro_get_timer_noise for forces 0 and 1 without om_macro_init_force; implies noise exists lazily or at om_world_new. Card report lists this test as 'already satisfiable' with no unbuilt symbol, yet om_macro_get_timer_noise is unbuilt (carded 301a1).
+- Struct C names not stated anywhere; by header convention (OmDecision -> om_decision): OMReplayCommand -> om_replay_command, OMReinforcementWave -> om_reinforcement_wave. Used those in param ctypes. OMReplayCommand ends with uint32_t target_id and no _pad (header structs pad explicitly); OMReinforcementWave ends with uint32_t is_spawned, no _pad.
+- Enum mirrors defined only in tests (no header equivalents): OMMacroBehavior {ADVANCE 0, DEFEND 1, PATROL 2, AMBUSH 3, RETREAT 4, INVALID 99}, OMMacroModifier {CAUTIOUS 0, AGGRESSIVE 1, PHASED 2, INVALID 99}, OMMacroCommand {MOVE 0, ATTACK_MOVE 1, ATTACK_TARGET 2, ACTIVATE_ABILITY 3}, OMTransitionKind {THRESHOLD 0, TIMER 1, HOOK 2, RETREAT 3, ESCALATE 4}, OMDifficulty {EASY 0, MEDIUM 1, HARD 2} (OMDifficulty also defined in E-10 tests). Enum-typed params reported as int.
+- Call site totals: 102 story-file lib.om_* calls + 14 control dbg.om_* calls = 116. Distinct story symbols 60 (matches card report) + 2 header-declared control symbols = 62 rows.
+
+## E-17
+- Zero kwarg call sites in E-17. Cards give no param names, header declares none of the 61 E-17 symbols, om_internal.h no hits. Every non-world non-out param named p0..pN; test-comment reading in note. Only w (om_world*) and out (pointer-out) named per header pattern.
+- OMVec2 defined twice, identical fields, in test_E17_S112 and test_E17_S118. Reported once (S112 as source).
+- Cross-epic ownership: om_tactical_tick, om_tactical_tick_to, om_unit_spawn_combat -> unit.c; om_objective_get_center -> mission.c (symbol_modules.toml). Cards 326a1/326a2 list all four in tactical_mapgen.c snippet_symbol. Reported with toml module.
+- om_unit_get_position and om_unit_order_hold_node not in symbol_modules.toml. om_unit_get_position near-duplicate of om_unit_get_pos (tactical_move.c; E-12/E-13 unpack tuple, E-17 uses OMVec2 out-pointer). Same thing, two names, two shapes. Card 326a2 puts both in tactical_mapgen.c; by name they are unit/movement symbols.
+- om_route_grid_is_cell_blocked: route grid is E-13 R-097-01 concept, not in symbol_modules.toml, card 322a2 assigns tactical_mapgen.c.
+- om_render_detect_repeated_tile_boundary, om_proc_arch_section_is_era_agnostic, om_proc_arch_resolve_section_piece: render/T2 and procedural-architecture concerns (Q-119-01 open) called on C sim lib. Transcribed as called.
+- All 7 E-17 control stubs raise NotImplementedError and pass OMBug.DRIFTING_NODE_MOVES_BUT_THE_OBJECTIVE / FAIRNESS_EVALUATOR_REJECTS_AND_SILENTLY_REGENERATES / FLAVORING_MULTIPLIERS_UNBOUNDED_SO_A_DEAD / JITTER_APPLIED_AFTER_EDGES_ARE_LAID / LAYER_MASKS_EMITTED_FOR_LISTED_LAYERS / LAYOUT_CHOSEN_BY_INDEX_INSTEAD_OF / SOURCES_PLACED_AT_LAYOUT_PERCENTAGES_INSTEAD. None exist in conftest OMBug or header; no om_bug_e17 enum. Controls call only om_debug_inject + om_world_step.
+- No _bind_e17 in conftest. Tests wrap many returns as ctypes.c_double(x).value and compare om_map_get_canvas_base_dimension raw to 8000.0: bindings must set restype double or values are garbage. Seeds (11, 42, 12345) and ticks passed as plain Python int; fine once argtypes declared uint64_t.
+- om_map_get_compatible_layout_count called with w=None in R-112-05 and w=world in R-112-01: must accept NULL world (library is world-independent).
+- om_map_generate, om_map_generate_gradients: (w, 0, 42) with no comment; typed archetype, seed by analogy with om_map_generate_spine whose comment says '# archetype 0, seed 11'.
+- om_gradient_add_moving_source p1 = 0: gradient type OBSTACLE vs source id, unclear.
+- om_map_count_distinct_routes_staging_to_objective p1 = 0: objective node id vs objective ordinal, unclear.
+- om_map_node_get_owner returns 0 for nobody; conflicts with E-05 faction id convention (-1 unowned, 0 player). Typed int32_t per faction-id rule; int side enum also possible.
+- om_map_setup_drifting_node p2 period: uint32_t (duration, cooldown_ticks pattern) vs uint64_t (tick). Also called on fresh world without om_map_generate: node 0 must pre-exist.
+- om_map_get_canvas_base_dimension takes only category, no world/seed, yet R-116-01 accepts a drawn range (Q-118-01 open). Cannot draw deterministically with that signature.
+- om_map_get_compatible_layouts and om_fairness_evaluate return unused at call sites: uint32_t count / int status vs void. Reported uint32_t (enumerate pattern) and void respectively.
+- om_map_add_layer_restriction_zone p3 single layer index; no way to pass a multi-layer allowed list at this call shape.
+- Archetype ids (0..9, E-10 S-073 mission archetypes) typed uint32_t as indices; enum int also consistent with header om_tier passing.
+
+## E-15
+- No _bind_e15 in tests/csim/conftest.py. Every E-15 symbol runs on ctypes defaults: int args, c_int restype. Double-returning symbols (om_structure_get_capture_progress, om_structure_get_hp, om_structure_get_base_max_hp, om_structure_get_matchup_multiplier, om_structure_get_last_spawn_distance, om_mission_compute_starting_force, om_mission_compute_reinforcement_capacity, om_mission_get_objective_completion, om_hazard_sample_interference) read wrong until argtypes/restype declared; test's ctypes.c_double(x).value wrap on an int does not fix that.
+- Bare Python floats passed positionally at test_E15_S130 line 66 (om_unit_spawn_combat(w, 1, pos_0.x, pos_0.y)) and line 86 (om_structure_is_in_capture_radius(w, 0, center_50.x, center_50.y)): ctypes raises ArgumentError without argtypes. Every other double arg is wrapped ctypes.c_double.
+- Struct C names invented by me for header generation, source classes in tests: OMStructureHUD -> om_structure_hud, OMCompositionRatio -> om_composition_ratio, OMVec2 -> om_vec2. Rename freely; field order/types are the test's.
+- om_structure_hud: uint32_t next_unit_type between doubles leaves 4 bytes implicit padding before hp. ctypes Structure and C agree, but header convention uses explicit _pad; adding one changes the Python mirror.
+- om_unit_spawn_combat second arg disagrees: S129 line 31 passes 0 for 'enemy unit adjacent', S130 lines 66/115 pass 1 for 'enemy'. Faction-id vs unit-type readings both plausible. Owned by unit.c (E-11); E-11 tests decide.
+- om_unit_has_non_combat_visual_tag arg: one site passes OMNonCombatKind.CONVOY (0), other passes 10 as 'standard combat unit'. Implies a shared id space where kinds 0..4 are non-combat and combat types sit above; undefined anywhere.
+- Owner/faction id space in E-15 tests: 0 neutral, 1 player, 2 enemy (om_structure_set_owner, om_render_get_owner_color). E-05 header uses faction 0 = OM_ARCH_PLAYER and -1 unowned. Conflict; not decided.
+- om_unit_get_target: E-15 asserts 0 means 'no target'; header convention is UINT32_MAX for none. Owned by unit.c; E-12/E-13 call sites decide.
+- Ticks-typed params (om_structure_set_timer, om_structure_get_timer, om_mission_compute_reinforcement_capacity time limit, om_drift_interpolate period/tick, om_objective_setup_drifting, om_structure_init_drifting, om_tactical_tick_to, om_hazard_spawn_moving_interference last arg) typed uint64_t per header ticks pattern; tests pass small int literals so uint32_t works equally. om_hazard_spawn_moving_interference last arg 100 is unlabeled: period, duration, or speed.
+- Int-vs-double return undecidable from test alone: om_structure_unit_cost (== 0), om_mission_get_reinforcement_trickle (== 0), om_structure_pop_spawned_unit (== 1: flag, count, or unit id), om_render_get_owner_color (inequality only). Typed to match default c_int restype.
+- Seven E-15 controls reference OMBug.CAPTURE_PROGRESSES_WITH_THE_OWNER_PRESENT, CONVOY_RETURNS_FIRE, DRIFTING_OBJECTIVE_S_ZONE_STAYS_AT, PRODUCTION_TIMER_RESETS_ON_TYPE_CHANGE, SPAWN_POSITION_FROM_AN_UNSEEDED_RNG, STRUCTURE_TAKES_MATCHUP_MULTIPLIERS, TWO_ENEMY_FACTIONS_INSIDE_COUNT_AS. None in conftest OMBug nor header om_bug enums; no E-15 bug id range (E-05 100s, E-04 200s, E-03 300s) assigned. Controls are unfilled skeletons (raise NotImplementedError) and call only om_debug_inject/om_world_step.
+- Enums used as int params with no C typedef: OMMapSize, OMUnitCategory, OMNonCombatKind, OMDriftMode, OMHazardType. Header pattern would typedef each; typed 'int' here.
+- Symbols named like other epics' territory but absent from symbol_modules.toml, so assigned to tactical_support.c by the stated rule: om_ticker_pop_message (E-16 HUD ticker R-104-01), om_unit_tick_decision_loop (E-11 R-087), om_unit_order_move (overlaps E-13 om_command_move in tactical_move.c), om_mission_compute_starting_force / om_mission_compute_reinforcement_capacity / om_mission_setup_extraction_point / om_mission_check_extraction_objectives / om_mission_set_player_held_structures_count / om_mission_get_reinforcement_trickle (E-10 mission.c namespace).
+- om_tactical_tick and om_tactical_tick_to restype unknowable from E-15 (return unused); reported void. Owning epic E-11 decides.
+- om_objective_get_center shape here is (w, idx, om_vec2* out); E-17 also calls it (report cross-epic list). E-17 call shape not checked in this pass; owner mission.c.
+- om_hazard_get_launch_types return unused; header reader pattern (om_region_neighbors) returns total count uint32_t. Reported void.
+
+## E-11
+- No _bind_e11 in tests/csim/conftest.py: no argtypes/restype declared for any E-11 symbol. Without restype ctypes returns c_int, so every double reader (om_unit_hp, om_unit_profile_*, om_unit_effective_speed, om_unit_ability_cooldown, ...) truncates; Python list args (om_command_move, om_command_attack_move, om_command_activate_ability) raise ctypes.ArgumentError. Tests cannot go green until a binding block lands.
+- om_command_move and om_command_attack_move: E-11 passes (w, [ids], n, x, y); E-12/E-13 pass (w, u, x, y). Two shapes for one symbol; om_command_move owner is tactical_move.c (E-13), om_command_attack_move owner unit.c (E-11). Same epic's om_command_attack_target takes a single id with no list/count.
+- om_tactical_tick: E-11 uses as getter (evt.tick == om_tactical_tick(w)); E-10/E-12/E-14/E-15/E-17 call as stepper. Getter must not advance; stepper must. Needs one decision.
+- om_tick_read_ability_events(w) returns a Python list in tests; not a C-expressible return. Implied record type om_ability_event from attribute use: tick uint64_t, unit_id uint32_t, ability_id uint32_t, duration uint32_t (== 60, == 400), telegraph_ticks uint32_t (== 30), cue_id uint32_t (== om_cue_lookup), radius double (approx 350.0). R-086-09 text also names 'target' (never read). Needs struct + (w, out, max) reader + conftest helper; none exist. Not listed under structs because no ctypes.Structure is defined in E-11 tests.
+- Control stubs reference OMBug members absent from conftest and header: AOE_CAP_APPLIED_PER_TARGET_INSTEAD, BACKSWING_PAUSES_ATTACKING_AS_WELL_AS, BRACE_BONUS_APPLIED_DURING_WINDUP, COHORT_STAGGER_SKIPS_VALIDATION_SO_A, INTERCEPT_TRIGGERS_ON_LINE_OR_SIEGE, MATCHUP_MATRIX_TRANSPOSED_ATTACKER_AND_TARGET, RETURN_FIRE_OVERRIDES_AN_EXISTING_ENGAGEMENT, WARDEN_AURA_APPLIES_TO_ENEMIES_OR. No om_bug_e11 enum values assigned; all 8 controls raise NotImplementedError (unfilled).
+- Unit id type: om_unit_spawn return used as handle, index-like (u % 4 cohort), compared to om_unit_target which returns -1 sentinel. Chose uint32_t ids and int32_t for om_unit_target; all-int32_t (faction-id pattern) is the alternative.
+- Category / unit type / ability / stat field / elevation tier passed as bare int literals; no C enums declared. Typed as int here; header pattern would be typedef enums (om_unit_category, om_unit_type, om_ability). om_unit_profile_* also accept custom type id 100 (after om_roster_register_custom_unit), so unit_type cannot be a closed six-value enum.
+- om_map_add_cover: four bare doubles (50.0, 100.0, 20.0, 1.0); no names anywhere. Owner tactical_mapgen.c (E-17).
+- Return types chosen by sibling pattern where the test discards the value: om_tactical_step / om_tactical_run -> uint64_t (om_world_step/om_world_run), om_tactical_run_until_engagement_ends -> uint64_t (run_until_eliminated), om_command_attack_target / om_command_attack_move / om_tactical_spawn_force_composition / om_unit_deal_damage -> void.
+- Reader name drift vs symbol_modules.toml: E-11 tests call om_unit_hp and om_unit_target; toml lists om_unit_get_hp and om_unit_get_target (unit.c). E-12 tests call om_unit_get_hp. Two names each for one reader.
+- om_cue_lookup takes no om_world*; only E-11 symbol without a world handle.
+- S-087 test_R_087_07 spawns OMUnitType.SUPPLY=6 and EVACUATION=7, outside the six-unit S-082 roster; no profile rows exist for them.
+- om_unit_set_stealth and om_tactical_zone_visible_to_enemy touch visibility (E-12 fog) but are not in symbol_modules.toml; assigned unit.c by epic.
+
+## E-06
+- Breakaway creation carded twice under two names: om_faction_create_breakaway(w, 1, 2) in S-042 (return unused) and om_breakaway_create(w, 0, 1) -> int32_t new faction id in S-045. Same operation. Second arg of S-042 call: region idx (by analogy) or new faction id (no regions/owners set in that test). Header E-05 comment and toml modules say breakaway creation is E-07 (lifecycle.c); cards 220a/223a1 put both in diplomacy.c; neither in toml [symbols].
+- Cross-epic symbols carded to diplomacy.c but not in toml [symbols]: om_mission_start, om_mission_unit_tier (E-10 mission.c), om_chronicle_distill_candidates (E-09 chronicle.c). Reported module = card (diplomacy.c); parent decides.
+- Card 223a1 lists om_gen_set_faction_count / om_gen_set_region_range under diplomacy.c; both header-declared E-03 symbols, toml modules worldgen.c = E-03. Reported as worldgen.c.
+- S-046 hasattr fork: om_faction_tech_multipliers (3 double* outs) vs om_faction_tech_attack/defense/economy. Declaring the first makes the three singles dead; card 224a names all four.
+- S-048 hasattr forks: om_faction_tech_tier vs om_tech_tier(double); om_faction_next_mission_unit_tier vs om_faction_unit_tier; om_chronicle_distill_candidates vs om_tier_transition_candidate_exists vs om_faction_tier_transition_candidate. Only one per chain needed; cards 226a1/226a2 name every alternative.
+- conftest has no _bind_e06: none of the 27 new symbols get argtypes/restype. ctypes defaults int restype and int-coerced args, so every double-returning reader (om_faction_betrayal_chance, om_archetype_*_weight/disposition, om_faction_tech_attack...) and om_tech_tier(double) fail regardless of C correctness; om_faction_cooperative_since vs uint64 tick truncates. Harness gap, not signature ambiguity.
+- Tick sentinel type: om_faction_cooperative_since, om_faction_last_knowledge_lost, om_faction_set_last_knowledge_lost. Rule says uint64_t; header precedent (om_region_held_since, om_event_last_fired) uses int64_t with -1 = never. Both readers need a never state.
+- Seven E-06 control stubs reference OMBug members absent from conftest and no om_bug_e06 enum in header: BETRAYAL_OPPORTUNITY_COMPUTED_FROM_WHOLE_FACTION, BOTH_PARTNERS_BETRAY_IN_THE_SAME, BREAKAWAY_TECH_COPIED_BEFORE_THE_PARENT, CONVERGENCE_PULLS_TOWARD_THE_SUM_OF, COUNTER_INCREMENTS_FOR_PAIRS_THAT_SHARE, OVERTURE_ROLLED_BEFORE_THE_STABILITY_CHECK, TIER_COMPUTED_WITH_INCLUSIVE_UPPER_BOUNDS. All raise NotImplementedError.
+- R-045-09 counts Knowledge Lost via getattr(e, 'is_knowledge_lost', False) on om_fired_event; field does not exist, count always 0, mean check cannot pass. No Knowledge Lost template id fixed in header (only 100/101). Test defect, not signature.
+- om_faction_stance_counter / om_faction_set_stance_counter only ever called as (0, 1); directed vs pair-keyed untested. p0/p1 naming left to parent.
+- om_diplomacy_step and om_tech_step called standalone outside om_world_step (R-042-03, R-045-04/08, R-047-02/03); they are sub-step entry points, report calls them old placeholder symbols. Restype void assumed (unused).
+- Header-declared fixtures reached only through conftest helpers and not rowed (not named by any E-06 card): om_world_new, om_world_free, om_faction_set, om_faction_set_stance, om_region_set, om_region_set_owner, om_region_set_edge, om_rng_force, om_intent_inject, om_faction_candidates, om_tick_attacks, om_region_drift, om_world_generate. Rowed the five helper-reached symbols the cards do name (om_tick_friction, om_world_generated, om_tick_events, om_gen_set_faction_count, om_gen_set_region_range); excluded from call_site_count.
+- om_faction_tech_multipliers must override E-05 fixture om_faction_set_tech_multipliers pins: R-046 tests call set_faction then read computed values; which wins after both are called is unspecified.
+
+## E-09
+- No _bind_e09 in tests/csim/conftest.py. E-09 tests call 80 sites with keyword args; ctypes drops kwargs silently on foreign function without paramflags (verified: libc.strlen(s=b'abc') returned 46, garbage). Bindings must be built with paramflags carrying these param names, else every kwarg call passes zero args. restype defaults c_int: double and const char* returns truncated/garbage until bound.
+- Struct C names derived from ctypes class names per conftest convention (OmDriftRow -> om_drift_row): OmChronicleCluster -> om_chronicle_cluster, OmChronicleEntry -> om_chronicle_entry, OmFragmentPoolCounts -> om_fragment_pool_counts. Python mirrors defined in test files, not conftest. om_chronicle_cluster has implicit 4-byte pad before peak_score (3 x uint32 then double); header convention adds explicit _pad, test mirror does not -> header must NOT add _pad or layouts diverge.
+- 9 control tests reference OMBug.<NAME> absent from conftest OMBug and from header: A_DIGIT_LEAKS_THROUGH_A_SLOT, ASSEMBLER_SEEDED_FROM_WALL_CLOCK_BREAKING, CATEGORY_CAP_APPLIED_TO_LINEAGE_CLUSTERS, CHAIN_CLUSTERS_SPLIT_BY_REGION_BREAKING, CONSEQUENCE_CLUSTER_RANKED_BY_SCORE_AND, CROSS_ENTRY_DEDUP_KEEPS_THE_LATER, FIRST_MENTION_QUALIFIER_APPLIED_ON_EVERY, LINEAGE_CLUSTER_OMITTED_WHEN_THE_FAMILY, MAP_WAITS_FOR_THE_SCROLL_OR. No om_bug_e09 enum ids assigned (E-03 used 300-311; next block 400+ open). Controls still raise NotImplementedError (unfilled skeletons); each only calls dbg.om_debug_inject + dbg.om_world_step.
+- Positional-only sites, names p0/p1 assigned, confidence ambiguous: om_chronicle_get_cluster(w, idx, out), om_chronicle_category_name(category) [no om_world*], om_chronicle_count_by_type(w, cluster_type), om_chronicle_has_keyframe_in_range(w, 10, 20), om_chronicle_has_keyframe_at_tick(w, 35), om_event_get_attached_character(w, ev_id, 0), om_chronicle_fragment_pool_counts(w, cat_idx, out), om_chronicle_fragment_check_near_duplicate(w, f1, f2), om_event_template_chronicle_prose(w, tid). Cards carry only bible rule text, no param names.
+- Enum-valued params/returns (cluster_type, category, outcome, tier, rank) transcribed uint32_t matching om_chronicle_cluster.category/type fields. Test-side mirrors: OMClusterType 0-3, OMOutcomeCategory 0-2, OMLineageCategory 0-4, OMChainCategory 10-17, OMRegionalCategory 20-23. Header convention elsewhere uses typedef enums (om_tier, om_field) as param types; naming those typedefs = design decision, not made here.
+- Cross-epic ownership per symbol_modules.toml: om_lineage_create, om_character_create, om_lineage_record_history_region -> generational.c (E-08); om_event_fire_manual, om_event_get_attached_character, om_events_load_launch, om_event_template_count -> events.c (E-04); om_chronicle_entry_count -> chronicle.c (E-09, also called by E-08 S055). E-08 call sites for all six use identical kwarg names and positional shape (checked). Cards 250a2, 252a1, 255a, 256a2 list these as E-09 symbols; toml wins.
+- om_event_template_chronicle_prose: not in toml; card 256a3 assigns chronicle.c (allowed_files csrc/chronicle.c) but om_event_template_ prefix and om_event_template_count/get living in events.c argue events.c. Reported chronicle.c per card; needs decision.
+- Id types: lineage_id, character_id, entry_id, event id transcribed uint32_t (attached_character_id=0 used as 'none', ids 1-based). Alternative int32_t with -1 sentinel like faction ids; affects om_event_fire_manual and om_event_get_attached_character restype (E-04 owns, their transcriber decides).
+- om_debug_inject and om_world_step: called via dbg handle (not lib.) in controls; included as rows with header signatures verbatim. call_site_count 151 = 133 lib.om_* sites in story files + 18 dbg.om_* sites in controls (9 x om_debug_inject, 9 x om_world_step). Story-file-only count = 133.
+- Void restypes: return unused at every site for 24 symbols; transcribed void. Out-param functions (om_chronicle_get_cluster, om_chronicle_assemble_cluster_entry, om_chronicle_fragment_pool_counts) transcribed int status per om_region_drift/om_event_template_get pattern though return also unused.
+- Presentation constant getters (slide_in/out, map_width_ratio, word_cadence, word_fade, entry_hold, map_is_master_clock) take w in tests; om_checksum_cadence(void) pattern exists for constants. Kept om_world* to match call shape.
+- om_chronicle_categorize_chain_cluster kwarg order (template_name, n_events, net_mil, net_eco, net_ten) differs from om_chronicle_categorize_lineage_cluster (template_name, net_eco, net_mil, net_ten). Params listed in each call's kwarg order; paramflags binding makes order irrelevant, header order is a choice.
+- om_chronicle_assemble_with_seed seed kwarg = jump start tick (50); uint64_t chosen per om_world_set_seed(uint64_t). om_chronicle_add_mock_entry start_tick/end_tick and om_chronicle_add_ownership_change_event tick -> uint64_t; om_character_create lifespan (duration) -> uint32_t per header cooldown_ticks/delay_* pattern, birth_tick -> uint64_t.
+- test_R_068_04 uses conftest set_owner (om_region_set_owner, E-05 header symbol) as fixture; not an E-09 lib.om_ call, not counted, no row.
+- Report.md says 69 distinct symbols carded; this table has 69 lib.om_* rows + 2 dbg rows = 71. Matches.
+
+## E-08
+- om_time_jump_run: two call shapes. (w, n) return ignored at S055 x1, S064 x3; (w, jump_len, byref(OmTimeJumpReport)) with rc == 0 at S056 x3. Tabled as 3-param with nullable out pointer, int return. Without argtypes the 2-arg calls leave p1 garbage; generator must either bind argtypes and make tests pass NULL, or split into two symbols. Decision needed.
+- No _bind_e08 in conftest; E-08 tests call every new symbol raw. Double params (delta, base_p, draw, spread_draw, budget, delta_military, delta_economy) and double returns (om_selector_base_rotation_prob, om_selector_decayed_rotation_prob, om_selector_score_previous_lineage) cannot work through bare ctypes; uint64_t returns (om_world_strategic_tick, om_time_jump_*_tick) truncate to int. Generated bindings must add a _bind_e08 block and tests must trigger it.
+- Struct C names not stated anywhere in tests; mapping by conftest convention (OmDriftRow -> om_drift_row): OmTimeJumpReport -> om_time_jump_report, OmSelectionRecord -> om_selection_record, OmCharacterRecord -> om_character_record, OmOnboardingConfig -> om_onboarding_config. Param ctypes above use these derived names.
+- OmTimeJumpReport: 2 x uint64 then 9 x uint32 with no explicit _pad; header convention wants explicit 8-byte alignment. sizeof 56 with implicit tail pad; either add _pad in both header and test or accept.
+- OmSelectionRecord and OmCharacterRecord each defined twice (S057+S061, S059+S060), identical bodies. Listed once each.
+- Positional-only p0/p1 names (no card brief or header names exist; card briefs are quoted rules only): om_chapter_set_phase(p0=phase), om_rng_force_selector_draw(p0=draw), om_selector_get_nemesis_candidate(p0=index), om_character_faction(p0=character_id), om_character_lineage_id(p0=character_id), om_character_set_faction(p0=character_id), om_character_set_generation(p0=character_id), om_character_get_record(p0=character_id, p1=out), om_world_set_strategic_tick(p0=tick), om_time_jump_run_tracked(p0=jump_ticks), om_event_attached_character_count(p0=event_id), om_event_get_attached_character(p0=event_id, p1=index), om_character_has_event_history(p0=character_id), om_onboarding_validate(p0=cfg), om_time_jump_report_faction_field_deltas_count(p0=report), om_save_state_write(p0=buf, p1=size), om_load_state_read(p0=buf, p1=size), om_time_jump_run(p0=jump_ticks, p1=report). Suggested names in parentheses are inferences, not evidence.
+- Enum-valued params/returns typed int; no header typedefs exist yet for: om_chapter_phase (OMChapterPhase 0..6), om_rotation_reason (0 forced, 1 normal, 2 commander_death), om_pool_type (0 previous, 1 nemesis, 2 unrelated), om_rank (0 supreme_commander, 1 regional_commander, 2 garrison_officer, 3 lineage_member), om_character_status (0 active, 1 historical), om_chapter_end_reason (0 normal, 1 commander_death, 2 faction_collapsed), om_campaign_end_reason (0 active, 1 no_surviving_factions), om_difficulty (0 easy, 1 medium, 2 hard). rank stored as uint32_t in OmCharacterRecord so om_character_create/_with_rank take uint32_t rank.
+- Module ownership gaps: toml sends om_event_fire_manual and om_event_get_attached_character to events.c but sibling om_event_attached_character_count and om_character_has_event_history stay in generational.c (card 245a3); toml sends om_chronicle_entry_count to chronicle.c but om_chronicle_consequence_entry_count, om_chronicle_lineage_entry_count, om_chronicle_has_faction_fall_entry stay generational.c (cards 240a4, 247a2); om_mission_generator_run / om_mission_generator_chosen_region / om_force_allocator_run / om_force_set_surviving_units / om_force_allocated_unit_count carded generational.c though names read E-10. om_tactical_step -> unit.c per toml, only (w) shape seen here.
+- om_region_owner and om_faction_tech: declared in header E-05 block, not in symbol_modules.toml; module reported as sim.c by guess. Signatures certain.
+- om_world_set_strategic_tick vs toml's om_world_set_tick (sim.c): different names, possibly same intent. Not merged.
+- Nine control stubs reference OMBug.HARD_CAP_STILL_ENFORCED_AFTER_WESTLEY, LINEAGE_COUNTER_INCREMENTED_TWICE_ON_A, NATURAL_DEATHS_NEVER_PROCESSED_SO_THE, ONBOARDING_PERMANENCE_STILL_ENFORCED, REASSIGNMENT_PICKS_THE_PLAYER_S_OWN, RIVAL_TAGS_APPLIED_TO_FRIENDLY_CHARACTERS, ROTATION_PROBABILITY_INVERTED_ACTIVE_REGIONS_ROTATE, SELECTOR_RUNS_BEFORE_THE_MISSION_GENERATOR, SUCCESSOR_SEARCH_IGNORES_THE_2_HOP; none exist in conftest.OMBug or header om_bug enums. All nine raise NotImplementedError; no E-08 bug id block in header yet.
+- om_save_state_size return: uint32_t chosen (count convention); size_t or uint64_t plausible. om_character_name_reuse_cooldown: uint32_t chosen (lifespan precedent); uint64_t plausible per tick convention.
+- Id conventions: om_lineage_create / om_character_create / om_character_create_child take caller-supplied ids; om_character_create_random / _with_rank / om_lineage_spawn_* / om_selector_draw_unrelated return sim-assigned ids; tests assert id > 0 so 0 = none.
+- Symbols reached only through conftest helpers (set_region -> om_region_set, set_owner -> om_region_set_owner, set_faction -> om_faction_set, set_edge -> om_region_set_edge, world_factory -> om_world_new / om_world_free) are not rowed; all exist in header.
+- Return types void where tests ignore the value (om_lineage_create, om_character_create, om_character_kill, selector run_for_lineage / resolve_commander_death / force_rotate, om_onboarding_load_from_slot, om_save_state_write, om_load_state_read, etc.); int status returns would be ABI-compatible with these tests.
+
+## E-10
+- HARNESS: conftest.py has no _bind_e10. No E-10 symbol gets argtypes/restype. ctypes default restype c_int -> every double-returning symbol (urgency, parity, power, completion, score...) reads back as int; approx float asserts cannot pass regardless of C impl. Pointer/int/float args pass OK by default conversion. Needs _bind_e10 block or per-test restype.
+- HARNESS: test_E10_S076_the_clock.py uses ctypes.c_double but never imports ctypes -> NameError at first test. S077/S078/S079/S080 import it; S076 missing.
+- HARNESS: test_E10_S078 calls read_drift(lib, w, idx, OMField.X) with 4 args and compares to float; conftest read_drift(lib, w, idx) takes 3, returns (rc, row) -> TypeError. Intended lib.om_region_field(w, idx, field).
+- CONTROLS: all 9 test_control_e10_* are gen_controls stubs raising NotImplementedError; reference OMBug.BAND_THRESHOLDS_APPLIED_INCLUSIVELY, DEFICIT_AND_CURRENT_FORMS_SWAPPED_FOR, PARITY_COMPUTED_FROM_THE_FACTION_S, POOL_INCLUDES_REGIONS_TWO_HOPS_AWAY, REFUSAL_DEPLOYS_A_FORCE, RETENTION_COMPUTED_FROM_UNIT_COUNT_INSTEAD, TIME_LIMIT_USES_THE_OVERRIDDEN_250, TRANSFER_APPLIED_ON_PARTIAL_SUCCESS_FOR, WEIGHTED_DRAW_USES_RANK_INSTEAD_OF. None in conftest OMBug nor header om_bug enums. Need om_bug_e10 enum + mirror.
+- STRUCT NAMES: C names inferred from Python classes by conftest convention (OmDriftRow<->om_drift_row): OMMissionCandidate->om_mission_candidate, OMArchetypeMetadata->om_archetype_metadata, OMObjectiveSpec->om_objective_spec, OMBriefing->om_briefing, OMDebrief->om_debrief, OMUnitProfile->om_unit_profile. Not named in any header/card.
+- STRUCT PADDING: om_objective_spec (uint32 x3 then double) and om_debrief (int32 then double) have implicit 4-byte pad; header convention is explicit _pad field. ctypes and C pad identically so ABI matches, but header style differs. om_mission_candidate, om_unit_profile, om_briefing, om_archetype_metadata pad-free.
+- ENUM TYPES: tests define OMMissionArchetype, OMCanvasCategory, OMDifficulty, OMObjectiveKind, OMCommanderFate, OMMissionBand, OMBriefingSection mirrors; no C enum declared. Table types archetype as uint32_t (struct mirrors c_uint32, header template-id pattern), band/fate as int32_t (OMDebrief c_int32, UNKNOWN=-1), difficulty as int (ctypes c_int default). Header author may prefer enum typedefs (om_mission_archetype etc.) as E-05 does; all int-compatible.
+- OMMissionBand mirrored twice with different members: S077 has UNKNOWN=-1 (no REFUSAL); S078 has REFUSAL=5 (no UNKNOWN). One enum needs both: UNKNOWN=-1, 0..4 bands, REFUSAL=5.
+- SPEC CONFLICT: om_mission_compute_parity (S-080 test + E-14 S125) expects easy=max(1.0,base), hard=min(1.0,base); om_mission_compute_difficulty_parity (S-074 R-074-03) expects easy=max(base,0.95), hard=min(base,0.85), floor 0.75. Two parity-by-difficulty functions, two formulas. R-080-02 says 'R-074-03 applies' -> S-080 test numbers contradict bible. Design-lane call.
+- om_time_jump_run (generational.c, E-08 owned): E-08 own sites disagree, S055/S064 2-arg (w,n) vs S056 3-arg (w,n,byref(report)) with rc. E-10 uses 2-arg. Row marked ambiguous; E-08 transcription owns final shape.
+- DUPLICATES of header symbols carded to mission.c: om_region_get_owner == om_region_owner; om_region_get_held_since == om_region_held_since; om_set_neighbors ~ om_region_set_edge/om_region_set_adjacency. Either alias in C or rewrite S078 tests to header names.
+- OWNERSHIP not in symbol_modules.toml, cards put in mission.c but prefix says elsewhere: om_unit_power, om_unit_get_profile (unit.c/E-11); om_chronicle_has_mission_consequence_flag (chronicle.c/E-09); om_set_neighbors, om_region_get_owner, om_region_get_held_since (sim.c core fixture). Table reports mission.c per card; flag for toml update.
+- om_objective_get_center listed in toml as mission.c (E-10) but no E-10 test calls it; E-15 S130 and E-17 S118 call (w, 0, byref(pos)). No row here; E-10 must still declare/build it or toml moves it.
+- test_R_078_04 and test_R_078_07 assume player faction id 1 (player_faction = 1) with no om_faction_set; header says player is faction 0 (OM_ARCH_PLAYER, om_gen_set_player_preference 'Player faction (id 0)'). om_mission_apply_consequences transfer target and adjacent_player filter depend on which id is 'player'.
+- om_mission_select (S-072) vs om_mission_select_candidate (S-080): two selectors, first returns region/pool idx (ambiguous, coincide in test), second returns archetype. om_mission_set_candidate_viable keyed by archetype only.
+- om_archetype_base_time_ticks: S-076 test expects bible minutes*1200 (3600 for id 0), NOT Q-076-01 config override (250-450 ticks). Control 'time_limit_uses_the_overridden_250' treats override as the bug. Confirm which table is launch truth.
+- om_mission_allocate_force_profile: out buffer double* with no length param (test passes c_double*6, reads 6). Header would need fixed OM_UNIT_TYPES=6 or added max param.
+- Unnamed positional literals (p1/p2/p3): om_mission_select_layout arg 3 (42), om_mission_setup arg 2 (0), om_mission_setup_termination args 2 and 4 (0, 0), om_mission_check_terminated arg 2 (0), om_mission_setup_tactical arg 2 (0). Cards carry no header slice yet ('run card_slice.py --write after the skeleton lands'), so no brief names them.
+- Ticks typed uint64_t per header rule (om_mission_compute_time_limit, om_archetype_base_time_ticks, om_mission_get_time_limit, required/elapsed ticks, time_limit). Tests compare to Python ints; uint32_t would also pass. Without restype, uint64_t return read as low 32 bits of c_int, still equal for tested values.
+- Every call positional; kwarg_site_count 0. call_site_count 200 = 182 lib.om_* in 9 story files (incl. 1 inside read_mission_candidates helper, 4 om_region_set_owner) + 18 dbg.om_* in 9 controls.
+
+## Ambiguous symbol rows
+- om_chapter_set_phase: Positional only, 3 sites. p0 = OMChapterPhase value (MISSION, OUTCOME_RESOLUTION, TIME_JUMP). No name in card/header; suggest phase.
+- om_character_faction: Positional (w, new_char_id). p0 = character id. Faction id == 5; record.faction is c_int32.
+- om_character_get_record: 9 sites, all positional (w, id, byref(OmCharacterRecord)). p0 = character id, p1 = out record. rc == 0 asserted once (R-060-06). Mirrors om_region_drift / om_event_template_get pattern.
+- om_character_has_event_history: Positional (w, cid). p0 = character id. == 0.
+- om_character_lineage_id: Positional (w, new_char_id). p0 = character id. Result > 0.
+- om_character_set_faction: Mixed: (w, 10, faction_id=0). p0 positional = character id at all 5 sites; suggest character_id. Return unused.
+- om_character_set_generation: Mixed (w, 1, generation=2). p0 = character id. Return unused.
+- om_chronicle_category_name: NO om_world* param: called om_chronicle_category_name(c.category). p0 = category id (om_chronicle_cluster.category). Result read with ctypes.string_at, substring b"quiet" expected for lineage_quiet ->
+- om_chronicle_count_by_type: Positional: (w, OMClusterType.CONSEQUENCE|LINEAGE). p0 = cluster type. Compared == 0.
+- om_chronicle_fragment_check_near_duplicate: Positional (w, f1, f2) two bytes fragments; brief: 'two fragments in the same pool'. Compared == 1 (later rejected).
+- om_chronicle_fragment_pool_counts: Positional (w, cat_idx, byref(OmFragmentPoolCounts)); test local var cat_idx. p0 = category index 0..count-1, p1 = out struct. Return unused; int status per out-param pattern.
+- om_chronicle_get_cluster: Positional only: (w, 0|i, byref(OmChronicleCluster)). p0 = entry index in 0..entry_count-1, p1 = out struct. Return unused; int status per om_region_drift/om_event_template_get out-param pattern.
+- om_chronicle_has_keyframe_at_tick: Positional (w, 35) = ownership-change tick. Likely name tick. Compared == 1.
+- om_chronicle_has_keyframe_in_range: Positional (w, 10, 20) = the mock entry's start_tick/end_tick. Likely names start_tick,end_tick; brief says only 'tick range'. Compared == 1.
+- om_client_snapshot_read: 1 site. Test iterates client_data.units, reads u.id and u.faction_id; no ctypes Structure mirror defined anywhere. Readings: (a) restype pointer to struct with units array + count plus Python wrapper;
+- om_collision_pass: Runs collision pass standalone without om_world_step (4 sites). Return unused.
+- om_combat_can_shoot: Compared == 1 / == 0. Inferred p0=attacker_id, p1=target_id.
+- om_command_activate_ability: signature differs across epics: E-13:[('w', 'om_world*'), ('p0', 'const uint32_t*'), ('p1', 'uint32_t')]->void | E-11:[('w', 'om_world*'), ('unit_ids', 'const uint32_t*'), ('n_units', 'uint32_t'), ('target_x', 'double'), ('target_y', 'double')]->int ; Always (w, [unit], 1, x, y); rc == 0 accepted, !
+- om_command_attack_move: signature differs across epics: E-12:[('w', 'om_world*'), ('unit', 'uint32_t'), ('x', 'double'), ('y', 'double')]->void | E-13:[('w', 'om_world*'), ('p0', 'uint32_t'), ('p1', 'double'), ('p2', 'double')]->void | E-11:[('w', 'om_world*'), ('unit_ids', 'const uint32_t*'), ('n_units', 'uint32_t'), ('x'
+- om_command_attack_target: signature differs across epics: E-13:[('w', 'om_world*'), ('p0', 'uint32_t'), ('p1', 'uint32_t')]->void | E-11:[('w', 'om_world*'), ('unit_id', 'uint32_t'), ('target_id', 'uint32_t')]->void ; Owned by unit.c (toml). Return unused. Inferred p0=unit_id, p1=target_id.
+- om_command_attack_target_kiting: Call (w, retreating_unit, pursuer, 0.0, 0.0). Inferred p0=unit_id, p1=target_id, p2=retreat_x, p3=retreat_y. Return unused. Not a command named in R-096 four-command set; flag scope.
+- om_command_direct_move: Move with no route waypoints. Return unused. Inferred p0=unit_id, p1=x, p2=y.
+- om_command_group_move: p0 = (ctypes.c_uint32 * n) array of unit ids, p1 = n, p2=click_x, p3=click_y. Return = group id: compared g2 != g1, passed to om_group_is_active. Matches om_region_set_adjacency pointer+count pattern.
+- om_command_issue_named: Call (w, b"patrol", u, 200.0, 200.0); status != 0 = rejected. Inferred p0=command_name, p1=unit_id, p2=x, p3=y. Needs c_char_p argtype. Only rejection tested; accepted names never exercised.
+- om_command_move: signature differs across epics: E-12:[('w', 'om_world*'), ('unit', 'uint32_t'), ('x', 'double'), ('y', 'double')]->void | E-13:[('w', 'om_world*'), ('p0', 'uint32_t'), ('p1', 'double'), ('p2', 'double')]->void | E-11:[('w', 'om_world*'), ('unit_ids', 'const uint32_t*'), ('n_units', 'uint32_t'), ('x'
+- om_command_queue_attack_move: Deferred variant of om_command_attack_move. Return unused. Inferred p0=unit_id, p1=x, p2=y.
+- om_command_queue_move: Deferred variant of om_command_move: applied at next step in arrival order. Return unused. Inferred p0=unit_id, p1=x, p2=y.
+- om_drift_interpolate: No world; pure function. p0 = (OMVec2 * 2) waypoint array; p1 = waypoint count 2; p2 = period ticks 100; p3 = OMDriftMode enum (PING_PONG 0, LOOP 1, no C typedef); p4 = tick (50, 75); p5 = byref(OMVec
+- om_enemy_production_adapt_target: No world. p0 = byref base target; p1 = byref player composition; p2 = byref adjusted out. Return unused. Four call sites.
+- om_enemy_production_select_category: No world. p0 = byref target ratio; p1 = byref current composition. Return == OMUnitCategory.SIEGE (2); enum om_unit_category (LINE 0, STRIKE 1, SIEGE 2), no C typedef yet; header pattern returns enums
+- om_event_attached_character_count: Positional (w, ev_id). p0 = event id. Card 245a3 -> generational.c; not in toml though siblings are events.c.
+- om_event_get_attached_character: E-04 owns. Positional (w, ev_id, 0): p0 = event id from om_event_fire_manual, p1 = 0 (attachment slot index, guess). Return compared == 10 (character id); int32_t if -1 sentinel. E-08 S060 same positi
+- om_event_template_chronicle_prose: Positional (w, tid) over range(om_event_template_count). p0 = template id; header names it `id` in om_event_template_get. Module: card 256a3 says chronicle.c; om_event_template_ prefix suggests events
+- om_faction_cooperative_since: Not in header. 1 site: (w, 0, 1) == current_tick (uint64_t from om_world_step). Rule says ticks uint64_t; header precedent om_region_held_since / om_event_last_fired use int64_t with -1 = never. Pair 
+- om_faction_create_breakaway: Not in header. 1 site: (w, 1, 2), return unused. Test comment: 'Breakaway creation hook (E-06 R-042-06 / E-07 R-049-05)'. p0 = parent faction 1. p1 unclear: region idx 2 (mirrors om_breakaway_create(w
+- om_faction_last_knowledge_lost: Not in header. 1 site: (w, 0) == 106. Tick reader; uint64_t per rule vs int64_t sentinel (never fired). Card 223a2.
+- om_faction_set_last_knowledge_lost: Not in header. 1 site: (w, 0, 0), return unused -> void. Test comment 'set last knowledge lost to 0'. tick type: uint64_t per rule vs int64_t (-1 = never, header precedent om_event_last_fired). Pair w
+- om_faction_set_stance_counter: Not in header. 6 sites, always (w, 0, 1, 80). Fixture setter, return unused -> void. p0/p1 faction pair as om_faction_stance_counter; p2 = counter value (80 = overture threshold).
+- om_faction_stance_counter: Not in header. 8 sites, always (w, 0, 1). Compared == 0/1/2/initial_count -> count -> uint32_t (int32_t also fits). p0/p1 = faction pair, mirrors om_faction_stance(from, toward); brief says pair is sy
+- om_faction_tier_transition_candidate: Not in header. 1 site, final else branch: (w, 0), value appended to list and never inspected -> restype unconstrained (int guess). Dead if either alt declared.
+- om_fairness_evaluate: out = byref(OMFairnessScore). Return unused; int status also possible.
+- om_fairness_force_score: p1 = composite score (c_double 0.10). Fixture. Return unused.
+- om_gradient_add_moving_source: Call (w, 0, 100.0, 100.0, 500.0, 500.0, 100). p2..p5 = start x,y and end x,y (comment: 'source moves to ~300,300' at tick 50 of 100). p6 = period ticks. p1 = 0: gradient type OBSTACLE (sampled via om_
+- om_gradient_combine_overlap: No world. Two intensities (c_double). Return wrapped c_double, min(1.0, a+b).
+- om_gradient_get_anchor_intensity: No world. Test comments: p0 = node type (CHOKEPOINT 3, VANTAGE 5, HAZARD 6), p1 = gradient type (OBSTACLE 0, INTERFERENCE 2, ELEVATION 3). Both enums. Return wrapped c_double.
+- om_gradient_get_anchor_radius: Same shape as om_gradient_get_anchor_intensity: node type, gradient type. Return wrapped c_double (600/700/500).
+- om_gradient_sample_single: No world. Test comments: p0 intensity (0.8), p1 radius (600.0), p2 distance r (300.0), p3 falloff type (0 = LINEAR, int literal, enum). Return wrapped c_double, approx 0.4.
+- om_group_is_active: Compared == 1 / == 0. Inferred p0=group_id (from om_command_group_move).
+- om_hazard_get_launch_types: No world. p0 = (c_uint32 * n) out array; p1 = max count. Return unused; header reader pattern would return uint32_t count (om_region_neighbors shape).
+- om_hazard_is_enabled_at_launch: No world. p0 = OMHazardType enum. Return == 0 for DRAG/DAMAGE/BOOST/DISRUPTION. Four call sites.
+- om_hazard_launch_type_count: No args (void). Return == 1, used as ctypes array length.
+- om_hazard_sample_interference: p1/p2 = c_double sample x, y. Return wrapped c_double, > 0.5 at source. Three call sites.
+- om_hazard_spawn_moving_interference: p1..p4 = c_double start x, y, end x, y (0,0 to 500,500); p5 = 100 int literal, unlabeled; comment 'at tick 50 source at (250,250)' implies period/travel ticks. Return assigned source_id, never used.
+- om_load_state_read: Positional (w2, buf, save_size). p0 = buffer, p1 = length. Return unused; int status plausible. Must restore RNG state + chain counter (R-064-04).
+- om_macro_bind_hook_flag: p1 force id 1, p2 flag name bytes. Return ignored.
+- om_macro_bus_get_flag: p1 flag name bytes (force_a_routed, force_0_routed, objective_0_contested, reinforcements_arrived). Return == 1.
+- om_macro_bus_register_vocab: No world (global vocabulary, test passes no w). p0 flag name bytes. Return ignored.
+- om_macro_bus_set_flag: p1 flag name bytes, p2 value 1. Return ignored.
+- om_macro_enemy_leaves_trigger: p1 force_id. Return ignored. Fixture hook: enemy leaves ambush radius; behavior must stay ADVANCE.
+- om_macro_eval_hook_flag: p1 force id 1, p2 flag name bytes. Return == 1 fired.
+- om_macro_eval_timer_transition: No world. p0 duration D (int literal 100), p1 elapsed (90/91), p2 noise (ctypes.c_double 0.10). Fires when elapsed*(1+noise) >= D. p0/p1 typed uint64_t as ticks; could be uint32_t or double. Return 0/
+- om_macro_eval_transitions: p1 force id 0. Return OMTransitionKind that fired (HOOK=2 expected).
+- om_macro_execute_behavior: p1 passed as local var force_id (0). p2 behavior enum, p3 modifier enum. Return compared to OMMacroCommand enum (ATTACK_MOVE=1, MOVE=0).
+- om_macro_get_behavior: p1 force id. Return compared to behavior enum (ADVANCE=0, DEFEND=1).
+- om_macro_get_eval_interval: No world. p0 OMDifficulty enum. Return == 40 for EASY and HARD. Overlaps om_macro_evaluation_interval_ticks(void).
+- om_macro_get_last_issued_command_type: p1 force id literal 0. Return in OMMacroCommand {0,1,2,3}.
+- om_macro_get_modifier: p1 force_id. Return compared to modifier enum (AGGRESSIVE=1).
+- om_macro_get_phased_subgroups: p1 force id literal 0. Return count 2..3.
+- om_macro_get_speed_multiplier: No world. p0 modifier enum (CAUTIOUS=0 -> 0.6, AGGRESSIVE=1 -> 1.2). Test wraps raw return in ctypes.c_double(...).value; no restype bound in conftest so raw call returns c_int (test-side defect, not 
+- om_macro_get_threshold_noise: p1 force id literal 0. Return in [-0.15, 0.15], held across om_macro_tick. Test wraps raw return in c_double(...).value; no restype bound (test-side).
+- om_macro_get_timer_noise: p1 force id (0/1). Return in [-0.20, 0.20]. R-122-05 reads forces 0 and 1 with no om_macro_init_force first. Same c_double wrap caveat.
+- om_macro_init_force: Called (w, 0, 100) '# force 0' and (w, 1, 101) '# force 1'. p1 force id. p2 meaning unknown: R-122-01 says 'its own faction id if the script assigns one' -> int32_t faction id guessed; could be script
+- om_macro_is_hidden: p1 force_id. Return == 1 after ambush set.
+- om_macro_player_enter_objective: p1 objective idx 0 (sets objective_0_contested after runner update). Return ignored.
+- om_macro_resolve_conflict: No world. Called (THRESHOLD=0, TIMER=1) -> returns THRESHOLD. p0/p1 OMTransitionKind. Sibling om_macro_resolve_conflict_types same shape; possibly one redundant.
+- om_macro_resolve_conflict_types: No world. Inline call-site comments: p0 '# threshold type' (ESCALATE=4), p1 '# timer type' (RETREAT=3) -> returns RETREAT. Both OMTransitionKind.
+- om_macro_set_base_transition_true: p1 force id 0, p2 on flag 1. Fixture setter, return ignored.
+- om_macro_set_force_hp_pct: p1 force id 0, p2 ctypes.c_double(0.18) hp fraction. Fixture setter, return ignored.
+- om_macro_set_hook_true: p1 force id 0, p2 on flag 1. Fixture setter, return ignored.
+- om_macro_set_state: p1 force id (0/1), p2 behavior enum, p3 modifier enum. Return ignored at all 3 sites; void assumed.
+- om_macro_tick: p1 tick literal (39, 40). Ticks uint64_t per header. Return ignored. Unclear whether p1 is absolute tick or tick count to advance; test semantics = absolute tick (39 no eval, 40 eval).
+- om_macro_trigger_ambush: p1 force_id. Return ignored.
+- om_macro_validate_bus_flag: No world. p0 flag name bytes. Return 1 declared, 0 undeclared.
+- om_macro_validate_condition_name: No world. bytes literal passed (b"player_force_in_zone", b"enemy_in_range") -> both return 0 (dropped vocabulary per Q-121-01).
+- om_macro_validate_state: No world. p0 behavior enum 0..4 (99 invalid), p1 modifier enum 0..2 (99 invalid). Returns 1 valid, 0 invalid. Names p0/p1: no header comment, no brief; local meaning behavior, modifier.
+- om_map_add_cover: signature differs across epics: E-12:[('w', 'om_world*'), ('x', 'double'), ('y', 'double'), ('p2', 'double'), ('p3', 'double')]->uint32_t | E-13:[('w', 'om_world*'), ('p0', 'double'), ('p1', 'double'), ('p2', 'double'), ('p3', 'double')]->void | E-11:[('w', 'om_world*'), ('p0', 'double'), ('p1', 'do
+- om_map_add_hazard_zone: 1 site (300.0, 100.0, 50.0); return stored as hazard_id. p2 unnamed, radius plausible. Map piece smells tactical_mapgen.c; card says fog.c.
+- om_map_add_layer_restriction_zone: p1/p2 = zone x,y (c_double 1000). p3 = 0, comment 'restricts to layer 0' = allowed (listed) layer index. Single layer only at call site; unclear how multi-layer lists pass. Return unused.
+- om_map_add_obstacle: signature differs across epics: E-12:[('w', 'om_world*'), ('x', 'double'), ('y', 'double'), ('p2', 'double')]->uint32_t | E-13:[('w', 'om_world*'), ('p0', 'double'), ('p1', 'double'), ('p2', 'double')]->void ; Owned by tactical_mapgen.c (E-17). 2 sites (100.0, 100.0, 30.0); return stored as obs_id -
+- om_map_add_spine_node: 1 site (400.0, 100.0, 1); return stored as node_id. p2 int literal, unnamed: R-092-01 says 'spine node type' so node type likely, layer also plausible.
+- om_map_archetype_canvas_category: No world. p0 = mission archetype id (0 DEFENSIVE_STAND, 1 SIEGE_BREAKING, 4 SUPPRESSION per S-073). Return compared to OMCanvasCategory 0/1/2 (enum).
+- om_map_check_boundary_gradient_discontinuity: p1/p2 = boundary x (1000.0), y (500.0) c_double. Return wrapped c_double, < 0.05.
+- om_map_clamp_flavoring_delta: No world. p0 = delta (c_double). Return clamped to [-0.25, 0.25].
+- om_map_compute_chokepoint_width: No world. p0 = width ratio w (c_double 1.5 / 0.8). Return wrapped ctypes.c_double(x).value, approx w*200.
+- om_map_compute_economy_obstacle_delta: No world. p0 = economy field (c_double 80.0). Return < 0.0.
+- om_map_compute_modified_canvas: No world. p0 = archetype (0, 9, 4). Comments: 'economy 100 vs economy 0' varies p1; 'tension 100 vs tension 0' varies p2. So p1 economy, p2 tension. Return wrapped c_double, bounded base*0.7..1.3.
+- om_map_compute_tension_cover_delta: No world. p0 = tension field (c_double 80.0). Return > 0.0.
+- om_map_count_distinct_routes_staging_to_objective: p1 = 0, no comment; objective node id or objective ordinal, unclear. Return compared >= 2.
+- om_map_count_nodes_of_type: p1 = OMSpineNodeType enum value. Return compared >= 1, used in range().
+- om_map_flavoring_stability_multiplier: No world. p0 = stability s (c_double 100/0/50). Return wrapped c_double, 1 + 0.5*(100-s)/100.
+- om_map_generate: Calls (w,0,11), (w,0,42) x3, no comment; same shape as om_map_generate_spine so archetype, seed by analogy. Return unused.
+- om_map_generate_gradients: Call (w, 0, 42), no comment; same shape as om_map_generate_spine so archetype, seed by analogy. Return unused.
+- om_map_generate_spine: Test comment '# archetype 0, seed 11'. Call sites (w,0,11) and (w,0,42) x4. Return unused.
+- om_map_get_canvas_base_dimension: No world. p0 = OMCanvasCategory enum. Return compared to 8000.0 / range, no c_double wrap: restype must be double. Test accepts fixed base or drawn range but no world/seed arg, so drawing impossible h
+- om_map_get_compatible_layout_count: p1 = archetype id (test comment 'archetype 0', loops arch_id 0..9). Return used as array size + compared >= 4. R-112-05 passes w=None: must accept NULL world.
+- om_map_get_compatible_layouts: p1 = archetype id; out = (c_uint32 * pool_size) buffer; p3 = max (pool_size). Return unused at call site; uint32_t per om_region_neighbors enumerate pattern, void also possible.
+- om_map_get_node_pos: p1 = node id (0). out = byref(OMVec2). Return unused.
+- om_map_get_node_type: p1 = node index (loop 0..node_count). Return compared against OMSpineNodeType 0..8 (enum, om_tier-style int).
+- om_map_get_nth_node_of_type: p1 = OMSpineNodeType, p2 = nth ordinal. Return = node id, passed on as index to om_map_has_flank_bypass / om_map_node_get_owner.
+- om_map_has_flank_bypass: p1 = chokepoint node id. Return compared == 1.
+- om_map_instantiate_zone_pos: No world. p0/p1 = base_pct x/y (c_double 0.50), p2 = canvas_dim (c_double 10000.0), p3 = int literal 12345, no comment; jitter needs RNG so likely seed. out = byref(OMVec2). Return unused.
+- om_map_is_edge_coord: p1/p2 ctypes.c_double instances (x, y). Return == 1. Prefix om_map_ (E-17 tactical_mapgen.c owns om_map_add_*), toml silent, only E-14 calls; card 304a2 -> enemy_macro.c.
+- om_map_is_reachable_from_all_spawns: p1 = node id. Return compared == 1.
+- om_map_is_reachable_from_staging: p1 = node id. Return compared == 1.
+- om_map_layout_check_hazard_approaches: No world. p0 = layout_id (loop var). Return == 1.
+- om_map_layout_check_vantage_reachability: No world. p0 = layout_id (loop var). Return == 1.
+- om_map_layout_file_has_forbidden_fields: No world. p0 = 0, layout id by context. Return compared == 0.
+- om_map_layout_file_has_required_fields: No world. p0 = 0, layout id by context. Return compared == 1.
+- om_map_layout_matches_archetype_filter: No world. p0 = layout id (from out buffer), p1 = archetype id. Return compared == 1.
+- om_map_node_get_owner: p1 = vantage node id. Return compared == 0 ('0 or NEUTRAL' = nobody). Conflicts with E-05 faction convention (-1 unowned, 0 player); int32_t per faction-id rule, int side enum also possible.
+- om_map_sample_gradients: p1/p2 = x, y (c_double). out = byref(OMGradientProperties). Return unused.
+- om_map_sample_layer_accessibility: p1/p2 = x,y (c_double), p3 = layer index (0/1). Return compared == 0 / == 1.
+- om_map_sample_obstacle_density: p1/p2 = x,y (c_double). Return wrapped c_double, compared >.
+- om_map_select_layout_uniform: No world. p0 = seed (loop var 'seed' 0..399), p1 = pool_size (4). Return 0 <= chosen < pool_size, used as dict key. Seed uint64_t per om_world_new pattern.
+- om_map_set_obstacle_density: Calls (w, 2, 2, 0, 0.75). Inferred p0=cell_x, p1=cell_y, p2=layer, p3=density. Card 292a1 puts it in tactical_move.c; not in toml though map-fixture domain (E-17 tactical_mapgen.c) plausible.
+- om_map_set_simulation_coupling: p1 = on/off flag (0). om_trace_enable(w, int on) pattern. Return unused.
+- om_map_setup_drifting_node: Test comment '# node 0, period 100 ticks'. p1 = node id, p2 = period in ticks (uint32_t per cooldown_ticks/delay pattern for durations; uint64_t possible). Return unused. Called without prior om_map_g
+- om_mission_check_extraction_objectives: Return unused.
+- om_mission_check_terminated: == 1 / == 0. p1 same unnamed 0 as om_mission_setup_termination arg 1.
+- om_mission_compute_parity: signature differs across epics: E-14:[('p0', 'double'), ('p1', 'int')]->double | E-10:[('base', 'double'), ('difficulty', 'int')]->double ; Owned by mission.c (E-10) per toml; card 305a1 wrongly lists under enemy_macro.c. No world. p0 ctypes.c_double base parity (1.0; E-10 passes 1.2, 0.8), p1 OMDif
+- om_mission_compute_reinforcement_capacity: No world. p0 = c_double F; p1 = time limit 3600 ticks (int literal). Return >= 80.0.
+- om_mission_compute_starting_force: No world. p0 = c_double expected full force F (100.0). Return approx 20.0 (0.20 F). Not in symbol_modules.toml; E-10 mission territory by name, owned here by rule.
+- om_mission_get_objective_completion: signature differs across epics: E-15:[('w', 'om_world*'), ('p1', 'uint32_t')]->double | E-10:[('w', 'const om_world*'), ('objective_idx', 'uint32_t')]->double ; Owned by mission.c (E-10) per symbol_modules.toml. p1 = objective idx (0). Return wrapped c_double > 0.0.
+- om_mission_get_reinforcement_foreshadow_text: p1 create_string_buffer(512) out, p2 512 max. Test reads buffer .value (NUL-terminated). Return ignored; uint32_t length by reader pattern, void also fits.
+- om_mission_get_reinforcement_spawn_pos: p1/p2 byref(ctypes.c_double) out params (locals spawn_x, spawn_y). Return ignored.
+- om_mission_get_reinforcement_trickle: Return == 0 int literal; trickle is a rate so double reading possible. uint32_t chosen to match default ctypes restype.
+- om_mission_init_seed: p1 seed literal 424242; seeds uint64_t per om_world_new. Return ignored. Prefix om_mission_ but toml silent; only E-14 calls it; card 303a1 places it in enemy_macro.c.
+- om_mission_schedule_external_reinforcement: p1 ctypes.byref(OMReinforcementWave) out param. Return ignored; void or int status both fit.
+- om_mission_select: Return compared to ints 0..5 = injected region_idx values, but could be pool index; coincide in test. Consumes one forced draw (force_draws [0.35]). Distinct from om_mission_select_candidate (S-080) w
+- om_mission_select_layout: Third arg literal 42, unnamed; reads as seed or draw. Return = layout id, must be in compatible list.
+- om_mission_set_external_reinforcement: p1 byref(OMReinforcementWave) filled by test (is_scheduled=1, direction=1, arrival_tick=500). Fixture setter, return ignored.
+- om_mission_set_player_held_structures_count: p1 = held structure count (0). Return unused.
+- om_mission_setup: Sites (w,0,DEFENSIVE_STAND,1) and (w,0,DEFENSIVE_STAND,0). p1=0 likely region_idx (world has 2 regions), unnamed. Last arg from comment 'lineage connection = 1'.
+- om_mission_setup_extraction_point: Fixture: p1/p2 = c_double x, y (500, 500); p3 = c_double radius (200 wu). Return unused.
+- om_mission_setup_tactical: All 7 sites (w,0,1000); comment 'limit = 1000 ticks'. p1=0 unnamed: archetype, region_idx, or mission slot all fit.
+- om_mission_setup_termination: Sites (w,0,1,0,100,200,1), (w,0,0,0,200,200,1), (w,0,0,0,50,200,0), (w,0,0,0,50,200,1). Comments name 'tick = 200, limit = 200' and 'player_alive = 0'; case1 'Primary complete' -> arg2. p1 always 0 (m
+- om_mission_start: Not in header. 1 site, hasattr-guarded: (w, 0) -> mission id fed to om_mission_unit_tier; else literal 0. Restype: id -> uint32_t, or int32_t if -1 on failure. Mission system is E-10 (toml modules mis
+- om_mission_unit_tier: Not in header. 2 sites, hasattr-guarded: (w, running_mission_id) == 1 before and after tech crosses tier. mission_id type follows om_mission_start restype. E-10 territory; card 226a1 -> diplomacy.c.
+- om_navmesh_find_path: Call (w, 0.0, 0.0, 500.0, 0.0, 0); result `path_len > 0`. Inferred p0=from_x, p1=from_y, p2=to_x, p3=to_y, p4=layer. Non-const: sets state om_navmesh_is_path_straightened reads.
+- om_navmesh_get_cache_hits: Count, compared > . uint32_t per count rule; uint64_t also fits (monotone counter).
+- om_navmesh_get_cell_size: Compared approx == 100.0.
+- om_navmesh_is_cell_blocked: Calls (w, 2, 2, 0); compared == 1 / == 0. Inferred p0=cell_x, p1=cell_y, p2=layer.
+- om_navmesh_is_path_straightened: Compared == 1; refers to last om_navmesh_find_path result (implicit state).
+- om_objective_get_center: signature differs across epics: E-17:[('w', 'om_world*'), ('p1', 'uint32_t'), ('out', 'OMVec2*')]->void | E-15:[('w', 'om_world*'), ('p1', 'uint32_t'), ('p2', 'om_vec2*')]->void ; Owned by mission.c (E-10) per symbol_modules.toml; card 326a1 lists it under tactical_mapgen.c. p1 = objective index (0)
+- om_objective_is_contested: p1 = objective idx. Return == 0 flag.
+- om_objective_setup_drifting: Fixture: p1 = objective idx (0); p2 = period ticks (100). Waypoints and mode not passed; implied defaults. Return unused.
+- om_onboarding_validate: Only E-08 symbol with no om_world*. Positional byref(OmOnboardingConfig). p0 = cfg. rc == 0 valid, != 0 invalid (all 10 rare marks).
+- om_player_can_see_unit: 1 site (w, 0, enemy) == 0. Second arg 0 unnamed; player faction id 0 most plausible (faction_id int32_t). Overlaps om_player_can_see(w, unit) -- two readers for same fact.
+- om_proc_arch_resolve_section_piece: No world. p0 = section_type, p1 = era (1 steampunk, 2 cyberpunk, enum). Return = prefab id, compared != 0 and pairwise !=.
+- om_proc_arch_section_is_era_agnostic: No world. p0 = section_type (0, comment 'BARRACKS_SECTION', enum). Return == 1.
+- om_render_get_owner_color: No world. p0 = owner (1 player, 2 enemy, 0 neutral). Return only compared for pairwise inequality; packed color uint32_t assumed. Three call sites.
+- om_render_get_structure_silhouette_id: No args (void). Return compared != every unit silhouette id.
+- om_render_get_unit_silhouette_id: No world. p0 = unit type 0..5. Return id compared for inequality.
+- om_render_is_volume_obscuring: No world. p0 = OMHazardType enum (SENSOR_INTERFERENCE 0 ... DISRUPTION 4, no C typedef). Return == 1 flag.
+- om_renderer_interpolate_facing: Inferred p0=unit_id, p1=alpha. Expected f0 + a*(f1-f0), plain lerp, no wrap.
+- om_renderer_interpolate_position: Tuple unpack `rx, ry = ...(w, u, 0.5)`; same two readings as om_unit_get_pos. Inferred p0=unit_id, p1=alpha, p2=out_x, p3=out_y.
+- om_replay_get_command_count_at_tick: Call (w, 0) after one om_world_step; expects 2. Inferred p0=tick. Tick literal 0 = the tick commands were queued for (pre-first-step), so replay tick numbering starts at 0 while om_world_step auto-inc
+- om_replay_get_commands: p1 OMReplayCommand array (out buffer), p2 count/max. Return ignored; header reader pattern (om_tick_*) returns uint32_t written, void also satisfies tests.
+- om_replay_log_command: Arg order mirrors OMReplayCommand fields exactly: tick, force_id, command_type, target_x (c_double), target_y (c_double), target_id. Return ignored at all 3 sites.
+- om_rng_force_selector_draw: Positional (w, 0.01). p0 = forced uniform draw; suggest draw. Return unused. Cf om_rng_force in header (array form).
+- om_route_grid_is_cell_blocked: No world. p0 = obstacle density (c_double 0.75 / 0.65). Return == 1 / == 0. Route grid is E-13 R-097-01 concept; not in symbol_modules.toml; card 322a2 puts it in tactical_mapgen.c.
+- om_save_state_write: Positional (w, buf, save_size). p0 = out buffer (c_uint8 array), p1 = capacity. Return unused; bytes-written int plausible.
+- om_selector_get_nemesis_candidate: Positional (w, 0). p0 = candidate index; suggest idx. Returns character id (== 3).
+- om_session_capture_enable: p1 on flag 1 (om_trace_enable pattern). Return ignored.
+- om_session_capture_read: p1 create_string_buffer(capture_size) out, p2 capture_size max. Return ignored; uint32_t bytes written by reader pattern, void also fits.
+- om_steering_get_obstacle_repulsion: Tuple unpack `rx, ry = ...`; same two readings as om_unit_get_pos. Queried right after command, no step. Inferred p0=unit_id, p1=out_x, p2=out_y.
+- om_steering_get_sweep_angle_at: Index from range(count); radians, [0]==0.0, [1]>0, [2]<0, |[1]|==|[2]|. Inferred p0=index. Values compared with == across worlds (exact).
+- om_steering_get_sweep_angle_count: Used as range() bound; > 0.
+- om_strategic_agent_read_region_field: 1 site (w, 0, 1, OMField.MILITARY) approx == 0.42. Comment 'Region 0 is owned by Faction 0 ... agent in Region 0 reads neighbor Region 1' -- p0 is faction_id 0 or source region 0, undecidable. Fixture
+- om_structure_apply_damage: Test comment: 'damage = 100, attacker_type = 0'. p1 = structure idx; p2 = c_double damage; p3 = attacker unit type. Return unused.
+- om_structure_assign_owners: No world. p0 = mission archetype id (0 = defensive stand per comment, no enum in test); p1 = total count 4; p2/p3/p4 = byref(c_uint32) player/enemy/neutral out. Return unused.
+- om_structure_compute_count: No world. p0 = ctypes.c_double region military; p1 = OMMapSize enum (SMALL/MEDIUM/LARGE, no C typedef yet). Return compared to int counts 2..4. Six call sites.
+- om_structure_get_base_max_hp: No args (void). Return wrapped c_double approx 3000.0 (ALG-75).
+- om_structure_get_capture_progress: p1 = structure idx. Return wrapped c_double, approx 0.5 / 0.0 in [0,1].
+- om_structure_get_hp: p1 = structure idx. Return wrapped c_double approx 3000.0 / 2900.0.
+- om_structure_get_hud_data: p1 = structure idx; p2 = byref(OMStructureHUD) out. Return unused.
+- om_structure_get_last_spawn_distance: p1 = structure idx. Return wrapped ctypes.c_double(dist).value <= 150.0 wu.
+- om_structure_get_matchup_multiplier: No world. p0 = attacker unit type 0..5. Return approx 1.0 for all six.
+- om_structure_get_owner: p1 = structure idx. Return == 1 faction id.
+- om_structure_get_position: p1 = structure idx; p2 = byref(OMVec2) out. Return unused.
+- om_structure_get_timer: p1 = structure idx. Return compared to 0 and 250 (ticks). uint64_t pairs with om_structure_set_timer; uint32_t reading possible. Default ctypes restype is c_int; binding needed.
+- om_structure_get_unit_type: p1 = structure idx. Return == 1; HUD mirror types next_unit_type c_uint32.
+- om_structure_init: Test comment: 'structure 0, unit type 0, power 100'. p1 = structure idx, p2 = unit type, p3 = c_double power. Return unused. Eight call sites.
+- om_structure_init_drifting: Fixture: p1 = structure idx; p2 = period ticks (100). Return unused.
+- om_structure_is_destroyed: p1 = structure idx. Return == 1 flag.
+- om_structure_is_in_capture_radius: p1 = structure idx; p2/p3 = x, y passed as bare Python floats center_50.x/.y (ctypes ArgumentError without argtypes). Return == 1 flag.
+- om_structure_on_owner_changed: Test comment: 'old 2, new 1'. p1 = structure idx; p2 = old owner; p3 = new owner. Return unused.
+- om_structure_pop_spawned_unit: p1 = structure idx. Return == 1 asserted 'Unit spawned': flag, popped count, or unit id all fit. int chosen.
+- om_structure_production_interval_ticks: No world. p0 = c_double unit-type power (100.0). Return == 600 ticks; uint64_t reading possible under ticks pattern, small value so uint32_t chosen.
+- om_structure_set_capture_progress: Fixture: p1 = structure idx; p2 = c_double progress (0.6). Return unused.
+- om_structure_set_capturing_faction: Fixture: p1 = structure idx; p2 = unopposed capturing faction (1). Return unused.
+- om_structure_set_contested: Fixture: p1 = structure idx; p2 = on flag (1), same shape as om_trace_enable(w, int on). Return unused.
+- om_structure_set_owner: p1 = structure idx; p2 = owner faction (2 enemy, 0 neutral, 1 player per comments; differs from E-05 faction id space where 0 = player). Return unused.
+- om_structure_set_timer: p1 = structure idx; p2 = timer in ticks (600, 250 int literals). uint64_t per ticks pattern; uint32_t reading possible. Return unused.
+- om_structure_switch_unit_type: p1 = structure idx; p2 = new unit type (1). Return unused.
+- om_structure_tick_capture: p1 = structure idx; one tactical tick of capture (dt = 1/20 s; 200 ticks = 10 s). Return unused.
+- om_structure_tick_production: p1 = structure idx. Return unused.
+- om_structure_unit_cost: No world. p0 = unit type (0). Return == 0 int literal; double cost reading possible, test relies on default int restype.
+- om_tactical_step: signature differs across epics: E-12:[('w', 'om_world*')]->uint64_t | E-11:[('w', 'om_world*')]->uint64_t | E-08:[('w', 'om_world*')]->void ; Owned by unit.c per toml. 2 sites, return unused. restype guessed from om_world_step pattern; E-11 tests decide.
+- om_tactical_tick: signature differs across epics: E-14:[('w', 'om_world*')]->uint64_t | E-17:[('w', 'om_world*')]->uint64_t | E-15:[('w', 'om_world*')]->void | E-11:[('w', 'om_world*')]->uint64_t | E-10:[('w', 'om_world*')]->uint64_t ; Owned by unit.c (E-11) per symbol_modules.toml; card 303a1 wrongly lists it under 
+- om_tactical_tick_to: signature differs across epics: E-14:[('w', 'om_world*'), ('p1', 'uint64_t')]->uint64_t | E-17:[('w', 'om_world*'), ('p1', 'uint64_t')]->void | E-15:[('w', 'om_world*'), ('p1', 'uint64_t')]->void ; Owned by unit.c (E-11) per toml; card 304a1 wrongly lists under enemy_macro.c. p1 target tick literal 
+- om_tick_read_ability_events: Called (w) only; result used as Python list (len, [0], iteration) of records with .tick .unit_id .ability_id .duration .telegraph_ticks .cue_id .radius. Raw ctypes call cannot return list. Reading A: 
+- om_ticker_pop_message: p1 = create_string_buffer(256) out; p2 = buffer size 256. Return unused; length/int reading possible. Ticker is E-16 HUD (R-104-01) by name but not in symbol_modules.toml, so owned here by rule. Expec
+- om_time_jump_report_faction_field_deltas_count: Positional byref(OmTimeJumpReport). p0 = report. Result >= 0 only.
+- om_time_jump_run: signature differs across epics: E-08:[('w', 'om_world*'), ('p0', 'uint32_t'), ('p1', 'om_time_jump_report*')]->int | E-10:[('w', 'om_world*'), ('n_ticks', 'uint64_t')]->int ; Two shapes. S055/S064: (w, 50)/(w, 25)/(w, 30) two args, return unused. S056: (w, jump_len, byref(OmTimeJumpReport)) three ar
+- om_time_jump_run_tracked: Positional (w, 50). p0 = jump ticks. Return unused.
+- om_unit_attack: signature differs across epics: E-12:[('w', 'om_world*'), ('attacker', 'uint32_t'), ('target', 'uint32_t')]->void | E-13:[('w', 'om_world*'), ('p0', 'uint32_t'), ('p1', 'uint32_t')]->void ; Owned by unit.c per toml. 1 site, return unused; E-11/E-13 may return damage double.
+- om_unit_can_return_fire: p1 = unit id. Return == 0 flag.
+- om_unit_clear_orders: Return unused. Inferred p0=unit_id.
+- om_unit_compute_terrain_speed: Pure query: (unit, obstacle_density) -> wu/s; 150*(1-0.5d) band, 0.0 at d>=0.75. Note test expects 0.70 -> 97.5 (not blocked) but R-097-01 says >0.7 blocked; consistent. Inferred p0=unit_id, p1=densit
+- om_unit_deal_damage: signature differs across epics: E-15:[('w', 'om_world*'), ('p1', 'uint32_t'), ('p2', 'uint32_t'), ('p3', 'double')]->void | E-11:[('w', 'om_world*'), ('attacker_id', 'uint32_t'), ('target_id', 'uint32_t'), ('base_damage', 'double')]->void ; Owned by unit.c (E-11). p1 = attacker unit id; p2 = target 
+- om_unit_engage: Fixture: pins front as engaged/immovable vs enemy. Return unused. Inferred p0=unit_id, p1=target_id.
+- om_unit_get_base_hp: No world. p0 unit_type range(6), p1 side 0/1. Return compared via c_double wrap (no restype bound). Prefix om_unit_ same ownership caveat as om_unit_get_decision_loop_ptr.
+- om_unit_get_cross_layer_factor: 6 sites. Third arg 1|2|3 = layers away from observer (comments 'Adjacent layer factor', 'Two-layer', 'Three-layer'); no name given. Returns 1.00/0.40/0.20 inside vantage, 0.50/0.20/0.00 outside.
+- om_unit_get_current_speed: Units wu/s (150.0, 40.0, 0.0), not wu/tick. Read right after command, before any step (S-095). Inferred p0=unit_id.
+- om_unit_get_decision_loop_ptr: No world. p0 unit_type range(6), p1 side ('# player' 0 / '# enemy' 1). Return compared == across sides: function pointer. No restype bound -> ctypes returns c_int, truncates 64-bit pointer (test-side)
+- om_unit_get_destination: Tuple unpack `dx, dy = ...`; same two readings as om_unit_get_pos. Inferred p0=unit_id, p1=out_x, p2=out_y.
+- om_unit_get_facing: Radians, compared approx to 0.0 / pi/2 / 6.0/20.0. Inferred p0=unit_id.
+- om_unit_get_hp: signature differs across epics: E-12:[('w', 'const om_world*'), ('unit', 'uint32_t')]->double | E-13:[('w', 'const om_world*'), ('p0', 'uint32_t')]->double ; Owned by unit.c per toml. 6 sites, float arithmetic and approx compare.
+- om_unit_get_order_destination: p1 = unit id; p2 = byref(OMVec2) out. Return unused.
+- om_unit_get_order_kind: Compared == OMOrderKind.ATTACK_MOVE (test enum MOVE=0, ATTACK_MOVE=1, ATTACK_TARGET=2, ACTIVATE_ABILITY=3). Enum restype (c_int per om_region_tier pattern). Inferred p0=unit_id.
+- om_unit_get_pos: signature differs across epics: E-12:[('w', 'const om_world*'), ('unit', 'uint32_t')]->? | E-13:[('w', 'const om_world*'), ('p0', 'uint32_t'), ('p1', 'double*'), ('p2', 'double*')]->int ; Test unpacks `x, y = lib.om_unit_get_pos(w, u)`; ctypes cannot return tuple. Reading A: out pointers (unit_id, d
+- om_unit_get_position: p1 = unit_id. out = byref(OMVec2). Not in symbol_modules.toml. Near-duplicate of om_unit_get_pos (tactical_move.c, E-12/E-13 tests unpack x, y = lib.om_unit_get_pos(w, u)). Two names, two shapes, same
+- om_unit_get_target: signature differs across epics: E-12:[('w', 'const om_world*'), ('unit', 'uint32_t')]->uint32_t | E-13:[('w', 'const om_world*'), ('p0', 'uint32_t')]->uint32_t | E-15:[('w', 'om_world*'), ('p1', 'uint32_t')]->uint32_t ; Owned by unit.c per toml. 2 sites: == friendly_in_range (unit id) and == 0 (none
+- om_unit_has_active_buff: Call (w, raider, b"surge"); compared == 1. Inferred p0=unit_id, p1=buff_name. Needs c_char_p argtype.
+- om_unit_has_non_combat_visual_tag: No world. p0 disagrees: one site passes OMNonCombatKind.CONVOY (0), other passes 10 'standard combat unit'; so p0 is some unit-type id space where non-combat kinds and combat types coexist. Return 1 /
+- om_unit_is_braced: Compared == 1 / == 0. Inferred p0=unit_id.
+- om_unit_is_flinching: p1 = unit id. Return == 1 flag after damage.
+- om_unit_is_non_combat_supported: No world. p0 = OMNonCombatKind enum. Return 1 for CONVOY/EVACUEE, 0 for SCIENCE/INTELLIGENCE/CULTURAL (Q-129-01). Five call sites.
+- om_unit_order_hold_node: p1 = unit_id, p2 = node_id (variable names). Return unused. Not in symbol_modules.toml; unit command by name, card 326a2 puts it in tactical_mapgen.c. Module questionable.
+- om_unit_order_move: p1 = unit id; p2/p3 = c_double destination x, y. Return unused. om_command_move is E-13's tactical_move.c symbol; this one not in symbol_modules.toml, owned here by rule; possible duplicate of E-13 mo
+- om_unit_set_facing: Inferred p0=unit_id, p1=facing_rad.
+- om_unit_set_hp: signature differs across epics: E-13:[('w', 'om_world*'), ('p0', 'uint32_t'), ('p1', 'double')]->void | E-11:[('w', 'om_world*'), ('unit_id', 'uint32_t'), ('hp', 'double')]->void ; Owned by unit.c (toml). Call (w, enemy, 0.0) kills unit. Inferred p0=unit_id, p1=hp.
+- om_unit_set_pos: Inferred p0=unit_id, p1=x, p2=y. toml lists om_unit_teleport (tactical_move.c) for same concept, not om_unit_set_pos; name mismatch.
+- om_unit_set_visible_to_faction: Call (w, enemy, 0, 0). Inferred p0=unit_id, p1=faction_id, p2=visible flag. Not in toml; card 291a2 assigns tactical_move.c, but fog-domain (fog.c/E-12) plausible. Flag for design lane.
+- om_unit_spawn: signature differs across epics: E-12:[('w', 'om_world*'), ('unit_type', 'int'), ('faction_id', 'int32_t'), ('x', 'double'), ('y', 'double'), ('layer', 'uint32_t')]->uint32_t | E-13:[('w', 'om_world*'), ('p0', 'int'), ('p1', 'int32_t'), ('p2', 'double'), ('p3', 'double'), ('p4', 'uint32_t')]->uint32_
+- om_unit_spawn_combat: Owned by unit.c (E-11) per symbol_modules.toml; card 326a2 lists it under tactical_mapgen.c. p1 = 0 here; E-15 S-130 passes 1 with comment 'enemy', so side/owner (0 player, 1 enemy). p2/p3 = x,y (c_do
+- om_unit_spawn_non_combat: p1 = OMNonCombatKind enum (CONVOY 0, EVACUEE 1, ...; no C typedef); p2/p3 = c_double x, y. Return used as unit id passed to om_unit_* readers. No faction param: owning faction unstated.
+- om_unit_teleport: signature differs across epics: E-12:[('w', 'om_world*'), ('unit', 'uint32_t'), ('x', 'double'), ('y', 'double'), ('layer', 'uint32_t')]->void | E-11:[('w', 'om_world*'), ('unit_id', 'uint32_t'), ('x', 'double'), ('y', 'double'), ('layer', 'uint32_t')]->void ; Owned by tactical_move.c per toml. 1 si
+- om_unit_tick_decision_loop: p1 = unit id. Return unused. E-11 R-087 decision loop by name, not in symbol_modules.toml, owned here by rule.
+- om_visibility_compute: Listed fog.c in symbol_modules.toml. 12 sites, return never read.
+- om_world_get_state_checksum: Owned by sim.c per toml. 2 sites, cs1 == cs2. Header already has uint64_t om_world_checksum(const om_world*) -- near-duplicate; needs explicit c_uint64 restype or 64-bit truncates.
+- om_world_set_strategic_tick: Positional (w, 150). p0 = tick. Toml has om_world_set_tick in sim.c; different name, not merged here.
+
+## Struct conflicts
+- none
