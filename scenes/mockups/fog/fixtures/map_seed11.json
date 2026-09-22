@@ -1,0 +1,24 @@
+{
+  "canvas": 6400.0,
+  "obstacles": [
+    {"pos": [3200, 2200], "half_extents": [220, 120], "tall": true},
+    {"pos": [1800, 4200], "half_extents": [180, 180], "tall": true},
+    {"pos": [4600, 3600], "half_extents": [260, 140], "tall": false}
+  ],
+  "zones": [
+    {"kind": "interference", "pos": [1500, 1500], "radius": 900.0, "intensity": 0.5},
+    {"kind": "hazard", "pos": [5200, 4200], "radius": 500.0},
+    {"kind": "cover", "pos": [900, 4400], "radius": 450.0}
+  ],
+  "nodes": [
+    {"type": "objective", "pos": [3200, 3200]},
+    {"type": "vantage", "pos": [4800, 4800]},
+    {"type": "chokepoint", "pos": [3200, 1000]},
+    {"type": "staging", "pos": [800, 3200]},
+    {"type": "extraction", "pos": [5800, 800]}
+  ],
+  "structures": [
+    {"sid": 1, "pos": [5600, 1700]},
+    {"sid": 2, "pos": [200, 6100]}
+  ]
+}
