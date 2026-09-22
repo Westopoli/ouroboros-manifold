@@ -52,6 +52,23 @@ Read against `docs/bible/references/E-17/E-17-8-wows-map-view.png` (grid, terrai
 - `fps_ms` (`Performance.TIME_PROCESS`) under llvmpipe/Compatibility at 1280x720, this session (quieter machine than the original build session): 100.4-170.4ms/frame.
 - Every clean/planted smoke run (9 screenshots, 3 regenerates, 2 tick batches) and the 1920x1080 review batch completed well inside the 300-400s wrapper timeout, no retries needed.
 
+## Pass 2 (2026-09-22, mockup review 1 fixes)
+
+Fixes edge-scroll (right/bottom dead) and regenerate (same-seed no-op); see README "Mockup review 1 fixes" for root causes and evidence.
+
+| id | check | clean result | plant | planted result |
+|---|---|---|---|---|
+| EDGE-13 (new) | centred `_mouse_pos` (bounds space) does not pan; `_mouse_pos` at `bounds.x-10`/`bounds.y-10` pans camera.x/z positively | PASS under `--headless` | none | — |
+| DET-1 to LABEL-12 | unchanged since pass 1 | PASS, re-ran clean + all 6 plants after the camera_rig.gd/hud.gd/objectives_mockup.gd edits, still LIVE | (all 6) | LIVE, same fails as pass 1's table above |
+
+Xvfb, `--res 2560x1440`, `qa/edges.json`, camera parked at `(12000, 12000)` height 3000: move `(2540, 720)` -> `camera.x` `12000 -> 13550`; move `(1280, 1420)` -> `camera.z` `12000 -> 13550`; move `(20, 720)` -> `camera.x` `13550 -> 12000`; move `(1280, 20)` -> `camera.z` `13550 -> 12000`. All four edges pan; `errors.txt` count 0.
+
+Regenerate, `qa/smoke.json`'s own `after_r` checkpoint (`defensive_stand`/`hold_zone`, fixture 12): `fixture12` state `seed=12 regen_count=10 hash=3757886768` -> `after_r` state `seed=13 regen_count=11 hash=3757886768` — seed and regen_count advance, hash is unchanged because `hold_zone` archetypes are deliberately seed-invariant (same finding as pass 1's SEED-2 row), not a residual bug. Separately reproduced with a seed-sensitive archetype (`siege_breaking`): hash `3289694821` (seed 11) -> `2334985817` (seed 12).
+
+`scripts/mockup_verify.sh objectives` clean and all 6 `--plant` runs: still `PLANT <id> LIVE` with the same fail sets as the pass-1 table above (unaffected by this pass's edits, re-confirmed). Two clean `qa/smoke.json` runs at 1280x720: both exit 0, `errors.txt` count 0, and `after_r`'s `hash`/`seed` match between the two runs (`3757886768`/`13`). All 6 plants also re-run once each through `mockup_qa.sh run` under Xvfb at 1280x720 (`qa/plant_check.json`): exit 0, `errors.txt` count 0 for every one.
+
+Re-shot the 1920x1080 `qa/smoke.json` batch and diffed every pass-1 screenshot against it: all 9 (10 counting the `seed11`/`kind_defensive_stand` alias) land at 0.000027-0.000078, the same noise floor as pass 1's own DET-1 pixel check — neither fix touches a rendered frame (`qa/smoke.json` never moves the mouse, and its only `key R` press happens after the last screenshot). `pass1/` is unchanged, nothing re-shot.
+
 ## Node-skip count
 
 0 skips across all 30 (10 archetypes x 3 fixtures) satisfiability checks in the clean pass (SAT-5). The skip/fallback path is only exercised by the synthetic ROUTE-6 fixture and the `objective-on-spawn`/`route-ignored` plants.
