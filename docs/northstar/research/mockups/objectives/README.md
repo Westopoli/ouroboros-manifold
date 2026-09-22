@@ -60,3 +60,7 @@ Design points I did not decide, each with two or three candidates:
 ## Next step
 
 The pass-1 screenshots (1920x1080, 10 shots: five kinds at tactical zoom, map zoom, HUD at 30% and 90% progress, seed 11 and seed 12) are committed under `pass1/`. The mockup awaits your look — especially the two visual bugs above, which need a Forward+ seat to resolve either way.
+
+## Fresh-eyes review (2026-09-22, Sonnet reviewer, screenshots only)
+
+Verdict: fix first. The invisible Label3D text is not an Xvfb mystery: `markers.gd` and `objectives_mockup.gd` set `font_size` but leave `pixel_size` at its default of 0.01, so 64 px text is under one world unit tall on a 6,000 to 24,000 wu canvas; the fog and galaxy mockups hit and fixed the same defect (`pixel_size` 2.2 and 0.05). `map_zoom.png` shows only the HUD because the camera is a fixed survey point, not the objective's position. Should-fix: the destroy-targets boxes render near black instead of orange and the escort route trail is not in frame, so those two kinds do not read; two of the five "kind" exemplars are pixel-identical because both archetypes map to hold at the same node (the archetype table yields four kinds, never survive); the grey-to-black gradient is most likely the procedural sky bleeding past the ground plane under the Compatibility renderer, to be isolated by switching the environment to a flat clear colour; the HUD's progress-bar glyphs render as missing-glyph boxes; the README's claim that node boxes appear in `kind_defensive_stand.png` is not borne out by the file.
