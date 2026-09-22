@@ -66,7 +66,7 @@ func _update_readout() -> void:
 	var s: Dictionary = _root.qa_state()
 	_phase_label.text = "RECON" if s.phase == "recon" else "MISSION t=%d" % s.tick
 	var total: int = s.enemy_count_total
-	var vis: int = s.visible_enemy_uids.size()
+	var vis: int = s.view_enemy_uids.size()
 	var cells: Dictionary = s.cells
 	var total_cells: int = int(cells.never_seen) + int(cells.explored) + int(cells.visible)
 	var seen_pct := 0.0

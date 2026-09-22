@@ -11,7 +11,6 @@ const PLANTS := ["fog-leak", "no-memory", "recon-shows-enemy", "radius-ignored",
 var _failures := 0
 var _root: Node
 
-
 func _initialize() -> void:
 	_check_det1()
 	_check_vis2()
@@ -27,20 +26,16 @@ func _initialize() -> void:
 	print("VERIFY OK")
 	quit(0)
 
-
 func _assert(cond: bool, msg: String) -> void:
 	if not cond:
 		_failures += 1
 		print("FAIL: %s" % msg)
 
-
 func _mk_friendly(uid: int, pos: Vector2, sensor: float) -> Dictionary:
 	return {"uid": uid, "pos": pos, "sensor_wu": sensor, "layer": 0, "waypoints": [], "wp_idx": 0, "speed": 0.0}
 
-
 func _mk_enemy(uid: int, pos: Vector2) -> Dictionary:
 	return {"uid": uid, "center": pos, "radius": 0.0, "angular_speed": 0.0, "phase_offset": 0.0, "pos": pos}
-
 
 # plant: seed-ignored
 func _check_det1() -> void:
@@ -55,7 +50,6 @@ func _check_det1() -> void:
 			t.step()
 		hashes.append(t.compute_hash())
 	_assert(hashes[0] == hashes[1] and hashes[0] != hashes[2], "DET-1 same seed equal, seed 12 differs")
-
 
 # plant: radius-ignored
 func _check_vis2() -> void:
@@ -76,7 +70,6 @@ func _check_vis2() -> void:
 	ok = ok and u.has(910) and u.has(911) and not u.has(912)
 	_assert(ok, "VIS-2 sensor 700/interference 0.5/union numbers")
 
-
 # plant: los-ignored
 func _check_los3() -> void:
 	var t := FogTruth.new()
@@ -88,14 +81,12 @@ func _check_los3() -> void:
 	var open_ok: bool = t.compute_visibility().visible_enemy_uids.has(950)
 	_assert(blocked_ok and open_ok, "LOS-3 tall obstacle blocks sight")
 
-
 # self-test, no plant
 func _check_sym8() -> void:
 	var t := FogTruth.new()
 	var sees: bool = t.can_see(Vector2.ZERO, 700.0, Vector2(500, 0))
 	var not_seen_back: bool = not t.can_see(Vector2(500, 0), 200.0, Vector2.ZERO)
 	_assert(sees and not_seen_back, "SYM-8 asymmetric sensors")
-
 
 # plant: no-memory
 func _check_mem6() -> void:
@@ -117,7 +108,6 @@ func _check_mem6() -> void:
 	var went_never_seen: bool = g2.cells[idx] == FogCellGrid.NEVER_SEEN
 	_assert(was_visible and became_explored and stayed_explored and went_never_seen, "MEM-6 memory-on/off transitions")
 
-
 # self-test, no plant
 func _check_time10() -> void:
 	var t := FogTruth.new()
@@ -137,7 +127,6 @@ func _check_time10() -> void:
 	var avg_ms: float = (float(total_us) / float(n)) / 1000.0
 	_assert(avg_ms < 3.0, "TIME-10 tick_avg %.3fms under 3ms" % avg_ms)
 
-
 func _check_scene() -> void:
 	var packed: PackedScene = load(MOCKUP_SCENE)
 	if packed == null:
@@ -153,20 +142,26 @@ func _check_scene() -> void:
 	_check_struct7()
 	_check_json9()
 
-
 # plant: recon-shows-enemy
 func _check_recon5() -> void:
 	var s0: Dictionary = _root.qa_state()
 	var recon_ok: bool = s0.cells.never_seen == 0 and s0.cells.explored == 0 and s0.cells.visible == DIM * DIM and s0.view_enemy_uids.is_empty()
+	var hud: Node = _root.get_node("HUD"); hud._update_readout()
+	var readout_ok: bool = int(String(hud._readout_label.text).split(" ")[2]) == 0
 	_root.qa_tick(20)
 	var s1: Dictionary = _root.qa_state()
 	var still_recon: bool = s1.hash == s0.hash and s1.tick == 0
 	_root.qa_set("phase", "mission")
 	var s2: Dictionary = _root.qa_state()
 	var begin_ok: bool = s2.cells.never_seen > 3000 and s2.phase == "mission"
-	var nodes_drawn: bool = _root.get_node("World/FogView/MapNodes").get_child_count() > 0
-	_assert(recon_ok and still_recon and begin_ok and nodes_drawn, "RECON-5 recon then begin fog drop")
-
+	hud._update_readout()
+	readout_ok = readout_ok and int(String(hud._readout_label.text).split(" ")[2]) == s2.view_enemy_uids.size()
+	var nodes: Array = _root.get_node("World/FogView/MapNodes").get_children()
+	var labels_ok := true
+	for n in nodes:
+		if n is Label3D:
+			labels_ok = labels_ok and not String(n.text).is_empty()
+	_assert(recon_ok and still_recon and begin_ok and nodes.size() > 0 and readout_ok and labels_ok, "RECON-5 recon/begin, HUD readout from view set, node labels")
 
 # plant: fog-leak
 func _check_view4() -> void:
@@ -176,7 +171,6 @@ func _check_view4() -> void:
 	var set_ok: bool = s.view_enemy_uids.has(101) and s.view_enemy_uids.has(102) and s.view_enemy_uids.has(103)
 	var none_leaked: bool = not s.view_enemy_uids.has(104) and not s.view_enemy_uids.has(108)
 	_assert(count_ok and set_ok and none_leaked, "VIEW-4 view holds only the 3 visible of 8 enemies")
-
 
 # self-test, no plant (uses fog-leak-free state from VIEW-4/RECON-5 above)
 func _check_struct7() -> void:
@@ -192,7 +186,6 @@ func _check_struct7() -> void:
 	var fog_view: Node = _root.get_node("World/FogView")
 	var not_drawn: bool = not fog_view.get_enemy_uids().has(101) and not fog_view.get_enemy_uids().has(102)
 	_assert(visited and explored and never and not_drawn, "STRUCT-7 structure explored/never-seen states")
-
 
 func _check_json9() -> void:
 	var s: Dictionary = _root.qa_state()
