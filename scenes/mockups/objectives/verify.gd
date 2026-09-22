@@ -13,6 +13,7 @@ const CONTRACT_KEYS := ["seed", "hash", "fixture", "archetype", "objective", "sa
 	"route_len_wu", "time_limit_ticks", "skipped", "marker", "tick", "timing_ms", "regen_count"]
 const OBJ_KEYS := ["id", "type", "progress", "status", "is_primary", "location"]
 const PLANTS := ["objective-on-spawn", "marker-unnamed", "progress-static", "kind-mapping-random", "seed-ignored", "route-ignored"]
+const LABEL_MIN_PIXEL_SIZE := 0.5
 
 var _failures := 0
 
@@ -21,6 +22,7 @@ func _initialize() -> void:
 	_check_det_1(); _check_seed_2(); _check_kind_3(); _check_place_4(); _check_sat_5(); _check_route_6()
 	await _check_name_7()
 	_check_prog_8(); _check_shape_9()
+	await _check_label_12()
 	await _check_json_10()
 	await _check_time_11()
 	if _failures > 0:
@@ -240,4 +242,20 @@ func _check_time_11() -> void:
 	root.qa_seed(11)
 	var st: Dictionary = root.qa_state()
 	_assert(float(st.timing_ms.gen) < 200.0, "TIME-11 gen %f ms" % float(st.timing_ms.gen))
+	root.queue_free()
+
+# plant: marker-unnamed
+func _check_label_12() -> void:
+	var packed = load(MOCKUP_SCENE)
+	if not _assert(packed != null, "LABEL-12 cannot load scene"):
+		return
+	var root = packed.instantiate()
+	get_root().add_child(root)
+	await process_frame; await process_frame
+	var labels := _find_label3ds(root)
+	var bad: Array = []
+	for l in labels:
+		if l.pixel_size < LABEL_MIN_PIXEL_SIZE or l.text == "":
+			bad.append("%s(px=%.3f,text='%s')" % [l.name, l.pixel_size, l.text])
+	_assert(not labels.is_empty() and bad.is_empty(), "LABEL-12 bad Label3D nodes %s" % [bad])
 	root.queue_free()

@@ -111,6 +111,7 @@ func _draw_places() -> void:
 		lbl.text = n.type
 		lbl.font = _node_font
 		lbl.font_size = 40
+		lbl.pixel_size = 1.6
 		lbl.modulate = Color(0.85, 0.86, 0.88)
 		lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 		lbl.no_depth_test = true
