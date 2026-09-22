@@ -13,12 +13,12 @@ Each brief is a self-contained task handed to an implementor chat, copied here o
 | 2026-09-21 | `2026-09-21-px-batch-c-vision-archive.md` (PX-12, PX-9) | not yet handed | |
 | 2026-09-21 | `2026-09-21-executor-audit-fixes.md` (S-039 wiring and re-cut, E-04 re-cut, om_pow, fuel lint, DAG emitter, stale docs) | Sonnet sub-agent in the design chat | done 2026-09-21 night; DECISIONS.md Tenth round R13-R18; R13 became Q-039-01, R14/R17 resolved by the design lane and handed to a follow-up sub-agent |
 | 2026-09-21 | `2026-09-21-agora-cascade-safety-seat-scheduler.md` (three waves, gated on the executor brief) | Sonnet sub-agent in the design chat, overnight | done 2026-09-22; DECISIONS.md Eleventh round; two follow-ups open (intervene out of the GPU process, runway row) |
-| 2026-09-22 | `2026-09-22-mockup-qa-harness.md` (shared Xvfb self-QA harness for `scenes/mockups/*`, landscape retrofit as its positive control) | Sonnet sub-agent in the design chat, own worktree on branch `mockup/harness` (parallel doers cannot share one checkout; the design chat merges into `main`) | running |
-| 2026-09-22 | `2026-09-22-p1-galaxy-mockup.md` | Sonnet sub-agent, worktree branch `mockup/galaxy` | waiting on the harness gate |
-| 2026-09-22 | `2026-09-22-p3-objectives-mockup.md` | Sonnet sub-agent, worktree branch `mockup/objectives` | waiting on the harness gate |
-| 2026-09-22 | `2026-09-22-p4-units-mockup.md` | Sonnet sub-agent, worktree branch `mockup/units` | waiting on the harness gate |
-| 2026-09-22 | `2026-09-22-p5-fog-mockup.md` | Sonnet sub-agent, worktree branch `mockup/fog` | waiting on the harness gate |
-| 2026-09-22 | `2026-09-22-p6-layers-mockup.md` (two-layer prototype S-P10) | Sonnet sub-agent, worktree branch `mockup/layers` | waiting on the harness gate |
-| 2026-09-22 | `2026-09-22-p7-chronicle-mockup.md` | Sonnet sub-agent, worktree branch `mockup/chronicle` | waiting on the harness gate |
-| 2026-09-22 | `2026-09-22-p8-hud-mockup.md` (camera, HUD, selection, S-P12) | Sonnet sub-agent, worktree branch `mockup/hud` | waiting on the harness gate |
-| 2026-09-22 | `2026-09-22-p9-menus-mockup.md` (menu, setup, briefing, debrief, S-P01 card) | Sonnet sub-agent, worktree branch `mockup/menus` | waiting on the harness gate |
+| 2026-09-22 | `2026-09-22-mockup-qa-harness.md` (shared Xvfb self-QA harness for `scenes/mockups/*`, landscape retrofit as its positive control) | Sonnet sub-agent in the design chat, own worktree on branch `mockup/harness` (parallel doers cannot share one checkout; the design chat merges into `main`) | done 2026-09-22, merged `432ddba`; boot fix `1797d68` (QA runs boot via `--script`, no autoloads, after the SimBridge 30 s cutoff was found) |
+| 2026-09-22 | `2026-09-22-p1-galaxy-mockup.md` | Sonnet sub-agent, worktree branch `mockup/galaxy` | running 2026-09-22 (eight in parallel) |
+| 2026-09-22 | `2026-09-22-p3-objectives-mockup.md` | Sonnet sub-agent, worktree branch `mockup/objectives` | running 2026-09-22 (eight in parallel) |
+| 2026-09-22 | `2026-09-22-p4-units-mockup.md` | Sonnet sub-agent, worktree branch `mockup/units` | running 2026-09-22 (eight in parallel) |
+| 2026-09-22 | `2026-09-22-p5-fog-mockup.md` | Sonnet sub-agent, worktree branch `mockup/fog` | running 2026-09-22 (eight in parallel) |
+| 2026-09-22 | `2026-09-22-p6-layers-mockup.md` (two-layer prototype S-P10) | Sonnet sub-agent, worktree branch `mockup/layers` | running 2026-09-22 (eight in parallel) |
+| 2026-09-22 | `2026-09-22-p7-chronicle-mockup.md` | Sonnet sub-agent, worktree branch `mockup/chronicle` | running 2026-09-22 (eight in parallel) |
+| 2026-09-22 | `2026-09-22-p8-hud-mockup.md` (camera, HUD, selection, S-P12) | Sonnet sub-agent, worktree branch `mockup/hud` | running 2026-09-22 (eight in parallel) |
+| 2026-09-22 | `2026-09-22-p9-menus-mockup.md` (menu, setup, briefing, debrief, S-P01 card) | Sonnet sub-agent, worktree branch `mockup/menus` | running 2026-09-22 (eight in parallel) |
