@@ -4,7 +4,7 @@ const KITS_DIR := "res://scenes/mockups/landscape/kits/"
 const DEFAULT_CANVAS := 16000.0
 const DEFAULT_KIT := "greek"
 const SCREENSHOT_DIR := "res://docs/northstar/research/landscape_design/mockup/"
-const BAND_HEIGHTS := {"micro": 700.0, "tactical": 3000.0, "map": 20000.0}
+const BAND_HEIGHTS := {"micro": 1000.0, "tactical": 3000.0, "map": 20000.0}
 
 var _world: Node3D
 var _camera_rig: Node3D
@@ -155,12 +155,31 @@ func _find_objective_pos() -> Vector3:
 
 # Micro band sits low enough that aiming at the objective drops the camera inside the
 # dense city geometry (colonnades, walls). A gate crossing puts it in open ground with a
-# wall and units to read at human scale instead, matching the brief's "near a gate" framing.
+# wall and units to read at human scale instead, matching the brief's "near a gate" framing
+# -- but standing exactly ON the gate point put the camera inside the (now correctly sized)
+# gate_arch mesh itself. Stand 60% of the way from the nearest staging node toward the gate
+# instead, so the shot is just outside it looking in.
 func _find_gate_pos() -> Vector3:
+	var gate_point: Vector2 = Vector2.ZERO
+	var found := false
 	for c in _field_map.crossings:
 		if c.kind == "gate":
-			return Vector3(c.point.x, 0.0, c.point.y)
-	return _find_objective_pos()
+			gate_point = c.point
+			found = true
+			break
+	if not found:
+		return _find_objective_pos()
+
+	var staging_point: Vector2 = gate_point
+	var best_d := INF
+	for n in _field_map.nodes:
+		if n.type == "staging":
+			var d: float = n.pos.distance_to(gate_point)
+			if d < best_d:
+				best_d = d
+				staging_point = n.pos
+	var approach: Vector2 = staging_point.lerp(gate_point, 0.6)
+	return Vector3(approach.x, 0.0, approach.y)
 
 
 func _take_screenshot(file_name: String) -> void:
