@@ -10,6 +10,8 @@ func _initialize() -> void:
 		push_error("qa_boot: missing --qa-scene")
 		quit(2)
 		return
+	if args.has("--qa-live"):
+		OS.set_environment("QA_LIVE", "1")
 	var packed = load(scene_path)
 	if packed == null:
 		push_error("qa_boot: cannot load %s" % scene_path)
