@@ -231,6 +231,12 @@ def undertest_warn(candidate_dir: Path, base_ref: str, piece_id: str, *,
             f"{result['killed']}/{result['total_mutants']} mutants killed"]
 
 
+def _normalize_worktree_paths(text: str, *roots: Path) -> str:
+    for root in roots:
+        text = text.replace(str(root), "<WORKTREE>")
+    return text
+
+
 def regression_check(candidate_dir: Path, base_ref: str, test_args: list[str], *,
                       python_exe: str = sr.DEFAULT_PYTHON, timeout: int = 600,
                       junit: bool = True, worktree_root: Path | None = None) -> tuple[bool, str, sr.RegressionReport]:
@@ -255,6 +261,20 @@ def regression_check(candidate_dir: Path, base_ref: str, test_args: list[str], *
             after_xml = Path(jtmp) / "after.xml" if junit else None
             before = sr.run_pytest(tmp, python_exe, test_args, timeout, junit_path=before_xml)
             after = sr.run_pytest(candidate_dir, python_exe, test_args, timeout, junit_path=after_xml)
+        # Every unbuilt-symbol failure (extremely common in this codebase --
+        # most of E-06..E-17 is still STUB) raises a ctypes AttributeError
+        # whose text embeds the .so's own absolute path
+        # (".../libouroboros.so: undefined symbol: ..."). `tmp` and
+        # `candidate_dir` are two different directories by construction, so
+        # every such failure's first-assertion text differs between
+        # before/after even when nothing about the failure itself changed --
+        # found building the F6 rejection replays: a pure docs-only diff
+        # came back REJECT "changed assertions" over exactly this. Normalize
+        # both worktree roots to one placeholder before comparing.
+        before.first_assertion = {k: _normalize_worktree_paths(v, tmp, candidate_dir)
+                                   for k, v in before.first_assertion.items()}
+        after.first_assertion = {k: _normalize_worktree_paths(v, tmp, candidate_dir)
+                                  for k, v in after.first_assertion.items()}
         report = sr.compare_runs(before, after)
         if report.accept:
             detail = f"OK ({after.passed}p/{after.failed}f)"

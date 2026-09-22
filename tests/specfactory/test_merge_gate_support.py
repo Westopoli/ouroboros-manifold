@@ -305,6 +305,30 @@ GOOD_TEST = "def test_a():\n    assert 1 == 1\n"
 BAD_TEST = "def test_a():\n    assert 1 == 1\n\ndef test_b():\n    assert 1 == 2\n"
 
 
+def test_positive_control_worktree_path_noise_never_looks_like_a_changed_assertion(tmp_path):
+    """Real incident found building the F6 rejection replays: a ctypes
+    AttributeError's text embeds the .so's own absolute path
+    (".../libouroboros.so: undefined symbol: ..."), which is unique to each
+    of the before/after worktrees by construction -- a pure no-op diff over
+    a file that only ever raises that AttributeError must never be flagged
+    as a changed assertion just because the two worktree paths differ."""
+    repo = _init_pytest_repo(tmp_path / "repo", test_text=(
+        "import pathlib\n"
+        "def test_a():\n"
+        "    here = pathlib.Path(__file__).resolve().parent\n"
+        "    raise AttributeError(f'{here}/lib.so: undefined symbol: om_x')\n"
+    ))
+    base_sha = _git(repo, "rev-parse", "HEAD").stdout.strip()
+    (repo / "README.md").write_text("docs only\n")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "docs-only candidate")
+
+    ok, detail, report = mgs.regression_check(repo, base_sha, ["test_synth.py"],
+                                               python_exe=PYTHON, worktree_root=tmp_path)
+    assert ok is True, detail
+    assert report.changed_assertions == []
+
+
 def test_positive_control_regression_check_rejects_new_failure(tmp_path):
     repo = _init_pytest_repo(tmp_path / "repo", test_text=GOOD_TEST)
     base_sha = _git(repo, "rev-parse", "HEAD").stdout.strip()
