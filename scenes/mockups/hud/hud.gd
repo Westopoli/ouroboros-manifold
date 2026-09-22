@@ -31,6 +31,7 @@ var _selection_header: Label
 var _selection_rows: VBoxContainer
 var _group_tabs: Array[Label] = []
 var _layer_slots: Array[Label] = []
+var _last_rows_key := ""
 
 
 func setup(root) -> void:
@@ -174,20 +175,24 @@ func sync(state: Dictionary) -> void:
 
 	var selected: Array = state.selected
 	_selection_header.text = "SELECTION (%d)" % selected.size()
-	for c in _selection_rows.get_children():
-		c.free()
-	for row in compute_rows(selected, state.units):
-		var hb := HBoxContainer.new()
-		var lbl := Label.new()
-		lbl.text = "%s x%d  %d hp" % [row.type, row.count, int(row.hp)]
-		lbl.add_theme_color_override("font_color", TEXT)
-		hb.add_child(lbl)
-		for layer in row.layers:
-			var dot := ColorRect.new()
-			dot.color = LAYER_COLORS.get(layer, TEXT)
-			dot.custom_minimum_size = Vector2(8, 8)
-			hb.add_child(dot)
-		_selection_rows.add_child(hb)
+	var rows := compute_rows(selected, state.units)
+	var rows_key := str(rows)
+	if rows_key != _last_rows_key:
+		_last_rows_key = rows_key
+		for c in _selection_rows.get_children():
+			c.free()
+		for row in rows:
+			var hb := HBoxContainer.new()
+			var lbl := Label.new()
+			lbl.text = "%s x%d  %d hp" % [row.type, row.count, int(row.hp)]
+			lbl.add_theme_color_override("font_color", TEXT)
+			hb.add_child(lbl)
+			for layer in row.layers:
+				var dot := ColorRect.new()
+				dot.color = LAYER_COLORS.get(layer, TEXT)
+				dot.custom_minimum_size = Vector2(8, 8)
+				hb.add_child(dot)
+			_selection_rows.add_child(hb)
 
 	var groups: Dictionary = state.groups
 	for i in range(_group_tabs.size()):
