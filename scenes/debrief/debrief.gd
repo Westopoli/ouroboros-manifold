@@ -2,8 +2,18 @@ extends Control
 
 signal debrief_completed
 
+# C transport v1 debrief frame band int -> display string, worst to best.
+# docs/architecture.md "chronicle frame, mission frame, debrief frame";
+# docs/northstar/plans/push/specs/C4.md R-077-02.
+const BAND_NAMES := ["total_failure", "partial_failure", "partial_success", "strong_success", "total_success"]
+
+const PLANTS := ["band-off-by-one"]
+
 var _params: Dictionary = {}
 var _accent: Color = ThemeConstants.DEFAULT_ACCENT
+
+var _frame: Dictionary = {}
+var _plant_band_off_by_one := false
 
 
 func setup(params: Dictionary) -> void:
@@ -17,6 +27,45 @@ func setup(params: Dictionary) -> void:
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		_on_exit()
+
+
+# C transport v1 rebind entry point (docs/architecture.md "debrief frame"),
+# independent of setup()/legacy _params. Replaces stored frame state in full
+# on every call.
+func load_frame(debrief: Dictionary) -> void:
+	_frame = {
+		"band": debrief.get("band", 0),
+		"achieved": debrief.get("achieved", 0.0),
+		"brought_home": debrief.get("brought_home", 0.0),
+		"region_delta": debrief.get("region_delta", {}),
+	}
+
+
+func qa_state() -> Dictionary:
+	var band_index := int(_frame.get("band", 0))
+	if _plant_band_off_by_one:
+		band_index = mini(band_index + 1, BAND_NAMES.size() - 1)
+	var region_delta: Dictionary = _frame.get("region_delta", {})
+	return {
+		"band": BAND_NAMES[band_index],
+		"achieved_pct": float(_frame.get("achieved", 0.0)) * 100.0,
+		"brought_home_pct": float(_frame.get("brought_home", 0.0)) * 100.0,
+		"region_delta": {
+			"military": region_delta.get("military", 0.0),
+			"economy": region_delta.get("economy", 0.0),
+			"tension": region_delta.get("tension", 0.0),
+			"population": region_delta.get("population", 0.0),
+		},
+	}
+
+
+func qa_plant(id: String) -> bool:
+	match id:
+		"band-off-by-one":
+			_plant_band_off_by_one = true
+			return true
+		_:
+			return false
 
 
 func _build_ui() -> void:
