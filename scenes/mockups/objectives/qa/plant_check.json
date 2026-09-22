@@ -1,0 +1,14 @@
+[
+  ["seed", 11],
+  ["call", "qa_camera", 3000, 16800, 19400],
+  ["call", "qa_set", "archetype", "defensive_stand"],
+  ["wait_frames", 2],
+  ["screenshot", "shot1"],
+  ["state", "state1"],
+  ["seed", 12],
+  ["screenshot", "shot2"],
+  ["state", "state2"],
+  ["call", "qa_tick", 600],
+  ["screenshot", "shot3"],
+  ["state", "state3"]
+]
