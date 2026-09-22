@@ -5,6 +5,8 @@ from docs/bible/epics/E-13-movement-and-command.md. Fill each stub from its rule
 do not change a rule's assertion to match wrong behavior -- a failing test
 here is the spec, not a bug in the test.
 """
+import math
+
 import pytest
 
 from conftest import OMField, OMTier, read_drift, set_region  # adjust imports to what this epic's fixtures need
@@ -106,9 +108,15 @@ def test_R_097_04_it_keeps_that_heading_for(lib, world_factory):
     deflected_heading = lib.om_unit_get_facing(w, u)
     start_pos_x, start_pos_y = lib.om_unit_get_pos(w, u)
 
-    # Step simulation until unit covers < 60 wu: heading must remain unchanged
+    # Step simulation until unit covers < 60 wu: heading must remain unchanged.
+    # Bounded (cap matches test_R_099_01's range(100) in this epic): a Raider
+    # covers 55 wu in ~8 real ticks (7.5 wu/tick, R-099-02), so 100 is generous
+    # headroom against a working sim; against the STUB (no movement) the loop
+    # must still terminate rather than spin forever.
     dist_covered = 0.0
-    while dist_covered < 55.0:
+    for _ in range(100):
+        if dist_covered >= 55.0:
+            break
         lib.om_world_step(w)
         curr_x, curr_y = lib.om_unit_get_pos(w, u)
         dist_covered = math.hypot(curr_x - start_pos_x, curr_y - start_pos_y)

@@ -49,9 +49,9 @@ def test_R_078_02_military_12_0_tension_5(lib, world_factory):
     # Apply consequences of defensive stand (0) total_success (4) to region 0
     lib.om_mission_apply_consequences(w, 0, 0, OMMissionBand.TOTAL_SUCCESS)
 
-    assert read_drift(lib, w, 0, OMField.MILITARY) == pytest.approx(32.0, abs=1e-4)  # 20 + 12
-    assert read_drift(lib, w, 0, OMField.TENSION) == pytest.approx(45.0, abs=1e-4)   # 50 - 5
-    assert read_drift(lib, w, 0, OMField.ECONOMY) == pytest.approx(49.0, abs=1e-4)   # 50 - 2% of 50 = 49.0
+    assert lib.om_region_field(w, 0, OMField.MILITARY) == pytest.approx(32.0, abs=1e-4)  # 20 + 12
+    assert lib.om_region_field(w, 0, OMField.TENSION) == pytest.approx(45.0, abs=1e-4)   # 50 - 5
+    assert lib.om_region_field(w, 0, OMField.ECONOMY) == pytest.approx(49.0, abs=1e-4)   # 50 - 2% of 50 = 49.0
 
 
 def test_R_078_03_military_3_0(lib, world_factory):
@@ -62,7 +62,7 @@ def test_R_078_03_military_3_0(lib, world_factory):
     lib.om_mission_apply_consequences(w, 0, 0, OMMissionBand.TOTAL_SUCCESS)
 
     # (100 - 80) * 0.15 = 3.0 -> military becomes 83.0
-    assert read_drift(lib, w, 0, OMField.MILITARY) == pytest.approx(83.0, abs=1e-4)
+    assert lib.om_region_field(w, 0, OMField.MILITARY) == pytest.approx(83.0, abs=1e-4)
 
 
 def test_R_078_04_region_s_owner_becomes_player(lib, world_factory):
@@ -136,9 +136,9 @@ def test_R_078_07_delta_applies_to_every_player(lib, world_factory):
     lib.om_mission_apply_target_adjacent_player(w, 0, OMField.TENSION, ctypes.c_double(5.0))
 
     # Neighbors 1 and 3 (player) should have delta applied: 50 -> 55
-    assert read_drift(lib, w, 1, OMField.TENSION) == pytest.approx(55.0, abs=1e-4)
-    assert read_drift(lib, w, 3, OMField.TENSION) == pytest.approx(55.0, abs=1e-4)
+    assert lib.om_region_field(w, 1, OMField.TENSION) == pytest.approx(55.0, abs=1e-4)
+    assert lib.om_region_field(w, 3, OMField.TENSION) == pytest.approx(55.0, abs=1e-4)
 
     # Neighbor 2 (enemy) should be unaffected: 50
-    assert read_drift(lib, w, 2, OMField.TENSION) == pytest.approx(50.0, abs=1e-4)
+    assert lib.om_region_field(w, 2, OMField.TENSION) == pytest.approx(50.0, abs=1e-4)
 

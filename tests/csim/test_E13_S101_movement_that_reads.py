@@ -5,6 +5,9 @@ from docs/bible/epics/E-13-movement-and-command.md. Fill each stub from its rule
 do not change a rule's assertion to match wrong behavior -- a failing test
 here is the spec, not a bug in the test.
 """
+import ctypes
+import math
+
 import pytest
 
 from conftest import OMField, OMTier, read_drift, set_region  # adjust imports to what this epic's fixtures need

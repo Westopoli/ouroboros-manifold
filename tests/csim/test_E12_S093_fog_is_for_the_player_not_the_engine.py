@@ -93,7 +93,7 @@ def test_R_093_03_they_read_every_neighbor_region(lib, world_factory):
 
     # Region 0 is owned by Faction 0; Region 1 is a neighbor
     # Set known field values in neighbor Region 1
-    set_region(w, 1, OMField.MILITARY, 0.42)
+    set_region(lib, w, 1, military=0.42)
 
     # Tactical fog is active; Faction 0 has no units in Region 1
     lib.om_visibility_set_player_fog(w, 1)
