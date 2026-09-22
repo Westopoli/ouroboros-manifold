@@ -1,0 +1,640 @@
+{
+  "time_jump_start": {
+    "type": "time_jump_start",
+    "time_jump_id": "tj_seed12",
+    "span_years": 18,
+    "total_keyframes": 9,
+    "total_entries": 6,
+    "faction_names": {
+      "f_ostrel": "The Ostrel Concord",
+      "f_kaine": "The Kaine Dominion"
+    },
+    "ownership_timeline": [
+      {
+        "tick": 1020,
+        "system_id": "r_saltmere",
+        "owner": "f_kaine"
+      }
+    ]
+  },
+  "entries": [
+    {
+      "type": "chronicle_entry",
+      "entry_id": "ce_1001",
+      "category": "consequence_failure",
+      "region": "r_varlow",
+      "score": 99.0,
+      "tick_range_start": 0,
+      "tick_range_end": 200,
+      "base_form": "Varlow, held by the Kaine Dominion, broke before relief ever cleared the ridge. The Ostrel line pulled back in good order, which was the only part of the day anyone wanted to remember.",
+      "expanded_form": "Varlow, held by the Kaine Dominion, broke before relief ever cleared the ridge. The Ostrel line pulled back in good order, which was the only part of the day anyone wanted to remember. Captain Yssa Renn logged the withdrawal as tactical, and nobody in the Ostrel Concord corrected her.",
+      "mentions": [
+        {
+          "kind": "region",
+          "id": "r_varlow",
+          "form": "base",
+          "span_start": 0,
+          "span_end": 6
+        },
+        {
+          "kind": "faction",
+          "id": "f_kaine",
+          "form": "base",
+          "span_start": 20,
+          "span_end": 34
+        }
+      ],
+      "expanded_mentions": [
+        {
+          "kind": "region",
+          "id": "r_varlow",
+          "form": "expanded",
+          "span_start": 0,
+          "span_end": 6
+        },
+        {
+          "kind": "faction",
+          "id": "f_kaine",
+          "form": "expanded",
+          "span_start": 20,
+          "span_end": 34
+        },
+        {
+          "kind": "character",
+          "id": "c_yssa_renn",
+          "form": "expanded",
+          "span_start": 193,
+          "span_end": 202
+        },
+        {
+          "kind": "faction",
+          "id": "f_ostrel",
+          "form": "expanded",
+          "span_start": 256,
+          "span_end": 270
+        }
+      ]
+    },
+    {
+      "type": "chronicle_entry",
+      "entry_id": "ce_1002",
+      "category": "lineage_quiet",
+      "region": "r_ambervale",
+      "score": 9.0,
+      "tick_range_start": 240,
+      "tick_range_end": 420,
+      "base_form": "Ambervale asked nothing of the Renn household that season, and the household gave it nothing worth recording either. The harvest came, the roof got patched, and that was the whole of it.",
+      "expanded_form": "Ambervale asked nothing of the Renn household that season, and the household gave it nothing worth recording either. The harvest came, the roof got patched, and that was the whole of it. Even Yssa's grandmother, who kept the family ledger, wrote only that the year was quiet and let it stand.",
+      "mentions": [
+        {
+          "kind": "region",
+          "id": "r_ambervale",
+          "form": "base",
+          "span_start": 0,
+          "span_end": 9
+        }
+      ],
+      "expanded_mentions": [
+        {
+          "kind": "region",
+          "id": "r_ambervale",
+          "form": "expanded",
+          "span_start": 0,
+          "span_end": 9
+        },
+        {
+          "kind": "character",
+          "id": "c_renn_elder",
+          "form": "expanded",
+          "span_start": 192,
+          "span_end": 210
+        }
+      ]
+    },
+    {
+      "type": "chronicle_entry",
+      "entry_id": "ce_1003",
+      "category": "chain_conflict_stalemate",
+      "region": "r_greymoor",
+      "score": 7.5,
+      "tick_range_start": 460,
+      "tick_range_end": 900,
+      "base_form": "Greymoor traded the same three ridgelines back and forth for the better part of a year. Neither the Kaine Dominion nor the Ostrel Concord could hold the pass long enough to fortify it, so both stopped trying.",
+      "expanded_form": "Greymoor traded the same three ridgelines back and forth for the better part of a year. Neither the Kaine Dominion nor the Ostrel Concord could hold the pass long enough to fortify it, so both stopped trying. The truce that ended it was never signed, only observed, after Colonel Bran Ostwick simply stopped sending troops up the ridge.",
+      "mentions": [
+        {
+          "kind": "region",
+          "id": "r_greymoor",
+          "form": "base",
+          "span_start": 0,
+          "span_end": 8
+        },
+        {
+          "kind": "faction",
+          "id": "f_kaine",
+          "form": "base",
+          "span_start": 100,
+          "span_end": 114
+        },
+        {
+          "kind": "faction",
+          "id": "f_ostrel",
+          "form": "base",
+          "span_start": 123,
+          "span_end": 137
+        }
+      ],
+      "expanded_mentions": [
+        {
+          "kind": "region",
+          "id": "r_greymoor",
+          "form": "expanded",
+          "span_start": 0,
+          "span_end": 8
+        },
+        {
+          "kind": "faction",
+          "id": "f_kaine",
+          "form": "expanded",
+          "span_start": 100,
+          "span_end": 114
+        },
+        {
+          "kind": "faction",
+          "id": "f_ostrel",
+          "form": "expanded",
+          "span_start": 123,
+          "span_end": 137
+        },
+        {
+          "kind": "character",
+          "id": "c_bran_ostwick",
+          "form": "expanded",
+          "span_start": 280,
+          "span_end": 292
+        }
+      ]
+    },
+    {
+      "type": "chronicle_entry",
+      "entry_id": "ce_1004",
+      "category": "regional_faction_shift",
+      "region": "r_saltmere",
+      "score": 6.0,
+      "tick_range_start": 940,
+      "tick_range_end": 1300,
+      "base_form": "Saltmere's council voted itself into the Kaine Dominion rather than wait for a siege that never quite arrived. The Ostrel Concord garrison left by boat, and the harbor gates never reopened to their flag.",
+      "expanded_form": "Saltmere's council voted itself into the Kaine Dominion rather than wait for a siege that never quite arrived. The Ostrel Concord garrison left by boat, and the harbor gates never reopened to their flag. Councilor Petra Vance signed the accession herself, then quietly bought passage on the same boat out.",
+      "mentions": [
+        {
+          "kind": "region",
+          "id": "r_saltmere",
+          "form": "base",
+          "span_start": 0,
+          "span_end": 8
+        },
+        {
+          "kind": "faction",
+          "id": "f_kaine",
+          "form": "base",
+          "span_start": 41,
+          "span_end": 55
+        },
+        {
+          "kind": "faction",
+          "id": "f_ostrel",
+          "form": "base",
+          "span_start": 115,
+          "span_end": 129
+        }
+      ],
+      "expanded_mentions": [
+        {
+          "kind": "region",
+          "id": "r_saltmere",
+          "form": "expanded",
+          "span_start": 0,
+          "span_end": 8
+        },
+        {
+          "kind": "faction",
+          "id": "f_kaine",
+          "form": "expanded",
+          "span_start": 41,
+          "span_end": 55
+        },
+        {
+          "kind": "faction",
+          "id": "f_ostrel",
+          "form": "expanded",
+          "span_start": 115,
+          "span_end": 129
+        },
+        {
+          "kind": "character",
+          "id": "c_petra_vance",
+          "form": "expanded",
+          "span_start": 214,
+          "span_end": 225
+        }
+      ]
+    },
+    {
+      "type": "chronicle_entry",
+      "entry_id": "ce_1005",
+      "category": "regional_decline",
+      "region": "r_farrow",
+      "score": 5.0,
+      "tick_range_start": 1350,
+      "tick_range_end": 1650,
+      "base_form": "Farrow's mines gave out two seasons after Saltmere changed hands, and half the town followed the miners out along the coast road looking for work the Dominion hadn't promised anyone.",
+      "expanded_form": "Farrow's mines gave out two seasons after Saltmere changed hands, and half the town followed the miners out along the coast road looking for work the Dominion hadn't promised anyone. Foreman Otto Kessler stayed behind to seal the shafts properly, which nobody else thought worth doing.",
+      "mentions": [
+        {
+          "kind": "region",
+          "id": "r_farrow",
+          "form": "base",
+          "span_start": 0,
+          "span_end": 6
+        },
+        {
+          "kind": "region",
+          "id": "r_saltmere",
+          "form": "base",
+          "span_start": 42,
+          "span_end": 50
+        },
+        {
+          "kind": "faction",
+          "id": "f_kaine",
+          "form": "base",
+          "span_start": 150,
+          "span_end": 158
+        }
+      ],
+      "expanded_mentions": [
+        {
+          "kind": "region",
+          "id": "r_farrow",
+          "form": "expanded",
+          "span_start": 0,
+          "span_end": 6
+        },
+        {
+          "kind": "region",
+          "id": "r_saltmere",
+          "form": "expanded",
+          "span_start": 42,
+          "span_end": 50
+        },
+        {
+          "kind": "faction",
+          "id": "f_kaine",
+          "form": "expanded",
+          "span_start": 150,
+          "span_end": 158
+        },
+        {
+          "kind": "character",
+          "id": "c_otto_kessler",
+          "form": "expanded",
+          "span_start": 191,
+          "span_end": 203
+        }
+      ]
+    },
+    {
+      "type": "chronicle_entry",
+      "entry_id": "ce_1006",
+      "category": "regional_stable",
+      "region": "r_windle",
+      "score": 3.0,
+      "tick_range_start": 1900,
+      "tick_range_end": 2400,
+      "base_form": "Windle kept its own counsel through all of it, trading with whichever flag flew closest that month and asking no questions the answers to which might change its taxes.",
+      "expanded_form": "Windle kept its own counsel through all of it, trading with whichever flag flew closest that month and asking no questions the answers to which might change its taxes. The town elder, Sella Marrow, called this policy prudence, and the ledgers agreed with her.",
+      "mentions": [
+        {
+          "kind": "region",
+          "id": "r_windle",
+          "form": "base",
+          "span_start": 0,
+          "span_end": 6
+        }
+      ],
+      "expanded_mentions": [
+        {
+          "kind": "region",
+          "id": "r_windle",
+          "form": "expanded",
+          "span_start": 0,
+          "span_end": 6
+        },
+        {
+          "kind": "character",
+          "id": "c_sella_marrow",
+          "form": "expanded",
+          "span_start": 184,
+          "span_end": 196
+        }
+      ]
+    }
+  ],
+  "galaxy": {
+    "systems": [
+      {
+        "id": "r_varlow",
+        "x": 100.0,
+        "y": -60.0,
+        "owner": "f_kaine"
+      },
+      {
+        "id": "r_ambervale",
+        "x": 40.0,
+        "y": 180.0,
+        "owner": "f_ostrel"
+      },
+      {
+        "id": "r_greymoor",
+        "x": -160.0,
+        "y": 120.0,
+        "owner": "f_kaine"
+      },
+      {
+        "id": "r_saltmere",
+        "x": -220.0,
+        "y": -80.0,
+        "owner": "f_ostrel"
+      },
+      {
+        "id": "r_farrow",
+        "x": -60.0,
+        "y": -220.0,
+        "owner": "f_kaine"
+      },
+      {
+        "id": "r_windle",
+        "x": 240.0,
+        "y": 60.0,
+        "owner": "f_ostrel"
+      },
+      {
+        "id": "t00",
+        "x": 450.9,
+        "y": 164.6,
+        "owner": "f_kaine"
+      },
+      {
+        "id": "t01",
+        "x": 353.6,
+        "y": 324.6,
+        "owner": "f_ostrel"
+      },
+      {
+        "id": "t02",
+        "x": 202.5,
+        "y": 435.2,
+        "owner": ""
+      },
+      {
+        "id": "t03",
+        "x": 20.5,
+        "y": 479.6,
+        "owner": "f_kaine"
+      },
+      {
+        "id": "t04",
+        "x": -164.6,
+        "y": 450.9,
+        "owner": "f_ostrel"
+      },
+      {
+        "id": "t05",
+        "x": -324.6,
+        "y": 353.6,
+        "owner": "f_kaine"
+      },
+      {
+        "id": "t06",
+        "x": -435.2,
+        "y": 202.5,
+        "owner": "f_ostrel"
+      },
+      {
+        "id": "t07",
+        "x": -479.6,
+        "y": 20.5,
+        "owner": ""
+      },
+      {
+        "id": "t08",
+        "x": -450.9,
+        "y": -164.6,
+        "owner": "f_kaine"
+      },
+      {
+        "id": "t09",
+        "x": -353.6,
+        "y": -324.6,
+        "owner": "f_ostrel"
+      },
+      {
+        "id": "t10",
+        "x": -202.5,
+        "y": -435.2,
+        "owner": "f_kaine"
+      },
+      {
+        "id": "t11",
+        "x": -20.5,
+        "y": -479.6,
+        "owner": "f_ostrel"
+      },
+      {
+        "id": "t12",
+        "x": 164.6,
+        "y": -450.9,
+        "owner": ""
+      },
+      {
+        "id": "t13",
+        "x": 324.6,
+        "y": -353.6,
+        "owner": "f_kaine"
+      },
+      {
+        "id": "t14",
+        "x": 435.2,
+        "y": -202.5,
+        "owner": "f_ostrel"
+      },
+      {
+        "id": "t15",
+        "x": 479.6,
+        "y": -20.5,
+        "owner": "f_kaine"
+      }
+    ],
+    "edges": [
+      [
+        "r_varlow",
+        "r_ambervale"
+      ],
+      [
+        "r_ambervale",
+        "r_greymoor"
+      ],
+      [
+        "r_greymoor",
+        "r_saltmere"
+      ],
+      [
+        "r_saltmere",
+        "r_farrow"
+      ],
+      [
+        "r_farrow",
+        "r_windle"
+      ],
+      [
+        "r_windle",
+        "r_varlow"
+      ],
+      [
+        "t00",
+        "t01"
+      ],
+      [
+        "t01",
+        "t02"
+      ],
+      [
+        "t02",
+        "t03"
+      ],
+      [
+        "t03",
+        "t04"
+      ],
+      [
+        "t04",
+        "t05"
+      ],
+      [
+        "t05",
+        "t06"
+      ],
+      [
+        "t06",
+        "t07"
+      ],
+      [
+        "t07",
+        "t08"
+      ],
+      [
+        "t08",
+        "t09"
+      ],
+      [
+        "t09",
+        "t10"
+      ],
+      [
+        "t10",
+        "t11"
+      ],
+      [
+        "t11",
+        "t12"
+      ],
+      [
+        "t12",
+        "t13"
+      ],
+      [
+        "t13",
+        "t14"
+      ],
+      [
+        "t14",
+        "t15"
+      ],
+      [
+        "t15",
+        "t00"
+      ],
+      [
+        "r_varlow",
+        "t00"
+      ],
+      [
+        "r_saltmere",
+        "t03"
+      ],
+      [
+        "r_varlow",
+        "t06"
+      ],
+      [
+        "r_saltmere",
+        "t09"
+      ],
+      [
+        "r_varlow",
+        "t12"
+      ],
+      [
+        "r_saltmere",
+        "t15"
+      ]
+    ]
+  },
+  "keyframes": [
+    {
+      "tick": 50,
+      "system_id": "t02",
+      "owner": ""
+    },
+    {
+      "tick": 100,
+      "system_id": "r_varlow",
+      "owner": "f_kaine"
+    },
+    {
+      "tick": 330,
+      "system_id": "r_ambervale",
+      "owner": "f_ostrel"
+    },
+    {
+      "tick": 650,
+      "system_id": "r_greymoor",
+      "owner": "f_kaine"
+    },
+    {
+      "tick": 900,
+      "system_id": "t06",
+      "owner": ""
+    },
+    {
+      "tick": 1020,
+      "system_id": "r_saltmere",
+      "owner": "f_kaine"
+    },
+    {
+      "tick": 1500,
+      "system_id": "r_farrow",
+      "owner": "f_kaine"
+    },
+    {
+      "tick": 1800,
+      "system_id": "t10",
+      "owner": ""
+    },
+    {
+      "tick": 2100,
+      "system_id": "r_windle",
+      "owner": "f_ostrel"
+    }
+  ]
+}
