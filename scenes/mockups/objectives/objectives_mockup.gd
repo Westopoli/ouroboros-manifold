@@ -3,8 +3,8 @@ extends Node3D
 const QaPlants := preload("res://scenes/mockups/_shared/qa_plants.gd")
 const FIXTURES_DIR := "res://scenes/mockups/objectives/fixtures/"
 const PLAYER_COLOR := Color("#4099ff")
-const NODE_COLOR := Color(0.55, 0.58, 0.62)
-const NODE_BOX := Vector3(140, 30, 140)
+const NODE_COLOR := Color(0.62, 0.66, 0.72)
+const NODE_BOX := Vector3(160, 40, 160)
 
 const PLANTS: Array[String] = [
 	"objective-on-spawn", "marker-unnamed", "progress-static",
@@ -41,11 +41,12 @@ func _ready() -> void:
 
 func _build_ground() -> void:
 	var plane := PlaneMesh.new()
-	plane.size = Vector2(60000, 60000)
+	plane.size = Vector2(200000, 200000)
 	var mi := MeshInstance3D.new()
 	mi.mesh = plane
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = Color(0.09, 0.11, 0.09)
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mi.material_override = mat
 	mi.position = Vector3(12000, -2.0, 12000)
 	_world.add_child(mi)

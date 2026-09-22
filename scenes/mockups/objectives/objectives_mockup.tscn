@@ -45,7 +45,7 @@ canvas_size = 24000.0
 current = true
 fov = 55.0
 near = 1.0
-far = 40000.0
+far = 150000.0
 
 [node name="HUD" type="CanvasLayer" parent="."]
 script = ExtResource("4")
