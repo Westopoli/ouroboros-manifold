@@ -77,11 +77,14 @@ func _get_material(role: String, faction: int) -> StandardMaterial3D:
 	if _mat_cache.has(key):
 		return _mat_cache[key]
 	var mat := StandardMaterial3D.new()
-	var color_key := "faction_%d" % faction
-	mat.albedo_color = Color(String(roster.palette.get(color_key, "#ffffff")))
 	mat.roughness = 0.7
+	mat.vertex_color_use_as_albedo = true
 	_mat_cache[key] = mat
 	return mat
+
+
+func _faction_color(faction: int) -> Color:
+	return Color(String(roster.palette.get("faction_%d" % faction, "#ffffff")))
 
 
 func _get_mesh(role: String) -> Mesh:
@@ -180,7 +183,7 @@ func sync(tick: int, units: Array) -> void:
 		if not per_batch.has(key):
 			per_batch[key] = []
 		if u.alive:
-			var col := Color(1, 1, 1, 1)
+			var col := _faction_color(u.faction)
 			var since_hit: int = tick - int(u.last_hit_tick)
 			if since_hit >= 0 and since_hit <= HIT_FLASH_TICKS:
 				var t: float = 1.0 - float(since_hit) / float(HIT_FLASH_TICKS)
@@ -194,7 +197,7 @@ func sync(tick: int, units: Array) -> void:
 			if since < 0 or since >= DEATH_REMOVE_TICKS:
 				continue
 			wrecks_active += 1
-			var col2 := Color(1, 1, 1, 1)
+			var col2 := _faction_color(u.faction)
 			if since <= DEATH_BLOOM_TICKS:
 				var bt: float = 1.0 - float(since) / float(DEATH_BLOOM_TICKS)
 				col2 = col2.lerp(DEATH_BOOST, bt)
