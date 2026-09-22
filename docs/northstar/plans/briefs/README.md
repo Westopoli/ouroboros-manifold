@@ -23,3 +23,6 @@ Each brief is a self-contained task handed to an implementor chat, copied here o
 | 2026-09-22 | `2026-09-22-p8-hud-mockup.md` (camera, HUD, selection, S-P12) | Sonnet sub-agent, worktree branch `mockup/hud` | done, merged, reviewed, fixes merged `0d82c21`; ready for Westley |
 | 2026-09-22 | `2026-09-22-p9-menus-mockup.md` (menu, setup, briefing, debrief, S-P01 card) | Sonnet sub-agent, worktree branch `mockup/menus` | done 2026-09-22, merged `532eb9f`; reviewed, notes in its README; ready for Westley |
 | 2026-09-22 | `2026-09-22-two-day-push.md` (the approved plan: freeze, waves, attach gates, straggler rule, managers M0-M3) | M0 this session; M1-M3 chats Westley opens | running |
+| 2026-09-22 | `2026-09-22-manager-M1.md` (push manager M1; rules in `2026-09-22-manager-common.md`) | Sonnet chat Westley opens in `~/Projects/om-push/m1` | ready to hand |
+| 2026-09-22 | `2026-09-22-manager-M2.md` (push manager M2; rules in `2026-09-22-manager-common.md`) | Sonnet chat Westley opens in `~/Projects/om-push/m2` | ready to hand |
+| 2026-09-22 | `2026-09-22-manager-M3.md` (push manager M3; rules in `2026-09-22-manager-common.md`) | Sonnet chat Westley opens in `~/Projects/om-push/m3` | ready to hand |
