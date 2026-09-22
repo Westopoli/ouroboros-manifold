@@ -95,7 +95,9 @@ def card_is_done(runs_dir: Path, card_id: str) -> bool:
 
 
 def load_orchestrators_from_toml(project: Path) -> list[str] | None:
-    toml_path = project / "specfactory.toml"
+    toml_path = project / "docs/northstar/spec_factory/specfactory.toml"
+    if not toml_path.is_file():
+        toml_path = project / "specfactory.toml"
     if not tomllib or not toml_path.is_file():
         return None
     data = tomllib.loads(toml_path.read_text())
