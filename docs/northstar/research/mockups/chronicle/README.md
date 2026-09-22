@@ -68,3 +68,7 @@ Two real harness bugs surfaced mid-session on the shared build machine and were 
 ## Next step
 
 Pass-1 screenshots (1920x1080) are in `pass1/`: `slide_in.png`, `mid_print.png`, `expanded.png`, `before_morph.png`, `after_morph.png`, `end_seed11.png`, `end_seed12.png`. The mockup awaits your look.
+
+## Fresh-eyes review (2026-09-22, Sonnet reviewer, screenshots only)
+
+Verdict: fix first. Blocker: every shot renders a flat grey background (77, 77, 77) inside and outside the map viewport although the scene's Environment sets a near-black; the configured colour never reaches the screen under the Compatibility renderer (SubViewport clear mode, a camera environment override, or the project's default clear colour), so the map reads as a wireframe on grey rather than a galaxy. Should-fix: the expansion overlay is 94 percent opaque and the entries beneath bleed through the "click to close" hint; the ownership morph is correct in the pixels (cyan to purple at the keyframe node, timed to the entry) but the node is a 15 px dot among twenty and the pulse ring has faded by the after frame, so nothing draws the eye; the map has no shells, glow, grid or dense starfield; the two seeds' galaxies look interchangeable. The scroll side (pace, expansion content, prose tone, mention colouring) checks out. The checklist's Q1 and Q6 answers must be amended.
