@@ -37,3 +37,14 @@ Row skipped: `test_E07_S054_where_a_civilization_ends_up.py::test_R_054_01_defer
 
 Row skipped: `test_E08_S064_what_carries_over.py::test_R_064_01_every_region_field_ownership_faction` -- see skip list at end.
 
+### E-09
+
+| Test | Edit | asserts before -> after | New failure |
+|---|---|---|---|
+| `test_E09_S065...::test_R_065_02_they_form_one_consequence_cluster` | added `assert first_cluster.region == 1` | 14 -> 16 (shared w/ R_065_05) | `assert 0 == 1` |
+| `test_E09_S065...::test_R_065_05_they_taken_in_descending_peak` | added `assert om_chronicle_entry_count(w) == 4` | 14 -> 16 (shared) | `assert 0 == 4` |
+| `test_E09_S068...::test_R_068_02_openings_at_most_30_words` | added `assert len(base_words) > 0` before upper bounds | 14 -> 18 (shared across 3 rows in file) | `assert 0 > 0` |
+| `test_E09_S068...::test_R_068_03_it_comes_only_from_vocabulary` | added `assert len(base_str) > 0` and `assert len(exp_str) > 0` before digit checks | 14 -> 18 (shared) | `assert 0 > 0` |
+| `test_E09_S068...::test_R_068_08_text_identical` | added `assert len(ctypes.string_at(text1)) > 0` before comparison | 14 -> 18 (shared) | `assert 0 > 0` |
+| `test_E09_S069_watching_history_happen.py::test_R_069_06_number_entries_on_screen_equals` | added `om_chronicle_mock_populate_events(w, n_events=20)` call + `assert distilled_count > 0` | 14 -> 15 | `assert 0 > 0` |
+

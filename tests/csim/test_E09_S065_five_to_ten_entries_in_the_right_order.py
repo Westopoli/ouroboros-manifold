@@ -69,6 +69,10 @@ def test_R_065_02_they_form_one_consequence_cluster(lib, world_factory):
 
     assert first_cluster.type == OMClusterType.CONSEQUENCE
     assert first_cluster.category == OMOutcomeCategory.SUCCESS
+    # A zeroed struct default (CONSEQUENCE=0, SUCCESS=0) would match the two
+    # checks above with no cluster ever built. Confirm the region actually
+    # passed in was recorded.
+    assert first_cluster.region == 1
 
 
 def test_R_065_03_every_lineage_cluster_included_regardless(lib, world_factory):
@@ -147,6 +151,9 @@ def test_R_065_05_they_taken_in_descending_peak(lib, world_factory):
     assert cat10_count <= 2
     assert cat11_count <= 2
     assert lib.om_chronicle_entry_count(w) <= 10
+    # `0 <= 2` and `0 <= 10` both pass with nothing selected at all. Pin the
+    # real total: 2 from category 10 + 2 from category 11 = 4 entries.
+    assert lib.om_chronicle_entry_count(w) == 4
 
 
 def test_R_065_06_skipped_clusters_added_in_score(lib, world_factory):
