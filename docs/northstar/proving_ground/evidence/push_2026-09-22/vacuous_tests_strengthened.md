@@ -91,3 +91,9 @@ Row skipped: `test_E08_S064_what_carries_over.py::test_R_064_01_every_region_fie
 
 Row skipped: `test_E14_S123_the_enemy_replays_like_i_do.py::test_R_123_03_it_never_reads_player_s` -- see skip list at end.
 
+### E-15
+
+| Test | Edit | asserts before -> after | New failure |
+|---|---|---|---|
+| `test_E15_S126_most_of_my_force_is_out_there.py::test_R_126_06_units_have_no_cost_player` | tied the check to R-126-02's real production flow (init structure, tick production, pop spawn) and asserted `spawned == 1` before re-checking trickle stays 0 | 21 -> 23 | `assert 0 == 1` |
+
