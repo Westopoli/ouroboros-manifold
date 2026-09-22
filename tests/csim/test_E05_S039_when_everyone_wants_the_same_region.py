@@ -221,6 +221,7 @@ def _two_attackers_on_owned(lib, world_factory, *, defender_military):
     return w
 
 
+@pytest.mark.skip(reason="Q-039-01")
 def test_R_039_05_each_collider_s_strength_applied(lib, world_factory):
     """Given the target is owned by a third faction with military 30, When the collision resolves, Then each collider's strength is applied against defense 33 with its own stochastic draw, damages sum, and a conquest goes to the winner if military falls below 5."""
     # Injected telegraphed attacks resolve at tick + 3 (R-036-03); the

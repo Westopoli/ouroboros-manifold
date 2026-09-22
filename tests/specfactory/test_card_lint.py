@@ -584,6 +584,11 @@ def test_fuel_report_buckets_buildable_missing_file_and_open_q(tmp_path):
         "def test_R_002_01_missing(lib, world_factory):\n"
         "    w = world_factory()\n"
         "    lib.om_this_symbol_does_not_exist(w)\n"
+        "\n\n"
+        "def test_R_999_05_flagged_rule(lib, world_factory):\n"
+        "    w = world_factory()\n"
+        "    isolate_agents(lib, w)\n"
+        "    set_faction(lib, w, 0, 1)\n"
     )
     queue = tmp_path / "queue"
     parked = queue / "parked"
@@ -608,10 +613,16 @@ def test_fuel_report_buckets_buildable_missing_file_and_open_q(tmp_path):
     register.write_text(
         "| Flag | Epic / story | Question | Candidate answers | Status | Answer |\n"
         "|---|---|---|---|---|---|\n"
-        "| Q-E05-01 | E-05 / S-999 | Some open question. | (a) x; (b) y | open | |\n"
+        "| Q-999-01 | E-05 / S-999 | Does R-999-05 need a draw? | (a) x; (b) y | open | |\n"
     )
-    # E-05: blocked by an open ambiguity-register flag on its whole epic.
+    # E-05, story S-999: only the flagged rule (R-999-05) is held, not the epic.
     _write_fuel_card(parked / "005-e05-openq.md.hold", project, rules_file="rules/E-05.md",
+                      snippet_file="csrc/agent.c", snippet_symbol="om_faction_candidates",
+                      test_call="test_R_999_05_flagged_rule")
+    # Same epic, same story-numbering family, a DIFFERENT rule the row never
+    # names -- proves the hold is rule-scoped, not epic- or even story-wide
+    # once a row narrows to a specific rule (R13/Q-039-01).
+    _write_fuel_card(queue / "006-e05-unflagged.md", project, rules_file="rules/E-05.md",
                       snippet_file="csrc/agent.c", snippet_symbol="om_faction_candidates",
                       test_call="test_R_001_01_basic")
 
@@ -622,12 +633,76 @@ def test_fuel_report_buckets_buildable_missing_file_and_open_q(tmp_path):
     assert "002-e02-missing" in data["buckets"]["missing_file"]
     assert "003-e03-abigap" in data["buckets"]["abi_gap"]
     assert "005-e05-openq" in data["buckets"]["open_q"]
+    assert "006-e05-unflagged" in data["buckets"]["buildable"]
     assert "004-e04-dead" not in " ".join(sum(data["buckets"].values(), []))
     assert data["per_epic"]["E-01"]["buildable"] == 1
     assert data["per_epic"]["E-02"]["missing_file"] == 1
     assert data["per_epic"]["E-03"]["abi_gap"] == 1
     assert data["per_epic"]["E-05"]["open_q"] == 1
-    assert "E-05" in data["stalled_epics"]
+    assert data["per_epic"]["E-05"]["buildable"] == 1
+    assert "R-999-05" in data["flagged_rules"]
+    assert data["flagged_stories"] == []
+
+
+def test_fuel_report_open_flag_holds_whole_story_when_no_rule_named(tmp_path):
+    """A register row whose Question text names no rule id (only a story in
+    the "Epic / story" column) holds every rule of that story -- the
+    ambiguity has not been narrowed yet."""
+    project = _init_project(tmp_path)
+    (project / "tests" / "csim" / "test_widgets.py").write_text(
+        TEST_FILE + "\n\n"
+        "def test_R_998_01_in_flagged_story(lib, world_factory):\n"
+        "    w = world_factory()\n"
+        "    isolate_agents(lib, w)\n"
+        "    set_faction(lib, w, 0, 1)\n"
+    )
+    queue = tmp_path / "queue"
+    queue.mkdir()
+    _write_fuel_card(queue / "007-e05-story-held.md", project, rules_file="rules/E-05.md",
+                      snippet_file="csrc/agent.c", snippet_symbol="om_faction_candidates",
+                      test_call="test_R_998_01_in_flagged_story")
+    _write_fuel_card(queue / "008-e05-story-unheld.md", project, rules_file="rules/E-05.md",
+                      snippet_file="csrc/agent.c", snippet_symbol="om_faction_candidates",
+                      test_call="test_R_001_01_basic")
+    register = tmp_path / "ambiguity_register.md"
+    register.write_text(
+        "| Flag | Epic / story | Question | Candidate answers | Status | Answer |\n"
+        "|---|---|---|---|---|---|\n"
+        "| Q-998-01 | E-05 / S-998 | Some open question naming no rule. | (a) x; (b) y | open | |\n"
+    )
+    proc = _run_fuel(queue, project, register, "--json")
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    data = json.loads(proc.stdout)
+    assert "007-e05-story-held" in data["buckets"]["open_q"]
+    assert "008-e05-story-unheld" in data["buckets"]["buildable"]
+    assert data["flagged_stories"] == ["S-998"]
+
+
+def test_fuel_report_real_register_holds_r_039_05_not_205a(tmp_path):
+    """R13/Q-039-01, the real audit finding: the real ambiguity register
+    flags R-039-05 by name. A card whose acceptance proves that rule is
+    held; the real 205a card (re-cut to exclude R-039-05) is not."""
+    sys.path.insert(0, str(CARD_LINT.parent))
+    import card_lint  # noqa: E402
+
+    project = card_lint.DEFAULT_PROJECT
+    register = card_lint.DEFAULT_REGISTER
+    flagged_rules, flagged_stories = card_lint.register_flags(register)
+    assert "R-039-05" in flagged_rules
+
+    held_card = {
+        "acceptance": [
+            f"{sys.executable} -m pytest -q "
+            "tests/csim/test_E05_S039_when_everyone_wants_the_same_region.py"
+            "::test_R_039_05_each_collider_s_strength_applied"
+        ],
+    }
+    assert card_lint.card_is_held(held_card, project, flagged_rules, flagged_stories)
+
+    real_205a = card_lint.parse_card(
+        Path.home() / "Projects/agora/queue/205a-e05-collision-lottery.md"
+    )
+    assert not card_lint.card_is_held(real_205a, project, flagged_rules, flagged_stories)
 
 
 def test_fuel_report_text_mode_prints_summary(tmp_path):

@@ -448,6 +448,9 @@ def lint(card_path: Path, project: Path, queue: Path) -> tuple[list[Finding], li
 DEFAULT_PROJECT = Path("/home/westopoli/Projects/ouroboros-manifold")
 DEFAULT_REGISTER = DEFAULT_PROJECT / "docs/northstar/ambiguity_register.md"
 EPIC_RE = re.compile(r"E-?(\d+)")
+RULE_ID_RE = re.compile(r"\bR-(\d{3})-(\d{2})\b")
+STORY_ID_RE = re.compile(r"\bS-(\d{3})\b")
+TEST_RULE_ID_RE = re.compile(r"^test_R_(\d{3})_(\d{2})")
 
 
 def _normalize_epic(text: str) -> str | None:
@@ -455,13 +458,29 @@ def _normalize_epic(text: str) -> str | None:
     return f"E-{int(m.group(1)):02d}" if m else None
 
 
-def open_epics(register_path: Path) -> set[str]:
-    """Epic ids (e.g. "E-05") carrying at least one 'open' row in the
-    ambiguity register's "Epic / story" column. CLAUDE.md: "an epic with an
-    open flag is not built"."""
+FLAG_ID_RE = re.compile(r"^Q-(\d{3})-\d{2}$")
+
+
+def register_flags(register_path: Path) -> tuple[set[str], set[str]]:
+    """(flagged_rules, flagged_stories) from every 'open' row of the
+    ambiguity register (audit 2026-09-21, R13/Q-039-01: narrowed from "epic
+    has an open flag holds every card of that epic" to rule scope).
+
+    A flag id follows `Q-<story-number>-<seq>` (e.g. `Q-039-01` is about
+    S-039; confirmed against every numeric flag already in the register).
+    Its Question text often cites a rule from a DIFFERENT story for contrast
+    (Q-039-01 cites `R-036-03` -- "or do they resolve ... as R-036-03 says?"
+    -- to describe the existing behavior it is questioning, not to flag
+    R-036-03 itself). Only a cited rule id that belongs to the flag's own
+    story is treated as the disputed rule; if none does, the whole story is
+    held (not narrowed to a rule yet). A flag id with no numeric story
+    (`Q-E01-01`, an epic-wide question) falls back to any rule id cited
+    anywhere in the Question text, else every story named in the "Epic /
+    story" column."""
+    flagged_rules: set[str] = set()
+    flagged_stories: set[str] = set()
     if not register_path.is_file():
-        return set()
-    epics: set[str] = set()
+        return flagged_rules, flagged_stories
     for line in register_path.read_text().splitlines():
         if not line.startswith("|"):
             continue
@@ -470,10 +489,68 @@ def open_epics(register_path: Path) -> set[str]:
             continue
         if cols[4].lower() != "open":
             continue
-        epic = _normalize_epic(cols[1])
-        if epic:
-            epics.add(epic)
-    return epics
+        rule_ids = {f"R-{d}-{r}" for d, r in RULE_ID_RE.findall(cols[2])}
+        flag_m = FLAG_ID_RE.match(cols[0])
+        if flag_m:
+            story_num = flag_m.group(1)
+            own_story_rules = {r for r in rule_ids if r.split("-")[1] == story_num}
+            if own_story_rules:
+                flagged_rules |= own_story_rules
+            else:
+                flagged_stories.add(f"S-{story_num}")
+        elif rule_ids:
+            flagged_rules |= rule_ids
+        else:
+            flagged_stories |= {f"S-{d}" for d in STORY_ID_RE.findall(cols[1])}
+    return flagged_rules, flagged_stories
+
+
+def acceptance_test_names(card: dict, project: Path) -> list[str]:
+    """Every test function name a card's acceptance reaches, expanding a
+    whole-file token to every `test_*` def in that file (mirrors
+    collect_acceptance_symbols's traversal, but collects test names instead
+    of om_* symbols)."""
+    names: list[str] = []
+    module_cache: dict[Path, dict[str, ast.FunctionDef]] = {}
+    for cmd in card.get("acceptance") or []:
+        for tok in acceptance_node_id_tokens(cmd):
+            file_part, test_name = parse_node_id(tok)
+            test_path = project / file_part
+            if not test_path.is_file():
+                continue
+            if test_path not in module_cache:
+                module_cache[test_path] = helper_defs_of(test_path)
+            module_defs = module_cache[test_path]
+            if test_name is None:
+                names.extend(name for name in module_defs if name.startswith("test_"))
+            else:
+                base_name = test_name.split("[", 1)[0]
+                if base_name in module_defs:
+                    names.append(base_name)
+    return names
+
+
+def acceptance_rule_ids(card: dict, project: Path) -> set[str]:
+    """Rule ids (`R-###-##`) named by a card's acceptance test functions."""
+    ids: set[str] = set()
+    for name in acceptance_test_names(card, project):
+        m = TEST_RULE_ID_RE.match(name)
+        if m:
+            ids.add(f"R-{m.group(1)}-{m.group(2)}")
+    return ids
+
+
+def card_is_held(card: dict, project: Path, flagged_rules: set[str], flagged_stories: set[str]) -> bool:
+    """True when the card's acceptance proves a rule that carries an open
+    ambiguity-register flag -- directly (the rule id itself is flagged) or
+    because its whole story is flagged (no rule-level narrowing yet)."""
+    for rid in acceptance_rule_ids(card, project):
+        if rid in flagged_rules:
+            return True
+        story = f"S-{rid.split('-')[1]}"
+        if story in flagged_stories:
+            return True
+    return False
 
 
 def epic_of_card(card: dict) -> str | None:
@@ -504,7 +581,7 @@ def _iter_live_and_held_cards(queue: Path):
 
 
 def fuel_report(queue: Path, project: Path, register_path: Path) -> dict:
-    stalled_epics = open_epics(register_path)
+    flagged_rules, flagged_stories = register_flags(register_path)
     buckets: dict[str, list[str]] = {
         "buildable": [], "missing_file": [], "abi_gap": [], "open_q": [], "other_blocked": [],
     }
@@ -521,7 +598,7 @@ def fuel_report(queue: Path, project: Path, register_path: Path) -> dict:
         epic = epic_of_card(card) or "unknown"
         per_epic.setdefault(epic, {"buildable": 0, "missing_file": 0, "abi_gap": 0, "open_q": 0, "other_blocked": 0})
 
-        if epic in stalled_epics:
+        if card_is_held(card, project, flagged_rules, flagged_stories):
             bucket = "open_q"
         else:
             findings, errors = lint(card_path, project, queue)
@@ -541,7 +618,12 @@ def fuel_report(queue: Path, project: Path, register_path: Path) -> dict:
         buckets[bucket].append(cid)
         per_epic[epic][bucket] += 1
 
-    return {"buckets": buckets, "per_epic": per_epic, "stalled_epics": sorted(stalled_epics)}
+    return {
+        "buckets": buckets,
+        "per_epic": per_epic,
+        "flagged_rules": sorted(flagged_rules),
+        "flagged_stories": sorted(flagged_stories),
+    }
 
 
 def print_fuel_report(report: dict) -> None:
@@ -559,9 +641,13 @@ def print_fuel_report(report: dict) -> None:
         print(f"  {epic}: {total} cards -- buildable={counts['buildable']} "
               f"missing_file={counts['missing_file']} abi_gap={counts['abi_gap']} "
               f"open_q={counts['open_q']} other={counts['other_blocked']}")
-    if report["stalled_epics"]:
+    if report["flagged_rules"] or report["flagged_stories"]:
         print()
-        print("epics with an open ambiguity-register flag (not built): " + ", ".join(report["stalled_epics"]))
+        if report["flagged_rules"]:
+            print("rules held by an open ambiguity-register flag: " + ", ".join(report["flagged_rules"]))
+        if report["flagged_stories"]:
+            print("stories held by an open ambiguity-register flag (no rule-level narrowing yet): "
+                  + ", ".join(report["flagged_stories"]))
 
 
 def main(argv: list[str]) -> int:
