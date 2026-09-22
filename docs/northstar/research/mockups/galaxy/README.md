@@ -33,3 +33,7 @@ Five points the brief asked to be raised, not decided:
 ## Next step
 
 The pass-1 screenshots are in `pass1/` (10 shots: overview, regional, local, hover, mid-replay, at seeds 11 and 12, 1920x1080). The mockup awaits Westley's look.
+
+## Fresh-eyes review (2026-09-22, Sonnet reviewer, screenshots only)
+
+Verdict: fine to show Westley now; no blockers. Two should-fix gaps for pass 2, both on open bible rules: the Local band frames one or two spheres filling the screen with no distant systems in view, so R-106-03's "distant systems desaturate" cannot be seen and the band reads as flying into a planet rather than focusing (widen the Local plateau or cap the point scale so neighbours stay in frame); and no screenshot shows the conquest flash of R-106-04 (a single-step-then-screenshot script is needed before it counts as visually proven). Nits: faceted spheres up close, a system point rendering under the HUD legend at Overview, faction name labels sitting on a system point. The revised BAND-X threshold is sound; the FLASH-X change to a data-only oracle hides a real visual gap and stays open.
