@@ -1,0 +1,29 @@
+{
+  "units": [
+    {"role": "frontliner", "faction": 0, "pos": [3875, 3595]},
+    {"role": "frontliner", "faction": 0, "pos": [3875, 3685]},
+    {"role": "frontliner", "faction": 0, "pos": [3875, 3775]},
+    {"role": "frontliner", "faction": 0, "pos": [3875, 3865]},
+    {"role": "frontliner", "faction": 0, "pos": [3875, 3955]},
+    {"role": "frontliner", "faction": 0, "pos": [3875, 4045]},
+    {"role": "frontliner", "faction": 0, "pos": [3875, 4135]},
+    {"role": "frontliner", "faction": 0, "pos": [3875, 4225]},
+    {"role": "frontliner", "faction": 0, "pos": [3875, 4315]},
+    {"role": "frontliner", "faction": 0, "pos": [3875, 4405]},
+    {"role": "frontliner", "faction": 1, "pos": [4125, 3595]},
+    {"role": "frontliner", "faction": 1, "pos": [4125, 3685]},
+    {"role": "frontliner", "faction": 1, "pos": [4125, 3775]},
+    {"role": "frontliner", "faction": 1, "pos": [4125, 3865]},
+    {"role": "frontliner", "faction": 1, "pos": [4125, 3955]},
+    {"role": "frontliner", "faction": 1, "pos": [4125, 4045]},
+    {"role": "frontliner", "faction": 1, "pos": [4125, 4135]},
+    {"role": "frontliner", "faction": 1, "pos": [4125, 4225]},
+    {"role": "frontliner", "faction": 1, "pos": [4125, 4315]},
+    {"role": "frontliner", "faction": 1, "pos": [4125, 4405]}
+  ],
+  "obstacles": [],
+  "commands": [
+    {"tick": 0, "kind": "attack_move", "uids": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], "point": [4900, 4000]},
+    {"tick": 0, "kind": "attack_move", "uids": [10, 11, 12, 13, 14, 15, 16, 17, 18, 19], "point": [3100, 4000]}
+  ]
+}

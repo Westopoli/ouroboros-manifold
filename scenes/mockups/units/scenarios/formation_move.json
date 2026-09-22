@@ -1,0 +1,16 @@
+{
+  "units": [
+    {"role": "flanker", "faction": 0, "pos": [1000, 3850]},
+    {"role": "flanker", "faction": 0, "pos": [1040, 3850]},
+    {"role": "flanker", "faction": 0, "pos": [1080, 3850]},
+    {"role": "flanker", "faction": 0, "pos": [1120, 3850]},
+    {"role": "anchor", "faction": 0, "pos": [1000, 4150]},
+    {"role": "anchor", "faction": 0, "pos": [1040, 4150]},
+    {"role": "anchor", "faction": 0, "pos": [1080, 4150]},
+    {"role": "anchor", "faction": 0, "pos": [1120, 4150]}
+  ],
+  "obstacles": [],
+  "commands": [
+    {"tick": 0, "kind": "move", "uids": [0, 1, 2, 3, 4, 5, 6, 7], "point": [4000, 4000]}
+  ]
+}
