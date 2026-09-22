@@ -4,10 +4,13 @@
 Builds a throwaway synthetic era pack per unit test (mirrors
 assets/eras/test_era's manifest shape: era_id, era_display_name,
 era_accent_color, units, structures, environment, materials, faction_colors)
-so this suite does not depend on the real assets/eras/** packs. The last two
-tests exercise the real docs/northstar/proving_ground/evidence/px10/
-{pack_clean,pack_broken} fixtures this PX ships, using the real
-banned_words.txt.
+so most of this suite does not depend on the real assets/eras/** packs. Two
+groups of tests do exercise real packs, using the real banned_words.txt:
+docs/northstar/proving_ground/evidence/px10/{pack_clean,pack_broken} (PX-10),
+and assets/eras/{settled_reach,greek_placeholder} (K2, docs/northstar/plans/
+briefs/2026-09-22-two-day-push.md wave 3) -- both accept, they are
+mechanically identical (R-146-02), and a copy of the Greek pack with a
+banned word injected is rejected.
 """
 import json
 import subprocess
@@ -207,3 +210,47 @@ def test_real_pack_broken_rejected_with_all_three_defects():
     assert "era_accent_color" in proc.stdout
     assert "BANNED_WORD" in proc.stdout
     assert "ERA_ID_IN_UNIT_ID" in proc.stdout
+
+
+# ---- K2 (docs/northstar/plans/briefs/2026-09-22-two-day-push.md wave 3): both
+# live assets/eras/** packs accept, and a broken copy of the new pack is
+# rejected -- the two-pack contract this piece's acceptance names.
+
+SETTLED_REACH_PACK = REPO / "assets" / "eras" / "settled_reach"
+GREEK_PLACEHOLDER_PACK = REPO / "assets" / "eras" / "greek_placeholder"
+
+
+def test_real_settled_reach_pack_accepted():
+    proc = _run(SETTLED_REACH_PACK)
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert "PACK OK" in proc.stdout
+
+
+def test_real_greek_placeholder_pack_accepted():
+    proc = _run(GREEK_PLACEHOLDER_PACK)
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert "PACK OK" in proc.stdout
+
+
+def test_greek_placeholder_mechanically_identical_to_settled_reach():
+    proc = subprocess.run(
+        [sys.executable, str(PACK_VALIDATE), "--diff-mechanical",
+         str(GREEK_PLACEHOLDER_PACK), str(SETTLED_REACH_PACK)],
+        capture_output=True, text=True,
+    )
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert "MECHANICAL DIFF OK" in proc.stdout
+
+
+def test_greek_placeholder_copy_with_injected_banned_word_rejected(tmp_path):
+    import shutil
+    broken = tmp_path / "greek_placeholder_broken"
+    shutil.copytree(GREEK_PLACEHOLDER_PACK, broken)
+    manifest_path = broken / "manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    manifest["era_display_name"] = "The Prototype Reach"
+    manifest_path.write_text(json.dumps(manifest, indent=2))
+    proc = _run(broken)
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert "BANNED_WORD" in proc.stdout
+    assert "prototype" in proc.stdout.lower()

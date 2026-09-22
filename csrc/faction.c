@@ -33,6 +33,24 @@ int om_region_edge(const om_world *w, uint32_t a, uint32_t b, om_edge_type *out)
     return 1;
 }
 
+uint32_t om_region_neighbors(const om_world *w, uint32_t idx, uint32_t *out, uint32_t max) {
+    if (w == NULL || idx >= w->n_regions)
+        return 0;
+
+    uint32_t count = 0;
+    for (uint32_t j = 0; j < w->n_regions; j++) {
+        if (j == idx)
+            continue;
+        om_edge_type et;
+        if (!om_region_edge(w, idx, j, &et))
+            continue;
+        if (out != NULL && count < max)
+            out[count] = j;
+        count++;
+    }
+    return count;
+}
+
 int om_faction_set(om_world *w, int32_t faction_id, om_archetype archetype, double budget, double tech, double attack_confidence) {
     if (w == NULL || faction_id < 0 || faction_id >= OM_MAX_FACTIONS)
         return -1;

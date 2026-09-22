@@ -77,7 +77,7 @@ def _edges(lib: ctypes.CDLL, w, region_count: int) -> list[tuple[int, int, int]]
     """[(a, b, t)] with a<b: `om_region_neighbors` (O(degree)) paired with
     `om_region_edge` for the type when a build exports the former, else the
     O(N^2) `om_region_edge` sweep ouroboros_sim.h names as the alternative
-    (E-03/worldgen.c, which implements om_region_neighbors, is not landed in
+    (faction.c, which implements om_region_neighbors, is not landed in
     every build; om_region_edge itself is E-05 and always present)."""
     pairs: list[tuple[int, int, int]] = []
     if hasattr(lib, "om_region_neighbors"):
