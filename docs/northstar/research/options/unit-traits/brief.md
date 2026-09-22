@@ -30,7 +30,7 @@ A-261 (`:421`): "unit stats/damage-multipliers/etc. are tuned by running headles
 
 ## 4. Fixed constraints any option must honor
 
-- Six unit types, two per category, one ability each, a role nobody else fills; silhouettes fixed across eras (E-11 S-082; A-413).
+- Roster: on 2026-09-22 Westley amended the six-type rule; an era pack carries 20 to 40 unit types in the register of Age of Empires 3 and Age of Empires Online, balanced by a scoring mechanism still to be designed (register Q-082-02, open flags Q-082-03 to Q-082-05). Categories, one ability per unit, and per-type silhouettes are under review with those flags.
 - Roster invariants: every Strike faster than every Line, every Line faster than every Siege; Bastion has at least twice the next HP; both Strike see farther than both Siege; only the Bombard has area damage (R-082-02 to 05, `E-11:56-59`).
 - R-083-01: a profile has stats, zero to two traits, exactly one ability. R-083-02: a trait modifies one stat or one multiplier by a fixed amount stated in the profile (`E-11:70-71`).
 - Warden aura: 10 percent damage reduction within 300 wu, diminishing with a second Warden (R-083-03; Q-084-01).

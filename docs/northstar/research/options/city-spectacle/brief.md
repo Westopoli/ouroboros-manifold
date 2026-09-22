@@ -54,4 +54,12 @@ Three options, one wild. Each option describes what the player sees the city do 
 
 ## 8. Westley confirms
 
-(empty until batch 2)
+Batch 2, 2026-09-22, verbatim: "yes city is in teh same map. Yes grows during mission (economic player will be managing that growth). Their city will always need to be protected, if it's an attacker than it's their "forward base" or "base of operations", the piont from which they're launching the attack. If it dies, the battle is over, re-enforcements can't come and you can't replenish your forces (classic RTS). Damage can persist if the time jump is short, it kinda depends on the situation of the civilization: big economy, quick rebuild, slow economy and they took a massive hit in the simulation numbers, slow rebuild."
+
+Folded into the brief:
+
+- Question 1: confirmed. The city the player watches grow is on the tactical map they fight in.
+- Question 2: the city grows during the mission. With an economy player it is their growth; in solo play it runs itself during the mission.
+- Every side has a city on the map. The defender's city is home; the attacker's is a forward base, the point the attack launches from. If a side's city dies, its battle is over: reinforcements stop and forces cannot be replenished, in the classic RTS sense. This is a new loss condition that touches E-10 outcomes and E-15 reinforcement; the options describe it from the player's chair, and the epics are rewritten later.
+- Question 4: damage persists when the time jump is short, and rebuilding depends on the civilization's state: a big economy rebuilds fast, a weak one that took a hit in the simulation rebuilds slowly.
+- Question 3 (the smallest nudge for the solo commander): not answered. Options propose it.

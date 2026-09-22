@@ -46,8 +46,14 @@ StarCraft 2, Age of Empires 3, Halo Wars for the baseline RTS feel (vision Q8). 
 
 ## 7. Proposed option width
 
-Three options, one wild. Each option describes what a player notices in the first minute of a mission in a new era, what they have to relearn, and what stays exactly the same.
+Four options, two wild (raised from three and one in batch 2). Each option describes what a player notices in the first minute of a mission in a new era, what they have to relearn, and what stays exactly the same.
 
 ## 8. Westley confirms
 
-(empty until batch 2)
+Batch 2, 2026-09-22, verbatim: "I want to modify the bible on the "only 6 types" rule, given how we're building this, I want to make it like Age of Empires 3 or AOE Online where there are many many units, many options. We'll need to design a mechanism to make sure units are balanced (scoring system has been documented in old bible before), but the goal is 20-40 different units per-era, with eras swinging hard if there was a specific conflict we're focusing on for that era (like Romans vs Greeks, or WW2 Axis vs Allies). Find and make that ammendment into the bible, record the decision date and time. For your Qs for this one, I'm going to leave them open and see what I like from what the agents return (I haven't decided, so wider option variance means I can pull more wheat from the chaff)."
+
+Folded into the brief:
+
+- The six-unit-type rule is amended in the bible (decision 2026-09-22 14:27 EDT, register row Q-082-02): an era pack carries 20 to 40 unit types, in the register of Age of Empires 3 and Age of Empires Online; a balance scoring mechanism (the old bible's power rating, A-279) is to be designed; an era built around a specific conflict (Romans against Greeks, a world war's two alliances) may swing its roster hard toward that conflict. Section 4's "six unit types" constraint no longer holds; the fixed silhouette rule per type is under review (Q-132-03).
+- A per-era roster of 20 to 40 units is itself a feel mechanism the options may use: eras differ by what fights in them, not only by fog and tempo.
+- Questions 1 to 4: deliberately left open. Westley wants wide variance to pick from. Width raised to four options, two wild.

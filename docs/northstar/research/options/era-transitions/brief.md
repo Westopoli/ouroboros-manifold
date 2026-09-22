@@ -65,4 +65,12 @@ Three options, one wild. Each option describes what the player experiences at th
 
 ## 8. Westley confirms
 
-(empty until batch 2)
+Batch 2, 2026-09-22, verbatim: "Rescale tech, if players are a part of the same civilization, a multi-civ rescale isn't needed. The teams shoudln't immediately jump to late game after an era jump, but the civ that was "leading" should still be leading. If a player lacks a pack, they can't "go" to that next era, and the time jump will go through all of history (looping through eras) until every player has an era. The chronicle will record old characters as "distant myths/legends" with smaller and smaller mentions the farther out you go."
+
+Folded into the brief:
+
+- Tech at the boundary (question 2): rescale. Nobody arrives in the new era at late game; the civilization that was leading still leads. Players in one civilization share the rescale; a multi-civilization rescale is not needed.
+- A missing pack (question 4): a player without the next era cannot go there. The time jump keeps going through history, looping through the eras, until it lands on an era every player owns. History is a loop, not a line that ends. This bears on A-071 (the last era continues indefinitely); whether the loop also applies to a solo campaign is asked in batch 3.
+- The chronicle: characters from earlier eras become distant myths and legends, mentioned less and less the farther the timeline moves from them.
+- The vehicle (question 1): the time jump carries the transition. What decides which jump crosses the boundary stays open; options may propose it.
+- Names (question 3): not answered. Options describe the boundary without naming the past and present eras.

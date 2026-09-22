@@ -52,4 +52,13 @@ Three options, two wild. Each option describes the economy player's session: wha
 
 ## 8. Westley confirms
 
-(empty until batch 2)
+Batch 2, 2026-09-22, verbatim: "not just pieces, we want to design a mechanism that requires the users to think (like sc2's economy) and juggle tasks (sc2 had supply, multiple resources, tech timings, consistent worker production, a lot of different variables). (we could do another optional mode where players can share military/economic responsibilities). Yes the city builds/runs itself when the player doesn't have the economic mode enabled. same tactical map for both. Yes it will persist, but we don't want the complexity to build forever, we'll need to design a "reset" method that keeps the load from increasing to the point of unreasonableness for the player. One idea is to have "upgrades" that automate tasks and or allow them to focus on other tasks that reap more rewards."
+
+Folded into the brief:
+
+- Depth (question 1): the economy player runs a full economy that demands thought and task juggling, in the register of StarCraft 2's supply, multiple resources, tech timings, and steady worker production. "Pieces only" describes the solo commander, not this role.
+- A further optional mode may let both players share military and economic responsibilities. Options may include it.
+- Question 2: confirmed. The city builds and runs itself when the economic mode is not enabled. "Economic mode" is a per-player toggle, not only a queue choice.
+- Question 3: same tactical map for both players.
+- Question 4: the economy persists through time jumps, and its complexity must not grow without bound. A reset or load-capping mechanism is required; one idea is upgrades that automate earlier tasks so the player moves on to higher-reward ones. Options must say how load stays reasonable over a campaign.
+- Roster context: the bible now targets 20 to 40 unit types per era (Q-082-02), so production choices are wide.
