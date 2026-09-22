@@ -33,7 +33,17 @@ DEFAULT_IGNORES = (".swarm/**", ".claude/**", "logs/**",
     # test and the per-piece spec are M0-reviewed documents, never a footprint
     "tests/push/**", "docs/northstar/plans/push/specs/**",
 )
-DEF_RE = re.compile(r"^[a-z_][a-z_ ]*\bom_[a-z0-9_]+\s*\(")
+# A C return type: any run of qualifier/type words (const, static, unsigned,
+# a `_t` typedef, an om_-prefixed struct/enum name, ...) plus optional
+# pointer stars, anchored at column 0 -- a call inside a body always has
+# leading whitespace or a statement keyword (`return`, ...) that is not
+# itself a type word, so neither can match here.
+_TYPE_WORD = (
+    r"(?:const|static|unsigned|signed|struct|volatile|extern|inline|"
+    r"void|int|char|float|double|short|long|bool|"
+    r"[A-Za-z_][A-Za-z0-9_]*_t|om_[A-Za-z0-9_]+)"
+)
+DEF_RE = re.compile(rf"^(?:{_TYPE_WORD}[ \t]+)+[ \t]*\**[ \t]*\bom_[a-z0-9_]+\s*\(")
 SYMBOL_RE = re.compile(r"\b(om_[a-z0-9_]+)\s*\(")
 
 

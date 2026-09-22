@@ -150,6 +150,33 @@ def test_unknown_piece_id_rejected(tmp_path):
     assert "NOPE" in detail
 
 
+# ---------------------------------------------------------------- DEF_RE / _diff_added_definitions --
+
+def test_positive_control_def_re_return_type_variants(tmp_path):
+    """DEF_RE's return-type prefix class must cover digits and pointer
+    stars (uint32_t, const-pointer, static-qualified) so real C
+    definitions are not silently missed, while a call embedded in an
+    assignment or a bare `return` statement is still excluded."""
+    repo = _init_repo(tmp_path / "repo")
+    (repo / "csrc" / "scratch.c").write_text(
+        "uint32_t om_a(void) { return 0; }\n"
+        "const om_region *om_b(void) { return 0; }\n"
+        "static uint64_t om_c(void) { return 0; }\n"
+        "int om_container(void) {\n"
+        "    uint32_t n = om_d(0);\n"
+        "return om_e(0);\n"
+        "}\n"
+    )
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "candidate")
+
+    defs = mgs._diff_added_definitions(repo, "HEAD~1")
+    symbols = {sym for _, sym in defs}
+    assert {"om_a", "om_b", "om_c"} <= symbols
+    assert "om_d" not in symbols
+    assert "om_e" not in symbols
+
+
 # ---------------------------------------------------------------- symbol_ownership_check --
 
 def _write_signatures(path: Path, rows: list[tuple[str, str]]) -> None:
@@ -181,6 +208,31 @@ def test_positive_control_symbol_defined_in_wrong_module_rejected(tmp_path):
     assert "om_event_fire_manual" in detail
     assert "diplomacy.c" in detail
     assert "events.c" in detail
+
+
+def test_positive_control_pointer_return_type_wrong_module_rejected(tmp_path):
+    """Mirrors test_positive_control_symbol_defined_in_wrong_module_rejected
+    but with a return type (uint32_t, pointer arg) the pre-fix DEF_RE
+    (no digits/no `*` in its type-prefix class) silently missed --
+    csrc/collision.c gaining a friction.c-owned symbol must still reject."""
+    repo = _init_repo(tmp_path / "repo")
+    sigs = tmp_path / "signatures.toml"
+    _write_signatures(sigs, [("om_step_friction", "friction.c")])
+    empty_sm = tmp_path / "symbol_modules.toml"
+    empty_sm.write_text("[symbols]\n")
+
+    (repo / "csrc" / "collision.c").write_text(
+        "uint32_t om_step_friction(const om_world *w) { return 0; }\n"
+    )
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "candidate")
+
+    ok, detail = mgs.symbol_ownership_check(repo, "HEAD~1", signatures_path=sigs,
+                                             symbol_modules_path=empty_sm)
+    assert ok is False
+    assert "om_step_friction" in detail
+    assert "collision.c" in detail
+    assert "friction.c" in detail
 
 
 def test_symbol_defined_in_correct_module_accepted(tmp_path):
