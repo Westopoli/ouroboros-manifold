@@ -57,4 +57,10 @@ Three options, one wild. Each option includes a hotkey and gesture table (bind, 
 
 ## 8. Westley confirms
 
-(empty until batch 1)
+Batch 1, 2026-09-22, verbatim: "When a player selects a group, and right clicks, all units should stay on their layer. If a player wants to swap the layer of a specific group or set of units, we need to give them options to manually select them. We'll offer them a variety of keybinds to do various things. Control groups, no all army hotkey"
+
+Folded into the brief:
+
+- Question 1: confirmed. "Army hotkeys" are the control-group hotkeys. No all-army hotkey exists.
+- A right-click move on a selection keeps every unit on its current layer. Changing the layer of a group or a set of units is a deliberate act on a manual selection, never a side effect of a move.
+- Questions 2 to 4 (sub-group meanings, exclusive membership as a top-level rule, one gesture versus two): left to the options. Westley wants a variety of keybinds offered; each option proposes its vocabulary for selecting a group, a layer slice of it, or a set of units, and for moving that selection between layers.

@@ -52,4 +52,12 @@ Three options, one wild. Each option names which orders exist at map altitude, h
 
 ## 8. Westley confirms
 
-(empty until batch 1)
+Batch 1, 2026-09-22, verbatim: "map view replaces minimap just like World of Warships. Galaxy view is different from when the chronicle is being shown before the mission starts, the player doens't need to see the galaxy view when they're actively in a mission, don't conflate the two different views. Map view: in game mission, Galaxy view: whole simulation view exterior to missions. Only move and attack move. For layers, we'll collapse them but the unit "group" will indicate to the user with some UI that the group is Upper layers (4-5), Lower layers (1-2), or expansive (1-5)."
+
+Folded into the brief:
+
+- Orders (question 1): move and attack-move only from the map view.
+- Minimap (question 2): the map view replaces the minimap, as in World of Warships.
+- Zoom levels (question 3): the hub's "two zoom levels" are the galaxy view (outside missions, whole simulation) and the mission. The map view is a band inside the mission and never shows the galaxy. Options do not conflate the two.
+- Layers (question 4): layers collapse in the map view; each unit group carries a UI mark for Upper (layers 4 and 5), Lower (layers 1 and 2), or Expansive (layers 1 to 5). A group entirely on layer 3 was not named; options say how a mid-layer group reads.
+- Q-103-02's candidates are superseded by this combination: move and attack-move only, and the minimap replaced.

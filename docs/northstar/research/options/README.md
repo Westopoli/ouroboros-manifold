@@ -26,10 +26,10 @@ Precedent for this shape: `../landscape_design/README.md`, the P2 design phase. 
 
 | Feature | Slug | Batch | Brief | Confirmed | Options |
 |---|---|---|---|---|---|
-| Multi-perspective camera | `camera` | 1 | written | | |
-| Map view zoom band | `map-view` | 1 | written | | |
-| Control group depth | `control-groups` | 1 | written | | |
-| Layer system look and feel | `layer-system` | 1 | written | | |
+| Multi-perspective camera | `camera` | 1 | written | 2026-09-22 | |
+| Map view zoom band | `map-view` | 1 | written | 2026-09-22 | |
+| Control group depth | `control-groups` | 1 | written | 2026-09-22 | |
+| Layer system look and feel | `layer-system` | 1 | written | 2026-09-22 | |
 | Era transitions | `era-transitions` | 2 | written | | |
 | Era feel differentiation | `era-feel` | 2 | written | | |
 | Paired economy multiplayer mode | `paired-economy` | 2 | written | | |

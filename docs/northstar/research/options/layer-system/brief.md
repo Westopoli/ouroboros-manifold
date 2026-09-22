@@ -58,4 +58,13 @@ Four options, two wild. Each option describes, from the player's chair: the stac
 
 ## 8. Westley confirms
 
-(empty until batch 1)
+Batch 1, 2026-09-22, verbatim: "no specific scale numbers, that's for the agents to decide based on their specific option, layer differences will also change per-era: in space layer differences can be quite large, but on land layer differences are a lot smaller in small-scale combat (pre-high altitude planes or deep sea submarines). For the dimming, layer it's on should be around 50%, adjacent layers 10-20%, layers 2 away are 5%. The idea behind it is visible but not in the way. - When the player toggles to a different layer we should show them a little icon or something to indicate which layer the unit would be moving too, like a waypoint or something. Grid around each unit, not whole layer, players need to be able to see the battlefield and the background and things behind the grid view (think Autocad, Unreal engine, tools that visualize 3D objects well and clear to the user and user friendly). Exactly 5 for each, for eras that don't have units that can literal "fly" (roman/greek), the escelation will still be land, it'll just be mountains or something reasonable to get that high/low."
+
+Folded into the brief:
+
+- Vertical scale (question 1): no numbers from Westley; each option sets its own scale and says why. The spacing is a per-era value: large in a space era, small in a land era before high-altitude flight or deep submarines. Exactly five layers in every era; in a land era without flying units the upper layers are still land (mountains or something reasonable).
+- Dimming (question 3): the percentages "layer it's on should be around 50%, adjacent layers 10-20%, layers 2 away are 5%. The idea behind it is visible but not in the way" were given in answer to the dimming question; whether they describe the per-unit grid's opacity per layer (A-299's idea) or the fall-back of non-focused layers is being confirmed in batch 2. Options should read them as the visual weight of layer cues relative to the focused one and keep the world visible.
+- Cross-layer combat (question 2): not answered in batch 1. Options assume same-layer combat (Q-008-01) and may note where a cross-layer variant would change the picture.
+- Layer-change indicator: when the player toggles a unit toward another layer, a small icon shows which layer it is moving to, like a waypoint. This is the R-009-02 preference indicator, now given a direction.
+- Grid (question 4): a grid around each unit, never a whole-layer plane. The battlefield, the background, and anything behind the grid must stay visible. Reference register: AutoCAD, Unreal Engine, and other 3D visualization tools that read clearly.
+- Five layers (question 5): confirmed.

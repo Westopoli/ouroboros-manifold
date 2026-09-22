@@ -65,4 +65,12 @@ Four options, of which two wild (no shipped game has the shape). Each option mus
 
 ## 8. Westley confirms
 
-(empty until batch 1)
+Batch 1, 2026-09-22, verbatim: "present is classic RTS, I'm not sure if that's 45 degrees. We will have an auto-anchor to that view, but we'll allow users to have a different "mode" and that's the mode we're designing. Ships from launch. For the camera height, I described this in a prior chat recently, grepping "halo wars" might show what I answered, basically Halo Wars camera stayed at the height the user was at even during elevation changes, so the user wasn't fighting to zoom and move at the same time when changing elevation."
+
+Folded into the brief:
+
+- Scope (question 1): the multi-perspective system ships from launch. It is a "mode" the player enters; the default view is the classic RTS camera with an auto-anchor back to it. The options design the mode, and each must say how the player enters it, leaves it, and snaps home.
+- Modes (question 2): a designed mode is allowed. R-103-01's "no auto-anchoring, no camera modes" is superseded for the default view (auto-anchor to classic) and for the designed mode; that rule is rewritten by the Design Lane when a pick lands, not in this pass.
+- Interim (question 3): classic RTS angle; the pitch number is not a decision ("I'm not sure if that's 45 degrees").
+- Height (question 4): the Halo Wars floor is the standard. The camera keeps the player's height above the ground under it through elevation changes, so the player never zooms and moves at once to follow terrain (also `docs/northstar/research/landscape_design/README.md:63,71`; `docs/northstar/plans/briefs/2026-09-21-p2-landscape-mockup-pass3.md:34`).
+- Unit POV (question 5): not answered in batch 1. Options may include or omit a unit POV preset; if included, the option must say what the player does there.
