@@ -441,15 +441,155 @@ def lint(card_path: Path, project: Path, queue: Path) -> tuple[list[Finding], li
     return findings, errors
 
 
+# ---- fuel report: buildable / blocked-by-missing-file / blocked-by-ABI-gap /
+# blocked-by-open-Q, over a whole queue, so the cascade's runway line has a
+# mechanical source instead of a guess (audit 2026-09-21, item 2). ----
+
+DEFAULT_PROJECT = Path("/home/westopoli/Projects/ouroboros-manifold")
+DEFAULT_REGISTER = DEFAULT_PROJECT / "docs/northstar/ambiguity_register.md"
+EPIC_RE = re.compile(r"E-?(\d+)")
+
+
+def _normalize_epic(text: str) -> str | None:
+    m = EPIC_RE.search(text)
+    return f"E-{int(m.group(1)):02d}" if m else None
+
+
+def open_epics(register_path: Path) -> set[str]:
+    """Epic ids (e.g. "E-05") carrying at least one 'open' row in the
+    ambiguity register's "Epic / story" column. CLAUDE.md: "an epic with an
+    open flag is not built"."""
+    if not register_path.is_file():
+        return set()
+    epics: set[str] = set()
+    for line in register_path.read_text().splitlines():
+        if not line.startswith("|"):
+            continue
+        cols = [c.strip() for c in line.strip("|").split("|")]
+        if len(cols) < 5 or not cols[0].startswith("Q-"):
+            continue
+        if cols[4].lower() != "open":
+            continue
+        epic = _normalize_epic(cols[1])
+        if epic:
+            epics.add(epic)
+    return epics
+
+
+def epic_of_card(card: dict) -> str | None:
+    for field in ("rules_file", "test_file", "goal"):
+        val = card.get(field)
+        if isinstance(val, str):
+            epic = _normalize_epic(val)
+            if epic:
+                return epic
+    return None
+
+
+def _iter_live_and_held_cards(queue: Path):
+    """Cards still actually in play for a runway count: every `queue/*.md`
+    (live) plus every `queue/parked/*.hold` (waiting its turn in
+    RELEASE_CHAIN) -- not `.retired`/`.superseded`/`.legacy`/
+    `.satisfied-by-*`/`.harness-bug`/`.blocked`/`.done-archived`, which are
+    already resolved one way or another and would double-count or pad the
+    runway with dead cards."""
+    if not queue.is_dir():
+        return
+    for p in sorted(queue.glob("*.md")):
+        yield p
+    parked = queue / "parked"
+    if parked.is_dir():
+        for p in sorted(parked.glob("*.hold")):
+            yield p
+
+
+def fuel_report(queue: Path, project: Path, register_path: Path) -> dict:
+    stalled_epics = open_epics(register_path)
+    buckets: dict[str, list[str]] = {
+        "buildable": [], "missing_file": [], "abi_gap": [], "open_q": [], "other_blocked": [],
+    }
+    per_epic: dict[str, dict[str, int]] = {}
+
+    for card_path in _iter_live_and_held_cards(queue):
+        try:
+            card = parse_card(card_path)
+        except Exception:
+            continue
+        if card.get("kind") == "gate":
+            continue
+        cid = card_id_of(card_path)
+        epic = epic_of_card(card) or "unknown"
+        per_epic.setdefault(epic, {"buildable": 0, "missing_file": 0, "abi_gap": 0, "open_q": 0, "other_blocked": 0})
+
+        if epic in stalled_epics:
+            bucket = "open_q"
+        else:
+            findings, errors = lint(card_path, project, queue)
+            if errors:
+                bucket = "other_blocked"
+            else:
+                codes = {f["code"] for f in findings if f["level"] == "FAIL"}
+                if "MISSING_SNIPPET_FILE" in codes:
+                    bucket = "missing_file"
+                elif "ABI_GAP" in codes:
+                    bucket = "abi_gap"
+                elif codes:
+                    bucket = "other_blocked"
+                else:
+                    bucket = "buildable"
+
+        buckets[bucket].append(cid)
+        per_epic[epic][bucket] += 1
+
+    return {"buckets": buckets, "per_epic": per_epic, "stalled_epics": sorted(stalled_epics)}
+
+
+def print_fuel_report(report: dict) -> None:
+    b = report["buckets"]
+    print(f"buildable now:        {len(b['buildable'])}")
+    print(f"blocked (missing file): {len(b['missing_file'])}")
+    print(f"blocked (ABI gap):     {len(b['abi_gap'])}")
+    print(f"blocked (open Q-):     {len(b['open_q'])}")
+    print(f"blocked (other FAIL):  {len(b['other_blocked'])}")
+    print()
+    print("per epic:")
+    for epic in sorted(report["per_epic"]):
+        counts = report["per_epic"][epic]
+        total = sum(counts.values())
+        print(f"  {epic}: {total} cards -- buildable={counts['buildable']} "
+              f"missing_file={counts['missing_file']} abi_gap={counts['abi_gap']} "
+              f"open_q={counts['open_q']} other={counts['other_blocked']}")
+    if report["stalled_epics"]:
+        print()
+        print("epics with an open ambiguity-register flag (not built): " + ", ".join(report["stalled_epics"]))
+
+
 def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("card_file")
+    ap.add_argument("card_file", nargs="?")
     ap.add_argument("--project", help="defaults to the card's project: field")
     ap.add_argument("--queue", default=str(DEFAULT_QUEUE))
     ap.add_argument("--json", action="store_true")
+    ap.add_argument("--fuel", metavar="QUEUE", nargs="?", const=str(DEFAULT_QUEUE),
+                     help="report mode: buildable/blocked counts over a whole queue instead of linting one card")
+    ap.add_argument("--register", default=str(DEFAULT_REGISTER))
     try:
         args = ap.parse_args(argv)
     except SystemExit:
+        return 2
+
+    if args.fuel is not None:
+        queue = Path(args.fuel).expanduser()
+        project = Path(args.project).expanduser() if args.project else DEFAULT_PROJECT
+        report = fuel_report(queue, project, Path(args.register).expanduser())
+        if args.json:
+            print(json.dumps(report, indent=2))
+        else:
+            print_fuel_report(report)
+        return 0
+
+    if not args.card_file:
+        print("card_file is required unless --fuel is given", file=sys.stderr)
         return 2
 
     card_path = Path(args.card_file)

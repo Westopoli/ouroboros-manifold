@@ -553,3 +553,95 @@ def test_json_output_shape(tmp_path):
     assert data["ok"] is True
     assert data["fail_count"] == 0
     assert isinstance(data["findings"], list)
+
+
+# ---- --fuel report mode (audit 2026-09-21, item 2) ----
+
+def _run_fuel(queue: Path, project: Path, register: Path, *extra) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        [sys.executable, str(CARD_LINT), "--fuel", str(queue), "--project", str(project),
+         "--register", str(register), *extra],
+        capture_output=True, text=True,
+    )
+
+
+def _write_fuel_card(path: Path, project: Path, *, rules_file: str, snippet_file: str,
+                      snippet_symbol: str, test_call: str) -> None:
+    lines = [
+        "---", f"project: {project}", "acceptance:",
+        f'  - "{sys.executable} -m pytest -q tests/csim/test_widgets.py::{test_call}"',
+        f'allowed_files: "{snippet_file}"', f"snippet_file: {snippet_file}",
+        f'snippet_symbol: "{snippet_symbol}"', f"rules_file: {rules_file}",
+        "expected_lines: 40", "---", "", "## Brief for DeepSeek", "Synthetic.", "",
+    ]
+    path.write_text("\n".join(lines))
+
+
+def test_fuel_report_buckets_buildable_missing_file_and_open_q(tmp_path):
+    project = _init_project(tmp_path)
+    (project / "tests" / "csim" / "test_widgets.py").write_text(
+        TEST_FILE + "\n\n"
+        "def test_R_002_01_missing(lib, world_factory):\n"
+        "    w = world_factory()\n"
+        "    lib.om_this_symbol_does_not_exist(w)\n"
+    )
+    queue = tmp_path / "queue"
+    parked = queue / "parked"
+    parked.mkdir(parents=True)
+
+    # E-01: buildable (live queue card, real project.c function, no FAIL).
+    _write_fuel_card(queue / "001-e01-ok.md", project, rules_file="rules/E-01.md",
+                      snippet_file="csrc/agent.c", snippet_symbol="om_faction_candidates",
+                      test_call="test_R_001_01_basic")
+    # E-02: blocked by a missing snippet_file (parked, .hold).
+    _write_fuel_card(parked / "002-e02-missing.md.hold", project, rules_file="rules/E-02.md",
+                      snippet_file="csrc/does_not_exist.c", snippet_symbol="om_ghost",
+                      test_call="test_R_001_01_basic")
+    # E-03: blocked by an ABI gap (symbol defined nowhere).
+    _write_fuel_card(parked / "003-e03-abigap.md.hold", project, rules_file="rules/E-03.md",
+                      snippet_file="csrc/agent.c", snippet_symbol="om_faction_candidates",
+                      test_call="test_R_002_01_missing")
+    # A dead suffix (.retired) must not be counted at all.
+    (parked / "004-e04-dead.md.retired").write_text("not a real card")
+
+    register = tmp_path / "ambiguity_register.md"
+    register.write_text(
+        "| Flag | Epic / story | Question | Candidate answers | Status | Answer |\n"
+        "|---|---|---|---|---|---|\n"
+        "| Q-E05-01 | E-05 / S-999 | Some open question. | (a) x; (b) y | open | |\n"
+    )
+    # E-05: blocked by an open ambiguity-register flag on its whole epic.
+    _write_fuel_card(parked / "005-e05-openq.md.hold", project, rules_file="rules/E-05.md",
+                      snippet_file="csrc/agent.c", snippet_symbol="om_faction_candidates",
+                      test_call="test_R_001_01_basic")
+
+    proc = _run_fuel(queue, project, register, "--json")
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    data = json.loads(proc.stdout)
+    assert "001-e01-ok" in data["buckets"]["buildable"]
+    assert "002-e02-missing" in data["buckets"]["missing_file"]
+    assert "003-e03-abigap" in data["buckets"]["abi_gap"]
+    assert "005-e05-openq" in data["buckets"]["open_q"]
+    assert "004-e04-dead" not in " ".join(sum(data["buckets"].values(), []))
+    assert data["per_epic"]["E-01"]["buildable"] == 1
+    assert data["per_epic"]["E-02"]["missing_file"] == 1
+    assert data["per_epic"]["E-03"]["abi_gap"] == 1
+    assert data["per_epic"]["E-05"]["open_q"] == 1
+    assert "E-05" in data["stalled_epics"]
+
+
+def test_fuel_report_text_mode_prints_summary(tmp_path):
+    project = _init_project(tmp_path)
+    queue = tmp_path / "queue"
+    queue.mkdir()
+    _write_fuel_card(queue / "001-e01-ok.md", project, rules_file="rules/E-01.md",
+                      snippet_file="csrc/agent.c", snippet_symbol="om_faction_candidates",
+                      test_call="test_R_001_01_basic")
+    register = tmp_path / "ambiguity_register.md"
+    register.write_text("| Flag | Epic / story | Question | Candidate answers | Status | Answer |\n|---|---|---|---|---|---|\n")
+    proc = _run_fuel(queue, project, register)
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert "buildable now:" in proc.stdout
+    assert "blocked (missing file):" in proc.stdout
+    assert "blocked (ABI gap):" in proc.stdout
+    assert "blocked (open Q-):" in proc.stdout
