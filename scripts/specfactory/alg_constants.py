@@ -12,9 +12,14 @@ algorithms.md; only reads it.
 -1, 2, an array size in a declaration, a #define line, or a sizeof(...)
 argument -- so a tuned constant lands in algorithms.md and this header, not
 scattered through the C. csrc/{sim,region,faction,agent,resolve}.c predate
-this lint; their current literals are grandfathered by exact
-file:line:col:token in docs/northstar/spec_factory/constants_allowlist.txt
-(regenerate with --gen-allowlist after a deliberate change to one of them).
+this lint; their current literals are grandfathered in
+docs/northstar/spec_factory/constants_allowlist.txt, keyed by
+file:token:occurrence (the n-th time that exact token text appears among a
+file's violations, top to bottom) so editing unrelated lines never shifts
+an entry out from under itself (regenerate with --gen-allowlist after a
+deliberate change to one of them). The allowlist also accepts the
+deprecated file:line:col:token format on read, with a WARN, so a
+not-yet-regenerated file does not crash the lint.
 
 Both commands are deterministic and idempotent: same input, same output,
 every time.
@@ -535,17 +540,75 @@ def find_violations(text: str) -> list[tuple[int, int, str]]:
     return violations
 
 
-def load_allowlist() -> set[tuple[str, int, int, str]]:
-    if not ALLOWLIST_PATH.exists():
-        return set()
-    entries = set()
-    for line in ALLOWLIST_PATH.read_text().splitlines():
+def find_violations_with_occurrence(text: str) -> list[tuple[int, int, str, int]]:
+    """[(lineno, col, token, occurrence)] -- `occurrence` is the 1-based
+    count of that exact token text among this text's violations, in the
+    same top-to-bottom, left-to-right order find_violations returns them.
+    Stable under any edit that does not itself add or remove a matching
+    occurrence, so an allowlist keyed on it survives unrelated line
+    insertion/deletion."""
+    counts: dict[str, int] = {}
+    out = []
+    for lineno, col, token in find_violations(text):
+        counts[token] = counts.get(token, 0) + 1
+        out.append((lineno, col, token, counts[token]))
+    return out
+
+
+class Allowlist:
+    __slots__ = ("new", "legacy")
+
+    def __init__(self, new: set[tuple[str, str, int]], legacy: set[tuple[str, int, int, str]]):
+        self.new = new
+        self.legacy = legacy
+
+    def contains(self, rel: str, lineno: int, col: int, token: str, occurrence: int) -> bool:
+        return (rel, token, occurrence) in self.new or (rel, lineno, col, token) in self.legacy
+
+
+def parse_allowlist_lines(lines: list[str]) -> Allowlist:
+    """Reads file:token:occurrence (current) and, for a not-yet-regenerated
+    file, the deprecated file:line:col:token (matched by its original exact
+    line/col, since no occurrence number was ever recorded for it) -- never
+    crashes on either, and WARNs once when the deprecated shape is seen."""
+    new_entries: set[tuple[str, str, int]] = set()
+    legacy_entries: set[tuple[str, int, int, str]] = set()
+    saw_legacy = False
+    for line in lines:
         line = line.strip()
         if not line or line.startswith("#"):
             continue
-        path, lineno, col, token = line.split(":", 3)
-        entries.add((path, int(lineno), int(col), token))
-    return entries
+        parts = line.split(":")
+        if len(parts) == 4:
+            path, lineno, col, token = parts
+            legacy_entries.add((path, int(lineno), int(col), token))
+            saw_legacy = True
+        elif len(parts) == 3:
+            path, token, occurrence = parts
+            new_entries.add((path, token, int(occurrence)))
+        else:
+            raise ValueError(f"unrecognized constants_allowlist.txt line: {line!r}")
+    if saw_legacy:
+        print(
+            f"WARN {ALLOWLIST_PATH}: deprecated file:line:col:token allowlist "
+            "entries found -- regenerate with --gen-allowlist"
+        )
+    return Allowlist(new_entries, legacy_entries)
+
+
+def load_allowlist() -> Allowlist:
+    if not ALLOWLIST_PATH.exists():
+        return Allowlist(set(), set())
+    return parse_allowlist_lines(ALLOWLIST_PATH.read_text().splitlines())
+
+
+def lint_file_violations(rel: str, text: str, allowlist: Allowlist, grandfathered: bool) -> list[str]:
+    messages = []
+    for lineno, col, token, occurrence in find_violations_with_occurrence(text):
+        if grandfathered and allowlist.contains(rel, lineno, col, token, occurrence):
+            continue
+        messages.append(f"FAIL {rel}:{lineno} bare literal `{token}`")
+    return messages
 
 
 def cmd_lint(csrc_dir: Path) -> int:
@@ -559,10 +622,7 @@ def cmd_lint(csrc_dir: Path) -> int:
         abs_file = c_file.resolve()
         rel = str(abs_file.relative_to(REPO)) if abs_file.is_relative_to(REPO) else c_file.name
         grandfathered = c_file.name in GRANDFATHERED_FILES
-        for lineno, col, token in find_violations(text):
-            if grandfathered and (rel, lineno, col, token) in allowlist:
-                continue
-            messages.append(f"FAIL {rel}:{lineno} bare literal `{token}`")
+        messages.extend(lint_file_violations(rel, text, allowlist, grandfathered))
     for m in messages:
         print(m)
     if messages:
@@ -572,17 +632,26 @@ def cmd_lint(csrc_dir: Path) -> int:
     return 0
 
 
-def cmd_gen_allowlist(csrc_dir: Path) -> int:
-    entries = []
+def gen_allowlist_entries(csrc_dir: Path) -> list[str]:
+    """[file:token:occurrence, ...] for every grandfathered file's current
+    violations, sorted by (file, source line, source column) so the
+    checked-in list reads top to bottom same as the .c files it covers."""
+    entries: list[tuple[str, int, int, str, int]] = []
     for c_file in sorted(csrc_dir.glob("*.c")):
         if c_file.name not in GRANDFATHERED_FILES:
             continue
         rel = str(c_file.resolve().relative_to(REPO))
-        for lineno, col, token in find_violations(c_file.read_text()):
-            entries.append(f"{rel}:{lineno}:{col}:{token}")
+        for lineno, col, token, occurrence in find_violations_with_occurrence(c_file.read_text()):
+            entries.append((rel, lineno, col, token, occurrence))
+    entries.sort(key=lambda e: (e[0], e[1], e[2]))
+    return [f"{rel}:{token}:{occurrence}" for rel, _lineno, _col, token, occurrence in entries]
+
+
+def cmd_gen_allowlist(csrc_dir: Path) -> int:
+    lines = gen_allowlist_entries(csrc_dir)
     ALLOWLIST_PATH.parent.mkdir(parents=True, exist_ok=True)
-    ALLOWLIST_PATH.write_text("\n".join(entries) + "\n")
-    print(f"wrote {len(entries)} entries to {ALLOWLIST_PATH}")
+    ALLOWLIST_PATH.write_text("\n".join(lines) + "\n")
+    print(f"wrote {len(lines)} entries to {ALLOWLIST_PATH}")
     return 0
 
 

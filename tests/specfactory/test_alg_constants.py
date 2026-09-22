@@ -353,9 +353,9 @@ def test_lint_new_module_is_not_grandfathered(tmp_path):
 
 
 def test_lint_grandfathered_file_still_fails_on_a_literal_outside_the_allowlist(tmp_path):
-    """sim.c is grandfathered by exact file:line:col:token; a literal at a
-    location the allowlist does not name still fails -- grandfathering is
-    not a blanket exemption for the whole file."""
+    """sim.c is grandfathered by exact file:token:occurrence; a literal at
+    an occurrence the allowlist does not name still fails -- grandfathering
+    is not a blanket exemption for the whole file."""
     csrc = tmp_path / "csrc"
     csrc.mkdir()
     (csrc / "sim.c").write_text("double f(double x) { return x * 0.99; }\n")
@@ -365,18 +365,101 @@ def test_lint_grandfathered_file_still_fails_on_a_literal_outside_the_allowlist(
 
 
 def test_allowlist_file_exists_and_is_nonempty():
+    """New format: file:token:occurrence -- not file:line:col:token. See
+    test_alg_constants.py's --lint section below for why (line-keyed
+    entries went stale the moment a grandfathered file's lines shifted)."""
     assert ALLOWLIST.exists()
     lines = [l for l in ALLOWLIST.read_text().splitlines() if l.strip()]
     assert len(lines) > 0
     for line in lines:
-        path, lineno, col, token = line.split(":", 3)
+        path, token, occurrence = line.split(":", 2)
         assert path.startswith("csrc/")
         assert path.rsplit("/", 1)[-1] in ac.GRANDFATHERED_FILES
-        int(lineno)
-        int(col)
         assert token
+        assert int(occurrence) >= 1
 
 
 def test_lint_missing_dir_exits_2(tmp_path):
     proc = _run("--lint", str(tmp_path / "does_not_exist"))
     assert proc.returncode == 2, proc.stdout + proc.stderr
+
+
+# --------------------------------------------------------------------- allowlist keying (file:token:occurrence)
+
+
+def test_find_violations_with_occurrence_counts_repeats_in_order():
+    text = (
+        "double f(double x) {\n"
+        "    double a = x * 0.33;\n"
+        "    double b = x * 0.33;\n"
+        "    double c = x * 0.5;\n"
+        "    return a + b + c;\n"
+        "}\n"
+    )
+    keyed = ac.find_violations_with_occurrence(text)
+    occ_033 = [occurrence for _, _, token, occurrence in keyed if token == "0.33"]
+    assert occ_033 == [1, 2]
+    occ_05 = [occurrence for _, _, token, occurrence in keyed if token == "0.5"]
+    assert occ_05 == [1]
+
+
+def test_parse_allowlist_lines_matches_by_token_and_occurrence_not_position():
+    allowlist = ac.parse_allowlist_lines(["csrc/sim.c:0.33:2"])
+    assert allowlist.contains("csrc/sim.c", 99, 1, "0.33", 2)
+    assert not allowlist.contains("csrc/sim.c", 99, 1, "0.33", 1)
+    assert not allowlist.contains("csrc/sim.c", 99, 1, "0.5", 2)
+
+
+def test_parse_allowlist_lines_accepts_deprecated_format_with_warn(capsys):
+    """The pre-fix file:line:col:token format must not crash the lint --
+    it is parsed, matched by its original exact line/col, and warned
+    about so it gets regenerated."""
+    allowlist = ac.parse_allowlist_lines(["csrc/sim.c:59:26:0.40"])
+    warn_output = capsys.readouterr().out
+    assert "WARN" in warn_output
+    assert allowlist.contains("csrc/sim.c", 59, 26, "0.40", 1)
+    assert not allowlist.contains("csrc/sim.c", 60, 26, "0.40", 1)
+
+
+def test_parse_allowlist_lines_mixed_old_and_new_formats_does_not_crash(capsys):
+    allowlist = ac.parse_allowlist_lines([
+        "csrc/sim.c:59:26:0.40",
+        "csrc/agent.c:1.5:1",
+    ])
+    assert allowlist.contains("csrc/sim.c", 59, 26, "0.40", 1)
+    assert allowlist.contains("csrc/agent.c", 0, 0, "1.5", 1)
+    assert "WARN" in capsys.readouterr().out
+
+
+def test_gen_allowlist_entries_is_deterministic():
+    a = ac.gen_allowlist_entries(REPO / "csrc")
+    b = ac.gen_allowlist_entries(REPO / "csrc")
+    assert a == b
+
+
+def test_gen_allowlist_entries_new_format_matches_checked_in_file():
+    """The checked-in allowlist is exactly what --gen-allowlist produces
+    right now, in the new file:token:occurrence format."""
+    lines = ac.gen_allowlist_entries(REPO / "csrc")
+    checked_in = [l for l in ALLOWLIST.read_text().splitlines() if l.strip()]
+    assert lines == checked_in
+    for line in lines:
+        assert len(line.split(":")) == 3
+
+
+def test_lint_allowlist_survives_unrelated_line_shift_but_still_catches_new_literal():
+    """Regression for the incident this fix answers: csrc/sim.c changed
+    this morning, shifted every line below the edit, and the old
+    file:line:col:token allowlist keys went stale -- 82 false lint
+    failures on main, hand-regenerated at commit 349218b. Positive
+    control: inserting unrelated blank lines must not invalidate the
+    allowlist; appending a genuinely new literal must still fail."""
+    allowlist = ac.load_allowlist()
+    original = (REPO / "csrc" / "sim.c").read_text()
+
+    shifted = "\n\n\n" + original
+    assert ac.lint_file_violations("csrc/sim.c", shifted, allowlist, grandfathered=True) == []
+
+    appended = shifted.rstrip("\n") + "\ndouble om_scratch_probe(double x) { return x * 0.33; }\n"
+    messages = ac.lint_file_violations("csrc/sim.c", appended, allowlist, grandfathered=True)
+    assert any("0.33" in m for m in messages), messages
