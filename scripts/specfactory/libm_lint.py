@@ -1,13 +1,19 @@
 #!/usr/bin/env python3
-"""Fails on any call to a libm transcendental in csrc/*.c.
+"""Fails on any call to a libm transcendental, or another non-deterministic
+libc call, anywhere in csrc/**/*.c.
 
 CLAUDE.md's determinism contract: same seed, same command stream, byte-
 identical trace on Windows, macOS, and Linux -- "no platform transcendental
-calls without a deterministic implementation". `om_sin` and `om_pow` exist
-precisely so the sim never calls libm `sin()`/`pow()` (audit
-2026-09-21, finding 1: `pow()` was missed at `csrc/sim.c:206` until this
-fix). This lint is the mechanical backstop so the next miss is caught
-before it ships, not found by a platform build months later.
+calls without a deterministic implementation" and "no ... hash-order or
+wall-clock input to the sim". `om_sin` and `om_pow` exist precisely so the
+sim never calls libm `sin()`/`pow()` (audit 2026-09-21, finding 1: `pow()`
+was missed at `csrc/sim.c:206` until this fix). `rand`/`srand` bypass the
+sim's own seeded stream; `time`/`clock` are wall-clock; `qsort`/`bsearch`
+have platform-defined tie-break order for equal keys, which is a hash-order
+class non-determinism. This lint is the mechanical backstop so the next
+miss is caught before it ships, not found by a platform build months later.
+Recursive (csrc/**/*.c) so a subdirectory module (e.g. csrc/pipe/) is
+covered without a second lint to remember.
 
 Usage:
     scripts/specfactory/libm_lint.py [csrc_dir]
@@ -24,6 +30,7 @@ from pathlib import Path
 BANNED = [
     "pow", "exp", "log", "log2", "log10", "sin", "cos", "tan",
     "asin", "acos", "atan", "atan2", "sinh", "cosh", "tanh", "exp2", "cbrt",
+    "rand", "srand", "time", "clock", "qsort", "bsearch",
 ]
 ALLOWED = {"sqrt", "fabs", "floor", "ceil", "round", "trunc", "fmin", "fmax", "fmod"}
 
@@ -121,7 +128,7 @@ def lint_text(path_label: str, text: str) -> list[str]:
 
 def lint_dir(csrc_dir: Path) -> list[str]:
     messages: list[str] = []
-    for c_file in sorted(csrc_dir.glob("*.c")):
+    for c_file in sorted(csrc_dir.rglob("*.c")):
         messages.extend(lint_text(str(c_file), c_file.read_text()))
     return messages
 

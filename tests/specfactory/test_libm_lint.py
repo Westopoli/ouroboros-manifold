@@ -128,3 +128,58 @@ def test_negative_control_real_csrc_after_the_om_pow_fix_is_clean():
 def test_missing_csrc_dir_exits_2(tmp_path):
     proc = _run(tmp_path / "does_not_exist")
     assert proc.returncode == 2, proc.stdout + proc.stderr
+
+
+def test_newly_banned_functions_are_caught(tmp_path):
+    """CLAUDE.md's determinism contract also forbids wall-clock input and
+    hash/platform-order-dependent calls: rand/srand bypass the sim's own
+    seeded stream, time/clock are wall-clock, qsort/bsearch have
+    platform-defined tie-break order for equal keys."""
+    csrc = tmp_path / "csrc"
+    csrc.mkdir()
+    newly_banned = ["rand", "srand", "time", "clock", "qsort", "bsearch"]
+    body = "\n".join(f"int r{i} = (int){fn}(0);" for i, fn in enumerate(newly_banned))
+    (csrc / "fixture.c").write_text(f"void f(void) {{\n{body}\n}}\n")
+    proc = _run(csrc)
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert f"LIBM LINT FAILED ({len(newly_banned)})" in proc.stdout
+    for fn in newly_banned:
+        assert f"{fn}()" in proc.stdout
+
+
+def test_newly_banned_functions_om_prefixed_wrappers_not_flagged(tmp_path):
+    csrc = tmp_path / "csrc"
+    csrc.mkdir()
+    (csrc / "fixture.c").write_text(
+        "int om_rand(void) { return 0; }\n"
+        "void om_srand(unsigned s) { (void)s; }\n"
+        "long om_time(void) { return 0; }\n"
+        "void om_qsort(void *b, unsigned n) { (void)b; (void)n; }\n"
+        "int f(void) { return om_rand() + om_time() + (int)om_srand(0) + om_qsort(0, 0); }\n"
+    )
+    proc = _run(csrc)
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert "LIBM LINT OK" in proc.stdout
+
+
+def test_lint_is_recursive_into_subdirectories(tmp_path):
+    csrc = tmp_path / "csrc"
+    (csrc / "pipe").mkdir(parents=True)
+    (csrc / "pipe" / "om_pipe.c").write_text(
+        "double f(double x) { return pow(x, 0.3); }\n"
+    )
+    proc = _run(csrc)
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert "pow()" in proc.stdout
+    assert str(Path("pipe") / "om_pipe.c") in proc.stdout
+
+
+def test_lint_recursive_negative_control_clean_subdirectory(tmp_path):
+    csrc = tmp_path / "csrc"
+    (csrc / "pipe").mkdir(parents=True)
+    (csrc / "pipe" / "om_pipe.c").write_text(
+        "double f(double x) { return om_pow(x, 0.3); }\n"
+    )
+    proc = _run(csrc)
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert "LIBM LINT OK" in proc.stdout
