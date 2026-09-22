@@ -19,6 +19,7 @@
   ["call", "qa_recall", 2],
   ["state", "centred"],
   ["key", "Tab"],
+  ["screenshot", "after_tab"],
   ["state", "after_tab"],
   ["call", "qa_camera", 3000, 5900, 3000],
   ["key_down", "D"],
