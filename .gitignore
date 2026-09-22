@@ -29,3 +29,5 @@ graphify-out/raw/
 .venv/
 *.so
 *.o
+
+docs/northstar/research/mockups/**/*.import

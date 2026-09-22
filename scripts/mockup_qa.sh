@@ -57,7 +57,7 @@ cmd_run() {
     env -u DISPLAY -u WAYLAND_DISPLAY -u XAUTHORITY \
         LIBGL_ALWAYS_SOFTWARE=1 GALLIUM_DRIVER=llvmpipe LP_NUM_THREADS="$LP_NUM_THREADS" MOCKUP_PLANT="$plant" \
         timeout --kill-after=10 "$timeout" \
-        xvfb-run -a -s "-screen 0 ${res}x24" bash -c '
+        xvfb-run -a -s "-screen 0 ${res}x24 ${XVFB_EXTRA:--s 0}" bash -c '
             OUT="$1"; shift
             (
                 while true; do
@@ -164,7 +164,7 @@ cmd_liveness() {
     env -u DISPLAY -u WAYLAND_DISPLAY -u XAUTHORITY \
         LIBGL_ALWAYS_SOFTWARE=1 GALLIUM_DRIVER=llvmpipe LP_NUM_THREADS="$LP_NUM_THREADS" \
         timeout --kill-after=10 120 \
-        xvfb-run -a -s "-screen 0 1280x720x24" bash -c '
+        xvfb-run -a -s "-screen 0 1280x720x24 ${XVFB_EXTRA:--s 0}" bash -c '
             OUT="$1"; shift
             (
                 xdotool search --sync --name "^QA:" windowfocus --sync mousemove 640 360 click 1 key r
