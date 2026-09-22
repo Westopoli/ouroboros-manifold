@@ -22,3 +22,4 @@ Each brief is a self-contained task handed to an implementor chat, copied here o
 | 2026-09-22 | `2026-09-22-p7-chronicle-mockup.md` | Sonnet sub-agent, worktree branch `mockup/chronicle` | done, merged, reviewed, fixes merged `65ccda5`; ready for Westley |
 | 2026-09-22 | `2026-09-22-p8-hud-mockup.md` (camera, HUD, selection, S-P12) | Sonnet sub-agent, worktree branch `mockup/hud` | done, merged, reviewed, fixes merged `0d82c21`; ready for Westley |
 | 2026-09-22 | `2026-09-22-p9-menus-mockup.md` (menu, setup, briefing, debrief, S-P01 card) | Sonnet sub-agent, worktree branch `mockup/menus` | done 2026-09-22, merged `532eb9f`; reviewed, notes in its README; ready for Westley |
+| 2026-09-22 | `2026-09-22-two-day-push.md` (the approved plan: freeze, waves, attach gates, straggler rule, managers M0-M3) | M0 this session; M1-M3 chats Westley opens | running |
