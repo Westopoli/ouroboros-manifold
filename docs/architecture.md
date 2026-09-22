@@ -227,3 +227,70 @@ Added in Stage 11g (`stage_11g_world_view_inspection_spec.md`).
 - `delta()` never includes this field. Clients must not expect it in tick-delta payloads.
 
 Added in Wave 2.5R (`cover_asteroid_los_spec.md`).
+
+## C transport v1 (2026-09-22, the tick-delta rule: shapes first, then T1 builds them)
+
+The C pipe server (`pipe/ouroboros_pipe`, source `csrc/pipe/om_pipe.c`, piece T1) speaks to Godot over stdio with the same framing the old Python pipe used, so `autoload/sim_bridge.gd`'s reader is reused: **4-byte big-endian length prefix, then UTF-8 JSON**, both directions (the C server reads commands from stdin with the same framing; the temp-file command channel is retired). Every message has `"type"`. The server carries **no names, no positions, no prose** (decision C5): the client layout pass owns positions and the offline library owns names and prose; the server sends indices, ids, enum ints and numbers only. Keys are stable; a client ignores keys it does not know; a removed key fails `tests/transport/test_pipe_shapes.py`.
+
+Enums are sent as the header's integer values (`om_tier`, `om_archetype`, `om_stance`, `om_edge_type`, `om_feature`, `om_bug`); the client maps them through `EraThemeResolver` or a table, never by name.
+
+### hello (server to client, once)
+```json
+{"type":"hello","abi":2,"layout_ok":true,"seed":1,"n_regions":60,"features":[1,2,3,6],"checksum_cadence":10}
+```
+`abi` is `om_abi_version()`; `layout_ok` is `om_abi_layout_check(sizeof rows)`; `features` lists the enabled `om_feature` ids.
+
+### snapshot (server to client, on request and after `set_seed`/`load`)
+```json
+{"type":"snapshot","tick":10,"checksum":1234567890,
+ "regions":[{"i":0,"owner":-1,"tier":1,"military":12.5,"economy":30.0,"tension":8.0,"population":20.0,"stability":61.2,"capacity":44.0}],
+ "factions":[{"id":0,"archetype":2,"budget":100.0,"tech":1.5,"stance":[3,1,2]}],
+ "edges":[{"a":0,"b":1,"t":2}],
+ "telegraphs":[{"attacker":0,"target":7,"commit":40.0,"declared_tick":8}]}
+```
+`regions[i]` is by index; `owner` is `om_region_owner` (-1 unowned); the six numbers are the four fields and two composites, post-clamp, two decimals. `factions[].stance[k]` is `om_faction_stance(id, k)` for every faction k. `edges` is the full undirected edge list once (`a < b`). `telegraphs` is `om_pending_telegraphs`.
+
+### delta (server to client, every tick after a `step` or during `run_to`)
+```json
+{"type":"delta","tick":11,"checksum":0,
+ "regions":[{"i":3,"owner":0,"military":11.0,"economy":30.4,"tension":7.5,"population":20.1,"stability":62.0,"capacity":44.2}],
+ "events":[{"tick":11,"region":3,"template":5,"chain":-1,"source":0,"delta":[0,-2.0,3.0,0],"creates_faction":0}],
+ "attacks":[{"attacker":0,"target":7,"band":2,"conquest":1,"d_military":-13.6,"d_economy":-5.4,"d_tension":10.9,"collision":0}],
+ "collisions":[{"target":7,"factions":[0,1],"winner":0,"margin":0.741,"refund":6.2}],
+ "revolts":[{"region":9,"faction":1,"roll":0.02}],
+ "factions":[{"id":0,"budget":60.0,"tech":1.5}]}
+```
+Only regions whose stored values changed appear; `checksum` is the world checksum on cadence ticks, else 0; the lists come from `om_tick_events`, `om_tick_attacks`, `om_tick_collisions`, `om_tick_admin_rolls` and are empty arrays when nothing fired. A client that misses a delta requests a snapshot.
+
+### command (client to server)
+```json
+{"type":"cmd","name":"step","n":1}
+{"type":"cmd","name":"run_to","tick":500}
+{"type":"cmd","name":"snapshot"}
+{"type":"cmd","name":"set_seed","seed":7,"n_regions":60,"features":[1,2,3,6]}
+{"type":"cmd","name":"set_feature","feature":4,"on":true}
+{"type":"cmd","name":"inject","bug":6}
+{"type":"cmd","name":"save","path":"saves/slot1.omsave"}
+{"type":"cmd","name":"load","path":"saves/slot1.omsave"}
+{"type":"cmd","name":"quit"}
+```
+Every command is answered by `{"type":"ack","name":"...","tick":N}` or `{"type":"error","name":"...","reason":"..."}`; `run_to` streams deltas then one ack. `inject` exists only in the debug build (`error` otherwise). `save`/`load` use T2's `om_save_state_*` and reply with the post-load `snapshot`.
+
+### tactical snapshot (v1 tactical, once B10/B12 attach; sent on `snapshot` when a tactical map is loaded)
+```json
+{"type":"tactical","tick":120,"map":{"canvas":16000,"nodes":[{"i":0,"kind":0,"x":8000.0,"y":9200.0}],"cover":[{"x":1.0,"y":2.0,"r":120.0,"h":40.0}],"obstacles":[{"x":1.0,"y":2.0,"r":200.0}]},
+ "units":[{"id":4,"faction":0,"type":1,"tier":2,"x":100.0,"y":200.0,"hp":80.0,"layer":1,"facing":1.57,"target":-1,"state":0}],
+ "visible":{"0":[4,5,9]}}
+```
+Tactical positions are sim state (units move in the sim), so they are sent; strategic region positions are not. `visible[faction]` is `om_visibility_compute`'s set for that faction.
+
+### chronicle frame, mission frame, debrief frame (on `snapshot` after a jump, mission start, mission end)
+```json
+{"type":"chronicle","jump":{"from_tick":100,"to_tick":150},"entries":[{"id":12,"start_tick":103,"end_tick":110,"category":3,"cluster_type":1,"refs":{"regions":[3,4],"factions":[0]},"fragment":417,"significance":0.8}]}
+{"type":"mission","archetype":2,"region":7,"deadline_ticks":900,"objectives":[{"i":0,"kind":1,"node":3,"primary":true,"radius":300.0,"progress":0.0}],"force":{"types":[2,2,1,0,0,0],"tiers":[2,2,1,0,0,0]}}
+{"type":"debrief","band":2,"achieved":0.8,"brought_home":0.6,"region_delta":{"military":-4.0,"economy":2.0,"tension":-3.0,"population":0.0}}
+```
+`fragment` is a library id; the client renders prose from `library/chronicle/fragments.json`. Objective `kind` and `node` are E-10/E-17 enums and node indices; names come from the client's layout pass.
+
+### Schemas and fixture
+`docs/northstar/spec_factory/transport/{snapshot,delta,command}.schema.json` (JSON Schema, draft 2020-12, `additionalProperties: true`, required keys as above); `tests/transport/fixtures/snapshot_seed1_tick10.json` is produced through ctypes by `scripts/specfactory/snapshot_fixture.py --seed 1 --regions 60 --ticks 10` and is the client pieces' stand-in until T1 attaches; `tests/transport/test_pipe_shapes.py` validates the fixture against the schema and, once `pipe/ouroboros_pipe` exists, drives it with a 10-step script and asserts the streamed checksum equals `om_world_get_state_checksum` through ctypes.

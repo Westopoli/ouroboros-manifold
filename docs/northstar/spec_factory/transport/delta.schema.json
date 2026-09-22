@@ -1,0 +1,89 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "delta.schema.json",
+ "type": "object",
+ "required": [
+  "type",
+  "tick",
+  "checksum",
+  "regions",
+  "events",
+  "attacks",
+  "collisions",
+  "revolts",
+  "factions"
+ ],
+ "properties": {
+  "type": {
+   "const": "delta"
+  },
+  "tick": {
+   "type": "integer"
+  },
+  "checksum": {
+   "type": "integer"
+  },
+  "regions": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "i",
+     "owner",
+     "military",
+     "economy",
+     "tension",
+     "population",
+     "stability",
+     "capacity"
+    ],
+    "properties": {
+     "i": {
+      "type": "integer"
+     },
+     "owner": {
+      "type": "integer"
+     },
+     "tier": {
+      "type": "integer"
+     },
+     "military": {
+      "type": "number"
+     },
+     "economy": {
+      "type": "number"
+     },
+     "tension": {
+      "type": "number"
+     },
+     "population": {
+      "type": "number"
+     },
+     "stability": {
+      "type": "number"
+     },
+     "capacity": {
+      "type": "number"
+     }
+    },
+    "additionalProperties": true
+   }
+  },
+  "events": {
+   "type": "array"
+  },
+  "attacks": {
+   "type": "array"
+  },
+  "collisions": {
+   "type": "array"
+  },
+  "revolts": {
+   "type": "array"
+  },
+  "factions": {
+   "type": "array"
+  }
+ },
+ "additionalProperties": true
+}

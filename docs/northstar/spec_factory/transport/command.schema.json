@@ -1,0 +1,58 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "command.schema.json",
+ "type": "object",
+ "required": [
+  "type",
+  "name"
+ ],
+ "properties": {
+  "type": {
+   "const": "cmd"
+  },
+  "name": {
+   "enum": [
+    "step",
+    "run_to",
+    "snapshot",
+    "set_seed",
+    "set_feature",
+    "inject",
+    "save",
+    "load",
+    "quit"
+   ]
+  },
+  "n": {
+   "type": "integer"
+  },
+  "tick": {
+   "type": "integer"
+  },
+  "seed": {
+   "type": "integer"
+  },
+  "n_regions": {
+   "type": "integer"
+  },
+  "features": {
+   "type": "array",
+   "items": {
+    "type": "integer"
+   }
+  },
+  "feature": {
+   "type": "integer"
+  },
+  "on": {
+   "type": "boolean"
+  },
+  "bug": {
+   "type": "integer"
+  },
+  "path": {
+   "type": "string"
+  }
+ },
+ "additionalProperties": true
+}
