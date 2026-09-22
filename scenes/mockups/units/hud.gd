@@ -6,7 +6,7 @@ const DEFAULT_KIT := "greek"
 const DEFAULT_SCENARIO := "lineup"
 const SCENARIO_NAMES := ["lineup", "mirror_10v10", "bombards_1000", "flank_4v4", "formation_move", "plain_move_under_fire"]
 
-var _sim: ToySim
+var _sim: UnitsToySim
 var _roster: Roster
 var _kits: Dictionary = {}
 var _scenarios: Dictionary = {}
@@ -48,7 +48,7 @@ func _ready() -> void:
 	_roster = _kits.get(_kit_name, Roster.new())
 	_view.set_roster(_roster)
 
-	_sim = ToySim.new()
+	_sim = UnitsToySim.new()
 	for name in SCENARIO_NAMES:
 		_scenario_option.add_item(name)
 	_scenario_option.item_selected.connect(_on_scenario_selected)
@@ -63,8 +63,8 @@ func _process(delta: float) -> void:
 	if _playing:
 		_tick_accum += delta
 		var steps := 0
-		while _tick_accum >= ToySim.TICK_DT and steps < 40:
-			_tick_accum -= ToySim.TICK_DT
+		while _tick_accum >= UnitsToySim.TICK_DT and steps < 40:
+			_tick_accum -= UnitsToySim.TICK_DT
 			_sim.step()
 			steps += 1
 		if steps > 0:
@@ -335,7 +335,7 @@ func qa_set(name: String, value) -> void:
 			_set_kit(String(value))
 
 
-func get_sim() -> ToySim:
+func get_sim() -> UnitsToySim:
 	return _sim
 
 

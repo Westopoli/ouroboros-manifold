@@ -49,19 +49,19 @@ func _load_roster(kit: String) -> Roster:
 	return Roster.load_kit(KITS_DIR + kit + ".json")
 
 
-func _sim_for(kit: String, name: String, p_seed: int) -> ToySim:
-	var sim := ToySim.new()
+func _sim_for(kit: String, name: String, p_seed: int) -> UnitsToySim:
+	var sim := UnitsToySim.new()
 	sim.reset(_load_roster(kit), _load_scenario(name), p_seed)
 	return sim
 
 
-func _sim_for_dict(kit: String, scenario: Dictionary, p_seed: int) -> ToySim:
-	var sim := ToySim.new()
+func _sim_for_dict(kit: String, scenario: Dictionary, p_seed: int) -> UnitsToySim:
+	var sim := UnitsToySim.new()
 	sim.reset(_load_roster(kit), scenario, p_seed)
 	return sim
 
 
-func _run_n(sim: ToySim, n: int) -> void:
+func _run_n(sim: UnitsToySim, n: int) -> void:
 	for i in range(n):
 		sim.step()
 
@@ -348,7 +348,7 @@ func _arg_max(d: Dictionary) -> String:
 	return best
 
 
-func _count_alive(sim: ToySim, faction: int) -> int:
+func _count_alive(sim: UnitsToySim, faction: int) -> int:
 	var n := 0
 	for u in sim.units:
 		if u.alive and u.faction == faction:
@@ -376,7 +376,7 @@ func _line_vs_strike_variant() -> Dictionary:
 	}
 
 
-func _no_obstacle_overlap(sim: ToySim, obstacles: Array) -> bool:
+func _no_obstacle_overlap(sim: UnitsToySim, obstacles: Array) -> bool:
 	for u in sim.units:
 		if not u.alive:
 			continue
@@ -386,7 +386,7 @@ func _no_obstacle_overlap(sim: ToySim, obstacles: Array) -> bool:
 	return true
 
 
-func _min_separation_ok(sim: ToySim) -> bool:
+func _min_separation_ok(sim: UnitsToySim) -> bool:
 	for i in range(sim.units.size()):
 		var a = sim.units[i]
 		if not a.alive:
@@ -398,7 +398,7 @@ func _min_separation_ok(sim: ToySim) -> bool:
 	return true
 
 
-func _moving_units_face_heading(sim: ToySim) -> bool:
+func _moving_units_face_heading(sim: UnitsToySim) -> bool:
 	for u in sim.units:
 		if not u.alive or u.order.is_empty():
 			continue
@@ -430,7 +430,7 @@ func _face6_variant() -> Dictionary:
 	}
 
 
-func _attackers_face_targets(sim: ToySim) -> bool:
+func _attackers_face_targets(sim: UnitsToySim) -> bool:
 	var any := false
 	for u in sim.units:
 		if not u.alive or u.target == null:
@@ -445,14 +445,14 @@ func _attackers_face_targets(sim: ToySim) -> bool:
 	return any
 
 
-func _movers_never_targeted(sim: ToySim) -> bool:
+func _movers_never_targeted(sim: UnitsToySim) -> bool:
 	for u in sim.units:
 		if u.faction == 0 and u.target != null:
 			return false
 	return true
 
 
-func _any_mover_targeted(sim: ToySim) -> bool:
+func _any_mover_targeted(sim: UnitsToySim) -> bool:
 	for u in sim.units:
 		if u.faction == 0 and u.target != null:
 			return true
@@ -469,7 +469,7 @@ func _advance_to_first_death(root, max_ticks: int) -> Dictionary:
 	return {"uid": -1, "tick": -1}
 
 
-func _arrival_spread(sim: ToySim, max_ticks: int) -> int:
+func _arrival_spread(sim: UnitsToySim, max_ticks: int) -> int:
 	var arrival := {}
 	for t in range(max_ticks):
 		sim.step()
@@ -488,7 +488,7 @@ func _arrival_spread(sim: ToySim, max_ticks: int) -> int:
 	return int(mx - mn)
 
 
-func _arrival_tick(sim: ToySim, uid: int, max_ticks: int) -> int:
+func _arrival_tick(sim: UnitsToySim, uid: int, max_ticks: int) -> int:
 	for t in range(max_ticks):
 		sim.step()
 		if sim.get_unit(uid).order.is_empty():

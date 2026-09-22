@@ -1,4 +1,4 @@
-class_name ToySim
+class_name UnitsToySim
 extends RefCounted
 
 const QaPlants := preload("res://scenes/mockups/_shared/qa_plants.gd")
