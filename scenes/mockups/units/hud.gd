@@ -382,12 +382,15 @@ func get_state_dict() -> Dictionary:
 	var bboxes := {}
 	for role in Roster.ROLE_ORDER:
 		bboxes[role] = _roster.get_silhouette(role).get("size", [0, 0, 0])
+	var pan: Vector2 = _camera_rig.get_pan_target()
 	return {
 		"seed": _seed,
 		"hash": _sim.compute_hash(),
 		"kit": _kit_name,
 		"scenario": _scenario_name,
 		"tick": _sim.current_tick,
+		"playing": _playing,
+		"camera_pos": [pan.x, pan.y],
 		"alive": {"0": alive.get(0, 0), "1": alive.get(1, 0)},
 		"units": units_dict,
 		"units_px": units_px,
