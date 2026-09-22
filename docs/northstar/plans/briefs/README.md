@@ -27,7 +27,7 @@ Each brief is a self-contained task handed to an implementor chat, copied here o
 | 2026-09-22 | `2026-09-22-manager-M2.md` (push manager M2; rules in `2026-09-22-manager-common.md`) | Sonnet chat Westley opens in `~/Projects/om-push/m2` | ready to hand |
 | 2026-09-22 | `2026-09-22-manager-M3.md` (push manager M3; rules in `2026-09-22-manager-common.md`) | Sonnet chat Westley opens in `~/Projects/om-push/m3` | ready to hand |
 | 2026-09-22 | `2026-09-22-p1-galaxy-mockup-pass2.md` (legacy look on the new generator, shells, Play restart) | Sonnet sub-agent, worktree branch `mockup/galaxy-pass2` | running |
-| 2026-09-22 | `2026-09-22-p3-objectives-mockup-pass2.md` (edge scroll on large screens, regenerate advances the seed) | Sonnet sub-agent, worktree branch `mockup/objectives-pass2` | running |
+| 2026-09-22 | `2026-09-22-p3-objectives-mockup-pass2.md` (edge scroll on large screens, regenerate advances the seed) | Sonnet sub-agent, worktree branch `mockup/objectives-pass2` | done, merged 2026-09-22; fog and hud share the window-size defect |
 | 2026-09-22 | `2026-09-22-p4-units-mockup-pass2.md` (sim runs by default, drag box, edge scroll, HUD hover) | Sonnet sub-agent, worktree branch `mockup/units-pass2` | running |
 | 2026-09-22 | `2026-09-22-p5-fog-mockup-pass2.md` (edge scroll, seed perturbs the map) | Sonnet sub-agent, worktree branch `mockup/fog-pass2` | running |
 | 2026-09-22 | `2026-09-22-p6-layers-mockup-pass2.md` (runs on launch, pick and edges in one space, seed perturbs the map, self-demo) | Sonnet sub-agent, worktree branch `mockup/layers-pass2` | running |
