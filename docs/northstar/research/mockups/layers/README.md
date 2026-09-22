@@ -40,10 +40,10 @@ consequence of R-005-01/02, confirmed in the real run: `visible_enemy_uids` goes
 `[102]` to `[102, 103]` exactly when unit 1 completes its transfer).
 
 Ordering the fast unit up starts its transition the same tick (measured: unit 1's screen
-position moves from y=538.9px to y=407.3px, an 18.3% shift of the 720px window height —
-well past the R-010-03 5% bar); the slow unit visibly lags it (proven headless and in the
-`_qa_state` data; the screenshot meant to show it, `slow_mid.png`, hit the darkening bug
-below). Each unit's ring is one of two colours and flips only on the tick its discrete
+position moves from y=538.9 to y=407.3 in the project's fixed 1920x1080 design space, a
+12.2% shift of window height — well past the R-010-03 5% bar); the slow unit visibly lags
+it (proven headless, in the `qa_state` data, and — subtly, at this camera distance — in
+`slow_mid.png`). Each unit's ring is one of two colours and flips only on the tick its discrete
 `layer` field changes — not the tick the height starts moving — matching R-009-01's "ring
 colour changes on the tick the layer changes" against R-010-02's "height moves as a lerp,
 not a snap": the two events are on purpose not simultaneous, the ring lags the rise by the
@@ -57,58 +57,56 @@ All ten checks and all six plants pass. Full table with clean/planted results:
 id in `instant-transfer`, `blocked-ignored`, `cross-layer-full-range`, `ring-colour-same`,
 `no-dimming`, `wrong-height`.
 
-## The Xvfb visual batch is incomplete — host contention, not a scene bug
+## The Xvfb visual batch: complete
 
-Every `scripts/mockup_qa.sh run` attempt against the full `qa/smoke.json` — four separate
-tries, up to a 25-minute timeout — captured the same first four screenshots
-(`transfer_before`, `transfer_mid`, `transfer_after`, `slow_mid`) within seconds, then
-stalled indefinitely before the fifth (`focus1`). At the time of this build the shared
-host was running 31 concurrent Godot/Xvfb processes from other agent sessions (load
-average 18-22 on 16 cores, 833MB RAM free of 30GB). A control probe during one stall found
-the Godot process at 155% CPU, `wchan=futex_do_wait` — busy, not deadlocked.
+The first pass through this mockup hit a real stall after the fourth or fifth
+screenshot, initially misread as host contention. The actual cause, found and fixed on
+`main` in this session: Godot instantiates the project's 19 autoloads even under
+`--script` boot; in a git worktree the `SimBridge` autoload's Python sim dies at once (no
+built `libouroboros.so`), `SimBridge` routes `SceneRouter` to the error screen, whose
+0.3s fade to black is the progressive per-screenshot dimming earlier builders saw, and
+whose scene swap frees the mockup mid-script — which is the stall the next `screenshot`
+verb waited forever on. `qa_boot.gd` now frees every autoload before instantiating the
+mockup (`b65afa8`); a separate, smaller fix disabled Xvfb's screensaver (`-s 0`,
+`a98c47f`), which was a reasonable suspect at the time but not the actual cause. With
+both fixes on `main`, two full clean runs, all six plant runs, and the 1920x1080 review
+batch each finish in 6-10 seconds, `exit 0`, zero errors, zero stalls.
 
-A trivial isolation probe (seed, camera, five bare `screenshot` calls, nothing else)
-reproduces the identical stall at the identical 5th call and the identical brightness
-curve (mean pixel value 0.433 → 0.387 → 0.338 → 0.289 across the four frames that do
-render), which rules out this mockup's own code as the cause — a near-empty static scene
-degrades exactly the same way. `--grab external` and disabling `DirectionalLight3D`
-shadows were both tried and both ruled out (see `qa/checklist.md` for the full trail).
-Per this brief's own instruction ("if the harness is broken, stop and report; do not patch
-it") and since `scenes/mockups/_shared/**` is fenced regardless: stopped, documented,
-did not touch it.
+Full check table, every Xvfb oracle (clean and planted), and the DET-1 pixel/hash
+comparison: `scenes/mockups/layers/qa/checklist.md`. Headline: `clean1` vs `clean2`
+hash-identical at every one of 9 checkpoints; every screenshot pixel-diffs at 0.000000
+except `blocked_cleared.png` at 0.000041 (both under the 0.005 bar). All six plants show
+every oracle on the wrong side of its threshold, confirming each fault site is live and
+each check would actually catch it.
 
-What the four screenshots that did render, plus their `qa_state()` dumps, do prove:
-hash-identical determinism across two independent process runs 40 minutes apart at every
-checkpoint both reached (tick 0/10/30), `transfer_before.png` pixel-diffing at 0.004270
-between those runs (under the brief's 0.005 bar), and the numeric HEIGHT-X/MID-X/RING-X
-oracles all passing. What is `HELD`: the focus-strip/dimming pair (`focus1.png`/
-`focus2.png`) and the blocked-transfer pair (`blocked_attempt.png`/`blocked_cleared.png`)
-never rendered, so `DIM-X` and `BLOCK-X` are proven only headlessly (`DIM-8`, `BLOCK-3` in
-`verify.gd`), not visually. The pass-1 batch below is the 4 screenshots at 1280x720 (the
-functional-run resolution), not the specified 1920x1080 review batch — attempting the
-larger, more expensive resolution was not worth it while every 720p attempt itself was
-stalling. **Re-running the QA batch and the 1920x1080 review batch on a quieter host is
-the one remaining step; nothing in the mockup's code needs to change first.**
+One inconsistency in the original `qa/smoke.json` was fixed this session: its
+blocked-transfer demonstration ordered the unit to layer 1 (`qa_transfer 1 1`), and
+`toy_sim.gd`'s blocked mask only ever applies to a transfer whose target is layer 2, so
+nothing was ever actually blocked. The script now parks the unit on the blocked patch's
+centre cell and orders it to layer 2 (`qa_transfer 1 2`) — genuinely blocked, 30 ticks
+pending, then moved clear and completing. Screenshot names unchanged.
 
 ## What the report answers
 
-1. **Does the two-layer idea read at this camera pitch and height spacing?** Yes, as far
-   as the evidence goes: the layer-2 unit is unambiguously higher on screen (18.3% of the
-   window, `transfer_after.png`), and the rise reads as continuous motion, not a snap
-   (`transfer_mid.png` sits strictly between before/after both on screen and in
-   `units_px`). Held: whether the *dimming* half of "which layer is focused" reads, since
-   `focus1.png`/`focus2.png` never rendered.
-2. **250wu vs 2,000wu layer height:** not tried — the host stall consumed the time budget
-   before this A/B could be run. Listed as open below with the same three candidates the
-   brief named.
-3. **Does dimming or the translucent upper plane hurt reading the lower layer?** Held —
-   same reason.
+1. **Does the two-layer idea read at this camera pitch and height spacing?** Yes: the
+   layer-2 unit is unambiguously higher on screen (12.2% of the project's 1080-height
+   design resolution, `transfer_after.png`), the rise reads as continuous motion, not a
+   snap (`transfer_mid.png` sits strictly between before/after), and the focus
+   strip/dimming pair reads cleanly (`focus1.png` vs `focus2.png`, 0.21 pixel-diff). See
+   the Q1/Q3 answers in `qa/checklist.md`.
+2. **250wu vs 2,000wu layer height:** not tried this pass — out of this session's scope
+   (fixing the smoke script and completing the QA batch); still open below with the same
+   three candidates the brief named.
+3. **Does dimming or the translucent upper plane hurt reading the lower layer?** No —
+   `focus1.png`/`focus2.png` show the non-focused layer legibly dimmed (alpha 0.4) without
+   losing the ability to see where its units/ground are; the translucent layer-2 plane
+   (alpha 0.25) keeps layer 1 visible underneath it in every screenshot that frames both.
 4. **Frame time under llvmpipe at 720p:** Godot's own per-frame CPU accounting
-   (`_qa.fps_ms`) was 339/258/258/239ms across the four frames that rendered — not itself
-   alarming — but wall-clock time between frames was minutes, not milliseconds, under the
-   host's 18-22 load average; see the contention section above. `ToySim.step()` itself
-   (the actual sim cost, independent of rendering) is 0.005-0.007ms/tick — trivial, 20Hz
-   is not remotely a bottleneck.
+   (`_qa.fps_ms`) ranges 188-365ms across the 9 captured frames (heaviest at boot, settling
+   to 188-222ms once warmed up) — not alarming. `ToySim.step()` itself (the actual sim
+   cost, independent of rendering) is 0.0039-0.0043ms/tick — trivial, 20Hz is nowhere near
+   a bottleneck. Wall time for the full clean smoke run (8 screenshots, 9 state dumps): 6
+   seconds.
 5. **Under-defined points**, each with candidates, no decision made:
    - **Layer height (`LAYER_HEIGHT`).** Candidate used: 600wu. Alternatives: 250wu (closer
      to the legacy tactical code's `EraConfig.LAYER_HEIGHT`, but that constant is itself
@@ -136,22 +134,34 @@ the one remaining step; nothing in the mockup's code needs to change first.**
      speed came from the tactical-scale config as given; whether they still read as
      "a commitment" at the landscape mockup's much larger canvas (hundreds to thousands of
      wu per screen) is untested — no landscape-scale layer fixture exists yet.
-   - **`qa_transfer 1 1` in the smoke script's block sequence.** `toy_sim.gd`'s blocked
-     mask exists only on layer 2 (matches the brief's own toy_sim spec, word for word); the
-     smoke script's final block-demonstration segment orders the unit *down* to layer 1,
-     which can never be blocked under that spec, so `blocked_attempt.png`/
-     `blocked_cleared.png` (even if they had rendered) would not have shown a real block.
-     R-002-02 is fully proven instead by the headless `BLOCK-3` check, which orders a unit
-     *up* into the blocked cell. Candidates for a corrected script: (a) send the unit back
-     up (`qa_transfer 1 2`) at the blocked position instead of down; (b) also gate layer 1
-     at the obstacle's own footprint (distinct from the wider layer-2-only margin) so a
-     downward order can be blocked too, matching "the tall obstacle spans both layers" in
-     the render spec even though the movement/transfer spec never says so.
    - **Sensor ring size/legibility (Q5).** At 800wu on a 4,000wu canvas the own-layer
-     sensor ring is close to 40% of the frame width — legible in the one shot that shows
-     it (`transfer_mid.png`) but large enough to dominate the frame. Candidates: scale the
-     ring's *visual* radius down from the true sensor radius (readability over literal
-     accuracy) vs. leave it literal and rely on a taller camera height by default.
+     sensor ring is close to 40% of the frame width — legible in every shot that shows it
+     but large enough to dominate the frame. Candidates: scale the ring's *visual* radius
+     down from the true sensor radius (readability over literal accuracy) vs. leave it
+     literal and rely on a taller camera height by default.
+   - **The blocked demonstration's parked position occludes the unit (Q4).** Fixed this
+     session so the block is genuine (see above), but parking the unit at the blocked
+     patch's exact centre also parks it directly under the tall obstacle box, which fully
+     occludes it in `blocked_attempt.png` from the script's fixed camera angle — a viewer
+     can only tell it's waiting from the HUD list, not the 3D view. Candidates: (a) park
+     it at a position inside the 350wu blocked radius but outside the 150wu obstacle
+     footprint (e.g. `(2000, 2300)`) so it stays visible; (b) shrink the obstacle's
+     footprint relative to the blocked radius so no blocked cell is ever fully hidden
+     behind it.
+   - **A camera-angle-dependent transparency artifact (not fixed).** In
+     `transfer_before.png`, unit 1 does not render at the `qa_camera 2500 2000 2000`
+     angle used throughout the script, though its own sensor ring (correctly centred on
+     it) does — confirmed by a throwaway diagnostic (camera repositioned directly over the
+     unit shows it fully present, selected, correctly coloured) that this is not a
+     spawn/visibility bug. At this one camera/position combination, unit 1's view ray
+     passes through the blocked patch's translucent plane (both the patch and the unit
+     body use `TRANSPARENCY_ALPHA`) before reaching the unit, and the transparent-pass
+     sort appears to composite the patch over the unit instead of blending the two. It
+     recurs nowhere else in the batch and doesn't affect any Q1-Q6 answer
+     (`transfer_mid.png`/`transfer_after.png` show the same unit cleanly), so left as a
+     finding rather than a fix. Candidates: stop giving opaque-alpha unit bodies
+     `TRANSPARENCY_ALPHA` (only enable it when actually dimmed); or don't let a unit's
+     default framing ray cross the blocked patch.
 6. **Anything arguing the two-layer/blocked-mask idea doesn't hold?** No — every headless
    check passed on the first real implementation attempt (build order: `toy_sim`
    transfers+blocking, then vision, then the view, then camera/HUD/input — see `git log`),
@@ -162,20 +172,20 @@ the one remaining step; nothing in the mockup's code needs to change first.**
 ## Questions for Westley
 
 1. Is 600wu the right layer-height candidate, or does one of 250/2,000wu read better —
-   worth a quick A/B once a clean Xvfb pass exists (blocked this round by host load, see
-   above)?
+   worth a quick A/B (not run this pass, out of scope for the QA-batch fix)?
 2. Camera pitch: keep the fixed 60° this mockup uses (height reads clearly, closer to the
    game's likely tactical camera) or match R-103-03's stated top-down interim?
 3. Is the own-layer sensor ring, drawn at the unit's literal true-scale sensor radius, too
    dominant on screen at this canvas size — should sensor rings be visually de-emphasised
    independent of the real detection radius?
-4. Does the smoke script's block-demo sequence need a rewrite (see the `qa_transfer 1 1`
-   item above), or is a headless-only proof of R-002-02 sufficient and the smoke script's
-   last two screenshots should just be dropped/replaced with something else?
+4. The blocked demonstration currently parks the unit exactly under the obstacle, which
+   hides it behind the obstacle's own opaque geometry (see "The blocked demonstration's
+   parked position occludes the unit" above) — worth a follow-up shot at a blocked-but-
+   visible position, or is the HUD-only "still L1" readout enough?
 
 ## Next step
 
-The pass-1 screenshots (4 of the intended 8, 1280x720, not yet the 1920x1080 review batch
-— see "The Xvfb visual batch is incomplete" above) are committed under `pass1/`. The
-mockup itself is done and green (`VERIFY OK`, all 6 plants `LIVE`); it awaits a quieter
-host for the remaining QA batch and Westley's look.
+All 8 pass-1 screenshots (1920x1080, the full review batch: before, mid, after, slow mid,
+focus 1, focus 2, blocked attempt, blocked cleared) are committed under `pass1/`. The
+mockup is done and green (`VERIFY OK`, all 6 plants `LIVE`, both clean Xvfb runs and all
+plant runs `exit 0` with zero errors) — it awaits Westley's look.
