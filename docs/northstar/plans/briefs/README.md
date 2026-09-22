@@ -11,4 +11,5 @@ Each brief is a self-contained task handed to an implementor chat, copied here o
 | 2026-09-21 | `2026-09-21-px-batch-a-sim-replays.md` (PX-4, PX-7, PX-14, PX-19) | implementor chat | done 2026-09-21; `proving_ground/PX-batch-A-finishing-report.md` |
 | 2026-09-21 | `2026-09-21-px-batch-b-spec-content-boundary.md` (PX-1, PX-10, PX-11) | not yet handed | |
 | 2026-09-21 | `2026-09-21-px-batch-c-vision-archive.md` (PX-12, PX-9) | not yet handed | |
-| 2026-09-21 | `2026-09-21-executor-audit-fixes.md` (S-039 wiring and re-cut, E-04 re-cut, om_pow, fuel lint, DAG emitter, stale docs) | not yet handed | |
+| 2026-09-21 | `2026-09-21-executor-audit-fixes.md` (S-039 wiring and re-cut, E-04 re-cut, om_pow, fuel lint, DAG emitter, stale docs) | Sonnet sub-agent in the design chat | running |
+| 2026-09-21 | `2026-09-21-agora-cascade-safety-seat-scheduler.md` (three waves, gated on the executor brief) | not yet handed | |
