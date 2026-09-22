@@ -24,6 +24,7 @@ func _initialize() -> void:
 	_check_pause()
 	_check_morph()
 	_check_layout()
+	_check_background()
 
 	for id in PLANTS:
 		_assert(_root.qa_plant(id), "qa_plant(%s) must return true" % id)
@@ -170,6 +171,14 @@ func _check_layout() -> void:
 	_assert(is_equal_approx(float(_root.qa_state().map_width_fraction), 1.0), "map_width_fraction must be 1.0 at the end")
 	var on_screen: int = _root._scroll._list.get_child_count()
 	_assert(on_screen == _root._jump.entries.size(), "on-screen entry count %d must equal validated count %d" % [on_screen, _root._jump.entries.size()])
+
+
+# plant: none
+func _check_background() -> void:
+	var env: Environment = _root.get_node("MapViewport/SubViewport/WorldEnvironment").environment
+	_assert(env.background_mode == Environment.BG_COLOR, "map environment must use BG_COLOR, not BG_SKY, for background_color to render")
+	var c: Color = env.background_color
+	_assert(c.r < 0.08 and c.g < 0.08 and c.b < 0.12, "map environment background_color must be near-black, got %s" % c)
 
 
 func _make_synthetic_fixture(n: int, with_keyframes: bool) -> Dictionary:
