@@ -1,0 +1,12 @@
+{
+  "window": "last 150 dispatch->build/burn ticks",
+  "first_line": 106844,
+  "last_line": 117198,
+  "first_dt": "2026-09-16 11:58:28",
+  "last_dt": "2026-09-20 16:22:57",
+  "count": 149,
+  "median_s": 683.0,
+  "p90_s": 2709.0,
+  "max_s": 58003.0,
+  "over_300s_count": 125
+}

@@ -1,0 +1,17 @@
+{
+  "total_pairs": 468,
+  "back_to_back_pairs (zero intervening dispatcher ticks of any kind)": {
+    "count": 431,
+    "median": 62.0,
+    "p90": 2032.0,
+    "max": 86640.0,
+    "over_300s": 177
+  },
+  "loose_pairs (queue had nothing else due, or a lower-priority tick ran between)": {
+    "count": 37,
+    "median": 5627.0,
+    "p90": 58003.0,
+    "max": 1433794.0,
+    "over_300s": 35
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "cron_log": "/home/westopoli/Projects/agora/runs/cron.log",
+  "dispatch_tick_count": 469,
+  "gap_count": 468,
+  "median_s": 134.0,
+  "p90_s": 2205.0,
+  "max_s": 1433794.0,
+  "over_300s_count": 212,
+  "worst_pairs": [
+    {
+      "from_line": 7144,
+      "to_line": 80669,
+      "gap_s": 1433794.0
+    },
+    {
+      "from_line": 86558,
+      "to_line": 103261,
+      "gap_s": 317958.0
+    },
+    {
+      "from_line": 80669,
+      "to_line": 86353,
+      "gap_s": 269842.0
+    },
+    {
+      "from_line": 3233,
+      "to_line": 7077,
+      "gap_s": 91861.0
+    },
+    {
+      "from_line": 3173,
+      "to_line": 3175,
+      "gap_s": 86640.0
+    },
+    {
+      "from_line": 114290,
+      "to_line": 117162,
+      "gap_s": 58003.0
+    },
+    {
+      "from_line": 107088,
+      "to_line": 109059,
+      "gap_s": 41348.0
+    },
+    {
+      "from_line": 109087,
+      "to_line": 109109,
+      "gap_s": 36249.0
+    }
+  ]
+}

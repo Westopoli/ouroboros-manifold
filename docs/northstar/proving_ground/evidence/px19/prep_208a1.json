@@ -1,0 +1,43 @@
+{
+  "card": "/home/westopoli/Projects/agora/queue/parked/208a1-e04-launch-templates.md.hold",
+  "repo": "/home/westopoli/Projects/ouroboros-manifold",
+  "steps": {
+    "git_worktree_add": {
+      "seconds": 0.5085066470055608,
+      "returncode": 0
+    },
+    "make_libouroboros": {
+      "seconds": 0.6402293019928038,
+      "returncode": 0
+    },
+    "baseline_pytest": {
+      "seconds": 0.9087772409984609,
+      "returncode": 1,
+      "argv": [
+        "/home/westopoli/Projects/agora/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/csim/test_E04_S030_the_launch_event_library.py::test_R_030_01_it_contains_exactly_26_templates",
+        "tests/csim/test_E04_S030_the_launch_event_library.py::test_R_030_03_every_value_integer_in_4"
+      ]
+    },
+    "card_lint": {
+      "seconds": 0.09287017800670583,
+      "returncode": 0
+    },
+    "card_slice_write": {
+      "seconds": 0.07659992600383703,
+      "returncode": 0
+    },
+    "prompt_assembly": {
+      "seconds": 0.0003199039929313585,
+      "returncode": 0,
+      "prompt_chars": 47681,
+      "estimated_tokens": 11920
+    }
+  },
+  "total_prep_seconds": 2.2273031980002997
+}

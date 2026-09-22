@@ -1,0 +1,88 @@
+{
+  "root": "/home/westopoli/Projects/agora/runs",
+  "distinct_files_with_load_duration": 6,
+  "total_occurrences_on_disk": 672,
+  "median_s": 25.7230247345,
+  "min_s": 0.493012903,
+  "max_s": 49.662632321,
+  "values": [
+    {
+      "sha256": "dc46c2d9c94f0c6d09e89458632ed38efe9c66c72b285ab4255d7142bbf8c7e1",
+      "load_duration_ns": 493012903,
+      "load_duration_s": 0.493012903,
+      "model": "gpt-oss:20b",
+      "prompt_eval_count": 14403,
+      "occurrences": 112,
+      "example_paths": [
+        "/home/westopoli/Projects/agora/runs/205a-e05-collision-lottery-20260920-1559/worktree/docs/northstar/research/harness_defects_2026-09-17/evidence/tokens/resp_t3.json",
+        "/home/westopoli/Projects/agora/runs/_archived-prefix-204b1-e05-conquest-garrison-20260918-2045/worktree/docs/northstar/research/harness_defects_2026-09-17/evidence/tokens/resp_t3.json",
+        "/home/westopoli/Projects/agora/runs/204a2-e05-reactive-reinforcement-20260918-1446/worktree/docs/northstar/research/harness_defects_2026-09-17/evidence/tokens/resp_t3.json"
+      ]
+    },
+    {
+      "sha256": "04ee0a2569422041557587f82250a175f4d212b5a558c74c5801ec1b750f8fd2",
+      "load_duration_ns": 14156310479,
+      "load_duration_s": 14.156310479,
+      "model": "gpt-oss:20b",
+      "prompt_eval_count": 14403,
+      "occurrences": 112,
+      "example_paths": [
+        "/home/westopoli/Projects/agora/runs/205a-e05-collision-lottery-20260920-1559/worktree/docs/northstar/research/harness_defects_2026-09-17/evidence/tokens/resp_t2.json",
+        "/home/westopoli/Projects/agora/runs/_archived-prefix-204b1-e05-conquest-garrison-20260918-2045/worktree/docs/northstar/research/harness_defects_2026-09-17/evidence/tokens/resp_t2.json",
+        "/home/westopoli/Projects/agora/runs/204a2-e05-reactive-reinforcement-20260918-1446/worktree/docs/northstar/research/harness_defects_2026-09-17/evidence/tokens/resp_t2.json"
+      ]
+    },
+    {
+      "sha256": "7c7f60ca9226ec30f0f3cfea42752f4bad7d86b266f5a57127f69c178e4395c7",
+      "load_duration_ns": 15538379004,
+      "load_duration_s": 15.538379004,
+      "model": "gpt-oss:20b",
+      "prompt_eval_count": 14403,
+      "occurrences": 112,
+      "example_paths": [
+        "/home/westopoli/Projects/agora/runs/205a-e05-collision-lottery-20260920-1559/worktree/docs/northstar/research/harness_defects_2026-09-17/evidence/tokens/resp_t4.json",
+        "/home/westopoli/Projects/agora/runs/_archived-prefix-204b1-e05-conquest-garrison-20260918-2045/worktree/docs/northstar/research/harness_defects_2026-09-17/evidence/tokens/resp_t4.json",
+        "/home/westopoli/Projects/agora/runs/204a2-e05-reactive-reinforcement-20260918-1446/worktree/docs/northstar/research/harness_defects_2026-09-17/evidence/tokens/resp_t4.json"
+      ]
+    },
+    {
+      "sha256": "5b163ab562d6f6e2f9a057510743c26831dd60c9a6a3fca05bcd92c5b42ca62a",
+      "load_duration_ns": 35907670465,
+      "load_duration_s": 35.907670465,
+      "model": "gpt-oss:20b",
+      "prompt_eval_count": 14403,
+      "occurrences": 112,
+      "example_paths": [
+        "/home/westopoli/Projects/agora/runs/205a-e05-collision-lottery-20260920-1559/worktree/docs/northstar/research/harness_defects_2026-09-17/evidence/tokens/resp_t1.json",
+        "/home/westopoli/Projects/agora/runs/_archived-prefix-204b1-e05-conquest-garrison-20260918-2045/worktree/docs/northstar/research/harness_defects_2026-09-17/evidence/tokens/resp_t1.json",
+        "/home/westopoli/Projects/agora/runs/204a2-e05-reactive-reinforcement-20260918-1446/worktree/docs/northstar/research/harness_defects_2026-09-17/evidence/tokens/resp_t1.json"
+      ]
+    },
+    {
+      "sha256": "c52cadb2f3d5299f1be9ab980e01b628790058120c6c1c821138f846a98afc35",
+      "load_duration_ns": 44552452372,
+      "load_duration_s": 44.552452372,
+      "model": "qwen3-coder:30b",
+      "prompt_eval_count": 14984,
+      "occurrences": 112,
+      "example_paths": [
+        "/home/westopoli/Projects/agora/runs/205a-e05-collision-lottery-20260920-1559/worktree/docs/northstar/research/harness_defects_2026-09-17/evidence/tokens/resp_qwen_32768.json",
+        "/home/westopoli/Projects/agora/runs/_archived-prefix-204b1-e05-conquest-garrison-20260918-2045/worktree/docs/northstar/research/harness_defects_2026-09-17/evidence/tokens/resp_qwen_32768.json",
+        "/home/westopoli/Projects/agora/runs/204a2-e05-reactive-reinforcement-20260918-1446/worktree/docs/northstar/research/harness_defects_2026-09-17/evidence/tokens/resp_qwen_32768.json"
+      ]
+    },
+    {
+      "sha256": "e89ef3f5fca7c331bb490aa3724fa85b19c6a83b2a0d82c74b826e3aaa55dd46",
+      "load_duration_ns": 49662632321,
+      "load_duration_s": 49.662632321,
+      "model": "qwen3-coder:30b",
+      "prompt_eval_count": 14984,
+      "occurrences": 112,
+      "example_paths": [
+        "/home/westopoli/Projects/agora/runs/205a-e05-collision-lottery-20260920-1559/worktree/docs/northstar/research/harness_defects_2026-09-17/evidence/tokens/resp_qwen_16384.json",
+        "/home/westopoli/Projects/agora/runs/_archived-prefix-204b1-e05-conquest-garrison-20260918-2045/worktree/docs/northstar/research/harness_defects_2026-09-17/evidence/tokens/resp_qwen_16384.json",
+        "/home/westopoli/Projects/agora/runs/204a2-e05-reactive-reinforcement-20260918-1446/worktree/docs/northstar/research/harness_defects_2026-09-17/evidence/tokens/resp_qwen_16384.json"
+      ]
+    }
+  ]
+}
