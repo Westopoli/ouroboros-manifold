@@ -39,6 +39,9 @@ def test_R_123_01_every_enemy_command_identical_on(lib, world_factory):
 
     count1 = lib.om_replay_command_count(w1)
     count2 = lib.om_replay_command_count(w2)
+    # A hard-stub count of 0 would make the per-command loop below run 0
+    # times, proving nothing. Require real commands were actually logged.
+    assert count1 > 0
     assert count1 == count2
 
     cmds1 = (OMReplayCommand * count1)()

@@ -40,6 +40,9 @@ def test_R_080_01_both_sides_draw_from_same(lib, world_factory):
         lib.om_unit_get_profile(unit_type, OMDifficulty.MEDIUM, ctypes.byref(prof_med))
         lib.om_unit_get_profile(unit_type, OMDifficulty.HARD, ctypes.byref(prof_hard))
 
+        # An accessor that leaves `out` zeroed for every difficulty would
+        # satisfy the cross-difficulty equality below with no roster at all.
+        assert prof_easy.hp > 0, "unit profile must be a real (nonzero) roster baseline"
         assert prof_easy.hp == prof_med.hp == prof_hard.hp
         assert prof_easy.base_damage == prof_med.base_damage == prof_hard.base_damage
         assert prof_easy.attack_interval == prof_med.attack_interval == prof_hard.attack_interval

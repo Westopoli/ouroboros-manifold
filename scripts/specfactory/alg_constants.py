@@ -615,12 +615,17 @@ def cmd_lint(csrc_dir: Path) -> int:
     if not csrc_dir.is_dir():
         print(f"csrc dir not found: {csrc_dir}", file=sys.stderr)
         return 2
-    allowlist = load_allowlist()
+    # The lint keys entries by path relative to the tree that holds `csrc_dir`
+    # (a merge worktree, not this checkout), and reads that tree's allowlist,
+    # so a candidate is judged against the allowlist it carries.
+    tree = csrc_dir.resolve().parent
+    tree_allowlist = tree / "docs" / "northstar" / "spec_factory" / "constants_allowlist.txt"
+    allowlist = (parse_allowlist_lines(tree_allowlist.read_text().splitlines())
+                 if tree_allowlist.is_file() else load_allowlist())
     messages = []
     for c_file in sorted(csrc_dir.glob("*.c")):
         text = c_file.read_text()
-        abs_file = c_file.resolve()
-        rel = str(abs_file.relative_to(REPO)) if abs_file.is_relative_to(REPO) else c_file.name
+        rel = str(c_file.resolve().relative_to(tree))
         grandfathered = c_file.name in GRANDFATHERED_FILES
         messages.extend(lint_file_violations(rel, text, allowlist, grandfathered))
     for m in messages:
@@ -640,7 +645,7 @@ def gen_allowlist_entries(csrc_dir: Path) -> list[str]:
     for c_file in sorted(csrc_dir.glob("*.c")):
         if c_file.name not in GRANDFATHERED_FILES:
             continue
-        rel = str(c_file.resolve().relative_to(REPO))
+        rel = str(c_file.resolve().relative_to(csrc_dir.resolve().parent))
         for lineno, col, token, occurrence in find_violations_with_occurrence(c_file.read_text()):
             entries.append((rel, lineno, col, token, occurrence))
     entries.sort(key=lambda e: (e[0], e[1], e[2]))

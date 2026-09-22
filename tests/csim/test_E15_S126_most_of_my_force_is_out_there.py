@@ -130,3 +130,14 @@ def test_R_126_06_units_have_no_cost_player(lib, world_factory):
     trickle = lib.om_mission_get_reinforcement_trickle(w)
     assert trickle == 0
 
+    # Both accessors above are permanently-0 constants unconnected to any
+    # real production path. Tie the check to R-126-02's real production flow:
+    # confirm a spawn counter moves while the trickle counter stays 0.
+    lib.om_structure_init(w, 0, 0, ctypes.c_double(100.0))
+    lib.om_structure_set_timer(w, 0, 600)
+    lib.om_structure_tick_production(w, 0)
+    spawned = lib.om_structure_pop_spawned_unit(w, 0)
+    assert spawned == 1
+    trickle_after_spawn = lib.om_mission_get_reinforcement_trickle(w)
+    assert trickle_after_spawn == 0
+

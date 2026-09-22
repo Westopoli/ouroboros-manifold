@@ -95,6 +95,7 @@ class OMBug:
     SLOW = 5
     DRIFT_GATE_IGNORED = 6
     LIBM_POW = 7
+    RNG_UNSEEDED = 8
 
 
 # ---- struct mirrors (field order/types must match the header exactly) ----
@@ -1042,6 +1043,7 @@ class OMBugE03:
     BUDGET_DRIFT = 309
     ARCHETYPE_RANGE_MISS = 310
     E03_SLOW = 311
+    STARTING_RATIO_SWAPPED = 312
 
 
 def _bind_e03(lib):
@@ -1154,14 +1156,47 @@ def region_neighbors(lib, w, idx, max_records=256):
 class OMBugE06:
     DIPLOMACY_AFTER_DRIFT = 400
     TECHNOLOGY_BEFORE_ADMIN = 401
+    TECH_GROWTH_TERMS_SWAPPED = 402
 
 
 class OMBugE07:
     LIFECYCLE_BEFORE_DRIFT = 500
+    ZOMBIE_PASS1_GE_NOT_GT = 501
+
+
+class OMBugE08:
+    TIME_JUMP_CLAMP_SKIPPED = 600
+
+
+class OMBugE09:
+    SIGNIFICANCE_CAP_SKIPPED = 700
+
+
+class OMBugE10:
+    URGENCY_DEFICIT_DIVISOR_WRONG = 800
 
 
 class OMBugE11:
     TACTICAL_BEFORE_STRATEGIC = 900
+    BRACE_REDUCTION_WRONG_CONSTANT = 901
+
+
+class OMBugE12:
+    INTERFERENCE_IGNORES_INTENSITY = 1000
+
+
+class OMBugE13:
+    MOVE_RUBBERBAND = 1100
+    NAVMESH_CELL_SIZE_WRONG_CONSTANT = 1101
+
+
+class OMBugE15:
+    STRUCTURE_MAX_HP_WRONG_CONSTANT = 1300
+
+
+class OMBugSave:
+    SAVE_SKIPS_RNG_STATE = 1600
+    SAVE_SKIPS_TICK = 1601
 
 
 # ======================================================================

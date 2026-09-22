@@ -95,8 +95,12 @@ def test_R_069_06_number_entries_on_screen_equals(lib, world_factory):
     """Given a T2 screenshot at the end of the narration phase, When compared, Then the number of entries on screen equals the number the distiller produced."""
     w = world_factory(n_regions=4)
 
+    # With no events injected, 0 entries distilled would equal 0 rendered by
+    # coincidence. Populate real events first so the count is nonzero.
+    lib.om_chronicle_mock_populate_events(w, n_events=20)
     lib.om_chronicle_distill_and_assemble(w)
     distilled_count = lib.om_chronicle_entry_count(w)
+    assert distilled_count > 0
 
     rendered_screen_count = lib.om_chronicle_rendered_entry_count(w)
     assert rendered_screen_count == distilled_count

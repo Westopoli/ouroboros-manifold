@@ -108,8 +108,14 @@ def test_R_056_05_lineage_members_generated_s_059(lib, world_factory):
     lib.om_character_create(w, character_id=1, lineage_id=1, region_idx=0, rank=3, birth_tick=0, lifespan=25)
 
     # Run a jump of 30 ticks
+    start_tick = lib.om_world_strategic_tick(w)
     report = OmTimeJumpReport()
     lib.om_time_jump_run(w, 30, ctypes.byref(report))
+
+    # A report left ctypes-zeroed (never filled) would read end_tick == 0,
+    # indistinguishable from the tick getters' own hard-stub 0. Pin the
+    # report itself to the real jump length before trusting it as a reference.
+    assert report.end_tick == start_tick + 30
 
     # Lineage generation & death processing occurred once at the end tick
     assert lib.om_time_jump_lineage_generation_tick(w) == report.end_tick

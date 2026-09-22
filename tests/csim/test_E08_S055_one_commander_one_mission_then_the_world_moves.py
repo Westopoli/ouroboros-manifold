@@ -74,6 +74,13 @@ def test_R_055_02_no_strategic_tick_runs_strategic(lib, world_factory):
     strat_tick_end = lib.om_world_strategic_tick(w)
     assert strat_tick_end == strat_tick_start
 
+    # om_tactical_step never touches the strategic counter either way, so the
+    # check above holds vacuously. Drive the world's own strategic tick entry
+    # point while still in MISSION phase and confirm it is still held stopped.
+    assert lib.om_chapter_current_phase(w) == OMChapterPhase.MISSION
+    lib.om_world_step(w)
+    assert lib.om_world_strategic_tick(w) == strat_tick_start
+
 
 def test_R_055_03_those_field_changes_land_before(lib, world_factory):
     """Given the mission resolves, When the outcome resolver applies its consequence bundle (E-10), Then those field changes land before the first tick of the time jump."""
@@ -109,6 +116,10 @@ def test_R_055_04_character_selector_runs_after_it(lib, world_factory):
     # Mission generator runs and chooses mission region 2
     lib.om_mission_generator_run(w)
     chosen_region = lib.om_mission_generator_chosen_region(w)
+    # A hard-stub chosen-region accessor returning 0 would make the equality
+    # below trivially true against an equally-stubbed reader; region 2 was set
+    # up as the mission target, so 0 alone is not a valid chosen region here.
+    assert chosen_region != 0, "chosen region must be a real (nonzero) mission target"
 
     # Character selector runs after mission generator and reads the chosen region
     lib.om_character_selector_run(w)

@@ -147,6 +147,7 @@ def test_R_040_03_one_integer_draw_l_uniform(lib, world_factory):
         assert evt.source_faction == 0
 
 
+@pytest.mark.skip(reason="Q-040-02 open: a self-initiated OM_ACT_REINFORCE has no defined consumer; case A of this test depends on the answer")
 def test_R_040_04_chain_still_completes_nothing_interrupts(lib, world_factory):
     """Given the chain is running, When the owner reinforces the region or its fields improve, Then the chain still completes; nothing interrupts it."""
     # Case A: the owner reinforces the region the pending chain targets.

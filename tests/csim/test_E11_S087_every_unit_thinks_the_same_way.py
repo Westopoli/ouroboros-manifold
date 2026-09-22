@@ -71,6 +71,9 @@ def test_R_087_03_it_attacks_nearest_such_enemy(lib, world_factory):
     vanguard = lib.om_unit_spawn(w, OMUnitType.VANGUARD, 0, 0.0, 0.0, 0)
     e_near = lib.om_unit_spawn(w, OMUnitType.RAIDER, 1, 100.0, 0.0, 0)
     e_far = lib.om_unit_spawn(w, OMUnitType.RAIDER, 1, 200.0, 0.0, 0)
+    # om_unit_spawn always returning 0 would alias every unit to id 0, making
+    # om_unit_target's own 0-stub match by coincidence below.
+    assert len({vanguard, e_near, e_far}) == 3, "spawned unit ids must be distinct"
 
     # Step targeting: acquires nearest enemy (e_near)
     lib.om_tactical_step(w)
@@ -125,6 +128,9 @@ def test_R_087_06_it_targets_attacker_return_fire(lib, world_factory):
     unit = lib.om_unit_spawn(w, OMUnitType.VANGUARD, 0, 0.0, 0.0, 0)
     attacker1 = lib.om_unit_spawn(w, OMUnitType.RAIDER, 1, 150.0, 0.0, 0)
     attacker2 = lib.om_unit_spawn(w, OMUnitType.RAIDER, 1, 0.0, 150.0, 0)
+    # Same id-collision issue as R-087-03: distinct ids required before the
+    # targeting equality checks below mean anything.
+    assert len({unit, attacker1, attacker2}) == 3, "spawned unit ids must be distinct"
 
     lib.om_unit_deal_damage(w, attacker1, unit, 10.0)
     lib.om_tactical_step(w)

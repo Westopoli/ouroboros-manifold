@@ -95,6 +95,11 @@ def test_R_100_03_it_faces_pursuer(lib, world_factory):
     retreating_unit = lib.om_unit_spawn(w, OMUnitType.VANGUARD, 0, 100.0, 0.0, 0)
     pursuer = lib.om_unit_spawn(w, OMUnitType.RAIDER, 1, 200.0, 0.0, 0)
 
+    # Set facing to a different value first: om_unit_get_facing hard-stubs
+    # 0.0, which coincidentally equals the expected pursuer angle below.
+    lib.om_unit_set_facing(w, retreating_unit, math.pi)
+    assert lib.om_unit_get_facing(w, retreating_unit) == pytest.approx(math.pi, abs=1e-6)
+
     # Issue retreat under attack-target
     lib.om_command_attack_target_kiting(w, retreating_unit, pursuer, 0.0, 0.0)
 

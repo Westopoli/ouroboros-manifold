@@ -29,6 +29,7 @@ def test_R_114_01_each_obstacle_density_cover_density(lib, world_factory):
     lib.om_map_generate_gradients(w, 0, 42)
 
     props = OMGradientProperties()
+    any_nonzero = False
     # Sample at arbitrary points
     for x, y in [(1000.0, 1000.0), (3000.0, 3000.0), (5000.0, 5000.0)]:
         lib.om_map_sample_gradients(w, ctypes.c_double(x), ctypes.c_double(y), ctypes.byref(props))
@@ -38,6 +39,14 @@ def test_R_114_01_each_obstacle_density_cover_density(lib, world_factory):
         assert 0.0 <= props.elevation <= 1.0
         assert props.layer_accessibility_0 in (0, 1)
         assert props.layer_accessibility_1 in (0, 1)
+        if (props.obstacle_density or props.cover_density or props.sensor_interference
+                or props.elevation or props.layer_accessibility_0 or props.layer_accessibility_1):
+            any_nonzero = True
+
+    # A leftover-zeroed `props` out-param would satisfy every range check
+    # above by coincidence. Require the sampler to have actually written
+    # something nonzero across these 3 points.
+    assert any_nonzero
 
 
 def test_R_114_02_its_contribution_intensity_falloff_r(lib, world_factory):

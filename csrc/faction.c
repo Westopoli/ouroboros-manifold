@@ -56,20 +56,7 @@ int om_faction_set(om_world *w, int32_t faction_id, om_archetype archetype, doub
             default:                    lo = 4.0; hi = 8.0; break;
         }
         
-        double u;
-        if (w->rng_forced_len > 0) {
-            u = w->rng_forced[w->rng_forced_head];
-            w->rng_forced_head++;
-            w->rng_forced_len--;
-        } else {
-            uint32_t next32 = (uint32_t)((w->rng_state >> 12) + w->rng_inc);
-            w->rng_state = next32 * 6364136223846793005ULL + w->rng_inc;
-            uint32_t a = next32 >> 5;
-            next32 = (uint32_t)((w->rng_state >> 12) + w->rng_inc);
-            w->rng_state = next32 * 6364136223846793005ULL + w->rng_inc;
-            uint32_t b = next32 >> 6;
-            u = (a * 67108864.0 + b) * (1.0 / 9007199254740992.0);
-        }
+        double u = om_rng_draw(w);
         w->faction_confidence[faction_id] = lo + (hi - lo) * u;
     } else {
         w->faction_confidence[faction_id] = attack_confidence;

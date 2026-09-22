@@ -187,8 +187,11 @@ def test_R_029_03_no_revolt_roll_made_for(lib, world_factory):
     assert fired_t[0].tick == 4
     assert lib.om_event_last_fired(w, 0, tid_revolt) == 4
 
-    # Tick t + 1 (tick 5): no queued events due; assert zero PRNG draws consumed
-    force_draws(lib, w, [0.0])
+    # Tick t + 1 (tick 5): no queued events due; assert zero PRNG draws consumed. This forced
+    # value is never consumed at tick 5 (FIFO contract, ouroboros_sim.h), so it carries forward
+    # to the next tick that actually draws -- tick 9's Revolt Crushed roll below -- pinned safely
+    # away from that roll's 0.45 probability rather than 0.0.
+    force_draws(lib, w, [0.99])
     lib.om_world_step(w)  # tick 5
     assert lib.om_rng_forced_remaining(w) == 1  # forced draw not consumed: no revolt roll was made
 
@@ -197,14 +200,23 @@ def test_R_029_03_no_revolt_roll_made_for(lib, world_factory):
     assert lib.om_event_last_fired(w, 0, tid_revolt) == 4
 
     # Ticks t + 2 through t + 11 (ticks 6 through 15):
-    # Cooldown suppresses the revolt roll; assert no revolt fires on any of these ticks
+    # Cooldown suppresses the revolt roll (0 draws, every tick). Tick 9's Revolt Crushed
+    # (military 38.0 > 35.0, condition met) consumes the 0.99 still sitting in the FIFO from
+    # tick 5 above (fails its 0.45 probability, no fire), so nothing new is forced there; tick
+    # 12's Revolt Entrenched (tension 68.0 > 40.0, condition met) needs its own fresh draw,
+    # forced to fail (1.0), since the FIFO is empty again by then. Forcing draws on ticks with
+    # nothing due would leave them sitting in the FIFO and get consumed out of position by the
+    # tick 16 revolt-roll below.
     for tick in range(6, 16):
-        # Force high probability draws (1.0) for any queued follow-up that comes due (ticks 9 and 12)
-        force_draws(lib, w, [1.0, 1.0])
+        if tick == 12:
+            force_draws(lib, w, [1.0])
         lib.om_world_step(w)
         events_k = [e for e in read_events(lib, w) if e.template_id == tid_revolt]
         assert len(events_k) == 0, f"regional revolt fired on cooldown tick {tick} (last_fired={lib.om_event_last_fired(w, 0, tid_revolt)})"
         assert lib.om_event_last_fired(w, 0, tid_revolt) == 4
+
+    # FIFO is empty again: tick 9 drained tick 5's leftover, tick 12 drained its own.
+    assert lib.om_rng_forced_remaining(w) == 0
 
     # Tick t + 12 (tick 16): cooldown of 12 ticks has elapsed (16 - 4 = 12 >= 12)
     # The roll resumes and fires with draw 0.0 < p

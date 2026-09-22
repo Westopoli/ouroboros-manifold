@@ -85,11 +85,23 @@ def test_R_079_03_it_shows_band_objectives_with(lib, world_factory):
     """Given the mission ends, When the debrief is shown, Then it shows the band, the objectives with completion, force retention, and commander fate."""
     w = world_factory(n_regions=1)
     lib.om_mission_setup_tactical(w, 0, 1000)
+
+    # Force a specific outcome: every objective fully complete, none failed.
+    # A zeroed debrief struct would satisfy the range checks below with no
+    # mission having run at all, so pin an exact expected score.
+    lib.om_mission_build_objectives(w, 0)
+    n_obj = lib.om_mission_objective_count(w)
+    for i in range(n_obj):
+        lib.om_mission_set_objective_completion(w, i, 1.0)
+
     lib.om_mission_end(w)
 
     debrief = OMDebrief()
     lib.om_mission_get_debrief(w, ctypes.byref(debrief))
 
+    # ALG-58: objective_score = Sum(weight * completion) with none failed;
+    # weights sum to 1.0 (R-075-01), all completions forced to 1.0 above.
+    assert debrief.objective_score == pytest.approx(1.0, abs=1e-5)
     assert debrief.band >= 0
     assert 0.0 <= debrief.objective_score <= 1.0
     assert 0.0 <= debrief.retention <= 1.0

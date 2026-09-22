@@ -54,6 +54,7 @@ acceptance = [
     "tests/csim/test_E05_S040_empires_fracture.py",
     "tests/csim/test_E05_S041_hostile_borders_wear_you_down.py",
 ]
+# test_R_040_04 is skipped under Q-040-02 and does not count until the flag closes
 depends_on = []
 status = "pending"
 size_estimate = "ALG-25, ALG-29 (E-05 S-040, S-041)"

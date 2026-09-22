@@ -28,7 +28,11 @@ DEFAULT_PIECES = REPO / "docs/northstar/plans/push/pieces.toml"
 DEFAULT_SIGNATURES = REPO / "docs/northstar/spec_factory/signatures.toml"
 DEFAULT_SYMBOL_MODULES = REPO / "docs/northstar/spec_factory/symbol_modules.toml"
 
-DEFAULT_IGNORES = (".swarm/**", ".claude/**", "logs/**")
+DEFAULT_IGNORES = (".swarm/**", ".claude/**", "logs/**",
+    # manager-mode artefacts that ride along with a leaf commit: the adapter
+    # test and the per-piece spec are M0-reviewed documents, never a footprint
+    "tests/push/**", "docs/northstar/plans/push/specs/**",
+)
 DEF_RE = re.compile(r"^[a-z_][a-z_ ]*\bom_[a-z0-9_]+\s*\(")
 SYMBOL_RE = re.compile(r"\b(om_[a-z0-9_]+)\s*\(")
 
@@ -276,20 +280,27 @@ def regression_check(candidate_dir: Path, base_ref: str, test_args: list[str], *
         after.first_assertion = {k: _normalize_worktree_paths(v, tmp, candidate_dir)
                                   for k, v in after.first_assertion.items()}
         report = sr.compare_runs(before, after)
-        if report.accept:
+        # A red test whose first assertion line moves is a WARN, not a reject:
+        # an attached piece legitimately changes how a still-unbuilt test fails
+        # (B3 moved test_E16_S111's failing line by changing the checksum path).
+        # Only new red ids and rising skip/xfail counts reject.
+        accept = not report.new_failures and report.skipped_increase <= 0 and report.xfailed_increase <= 0
+        if accept:
             detail = f"OK ({after.passed}p/{after.failed}f)"
+            if report.changed_assertions:
+                detail += f" WARN changed assertions: {report.changed_assertions}"
         else:
             parts = []
             if report.new_failures:
                 parts.append(f"new failures: {report.new_failures}")
             if report.changed_assertions:
-                parts.append(f"changed assertions: {report.changed_assertions}")
+                parts.append(f"changed assertions (warn): {report.changed_assertions}")
             if report.skipped_increase > 0:
                 parts.append(f"skipped +{report.skipped_increase}")
             if report.xfailed_increase > 0:
                 parts.append(f"xfailed +{report.xfailed_increase}")
             detail = "; ".join(parts)
-        return report.accept, detail, report
+        return accept, detail, report
     finally:
         subprocess.run(["git", "worktree", "remove", "--force", str(tmp)],
                         cwd=str(candidate_dir), capture_output=True, text=True)

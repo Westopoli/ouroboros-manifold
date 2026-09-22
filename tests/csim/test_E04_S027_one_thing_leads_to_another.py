@@ -117,6 +117,13 @@ def test_R_027_02_it_dropped_without_firing_without(lib, world_factory):
     for r in range(6):
         set_region(lib, w, r, tier=OMTier.HOME, military=50.0, economy=50.0, tension=50.0, population=50.0)  # neutral tier HOME
         set_owner(lib, w, r, 0, held_since=-1)  # neutral held_since -1 (held since the world began)
+    # Regions 3, 4, 5 start below Garrison Collapse's fresh-trigger threshold (military < 30.0)
+    # so its breached flag is primed here, during the grace period, and not fired fresh at
+    # tick 4 (R-026-02, R-026-05); the rule's own boundary values for Border Incursion's spawn
+    # condition (19.0, 18.0, 17.0) are themselves below 30.0, so priming is the only way to
+    # keep Garrison Collapse quiet while still exercising that boundary.
+    for r in (3, 4, 5):
+        set_region(lib, w, r, tier=OMTier.HOME, military=25.0, economy=50.0, tension=50.0, population=50.0)  # neutral tier HOME
     set_tech_multipliers(lib, w, 0, 1.0, 1.0, 1.0)  # neutral tech multipliers 1.0
 
     # Tick 1: queue parent events to spawn follow-ups with conditions due tick 4
@@ -157,16 +164,19 @@ def test_R_027_02_it_dropped_without_firing_without(lib, world_factory):
     set_region(lib, w, 5, tier=OMTier.HOME, military=17.0, economy=50.0, tension=20.0, population=50.0)  # neutral tier HOME
 
     # On tick 4, regions 0, 1, 3, 4 have conditions not met and must be dropped WITHOUT a probability roll.
-    # Regions 2 and 5 have conditions met and proceed to probability rolls.
-    # Provide draw 0.99 for both so they fail probability (consuming 1 draw each, 0 spawns).
-    # Provide 2 extra sentinel draws: if failing conditions consume a roll, forced remaining will drop below 2.
-    force_draws(lib, w, [0.99, 0.99, 0.50, 0.50])
-    assert lib.om_rng_forced_remaining(w) == 4
+    # Regions 2 and 5 have conditions met and proceed to probability rolls: 2 draws (0.99 each,
+    # safe against 0.60 and 0.55). Then the fresh-trigger phase rolls the regional revolt once
+    # per inhabited region 0..5 regardless of outcome, e2e "Draw order", ALG-34: 6 more draws
+    # (0.99 each, safe against every p in play here); none of the six regions has a fresh
+    # threshold crossing this tick (Garrison Collapse primed above), so no spawn draws follow.
+    force_draws(lib, w, [0.99] * 8)
+    assert lib.om_rng_forced_remaining(w) == 8
 
     lib.om_world_step(w)  # tick 4
 
-    # Exactly 2 probability draws consumed (Region 2 and Region 5); 0 consumed for Regions 0, 1, 3, 4
-    assert lib.om_rng_forced_remaining(w) == 2
+    # Exactly 2 pending-queue probability draws (Region 2, Region 5) + 6 revolt-roll draws
+    # (regions 0-5) consumed; 0 consumed for Regions 0, 1, 3, 4 (dropped without a roll)
+    assert lib.om_rng_forced_remaining(w) == 0
 
     events = read_events(lib, w)
     # Neither region with failed condition fired
@@ -267,9 +277,11 @@ def test_R_027_04_regional_revolt_may_fire_with(lib, world_factory):
     # Famine spawns:
     # 1. Regional Revolt [3, 6], 0.50, tension above 40
     # 2. Famine Relief [5, 12], 0.55, economy above 12
-    # Region 0: Regional Revolt delay draw 0.00 -> delay 3 (due tick 53); Famine Relief delay draw 0.50
-    # Region 1: Regional Revolt delay draw 1.00 -> delay 6 (due tick 56); Famine Relief delay draw 0.50
-    force_draws(lib, w, [0.00, 0.50, 1.00, 0.50])
+    # Per region (e2e "Draw order", ALG-34): the regional-revolt roll first (0.99, safe against
+    # every p in play here), then Famine's own spawn delays in spawn-table order.
+    # Region 0: revolt-roll 0.99; Regional Revolt delay draw 0.00 -> delay 3 (due tick 53); Famine Relief delay draw 0.50
+    # Region 1: revolt-roll 0.99; Regional Revolt delay draw 1.00 -> delay 6 (due tick 56); Famine Relief delay draw 0.50
+    force_draws(lib, w, [0.99, 0.00, 0.50, 0.99, 1.00, 0.50])
     lib.om_world_step(w)  # tick 50
 
     events_50 = read_events(lib, w)
@@ -500,10 +512,14 @@ def test_R_027_06_its_chain_tag_equals_root(lib, world_factory):
     # Region 1 economy rises to 60.0 (> 55.0 Trade Boom)
     set_region(lib, w, 1, tier=OMTier.HOME, military=50.0, economy=60.0, tension=20.0, population=50.0)  # neutral tier HOME
 
-    # Garrison Collapse spawns Border Incursion [3, 7] (delay draw 0.0 -> delay 3 -> due tick 7)
-    # and Emergency Levy [2, 5] (delay draw 1.0 -> delay 5 -> due tick 9)
-    # Trade Boom spawns Prosperity Unrest [8, 15] (delay draw 0.0 -> delay 8 -> due tick 12)
-    force_draws(lib, w, [0.00, 1.00, 0.00])
+    # Per region (e2e "Draw order", ALG-34): the regional-revolt roll comes before the fired
+    # threshold template's own spawn draws, regardless of the template's table position, so
+    # Region 0's revolt-roll (0.99, safe) precedes Garrison Collapse's (template id 0) two
+    # spawn draws.
+    # Region 0: revolt-roll 0.99; Garrison Collapse spawns Border Incursion [3, 7] (delay draw
+    # 0.0 -> delay 3 -> due tick 7) and Emergency Levy [2, 5] (delay draw 1.0 -> delay 5 -> due tick 9)
+    # Region 1: revolt-roll 0.99; Trade Boom spawns Prosperity Unrest [8, 15] (delay draw 0.0 -> delay 8 -> due tick 12)
+    force_draws(lib, w, [0.99, 0.00, 1.00, 0.99, 0.00])
     lib.om_world_step(w)  # tick 4
 
     events_4 = read_events(lib, w)
@@ -576,7 +592,9 @@ def test_R_027_07_it_holds_pruned_record_with(lib, world_factory):
     """Given a queued event dropped by R-027-02, When the tick log is read, Then it holds a `pruned` record with the template, region, tick, chain tag, and the condition that failed, so the chronicle (E-09) can tell the revolt that almost happened."""
     # 2 regions test pruned records for both failed condition directions:
     # Region 0: "Regional Revolt" (condition: tension above 40.0; at resolution tension = 30.0 <= 40.0)
-    # Region 1: "Border Incursion" (condition: military below 18.0; at resolution military = 25.0 >= 18.0)
+    # Region 1: "Border Incursion" (condition: military below 18.0; at resolution military = 35.0 >= 18.0,
+    # kept above Garrison Collapse's fresh-trigger threshold of 30.0 so that template does not
+    # also fire fresh on tick 4, R-026-02)
     w = world_factory(n_regions=2)
     isolate_events(lib, w)
     load_launch_events(lib, w)
@@ -611,10 +629,18 @@ def test_R_027_07_it_holds_pruned_record_with(lib, world_factory):
     # Arrange failing tick-start fields on tick 4:
     # Region 0: tension = 30.0 (fails tension above 40.0)
     set_region(lib, w, 0, tier=OMTier.HOME, military=50.0, economy=50.0, tension=30.0, population=50.0)  # neutral tier HOME
-    # Region 1: military = 25.0 (fails military below 18.0)
-    set_region(lib, w, 1, tier=OMTier.HOME, military=25.0, economy=50.0, tension=20.0, population=50.0)  # neutral tier HOME
+    # Region 1: military = 35.0 (fails military below 18.0; stays above Garrison Collapse's
+    # 30.0 so that template is not also crossed fresh)
+    set_region(lib, w, 1, tier=OMTier.HOME, military=35.0, economy=50.0, tension=20.0, population=50.0)  # neutral tier HOME
 
+    # Neither region has a fresh threshold crossing this tick, so the only tick 4 draws are
+    # the fresh-trigger phase's regional-revolt roll, once per inhabited region (e2e "Draw
+    # order", ALG-34): region 0 then region 1, both forced safely away from their tiny p.
+    force_draws(lib, w, [0.99, 0.99])
     lib.om_world_step(w)  # tick 4
+
+    # Both revolt-roll draws consumed, nothing else
+    assert lib.om_rng_forced_remaining(w) == 0
 
     # Neither event fired
     assert len(read_events(lib, w)) == 0
@@ -643,7 +669,7 @@ def test_R_027_07_it_holds_pruned_record_with(lib, world_factory):
     assert p1.cond_kind == OMCond.BELOW
     assert p1.cond_field == OMField.MILITARY
     assert p1.cond_value == pytest.approx(18.0, abs=1e-6)
-    assert p1.field_value == pytest.approx(25.0, abs=1e-6)
+    assert p1.field_value == pytest.approx(35.0, abs=1e-6)
 
     # Events were dropped from the pending queue
     assert not any(q.due_tick == 4 for q in read_event_queue(lib, w))

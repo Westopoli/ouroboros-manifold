@@ -309,8 +309,11 @@ def test_R_026_06_each_field_delta_applies_with(lib, world_factory):
     set_owner(lib, w, 0, 0, held_since=-1)  # neutral held_since -1 (held since the world began)
 
     # Region 1: tests tension floor 12.0 via Cultural Renaissance
-    # Start fields: military 40.0, economy 50.0 (unbreached), tension 13.0, population 45.0
-    set_region(lib, w, 1, tier=OMTier.HOME, military=40.0, economy=50.0, tension=13.0, population=45.0)  # neutral tier HOME
+    # Start fields: military 40.0, economy 56.0 (above Trade Boom's 55.0 threshold so
+    # Trade Boom is already breached going into tick 4 and does not fire alongside
+    # Cultural Renaissance when economy jumps to 65.0; still below Renaissance's 60.0,
+    # unbreached for the rule's crossing), tension 13.0, population 45.0
+    set_region(lib, w, 1, tier=OMTier.HOME, military=40.0, economy=56.0, tension=13.0, population=45.0)  # neutral tier HOME
     set_owner(lib, w, 1, 0, held_since=-1)  # neutral held_since -1 (held since the world began)
 
     # Region 2: tests ceiling 100.0 via Military Buildup

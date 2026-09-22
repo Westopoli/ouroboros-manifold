@@ -32,6 +32,11 @@ def test_R_121_01_condition_compared_against_its_noised(lib, world_factory):
     timer_noise = lib.om_macro_get_timer_noise(w, 0)
     assert -0.20 <= ctypes.c_double(timer_noise).value <= 0.20
 
+    # A hard 0.0 stub is in-range and "held" trivially; a real uniform draw
+    # in +-0.15/+-0.20 is (with overwhelming probability) nonzero.
+    assert ctypes.c_double(t_noise).value != 0.0
+    assert ctypes.c_double(timer_noise).value != 0.0
+
     # Noise is held for the mission (drawn once at start)
     lib.om_macro_tick(w, 40)
     assert lib.om_macro_get_threshold_noise(w, 0) == t_noise
@@ -89,4 +94,9 @@ def test_R_121_05_q_121_01_code_returns(lib, world_factory):
     # Attempting to use them fails validation.
     assert lib.om_macro_validate_condition_name(b"player_force_in_zone") == 0
     assert lib.om_macro_validate_condition_name(b"enemy_in_range") == 0
+
+    # A hard-stub validator that rejects everything (0) would also "correctly"
+    # reject these two, but would wrongly reject real vocabulary too. Confirm
+    # a condition R-121-01 keeps ("timer expired") is still accepted.
+    assert lib.om_macro_validate_condition_name(b"timer_expired") == 1
 

@@ -57,6 +57,8 @@ def test_R_068_02_openings_at_most_30_words(lib, world_factory):
     base_words = entry.base_text.decode("utf-8").split()
     exp_words = entry.expanded_text.decode("utf-8").split()
 
+    # Empty text has 0 words, trivially satisfying both upper bounds below.
+    assert len(base_words) > 0
     assert len(base_words) < 90
     assert len(exp_words) < 140
 
@@ -71,6 +73,9 @@ def test_R_068_03_it_comes_only_from_vocabulary(lib, world_factory):
     base_str = entry.base_text.decode("utf-8")
     exp_str = entry.expanded_text.decode("utf-8")
 
+    # Empty text has no digits either, trivially satisfying the checks below.
+    assert len(base_str) > 0
+    assert len(exp_str) > 0
     # No raw numbers / digits should appear anywhere in chronicle text
     assert not re.search(r"\d", base_str), f"Base text contains digits: {base_str}"
     assert not re.search(r"\d", exp_str), f"Expanded text contains digits: {exp_str}"
@@ -150,4 +155,6 @@ def test_R_068_08_text_identical(lib, world_factory):
     text1 = lib.om_chronicle_get_full_scroll_text(w1)
     text2 = lib.om_chronicle_get_full_scroll_text(w2)
 
+    # Two empty scrolls are trivially equal; require real text first.
+    assert len(ctypes.string_at(text1)) > 0
     assert ctypes.string_at(text1) == ctypes.string_at(text2)

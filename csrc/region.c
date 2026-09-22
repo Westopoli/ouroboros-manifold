@@ -1,6 +1,7 @@
 /* csrc/region.c — E-02 region state and composites (build card 200). */
 #include "ouroboros_sim.h"
 #include "om_internal.h"
+#include "om_constants.h"
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -12,6 +13,7 @@ om_world *om_world_new(uint32_t n_regions, uint64_t seed) {
     if (!w) return NULL;
     w->n_regions = n_regions;
     w->seed = seed;
+    om_rng_seed(w, seed);
     w->tick = 0;
     w->trace_on = 0;
     /* R11 (DECISIONS.md): -1, not 0 -- OM_BUG_OSC_AS_LEVEL is bug id 0, so a
@@ -33,8 +35,49 @@ om_world *om_world_new(uint32_t n_regions, uint64_t seed) {
     w->trace = NULL;
     w->trace_len = 0;
     w->trace_cap = 0;
+    /* F2b: E-03 generation defaults (ouroboros_sim.h ~line 690, ALG-30/31).
+     * The om_gen_set_* setters in csrc/worldgen.c overwrite these. */
+    w->gen_region_min = OM_WORLD_REGION_COUNT_RANGE_LO;
+    w->gen_region_max = OM_WORLD_REGION_COUNT_RANGE_HI;
+    w->gen_faction_count = OM_WORLD_FACTIONS_PER_GAME;
+    w->gen_extra_edge_ratio = OM_WORLD_EXTRA_EDGE_RATIO;
+    w->gen_player_pref = OM_TMPL_NONE;
+    w->gen_preference_weight = OM_WORLD_PLAYER_PREFERENCE_WEIGHT;
+    w->gen_extra_edges_on = 1;
+    {
+        const double ranges[3][4] = {
+            { OM_CONQUEROR_HOME_RANGE_MILITARY_LO, OM_CONQUEROR_HOME_RANGE_MILITARY_HI,
+              OM_CONQUEROR_HOME_RANGE_ECONOMY_LO, OM_CONQUEROR_HOME_RANGE_ECONOMY_HI },
+            { OM_FORTIFIER_HOME_RANGE_MILITARY_LO, OM_FORTIFIER_HOME_RANGE_MILITARY_HI,
+              OM_FORTIFIER_HOME_RANGE_ECONOMY_LO, OM_FORTIFIER_HOME_RANGE_ECONOMY_HI },
+            { OM_OPPORTUNIST_HOME_RANGE_MILITARY_LO, OM_OPPORTUNIST_HOME_RANGE_MILITARY_HI,
+              OM_OPPORTUNIST_HOME_RANGE_ECONOMY_LO, OM_OPPORTUNIST_HOME_RANGE_ECONOMY_HI },
+        };
+        memcpy(w->gen_home_range, ranges, sizeof(ranges));
+    }
+    for (uint32_t i = 0; i < OM_MAX_FACTIONS; i++) {
+        w->faction_template[i] = OM_TMPL_NONE;
+    }
+    w->generated = 0;
+    w->edge_count = 0;
     return w;
 }
+
+#ifdef OM_DEBUG_INJECT
+void om_debug_gen_config(const om_world *w, om_debug_gen_config_row *out) {
+    if (!w || !out) return;
+    out->region_min = w->gen_region_min;
+    out->region_max = w->gen_region_max;
+    out->faction_count = w->gen_faction_count;
+    out->extra_edge_ratio = w->gen_extra_edge_ratio;
+    out->player_pref = (int32_t)w->gen_player_pref;
+    out->preference_weight = w->gen_preference_weight;
+    out->extra_edges_on = w->gen_extra_edges_on;
+    memcpy(out->home_range, w->gen_home_range, sizeof(out->home_range));
+    out->generated = w->generated;
+    out->edge_count = w->edge_count;
+}
+#endif
 
 void om_world_free(om_world *w) {
     if (!w) return;
@@ -46,6 +89,7 @@ void om_world_free(om_world *w) {
 void om_world_set_seed(om_world *w, uint64_t seed) {
     if (!w) return;
     w->seed = seed;
+    om_rng_seed(w, seed);
 }
 
 /* weak: csrc/worldgen.c (card B4) provides the strong definition; delete this stub after attach/B4 */
