@@ -1,0 +1,5 @@
+2026-09-22T23:37:37+00:00 | /home/westopoli/Projects/om-push/m2 | git rev-parse --git-dir | exit 0
+2026-09-22T23:37:37+00:00 | /home/westopoli/Projects/om-push/m2 | git rev-parse --abbrev-ref HEAD | exit 0
+2026-09-22T23:37:37+00:00 | /home/westopoli/Projects/om-push/m2 | git status --porcelain --untracked-files=normal | exit 0
+2026-09-22T23:37:37+00:00 | /home/westopoli/Projects/om-push/m2 | git worktree list --porcelain | exit 0
+2026-09-22T23:37:37+00:00 | /home/westopoli/Projects/om-push/m2 | git branch --list '--format=%(refname:short)' 'swarm/b10/**' | exit 0
