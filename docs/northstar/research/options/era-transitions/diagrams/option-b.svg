@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" width="960" height="540" version="1.1">
+  <rect x="0" y="0" width="960" height="540" fill="#f4f2ec"/>
+  <text x="24" y="32" font-family="Helvetica, Arial, sans-serif" font-size="20" fill="#1c1c1c" font-weight="bold">Option B — The Appointed Turn</text>
+  <text x="24" y="54" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#4a4a44">An announced chapter count, set at the start of the campaign, decides when the jump crosses</text>
+
+  <!-- onboarding note -->
+  <rect x="24" y="76" width="912" height="40" fill="#efece4" stroke="#8a8578"/>
+  <text x="40" y="100" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#1c1c1c">onboarding, campaign start: difficulty — medium · mission preferences set · this age's length — 9 chapters</text>
+
+  <!-- chapter track -->
+  <rect x="24" y="130" width="912" height="150" fill="#dedad0" stroke="#8a8578"/>
+  <text x="40" y="150" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#5a564c">chapters counted down, stated on every loading screen and briefing</text>
+
+  <g font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle">
+    <rect x="50" y="170" width="80" height="50" fill="#e3dfd3" stroke="#8a8578"/>
+    <text x="90" y="200" fill="#1c1c1c">1</text>
+    <rect x="140" y="170" width="80" height="50" fill="#e3dfd3" stroke="#8a8578"/>
+    <text x="180" y="200" fill="#1c1c1c">2</text>
+    <rect x="230" y="170" width="80" height="50" fill="#e3dfd3" stroke="#8a8578"/>
+    <text x="270" y="200" fill="#1c1c1c">3</text>
+    <rect x="320" y="170" width="80" height="50" fill="#e3dfd3" stroke="#8a8578"/>
+    <text x="360" y="200" fill="#1c1c1c">4</text>
+    <rect x="410" y="170" width="80" height="50" fill="#e3dfd3" stroke="#8a8578"/>
+    <text x="450" y="200" fill="#1c1c1c">5</text>
+    <rect x="500" y="170" width="80" height="50" fill="#e3dfd3" stroke="#8a8578"/>
+    <text x="540" y="200" fill="#1c1c1c">6</text>
+    <rect x="590" y="170" width="80" height="50" fill="#e3dfd3" stroke="#8a8578"/>
+    <text x="630" y="200" fill="#1c1c1c">7</text>
+    <rect x="680" y="170" width="80" height="50" fill="#e3dfd3" stroke="#8a8578"/>
+    <text x="720" y="200" fill="#1c1c1c">8</text>
+    <rect x="770" y="170" width="140" height="50" fill="#fbe0dc" stroke="#c0392b" stroke-width="2"/>
+    <text x="840" y="194" fill="#1c1c1c" font-weight="bold">9</text>
+    <text x="840" y="212" fill="#1c1c1c" font-weight="bold" font-size="10">appointed turn</text>
+  </g>
+  <text x="560" y="245" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#4a4a44">briefing before chapter 9: "the final campaign of this age"</text>
+  <text x="560" y="262" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#4a4a44">chronicle's first line after: "the age you played is over"</text>
+
+  <line x1="840" y1="220" x2="840" y2="340" stroke="#1c1c1c" stroke-width="2" marker-end="url(#arrowB)"/>
+  <defs>
+    <marker id="arrowB" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#1c1c1c"/>
+    </marker>
+  </defs>
+
+  <!-- era chain -->
+  <text x="40" y="335" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#5a564c">the campaign's owned ages, in order, with the loop after the last</text>
+  <g font-family="Helvetica, Arial, sans-serif" font-size="13" text-anchor="middle">
+    <rect x="60" y="350" width="170" height="60" fill="#e3dfd3" stroke="#8a8578"/>
+    <text x="145" y="378" fill="#1c1c1c">age owned first</text>
+    <text x="145" y="396" fill="#1c1c1c" font-size="10">count: 9 chapters</text>
+
+    <line x1="230" y1="380" x2="290" y2="380" stroke="#1c1c1c" stroke-width="2" marker-end="url(#arrowB)"/>
+
+    <rect x="290" y="350" width="170" height="60" fill="#c9d8ee" stroke="#1c1c1c" stroke-width="2"/>
+    <text x="375" y="378" fill="#1c1c1c" font-weight="bold">age owned second</text>
+    <text x="375" y="396" fill="#1c1c1c" font-size="10" font-weight="bold">rescaled, count restarts at 1</text>
+
+    <line x1="460" y1="380" x2="520" y2="380" stroke="#1c1c1c" stroke-width="2" marker-end="url(#arrowB)"/>
+
+    <rect x="520" y="350" width="170" height="60" fill="#e3dfd3" stroke="#8a8578"/>
+    <text x="605" y="378" fill="#1c1c1c">age owned third</text>
+    <text x="605" y="396" fill="#1c1c1c" font-size="10">count: new length stated</text>
+
+    <line x1="690" y1="380" x2="750" y2="380" stroke="#1c1c1c" stroke-width="2" marker-end="url(#arrowB)"/>
+
+    <rect x="750" y="350" width="150" height="60" fill="#dfe7d6" stroke="#8a8578"/>
+    <text x="825" y="378" fill="#1c1c1c">no next pack:</text>
+    <text x="825" y="396" fill="#1c1c1c">common set only</text>
+  </g>
+
+  <path d="M 750 420 C 500 470, 300 470, 145 420" fill="none" stroke="#4a78c2" stroke-width="2" stroke-dasharray="5 3" marker-end="url(#arrowB)"/>
+  <text x="440" y="465" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#4a4a44">history loops: the count restarts at 1 back in the first owned age</text>
+
+  <rect x="24" y="500" width="912" height="26" fill="#e9e6dd" stroke="#8a8578"/>
+  <text x="40" y="518" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#4a4a44">earlier commanders are named as history, not living cast, trimmed further with each later crossing</text>
+</svg>
