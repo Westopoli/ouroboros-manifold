@@ -21,6 +21,7 @@ var _stability: float = 60.0
 @onready var _kit_toggle_button: Button = $VBoxContainer/KitToggleButton
 @onready var _piece_count_label: Label = $VBoxContainer/PieceCountLabel
 @onready var _stability_slider: HSlider = $VBoxContainer/StabilitySlider
+@onready var _map_view: Control = $MapView
 
 
 func _ready() -> void:
@@ -92,6 +93,7 @@ func _regenerate() -> void:
 
 	_seed_label.text = "Seed: %d" % _seed
 	_piece_count_label.text = "Pieces: %d" % result.total
+	_map_view.set_field_map(field_map)
 
 
 func _on_regenerate_pressed() -> void:
