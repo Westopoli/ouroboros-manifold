@@ -85,9 +85,11 @@ func _pick_friendly(screen_pos: Vector2) -> int:
 
 
 func _regenerate(p_seed: int) -> void:
+	_truth.load_fixture(FIXTURE_PATH)
 	_truth.load_scenario(SCENARIO_PATH)
 	_truth.generate(p_seed)
 	_grid.setup(GRID_DIM, CELL_SIZE)
+	_fog_view.rebuild_terrain(_truth)
 	_phase = "recon"
 	_selected_uid = -1
 	_sync_view()

@@ -18,6 +18,7 @@ func _initialize() -> void:
 	_check_sym8()
 	_check_mem6()
 	_check_time10()
+	_check_seed11()
 	await _check_scene()
 	if _failures > 0:
 		print("VERIFY FAILED: %d check(s)" % _failures)
@@ -127,6 +128,22 @@ func _check_time10() -> void:
 	var avg_ms: float = (float(total_us) / float(n)) / 1000.0
 	_assert(avg_ms < 3.0, "TIME-10 tick_avg %.3fms under 3ms" % avg_ms)
 
+# plant: seed-ignored
+func _check_seed11() -> void:
+	var t11 := FogTruth.new()
+	t11.load_fixture(FIXTURE_PATH)
+	t11.load_scenario(SCENARIO_PATH)
+	t11.generate(11)
+	var t12 := FogTruth.new()
+	t12.load_fixture(FIXTURE_PATH)
+	t12.load_scenario(SCENARIO_PATH)
+	t12.generate(12)
+	var far := 0
+	for i in range(t11.obstacles.size()):
+		if t11.obstacles[i].pos.distance_to(t12.obstacles[i].pos) > 200.0:
+			far += 1
+	_assert(far * 2 >= t11.obstacles.size(), "SEED-11 seeds 11/12 place >=half obstacles >200wu apart (%d/%d)" % [far, t11.obstacles.size()])
+
 func _check_scene() -> void:
 	var packed: PackedScene = load(MOCKUP_SCENE)
 	if packed == null:
@@ -140,6 +157,7 @@ func _check_scene() -> void:
 	_root.qa_tick(1)
 	_check_view4()
 	_check_struct7()
+	_check_spin12()
 	_check_json9()
 
 # plant: recon-shows-enemy
@@ -186,6 +204,14 @@ func _check_struct7() -> void:
 	var fog_view: Node = _root.get_node("World/FogView")
 	var not_drawn: bool = not fog_view.get_enemy_uids().has(101) and not fog_view.get_enemy_uids().has(102)
 	_assert(visited and explored and never and not_drawn, "STRUCT-7 structure explored/never-seen states")
+
+# self-test, no plant
+func _check_spin12() -> void:
+	var hud: Node = _root.get_node("HUD")
+	var before: Dictionary = _root.qa_state()
+	hud._seed_spinbox.value = 42.0
+	var after: Dictionary = _root.qa_state()
+	_assert(after.seed == 42 and after.regen_count == before.regen_count + 1, "SPIN-12 seed spinbox value_changed regenerates")
 
 func _check_json9() -> void:
 	var s: Dictionary = _root.qa_state()
