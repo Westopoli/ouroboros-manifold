@@ -1,1 +1,17 @@
 2026-09-22T23:40:11+00:00 | /home/westopoli/Projects/om-push/m3 | git status --porcelain | exit 0
+2026-09-22T23:40:11+00:00 | /home/westopoli/Projects/om-push/m3 | git add -A -- .swarm/c4/git-ops.log .swarm/c4/wave-1.base.json .swarm/c2-1 .swarm/c3 .swarm/c4/audits .swarm/c4/briefs/leaf-01.ASSUMPTIONS.md .swarm/c4/briefs/leaf-02.ASSUMPTIONS.md .swarm/c4/worktrees docs/northstar/plans/push/specs/C2-1.md docs/northstar/plans/push/specs/C3.md | exit 0
+2026-09-22T23:40:11+00:00 | /home/westopoli/Projects/om-push/m3 | git commit -q -m 'swarm(c3): wave 1 base — spec/contract/umbrella/briefs/tests' | exit 0
+2026-09-22T23:40:11+00:00 | /home/westopoli/Projects/om-push/m3 | git rev-parse --abbrev-ref HEAD | exit 0
+2026-09-22T23:40:11+00:00 | /home/westopoli/Projects/om-push/m3 | git rev-parse HEAD | exit 0
+2026-09-22T23:40:11+00:00 | /home/westopoli/Projects/om-push/m3 | git show-ref --verify --quiet refs/heads/swarm/c3/integration | exit 1
+2026-09-22T23:40:11+00:00 | /home/westopoli/Projects/om-push/m3 | git branch swarm/c3/integration 24c67ae09a8e1392d0c4e9b516fbf70cd66488f0 | exit 0
+2026-09-22T23:40:12+00:00 | /home/westopoli/Projects/om-push/m3 | git worktree add /home/westopoli/Projects/om-push/m3/.swarm/c3/worktrees/integration swarm/c3/integration | exit 0
+2026-09-22T23:40:12+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/c3/worktrees/integration | git rev-parse --git-path info/exclude | exit 0
+2026-09-22T23:40:12+00:00 | /home/westopoli/Projects/om-push/m3 | git rev-parse swarm/c3/integration | exit 0
+2026-09-22T23:40:15+00:00 | /home/westopoli/Projects/om-push/m3 | git worktree add -b swarm/c3/leaf-01 /home/westopoli/Projects/om-push/m3/.swarm/c3/worktrees/leaf-01 24c67ae09a8e1392d0c4e9b516fbf70cd66488f0 | exit 0
+2026-09-22T23:40:15+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/c3/worktrees/leaf-01 | git rev-parse --git-path info/exclude | exit 0
+2026-09-22T23:43:45+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/c3/worktrees/leaf-01 | git rev-parse HEAD | exit 0
+2026-09-22T23:43:46+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/c3/worktrees/leaf-01 | git status --porcelain --untracked-files=all | exit 0
+2026-09-22T23:43:46+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/c3/worktrees/leaf-01 | git add -- scenes/world/chronicle_scroll_panel.gd | exit 0
+2026-09-22T23:43:46+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/c3/worktrees/leaf-01 | git commit -q -m 'swarm(c3): leaf-01 — Add `set_snapshot(snapshot: Dictionary) -> void`, `load_frame(frame:' | exit 0
+2026-09-22T23:43:46+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/c3/worktrees/leaf-01 | git rev-parse HEAD | exit 0
