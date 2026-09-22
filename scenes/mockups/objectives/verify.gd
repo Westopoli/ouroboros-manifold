@@ -153,11 +153,24 @@ func _check_name_7() -> void:
 	var root = packed.instantiate()
 	get_root().add_child(root)
 	await process_frame; await process_frame
-	var labels := _find_label3ds(root)
+	var marker := _find_marker(root)
+	if not _assert(marker != null, "NAME-7 no Marker node found"):
+		root.queue_free()
+		return
+	var labels := _find_label3ds(marker)
 	if _assert(labels.size() == 1, "NAME-7 marker label count %d, expected 1" % labels.size()):
 		var st: Dictionary = root.qa_state()
 		_assert(labels[0].text != "" and labels[0].text == String(st.marker.name), "NAME-7 label text mismatch: '%s' vs '%s'" % [labels[0].text, st.marker.name])
 	root.queue_free()
+
+func _find_marker(node: Node) -> Node:
+	for c in node.get_children():
+		if c is Marker:
+			return c
+		var found := _find_marker(c)
+		if found != null:
+			return found
+	return null
 
 func _find_label3ds(node: Node) -> Array:
 	var out: Array = []

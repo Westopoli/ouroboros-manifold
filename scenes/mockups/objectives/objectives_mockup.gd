@@ -3,6 +3,8 @@ extends Node3D
 const QaPlants := preload("res://scenes/mockups/_shared/qa_plants.gd")
 const FIXTURES_DIR := "res://scenes/mockups/objectives/fixtures/"
 const PLAYER_COLOR := Color("#4099ff")
+const NODE_COLOR := Color(0.55, 0.58, 0.62)
+const NODE_BOX := Vector3(140, 30, 140)
 
 const PLANTS: Array[String] = [
 	"objective-on-spawn", "marker-unnamed", "progress-static",
@@ -65,6 +67,7 @@ func _generate() -> void:
 	var display: String = MissionGen.DISPLAY_NAMES.get(_mission.kind, _mission.kind)
 	_marker.setup(_mission, display)
 	_add_player_spawn(_places.player_spawn().pos)
+	_draw_places()
 	_camera_rig.pan_to(Vector3(_mission.pos.x, 0.0, _mission.pos.y))
 	_regen_count += 1
 	if _hud != null:
@@ -82,6 +85,38 @@ func _add_player_spawn(pos: Vector2) -> void:
 	mi.material_override = mat
 	mi.position = Vector3(pos.x, 60.0, pos.y)
 	_generated.add_child(mi)
+
+
+static var _node_mesh: BoxMesh
+static var _node_mat: StandardMaterial3D
+static var _node_font: FontFile = load("res://theme/fonts/JetBrainsMono-Regular.ttf")
+
+
+func _draw_places() -> void:
+	if _node_mesh == null:
+		_node_mesh = BoxMesh.new()
+		_node_mesh.size = NODE_BOX
+	if _node_mat == null:
+		_node_mat = StandardMaterial3D.new()
+		_node_mat.albedo_color = NODE_COLOR
+		_node_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	for n in _places.nodes:
+		var mi := MeshInstance3D.new()
+		mi.mesh = _node_mesh
+		mi.material_override = _node_mat
+		mi.position = Vector3(n.pos.x, 15.0, n.pos.y)
+		_generated.add_child(mi)
+		var lbl := Label3D.new()
+		lbl.text = n.type
+		lbl.font = _node_font
+		lbl.font_size = 32
+		lbl.pixel_size = 0.4
+		lbl.modulate = Color(0.85, 0.86, 0.88)
+		lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		lbl.no_depth_test = true
+		lbl.fixed_size = true
+		lbl.position = Vector3(n.pos.x, 90.0, n.pos.y)
+		_generated.add_child(lbl)
 
 
 func qa_state() -> Dictionary:
