@@ -110,12 +110,10 @@ func _draw_places() -> void:
 		var lbl := Label3D.new()
 		lbl.text = n.type
 		lbl.font = _node_font
-		lbl.font_size = 32
-		lbl.pixel_size = 0.4
+		lbl.font_size = 40
 		lbl.modulate = Color(0.85, 0.86, 0.88)
 		lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 		lbl.no_depth_test = true
-		lbl.fixed_size = true
 		lbl.position = Vector3(n.pos.x, 90.0, n.pos.y)
 		_generated.add_child(lbl)
 
