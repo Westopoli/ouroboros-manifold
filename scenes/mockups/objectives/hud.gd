@@ -8,6 +8,7 @@ const BAR_WIDTH := 320.0
 const BAR_HEIGHT := 6.0
 const PLAY_HZ := 20.0
 const MINIMAP_SIZE := Vector2(200, 200)
+const MONO_FONT := preload("res://theme/fonts/JetBrainsMono-Regular.ttf")
 
 var _root: Node3D
 var _playing := false
@@ -28,6 +29,7 @@ var _play_accum := 0.0
 
 func bind(root: Node3D) -> void:
 	_root = root
+	_objective_label.add_theme_font_override("font", MONO_FONT)
 	for n in ARCHETYPE_NAMES:
 		_archetype_option.add_item(n)
 	_archetype_option.focus_mode = Control.FOCUS_NONE
@@ -98,7 +100,7 @@ func refresh() -> void:
 	var label: String = MissionGen.DISPLAY_NAMES.get(m.kind, m.kind)
 	var pct := int(round(m.progress * 100.0))
 	var filled := int(round(m.progress * 10.0))
-	var bar := "▮".repeat(filled) + "▯".repeat(10 - filled)
+	var bar := "#".repeat(filled) + "-".repeat(10 - filled)
 	_objective_label.text = "PRIMARY  %s  %s %d%%" % [label, bar, pct]
 	_bar_bg.custom_minimum_size = Vector2(BAR_WIDTH, BAR_HEIGHT)
 	_bar_fill.position = Vector2.ZERO
