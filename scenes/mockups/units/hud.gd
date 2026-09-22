@@ -300,6 +300,14 @@ func qa_tick(n: int) -> void:
 	_refresh_labels()
 
 
+func qa_tick_until_flash(max_ticks: int) -> int:
+	var n := 0
+	while n < max_ticks and _view.flashes_active == 0:
+		qa_tick(1)
+		n += 1
+	return n
+
+
 func qa_command(kind: String, uids: Array, x: float, z: float) -> void:
 	match kind:
 		"attack_target":
