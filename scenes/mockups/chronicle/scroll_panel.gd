@@ -42,7 +42,7 @@ func _ready() -> void:
 	add_child(_expansion)
 
 	var bg := ColorRect.new()
-	bg.color = Color(0.04, 0.05, 0.07, 0.94)
+	bg.color = Color(0.04, 0.05, 0.07, 1.0)
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_expansion.add_child(bg)
