@@ -131,12 +131,13 @@ cmd_diff() {
     local a="$1" b="$2" fuzz="${3:-5}" heatmap="${4:-}"
     local total
     total="$(identify -format '%[fx:w*h]' "$a" 2>/dev/null)"
-    local ae
+    local ae_raw ae
     set +e
-    ae="$(compare -metric AE -fuzz "${fuzz}%" "$a" "$b" null: 2>&1)"
+    ae_raw="$(compare -metric AE -fuzz "${fuzz}%" "$a" "$b" null: 2>&1)"
     set -e
+    ae="$(printf '%s' "$ae_raw" | grep -oE '^[0-9]+' || true)"
     if [[ ! "$ae" =~ ^[0-9]+$ ]]; then
-        echo "diff: compare did not return a pixel count: $ae" >&2
+        echo "diff: compare did not return a pixel count: $ae_raw" >&2
         exit 2
     fi
     if [[ -n "$heatmap" ]]; then
@@ -146,13 +147,89 @@ cmd_diff() {
 }
 
 cmd_liveness() {
-    echo "liveness: not implemented yet" >&2
-    exit 2
+    local mockup="$1" outdir="$2"
+    local scene="scenes/mockups/${mockup}/${mockup}_mockup.tscn"
+    if [[ ! -f "$scene" ]]; then
+        echo "liveness: no scene $scene" >&2
+        exit 2
+    fi
+    mkdir -p "$outdir"
+    local out_abs script_abs
+    out_abs="$(realpath "$outdir")"
+    script_abs="$(realpath "scenes/mockups/_shared/liveness.json")"
+
+    LP_NUM_THREADS="${LP_NUM_THREADS:-2}"
+    set +e
+    env -u DISPLAY -u WAYLAND_DISPLAY -u XAUTHORITY \
+        LIBGL_ALWAYS_SOFTWARE=1 GALLIUM_DRIVER=llvmpipe LP_NUM_THREADS="$LP_NUM_THREADS" \
+        timeout --kill-after=10 120 \
+        xvfb-run -a -s "-screen 0 1280x720x24" bash -c '
+            OUT="$1"; shift
+            (
+                xdotool search --sync --name "^QA:" windowfocus --sync mousemove 640 360 click 1 key r
+                touch "$OUT/xdotool.done"
+            ) &
+            "$@" >"$OUT/stdout.log" 2>"$OUT/stderr.log"
+        ' _ "$out_abs" \
+        "$GODOT" --path . --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1280x720 \
+            --fixed-fps 30 --quit-after 100000 "$scene" -- --qa-script "$script_abs" --qa-out "$out_abs" --qa-grab engine
+    local exit_code=$?
+    set -e
+    echo "$exit_code" > "$out_abs/exit.txt"
+    cmd_scan "$out_abs"
+
+    local os_inputs
+    os_inputs="$(python3 -c "
+import json
+d = json.load(open('$out_abs/liveness.json'))
+print(d['_qa']['os_inputs'])
+" 2>/dev/null || echo -1)"
+    if [[ "$os_inputs" -ge 2 ]] 2>/dev/null; then
+        echo "LIVENESS OK os_inputs=$os_inputs"
+        return 0
+    fi
+    echo "LIVENESS FAIL os_inputs=$os_inputs" >&2
+    return 1
 }
 
 cmd_selftest() {
-    echo "selftest: not implemented yet" >&2
-    exit 2
+    local tmp
+    tmp="$(mktemp -d)"
+    local failures=0
+
+    echo '[["nope", 1]]' > "$tmp/unknown_verb.json"
+    mkdir -p "$tmp/out1"
+    local exit1=0
+    cmd_run landscape "$tmp/unknown_verb.json" "$tmp/out1" --timeout 120 >/dev/null 2>&1 || exit1=$?
+    if [[ "$exit1" != "3" ]]; then
+        echo "selftest: unknown-verb script expected exit 3, got $exit1" >&2
+        failures=$((failures + 1))
+    fi
+
+    printf 'not { json' > "$tmp/not_json.json"
+    mkdir -p "$tmp/out2"
+    local exit2=0
+    cmd_run landscape "$tmp/not_json.json" "$tmp/out2" --timeout 120 >/dev/null 2>&1 || exit2=$?
+    if [[ "$exit2" != "2" ]]; then
+        echo "selftest: not-json script expected exit 2, got $exit2" >&2
+        failures=$((failures + 1))
+    fi
+
+    echo '[["state","ok"]]' > "$tmp/ok.json"
+    mkdir -p "$tmp/out3"
+    local exit3=0
+    cmd_run landscape "$tmp/ok.json" "$tmp/out3" --timeout 180 >/dev/null 2>&1 || exit3=$?
+    if [[ "$exit3" != "0" || ! -f "$tmp/out3/ok.json" ]]; then
+        echo "selftest: ok script expected exit 0 and ok.json, got exit $exit3" >&2
+        failures=$((failures + 1))
+    fi
+
+    rm -rf "$tmp"
+    if [[ "$failures" -gt 0 ]]; then
+        echo "SELFTEST FAILED ($failures)" >&2
+        exit 1
+    fi
+    echo "SELFTEST OK"
 }
 
 [[ $# -ge 1 ]] || usage

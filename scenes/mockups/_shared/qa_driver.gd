@@ -68,7 +68,8 @@ func _arg_value(args: PackedStringArray, flag: String) -> String:
 func _run() -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
-	var center: Vector2 = get_viewport().get_visible_rect().size * 0.5
+	var window_size := DisplayServer.window_get_size()
+	var center := Vector2(window_size.x, window_size.y) * 0.5
 	await _push_frame(_make_motion(center))
 
 	for action in _script:
@@ -96,10 +97,38 @@ func _do(action: Array) -> void:
 				await get_tree().process_frame
 		"call":
 			_do_call(action)
+		"seed":
+			_do_call(["call", "qa_seed", action[1]])
 		"screenshot":
 			await _do_screenshot(action[1])
 		"state":
 			_do_state(action[1])
+		"tree":
+			_do_tree(action[1])
+		"move":
+			await _do_move(action[1], action[2])
+		"click":
+			var button: int = action[3] if action.size() > 3 else MOUSE_BUTTON_LEFT
+			await _do_click(action[1], action[2], button)
+		"click_node":
+			await _do_click_node(action[1])
+		"drag":
+			var steps: int = action[5] if action.size() > 5 else 8
+			await _do_drag(action[1], action[2], action[3], action[4], steps)
+		"wheel":
+			await _do_wheel(int(action[1]))
+		"key":
+			await _do_key(action[1])
+		"key_down":
+			await _do_key_hold(action[1], true)
+		"key_up":
+			await _do_key_hold(action[1], false)
+		"plant":
+			_do_plant(action[1])
+		"pause":
+			get_tree().paused = action[1]
+		"wait_file":
+			await _do_wait_file(action[1], int(action[2]))
 		_:
 			_fail(3, "unknown verb %s" % verb)
 
@@ -118,6 +147,149 @@ func _do_state(name: String) -> void:
 	var d: Dictionary = _root.qa_state()
 	d["_qa"] = _qa_info()
 	_write_json(name, d)
+
+
+func _do_tree(name: String) -> void:
+	var controls: Array = []
+	var node3ds: Array = []
+	_collect_tree(_root, controls, node3ds)
+	_write_json(name, {"controls": controls, "node3ds": node3ds})
+
+
+func _collect_tree(node: Node, controls: Array, node3ds: Array) -> void:
+	for child in node.get_children():
+		if child is Control:
+			var ctrl: Control = child
+			if ctrl.visible:
+				var vp := ctrl.get_viewport()
+				var origin: Vector2 = vp.get_final_transform() * ctrl.get_global_rect().position
+				var far: Vector2 = vp.get_final_transform() * (ctrl.get_global_rect().position + ctrl.get_global_rect().size)
+				controls.append({
+					"path": String(_root.get_path_to(ctrl)),
+					"class": ctrl.get_class(),
+					"text": ctrl.get("text"),
+					"rect_px": [origin.x, origin.y, far.x - origin.x, far.y - origin.y],
+				})
+		elif child is Node3D:
+			node3ds.append({
+				"path": String(_root.get_path_to(child)),
+				"class": child.get_class(),
+				"parent": String(_root.get_path_to(child.get_parent())),
+			})
+		_collect_tree(child, controls, node3ds)
+
+
+func _do_move(x: float, y: float) -> void:
+	await _push_frame(_make_motion(Vector2(x, y)))
+
+
+func _do_click(x: float, y: float, button: int) -> void:
+	await _do_move(x, y)
+	var pos := Vector2(x, y)
+	var down := InputEventMouseButton.new()
+	down.position = pos
+	down.global_position = pos
+	down.button_index = button
+	down.pressed = true
+	await _push_frame(down)
+	var up := InputEventMouseButton.new()
+	up.position = pos
+	up.global_position = pos
+	up.button_index = button
+	up.pressed = false
+	await _push_frame(up)
+
+
+func _do_click_node(path: String) -> void:
+	var ctrl: Control = _root.get_node_or_null(path)
+	if ctrl == null:
+		_fail(3, "click_node: no Control at %s" % path)
+		return
+	var center: Vector2 = ctrl.get_viewport().get_final_transform() * ctrl.get_global_rect().get_center()
+	await _do_click(center.x, center.y, MOUSE_BUTTON_LEFT)
+
+
+func _do_drag(x0: float, y0: float, x1: float, y1: float, steps: int) -> void:
+	await _do_move(x0, y0)
+	var from := Vector2(x0, y0)
+	var down := InputEventMouseButton.new()
+	down.position = from
+	down.global_position = from
+	down.button_index = MOUSE_BUTTON_LEFT
+	down.pressed = true
+	await _push_frame(down)
+
+	var to := Vector2(x1, y1)
+	for s in range(1, steps + 1):
+		var t := float(s) / float(steps)
+		await _do_move(lerp(from.x, to.x, t), lerp(from.y, to.y, t))
+
+	var up := InputEventMouseButton.new()
+	up.position = to
+	up.global_position = to
+	up.button_index = MOUSE_BUTTON_LEFT
+	up.pressed = false
+	await _push_frame(up)
+
+
+func _do_wheel(n: int) -> void:
+	var button: int = MOUSE_BUTTON_WHEEL_UP if n > 0 else MOUSE_BUTTON_WHEEL_DOWN
+	for i in range(abs(n)):
+		var down := InputEventMouseButton.new()
+		down.position = _mouse_pos
+		down.global_position = _mouse_pos
+		down.button_index = button
+		down.pressed = true
+		await _push_frame(down)
+		var up := InputEventMouseButton.new()
+		up.position = _mouse_pos
+		up.global_position = _mouse_pos
+		up.button_index = button
+		up.pressed = false
+		await _push_frame(up)
+
+
+func _do_key(key_name: String) -> void:
+	var keycode := OS.find_keycode_from_string(key_name)
+	if keycode == KEY_NONE:
+		_fail(3, "key: unknown key %s" % key_name)
+		return
+	var down := InputEventKey.new()
+	down.keycode = keycode
+	down.physical_keycode = keycode
+	down.unicode = keycode
+	down.pressed = true
+	await _push_frame(down)
+	var up := InputEventKey.new()
+	up.keycode = keycode
+	up.physical_keycode = keycode
+	up.unicode = keycode
+	up.pressed = false
+	await _push_frame(up)
+
+
+func _do_key_hold(key_name: String, down: bool) -> void:
+	var keycode := OS.find_keycode_from_string(key_name)
+	if keycode == KEY_NONE:
+		_fail(3, "key_down/key_up: unknown key %s" % key_name)
+		return
+	var e := InputEventKey.new()
+	e.keycode = keycode
+	e.physical_keycode = keycode
+	e.unicode = keycode
+	e.pressed = down
+	await _push_frame(e)
+
+
+func _do_plant(id: String) -> void:
+	if not _root.qa_plant(id):
+		_fail(3, "plant: unknown id %s" % id)
+
+
+func _do_wait_file(name: String, max_frames: int) -> void:
+	var ok := await _wait_file(name, max_frames)
+	if not ok:
+		print("QA_WARN wait_file timeout %s" % name)
 
 
 func _do_screenshot(name: String) -> void:
