@@ -35,10 +35,19 @@ var _press_pos: Vector2 = Vector2.ZERO
 var _move_tween: Tween
 
 @onready var _camera: Camera3D = $Camera3D
+var _zoom_controller: Node
 
 
 func _ready() -> void:
+	_zoom_controller = Node.new()
+	_zoom_controller.set_script(load("res://scenes/mockups/galaxy/legacy_zoom_disclosure_controller.gd"))
+	_zoom_controller.name = "ZoomDisclosureController"
+	add_child(_zoom_controller)
 	_update_camera()
+
+
+func get_zoom_controller() -> Node:
+	return _zoom_controller
 
 
 func set_galaxy_view(view: Node3D) -> void:
@@ -52,6 +61,7 @@ func get_camera() -> Camera3D:
 func _process(_delta: float) -> void:
 	if not (_move_tween and _move_tween.is_valid() and _move_tween.is_running()):
 		_update_camera()
+	_zoom_controller.update_from_distance(_distance)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -142,6 +152,7 @@ func qa_camera(distance: float, target_system_id: int) -> void:
 			_focused_id = target_system_id
 	_distance = clampf(distance, DIST_MIN, DIST_MAX)
 	_update_camera()
+	_zoom_controller.update_from_distance(_distance)
 
 
 func _kill_tween() -> void:

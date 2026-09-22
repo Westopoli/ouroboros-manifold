@@ -39,6 +39,9 @@ static func sync_system(wv: Node, galaxy: Galaxy, system_id: int, owner_color_fn
 	for e in galaxy.edges:
 		if e.a != system_id and e.b != system_id:
 			continue
-		var is_border: bool = e.kind == "border"
-		var edge_color: Color = owner_color_fn.call(galaxy.systems[e.a].owner, galaxy) if is_border else trade_color
+		var oa: int = galaxy.systems[e.a].owner
+		var ob: int = galaxy.systems[e.b].owner
+		var is_border: bool = oa == ob and oa != -1
+		e.kind = "border" if is_border else "trade"
+		var edge_color: Color = owner_color_fn.call(oa, galaxy) if is_border else trade_color
 		wv.add_connection(str(e.a), str(e.b), e.kind, edge_color)

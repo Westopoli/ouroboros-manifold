@@ -18,6 +18,7 @@ const PLANTS: Array[String] = [
 
 func _ready() -> void:
 	_camera.set_galaxy_view(_view)
+	_view.attach_camera(_camera)
 
 
 func _process(_delta: float) -> void:
