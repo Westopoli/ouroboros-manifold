@@ -12,6 +12,7 @@ var _galaxy: Galaxy
 var _points: MultiMeshInstance3D
 var _wv_data: Node
 var _constellation: Node3D
+var _shell: Node3D
 var _names: Node3D
 var _flash_boost: Dictionary = {}
 var _flash_rings: Array = []
@@ -31,16 +32,26 @@ func _ready() -> void:
 	_constellation.set_script(load("res://scenes/mockups/galaxy/legacy_constellation_renderer.gd"))
 	_constellation.name = "ConstellationRenderer"
 	add_child(_constellation)
+	_shell = Node3D.new()
+	_shell.set_script(load("res://scenes/mockups/galaxy/legacy_shell_renderer.gd"))
+	_shell.name = "ShellRenderer"
+	add_child(_shell)
 	# Zoom controller lives on OrbitCamera, a sibling created after GalaxyView
 	# in the scene tree (World before OrbitCamera in galaxy_mockup.tscn), so
 	# it does not exist yet at this _ready(). setup() with null is safe —
 	# _process() no-ops until attach_camera() sets it (called from
 	# galaxy_mockup.gd's own _ready(), which runs last, after every sibling).
 	_constellation.setup(_wv_data, null)
+	_shell.setup(_wv_data, null)
 
 
 func attach_camera(camera: Node) -> void:
 	_constellation._zoom_controller = camera.get_zoom_controller()
+	_shell._zoom_controller = camera.get_zoom_controller()
+
+
+func get_faction_shell_count() -> int:
+	return _shell.get_faction_shell_count() if _shell else 0
 
 
 func build(galaxy: Galaxy) -> void:
