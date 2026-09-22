@@ -12,4 +12,4 @@ Each brief is a self-contained task handed to an implementor chat, copied here o
 | 2026-09-21 | `2026-09-21-px-batch-b-spec-content-boundary.md` (PX-1, PX-10, PX-11) | not yet handed | |
 | 2026-09-21 | `2026-09-21-px-batch-c-vision-archive.md` (PX-12, PX-9) | not yet handed | |
 | 2026-09-21 | `2026-09-21-executor-audit-fixes.md` (S-039 wiring and re-cut, E-04 re-cut, om_pow, fuel lint, DAG emitter, stale docs) | Sonnet sub-agent in the design chat | done 2026-09-21 night; DECISIONS.md Tenth round R13-R18; R13 became Q-039-01, R14/R17 resolved by the design lane and handed to a follow-up sub-agent |
-| 2026-09-21 | `2026-09-21-agora-cascade-safety-seat-scheduler.md` (three waves, gated on the executor brief) | Sonnet sub-agent in the design chat, overnight | running |
+| 2026-09-21 | `2026-09-21-agora-cascade-safety-seat-scheduler.md` (three waves, gated on the executor brief) | Sonnet sub-agent in the design chat, overnight | done 2026-09-22; DECISIONS.md Eleventh round; two follow-ups open (intervene out of the GPU process, runway row) |
