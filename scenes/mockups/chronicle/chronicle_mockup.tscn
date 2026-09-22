@@ -1,0 +1,72 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scenes/mockups/chronicle/chronicle_mockup.gd" id="1"]
+[ext_resource type="Script" path="res://scenes/mockups/_shared/qa_driver.gd" id="2"]
+[ext_resource type="Script" path="res://scenes/mockups/chronicle/mini_galaxy.gd" id="3"]
+[ext_resource type="Script" path="res://scenes/mockups/chronicle/scroll_panel.gd" id="4"]
+[ext_resource type="Script" path="res://scenes/mockups/chronicle/hud.gd" id="5"]
+
+[sub_resource type="Environment" id="Environment_1"]
+background_mode = 2
+background_color = Color(0.02, 0.024, 0.04, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.5, 0.55, 0.7, 1)
+ambient_light_energy = 0.35
+fog_enabled = true
+fog_light_color = Color(0.05, 0.06, 0.1, 1)
+fog_density = 0.0006
+
+[node name="ChronicleMockup" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="QADriver" type="Node" parent="."]
+script = ExtResource("2")
+
+[node name="MapViewport" type="SubViewportContainer" parent="."]
+anchor_top = 0.0
+anchor_right = 0.62
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+stretch = true
+
+[node name="SubViewport" type="SubViewport" parent="MapViewport"]
+transparent_bg = false
+size = Vector2i(1600, 900)
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="MapViewport/SubViewport"]
+environment = SubResource("Environment_1")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="MapViewport/SubViewport"]
+rotation_degrees = Vector3(-55, -25, 0)
+light_energy = 1.1
+
+[node name="Camera3D" type="Camera3D" parent="MapViewport/SubViewport"]
+position = Vector3(0, 900, 650)
+rotation_degrees = Vector3(-54, 0, 0)
+fov = 45.0
+near = 1.0
+far = 6000.0
+
+[node name="MiniGalaxy" type="Node3D" parent="MapViewport/SubViewport"]
+script = ExtResource("3")
+
+[node name="Scroll" type="Control" parent="."]
+anchor_left = 0.62
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_right = -24.0
+offset_top = 24.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("4")
+
+[node name="HUD" type="CanvasLayer" parent="."]
+script = ExtResource("5")
