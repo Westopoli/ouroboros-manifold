@@ -54,7 +54,7 @@ func _check_box2() -> void:
 	var units := _fake_units()
 	var project := func(uid): return units[uid].pos
 	sel.box(Rect2(-10, -10, 1000, 1000), project, units)
-	_assert(sel.selected.size() == 3, "BOX-2: box selected %s, want 3 uids across both layers" % sel.selected)
+	_assert(sel.selected.size() == 3, "BOX-2: box selected %s, want 3 uids across both layers" % [sel.selected])
 
 func _check_narrow3() -> void:
 	var cls = _load_class(SEL_PATH)
@@ -154,8 +154,16 @@ func _check_panel10() -> void:
 	var focus_ok := true
 	for c in controls:
 		focus_ok = focus_ok and c.focus_mode == Control.FOCUS_NONE
-	_assert(controls.size() > 0 and focus_ok and overlay_ok,
-		"PANEL-10: controls=%d focus_ok=%s overlay_ok=%s" % [controls.size(), focus_ok, overlay_ok])
+	var hud: Node = root.get_node_or_null("HUD")
+	var s: Dictionary = root.qa_state()
+	var rows: Array = hud.compute_rows(s.selected, s.units) if hud != null and hud.has_method("compute_rows") else []
+	var rows_ok: bool = rows.size() == 2
+	var total := 0; var hp_sum := 0.0
+	for r in rows:
+		total += int(r.count); hp_sum += float(r.hp)
+	rows_ok = rows_ok and total == 3 and is_equal_approx(hp_sum, 300.0)
+	_assert(controls.size() > 0 and focus_ok and overlay_ok and rows_ok,
+		"PANEL-10: controls=%d focus_ok=%s overlay_ok=%s rows=%s" % [controls.size(), focus_ok, overlay_ok, rows])
 
 func _check_json11() -> void:
 	var root = await _instantiate_root()

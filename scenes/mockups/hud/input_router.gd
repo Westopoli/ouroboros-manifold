@@ -8,8 +8,8 @@ var _toy
 var _selection
 var _camera_rig
 
-var _box_active := false
-var _box_start := Vector2.ZERO
+var box_active := false
+var box_start := Vector2.ZERO
 var _box_additive := false
 
 
@@ -40,23 +40,23 @@ func _on_mouse_button(mb: InputEventMouseButton) -> void:
 	match mb.button_index:
 		MOUSE_BUTTON_LEFT:
 			if mb.pressed:
-				_box_start = mb.position
-				_box_active = true
+				box_start = mb.position
+				box_active = true
 				_box_additive = mb.shift_pressed
 			else:
-				if _box_active:
+				if box_active:
 					_finish_box(mb.position)
-				_box_active = false
+				box_active = false
 		MOUSE_BUTTON_RIGHT:
 			if mb.pressed:
 				_on_right_click(mb.position)
 
 
 func _finish_box(release_pos: Vector2) -> void:
-	if release_pos.distance_to(_box_start) < 6.0:
+	if release_pos.distance_to(box_start) < 6.0:
 		_click_at(release_pos, _box_additive)
 	else:
-		var rect := Rect2(_box_start, Vector2.ZERO).expand(release_pos)
+		var rect := Rect2(box_start, Vector2.ZERO).expand(release_pos)
 		var cam: Camera3D = _camera_rig.get_camera()
 		var project := func(uid): return cam.unproject_position(_world_pos(uid))
 		_selection.box(rect, project, _toy.get_alive())

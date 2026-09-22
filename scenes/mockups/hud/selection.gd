@@ -9,7 +9,7 @@ var selected: Array[int] = []
 var groups: Dictionary = {}
 var focus_layer: int = 1
 
-var _last_recall_digit: int = -1
+var last_recall_digit: int = -1
 var _last_recall_ms: int = -100000
 
 
@@ -81,10 +81,10 @@ func recall(digit: int, units: Dictionary, now_ms: int) -> Dictionary:
 	groups[digit] = live
 	selected = live.duplicate()
 
-	if digit == _last_recall_digit and now_ms - _last_recall_ms <= RECALL_WINDOW_MS:
+	if digit == last_recall_digit and now_ms - _last_recall_ms <= RECALL_WINDOW_MS:
 		result.centre_requested = true
 		result.centre = _centroid(live, units)
-	_last_recall_digit = digit
+	last_recall_digit = digit
 	_last_recall_ms = now_ms
 	return result
 

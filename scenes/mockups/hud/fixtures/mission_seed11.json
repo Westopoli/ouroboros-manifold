@@ -1,0 +1,8 @@
+{
+  "canvas_wu": 6000.0,
+  "objective": {
+    "name": "The Core",
+    "kind": "hold",
+    "progress_curve": [[0, 0.0], [300, 0.15], [600, 0.38], [900, 0.7], [1200, 1.0]]
+  }
+}

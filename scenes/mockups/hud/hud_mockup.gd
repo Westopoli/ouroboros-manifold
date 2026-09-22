@@ -9,6 +9,8 @@ const PLANTS: Array[String] = ["box-one-layer", "group-shared", "select-all-exis
 
 const DT := 1.0 / 20.0
 const LAYER_Y := {1: 0.0, 2: 400.0}
+const CANVAS_SIZE := 6000.0
+const FIXTURE_PATH := "res://scenes/mockups/hud/fixtures/mission_seed11.json"
 
 var _camera_rig: Node3D
 var _hud: Node
@@ -22,6 +24,7 @@ var _time_acc: float = 0.0
 var _regen_count: int = 0
 var _tick_ms_sum: float = 0.0
 var _tick_ms_n: int = 0
+var _fixture: Dictionary = {}
 
 
 func _ready() -> void:
@@ -31,12 +34,99 @@ func _ready() -> void:
 
 	_toy = ToyUnitsScript.new()
 	_selection = SelectionScript.new()
+	_fixture = _load_fixture()
+	_build_world()
+
 	if _input_router != null and _input_router.has_method("setup"):
 		_input_router.setup(self, _toy, _selection, _camera_rig)
+
+	qa_seed(_seed)
+	_build_units()
+	_sync_visuals()
+
 	if _hud != null and _hud.has_method("setup"):
 		_hud.setup(self)
 
-	qa_seed(_seed)
+
+func _load_fixture() -> Dictionary:
+	var text := FileAccess.get_file_as_string(FIXTURE_PATH)
+	var parsed = JSON.parse_string(text)
+	return parsed if typeof(parsed) == TYPE_DICTIONARY else {}
+
+
+func _build_world() -> void:
+	var world := get_node_or_null("World")
+	if world == null:
+		return
+	var env := Environment.new()
+	env.background_mode = Environment.BG_COLOR
+	env.background_color = Color(0.04, 0.05, 0.07)
+	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	env.ambient_light_color = Color(0.8, 0.85, 0.9)
+	env.ambient_light_energy = 0.7
+	var we := WorldEnvironment.new()
+	we.environment = env
+	world.add_child(we)
+
+	var light := DirectionalLight3D.new()
+	light.rotation_degrees = Vector3(-60.0, -30.0, 0.0)
+	light.light_energy = 1.1
+	world.add_child(light)
+
+	world.add_child(_make_plane(Vector3(CANVAS_SIZE * 0.5, 0.0, CANVAS_SIZE * 0.5), Color(0.06, 0.07, 0.09, 1.0)))
+	var layer2 := _make_plane(Vector3(CANVAS_SIZE * 0.5, 400.0, CANVAS_SIZE * 0.5), Color(0.4, 0.6, 0.85, 0.16))
+	var mat: StandardMaterial3D = layer2.material_override
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	world.add_child(layer2)
+
+	var units_node := Node3D.new()
+	units_node.name = "Units"
+	world.add_child(units_node)
+
+
+func _make_plane(pos: Vector3, color: Color) -> MeshInstance3D:
+	var mesh := PlaneMesh.new()
+	mesh.size = Vector2(CANVAS_SIZE, CANVAS_SIZE)
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = color
+	var mi := MeshInstance3D.new()
+	mi.mesh = mesh
+	mi.material_override = mat
+	mi.position = pos
+	return mi
+
+
+func _build_units() -> void:
+	var units_node := get_node_or_null("World/Units")
+	if units_node == null:
+		return
+	var all: Dictionary = _toy.get_all()
+	for uid in all.keys():
+		var faction: String = all[uid].faction
+		var body := MeshInstance3D.new()
+		body.name = "Unit_%d" % uid
+		var mesh := CapsuleMesh.new()
+		mesh.radius = 15.0
+		mesh.height = 50.0
+		var mat := StandardMaterial3D.new()
+		mat.albedo_color = Color("#4099FF") if faction == "player" else Color("#FF4738")
+		body.mesh = mesh
+		body.material_override = mat
+
+		var ring := MeshInstance3D.new()
+		ring.name = "Ring"
+		var ring_mesh := CylinderMesh.new()
+		ring_mesh.top_radius = 32.0
+		ring_mesh.bottom_radius = 32.0
+		ring_mesh.height = 2.0
+		var ring_mat := StandardMaterial3D.new()
+		ring_mat.albedo_color = Color(0.3, 0.8, 1.0, 0.9)
+		ring.mesh = ring_mesh
+		ring.material_override = ring_mat
+		ring.position = Vector3(0.0, -24.0, 0.0)
+		ring.visible = false
+		body.add_child(ring)
+		units_node.add_child(body)
 
 
 func _process(delta: float) -> void:
@@ -85,8 +175,24 @@ func _clock_s() -> float:
 
 
 func _current_objective() -> Dictionary:
-	var progress: float = clampf(float(_tick) / 1200.0, 0.0, 1.0)
-	return {"name": "Hold The Core", "progress": progress}
+	var obj: Dictionary = _fixture.get("objective", {})
+	var curve: Array = obj.get("progress_curve", [[0, 0.0], [1200, 1.0]])
+	return {"name": obj.get("name", "The Core"), "progress": _interp_curve(curve, _tick)}
+
+
+func _interp_curve(curve: Array, t: int) -> float:
+	if curve.is_empty():
+		return 0.0
+	if t <= int(curve[0][0]):
+		return float(curve[0][1])
+	for i in range(curve.size() - 1):
+		var a: Array = curve[i]
+		var b: Array = curve[i + 1]
+		if t <= int(b[0]):
+			var span: float = float(b[0]) - float(a[0])
+			var f: float = (float(t) - float(a[0])) / span if span > 0.0 else 0.0
+			return lerpf(float(a[1]), float(b[1]), f)
+	return float(curve[curve.size() - 1][1])
 
 
 func qa_state() -> Dictionary:
