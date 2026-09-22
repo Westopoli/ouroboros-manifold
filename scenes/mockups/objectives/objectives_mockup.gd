@@ -21,6 +21,7 @@ var _mission: Dictionary = {}
 var _fixture: int = 11
 var _seed: int = 11
 var _archetype: String = "defensive_stand"
+var _kind_override: String = ""
 var _timing_ms: Dictionary = {"gen": 0.0}
 var _regen_count: int = 0
 
@@ -57,7 +58,7 @@ func _generate() -> void:
 	var eff_fixture: int = 11 if QaPlants.is_active("seed-ignored") else _fixture
 	_places = Places.new()
 	_places.load_path(FIXTURES_DIR + "nodes_seed%d.json" % eff_fixture)
-	_mission = MissionGen.build(_archetype, _places, _seed)
+	_mission = MissionGen.build(_archetype, _places, _seed, _kind_override)
 	var t1 := Time.get_ticks_usec()
 	_timing_ms = {"gen": (t1 - t0) / 1000.0}
 
@@ -157,9 +158,13 @@ func qa_set(name: String, value) -> void:
 	match name:
 		"archetype":
 			_archetype = String(value)
+			_kind_override = ""
 			_generate()
 		"fixture":
 			_fixture = int(value)
+			_generate()
+		"kind":
+			_kind_override = String(value)
 			_generate()
 
 
