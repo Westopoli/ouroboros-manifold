@@ -85,3 +85,9 @@ Full check table, oracle table, and the re-answered Q1-Q6 with proving screensho
 ## Next step
 
 Pass-1 screenshots (1920x1080) are in `pass1/`, replaced after this fix pass: `slide_in.png`, `mid_print.png`, `expanded.png`, `before_morph.png`, `after_morph.png`, `end_seed11.png`, `end_seed12.png`. The mockup awaits your look.
+
+## Mockup review 1 (Westley, 2026-09-22)
+
+Verbatim: "chronicle mockup should really just be the chronicle overlaid on top of the galaxy view (just like in the other version of the game), so the galaxy behind the chronicle is wrong, similar problem to the world view. Really both of these prototypes could be the same agent, they're closely related."
+
+Pass 2 brief: `docs/northstar/plans/briefs/2026-09-22-p7-chronicle-mockup-pass2.md` (the scroll over the galaxy mockup's pass-2 view; handed to the galaxy doer after galaxy pass 2 merges).
