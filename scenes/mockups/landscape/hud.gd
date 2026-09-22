@@ -23,6 +23,8 @@ var _stability: float = 60.0
 @onready var _regenerate_button: Button = $VBoxContainer/RegenerateButton
 @onready var _kit_toggle_button: Button = $VBoxContainer/KitToggleButton
 @onready var _piece_count_label: Label = $VBoxContainer/PieceCountLabel
+@onready var _skeleton_label: Label = $VBoxContainer/SkeletonLabel
+@onready var _timing_label: Label = $VBoxContainer/TimingLabel
 @onready var _stability_slider: HSlider = $VBoxContainer/StabilitySlider
 @onready var _map_view: Control = $MapView
 
@@ -50,7 +52,9 @@ func _ready() -> void:
 	_camera_rig.band_changed.connect(_on_band_changed)
 	_regenerate_button.pressed.connect(_on_regenerate_pressed)
 	_kit_toggle_button.pressed.connect(_on_kit_toggle_pressed)
-	_stability_slider.value_changed.connect(_on_stability_slider_value_changed)
+	# Regenerate on release, not on every drag tick (Westley: dragging "slows everything down
+	# for a few seconds" because value_changed fired a full regenerate per pixel of drag).
+	_stability_slider.drag_ended.connect(_on_stability_drag_ended)
 
 	_regenerate()
 
@@ -91,20 +95,30 @@ func _regenerate() -> void:
 	for child in _generated.get_children():
 		child.free()
 
+	var t0 := Time.get_ticks_usec()
 	var field_map := FieldMap.new()
 	field_map.generate(_seed, _canvas, _stability)
+	var t1 := Time.get_ticks_usec()
 
 	var kit: Dictionary = _kits[_kit_name]
 
 	var ground_builder := GroundBuilder.new()
 	_generated.add_child(ground_builder.build(field_map, kit))
+	var t2 := Time.get_ticks_usec()
 
 	var placer := Placer.new()
 	var result := placer.place(field_map, kit, _generated)
+	var t3 := Time.get_ticks_usec()
 
 	_field_map = field_map
 	_seed_label.text = "Seed: %d" % _seed
 	_piece_count_label.text = "Pieces: %d" % result.total
+	_skeleton_label.text = "Skeleton: %s" % field_map.skeleton_name
+	var gen_ms := (t1 - t0) / 1000.0
+	var ground_ms := (t2 - t1) / 1000.0
+	var placer_ms := (t3 - t2) / 1000.0
+	_timing_label.text = "Gen: %dms Ground: %dms Placer: %dms (total %dms)" % [gen_ms, ground_ms, placer_ms, gen_ms + ground_ms + placer_ms]
+	print("regenerate timing: gen=%.1fms ground=%.1fms placer=%.1fms total=%.1fms" % [gen_ms, ground_ms, placer_ms, gen_ms + ground_ms + placer_ms])
 	_map_view.set_field_map(field_map)
 
 
@@ -121,8 +135,10 @@ func _on_kit_toggle_pressed() -> void:
 	_regenerate()
 
 
-func _on_stability_slider_value_changed(value: float) -> void:
-	_stability = value
+func _on_stability_drag_ended(value_changed: bool) -> void:
+	if not value_changed:
+		return
+	_stability = _stability_slider.value
 	_regenerate()
 
 

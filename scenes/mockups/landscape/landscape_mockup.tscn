@@ -74,6 +74,15 @@ text = "Kit: —"
 [node name="PieceCountLabel" type="Label" parent="HUD/VBoxContainer"]
 text = "Pieces: —"
 
+[node name="SkeletonLabel" type="Label" parent="HUD/VBoxContainer"]
+text = "Skeleton: —"
+
+[node name="TimingLabel" type="Label" parent="HUD/VBoxContainer"]
+text = "Gen: — Ground: — Placer: —"
+
+[node name="StabilityLabel" type="Label" parent="HUD/VBoxContainer"]
+text = "Stability (release to apply)"
+
 [node name="StabilitySlider" type="HSlider" parent="HUD/VBoxContainer"]
 custom_minimum_size = Vector2(160, 0)
 min_value = 0.0
