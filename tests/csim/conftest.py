@@ -246,13 +246,12 @@ def _configure_debug(h):
     h.om_debug_inject.restype = None
 
 
-@pytest.fixture(scope="session")
-def lib():
-    if not LIB_PATH.exists():
-        if _HAS_CSRC:
-            pytest.fail("COMPILE ERROR: csrc/*.c present but libouroboros.so did not build:\n"
-                        + (BUILD_ERROR or "(no compiler output captured; run `make`)"))
-        pytest.skip("no csrc/*.c implementation yet; nothing to build")
+def load_lib():
+    if not LIB_PATH.exists() and _HAS_CSRC:
+        raise RuntimeError(
+            "COMPILE ERROR: csrc/*.c present but libouroboros.so did not build:\n"
+            + (BUILD_ERROR or "(no compiler output captured; run `make`)")
+        )
     handle = ctypes.CDLL(str(LIB_PATH))
     _configure_common(handle)
     _bind_generated(handle)
@@ -262,6 +261,16 @@ def lib():
         "(this suite's contract version of csrc/ouroboros_sim.h)"
     )
     return handle
+
+
+@pytest.fixture(scope="session")
+def lib():
+    if not LIB_PATH.exists():
+        if _HAS_CSRC:
+            pytest.fail("COMPILE ERROR: csrc/*.c present but libouroboros.so did not build:\n"
+                        + (BUILD_ERROR or "(no compiler output captured; run `make`)"))
+        pytest.skip("no csrc/*.c implementation yet; nothing to build")
+    return load_lib()
 
 
 @pytest.fixture(scope="session")
