@@ -22,6 +22,10 @@ Precedent for this shape: `../landscape_design/README.md`, the P2 design phase. 
 
 `.gdignore` keeps Godot from generating `.import` files for the SVGs.
 
+## Atlas
+
+All eleven option sets, side by side with their diagrams, on one page: https://claude.ai/artifact/6571aySFhmoQ1i4XswDhNm (private to Westley). Rebuilt from the files here whenever an options.md changes.
+
 ## Status
 
 | Feature | Slug | Batch | Brief | Confirmed | Options |
