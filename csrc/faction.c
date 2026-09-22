@@ -5,13 +5,13 @@
 #include <stdlib.h>
 
 void om_world_set_feature(om_world *w, om_feature f, int on) {
-    if (w == NULL || (unsigned)f >= 8)
+    if (w == NULL || (unsigned)f >= 9)
         return;
     w->features[f] = on != 0;
 }
 
 int om_world_feature(const om_world *w, om_feature f) {
-    if (w == NULL || (unsigned)f >= 8)
+    if (w == NULL || (unsigned)f >= 9)
         return 0;
     return w->features[f];
 }

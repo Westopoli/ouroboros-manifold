@@ -165,6 +165,16 @@ uint64_t om_world_step(om_world *w) {
     }
 #endif
 
+    /* Tactical orchestrator (E-11, decision 3): with OM_FEAT_TACTICAL on,
+     * runs once, after every strategic step below -- never before them. */
+    int tactical_before_strategic = 0;
+#ifdef OM_DEBUG_INJECT
+    tactical_before_strategic = (w->inject == OM_BUG_TACTICAL_BEFORE_STRATEGIC);
+    if (om_world_feature(w, OM_FEAT_TACTICAL) && tactical_before_strategic) {
+        om_tactical_step(w);           /* Fault: tactical runs before the strategic steps */
+    }
+#endif
+
     /* Steps 1-2: Events (E-04): resolve the due queue, then evaluate fresh
      * triggers on every inhabited region (docs/bible/algorithms.md:13-14). */
 #ifdef OM_DEBUG_INJECT
@@ -217,12 +227,41 @@ uint64_t om_world_step(om_world *w) {
 #endif
 
     /* Step 4: Friction & Admin Revolts (E-05) */
+    int technology_before_admin = 0;
+#ifdef OM_DEBUG_INJECT
+    technology_before_admin = (w->inject == OM_BUG_TECHNOLOGY_BEFORE_ADMIN);
+#endif
     if (om_world_feature(w, OM_FEAT_FRICTION)) {
         om_step_friction(w);           /* 4 */
     }
+#ifdef OM_DEBUG_INJECT
+    if (om_world_feature(w, OM_FEAT_TECHNOLOGY) && technology_before_admin) {
+        om_step_technology(w);         /* Fault: 4.5 runs before 4.1 (admin revolts) instead of after */
+    }
+#endif
     if (om_world_feature(w, OM_FEAT_ADMIN_REVOLTS)) {
         om_step_admin_revolts(w);      /* 4.1 */
     }
+
+    /* Steps 4.25-4.5: Diplomacy & Technology (E-06), after admin revolts and
+     * before drift (docs/bible/algorithms.md:25-26). */
+    int diplomacy_after_drift = 0;
+    int lifecycle_before_drift = 0;
+#ifdef OM_DEBUG_INJECT
+    diplomacy_after_drift = (w->inject == OM_BUG_DIPLOMACY_AFTER_DRIFT);
+    lifecycle_before_drift = (w->inject == OM_BUG_LIFECYCLE_BEFORE_DRIFT);
+#endif
+    if (om_world_feature(w, OM_FEAT_DIPLOMACY) && !diplomacy_after_drift) {
+        om_step_diplomacy(w);          /* 4.25 */
+    }
+    if (om_world_feature(w, OM_FEAT_TECHNOLOGY) && !technology_before_admin) {
+        om_step_technology(w);         /* 4.5 */
+    }
+#ifdef OM_DEBUG_INJECT
+    if (om_world_feature(w, OM_FEAT_LIFECYCLE) && lifecycle_before_drift) {
+        om_step_lifecycle(w);          /* Fault: 6 runs before step 5 (drift) instead of after */
+    }
+#endif
 
     /* Step 5: Drift (E-02), gated on OM_FEAT_DRIFT and run after
      * factions/friction/admin-revolts (docs/bible/algorithms.md:9-29). */
@@ -408,6 +447,16 @@ uint64_t om_world_step(om_world *w) {
             om_trace_append(w, &row);
         }
     }
+    }
+
+    /* Step 6: Lifecycle (E-07), after drift (docs/bible/algorithms.md:28). */
+    if (om_world_feature(w, OM_FEAT_LIFECYCLE) && !lifecycle_before_drift) {
+        om_step_lifecycle(w);          /* 6 */
+    }
+
+    /* Tactical orchestrator (E-11, decision 3): after every strategic step. */
+    if (om_world_feature(w, OM_FEAT_TACTICAL) && !tactical_before_strategic) {
+        om_tactical_step(w);
     }
 
     return w->tick;

@@ -96,8 +96,15 @@ typedef struct om_trace_row {
 
 /* ---- ABI version ---- */
 /* The test harness asserts this matches what it was written against. Bump on any
- * breaking change to a signature or struct layout. */
+ * breaking change to a signature or struct layout. Bumped to 2 at freeze/F2
+ * (OM_FEAT_TACTICAL, the E-06/E-07/E-11 tick-order bug ids, and the three
+ * core symbols below are new since version 1). */
 uint32_t om_abi_version(void);
+/* T1's pipe hello checks the caller's struct sizes against the library's own
+ * before trusting anything else over the wire (audit 2026-09-21, A F-8-5):
+ * returns 1 when every size matches this build's sizeof, 0 otherwise. */
+int      om_abi_layout_check(uint32_t sizeof_trace_row, uint32_t sizeof_drift_row,
+                             uint32_t sizeof_collision);
 
 /* ---- lifecycle ---- */
 om_world *om_world_new(uint32_t n_regions, uint64_t seed);
@@ -121,6 +128,9 @@ uint32_t om_region_count(const om_world *w);
 /* ---- tick (7-step sequence, tick auto-increments from 1) ---- */
 uint64_t om_world_step(om_world *w);                 /* advance one tick, return new tick */
 uint64_t om_world_run(om_world *w, uint64_t n_ticks); /* bulk path the scale gate times */
+/* Fixture setter (E-06/E-10): moves the tick counter directly, with no other
+ * side effect. The next om_world_step() then returns tick + 1. */
+void     om_world_set_tick(om_world *w, uint64_t tick);
 
 /* ---- read state ---- */
 double  om_region_field(const om_world *w, uint32_t idx, om_field f);
@@ -135,6 +145,10 @@ int     om_region_drift(const om_world *w, uint32_t idx, om_drift_row *out);
  * six numbers in region-index order, folded with the tick. Computable on demand. */
 uint64_t om_world_checksum(const om_world *w);
 uint32_t om_checksum_cadence(void);   /* returns 10 (R-020-03) */
+/* Same value as om_world_checksum (T1's snapshot/delta and E-12/E-13's own
+ * checksum reads all name this symbol instead; kept as a second entry point
+ * rather than a rename so om_world_checksum's existing callers are untouched). */
+uint64_t om_world_get_state_checksum(const om_world *w);
 
 /* ---- deterministic transcendental ---- */
 /* The one platform-independent sine used by the ALG-01 oscillator. Compiled
@@ -223,7 +237,10 @@ typedef enum {
     OM_FEAT_DIPLOMACY     = 4,  /* tick step 4.25 (E-06) */
     OM_FEAT_TECHNOLOGY    = 5,  /* tick step 4.5 (E-06) */
     OM_FEAT_DRIFT         = 6,  /* tick step 5 (E-02) */
-    OM_FEAT_LIFECYCLE     = 7   /* tick step 6 (E-07) */
+    OM_FEAT_LIFECYCLE     = 7,  /* tick step 6 (E-07) */
+    OM_FEAT_TACTICAL      = 8   /* tactical orchestrator (E-11): with a tactical map
+                                 * loaded, runs after every strategic step (decision 3,
+                                 * docs/northstar/plans/briefs/2026-09-22-two-day-push.md) */
 } om_feature;
 void om_world_set_feature(om_world *w, om_feature f, int on);
 int  om_world_feature(const om_world *w, om_feature f);
@@ -742,6 +759,55 @@ typedef enum {
     OM_BUG_ARCHETYPE_RANGE_MISS  = 310, /* a home's mil/eco rolled outside its R-022-05 archetype range */
     OM_BUG_E03_SLOW              = 311  /* deliberate O(N^2) slowdown for the 110-region scale gate */
 } om_bug_e03;
+#endif
+
+
+/* ======================================================================
+ * E-06: diplomacy and technology (epics/E-06-diplomacy-and-technology.md).
+ * Appended 2026-09-22 (freeze/F2): tick-order wiring only -- om_step_diplomacy
+ * and om_step_technology are internal hooks (csrc/om_internal.h) that run at
+ * tick steps 4.25 and 4.5 (docs/bible/algorithms.md:25-26); the epic's own
+ * symbols (stance, tech growth) land with card B5. Nothing above this line
+ * changes.
+ * ====================================================================== */
+#ifdef OM_DEBUG_INJECT
+typedef enum {
+    OM_BUG_DIPLOMACY_AFTER_DRIFT   = 400, /* step 4.25 runs after step 5 (drift) instead of before it */
+    OM_BUG_TECHNOLOGY_BEFORE_ADMIN = 401  /* step 4.5 runs before step 4.1 (admin revolts) instead of after it */
+} om_bug_e06;
+#endif
+
+
+/* ======================================================================
+ * E-07: civilizational lifecycle (epics/E-07-civilizational-lifecycle.md).
+ * Appended 2026-09-22 (freeze/F2): tick-order wiring only -- om_step_lifecycle
+ * is an internal hook (csrc/om_internal.h) that runs at tick step 6, after
+ * drift (docs/bible/algorithms.md:28, "Zombie faction cleanup"); the epic's
+ * own symbols land with card B6. Nothing above this line changes.
+ * ====================================================================== */
+#ifdef OM_DEBUG_INJECT
+typedef enum {
+    OM_BUG_LIFECYCLE_BEFORE_DRIFT = 500 /* step 6 runs before step 5 (drift) instead of after it */
+} om_bug_e07;
+#endif
+
+
+/* ======================================================================
+ * E-11: units and combat (epics/E-11-units-and-combat.md). Appended
+ * 2026-09-22 (freeze/F2): the tactical orchestrator's wiring only --
+ * om_tactical_step is a STUB in csrc/unit.c; the epic's own symbols land with
+ * card B10. Nothing above this line changes.
+ * ====================================================================== */
+/* The tactical orchestrator (decision 3, two-day-push brief): with
+ * OM_FEAT_TACTICAL on, om_world_step calls this once, after every strategic
+ * step, and ignores the return (mirrors the om_world_step pattern; a real
+ * tick value backs it once B10 lands). */
+uint64_t om_tactical_step(om_world *w);
+
+#ifdef OM_DEBUG_INJECT
+typedef enum {
+    OM_BUG_TACTICAL_BEFORE_STRATEGIC = 900 /* tactical runs before the strategic steps instead of after them */
+} om_bug_e11;
 #endif
 
 #ifdef __cplusplus

@@ -187,6 +187,9 @@ def _configure_common(h):
     h.om_world_run.argtypes = [OMWorldP, ctypes.c_uint64]
     h.om_world_run.restype = ctypes.c_uint64
 
+    h.om_tactical_step.argtypes = [OMWorldP]
+    h.om_tactical_step.restype = ctypes.c_uint64
+
     h.om_region_field.argtypes = [OMWorldP, ctypes.c_uint32, ctypes.c_int]
     h.om_region_field.restype = ctypes.c_double
 
@@ -340,6 +343,7 @@ class OMFeature:
     TECHNOLOGY = 5
     DRIFT = 6
     LIFECYCLE = 7
+    TACTICAL = 8
 
 
 class OMArchetype:
@@ -1069,3 +1073,25 @@ def region_neighbors(lib, w, idx, max_records=256):
     buf = (ctypes.c_uint32 * max_records)()
     n = lib.om_region_neighbors(w, idx, buf, max_records)
     return [buf[i] for i in range(min(n, max_records))]
+
+
+# ======================================================================
+# ---- E-06 / E-07 / E-11: tick-order wiring only (freeze/F2, 2026-09-22) ----
+# Mirrors the om_bug_e06 / om_bug_e07 / om_bug_e11 blocks appended to
+# csrc/ouroboros_sim.h. Each epic's real symbols (stance and tech growth for
+# E-06, zombie cleanup for E-07, units and combat for E-11) land with their
+# own build card; only the tick-order wiring exists today.
+# ======================================================================
+
+
+class OMBugE06:
+    DIPLOMACY_AFTER_DRIFT = 400
+    TECHNOLOGY_BEFORE_ADMIN = 401
+
+
+class OMBugE07:
+    LIFECYCLE_BEFORE_DRIFT = 500
+
+
+class OMBugE11:
+    TACTICAL_BEFORE_STRATEGIC = 900

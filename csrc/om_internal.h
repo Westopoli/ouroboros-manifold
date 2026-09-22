@@ -43,8 +43,10 @@ struct om_world {
     om_trace_row *trace;
     uint64_t trace_len, trace_cap;
 
-    /* E-05 faction, ownership, typed edges, and RNG state */
-    int          features[8];
+    /* E-05 faction, ownership, typed edges, and RNG state.
+     * features[] is sized for every om_feature id (OM_FEAT_EVENTS ..
+     * OM_FEAT_TACTICAL, 9 today); bump alongside a new om_feature value. */
+    int          features[9];
     double       faction_budget[OM_MAX_FACTIONS];
     double       faction_budget_snapshot[OM_MAX_FACTIONS];
     double       faction_tech[OM_MAX_FACTIONS];
@@ -103,5 +105,12 @@ void om_step_collisions(om_world *w);
 void om_step_resolve(om_world *w);
 void om_step_friction(om_world *w);
 void om_step_admin_revolts(om_world *w);
+/* Tick steps 4.25, 4.5 (E-06) and 6 (E-07); wired in csrc/sim.c between
+ * om_step_admin_revolts and the drift loop, and after it, respectively (F2
+ * freeze). STUB bodies in csrc/diplomacy.c and csrc/lifecycle.c until B5/B6
+ * land. */
+void om_step_diplomacy(om_world *w);
+void om_step_technology(om_world *w);
+void om_step_lifecycle(om_world *w);
 
 #endif /* OM_INTERNAL_H */
