@@ -30,6 +30,12 @@ int om_step_beta(void *w) {
     (void)w;
     return 0;
 }
+
+int om_step_gamma(void *w) {
+    /* STUB */
+    (void)w;
+    return 0;
+}
 '''
 
 CONFTEST = '''
@@ -39,6 +45,10 @@ def read_alpha(lib, w):
 
 def call_beta(lib, w):
     return lib.om_step_beta(w)
+
+
+def call_gamma(lib, w):
+    return lib.om_step_gamma(w)
 '''
 
 TEST_A = '''
@@ -59,6 +69,15 @@ def test_R_002_01(lib, world_factory):
     call_beta(lib, w)
 '''
 
+TEST_C = '''
+from conftest import call_gamma
+
+
+def test_R_004_01(lib, world_factory):
+    w = world_factory()
+    call_gamma(lib, w)
+'''
+
 TEST_GATE = '''
 def test_gate_ok():
     assert True
@@ -75,6 +94,7 @@ def _init_project(tmp_path: Path) -> Path:
     (project / "tests" / "csim" / "conftest.py").write_text(CONFTEST)
     (project / "tests" / "csim" / "test_a.py").write_text(TEST_A)
     (project / "tests" / "csim" / "test_b.py").write_text(TEST_B)
+    (project / "tests" / "csim" / "test_c.py").write_text(TEST_C)
     (project / "tests" / "csim" / "test_gate.py").write_text(TEST_GATE)
     return project
 
@@ -159,6 +179,53 @@ def test_double_owner_and_cycle_are_reported(tmp_path):
     double_owner = [e for e in data["errors"] if e["kind"] == "double_owner"]
     assert double_owner and double_owner[0]["symbol"] == "om_step_beta"
     assert set(double_owner[0]["cards"]) == {"card-b1", "card-b2"}
+
+
+def test_sequential_owner_is_a_note_not_an_error_when_ordered(tmp_path):
+    """Two cards claim the same still-stub symbol (om_step_beta), same shape
+    as test_double_owner_and_cycle_are_reported above, but this time
+    card-seq1 also owns om_step_gamma and card-seq2's acceptance reaches it
+    -- a real edge (card-seq1 -> card-seq2) orders them. R17: reachability
+    over the DAG makes this a `sequential_owner` note, not a `double_owner`
+    error (audit 2026-09-21, Tenth round resolutions design-lane decision)."""
+    project = _init_project(tmp_path)
+    queue = tmp_path / "queue"
+    queue.mkdir()
+    _write_card(queue / "card-seq1.md", project, snippet_symbol="om_step_beta, om_step_gamma",
+                snippet_file="csrc/beta.c", test_call="tests/csim/test_b.py::test_R_002_01",
+                allowed_files="csrc/beta.c")
+    _write_card(queue / "card-seq2.md", project, snippet_symbol="om_step_beta",
+                snippet_file="csrc/beta.c", test_call="tests/csim/test_c.py::test_R_004_01",
+                allowed_files="csrc/beta.c")
+    proc = _run(queue, project)
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    data = json.loads(proc.stdout)
+    assert data["errors"] == []
+    seq = [n for n in data["notes"] if n["kind"] == "sequential_owner"]
+    assert seq and seq[0]["symbol"] == "om_step_beta"
+    assert seq[0]["cards"] == ["card-seq1", "card-seq2"]
+
+
+def test_unordered_double_owner_is_not_demoted_to_a_note(tmp_path):
+    """Same shared-symbol shape as the sequential test above, but with no
+    edge at all between the two claimants (neither's acceptance reaches a
+    symbol the other owns) -- reachability cannot order them, so this stays
+    a `double_owner` error, not a note."""
+    project = _init_project(tmp_path)
+    queue = tmp_path / "queue"
+    queue.mkdir()
+    _write_card(queue / "card-b1.md", project, snippet_symbol="om_step_beta",
+                snippet_file="csrc/beta.c", test_call="tests/csim/test_b.py::test_R_002_01",
+                allowed_files="csrc/beta.c")
+    _write_card(queue / "card-b2.md", project, snippet_symbol="om_step_beta",
+                snippet_file="csrc/beta.c", test_call="tests/csim/test_b.py::test_R_002_01",
+                allowed_files="csrc/beta.c")
+    proc = _run(queue, project)
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    data = json.loads(proc.stdout)
+    assert not any(n["kind"] == "sequential_owner" for n in data["notes"])
+    double_owner = [e for e in data["errors"] if e["kind"] == "double_owner"]
+    assert double_owner and set(double_owner[0]["cards"]) == {"card-b1", "card-b2"}
 
 
 def test_dead_suffixes_are_excluded_from_the_graph(tmp_path):

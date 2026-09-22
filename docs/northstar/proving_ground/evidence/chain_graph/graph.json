@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-22T02:45:31Z",
+  "generated_at": "2026-09-22T03:25:10Z",
   "project": "/home/westopoli/Projects/ouroboros-manifold",
   "nodes": [
     {
@@ -258,11 +258,10 @@
     {
       "card": "205a-e05-collision-lottery",
       "kind": "build",
-      "file": "csrc/collision.c,csrc/resolve.c",
+      "file": "csrc/collision.c",
       "symbols": [
         "om_step_collisions",
-        "om_tick_collisions",
-        "om_step_telegraphs"
+        "om_tick_collisions"
       ],
       "epic": "E-05",
       "story": "039"
@@ -428,22 +427,13 @@
       "story": "040"
     },
     {
-      "card": "208a1-e04-launch-templates",
+      "card": "208a-e04-library-load-readback",
       "kind": "build",
       "file": "csrc/events.c",
       "symbols": [
         "om_event_template_count",
         "om_event_template_get",
-        "om_event_template_by_name"
-      ],
-      "epic": "E-04",
-      "story": "030"
-    },
-    {
-      "card": "208a2-e04-library-loader",
-      "kind": "build",
-      "file": "csrc/events.c",
-      "symbols": [
+        "om_event_template_by_name",
         "om_events_load_launch",
         "om_events_load"
       ],
@@ -518,7 +508,7 @@
       "kind": "build",
       "file": "csrc/events.c",
       "symbols": [
-        "om_debug_inject"
+        "om_step_events"
       ],
       "epic": "E-04",
       "story": null
@@ -1976,154 +1966,129 @@
       "symbol": "gate:S-040"
     },
     {
-      "from": "208a1-e04-launch-templates",
-      "to": "208a2-e04-library-loader",
-      "symbol": "om_event_template_by_name"
-    },
-    {
-      "from": "208a1-e04-launch-templates",
-      "to": "208a2-e04-library-loader",
-      "symbol": "om_event_template_count"
-    },
-    {
-      "from": "208a1-e04-launch-templates",
-      "to": "208a2-e04-library-loader",
-      "symbol": "om_event_template_get"
-    },
-    {
-      "from": "208a1-e04-launch-templates",
+      "from": "208a-e04-library-load-readback",
       "to": "208b1-e04-noise-offsets",
       "symbol": "om_event_template_count"
     },
     {
-      "from": "208a1-e04-launch-templates",
+      "from": "208a-e04-library-load-readback",
       "to": "208b1-e04-noise-offsets",
       "symbol": "om_event_template_get"
     },
     {
-      "from": "208a1-e04-launch-templates",
+      "from": "208a-e04-library-load-readback",
+      "to": "208b1-e04-noise-offsets",
+      "symbol": "om_events_load_launch"
+    },
+    {
+      "from": "208a-e04-library-load-readback",
       "to": "208b2-e04-threshold-triggers",
       "symbol": "om_event_template_by_name"
     },
     {
-      "from": "208a1-e04-launch-templates",
+      "from": "208a-e04-library-load-readback",
       "to": "208b2-e04-threshold-triggers",
       "symbol": "om_event_template_count"
     },
     {
-      "from": "208a1-e04-launch-templates",
+      "from": "208a-e04-library-load-readback",
+      "to": "208b2-e04-threshold-triggers",
+      "symbol": "om_events_load_launch"
+    },
+    {
+      "from": "208a-e04-library-load-readback",
       "to": "208b3-e04-revolts-and-deltas",
       "symbol": "om_event_template_by_name"
     },
     {
-      "from": "208a1-e04-launch-templates",
+      "from": "208a-e04-library-load-readback",
       "to": "208b3-e04-revolts-and-deltas",
       "symbol": "om_event_template_count"
     },
     {
-      "from": "208a1-e04-launch-templates",
+      "from": "208a-e04-library-load-readback",
       "to": "208b3-e04-revolts-and-deltas",
       "symbol": "om_event_template_get"
     },
     {
-      "from": "208a1-e04-launch-templates",
+      "from": "208a-e04-library-load-readback",
+      "to": "208b3-e04-revolts-and-deltas",
+      "symbol": "om_events_load_launch"
+    },
+    {
+      "from": "208a-e04-library-load-readback",
       "to": "209a-e04-queue-exclusion",
       "symbol": "om_event_template_by_name"
     },
     {
-      "from": "208a1-e04-launch-templates",
+      "from": "208a-e04-library-load-readback",
       "to": "209a-e04-queue-exclusion",
       "symbol": "om_event_template_count"
     },
     {
-      "from": "208a1-e04-launch-templates",
+      "from": "208a-e04-library-load-readback",
+      "to": "209a-e04-queue-exclusion",
+      "symbol": "om_events_load_launch"
+    },
+    {
+      "from": "208a-e04-library-load-readback",
       "to": "209b-e04-queue-resolution",
       "symbol": "om_event_template_by_name"
     },
     {
-      "from": "208a1-e04-launch-templates",
+      "from": "208a-e04-library-load-readback",
       "to": "209b-e04-queue-resolution",
       "symbol": "om_event_template_count"
     },
     {
-      "from": "208a1-e04-launch-templates",
+      "from": "208a-e04-library-load-readback",
+      "to": "209b-e04-queue-resolution",
+      "symbol": "om_events_load_launch"
+    },
+    {
+      "from": "208a-e04-library-load-readback",
       "to": "209c-e04-chain-spawns",
       "symbol": "om_event_template_by_name"
     },
     {
-      "from": "208a1-e04-launch-templates",
+      "from": "208a-e04-library-load-readback",
       "to": "209c-e04-chain-spawns",
       "symbol": "om_event_template_count"
     },
     {
-      "from": "208a1-e04-launch-templates",
+      "from": "208a-e04-library-load-readback",
+      "to": "209c-e04-chain-spawns",
+      "symbol": "om_event_template_get"
+    },
+    {
+      "from": "208a-e04-library-load-readback",
+      "to": "209c-e04-chain-spawns",
+      "symbol": "om_events_load_launch"
+    },
+    {
+      "from": "208a-e04-library-load-readback",
       "to": "210-e04-fault-injection",
       "symbol": "om_event_template_by_name"
     },
     {
-      "from": "208a1-e04-launch-templates",
+      "from": "208a-e04-library-load-readback",
       "to": "210-e04-fault-injection",
       "symbol": "om_event_template_count"
     },
     {
-      "from": "208a1-e04-launch-templates",
+      "from": "208a-e04-library-load-readback",
+      "to": "210-e04-fault-injection",
+      "symbol": "om_events_load_launch"
+    },
+    {
+      "from": "208a-e04-library-load-readback",
       "to": "256a-e09-chronicle-the_fragment_library_con",
       "symbol": "om_event_template_count"
     },
     {
-      "from": "208a2-e04-library-loader",
-      "to": "208a1-e04-launch-templates",
-      "symbol": "om_events_load_launch"
-    },
-    {
-      "from": "208a2-e04-library-loader",
-      "to": "208b1-e04-noise-offsets",
-      "symbol": "om_events_load_launch"
-    },
-    {
-      "from": "208a2-e04-library-loader",
-      "to": "208b2-e04-threshold-triggers",
-      "symbol": "om_events_load_launch"
-    },
-    {
-      "from": "208a2-e04-library-loader",
-      "to": "208b3-e04-revolts-and-deltas",
-      "symbol": "om_events_load_launch"
-    },
-    {
-      "from": "208a2-e04-library-loader",
-      "to": "209a-e04-queue-exclusion",
-      "symbol": "om_events_load_launch"
-    },
-    {
-      "from": "208a2-e04-library-loader",
-      "to": "209b-e04-queue-resolution",
-      "symbol": "om_events_load_launch"
-    },
-    {
-      "from": "208a2-e04-library-loader",
-      "to": "209c-e04-chain-spawns",
-      "symbol": "om_events_load_launch"
-    },
-    {
-      "from": "208a2-e04-library-loader",
-      "to": "210-e04-fault-injection",
-      "symbol": "om_events_load_launch"
-    },
-    {
-      "from": "208a2-e04-library-loader",
+      "from": "208a-e04-library-load-readback",
       "to": "256a-e09-chronicle-the_fragment_library_con",
       "symbol": "om_events_load_launch"
-    },
-    {
-      "from": "208b1-e04-noise-offsets",
-      "to": "208a1-e04-launch-templates",
-      "symbol": "om_event_set_noise"
-    },
-    {
-      "from": "208b1-e04-noise-offsets",
-      "to": "208a2-e04-library-loader",
-      "symbol": "om_event_set_noise"
     },
     {
       "from": "208b1-e04-noise-offsets",
@@ -2157,28 +2122,23 @@
     },
     {
       "from": "208b3-e04-revolts-and-deltas",
-      "to": "208a1-e04-launch-templates",
+      "to": "208b2-e04-threshold-triggers",
+      "symbol": "om_tick_events"
+    },
+    {
+      "from": "208b3-e04-revolts-and-deltas",
+      "to": "209a-e04-queue-exclusion",
+      "symbol": "om_tick_events"
+    },
+    {
+      "from": "208b3-e04-revolts-and-deltas",
+      "to": "209b-e04-queue-resolution",
+      "symbol": "om_tick_events"
+    },
+    {
+      "from": "208b3-e04-revolts-and-deltas",
+      "to": "209c-e04-chain-spawns",
       "symbol": "om_region_event_delta"
-    },
-    {
-      "from": "208b3-e04-revolts-and-deltas",
-      "to": "208a2-e04-library-loader",
-      "symbol": "om_tick_events"
-    },
-    {
-      "from": "208b3-e04-revolts-and-deltas",
-      "to": "208b2-e04-threshold-triggers",
-      "symbol": "om_tick_events"
-    },
-    {
-      "from": "208b3-e04-revolts-and-deltas",
-      "to": "209a-e04-queue-exclusion",
-      "symbol": "om_tick_events"
-    },
-    {
-      "from": "208b3-e04-revolts-and-deltas",
-      "to": "209b-e04-queue-resolution",
-      "symbol": "om_tick_events"
     },
     {
       "from": "208b3-e04-revolts-and-deltas",
@@ -2199,16 +2159,6 @@
       "from": "209b-e04-queue-resolution",
       "to": "230a2-e07-lifecycle-a_revolt_can_birth_a_nat",
       "symbol": "om_tick_pruned"
-    },
-    {
-      "from": "209c-e04-chain-spawns",
-      "to": "208a1-e04-launch-templates",
-      "symbol": "om_event_queue_external"
-    },
-    {
-      "from": "209c-e04-chain-spawns",
-      "to": "208a2-e04-library-loader",
-      "symbol": "om_event_queue_external"
     },
     {
       "from": "209c-e04-chain-spawns",
@@ -2245,14 +2195,6 @@
     {
       "kind": "double_owner",
       "cards": [
-        "201b-e02-drift-trace",
-        "210-e04-fault-injection"
-      ],
-      "symbol": "om_debug_inject"
-    },
-    {
-      "kind": "double_owner",
-      "cards": [
         "203a1-e05-candidate-enumeration",
         "203a2-e05-candidate-scoring",
         "203b1-e05-viability-scoring",
@@ -2284,14 +2226,6 @@
         "203e-e05-telegraph-declare-draw-queue"
       ],
       "symbol": "om_pending_telegraphs"
-    },
-    {
-      "kind": "double_owner",
-      "cards": [
-        "204a1-e05-telegraph-maturation",
-        "205a-e05-collision-lottery"
-      ],
-      "symbol": "om_step_telegraphs"
     },
     {
       "kind": "double_owner",
@@ -2554,15 +2488,6 @@
         "327a-e17-mapgen-terrain_that_reads_like_"
       ],
       "symbol": "om_mapgen_step"
-    },
-    {
-      "kind": "cycle",
-      "cards": [
-        "208a1-e04-launch-templates",
-        "208a2-e04-library-loader",
-        "208a1-e04-launch-templates"
-      ],
-      "symbol": null
     },
     {
       "kind": "missing_file",
@@ -4489,5 +4414,6 @@
       ],
       "symbol": null
     }
-  ]
+  ],
+  "notes": []
 }
