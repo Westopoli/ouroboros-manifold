@@ -61,7 +61,7 @@ func _check_narrow3() -> void:
 	if cls == null or not cls.new().has_method("narrow"):
 		_assert(false, "NARROW-3: selection.gd missing narrow()"); return
 	var sel = cls.new()
-	sel.selected = [1, 2, 3]
+	sel.selected = [1, 2, 3] as Array[int]
 	sel.focus_layer = 1
 	sel.narrow(2, _fake_units())
 	_assert(sel.selected == [2, 3] and sel.focus_layer == 1,
@@ -73,8 +73,8 @@ func _check_group4() -> void:
 		_assert(false, "GROUP-4: selection.gd missing bind()"); return
 	var sel = cls.new()
 	var units := _fake_units()
-	sel.selected = [1]; sel.bind(1, units)
-	sel.selected = [1, 2]; sel.bind(2, units)
+	sel.selected = [1] as Array[int]; sel.bind(1, units)
+	sel.selected = [1, 2] as Array[int]; sel.bind(2, units)
 	var r: Dictionary = sel.recall(2, units, 0)
 	_assert(not sel.groups.get(1, []).has(1) and sel.selected == [1, 2] and not r.centre_requested,
 		"GROUP-4: groups=%s selected=%s" % [sel.groups, sel.selected])
@@ -85,7 +85,7 @@ func _check_centre5() -> void:
 		_assert(false, "CENTRE-5: selection.gd missing recall()"); return
 	var sel = cls.new()
 	var units := _fake_units()
-	sel.selected = [1, 2]; sel.bind(3, units)
+	sel.selected = [1, 2] as Array[int]; sel.bind(3, units)
 	var r1: Dictionary = sel.recall(3, units, 1000)
 	var r2: Dictionary = sel.recall(3, units, 1300)
 	var r3: Dictionary = sel.recall(3, units, 2000)
@@ -110,7 +110,7 @@ func _check_shift7() -> void:
 		_assert(false, "SHIFT-7: selection.gd missing shift_click()"); return
 	var sel = cls.new()
 	var units := _fake_units()
-	sel.selected = [1]
+	sel.selected = [1] as Array[int]
 	sel.shift_click(2, units)
 	var added: bool = sel.selected.has(2)
 	sel.shift_click(1, units)
