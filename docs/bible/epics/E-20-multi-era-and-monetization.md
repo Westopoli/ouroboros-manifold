@@ -21,7 +21,7 @@ At launch every era plays the same: same fog, same tempo, same reinforcement. Di
 
 ## Obviously working in 60 seconds
 
-Load the Settled Reach: a mission generates, forces spawn as sci-fi ships at Tier 2. Switch the era pack to the past era: the same seed produces the same map seed, the same six unit types with the same stats, the same objectives, drawn as that era's models, named from that era's pools, briefed in that era's prose. Grep the engine for any era name: zero hits.
+Load the Settled Reach: a mission generates, forces spawn as sci-fi ships at Tier 2. Switch the era pack to the past era: the same seed produces the same map seed, the same unit roster with the same stats, the same objectives, drawn as that era's models, named from that era's pools, briefed in that era's prose. Grep the engine for any era name: zero hits.
 
 ## Stories
 
@@ -42,10 +42,10 @@ Open flags: none.
 As an era designer, I want a checklist of exactly what a pack contains, so that every era is complete and nothing else.
 
 Rules
-- R-146-01  Given an era pack, When validated, Then it contains: identity (name, spatial scale, tone), three tier definitions, 18 unit models and per-type silhouette conformance, 3 to 6 tiered structures, 5 to 10 environment objects, the six ability visual mappings, attack visual categories per type, era-specific naming pools, era-specific chronicle and briefing fragments, a strategic view definition, and the per-era config values (unit stat profile per tier, restriction mask or none, elevation flag, reinforcement constants, fog constants).
+- R-146-01  Given an era pack, When validated, Then it contains: identity (name, spatial scale, tone), three tier definitions, one unit model per roster type per tier and per-type silhouette conformance (E-18 S-132), 3 to 6 tiered structures, 5 to 10 environment objects, the ability visual mappings for every ability in the roster, attack visual categories per type, era-specific naming pools, era-specific chronicle and briefing fragments, a strategic view definition, and the per-era config values (unit stat profile per tier, restriction mask or none, elevation flag, reinforcement constants, fog constants).
 - R-146-02  Given the launch constraint (A-321), When per-era config values are set for the three launch eras, Then they are identical across eras except art, names, and prose [Q-146-01].
 - R-146-03  Given a pack, When any required entry is missing, Then the pack fails to load with the entry named; a missing optional asset uses the placeholder.
-- R-146-04  Given the Era Creation Template (six layers), When a new era is designed, Then it follows those layers in order and stays within the fixed engine abstractions (6 types, fixed RPS, spine plus five gradients, abstract structure types, three tiers at 0/34/67).
+- R-146-04  Given the Era Creation Template (six layers), When a new era is designed, Then it follows those layers in order and stays within the fixed engine abstractions (three categories on a fixed rock-paper-scissors, a 20 to 40 type roster per era [Q-082-05], spine plus five gradients, abstract structure types, three tiers at 0/34/67).
 
 Inputs: pack manifest.
 Outputs: validation report; loaded pack.
@@ -133,7 +133,7 @@ Open flags: none; deferred by Westley's Stage 1 decision, reopen only if built e
 
 - Zero era names in engine source.
 - Every pack passes the same contract test.
-- The three launch eras share identical mechanical config (A-321).
+- The three launch eras share identical mechanical config (A-321) [Q-082-05: whether per-era rosters keep unit profiles identical across the launch packs].
 
 ## Scale requirements
 

@@ -108,7 +108,7 @@ Open flags: Q-131-01 (settlement vs station naming: `docs/bible_history/bible_2_
 |---|---|---|---|
 | Region military | E-02 | [0, 100] | |
 | Archetype split and target ratio | E-10, E-21 | fractions summing to 1 | invalid fails load |
-| Player production choice | Player | one of 6 types | unknown type rejected |
+| Player production choice | Player | one type from the era's roster | unknown type rejected |
 | Drift specs | E-17 | waypoints ≥ 2, period > 0, mode | invalid fails generation |
 | Unit power | E-11 | > 0 | |
 

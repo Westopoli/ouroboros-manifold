@@ -173,7 +173,7 @@ Open flags: Q-080-01 (the bible's constraint compression across generations, tim
 | Ledger, lineage id | E-08 | | missing lineage gives relevance 0 |
 | Onboarding | E-08 | difficulty; per-archetype preference or rare | invalid rejected at save |
 | Archetype library | E-21 | 10 archetypes with the S-073 table | malformed fails load |
-| Unit roster | E-11 | 6 types with power | |
+| Unit roster | E-11 | the era's roster with power | |
 | Accept or refuse | Player | | |
 | Tactical result | E-11 through E-15 | objectives, unit store, commander unit | |
 

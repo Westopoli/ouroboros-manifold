@@ -11,11 +11,11 @@
 | Every visible-surface story has a reference | **No.** S-088 (how units read on screen, squads, ability cues) has a visible surface and no reference. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on 6 open flags and one missing reference. Q-081-01 (the Siege-versus-Strike multiplier is 0.20 in code and 0.75 in the bible) and Q-083-01 (traits are in the bible and not in the code) are the load-bearing ones.
+**Gate verdict: not passed.** Blocked on open flags and one missing reference. Q-081-01 (the Siege-versus-Strike multiplier is 0.20 in code and 0.75 in the bible) and the roster flags Q-082-03 to Q-082-05 (how a 20 to 40 type roster is shaped, balanced, and sized per era) are the load-bearing ones.
 
 ## Purpose
 
-Six unit types, two per category, on a soft rock-paper-scissors: Strike flanks Siege, Siege crushes Line, Line absorbs Strike. Every unit has stats, exactly one ability, and a role nobody else fills. Damage is flat: base damage times a category multiplier, no falloff, no cover reduction. Fights last long enough to read and retreat from; HP, not damage, sets the tempo, so flanks resolve first, the center grinds, and Siege duels last longest. Every unit on both sides runs the same three-check decision loop: flinch from what you cannot fight, obey the player, shoot the nearest thing in range. Abilities are the mastery layer: ignorable by a new player, decisive in skilled hands, every one a commitment with a tradeoff.
+A roster of 20 to 40 unit types per era, in the register of Age of Empires 3 and Age of Empires Online, on three categories and a soft rock-paper-scissors: Strike flanks Siege, Siege crushes Line, Line absorbs Strike. The six Settled Reach types below are the first of them and the tuning baseline. Every unit has stats and exactly one ability; how roles and the roster invariants extend past six types is open (Q-082-03), the roster is balanced by a scoring mechanism still to be designed (Q-082-04), and an era built around a named conflict may weight its roster toward that conflict's sides (Q-082-05). Damage is flat: base damage times a category multiplier, no falloff, no cover reduction. Fights last long enough to read and retreat from; HP, not damage, sets the tempo, so flanks resolve first, the center grinds, and Siege duels last longest. Every unit on both sides runs the same three-check decision loop: flinch from what you cannot fight, obey the player, shoot the nearest thing in range. Abilities are the mastery layer: ignorable by a new player, decisive in skilled hands, every one a commitment with a tradeoff.
 
 The numbers below are the Tier 2 Settled Reach baseline; they are tuned by headless simulation, not by hand (Stage 1 A-261).
 
@@ -38,11 +38,11 @@ Inputs: unit categories; base damage.
 Outputs: damage events in the tick delta; HP.
 Open flags: Q-081-01.
 
-### S-082 — The six
-As a commander, I want six units I can learn by heart, each with one job, so that I read a force at a glance.
+### S-082 — The roster
+As a commander, I want a roster of 20 to 40 unit types per era, each with a job I can learn, so that a force offers many options and still reads at a glance.
 
 Rules
-- R-082-01  Given the launch roster, When loaded, Then it is exactly this table and a contract test checks it:
+- R-082-01  Given the Settled Reach baseline, When loaded, Then it contains at least these six types with this table, checked by a contract test; the rest of each era's roster is set by Q-082-05:
 
 | Unit | Category | Role | HP | Damage | Interval s | Range wu | Speed wu/s | Sensor wu | Layer transition s | AoE wu |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -58,10 +58,12 @@ Rules
 - R-082-04  Given the roster, When sensor radius is read, Then both Strike units see farther than both Siege units.
 - R-082-05  Given the roster, When AoE is read, Then only the Bombard has an area attack.
 - R-082-06  Given an expansion pack adds a unit type, When loaded, Then it declares category, role, the stats above, and one ability, and no engine code changes.
+- R-082-07  Given an era pack, When its roster is validated, Then it declares between 20 and 40 unit types, each with category, role, the stats above, and one ability, and the roster passes the balance scoring mechanism [Q-082-04]; an era built around a named conflict may weight its roster toward that conflict's sides [Q-082-05].
+- R-082-08  Given Tier 1 and Tier 3, When profiles are read, Then HP and damage are 0.8× and 1.2× the Tier 2 values and all other ratios scale uniformly.
 
 Inputs: unit profile table (per tier, per era pack).
 Outputs: loaded roster; contract test.
-Open flags: Q-082-01 (Tier 1 and Tier 3 profiles exist as "config-level variants"; no values are authored).
+Open flags: Q-082-03 (categories, roles, and the roster invariants past six types), Q-082-04 (the balance scoring mechanism), Q-082-05 (launch roster size per era and the conflict swing).
 
 ### S-083 — Stats, traits, ability
 As a commander, I want each unit to be its stats plus one or two passive traits plus one ability, so that units within a category differ in kind and not only in number.
@@ -156,7 +158,7 @@ Open flags: none beyond the missing reference. Reference required: `references/E
 
 | Input | Source | Range | Rejection |
 |---|---|---|---|
-| Unit profile table | Era pack, per tier | 6 types, stats as S-082 | missing field fails load |
+| Unit profile table | Era pack, per tier | 20 to 40 types per era, stats as S-082 | missing field fails load |
 | Ability activation | Player (E-13 command) or enemy macro | unit ids | on cooldown or dead: rejected |
 | Positions, layers, visibility | E-01, E-12, E-13 | | |
 | Elevation flag | Era pack | bool, false for the Settled Reach | |

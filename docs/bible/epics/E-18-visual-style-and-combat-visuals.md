@@ -11,17 +11,17 @@
 | Every visible-surface story has a reference | **No.** This entire epic is a visible surface. Art of Rally (look), the opening battle of Revenge of the Sith (combat weight), Halo CE (world-building), and Claude Code's spinner (glyph animation) are the bible's named references; none is attached as a screenshot yet. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on 4 open flags and references. This epic is the T2 ground truth for everything else; it cannot be Ready before Westley's reference set exists.
+**Gate verdict: not passed.** Blocked on 5 open flags and references. This epic is the T2 ground truth for everything else; it cannot be Ready before Westley's reference set exists.
 
 ## Purpose
 
-Low-poly, Art of Rally: flat shading, clean silhouettes, the shape is the information. Six unit silhouettes that persist across every era so a Raider reads as a Raider whether it is a dart of a ship or a longboat. Three tiers that read at tactical zoom in three words each: boxy, seamed, matte; smooth, integrated, polished; flowing, luminous, abstract. Combat that conveys mass: nothing snaps or pops, hits bloom slowly, dead ships drift. Four attack visual categories and three ability overlays that every era skins from a manifest without new rendering code. Menus and transitions animated from simple elements composed with precise timing.
+Low-poly, Art of Rally: flat shading, clean silhouettes, the shape is the information. Unit silhouettes that persist across every era so a Raider reads as a Raider whether it is a dart of a ship or a longboat; how that rule reaches across a 20 to 40 type roster is open (Q-132-02). Three tiers that read at tactical zoom in three words each: boxy, seamed, matte; smooth, integrated, polished; flowing, luminous, abstract. Combat that conveys mass: nothing snaps or pops, hits bloom slowly, dead ships drift. Four attack visual categories and three ability overlays that every era skins from a manifest without new rendering code. Menus and transitions animated from simple elements composed with precise timing.
 
 The era-agnostic rule holds here as everywhere: the engine emits abstract events and state; the era manifest maps them to look.
 
 ## Obviously working in 60 seconds
 
-Put one of each unit on screen at Tier 2: six silhouettes distinguishable at tactical zoom, Strike smallest and Siege largest, Bastion wider than long, Bombard longest. Fire a Raider at a Vanguard: a projectile with a trail travels, an impact burst drifts out over half a second, the Vanguard blooms warm for a third of a second, no shake. Kill it: a death flare, fire and sparks, a slow drift along its last heading, darkening over 3 to 5 seconds. Pop Barrage: a warm ring telegraph, then a heavy volley. Swap to a Tier 1 manifest: the same units, boxy and painted.
+Put the six Settled Reach baseline units on screen at Tier 2: six silhouettes distinguishable at tactical zoom, Strike smallest and Siege largest, Bastion wider than long, Bombard longest. Fire a Raider at a Vanguard: a projectile with a trail travels, an impact burst drifts out over half a second, the Vanguard blooms warm for a third of a second, no shake. Kill it: a death flare, fire and sparks, a slow drift along its last heading, darkening over 3 to 5 seconds. Pop Barrage: a warm ring telegraph, then a heavy volley. Swap to a Tier 1 manifest: the same units, boxy and painted.
 
 ## Stories
 
@@ -29,14 +29,15 @@ Put one of each unit on screen at Tier 2: six silhouettes distinguishable at tac
 As a commander, I want every unit type to have a shape I can read at a glance in any era, so that I never squint to know what I am fighting.
 
 Rules
-- R-132-01  Given the six types, When drawn in any era, Then Raider is narrow, elongated, swept back and the smallest; Interceptor wider and flatter than Raider; Vanguard a front-heavy wedge or slab; Warden vertical or radial with a central projection; Bombard the longest, dominated by one linear axis; Bastion the widest and most compact, wider than long.
-- R-132-02  Given a T2 screenshot at tactical zoom with all six types, When inspected, Then each type is identifiable from silhouette alone.
+- R-132-01  Given the six Settled Reach baseline types, When drawn in any era, Then Raider is narrow, elongated, swept back and the smallest; Interceptor wider and flatter than Raider; Vanguard a front-heavy wedge or slab; Warden vertical or radial with a central projection; Bombard the longest, dominated by one linear axis; Bastion the widest and most compact, wider than long.
+- R-132-02  Given a T2 screenshot at tactical zoom with the six baseline types, When inspected, Then each type is identifiable from silhouette alone.
+- R-132-05  Given an era roster of 20 to 40 types, When drawn at tactical zoom, Then each type is identifiable [Q-132-02: one persistent silhouette per type, or silhouette families per category with variants read by size and detail].
 - R-132-03  Given a Strike unit, When drawn, Then it is 3 to 5 small models moving as one (E-11 R-088-01).
 - R-132-04  Given any model, When counted, Then it is 150 to 300 polygons for Strike squad members, 300 to 500 for Line, 400 to 600 for Siege, 200 to 800 for structures, 100 to 300 for environment.
 
 Inputs: era manifest models.
 Outputs: screen.
-Open flags: none. The readability check is manual review plus the playtest silhouette-naming question (Track L hypothesis H12); no automated classifier at launch.
+Open flags: Q-132-02. The readability check is manual review plus the playtest silhouette-naming question (Track L hypothesis H12); no automated classifier at launch.
 
 ### S-133 — Three tiers you can read
 As a commander, I want a faction's technology tier to show in how its ships look, and to show loss when it falls, so that history is visible on the battlefield.
@@ -46,7 +47,7 @@ Rules
 - R-133-02  Given Tier 2, When drawn, Then smooth, integrated, polished: deliberate curves, flush weapons, bilateral symmetry, cleaner metallics, faction color as plating, subtle seam glow.
 - R-133-03  Given Tier 3, When drawn, Then flowing, luminous, abstract: organic-geometric forms, minimal surface detail, emissive materials, faction color as a property of the material.
 - R-133-04  Given a faction that fell from Tier 3 to Tier 1, When its forces are drawn next to a Tier 3 neighbor, Then the contrast is immediate at tactical zoom.
-- R-133-05  Given an era pack, When authored, Then it defines all six types at all three tiers (18 unit models), 3 to 6 tiered point-of-interest structures, and 5 to 10 universal environment objects.
+- R-133-05  Given an era pack, When authored, Then it defines every type in its roster at all three tiers (one model per type per tier), 3 to 6 tiered point-of-interest structures, and 5 to 10 universal environment objects.
 
 Inputs: tier; era manifest.
 Outputs: screen.
