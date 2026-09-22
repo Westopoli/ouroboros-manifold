@@ -68,6 +68,7 @@ func _process(delta: float) -> void:
 
 
 func _on_regenerate_pressed() -> void:
+	_seed_spinbox.value += 1
 	_root.qa_seed(int(_seed_spinbox.value))
 
 

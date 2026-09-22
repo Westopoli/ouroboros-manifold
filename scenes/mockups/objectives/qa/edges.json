@@ -1,0 +1,17 @@
+[
+  ["seed", 11],
+  ["call", "qa_camera", 3000, 12000, 12000],
+  ["state", "edge_start"],
+  ["move", 2540, 720],
+  ["wait_frames", 30],
+  ["state", "edge_right"],
+  ["move", 1280, 1420],
+  ["wait_frames", 30],
+  ["state", "edge_bottom"],
+  ["move", 20, 720],
+  ["wait_frames", 30],
+  ["state", "edge_left"],
+  ["move", 1280, 20],
+  ["wait_frames", 30],
+  ["state", "edge_top"]
+]
