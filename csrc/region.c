@@ -46,8 +46,8 @@ void om_world_set_seed(om_world *w, uint64_t seed) {
     w->seed = seed;
 }
 
-void om_world_generate(om_world *w) {
-    /* Stub: no-op for E-02 isolation tests. */
+/* weak: csrc/worldgen.c (card B4) provides the strong definition; delete this stub after attach/B4 */
+__attribute__((weak)) void om_world_generate(om_world *w) {
     (void)w;
 }
 
