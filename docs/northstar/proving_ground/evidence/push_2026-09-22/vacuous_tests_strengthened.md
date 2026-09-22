@@ -71,3 +71,11 @@ Row skipped: `test_E08_S064_what_carries_over.py::test_R_064_01_every_region_fie
 | `test_E12_S089_i_see_what_my_units_see.py::test_R_089_03_it_not_drawn_its_hp` | captured `friendly` id, added `assert friendly in all_ids_in_client` before the exclusion check | 19 -> 20 | `assert 0 in []` |
 | `test_E12_S093_fog_is_for_the_player_not_the_engine.py::test_R_093_01_traces_identical` | added `assert om_unit_get_hp(w1,f1) > 0` before the cross-world checksum/hp comparisons | 9 -> 10 | `assert 0.0 > 0` |
 
+### E-13
+
+| Test | Edit | asserts before -> after | New failure |
+|---|---|---|---|
+| `test_E13_S100_facing.py::test_R_100_03_it_faces_pursuer` | set facing to `pi` first, assert readback `== pi` before issuing the kiting command (get_facing hard-stubs 0.0, coinciding with the expected pursuer angle) | 7 -> 8 | `assert 0.0 == pi ± 1e-06` (approx) |
+| `test_E13_S101_movement_that_reads.py::test_R_101_02_position_facing_linearly_interpolated_from` | added `assert p1_x != p0_x` before the interpolation checks | 7 -> 8 | `assert 0.0 != 0.0` |
+| `test_E13_S102_same_commands_same_battle.py::test_R_102_01_every_position_facing_target_identical` | added `assert pos1_w1 != (0.0, 0.0)` inside the checkpoint loop before the cross-machine equality | 10 -> 11 | `assert (0.0, 0.0) != (0.0, 0.0)` |
+

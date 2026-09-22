@@ -96,6 +96,10 @@ def test_R_101_02_position_facing_linearly_interpolated_from(lib, world_factory)
     p1_x, p1_y = lib.om_unit_get_pos(w, u)
     f1 = lib.om_unit_get_facing(w, u)
 
+    # om_unit_get_pos always returning (0, 0) would make the midpoint of two
+    # zeros zero, satisfying the interpolation checks below by coincidence.
+    assert p1_x != p0_x, "unit must have actually moved between the two ticks"
+
     # Sample sub-tick interpolation at alpha = 0.5
     render_x, render_y = lib.om_renderer_interpolate_position(w, u, 0.5)
     render_facing = lib.om_renderer_interpolate_facing(w, u, 0.5)

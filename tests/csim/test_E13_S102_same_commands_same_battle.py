@@ -53,6 +53,9 @@ def test_R_102_01_every_position_facing_target_identical(lib, world_factory):
 
             pos1_w1 = lib.om_unit_get_pos(w1, u1_w1)
             pos1_w2 = lib.om_unit_get_pos(w2, u1_w2)
+            # Movement/facing/targeting hard-stubbed to constants would match
+            # across machines trivially, exercising no real divergence risk.
+            assert pos1_w1 != (0.0, 0.0), "unit must have actually moved by this checkpoint"
             assert pos1_w1 == pos1_w2
 
             facing1_w1 = lib.om_unit_get_facing(w1, u1_w1)
