@@ -8,10 +8,13 @@ const TEXT := Color(0.91, 0.90, 0.88, 1.0)
 
 class BoxOverlay extends Control:
 	var router: Node
+	var _was_active := false
 
 	func _process(_delta: float) -> void:
-		if router != null and router.box_active:
+		var active: bool = router != null and router.box_active
+		if active or active != _was_active:
 			queue_redraw()
+		_was_active = active
 
 	func _draw() -> void:
 		if router == null or not router.box_active:
