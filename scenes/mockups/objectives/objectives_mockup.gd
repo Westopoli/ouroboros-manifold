@@ -88,7 +88,7 @@ func qa_state() -> Dictionary:
 	var display: String = MissionGen.DISPLAY_NAMES.get(_mission.kind, _mission.kind)
 	var camera: Camera3D = _camera_rig.get_camera() if _camera_rig != null else null
 	var wp := Vector3(_mission.pos.x, 0.0, _mission.pos.y)
-	var px := camera.unproject_position(wp) if camera != null else Vector2.ZERO
+	var px := camera.unproject_position(wp) * _viewport_scale() if camera != null else Vector2.ZERO
 	return {
 		"seed": _seed, "hash": MissionGen.mission_hash(_mission), "fixture": _fixture,
 		"archetype": _archetype, "objective": _mission.objective, "satisfiable": _mission.satisfiable,
@@ -136,3 +136,11 @@ func get_mission() -> Dictionary:
 
 func get_places() -> Places:
 	return _places
+
+
+func _viewport_scale() -> Vector2:
+	var vp_size: Vector2 = get_viewport().get_visible_rect().size
+	var win_size := Vector2(DisplayServer.window_get_size())
+	if vp_size.x <= 0.0 or vp_size.y <= 0.0:
+		return Vector2.ONE
+	return win_size / vp_size
