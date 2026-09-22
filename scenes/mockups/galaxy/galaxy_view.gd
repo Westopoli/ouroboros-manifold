@@ -8,12 +8,6 @@ const ARC_HEIGHT_FRACTION := 0.15
 const FILAMENT_WIDTH_BORDER := 0.075
 const FILAMENT_WIDTH_TRADE := 0.035
 const POINT_BASE_RADIUS := 1.4
-const DUST_COUNT := 400
-const STAR_COUNT := 800
-const FIELD_RADIUS := 260.0
-const GRID_RADIUS := 220.0
-const GRID_RINGS := 5
-const GRID_SPOKES := 16
 const NEUTRAL_COLOR := Color(0.55, 0.55, 0.58, 1.0)
 const TRADE_DIM := Color(0.42, 0.44, 0.5, 0.5)
 const FLASH_DURATION := 0.6
@@ -233,71 +227,13 @@ func _build_names() -> void:
 
 
 func _build_ambient() -> void:
+	# Pass 1's own dust/star/grid quads are superseded by the legacy rig below
+	# (settled_reach_renderer.gd), which already carries its own ambient dust,
+	# starfield, and polar grid alongside the rings and central glow.
 	var ambient := Node3D.new()
 	ambient.name = "Ambient"
+	ambient.set_script(load("res://scenes/mockups/galaxy/legacy_ambient_rig.gd"))
 	add_child(ambient)
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 777
-	ambient.add_child(_build_field_multimesh("Dust", DUST_COUNT, rng, 0.6, Color(0.55, 0.6, 0.7, 0.16)))
-	ambient.add_child(_build_field_multimesh("Stars", STAR_COUNT, rng, 0.22, Color(0.85, 0.85, 0.92, 0.3)))
-	ambient.add_child(_build_grid())
-
-
-func _build_field_multimesh(mm_name: String, count: int, rng: RandomNumberGenerator, quad_size: float, color: Color) -> MultiMeshInstance3D:
-	var mmi := MultiMeshInstance3D.new()
-	mmi.name = mm_name
-	var mm := MultiMesh.new()
-	mm.transform_format = MultiMesh.TRANSFORM_3D
-	mm.use_colors = true
-	var quad := QuadMesh.new()
-	quad.size = Vector2(quad_size, quad_size)
-	mm.mesh = quad
-	mm.instance_count = count
-	for i in range(count):
-		var r := FIELD_RADIUS * sqrt(rng.randf())
-		var theta := rng.randf() * TAU
-		var y := rng.randf_range(-50.0, 50.0)
-		mm.set_instance_transform(i, Transform3D(Basis(), Vector3(cos(theta) * r, y, sin(theta) * r)))
-		mm.set_instance_color(i, color)
-	var mat := StandardMaterial3D.new()
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.vertex_color_use_as_albedo = true
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
-	mmi.material_override = mat
-	mmi.multimesh = mm
-	return mmi
-
-
-func _build_grid() -> MeshInstance3D:
-	var verts := PackedVector3Array()
-	for ring_i in range(1, GRID_RINGS + 1):
-		var r := GRID_RADIUS * float(ring_i) / float(GRID_RINGS)
-		var prev := Vector3(r, 0, 0)
-		for seg in range(1, 33):
-			var a := TAU * float(seg) / 32.0
-			var p := Vector3(cos(a) * r, 0, sin(a) * r)
-			verts.append(prev)
-			verts.append(p)
-			prev = p
-	for spoke in range(GRID_SPOKES):
-		var a := TAU * float(spoke) / float(GRID_SPOKES)
-		verts.append(Vector3.ZERO)
-		verts.append(Vector3(cos(a) * GRID_RADIUS, 0, sin(a) * GRID_RADIUS))
-	var mesh := ArrayMesh.new()
-	var arrays := []
-	arrays.resize(Mesh.ARRAY_MAX)
-	arrays[Mesh.ARRAY_VERTEX] = verts
-	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_LINES, arrays)
-	var mi := MeshInstance3D.new()
-	mi.name = "PolarGrid"
-	mi.mesh = mesh
-	var mat := StandardMaterial3D.new()
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.albedo_color = Color(0.5, 0.55, 0.65, 0.14)
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mi.material_override = mat
-	return mi
 
 
 func _band_weights(d: float) -> Dictionary:
