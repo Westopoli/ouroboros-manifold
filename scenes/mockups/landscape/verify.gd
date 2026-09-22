@@ -4,11 +4,16 @@ const KITS_DIR := "res://scenes/mockups/landscape/kits/"
 const DEFAULT_CANVAS := 24000.0
 const SLOPE_THRESHOLD := 0.85
 const CORE_WATER_DIST_WU := 400.0
+const MOCKUP_SCENE := "res://scenes/mockups/landscape/landscape_mockup.tscn"
+const CONTRACT_KEYS := ["seed", "hash", "canvas_wu", "stability", "kit", "band", "camera_height",
+	"elevation_max_wu", "overlay", "city", "timing_ms", "regen_count", "piece_total", "objective_px"]
+const PLANTS := ["seed-ignored", "overlay-screen-space", "stability-noop", "flat-terrain", "city-disc", "regen-stall"]
 
 var _failures := 0
+var _root: Node
 
 
-func _init() -> void:
+func _initialize() -> void:
 	var fm := FieldMap.new()
 	fm.generate(11, DEFAULT_CANVAS, 60.0)
 
@@ -19,12 +24,83 @@ func _init() -> void:
 	_check_chokepoint_kinds(fm)
 	_check_kit_vocab(fm)
 
+	await _check_contract()
+
 	if _failures > 0:
 		print("VERIFY FAILED: %d check(s)" % _failures)
 		quit(1)
 		return
 	print("VERIFY OK")
 	quit(0)
+
+
+func _check_contract() -> void:
+	var packed: PackedScene = load(MOCKUP_SCENE)
+	if packed == null:
+		_assert(false, "cannot load %s" % MOCKUP_SCENE)
+		return
+	_root = packed.instantiate()
+	get_root().add_child(_root)
+	await process_frame
+	await process_frame
+
+	if not (_root.has_method("qa_state") and _root.has_method("qa_plant")):
+		_assert(false, "root missing qa_state/qa_plant contract")
+		return
+
+	var state0: Dictionary = _root.qa_state()
+	_assert_contract_shape(state0)
+
+	if _root.has_method("qa_seed") and _root.has_method("qa_set"):
+		_check_contract_behavior(state0)
+	else:
+		_assert(false, "root missing qa_seed/qa_set contract methods")
+
+	for id in PLANTS:
+		_assert(_root.qa_plant(id), "qa_plant(%s) must return true" % id)
+	_assert(not _root.qa_plant("nope"), "qa_plant('nope') must return false")
+
+
+func _assert_contract_shape(state: Dictionary) -> void:
+	var text := JSON.stringify(state)
+	_assert(text != "", "qa_state() did not survive JSON.stringify")
+	for key in CONTRACT_KEYS:
+		_assert(state.has(key), "qa_state() missing key %s" % key)
+
+
+func _check_contract_behavior(state0: Dictionary) -> void:
+	var t0 := Time.get_ticks_msec()
+	_root.qa_seed(11)
+	var t1 := Time.get_ticks_msec()
+	var hash_11_a = _root.qa_state().hash
+	# plant: regen-stall
+	_assert(t1 - t0 < 6000, "qa_seed(11) took %dms, expected < 6000ms" % (t1 - t0))
+
+	_root.qa_seed(11)
+	var hash_11_b = _root.qa_state().hash
+	_assert(hash_11_a == hash_11_b, "qa_seed(11) twice must hash equal")
+
+	# plant: seed-ignored
+	_root.qa_seed(12)
+	var hash_12 = _root.qa_state().hash
+	_assert(hash_11_b != hash_12, "qa_seed(12) must hash differently from qa_seed(11)")
+
+	# plant: flat-terrain
+	_assert(state0.elevation_max_wu >= 3000.0, "elevation_max_wu %.1f below 3000" % state0.elevation_max_wu)
+
+	# plant: city-disc
+	_assert(state0.city.footprint_aspect > 1.15, "city footprint_aspect %.3f not above 1.15" % state0.city.footprint_aspect)
+
+	# plant: overlay-screen-space
+	_assert(state0.overlay.parent_class == "Node3D", "overlay parent_class is %s, expected Node3D" % state0.overlay.parent_class)
+	_assert(String(state0.overlay.parent_path) == "World", "overlay parent_path is %s, expected World" % state0.overlay.parent_path)
+
+	_root.qa_set("stability", 20.0)
+	var hash_stab20 = _root.qa_state().hash
+	_root.qa_set("stability", 90.0)
+	var hash_stab90 = _root.qa_state().hash
+	# plant: stability-noop
+	_assert(hash_stab20 != hash_stab90, "stability 20 vs 90 must hash differently")
 
 
 func _check_determinism(fm: FieldMap) -> void:

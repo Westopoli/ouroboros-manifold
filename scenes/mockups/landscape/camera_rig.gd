@@ -162,6 +162,10 @@ func get_height() -> float:
 	return _height
 
 
+func get_camera() -> Camera3D:
+	return _camera
+
+
 # For the screenshot driver: jump straight to a height/look-at point instead of
 # animating there via input, so a batch of shots can be taken deterministically.
 func set_height(h: float) -> void:

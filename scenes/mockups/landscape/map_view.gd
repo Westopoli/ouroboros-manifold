@@ -1,5 +1,6 @@
 extends Control
 
+const QaPlants := preload("res://scenes/mockups/_shared/qa_plants.gd")
 const GROUP_HIT_RADIUS := 18.0
 const ARC_BEND := 0.18
 const GRID_DIVISIONS := 10
@@ -29,11 +30,24 @@ var _selected_group_index: int = -1
 func _ready() -> void:
 	_camera_rig = get_node("../../CameraRig")
 	_camera = _camera_rig.get_node("Camera3D")
-	_world_container = Node3D.new()
-	_world_container.name = "MapViewGeometry"
-	get_node("../../World").add_child(_world_container)
 	_camera_rig.band_changed.connect(_on_band_changed)
 	_apply_band(_camera_rig.get_current_band())
+
+
+func get_overlay_node() -> Node3D:
+	return _world_container
+
+
+func _ensure_world_container() -> void:
+	if QaPlants.is_active("overlay-screen-space"):
+		if _world_container:
+			_world_container.queue_free()
+			_world_container = null
+		return
+	if _world_container == null:
+		_world_container = Node3D.new()
+		_world_container.name = "MapViewGeometry"
+		get_node("../../World").add_child(_world_container)
 
 
 func set_field_map(field_map: FieldMap) -> void:
@@ -58,7 +72,8 @@ func _on_band_changed(band: String) -> void:
 
 func _apply_band(band: String) -> void:
 	visible = band == "map"
-	_world_container.visible = visible
+	if _world_container:
+		_world_container.visible = visible
 
 
 func _process(_delta: float) -> void:
@@ -67,6 +82,10 @@ func _process(_delta: float) -> void:
 
 
 func _rebuild_world_geometry() -> void:
+	_ensure_world_container()
+	_apply_band(_camera_rig.get_current_band())
+	if _world_container == null:
+		return
 	for child in _world_container.get_children():
 		child.queue_free()
 
@@ -168,9 +187,20 @@ func _gui_input(event: InputEvent) -> void:
 func _draw() -> void:
 	if _field_map == null or _camera == null:
 		return
+	if QaPlants.is_active("overlay-screen-space"):
+		_draw_grid_screen_space()
 	_draw_objectives()
 	_draw_unit_groups()
 	_draw_arrows()
+
+
+func _draw_grid_screen_space() -> void:
+	var rect: Vector2 = get_viewport_rect().size
+	for i in range(GRID_DIVISIONS + 1):
+		var x: float = rect.x * i / float(GRID_DIVISIONS)
+		draw_line(Vector2(x, 0.0), Vector2(x, rect.y), GRID_COLOR, 1.0)
+		var y: float = rect.y * i / float(GRID_DIVISIONS)
+		draw_line(Vector2(0.0, y), Vector2(rect.x, y), GRID_COLOR, 1.0)
 
 
 func _draw_objectives() -> void:
