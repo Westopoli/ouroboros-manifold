@@ -1,0 +1,21 @@
+{
+  "units": [
+    {"role": "artillery", "faction": 0, "pos": [3000, 3800]},
+    {"role": "artillery", "faction": 0, "pos": [3000, 3835]},
+    {"role": "artillery", "faction": 0, "pos": [3000, 3870]},
+    {"role": "artillery", "faction": 0, "pos": [3000, 3905]},
+    {"role": "artillery", "faction": 0, "pos": [3000, 3940]},
+    {"role": "artillery", "faction": 0, "pos": [3000, 3975]},
+    {"role": "artillery", "faction": 0, "pos": [3000, 4010]},
+    {"role": "artillery", "faction": 0, "pos": [3000, 4045]},
+    {"role": "artillery", "faction": 0, "pos": [3000, 4080]},
+    {"role": "artillery", "faction": 0, "pos": [3000, 4115]},
+    {"role": "frontliner", "faction": 1, "pos": [3900, 4000]},
+    {"role": "frontliner", "faction": 1, "pos": [4300, 3900]},
+    {"role": "frontliner", "faction": 1, "pos": [4300, 4100]}
+  ],
+  "obstacles": [],
+  "commands": [
+    {"tick": 0, "kind": "attack_move", "uids": [10, 11, 12], "point": [3200, 4000]}
+  ]
+}
