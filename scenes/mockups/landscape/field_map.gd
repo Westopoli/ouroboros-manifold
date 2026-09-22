@@ -1,6 +1,8 @@
 class_name FieldMap
 extends RefCounted
 
+const QaPlants := preload("res://scenes/mockups/_shared/qa_plants.gd")
+
 const SPACING := 100.0
 # Peaks 3000-5000wu per the brief. Elevation is stored continuous (world units, sea level
 # 0) for placement and camera; only border tracing quantizes it.
@@ -28,7 +30,7 @@ var _rng := RandomNumberGenerator.new()
 
 func generate(p_seed: int, p_canvas: float = 24000.0, p_stability: float = 60.0) -> void:
 	canvas = p_canvas
-	stability = clamp(p_stability, 0.0, 100.0)
+	stability = clamp(60.0 if QaPlants.is_active("stability-noop") else p_stability, 0.0, 100.0)
 	dim = int(canvas / SPACING) + 1
 	_rng.seed = p_seed
 
@@ -301,7 +303,7 @@ func _build_elevation(noise_continent: FastNoiseLite, noise_hills: FastNoiseLite
 			var wpos := Vector2(gx * SPACING, gy * SPACING)
 			h += noise_detail.get_noise_2d(wpos.x, wpos.y) * detail_amplitude_wu
 			var edge_bias: float = smoothstep(canvas * 0.72, canvas, wpos.y) * -(peak_target * 0.5 + 800.0)
-			out[idx] = h + edge_bias
+			out[idx] = (h + edge_bias) * (0.05 if QaPlants.is_active("flat-terrain") else 1.0)
 	return out
 
 
@@ -640,8 +642,8 @@ func _build_population_district(core_pos: Vector2, elevation: PackedFloat32Array
 			var radial: float = clamp(1.0 - dist / CITY_REACH_WU, 0.0, 1.0)
 			var slope_penalty: float = 1.0 - clamp(slope[idx] * 2.0, 0.0, 1.0)
 			var water_bonus: float = 1.0 + clamp(water[idx] * 3.0, 0.0, 1.0) * 0.6 if water[idx] < 0.5 else 0.0
-			var pop: float = radial * slope_penalty * water_bonus
-			if water[idx] > 0.5:
+			var pop: float = radial if QaPlants.is_active("city-disc") else radial * slope_penalty * water_bonus
+			if water[idx] > 0.5 and not QaPlants.is_active("city-disc"):
 				pop = 0.0
 			pop = clamp(pop, 0.0, 1.0)
 			population[idx] = pop

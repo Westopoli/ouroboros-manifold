@@ -1,5 +1,6 @@
 extends CanvasLayer
 
+const QaPlants := preload("res://scenes/mockups/_shared/qa_plants.gd")
 const KITS_DIR := "res://scenes/mockups/landscape/kits/"
 const DEFAULT_CANVAS := 24000.0
 const CANVAS_OPTIONS := [16000.0, 24000.0, 32000.0]
@@ -17,6 +18,9 @@ var _kit_name: String = DEFAULT_KIT
 var _seed: int = 11
 var _canvas: float = DEFAULT_CANVAS
 var _stability: float = 60.0
+var _piece_total: int = 0
+var _timing_ms: Dictionary = {}
+var _regen_count: int = 0
 
 @onready var _seed_label: Label = $VBoxContainer/SeedLabel
 @onready var _seed_spinbox: SpinBox = $VBoxContainer/SeedSpinBox
@@ -96,12 +100,16 @@ func _load_kits() -> void:
 
 
 func _regenerate() -> void:
+	if QaPlants.is_active("regen-stall"):
+		OS.delay_msec(3000)
+
 	for child in _generated.get_children():
 		child.free()
 
 	var t0 := Time.get_ticks_usec()
 	var field_map := FieldMap.new()
-	field_map.generate(_seed, _canvas, _stability)
+	var gen_seed := 11 if QaPlants.is_active("seed-ignored") else _seed
+	field_map.generate(gen_seed, _canvas, _stability)
 	var t1 := Time.get_ticks_usec()
 
 	var kit: Dictionary = _kits[_kit_name]
@@ -118,13 +126,16 @@ func _regenerate() -> void:
 	_camera_rig.field_map = field_map
 	_seed_label.text = "Seed: %d" % _seed
 	_piece_count_label.text = "Pieces: %d" % result.total
+	_piece_total = result.total
 	_canvas_label.text = "Canvas: %d" % int(field_map.canvas)
 	var gen_ms := (t1 - t0) / 1000.0
 	var ground_ms := (t2 - t1) / 1000.0
 	var placer_ms := (t3 - t2) / 1000.0
+	_timing_ms = {"gen": gen_ms, "ground": ground_ms, "placer": placer_ms, "total": gen_ms + ground_ms + placer_ms}
 	_timing_label.text = "Gen: %dms Ground: %dms Placer: %dms (total %dms)" % [gen_ms, ground_ms, placer_ms, gen_ms + ground_ms + placer_ms]
 	print("regenerate timing: gen=%.1fms ground=%.1fms placer=%.1fms total=%.1fms" % [gen_ms, ground_ms, placer_ms, gen_ms + ground_ms + placer_ms])
 	_map_view.set_field_map(field_map)
+	_regen_count += 1
 
 
 func _on_regenerate_pressed() -> void:
@@ -260,3 +271,58 @@ func _run_screenshot_batch() -> void:
 		_take_screenshot("%s_valley_looking_up_seed11" % kit_name)
 
 	get_tree().quit()
+
+
+func get_seed() -> int:
+	return _seed
+
+
+func get_canvas_wu() -> float:
+	return _canvas
+
+
+func get_stability() -> float:
+	return _stability
+
+
+func get_kit_name() -> String:
+	return _kit_name
+
+
+func get_field_map() -> FieldMap:
+	return _field_map
+
+
+func get_piece_total() -> int:
+	return _piece_total
+
+
+func get_timing_ms() -> Dictionary:
+	return _timing_ms
+
+
+func get_regen_count() -> int:
+	return _regen_count
+
+
+func qa_regenerate() -> void:
+	_regenerate()
+
+
+func qa_seed(n: int) -> void:
+	_seed = n
+	_seed_spinbox.value = n
+	_regenerate()
+
+
+func qa_set_stability(v: float) -> void:
+	_stability = v
+	_stability_slider.value = v
+	_regenerate()
+
+
+func qa_set_kit(kit_name: String) -> void:
+	if _kits.has(kit_name):
+		_kit_name = kit_name
+		_kit_toggle_button.text = "Kit: %s" % _kit_name
+		_regenerate()

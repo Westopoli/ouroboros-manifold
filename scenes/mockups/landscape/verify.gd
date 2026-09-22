@@ -89,7 +89,7 @@ func _check_contract_behavior(state0: Dictionary) -> void:
 	_assert(state0.elevation_max_wu >= 3000.0, "elevation_max_wu %.1f below 3000" % state0.elevation_max_wu)
 
 	# plant: city-disc
-	_assert(state0.city.fraction_within_r_of_core < 0.7, "city fraction_within_r_of_core %.3f not below 0.7" % state0.city.fraction_within_r_of_core)
+	_assert(state0.city.footprint_aspect > 1.15, "city footprint_aspect %.3f not above 1.15" % state0.city.footprint_aspect)
 
 	# plant: overlay-screen-space
 	_assert(state0.overlay.parent_class == "Node3D", "overlay parent_class is %s, expected Node3D" % state0.overlay.parent_class)
