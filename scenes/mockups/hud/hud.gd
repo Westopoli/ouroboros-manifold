@@ -1,7 +1,7 @@
 extends CanvasLayer
 
 const TYPE_NAMES := ["scout", "line"]
-const LAYER_COLORS := {1: Color(0.3, 0.8, 1.0), 2: Color(1.0, 0.55, 0.0)}
+const LAYER_COLORS := {1: Color(0.3, 0.8, 1.0), 2: Color(0.72, 0.35, 0.95)}
 const ACTIVE_COLOR := Color(0.3, 0.8, 1.0)
 const DIM := Color(0.91, 0.90, 0.88, 0.55)
 const TEXT := Color(0.91, 0.90, 0.88, 1.0)
