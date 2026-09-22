@@ -23,6 +23,21 @@ const WALL_THICKNESS_WU := 40.0
 const FLAT_THICKNESS_WU := 20.0
 const MAGENTA_COLOR := Color(1.0, 0.0, 1.0)
 
+# Cliff border height is sampled from real terrain, not the kit's flat default.
+const MIN_CLIFF_HEIGHT_WU := 40.0
+const CLIFF_HEIGHT_SAMPLE_OFFSET_WU := 300.0
+const CLIFF_HEIGHT_BUCKET_WU := 20.0
+
+# Wall/hull border segments use tighter spacing plus overlap-length so the
+# rampart reads as continuous instead of dashed, regardless of the other
+# border kinds' spacing.
+const WALL_SEGMENT_SPACING_WU := 100.0
+const WALL_SEGMENT_OVERLAP_FACTOR := 1.3
+
+const BACKDROP_INSTANCE_COUNT := 7
+const BACKDROP_JITTER_WU := 800.0
+const BACKDROP_SCALE_JITTER := 0.15
+
 # Fixed mesh vocabulary from kits/README.md. is_known_mesh_name() is the testable API
 # a later verify.gd step should call; build_mesh() falls back to a magenta box for any
 # name not in MESH_BUILDER_METHODS (R-146-03 placeholder-miss rule).
@@ -176,38 +191,67 @@ func _place_borders(field_map: FieldMap, kit: Dictionary, kit_name: String, grou
 		var mesh_name: String = cfg.get("mesh", "none")
 		var color_hex: String = cfg.get("color", "#ffffff")
 		var crossings_here: Array = crossings_by_border.get(bi, [])
+		var is_cliff: bool = border.kind == "cliff"
+		var is_wall: bool = border.kind == "wall"
+		var spacing_wu: float = WALL_SEGMENT_SPACING_WU if is_wall else BORDER_SEGMENT_SPACING_WU
+		var seg_length_wu: float = (WALL_SEGMENT_SPACING_WU * WALL_SEGMENT_OVERLAP_FACTOR) if is_wall else BORDER_SEGMENT_SPACING_WU
 
 		if mesh_name != "none":
-			var resolved := _resolve(mesh_name, color_hex, [BORDER_SEGMENT_SPACING_WU, height])
-			if not resolved.is_empty():
+			# Cliff segments each need their own mesh (real elevation-derived height),
+			# so only pre-resolve one shared mesh for the other border kinds.
+			var resolved_fixed: Dictionary = {}
+			if not is_cliff:
+				resolved_fixed = _resolve(mesh_name, color_hex, [seg_length_wu, height])
+			if is_cliff or not resolved_fixed.is_empty():
 				var pts: Array = border.points
 				for i in range(pts.size() - 1):
 					var a: Vector2 = pts[i]
 					var b: Vector2 = pts[i + 1]
 					var seg_len: float = a.distance_to(b)
+					var nd: Vector2 = ((b - a) / seg_len) if seg_len > 0.0001 else Vector2(1.0, 0.0)
+					var basis := _border_basis(nd)
+					var perp2 := Vector2(-nd.y, nd.x)
 					var d := 0.0
 					while d < seg_len:
 						var t: float = (d / seg_len) if seg_len > 0.0 else 0.0
 						var p: Vector2 = a.lerp(b, t)
 						if not _in_any_gap(p, crossings_here):
-							var ground_y := _elevation_at(field_map, p)
-							var y: float = ground_y + _ground_offset(resolved.mesh)
-							var xform := Transform3D(Basis(), Vector3(p.x, y, p.y))
-							_group_add(groups, "%s_segment" % border.kind, kit_name, resolved.mesh, xform, resolved.color)
-						d += BORDER_SEGMENT_SPACING_WU
+							var resolved := resolved_fixed
+							var group_kit_name := kit_name
+							if is_cliff:
+								var cliff_h := _cliff_height_wu(field_map, p, perp2)
+								resolved = _resolve(mesh_name, color_hex, [seg_length_wu, cliff_h])
+								var bucket := int(round(cliff_h / CLIFF_HEIGHT_BUCKET_WU))
+								group_kit_name = "%s_h%d" % [kit_name, bucket]
+							if not resolved.is_empty():
+								var ground_y := _elevation_at(field_map, p)
+								var y: float = ground_y + _ground_offset(resolved.mesh)
+								var xform := Transform3D(basis, Vector3(p.x, y, p.y))
+								_group_add(groups, "%s_segment" % border.kind, group_kit_name, resolved.mesh, xform, resolved.color)
+						d += spacing_wu
 
 		var crossing_cfg: Dictionary = cfg.get("crossing", {})
 		for c in crossings_here:
 			var ccfg: Dictionary = crossing_cfg.get(c.kind, {})
 			if ccfg.is_empty():
 				continue
-			var cresolved := _resolve(ccfg.get("mesh", "none"), ccfg.get("color", "#ffffff"), [CROSSING_GAP_WU * 2.0, height])
+			var cp: Vector2 = c.point
+			# Crossing pieces align to the border's local direction here too (same
+			# fix as the segments above): previously placed with an identity basis,
+			# so a gate/airlock on a north-south border sat rotated 90 degrees off
+			# from the wall it interrupts, reading as a thin edge-on sliver.
+			var cdir := _border_dir_at(border, cp)
+			var crossing_height := height
+			if is_cliff:
+				var cperp := Vector2(-cdir.y, cdir.x)
+				crossing_height = _cliff_height_wu(field_map, cp, cperp)
+			var cresolved := _resolve(ccfg.get("mesh", "none"), ccfg.get("color", "#ffffff"), [CROSSING_GAP_WU * 2.0, crossing_height])
 			if cresolved.is_empty():
 				continue
-			var cp: Vector2 = c.point
 			var cground := _elevation_at(field_map, cp)
 			var cy: float = cground + _ground_offset(cresolved.mesh)
-			var cxform := Transform3D(Basis(), Vector3(cp.x, cy, cp.y))
+			var cbasis := _border_basis(cdir)
+			var cxform := Transform3D(cbasis, Vector3(cp.x, cy, cp.y))
 			_group_add(groups, c.kind, kit_name, cresolved.mesh, cxform, cresolved.color)
 
 
@@ -235,9 +279,20 @@ func _place_backdrop(field_map: FieldMap, kit: Dictionary, kit_name: String, gro
 	if resolved.is_empty():
 		return
 	var distance: float = cfg.get("distance", 30000.0)
-	var pos := Vector3(field_map.canvas * 0.5, distance * 0.1, field_map.canvas + distance)
-	var xform := Transform3D(Basis(), pos)
-	_group_add(groups, "backdrop", kit_name, resolved.mesh, xform, resolved.color)
+	# Same seeding pattern as place()'s rng: deterministic per field_map, offset
+	# so this stream doesn't line up with the cell-placement rng's draws.
+	var rng := RandomNumberGenerator.new()
+	rng.seed = field_map.compute_hash() + 777
+	var base_z: float = field_map.canvas + distance
+	for i in range(BACKDROP_INSTANCE_COUNT):
+		var t: float = (float(i) / float(BACKDROP_INSTANCE_COUNT - 1)) if BACKDROP_INSTANCE_COUNT > 1 else 0.5
+		var base_x: float = lerp(-field_map.canvas * 0.25, field_map.canvas * 1.25, t)
+		var jx := rng.randf_range(-BACKDROP_JITTER_WU, BACKDROP_JITTER_WU)
+		var jz := rng.randf_range(-BACKDROP_JITTER_WU, BACKDROP_JITTER_WU)
+		var scale_j: float = rng.randf_range(1.0 - BACKDROP_SCALE_JITTER, 1.0 + BACKDROP_SCALE_JITTER)
+		var pos := Vector3(base_x + jx, distance * 0.1, base_z + jz)
+		var xform := Transform3D(Basis().scaled(Vector3(scale_j, scale_j, scale_j)), pos)
+		_group_add(groups, "backdrop", kit_name, resolved.mesh, xform, resolved.color)
 
 
 func _place_water(field_map: FieldMap, kit: Dictionary, world_parent: Node3D) -> void:
@@ -309,6 +364,56 @@ func _elevation_at(field_map: FieldMap, p: Vector2) -> float:
 	var gy: int = clampi(int(round(p.y / spacing)), 0, dim - 1)
 	var cell: Dictionary = field_map.grid[gy * dim + gx]
 	return cell.elevation * LEVELS * TERRACE_HEIGHT_WU
+
+
+# Real elevation step at a cliff border point: sample the grid on both sides
+# (perpendicular to the border) and diff, using the same wu convention as
+# _elevation_at. Floored so a barely-there step doesn't render as a sliver.
+func _cliff_height_wu(field_map: FieldMap, p: Vector2, perp2: Vector2) -> float:
+	var dim: int = field_map.dim
+	var spacing: float = FieldMap.SPACING
+	var p_hi: Vector2 = p + perp2 * CLIFF_HEIGHT_SAMPLE_OFFSET_WU
+	var p_lo: Vector2 = p - perp2 * CLIFF_HEIGHT_SAMPLE_OFFSET_WU
+	var gx_hi: int = clampi(int(round(p_hi.x / spacing)), 0, dim - 1)
+	var gy_hi: int = clampi(int(round(p_hi.y / spacing)), 0, dim - 1)
+	var gx_lo: int = clampi(int(round(p_lo.x / spacing)), 0, dim - 1)
+	var gy_lo: int = clampi(int(round(p_lo.y / spacing)), 0, dim - 1)
+	var e_hi: float = field_map.grid[gy_hi * dim + gx_hi].elevation
+	var e_lo: float = field_map.grid[gy_lo * dim + gx_lo].elevation
+	var diff_wu: float = abs(e_hi - e_lo) * LEVELS * TERRACE_HEIGHT_WU
+	return max(diff_wu, MIN_CLIFF_HEIGHT_WU)
+
+
+# Nearest-segment direction on a border's polyline, for orienting a piece
+# (segment or crossing) that doesn't already know which (a, b) pair it's on.
+func _border_dir_at(border: Dictionary, p: Vector2) -> Vector2:
+	var pts: Array = border.points
+	var best_d := INF
+	var best_dir := Vector2(1.0, 0.0)
+	for i in range(pts.size() - 1):
+		var a: Vector2 = pts[i]
+		var b: Vector2 = pts[i + 1]
+		var seg: Vector2 = b - a
+		var len_sq: float = seg.length_squared()
+		if len_sq < 0.0001:
+			continue
+		var t: float = clamp((p - a).dot(seg) / len_sq, 0.0, 1.0)
+		var proj: Vector2 = a + seg * t
+		var d: float = p.distance_to(proj)
+		if d < best_d:
+			best_d = d
+			best_dir = seg.normalized()
+	return best_dir
+
+
+# Orients a border piece so its "long" local X axis runs along the border
+# direction and its local Z (thickness) axis runs across it. Border segments
+# and crossings were previously placed with an identity basis, so a piece on
+# a north-south border stretch presented its thin edge along the path instead
+# of its long face, which is what actually caused the dashed/hatch-mark look.
+func _border_basis(dir2: Vector2) -> Basis:
+	var dir3 := Vector3(dir2.x, 0.0, dir2.y)
+	return Basis(dir3, Vector3.UP, Vector3(-dir3.z, 0.0, dir3.x))
 
 
 func _ground_offset(mesh: Mesh) -> float:
