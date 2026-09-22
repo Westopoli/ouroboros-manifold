@@ -810,6 +810,840 @@ typedef enum {
 } om_bug_e11;
 #endif
 
+/* ---- generated from signatures.toml: structs ---- */
+typedef struct om_absorption_record {
+    uint64_t tick;
+    int32_t absorbed_faction;
+    int32_t absorbing_faction;
+    uint32_t region_idx;
+} om_absorption_record;
+
+typedef struct om_archetype_metadata {
+    uint32_t id;
+    uint32_t canvas_category;
+    uint32_t primary_objective;
+    uint32_t transfer_on_total;
+    uint32_t transfer_on_strong;
+    uint32_t transfer_on_partial;
+} om_archetype_metadata;
+
+typedef struct om_briefing {
+    char situation_text[1024];
+    char objective_text[1024];
+    char assets_text[1024];
+    uint32_t has_situation;
+    uint32_t has_objective;
+    uint32_t has_assets;
+} om_briefing;
+
+typedef struct om_character_record {
+    uint32_t id;
+    char name[32];
+    int32_t faction;
+    uint32_t region;
+    uint32_t rank;
+    uint64_t birth_tick;
+    uint32_t lifespan;
+    uint32_t status;
+    uint64_t death_tick;
+    uint32_t lineage_id;
+    uint32_t parent_id;
+    uint32_t generation;
+    uint32_t n_rival_tags;
+    uint32_t n_children;
+} om_character_record;
+
+typedef struct om_chronicle_cluster {
+    uint32_t type;
+    uint32_t category;
+    uint32_t region;
+    double peak_score;
+    int32_t chain_tag;
+    uint64_t start_tick;
+    uint64_t end_tick;
+} om_chronicle_cluster;
+
+typedef struct om_chronicle_entry {
+    uint32_t id;
+    uint32_t category;
+    uint32_t region;
+    char base_text[512];
+    char expanded_text[1024];
+    uint64_t start_tick;
+    uint64_t end_tick;
+} om_chronicle_entry;
+
+typedef struct om_composition_ratio {
+    double line;
+    double strike;
+    double siege;
+} om_composition_ratio;
+
+typedef struct om_debrief {
+    int32_t band;
+    double objective_score;
+    double retention;
+    int32_t commander_fate;
+    char text[2048];
+} om_debrief;
+
+typedef struct om_fairness_score {
+    double route_count_balance;
+    double travel_time_balance;
+    double vantage_accessibility_balance;
+    double hazard_symmetry;
+    double composite_score;
+} om_fairness_score;
+
+typedef struct om_fragment_pool_counts {
+    uint32_t openings;
+    uint32_t details;
+    uint32_t closings;
+} om_fragment_pool_counts;
+
+typedef struct om_gradient_properties {
+    double obstacle_density;
+    double cover_density;
+    double sensor_interference;
+    double elevation;
+    uint32_t layer_accessibility_0;
+    uint32_t layer_accessibility_1;
+} om_gradient_properties;
+
+typedef struct om_mission_candidate {
+    uint32_t region_idx;
+    uint32_t archetype;
+    double urgency;
+    double relevance;
+    double preference;
+    double score;
+} om_mission_candidate;
+
+typedef struct om_objective_spec {
+    uint32_t id;
+    uint32_t kind;
+    uint32_t is_primary;
+    double weight;
+    double completion;
+    uint32_t is_complete;
+    uint32_t is_failed;
+} om_objective_spec;
+
+typedef struct om_onboarding_config {
+    uint32_t difficulty;
+    double weights[10];
+    uint32_t rare_marks[10];
+} om_onboarding_config;
+
+typedef struct om_reinforcement_wave {
+    uint32_t is_scheduled;
+    uint32_t direction;
+    uint64_t arrival_tick;
+    uint32_t is_spawned;
+} om_reinforcement_wave;
+
+typedef struct om_replay_command {
+    uint64_t tick;
+    uint32_t force_id;
+    uint32_t command_type;
+    double target_x;
+    double target_y;
+    uint32_t target_id;
+} om_replay_command;
+
+typedef struct om_reversion_record {
+    uint64_t tick;
+    uint32_t region_idx;
+    int32_t original_faction;
+    int32_t restored_faction;
+    double military_stolen;
+    double economy_stolen;
+} om_reversion_record;
+
+typedef struct om_revolt_record {
+    uint64_t tick;
+    uint32_t region_idx;
+    int32_t original_faction;
+    double success_rate;
+    double draw;
+    uint32_t faction_created;
+    int32_t new_faction_id;
+    double military_stolen;
+    double economy_stolen;
+    int32_t reverted_faction;
+} om_revolt_record;
+
+typedef struct om_selection_record {
+    uint32_t rotated;
+    uint32_t reason;
+    uint32_t pool;
+    uint32_t new_lineage_id;
+    uint32_t commander_id;
+    uint32_t chapters_in_lineage;
+    uint32_t home_region_idx;
+    uint32_t _pad;
+} om_selection_record;
+
+typedef struct om_structure_hud {
+    double timer_progress;
+    uint32_t next_unit_type;
+    double hp;
+    double max_hp;
+} om_structure_hud;
+
+typedef struct om_time_jump_report {
+    uint64_t start_tick;
+    uint64_t end_tick;
+    uint32_t jump_ticks;
+    uint32_t n_territory_changes;
+    uint32_t n_faction_births;
+    uint32_t n_faction_deaths;
+    uint32_t n_conquests;
+    uint32_t n_colonizations;
+    uint32_t n_revolts;
+    uint32_t n_chronicle_entries;
+    uint32_t n_snapshots;
+} om_time_jump_report;
+
+typedef struct om_unit_profile {
+    uint32_t unit_type;
+    double hp;
+    double base_damage;
+    double attack_interval;
+    double power;
+} om_unit_profile;
+
+typedef struct om_vec2 {
+    double x;
+    double y;
+} om_vec2;
+/* ---- end generated: structs ---- */
+
+/* ---- generated from signatures.toml: chronicle.c ---- */
+void om_chronicle_add_chain_event(om_world *w, int32_t chain_tag, uint32_t region_idx, uint32_t category);
+void om_chronicle_add_cluster_direct(om_world *w, uint32_t cluster_type, uint32_t category, double score);
+void om_chronicle_add_consequence_event(om_world *w, uint32_t region_idx, uint32_t outcome);
+void om_chronicle_add_event(om_world *w, uint32_t region_idx, double score);
+void om_chronicle_add_lineage_event(om_world *w, uint32_t lineage_id, uint32_t region_idx, double score);
+void om_chronicle_add_mock_entry(om_world *w, uint32_t entry_id, uint64_t start_tick, uint64_t end_tick);
+void om_chronicle_add_ownership_change_event(om_world *w, uint32_t region_idx, uint64_t tick);
+void om_chronicle_add_raw_entry(om_world *w, uint32_t entry_id, const char *text);
+const char *om_chronicle_apply_slot_echo_anaphora(om_world *w, const char *fragment1_slot, const char *fragment2_slot);
+const char *om_chronicle_apply_word_echo_synonym(om_world *w, const char *text);
+int om_chronicle_assemble_cluster_entry(om_world *w, uint32_t category, uint32_t region_idx, om_chronicle_entry *out_entry);
+void om_chronicle_assemble_with_seed(om_world *w, uint64_t seed);
+uint32_t om_chronicle_build_chain_clusters(om_world *w);
+void om_chronicle_build_opening_scroll(om_world *w);
+double om_chronicle_calculate_score(const om_world *w, uint32_t tier, double delta_sum, int in_mission_region, int has_character, uint32_t chain_length, int has_lineage_member);
+uint32_t om_chronicle_categorize_chain_cluster(const om_world *w, const char *template_name, uint32_t n_events, double net_mil, double net_eco, double net_ten);
+uint32_t om_chronicle_categorize_lineage_cluster(const om_world *w, const char *template_name, double net_eco, double net_mil, double net_ten);
+uint32_t om_chronicle_categorize_regional_cluster(const om_world *w, int has_conquest_or_revolt, double net_eco_pop);
+const char *om_chronicle_category_name(uint32_t category);
+uint32_t om_chronicle_chain_category_count(const om_world *w);
+double om_chronicle_context_multiplier(const om_world *w, int in_mission_region, int has_character, uint32_t chain_length, int has_lineage_member);
+uint32_t om_chronicle_count_by_type(const om_world *w, uint32_t cluster);
+void om_chronicle_dedup_content_words(om_world *w, double threshold);
+void om_chronicle_dismiss_expanded(om_world *w);
+void om_chronicle_distill_and_assemble(om_world *w);
+uint32_t om_chronicle_entry_count(const om_world *w);
+int om_chronicle_entry_is_retained(const om_world *w, uint32_t entry_id);
+int om_chronicle_fragment_batch_exceeds_rejection_limit(const om_world *w, uint32_t rejected_count, uint32_t total_count);
+uint32_t om_chronicle_fragment_category_count(const om_world *w);
+int om_chronicle_fragment_check_near_duplicate(const om_world *w, const char *p0, const char *p1);
+void om_chronicle_fragment_inject_invalid_slot(om_world *w, uint32_t category, const char *invalid_slot);
+void om_chronicle_fragment_library_load_launch(om_world *w);
+int om_chronicle_fragment_library_validate(const om_world *w);
+int om_chronicle_fragment_pool_counts(const om_world *w, uint32_t category, om_fragment_pool_counts *out);
+void om_chronicle_generate_map_keyframes(om_world *w);
+int om_chronicle_get_cluster(const om_world *w, uint32_t entry, om_chronicle_cluster *out);
+const char *om_chronicle_get_full_scroll_text(const om_world *w);
+int om_chronicle_handle_click(om_world *w, uint32_t entry_id);
+int om_chronicle_has_keyframe_at_tick(const om_world *w, uint64_t p0);
+int om_chronicle_has_keyframe_in_range(const om_world *w, uint64_t p0, uint64_t p1);
+int om_chronicle_is_lineage_event(const om_world *w, uint32_t lineage_id, uint32_t region_idx, uint32_t attached_character_id, uint32_t mission_region);
+int om_chronicle_is_paused(const om_world *w);
+uint32_t om_chronicle_lineage_category_count(const om_world *w);
+int om_chronicle_map_is_master_clock(const om_world *w);
+void om_chronicle_mock_populate_events(om_world *w, uint32_t n_events);
+double om_chronicle_presentation_entry_hold_sec(const om_world *w);
+double om_chronicle_presentation_map_width_ratio(const om_world *w);
+double om_chronicle_presentation_slide_in_sec(const om_world *w);
+double om_chronicle_presentation_slide_out_sec(const om_world *w);
+double om_chronicle_presentation_word_cadence_sec(const om_world *w);
+double om_chronicle_presentation_word_fade_sec(const om_world *w);
+uint32_t om_chronicle_regional_category_count(const om_world *w);
+const char *om_chronicle_render_character_rank(const om_world *w, uint32_t character_id);
+const char *om_chronicle_render_region_mention(const om_world *w, uint32_t region_idx, int is_first_mention);
+uint32_t om_chronicle_rendered_entry_count(const om_world *w);
+double om_chronicle_score_base(const om_world *w, uint32_t tier, double delta_sum);
+double om_chronicle_score_event(const om_world *w, uint32_t region_idx, uint32_t tier, double delta_sum);
+void om_chronicle_select_clusters(om_world *w);
+uint32_t om_chronicle_selected_category_count(const om_world *w, uint32_t category);
+void om_chronicle_set_entry_state(om_world *w, uint32_t entry_id, int is_printing);
+int om_chronicle_validate_event_template_prose(const om_world *w);
+const char *om_event_template_chronicle_prose(const om_world *w, uint32_t template);
+/* ---- end generated: chronicle.c ---- */
+
+/* ---- generated from signatures.toml: diplomacy.c ---- */
+double om_archetype_betrayal_weight(om_archetype archetype);
+double om_archetype_peace_disposition(om_archetype archetype);
+int32_t om_breakaway_create(om_world *w, int32_t parent, uint32_t region_idx);
+uint32_t om_chronicle_distill_candidates(const om_world *w, uint32_t *out, uint32_t max);
+void om_diplomacy_init(om_world *w);
+void om_diplomacy_step(om_world *w);
+double om_faction_betrayal_chance(const om_world *w, int32_t betrayer, int32_t partner);
+double om_faction_betrayal_opportunity(const om_world *w, int32_t betrayer, int32_t partner);
+uint64_t om_faction_cooperative_since(const om_world *w, int32_t p0, int32_t p1);
+void om_faction_create_breakaway(om_world *w, int32_t parent, uint32_t p1);
+int64_t om_faction_last_knowledge_lost(const om_world *w, int32_t faction_id);
+uint32_t om_faction_next_mission_unit_tier(const om_world *w, int32_t faction_id);
+void om_faction_set_last_knowledge_lost(om_world *w, int32_t faction_id, int64_t tick);
+void om_faction_set_stance_counter(om_world *w, int32_t p0, int32_t p1, uint32_t counter);
+uint32_t om_faction_stance_counter(const om_world *w, int32_t p0, int32_t faction);
+double om_faction_tech_attack(const om_world *w, int32_t faction_id);
+double om_faction_tech_defense(const om_world *w, int32_t faction_id);
+double om_faction_tech_economy(const om_world *w, int32_t faction_id);
+void om_faction_tech_multipliers(const om_world *w, int32_t faction_id, double *attack, double *defense, double *economy);
+uint32_t om_faction_tech_tier(const om_world *w, int32_t faction_id);
+int om_faction_tier_transition_candidate(const om_world *w, int32_t faction_id);
+uint32_t om_faction_unit_tier(const om_world *w, int32_t faction_id);
+uint32_t om_mission_start(om_world *w, int32_t faction_id);
+uint32_t om_mission_unit_tier(const om_world *w, uint32_t mission_id);
+void om_tech_step(om_world *w);
+uint32_t om_tech_tier(double tech);
+int om_tier_transition_candidate_exists(const om_world *w, int32_t faction_id);
+/* ---- end generated: diplomacy.c ---- */
+
+/* ---- generated from signatures.toml: enemy_macro.c ---- */
+void om_macro_bind_hook_flag(om_world *w, uint32_t p1, const char *p2);
+uint32_t om_macro_bus_get_active_flags_count(om_world *w);
+int om_macro_bus_get_flag(om_world *w, const char *p1);
+void om_macro_bus_register_vocab(const char *p0);
+void om_macro_bus_set_flag(om_world *w, const char *p1, int p2);
+void om_macro_enemy_leaves_trigger(om_world *w, uint32_t p1);
+int om_macro_eval_hook_flag(om_world *w, uint32_t p1, const char *p2);
+int om_macro_eval_timer_transition(uint64_t p0, uint64_t p1, double p2);
+int om_macro_eval_transitions(om_world *w, uint32_t p1);
+uint32_t om_macro_evaluation_interval_ticks(void);
+int om_macro_execute_behavior(om_world *w, uint32_t p1, int p2, int p3);
+int om_macro_get_behavior(om_world *w, uint32_t p1);
+uint32_t om_macro_get_eval_interval(int p0);
+int om_macro_get_last_issued_command_type(om_world *w, uint32_t p1);
+int om_macro_get_modifier(om_world *w, uint32_t p1);
+uint32_t om_macro_get_phased_subgroups(om_world *w, uint32_t p1);
+double om_macro_get_speed_multiplier(int p0);
+double om_macro_get_threshold_noise(om_world *w, uint32_t p1);
+double om_macro_get_timer_noise(om_world *w, uint32_t p1);
+int om_macro_has_evaluated(om_world *w);
+void om_macro_init_force(om_world *w, uint32_t p1, int32_t p2);
+int om_macro_is_hidden(om_world *w, uint32_t p1);
+int om_macro_issues_illegal_command(om_world *w);
+int om_macro_mutates_unit_stats(om_world *w);
+void om_macro_player_enter_objective(om_world *w, uint32_t p1);
+int om_macro_reads_player_visibility_set(om_world *w);
+int om_macro_resolve_conflict(int p0, int p1);
+int om_macro_resolve_conflict_types(int p0, int p1);
+void om_macro_set_base_transition_true(om_world *w, uint32_t p1, int p2);
+void om_macro_set_force_hp_pct(om_world *w, uint32_t p1, double p2);
+void om_macro_set_hook_true(om_world *w, uint32_t p1, int p2);
+void om_macro_set_state(om_world *w, uint32_t p1, int p2, int p3);
+void om_macro_tick(om_world *w, uint64_t p1);
+void om_macro_trigger_ambush(om_world *w, uint32_t p1);
+void om_macro_update_bus_runner(om_world *w);
+int om_macro_validate_bus_flag(const char *p0);
+int om_macro_validate_condition_name(const char *p0);
+int om_macro_validate_state(int p0, int p1);
+int om_map_is_edge_coord(om_world *w, double p1, double p2);
+void om_mission_check_external_reinforcements(om_world *w);
+double om_mission_get_external_reinforcement_prob(void);
+uint32_t om_mission_get_reinforcement_foreshadow_text(om_world *w, char *p1, uint32_t p2);
+void om_mission_get_reinforcement_spawn_pos(om_world *w, double *p1, double *p2);
+void om_mission_init_seed(om_world *w, uint64_t p1);
+int om_mission_is_reinforcement_spawned(om_world *w);
+void om_mission_schedule_external_reinforcement(om_world *w, om_reinforcement_wave *p1);
+void om_mission_set_external_reinforcement(om_world *w, const om_reinforcement_wave *p1);
+uint32_t om_replay_command_count(om_world *w);
+uint32_t om_replay_get_commands(om_world *w, om_replay_command *p1, uint32_t p2);
+void om_replay_log_command(om_world *w, uint64_t p1, uint32_t p2, uint32_t p3, double p4, double p5, uint32_t p6);
+void om_session_capture_enable(om_world *w, int p1);
+uint32_t om_session_capture_get_size(om_world *w);
+int om_session_capture_is_enabled(om_world *w);
+uint32_t om_session_capture_read(om_world *w, char *p1, uint32_t p2);
+double om_unit_get_base_hp(uint32_t p0, int p1);
+const void *om_unit_get_decision_loop_ptr(uint32_t p0, int p1);
+/* ---- end generated: enemy_macro.c ---- */
+
+/* ---- generated from signatures.toml: events.c ---- */
+uint32_t om_event_fire_manual(om_world *w, uint32_t region_idx, uint32_t tier);
+uint32_t om_event_get_attached_character(const om_world *w, uint32_t event, uint32_t p1);
+/* ---- end generated: events.c ---- */
+
+/* ---- generated from signatures.toml: fog.c ---- */
+double om_fog_get_drawn_sensor_circle_radius(const om_world *w, uint32_t unit);
+int om_fog_get_treatment_at(const om_world *w, double x, double y, uint32_t layer);
+uint32_t om_map_add_hazard_zone(om_world *w, double x, double y, double p2);
+void om_map_add_interference_zone(om_world *w, double x, double y, uint32_t layer, double intensity, double radius);
+void om_map_add_moving_interference_zone(om_world *w, double x, double y, uint32_t layer, double intensity, double radius, double vx, double vy);
+uint32_t om_map_add_spawn_point(om_world *w, double x, double y, int32_t faction_id);
+uint32_t om_map_add_spine_node(om_world *w, double x, double y, int p2);
+uint32_t om_map_add_structure(om_world *w, double x, double y, int32_t owner_faction);
+void om_map_add_vantage_node(om_world *w, double x, double y, double radius);
+void om_mission_begin(om_world *w);
+uint64_t om_mission_get_clock(const om_world *w);
+int om_mission_get_phase(const om_world *w);
+int om_mission_is_started(const om_world *w);
+void om_mission_set_phase(om_world *w, int phase);
+int om_player_can_see(const om_world *w, uint32_t unit);
+int om_player_can_see_friendly(const om_world *w, uint32_t unit);
+int om_player_can_see_unit(const om_world *w, int32_t p0, uint32_t unit);
+double om_recon_get_terrain_visibility_ratio(const om_world *w);
+int om_recon_is_enemy_visible(const om_world *w, uint32_t unit);
+int om_recon_is_feature_visible(const om_world *w, uint32_t feature_id);
+int om_recon_is_spawn_point_visible(const om_world *w, uint32_t spawn_id);
+int om_recon_is_structure_ownership_visible(const om_world *w, uint32_t structure_id);
+void om_set_era_flag(om_world *w, const char *name, int on);
+void om_set_era_name(om_world *w, const char *name);
+double om_strategic_agent_read_region_field(const om_world *w, int32_t p0, uint32_t region_idx, om_field field);
+void om_unit_acquire_target(om_world *w, uint32_t unit);
+int om_unit_can_see(const om_world *w, uint32_t observer, uint32_t target);
+double om_unit_get_cross_layer_factor(const om_world *w, uint32_t unit, uint32_t p0);
+double om_unit_get_effective_sensor_radius_to_target_elevation(const om_world *w, uint32_t unit, uint32_t target_elevation_tier);
+uint32_t om_unit_spawn_with_elevation(om_world *w, int unit_type, int32_t faction_id, double x, double y, uint32_t layer, uint32_t elevation_tier);
+void om_visibility_compute(om_world *w);
+void om_visibility_set_player_fog(om_world *w, int on);
+double om_zone_sample_interference(const om_world *w, double x, double y, uint32_t layer);
+/* ---- end generated: fog.c ---- */
+
+/* ---- generated from signatures.toml: generational.c ---- */
+int om_campaign_check_surviving_factions(const om_world *w);
+int om_campaign_needs_onboarding(const om_world *w);
+uint32_t om_campaign_opening_jump_length(const om_world *w);
+void om_campaign_start(om_world *w, uint32_t chapter);
+void om_campaign_trigger_terminal_restart(om_world *w);
+void om_chapter_advance_phase(om_world *w);
+int om_chapter_current_phase(const om_world *w);
+int om_chapter_end_reason_for_collapse(const om_world *w, int32_t player_faction);
+int om_chapter_mission_realtime(const om_world *w);
+int om_chapter_recon_has_clock(const om_world *w);
+void om_chapter_set_phase(om_world *w, int p0);
+void om_chapter_start(om_world *w, uint32_t chapter);
+void om_chapter_transition_complete(om_world *w);
+void om_chapter_transition_start(om_world *w);
+void om_character_create(om_world *w, uint32_t character_id, uint32_t lineage_id, uint32_t region_idx, uint32_t rank, uint64_t birth_tick, uint32_t lifespan);
+void om_character_create_child(om_world *w, uint32_t child_id, uint32_t parent_id, uint32_t region_idx, uint64_t birth_tick, uint32_t lifespan);
+uint32_t om_character_create_random(om_world *w, int32_t faction_id, uint32_t region_idx);
+uint32_t om_character_create_with_rank(om_world *w, int32_t faction_id, uint32_t region_idx, uint32_t rank, uint64_t birth_tick, uint32_t lifespan);
+int32_t om_character_faction(const om_world *w, uint32_t character);
+int om_character_get_record(const om_world *w, uint32_t character, om_character_record *out);
+int om_character_has_event_history(const om_world *w, uint32_t character);
+int om_character_has_rival_tag(const om_world *w, uint32_t character_id, uint32_t target_commander_id);
+int om_character_is_main_character(const om_world *w, uint32_t character_id);
+void om_character_kill(om_world *w, uint32_t character_id, uint64_t tick);
+uint32_t om_character_lineage_id(const om_world *w, uint32_t character);
+uint32_t om_character_name_reuse_cooldown(const om_world *w, uint32_t character_id);
+void om_character_selector_confirm_commander(om_world *w, uint32_t character_id);
+void om_character_selector_force_rotate(om_world *w, uint32_t lineage_id, uint32_t mission_region, int reason, int pool, om_selection_record *out_record);
+uint32_t om_character_selector_input_region(const om_world *w);
+void om_character_selector_resolve_commander_death(om_world *w, uint32_t lineage_id, uint32_t mission_region, om_selection_record *out_record);
+void om_character_selector_run(om_world *w);
+void om_character_selector_run_for_lineage(om_world *w, uint32_t lineage_id, uint32_t mission_region, om_selection_record *out_record);
+void om_character_set_faction(om_world *w, uint32_t character_id, int32_t faction_id);
+void om_character_set_generation(om_world *w, uint32_t character_id, uint32_t generation);
+void om_character_tag_rival(om_world *w, uint32_t character_id, uint32_t rival_of_character_id);
+uint32_t om_chronicle_consequence_entry_count(const om_world *w);
+int om_chronicle_has_faction_fall_entry(const om_world *w, int32_t old_faction);
+uint32_t om_chronicle_lineage_entry_count(const om_world *w);
+uint32_t om_event_attached_character_count(const om_world *w, uint32_t event);
+void om_faction_create_named(om_world *w, int32_t faction_id, uint32_t first_region);
+uint32_t om_faction_supreme_commander(const om_world *w, int32_t faction_id);
+uint32_t om_force_allocated_unit_count(const om_world *w, uint32_t mission_id);
+void om_force_allocator_run(om_world *w, uint32_t mission_id, double budget);
+void om_force_set_surviving_units(om_world *w, uint32_t mission_id, uint32_t n_survivors);
+int om_ledger_commander_death_outcome_band(const om_world *w, uint32_t commander_id);
+uint32_t om_ledger_commander_death_region(const om_world *w, uint32_t commander_id);
+void om_lineage_create(om_world *w, uint32_t lineage_id, uint32_t home_region);
+uint32_t om_lineage_generate_descendants(om_world *w, uint32_t lineage_id, uint32_t jump_ticks);
+uint32_t om_lineage_home_region(const om_world *w, uint32_t lineage_id);
+void om_lineage_record_history_region(om_world *w, uint32_t lineage_id, uint32_t region_idx);
+void om_lineage_set_chapter_count(om_world *w, uint32_t lineage_id, uint32_t chapters);
+uint32_t om_lineage_spawn_descendant_at_tick(om_world *w, uint32_t lineage_id, uint32_t parent_id, uint64_t tick);
+uint32_t om_lineage_spawn_single_descendant(om_world *w, uint32_t lineage_id);
+void om_load_state_read(om_world *w, const uint8_t *buffer, uint32_t length);
+uint32_t om_mission_generator_chosen_region(const om_world *w);
+void om_mission_generator_run(om_world *w);
+void om_mission_tag_rivals(om_world *w, uint32_t mission_region, uint32_t commander_id);
+void om_onboarding_load_from_slot(const om_world *w, uint32_t slot_id, om_onboarding_config *out_cfg);
+void om_onboarding_save_to_slot(om_world *w, uint32_t slot_id, const om_onboarding_config *cfg);
+int om_onboarding_update_choices(om_world *w, uint32_t slot_id, const om_onboarding_config *new_cfg);
+int om_onboarding_validate(const om_onboarding_config *cfg);
+void om_outcome_apply_consequences(om_world *w, uint32_t target_region, double delta_military, double delta_economy);
+void om_outcome_record_commander_death(om_world *w, uint32_t commander_id, uint32_t mission_region, int outcome_band);
+int om_player_faction_check_collapse(const om_world *w, int32_t player_faction);
+int32_t om_player_faction_reassign_on_collapse(om_world *w, int32_t player_faction);
+void om_player_faction_record_reassignment(om_world *w, int32_t old_faction, int32_t new_faction);
+void om_process_natural_deaths(om_world *w, uint64_t tick);
+uint32_t om_progression_carried_commander_stats_count(const om_world *w);
+int om_progression_has_player_level(const om_world *w);
+int om_progression_supports_era_unlocks(const om_world *w);
+void om_region_assign_regional_commander(om_world *w, uint32_t region_idx, int32_t faction_id);
+uint32_t om_region_regional_commander(const om_world *w, uint32_t region_idx);
+void om_rng_force_descendant_spread(om_world *w, double spread_draw);
+void om_rng_force_selector_draw(om_world *w, double forced);
+uint32_t om_save_state_size(const om_world *w);
+void om_save_state_write(const om_world *w, uint8_t *out, uint32_t capacity);
+double om_selector_base_rotation_prob(const om_world *w, double delta);
+void om_selector_clear_pools(om_world *w);
+double om_selector_decayed_rotation_prob(const om_world *w, double base_p, uint32_t chapters);
+uint32_t om_selector_draw_unrelated(om_world *w, uint32_t mission_region);
+uint32_t om_selector_gather_nemesis_candidates(om_world *w, uint32_t mission_region);
+uint32_t om_selector_get_nemesis_candidate(const om_world *w, uint32_t candidate);
+int om_selector_resolve_fallback_pool(const om_world *w, int initial_pool);
+int om_selector_roll_pool(const om_world *w, double draw);
+double om_selector_score_previous_lineage(const om_world *w, uint32_t chapters_ago, uint32_t living_nearby);
+uint32_t om_time_jump_choose_length(om_world *w, uint32_t requested);
+uint32_t om_time_jump_choose_opening_length(om_world *w);
+uint32_t om_time_jump_death_pass_count(const om_world *w);
+uint64_t om_time_jump_death_processing_tick(const om_world *w);
+int om_time_jump_interrupt(om_world *w);
+uint64_t om_time_jump_lineage_generation_tick(const om_world *w);
+uint32_t om_time_jump_report_faction_field_deltas_count(const om_world *w, const om_time_jump_report *report);
+int om_time_jump_run(om_world *w, uint32_t n_ticks, om_time_jump_report *report);
+void om_time_jump_run_tracked(om_world *w, uint32_t jump);
+uint64_t om_time_jump_start_tick(const om_world *w);
+void om_world_set_strategic_tick(om_world *w, uint64_t tick);
+uint64_t om_world_strategic_tick(const om_world *w);
+/* ---- end generated: generational.c ---- */
+
+/* ---- generated from signatures.toml: lifecycle.c ---- */
+int om_faction_is_active(const om_world *w, int32_t faction_id);
+void om_faction_mark_conquered_this_tick(om_world *w, int32_t faction_id);
+void om_faction_remove(om_world *w, int32_t faction_id);
+void om_faction_set_created_tick(om_world *w, int32_t faction_id, uint64_t tick);
+void om_faction_set_event_window_counts(om_world *w, int32_t faction_id, uint32_t total_events, uint32_t revolts, uint32_t attacks, uint32_t colonizations);
+int om_player_faction_collapsed(const om_world *w);
+int32_t om_region_previous_owner(const om_world *w, uint32_t idx);
+void om_region_set_previous_owner(om_world *w, uint32_t idx, int32_t faction_id);
+uint32_t om_tick_absorptions(const om_world *w, om_absorption_record *out, uint32_t max);
+uint32_t om_tick_reversions(const om_world *w, om_reversion_record *out, uint32_t max);
+uint32_t om_tick_revolts(const om_world *w, om_revolt_record *out, uint32_t max);
+int om_world_is_terminal(const om_world *w);
+/* ---- end generated: lifecycle.c ---- */
+
+/* ---- generated from signatures.toml: mission.c ---- */
+uint64_t om_archetype_base_time_ticks(uint32_t archetype);
+int om_chronicle_has_mission_consequence_flag(const om_world *w);
+double om_consequence_apply_clamped(double current, double delta);
+double om_consequence_eval_delta_current(double current, double pct);
+double om_consequence_eval_delta_deficit(double current, double pct);
+void om_mission_allocate_force_profile(const om_world *w, uint32_t archetype, double total_power, double *out_ratios);
+void om_mission_apply_capacity_shortfall(om_world *w, double capacity);
+void om_mission_apply_consequences(om_world *w, uint32_t region_idx, uint32_t archetype, int32_t band);
+void om_mission_apply_target_adjacent_player(om_world *w, uint32_t region_idx, om_field field, double delta);
+uint32_t om_mission_archetype_count(const om_world *w);
+int om_mission_assemble_briefing(const om_world *w, om_briefing *out);
+void om_mission_build_candidate_pool(om_world *w);
+void om_mission_build_objectives(om_world *w, uint32_t archetype);
+int om_mission_can_edit_loadout(const om_world *w);
+double om_mission_candidate_score(double urgency, double relevance, double preference);
+uint32_t om_mission_candidates(const om_world *w, om_mission_candidate *out, uint32_t max);
+int om_mission_check_terminated(const om_world *w, uint32_t p1);
+int32_t om_mission_classify_band(uint32_t archetype, double final);
+double om_mission_compute_base_parity(double c);
+double om_mission_compute_difficulty_parity(double base, int difficulty);
+double om_mission_compute_enemy_power(om_world *w, uint32_t archetype, double committed_budget, double military, double population);
+double om_mission_compute_final_score(double o, double r);
+double om_mission_compute_parity(double p0, int p1);
+double om_mission_compute_preference(const om_world *w, uint32_t archetype);
+double om_mission_compute_relevance(const om_world *w, uint32_t region_idx, uint32_t archetype);
+double om_mission_compute_retention(double deployed_power, double surviving_power);
+uint64_t om_mission_compute_time_limit(uint64_t B, double u);
+double om_mission_compute_urgency(const om_world *w, uint32_t region_idx, uint32_t archetype);
+void om_mission_end(om_world *w);
+int32_t om_mission_eval_commander_fate(double hp, double max_hp);
+double om_mission_eval_destroy_targets(om_world *w, uint32_t objective_idx, uint32_t destroyed);
+double om_mission_eval_eliminate(om_world *w, uint32_t objective_idx, double hp_destroyed);
+double om_mission_eval_escort(om_world *w, uint32_t objective_idx, uint32_t reached_alive);
+void om_mission_eval_hold_zone(om_world *w, uint32_t objective_idx, uint32_t enemies_inside);
+double om_mission_eval_survive(om_world *w, uint32_t objective_idx, uint64_t elapsed_ticks, int player_alive);
+uint32_t om_mission_fallback_archetype(const om_world *w);
+uint32_t om_mission_fallback_region(const om_world *w);
+double om_mission_fill_player_force(om_world *w, double P, double parity);
+int om_mission_get_archetype_metadata(const om_world *w, uint32_t archetype, om_archetype_metadata *out);
+double om_mission_get_archetype_preference_weight(const om_world *w, uint32_t archetype, int is_rare);
+int32_t om_mission_get_band(const om_world *w);
+uint32_t om_mission_get_briefing_controls(const om_world *w);
+void om_mission_get_briefing_text(const om_world *w, char *out, uint32_t cap);
+double om_mission_get_candidate_score(const om_world *w, uint32_t region_idx, uint32_t archetype);
+uint32_t om_mission_get_compatible_layouts(const om_world *w, uint32_t archetype, uint32_t *out, uint32_t max);
+int om_mission_get_debrief(const om_world *w, om_debrief *out);
+uint32_t om_mission_get_deployed_force_count(const om_world *w);
+double om_mission_get_enemy_power(const om_world *w);
+double om_mission_get_objective_completion(const om_world *w, uint32_t objective_idx);
+double om_mission_get_objective_score(const om_world *w);
+uint32_t om_mission_get_objectives(const om_world *w, om_objective_spec *out, uint32_t max);
+double om_mission_get_player_parity(const om_world *w);
+void om_mission_get_player_units(const om_world *w, uint32_t *out, uint32_t max);
+void om_mission_get_shortfall_text(const om_world *w, char *out, uint32_t cap);
+uint64_t om_mission_get_time_limit(const om_world *w);
+void om_mission_inject_candidate(om_world *w, uint32_t region_idx, uint32_t archetype, double score);
+int om_mission_is_ended(const om_world *w);
+void om_mission_load_launch_library(om_world *w);
+uint32_t om_mission_objective_count(const om_world *w);
+void om_mission_resolve_refusal(om_world *w, uint32_t region_idx);
+uint32_t om_mission_select(om_world *w);
+uint32_t om_mission_select_candidate(om_world *w);
+uint32_t om_mission_select_layout(om_world *w, uint32_t archetype, uint32_t p2);
+void om_mission_set_archetype_profile(om_world *w, uint32_t archetype, const double *profile, uint32_t n_types);
+void om_mission_set_candidate_viable(om_world *w, uint32_t archetype, int viable);
+void om_mission_set_conflict_context(om_world *w, uint32_t region_idx, uint32_t recent_attacks, double attack_budget_sum, uint32_t adjacent_lost);
+void om_mission_set_lineage_context(om_world *w, uint32_t region_idx, double lineage, uint32_t hops, uint32_t times_run);
+void om_mission_set_objective_completion(om_world *w, uint32_t objective_idx, double completion);
+void om_mission_set_player_units(om_world *w, const uint32_t *counts, uint32_t n_types);
+void om_mission_set_preference(om_world *w, uint32_t archetype, double weight);
+void om_mission_set_revolt_events(om_world *w, uint32_t region_idx, uint32_t recent_revolt_events);
+void om_mission_setup(om_world *w, uint32_t p1, uint32_t archetype, int lineage_connection);
+void om_mission_setup_destroy_targets(om_world *w, uint32_t objective_idx, uint32_t total);
+void om_mission_setup_eliminate(om_world *w, uint32_t objective_idx, double initial_hp);
+void om_mission_setup_escort(om_world *w, uint32_t objective_idx, uint32_t total);
+void om_mission_setup_hold_zone(om_world *w, uint32_t objective_idx, uint64_t required_ticks);
+void om_mission_setup_survive(om_world *w, uint32_t objective_idx, uint64_t required_ticks);
+void om_mission_setup_tactical(om_world *w, uint32_t p1, uint64_t time_limit);
+void om_mission_setup_termination(om_world *w, uint32_t p1, int primary_complete, int p3, uint64_t tick, uint64_t time_limit, int player_alive);
+int om_objective_get_center(const om_world *w, uint32_t objective_idx, om_vec2 *out);
+int64_t om_region_get_held_since(const om_world *w, uint32_t idx);
+int32_t om_region_get_owner(const om_world *w, uint32_t idx);
+void om_set_neighbors(om_world *w, uint32_t a, uint32_t b);
+int om_unit_get_profile(uint32_t unit_type, int difficulty, om_unit_profile *out);
+double om_unit_power(uint32_t unit_type);
+/* ---- end generated: mission.c ---- */
+
+/* ---- generated from signatures.toml: tactical_mapgen.c ---- */
+void om_fairness_evaluate(om_world *w, om_fairness_score *byref);
+void om_fairness_force_score(om_world *w, double composite);
+int om_fairness_is_score_logged(om_world *w);
+void om_fairness_run_post_generation_check(om_world *w);
+void om_gradient_add_moving_source(om_world *w, int p1, double p2, double p3, double p4, double start, uint32_t period);
+double om_gradient_combine_overlap(double p0, double p1);
+double om_gradient_get_anchor_intensity(int node, int gradient);
+double om_gradient_get_anchor_radius(int p0, int p1);
+double om_gradient_sample_single(double p0, double p1, double p2, int p3);
+uint32_t om_map_add_cover(om_world *w, double x, double y, double radius, double height);
+void om_map_add_layer_restriction_zone(om_world *w, double p1, double zone, uint32_t p3);
+uint32_t om_map_add_obstacle(om_world *w, double x, double y, double radius);
+int om_map_archetype_canvas_category(uint32_t mission);
+double om_map_check_boundary_gradient_discontinuity(om_world *w, double p1, double boundary);
+double om_map_clamp_flavoring_delta(double delta);
+double om_map_compute_chokepoint_width(double width);
+double om_map_compute_economy_obstacle_delta(double economy);
+double om_map_compute_modified_canvas(uint32_t archetype, double p1, double p2);
+double om_map_compute_tension_cover_delta(double tension);
+uint32_t om_map_count_distinct_routes_staging_to_objective(om_world *w, uint32_t p1);
+uint32_t om_map_count_nodes_of_type(om_world *w, int p1);
+double om_map_flavoring_stability_multiplier(double stability);
+void om_map_generate(om_world *w, uint32_t p1, uint64_t p2);
+void om_map_generate_gradients(om_world *w, uint32_t p1, uint64_t p2);
+void om_map_generate_spine(om_world *w, uint32_t p1, uint64_t p2);
+uint64_t om_map_get_active_seed(om_world *w);
+double om_map_get_canvas_base_dimension(int p0);
+uint32_t om_map_get_compatible_layout_count(om_world *w, uint32_t archetype);
+uint32_t om_map_get_compatible_layouts(om_world *w, uint32_t archetype, uint32_t *out, uint32_t max);
+uint32_t om_map_get_node_count(om_world *w);
+void om_map_get_node_pos(om_world *w, uint32_t node, om_vec2 *byref);
+int om_map_get_node_type(om_world *w, uint32_t node);
+uint32_t om_map_get_nth_node_of_type(om_world *w, int p1, uint32_t nth);
+int om_map_get_simulation_coupling(om_world *w);
+int om_map_has_flank_bypass(om_world *w, uint32_t chokepoint);
+void om_map_instantiate_zone_pos(double p0, double base_pct, double canvas_dim, uint64_t p3, om_vec2 *byref);
+int om_map_is_reachable_from_all_spawns(om_world *w, uint32_t node);
+int om_map_is_reachable_from_staging(om_world *w, uint32_t node);
+int om_map_is_valid(om_world *w);
+int om_map_layout_check_hazard_approaches(uint32_t layout_id);
+int om_map_layout_check_vantage_reachability(uint32_t layout_id);
+int om_map_layout_file_has_forbidden_fields(uint32_t p0);
+int om_map_layout_file_has_required_fields(uint32_t p0);
+int om_map_layout_matches_archetype_filter(uint32_t layout, uint32_t archetype);
+uint32_t om_map_library_total_layouts(void);
+int32_t om_map_node_get_owner(om_world *w, uint32_t vantage);
+void om_map_sample_gradients(om_world *w, double p1, double x, om_gradient_properties *byref);
+int om_map_sample_layer_accessibility(om_world *w, double p1, double x, uint32_t layer);
+double om_map_sample_obstacle_density(om_world *w, double p1, double x);
+uint32_t om_map_select_layout_uniform(uint64_t seed, uint32_t pool_size);
+void om_map_set_simulation_coupling(om_world *w, int on);
+void om_map_setup_drifting_node(om_world *w, uint32_t node, uint32_t period);
+int om_map_verify_flank_connections(om_world *w);
+uint32_t om_proc_arch_resolve_section_piece(int section_type, int era);
+int om_proc_arch_section_is_era_agnostic(int section_type);
+int om_render_detect_repeated_tile_boundary(om_world *w);
+int om_route_grid_is_cell_blocked(double obstacle);
+void om_unit_get_position(om_world *w, uint32_t unit_id, om_vec2 *byref);
+void om_unit_order_hold_node(om_world *w, uint32_t unit_id, uint32_t node_id);
+/* ---- end generated: tactical_mapgen.c ---- */
+
+/* ---- generated from signatures.toml: tactical_move.c ---- */
+void om_collision_pass(om_world *w);
+int om_combat_can_shoot(const om_world *w, uint32_t p0, uint32_t p1);
+void om_command_attack_target_kiting(om_world *w, uint32_t p0, uint32_t p1, double p2, double p3);
+void om_command_direct_move(om_world *w, uint32_t p0, double p1, double p2);
+uint32_t om_command_group_move(om_world *w, const uint32_t *p0, uint32_t n, double p2, double p3);
+int om_command_issue_named(om_world *w, const char *p0, uint32_t p1, double p2, double p3);
+int om_command_move(om_world *w, const uint32_t *unit_ids, uint32_t n_units, double x, double y);
+void om_command_queue_attack_move(om_world *w, uint32_t p0, double p1, double p2);
+void om_command_queue_move(om_world *w, uint32_t p0, double p1, double p2);
+int om_group_is_active(const om_world *w, uint32_t p0);
+void om_map_set_obstacle_density(om_world *w, uint32_t p0, uint32_t p1, uint32_t p2, double p3);
+uint32_t om_navmesh_find_path(om_world *w, double p0, double p1, double p2, double p3, uint32_t p4);
+uint32_t om_navmesh_get_cache_hits(const om_world *w);
+double om_navmesh_get_cell_size(const om_world *w);
+int om_navmesh_is_cell_blocked(const om_world *w, uint32_t p0, uint32_t p1, uint32_t p2);
+int om_navmesh_is_path_straightened(const om_world *w);
+double om_renderer_interpolate_facing(const om_world *w, uint32_t p0, double p1);
+int om_renderer_interpolate_position(const om_world *w, uint32_t p0, double p1, double *p2, double *p3);
+uint32_t om_replay_get_command_count_at_tick(const om_world *w, uint64_t p0);
+int om_steering_get_obstacle_repulsion(const om_world *w, uint32_t p0, double *p1, double *p2);
+double om_steering_get_sweep_angle_at(const om_world *w, uint32_t p0);
+uint32_t om_steering_get_sweep_angle_count(const om_world *w);
+void om_unit_clear_orders(om_world *w, uint32_t p0);
+double om_unit_compute_terrain_speed(const om_world *w, uint32_t p0, double p1);
+void om_unit_engage(om_world *w, uint32_t p0, uint32_t p1);
+double om_unit_get_current_speed(const om_world *w, uint32_t p0);
+int om_unit_get_destination(const om_world *w, uint32_t p0, double *p1, double *p2);
+double om_unit_get_facing(const om_world *w, uint32_t p0);
+int om_unit_get_order_kind(const om_world *w, uint32_t p0);
+int om_unit_get_pos(const om_world *w, uint32_t unit, double *out_x, double *out_y);
+int om_unit_has_active_buff(const om_world *w, uint32_t p0, const char *p1);
+int om_unit_is_braced(const om_world *w, uint32_t p0);
+void om_unit_set_facing(om_world *w, uint32_t p0, double p1);
+void om_unit_set_pos(om_world *w, uint32_t p0, double p1, double p2);
+void om_unit_set_visible_to_faction(om_world *w, uint32_t p0, int32_t p1, int p2);
+void om_unit_teleport(om_world *w, uint32_t unit, double x, double y, uint32_t layer);
+/* ---- end generated: tactical_move.c ---- */
+
+/* ---- generated from signatures.toml: tactical_support.c ---- */
+void om_drift_interpolate(const om_vec2 *p0, uint32_t waypoint, uint64_t period, int p3, uint64_t tick, om_vec2 *byref);
+void om_enemy_production_adapt_target(const om_composition_ratio *byref, const om_composition_ratio *p1, om_composition_ratio *p2);
+int om_enemy_production_select_category(const om_composition_ratio *byref, const om_composition_ratio *p1);
+void om_hazard_get_launch_types(uint32_t *p0, uint32_t max);
+int om_hazard_is_enabled_at_launch(int p0);
+uint32_t om_hazard_launch_type_count(void);
+double om_hazard_sample_interference(om_world *w, double p1, double c_double);
+uint32_t om_hazard_spawn_moving_interference(om_world *w, double p1, double p2, double p3, double c_double, uint64_t p5);
+void om_mission_check_extraction_objectives(om_world *w);
+double om_mission_compute_reinforcement_capacity(double c_double, uint64_t time);
+double om_mission_compute_starting_force(double c_double);
+uint32_t om_mission_get_reinforcement_trickle(om_world *w);
+void om_mission_set_player_held_structures_count(om_world *w, uint32_t held);
+void om_mission_setup_extraction_point(om_world *w, double p1, double c_double, double p3);
+int om_objective_is_contested(om_world *w, uint32_t objective);
+void om_objective_setup_drifting(om_world *w, uint32_t objective, uint64_t period);
+uint32_t om_render_get_owner_color(int32_t owner);
+uint32_t om_render_get_structure_silhouette_id(void);
+uint32_t om_render_get_unit_silhouette_id(uint32_t unit);
+int om_render_is_volume_obscuring(int p0);
+void om_structure_apply_damage(om_world *w, uint32_t structure, double c_double, uint32_t attacker);
+void om_structure_assign_owners(int mission, uint32_t total, uint32_t *p2, uint32_t *p3, uint32_t *byref);
+uint32_t om_structure_compute_count(double ctypes, int p1);
+double om_structure_get_base_max_hp(void);
+double om_structure_get_capture_progress(om_world *w, uint32_t structure);
+double om_structure_get_hp(om_world *w, uint32_t structure);
+void om_structure_get_hud_data(om_world *w, uint32_t structure, om_structure_hud *byref);
+double om_structure_get_last_spawn_distance(om_world *w, uint32_t structure);
+double om_structure_get_matchup_multiplier(uint32_t attacker);
+int32_t om_structure_get_owner(om_world *w, uint32_t structure);
+void om_structure_get_position(om_world *w, uint32_t structure, om_vec2 *byref);
+uint64_t om_structure_get_timer(om_world *w, uint32_t structure);
+uint32_t om_structure_get_unit_type(om_world *w, uint32_t structure);
+void om_structure_init(om_world *w, uint32_t structure, uint32_t unit, double c_double);
+void om_structure_init_drifting(om_world *w, uint32_t structure, uint64_t period);
+int om_structure_is_destroyed(om_world *w, uint32_t structure);
+int om_structure_is_in_capture_radius(om_world *w, uint32_t structure, double p2, double x);
+void om_structure_on_owner_changed(om_world *w, uint32_t structure, int32_t old, int32_t new);
+int om_structure_pop_spawned_unit(om_world *w, uint32_t structure);
+uint32_t om_structure_production_interval_ticks(double c_double);
+void om_structure_set_capture_progress(om_world *w, uint32_t structure, double c_double);
+void om_structure_set_capturing_faction(om_world *w, uint32_t structure, int32_t unopposed);
+void om_structure_set_contested(om_world *w, uint32_t structure, int on);
+void om_structure_set_owner(om_world *w, uint32_t structure, int32_t owner);
+void om_structure_set_timer(om_world *w, uint32_t structure, uint64_t timer);
+void om_structure_switch_unit_type(om_world *w, uint32_t structure, uint32_t new);
+void om_structure_tick_capture(om_world *w, uint32_t structure);
+void om_structure_tick_production(om_world *w, uint32_t structure);
+uint32_t om_structure_unit_cost(uint32_t unit);
+void om_ticker_pop_message(om_world *w, char *create_string_buffer, uint32_t buffer);
+int om_unit_can_return_fire(om_world *w, uint32_t unit);
+void om_unit_get_order_destination(om_world *w, uint32_t unit, om_vec2 *byref);
+int om_unit_has_non_combat_visual_tag(int p0);
+int om_unit_is_flinching(om_world *w, uint32_t unit);
+int om_unit_is_non_combat_supported(int p0);
+void om_unit_order_move(om_world *w, uint32_t unit, double p2, double c_double);
+uint32_t om_unit_spawn_non_combat(om_world *w, int p1, double p2, double c_double);
+void om_unit_tick_decision_loop(om_world *w, uint32_t unit);
+/* ---- end generated: tactical_support.c ---- */
+
+/* ---- generated from signatures.toml: unit.c ---- */
+int om_command_activate_ability(om_world *w, const uint32_t *unit_ids, uint32_t n_units, double target_x, double target_y);
+int om_command_attack_move(om_world *w, const uint32_t *unit_ids, uint32_t n_units, double x, double y);
+int om_command_attack_target(om_world *w, const uint32_t *unit_ids, uint32_t n_units, uint32_t target_unit);
+uint32_t om_cue_lookup(const char *name);
+int om_era_elevation_damage_bonus_enabled(om_world *w);
+int om_roster_register_custom_unit(om_world *w, uint32_t type_id, int category, const char *role, double max_hp, double base_damage, double attack_interval, double attack_range, double speed, double sensor_radius, double layer_transition_time, double aoe_radius, int ability_id);
+double om_tactical_category_multiplier(om_world *w, int attacker_category, int target_category);
+void om_tactical_disable_abilities(om_world *w);
+void om_tactical_reset(om_world *w);
+uint64_t om_tactical_run(om_world *w, uint64_t n_ticks);
+uint64_t om_tactical_run_until_eliminated(om_world *w);
+uint64_t om_tactical_run_until_engagement_ends(om_world *w, uint32_t unit_id);
+void om_tactical_spawn_force_composition(om_world *w, int32_t faction_id, uint32_t count, const char *composition);
+int om_tactical_target_validation_runs_every_tick(om_world *w);
+int om_tactical_telegraph_active(om_world *w, double x, double y);
+uint64_t om_tactical_tick(om_world *w);
+uint64_t om_tactical_tick_to(om_world *w, uint64_t tick);
+int om_tactical_zone_visible_to_enemy(om_world *w, uint32_t unit_id);
+uint32_t om_tick_read_ability_events(om_world *w);
+int om_unit_ability_active(om_world *w, uint32_t unit_id);
+double om_unit_ability_cooldown(om_world *w, uint32_t unit_id);
+int om_unit_alive(om_world *w, uint32_t unit_id);
+void om_unit_apply_trait_modifier(om_world *w, uint32_t unit_id, int stat_field, double delta);
+void om_unit_attack(om_world *w, uint32_t attacker, uint32_t target);
+double om_unit_damage_reduction(om_world *w, uint32_t unit_id);
+void om_unit_deal_damage(om_world *w, uint32_t p1, uint32_t p2, double p3);
+double om_unit_effective_speed(om_world *w, uint32_t unit_id);
+void om_unit_fire_aoe_attack(om_world *w, uint32_t attacker_id, uint32_t target_id, double radius);
+double om_unit_get_hp(const om_world *w, uint32_t unit);
+uint32_t om_unit_get_target(const om_world *w, uint32_t unit);
+double om_unit_hp(om_world *w, uint32_t unit_id);
+int om_unit_in_backswing(om_world *w, uint32_t unit_id);
+int om_unit_in_flinch(om_world *w, uint32_t unit_id);
+double om_unit_output_multiplier(om_world *w, uint32_t unit_id);
+double om_unit_position_x(om_world *w, uint32_t unit_id);
+double om_unit_position_y(om_world *w, uint32_t unit_id);
+uint32_t om_unit_profile_ability_count(om_world *w, int unit_type);
+double om_unit_profile_aoe_radius(om_world *w, int unit_type);
+double om_unit_profile_attack_interval(om_world *w, int unit_type);
+double om_unit_profile_attack_range(om_world *w, int unit_type);
+double om_unit_profile_base_damage(om_world *w, int unit_type);
+int om_unit_profile_category(om_world *w, int unit_type);
+double om_unit_profile_dps(om_world *w, int unit_type);
+double om_unit_profile_layer_transition_time(om_world *w, int unit_type);
+double om_unit_profile_max_hp(om_world *w, int unit_type);
+double om_unit_profile_sensor_radius(om_world *w, int unit_type);
+double om_unit_profile_speed(om_world *w, int unit_type);
+uint32_t om_unit_profile_trait_count(om_world *w, int unit_type);
+uint32_t om_unit_render_craft_count(om_world *w, int unit_type);
+double om_unit_render_silhouette_size(om_world *w, int unit_type);
+void om_unit_set_ability_cooldown(om_world *w, uint32_t unit_id, double ticks);
+void om_unit_set_brace_active(om_world *w, uint32_t unit_id, int on);
+void om_unit_set_elevation_tier(om_world *w, uint32_t unit_id, int tier);
+void om_unit_set_fortify_active(om_world *w, uint32_t unit_id, int on);
+void om_unit_set_hp(om_world *w, uint32_t p0, double p1);
+void om_unit_set_stealth(om_world *w, uint32_t unit_id, int on);
+void om_unit_set_warden_aura_active(om_world *w, uint32_t unit_id, int on);
+uint32_t om_unit_spawn(om_world *w, int unit_type, int32_t faction_id, double x, double y, uint32_t layer);
+uint32_t om_unit_spawn_combat(om_world *w, int32_t p1, double p2, double x);
+uint32_t om_unit_spawn_for_category(om_world *w, int category, int32_t faction_id, double x, double y, uint32_t layer);
+int32_t om_unit_target(om_world *w, uint32_t unit_id);
+uint32_t om_unit_targeting_cohort(om_world *w, uint32_t unit_id);
+/* ---- end generated: unit.c ---- */
+
 #ifdef __cplusplus
 }
 #endif

@@ -254,6 +254,7 @@ def lib():
         pytest.skip("no csrc/*.c implementation yet; nothing to build")
     handle = ctypes.CDLL(str(LIB_PATH))
     _configure_common(handle)
+    _bind_generated(handle)
     version = handle.om_abi_version()
     assert version == EXPECTED_ABI_VERSION, (
         f"om_abi_version() returned {version}, expected {EXPECTED_ABI_VERSION} "
@@ -272,6 +273,7 @@ def dbg():
     handle = ctypes.CDLL(str(DBG_LIB_PATH))
     _configure_common(handle)
     _configure_debug(handle)
+    _bind_generated(handle)
     version = handle.om_abi_version()
     assert version == EXPECTED_ABI_VERSION, (
         f"om_abi_version() returned {version}, expected {EXPECTED_ABI_VERSION} "
@@ -1160,3 +1162,1180 @@ class OMBugE07:
 
 class OMBugE11:
     TACTICAL_BEFORE_STRATEGIC = 900
+
+
+# ======================================================================
+# ---- E-06..E-17: bindings from signatures.toml (freeze F1b, 2026-09-22) ----
+# The story tests call lib.om_*(...) on the handle directly, many with
+# keyword arguments, so every table symbol is bound at fixture time by
+# _bind_generated: _bind sets argtypes/restype and, for a row with kwargs,
+# swaps in a paramflags prototype so keywords reach the C side (a raw
+# ctypes function drops them silently). A symbol the library lacks stays
+# unbound and fails red at its first call site, like the lazy E-03/E-04/
+# E-05 binders above. The _wrap_* adapters are the `wrapper` field of
+# docs/northstar/spec_factory/signatures.toml; each keeps .argtypes/.restype
+# and the raw function on .raw.
+# ======================================================================
+
+
+def _bind(lib, name, argtypes, restype, params, kw=False):
+    if not hasattr(lib, name):
+        return
+    fn = getattr(lib, name)
+    fn.argtypes = argtypes
+    fn.restype = restype
+    if kw:
+        proto = ctypes.CFUNCTYPE(restype, *argtypes)
+        setattr(lib, name, proto((name, lib), tuple((1, p) for p in params)))
+
+
+def _replace(lib, name, call):
+    raw = getattr(lib, name)
+    call.argtypes = raw.argtypes
+    call.restype = raw.restype
+    call.raw = raw
+    setattr(lib, name, call)
+
+
+def _ids_group(ids, rest):
+    """(ids, rest) as the test wrote them -> (uint32 array, n, remaining args).
+    A list/tuple/array is the group form and carries its count next; a bare
+    id is the single-unit form."""
+    if isinstance(ids, ctypes.Array):
+        return ids, rest[0], rest[1:]
+    if isinstance(ids, (list, tuple)):
+        ids = list(ids)
+        return (ctypes.c_uint32 * max(len(ids), 1))(*ids), rest[0], rest[1:]
+    return (ctypes.c_uint32 * 1)(ids), 1, rest
+
+
+def _wrap_ids_list_or_single(lib, name):
+    if not hasattr(lib, name):
+        return
+    raw = getattr(lib, name)
+
+    def call(w, ids, *rest):
+        arr, n, rest = _ids_group(ids, rest)
+        return raw(w, arr, n, *rest)
+
+    _replace(lib, name, call)
+
+
+def _wrap_ids_list_optional_target(lib, name):
+    if not hasattr(lib, name):
+        return
+    raw = getattr(lib, name)
+
+    def call(w, ids, *rest):
+        arr, n, rest = _ids_group(ids, rest)
+        if not rest:
+            rest = (math.nan, math.nan)
+        return raw(w, arr, n, *rest)
+
+    _replace(lib, name, call)
+
+
+def _wrap_optional_trailing_null(lib, name):
+    if not hasattr(lib, name):
+        return
+    raw = getattr(lib, name)
+
+    def call(w, n_ticks, report=None):
+        return raw(w, n_ticks, report)
+
+    _replace(lib, name, call)
+
+
+def _wrap_out_pair(lib, name):
+    """(w, *args) -> (x, y): the two trailing double* out-params become the
+    return value, so om_unit_get_pos(w, unit) and any row with more leading
+    inputs (an interpolation alpha, say) share one adapter."""
+    if not hasattr(lib, name):
+        return
+    raw = getattr(lib, name)
+
+    def call(w, *args):
+        x = ctypes.c_double()
+        y = ctypes.c_double()
+        raw(w, *args, ctypes.byref(x), ctypes.byref(y))
+        return (x.value, y.value)
+
+    _replace(lib, name, call)
+
+
+def _bind_generated(lib):
+    for binder in _GENERATED_BINDERS:
+        binder(lib)
+
+
+# ---- generated from signatures.toml ----
+# Written by scripts/specfactory/sig_table.py --emit from
+# docs/northstar/spec_factory/signatures.toml; edit the table, not this region.
+# Struct pointers bind as c_void_p (V): the story tests carry their own
+# ctypes.Structure classes, so a typed POINTER() would reject them. The
+# mirrors below serve the wrappers and future tests; STRUCT_C_NAMES maps
+# each Python name to its C typedef.
+
+class OmAbsorptionRecord(ctypes.Structure):
+    _fields_ = [
+        ("tick", ctypes.c_uint64),
+        ("absorbed_faction", ctypes.c_int32),
+        ("absorbing_faction", ctypes.c_int32),
+        ("region_idx", ctypes.c_uint32),
+    ]
+
+
+om_absorption_record = OmAbsorptionRecord
+
+
+class OMArchetypeMetadata(ctypes.Structure):
+    _fields_ = [
+        ("id", ctypes.c_uint32),
+        ("canvas_category", ctypes.c_uint32),
+        ("primary_objective", ctypes.c_uint32),
+        ("transfer_on_total", ctypes.c_uint32),
+        ("transfer_on_strong", ctypes.c_uint32),
+        ("transfer_on_partial", ctypes.c_uint32),
+    ]
+
+
+om_archetype_metadata = OMArchetypeMetadata
+
+
+class OMBriefing(ctypes.Structure):
+    _fields_ = [
+        ("situation_text", ctypes.c_char * 1024),
+        ("objective_text", ctypes.c_char * 1024),
+        ("assets_text", ctypes.c_char * 1024),
+        ("has_situation", ctypes.c_uint32),
+        ("has_objective", ctypes.c_uint32),
+        ("has_assets", ctypes.c_uint32),
+    ]
+
+
+om_briefing = OMBriefing
+
+
+class OmCharacterRecord(ctypes.Structure):
+    _fields_ = [
+        ("id", ctypes.c_uint32),
+        ("name", ctypes.c_char * 32),
+        ("faction", ctypes.c_int32),
+        ("region", ctypes.c_uint32),
+        ("rank", ctypes.c_uint32),
+        ("birth_tick", ctypes.c_uint64),
+        ("lifespan", ctypes.c_uint32),
+        ("status", ctypes.c_uint32),
+        ("death_tick", ctypes.c_uint64),
+        ("lineage_id", ctypes.c_uint32),
+        ("parent_id", ctypes.c_uint32),
+        ("generation", ctypes.c_uint32),
+        ("n_rival_tags", ctypes.c_uint32),
+        ("n_children", ctypes.c_uint32),
+    ]
+
+
+class OmChronicleCluster(ctypes.Structure):
+    _fields_ = [
+        ("type", ctypes.c_uint32),
+        ("category", ctypes.c_uint32),
+        ("region", ctypes.c_uint32),
+        ("peak_score", ctypes.c_double),
+        ("chain_tag", ctypes.c_int32),
+        ("start_tick", ctypes.c_uint64),
+        ("end_tick", ctypes.c_uint64),
+    ]
+
+
+om_chronicle_cluster = OmChronicleCluster
+
+
+class OmChronicleEntry(ctypes.Structure):
+    _fields_ = [
+        ("id", ctypes.c_uint32),
+        ("category", ctypes.c_uint32),
+        ("region", ctypes.c_uint32),
+        ("base_text", ctypes.c_char * 512),
+        ("expanded_text", ctypes.c_char * 1024),
+        ("start_tick", ctypes.c_uint64),
+        ("end_tick", ctypes.c_uint64),
+    ]
+
+
+om_chronicle_entry = OmChronicleEntry
+
+
+class OMCompositionRatio(ctypes.Structure):
+    _fields_ = [
+        ("line", ctypes.c_double),
+        ("strike", ctypes.c_double),
+        ("siege", ctypes.c_double),
+    ]
+
+
+om_composition_ratio = OMCompositionRatio
+
+
+class OMDebrief(ctypes.Structure):
+    _fields_ = [
+        ("band", ctypes.c_int32),
+        ("objective_score", ctypes.c_double),
+        ("retention", ctypes.c_double),
+        ("commander_fate", ctypes.c_int32),
+        ("text", ctypes.c_char * 2048),
+    ]
+
+
+om_debrief = OMDebrief
+
+
+class OMFairnessScore(ctypes.Structure):
+    _fields_ = [
+        ("route_count_balance", ctypes.c_double),
+        ("travel_time_balance", ctypes.c_double),
+        ("vantage_accessibility_balance", ctypes.c_double),
+        ("hazard_symmetry", ctypes.c_double),
+        ("composite_score", ctypes.c_double),
+    ]
+
+
+class OmFragmentPoolCounts(ctypes.Structure):
+    _fields_ = [
+        ("openings", ctypes.c_uint32),
+        ("details", ctypes.c_uint32),
+        ("closings", ctypes.c_uint32),
+    ]
+
+
+om_fragment_pool_counts = OmFragmentPoolCounts
+
+
+class OMGradientProperties(ctypes.Structure):
+    _fields_ = [
+        ("obstacle_density", ctypes.c_double),
+        ("cover_density", ctypes.c_double),
+        ("sensor_interference", ctypes.c_double),
+        ("elevation", ctypes.c_double),
+        ("layer_accessibility_0", ctypes.c_uint32),
+        ("layer_accessibility_1", ctypes.c_uint32),
+    ]
+
+
+class OMMissionCandidate(ctypes.Structure):
+    _fields_ = [
+        ("region_idx", ctypes.c_uint32),
+        ("archetype", ctypes.c_uint32),
+        ("urgency", ctypes.c_double),
+        ("relevance", ctypes.c_double),
+        ("preference", ctypes.c_double),
+        ("score", ctypes.c_double),
+    ]
+
+
+om_mission_candidate = OMMissionCandidate
+
+
+class OMObjectiveSpec(ctypes.Structure):
+    _fields_ = [
+        ("id", ctypes.c_uint32),
+        ("kind", ctypes.c_uint32),
+        ("is_primary", ctypes.c_uint32),
+        ("weight", ctypes.c_double),
+        ("completion", ctypes.c_double),
+        ("is_complete", ctypes.c_uint32),
+        ("is_failed", ctypes.c_uint32),
+    ]
+
+
+om_objective_spec = OMObjectiveSpec
+
+
+class OmOnboardingConfig(ctypes.Structure):
+    _fields_ = [
+        ("difficulty", ctypes.c_uint32),
+        ("weights", ctypes.c_double * 10),
+        ("rare_marks", ctypes.c_uint32 * 10),
+    ]
+
+
+class OMReinforcementWave(ctypes.Structure):
+    _fields_ = [
+        ("is_scheduled", ctypes.c_uint32),
+        ("direction", ctypes.c_uint32),
+        ("arrival_tick", ctypes.c_uint64),
+        ("is_spawned", ctypes.c_uint32),
+    ]
+
+
+class OMReplayCommand(ctypes.Structure):
+    _fields_ = [
+        ("tick", ctypes.c_uint64),
+        ("force_id", ctypes.c_uint32),
+        ("command_type", ctypes.c_uint32),
+        ("target_x", ctypes.c_double),
+        ("target_y", ctypes.c_double),
+        ("target_id", ctypes.c_uint32),
+    ]
+
+
+class OmReversionRecord(ctypes.Structure):
+    _fields_ = [
+        ("tick", ctypes.c_uint64),
+        ("region_idx", ctypes.c_uint32),
+        ("original_faction", ctypes.c_int32),
+        ("restored_faction", ctypes.c_int32),
+        ("military_stolen", ctypes.c_double),
+        ("economy_stolen", ctypes.c_double),
+    ]
+
+
+om_reversion_record = OmReversionRecord
+
+
+class OmRevoltRecord(ctypes.Structure):
+    _fields_ = [
+        ("tick", ctypes.c_uint64),
+        ("region_idx", ctypes.c_uint32),
+        ("original_faction", ctypes.c_int32),
+        ("success_rate", ctypes.c_double),
+        ("draw", ctypes.c_double),
+        ("faction_created", ctypes.c_uint32),
+        ("new_faction_id", ctypes.c_int32),
+        ("military_stolen", ctypes.c_double),
+        ("economy_stolen", ctypes.c_double),
+        ("reverted_faction", ctypes.c_int32),
+    ]
+
+
+om_revolt_record = OmRevoltRecord
+
+
+class OmSelectionRecord(ctypes.Structure):
+    _fields_ = [
+        ("rotated", ctypes.c_uint32),
+        ("reason", ctypes.c_uint32),
+        ("pool", ctypes.c_uint32),
+        ("new_lineage_id", ctypes.c_uint32),
+        ("commander_id", ctypes.c_uint32),
+        ("chapters_in_lineage", ctypes.c_uint32),
+        ("home_region_idx", ctypes.c_uint32),
+        ("_pad", ctypes.c_uint32),
+    ]
+
+
+class OMStructureHUD(ctypes.Structure):
+    _fields_ = [
+        ("timer_progress", ctypes.c_double),
+        ("next_unit_type", ctypes.c_uint32),
+        ("hp", ctypes.c_double),
+        ("max_hp", ctypes.c_double),
+    ]
+
+
+om_structure_hud = OMStructureHUD
+
+
+class OmTimeJumpReport(ctypes.Structure):
+    _fields_ = [
+        ("start_tick", ctypes.c_uint64),
+        ("end_tick", ctypes.c_uint64),
+        ("jump_ticks", ctypes.c_uint32),
+        ("n_territory_changes", ctypes.c_uint32),
+        ("n_faction_births", ctypes.c_uint32),
+        ("n_faction_deaths", ctypes.c_uint32),
+        ("n_conquests", ctypes.c_uint32),
+        ("n_colonizations", ctypes.c_uint32),
+        ("n_revolts", ctypes.c_uint32),
+        ("n_chronicle_entries", ctypes.c_uint32),
+        ("n_snapshots", ctypes.c_uint32),
+    ]
+
+
+class OMUnitProfile(ctypes.Structure):
+    _fields_ = [
+        ("unit_type", ctypes.c_uint32),
+        ("hp", ctypes.c_double),
+        ("base_damage", ctypes.c_double),
+        ("attack_interval", ctypes.c_double),
+        ("power", ctypes.c_double),
+    ]
+
+
+om_unit_profile = OMUnitProfile
+
+
+class OMVec2(ctypes.Structure):
+    _fields_ = [
+        ("x", ctypes.c_double),
+        ("y", ctypes.c_double),
+    ]
+
+
+om_vec2 = OMVec2
+
+
+STRUCT_C_NAMES = {
+    "OmAbsorptionRecord": "om_absorption_record",
+    "om_absorption_record": "om_absorption_record",
+    "OMArchetypeMetadata": "om_archetype_metadata",
+    "om_archetype_metadata": "om_archetype_metadata",
+    "OMBriefing": "om_briefing",
+    "om_briefing": "om_briefing",
+    "OmCharacterRecord": "om_character_record",
+    "OmChronicleCluster": "om_chronicle_cluster",
+    "om_chronicle_cluster": "om_chronicle_cluster",
+    "OmChronicleEntry": "om_chronicle_entry",
+    "om_chronicle_entry": "om_chronicle_entry",
+    "OMCompositionRatio": "om_composition_ratio",
+    "om_composition_ratio": "om_composition_ratio",
+    "OMDebrief": "om_debrief",
+    "om_debrief": "om_debrief",
+    "OMFairnessScore": "om_fairness_score",
+    "OmFragmentPoolCounts": "om_fragment_pool_counts",
+    "om_fragment_pool_counts": "om_fragment_pool_counts",
+    "OMGradientProperties": "om_gradient_properties",
+    "OMMissionCandidate": "om_mission_candidate",
+    "om_mission_candidate": "om_mission_candidate",
+    "OMObjectiveSpec": "om_objective_spec",
+    "om_objective_spec": "om_objective_spec",
+    "OmOnboardingConfig": "om_onboarding_config",
+    "OMReinforcementWave": "om_reinforcement_wave",
+    "OMReplayCommand": "om_replay_command",
+    "OmReversionRecord": "om_reversion_record",
+    "om_reversion_record": "om_reversion_record",
+    "OmRevoltRecord": "om_revolt_record",
+    "om_revolt_record": "om_revolt_record",
+    "OmSelectionRecord": "om_selection_record",
+    "OMStructureHUD": "om_structure_hud",
+    "om_structure_hud": "om_structure_hud",
+    "OmTimeJumpReport": "om_time_jump_report",
+    "OMUnitProfile": "om_unit_profile",
+    "om_unit_profile": "om_unit_profile",
+    "OMVec2": "om_vec2",
+    "om_vec2": "om_vec2",
+}
+
+
+def _bind_e06(lib):
+    if getattr(lib, "_e06_bound", False):
+        return
+    P = ctypes.POINTER
+    V = ctypes.c_void_p
+    W = OMWorldP
+    _bind(lib, "om_archetype_betrayal_weight", [ctypes.c_int], ctypes.c_double, ("archetype",))
+    _bind(lib, "om_archetype_peace_disposition", [ctypes.c_int], ctypes.c_double, ("archetype",))
+    _bind(lib, "om_breakaway_create", [W, ctypes.c_int32, ctypes.c_uint32], ctypes.c_int32, ("w", "parent", "region_idx"))
+    _bind(lib, "om_chronicle_distill_candidates", [W, P(ctypes.c_uint32), ctypes.c_uint32], ctypes.c_uint32, ("w", "out", "max"))
+    _bind(lib, "om_debug_inject", [W, ctypes.c_int], None, ("w", "bug"))
+    _bind(lib, "om_diplomacy_init", [W], None, ("w",))
+    _bind(lib, "om_diplomacy_step", [W], None, ("w",))
+    _bind(lib, "om_faction_betrayal_chance", [W, ctypes.c_int32, ctypes.c_int32], ctypes.c_double, ("w", "betrayer", "partner"))
+    _bind(lib, "om_faction_betrayal_opportunity", [W, ctypes.c_int32, ctypes.c_int32], ctypes.c_double, ("w", "betrayer", "partner"))
+    _bind(lib, "om_faction_cooperative_since", [W, ctypes.c_int32, ctypes.c_int32], ctypes.c_uint64, ("w", "p0", "p1"))
+    _bind(lib, "om_faction_count", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_faction_create_breakaway", [W, ctypes.c_int32, ctypes.c_uint32], None, ("w", "parent", "p1"))
+    _bind(lib, "om_faction_last_knowledge_lost", [W, ctypes.c_int32], ctypes.c_int64, ("w", "faction_id"))
+    _bind(lib, "om_faction_next_mission_unit_tier", [W, ctypes.c_int32], ctypes.c_uint32, ("w", "faction_id"))
+    _bind(lib, "om_faction_set_last_knowledge_lost", [W, ctypes.c_int32, ctypes.c_int64], None, ("w", "faction_id", "tick"))
+    _bind(lib, "om_faction_set_stance_counter", [W, ctypes.c_int32, ctypes.c_int32, ctypes.c_uint32], None, ("w", "p0", "p1", "counter"))
+    _bind(lib, "om_faction_stance", [W, ctypes.c_int32, ctypes.c_int32], ctypes.c_int, ("w", "from", "toward"))
+    _bind(lib, "om_faction_stance_counter", [W, ctypes.c_int32, ctypes.c_int32], ctypes.c_uint32, ("w", "p0", "faction"))
+    _bind(lib, "om_faction_tech", [W, ctypes.c_int32], ctypes.c_double, ("w", "faction_id"))
+    _bind(lib, "om_faction_tech_attack", [W, ctypes.c_int32], ctypes.c_double, ("w", "faction_id"))
+    _bind(lib, "om_faction_tech_defense", [W, ctypes.c_int32], ctypes.c_double, ("w", "faction_id"))
+    _bind(lib, "om_faction_tech_economy", [W, ctypes.c_int32], ctypes.c_double, ("w", "faction_id"))
+    _bind(lib, "om_faction_tech_multipliers", [W, ctypes.c_int32, P(ctypes.c_double), P(ctypes.c_double), P(ctypes.c_double)], None, ("w", "faction_id", "attack", "defense", "economy"))
+    _bind(lib, "om_faction_tech_tier", [W, ctypes.c_int32], ctypes.c_uint32, ("w", "faction_id"))
+    _bind(lib, "om_faction_tier_transition_candidate", [W, ctypes.c_int32], ctypes.c_int, ("w", "faction_id"))
+    _bind(lib, "om_faction_unit_tier", [W, ctypes.c_int32], ctypes.c_uint32, ("w", "faction_id"))
+    _bind(lib, "om_gen_set_faction_count", [W, ctypes.c_uint32], None, ("w", "n"))
+    _bind(lib, "om_gen_set_region_range", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "lo", "hi"))
+    _bind(lib, "om_mission_start", [W, ctypes.c_int32], ctypes.c_uint32, ("w", "faction_id"))
+    _bind(lib, "om_mission_unit_tier", [W, ctypes.c_uint32], ctypes.c_uint32, ("w", "mission_id"))
+    _bind(lib, "om_region_count", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_region_edge", [W, ctypes.c_uint32, ctypes.c_uint32, P(ctypes.c_int)], ctypes.c_int, ("w", "a", "b", "out"))
+    _bind(lib, "om_region_field", [W, ctypes.c_uint32, ctypes.c_int], ctypes.c_double, ("w", "idx", "f"))
+    _bind(lib, "om_region_owner", [W, ctypes.c_uint32], ctypes.c_int32, ("w", "idx"))
+    _bind(lib, "om_tech_step", [W], None, ("w",))
+    _bind(lib, "om_tech_tier", [ctypes.c_double], ctypes.c_uint32, ("tech",))
+    _bind(lib, "om_tick_events", [W, V, ctypes.c_uint32], ctypes.c_uint32, ("w", "out", "max"))
+    _bind(lib, "om_tick_friction", [W, V, ctypes.c_uint32], ctypes.c_uint32, ("w", "out", "max"))
+    _bind(lib, "om_tier_transition_candidate_exists", [W, ctypes.c_int32], ctypes.c_int, ("w", "faction_id"))
+    _bind(lib, "om_world_generated", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_world_set_feature", [W, ctypes.c_int, ctypes.c_int], None, ("w", "f", "on"))
+    _bind(lib, "om_world_set_tick", [W, ctypes.c_uint64], None, ("w", "tick"))
+    _bind(lib, "om_world_step", [W], ctypes.c_uint64, ("w",))
+    lib._e06_bound = True
+
+
+def _bind_e07(lib):
+    if getattr(lib, "_e07_bound", False):
+        return
+    P = ctypes.POINTER
+    V = ctypes.c_void_p
+    W = OMWorldP
+    _bind(lib, "om_faction_archetype", [W, ctypes.c_int32], ctypes.c_int, ("w", "faction_id"))
+    _bind(lib, "om_faction_budget", [W, ctypes.c_int32], ctypes.c_double, ("w", "faction_id"))
+    _bind(lib, "om_faction_confidence", [W, ctypes.c_int32], ctypes.c_double, ("w", "faction_id"))
+    _bind(lib, "om_faction_is_active", [W, ctypes.c_int32], ctypes.c_int, ("w", "faction_id"))
+    _bind(lib, "om_faction_mark_conquered_this_tick", [W, ctypes.c_int32], None, ("w", "faction_id"))
+    _bind(lib, "om_faction_remove", [W, ctypes.c_int32], None, ("w", "faction_id"))
+    _bind(lib, "om_faction_set_created_tick", [W, ctypes.c_int32, ctypes.c_uint64], None, ("w", "faction_id", "tick"))
+    _bind(lib, "om_faction_set_event_window_counts", [W, ctypes.c_int32, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "faction_id", "total_events", "revolts", "attacks", "colonizations"), kw=True)
+    _bind(lib, "om_faction_territory", [W, ctypes.c_int32], ctypes.c_uint32, ("w", "faction_id"))
+    _bind(lib, "om_player_faction_collapsed", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_region_held_since", [W, ctypes.c_uint32], ctypes.c_int64, ("w", "idx"))
+    _bind(lib, "om_region_previous_owner", [W, ctypes.c_uint32], ctypes.c_int32, ("w", "idx"))
+    _bind(lib, "om_region_set_previous_owner", [W, ctypes.c_uint32, ctypes.c_int32], None, ("w", "idx", "faction_id"))
+    _bind(lib, "om_tick_absorptions", [W, V, ctypes.c_uint32], ctypes.c_uint32, ("w", "out", "max"))
+    _bind(lib, "om_tick_reversions", [W, V, ctypes.c_uint32], ctypes.c_uint32, ("w", "out", "max"))
+    _bind(lib, "om_tick_revolts", [W, V, ctypes.c_uint32], ctypes.c_uint32, ("w", "out", "max"))
+    _bind(lib, "om_world_is_terminal", [W], ctypes.c_int, ("w",))
+    lib._e07_bound = True
+
+
+def _bind_e08(lib):
+    if getattr(lib, "_e08_bound", False):
+        return
+    P = ctypes.POINTER
+    V = ctypes.c_void_p
+    W = OMWorldP
+    _bind(lib, "om_campaign_check_surviving_factions", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_campaign_needs_onboarding", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_campaign_opening_jump_length", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_campaign_start", [W, ctypes.c_uint32], None, ("w", "chapter"), kw=True)
+    _bind(lib, "om_campaign_trigger_terminal_restart", [W], None, ("w",))
+    _bind(lib, "om_chapter_advance_phase", [W], None, ("w",))
+    _bind(lib, "om_chapter_current_phase", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_chapter_end_reason_for_collapse", [W, ctypes.c_int32], ctypes.c_int, ("w", "player_faction"), kw=True)
+    _bind(lib, "om_chapter_mission_realtime", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_chapter_recon_has_clock", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_chapter_set_phase", [W, ctypes.c_int], None, ("w", "p0"))
+    _bind(lib, "om_chapter_start", [W, ctypes.c_uint32], None, ("w", "chapter"), kw=True)
+    _bind(lib, "om_chapter_transition_complete", [W], None, ("w",))
+    _bind(lib, "om_chapter_transition_start", [W], None, ("w",))
+    _bind(lib, "om_character_create", [W, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint64, ctypes.c_uint32], None, ("w", "character_id", "lineage_id", "region_idx", "rank", "birth_tick", "lifespan"), kw=True)
+    _bind(lib, "om_character_create_child", [W, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint64, ctypes.c_uint32], None, ("w", "child_id", "parent_id", "region_idx", "birth_tick", "lifespan"), kw=True)
+    _bind(lib, "om_character_create_random", [W, ctypes.c_int32, ctypes.c_uint32], ctypes.c_uint32, ("w", "faction_id", "region_idx"), kw=True)
+    _bind(lib, "om_character_create_with_rank", [W, ctypes.c_int32, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint64, ctypes.c_uint32], ctypes.c_uint32, ("w", "faction_id", "region_idx", "rank", "birth_tick", "lifespan"), kw=True)
+    _bind(lib, "om_character_faction", [W, ctypes.c_uint32], ctypes.c_int32, ("w", "character"))
+    _bind(lib, "om_character_get_record", [W, ctypes.c_uint32, V], ctypes.c_int, ("w", "character", "out"))
+    _bind(lib, "om_character_has_event_history", [W, ctypes.c_uint32], ctypes.c_int, ("w", "character"))
+    _bind(lib, "om_character_has_rival_tag", [W, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_int, ("w", "character_id", "target_commander_id"), kw=True)
+    _bind(lib, "om_character_is_main_character", [W, ctypes.c_uint32], ctypes.c_int, ("w", "character_id"), kw=True)
+    _bind(lib, "om_character_kill", [W, ctypes.c_uint32, ctypes.c_uint64], None, ("w", "character_id", "tick"), kw=True)
+    _bind(lib, "om_character_lineage_id", [W, ctypes.c_uint32], ctypes.c_uint32, ("w", "character"))
+    _bind(lib, "om_character_name_reuse_cooldown", [W, ctypes.c_uint32], ctypes.c_uint32, ("w", "character_id"), kw=True)
+    _bind(lib, "om_character_selector_confirm_commander", [W, ctypes.c_uint32], None, ("w", "character_id"), kw=True)
+    _bind(lib, "om_character_selector_force_rotate", [W, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_int, ctypes.c_int, V], None, ("w", "lineage_id", "mission_region", "reason", "pool", "out_record"), kw=True)
+    _bind(lib, "om_character_selector_input_region", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_character_selector_resolve_commander_death", [W, ctypes.c_uint32, ctypes.c_uint32, V], None, ("w", "lineage_id", "mission_region", "out_record"), kw=True)
+    _bind(lib, "om_character_selector_run", [W], None, ("w",))
+    _bind(lib, "om_character_selector_run_for_lineage", [W, ctypes.c_uint32, ctypes.c_uint32, V], None, ("w", "lineage_id", "mission_region", "out_record"), kw=True)
+    _bind(lib, "om_character_set_faction", [W, ctypes.c_uint32, ctypes.c_int32], None, ("w", "character_id", "faction_id"), kw=True)
+    _bind(lib, "om_character_set_generation", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "character_id", "generation"), kw=True)
+    _bind(lib, "om_character_tag_rival", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "character_id", "rival_of_character_id"), kw=True)
+    _bind(lib, "om_chronicle_consequence_entry_count", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_chronicle_entry_count", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_chronicle_has_faction_fall_entry", [W, ctypes.c_int32], ctypes.c_int, ("w", "old_faction"), kw=True)
+    _bind(lib, "om_chronicle_lineage_entry_count", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_event_attached_character_count", [W, ctypes.c_uint32], ctypes.c_uint32, ("w", "event"))
+    _bind(lib, "om_event_fire_manual", [W, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_uint32, ("w", "region_idx", "tier"), kw=True)
+    _bind(lib, "om_event_get_attached_character", [W, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_uint32, ("w", "event", "p1"))
+    _bind(lib, "om_faction_create_named", [W, ctypes.c_int32, ctypes.c_uint32], None, ("w", "faction_id", "first_region"), kw=True)
+    _bind(lib, "om_faction_supreme_commander", [W, ctypes.c_int32], ctypes.c_uint32, ("w", "faction_id"), kw=True)
+    _bind(lib, "om_force_allocated_unit_count", [W, ctypes.c_uint32], ctypes.c_uint32, ("w", "mission_id"), kw=True)
+    _bind(lib, "om_force_allocator_run", [W, ctypes.c_uint32, ctypes.c_double], None, ("w", "mission_id", "budget"), kw=True)
+    _bind(lib, "om_force_set_surviving_units", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "mission_id", "n_survivors"), kw=True)
+    _bind(lib, "om_ledger_commander_death_outcome_band", [W, ctypes.c_uint32], ctypes.c_int, ("w", "commander_id"), kw=True)
+    _bind(lib, "om_ledger_commander_death_region", [W, ctypes.c_uint32], ctypes.c_uint32, ("w", "commander_id"), kw=True)
+    _bind(lib, "om_lineage_create", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "lineage_id", "home_region"), kw=True)
+    _bind(lib, "om_lineage_generate_descendants", [W, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_uint32, ("w", "lineage_id", "jump_ticks"), kw=True)
+    _bind(lib, "om_lineage_home_region", [W, ctypes.c_uint32], ctypes.c_uint32, ("w", "lineage_id"), kw=True)
+    _bind(lib, "om_lineage_record_history_region", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "lineage_id", "region_idx"), kw=True)
+    _bind(lib, "om_lineage_set_chapter_count", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "lineage_id", "chapters"), kw=True)
+    _bind(lib, "om_lineage_spawn_descendant_at_tick", [W, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint64], ctypes.c_uint32, ("w", "lineage_id", "parent_id", "tick"), kw=True)
+    _bind(lib, "om_lineage_spawn_single_descendant", [W, ctypes.c_uint32], ctypes.c_uint32, ("w", "lineage_id"), kw=True)
+    _bind(lib, "om_load_state_read", [W, P(ctypes.c_uint8), ctypes.c_uint32], None, ("w", "buffer", "length"))
+    _bind(lib, "om_mission_generator_chosen_region", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_mission_generator_run", [W], None, ("w",))
+    _bind(lib, "om_mission_tag_rivals", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "mission_region", "commander_id"), kw=True)
+    _bind(lib, "om_onboarding_load_from_slot", [W, ctypes.c_uint32, V], None, ("w", "slot_id", "out_cfg"), kw=True)
+    _bind(lib, "om_onboarding_save_to_slot", [W, ctypes.c_uint32, V], None, ("w", "slot_id", "cfg"), kw=True)
+    _bind(lib, "om_onboarding_update_choices", [W, ctypes.c_uint32, V], ctypes.c_int, ("w", "slot_id", "new_cfg"), kw=True)
+    _bind(lib, "om_onboarding_validate", [V], ctypes.c_int, ("cfg",))
+    _bind(lib, "om_outcome_apply_consequences", [W, ctypes.c_uint32, ctypes.c_double, ctypes.c_double], None, ("w", "target_region", "delta_military", "delta_economy"), kw=True)
+    _bind(lib, "om_outcome_record_commander_death", [W, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_int], None, ("w", "commander_id", "mission_region", "outcome_band"), kw=True)
+    _bind(lib, "om_player_faction_check_collapse", [W, ctypes.c_int32], ctypes.c_int, ("w", "player_faction"), kw=True)
+    _bind(lib, "om_player_faction_reassign_on_collapse", [W, ctypes.c_int32], ctypes.c_int32, ("w", "player_faction"), kw=True)
+    _bind(lib, "om_player_faction_record_reassignment", [W, ctypes.c_int32, ctypes.c_int32], None, ("w", "old_faction", "new_faction"), kw=True)
+    _bind(lib, "om_process_natural_deaths", [W, ctypes.c_uint64], None, ("w", "tick"), kw=True)
+    _bind(lib, "om_progression_carried_commander_stats_count", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_progression_has_player_level", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_progression_supports_era_unlocks", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_region_assign_regional_commander", [W, ctypes.c_uint32, ctypes.c_int32], None, ("w", "region_idx", "faction_id"), kw=True)
+    _bind(lib, "om_region_regional_commander", [W, ctypes.c_uint32], ctypes.c_uint32, ("w", "region_idx"), kw=True)
+    _bind(lib, "om_rng_force_descendant_spread", [W, ctypes.c_double], None, ("w", "spread_draw"), kw=True)
+    _bind(lib, "om_rng_force_selector_draw", [W, ctypes.c_double], None, ("w", "forced"))
+    _bind(lib, "om_save_state_size", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_save_state_write", [W, P(ctypes.c_uint8), ctypes.c_uint32], None, ("w", "out", "capacity"))
+    _bind(lib, "om_selector_base_rotation_prob", [W, ctypes.c_double], ctypes.c_double, ("w", "delta"), kw=True)
+    _bind(lib, "om_selector_clear_pools", [W], None, ("w",))
+    _bind(lib, "om_selector_decayed_rotation_prob", [W, ctypes.c_double, ctypes.c_uint32], ctypes.c_double, ("w", "base_p", "chapters"), kw=True)
+    _bind(lib, "om_selector_draw_unrelated", [W, ctypes.c_uint32], ctypes.c_uint32, ("w", "mission_region"), kw=True)
+    _bind(lib, "om_selector_gather_nemesis_candidates", [W, ctypes.c_uint32], ctypes.c_uint32, ("w", "mission_region"), kw=True)
+    _bind(lib, "om_selector_get_nemesis_candidate", [W, ctypes.c_uint32], ctypes.c_uint32, ("w", "candidate"))
+    _bind(lib, "om_selector_resolve_fallback_pool", [W, ctypes.c_int], ctypes.c_int, ("w", "initial_pool"), kw=True)
+    _bind(lib, "om_selector_roll_pool", [W, ctypes.c_double], ctypes.c_int, ("w", "draw"), kw=True)
+    _bind(lib, "om_selector_score_previous_lineage", [W, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_double, ("w", "chapters_ago", "living_nearby"), kw=True)
+    _bind(lib, "om_tactical_step", [W], ctypes.c_uint64, ("w",))
+    _bind(lib, "om_time_jump_choose_length", [W, ctypes.c_uint32], ctypes.c_uint32, ("w", "requested"), kw=True)
+    _bind(lib, "om_time_jump_choose_opening_length", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_time_jump_death_pass_count", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_time_jump_death_processing_tick", [W], ctypes.c_uint64, ("w",))
+    _bind(lib, "om_time_jump_interrupt", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_time_jump_lineage_generation_tick", [W], ctypes.c_uint64, ("w",))
+    _bind(lib, "om_time_jump_report_faction_field_deltas_count", [W, V], ctypes.c_uint32, ("w", "report"))
+    _bind(lib, "om_time_jump_run", [W, ctypes.c_uint32, V], ctypes.c_int, ("w", "n_ticks", "report"))
+    _wrap_optional_trailing_null(lib, "om_time_jump_run")
+    _bind(lib, "om_time_jump_run_tracked", [W, ctypes.c_uint32], None, ("w", "jump"))
+    _bind(lib, "om_time_jump_start_tick", [W], ctypes.c_uint64, ("w",))
+    _bind(lib, "om_world_checksum", [W], ctypes.c_uint64, ("w",))
+    _bind(lib, "om_world_set_strategic_tick", [W, ctypes.c_uint64], None, ("w", "tick"))
+    _bind(lib, "om_world_strategic_tick", [W], ctypes.c_uint64, ("w",))
+    lib._e08_bound = True
+
+
+def _bind_e09(lib):
+    if getattr(lib, "_e09_bound", False):
+        return
+    P = ctypes.POINTER
+    V = ctypes.c_void_p
+    W = OMWorldP
+    _bind(lib, "om_chronicle_add_chain_event", [W, ctypes.c_int32, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "chain_tag", "region_idx", "category"), kw=True)
+    _bind(lib, "om_chronicle_add_cluster_direct", [W, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_double], None, ("w", "cluster_type", "category", "score"), kw=True)
+    _bind(lib, "om_chronicle_add_consequence_event", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "region_idx", "outcome"), kw=True)
+    _bind(lib, "om_chronicle_add_event", [W, ctypes.c_uint32, ctypes.c_double], None, ("w", "region_idx", "score"), kw=True)
+    _bind(lib, "om_chronicle_add_lineage_event", [W, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_double], None, ("w", "lineage_id", "region_idx", "score"), kw=True)
+    _bind(lib, "om_chronicle_add_mock_entry", [W, ctypes.c_uint32, ctypes.c_uint64, ctypes.c_uint64], None, ("w", "entry_id", "start_tick", "end_tick"), kw=True)
+    _bind(lib, "om_chronicle_add_ownership_change_event", [W, ctypes.c_uint32, ctypes.c_uint64], None, ("w", "region_idx", "tick"), kw=True)
+    _bind(lib, "om_chronicle_add_raw_entry", [W, ctypes.c_uint32, ctypes.c_char_p], None, ("w", "entry_id", "text"), kw=True)
+    _bind(lib, "om_chronicle_apply_slot_echo_anaphora", [W, ctypes.c_char_p, ctypes.c_char_p], ctypes.c_char_p, ("w", "fragment1_slot", "fragment2_slot"), kw=True)
+    _bind(lib, "om_chronicle_apply_word_echo_synonym", [W, ctypes.c_char_p], ctypes.c_char_p, ("w", "text"), kw=True)
+    _bind(lib, "om_chronicle_assemble_cluster_entry", [W, ctypes.c_uint32, ctypes.c_uint32, V], ctypes.c_int, ("w", "category", "region_idx", "out_entry"), kw=True)
+    _bind(lib, "om_chronicle_assemble_with_seed", [W, ctypes.c_uint64], None, ("w", "seed"), kw=True)
+    _bind(lib, "om_chronicle_build_chain_clusters", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_chronicle_build_opening_scroll", [W], None, ("w",))
+    _bind(lib, "om_chronicle_calculate_score", [W, ctypes.c_uint32, ctypes.c_double, ctypes.c_int, ctypes.c_int, ctypes.c_uint32, ctypes.c_int], ctypes.c_double, ("w", "tier", "delta_sum", "in_mission_region", "has_character", "chain_length", "has_lineage_member"), kw=True)
+    _bind(lib, "om_chronicle_categorize_chain_cluster", [W, ctypes.c_char_p, ctypes.c_uint32, ctypes.c_double, ctypes.c_double, ctypes.c_double], ctypes.c_uint32, ("w", "template_name", "n_events", "net_mil", "net_eco", "net_ten"), kw=True)
+    _bind(lib, "om_chronicle_categorize_lineage_cluster", [W, ctypes.c_char_p, ctypes.c_double, ctypes.c_double, ctypes.c_double], ctypes.c_uint32, ("w", "template_name", "net_eco", "net_mil", "net_ten"), kw=True)
+    _bind(lib, "om_chronicle_categorize_regional_cluster", [W, ctypes.c_int, ctypes.c_double], ctypes.c_uint32, ("w", "has_conquest_or_revolt", "net_eco_pop"), kw=True)
+    _bind(lib, "om_chronicle_category_name", [ctypes.c_uint32], ctypes.c_char_p, ("category",))
+    _bind(lib, "om_chronicle_chain_category_count", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_chronicle_context_multiplier", [W, ctypes.c_int, ctypes.c_int, ctypes.c_uint32, ctypes.c_int], ctypes.c_double, ("w", "in_mission_region", "has_character", "chain_length", "has_lineage_member"), kw=True)
+    _bind(lib, "om_chronicle_count_by_type", [W, ctypes.c_uint32], ctypes.c_uint32, ("w", "cluster"))
+    _bind(lib, "om_chronicle_dedup_content_words", [W, ctypes.c_double], None, ("w", "threshold"), kw=True)
+    _bind(lib, "om_chronicle_dismiss_expanded", [W], None, ("w",))
+    _bind(lib, "om_chronicle_distill_and_assemble", [W], None, ("w",))
+    _bind(lib, "om_chronicle_entry_is_retained", [W, ctypes.c_uint32], ctypes.c_int, ("w", "entry_id"), kw=True)
+    _bind(lib, "om_chronicle_fragment_batch_exceeds_rejection_limit", [W, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_int, ("w", "rejected_count", "total_count"), kw=True)
+    _bind(lib, "om_chronicle_fragment_category_count", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_chronicle_fragment_check_near_duplicate", [W, ctypes.c_char_p, ctypes.c_char_p], ctypes.c_int, ("w", "p0", "p1"))
+    _bind(lib, "om_chronicle_fragment_inject_invalid_slot", [W, ctypes.c_uint32, ctypes.c_char_p], None, ("w", "category", "invalid_slot"), kw=True)
+    _bind(lib, "om_chronicle_fragment_library_load_launch", [W], None, ("w",))
+    _bind(lib, "om_chronicle_fragment_library_validate", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_chronicle_fragment_pool_counts", [W, ctypes.c_uint32, V], ctypes.c_int, ("w", "category", "out"))
+    _bind(lib, "om_chronicle_generate_map_keyframes", [W], None, ("w",))
+    _bind(lib, "om_chronicle_get_cluster", [W, ctypes.c_uint32, V], ctypes.c_int, ("w", "entry", "out"))
+    _bind(lib, "om_chronicle_get_full_scroll_text", [W], ctypes.c_char_p, ("w",))
+    _bind(lib, "om_chronicle_handle_click", [W, ctypes.c_uint32], ctypes.c_int, ("w", "entry_id"), kw=True)
+    _bind(lib, "om_chronicle_has_keyframe_at_tick", [W, ctypes.c_uint64], ctypes.c_int, ("w", "p0"))
+    _bind(lib, "om_chronicle_has_keyframe_in_range", [W, ctypes.c_uint64, ctypes.c_uint64], ctypes.c_int, ("w", "p0", "p1"))
+    _bind(lib, "om_chronicle_is_lineage_event", [W, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_int, ("w", "lineage_id", "region_idx", "attached_character_id", "mission_region"), kw=True)
+    _bind(lib, "om_chronicle_is_paused", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_chronicle_lineage_category_count", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_chronicle_map_is_master_clock", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_chronicle_mock_populate_events", [W, ctypes.c_uint32], None, ("w", "n_events"), kw=True)
+    _bind(lib, "om_chronicle_presentation_entry_hold_sec", [W], ctypes.c_double, ("w",))
+    _bind(lib, "om_chronicle_presentation_map_width_ratio", [W], ctypes.c_double, ("w",))
+    _bind(lib, "om_chronicle_presentation_slide_in_sec", [W], ctypes.c_double, ("w",))
+    _bind(lib, "om_chronicle_presentation_slide_out_sec", [W], ctypes.c_double, ("w",))
+    _bind(lib, "om_chronicle_presentation_word_cadence_sec", [W], ctypes.c_double, ("w",))
+    _bind(lib, "om_chronicle_presentation_word_fade_sec", [W], ctypes.c_double, ("w",))
+    _bind(lib, "om_chronicle_regional_category_count", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_chronicle_render_character_rank", [W, ctypes.c_uint32], ctypes.c_char_p, ("w", "character_id"), kw=True)
+    _bind(lib, "om_chronicle_render_region_mention", [W, ctypes.c_uint32, ctypes.c_int], ctypes.c_char_p, ("w", "region_idx", "is_first_mention"), kw=True)
+    _bind(lib, "om_chronicle_rendered_entry_count", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_chronicle_score_base", [W, ctypes.c_uint32, ctypes.c_double], ctypes.c_double, ("w", "tier", "delta_sum"), kw=True)
+    _bind(lib, "om_chronicle_score_event", [W, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_double], ctypes.c_double, ("w", "region_idx", "tier", "delta_sum"), kw=True)
+    _bind(lib, "om_chronicle_select_clusters", [W], None, ("w",))
+    _bind(lib, "om_chronicle_selected_category_count", [W, ctypes.c_uint32], ctypes.c_uint32, ("w", "category"), kw=True)
+    _bind(lib, "om_chronicle_set_entry_state", [W, ctypes.c_uint32, ctypes.c_int], None, ("w", "entry_id", "is_printing"), kw=True)
+    _bind(lib, "om_chronicle_validate_event_template_prose", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_event_template_chronicle_prose", [W, ctypes.c_uint32], ctypes.c_char_p, ("w", "template"))
+    _bind(lib, "om_event_template_count", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_events_load_launch", [W], None, ("w",))
+    lib._e09_bound = True
+
+
+def _bind_e10(lib):
+    if getattr(lib, "_e10_bound", False):
+        return
+    P = ctypes.POINTER
+    V = ctypes.c_void_p
+    W = OMWorldP
+    _bind(lib, "om_archetype_base_time_ticks", [ctypes.c_uint32], ctypes.c_uint64, ("archetype",))
+    _bind(lib, "om_chronicle_has_mission_consequence_flag", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_consequence_apply_clamped", [ctypes.c_double, ctypes.c_double], ctypes.c_double, ("current", "delta"))
+    _bind(lib, "om_consequence_eval_delta_current", [ctypes.c_double, ctypes.c_double], ctypes.c_double, ("current", "pct"))
+    _bind(lib, "om_consequence_eval_delta_deficit", [ctypes.c_double, ctypes.c_double], ctypes.c_double, ("current", "pct"))
+    _bind(lib, "om_mission_allocate_force_profile", [W, ctypes.c_uint32, ctypes.c_double, P(ctypes.c_double)], None, ("w", "archetype", "total_power", "out_ratios"))
+    _bind(lib, "om_mission_apply_capacity_shortfall", [W, ctypes.c_double], None, ("w", "capacity"))
+    _bind(lib, "om_mission_apply_consequences", [W, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_int32], None, ("w", "region_idx", "archetype", "band"))
+    _bind(lib, "om_mission_apply_target_adjacent_player", [W, ctypes.c_uint32, ctypes.c_int, ctypes.c_double], None, ("w", "region_idx", "field", "delta"))
+    _bind(lib, "om_mission_archetype_count", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_mission_assemble_briefing", [W, V], ctypes.c_int, ("w", "out"))
+    _bind(lib, "om_mission_build_candidate_pool", [W], None, ("w",))
+    _bind(lib, "om_mission_build_objectives", [W, ctypes.c_uint32], None, ("w", "archetype"))
+    _bind(lib, "om_mission_can_edit_loadout", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_mission_candidate_score", [ctypes.c_double, ctypes.c_double, ctypes.c_double], ctypes.c_double, ("urgency", "relevance", "preference"))
+    _bind(lib, "om_mission_candidates", [W, V, ctypes.c_uint32], ctypes.c_uint32, ("w", "out", "max"))
+    _bind(lib, "om_mission_check_terminated", [W, ctypes.c_uint32], ctypes.c_int, ("w", "p1"))
+    _bind(lib, "om_mission_classify_band", [ctypes.c_uint32, ctypes.c_double], ctypes.c_int32, ("archetype", "final"))
+    _bind(lib, "om_mission_compute_base_parity", [ctypes.c_double], ctypes.c_double, ("c",))
+    _bind(lib, "om_mission_compute_difficulty_parity", [ctypes.c_double, ctypes.c_int], ctypes.c_double, ("base", "difficulty"))
+    _bind(lib, "om_mission_compute_enemy_power", [W, ctypes.c_uint32, ctypes.c_double, ctypes.c_double, ctypes.c_double], ctypes.c_double, ("w", "archetype", "committed_budget", "military", "population"))
+    _bind(lib, "om_mission_compute_final_score", [ctypes.c_double, ctypes.c_double], ctypes.c_double, ("o", "r"))
+    _bind(lib, "om_mission_compute_parity", [ctypes.c_double, ctypes.c_int], ctypes.c_double, ("p0", "p1"))
+    _bind(lib, "om_mission_compute_preference", [W, ctypes.c_uint32], ctypes.c_double, ("w", "archetype"))
+    _bind(lib, "om_mission_compute_relevance", [W, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_double, ("w", "region_idx", "archetype"))
+    _bind(lib, "om_mission_compute_retention", [ctypes.c_double, ctypes.c_double], ctypes.c_double, ("deployed_power", "surviving_power"))
+    _bind(lib, "om_mission_compute_time_limit", [ctypes.c_uint64, ctypes.c_double], ctypes.c_uint64, ("B", "u"))
+    _bind(lib, "om_mission_compute_urgency", [W, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_double, ("w", "region_idx", "archetype"))
+    _bind(lib, "om_mission_end", [W], None, ("w",))
+    _bind(lib, "om_mission_eval_commander_fate", [ctypes.c_double, ctypes.c_double], ctypes.c_int32, ("hp", "max_hp"))
+    _bind(lib, "om_mission_eval_destroy_targets", [W, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_double, ("w", "objective_idx", "destroyed"))
+    _bind(lib, "om_mission_eval_eliminate", [W, ctypes.c_uint32, ctypes.c_double], ctypes.c_double, ("w", "objective_idx", "hp_destroyed"))
+    _bind(lib, "om_mission_eval_escort", [W, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_double, ("w", "objective_idx", "reached_alive"))
+    _bind(lib, "om_mission_eval_hold_zone", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "objective_idx", "enemies_inside"))
+    _bind(lib, "om_mission_eval_survive", [W, ctypes.c_uint32, ctypes.c_uint64, ctypes.c_int], ctypes.c_double, ("w", "objective_idx", "elapsed_ticks", "player_alive"))
+    _bind(lib, "om_mission_fallback_archetype", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_mission_fallback_region", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_mission_fill_player_force", [W, ctypes.c_double, ctypes.c_double], ctypes.c_double, ("w", "P", "parity"))
+    _bind(lib, "om_mission_get_archetype_metadata", [W, ctypes.c_uint32, V], ctypes.c_int, ("w", "archetype", "out"))
+    _bind(lib, "om_mission_get_archetype_preference_weight", [W, ctypes.c_uint32, ctypes.c_int], ctypes.c_double, ("w", "archetype", "is_rare"))
+    _bind(lib, "om_mission_get_band", [W], ctypes.c_int32, ("w",))
+    _bind(lib, "om_mission_get_briefing_controls", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_mission_get_briefing_text", [W, ctypes.c_char_p, ctypes.c_uint32], None, ("w", "out", "cap"))
+    _bind(lib, "om_mission_get_candidate_score", [W, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_double, ("w", "region_idx", "archetype"))
+    _bind(lib, "om_mission_get_compatible_layouts", [W, ctypes.c_uint32, P(ctypes.c_uint32), ctypes.c_uint32], ctypes.c_uint32, ("w", "archetype", "out", "max"))
+    _bind(lib, "om_mission_get_debrief", [W, V], ctypes.c_int, ("w", "out"))
+    _bind(lib, "om_mission_get_deployed_force_count", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_mission_get_enemy_power", [W], ctypes.c_double, ("w",))
+    _bind(lib, "om_mission_get_objective_completion", [W, ctypes.c_uint32], ctypes.c_double, ("w", "objective_idx"))
+    _bind(lib, "om_mission_get_objective_score", [W], ctypes.c_double, ("w",))
+    _bind(lib, "om_mission_get_objectives", [W, V, ctypes.c_uint32], ctypes.c_uint32, ("w", "out", "max"))
+    _bind(lib, "om_mission_get_player_parity", [W], ctypes.c_double, ("w",))
+    _bind(lib, "om_mission_get_player_units", [W, P(ctypes.c_uint32), ctypes.c_uint32], None, ("w", "out", "max"))
+    _bind(lib, "om_mission_get_shortfall_text", [W, ctypes.c_char_p, ctypes.c_uint32], None, ("w", "out", "cap"))
+    _bind(lib, "om_mission_get_time_limit", [W], ctypes.c_uint64, ("w",))
+    _bind(lib, "om_mission_inject_candidate", [W, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_double], None, ("w", "region_idx", "archetype", "score"))
+    _bind(lib, "om_mission_is_ended", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_mission_load_launch_library", [W], None, ("w",))
+    _bind(lib, "om_mission_objective_count", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_mission_resolve_refusal", [W, ctypes.c_uint32], None, ("w", "region_idx"))
+    _bind(lib, "om_mission_select", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_mission_select_candidate", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_mission_select_layout", [W, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_uint32, ("w", "archetype", "p2"))
+    _bind(lib, "om_mission_set_archetype_profile", [W, ctypes.c_uint32, P(ctypes.c_double), ctypes.c_uint32], None, ("w", "archetype", "profile", "n_types"))
+    _bind(lib, "om_mission_set_candidate_viable", [W, ctypes.c_uint32, ctypes.c_int], None, ("w", "archetype", "viable"))
+    _bind(lib, "om_mission_set_conflict_context", [W, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_double, ctypes.c_uint32], None, ("w", "region_idx", "recent_attacks", "attack_budget_sum", "adjacent_lost"))
+    _bind(lib, "om_mission_set_lineage_context", [W, ctypes.c_uint32, ctypes.c_double, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "region_idx", "lineage", "hops", "times_run"))
+    _bind(lib, "om_mission_set_objective_completion", [W, ctypes.c_uint32, ctypes.c_double], None, ("w", "objective_idx", "completion"))
+    _bind(lib, "om_mission_set_player_units", [W, P(ctypes.c_uint32), ctypes.c_uint32], None, ("w", "counts", "n_types"))
+    _bind(lib, "om_mission_set_preference", [W, ctypes.c_uint32, ctypes.c_double], None, ("w", "archetype", "weight"))
+    _bind(lib, "om_mission_set_revolt_events", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "region_idx", "recent_revolt_events"))
+    _bind(lib, "om_mission_setup", [W, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_int], None, ("w", "p1", "archetype", "lineage_connection"))
+    _bind(lib, "om_mission_setup_destroy_targets", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "objective_idx", "total"))
+    _bind(lib, "om_mission_setup_eliminate", [W, ctypes.c_uint32, ctypes.c_double], None, ("w", "objective_idx", "initial_hp"))
+    _bind(lib, "om_mission_setup_escort", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "objective_idx", "total"))
+    _bind(lib, "om_mission_setup_hold_zone", [W, ctypes.c_uint32, ctypes.c_uint64], None, ("w", "objective_idx", "required_ticks"))
+    _bind(lib, "om_mission_setup_survive", [W, ctypes.c_uint32, ctypes.c_uint64], None, ("w", "objective_idx", "required_ticks"))
+    _bind(lib, "om_mission_setup_tactical", [W, ctypes.c_uint32, ctypes.c_uint64], None, ("w", "p1", "time_limit"))
+    _bind(lib, "om_mission_setup_termination", [W, ctypes.c_uint32, ctypes.c_int, ctypes.c_int, ctypes.c_uint64, ctypes.c_uint64, ctypes.c_int], None, ("w", "p1", "primary_complete", "p3", "tick", "time_limit", "player_alive"))
+    _bind(lib, "om_region_get_held_since", [W, ctypes.c_uint32], ctypes.c_int64, ("w", "idx"))
+    _bind(lib, "om_region_get_owner", [W, ctypes.c_uint32], ctypes.c_int32, ("w", "idx"))
+    _bind(lib, "om_region_set_owner", [W, ctypes.c_uint32, ctypes.c_int32, ctypes.c_int64], None, ("w", "idx", "faction_id", "held_since_tick"))
+    _bind(lib, "om_set_neighbors", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "a", "b"))
+    _bind(lib, "om_tactical_tick", [W], ctypes.c_uint64, ("w",))
+    _bind(lib, "om_unit_get_profile", [ctypes.c_uint32, ctypes.c_int, V], ctypes.c_int, ("unit_type", "difficulty", "out"))
+    _bind(lib, "om_unit_power", [ctypes.c_uint32], ctypes.c_double, ("unit_type",))
+    lib._e10_bound = True
+
+
+def _bind_e11(lib):
+    if getattr(lib, "_e11_bound", False):
+        return
+    P = ctypes.POINTER
+    V = ctypes.c_void_p
+    W = OMWorldP
+    _bind(lib, "om_command_activate_ability", [W, P(ctypes.c_uint32), ctypes.c_uint32, ctypes.c_double, ctypes.c_double], ctypes.c_int, ("w", "unit_ids", "n_units", "target_x", "target_y"))
+    _wrap_ids_list_optional_target(lib, "om_command_activate_ability")
+    _bind(lib, "om_command_attack_move", [W, P(ctypes.c_uint32), ctypes.c_uint32, ctypes.c_double, ctypes.c_double], ctypes.c_int, ("w", "unit_ids", "n_units", "x", "y"))
+    _wrap_ids_list_or_single(lib, "om_command_attack_move")
+    _bind(lib, "om_command_attack_target", [W, P(ctypes.c_uint32), ctypes.c_uint32, ctypes.c_uint32], ctypes.c_int, ("w", "unit_ids", "n_units", "target_unit"))
+    _wrap_ids_list_or_single(lib, "om_command_attack_target")
+    _bind(lib, "om_command_move", [W, P(ctypes.c_uint32), ctypes.c_uint32, ctypes.c_double, ctypes.c_double], ctypes.c_int, ("w", "unit_ids", "n_units", "x", "y"))
+    _wrap_ids_list_or_single(lib, "om_command_move")
+    _bind(lib, "om_cue_lookup", [ctypes.c_char_p], ctypes.c_uint32, ("name",))
+    _bind(lib, "om_era_elevation_damage_bonus_enabled", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_map_add_cover", [W, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double], ctypes.c_uint32, ("w", "x", "y", "radius", "height"))
+    _bind(lib, "om_roster_register_custom_unit", [W, ctypes.c_uint32, ctypes.c_int, ctypes.c_char_p, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_int], ctypes.c_int, ("w", "type_id", "category", "role", "max_hp", "base_damage", "attack_interval", "attack_range", "speed", "sensor_radius", "layer_transition_time", "aoe_radius", "ability_id"))
+    _bind(lib, "om_tactical_category_multiplier", [W, ctypes.c_int, ctypes.c_int], ctypes.c_double, ("w", "attacker_category", "target_category"))
+    _bind(lib, "om_tactical_disable_abilities", [W], None, ("w",))
+    _bind(lib, "om_tactical_reset", [W], None, ("w",))
+    _bind(lib, "om_tactical_run", [W, ctypes.c_uint64], ctypes.c_uint64, ("w", "n_ticks"))
+    _bind(lib, "om_tactical_run_until_eliminated", [W], ctypes.c_uint64, ("w",))
+    _bind(lib, "om_tactical_run_until_engagement_ends", [W, ctypes.c_uint32], ctypes.c_uint64, ("w", "unit_id"))
+    _bind(lib, "om_tactical_spawn_force_composition", [W, ctypes.c_int32, ctypes.c_uint32, ctypes.c_char_p], None, ("w", "faction_id", "count", "composition"))
+    _bind(lib, "om_tactical_target_validation_runs_every_tick", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_tactical_telegraph_active", [W, ctypes.c_double, ctypes.c_double], ctypes.c_int, ("w", "x", "y"))
+    _bind(lib, "om_tactical_zone_visible_to_enemy", [W, ctypes.c_uint32], ctypes.c_int, ("w", "unit_id"))
+    _bind(lib, "om_tick_read_ability_events", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_unit_ability_active", [W, ctypes.c_uint32], ctypes.c_int, ("w", "unit_id"))
+    _bind(lib, "om_unit_ability_cooldown", [W, ctypes.c_uint32], ctypes.c_double, ("w", "unit_id"))
+    _bind(lib, "om_unit_alive", [W, ctypes.c_uint32], ctypes.c_int, ("w", "unit_id"))
+    _bind(lib, "om_unit_apply_trait_modifier", [W, ctypes.c_uint32, ctypes.c_int, ctypes.c_double], None, ("w", "unit_id", "stat_field", "delta"))
+    _bind(lib, "om_unit_damage_reduction", [W, ctypes.c_uint32], ctypes.c_double, ("w", "unit_id"))
+    _bind(lib, "om_unit_deal_damage", [W, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_double], None, ("w", "p1", "p2", "p3"))
+    _bind(lib, "om_unit_effective_speed", [W, ctypes.c_uint32], ctypes.c_double, ("w", "unit_id"))
+    _bind(lib, "om_unit_fire_aoe_attack", [W, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_double], None, ("w", "attacker_id", "target_id", "radius"))
+    _bind(lib, "om_unit_hp", [W, ctypes.c_uint32], ctypes.c_double, ("w", "unit_id"))
+    _bind(lib, "om_unit_in_backswing", [W, ctypes.c_uint32], ctypes.c_int, ("w", "unit_id"))
+    _bind(lib, "om_unit_in_flinch", [W, ctypes.c_uint32], ctypes.c_int, ("w", "unit_id"))
+    _bind(lib, "om_unit_output_multiplier", [W, ctypes.c_uint32], ctypes.c_double, ("w", "unit_id"))
+    _bind(lib, "om_unit_position_x", [W, ctypes.c_uint32], ctypes.c_double, ("w", "unit_id"))
+    _bind(lib, "om_unit_position_y", [W, ctypes.c_uint32], ctypes.c_double, ("w", "unit_id"))
+    _bind(lib, "om_unit_profile_ability_count", [W, ctypes.c_int], ctypes.c_uint32, ("w", "unit_type"))
+    _bind(lib, "om_unit_profile_aoe_radius", [W, ctypes.c_int], ctypes.c_double, ("w", "unit_type"))
+    _bind(lib, "om_unit_profile_attack_interval", [W, ctypes.c_int], ctypes.c_double, ("w", "unit_type"))
+    _bind(lib, "om_unit_profile_attack_range", [W, ctypes.c_int], ctypes.c_double, ("w", "unit_type"))
+    _bind(lib, "om_unit_profile_base_damage", [W, ctypes.c_int], ctypes.c_double, ("w", "unit_type"))
+    _bind(lib, "om_unit_profile_category", [W, ctypes.c_int], ctypes.c_int, ("w", "unit_type"))
+    _bind(lib, "om_unit_profile_dps", [W, ctypes.c_int], ctypes.c_double, ("w", "unit_type"))
+    _bind(lib, "om_unit_profile_layer_transition_time", [W, ctypes.c_int], ctypes.c_double, ("w", "unit_type"))
+    _bind(lib, "om_unit_profile_max_hp", [W, ctypes.c_int], ctypes.c_double, ("w", "unit_type"))
+    _bind(lib, "om_unit_profile_sensor_radius", [W, ctypes.c_int], ctypes.c_double, ("w", "unit_type"))
+    _bind(lib, "om_unit_profile_speed", [W, ctypes.c_int], ctypes.c_double, ("w", "unit_type"))
+    _bind(lib, "om_unit_profile_trait_count", [W, ctypes.c_int], ctypes.c_uint32, ("w", "unit_type"))
+    _bind(lib, "om_unit_render_craft_count", [W, ctypes.c_int], ctypes.c_uint32, ("w", "unit_type"))
+    _bind(lib, "om_unit_render_silhouette_size", [W, ctypes.c_int], ctypes.c_double, ("w", "unit_type"))
+    _bind(lib, "om_unit_set_ability_cooldown", [W, ctypes.c_uint32, ctypes.c_double], None, ("w", "unit_id", "ticks"))
+    _bind(lib, "om_unit_set_brace_active", [W, ctypes.c_uint32, ctypes.c_int], None, ("w", "unit_id", "on"))
+    _bind(lib, "om_unit_set_elevation_tier", [W, ctypes.c_uint32, ctypes.c_int], None, ("w", "unit_id", "tier"))
+    _bind(lib, "om_unit_set_fortify_active", [W, ctypes.c_uint32, ctypes.c_int], None, ("w", "unit_id", "on"))
+    _bind(lib, "om_unit_set_hp", [W, ctypes.c_uint32, ctypes.c_double], None, ("w", "p0", "p1"))
+    _bind(lib, "om_unit_set_stealth", [W, ctypes.c_uint32, ctypes.c_int], None, ("w", "unit_id", "on"))
+    _bind(lib, "om_unit_set_warden_aura_active", [W, ctypes.c_uint32, ctypes.c_int], None, ("w", "unit_id", "on"))
+    _bind(lib, "om_unit_spawn", [W, ctypes.c_int, ctypes.c_int32, ctypes.c_double, ctypes.c_double, ctypes.c_uint32], ctypes.c_uint32, ("w", "unit_type", "faction_id", "x", "y", "layer"))
+    _bind(lib, "om_unit_spawn_for_category", [W, ctypes.c_int, ctypes.c_int32, ctypes.c_double, ctypes.c_double, ctypes.c_uint32], ctypes.c_uint32, ("w", "category", "faction_id", "x", "y", "layer"))
+    _bind(lib, "om_unit_target", [W, ctypes.c_uint32], ctypes.c_int32, ("w", "unit_id"))
+    _bind(lib, "om_unit_targeting_cohort", [W, ctypes.c_uint32], ctypes.c_uint32, ("w", "unit_id"))
+    _bind(lib, "om_unit_teleport", [W, ctypes.c_uint32, ctypes.c_double, ctypes.c_double, ctypes.c_uint32], None, ("w", "unit", "x", "y", "layer"))
+    lib._e11_bound = True
+
+
+def _bind_e12(lib):
+    if getattr(lib, "_e12_bound", False):
+        return
+    P = ctypes.POINTER
+    V = ctypes.c_void_p
+    W = OMWorldP
+    _bind(lib, "om_fog_get_drawn_sensor_circle_radius", [W, ctypes.c_uint32], ctypes.c_double, ("w", "unit"))
+    _bind(lib, "om_fog_get_treatment_at", [W, ctypes.c_double, ctypes.c_double, ctypes.c_uint32], ctypes.c_int, ("w", "x", "y", "layer"))
+    _bind(lib, "om_map_add_hazard_zone", [W, ctypes.c_double, ctypes.c_double, ctypes.c_double], ctypes.c_uint32, ("w", "x", "y", "p2"))
+    _bind(lib, "om_map_add_interference_zone", [W, ctypes.c_double, ctypes.c_double, ctypes.c_uint32, ctypes.c_double, ctypes.c_double], None, ("w", "x", "y", "layer", "intensity", "radius"))
+    _bind(lib, "om_map_add_moving_interference_zone", [W, ctypes.c_double, ctypes.c_double, ctypes.c_uint32, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double], None, ("w", "x", "y", "layer", "intensity", "radius", "vx", "vy"))
+    _bind(lib, "om_map_add_obstacle", [W, ctypes.c_double, ctypes.c_double, ctypes.c_double], ctypes.c_uint32, ("w", "x", "y", "radius"))
+    _bind(lib, "om_map_add_spawn_point", [W, ctypes.c_double, ctypes.c_double, ctypes.c_int32], ctypes.c_uint32, ("w", "x", "y", "faction_id"))
+    _bind(lib, "om_map_add_spine_node", [W, ctypes.c_double, ctypes.c_double, ctypes.c_int], ctypes.c_uint32, ("w", "x", "y", "p2"))
+    _bind(lib, "om_map_add_structure", [W, ctypes.c_double, ctypes.c_double, ctypes.c_int32], ctypes.c_uint32, ("w", "x", "y", "owner_faction"))
+    _bind(lib, "om_map_add_vantage_node", [W, ctypes.c_double, ctypes.c_double, ctypes.c_double], None, ("w", "x", "y", "radius"))
+    _bind(lib, "om_mission_begin", [W], None, ("w",))
+    _bind(lib, "om_mission_get_clock", [W], ctypes.c_uint64, ("w",))
+    _bind(lib, "om_mission_get_phase", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_mission_is_started", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_mission_set_phase", [W, ctypes.c_int], None, ("w", "phase"))
+    _bind(lib, "om_player_can_see", [W, ctypes.c_uint32], ctypes.c_int, ("w", "unit"))
+    _bind(lib, "om_player_can_see_friendly", [W, ctypes.c_uint32], ctypes.c_int, ("w", "unit"))
+    _bind(lib, "om_player_can_see_unit", [W, ctypes.c_int32, ctypes.c_uint32], ctypes.c_int, ("w", "p0", "unit"))
+    _bind(lib, "om_recon_get_terrain_visibility_ratio", [W], ctypes.c_double, ("w",))
+    _bind(lib, "om_recon_is_enemy_visible", [W, ctypes.c_uint32], ctypes.c_int, ("w", "unit"))
+    _bind(lib, "om_recon_is_feature_visible", [W, ctypes.c_uint32], ctypes.c_int, ("w", "feature_id"))
+    _bind(lib, "om_recon_is_spawn_point_visible", [W, ctypes.c_uint32], ctypes.c_int, ("w", "spawn_id"))
+    _bind(lib, "om_recon_is_structure_ownership_visible", [W, ctypes.c_uint32], ctypes.c_int, ("w", "structure_id"))
+    _bind(lib, "om_set_era_flag", [W, ctypes.c_char_p, ctypes.c_int], None, ("w", "name", "on"))
+    _bind(lib, "om_set_era_name", [W, ctypes.c_char_p], None, ("w", "name"))
+    _bind(lib, "om_strategic_agent_read_region_field", [W, ctypes.c_int32, ctypes.c_uint32, ctypes.c_int], ctypes.c_double, ("w", "p0", "region_idx", "field"))
+    _bind(lib, "om_unit_acquire_target", [W, ctypes.c_uint32], None, ("w", "unit"))
+    _bind(lib, "om_unit_attack", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "attacker", "target"))
+    _bind(lib, "om_unit_can_see", [W, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_int, ("w", "observer", "target"))
+    _bind(lib, "om_unit_get_cross_layer_factor", [W, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_double, ("w", "unit", "p0"))
+    _bind(lib, "om_unit_get_effective_sensor_radius_to_target_elevation", [W, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_double, ("w", "unit", "target_elevation_tier"))
+    _bind(lib, "om_unit_get_hp", [W, ctypes.c_uint32], ctypes.c_double, ("w", "unit"))
+    _bind(lib, "om_unit_get_pos", [W, ctypes.c_uint32, P(ctypes.c_double), P(ctypes.c_double)], ctypes.c_int, ("w", "unit", "out_x", "out_y"))
+    _wrap_out_pair(lib, "om_unit_get_pos")
+    _bind(lib, "om_unit_get_target", [W, ctypes.c_uint32], ctypes.c_uint32, ("w", "unit"))
+    _bind(lib, "om_unit_spawn_with_elevation", [W, ctypes.c_int, ctypes.c_int32, ctypes.c_double, ctypes.c_double, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_uint32, ("w", "unit_type", "faction_id", "x", "y", "layer", "elevation_tier"))
+    _bind(lib, "om_visibility_compute", [W], None, ("w",))
+    _bind(lib, "om_visibility_set_player_fog", [W, ctypes.c_int], None, ("w", "on"))
+    _bind(lib, "om_world_get_state_checksum", [W], ctypes.c_uint64, ("w",))
+    _bind(lib, "om_zone_sample_interference", [W, ctypes.c_double, ctypes.c_double, ctypes.c_uint32], ctypes.c_double, ("w", "x", "y", "layer"))
+    lib._e12_bound = True
+
+
+def _bind_e13(lib):
+    if getattr(lib, "_e13_bound", False):
+        return
+    P = ctypes.POINTER
+    V = ctypes.c_void_p
+    W = OMWorldP
+    _bind(lib, "om_collision_pass", [W], None, ("w",))
+    _bind(lib, "om_combat_can_shoot", [W, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_int, ("w", "p0", "p1"))
+    _bind(lib, "om_command_attack_target_kiting", [W, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_double, ctypes.c_double], None, ("w", "p0", "p1", "p2", "p3"))
+    _bind(lib, "om_command_direct_move", [W, ctypes.c_uint32, ctypes.c_double, ctypes.c_double], None, ("w", "p0", "p1", "p2"))
+    _bind(lib, "om_command_group_move", [W, P(ctypes.c_uint32), ctypes.c_uint32, ctypes.c_double, ctypes.c_double], ctypes.c_uint32, ("w", "p0", "n", "p2", "p3"))
+    _bind(lib, "om_command_issue_named", [W, ctypes.c_char_p, ctypes.c_uint32, ctypes.c_double, ctypes.c_double], ctypes.c_int, ("w", "p0", "p1", "p2", "p3"))
+    _bind(lib, "om_command_queue_attack_move", [W, ctypes.c_uint32, ctypes.c_double, ctypes.c_double], None, ("w", "p0", "p1", "p2"))
+    _bind(lib, "om_command_queue_move", [W, ctypes.c_uint32, ctypes.c_double, ctypes.c_double], None, ("w", "p0", "p1", "p2"))
+    _bind(lib, "om_group_is_active", [W, ctypes.c_uint32], ctypes.c_int, ("w", "p0"))
+    _bind(lib, "om_map_set_obstacle_density", [W, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_double], None, ("w", "p0", "p1", "p2", "p3"))
+    _bind(lib, "om_navmesh_find_path", [W, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_uint32], ctypes.c_uint32, ("w", "p0", "p1", "p2", "p3", "p4"))
+    _bind(lib, "om_navmesh_get_cache_hits", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_navmesh_get_cell_size", [W], ctypes.c_double, ("w",))
+    _bind(lib, "om_navmesh_is_cell_blocked", [W, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_int, ("w", "p0", "p1", "p2"))
+    _bind(lib, "om_navmesh_is_path_straightened", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_renderer_interpolate_facing", [W, ctypes.c_uint32, ctypes.c_double], ctypes.c_double, ("w", "p0", "p1"))
+    _bind(lib, "om_renderer_interpolate_position", [W, ctypes.c_uint32, ctypes.c_double, P(ctypes.c_double), P(ctypes.c_double)], ctypes.c_int, ("w", "p0", "p1", "p2", "p3"))
+    _bind(lib, "om_replay_get_command_count_at_tick", [W, ctypes.c_uint64], ctypes.c_uint32, ("w", "p0"))
+    _bind(lib, "om_steering_get_obstacle_repulsion", [W, ctypes.c_uint32, P(ctypes.c_double), P(ctypes.c_double)], ctypes.c_int, ("w", "p0", "p1", "p2"))
+    _bind(lib, "om_steering_get_sweep_angle_at", [W, ctypes.c_uint32], ctypes.c_double, ("w", "p0"))
+    _bind(lib, "om_steering_get_sweep_angle_count", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_unit_clear_orders", [W, ctypes.c_uint32], None, ("w", "p0"))
+    _bind(lib, "om_unit_compute_terrain_speed", [W, ctypes.c_uint32, ctypes.c_double], ctypes.c_double, ("w", "p0", "p1"))
+    _bind(lib, "om_unit_engage", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "p0", "p1"))
+    _bind(lib, "om_unit_get_current_speed", [W, ctypes.c_uint32], ctypes.c_double, ("w", "p0"))
+    _bind(lib, "om_unit_get_destination", [W, ctypes.c_uint32, P(ctypes.c_double), P(ctypes.c_double)], ctypes.c_int, ("w", "p0", "p1", "p2"))
+    _bind(lib, "om_unit_get_facing", [W, ctypes.c_uint32], ctypes.c_double, ("w", "p0"))
+    _bind(lib, "om_unit_get_order_kind", [W, ctypes.c_uint32], ctypes.c_int, ("w", "p0"))
+    _bind(lib, "om_unit_has_active_buff", [W, ctypes.c_uint32, ctypes.c_char_p], ctypes.c_int, ("w", "p0", "p1"))
+    _bind(lib, "om_unit_is_braced", [W, ctypes.c_uint32], ctypes.c_int, ("w", "p0"))
+    _bind(lib, "om_unit_set_facing", [W, ctypes.c_uint32, ctypes.c_double], None, ("w", "p0", "p1"))
+    _bind(lib, "om_unit_set_pos", [W, ctypes.c_uint32, ctypes.c_double, ctypes.c_double], None, ("w", "p0", "p1", "p2"))
+    _bind(lib, "om_unit_set_visible_to_faction", [W, ctypes.c_uint32, ctypes.c_int32, ctypes.c_int], None, ("w", "p0", "p1", "p2"))
+    lib._e13_bound = True
+
+
+def _bind_e14(lib):
+    if getattr(lib, "_e14_bound", False):
+        return
+    P = ctypes.POINTER
+    V = ctypes.c_void_p
+    W = OMWorldP
+    _bind(lib, "om_macro_bind_hook_flag", [W, ctypes.c_uint32, ctypes.c_char_p], None, ("w", "p1", "p2"))
+    _bind(lib, "om_macro_bus_get_active_flags_count", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_macro_bus_get_flag", [W, ctypes.c_char_p], ctypes.c_int, ("w", "p1"))
+    _bind(lib, "om_macro_bus_register_vocab", [ctypes.c_char_p], None, ("p0",))
+    _bind(lib, "om_macro_bus_set_flag", [W, ctypes.c_char_p, ctypes.c_int], None, ("w", "p1", "p2"))
+    _bind(lib, "om_macro_enemy_leaves_trigger", [W, ctypes.c_uint32], None, ("w", "p1"))
+    _bind(lib, "om_macro_eval_hook_flag", [W, ctypes.c_uint32, ctypes.c_char_p], ctypes.c_int, ("w", "p1", "p2"))
+    _bind(lib, "om_macro_eval_timer_transition", [ctypes.c_uint64, ctypes.c_uint64, ctypes.c_double], ctypes.c_int, ("p0", "p1", "p2"))
+    _bind(lib, "om_macro_eval_transitions", [W, ctypes.c_uint32], ctypes.c_int, ("w", "p1"))
+    _bind(lib, "om_macro_evaluation_interval_ticks", [], ctypes.c_uint32, ())
+    _bind(lib, "om_macro_execute_behavior", [W, ctypes.c_uint32, ctypes.c_int, ctypes.c_int], ctypes.c_int, ("w", "p1", "p2", "p3"))
+    _bind(lib, "om_macro_get_behavior", [W, ctypes.c_uint32], ctypes.c_int, ("w", "p1"))
+    _bind(lib, "om_macro_get_eval_interval", [ctypes.c_int], ctypes.c_uint32, ("p0",))
+    _bind(lib, "om_macro_get_last_issued_command_type", [W, ctypes.c_uint32], ctypes.c_int, ("w", "p1"))
+    _bind(lib, "om_macro_get_modifier", [W, ctypes.c_uint32], ctypes.c_int, ("w", "p1"))
+    _bind(lib, "om_macro_get_phased_subgroups", [W, ctypes.c_uint32], ctypes.c_uint32, ("w", "p1"))
+    _bind(lib, "om_macro_get_speed_multiplier", [ctypes.c_int], ctypes.c_double, ("p0",))
+    _bind(lib, "om_macro_get_threshold_noise", [W, ctypes.c_uint32], ctypes.c_double, ("w", "p1"))
+    _bind(lib, "om_macro_get_timer_noise", [W, ctypes.c_uint32], ctypes.c_double, ("w", "p1"))
+    _bind(lib, "om_macro_has_evaluated", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_macro_init_force", [W, ctypes.c_uint32, ctypes.c_int32], None, ("w", "p1", "p2"))
+    _bind(lib, "om_macro_is_hidden", [W, ctypes.c_uint32], ctypes.c_int, ("w", "p1"))
+    _bind(lib, "om_macro_issues_illegal_command", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_macro_mutates_unit_stats", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_macro_player_enter_objective", [W, ctypes.c_uint32], None, ("w", "p1"))
+    _bind(lib, "om_macro_reads_player_visibility_set", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_macro_resolve_conflict", [ctypes.c_int, ctypes.c_int], ctypes.c_int, ("p0", "p1"))
+    _bind(lib, "om_macro_resolve_conflict_types", [ctypes.c_int, ctypes.c_int], ctypes.c_int, ("p0", "p1"))
+    _bind(lib, "om_macro_set_base_transition_true", [W, ctypes.c_uint32, ctypes.c_int], None, ("w", "p1", "p2"))
+    _bind(lib, "om_macro_set_force_hp_pct", [W, ctypes.c_uint32, ctypes.c_double], None, ("w", "p1", "p2"))
+    _bind(lib, "om_macro_set_hook_true", [W, ctypes.c_uint32, ctypes.c_int], None, ("w", "p1", "p2"))
+    _bind(lib, "om_macro_set_state", [W, ctypes.c_uint32, ctypes.c_int, ctypes.c_int], None, ("w", "p1", "p2", "p3"))
+    _bind(lib, "om_macro_tick", [W, ctypes.c_uint64], None, ("w", "p1"))
+    _bind(lib, "om_macro_trigger_ambush", [W, ctypes.c_uint32], None, ("w", "p1"))
+    _bind(lib, "om_macro_update_bus_runner", [W], None, ("w",))
+    _bind(lib, "om_macro_validate_bus_flag", [ctypes.c_char_p], ctypes.c_int, ("p0",))
+    _bind(lib, "om_macro_validate_condition_name", [ctypes.c_char_p], ctypes.c_int, ("p0",))
+    _bind(lib, "om_macro_validate_state", [ctypes.c_int, ctypes.c_int], ctypes.c_int, ("p0", "p1"))
+    _bind(lib, "om_map_is_edge_coord", [W, ctypes.c_double, ctypes.c_double], ctypes.c_int, ("w", "p1", "p2"))
+    _bind(lib, "om_mission_check_external_reinforcements", [W], None, ("w",))
+    _bind(lib, "om_mission_get_external_reinforcement_prob", [], ctypes.c_double, ())
+    _bind(lib, "om_mission_get_reinforcement_foreshadow_text", [W, ctypes.c_char_p, ctypes.c_uint32], ctypes.c_uint32, ("w", "p1", "p2"))
+    _bind(lib, "om_mission_get_reinforcement_spawn_pos", [W, P(ctypes.c_double), P(ctypes.c_double)], None, ("w", "p1", "p2"))
+    _bind(lib, "om_mission_init_seed", [W, ctypes.c_uint64], None, ("w", "p1"))
+    _bind(lib, "om_mission_is_reinforcement_spawned", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_mission_schedule_external_reinforcement", [W, V], None, ("w", "p1"))
+    _bind(lib, "om_mission_set_external_reinforcement", [W, V], None, ("w", "p1"))
+    _bind(lib, "om_replay_command_count", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_replay_get_commands", [W, V, ctypes.c_uint32], ctypes.c_uint32, ("w", "p1", "p2"))
+    _bind(lib, "om_replay_log_command", [W, ctypes.c_uint64, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_double, ctypes.c_double, ctypes.c_uint32], None, ("w", "p1", "p2", "p3", "p4", "p5", "p6"))
+    _bind(lib, "om_session_capture_enable", [W, ctypes.c_int], None, ("w", "p1"))
+    _bind(lib, "om_session_capture_get_size", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_session_capture_is_enabled", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_session_capture_read", [W, ctypes.c_char_p, ctypes.c_uint32], ctypes.c_uint32, ("w", "p1", "p2"))
+    _bind(lib, "om_tactical_tick_to", [W, ctypes.c_uint64], ctypes.c_uint64, ("w", "tick"))
+    _bind(lib, "om_unit_get_base_hp", [ctypes.c_uint32, ctypes.c_int], ctypes.c_double, ("p0", "p1"))
+    _bind(lib, "om_unit_get_decision_loop_ptr", [ctypes.c_uint32, ctypes.c_int], V, ("p0", "p1"))
+    lib._e14_bound = True
+
+
+def _bind_e15(lib):
+    if getattr(lib, "_e15_bound", False):
+        return
+    P = ctypes.POINTER
+    V = ctypes.c_void_p
+    W = OMWorldP
+    _bind(lib, "om_drift_interpolate", [V, ctypes.c_uint32, ctypes.c_uint64, ctypes.c_int, ctypes.c_uint64, V], None, ("p0", "waypoint", "period", "p3", "tick", "byref"))
+    _bind(lib, "om_enemy_production_adapt_target", [V, V, V], None, ("byref", "p1", "p2"))
+    _bind(lib, "om_enemy_production_select_category", [V, V], ctypes.c_int, ("byref", "p1"))
+    _bind(lib, "om_hazard_get_launch_types", [P(ctypes.c_uint32), ctypes.c_uint32], None, ("p0", "max"))
+    _bind(lib, "om_hazard_is_enabled_at_launch", [ctypes.c_int], ctypes.c_int, ("p0",))
+    _bind(lib, "om_hazard_launch_type_count", [], ctypes.c_uint32, ())
+    _bind(lib, "om_hazard_sample_interference", [W, ctypes.c_double, ctypes.c_double], ctypes.c_double, ("w", "p1", "c_double"))
+    _bind(lib, "om_hazard_spawn_moving_interference", [W, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_uint64], ctypes.c_uint32, ("w", "p1", "p2", "p3", "c_double", "p5"))
+    _bind(lib, "om_mission_check_extraction_objectives", [W], None, ("w",))
+    _bind(lib, "om_mission_compute_reinforcement_capacity", [ctypes.c_double, ctypes.c_uint64], ctypes.c_double, ("c_double", "time"))
+    _bind(lib, "om_mission_compute_starting_force", [ctypes.c_double], ctypes.c_double, ("c_double",))
+    _bind(lib, "om_mission_get_reinforcement_trickle", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_mission_set_player_held_structures_count", [W, ctypes.c_uint32], None, ("w", "held"))
+    _bind(lib, "om_mission_setup_extraction_point", [W, ctypes.c_double, ctypes.c_double, ctypes.c_double], None, ("w", "p1", "c_double", "p3"))
+    _bind(lib, "om_objective_get_center", [W, ctypes.c_uint32, V], ctypes.c_int, ("w", "objective_idx", "out"))
+    _bind(lib, "om_objective_is_contested", [W, ctypes.c_uint32], ctypes.c_int, ("w", "objective"))
+    _bind(lib, "om_objective_setup_drifting", [W, ctypes.c_uint32, ctypes.c_uint64], None, ("w", "objective", "period"))
+    _bind(lib, "om_render_get_owner_color", [ctypes.c_int32], ctypes.c_uint32, ("owner",))
+    _bind(lib, "om_render_get_structure_silhouette_id", [], ctypes.c_uint32, ())
+    _bind(lib, "om_render_get_unit_silhouette_id", [ctypes.c_uint32], ctypes.c_uint32, ("unit",))
+    _bind(lib, "om_render_is_volume_obscuring", [ctypes.c_int], ctypes.c_int, ("p0",))
+    _bind(lib, "om_structure_apply_damage", [W, ctypes.c_uint32, ctypes.c_double, ctypes.c_uint32], None, ("w", "structure", "c_double", "attacker"))
+    _bind(lib, "om_structure_assign_owners", [ctypes.c_int, ctypes.c_uint32, P(ctypes.c_uint32), P(ctypes.c_uint32), P(ctypes.c_uint32)], None, ("mission", "total", "p2", "p3", "byref"))
+    _bind(lib, "om_structure_compute_count", [ctypes.c_double, ctypes.c_int], ctypes.c_uint32, ("ctypes", "p1"))
+    _bind(lib, "om_structure_get_base_max_hp", [], ctypes.c_double, ())
+    _bind(lib, "om_structure_get_capture_progress", [W, ctypes.c_uint32], ctypes.c_double, ("w", "structure"))
+    _bind(lib, "om_structure_get_hp", [W, ctypes.c_uint32], ctypes.c_double, ("w", "structure"))
+    _bind(lib, "om_structure_get_hud_data", [W, ctypes.c_uint32, V], None, ("w", "structure", "byref"))
+    _bind(lib, "om_structure_get_last_spawn_distance", [W, ctypes.c_uint32], ctypes.c_double, ("w", "structure"))
+    _bind(lib, "om_structure_get_matchup_multiplier", [ctypes.c_uint32], ctypes.c_double, ("attacker",))
+    _bind(lib, "om_structure_get_owner", [W, ctypes.c_uint32], ctypes.c_int32, ("w", "structure"))
+    _bind(lib, "om_structure_get_position", [W, ctypes.c_uint32, V], None, ("w", "structure", "byref"))
+    _bind(lib, "om_structure_get_timer", [W, ctypes.c_uint32], ctypes.c_uint64, ("w", "structure"))
+    _bind(lib, "om_structure_get_unit_type", [W, ctypes.c_uint32], ctypes.c_uint32, ("w", "structure"))
+    _bind(lib, "om_structure_init", [W, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_double], None, ("w", "structure", "unit", "c_double"))
+    _bind(lib, "om_structure_init_drifting", [W, ctypes.c_uint32, ctypes.c_uint64], None, ("w", "structure", "period"))
+    _bind(lib, "om_structure_is_destroyed", [W, ctypes.c_uint32], ctypes.c_int, ("w", "structure"))
+    _bind(lib, "om_structure_is_in_capture_radius", [W, ctypes.c_uint32, ctypes.c_double, ctypes.c_double], ctypes.c_int, ("w", "structure", "p2", "x"))
+    _bind(lib, "om_structure_on_owner_changed", [W, ctypes.c_uint32, ctypes.c_int32, ctypes.c_int32], None, ("w", "structure", "old", "new"))
+    _bind(lib, "om_structure_pop_spawned_unit", [W, ctypes.c_uint32], ctypes.c_int, ("w", "structure"))
+    _bind(lib, "om_structure_production_interval_ticks", [ctypes.c_double], ctypes.c_uint32, ("c_double",))
+    _bind(lib, "om_structure_set_capture_progress", [W, ctypes.c_uint32, ctypes.c_double], None, ("w", "structure", "c_double"))
+    _bind(lib, "om_structure_set_capturing_faction", [W, ctypes.c_uint32, ctypes.c_int32], None, ("w", "structure", "unopposed"))
+    _bind(lib, "om_structure_set_contested", [W, ctypes.c_uint32, ctypes.c_int], None, ("w", "structure", "on"))
+    _bind(lib, "om_structure_set_owner", [W, ctypes.c_uint32, ctypes.c_int32], None, ("w", "structure", "owner"))
+    _bind(lib, "om_structure_set_timer", [W, ctypes.c_uint32, ctypes.c_uint64], None, ("w", "structure", "timer"))
+    _bind(lib, "om_structure_switch_unit_type", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "structure", "new"))
+    _bind(lib, "om_structure_tick_capture", [W, ctypes.c_uint32], None, ("w", "structure"))
+    _bind(lib, "om_structure_tick_production", [W, ctypes.c_uint32], None, ("w", "structure"))
+    _bind(lib, "om_structure_unit_cost", [ctypes.c_uint32], ctypes.c_uint32, ("unit",))
+    _bind(lib, "om_ticker_pop_message", [W, ctypes.c_char_p, ctypes.c_uint32], None, ("w", "create_string_buffer", "buffer"))
+    _bind(lib, "om_unit_can_return_fire", [W, ctypes.c_uint32], ctypes.c_int, ("w", "unit"))
+    _bind(lib, "om_unit_get_order_destination", [W, ctypes.c_uint32, V], None, ("w", "unit", "byref"))
+    _bind(lib, "om_unit_has_non_combat_visual_tag", [ctypes.c_int], ctypes.c_int, ("p0",))
+    _bind(lib, "om_unit_is_flinching", [W, ctypes.c_uint32], ctypes.c_int, ("w", "unit"))
+    _bind(lib, "om_unit_is_non_combat_supported", [ctypes.c_int], ctypes.c_int, ("p0",))
+    _bind(lib, "om_unit_order_move", [W, ctypes.c_uint32, ctypes.c_double, ctypes.c_double], None, ("w", "unit", "p2", "c_double"))
+    _bind(lib, "om_unit_spawn_combat", [W, ctypes.c_int32, ctypes.c_double, ctypes.c_double], ctypes.c_uint32, ("w", "p1", "p2", "x"))
+    _bind(lib, "om_unit_spawn_non_combat", [W, ctypes.c_int, ctypes.c_double, ctypes.c_double], ctypes.c_uint32, ("w", "p1", "p2", "c_double"))
+    _bind(lib, "om_unit_tick_decision_loop", [W, ctypes.c_uint32], None, ("w", "unit"))
+    lib._e15_bound = True
+
+
+def _bind_e17(lib):
+    if getattr(lib, "_e17_bound", False):
+        return
+    P = ctypes.POINTER
+    V = ctypes.c_void_p
+    W = OMWorldP
+    _bind(lib, "om_fairness_evaluate", [W, V], None, ("w", "byref"))
+    _bind(lib, "om_fairness_force_score", [W, ctypes.c_double], None, ("w", "composite"))
+    _bind(lib, "om_fairness_is_score_logged", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_fairness_run_post_generation_check", [W], None, ("w",))
+    _bind(lib, "om_gradient_add_moving_source", [W, ctypes.c_int, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_uint32], None, ("w", "p1", "p2", "p3", "p4", "start", "period"))
+    _bind(lib, "om_gradient_combine_overlap", [ctypes.c_double, ctypes.c_double], ctypes.c_double, ("p0", "p1"))
+    _bind(lib, "om_gradient_get_anchor_intensity", [ctypes.c_int, ctypes.c_int], ctypes.c_double, ("node", "gradient"))
+    _bind(lib, "om_gradient_get_anchor_radius", [ctypes.c_int, ctypes.c_int], ctypes.c_double, ("p0", "p1"))
+    _bind(lib, "om_gradient_sample_single", [ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_int], ctypes.c_double, ("p0", "p1", "p2", "p3"))
+    _bind(lib, "om_map_add_layer_restriction_zone", [W, ctypes.c_double, ctypes.c_double, ctypes.c_uint32], None, ("w", "p1", "zone", "p3"))
+    _bind(lib, "om_map_archetype_canvas_category", [ctypes.c_uint32], ctypes.c_int, ("mission",))
+    _bind(lib, "om_map_check_boundary_gradient_discontinuity", [W, ctypes.c_double, ctypes.c_double], ctypes.c_double, ("w", "p1", "boundary"))
+    _bind(lib, "om_map_clamp_flavoring_delta", [ctypes.c_double], ctypes.c_double, ("delta",))
+    _bind(lib, "om_map_compute_chokepoint_width", [ctypes.c_double], ctypes.c_double, ("width",))
+    _bind(lib, "om_map_compute_economy_obstacle_delta", [ctypes.c_double], ctypes.c_double, ("economy",))
+    _bind(lib, "om_map_compute_modified_canvas", [ctypes.c_uint32, ctypes.c_double, ctypes.c_double], ctypes.c_double, ("archetype", "p1", "p2"))
+    _bind(lib, "om_map_compute_tension_cover_delta", [ctypes.c_double], ctypes.c_double, ("tension",))
+    _bind(lib, "om_map_count_distinct_routes_staging_to_objective", [W, ctypes.c_uint32], ctypes.c_uint32, ("w", "p1"))
+    _bind(lib, "om_map_count_nodes_of_type", [W, ctypes.c_int], ctypes.c_uint32, ("w", "p1"))
+    _bind(lib, "om_map_flavoring_stability_multiplier", [ctypes.c_double], ctypes.c_double, ("stability",))
+    _bind(lib, "om_map_generate", [W, ctypes.c_uint32, ctypes.c_uint64], None, ("w", "p1", "p2"))
+    _bind(lib, "om_map_generate_gradients", [W, ctypes.c_uint32, ctypes.c_uint64], None, ("w", "p1", "p2"))
+    _bind(lib, "om_map_generate_spine", [W, ctypes.c_uint32, ctypes.c_uint64], None, ("w", "p1", "p2"))
+    _bind(lib, "om_map_get_active_seed", [W], ctypes.c_uint64, ("w",))
+    _bind(lib, "om_map_get_canvas_base_dimension", [ctypes.c_int], ctypes.c_double, ("p0",))
+    _bind(lib, "om_map_get_compatible_layout_count", [W, ctypes.c_uint32], ctypes.c_uint32, ("w", "archetype"))
+    _bind(lib, "om_map_get_compatible_layouts", [W, ctypes.c_uint32, P(ctypes.c_uint32), ctypes.c_uint32], ctypes.c_uint32, ("w", "archetype", "out", "max"))
+    _bind(lib, "om_map_get_node_count", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_map_get_node_pos", [W, ctypes.c_uint32, V], None, ("w", "node", "byref"))
+    _bind(lib, "om_map_get_node_type", [W, ctypes.c_uint32], ctypes.c_int, ("w", "node"))
+    _bind(lib, "om_map_get_nth_node_of_type", [W, ctypes.c_int, ctypes.c_uint32], ctypes.c_uint32, ("w", "p1", "nth"))
+    _bind(lib, "om_map_get_simulation_coupling", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_map_has_flank_bypass", [W, ctypes.c_uint32], ctypes.c_int, ("w", "chokepoint"))
+    _bind(lib, "om_map_instantiate_zone_pos", [ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_uint64, V], None, ("p0", "base_pct", "canvas_dim", "p3", "byref"))
+    _bind(lib, "om_map_is_reachable_from_all_spawns", [W, ctypes.c_uint32], ctypes.c_int, ("w", "node"))
+    _bind(lib, "om_map_is_reachable_from_staging", [W, ctypes.c_uint32], ctypes.c_int, ("w", "node"))
+    _bind(lib, "om_map_is_valid", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_map_layout_check_hazard_approaches", [ctypes.c_uint32], ctypes.c_int, ("layout_id",))
+    _bind(lib, "om_map_layout_check_vantage_reachability", [ctypes.c_uint32], ctypes.c_int, ("layout_id",))
+    _bind(lib, "om_map_layout_file_has_forbidden_fields", [ctypes.c_uint32], ctypes.c_int, ("p0",))
+    _bind(lib, "om_map_layout_file_has_required_fields", [ctypes.c_uint32], ctypes.c_int, ("p0",))
+    _bind(lib, "om_map_layout_matches_archetype_filter", [ctypes.c_uint32, ctypes.c_uint32], ctypes.c_int, ("layout", "archetype"))
+    _bind(lib, "om_map_library_total_layouts", [], ctypes.c_uint32, ())
+    _bind(lib, "om_map_node_get_owner", [W, ctypes.c_uint32], ctypes.c_int32, ("w", "vantage"))
+    _bind(lib, "om_map_sample_gradients", [W, ctypes.c_double, ctypes.c_double, V], None, ("w", "p1", "x", "byref"))
+    _bind(lib, "om_map_sample_layer_accessibility", [W, ctypes.c_double, ctypes.c_double, ctypes.c_uint32], ctypes.c_int, ("w", "p1", "x", "layer"))
+    _bind(lib, "om_map_sample_obstacle_density", [W, ctypes.c_double, ctypes.c_double], ctypes.c_double, ("w", "p1", "x"))
+    _bind(lib, "om_map_select_layout_uniform", [ctypes.c_uint64, ctypes.c_uint32], ctypes.c_uint32, ("seed", "pool_size"))
+    _bind(lib, "om_map_set_simulation_coupling", [W, ctypes.c_int], None, ("w", "on"))
+    _bind(lib, "om_map_setup_drifting_node", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "node", "period"))
+    _bind(lib, "om_map_verify_flank_connections", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_proc_arch_resolve_section_piece", [ctypes.c_int, ctypes.c_int], ctypes.c_uint32, ("section_type", "era"))
+    _bind(lib, "om_proc_arch_section_is_era_agnostic", [ctypes.c_int], ctypes.c_int, ("section_type",))
+    _bind(lib, "om_render_detect_repeated_tile_boundary", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_route_grid_is_cell_blocked", [ctypes.c_double], ctypes.c_int, ("obstacle",))
+    _bind(lib, "om_unit_get_position", [W, ctypes.c_uint32, V], None, ("w", "unit_id", "byref"))
+    _bind(lib, "om_unit_order_hold_node", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "unit_id", "node_id"))
+    lib._e17_bound = True
+
+
+_GENERATED_BINDERS = (_bind_e06, _bind_e07, _bind_e08, _bind_e09, _bind_e10, _bind_e11, _bind_e12, _bind_e13, _bind_e14, _bind_e15, _bind_e17)
+# ---- end generated ----

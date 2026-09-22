@@ -139,3 +139,17 @@ int om_region_event_delta(const om_world *w, uint32_t region_idx, double out[OM_
     (void)w; (void)region_idx; (void)out;
     return 0;
 }
+
+/* ---- generated stubs from signatures.toml ---- */
+uint32_t om_event_fire_manual(om_world *w, uint32_t region_idx, uint32_t tier) {
+    /* STUB */
+    (void)w; (void)region_idx; (void)tier;
+    return 0;
+}
+
+uint32_t om_event_get_attached_character(const om_world *w, uint32_t event, uint32_t p1) {
+    /* STUB */
+    (void)w; (void)event; (void)p1;
+    return 0;
+}
+/* ---- end generated stubs ---- */
