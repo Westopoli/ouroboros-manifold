@@ -147,11 +147,10 @@ func _check_seed_2() -> void:
 func _check_colour_5() -> void:
 	var view := _root.get_node("World/GalaxyView")
 	var g: Galaxy = view.get_galaxy()
-	var mm: MultiMesh = view.get_node("Points").multimesh
 	var bad := 0
 	for i in range(g.systems.size()):
 		var expected: Color = view.owner_color(g.systems[i].owner, g)
-		if not mm.get_instance_color(i).is_equal_approx(expected):
+		if not view.get_point_color(i).is_equal_approx(expected):
 			bad += 1
 	_assert(bad == 0, "%d/%d point colours do not match their owner's palette" % [bad, g.systems.size()])
 
