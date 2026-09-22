@@ -759,7 +759,8 @@ typedef enum {
     OM_BUG_ARCHIPELAGO_DENSE     = 308, /* all Archipelago frontiers wired to the home (no sparse frontier) */
     OM_BUG_BUDGET_DRIFT          = 309, /* a late template roll changes the already-fixed region budget */
     OM_BUG_ARCHETYPE_RANGE_MISS  = 310, /* a home's mil/eco rolled outside its R-022-05 archetype range */
-    OM_BUG_E03_SLOW              = 311  /* deliberate O(N^2) slowdown for the 110-region scale gate */
+    OM_BUG_E03_SLOW              = 311, /* deliberate O(N^2) slowdown for the 110-region scale gate */
+    OM_BUG_STARTING_RATIO_SWAPPED = 312 /* ALG-30 general formula: economy uses STARTING_MIL_RATIO and military uses STARTING_ECO_RATIO */
 } om_bug_e03;
 #endif
 
@@ -775,7 +776,8 @@ typedef enum {
 #ifdef OM_DEBUG_INJECT
 typedef enum {
     OM_BUG_DIPLOMACY_AFTER_DRIFT   = 400, /* step 4.25 runs after step 5 (drift) instead of before it */
-    OM_BUG_TECHNOLOGY_BEFORE_ADMIN = 401  /* step 4.5 runs before step 4.1 (admin revolts) instead of after it */
+    OM_BUG_TECHNOLOGY_BEFORE_ADMIN = 401, /* step 4.5 runs before step 4.1 (admin revolts) instead of after it */
+    OM_BUG_TECH_GROWTH_TERMS_SWAPPED = 402 /* ALG-27 om_tech_step: avg_e and avg_p swapped between the growth ratio and the TECH_POPULATION_FLOOR clamp */
 } om_bug_e06;
 #endif
 
@@ -789,7 +791,8 @@ typedef enum {
  * ====================================================================== */
 #ifdef OM_DEBUG_INJECT
 typedef enum {
-    OM_BUG_LIFECYCLE_BEFORE_DRIFT = 500 /* step 6 runs before step 5 (drift) instead of after it */
+    OM_BUG_LIFECYCLE_BEFORE_DRIFT = 500, /* step 6 runs before step 5 (drift) instead of after it */
+    OM_BUG_ZOMBIE_PASS1_GE_NOT_GT = 501 /* ALG-42 pass 1 removes a zero-region breakaway only when creation tick is > 5 ticks ago, not >= 5 */
 } om_bug_e07;
 #endif
 
@@ -808,8 +811,107 @@ uint64_t om_tactical_step(om_world *w);
 
 #ifdef OM_DEBUG_INJECT
 typedef enum {
-    OM_BUG_TACTICAL_BEFORE_STRATEGIC = 900 /* tactical runs before the strategic steps instead of after them */
+    OM_BUG_TACTICAL_BEFORE_STRATEGIC = 900, /* tactical runs before the strategic steps instead of after them */
+    OM_BUG_BRACE_REDUCTION_WRONG_CONSTANT = 901 /* ALG-60 om_unit_damage_reduction: Brace reduction (0.50) implemented as Fortify's 0.20 */
 } om_bug_e11;
+#endif
+
+/* ======================================================================
+ * E-08: generational (epics/E-08-generational-play.md). Two-day-push brief
+ * decision 6: 600s reserved. F5 window control only; the epic's own symbols
+ * land with card B7.
+ * ====================================================================== */
+#ifdef OM_DEBUG_INJECT
+typedef enum {
+    OM_BUG_TIME_JUMP_CLAMP_SKIPPED = 600 /* ALG-45 om_time_jump_choose_length returns the raw requested length, skipping the [20, 100] clamp */
+} om_bug_e08;
+#endif
+
+/* ======================================================================
+ * E-09: chronicle (epics/E-09-chronicle.md). Two-day-push brief decision 6:
+ * 700s reserved. F5 window control only; the epic's own symbols land with
+ * card B8.
+ * ====================================================================== */
+#ifdef OM_DEBUG_INJECT
+typedef enum {
+    OM_BUG_SIGNIFICANCE_CAP_SKIPPED = 700 /* ALG-50 om_chronicle_score_base skips the SIGNIFICANCE_DELTA_CAP = 3.0 clamp on the delta term */
+} om_bug_e09;
+#endif
+
+/* ======================================================================
+ * E-10: missions (epics/E-10-missions.md). Two-day-push brief decision 6:
+ * 800s reserved. F5 window control only; the epic's own symbols land with
+ * card B9.
+ * ====================================================================== */
+#ifdef OM_DEBUG_INJECT
+typedef enum {
+    OM_BUG_URGENCY_DEFICIT_DIVISOR_WRONG = 800 /* ALG-55 om_mission_compute_urgency divides the three-term deficit sum by 200 instead of 300 */
+} om_bug_e10;
+#endif
+
+/* ======================================================================
+ * E-12: fog and sensors (epics/E-12-fog-and-sensors.md). Two-day-push brief
+ * decision 6: 1000s reserved. F5 window control only; the epic's own
+ * symbols land with card B11.
+ * ====================================================================== */
+#ifdef OM_DEBUG_INJECT
+typedef enum {
+    OM_BUG_INTERFERENCE_IGNORES_INTENSITY = 1000 /* ALG-65 om_zone_sample_interference returns 1.0 inside any zone instead of the zone's own configured intensity */
+} om_bug_e12;
+#endif
+
+/* ======================================================================
+ * E-13: movement and command (epics/E-13-movement-and-command.md). Two-day-
+ * push brief decision 6: 1100s reserved. OM_BUG_MOVE_RUBBERBAND = 1100 is
+ * already referenced by tests/qa/t1/test_rts_detectors.py's own local enum
+ * (Q2); mirrored here by name and id per that file's own comment ("F5 moves
+ * it into conftest"). F5 window control only; the epic's own symbols land
+ * with card B12.
+ * ====================================================================== */
+#ifdef OM_DEBUG_INJECT
+typedef enum {
+    OM_BUG_MOVE_RUBBERBAND = 1100, /* a scripted move overshoots and corrects every tick instead of arriving directly (Q2 rts_detectors "rubberband") */
+    OM_BUG_NAVMESH_CELL_SIZE_WRONG_CONSTANT = 1101 /* ALG-67 om_navmesh_get_cell_size returns NAVMESH_OBSTACLE_THRESHOLD (0.7) scaled onto the cell size (70.0) instead of NAVMESH_CELL_SIZE (100.0) */
+} om_bug_e13;
+#endif
+
+/* ======================================================================
+ * E-14: enemy macro behavior (epics/E-14-enemy-macro-behavior.md). Two-day-
+ * push brief decision 6: 1200s reserved for this module. No id assigned by
+ * F5: the one concrete number ALG-74 states (SCRIPT_EVAL_INTERVAL_TICKS =
+ * 40) is exposed only by om_macro_evaluation_interval_ticks(void), which
+ * takes no om_world*, so no per-world om_debug_inject could ever gate it --
+ * a control built on it could not fail on any build, correct or buggy
+ * (CLAUDE.md). The only om_world*-taking candidates (om_macro_get_threshold_noise
+ * / om_macro_get_timer_noise) need a trigger point and a p1 indexing scheme
+ * signatures.toml does not resolve; not guessed. See
+ * docs/northstar/proving_ground/evidence/push_2026-09-22/f5_controls.md.
+ * ====================================================================== */
+
+/* ======================================================================
+ * E-15: reinforcement structures (epics/E-15-reinforcement-structures.md).
+ * Two-day-push brief decision 6: 1300s reserved. F5 window control only;
+ * the epic's own symbols land with card B14.
+ * ====================================================================== */
+#ifdef OM_DEBUG_INJECT
+typedef enum {
+    OM_BUG_STRUCTURE_MAX_HP_WRONG_CONSTANT = 1300 /* ALG-75 om_structure_get_hud_data's max_hp field reads REINFORCEMENT_CAPTURE_RADIUS (300.0) instead of REINFORCEMENT_STRUCTURE_HP (3000.0); the pure om_structure_get_base_max_hp() getter takes no om_world* and cannot host a per-world fault */
+} om_bug_e15;
+#endif
+
+/* ======================================================================
+ * save.c (S-111 saving, epics/E-16-client-camera-hud-and-world-view.md).
+ * Two-day-push brief decision 6: "save 1600s" reserved (no epic number of
+ * its own). OM_BUG_SAVE_SKIPS_RNG_STATE = 1600 is already referenced by
+ * tests/csim/test_E16_S111_saving.py's own local constant, mirrored here by
+ * name and id per that file's own comment ("F5 moves this into conftest's
+ * OMBug"). F5 window control only; the epic's own symbols land with card T2c.
+ * ====================================================================== */
+#ifdef OM_DEBUG_INJECT
+typedef enum {
+    OM_BUG_SAVE_SKIPS_RNG_STATE = 1600, /* save/load skips writing or restoring the PCG32 stream (test_E16_S111_saving.py's own control) */
+    OM_BUG_SAVE_SKIPS_TICK = 1601 /* om_load_state_read restores everything but the tick counter, so a loaded world resumes stepping from tick 0 */
+} om_bug_save;
 #endif
 
 /* ---- generated from signatures.toml: structs ---- */
