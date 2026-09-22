@@ -1,0 +1,381 @@
+extends SceneTree
+
+# Piece C5 (docs/northstar/plans/push/pieces.toml; docs/northstar/plans/briefs/
+# 2026-09-22-two-day-push.md wave-2 row C5, attach step 7): res://scenes/tactical_c/
+# tactical_view.tscn is a fresh, minimal renderer over a C transport v1 "tactical"
+# snapshot (docs/architecture.md "C transport v1"): units drawn as blocks, move/
+# attack-move/attack-target/box-select input turned into command JSON, a fixed
+# top-down camera bounded to the map canvas. Not built yet (depends on attach/B10,
+# attach/B12, attach/T1); this file is red on the missing scene, not a parse error.
+#
+# Contract this test requires of the root node (recorded verbatim in
+# docs/northstar/proving_ground/evidence/push_2026-09-22/c5_t2g_tests_note.md):
+#   load_frame(frame: Dictionary) -> void       loads one tactical snapshot (map/
+#                                                units/visible), replacing whatever
+#                                                was loaded before
+#   qa_state() -> Dictionary                    JSON-safe: tick, canvas, units
+#                                                {id:{faction,type,tier,hp,layer,
+#                                                facing,state,x,y}} (ground truth,
+#                                                every unit in the loaded frame),
+#                                                units_px {id:[x,y]} (screen space,
+#                                                ONLY units the local faction's
+#                                                `visible` set contains -- R-089-04,
+#                                                no ghost for a hidden or
+#                                                never-seen unit), local_faction,
+#                                                selected, camera {x,y}
+#   qa_plant(id: String) -> bool                PLANTS reused verbatim from the p4
+#                                                and p8 mockup briefs; "nope" and
+#                                                any id this scene does not
+#                                                implement always return false
+#   issue_command(cmd: Dictionary) -> Dictionary the command JSON the scene would
+#                                                send over the pipe for a UI
+#                                                action, never actually sent here
+#   qa_box_select(x0,y0,x1,y1: float) -> Array  screen-space rect select; returns
+#                                                and records the newly selected ids
+#   qa_pan(x, y: float) -> void                  pans/recentres the camera, clamped
+#                                                to the loaded frame's map canvas
+#                                                (R-103-02)
+#
+# PLANTS reused verbatim: "facing-fixed", "camera-unbounded" (both listed in
+# 2026-09-22-p4-units-mockup.md / -p8-hud-mockup.md's PLANTS arrays). "pass-through",
+# "instant-fight", "silhouettes-same", "no-death-visual", "box-one-layer",
+# "group-shared", "clock-wallclock", "narrow-moves-focus" do not apply to this
+# minimal view (no collision/damage sim, one layer, no clock, no control groups)
+# and are not required here -- see the evidence note's "Not tested here". R-105-04
+# forbids a select-all command outright, so "select-all-exists" must return false
+# from qa_plant() unconditionally, never true even when "planted" -- this scene
+# must never wire that fault site up at all.
+
+const SCENE_PATH := "res://scenes/tactical_c/tactical_view.tscn"
+const FIXTURE_TICK0_PATH := "res://tests/fixtures/tactical_frame_seed11.json"
+const FIXTURE_TICK10_PATH := "res://tests/fixtures/tactical_frame_seed11_tick10.json"
+const N_UNITS := 12
+const LOCAL_FACTION := 0
+const PLANTS := ["facing-fixed", "camera-unbounded"]
+const CONTRACT_METHODS := ["load_frame", "qa_state", "qa_plant", "issue_command",
+	"qa_box_select", "qa_pan"]
+
+var _pass_count := 0
+var _fail_count := 0
+var _fail_msgs: Array[String] = []
+var _root: Node
+var _frame0: Dictionary
+var _frame10: Dictionary
+
+
+func _initialize() -> void:
+	await _run_tests()
+	print("\n=== Tactical View Test Results ===")
+	print("PASS: %d  FAIL: %d" % [_pass_count, _fail_count])
+	if _fail_count > 0:
+		print("Failures:")
+		for msg in _fail_msgs:
+			print("  - " + msg)
+		print("=== RED ===\n")
+		quit(1)
+	else:
+		print("=== GREEN ===\n")
+		quit(0)
+
+
+func _assert(cond: bool, msg: String) -> void:
+	if cond:
+		_pass_count += 1
+	else:
+		_fail_count += 1
+		_fail_msgs.append(msg)
+
+
+func _run_tests() -> void:
+	_frame0 = _read_json(FIXTURE_TICK0_PATH)
+	_assert(not _frame0.is_empty(), "fixture missing or unparsable: " + FIXTURE_TICK0_PATH)
+	_frame10 = _read_json(FIXTURE_TICK10_PATH)
+	_assert(not _frame10.is_empty(), "fixture missing or unparsable: " + FIXTURE_TICK10_PATH)
+	if _frame0.is_empty() or _frame10.is_empty():
+		return
+	_assert(_frame0.get("units", []).size() == N_UNITS,
+		"fixture setup bug: tick0 fixture should carry %d units" % N_UNITS)
+
+	var packed = load(SCENE_PATH)
+	_assert(packed != null, "cannot load %s (piece C5 not attached yet)" % SCENE_PATH)
+	if packed == null or not (packed is PackedScene):
+		return
+
+	_root = (packed as PackedScene).instantiate()
+	_assert(_root != null, "%s failed to instantiate" % SCENE_PATH)
+	if _root == null:
+		return
+	get_root().add_child(_root)
+	await process_frame
+	await process_frame
+
+	for m in CONTRACT_METHODS:
+		_assert(_root.has_method(m), "tactical_view root missing method: " + m)
+	for m in CONTRACT_METHODS:
+		if not _root.has_method(m):
+			return
+
+	_root.load_frame(_frame0)
+	await process_frame
+
+	_check_qa_state_json_safe()
+	_check_units_count_and_px_in_viewport()
+	_check_only_visible_set_drawn_R089_04()
+	await _check_moved_unit_and_facing_R100_01()
+	_check_dead_unit_gone_and_hidden_unit_no_ghost()
+	_check_command_move_R096_01()
+	_check_command_attack_move_R096_02()
+	_check_command_attack_target_R096_04()
+	_check_box_select_then_move_R105_01()
+	_check_camera_bounded_R103_02()
+	_check_plant_camera_unbounded()
+	await _check_plant_facing_fixed_R100_01()
+	_check_select_all_never_exists_R105_04()
+	_check_plant_nope_and_all_real_plants_true()
+
+
+func _check_qa_state_json_safe() -> void:
+	var text := JSON.stringify(_root.qa_state())
+	_assert(text != "", "qa_state() did not survive JSON.stringify")
+
+
+func _check_units_count_and_px_in_viewport() -> void:
+	var state: Dictionary = _root.qa_state()
+	var units: Dictionary = state.get("units", {})
+	_assert(units.size() == N_UNITS,
+		"units should carry all %d units from the loaded frame (ground truth), got %d" % [N_UNITS, units.size()])
+
+	var px: Dictionary = state.get("units_px", {})
+	# get_root().size is not a reliable viewport measurement under
+	# --headless (observed 100x100 regardless of project.godot's configured
+	# 1920x1080), so a too-small reading falls back to the configured size
+	# rather than asserting against a meaningless 100x100 box.
+	var vp := Vector2(get_root().size)
+	if vp.x < 200.0 or vp.y < 200.0:
+		vp = Vector2(1920, 1080)
+	var outside := 0
+	for id in px:
+		var p = px[id]
+		if typeof(p) != TYPE_ARRAY or p.size() != 2 or p[0] < 0 or p[0] > vp.x or p[1] < 0 or p[1] > vp.y:
+			outside += 1
+	_assert(outside == 0,
+		"%d/%d drawn units_px entries fall outside the %dx%d viewport" % [outside, px.size(), int(vp.x), int(vp.y)])
+
+
+# R-089-04: visibility has no memory of last-seen positions. Only the local
+# faction's `visible` set is drawn; an enemy the fixture never lists (11, 12)
+# must have no node at all.
+func _check_only_visible_set_drawn_R089_04() -> void:
+	var state: Dictionary = _root.qa_state()
+	_assert(int(state.get("local_faction", -1)) == LOCAL_FACTION,
+		"local_faction should be %d in Round 1 (single player), got %s" % [LOCAL_FACTION, state.get("local_faction")])
+
+	var expected: Array = _frame0.get("visible", {}).get(str(LOCAL_FACTION), [])
+	var drawn := _int_keys(state.get("units_px", {}))
+	_assert(_same_set(drawn, expected),
+		"tick0: drawn ids %s should equal visible[\"0\"] %s exactly" % [str(drawn), str(expected)])
+
+	for hidden_id in [11, 12]:
+		_assert(not drawn.has(hidden_id),
+			"tick0: unit %d is outside visible[\"0\"] and must have no node" % hidden_id)
+
+
+func _check_moved_unit_and_facing_R100_01() -> void:
+	var state0: Dictionary = _root.qa_state()
+	var px0 = state0.get("units_px", {}).get("4")
+	var facing0 = state0.get("units", {}).get("4", {}).get("facing")
+	_assert(px0 != null, "unit 4 should be drawn at tick0 (positive control)")
+	_assert(facing0 != null, "unit 4 should report a facing at tick0")
+
+	_root.load_frame(_frame10)
+	await process_frame
+	var state10: Dictionary = _root.qa_state()
+	var px10 = state10.get("units_px", {}).get("4")
+	var facing10 = state10.get("units", {}).get("4", {}).get("facing")
+	_assert(px10 != null, "unit 4 should still be drawn at tick10")
+	_assert(facing10 != null, "unit 4 should report a facing at tick10")
+	if px0 == null or px10 == null or facing0 == null or facing10 == null:
+		return
+
+	_assert(float(facing0) != float(facing10),
+		"R-100-01: unit 4's facing should change between tick0 (%s) and tick10 (%s) after a pure +x move" % [facing0, facing10])
+
+	var dx: float = abs(float(px10[0]) - float(px0[0]))
+	var dy: float = abs(float(px10[1]) - float(px0[1]))
+	_assert(max(dx, dy) > 3.0,
+		"unit 4's screen position should visibly move between the two frames (dx=%s dy=%s)" % [dx, dy])
+	_assert(dx > 3.0 * dy or dy > 3.0 * dx,
+		"unit 4 moved 75 wu along +x with y unchanged; the screen delta should read as one dominant axis, not a diagonal (dx=%s dy=%s)" % [dx, dy])
+
+
+func _check_dead_unit_gone_and_hidden_unit_no_ghost() -> void:
+	var state10: Dictionary = _root.qa_state()
+	var units: Dictionary = state10.get("units", {})
+	var px: Dictionary = state10.get("units_px", {})
+
+	_assert(not units.has("2"), "R-136 placeholder: unit 2 died between the frames and must be gone from qa_state().units entirely")
+	_assert(not px.has("2"), "unit 2 must have no drawn node at tick10")
+
+	_assert(units.has("10"), "unit 10 is still alive at tick10 (fixture setup: only left faction 0's visible set)")
+	_assert(not px.has("10"),
+		"R-089-04: unit 10 left visible[\"0\"] at tick10; it must have no node and no ghost of its tick0 position")
+
+
+func _check_command_move_R096_01() -> void:
+	var cmd: Dictionary = _root.issue_command({"kind": "move", "unit_ids": [4], "x": 500.0, "y": 300.0})
+	_assert(cmd.get("type") == "cmd", "move command must carry type=cmd, got %s" % cmd.get("type"))
+	_assert(cmd.get("name") == "command_move", "move command name should be command_move, got %s" % cmd.get("name"))
+	_assert(_ints_eq_ordered(cmd.get("unit_ids", []), [4]), "move command unit_ids should be [4], got %s" % str(cmd.get("unit_ids")))
+	_assert(float(cmd.get("x", -1)) == 500.0 and float(cmd.get("y", -1)) == 300.0,
+		"move command should carry the destination coordinates, got x=%s y=%s" % [cmd.get("x"), cmd.get("y")])
+
+
+func _check_command_attack_move_R096_02() -> void:
+	var cmd: Dictionary = _root.issue_command({"kind": "attack_move", "unit_ids": [1, 3], "x": 900.0, "y": 900.0})
+	_assert(cmd.get("type") == "cmd", "attack-move command must carry type=cmd")
+	_assert(cmd.get("name") == "command_attack_move", "attack-move command name should be command_attack_move, got %s" % cmd.get("name"))
+	_assert(_ints_eq_ordered(cmd.get("unit_ids", []), [1, 3]), "attack-move command unit_ids should be [1, 3], got %s" % str(cmd.get("unit_ids")))
+	_assert(float(cmd.get("x", -1)) == 900.0 and float(cmd.get("y", -1)) == 900.0,
+		"attack-move command should carry the destination coordinates")
+
+
+func _check_command_attack_target_R096_04() -> void:
+	var cmd: Dictionary = _root.issue_command({"kind": "attack_target", "unit_ids": [1], "target": 7})
+	_assert(cmd.get("type") == "cmd", "attack-target command must carry type=cmd")
+	_assert(cmd.get("name") == "command_attack_target", "attack-target command name should be command_attack_target, got %s" % cmd.get("name"))
+	_assert(_ints_eq_ordered(cmd.get("unit_ids", []), [1]), "attack-target command unit_ids should be [1], got %s" % str(cmd.get("unit_ids")))
+	_assert(int(cmd.get("target", -999)) == 7, "attack-target command should carry the target id, got %s" % cmd.get("target"))
+
+
+func _check_box_select_then_move_R105_01() -> void:
+	var state: Dictionary = _root.qa_state()
+	var px: Dictionary = state.get("units_px", {})
+	var p1 = px.get("1")
+	var p3 = px.get("3")
+	_assert(p1 != null and p3 != null, "units 1 and 3 should both be drawn at tick10 (positive control for the box-select fixture)")
+	if p1 == null or p3 == null:
+		return
+
+	var x0: float = min(float(p1[0]), float(p3[0])) - 2.0
+	var y0: float = min(float(p1[1]), float(p3[1])) - 2.0
+	var x1: float = max(float(p1[0]), float(p3[0])) + 2.0
+	var y1: float = max(float(p1[1]), float(p3[1])) + 2.0
+
+	var selected: Array = _root.qa_box_select(x0, y0, x1, y1)
+	_assert(_same_set(_as_ints(selected), [1, 3]),
+		"R-105-01: a box drawn tightly around units 1 and 3 should select exactly {1, 3}, got %s" % str(selected))
+
+	var cmd: Dictionary = _root.issue_command({"kind": "move", "unit_ids": selected, "x": 10.0, "y": 20.0})
+	_assert(_same_set(_as_ints(cmd.get("unit_ids", [])), [1, 3]),
+		"a move issued right after the box-select should carry both selected ids, got %s" % str(cmd.get("unit_ids")))
+
+
+# R-103-02: the mission canvas edges bound the camera; it never leaves the map.
+func _check_camera_bounded_R103_02() -> void:
+	var canvas: float = float(_frame10.get("map", {}).get("canvas", 0.0))
+	_assert(canvas > 0.0, "fixture setup bug: map.canvas should be > 0")
+
+	_root.qa_pan(canvas * 0.5, canvas * 0.5)
+	var cam_mid: Dictionary = _root.qa_state().get("camera", {})
+	_assert(abs(float(cam_mid.get("x", -1)) - canvas * 0.5) < 1.0 and abs(float(cam_mid.get("y", -1)) - canvas * 0.5) < 1.0,
+		"clean: panning to the canvas centre should land there (positive control), got %s" % str(cam_mid))
+
+	_root.qa_pan(999999.0, 999999.0)
+	var cam_edge: Dictionary = _root.qa_state().get("camera", {})
+	var cx: float = float(cam_edge.get("x", -1))
+	var cy: float = float(cam_edge.get("y", -1))
+	_assert(cx >= 0.0 and cx <= canvas and cy >= 0.0 and cy <= canvas,
+		"R-103-02: panning far past the edge should clamp the camera inside [0, %s], got %s" % [canvas, str(cam_edge)])
+	_assert(cx < 999999.0,
+		"camera should not simply pass the raw pan target through unclamped")
+
+
+func _check_plant_camera_unbounded() -> void:
+	var canvas: float = float(_frame10.get("map", {}).get("canvas", 0.0))
+	_assert(_root.qa_plant("camera-unbounded"), "qa_plant(camera-unbounded) must return true")
+	_root.qa_pan(999999.0, 999999.0)
+	var cam: Dictionary = _root.qa_state().get("camera", {})
+	_assert(float(cam.get("x", 0.0)) > canvas,
+		"PLANT camera-unbounded: the clamp should be gone, camera.x should exceed the canvas, got %s" % str(cam))
+
+
+# The clean run above already proved unit 4's facing differs between tick0
+# and tick10 (positive control). Under facing-fixed, reloading both frames
+# must no longer reproduce that difference.
+func _check_plant_facing_fixed_R100_01() -> void:
+	_assert(_root.qa_plant("facing-fixed"), "qa_plant(facing-fixed) must return true")
+	_root.load_frame(_frame0)
+	await process_frame
+	var facing_a = _root.qa_state().get("units", {}).get("4", {}).get("facing")
+	_root.load_frame(_frame10)
+	await process_frame
+	var facing_b = _root.qa_state().get("units", {}).get("4", {}).get("facing")
+	_assert(facing_a != null and facing_b != null, "unit 4's facing should still be reported under the plant")
+	if facing_a != null and facing_b != null:
+		_assert(float(facing_a) == float(facing_b),
+			"PLANT facing-fixed: unit 4's facing should stay frozen across the two frames, got %s then %s" % [facing_a, facing_b])
+
+
+# R-105-04: no select-all, select-all-army, or select-all-of-type command may
+# ever exist. Unlike a normal plant (false until activated, true after),
+# this id must never be wired to a fault site at all, so it stays false
+# whether or not it is "planted".
+func _check_select_all_never_exists_R105_04() -> void:
+	_assert(not _root.qa_plant("select-all-exists"),
+		"R-105-04: qa_plant(select-all-exists) must return false -- this scene must never expose a select-all fault site to enable")
+
+
+func _check_plant_nope_and_all_real_plants_true() -> void:
+	_assert(not _root.qa_plant("nope"), "qa_plant('nope') must return false")
+	for id in PLANTS:
+		_assert(_root.qa_plant(id), "qa_plant(%s) must return true" % id)
+
+
+func _int_keys(d: Dictionary) -> Array:
+	var out := []
+	for k in d.keys():
+		out.append(int(k))
+	return out
+
+
+func _as_ints(a: Array) -> Array:
+	var out := []
+	for v in a:
+		out.append(int(v))
+	return out
+
+
+# Array equality/`.has()` in GDScript compares element type strictly (1 ==
+# 1.0 as scalars, but [1] == [1.0] as arrays is false, and [1.0].has(1) is
+# false); JSON always parses whole numbers as floats, so every id set this
+# file compares is normalized to int here, never left to the caller.
+func _same_set(a: Array, b: Array) -> bool:
+	var ia := _as_ints(a)
+	var ib := _as_ints(b)
+	if ia.size() != ib.size():
+		return false
+	for v in ia:
+		if not ib.has(v):
+			return false
+	return true
+
+
+func _ints_eq_ordered(a: Array, b: Array) -> bool:
+	var ia := _as_ints(a)
+	var ib := _as_ints(b)
+	if ia.size() != ib.size():
+		return false
+	for i in range(ia.size()):
+		if ia[i] != ib[i]:
+			return false
+	return true
+
+
+func _read_json(path: String) -> Dictionary:
+	var f := FileAccess.open(path, FileAccess.READ)
+	if f == null:
+		return {}
+	var text := f.get_as_text()
+	f.close()
+	var data = JSON.parse_string(text)
+	return data if typeof(data) == TYPE_DICTIONARY else {}

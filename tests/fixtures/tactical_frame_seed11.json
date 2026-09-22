@@ -1,0 +1,35 @@
+{
+  "type": "tactical",
+  "tick": 0,
+  "map": {
+    "canvas": 4000.0,
+    "nodes": [
+      {"i": 0, "kind": 0, "x": 500.0, "y": 500.0},
+      {"i": 1, "kind": 1, "x": 3500.0, "y": 3500.0}
+    ],
+    "cover": [
+      {"x": 2000.0, "y": 2000.0, "r": 150.0, "h": 30.0}
+    ],
+    "obstacles": [
+      {"x": 2500.0, "y": 1500.0, "r": 100.0}
+    ]
+  },
+  "units": [
+    {"id": 1, "faction": 0, "type": 0, "tier": 2, "x": 800.0, "y": 800.0, "hp": 250.0, "layer": 1, "facing": 0.7854, "target": -1, "state": 0},
+    {"id": 2, "faction": 0, "type": 2, "tier": 2, "x": 1000.0, "y": 800.0, "hp": 15.0, "layer": 1, "facing": 0.0, "target": 8, "state": 2},
+    {"id": 3, "faction": 0, "type": 3, "tier": 2, "x": 1200.0, "y": 800.0, "hp": 375.0, "layer": 1, "facing": 3.14159, "target": -1, "state": 0},
+    {"id": 4, "faction": 0, "type": 1, "tier": 2, "x": 1500.0, "y": 2000.0, "hp": 325.0, "layer": 1, "facing": 1.5708, "target": -1, "state": 1},
+    {"id": 5, "faction": 0, "type": 4, "tier": 2, "x": 1800.0, "y": 800.0, "hp": 400.0, "layer": 1, "facing": 0.0, "target": -1, "state": 0},
+    {"id": 6, "faction": 0, "type": 5, "tier": 2, "x": 2000.0, "y": 800.0, "hp": 1050.0, "layer": 1, "facing": 0.0, "target": -1, "state": 0},
+    {"id": 7, "faction": 1, "type": 0, "tier": 2, "x": 2400.0, "y": 3200.0, "hp": 250.0, "layer": 1, "facing": 3.14159, "target": -1, "state": 0},
+    {"id": 8, "faction": 1, "type": 2, "tier": 2, "x": 2600.0, "y": 3200.0, "hp": 500.0, "layer": 1, "facing": 3.14159, "target": 2, "state": 2},
+    {"id": 9, "faction": 1, "type": 3, "tier": 2, "x": 2800.0, "y": 3200.0, "hp": 375.0, "layer": 1, "facing": 3.14159, "target": -1, "state": 0},
+    {"id": 10, "faction": 1, "type": 1, "tier": 2, "x": 3000.0, "y": 3200.0, "hp": 325.0, "layer": 1, "facing": 3.14159, "target": -1, "state": 0},
+    {"id": 11, "faction": 1, "type": 4, "tier": 2, "x": 3200.0, "y": 3200.0, "hp": 400.0, "layer": 1, "facing": 3.14159, "target": -1, "state": 0},
+    {"id": 12, "faction": 1, "type": 5, "tier": 2, "x": 3400.0, "y": 3200.0, "hp": 1050.0, "layer": 1, "facing": 3.14159, "target": -1, "state": 0}
+  ],
+  "visible": {
+    "0": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+    "1": [7, 8, 9, 10, 11, 12, 1, 2, 3, 4]
+  }
+}
