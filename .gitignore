@@ -29,5 +29,7 @@ graphify-out/raw/
 .venv/
 *.so
 *.o
+build/
+pipe/ouroboros_pipe
 
 docs/northstar/research/mockups/**/*.import

@@ -51,7 +51,33 @@ from card_lint import (  # noqa: E402
 )
 from green_check import parse_card  # noqa: E402
 
-ORCHESTRATORS = {"om_world_step"}
+try:
+    import tomllib
+except ModuleNotFoundError:  # Python < 3.11
+    tomllib = None
+
+_SPECFACTORY_TOML = Path(__file__).resolve().parents[2] / "docs/northstar/spec_factory/specfactory.toml"
+_DEFAULT_ORCHESTRATORS = {"om_world_step"}
+
+
+def _load_orchestrators() -> set[str]:
+    """`[chain_graph] orchestrators` from docs/northstar/spec_factory/
+    specfactory.toml (freeze/F2, decision 3's orchestrator set for tick-stage
+    closure); falls back to the historical single-orchestrator constant when
+    the file is absent, unreadable, or missing the table."""
+    if not tomllib or not _SPECFACTORY_TOML.is_file():
+        return set(_DEFAULT_ORCHESTRATORS)
+    try:
+        data = tomllib.loads(_SPECFACTORY_TOML.read_text())
+    except (OSError, tomllib.TOMLDecodeError):
+        return set(_DEFAULT_ORCHESTRATORS)
+    orchestrators = data.get("chain_graph", {}).get("orchestrators")
+    if not orchestrators:
+        return set(_DEFAULT_ORCHESTRATORS)
+    return set(orchestrators)
+
+
+ORCHESTRATORS = _load_orchestrators()
 HOOK_CALL_RE = re.compile(r"^\s*(om_[A-Za-z0-9_]+)\(w\);", re.M)
 READER_RE = re.compile(r"^om_(?:tick|pending)_[A-Za-z0-9_]*$")
 
