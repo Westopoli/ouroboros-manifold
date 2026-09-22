@@ -1,0 +1,80 @@
+# Symbol-to-module ownership for symbols that more than one epic's tests call.
+# Claude-owned data (design lane), drafted 2026-09-21 night from
+# docs/northstar/proving_ground/evidence/card_regen/cross_epic.md, for Westley's
+# review before card_regen.py and skeleton_gen.py read it. Rule: a symbol is owned
+# by the module whose epic defines its behaviour in the bible; every other epic's
+# card drops it and treats it as a prerequisite (sequential ownership across
+# epics, the same rule card_regen applies within one epic). A module's owning
+# epic is the one whose cards build it; "core" symbols live in sim.c and are
+# built by a core card, not by any feature epic.
+
+[modules]
+"sim.c"             = "core"
+"events.c"          = "E-04"
+"friction.c"        = "E-05"
+"worldgen.c"        = "E-03"
+"diplomacy.c"       = "E-06"
+"lifecycle.c"       = "E-07"
+"generational.c"    = "E-08"
+"chronicle.c"       = "E-09"
+"mission.c"         = "E-10"
+"unit.c"            = "E-11"
+"fog.c"             = "E-12"
+"tactical_move.c"   = "E-13"
+"enemy_macro.c"     = "E-14"
+"tactical_support.c"= "E-15"
+"tactical_mapgen.c" = "E-17"
+
+[symbols]
+# characters, lineages, time jump: generational (E-08)
+om_character_create                 = "generational.c"
+om_lineage_create                   = "generational.c"
+om_lineage_record_history_region    = "generational.c"
+om_time_jump_run                    = "generational.c"
+# chronicle entries: E-09
+om_chronicle_entry_count            = "chronicle.c"
+# event system, including manual firing and character attachment: E-04
+om_event_fire_manual                = "events.c"
+om_event_get_attached_character     = "events.c"
+om_tick_events                      = "events.c"
+om_event_queue_external             = "events.c"
+om_tick_pruned                      = "events.c"
+om_event_template_count             = "events.c"
+om_events_load_launch               = "events.c"
+# border friction: E-05 (live card 206a)
+om_tick_friction                    = "friction.c"
+# world generation: E-03
+om_world_generated                  = "worldgen.c"
+# core fixture and trace helpers: sim.c
+om_world_set_tick                   = "sim.c"
+om_world_get_state_checksum         = "sim.c"
+# missions and objectives: E-10
+om_mission_compute_parity           = "mission.c"
+om_mission_end                      = "mission.c"
+om_mission_get_objective_completion = "mission.c"
+om_objective_get_center             = "mission.c"
+# units, combat, the tactical tick orchestrator: E-11
+# (om_tactical_tick and om_tactical_step are a second orchestrator for tick-stage
+# closure; specfactory.toml must list them once they exist)
+om_tactical_step                    = "unit.c"
+om_tactical_tick                    = "unit.c"
+om_tactical_tick_to                 = "unit.c"
+om_unit_spawn                       = "unit.c"
+om_unit_spawn_combat                = "unit.c"
+om_unit_attack                      = "unit.c"
+om_unit_deal_damage                 = "unit.c"
+om_unit_get_hp                      = "unit.c"
+om_unit_set_hp                      = "unit.c"
+om_unit_get_target                  = "unit.c"
+om_command_attack_move              = "unit.c"
+om_command_attack_target            = "unit.c"
+om_command_activate_ability         = "unit.c"
+# movement and position: E-13
+om_command_move                     = "tactical_move.c"
+om_unit_get_pos                     = "tactical_move.c"
+om_unit_teleport                    = "tactical_move.c"
+# fog and visibility: E-12
+om_visibility_compute               = "fog.c"
+# tactical map pieces: E-17
+om_map_add_cover                    = "tactical_mapgen.c"
+om_map_add_obstacle                 = "tactical_mapgen.c"
