@@ -10,6 +10,7 @@ const PLANTS: Array[String] = [
 ]
 
 var _camera_rig
+var _hud
 var _world: Node3D
 var _generated: Node3D
 var _marker: Marker
@@ -24,6 +25,7 @@ var _regen_count: int = 0
 
 func _ready() -> void:
 	_camera_rig = get_node("CameraRig")
+	_hud = get_node("HUD")
 	_world = Node3D.new()
 	_world.name = "World"
 	add_child(_world)
@@ -32,6 +34,7 @@ func _ready() -> void:
 	_world.add_child(_generated)
 	_build_ground()
 	_generate()
+	_hud.bind(self)
 
 
 func _build_ground() -> void:
@@ -63,6 +66,8 @@ func _generate() -> void:
 	_marker.setup(_mission, display)
 	_add_player_spawn(_places.player_spawn().pos)
 	_regen_count += 1
+	if _hud != null:
+		_hud.on_regenerated()
 
 
 func _add_player_spawn(pos: Vector2) -> void:
