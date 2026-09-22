@@ -210,11 +210,35 @@ func _resolve_pending(u: Dictionary) -> void:
 
 
 func visible_by(uid: int) -> Array:
-	return []
+	var out: Array = []
+	if not units.has(uid):
+		return out
+	var observer: Dictionary = units[uid]
+	for eid in units.keys():
+		var e: Dictionary = units[eid]
+		if e.faction == observer.faction:
+			continue
+		var dist: float = observer.pos.distance_to(e.pos)
+		var radius: float = observer.sensor_wu
+		if e.layer != observer.layer:
+			radius = observer.sensor_wu * ADJACENT_VISION_FACTOR
+			if QaPlants.is_active("cross-layer-full-range"):
+				radius = observer.sensor_wu
+		if dist <= radius:
+			out.append(eid)
+	return out
 
 
 func visible_enemy_uids() -> Array:
-	return []
+	var seen := {}
+	for uid in units.keys():
+		if units[uid].faction != 0:
+			continue
+		for eid in visible_by(uid):
+			seen[eid] = true
+	var out: Array = seen.keys()
+	out.sort()
+	return out
 
 
 func compute_hash() -> int:
