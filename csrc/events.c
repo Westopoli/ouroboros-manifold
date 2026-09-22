@@ -36,6 +36,11 @@
 #include <stddef.h>
 #include <string.h>
 
+void om_step_events(om_world *w) {
+    /* STUB */
+    (void)w;
+}
+
 void om_events_load_launch(om_world *w) {
     /* STUB */
     (void)w;

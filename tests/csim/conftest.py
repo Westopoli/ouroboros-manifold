@@ -756,6 +756,7 @@ class OMBugE04:
     CHAIN_COUNTER_UNSAVED = 207
     TRIGGERS_READ_LIVE = 208
     E04_SLOW = 209
+    EVENTS_AFTER_FACTIONS = 210
 
 
 class OmSpawn(ctypes.Structure):

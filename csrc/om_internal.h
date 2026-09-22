@@ -94,6 +94,7 @@ struct om_world {
  * the colliding intents from w->decisions[] so om_step_resolve never
  * double-resolves them. See docs/bible/epics/E-05-faction-agents-and-conflict.md
  * R-039-01..06 and csrc/sim.c's tick-order wiring in om_world_step. */
+void om_step_events(om_world *w);
 void om_faction_step_budget(om_world *w);
 void om_step_telegraphs(om_world *w);
 void om_step_decisions(om_world *w);

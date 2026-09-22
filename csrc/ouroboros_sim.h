@@ -635,7 +635,9 @@ typedef enum {
     OM_BUG_DRAW_BEFORE_CONDITION   = 206, /* probability draw consumed before the condition check */
     OM_BUG_CHAIN_COUNTER_UNSAVED   = 207,
     OM_BUG_TRIGGERS_READ_LIVE      = 208, /* fresh triggers read another region's post-event field */
-    OM_BUG_E04_SLOW                = 209
+    OM_BUG_E04_SLOW                = 209,
+    OM_BUG_EVENTS_AFTER_FACTIONS   = 210  /* tick steps 1-2 (events) run after step 3 (factions)
+                                            * instead of before it */
 } om_bug_e04;
 #endif
 

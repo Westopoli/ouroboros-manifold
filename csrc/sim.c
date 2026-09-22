@@ -108,6 +108,17 @@ uint64_t om_world_step(om_world *w) {
     }
 #endif
 
+    /* Steps 1-2: Events (E-04): resolve the due queue, then evaluate fresh
+     * triggers on every inhabited region (docs/bible/algorithms.md:13-14). */
+#ifdef OM_DEBUG_INJECT
+    int events_after_factions = (w->inject == OM_BUG_EVENTS_AFTER_FACTIONS);
+#else
+    int events_after_factions = 0;
+#endif
+    if (om_world_feature(w, OM_FEAT_EVENTS) && !events_after_factions) {
+        om_step_events(w);              /* 1-2 */
+    }
+
     /* Step 3: Factions (E-05) */
     if (om_world_feature(w, OM_FEAT_FACTIONS)) {
         /* 3a snapshot */
@@ -141,6 +152,12 @@ uint64_t om_world_step(om_world *w) {
             om_step_resolve(w);        /* 3f */
         }
     }
+
+#ifdef OM_DEBUG_INJECT
+    if (om_world_feature(w, OM_FEAT_EVENTS) && events_after_factions) {
+        om_step_events(w);              /* Fault: 1-2 run after step 3 instead of before it */
+    }
+#endif
 
     /* Step 4: Friction & Admin Revolts (E-05) */
     if (om_world_feature(w, OM_FEAT_FRICTION)) {
