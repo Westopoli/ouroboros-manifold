@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" width="960" height="620" version="1.1">
+  <rect x="0" y="0" width="960" height="620" fill="#f4f1ea"/>
+  <text x="30" y="38" font-family="Georgia, serif" font-size="22" fill="#20202a" font-weight="bold">Standing Orders — pre-mission loadout board</text>
+  <text x="30" y="60" font-family="Georgia, serif" font-size="13" fill="#4a4a55">Assign up to two trait cards per unit type. Empty slots are free.</text>
+
+  <!-- Unit type rows -->
+  <g font-family="Georgia, serif">
+    <!-- Row: Raider -->
+    <rect x="30" y="90" width="900" height="90" fill="#ffffff" stroke="#c9c2b3" stroke-width="1.5"/>
+    <circle cx="70" cy="135" r="26" fill="#d8cba8" stroke="#8a7a52" stroke-width="2"/>
+    <text x="70" y="141" font-size="13" text-anchor="middle" fill="#20202a">Raider</text>
+    <text x="120" y="120" font-size="12" fill="#6a6a70">Strike · flanker</text>
+    <!-- slot 1 filled -->
+    <rect x="120" y="128" width="170" height="42" rx="6" fill="#eef3e6" stroke="#5c8a3c" stroke-width="2"/>
+    <text x="205" y="147" font-size="13" text-anchor="middle" fill="#2f4a20" font-weight="bold">Long Stride</text>
+    <text x="205" y="163" font-size="10" text-anchor="middle" fill="#4a5a40">+15% move speed</text>
+    <!-- slot 2 empty -->
+    <rect x="305" y="128" width="170" height="42" rx="6" fill="#f4f1ea" stroke="#b8b0a0" stroke-width="1.5" stroke-dasharray="5,4"/>
+    <text x="390" y="153" font-size="12" text-anchor="middle" fill="#8a8578">empty slot</text>
+    <text x="600" y="120" font-size="12" fill="#6a6a70">badge shown on portrait:</text>
+    <circle cx="620" cy="150" r="18" fill="#d8cba8" stroke="#8a7a52" stroke-width="2"/>
+    <text x="650" y="146" font-size="11" fill="#6a6a70">no badge — numeric trait, felt not shown</text>
+
+    <!-- Row: Vanguard -->
+    <rect x="30" y="190" width="900" height="90" fill="#ffffff" stroke="#c9c2b3" stroke-width="1.5"/>
+    <circle cx="70" cy="235" r="26" fill="#b9c7d8" stroke="#4c6a8a" stroke-width="2"/>
+    <text x="70" y="241" font-size="13" text-anchor="middle" fill="#20202a">Vanguard</text>
+    <text x="120" y="220" font-size="12" fill="#6a6a70">Line · frontliner</text>
+    <rect x="120" y="228" width="170" height="42" rx="6" fill="#fdeeea" stroke="#a04030" stroke-width="2"/>
+    <text x="205" y="247" font-size="13" text-anchor="middle" fill="#6a2418" font-weight="bold">Bulwark</text>
+    <text x="205" y="263" font-size="10" text-anchor="middle" fill="#7a4030">survive 1 killing blow / fight</text>
+    <rect x="305" y="228" width="170" height="42" rx="6" fill="#f4f1ea" stroke="#b8b0a0" stroke-width="1.5" stroke-dasharray="5,4"/>
+    <text x="390" y="253" font-size="12" text-anchor="middle" fill="#8a8578">empty slot</text>
+    <circle cx="620" cy="250" r="18" fill="#b9c7d8" stroke="#4c6a8a" stroke-width="2"/>
+    <rect x="632" y="234" width="16" height="16" rx="3" fill="#a04030"/>
+    <text x="660" y="246" font-size="11" fill="#6a6a70">badge — Bulwark is a</text>
+    <text x="660" y="260" font-size="11" fill="#6a6a70">rule-changer, unspent this fight</text>
+
+    <!-- Row: Bombard -->
+    <rect x="30" y="290" width="900" height="90" fill="#ffffff" stroke="#c9c2b3" stroke-width="1.5"/>
+    <circle cx="70" cy="335" r="26" fill="#d8b9b9" stroke="#8a4c4c" stroke-width="2"/>
+    <text x="70" y="341" font-size="13" text-anchor="middle" fill="#20202a">Bombard</text>
+    <text x="120" y="320" font-size="12" fill="#6a6a70">Siege · artillery</text>
+    <rect x="120" y="328" width="170" height="42" rx="6" fill="#f4f1ea" stroke="#b8b0a0" stroke-width="1.5" stroke-dasharray="5,4"/>
+    <text x="205" y="353" font-size="12" text-anchor="middle" fill="#8a8578">empty slot</text>
+    <rect x="305" y="328" width="170" height="42" rx="6" fill="#f4f1ea" stroke="#b8b0a0" stroke-width="1.5" stroke-dasharray="5,4"/>
+    <text x="390" y="353" font-size="12" text-anchor="middle" fill="#8a8578">empty slot</text>
+    <text x="600" y="345" font-size="12" fill="#8a8578" font-style="italic">fields with base stats alone</text>
+  </g>
+
+  <!-- Card library panel -->
+  <rect x="30" y="400" width="900" height="140" fill="#ffffff" stroke="#c9c2b3" stroke-width="1.5"/>
+  <text x="45" y="422" font-family="Georgia, serif" font-size="14" fill="#20202a" font-weight="bold">Shared card library — open from chapter one, no unlock</text>
+  <g font-family="Georgia, serif" font-size="11">
+    <rect x="45" y="435" width="130" height="36" rx="5" fill="#eef3e6" stroke="#5c8a3c"/>
+    <text x="110" y="457" text-anchor="middle" fill="#2f4a20">Long Stride</text>
+    <rect x="185" y="435" width="130" height="36" rx="5" fill="#fdeeea" stroke="#a04030"/>
+    <text x="250" y="457" text-anchor="middle" fill="#6a2418">Bulwark</text>
+    <rect x="325" y="435" width="130" height="36" rx="5" fill="#eef0f6" stroke="#4c5a8a"/>
+    <text x="390" y="457" text-anchor="middle" fill="#28304a">Scorched Earth</text>
+    <rect x="465" y="435" width="130" height="36" rx="5" fill="#f6f0e8" stroke="#8a6a3c"/>
+    <text x="530" y="457" text-anchor="middle" fill="#4a3a20">Deep Sensors</text>
+    <rect x="605" y="435" width="130" height="36" rx="5" fill="#f0e8f6" stroke="#6a3c8a"/>
+    <text x="670" y="457" text-anchor="middle" fill="#3a2050">Hardened Plate</text>
+    <text x="770" y="457" fill="#8a8578" font-style="italic">... many more</text>
+  </g>
+  <text x="45" y="485" font-family="Georgia, serif" font-size="12" fill="#4a4a55">Enemy force is built from this same library, same two-card cap, by the mission generator.</text>
+  <text x="45" y="510" font-family="Georgia, serif" font-size="12" fill="#4a4a55">A nerfed card's line of text or number changes here, visible before the next mission.</text>
+</svg>

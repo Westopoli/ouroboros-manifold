@@ -34,7 +34,7 @@ Precedent for this shape: `../landscape_design/README.md`, the P2 design phase. 
 | Era feel differentiation | `era-feel` | 2 | written | 2026-09-22 (4 options) | agent running 2026-09-22 |
 | Paired economy multiplayer mode | `paired-economy` | 2 | written | 2026-09-22 | agent running 2026-09-22 |
 | Self-running city spectacle | `city-spectacle` | 2 | written | 2026-09-22 | 3 options, reviewed 2026-09-22 |
-| Unit passive traits | `unit-traits` | 3 | written | 2026-09-22 | agent running 2026-09-22 |
+| Unit passive traits | `unit-traits` | 3 | written | 2026-09-22 | 2 options, reviewed 2026-09-22 |
 | Mission complications | `complications` | 3 | written | 2026-09-22 (2 options, surface) | 2 options, reviewed 2026-09-22 |
 | Enemy macro difficulty knobs | `difficulty-knobs` | 3 | written | 2026-09-22 | agent running 2026-09-22 |
 
