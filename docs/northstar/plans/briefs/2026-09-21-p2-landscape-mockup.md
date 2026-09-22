@@ -10,7 +10,7 @@ The design in one paragraph. One generator produces a **field map**: a canvas, a
 
 ## Rules for the implementor
 
-- Sub-agents are Sonnet; you plan and review, they build. Ask Westley about his Claude usage before a batch of more than two doers.
+- If you are an Opus or Fable chat: plan and review, Sonnet sub-agents build; ask Westley about his Claude usage before a batch of more than two doers. If you are a Sonnet chat: do the work yourself, spawn no sub-agents.
 - This is a mockup: placeholder primitives only (boxes, cylinders, prisms, planes, flat colours). No asset pipeline, no imported models, no textures beyond vertex colour and flat shading. "Playful, bright, Age of Empires Online" is a palette and a silhouette register, not an art task.
 - All new files under `scenes/mockups/landscape/` in `~/Projects/ouroboros-manifold`, plus screenshots under `docs/northstar/research/landscape_design/mockup/`. Touch nothing else: not `csrc/`, `simulation/`, `tests/`, `docs/bible/`, `docs/northstar/` (except the screenshot folder and one status line in `landscape_design/README.md` under "Next step"), not the existing `scenes/` files, not `project.godot` unless the Godot facts section below says the version line must change (ask Westley first if so).
 - Godot only, GDScript only, no C, no Python. No Ollama calls (the GPU belongs to the Agora chain); the mockup itself may use the GPU when Westley runs it.

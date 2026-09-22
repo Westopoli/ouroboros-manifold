@@ -4,7 +4,7 @@ Self-contained. Program context: `2026-09-21-factory-program.md`; design under t
 
 ## Rules for the implementor
 
-- Sub-agents are Sonnet; you plan and review, they build. Ask Westley about his Claude usage before a batch of more than two doers.
+- If you are an Opus or Fable chat: plan and review, Sonnet sub-agents build; ask Westley about his Claude usage before a batch of more than two doers. If you are a Sonnet chat: do the work yourself, spawn no sub-agents.
 - Nobody writes game code or implements a card. PX-11 runs one real build card through Agora on a different project, which is the only model call in this batch; it needs the GPU, so it runs only when `systemctl --user is-active agora-dispatcher.service` says `inactive` or Westley pauses the chain for it. Ask him for the window; do everything else first.
 - New files allowed: under ouroboros `scripts/specfactory/`, `tests/specfactory/`, `docs/northstar/proving_ground/`, and one toy pack pair under `docs/northstar/proving_ground/evidence/px10/`; under agora `projects/proving-ground/` and `projects/salesmen/` (data only); under `~/Projects/the-best-salesmen` one failing test and one stub for PX-11 (its own repo, its own commit). No edits to `~/Projects/agora/scripts/` unless the change is generic and you record it as the PX-11 count.
 - Scratch under `/tmp/pxB/`; clean up worktrees.

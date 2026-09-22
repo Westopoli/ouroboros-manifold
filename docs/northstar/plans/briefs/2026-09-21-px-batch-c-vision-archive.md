@@ -4,7 +4,7 @@ Self-contained. Program context: `2026-09-21-factory-program.md`; design under t
 
 ## Rules for the implementor
 
-- Sub-agents are Sonnet; you plan and review, they build. Ask Westley about his Claude usage before a batch of more than two doers.
+- If you are an Opus or Fable chat: plan and review, Sonnet sub-agents build; ask Westley about his Claude usage before a batch of more than two doers. If you are a Sonnet chat: do the work yourself, spawn no sub-agents.
 - PX-12(b) pulls and runs a local vision model on the GPU; it runs only in a window Westley grants with the chain paused. PX-12(a) and PX-9 need no GPU.
 - Cloud vision calls are capped: at most 40 judged screenshots per model, and every call's cost is logged to `~/Projects/agora/runs/costs.jsonl` under `campaign: px12-vision-probe`. Stop and report if a route costs more than $2 total.
 - No game code. New files under ouroboros `scripts/specfactory/`, `tests/specfactory/`, `docs/northstar/proving_ground/` and evidence dirs; under agora only data under `projects/proving-ground/`. Scratch under `/tmp/pxC/`.

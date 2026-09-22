@@ -4,7 +4,7 @@ Self-contained. Program context: `2026-09-21-factory-program.md`; design under t
 
 ## Rules for the implementor
 
-- Sub-agents are Sonnet; you plan and review, they build. Ask Westley about his Claude usage before a batch of more than two doers.
+- If you are an Opus or Fable chat: plan and review, Sonnet sub-agents build; ask Westley about his Claude usage before a batch of more than two doers. If you are a Sonnet chat: do the work yourself, spawn no sub-agents.
 - Nobody writes game code. These are replays and measurements. New files allowed: `scripts/specfactory/<tool>.py` with tests in `tests/specfactory/`, the write-ups, evidence under `docs/northstar/proving_ground/evidence/px04|px07|px14|px19/`. Touch nothing under `csrc/`, `tests/csim/`, `docs/bible/`, `docs/northstar/PLAN.md`, or `~/Projects/agora` except reading (PX-19 reads its logs).
 - Scratch worktrees only: `git worktree add --detach /tmp/pxA/<case> <commit>` from `~/Projects/ouroboros-manifold`; remove every one when done (`git worktree remove --force`, `git worktree prune`).
 - Python: `~/Projects/agora/.venv/bin/python`. Tests: `-m pytest -q -p no:cacheprovider`. The C library builds through `tests/csim/conftest.py` (`make -s libouroboros.so libouroboros_dbg.so`).
