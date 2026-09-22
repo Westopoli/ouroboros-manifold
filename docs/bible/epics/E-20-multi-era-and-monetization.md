@@ -68,13 +68,13 @@ As a player, I want a campaign to move chronologically through the eras I own, s
 
 Rules
 - R-148-01  Given a campaign in era k and the player owns era k + 1, When [Q-148-01: the trigger], Then the next time jump lands in era k + 1 with the same galaxy, the same factions, and the same ledger.
-- R-148-02  Given the era transition, When the world carries over, Then region fields, ownership, tech, edges, and characters persist; only the pack changes; the chronicle frames the transition.
-- R-148-03  Given the last owned era, When reached, Then the campaign continues in it indefinitely with tech oscillating (Stage 1 A-071 interim) until S-054 is designed.
+- R-148-02  Given the era transition, When the world carries over, Then region fields, ownership, edges, and characters persist and tech is rescaled so that no faction arrives at late game and the leading faction still leads; only the pack changes; the chronicle frames the transition, and characters from earlier eras fade into distant myths with fewer mentions the farther the timeline moves from them.
+- R-148-03  Given the last owned era, When the next time jump comes, Then history loops: the jump lands in the first owned era with the same galaxy, the same factions, and the same ledger, in solo campaigns and in matches alike [Q-148-04: what the loop does to tech, characters, and the chronicle, and how it relates to the deferred Ouroboros restart, S-054].
 - R-148-04  Given a multiplayer match, When eras traverse, Then E-19 S-143 applies.
 
 Inputs: ownership; campaign state.
 Outputs: era in the save; chronicle entry.
-Open flags: Q-148-01 (what triggers an era transition: elapsed years, tech, chapter count, or a choice), Q-148-02 (tech tiers and the era boundary: does tech reset, carry, or rescale at the transition).
+Open flags: Q-148-01 (what triggers an era transition: elapsed years, tech, chapter count, or a choice), Q-148-04 (the loop's effect on tech, characters, and the chronicle). Q-148-02 is closed: tech rescales at the boundary, nobody arrives at late game, the leading civilization still leads.
 
 ### S-149 — Buying and earning eras
 As a player, I want a fair price and the chance to earn expansions by playing, so that the game respects my time and my wallet.

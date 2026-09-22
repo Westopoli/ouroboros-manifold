@@ -58,7 +58,7 @@ Folded into the brief:
 
 - Depth (question 1): the economy player runs a full economy that demands thought and task juggling, in the register of StarCraft 2's supply, multiple resources, tech timings, and steady worker production. "Pieces only" describes the solo commander, not this role.
 - A further optional mode may let both players share military and economic responsibilities. Options may include it.
-- Question 2: confirmed. The city builds and runs itself when the economic mode is not enabled. "Economic mode" is a per-player toggle, not only a queue choice.
+- Question 2: confirmed. The city builds and runs itself when the economic mode is not enabled. Confirmed 2026-09-22, verbatim: "economic mode: paired queue only, when they start the "universe" they lock in to the configuration they defined at the start. They can't play it without the same number of players, in the same number of slots, with the same eras. Otherwise they'll have to start a new universe." The economic mode exists only through the paired queue, and a universe (a multiplayer campaign) locks its configuration at creation.
 - Question 3: same tactical map for both players.
 - Question 4: the economy persists through time jumps, and its complexity must not grow without bound. A reset or load-capping mechanism is required; one idea is upgrades that automate earlier tasks so the player moves on to higher-reward ones. Options must say how load stays reasonable over a campaign.
 - Roster context: the bible now targets 20 to 40 unit types per era (Q-082-02), so production choices are wide.
@@ -70,5 +70,5 @@ Follow the common template in `../README.md` ("Sub-agent template"). Sections 4 
 - Options: 3, of which 2 wild.
 - A full economy that demands thought and task juggling in the StarCraft 2 register (supply, several resources, tech timings, steady worker production), on the same tactical map as the battle.
 - The economy persists through time jumps and must not grow without bound: each option includes its reset or load-capping mechanism (one idea: upgrades that automate earlier tasks).
-- An economic mode the player enables; when off, the city runs itself. An optional shared mode where both players do both is welcome.
+- The economic role exists only in the paired queue; a universe locks its player count, slots, and eras at creation and can only continue with the same. When nobody holds the role, the city runs itself. An optional shared mode where both players do both is welcome.
 - How the economy player's work becomes the commander's units, walls, and positions, and how the pair talks.

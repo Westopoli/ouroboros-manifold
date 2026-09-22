@@ -105,7 +105,7 @@ Rules
 
 Inputs: none yet.
 Outputs: none yet.
-Open flags: Q-054-01 (Stage 1 deferred the Survival / Exodus / Extinction-with-Amnesia terminal conditions and the Ouroboros restart; interim: the final era continues indefinitely, tech oscillates (A-071)).
+Open flags: Q-054-01 (Stage 1 deferred the Survival / Exodus / Extinction-with-Amnesia terminal conditions and the Ouroboros restart; interim: history loops back to the first owned era after the last, E-20 R-148-03).
 
 ## Inputs
 

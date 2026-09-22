@@ -95,11 +95,11 @@ As a player, I want to find a match, invite friends, and get into the game, so t
 Rules
 - R-144-01  Given the main menu, When Multiplayer is chosen, Then the player can host, join by invite, or [Q-144-01: matchmaking scope at launch].
 - R-144-02  Given a lobby, When shown, Then it lists peers, their owned eras, the common era set, the seed, and the difficulty owner (Q-079-01).
-- R-144-03  Given a match ends, When peers return, Then the campaign save is written identically on every peer [Q-144-02: shared campaign persistence].
+- R-144-03  Given a universe (a multiplayer campaign) is created, When its configuration is set, Then the player count, the slots, the era packs, and the paired economic roles are locked; a later session continues it only with the same number of players in the same slots with the same eras, otherwise a new universe starts; the campaign save is written identically on every peer [Q-144-03: who may host the next session].
 
 Inputs: Steam friends; lobby.
 Outputs: lobby screen; match start.
-Open flags: Q-144-01, Q-144-02. Reference required: `references/E-19/notes.md`, missing.
+Open flags: Q-144-01, Q-144-03. Reference required: `references/E-19/notes.md`, missing.
 
 ### S-159 — Someday: a visible, growing economy, player-run in pairs or running itself alone
 

@@ -70,7 +70,7 @@ Batch 2, 2026-09-22, verbatim: "Rescale tech, if players are a part of the same 
 Folded into the brief:
 
 - Tech at the boundary (question 2): rescale. Nobody arrives in the new era at late game; the civilization that was leading still leads. Players in one civilization share the rescale; a multi-civilization rescale is not needed.
-- A missing pack (question 4): a player without the next era cannot go there. The time jump keeps going through history, looping through the eras, until it lands on an era every player owns. History is a loop, not a line that ends. This bears on A-071 (the last era continues indefinitely); whether the loop also applies to a solo campaign is asked in batch 3.
+- A missing pack (question 4): a player without the next era cannot go there. The time jump keeps going through history, looping through the eras, until it lands on an era every player owns. History is a loop, not a line that ends. Confirmed 2026-09-22, verbatim "history loop through eras: yes in solo campaigns": the loop replaces the Stage 1 interim in which the last era continued indefinitely (A-071); E-20 R-148-03 is rewritten and the loop's mechanics are flagged (Q-148-04).
 - The chronicle: characters from earlier eras become distant myths and legends, mentioned less and less the farther the timeline moves from them.
 - The vehicle (question 1): the time jump carries the transition. What decides which jump crosses the boundary stays open; options may propose it.
 - Names (question 3): not answered. Options describe the boundary without naming the past and present eras.
@@ -81,6 +81,6 @@ Follow the common template in `../README.md` ("Sub-agent template"). Sections 4 
 
 - Options: 3, of which 1 wild.
 - Tech rescales at the boundary: nobody arrives at late game, the leading civilization still leads.
-- When a peer lacks the next pack, the jump keeps going through history, looping through eras, until an era every peer owns; options show what the players see during that loop.
+- History loops: after the last owned era the next time jump returns to the first, in solo campaigns as well as matches; when a peer lacks the next pack the jump keeps going until an era every peer owns. Options show what the player sees when history comes around again: the same galaxy and ledger, characters faded to myth.
 - Earlier characters fade into distant myths and legends in the chronicle, mentioned less the farther the timeline moves.
 - Propose what decides which time jump crosses the boundary. Do not name the past and present eras.

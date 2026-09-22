@@ -63,7 +63,7 @@ Batch 1, 2026-09-22, verbatim: "no specific scale numbers, that's for the agents
 Folded into the brief:
 
 - Vertical scale (question 1): no numbers from Westley; each option sets its own scale and says why. The spacing is a per-era value: large in a space era, small in a land era before high-altitude flight or deep submarines. Exactly five layers in every era; in a land era without flying units the upper layers are still land (mountains or something reasonable).
-- Dimming (question 3): the percentages "layer it's on should be around 50%, adjacent layers 10-20%, layers 2 away are 5%. The idea behind it is visible but not in the way" were given in answer to the dimming question; whether they describe the per-unit grid's opacity per layer (A-299's idea) or the fall-back of non-focused layers is being confirmed in batch 2. Options should read them as the visual weight of layer cues relative to the focused one and keep the world visible.
+- Dimming (question 3): confirmed 2026-09-22, verbatim "Layer dimming: grid visibility per layer". The per-unit grid shows at about 50 percent on the unit's own layer, 10 to 20 percent on adjacent layers, 5 percent two layers away: "visible but not in the way". How far non-focused layers fall back under strip focus stays "slightly" (Q-009-01) and is each option's call.
 - Cross-layer combat (question 2): not answered in batch 1. Options assume same-layer combat (Q-008-01) and may note where a cross-layer variant would change the picture.
 - Layer-change indicator: when the player toggles a unit toward another layer, a small icon shows which layer it is moving to, like a waypoint. This is the R-009-02 preference indicator, now given a direction.
 - Grid (question 4): a grid around each unit, never a whole-layer plane. The battlefield, the background, and anything behind the grid must stay visible. Reference register: AutoCAD, Unreal Engine, and other 3D visualization tools that read clearly.
@@ -76,6 +76,6 @@ Follow the common template in `../README.md` ("Sub-agent template"). Sections 4 
 - Options: 4, of which 2 wild.
 - A grid around each unit, never a whole-layer plane; the battlefield and everything behind the grid stays visible. Register: AutoCAD, Unreal Engine, and other 3D visualization tools that read clearly.
 - A waypoint-like icon that shows which layer a unit is moving to when the player toggles it.
-- The numbers "50% / 10-20% / 5%" (own, adjacent, two away): each option states whether it reads them as grid visibility per layer or as the fall-back of non-focused layers, or both, and shows the result.
+- The per-unit grid's visibility is about 50 percent on the unit's own layer, 10 to 20 percent on adjacent layers, 5 percent two away. Strip focus dims non-focused layers "slightly"; each option shows how much.
 - No fixed spacing: each option sets its own vertical scale and says why; spacing is per era (large in space, small on land). Five layers in every era, including land eras without flying units.
 - Assume same-layer combat; note where a cross-layer variant would change the picture.
