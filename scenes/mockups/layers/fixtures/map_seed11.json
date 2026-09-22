@@ -1,0 +1,15 @@
+{
+  "canvas_wu": 4000,
+  "obstacle": {"pos": [2000, 2000], "size": [300, 300]},
+  "blocked_region": {"center": [2000, 2000], "radius": 350},
+  "vantage_marker": {"pos": [3200, 700]},
+  "friendlies": [
+    {"uid": 1, "type": "fast", "pos": [1550, 2000], "layer": 1},
+    {"uid": 2, "type": "slow", "pos": [1550, 2300], "layer": 1}
+  ],
+  "enemies": [
+    {"uid": 101, "pos": [3600, 800], "layer": 1},
+    {"uid": 102, "pos": [1900, 2000], "layer": 2},
+    {"uid": 103, "pos": [1550, 2600], "layer": 2}
+  ]
+}
