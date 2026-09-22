@@ -2,6 +2,12 @@
 
 Rung P1 of the prototype ladder (`docs/northstar/PLAN.md:162`). Throwaway Godot mockup for E-16 S-106/S-107: the galaxy between missions. Scene: `scenes/mockups/galaxy/galaxy_mockup.tscn`.
 
+## Running it
+
+`~/.local/bin/godot --scene scenes/mockups/galaxy/galaxy_mockup.tscn` from the repo root. Hotkeys: `R` regenerate (from the seed spinbox), `J` toggle the jump-log replay. Left-drag pans, wheel zooms, right-drag orbits, left-click a system to focus it (tweens into the Local band over 1.5s). Hover a faction row in the left list to brighten it and dim the rest; click a row to pin that until it's clicked again or empty space is clicked. Hover a system for a name/owner tooltip.
+
+This could not be run on Westley's seat from this session; confirmed instead by reading `scenes/mockups/_shared/qa_driver.gd`'s `_ready()` that a launch without `--qa-script` in the user args returns immediately, before any output directory or `_run.json` is touched — the driver is inert on a plain interactive `--scene` launch.
+
 ## Design as built
 
 One seeded galaxy: 40 to 80 systems on a disc (radius 100wu, denser core), placed by rejection sampling at minimum 6wu spacing. Each system links to its 3 nearest neighbours within 30wu, symmetrised, with isolated systems attached to their nearest neighbour regardless of distance. 4 to 8 factions, capitals chosen by farthest-point sampling, territory grown by a seeded round-robin breadth-first flood over that adjacency until 85 percent of systems are owned; the rest stay neutral. An edge is a bright, thick "border" filament when both ends share a non-neutral owner, otherwise a thin, dim "trade" filament. Faction 0 is the player's; its capital is the single brightest point in the galaxy.
