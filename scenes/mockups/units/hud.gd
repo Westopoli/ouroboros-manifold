@@ -41,6 +41,10 @@ func _ready() -> void:
 	_view = get_node("../World/UnitView")
 	_ground = get_node("../World/Ground")
 
+	for lbl in [_tick_label, _survivors_label, _selected_label, _log_label]:
+		lbl.add_theme_color_override("font_outline_color", Color.BLACK)
+		lbl.add_theme_constant_override("outline_size", 6)
+
 	_load_kits()
 	_load_scenarios()
 	if not _kits.has(_kit_name) and not _kits.is_empty():
