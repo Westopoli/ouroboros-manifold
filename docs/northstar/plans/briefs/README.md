@@ -30,3 +30,4 @@ Each brief is a self-contained task handed to an implementor chat, copied here o
 | 2026-09-22 | `2026-09-22-p3-objectives-mockup-pass2.md` (edge scroll on large screens, regenerate advances the seed) | Sonnet sub-agent, worktree branch `mockup/objectives-pass2` | running |
 | 2026-09-22 | `2026-09-22-p4-units-mockup-pass2.md` (sim runs by default, drag box, edge scroll, HUD hover) | Sonnet sub-agent, worktree branch `mockup/units-pass2` | running |
 | 2026-09-22 | `2026-09-22-p5-fog-mockup-pass2.md` (edge scroll, seed perturbs the map) | Sonnet sub-agent, worktree branch `mockup/fog-pass2` | running |
+| 2026-09-22 | `2026-09-22-p6-layers-mockup-pass2.md` (runs on launch, pick and edges in one space, seed perturbs the map, self-demo) | Sonnet sub-agent, worktree branch `mockup/layers-pass2` | running |
