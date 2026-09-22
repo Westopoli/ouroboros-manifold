@@ -1,0 +1,360 @@
+# spec: docs/northstar/plans/briefs/2026-09-22-two-day-push.md, item 1
+"""Tests for scripts/specfactory/merge_gate_support.py (the footprint fence
+and symbol-ownership lint merge_gate.sh calls into)."""
+import subprocess
+import sys
+from pathlib import Path
+
+import pytest
+
+REPO = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(REPO / "scripts" / "specfactory"))
+
+import merge_gate_support as mgs  # noqa: E402
+import suite_regression as sr  # noqa: E402
+
+
+def _git(repo: Path, *args: str) -> subprocess.CompletedProcess:
+    return subprocess.run(["git", *args], cwd=repo, check=True, capture_output=True, text=True)
+
+
+def _init_repo(base_dir: Path) -> Path:
+    repo = base_dir
+    repo.mkdir(parents=True, exist_ok=True)
+    _git(repo, "init", "-q")
+    _git(repo, "config", "user.email", "gate@test")
+    _git(repo, "config", "user.name", "gate")
+    (repo / "csrc").mkdir()
+    (repo / "csrc" / "events.c").write_text("int om_event_stub(void) { return 0; }\n")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "base")
+    _git(repo, "rev-parse", "HEAD")
+    return repo
+
+
+def _write_pieces(path: Path, pieces: list[dict]) -> None:
+    lines = []
+    for p in pieces:
+        lines.append("[[piece]]")
+        lines.append(f'id = "{p["id"]}"')
+        owns = p.get("owns", [])
+        lines.append("owns = [" + ", ".join(f'"{o}"' for o in owns) + "]")
+        owns_glob = p.get("owns_glob", [])
+        if owns_glob:
+            lines.append("owns_glob = [" + ", ".join(f'"{o}"' for o in owns_glob) + "]")
+        lines.append("")
+    path.write_text("\n".join(lines))
+
+
+# ---------------------------------------------------------------- footprint_check --
+
+def test_positive_control_extra_file_rejected(tmp_path):
+    repo = _init_repo(tmp_path / "repo")
+    pieces = tmp_path / "pieces.toml"
+    _write_pieces(pieces, [{"id": "B1", "owns": ["csrc/events.c"]}])
+
+    (repo / "csrc" / "events.c").write_text("int om_event_stub(void) { return 1; }\n")
+    (repo / "tests_edit.py").write_text("x = 1\n")  # outside owns
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "candidate")
+
+    ok, detail = mgs.footprint_check(repo, "HEAD~1", "B1", pieces_path=pieces)
+    assert ok is False
+    assert "tests_edit.py" in detail
+
+
+def test_clean_diff_within_owns_accepted(tmp_path):
+    repo = _init_repo(tmp_path / "repo")
+    pieces = tmp_path / "pieces.toml"
+    _write_pieces(pieces, [{"id": "B1", "owns": ["csrc/events.c"]}])
+
+    (repo / "csrc" / "events.c").write_text("int om_event_stub(void) { return 1; }\n")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "candidate")
+
+    ok, detail = mgs.footprint_check(repo, "HEAD~1", "B1", pieces_path=pieces)
+    assert ok is True
+    assert detail == "OK"
+
+
+def test_ignored_paths_never_count_against_the_fence(tmp_path):
+    repo = _init_repo(tmp_path / "repo")
+    pieces = tmp_path / "pieces.toml"
+    _write_pieces(pieces, [{"id": "B1", "owns": ["csrc/events.c"]}])
+
+    (repo / "csrc" / "events.c").write_text("int om_event_stub(void) { return 1; }\n")
+    (repo / ".swarm").mkdir()
+    (repo / ".swarm" / "note.md").write_text("scratch\n")
+    (repo / "logs").mkdir()
+    (repo / "logs" / "sim_stderr.log").write_text("noise\n")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "candidate")
+
+    ok, detail = mgs.footprint_check(repo, "HEAD~1", "B1", pieces_path=pieces)
+    assert ok is True
+    assert detail == "OK"
+
+
+def test_gd_uid_sidecar_counts_as_its_gd_file(tmp_path):
+    repo = _init_repo(tmp_path / "repo")
+    pieces = tmp_path / "pieces.toml"
+    _write_pieces(pieces, [{"id": "C7", "owns": ["autoload/qa_daemon.gd"]}])
+
+    (repo / "autoload").mkdir()
+    (repo / "autoload" / "qa_daemon.gd.uid").write_text("uid://abc\n")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "candidate")
+
+    ok, detail = mgs.footprint_check(repo, "HEAD~1", "C7", pieces_path=pieces)
+    assert ok is True, detail
+
+
+def test_owns_glob_matches(tmp_path):
+    repo = _init_repo(tmp_path / "repo")
+    pieces = tmp_path / "pieces.toml"
+    _write_pieces(pieces, [{"id": "C2", "owns_glob": ["scenes/galaxy/**"]}])
+
+    (repo / "scenes" / "galaxy").mkdir(parents=True)
+    (repo / "scenes" / "galaxy" / "view.gd").write_text("extends Node\n")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "candidate")
+
+    ok, detail = mgs.footprint_check(repo, "HEAD~1", "C2", pieces_path=pieces)
+    assert ok is True, detail
+
+
+def test_footprint_check_accepts_comma_separated_piece_ids_union(tmp_path):
+    """merge_cli.py revert: a piece plus its dependants revert together in
+    one candidate, so the fence checks the union of their owns."""
+    repo = _init_repo(tmp_path / "repo")
+    pieces = tmp_path / "pieces.toml"
+    _write_pieces(pieces, [
+        {"id": "B10", "owns": ["csrc/unit.c"]},
+        {"id": "B11", "owns": ["csrc/fog.c"]},
+    ])
+    (repo / "csrc" / "unit.c").write_text("int om_unit_stub(void) { return 0; }\n")
+    (repo / "csrc" / "fog.c").write_text("int om_fog_stub(void) { return 0; }\n")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "candidate")
+
+    ok, detail = mgs.footprint_check(repo, "HEAD~1", "B10,B11", pieces_path=pieces)
+    assert ok is True, detail
+
+
+def test_unknown_piece_id_rejected(tmp_path):
+    repo = _init_repo(tmp_path / "repo")
+    pieces = tmp_path / "pieces.toml"
+    _write_pieces(pieces, [{"id": "B1", "owns": ["csrc/events.c"]}])
+    ok, detail = mgs.footprint_check(repo, "HEAD", "NOPE", pieces_path=pieces)
+    assert ok is False
+    assert "NOPE" in detail
+
+
+# ---------------------------------------------------------------- symbol_ownership_check --
+
+def _write_signatures(path: Path, rows: list[tuple[str, str]]) -> None:
+    lines = []
+    for name, module in rows:
+        lines.append("[[symbols]]")
+        lines.append(f'name = "{name}"')
+        lines.append(f'module = "{module}"')
+        lines.append("")
+    path.write_text("\n".join(lines))
+
+
+def test_positive_control_symbol_defined_in_wrong_module_rejected(tmp_path):
+    repo = _init_repo(tmp_path / "repo")
+    sigs = tmp_path / "signatures.toml"
+    _write_signatures(sigs, [("om_event_fire_manual", "events.c")])
+    empty_sm = tmp_path / "symbol_modules.toml"
+    empty_sm.write_text("[symbols]\n")
+
+    (repo / "csrc" / "diplomacy.c").write_text(
+        "int om_event_fire_manual(void) { return 0; }\n"
+    )
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "candidate")
+
+    ok, detail = mgs.symbol_ownership_check(repo, "HEAD~1", signatures_path=sigs,
+                                             symbol_modules_path=empty_sm)
+    assert ok is False
+    assert "om_event_fire_manual" in detail
+    assert "diplomacy.c" in detail
+    assert "events.c" in detail
+
+
+def test_symbol_defined_in_correct_module_accepted(tmp_path):
+    repo = _init_repo(tmp_path / "repo")
+    sigs = tmp_path / "signatures.toml"
+    _write_signatures(sigs, [("om_event_fire_manual", "events.c")])
+    empty_sm = tmp_path / "symbol_modules.toml"
+    empty_sm.write_text("[symbols]\n")
+
+    (repo / "csrc" / "events.c").write_text(
+        "int om_event_stub(void) { return 0; }\n"
+        "int om_event_fire_manual(void) { return 1; }\n"
+    )
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "candidate")
+
+    ok, detail = mgs.symbol_ownership_check(repo, "HEAD~1", signatures_path=sigs,
+                                             symbol_modules_path=empty_sm)
+    assert ok is True, detail
+
+
+def test_unknown_symbol_is_skipped_not_rejected(tmp_path):
+    repo = _init_repo(tmp_path / "repo")
+    sigs = tmp_path / "signatures.toml"
+    _write_signatures(sigs, [])
+    empty_sm = tmp_path / "symbol_modules.toml"
+    empty_sm.write_text("[symbols]\n")
+
+    (repo / "csrc" / "events.c").write_text(
+        "static int om_event_internal_helper(void) { return 0; }\n"
+    )
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "candidate")
+
+    ok, detail = mgs.symbol_ownership_check(repo, "HEAD~1", signatures_path=sigs,
+                                             symbol_modules_path=empty_sm)
+    assert ok is True
+    assert "not checked" in detail
+
+
+def test_symbol_modules_override_applies(tmp_path):
+    repo = _init_repo(tmp_path / "repo")
+    sigs = tmp_path / "signatures.toml"
+    sigs.write_text("")
+    sm = tmp_path / "symbol_modules.toml"
+    sm.write_text('[symbols]\nom_faction_create_breakaway = "diplomacy.c"\n')
+
+    (repo / "csrc" / "diplomacy.c").write_text(
+        "int om_faction_create_breakaway(void) { return 0; }\n"
+    )
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "candidate")
+
+    ok, detail = mgs.symbol_ownership_check(repo, "HEAD~1", signatures_path=sigs,
+                                             symbol_modules_path=sm)
+    assert ok is True, detail
+
+
+def test_no_om_definitions_in_diff_is_clean(tmp_path):
+    repo = _init_repo(tmp_path / "repo")
+    sigs = tmp_path / "signatures.toml"
+    sigs.write_text("")
+    sm = tmp_path / "symbol_modules.toml"
+    sm.write_text("[symbols]\n")
+
+    (repo / "README.md").write_text("docs only\n")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "candidate")
+
+    ok, detail = mgs.symbol_ownership_check(repo, "HEAD~1", signatures_path=sigs,
+                                             symbol_modules_path=sm)
+    assert ok is True
+    assert "no om_* definitions" in detail
+
+
+# ---------------------------------------------------------------- undertest_warn --
+
+def test_undertest_warn_unknown_piece_skips(tmp_path):
+    pieces = tmp_path / "pieces.toml"
+    _write_pieces(pieces, [{"id": "B1", "owns": ["csrc/events.c"]}])
+    lines = mgs.undertest_warn(tmp_path, "HEAD", "NOPE", pieces_path=pieces)
+    assert len(lines) == 1 and "unknown piece id" in lines[0]
+
+
+def test_undertest_warn_no_acceptance_skips(tmp_path):
+    pieces = tmp_path / "pieces.toml"
+    pieces.write_text('[[piece]]\nid = "B1"\nowns = ["csrc/events.c"]\nacceptance = []\n')
+    lines = mgs.undertest_warn(tmp_path, "HEAD", "B1", pieces_path=pieces)
+    assert len(lines) == 1 and "no pytest acceptance ids" in lines[0]
+
+
+def test_undertest_warn_no_own_definition_skips(tmp_path):
+    repo = _init_repo(tmp_path / "repo")
+    pieces = tmp_path / "pieces.toml"
+    pieces.write_text(
+        '[[piece]]\nid = "B1"\nowns = ["csrc/events.c"]\n'
+        'acceptance = ["tests/csim/test_x.py"]\n'
+    )
+    (repo / "README.md").write_text("docs\n")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "candidate")
+    lines = mgs.undertest_warn(repo, "HEAD~1", "B1", pieces_path=pieces)
+    assert len(lines) == 1 and "no new/changed" in lines[0]
+
+
+# ---------------------------------------------------------------- regression_check --
+
+def _init_pytest_repo(base_dir: Path, *, test_text: str) -> Path:
+    repo = base_dir
+    repo.mkdir(parents=True, exist_ok=True)
+    _git(repo, "init", "-q")
+    _git(repo, "config", "user.email", "gate@test")
+    _git(repo, "config", "user.name", "gate")
+    (repo / "test_synth.py").write_text(test_text)
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "base")
+    return repo
+
+
+PYTHON = sr.DEFAULT_PYTHON
+GOOD_TEST = "def test_a():\n    assert 1 == 1\n"
+BAD_TEST = "def test_a():\n    assert 1 == 1\n\ndef test_b():\n    assert 1 == 2\n"
+
+
+def test_positive_control_regression_check_rejects_new_failure(tmp_path):
+    repo = _init_pytest_repo(tmp_path / "repo", test_text=GOOD_TEST)
+    base_sha = _git(repo, "rev-parse", "HEAD").stdout.strip()
+    (repo / "test_synth.py").write_text(BAD_TEST)
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "candidate")
+
+    ok, detail, report = mgs.regression_check(repo, base_sha, ["test_synth.py"],
+                                               python_exe=PYTHON, worktree_root=tmp_path,
+                                               junit=False)
+    assert ok is False
+    assert "test_b" in detail
+    assert report.new_failures == ["test_synth.py::test_b"]
+
+
+def test_regression_check_accepts_clean_candidate(tmp_path):
+    repo = _init_pytest_repo(tmp_path / "repo", test_text=GOOD_TEST)
+    base_sha = _git(repo, "rev-parse", "HEAD").stdout.strip()
+    (repo / "README.md").write_text("docs only\n")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "candidate")
+
+    ok, detail, report = mgs.regression_check(repo, base_sha, ["test_synth.py"],
+                                               python_exe=PYTHON, worktree_root=tmp_path,
+                                               junit=False)
+    assert ok is True, detail
+    assert report.new_failures == []
+
+
+def test_regression_check_removes_its_worktree(tmp_path):
+    repo = _init_pytest_repo(tmp_path / "repo", test_text=GOOD_TEST)
+    base_sha = _git(repo, "rev-parse", "HEAD").stdout.strip()
+    mgs.regression_check(repo, base_sha, ["test_synth.py"], python_exe=PYTHON,
+                          worktree_root=tmp_path, junit=False)
+    listing = _git(repo, "worktree", "list").stdout
+    assert "merge_gate_before_" not in listing
+
+
+def test_cli_footprint_exit_codes(tmp_path):
+    repo = _init_repo(tmp_path / "repo")
+    pieces = tmp_path / "pieces.toml"
+    _write_pieces(pieces, [{"id": "B1", "owns": ["csrc/events.c"]}])
+    (repo / "csrc" / "events.c").write_text("int om_event_stub(void) { return 1; }\n")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "candidate")
+
+    proc = subprocess.run(
+        [sys.executable, str(REPO / "scripts" / "specfactory" / "merge_gate_support.py"),
+         "footprint", str(repo), "HEAD~1", "B1", "--pieces", str(pieces)],
+        capture_output=True, text=True,
+    )
+    assert proc.returncode == 0
+    assert proc.stdout.startswith("OK")

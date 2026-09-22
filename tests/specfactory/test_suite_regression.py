@@ -155,6 +155,104 @@ def test_predecessor_only_can_miss_what_whole_suite_catches(tmp_path):
     assert pred.result.failed == 0
 
 
+# ---------------------------------------------------------------- junit extension (F6 item 1) --
+
+def test_parse_junit_extra_first_assertion_and_counts(tmp_path):
+    xml = tmp_path / "junit.xml"
+    xml.write_text(
+        '<?xml version="1.0"?>\n'
+        '<testsuites><testsuite>\n'
+        '<testcase classname="test_synth" name="test_a" file="test_synth.py">'
+        '<failure message="assert 1 == 2">assert 1 == 2\nextra detail line</failure></testcase>\n'
+        '<testcase classname="test_synth" name="test_b" file="test_synth.py">'
+        '<skipped type="pytest.xfail" message="known bug"></skipped></testcase>\n'
+        '<testcase classname="test_synth" name="test_c" file="test_synth.py">'
+        '<skipped message="no display"></skipped></testcase>\n'
+        '<testcase classname="test_synth" name="test_d" file="test_synth.py"></testcase>\n'
+        '</testsuite></testsuites>\n'
+    )
+    first_assertion, skipped, xfailed = sr.parse_junit_extra(xml)
+    assert first_assertion == {"test_synth.py::test_a": "assert 1 == 2"}
+    assert skipped == 1
+    assert xfailed == 1
+
+
+def test_parse_junit_extra_missing_file_is_empty(tmp_path):
+    first_assertion, skipped, xfailed = sr.parse_junit_extra(tmp_path / "nope.xml")
+    assert (first_assertion, skipped, xfailed) == ({}, 0, 0)
+
+
+def test_compare_runs_flags_changed_assertion_on_id_red_both_sides():
+    before = sr.RunResult(passed=1, failed=1, failing_ids=("t.py::test_a",), wall_s=0.1,
+                           returncode=1, first_assertion={"t.py::test_a": "assert 1 == 2"})
+    after = sr.RunResult(passed=1, failed=1, failing_ids=("t.py::test_a",), wall_s=0.1,
+                          returncode=1, first_assertion={"t.py::test_a": "assert 1 == 3"})
+    report = sr.compare_runs(before, after)
+    assert report.new_failures == []
+    assert report.changed_assertions == ["t.py::test_a"]
+    assert report.accept is False
+
+
+def test_compare_runs_same_assertion_both_sides_is_clean():
+    before = sr.RunResult(passed=1, failed=1, failing_ids=("t.py::test_a",), wall_s=0.1,
+                           returncode=1, first_assertion={"t.py::test_a": "assert 1 == 2"})
+    after = sr.RunResult(passed=1, failed=1, failing_ids=("t.py::test_a",), wall_s=0.1,
+                          returncode=1, first_assertion={"t.py::test_a": "assert 1 == 2"})
+    report = sr.compare_runs(before, after)
+    assert report.changed_assertions == []
+    assert report.accept is True
+
+
+def test_compare_runs_flags_skipped_increase():
+    before = sr.RunResult(passed=2, failed=0, failing_ids=(), wall_s=0.1, returncode=0, skipped=1)
+    after = sr.RunResult(passed=2, failed=0, failing_ids=(), wall_s=0.1, returncode=0, skipped=2)
+    report = sr.compare_runs(before, after)
+    assert report.skipped_increase == 1
+    assert report.accept is False
+
+
+def test_compare_runs_flags_xfailed_increase():
+    before = sr.RunResult(passed=2, failed=0, failing_ids=(), wall_s=0.1, returncode=0, xfailed=0)
+    after = sr.RunResult(passed=2, failed=0, failing_ids=(), wall_s=0.1, returncode=0, xfailed=1)
+    report = sr.compare_runs(before, after)
+    assert report.xfailed_increase == 1
+    assert report.accept is False
+
+
+def test_compare_runs_new_failure_still_detected():
+    before = sr.RunResult(passed=2, failed=0, failing_ids=(), wall_s=0.1, returncode=0)
+    after = sr.RunResult(passed=1, failed=1, failing_ids=("t.py::test_a",), wall_s=0.1, returncode=1)
+    report = sr.compare_runs(before, after)
+    assert report.new_failures == ["t.py::test_a"]
+    assert report.accept is False
+
+
+def test_run_pytest_with_junit_path_populates_first_assertion(tmp_path):
+    repo = _init_repo(tmp_path / "repo")
+    junit = tmp_path / "out.xml"
+    result = sr.run_pytest(repo, PYTHON, ["test_synth.py"], junit_path=junit)
+    assert result.failed == 0
+    assert junit.exists()
+
+
+def test_whole_suite_regression_junit_mode_positive_control(tmp_path):
+    """Same-id, different-reason regression: the diff keeps
+    test_depends_on_value red on both sides (a pre-existing unrelated
+    failure), but changes WHY it fails. A bare failing-id-set diff sees no
+    new failure at all; --junit mode must still reject."""
+    test_text = TEST_BASE.replace(
+        "def test_depends_on_value():\n    assert libmod.value() == 1\n",
+        "def test_depends_on_value():\n    assert libmod.value() == 999\n",
+    )
+    repo = _init_repo(tmp_path / "repo", test_text=test_text)
+    diff = _bad_diff(repo)  # libmod.value() 1 -> 2; test still fails either way
+    report = sr.whole_suite_regression(repo, diff, python_exe=PYTHON,
+                                        test_args=["test_synth.py"], junit=True)
+    assert report.new_failures == []
+    assert report.changed_assertions == ["test_synth.py::test_depends_on_value"]
+    assert report.accept is False
+
+
 def test_predecessor_only_catches_regression_it_actually_owns(tmp_path):
     """When the predecessor DOES own the broken test, predecessor-only
     rejects too -- proves the miss above is about test ownership, not a

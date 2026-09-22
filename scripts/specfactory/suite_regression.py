@@ -27,7 +27,9 @@ import json
 import re
 import subprocess
 import sys
+import tempfile
 import time
+import xml.etree.ElementTree as ET
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
@@ -57,6 +59,47 @@ def parse_pytest(stdout: str) -> tuple[int, int, tuple[str, ...]]:
     return passed, failed + errors, tuple(ids)
 
 
+def parse_junit_extra(xml_path: Path) -> tuple[dict[str, str], int, int]:
+    """(first_assertion, skipped_count, xfailed_count) from a pytest
+    `--junitxml` report. `first_assertion` maps a failing/erroring node id
+    (`file.py::test_name`, matching parse_pytest's own id shape) to the
+    first line of its failure/error message -- the merge gate rejects a
+    candidate where an id stays red on both sides of a diff but its first
+    assertion line changed, which a bare failing-id-set diff would miss
+    entirely (same id, different reason). `skipped_count` is every
+    `<skipped>` testcase pytest did not mark as xfail; `xfailed_count` is
+    every `<skipped type="pytest.xfail">` (pytest's own junit convention for
+    an expected failure) -- an xpass (unexpectedly passing xfail) has no
+    `<skipped>` child at all and is counted as passed, same as pytest's own
+    short summary treats it."""
+    first_assertion: dict[str, str] = {}
+    skipped = 0
+    xfailed = 0
+    if not Path(xml_path).exists():
+        return first_assertion, skipped, xfailed
+    root = ET.parse(xml_path).getroot()
+    for tc in root.iter("testcase"):
+        classname = tc.get("classname", "")
+        name = tc.get("name", "")
+        file_attr = tc.get("file")
+        module = file_attr if file_attr else classname.replace(".", "/") + ".py"
+        node_id = f"{module}::{name}"
+        failure = tc.find("failure")
+        error = tc.find("error")
+        skipped_el = tc.find("skipped")
+        if failure is not None or error is not None:
+            el = failure if failure is not None else error
+            text = (el.get("message") or "") or (el.text or "")
+            first_line = (text or "").strip().splitlines()[0] if (text or "").strip() else ""
+            first_assertion[node_id] = first_line
+        elif skipped_el is not None:
+            if skipped_el.get("type") == "pytest.xfail":
+                xfailed += 1
+            else:
+                skipped += 1
+    return first_assertion, skipped, xfailed
+
+
 @dataclass
 class RunResult:
     passed: int
@@ -66,18 +109,30 @@ class RunResult:
     returncode: int
     stdout: str = field(repr=False, default="")
     stderr: str = field(repr=False, default="")
+    first_assertion: dict[str, str] = field(default_factory=dict)
+    skipped: int = 0
+    xfailed: int = 0
 
 
 def run_pytest(cwd: Path, python_exe: str = DEFAULT_PYTHON, test_args=DEFAULT_TEST_ARGS,
-                timeout: int = 600, extra_args: list[str] | None = None) -> RunResult:
+                timeout: int = 600, extra_args: list[str] | None = None,
+                junit_path: Path | None = None) -> RunResult:
+    """`junit_path`, when given, also captures --junitxml there and populates
+    first_assertion/skipped/xfailed from it (parse_junit_extra); omitted,
+    behaviour is unchanged from before this capability existed (all three
+    default empty/zero)."""
     argv = [python_exe, "-m", "pytest", "-q", "-p", "no:cacheprovider",
             *(extra_args or []), *test_args]
+    if junit_path is not None:
+        argv.append(f"--junitxml={junit_path}")
     t0 = time.time()
     r = subprocess.run(argv, cwd=str(cwd), capture_output=True, text=True, timeout=timeout)
     wall = time.time() - t0
     passed, failed, ids = parse_pytest(r.stdout)
+    first_assertion, skipped, xfailed = ({}, 0, 0) if junit_path is None else parse_junit_extra(junit_path)
     return RunResult(passed=passed, failed=failed, failing_ids=ids, wall_s=round(wall, 2),
-                      returncode=r.returncode, stdout=r.stdout, stderr=r.stderr)
+                      returncode=r.returncode, stdout=r.stdout, stderr=r.stderr,
+                      first_assertion=first_assertion, skipped=skipped, xfailed=xfailed)
 
 
 def apply_diff(cwd: Path, diff_text: str) -> None:
@@ -92,25 +147,70 @@ class RegressionReport:
     before: RunResult
     after: RunResult
     new_failures: list[str]
-    accept: bool
+    changed_assertions: list[str] = field(default_factory=list)
+    skipped_increase: int = 0
+    xfailed_increase: int = 0
+    accept: bool = True
+
+    def __post_init__(self):
+        # Recomputed here (not trusted from the caller) so every construction
+        # path -- whole_suite_regression, compare_runs, a hand-built report in
+        # a test -- agrees on what "accept" means for the same before/after.
+        self.accept = (
+            not self.new_failures
+            and not self.changed_assertions
+            and self.skipped_increase <= 0
+            and self.xfailed_increase <= 0
+        )
+
+
+def compare_runs(before: RunResult, after: RunResult) -> RegressionReport:
+    """The comparison half of the gate, decoupled from how `before`/`after`
+    were produced -- `whole_suite_regression` builds them via diff-apply in
+    one worktree; the merge gate (two already-built trees: a base-ref
+    worktree and the candidate) builds them by running `run_pytest` once per
+    tree and calls this directly. new_failures is red-after/green-before, as
+    before; changed_assertions is every id red on BOTH sides whose first
+    assertion line differs (same id, different reason -- a failing-id-set
+    diff alone would call that a non-event). Both `first_assertion` maps are
+    empty unless `run_pytest` was called with `junit_path`, in which case
+    changed_assertions is always empty too (nothing to compare)."""
+    new_failures = sorted(set(after.failing_ids) - set(before.failing_ids))
+    still_red = set(after.failing_ids) & set(before.failing_ids)
+    changed_assertions = sorted(
+        nid for nid in still_red
+        if before.first_assertion.get(nid) is not None
+        and after.first_assertion.get(nid) is not None
+        and before.first_assertion[nid] != after.first_assertion[nid]
+    )
+    return RegressionReport(
+        before=before, after=after, new_failures=new_failures,
+        changed_assertions=changed_assertions,
+        skipped_increase=after.skipped - before.skipped,
+        xfailed_increase=after.xfailed - before.xfailed,
+    )
 
 
 def whole_suite_regression(worktree: Path, diff_text: str, *, python_exe: str = DEFAULT_PYTHON,
-                            test_args=DEFAULT_TEST_ARGS, timeout: int = 600) -> RegressionReport:
+                            test_args=DEFAULT_TEST_ARGS, timeout: int = 600,
+                            junit: bool = False) -> RegressionReport:
     """The claimed gate. Records the failing-id set of `test_args` (default
     tests/csim) before the diff, applies it, records after, and reports new
     failures = ids failing after that were NOT failing before (red-after,
     green-before -- a test already red before the diff is never counted as a
     new failure, even if it stays red after). Rejects (accept=False) on any
-    new failure. The diff is applied in place; `worktree` is expected to
-    already be checked out at the diff's base commit."""
+    new failure, or (when `junit=True`) a changed first-assertion line on an
+    id red both sides, or a rise in skipped/xfailed count. The diff is
+    applied in place; `worktree` is expected to already be checked out at
+    the diff's base commit."""
     worktree = Path(worktree)
-    before = run_pytest(worktree, python_exe, test_args, timeout)
-    apply_diff(worktree, diff_text)
-    after = run_pytest(worktree, python_exe, test_args, timeout)
-    new_failures = sorted(set(after.failing_ids) - set(before.failing_ids))
-    return RegressionReport(before=before, after=after, new_failures=new_failures,
-                             accept=not new_failures)
+    with tempfile.TemporaryDirectory(prefix="suite_regression_junit_") as tmp:
+        before_xml = Path(tmp) / "before.xml" if junit else None
+        after_xml = Path(tmp) / "after.xml" if junit else None
+        before = run_pytest(worktree, python_exe, test_args, timeout, junit_path=before_xml)
+        apply_diff(worktree, diff_text)
+        after = run_pytest(worktree, python_exe, test_args, timeout, junit_path=after_xml)
+    return compare_runs(before, after)
 
 
 @dataclass
@@ -165,11 +265,15 @@ def main(argv: list[str] | None = None) -> int:
                      help="if given, also runs predecessor_only_regression over the same diff")
     ap.add_argument("--timeout", type=int, default=600)
     ap.add_argument("--json", action="store_true")
+    ap.add_argument("--junit", action="store_true",
+                     help="also capture --junitxml before/after to catch a changed first "
+                          "assertion line or a skipped/xfailed rise on an id red both sides")
     args = ap.parse_args(argv)
 
     diff_text = Path(args.diff_file).read_text()
     report = whole_suite_regression(Path(args.worktree), diff_text, python_exe=args.python,
-                                     test_args=args.test_args, timeout=args.timeout)
+                                     test_args=args.test_args, timeout=args.timeout,
+                                     junit=args.junit)
     out = {"whole_suite": _report_to_dict(report)}
 
     pred = None
@@ -185,6 +289,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"whole-suite: before {report.before.passed}p/{report.before.failed}f "
               f"({report.before.wall_s}s) -> after {report.after.passed}p/{report.after.failed}f "
               f"({report.after.wall_s}s); new failures: {report.new_failures or 'none'}; "
+              f"changed assertions: {report.changed_assertions or 'none'}; "
+              f"skipped_increase={report.skipped_increase} xfailed_increase={report.xfailed_increase}; "
               f"accept={report.accept}")
         if pred is not None:
             print(f"predecessor-only: {pred.result.failed} failed of "
