@@ -1,0 +1,17 @@
+[
+  ["seed", 11],
+  ["call", "qa_camera", 90, -1],
+  ["screenshot", "overview_seed11"],
+  ["call", "qa_camera", 50, -1],
+  ["screenshot", "regional_seed11"],
+  ["call", "qa_camera", 20, 0],
+  ["screenshot", "local_seed11"],
+  ["call", "qa_camera", 50, -1],
+  ["call", "qa_set", "hover_faction", 1],
+  ["screenshot", "hover_seed11"],
+  ["call", "qa_set", "hover_faction", -1],
+  ["call", "qa_replay_step"],
+  ["call", "qa_replay_step"],
+  ["call", "qa_replay_step"],
+  ["screenshot", "mid_replay_seed11"]
+]

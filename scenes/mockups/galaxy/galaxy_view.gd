@@ -378,6 +378,9 @@ func update_view(distance: float, focused_id: int, hover_faction: int, pin_facti
 	if _names:
 		for label in _names.get_children():
 			label.modulate.a = name_alpha
+			# Label3D's outline has its own alpha, separate from modulate; left
+			# opaque it stays a fully readable dark silhouette even at alpha 0.
+			label.outline_modulate.a = name_alpha
 
 
 func flash(system_id: int, color: Color) -> void:
