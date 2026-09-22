@@ -1,0 +1,482 @@
+# docs/northstar/plans/push/pieces.toml -- F6 item 4 (two-day push).
+# One [[piece]] per plan piece from docs/northstar/plans/briefs/2026-09-22-two-day-push.md's
+# wave-0/wave-1/wave-2/wave-3 tables. `owns` is exact paths (footprint fence: the piece's
+# diff must equal this set exactly); `owns_glob` allows glob patterns for a piece whose
+# footprint is a whole new directory. `acceptance` is pytest node ids (collected by
+# `pieces.py --check`) or a Godot test script path (existence-checked only, since
+# run_godot_tests.sh does not use pytest collection). `tests_pending = true` marks a piece
+# whose acceptance file(s) are not written yet (a future M0 action named in the plan) --
+# `pieces.py --check` WARNs instead of FAILing on those so this file can be authored ahead
+# of the tests it names. `depends_on` uses piece ids, or the literal "freeze" for wave-0's
+# F0..F6 (not modeled as pieces here -- they are M0's own direct-to-main work, never merged
+# through merge_cli.py).
+
+[[piece]]
+id = "B1"
+manager = "M1"
+wave = 1
+owns = ["csrc/events.c"]
+acceptance = [
+    "tests/csim/test_E04_S026_crises_start_when_a_line_is_crossed.py",
+    "tests/csim/test_E04_S027_one_thing_leads_to_another.py",
+    "tests/csim/test_E04_S028_disasters_stack_contradictions_do_not.py",
+    "tests/csim/test_E04_S029_some_pressures_never_stop.py",
+    "tests/csim/test_E04_S030_the_launch_event_library.py",
+    "tests/csim/test_E04_wiring.py",
+]
+depends_on = []
+status = "pending"
+size_estimate = "749 py lines, 31 tests (E-04)"
+
+[[piece]]
+id = "B2"
+manager = "M1"
+wave = 1
+owns = ["csrc/collision.c"]
+acceptance = [
+    "tests/csim/test_E05_S039_when_everyone_wants_the_same_region.py::test_R_039_01_factors_1_0_0_7",
+    "tests/csim/test_E05_S039_when_everyone_wants_the_same_region.py::test_R_039_02_opposition_0_35_ceiling_0",
+    "tests/csim/test_E05_S039_when_everyone_wants_the_same_region.py::test_R_039_03_its_highest_military_region_gains",
+    "tests/csim/test_E05_S039_when_everyone_wants_the_same_region.py::test_R_039_04_starter_military_10_0_margin",
+    "tests/csim/test_E05_S039_when_everyone_wants_the_same_region.py::test_R_039_06_same_rules_apply_with_second",
+    "tests/csim/test_E05_S039_wiring.py",
+]
+depends_on = []
+status = "pending"
+size_estimate = "ALG-23/24, 6 tests (E-05 S-039 minus R-039-05, held by Q-039-01)"
+
+[[piece]]
+id = "B3"
+manager = "M1"
+wave = 1
+owns = ["csrc/friction.c"]
+acceptance = [
+    "tests/csim/test_E05_S040_empires_fracture.py",
+    "tests/csim/test_E05_S041_hostile_borders_wear_you_down.py",
+]
+depends_on = []
+status = "pending"
+size_estimate = "ALG-25, ALG-29 (E-05 S-040, S-041)"
+
+[[piece]]
+id = "B4"
+manager = "M1"
+wave = 1
+owns = ["csrc/worldgen.c"]
+acceptance = [
+    "tests/csim/test_E03_S021_a_fresh_galaxy_from_a_seed.py",
+    "tests/csim/test_E03_S022_homes_are_strong_frontiers_are_new.py",
+    "tests/csim/test_E03_S023_routes_carry_armies_trade_or_both.py",
+    "tests/csim/test_E03_S024_politics_redraws_the_routes.py",
+    "tests/csim/test_E03_S025_nobody_starts_on_your_doorstep.py",
+]
+depends_on = ["freeze"]
+status = "pending"
+size_estimate = "217+ py lines, 28 tests (E-03); needs F2's weak om_world_generate attribute"
+
+[[piece]]
+id = "B5"
+manager = "M1"
+wave = 1
+owns = ["csrc/diplomacy.c"]
+acceptance = [
+    "tests/csim/test_E06_S042_three_ways_to_feel_about_a_neighbor.py",
+    "tests/csim/test_E06_S043_peace_grows_out_of_quiet.py",
+    "tests/csim/test_E06_S044_peace_is_never_safe.py",
+    "tests/csim/test_E06_S045_a_faction_s_technology_is_one_number.py",
+    "tests/csim/test_E06_S046_archetypes_spend_tech_differently.py",
+    "tests/csim/test_E06_S047_friends_share_knowledge.py",
+    "tests/csim/test_E06_wiring.py",
+]
+depends_on = ["freeze"]
+status = "pending"
+size_estimate = "368 py lines, 42 tests (E-06 minus S-048, held for B5b)"
+
+[[piece]]
+id = "B5b"
+manager = "M1"
+wave = 3
+owns = ["csrc/diplomacy.c"]
+acceptance = [
+    "tests/csim/test_E06_S048_three_tiers_of_technology.py",
+]
+depends_on = ["B5"]
+status = "pending"
+size_estimate = "1 story, S-048 (three tiers of technology)"
+
+[[piece]]
+id = "B6"
+manager = "M1"
+wave = 1
+owns = ["csrc/lifecycle.c"]
+acceptance = [
+    "tests/csim/test_E07_S049_a_revolt_can_birth_a_nation.py",
+    "tests/csim/test_E07_S050_old_loyalties.py",
+    "tests/csim/test_E07_S051_nations_that_never_were.py",
+    "tests/csim/test_E07_S052_no_plot_armor.py",
+    "tests/csim/test_E07_S053_every_faction_has_an_age.py",
+    "tests/csim/test_E07_S054_where_a_civilization_ends_up.py",
+    "tests/csim/test_E07_wiring.py",
+]
+depends_on = ["freeze"]
+status = "pending"
+size_estimate = "51 py lines plus tick.py parts, 28 tests (E-07)"
+
+[[piece]]
+id = "B7"
+manager = "M1"
+wave = 1
+owns = ["csrc/generational.c"]
+acceptance = [
+    "tests/csim/test_E08_S056_decades_pass_while_i_am_gone.py",
+    "tests/csim/test_E08_S057_stay_with_the_family_or_move_on.py",
+    "tests/csim/test_E08_S058_who_i_come_back_as.py",
+    "tests/csim/test_E08_S059_the_family_grows_while_i_am_away.py",
+    "tests/csim/test_E08_S060_named_leaders_live_and_die.py",
+    "tests/csim/test_E08_S061_when_my_commander_dies.py",
+    "tests/csim/test_E08_S062_when_my_civilization_falls.py",
+    "tests/csim/test_E08_S063_my_two_choices_at_the_start.py",
+    "tests/csim/test_E08_S064_what_carries_over.py",
+]
+depends_on = ["freeze"]
+status = "pending"
+size_estimate = "1263 py lines, 50 tests (E-08 minus S-055, held for B7b: needs chronicle.c and unit.c)"
+
+[[piece]]
+id = "B7b"
+manager = "M1"
+wave = 3
+owns = ["csrc/generational.c"]
+acceptance = [
+    "tests/csim/test_E08_S055_one_commander_one_mission_then_the_world_moves.py",
+]
+depends_on = ["B7", "B8", "B10"]
+status = "pending"
+size_estimate = "1 story, S-055 (needs chronicle.c and unit.c both attached)"
+
+[[piece]]
+id = "B8"
+manager = "M1"
+wave = 2
+owns = ["csrc/chronicle.c"]
+acceptance = [
+    "tests/csim/test_E09_S065_five_to_ten_entries_in_the_right_order.py",
+    "tests/csim/test_E09_S066_what_counts_as_notable.py",
+    "tests/csim/test_E09_S067_stories_not_events.py",
+    "tests/csim/test_E09_S068_written_from_fragments_never_the_same_twice.py",
+    "tests/csim/test_E09_S069_watching_history_happen.py",
+    "tests/csim/test_E09_S070_my_family_is_always_in_the_story.py",
+    "tests/csim/test_E09_S071_the_fragment_library_contract.py",
+]
+depends_on = ["B7"]
+status = "pending"
+size_estimate = "923 py lines, 39 tests (E-09)"
+
+[[piece]]
+id = "B9"
+manager = "M2"
+wave = 1
+owns = ["csrc/mission.c"]
+acceptance = [
+    "tests/csim/test_E10_S072_orders_come_from_where_the_world_hurts.py",
+    "tests/csim/test_E10_S073_ten_kinds_of_trouble.py",
+    "tests/csim/test_E10_S074_you_get_what_the_civilization_can_spare.py",
+    "tests/csim/test_E10_S075_hold_destroy_escort_survive_eliminate.py",
+    "tests/csim/test_E10_S076_the_clock.py",
+    "tests/csim/test_E10_S077_five_ways_it_can_go.py",
+    "tests/csim/test_E10_S078_a_battle_becomes_history.py",
+    "tests/csim/test_E10_S079_orders_not_menus.py",
+    "tests/csim/test_E10_S080_difficulty_is_scarcity_not_stronger_enemies.py",
+]
+depends_on = ["freeze"]
+status = "pending"
+size_estimate = "1450 py lines, 45 tests (E-10 by closure); S-076 calls om_tactical_tick (unit.c/B10) -- see report finding"
+
+[[piece]]
+id = "B10"
+manager = "M2"
+wave = 1
+owns = ["csrc/unit.c"]
+acceptance = [
+    "tests/csim/test_E11_S081_three_categories_a_soft_triangle.py",
+    "tests/csim/test_E11_S082_the_six.py",
+    "tests/csim/test_E11_S083_stats_traits_ability.py",
+    "tests/csim/test_E11_S086_one_ability_each.py",
+    "tests/csim/test_E11_S088_reading_units_on_screen.py",
+    "tests/csim/test_E11_wiring.py",
+]
+depends_on = ["freeze"]
+status = "pending"
+size_estimate = "1128 py lines, 45 tests (E-11 minus S-084/S-085/S-087, held for B10b: need tactical_move.c)"
+
+[[piece]]
+id = "B10b"
+manager = "M2"
+wave = 3
+owns = ["csrc/unit.c"]
+acceptance = [
+    "tests/csim/test_E11_S084_flat_damage.py",
+    "tests/csim/test_E11_S085_long_enough_to_think.py",
+    "tests/csim/test_E11_S087_every_unit_thinks_the_same_way.py",
+]
+depends_on = ["B10", "B12"]
+status = "pending"
+size_estimate = "3 stories, S-084/S-085/S-087 (need tactical_move.c attached)"
+
+[[piece]]
+id = "B11"
+manager = "M2"
+wave = 2
+owns = ["csrc/fog.c"]
+acceptance = [
+    "tests/csim/test_E12_S089_i_see_what_my_units_see.py",
+    "tests/csim/test_E12_S090_hiding_in_the_storm.py",
+    "tests/csim/test_E12_S091_standing_high.py",
+    "tests/csim/test_E12_S092_recon_then_fog.py",
+    "tests/csim/test_E12_S093_fog_is_for_the_player_not_the_engine.py",
+    "tests/csim/test_E12_S094_how_fog_looks.py",
+]
+depends_on = ["B10"]
+status = "pending"
+size_estimate = "121 py lines, 23 tests (E-12); S-089/S-092 call tactical_move.c -- see report finding"
+
+[[piece]]
+id = "B12"
+manager = "M2"
+wave = 2
+owns = ["csrc/tactical_move.c"]
+acceptance = [
+    "tests/csim/test_E13_S095_a_force_moves_as_one.py",
+    "tests/csim/test_E13_S097_around_not_through.py",
+    "tests/csim/test_E13_S098_firing_through_friends.py",
+    "tests/csim/test_E13_S099_speed_is_position.py",
+    "tests/csim/test_E13_S100_facing.py",
+    "tests/csim/test_E13_S101_movement_that_reads.py",
+    "tests/csim/test_E13_S102_same_commands_same_battle.py",
+]
+depends_on = ["B10", "B11"]
+status = "pending"
+size_estimate = "1038 py lines, 35 tests (E-13 minus S-096, held for B12b: needs fog.c)"
+
+[[piece]]
+id = "B12b"
+manager = "M2"
+wave = 3
+owns = ["csrc/tactical_move.c"]
+acceptance = [
+    "tests/csim/test_E13_S096_four_commands.py",
+]
+depends_on = ["B12", "B11"]
+status = "pending"
+size_estimate = "1 story, S-096 (needs fog.c attached)"
+
+[[piece]]
+id = "B13"
+manager = "M2"
+wave = 2
+owns = ["csrc/enemy_macro.c"]
+acceptance = [
+    "tests/csim/test_E14_S120_five_behaviors_three_moods.py",
+    "tests/csim/test_E14_S121_timers_and_thresholds_with_noise.py",
+    "tests/csim/test_E14_S122_forces_that_notice_each_other.py",
+    "tests/csim/test_E14_S123_the_enemy_replays_like_i_do.py",
+    "tests/csim/test_E14_S124_rare_surprises.py",
+    "tests/csim/test_E14_S125_how_hard_the_enemy_tries.py",
+]
+depends_on = ["B10"]
+status = "pending"
+size_estimate = "539 py lines, 22 tests (E-14)"
+
+[[piece]]
+id = "B14"
+manager = "M2"
+wave = 2
+owns = ["csrc/tactical_support.c"]
+acceptance = [
+    "tests/csim/test_E15_S126_most_of_my_force_is_out_there.py",
+    "tests/csim/test_E15_S127_taking_a_garrison.py",
+    "tests/csim/test_E15_S128_what_the_enemy_builds.py",
+    "tests/csim/test_E15_S129_units_that_cannot_fight.py",
+    "tests/csim/test_E15_S130_the_battlefield_moves.py",
+    "tests/csim/test_E15_S131_reading_hazards_and_structures.py",
+]
+depends_on = ["B10", "B9"]
+status = "pending"
+size_estimate = "184 py lines, 25 tests (E-15)"
+
+[[piece]]
+id = "B15m"
+manager = "M2"
+wave = 1
+owns = ["csrc/tactical_mapgen.c"]
+acceptance = [
+    "tests/csim/test_E11_S084_flat_damage.py",
+    "tests/csim/test_E12_S089_i_see_what_my_units_see.py",
+    "tests/csim/test_E12_S092_recon_then_fog.py",
+    "tests/csim/test_E12_S093_fog_is_for_the_player_not_the_engine.py",
+    "tests/csim/test_E13_S095_a_force_moves_as_one.py",
+    "tests/csim/test_E13_S098_firing_through_friends.py",
+]
+depends_on = ["freeze"]
+status = "pending"
+size_estimate = "fixture functions only (om_map_add_cover, om_map_add_obstacle); the E-11..E-13 fixture calls, not the full 1575-line/29-test E-17 generator (held)"
+
+[[piece]]
+id = "C7"
+manager = "M3"
+wave = 1
+owns = []
+owns_glob = ["autoload/qa_daemon.gd", "scenes/harness/**"]
+acceptance = [
+    "tests/test_qa_daemon.gd",
+]
+depends_on = []
+status = "pending"
+size_estimate = "new daemon autoload plus harness scene; first client piece, everything else attaches through it"
+
+[[piece]]
+id = "T1"
+manager = "M3"
+wave = 1
+owns = ["csrc/pipe/om_pipe.c"]
+acceptance = [
+    "tests/transport",
+]
+depends_on = ["freeze"]
+status = "pending"
+size_estimate = "thin stdio pipe server over libouroboros.so; shapes fixed by F4"
+
+[[piece]]
+id = "C2"
+manager = "M3"
+wave = 1
+owns = ["autoload/c_bridge.gd"]
+owns_glob = ["scenes/galaxy/**"]
+acceptance = [
+    "tests/test_galaxy_view.gd",
+]
+depends_on = ["freeze"]
+status = "pending"
+tests_pending = true
+size_estimate = "replaces 5181 lines coupled to scenes/shared/world_view; rebind to T1 when it attaches"
+
+[[piece]]
+id = "K1"
+manager = "M0"
+wave = 1
+owns = ["scripts/specfactory/pack_validate.py"]
+acceptance = [
+    "tests/specfactory/test_pack_validate.py",
+]
+depends_on = []
+status = "pending"
+size_estimate = "PX-10 already wrote the test, banned_words.txt and both fixture packs; only pack_validate.py itself is unbuilt"
+
+[[piece]]
+id = "Q2"
+manager = "M2"
+wave = 2
+owns = ["scripts/qa/rts_detectors.py"]
+acceptance = [
+    "tests/qa/t1/test_rts_detectors.py",
+]
+depends_on = ["B10", "freeze"]
+status = "pending"
+tests_pending = true
+size_estimate = "rubber-band/stuck/backwards/dropped-order detectors over a scripted tactical trace"
+
+[[piece]]
+id = "T2c"
+manager = "M1"
+wave = 2
+owns = ["csrc/save.c"]
+acceptance = [
+    "tests/csim/test_E16_S111_saving.py",
+]
+depends_on = ["B7"]
+status = "pending"
+tests_pending = true
+size_estimate = "E-16 S-111; C-side serialisation of om_world (om_save_state_*, om_load_state_read)"
+
+[[piece]]
+id = "T2g"
+manager = "M3"
+wave = 2
+owns = []
+owns_glob = ["scenes/load_game/**"]
+acceptance = [
+    "tests/test_load_game.gd",
+]
+depends_on = ["T2c", "T1"]
+status = "pending"
+tests_pending = true
+size_estimate = "Godot save-slot layer over T2c, rebind to T1"
+
+[[piece]]
+id = "C3"
+manager = "M3"
+wave = 2
+owns = []
+owns_glob = ["scenes/world/chronicle_*"]
+acceptance = [
+    "tests/test_chronicle_scroll.gd",
+]
+depends_on = ["B8", "T1"]
+status = "pending"
+tests_pending = true
+size_estimate = "rebind scroll to B8's output through T1; mockup p7 plants"
+
+[[piece]]
+id = "C4"
+manager = "M3"
+wave = 2
+owns = []
+owns_glob = ["scenes/mission_briefing/**", "scenes/debrief/**"]
+acceptance = [
+    "tests/test_briefing_debrief.gd",
+]
+depends_on = ["B9", "T1"]
+status = "pending"
+tests_pending = true
+size_estimate = "rebind briefing/debrief to B9's output; mockup p9 plants"
+
+[[piece]]
+id = "C5"
+manager = "M3"
+wave = 2
+owns = []
+owns_glob = ["scenes/tactical_c/**"]
+acceptance = [
+    "tests/test_tactical_view.gd",
+]
+depends_on = ["B10", "B12", "T1"]
+status = "pending"
+tests_pending = true
+size_estimate = "minimal rebuild over T1's tactical frame; mockup p4/p8 plants"
+
+[[piece]]
+id = "K2"
+manager = "M0"
+wave = 3
+owns = []
+owns_glob = ["assets/eras/greek_placeholder/**"]
+acceptance = [
+    "tests/specfactory/test_pack_validate.py",
+]
+depends_on = ["K1"]
+status = "pending"
+tests_pending = true
+size_estimate = "second placeholder era pack (Greek kit from the mockup); path name a candidate, see report"
+
+[[piece]]
+id = "Q1"
+manager = "M0"
+wave = 2
+owns = []
+owns_glob = ["agora/projects/ouroboros/**"]
+acceptance = []
+depends_on = ["C7"]
+status = "pending"
+tests_pending = true
+size_estimate = "cross-repo piece (lives in the agora checkout, not this repo); QA campaign files, planted-bug catalog, per-epic gate cards; data lint, no pytest id"
+
