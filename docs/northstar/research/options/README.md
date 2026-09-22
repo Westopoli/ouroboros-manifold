@@ -29,14 +29,14 @@ Precedent for this shape: `../landscape_design/README.md`, the P2 design phase. 
 | Multi-perspective camera | `camera` | 1 | written | 2026-09-22 | agent running 2026-09-22 |
 | Map view zoom band | `map-view` | 1 | written | 2026-09-22 | agent running 2026-09-22 |
 | Control group depth | `control-groups` | 1 | written | 2026-09-22 | agent running 2026-09-22 |
-| Layer system look and feel | `layer-system` | 1 | written | 2026-09-22 | agent running 2026-09-22 |
-| Era transitions | `era-transitions` | 2 | written | 2026-09-22 | held |
-| Era feel differentiation | `era-feel` | 2 | written | 2026-09-22 (4 options) | held |
-| Paired economy multiplayer mode | `paired-economy` | 2 | written | 2026-09-22 | held |
+| Layer system look and feel | `layer-system` | 1 | written | 2026-09-22 | 4 options, reviewed 2026-09-22 |
+| Era transitions | `era-transitions` | 2 | written | 2026-09-22 | agent running 2026-09-22 |
+| Era feel differentiation | `era-feel` | 2 | written | 2026-09-22 (4 options) | agent running 2026-09-22 |
+| Paired economy multiplayer mode | `paired-economy` | 2 | written | 2026-09-22 | agent running 2026-09-22 |
 | Self-running city spectacle | `city-spectacle` | 2 | written | 2026-09-22 | agent running 2026-09-22 |
-| Unit passive traits | `unit-traits` | 3 | written | 2026-09-22 | held |
-| Mission complications | `complications` | 3 | written | 2026-09-22 (2 options, surface) | held |
-| Enemy macro difficulty knobs | `difficulty-knobs` | 3 | written | 2026-09-22 | held |
+| Unit passive traits | `unit-traits` | 3 | written | 2026-09-22 | agent running 2026-09-22 |
+| Mission complications | `complications` | 3 | written | 2026-09-22 (2 options, surface) | agent running 2026-09-22 |
+| Enemy macro difficulty knobs | `difficulty-knobs` | 3 | written | 2026-09-22 | agent running 2026-09-22 |
 
 ## Sub-agent template
 
@@ -49,7 +49,7 @@ One agent per feature, launched only when Westley says so. The agent reads, in o
 - Research: WebSearch and WebFetch allowed; cite every prior-art claim; `docs/research/games/*.md` may be read.
 - Write access: only `docs/northstar/research/options/<slug>/`. Never `docs/bible/**`, `docs/northstar/ambiguity_register.md`, `CLAUDE.md`, tests, code.
 - Prose: normal prose in `options.md`; caveman only in the report back to the main agent.
-- Length: 600 to 1,200 words plus tables unless the brief says otherwise. Longer means the option is drifting into "how".
+- Length: 600 to 1,500 words plus tables unless the brief says otherwise; the required elements per option set the floor. Longer means the option is drifting into "how".
 
 ## Review checklist for an options.md
 
