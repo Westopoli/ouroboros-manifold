@@ -100,13 +100,12 @@ func _load_kits() -> void:
 
 
 func _regenerate() -> void:
-	if QaPlants.is_active("regen-stall"):
-		OS.delay_msec(3000)
-
 	for child in _generated.get_children():
 		child.free()
 
 	var t0 := Time.get_ticks_usec()
+	if QaPlants.is_active("regen-stall"):
+		OS.delay_msec(3000)
 	var field_map := FieldMap.new()
 	var gen_seed := 11 if QaPlants.is_active("seed-ignored") else _seed
 	field_map.generate(gen_seed, _canvas, _stability)

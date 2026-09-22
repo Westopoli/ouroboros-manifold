@@ -3,7 +3,7 @@
 A kit JSON reskins the same field-map output for one era. Keys:
 
 - `name` — kit id string.
-- `palette` — hex colors for `sky`, `water`, `zone_a`, `zone_b`, `zone_c`, `cliff`. Free-standing swatches; individual rules below carry their own `color` too.
+- `palette` — hex colors for `sky`, `water`, `zone_a`, `zone_b`, `zone_c`, `zone_d`, `zone_e`, `cliff`. Free-standing swatches; individual rules below carry their own `color` too.
 - `water_is` — `"surface"` (draw water as a surface, e.g. sea) or `"void"` (draw nothing, placer darkens sky instead).
 - `terrain` — ordered list of `{when, piece, density, mesh, size, color}` rules for non-city ground cover (rock, vegetation, field rows, debris, etc). First matching rule per cell wins.
 - `city` — same rule shape, keyed by district band (1..4). Applies only where `district >= 1`.
