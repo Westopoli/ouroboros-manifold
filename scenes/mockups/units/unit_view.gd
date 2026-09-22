@@ -88,9 +88,43 @@ func _get_mesh(role: String) -> Mesh:
 	var shape := String(roster.get_silhouette(role).get("shape", "wide_block"))
 	if _mesh_cache.has(shape):
 		return _mesh_cache[shape]
-	var mesh := _build_prism(SHAPE_POINTS.get(shape, SHAPE_POINTS["wide_block"]))
+	var points: Array = SHAPE_POINTS.get(shape, SHAPE_POINTS["wide_block"])
+	var mesh := _build_spire(points) if shape == "spire_radial" else _build_prism(points)
 	_mesh_cache[shape] = mesh
 	return mesh
+
+
+func _build_spire(points: Array) -> ArrayMesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var n := points.size()
+	var base_h := 0.55
+	for i in range(1, n - 1):
+		st.add_vertex(Vector3(points[0].x, base_h, points[0].y))
+		st.add_vertex(Vector3(points[i].x, base_h, points[i].y))
+		st.add_vertex(Vector3(points[i + 1].x, base_h, points[i + 1].y))
+	for i in range(1, n - 1):
+		st.add_vertex(Vector3(points[0].x, 0.0, points[0].y))
+		st.add_vertex(Vector3(points[i + 1].x, 0.0, points[i + 1].y))
+		st.add_vertex(Vector3(points[i].x, 0.0, points[i].y))
+	for i in range(n):
+		var a: Vector2 = points[i]
+		var b: Vector2 = points[(i + 1) % n]
+		st.add_vertex(Vector3(a.x, base_h, a.y))
+		st.add_vertex(Vector3(a.x, 0.0, a.y))
+		st.add_vertex(Vector3(b.x, 0.0, b.y))
+		st.add_vertex(Vector3(a.x, base_h, a.y))
+		st.add_vertex(Vector3(b.x, 0.0, b.y))
+		st.add_vertex(Vector3(b.x, base_h, b.y))
+	var apex := Vector3(0.0, 1.0, 0.0)
+	for i in range(n):
+		var a: Vector2 = points[i]
+		var b: Vector2 = points[(i + 1) % n]
+		st.add_vertex(Vector3(a.x, base_h, a.y))
+		st.add_vertex(Vector3(b.x, base_h, b.y))
+		st.add_vertex(apex)
+	st.generate_normals()
+	return st.commit()
 
 
 func _get_shape_extent(shape: String) -> Vector2:
