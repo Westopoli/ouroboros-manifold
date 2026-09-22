@@ -58,6 +58,18 @@ Diagnosis and the second-pass list, for the mockup chat:
 
 Kits swapped cleanly and quickly: the one-generator-two-kits claim holds and is not reopened.
 
+## Mockup review 2 (Westley, 2026-09-21): concept approved, generator shape must change
+
+Verbatim: "Protoptye has my go ahead (though, the elevation changes leave much to be desired, I imagined that the maps would be significantly larger, mountains would be huge and zoomability would have a "floor" that you can follow elevation changes with (halo wars had a mechanic like this), you stayed at your zoom "height" even when elevation changed, so scrolling to a higher elevation didn't require you to adjust your zoom level. Though Halo Wars had small changes, I want this game to have big changes for vastly different heights. City has distinct onion layers, if this is a prototype of the map generation/landscape system, I'd hoped it'd be much more dynamic, more variety, not simple circular cities, cities that follow rivers like reality or nestle in valleys/peaks, hillsides. Stochiastic seperations, very similar to the Roblox biome/landscape generation tool." Five reference images saved as `references/E-17/E-17-9..13*.png` with rows in `notes.md`.
+
+What is approved: one generator, one field map, two kits, the placer, the city as the battlefield, three zoom bands, the map-view overlay. What changes before the epics are rewritten:
+
+1. **Terrain first, waypoints second.** The mockup placed a hand skeleton and grew gradients around it, which gives circular cities on flat ground. The generator inverts: layered noise (Roblox-style, seeded) produces elevation, water (lakes and rivers flowing downhill from peaks to a coast) and biome bands that follow elevation and latitude; then the spine nodes are *found* on that terrain by rules (the city core at a river bend, a valley floor or a defensible hillside; chokepoints where a pass, a bridge or a gate must be; vantages on real peaks). Q-119-02 is answered by this: no skeleton library; the layout is derived from terrain, and fairness (Q-113-01) is checked on the derived spine.
+2. **Big elevation.** Mountains are huge; height differences are large; five terraces stay for the layer system but the vertical scale is many times the mockup's 250 wu, and cliffs, valleys and peaks read at every band.
+3. **Cities follow terrain.** Districts grow along rivers, coasts and contour lines, never as rings; the wall follows defensible ground; population density is shaped by water, slope and the core's position.
+4. **Larger canvas.** Significantly larger than one city; a map holds a landmass-scale variety of biomes (E-17 R-116-01's canvas ranges are revisited in the rewrite).
+5. **Camera floor.** The camera keeps its height above the ground under it, so scrolling up a mountain does not need a zoom change (Halo Wars), with the bands defined by height above ground. This is an E-16 S-103 rule.
+
 ## Next step
 
 Mockup review 1's items 1-5 are fixed (2026-09-21): world-space map overlay (was frozen screen-space), border pieces now orient along the path with real cliff height (the actual cause of the dashed wall look, not spacing), decoration density retuned so the city reads over the fields, four skeletons with 8% jitter (was one at 3%), stability slider labelled/debounced with a real visible effect, and a measured perf fix (ground mesh dedup: regenerate ~1.49s -> ~0.84s; field_map generation is now the largest remaining cost). 14 review screenshots in `mockup/` are re-shot against all of this. Awaiting Westley's second look. On approval: epics E-17/E-16/E-19 are rewritten from this design and Stage 5 tests are authored.

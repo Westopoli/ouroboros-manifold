@@ -23,6 +23,18 @@
 | 07 | S-119, S-116 | concept image far | The whole canvas in one view: 20 to 30 tactical screens of terrain and city, still readable as places | A single-screen skirmish arena | huge-scale canvas with the playful bright Age of Empires Online register at every zoom |
 | 08 | S-103 (E-16), S-116 | World of Warships | The map view: grid, terrain as simple shapes, unit groups as icons, drawn movement arrows, objective circles; basic group movement orders are given from here | Naval UI, the grid letters | the third zoom band (micro, tactical, map) and orders from the map level |
 
+## Provided shots (Westley, 2026-09-21, mockup review 2)
+
+`E-17-9-roblox-biome-map.png`, `E-17-10-roblox-terrain-cliffs.png`, `E-17-11-roblox-heightfield.png` (Roblox terrain generator), `E-17-12-island-biome-map.png`, `E-17-13-island-heightfield.png` (island generators).
+
+| # | Story | Source | Aspect — the example | Not wanted | Proves / contrast |
+|---|---|---|---|---|---|
+| 09 | S-114, S-119 | Roblox biome map | Biomes and elevation as layered noise: bands that follow each other (water, shore, lowland, upland, peak), stochastic separations, no repeated shape | Concentric anything | terrain zones come from noise fields, not from discs around waypoints |
+| 10 | S-114, S-119 | Roblox terrain, ground view | Huge elevation: cliffs, a lake far below, snow peaks far above; the player physically feels height | Gentle terraces | mountains are huge, elevation changes are big, "vastly different heights" |
+| 11 | S-114 | Roblox heightfield | The same noise as a heightfield with terraces and shading; water fills the lows | | one elevation field drives ground mesh, water and biome bands together |
+| 12 | S-119 | island biome map | A whole landmass with snow north, forest south, coasts, inlets; biomes follow elevation and latitude | | large-scale variety across one map; cities should follow rivers and coasts the way real ones do |
+| 13 | S-116, S-119 | island heightfield | The same map as relief: peaks, valleys, islands; the canvas is much larger than one city | A single city-sized canvas | maps are significantly larger; a city nestles in a valley, on a hillside, or along a river, never a circle stamped on flat ground |
+
 ## Derived target — elevation and sense of scale (Westley, 2026-09-13)
 
 The AoE shots pin the readable toy register only. The thing Westley cares most about for E-17 is **not** in them and is the design target:
