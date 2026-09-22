@@ -1,62 +1,31 @@
-# claude-swarm — Ouroboros project config
-# Cascade: drift-gate-and-green-check (harness-fix cascade, 2026-09-17 decisions)
-
-spec_dir          = "docs/test_specs/"
-briefs_dir        = ".swarm/drift-gate-and-green-check/briefs/"
+spec_dir           = "docs/northstar/plans/push/specs/"
 type_contract_path = "csrc/ouroboros_sim.h"
-
-umbrella_test_cmd = ".venv/bin/python -m pytest tests/csim/test_E02_S160_drift_gate.py -p no:cacheprovider -q"
-apex_test_cmd     = ".venv/bin/python -m pytest tests/csim/test_E02_S0*.py tests/csim/test_E02_S160_drift_gate.py tests/csim/test_E02_gate_drift_trajectory.py tests/csim/controls/test_control_drift_gate_ignored.py \"tests/csim/test_E05_S033_territory_pays_or_costs.py::test_R_033_01_budget_66_8_40_8\" -p no:cacheprovider -q"
-graphify_cmd      = ""
-
+umbrella_test_cmd  = "~/Projects/agora/.venv/bin/python -m pytest tests/push -q -p no:cacheprovider"
 parent_owned = [
-  "docs/bible/game_bible.md",
-  "docs/bible_history/bible_2_00_simulation.md",
-  "docs/bible_history/bible_2_00_missions.md",
-  "docs/bible_history/bible_2_00_chronicle.md",
-  "docs/bible_history/bible_2_00_antagonist.md",
-  "docs/bible_history/game_bible_1_23.md",
-  "docs/bible_history/bible_2_00_ai_pipeline.md",
-  "docs/test_specs/cover_asteroid_los_spec.md",
-  "docs/test_specs/cover_los_rework_spec.md",
-  "docs/test_specs/wave_3_pre_zip_wiring.md",
-  "docs/phase1_ship_plan.md",
-  "docs/priority_queue.md",
-  "simulation/test_asteroid_umbrella.py",
-  "simulation/test_cover_umbrella.py",
-  "simulation/test_wave3_blockers_umbrella.py",
-  "tests/test_wave3_blockers_umbrella.gd",
-  "simulation/tick.py",
-  "simulation/drift.py",
-  "simulation/faction.py",
-  "simulation/region.py",
-  "simulation/events.py",
-  "simulation/event_engine.py",
-  "simulation/intent_resolver.py",
-  "simulation/border_friction.py",
-  "simulation/technology.py",
-  "simulation/diplomacy.py",
-  "simulation/world.py",
-  "simulation/templates.py",
-  "simulation/theme_scifi.py",
-  "csrc/ouroboros_sim.h",
+  "csrc/*.h",
+  "csrc/sim.c",
+  "csrc/region.c",
+  "csrc/om_constants.h",
   "Makefile",
+  "project.godot",
   "tests/csim/**",
-  "tests/specfactory/**",
-  "docs/bible/stories.md",
-  "docs/bible/epics/E-02-region-fields-and-drift.md",
-  "docs/bible/algorithms.md",
-  "docs/test_specs/drift-gate-and-green-check.md",
+  "tests/qa/**",
+  "tests/transport/**",
+  "docs/**",
+  "scripts/agy_task.sh",
+  "scripts/build_ledger.py",
+  "scripts/derive_agora_rules.py",
+  "scripts/mockup_qa.sh",
+  "scripts/mockup_verify.sh",
+  "scripts/qa_harness.sh",
+  "scripts/run_godot_tests.sh",
+  "scripts/specfactory/**",
+  "scripts/tactical/**",
+  "autoload/**",
+  "scenes/**",
 ]
-
+worktree_link    = [".venv"]
+footprint_ignore = [".git/**", ".swarm/**", ".claude/**", "logs/**", "__pycache__/**", "*.pyc", ".pytest_cache/**", "build/**", "*.so", "*.gd.uid"]
 [invariants]
-max_impl_lines      = 200
+max_impl_lines = 2500
 max_test_assertions = 20
-ambiguous_verbs = [
-  "decide", "choose", "design", "determine",
-  "figure out", "resolve", "as appropriate",
-  "use your judgment", "pick", "select an approach",
-]
-
-[gates]
-extra_spec_gate_cmds = []
