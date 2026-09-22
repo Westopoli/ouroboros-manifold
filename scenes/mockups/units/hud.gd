@@ -41,6 +41,10 @@ func _ready() -> void:
 	_view = get_node("../World/UnitView")
 	_ground = get_node("../World/Ground")
 
+	for lbl in [_tick_label, _survivors_label, _selected_label, _log_label]:
+		lbl.add_theme_color_override("font_outline_color", Color.BLACK)
+		lbl.add_theme_constant_override("outline_size", 6)
+
 	_load_kits()
 	_load_scenarios()
 	if not _kits.has(_kit_name) and not _kits.is_empty():
@@ -298,6 +302,14 @@ func qa_tick(n: int) -> void:
 	_last_tick_avg_ms = (float(t1 - t0) / 1000.0) / float(max(n, 1))
 	_view.sync(_sim.current_tick, _sim.units)
 	_refresh_labels()
+
+
+func qa_tick_until_flash(max_ticks: int) -> int:
+	var n := 0
+	while n < max_ticks and _view.flashes_active == 0:
+		qa_tick(1)
+		n += 1
+	return n
 
 
 func qa_command(kind: String, uids: Array, x: float, z: float) -> void:

@@ -1,18 +1,21 @@
 {
   "units": [
-    {"role": "flanker", "faction": 0, "pos": [2000, 3940]},
-    {"role": "flanker", "faction": 0, "pos": [2000, 3980]},
-    {"role": "flanker", "faction": 0, "pos": [2000, 4020]},
-    {"role": "flanker", "faction": 0, "pos": [2000, 4060]},
+    {"role": "flanker", "faction": 0, "pos": [2000, 3200]},
+    {"role": "flanker", "faction": 0, "pos": [2000, 3450]},
+    {"role": "flanker", "faction": 0, "pos": [2000, 4550]},
+    {"role": "flanker", "faction": 0, "pos": [2000, 4800]},
     {"role": "artillery", "faction": 1, "pos": [6000, 3940]},
     {"role": "artillery", "faction": 1, "pos": [6000, 3980]},
     {"role": "artillery", "faction": 1, "pos": [6000, 4020]},
     {"role": "artillery", "faction": 1, "pos": [6000, 4060]}
   ],
   "obstacles": [
-    {"x0": 3800, "z0": 3000, "x1": 4200, "z1": 4600}
+    {"x0": 3800, "z0": 3600, "x1": 4200, "z1": 4400}
   ],
   "commands": [
-    {"tick": 0, "kind": "attack_move", "uids": [0, 1, 2, 3], "point": [6500, 4000]}
+    {"tick": 0, "kind": "attack_move", "uids": [0], "point": [6000, 4000]},
+    {"tick": 0, "kind": "attack_move", "uids": [1], "point": [6000, 4000]},
+    {"tick": 0, "kind": "attack_move", "uids": [2], "point": [6000, 4000]},
+    {"tick": 0, "kind": "attack_move", "uids": [3], "point": [6000, 4000]}
   ]
 }

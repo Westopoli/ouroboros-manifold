@@ -20,6 +20,7 @@ func _initialize() -> void:
 	_check_PLAIN_7()
 	await _check_DEATH_8()
 	_check_FORM_9()
+	await _check_FOOT_12()
 	await _check_JSON_10()
 	_check_TIME_11()
 
@@ -217,6 +218,34 @@ func _check_TIME_11() -> void:
 	_run_n(sim, 200)
 	var avg_ms := (float(Time.get_ticks_usec() - t0) / 1000.0) / 200.0
 	_assert(avg_ms < 2.0, "tick_avg %.4fms for 20 units, expected < 2ms" % avg_ms)
+
+
+# plant: none; render regression, catches what SIL-3 (data-only) cannot
+func _check_FOOT_12() -> void:
+	var root = await _boot_scene()
+	root.qa_set("scenario", "lineup")
+	var view = root.get_node("World/UnitView")
+	var cam: Camera3D = root.get_node("CameraRig").get_camera()
+	var state: Dictionary = root.qa_state()
+	var lengths := {}
+	for uid_s in state.units.keys():
+		var ud: Dictionary = state.units[uid_s]
+		var role: String = ud.role
+		var pos := Vector2(ud.pos[0], ud.pos[1])
+		var xf: Transform3D = view.get_unit_render_transform(role, pos, float(ud.facing))
+		lengths[role] = _projected_length(xf * view.get_role_mesh_aabb(role), cam)
+	if not _assert(_arg_max(lengths) == "artillery", "rendered footprint: longest is %s, expected artillery" % _arg_max(lengths)):
+		root.queue_free()
+		return
+	_assert(_arg_min(lengths) == "flanker", "rendered footprint: shortest is %s, expected flanker" % _arg_min(lengths))
+	root.queue_free()
+
+
+func _projected_length(aabb: AABB, cam: Camera3D) -> float:
+	var rect := Rect2(cam.unproject_position(aabb.get_endpoint(0)), Vector2.ZERO)
+	for i in range(1, 8):
+		rect = rect.expand(cam.unproject_position(aabb.get_endpoint(i)))
+	return max(rect.size.x, rect.size.y)
 
 
 # --- helpers ---

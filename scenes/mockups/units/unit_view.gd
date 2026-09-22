@@ -29,6 +29,7 @@ var flashes_active: int = 0
 var _batches: Dictionary = {}
 var _mesh_cache: Dictionary = {}
 var _mat_cache: Dictionary = {}
+var _extent_cache: Dictionary = {}
 var _selected: Dictionary = {}
 var _sel_rings: Dictionary = {}
 var _pings: Array = []
@@ -76,20 +77,75 @@ func _get_material(role: String, faction: int) -> StandardMaterial3D:
 	if _mat_cache.has(key):
 		return _mat_cache[key]
 	var mat := StandardMaterial3D.new()
-	var color_key := "faction_%d" % faction
-	mat.albedo_color = Color(String(roster.palette.get(color_key, "#ffffff")))
 	mat.roughness = 0.7
+	mat.vertex_color_use_as_albedo = true
 	_mat_cache[key] = mat
 	return mat
+
+
+func _faction_color(faction: int) -> Color:
+	return Color(String(roster.palette.get("faction_%d" % faction, "#ffffff")))
 
 
 func _get_mesh(role: String) -> Mesh:
 	var shape := String(roster.get_silhouette(role).get("shape", "wide_block"))
 	if _mesh_cache.has(shape):
 		return _mesh_cache[shape]
-	var mesh := _build_prism(SHAPE_POINTS.get(shape, SHAPE_POINTS["wide_block"]))
+	var points: Array = SHAPE_POINTS.get(shape, SHAPE_POINTS["wide_block"])
+	var mesh := _build_spire(points) if shape == "spire_radial" else _build_prism(points)
 	_mesh_cache[shape] = mesh
 	return mesh
+
+
+func _build_spire(points: Array) -> ArrayMesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var n := points.size()
+	var base_h := 0.55
+	for i in range(1, n - 1):
+		st.add_vertex(Vector3(points[0].x, base_h, points[0].y))
+		st.add_vertex(Vector3(points[i].x, base_h, points[i].y))
+		st.add_vertex(Vector3(points[i + 1].x, base_h, points[i + 1].y))
+	for i in range(1, n - 1):
+		st.add_vertex(Vector3(points[0].x, 0.0, points[0].y))
+		st.add_vertex(Vector3(points[i + 1].x, 0.0, points[i + 1].y))
+		st.add_vertex(Vector3(points[i].x, 0.0, points[i].y))
+	for i in range(n):
+		var a: Vector2 = points[i]
+		var b: Vector2 = points[(i + 1) % n]
+		st.add_vertex(Vector3(a.x, base_h, a.y))
+		st.add_vertex(Vector3(a.x, 0.0, a.y))
+		st.add_vertex(Vector3(b.x, 0.0, b.y))
+		st.add_vertex(Vector3(a.x, base_h, a.y))
+		st.add_vertex(Vector3(b.x, 0.0, b.y))
+		st.add_vertex(Vector3(b.x, base_h, b.y))
+	var apex := Vector3(0.0, 1.0, 0.0)
+	for i in range(n):
+		var a: Vector2 = points[i]
+		var b: Vector2 = points[(i + 1) % n]
+		st.add_vertex(Vector3(a.x, base_h, a.y))
+		st.add_vertex(Vector3(b.x, base_h, b.y))
+		st.add_vertex(apex)
+	st.generate_normals()
+	return st.commit()
+
+
+func _get_shape_extent(shape: String) -> Vector2:
+	if _extent_cache.has(shape):
+		return _extent_cache[shape]
+	var points: Array = SHAPE_POINTS.get(shape, SHAPE_POINTS["wide_block"])
+	var min_x := INF
+	var max_x := -INF
+	var min_z := INF
+	var max_z := -INF
+	for p in points:
+		min_x = min(min_x, p.x)
+		max_x = max(max_x, p.x)
+		min_z = min(min_z, p.y)
+		max_z = max(max_z, p.y)
+	var extent := Vector2(max_x - min_x, max_z - min_z)
+	_extent_cache[shape] = extent
+	return extent
 
 
 func _build_prism(points: Array) -> ArrayMesh:
@@ -127,7 +183,7 @@ func sync(tick: int, units: Array) -> void:
 		if not per_batch.has(key):
 			per_batch[key] = []
 		if u.alive:
-			var col := Color(1, 1, 1, 1)
+			var col := _faction_color(u.faction)
 			var since_hit: int = tick - int(u.last_hit_tick)
 			if since_hit >= 0 and since_hit <= HIT_FLASH_TICKS:
 				var t: float = 1.0 - float(since_hit) / float(HIT_FLASH_TICKS)
@@ -141,7 +197,7 @@ func sync(tick: int, units: Array) -> void:
 			if since < 0 or since >= DEATH_REMOVE_TICKS:
 				continue
 			wrecks_active += 1
-			var col2 := Color(1, 1, 1, 1)
+			var col2 := _faction_color(u.faction)
 			if since <= DEATH_BLOOM_TICKS:
 				var bt: float = 1.0 - float(since) / float(DEATH_BLOOM_TICKS)
 				col2 = col2.lerp(DEATH_BOOST, bt)
@@ -154,23 +210,33 @@ func sync(tick: int, units: Array) -> void:
 	_update_pings(tick)
 
 
+func get_unit_render_transform(role: String, pos: Vector2, facing: float) -> Transform3D:
+	var sil := roster.get_silhouette(role)
+	var size: Array = sil.get("size", [20, 20, 10])
+	var extent := _get_shape_extent(String(sil.get("shape", "wide_block")))
+	var scale_v := Vector3(float(size[1]) / extent.x, float(size[2]), float(size[0]) / extent.y)
+	var basis_rot := Basis(Vector3.UP, -facing - PI / 2.0)
+	return Transform3D(basis_rot * Basis.from_scale(scale_v), Vector3(pos.x, 0.0, pos.y))
+
+
+func get_role_mesh_aabb(role: String) -> AABB:
+	return _get_mesh(role).get_aabb()
+
+
 func _append_squad(list: Array, u: Dictionary, pos: Vector2, facing: float, color: Color, selected: bool) -> void:
 	var sil := roster.get_silhouette(u.role)
 	var squad: int = int(sil.get("squad", 1))
 	var size: Array = sil.get("size", [20, 20, 10])
-	var scale_v := Vector3(float(size[1]), float(size[2]), float(size[0]))
-	var basis_rot := Basis(Vector3.UP, -facing - PI / 2.0)
-	var basis := basis_rot.scaled(scale_v)
+	var xf0 := get_unit_render_transform(u.role, pos, facing)
 	if squad <= 1:
-		var origin := Vector3(pos.x, 0.0, pos.y)
-		list.append({"xform": Transform3D(basis, origin), "color": color})
+		list.append({"xform": xf0, "color": color})
 	else:
 		var spacing: float = float(size[0]) * 0.9
+		var basis_rot := Basis(Vector3.UP, -facing - PI / 2.0)
 		for i in range(squad):
 			var off2: Vector2 = SQUAD_OFFSETS[i % SQUAD_OFFSETS.size()] * spacing
 			var world_off: Vector3 = basis_rot * Vector3(off2.x, 0.0, off2.y)
-			var origin2: Vector3 = Vector3(pos.x, 0.0, pos.y) + world_off
-			list.append({"xform": Transform3D(basis, origin2), "color": color})
+			list.append({"xform": Transform3D(xf0.basis, xf0.origin + world_off), "color": color})
 	_update_ring(u.uid, pos, selected)
 
 

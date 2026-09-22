@@ -44,5 +44,9 @@ func qa_tick(n: int) -> void:
 	_hud.qa_tick(n)
 
 
+func qa_tick_until_flash(max_ticks: int) -> int:
+	return _hud.qa_tick_until_flash(max_ticks)
+
+
 func qa_command(kind: String, uids: Array, x: float, z: float) -> void:
 	_hud.qa_command(kind, uids, x, z)
