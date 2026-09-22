@@ -87,7 +87,43 @@ struct om_world {
      * by E-04 (ALG-36). Persists across ticks; never reset in sim.c. */
     om_queued_event    event_queue[64];
     uint32_t           event_queue_n;
+
+    /* E-03 generation config and result (freeze/F2b). Config is written by
+     * the om_gen_set_* setters (ouroboros_sim.h ~line 690, csrc/worldgen.c)
+     * and read by om_world_generate; defaults are set in om_world_new
+     * (csrc/region.c) from om_constants.h. gen_home_range is indexed
+     * [archetype - OM_ARCH_CONQUEROR][mil_lo, mil_hi, eco_lo, eco_hi]
+     * (R-022-05). faction_template holds each faction's rolled template
+     * (OM_TMPL_NONE before generation); generated and edge_count back
+     * om_world_generated / om_world_edge_count. */
+    uint32_t    gen_region_min, gen_region_max;
+    uint32_t    gen_faction_count;
+    double      gen_extra_edge_ratio;
+    om_template gen_player_pref;
+    double      gen_preference_weight;
+    int         gen_extra_edges_on;
+    double      gen_home_range[3][4];
+    om_template faction_template[OM_MAX_FACTIONS];
+    int         generated;
+    uint32_t    edge_count;
 };
+
+/* Debug-build mirror of the E-03 generation fields above, for the F2b storage
+ * test (tests/csim/test_E03_wiring_storage.py). Not part of the public ABI. */
+#ifdef OM_DEBUG_INJECT
+typedef struct {
+    uint32_t region_min, region_max;
+    uint32_t faction_count;
+    double   extra_edge_ratio;
+    int32_t  player_pref;
+    double   preference_weight;
+    int32_t  extra_edges_on;
+    double   home_range[3][4];
+    int32_t  generated;
+    uint32_t edge_count;
+} om_debug_gen_config_row;
+void om_debug_gen_config(const om_world *w, om_debug_gen_config_row *out);
+#endif
 
 /* Internal step hooks. om_step_collisions runs between om_step_reinforce
  * (3e) and om_step_resolve (3f): it groups this tick's pending intents in
