@@ -22,15 +22,23 @@ const MAP_MAX := 40000.0
 const PITCH_LOW_DEG := 50.0
 const PITCH_HIGH_DEG := 90.0
 
-@export var canvas_size: float = 16000.0
+@export var canvas_size: float = 24000.0
 
-# "height" = distance from the camera to the ground-plane point it looks at
-# (same role as tactical.gd's zoom_dist), not literal world-space Y. Pitch
-# changes across bands, so a literal world Y would decouple wheel-zoom input
-# from a consistent camera distance.
+const GROUND_FOLLOW_TIME_CONSTANT := 0.2
+
+# "height" = distance from the camera to the ground-plane point it looks at (above the
+# terrain under the rig, not literal world Y -- see _update_ground_follow), same role as
+# tactical.gd's zoom_dist. Pitch changes across bands, so a raw camera Y would decouple
+# wheel-zoom input from a consistent camera distance.
 var _height: float = 3000.0
 var _pan_target: Vector3 = Vector3.ZERO
 var _current_band: String = "tactical"
+var _ground_y: float = 0.0
+
+# Set by the owner (hud.gd) after every regenerate. The rig samples this to keep a
+# constant height above the terrain under it (Halo Wars: scrolling onto a mountain
+# doesn't require a zoom change) rather than a fixed world Y.
+var field_map: FieldMap
 
 @onready var _camera: Camera3D = $Camera3D
 
@@ -44,7 +52,26 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_handle_pan(delta)
+	_update_ground_follow(delta)
 	_update_camera()
+
+
+# Smoothed over ~200ms so a ridge crossed while panning doesn't jolt the camera; the zoom
+# amount (_height) stays exactly what the wheel set regardless of terrain underneath.
+func _update_ground_follow(delta: float) -> void:
+	var target_y := _sample_ground_elevation(_pan_target.x, _pan_target.z)
+	var alpha: float = 1.0 - exp(-delta / GROUND_FOLLOW_TIME_CONSTANT)
+	_ground_y = lerp(_ground_y, target_y, alpha)
+	position.y = _ground_y
+
+
+func _sample_ground_elevation(x: float, z: float) -> float:
+	if field_map == null:
+		return 0.0
+	var dim: int = field_map.dim
+	var gx: int = clampi(int(round(x / FieldMap.SPACING)), 0, dim - 1)
+	var gy: int = clampi(int(round(z / FieldMap.SPACING)), 0, dim - 1)
+	return field_map.grid[gy * dim + gx].elevation
 
 
 func _handle_pan(delta: float) -> void:
@@ -72,7 +99,8 @@ func _handle_pan(delta: float) -> void:
 	if dir != Vector3.ZERO:
 		_pan_target += dir.normalized() * PAN_SPEED * delta
 		_clamp_pan_target()
-		position = _pan_target
+		position.x = _pan_target.x
+		position.z = _pan_target.z
 
 
 func _clamp_pan_target() -> void:
@@ -145,5 +173,8 @@ func set_height(h: float) -> void:
 func pan_to(world_pos: Vector3) -> void:
 	_pan_target = Vector3(world_pos.x, 0.0, world_pos.z)
 	_clamp_pan_target()
-	position = _pan_target
+	# Snap the ground follow instantly here (no 200ms smoothing) since this is the
+	# deterministic screenshot-driver jump, not an interactive pan.
+	_ground_y = _sample_ground_elevation(_pan_target.x, _pan_target.z)
+	position = Vector3(_pan_target.x, _ground_y, _pan_target.z)
 	_update_camera()
