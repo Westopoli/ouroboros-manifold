@@ -44,6 +44,20 @@ Both mappers use the same placement engine, so a border is a coastline, a cliff 
 
 **Two skins for the mockup** (answer 7): a Greek skin (the classical city of the reference images) and a Settled Reach skin (a station or habitat cluster on asteroids: walls are hull sections, coast is vacuum, bridges are docking spines). Placeholder blocky pieces in both; real models come from the offline asset pipeline (E-21) later.
 
+## Mockup review 1 (Westley, 2026-09-21)
+
+Westley flew the mockup. Verbatim: "Different seeds don't differ (regenerate doesn't seem to do anything but freeze the game for a little bit). kits swapped cleanly and quickly. Camera did pan correctly but the "map" lines just pop up on screen withuot moving as you zoom out, and given it's representing things on the map, not moving with the map looks very broken. I can't tell what the pieces slider does, slows everything down for a few seconds but doens't change anything much that I can see visually." After another regenerate: "this time there was a small difference".
+
+Diagnosis and the second-pass list, for the mockup chat:
+
+1. **Seeds barely differ, by spec.** The brief asked for one hand-authored skeleton with 3 percent jitter (R-112-03), so a seed changes only noise and dressing. Q-119-02 answered by demonstration: one skeleton reads as one map. Second pass: three or four skeletons (`skeletons/*.json`, same shape as `skeleton.json`), the seed picks one and jitters up to 8 percent; the HUD shows which skeleton. Fully seeded layout stays a flag.
+2. **Map overlay drawn in screen space: bug.** Grid, contours, river, icons and arrows do not move with the terrain while zooming, the river runs off the canvas, contours float. Draw the overlay as world-space geometry on the ground plane (lines a few wu above ground, grid as a ground mesh) so it pans and zooms with the map; icons may stay screen-space but must be re-projected every frame from world positions.
+3. **Stability slider unlabelled and its effect invisible: HUD bug.** Label it "Stability", debounce (regenerate on release), and make stability 20 versus 90 obviously different at tactical zoom (hazard and cover pieces, field rows).
+4. **Regenerate freezes.** Budget was 500 ms; measure and report generation, placer and ground-mesh times separately; move the placer to MultiMesh buffer updates rather than node rebuilds if that is the cost.
+5. **Look, unchanged from the first read:** cliff faces with real terrace height, a water plane for river and coast, a wall with thickness and a visible gate piece, backdrop mountains at the canvas edge, city core pieces that read as a core (temple and acropolis silhouettes larger than houses).
+
+Kits swapped cleanly and quickly: the one-generator-two-kits claim holds and is not reopened.
+
 ## Next step
 
 The mockup is built (`scenes/mockups/landscape/`, throwaway GDScript, `godot --path . --scene scenes/mockups/landscape/landscape_mockup.tscn`) and awaiting Westley's approval pass. 14 review screenshots are in `mockup/`; the finishing report (evidence, open questions, and one thing that argues against the one-generator-two-mappers idea) was delivered to Westley in chat on 2026-09-21. On approval: epics E-17/E-16/E-19 are rewritten from this design and Stage 5 tests are authored.
