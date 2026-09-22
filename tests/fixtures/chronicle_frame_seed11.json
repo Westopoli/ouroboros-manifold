@@ -1,0 +1,66 @@
+{
+  "type": "chronicle",
+  "jump": {"from_tick": 100, "to_tick": 150},
+  "entries": [
+    {
+      "id": 201,
+      "start_tick": 102,
+      "end_tick": 109,
+      "category": 0,
+      "cluster_type": 0,
+      "refs": {"regions": [3], "factions": [0]},
+      "fragment": 910201,
+      "significance": 0.92
+    },
+    {
+      "id": 202,
+      "start_tick": 111,
+      "end_tick": 116,
+      "category": 5,
+      "cluster_type": 1,
+      "refs": {"regions": [4], "factions": [0]},
+      "fragment": 910202,
+      "significance": 0.71
+    },
+    {
+      "id": 203,
+      "start_tick": 119,
+      "end_tick": 131,
+      "category": 10,
+      "cluster_type": 2,
+      "refs": {"regions": [12, 13], "factions": [1]},
+      "fragment": 910203,
+      "significance": 0.83
+    },
+    {
+      "id": 204,
+      "start_tick": 133,
+      "end_tick": 137,
+      "category": 16,
+      "cluster_type": 3,
+      "refs": {"regions": [24], "factions": [2, 0]},
+      "fragment": 910204,
+      "significance": 0.68
+    },
+    {
+      "id": 205,
+      "start_tick": 139,
+      "end_tick": 143,
+      "category": 16,
+      "cluster_type": 3,
+      "refs": {"regions": [25], "factions": [2, 0]},
+      "fragment": 910205,
+      "significance": 0.62
+    },
+    {
+      "id": 206,
+      "start_tick": 145,
+      "end_tick": 149,
+      "category": 17,
+      "cluster_type": 3,
+      "refs": {"regions": [13], "factions": [1]},
+      "fragment": 910206,
+      "significance": 0.51
+    }
+  ]
+}
