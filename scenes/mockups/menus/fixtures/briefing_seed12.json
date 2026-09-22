@@ -1,0 +1,34 @@
+{
+  "mission_title": "Breaking the Ring at Thorn Hollow",
+  "mission_subtitle": "Relieve a besieged garrison before the ring tightens",
+  "situation_text": "The Ashfall Combine has ringed Thorn Hollow for eleven days, cutting the garrison off from resupply. Command believes the ring is thinnest along the eastern approach, where the Combine's forces are still digging in.",
+  "objective_primary": {
+    "text": "Break the ring. Open a corridor to the garrison.",
+    "archetype": "siege_breaking",
+    "success_spectrum_label": "THE RING BREAKS"
+  },
+  "objectives_secondary": [],
+  "enemy_assessment": {
+    "faction_name": "the Ashfall Combine",
+    "archetype_label": "SIEGE RING",
+    "behavior_tag": "STILL DIGGING IN, VULNERABLE AT THE SEAMS"
+  },
+  "player_force": {
+    "parity_percentage": 55,
+    "units": [
+      {"type_abstract": "vanguard", "type_display_name": "Line Company", "category": "line", "count": 3},
+      {"type_abstract": "raider", "type_display_name": "Skirmishers", "category": "strike", "count": 2},
+      {"type_abstract": "interceptor", "type_display_name": "Outriders", "category": "strike", "count": 2},
+      {"type_abstract": "bombard", "type_display_name": "Siege Train", "category": "siege", "count": 2}
+    ]
+  },
+  "region_state": {"name": "Thorn Hollow", "tier": "Contested"},
+  "commander_lineage": {
+    "name": "Commander Reyes",
+    "generation_number": 2,
+    "predecessor_name": "Commander Aldis",
+    "predecessor_status": "killed in action"
+  },
+  "reinforcement_note": "No reinforcements are coming; this is the relief force.",
+  "assets_note": "Command fields {parity} against a ring that has not finished digging in. The corridor will cost interceptors; expect the outriders to take the worst of it."
+}
