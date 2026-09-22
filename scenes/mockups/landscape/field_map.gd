@@ -2,10 +2,14 @@ class_name FieldMap
 extends RefCounted
 
 const SPACING := 100.0
+const SKELETONS_DIR := "res://scenes/mockups/landscape/skeletons/"
+const NODE_JITTER_MAX := 0.08
+const RIVER_JITTER_MAX := 0.06
 
 var canvas: float = 16000.0
 var stability: float = 60.0
 var dim: int = 0
+var skeleton_name: String = ""
 var nodes: Array = []
 # grid: flat Array of Dictionaries, index = gy * dim + gx, gx/gy in [0, dim-1].
 # World position of a cell = Vector2(gx, gy) * SPACING.
@@ -31,8 +35,11 @@ func generate(p_seed: int, p_canvas: float = 16000.0, p_stability: float = 60.0)
 	var noise_zone_b := _make_noise(p_seed + 11, 0.00022)
 	var noise_zone_c := _make_noise(p_seed + 12, 0.00025)
 
-	nodes = _build_nodes()
-	var river_points := _build_river()
+	var skeleton := _load_skeleton(p_seed)
+	skeleton_name = skeleton.get("name", "")
+	var coast_y_ratio: float = skeleton.get("coast_y_ratio", 0.90)
+	nodes = _build_nodes(skeleton)
+	var river_points := _build_river(skeleton)
 
 	var objective_pos: Vector2 = _find_node("objective")
 	var vantage_pos: Vector2 = _find_node("vantage")
@@ -90,17 +97,21 @@ func generate(p_seed: int, p_canvas: float = 16000.0, p_stability: float = 60.0)
 			var idx := gy * dim + gx
 			var wpos := Vector2(gx * SPACING, gy * SPACING)
 
-			var water := _sample_water(wpos, river_points)
+			var water := _sample_water(wpos, river_points, coast_y_ratio)
 
 			var obstacle: float = clamp(_radial_sum_arrays(wpos, obstacle_pos, obstacle_rad, obstacle_int) + noise_obstacle.get_noise_2d(wpos.x, wpos.y) * 0.06, 0.0, 1.0)
 
 			var cover_raw: float = _radial_sum_arrays(wpos, cover_pos, cover_rad, cover_int) + noise_cover.get_noise_2d(wpos.x, wpos.y) * 0.06
-			# Higher stability raises cover (better-maintained defensive terrain).
-			var cover: float = clamp(cover_raw * (1.0 + stability / 100.0 * 0.3), 0.0, 1.0)
+			# Additive, not multiplicative: cover_raw is near-zero almost everywhere except
+			# near chokepoints/staging, so scaling it left stability invisible over most of
+			# the map (Westley: "can't tell what the pieces slider does"). An additive shift
+			# around the stability=50 midpoint moves cover across the kits' cover-rule
+			# thresholds broadly, not just where a radial source already put cover down.
+			var cover: float = clamp(cover_raw + (stability / 100.0 - 0.5) * 0.6, 0.0, 1.0)
 
 			var interference_raw: float = _radial_sum_arrays(wpos, interference_pos, interference_rad, interference_int) + noise_interference.get_noise_2d(wpos.x, wpos.y) * 0.05
 			# Higher stability lowers interference (fewer signal-denial hazards).
-			var interference: float = clamp(interference_raw * (1.0 - stability / 100.0 * 0.5), 0.0, 1.0)
+			var interference: float = clamp(interference_raw * (1.0 - stability / 100.0 * 0.7), 0.0, 1.0)
 
 			var elevation_raw: float = clamp(_radial_sum_arrays(wpos, elevation_pos, elevation_rad, elevation_int) + 0.05 + noise_elevation.get_noise_2d(wpos.x, wpos.y) * 0.06, 0.0, 1.0)
 			elevation_raw *= (1.0 - water * 0.9)
@@ -213,57 +224,51 @@ func _make_noise(seed_val: int, freq: float) -> FastNoiseLite:
 	n.frequency = freq
 	return n
 
-func _build_nodes() -> Array:
-	# Base position_ratio values (fraction of canvas, x,y in [0,1]) before jitter.
-	# Coast runs along the south edge (y -> 1.0); hill/vantage sits north (y -> 0.0);
-	# the river runs from near the hill down to the coast, bending past the objective.
-	# objective         (0.50, 0.62)  city core on a rise inside the river bend
-	# staging           (0.72, 0.55)  farmland side
-	# staging           (0.78, 0.68)  farmland side
-	# chokepoint        (0.50, 0.50)  wall meets the north land approach
-	# chokepoint        (0.30, 0.62)  wall meets the west land approach
-	# chokepoint        (0.52, 0.72)  river bridge chokepoint
-	# flank_route       (0.75, 0.15)  route around the east shoulder of the hill
-	# vantage           (0.50, 0.08)  hilltop
-	# hazard_anchor     (0.75, 0.88)  marsh, southeast, off the river mouth
-	# spawn_point       (0.25, 0.10)  far side from the objective, near the hill
-	# spawn_point       (0.75, 0.10)  far side from the objective, near the hill
-	# extraction        (0.30, 0.97)  coast, west of the river mouth
-	# (no transit node in this hand-authored skeleton; transit remains a valid node type)
-	var base: Array = [
-		{type = "objective", ratio = Vector2(0.50, 0.62)},
-		{type = "staging", ratio = Vector2(0.72, 0.55)},
-		{type = "staging", ratio = Vector2(0.78, 0.68)},
-		{type = "chokepoint", ratio = Vector2(0.50, 0.50)},
-		{type = "chokepoint", ratio = Vector2(0.30, 0.62)},
-		{type = "chokepoint", ratio = Vector2(0.52, 0.72)},
-		{type = "flank_route", ratio = Vector2(0.75, 0.15)},
-		{type = "vantage", ratio = Vector2(0.50, 0.08)},
-		{type = "hazard_anchor", ratio = Vector2(0.75, 0.88)},
-		{type = "spawn_point", ratio = Vector2(0.25, 0.10)},
-		{type = "spawn_point", ratio = Vector2(0.75, 0.10)},
-		{type = "extraction", ratio = Vector2(0.30, 0.97)},
-	]
+func _load_skeleton(p_seed: int) -> Dictionary:
+	# One hand-authored skeleton per file (Q-119-02 still open: this is "skeletons now,
+	# count growing", not a decision). Sorted filenames give a stable, reproducible
+	# seed -> skeleton mapping across runs.
+	var dir := DirAccess.open(SKELETONS_DIR)
+	var files: Array = []
+	if dir != null:
+		dir.list_dir_begin()
+		var file_name := dir.get_next()
+		while file_name != "":
+			if not dir.current_is_dir() and file_name.ends_with(".json"):
+				files.append(file_name)
+			file_name = dir.get_next()
+		dir.list_dir_end()
+	files.sort()
+	if files.is_empty():
+		return {}
+	var index: int = absi(p_seed) % files.size()
+	var text := FileAccess.get_file_as_string(SKELETONS_DIR + files[index])
+	var parsed = JSON.parse_string(text)
+	return parsed if typeof(parsed) == TYPE_DICTIONARY else {}
+
+
+func _build_nodes(skeleton: Dictionary) -> Array:
 	var result: Array = []
-	for entry in base:
-		var jitter := Vector2(_rng.randf_range(-0.03, 0.03), _rng.randf_range(-0.03, 0.03))
-		var ratio: Vector2 = (entry.ratio + jitter).clamp(Vector2.ZERO, Vector2.ONE)
+	for entry in skeleton.get("nodes", []):
+		var ratio_arr: Array = entry.position_ratio
+		var base_ratio := Vector2(ratio_arr[0], ratio_arr[1])
+		var jitter := Vector2(
+			_rng.randf_range(-NODE_JITTER_MAX, NODE_JITTER_MAX),
+			_rng.randf_range(-NODE_JITTER_MAX, NODE_JITTER_MAX)
+		)
+		var ratio: Vector2 = (base_ratio + jitter).clamp(Vector2.ZERO, Vector2.ONE)
 		result.append({type = entry.type, pos = ratio * canvas})
 	return result
 
-func _build_river() -> PackedVector2Array:
-	# River control points (position_ratio), from near the hill down to the coast,
-	# bending past the objective's river bend:
-	# (0.58,0.10) (0.62,0.25) (0.58,0.40) (0.50,0.50) (0.45,0.60) (0.52,0.68) (0.50,0.80) (0.46,0.92) (0.44,1.00)
-	var base_ratios: Array = [
-		Vector2(0.58, 0.10), Vector2(0.62, 0.25), Vector2(0.58, 0.40),
-		Vector2(0.50, 0.50), Vector2(0.45, 0.60), Vector2(0.52, 0.68),
-		Vector2(0.50, 0.80), Vector2(0.46, 0.92), Vector2(0.44, 1.00),
-	]
+func _build_river(skeleton: Dictionary) -> PackedVector2Array:
 	var points := PackedVector2Array()
-	for r in base_ratios:
-		var jitter := Vector2(_rng.randf_range(-0.02, 0.02), _rng.randf_range(-0.02, 0.02))
-		var ratio: Vector2 = (r + jitter).clamp(Vector2.ZERO, Vector2.ONE)
+	for r in skeleton.get("river_ratio", []):
+		var base_ratio := Vector2(r[0], r[1])
+		var jitter := Vector2(
+			_rng.randf_range(-RIVER_JITTER_MAX, RIVER_JITTER_MAX),
+			_rng.randf_range(-RIVER_JITTER_MAX, RIVER_JITTER_MAX)
+		)
+		var ratio: Vector2 = (base_ratio + jitter).clamp(Vector2.ZERO, Vector2.ONE)
 		points.append(ratio * canvas)
 	return points
 
@@ -299,8 +304,8 @@ func _radial_one(pos: Vector2, source_pos: Vector2, radius: float, intensity: fl
 # Water convention: signed distance field, negative = water. water[cell] in [0,1] is a
 # smoothed step of that SDF: 0.0 = fully dry, 1.0 = deep water, 0.5 = the shoreline
 # (the isoline the coast border is traced from).
-func _sample_water(pos: Vector2, river_points: PackedVector2Array) -> float:
-	var coast_line_y: float = 0.90 * canvas
+func _sample_water(pos: Vector2, river_points: PackedVector2Array, coast_y_ratio: float) -> float:
+	var coast_line_y: float = coast_y_ratio * canvas
 	var coast_sdf: float = coast_line_y - pos.y
 	var river_sdf: float = _distance_to_polyline(pos, river_points) - 180.0
 	var sdf: float = min(coast_sdf, river_sdf)
