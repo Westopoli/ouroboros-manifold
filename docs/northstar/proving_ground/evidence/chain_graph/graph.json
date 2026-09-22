@@ -1,0 +1,4493 @@
+{
+  "generated_at": "2026-09-22T02:45:31Z",
+  "project": "/home/westopoli/Projects/ouroboros-manifold",
+  "nodes": [
+    {
+      "card": "201a-e02-drift-core",
+      "kind": "build",
+      "file": "csrc/sim.c",
+      "symbols": [
+        "om_world_step",
+        "om_world_run",
+        "om_region_drift",
+        "om_sin",
+        "om_trace_enable",
+        "om_trace_len",
+        "om_trace_read"
+      ],
+      "epic": "E-02",
+      "story": "019"
+    },
+    {
+      "card": "201b-e02-drift-trace",
+      "kind": "build",
+      "file": "csrc/sim.c",
+      "symbols": [
+        "om_world_checksum",
+        "om_debug_inject"
+      ],
+      "epic": "E-02",
+      "story": null
+    },
+    {
+      "card": "202a1-e05-faction-basics",
+      "kind": "build",
+      "file": "csrc/faction.c",
+      "symbols": [
+        "om_faction_set",
+        "om_faction_set_stance",
+        "om_faction_set_tech_multipliers",
+        "om_faction_count",
+        "om_faction_archetype",
+        "om_faction_budget",
+        "om_faction_tech",
+        "om_faction_stance"
+      ],
+      "epic": "E-05",
+      "story": "032"
+    },
+    {
+      "card": "202a2-e05-faction-confidence-rng",
+      "kind": "build",
+      "file": "csrc/faction.c",
+      "symbols": [
+        "om_rng_force",
+        "om_rng_forced_remaining"
+      ],
+      "epic": "E-05",
+      "story": null
+    },
+    {
+      "card": "202a3-e05-region-ownership",
+      "kind": "build",
+      "file": "csrc/faction.c",
+      "symbols": [
+        "om_region_set_owner",
+        "om_region_owner",
+        "om_region_held_since"
+      ],
+      "epic": "E-05",
+      "story": null
+    },
+    {
+      "card": "202a4-e05-region-edges-features",
+      "kind": "build",
+      "file": "csrc/faction.c",
+      "symbols": [
+        "om_region_set_edge",
+        "om_region_edge",
+        "om_world_set_feature",
+        "om_world_feature"
+      ],
+      "epic": "E-05",
+      "story": null
+    },
+    {
+      "card": "202b1-e05-faction-territory",
+      "kind": "build",
+      "file": "csrc/faction.c",
+      "symbols": [
+        "om_faction_territory"
+      ],
+      "epic": "E-05",
+      "story": null
+    },
+    {
+      "card": "202z1-e05-s032-gate",
+      "kind": "gate",
+      "file": "",
+      "symbols": [],
+      "epic": null,
+      "story": "032"
+    },
+    {
+      "card": "202z2-e05-s033-gate",
+      "kind": "gate",
+      "file": "",
+      "symbols": [],
+      "epic": null,
+      "story": "033"
+    },
+    {
+      "card": "203a1-e05-candidate-enumeration",
+      "kind": "build",
+      "file": "csrc/agent.c",
+      "symbols": [
+        "om_faction_candidates"
+      ],
+      "epic": "E-05",
+      "story": "034"
+    },
+    {
+      "card": "203a2-e05-candidate-scoring",
+      "kind": "build",
+      "file": "csrc/agent.c",
+      "symbols": [
+        "om_faction_candidates"
+      ],
+      "epic": "E-05",
+      "story": "034"
+    },
+    {
+      "card": "203b1-e05-viability-scoring",
+      "kind": "build",
+      "file": "csrc/agent.c",
+      "symbols": [
+        "om_faction_candidates",
+        "om_step_decisions",
+        "om_tick_decisions"
+      ],
+      "epic": "E-05",
+      "story": "035"
+    },
+    {
+      "card": "203c-e05-candidate-regression-repair",
+      "kind": "build",
+      "file": "csrc/agent.c",
+      "symbols": [
+        "om_faction_candidates"
+      ],
+      "epic": "E-05",
+      "story": "034"
+    },
+    {
+      "card": "203e-e05-telegraph-declare-draw-queue",
+      "kind": "build",
+      "file": "csrc/agent.c",
+      "symbols": [
+        "om_pending_telegraphs",
+        "om_step_decisions"
+      ],
+      "epic": "E-05",
+      "story": "036"
+    },
+    {
+      "card": "203z-e05-s035-gate",
+      "kind": "gate",
+      "file": "",
+      "symbols": [],
+      "epic": null,
+      "story": "035"
+    },
+    {
+      "card": "204a1-e05-telegraph-maturation",
+      "kind": "build",
+      "file": "csrc/resolve.c",
+      "symbols": [
+        "om_step_telegraphs",
+        "om_tick_attacks"
+      ],
+      "epic": "E-05",
+      "story": "036"
+    },
+    {
+      "card": "204a2-e05-reactive-reinforcement",
+      "kind": "build",
+      "file": "csrc/resolve.c",
+      "symbols": [
+        "om_step_reinforce",
+        "om_tick_reinforces"
+      ],
+      "epic": "E-05",
+      "story": "036"
+    },
+    {
+      "card": "204a3-e05-core-attack",
+      "kind": "build",
+      "file": "csrc/resolve.c",
+      "symbols": [
+        "om_step_resolve"
+      ],
+      "epic": "E-05",
+      "story": "037"
+    },
+    {
+      "card": "204b2-e05-unrest-colonize",
+      "kind": "build",
+      "file": "csrc/resolve.c",
+      "symbols": [
+        "om_tick_colonizations",
+        "om_event_queue"
+      ],
+      "epic": "E-05",
+      "story": "038"
+    },
+    {
+      "card": "204b3-e05-damage-history",
+      "kind": "build",
+      "file": "csrc/resolve.c",
+      "symbols": [
+        "om_region_add_damage",
+        "om_region_damage_history"
+      ],
+      "epic": "E-05",
+      "story": "034"
+    },
+    {
+      "card": "204z-e05-s034-gate",
+      "kind": "gate",
+      "file": "",
+      "symbols": [],
+      "epic": null,
+      "story": "034"
+    },
+    {
+      "card": "204z1-e05-s037-gate",
+      "kind": "gate",
+      "file": "",
+      "symbols": [],
+      "epic": null,
+      "story": "037"
+    },
+    {
+      "card": "204z2-e05-s036-gate",
+      "kind": "gate",
+      "file": "",
+      "symbols": [],
+      "epic": null,
+      "story": "036"
+    },
+    {
+      "card": "204z3-e05-s038-gate",
+      "kind": "gate",
+      "file": "",
+      "symbols": [],
+      "epic": null,
+      "story": "038"
+    },
+    {
+      "card": "205a-e05-collision-lottery",
+      "kind": "build",
+      "file": "csrc/collision.c,csrc/resolve.c",
+      "symbols": [
+        "om_step_collisions",
+        "om_tick_collisions",
+        "om_step_telegraphs"
+      ],
+      "epic": "E-05",
+      "story": "039"
+    },
+    {
+      "card": "208+e05-spawn-fault-branches",
+      "kind": "build",
+      "file": "csrc/agent.c",
+      "symbols": [
+        "om_faction_candidates"
+      ],
+      "epic": "E-05",
+      "story": null
+    },
+    {
+      "card": "TEMPLATE",
+      "kind": "build",
+      "file": "",
+      "symbols": [],
+      "epic": null,
+      "story": null
+    },
+    {
+      "card": "103-probe-a-toy-drift-r2",
+      "kind": "build",
+      "file": "",
+      "symbols": [],
+      "epic": null,
+      "story": null
+    },
+    {
+      "card": "104-probe-a-toy-drift-r3",
+      "kind": "build",
+      "file": "",
+      "symbols": [],
+      "epic": null,
+      "story": null
+    },
+    {
+      "card": "107-probe-a-build",
+      "kind": "build",
+      "file": "probe_a/toy_drift.c",
+      "symbols": [
+        "toy_rng_seed",
+        "toy_rng_next",
+        "toy_rng_uniform",
+        "toy_drift_economy",
+        "toy_drift_economy_n"
+      ],
+      "epic": null,
+      "story": null
+    },
+    {
+      "card": "108-probe-b-build",
+      "kind": "build",
+      "file": "probe_b/neighbors.c",
+      "symbols": [
+        "nb_count_pairs_within"
+      ],
+      "epic": null,
+      "story": null
+    },
+    {
+      "card": "109-probe-e-build",
+      "kind": "build",
+      "file": "probe_e/contra.c",
+      "symbols": [
+        "contra_f"
+      ],
+      "epic": null,
+      "story": null
+    },
+    {
+      "card": "110-probe-f-build",
+      "kind": "build",
+      "file": "probe_a/toy_drift.c",
+      "symbols": [
+        "toy_rng_seed",
+        "toy_rng_next",
+        "toy_rng_uniform",
+        "toy_drift_economy",
+        "toy_drift_economy_n"
+      ],
+      "epic": null,
+      "story": null
+    },
+    {
+      "card": "111-probe-e-abort",
+      "kind": "build",
+      "file": "probe_e/contra.c",
+      "symbols": [
+        "contra_f"
+      ],
+      "epic": null,
+      "story": null
+    },
+    {
+      "card": "112-probe-h-gd-build",
+      "kind": "build",
+      "file": "probe_h/region_label.gd",
+      "symbols": [
+        "_ready",
+        "update_region"
+      ],
+      "epic": null,
+      "story": null
+    },
+    {
+      "card": "203b-e05-decision-arbitration",
+      "kind": "build",
+      "file": "csrc/agent.c",
+      "symbols": [
+        "om_tick_decisions",
+        "om_pending_telegraphs"
+      ],
+      "epic": "E-05",
+      "story": "035"
+    },
+    {
+      "card": "205z-e05-s039-gate",
+      "kind": "gate",
+      "file": "",
+      "symbols": [],
+      "epic": null,
+      "story": "039"
+    },
+    {
+      "card": "206a-e05-border-friction",
+      "kind": "build",
+      "file": "csrc/friction.c",
+      "symbols": [
+        "om_step_friction",
+        "om_tick_friction"
+      ],
+      "epic": "E-05",
+      "story": "041"
+    },
+    {
+      "card": "206b-e05-admin-revolts",
+      "kind": "build",
+      "file": "csrc/friction.c",
+      "symbols": [
+        "om_step_admin_revolts",
+        "om_tick_admin_rolls"
+      ],
+      "epic": "E-05",
+      "story": "040"
+    },
+    {
+      "card": "206z1-e05-s041-gate",
+      "kind": "gate",
+      "file": "",
+      "symbols": [],
+      "epic": null,
+      "story": "041"
+    },
+    {
+      "card": "206z2-e05-s040-gate",
+      "kind": "gate",
+      "file": "",
+      "symbols": [],
+      "epic": null,
+      "story": "040"
+    },
+    {
+      "card": "208a1-e04-launch-templates",
+      "kind": "build",
+      "file": "csrc/events.c",
+      "symbols": [
+        "om_event_template_count",
+        "om_event_template_get",
+        "om_event_template_by_name"
+      ],
+      "epic": "E-04",
+      "story": "030"
+    },
+    {
+      "card": "208a2-e04-library-loader",
+      "kind": "build",
+      "file": "csrc/events.c",
+      "symbols": [
+        "om_events_load_launch",
+        "om_events_load"
+      ],
+      "epic": "E-04",
+      "story": "030"
+    },
+    {
+      "card": "208b1-e04-noise-offsets",
+      "kind": "build",
+      "file": "csrc/events.c",
+      "symbols": [
+        "om_event_roll_noise",
+        "om_event_set_noise",
+        "om_event_noise"
+      ],
+      "epic": "E-04",
+      "story": "026"
+    },
+    {
+      "card": "208b2-e04-threshold-triggers",
+      "kind": "build",
+      "file": "csrc/events.c",
+      "symbols": [
+        "om_event_breached"
+      ],
+      "epic": "E-04",
+      "story": "026"
+    },
+    {
+      "card": "208b3-e04-revolts-and-deltas",
+      "kind": "build",
+      "file": "csrc/events.c",
+      "symbols": [
+        "om_tick_events",
+        "om_region_event_delta"
+      ],
+      "epic": "E-04",
+      "story": "029"
+    },
+    {
+      "card": "209a-e04-queue-exclusion",
+      "kind": "build",
+      "file": "csrc/events.c",
+      "symbols": [
+        "om_tick_delayed"
+      ],
+      "epic": "E-04",
+      "story": "028"
+    },
+    {
+      "card": "209b-e04-queue-resolution",
+      "kind": "build",
+      "file": "csrc/events.c",
+      "symbols": [
+        "om_tick_pruned"
+      ],
+      "epic": "E-04",
+      "story": "027"
+    },
+    {
+      "card": "209c-e04-chain-spawns",
+      "kind": "build",
+      "file": "csrc/events.c",
+      "symbols": [
+        "om_event_queue_external"
+      ],
+      "epic": "E-04",
+      "story": "027"
+    },
+    {
+      "card": "210-e04-fault-injection",
+      "kind": "build",
+      "file": "csrc/events.c",
+      "symbols": [
+        "om_debug_inject"
+      ],
+      "epic": "E-04",
+      "story": null
+    },
+    {
+      "card": "211a1-e03-worldgen-a_fresh_galaxy_from_a_se",
+      "kind": "build",
+      "file": "csrc/worldgen.c",
+      "symbols": [
+        "om_world_generate"
+      ],
+      "epic": "E-03",
+      "story": "021"
+    },
+    {
+      "card": "211a2-e03-worldgen-a_fresh_galaxy_from_a_se",
+      "kind": "build",
+      "file": "csrc/worldgen.c",
+      "symbols": [
+        "om_world_generate"
+      ],
+      "epic": "E-03",
+      "story": "021"
+    },
+    {
+      "card": "211a3-e03-worldgen-a_fresh_galaxy_from_a_se",
+      "kind": "build",
+      "file": "csrc/worldgen.c",
+      "symbols": [
+        "om_world_generate"
+      ],
+      "epic": "E-03",
+      "story": "021"
+    },
+    {
+      "card": "211a4-e03-worldgen-a_fresh_galaxy_from_a_se",
+      "kind": "build",
+      "file": "csrc/worldgen.c",
+      "symbols": [
+        "om_world_generate"
+      ],
+      "epic": "E-03",
+      "story": "021"
+    },
+    {
+      "card": "212a1-e03-worldgen-homes_are_strong_frontie",
+      "kind": "build",
+      "file": "csrc/worldgen.c",
+      "symbols": [
+        "om_world_generate"
+      ],
+      "epic": "E-03",
+      "story": "022"
+    },
+    {
+      "card": "212a2-e03-worldgen-homes_are_strong_frontie",
+      "kind": "build",
+      "file": "csrc/worldgen.c",
+      "symbols": [
+        "om_world_generate"
+      ],
+      "epic": "E-03",
+      "story": "022"
+    },
+    {
+      "card": "213a-e03-worldgen-routes_carry_armies_trad",
+      "kind": "build",
+      "file": "csrc/worldgen.c",
+      "symbols": [
+        "om_world_generate"
+      ],
+      "epic": "E-03",
+      "story": "023"
+    },
+    {
+      "card": "214a1-e03-worldgen-politics_redraws_the_rou",
+      "kind": "build",
+      "file": "csrc/worldgen.c",
+      "symbols": [
+        "om_world_generate"
+      ],
+      "epic": "E-03",
+      "story": "024"
+    },
+    {
+      "card": "214a2-e03-worldgen-politics_redraws_the_rou",
+      "kind": "build",
+      "file": "csrc/worldgen.c",
+      "symbols": [
+        "om_world_generate"
+      ],
+      "epic": "E-03",
+      "story": "024"
+    },
+    {
+      "card": "215a-e03-worldgen-nobody_starts_on_your_do",
+      "kind": "build",
+      "file": "csrc/worldgen.c",
+      "symbols": [
+        "om_world_generate"
+      ],
+      "epic": "E-03",
+      "story": "025"
+    },
+    {
+      "card": "220a1-e06-diplomacy-three_ways_to_feel_about",
+      "kind": "build",
+      "file": "csrc/diplomacy.c",
+      "symbols": [
+        "om_diplomacy_step"
+      ],
+      "epic": "E-06",
+      "story": "042"
+    },
+    {
+      "card": "220a2-e06-diplomacy-three_ways_to_feel_about",
+      "kind": "build",
+      "file": "csrc/diplomacy.c",
+      "symbols": [
+        "om_diplomacy_step"
+      ],
+      "epic": "E-06",
+      "story": "042"
+    },
+    {
+      "card": "221a1-e06-diplomacy-peace_grows_out_of_quiet",
+      "kind": "build",
+      "file": "csrc/diplomacy.c",
+      "symbols": [
+        "om_diplomacy_step"
+      ],
+      "epic": "E-06",
+      "story": "043"
+    },
+    {
+      "card": "221a2-e06-diplomacy-peace_grows_out_of_quiet",
+      "kind": "build",
+      "file": "csrc/diplomacy.c",
+      "symbols": [
+        "om_diplomacy_step"
+      ],
+      "epic": "E-06",
+      "story": "043"
+    },
+    {
+      "card": "222a1-e06-diplomacy-peace_is_never_safe",
+      "kind": "build",
+      "file": "csrc/diplomacy.c",
+      "symbols": [
+        "om_diplomacy_step"
+      ],
+      "epic": "E-06",
+      "story": "044"
+    },
+    {
+      "card": "222a2-e06-diplomacy-peace_is_never_safe",
+      "kind": "build",
+      "file": "csrc/diplomacy.c",
+      "symbols": [
+        "om_diplomacy_step"
+      ],
+      "epic": "E-06",
+      "story": "044"
+    },
+    {
+      "card": "223a1-e06-diplomacy-a_faction_s_technology_i",
+      "kind": "build",
+      "file": "csrc/diplomacy.c",
+      "symbols": [
+        "om_tech_step"
+      ],
+      "epic": "E-06",
+      "story": "045"
+    },
+    {
+      "card": "223a2-e06-diplomacy-a_faction_s_technology_i",
+      "kind": "build",
+      "file": "csrc/diplomacy.c",
+      "symbols": [
+        "om_tech_step"
+      ],
+      "epic": "E-06",
+      "story": "045"
+    },
+    {
+      "card": "223a3-e06-diplomacy-a_faction_s_technology_i",
+      "kind": "build",
+      "file": "csrc/diplomacy.c",
+      "symbols": [
+        "om_tech_step"
+      ],
+      "epic": "E-06",
+      "story": "045"
+    },
+    {
+      "card": "224a1-e06-diplomacy-archetypes_spend_tech_di",
+      "kind": "build",
+      "file": "csrc/diplomacy.c",
+      "symbols": [
+        "om_tech_step"
+      ],
+      "epic": "E-06",
+      "story": "046"
+    },
+    {
+      "card": "224a2-e06-diplomacy-archetypes_spend_tech_di",
+      "kind": "build",
+      "file": "csrc/diplomacy.c",
+      "symbols": [
+        "om_tech_step"
+      ],
+      "epic": "E-06",
+      "story": "046"
+    },
+    {
+      "card": "225a-e06-diplomacy-friends_share_knowledge",
+      "kind": "build",
+      "file": "csrc/diplomacy.c",
+      "symbols": [
+        "om_diplomacy_step"
+      ],
+      "epic": "E-06",
+      "story": "047"
+    },
+    {
+      "card": "226a-e06-diplomacy-three_tiers_of_technolog",
+      "kind": "build",
+      "file": "csrc/diplomacy.c",
+      "symbols": [
+        "om_tech_step"
+      ],
+      "epic": "E-06",
+      "story": "048"
+    },
+    {
+      "card": "230a1-e07-lifecycle-a_revolt_can_birth_a_nat",
+      "kind": "build",
+      "file": "csrc/lifecycle.c",
+      "symbols": [
+        "om_lifecycle_step"
+      ],
+      "epic": "E-07",
+      "story": "049"
+    },
+    {
+      "card": "230a2-e07-lifecycle-a_revolt_can_birth_a_nat",
+      "kind": "build",
+      "file": "csrc/lifecycle.c",
+      "symbols": [
+        "om_lifecycle_step"
+      ],
+      "epic": "E-07",
+      "story": "049"
+    },
+    {
+      "card": "231a1-e07-lifecycle-old_loyalties",
+      "kind": "build",
+      "file": "csrc/lifecycle.c",
+      "symbols": [
+        "om_lifecycle_step"
+      ],
+      "epic": "E-07",
+      "story": "050"
+    },
+    {
+      "card": "231a2-e07-lifecycle-old_loyalties",
+      "kind": "build",
+      "file": "csrc/lifecycle.c",
+      "symbols": [
+        "om_lifecycle_step"
+      ],
+      "epic": "E-07",
+      "story": "050"
+    },
+    {
+      "card": "232a1-e07-lifecycle-nations_that_never_were",
+      "kind": "build",
+      "file": "csrc/lifecycle.c",
+      "symbols": [
+        "om_lifecycle_step"
+      ],
+      "epic": "E-07",
+      "story": "051"
+    },
+    {
+      "card": "232a2-e07-lifecycle-nations_that_never_were",
+      "kind": "build",
+      "file": "csrc/lifecycle.c",
+      "symbols": [
+        "om_lifecycle_step"
+      ],
+      "epic": "E-07",
+      "story": "051"
+    },
+    {
+      "card": "233a-e07-lifecycle-no_plot_armor",
+      "kind": "build",
+      "file": "csrc/lifecycle.c",
+      "symbols": [
+        "om_lifecycle_step"
+      ],
+      "epic": "E-07",
+      "story": "052"
+    },
+    {
+      "card": "234a1-e07-lifecycle-every_faction_has_an_age",
+      "kind": "build",
+      "file": "csrc/lifecycle.c",
+      "symbols": [
+        "om_lifecycle_step"
+      ],
+      "epic": "E-07",
+      "story": "053"
+    },
+    {
+      "card": "234a2-e07-lifecycle-every_faction_has_an_age",
+      "kind": "build",
+      "file": "csrc/lifecycle.c",
+      "symbols": [
+        "om_lifecycle_step"
+      ],
+      "epic": "E-07",
+      "story": "053"
+    },
+    {
+      "card": "235a-e07-lifecycle-where_a_civilization_end",
+      "kind": "build",
+      "file": "csrc/lifecycle.c",
+      "symbols": [
+        "om_lifecycle_step"
+      ],
+      "epic": "E-07",
+      "story": "054"
+    },
+    {
+      "card": "240a1-e08-generational-one_commander_one_missio",
+      "kind": "build",
+      "file": "csrc/generational.c",
+      "symbols": [
+        "om_generational_step"
+      ],
+      "epic": "E-08",
+      "story": "055"
+    },
+    {
+      "card": "240a2-e08-generational-one_commander_one_missio",
+      "kind": "build",
+      "file": "csrc/generational.c",
+      "symbols": [
+        "om_generational_step"
+      ],
+      "epic": "E-08",
+      "story": "055"
+    },
+    {
+      "card": "241a1-e08-generational-decades_pass_while_i_am_",
+      "kind": "build",
+      "file": "csrc/generational.c",
+      "symbols": [
+        "om_generational_step"
+      ],
+      "epic": "E-08",
+      "story": "056"
+    },
+    {
+      "card": "241a2-e08-generational-decades_pass_while_i_am_",
+      "kind": "build",
+      "file": "csrc/generational.c",
+      "symbols": [
+        "om_generational_step"
+      ],
+      "epic": "E-08",
+      "story": "056"
+    },
+    {
+      "card": "242a1-e08-generational-stay_with_the_family_or_",
+      "kind": "build",
+      "file": "csrc/generational.c",
+      "symbols": [
+        "om_generational_step"
+      ],
+      "epic": "E-08",
+      "story": "057"
+    },
+    {
+      "card": "242a2-e08-generational-stay_with_the_family_or_",
+      "kind": "build",
+      "file": "csrc/generational.c",
+      "symbols": [
+        "om_generational_step"
+      ],
+      "epic": "E-08",
+      "story": "057"
+    },
+    {
+      "card": "243a1-e08-generational-who_i_come_back_as",
+      "kind": "build",
+      "file": "csrc/generational.c",
+      "symbols": [
+        "om_generational_step"
+      ],
+      "epic": "E-08",
+      "story": "058"
+    },
+    {
+      "card": "243a2-e08-generational-who_i_come_back_as",
+      "kind": "build",
+      "file": "csrc/generational.c",
+      "symbols": [
+        "om_generational_step"
+      ],
+      "epic": "E-08",
+      "story": "058"
+    },
+    {
+      "card": "244a-e08-generational-the_family_grows_while_i",
+      "kind": "build",
+      "file": "csrc/generational.c",
+      "symbols": [
+        "om_generational_step"
+      ],
+      "epic": "E-08",
+      "story": "059"
+    },
+    {
+      "card": "245a1-e08-generational-named_leaders_live_and_d",
+      "kind": "build",
+      "file": "csrc/generational.c",
+      "symbols": [
+        "om_generational_step"
+      ],
+      "epic": "E-08",
+      "story": "060"
+    },
+    {
+      "card": "245a2-e08-generational-named_leaders_live_and_d",
+      "kind": "build",
+      "file": "csrc/generational.c",
+      "symbols": [
+        "om_generational_step"
+      ],
+      "epic": "E-08",
+      "story": "060"
+    },
+    {
+      "card": "246a-e08-generational-when_my_commander_dies",
+      "kind": "build",
+      "file": "csrc/generational.c",
+      "symbols": [
+        "om_generational_step"
+      ],
+      "epic": "E-08",
+      "story": "061"
+    },
+    {
+      "card": "247a-e08-generational-when_my_civilization_fal",
+      "kind": "build",
+      "file": "csrc/generational.c",
+      "symbols": [
+        "om_generational_step"
+      ],
+      "epic": "E-08",
+      "story": "062"
+    },
+    {
+      "card": "248a-e08-generational-my_two_choices_at_the_st",
+      "kind": "build",
+      "file": "csrc/generational.c",
+      "symbols": [
+        "om_generational_step"
+      ],
+      "epic": "E-08",
+      "story": "063"
+    },
+    {
+      "card": "249a-e08-generational-what_carries_over",
+      "kind": "build",
+      "file": "csrc/generational.c",
+      "symbols": [
+        "om_generational_step"
+      ],
+      "epic": "E-08",
+      "story": "064"
+    },
+    {
+      "card": "250a1-e09-chronicle-five_to_ten_entries_in_t",
+      "kind": "build",
+      "file": "csrc/chronicle.c",
+      "symbols": [
+        "om_chronicle_step"
+      ],
+      "epic": "E-09",
+      "story": "065"
+    },
+    {
+      "card": "250a2-e09-chronicle-five_to_ten_entries_in_t",
+      "kind": "build",
+      "file": "csrc/chronicle.c",
+      "symbols": [
+        "om_chronicle_step"
+      ],
+      "epic": "E-09",
+      "story": "065"
+    },
+    {
+      "card": "251a1-e09-chronicle-what_counts_as_notable",
+      "kind": "build",
+      "file": "csrc/chronicle.c",
+      "symbols": [
+        "om_chronicle_step"
+      ],
+      "epic": "E-09",
+      "story": "066"
+    },
+    {
+      "card": "251a2-e09-chronicle-what_counts_as_notable",
+      "kind": "build",
+      "file": "csrc/chronicle.c",
+      "symbols": [
+        "om_chronicle_step"
+      ],
+      "epic": "E-09",
+      "story": "066"
+    },
+    {
+      "card": "252a1-e09-chronicle-stories_not_events",
+      "kind": "build",
+      "file": "csrc/chronicle.c",
+      "symbols": [
+        "om_chronicle_step"
+      ],
+      "epic": "E-09",
+      "story": "067"
+    },
+    {
+      "card": "252a2-e09-chronicle-stories_not_events",
+      "kind": "build",
+      "file": "csrc/chronicle.c",
+      "symbols": [
+        "om_chronicle_step"
+      ],
+      "epic": "E-09",
+      "story": "067"
+    },
+    {
+      "card": "253a1-e09-chronicle-written_from_fragments_n",
+      "kind": "build",
+      "file": "csrc/chronicle.c",
+      "symbols": [
+        "om_chronicle_step"
+      ],
+      "epic": "E-09",
+      "story": "068"
+    },
+    {
+      "card": "253a2-e09-chronicle-written_from_fragments_n",
+      "kind": "build",
+      "file": "csrc/chronicle.c",
+      "symbols": [
+        "om_chronicle_step"
+      ],
+      "epic": "E-09",
+      "story": "068"
+    },
+    {
+      "card": "254a1-e09-chronicle-watching_history_happen",
+      "kind": "build",
+      "file": "csrc/chronicle.c",
+      "symbols": [
+        "om_chronicle_step"
+      ],
+      "epic": "E-09",
+      "story": "069"
+    },
+    {
+      "card": "254a2-e09-chronicle-watching_history_happen",
+      "kind": "build",
+      "file": "csrc/chronicle.c",
+      "symbols": [
+        "om_chronicle_step"
+      ],
+      "epic": "E-09",
+      "story": "069"
+    },
+    {
+      "card": "255a-e09-chronicle-my_family_is_always_in_t",
+      "kind": "build",
+      "file": "csrc/chronicle.c",
+      "symbols": [
+        "om_chronicle_step"
+      ],
+      "epic": "E-09",
+      "story": "070"
+    },
+    {
+      "card": "256a-e09-chronicle-the_fragment_library_con",
+      "kind": "build",
+      "file": "csrc/chronicle.c",
+      "symbols": [
+        "om_chronicle_step"
+      ],
+      "epic": "E-09",
+      "story": "071"
+    },
+    {
+      "card": "260a1-e10-missions-orders_come_from_where_t",
+      "kind": "build",
+      "file": "csrc/mission.c",
+      "symbols": [
+        "om_mission_step"
+      ],
+      "epic": "E-10",
+      "story": "072"
+    },
+    {
+      "card": "260a2-e10-missions-orders_come_from_where_t",
+      "kind": "build",
+      "file": "csrc/mission.c",
+      "symbols": [
+        "om_mission_step"
+      ],
+      "epic": "E-10",
+      "story": "072"
+    },
+    {
+      "card": "261a-e10-missions-ten_kinds_of_trouble",
+      "kind": "build",
+      "file": "csrc/mission.c",
+      "symbols": [
+        "om_mission_step"
+      ],
+      "epic": "E-10",
+      "story": "073"
+    },
+    {
+      "card": "262a1-e10-missions-you_get_what_the_civiliz",
+      "kind": "build",
+      "file": "csrc/mission.c",
+      "symbols": [
+        "om_mission_step"
+      ],
+      "epic": "E-10",
+      "story": "074"
+    },
+    {
+      "card": "262a2-e10-missions-you_get_what_the_civiliz",
+      "kind": "build",
+      "file": "csrc/mission.c",
+      "symbols": [
+        "om_mission_step"
+      ],
+      "epic": "E-10",
+      "story": "074"
+    },
+    {
+      "card": "263a1-e10-missions-hold_destroy_escort_surv",
+      "kind": "build",
+      "file": "csrc/mission.c",
+      "symbols": [
+        "om_mission_step"
+      ],
+      "epic": "E-10",
+      "story": "075"
+    },
+    {
+      "card": "263a2-e10-missions-hold_destroy_escort_surv",
+      "kind": "build",
+      "file": "csrc/mission.c",
+      "symbols": [
+        "om_mission_step"
+      ],
+      "epic": "E-10",
+      "story": "075"
+    },
+    {
+      "card": "264a-e10-missions-the_clock",
+      "kind": "build",
+      "file": "csrc/mission.c",
+      "symbols": [
+        "om_mission_step"
+      ],
+      "epic": "E-10",
+      "story": "076"
+    },
+    {
+      "card": "265a-e10-missions-five_ways_it_can_go",
+      "kind": "build",
+      "file": "csrc/mission.c",
+      "symbols": [
+        "om_mission_step"
+      ],
+      "epic": "E-10",
+      "story": "077"
+    },
+    {
+      "card": "266a1-e10-missions-a_battle_becomes_history",
+      "kind": "build",
+      "file": "csrc/mission.c",
+      "symbols": [
+        "om_mission_step"
+      ],
+      "epic": "E-10",
+      "story": "078"
+    },
+    {
+      "card": "266a2-e10-missions-a_battle_becomes_history",
+      "kind": "build",
+      "file": "csrc/mission.c",
+      "symbols": [
+        "om_mission_step"
+      ],
+      "epic": "E-10",
+      "story": "078"
+    },
+    {
+      "card": "267a-e10-missions-orders_not_menus",
+      "kind": "build",
+      "file": "csrc/mission.c",
+      "symbols": [
+        "om_mission_step"
+      ],
+      "epic": "E-10",
+      "story": "079"
+    },
+    {
+      "card": "268a-e10-missions-difficulty_is_scarcity_n",
+      "kind": "build",
+      "file": "csrc/mission.c",
+      "symbols": [
+        "om_mission_step"
+      ],
+      "epic": "E-10",
+      "story": "080"
+    },
+    {
+      "card": "270a-e11-combat-three_categories_a_soft_",
+      "kind": "build",
+      "file": "csrc/unit.c",
+      "symbols": [
+        "om_unit_step"
+      ],
+      "epic": "E-11",
+      "story": "081"
+    },
+    {
+      "card": "271a1-e11-combat-the_six",
+      "kind": "build",
+      "file": "csrc/unit.c",
+      "symbols": [
+        "om_unit_step"
+      ],
+      "epic": "E-11",
+      "story": "082"
+    },
+    {
+      "card": "271a2-e11-combat-the_six",
+      "kind": "build",
+      "file": "csrc/unit.c",
+      "symbols": [
+        "om_unit_step"
+      ],
+      "epic": "E-11",
+      "story": "082"
+    },
+    {
+      "card": "272a-e11-combat-stats_traits_ability",
+      "kind": "build",
+      "file": "csrc/unit.c",
+      "symbols": [
+        "om_unit_step"
+      ],
+      "epic": "E-11",
+      "story": "083"
+    },
+    {
+      "card": "273a1-e11-combat-flat_damage",
+      "kind": "build",
+      "file": "csrc/unit.c",
+      "symbols": [
+        "om_unit_step"
+      ],
+      "epic": "E-11",
+      "story": "084"
+    },
+    {
+      "card": "273a2-e11-combat-flat_damage",
+      "kind": "build",
+      "file": "csrc/unit.c",
+      "symbols": [
+        "om_unit_step"
+      ],
+      "epic": "E-11",
+      "story": "084"
+    },
+    {
+      "card": "274a1-e11-combat-long_enough_to_think",
+      "kind": "build",
+      "file": "csrc/unit.c",
+      "symbols": [
+        "om_unit_step"
+      ],
+      "epic": "E-11",
+      "story": "085"
+    },
+    {
+      "card": "274a2-e11-combat-long_enough_to_think",
+      "kind": "build",
+      "file": "csrc/unit.c",
+      "symbols": [
+        "om_unit_step"
+      ],
+      "epic": "E-11",
+      "story": "085"
+    },
+    {
+      "card": "275a1-e11-combat-one_ability_each",
+      "kind": "build",
+      "file": "csrc/unit.c",
+      "symbols": [
+        "om_unit_step"
+      ],
+      "epic": "E-11",
+      "story": "086"
+    },
+    {
+      "card": "275a2-e11-combat-one_ability_each",
+      "kind": "build",
+      "file": "csrc/unit.c",
+      "symbols": [
+        "om_unit_step"
+      ],
+      "epic": "E-11",
+      "story": "086"
+    },
+    {
+      "card": "275a3-e11-combat-one_ability_each",
+      "kind": "build",
+      "file": "csrc/unit.c",
+      "symbols": [
+        "om_unit_step"
+      ],
+      "epic": "E-11",
+      "story": "086"
+    },
+    {
+      "card": "276a1-e11-combat-every_unit_thinks_the_sa",
+      "kind": "build",
+      "file": "csrc/unit.c",
+      "symbols": [
+        "om_unit_step"
+      ],
+      "epic": "E-11",
+      "story": "087"
+    },
+    {
+      "card": "276a2-e11-combat-every_unit_thinks_the_sa",
+      "kind": "build",
+      "file": "csrc/unit.c",
+      "symbols": [
+        "om_unit_step"
+      ],
+      "epic": "E-11",
+      "story": "087"
+    },
+    {
+      "card": "277a-e11-combat-reading_units_on_screen",
+      "kind": "build",
+      "file": "csrc/unit.c",
+      "symbols": [
+        "om_unit_step"
+      ],
+      "epic": "E-11",
+      "story": "088"
+    },
+    {
+      "card": "280a1-e12-fog-i_see_what_my_units_see",
+      "kind": "build",
+      "file": "csrc/fog.c",
+      "symbols": [
+        "om_fog_step"
+      ],
+      "epic": "E-12",
+      "story": "089"
+    },
+    {
+      "card": "280a2-e12-fog-i_see_what_my_units_see",
+      "kind": "build",
+      "file": "csrc/fog.c",
+      "symbols": [
+        "om_fog_step"
+      ],
+      "epic": "E-12",
+      "story": "089"
+    },
+    {
+      "card": "281a1-e12-fog-hiding_in_the_storm",
+      "kind": "build",
+      "file": "csrc/fog.c",
+      "symbols": [
+        "om_fog_step"
+      ],
+      "epic": "E-12",
+      "story": "090"
+    },
+    {
+      "card": "281a2-e12-fog-hiding_in_the_storm",
+      "kind": "build",
+      "file": "csrc/fog.c",
+      "symbols": [
+        "om_fog_step"
+      ],
+      "epic": "E-12",
+      "story": "090"
+    },
+    {
+      "card": "282a-e12-fog-standing_high",
+      "kind": "build",
+      "file": "csrc/fog.c",
+      "symbols": [
+        "om_fog_step"
+      ],
+      "epic": "E-12",
+      "story": "091"
+    },
+    {
+      "card": "283a-e12-fog-recon_then_fog",
+      "kind": "build",
+      "file": "csrc/fog.c",
+      "symbols": [
+        "om_fog_step"
+      ],
+      "epic": "E-12",
+      "story": "092"
+    },
+    {
+      "card": "284a-e12-fog-fog_is_for_the_player_no",
+      "kind": "build",
+      "file": "csrc/fog.c",
+      "symbols": [
+        "om_fog_step"
+      ],
+      "epic": "E-12",
+      "story": "093"
+    },
+    {
+      "card": "285a-e12-fog-how_fog_looks",
+      "kind": "build",
+      "file": "csrc/fog.c",
+      "symbols": [
+        "om_fog_step"
+      ],
+      "epic": "E-12",
+      "story": "094"
+    },
+    {
+      "card": "290a1-e13-movement-a_force_moves_as_one",
+      "kind": "build",
+      "file": "csrc/tactical_move.c",
+      "symbols": [
+        "om_movement_step"
+      ],
+      "epic": "E-13",
+      "story": "095"
+    },
+    {
+      "card": "290a2-e13-movement-a_force_moves_as_one",
+      "kind": "build",
+      "file": "csrc/tactical_move.c",
+      "symbols": [
+        "om_movement_step"
+      ],
+      "epic": "E-13",
+      "story": "095"
+    },
+    {
+      "card": "291a1-e13-movement-four_commands",
+      "kind": "build",
+      "file": "csrc/tactical_move.c",
+      "symbols": [
+        "om_movement_step"
+      ],
+      "epic": "E-13",
+      "story": "096"
+    },
+    {
+      "card": "291a2-e13-movement-four_commands",
+      "kind": "build",
+      "file": "csrc/tactical_move.c",
+      "symbols": [
+        "om_movement_step"
+      ],
+      "epic": "E-13",
+      "story": "096"
+    },
+    {
+      "card": "292a1-e13-movement-around_not_through",
+      "kind": "build",
+      "file": "csrc/tactical_move.c",
+      "symbols": [
+        "om_movement_step"
+      ],
+      "epic": "E-13",
+      "story": "097"
+    },
+    {
+      "card": "292a2-e13-movement-around_not_through",
+      "kind": "build",
+      "file": "csrc/tactical_move.c",
+      "symbols": [
+        "om_movement_step"
+      ],
+      "epic": "E-13",
+      "story": "097"
+    },
+    {
+      "card": "292a3-e13-movement-around_not_through",
+      "kind": "build",
+      "file": "csrc/tactical_move.c",
+      "symbols": [
+        "om_movement_step"
+      ],
+      "epic": "E-13",
+      "story": "097"
+    },
+    {
+      "card": "292a4-e13-movement-around_not_through",
+      "kind": "build",
+      "file": "csrc/tactical_move.c",
+      "symbols": [
+        "om_movement_step"
+      ],
+      "epic": "E-13",
+      "story": "097"
+    },
+    {
+      "card": "293a-e13-movement-firing_through_friends",
+      "kind": "build",
+      "file": "csrc/tactical_move.c",
+      "symbols": [
+        "om_movement_step"
+      ],
+      "epic": "E-13",
+      "story": "098"
+    },
+    {
+      "card": "294a-e13-movement-speed_is_position",
+      "kind": "build",
+      "file": "csrc/tactical_move.c",
+      "symbols": [
+        "om_movement_step"
+      ],
+      "epic": "E-13",
+      "story": "099"
+    },
+    {
+      "card": "295a-e13-movement-facing",
+      "kind": "build",
+      "file": "csrc/tactical_move.c",
+      "symbols": [
+        "om_movement_step"
+      ],
+      "epic": "E-13",
+      "story": "100"
+    },
+    {
+      "card": "296a-e13-movement-movement_that_reads",
+      "kind": "build",
+      "file": "csrc/tactical_move.c",
+      "symbols": [
+        "om_movement_step"
+      ],
+      "epic": "E-13",
+      "story": "101"
+    },
+    {
+      "card": "297a-e13-movement-same_commands_same_battl",
+      "kind": "build",
+      "file": "csrc/tactical_move.c",
+      "symbols": [
+        "om_movement_step"
+      ],
+      "epic": "E-13",
+      "story": "102"
+    },
+    {
+      "card": "300a-e14-enemy-five_behaviors_three_moo",
+      "kind": "build",
+      "file": "csrc/enemy_macro.c",
+      "symbols": [
+        "om_enemy_macro_step"
+      ],
+      "epic": "E-14",
+      "story": "120"
+    },
+    {
+      "card": "301a1-e14-enemy-timers_and_thresholds_wi",
+      "kind": "build",
+      "file": "csrc/enemy_macro.c",
+      "symbols": [
+        "om_enemy_macro_step"
+      ],
+      "epic": "E-14",
+      "story": "121"
+    },
+    {
+      "card": "301a2-e14-enemy-timers_and_thresholds_wi",
+      "kind": "build",
+      "file": "csrc/enemy_macro.c",
+      "symbols": [
+        "om_enemy_macro_step"
+      ],
+      "epic": "E-14",
+      "story": "121"
+    },
+    {
+      "card": "302a1-e14-enemy-forces_that_notice_each_",
+      "kind": "build",
+      "file": "csrc/enemy_macro.c",
+      "symbols": [
+        "om_enemy_macro_step"
+      ],
+      "epic": "E-14",
+      "story": "122"
+    },
+    {
+      "card": "302a2-e14-enemy-forces_that_notice_each_",
+      "kind": "build",
+      "file": "csrc/enemy_macro.c",
+      "symbols": [
+        "om_enemy_macro_step"
+      ],
+      "epic": "E-14",
+      "story": "122"
+    },
+    {
+      "card": "303a-e14-enemy-the_enemy_replays_like_i",
+      "kind": "build",
+      "file": "csrc/enemy_macro.c",
+      "symbols": [
+        "om_enemy_macro_step"
+      ],
+      "epic": "E-14",
+      "story": "123"
+    },
+    {
+      "card": "304a-e14-enemy-rare_surprises",
+      "kind": "build",
+      "file": "csrc/enemy_macro.c",
+      "symbols": [
+        "om_enemy_macro_step"
+      ],
+      "epic": "E-14",
+      "story": "124"
+    },
+    {
+      "card": "305a-e14-enemy-how_hard_the_enemy_tries",
+      "kind": "build",
+      "file": "csrc/enemy_macro.c",
+      "symbols": [
+        "om_enemy_macro_step"
+      ],
+      "epic": "E-14",
+      "story": "125"
+    },
+    {
+      "card": "310a1-e15-support-most_of_my_force_is_out_",
+      "kind": "build",
+      "file": "csrc/tactical_support.c",
+      "symbols": [
+        "om_support_step"
+      ],
+      "epic": "E-15",
+      "story": "126"
+    },
+    {
+      "card": "310a2-e15-support-most_of_my_force_is_out_",
+      "kind": "build",
+      "file": "csrc/tactical_support.c",
+      "symbols": [
+        "om_support_step"
+      ],
+      "epic": "E-15",
+      "story": "126"
+    },
+    {
+      "card": "311a1-e15-support-taking_a_garrison",
+      "kind": "build",
+      "file": "csrc/tactical_support.c",
+      "symbols": [
+        "om_support_step"
+      ],
+      "epic": "E-15",
+      "story": "127"
+    },
+    {
+      "card": "311a2-e15-support-taking_a_garrison",
+      "kind": "build",
+      "file": "csrc/tactical_support.c",
+      "symbols": [
+        "om_support_step"
+      ],
+      "epic": "E-15",
+      "story": "127"
+    },
+    {
+      "card": "312a-e15-support-what_the_enemy_builds",
+      "kind": "build",
+      "file": "csrc/tactical_support.c",
+      "symbols": [
+        "om_support_step"
+      ],
+      "epic": "E-15",
+      "story": "128"
+    },
+    {
+      "card": "313a-e15-support-units_that_cannot_fight",
+      "kind": "build",
+      "file": "csrc/tactical_support.c",
+      "symbols": [
+        "om_support_step"
+      ],
+      "epic": "E-15",
+      "story": "129"
+    },
+    {
+      "card": "314a1-e15-support-the_battlefield_moves",
+      "kind": "build",
+      "file": "csrc/tactical_support.c",
+      "symbols": [
+        "om_support_step"
+      ],
+      "epic": "E-15",
+      "story": "130"
+    },
+    {
+      "card": "314a2-e15-support-the_battlefield_moves",
+      "kind": "build",
+      "file": "csrc/tactical_support.c",
+      "symbols": [
+        "om_support_step"
+      ],
+      "epic": "E-15",
+      "story": "130"
+    },
+    {
+      "card": "315a-e15-support-reading_hazards_and_stru",
+      "kind": "build",
+      "file": "csrc/tactical_support.c",
+      "symbols": [
+        "om_support_step"
+      ],
+      "epic": "E-15",
+      "story": "131"
+    },
+    {
+      "card": "320a1-e17-mapgen-bones_from_the_library",
+      "kind": "build",
+      "file": "csrc/tactical_mapgen.c",
+      "symbols": [
+        "om_mapgen_step"
+      ],
+      "epic": "E-17",
+      "story": "112"
+    },
+    {
+      "card": "320a2-e17-mapgen-bones_from_the_library",
+      "kind": "build",
+      "file": "csrc/tactical_mapgen.c",
+      "symbols": [
+        "om_mapgen_step"
+      ],
+      "epic": "E-17",
+      "story": "112"
+    },
+    {
+      "card": "321a1-e17-mapgen-nine_kinds_of_place",
+      "kind": "build",
+      "file": "csrc/tactical_mapgen.c",
+      "symbols": [
+        "om_mapgen_step"
+      ],
+      "epic": "E-17",
+      "story": "113"
+    },
+    {
+      "card": "321a2-e17-mapgen-nine_kinds_of_place",
+      "kind": "build",
+      "file": "csrc/tactical_mapgen.c",
+      "symbols": [
+        "om_mapgen_step"
+      ],
+      "epic": "E-17",
+      "story": "113"
+    },
+    {
+      "card": "322a1-e17-mapgen-texture_from_gradients",
+      "kind": "build",
+      "file": "csrc/tactical_mapgen.c",
+      "symbols": [
+        "om_mapgen_step"
+      ],
+      "epic": "E-17",
+      "story": "114"
+    },
+    {
+      "card": "322a2-e17-mapgen-texture_from_gradients",
+      "kind": "build",
+      "file": "csrc/tactical_mapgen.c",
+      "symbols": [
+        "om_mapgen_step"
+      ],
+      "epic": "E-17",
+      "story": "114"
+    },
+    {
+      "card": "323a-e17-mapgen-the_region_shapes_the_te",
+      "kind": "build",
+      "file": "csrc/tactical_mapgen.c",
+      "symbols": [
+        "om_mapgen_step"
+      ],
+      "epic": "E-17",
+      "story": "115"
+    },
+    {
+      "card": "324a-e17-mapgen-canvas",
+      "kind": "build",
+      "file": "csrc/tactical_mapgen.c",
+      "symbols": [
+        "om_mapgen_step"
+      ],
+      "epic": "E-17",
+      "story": "116"
+    },
+    {
+      "card": "325a-e17-mapgen-fair_enough",
+      "kind": "build",
+      "file": "csrc/tactical_mapgen.c",
+      "symbols": [
+        "om_mapgen_step"
+      ],
+      "epic": "E-17",
+      "story": "117"
+    },
+    {
+      "card": "326a-e17-mapgen-the_battlefield_moves",
+      "kind": "build",
+      "file": "csrc/tactical_mapgen.c",
+      "symbols": [
+        "om_mapgen_step"
+      ],
+      "epic": "E-17",
+      "story": "118"
+    },
+    {
+      "card": "327a-e17-mapgen-terrain_that_reads_like_",
+      "kind": "build",
+      "file": "csrc/tactical_mapgen.c",
+      "symbols": [
+        "om_mapgen_step"
+      ],
+      "epic": "E-17",
+      "story": "119"
+    }
+  ],
+  "edges": [
+    {
+      "from": "202a1-e05-faction-basics",
+      "to": "202z1-e05-s032-gate",
+      "symbol": "gate:S-032"
+    },
+    {
+      "from": "203a1-e05-candidate-enumeration",
+      "to": "204z-e05-s034-gate",
+      "symbol": "gate:S-034"
+    },
+    {
+      "from": "203a2-e05-candidate-scoring",
+      "to": "204z-e05-s034-gate",
+      "symbol": "gate:S-034"
+    },
+    {
+      "from": "203b-e05-decision-arbitration",
+      "to": "203z-e05-s035-gate",
+      "symbol": "gate:S-035"
+    },
+    {
+      "from": "203b1-e05-viability-scoring",
+      "to": "203z-e05-s035-gate",
+      "symbol": "gate:S-035"
+    },
+    {
+      "from": "203c-e05-candidate-regression-repair",
+      "to": "204z-e05-s034-gate",
+      "symbol": "gate:S-034"
+    },
+    {
+      "from": "203e-e05-telegraph-declare-draw-queue",
+      "to": "204z2-e05-s036-gate",
+      "symbol": "gate:S-036"
+    },
+    {
+      "from": "204a1-e05-telegraph-maturation",
+      "to": "204z2-e05-s036-gate",
+      "symbol": "gate:S-036"
+    },
+    {
+      "from": "204a2-e05-reactive-reinforcement",
+      "to": "204z2-e05-s036-gate",
+      "symbol": "gate:S-036"
+    },
+    {
+      "from": "204a3-e05-core-attack",
+      "to": "204z1-e05-s037-gate",
+      "symbol": "gate:S-037"
+    },
+    {
+      "from": "204b2-e05-unrest-colonize",
+      "to": "204z3-e05-s038-gate",
+      "symbol": "gate:S-038"
+    },
+    {
+      "from": "204b3-e05-damage-history",
+      "to": "204z-e05-s034-gate",
+      "symbol": "gate:S-034"
+    },
+    {
+      "from": "205a-e05-collision-lottery",
+      "to": "205z-e05-s039-gate",
+      "symbol": "gate:S-039"
+    },
+    {
+      "from": "206a-e05-border-friction",
+      "to": "206z1-e05-s041-gate",
+      "symbol": "gate:S-041"
+    },
+    {
+      "from": "206a-e05-border-friction",
+      "to": "213a-e03-worldgen-routes_carry_armies_trad",
+      "symbol": "om_tick_friction"
+    },
+    {
+      "from": "206a-e05-border-friction",
+      "to": "220a1-e06-diplomacy-three_ways_to_feel_about",
+      "symbol": "om_tick_friction"
+    },
+    {
+      "from": "206a-e05-border-friction",
+      "to": "220a2-e06-diplomacy-three_ways_to_feel_about",
+      "symbol": "om_tick_friction"
+    },
+    {
+      "from": "206b-e05-admin-revolts",
+      "to": "206z2-e05-s040-gate",
+      "symbol": "gate:S-040"
+    },
+    {
+      "from": "208a1-e04-launch-templates",
+      "to": "208a2-e04-library-loader",
+      "symbol": "om_event_template_by_name"
+    },
+    {
+      "from": "208a1-e04-launch-templates",
+      "to": "208a2-e04-library-loader",
+      "symbol": "om_event_template_count"
+    },
+    {
+      "from": "208a1-e04-launch-templates",
+      "to": "208a2-e04-library-loader",
+      "symbol": "om_event_template_get"
+    },
+    {
+      "from": "208a1-e04-launch-templates",
+      "to": "208b1-e04-noise-offsets",
+      "symbol": "om_event_template_count"
+    },
+    {
+      "from": "208a1-e04-launch-templates",
+      "to": "208b1-e04-noise-offsets",
+      "symbol": "om_event_template_get"
+    },
+    {
+      "from": "208a1-e04-launch-templates",
+      "to": "208b2-e04-threshold-triggers",
+      "symbol": "om_event_template_by_name"
+    },
+    {
+      "from": "208a1-e04-launch-templates",
+      "to": "208b2-e04-threshold-triggers",
+      "symbol": "om_event_template_count"
+    },
+    {
+      "from": "208a1-e04-launch-templates",
+      "to": "208b3-e04-revolts-and-deltas",
+      "symbol": "om_event_template_by_name"
+    },
+    {
+      "from": "208a1-e04-launch-templates",
+      "to": "208b3-e04-revolts-and-deltas",
+      "symbol": "om_event_template_count"
+    },
+    {
+      "from": "208a1-e04-launch-templates",
+      "to": "208b3-e04-revolts-and-deltas",
+      "symbol": "om_event_template_get"
+    },
+    {
+      "from": "208a1-e04-launch-templates",
+      "to": "209a-e04-queue-exclusion",
+      "symbol": "om_event_template_by_name"
+    },
+    {
+      "from": "208a1-e04-launch-templates",
+      "to": "209a-e04-queue-exclusion",
+      "symbol": "om_event_template_count"
+    },
+    {
+      "from": "208a1-e04-launch-templates",
+      "to": "209b-e04-queue-resolution",
+      "symbol": "om_event_template_by_name"
+    },
+    {
+      "from": "208a1-e04-launch-templates",
+      "to": "209b-e04-queue-resolution",
+      "symbol": "om_event_template_count"
+    },
+    {
+      "from": "208a1-e04-launch-templates",
+      "to": "209c-e04-chain-spawns",
+      "symbol": "om_event_template_by_name"
+    },
+    {
+      "from": "208a1-e04-launch-templates",
+      "to": "209c-e04-chain-spawns",
+      "symbol": "om_event_template_count"
+    },
+    {
+      "from": "208a1-e04-launch-templates",
+      "to": "210-e04-fault-injection",
+      "symbol": "om_event_template_by_name"
+    },
+    {
+      "from": "208a1-e04-launch-templates",
+      "to": "210-e04-fault-injection",
+      "symbol": "om_event_template_count"
+    },
+    {
+      "from": "208a1-e04-launch-templates",
+      "to": "256a-e09-chronicle-the_fragment_library_con",
+      "symbol": "om_event_template_count"
+    },
+    {
+      "from": "208a2-e04-library-loader",
+      "to": "208a1-e04-launch-templates",
+      "symbol": "om_events_load_launch"
+    },
+    {
+      "from": "208a2-e04-library-loader",
+      "to": "208b1-e04-noise-offsets",
+      "symbol": "om_events_load_launch"
+    },
+    {
+      "from": "208a2-e04-library-loader",
+      "to": "208b2-e04-threshold-triggers",
+      "symbol": "om_events_load_launch"
+    },
+    {
+      "from": "208a2-e04-library-loader",
+      "to": "208b3-e04-revolts-and-deltas",
+      "symbol": "om_events_load_launch"
+    },
+    {
+      "from": "208a2-e04-library-loader",
+      "to": "209a-e04-queue-exclusion",
+      "symbol": "om_events_load_launch"
+    },
+    {
+      "from": "208a2-e04-library-loader",
+      "to": "209b-e04-queue-resolution",
+      "symbol": "om_events_load_launch"
+    },
+    {
+      "from": "208a2-e04-library-loader",
+      "to": "209c-e04-chain-spawns",
+      "symbol": "om_events_load_launch"
+    },
+    {
+      "from": "208a2-e04-library-loader",
+      "to": "210-e04-fault-injection",
+      "symbol": "om_events_load_launch"
+    },
+    {
+      "from": "208a2-e04-library-loader",
+      "to": "256a-e09-chronicle-the_fragment_library_con",
+      "symbol": "om_events_load_launch"
+    },
+    {
+      "from": "208b1-e04-noise-offsets",
+      "to": "208a1-e04-launch-templates",
+      "symbol": "om_event_set_noise"
+    },
+    {
+      "from": "208b1-e04-noise-offsets",
+      "to": "208a2-e04-library-loader",
+      "symbol": "om_event_set_noise"
+    },
+    {
+      "from": "208b1-e04-noise-offsets",
+      "to": "208b2-e04-threshold-triggers",
+      "symbol": "om_event_set_noise"
+    },
+    {
+      "from": "208b1-e04-noise-offsets",
+      "to": "208b3-e04-revolts-and-deltas",
+      "symbol": "om_event_set_noise"
+    },
+    {
+      "from": "208b1-e04-noise-offsets",
+      "to": "209a-e04-queue-exclusion",
+      "symbol": "om_event_set_noise"
+    },
+    {
+      "from": "208b1-e04-noise-offsets",
+      "to": "209b-e04-queue-resolution",
+      "symbol": "om_event_set_noise"
+    },
+    {
+      "from": "208b1-e04-noise-offsets",
+      "to": "209c-e04-chain-spawns",
+      "symbol": "om_event_set_noise"
+    },
+    {
+      "from": "208b1-e04-noise-offsets",
+      "to": "210-e04-fault-injection",
+      "symbol": "om_event_set_noise"
+    },
+    {
+      "from": "208b3-e04-revolts-and-deltas",
+      "to": "208a1-e04-launch-templates",
+      "symbol": "om_region_event_delta"
+    },
+    {
+      "from": "208b3-e04-revolts-and-deltas",
+      "to": "208a2-e04-library-loader",
+      "symbol": "om_tick_events"
+    },
+    {
+      "from": "208b3-e04-revolts-and-deltas",
+      "to": "208b2-e04-threshold-triggers",
+      "symbol": "om_tick_events"
+    },
+    {
+      "from": "208b3-e04-revolts-and-deltas",
+      "to": "209a-e04-queue-exclusion",
+      "symbol": "om_tick_events"
+    },
+    {
+      "from": "208b3-e04-revolts-and-deltas",
+      "to": "209b-e04-queue-resolution",
+      "symbol": "om_tick_events"
+    },
+    {
+      "from": "208b3-e04-revolts-and-deltas",
+      "to": "209c-e04-chain-spawns",
+      "symbol": "om_tick_events"
+    },
+    {
+      "from": "208b3-e04-revolts-and-deltas",
+      "to": "210-e04-fault-injection",
+      "symbol": "om_tick_events"
+    },
+    {
+      "from": "208b3-e04-revolts-and-deltas",
+      "to": "223a3-e06-diplomacy-a_faction_s_technology_i",
+      "symbol": "om_tick_events"
+    },
+    {
+      "from": "209b-e04-queue-resolution",
+      "to": "230a2-e07-lifecycle-a_revolt_can_birth_a_nat",
+      "symbol": "om_tick_pruned"
+    },
+    {
+      "from": "209c-e04-chain-spawns",
+      "to": "208a1-e04-launch-templates",
+      "symbol": "om_event_queue_external"
+    },
+    {
+      "from": "209c-e04-chain-spawns",
+      "to": "208a2-e04-library-loader",
+      "symbol": "om_event_queue_external"
+    },
+    {
+      "from": "209c-e04-chain-spawns",
+      "to": "209a-e04-queue-exclusion",
+      "symbol": "om_event_queue_external"
+    },
+    {
+      "from": "209c-e04-chain-spawns",
+      "to": "209b-e04-queue-resolution",
+      "symbol": "om_event_queue_external"
+    },
+    {
+      "from": "209c-e04-chain-spawns",
+      "to": "230a1-e07-lifecycle-a_revolt_can_birth_a_nat",
+      "symbol": "om_event_queue_external"
+    },
+    {
+      "from": "209c-e04-chain-spawns",
+      "to": "230a2-e07-lifecycle-a_revolt_can_birth_a_nat",
+      "symbol": "om_event_queue_external"
+    },
+    {
+      "from": "209c-e04-chain-spawns",
+      "to": "231a1-e07-lifecycle-old_loyalties",
+      "symbol": "om_event_queue_external"
+    },
+    {
+      "from": "209c-e04-chain-spawns",
+      "to": "231a2-e07-lifecycle-old_loyalties",
+      "symbol": "om_event_queue_external"
+    }
+  ],
+  "errors": [
+    {
+      "kind": "double_owner",
+      "cards": [
+        "201b-e02-drift-trace",
+        "210-e04-fault-injection"
+      ],
+      "symbol": "om_debug_inject"
+    },
+    {
+      "kind": "double_owner",
+      "cards": [
+        "203a1-e05-candidate-enumeration",
+        "203a2-e05-candidate-scoring",
+        "203b1-e05-viability-scoring",
+        "203c-e05-candidate-regression-repair",
+        "208+e05-spawn-fault-branches"
+      ],
+      "symbol": "om_faction_candidates"
+    },
+    {
+      "kind": "double_owner",
+      "cards": [
+        "203b1-e05-viability-scoring",
+        "203e-e05-telegraph-declare-draw-queue"
+      ],
+      "symbol": "om_step_decisions"
+    },
+    {
+      "kind": "double_owner",
+      "cards": [
+        "203b-e05-decision-arbitration",
+        "203b1-e05-viability-scoring"
+      ],
+      "symbol": "om_tick_decisions"
+    },
+    {
+      "kind": "double_owner",
+      "cards": [
+        "203b-e05-decision-arbitration",
+        "203e-e05-telegraph-declare-draw-queue"
+      ],
+      "symbol": "om_pending_telegraphs"
+    },
+    {
+      "kind": "double_owner",
+      "cards": [
+        "204a1-e05-telegraph-maturation",
+        "205a-e05-collision-lottery"
+      ],
+      "symbol": "om_step_telegraphs"
+    },
+    {
+      "kind": "double_owner",
+      "cards": [
+        "107-probe-a-build",
+        "110-probe-f-build"
+      ],
+      "symbol": "toy_rng_seed"
+    },
+    {
+      "kind": "double_owner",
+      "cards": [
+        "107-probe-a-build",
+        "110-probe-f-build"
+      ],
+      "symbol": "toy_rng_next"
+    },
+    {
+      "kind": "double_owner",
+      "cards": [
+        "107-probe-a-build",
+        "110-probe-f-build"
+      ],
+      "symbol": "toy_rng_uniform"
+    },
+    {
+      "kind": "double_owner",
+      "cards": [
+        "107-probe-a-build",
+        "110-probe-f-build"
+      ],
+      "symbol": "toy_drift_economy"
+    },
+    {
+      "kind": "double_owner",
+      "cards": [
+        "107-probe-a-build",
+        "110-probe-f-build"
+      ],
+      "symbol": "toy_drift_economy_n"
+    },
+    {
+      "kind": "double_owner",
+      "cards": [
+        "109-probe-e-build",
+        "111-probe-e-abort"
+      ],
+      "symbol": "contra_f"
+    },
+    {
+      "kind": "double_owner",
+      "cards": [
+        "211a1-e03-worldgen-a_fresh_galaxy_from_a_se",
+        "211a2-e03-worldgen-a_fresh_galaxy_from_a_se",
+        "211a3-e03-worldgen-a_fresh_galaxy_from_a_se",
+        "211a4-e03-worldgen-a_fresh_galaxy_from_a_se",
+        "212a1-e03-worldgen-homes_are_strong_frontie",
+        "212a2-e03-worldgen-homes_are_strong_frontie",
+        "213a-e03-worldgen-routes_carry_armies_trad",
+        "214a1-e03-worldgen-politics_redraws_the_rou",
+        "214a2-e03-worldgen-politics_redraws_the_rou",
+        "215a-e03-worldgen-nobody_starts_on_your_do"
+      ],
+      "symbol": "om_world_generate"
+    },
+    {
+      "kind": "double_owner",
+      "cards": [
+        "220a1-e06-diplomacy-three_ways_to_feel_about",
+        "220a2-e06-diplomacy-three_ways_to_feel_about",
+        "221a1-e06-diplomacy-peace_grows_out_of_quiet",
+        "221a2-e06-diplomacy-peace_grows_out_of_quiet",
+        "222a1-e06-diplomacy-peace_is_never_safe",
+        "222a2-e06-diplomacy-peace_is_never_safe",
+        "225a-e06-diplomacy-friends_share_knowledge"
+      ],
+      "symbol": "om_diplomacy_step"
+    },
+    {
+      "kind": "double_owner",
+      "cards": [
+        "223a1-e06-diplomacy-a_faction_s_technology_i",
+        "223a2-e06-diplomacy-a_faction_s_technology_i",
+        "223a3-e06-diplomacy-a_faction_s_technology_i",
+        "224a1-e06-diplomacy-archetypes_spend_tech_di",
+        "224a2-e06-diplomacy-archetypes_spend_tech_di",
+        "226a-e06-diplomacy-three_tiers_of_technolog"
+      ],
+      "symbol": "om_tech_step"
+    },
+    {
+      "kind": "double_owner",
+      "cards": [
+        "230a1-e07-lifecycle-a_revolt_can_birth_a_nat",
+        "230a2-e07-lifecycle-a_revolt_can_birth_a_nat",
+        "231a1-e07-lifecycle-old_loyalties",
+        "231a2-e07-lifecycle-old_loyalties",
+        "232a1-e07-lifecycle-nations_that_never_were",
+        "232a2-e07-lifecycle-nations_that_never_were",
+        "233a-e07-lifecycle-no_plot_armor",
+        "234a1-e07-lifecycle-every_faction_has_an_age",
+        "234a2-e07-lifecycle-every_faction_has_an_age",
+        "235a-e07-lifecycle-where_a_civilization_end"
+      ],
+      "symbol": "om_lifecycle_step"
+    },
+    {
+      "kind": "double_owner",
+      "cards": [
+        "240a1-e08-generational-one_commander_one_missio",
+        "240a2-e08-generational-one_commander_one_missio",
+        "241a1-e08-generational-decades_pass_while_i_am_",
+        "241a2-e08-generational-decades_pass_while_i_am_",
+        "242a1-e08-generational-stay_with_the_family_or_",
+        "242a2-e08-generational-stay_with_the_family_or_",
+        "243a1-e08-generational-who_i_come_back_as",
+        "243a2-e08-generational-who_i_come_back_as",
+        "244a-e08-generational-the_family_grows_while_i",
+        "245a1-e08-generational-named_leaders_live_and_d",
+        "245a2-e08-generational-named_leaders_live_and_d",
+        "246a-e08-generational-when_my_commander_dies",
+        "247a-e08-generational-when_my_civilization_fal",
+        "248a-e08-generational-my_two_choices_at_the_st",
+        "249a-e08-generational-what_carries_over"
+      ],
+      "symbol": "om_generational_step"
+    },
+    {
+      "kind": "double_owner",
+      "cards": [
+        "250a1-e09-chronicle-five_to_ten_entries_in_t",
+        "250a2-e09-chronicle-five_to_ten_entries_in_t",
+        "251a1-e09-chronicle-what_counts_as_notable",
+        "251a2-e09-chronicle-what_counts_as_notable",
+        "252a1-e09-chronicle-stories_not_events",
+        "252a2-e09-chronicle-stories_not_events",
+        "253a1-e09-chronicle-written_from_fragments_n",
+        "253a2-e09-chronicle-written_from_fragments_n",
+        "254a1-e09-chronicle-watching_history_happen",
+        "254a2-e09-chronicle-watching_history_happen",
+        "255a-e09-chronicle-my_family_is_always_in_t",
+        "256a-e09-chronicle-the_fragment_library_con"
+      ],
+      "symbol": "om_chronicle_step"
+    },
+    {
+      "kind": "double_owner",
+      "cards": [
+        "260a1-e10-missions-orders_come_from_where_t",
+        "260a2-e10-missions-orders_come_from_where_t",
+        "261a-e10-missions-ten_kinds_of_trouble",
+        "262a1-e10-missions-you_get_what_the_civiliz",
+        "262a2-e10-missions-you_get_what_the_civiliz",
+        "263a1-e10-missions-hold_destroy_escort_surv",
+        "263a2-e10-missions-hold_destroy_escort_surv",
+        "264a-e10-missions-the_clock",
+        "265a-e10-missions-five_ways_it_can_go",
+        "266a1-e10-missions-a_battle_becomes_history",
+        "266a2-e10-missions-a_battle_becomes_history",
+        "267a-e10-missions-orders_not_menus",
+        "268a-e10-missions-difficulty_is_scarcity_n"
+      ],
+      "symbol": "om_mission_step"
+    },
+    {
+      "kind": "double_owner",
+      "cards": [
+        "270a-e11-combat-three_categories_a_soft_",
+        "271a1-e11-combat-the_six",
+        "271a2-e11-combat-the_six",
+        "272a-e11-combat-stats_traits_ability",
+        "273a1-e11-combat-flat_damage",
+        "273a2-e11-combat-flat_damage",
+        "274a1-e11-combat-long_enough_to_think",
+        "274a2-e11-combat-long_enough_to_think",
+        "275a1-e11-combat-one_ability_each",
+        "275a2-e11-combat-one_ability_each",
+        "275a3-e11-combat-one_ability_each",
+        "276a1-e11-combat-every_unit_thinks_the_sa",
+        "276a2-e11-combat-every_unit_thinks_the_sa",
+        "277a-e11-combat-reading_units_on_screen"
+      ],
+      "symbol": "om_unit_step"
+    },
+    {
+      "kind": "double_owner",
+      "cards": [
+        "280a1-e12-fog-i_see_what_my_units_see",
+        "280a2-e12-fog-i_see_what_my_units_see",
+        "281a1-e12-fog-hiding_in_the_storm",
+        "281a2-e12-fog-hiding_in_the_storm",
+        "282a-e12-fog-standing_high",
+        "283a-e12-fog-recon_then_fog",
+        "284a-e12-fog-fog_is_for_the_player_no",
+        "285a-e12-fog-how_fog_looks"
+      ],
+      "symbol": "om_fog_step"
+    },
+    {
+      "kind": "double_owner",
+      "cards": [
+        "290a1-e13-movement-a_force_moves_as_one",
+        "290a2-e13-movement-a_force_moves_as_one",
+        "291a1-e13-movement-four_commands",
+        "291a2-e13-movement-four_commands",
+        "292a1-e13-movement-around_not_through",
+        "292a2-e13-movement-around_not_through",
+        "292a3-e13-movement-around_not_through",
+        "292a4-e13-movement-around_not_through",
+        "293a-e13-movement-firing_through_friends",
+        "294a-e13-movement-speed_is_position",
+        "295a-e13-movement-facing",
+        "296a-e13-movement-movement_that_reads",
+        "297a-e13-movement-same_commands_same_battl"
+      ],
+      "symbol": "om_movement_step"
+    },
+    {
+      "kind": "double_owner",
+      "cards": [
+        "300a-e14-enemy-five_behaviors_three_moo",
+        "301a1-e14-enemy-timers_and_thresholds_wi",
+        "301a2-e14-enemy-timers_and_thresholds_wi",
+        "302a1-e14-enemy-forces_that_notice_each_",
+        "302a2-e14-enemy-forces_that_notice_each_",
+        "303a-e14-enemy-the_enemy_replays_like_i",
+        "304a-e14-enemy-rare_surprises",
+        "305a-e14-enemy-how_hard_the_enemy_tries"
+      ],
+      "symbol": "om_enemy_macro_step"
+    },
+    {
+      "kind": "double_owner",
+      "cards": [
+        "310a1-e15-support-most_of_my_force_is_out_",
+        "310a2-e15-support-most_of_my_force_is_out_",
+        "311a1-e15-support-taking_a_garrison",
+        "311a2-e15-support-taking_a_garrison",
+        "312a-e15-support-what_the_enemy_builds",
+        "313a-e15-support-units_that_cannot_fight",
+        "314a1-e15-support-the_battlefield_moves",
+        "314a2-e15-support-the_battlefield_moves",
+        "315a-e15-support-reading_hazards_and_stru"
+      ],
+      "symbol": "om_support_step"
+    },
+    {
+      "kind": "double_owner",
+      "cards": [
+        "320a1-e17-mapgen-bones_from_the_library",
+        "320a2-e17-mapgen-bones_from_the_library",
+        "321a1-e17-mapgen-nine_kinds_of_place",
+        "321a2-e17-mapgen-nine_kinds_of_place",
+        "322a1-e17-mapgen-texture_from_gradients",
+        "322a2-e17-mapgen-texture_from_gradients",
+        "323a-e17-mapgen-the_region_shapes_the_te",
+        "324a-e17-mapgen-canvas",
+        "325a-e17-mapgen-fair_enough",
+        "326a-e17-mapgen-the_battlefield_moves",
+        "327a-e17-mapgen-terrain_that_reads_like_"
+      ],
+      "symbol": "om_mapgen_step"
+    },
+    {
+      "kind": "cycle",
+      "cards": [
+        "208a1-e04-launch-templates",
+        "208a2-e04-library-loader",
+        "208a1-e04-launch-templates"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "107-probe-a-build"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "108-probe-b-build"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "109-probe-e-build"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "110-probe-f-build"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "111-probe-e-abort"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "112-probe-h-gd-build"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "211a1-e03-worldgen-a_fresh_galaxy_from_a_se"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "211a1-e03-worldgen-a_fresh_galaxy_from_a_se"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "211a2-e03-worldgen-a_fresh_galaxy_from_a_se"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "211a2-e03-worldgen-a_fresh_galaxy_from_a_se"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "211a3-e03-worldgen-a_fresh_galaxy_from_a_se"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "211a3-e03-worldgen-a_fresh_galaxy_from_a_se"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "211a4-e03-worldgen-a_fresh_galaxy_from_a_se"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "211a4-e03-worldgen-a_fresh_galaxy_from_a_se"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "212a1-e03-worldgen-homes_are_strong_frontie"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "212a1-e03-worldgen-homes_are_strong_frontie"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "212a2-e03-worldgen-homes_are_strong_frontie"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "212a2-e03-worldgen-homes_are_strong_frontie"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "213a-e03-worldgen-routes_carry_armies_trad"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "213a-e03-worldgen-routes_carry_armies_trad"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "214a1-e03-worldgen-politics_redraws_the_rou"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "214a2-e03-worldgen-politics_redraws_the_rou"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "214a2-e03-worldgen-politics_redraws_the_rou"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "215a-e03-worldgen-nobody_starts_on_your_do"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "215a-e03-worldgen-nobody_starts_on_your_do"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "220a1-e06-diplomacy-three_ways_to_feel_about"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "220a1-e06-diplomacy-three_ways_to_feel_about"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "220a2-e06-diplomacy-three_ways_to_feel_about"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "220a2-e06-diplomacy-three_ways_to_feel_about"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "221a1-e06-diplomacy-peace_grows_out_of_quiet"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "221a1-e06-diplomacy-peace_grows_out_of_quiet"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "221a2-e06-diplomacy-peace_grows_out_of_quiet"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "221a2-e06-diplomacy-peace_grows_out_of_quiet"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "222a1-e06-diplomacy-peace_is_never_safe"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "222a1-e06-diplomacy-peace_is_never_safe"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "222a2-e06-diplomacy-peace_is_never_safe"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "222a2-e06-diplomacy-peace_is_never_safe"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "223a1-e06-diplomacy-a_faction_s_technology_i"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "223a2-e06-diplomacy-a_faction_s_technology_i"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "223a2-e06-diplomacy-a_faction_s_technology_i"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "223a3-e06-diplomacy-a_faction_s_technology_i"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "223a3-e06-diplomacy-a_faction_s_technology_i"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "224a1-e06-diplomacy-archetypes_spend_tech_di"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "224a1-e06-diplomacy-archetypes_spend_tech_di"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "224a2-e06-diplomacy-archetypes_spend_tech_di"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "224a2-e06-diplomacy-archetypes_spend_tech_di"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "225a-e06-diplomacy-friends_share_knowledge"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "225a-e06-diplomacy-friends_share_knowledge"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "226a-e06-diplomacy-three_tiers_of_technolog"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "226a-e06-diplomacy-three_tiers_of_technolog"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "230a1-e07-lifecycle-a_revolt_can_birth_a_nat"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "230a1-e07-lifecycle-a_revolt_can_birth_a_nat"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "230a2-e07-lifecycle-a_revolt_can_birth_a_nat"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "231a1-e07-lifecycle-old_loyalties"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "231a1-e07-lifecycle-old_loyalties"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "231a2-e07-lifecycle-old_loyalties"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "231a2-e07-lifecycle-old_loyalties"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "232a1-e07-lifecycle-nations_that_never_were"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "232a1-e07-lifecycle-nations_that_never_were"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "232a2-e07-lifecycle-nations_that_never_were"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "232a2-e07-lifecycle-nations_that_never_were"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "233a-e07-lifecycle-no_plot_armor"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "233a-e07-lifecycle-no_plot_armor"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "234a1-e07-lifecycle-every_faction_has_an_age"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "234a1-e07-lifecycle-every_faction_has_an_age"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "234a2-e07-lifecycle-every_faction_has_an_age"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "234a2-e07-lifecycle-every_faction_has_an_age"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "235a-e07-lifecycle-where_a_civilization_end"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "235a-e07-lifecycle-where_a_civilization_end"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "240a1-e08-generational-one_commander_one_missio"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "240a1-e08-generational-one_commander_one_missio"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "240a2-e08-generational-one_commander_one_missio"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "240a2-e08-generational-one_commander_one_missio"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "241a1-e08-generational-decades_pass_while_i_am_"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "241a1-e08-generational-decades_pass_while_i_am_"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "241a2-e08-generational-decades_pass_while_i_am_"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "241a2-e08-generational-decades_pass_while_i_am_"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "242a1-e08-generational-stay_with_the_family_or_"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "242a1-e08-generational-stay_with_the_family_or_"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "242a2-e08-generational-stay_with_the_family_or_"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "242a2-e08-generational-stay_with_the_family_or_"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "243a1-e08-generational-who_i_come_back_as"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "243a1-e08-generational-who_i_come_back_as"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "243a2-e08-generational-who_i_come_back_as"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "243a2-e08-generational-who_i_come_back_as"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "244a-e08-generational-the_family_grows_while_i"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "244a-e08-generational-the_family_grows_while_i"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "245a1-e08-generational-named_leaders_live_and_d"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "245a1-e08-generational-named_leaders_live_and_d"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "245a2-e08-generational-named_leaders_live_and_d"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "245a2-e08-generational-named_leaders_live_and_d"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "246a-e08-generational-when_my_commander_dies"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "246a-e08-generational-when_my_commander_dies"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "247a-e08-generational-when_my_civilization_fal"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "247a-e08-generational-when_my_civilization_fal"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "248a-e08-generational-my_two_choices_at_the_st"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "248a-e08-generational-my_two_choices_at_the_st"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "249a-e08-generational-what_carries_over"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "249a-e08-generational-what_carries_over"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "250a1-e09-chronicle-five_to_ten_entries_in_t"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "250a1-e09-chronicle-five_to_ten_entries_in_t"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "250a2-e09-chronicle-five_to_ten_entries_in_t"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "250a2-e09-chronicle-five_to_ten_entries_in_t"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "251a1-e09-chronicle-what_counts_as_notable"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "251a1-e09-chronicle-what_counts_as_notable"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "251a2-e09-chronicle-what_counts_as_notable"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "251a2-e09-chronicle-what_counts_as_notable"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "252a1-e09-chronicle-stories_not_events"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "252a1-e09-chronicle-stories_not_events"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "252a2-e09-chronicle-stories_not_events"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "252a2-e09-chronicle-stories_not_events"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "253a1-e09-chronicle-written_from_fragments_n"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "253a1-e09-chronicle-written_from_fragments_n"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "253a2-e09-chronicle-written_from_fragments_n"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "253a2-e09-chronicle-written_from_fragments_n"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "254a1-e09-chronicle-watching_history_happen"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "254a1-e09-chronicle-watching_history_happen"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "254a2-e09-chronicle-watching_history_happen"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "254a2-e09-chronicle-watching_history_happen"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "255a-e09-chronicle-my_family_is_always_in_t"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "255a-e09-chronicle-my_family_is_always_in_t"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "256a-e09-chronicle-the_fragment_library_con"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "256a-e09-chronicle-the_fragment_library_con"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "260a1-e10-missions-orders_come_from_where_t"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "260a1-e10-missions-orders_come_from_where_t"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "260a2-e10-missions-orders_come_from_where_t"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "260a2-e10-missions-orders_come_from_where_t"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "261a-e10-missions-ten_kinds_of_trouble"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "261a-e10-missions-ten_kinds_of_trouble"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "262a1-e10-missions-you_get_what_the_civiliz"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "262a1-e10-missions-you_get_what_the_civiliz"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "262a2-e10-missions-you_get_what_the_civiliz"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "262a2-e10-missions-you_get_what_the_civiliz"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "263a1-e10-missions-hold_destroy_escort_surv"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "263a1-e10-missions-hold_destroy_escort_surv"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "263a2-e10-missions-hold_destroy_escort_surv"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "263a2-e10-missions-hold_destroy_escort_surv"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "264a-e10-missions-the_clock"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "264a-e10-missions-the_clock"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "265a-e10-missions-five_ways_it_can_go"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "265a-e10-missions-five_ways_it_can_go"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "266a1-e10-missions-a_battle_becomes_history"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "266a1-e10-missions-a_battle_becomes_history"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "266a2-e10-missions-a_battle_becomes_history"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "266a2-e10-missions-a_battle_becomes_history"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "267a-e10-missions-orders_not_menus"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "267a-e10-missions-orders_not_menus"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "268a-e10-missions-difficulty_is_scarcity_n"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "268a-e10-missions-difficulty_is_scarcity_n"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "270a-e11-combat-three_categories_a_soft_"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "270a-e11-combat-three_categories_a_soft_"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "271a1-e11-combat-the_six"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "271a1-e11-combat-the_six"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "271a2-e11-combat-the_six"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "271a2-e11-combat-the_six"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "272a-e11-combat-stats_traits_ability"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "272a-e11-combat-stats_traits_ability"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "273a1-e11-combat-flat_damage"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "273a1-e11-combat-flat_damage"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "273a2-e11-combat-flat_damage"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "273a2-e11-combat-flat_damage"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "274a1-e11-combat-long_enough_to_think"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "274a1-e11-combat-long_enough_to_think"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "274a2-e11-combat-long_enough_to_think"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "274a2-e11-combat-long_enough_to_think"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "275a1-e11-combat-one_ability_each"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "275a1-e11-combat-one_ability_each"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "275a2-e11-combat-one_ability_each"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "275a2-e11-combat-one_ability_each"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "275a3-e11-combat-one_ability_each"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "275a3-e11-combat-one_ability_each"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "276a1-e11-combat-every_unit_thinks_the_sa"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "276a1-e11-combat-every_unit_thinks_the_sa"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "276a2-e11-combat-every_unit_thinks_the_sa"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "276a2-e11-combat-every_unit_thinks_the_sa"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "277a-e11-combat-reading_units_on_screen"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "277a-e11-combat-reading_units_on_screen"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "280a1-e12-fog-i_see_what_my_units_see"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "280a1-e12-fog-i_see_what_my_units_see"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "280a2-e12-fog-i_see_what_my_units_see"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "280a2-e12-fog-i_see_what_my_units_see"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "281a1-e12-fog-hiding_in_the_storm"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "281a1-e12-fog-hiding_in_the_storm"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "281a2-e12-fog-hiding_in_the_storm"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "281a2-e12-fog-hiding_in_the_storm"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "282a-e12-fog-standing_high"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "282a-e12-fog-standing_high"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "283a-e12-fog-recon_then_fog"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "283a-e12-fog-recon_then_fog"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "284a-e12-fog-fog_is_for_the_player_no"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "284a-e12-fog-fog_is_for_the_player_no"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "285a-e12-fog-how_fog_looks"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "285a-e12-fog-how_fog_looks"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "290a1-e13-movement-a_force_moves_as_one"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "290a1-e13-movement-a_force_moves_as_one"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "290a2-e13-movement-a_force_moves_as_one"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "290a2-e13-movement-a_force_moves_as_one"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "291a1-e13-movement-four_commands"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "291a1-e13-movement-four_commands"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "291a2-e13-movement-four_commands"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "291a2-e13-movement-four_commands"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "292a1-e13-movement-around_not_through"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "292a1-e13-movement-around_not_through"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "292a2-e13-movement-around_not_through"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "292a2-e13-movement-around_not_through"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "292a3-e13-movement-around_not_through"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "292a3-e13-movement-around_not_through"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "292a4-e13-movement-around_not_through"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "292a4-e13-movement-around_not_through"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "293a-e13-movement-firing_through_friends"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "293a-e13-movement-firing_through_friends"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "294a-e13-movement-speed_is_position"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "294a-e13-movement-speed_is_position"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "295a-e13-movement-facing"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "295a-e13-movement-facing"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "296a-e13-movement-movement_that_reads"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "296a-e13-movement-movement_that_reads"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "297a-e13-movement-same_commands_same_battl"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "297a-e13-movement-same_commands_same_battl"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "300a-e14-enemy-five_behaviors_three_moo"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "300a-e14-enemy-five_behaviors_three_moo"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "301a1-e14-enemy-timers_and_thresholds_wi"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "301a1-e14-enemy-timers_and_thresholds_wi"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "301a2-e14-enemy-timers_and_thresholds_wi"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "301a2-e14-enemy-timers_and_thresholds_wi"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "302a1-e14-enemy-forces_that_notice_each_"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "302a1-e14-enemy-forces_that_notice_each_"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "302a2-e14-enemy-forces_that_notice_each_"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "302a2-e14-enemy-forces_that_notice_each_"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "303a-e14-enemy-the_enemy_replays_like_i"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "303a-e14-enemy-the_enemy_replays_like_i"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "304a-e14-enemy-rare_surprises"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "304a-e14-enemy-rare_surprises"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "305a-e14-enemy-how_hard_the_enemy_tries"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "305a-e14-enemy-how_hard_the_enemy_tries"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "310a1-e15-support-most_of_my_force_is_out_"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "310a1-e15-support-most_of_my_force_is_out_"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "310a2-e15-support-most_of_my_force_is_out_"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "310a2-e15-support-most_of_my_force_is_out_"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "311a1-e15-support-taking_a_garrison"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "311a1-e15-support-taking_a_garrison"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "311a2-e15-support-taking_a_garrison"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "311a2-e15-support-taking_a_garrison"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "312a-e15-support-what_the_enemy_builds"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "312a-e15-support-what_the_enemy_builds"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "313a-e15-support-units_that_cannot_fight"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "313a-e15-support-units_that_cannot_fight"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "314a1-e15-support-the_battlefield_moves"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "314a1-e15-support-the_battlefield_moves"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "314a2-e15-support-the_battlefield_moves"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "314a2-e15-support-the_battlefield_moves"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "315a-e15-support-reading_hazards_and_stru"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "315a-e15-support-reading_hazards_and_stru"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "320a1-e17-mapgen-bones_from_the_library"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "320a1-e17-mapgen-bones_from_the_library"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "320a2-e17-mapgen-bones_from_the_library"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "320a2-e17-mapgen-bones_from_the_library"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "321a1-e17-mapgen-nine_kinds_of_place"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "321a1-e17-mapgen-nine_kinds_of_place"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "321a2-e17-mapgen-nine_kinds_of_place"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "321a2-e17-mapgen-nine_kinds_of_place"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "322a1-e17-mapgen-texture_from_gradients"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "322a1-e17-mapgen-texture_from_gradients"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "322a2-e17-mapgen-texture_from_gradients"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "322a2-e17-mapgen-texture_from_gradients"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "323a-e17-mapgen-the_region_shapes_the_te"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "323a-e17-mapgen-the_region_shapes_the_te"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "324a-e17-mapgen-canvas"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "324a-e17-mapgen-canvas"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "325a-e17-mapgen-fair_enough"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "325a-e17-mapgen-fair_enough"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "326a-e17-mapgen-the_battlefield_moves"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "326a-e17-mapgen-the_battlefield_moves"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "missing_file",
+      "cards": [
+        "327a-e17-mapgen-terrain_that_reads_like_"
+      ],
+      "symbol": null
+    },
+    {
+      "kind": "abi_gap",
+      "cards": [
+        "327a-e17-mapgen-terrain_that_reads_like_"
+      ],
+      "symbol": null
+    }
+  ]
+}

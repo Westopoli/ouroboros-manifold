@@ -74,6 +74,7 @@ All under `scripts/specfactory/`, Python 3.14 stdlib only (no new dependencies),
 - `card_slice.py` — generates the `## Header slice` section from the symbols a card's tests, brief and target functions use.
 - `green_check.py` — proves a reference implementation, whose body lives at `tests/csim/references/<card-id>.c`, makes a card's acceptance commands pass in a scratch git worktree, after confirming they fail on the untouched project.
 - `gen_card.py` — emits an Agora card's YAML frontmatter in the existing `agora/queue/*.md` shape.
+- `chain_graph.py` — emits the JSON dependency DAG Agora's scheduler reads (nodes, edges, and cycle/double_owner/missing_file/abi_gap errors), derived from `chain_sim.build_dag`/`tick_closure` instead of a hand-listed release order. Exit 1 on any error; committed at `docs/northstar/proving_ground/evidence/chain_graph/graph.json` when the run is clean.
 
 Prompts and schemas for the `agy`-drafted steps (e2e draft, test-body fill, card brief, findings) are not yet written — none of E-03's blocked flags needed them this session (the fold's design gaps needed Claude's judgment, not `agy`'s drafting), and writing a prompt against a step that hasn't run for real yet risks specifying the wrong shape. Written when the next epic clears its register and reaches the draft-e2e step for real.
 
