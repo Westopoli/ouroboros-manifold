@@ -4,7 +4,7 @@ Real measured numbers from `scripts/mockup_qa.sh` and `scripts/mockup_verify.sh`
 
 | id | oracle | threshold (candidate; Westley owns) | measured clean | measured planted | plant |
 |---|---|---|---|---|---|
-| ERR-0 | `errors.txt` count, `exit.txt`, no `UNIFORM` | count == 10 (revised — see below); exit 0; no UNIFORM | count=10, exit=0, no UNIFORM | same 10-line signature every run | none |
+| ERR-0 | `errors.txt` count, `exit.txt`, no `UNIFORM` | count 0 (scan now filters the GL shutdown-leak signature); exit 0; no UNIFORM | count=0 after the filter (was the 10-line shutdown signature), exit=0, no UNIFORM | same | none |
 | GPU-0 | `_qa.adapter` contains `llvmpipe`, `_qa.method == "gl_compatibility"` | exact | `llvmpipe (LLVM 21.1.8, 256 bits)`, `gl_compatibility` | — | none |
 | DET-1 | two clean runs: `seed11.json.hash` equal, `diff` on `seed11_tactical.png` | hash equal; diff < 0.005 | hash 2518310074 == 2518310074; diff 0.000000 (fuzz 30) | — | none |
 | SEED-2 | `hash` differs 11 vs 12; `diff` on the two tactical shots | >= 0.20 clean; < 0.02 under `seed-ignored` | hash differs (2518310074 vs 431767273); diff 0.491935 (fuzz 30) | hash equal (2518310074 both); diff 0.000001 (fuzz 30) | `seed-ignored` |

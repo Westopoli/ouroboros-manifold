@@ -40,7 +40,7 @@ func _ready() -> void:
 		return
 	_script = parsed
 
-	_root = get_tree().current_scene
+	_root = get_tree().current_scene if get_tree().current_scene != null else get_parent()
 	if _root == null or not (_root.has_method("qa_state") and _root.has_method("qa_plant")):
 		print("QA_ERR scene root missing qa_state/qa_plant contract")
 		get_tree().quit(3)

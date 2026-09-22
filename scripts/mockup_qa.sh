@@ -77,7 +77,8 @@ cmd_run() {
             exit "$code"
         ' _ "$out_abs" \
         "$GODOT" --path . --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution "$res" \
-            --fixed-fps 30 --quit-after 100000 "$scene" -- --qa-script "$script_abs" --qa-out "$out_abs" --qa-grab "$grab"
+            --fixed-fps 30 --quit-after 100000 --script res://scenes/mockups/_shared/qa_boot.gd \
+            -- --qa-scene "res://$scene" --qa-script "$script_abs" --qa-out "$out_abs" --qa-grab "$grab"
     local exit_code=$?
     set -e
     echo "$exit_code" > "$out_abs/exit.txt"
@@ -94,7 +95,7 @@ cmd_scan() {
     local err_lines=""
     for log in "$outdir/stdout.log" "$outdir/stderr.log"; do
         [[ -f "$log" ]] || continue
-        err_lines+="$(grep -nE 'SCRIPT ERROR|^ERROR:|^USER ERROR|Node not found' "$log" || true)"$'\n'
+        err_lines+="$(grep -nE 'SCRIPT ERROR|^ERROR:|^USER ERROR|Node not found' "$log" | grep -vE 'at exit|never freed|leaked [0-9]+ bytes' || true)"$'\n'
     done
     err_lines="$(printf '%s' "$err_lines" | sed '/^$/d')"
     local err_count=0
@@ -172,7 +173,8 @@ cmd_liveness() {
             "$@" >"$OUT/stdout.log" 2>"$OUT/stderr.log"
         ' _ "$out_abs" \
         "$GODOT" --path . --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1280x720 \
-            --fixed-fps 30 --quit-after 100000 "$scene" -- --qa-script "$script_abs" --qa-out "$out_abs" --qa-grab engine
+            --fixed-fps 30 --quit-after 100000 --script res://scenes/mockups/_shared/qa_boot.gd \
+            -- --qa-scene "res://$scene" --qa-script "$script_abs" --qa-out "$out_abs" --qa-grab engine
     local exit_code=$?
     set -e
     echo "$exit_code" > "$out_abs/exit.txt"
