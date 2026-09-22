@@ -53,6 +53,10 @@ def test_R_064_02_they_come_only_from_mission(lib, world_factory):
     lib.om_force_allocator_run(w_clean, mission_id=2, budget=50.0)
     units_clean = lib.om_force_allocated_unit_count(w_clean, mission_id=2)
 
+    # A hard-stub allocator (always 0 units) satisfies the equality below by
+    # coincidence for any survivor count. Pin the allocation to a real,
+    # budget-derived nonzero count first.
+    assert units_m2 > 0
     assert units_m2 == units_clean  # Zero carryover from surviving units
 
 
@@ -84,8 +88,15 @@ def test_R_064_04_next_time_jump_produces_same(lib, world_factory):
 
     # Save w1 state to buffer
     save_size = lib.om_save_state_size(w1)
+    # A stub save size of 0 would make the buffer empty and the write/read
+    # below no-ops, so both worlds would stay blank and match by construction.
+    assert save_size > 0
     buf = (ctypes.c_uint8 * save_size)()
     lib.om_save_state_write(w1, buf, save_size)
+
+    # Populate w2 differently before load, so a real load must overwrite it
+    # for the post-load checksum comparison to mean anything.
+    set_region(lib, w2, 0, tier=OMTier.HOME, military=99.0, economy=99.0, tension=99.0, population=99.0, faction_id=0)
 
     # Load into w2
     lib.om_load_state_read(w2, buf, save_size)

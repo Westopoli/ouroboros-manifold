@@ -164,3 +164,10 @@ def test_R_060_06_it_holds_exactly_id_name(lib, world_factory):
     }
     actual_fields = {f[0] for f in OmCharacterRecord._fields_}
     assert expected_fields == actual_fields
+
+    # The check above compares the test's own ctypes mirror to itself and can
+    # never fail regardless of implementation. Also check real populated values.
+    assert rec.rank == OMRank.LINEAGE_MEMBER
+    assert rec.birth_tick == 10
+    assert rec.lifespan == 200
+    assert rec.faction == 0

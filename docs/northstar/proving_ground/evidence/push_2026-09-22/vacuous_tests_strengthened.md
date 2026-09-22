@@ -24,3 +24,16 @@ Per row: file, edit, assert-count before -> after, new failure line. Rows skippe
 
 Row skipped: `test_E07_S054_where_a_civilization_ends_up.py::test_R_054_01_deferred_with_feature_no_rule` -- see skip list at end.
 
+### E-08
+
+| Test | Edit | asserts before -> after | New failure |
+|---|---|---|---|
+| `test_E08_S055...::test_R_055_02_no_strategic_tick_runs_strategic` | added phase check + a second `om_world_step` call while still in MISSION, re-asserting the strategic tick didn't move | 19 -> 22 (shared with R_055_04 below) | `assert 0 == 2` (`om_chapter_current_phase` stub never reflects `om_chapter_set_phase(MISSION)`) |
+| `test_E08_S055...::test_R_055_04_character_selector_runs_after_it` | added `assert chosen_region != 0` before the read-back comparison | 19 -> 22 (shared) | `AssertionError: chosen region must be a real (nonzero) mission target` / `assert 0 != 0` |
+| `test_E08_S056_decades_pass_while_i_am_gone.py::test_R_056_05_lineage_members_generated_s_059` | captured `start_tick` and added `assert report.end_tick == start_tick+30` before trusting the report | 16 -> 17 | `assert 0 == (0 + 30)` |
+| `test_E08_S060_named_leaders_live_and_die.py::test_R_060_06_it_holds_exactly_id_name` | added real value checks (`rank`, `birth_tick`, `lifespan`, `faction`) alongside the existing tautological field-name check (kept, not removed) | 24 -> 28 | `assert 0 == 3` (rank never populated) |
+| `test_E08_S064_what_carries_over.py::test_R_064_02_they_come_only_from_mission` | added `assert units_m2 > 0` before the cross-world equality | 9 -> 11 (shared with R_064_04) | `assert 0 > 0` |
+| `test_E08_S064_what_carries_over.py::test_R_064_04_next_time_jump_produces_same` | added `assert save_size > 0`; populated w2's region 0 with different values before the (stub) load, so a real load would have to overwrite it | 9 -> 11 (shared) | `assert 0 > 0` |
+
+Row skipped: `test_E08_S064_what_carries_over.py::test_R_064_01_every_region_field_ownership_faction` -- see skip list at end.
+
