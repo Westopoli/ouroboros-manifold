@@ -1,7 +1,7 @@
 [
   ["state", "boot"],
   ["seed", 11],
-  ["call", "qa_camera", 4000, 3200, 3200],
+  ["call", "qa_camera", 5500, 3200, 3450],
   ["screenshot", "recon"],
   ["state", "recon"],
   ["call", "qa_set", "phase", "mission"],
