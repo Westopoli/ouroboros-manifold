@@ -88,6 +88,7 @@ func render(rows: Array, expanded_id: String) -> void:
 		_show_expansion(_last_rows[expanded_id])
 	else:
 		_expansion.visible = false
+		_expansion.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	if _rows.has(expanded_id):
 		_scroll_container.ensure_control_visible(_rows[expanded_id])
@@ -102,6 +103,7 @@ func _show_expansion(row: Dictionary) -> void:
 	var mentions: Array = row.expanded_mentions
 	_expansion_label.text = EntryView.build_bbcode(text, mentions) + "\n\n[color=#8f8c86]click or press Escape to close[/color]"
 	_expansion.visible = true
+	_expansion.mouse_filter = Control.MOUSE_FILTER_STOP
 
 
 func _on_expansion_input(event: InputEvent) -> void:
