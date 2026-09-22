@@ -190,8 +190,17 @@ func _assign_factions(galaxy: Galaxy, rng: RandomNumberGenerator) -> void:
 			break
 
 
+const GOLDEN_ANGLE := 0.6180339887498949
+
+# faction_palette.gd:38 hashes a string faction id ("f_dominion", ...), whose
+# hash output spreads well across hue space. Ids here are small sequential
+# ints (0..7); str(id).hash() % 360 puts them all within a few degrees of
+# each other (measured: ids 0-7 all landed in hue 0.39-0.41, all the same
+# green) since a 1-character string differing by one byte barely moves the
+# hash. Golden-angle stepping is the standard fix for maximally distinct
+# hues over a small sequential id space.
 func _hue_for(id: int) -> float:
-	return float(posmod(str(id).hash(), 360)) / 360.0
+	return fmod(float(id) * GOLDEN_ANGLE, 1.0)
 
 
 func _assign_significance(galaxy: Galaxy, rng: RandomNumberGenerator) -> void:

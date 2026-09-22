@@ -223,6 +223,9 @@ func _build_names() -> void:
 		label.position = sum / float(n) + Vector3(0, 6, 0)
 		label.modulate = owner_color(f.id, _galaxy)
 		label.font_size = 40
+		# default pixel_size (0.01) renders 40px text ~0.4wu tall, invisible
+		# against a ~100wu-radius galaxy; scale it up to read at Overview range.
+		label.pixel_size = 0.05
 		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 		label.no_depth_test = true
 		label.modulate.a = 0.0
