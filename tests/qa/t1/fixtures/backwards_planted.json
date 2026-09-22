@@ -1,0 +1,87 @@
+[
+  {
+    "tick": 1,
+    "dt": 0.05,
+    "commands": [],
+    "units": {
+      "3": {
+        "x": 100.0,
+        "y": 0.0,
+        "vx": -150.0,
+        "vy": 0.0,
+        "facing": 0.0,
+        "target_active": true,
+        "tx": 0.0,
+        "ty": 0.0
+      }
+    }
+  },
+  {
+    "tick": 2,
+    "dt": 0.05,
+    "commands": [],
+    "units": {
+      "3": {
+        "x": 92.5,
+        "y": 0.0,
+        "vx": -150.0,
+        "vy": 0.0,
+        "facing": 0.0,
+        "target_active": true,
+        "tx": 0.0,
+        "ty": 0.0
+      }
+    }
+  },
+  {
+    "tick": 3,
+    "dt": 0.05,
+    "commands": [],
+    "units": {
+      "3": {
+        "x": 85.0,
+        "y": 0.0,
+        "vx": -150.0,
+        "vy": 0.0,
+        "facing": 0.0,
+        "target_active": true,
+        "tx": 0.0,
+        "ty": 0.0
+      }
+    }
+  },
+  {
+    "tick": 4,
+    "dt": 0.05,
+    "commands": [],
+    "units": {
+      "3": {
+        "x": 77.5,
+        "y": 0.0,
+        "vx": -150.0,
+        "vy": 0.0,
+        "facing": 0.0,
+        "target_active": true,
+        "tx": 0.0,
+        "ty": 0.0
+      }
+    }
+  },
+  {
+    "tick": 5,
+    "dt": 0.05,
+    "commands": [],
+    "units": {
+      "3": {
+        "x": 70.0,
+        "y": 0.0,
+        "vx": -150.0,
+        "vy": 0.0,
+        "facing": 0.0,
+        "target_active": true,
+        "tx": 0.0,
+        "ty": 0.0
+      }
+    }
+  }
+]
