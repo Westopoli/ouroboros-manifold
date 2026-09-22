@@ -189,3 +189,7 @@ All 8 pass-1 screenshots (1920x1080, the full review batch: before, mid, after, 
 focus 1, focus 2, blocked attempt, blocked cleared) are committed under `pass1/`. The
 mockup is done and green (`VERIFY OK`, all 6 plants `LIVE`, both clean Xvfb runs and all
 plant runs `exit 0` with zero errors) — it awaits Westley's look.
+
+## Fresh-eyes review (2026-09-22, Sonnet reviewer, screenshots only)
+
+Verdict: quick fix and rerun before Westley's look. Two required proofs are broken by known one-line causes: `transfer_before.png` shows only the selected unit's ring because every unit body is given alpha transparency at spawn and sorts behind the translucent blocked patch from that camera ray; `blocked_attempt.png` parks the waiting unit dead centre under the obstacle, so nothing but the HUD proves it is waiting. Nits: `focus1.png` is byte-identical to `slow_mid.png` because focus already defaulted to 1; the obstacle prism reads as three colour bands under the dimming and could pass for a third layer; the other-layer sensor ring looks nearer 35 percent of the own-layer ring than the rule's 50 percent, to be measured at a fixed camera before calling it wrong. Height, dimming, rings and the blocked mechanic are proven in the numbers.
