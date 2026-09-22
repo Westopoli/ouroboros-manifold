@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 960 600" width="960" height="600">
+  <rect x="0" y="0" width="960" height="600" fill="#f4f1e8"/>
+  <text x="480" y="30" font-family="Georgia, serif" font-size="20" fill="#1a1a1a" text-anchor="middle">The Tideline — the city's edge migrating along the valley, mid-mission</text>
+
+  <!-- contour / valley shading -->
+  <path d="M 0 420 C 200 380 350 440 500 400 C 650 360 800 420 960 380 L 960 600 L 0 600 Z" fill="#e2dcc4"/>
+  <text x="60" y="510" font-family="Georgia, serif" font-size="11" fill="#5a5030">valley floor</text>
+
+  <!-- river -->
+  <path d="M 40 300 C 220 320 300 250 420 270 C 560 290 640 230 760 260 C 850 280 900 250 950 260" fill="none" stroke="#7fb3c9" stroke-width="22"/>
+  <text x="480" y="240" font-family="Georgia, serif" font-size="13" fill="#2b5b6e" text-anchor="middle">river</text>
+
+  <!-- contested riverside -->
+  <rect x="180" y="280" width="120" height="60" fill="none" stroke="#7a3a3a" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="240" y="360" font-family="Georgia, serif" font-size="11" fill="#7a3a3a" text-anchor="middle">Contested riverside</text>
+  <text x="240" y="374" font-family="Georgia, serif" font-size="11" fill="#7a3a3a" text-anchor="middle">(unsafe — no growth)</text>
+
+  <!-- bluff held by player -->
+  <ellipse cx="420" cy="420" rx="90" ry="45" fill="#c9dcc0" stroke="#4a7a45" stroke-width="2"/>
+  <text x="420" y="415" font-family="Georgia, serif" font-size="11" fill="#1a1a1a" text-anchor="middle">Held bluff</text>
+  <text x="420" y="430" font-family="Georgia, serif" font-size="11" fill="#1a1a1a" text-anchor="middle">(your force, 3+ min)</text>
+
+  <!-- resettled cluster, new -->
+  <g>
+    <rect x="390" y="460" width="26" height="20" fill="#a08050" stroke="#5a3a1e"/>
+    <rect x="425" y="465" width="22" height="18" fill="#a08050" stroke="#5a3a1e"/>
+    <rect x="455" y="458" width="24" height="20" fill="#a08050" stroke="#5a3a1e"/>
+    <text x="435" y="500" font-family="Georgia, serif" font-size="11" fill="#2f5a2a" text-anchor="middle">Resettled cluster (new — follows bluff's curve)</text>
+  </g>
+
+  <!-- migration arrows following terrain, not straight to a point -->
+  <path d="M 250 320 C 300 360 340 400 385 430" fill="none" stroke="#2f5a2a" stroke-width="2" marker-end="url(#arrowc)"/>
+  <text x="300" y="380" font-family="Georgia, serif" font-size="10" fill="#2f5a2a">settlers move along the slope, not in a straight line to one unit</text>
+
+  <!-- city core, left, older, established -->
+  <g>
+    <rect x="60" y="150" width="150" height="110" rx="6" fill="#e8dcc0" stroke="#8a7245" stroke-width="2"/>
+    <text x="135" y="140" font-family="Georgia, serif" font-size="14" fill="#1a1a1a" text-anchor="middle">City core</text>
+    <text x="135" y="200" font-family="Georgia, serif" font-size="10" fill="#1a1a1a" text-anchor="middle">(older district, grown</text>
+    <text x="135" y="214" font-family="Georgia, serif" font-size="10" fill="#1a1a1a" text-anchor="middle">from past defenses)</text>
+  </g>
+
+  <!-- attacker forward base, thin, right -->
+  <g>
+    <rect x="760" y="120" width="150" height="80" rx="6" fill="#e6d3c8" stroke="#8a5245" stroke-width="2"/>
+    <text x="835" y="112" font-family="Georgia, serif" font-size="13" fill="#1a1a1a" text-anchor="middle">Attacker forward base</text>
+    <text x="835" y="160" font-family="Georgia, serif" font-size="10" fill="#1a1a1a" text-anchor="middle">thin, unresettled —</text>
+    <text x="835" y="174" font-family="Georgia, serif" font-size="10" fill="#1a1a1a" text-anchor="middle">no time to draw people</text>
+  </g>
+
+  <!-- caption -->
+  <rect x="80" y="530" width="800" height="50" rx="4" fill="#1a1a1a"/>
+  <text x="480" y="550" font-family="Georgia, serif" font-size="12" fill="#f4f1e8" text-anchor="middle">The city's edge creeps along the river and contour toward whichever ground stays safest — never a ring around one unit,</text>
+  <text x="480" y="568" font-family="Georgia, serif" font-size="12" fill="#f4f1e8" text-anchor="middle">never a leap across the map.</text>
+
+  <defs>
+    <marker id="arrowc" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#2f5a2a"/>
+    </marker>
+  </defs>
+</svg>

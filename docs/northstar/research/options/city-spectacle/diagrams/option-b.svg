@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 960 600" width="960" height="600">
+  <rect x="0" y="0" width="960" height="600" fill="#f4f1e8"/>
+  <text x="480" y="30" font-family="Georgia, serif" font-size="20" fill="#1a1a1a" text-anchor="middle">The Long Bloom — one mission's growth curve, then the campaign</text>
+
+  <!-- flow boxes -->
+  <g font-family="Georgia, serif" font-size="12" fill="#1a1a1a">
+    <rect x="30" y="90" width="150" height="60" rx="6" fill="#dccfa8" stroke="#8a7245" stroke-width="2"/>
+    <text x="105" y="115" text-anchor="middle">Mission start</text>
+    <text x="105" y="132" text-anchor="middle">city at last</text>
+    <text x="105" y="147" text-anchor="middle">saved stage</text>
+
+    <rect x="230" y="90" width="170" height="60" rx="6" fill="#c9dcc0" stroke="#4a7a45" stroke-width="2"/>
+    <text x="315" y="115" text-anchor="middle">Ambient growth tick</text>
+    <text x="315" y="132" text-anchor="middle">(scripted, from region</text>
+    <text x="315" y="147" text-anchor="middle">economic field, no agent)</text>
+
+    <rect x="450" y="90" width="180" height="60" rx="6" fill="#dccfa8" stroke="#8a7245" stroke-width="2"/>
+    <text x="540" y="112" text-anchor="middle">Reward earned mid-mission?</text>
+    <text x="540" y="129" text-anchor="middle">Player picks ONE:</text>
+    <text x="540" y="146" text-anchor="middle">Harbor Quarter / Hill Terraces</text>
+
+    <rect x="680" y="90" width="230" height="60" rx="6" fill="#c9dcc0" stroke="#4a7a45" stroke-width="2"/>
+    <text x="795" y="115" text-anchor="middle">Chosen district's next</text>
+    <text x="795" y="132" text-anchor="middle">growth stage lands early</text>
+    <text x="795" y="147" text-anchor="middle">(wood wall to stone, etc.)</text>
+
+    <rect x="230" y="220" width="170" height="55" rx="6" fill="#e8dcc0" stroke="#8a7245" stroke-width="2"/>
+    <text x="315" y="245" text-anchor="middle">Mission end</text>
+    <text x="315" y="260" text-anchor="middle">(or: city core dies —</text>
+    <text x="315" y="274" text-anchor="middle" font-size="10">reinforcement and replenishment stop)</text>
+
+    <rect x="450" y="220" width="180" height="55" rx="6" fill="#c0d0e0" stroke="#3a5a7a" stroke-width="2"/>
+    <text x="540" y="245" text-anchor="middle">Time jump</text>
+    <text x="540" y="260" text-anchor="middle">(short: damage persists)</text>
+
+    <rect x="680" y="220" width="230" height="70" rx="6" fill="#e0c0c0" stroke="#7a3a3a" stroke-width="2"/>
+    <text x="795" y="242" text-anchor="middle">Rebuild pace set by the</text>
+    <text x="795" y="257" text-anchor="middle">civilization's economic state:</text>
+    <text x="795" y="272" text-anchor="middle">rich = fast, weak = slow / stalled</text>
+
+    <rect x="450" y="330" width="230" height="55" rx="6" fill="#dccfa8" stroke="#8a7245" stroke-width="2"/>
+    <text x="565" y="355" text-anchor="middle">Next mission at this city</text>
+    <text x="565" y="370" text-anchor="middle">opens at whatever stage rebuild reached</text>
+  </g>
+
+  <!-- arrows: reading order is the full top row left to right, then down into the bottom row, then left to right again, then down to the last box -->
+  <g stroke="#5a4a2a" stroke-width="2" fill="none" marker-end="url(#arrowb)">
+    <line x1="180" y1="120" x2="228" y2="120"/>
+    <line x1="400" y1="120" x2="448" y2="120"/>
+    <line x1="630" y1="120" x2="678" y2="120"/>
+    <path d="M 795 150 L 795 195 L 330 195 L 315 218"/>
+    <line x1="400" y1="247" x2="448" y2="247"/>
+    <line x1="630" y1="247" x2="678" y2="247"/>
+    <line x1="795" y1="290" x2="640" y2="330"/>
+  </g>
+
+  <defs>
+    <marker id="arrowb" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#5a4a2a"/>
+    </marker>
+  </defs>
+
+  <text x="480" y="440" font-family="Georgia, serif" font-size="13" fill="#1a1a1a" text-anchor="middle">Over a campaign: a long-prosperous civilization's city arrives at each mission further along this curve;</text>
+  <text x="480" y="460" font-family="Georgia, serif" font-size="13" fill="#1a1a1a" text-anchor="middle">a civilization recovering from collapse arrives with wards still at early, damaged stages.</text>
+
+  <rect x="80" y="500" width="800" height="70" rx="6" fill="#ffffff" stroke="#8a7245"/>
+  <text x="480" y="525" font-family="Georgia, serif" font-size="12" fill="#1a1a1a" text-anchor="middle">Player's only levers: the single reward-spend nudge above, and one civic-identity pick</text>
+  <text x="480" y="543" font-family="Georgia, serif" font-size="12" fill="#1a1a1a" text-anchor="middle">(garrison town or trade town) made once, at mission start.</text>
+  <text x="480" y="561" font-family="Georgia, serif" font-size="12" fill="#7a3a3a" text-anchor="middle">A running build queue or a resource counter would cross into managing an economy — neither exists here.</text>
+</svg>

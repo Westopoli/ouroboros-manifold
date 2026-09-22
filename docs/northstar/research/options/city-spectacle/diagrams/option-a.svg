@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 960 600" width="960" height="600">
+  <rect x="0" y="0" width="960" height="600" fill="#f4f1e8"/>
+  <text x="480" y="30" font-family="Georgia, serif" font-size="20" fill="#1a1a1a" text-anchor="middle">Ward and Wall — one moment on the battlefield</text>
+
+  <!-- river: visible band running top to bottom between the two cities -->
+  <path d="M 470 50 C 460 150 480 250 465 350 C 455 430 475 500 470 590" fill="none" stroke="#9fbfd0" stroke-width="13"/>
+  <text x="480" y="300" font-family="Georgia, serif" font-size="13" fill="#2b5b6e">river</text>
+
+  <!-- defender city: home, left -->
+  <g>
+    <rect x="90" y="150" width="220" height="180" rx="6" fill="#e8dcc0" stroke="#8a7245" stroke-width="2"/>
+    <text x="200" y="140" font-family="Georgia, serif" font-size="15" fill="#1a1a1a" text-anchor="middle">Defender City — Home</text>
+
+    <rect x="100" y="165" width="200" height="45" fill="#c9b98a" stroke="#8a7245"/>
+    <text x="200" y="192" font-family="Georgia, serif" font-size="11" fill="#1a1a1a" text-anchor="middle">Garrison Ward</text>
+
+    <rect x="100" y="222" width="200" height="45" fill="#d7c9a0" stroke="#8a7245" stroke-dasharray="4 3"/>
+    <text x="200" y="238" font-family="Georgia, serif" font-size="11" fill="#1a1a1a" text-anchor="middle">Dockside Ward</text>
+    <text x="200" y="252" font-family="Georgia, serif" font-size="9" fill="#4a7a2a" text-anchor="middle">(scaffolding up)</text>
+
+    <rect x="100" y="279" width="200" height="45" fill="#dccfa8" stroke="#8a7245"/>
+    <text x="200" y="306" font-family="Georgia, serif" font-size="11" fill="#1a1a1a" text-anchor="middle">Market Row</text>
+  </g>
+
+  <!-- captured structure feeding dockside, aligned with the ward's new position -->
+  <circle cx="345" cy="244" r="16" fill="#5b8a3a" stroke="#2f4d1e" stroke-width="2"/>
+  <text x="345" y="271" font-family="Georgia, serif" font-size="10" fill="#1a1a1a" text-anchor="middle">Captured</text>
+  <text x="345" y="283" font-family="Georgia, serif" font-size="10" fill="#1a1a1a" text-anchor="middle">Garrison</text>
+  <line x1="329" y1="244" x2="303" y2="244" stroke="#2f4d1e" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="345" y="308" font-family="Georgia, serif" font-size="10" fill="#4a7a2a" text-anchor="middle">feeds ward growth</text>
+
+  <!-- neutral structure -->
+  <circle cx="560" cy="330" r="14" fill="#b8b8b8" stroke="#5a5a5a" stroke-width="2"/>
+  <text x="560" y="355" font-family="Georgia, serif" font-size="10" fill="#1a1a1a" text-anchor="middle">Neutral Structure</text>
+
+  <!-- attacker forward base, right -->
+  <g>
+    <rect x="650" y="380" width="220" height="150" rx="6" fill="#e6d3c8" stroke="#8a5245" stroke-width="2"/>
+    <text x="760" y="370" font-family="Georgia, serif" font-size="15" fill="#1a1a1a" text-anchor="middle">Attacker Forward Base</text>
+
+    <rect x="670" y="400" width="70" height="55" fill="#3a2a24" stroke="#5a3a2a"/>
+    <text x="705" y="470" font-family="Georgia, serif" font-size="10" fill="#1a1a1a" text-anchor="middle">Dockside Ward (burnt,</text>
+    <text x="705" y="483" font-family="Georgia, serif" font-size="10" fill="#1a1a1a" text-anchor="middle">not rebuilt — lost garrison)</text>
+
+    <rect x="760" y="400" width="90" height="60" fill="#d8b8a8" stroke="#8a5245"/>
+    <text x="805" y="475" font-family="Georgia, serif" font-size="10" fill="#1a1a1a" text-anchor="middle">Staging Ward</text>
+  </g>
+
+  <!-- ticker -->
+  <rect x="260" y="540" width="440" height="34" rx="4" fill="#1a1a1a"/>
+  <text x="480" y="562" font-family="Georgia, serif" font-size="12" fill="#f4f1e8" text-anchor="middle">Ticker: "Structure captured — Dockside Ward begins construction"</text>
+
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#2f4d1e"/>
+    </marker>
+  </defs>
+</svg>
