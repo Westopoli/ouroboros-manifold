@@ -57,14 +57,15 @@ func _process(_delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
+		var pos := _to_real_px(mb.position)
 		if mb.button_index == MOUSE_BUTTON_LEFT:
 			if mb.pressed:
 				_dragging_pan = true
-				_press_pos = mb.position
+				_press_pos = pos
 			else:
 				_dragging_pan = false
-				if _press_pos.distance_to(mb.position) < 4.0:
-					_try_click(mb.position)
+				if _press_pos.distance_to(pos) < 4.0:
+					_try_click(pos)
 		elif mb.button_index == MOUSE_BUTTON_RIGHT:
 			_dragging_orbit = mb.pressed
 		elif mb.button_index == MOUSE_BUTTON_WHEEL_UP and mb.pressed:
@@ -77,7 +78,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_pan_by(mm.relative)
 		elif _dragging_orbit:
 			_orbit_by(mm.relative)
-		_hovered_id = pick_at(mm.position)
+		_hovered_id = pick_at(_to_real_px(mm.position))
 
 
 func _zoom(factor: float) -> void:
@@ -182,10 +183,25 @@ func _effective_pick_radius() -> float:
 	return -1.0 if QaPlants.is_active("pick-radius-zero") else PICK_RADIUS_PX
 
 
-# get_viewport().get_visible_rect().size read from this Node3D is inflated vs the
-# real window pixel size under canvas_items/expand stretch (see _shared/README.md);
-# unproject_position() reports in that same inflated space, so rescale to
-# DisplayServer's real pixel size to match what qa_driver's click/move use.
+# get_viewport().get_visible_rect().size read from this Node3D is the project's
+# configured base resolution (1920x1080), not the real window pixel size, under
+# canvas_items/expand stretch (see _shared/README.md); unproject_position() and
+# every InputEvent position _unhandled_input receives are in that same base-
+# resolution space, so rescale to DisplayServer's real pixel size to match what
+# qa_driver's click/move verbs send and what qa_state() reports.
+func _canvas_to_real_scale() -> Vector2:
+	var inflated: Vector2 = get_viewport().get_visible_rect().size
+	var real: Vector2 = DisplayServer.window_get_size()
+	if inflated.x <= 0.0 or inflated.y <= 0.0:
+		return Vector2.ONE
+	return Vector2(real.x / inflated.x, real.y / inflated.y)
+
+
+func _to_real_px(canvas_pos: Vector2) -> Vector2:
+	var scale := _canvas_to_real_scale()
+	return Vector2(canvas_pos.x * scale.x, canvas_pos.y * scale.y)
+
+
 func project(system_id: int) -> Vector2:
 	if _galaxy_view == null or _galaxy_view.get_galaxy() == null:
 		return Vector2(-1, -1)
@@ -193,11 +209,7 @@ func project(system_id: int) -> Vector2:
 	if system_id < 0 or system_id >= g.systems.size():
 		return Vector2(-1, -1)
 	var raw: Vector2 = _camera.unproject_position(g.systems[system_id].pos)
-	var inflated: Vector2 = get_viewport().get_visible_rect().size
-	var real: Vector2 = DisplayServer.window_get_size()
-	if inflated.x <= 0.0 or inflated.y <= 0.0:
-		return raw
-	return Vector2(raw.x * real.x / inflated.x, raw.y * real.y / inflated.y)
+	return _to_real_px(raw)
 
 
 func pick_at(px: Vector2) -> int:
