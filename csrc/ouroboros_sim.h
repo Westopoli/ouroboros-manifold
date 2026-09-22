@@ -178,8 +178,10 @@ typedef enum {
     OM_BUG_GE_NOT_GT         = 4,  /* threshold uses >= where the source uses > */
     OM_BUG_SLOW              = 5,  /* deliberate slowdown, to prove the speed leg can fail */
     OM_BUG_DRIFT_GATE_IGNORED = 6, /* drift runs even with OM_FEAT_DRIFT off (S-160) */
-    OM_BUG_LIBM_POW          = 7  /* om_pow's deterministic polynomial swapped for libm pow(),
+    OM_BUG_LIBM_POW          = 7, /* om_pow's deterministic polynomial swapped for libm pow(),
                                     * breaking the cross-platform determinism contract */
+    OM_BUG_RNG_UNSEEDED      = 8  /* the world RNG stream is never derived from the seed: every
+                                    * seed draws the same values (the push-day M1 finding) */
 } om_bug;
 void om_debug_inject(om_world *w, om_bug bug);
 #endif

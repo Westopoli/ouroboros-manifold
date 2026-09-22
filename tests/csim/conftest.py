@@ -95,6 +95,7 @@ class OMBug:
     SLOW = 5
     DRIFT_GATE_IGNORED = 6
     LIBM_POW = 7
+    RNG_UNSEEDED = 8
 
 
 # ---- struct mirrors (field order/types must match the header exactly) ----
