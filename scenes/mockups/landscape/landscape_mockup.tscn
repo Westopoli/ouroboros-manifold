@@ -74,8 +74,12 @@ text = "Kit: —"
 [node name="PieceCountLabel" type="Label" parent="HUD/VBoxContainer"]
 text = "Pieces: —"
 
-[node name="SkeletonLabel" type="Label" parent="HUD/VBoxContainer"]
-text = "Skeleton: —"
+[node name="CanvasLabel" type="Label" parent="HUD/VBoxContainer"]
+text = "Canvas: —"
+
+[node name="CanvasToggleButton" type="Button" parent="HUD/VBoxContainer"]
+focus_mode = 0
+text = "Canvas: —"
 
 [node name="TimingLabel" type="Label" parent="HUD/VBoxContainer"]
 text = "Gen: — Ground: — Placer: —"

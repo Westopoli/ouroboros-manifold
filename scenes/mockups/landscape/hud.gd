@@ -1,9 +1,10 @@
 extends CanvasLayer
 
 const KITS_DIR := "res://scenes/mockups/landscape/kits/"
-const DEFAULT_CANVAS := 16000.0
+const DEFAULT_CANVAS := 24000.0
+const CANVAS_OPTIONS := [16000.0, 24000.0, 32000.0]
 const DEFAULT_KIT := "greek"
-const SCREENSHOT_DIR := "res://docs/northstar/research/landscape_design/mockup/"
+const SCREENSHOT_DIR := "res://docs/northstar/research/landscape_design/mockup/pass3/"
 const BAND_HEIGHTS := {"micro": 1000.0, "tactical": 3000.0, "map": 20000.0}
 
 var _world: Node3D
@@ -23,7 +24,8 @@ var _stability: float = 60.0
 @onready var _regenerate_button: Button = $VBoxContainer/RegenerateButton
 @onready var _kit_toggle_button: Button = $VBoxContainer/KitToggleButton
 @onready var _piece_count_label: Label = $VBoxContainer/PieceCountLabel
-@onready var _skeleton_label: Label = $VBoxContainer/SkeletonLabel
+@onready var _canvas_label: Label = $VBoxContainer/CanvasLabel
+@onready var _canvas_toggle_button: Button = $VBoxContainer/CanvasToggleButton
 @onready var _timing_label: Label = $VBoxContainer/TimingLabel
 @onready var _stability_slider: HSlider = $VBoxContainer/StabilitySlider
 @onready var _map_view: Control = $MapView
@@ -47,11 +49,13 @@ func _ready() -> void:
 	_seed = int(_seed_spinbox.value)
 	_stability = _stability_slider.value
 	_kit_toggle_button.text = "Kit: %s" % _kit_name
+	_canvas_toggle_button.text = "Canvas: %d" % int(_canvas)
 	_band_label.text = "Band: %s" % _camera_rig.get_current_band()
 
 	_camera_rig.band_changed.connect(_on_band_changed)
 	_regenerate_button.pressed.connect(_on_regenerate_pressed)
 	_kit_toggle_button.pressed.connect(_on_kit_toggle_pressed)
+	_canvas_toggle_button.pressed.connect(_on_canvas_toggle_pressed)
 	# Regenerate on release, not on every drag tick (Westley: dragging "slows everything down
 	# for a few seconds" because value_changed fired a full regenerate per pixel of drag).
 	_stability_slider.drag_ended.connect(_on_stability_drag_ended)
@@ -111,9 +115,10 @@ func _regenerate() -> void:
 	var t3 := Time.get_ticks_usec()
 
 	_field_map = field_map
+	_camera_rig.field_map = field_map
 	_seed_label.text = "Seed: %d" % _seed
 	_piece_count_label.text = "Pieces: %d" % result.total
-	_skeleton_label.text = "Skeleton: %s" % field_map.skeleton_name
+	_canvas_label.text = "Canvas: %d" % int(field_map.canvas)
 	var gen_ms := (t1 - t0) / 1000.0
 	var ground_ms := (t2 - t1) / 1000.0
 	var placer_ms := (t3 - t2) / 1000.0
@@ -132,6 +137,14 @@ func _on_kit_toggle_pressed() -> void:
 	var idx: int = kit_names.find(_kit_name)
 	_kit_name = kit_names[(idx + 1) % kit_names.size()]
 	_kit_toggle_button.text = "Kit: %s" % _kit_name
+	_regenerate()
+
+
+func _on_canvas_toggle_pressed() -> void:
+	var idx: int = CANVAS_OPTIONS.find(_canvas)
+	_canvas = CANVAS_OPTIONS[(idx + 1) % CANVAS_OPTIONS.size()] if idx != -1 else CANVAS_OPTIONS[0]
+	_canvas_toggle_button.text = "Canvas: %d" % int(_canvas)
+	_camera_rig.canvas_size = _canvas
 	_regenerate()
 
 
@@ -184,14 +197,40 @@ func _find_gate_pos() -> Vector3:
 
 func _take_screenshot(file_name: String) -> void:
 	var dir := DirAccess.open("res://")
-	dir.make_dir_recursive("docs/northstar/research/landscape_design/mockup")
+	dir.make_dir_recursive("docs/northstar/research/landscape_design/mockup/pass3")
 	var img := get_viewport().get_texture().get_image()
 	img.save_png(SCREENSHOT_DIR + file_name + ".png")
 
 
+# A valley point close to the vantage's base: the vantage is a real local peak now (pass 3),
+# so standing near its foot at micro band should put the mountain filling the frame without
+# any special look-at-target logic -- camera_rig always looks back at its own origin, so
+# placing that origin at the mountain's foot is enough.
+func _find_valley_near_vantage_pos() -> Vector3:
+	var vantage_pos := Vector2.ZERO
+	for n in _field_map.nodes:
+		if n.type == "vantage":
+			vantage_pos = n.pos
+			break
+	var dim: int = _field_map.dim
+	var best_e := INF
+	var best := vantage_pos + Vector2(1200, 0)
+	for gy in range(dim):
+		for gx in range(dim):
+			var wpos := Vector2(gx, gy) * FieldMap.SPACING
+			var d := wpos.distance_to(vantage_pos)
+			if d < 600.0 or d > 2000.0:
+				continue
+			var e: float = _field_map.grid[gy * dim + gx].elevation
+			if e < best_e:
+				best_e = e
+				best = wpos
+	return Vector3(best.x, 0.0, best.y)
+
+
 func _run_screenshot_batch() -> void:
 	for kit_name in _kits.keys():
-		for shot_seed in [11, 12]:
+		for shot_seed in [11, 12, 13]:
 			_kit_name = kit_name
 			_seed = shot_seed
 			_seed_spinbox.value = shot_seed
@@ -207,18 +246,17 @@ func _run_screenshot_batch() -> void:
 				await RenderingServer.frame_post_draw
 				_take_screenshot("%s_%s_seed%d" % [kit_name, band, shot_seed])
 
-	_kit_name = "greek"
-	_seed = 11
-	_seed_spinbox.value = 11
-	_kit_toggle_button.text = "Kit: %s" % _kit_name
-	for shot_stability in [20.0, 90.0]:
-		_stability = shot_stability
+	for kit_name in _kits.keys():
+		_kit_name = kit_name
+		_seed = 11
+		_seed_spinbox.value = 11
+		_kit_toggle_button.text = "Kit: %s" % _kit_name
 		_regenerate()
-		_camera_rig.pan_to(_find_objective_pos())
-		_camera_rig.set_height(BAND_HEIGHTS["tactical"])
+		_camera_rig.pan_to(_find_valley_near_vantage_pos())
+		_camera_rig.set_height(BAND_HEIGHTS["micro"])
 		await get_tree().process_frame
 		await get_tree().process_frame
 		await RenderingServer.frame_post_draw
-		_take_screenshot("greek_tactical_seed11_stability%d" % int(shot_stability))
+		_take_screenshot("%s_valley_looking_up_seed11" % kit_name)
 
 	get_tree().quit()
