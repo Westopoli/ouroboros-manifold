@@ -18,3 +18,26 @@
 2026-09-22T23:23:50+00:00 | /home/westopoli/Projects/om-push/m3 | git worktree list --porcelain | exit 0
 2026-09-22T23:23:50+00:00 | /home/westopoli/Projects/om-push/m3 | git branch --list '--format=%(refname:short)' 'swarm/c4/**' | exit 0
 2026-09-22T23:24:28+00:00 | /home/westopoli/Projects/om-push/m3 | git status --porcelain | exit 0
+2026-09-22T23:24:28+00:00 | /home/westopoli/Projects/om-push/m3 | git add -A -- .swarm/c4/git-ops.log .swarm/c4/worktrees/integration | exit 0
+2026-09-22T23:24:28+00:00 | /home/westopoli/Projects/om-push/m3 | git commit -q -m 'swarm(c4): wave 1 base — spec/contract/umbrella/briefs/tests' | exit 0
+2026-09-22T23:24:28+00:00 | /home/westopoli/Projects/om-push/m3 | git rev-parse --abbrev-ref HEAD | exit 0
+2026-09-22T23:24:28+00:00 | /home/westopoli/Projects/om-push/m3 | git rev-parse HEAD | exit 0
+2026-09-22T23:24:28+00:00 | /home/westopoli/Projects/om-push/m3 | git show-ref --verify --quiet refs/heads/swarm/c4/integration | exit 1
+2026-09-22T23:24:28+00:00 | /home/westopoli/Projects/om-push/m3 | git branch swarm/c4/integration da51fba1333eaac6b02931598f1ccacee600ea1b | exit 0
+2026-09-22T23:24:29+00:00 | /home/westopoli/Projects/om-push/m3 | git worktree add /home/westopoli/Projects/om-push/m3/.swarm/c4/worktrees/integration swarm/c4/integration | exit 0
+2026-09-22T23:24:29+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/c4/worktrees/integration | git rev-parse --git-path info/exclude | exit 0
+2026-09-22T23:24:29+00:00 | /home/westopoli/Projects/om-push/m3 | git rev-parse swarm/c4/integration | exit 0
+2026-09-22T23:24:32+00:00 | /home/westopoli/Projects/om-push/m3 | git worktree add -b swarm/c4/leaf-01 /home/westopoli/Projects/om-push/m3/.swarm/c4/worktrees/leaf-01 da51fba1333eaac6b02931598f1ccacee600ea1b | exit 0
+2026-09-22T23:24:32+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/c4/worktrees/leaf-01 | git rev-parse --git-path info/exclude | exit 0
+2026-09-22T23:24:33+00:00 | /home/westopoli/Projects/om-push/m3 | git worktree add -b swarm/c4/leaf-02 /home/westopoli/Projects/om-push/m3/.swarm/c4/worktrees/leaf-02 da51fba1333eaac6b02931598f1ccacee600ea1b | exit 0
+2026-09-22T23:24:33+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/c4/worktrees/leaf-02 | git rev-parse --git-path info/exclude | exit 0
+2026-09-22T23:25:49+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/c4/worktrees/leaf-01 | git rev-parse HEAD | exit 0
+2026-09-22T23:25:50+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/c4/worktrees/leaf-01 | git status --porcelain --untracked-files=all | exit 0
+2026-09-22T23:25:50+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/c4/worktrees/leaf-01 | git add -- scenes/mission_briefing/mission_briefing.gd | exit 0
+2026-09-22T23:25:50+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/c4/worktrees/leaf-01 | git commit -q -m 'swarm(c4): leaf-01 — Add `load_frame(mission: Dictionary) -> void`, `qa_state() -> Dictionary' | exit 0
+2026-09-22T23:25:50+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/c4/worktrees/leaf-01 | git rev-parse HEAD | exit 0
+2026-09-22T23:25:52+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/c4/worktrees/leaf-02 | git rev-parse HEAD | exit 0
+2026-09-22T23:25:53+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/c4/worktrees/leaf-02 | git status --porcelain --untracked-files=all | exit 0
+2026-09-22T23:25:53+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/c4/worktrees/leaf-02 | git add -- scenes/debrief/debrief.gd | exit 0
+2026-09-22T23:25:53+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/c4/worktrees/leaf-02 | git commit -q -m 'swarm(c4): leaf-02 — Add `load_frame(debrief: Dictionary) -> void`, `qa_state() -> Dictionary' | exit 0
+2026-09-22T23:25:53+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/c4/worktrees/leaf-02 | git rev-parse HEAD | exit 0
