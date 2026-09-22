@@ -6,6 +6,7 @@ shells out to the real agy CLI or builds the real C library.
 """
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -127,6 +128,180 @@ def test_call_gemini_builds_the_documented_argv(monkeypatch):
     assert "--dangerously-skip-permissions" in argv
     assert "--sandbox" in argv
     assert captured["timeout"] == 300
+
+
+# ------------------------------------------------------------- call_anthropic --
+
+def test_call_anthropic_parses_canned_reply(monkeypatch):
+    def fake_chat(model, system, user, *, timeout):
+        return ('{"functions": [{"name": "om_step_decisions", '
+                 '"text": "void om_step_decisions(om_world *w) {}\\n"}], '
+                 '"rationale": "anthropic reply"}')
+
+    monkeypatch.setattr(efp, "ANTHROPIC_CHAT", fake_chat)
+    payload, wall = efp.call_anthropic("claude-sonnet-4-6", "some prompt", timeout=5)
+    assert payload["rationale"] == "anthropic reply"
+    assert payload["functions"][0]["name"] == "om_step_decisions"
+    assert wall >= 0
+
+
+def test_call_anthropic_passes_model_prompt_and_timeout_to_the_hook(monkeypatch):
+    captured = {}
+
+    def fake_chat(model, system, user, *, timeout):
+        captured.update(model=model, system=system, user=user, timeout=timeout)
+        return '{"functions": [], "rationale": "r"}'
+
+    monkeypatch.setattr(efp, "ANTHROPIC_CHAT", fake_chat)
+    efp.call_anthropic("claude-sonnet-4-6", "PROMPT TEXT", timeout=123)
+    assert captured["model"] == "claude-sonnet-4-6"
+    assert captured["user"] == "PROMPT TEXT"
+    assert captured["timeout"] == 123
+
+
+def test_call_anthropic_raises_on_schema_mismatch(monkeypatch):
+    monkeypatch.setattr(efp, "ANTHROPIC_CHAT", lambda *a, **k: "not json at all")
+    with pytest.raises(efp.AgyCallError):
+        efp.call_anthropic("claude-sonnet-4-6", "prompt", timeout=5)
+
+
+def test_call_anthropic_wraps_underlying_exception(monkeypatch):
+    def boom(*a, **k):
+        raise RuntimeError("network error")
+
+    monkeypatch.setattr(efp, "ANTHROPIC_CHAT", boom)
+    with pytest.raises(efp.AgyCallError):
+        efp.call_anthropic("claude-sonnet-4-6", "prompt", timeout=5)
+
+
+def test_call_anthropic_reraises_transport_unavailable_without_wrapping(monkeypatch):
+    def fake_chat(model, system, user, *, timeout):
+        raise efp.TransportUnavailable("the 'anthropic' package is not installed")
+
+    monkeypatch.setattr(efp, "ANTHROPIC_CHAT", fake_chat)
+    with pytest.raises(efp.TransportUnavailable, match="anthropic"):
+        efp.call_anthropic("claude-sonnet-4-6", "prompt", timeout=5)
+
+
+def test_anthropic_chat_hook_raises_transport_unavailable_without_the_sdk_installed():
+    """No monkeypatch: exercises the real hook. Meaningful only in an
+    interpreter without the `anthropic` package installed -- the agora
+    venv this probe runs in does not have it -- so this proves the real
+    import-failure path, not just a mocked one."""
+    import importlib
+    try:
+        importlib.import_module("anthropic")
+        pytest.skip("anthropic package is installed in this interpreter")
+    except ImportError:
+        pass
+    with pytest.raises(efp.TransportUnavailable):
+        efp.ANTHROPIC_CHAT("claude-sonnet-4-6", "sys", "user", timeout=5)
+
+
+# ------------------------------------------------------- transport override --
+
+def test_resolve_transport_override_wins_over_model_name():
+    assert efp.resolve_transport("api-anthropic", "deepseek-v4-flash") == "api-anthropic"
+    assert efp.resolve_transport("agy", "deepseek-v4-flash") == "agy"
+    assert efp.resolve_transport("api-deepseek", "claude-sonnet-4-6") == "api-deepseek"
+
+
+def test_resolve_transport_defaults_to_the_by_name_heuristic_when_none_given():
+    assert efp.resolve_transport(None, "deepseek-v4-flash") == "api-deepseek"
+    assert efp.resolve_transport(None, "gemini-3.7-flash-high") == "agy"
+    assert efp.resolve_transport(None, "claude-sonnet-4-6") == "agy"
+
+
+def test_resolve_transport_rejects_unknown_value():
+    with pytest.raises(ValueError):
+        efp.resolve_transport("carrier-pigeon", "any-model")
+
+
+def test_call_escalator_transport_override_forces_api_deepseek(monkeypatch):
+    seen = []
+    monkeypatch.setattr(efp, "call_deepseek", lambda model, prompt, **kw: (seen.append("deepseek"), ({}, 0.0))[1])
+    monkeypatch.setattr(efp, "call_gemini", lambda model, prompt, **kw: (seen.append("gemini"), ({}, 0.0))[1])
+    monkeypatch.setattr(efp, "call_anthropic", lambda model, prompt, **kw: (seen.append("anthropic"), ({}, 0.0))[1])
+
+    efp.call_escalator("claude-sonnet-4-6", "prompt", transport="api-deepseek")
+    assert seen == ["deepseek"]
+
+
+def test_call_escalator_transport_override_forces_agy(monkeypatch):
+    seen = []
+    monkeypatch.setattr(efp, "call_deepseek", lambda model, prompt, **kw: (seen.append("deepseek"), ({}, 0.0))[1])
+    monkeypatch.setattr(efp, "call_gemini", lambda model, prompt, **kw: (seen.append("gemini"), ({}, 0.0))[1])
+    monkeypatch.setattr(efp, "call_anthropic", lambda model, prompt, **kw: (seen.append("anthropic"), ({}, 0.0))[1])
+
+    efp.call_escalator("deepseek-v4-flash", "prompt", transport="agy")
+    assert seen == ["gemini"]
+
+
+def test_call_escalator_transport_override_forces_api_anthropic(monkeypatch):
+    seen = []
+    monkeypatch.setattr(efp, "call_deepseek", lambda model, prompt, **kw: (seen.append("deepseek"), ({}, 0.0))[1])
+    monkeypatch.setattr(efp, "call_gemini", lambda model, prompt, **kw: (seen.append("gemini"), ({}, 0.0))[1])
+    monkeypatch.setattr(efp, "call_anthropic", lambda model, prompt, **kw: (seen.append("anthropic"), ({}, 0.0))[1])
+
+    efp.call_escalator("gemini-3.7-flash-high", "prompt", transport="api-anthropic")
+    assert seen == ["anthropic"]
+
+
+def test_run_agy_call_threads_record_transport_into_call_escalator(tmp_path, monkeypatch):
+    captured = {}
+
+    def fake_call_escalator(model, prompt, *, timeout=300, transport=None):
+        captured["transport"] = transport
+        return ({"functions": [{"name": "om_thing", "text": "int om_thing(int x) { return x; }\n"}],
+                  "rationale": "r"}, 0.1)
+
+    monkeypatch.setattr(efp, "call_escalator", fake_call_escalator)
+
+    (tmp_path / "csrc").mkdir()
+    (tmp_path / "csrc" / "thing.c").write_text("int om_thing(int x) {\n    return x + 1;\n}\n")
+    target = efp.FenceTarget(file="csrc/thing.c", label="om_thing", symbol="om_thing")
+    case = efp.Case(id="FAKE2", probe="PX-17", pre_fix_commit="deadbeef", human_fix_commit=None,
+                     fence=(target,), diagnosis="x", contract_quote="", target_tests=())
+
+    record = {"_transport": "api-anthropic"}
+    efp._run_agy_call(case, "claude-sonnet-4-6", tmp_path, [target], "failing output", None, record)
+    assert captured["transport"] == "api-anthropic"
+
+
+# --------------------------------------------------------------- dry-run --
+
+def test_main_dry_run_prints_resolved_transport_and_model_and_exits_0(capsys):
+    rc = efp.main(["run", "R7d", "--model", "deepseek-chat", "--dry-run"])
+    assert rc == 0
+    out = json.loads(capsys.readouterr().out)
+    assert out == {"case": "R7d", "model": "deepseek-chat", "transport": "api-deepseek"}
+
+
+def test_main_dry_run_honors_explicit_transport_override(capsys):
+    rc = efp.main(["run", "R7d", "--model", "claude-sonnet-4-6", "--transport", "api-anthropic", "--dry-run"])
+    assert rc == 0
+    out = json.loads(capsys.readouterr().out)
+    assert out == {"case": "R7d", "model": "claude-sonnet-4-6", "transport": "api-anthropic"}
+
+
+def test_main_dry_run_never_calls_run_case(monkeypatch, capsys):
+    def boom(*a, **k):
+        raise AssertionError("dry-run must not build a worktree or call run_case")
+
+    monkeypatch.setattr(efp, "run_case", boom)
+    rc = efp.main(["run", "R8", "--model", "deepseek-chat", "--dry-run"])
+    assert rc == 0
+
+
+def test_main_returns_3_when_transport_unavailable(monkeypatch, capsys):
+    def fake_run_case(*a, **k):
+        raise efp.TransportUnavailable("the 'anthropic' package is not installed")
+
+    monkeypatch.setattr(efp, "run_case", fake_run_case)
+    rc = efp.main(["run", "R7d", "--model", "claude-sonnet-4-6", "--transport", "api-anthropic"])
+    assert rc == 3
+    err = capsys.readouterr().err
+    assert "anthropic" in err
 
 
 # ---------------------------------------------------------------- fence ----

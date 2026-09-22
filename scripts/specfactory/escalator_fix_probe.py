@@ -107,6 +107,14 @@ class AgyCallError(RuntimeError):
     """agy itself failed (nonzero exit, timeout, or schema mismatch)."""
 
 
+class TransportUnavailable(RuntimeError):
+    """A --transport was named whose backing package/binary is not
+    installed or importable in this interpreter. A harness setup problem,
+    never a model finding -- kept separate from AgyCallError so run_case's
+    retry loop (which treats AgyCallError as retryable-with-feedback) does
+    not swallow it; the CLI exits 3 on this instead."""
+
+
 @dataclasses.dataclass
 class PytestResult:
     returncode: int
@@ -201,10 +209,77 @@ def call_deepseek(model: str, prompt_text: str, *, timeout: int = 300) -> tuple[
     return payload, wall
 
 
-def call_escalator(model: str, prompt_text: str, *, timeout: int = 300) -> tuple[dict, float]:
-    """Dispatches to DeepSeek's direct API or agy by model name."""
-    if model.startswith("deepseek"):
+ANTHROPIC_SYSTEM = "Follow the fence and the output contract exactly. Reply with JSON only, nothing else."
+ANTHROPIC_KEY_FILE = pathlib.Path("~/.config/agora/anthropic.key").expanduser()
+
+
+def ANTHROPIC_CHAT(model: str, system: str, user: str, *, timeout: int) -> str:
+    """The one function in this module that calls the Anthropic Messages
+    API through the Anthropic Python SDK. Module-level hook by design --
+    tests monkeypatch this attribute with a fake, same pattern as
+    RUN_AGY/DEEPSEEK_CHAT_JSON. Raises TransportUnavailable if the SDK
+    (the `anthropic` package) is not installed in this interpreter."""
+    try:
+        import anthropic
+    except ImportError as exc:
+        raise TransportUnavailable(
+            "the 'anthropic' package is not installed in this interpreter -- "
+            "the api-anthropic transport needs the Anthropic Python SDK "
+            f"(pip install anthropic in the venv running this probe): {exc}") from exc
+    key = os.environ.get("ANTHROPIC_API_KEY") or (
+        ANTHROPIC_KEY_FILE.read_text().strip() if ANTHROPIC_KEY_FILE.exists() else None)
+    if not key:
+        raise AgyCallError(f"no Anthropic API key configured (ANTHROPIC_API_KEY or {ANTHROPIC_KEY_FILE})")
+    client = anthropic.Anthropic(api_key=key)
+    resp = client.messages.create(model=model, max_tokens=4096, temperature=0.2, system=system,
+                                   messages=[{"role": "user", "content": user}], timeout=timeout)
+    return "".join(getattr(block, "text", "") for block in resp.content)
+
+
+def call_anthropic(model: str, prompt_text: str, *, timeout: int = 300) -> tuple[dict, float]:
+    """One escalator call through the Anthropic Messages API (the
+    api-anthropic transport -- --transport only, there is no by-model-name
+    inference to this transport). Returns the same (payload, wall_seconds)
+    contract as call_gemini/call_deepseek."""
+    t0 = time.monotonic()
+    try:
+        text = ANTHROPIC_CHAT(model, ANTHROPIC_SYSTEM, prompt_text, timeout=timeout)
+    except TransportUnavailable:
+        raise
+    except Exception as exc:
+        raise AgyCallError(f"anthropic call failed: {exc}") from exc
+    wall = time.monotonic() - t0
+    payload = payload_from_envelope(text, ("functions", "rationale"))
+    if payload is None:
+        raise AgyCallError(f"anthropic reply did not match the expected schema: {text[:800]!r}")
+    return payload, wall
+
+
+_TRANSPORTS = ("api-deepseek", "api-anthropic", "agy")
+
+
+def resolve_transport(transport: str | None, model: str) -> str:
+    """--transport, when given, is authoritative. Otherwise: the original
+    by-model-name heuristic (deepseek-prefixed names go to the DeepSeek
+    API, everything else to agy). There is no by-name heuristic for
+    api-anthropic -- it is reached only through an explicit --transport."""
+    if transport is not None:
+        if transport not in _TRANSPORTS:
+            raise ValueError(f"unknown transport {transport!r}, expected one of {_TRANSPORTS}")
+        return transport
+    return "api-deepseek" if model.startswith("deepseek") else "agy"
+
+
+def call_escalator(model: str, prompt_text: str, *, timeout: int = 300,
+                    transport: str | None = None) -> tuple[dict, float]:
+    """Dispatches by `transport` when given, else by model name (the
+    original heuristic: deepseek-prefixed models to the DeepSeek API,
+    everything else to agy)."""
+    resolved = resolve_transport(transport, model)
+    if resolved == "api-deepseek":
         return call_deepseek(model, prompt_text, timeout=timeout)
+    if resolved == "api-anthropic":
+        return call_anthropic(model, prompt_text, timeout=timeout)
     return call_gemini(model, prompt_text, timeout=timeout)
 
 
@@ -790,7 +865,7 @@ def _run_agy_call(case: Case, model: str, worktree: pathlib.Path, targets: list[
         current_texts[t.label] = span.body
 
     prompt = build_prompt(case, targets, current_texts, failing_output, previous_feedback)
-    payload, wall = call_escalator(model, prompt, timeout=300)
+    payload, wall = call_escalator(model, prompt, timeout=300, transport=record.get("_transport"))
     record.setdefault("agy_calls", []).append({
         "targets": [t.label for t in targets], "wall_seconds": round(wall, 2),
         "rationale": payload.get("rationale", "")})
@@ -876,7 +951,7 @@ def _gate_after_apply(case: Case, worktree: pathlib.Path, record: dict,
 
 def run_case(case_id: str, model: str, *, repo: pathlib.Path = REPO_ROOT,
              scratch_root: pathlib.Path, results_dir: pathlib.Path,
-             max_attempts: int = 3) -> dict:
+             max_attempts: int = 3, transport: str | None = None) -> dict:
     case = CASES[case_id]
     results_dir.mkdir(parents=True, exist_ok=True)
     pre_fix = resolve_pre_fix_commit(case, repo)
@@ -927,7 +1002,8 @@ def run_case(case_id: str, model: str, *, repo: pathlib.Path = REPO_ROOT,
         for attempt_n in range(1, max_attempts + 1):
             record: dict = {"case": case_id, "model": model, "attempt": attempt_n,
                              "_baseline_failing": baseline_failing,
-                             "_stub_worktree": stub_worktree, "_human_fix_worktree": human_fix_worktree}
+                             "_stub_worktree": stub_worktree, "_human_fix_worktree": human_fix_worktree,
+                             "_transport": transport}
             try:
                 if case.sequential:
                     ok, info = run_sequential_attempt(case, model, worktree, failing_output,
@@ -948,7 +1024,7 @@ def run_case(case_id: str, model: str, *, repo: pathlib.Path = REPO_ROOT,
                 _write_record(results_dir, record)
                 continue
 
-            for key in ("_baseline_failing", "_stub_worktree", "_human_fix_worktree"):
+            for key in ("_baseline_failing", "_stub_worktree", "_human_fix_worktree", "_transport"):
                 record.pop(key, None)
             if ok:
                 record["gate_reached"] = "done"
@@ -994,14 +1070,26 @@ def main(argv: list[str] | None = None) -> int:
     run_p.add_argument("--results", default=None)
     run_p.add_argument("--max-attempts", type=int, default=3)
     run_p.add_argument("--repo", default=str(REPO_ROOT))
+    run_p.add_argument("--transport", choices=_TRANSPORTS, default=None,
+                        help="override the by-model-name dispatch (api-deepseek, api-anthropic, agy)")
+    run_p.add_argument("--dry-run", action="store_true",
+                        help="print the resolved transport and model, make no model call, exit 0")
     args = parser.parse_args(argv)
 
     if args.cmd == "run":
+        if args.dry_run:
+            resolved = resolve_transport(args.transport, args.model)
+            print(json.dumps({"case": args.case_id, "model": args.model, "transport": resolved}, indent=2))
+            return 0
         scratch_root = pathlib.Path(args.scratch)
         results_dir = pathlib.Path(args.results) if args.results else scratch_root / "results"
-        summary = run_case(args.case_id, args.model, repo=pathlib.Path(args.repo),
-                            scratch_root=scratch_root, results_dir=results_dir,
-                            max_attempts=args.max_attempts)
+        try:
+            summary = run_case(args.case_id, args.model, repo=pathlib.Path(args.repo),
+                                scratch_root=scratch_root, results_dir=results_dir,
+                                max_attempts=args.max_attempts, transport=args.transport)
+        except TransportUnavailable as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 3
         print(json.dumps(summary, indent=2))
         return 0
     return 1
