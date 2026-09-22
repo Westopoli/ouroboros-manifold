@@ -69,10 +69,17 @@ func _generate() -> void:
 	_marker.setup(_mission, display)
 	_add_player_spawn(_places.player_spawn().pos)
 	_draw_places()
-	_camera_rig.pan_to(Vector3(_mission.pos.x, 0.0, _mission.pos.y))
+	_camera_rig.pan_to(Vector3(_pan_target().x, 0.0, _pan_target().y))
 	_regen_count += 1
 	if _hud != null:
 		_hud.on_regenerated()
+
+
+func _pan_target() -> Vector2:
+	if _mission.kind == "escort_to_extraction" and _mission.extra.has("route"):
+		var route: Array = _mission.extra.route
+		return route[int(route.size() * 0.75)]
+	return _mission.pos
 
 
 func _add_player_spawn(pos: Vector2) -> void:
