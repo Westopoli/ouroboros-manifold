@@ -2,12 +2,14 @@ extends Node3D
 
 const QaPlants := preload("res://scenes/mockups/_shared/qa_plants.gd")
 const FIXTURES_DIR := "res://scenes/mockups/objectives/fixtures/"
+const PLAYER_COLOR := Color("#4099ff")
 
 const PLANTS: Array[String] = [
 	"objective-on-spawn", "marker-unnamed", "progress-static",
 	"kind-mapping-random", "seed-ignored", "route-ignored",
 ]
 
+var _camera_rig
 var _world: Node3D
 var _generated: Node3D
 var _marker: Marker
@@ -21,13 +23,27 @@ var _regen_count: int = 0
 
 
 func _ready() -> void:
+	_camera_rig = get_node("CameraRig")
 	_world = Node3D.new()
 	_world.name = "World"
 	add_child(_world)
 	_generated = Node3D.new()
 	_generated.name = "Generated"
 	_world.add_child(_generated)
+	_build_ground()
 	_generate()
+
+
+func _build_ground() -> void:
+	var plane := PlaneMesh.new()
+	plane.size = Vector2(60000, 60000)
+	var mi := MeshInstance3D.new()
+	mi.mesh = plane
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.09, 0.11, 0.09)
+	mi.material_override = mat
+	mi.position = Vector3(12000, -2.0, 12000)
+	_world.add_child(mi)
 
 
 func _generate() -> void:
@@ -45,16 +61,33 @@ func _generate() -> void:
 	_generated.add_child(_marker)
 	var display: String = MissionGen.DISPLAY_NAMES.get(_mission.kind, _mission.kind)
 	_marker.setup(_mission, display)
+	_add_player_spawn(_places.player_spawn().pos)
 	_regen_count += 1
+
+
+func _add_player_spawn(pos: Vector2) -> void:
+	var box := BoxMesh.new()
+	box.size = Vector3(200, 120, 200)
+	var mi := MeshInstance3D.new()
+	mi.mesh = box
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = PLAYER_COLOR
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mi.material_override = mat
+	mi.position = Vector3(pos.x, 60.0, pos.y)
+	_generated.add_child(mi)
 
 
 func qa_state() -> Dictionary:
 	var display: String = MissionGen.DISPLAY_NAMES.get(_mission.kind, _mission.kind)
+	var camera: Camera3D = _camera_rig.get_camera() if _camera_rig != null else null
+	var wp := Vector3(_mission.pos.x, 0.0, _mission.pos.y)
+	var px := camera.unproject_position(wp) if camera != null else Vector2.ZERO
 	return {
 		"seed": _seed, "hash": MissionGen.mission_hash(_mission), "fixture": _fixture,
 		"archetype": _archetype, "objective": _mission.objective, "satisfiable": _mission.satisfiable,
 		"route_len_wu": min(_mission.route_len_wu, 999999.0), "time_limit_ticks": _mission.time_limit_ticks,
-		"skipped": _mission.skipped, "marker": {"name": display, "px": [0.0, 0.0]}, "tick": _mission.tick,
+		"skipped": _mission.skipped, "marker": {"name": display, "px": [px.x, px.y]}, "tick": _mission.tick,
 		"timing_ms": _timing_ms, "regen_count": _regen_count,
 	}
 
@@ -83,7 +116,7 @@ func qa_set(name: String, value) -> void:
 
 
 func qa_camera(height: float, x: float, z: float) -> void:
-	pass
+	_camera_rig.qa_camera(height, x, z)
 
 
 func qa_tick(n: int) -> void:
