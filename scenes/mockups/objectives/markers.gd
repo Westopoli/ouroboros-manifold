@@ -102,6 +102,7 @@ func _add_label(wp: Vector3, text: String, col: Color) -> void:
 	label.text = "" if QaPlants.is_active("marker-unnamed") else text
 	label.font = _font
 	label.font_size = 64
+	label.pixel_size = 2.2
 	label.modulate = col
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.no_depth_test = true

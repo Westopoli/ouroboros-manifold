@@ -21,6 +21,7 @@ var _mission: Dictionary = {}
 var _fixture: int = 11
 var _seed: int = 11
 var _archetype: String = "defensive_stand"
+var _kind_override: String = ""
 var _timing_ms: Dictionary = {"gen": 0.0}
 var _regen_count: int = 0
 
@@ -57,7 +58,7 @@ func _generate() -> void:
 	var eff_fixture: int = 11 if QaPlants.is_active("seed-ignored") else _fixture
 	_places = Places.new()
 	_places.load_path(FIXTURES_DIR + "nodes_seed%d.json" % eff_fixture)
-	_mission = MissionGen.build(_archetype, _places, _seed)
+	_mission = MissionGen.build(_archetype, _places, _seed, _kind_override)
 	var t1 := Time.get_ticks_usec()
 	_timing_ms = {"gen": (t1 - t0) / 1000.0}
 
@@ -69,10 +70,17 @@ func _generate() -> void:
 	_marker.setup(_mission, display)
 	_add_player_spawn(_places.player_spawn().pos)
 	_draw_places()
-	_camera_rig.pan_to(Vector3(_mission.pos.x, 0.0, _mission.pos.y))
+	_camera_rig.pan_to(Vector3(_pan_target().x, 0.0, _pan_target().y))
 	_regen_count += 1
 	if _hud != null:
 		_hud.on_regenerated()
+
+
+func _pan_target() -> Vector2:
+	if _mission.kind == "escort_to_extraction" and _mission.extra.has("route"):
+		var route: Array = _mission.extra.route
+		return route[int(route.size() * 0.75)]
+	return _mission.pos
 
 
 func _add_player_spawn(pos: Vector2) -> void:
@@ -111,6 +119,7 @@ func _draw_places() -> void:
 		lbl.text = n.type
 		lbl.font = _node_font
 		lbl.font_size = 40
+		lbl.pixel_size = 1.6
 		lbl.modulate = Color(0.85, 0.86, 0.88)
 		lbl.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 		lbl.no_depth_test = true
@@ -149,14 +158,22 @@ func qa_set(name: String, value) -> void:
 	match name:
 		"archetype":
 			_archetype = String(value)
+			_kind_override = ""
 			_generate()
 		"fixture":
 			_fixture = int(value)
+			_generate()
+		"kind":
+			_kind_override = String(value)
 			_generate()
 
 
 func qa_camera(height: float, x: float, z: float) -> void:
 	_camera_rig.qa_camera(height, x, z)
+
+
+func qa_camera_at_objective(height: float) -> void:
+	_camera_rig.qa_camera(height, _mission.pos.x, _mission.pos.y)
 
 
 func qa_tick(n: int) -> void:

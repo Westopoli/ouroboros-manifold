@@ -69,10 +69,10 @@ static func _seeded_rng(seed_val: int, salt: String) -> RandomNumberGenerator:
 	return rng
 
 
-static func build(archetype_name: String, places: Places, mission_seed: int) -> Dictionary:
+static func build(archetype_name: String, places: Places, mission_seed: int, kind_override: String = "") -> Dictionary:
 	var row := _row(archetype_name)
 	var eff_seed: int = 11 if QaPlants.is_active("seed-ignored") else mission_seed
-	var kind: String = row.kind
+	var kind: String = kind_override if kind_override != "" else row.kind
 	if QaPlants.is_active("kind-mapping-random"):
 		var kinds := DISPLAY_NAMES.keys()
 		var rng := _seeded_rng(eff_seed, archetype_name + "_kindrandom")
