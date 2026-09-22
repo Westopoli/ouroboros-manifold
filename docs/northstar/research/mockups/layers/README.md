@@ -75,16 +75,20 @@ batch each finish in 6-10 seconds, `exit 0`, zero errors, zero stalls.
 Full check table, every Xvfb oracle (clean and planted), and the DET-1 pixel/hash
 comparison: `scenes/mockups/layers/qa/checklist.md`. Headline: `clean1` vs `clean2`
 hash-identical at every one of 9 checkpoints; every screenshot pixel-diffs at 0.000000
-except `blocked_cleared.png` at 0.000041 (both under the 0.005 bar). All six plants show
-every oracle on the wrong side of its threshold, confirming each fault site is live and
-each check would actually catch it.
+(all under the 0.005 bar). All six plants show every oracle on the wrong side of its
+threshold, confirming each fault site is live and each check would actually catch it.
 
-One inconsistency in the original `qa/smoke.json` was fixed this session: its
-blocked-transfer demonstration ordered the unit to layer 1 (`qa_transfer 1 1`), and
-`toy_sim.gd`'s blocked mask only ever applies to a transfer whose target is layer 2, so
-nothing was ever actually blocked. The script now parks the unit on the blocked patch's
-centre cell and orders it to layer 2 (`qa_transfer 1 2`) — genuinely blocked, 30 ticks
-pending, then moved clear and completing. Screenshot names unchanged.
+Two fixes to `qa/smoke.json` this pass, on top of an earlier-session fix to the same
+demonstration (its blocked-transfer leg originally ordered the unit to layer 1 instead of
+layer 2, so `toy_sim.gd`'s layer-2-only blocked mask never actually triggered): the unit
+now parks at `(2000, 2300)` instead of the blocked patch's exact centre `(2000, 2000)` —
+still inside the 350wu blocked radius, but outside the obstacle's own 150wu footprint, so
+`blocked_attempt.png` shows the waiting unit instead of hiding it behind the obstacle's
+opaque geometry (see "Fresh-eyes review" below); and the script now flips focus 2→1 right
+before the `focus1` screenshot instead of relying on the untouched default, so that shot
+proves the toggle path fired (it still renders identically to `slow_mid.png`, because both
+capture the same tick/position/focus/camera tuple — see the checklist for why that is
+expected, not a leftover bug). Screenshot names unchanged.
 
 ## What the report answers
 
@@ -102,9 +106,9 @@ pending, then moved clear and completing. Screenshot names unchanged.
    losing the ability to see where its units/ground are; the translucent layer-2 plane
    (alpha 0.25) keeps layer 1 visible underneath it in every screenshot that frames both.
 4. **Frame time under llvmpipe at 720p:** Godot's own per-frame CPU accounting
-   (`_qa.fps_ms`) ranges 188-365ms across the 9 captured frames (heaviest at boot, settling
-   to 188-222ms once warmed up) — not alarming. `ToySim.step()` itself (the actual sim
-   cost, independent of rendering) is 0.0039-0.0043ms/tick — trivial, 20Hz is nowhere near
+   (`_qa.fps_ms`) ranges 195-284ms across the 9 captured frames (heaviest at boot, settling
+   to 195-226ms once warmed up) — not alarming. `ToySim.step()` itself (the actual sim
+   cost, independent of rendering) is 0.0040-0.0045ms/tick — trivial, 20Hz is nowhere near
    a bottleneck. Wall time for the full clean smoke run (8 screenshots, 9 state dumps): 6
    seconds.
 5. **Under-defined points**, each with candidates, no decision made:
@@ -136,32 +140,37 @@ pending, then moved clear and completing. Screenshot names unchanged.
      wu per screen) is untested — no landscape-scale layer fixture exists yet.
    - **Sensor ring size/legibility (Q5).** At 800wu on a 4,000wu canvas the own-layer
      sensor ring is close to 40% of the frame width — legible in every shot that shows it
-     but large enough to dominate the frame. Candidates: scale the ring's *visual* radius
-     down from the true sensor radius (readability over literal accuracy) vs. leave it
-     literal and rely on a taller camera height by default.
-   - **The blocked demonstration's parked position occludes the unit (Q4).** Fixed this
-     session so the block is genuine (see above), but parking the unit at the blocked
-     patch's exact centre also parks it directly under the tall obstacle box, which fully
-     occludes it in `blocked_attempt.png` from the script's fixed camera angle — a viewer
-     can only tell it's waiting from the HUD list, not the 3D view. Candidates: (a) park
-     it at a position inside the 350wu blocked radius but outside the 150wu obstacle
-     footprint (e.g. `(2000, 2300)`) so it stays visible; (b) shrink the obstacle's
-     footprint relative to the blocked radius so no blocked cell is ever fully hidden
-     behind it.
-   - **A camera-angle-dependent transparency artifact (not fixed).** In
-     `transfer_before.png`, unit 1 does not render at the `qa_camera 2500 2000 2000`
-     angle used throughout the script, though its own sensor ring (correctly centred on
-     it) does — confirmed by a throwaway diagnostic (camera repositioned directly over the
-     unit shows it fully present, selected, correctly coloured) that this is not a
-     spawn/visibility bug. At this one camera/position combination, unit 1's view ray
-     passes through the blocked patch's translucent plane (both the patch and the unit
-     body use `TRANSPARENCY_ALPHA`) before reaching the unit, and the transparent-pass
-     sort appears to composite the patch over the unit instead of blending the two. It
-     recurs nowhere else in the batch and doesn't affect any Q1-Q6 answer
-     (`transfer_mid.png`/`transfer_after.png` show the same unit cleanly), so left as a
-     finding rather than a fix. Candidates: stop giving opaque-alpha unit bodies
-     `TRANSPARENCY_ALPHA` (only enable it when actually dimmed); or don't let a unit's
-     default framing ray cross the blocked patch.
+     but large enough to dominate the frame. Measured this pass: the *screen* ratio of the
+     other-layer ring to the own-layer ring is not the world-space 50% flat — it runs
+     0.40–0.62 depending on which layer the selected unit currently occupies, a camera-
+     perspective effect from the two rings sitting at different world heights at a fixed
+     60°-pitch camera (see `qa/checklist.md`, "Item 5"); the world radii themselves are
+     exactly 50% by construction, not a bug. Candidates unchanged: scale the ring's
+     *visual* radius down from the true sensor radius (readability over literal accuracy)
+     vs. leave it literal and rely on a taller camera height by default.
+   - **The blocked demonstration's parked position occluded the unit (Q4) — fixed this
+     pass.** Previously the unit parked at the blocked patch's exact centre, which is also
+     the obstacle's exact centre, so the obstacle's opaque geometry hid it in
+     `blocked_attempt.png` and only the HUD list proved it was waiting. Now parked at
+     `(2000, 2300)` — inside the 350wu blocked radius, outside the obstacle's 150wu
+     footprint — so the unit (cyan box, yellow selection ring) is directly visible,
+     waiting, beside the obstacle. No longer open.
+   - **A camera-angle-dependent transparency artifact on unit bodies — fixed this pass.**
+     Previously, in `transfer_before.png`, unit 1 did not render at the
+     `qa_camera 2500 2000 2000` angle used throughout the script (its sensor ring showed,
+     the body did not): `_spawn_unit_node()` set `TRANSPARENCY_ALPHA` on every unit body
+     unconditionally at spawn, so an opaque-looking body was actually in the transparent
+     render pass and lost the depth sort against the translucent blocked-patch plane along
+     that camera ray. Fixed: transparency is now enabled only while the unit is actually
+     dimmed (`layer_alpha(u.layer) < 1.0`); an undimmed body renders in the opaque pass and
+     cannot lose that fight. `transfer_before.png` now shows the unit directly. The same
+     family of artifact still affects the **obstacle** — its opaque box shows a persistent
+     three-tone band where the translucent `GroundLayer2` and blocked-patch planes cross
+     its geometry (unrelated to dimming/focus, confirmed by `focus1.png` vs `focus2.png`
+     being pixel-identical on the obstacle) — not fixed this pass, since the fix item was
+     scoped to unit bodies specifically; candidate for a future pass: apply the same
+     opaque-unless-dimmed pattern to the ground/patch planes, or don't let them cross
+     opaque geometry at all.
 6. **Anything arguing the two-layer/blocked-mask idea doesn't hold?** No — every headless
    check passed on the first real implementation attempt (build order: `toy_sim`
    transfers+blocking, then vision, then the view, then camera/HUD/input — see `git log`),
@@ -178,18 +187,40 @@ pending, then moved clear and completing. Screenshot names unchanged.
 3. Is the own-layer sensor ring, drawn at the unit's literal true-scale sensor radius, too
    dominant on screen at this canvas size — should sensor rings be visually de-emphasised
    independent of the real detection radius?
-4. The blocked demonstration currently parks the unit exactly under the obstacle, which
-   hides it behind the obstacle's own opaque geometry (see "The blocked demonstration's
-   parked position occludes the unit" above) — worth a follow-up shot at a blocked-but-
-   visible position, or is the HUD-only "still L1" readout enough?
+4. The obstacle's opaque box still shows a persistent three-tone band where the
+   translucent ground/blocked-patch planes cross it (see "A camera-angle-dependent
+   transparency artifact" above) — confirmed unrelated to focus/dimming, so it doesn't
+   misread as a third *layer*, but is it worth the same opaque-unless-dimmed fix already
+   applied to unit bodies, or is a visible seam on a static obstacle an acceptable mockup
+   artifact to leave for the design phase?
 
 ## Next step
 
 All 8 pass-1 screenshots (1920x1080, the full review batch: before, mid, after, slow mid,
-focus 1, focus 2, blocked attempt, blocked cleared) are committed under `pass1/`. The
-mockup is done and green (`VERIFY OK`, all 6 plants `LIVE`, both clean Xvfb runs and all
-plant runs `exit 0` with zero errors) — it awaits Westley's look.
+focus 1, focus 2, blocked attempt, blocked cleared) are committed under `pass1/`, replaced
+this pass with the post-fix batch. The mockup is done and green (`VERIFY OK`, all 6 plants
+`LIVE`, both clean Xvfb runs, all six plant runs, and the 1080p review batch all `exit 0`
+with zero errors) — the fresh-eyes review's two required-proof breaks are fixed
+(`transfer_before.png` now shows the unit, `blocked_attempt.png` now shows it waiting
+visibly) and its three nits are addressed or explained below — it awaits Westley's look.
 
 ## Fresh-eyes review (2026-09-22, Sonnet reviewer, screenshots only)
 
 Verdict: quick fix and rerun before Westley's look. Two required proofs are broken by known one-line causes: `transfer_before.png` shows only the selected unit's ring because every unit body is given alpha transparency at spawn and sorts behind the translucent blocked patch from that camera ray; `blocked_attempt.png` parks the waiting unit dead centre under the obstacle, so nothing but the HUD proves it is waiting. Nits: `focus1.png` is byte-identical to `slow_mid.png` because focus already defaulted to 1; the obstacle prism reads as three colour bands under the dimming and could pass for a third layer; the other-layer sensor ring looks nearer 35 percent of the own-layer ring than the rule's 50 percent, to be measured at a fixed camera before calling it wrong. Height, dimming, rings and the blocked mechanic are proven in the numbers.
+
+**Resolved this pass:** both required-proof breaks are fixed in code (unit-body
+transparency now toggles with dimming instead of being always-on; the blocked demo parks
+at `(2000, 2300)`, clear of the obstacle) and reproven in a fresh Xvfb batch (`clean1`/
+`clean2` hash- and pixel-identical, all 6 plants still `LIVE`). Of the three nits:
+`focus1.png` is still byte-identical to `slow_mid.png` after flipping focus through 2 and
+back — explained in `qa/checklist.md` as an expected consequence of both shots sharing the
+same tick/position/focus/camera tuple, not a leftover bug, since rendering has no other
+hidden state to make the same tuple render differently. The obstacle's colour-banding is
+confirmed unrelated to dimming (still present, unchanged by focus) — a separate,
+still-open transparent-plane-over-opaque-geometry artifact, same family as the one just
+fixed for unit bodies but not yet applied to the ground/blocked-patch planes; not fixed
+this pass (out of the five-item scope), flagged above under "Questions for Westley." The
+sensor-ring ratio was measured precisely this pass (`ring_px` added to `qa_state()`): the
+world radii are exactly 50% by construction; the screen ratio runs 0.40–0.62 depending on
+which layer the unit occupies, a perspective-distance effect of the fixed camera, not the
+reviewer's guessed 35% nor a code defect — see `qa/checklist.md`, "Item 5."
