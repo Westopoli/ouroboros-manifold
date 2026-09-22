@@ -240,7 +240,7 @@ Enums are sent as the header's integer values (`om_tier`, `om_archetype`, `om_st
 ```
 `abi` is `om_abi_version()`; `layout_ok` is `om_abi_layout_check(sizeof rows)`; `features` lists the enabled `om_feature` ids.
 
-### snapshot (server to client, on request and after `set_seed`/`load`)
+### snapshot (server to client, on request and after `load`)
 ```json
 {"type":"snapshot","tick":10,"checksum":1234567890,
  "regions":[{"i":0,"owner":-1,"tier":1,"military":12.5,"economy":30.0,"tension":8.0,"population":20.0,"stability":61.2,"capacity":44.0}],
@@ -274,7 +274,7 @@ Only regions whose stored values changed appear; `checksum` is the world checksu
 {"type":"cmd","name":"load","path":"saves/slot1.omsave"}
 {"type":"cmd","name":"quit"}
 ```
-Every command is answered by `{"type":"ack","name":"...","tick":N}` or `{"type":"error","name":"...","reason":"..."}`; `run_to` streams deltas then one ack. `inject` exists only in the debug build (`error` otherwise). `save`/`load` use T2's `om_save_state_*` and reply with the post-load `snapshot`.
+Every command except `set_seed` is answered by `{"type":"ack","name":"...","tick":N}` or `{"type":"error","name":"...","reason":"..."}`; `run_to` streams deltas then one ack. `set_seed` is silent (no ack, no snapshot): `tests/transport/test_pipe_shapes.py` requires the first frame after `hello` to be the first `step` delta, so a client that wants the fresh world sends `snapshot`. `inject` exists only in the debug build (`error` otherwise). `save`/`load` use T2's `om_save_state_*` and reply with the post-load `snapshot`.
 
 ### tactical snapshot (v1 tactical, once B10/B12 attach; sent on `snapshot` when a tactical map is loaded)
 ```json

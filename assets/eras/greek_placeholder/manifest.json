@@ -1,0 +1,96 @@
+{
+  "era_id": "greek_placeholder",
+  "era_display_name": "The Marble Reach",
+  "era_accent_color": "#c9a84c",
+
+  "units": {
+    "vanguard":    { "category": "line",   "squad_count": 1, "visual_scale": 1.5, "facing_offset_rad": 0.0, "tiers": {
+      "1": { "scene": "units/line_unit.tscn" },
+      "2": { "scene": "units/line_unit.tscn" },
+      "3": { "scene": "units/line_unit.tscn" }
+    }},
+    "warden":      { "category": "line",   "squad_count": 1, "visual_scale": 200.0, "facing_offset_rad": 0.0, "tiers": {
+      "1": { "scene": "units/line_unit.tscn" },
+      "2": { "scene": "units/line_unit.tscn" },
+      "3": { "scene": "units/line_unit.tscn" }
+    }},
+    "bombard":     { "category": "siege",  "squad_count": 1, "visual_scale": 2.0, "facing_offset_rad": -1.5708, "tiers": {
+      "1": { "scene": "units/siege_unit.tscn" },
+      "2": { "scene": "units/siege_unit.tscn" },
+      "3": { "scene": "units/siege_unit.tscn" }
+    }},
+    "bastion":     { "category": "siege",  "squad_count": 1, "visual_scale": 2.0, "facing_offset_rad": 0.0, "tiers": {
+      "1": { "scene": "units/siege_unit.tscn" },
+      "2": { "scene": "units/siege_unit.tscn" },
+      "3": { "scene": "units/siege_unit.tscn" }
+    }},
+    "raider":      { "category": "strike", "squad_count": 4, "visual_scale": 1.0, "facing_offset_rad": 3.1416, "tiers": {
+      "1": { "scene": "units/strike_unit.tscn" },
+      "2": { "scene": "units/strike_unit.tscn" },
+      "3": { "scene": "units/strike_unit.tscn" }
+    }},
+    "interceptor": { "category": "strike", "squad_count": 4, "visual_scale": 1.0, "facing_offset_rad": 0.0, "tiers": {
+      "1": { "scene": "units/strike_unit.tscn" },
+      "2": { "scene": "units/strike_unit.tscn" },
+      "3": { "scene": "units/strike_unit.tscn" }
+    }}
+  },
+
+  "structures": {
+    "settlement": { "tiers": {
+      "1": { "scene": "placeholder.tscn" },
+      "2": { "scene": "placeholder.tscn" },
+      "3": { "scene": "placeholder.tscn" }
+    }}
+  },
+
+  "environment": {
+    "obstacle_small":  { "scene": "environment/obstacle_small.tscn" },
+    "obstacle_medium": { "scene": "environment/obstacle_medium.tscn" },
+    "obstacle_large":  { "scene": "environment/obstacle_large.tscn" },
+    "cargo":           { "scene": "placeholder.tscn" },
+    "derelict":        { "scene": "placeholder.tscn" },
+    "cover_pylon":     { "scene": "placeholder.tscn" },
+    "nav_beacon":      { "scene": "placeholder.tscn" },
+    "hazard_volume":   { "scene": "placeholder.tscn" }
+  },
+
+  "materials": {
+    "1": {
+      "hull_primary":   { "color": "#D8C9A3", "metallic": 0.0, "roughness": 0.9 },
+      "hull_secondary": { "color": "#BFA97A", "metallic": 0.0, "roughness": 0.9 },
+      "accent":         { "color": "#8C6239", "metallic": 0.0, "roughness": 0.9 },
+      "engine_glow":    { "color": "#FF8844", "emission": 2.0 },
+      "sensor":         { "color": "#88CCFF", "emission": 0.5 },
+      "faction_color_treatment": "matte",
+      "faction_color_metallic": 0.0,
+      "faction_color_roughness": 0.8
+    },
+    "2": {
+      "hull_primary":   { "color": "#C1652F", "metallic": 0.4, "roughness": 0.4 },
+      "hull_secondary": { "color": "#8C6239", "metallic": 0.4, "roughness": 0.45 },
+      "accent_line":    { "color": "#D8C9A3", "emission": 0.3 },
+      "engine_glow":    { "color": "#66AAFF", "emission": 3.0 },
+      "weapon":         { "color": "#5A4A32", "metallic": 0.5, "roughness": 0.3 },
+      "faction_color_treatment": "metallic",
+      "faction_color_metallic": 0.7,
+      "faction_color_roughness": 0.35
+    },
+    "3": {
+      "hull_primary":   { "color": "#3A2F1E", "metallic": 0.6, "roughness": 0.2 },
+      "hull_secondary": { "color": "#4A3B24", "metallic": 0.5, "roughness": 0.25 },
+      "engine_glow_whitened": true,
+      "engine_glow_emission": 4.0,
+      "faction_color_treatment": "emissive",
+      "faction_color_emission": 2.0,
+      "faction_edge_emission": 0.8
+    }
+  },
+
+  "faction_colors": {
+    "0": "#4099FF",
+    "1": "#FF4738",
+    "2": "#40E566",
+    "3": "#FFCC33"
+  }
+}
