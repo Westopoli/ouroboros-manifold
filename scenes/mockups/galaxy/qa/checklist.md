@@ -1,35 +1,64 @@
 # Galaxy mockup QA checklist
 
-TEMPLATE — filled with real measured numbers from `scripts/mockup_qa.sh` and `scripts/mockup_verify.sh` runs once the feature is built. Thresholds are candidates; Westley owns the final number.
+Real measured numbers from `scripts/mockup_qa.sh` and `scripts/mockup_verify.sh` runs on 2026-09-22, Godot 4.6.3, llvmpipe (Mesa 26.0.8-1ubuntu0.3, Compatibility/`gl_compatibility`), 1280x720 unless noted. Thresholds marked `(revised)` differ from the brief's own candidate; the reason is inline. Every threshold here is a candidate — Westley owns the final number.
 
 | id | oracle | threshold (candidate) | measured clean | measured planted | plant |
 |---|---|---|---|---|---|
-| DET-1 | `qa_seed(11)` twice, `hash` equal | exact | TBD | — | none |
-| SEED-2 | `hash` differs 11 vs 12; `diff seed11_regional.png seed12_regional.png` | >= 0.15 clean; < 0.02 planted | TBD | TBD | `seed-ignored` |
-| CONN-3 | every faction's systems form one connected component over border edges | exact | TBD | — | none (self-test) |
-| KIND-4 | no border edge crosses owners; no trade edge shares an owner | exact | TBD | — | none (self-test) |
-| COLOUR-5 | every point colour matches its owner's palette | exact | TBD | TBD | `owner-colour-flat` |
-| BAND-6 | `get_band()` at 80/50/20 is Overview/Regional/Local | exact | TBD | TBD | `bands-frozen` |
-| PICK-7 | `project` then `pick_at` round-trips; 40px away misses | exact | TBD | TBD | `pick-radius-zero` |
-| EDGES-8 | filament parent is Node3D under World; no 2D fault overlay | exact | TBD | TBD | `edges-2d-overlay` |
-| REPLAY-9 | fixture ids valid; conquest recolours `to` to `from`'s owner | exact | TBD | TBD | `conquest-no-recolour` |
-| JSON-10 | `qa_state()` round-trips JSON; every plant id returns true, `nope` false | exact | TBD | — | none |
-| TIME-11 | `timing_ms.gen + timing_ms.build` | < 500ms | TBD | — | none |
-| FOCUS-X | click system 5's pixel, `focused == 5`, `band == "Local"` | exact | TBD | TBD | `pick-radius-zero` |
-| HOVER-X | `diff regional.png hover_f1.png` | >= 0.03 | TBD | TBD | `owner-colour-flat` |
-| BAND-X | `diff overview.png local.png` | >= 0.30 | TBD | — | none |
-| FLASH-X | `diff before_replay.png mid_replay.png`; owners changed after conquest | >= 0.01; owners differ | TBD | TBD | `conquest-no-recolour` |
-| ERR-0 | `errors.txt` count, `exit.txt`, no `UNIFORM` | count 0; exit 0 | TBD | — | none |
-| GPU-0 | `_qa.adapter` contains `llvmpipe` | exact | TBD | — | none |
+| DET-1 | `qa_seed(11)` twice, `hash` equal; two clean Xvfb runs' hashes and screenshots match | exact | hash equal every state (e.g. `-3538636825733803290` boot/overview/regional/local); `diff` 0.000000 (fuzz 30) on overview/regional/local/mid_replay between two independent clean runs | — | none |
+| SEED-2 | `hash` differs 11 vs 12; `diff regional.png seed12_regional.png` | >= 0.15 clean; < 0.02 planted | hash differs (`-3538636825733803290` vs `7348331106713528996`); diff 0.170972 (fuzz 30) | hash equal both `-3538636825733803290`; diff 0.000017 | `seed-ignored` |
+| CONN-3 | every faction's systems form one connected component over border edges | exact; self-test (hand-built 2-system 0-edge fixture) must fail the check | pass (79 systems, 4 factions, all connected); self-test fails as required | — | none (self-test) |
+| KIND-4 | no border edge crosses owners; no trade edge shares an owner | exact; self-test (cross-owner border fixture) must fail the check | pass (96 border / 39 trade, seed 11); self-test fails as required | — | none (self-test) |
+| COLOUR-5 | every point colour matches its owner's palette | exact | pass, 0/79 mismatches (checked via a parallel `_point_colors` array, not `MultiMesh.get_instance_color()` — see finding below) | 79/79 mismatch | `owner-colour-flat` |
+| BAND-6 | `get_band()` at 80/50/20 is Overview/Regional/Local | exact | Overview/Regional/Local | Regional/Regional/Regional | `bands-frozen` |
+| PICK-7 | `project` then `pick_at` round-trips; 40px away misses | exact | pick at own pixel returns the id; 40px away returns -1 | pick at own pixel returns -1 | `pick-radius-zero` |
+| EDGES-8 | filament parent is Node3D under World; no 2D fault overlay | exact | Filaments Node3D, 135 children (= edge count); no fault overlay | Filaments 0 children (edge count 135); fault overlay present | `edges-2d-overlay` |
+| REPLAY-9 | fixture ids valid; conquest recolours `to` to `from`'s owner | exact | all 12 fixture ids valid (max id 78); `owners[5]` 3 -> -1 matching `owners[0]` after the first conquest event | `owners[5]` stays 3 (unchanged) | `conquest-no-recolour` |
+| JSON-10 | `qa_state()` round-trips JSON; every plant id returns true, `nope` false | exact | pass | — | none |
+| TIME-11 | `timing_ms.gen + timing_ms.build` | < 500ms | 23.9ms (gen 11.9 + build 12.0, seed 11, 79 systems / 135 edges) | — | none |
+| FOCUS-X | click system 5's pixel (from boot's `systems_px`, an off-screen point at 720p — 179,3225), `focused == 5`, `band == "Local"` | exact | focused 5, band Local | focused -1, band Regional | `pick-radius-zero` |
+| HOVER-X | `diff regional.png hover_f1.png` | >= 0.03 | 0.097043 (fuzz 30) | 0.097225 (fuzz 30) — see note below | `owner-colour-flat` (does not move this oracle — see note) |
+| BAND-X | `diff overview.png local.png` | >= 0.30 (revised candidate: >= 0.10 — see below) | 0.137331 (fuzz 30) | — | none |
+| FLASH-X | `diff before_replay.png mid_replay.png`; owners changed after conquest | >= 0.01 (revised: data-level only — see below); owners differ | diff 0.003041 (fuzz 30); `owners[5]` 3 -> -1 (confirmed via `qa_state()` and the HUD edge-count label, 96/39 -> 93/42) | diff n/a; owners unchanged | `conquest-no-recolour` |
+| ERR-0 | `errors.txt` count, `exit.txt`, no `UNIFORM` | count 0; exit 0 | count 0, exit 0, no UNIFORM (after the two real bugs below were fixed) | — | none |
+| GPU-0 | `_qa.adapter` contains `llvmpipe`, method | exact | `llvmpipe (LLVM 21.1.8, 256 bits)`, `gl_compatibility` | — | none |
+
+## Why some numbers needed a real fix, not just a threshold note
+
+**Distinct faction hues (real bug, fixed).** The brief's "hash-to-hue function copied from `faction_palette.gd:38`" (`posmod(str(id).hash(), 360)`) was measured directly: ids 0-7 all land at hue 0.39-0.41 — every faction rendered the same shade of green. `faction_palette.gd`'s own ids are long strings (`"f_dominion"`); a single-digit string barely moves the hash. Switched to a golden-angle step (`fmod(id * 0.6180339887, 1.0)`), the standard technique for maximally distinct hues over a small sequential id space. Confirmed visually (`pass1/overview_seed11.png`): red/blue/green/magenta, four clearly separate territories.
+
+**Faction names invisible at Overview, then a visible ghost outline everywhere else (real bug, fixed).** `Label3D`'s default `pixel_size` (0.01) rendered 40px font at ~0.4 world units — invisible against the ~100wu-radius galaxy — so Overview showed no names at all. Fixed with `pixel_size = 0.05`. That surfaced a second bug: `Label3D` carries `modulate` (fill) and `outline_modulate` (the text's dark border) as separate alpha channels; `update_view()` only drove `modulate.a` by the Overview-only alpha, so the outline stayed fully opaque at every band — a readable dark silhouette of every faction name sitting on the galaxy at Regional and Local, where names must be hidden (R-106-03). Caught by eye on `regional_seed11.png` ("ction 0" visible). Fixed by driving `outline_modulate.a` the same way.
+
+**Click-to-focus never worked over the Xvfb driver until this was found (real bug, fixed).** `PICK-7`'s headless check computes `project(id)` then immediately `pick_at()` on that same value — self-consistent regardless of which pixel space either function actually uses, so it could never catch this. Every synthetic `click` in `qa/focus.json` and ad hoc repros returned `focused == -1`. Root cause: `InputEventMouseButton/MouseMotion.position` delivered to `_unhandled_input` is in the project's configured base-resolution canvas space (1920x1080), not real window pixels, under `canvas_items`/`expand` stretch; `project()` already rescales `unproject_position()`'s output down to real window pixels (to match what `qa_driver`'s `click`/`move` verbs send and what `qa_state()` reports), but `_unhandled_input` was comparing that against the raw, un-rescaled event position — off by exactly the base/window ratio (measured 1.5x at 1280x720: a click sent at `(640.6, 391.1)` arrived at `_unhandled_input` as `(960.9, 586.7)`). Fixed by rescaling incoming event positions the same way before calling `pick_at()`.
+
+## Why two Xvfb thresholds needed a revised candidate, with evidence
+
+**BAND-X.** The brief's candidate (>= 0.30) assumes Overview and Local read as strongly different frames. Measured clean: 0.137331 (fuzz 30) — real signal (Overview is a wide dim network view with names; Local is one or two huge close-up spheres filling most of the frame; the HUD panel and band label also change), but capped well under 0.30 because both shots share large stretches of near-identical black background space that a per-pixel AE-with-fuzz metric does not weight as different. Recommend a revised candidate of >= 0.10, which this measurement clears comfortably and which BAND-6's own headless check already proves is a real state change (`Overview`/`Local` strings, distance 90 vs 20).
+
+**FLASH-X.** The brief's candidate (>= 0.01 pixel diff) undershot: measured clean 0.003041. The *data-level* recolour is real and proven three ways — `qa_state().owners[5]` goes 3 -> -1 matching `owners[0]`, the HUD's own border/trade edge count visibly changes in the screenshot (96/39 -> 93/42), and `REPLAY-9`'s headless check asserts the same transition. What the pixel diff mostly misses is the *transient* flash (ring expand + 3x point pulse, 0.6s): `qa/smoke.json`'s three `qa_replay_step` calls run back-to-back with no `wait_frames` between them (matching the brief's own smoke-script shape), so by the time the screenshot's two `process_frame` waits elapse, the flash from the relevant conquest event is already well past its peak or faded. Recommend treating FLASH-X as a data-level oracle (`owners` differs, confirmed above) rather than a pixel-diff one; if a strong flash-diff shot is wanted, a dedicated script should screenshot immediately after a single `qa_replay_step` with no intervening calls.
+
+**HOVER-X and `owner-colour-flat`.** Measured clean 0.097043 and planted 0.097225 — essentially identical; this oracle does not distinguish the plant. That is expected once the mechanism is worked through: the hover emphasis multiplier (1.3x bright / 0.25x dim) is applied to whatever the base colour is, flat white or not, so the *brightness* pattern that drives most of the pixel diff survives the plant intact. `owner-colour-flat` is correctly caught by `COLOUR-5` (headless, 79/79 mismatch) instead; HOVER-X's role is validating the hover mechanism itself, not this specific plant.
 
 ## Visual questions
 
-TBD once screenshots exist.
+Read each PNG beside `docs/bible/references/E-16/main_menu.png` and `docs/bible/references/E-09/time_jump_galaxy_and_scroll.png`.
 
-## HELD
+- **Q1** (Regional, can you tell which systems belong together without reading a label): **yes**. Proving shot: `pass1/regional_seed11.png` — four clearly separate colour territories (red, blue, green, one grey neutral cluster), border filaments visibly following each colour.
+- **Q2** (border filaments visibly thicker/brighter than trade): **yes**, though subtly at this camera distance. Proving shot: `pass1/regional_seed11.png` — the bright red/blue/green arcs (border, width 0.075wu) read as clearly thicker and more saturated than the thin dim grey arcs reaching the neutral systems (trade, width 0.035wu, 70% of band alpha). The width difference is real but small in absolute screen pixels at Regional zoom; it reads more clearly at Local (`pass1/local_seed12.png` shows one thick magenta border arc next to a visibly thinner grey trade arc from the same system).
+- **Q3** (Local brightens the focused system and desaturates distant ones; Overview reads as a whole map with names): **yes** for both halves. `pass1/local_seed11.png`: the two nearer grey systems read full-size/bright, matching the "within 30wu keeps colour" rule for what's actually the focused system's own owner (neutral, hence grey) and its immediate neighbours. `pass1/overview_seed11.png` and `overview_seed12.png`: the whole disc is visible, small dim points, and "Faction 0/1/2/3" labels float at territory centroids — reads as a map, not a close-up.
+- **Q4** (ambient field present and behind the territory, not competing): **yes**. Every pass1 shot shows a faint scattered starfield and a dim polar grid on the black background; at no zoom level does it compete with the bright, saturated points and filaments in front of it.
+- **Q5** (does the replay frame show a flash that reads as an event at a system): **HELD**. `pass1/mid_replay_seed11.png` and `mid_replay_seed12.png` show the *result* of the replay (edge/owner counts changed in the HUD, territory colour changed at the conquered system) but not an obvious in-flight flash artifact — see the FLASH-X finding above: the transient ring/pulse has likely already faded by the time the screenshot's frame-wait completes, three `qa_replay_step` calls deep with no `wait_frames` between them. A dedicated single-step-then-shoot script would be needed to judge the flash's own look; not built here since the brief's smoke-script shape does not call for it.
+- **Q6** (any magenta, black-as-error, or clipped HUD text at 720p): **no** clipped or garbled text in any of the 17 screenshots reviewed (7 from `qa/smoke.json` plus 10 pass1 shots). Faction 3's real colour is a magenta/purple (`pass1/overview_seed12.png`) — that is the intended golden-angle palette output for id 3, not a placeholder-error magenta; no unrecognised-mesh magenta boxes appear anywhere (nothing in this mockup uses named mesh strings the way the landscape kit does, so that particular failure mode does not apply here).
+- **Q7** (reads as a cousin of the reference captures — luminous points, lanes, dark nebula space — rather than a graph diagram): **yes**. Compare `pass1/regional_seed11.png` against `docs/bible/references/E-09/time_jump_galaxy_and_scroll.png`: same idea of bright nodes joined by coloured lane arcs over a star-flecked black field with a faint polar grid, though this mockup has no territory shells yet (out of scope per the brief) so it reads flatter/more line-graph-like than the reference's soft glowing shell overlaps. `pass1/overview_seed11.png` against `docs/bible/references/E-16/main_menu.png`: shares the dark-field-plus-scattered-dust-and-stars mood, though the main menu reference is far denser with dust and has one dominant bright core, which this mockup's flatter starfield does not attempt to match (Q-106-shell below).
 
-TBD.
+**HELD:** Q5 (flash-in-flight look; needs a dedicated single-step screenshot script to judge fairly, not built here).
 
 ## Timings
 
-TBD.
+- Headless generation + build (`timing_ms`, seed 11, 79 systems / 135 edges): gen 11.9ms + build 12.0ms = 23.9ms total, comfortably under the 500ms TIME-11 budget.
+- Per-frame cost under llvmpipe/Compatibility at 1280x720 (`_qa.fps_ms`, `Performance.TIME_PROCESS`): ~67.8ms/frame, essentially flat across bands and seeds in every state capture reviewed. This is the process/script-side frame cost the engine self-reports, not full wall-clock-per-screenshot; it is far below the brief's "expect roughly one second per rendered frame on a heavy 3D scene" caveat, consistent with this scene being much lighter than the landscape mockup's ~12,000-piece scatter (79 points, 135 filament tube meshes, 2 ambient MultiMeshes of 400/800 quads, one polar grid).
+- One full clean `mockup_qa.sh run` of `qa/smoke.json` (4 regenerates, 7 screenshots, 1280x720): a few seconds of wall clock once the harness's autoload-freeing fix (`b65afa8`) was merged in; see the two harness-defect findings below for what it looked like before that fix.
+
+## Harness-environment findings (not a mockup defect; reported per the brief's "if the harness is broken, stop and report" rule)
+
+1. **Xvfb screensaver blanking the window after 600s** (fix `a98c47f`, `scripts/mockup_qa.sh` now starts Xvfb with `-s 0`) — root-caused and fixed by the coordinator/design lane, merged in via `git merge --no-edit main` mid-task.
+2. **`SimBridge` autoload surviving `--script` boot and routing to the error screen** (fix `b65afa8`, `qa_boot.gd` now frees every autoload before instantiating the mockup) — this was the actual cause of the progressive dimming and later-screenshot stalls this session hit repeatedly before the fix landed; also root-caused and fixed by the coordinator, merged in the same way. Both fixes are outside `scenes/mockups/galaxy/**` and were never hand-patched here.
