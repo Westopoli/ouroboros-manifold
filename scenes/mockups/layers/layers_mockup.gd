@@ -214,6 +214,7 @@ func qa_state() -> Dictionary:
 		if u.faction == 0:
 			rings[str(uid)] = "#" + _layer_view.ring_color(u).to_html(false)
 
+	var pan: Vector2 = _camera_rig.get_pan()
 	return {
 		"seed": _seed,
 		"hash": _sim.compute_hash(),
@@ -227,6 +228,9 @@ func qa_state() -> Dictionary:
 		"ring_px": _layer_view.sensor_ring_px(cam),
 		"timing_ms": {"tick_avg": _sim.tick_avg_ms()},
 		"regen_count": _regen_count,
+		"selected_uid": _selected_uid,
+		"camera": {"x": pan.x, "z": pan.y},
+		"canvas_px": [get_viewport().get_visible_rect().size.x, get_viewport().get_visible_rect().size.y],
 	}
 
 
