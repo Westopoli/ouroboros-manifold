@@ -16,3 +16,11 @@ Per row: file, edit, assert-count before -> after, new failure line. Rows skippe
 | `test_E06_S043_peace_grows_out_of_quiet.py::test_R_043_06_pair_stays_neutral_counter_resets` | added round-trip `assert lib.om_faction_stance_counter(w,0,1) == 80` right after the setter call | 16 -> 17 | `assert 0 == 80` |
 | `test_E06_S045_a_faction_s_technology_is_one_number.py::test_R_045_06_it_equals_parent_s_tech` | added `assert breakaway_fid != 0` before reading its tech | 14 -> 15 | `AssertionError: breakaway id must differ from parent id 0` / `assert 0 != 0` |
 
+### E-07
+
+| Test | Edit | asserts before -> after | New failure |
+|---|---|---|---|
+| `test_E07_S053_every_faction_has_an_age.py::test_R_053_01_its_phase_fragmentation` | companion check: reset window to revolts=0 and assert `phase != FRAGMENTATION` | 10 -> 11 | `AssertionError: assert 0 != 0` (phase stub always returns FRAGMENTATION's value 0) |
+
+Row skipped: `test_E07_S054_where_a_civilization_ends_up.py::test_R_054_01_deferred_with_feature_no_rule` -- see skip list at end.
+

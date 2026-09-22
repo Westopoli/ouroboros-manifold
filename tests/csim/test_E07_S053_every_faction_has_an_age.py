@@ -46,6 +46,12 @@ def test_R_053_01_its_phase_fragmentation(lib, world_factory):
 
     assert lib.om_faction_phase(w, 0) == OMPhase.FRAGMENTATION
 
+    # Companion check: with revolts=0 the fragmentation condition no longer
+    # holds, so phase must NOT be fragmentation. A stub that always returns
+    # FRAGMENTATION's value (0) regardless of input would fail this.
+    lib.om_faction_set_event_window_counts(w, 0, total_events=100, revolts=0, attacks=0, colonizations=0)
+    assert lib.om_faction_phase(w, 0) != OMPhase.FRAGMENTATION
+
 
 def test_R_053_02_its_phase_overextension(lib, world_factory):
     """Given not fragmentation, When maintenance (regions · 8) divided by total economy exceeds 0.4, Then its phase is overextension."""
