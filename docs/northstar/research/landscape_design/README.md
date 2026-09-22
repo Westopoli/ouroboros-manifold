@@ -46,4 +46,4 @@ Both mappers use the same placement engine, so a border is a coastline, a cliff 
 
 ## Next step
 
-A mockup spec for Westley's approval, then the mockup itself in Godot, then the epic rewrites.
+The mockup is built (`scenes/mockups/landscape/`, throwaway GDScript, `godot --path . --scene scenes/mockups/landscape/landscape_mockup.tscn`) and awaiting Westley's approval pass. 14 review screenshots are in `mockup/`; the finishing report (evidence, open questions, and one thing that argues against the one-generator-two-mappers idea) was delivered to Westley in chat on 2026-09-21. On approval: epics E-17/E-16/E-19 are rewritten from this design and Stage 5 tests are authored.
