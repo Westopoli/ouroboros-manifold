@@ -13,6 +13,8 @@ fails every dependent test loudly (red), per the QA plan for this suite.
 import ctypes
 import math
 import pathlib
+import re
+import tomllib
 
 import pytest
 
@@ -20,6 +22,7 @@ REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 LIB_PATH = REPO_ROOT / "libouroboros.so"
 DBG_LIB_PATH = REPO_ROOT / "libouroboros_dbg.so"
 CSRC_DIR = REPO_ROOT / "csrc"
+MVP_FEATURES_PATH = REPO_ROOT / "docs/northstar/spec_factory/mvp_features.toml"
 
 
 BUILD_ERROR = None
@@ -277,29 +280,80 @@ def dbg():
     return handle
 
 
-def _world_factory_for(handle):
+_MVP_FEATURES = None
+
+
+def _mvp_features():
+    global _MVP_FEATURES
+    if _MVP_FEATURES is None:
+        with open(MVP_FEATURES_PATH, "rb") as f:
+            _MVP_FEATURES = tomllib.load(f)
+    return _MVP_FEATURES
+
+
+_EPIC_RE = re.compile(r"^test_e(\d+)_", re.IGNORECASE)
+_EPIC_CONTROL_RE = re.compile(r"^test_control_e(\d+)_", re.IGNORECASE)
+
+
+def _epic_for_module(stem):
+    """D1 (mvp_features.toml): the epic a test module's world_factory /
+    dbg_world_factory calls apply the [isolation] set for, derived from the
+    module's own filename -- `test_E##_...` (the story modules) or
+    `test_control_e##_...` (the per-epic positive controls). An un-prefixed
+    `test_control_...` file is one of the original E-02 drift/oscillator bug
+    controls (test_control_osc_as_level.py and friends, predating the E-03+
+    per-epic control naming), so it falls to E-02. Anything else gets no
+    epic and falls to [default]."""
+    m = _EPIC_RE.match(stem) or _EPIC_CONTROL_RE.match(stem)
+    if m:
+        return f"E-{int(m.group(1)):02d}"
+    if stem.startswith("test_control_"):
+        return "E-02"
+    return None
+
+
+def _feature_names_for_epic(epic):
+    cfg = _mvp_features()
+    isolation = cfg.get("isolation", {})
+    if epic and epic in isolation:
+        return isolation[epic]
+    return cfg.get("default", {}).get("features", [])
+
+
+def _apply_epic_features(handle, w, epic):
+    """D1: om_world_new() sets no feature any more; apply the calling test's
+    epic set (or [default]) on top of the raw world, mirroring what the
+    DRIFT-on default used to do globally, now scoped per epic."""
+    for name in _feature_names_for_epic(epic):
+        handle.om_world_set_feature(w, getattr(OMFeature, name), 1)
+
+
+def _world_factory_for(handle, epic):
     created = []
 
     def _make(n_regions=1, seed=1):
         w = handle.om_world_new(ctypes.c_uint32(n_regions), ctypes.c_uint64(seed))
         assert w, "om_world_new returned NULL"
         created.append(w)
+        _apply_epic_features(handle, w, epic)
         return w
 
     return _make, created
 
 
 @pytest.fixture
-def world_factory(lib):
-    make, created = _world_factory_for(lib)
+def world_factory(lib, request):
+    epic = _epic_for_module(pathlib.Path(request.module.__file__).stem)
+    make, created = _world_factory_for(lib, epic)
     yield make
     for w in created:
         lib.om_world_free(w)
 
 
 @pytest.fixture
-def dbg_world_factory(dbg):
-    make, created = _world_factory_for(dbg)
+def dbg_world_factory(dbg, request):
+    epic = _epic_for_module(pathlib.Path(request.module.__file__).stem)
+    make, created = _world_factory_for(dbg, epic)
     yield make
     for w in created:
         dbg.om_world_free(w)

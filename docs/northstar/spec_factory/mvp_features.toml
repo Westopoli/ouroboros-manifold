@@ -1,0 +1,32 @@
+# D1 (docs/northstar/plans/briefs/2026-09-22-two-day-push.md, decision 4):
+# om_world_new() sets no feature (the DRIFT-on default in csrc/region.c is
+# gone, freeze/F2). tests/csim/conftest.py's world_factory / dbg_world_factory
+# apply the set below on top of every raw world, keyed by the calling test
+# module's epic (derived from its filename, `test_E##_...` or
+# `test_control_e##_...`; an un-prefixed `test_control_*` file is one of the
+# original E-02 drift/oscillator bug controls). Feature names are om_feature
+# enum members (OMFeature.<NAME> in conftest.py, OM_FEAT_<NAME> in
+# csrc/ouroboros_sim.h).
+
+[default]
+# The MVP feature set (Round-1 lean loop, mvp-priority-round1): every story a
+# test can reach without its own epic's still-unattached step. DIPLOMACY,
+# TECHNOLOGY, LIFECYCLE, and TACTICAL stay off here until B5, B6, and B10
+# attach -- freeze/F2 wires their STUB calls, but the calls do nothing until
+# those cards land, so turning the switches on by default would buy nothing
+# and only widen what an isolation test has to account for.
+features = ["EVENTS", "FACTIONS", "FRICTION", "ADMIN_REVOLTS", "DRIFT"]
+
+[isolation]
+# E-08, E-09, E-10 have no row here; they fall through to [default].
+"E-02" = ["DRIFT"]
+"E-04" = ["EVENTS"]
+"E-05" = ["FACTIONS", "FRICTION", "ADMIN_REVOLTS", "DRIFT"]
+"E-06" = ["DIPLOMACY", "TECHNOLOGY"]
+"E-07" = ["LIFECYCLE"]
+"E-11" = ["TACTICAL"]
+"E-12" = ["TACTICAL"]
+"E-13" = ["TACTICAL"]
+"E-14" = ["TACTICAL"]
+"E-15" = ["TACTICAL"]
+"E-17" = ["TACTICAL"]

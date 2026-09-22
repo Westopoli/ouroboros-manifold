@@ -26,7 +26,9 @@ om_world *om_world_new(uint32_t n_regions, uint64_t seed) {
     for (uint32_t i = 0; i < n_regions; i++) {
         w->regions[i].faction_id = -1;
     }
-    om_world_set_feature(w, OM_FEAT_DRIFT, 1);
+    /* D1 (two-day-push brief, decision 4): om_world_new() sets no feature.
+     * conftest.py's world_factory applies each test's epic feature set from
+     * docs/northstar/spec_factory/mvp_features.toml on top of a raw world. */
     memset(w->region_edge, -1, sizeof(w->region_edge));
     w->trace = NULL;
     w->trace_len = 0;
