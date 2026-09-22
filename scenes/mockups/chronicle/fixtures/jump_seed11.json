@@ -1,0 +1,770 @@
+{
+  "time_jump_start": {
+    "type": "time_jump_start",
+    "time_jump_id": "tj_seed11",
+    "span_years": 24,
+    "total_keyframes": 12,
+    "total_entries": 8,
+    "faction_names": {
+      "f_ostrel": "The Ostrel Concord",
+      "f_kaine": "The Kaine Dominion"
+    },
+    "ownership_timeline": [
+      {
+        "tick": 463,
+        "system_id": "r_moorwick",
+        "owner": "f_ostrel"
+      },
+      {
+        "tick": 1010,
+        "system_id": "r_pellast",
+        "owner": "f_kaine"
+      }
+    ]
+  },
+  "entries": [
+    {
+      "type": "chronicle_entry",
+      "entry_id": "ce_0001",
+      "category": "consequence_success",
+      "region": "r_halven",
+      "score": 99.0,
+      "tick_range_start": 0,
+      "tick_range_end": 150,
+      "base_form": "Halven Reach, held by the Ostrel Concord, held through the siege everyone expected to break it. The garrison's last stand became the reason children there would later be told to trust their own stubbornness.",
+      "expanded_form": "Halven Reach, held by the Ostrel Concord, held through the siege everyone expected to break it. The garrison's last stand became the reason children there would later be told to trust their own stubbornness. Commander Rael Voss signed the surrender terms Kaine Dominion never got to offer.",
+      "mentions": [
+        {
+          "kind": "region",
+          "id": "r_halven",
+          "form": "base",
+          "span_start": 0,
+          "span_end": 12
+        },
+        {
+          "kind": "faction",
+          "id": "f_ostrel",
+          "form": "base",
+          "span_start": 26,
+          "span_end": 40
+        }
+      ],
+      "expanded_mentions": [
+        {
+          "kind": "region",
+          "id": "r_halven",
+          "form": "expanded",
+          "span_start": 0,
+          "span_end": 12
+        },
+        {
+          "kind": "faction",
+          "id": "f_ostrel",
+          "form": "expanded",
+          "span_start": 26,
+          "span_end": 40
+        },
+        {
+          "kind": "character",
+          "id": "c_rael_voss",
+          "form": "expanded",
+          "span_start": 218,
+          "span_end": 227
+        },
+        {
+          "kind": "faction",
+          "id": "f_kaine",
+          "form": "expanded",
+          "span_start": 255,
+          "span_end": 269
+        }
+      ]
+    },
+    {
+      "type": "chronicle_entry",
+      "entry_id": "ce_0002",
+      "category": "lineage_military_action",
+      "region": "r_kestrel",
+      "score": 9.5,
+      "tick_range_start": 180,
+      "tick_range_end": 360,
+      "base_form": "Word of Halven Reach reached Kestrel Hold before the couriers did. The Voss household had already buried one commander that winter; they raised Rael to the rank before the ink on the last commission dried.",
+      "expanded_form": "Word of Halven Reach reached Kestrel Hold before the couriers did. The Voss household had already buried one commander that winter; they raised Rael to the rank before the ink on the last commission dried. The regiment swore the oath to the Ostrel Concord twice that week, once for Rael and once for the dead.",
+      "mentions": [
+        {
+          "kind": "region",
+          "id": "r_halven",
+          "form": "base",
+          "span_start": 8,
+          "span_end": 20
+        },
+        {
+          "kind": "region",
+          "id": "r_kestrel",
+          "form": "base",
+          "span_start": 29,
+          "span_end": 41
+        },
+        {
+          "kind": "character",
+          "id": "c_rael_voss",
+          "form": "base",
+          "span_start": 144,
+          "span_end": 148
+        }
+      ],
+      "expanded_mentions": [
+        {
+          "kind": "region",
+          "id": "r_halven",
+          "form": "expanded",
+          "span_start": 8,
+          "span_end": 20
+        },
+        {
+          "kind": "region",
+          "id": "r_kestrel",
+          "form": "expanded",
+          "span_start": 29,
+          "span_end": 41
+        },
+        {
+          "kind": "character",
+          "id": "c_rael_voss",
+          "form": "expanded",
+          "span_start": 144,
+          "span_end": 148
+        },
+        {
+          "kind": "faction",
+          "id": "f_ostrel",
+          "form": "expanded",
+          "span_start": 241,
+          "span_end": 255
+        }
+      ]
+    },
+    {
+      "type": "chronicle_entry",
+      "entry_id": "ce_0003",
+      "category": "regional_faction_shift",
+      "region": "r_moorwick",
+      "score": 8.0,
+      "tick_range_start": 380,
+      "tick_range_end": 900,
+      "base_form": "Moorwick changed hands twice before midsummer. The Kaine Dominion garrison withdrew without a formal surrender, and the Ostrel Concord banner went up over a town hall still full of Kaine paperwork nobody had time to burn.",
+      "expanded_form": "Moorwick changed hands twice before midsummer. The Kaine Dominion garrison withdrew without a formal surrender, and the Ostrel Concord banner went up over a town hall still full of Kaine paperwork nobody had time to burn. The new administrator, Warden Coel Ashby, kept the old ledgers open rather than rewrite the town's debts in Ostrel ink.",
+      "mentions": [
+        {
+          "kind": "region",
+          "id": "r_moorwick",
+          "form": "base",
+          "span_start": 0,
+          "span_end": 8
+        },
+        {
+          "kind": "faction",
+          "id": "f_kaine",
+          "form": "base",
+          "span_start": 51,
+          "span_end": 65
+        },
+        {
+          "kind": "faction",
+          "id": "f_ostrel",
+          "form": "base",
+          "span_start": 120,
+          "span_end": 134
+        }
+      ],
+      "expanded_mentions": [
+        {
+          "kind": "region",
+          "id": "r_moorwick",
+          "form": "expanded",
+          "span_start": 0,
+          "span_end": 8
+        },
+        {
+          "kind": "faction",
+          "id": "f_kaine",
+          "form": "expanded",
+          "span_start": 51,
+          "span_end": 65
+        },
+        {
+          "kind": "faction",
+          "id": "f_ostrel",
+          "form": "expanded",
+          "span_start": 120,
+          "span_end": 134
+        },
+        {
+          "kind": "character",
+          "id": "c_coel_ashby",
+          "form": "expanded",
+          "span_start": 252,
+          "span_end": 262
+        }
+      ]
+    },
+    {
+      "type": "chronicle_entry",
+      "entry_id": "ce_0004",
+      "category": "regional_faction_shift",
+      "region": "r_pellast",
+      "score": 7.0,
+      "tick_range_start": 950,
+      "tick_range_end": 1300,
+      "base_form": "Pellast fell the other direction. Three seasons of Ostrel administration ended in an afternoon when the Kaine Dominion fleet took the orbital relay and the ground garrison simply stopped answering the Concord's calls.",
+      "expanded_form": "Pellast fell the other direction. Three seasons of Ostrel administration ended in an afternoon when the Kaine Dominion fleet took the orbital relay and the ground garrison simply stopped answering the Concord's calls. No one in Pellast filed a formal protest; the paperwork for that had left with the last Ostrel administrator three seasons earlier, along with Magistrate Enna Thale.",
+      "mentions": [
+        {
+          "kind": "region",
+          "id": "r_pellast",
+          "form": "base",
+          "span_start": 0,
+          "span_end": 7
+        },
+        {
+          "kind": "faction",
+          "id": "f_ostrel",
+          "form": "base",
+          "span_start": 51,
+          "span_end": 57
+        },
+        {
+          "kind": "faction",
+          "id": "f_kaine",
+          "form": "base",
+          "span_start": 104,
+          "span_end": 118
+        }
+      ],
+      "expanded_mentions": [
+        {
+          "kind": "region",
+          "id": "r_pellast",
+          "form": "expanded",
+          "span_start": 0,
+          "span_end": 7
+        },
+        {
+          "kind": "faction",
+          "id": "f_ostrel",
+          "form": "expanded",
+          "span_start": 51,
+          "span_end": 57
+        },
+        {
+          "kind": "faction",
+          "id": "f_kaine",
+          "form": "expanded",
+          "span_start": 104,
+          "span_end": 118
+        },
+        {
+          "kind": "character",
+          "id": "c_enna_thale",
+          "form": "expanded",
+          "span_start": 372,
+          "span_end": 382
+        }
+      ]
+    },
+    {
+      "type": "chronicle_entry",
+      "entry_id": "ce_0005",
+      "category": "chain_crisis_resolved_well",
+      "region": "r_dray",
+      "score": 6.0,
+      "tick_range_start": 1350,
+      "tick_range_end": 1750,
+      "base_form": "Dray's Hollow starved for a season before the grain barges came. The shortage bred a small revolt that the local garrison put down without much bloodshed, and by autumn the granaries were fuller than before the failure that started it.",
+      "expanded_form": "Dray's Hollow starved for a season before the grain barges came. The shortage bred a small revolt that the local garrison put down without much bloodshed, and by autumn the granaries were fuller than before the failure that started it. The barges came from Moorwick, which had grain to spare and, for once, a garrison willing to share it.",
+      "mentions": [
+        {
+          "kind": "region",
+          "id": "r_dray",
+          "form": "base",
+          "span_start": 0,
+          "span_end": 13
+        }
+      ],
+      "expanded_mentions": [
+        {
+          "kind": "region",
+          "id": "r_dray",
+          "form": "expanded",
+          "span_start": 0,
+          "span_end": 13
+        },
+        {
+          "kind": "region",
+          "id": "r_moorwick",
+          "form": "expanded",
+          "span_start": 257,
+          "span_end": 265
+        }
+      ]
+    },
+    {
+      "type": "chronicle_entry",
+      "entry_id": "ce_0006",
+      "category": "chain_expansion",
+      "region": "r_underfell",
+      "score": 5.0,
+      "tick_range_start": 1800,
+      "tick_range_end": 2050,
+      "base_form": "Undermere's tunnels reached the surface three times in as many years, each time claimed as a new settlement by whichever garrison found the shaft first. The Concord finally paid for proper surveys rather than race the Dominion to another hole in the ground.",
+      "expanded_form": "Undermere's tunnels reached the surface three times in as many years, each time claimed as a new settlement by whichever garrison found the shaft first. The Concord finally paid for proper surveys rather than race the Dominion to another hole in the ground. Surveyor Mira Doss filed the first map of the tunnels that anyone actually trusted.",
+      "mentions": [
+        {
+          "kind": "region",
+          "id": "r_underfell",
+          "form": "base",
+          "span_start": 0,
+          "span_end": 9
+        },
+        {
+          "kind": "faction",
+          "id": "f_ostrel",
+          "form": "base",
+          "span_start": 157,
+          "span_end": 164
+        },
+        {
+          "kind": "faction",
+          "id": "f_kaine",
+          "form": "base",
+          "span_start": 218,
+          "span_end": 226
+        }
+      ],
+      "expanded_mentions": [
+        {
+          "kind": "region",
+          "id": "r_underfell",
+          "form": "expanded",
+          "span_start": 0,
+          "span_end": 9
+        },
+        {
+          "kind": "faction",
+          "id": "f_ostrel",
+          "form": "expanded",
+          "span_start": 157,
+          "span_end": 164
+        },
+        {
+          "kind": "faction",
+          "id": "f_kaine",
+          "form": "expanded",
+          "span_start": 218,
+          "span_end": 226
+        },
+        {
+          "kind": "character",
+          "id": "c_mira_doss",
+          "form": "expanded",
+          "span_start": 267,
+          "span_end": 276
+        }
+      ]
+    },
+    {
+      "type": "chronicle_entry",
+      "entry_id": "ce_0007",
+      "category": "regional_growth",
+      "region": "r_ashcombe",
+      "score": 4.0,
+      "tick_range_start": 2080,
+      "tick_range_end": 2250,
+      "base_form": "Ashcombe grew fat on the trade Halven Reach's siege had rerouted through it. Warehouses that stood empty for a decade filled twice over, and the harbor added a second dock nobody had budgeted for.",
+      "expanded_form": "Ashcombe grew fat on the trade Halven Reach's siege had rerouted through it. Warehouses that stood empty for a decade filled twice over, and the harbor added a second dock nobody had budgeted for. Harbormaster Guil Petrenko called it the best accident in Ashcombe's short memory.",
+      "mentions": [
+        {
+          "kind": "region",
+          "id": "r_ashcombe",
+          "form": "base",
+          "span_start": 0,
+          "span_end": 8
+        },
+        {
+          "kind": "region",
+          "id": "r_halven",
+          "form": "base",
+          "span_start": 31,
+          "span_end": 43
+        }
+      ],
+      "expanded_mentions": [
+        {
+          "kind": "region",
+          "id": "r_ashcombe",
+          "form": "expanded",
+          "span_start": 0,
+          "span_end": 8
+        },
+        {
+          "kind": "region",
+          "id": "r_halven",
+          "form": "expanded",
+          "span_start": 31,
+          "span_end": 43
+        },
+        {
+          "kind": "character",
+          "id": "c_guil_petrenko",
+          "form": "expanded",
+          "span_start": 210,
+          "span_end": 223
+        }
+      ]
+    },
+    {
+      "type": "chronicle_entry",
+      "entry_id": "ce_0008",
+      "category": "regional_stable",
+      "region": "r_thistlewake",
+      "score": 3.0,
+      "tick_range_start": 2280,
+      "tick_range_end": 2400,
+      "base_form": "Thistlewake did what it always did, which was mostly nothing worth writing down. The garrison rotated, the harvest came in average, and the only news worth a mention was that there was no news.",
+      "expanded_form": "Thistlewake did what it always did, which was mostly nothing worth writing down. The garrison rotated, the harvest came in average, and the only news worth a mention was that there was no news. Even Warden Tomas Feck's annual report noted, dryly, that Thistlewake remained exactly as unremarkable as promised.",
+      "mentions": [
+        {
+          "kind": "region",
+          "id": "r_thistlewake",
+          "form": "base",
+          "span_start": 0,
+          "span_end": 11
+        }
+      ],
+      "expanded_mentions": [
+        {
+          "kind": "region",
+          "id": "r_thistlewake",
+          "form": "expanded",
+          "span_start": 0,
+          "span_end": 11
+        },
+        {
+          "kind": "character",
+          "id": "c_tomas_feck",
+          "form": "expanded",
+          "span_start": 206,
+          "span_end": 216
+        }
+      ]
+    }
+  ],
+  "galaxy": {
+    "systems": [
+      {
+        "id": "r_halven",
+        "x": 120.0,
+        "y": 40.0,
+        "owner": "f_ostrel"
+      },
+      {
+        "id": "r_kestrel",
+        "x": 60.0,
+        "y": 160.0,
+        "owner": "f_ostrel"
+      },
+      {
+        "id": "r_moorwick",
+        "x": -180.0,
+        "y": 90.0,
+        "owner": "f_kaine"
+      },
+      {
+        "id": "r_pellast",
+        "x": -140.0,
+        "y": -160.0,
+        "owner": "f_ostrel"
+      },
+      {
+        "id": "r_dray",
+        "x": 220.0,
+        "y": -120.0,
+        "owner": "f_ostrel"
+      },
+      {
+        "id": "r_underfell",
+        "x": -40.0,
+        "y": 240.0,
+        "owner": "f_kaine"
+      },
+      {
+        "id": "r_ashcombe",
+        "x": 200.0,
+        "y": 180.0,
+        "owner": "f_ostrel"
+      },
+      {
+        "id": "r_thistlewake",
+        "x": -260.0,
+        "y": -40.0,
+        "owner": "f_kaine"
+      },
+      {
+        "id": "s00",
+        "x": 454.8,
+        "y": 68.7,
+        "owner": "f_ostrel"
+      },
+      {
+        "id": "s01",
+        "x": 380.0,
+        "y": 259.3,
+        "owner": "f_kaine"
+      },
+      {
+        "id": "s02",
+        "x": 229.8,
+        "y": 398.5,
+        "owner": ""
+      },
+      {
+        "id": "s03",
+        "x": 34.2,
+        "y": 458.7,
+        "owner": "f_ostrel"
+      },
+      {
+        "id": "s04",
+        "x": -168.2,
+        "y": 428.1,
+        "owner": "f_kaine"
+      },
+      {
+        "id": "s05",
+        "x": -337.3,
+        "y": 312.7,
+        "owner": "f_ostrel"
+      },
+      {
+        "id": "s06",
+        "x": -439.6,
+        "y": 135.4,
+        "owner": "f_kaine"
+      },
+      {
+        "id": "s07",
+        "x": -454.8,
+        "y": -68.7,
+        "owner": ""
+      },
+      {
+        "id": "s08",
+        "x": -380.0,
+        "y": -259.3,
+        "owner": "f_ostrel"
+      },
+      {
+        "id": "s09",
+        "x": -229.8,
+        "y": -398.5,
+        "owner": "f_kaine"
+      },
+      {
+        "id": "s10",
+        "x": -34.2,
+        "y": -458.7,
+        "owner": "f_ostrel"
+      },
+      {
+        "id": "s11",
+        "x": 168.2,
+        "y": -428.1,
+        "owner": "f_kaine"
+      },
+      {
+        "id": "s12",
+        "x": 337.3,
+        "y": -312.7,
+        "owner": ""
+      },
+      {
+        "id": "s13",
+        "x": 439.6,
+        "y": -135.4,
+        "owner": "f_ostrel"
+      }
+    ],
+    "edges": [
+      [
+        "r_halven",
+        "r_kestrel"
+      ],
+      [
+        "r_kestrel",
+        "r_moorwick"
+      ],
+      [
+        "r_moorwick",
+        "r_pellast"
+      ],
+      [
+        "r_pellast",
+        "r_dray"
+      ],
+      [
+        "r_dray",
+        "r_underfell"
+      ],
+      [
+        "r_underfell",
+        "r_ashcombe"
+      ],
+      [
+        "r_ashcombe",
+        "r_thistlewake"
+      ],
+      [
+        "r_thistlewake",
+        "r_halven"
+      ],
+      [
+        "s00",
+        "s01"
+      ],
+      [
+        "s01",
+        "s02"
+      ],
+      [
+        "s02",
+        "s03"
+      ],
+      [
+        "s03",
+        "s04"
+      ],
+      [
+        "s04",
+        "s05"
+      ],
+      [
+        "s05",
+        "s06"
+      ],
+      [
+        "s06",
+        "s07"
+      ],
+      [
+        "s07",
+        "s08"
+      ],
+      [
+        "s08",
+        "s09"
+      ],
+      [
+        "s09",
+        "s10"
+      ],
+      [
+        "s10",
+        "s11"
+      ],
+      [
+        "s11",
+        "s12"
+      ],
+      [
+        "s12",
+        "s13"
+      ],
+      [
+        "s13",
+        "s00"
+      ],
+      [
+        "r_halven",
+        "s00"
+      ],
+      [
+        "r_pellast",
+        "s03"
+      ],
+      [
+        "r_ashcombe",
+        "s06"
+      ],
+      [
+        "r_kestrel",
+        "s09"
+      ],
+      [
+        "r_dray",
+        "s12"
+      ]
+    ]
+  },
+  "keyframes": [
+    {
+      "tick": 40,
+      "system_id": "s03",
+      "owner": ""
+    },
+    {
+      "tick": 75,
+      "system_id": "r_halven",
+      "owner": "f_ostrel"
+    },
+    {
+      "tick": 270,
+      "system_id": "r_kestrel",
+      "owner": "f_ostrel"
+    },
+    {
+      "tick": 463,
+      "system_id": "r_moorwick",
+      "owner": "f_ostrel"
+    },
+    {
+      "tick": 700,
+      "system_id": "s07",
+      "owner": ""
+    },
+    {
+      "tick": 1010,
+      "system_id": "r_pellast",
+      "owner": "f_kaine"
+    },
+    {
+      "tick": 1550,
+      "system_id": "r_dray",
+      "owner": "f_ostrel"
+    },
+    {
+      "tick": 1600,
+      "system_id": "s10",
+      "owner": ""
+    },
+    {
+      "tick": 1925,
+      "system_id": "r_underfell",
+      "owner": "f_kaine"
+    },
+    {
+      "tick": 2165,
+      "system_id": "r_ashcombe",
+      "owner": "f_ostrel"
+    },
+    {
+      "tick": 2200,
+      "system_id": "s12",
+      "owner": ""
+    },
+    {
+      "tick": 2340,
+      "system_id": "r_thistlewake",
+      "owner": "f_kaine"
+    }
+  ]
+}
