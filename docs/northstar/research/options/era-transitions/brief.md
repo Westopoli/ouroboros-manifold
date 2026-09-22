@@ -74,3 +74,13 @@ Folded into the brief:
 - The chronicle: characters from earlier eras become distant myths and legends, mentioned less and less the farther the timeline moves from them.
 - The vehicle (question 1): the time jump carries the transition. What decides which jump crosses the boundary stays open; options may propose it.
 - Names (question 3): not answered. Options describe the boundary without naming the past and present eras.
+
+## 9. Sub-agent brief
+
+Follow the common template in `../README.md` ("Sub-agent template"). Sections 4 and 8 of this file are the constraints; where they disagree, section 8 wins.
+
+- Options: 3, of which 1 wild.
+- Tech rescales at the boundary: nobody arrives at late game, the leading civilization still leads.
+- When a peer lacks the next pack, the jump keeps going through history, looping through eras, until an era every peer owns; options show what the players see during that loop.
+- Earlier characters fade into distant myths and legends in the chronicle, mentioned less the farther the timeline moves.
+- Propose what decides which time jump crosses the boundary. Do not name the past and present eras.

@@ -55,8 +55,25 @@ None for complications. `docs/bible/references/E-10/notes.md:3`: "TBD by design.
 
 ## 7. Proposed option width
 
-Three options, one wild. Each option describes what a complication is to the player: how it announces itself, what it changes on the field, what decision it forces, how it reads in the debrief and the chronicle, and how difficulty changes its presence.
+Two options, one wild, surface level (reduced in batch 3). Each option describes what a complication is to the player: how it announces itself, what it changes on the field, what decision it forces, how it reads in the debrief and the chronicle, and how difficulty changes its presence.
 
 ## 8. Westley confirms
 
-(empty until batch 3)
+Batch 3, 2026-09-22, verbatim: "every third mission is a little often, we want this to be a rarity and celebrated (like an easter egg), 1% chance. 1: surface level now, not too deep on this one since yes we want the core missions work designed first. 2: decided at generation 4: true surprise. 5: no"
+
+Folded into the brief:
+
+- Cadence: about 1 percent of missions, a celebrated rarity in the spirit of an easter egg, not one in three.
+- Question 1: surface level in this pass; core missions are designed first. Width reduced to two options, one wild, with a shorter cap.
+- Question 2: decided at mission generation, never live.
+- Question 4: a true surprise, not foreshadowed.
+- Question 5: no overlap; at most one per mission.
+- Question 3 (the reinforcement wave's relation to complications): not answered; options may treat the wave as separate.
+
+## 9. Sub-agent brief
+
+Follow the common template in `../README.md` ("Sub-agent template"). Sections 4 and 8 of this file are the constraints; where they disagree, section 8 wins.
+
+- Options: 2, of which 1 wild.
+- Surface level. About 1 percent of missions, a celebrated rarity like an easter egg. Decided at generation, a true surprise, at most one per mission.
+- Cap: 400 to 700 words plus tables.

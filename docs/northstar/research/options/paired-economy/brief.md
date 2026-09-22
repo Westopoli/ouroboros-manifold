@@ -62,3 +62,13 @@ Folded into the brief:
 - Question 3: same tactical map for both players.
 - Question 4: the economy persists through time jumps, and its complexity must not grow without bound. A reset or load-capping mechanism is required; one idea is upgrades that automate earlier tasks so the player moves on to higher-reward ones. Options must say how load stays reasonable over a campaign.
 - Roster context: the bible now targets 20 to 40 unit types per era (Q-082-02), so production choices are wide.
+
+## 9. Sub-agent brief
+
+Follow the common template in `../README.md` ("Sub-agent template"). Sections 4 and 8 of this file are the constraints; where they disagree, section 8 wins.
+
+- Options: 3, of which 2 wild.
+- A full economy that demands thought and task juggling in the StarCraft 2 register (supply, several resources, tech timings, steady worker production), on the same tactical map as the battle.
+- The economy persists through time jumps and must not grow without bound: each option includes its reset or load-capping mechanism (one idea: upgrades that automate earlier tasks).
+- An economic mode the player enables; when off, the city runs itself. An optional shared mode where both players do both is welcome.
+- How the economy player's work becomes the commander's units, walls, and positions, and how the pair talks.

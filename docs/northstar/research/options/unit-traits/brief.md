@@ -58,4 +58,20 @@ Two options, one wild. Each option describes what a trait is to the player: wher
 
 ## 8. Westley confirms
 
-(empty until batch 3)
+Batch 3, 2026-09-22, verbatim: "1: yes design here 2: traits in addition to the increased unit number, think Dead-by-daylight level customizability, users will have  so many cards that each can be pretty individualized to their playstyle, if certain ones get abused we'll nerf them. 3: it can change a rule 4: depends on trait"
+
+Folded into the brief:
+
+- Question 1: deferred, not deleted; this pass designs the post-launch version.
+- Question 2: traits exist on top of the 20 to 40 unit roster. The register is Dead by Daylight's perk customization: many cards, so each player's force can be individualized to their playstyle, with abused cards nerfed after launch. Whether a card attaches to a unit type, a unit, the commander, or the force loadout is not stated; options say where cards come from, who holds them, and whether the enemy fields them too, and must reconcile with "no persistent player level" (A-061) and "both sides draw the same profiles" (R-080-01), naming what they strain.
+- Question 3: a trait may change a rule, not only a number.
+- Question 4: whether a trait shows on the HUD depends on the trait.
+
+## 9. Sub-agent brief
+
+Follow the common template in `../README.md` ("Sub-agent template"). Sections 4 and 8 of this file are the constraints; where they disagree, section 8 wins.
+
+- Options: 2, of which 1 wild.
+- Design the post-launch version: perk-card customization in the Dead by Daylight register, on top of a 20 to 40 unit roster, individualized to a player's style, nerfed when abused.
+- A trait may change a rule. HUD visibility depends on the trait.
+- Each option says where cards come from, who holds them (unit type, unit, commander, force), whether the enemy fields them, and how it squares with no persistent player level (A-061) and both sides drawing the same profiles (R-080-01).

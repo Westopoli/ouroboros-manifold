@@ -56,4 +56,21 @@ Three options, one wild. Each option describes what the player chooses, what the
 
 ## 8. Westley confirms
 
-(empty until batch 3)
+Batch 3, 2026-09-22, verbatim: "within reason, we don't want to have to design a whole LLM to play the game. For now we can use the Starcraft 2 model, we'll need to find out how they had those AI make decisions and play the game. 2: yes 3: not yet 4: cheating vision"
+
+Folded into the brief:
+
+- Reference model: StarCraft 2's built-in AI. The sub-agent researches how those opponents decide and play at each difficulty level and uses that as the primary prior art. No learned model, no LLM; "within reason".
+- Question 2: design the knob for the version that ships when S-125 is scheduled.
+- Question 3: the knob does not change enemy behavior yet; it changes how much the enemy has.
+- Question 4: cheating vision must never happen at any difficulty.
+- Question 1 (player side, enemy side, or both): answered by the StarCraft 2 reference and "how much the enemy has"; options may place the knob on either side or both and say so.
+
+## 9. Sub-agent brief
+
+Follow the common template in `../README.md` ("Sub-agent template"). Sections 4 and 8 of this file are the constraints; where they disagree, section 8 wins.
+
+- Options: 3, of which 1 wild.
+- Primary prior art: StarCraft 2's built-in AI difficulty levels. Research how those opponents decide and play at each level, with citations; no learned model, no LLM.
+- The knob changes how much the enemy has, not how it behaves, for now. Cheating vision never happens at any difficulty.
+- Each option says what the player chooses, what changes in the first ten minutes from easy to hard, and how a loss on hard still reads as the player's own limit.

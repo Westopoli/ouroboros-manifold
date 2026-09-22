@@ -64,3 +64,13 @@ Folded into the brief:
 - Question 1: confirmed. "Army hotkeys" are the control-group hotkeys. No all-army hotkey exists.
 - A right-click move on a selection keeps every unit on its current layer. Changing the layer of a group or a set of units is a deliberate act on a manual selection, never a side effect of a move.
 - Questions 2 to 4 (sub-group meanings, exclusive membership as a top-level rule, one gesture versus two): left to the options. Westley wants a variety of keybinds offered; each option proposes its vocabulary for selecting a group, a layer slice of it, or a set of units, and for moving that selection between layers.
+
+## 9. Sub-agent brief
+
+Follow the common template in `../README.md` ("Sub-agent template"). Sections 4 and 8 of this file are the constraints; where they disagree, section 8 wins.
+
+- Options: 3, of which 1 wild.
+- A hotkey and gesture table per option: bind, recall, narrow to a layer slice, select a set inside a group, move a selection to another layer, split, merge, center the camera.
+- A right-click move keeps every unit on its layer; a layer change is a deliberate act on a manual selection.
+- How exclusive membership reads when a group has layer slices inside it, and what the HUD tabs show for a group spread across layers.
+- The target: three armies with two or three layers each, run by one skilled player, with no select-all of any kind.

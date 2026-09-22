@@ -74,3 +74,14 @@ Folded into the brief:
 - Interim (question 3): classic RTS angle; the pitch number is not a decision ("I'm not sure if that's 45 degrees").
 - Height (question 4): the Halo Wars floor is the standard. The camera keeps the player's height above the ground under it through elevation changes, so the player never zooms and moves at once to follow terrain (also `docs/northstar/research/landscape_design/README.md:63,71`; `docs/northstar/plans/briefs/2026-09-21-p2-landscape-mockup-pass3.md:34`).
 - Unit POV (question 5): not answered in batch 1. Options may include or omit a unit POV preset; if included, the option must say what the player does there.
+
+## 9. Sub-agent brief
+
+Follow the common template in `../README.md` ("Sub-agent template"). Sections 4 and 8 of this file are the constraints; where they disagree, section 8 wins.
+
+- Options: 4, of which 2 wild.
+- The designed mode, entered from the classic RTS default view that has an auto-anchor home. Each option says how the player enters the mode, switches views inside it, steers, and returns home, and what they see while the view changes.
+- A control table per option: keys, mouse, and gestures for every action above.
+- How the five layers read from each view in the option; the Halo Wars height floor holds in every view.
+- Augmented-reality perception and legibility research is an explicit lead for wild options. Read `docs/research/topics/delegated_command_precedents.md` first; a literal Battle Room arena was already judged a bad fit.
+- Unit POV: optional; if an option includes it, say what the player does there.

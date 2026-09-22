@@ -61,3 +61,13 @@ Folded into the brief:
 - Zoom levels (question 3): the hub's "two zoom levels" are the galaxy view (outside missions, whole simulation) and the mission. The map view is a band inside the mission and never shows the galaxy. Options do not conflate the two.
 - Layers (question 4): layers collapse in the map view; each unit group carries a UI mark for Upper (layers 4 and 5), Lower (layers 1 and 2), or Expansive (layers 1 to 5). A group entirely on layer 3 was not named; options say how a mid-layer group reads.
 - Q-103-02's candidates are superseded by this combination: move and attack-move only, and the minimap replaced.
+
+## 9. Sub-agent brief
+
+Follow the common template in `../README.md` ("Sub-agent template"). Sections 4 and 8 of this file are the constraints; where they disagree, section 8 wins.
+
+- Options: 3, of which 1 wild.
+- Move and attack-move are the only orders from map altitude. The map view replaces the minimap. It lives inside the mission and never shows the galaxy.
+- How the player picks a group from above and gives the order; what the order looks like on the map and on the ground when they zoom back in.
+- Groups carry a mark for Upper (layers 4 and 5), Lower (1 and 2), or Expansive (1 to 5); propose how a group entirely on layer 3 reads.
+- What the transition between the tactical band and the map band looks and feels like, and how fog reads from above.

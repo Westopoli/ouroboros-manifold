@@ -68,3 +68,14 @@ Folded into the brief:
 - Layer-change indicator: when the player toggles a unit toward another layer, a small icon shows which layer it is moving to, like a waypoint. This is the R-009-02 preference indicator, now given a direction.
 - Grid (question 4): a grid around each unit, never a whole-layer plane. The battlefield, the background, and anything behind the grid must stay visible. Reference register: AutoCAD, Unreal Engine, and other 3D visualization tools that read clearly.
 - Five layers (question 5): confirmed.
+
+## 9. Sub-agent brief
+
+Follow the common template in `../README.md` ("Sub-agent template"). Sections 4 and 8 of this file are the constraints; where they disagree, section 8 wins.
+
+- Options: 4, of which 2 wild.
+- A grid around each unit, never a whole-layer plane; the battlefield and everything behind the grid stays visible. Register: AutoCAD, Unreal Engine, and other 3D visualization tools that read clearly.
+- A waypoint-like icon that shows which layer a unit is moving to when the player toggles it.
+- The numbers "50% / 10-20% / 5%" (own, adjacent, two away): each option states whether it reads them as grid visibility per layer or as the fall-back of non-focused layers, or both, and shows the result.
+- No fixed spacing: each option sets its own vertical scale and says why; spacing is per era (large in space, small on land). Five layers in every era, including land eras without flying units.
+- Assume same-layer combat; note where a cross-layer variant would change the picture.

@@ -63,3 +63,13 @@ Folded into the brief:
 - Every side has a city on the map. The defender's city is home; the attacker's is a forward base, the point the attack launches from. If a side's city dies, its battle is over: reinforcements stop and forces cannot be replenished, in the classic RTS sense. This is a new loss condition that touches E-10 outcomes and E-15 reinforcement; the options describe it from the player's chair, and the epics are rewritten later.
 - Question 4: damage persists when the time jump is short, and rebuilding depends on the civilization's state: a big economy rebuilds fast, a weak one that took a hit in the simulation rebuilds slowly.
 - Question 3 (the smallest nudge for the solo commander): not answered. Options propose it.
+
+## 9. Sub-agent brief
+
+Follow the common template in `../README.md` ("Sub-agent template"). Sections 4 and 8 of this file are the constraints; where they disagree, section 8 wins.
+
+- Options: 3, of which 1 wild.
+- The city is on the tactical map and grows during the mission; in solo play it runs itself.
+- Every side has a city: the defender's home, the attacker's forward base. If a side's city dies, its battle is over: no reinforcements, no replenishment.
+- Damage persists after a short time jump; rebuilding speed follows the civilization's economic state.
+- Propose the smallest nudge a solo commander has over the city, and what would cross into managing an economy.

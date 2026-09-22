@@ -57,3 +57,12 @@ Folded into the brief:
 - The six-unit-type rule is amended in the bible (decision 2026-09-22 14:27 EDT, register row Q-082-02): an era pack carries 20 to 40 unit types, in the register of Age of Empires 3 and Age of Empires Online; a balance scoring mechanism (the old bible's power rating, A-279) is to be designed; an era built around a specific conflict (Romans against Greeks, a world war's two alliances) may swing its roster hard toward that conflict. Section 4's "six unit types" constraint no longer holds; the fixed silhouette rule per type is under review (Q-132-03).
 - A per-era roster of 20 to 40 units is itself a feel mechanism the options may use: eras differ by what fights in them, not only by fog and tempo.
 - Questions 1 to 4: deliberately left open. Westley wants wide variance to pick from. Width raised to four options, two wild.
+
+## 9. Sub-agent brief
+
+Follow the common template in `../README.md` ("Sub-agent template"). Sections 4 and 8 of this file are the constraints; where they disagree, section 8 wins.
+
+- Options: 4, of which 2 wild.
+- Every question in section 6 is deliberately open; Westley wants wide variance. Go wide.
+- A roster of 20 to 40 unit types per era (Q-082-02) is available as a feel lever: eras may differ by what fights in them.
+- Every difference must be expressible as pack content or config the engine consumes uniformly; no engine branch on era.

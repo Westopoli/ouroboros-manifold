@@ -31,12 +31,25 @@ Precedent for this shape: `../landscape_design/README.md`, the P2 design phase. 
 | Control group depth | `control-groups` | 1 | written | 2026-09-22 | |
 | Layer system look and feel | `layer-system` | 1 | written | 2026-09-22 | |
 | Era transitions | `era-transitions` | 2 | written | 2026-09-22 | |
-| Era feel differentiation | `era-feel` | 2 | written | 2026-09-22 | |
+| Era feel differentiation | `era-feel` | 2 | written | 2026-09-22 (4 options) | |
 | Paired economy multiplayer mode | `paired-economy` | 2 | written | 2026-09-22 | |
 | Self-running city spectacle | `city-spectacle` | 2 | written | 2026-09-22 | |
-| Unit passive traits | `unit-traits` | 3 | written | | |
-| Mission complications | `complications` | 3 | written | | |
-| Enemy macro difficulty knobs | `difficulty-knobs` | 3 | written | | |
+| Unit passive traits | `unit-traits` | 3 | written | 2026-09-22 | |
+| Mission complications | `complications` | 3 | written | 2026-09-22 (2 options, surface) | |
+| Enemy macro difficulty knobs | `difficulty-knobs` | 3 | written | 2026-09-22 | |
+
+## Sub-agent template
+
+One agent per feature, launched only when Westley says so. The agent reads, in order: `docs/bible/game_bible.md`, the feature's epic file, its `brief.md` (sections 4 and 8 are the constraints; section 8 wins), and the prior research the brief names. Then it writes `options.md` and one SVG per option in `diagrams/`.
+
+- Role: research and enumerate. Never decide, recommend, or rank. Player perspective only: what the player sees, does, feels, and learns. No implementation, no engine or data language, no file paths, no code.
+- Options: the count and wild count in the brief's section 9, labeled A to D. A wild option is a shape no shipped game has and may have no precedent.
+- Per option: a name; one paragraph on how it works from the player's chair; a 30 to 60 second play vignette in second person; the brief constraints it honors and the ones it strains, named; prior art with a confidence tag (VERIFIED, REPORTED, ESTIMATED, AMBIGUOUS) or "none"; player-side tradeoffs as consequences; one SVG diagram. Camera and control groups also carry a control table per option.
+- Diagram: hand-authored SVG, 960 wide, either a screen wireframe (what the player sees at one moment, labeled regions) or a flow (states the player passes through). Real labels, no lorem, no external images, plain SVG 1.1 with no scripts and no foreignObject, so GitHub renders it.
+- Research: WebSearch and WebFetch allowed; cite every prior-art claim; `docs/research/games/*.md` may be read.
+- Write access: only `docs/northstar/research/options/<slug>/`. Never `docs/bible/**`, `docs/northstar/ambiguity_register.md`, `CLAUDE.md`, tests, code.
+- Prose: normal prose in `options.md`; caveman only in the report back to the main agent.
+- Length: 600 to 1,200 words plus tables unless the brief says otherwise. Longer means the option is drifting into "how".
 
 ## Review checklist for an options.md
 
