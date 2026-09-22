@@ -198,6 +198,10 @@ def test_R_043_06_pair_stays_neutral_counter_resets(lib, world_factory):
 
     lib.om_world_set_feature(w, OMFeature.DIPLOMACY, 1)
     lib.om_faction_set_stance_counter(w, 0, 1, 80)
+    # Round-trip check: setter must actually store the value before the
+    # post-failure ==0 check below can mean anything (a no-op setter/getter
+    # pair would already read 0 here).
+    assert lib.om_faction_stance_counter(w, 0, 1) == 80
     force_draws(lib, w, [0.99])
     lib.om_world_step(w)
 

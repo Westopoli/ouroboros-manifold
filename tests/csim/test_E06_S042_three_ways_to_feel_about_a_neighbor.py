@@ -44,6 +44,8 @@ def test_R_042_01_it_exactly_one_hostile_neutral(lib, world_factory):
     assert s10 == s01, "stance must be symmetric for the pair"
     assert lib.om_faction_stance(w, 0, 0) == OMStance.COOPERATIVE
     assert lib.om_faction_stance(w, 1, 1) == OMStance.COOPERATIVE
+    # DEFAULT/DEFAULT is not in R-042-05's hostile-override table, so it must read neutral exactly.
+    assert s01 == OMStance.NEUTRAL, "DEFAULT/DEFAULT pair not in the hostile-override table must be neutral"
 
 
 def test_R_042_02_each_includes_other_s_regions(lib, world_factory):
@@ -182,6 +184,11 @@ def test_R_042_06_it_hostile_toward_every_existing(lib, world_factory):
     set_faction(lib, w, 0, OMArchetype.PLAYER, budget=0.0, tech=0.0)
     set_faction(lib, w, 1, OMArchetype.FORTIFIER, budget=0.0, tech=0.0)
     set_stance(lib, w, 0, 1, OMStance.COOPERATIVE)
+
+    # Pre-set to COOPERATIVE (non-zero) so post-call HOSTILE (0) proves the
+    # function acted, rather than coinciding with zero-init default memory.
+    set_stance(lib, w, 0, 2, OMStance.COOPERATIVE)
+    set_stance(lib, w, 1, 2, OMStance.COOPERATIVE)
 
     # Breakaway creation hook (E-06 R-042-06 / E-07 R-049-05)
     lib.om_faction_create_breakaway(w, 1, 2)

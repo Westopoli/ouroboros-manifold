@@ -122,6 +122,9 @@ def test_R_045_06_it_equals_parent_s_tech(lib, world_factory):
     # Trigger breakaway creation on region 1
     breakaway_fid = lib.om_breakaway_create(w, 0, 1)
     assert breakaway_fid >= 0
+    # A stub returning 0 (the parent's own id) would let this test read the
+    # parent's own tech and pass by coincidence; the new faction must be distinct.
+    assert breakaway_fid != 0, "breakaway id must differ from parent id 0"
     assert lib.om_faction_tech(w, breakaway_fid) == pytest.approx(45.5, abs=1e-5)
 
 
