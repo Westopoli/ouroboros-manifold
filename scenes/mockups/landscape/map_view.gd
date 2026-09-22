@@ -3,6 +3,10 @@ extends Control
 const GROUP_HIT_RADIUS := 18.0
 const ARC_BEND := 0.18
 const GRID_DIVISIONS := 10
+# Flat height above the nominal y=0 ground plane for all world-space overlay geometry.
+# A real implementation would sample terrain height per point (ground.gd's job, out of
+# scope here); a constant offset is the correct simple stand-in for a schematic overlay.
+const HEIGHT_OFFSET := 30.0
 
 const GRID_COLOR := Color(1, 1, 1, 0.25)
 const OBJECTIVE_COLOR := Color(1, 0.85, 0.2, 1)
@@ -15,6 +19,8 @@ const FACTION_COLORS := [Color("#4099FF"), Color("#FF4738")]
 
 var _field_map: FieldMap
 var _camera_rig: Node3D
+var _camera: Camera3D
+var _world_container: Node3D
 var _unit_groups: Array = []
 var _arrows: Array = []
 var _selected_group_index: int = -1
@@ -22,19 +28,24 @@ var _selected_group_index: int = -1
 
 func _ready() -> void:
 	_camera_rig = get_node("../../CameraRig")
+	_camera = _camera_rig.get_node("Camera3D")
+	_world_container = Node3D.new()
+	_world_container.name = "MapViewGeometry"
+	get_node("../../World").add_child(_world_container)
 	_camera_rig.band_changed.connect(_on_band_changed)
-	visible = _camera_rig.get_current_band() == "map"
+	_apply_band(_camera_rig.get_current_band())
 
 
 func set_field_map(field_map: FieldMap) -> void:
 	_field_map = field_map
+	_rebuild_world_geometry()
 	# Fake unit groups: no real factions/units in this mockup, so we just plant one
 	# marker per spawn_point node (there are always exactly two) and alternate colors.
 	_unit_groups.clear()
 	var faction := 0
 	for node in field_map.nodes:
 		if node.type == "spawn_point":
-			_unit_groups.append({pos = node.pos, faction = faction})
+			_unit_groups.append({pos = Vector3(node.pos.x, 0.0, node.pos.y), faction = faction})
 			faction = (faction + 1) % FACTION_COLORS.size()
 	_arrows.clear()
 	_selected_group_index = -1
@@ -42,11 +53,86 @@ func set_field_map(field_map: FieldMap) -> void:
 
 
 func _on_band_changed(band: String) -> void:
+	_apply_band(band)
+
+
+func _apply_band(band: String) -> void:
 	visible = band == "map"
+	_world_container.visible = visible
 
 
-func _world_to_screen(world_xz: Vector2) -> Vector2:
-	return (world_xz / _field_map.canvas) * size
+func _process(_delta: float) -> void:
+	if visible:
+		queue_redraw()
+
+
+func _rebuild_world_geometry() -> void:
+	for child in _world_container.get_children():
+		child.queue_free()
+
+	var canvas: float = _field_map.canvas
+
+	var grid_mesh := ImmediateMesh.new()
+	grid_mesh.surface_begin(Mesh.PRIMITIVE_LINES)
+	for i in range(GRID_DIVISIONS + 1):
+		var t: float = canvas * i / float(GRID_DIVISIONS)
+		grid_mesh.surface_add_vertex(Vector3(t, HEIGHT_OFFSET, 0.0))
+		grid_mesh.surface_add_vertex(Vector3(t, HEIGHT_OFFSET, canvas))
+		grid_mesh.surface_add_vertex(Vector3(0.0, HEIGHT_OFFSET, t))
+		grid_mesh.surface_add_vertex(Vector3(canvas, HEIGHT_OFFSET, t))
+	grid_mesh.surface_end()
+	var grid_mat := StandardMaterial3D.new()
+	grid_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	grid_mat.albedo_color = GRID_COLOR
+	grid_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	var grid_instance := MeshInstance3D.new()
+	grid_instance.mesh = grid_mesh
+	grid_instance.material_override = grid_mat
+	_world_container.add_child(grid_instance)
+
+	var border_mesh := ImmediateMesh.new()
+	border_mesh.surface_begin(Mesh.PRIMITIVE_LINES)
+	for border in _field_map.borders:
+		var pts: Array = border.points
+		if pts.size() < 2:
+			continue
+		var color: Color = BORDER_COLORS.get(border.kind, Color.WHITE)
+		for i in range(pts.size() - 1):
+			var a: Vector2 = pts[i]
+			var b: Vector2 = pts[i + 1]
+			border_mesh.surface_set_color(color)
+			border_mesh.surface_add_vertex(Vector3(a.x, HEIGHT_OFFSET, a.y))
+			border_mesh.surface_set_color(color)
+			border_mesh.surface_add_vertex(Vector3(b.x, HEIGHT_OFFSET, b.y))
+	border_mesh.surface_end()
+	var border_mat := StandardMaterial3D.new()
+	border_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	border_mat.vertex_color_use_as_albedo = true
+	var border_instance := MeshInstance3D.new()
+	border_instance.mesh = border_mesh
+	border_instance.material_override = border_mat
+	_world_container.add_child(border_instance)
+
+	for col in range(GRID_DIVISIONS):
+		var letter := String.chr(65 + col)
+		var x: float = canvas * (col + 0.5) / float(GRID_DIVISIONS)
+		_add_grid_label(letter, Vector3(x, HEIGHT_OFFSET, 0.0))
+	for row in range(GRID_DIVISIONS):
+		var z: float = canvas * (row + 0.5) / float(GRID_DIVISIONS)
+		_add_grid_label(str(row + 1), Vector3(0.0, HEIGHT_OFFSET, z))
+
+
+func _add_grid_label(text: String, world_pos: Vector3) -> void:
+	var label := Label3D.new()
+	label.text = text
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	label.modulate = GRID_COLOR
+	label.position = world_pos
+	_world_container.add_child(label)
+
+
+func _project(world_pos: Vector3) -> Vector2:
+	return _camera.unproject_position(world_pos)
 
 
 func _gui_input(event: InputEvent) -> void:
@@ -58,71 +144,51 @@ func _gui_input(event: InputEvent) -> void:
 
 	if _selected_group_index == -1:
 		for i in range(_unit_groups.size()):
-			var screen_pos: Vector2 = _world_to_screen(_unit_groups[i].pos)
+			var world_pos: Vector3 = _unit_groups[i].pos
+			if _camera.is_position_behind(world_pos):
+				continue
+			var screen_pos: Vector2 = _project(world_pos)
 			if screen_pos.distance_to(mb.position) <= GROUP_HIT_RADIUS:
 				_selected_group_index = i
 				break
 	else:
-		var from_pos: Vector2 = _world_to_screen(_unit_groups[_selected_group_index].pos)
-		_arrows.append({from = from_pos, to = mb.position})
+		# Ray from the click through the current camera, intersected with the y=0 ground
+		# plane, so the stored order point is a real world position, not a screen pixel.
+		var origin: Vector3 = _camera.project_ray_origin(mb.position)
+		var dir: Vector3 = _camera.project_ray_normal(mb.position)
+		var ground := Plane(Vector3.UP, 0.0)
+		var hit = ground.intersects_ray(origin, dir)
+		if hit != null:
+			_arrows.append({from_world = _unit_groups[_selected_group_index].pos, to_world = hit})
 		_selected_group_index = -1
 
 	queue_redraw()
 
 
 func _draw() -> void:
-	if _field_map == null:
+	if _field_map == null or _camera == null:
 		return
-	_draw_grid()
-	_draw_borders()
 	_draw_objectives()
 	_draw_unit_groups()
 	_draw_arrows()
 
 
-func _draw_grid() -> void:
-	var font := ThemeDB.fallback_font
-	var font_size := 14
-	for i in range(GRID_DIVISIONS + 1):
-		var x: float = size.x * i / float(GRID_DIVISIONS)
-		var y: float = size.y * i / float(GRID_DIVISIONS)
-		draw_line(Vector2(x, 0), Vector2(x, size.y), GRID_COLOR, 1.0)
-		draw_line(Vector2(0, y), Vector2(size.x, y), GRID_COLOR, 1.0)
-	for col in range(GRID_DIVISIONS):
-		var letter := String.chr(65 + col)
-		var cx: float = size.x * (col + 0.5) / float(GRID_DIVISIONS)
-		draw_string(font, Vector2(cx - 4, 14), letter, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, GRID_COLOR)
-	for row in range(GRID_DIVISIONS):
-		var cy: float = size.y * (row + 0.5) / float(GRID_DIVISIONS)
-		draw_string(font, Vector2(4, cy + 4), str(row + 1), HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, GRID_COLOR)
-
-
-func _draw_borders() -> void:
-	for border in _field_map.borders:
-		var pts: Array = border.points
-		if pts.size() < 2:
-			continue
-		var screen_pts := PackedVector2Array()
-		for p in pts:
-			screen_pts.append(_world_to_screen(p))
-		var color: Color = BORDER_COLORS.get(border.kind, Color.WHITE)
-		# No flood-fill area data for water, only the coast polyline itself, so water is
-		# rendered as a thicker line rather than a filled region — a schematic minimum.
-		var width: float = 4.0 if border.kind == "coast" else 2.0
-		draw_polyline(screen_pts, color, width)
-
-
 func _draw_objectives() -> void:
 	for node in _field_map.nodes:
 		if node.type == "objective":
-			var center: Vector2 = _world_to_screen(node.pos)
-			draw_arc(center, 16.0, 0.0, TAU, 24, OBJECTIVE_COLOR, 2.0)
+			var world_pos := Vector3(node.pos.x, 0.0, node.pos.y)
+			if _camera.is_position_behind(world_pos):
+				continue
+			draw_arc(_project(world_pos), 16.0, 0.0, TAU, 24, OBJECTIVE_COLOR, 2.0)
 
 
 func _draw_unit_groups() -> void:
 	for i in range(_unit_groups.size()):
 		var group: Dictionary = _unit_groups[i]
-		var pos: Vector2 = _world_to_screen(group.pos)
+		var world_pos: Vector3 = group.pos
+		if _camera.is_position_behind(world_pos):
+			continue
+		var pos: Vector2 = _project(world_pos)
 		var color: Color = FACTION_COLORS[group.faction]
 		var chevron := PackedVector2Array([pos + Vector2(-10, 8), pos + Vector2(0, -10), pos + Vector2(10, 8)])
 		draw_polyline(chevron, color, 3.0)
@@ -132,8 +198,12 @@ func _draw_unit_groups() -> void:
 
 func _draw_arrows() -> void:
 	for arrow in _arrows:
-		var from: Vector2 = arrow.from
-		var to: Vector2 = arrow.to
+		var from_world: Vector3 = arrow.from_world
+		var to_world: Vector3 = arrow.to_world
+		if _camera.is_position_behind(from_world) or _camera.is_position_behind(to_world):
+			continue
+		var from: Vector2 = _project(from_world)
+		var to: Vector2 = _project(to_world)
 		var mid: Vector2 = (from + to) * 0.5
 		var dir: Vector2 = to - from
 		# Curve bend: offset the Bezier control point perpendicular to the straight line by
