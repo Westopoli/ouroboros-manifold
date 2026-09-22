@@ -151,7 +151,7 @@ func _check_pause() -> void:
 # plant: morph-instant
 func _check_morph() -> void:
 	_root.qa_seed(11)
-	_root.qa_tick(441)
+	_root.qa_tick(463)
 	var before: Color = _root._mini_galaxy.get_system_color("r_moorwick")
 	_root.qa_tick(20)
 	var mid: Color = _root._mini_galaxy.get_system_color("r_moorwick")
