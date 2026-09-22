@@ -13,6 +13,7 @@ om_world *om_world_new(uint32_t n_regions, uint64_t seed) {
     if (!w) return NULL;
     w->n_regions = n_regions;
     w->seed = seed;
+    om_rng_seed(w, seed);
     w->tick = 0;
     w->trace_on = 0;
     /* R11 (DECISIONS.md): -1, not 0 -- OM_BUG_OSC_AS_LEVEL is bug id 0, so a
@@ -88,6 +89,7 @@ void om_world_free(om_world *w) {
 void om_world_set_seed(om_world *w, uint64_t seed) {
     if (!w) return;
     w->seed = seed;
+    om_rng_seed(w, seed);
 }
 
 /* weak: csrc/worldgen.c (card B4) provides the strong definition; delete this stub after attach/B4 */

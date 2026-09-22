@@ -125,6 +125,48 @@ static double om_osc_prev(double amplitude, double period, double phase, uint64_
 #define TENSION_AMPLITUDE 2.0
 #define TENSION_PERIOD 18.0
 
+/* ---------------------------------------------------------------- world RNG */
+
+static void om_pcg32_step(om_world *w) {
+    w->rng_state = w->rng_state * 6364136223846793005ULL + w->rng_inc;
+}
+
+static uint32_t om_pcg32_next32(om_world *w) {
+    uint64_t old = w->rng_state;
+    om_pcg32_step(w);
+    uint32_t xorshifted = (uint32_t)(((old >> 18) ^ old) >> 27);
+    uint32_t rot = (uint32_t)(old >> 59);
+    return (xorshifted >> rot) | (xorshifted << ((32 - rot) & 31));
+}
+
+void om_rng_seed(om_world *w, uint64_t seed) {
+    w->rng_inc = ((seed ^ 0xDA3E39CB94B95BDBULL) << 1) | 1;
+    w->rng_state = 0;
+    om_pcg32_step(w);
+    w->rng_state += seed;
+    om_pcg32_step(w);
+}
+
+double om_rng_draw(om_world *w) {
+    if (w->rng_forced_len > 0) {
+        double u = w->rng_forced[w->rng_forced_head];
+        w->rng_forced_head = (w->rng_forced_head + 1) % 4096;
+        w->rng_forced_len--;
+        return u;
+    }
+#ifdef OM_DEBUG_INJECT
+    /* OM_BUG_RNG_UNSEEDED: the calloc'd zero state om_world_new left behind
+     * before om_rng_seed existed (push-day M1 finding). */
+    if (w->inject == OM_BUG_RNG_UNSEEDED) {
+        w->rng_state = 0;
+        w->rng_inc = 0;
+    }
+#endif
+    uint32_t a = om_pcg32_next32(w) >> 5;
+    uint32_t b = om_pcg32_next32(w) >> 6;
+    return (a * 67108864.0 + b) * (1.0 / 9007199254740992.0);
+}
+
 /* ---------------------------------------------------------------- clamp */
 
 static double om_clamp(double v, double lo, double hi) {

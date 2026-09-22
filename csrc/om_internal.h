@@ -149,4 +149,11 @@ void om_step_diplomacy(om_world *w);
 void om_step_technology(om_world *w);
 void om_step_lifecycle(om_world *w);
 
+/* The world RNG (ouroboros_sim.h "the world RNG contract"), csrc/sim.c.
+ * om_rng_seed derives rng_state/rng_inc from the seed (om_world_new,
+ * om_world_set_seed). om_rng_draw is the one uniform-in-[0,1) draw every
+ * consumer calls: forced queue first (om_rng_force), else one PCG32 u. */
+void   om_rng_seed(om_world *w, uint64_t seed);
+double om_rng_draw(om_world *w);
+
 #endif /* OM_INTERNAL_H */

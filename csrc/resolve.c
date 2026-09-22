@@ -192,22 +192,13 @@ void om_step_telegraphs(om_world *w) {
         double effective_attack = t->commit * 1.0 * tech_attack * 1.0;
         double effective_defense = target->military * 0.55 * tech_defense * entrenchment + reinforce_commit;
 
-        double stochastic;
-        if (w->rng_forced_len > 0) {
-            /* A forced draw stands for the already-scaled U(0.7, 1.3) stochastic value
-             * itself (confirmed against test_R_037_01/02/05: forcing 0.7 or 1.0 makes
-             * net come out as exactly (effective_attack - effective_defense) * 0.7 or
-             * * 1.0, not the 0.7-1.3 rescale of a raw [0,1) input). */
-            stochastic = w->rng_forced[w->rng_forced_head];
-            w->rng_forced_head++;
-            w->rng_forced_len--;
-        } else {
-            uint32_t a = (uint32_t)(w->rng_state >> 5);
-            uint32_t b = (uint32_t)(w->rng_state >> 6);
-            double u = (a * 67108864.0 + b) * (1.0 / 9007199254740992.0);
-            w->rng_state = w->rng_state * 6364136223846793005ULL + w->rng_inc;
-            stochastic = 0.7 + 0.6 * u;
-        }
+        /* A forced draw stands for the already-scaled U(0.7, 1.3) stochastic value
+         * itself (confirmed against test_R_037_01/02/05: forcing 0.7 or 1.0 makes
+         * net come out as exactly (effective_attack - effective_defense) * 0.7 or
+         * * 1.0, not the 0.7-1.3 rescale of a raw [0,1) input). */
+        int forced = w->rng_forced_len > 0;
+        double u = om_rng_draw(w);
+        double stochastic = forced ? u : 0.7 + 0.6 * u;
         double net = (effective_attack - effective_defense) * stochastic;
 
         double d_military, d_economy, d_tension;
@@ -295,18 +286,8 @@ void om_step_reinforce(om_world *w) {
         
         double reinforce_prob = fmin(1.0, w_defend / 1.5);
         
-        double u;
-        if (w->rng_forced_len > 0) {
-            u = w->rng_forced[w->rng_forced_head];
-            w->rng_forced_head++;
-            w->rng_forced_len--;
-        } else {
-            uint32_t a = (uint32_t)(w->rng_state >> 5);
-            uint32_t b = (uint32_t)(w->rng_state >> 6);
-            u = (a * 67108864.0 + b) * (1.0 / 9007199254740992.0);
-            w->rng_state = w->rng_state * 6364136223846793005ULL + w->rng_inc;
-        }
-        
+        double u = om_rng_draw(w);
+
         if (u > reinforce_prob) continue;
         
         double commit = fmin(w->faction_budget_snapshot[f] * 0.30, t->commit * 0.5);
@@ -322,18 +303,8 @@ void om_step_reinforce(om_world *w) {
         double lo = 0.85 - (tension / 100.0) * 0.20;
         double hi = 1.15 + (tension / 100.0) * 0.20;
         
-        double u2;
-        if (w->rng_forced_len > 0) {
-            u2 = w->rng_forced[w->rng_forced_head];
-            w->rng_forced_head++;
-            w->rng_forced_len--;
-        } else {
-            uint32_t a = (uint32_t)(w->rng_state >> 5);
-            uint32_t b = (uint32_t)(w->rng_state >> 6);
-            u2 = (a * 67108864.0 + b) * (1.0 / 9007199254740992.0);
-            w->rng_state = w->rng_state * 6364136223846793005ULL + w->rng_inc;
-        }
-        
+        double u2 = om_rng_draw(w);
+
         double variance = lo + (hi - lo) * u2;
         double d_military = base * variance;
         
@@ -403,19 +374,11 @@ void om_step_resolve(om_world *w) {
         }
         effective_defense += reinforce_commit;
 
-        /* Draw stochastic factor u ~ U(0.7, 1.3) */
-        double u;
-        if (w->rng_forced_len > 0) {
-            u = w->rng_forced[w->rng_forced_head];
-            w->rng_forced_head++;
-            w->rng_forced_len--;
-        } else {
-            uint32_t a = (uint32_t)(w->rng_state >> 5);
-            uint32_t b = (uint32_t)(w->rng_state >> 6);
-            double unif = (a * 67108864.0 + b) * (1.0 / 9007199254740992.0);
-            w->rng_state = w->rng_state * 6364136223846793005ULL + w->rng_inc;
-            u = 0.7 + 0.6 * unif;
-        }
+        /* Stochastic factor U(0.7, 1.3); a forced draw is the scaled value itself
+         * (same convention as the telegraph resolution above). */
+        int forced = w->rng_forced_len > 0;
+        double unif = om_rng_draw(w);
+        double u = forced ? unif : 0.7 + 0.6 * unif;
 
         double net = (effective_attack - effective_defense) * u;
 
@@ -528,33 +491,11 @@ void om_step_resolve(om_world *w) {
         r->garrison = garrison;
 
         /* ALG-22 Conquest Unrest */
-        double u_draw;
-        if (w->rng_forced_len > 0) {
-            u_draw = w->rng_forced[w->rng_forced_head];
-            w->rng_forced_head++;
-            w->rng_forced_len--;
-        } else {
-            uint32_t a = (uint32_t)(w->rng_state >> 5);
-            uint32_t b = (uint32_t)(w->rng_state >> 6);
-            double unif = (a * 67108864.0 + b) * (1.0 / 9007199254740992.0);
-            w->rng_state = w->rng_state * 6364136223846793005ULL + w->rng_inc;
-            u_draw = unif;
-        }
-        
+        double u_draw = om_rng_draw(w);
+
         if (u_draw <= 0.6) {
-            double delay_draw;
-            if (w->rng_forced_len > 0) {
-                delay_draw = w->rng_forced[w->rng_forced_head];
-                w->rng_forced_head++;
-                w->rng_forced_len--;
-            } else {
-                uint32_t a = (uint32_t)(w->rng_state >> 5);
-                uint32_t b = (uint32_t)(w->rng_state >> 6);
-                double unif = (a * 67108864.0 + b) * (1.0 / 9007199254740992.0);
-                w->rng_state = w->rng_state * 6364136223846793005ULL + w->rng_inc;
-                delay_draw = unif;
-            }
-            
+            double delay_draw = om_rng_draw(w);
+
             double triangular = 4.0 + (8.0 - 4.0) * sqrt(delay_draw * (6.0 - 4.0) / (8.0 - 4.0));
             int32_t delay = (int32_t)round(triangular);
             
