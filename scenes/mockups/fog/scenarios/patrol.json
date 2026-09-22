@@ -1,0 +1,18 @@
+{
+  "friendlies": [
+    {"uid": 1, "start": [5000, 900], "sensor_wu": 700.0, "speed": 40.0,
+      "waypoints": [[5600, 900], [5600, 1700], [5000, 1700], [5000, 900]]},
+    {"uid": 2, "start": [2600, 5200], "sensor_wu": 500.0, "speed": 40.0,
+      "waypoints": [[3300, 5200], [3300, 5900], [2600, 5900], [2600, 5200]]}
+  ],
+  "enemies": [
+    {"uid": 101, "center": [5300, 1200], "radius": 0.0, "angular_speed": 0.0},
+    {"uid": 102, "center": [4600, 700], "radius": 0.0, "angular_speed": 0.0},
+    {"uid": 103, "center": [2900, 5450], "radius": 0.0, "angular_speed": 0.0},
+    {"uid": 104, "center": [200, 200], "radius": 150.0, "angular_speed": 0.02},
+    {"uid": 105, "center": [6100, 6100], "radius": 150.0, "angular_speed": -0.015},
+    {"uid": 106, "center": [3800, 200], "radius": 100.0, "angular_speed": 0.01},
+    {"uid": 107, "center": [300, 3200], "radius": 0.0, "angular_speed": 0.0},
+    {"uid": 108, "center": [6100, 3600], "radius": 0.0, "angular_speed": 0.0}
+  ]
+}
