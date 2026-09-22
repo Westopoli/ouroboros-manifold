@@ -1,4 +1,4 @@
-extends Control
+extends VBoxContainer
 
 var entry_id: String = ""
 var _root: Node
@@ -10,22 +10,20 @@ func setup(root: Node) -> void:
 	_root = root
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 2)
-	vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(vbox)
+	add_theme_constant_override("separation", 2)
 	_label = RichTextLabel.new()
 	_label.bbcode_enabled = true
 	_label.fit_content = true
 	_label.scroll_active = false
 	_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_label.add_theme_font_size_override("normal_font_size", 22)
-	vbox.add_child(_label)
+	add_child(_label)
 	_cursor = Label.new()
 	_cursor.text = "_"
 	_cursor.visible = false
 	_cursor.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	vbox.add_child(_cursor)
+	add_child(_cursor)
 
 
 func render(row: Dictionary) -> void:

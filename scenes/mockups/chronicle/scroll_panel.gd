@@ -9,6 +9,8 @@ var _list: VBoxContainer
 var _scroll_container: ScrollContainer
 var _expansion: Control
 var _expansion_label: RichTextLabel
+var _rest_x: float = 0.0
+var _rest_x_known: bool = false
 
 
 func _ready() -> void:
@@ -64,11 +66,14 @@ func begin() -> void:
 	_rows.clear()
 	_last_rows.clear()
 	_expansion.visible = false
-	position.x = 60
+	if not _rest_x_known:
+		_rest_x = position.x
+		_rest_x_known = true
+	position.x = _rest_x + 60
 	modulate.a = 0.0
 	var tw := create_tween()
 	tw.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
-	tw.tween_property(self, "position:x", 0.0, 0.40)
+	tw.tween_property(self, "position:x", _rest_x, 0.40)
 	tw.parallel().tween_property(self, "modulate:a", 1.0, 0.40)
 
 
