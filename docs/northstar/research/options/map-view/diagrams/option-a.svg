@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="960" height="620" viewBox="0 0 960 620">
+  <rect x="0" y="0" width="960" height="620" fill="#eef1f4"/>
+  <text x="20" y="30" font-family="sans-serif" font-size="20" fill="#1a1a1a" font-weight="bold">Option A — The War Table (screen wireframe, map band)</text>
+
+  <!-- map surface -->
+  <rect x="20" y="50" width="920" height="500" fill="#b9d6e8" stroke="#333333" stroke-width="2"/>
+
+  <!-- terrain shapes -->
+  <polygon points="20,50 220,50 260,180 120,260 20,220" fill="#7fae6b" stroke="#4c6e3f" stroke-width="1.5"/>
+  <text x="70" y="150" font-family="sans-serif" font-size="14" fill="#2c3b22">Forest</text>
+
+  <rect x="620" y="360" width="200" height="140" fill="#c9b48a" stroke="#8a7550" stroke-width="1.5"/>
+  <text x="660" y="435" font-family="sans-serif" font-size="14" fill="#4a3d24">City core</text>
+
+  <path d="M 300 50 L 340 250 L 300 550" fill="none" stroke="#3f7fbf" stroke-width="14" opacity="0.6"/>
+  <text x="330" y="300" font-family="sans-serif" font-size="14" fill="#153a5c">River border</text>
+
+  <!-- fog wash -->
+  <rect x="700" y="60" width="220" height="180" fill="#9aa3ab" opacity="0.45"/>
+  <text x="720" y="90" font-family="sans-serif" font-size="13" fill="#2a2f33">Fog wash (unseen ground)</text>
+
+  <!-- objective circle -->
+  <circle cx="800" cy="430" r="26" fill="none" stroke="#d9a441" stroke-width="3"/>
+  <text x="770" y="475" font-family="sans-serif" font-size="13" fill="#5c4310">Objective circle</text>
+
+  <!-- drag box selection -->
+  <rect x="380" y="380" width="100" height="70" fill="none" stroke="#111111" stroke-width="2" stroke-dasharray="6,4"/>
+  <text x="382" y="465" font-family="sans-serif" font-size="12" fill="#111111">Drag box (every layer)</text>
+
+  <!-- friendly wedges -->
+  <polygon points="410,400 430,430 390,430" fill="#3f6fd1" stroke="#12275c" stroke-width="1.5"/>
+  <rect x="398" y="432" width="24" height="4" fill="#12275c"/>
+  <text x="392" y="392" font-family="sans-serif" font-size="11" fill="#12275c">Selected (Lower)</text>
+
+  <polygon points="500,180 520,210 480,210" fill="#3f6fd1" stroke="#12275c" stroke-width="1.5"/>
+  <rect x="492" y="176" width="16" height="4" fill="#12275c"/>
+  <text x="470" y="168" font-family="sans-serif" font-size="11" fill="#12275c">Upper</text>
+
+  <polygon points="560,280 580,310 540,310" fill="#3f6fd1" stroke="#12275c" stroke-width="1.5"/>
+  <text x="535" y="330" font-family="sans-serif" font-size="11" fill="#12275c">Layer 3 (no bar)</text>
+
+  <polygon points="450,120 470,150 430,150" fill="#3f6fd1" stroke="#12275c" stroke-width="1.5"/>
+  <rect x="426" y="120" width="4" height="30" fill="#12275c"/>
+  <text x="400" y="112" font-family="sans-serif" font-size="11" fill="#12275c">Expansive</text>
+
+  <!-- enemy wedge -->
+  <polygon points="760,300 780,330 740,330" fill="#c73b3b" stroke="#5c1010" stroke-width="1.5"/>
+  <text x="730" y="292" font-family="sans-serif" font-size="11" fill="#5c1010">Visible enemy</text>
+
+  <!-- attack-move order arrow -->
+  <path d="M 415 400 C 550 320, 650 340, 750 320" fill="none" stroke="#c73b3b" stroke-width="3" marker-end="url(#arrowRed)"/>
+  <text x="520" y="350" font-family="sans-serif" font-size="12" fill="#5c1010">Attack-move order</text>
+
+  <!-- move order example -->
+  <path d="M 500 195 C 560 250, 600 300, 640 400" fill="none" stroke="#2b7a4b" stroke-width="3" marker-end="url(#arrowGreen)"/>
+  <text x="560" y="260" font-family="sans-serif" font-size="12" fill="#1c4b2f">Move order (flag end)</text>
+
+  <defs>
+    <marker id="arrowRed" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+      <polygon points="0,0 6,3 0,6" fill="#c73b3b"/>
+    </marker>
+    <marker id="arrowGreen" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+      <polygon points="0,0 6,3 0,6" fill="#2b7a4b"/>
+    </marker>
+  </defs>
+
+  <text x="20" y="580" font-family="sans-serif" font-size="12" fill="#333333">No grid letters, no naval chrome. Whole screen replaces the old corner minimap.</text>
+</svg>
