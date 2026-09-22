@@ -1,0 +1,19 @@
+# scripts/specfactory/pack_validate.py reads this list (docs/northstar/plans/
+# briefs/2026-09-21-px-batch-b-spec-content-boundary.md PX-10; CLAUDE.md "No IP
+# exposure"). One word or short phrase per line, case-insensitive, matched on
+# a word boundary. Blank lines and #-comments are ignored.
+#
+# Meta terms: an engine or pipeline word that leaked into player-facing text.
+placeholder
+prototype
+sandbox
+debug
+todo
+#
+# IP terms: names from existing fiction (CLAUDE.md "No character names, place
+# names, or plot elements from any existing fiction").
+jedi
+klingon
+wookiee
+hobbit
+tardis

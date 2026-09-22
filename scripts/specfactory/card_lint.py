@@ -36,6 +36,12 @@ MAX_SNIPPET_SYMBOLS = 5
 MAX_EXPECTED_LINES = 80
 DEFAULT_QUEUE = Path("/home/westopoli/Projects/agora/queue")
 
+# A card (any kind) may never allow the worker to touch the gate scripts that
+# lint and merge it, or the fenced tests that are its own spec (docs/
+# northstar/plans/briefs/2026-09-21-px-batch-b-spec-content-boundary.md
+# PX-10).
+FORBIDDEN_ALLOWED_PREFIXES = ("scripts/specfactory/", "tests/")
+
 OM_SYMBOL_RE = re.compile(r"^om_[A-Za-z0-9_]*$")
 PYTEST_RE = re.compile(r"\bpytest\b")
 
@@ -333,6 +339,13 @@ def lint(card_path: Path, project: Path, queue: Path) -> tuple[list[Finding], li
     snippet_file = card.get("snippet_file", "")
     snippet_files = _split_list(snippet_file)
     snippet_symbols = _split_list(card.get("snippet_symbol", ""))
+
+    for f in sorted(allowed_files):
+        if f.startswith(FORBIDDEN_ALLOWED_PREFIXES):
+            findings.append(Finding(
+                "FAIL", "FORBIDDEN_ALLOWED_PATH",
+                f"allowed_files may not include a path under scripts/specfactory/ or tests/: {f}",
+            ))
 
     symbols, bad_node_ids = collect_acceptance_symbols(card, project)
 

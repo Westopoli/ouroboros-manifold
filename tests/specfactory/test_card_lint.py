@@ -318,6 +318,38 @@ def test_rule_g_mutating_symbol_with_world_step_passes(tmp_path):
     assert "CONST_ONLY" not in proc.stdout
 
 
+def test_forbidden_allowed_path_scripts_specfactory_fails(tmp_path):
+    # PX-10 (docs/northstar/plans/briefs/2026-09-21-px-batch-b-spec-content-
+    # boundary.md): a card may not allow a path under scripts/specfactory/ --
+    # that is where the gates and validators it is lint-checked against live.
+    project = _init_project(tmp_path)
+    card = _write_card(tmp_path, project, allowed_files="scripts/specfactory/pack_validate.py")
+    proc = _run(card)
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert "FORBIDDEN_ALLOWED_PATH" in proc.stdout
+    assert "scripts/specfactory/pack_validate.py" in proc.stdout
+
+
+def test_forbidden_allowed_path_tests_dir_fails(tmp_path):
+    project = _init_project(tmp_path)
+    card = _write_card(tmp_path, project, allowed_files="tests/csim/test_widgets.py")
+    proc = _run(card)
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert "FORBIDDEN_ALLOWED_PATH" in proc.stdout
+    assert "tests/csim/test_widgets.py" in proc.stdout
+
+
+def test_forbidden_allowed_path_one_of_several_still_named(tmp_path):
+    # A card mixing a legitimate allowed path with a forbidden one still
+    # fails, and the finding names the forbidden path, not the legitimate one.
+    project = _init_project(tmp_path)
+    card = _write_card(tmp_path, project, allowed_files="csrc/agent.c, scripts/specfactory/card_lint.py")
+    proc = _run(card)
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert "FORBIDDEN_ALLOWED_PATH" in proc.stdout
+    assert "scripts/specfactory/card_lint.py" in proc.stdout
+
+
 def test_warn_own_file_stub_not_named_does_not_fail(tmp_path):
     project = _init_project(tmp_path)
     card = _write_card(tmp_path, project)  # agent.c has an unnamed stub helper
