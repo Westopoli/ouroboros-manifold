@@ -1,5 +1,7 @@
 extends CanvasLayer
 
+const MONO_FONT := preload("res://theme/fonts/JetBrainsMono-Regular.ttf")
+
 var _root: Node
 var _skip_btn: Button
 var _proceed_btn: Button
@@ -14,6 +16,9 @@ func _ready() -> void:
 	box.name = "VBoxContainer"
 	box.position = Vector2(16, 16)
 	box.add_theme_constant_override("separation", 6)
+	var t := Theme.new()
+	t.default_font = MONO_FONT
+	box.theme = t
 	add_child(box)
 
 	_skip_btn = Button.new()

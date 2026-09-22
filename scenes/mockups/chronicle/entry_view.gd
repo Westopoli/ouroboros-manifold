@@ -1,5 +1,7 @@
 extends VBoxContainer
 
+const SERIF_FONT := preload("res://theme/fonts/Newsreader-Light.ttf")
+
 var entry_id: String = ""
 var _root: Node
 var _label: RichTextLabel
@@ -17,6 +19,7 @@ func setup(root: Node) -> void:
 	_label.scroll_active = false
 	_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_label.add_theme_font_override("normal_font", SERIF_FONT)
 	_label.add_theme_font_size_override("normal_font_size", 22)
 	add_child(_label)
 	_cursor = Label.new()

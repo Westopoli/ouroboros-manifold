@@ -1,6 +1,7 @@
 extends Control
 
 const EntryView := preload("res://scenes/mockups/chronicle/entry_view.gd")
+const SERIF_FONT := preload("res://theme/fonts/Newsreader-Light.ttf")
 
 var _root: Node
 var _rows: Dictionary = {}
@@ -48,6 +49,7 @@ func _ready() -> void:
 	_expansion_label.offset_right = -24
 	_expansion_label.offset_top = 24
 	_expansion_label.offset_bottom = -24
+	_expansion_label.add_theme_font_override("normal_font", SERIF_FONT)
 	_expansion_label.add_theme_font_size_override("normal_font_size", 24)
 	_expansion_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_expansion.add_child(_expansion_label)
