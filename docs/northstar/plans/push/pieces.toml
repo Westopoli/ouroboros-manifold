@@ -438,7 +438,7 @@ acceptance = [
     "tests/test_briefing_debrief.gd",
 ]
 depends_on = ["B9", "T1"]
-status = "pending"
+status = { state = "attached", attach_sha = "85c6f4d" }
 tests_pending = true
 size_estimate = "rebind briefing/debrief to B9's output; mockup p9 plants"
 
