@@ -23,7 +23,7 @@
   ["screenshot", "kind_multi_front_defense"],
   ["state", "kind_multi_front_defense"],
   ["call", "qa_set", "archetype", "defensive_stand"],
-  ["call", "qa_camera", 12000, 12000, 12000],
+  ["call", "qa_camera_at_objective", 12000],
   ["screenshot", "map_zoom"],
   ["state", "map_zoom"],
   ["call", "qa_tick", 270],

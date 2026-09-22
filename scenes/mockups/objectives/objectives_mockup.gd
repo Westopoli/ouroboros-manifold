@@ -160,6 +160,10 @@ func qa_camera(height: float, x: float, z: float) -> void:
 	_camera_rig.qa_camera(height, x, z)
 
 
+func qa_camera_at_objective(height: float) -> void:
+	_camera_rig.qa_camera(height, _mission.pos.x, _mission.pos.y)
+
+
 func qa_tick(n: int) -> void:
 	MissionGen.tick(_mission, n)
 	_marker.refresh(_mission)
