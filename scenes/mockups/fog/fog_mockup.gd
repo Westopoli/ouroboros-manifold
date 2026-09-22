@@ -84,6 +84,7 @@ func begin_mission() -> void:
 	if _phase == "mission":
 		return
 	_phase = "mission"
+	_truth.phase = "mission"
 	_grid.reset_never_seen()
 	_sync_view()
 
