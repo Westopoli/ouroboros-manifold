@@ -253,9 +253,14 @@ func _update_sensor_rings() -> void:
 	_sensor_other.position = Vector3(u.pos.x, other_h + 3.0, u.pos.y)
 
 
+const SENSOR_TUBE_WIDTH := 20.0
+
+
 func _scale_ring(node: MeshInstance3D, radius_wu: float) -> void:
-	var scale_factor: float = radius_wu / RING_OUTER
-	node.scale = Vector3(scale_factor, 1.0, scale_factor)
+	var torus: TorusMesh = node.mesh as TorusMesh
+	torus.outer_radius = radius_wu
+	torus.inner_radius = maxf(radius_wu - SENSOR_TUBE_WIDTH, 1.0)
+	node.scale = Vector3.ONE
 
 
 func _update_selection_ring() -> void:
