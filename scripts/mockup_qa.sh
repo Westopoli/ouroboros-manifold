@@ -19,6 +19,7 @@ usage() {
     cat >&2 <<'EOF'
 usage:
   mockup_qa.sh run <mockup> <script.json> <outdir> [--res 1280x720] [--grab engine|external] [--plant id[,id]] [--timeout 600]
+  mockup_qa.sh firstlook <mockup> <outdir> [--res 2560x1440] [--timeout 600]
   mockup_qa.sh liveness <mockup> <outdir>
   mockup_qa.sh diff <a.png> <b.png> [fuzz%=5] [heatmap.png]
   mockup_qa.sh scan <outdir>
@@ -79,6 +80,77 @@ cmd_run() {
         "$GODOT" --path . --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution "$res" \
             --fixed-fps "${QA_FIXED_FPS:-30}" --quit-after 100000 --script res://scenes/mockups/_shared/qa_boot.gd \
             -- --qa-scene "res://$scene" --qa-script "$script_abs" --qa-out "$out_abs" --qa-grab "$grab"
+    local exit_code=$?
+    set -e
+    echo "$exit_code" > "$out_abs/exit.txt"
+    cmd_scan "$out_abs"
+    return "$exit_code"
+}
+
+cmd_firstlook() {
+    local mockup="$1" outdir="$2"
+    shift 2
+    local res="2560x1440" timeout="600"
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --res) res="$2"; shift 2 ;;
+            --timeout) timeout="$2"; shift 2 ;;
+            *) echo "firstlook: unknown arg $1" >&2; exit 2 ;;
+        esac
+    done
+
+    local script="scenes/mockups/${mockup}/qa/firstlook.json"
+    if [[ ! -f "$script" ]]; then
+        echo "firstlook: no script $script" >&2
+        exit 2
+    fi
+
+    local bad
+    bad="$(grep -nE '^[[:space:]]*\[[[:space:]]*"(call|seed|plant|pause)"' "$script" || true)"
+    if [[ -n "$bad" ]]; then
+        echo "firstlook: $script must drive real-input verbs only (no call/seed/plant/pause):" >&2
+        printf '%s\n' "$bad" >&2
+        exit 2
+    fi
+
+    local scene="scenes/mockups/${mockup}/${mockup}_mockup.tscn"
+    if [[ ! -f "$scene" ]]; then
+        echo "firstlook: no scene $scene" >&2
+        exit 2
+    fi
+    mkdir -p "$outdir"
+    local out_abs
+    out_abs="$(realpath "$outdir")"
+    local script_abs
+    script_abs="$(realpath "$script")"
+
+    LP_NUM_THREADS="${LP_NUM_THREADS:-2}"
+    set +e
+    env -u DISPLAY -u WAYLAND_DISPLAY -u XAUTHORITY \
+        LIBGL_ALWAYS_SOFTWARE=1 GALLIUM_DRIVER=llvmpipe LP_NUM_THREADS="$LP_NUM_THREADS" \
+        timeout --kill-after=10 "$timeout" \
+        xvfb-run -a -s "-screen 0 ${res}x24 ${XVFB_EXTRA:--s 0}" bash -c '
+            OUT="$1"; shift
+            (
+                while true; do
+                    for grab_file in "$OUT"/*.grab; do
+                        [[ -e "$grab_file" ]] || continue
+                        base="${grab_file%.grab}"
+                        import -window root -display "$DISPLAY" "${base}.png" 2>/dev/null
+                        mv "$grab_file" "${base}.done"
+                    done
+                    sleep 0.1
+                done
+            ) &
+            poll_pid=$!
+            "$@" >"$OUT/stdout.log" 2>"$OUT/stderr.log"
+            code=$?
+            kill "$poll_pid" 2>/dev/null
+            exit "$code"
+        ' _ "$out_abs" \
+        "$GODOT" --path . --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution "$res" \
+            --quit-after 100000 --script res://scenes/mockups/_shared/qa_boot.gd \
+            -- --qa-scene "res://$scene" --qa-script "$script_abs" --qa-out "$out_abs" --qa-grab engine --qa-live
     local exit_code=$?
     set -e
     echo "$exit_code" > "$out_abs/exit.txt"
@@ -239,6 +311,7 @@ sub="$1"
 shift
 case "$sub" in
     run) cmd_run "$@" ;;
+    firstlook) cmd_firstlook "$@" ;;
     scan) cmd_scan "$@" ;;
     diff) cmd_diff "$@" ;;
     liveness) cmd_liveness "$@" ;;
