@@ -29,6 +29,7 @@ var flashes_active: int = 0
 var _batches: Dictionary = {}
 var _mesh_cache: Dictionary = {}
 var _mat_cache: Dictionary = {}
+var _extent_cache: Dictionary = {}
 var _selected: Dictionary = {}
 var _sel_rings: Dictionary = {}
 var _pings: Array = []
@@ -90,6 +91,24 @@ func _get_mesh(role: String) -> Mesh:
 	var mesh := _build_prism(SHAPE_POINTS.get(shape, SHAPE_POINTS["wide_block"]))
 	_mesh_cache[shape] = mesh
 	return mesh
+
+
+func _get_shape_extent(shape: String) -> Vector2:
+	if _extent_cache.has(shape):
+		return _extent_cache[shape]
+	var points: Array = SHAPE_POINTS.get(shape, SHAPE_POINTS["wide_block"])
+	var min_x := INF
+	var max_x := -INF
+	var min_z := INF
+	var max_z := -INF
+	for p in points:
+		min_x = min(min_x, p.x)
+		max_x = max(max_x, p.x)
+		min_z = min(min_z, p.y)
+		max_z = max(max_z, p.y)
+	var extent := Vector2(max_x - min_x, max_z - min_z)
+	_extent_cache[shape] = extent
+	return extent
 
 
 func _build_prism(points: Array) -> ArrayMesh:
@@ -154,23 +173,33 @@ func sync(tick: int, units: Array) -> void:
 	_update_pings(tick)
 
 
+func get_unit_render_transform(role: String, pos: Vector2, facing: float) -> Transform3D:
+	var sil := roster.get_silhouette(role)
+	var size: Array = sil.get("size", [20, 20, 10])
+	var extent := _get_shape_extent(String(sil.get("shape", "wide_block")))
+	var scale_v := Vector3(float(size[1]) / extent.x, float(size[2]), float(size[0]) / extent.y)
+	var basis_rot := Basis(Vector3.UP, -facing - PI / 2.0)
+	return Transform3D(basis_rot * Basis.from_scale(scale_v), Vector3(pos.x, 0.0, pos.y))
+
+
+func get_role_mesh_aabb(role: String) -> AABB:
+	return _get_mesh(role).get_aabb()
+
+
 func _append_squad(list: Array, u: Dictionary, pos: Vector2, facing: float, color: Color, selected: bool) -> void:
 	var sil := roster.get_silhouette(u.role)
 	var squad: int = int(sil.get("squad", 1))
 	var size: Array = sil.get("size", [20, 20, 10])
-	var scale_v := Vector3(float(size[1]), float(size[2]), float(size[0]))
-	var basis_rot := Basis(Vector3.UP, -facing - PI / 2.0)
-	var basis := basis_rot.scaled(scale_v)
+	var xf0 := get_unit_render_transform(u.role, pos, facing)
 	if squad <= 1:
-		var origin := Vector3(pos.x, 0.0, pos.y)
-		list.append({"xform": Transform3D(basis, origin), "color": color})
+		list.append({"xform": xf0, "color": color})
 	else:
 		var spacing: float = float(size[0]) * 0.9
+		var basis_rot := Basis(Vector3.UP, -facing - PI / 2.0)
 		for i in range(squad):
 			var off2: Vector2 = SQUAD_OFFSETS[i % SQUAD_OFFSETS.size()] * spacing
 			var world_off: Vector3 = basis_rot * Vector3(off2.x, 0.0, off2.y)
-			var origin2: Vector3 = Vector3(pos.x, 0.0, pos.y) + world_off
-			list.append({"xform": Transform3D(basis, origin2), "color": color})
+			list.append({"xform": Transform3D(xf0.basis, xf0.origin + world_off), "color": color})
 	_update_ring(u.uid, pos, selected)
 
 
