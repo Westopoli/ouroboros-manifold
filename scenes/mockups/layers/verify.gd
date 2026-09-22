@@ -168,6 +168,8 @@ func _check_dim8() -> void:
 	# plant: no-dimming
 	_assert(is_equal_approx(lv.get_unit_body(1).material_override.albedo_color.a, 0.4), "layer-2 unit is not dimmed with focus on layer 1")
 	_assert(is_equal_approx(lv.get_unit_body(2).material_override.albedo_color.a, 1.0), "layer-1 unit is dimmed with focus on layer 1")
+	_assert(lv.get_unit_body(2).material_override.transparency == BaseMaterial3D.TRANSPARENCY_DISABLED,
+		"a unit on the focused (undimmed) layer does not have an opaque material")
 	_root.qa_set("focus_layer", 2)
 	_assert(is_equal_approx(lv.get_unit_body(1).material_override.albedo_color.a, 1.0), "layer-2 unit is dimmed with focus on layer 2")
 	_assert(is_equal_approx(lv.get_unit_body(2).material_override.albedo_color.a, 0.4), "layer-1 unit is not dimmed with focus on layer 2")

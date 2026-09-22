@@ -203,8 +203,10 @@ func _update_units() -> void:
 		ring.position = Vector3(u.pos.x, h + 2.0, u.pos.y)
 		var body_mat: StandardMaterial3D = body.material_override
 		var ring_mat: StandardMaterial3D = ring.material_override
-		body_mat.albedo_color.a = layer_alpha(u.layer)
-		ring_mat.albedo_color.a = layer_alpha(u.layer)
+		var alpha := layer_alpha(u.layer)
+		body_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA if alpha < 1.0 else BaseMaterial3D.TRANSPARENCY_DISABLED
+		body_mat.albedo_color.a = alpha
+		ring_mat.albedo_color.a = alpha
 		var rc := ring_color(u)
 		ring_mat.albedo_color = Color(rc.r, rc.g, rc.b, ring_mat.albedo_color.a)
 		ring_mat.emission = rc
@@ -223,7 +225,6 @@ func _spawn_unit_node(uid: int, u: Dictionary) -> void:
 	body.mesh = mesh
 	var body_mat := StandardMaterial3D.new()
 	body_mat.albedo_color = Color("#4099FF") if u.faction == 0 else Color("#FF4738")
-	body_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	body.material_override = body_mat
 	add_child(body)
 
@@ -261,6 +262,28 @@ func _scale_ring(node: MeshInstance3D, radius_wu: float) -> void:
 	torus.outer_radius = radius_wu
 	torus.inner_radius = maxf(radius_wu - SENSOR_TUBE_WIDTH, 1.0)
 	node.scale = Vector3.ONE
+
+
+func sensor_ring_px(cam: Camera3D) -> Dictionary:
+	if selected_uid < 0 or not sim.units.has(selected_uid) or cam == null:
+		return {}
+	var u: Dictionary = sim.units[selected_uid]
+	var h := unit_height(u)
+	var other_layer: int = 2 if u.layer == 1 else 1
+	var other_h: float = float(other_layer - 1) * LAYER_HEIGHT
+	var own_center := Vector3(u.pos.x, h + 3.0, u.pos.y)
+	var other_center := Vector3(u.pos.x, other_h + 3.0, u.pos.y)
+	return {
+		"own": _radius_px(cam, own_center, u.sensor_wu),
+		"other": _radius_px(cam, other_center, u.sensor_wu * 0.5),
+	}
+
+
+func _radius_px(cam: Camera3D, center: Vector3, radius_wu: float) -> float:
+	var edge := center + Vector3(radius_wu, 0.0, 0.0)
+	var c_px: Vector2 = cam.unproject_position(center)
+	var e_px: Vector2 = cam.unproject_position(edge)
+	return c_px.distance_to(e_px)
 
 
 func _update_selection_ring() -> void:

@@ -224,6 +224,7 @@ func qa_state() -> Dictionary:
 		"units_px": units_px,
 		"visible_enemy_uids": _sim.visible_enemy_uids(),
 		"rings": rings,
+		"ring_px": _layer_view.sensor_ring_px(cam),
 		"timing_ms": {"tick_avg": _sim.tick_avg_ms()},
 		"regen_count": _regen_count,
 	}
