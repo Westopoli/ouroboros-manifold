@@ -15,6 +15,10 @@ func _initialize() -> void:
 		push_error("qa_boot: cannot load %s" % scene_path)
 		quit(2)
 		return
+	if OS.get_environment("QA_KEEP_AUTOLOADS") == "":
+		for child in root.get_children():
+			root.remove_child(child)
+			child.free()
 	var node: Node = packed.instantiate()
 	root.add_child(node)
 	current_scene = node

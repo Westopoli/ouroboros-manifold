@@ -77,7 +77,7 @@ cmd_run() {
             exit "$code"
         ' _ "$out_abs" \
         "$GODOT" --path . --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution "$res" \
-            --fixed-fps 30 --quit-after 100000 --script res://scenes/mockups/_shared/qa_boot.gd \
+            --fixed-fps "${QA_FIXED_FPS:-30}" --quit-after 100000 --script res://scenes/mockups/_shared/qa_boot.gd \
             -- --qa-scene "res://$scene" --qa-script "$script_abs" --qa-out "$out_abs" --qa-grab "$grab"
     local exit_code=$?
     set -e
@@ -173,7 +173,7 @@ cmd_liveness() {
             "$@" >"$OUT/stdout.log" 2>"$OUT/stderr.log"
         ' _ "$out_abs" \
         "$GODOT" --path . --display-driver x11 --rendering-driver opengl3 -w --position 0,0 --resolution 1280x720 \
-            --fixed-fps 30 --quit-after 100000 --script res://scenes/mockups/_shared/qa_boot.gd \
+            --fixed-fps "${QA_FIXED_FPS:-30}" --quit-after 100000 --script res://scenes/mockups/_shared/qa_boot.gd \
             -- --qa-scene "res://$scene" --qa-script "$script_abs" --qa-out "$out_abs" --qa-grab engine
     local exit_code=$?
     set -e
