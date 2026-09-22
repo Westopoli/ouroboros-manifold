@@ -1,5 +1,26 @@
 extends Control
 
+# C transport v1 rebind (piece C4, leaf-01). load_frame()/qa_state()/
+# qa_plant() are the new entry point that consumes a mission frame
+# (docs/architecture.md "chronicle frame, mission frame, debrief frame")
+# instead of the legacy UIDataBus.get_mission_briefing() dict above. The
+# frame carries no names (C5 rule); marker_name is looked up from
+# _NODE_MARKER_NAMES, a client-side node id -> display name table, never
+# echoed straight from the frame's "node" field.
+const _NODE_MARKER_NAMES := {
+	3: "Ridge Point",
+	7: "Forward Camp",
+	12: "Hollow Crossing",
+}
+const _FALLBACK_MARKER_NAME := "Unmarked Position"
+
+var _frame_archetype: int = 0
+var _frame_region: int = 0
+var _frame_deadline_ticks: int = 0
+var _frame_objectives: Array = []
+var _frame_force: Dictionary = {}
+var _plant_marker_from_frame: bool = false
+
 var _data: Dictionary = {}
 var _accent: Color
 var _accent_dim: Color
@@ -707,3 +728,44 @@ func _animate_entrance() -> void:
 			delay = 0.5
 		else:
 			delay += ThemeConstants.STAGGER_INCREMENT
+
+
+func load_frame(mission: Dictionary) -> void:
+	_frame_archetype = int(mission.get("archetype", 0))
+	_frame_region = int(mission.get("region", 0))
+	_frame_deadline_ticks = int(mission.get("deadline_ticks", 0))
+	_frame_objectives = (mission.get("objectives", []) as Array).duplicate(true)
+	_frame_force = (mission.get("force", {}) as Dictionary).duplicate(true)
+
+
+func qa_state() -> Dictionary:
+	var objectives: Array = []
+	for o in _frame_objectives:
+		var node := int(o.get("node", 0))
+		objectives.append({
+			"i": int(o.get("i", 0)),
+			"kind": int(o.get("kind", 0)),
+			"node": node,
+			"primary": bool(o.get("primary", false)),
+			"marker_name": _marker_name_for_node(node),
+		})
+	return {
+		"archetype": _frame_archetype,
+		"deadline_ticks": _frame_deadline_ticks,
+		"objectives": objectives,
+	}
+
+
+func qa_plant(id: String) -> bool:
+	match id:
+		"marker-from-frame":
+			_plant_marker_from_frame = true
+			return true
+		_:
+			return false
+
+
+func _marker_name_for_node(node: int) -> String:
+	if _plant_marker_from_frame:
+		return "Node %d" % node
+	return _NODE_MARKER_NAMES.get(node, _FALLBACK_MARKER_NAME)
