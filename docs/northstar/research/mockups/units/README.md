@@ -2,6 +2,16 @@
 
 Rung P4 of the prototype ladder: six units, movement and combat on one layer, toy tactical sim in GDScript at a fixed 20 Hz tick, seeded and replayable from a command list. Built against E-11, E-13, E-18's 60-second paragraphs and Round 1 rules (R-082 through R-100, R-132/R-136).
 
+## Running it
+
+```
+~/.local/bin/godot --scene scenes/mockups/units/units_mockup.tscn
+```
+
+Hotkeys: `Space` play/pause, `T` step one tick, `R` reset the current scenario, `Tab` toggle kit, `F12` screenshot, left-click select, left-drag box-select, right-click move, `Shift`+right-click attack-move, right-click on an enemy attack-target. Scenario dropdown and kit button are also clickable in the HUD.
+
+This could not be run on Westley's seat from this session; confirmed instead that the QA driver is inert without `--qa-script`: booting the scene through `qa_boot.gd` with `--qa-scene res://scenes/mockups/units/units_mockup.tscn` and no `--qa-script` produces an empty output directory (no `_run.json`, no side effects) — the driver's own `_ready()` returns immediately when that arg is absent.
+
 ## Design as built
 
 **Roster and kits.** `roster.gd` loads a kit JSON (`kits/greek.json`, `kits/settled_reach.json`); both carry the identical R-082-01 stats table, differing only in display name, palette, and (deliberately) nothing else in silhouette geometry — the era-agnostic rule (R-145-01) says a Raider reads as a Raider in any era, so shape and size are shared, only colour and name vary. Six roles: `flanker` (Raider/Peltast), `screen` (Interceptor/Skirmisher), `frontliner` (Vanguard/Hoplite), `support` (Warden/Priest), `artillery` (Bombard/Ballista), `anchor` (Bastion/Phalanx). Silhouette shapes: `swept_dart`, `flat_wing`, `wedge_slab`, `spire_radial`, `long_barrel`, `wide_block`, one fixed vocabulary word per role, sizes doubled once during this pass for legibility (see checklist).
