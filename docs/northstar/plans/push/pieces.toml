@@ -344,7 +344,7 @@ acceptance = [
     "tests/transport",
 ]
 depends_on = ["freeze"]
-status = "pending"
+status = { state = "attached", attach_sha = "5296b14" }
 size_estimate = "thin stdio pipe server over libouroboros.so; shapes fixed by F4"
 
 [[piece]]
