@@ -18,6 +18,26 @@ func build(field_map: FieldMap, kit: Dictionary) -> MeshInstance3D:
 	# skipping it here unconditionally avoids a double-drawn plane if that file also draws one.
 	var void_mode: bool = kit.get("water_is", "surface") == "void"
 
+	# Each grid point is shared by up to 4 quads. The original per-quad-corner recompute
+	# (height + a 3x3 zone vote + a 4-neighbor cliff check) ran up to 4x per point and
+	# measured as the dominant regenerate cost (~885ms of ~1.5s at a 16000wu canvas).
+	# Precomputing once per point and indexing into it from the quad loop removes that
+	# redundancy without changing the math.
+	var heights := PackedFloat32Array()
+	heights.resize(dim * dim)
+	for gy in range(dim):
+		for gx in range(dim):
+			heights[gy * dim + gx] = field_map.grid[gy * dim + gx].elevation * LEVELS * TERRACE_HEIGHT_WU
+
+	var colors: Array = []
+	colors.resize(dim * dim)
+	for gy in range(dim):
+		for gx in range(dim):
+			var idx := gy * dim + gx
+			var color := _zone_color(field_map, gx, gy, dim, zone_colors)
+			var cliff_factor := _cliff_factor(heights, gx, gy, dim)
+			colors[idx] = color.lerp(cliff_color, cliff_factor)
+
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 
@@ -25,7 +45,7 @@ func build(field_map: FieldMap, kit: Dictionary) -> MeshInstance3D:
 		for gx in range(dim - 1):
 			if void_mode and _quad_is_void(field_map, gx, gy, dim):
 				continue
-			_emit_quad(st, field_map, gx, gy, dim, spacing, zone_colors, cliff_color)
+			_emit_quad(st, heights, colors, gx, gy, dim, spacing)
 
 	st.generate_normals()
 	var mesh := st.commit()
@@ -39,37 +59,30 @@ func build(field_map: FieldMap, kit: Dictionary) -> MeshInstance3D:
 	mesh_instance.material_override = mat
 	return mesh_instance
 
-func _emit_quad(st: SurfaceTool, field_map: FieldMap, gx: int, gy: int, dim: int, spacing: float, zone_colors: Array, cliff_color: Color) -> void:
-	var v00 := _vertex(field_map, gx, gy, dim, spacing, zone_colors, cliff_color)
-	var v10 := _vertex(field_map, gx + 1, gy, dim, spacing, zone_colors, cliff_color)
-	var v11 := _vertex(field_map, gx + 1, gy + 1, dim, spacing, zone_colors, cliff_color)
-	var v01 := _vertex(field_map, gx, gy + 1, dim, spacing, zone_colors, cliff_color)
+func _emit_quad(st: SurfaceTool, heights: PackedFloat32Array, colors: Array, gx: int, gy: int, dim: int, spacing: float) -> void:
+	var i00 := gy * dim + gx
+	var i10 := gy * dim + gx + 1
+	var i11 := (gy + 1) * dim + gx + 1
+	var i01 := (gy + 1) * dim + gx
 
-	st.set_color(v00.color)
-	st.add_vertex(v00.pos)
-	st.set_color(v10.color)
-	st.add_vertex(v10.pos)
-	st.set_color(v11.color)
-	st.add_vertex(v11.pos)
+	var p00 := Vector3(gx * spacing, heights[i00], gy * spacing)
+	var p10 := Vector3((gx + 1) * spacing, heights[i10], gy * spacing)
+	var p11 := Vector3((gx + 1) * spacing, heights[i11], (gy + 1) * spacing)
+	var p01 := Vector3(gx * spacing, heights[i01], (gy + 1) * spacing)
 
-	st.set_color(v00.color)
-	st.add_vertex(v00.pos)
-	st.set_color(v11.color)
-	st.add_vertex(v11.pos)
-	st.set_color(v01.color)
-	st.add_vertex(v01.pos)
+	st.set_color(colors[i00])
+	st.add_vertex(p00)
+	st.set_color(colors[i10])
+	st.add_vertex(p10)
+	st.set_color(colors[i11])
+	st.add_vertex(p11)
 
-func _vertex(field_map: FieldMap, gx: int, gy: int, dim: int, spacing: float, zone_colors: Array, cliff_color: Color) -> Dictionary:
-	var height := _height_at(field_map, gx, gy, dim)
-	var pos := Vector3(gx * spacing, height, gy * spacing)
-	var color := _zone_color(field_map, gx, gy, dim, zone_colors)
-	var cliff_factor := _cliff_factor(field_map, gx, gy, dim, height)
-	color = color.lerp(cliff_color, cliff_factor)
-	return {pos = pos, color = color}
-
-func _height_at(field_map: FieldMap, gx: int, gy: int, dim: int) -> float:
-	var cell: Dictionary = field_map.grid[gy * dim + gx]
-	return cell.elevation * LEVELS * TERRACE_HEIGHT_WU
+	st.set_color(colors[i00])
+	st.add_vertex(p00)
+	st.set_color(colors[i11])
+	st.add_vertex(p11)
+	st.set_color(colors[i01])
+	st.add_vertex(p01)
 
 func _zone_color(field_map: FieldMap, gx: int, gy: int, dim: int, zone_colors: Array) -> Color:
 	# No raw per-zone noise weights survive to this file, only the winning zone id per cell,
@@ -90,10 +103,11 @@ func _zone_color(field_map: FieldMap, gx: int, gy: int, dim: int, zone_colors: A
 		color += zone_colors[i] * (counts[i] / total)
 	return color
 
-func _cliff_factor(field_map: FieldMap, gx: int, gy: int, dim: int, height: float) -> float:
+func _cliff_factor(heights: PackedFloat32Array, gx: int, gy: int, dim: int) -> float:
 	# Steepness proxy: how far this vertex sits above/below its 4 orthogonal neighbors' average
 	# height, scaled against half a terrace step; softened (not a hard threshold) so cliff
 	# shading grades in rather than banding.
+	var height: float = heights[gy * dim + gx]
 	var sum := 0.0
 	var count := 0.0
 	var offsets: Array[Vector2i] = [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]
@@ -102,7 +116,7 @@ func _cliff_factor(field_map: FieldMap, gx: int, gy: int, dim: int, height: floa
 		var ny: int = gy + offset.y
 		if nx < 0 or nx >= dim or ny < 0 or ny >= dim:
 			continue
-		sum += _height_at(field_map, nx, ny, dim)
+		sum += heights[ny * dim + nx]
 		count += 1.0
 	if count == 0.0:
 		return 0.0
