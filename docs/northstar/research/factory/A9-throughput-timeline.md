@@ -85,8 +85,9 @@ about wasted rebuild attempts.
 **(b) A run stops at plateau diagnosis instead of the 10-run cap.**
 204b1 (30 attempts, best_failed never converging below 1–5) and 207 (10 attempts, identical `baseline_failed=1`
 compile error every single time) are textbook plateaus visible after 2–3 non-improving attempts, not 10. Cutting
-each stuck card's attempts to ~3 (≈30 min for 204b1's cadence, ≈20 min for 207's) instead of running to (and, for
-204b1, past) the cap saves an estimated **~330 min (5.5h)** off 204b1 and **~50 min** off 207 so far, and — more
+each stuck card's attempts to ~3 (≈30 min for 204b1's cadence, ≈20 min for 207's) instead of running to the
+10-run cap each time (204b1 did this three times over three human re-queues, R7j/R7k) saves an estimated
+**~330 min (5.5h)** off 204b1 and **~50 min** off 207 so far, and — more
 importantly — converts a silent multi-hour stall into a same-session escalation. Combined with (a), most of the
 window compresses toward **8–10 h** for the same output.
 
@@ -108,8 +109,12 @@ attributable to genuine build/QA cost per card, not to the queue sitting idle or
 2. **No stagnation/plateau detector inside a build's own retry loop** — `207-e05-step-order-fault` reran the
    identical failing approach 10 times with an unchanged `baseline_failed=1` compile error (2026-09-19 21:51–23:12,
    ongoing), and `204b1-e05-conquest-garrison` ran 30 non-converging attempts (2026-09-18 19:45–2026-09-19 03:45).
-3. **The 10-attempt cap doesn't stop the loop, only announces it** — three "204b1 hit the 10-attempt cap (10 runs)"
-   monitor events fired at 2026-09-19 01:43:53–01:45:33 EDT, then 11 more attempts ran anyway through 03:45:19.
+3. **Correction (audit 2026-09-21, item 4, verified against R7j/R7k in DECISIONS.md): the cap did stop the loop
+   each time.** 204b1's 30 attempts are three separate 10-run stretches: the cap fired and halted the card at
+   10 runs, then Westley re-queued it with a fresh attempt budget (R7j, R7k) after each halt, narrowing the
+   fixture closer each round but never landing a clean, non-regressing implementation before the card was
+   retired and hand-committed. The cap-as-designed worked; the three re-queues were deliberate human calls, not
+   a harness bug that let attempts run past the limit.
 4. **No unattended overnight escalation path** — between the last 204b1 attempt and Westley's "complete 204b1
    yourself inline" instruction (2026-09-19 03:57–08:05, ~4h08m), the executor transcript is silent: a stuck head
    card can only be resolved by a human waking up and typing, not by a queued escalation ticket.
