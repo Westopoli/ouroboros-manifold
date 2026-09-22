@@ -70,6 +70,36 @@ func set_data(systems: Array, edges: Array) -> void:
 		_ring_materials[sid] = rmat
 
 	_build_edges(edges)
+	_build_polar_grid()
+
+
+func _build_polar_grid() -> void:
+	var im := ImmediateMesh.new()
+	var mi := MeshInstance3D.new()
+	mi.mesh = im
+	mi.position.y = -1.0
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.35, 0.42, 0.55, 0.14)
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mi.material_override = mat
+	im.surface_begin(Mesh.PRIMITIVE_LINES)
+	var rings := [200.0, 400.0, 600.0, 800.0]
+	var segments := 48
+	for r in rings:
+		for i in range(segments):
+			var a0 := TAU * float(i) / float(segments)
+			var a1 := TAU * float(i + 1) / float(segments)
+			im.surface_add_vertex(Vector3(r * cos(a0), 0.0, r * sin(a0)))
+			im.surface_add_vertex(Vector3(r * cos(a1), 0.0, r * sin(a1)))
+	var spokes := 12
+	var max_r: float = rings[rings.size() - 1]
+	for i in range(spokes):
+		var ang := TAU * float(i) / float(spokes)
+		im.surface_add_vertex(Vector3(0.0, 0.0, 0.0))
+		im.surface_add_vertex(Vector3(max_r * cos(ang), 0.0, max_r * sin(ang)))
+	im.surface_end()
+	_orbit_root.add_child(mi)
 
 
 func _build_edges(edges: Array) -> void:
@@ -101,18 +131,19 @@ func _build_starfield() -> void:
 	var quad := QuadMesh.new()
 	quad.size = Vector2(2.5, 2.5)
 	mm.mesh = quad
-	var n := 260
+	var n := 900
 	mm.instance_count = n
 	var rng := RandomNumberGenerator.new()
 	rng.seed = STARFIELD_SEED
 	for i in range(n):
-		var r := rng.randf_range(500.0, 1500.0)
+		var r := rng.randf_range(300.0, 2200.0)
 		var ang := rng.randf_range(0.0, TAU)
 		var x := r * cos(ang)
 		var z := r * sin(ang)
-		var y := rng.randf_range(-60.0, 260.0)
-		mm.set_instance_transform(i, Transform3D(Basis(), Vector3(x, y, z)))
-		var b := rng.randf_range(0.45, 1.0)
+		var y := rng.randf_range(-80.0, 320.0)
+		var s := rng.randf_range(0.5, 1.6)
+		mm.set_instance_transform(i, Transform3D(Basis().scaled(Vector3(s, s, s)), Vector3(x, y, z)))
+		var b := rng.randf_range(0.35, 1.0)
 		mm.set_instance_color(i, Color(b, b, b, 1.0))
 	mmi.multimesh = mm
 	var mat := StandardMaterial3D.new()
