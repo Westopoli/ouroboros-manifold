@@ -20,7 +20,7 @@ do_not_edit:
 impl_line_budget: 250
 test_assertion_budget: 20
 test_owned_by: parent
-wave: 2
+wave: 1
 ---
 
 ## Task
