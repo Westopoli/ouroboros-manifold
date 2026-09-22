@@ -5,14 +5,6 @@ extends RefCounted
 # and handed a world_parent to populate. It never needs to be in the scene tree itself,
 # so a plain object is simpler than a node with lifecycle baggage.
 
-# Shared with ground.gd: world-space wu per terrace level (elevation is a normalized
-# 0..1 float from FieldMap's 5-level terracing). 250.0 is a guess per the brief.
-# ground.gd's actual height formula is `elevation * LEVELS * TERRACE_HEIGHT_WU`
-# (its LEVELS = 4.0, matching FieldMap._terrace's level count) — matched here so
-# placed pieces sit on the ground mesh instead of floating below it.
-const TERRACE_HEIGHT_WU := 250.0
-const LEVELS := 4.0
-
 const JITTER_RANGE_WU := 50.0
 const BORDER_SEGMENT_SPACING_WU := 150.0
 const CROSSING_GAP_WU := 300.0
@@ -165,7 +157,7 @@ func _place_cells(field_map: FieldMap, kit: Dictionary, kit_name: String, rng: R
 			var jz := rng.randf_range(-JITTER_RANGE_WU, JITTER_RANGE_WU)
 			var wx := gx * spacing + jx
 			var wz := gy * spacing + jz
-			var ground_y: float = cell.elevation * LEVELS * TERRACE_HEIGHT_WU
+			var ground_y: float = cell.elevation
 			var y: float = ground_y + _ground_offset(resolved.mesh)
 			var xform := Transform3D(Basis(), Vector3(wx, y, wz))
 			_group_add(groups, rule.get("piece", "piece"), kit_name, resolved.mesh, xform, resolved.color)
@@ -337,7 +329,7 @@ func _rule_matches(when: Dictionary, cell: Dictionary) -> bool:
 	for key in when.keys():
 		var cond = when[key]
 		if key == "zone":
-			var zone_names := ["zone_a", "zone_b", "zone_c"]
+			var zone_names := ["zone_a", "zone_b", "zone_c", "zone_d", "zone_e"]
 			if zone_names[cell.zone] != cond:
 				return false
 		elif key == "district":
@@ -363,12 +355,12 @@ func _elevation_at(field_map: FieldMap, p: Vector2) -> float:
 	var gx: int = clampi(int(round(p.x / spacing)), 0, dim - 1)
 	var gy: int = clampi(int(round(p.y / spacing)), 0, dim - 1)
 	var cell: Dictionary = field_map.grid[gy * dim + gx]
-	return cell.elevation * LEVELS * TERRACE_HEIGHT_WU
+	return cell.elevation
 
 
 # Real elevation step at a cliff border point: sample the grid on both sides
-# (perpendicular to the border) and diff, using the same wu convention as
-# _elevation_at. Floored so a barely-there step doesn't render as a sliver.
+# (perpendicular to the border) and diff. Floored so a barely-there step doesn't
+# render as a sliver.
 func _cliff_height_wu(field_map: FieldMap, p: Vector2, perp2: Vector2) -> float:
 	var dim: int = field_map.dim
 	var spacing: float = FieldMap.SPACING
@@ -380,7 +372,7 @@ func _cliff_height_wu(field_map: FieldMap, p: Vector2, perp2: Vector2) -> float:
 	var gy_lo: int = clampi(int(round(p_lo.y / spacing)), 0, dim - 1)
 	var e_hi: float = field_map.grid[gy_hi * dim + gx_hi].elevation
 	var e_lo: float = field_map.grid[gy_lo * dim + gx_lo].elevation
-	var diff_wu: float = abs(e_hi - e_lo) * LEVELS * TERRACE_HEIGHT_WU
+	var diff_wu: float = abs(e_hi - e_lo)
 	return max(diff_wu, MIN_CLIFF_HEIGHT_WU)
 
 

@@ -1,33 +1,29 @@
 class_name GroundBuilder
 extends RefCounted
 
-# Matches placer.gd's constant so both files agree on world scale; 250 wu/level is a guess
-# per the design brief, pending Westley's review.
-const TERRACE_HEIGHT_WU := 250.0
-const LEVELS := 4.0
-const CLIFF_SOFTEN := 0.5
-const VOID_ELEVATION_THRESHOLD := 0.125
+const CLIFF_REFERENCE_WU := 400.0
+const VOID_ELEVATION_THRESHOLD_WU := 100.0
 
 func build(field_map: FieldMap, kit: Dictionary) -> MeshInstance3D:
 	var dim: int = field_map.dim
 	var spacing: float = FieldMap.SPACING
 	var palette: Dictionary = kit.palette
-	var zone_colors := [Color(palette.zone_a), Color(palette.zone_b), Color(palette.zone_c)]
+	var zone_colors := [Color(palette.zone_a), Color(palette.zone_b), Color(palette.zone_c), Color(palette.zone_d), Color(palette.zone_e)]
 	var cliff_color := Color(palette.cliff)
 	# Water plane (surface mode) is drawn by whichever file the master spec assigns it to;
 	# skipping it here unconditionally avoids a double-drawn plane if that file also draws one.
 	var void_mode: bool = kit.get("water_is", "surface") == "void"
 
-	# Each grid point is shared by up to 4 quads. The original per-quad-corner recompute
-	# (height + a 3x3 zone vote + a 4-neighbor cliff check) ran up to 4x per point and
-	# measured as the dominant regenerate cost (~885ms of ~1.5s at a 16000wu canvas).
-	# Precomputing once per point and indexing into it from the quad loop removes that
-	# redundancy without changing the math.
+	# Each grid point is shared by up to 4 quads. Precomputing height/color once per point
+	# and indexing into it from the quad loop (rather than recomputing per corner) is the
+	# fix measured in pass 2 (ground was the dominant regenerate cost). Elevation is now
+	# continuous world units (pass 3), not a normalized 0..1 pre-terraced value, so vertex
+	# Y is the grid's own elevation directly.
 	var heights := PackedFloat32Array()
 	heights.resize(dim * dim)
 	for gy in range(dim):
 		for gx in range(dim):
-			heights[gy * dim + gx] = field_map.grid[gy * dim + gx].elevation * LEVELS * TERRACE_HEIGHT_WU
+			heights[gy * dim + gx] = field_map.grid[gy * dim + gx].elevation
 
 	var colors: Array = []
 	colors.resize(dim * dim)
@@ -87,7 +83,7 @@ func _emit_quad(st: SurfaceTool, heights: PackedFloat32Array, colors: Array, gx:
 func _zone_color(field_map: FieldMap, gx: int, gy: int, dim: int, zone_colors: Array) -> Color:
 	# No raw per-zone noise weights survive to this file, only the winning zone id per cell,
 	# so approximate a soft blend by voting the 3x3 neighborhood and weighting by vote share.
-	var counts := [0.0, 0.0, 0.0]
+	var counts := [0.0, 0.0, 0.0, 0.0, 0.0]
 	var total := 0.0
 	for oy in range(-1, 2):
 		for ox in range(-1, 2):
@@ -99,14 +95,14 @@ func _zone_color(field_map: FieldMap, gx: int, gy: int, dim: int, zone_colors: A
 			counts[z] += 1.0
 			total += 1.0
 	var color := Color(0, 0, 0)
-	for i in range(3):
+	for i in range(5):
 		color += zone_colors[i] * (counts[i] / total)
 	return color
 
 func _cliff_factor(heights: PackedFloat32Array, gx: int, gy: int, dim: int) -> float:
-	# Steepness proxy: how far this vertex sits above/below its 4 orthogonal neighbors' average
-	# height, scaled against half a terrace step; softened (not a hard threshold) so cliff
-	# shading grades in rather than banding.
+	# Steepness proxy: how far this vertex sits above/below its 4 orthogonal neighbors'
+	# average height, scaled against a reference slope; softened (not a hard threshold) so
+	# cliff shading grades in rather than banding.
 	var height: float = heights[gy * dim + gx]
 	var sum := 0.0
 	var count := 0.0
@@ -122,7 +118,7 @@ func _cliff_factor(heights: PackedFloat32Array, gx: int, gy: int, dim: int) -> f
 		return 0.0
 	var avg: float = sum / count
 	var diff: float = abs(height - avg)
-	return clamp(diff / (TERRACE_HEIGHT_WU * CLIFF_SOFTEN), 0.0, 1.0)
+	return clamp(diff / CLIFF_REFERENCE_WU, 0.0, 1.0)
 
 func _quad_is_void(field_map: FieldMap, gx: int, gy: int, dim: int) -> bool:
 	var corners: Array[Vector2i] = [Vector2i(gx, gy), Vector2i(gx + 1, gy), Vector2i(gx, gy + 1), Vector2i(gx + 1, gy + 1)]
@@ -132,4 +128,4 @@ func _quad_is_void(field_map: FieldMap, gx: int, gy: int, dim: int) -> bool:
 		var cell: Dictionary = field_map.grid[c.y * dim + c.x]
 		water_sum += cell.water
 		elevation_sum += cell.elevation
-	return (water_sum / 4.0) > 0.5 or (elevation_sum / 4.0) < VOID_ELEVATION_THRESHOLD
+	return (water_sum / 4.0) > 0.5 or (elevation_sum / 4.0) < VOID_ELEVATION_THRESHOLD_WU

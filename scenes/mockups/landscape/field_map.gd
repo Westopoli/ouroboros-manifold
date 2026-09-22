@@ -2,50 +2,126 @@ class_name FieldMap
 extends RefCounted
 
 const SPACING := 100.0
-const SKELETONS_DIR := "res://scenes/mockups/landscape/skeletons/"
-const NODE_JITTER_MAX := 0.08
-const RIVER_JITTER_MAX := 0.06
+# Peaks 3000-5000wu per the brief. Elevation is stored continuous (world units, sea level
+# 0) for placement and camera; only border tracing quantizes it.
+const PEAK_HEIGHT_WU := 5000.0
+const CITY_CORE_TARGET_ELEV_WU := 500.0
+const CITY_REACH_WU := 4500.0
 
-var canvas: float = 16000.0
+var canvas: float = 24000.0
 var stability: float = 60.0
 var dim: int = 0
-var skeleton_name: String = ""
 var nodes: Array = []
 # grid: flat Array of Dictionaries, index = gy * dim + gx, gx/gy in [0, dim-1].
 # World position of a cell = Vector2(gx, gy) * SPACING.
-# Each cell: {obstacle, cover, elevation, interference, water, population, wealth: float [0,1],
-#             zone: int 0/1/2, district: int 0..4}
+# Each cell: {obstacle, cover, interference, water, population, wealth: float [0,1],
+#             elevation: float world units (continuous, sea level 0, peaks ~PEAK_HEIGHT_WU),
+#             slope: float [0,1] local steepness, zone: int 0..4, district: int 0..4}
 var grid: Array = []
 var borders: Array = []
 var crossings: Array = []
+# Each entry a PackedVector2Array of world-space points, highlands to the sea/a lake.
+var rivers: Array = []
 
 var _rng := RandomNumberGenerator.new()
 
-func generate(p_seed: int, p_canvas: float = 16000.0, p_stability: float = 60.0) -> void:
+
+func generate(p_seed: int, p_canvas: float = 24000.0, p_stability: float = 60.0) -> void:
 	canvas = p_canvas
 	stability = clamp(p_stability, 0.0, 100.0)
 	dim = int(canvas / SPACING) + 1
 	_rng.seed = p_seed
 
-	var noise_obstacle := _make_noise(p_seed + 0, 0.00035)
-	var noise_cover := _make_noise(p_seed + 1, 0.00035)
-	var noise_elevation := _make_noise(p_seed + 2, 0.00030)
-	var noise_interference := _make_noise(p_seed + 3, 0.00040)
-	var noise_zone_a := _make_noise(p_seed + 10, 0.00020)
-	var noise_zone_b := _make_noise(p_seed + 11, 0.00022)
-	var noise_zone_c := _make_noise(p_seed + 12, 0.00025)
+	var noise_continent := _make_noise(p_seed + 0, 60.0 / canvas)
+	var noise_hills := _make_noise(p_seed + 1, 8.0 / canvas)
+	var noise_detail := _make_noise(p_seed + 2, 40.0 / canvas)
+	var noise_boundary := _make_noise(p_seed + 3, 14.0 / canvas)
+	var noise_moisture := _make_noise(p_seed + 4, 20.0 / canvas)
+	var noise_obstacle := _make_noise(p_seed + 5, 0.00035)
+	var noise_cover := _make_noise(p_seed + 6, 0.00035)
+	var noise_interference := _make_noise(p_seed + 7, 0.00040)
 
-	var skeleton := _load_skeleton(p_seed)
-	skeleton_name = skeleton.get("name", "")
-	var coast_y_ratio: float = skeleton.get("coast_y_ratio", 0.90)
-	nodes = _build_nodes(skeleton)
-	var river_points := _build_river(skeleton)
+	var elevation := _build_elevation(noise_continent, noise_hills, noise_detail)
+	var slope := _build_slope(elevation)
+	var water_result := _build_water(elevation)
+	var water: PackedFloat32Array = water_result.water
+	rivers = water_result.rivers
+	var zone := _build_zone(elevation, water, noise_boundary, noise_moisture)
 
-	var objective_pos: Vector2 = _find_node("objective")
-	var vantage_pos: Vector2 = _find_node("vantage")
-	var hazard_pos: Vector2 = _find_node("hazard_anchor")
-	# Chokepoints are appended in base-list order: north approach, west approach, river bridge.
+	var core_gxy := _find_city_core(elevation, slope, water)
+	var core_pos := Vector2(core_gxy.x, core_gxy.y) * SPACING
+	var pop_result := _build_population_district(core_pos, elevation, slope, water)
+	var population_raw: PackedFloat32Array = pop_result.population
+	var district: PackedFloat32Array = pop_result.district
+
+	grid.resize(dim * dim)
+	for gy in range(dim):
+		for gx in range(dim):
+			var idx := gy * dim + gx
+			grid[idx] = {
+				elevation = elevation[idx],
+				slope = slope[idx],
+				water = water[idx],
+				zone = zone[idx],
+				district = int(district[idx]),
+				population = population_raw[idx],
+				obstacle = 0.0,
+				cover = 0.0,
+				interference = 0.0,
+				wealth = 0.0,
+			}
+
+	borders = []
+	_append_borders(_march_squares(water, dim, 0.5), "coast")
+	# Tracing cliff borders on raw continuous elevation picks up every ripple of the detail
+	# noise octave as a "cliff" (12,000+ tiny segments, measured) -- the brief's own fix:
+	# quantize to the five terraces for border tracing only, keep the mesh/placement height
+	# continuous. Terracing flattens most of the terrain into wide flat bands so only real
+	# level changes produce a contour.
+	# Terracing alone still flickers across a threshold wherever the detail-noise octave's
+	# high-frequency texture crosses it (13,000+ segments, measured) -- cliffs should read
+	# macro terrain structure, not surface texture. A small box blur removes that
+	# salt-and-pepper noise before tracing without touching the mesh/placement elevation.
+	var terraced := _blur(_build_terrace_bands(elevation), dim, 2)
+	for frac in [0.20, 0.42, 0.64, 0.86]:
+		_append_borders(_march_squares(terraced, dim, frac), "cliff")
+	var district_flat := PackedFloat32Array()
+	district_flat.resize(dim * dim)
+	for i in range(district.size()):
+		district_flat[i] = 1.0 if district[i] >= 2.0 else 0.0
+	_append_borders(_march_squares(district_flat, dim, 0.5), "wall")
+
+	nodes = [{type = "objective", pos = core_pos}]
+	var vantage_pos := _find_vantage(core_pos, elevation)
+	nodes.append({type = "vantage", pos = vantage_pos})
+
+	var wall_points := _points_of_kind("wall")
+	var coast_points := _points_of_kind("coast")
+	var cliff_points := _points_of_kind("cliff")
+
+	var approach_dirs := _find_approach_directions(core_pos, wall_points)
+	var gate_a := _nearest_point(wall_points, core_pos + approach_dirs[0] * CITY_REACH_WU * 0.6, core_pos)
+	var gate_b := _nearest_point(wall_points, core_pos + approach_dirs[1] * CITY_REACH_WU * 0.6, core_pos)
+	var bridge_pt := _nearest_point(coast_points, core_pos, core_pos)
+	var pass_pt := _nearest_point(cliff_points, vantage_pos, core_pos)
+	for p in [gate_a, gate_b, bridge_pt, pass_pt]:
+		nodes.append({type = "chokepoint", pos = p})
+
+	nodes.append({type = "flank_route", pos = core_pos + approach_dirs[0].rotated(0.6) * CITY_REACH_WU})
+	nodes.append({type = "staging", pos = gate_a + approach_dirs[0] * 1200.0})
+	nodes.append({type = "staging", pos = gate_b + approach_dirs[1] * 1200.0})
+	nodes.append({type = "hazard_anchor", pos = _find_hazard_anchor(elevation, slope, water, core_pos)})
+	var spawn_dir: Vector2 = -((approach_dirs[0] + approach_dirs[1]).normalized())
+	if spawn_dir.length() < 0.1:
+		spawn_dir = approach_dirs[0].rotated(PI * 0.5)
+	nodes.append({type = "spawn_point", pos = core_pos + spawn_dir.rotated(0.3) * CITY_REACH_WU * 1.8})
+	nodes.append({type = "spawn_point", pos = core_pos + spawn_dir.rotated(-0.3) * CITY_REACH_WU * 1.8})
+	nodes.append({type = "extraction", pos = _find_extraction(core_pos, water)})
+	for n in nodes:
+		n.pos = n.pos.clamp(Vector2.ZERO, Vector2.ONE * canvas)
+
 	var chokepoints: Array = _find_nodes("chokepoint")
+	var hazard_pos: Vector2 = _find_node("hazard_anchor")
 
 	var obstacle_pos := PackedVector2Array()
 	var obstacle_rad := PackedFloat32Array()
@@ -70,10 +146,6 @@ func generate(p_seed: int, p_canvas: float = 16000.0, p_stability: float = 60.0)
 		cover_rad.append(500.0)
 		cover_int.append(0.30)
 
-	var elevation_pos := PackedVector2Array([vantage_pos, vantage_pos])
-	var elevation_rad := PackedFloat32Array([700.0, 3500.0])
-	var elevation_int := PackedFloat32Array([0.90, 0.45])
-
 	var interference_pos := PackedVector2Array([hazard_pos])
 	var interference_rad := PackedFloat32Array([500.0])
 	var interference_int := PackedFloat32Array([0.75])
@@ -82,91 +154,35 @@ func generate(p_seed: int, p_canvas: float = 16000.0, p_stability: float = 60.0)
 		interference_rad.append(400.0)
 		interference_int.append(0.20)
 
-	var harbor_pos: Vector2 = Vector2(0.42, 0.85) * canvas
-
-	grid.resize(dim * dim)
-	var elevation_flat := PackedFloat32Array()
-	elevation_flat.resize(dim * dim)
-	var water_flat := PackedFloat32Array()
-	water_flat.resize(dim * dim)
-	var district_flat := PackedFloat32Array()
-	district_flat.resize(dim * dim)
+	var harbor_pos: Vector2 = _find_node("extraction")
 
 	for gy in range(dim):
 		for gx in range(dim):
 			var idx := gy * dim + gx
 			var wpos := Vector2(gx * SPACING, gy * SPACING)
+			var cell: Dictionary = grid[idx]
 
-			var water := _sample_water(wpos, river_points, coast_y_ratio)
-
-			var obstacle: float = clamp(_radial_sum_arrays(wpos, obstacle_pos, obstacle_rad, obstacle_int) + noise_obstacle.get_noise_2d(wpos.x, wpos.y) * 0.06, 0.0, 1.0)
+			var obstacle: float = clamp(_radial_sum_arrays(wpos, obstacle_pos, obstacle_rad, obstacle_int) + noise_obstacle.get_noise_2d(wpos.x, wpos.y) * 0.06 + cell.slope * 0.5, 0.0, 1.0)
 
 			var cover_raw: float = _radial_sum_arrays(wpos, cover_pos, cover_rad, cover_int) + noise_cover.get_noise_2d(wpos.x, wpos.y) * 0.06
-			# Additive, not multiplicative: cover_raw is near-zero almost everywhere except
-			# near chokepoints/staging, so scaling it left stability invisible over most of
-			# the map (Westley: "can't tell what the pieces slider does"). An additive shift
-			# around the stability=50 midpoint moves cover across the kits' cover-rule
-			# thresholds broadly, not just where a radial source already put cover down.
+			if cell.zone == 1 or cell.zone == 2:
+				cover_raw += 0.2
 			var cover: float = clamp(cover_raw + (stability / 100.0 - 0.5) * 0.6, 0.0, 1.0)
 
 			var interference_raw: float = _radial_sum_arrays(wpos, interference_pos, interference_rad, interference_int) + noise_interference.get_noise_2d(wpos.x, wpos.y) * 0.05
-			# Higher stability lowers interference (fewer signal-denial hazards).
+			if cell.zone == 3:
+				interference_raw += 0.2
 			var interference: float = clamp(interference_raw * (1.0 - stability / 100.0 * 0.7), 0.0, 1.0)
 
-			var elevation_raw: float = clamp(_radial_sum_arrays(wpos, elevation_pos, elevation_rad, elevation_int) + 0.05 + noise_elevation.get_noise_2d(wpos.x, wpos.y) * 0.06, 0.0, 1.0)
-			elevation_raw *= (1.0 - water * 0.9)
-			var elevation: float = _terrace(clamp(elevation_raw, 0.0, 1.0))
-
-			var za: float = noise_zone_a.get_noise_2d(wpos.x, wpos.y) * 0.5 + 0.5
-			var zb: float = noise_zone_b.get_noise_2d(wpos.x, wpos.y) * 0.5 + 0.5
-			var zc: float = noise_zone_c.get_noise_2d(wpos.x, wpos.y) * 0.5 + 0.5
-			var zone := 0
-			if zb >= za and zb >= zc:
-				zone = 1
-			elif zc >= za and zc >= zb:
-				zone = 2
-
-			var pop_radial: float = _radial_one(wpos, objective_pos, 5000.0, 1.0)
-			var population: float = pop_radial * (1.0 - elevation * 0.5)
-			if water > 0.5:
-				population = 0.0
-			population = clamp(population, 0.0, 1.0)
-
 			var wealth: float = _radial_one(wpos, harbor_pos, 4000.0, 1.0) * (stability / 100.0)
-			if water > 0.5:
+			if cell.water > 0.5:
 				wealth = 0.0
 			wealth = clamp(wealth, 0.0, 1.0)
 
-			var district := 0
-			if population >= 0.8:
-				district = 4
-			elif population >= 0.6:
-				district = 3
-			elif population >= 0.4:
-				district = 2
-			elif population >= 0.2:
-				district = 1
-
-			grid[idx] = {
-				obstacle = obstacle,
-				cover = cover,
-				elevation = elevation,
-				interference = interference,
-				water = water,
-				population = population,
-				wealth = wealth,
-				zone = zone,
-				district = district,
-			}
-			elevation_flat[idx] = elevation
-			water_flat[idx] = water
-			district_flat[idx] = (1.0 if district >= 2 else 0.0)
-
-	borders = []
-	_append_borders(_march_squares(water_flat, dim, 0.5), "coast")
-	for th in [0.125, 0.375, 0.625, 0.875]:
-		_append_borders(_march_squares(elevation_flat, dim, th), "cliff")
-	_append_borders(_march_squares(district_flat, dim, 0.5), "wall")
+			cell.obstacle = obstacle
+			cell.cover = cover
+			cell.interference = interference
+			cell.wealth = wealth
 
 	crossings = []
 	for bi in range(borders.size()):
@@ -186,6 +202,7 @@ func generate(p_seed: int, p_canvas: float = 16000.0, p_stability: float = 60.0)
 			if res.distance <= 300.0:
 				crossings.append({border_index = bi, point = res.point, kind = kind})
 
+
 func compute_hash() -> int:
 	var parts: Array = []
 	for n in nodes:
@@ -201,13 +218,18 @@ func compute_hash() -> int:
 			parts.append(int(round(pts[i].x)))
 			parts.append(int(round(pts[i].y)))
 			i += step
+	for r in rivers:
+		var rp: PackedVector2Array = r
+		if rp.size() > 0:
+			parts.append(int(round(rp[0].x)))
+			parts.append(int(round(rp[rp.size() - 1].y)))
 	var gstep := 10
 	var i2 := 0
 	while i2 < grid.size():
 		var cell: Dictionary = grid[i2]
 		parts.append(int(round(cell.obstacle * 1000.0)))
 		parts.append(int(round(cell.cover * 1000.0)))
-		parts.append(int(round(cell.elevation * 1000.0)))
+		parts.append(int(round(cell.elevation * 10.0)))
 		parts.append(int(round(cell.interference * 1000.0)))
 		parts.append(int(round(cell.water * 1000.0)))
 		parts.append(int(round(cell.population * 1000.0)))
@@ -217,6 +239,7 @@ func compute_hash() -> int:
 		i2 += gstep
 	return hash(parts)
 
+
 func _make_noise(seed_val: int, freq: float) -> FastNoiseLite:
 	var n := FastNoiseLite.new()
 	n.seed = seed_val
@@ -224,59 +247,502 @@ func _make_noise(seed_val: int, freq: float) -> FastNoiseLite:
 	n.frequency = freq
 	return n
 
-func _load_skeleton(p_seed: int) -> Dictionary:
-	# One hand-authored skeleton per file (Q-119-02 still open: this is "skeletons now,
-	# count growing", not a decision). Sorted filenames give a stable, reproducible
-	# seed -> skeleton mapping across runs.
-	var dir := DirAccess.open(SKELETONS_DIR)
-	var files: Array = []
-	if dir != null:
-		dir.list_dir_begin()
-		var file_name := dir.get_next()
-		while file_name != "":
-			if not dir.current_is_dir() and file_name.ends_with(".json"):
-				files.append(file_name)
-			file_name = dir.get_next()
-		dir.list_dir_end()
-	files.sort()
-	if files.is_empty():
-		return {}
-	var index: int = absi(p_seed) % files.size()
-	var text := FileAccess.get_file_as_string(SKELETONS_DIR + files[index])
-	var parsed = JSON.parse_string(text)
-	return parsed if typeof(parsed) == TYPE_DICTIONARY else {}
+
+# Three octaves (continent/hills/detail) summed, then RE-NORMALIZED against this specific
+# generation's own min/max so peaks land in the brief's 3000-5000wu window every seed,
+# regardless of how the weighted noise sum happens to statistically distribute (a first
+# attempt shaped the raw noise with a power curve before scaling and it silently crushed
+# every peak to ~2100wu -- pow(x,1.4) on x in [0,1] shrinks values, it doesn't stretch them;
+# caught by checking the actual min/max after generating, not by inspection). A south-edge
+# bias guarantees a coast on at least one edge every seed; a mild power curve on the
+# normalized [0,1] fraction (applied after normalization, in the direction that actually
+# concentrates height near the top) gives peaks a pointed rather than plateaued profile.
+func _build_elevation(noise_continent: FastNoiseLite, noise_hills: FastNoiseLite, noise_detail: FastNoiseLite) -> PackedFloat32Array:
+	var raw := PackedFloat32Array()
+	raw.resize(dim * dim)
+	var min_raw := INF
+	var max_raw := -INF
+	for gy in range(dim):
+		for gx in range(dim):
+			var wpos := Vector2(gx * SPACING, gy * SPACING)
+			var n := noise_continent.get_noise_2d(wpos.x, wpos.y) * 0.6 \
+				+ noise_hills.get_noise_2d(wpos.x, wpos.y) * 0.3 \
+				+ noise_detail.get_noise_2d(wpos.x, wpos.y) * 0.1
+			raw[gy * dim + gx] = n
+			min_raw = min(min_raw, n)
+			max_raw = max(max_raw, n)
+
+	var peak_target: float = PEAK_HEIGHT_WU * _rng.randf_range(0.6, 1.0)
+	var sea_depth_target: float = -PEAK_HEIGHT_WU * 0.3
+
+	var out := PackedFloat32Array()
+	out.resize(dim * dim)
+	for gy in range(dim):
+		for gx in range(dim):
+			var idx := gy * dim + gx
+			var n: float = raw[idx]
+			var h := 0.0
+			if n >= 0.0 and max_raw > 0.0:
+				h = pow(n / max_raw, 1.3) * peak_target
+			elif n < 0.0 and min_raw < 0.0:
+				h = (n / min_raw) * sea_depth_target
+			var wpos := Vector2(gx * SPACING, gy * SPACING)
+			var edge_bias: float = smoothstep(canvas * 0.72, canvas, wpos.y) * -(peak_target * 0.5 + 800.0)
+			out[idx] = h + edge_bias
+	return out
 
 
-func _build_nodes(skeleton: Dictionary) -> Array:
-	var result: Array = []
-	for entry in skeleton.get("nodes", []):
-		var ratio_arr: Array = entry.position_ratio
-		var base_ratio := Vector2(ratio_arr[0], ratio_arr[1])
-		var jitter := Vector2(
-			_rng.randf_range(-NODE_JITTER_MAX, NODE_JITTER_MAX),
-			_rng.randf_range(-NODE_JITTER_MAX, NODE_JITTER_MAX)
-		)
-		var ratio: Vector2 = (base_ratio + jitter).clamp(Vector2.ZERO, Vector2.ONE)
-		result.append({type = entry.type, pos = ratio * canvas})
-	return result
+# Quantized 0..1 terrace classification used only for cliff border tracing (see the call
+# site's comment). Same gentle-bench-then-steep-cliff shape as the pre-pass-3 mockup's
+# terracing, just no longer the mesh/placement height itself.
+func _build_terrace_bands(elevation: PackedFloat32Array) -> PackedFloat32Array:
+	var out := PackedFloat32Array()
+	out.resize(elevation.size())
+	var levels := 4.0
+	var edge := 0.18
+	var bench_slope := 0.15
+	for i in range(elevation.size()):
+		var raw: float = clamp(elevation[i] / PEAK_HEIGHT_WU, 0.0, 0.999999)
+		var scaled: float = raw * (levels + 1.0)
+		var level: float = floor(scaled)
+		var frac: float = scaled - level
+		var gentle: float = frac * bench_slope
+		var cliff: float = smoothstep(1.0 - edge, 1.0, frac) * (1.0 - bench_slope)
+		out[i] = clamp(level + gentle + cliff, 0.0, levels) / levels
+	return out
 
-func _build_river(skeleton: Dictionary) -> PackedVector2Array:
-	var points := PackedVector2Array()
-	for r in skeleton.get("river_ratio", []):
-		var base_ratio := Vector2(r[0], r[1])
-		var jitter := Vector2(
-			_rng.randf_range(-RIVER_JITTER_MAX, RIVER_JITTER_MAX),
-			_rng.randf_range(-RIVER_JITTER_MAX, RIVER_JITTER_MAX)
-		)
-		var ratio: Vector2 = (base_ratio + jitter).clamp(Vector2.ZERO, Vector2.ONE)
-		points.append(ratio * canvas)
-	return points
+
+func _blur(values: PackedFloat32Array, d: int, radius: int) -> PackedFloat32Array:
+	var out := PackedFloat32Array()
+	out.resize(values.size())
+	for gy in range(d):
+		for gx in range(d):
+			var sum := 0.0
+			var count := 0
+			for oy in range(-radius, radius + 1):
+				for ox in range(-radius, radius + 1):
+					var nx := gx + ox
+					var ny := gy + oy
+					if nx < 0 or nx >= d or ny < 0 or ny >= d:
+						continue
+					sum += values[ny * d + nx]
+					count += 1
+			out[gy * d + gx] = sum / count
+	return out
+
+
+func _build_slope(elevation: PackedFloat32Array) -> PackedFloat32Array:
+	var out := PackedFloat32Array()
+	out.resize(dim * dim)
+	# Normalized against a reference slope of one full terrace band per two grid cells;
+	# steeper than that reads as fully "slope = 1" for gameplay/placement purposes.
+	var reference: float = (PEAK_HEIGHT_WU * 0.25) / (SPACING * 2.0)
+	for gy in range(dim):
+		for gx in range(dim):
+			var idx := gy * dim + gx
+			var h := elevation[idx]
+			var sum := 0.0
+			var count := 0
+			if gx > 0:
+				sum += abs(h - elevation[idx - 1]); count += 1
+			if gx < dim - 1:
+				sum += abs(h - elevation[idx + 1]); count += 1
+			if gy > 0:
+				sum += abs(h - elevation[idx - dim]); count += 1
+			if gy < dim - 1:
+				sum += abs(h - elevation[idx + dim]); count += 1
+			var avg: float = (sum / count) / SPACING if count > 0 else 0.0
+			out[idx] = clamp(avg / reference, 0.0, 1.0)
+	return out
+
+
+# Sea from elevation<0, a handful of bounded-flood lakes in local basins above sea level, and
+# 2-4 rivers traced downhill by steepest descent from high sources to the sea or a lake.
+# Lake detection is a cheap local-minimum + bounded flood, not a real watershed transform --
+# adequate for a mockup canvas, documented as a simplification in the report.
+func _build_water(elevation: PackedFloat32Array) -> Dictionary:
+	var water := PackedFloat32Array()
+	water.resize(dim * dim)
+	for i in range(water.size()):
+		water[i] = smoothstep(60.0, -60.0, elevation[i])
+
+	var lake_seeds := _find_lake_seeds(elevation)
+	for seed_idx in lake_seeds:
+		_flood_lake(elevation, water, seed_idx)
+
+	var rivers_out: Array = []
+	var sources := _find_river_sources(elevation)
+	for src in sources:
+		var path := _trace_river(elevation, water, src)
+		if path.size() >= 2:
+			rivers_out.append(path)
+			_stamp_river(water, path)
+	return {water = water, rivers = rivers_out}
+
+
+func _find_lake_seeds(elevation: PackedFloat32Array) -> Array:
+	var seeds: Array = []
+	var step := 6
+	for gy in range(step, dim - step, step):
+		for gx in range(step, dim - step, step):
+			var idx := gy * dim + gx
+			var h := elevation[idx]
+			if h <= 0.0 or h > PEAK_HEIGHT_WU * 0.18:
+				continue
+			var is_min := true
+			for oy in range(-1, 2):
+				for ox in range(-1, 2):
+					if ox == 0 and oy == 0:
+						continue
+					var nidx := (gy + oy) * dim + (gx + ox)
+					if elevation[nidx] < h:
+						is_min = false
+						break
+				if not is_min:
+					break
+			if is_min:
+				seeds.append(idx)
+	return seeds
+
+
+func _flood_lake(elevation: PackedFloat32Array, water: PackedFloat32Array, seed_idx: int) -> void:
+	var fill_level: float = elevation[seed_idx] + 150.0
+	var visited := {}
+	var queue: Array = [seed_idx]
+	visited[seed_idx] = true
+	var visits := 0
+	while not queue.is_empty() and visits < 1500:
+		var idx: int = queue.pop_back()
+		visits += 1
+		if elevation[idx] > fill_level:
+			continue
+		water[idx] = max(water[idx], 1.0)
+		var gy := idx / dim
+		var gx := idx % dim
+		var lake_offsets: Array[Vector2i] = [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]
+		for offset in lake_offsets:
+			var nx: int = gx + offset.x
+			var ny: int = gy + offset.y
+			if nx < 0 or nx >= dim or ny < 0 or ny >= dim:
+				continue
+			var nidx := ny * dim + nx
+			if not visited.has(nidx) and elevation[nidx] <= fill_level:
+				visited[nidx] = true
+				queue.append(nidx)
+
+
+func _find_river_sources(elevation: PackedFloat32Array) -> Array:
+	var candidates: Array = []
+	var step := 8
+	for gy in range(step, dim - step, step):
+		for gx in range(step, dim - step, step):
+			var idx := gy * dim + gx
+			if elevation[idx] > PEAK_HEIGHT_WU * 0.55:
+				candidates.append(idx)
+	candidates.sort_custom(func(a, b): return elevation[a] > elevation[b])
+	var sources: Array = []
+	var min_dist: float = canvas * 0.18
+	var count: int = 2 + _rng.randi_range(0, 2)
+	for idx in candidates:
+		if sources.size() >= count:
+			break
+		var gy: int = idx / dim
+		var gx: int = idx % dim
+		var pos := Vector2(gx, gy) * SPACING
+		var far_enough := true
+		for s in sources:
+			if pos.distance_to(Vector2(s % dim, s / dim) * SPACING) < min_dist:
+				far_enough = false
+				break
+		if far_enough:
+			sources.append(idx)
+	return sources
+
+
+func _trace_river(elevation: PackedFloat32Array, water: PackedFloat32Array, start_idx: int) -> PackedVector2Array:
+	var path := PackedVector2Array()
+	var gx := start_idx % dim
+	var gy := start_idx / dim
+	path.append(Vector2(gx, gy) * SPACING)
+	var max_steps: int = dim * 3
+	for _step in range(max_steps):
+		var idx := gy * dim + gx
+		if water[idx] > 0.5:
+			return path
+		var step_result := _river_step(elevation, gx, gy)
+		if step_result.x == gx and step_result.y == gy:
+			break
+		gx = step_result.x
+		gy = step_result.y
+		path.append(Vector2(gx, gy) * SPACING)
+	# Steepest descent on noisy terrain can stall in a shallow local dip well short of real
+	# water (a proper watershed/depression-fill is out of scope for this mockup); guarantee
+	# the "every river ends at sea or a lake" invariant by extending the last point straight
+	# to the nearest actual water cell rather than leaving the river stranded inland.
+	var nearest := _nearest_water_cell(water, gx, gy)
+	if nearest != Vector2i(gx, gy):
+		path.append(Vector2(nearest.x, nearest.y) * SPACING)
+	return path
+
+
+# Immediate 8-neighbors first; if none are lower (a shallow pit), widen the search radius
+# so the path can hop over small local dips instead of stalling on them.
+func _river_step(elevation: PackedFloat32Array, gx: int, gy: int) -> Vector2i:
+	var idx := gy * dim + gx
+	for radius in [1, 2, 3, 4]:
+		var best_h: float = elevation[idx]
+		var best := Vector2i(gx, gy)
+		for oy in range(-radius, radius + 1):
+			for ox in range(-radius, radius + 1):
+				if ox == 0 and oy == 0:
+					continue
+				var nx := gx + ox
+				var ny := gy + oy
+				if nx < 0 or nx >= dim or ny < 0 or ny >= dim:
+					continue
+				var nh: float = elevation[ny * dim + nx]
+				if nh < best_h:
+					best_h = nh
+					best = Vector2i(nx, ny)
+		if best != Vector2i(gx, gy):
+			return best
+	return Vector2i(gx, gy)
+
+
+func _nearest_water_cell(water: PackedFloat32Array, gx: int, gy: int) -> Vector2i:
+	var best_d := INF
+	var best := Vector2i(gx, gy)
+	for idx in range(water.size()):
+		if water[idx] <= 0.5:
+			continue
+		var wx := idx % dim
+		var wy := idx / dim
+		var d: float = Vector2(wx - gx, wy - gy).length()
+		if d < best_d:
+			best_d = d
+			best = Vector2i(wx, wy)
+	return best
+
+
+func _stamp_river(water: PackedFloat32Array, path: PackedVector2Array) -> void:
+	for i in range(path.size()):
+		var t: float = float(i) / float(max(1, path.size() - 1))
+		var width: float = lerp(50.0, 220.0, t)
+		var p: Vector2 = path[i]
+		var reach: int = int(ceil(width / SPACING)) + 1
+		var gx := int(round(p.x / SPACING))
+		var gy := int(round(p.y / SPACING))
+		for oy in range(-reach, reach + 1):
+			for ox in range(-reach, reach + 1):
+				var nx := gx + ox
+				var ny := gy + oy
+				if nx < 0 or nx >= dim or ny < 0 or ny >= dim:
+					continue
+				var cell_pos := Vector2(nx, ny) * SPACING
+				var d := cell_pos.distance_to(p)
+				var idx := ny * dim + nx
+				water[idx] = max(water[idx], smoothstep(width, width * 0.4, d))
+
+
+# Zones (still zone_a..e in code; a kit names them) come from perturbed continuous elevation
+# plus a cheap moisture proxy (distance to the nearest river sample or the south coast edge,
+# not a true distance transform) so bands read as noise-separated regions, not elevation rings.
+func _build_zone(elevation: PackedFloat32Array, water: PackedFloat32Array, noise_boundary: FastNoiseLite, noise_moisture: FastNoiseLite) -> PackedInt32Array:
+	var out := PackedInt32Array()
+	out.resize(dim * dim)
+	for gy in range(dim):
+		for gx in range(dim):
+			var idx := gy * dim + gx
+			var wpos := Vector2(gx * SPACING, gy * SPACING)
+			var moisture_sea: float = 1.0 - clamp((canvas - wpos.y) / 7000.0, 0.0, 1.0)
+			var moisture_river := 0.0
+			for r in rivers:
+				var rp: PackedVector2Array = r
+				var d := _distance_to_polyline(wpos, rp)
+				moisture_river = max(moisture_river, 1.0 - clamp(d / 1600.0, 0.0, 1.0))
+			var moisture: float = clamp(max(moisture_sea, moisture_river) + noise_moisture.get_noise_2d(wpos.x, wpos.y) * 0.12, 0.0, 1.0)
+			var latitude: float = wpos.y / canvas
+
+			var perturbed: float = elevation[idx] + noise_boundary.get_noise_2d(wpos.x, wpos.y) * PEAK_HEIGHT_WU * 0.12 - (1.0 - latitude) * PEAK_HEIGHT_WU * 0.15
+
+			var zone := 1
+			if moisture > 0.55 and perturbed < PEAK_HEIGHT_WU * 0.12:
+				zone = 0
+			elif perturbed < PEAK_HEIGHT_WU * 0.30:
+				zone = 1
+			elif perturbed < PEAK_HEIGHT_WU * 0.55:
+				zone = 2
+			elif perturbed < PEAK_HEIGHT_WU * 0.80:
+				zone = 3
+			else:
+				zone = 4
+			out[idx] = zone
+	return out
+
+
+# Score every cell: near water but dry, flat, a habitable elevation, not hugging the edge.
+# The city core is the argmax; a tiny per-seed jitter breaks exact ties deterministically.
+func _find_city_core(elevation: PackedFloat32Array, slope: PackedFloat32Array, water: PackedFloat32Array) -> Vector2i:
+	var best_score := -INF
+	var best := Vector2i(dim / 2, dim / 2)
+	var margin: int = int(dim * 0.12)
+	# Picking a single representative point tolerates a coarse stride; a full per-cell scan
+	# measured as a real contributor to a ~1.2s field_map generation at a 24000wu canvas.
+	for gy in range(margin, dim - margin, 2):
+		for gx in range(margin, dim - margin, 2):
+			var idx := gy * dim + gx
+			if water[idx] > 0.4:
+				continue
+			var water_score := 0.0
+			for offset in [Vector2i(-4, 0), Vector2i(4, 0), Vector2i(0, -4), Vector2i(0, 4)]:
+				var nx: int = clampi(gx + offset.x, 0, dim - 1)
+				var ny: int = clampi(gy + offset.y, 0, dim - 1)
+				water_score = max(water_score, water[ny * dim + nx])
+			var flat_score: float = 1.0 - slope[idx]
+			var elev_diff: float = abs(elevation[idx] - CITY_CORE_TARGET_ELEV_WU)
+			var elev_score: float = clamp(1.0 - elev_diff / (PEAK_HEIGHT_WU * 0.4), 0.0, 1.0)
+			var edge_dist: float = min(min(gx, dim - 1 - gx), min(gy, dim - 1 - gy)) / float(dim)
+			var edge_score: float = clamp(edge_dist / 0.2, 0.0, 1.0)
+			var score: float = water_score * 1.4 + flat_score * 1.0 + elev_score * 1.0 + edge_score * 0.6 + _rng.randf() * 0.01
+			if score > best_score:
+				best_score = score
+				best = Vector2i(gx, gy)
+	return best
+
+
+# Population is radial falloff from the core, reshaped by slope (steep ground never
+# populates) and water proximity (a bonus, so the city hugs a river or coast instead of
+# spreading as a uniform ring) -- a cheap stand-in for a real cost-flood-fill that still
+# directly answers "cities follow rivers/valleys, never a plain circle".
+func _build_population_district(core_pos: Vector2, elevation: PackedFloat32Array, slope: PackedFloat32Array, water: PackedFloat32Array) -> Dictionary:
+	var population := PackedFloat32Array()
+	population.resize(dim * dim)
+	var district := PackedFloat32Array()
+	district.resize(dim * dim)
+	for gy in range(dim):
+		for gx in range(dim):
+			var idx := gy * dim + gx
+			var wpos := Vector2(gx * SPACING, gy * SPACING)
+			var dist := wpos.distance_to(core_pos)
+			var radial: float = clamp(1.0 - dist / CITY_REACH_WU, 0.0, 1.0)
+			var slope_penalty: float = 1.0 - clamp(slope[idx] * 2.0, 0.0, 1.0)
+			var water_bonus: float = 1.0 + clamp(water[idx] * 3.0, 0.0, 1.0) * 0.6 if water[idx] < 0.5 else 0.0
+			var pop: float = radial * slope_penalty * water_bonus
+			if water[idx] > 0.5:
+				pop = 0.0
+			pop = clamp(pop, 0.0, 1.0)
+			population[idx] = pop
+			var d := 0
+			if pop >= 0.8:
+				d = 4
+			elif pop >= 0.6:
+				d = 3
+			elif pop >= 0.4:
+				d = 2
+			elif pop >= 0.2:
+				d = 1
+			district[idx] = d
+	return {population = population, district = district}
+
+
+func _find_vantage(core_pos: Vector2, elevation: PackedFloat32Array) -> Vector2:
+	var best_h := -INF
+	var best := core_pos + Vector2(0, -CITY_REACH_WU)
+	for gy in range(0, dim, 2):
+		for gx in range(0, dim, 2):
+			var wpos := Vector2(gx * SPACING, gy * SPACING)
+			var d := wpos.distance_to(core_pos)
+			if d < CITY_REACH_WU * 0.5 or d > CITY_REACH_WU * 2.2:
+				continue
+			var h: float = elevation[gy * dim + gx]
+			if h > best_h:
+				best_h = h
+				best = wpos
+	return best
+
+
+func _find_hazard_anchor(elevation: PackedFloat32Array, slope: PackedFloat32Array, water: PackedFloat32Array, core_pos: Vector2) -> Vector2:
+	var best_score := -INF
+	var best := core_pos + Vector2(CITY_REACH_WU, CITY_REACH_WU)
+	for gy in range(0, dim, 2):
+		for gx in range(0, dim, 2):
+			var idx := gy * dim + gx
+			var wpos := Vector2(gx * SPACING, gy * SPACING)
+			var d := wpos.distance_to(core_pos)
+			if d < CITY_REACH_WU * 0.7:
+				continue
+			var marsh_score: float = (1.0 - slope[idx]) * (1.0 if elevation[idx] > -60.0 and elevation[idx] < 200.0 else 0.0) * (1.0 - water[idx])
+			var highland_score: float = clamp(elevation[idx] / PEAK_HEIGHT_WU, 0.0, 1.0) * 0.5
+			var score: float = max(marsh_score, highland_score)
+			if score > best_score:
+				best_score = score
+				best = wpos
+	return best
+
+
+func _find_extraction(core_pos: Vector2, water: PackedFloat32Array) -> Vector2:
+	var best_d := INF
+	var best := core_pos + Vector2(0, CITY_REACH_WU * 2.0)
+	for gy in range(0, dim, 2):
+		for gx in range(0, dim, 2):
+			var idx := gy * dim + gx
+			if water[idx] < 0.4 or water[idx] > 0.9:
+				continue
+			var wpos := Vector2(gx * SPACING, gy * SPACING)
+			var d := wpos.distance_to(core_pos)
+			if d < best_d:
+				best_d = d
+				best = wpos
+	return best
+
+
+func _points_of_kind(kind: String) -> Array:
+	var pts: Array = []
+	for b in borders:
+		if b.kind == kind:
+			for p in b.points:
+				pts.append(p)
+	return pts
+
+
+func _nearest_point(points: Array, target: Vector2, fallback: Vector2) -> Vector2:
+	if points.is_empty():
+		return fallback
+	var best: Vector2 = points[0]
+	var best_d: float = target.distance_to(best)
+	for p in points:
+		var d: float = target.distance_to(p)
+		if d < best_d:
+			best_d = d
+			best = p
+	return best
+
+
+# Two outward approach directions from the core: the wall points closest to the core define
+# the local wall normal at two roughly opposite sides, used to place gates and staging.
+func _find_approach_directions(core_pos: Vector2, wall_points: Array) -> Array:
+	if wall_points.size() < 2:
+		return [Vector2(1, 0), Vector2(-1, 0)]
+	var sorted_pts: Array = wall_points.duplicate()
+	sorted_pts.sort_custom(func(a, b): return core_pos.distance_to(a) < core_pos.distance_to(b))
+	var dir_a: Vector2 = (sorted_pts[0] - core_pos).normalized()
+	var dir_b := dir_a
+	for p in sorted_pts:
+		var d: Vector2 = (p - core_pos).normalized()
+		if d.dot(dir_a) < 0.2:
+			dir_b = d
+			break
+	if dir_b.is_equal_approx(dir_a):
+		dir_b = -dir_a
+	return [dir_a, dir_b]
+
 
 func _find_node(t: String) -> Vector2:
 	for n in nodes:
 		if n.type == t:
 			return n.pos
 	return Vector2.ZERO
+
 
 func _find_nodes(t: String) -> Array:
 	var result: Array = []
@@ -285,10 +751,12 @@ func _find_nodes(t: String) -> Array:
 			result.append(n.pos)
 	return result
 
+
 func _radial_contribution(pos: Vector2, source: Dictionary) -> float:
 	var d: float = pos.distance_to(source.pos)
 	var t: float = clamp(1.0 - d / source.radius, 0.0, 1.0)
 	return source.intensity * smoothstep(0.0, 1.0, t)
+
 
 func _radial_sum_arrays(pos: Vector2, positions: PackedVector2Array, radii: PackedFloat32Array, intensities: PackedFloat32Array) -> float:
 	var total := 0.0
@@ -298,19 +766,10 @@ func _radial_sum_arrays(pos: Vector2, positions: PackedVector2Array, radii: Pack
 		total += intensities[i] * smoothstep(0.0, 1.0, t)
 	return total
 
+
 func _radial_one(pos: Vector2, source_pos: Vector2, radius: float, intensity: float) -> float:
 	return _radial_contribution(pos, {pos = source_pos, radius = radius, intensity = intensity})
 
-# Water convention: signed distance field, negative = water. water[cell] in [0,1] is a
-# smoothed step of that SDF: 0.0 = fully dry, 1.0 = deep water, 0.5 = the shoreline
-# (the isoline the coast border is traced from).
-func _sample_water(pos: Vector2, river_points: PackedVector2Array, coast_y_ratio: float) -> float:
-	var coast_line_y: float = coast_y_ratio * canvas
-	var coast_sdf: float = coast_line_y - pos.y
-	var river_sdf: float = _distance_to_polyline(pos, river_points) - 180.0
-	var sdf: float = min(coast_sdf, river_sdf)
-	var transition := 300.0
-	return clamp(smoothstep(-transition, transition, -sdf), 0.0, 1.0)
 
 func _distance_to_polyline(p: Vector2, points: PackedVector2Array) -> float:
 	var best := INF
@@ -320,6 +779,7 @@ func _distance_to_polyline(p: Vector2, points: PackedVector2Array) -> float:
 			best = d
 	return best
 
+
 func _dist_to_segment(p: Vector2, a: Vector2, b: Vector2) -> float:
 	var ab := b - a
 	var len_sq := ab.length_squared()
@@ -327,6 +787,7 @@ func _dist_to_segment(p: Vector2, a: Vector2, b: Vector2) -> float:
 	if len_sq > 0.0:
 		t = clamp((p - a).dot(ab) / len_sq, 0.0, 1.0)
 	return p.distance_to(a + ab * t)
+
 
 func _closest_point_on_polyline(p: Vector2, points: Array) -> Dictionary:
 	var best_d := INF
@@ -338,6 +799,7 @@ func _closest_point_on_polyline(p: Vector2, points: Array) -> Dictionary:
 			best_p = res.point
 	return {distance = best_d, point = best_p}
 
+
 func _closest_on_segment(p: Vector2, a: Vector2, b: Vector2) -> Dictionary:
 	var ab := b - a
 	var len_sq := ab.length_squared()
@@ -347,26 +809,12 @@ func _closest_on_segment(p: Vector2, a: Vector2, b: Vector2) -> Dictionary:
 	var proj := a + ab * t
 	return {distance = p.distance_to(proj), point = proj}
 
-# Elevation terracing: quantized into 5 levels (0..4). Each level is a bench with a gentle
-# continuous slope (bench_slope) across most of its span, then a steep smoothstep cliff
-# ramp in the last `edge` fraction of the span up into the next level, so the transition
-# is continuous but reads as a cliff rather than a hard floor() step.
-func _terrace(raw: float) -> float:
-	var levels := 4.0
-	var edge := 0.18
-	var bench_slope := 0.15
-	var scaled: float = clamp(raw, 0.0, 0.999999) * (levels + 1.0)
-	var level: float = floor(scaled)
-	var frac: float = scaled - level
-	var gentle: float = frac * bench_slope
-	var cliff: float = smoothstep(1.0 - edge, 1.0, frac) * (1.0 - bench_slope)
-	var terraced: float = clamp(level + gentle + cliff, 0.0, levels)
-	return terraced / levels
 
 func _edge_t(va: float, vb: float, threshold: float) -> float:
 	if is_equal_approx(va, vb):
 		return 0.5
 	return clamp((threshold - va) / (vb - va), 0.0, 1.0)
+
 
 func _march_squares(values: PackedFloat32Array, d: int, threshold: float) -> Array:
 	var segments: Array = []
@@ -426,6 +874,7 @@ func _march_squares(values: PackedFloat32Array, d: int, threshold: float) -> Arr
 						segments.append([bottom, right])
 	return _stitch_segments(segments)
 
+
 func _stitch_segments(segments: Array) -> Array:
 	var key_of := func(p: Vector2) -> String:
 		return "%d_%d" % [int(round(p.x * 10.0)), int(round(p.y * 10.0))]
@@ -458,6 +907,7 @@ func _stitch_segments(segments: Array) -> Array:
 				break
 		polylines.append(chain)
 	return polylines
+
 
 func _append_borders(polylines: Array, kind: String) -> void:
 	for pl in polylines:
