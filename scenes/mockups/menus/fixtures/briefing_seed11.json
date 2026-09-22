@@ -1,0 +1,34 @@
+{
+  "mission_title": "The Salt Line Holds",
+  "mission_subtitle": "A probing offensive against the frontier perimeter",
+  "situation_text": "The Cinder Concord has pushed three columns against the salt-flat perimeter since dawn. Regional command reads it as a probing offensive, not yet a full commitment, and expects the pressure to continue through the week.",
+  "objective_primary": {
+    "text": "Hold the perimeter. Do not let the line break.",
+    "archetype": "defensive_stand",
+    "success_spectrum_label": "THE LINE HOLDS"
+  },
+  "objectives_secondary": [],
+  "enemy_assessment": {
+    "faction_name": "the Cinder Concord",
+    "archetype_label": "PROBING OFFENSIVE",
+    "behavior_tag": "TESTS THE LINE, DOES NOT COMMIT"
+  },
+  "player_force": {
+    "parity_percentage": 90,
+    "units": [
+      {"type_abstract": "vanguard", "type_display_name": "Line Company", "category": "line", "count": 4},
+      {"type_abstract": "warden", "type_display_name": "Field Medics", "category": "line", "count": 2},
+      {"type_abstract": "raider", "type_display_name": "Skirmishers", "category": "strike", "count": 3},
+      {"type_abstract": "bastion", "type_display_name": "Wall Garrison", "category": "siege", "count": 3}
+    ]
+  },
+  "region_state": {"name": "the Salt Flats", "tier": "Frontier"},
+  "commander_lineage": {
+    "name": "Commander Vell",
+    "generation_number": 4,
+    "predecessor_name": "Commander Orsa",
+    "predecessor_status": "retired"
+  },
+  "reinforcement_note": "Reinforcements are two days out; the garrison holds until then.",
+  "assets_note": "Command fields {parity} against the entrenched attacker. The line is short on siege support; expect the cost to fall on the wall garrison, not the clock."
+}
