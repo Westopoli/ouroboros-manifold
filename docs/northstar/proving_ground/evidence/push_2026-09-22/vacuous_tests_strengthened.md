@@ -55,3 +55,12 @@ Row skipped: `test_E08_S064_what_carries_over.py::test_R_064_01_every_region_fie
 | `test_E10_S079_orders_not_menus.py::test_R_079_03_it_shows_band_objectives_with` | forced outcome: `om_mission_build_objectives(w,0)`, set every objective's completion to 1.0, then `assert debrief.objective_score == pytest.approx(1.0)` (ALG-58: weights sum to 1.0 per R-075-01, none failed) | 21 -> 22 | `assert 0.0 == 1.0 ± 1.0e-05` |
 | `test_E10_S080_difficulty_is_scarcity_not_stronger_enemies.py::test_R_080_01_both_sides_draw_from_same` | added `assert prof_easy.hp > 0` before the cross-difficulty equality | 12 -> 13 | `AssertionError: unit profile must be a real (nonzero) roster baseline` / `assert 0.0 > 0` |
 
+### E-11
+
+| Test | Edit | asserts before -> after | New failure |
+|---|---|---|---|
+| `test_E11_S081_three_categories_a_soft_triangle.py::test_R_081_02_line_wins_with_at_least` | added `assert initial_*_hp > 0` for all 3 sub-cases (line, siege, strike2) before their `>= 0.3 * initial` checks | 11 -> 14 | `assert 0.0 > 0` |
+| `test_E11_S082_the_six.py::test_R_082_03_bastion_has_most_by_at` | added `assert bastion_hp == pytest.approx(1050.0)` (roster table, R-082-01) before the ratio/min checks | 20 -> 21 | `assert 0.0 == 1050.0 ± 1.0e-06` |
+| `test_E11_S087_every_unit_thinks_the_same_way.py::test_R_087_03_it_attacks_nearest_such_enemy` | added `assert len({vanguard,e_near,e_far}) == 3` (distinct spawn ids) | 16 -> 18 (shared w/ R_087_06) | `assert 1 == 3` |
+| `test_E11_S087_every_unit_thinks_the_same_way.py::test_R_087_06_it_targets_attacker_return_fire` | added `assert len({unit,attacker1,attacker2}) == 3` (distinct spawn ids) | 16 -> 18 (shared) | `assert 1 == 3` |
+

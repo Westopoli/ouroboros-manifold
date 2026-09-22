@@ -66,6 +66,9 @@ def test_R_081_02_line_wins_with_at_least(lib, world_factory):
     u_line = [lib.om_unit_spawn(w, OMUnitType.VANGUARD, 0, 0.0, float(i * 30), 0) for i in range(10)]
     u_strike = [lib.om_unit_spawn(w, OMUnitType.RAIDER, 1, 250.0, float(i * 30), 0) for i in range(10)]
     initial_line_hp = sum(lib.om_unit_hp(w, u) for u in u_line)
+    # om_unit_hp/om_unit_alive are hard stubs (0.0/0), so a 0 initial HP would
+    # make the >= 0.3 * 0 check below hold trivially. Require a real roster.
+    assert initial_line_hp > 0
 
     # Resolve straight fight until one side is eliminated
     lib.om_tactical_run_until_eliminated(w)
@@ -80,6 +83,7 @@ def test_R_081_02_line_wins_with_at_least(lib, world_factory):
     u_siege = [lib.om_unit_spawn(w, OMUnitType.BOMBARD, 0, 0.0, float(i * 40), 0) for i in range(6)]
     u_line2 = [lib.om_unit_spawn(w, OMUnitType.VANGUARD, 1, 1000.0, float(i * 40), 0) for i in range(6)]
     initial_siege_hp = sum(lib.om_unit_hp(w, u) for u in u_siege)
+    assert initial_siege_hp > 0
 
     lib.om_tactical_run_until_eliminated(w)
     surviving_siege_hp = sum(lib.om_unit_hp(w, u) for u in u_siege if lib.om_unit_alive(w, u))
@@ -94,6 +98,7 @@ def test_R_081_02_line_wins_with_at_least(lib, world_factory):
     # Flank spawn: 90 degrees offset, short approach distance
     u_strike2 = [lib.om_unit_spawn(w, OMUnitType.RAIDER, 0, 500.0 + float(i * 30), 250.0, 0) for i in range(4)]
     initial_strike2_hp = sum(lib.om_unit_hp(w, u) for u in u_strike2)
+    assert initial_strike2_hp > 0
 
     lib.om_tactical_run_until_eliminated(w)
     surviving_strike2_hp = sum(lib.om_unit_hp(w, u) for u in u_strike2 if lib.om_unit_alive(w, u))

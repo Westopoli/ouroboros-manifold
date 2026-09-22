@@ -161,6 +161,9 @@ def test_R_082_03_bastion_has_most_by_at(lib, world_factory):
     other_hps = [hp for u, hp in hps.items() if u != OMUnitType.BASTION]
     next_highest_hp = max(other_hps)
 
+    # All profile getters hard-stub 0.0, so 0 >= 2*0 would hold trivially.
+    # Pin the Bastion's HP to the roster table (R-082-01) first.
+    assert bastion_hp == pytest.approx(1050.0, abs=1e-6)
     assert bastion_hp >= 2.0 * next_highest_hp
     assert hps[OMUnitType.RAIDER] == min(hps.values())
 
