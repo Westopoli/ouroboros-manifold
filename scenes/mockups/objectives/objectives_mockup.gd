@@ -65,6 +65,7 @@ func _generate() -> void:
 	var display: String = MissionGen.DISPLAY_NAMES.get(_mission.kind, _mission.kind)
 	_marker.setup(_mission, display)
 	_add_player_spawn(_places.player_spawn().pos)
+	_camera_rig.pan_to(Vector3(_mission.pos.x, 0.0, _mission.pos.y))
 	_regen_count += 1
 	if _hud != null:
 		_hud.on_regenerated()
