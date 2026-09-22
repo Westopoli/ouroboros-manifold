@@ -1,1 +1,24 @@
 2026-09-22T23:08:36+00:00 | /home/westopoli/Projects/om-push/m3 | git status --porcelain | exit 0
+2026-09-22T23:08:36+00:00 | /home/westopoli/Projects/om-push/m3 | git add -A -- .swarm/t1/git-ops.log .swarm/c2 .swarm/t1/NEEDS-DIAGNOSIS.md .swarm/t1/audits .swarm/t1/briefs/leaf-01.ASSUMPTIONS.md .swarm/t1/questions .swarm/t1/wave-1.base.json .swarm/t1/worktrees docs/northstar/plans/push/specs/C2.md | exit 0
+2026-09-22T23:08:36+00:00 | /home/westopoli/Projects/om-push/m3 | git commit -q -m 'swarm(c2): wave 1 base — spec/contract/umbrella/briefs/tests' | exit 0
+2026-09-22T23:08:36+00:00 | /home/westopoli/Projects/om-push/m3 | git rev-parse --abbrev-ref HEAD | exit 0
+2026-09-22T23:08:36+00:00 | /home/westopoli/Projects/om-push/m3 | git rev-parse HEAD | exit 0
+2026-09-22T23:08:36+00:00 | /home/westopoli/Projects/om-push/m3 | git show-ref --verify --quiet refs/heads/swarm/c2/integration | exit 1
+2026-09-22T23:08:36+00:00 | /home/westopoli/Projects/om-push/m3 | git branch swarm/c2/integration c5613fa2ed77bb15ade19cee6819afe36a3131b7 | exit 0
+2026-09-22T23:08:37+00:00 | /home/westopoli/Projects/om-push/m3 | git worktree add /home/westopoli/Projects/om-push/m3/.swarm/c2/worktrees/integration swarm/c2/integration | exit 0
+2026-09-22T23:08:37+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/c2/worktrees/integration | git rev-parse --git-path info/exclude | exit 0
+2026-09-22T23:08:37+00:00 | /home/westopoli/Projects/om-push/m3 | git rev-parse swarm/c2/integration | exit 0
+2026-09-22T23:08:39+00:00 | /home/westopoli/Projects/om-push/m3 | git worktree add -b swarm/c2/leaf-01 /home/westopoli/Projects/om-push/m3/.swarm/c2/worktrees/leaf-01 c5613fa2ed77bb15ade19cee6819afe36a3131b7 | exit 0
+2026-09-22T23:08:39+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/c2/worktrees/leaf-01 | git rev-parse --git-path info/exclude | exit 0
+2026-09-22T23:08:40+00:00 | /home/westopoli/Projects/om-push/m3 | git worktree add -b swarm/c2/leaf-02 /home/westopoli/Projects/om-push/m3/.swarm/c2/worktrees/leaf-02 c5613fa2ed77bb15ade19cee6819afe36a3131b7 | exit 0
+2026-09-22T23:08:40+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/c2/worktrees/leaf-02 | git rev-parse --git-path info/exclude | exit 0
+2026-09-22T23:09:35+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/c2/worktrees/leaf-01 | git rev-parse HEAD | exit 0
+2026-09-22T23:09:36+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/c2/worktrees/leaf-01 | git status --porcelain --untracked-files=all | exit 0
+2026-09-22T23:09:36+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/c2/worktrees/leaf-01 | git add -- autoload/c_bridge.gd | exit 0
+2026-09-22T23:09:36+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/c2/worktrees/leaf-01 | git commit -q -m 'swarm(c2): leaf-01 — Build `autoload/c_bridge.gd` per spec_lines 51-72 of the spec file above' | exit 0
+2026-09-22T23:09:36+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/c2/worktrees/leaf-01 | git rev-parse HEAD | exit 0
+2026-09-22T23:19:23+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/c2/worktrees/leaf-02 | git rev-parse HEAD | exit 0
+2026-09-22T23:19:23+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/c2/worktrees/leaf-02 | git status --porcelain --untracked-files=all | exit 0
+2026-09-22T23:19:23+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/c2/worktrees/leaf-02 | git add -- scenes/galaxy/galaxy_view.tscn scenes/galaxy/galaxy_view.gd scenes/galaxy/galaxy_gen.gd scenes/galaxy/orbit_camera.gd | exit 0
+2026-09-22T23:19:23+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/c2/worktrees/leaf-02 | git commit -q -m 'swarm(c2): leaf-02 — Build `scenes/galaxy/galaxy_view.tscn` (root scene) plus backing scripts' | exit 0
+2026-09-22T23:19:23+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/c2/worktrees/leaf-02 | git rev-parse HEAD | exit 0
