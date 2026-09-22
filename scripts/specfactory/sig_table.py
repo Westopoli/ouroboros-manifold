@@ -20,7 +20,11 @@
 
 A row whose C type cannot be mapped (an enum or struct the header and the
 table both lack) is left out of all three and listed under `blocked`, never
-guessed. A second --emit changes nothing.
+guessed. A row marked `internal = true` (an om_internal.h step/helper: no
+public header declaration, no ctypes binding) is skipped outright -- it
+never emits, never blocks; it exists in the table only so the merge gate's
+symbol-ownership lint has a module to check it against. A second --emit
+changes nothing.
 
 Usage:
     scripts/specfactory/sig_table.py --emit [--project DIR] [--table PATH] [--json]
@@ -358,6 +362,11 @@ def resolve_symbols(table: dict, types: Types) -> tuple[list[dict], list[dict], 
     blocked: list[dict] = []
     renamed_all: list[dict] = []
     for row in table.get("symbols", []):
+        if row.get("internal"):
+            # om_internal.h step/helper functions: ownership-only rows for the
+            # merge gate's symbol lint. No public header decl, no ctypes
+            # binding, no stub -- never emitted, never blocked.
+            continue
         reason = None
         c_ret = render_c_type(row["restype"])
         py_ret = ctypes_for(row["restype"], types)

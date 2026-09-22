@@ -150,7 +150,7 @@ def test_every_mappable_table_row_has_one_declaration_and_one_binding():
     problems = []
     for row in table["symbols"]:
         name = row["name"]
-        if name in blocked:
+        if name in blocked or row.get("internal"):
             continue
         decls = len(re.findall(r"\b" + re.escape(name) + r"\s*\(", header))
         if decls != 1:

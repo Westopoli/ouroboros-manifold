@@ -1163,6 +1163,16 @@ confidence = "likely"
 note = "Called lib.om_cue_lookup(b'cue_barrage_telegraph') with NO world handle; result compared == evt.cue_id. Only E-11 symbol besides om_abi_version-style globals without om_world*. int32_t with -1 unknown"
 
 [[symbols]]
+name = "om_debug_gen_config"
+module = "region.c"
+restype = "void"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "out", ctype = "om_debug_gen_config_row*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
 name = "om_debug_inject"
 module = "sim.c"
 restype = "void"
@@ -1470,6 +1480,16 @@ params = [{ name = "w", ctype = "const om_world*" }, { name = "p0", ctype = "int
 epics = ["E-06"]
 confidence = "likely"
 note = "Not in header. 8 sites, always (w, 0, 1). Compared == 0/1/2/initial_count -> count -> uint32_t (int32_t also fits). p0/p1 = faction pair, mirrors om_faction_stance(from, toward); brief says pair is sy"
+
+[[symbols]]
+name = "om_faction_step_budget"
+module = "faction.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
 
 [[symbols]]
 name = "om_faction_supreme_commander"
@@ -4072,6 +4092,16 @@ confidence = "likely"
 note = "Arg order mirrors OMReplayCommand fields exactly: tick, force_id, command_type, target_x (c_double), target_y (c_double), target_id. Return ignored at all 3 sites."
 
 [[symbols]]
+name = "om_rng_draw"
+module = "sim.c"
+restype = "double"
+params = [{ name = "w", ctype = "om_world*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
 name = "om_rng_force_descendant_spread"
 module = "generational.c"
 restype = "void"
@@ -4089,6 +4119,16 @@ params = [{ name = "w", ctype = "om_world*" }, { name = "forced", ctype = "doubl
 epics = ["E-08"]
 confidence = "likely"
 note = "Positional (w, 0.01). p0 = forced uniform draw; suggest draw. Return unused. Cf om_rng_force in header (array form)."
+
+[[symbols]]
+name = "om_rng_seed"
+module = "sim.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }, { name = "seed", ctype = "uint64_t" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
 
 [[symbols]]
 name = "om_roster_register_custom_unit"
@@ -4304,6 +4344,116 @@ params = [{ name = "w", ctype = "const om_world*" }]
 epics = ["E-13"]
 confidence = "likely"
 note = "Used as range() bound; > 0."
+
+[[symbols]]
+name = "om_step_admin_revolts"
+module = "friction.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_step_collisions"
+module = "collision.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_step_decisions"
+module = "agent.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_step_diplomacy"
+module = "diplomacy.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_step_events"
+module = "events.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_step_friction"
+module = "friction.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_step_lifecycle"
+module = "lifecycle.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_step_reinforce"
+module = "resolve.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_step_resolve"
+module = "resolve.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_step_technology"
+module = "diplomacy.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_step_telegraphs"
+module = "resolve.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
 
 [[symbols]]
 name = "om_strategic_agent_read_region_field"
