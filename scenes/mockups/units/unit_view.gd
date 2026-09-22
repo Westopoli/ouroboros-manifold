@@ -8,8 +8,8 @@ const DEATH_REMOVE_TICKS := 80
 const DRIFT_WU_PER_TICK := 0.6
 const DRIFT_CAP_TICKS := 40.0
 const PING_LIFETIME_TICKS := 30
-const FLASH_BOOST := Color(2.6, 2.5, 2.1, 1.0)
-const DEATH_BOOST := Color(3.2, 2.8, 1.6, 1.0)
+const FLASH_BOOST := Color(1.0, 0.95, 0.8, 1.0)
+const DEATH_BOOST := Color(1.0, 0.85, 0.55, 1.0)
 const WRECK_DARK := Color(0.12, 0.12, 0.12, 1.0)
 const SQUAD_OFFSETS: Array[Vector2] = [Vector2.ZERO, Vector2(-0.7, 0.6), Vector2(0.7, 0.6), Vector2(-1.3, 1.15), Vector2(1.3, 1.15)]
 const SHAPE_POINTS := {
@@ -43,33 +43,32 @@ func _ready() -> void:
 
 func set_roster(r: Roster) -> void:
 	roster = r
+	_mesh_cache.clear()
+	_mat_cache.clear()
 	_rebuild_batches()
 
 
 func _rebuild_batches() -> void:
-	for key in _batches.keys():
-		_batches[key].queue_free()
-	_batches.clear()
-	_mesh_cache.clear()
-	_mat_cache.clear()
 	if roster == null:
 		return
 	for role in Roster.ROLE_ORDER:
 		for faction in [0, 1]:
 			var key := "%s_%d" % [role, faction]
-			var mmi := MultiMeshInstance3D.new()
-			var mm := MultiMesh.new()
-			mm.transform_format = MultiMesh.TRANSFORM_3D
-			mm.use_colors = true
-			mm.mesh = _get_mesh(role)
-			mm.instance_count = 64
-			mm.visible_instance_count = 0
-			mmi.multimesh = mm
+			var mmi: MultiMeshInstance3D = _batches.get(key)
+			if mmi == null:
+				mmi = MultiMeshInstance3D.new()
+				var mm := MultiMesh.new()
+				mm.transform_format = MultiMesh.TRANSFORM_3D
+				mm.use_colors = true
+				mm.instance_count = 64
+				mm.visible_instance_count = 0
+				mmi.multimesh = mm
+				mmi.name = "Batch_%s" % key
+				mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+				add_child(mmi)
+				_batches[key] = mmi
+			mmi.multimesh.mesh = _get_mesh(role)
 			mmi.material_override = _get_material(role, faction)
-			mmi.name = "Batch_%s" % key
-			mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
-			add_child(mmi)
-			_batches[key] = mmi
 
 
 func _get_material(role: String, faction: int) -> StandardMaterial3D:
