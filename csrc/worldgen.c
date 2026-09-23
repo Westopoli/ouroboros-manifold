@@ -55,32 +55,11 @@
 #define OM_GEN_HR_ECO_HI 3
 
 /* ======================================================================
- * BLOCKER (reported, not fixed here -- out of scope: worldgen.c is the only
- * file this card may edit):
- *
- * 1. csrc/region.c:11 `if (n_regions == 0) return NULL;` in om_world_new
- *    contradicts ouroboros_sim.h:693-694's own documented contract ("pass
- *    n_regions == 0 to draw it uniformly ... at generation"). Every E-03
- *    acceptance test calls world_factory(n_regions=0, ...), so om_world_new
- *    returns NULL before this file ever runs. Proposed fix (2-line diff):
- *    guard the two n_regions-dependent blocks in om_world_new so 0 leaves
- *    w->regions == NULL / w->n_regions == 0 instead of failing; this file's
- *    om_world_generate() below already allocates w->regions itself when it
- *    finds w->n_regions == 0 on entry, so no other change is needed.
- *
- * 2. csrc/om_internal.h's `om_edge_type region_edge[64][64]` (and the
- *    matching `a >= 64 || b >= 64` guards in csrc/faction.c's
- *    om_region_set_edge/om_region_edge) cap recorded edges at region index
- *    63. E-03's own default region-count range is [60, 110]
- *    (OM_WORLD_REGION_COUNT_RANGE_*) and several tests force a draw that
- *    yields 85 regions, so any edge touching region 64+ silently fails to
- *    record. Proposed fix: widen region_edge to
- *    [OM_WORLD_REGION_COUNT_RANGE_HI][OM_WORLD_REGION_COUNT_RANGE_HI] (or a
- *    new OM_MAX_REGIONS constant >= 110) in om_internal.h and raise the two
- *    `>= 64` bounds in faction.c to match.
- *
- * Both are outside this file; this generator is written to be correct once
- * either lands, but cannot be exercised end-to-end until then.
+ * Both original blockers (om_world_new rejecting n_regions == 0; the
+ * region_edge[64][64] cap below E-03's 110-region range) are fixed on
+ * main as of freeze/F2d (fd01efd): om_world_new(0, seed) now defers the
+ * count exactly as this file expects, and OM_MAX_REGIONS is 128 everywhere
+ * region-indexed. Nothing left to report there.
  * ====================================================================== */
 
 static double gen_uniform(om_world *w, double lo, double hi) {
@@ -125,12 +104,20 @@ static om_template gen_roll_template(om_world *w, uint32_t fid, om_template pref
     return OM_TMPL_ARCHIPELAGO;
 }
 
-static uint32_t gen_template_max_size(om_template t) {
+/* The feasibility gate (ALG-31 step 3, "no draw") runs before a Twin
+ * Colony's per-home frontier counts are rolled (step 4), so it reserves
+ * each faction's smallest possible size, never the roll it hasn't taken
+ * yet -- reserving the largest possible size instead fails generation far
+ * more often than the roll actually requires. Placement then spends the
+ * region count's slack over that minimum (gen_twin_slack in
+ * om_world_generate) so a later faction's roll can never overrun the
+ * already-fixed budget. */
+static uint32_t gen_template_min_size(om_template t) {
     switch (t) {
         case OM_TMPL_ISOLATED:
             return 1 + OM_ISOLATED_FRONTIER_COUNT;
         case OM_TMPL_TWIN_COLONY:
-            return OM_TWIN_COLONY_HOME_COUNT * (1 + OM_TWIN_COLONY_FRONTIER_RANGE_HI);
+            return OM_TWIN_COLONY_HOME_COUNT * (1 + OM_TWIN_COLONY_FRONTIER_RANGE_LO);
         case OM_TMPL_ARCHIPELAGO:
         default:
             return 1 + OM_ARCHIPELAGO_FRONTIER_COUNT;
@@ -212,15 +199,24 @@ void om_world_generate(om_world *w) {
     for (uint32_t fid = 0; fid < n_factions; fid++)
         templates[fid] = gen_roll_template(w, fid, w->gen_player_pref, w->gen_preference_weight);
 
-    /* (3) feasibility -- no draw. Twin Colony's per-home frontier counts are
-     * not rolled yet, so the gate reserves each faction's max possible size
-     * (never lets a later roll change the already-fixed budget). */
-    uint32_t needed = n_factions; /* one corridor empty per faction */
+    /* (3) feasibility -- no draw. The epic's own Input table gives this as
+     * "count < sum of every rolled faction's template size + 1 fails"; the
+     * corridor step (R-021-06) needs one further distinct empty per faction
+     * on top of that sum, so the "+1" here is n_factions worth of corridor
+     * room, the loosest amount the corridor step can safely run on. Twin
+     * Colony's per-home frontier counts are not rolled yet, so this reserves
+     * each faction's minimum possible size, never the roll it hasn't taken
+     * -- reserving the max instead fails generation far more often than the
+     * roll actually needs. gen_twin_slack is the room left above that
+     * minimum; placement spends it on a Twin Colony's actual frontier draw
+     * so a later roll can never overrun the already-fixed budget. */
+    uint32_t min_inhabited = 0;
     for (uint32_t fid = 0; fid < n_factions; fid++)
-        needed += gen_template_max_size(templates[fid]);
-    needed += 1;
-    if (n_regions < needed)
+        min_inhabited += gen_template_min_size(templates[fid]);
+    uint32_t needed_with_corridors = min_inhabited + n_factions;
+    if (n_regions < needed_with_corridors)
         return;
+    uint32_t gen_twin_slack = n_regions - needed_with_corridors;
 
     if (w->n_regions == 0) {
         om_region *regions = calloc(n_regions, sizeof(om_region));
@@ -288,6 +284,20 @@ void om_world_generate(om_world *w) {
         } else { /* OM_TMPL_TWIN_COLONY */
             uint32_t f1 = gen_randint(w, OM_TWIN_COLONY_FRONTIER_RANGE_LO, OM_TWIN_COLONY_FRONTIER_RANGE_HI);
             uint32_t f2 = gen_randint(w, OM_TWIN_COLONY_FRONTIER_RANGE_LO, OM_TWIN_COLONY_FRONTIER_RANGE_HI);
+            /* Spend only what the feasibility gate's slack (n_regions minus
+             * every faction's reserved minimum) still has left; a draw above
+             * OM_TWIN_COLONY_FRONTIER_RANGE_LO that the budget can't afford
+             * falls back to the reserved minimum instead of overrunning it. */
+            uint32_t extra1 = f1 - OM_TWIN_COLONY_FRONTIER_RANGE_LO;
+            if (extra1 > gen_twin_slack)
+                extra1 = 0;
+            gen_twin_slack -= extra1;
+            f1 = OM_TWIN_COLONY_FRONTIER_RANGE_LO + extra1;
+            uint32_t extra2 = f2 - OM_TWIN_COLONY_FRONTIER_RANGE_LO;
+            if (extra2 > gen_twin_slack)
+                extra2 = 0;
+            gen_twin_slack -= extra2;
+            f2 = OM_TWIN_COLONY_FRONTIER_RANGE_LO + extra2;
 
             uint32_t home1 = cursor++;
             gen_place_region(w, home1, OM_TIER_HOME, (int32_t)fid, arch, &pop_sum, &pop_count);
