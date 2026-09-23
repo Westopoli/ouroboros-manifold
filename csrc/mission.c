@@ -578,16 +578,17 @@ double om_mission_compute_urgency(const om_world *w, uint32_t region_idx, uint32
     (void)archetype;
     double mil = om_region_field(w, region_idx, OM_F_MILITARY);
     double eco = om_region_field(w, region_idx, OM_F_ECONOMY);
-    /* ALG-55's deficit third term ("stability") is the raw tension field,
-     * not the OM_C_STABILITY composite (R-072-02's exact deficit=0.60 for
-     * military=economy=tension=40 only holds with tension used directly). */
-    double tension = om_region_field(w, region_idx, OM_F_TENSION);
+    /* ALG-55's deficit third term ("stability") is the ALG-09 OM_C_STABILITY
+     * composite (M0 ruling: the bible defines "stability" once, and the E-10
+     * window control reads it this way; R-072-02's exact-value fixture was a
+     * test defect derived from raw tension, corrected on the test side). */
+    double stability = om_region_composite(w, region_idx, OM_C_STABILITY);
     double deficit_divisor = OM_MISSION_DEFICIT_DIVISOR;
 #ifdef OM_DEBUG_INJECT
     if (w->inject == OM_BUG_URGENCY_DEFICIT_DIVISOR_WRONG) deficit_divisor = OM_MISSION_DEFICIT_DIVISOR_BUGGED;
 #endif
     double deficit = ((OM_MISSION_DEFICIT_FIELD_MAX - mil) + (OM_MISSION_DEFICIT_FIELD_MAX - eco) +
-                       (OM_MISSION_DEFICIT_FIELD_MAX - tension)) / deficit_divisor;
+                       (OM_MISSION_DEFICIT_FIELD_MAX - stability)) / deficit_divisor;
 
     const om_mission_state *st = om_mis_ro(w);
     uint32_t recent_attacks = 0, adjacent_lost = 0, recent_revolt_events = 0;
