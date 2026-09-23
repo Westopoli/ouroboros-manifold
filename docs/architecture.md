@@ -248,7 +248,7 @@ Enums are sent as the header's integer values (`om_tier`, `om_archetype`, `om_st
  "edges":[{"a":0,"b":1,"t":2}],
  "telegraphs":[{"attacker":0,"target":7,"commit":40.0,"declared_tick":8}]}
 ```
-`regions[i]` is by index; `owner` is `om_region_owner` (-1 unowned); the six numbers are the four fields and two composites, post-clamp, two decimals. `factions[].stance[k]` is `om_faction_stance(id, k)` for every faction k. `edges` is the full undirected edge list once (`a < b`). `telegraphs` is `om_pending_telegraphs`.
+`regions[i]` is by index; `owner` is `om_region_owner` (-1 unowned); the six numbers are the four fields and two composites, post-clamp, two decimals. `checksum` (here and on every tenth `delta`) is `om_world_get_state_checksum`, a uint64 written as a JSON number: a client whose JSON parser rounds integers through a double (Godot's `JSON.parse` does) must read the digits off the wire, as `autoload/c_bridge.gd` does; sending it as a string is a v2 shape question. Until B4 attaches, `set_seed` produces an empty world (no factions, no edges; seed 1, 60 regions, feature 6, 10 steps gives 16038372209008516879), so the populated fixture below is a stand-in for the file path only. `factions[].stance[k]` is `om_faction_stance(id, k)` for every faction k. `edges` is the full undirected edge list once (`a < b`). `telegraphs` is `om_pending_telegraphs`.
 
 ### delta (server to client, every tick after a `step` or during `run_to`)
 ```json

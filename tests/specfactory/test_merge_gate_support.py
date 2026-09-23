@@ -150,6 +150,42 @@ def test_unknown_piece_id_rejected(tmp_path):
     assert "NOPE" in detail
 
 
+# ---------------------------------------------------------------- acceptance_ids --
+
+def test_acceptance_ids_splits_pytest_and_godot(tmp_path):
+    """2026-09-22 defect: a client piece's acceptance mixing pytest node ids
+    and Godot test scripts (C2: tests/test_c_bridge.gd, tests/test_galaxy_view.gd
+    plus a pytest id) must split into the two lists merge_gate.sh runs
+    through different tools."""
+    pieces = tmp_path / "pieces.toml"
+    pieces.write_text(
+        '[[piece]]\n'
+        'id = "C2"\n'
+        'owns = []\n'
+        'acceptance = ["tests/test_c_bridge.gd", "tests/test_galaxy_view.gd", '
+        '"tests/csim/test_E04_wiring.py", "tests/csim/test_x.py::test_specific"]\n'
+    )
+    pytest_ids, godot_ids = mgs.acceptance_ids("C2", pieces_path=pieces)
+    assert pytest_ids == ["tests/csim/test_E04_wiring.py", "tests/csim/test_x.py::test_specific"]
+    assert godot_ids == ["tests/test_c_bridge.gd", "tests/test_galaxy_view.gd"]
+
+
+def test_acceptance_ids_pure_godot_piece(tmp_path):
+    pieces = tmp_path / "pieces.toml"
+    pieces.write_text('[[piece]]\nid = "C7"\nowns = []\nacceptance = ["tests/test_qa_daemon.gd"]\n')
+    pytest_ids, godot_ids = mgs.acceptance_ids("C7", pieces_path=pieces)
+    assert pytest_ids == []
+    assert godot_ids == ["tests/test_qa_daemon.gd"]
+
+
+def test_acceptance_ids_unknown_piece_returns_empty(tmp_path):
+    pieces = tmp_path / "pieces.toml"
+    pieces.write_text('[[piece]]\nid = "B1"\nowns = []\nacceptance = []\n')
+    pytest_ids, godot_ids = mgs.acceptance_ids("NOPE", pieces_path=pieces)
+    assert pytest_ids == []
+    assert godot_ids == []
+
+
 # ---------------------------------------------------------------- DEF_RE / _diff_added_definitions --
 
 def test_positive_control_def_re_return_type_variants(tmp_path):

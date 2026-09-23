@@ -138,6 +138,7 @@ func qa_state() -> Dictionary:
 		"route_len_wu": min(_mission.route_len_wu, 999999.0), "time_limit_ticks": _mission.time_limit_ticks,
 		"skipped": _mission.skipped, "marker": {"name": display, "px": [px.x, px.y]}, "tick": _mission.tick,
 		"timing_ms": _timing_ms, "regen_count": _regen_count,
+		"camera": {"x": _camera_rig.position.x, "z": _camera_rig.position.z} if _camera_rig != null else {"x": 0.0, "z": 0.0},
 	}
 
 
