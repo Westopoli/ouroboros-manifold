@@ -24,7 +24,10 @@ func _initialize() -> void:
 	_check_pause()
 	_check_morph()
 	_check_layout()
+	_check_map_fraction_narrating()
 	_check_background()
+	_check_galaxy_class()
+	_check_owners_match_colours()
 
 	for id in PLANTS:
 		_assert(_root.qa_plant(id), "qa_plant(%s) must return true" % id)
@@ -149,18 +152,55 @@ func _check_pause() -> void:
 	_assert(String(_root.qa_state().phase) == "narrating", "dismiss must resume narrating")
 
 
-# plant: morph-instant
+# plant: none. "morph-instant" (still a valid qa_plant id below, for the
+# PLANTS round-trip contract) is a no-op now: pass 1's 40-tick colour lerp
+# is gone, replaced per the pass-2 brief with galaxy_view.set_system_owner()
+# — the same instant recolour galaxy_mockup's own replay uses — so there is
+# no lerp left for that plant to short-circuit. System 11 is seed 11's
+# "r_moorwick" after fixture regeneration (see fixtures/jump_seed11.json,
+# keyframe/ownership_timeline tick 463 -> faction 0).
 func _check_morph() -> void:
 	_root.qa_seed(11)
+	_root.qa_tick(462)
+	var g: Galaxy = _root._galaxy_view.get_galaxy()
+	_assert(g.systems[11].owner != 0, "system 11 should not already be faction 0 one tick before its keyframe")
+	var before: Color = _root._galaxy_view.get_point_color(11)
+	_root.qa_tick(1)
+	var after: Color = _root._galaxy_view.get_point_color(11)
+	_assert(g.systems[11].owner == 0, "system 11 must become faction 0's after the tick-463 keyframe fires")
+	_assert(not before.is_equal_approx(after), "the recolour must be visible (before != after)")
+	var expected: Color = _root._galaxy_view.owner_color(0, g)
+	_assert(after.is_equal_approx(expected), "system 11's colour must equal faction 0's owner colour right after the keyframe")
+
+
+# plant: none
+func _check_galaxy_class() -> void:
+	var script: Script = _root._galaxy_view.get_script()
+	_assert(script != null and script.resource_path == "res://scenes/mockups/galaxy/galaxy_view.gd",
+		"the map's GalaxyView node must run scenes/mockups/galaxy/galaxy_view.gd, not a bespoke mini_galaxy")
+
+
+# plant: none
+func _check_owners_match_colours() -> void:
+	_root.qa_seed(11)
 	_root.qa_tick(463)
-	var before: Color = _root._mini_galaxy.get_system_color("r_moorwick")
-	_root.qa_tick(20)
-	var mid: Color = _root._mini_galaxy.get_system_color("r_moorwick")
-	_root.qa_tick(20)
-	var after: Color = _root._mini_galaxy.get_system_color("r_moorwick")
-	var new_c: Color = _root._mini_galaxy._owner_color("f_ostrel")
-	_assert(mid != before and mid != new_c, "at 1.0s the colour must be strictly between old and new")
-	_assert(after.is_equal_approx(new_c), "at 2.0s the colour must equal the new owner colour")
+	var g: Galaxy = _root._galaxy_view.get_galaxy()
+	var owners: Dictionary = _root.qa_state().owners
+	var bad := 0
+	for sys in g.systems:
+		var expected: Color = _root._galaxy_view.owner_color(int(owners[sys.id]), g)
+		if not _root._galaxy_view.get_point_color(sys.id).is_equal_approx(expected):
+			bad += 1
+	_assert(bad == 0, "%d/%d owners in qa_state() do not match the galaxy view's rendered instance colour" % [bad, g.systems.size()])
+
+
+# plant: none (self-test: tick 50 is well inside every entry's tick range,
+# so this would fail if _finish() somehow fired early)
+func _check_map_fraction_narrating() -> void:
+	_root.qa_seed(11)
+	_root.qa_tick(50)
+	_assert(String(_root.qa_state().phase) == "narrating", "self-test: should still be narrating at tick 50")
+	_assert(is_equal_approx(float(_root.qa_state().map_width_fraction), 0.62), "map_width_fraction must stay 0.62 while narrating")
 
 
 # plant: none
@@ -175,7 +215,7 @@ func _check_layout() -> void:
 
 # plant: none
 func _check_background() -> void:
-	var env: Environment = _root.get_node("MapViewport/SubViewport/WorldEnvironment").environment
+	var env: Environment = _root.get_node("MapViewport/SubViewport/World/WorldEnvironment").environment
 	_assert(env.background_mode == Environment.BG_COLOR, "map environment must use BG_COLOR, not BG_SKY, for background_color to render")
 	var c: Color = env.background_color
 	_assert(c.r < 0.08 and c.g < 0.08 and c.b < 0.12, "map environment background_color must be near-black, got %s" % c)
@@ -206,7 +246,7 @@ func _make_synthetic_fixture(n: int, with_keyframes: bool) -> Dictionary:
 		})
 		if with_keyframes:
 			keyframes.append({"tick": i * 100 + 10, "system_id": zone, "owner": ""})
-	return {"time_jump_start": {"time_jump_id": "synthetic", "ownership_timeline": []}, "entries": entries, "galaxy": {"systems": [], "edges": []}, "keyframes": keyframes}
+	return {"time_jump_start": {"time_jump_id": "synthetic", "ownership_timeline": []}, "entries": entries, "keyframes": keyframes}
 
 
 func _near_copy_of(e: Dictionary) -> Dictionary:
