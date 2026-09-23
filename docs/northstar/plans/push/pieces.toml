@@ -452,7 +452,7 @@ acceptance = [
     "tests/test_tactical_view.gd",
 ]
 depends_on = ["B10", "B12", "T1"]
-status = "pending"
+status = { state = "attached", attach_sha = "d429d15" }
 tests_pending = true
 size_estimate = "minimal rebuild over T1's tactical frame; mockup p4/p8 plants"
 
