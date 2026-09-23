@@ -43,6 +43,8 @@ typedef struct {
 typedef struct {
     om_event_template templates[OM_MAX_TEMPLATES];
     uint32_t n_templates;
+    uint32_t launch_count;                        /* F2h: the S-030 accessor's count, excludes registrations */
+    int32_t  significance_tier[OM_MAX_TEMPLATES];  /* F2h: om_event_register_external's own field, no public getter yet */
 
     double   noise[OM_EVT_MAX_REGIONS][OM_MAX_TEMPLATES];
     int      breached[OM_EVT_MAX_REGIONS][OM_MAX_TEMPLATES];
@@ -155,6 +157,7 @@ static int evt_install(om_evt_state *s, const om_event_template *src, uint32_t n
         s->templates[i].id = i;
     }
     s->n_templates = n;
+    s->launch_count = n; /* F2h: a (re)load resets the S-030 count and drops any registrations */
     return 0;
 }
 
@@ -325,7 +328,37 @@ void om_events_load_launch(om_world *w) {
 
 uint32_t om_event_template_count(const om_world *w) {
     om_evt_state *s = evt_find(w);
-    return s ? s->n_templates : 0;
+    return s ? s->launch_count : 0; /* F2h: excludes om_event_register_external ids */
+}
+
+/* F2h: registers a named template outside the fixed launch library, id
+ * >= om_event_template_count(w). Idempotent by name; no trigger (R-030-02
+ * spawn-only), no effects, exclusion tag NONE. */
+int32_t om_event_register_external(om_world *w, const char *name, int32_t significance_tier) {
+    if (!w || !name) return -1;
+    om_evt_state *s = evt_ensure(w);
+    if (!s) return -1;
+    for (uint32_t i = s->launch_count; i < s->n_templates; i++) {
+        if (strncmp(s->templates[i].name, name, OM_TEMPLATE_NAME) == 0) return (int32_t)i;
+    }
+    if (s->n_templates >= OM_MAX_TEMPLATES) return -1;
+    uint32_t id = s->n_templates;
+    om_event_template *t = &s->templates[id];
+    memset(t, 0, sizeof(*t));
+    strncpy(t->name, name, OM_TEMPLATE_NAME - 1);
+    t->id = id;
+    t->trigger_kind = OM_TRIG_NONE;
+    t->exclusion_tag = OM_EXCL_NONE;
+    s->significance_tier[id] = significance_tier;
+    s->n_templates = id + 1;
+    return (int32_t)id;
+}
+
+/* F2h: no existing accessor maps id -> name. NULL if out of range. */
+const char *om_event_template_name(const om_world *w, uint32_t template_id) {
+    om_evt_state *s = evt_find(w);
+    if (!s || template_id >= s->n_templates) return NULL;
+    return s->templates[template_id].name;
 }
 
 int om_event_template_get(const om_world *w, uint32_t id, om_event_template *out) {
@@ -662,6 +695,21 @@ static void evt_resolve_queue(om_evt_state *s, om_world *w, double snap[][OM_F_C
             fv = (qe->region_idx < OM_EVT_MAX_REGIONS) ? snap[qe->region_idx][qe->cond_field] : 0.0;
             cond_met = (qe->cond_kind == OM_COND_ABOVE) ? (fv > qe->cond_value) : (fv < qe->cond_value);
         }
+        /* ALG-41: an Admin Breakaway (or any faction-creating template)
+         * queued through om_event_queue_external is pruned if the region's
+         * owner no longer matches the chain's source faction by the time it
+         * resolves -- the chain's own owner-mismatch/changed-hands rule,
+         * unimplemented anywhere until now (see om_event_queue_external's
+         * hardcoded OM_COND_NONE and evt_admin_chain_spawn, which never
+         * carried a condition either). */
+        if (cond_met && cur_src[i] == OM_SRC_EXTERNAL && qe->source_faction >= 0 &&
+            s->templates[qe->template_id].creates_faction) {
+            int32_t owner = (qe->region_idx < w->n_regions) ? w->regions[qe->region_idx].faction_id : -1;
+            if (owner != qe->source_faction) {
+                cond_met = 0;
+                fv = (double)owner;
+            }
+        }
         if (!cond_met) {
             c->removed = 1;
             if (s->pruned_n < OM_EVT_LOG_CAP) {
@@ -905,7 +953,7 @@ void om_step_events(om_world *w) {
                                         * never lift an already-below-floor field just by evaluating */
         om_region *rg = &w->regions[r];
 #ifdef OM_DEBUG_INJECT
-        if (w->inject != OM_BUG_SEQUENTIAL_DELTAS)
+        if (w->inject != OM_BUG_SEQUENTIAL_DELTAS && w->inject != OM_BUG_TRIGGERS_READ_LIVE)
 #endif
         {
             double nm = evt_clamp(snap[r][OM_F_MILITARY] + s->applied_delta[r][OM_F_MILITARY], 0.0, OM_EVT_FIELD_CEILING);
