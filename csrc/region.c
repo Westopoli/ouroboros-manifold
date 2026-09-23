@@ -6,6 +6,7 @@
 #include <string.h>
 #include <math.h>
 
+static uint64_t om_world_serial_counter = 1;
 
 om_world *om_world_new(uint32_t n_regions, uint64_t seed) {
     if (n_regions == 0) return NULL;
@@ -60,6 +61,26 @@ om_world *om_world_new(uint32_t n_regions, uint64_t seed) {
     }
     w->generated = 0;
     w->edge_count = 0;
+
+    /* F2c: E-07 lifecycle log/window/tactical-state storage. calloc above
+     * already zeroes these; set explicitly so this list is the field list. */
+    w->lc_revolts_n = 0;
+    w->lc_reversions_n = 0;
+    w->lc_absorptions_n = 0;
+    for (uint32_t i = 0; i < OM_MAX_FACTIONS; i++) {
+        w->faction_created_tick[i] = 0;
+        w->faction_conquered_this_tick[i] = 0;
+        w->faction_window_total[i] = 0;
+        w->faction_window_revolts[i] = 0;
+        w->faction_window_attacks[i] = 0;
+        w->faction_window_colonizations[i] = 0;
+    }
+    /* NULL until first om_region_set_previous_owner call; getter returns
+     * -1 while NULL (same convention as region_held_since). */
+    w->region_previous_owner = NULL;
+    w->tactical_state = NULL;
+    w->tactical_state_free = NULL;
+    w->world_serial = om_world_serial_counter++;
     return w;
 }
 
@@ -81,6 +102,10 @@ void om_debug_gen_config(const om_world *w, om_debug_gen_config_row *out) {
 
 void om_world_free(om_world *w) {
     if (!w) return;
+    if (w->tactical_state && w->tactical_state_free) {
+        w->tactical_state_free(w->tactical_state);
+    }
+    free(w->region_previous_owner);
     free(w->regions);
     free(w->trace);
     free(w);

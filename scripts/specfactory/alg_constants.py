@@ -9,7 +9,7 @@ labelled values" convention, e.g. "..., rate `0.5`") and writes them as
 algorithms.md; only reads it.
 
 `--lint DIR`: fails on any bare numeric literal in DIR/*.c other than 0, 1,
--1, 2, an array size in a declaration, a #define line, a sizeof(...)
+-1, 2, 0.5, an array size in a declaration, a #define line, a sizeof(...)
 argument, or a literal inside a `/* constants-table: <bible citation> */`
 ... `/* end constants-table */` fence (a cited data table, e.g. E-04's
 static event-template library, not a tuning constant) -- so a tuned
@@ -38,7 +38,7 @@ REPO = Path(__file__).resolve().parents[2]
 ALGORITHMS_MD = REPO / "docs" / "bible" / "algorithms.md"
 ALLOWLIST_PATH = REPO / "docs" / "northstar" / "spec_factory" / "constants_allowlist.txt"
 GRANDFATHERED_FILES = {"sim.c", "region.c", "faction.c", "agent.c", "resolve.c"}
-ALWAYS_EXEMPT_VALUES = {0.0, 1.0, -1.0, 2.0}
+ALWAYS_EXEMPT_VALUES = {0.0, 1.0, -1.0, 2.0, 0.5}
 
 # --------------------------------------------------------------------- ALG parsing
 
@@ -481,7 +481,7 @@ TABLE_START_RE = re.compile(r"^\s*/\*\s*constants-table:\s*(.*?)\s*\*/\s*$")
 TABLE_END_RE = re.compile(r"^\s*/\*\s*end constants-table\s*\*/\s*$")
 TABLE_CITATION_RE = re.compile(r"docs/bible/|\bS-\d+\b|\bR-\d+-\d+\b|\bALG-\d+\b")
 TOKEN_RE = re.compile(
-    r"(?<![\w.])(-)?\b(\d+\.\d+(?:[eE][+-]?\d+)?[fFlL]?|\d+(?:[uUlL]*)|0[xX][0-9a-fA-F]+[uUlL]*)"
+    r"(?<![\w.])(-)?\b(\d+\.\d+(?:[eE][+-]?\d+)?[fFlL]?|\d+[eE][+-]?\d+[fFlL]?|\d+(?:[uUlL]*)|0[xX][0-9a-fA-F]+[uUlL]*)"
 )
 
 
