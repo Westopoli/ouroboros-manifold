@@ -38,7 +38,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_PIECES = REPO / "docs/northstar/plans/push/pieces.toml"
 DEFAULT_PYTHON = "/home/westopoli/Projects/agora/.venv/bin/python"
-ROOTS = ("tests/csim", "tests/qa/t1", "tests/transport", "tests/specfactory")
+ROOTS = ("tests/csim", "tests/qa/t1", "tests/qa/desktop", "tests/transport", "tests/specfactory")
 
 
 def load_pieces(path: Path) -> list[dict]:

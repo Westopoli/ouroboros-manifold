@@ -482,3 +482,17 @@ status = "pending"
 tests_pending = true
 size_estimate = "cross-repo piece (lives in the agora checkout, not this repo); QA campaign files, planted-bug catalog, per-epic gate cards; data lint, no pytest id"
 
+[[piece]]
+id = "C8"
+manager = "M3"
+wave = 3
+owns = ["autoload/scene_router.gd", "autoload/c_bridge.gd"]
+owns_glob = ["scenes/main_menu/**", "scenes/galaxy/**", "scenes/mission_briefing/**", "scenes/debrief/**", "scenes/tactical_c/**", "scenes/world/chronicle_*"]
+acceptance = [
+    "tests/qa/desktop/test_flow_spine.py",
+]
+depends_on = ["C2", "C3", "C4", "C5", "C7", "T1"]
+status = "pending"
+tests_pending = true
+size_estimate = "wires scene_router's SCENES dict (no \"galaxy\" entry today) through main_menu -> galaxy -> mission_briefing -> tactical_c -> debrief -> chronicle -> galaxy; adds NewGame/Mission/Deploy/EndMission/Continue/Return controls, none of which exist yet"
+
