@@ -15,7 +15,13 @@ const PAN_SPEED := 0.09
 const ORBIT_YAW_SPEED := 0.01
 const ORBIT_PITCH_SPEED := 0.1
 const PICK_RADIUS_PX := 14.0
-const FOCUS_DISTANCE := 20.0
+# Widened from 20.0 (pass-1 review: "reads as flying into a planet" — see
+# docs/northstar/research/mockups/galaxy/README.md, BAND-X). 28.0 stays
+# inside Local (< BAND_SPLIT_LOW 32.5) but keeps enough of the disc in frame
+# for neighbouring systems and their filaments to still read (paired with
+# galaxy_view.gd's lower LOCAL_FAR_WU-driven desaturation cutoff and capped
+# local_boost).
+const FOCUS_DISTANCE := 28.0
 const FOCUS_DURATION := 1.5
 
 const BAND_SPLIT_LOW := 32.5

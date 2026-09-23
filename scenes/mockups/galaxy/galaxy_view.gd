@@ -6,7 +6,12 @@ const POINT_BASE_RADIUS := 1.4
 const NEUTRAL_COLOR := Color(0.55, 0.55, 0.58, 1.0)
 const TRADE_DIM := Color(0.42, 0.44, 0.5, 0.5)
 const FLASH_DURATION := 0.6
-const LOCAL_FAR_WU := 30.0
+# Widened 30.0 -> 45.0 and local_boost capped lower (see _band_weights() call
+# site below) so a Local focus keeps neighbouring systems in their owner's
+# colour instead of desaturating everything past one system-width — part of
+# the pass-2 Local-band framing fix, paired with orbit_camera.gd's wider
+# FOCUS_DISTANCE.
+const LOCAL_FAR_WU := 45.0
 
 var _galaxy: Galaxy
 var _points: MultiMeshInstance3D
@@ -228,7 +233,7 @@ func update_view(distance: float, focused_id: int, hover_faction: int, pin_facti
 		var sat_mul := 1.0
 		if focused_id != -1 and w.local > 0.0:
 			if sys.id == focused_id:
-				local_boost = lerpf(1.0, 1.5, w.local)
+				local_boost = lerpf(1.0, 1.2, w.local)
 			else:
 				var d: float = sys.pos.distance_to(_galaxy.systems[focused_id].pos)
 				if d > LOCAL_FAR_WU:
