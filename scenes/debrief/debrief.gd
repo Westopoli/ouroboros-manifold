@@ -31,7 +31,7 @@ func _input(event: InputEvent) -> void:
 
 # C transport v1 rebind entry point (docs/architecture.md "debrief frame"),
 # independent of setup()/legacy _params. Replaces stored frame state in full
-# on every call.
+# on every call, then rebuilds the on-screen display from it (piece C4-1).
 func load_frame(debrief: Dictionary) -> void:
 	_frame = {
 		"band": debrief.get("band", 0),
@@ -39,6 +39,8 @@ func load_frame(debrief: Dictionary) -> void:
 		"brought_home": debrief.get("brought_home", 0.0),
 		"region_delta": debrief.get("region_delta", {}),
 	}
+	_clear_ui()
+	_build_ui()
 
 
 func qa_state() -> Dictionary:
@@ -66,6 +68,20 @@ func qa_plant(id: String) -> bool:
 			return true
 		_:
 			return false
+
+
+# Piece C4-1: makes _build_ui() safe to call more than once (load_frame()
+# calls it on every rebind). Mirrors scenes/world/chronicle_scroll_panel.gd's
+# begin_time_jump(), which clears _entry_container's children before
+# rebuilding, except this clears the root's own direct children (bg,
+# margin) since _build_ui() adds straight to self. remove_child() first so
+# a load_frame() call that immediately rebuilds again (no frame boundary in
+# between, as the fenced test does) does not see stale children still
+# reporting as present.
+func _clear_ui() -> void:
+	for child in get_children():
+		remove_child(child)
+		child.queue_free()
 
 
 func _build_ui() -> void:
@@ -435,7 +451,46 @@ func _band_color(band: String) -> Color:
 
 
 func _debrief() -> Dictionary:
-	return _params.get("debrief", {})
+	if _params.has("debrief"):
+		return _params.get("debrief", {})
+	if not _frame.is_empty():
+		return _debrief_from_frame()
+	return {}
+
+
+# Piece C4-1: _build_ui()'s section builders all read _debrief(); this is
+# the only place that translates the C-transport debrief frame into that
+# same shape so no section builder needs to know load_frame() exists. Only
+# fields the frame actually carries are mapped; everything else is left at
+# the section builders' own existing defaults (0, "", "survived") rather
+# than invented. See scene doc comment above for the frame's field list.
+func _debrief_from_frame() -> Dictionary:
+	var band_index: int = clampi(int(_frame.get("band", 0)), 0, BAND_NAMES.size() - 1)
+	var achieved: float = float(_frame.get("achieved", 0.0))
+	var brought_home: float = float(_frame.get("brought_home", 0.0))
+	var region_delta: Dictionary = _frame.get("region_delta", {})
+
+	var field_deltas: Dictionary = {}
+	for field_name in ["military", "economy", "tension", "population"]:
+		if region_delta.has(field_name):
+			var raw: float = float(region_delta.get(field_name, 0.0))
+			field_deltas[field_name] = {
+				"raw": raw,
+				"direction": "up" if raw >= 0.0 else "down",
+			}
+
+	return {
+		"outcome_band": BAND_NAMES[band_index],
+		"outcome_band_prose": "",
+		"final_score": achieved,
+		"objectives": [],
+		"mission_duration_seconds": 0.0,
+		"force_retention": brought_home,
+		"objective_score": achieved,
+		"commander_fate": "survived",
+		"impact_preview": "",
+		"field_deltas": field_deltas,
+	}
 
 
 func _on_continue() -> void:

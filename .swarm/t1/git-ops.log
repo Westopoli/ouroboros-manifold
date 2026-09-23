@@ -4,3 +4,19 @@
 2026-09-22T22:23:57+00:00 | /home/westopoli/Projects/om-push/m3 | git worktree list --porcelain | exit 0
 2026-09-22T22:23:57+00:00 | /home/westopoli/Projects/om-push/m3 | git branch --list '--format=%(refname:short)' 'swarm/t1/**' | exit 0
 2026-09-22T22:25:16+00:00 | /home/westopoli/Projects/om-push/m3 | git status --porcelain | exit 0
+2026-09-22T22:25:16+00:00 | /home/westopoli/Projects/om-push/m3 | git add -A -- .swarm/c7/git-ops.log .swarm/c7/audits/wave-1/leaf-01.COMMIT .swarm/c7/briefs/leaf-01.ASSUMPTIONS.md .swarm/c7/wave-1.base.json .swarm/c7/worktrees .swarm/t1 docs/northstar/plans/push/specs/T1.md | exit 0
+2026-09-22T22:25:16+00:00 | /home/westopoli/Projects/om-push/m3 | git commit -q -m 'swarm(t1): wave 1 base — spec/contract/umbrella/briefs/tests' | exit 0
+2026-09-22T22:25:16+00:00 | /home/westopoli/Projects/om-push/m3 | git rev-parse --abbrev-ref HEAD | exit 0
+2026-09-22T22:25:16+00:00 | /home/westopoli/Projects/om-push/m3 | git rev-parse HEAD | exit 0
+2026-09-22T22:25:16+00:00 | /home/westopoli/Projects/om-push/m3 | git show-ref --verify --quiet refs/heads/swarm/t1/integration | exit 1
+2026-09-22T22:25:16+00:00 | /home/westopoli/Projects/om-push/m3 | git branch swarm/t1/integration dad7f6916046ba04e50506c87e6edbbe21a0a04f | exit 0
+2026-09-22T22:25:17+00:00 | /home/westopoli/Projects/om-push/m3 | git worktree add /home/westopoli/Projects/om-push/m3/.swarm/t1/worktrees/integration swarm/t1/integration | exit 0
+2026-09-22T22:25:17+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/t1/worktrees/integration | git rev-parse --git-path info/exclude | exit 0
+2026-09-22T22:25:17+00:00 | /home/westopoli/Projects/om-push/m3 | git rev-parse swarm/t1/integration | exit 0
+2026-09-22T22:25:19+00:00 | /home/westopoli/Projects/om-push/m3 | git worktree add -b swarm/t1/leaf-01 /home/westopoli/Projects/om-push/m3/.swarm/t1/worktrees/leaf-01 dad7f6916046ba04e50506c87e6edbbe21a0a04f | exit 0
+2026-09-22T22:25:19+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/t1/worktrees/leaf-01 | git rev-parse --git-path info/exclude | exit 0
+2026-09-22T22:35:54+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/t1/worktrees/leaf-01 | git rev-parse HEAD | exit 0
+2026-09-22T22:35:56+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/t1/worktrees/leaf-01 | git status --porcelain --untracked-files=all | exit 0
+2026-09-22T22:35:56+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/t1/worktrees/leaf-01 | git add -- csrc/pipe/om_pipe.c | exit 0
+2026-09-22T22:35:56+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/t1/worktrees/leaf-01 | git commit -q -m 'swarm(t1): leaf-01 — Replace the placeholder `csrc/pipe/om_pipe.c` with the real stdio pipe' | exit 0
+2026-09-22T22:35:56+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/t1/worktrees/leaf-01 | git rev-parse HEAD | exit 0

@@ -1,0 +1,24 @@
+{
+ "wave": 1,
+ "slug": "c4",
+ "base_sha": "da51fba1333eaac6b02931598f1ccacee600ea1b",
+ "integration_sha": "da51fba1333eaac6b02931598f1ccacee600ea1b",
+ "user_branch": "main",
+ "created_at": "2026-09-22T23:24:29+00:00",
+ "leaves": {
+  "leaf-01": {
+   "branch": "swarm/c4/leaf-01",
+   "worktree": ".swarm/c4/worktrees/leaf-01",
+   "commit": "7846458a18f965b71cb0205a7bb08fe6a692232e",
+   "created_at": "2026-09-22T23:24:32+00:00",
+   "committed_at": "2026-09-22T23:25:50+00:00"
+  },
+  "leaf-02": {
+   "branch": "swarm/c4/leaf-02",
+   "worktree": ".swarm/c4/worktrees/leaf-02",
+   "commit": "3a459b3e6901d91ea42cbcb4b3cdd2f47eb07f97",
+   "created_at": "2026-09-22T23:24:33+00:00",
+   "committed_at": "2026-09-22T23:25:53+00:00"
+  }
+ }
+}

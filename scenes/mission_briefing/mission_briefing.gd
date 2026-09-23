@@ -736,6 +736,51 @@ func load_frame(mission: Dictionary) -> void:
 	_frame_deadline_ticks = int(mission.get("deadline_ticks", 0))
 	_frame_objectives = (mission.get("objectives", []) as Array).duplicate(true)
 	_frame_force = (mission.get("force", {}) as Dictionary).duplicate(true)
+	_apply_frame_to_data()
+	_clear_ui()
+	_build_ui()
+
+
+# Piece C4-1: overlays what the C-transport mission frame carries onto the
+# legacy _build_ui() data shape (_data), so _build_ui() does not need a
+# second rendering path. Only objective_primary/objectives_secondary and
+# the tick display are frame-derived; every other _data key (situation
+# text, enemy assessment, commander lineage, era accent, ...) is left as
+# whatever setup()/_ready() already put there (or its own _data.get()
+# default), since the frame does not carry that content and this piece
+# must not fabricate it. Marker names go through the existing
+# _marker_name_for_node() table lookup, never the frame's raw node id.
+func _apply_frame_to_data() -> void:
+	_data["tick_counter"] = _frame_deadline_ticks
+
+	var primary_obj: Dictionary = {}
+	var secondary_objs: Array = []
+	for o in _frame_objectives:
+		var node := int(o.get("node", 0))
+		var entry := {
+			"text": _marker_name_for_node(node),
+			"detail": "",
+		}
+		if bool(o.get("primary", false)):
+			primary_obj = entry
+		else:
+			secondary_objs.append(entry)
+	_data["objective_primary"] = primary_obj
+	_data["objectives_secondary"] = secondary_objs
+
+
+# Piece C4-1: makes _build_ui() safe to call more than once (load_frame()
+# calls it on every rebind). Mirrors scenes/world/chronicle_scroll_panel.gd's
+# begin_time_jump(), which clears _entry_container's children before
+# rebuilding, except this clears the root's own direct children (bg,
+# margin) since _build_ui() adds straight to self. remove_child() first so
+# a load_frame() call that immediately rebuilds again (no frame boundary in
+# between, as the fenced test does) does not see stale children still
+# reporting as present.
+func _clear_ui() -> void:
+	for child in get_children():
+		remove_child(child)
+		child.queue_free()
 
 
 func qa_state() -> Dictionary:
