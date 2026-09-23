@@ -87,6 +87,40 @@ text = "Tick: —"
 [node name="TimingLabel" type="Label" parent="HUD/VBox"]
 text = "tick_avg: —"
 
+[node name="SelectionLabel" type="Label" parent="HUD/VBox"]
+text = "Selected: none — Q/E apply to every friendly"
+
+[node name="PausedLabel" type="Label" parent="HUD"]
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -200.0
+offset_right = 200.0
+offset_top = 16.0
+offset_bottom = 70.0
+grow_horizontal = 2
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(1, 0.35, 0.2, 1)
+theme_override_font_sizes/font_size = 40
+text = "PAUSED"
+
+[node name="DemoLabel" type="Label" parent="HUD"]
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = -420.0
+offset_right = 420.0
+offset_top = -70.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 0
+horizontal_alignment = 1
+autowrap_mode = 2
+theme_override_colors/font_color = Color(1, 1, 0.75, 1)
+theme_override_font_sizes/font_size = 22
+visible = false
+text = ""
+
 [node name="UnitList" type="VBoxContainer" parent="HUD"]
 position = Vector2(16, 340)
 
