@@ -50,6 +50,75 @@ Took `08_galaxy_plants_gap_clean.png` instead -- clean galaxy view, no plants tr
 
 **This is a real capability gap for future desktop QA/first-look passes on galaxy_view's plant states**, not a game bug. If plant-level QA screenshots are wanted going forward, `qa_daemon.gd` needs a verb (e.g. extend `fixture` or add a `call`/`plant` verb) that reaches `get_tree().current_scene.qa_plant(id)` when present. Did not add it -- out of scope, docs-only pass, no code changes.
 
+## Plant screenshots -- gap closed, take 2
+
+Second pass, same day. `autoload/qa_daemon.gd` now has a real `"plant"` verb
+(`_dispatch`'s match hits `_do_plant(id)`, which calls
+`current_scene.qa_plant(id)` when the scene has it -- `_do_plant` at line 272,
+`"plant"` case at line 194). Gap from the section above is closed, no more
+"could not take them."
+
+Ran the same boot -> New Game -> galaxy flow, then called `plant` for all six
+ids in order, checked `ok: true` + `result.activated: true` on every one,
+screenshotted after each. All six calls came back clean, none silently
+skipped:
+
+| plant id | ok | activated |
+|---|---|---|
+| `seed-ignored` | true | true |
+| `owner-colour-flat` | true | true |
+| `edges-2d-overlay` | true | true |
+| `pick-radius-zero` | true | true |
+| `bands-frozen` | true | true |
+| `conquest-no-recolour` | true | true |
+
+Screenshots: `09_plant_seed-ignored.png` through `14_plant_conquest-no-recolour.png`.
+
+Checked pixels, not just the daemon's `ok`/`activated` flags: all six are
+byte-identical to `02_galaxy.png` (md5 `f14cbfff5c4f999417881aacadf45d68` on
+all seven files, clean shot included). Eyeballed `02_galaxy.png` next to
+`10_plant_owner-colour-flat.png` side by side too, confirms what the hash
+says -- same 60 black dots, same layout, same flat grey bg, same MISSION
+button. Not a screenshot-pipeline bug, real reason each one lands the same:
+
+- `seed-ignored` -- flips a flag `qa_seed()` checks before re-laying-out
+  points on the next seed call. Nobody called `qa_seed()` after planting, so
+  layout never got a chance to run (or not-run) differently. Behavioral, not
+  visual, on this pass.
+- `owner-colour-flat` -- does call `_recompute_region_colours()` right away
+  (only one of the six that repaints immediately). But every region's
+  `owner` is `-1` today (world gen / B4 not landed, per the "expected"
+  notes on `02_galaxy.png` above) -- so the "flat" branch and the normal
+  per-owner branch both land on the exact same single colour for every dot,
+  because every dot already shares the one owner id. Flat-vs-not-flat is a
+  distinction with no visible difference until factions exist.
+- `edges-2d-overlay` -- does call `_render_filaments()` right away too, but
+  there are zero edges in `_edges` (same empty-world reason -- no
+  factions/borders yet), so the "draw nothing, 2D overlay mode" branch and
+  the normal "draw real filament tubes" branch both draw nothing. Matches
+  the README's earlier note up top that `02_galaxy.png` has "no
+  factions/edges."
+- `pick-radius-zero` -- only changes `pick_radius_px` in `state()`'s output
+  (0.0 instead of 14.0), never touches rendering. Confirmed behavioral not
+  visual by reading `galaxy_view.gd` line 124 -- did not screenshot-hunt for
+  something that was never going to be there.
+- `bands-frozen` -- freezes the camera-distance band ("Overview" /
+  "Regional" / "Local") at whatever it was when planted; only shows up if
+  the camera moves afterward and the band would otherwise have changed. We
+  never moved the camera, so nothing to see.
+- `conquest-no-recolour` -- suppresses a recolour call that only fires on a
+  conquest event; no conquest happened in this run, so the suppressed call
+  and the normal call are both no-ops either way.
+
+Bottom line: the daemon-level gap (no way to call `qa_plant` at all) is
+fixed and confirmed working -- all six ids activate cleanly. The
+*visual*-difference gap most of these plants were built to expose is still
+blocked on the same B4 empty-world caveat this README already flagged for
+the plain galaxy screenshots. Worth a re-run once B4 world gen lands real
+owners/edges/factions -- `owner-colour-flat` and `edges-2d-overlay` should
+actually diverge from clean at that point; the other four are
+behavior-only by design and will keep looking the same as clean even then.
+
 ## Liveness check
 
 `scripts/qa_harness.sh liveness` (C7's precheck, drives `scenes/harness/harness.tscn` under the same Xvfb pattern):
@@ -71,5 +140,11 @@ Passed clean.
 - `06_chronicle.png` -- chronicle after Continue
 - `07_return_galaxy.png` -- galaxy view again after Return
 - `08_galaxy_plants_gap_clean.png` -- galaxy view, no plants (see plant-screenshot section for why)
+- `09_plant_seed-ignored.png` -- galaxy view, `seed-ignored` planted; byte-identical to `02_galaxy.png` (see "gap closed" section)
+- `10_plant_owner-colour-flat.png` -- galaxy view, `owner-colour-flat` planted; byte-identical to `02_galaxy.png` (empty-world caveat, see "gap closed" section)
+- `11_plant_edges-2d-overlay.png` -- galaxy view, `edges-2d-overlay` planted; byte-identical to `02_galaxy.png` (empty-world caveat, see "gap closed" section)
+- `12_plant_pick-radius-zero.png` -- galaxy view, `pick-radius-zero` planted; byte-identical to `02_galaxy.png` (behavioral not visual, see "gap closed" section)
+- `13_plant_bands-frozen.png` -- galaxy view, `bands-frozen` planted; byte-identical to `02_galaxy.png` (behavioral not visual, see "gap closed" section)
+- `14_plant_conquest-no-recolour.png` -- galaxy view, `conquest-no-recolour` planted; byte-identical to `02_galaxy.png` (behavioral not visual, see "gap closed" section)
 
 Driver script(s) used to produce this run were scratch tooling under `/tmp`, deleted after the run -- not in this worktree, not in this evidence dir.

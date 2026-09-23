@@ -157,22 +157,43 @@ func _setup_world_view_viewport() -> void:
 	tw.tween_property(container, "modulate:a", 0.7, 2.0)
 
 
+# Self-healing title-position tracking (replaces a CONNECT_ONE_SHOT
+# process_frame read). Investigation for this bug found TitlePlaceholder's
+# global_position is actually stable from the first frame in every
+# resolution tested; the real cause of the blank title was a separate
+# font-load race fixed in menu_title_heartbeat.gd's _try_build_title_labels.
+# This per-frame retry is kept as defense in depth against any future
+# layout timing where the placeholder's position takes a frame or more to
+# settle -- see also: scenes/loading_screen/loading_screen.gd's _process
+# retry (S-C8-07), the precedent for replacing a one-shot read with a
+# self-correcting per-frame one.
+const TITLE_POSITION_SETTLE_FRAME_CAP := 30
+
+var _title_position_prev := Vector2.INF
+var _title_position_frame := 0
+
 func _setup_title_heartbeat() -> void:
 	var heartbeat_script := load("res://scenes/main_menu/menu_title_heartbeat.gd")
 	_title_heartbeat = Control.new()
 	_title_heartbeat.set_script(heartbeat_script)
 	add_child(_title_heartbeat)
 
-	get_tree().process_frame.connect(_position_heartbeat_deferred, CONNECT_ONE_SHOT)
+	set_process(true)
 
 	if _world_view and _world_view.has_signal("structure_revealed"):
 		_world_view.structure_revealed.connect(_title_heartbeat._on_climax)
 
 
-func _position_heartbeat_deferred() -> void:
-	var placeholder := find_child("TitlePlaceholder", true, false)
-	if placeholder and _title_heartbeat:
-		_title_heartbeat.set_title_origin(placeholder.global_position)
+func _process(_delta: float) -> void:
+	var placeholder: Control = find_child("TitlePlaceholder", true, false)
+	if placeholder == null or _title_heartbeat == null:
+		return
+	var pos: Vector2 = placeholder.global_position
+	_title_heartbeat.set_title_origin(pos)
+	_title_position_frame += 1
+	if pos == _title_position_prev or _title_position_frame >= TITLE_POSITION_SETTLE_FRAME_CAP:
+		set_process(false)
+	_title_position_prev = pos
 
 
 func _create_menu_item(label_text: String, action: String) -> Control:
