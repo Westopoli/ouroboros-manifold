@@ -60,14 +60,6 @@ static uint32_t om_collision_highest_military_region(const om_world *w, int32_t 
 /* Resolves one target's colliding group (ALG-23/24). members[] holds indices
  * into w->decisions[]; the caller marks them consumed and compacts. */
 static void om_collision_resolve_group(om_world *w, const uint32_t *members, uint32_t n_members) {
-    /* NEEDS-HEADER item 1 (leaf-01 escalation, docs at
-     * .swarm/b2-collision/questions/leaf-01-Q1.md): ALG-23's per-collision
-     * loser tension base and the narrow-margin colonize draw's upper bound
-     * have no named constant in om_constants.h yet. Local placeholders,
-     * awaiting promotion. */
-    static const double LOSER_TENSION_BASE = 5.0;
-    static const double NARROW_MIL_UPPER = 0.70;
-
     om_decision *ds[OM_MAX_COLLIDERS];
     for (uint32_t i = 0; i < n_members; ++i) ds[i] = &w->decisions[members[i]];
     uint32_t target_idx = ds[0]->target_idx;
@@ -158,7 +150,7 @@ static void om_collision_resolve_group(om_world *w, const uint32_t *members, uin
             w->faction_budget[f] = budget_at_commit_time - (ds[i]->commit - refund);
             c.loser_tension[i] = 0.0;
         } else {
-            double tension_delta = LOSER_TENSION_BASE * ds[i]->commit / budget_at_commit_time;
+            double tension_delta = OM_COLLISION_LOSER_TENSION_BASE * ds[i]->commit / budget_at_commit_time;
             w->faction_budget[f] = budget_at_commit_time - ds[i]->commit;
             c.loser_tension[i] = tension_delta;
             uint32_t hit_idx = om_collision_highest_military_region(w, f);
@@ -166,14 +158,14 @@ static void om_collision_resolve_group(om_world *w, const uint32_t *members, uin
         }
     }
 
-    if (w->collisions_n < 64) w->collisions[w->collisions_n++] = c;
+    if (w->collisions_n < OM_MAX_REGIONS) w->collisions[w->collisions_n++] = c;
 
     if (w->regions[target_idx].faction_id < 0) {
         int32_t winner_faction = ds[winner]->faction_id;
         double start_military = OM_COLONY_START_MILITARY;
         if (margin < OM_COLLISION_NARROW_MARGIN) {
             double u_pen = om_rng_draw(w);
-            double frac = OM_COLLISION_NARROW_MIL_PENALTY + (NARROW_MIL_UPPER - OM_COLLISION_NARROW_MIL_PENALTY) * u_pen;
+            double frac = OM_COLLISION_NARROW_MIL_PENALTY + (OM_COLLISION_NARROW_MIL_PENALTY_MAX - OM_COLLISION_NARROW_MIL_PENALTY) * u_pen;
             start_military = OM_COLONY_START_MILITARY * frac;
         }
 
@@ -184,7 +176,7 @@ static void om_collision_resolve_group(om_world *w, const uint32_t *members, uin
         w->regions[target_idx].tension = OM_COLONY_START_TENSION;
         w->regions[target_idx].population = OM_COLONY_START_POPULATION;
 
-        if (w->colonizations_n < 64) {
+        if (w->colonizations_n < OM_MAX_REGIONS) {
             om_colonize_result *cr = &w->colonizations[w->colonizations_n++];
             cr->tick = w->tick;
             cr->faction_id = winner_faction;
