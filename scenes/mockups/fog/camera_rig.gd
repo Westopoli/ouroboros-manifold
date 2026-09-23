@@ -11,6 +11,7 @@ const PITCH_DEG := 72.0
 
 var _height: float = 3500.0
 var _pan_target: Vector3 = Vector3.ZERO
+var _mouse_pos: Vector2 = Vector2.ZERO
 
 @onready var _camera: Camera3D = $Camera3D
 
@@ -18,12 +19,18 @@ var _pan_target: Vector3 = Vector3.ZERO
 func _ready() -> void:
 	_pan_target = Vector3(canvas_size * 0.5, 0.0, canvas_size * 0.5)
 	position = _pan_target
+	_mouse_pos = get_viewport().get_visible_rect().size * 0.5
 	_update_camera()
 
 
 func _process(delta: float) -> void:
 	_handle_pan(delta)
 	_update_camera()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseMotion:
+		_mouse_pos = event.position
 
 
 func _handle_pan(delta: float) -> void:
@@ -37,16 +44,22 @@ func _handle_pan(delta: float) -> void:
 	if Input.is_key_pressed(KEY_S):
 		dir.z += 1.0
 
-	var mouse := get_viewport().get_mouse_position()
-	var vp := DisplayServer.window_get_size()
-	if mouse.x < EDGE_SCROLL_ZONE:
-		dir.x -= 1.0
-	if mouse.x > vp.x - EDGE_SCROLL_ZONE:
-		dir.x += 1.0
-	if mouse.y < EDGE_SCROLL_ZONE:
-		dir.z -= 1.0
-	if mouse.y > vp.y - EDGE_SCROLL_ZONE:
-		dir.z += 1.0
+	# Edge scroll compares the mouse against the fixed logical canvas
+	# (get_viewport().get_visible_rect().size, always the project's base
+	# resolution under canvas_items stretch) instead of the real window
+	# size (DisplayServer.window_get_size()), which only matched the canvas
+	# when the window happened to equal that base resolution. See
+	# docs/northstar/research/mockups/fog/README.md "Mockup review 1 fixes".
+	if get_viewport().gui_get_hovered_control() == null:
+		var canvas := get_viewport().get_visible_rect().size
+		if _mouse_pos.x < EDGE_SCROLL_ZONE:
+			dir.x -= 1.0
+		if _mouse_pos.x > canvas.x - EDGE_SCROLL_ZONE:
+			dir.x += 1.0
+		if _mouse_pos.y < EDGE_SCROLL_ZONE:
+			dir.z -= 1.0
+		if _mouse_pos.y > canvas.y - EDGE_SCROLL_ZONE:
+			dir.z += 1.0
 
 	if dir != Vector3.ZERO:
 		_pan_target += dir.normalized() * PAN_SPEED * delta
@@ -89,6 +102,10 @@ func get_camera() -> Camera3D:
 
 func get_height() -> float:
 	return _height
+
+
+func get_pan_position() -> Vector2:
+	return Vector2(position.x, position.z)
 
 
 func set_height(h: float) -> void:
