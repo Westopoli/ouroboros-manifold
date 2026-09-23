@@ -413,6 +413,15 @@ func load_frame(frame: Dictionary) -> void:
 			"text": _resolve_fragment_text(fragment_id),
 		})
 
+	for child in _entry_container.get_children():
+		child.queue_free()
+	for qa_entry in _qa_entries:
+		queue_entry({
+			"entry_id": str(qa_entry["entry_id"]),
+			"base_form": qa_entry["text"],
+			"mentions": [],
+		})
+
 	_qa_hash = hash(frame)
 	_qa_regen_count += 1
 	_qa_load_ms = float(Time.get_ticks_usec() - start_usec) / 1000.0
