@@ -179,4 +179,4 @@ func _on_progress_updated(step: String, pct: float) -> void:
 
 
 func _on_sim_ready(_metadata: Dictionary) -> void:
-	SceneRouter.go_to(_target_scene)
+	_skip_to_main = true
