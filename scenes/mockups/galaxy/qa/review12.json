@@ -4,7 +4,7 @@
   ["screenshot", "overview_seed12"],
   ["call", "qa_camera", 50, -1],
   ["screenshot", "regional_seed12"],
-  ["call", "qa_camera", 20, 0],
+  ["call", "qa_camera", 28, 0],
   ["screenshot", "local_seed12"],
   ["call", "qa_camera", 50, -1],
   ["call", "qa_set", "hover_faction", 1],

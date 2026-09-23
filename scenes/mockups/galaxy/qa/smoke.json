@@ -11,7 +11,7 @@
   ["screenshot", "seed12_regional"],
   ["state", "seed12"],
   ["seed", 11],
-  ["call", "qa_camera", 20, 0],
+  ["call", "qa_camera", 28, 0],
   ["screenshot", "local"],
   ["state", "local"],
   ["call", "qa_camera", 50, -1],
