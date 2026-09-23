@@ -61,6 +61,10 @@ func edges() -> Array:
 	return _snapshot.get("edges", [])
 
 
+func snapshot() -> Dictionary:
+	return _snapshot
+
+
 func load_snapshot_live(seed: int, n_regions: int, features: Array, steps: int = LIVE_SNAPSHOT_STEPS) -> bool:
 	var exe := ProjectSettings.globalize_path(PIPE_BIN_RES_PATH)
 	if not FileAccess.file_exists(exe):
