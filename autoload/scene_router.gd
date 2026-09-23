@@ -14,6 +14,9 @@ const SCENES := {
 	"debrief": "res://scenes/debrief/debrief.tscn",
 	"time_jump": "res://scenes/world/time_jump_sequencer.tscn",
 	"settings": "res://scenes/settings/settings.tscn",
+	"galaxy": "res://scenes/galaxy/galaxy_view.tscn",
+	"tactical_c": "res://scenes/tactical_c/tactical_view.tscn",
+	"chronicle": "res://scenes/world/chronicle_scroll_panel.tscn",
 }
 
 var _back_stack: Array[Dictionary] = []
