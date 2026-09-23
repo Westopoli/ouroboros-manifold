@@ -1,0 +1,9 @@
+[
+  ["seed", 11],
+  ["call", "qa_camera", 900, 2000, 2000],
+  ["screenshot", "before_seed11"],
+  ["state", "before_seed11"],
+  ["seed", 12],
+  ["screenshot", "before_seed12"],
+  ["state", "before_seed12"]
+]

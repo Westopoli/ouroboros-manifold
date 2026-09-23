@@ -17,10 +17,12 @@ var sim: ToySim
 var focus_layer: int = 1
 var selected_uid: int = -1
 
+const BLOCKED_CELL_INSET := 6.0
+
 var _unit_nodes: Dictionary = {}
 var _plane1: MeshInstance3D
 var _plane2: MeshInstance3D
-var _blocked_patch: MeshInstance3D
+var _blocked_patch: Node3D
 var _obstacle: MeshInstance3D
 var _sensor_own: MeshInstance3D
 var _sensor_other: MeshInstance3D
@@ -129,18 +131,32 @@ func _build_obstacle() -> void:
 
 
 func _build_blocked_patch() -> void:
-	var mesh := PlaneMesh.new()
-	var side: float = sim.blocked_radius * 2.0
-	mesh.size = Vector2(side, side)
-	_blocked_patch = MeshInstance3D.new()
+	_blocked_patch = Node3D.new()
 	_blocked_patch.name = "BlockedPatchLayer2"
-	_blocked_patch.mesh = mesh
-	_blocked_patch.position = Vector3(sim.blocked_center.x, LAYER_HEIGHT + 1.0, sim.blocked_center.y)
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.85, 0.20, 0.20, 0.45)
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	_blocked_patch.material_override = mat
 	add_child(_blocked_patch)
+	rebuild_blocked_patch()
+
+
+func rebuild_blocked_patch() -> void:
+	# See also: scenes/mockups/layers/toy_sim.gd is_blocked() — one quad per
+	# actually-blocked cell so the seeded per-cell pattern (not just the
+	# candidate circle) is visible and differs between seeds.
+	if _blocked_patch == null or sim == null:
+		return
+	for child in _blocked_patch.get_children():
+		child.queue_free()
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.85, 0.20, 0.20, 0.55)
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	var side: float = ToySim.CELL_WU - BLOCKED_CELL_INSET
+	for cell in sim.blocked_cell_centers():
+		var mesh := PlaneMesh.new()
+		mesh.size = Vector2(side, side)
+		var mi := MeshInstance3D.new()
+		mi.mesh = mesh
+		mi.material_override = mat
+		mi.position = Vector3(cell.x, LAYER_HEIGHT + 1.0, cell.y)
+		_blocked_patch.add_child(mi)
 
 
 func _build_sensor_rings() -> void:

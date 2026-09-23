@@ -272,10 +272,21 @@ func _collect_tree(node: Node, controls: Array, node3ds: Array) -> void:
 		if child is Control:
 			var ctrl: Control = child
 			if ctrl.visible:
+				# rect_px added for C8 (docs/northstar/plans/push/specs/C8.md):
+				# --qa-port callers had no way to locate a control's click
+				# centre (qa_driver.gd's own _collect_tree, used only in
+				# --qa-script mode, already computes this the same way).
+				# _do_click_node is still --qa-script-only (needs _root,
+				# which --qa-port mode never sets) -- port-mode callers click
+				# by coordinate off this rect instead.
+				var vp := ctrl.get_viewport()
+				var origin: Vector2 = vp.get_final_transform() * ctrl.get_global_rect().position
+				var far: Vector2 = vp.get_final_transform() * (ctrl.get_global_rect().position + ctrl.get_global_rect().size)
 				controls.append({
 					"path": String(ctrl.get_path()),
 					"class": ctrl.get_class(),
 					"text": ctrl.get("text"),
+					"rect_px": [origin.x, origin.y, far.x - origin.x, far.y - origin.y],
 				})
 		elif child is Node3D:
 			node3ds.append({

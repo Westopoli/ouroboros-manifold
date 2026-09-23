@@ -9,12 +9,16 @@ it are meant to start producing that reference material, so every visual judgeme
 is against the epic's prose (the 60-second paragraph, R-010-03) rather than a screenshot
 to match.
 
-Run it yourself: `~/.local/bin/godot --scene scenes/mockups/layers/layers_mockup.tscn`.
-Hotkeys: **Tab** cycles the focused layer, **1**/**2** set it directly, **Q**/**E** hard-
-transfer the selected unit to layer 1/2, **T** steps one tick, **Space** toggles real-time
-play (20Hz), **R** resets (re-seeds with the spinbox's current value). Left click selects
-the nearest friendly under the cursor; right click issues a move order to the selected
-unit. This scene has no autoload dependency and works identically whether launched by
+Run it yourself: `~/.local/bin/godot --scene scenes/mockups/layers/layers_mockup.tscn`. It
+runs on launch (paused only under `--qa-script`) and plays a one-time self-demo of the
+epic's paragraph; see "Mockup review 1 fixes" below.
+Hotkeys: **Tab** cycles the focused layer, **1**/**2** set it directly, **Q**/**E**
+transfer the selected unit to layer 1/2 (or every friendly, if none is selected) — ordering
+a transfer resumes play if paused, **T** steps one tick, **Space** toggles real-time play
+(20Hz), **R** resets (re-seeds with the spinbox's current value; the spinbox also reseeds
+on any value change), **D** replays the self-demo. Left click selects the nearest friendly
+under the cursor; right click issues a move order to the selected unit. This scene has no
+autoload dependency and works identically whether launched by
 `--scene` (autoloads running, as on Westley's seat) or through the QA harness's
 `qa_boot.gd` (no autoloads) — confirmed by code inspection, not a live run on Westley's
 seat: `scenes/mockups/_shared/qa_driver.gd`'s `_ready()` reads `--qa-script` from the
@@ -230,3 +234,64 @@ reviewer's guessed 35% nor a code defect — see `qa/checklist.md`, "Item 5."
 Verbatim: "The layers one doesn't appear to work at all. The buttons do not move the units when I click them, changing the seed doesn't do anything, reset doesn't do anything, step doesn't appear to do anything other than tick forward."
 
 Pass 2 brief: `docs/northstar/plans/briefs/2026-09-22-p6-layers-mockup-pass2.md` (sim starts paused so transfers never progress; click selection and edge scroll compare coordinate spaces that differ on a large screen; the map fixture ignores the seed; a self-running demo of the epic's paragraph on launch).
+
+## Mockup review 1 fixes (2026-09-22, pass 2)
+
+**1. Nothing moved.** `layers_mockup.gd` started with `_playing = false` and only Step/Space
+advanced the sim; ordering a transfer via the HUD buttons started a transition in data but
+nothing ever ticked it forward, so units never visibly moved (proven: a state dump right
+after `qa_transfer` showed `tick: 0`, `transition` non-null, unchanged on every later dump
+without an explicit `T`/Space). Fixed: an interactive launch (`--scene`, no `--qa-script`)
+now runs the sim immediately; a big red "PAUSED" HUD label shows only while stopped;
+ordering a transfer resumes play if paused. QA-scripted launches still boot paused so
+`qa_tick` keeps exact control (`scripts/mockup_verify.sh layers` and the Xvfb battery are
+all unaffected — same hashes, same fail counts on every plant).
+
+**2. The buttons acted on the selection, and nothing was selected by default.**
+Investigating the suspected coordinate-space bug (pick vs. edge-scroll) found the pick
+(a ground raycast off the mouse position, not `unproject_position`) and the edge-scroll fix
+already in the paused wip commit are both correct: at `--res 2560x1440`, all four edges
+pan, hovering the HUD does not, and a click at a unit's true screen pixel selects it
+(`qa/edges.json`, one clean run, `exit 0`). The actual bug: `transfer_selected()` silently
+did nothing when nothing was selected, and nothing is selected at boot — pressing "To layer
+2" straight after launch (exactly what Westley did) was a no-op. Fixed: with no selection,
+Q/E and the transfer buttons apply to every friendly, and the HUD says so ("Selected: none
+— Q/E apply to every friendly", or "Selected: unit N (type)" once one is picked).
+
+**3. Seed and Reset did nothing visible.** The blocked region was one static radius check
+(`is_blocked`) and enemies got zero position jitter — nothing about the map depended on the
+seed. Fixed: `toy_sim.gd` now builds a per-cell blocked mask at `generate()` time (the
+obstacle's own cell always blocked, every other candidate cell blocked by a
+`(cx + cz + seed) % 2` parity check), enemies get the same jitter friendlies already had,
+and `layer_view.gd` renders one small red quad per actually-blocked cell instead of one big
+static square, so the pattern itself is visible. Measured (headless): seed 11 vs. seed 12,
+17 vs. 21 blocked cells, 36 of 37 candidate cells (97%) differ; every one of the 5 units'
+positions differs. Pixel oracle (`qa/seed_oracle.json`, zoomed to `qa_camera 900 2000
+2000`): `before_seed11.png` vs. `before_seed12.png` diff **0.329** clean (bar: ≥ 0.05),
+**0.0001** under the new `seed-ignored` plant (bar: < 0.01; the plant collapses every
+requested seed to 11 in `ToySim.generate()`, a positive control proving the oracle would
+actually catch a regression). The spinbox now also reseeds on `value_changed`, not just on
+Reset/R. Reset itself was already fully correct (`generate()` already re-seeds tick to 0
+and every unit to its fixture position) — it only *looked* like a no-op because nothing had
+visibly changed yet, for the same reason as item 1.
+
+**4. Self-demo.** `fixtures/demo.json` is a flat, timed list of `qa_*` calls and narration
+strings (data, not code branches); `layers_mockup.gd` runs it once on every interactive
+launch and on **D**. Confirmed end to end under real wall-clock frames (not `qa_tick`): by
+200 real frames the fast unit has risen to layer 2; by 600 frames it is back on layer 1,
+`pending: true`, parked at `(2000, 2300)` — the blocked-and-waiting beat — narrating "fast
+unit walked onto the blocked patch, waiting" through the HUD's new bottom-of-screen demo
+label. `qa/demo.json` drives the same five beats deterministically through `qa_tick`
+instead, for the screenshot batch (`pass1/demo_beat1_rising.png` through
+`demo_beat5_cleared.png`) — those five frames show the "PAUSED" label because the QA
+harness ticks explicitly rather than running the sim clock (same reason the existing
+`smoke.json` screenshots always have); the interactive demo genuinely runs unpaused.
+
+Full verification: `scripts/mockup_verify.sh layers` → `VERIFY OK`; all 6 original plants
+`LIVE` with unchanged fail counts; `seed-ignored` is headlessly `DEAD` (by design — its only
+effect is on the seed pixel oracle, not on any of verify.gd's functional assertions) and
+proven `LIVE` by the pixel diff above. `smoke.json` run twice at 1280x720: `exit 0`,
+`errors: count 0`, byte-identical hashes across both runs and against the seed-11 narrative
+(`blocked_attempt`/`blocked_cleared` unaffected). All 7 plants run once each through
+`smoke.json` under Xvfb: `exit 0`, `errors: count 0`. The 1920x1080 review batch in
+`pass1/` is re-shot post-fix (8 original screenshots + the 5 new demo beats).

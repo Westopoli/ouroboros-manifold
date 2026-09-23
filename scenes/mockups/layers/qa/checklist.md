@@ -237,3 +237,27 @@ expected result of the instructed fix, recorded above rather than guessed at.
 - Wall time, one full clean run (`smoke.json`, 8 screenshots + 9 state dumps, 720p):
   **6 seconds** (`date` bracketing `clean1`: 13:21:56 → 13:22:02).
 - Wall time, 1920x1080 review batch: **11 seconds** (13:27:24 → 13:27:35).
+
+## Pass 2 (2026-09-22): review-1 fixes
+
+Full root-cause writeup and evidence: `docs/northstar/research/mockups/layers/README.md`,
+"Mockup review 1 fixes". Summary of what changed and what was re-run:
+
+| check | result |
+|---|---|
+| `scripts/mockup_verify.sh layers` | `VERIFY OK` |
+| all 6 original plants | `LIVE`, same fail counts as pass 1 |
+| new `seed-ignored` plant | headlessly `DEAD` (no functional assertion touches it by design); `LIVE` via the pixel oracle below |
+| `smoke.json` x2, 1280x720 | `exit 0`, `errors: count 0`, byte-identical hashes both runs |
+| `smoke.json`, all 7 plants once each, 1280x720 | `exit 0`, `errors: count 0` every plant |
+| `qa/edges.json`, 2560x1440 | `exit 0`; left/right/top/bottom edges pan the camera by ~1240wu each; HUD hover produces zero pan; click at a unit's true screen pixel selects it |
+| `qa/seed_oracle.json`, `qa_camera 900 2000 2000`, 1280x720 | clean `before_seed11` vs `before_seed12` diff **0.329** (≥ 0.05 bar); under `--plant seed-ignored`, diff **0.0001** (< 0.01 bar) |
+| `qa/demo.json`, 1920x1080 | `exit 0`, `errors: count 0`, 5 screenshots (`demo_beat1_rising` … `demo_beat5_cleared`), states confirm the fast unit rises, both units end up on layer 2 with `visible_enemy_uids: [102, 103]` mid-demo, then the blocked/waiting/cleared sequence at ticks 250/370 |
+| interactive self-demo under real wall-clock frames | at 200 frames unit 1 already on layer 2; at 600 frames back on layer 1, `pending: true`, parked at `(2000, 2300)` — the blocked beat, reached without any `qa_tick` call |
+| pass1/ review batch | re-shot at 1920x1080 (8 original screenshots + 5 new demo beats) |
+
+Blocked-cell membership is now seeded (per-cell parity, obstacle's own cell always
+blocked) instead of one static circle; `layer_view.gd` draws one quad per actually-blocked
+cell so the pattern is visible, not just the candidate radius. Enemies get the same
+position jitter friendlies already had. `qa_state()` gained `selected_uid`, `camera`,
+`canvas_px` (from the paused wip commit) and `playing`, `demo_narration` (this pass).
