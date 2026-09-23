@@ -162,6 +162,11 @@ struct om_world {
     void *events_state;
     void (*events_state_free)(void *);
 
+    /* B9: csrc/mission.c per-world state, same convention as tactical_state
+     * above. */
+    void *mission_state;
+    void (*mission_state_free)(void *);
+
     /* F2e: E-06 diplomacy storage backing the om_faction_stance_counter /
      * om_faction_cooperative_since / om_faction_last_knowledge_lost
      * accessors (csrc/ouroboros_sim.h; card B5 fills the read/write bodies
