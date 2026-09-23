@@ -1,10 +1,11 @@
 /* csrc/diplomacy.c — E-06 diplomacy and technology (card B5).
- * Stance table (S-042), betrayal (S-044), technology growth/convergence
- * (S-045/S-046/S-047) are implemented below. Peace formation (S-043) and
- * Knowledge Lost's fired-event record (part of S-045 R-045-07) stay STUB:
- * both need om_world storage this build card is not allowed to add (it may
- * only edit this file, never csrc/om_internal.h or csrc/events.c). See the
- * B5 report for the exact proposed struct fields / event-log change.
+ * Stance table (S-042), peace formation (S-043), betrayal (S-044),
+ * technology growth/convergence (S-045/S-046/S-047) are implemented below,
+ * backed by F2e's faction_stance_counter / faction_cooperative_since /
+ * faction_last_knowledge_lost storage (csrc/om_internal.h). Knowledge
+ * Lost's fired-event record (part of S-045 R-045-07) stays unwritten:
+ * csrc/events.c's om_tick_events has no fired-event log storage yet
+ * (that epic's own card), and this card may only edit this file.
  * S-048 (tech tiers, mission unit profiles, chronicle candidates) is a
  * later card (B5b); its stubs below are untouched. */
 /* PRIVATE LAYOUT, verbatim from csrc/om_internal.h (already included below).
@@ -61,7 +62,6 @@
 #define OM_ALG21_CONTESTED_ECO 0.2
 #define OM_ALG21_CONTESTED_TENSION 0.4
 #define OM_ALG21_REPELLED_MIL 0.10
-#define OM_TICK_LOG_CAP 64                 /* w->attacks[] capacity (csrc/om_internal.h) */
 
 /* ---- shared helpers ---- */
 
@@ -144,22 +144,27 @@ static double om__faction_avg_tension(const om_world *w, int32_t f) {
     return (n > 0) ? (sum / (double)n) : 0.0;
 }
 
-/* Mean military of owner's regions that have any edge to a region owned by
- * other -- ALG-40's "border military", the general adjacency graph, not the
- * OM_EDGE_BORDER type specifically (a cooperative pair's shared edges are
- * typically `both`). */
+/* True if region_idx has any edge (any type -- the general adjacency graph,
+ * not the OM_EDGE_BORDER type specifically) to a region owned by other. */
+static int om__region_borders_faction(const om_world *w, uint32_t region_idx, int32_t other) {
+    for (uint32_t j = 0; j < w->n_regions; j++) {
+        if (w->regions[j].faction_id != other) continue;
+        om_edge_type et;
+        if (om_region_edge(w, region_idx, j, &et)) return 1;
+    }
+    return 0;
+}
+
+/* Mean military of owner's regions bordering other -- ALG-40's "border
+ * military". */
 static double om__border_mean_military(const om_world *w, int32_t owner, int32_t other) {
     double sum = 0.0;
     uint32_t n = 0;
     for (uint32_t i = 0; i < w->n_regions; i++) {
         if (w->regions[i].faction_id != owner) continue;
-        int has_border = 0;
-        for (uint32_t j = 0; j < w->n_regions; j++) {
-            if (w->regions[j].faction_id != other) continue;
-            om_edge_type et;
-            if (om_region_edge(w, i, j, &et)) { has_border = 1; break; }
-        }
-        if (has_border) { sum += w->regions[i].military; n++; }
+        if (!om__region_borders_faction(w, i, other)) continue;
+        sum += w->regions[i].military;
+        n++;
     }
     return (n > 0) ? (sum / (double)n) : 0.0;
 }
@@ -170,13 +175,7 @@ static int om__find_weakest_bordering(const om_world *w, int32_t attacker, int32
     uint32_t best_idx = 0;
     for (uint32_t j = 0; j < w->n_regions; j++) {
         if (w->regions[j].faction_id != victim) continue;
-        int has_border = 0;
-        for (uint32_t i = 0; i < w->n_regions; i++) {
-            if (w->regions[i].faction_id != attacker) continue;
-            om_edge_type et;
-            if (om_region_edge(w, i, j, &et)) { has_border = 1; break; }
-        }
-        if (!has_border) continue;
+        if (!om__region_borders_faction(w, j, attacker)) continue;
         if (!found || w->regions[j].military < best_mil) {
             best_mil = w->regions[j].military;
             best_idx = j;
@@ -187,14 +186,17 @@ static int om__find_weakest_bordering(const om_world *w, int32_t attacker, int32
     return found;
 }
 
-static void om__betrayal_edges_to_border(om_world *w, int32_t attacker, int32_t victim) {
+/* Every existing edge between an a-owned region and a b-owned region
+ * becomes edge_type -- ALG-39's "shared edges become both" and ALG-40's
+ * "shared edges become border" are the same rewrite with a different type. */
+static void om__set_shared_edges(om_world *w, int32_t a, int32_t b, om_edge_type edge_type) {
     for (uint32_t i = 0; i < w->n_regions; i++) {
-        if (w->regions[i].faction_id != attacker) continue;
+        if (w->regions[i].faction_id != a) continue;
         for (uint32_t j = 0; j < w->n_regions; j++) {
-            if (w->regions[j].faction_id != victim) continue;
+            if (w->regions[j].faction_id != b) continue;
             om_edge_type et;
             if (om_region_edge(w, i, j, &et)) {
-                om_region_set_edge(w, i, j, OM_EDGE_BORDER);
+                om_region_set_edge(w, i, j, edge_type);
             }
         }
     }
@@ -217,7 +219,7 @@ static void om__set_hostile_to_all_used(om_world *w, int32_t new_id) {
 static void om__betrayal_fire(om_world *w, int32_t attacker, int32_t victim) {
     w->faction_stance[attacker][victim] = OM_STANCE_HOSTILE;
     w->faction_stance[victim][attacker] = OM_STANCE_HOSTILE;
-    om__betrayal_edges_to_border(w, attacker, victim);
+    om__set_shared_edges(w, attacker, victim, OM_EDGE_BORDER);
 
     uint32_t target_idx;
     if (!om__find_weakest_bordering(w, attacker, victim, &target_idx)) return;
@@ -264,7 +266,7 @@ static void om__betrayal_fire(om_world *w, int32_t attacker, int32_t victim) {
     target->economy = fmax(OM_ECONOMY_FLOOR, target->economy + d_economy);
     target->tension = fmin(OM_PCT_SCALE, fmax(0.0, target->tension + d_tension));
 
-    if (w->attacks_n < OM_TICK_LOG_CAP) {
+    if (w->attacks_n < OM_MAX_REGIONS) {
         om_attack_result *r = &w->attacks[w->attacks_n];
         r->tick = w->tick;
         r->attacker = attacker;
@@ -303,6 +305,103 @@ static void om__betrayal_pass(om_world *w) {
             double p_ba = om_faction_betrayal_chance(w, b, a);
             if (om_rng_draw(w) < p_ba) {
                 om__betrayal_fire(w, b, a);
+            }
+        }
+    }
+}
+
+/* ---- S-043: peace formation (ALG-38/39) helpers ---- */
+
+static int om__pair_has_edge(const om_world *w, int32_t a, int32_t b) {
+    for (uint32_t i = 0; i < w->n_regions; i++) {
+        if (w->regions[i].faction_id != a) continue;
+        if (om__region_borders_faction(w, i, b)) return 1;
+    }
+    return 0;
+}
+
+static int om__pair_attacked_this_tick(const om_world *w, int32_t a, int32_t b) {
+    for (uint32_t i = 0; i < w->attacks_n; i++) {
+        const om_attack_result *r = &w->attacks[i];
+        if (r->tick != w->tick) continue;
+        if ((r->attacker == a && r->defender == b) || (r->attacker == b && r->defender == a)) return 1;
+    }
+    return 0;
+}
+
+static double om__faction_avg_economy(const om_world *w, int32_t f) {
+    double sum = 0.0;
+    uint32_t n = 0;
+    for (uint32_t i = 0; i < w->n_regions; i++) {
+        if (w->regions[i].faction_id != f) continue;
+        sum += w->regions[i].economy;
+        n++;
+    }
+    return (n > 0) ? (sum / (double)n) : 0.0;
+}
+
+static double om__avg_border_stability(const om_world *w, int32_t owner, int32_t other) {
+    double sum = 0.0;
+    uint32_t n = 0;
+    for (uint32_t i = 0; i < w->n_regions; i++) {
+        if (w->regions[i].faction_id != owner) continue;
+        if (!om__region_borders_faction(w, i, other)) continue;
+        sum += om_region_composite(w, i, OM_C_STABILITY);
+        n++;
+    }
+    return (n > 0) ? (sum / (double)n) : 0.0;
+}
+
+/* ALG-39: a<b already NEUTRAL and sharing a border, counter just updated by
+ * om__peace_pass and read as the current value. */
+static void om__peace_check_overture(om_world *w, int32_t a, int32_t b) {
+    double stab_a = om__avg_border_stability(w, a, b);
+    double stab_b = om__avg_border_stability(w, b, a);
+    double stab = (stab_a < stab_b) ? stab_a : stab_b;
+
+    if (stab < OM_PEACE_STABILITY_THRESHOLD) {
+        om_faction_set_stance_counter(w, a, b, 0);
+        return;
+    }
+
+    double avg_e_a = om__faction_avg_economy(w, a);
+    double avg_e_b = om__faction_avg_economy(w, b);
+    double econ_diff = avg_e_a - avg_e_b;
+    if (econ_diff < 0.0) econ_diff = -econ_diff;
+    double compatibility = 1.0 - (econ_diff / OM_PCT_SCALE);
+    double disp_a = om_archetype_peace_disposition(w->faction_archetype[a]);
+    double disp_b = om_archetype_peace_disposition(w->faction_archetype[b]);
+
+    double p = OM_PEACE_BASE_PROBABILITY * compatibility * (stab / OM_PCT_SCALE) * disp_a * disp_b;
+    if (p < 0.0) p = 0.0;
+    if (p > 1.0) p = 1.0;
+
+    double draw = om_rng_draw(w);
+    if (draw < p) {
+        w->faction_stance[a][b] = OM_STANCE_COOPERATIVE;
+        w->faction_stance[b][a] = OM_STANCE_COOPERATIVE;
+        w->faction_cooperative_since[a][b] = w->tick;
+        w->faction_cooperative_since[b][a] = w->tick;
+        om__set_shared_edges(w, a, b, OM_EDGE_BOTH);
+    } else {
+        om_faction_set_stance_counter(w, a, b, 0);
+    }
+}
+
+static void om__peace_pass(om_world *w) {
+    for (int32_t a = 0; a < OM_MAX_FACTIONS; a++) {
+        if (!w->faction_used[a]) continue;
+        for (int32_t b = a + 1; b < OM_MAX_FACTIONS; b++) {
+            if (!w->faction_used[b]) continue;
+            if (w->faction_stance[a][b] != OM_STANCE_NEUTRAL) continue;
+            if (!om__pair_has_edge(w, a, b)) continue;
+
+            uint32_t counter = om__pair_attacked_this_tick(w, a, b)
+                ? 0 : om_faction_stance_counter(w, a, b) + 1;
+            om_faction_set_stance_counter(w, a, b, counter);
+
+            if (counter >= OM_PEACE_FORMATION_THRESHOLD) {
+                om__peace_check_overture(w, a, b);
             }
         }
     }
@@ -362,29 +461,23 @@ int32_t om_breakaway_create(om_world *w, int32_t parent, uint32_t region_idx) {
     return new_id;
 }
 
-/* ---- S-043: peace formation --------------------------------------------
- * ALG-38/39 need a per-pair non-aggression counter and cooperative-since
- * tick that persist tick to tick. om_world (csrc/om_internal.h) has no such
- * storage and this card may only edit csrc/diplomacy.c, so these four stay
- * STUB. Proposed struct om_world fields (after faction_used[OM_MAX_FACTIONS]):
- *   uint32_t faction_stance_counter[OM_MAX_FACTIONS][OM_MAX_FACTIONS];
- *   uint64_t faction_cooperative_since[OM_MAX_FACTIONS][OM_MAX_FACTIONS];
- * With that storage, om_diplomacy_step would: for every neutral pair
- * sharing a border, counter = 0 on an attack this tick else counter + 1;
- * at counter >= OM_PEACE_FORMATION_THRESHOLD, check stability, roll
- * PEACE_BASE_PROBABILITY * ..., and apply ALG-39 on success/failure. */
+/* ---- S-043: peace formation (ALG-38/39), backed by F2e's
+ * faction_stance_counter / faction_cooperative_since (csrc/om_internal.h). ---- */
+
 uint32_t om_faction_stance_counter(const om_world *w, int32_t p0, int32_t faction) {
-    (void)w; (void)p0; (void)faction;
-    return 0;
+    if (!w || p0 < 0 || p0 >= OM_MAX_FACTIONS || faction < 0 || faction >= OM_MAX_FACTIONS) return 0;
+    return w->faction_stance_counter[p0][faction];
 }
 
 void om_faction_set_stance_counter(om_world *w, int32_t p0, int32_t p1, uint32_t counter) {
-    (void)w; (void)p0; (void)p1; (void)counter;
+    if (!w || p0 < 0 || p0 >= OM_MAX_FACTIONS || p1 < 0 || p1 >= OM_MAX_FACTIONS) return;
+    w->faction_stance_counter[p0][p1] = counter;
+    w->faction_stance_counter[p1][p0] = counter;
 }
 
 uint64_t om_faction_cooperative_since(const om_world *w, int32_t p0, int32_t p1) {
-    (void)w; (void)p0; (void)p1;
-    return 0;
+    if (!w || p0 < 0 || p0 >= OM_MAX_FACTIONS || p1 < 0 || p1 >= OM_MAX_FACTIONS) return 0;
+    return w->faction_cooperative_since[p0][p1];
 }
 
 double om_archetype_peace_disposition(om_archetype archetype) {
@@ -475,18 +568,16 @@ double om_faction_tech_economy(const om_world *w, int32_t faction_id) {
 
 /* ---- S-045/S-047: technology growth, Knowledge Lost, convergence ---- */
 
-/* ALG-27b Knowledge Lost storage this card cannot add (csrc/om_internal.h is
- * off limits): a per-faction last-fired tick. Proposed field, alongside the
- * S-043 ones above: int64_t faction_last_knowledge_lost[OM_MAX_FACTIONS];
- * Until then these two read/write nothing, so the cooldown below always
- * measures "since tick 0" and the round trip in R-045-07 cannot hold. */
+/* ALG-27b Knowledge Lost, backed by F2e's faction_last_knowledge_lost
+ * (csrc/om_internal.h; -1 = never, set by csrc/region.c's om_world_new). */
 int64_t om_faction_last_knowledge_lost(const om_world *w, int32_t faction_id) {
-    (void)w; (void)faction_id;
-    return 0;
+    if (!w || faction_id < 0 || faction_id >= OM_MAX_FACTIONS) return -1;
+    return w->faction_last_knowledge_lost[faction_id];
 }
 
 void om_faction_set_last_knowledge_lost(om_world *w, int32_t faction_id, int64_t tick) {
-    (void)w; (void)faction_id; (void)tick;
+    if (!w || faction_id < 0 || faction_id >= OM_MAX_FACTIONS) return;
+    w->faction_last_knowledge_lost[faction_id] = tick;
 }
 
 void om_tech_step(om_world *w) {
@@ -573,6 +664,7 @@ void om_tech_step(om_world *w) {
 void om_diplomacy_step(om_world *w) {
     if (!w) return;
     om__betrayal_pass(w);
+    om__peace_pass(w);
 }
 
 void om_step_diplomacy(om_world *w) {
