@@ -150,3 +150,4 @@ One row per event: freeze steps, attaches, reverts, parks, rung gates, harness e
 | day1 | C1-1 | M3's `push/C1-1`: the main-menu title's real cause was a font-load race (ThemeConstants' fonts load in its own `_ready`; `_build_title_labels` ran first, `get_string_size` on a null font aborted label building with no retry) plus a latent empty-array crash in `_trigger_unresolve`; fixed with a per-frame retry and a guard, verified by screenshots at 1920x1080 and 1280x720; a `C1` row (owns `scenes/main_menu/**`, C8 depends on it) added so the increment resolves; queued |
 | day1 | merge C3-2 | chronicle screen renders the loaded frame's entries through `queue_entry` (6 entries from the fixture); increment of C3 |
 | day1 | merge docs | `docs/mockup-ledger` (mockup chat's ledger rows) on main through the docs profile; all three pass-2 branches landed through the gate |
+| day1 | merge C7-1 | daemon `plant` verb on main; increment of C7 |
