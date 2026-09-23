@@ -185,7 +185,8 @@ func _check_json10() -> void:
 	var state: Dictionary = _root.qa_state()
 	_assert(JSON.stringify(state) != "", "qa_state() did not survive JSON.stringify")
 	for key in ["seed", "hash", "tick", "focus_layer", "layer_height_wu", "units", "units_px",
-		"visible_enemy_uids", "rings", "timing_ms", "regen_count", "selected_uid", "camera", "canvas_px"]:
+		"visible_enemy_uids", "rings", "timing_ms", "regen_count", "selected_uid", "camera", "canvas_px",
+		"playing", "demo_narration"]:
 		_assert(state.has(key), "qa_state() missing key %s" % key)
 	_assert(not _root.qa_plant("nope"), "qa_plant('nope') must return false")
 	for id in PLANTS:
