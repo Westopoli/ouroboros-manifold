@@ -9,7 +9,6 @@
 static uint64_t om_world_serial_counter = 1;
 
 om_world *om_world_new(uint32_t n_regions, uint64_t seed) {
-    if (n_regions == 0) return NULL;
     om_world *w = calloc(1, sizeof(om_world));
     if (!w) return NULL;
     w->n_regions = n_regions;
@@ -21,13 +20,20 @@ om_world *om_world_new(uint32_t n_regions, uint64_t seed) {
      * default of 0 collided with it and every debug-build world ran with
      * that fault active until some other bug was deliberately injected. */
     w->inject = -1;
-    w->regions = calloc(n_regions, sizeof(om_region));
-    if (!w->regions) {
-        free(w);
-        return NULL;
-    }
-    for (uint32_t i = 0; i < n_regions; i++) {
-        w->regions[i].faction_id = -1;
+    /* F2d: n_regions == 0 defers the count to om_world_generate() (E-03,
+     * ouroboros_sim.h ~line 693-694); regions/n_regions stay NULL/0 here and
+     * csrc/worldgen.c's om_world_generate allocates w->regions itself. */
+    if (n_regions > 0) {
+        w->regions = calloc(n_regions, sizeof(om_region));
+        if (!w->regions) {
+            free(w);
+            return NULL;
+        }
+        for (uint32_t i = 0; i < n_regions; i++) {
+            w->regions[i].faction_id = -1;
+        }
+    } else {
+        w->regions = NULL;
     }
     /* D1 (two-day-push brief, decision 4): om_world_new() sets no feature.
      * conftest.py's world_factory applies each test's epic feature set from

@@ -8,7 +8,10 @@
 #include "ouroboros_sim.h"
 
 #define OM_MAX_NEIGHBORS 32
-#define OM_MAX_REGIONS 64
+/* F2d: raised 64 -> 128 so every region-indexed and per-tick-record bound
+ * covers E-03's full draw range (OM_WORLD_REGION_COUNT_RANGE_HI = 110,
+ * om_constants.h). */
+#define OM_MAX_REGIONS 128
 #define OM_DAMAGE_HISTORY_CAP 64
 #define OM_TIE_EPSILON 1e-12
 
@@ -61,27 +64,29 @@ struct om_world {
     int          faction_used[OM_MAX_FACTIONS];
     uint32_t     faction_n;
     int64_t     *region_held_since;
-    om_edge_type region_edge[64][64];
+    om_edge_type region_edge[OM_MAX_REGIONS][OM_MAX_REGIONS];
     uint64_t     rng_state, rng_inc;
     double       rng_forced[4096];
     uint32_t     rng_forced_head, rng_forced_len;
 
-    /* E-05 decision and resolution state */
-    om_decision        decisions[64];
+    /* E-05 decision and resolution state. Each log holds at most one record
+     * per region per tick, so it is sized OM_MAX_REGIONS (F2d), matching the
+     * n_regions bound every writer already loops on. */
+    om_decision        decisions[OM_MAX_REGIONS];
     uint32_t           decisions_n;
-    om_telegraph       telegraphs[64];
+    om_telegraph       telegraphs[OM_MAX_REGIONS];
     uint32_t           telegraphs_n;
-    om_attack_result   attacks[64];
+    om_attack_result   attacks[OM_MAX_REGIONS];
     uint32_t           attacks_n;
-    om_collision       collisions[64];
+    om_collision       collisions[OM_MAX_REGIONS];
     uint32_t           collisions_n;
-    om_reinforce       reinforces[64];
+    om_reinforce       reinforces[OM_MAX_REGIONS];
     uint32_t           reinforces_n;
-    om_colonize_result colonizations[64];
+    om_colonize_result colonizations[OM_MAX_REGIONS];
     uint32_t           colonizations_n;
-    om_friction        frictions[64];
+    om_friction        frictions[OM_MAX_REGIONS];
     uint32_t           frictions_n;
-    om_admin_roll      admin_rolls[64];
+    om_admin_roll      admin_rolls[OM_MAX_REGIONS];
     uint32_t           admin_rolls_n;
 
     /* event queue, shared with E-04 (ouroboros_sim.h ~line 454): entries are

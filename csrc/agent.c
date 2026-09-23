@@ -91,7 +91,7 @@ uint32_t om_faction_candidates(const om_world *w, int32_t faction_id, om_candida
     }
 
     uint32_t count = 0;
-    int seen[64] = {0};
+    int seen[OM_MAX_REGIONS] = {0};
 
     double weakest_mil = DBL_MAX;
 
@@ -254,13 +254,13 @@ void om_step_decisions(om_world *w) {
      * faction with such an entry skips its own recompute below (the header's
      * documented om_intent_inject contract); preserve those entries instead
      * of wiping them with the rest. */
-    om_decision preserved[64];
+    om_decision preserved[OM_MAX_REGIONS];
     uint32_t n_preserved = 0;
     int injected_faction[OM_MAX_FACTIONS] = {0};
 #ifdef OM_DEBUG_INJECT
     if (w->inject != OM_BUG_INJECT_IGNORED) {
 #endif
-        for (uint32_t i = 0; i < w->decisions_n && n_preserved < 64; ++i) {
+        for (uint32_t i = 0; i < w->decisions_n && n_preserved < OM_MAX_REGIONS; ++i) {
             if (w->decisions[i].tick == w->tick) {
                 preserved[n_preserved++] = w->decisions[i];
                 int32_t fid = w->decisions[i].faction_id;
@@ -275,11 +275,11 @@ void om_step_decisions(om_world *w) {
         w->decisions[w->decisions_n++] = preserved[i];
     }
 
-    om_candidate candidates[64];
-    for (int f = 0; f < OM_MAX_FACTIONS && w->decisions_n < 64; ++f) {
+    om_candidate candidates[OM_MAX_REGIONS];
+    for (int f = 0; f < OM_MAX_FACTIONS && w->decisions_n < OM_MAX_REGIONS; ++f) {
         if (!w->faction_used[f]) continue;
         if (injected_faction[f]) continue;
-        uint32_t n = om_faction_candidates(w, f, candidates, 64);
+        uint32_t n = om_faction_candidates(w, f, candidates, OM_MAX_REGIONS);
 
         om_candidate *best_attack = NULL;
         om_candidate *best_colonize = NULL;
@@ -410,7 +410,7 @@ void om_step_decisions(om_world *w) {
             if (u < pref) {
                 mode = OM_MODE_TELEGRAPH;
                 // Enqueue into telegraphs if space available
-                if (w->telegraphs_n < 64) {
+                if (w->telegraphs_n < OM_MAX_REGIONS) {
                     w->telegraphs[w->telegraphs_n].declared_tick = w->tick;
                     w->telegraphs[w->telegraphs_n].attacker = f;
                     w->telegraphs[w->telegraphs_n].target_idx = best_attack->region_idx;
