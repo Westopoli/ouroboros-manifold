@@ -1,8 +1,50 @@
 #include "ouroboros_sim.h"
 #include "om_internal.h"
+#include "om_constants.h"
 #include <stddef.h>
 #include <string.h>
 #include <stdlib.h>
+
+/* ALG-26 Multipliers: mult_axis = 1 + (tech/100) * ARCHETYPE_TECH_MULTIPLIERS[archetype][axis].
+ * Caches w->faction_tech_attack/defense/economy so resolve.c and collision.c
+ * never read a stale (calloc-zero) value. Recomputed whenever archetype or
+ * tech is set (om_faction_set is the only setter for either field). An
+ * unmapped/default archetype gets 0.0 for every axis (ARCHETYPE_TECH_MULTIPLIERS
+ * has no default-archetype row in algorithms.md's ALG-26 table), so its
+ * multiplier is a flat 1.0 regardless of tech, matching Python's
+ * config.ARCHETYPE_TECH_MULTIPLIERS.get(archetype, {...: 0.0}). */
+static void om_faction_tech_multipliers_recalc(om_world *w, int32_t faction_id) {
+    static const double axis[8][3] = {
+        [OM_ARCH_PLAYER]      = { OM_ARCHETYPE_TECH_MULTIPLIERS_PLAYER_CIVILIZATION_ATTACK,
+                                   OM_ARCHETYPE_TECH_MULTIPLIERS_PLAYER_CIVILIZATION_DEFENSE,
+                                   OM_ARCHETYPE_TECH_MULTIPLIERS_PLAYER_CIVILIZATION_ECONOMY },
+        [OM_ARCH_CONQUEROR]   = { OM_ARCHETYPE_TECH_MULTIPLIERS_CONQUEROR_ATTACK,
+                                   OM_ARCHETYPE_TECH_MULTIPLIERS_CONQUEROR_DEFENSE,
+                                   OM_ARCHETYPE_TECH_MULTIPLIERS_CONQUEROR_ECONOMY },
+        [OM_ARCH_FORTIFIER]   = { OM_ARCHETYPE_TECH_MULTIPLIERS_FORTIFIER_ATTACK,
+                                   OM_ARCHETYPE_TECH_MULTIPLIERS_FORTIFIER_DEFENSE,
+                                   OM_ARCHETYPE_TECH_MULTIPLIERS_FORTIFIER_ECONOMY },
+        [OM_ARCH_OPPORTUNIST] = { OM_ARCHETYPE_TECH_MULTIPLIERS_OPPORTUNIST_ATTACK,
+                                   OM_ARCHETYPE_TECH_MULTIPLIERS_OPPORTUNIST_DEFENSE,
+                                   OM_ARCHETYPE_TECH_MULTIPLIERS_OPPORTUNIST_ECONOMY },
+        [OM_ARCH_WARLORD]     = { OM_ARCHETYPE_TECH_MULTIPLIERS_WARLORD_ATTACK,
+                                   OM_ARCHETYPE_TECH_MULTIPLIERS_WARLORD_DEFENSE,
+                                   OM_ARCHETYPE_TECH_MULTIPLIERS_WARLORD_ECONOMY },
+        [OM_ARCH_SCHISM]      = { OM_ARCHETYPE_TECH_MULTIPLIERS_SCHISM_ATTACK,
+                                   OM_ARCHETYPE_TECH_MULTIPLIERS_SCHISM_DEFENSE,
+                                   OM_ARCHETYPE_TECH_MULTIPLIERS_SCHISM_ECONOMY },
+        [OM_ARCH_BREAKAWAY]   = { OM_ARCHETYPE_TECH_MULTIPLIERS_BREAKAWAY_ATTACK,
+                                   OM_ARCHETYPE_TECH_MULTIPLIERS_BREAKAWAY_DEFENSE,
+                                   OM_ARCHETYPE_TECH_MULTIPLIERS_BREAKAWAY_ECONOMY },
+        [OM_ARCH_DEFAULT]     = { 0.0, 0.0, 0.0 },
+    };
+    om_archetype a = w->faction_archetype[faction_id];
+    if ((unsigned)a >= sizeof(axis) / sizeof(axis[0])) a = OM_ARCH_DEFAULT;
+    double tech = w->faction_tech[faction_id];
+    w->faction_tech_attack[faction_id]  = 1.0 + (tech / 100.0) * axis[a][0];
+    w->faction_tech_defense[faction_id] = 1.0 + (tech / 100.0) * axis[a][1];
+    w->faction_tech_economy[faction_id] = 1.0 + (tech / 100.0) * axis[a][2];
+}
 
 void om_world_set_feature(om_world *w, om_feature f, int on) {
     if (w == NULL || (unsigned)f >= 9)
@@ -58,7 +100,8 @@ int om_faction_set(om_world *w, int32_t faction_id, om_archetype archetype, doub
     w->faction_archetype[faction_id] = archetype;
     w->faction_budget[faction_id] = budget;
     w->faction_tech[faction_id] = tech;
-    
+    om_faction_tech_multipliers_recalc(w, faction_id);
+
     if (w->faction_used[faction_id] == 0) {
         w->faction_used[faction_id] = 1;
         w->faction_n++;
