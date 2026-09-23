@@ -26,5 +26,10 @@
   ["screenshot", "mid_replay"],
   ["state", "mid_replay"],
   ["key", "R"],
-  ["state", "after_r"]
+  ["state", "after_r"],
+  ["call", "qa_replay_step"],
+  ["screenshot", "flash"],
+  ["state", "flash"],
+  ["call", "qa_replay_restart"],
+  ["state", "play_restart"]
 ]
