@@ -711,9 +711,14 @@ static void handle_set_seed(const char *json) {
     W = om_world_new((uint32_t)n_regions, (uint64_t)seed);
     g_tick = 0;
     for (int i = 0; i < nf; i++) om_world_set_feature(W, (om_feature)feats[i], 1);
+    om_world_generate(W);
+    if (!om_world_generated(W)) {
+        write_error("set_seed", "generation failed");
+        return;
+    }
     realloc_regions(om_region_count(W));
     capture_baseline();
-    /* Deviation from docs/architecture.md: no frame at all, not even an ack. */
+    /* Deviation from docs/architecture.md: no frame at all on success, not even an ack. */
 }
 
 static void handle_step(const char *json) {
