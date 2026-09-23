@@ -4,7 +4,8 @@ const MOCKUP_SCENE := "res://scenes/mockups/units/units_mockup.tscn"
 const KITS_DIR := "res://scenes/mockups/units/kits/"
 const SCENARIOS_DIR := "res://scenes/mockups/units/scenarios/"
 const CONTRACT_KEYS := ["seed", "hash", "kit", "scenario", "tick", "alive", "units", "units_px",
-	"bboxes", "flashes_active", "wrecks_active", "timing_ms", "regen_count"]
+	"bboxes", "flashes_active", "wrecks_active", "timing_ms", "regen_count", "playing",
+	"camera_pos", "drag_active", "drag_box_visible", "pings_active"]
 const PLANTS := ["pass-through", "facing-fixed", "instant-fight", "silhouettes-same", "seed-ignored", "no-death-visual"]
 
 var _failures := 0
@@ -23,6 +24,9 @@ func _initialize() -> void:
 	await _check_FOOT_12()
 	await _check_JSON_10()
 	_check_TIME_11()
+	await _check_DRAG_13()
+	await _check_PLAY_14()
+	_check_PING_15()
 
 	if _failures > 0:
 		print("VERIFY FAILED: %d check(s)" % _failures)
@@ -238,6 +242,77 @@ func _check_FOOT_12() -> void:
 		root.queue_free()
 		return
 	_assert(_arg_min(lengths) == "flanker", "rendered footprint: shortest is %s, expected flanker" % _arg_min(lengths))
+	root.queue_free()
+
+
+# plant: none; mockup review 1 fix: no visible box while dragging, lingering overlay
+func _check_DRAG_13() -> void:
+	var root = await _boot_scene()
+	var hud = root.get_node("HUD")
+	root.qa_set("scenario", "lineup")
+	if not _assert(not bool(root.qa_state().drag_box_visible), "drag box overlay visible before any drag"):
+		root.queue_free()
+		return
+	var down := InputEventMouseButton.new()
+	down.position = Vector2(100, 100)
+	down.button_index = MOUSE_BUTTON_LEFT
+	down.pressed = true
+	hud._unhandled_input(down)
+	var motion := InputEventMouseMotion.new()
+	motion.position = Vector2(400, 300)
+	hud._unhandled_input(motion)
+	var mid_state: Dictionary = root.qa_state()
+	if not _assert(bool(mid_state.drag_box_visible), "drag box not visible mid-drag"):
+		root.queue_free()
+		return
+	var up := InputEventMouseButton.new()
+	up.position = Vector2(400, 300)
+	up.button_index = MOUSE_BUTTON_LEFT
+	up.pressed = false
+	hud._unhandled_input(up)
+	var end_state: Dictionary = root.qa_state()
+	_assert(not bool(end_state.drag_box_visible), "drag box overlay still visible after release (lingering-overlay bug)")
+	root.queue_free()
+
+
+# plant: none; mockup review 1 fix: units do not move, sim must stay paused under qa-mode
+func _check_PLAY_14() -> void:
+	var root = await _boot_scene()
+	var hud = root.get_node("HUD")
+	var s0: Dictionary = root.qa_state()
+	if not _assert(not bool(s0.playing), "sim must start paused under --qa-script/headless"):
+		root.queue_free()
+		return
+	var t0 := int(s0.tick)
+	await process_frame
+	await process_frame
+	await process_frame
+	var s1: Dictionary = root.qa_state()
+	if not _assert(int(s1.tick) == t0, "tick drifted with no explicit qa_tick call while qa-mode paused"):
+		root.queue_free()
+		return
+	root.qa_set("scenario", "lineup")
+	hud.set_selection([0])
+	hud._handle_right_click(Vector2(400, 400))
+	var s2: Dictionary = root.qa_state()
+	_assert(not bool(s2.playing), "qa-mode command must not auto-unpause (breaks determinism)")
+	root.queue_free()
+
+
+# plant: none; mockup review 1 fix: waypoints stay forever (never fade) while paused
+func _check_PING_15() -> void:
+	var root = await _boot_scene()
+	var view = root.get_node("World/UnitView")
+	root.qa_set("scenario", "lineup")
+	view.add_ping(Vector2(4000, 4000), false)
+	if not _assert(view.pings_active() == 1, "ping not registered"):
+		root.queue_free()
+		return
+	view.set_playing(false)
+	for p in view._pings:
+		p.created_msec = Time.get_ticks_msec() - 2000
+	view._process(0.0)
+	_assert(view.pings_active() == 0, "ping did not expire on wall time while paused")
 	root.queue_free()
 
 

@@ -8,6 +8,7 @@
 #include "ouroboros_sim.h"
 
 #define OM_MAX_NEIGHBORS 32
+#define OM_MAX_REGIONS 64
 #define OM_DAMAGE_HISTORY_CAP 64
 
 typedef struct {

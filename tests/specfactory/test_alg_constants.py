@@ -384,6 +384,116 @@ def test_lint_missing_dir_exits_2(tmp_path):
     assert proc.returncode == 2, proc.stdout + proc.stderr
 
 
+# --------------------------------------------------------------------- constants-table markers
+
+
+def test_lint_constants_table_with_valid_citation_passes(tmp_path):
+    csrc = tmp_path / "csrc"
+    csrc.mkdir()
+    (csrc / "events.c").write_text(
+        "/* constants-table: docs/bible/epics/E-04-events-and-chains.md S-030 */\n"
+        "static const double thresholds[2] = { 40.0, 55.0 };\n"
+        "/* end constants-table */\n"
+        "double f(double x) { return x; }\n"
+    )
+    proc = _run("--lint", str(csrc))
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert "CONSTANTS LINT OK" in proc.stdout
+    assert "2 table literals exempted" in proc.stdout
+
+
+def test_lint_same_table_without_markers_fails(tmp_path):
+    csrc = tmp_path / "csrc"
+    csrc.mkdir()
+    (csrc / "events.c").write_text(
+        "static const double thresholds[2] = { 40.0, 55.0 };\n"
+        "double f(double x) { return x; }\n"
+    )
+    proc = _run("--lint", str(csrc))
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert "40.0" in proc.stdout
+    assert "55.0" in proc.stdout
+
+
+def test_lint_constants_table_marker_with_no_citation_fails(tmp_path):
+    csrc = tmp_path / "csrc"
+    csrc.mkdir()
+    (csrc / "events.c").write_text(
+        "/* constants-table: */\n"
+        "static const double thresholds[2] = { 40.0, 55.0 };\n"
+        "/* end constants-table */\n"
+    )
+    proc = _run("--lint", str(csrc))
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert "constants-table without a bible citation" in proc.stdout
+
+
+def test_lint_constants_table_unterminated_block_fails(tmp_path):
+    csrc = tmp_path / "csrc"
+    csrc.mkdir()
+    (csrc / "events.c").write_text(
+        "/* constants-table: docs/bible/epics/E-04-events-and-chains.md S-030 */\n"
+        "static const double thresholds[2] = { 40.0, 55.0 };\n"
+    )
+    proc = _run("--lint", str(csrc))
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert "unterminated constants-table block" in proc.stdout
+
+
+def test_lint_constants_table_literal_after_end_marker_still_fails(tmp_path):
+    csrc = tmp_path / "csrc"
+    csrc.mkdir()
+    (csrc / "events.c").write_text(
+        "/* constants-table: docs/bible/epics/E-04-events-and-chains.md S-030 */\n"
+        "static const double thresholds[2] = { 40.0, 55.0 };\n"
+        "/* end constants-table */\n"
+        "double f(double x) { return x * 0.42; }\n"
+    )
+    proc = _run("--lint", str(csrc))
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert "0.42" in proc.stdout
+    assert "40.0" not in proc.stdout
+    assert "55.0" not in proc.stdout
+
+
+def test_lint_constants_table_nested_block_fails(tmp_path):
+    csrc = tmp_path / "csrc"
+    csrc.mkdir()
+    (csrc / "events.c").write_text(
+        "/* constants-table: docs/bible/epics/E-04-events-and-chains.md S-030 */\n"
+        "static const double thresholds[2] = { 40.0, 55.0 };\n"
+        "/* constants-table: ALG-32 */\n"
+        "static const double more[1] = { 9.5 };\n"
+        "/* end constants-table */\n"
+    )
+    proc = _run("--lint", str(csrc))
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert "nested constants-table marker" in proc.stdout
+
+
+def test_find_constants_table_spans_valid_citation_forms():
+    assert ac.find_constants_table_spans(
+        "/* constants-table: docs/bible/algorithms.md */\nx\n/* end constants-table */\n", "f.c"
+    ) == ({1, 2, 3}, [])
+    assert ac.find_constants_table_spans(
+        "/* constants-table: S-030 */\nx\n/* end constants-table */\n", "f.c"
+    ) == ({1, 2, 3}, [])
+    assert ac.find_constants_table_spans(
+        "/* constants-table: R-030-02 */\nx\n/* end constants-table */\n", "f.c"
+    ) == ({1, 2, 3}, [])
+    assert ac.find_constants_table_spans(
+        "/* constants-table: ALG-32 */\nx\n/* end constants-table */\n", "f.c"
+    ) == ({1, 2, 3}, [])
+
+
+def test_gen_allowlist_unaffected_by_constants_table_support():
+    """--gen-allowlist behaviour is unchanged: still keys grandfathered
+    files' literals by file:token:occurrence, table markers or not."""
+    lines = ac.gen_allowlist_entries(REPO / "csrc")
+    checked_in = [l for l in ALLOWLIST.read_text().splitlines() if l.strip()]
+    assert lines == checked_in
+
+
 # --------------------------------------------------------------------- allowlist keying (file:token:occurrence)
 
 

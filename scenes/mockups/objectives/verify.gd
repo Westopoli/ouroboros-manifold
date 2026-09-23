@@ -23,6 +23,7 @@ func _initialize() -> void:
 	await _check_name_7()
 	_check_prog_8(); _check_shape_9()
 	await _check_label_12()
+	await _check_edge_13()
 	await _check_json_10()
 	await _check_time_11()
 	if _failures > 0:
@@ -258,4 +259,36 @@ func _check_label_12() -> void:
 		if l.pixel_size < LABEL_MIN_PIXEL_SIZE or l.text == "":
 			bad.append("%s(px=%.3f,text='%s')" % [l.name, l.pixel_size, l.text])
 	_assert(not labels.is_empty() and bad.is_empty(), "LABEL-12 bad Label3D nodes %s" % [bad])
+	root.queue_free()
+
+# plant: none
+func _check_edge_13() -> void:
+	var packed = load(MOCKUP_SCENE)
+	if not _assert(packed != null, "EDGE-13 cannot load scene"):
+		return
+	var root = packed.instantiate()
+	get_root().add_child(root)
+	await process_frame; await process_frame
+	var rig = root.get_node("CameraRig")
+	if not _assert(rig != null, "EDGE-13 no CameraRig node"):
+		root.queue_free()
+		return
+	var bounds: Vector2 = rig.get_viewport().get_visible_rect().size
+	var center := Vector3(0.0, 0.0, 0.0)
+	rig._mouse_pos = bounds * 0.5
+	rig.position = center
+	rig._handle_pan(1.0)
+	_assert(rig.position.is_equal_approx(center), "EDGE-13 centred mouse (same space as bounds) must not pan: %s" % [rig.position])
+
+	rig._mouse_pos = Vector2(bounds.x - 10.0, bounds.y * 0.5)
+	rig.position = center
+	rig._handle_pan(1.0)
+	var after_right: Vector3 = rig.position
+	_assert(after_right.x > center.x, "EDGE-13 mouse.x = bounds.x-10 (get_viewport().get_visible_rect().size, the mouse's own coordinate space) must pan camera.x positively: %s" % [after_right])
+
+	rig._mouse_pos = Vector2(bounds.x * 0.5, bounds.y - 10.0)
+	rig.position = center
+	rig._handle_pan(1.0)
+	var after_bottom: Vector3 = rig.position
+	_assert(after_bottom.z > center.z, "EDGE-13 mouse.y = bounds.y-10 (same space as bounds) must pan camera.z positively: %s" % [after_bottom])
 	root.queue_free()

@@ -110,6 +110,15 @@ else
     ok footprint "$(cat "$FP_LOG")"
 fi
 
+# -------------------------------------------------------------- 4b. gd class_name uniqueness
+GDCLS_LOG="$SCRATCH_ROOT/gd_class_names.log"
+"$PYTHON" "$GATE_DIR/merge_gate_support.py" gd-class-names "$CANDIDATE" >"$GDCLS_LOG" 2>&1
+if [[ $? -ne 0 ]]; then
+    reject gd_class_names "$(head -n1 "$GDCLS_LOG")"
+else
+    ok gd_class_names "$(cat "$GDCLS_LOG")"
+fi
+
 # -------------------------------------------------------------- 5. symbol-ownership lint
 SYM_LOG="$SCRATCH_ROOT/symbols.log"
 "$PYTHON" "$GATE_DIR/merge_gate_support.py" symbols "$CANDIDATE" "$BASE_REF" \
@@ -150,15 +159,11 @@ else
 fi
 
 # -------------------------------------------------------------- 7. piece acceptance ids green
-ACCEPT_IDS="$("$PYTHON" -c "
-import tomllib
-d = tomllib.loads(open('$PIECES_TOML', 'rb').read().decode())
-for p in d.get('piece', []):
-    if p.get('id') == '$PIECE_ID':
-        for a in p.get('acceptance') or []:
-            if a.endswith('.py') or '::' in a or a in ('tests/transport', 'tests/qa/t1', 'tests/csim'):
-                print(a)
-" 2>/dev/null)"
+ACCEPT_SPLIT="$("$PYTHON" "$GATE_DIR/merge_gate_support.py" acceptance-ids "$PIECE_ID" \
+    --pieces "$PIECES_TOML" 2>/dev/null)"
+ACCEPT_IDS="$(echo "$ACCEPT_SPLIT" | sed -n 's/^PY //p')"
+GODOT_IDS="$(echo "$ACCEPT_SPLIT" | sed -n 's/^GD //p')"
+GODOT_COUNT="$(echo "$GODOT_IDS" | grep -c . || true)"
 
 if [[ -n "$ACCEPT_IDS" ]]; then
     ACCEPT_LOG="$SCRATCH_ROOT/acceptance.log"
@@ -168,8 +173,22 @@ if [[ -n "$ACCEPT_IDS" ]]; then
     else
         ok acceptance ""
     fi
+elif [[ -n "$GODOT_IDS" ]]; then
+    warn acceptance "no pytest acceptance ids; $GODOT_COUNT godot ids"
 else
     warn acceptance "no pytest-collectible acceptance ids for piece $PIECE_ID"
+fi
+
+# -------------------------------------------------------------- 7b. piece acceptance ids, godot side
+if [[ -n "$GODOT_IDS" ]]; then
+    GODOT_LOG="$SCRATCH_ROOT/acceptance_godot.log"
+    ( timeout "$SUITE_TIMEOUT" "$CANDIDATE/scripts/run_godot_tests.sh" $GODOT_IDS ) >"$GODOT_LOG" 2>&1
+    if [[ $? -eq 0 ]]; then
+        ok acceptance_godot "$(grep -c '^PASS: res://' "$GODOT_LOG") files PASS"
+    else
+        FIRST_FAIL="$(grep -m1 '^FAIL: res://' "$GODOT_LOG")"
+        reject acceptance_godot "${FIRST_FAIL:-$(tail_oneline "$GODOT_LOG" 10)}"
+    fi
 fi
 
 # -------------------------------------------------------------- 8. tests/qa/t1 absolute run retired

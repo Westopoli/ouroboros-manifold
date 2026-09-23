@@ -332,7 +332,7 @@ acceptance = [
     "tests/test_qa_daemon.gd",
 ]
 depends_on = []
-status = "pending"
+status = { state = "attached", attach_sha = "9782557" }
 size_estimate = "new daemon autoload plus harness scene; first client piece, everything else attaches through it"
 
 [[piece]]
@@ -344,7 +344,7 @@ acceptance = [
     "tests/transport",
 ]
 depends_on = ["freeze"]
-status = "pending"
+status = { state = "attached", attach_sha = "5296b14" }
 size_estimate = "thin stdio pipe server over libouroboros.so; shapes fixed by F4"
 
 [[piece]]
@@ -358,7 +358,7 @@ acceptance = [
     "tests/test_galaxy_view.gd",
 ]
 depends_on = ["freeze"]
-status = "pending"
+status = { state = "attached", attach_sha = "a3e6dfb" }
 tests_pending = true
 size_estimate = "replaces 5181 lines coupled to scenes/shared/world_view; rebind to T1 when it attaches"
 
@@ -424,7 +424,7 @@ acceptance = [
     "tests/test_chronicle_scroll.gd",
 ]
 depends_on = ["B8", "T1"]
-status = "pending"
+status = { state = "attached", attach_sha = "2531652" }
 tests_pending = true
 size_estimate = "rebind scroll to B8's output through T1; mockup p7 plants"
 
@@ -438,7 +438,7 @@ acceptance = [
     "tests/test_briefing_debrief.gd",
 ]
 depends_on = ["B9", "T1"]
-status = "pending"
+status = { state = "attached", attach_sha = "85c6f4d" }
 tests_pending = true
 size_estimate = "rebind briefing/debrief to B9's output; mockup p9 plants"
 
@@ -452,7 +452,7 @@ acceptance = [
     "tests/test_tactical_view.gd",
 ]
 depends_on = ["B10", "B12", "T1"]
-status = "pending"
+status = { state = "attached", attach_sha = "d429d15" }
 tests_pending = true
 size_estimate = "minimal rebuild over T1's tactical frame; mockup p4/p8 plants"
 

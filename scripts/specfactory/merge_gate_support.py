@@ -33,13 +33,90 @@ DEFAULT_IGNORES = (".swarm/**", ".claude/**", "logs/**",
     # test and the per-piece spec are M0-reviewed documents, never a footprint
     "tests/push/**", "docs/northstar/plans/push/specs/**",
 )
-DEF_RE = re.compile(r"^[a-z_][a-z_ ]*\bom_[a-z0-9_]+\s*\(")
+# A C return type: any run of qualifier/type words (const, static, unsigned,
+# a `_t` typedef, an om_-prefixed struct/enum name, ...) plus optional
+# pointer stars, anchored at column 0 -- a call inside a body always has
+# leading whitespace or a statement keyword (`return`, ...) that is not
+# itself a type word, so neither can match here.
+_TYPE_WORD = (
+    r"(?:const|static|unsigned|signed|struct|volatile|extern|inline|"
+    r"void|int|char|float|double|short|long|bool|"
+    r"[A-Za-z_][A-Za-z0-9_]*_t|om_[A-Za-z0-9_]+)"
+)
+DEF_RE = re.compile(rf"^(?:{_TYPE_WORD}[ \t]+)+[ \t]*\**[ \t]*\bom_[a-z0-9_]+\s*\(")
 SYMBOL_RE = re.compile(r"\b(om_[a-z0-9_]+)\s*\(")
+
+# GDScript requires class_name at column 0 (or right after an annotation,
+# which this line-anchored match does not need to handle -- annotations are
+# their own line). Anchoring at ^ with re.MULTILINE means a `class_name`
+# inside a comment (`# class_name Foo`) or a string literal embedded mid-line
+# never matches, since neither starts its line at column 0 with the bare word.
+CLASS_NAME_RE = re.compile(r"^class_name\s+(\w+)", re.MULTILINE)
+# 2026-09-22 defect: a merge worktree under runs/merge/ in the integrator
+# clone, or any ad hoc worktree (`.swarm`'s own or elsewhere), holds a full
+# second copy of every .gd file -- walked without this filter, every class
+# would double and the check would reject clean trees.
+GD_CLASS_IGNORE_DIRS = {".godot", "build", ".swarm", "runs", "worktrees"}
+
+
+def _gd_path_ignored(parts: tuple[str, ...]) -> bool:
+    return any(p in GD_CLASS_IGNORE_DIRS for p in parts)
+
+
+def gd_class_names_check(root: Path) -> tuple[bool, str]:
+    """(ok, detail). Walks every *.gd file under `root` (skipping
+    GD_CLASS_IGNORE_DIRS at any depth) and maps each `^class_name NAME`
+    declaration to the file(s) that declare it. Godot's global class
+    registry means two scripts both naming themselves e.g. GalaxyGen
+    silently shadow each other -- a `--script` test run against a candidate
+    worktree with no `.godot/` class cache does not catch this (2026-09-22:
+    C2 passed the gate this way and was red on main), but any project that
+    imports both scripts does. ok=False names every duplicate, one line
+    each, `NAME: path1, path2`."""
+    root = Path(root)
+    declarations: dict[str, list[str]] = {}
+    for path in sorted(root.rglob("*.gd")):
+        rel = path.relative_to(root)
+        if _gd_path_ignored(rel.parts):
+            continue
+        try:
+            text = path.read_text(errors="replace")
+        except OSError:
+            continue
+        for m in CLASS_NAME_RE.finditer(text):
+            declarations.setdefault(m.group(1), []).append(str(rel))
+
+    dups = {name: paths for name, paths in sorted(declarations.items()) if len(paths) > 1}
+    if dups:
+        lines = [f"{name}: {', '.join(paths)}" for name, paths in dups.items()]
+        return False, "\n".join(lines)
+    return True, f"{len(declarations)} classes unique"
 
 
 def _load_pieces(pieces_path: Path) -> dict[str, dict]:
     data = tomllib.loads(Path(pieces_path).read_text())
     return {p["id"]: p for p in data.get("piece", []) if p.get("id")}
+
+
+_INCREMENT_RE = re.compile(r"^(.*)-\d+$")
+
+
+def resolve_piece_id(piece_id: str, pieces: dict[str, dict]) -> str:
+    """The push plan's straggler rule lets a leaf submit an increment as
+    branch `push/<piece>-<n>` (e.g. `push/C2-1`, `push/B10-2`). Every gate
+    step and lookup that reads pieces.toml by piece id resolves such an id to
+    its base piece here: strip one trailing `-<digits>` when `piece_id` is
+    not itself a piece and the stripped id is (`C2-1` -> `C2`, `B10-2` ->
+    `B10`; `B15m` stays `B15m` since it has no trailing `-<digits>`; an id
+    that is already a piece is returned as-is). Unresolvable ids (no base
+    piece either) are returned unchanged so the caller's own unknown-id
+    check still rejects them."""
+    if piece_id in pieces:
+        return piece_id
+    m = _INCREMENT_RE.match(piece_id)
+    if m and m.group(1) in pieces:
+        return m.group(1)
+    return piece_id
 
 
 def _norm_gd_uid(path: str) -> str:
@@ -86,15 +163,19 @@ def footprint_check(candidate_dir: Path, base_ref: str, piece_id: str, *,
     not any one piece alone)."""
     pieces = _load_pieces(pieces_path)
     piece_ids = [p.strip() for p in piece_id.split(",") if p.strip()]
-    unknown = [pid for pid in piece_ids if pid not in pieces]
+    resolved_ids = [resolve_piece_id(pid, pieces) for pid in piece_ids]
+    unknown = [pid for pid, rid in zip(piece_ids, resolved_ids) if rid not in pieces]
     if unknown:
         return False, f"unknown piece id(s) {unknown} (not in {pieces_path})"
 
+    label = ",".join(pid if pid == rid else f"{pid} -> {rid}"
+                      for pid, rid in zip(piece_ids, resolved_ids))
+
     owns: list[str] = []
     owns_glob: list[str] = []
-    for pid in piece_ids:
-        owns.extend(pieces[pid].get("owns", []) or [])
-        owns_glob.extend(pieces[pid].get("owns_glob", []) or [])
+    for rid in resolved_ids:
+        owns.extend(pieces[rid].get("owns", []) or [])
+        owns_glob.extend(pieces[rid].get("owns_glob", []) or [])
 
     raw = changed_files(candidate_dir, base_ref)
     normalized = sorted({_norm_gd_uid(p) for p in raw if not _ignored(p, ignores)})
@@ -103,7 +184,7 @@ def footprint_check(candidate_dir: Path, base_ref: str, piece_id: str, *,
     missing = [p for p in owns if p not in normalized]
 
     if extra:
-        return False, f"diff touches files outside {piece_id}'s owns: {extra}"
+        return False, f"diff touches files outside {label}'s owns: {extra}"
     if missing:
         return True, f"OK (owned files with no diff yet, fine for a partial increment): {missing}"
     return True, "OK"
@@ -202,7 +283,8 @@ def undertest_warn(candidate_dir: Path, base_ref: str, piece_id: str, *,
     import undertest_check as utc  # noqa: E402
 
     pieces = _load_pieces(pieces_path)
-    piece = pieces.get(piece_id)
+    resolved_id = resolve_piece_id(piece_id, pieces)
+    piece = pieces.get(resolved_id)
     if piece is None:
         return [f"undertest_check skipped: unknown piece id {piece_id!r}"]
     acceptance = [a for a in (piece.get("acceptance") or []) if a.endswith(".py") or "::" in a]
@@ -233,6 +315,29 @@ def undertest_warn(candidate_dir: Path, base_ref: str, piece_id: str, *,
         return lines
     return [f"undertest_check OK {symbol} in {file_path}: "
             f"{result['killed']}/{result['total_mutants']} mutants killed"]
+
+
+def acceptance_ids(piece_id: str, *, pieces_path: Path = DEFAULT_PIECES) -> tuple[list[str], list[str]]:
+    """(pytest_ids, godot_ids) for a piece's acceptance list. A pytest id is
+    anything pytest can collect directly (a `.py` path, a `::`-qualified node
+    id, or one of the three bare directory names the gate already runs
+    whole) -- the exact filter merge_gate.sh's step 7 used inline before this
+    function existed. A `.gd` id is a Godot test script, run through
+    scripts/run_godot_tests.sh instead: pytest cannot collect it, so before
+    this split it was silently never run for a client piece (C2, C7) whose
+    acceptance is entirely Godot tests (2026-09-22 defect)."""
+    pieces = _load_pieces(pieces_path)
+    piece = pieces.get(resolve_piece_id(piece_id, pieces))
+    if piece is None:
+        return [], []
+    pytest_ids: list[str] = []
+    godot_ids: list[str] = []
+    for a in piece.get("acceptance") or []:
+        if a.endswith(".gd"):
+            godot_ids.append(a)
+        elif a.endswith(".py") or "::" in a or a in ("tests/transport", "tests/qa/t1", "tests/csim"):
+            pytest_ids.append(a)
+    return pytest_ids, godot_ids
 
 
 def _normalize_worktree_paths(text: str, *roots: Path) -> str:
@@ -322,6 +427,13 @@ def main(argv: list[str]) -> int:
     sy.add_argument("--signatures", default=str(DEFAULT_SIGNATURES))
     sy.add_argument("--symbol-modules", default=str(DEFAULT_SYMBOL_MODULES))
 
+    gc = sub.add_parser("gd-class-names")
+    gc.add_argument("root")
+
+    ai = sub.add_parser("acceptance-ids")
+    ai.add_argument("piece_id")
+    ai.add_argument("--pieces", default=str(DEFAULT_PIECES))
+
     ut = sub.add_parser("undertest")
     ut.add_argument("candidate_dir")
     ut.add_argument("base_ref")
@@ -342,10 +454,19 @@ def main(argv: list[str]) -> int:
     if args.cmd == "footprint":
         ok, detail = footprint_check(Path(args.candidate_dir), args.base_ref, args.piece_id,
                                       pieces_path=Path(args.pieces))
+    elif args.cmd == "acceptance-ids":
+        pytest_ids, godot_ids = acceptance_ids(args.piece_id, pieces_path=Path(args.pieces))
+        for i in pytest_ids:
+            print(f"PY {i}")
+        for i in godot_ids:
+            print(f"GD {i}")
+        return 0
     elif args.cmd == "symbols":
         ok, detail = symbol_ownership_check(Path(args.candidate_dir), args.base_ref,
                                              signatures_path=Path(args.signatures),
                                              symbol_modules_path=Path(args.symbol_modules))
+    elif args.cmd == "gd-class-names":
+        ok, detail = gd_class_names_check(Path(args.root))
     elif args.cmd == "undertest":
         lines = undertest_warn(Path(args.candidate_dir), args.base_ref, args.piece_id,
                                 pieces_path=Path(args.pieces), cap=args.cap)

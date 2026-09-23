@@ -18,6 +18,7 @@ func bind(root: Node) -> void:
 	_memory_check.toggled.connect(_on_memory_toggled)
 	_reset_button.pressed.connect(_on_reset_pressed)
 	_step_button.pressed.connect(_on_step_pressed)
+	_seed_spinbox.value_changed.connect(_on_seed_changed)
 	_memory_check.button_pressed = true
 	_update_readout()
 
@@ -53,6 +54,11 @@ func _on_memory_toggled(pressed: bool) -> void:
 
 func _on_reset_pressed() -> void:
 	_root.qa_seed(int(_seed_spinbox.value))
+	_playing = false
+
+
+func _on_seed_changed(value: float) -> void:
+	_root.qa_seed(int(value))
 	_playing = false
 
 

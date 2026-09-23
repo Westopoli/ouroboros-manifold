@@ -8,7 +8,7 @@ Rung P4 of the prototype ladder: six units, movement and combat on one layer, to
 ~/.local/bin/godot --scene scenes/mockups/units/units_mockup.tscn
 ```
 
-Hotkeys: `Space` play/pause, `T` step one tick, `R` reset the current scenario, `Tab` toggle kit, `F12` screenshot, left-click select, left-drag box-select, right-click move, `Shift`+right-click attack-move, right-click on an enemy attack-target. Scenario dropdown and kit button are also clickable in the HUD.
+Hotkeys: the sim runs by default on launch (paused only under `--qa-script` or `--headless`, for determinism), `Space` pauses/resumes, `T` step one tick, `R` reset the current scenario, `Tab` toggle kit, `F12` screenshot, left-click select, left-drag box-select (draws a live selection rectangle), right-click move (also resumes a paused sim), `Shift`+right-click attack-move, right-click on an enemy attack-target. A "PAUSED" banner shows top-centre whenever the sim isn't running. Scenario dropdown and kit button are also clickable in the HUD.
 
 This could not be run on Westley's seat from this session; confirmed instead that the QA driver is inert without `--qa-script`: booting the scene through `qa_boot.gd` with `--qa-scene res://scenes/mockups/units/units_mockup.tscn` and no `--qa-script` produces an empty output directory (no `_run.json`, no side effects) — the driver's own `_ready()` returns immediately when that arg is absent.
 
@@ -65,3 +65,20 @@ All nine items from the fresh-eyes review addressed; full before/after evidence 
 - **Flank clipped at frame edge (blocker).** Camera now follows the two forces' actual midpoint at capture time; raiders repositioned into a two-pronged spread approach (see below).
 - **Support disc, Strike squads indistinguishable, void bars, HUD contrast, uncommitted facing shots (should-fix, all five).** All fixed; see checklist items 2, 3, 7, 8, 9.
 - **Held: flank outcome.** The spread, two-pronged approach (four independent attack-move commands instead of one shared group command that preserved the tight start-cluster to the destination) measurably changed the fight — 1 Bombard now dies before the Raiders are wiped, was 0 — but Bombards still win the full engagement. Per the brief's instruction, stats were not tuned; recorded in Questions for Westley above with three candidates (artillery minimum range; the E-11 paragraph may assume an unseen approach that this toy has no sensor/fog model to test; or the toy's numbers stand and the paragraph needs revising).
+
+## Mockup review 1 (Westley, 2026-09-22)
+
+Verbatim: "Units prototype: waypoints stay forever (never fade), there's no visible box that indicates the size I'm clicking and dragging over units to select (though it does work, when I click and drag and right click the units I selected output the command). Units do not move or do anything. Moving my mouse to the top left to select the drop down moves the screen that way because it's close enough to the edge of the screen to move the view."
+
+Pass 2 brief: `docs/northstar/plans/briefs/2026-09-22-p4-units-mockup-pass2.md` (the sim starts paused so nothing ticks and pings never expire; no drag rectangle is drawn; edge scroll compares canvas-space mouse against a non-canvas size and fires over the HUD).
+
+## Mockup review 1 fixes (2026-09-22, pass 2)
+
+All four items fixed; full before/after evidence, measured numbers, and the Xvfb determinism re-check are in `scenes/mockups/units/qa/checklist.md` ("Fix pass 2"). Root causes:
+
+1. **Units do not move; waypoints never fade.** `hud.gd` started `_playing = false` and never flipped it on an interactive launch — `_process` only ticks the sim `if _playing`, and `unit_view.gd`'s pings expire by comparing the (frozen) sim tick against a lifetime, so neither ever advanced. Fixed: the sim now starts running by default (`_playing = not _qa_mode`, where `_qa_mode` detects `--qa-script` or a `--headless` boot so QA/`verify.gd` stay paused and deterministic); issuing an order also resumes a paused interactive session (gated off in qa-mode). A "PAUSED" banner shows whenever the sim isn't running. Pings now additionally age on wall-clock time (1.5s) while paused, so a paused scene's waypoints still clear even though the tick-based expiry they normally use is frozen.
+2. **No visible drag-select box.** The rectangle was always computed for hit-testing but never drawn. Fixed with a new `DragBox` control (`scenes/mockups/units/drag_box.gd`) drawing the brief's exact fill/edge colours from press to release.
+3. **Edge scroll unreachable at 4480x1440.** `camera_rig.gd` compared a canvas-space mouse position against `get_viewport().get_visible_rect().size`, which under this project's `canvas_items` stretch — read from a bare `Node3D`, not a `Control` — is neither the canvas nor the real window (see `scenes/mockups/_shared/README.md`'s documented fact about this exact call). Fixed by converting the `_input`-tracked mouse position to real window pixels via `get_viewport().get_final_transform()` and comparing against `DisplayServer.window_get_size()`. Fixed by the doer who paused mid-run (commit `beced71`); this pass verified it at `--res 2560x1440` rather than re-deriving it.
+4. **Edge scroll fires over the HUD.** Suppressed whenever `get_viewport().gui_get_hovered_control() != null` or the mouse is inside the HUD panel's rect. Same commit as item 3, verified this pass.
+
+Evidence: `pass1/lineup_greek.png` etc. re-shot (the "PAUSED" banner now appears in every QA screenshot, since QA stays paused by design); `pass1/drag_mid.png` (new) shows the drag box spanning the six lineup units; `qa/edges.json` at 2560x1440 shows all four edges panning the camera and the HUD-hover case holding still. Two independent `smoke.json` runs stay hash- and pixel-identical after all four fixes.

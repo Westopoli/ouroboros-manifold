@@ -2,26 +2,22 @@ extends Node3D
 
 const QaPlants := preload("res://scenes/mockups/_shared/qa_plants.gd")
 
-const TUBE_SIDES := 8
-const CURVE_SEGMENTS := 16
-const ARC_HEIGHT_FRACTION := 0.15
-const FILAMENT_WIDTH_BORDER := 0.075
-const FILAMENT_WIDTH_TRADE := 0.035
 const POINT_BASE_RADIUS := 1.4
-const DUST_COUNT := 400
-const STAR_COUNT := 800
-const FIELD_RADIUS := 260.0
-const GRID_RADIUS := 220.0
-const GRID_RINGS := 5
-const GRID_SPOKES := 16
 const NEUTRAL_COLOR := Color(0.55, 0.55, 0.58, 1.0)
 const TRADE_DIM := Color(0.42, 0.44, 0.5, 0.5)
 const FLASH_DURATION := 0.6
-const LOCAL_FAR_WU := 30.0
+# Widened 30.0 -> 45.0 and local_boost capped lower (see _band_weights() call
+# site below) so a Local focus keeps neighbouring systems in their owner's
+# colour instead of desaturating everything past one system-width — part of
+# the pass-2 Local-band framing fix, paired with orbit_camera.gd's wider
+# FOCUS_DISTANCE.
+const LOCAL_FAR_WU := 45.0
 
 var _galaxy: Galaxy
 var _points: MultiMeshInstance3D
-var _filaments: Node3D
+var _wv_data: Node
+var _constellation: Node3D
+var _shell: Node3D
 var _names: Node3D
 var _flash_boost: Dictionary = {}
 var _flash_rings: Array = []
@@ -33,6 +29,34 @@ var _point_colors: Array = []
 
 func _ready() -> void:
 	_build_ambient()
+	_wv_data = Node.new()
+	_wv_data.set_script(load("res://scenes/mockups/galaxy/legacy_world_view_data.gd"))
+	_wv_data.name = "WorldViewData"
+	add_child(_wv_data)
+	_constellation = Node3D.new()
+	_constellation.set_script(load("res://scenes/mockups/galaxy/legacy_constellation_renderer.gd"))
+	_constellation.name = "ConstellationRenderer"
+	add_child(_constellation)
+	_shell = Node3D.new()
+	_shell.set_script(load("res://scenes/mockups/galaxy/legacy_shell_renderer.gd"))
+	_shell.name = "ShellRenderer"
+	add_child(_shell)
+	# Zoom controller lives on OrbitCamera, a sibling created after GalaxyView
+	# in the scene tree (World before OrbitCamera in galaxy_mockup.tscn), so
+	# it does not exist yet at this _ready(). setup() with null is safe —
+	# _process() no-ops until attach_camera() sets it (called from
+	# galaxy_mockup.gd's own _ready(), which runs last, after every sibling).
+	_constellation.setup(_wv_data, null)
+	_shell.setup(_wv_data, null)
+
+
+func attach_camera(camera: Node) -> void:
+	_constellation._zoom_controller = camera.get_zoom_controller()
+	_shell._zoom_controller = camera.get_zoom_controller()
+
+
+func get_faction_shell_count() -> int:
+	return _shell.get_faction_shell_count() if _shell else 0
 
 
 func build(galaxy: Galaxy) -> void:
@@ -42,13 +66,17 @@ func build(galaxy: Galaxy) -> void:
 		r.node.free()
 	_flash_rings.clear()
 	_build_points()
-	_build_filaments()
+	_populate_wv_data()
 	_build_names()
 	update_view(50.0, -1, -1, -1)
 
 
 func get_galaxy() -> Galaxy:
 	return _galaxy
+
+
+func _region_size(significance: float) -> float:
+	return 2.0 * POINT_BASE_RADIUS * (0.6 + 1.4 * significance)
 
 
 func get_point_color(system_id: int) -> Color:
@@ -93,40 +121,16 @@ func _build_points() -> void:
 	add_child(_points)
 
 
-func _build_filaments() -> void:
-	if _filaments:
-		_filaments.free()
-	_filaments = Node3D.new()
-	_filaments.name = "Filaments"
-	add_child(_filaments)
-
-	if QaPlants.is_active("edges-2d-overlay"):
+func _populate_wv_data() -> void:
+	var skip_connections := QaPlants.is_active("edges-2d-overlay")
+	GalaxyAdapter.populate(_wv_data, _galaxy, Callable(self, "owner_color"), Callable(self, "_region_size"), TRADE_DIM, skip_connections)
+	if skip_connections:
 		_build_filaments_2d_fault()
-		return
-
-	for e in _galaxy.edges:
-		_build_one_filament(e)
-
-
-func _build_one_filament(e: Dictionary) -> void:
-	var from_pos: Vector3 = _galaxy.systems[e.a].pos
-	var to_pos: Vector3 = _galaxy.systems[e.b].pos
-	var is_border: bool = e.kind == "border"
-	var width: float = FILAMENT_WIDTH_BORDER if is_border else FILAMENT_WIDTH_TRADE
-	var mi := MeshInstance3D.new()
-	mi.name = "E_%d_%d" % [e.a, e.b]
-	mi.mesh = _build_tube(_bezier_arc(from_pos, to_pos), width)
-	mi.set_meta("edge", e)
-	var mat := StandardMaterial3D.new()
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mat.albedo_color = owner_color(_galaxy.systems[e.a].owner, _galaxy) if is_border else TRADE_DIM
-	mi.material_override = mat
-	_filaments.add_child(mi)
 
 
 # fault: edges-2d-overlay draws lanes in a full-rect Control's _draw() under HUD
-# instead of Node3D tubes here; Filaments stays empty so EDGES-8 can tell them apart.
+# instead of ConstellationRenderer's tubes; the adapter skips add_connection()
+# so ConstellationRenderer stays empty and EDGES-8 can tell them apart.
 func _build_filaments_2d_fault() -> void:
 	var hud := get_node("../../HUD")
 	var existing := hud.get_node_or_null("FilamentOverlay2D")
@@ -137,69 +141,6 @@ func _build_filaments_2d_fault() -> void:
 	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hud.add_child(overlay)
-
-
-func _bezier_arc(from_pos: Vector3, to_pos: Vector3) -> PackedVector3Array:
-	var mid := (from_pos + to_pos) * 0.5
-	var dist := from_pos.distance_to(to_pos)
-	var arc_height := dist * ARC_HEIGHT_FRACTION
-	var dir := (to_pos - from_pos).normalized()
-	var up := Vector3.UP
-	if absf(dir.dot(up)) > 0.95:
-		up = Vector3.RIGHT
-	var perp := dir.cross(up).normalized()
-	var hash_val := from_pos.x * 73.0 + from_pos.z * 137.0 + to_pos.x * 97.0 + to_pos.z * 53.0
-	var perp_offset := sin(hash_val) * arc_height * 0.5
-	var cp1 := from_pos.lerp(mid, 0.5) + Vector3(0, arc_height, 0) + perp * perp_offset
-	var cp2 := mid.lerp(to_pos, 0.5) + Vector3(0, arc_height, 0) + perp * perp_offset
-	var points := PackedVector3Array()
-	for i in range(CURVE_SEGMENTS + 1):
-		var t := float(i) / float(CURVE_SEGMENTS)
-		var it := 1.0 - t
-		points.append(it * it * it * from_pos + 3.0 * it * it * t * cp1 + 3.0 * it * t * t * cp2 + t * t * t * to_pos)
-	return points
-
-
-func _build_tube(curve: PackedVector3Array, radius: float) -> ArrayMesh:
-	var mesh := ArrayMesh.new()
-	var verts := PackedVector3Array()
-	var indices := PackedInt32Array()
-	if curve.size() < 2:
-		return mesh
-	for i in range(curve.size()):
-		var pos := curve[i]
-		var tangent: Vector3
-		if i == 0:
-			tangent = (curve[1] - curve[0]).normalized()
-		elif i == curve.size() - 1:
-			tangent = (curve[i] - curve[i - 1]).normalized()
-		else:
-			tangent = (curve[i + 1] - curve[i - 1]).normalized()
-		var up := Vector3.UP
-		if absf(tangent.dot(up)) > 0.95:
-			up = Vector3.RIGHT
-		var right := tangent.cross(up).normalized()
-		var actual_up := right.cross(tangent).normalized()
-		for j in range(TUBE_SIDES + 1):
-			var angle := float(j) / float(TUBE_SIDES) * TAU
-			verts.append(pos + right * cos(angle) * radius + actual_up * sin(angle) * radius)
-	var verts_per_ring := TUBE_SIDES + 1
-	for i in range(curve.size() - 1):
-		for j in range(TUBE_SIDES):
-			var curr := i * verts_per_ring + j
-			var next := curr + verts_per_ring
-			indices.append(curr)
-			indices.append(next)
-			indices.append(curr + 1)
-			indices.append(curr + 1)
-			indices.append(next)
-			indices.append(next + 1)
-	var arrays := []
-	arrays.resize(Mesh.ARRAY_MAX)
-	arrays[Mesh.ARRAY_VERTEX] = verts
-	arrays[Mesh.ARRAY_INDEX] = indices
-	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-	return mesh
 
 
 func _build_names() -> void:
@@ -233,71 +174,13 @@ func _build_names() -> void:
 
 
 func _build_ambient() -> void:
+	# Pass 1's own dust/star/grid quads are superseded by the legacy rig below
+	# (settled_reach_renderer.gd), which already carries its own ambient dust,
+	# starfield, and polar grid alongside the rings and central glow.
 	var ambient := Node3D.new()
 	ambient.name = "Ambient"
+	ambient.set_script(load("res://scenes/mockups/galaxy/legacy_ambient_rig.gd"))
 	add_child(ambient)
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 777
-	ambient.add_child(_build_field_multimesh("Dust", DUST_COUNT, rng, 0.6, Color(0.55, 0.6, 0.7, 0.16)))
-	ambient.add_child(_build_field_multimesh("Stars", STAR_COUNT, rng, 0.22, Color(0.85, 0.85, 0.92, 0.3)))
-	ambient.add_child(_build_grid())
-
-
-func _build_field_multimesh(mm_name: String, count: int, rng: RandomNumberGenerator, quad_size: float, color: Color) -> MultiMeshInstance3D:
-	var mmi := MultiMeshInstance3D.new()
-	mmi.name = mm_name
-	var mm := MultiMesh.new()
-	mm.transform_format = MultiMesh.TRANSFORM_3D
-	mm.use_colors = true
-	var quad := QuadMesh.new()
-	quad.size = Vector2(quad_size, quad_size)
-	mm.mesh = quad
-	mm.instance_count = count
-	for i in range(count):
-		var r := FIELD_RADIUS * sqrt(rng.randf())
-		var theta := rng.randf() * TAU
-		var y := rng.randf_range(-50.0, 50.0)
-		mm.set_instance_transform(i, Transform3D(Basis(), Vector3(cos(theta) * r, y, sin(theta) * r)))
-		mm.set_instance_color(i, color)
-	var mat := StandardMaterial3D.new()
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.vertex_color_use_as_albedo = true
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
-	mmi.material_override = mat
-	mmi.multimesh = mm
-	return mmi
-
-
-func _build_grid() -> MeshInstance3D:
-	var verts := PackedVector3Array()
-	for ring_i in range(1, GRID_RINGS + 1):
-		var r := GRID_RADIUS * float(ring_i) / float(GRID_RINGS)
-		var prev := Vector3(r, 0, 0)
-		for seg in range(1, 33):
-			var a := TAU * float(seg) / 32.0
-			var p := Vector3(cos(a) * r, 0, sin(a) * r)
-			verts.append(prev)
-			verts.append(p)
-			prev = p
-	for spoke in range(GRID_SPOKES):
-		var a := TAU * float(spoke) / float(GRID_SPOKES)
-		verts.append(Vector3.ZERO)
-		verts.append(Vector3(cos(a) * GRID_RADIUS, 0, sin(a) * GRID_RADIUS))
-	var mesh := ArrayMesh.new()
-	var arrays := []
-	arrays.resize(Mesh.ARRAY_MAX)
-	arrays[Mesh.ARRAY_VERTEX] = verts
-	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_LINES, arrays)
-	var mi := MeshInstance3D.new()
-	mi.name = "PolarGrid"
-	mi.mesh = mesh
-	var mat := StandardMaterial3D.new()
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.albedo_color = Color(0.5, 0.55, 0.65, 0.14)
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mi.material_override = mat
-	return mi
 
 
 func _band_weights(d: float) -> Dictionary:
@@ -341,7 +224,6 @@ func update_view(distance: float, focused_id: int, hover_faction: int, pin_facti
 		return
 	var w := _band_weights(distance)
 	var point_scale_band: float = lerpf(1.0, 0.6, w.overview)
-	var filament_alpha_band: float = lerpf(1.0, 0.4, w.overview)
 	var name_alpha: float = w.overview
 
 	for i in range(_galaxy.systems.size()):
@@ -351,7 +233,7 @@ func update_view(distance: float, focused_id: int, hover_faction: int, pin_facti
 		var sat_mul := 1.0
 		if focused_id != -1 and w.local > 0.0:
 			if sys.id == focused_id:
-				local_boost = lerpf(1.0, 1.5, w.local)
+				local_boost = lerpf(1.0, 1.2, w.local)
 			else:
 				var d: float = sys.pos.distance_to(_galaxy.systems[focused_id].pos)
 				if d > LOCAL_FAR_WU:
@@ -365,15 +247,22 @@ func update_view(distance: float, focused_id: int, hover_faction: int, pin_facti
 		_points.multimesh.set_instance_color(i, c)
 		_point_colors[i] = c
 
-	for child in _filaments.get_children():
-		if not child.has_meta("edge"):
-			continue
-		var e: Dictionary = child.get_meta("edge")
-		var is_border: bool = e.kind == "border"
-		var owner_a: int = _galaxy.systems[e.a].owner
-		var emph := _faction_emphasis(owner_a if is_border else -1, hover_faction, pin_faction)
-		var mat: StandardMaterial3D = child.material_override
-		mat.albedo_color.a = clampf(filament_alpha_band * (1.0 if is_border else 0.7) * emph, 0.0, 1.0)
+	# Filament alpha-by-band is legacy_constellation_renderer.gd's own
+	# _process(), driven by the zoom controller (see attach_camera()); this
+	# loop only carries pass 1's hover/pin emphasis into the shader's own
+	# emphasis_multiplier uniform, kept separate so the two writers never
+	# fight over alpha_multiplier in the same frame.
+	if _constellation:
+		for key in _constellation.get_filament_visuals():
+			var node: MeshInstance3D = _constellation.get_filament_visuals()[key]
+			var edge_meta: Dictionary = node.get_meta("edge")
+			var owner_a: int = _galaxy.systems[int(edge_meta.a_id)].owner
+			var owner_b: int = _galaxy.systems[int(edge_meta.b_id)].owner
+			var is_border: bool = owner_a == owner_b and owner_a != -1
+			var emph := _faction_emphasis(owner_a if is_border else -1, hover_faction, pin_faction)
+			var mat: ShaderMaterial = node.material_override
+			if mat:
+				mat.set_shader_parameter("emphasis_multiplier", emph)
 
 	if _names:
 		for label in _names.get_children():
@@ -427,16 +316,4 @@ func set_system_owner(system_id: int, faction_id: int) -> void:
 	if _galaxy == null or system_id < 0 or system_id >= _galaxy.systems.size():
 		return
 	_galaxy.systems[system_id].owner = faction_id
-	for child in _filaments.get_children():
-		if not child.has_meta("edge"):
-			continue
-		var e: Dictionary = child.get_meta("edge")
-		if e.a != system_id and e.b != system_id:
-			continue
-		var oa: int = _galaxy.systems[e.a].owner
-		var ob: int = _galaxy.systems[e.b].owner
-		e.kind = "border" if (oa == ob and oa != -1) else "trade"
-		var is_border: bool = e.kind == "border"
-		child.mesh = _build_tube(_bezier_arc(_galaxy.systems[e.a].pos, _galaxy.systems[e.b].pos), FILAMENT_WIDTH_BORDER if is_border else FILAMENT_WIDTH_TRADE)
-		var mat: StandardMaterial3D = child.material_override
-		mat.albedo_color = owner_color(oa, _galaxy) if is_border else TRADE_DIM
+	GalaxyAdapter.sync_system(_wv_data, _galaxy, system_id, Callable(self, "owner_color"), Callable(self, "_region_size"), TRADE_DIM)

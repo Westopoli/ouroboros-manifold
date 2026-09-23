@@ -3,6 +3,9 @@ extends RefCounted
 
 const QaPlants := preload("res://scenes/mockups/_shared/qa_plants.gd")
 
+const JITTER_MAX_WU := 400.0
+const ENEMY_LOOP_RADII_WU: Array[float] = [90.0, 130.0, 170.0, 220.0]
+
 var canvas: float = 6400.0
 var seed: int = 11
 var tick: int = 0
@@ -55,11 +58,55 @@ func load_scenario(scenario_path: String) -> void:
 func generate(p_seed: int) -> void:
 	seed = 11 if QaPlants.is_active("seed-ignored") else p_seed
 	_rng.seed = seed
+
+	for o in obstacles:
+		o.pos += _jitter()
+	for z in zones:
+		z.pos += _jitter()
+	_rotate_interference_zone()
+	for s in structures:
+		s.pos += _jitter()
+
 	for e in enemies:
+		if e.radius > 0.0:
+			e.radius = ENEMY_LOOP_RADII_WU[_rng.randi() % ENEMY_LOOP_RADII_WU.size()]
+			e.angular_speed = absf(e.angular_speed) * (-1.0 if _rng.randi() % 2 == 0 else 1.0)
 		e.phase_offset = _rng.randf_range(0.0, TAU)
 		e.pos = e.center + Vector2(e.radius, 0.0).rotated(e.phase_offset)
+
+	for f in friendlies:
+		_reorder_waypoints(f)
+
 	tick = 0
 	phase = "recon"
+
+
+func _jitter() -> Vector2:
+	return Vector2(_rng.randf_range(-JITTER_MAX_WU, JITTER_MAX_WU), _rng.randf_range(-JITTER_MAX_WU, JITTER_MAX_WU))
+
+
+func _rotate_interference_zone() -> void:
+	var center := Vector2(canvas * 0.5, canvas * 0.5)
+	var angle: float = _rng.randf_range(0.0, TAU)
+	for z in zones:
+		if z.kind == "interference":
+			z.pos = center + (z.pos - center).rotated(angle)
+
+
+func _reorder_waypoints(f: Dictionary) -> void:
+	if f.waypoints.size() < 2:
+		return
+	var n: int = f.waypoints.size()
+	var offset: int = _rng.randi() % n
+	var reversed: bool = _rng.randi() % 2 == 0
+	var base: Array = f.waypoints.duplicate()
+	if reversed:
+		base.reverse()
+	var reordered: Array = []
+	for i in range(n):
+		reordered.append(base[(i + offset) % n])
+	f.waypoints = reordered
+	f.wp_idx = 0
 
 
 func step() -> void:
