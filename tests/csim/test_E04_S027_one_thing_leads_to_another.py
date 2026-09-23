@@ -495,9 +495,14 @@ def test_R_027_06_its_chain_tag_equals_root(lib, world_factory):
     tid_boom = template_id(lib, w, "Trade Boom")
     tid_unrest = template_id(lib, w, "Prosperity Unrest")
 
-    # Neutral starting fields unbreached for ticks 1..3
+    # Neutral starting fields unbreached for ticks 1..3, except Region 1's tension is primed
+    # above 35.0 (Diplomatic Incident's fresh-trigger threshold) so grace priming (R-026-05)
+    # marks it already breached; this keeps the tick-12 rise to 45.0 from also freshly
+    # crossing Diplomatic Incident. Region 1's population is primed at 49.0 (not 50.0) so
+    # Trade Boom's own +1 population effect at tick 4 lands at 50.0, not strictly above
+    # Harvest Surplus's 50.0 threshold -- population above 50 stays unbreached too.
     set_region(lib, w, 0, tier=OMTier.HOME, military=40.0, economy=50.0, tension=50.0, population=50.0)  # neutral tier HOME
-    set_region(lib, w, 1, tier=OMTier.HOME, military=50.0, economy=50.0, tension=20.0, population=50.0)  # neutral tier HOME
+    set_region(lib, w, 1, tier=OMTier.HOME, military=50.0, economy=50.0, tension=36.0, population=49.0)  # neutral tier HOME, tension primed above Diplomatic Incident's 35.0
     for r in range(2):
         set_owner(lib, w, r, 0, held_since=-1)  # neutral held_since -1 (held since the world began)
     set_tech_multipliers(lib, w, 0, 1.0, 1.0, 1.0)  # neutral tech multipliers 1.0
@@ -509,8 +514,11 @@ def test_R_027_06_its_chain_tag_equals_root(lib, world_factory):
     # Tick 4 crossings:
     # Region 0 military drops to 25.0 (< 30.0 Garrison Collapse)
     set_region(lib, w, 0, tier=OMTier.HOME, military=25.0, economy=50.0, tension=50.0, population=50.0)  # neutral tier HOME
-    # Region 1 economy rises to 60.0 (> 55.0 Trade Boom)
-    set_region(lib, w, 1, tier=OMTier.HOME, military=50.0, economy=60.0, tension=20.0, population=50.0)  # neutral tier HOME
+    # Region 1 economy rises to 56.0 (> 55.0 Trade Boom, but its +2 effect lands at 58.0, still
+    # <= 60.0 so Cultural Renaissance's fresh-trigger threshold is not also crossed); tension
+    # holds at 36.0 (already breached for Diplomatic Incident since grace, not a fresh crossing);
+    # population holds at 49.0 (Trade Boom's +1 effect lands at 50.0, not above Harvest Surplus)
+    set_region(lib, w, 1, tier=OMTier.HOME, military=50.0, economy=56.0, tension=36.0, population=49.0)  # neutral tier HOME
 
     # Per region (e2e "Draw order", ALG-34): the regional-revolt roll comes before the fired
     # threshold template's own spawn draws, regardless of the template's table position, so
@@ -574,7 +582,9 @@ def test_R_027_06_its_chain_tag_equals_root(lib, world_factory):
     # Advance to tick 12 when Prosperity Unrest (spawn of Chain 2) resolves
     lib.om_world_step(w)  # tick 11
 
-    # Tick 12: Prosperity Unrest condition is tension > 40 (set tension = 45.0 in Region 1)
+    # Tick 12: Prosperity Unrest condition is tension > 40 (raise tension 36.0 -> 45.0 in Region
+    # 1; only the > 40 spawn condition is newly met -- Diplomatic Incident's > 35 fresh-trigger
+    # threshold was already breached since grace, so this is not a fresh crossing there)
     set_region(lib, w, 1, tier=OMTier.HOME, military=50.0, economy=60.0, tension=45.0, population=50.0)  # neutral tier HOME
     force_draws(lib, w, [0.1])  # prob draw 0.1 <= 0.25
     lib.om_world_step(w)  # tick 12

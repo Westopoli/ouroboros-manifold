@@ -1,6 +1,6 @@
 # Units mockup QA checklist
 
-Real measured numbers from `scripts/mockup_qa.sh` and `scripts/mockup_verify.sh` runs, fix pass 2026-09-22 (fresh-eyes review response), Godot 4.6.3, llvmpipe, 1280x720 unless noted. Thresholds marked `(candidate)` are the brief's own numbers; nothing here was loosened.
+Real measured numbers from `scripts/mockup_qa.sh` and `scripts/mockup_verify.sh` runs, fix pass 2 2026-09-22 (Mockup review 1 response), Godot 4.6.3, llvmpipe, 1280x720 unless noted. Thresholds marked `(candidate)` are the brief's own numbers; nothing here was loosened. Fix pass 1 (fresh-eyes review response) rows are unchanged below unless noted "pass 2".
 
 ## Headless checks (`scripts/mockup_verify.sh units`)
 
@@ -18,6 +18,9 @@ Real measured numbers from `scripts/mockup_qa.sh` and `scripts/mockup_verify.sh`
 | JSON-10 | qa_state() round-trips JSON, all contract keys present; qa_plant('nope') false; all 6 plant ids true | PASS | none | n/a |
 | TIME-11 | tick_avg < 2ms for 20 units, headless (measured 0.30ms) | PASS | none | n/a |
 | **FOOT-12 (new)** | instantiates the scene, builds each lineup unit's world AABB via `unit_view.get_unit_render_transform`/`get_role_mesh_aabb` (the real render path, not multimesh readback — proved dead under the headless dummy renderer, see item 1 below), projects the 8 corners through the camera; artillery's projected length must be longest, flanker's shortest | PASS (measured: artillery 108.3px longest, flanker 30.7px shortest, of flanker 30.7/screen 36.9/frontliner 46.6/support 36.3/artillery 108.3/anchor 64.4) | silhouettes-same | PLANT LIVE (shared with SIL-3, see above) |
+| **DRAG-13 (pass 2)** | box overlay hidden before any drag; `hud._unhandled_input` press+motion+release simulated directly (not via `Input.parse_input_event`, which the private-field style of this file already relies on elsewhere); overlay visible mid-drag, hidden again after release | PASS | none | n/a |
+| **PLAY-14 (pass 2)** | sim starts paused under `--qa-script`/headless (`qa_state().playing == false`); tick does not drift over 3 unforced `process_frame`s while paused; issuing a command via the interactive right-click path (`hud._handle_right_click`) does not auto-unpause in qa-mode | PASS | none | n/a |
+| **PING-15 (pass 2)** | a ping registered then aged 2000ms of simulated wall time (`created_msec` back-dated, no ticks) while `unit_view.set_playing(false)` is asserted expired by the next `_process` call | PASS | none | n/a |
 
 All 6 plant ids report `PLANT <id> LIVE` via `scripts/mockup_verify.sh units --plant <id>`. FOOT-12 had to be placed *before* JSON-10 in `_initialize()`: JSON-10 calls `qa_plant()` on every id to prove each returns true, and `QaPlants` is static process-global state with no reset call anywhere in scope — any plant-sensitive check placed after JSON-10 in the same verify run silently inherits every plant still active. This was latent (no check after JSON-10 needed plant-clean state before FOOT-12) and is now avoided by ordering, not by patching the shared `qa_plants.gd` (out of scope).
 
@@ -149,3 +152,49 @@ Both now included in `pass1/` (1920×1080, from `qa/review.json`), previously ge
 2. **Flash/death colour rendered nothing** — `vertex_color_use_as_albedo` was never set, and even fixed, the multiplicative-tint design could never brighten past the base colour. See item 5 above; this single fix also resolves item 6's "hits visible" requirement.
 3. **`QaPlants` static state pollutes checks after JSON-10** — `_check_JSON_10` activates every plant id to prove `qa_plant()` returns true and never resets (no reset function exists in the shared, off-limits `qa_plants.gd`); any plant-sensitive check placed after it in `_initialize()` silently inherits every plant. FOOT-12 is the first check added after JSON-10's position that's actually plant-sensitive, so this was latent, not a regression. Fixed by check ordering within `verify.gd` only.
 4. **`qa/smoke.json`'s death-tick off-by-one** — `qa_tick(140)` (then a first-attempt `qa_tick(123)`) both missed the unit's actual `death_tick` (124) by one tick either side; `qa_state()` at the "death" screenshot showed the unit still alive (hp 27.5). Fixed by using the tick count that lands exactly on `death_tick`.
+
+## Fix pass 2 (2026-09-22, Mockup review 1)
+
+Westley's verbatim report and root causes are in `docs/northstar/research/mockups/units/README.md` under "Mockup review 1". Evidence per item, in the brief's order:
+
+### 1. Units do not move, waypoints never fade
+
+**Root cause confirmed:** `hud.gd` started with `_playing = false` and never flipped it; `_process` only steps the sim `if _playing`, so a fresh interactive launch never ticked. `unit_view.gd`'s pings expire by comparing `current_tick` to a lifetime, so with the sim never ticking the comparison never advances and a ping never crosses `PING_LIFETIME_TICKS`.
+
+**Fix:** `hud._ready()` computes `_qa_mode := OS.get_cmdline_user_args().has("--qa-script") or DisplayServer.get_name() == "headless"` once. `_regenerate()` now sets `_playing = not _qa_mode` (via a new `_set_playing()` helper) instead of always `false`, so an interactive launch (real display, no `--qa-script`) starts playing and a QA/verify boot stays paused — both signals checked because `mockup_qa.sh run` launches through Xvfb's real X11 display (only `--qa-script` present) while `mockup_verify.sh` launches `--headless` with no `--qa-script` at all (`scripts/mockup_qa.sh` / `scripts/mockup_verify.sh`, see the two `godot` invocations). `PLAY-14` proves both: `qa_state().playing == false` right after boot, and tick does not drift over 3 unforced frames. Issuing an order (`_handle_right_click`) resumes a paused *interactive* session but is gated `and not _qa_mode` so a QA script's simulated right-click never starts wall-clock ticking mid-script (would have broken every hash/pixel-identical oracle below) — `PLAY-14`'s third assertion proves the gate holds.
+
+A `PausedLabel` (new node, `units_mockup.tscn`) shows "PAUSED" (black-outlined, 48pt) whenever `not _playing`; `Space` and any order both clear it via the same `_set_playing()` path.
+
+Pings: `unit_view.add_ping` now stamps `created_msec := Time.get_ticks_msec()`; a new `unit_view._process` ages every ping against a 1500ms wall-clock cutoff **only while paused** (`_playing_hint == false`, set by `hud._set_playing` calling `_view.set_playing()`), so the existing tick-based expiry stays authoritative (and deterministic) while playing, and a paused interactive scene still clears its waypoints. `PING-15` proves the wall-clock path fires without needing a real 1.5s sleep (back-dates `created_msec` by 2000ms, calls `_process` once, asserts `pings_active() == 0`). Confirmed inert for every committed QA script: `smoke.json`/`review.json` never leave more than milliseconds of real time between a `qa_command` and the next `screenshot` (synchronous calls, no intervening `wait_frames`), so the wall-clock path never fires during a scripted run — the two clean-run diffs below are unaffected.
+
+**Evidence:** `pass1/lineup_greek.png` (re-shot) shows "PAUSED" top-centre — the QA boot is paused by design, matching `qa_state().playing == false`; this is expected and correct (see `PLAY-14`), not a defect. Westley's interactive launch is untested from this session (same constraint the pass-1 doer noted — no display available here), but the code path is symmetric with the QA path already proven live, and PLAY-14's headless assertions exercise the same `_qa_mode`/`_set_playing` logic Godot runs when a real display is attached.
+
+### 2. No visible drag-select box
+
+**Root cause confirmed:** `hud._handle_left_release` always computed a `Rect2` for hit-testing but nothing was ever drawn — no `Control`, no `_draw()`, anywhere in the drag path.
+
+**Fix:** new `scenes/mockups/units/drag_box.gd` on a full-rect `Control` (`DragBox`, child of `HUD`, `mouse_filter = IGNORE`, `visible = false` at rest) drawing the brief's exact fill `(0.3, 0.8, 1.0, 0.08)` / edge `(0.3, 0.8, 1.0, 0.75)` width 1.5 via `_draw()`. `hud._unhandled_input` now tracks `InputEventMouseMotion` while `_dragging` and calls `_drag_box.set_rect(rect, true)` on press and every motion, `set_rect(Rect2(), false)` on release — `set_rect` toggles both `visible` and the internal `active` flag redrawn flag together, so `visible` is a true proxy for "box on screen," not just "control exists." `DRAG-13` proves all three states (hidden before any drag, visible mid-drag, hidden again after release) by calling `hud._unhandled_input` directly with synthetic press/motion/release events — the same code path real input drives.
+
+For QA scripts, the built-in `drag` verb is atomic (press, lerped moves, release, no callback in between), so a genuine mid-drag screenshot needed new driver-adjacent methods: `hud.qa_drag_start/qa_drag_to/qa_drag_end` (delegated from `units_mockup.gd`), each just constructing the matching `InputEvent` and calling `_unhandled_input` directly, callable individually via the harness's `call` verb. `qa/review.json` now does `qa_drag_start(150,450)` → `qa_drag_to(1750,650)` → `wait_frames 2` → `screenshot drag_mid` → `qa_drag_end` over the `lineup` scenario's six units (screen positions probed via `qa_state().units_px` first, 1920x1080). Both `drag_mid`/`drag_released` state dumps confirm `drag_active`/`drag_box_visible` flip correctly.
+
+**Evidence:** `pass1/drag_mid.png` — a light-blue-filled, blue-outlined rectangle spans the six lineup units exactly as pressed-and-dragged, matching the "no visible box... though it does work" complaint directly. `docs/northstar/research/mockups/units/pass1/drag_released.json`/`drag_mid.json` are not committed (the assertions live in `DRAG-13`); the screenshot is the visual proof.
+
+### 3 and 4. Edge scroll unreachable at 4480x1440 / edge scroll fires over the HUD
+
+Fixed by the paused-mid-run doer before this session resumed (commit `beced71`, `camera_rig.gd`/`hud.gd`); this session verified rather than re-derived. Root cause matches the brief exactly: `get_viewport().get_visible_rect().size`, read from `camera_rig.gd` (a bare `Node3D`, not a `Control`), reports the inflated `canvas_items` stretch space (see `scenes/mockups/_shared/README.md`'s documented fact), which is neither the canvas nor the real window — so on a window wider than that inflated space's right/bottom bounds, the zone is never reached. Fix tracks the mouse in canvas space via `_input`'s `InputEventMouseMotion.position` (never `get_viewport().get_mouse_position()`, which the shared README notes ignores synthetic/injected input), converts to real window pixels via `get_viewport().get_final_transform()`, and compares against `DisplayServer.window_get_size()` — both sides now the same space. Edge scroll is additionally suppressed whenever `get_viewport().gui_get_hovered_control() != null` or the mouse is inside the HUD panel's rect.
+
+**Evidence (`qa/edges.json`, `--res 2560x1440`, this session's run):**
+
+| case | `camera_pos` before | `camera_pos` after 30 frames | result |
+|---|---|---|---|
+| left (20, 720) | [4000, 4000] | [2450, 4000] | PASS (x decreases) |
+| right (2540, 720) | [4000, 4000] | [5550, 4000] | PASS (x increases) |
+| top (1280, 20) | [4000, 4000] | [4000, 2450] | PASS (z decreases) |
+| bottom (1280, 1420) | [4000, 4000] | [4000, 5550] | PASS (z increases) |
+| hud (235, 42), over the scenario dropdown | [4000, 4000] | [4000, 4000] | PASS (no pan) |
+
+Exit 0, 0 errors, one plant run each unaffected (plants don't touch camera code).
+
+## Determinism re-check (fix pass 2)
+
+Two independent `smoke.json` runs at 1280x720 after all four fixes: `exit.txt` 0/0, `errors.txt` 0/0, every `state` JSON identical except `timing_ms.tick_avg` (a measured wall-clock duration, expected to vary — unchanged finding from pass 1, not a regression), `hash`/`tick`/`playing`/`camera_pos`/`drag_active`/`drag_box_visible`/`pings_active`/unit positions all equal. Screenshot diff 0.000000 on `lineup_greek`, `fight_end`, `death_t20` (unchanged from pass 1's own oracle set). `scripts/mockup_verify.sh units` still `VERIFY OK` (18 checks now, +DRAG-13/PLAY-14/PING-15) and all 6 plants still report `PLANT <id> LIVE` with the same fail counts as pass 1 (pass 2's new checks are not plant-sensitive — none of the six plants touch input, pause state, or ping timing).

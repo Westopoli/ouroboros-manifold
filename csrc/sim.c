@@ -404,7 +404,7 @@ uint64_t om_world_step(om_world *w) {
              * across a border-only edge either way. See also: csrc/agent.c's
              * om_region_edge-driven neighbor scans (E-05 targeting reads any
              * edge type; this term is narrower -- trade or both only). */
-            int seen[64] = {0};
+            int seen[OM_MAX_REGIONS] = {0};
             for (uint32_t k = 0; k < r->n_neighbors; k++) {
                 uint32_t nidx = r->neighbors[k];
                 if (nidx >= w->n_regions) continue;

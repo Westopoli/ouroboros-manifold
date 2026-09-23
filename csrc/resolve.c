@@ -93,7 +93,7 @@ int om_intent_inject(om_world *w, int32_t faction_id, om_action action, uint32_t
         /* A telegraphed injection enters the pending list exactly like a
          * declared one (om_step_decisions), so it matures at tick + 3 via
          * om_step_telegraphs, not through this decision record. */
-        if (w->telegraphs_n >= 64) return -1;
+        if (w->telegraphs_n >= OM_MAX_REGIONS) return -1;
         om_telegraph *t = &w->telegraphs[w->telegraphs_n++];
         t->declared_tick = apply_tick;
         t->attacker = faction_id;
@@ -102,7 +102,7 @@ int om_intent_inject(om_world *w, int32_t faction_id, om_action action, uint32_t
         t->commit = commit;
     }
 
-    if (w->decisions_n >= 64) return -1;
+    if (w->decisions_n >= OM_MAX_REGIONS) return -1;
     om_decision *d = &w->decisions[w->decisions_n++];
     memset(d, 0, sizeof(*d));
     d->tick = apply_tick;
@@ -234,7 +234,7 @@ void om_step_telegraphs(om_world *w) {
         target->economy = fmax(8.0, target->economy + d_economy);
         target->tension = fmin(100.0, fmax(0.0, target->tension + d_tension));
 
-        if (w->attacks_n < 64) {
+        if (w->attacks_n < OM_MAX_REGIONS) {
             om_attack_result *r = &w->attacks[w->attacks_n];
             r->tick = w->tick;
             r->attacker = t->attacker;
@@ -308,7 +308,7 @@ void om_step_reinforce(om_world *w) {
         double variance = lo + (hi - lo) * u2;
         double d_military = base * variance;
         
-        if (w->reinforces_n < 64) {
+        if (w->reinforces_n < OM_MAX_REGIONS) {
             om_reinforce *r = &w->reinforces[w->reinforces_n];
             r->tick = w->tick;
             r->faction_id = f;
@@ -413,7 +413,7 @@ void om_step_resolve(om_world *w) {
         w->regions[target_idx].tension = tension;
 
         /* Record in w->attacks */
-        if (w->attacks_n < 64) {
+        if (w->attacks_n < OM_MAX_REGIONS) {
             om_attack_result *r = &w->attacks[w->attacks_n];
             r->tick = w->tick;
             r->attacker = attacker;
@@ -542,9 +542,26 @@ void om_step_resolve(om_world *w) {
         w->regions[target_idx].economy = economy;
         w->regions[target_idx].tension = tension;
         w->regions[target_idx].population = population;
-        
+
+        /* S-024 R-024-04: the colonized region's edges to the colonizer's own
+         * regions and to its cooperative partners' regions become BOTH.
+         * Colonize targets an unowned region, so there is no former owner to
+         * retype toward (unlike ALG-22 conquest above); every other edge
+         * (a hostile third party, say) is left as it was. */
+        for (uint32_t j = 0; j < w->n_regions; ++j) {
+            if (j == target_idx) continue;
+            om_edge_type et;
+            if (!om_region_edge(w, target_idx, j, &et)) continue;
+            int32_t nbr = w->regions[j].faction_id;
+            if (nbr == f) {
+                om_region_set_edge(w, target_idx, j, OM_EDGE_BOTH);
+            } else if (nbr >= 0 && w->faction_stance[f][nbr] == OM_STANCE_COOPERATIVE) {
+                om_region_set_edge(w, target_idx, j, OM_EDGE_BOTH);
+            }
+        }
+
         /* Record in w->colonizations */
-        if (w->colonizations_n < 64) {
+        if (w->colonizations_n < OM_MAX_REGIONS) {
             om_colonize_result *c = &w->colonizations[w->colonizations_n++];
             c->tick = w->tick;
             c->faction_id = f;

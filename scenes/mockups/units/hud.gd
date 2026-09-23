@@ -16,6 +16,7 @@ var _seed: int = 11
 var _regen_count: int = 0
 var _last_tick_avg_ms: float = 0.0
 var _playing: bool = false
+var _qa_mode: bool = false
 var _tick_accum: float = 0.0
 var _selected: Array = []
 var _drag_start: Vector2 = Vector2.ZERO
@@ -33,6 +34,8 @@ var _ground: MeshInstance3D
 @onready var _survivors_label: Label = $VBoxContainer/SurvivorsLabel
 @onready var _selected_label: Label = $VBoxContainer/SelectedLabel
 @onready var _log_label: Label = $VBoxContainer/LogLabel
+@onready var _paused_label: Label = $PausedLabel
+@onready var _drag_box: Control = $DragBox
 
 
 func _ready() -> void:
@@ -41,9 +44,17 @@ func _ready() -> void:
 	_view = get_node("../World/UnitView")
 	_ground = get_node("../World/Ground")
 
+	# QA drives ticks explicitly (qa_tick/wait_frames); the sim must stay paused under
+	# --qa-script and under the headless verify.gd boot, or wall-clock _process ticking
+	# would make screenshots and hashes non-deterministic. See scenes/mockups/_shared/README.md.
+	_qa_mode = OS.get_cmdline_user_args().has("--qa-script") or DisplayServer.get_name() == "headless"
+
 	for lbl in [_tick_label, _survivors_label, _selected_label, _log_label]:
 		lbl.add_theme_color_override("font_outline_color", Color.BLACK)
 		lbl.add_theme_constant_override("outline_size", 6)
+	_paused_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	_paused_label.add_theme_constant_override("outline_size", 8)
+	_paused_label.add_theme_font_size_override("font_size", 48)
 
 	_load_kits()
 	_load_scenarios()
@@ -80,7 +91,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		match event.keycode:
 			KEY_SPACE:
-				_playing = not _playing
+				_set_playing(not _playing)
 			KEY_T:
 				qa_tick(1)
 			KEY_R:
@@ -89,17 +100,28 @@ func _unhandled_input(event: InputEvent) -> void:
 				_toggle_kit()
 			KEY_F12:
 				_take_screenshot()
+	elif event is InputEventMouseMotion:
+		if _dragging:
+			_drag_box.set_rect(Rect2(_drag_start, Vector2.ZERO).expand((event as InputEventMouseMotion).position), true)
 	elif event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
 		if mb.button_index == MOUSE_BUTTON_LEFT:
 			if mb.pressed:
 				_drag_start = mb.position
 				_dragging = true
+				_drag_box.set_rect(Rect2(_drag_start, Vector2.ZERO), true)
 			elif _dragging:
 				_dragging = false
+				_drag_box.set_rect(Rect2(), false)
 				_handle_left_release(mb.position)
 		elif mb.button_index == MOUSE_BUTTON_RIGHT and mb.pressed:
 			_handle_right_click(mb.position)
+
+
+func _set_playing(v: bool) -> void:
+	_playing = v
+	_paused_label.visible = not _playing
+	_view.set_playing(_playing)
 
 
 func _handle_left_release(pos: Vector2) -> void:
@@ -137,6 +159,11 @@ func _pick_unit(pos: Vector2) -> int:
 func _handle_right_click(pos: Vector2) -> void:
 	if _selected.is_empty():
 		return
+	# Issuing an order resumes a paused interactive session (Mockup review 1: "units do not
+	# move"); QA scripts stay paused regardless so wall-clock _process ticking never runs
+	# during a scripted run (see the qa_mode determinism note in _ready()).
+	if not _playing and not _qa_mode:
+		_set_playing(true)
 	var enemy_uid := _pick_enemy(pos)
 	if enemy_uid != -1:
 		_sim.queue_command("attack_target", _selected.duplicate(), null, enemy_uid)
@@ -230,7 +257,7 @@ func _regenerate() -> void:
 	_view.sync(_sim.current_tick, _sim.units)
 	_update_ground_color()
 	_regen_count += 1
-	_playing = false
+	_set_playing(not _qa_mode)
 	_tick_accum = 0.0
 	_refresh_labels()
 
@@ -328,6 +355,28 @@ func qa_seed(n: int) -> void:
 	_regenerate()
 
 
+func qa_drag_start(x: float, y: float) -> void:
+	var down := InputEventMouseButton.new()
+	down.position = Vector2(x, y)
+	down.button_index = MOUSE_BUTTON_LEFT
+	down.pressed = true
+	_unhandled_input(down)
+
+
+func qa_drag_to(x: float, y: float) -> void:
+	var motion := InputEventMouseMotion.new()
+	motion.position = Vector2(x, y)
+	_unhandled_input(motion)
+
+
+func qa_drag_end(x: float, y: float) -> void:
+	var up := InputEventMouseButton.new()
+	up.position = Vector2(x, y)
+	up.button_index = MOUSE_BUTTON_LEFT
+	up.pressed = false
+	_unhandled_input(up)
+
+
 func qa_regenerate() -> void:
 	_view.set_roster(_roster)
 	_regenerate()
@@ -345,6 +394,8 @@ func qa_set(name: String, value) -> void:
 				_regenerate()
 		"kit":
 			_set_kit(String(value))
+		"playing":
+			_set_playing(bool(value))
 
 
 func get_sim() -> UnitsToySim:
@@ -382,12 +433,18 @@ func get_state_dict() -> Dictionary:
 	var bboxes := {}
 	for role in Roster.ROLE_ORDER:
 		bboxes[role] = _roster.get_silhouette(role).get("size", [0, 0, 0])
+	var pan: Vector2 = _camera_rig.get_pan_target()
 	return {
 		"seed": _seed,
 		"hash": _sim.compute_hash(),
 		"kit": _kit_name,
 		"scenario": _scenario_name,
 		"tick": _sim.current_tick,
+		"playing": _playing,
+		"camera_pos": [pan.x, pan.y],
+		"drag_active": _dragging,
+		"drag_box_visible": _drag_box.visible,
+		"pings_active": _view.pings_active(),
 		"alive": {"0": alive.get(0, 0), "1": alive.get(1, 0)},
 		"units": units_dict,
 		"units_px": units_px,

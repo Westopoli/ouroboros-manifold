@@ -37,11 +37,24 @@ func build_static(truth: FogTruth, dim: int, cell_size: float) -> void:
 	_cell_size = cell_size
 	_canvas = truth.canvas
 	_build_ground()
+	rebuild_terrain(truth)
+	_build_fog_mesh()
+
+
+func rebuild_terrain(truth: FogTruth) -> void:
+	_clear_children(_obstacles_node)
+	_clear_children(_zones_node)
+	_clear_children(_nodes_node)
+	_clear_children(_structures_node)
 	_build_obstacles(truth.obstacles)
 	_build_zones(truth.zones)
 	_build_nodes(truth.nodes)
 	_build_structures(truth.structures)
-	_build_fog_mesh()
+
+
+func _clear_children(node: Node3D) -> void:
+	for child in node.get_children():
+		child.free()
 
 
 func _build_ground() -> void:

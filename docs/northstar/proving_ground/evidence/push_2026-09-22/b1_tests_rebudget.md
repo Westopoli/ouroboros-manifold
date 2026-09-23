@@ -243,3 +243,62 @@ reorders `evt_evaluate_triggers` to the contract's per-region sequence
 six are red on `main`'s `events.c` stub for the stub's own reason (fires
 nothing / never consumes forced draws), confirmed by rerunning the same six
 ids against the repo-root `libouroboros.so` already built there.
+
+## Addendum 2026-09-22 (push_2026-09-22): R-027-06 tick-12 Diplomatic Incident confound
+
+B1-1 leaf (`origin/push/B1-1`, revolt-roll order fixed) reran this suite and
+found row 4 (`test_R_027_06_its_chain_tag_equals_root`) still red there for
+a second, order-independent reason: Region 1's tick-12 fixture jump
+(tension 20.0 -> 45.0, to satisfy Prosperity Unrest's `tension above 40`
+spawn condition) also freshly crosses Diplomatic Incident's own
+fresh-trigger threshold (`tension above 35`, epic table, no spawns), so
+`events_12` holds 2 records (`assert len(events_12) == 1` fails) regardless
+of draw order.
+
+**Old values (Region 1 only):** initial and tick-4 `set_region` calls used
+`tension=20.0, population=50.0`; tick-4 call used `economy=60.0`.
+
+**New values:** initial and tick-4 calls now use `tension=36.0,
+population=49.0`; tick-4 call uses `economy=56.0`. Tick-12's explicit
+`tension=45.0` is unchanged.
+
+**Why:** priming tension at 36.0 (above Diplomatic Incident's 35.0) from
+before the grace period marks it already breached (R-026-05), so the
+tick-12 rise to 45.0 is not a fresh crossing there — confirmed this alone
+insufficient by direct reproduction: Trade Boom's own effects at tick 4
+(economy +2, population +1) pushed the *old* economy=60.0 to 62.0 (crossing
+Cultural Renaissance's `economy above 60`) and population 50.0 to 51.0
+(crossing Harvest Surplus's `population above 50`) as same-tick-effect
+crossings evaluated fresh at tick 5 (R-026-07); those two templates'
+effects sum to tension -4, dropping tension from 37.0 back to 33.0 at tick
+5 and un-breaching Diplomatic Incident before tick 12, reproducing the same
+confound one tick later. Fixed by lowering Region 1's pre-effect economy to
+56.0 (Trade Boom's own fresh-trigger threshold is 55.0, so 56.0 still fires
+it; its +2 effect lands at 58.0, under Cultural Renaissance's 60.0) and
+population to 49.0 (Trade Boom's +1 effect lands at exactly 50.0, not above
+Harvest Surplus's 50.0 threshold). Traced field-by-field with a scratch
+ctypes driver against the B1-1 build calling `om_event_breached` and
+`om_region_field` every tick before settling on these values; confirmed no
+other table threshold sits in the intervals traversed (military held at
+50.0 throughout, at but not above Military Buildup's threshold; no other
+tension/economy/population threshold lies between the old and new values
+and their post-tick-12 endpoints). Draw budgets are unchanged (crossing
+detection consumes no draws in either fixture; the same five forced values
+at tick 4 and single value at tick 12 apply).
+
+**Verification:**
+1. Red at stub (main, `events.c` stub): `test_R_027_06_its_chain_tag_equals_root`
+   fails at `assert len(events_4) == 2`, gets `0` (stub fires nothing) —
+   same failure mode as before this fix.
+2. Green on the leaf: `git worktree add --detach /tmp/b1conf
+   origin/push/B1-1` (`38cd6b3`), built `libouroboros.so`/`libouroboros_dbg.so`,
+   copied the edited test file over the worktree's copy. Full S027 file: 7/7
+   passed. Other five E-04 files (`test_E04_S026_*`, `test_E04_S028_*`,
+   `test_E04_S029_*`, `test_E04_S030_*`, `test_E04_wiring.py`): 24/24 passed,
+   unchanged. Worktree removed, `git worktree prune` run.
+3. Rest of the S027 file unchanged on main: same 7 tests fail before and
+   after this edit (`test_R_027_01` through `test_R_027_07`), all for the
+   stub's pre-existing reasons, none newly broken.
+
+No assertion removed, weakened, or added; rule id and docstring unchanged;
+only Region 1's fixture field values changed as described above.

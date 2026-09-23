@@ -9,10 +9,13 @@ labelled values" convention, e.g. "..., rate `0.5`") and writes them as
 algorithms.md; only reads it.
 
 `--lint DIR`: fails on any bare numeric literal in DIR/*.c other than 0, 1,
--1, 2, an array size in a declaration, a #define line, or a sizeof(...)
-argument -- so a tuned constant lands in algorithms.md and this header, not
-scattered through the C. csrc/{sim,region,faction,agent,resolve}.c predate
-this lint; their current literals are grandfathered in
+-1, 2, 0.5, an array size in a declaration, a #define line, a sizeof(...)
+argument, or a literal inside a `/* constants-table: <bible citation> */`
+... `/* end constants-table */` fence (a cited data table, e.g. E-04's
+static event-template library, not a tuning constant) -- so a tuned
+constant lands in algorithms.md and this header, not scattered through the
+C. csrc/{sim,region,faction,agent,resolve}.c predate this lint; their
+current literals are grandfathered in
 docs/northstar/spec_factory/constants_allowlist.txt, keyed by
 file:token:occurrence (the n-th time that exact token text appears among a
 file's violations, top to bottom) so editing unrelated lines never shifts
@@ -35,7 +38,7 @@ REPO = Path(__file__).resolve().parents[2]
 ALGORITHMS_MD = REPO / "docs" / "bible" / "algorithms.md"
 ALLOWLIST_PATH = REPO / "docs" / "northstar" / "spec_factory" / "constants_allowlist.txt"
 GRANDFATHERED_FILES = {"sim.c", "region.c", "faction.c", "agent.c", "resolve.c"}
-ALWAYS_EXEMPT_VALUES = {0.0, 1.0, -1.0, 2.0}
+ALWAYS_EXEMPT_VALUES = {0.0, 1.0, -1.0, 2.0, 0.5}
 
 # --------------------------------------------------------------------- ALG parsing
 
@@ -474,8 +477,11 @@ LINE_COMMENT_RE = re.compile(r"//[^\n]*")
 STRING_RE = re.compile(r'"(?:[^"\\\n]|\\.)*"')
 CHAR_RE = re.compile(r"'(?:[^'\\\n]|\\.)*'")
 SIZEOF_RE = re.compile(r"sizeof\s*\([^()]*\)")
+TABLE_START_RE = re.compile(r"^\s*/\*\s*constants-table:\s*(.*?)\s*\*/\s*$")
+TABLE_END_RE = re.compile(r"^\s*/\*\s*end constants-table\s*\*/\s*$")
+TABLE_CITATION_RE = re.compile(r"docs/bible/|\bS-\d+\b|\bR-\d+-\d+\b|\bALG-\d+\b")
 TOKEN_RE = re.compile(
-    r"(?<![\w.])(-)?\b(\d+\.\d+(?:[eE][+-]?\d+)?[fFlL]?|\d+(?:[uUlL]*)|0[xX][0-9a-fA-F]+[uUlL]*)"
+    r"(?<![\w.])(-)?\b(\d+\.\d+(?:[eE][+-]?\d+)?[fFlL]?|\d+[eE][+-]?\d+[fFlL]?|\d+(?:[uUlL]*)|0[xX][0-9a-fA-F]+[uUlL]*)"
 )
 
 
@@ -516,6 +522,45 @@ def find_declaration_bracket_spans(line: str) -> list[tuple[int, int]]:
             if trail and trail[-1] == "]":
                 spans.append(bm.span())
     return spans
+
+
+def find_constants_table_spans(text: str, rel: str) -> tuple[set[int], list[str]]:
+    """[(exempt_lines, errors)] -- `exempt_lines` is the set of 1-based
+    line numbers inside a well-formed `constants-table` fence: a
+    `/* constants-table: <citation> */` line naming a bible path
+    (`docs/bible/...`) or section id (`S-###`, `R-###-##`, `ALG-##`),
+    closed by a matching `/* end constants-table */` line before EOF or
+    the next start marker. A fence with no citation, an unrecognized
+    citation, one still open at EOF, or a start marker nested inside
+    another open fence each append an error message and exempt nothing
+    for that fence."""
+    exempt: set[int] = set()
+    errors: list[str] = []
+    in_block = False
+    block_start = 0
+    block_valid = False
+    for lineno, line in enumerate(text.splitlines(), start=1):
+        start_m = TABLE_START_RE.match(line)
+        end_m = TABLE_END_RE.match(line)
+        if start_m:
+            if in_block:
+                errors.append(f"FAIL {rel}:{lineno} nested constants-table marker")
+                continue
+            citation = start_m.group(1).strip()
+            block_valid = bool(citation) and bool(TABLE_CITATION_RE.search(citation))
+            if not block_valid:
+                errors.append(f"FAIL {rel}:{lineno} constants-table without a bible citation")
+            in_block = True
+            block_start = lineno
+            continue
+        if end_m and in_block:
+            if block_valid:
+                exempt.update(range(block_start, lineno + 1))
+            in_block = False
+            continue
+    if in_block:
+        errors.append(f"FAIL {rel}:{block_start} unterminated constants-table block")
+    return exempt, errors
 
 
 def find_violations(text: str) -> list[tuple[int, int, str]]:
@@ -602,9 +647,17 @@ def load_allowlist() -> Allowlist:
     return parse_allowlist_lines(ALLOWLIST_PATH.read_text().splitlines())
 
 
-def lint_file_violations(rel: str, text: str, allowlist: Allowlist, grandfathered: bool) -> list[str]:
+def lint_file_violations(
+    rel: str,
+    text: str,
+    allowlist: Allowlist,
+    grandfathered: bool,
+    exempt_lines: frozenset[int] = frozenset(),
+) -> list[str]:
     messages = []
     for lineno, col, token, occurrence in find_violations_with_occurrence(text):
+        if lineno in exempt_lines:
+            continue
         if grandfathered and allowlist.contains(rel, lineno, col, token, occurrence):
             continue
         messages.append(f"FAIL {rel}:{lineno} bare literal `{token}`")
@@ -623,17 +676,24 @@ def cmd_lint(csrc_dir: Path) -> int:
     allowlist = (parse_allowlist_lines(tree_allowlist.read_text().splitlines())
                  if tree_allowlist.is_file() else load_allowlist())
     messages = []
+    exempted_total = 0
     for c_file in sorted(csrc_dir.glob("*.c")):
         text = c_file.read_text()
         rel = str(c_file.resolve().relative_to(tree))
         grandfathered = c_file.name in GRANDFATHERED_FILES
-        messages.extend(lint_file_violations(rel, text, allowlist, grandfathered))
+        exempt_lines, table_errors = find_constants_table_spans(text, rel)
+        messages.extend(table_errors)
+        exempted_total += sum(
+            1 for lineno, _col, _token, _occ in find_violations_with_occurrence(text)
+            if lineno in exempt_lines
+        )
+        messages.extend(lint_file_violations(rel, text, allowlist, grandfathered, frozenset(exempt_lines)))
     for m in messages:
         print(m)
     if messages:
-        print(f"CONSTANTS LINT FAILED ({len(messages)})")
+        print(f"CONSTANTS LINT FAILED ({len(messages)}) ({exempted_total} table literals exempted)")
         return 1
-    print("CONSTANTS LINT OK")
+    print(f"CONSTANTS LINT OK ({exempted_total} table literals exempted)")
     return 0
 
 

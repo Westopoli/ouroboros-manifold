@@ -8,8 +8,12 @@
 #include "ouroboros_sim.h"
 
 #define OM_MAX_NEIGHBORS 32
-#define OM_MAX_REGIONS 64
+/* F2d: raised 64 -> 128 so every region-indexed and per-tick-record bound
+ * covers E-03's full draw range (OM_WORLD_REGION_COUNT_RANGE_HI = 110,
+ * om_constants.h). */
+#define OM_MAX_REGIONS 128
 #define OM_DAMAGE_HISTORY_CAP 64
+#define OM_TIE_EPSILON 1e-12
 
 typedef struct {
     om_tier  tier;
@@ -60,27 +64,29 @@ struct om_world {
     int          faction_used[OM_MAX_FACTIONS];
     uint32_t     faction_n;
     int64_t     *region_held_since;
-    om_edge_type region_edge[64][64];
+    om_edge_type region_edge[OM_MAX_REGIONS][OM_MAX_REGIONS];
     uint64_t     rng_state, rng_inc;
     double       rng_forced[4096];
     uint32_t     rng_forced_head, rng_forced_len;
 
-    /* E-05 decision and resolution state */
-    om_decision        decisions[64];
+    /* E-05 decision and resolution state. Each log holds at most one record
+     * per region per tick, so it is sized OM_MAX_REGIONS (F2d), matching the
+     * n_regions bound every writer already loops on. */
+    om_decision        decisions[OM_MAX_REGIONS];
     uint32_t           decisions_n;
-    om_telegraph       telegraphs[64];
+    om_telegraph       telegraphs[OM_MAX_REGIONS];
     uint32_t           telegraphs_n;
-    om_attack_result   attacks[64];
+    om_attack_result   attacks[OM_MAX_REGIONS];
     uint32_t           attacks_n;
-    om_collision       collisions[64];
+    om_collision       collisions[OM_MAX_REGIONS];
     uint32_t           collisions_n;
-    om_reinforce       reinforces[64];
+    om_reinforce       reinforces[OM_MAX_REGIONS];
     uint32_t           reinforces_n;
-    om_colonize_result colonizations[64];
+    om_colonize_result colonizations[OM_MAX_REGIONS];
     uint32_t           colonizations_n;
-    om_friction        frictions[64];
+    om_friction        frictions[OM_MAX_REGIONS];
     uint32_t           frictions_n;
-    om_admin_roll      admin_rolls[64];
+    om_admin_roll      admin_rolls[OM_MAX_REGIONS];
     uint32_t           admin_rolls_n;
 
     /* event queue, shared with E-04 (ouroboros_sim.h ~line 454): entries are
@@ -107,6 +113,48 @@ struct om_world {
     om_template faction_template[OM_MAX_FACTIONS];
     int         generated;
     uint32_t    edge_count;
+
+    /* F2c: E-07 lifecycle storage (docs/bible/epics/E-07-civilizational-lifecycle.md,
+     * ALG-41..44). csrc/lifecycle.c (card B6) is the sole writer; these are
+     * distinct from E-05's admin_rolls[] above (S-040 admin revolts, not
+     * lifecycle revolts). Named lc_* so a lifecycle revolt/reversion/
+     * absorption is never confused with an E-05 record of the same shape.
+     * Per-tick logs like attacks[]/reinforces[]/decisions[] above: the tests
+     * (tests/csim/test_E07_S049/S050/S051) only ever check a log for the
+     * same tick that produced the record, so om_step_lifecycle must zero
+     * lc_revolts_n/lc_reversions_n/lc_absorptions_n at its own top, the way
+     * om_step_resolve zeros attacks_n (csrc/resolve.c) -- not done here
+     * because om_step_lifecycle's body is card B6's, not F2c's. */
+    om_revolt_record     lc_revolts[OM_MAX_REGIONS];
+    uint32_t             lc_revolts_n;
+    om_reversion_record  lc_reversions[OM_MAX_REGIONS];
+    uint32_t             lc_reversions_n;
+    om_absorption_record lc_absorptions[OM_MAX_REGIONS];
+    uint32_t             lc_absorptions_n;
+    uint64_t faction_created_tick[OM_MAX_FACTIONS];
+    int      faction_conquered_this_tick[OM_MAX_FACTIONS];
+    uint32_t faction_window_total[OM_MAX_FACTIONS];
+    uint32_t faction_window_revolts[OM_MAX_FACTIONS];
+    uint32_t faction_window_attacks[OM_MAX_FACTIONS];
+    uint32_t faction_window_colonizations[OM_MAX_FACTIONS];
+    /* -1 default (no previous owner). Lazily calloc'd on first write, same
+     * convention as region_held_since above: NULL until
+     * om_region_set_previous_owner's first call, -1 returned by
+     * om_region_previous_owner while NULL (both in csrc/lifecycle.c,
+     * card B6). Unlike region_held_since, om_world_free below does free
+     * this one -- region_held_since's own leak is pre-existing and out of
+     * F2c's scope. */
+    int32_t *region_previous_owner;
+
+    /* tactical modules keep per-world state here, never in file statics
+     * keyed by om_world* (save/load and the checksum must see it) */
+    void *tactical_state;
+    void (*tactical_state_free)(void *);
+
+    /* Bumped from a file-static counter in om_world_new (csrc/region.c),
+     * starting at 1: a cheap way for any module to detect a reused
+     * om_world* address (e.g. a stale cached pointer after free/realloc). */
+    uint64_t world_serial;
 };
 
 /* Debug-build mirror of the E-03 generation fields above, for the F2b storage

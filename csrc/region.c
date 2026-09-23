@@ -6,9 +6,9 @@
 #include <string.h>
 #include <math.h>
 
+static uint64_t om_world_serial_counter = 1;
 
 om_world *om_world_new(uint32_t n_regions, uint64_t seed) {
-    if (n_regions == 0) return NULL;
     om_world *w = calloc(1, sizeof(om_world));
     if (!w) return NULL;
     w->n_regions = n_regions;
@@ -20,13 +20,20 @@ om_world *om_world_new(uint32_t n_regions, uint64_t seed) {
      * default of 0 collided with it and every debug-build world ran with
      * that fault active until some other bug was deliberately injected. */
     w->inject = -1;
-    w->regions = calloc(n_regions, sizeof(om_region));
-    if (!w->regions) {
-        free(w);
-        return NULL;
-    }
-    for (uint32_t i = 0; i < n_regions; i++) {
-        w->regions[i].faction_id = -1;
+    /* F2d: n_regions == 0 defers the count to om_world_generate() (E-03,
+     * ouroboros_sim.h ~line 693-694); regions/n_regions stay NULL/0 here and
+     * csrc/worldgen.c's om_world_generate allocates w->regions itself. */
+    if (n_regions > 0) {
+        w->regions = calloc(n_regions, sizeof(om_region));
+        if (!w->regions) {
+            free(w);
+            return NULL;
+        }
+        for (uint32_t i = 0; i < n_regions; i++) {
+            w->regions[i].faction_id = -1;
+        }
+    } else {
+        w->regions = NULL;
     }
     /* D1 (two-day-push brief, decision 4): om_world_new() sets no feature.
      * conftest.py's world_factory applies each test's epic feature set from
@@ -60,6 +67,26 @@ om_world *om_world_new(uint32_t n_regions, uint64_t seed) {
     }
     w->generated = 0;
     w->edge_count = 0;
+
+    /* F2c: E-07 lifecycle log/window/tactical-state storage. calloc above
+     * already zeroes these; set explicitly so this list is the field list. */
+    w->lc_revolts_n = 0;
+    w->lc_reversions_n = 0;
+    w->lc_absorptions_n = 0;
+    for (uint32_t i = 0; i < OM_MAX_FACTIONS; i++) {
+        w->faction_created_tick[i] = 0;
+        w->faction_conquered_this_tick[i] = 0;
+        w->faction_window_total[i] = 0;
+        w->faction_window_revolts[i] = 0;
+        w->faction_window_attacks[i] = 0;
+        w->faction_window_colonizations[i] = 0;
+    }
+    /* NULL until first om_region_set_previous_owner call; getter returns
+     * -1 while NULL (same convention as region_held_since). */
+    w->region_previous_owner = NULL;
+    w->tactical_state = NULL;
+    w->tactical_state_free = NULL;
+    w->world_serial = om_world_serial_counter++;
     return w;
 }
 
@@ -81,6 +108,10 @@ void om_debug_gen_config(const om_world *w, om_debug_gen_config_row *out) {
 
 void om_world_free(om_world *w) {
     if (!w) return;
+    if (w->tactical_state && w->tactical_state_free) {
+        w->tactical_state_free(w->tactical_state);
+    }
+    free(w->region_previous_owner);
     free(w->regions);
     free(w->trace);
     free(w);
