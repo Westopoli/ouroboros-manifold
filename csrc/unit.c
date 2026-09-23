@@ -134,6 +134,78 @@
  * hanging the test process. */
 #define OM_TACTICAL_MAX_RUN_TICKS 1000000
 
+/* S-086/ALG-63: one ability per unit type, exact numbers per
+ * tests/csim/test_E11_S086_one_ability_each.py. OM_FORTIFY_RADIUS,
+ * OM_INTERCEPT_DETECTION_RADIUS, OM_AOE_DAMAGE_CAP_MULTIPLIER and the
+ * Warden aura constants already live in om_constants.h (ALG-60/61/63) and
+ * are reused here rather than redefined. */
+#define OM_ABILITY_SURGE_DURATION_TICKS 60
+#define OM_ABILITY_SURGE_SPEED_MULT 2.5
+#define OM_ABILITY_SURGE_OUTPUT_MULT 2.0
+#define OM_ABILITY_SURGE_COOLDOWN_TICKS 1500.0
+
+#define OM_ABILITY_INTERCEPT_SPEED_MULT 1.8
+#define OM_ABILITY_INTERCEPT_OUTPUT_MULT 1.5
+#define OM_ABILITY_INTERCEPT_COOLDOWN_TICKS 600.0
+
+#define OM_ABILITY_BRACE_WINDUP_TICKS 40
+#define OM_ABILITY_BRACE_DAMAGE_REDUCTION 0.50
+#define OM_ABILITY_BRACE_OUTPUT_MULT 1.3
+#define OM_ABILITY_BRACE_COOLDOWN_TICKS 700.0
+
+#define OM_ABILITY_RALLY_HEAL_AMOUNT 112.0
+#define OM_ABILITY_RALLY_RADIUS 400.0
+#define OM_ABILITY_RALLY_COOLDOWN_TICKS 1500.0
+/* Auto-trigger only ("a damaged friendly", R-086-08) reads as meaningfully
+ * wounded, not merely off full HP: test_R_083_03 (must stay green) has a
+ * Warden with a friendly at 400/500 HP (0.80) in radius that must NOT
+ * auto-fire Rally (only the passive aura applies that tick), while
+ * test_R_086_08 has one at 200/500 (0.40) that must. 0.5 cleanly separates
+ * them; the manual/instant heal itself (om_ability_do_rally) has no such
+ * gate -- it heals every friendly in radius regardless of current HP,
+ * per R-086-04. */
+#define OM_ABILITY_RALLY_AUTOTRIGGER_HP_FRACTION 0.5
+
+#define OM_ABILITY_BARRAGE_TELEGRAPH_TICKS 30
+#define OM_ABILITY_BARRAGE_DAMAGE_MULT 3.0
+#define OM_ABILITY_BARRAGE_RADIUS 100.0
+#define OM_ABILITY_BARRAGE_COOLDOWN_TICKS 1800.0
+
+#define OM_ABILITY_FORTIFY_DURATION_TICKS 400
+#define OM_ABILITY_FORTIFY_DAMAGE_REDUCTION 0.20
+#define OM_ABILITY_FORTIFY_SPEED_MULT 0.4
+#define OM_ABILITY_FORTIFY_COOLDOWN_TICKS 1400.0
+
+#define OM_ABILITY_DAMAGE_REDUCTION_CAP 0.9
+
+#define OM_ABILITY_EVENT_BUFFER_CAP 256
+
+#define OM_ABILITY_PHASE_IDLE 0
+#define OM_ABILITY_PHASE_WINDUP 1
+#define OM_ABILITY_PHASE_ACTIVE 2
+#define OM_ABILITY_PHASE_CANCELING 3
+#define OM_ABILITY_PHASE_TELEGRAPH 4
+
+/* S-088 render-facing metadata. om_cue_lookup and the Barrage activation
+ * site below both read OM_CUE_BARRAGE_TELEGRAPH as their one shared source
+ * of truth, so a name looked up by the renderer and the id stamped on the
+ * event always agree. */
+#define OM_CUE_NONE 0
+#define OM_CUE_BARRAGE_TELEGRAPH 1
+
+/* Strike squads render as several small craft sharing one HP bar/position
+ * (R-088-01); every other category is a single hull, so 1 is the natural
+ * default. */
+#define OM_RENDER_CRAFT_COUNT_STRIKE 4
+#define OM_RENDER_CRAFT_COUNT_DEFAULT 1
+
+/* R-088-03: silhouette size keyed on category with a clear gap between
+ * tiers -- Strike smallest, Line middle, Siege largest, regardless of any
+ * per-unit variation within a category. */
+#define OM_RENDER_SILHOUETTE_STRIKE 10.0
+#define OM_RENDER_SILHOUETTE_LINE 20.0
+#define OM_RENDER_SILHOUETTE_SIEGE 30.0
+
 typedef struct {
     int    category;
     double max_hp;
@@ -161,6 +233,16 @@ typedef struct {
     double   attack_range;
     double   cooldown;
     uint32_t target_id;
+    /* S-086 ability state: OM_ABILITY_PHASE_*, per-phase countdown, whether
+     * the phase's bonus is currently granted (distinguishes Brace windup
+     * from active/canceling), the ability's own cooldown (distinct from
+     * `cooldown` above, which is the ordinary attack timer), and the
+     * Bombard's recorded Barrage target. */
+    int      ability_phase;
+    int      ability_bonus_on;
+    uint32_t ability_ticks_remaining;
+    double   ability_cooldown;
+    double   ability_target_x, ability_target_y;
 } om_unit_row;
 
 typedef struct {
@@ -175,6 +257,11 @@ typedef struct {
     uint32_t            next_unit_id;
     om_custom_type_row  custom_types[OM_MAX_CUSTOM_TYPES];
     uint32_t            n_custom_types;
+    /* S-086 ability-event feed: drained on read (om_tick_read_ability_events)
+     * -- see the end of the file. */
+    om_ability_event    ability_events[OM_ABILITY_EVENT_BUFFER_CAP];
+    uint32_t            n_ability_events;
+    uint64_t            current_tick;
 } om_tac_state;
 
 static void om_tac_state_free(void *p) {
@@ -447,15 +534,362 @@ static void om_tactical_apply_aura_regen(om_world *w) {
 
 /* ---- end B10-1/B10-2 tactical state ---- */
 
-uint64_t om_tactical_step(om_world *w) {
-    om_tactical_apply_aura_regen(w);
+/* ---- B10-3: S-086 one ability each ----
+ * Two independent activation paths onto the same per-unit ability state:
+ * om_command_activate_ability (manual, checks only cooldown/already-active,
+ * Brace excepted) and om_ability_autotrigger_scan (runs every tactical
+ * tick over every unit regardless of faction; Intercept only ever fires
+ * this way). Ability id == unit_type (1:1, OMAbility in the test file
+ * matches OMUnitType by declared order). */
+
+static int om_tac_dist_le(double dx, double dy, double r) {
+    return (dx * dx + dy * dy) <= (r * r);
+}
+
+static int om_tac_enemy_within_range(const om_tac_state *st, const om_unit_row *self, double range) {
+    uint32_t j;
+    for (j = 0; j < st->n_units; j++) {
+        const om_unit_row *cand = &st->units[j];
+        if (!cand->in_use || cand->hp <= 0.0) continue;
+        if (cand->faction_id == self->faction_id) continue;
+        if (cand->layer != self->layer) continue;
+        if (om_tac_dist_le(cand->x - self->x, cand->y - self->y, range)) return 1;
+    }
     return 0;
+}
+
+static om_unit_row *om_tac_nearest_enemy_within_range(om_tac_state *st, const om_unit_row *self, double range) {
+    om_unit_row *best = NULL;
+    double best_d2 = 0.0, r2 = range * range;
+    uint32_t j;
+    for (j = 0; j < st->n_units; j++) {
+        om_unit_row *cand = &st->units[j];
+        double dx, dy, d2;
+        if (!cand->in_use || cand->hp <= 0.0) continue;
+        if (cand->faction_id == self->faction_id) continue;
+        if (cand->layer != self->layer) continue;
+        dx = cand->x - self->x; dy = cand->y - self->y; d2 = dx * dx + dy * dy;
+        if (d2 > r2) continue;
+        if (!best || d2 < best_d2) { best = cand; best_d2 = d2; }
+    }
+    return best;
+}
+
+static int om_tac_enemy_category_within(const om_tac_state *st, const om_unit_row *self, int category, double range) {
+    uint32_t j;
+    for (j = 0; j < st->n_units; j++) {
+        const om_unit_row *cand = &st->units[j];
+        if (!cand->in_use || cand->hp <= 0.0) continue;
+        if (cand->faction_id == self->faction_id) continue;
+        if (cand->layer != self->layer) continue;
+        if (cand->category != category) continue;
+        if (om_tac_dist_le(cand->x - self->x, cand->y - self->y, range)) return 1;
+    }
+    return 0;
+}
+
+static int om_tac_badly_damaged_friendly_within(const om_tac_state *st, const om_unit_row *self, double range) {
+    uint32_t j;
+    for (j = 0; j < st->n_units; j++) {
+        const om_unit_row *cand = &st->units[j];
+        if (!cand->in_use || cand->hp <= 0.0) continue;
+        if (cand->faction_id != self->faction_id) continue;
+        if (cand->hp >= cand->max_hp * OM_ABILITY_RALLY_AUTOTRIGGER_HP_FRACTION) continue;
+        if (om_tac_dist_le(cand->x - self->x, cand->y - self->y, range)) return 1;
+    }
+    return 0;
+}
+
+static int om_tac_count_friendlies_within(const om_tac_state *st, const om_unit_row *self, double range) {
+    uint32_t j;
+    int n = 0;
+    for (j = 0; j < st->n_units; j++) {
+        const om_unit_row *cand = &st->units[j];
+        if (!cand->in_use || cand->hp <= 0.0) continue;
+        if (cand == self) continue;
+        if (cand->faction_id != self->faction_id) continue;
+        if (om_tac_dist_le(cand->x - self->x, cand->y - self->y, range)) n++;
+    }
+    return n;
+}
+
+/* Every activation (manual or auto) appends one event, tagged with the
+ * tick it will be visible on: current_tick + 1, since an event created by
+ * a command issued between tactical_step calls (or by the autotrigger scan
+ * running inside the current call, before current_tick's own increment)
+ * both become observable once the in-flight tick finishes advancing --
+ * this is what makes test_R_086_09's `evt.tick == om_tactical_tick(w)`
+ * hold for a Surge activated before any step and read after exactly one. */
+static void om_ability_emit_event(om_tac_state *st, const om_unit_row *u, double target_x, double target_y,
+                                   uint32_t duration, uint32_t telegraph_ticks, uint32_t cue_id, double radius) {
+    om_ability_event *evt;
+    if (st->n_ability_events >= OM_ABILITY_EVENT_BUFFER_CAP) return;
+    evt = &st->ability_events[st->n_ability_events++];
+    evt->tick = st->current_tick + 1;
+    evt->unit_id = u->unit_id;
+    evt->ability_id = u->unit_type;
+    evt->target_x = target_x;
+    evt->target_y = target_y;
+    evt->duration = duration;
+    evt->telegraph_ticks = telegraph_ticks;
+    evt->cue_id = cue_id;
+    evt->radius = radius;
+}
+
+static void om_ability_start_surge(om_tac_state *st, om_unit_row *u) {
+    u->ability_phase = OM_ABILITY_PHASE_ACTIVE;
+    u->ability_ticks_remaining = OM_ABILITY_SURGE_DURATION_TICKS;
+    u->ability_bonus_on = 1;
+    u->ability_cooldown = 0.0;
+    om_ability_emit_event(st, u, u->x, u->y, OM_ABILITY_SURGE_DURATION_TICKS, 0, OM_CUE_NONE, 0.0);
+}
+
+/* R-086-03: reactivating while braced (windup, active, or already
+ * canceling) does not reject or stack -- it cancels the current brace
+ * through a mirrored 40-tick window (ability_bonus_on frozen at whatever
+ * it already was: 0 mid-windup, 1 once active), ending fully idle when
+ * that window elapses; see test_R_086_03's post-reactivation assertions. */
+static void om_ability_start_or_cancel_brace(om_tac_state *st, om_unit_row *u) {
+    if (u->ability_phase == OM_ABILITY_PHASE_IDLE) {
+        u->ability_phase = OM_ABILITY_PHASE_WINDUP;
+        u->ability_ticks_remaining = OM_ABILITY_BRACE_WINDUP_TICKS;
+        u->ability_bonus_on = 0;
+    } else {
+        u->ability_phase = OM_ABILITY_PHASE_CANCELING;
+        u->ability_ticks_remaining = OM_ABILITY_BRACE_WINDUP_TICKS;
+    }
+    u->ability_cooldown = OM_ABILITY_BRACE_COOLDOWN_TICKS;
+    om_ability_emit_event(st, u, u->x, u->y, OM_ABILITY_BRACE_WINDUP_TICKS, 0, OM_CUE_NONE, 0.0);
+}
+
+static void om_ability_do_rally(om_tac_state *st, om_unit_row *u) {
+    uint32_t j;
+    for (j = 0; j < st->n_units; j++) {
+        om_unit_row *cand = &st->units[j];
+        if (!cand->in_use || cand->hp <= 0.0) continue;
+        if (cand->faction_id != u->faction_id) continue;
+        if (!om_tac_dist_le(cand->x - u->x, cand->y - u->y, OM_ABILITY_RALLY_RADIUS)) continue;
+        cand->hp += OM_ABILITY_RALLY_HEAL_AMOUNT;
+        if (cand->hp > cand->max_hp) cand->hp = cand->max_hp;
+    }
+    u->ability_cooldown = OM_ABILITY_RALLY_COOLDOWN_TICKS;
+    om_ability_emit_event(st, u, u->x, u->y, 0, 0, OM_CUE_NONE, OM_ABILITY_RALLY_RADIUS);
+}
+
+static void om_ability_start_barrage(om_tac_state *st, om_unit_row *u, double target_x, double target_y) {
+    u->ability_phase = OM_ABILITY_PHASE_TELEGRAPH;
+    u->ability_ticks_remaining = OM_ABILITY_BARRAGE_TELEGRAPH_TICKS;
+    u->ability_target_x = target_x;
+    u->ability_target_y = target_y;
+    u->ability_cooldown = 0.0;
+    om_ability_emit_event(st, u, target_x, target_y, OM_ABILITY_BARRAGE_TELEGRAPH_TICKS,
+                          OM_ABILITY_BARRAGE_TELEGRAPH_TICKS,
+                          om_cue_lookup("cue_barrage_telegraph"), OM_ABILITY_BARRAGE_RADIUS);
+}
+
+/* R-086-05/ALG-61: base * 3.0 through the S-081 category multiplier
+ * (om_resolve_hit_multiplier, same helper the ordinary attack path uses,
+ * including the Bastion siege exception), unit-id order, running total
+ * capped at 4 * (base * 3.0). */
+static void om_ability_resolve_barrage_damage(om_world *w, om_tac_state *st, om_unit_row *u) {
+    double per_hit_base = u->base_damage * OM_ABILITY_BARRAGE_DAMAGE_MULT;
+    double cap = per_hit_base * OM_AOE_DAMAGE_CAP_MULTIPLIER;
+    double total = 0.0;
+    uint32_t j;
+    for (j = 0; j < st->n_units; j++) {
+        om_unit_row *cand = &st->units[j];
+        double mult, dmg, remaining;
+        if (!cand->in_use || cand->hp <= 0.0) continue;
+        if (cand->faction_id == u->faction_id) continue;
+        if (cand->layer != u->layer) continue;
+        if (!om_tac_dist_le(cand->x - u->ability_target_x, cand->y - u->ability_target_y, OM_ABILITY_BARRAGE_RADIUS)) continue;
+        if (total >= cap) break;
+        mult = om_resolve_hit_multiplier(w, u->category, cand);
+        dmg = per_hit_base * mult;
+        remaining = cap - total;
+        if (dmg > remaining) dmg = remaining;
+        cand->hp -= dmg;
+        if (cand->hp < 0.0) cand->hp = 0.0;
+        total += dmg;
+    }
+}
+
+static void om_ability_start_fortify(om_tac_state *st, om_unit_row *u) {
+    u->ability_phase = OM_ABILITY_PHASE_ACTIVE;
+    u->ability_ticks_remaining = OM_ABILITY_FORTIFY_DURATION_TICKS;
+    u->ability_bonus_on = 1;
+    u->ability_cooldown = OM_ABILITY_FORTIFY_COOLDOWN_TICKS;
+    om_ability_emit_event(st, u, u->x, u->y, OM_ABILITY_FORTIFY_DURATION_TICKS, 0, OM_CUE_NONE, OM_FORTIFY_RADIUS);
+}
+
+/* R-086-02: never manually activated -- always rejected here, regardless
+ * of cooldown/phase. R-086-03: Brace is the one manual-activation special
+ * case (never rejected while eligible at all -- reactivating while braced
+ * cancels and restarts instead). Every other ability follows the plain
+ * "off cooldown and not already in progress" rule (R-086-07). */
+static int om_ability_can_manually_activate(const om_unit_row *u) {
+    if (u->unit_type == OM_UT_INTERCEPTOR) return 0;
+    if (u->unit_type == OM_UT_VANGUARD) return 1;
+    if (u->ability_phase != OM_ABILITY_PHASE_IDLE) return 0;
+    if (u->ability_cooldown > 0.0) return 0;
+    return 1;
+}
+
+static void om_ability_manual_activate(om_world *w, om_tac_state *st, om_unit_row *u, double target_x, double target_y) {
+    switch (u->unit_type) {
+        case OM_UT_RAIDER:   om_ability_start_surge(st, u); break;
+        case OM_UT_VANGUARD: om_ability_start_or_cancel_brace(st, u); break;
+        case OM_UT_WARDEN:   om_ability_do_rally(st, u); break;
+        case OM_UT_BOMBARD:  om_ability_start_barrage(st, u, target_x, target_y); break;
+        case OM_UT_BASTION:  om_ability_start_fortify(st, u); break;
+        default: (void)w; break;
+    }
+}
+
+/* R-086-08: runs every tactical tick over every unit regardless of
+ * faction -- the mechanism is not faction-gated, only the threshold is.
+ * Intercept always fires this way (never manually); the other five are
+ * eligible here too, using each ability owner's own attack_range for the
+ * "enemy in range" threshold (Surge/Brace/Barrage), a damaged friendly in
+ * OM_ABILITY_RALLY_RADIUS (Rally), or 2+ friendlies in OM_FORTIFY_RADIUS
+ * (Fortify). */
+static void om_ability_autotrigger_scan(om_tac_state *st) {
+    uint32_t i;
+    for (i = 0; i < st->n_units; i++) {
+        om_unit_row *u = &st->units[i];
+        if (!u->in_use || u->hp <= 0.0) continue;
+        if (u->ability_phase != OM_ABILITY_PHASE_IDLE) continue;
+        if (u->ability_cooldown > 0.0) continue;
+        switch (u->unit_type) {
+            case OM_UT_INTERCEPTOR:
+                if (om_tac_enemy_category_within(st, u, OM_CAT_STRIKE, OM_INTERCEPT_DETECTION_RADIUS)) {
+                    u->ability_phase = OM_ABILITY_PHASE_ACTIVE;
+                    u->ability_bonus_on = 1;
+                    om_ability_emit_event(st, u, u->x, u->y, 0, 0, OM_CUE_NONE, OM_INTERCEPT_DETECTION_RADIUS);
+                }
+                break;
+            case OM_UT_RAIDER:
+                if (om_tac_enemy_within_range(st, u, u->attack_range)) om_ability_start_surge(st, u);
+                break;
+            case OM_UT_VANGUARD:
+                if (om_tac_enemy_within_range(st, u, u->attack_range)) om_ability_start_or_cancel_brace(st, u);
+                break;
+            case OM_UT_WARDEN:
+                if (om_tac_badly_damaged_friendly_within(st, u, OM_ABILITY_RALLY_RADIUS)) om_ability_do_rally(st, u);
+                break;
+            case OM_UT_BOMBARD: {
+                om_unit_row *tgt = om_tac_nearest_enemy_within_range(st, u, u->attack_range);
+                if (tgt) om_ability_start_barrage(st, u, tgt->x, tgt->y);
+                break;
+            }
+            case OM_UT_BASTION:
+                if (om_tac_count_friendlies_within(st, u, OM_FORTIFY_RADIUS) >= 2) om_ability_start_fortify(st, u);
+                break;
+            default: break;
+        }
+    }
+}
+
+static void om_ability_tick_surge(om_unit_row *u) {
+    if (u->ability_phase != OM_ABILITY_PHASE_ACTIVE) return;
+    if (u->ability_ticks_remaining > 0) {
+        u->ability_ticks_remaining--;
+    } else {
+        u->ability_phase = OM_ABILITY_PHASE_IDLE;
+        u->ability_bonus_on = 0;
+        u->ability_cooldown = OM_ABILITY_SURGE_COOLDOWN_TICKS;
+    }
+}
+
+static void om_ability_tick_brace(om_unit_row *u) {
+    if (u->ability_phase != OM_ABILITY_PHASE_WINDUP && u->ability_phase != OM_ABILITY_PHASE_CANCELING) return;
+    if (u->ability_ticks_remaining > 0) {
+        u->ability_ticks_remaining--;
+        return;
+    }
+    if (u->ability_phase == OM_ABILITY_PHASE_WINDUP) {
+        u->ability_phase = OM_ABILITY_PHASE_ACTIVE;
+        u->ability_bonus_on = 1;
+    } else {
+        u->ability_phase = OM_ABILITY_PHASE_IDLE;
+        u->ability_bonus_on = 0;
+    }
+}
+
+static void om_ability_tick_barrage(om_world *w, om_tac_state *st, om_unit_row *u) {
+    if (u->ability_phase != OM_ABILITY_PHASE_TELEGRAPH) return;
+    if (u->ability_ticks_remaining > 0) {
+        u->ability_ticks_remaining--;
+        return;
+    }
+    om_ability_resolve_barrage_damage(w, st, u);
+    u->ability_phase = OM_ABILITY_PHASE_IDLE;
+    u->ability_cooldown = OM_ABILITY_BARRAGE_COOLDOWN_TICKS;
+}
+
+static void om_ability_tick_fortify(om_unit_row *u) {
+    if (u->ability_phase != OM_ABILITY_PHASE_ACTIVE) return;
+    if (u->ability_ticks_remaining > 0) {
+        u->ability_ticks_remaining--;
+    } else {
+        u->ability_phase = OM_ABILITY_PHASE_IDLE;
+        u->ability_bonus_on = 0;
+    }
+}
+
+/* Cooldown decrements once per tactical tick, first, so a value freshly
+ * set by this same call's autotrigger/expiry processing (Surge, Barrage,
+ * Rally set theirs on completion; Brace/Fortify set theirs at activation)
+ * is never decremented before the caller can observe it. */
+static void om_ability_advance_all(om_world *w) {
+    om_tac_state *st = om_tac(w);
+    uint32_t i;
+    for (i = 0; i < st->n_units; i++) {
+        om_unit_row *u = &st->units[i];
+        if (!u->in_use) continue;
+        if (u->ability_cooldown > 0.0) u->ability_cooldown -= 1.0;
+    }
+    om_ability_autotrigger_scan(st);
+    for (i = 0; i < st->n_units; i++) {
+        om_unit_row *u = &st->units[i];
+        if (!u->in_use || u->hp <= 0.0) continue;
+        switch (u->unit_type) {
+            case OM_UT_RAIDER:   om_ability_tick_surge(u); break;
+            case OM_UT_VANGUARD: om_ability_tick_brace(u); break;
+            case OM_UT_BOMBARD:  om_ability_tick_barrage(w, st, u); break;
+            case OM_UT_BASTION:  om_ability_tick_fortify(u); break;
+            default: break;
+        }
+    }
+    st->current_tick++;
+}
+
+/* ---- end B10-3 ability system ---- */
+
+uint64_t om_tactical_step(om_world *w) {
+    /* No-op until a tactical battle actually exists (tests/csim/test_E11_wiring.py
+     * ::test_R_wiring_tactical_step_is_callable): a strategic-only world with no
+     * units spawned must not advance the tactical tick counter at all. */
+    const om_tac_state *ro = om_tac_ro(w);
+    if (!ro || ro->n_units == 0) return ro ? ro->current_tick : 0;
+    om_tactical_apply_aura_regen(w);
+    om_ability_advance_all(w);
+    return om_tac(w)->current_tick;
 }
 
 /* ---- generated stubs from signatures.toml ---- */
 int om_command_activate_ability(om_world *w, const uint32_t *unit_ids, uint32_t n_units, double target_x, double target_y) {
-    /* STUB */
-    (void)w; (void)unit_ids; (void)n_units; (void)target_x; (void)target_y;
+    om_tac_state *st = om_tac(w);
+    uint32_t i;
+    om_unit_row *u;
+    for (i = 0; i < n_units; i++) {
+        u = om_registry_find_in(st, unit_ids[i]);
+        if (!u || !om_ability_can_manually_activate(u)) return 1;
+    }
+    for (i = 0; i < n_units; i++) {
+        u = om_registry_find_in(st, unit_ids[i]);
+        om_ability_manual_activate(w, st, u, target_x, target_y);
+    }
     return 0;
 }
 
@@ -476,9 +910,8 @@ int om_command_attack_target(om_world *w, const uint32_t *unit_ids, uint32_t n_u
 }
 
 uint32_t om_cue_lookup(const char *name) {
-    /* STUB */
-    (void)name;
-    return 0;
+    if (name && strcmp(name, "cue_barrage_telegraph") == 0) return OM_CUE_BARRAGE_TELEGRAPH;
+    return OM_CUE_NONE;
 }
 
 int om_era_elevation_damage_bonus_enabled(om_world *w) {
@@ -563,9 +996,23 @@ uint64_t om_tactical_run_until_eliminated(om_world *w) {
 }
 
 uint64_t om_tactical_run_until_engagement_ends(om_world *w, uint32_t unit_id) {
-    /* STUB */
-    (void)w; (void)unit_id;
-    return 0;
+    om_tac_state *st = om_tac(w);
+    uint64_t ticks = 0;
+    om_unit_row *u = om_registry_find_in(st, unit_id);
+    if (!u) return 0;
+    while (ticks < OM_TACTICAL_MAX_RUN_TICKS
+           && u->hp > 0.0
+           && om_tac_enemy_within_range(st, u, u->attack_range)) {
+        om_tactical_tick_once(w);
+        om_tactical_step(w);
+        ticks++;
+    }
+    if (u->unit_type == OM_UT_INTERCEPTOR && u->ability_phase == OM_ABILITY_PHASE_ACTIVE) {
+        u->ability_phase = OM_ABILITY_PHASE_IDLE;
+        u->ability_bonus_on = 0;
+        u->ability_cooldown = OM_ABILITY_INTERCEPT_COOLDOWN_TICKS;
+    }
+    return ticks;
 }
 
 void om_tactical_spawn_force_composition(om_world *w, int32_t faction_id, uint32_t count, const char *composition) {
@@ -580,15 +1027,19 @@ int om_tactical_target_validation_runs_every_tick(om_world *w) {
 }
 
 int om_tactical_telegraph_active(om_world *w, double x, double y) {
-    /* STUB */
-    (void)w; (void)x; (void)y;
+    om_tac_state *st = om_tac(w);
+    uint32_t i;
+    for (i = 0; i < st->n_units; i++) {
+        const om_unit_row *u = &st->units[i];
+        if (!u->in_use || u->hp <= 0.0) continue;
+        if (u->ability_phase != OM_ABILITY_PHASE_TELEGRAPH) continue;
+        if (u->ability_target_x == x && u->ability_target_y == y) return 1;
+    }
     return 0;
 }
 
 uint64_t om_tactical_tick(om_world *w) {
-    /* STUB */
-    (void)w;
-    return 0;
+    return om_tac(w)->current_tick;
 }
 
 uint64_t om_tactical_tick_to(om_world *w, uint64_t tick) {
@@ -598,21 +1049,18 @@ uint64_t om_tactical_tick_to(om_world *w, uint64_t tick) {
 }
 
 int om_tactical_zone_visible_to_enemy(om_world *w, uint32_t unit_id) {
-    /* STUB */
-    (void)w; (void)unit_id;
-    return 0;
+    om_unit_row *row = om_registry_find_in(om_tac(w), unit_id);
+    return (row && row->unit_type == OM_UT_BASTION && row->ability_phase == OM_ABILITY_PHASE_ACTIVE) ? 1 : 0;
 }
 
 int om_unit_ability_active(om_world *w, uint32_t unit_id) {
-    /* STUB */
-    (void)w; (void)unit_id;
-    return 0;
+    om_unit_row *row = om_registry_find_in(om_tac(w), unit_id);
+    return (row && row->ability_phase != OM_ABILITY_PHASE_IDLE) ? 1 : 0;
 }
 
 double om_unit_ability_cooldown(om_world *w, uint32_t unit_id) {
-    /* STUB */
-    (void)w; (void)unit_id;
-    return 0.0;
+    om_unit_row *row = om_registry_find_in(om_tac(w), unit_id);
+    return row ? row->ability_cooldown : 0.0;
 }
 
 int om_unit_alive(om_world *w, uint32_t unit_id) {
@@ -631,10 +1079,33 @@ void om_unit_attack(om_world *w, uint32_t attacker, uint32_t target) {
     (void)w; (void)attacker; (void)target;
 }
 
+/* ALG-60: Brace 0.50 (self, while its bonus is granted) + Fortify 0.20
+ * (any friendly within OM_FORTIFY_RADIUS of an active Bastion) + Warden
+ * aura (om_warden_aura_reduction_for, already diminishing per extra
+ * Warden), capped at OM_ABILITY_DAMAGE_REDUCTION_CAP. */
 double om_unit_damage_reduction(om_world *w, uint32_t unit_id) {
-    /* STUB */
-    (void)w; (void)unit_id;
-    return 0.0;
+    om_tac_state *st = om_tac(w);
+    om_unit_row *row = om_registry_find_in(st, unit_id);
+    double reduction = 0.0;
+    uint32_t j;
+    int fortify_hit = 0;
+    if (!row) return 0.0;
+    if (row->unit_type == OM_UT_VANGUARD && row->ability_bonus_on
+        && row->ability_phase != OM_ABILITY_PHASE_IDLE) {
+        reduction += OM_ABILITY_BRACE_DAMAGE_REDUCTION;
+    }
+    for (j = 0; j < st->n_units; j++) {
+        const om_unit_row *cand = &st->units[j];
+        if (!cand->in_use || cand->hp <= 0.0) continue;
+        if (cand->unit_type != OM_UT_BASTION) continue;
+        if (cand->ability_phase != OM_ABILITY_PHASE_ACTIVE) continue;
+        if (cand->faction_id != row->faction_id) continue;
+        if (om_tac_dist_le(cand->x - row->x, cand->y - row->y, OM_FORTIFY_RADIUS)) { fortify_hit = 1; break; }
+    }
+    if (fortify_hit) reduction += OM_ABILITY_FORTIFY_DAMAGE_REDUCTION;
+    reduction += om_warden_aura_reduction_for(st, row);
+    if (reduction > OM_ABILITY_DAMAGE_REDUCTION_CAP) reduction = OM_ABILITY_DAMAGE_REDUCTION_CAP;
+    return reduction;
 }
 
 void om_unit_deal_damage(om_world *w, uint32_t p1, uint32_t p2, double p3) {
@@ -652,9 +1123,26 @@ void om_unit_deal_damage(om_world *w, uint32_t p1, uint32_t p2, double p3) {
 }
 
 double om_unit_effective_speed(om_world *w, uint32_t unit_id) {
-    /* STUB */
-    (void)w; (void)unit_id;
-    return 0.0;
+    om_unit_row *row = om_registry_find_in(om_tac(w), unit_id);
+    double base;
+    if (!row) return 0.0;
+    base = om_unit_profile_speed(w, row->unit_type);
+    switch (row->unit_type) {
+        case OM_UT_RAIDER:
+            if (row->ability_phase == OM_ABILITY_PHASE_ACTIVE) return base * OM_ABILITY_SURGE_SPEED_MULT;
+            break;
+        case OM_UT_INTERCEPTOR:
+            if (row->ability_phase == OM_ABILITY_PHASE_ACTIVE) return base * OM_ABILITY_INTERCEPT_SPEED_MULT;
+            break;
+        case OM_UT_VANGUARD:
+            if (row->ability_phase != OM_ABILITY_PHASE_IDLE) return 0.0;
+            break;
+        case OM_UT_BASTION:
+            if (row->ability_phase == OM_ABILITY_PHASE_ACTIVE) return base * OM_ABILITY_FORTIFY_SPEED_MULT;
+            break;
+        default: break;
+    }
+    return base;
 }
 
 void om_unit_fire_aoe_attack(om_world *w, uint32_t attacker_id, uint32_t target_id, double radius) {
@@ -690,21 +1178,31 @@ int om_unit_in_flinch(om_world *w, uint32_t unit_id) {
 }
 
 double om_unit_output_multiplier(om_world *w, uint32_t unit_id) {
-    /* STUB */
-    (void)w; (void)unit_id;
-    return 0.0;
+    om_unit_row *row = om_registry_find_in(om_tac(w), unit_id);
+    if (!row) return 1.0;
+    switch (row->unit_type) {
+        case OM_UT_RAIDER:
+            if (row->ability_phase == OM_ABILITY_PHASE_ACTIVE) return OM_ABILITY_SURGE_OUTPUT_MULT;
+            break;
+        case OM_UT_INTERCEPTOR:
+            if (row->ability_phase == OM_ABILITY_PHASE_ACTIVE) return OM_ABILITY_INTERCEPT_OUTPUT_MULT;
+            break;
+        case OM_UT_VANGUARD:
+            if (row->ability_bonus_on && row->ability_phase != OM_ABILITY_PHASE_IDLE) return OM_ABILITY_BRACE_OUTPUT_MULT;
+            break;
+        default: break;
+    }
+    return 1.0;
 }
 
 double om_unit_position_x(om_world *w, uint32_t unit_id) {
-    /* STUB */
-    (void)w; (void)unit_id;
-    return 0.0;
+    om_unit_row *row = om_registry_find_in(om_tac(w), unit_id);
+    return row ? row->x : 0.0;
 }
 
 double om_unit_position_y(om_world *w, uint32_t unit_id) {
-    /* STUB */
-    (void)w; (void)unit_id;
-    return 0.0;
+    om_unit_row *row = om_registry_find_in(om_tac(w), unit_id);
+    return row ? row->y : 0.0;
 }
 
 uint32_t om_unit_profile_ability_count(om_world *w, int unit_type) {
@@ -773,20 +1271,26 @@ uint32_t om_unit_profile_trait_count(om_world *w, int unit_type) {
 }
 
 uint32_t om_unit_render_craft_count(om_world *w, int unit_type) {
-    /* STUB */
-    (void)w; (void)unit_type;
-    return 0;
+    (void)w;
+    if (unit_type == OM_UT_RAIDER || unit_type == OM_UT_INTERCEPTOR) {
+        return OM_RENDER_CRAFT_COUNT_STRIKE;
+    }
+    return OM_RENDER_CRAFT_COUNT_DEFAULT;
 }
 
 double om_unit_render_silhouette_size(om_world *w, int unit_type) {
-    /* STUB */
-    (void)w; (void)unit_type;
-    return 0.0;
+    const om_unit_type_profile *p = om_get_profile(w, unit_type);
+    int category = p ? p->category : OM_CAT_STRIKE;
+    switch (category) {
+        case OM_CAT_LINE:  return OM_RENDER_SILHOUETTE_LINE;
+        case OM_CAT_SIEGE: return OM_RENDER_SILHOUETTE_SIEGE;
+        default:            return OM_RENDER_SILHOUETTE_STRIKE;
+    }
 }
 
 void om_unit_set_ability_cooldown(om_world *w, uint32_t unit_id, double ticks) {
-    /* STUB */
-    (void)w; (void)unit_id; (void)ticks;
+    om_unit_row *row = om_registry_find_in(om_tac(w), unit_id);
+    if (row) row->ability_cooldown = ticks;
 }
 
 void om_unit_set_brace_active(om_world *w, uint32_t unit_id, int on) {
@@ -852,8 +1356,12 @@ uint32_t om_unit_targeting_cohort(om_world *w, uint32_t unit_id) {
     return 0;
 }
 uint32_t om_tick_read_ability_events(om_world *w, om_ability_event *out, uint32_t max) {
-    /* STUB */
-    (void)w; (void)out; (void)max;
-    return 0;
+    om_tac_state *st = om_tac(w);
+    uint32_t n = st->n_ability_events;
+    uint32_t i;
+    if (n > max) n = max;
+    for (i = 0; i < n; i++) out[i] = st->ability_events[i];
+    st->n_ability_events = 0;
+    return n;
 }
 /* ---- end generated stubs ---- */

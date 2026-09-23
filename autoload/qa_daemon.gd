@@ -191,6 +191,8 @@ func _dispatch(verb: String, args: Array) -> Dictionary:
 			return {"ok": true, "result": _do_step(int(args[0]) if args.size() > 0 else 1)}
 		"inject":
 			return {"ok": true, "result": _do_inject(String(args[0]) if args.size() > 0 else "")}
+		"plant":
+			return _do_plant(String(args[0]) if args.size() > 0 else "")
 		"screenshot":
 			var name: String = String(args[0]) if args.size() > 0 else "screenshot"
 			if _driver == null:
@@ -265,6 +267,15 @@ func _do_inject(bug_id: String) -> Dictionary:
 	var known := KNOWN_BUG_IDS.has(bug_id)
 	_injected_bugs[bug_id] = known
 	return {"bug_id": bug_id, "known": known}
+
+
+func _do_plant(id: String) -> Dictionary:
+	var t := get_tree()
+	var scene: Node = t.current_scene if t != null else null
+	if scene == null or not scene.has_method("qa_plant"):
+		return {"ok": false, "error": "plant: current scene has no qa_plant method"}
+	var activated: bool = scene.call("qa_plant", id)
+	return {"ok": true, "result": {"id": id, "activated": activated}}
 
 
 func _collect_tree(node: Node, controls: Array, node3ds: Array) -> void:

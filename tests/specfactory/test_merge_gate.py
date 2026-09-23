@@ -177,11 +177,14 @@ def test_godot_import_runs_before_desktop_acceptance_and_not_for_csim_piece(tmp_
     godot_path.write_text(FAKE_GODOT)
     godot_path.chmod(0o755)
     args_log = tmp_path / "godot_args.log"
+    fake_venv = tmp_path / "fake_venv"
+    fake_venv.mkdir()
 
     env = {
         "MERGE_GATE_PIECES": str(pieces),
         "PATH": f"{fake_bin}:/usr/bin:/bin:/home/westopoli/Projects/agora/.venv/bin",
         "GODOT_ARGS_LOG": str(args_log),
+        "MERGE_GATE_VENV": str(fake_venv),
     }
 
     desktop = subprocess.run(
@@ -194,14 +197,21 @@ def test_godot_import_runs_before_desktop_acceptance_and_not_for_csim_piece(tmp_
     assert import_line < accept_line, desktop.stdout
     assert "--import" in args_log.read_text()
     assert "--headless" in args_log.read_text()
+    assert (repo / ".venv").is_symlink(), "candidate should get the harness venv linked in"
+    assert (repo / ".venv").resolve() == fake_venv.resolve()
+    venv_line = next(i for i, l in enumerate(desktop.stdout.splitlines()) if "venv_link" in l)
+    assert venv_line < import_line, desktop.stdout
 
+    (repo / ".venv").unlink()
     args_log.write_text("")
     csim_only = subprocess.run(
         ["bash", str(GATE), str(repo), "HEAD~1", "B1"],
         capture_output=True, text=True, env=env, timeout=60,
     )
     assert "GATE godot_import" not in csim_only.stdout, csim_only.stdout + csim_only.stderr
+    assert "venv_link" not in csim_only.stdout, csim_only.stdout
     assert args_log.read_text() == ""
+    assert not (repo / ".venv").exists(), "csim-only piece should not pay the venv link"
 
 
 def test_unknown_candidate_dir_is_a_usage_error():

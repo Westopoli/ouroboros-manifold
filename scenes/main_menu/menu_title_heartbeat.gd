@@ -32,10 +32,35 @@ var _first_event := true
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_build_title_labels()
 	_start_breathing()
 	_start_unresolve_timer()
 	_start_era_rotation()
+	_try_build_title_labels()
+
+
+# Investigation found TitlePlaceholder positioning was never the actual bug
+# (confirmed stable from frame 0 at both 1920x1080 and 1280x720 under Xvfb).
+# The real race: ThemeConstants (autoload) loads its font resources in its
+# own _ready(), and this Control can be built before that finishes, leaving
+# ThemeConstants.font_serif_regular null here. font.get_string_size() on a
+# null font is a hard GDScript error that aborts _build_title_labels() after
+# zero labels are appended -- _char_labels stays empty forever, so the title
+# never renders. Self-heal by retrying per frame until the font resource is
+# available, same pattern as scenes/loading_screen/loading_screen.gd's
+# _process retry (S-C8-07) for a one-shot-signal race.
+func _try_build_title_labels() -> void:
+	if not _char_labels.is_empty():
+		set_process(false)
+		return
+	if ThemeConstants.font_serif_regular == null:
+		set_process(true)
+		return
+	_build_title_labels()
+	set_process(false)
+
+
+func _process(_delta: float) -> void:
+	_try_build_title_labels()
 
 
 func set_title_origin(origin: Vector2) -> void:
@@ -115,6 +140,10 @@ func _schedule_next_unresolve() -> void:
 
 
 func _trigger_unresolve() -> void:
+	if _char_labels.is_empty():
+		_schedule_next_unresolve()
+		return
+
 	var count := randi_range(1, 3)
 	var glyph_hold := randf_range(GLYPH_HOLD_MIN, GLYPH_HOLD_MAX)
 	var white_blend := 0.30

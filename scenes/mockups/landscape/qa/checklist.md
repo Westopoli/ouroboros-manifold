@@ -36,6 +36,24 @@ Real measured numbers from `scripts/mockup_qa.sh` and `scripts/mockup_verify.sh`
 
 **HELD:** Q5 (see above — data-level pass, visual pass inconclusive at this camera framing).
 
+## Pass 2 (first look, 2026-09-22)
+
+`qa/firstlook.json` is the mockup review 2 positive control for `scripts/mockup_qa.sh firstlook` (`scenes/mockups/_shared/README.md`'s "First look" section): real `move`/`click_node`/`key` input only, `--qa-live`, 2560x1440, no `--fixed-fps`.
+
+| step | oracle | clean | planted (`camera_rig.gd:89` `vp` swapped to `DisplayServer.window_get_size()`) |
+|---|---|---|---|
+| boot | `regen_count`/`seed`/`kit`/`canvas_wu` all `equals` launch defaults | all `ok` | not run (plant is edge-scroll only) |
+| edge right | `objective_px.0` `changed` after `move` to `(2540, 720)` | `ok` | **`FAIL`** |
+| edge left | `objective_px.0` `changed` after `move` to `(20, 720)` | `ok` | `ok` |
+| edge top | `objective_px.1` `changed` after `move` to `(1280, 20)` | `ok` | `ok` |
+| edge bottom | `objective_px.1` `changed` after `move` to `(1280, 1420)` | `ok` | **`FAIL`** |
+| hover | `regen_count` `equals` its pre-hover value while parked on `RegenerateButton`'s centre | `ok` | `ok` |
+| Regenerate / Kit toggle / Canvas toggle / key `R` / key `Tab` | `regen_count`/`kit`/`canvas_wu` `increased`/`changed` | all `ok` | all `ok` |
+
+Clean: `scripts/mockup_qa.sh firstlook landscape <out>` — `exit.txt` 0, `errors.txt` count 0, all 14 `QA_EXPECT` lines `ok`. Planted (line 89 of `camera_rig.gd` temporarily reads `DisplayServer.window_get_size()` instead of `get_viewport().get_visible_rect().size`, reverted after, no diff left in the tree): `exit.txt` 0, `errors.txt` count 2 (`QA_EXPECT FAIL objective_px.0` at the right-edge step, `QA_EXPECT FAIL objective_px.1` at the bottom step) — exactly the two edges whose threshold reads `vp` (right, bottom); left and top compare against the constant `EDGE_SCROLL_ZONE` near zero and are correctly unaffected. This is the same fault class `objectives`' pass 2 found and fixed (`docs/northstar/research/mockups/objectives/README.md`) — `landscape/camera_rig.gd` itself is untouched by this brief, still polling `get_viewport().get_mouse_position()` every frame.
+
+**Why `changed`, not `increased`, on all four edges.** An early draft used `increased` for right/top (their calibrated pan direction) and `changed` for left/bottom. Two problems, both from chaining four edge tests on one running camera with no reset verb available to `firstlook` scripts: (1) the ground-follow height lerp (`camera_rig.gd:_update_ground_follow`) leaves a real but tiny (<2px) residual on `objective_px` for a few frames after any camera move settles, which could tip a strict `increased` check either way — fixed by widening the idle settle before each baseline `state` from a few frames to 35, which measurably drives the lerp to bit-exact convergence (proven: two `state` dumps 15 real frames apart were bit-identical to the last printed digit; a broken edge's "before" and "after" then compare exactly equal, not almost-equal). (2) With the noise fixed, `right` then `left` then `top` then `bottom` still share one camera position across groups, so `top`'s real projected direction depends on where `right`+`left` left the camera — under the clean code (both work, camera returns near its start) `top` reads one sign; under the `right`-only mutation (right is a no-op, left still moves the camera to a different resting spot) `top` read the opposite sign at first, printing a spurious `FAIL` on an edge the plant never touched. `changed` (any non-zero move counts, either direction) is immune to that sign flip and, given the now-real zero noise floor, is exactly as strict at catching a fully dead edge (bit-identical before/after) as `increased` was — so every edge check in the final script uses `changed`.
+
 ## Wall/frame time (report section 2 has the full numbers)
 
 - One clean `qa_seed`+screenshot regenerate cycle: ~3800-4800ms CPU (`gen`+`ground`+`placer`), independent of resolution.

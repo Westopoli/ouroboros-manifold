@@ -408,3 +408,59 @@ is untouched.
 Files touched: `tests/csim/test_E05_S032_every_faction_is_a_person.py`,
 `tests/csim/test_E05_S037_battles_have_a_shape.py`. No file outside
 `tests/csim/` touched.
+
+## R-044-07: expected commit follows budget growth before betrayal (B5 leaf finding)
+
+Classified `test-defect` (fixture's own numbers never reach the value the
+rule produces once an upstream core fix landed). Fixed under the test-fix
+gate: `assertions_preserved` (the "commits the entire budget" assertion
+stays, only the expected value changes to match what that budget is at fire
+time), `red_at_stub` (confirmed below), `two_agent_confound` n/a (one file).
+
+### `test_E06_S044_peace_is_never_safe.py::test_R_044_07_q_045_01_decides_commit`
+
+Bug: core fix `d61bd52` (tech multipliers start at the formula value, 1.0 at
+tech 0 instead of an uninitialized 0.0) changed `om_faction_step_budget`'s
+`delta *= w->faction_tech_economy[f]` term from a no-op (0.0 multiplier) to
+its intended value. The fixture's faction 0 (conqueror, budget 42.5, tech
+0.0) owns region 0 (economy 50.0). Tick sequence step 3b (ALG-17, budget
+accumulation) runs before step 3.5 (ALG-40, betrayal) on the same tick:
+`Δbudget = (economy 50.0 - REGION_MAINTENANCE_COST 8.0) * BUDGET_GROWTH_RATE
+0.025 * tech_economy 1.0 = 1.05` (`OM_BUDGET_GROWTH_RATE` and
+`OM_REGION_MAINTENANCE_COST` in `csrc/om_constants.h`; `faction_tech_economy`
+at tech 0.0 is `1.0 + (0/100) * axis = 1.0` per ALG-26, `csrc/faction.c:46`).
+Budget at betrayal fire time is `42.5 + 1.05 = 43.55`, not the fixture's
+pinned `42.5`. Confirmed the accumulation order and formula directly against
+`csrc/faction.c::om_faction_step_budget` (`delta += (economy - 8.0) * 0.025`
+per owned region, then `delta *= faction_tech_economy[f]`) rather than
+inferring it from the docs alone.
+
+Not a rule-text conflict: R-044-07 (docs/bible/epics/E-06-diplomacy-and-technology.md)
+and ALG-40 (docs/bible/algorithms.md) both say the betrayer commits its
+entire budget at fire time; Q-045-01 (docs/northstar/ambiguity_register.md,
+closed 2026-09-16) settled the commit/mode question as "full budget
+committed, at surprise efficiency" -- unrelated to this fixture's bug, which
+is purely that "entire budget" was pinned to the pre-tick value instead of
+the value after step 3b's legitimate growth.
+
+Fix: `assert betrayal_attack[0].commit == pytest.approx(42.5, ...)` ->
+`pytest.approx(43.55, ...)`, with the derivation above added as a comment.
+The "commits the entire budget" assertion and the rule id are unchanged.
+
+### Verification
+
+1. Red at stub, main (`3dd2d8a`): `test_R_044_07_q_045_01_decides_commit`
+   fails at `assert len(betrayal_attack) == 1` (`assert 0 == 1`) --
+   `diplomacy.c` is the stub on main, no betrayal ever fires. Same failure,
+   same line, for all 7 tests in the file (the whole file is red on main).
+2. Green on `origin/push/B5` (`c734601`, built diplomacy.c): copied the
+   edited file into a throwaway detached worktree (`git worktree add
+   --detach /tmp/b5r origin/push/B5`, `make libouroboros.so`), ran
+   `tests/csim/test_E06_S044_peace_is_never_safe.py`: `7 passed`.
+   `rm -rf /tmp/b5r && git worktree prune`.
+3. Rest of the file unchanged: `test_R_044_01` through `test_R_044_06` fail
+   identically before and after (same stub-driven failure on main, same
+   pass on push/B5) -- no assertion in any other test touched.
+
+Files touched: `tests/csim/test_E06_S044_peace_is_never_safe.py`. No file
+outside `tests/csim/` touched.

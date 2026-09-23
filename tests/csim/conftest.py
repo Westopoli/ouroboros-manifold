@@ -963,6 +963,22 @@ def load_launch_events(lib, w):
     lib.om_events_load_launch(w)
 
 
+def load_only_templates(lib, w, *names):
+    """Load just the named launch templates (their real values, pulled off the
+    full launch library) so a queued-event test never shares the region with
+    the other 25 templates' own thresholds -- the E-04 Testing Rigor
+    Directive's "fields, external spawns, and noise offsets hard-fixtured"
+    isolation, extended to which templates exist at all. Every id an E-07
+    fixture resolves by name still resolves after this (position in the
+    smaller array, not the launch library's row)."""
+    _bind_e04(lib)
+    lib.om_events_load_launch(w)
+    picked = [get_template(lib, w, template_id(lib, w, name)) for name in names]
+    arr = (OmEventTemplate * len(picked))(*picked)
+    rc = lib.om_events_load(w, arr, len(picked))
+    assert rc == 0, f"om_events_load failed loading {names}: rc={rc}"
+
+
 def template_id(lib, w, name):
     _bind_e04(lib)
     tid = lib.om_event_template_by_name(w, name.encode("utf-8"))
@@ -976,6 +992,27 @@ def get_template(lib, w, tid):
     rc = lib.om_event_template_get(w, tid, ctypes.byref(t))
     assert rc == 0, f"om_event_template_get({tid}) rc={rc}"
     return t
+
+
+def register_external_template(lib, w, name, significance_tier=0):
+    """F2h: om_event_register_external. Bound (guarded) in the generated
+    _bind_e06 block, not the legacy _bind_e04 -- events.c already has a
+    hand-written legacy _bind_e04 for its 27 pre-existing symbols, and a
+    generated _bind_e04 for this new events.c row would shadow it (last
+    def wins), silently dropping those 27 bindings. Undefined until B1-4
+    lands events.c -- calling this before then raises AttributeError, which
+    is the point (test_E04_S030_external_templates wants a clean red, not a
+    skip)."""
+    _bind_e06(lib)
+    return lib.om_event_register_external(w, name.encode("utf-8"), significance_tier)
+
+
+def template_name(lib, w, tid):
+    """F2h: om_event_template_name. Same _bind_e06 placement and
+    AttributeError-until-B1-4 contract as register_external_template above."""
+    _bind_e06(lib)
+    name = lib.om_event_template_name(w, tid)
+    return name.decode("utf-8") if name is not None else None
 
 
 def set_noise(lib, w, region_idx, tid, offset):
@@ -1748,6 +1785,8 @@ def _bind_e06(lib):
     _bind(lib, "om_debug_inject", [W, ctypes.c_int], None, ("w", "bug"))
     _bind(lib, "om_diplomacy_init", [W], None, ("w",))
     _bind(lib, "om_diplomacy_step", [W], None, ("w",))
+    _bind(lib, "om_event_register_external", [W, ctypes.c_char_p, ctypes.c_int32], ctypes.c_int32, ("w", "name", "significance_tier"))
+    _bind(lib, "om_event_template_name", [W, ctypes.c_uint32], ctypes.c_char_p, ("w", "template_id"))
     _bind(lib, "om_faction_betrayal_chance", [W, ctypes.c_int32, ctypes.c_int32], ctypes.c_double, ("w", "betrayer", "partner"))
     _bind(lib, "om_faction_betrayal_opportunity", [W, ctypes.c_int32, ctypes.c_int32], ctypes.c_double, ("w", "betrayer", "partner"))
     _bind(lib, "om_faction_cooperative_since", [W, ctypes.c_int32, ctypes.c_int32], ctypes.c_uint64, ("w", "p0", "p1"))

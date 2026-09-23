@@ -195,6 +195,16 @@ if [[ "$NEED_GODOT_IMPORT" -eq 1 ]]; then
     if [[ -z "$GODOT_BIN" ]]; then
         reject godot_import "godot binary not found (see scripts/run_godot_tests.sh lookup)"
     else
+        # A fresh candidate worktree has no .venv; autoload/sim_bridge.gd
+        # falls back to system python3, which has no numpy, so the sim dies
+        # at import and every scene routes to error_screen (gate gap,
+        # 2026-09-22). Link the harness venv in before importing; the
+        # candidate worktree is discarded after the gate, so no cleanup.
+        VENV_TARGET="${MERGE_GATE_VENV:-$HOME/Projects/agora/.venv}"
+        if [[ ! -e "$CANDIDATE/.venv" ]]; then
+            ln -s "$VENV_TARGET" "$CANDIDATE/.venv"
+            echo "ok venv_link \"$VENV_TARGET\""
+        fi
         IMPORT_LOG="$SCRATCH_ROOT/godot_import.log"
         IMPORT_START=$(date +%s)
         timeout 300 env -u DISPLAY -u WAYLAND_DISPLAY -u XAUTHORITY \

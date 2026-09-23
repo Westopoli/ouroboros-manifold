@@ -207,7 +207,7 @@ acceptance = [
     "tests/csim/test_E11_wiring.py",
 ]
 depends_on = ["freeze"]
-status = "pending"
+status = { state = "attached", attach_sha = "617827a" }
 size_estimate = "1128 py lines, 45 tests (E-11 minus S-084/S-085/S-087, held for B10b: need tactical_move.c)"
 
 [[piece]]
@@ -510,8 +510,8 @@ owns_glob = ["scenes/main_menu/**", "scenes/galaxy/**", "scenes/mission_briefing
 acceptance = [
     "tests/qa/desktop/test_flow_spine.py",
 ]
-depends_on = ["C2", "C3", "C4", "C5", "C7", "T1"]
-status = "pending"
+depends_on = ["C2", "C3", "C4", "C5", "C7", "T1", "C1"]
+status = { state = "attached", attach_sha = "9f9f8de" }
 tests_pending = true
 size_estimate = "wires scene_router's SCENES dict (no \"galaxy\" entry today) through main_menu -> galaxy -> mission_briefing -> tactical_c -> debrief -> chronicle -> galaxy; adds NewGame/Mission/Deploy/EndMission/Continue/Return controls, none of which exist yet"
 
@@ -524,3 +524,13 @@ owns_glob = ["scenes/mockups/_shared/**", "scenes/mockups/landscape/qa/**"]
 acceptance = []
 depends_on = []
 status = "pending"
+
+[[piece]]
+id = "C1"
+manager = "M3"
+wave = 1
+owns = []
+owns_glob = ["scenes/main_menu/**"]
+acceptance = ["tests/test_boot_scripts_parse.gd", "tests/test_privacy_modal.gd"]
+depends_on = []
+status = { state = "attached", attach_sha = "764ed59" }

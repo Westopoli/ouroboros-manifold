@@ -24,6 +24,23 @@ var _selected: Array = []
 var _unit_visuals: Dictionary = {}
 
 
+func _ready() -> void:
+	# C8 flow spine: SceneRouter._swap_scene never passes data into a
+	# scene routed to via go_to() (no setup() call on this path), so this
+	# view self-loads the fixture tactical frame on a fresh route-in.
+	var f := FileAccess.open("res://tests/fixtures/tactical_frame_seed11.json", FileAccess.READ)
+	if f != null:
+		var parsed = JSON.parse_string(f.get_as_text())
+		f.close()
+		if parsed is Dictionary:
+			load_frame(parsed)
+	var end_mission_btn := get_node_or_null("CanvasLayer/EndMission")
+	if end_mission_btn != null:
+		end_mission_btn.pressed.connect(func():
+			SceneRouter.go_to("debrief")
+		)
+
+
 func load_frame(frame: Dictionary) -> void:
 	_frame = frame
 	_canvas = float(frame.get("map", {}).get("canvas", 0.0))

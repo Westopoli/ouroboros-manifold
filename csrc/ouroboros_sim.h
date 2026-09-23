@@ -605,6 +605,31 @@ int om_event_queue_external(om_world *w, uint32_t region_idx, uint32_t template_
  * capacity (2,000 entries) is dropped and recorded as a pruned record with
  * cond_kind OM_COND_NONE (the overflow marker). */
 
+/* ---- module-owned named templates (F2h, ALG-27b: Knowledge Lost) ----
+ * The 26-template launch library (R-030-01) is fixed; a module that needs its
+ * own named event outside that table (e.g. E-06's Knowledge Lost, R-045-07)
+ * registers one here instead of editing the launch library. Returns a
+ * template id >= om_event_template_count(w) (the launch library size) that
+ * om_event_queue_external accepts and that om_event_template_get and
+ * om_event_template_name report on, same as any launch-library id. The
+ * registered template has no trigger (R-030-02: it never starts a chain on
+ * its own -- it fires only as a spawn, exactly like any other trigger-less
+ * template), no effects, exclusion tag OM_EXCL_NONE, and the given
+ * significance tier. Registering the same name twice returns the same id
+ * (idempotent by name). Ids are assigned in registration order, so the draw
+ * order and the state checksum stay deterministic across a run. Registered
+ * templates are saved and restored with the world. om_event_template_count
+ * -- the accessor the S-030 contract test (test_R_030_01) reads -- excludes
+ * registrations: it always reports the launch-library size, never grows when
+ * a template is registered. */
+int32_t om_event_register_external(om_world *w, const char *name, int32_t significance_tier);
+
+/* No existing accessor maps a template id back to its name (only
+ * om_event_template_by_name, name -> id, and om_event_template_get, id ->
+ * the full struct). Added so a registered external template's name can be
+ * read without pulling the whole struct. NULL if id is out of range. */
+const char *om_event_template_name(const om_world *w, uint32_t template_id);
+
 /* ---- tick-log readers for steps 1 and 2 (last step only) ---- */
 typedef struct om_fired_event {
     uint64_t tick;

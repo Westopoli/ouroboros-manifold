@@ -43,6 +43,7 @@ def test_R_051_01_it_removed_from_registry_every(lib, world_factory):
     """Given a breakaway faction with zero regions, When 5 or more ticks have passed since its creation tick, Then it is removed from the registry and every faction's stance table."""
     w = world_factory(n_regions=2)
     isolate_agents(lib, w)
+    lib.om_world_set_feature(w, OMFeature.FACTIONS, 0)
     lib.om_world_set_feature(w, OMFeature.LIFECYCLE, 1)
 
     set_faction(lib, w, 0, OMArchetype.DEFAULT, budget=0.0, tech=10.0, confidence=5.0)
@@ -58,8 +59,9 @@ def test_R_051_01_it_removed_from_registry_every(lib, world_factory):
 
     lib.om_faction_set_created_tick(w, 1, 1)
 
-    # Advance 5 ticks: tick 6 >= 1 + 5
-    for _ in range(5):
+    # Advance 6 ticks: tick 6 >= 1 + 5 (one om_world_step per tick; range(5)
+    # alone only reaches tick 5, one short of the boundary the comment names)
+    for _ in range(6):
         lib.om_world_step(w)
 
     # When cleanup runs, it is removed from registry and stance table
@@ -72,6 +74,7 @@ def test_R_051_02_its_region_passes_to_bordering(lib, world_factory):
     # 7 regions: Region 0 (breakaway), Regions 1,2 (Faction 1: 2 regions), Regions 3,4,5,6 (Faction 2: 4 regions)
     w = world_factory(n_regions=7)
     isolate_agents(lib, w)
+    lib.om_world_set_feature(w, OMFeature.FACTIONS, 0)
     lib.om_world_set_feature(w, OMFeature.LIFECYCLE, 1)
 
     set_faction(lib, w, 0, OMArchetype.BREAKAWAY, budget=10.0, tech=10.0, confidence=3.0)
@@ -119,6 +122,7 @@ def test_R_051_03_nothing_happens(lib, world_factory):
     # Case A: budget 25.0 >= 20.0 -> nothing happens
     w_bud = world_factory(n_regions=4)
     isolate_agents(lib, w_bud)
+    lib.om_world_set_feature(w_bud, OMFeature.FACTIONS, 0)
     lib.om_world_set_feature(w_bud, OMFeature.LIFECYCLE, 1)
 
     set_faction(lib, w_bud, 0, OMArchetype.BREAKAWAY, budget=25.0, tech=10.0, confidence=3.0)
@@ -141,6 +145,7 @@ def test_R_051_03_nothing_happens(lib, world_factory):
     # Case B: owns 2 regions -> nothing happens
     w_2reg = world_factory(n_regions=4)
     isolate_agents(lib, w_2reg)
+    lib.om_world_set_feature(w_2reg, OMFeature.FACTIONS, 0)
     lib.om_world_set_feature(w_2reg, OMFeature.LIFECYCLE, 1)
 
     set_faction(lib, w_2reg, 0, OMArchetype.BREAKAWAY, budget=10.0, tech=10.0, confidence=3.0)
@@ -164,6 +169,7 @@ def test_R_051_03_nothing_happens(lib, world_factory):
     # Case C: created fewer than 50 ticks ago (e.g. 30 ticks) -> nothing happens
     w_young = world_factory(n_regions=4)
     isolate_agents(lib, w_young)
+    lib.om_world_set_feature(w_young, OMFeature.FACTIONS, 0)
     lib.om_world_set_feature(w_young, OMFeature.LIFECYCLE, 1)
 
     set_faction(lib, w_young, 0, OMArchetype.BREAKAWAY, budget=10.0, tech=10.0, confidence=3.0)
@@ -188,6 +194,7 @@ def test_R_051_04_it_skipped_this_tick(lib, world_factory):
     """Given a breakaway that conquered a region this tick, When cleanup runs, Then it is skipped this tick."""
     w = world_factory(n_regions=4)
     isolate_agents(lib, w)
+    lib.om_world_set_feature(w, OMFeature.FACTIONS, 0)
     lib.om_world_set_feature(w, OMFeature.LIFECYCLE, 1)
 
     set_faction(lib, w, 0, OMArchetype.BREAKAWAY, budget=10.0, tech=10.0, confidence=3.0)
@@ -217,6 +224,7 @@ def test_R_051_05_it_never_removed(lib, world_factory):
     """Given a non-breakaway faction (starting faction) with zero regions, When cleanup runs, Then it is never removed."""
     w = world_factory(n_regions=2)
     isolate_agents(lib, w)
+    lib.om_world_set_feature(w, OMFeature.FACTIONS, 0)
     lib.om_world_set_feature(w, OMFeature.LIFECYCLE, 1)
 
     set_faction(lib, w, 0, OMArchetype.CONQUEROR, budget=0.0, tech=10.0, confidence=5.0)
@@ -238,6 +246,7 @@ def test_R_051_06_those_regions_become_unowned_with(lib, world_factory):
     """Given a removed faction still owned regions, When removal happens, Then those regions become unowned with held-since cleared."""
     w = world_factory(n_regions=2)
     isolate_agents(lib, w)
+    lib.om_world_set_feature(w, OMFeature.FACTIONS, 0)
     lib.om_world_set_feature(w, OMFeature.LIFECYCLE, 1)
 
     set_faction(lib, w, 0, OMArchetype.BREAKAWAY, budget=0.0, tech=10.0, confidence=3.0)
