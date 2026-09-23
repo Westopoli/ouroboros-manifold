@@ -186,6 +186,26 @@
 #define OM_ABILITY_PHASE_CANCELING 3
 #define OM_ABILITY_PHASE_TELEGRAPH 4
 
+/* S-088 render-facing metadata. om_cue_lookup and the Barrage activation
+ * site below both read OM_CUE_BARRAGE_TELEGRAPH as their one shared source
+ * of truth, so a name looked up by the renderer and the id stamped on the
+ * event always agree. */
+#define OM_CUE_NONE 0
+#define OM_CUE_BARRAGE_TELEGRAPH 1
+
+/* Strike squads render as several small craft sharing one HP bar/position
+ * (R-088-01); every other category is a single hull, so 1 is the natural
+ * default. */
+#define OM_RENDER_CRAFT_COUNT_STRIKE 4
+#define OM_RENDER_CRAFT_COUNT_DEFAULT 1
+
+/* R-088-03: silhouette size keyed on category with a clear gap between
+ * tiers -- Strike smallest, Line middle, Siege largest, regardless of any
+ * per-unit variation within a category. */
+#define OM_RENDER_SILHOUETTE_STRIKE 10.0
+#define OM_RENDER_SILHOUETTE_LINE 20.0
+#define OM_RENDER_SILHOUETTE_SIEGE 30.0
+
 typedef struct {
     int    category;
     double max_hp;
@@ -601,7 +621,7 @@ static int om_tac_count_friendlies_within(const om_tac_state *st, const om_unit_
  * this is what makes test_R_086_09's `evt.tick == om_tactical_tick(w)`
  * hold for a Surge activated before any step and read after exactly one. */
 static void om_ability_emit_event(om_tac_state *st, const om_unit_row *u, double target_x, double target_y,
-                                   uint32_t duration, uint32_t telegraph_ticks, double radius) {
+                                   uint32_t duration, uint32_t telegraph_ticks, uint32_t cue_id, double radius) {
     om_ability_event *evt;
     if (st->n_ability_events >= OM_ABILITY_EVENT_BUFFER_CAP) return;
     evt = &st->ability_events[st->n_ability_events++];
@@ -612,7 +632,7 @@ static void om_ability_emit_event(om_tac_state *st, const om_unit_row *u, double
     evt->target_y = target_y;
     evt->duration = duration;
     evt->telegraph_ticks = telegraph_ticks;
-    evt->cue_id = 0;
+    evt->cue_id = cue_id;
     evt->radius = radius;
 }
 
@@ -621,7 +641,7 @@ static void om_ability_start_surge(om_tac_state *st, om_unit_row *u) {
     u->ability_ticks_remaining = OM_ABILITY_SURGE_DURATION_TICKS;
     u->ability_bonus_on = 1;
     u->ability_cooldown = 0.0;
-    om_ability_emit_event(st, u, u->x, u->y, OM_ABILITY_SURGE_DURATION_TICKS, 0, 0.0);
+    om_ability_emit_event(st, u, u->x, u->y, OM_ABILITY_SURGE_DURATION_TICKS, 0, OM_CUE_NONE, 0.0);
 }
 
 /* R-086-03: reactivating while braced (windup, active, or already
@@ -639,7 +659,7 @@ static void om_ability_start_or_cancel_brace(om_tac_state *st, om_unit_row *u) {
         u->ability_ticks_remaining = OM_ABILITY_BRACE_WINDUP_TICKS;
     }
     u->ability_cooldown = OM_ABILITY_BRACE_COOLDOWN_TICKS;
-    om_ability_emit_event(st, u, u->x, u->y, OM_ABILITY_BRACE_WINDUP_TICKS, 0, 0.0);
+    om_ability_emit_event(st, u, u->x, u->y, OM_ABILITY_BRACE_WINDUP_TICKS, 0, OM_CUE_NONE, 0.0);
 }
 
 static void om_ability_do_rally(om_tac_state *st, om_unit_row *u) {
@@ -653,7 +673,7 @@ static void om_ability_do_rally(om_tac_state *st, om_unit_row *u) {
         if (cand->hp > cand->max_hp) cand->hp = cand->max_hp;
     }
     u->ability_cooldown = OM_ABILITY_RALLY_COOLDOWN_TICKS;
-    om_ability_emit_event(st, u, u->x, u->y, 0, 0, OM_ABILITY_RALLY_RADIUS);
+    om_ability_emit_event(st, u, u->x, u->y, 0, 0, OM_CUE_NONE, OM_ABILITY_RALLY_RADIUS);
 }
 
 static void om_ability_start_barrage(om_tac_state *st, om_unit_row *u, double target_x, double target_y) {
@@ -663,7 +683,8 @@ static void om_ability_start_barrage(om_tac_state *st, om_unit_row *u, double ta
     u->ability_target_y = target_y;
     u->ability_cooldown = 0.0;
     om_ability_emit_event(st, u, target_x, target_y, OM_ABILITY_BARRAGE_TELEGRAPH_TICKS,
-                          OM_ABILITY_BARRAGE_TELEGRAPH_TICKS, OM_ABILITY_BARRAGE_RADIUS);
+                          OM_ABILITY_BARRAGE_TELEGRAPH_TICKS,
+                          om_cue_lookup("cue_barrage_telegraph"), OM_ABILITY_BARRAGE_RADIUS);
 }
 
 /* R-086-05/ALG-61: base * 3.0 through the S-081 category multiplier
@@ -698,7 +719,7 @@ static void om_ability_start_fortify(om_tac_state *st, om_unit_row *u) {
     u->ability_ticks_remaining = OM_ABILITY_FORTIFY_DURATION_TICKS;
     u->ability_bonus_on = 1;
     u->ability_cooldown = OM_ABILITY_FORTIFY_COOLDOWN_TICKS;
-    om_ability_emit_event(st, u, u->x, u->y, OM_ABILITY_FORTIFY_DURATION_TICKS, 0, OM_FORTIFY_RADIUS);
+    om_ability_emit_event(st, u, u->x, u->y, OM_ABILITY_FORTIFY_DURATION_TICKS, 0, OM_CUE_NONE, OM_FORTIFY_RADIUS);
 }
 
 /* R-086-02: never manually activated -- always rejected here, regardless
@@ -744,7 +765,7 @@ static void om_ability_autotrigger_scan(om_tac_state *st) {
                 if (om_tac_enemy_category_within(st, u, OM_CAT_STRIKE, OM_INTERCEPT_DETECTION_RADIUS)) {
                     u->ability_phase = OM_ABILITY_PHASE_ACTIVE;
                     u->ability_bonus_on = 1;
-                    om_ability_emit_event(st, u, u->x, u->y, 0, 0, OM_INTERCEPT_DETECTION_RADIUS);
+                    om_ability_emit_event(st, u, u->x, u->y, 0, 0, OM_CUE_NONE, OM_INTERCEPT_DETECTION_RADIUS);
                 }
                 break;
             case OM_UT_RAIDER:
@@ -849,7 +870,7 @@ uint64_t om_tactical_step(om_world *w) {
     /* No-op until a tactical battle actually exists (tests/csim/test_E11_wiring.py
      * ::test_R_wiring_tactical_step_is_callable): a strategic-only world with no
      * units spawned must not advance the tactical tick counter at all. */
-    om_tac_state *ro = om_tac_ro(w);
+    const om_tac_state *ro = om_tac_ro(w);
     if (!ro || ro->n_units == 0) return ro ? ro->current_tick : 0;
     om_tactical_apply_aura_regen(w);
     om_ability_advance_all(w);
@@ -889,9 +910,8 @@ int om_command_attack_target(om_world *w, const uint32_t *unit_ids, uint32_t n_u
 }
 
 uint32_t om_cue_lookup(const char *name) {
-    /* STUB */
-    (void)name;
-    return 0;
+    if (name && strcmp(name, "cue_barrage_telegraph") == 0) return OM_CUE_BARRAGE_TELEGRAPH;
+    return OM_CUE_NONE;
 }
 
 int om_era_elevation_damage_bonus_enabled(om_world *w) {
@@ -1176,15 +1196,13 @@ double om_unit_output_multiplier(om_world *w, uint32_t unit_id) {
 }
 
 double om_unit_position_x(om_world *w, uint32_t unit_id) {
-    /* STUB */
-    (void)w; (void)unit_id;
-    return 0.0;
+    om_unit_row *row = om_registry_find_in(om_tac(w), unit_id);
+    return row ? row->x : 0.0;
 }
 
 double om_unit_position_y(om_world *w, uint32_t unit_id) {
-    /* STUB */
-    (void)w; (void)unit_id;
-    return 0.0;
+    om_unit_row *row = om_registry_find_in(om_tac(w), unit_id);
+    return row ? row->y : 0.0;
 }
 
 uint32_t om_unit_profile_ability_count(om_world *w, int unit_type) {
@@ -1253,15 +1271,21 @@ uint32_t om_unit_profile_trait_count(om_world *w, int unit_type) {
 }
 
 uint32_t om_unit_render_craft_count(om_world *w, int unit_type) {
-    /* STUB */
-    (void)w; (void)unit_type;
-    return 0;
+    (void)w;
+    if (unit_type == OM_UT_RAIDER || unit_type == OM_UT_INTERCEPTOR) {
+        return OM_RENDER_CRAFT_COUNT_STRIKE;
+    }
+    return OM_RENDER_CRAFT_COUNT_DEFAULT;
 }
 
 double om_unit_render_silhouette_size(om_world *w, int unit_type) {
-    /* STUB */
-    (void)w; (void)unit_type;
-    return 0.0;
+    const om_unit_type_profile *p = om_get_profile(w, unit_type);
+    int category = p ? p->category : OM_CAT_STRIKE;
+    switch (category) {
+        case OM_CAT_LINE:  return OM_RENDER_SILHOUETTE_LINE;
+        case OM_CAT_SIEGE: return OM_RENDER_SILHOUETTE_SIEGE;
+        default:            return OM_RENDER_SILHOUETTE_STRIKE;
+    }
 }
 
 void om_unit_set_ability_cooldown(om_world *w, uint32_t unit_id, double ticks) {
