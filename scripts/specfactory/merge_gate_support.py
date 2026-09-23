@@ -340,6 +340,56 @@ def acceptance_ids(piece_id: str, *, pieces_path: Path = DEFAULT_PIECES) -> tupl
     return pytest_ids, godot_ids
 
 
+def is_increment(piece_id: str, pieces: dict[str, dict]) -> str | None:
+    """The resolved base piece id iff `piece_id` is an increment of it (the
+    push plan's straggler rule, `push/<piece>-<n>`) -- resolve_piece_id maps
+    it to a DIFFERENT, known piece. Returns None for a full piece id (already
+    in `pieces`) and for an unresolvable id (stripping `-<digits>` still
+    isn't a known piece), so both keep the caller's REJECT path."""
+    resolved = resolve_piece_id(piece_id, pieces)
+    if resolved != piece_id and resolved in pieces:
+        return resolved
+    return None
+
+
+def partition_pytest_ids(ids: list[str], failing_ids) -> tuple[list[str], list[str]]:
+    """(green, red) subsets of `ids` (a piece's pytest acceptance ids: node
+    ids, whole-file paths, or bare directory names) given the failing node
+    ids from a pytest run of exactly those ids (sr.parse_pytest's third
+    element). An id is red if it IS a failing id, or a failing id lives
+    under it (`id::...` for a whole-file id, `id/...` for a directory id)."""
+    failing = set(failing_ids)
+    green: list[str] = []
+    red: list[str] = []
+    for i in ids:
+        hit = i in failing or any(f.startswith(f"{i}::") or f.startswith(f"{i}/") for f in failing)
+        (red if hit else green).append(i)
+    return green, red
+
+
+def partition_godot_ids(ids: list[str], log_text: str) -> tuple[list[str], list[str]]:
+    """(green, red) subsets of `ids` (Godot test script paths) given
+    run_godot_tests.sh's own combined stdout/stderr log, which prints
+    exactly one `PASS: res://<path>` line per script that passed (no
+    suffix -- `FAIL: res://<path> (exit N)` and the not-found line both
+    fail the exact match). An id missing from the log entirely (e.g. a
+    timeout cut the run short before it ran) counts red."""
+    passed = {line[len("PASS: "):].strip() for line in log_text.splitlines()
+              if line.startswith("PASS: res://")}
+    green: list[str] = []
+    red: list[str] = []
+    for i in ids:
+        res = i if i.startswith("res://") else f"res://{i.lstrip('./')}"
+        (green if res in passed else red).append(i)
+    return green, red
+
+
+def acceptance_warn_detail(piece_id: str, resolved_id: str, green: list[str],
+                            total_ids: list[str], red: list[str]) -> str:
+    return (f"increment {piece_id} of {resolved_id}: {len(green)}/{len(total_ids)} "
+            f"acceptance ids green; red: {red[:5]}")
+
+
 def _normalize_worktree_paths(text: str, *roots: Path) -> str:
     for root in roots:
         text = text.replace(str(root), "<WORKTREE>")
@@ -441,6 +491,13 @@ def main(argv: list[str]) -> int:
     ut.add_argument("--pieces", default=str(DEFAULT_PIECES))
     ut.add_argument("--cap", type=int, default=10)
 
+    av = sub.add_parser("acceptance-verdict")
+    av.add_argument("piece_id")
+    av.add_argument("--pieces", default=str(DEFAULT_PIECES))
+    av.add_argument("--ids-file", required=True)
+    av.add_argument("--pytest-log")
+    av.add_argument("--godot-log")
+
     rg = sub.add_parser("regression")
     rg.add_argument("candidate_dir")
     rg.add_argument("base_ref")
@@ -467,6 +524,20 @@ def main(argv: list[str]) -> int:
                                              symbol_modules_path=Path(args.symbol_modules))
     elif args.cmd == "gd-class-names":
         ok, detail = gd_class_names_check(Path(args.root))
+    elif args.cmd == "acceptance-verdict":
+        pieces = _load_pieces(Path(args.pieces))
+        resolved = is_increment(args.piece_id, pieces)
+        if resolved is None:
+            print("REJECT")
+            return 1
+        ids = [line.strip() for line in Path(args.ids_file).read_text().splitlines() if line.strip()]
+        if args.pytest_log:
+            _passed, _failed, failing = sr.parse_pytest(Path(args.pytest_log).read_text())
+            green, red = partition_pytest_ids(ids, failing)
+        else:
+            green, red = partition_godot_ids(ids, Path(args.godot_log).read_text())
+        print(f"WARN {acceptance_warn_detail(args.piece_id, resolved, green, ids, red)}")
+        return 0
     elif args.cmd == "undertest":
         lines = undertest_warn(Path(args.candidate_dir), args.base_ref, args.piece_id,
                                 pieces_path=Path(args.pieces), cap=args.cap)
