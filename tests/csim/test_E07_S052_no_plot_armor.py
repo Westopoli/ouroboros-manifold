@@ -37,8 +37,15 @@ def test_R_052_01_it_has_zero_regions_its(lib, world_factory):
     set_tech_multipliers(lib, w, 0, 1.0, 1.0, 1.0)
     set_tech_multipliers(lib, w, 1, 1.0, 1.0, 1.0)
 
-    # Region 0 is player's only region
-    set_region(lib, w, 0, tier=OMTier.HOME, military=2.0, economy=50.0, tension=0.0, population=50.0, faction_id=0)
+    # Region 0 is player's only region. Economy pinned at REGION_MAINTENANCE_COST
+    # (8.0, ALG-17) so this tick's budget accumulation (3b, which runs before
+    # the conquest resolves at 3f -- docs/bible/algorithms.md tick sequence)
+    # nets exactly 0 regardless of the region still nominally being owned at
+    # 3b. A higher economy (the original 50.0) earns a one-tick income spike
+    # before the loss registers, which the "budget still accumulates as 0"
+    # assertion below can never satisfy -- the fixture's own numbers never
+    # reached the zero-budget branch it claims to test.
+    set_region(lib, w, 0, tier=OMTier.HOME, military=2.0, economy=8.0, tension=0.0, population=50.0, faction_id=0)
     set_owner(lib, w, 0, 0, held_since=-1)
 
     # Region 1 is enemy's region
@@ -95,17 +102,23 @@ def test_R_052_02_no_rule_anywhere_checks_whether(lib, world_factory):
     set_edge(lib, w, 0, 2, OMEdge.BOTH)
     set_edge(lib, w, 1, 3, OMEdge.BOTH)
 
-    # Attack Region 0 (Player) with commit 30.0
+    # Attack Region 0 (Player) with commit 30.0. Only one forced draw: this
+    # attack's damage never brings target military below CONQUEST_THRESHOLD
+    # (5.0), so ALG-22's conquest-unrest draw never fires and a second forced
+    # value here would sit unconsumed in om_rng_force's FIFO queue -- carried
+    # over to leak into the *next* attack's stochastic draw instead of this
+    # tick's intended 1.0 (a stale forced-RNG-draw leftover; confirmed via
+    # om_rng_forced_remaining()).
     inject_intent(lib, w, 2, OMAction.ATTACK, target_idx=0, source_idx=2, commit=30.0, mode=OMMode.SURPRISE)
-    force_draws(lib, w, [1.0, 0.99])
+    force_draws(lib, w, [1.0])
     lib.om_world_step(w)
 
     damage_player = lib.om_region_field(w, 0, OMField.MILITARY)
     owner_player = lib.om_region_owner(w, 0)
 
-    # Attack Region 1 (NPC) with identical commit 30.0
+    # Attack Region 1 (NPC) with identical commit 30.0 -- same one-draw reasoning.
     inject_intent(lib, w, 2, OMAction.ATTACK, target_idx=1, source_idx=3, commit=30.0, mode=OMMode.SURPRISE)
-    force_draws(lib, w, [1.0, 0.99])
+    force_draws(lib, w, [1.0])
     lib.om_world_step(w)
 
     damage_npc = lib.om_region_field(w, 1, OMField.MILITARY)

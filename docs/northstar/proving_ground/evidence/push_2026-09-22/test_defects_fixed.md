@@ -464,3 +464,94 @@ The "commits the entire budget" assertion and the rule id are unchanged.
 
 Files touched: `tests/csim/test_E06_S044_peace_is_never_safe.py`. No file
 outside `tests/csim/` touched.
+
+## R-052-01 and R-052-02: E-07 S-052 no-plot-armor sweep reds
+
+Both `test-defect`. No csrc file touched, no assertion touched. Fixed under
+test-fix gate: `assertions_preserved` yes both, `red_at_stub` n/a (no core
+edit, main csrc untouched before/after so `E-02`..`E-08` failing-id sets and
+`checksum_trace.py` output are byte-identical by construction), `two_agent_confound`
+n/a (one file).
+
+### `test_R_052_01_it_has_zero_regions_its`
+
+Scorecard said "assert budget == 0.0, got 1.05." Repro (`/tmp` scratch ctypes
+script, deleted after): tick order 3b (`ALG-17` budget accrual) runs before
+3f (`ALG-19`..`ALG-24` intent resolve) same tick, per
+`docs/bible/algorithms.md` tick sequence and `csrc/sim.c:232-260` (matches
+byte for byte, no `OM_BUG_*` injection flag exists for this order — checked
+`csrc/ouroboros_sim.h` bug enum, none named budget/conquest order). Fixture
+region 0 econ 50.0: tick1 accrues `Δbudget = (50-8)*0.025 = 1.05` at 3b
+*before* 3f's conquest fires same tick and takes the region. Tick2 accrues 0
+(zero owned regions) but stock stays 1.05 forever. Rule text ("budget still
+accumulates as 0") is about the *increment* going to 0 once regions hit 0 —
+fixture's own econ=50.0 makes that increment nonzero on the very tick of
+loss, so the strict `== 0.0` assert can never land on the branch it claims
+to test. Not core: order matches docs, matches the injected-fault catalog
+(no such fault modeled), moving 3b after 3f would change what budget agents
+see at 3d (decide) system-wide — way past a targeted S-052 fix, blows the
+byte-identical requirement.
+
+Fix: region 0 economy `50.0` -> `8.0` (== `REGION_MAINTENANCE_COST`, so
+`Δbudget = (8-8)*0.025 = 0` regardless of same-tick ownership timing).
+Confirmed via scratch repro: econ=50.0 -> budget 1.05/1.05 (tick1/tick2);
+econ=8.0 -> budget 0.0/0.0, `om_player_faction_collapsed == 1` both cases.
+Conquest outcome (military-based, econ-independent) unaffected: owner=1,
+territory0=0 same both cases.
+
+### `test_R_052_02_no_rule_anywhere_checks_whether`
+
+Scorecard said "assert damage_player == damage_npc, got 8.0 vs 8.02."
+Repro: each attack (commit 30, surprise, target military 10) nets
+`effective_attack=15, effective_defense=11, net=4.0` (contested band,
+`d_military=-2.0` -> military 8.0), never crosses `CONQUEST_THRESHOLD=5.0`,
+so `ALG-22`'s conquest-unrest draw (`csrc/resolve.c` `om_step_resolve`,
+`u_draw = om_rng_draw(w)` after the conquest branch) never fires — only ONE
+`om_rng_draw` call happens per attack (the net-stochastic draw), not two.
+Fixture pushed `force_draws(lib, w, [1.0, 0.99])` before *each* attack.
+`om_rng_force` is FIFO-append (`csrc/faction.c:233-241`), not
+replace-on-push. First attack consumes only the `1.0` (net draw); the `0.99`
+sits unconsumed in the queue (`om_rng_forced_remaining` confirmed: 1
+remaining after step 1). Second attack's `force_draws` call appends its own
+`[1.0, 0.99]` onto that leftover, so the queue reads `[0.99(stale), 1.0,
+0.99]` FIFO — second attack's net draw pulls the *stale* 0.99 instead of the
+intended 1.0: `net = 4*0.99 = 3.96`, `d_military=-1.98` -> military 8.02.
+Exactly the scorecard's 8.0-vs-8.02. This is the fixture, not the sim: FIFO
+append-not-replace is `om_rng_force`'s documented contract and every other
+E-05/E-07 test using it relies on that same contract; the bug is this
+fixture pushing more draws per step than the scenario consumes.
+
+Fix: `force_draws(lib, w, [1.0, 0.99])` -> `force_draws(lib, w, [1.0])` at
+both call sites (only the draw actually consumed). Confirmed via scratch
+repro with `om_rng_forced_remaining()` printed each side: single-draw run
+shows 0 remaining after each step, `damage_player == damage_npc == 8.0` both
+attacks.
+
+### Verification (both tests)
+
+1. Before: main tree as-is (no csrc diff exists or was made — see status
+   below), both fail exactly per scorecard (`test_R_052_01`: `assert
+   1.05 == 0.0 +/- 1e-06`; `test_R_052_02`: `assert 8.0 ==
+   8.02 +/- 1e-06`). No throwaway worktree needed for a before/after csrc
+   diff since csrc is untouched by this fix (`git status --short csrc/`
+   empty).
+2. After: `pytest -q tests/csim/test_E07_S052_no_plot_armor.py` -> `2
+   passed`.
+3. `pytest -q tests/csim/ -k E07` (3 repeats) -> stable at `31 passed, 6
+   failed`, all 6 the `tests/csim/controls/test_control_e07_*` files —
+   pre-existing, unrelated to S-052 (sweep scorecard's separate B6 line:
+   "not tag-ready: R-049-06, R-052-01, R-052-02"). `R-049-06` itself passes
+   standalone (`test_E07_S049_a_revolt_can_birth_a_nation.py`: `7 passed`)
+   and in every repeat of the batched `-k E07` run above; one earlier
+   one-off run (mid-investigation, with unrelated scratch repro files still
+   in `tests/csim/`) showed it failing alongside the 6 controls — collection
+   pollution from those now-deleted scratch files, not a real regression.
+   R-049-06 untouched either way, out of this task's scope.
+4. csrc unchanged -> `E-02`..`E-08` failing-id sets and
+   `checksum_trace.py --lib build/O2/libouroboros.so --seed 1 --regions 60
+   --ticks 500 --features 6` output identical before/after by construction
+   (same binary). Ran once post-fix for the record: checksum trace
+   completes clean, no crash, no NaN.
+
+Files touched: `tests/csim/test_E07_S052_no_plot_armor.py`. No file outside
+`tests/csim/` touched.
