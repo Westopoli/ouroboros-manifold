@@ -258,6 +258,14 @@ typedef struct {
     int needs_onboarding;
     int in_transition;
 
+    /* R-055-02: the strategic tick the campaign reports is this module's own
+     * counter, not w->tick -- core sim.c's om_world_step() has no notion of
+     * chapter phase and always advances w->tick when called, so a raw
+     * om_world_step() during a MISSION (tactical ticks only) must not move
+     * "the strategic tick" the game observes. Only om_time_jump_run advances
+     * it, and only outside MISSION. */
+    uint64_t strategic_tick;
+
     uint32_t death_pass_count;
     uint64_t time_jump_lineage_gen_tick;
     uint64_t time_jump_death_tick;
@@ -366,7 +374,7 @@ static uint32_t gen_create_commander(om_world *w, gen_state *gs, int32_t faction
     c->faction = faction_id;
     c->region = region_idx;
     c->rank = rank;
-    c->birth_tick = w ? w->tick : 0;
+    c->birth_tick = gs ? gs->strategic_tick : 0;
     c->lifespan = gen_roll_lifespan(w);
     c->status = GEN_STATUS_ACTIVE;
     gen_roll_name(w, c->name, sizeof(c->name));
@@ -740,7 +748,7 @@ uint32_t om_character_create_random(om_world *w, int32_t faction_id, uint32_t re
     c->faction = faction_id;
     c->region = region_idx;
     c->rank = GEN_RANK_LINEAGE_MEMBER;
-    c->birth_tick = w ? w->tick : 0;
+    c->birth_tick = gs ? gs->strategic_tick : 0;
     c->lifespan = gen_roll_lifespan(w);
     c->status = GEN_STATUS_ACTIVE;
     gen_roll_name(w, c->name, sizeof(c->name));
@@ -1060,7 +1068,7 @@ uint32_t om_lineage_generate_descendants(om_world *w, uint32_t lineage_id, uint3
     double raw = (double)n_living * OM_LINEAGE_FERTILITY_RATE * (double)jump_ticks;
     uint32_t n = (uint32_t)floor(raw);
     if (n < 1) n = 1;
-    uint64_t tick = w ? w->tick : 0;
+    uint64_t tick = gs ? gs->strategic_tick : 0;
     for (uint32_t i = 0; i < n; i++) {
         uint32_t parent_id;
         if (n_living == 1) {
@@ -1108,7 +1116,7 @@ uint32_t om_lineage_spawn_single_descendant(om_world *w, uint32_t lineage_id) {
      * keeps the very next om_rng_draw() the spread roll, so a single
      * om_rng_force_descendant_spread() push lands on it regardless of how
      * many living members the lineage already has. */
-    gen_character *c = gen_spawn_descendant_from_parent(w, gs, lineage_id, members[0], w->tick);
+    gen_character *c = gen_spawn_descendant_from_parent(w, gs, lineage_id, members[0], gs->strategic_tick);
     return c ? c->id : 0;
 }
 
@@ -1430,9 +1438,13 @@ uint32_t om_time_jump_report_faction_field_deltas_count(const om_world *w, const
 int om_time_jump_run(om_world *w, uint32_t n_ticks, om_time_jump_report *report) {
     gen_state *gs = gen_get_state(w);
     if (!w || !gs) return 1;
-    uint64_t start_tick = w->tick;
+    /* R-055-02: the strategic sim is stopped for a mission's whole duration;
+     * a time jump cannot start (or silently continue) while one is running. */
+    if (gs->chapter_phase == GEN_PHASE_MISSION) return 1;
+    uint64_t start_tick = gs->strategic_tick;
     for (uint32_t i = 0; i < n_ticks; i++) om_world_step(w);
-    uint64_t end_tick = w->tick;
+    gs->strategic_tick += n_ticks;
+    uint64_t end_tick = gs->strategic_tick;
 
     gs->death_pass_count = 0;
     for (uint32_t li = 0; li < gs->n_lineages; li++)
@@ -1458,14 +1470,17 @@ void om_time_jump_run_tracked(om_world *w, uint32_t jump) {
 }
 
 uint64_t om_time_jump_start_tick(const om_world *w) {
-    return w ? w->tick + 1 : 0;
+    gen_state *gs = gen_get_state(w);
+    return gs ? gs->strategic_tick + 1 : 0;
 }
 
 void om_world_set_strategic_tick(om_world *w, uint64_t tick) {
-    if (w) w->tick = tick;
+    gen_state *gs = gen_get_state(w);
+    if (gs) gs->strategic_tick = tick;
 }
 
 uint64_t om_world_strategic_tick(const om_world *w) {
-    return w ? w->tick : 0;
+    gen_state *gs = gen_get_state(w);
+    return gs ? gs->strategic_tick : 0;
 }
 /* ---- end generated stubs ---- */
