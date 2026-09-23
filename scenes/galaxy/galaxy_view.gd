@@ -49,6 +49,32 @@ var _gen := GalaxyGen.new()
 
 func _ready() -> void:
 	_camera_rig.set_view(DEFAULT_DISTANCE, Vector3.ZERO)
+	_load_live_snapshot()
+	var mission_btn := get_node_or_null("UI/Mission")
+	if mission_btn:
+		mission_btn.pressed.connect(func(): SceneRouter.go_to("mission_briefing"))
+
+
+# Self-loading pattern (docs/northstar/plans/push/specs/C8-M3.md
+# "Self-loading pattern"): SceneRouter._swap_scene never passes data into a
+# scene unless it has setup(), so galaxy_view loads its own seed-driven
+# snapshot here instead. On failure (binary missing, pipe error) the scene
+# stays exactly as it is pre-set_snapshot -- qa_state() already handles
+# empty _regions/_edges gracefully (proven by tests/test_galaxy_view.gd's
+# own fallback-snapshot path).
+func _load_live_snapshot() -> void:
+	var seed_str := _arg_value(OS.get_cmdline_user_args(), "--seed")
+	var seed := int(seed_str) if seed_str != "" else DEFAULT_SEED
+	var bridge = load("res://autoload/c_bridge.gd").new()
+	if bridge.load_snapshot_live(seed, 60, [6]):
+		set_snapshot(bridge.snapshot())
+
+
+func _arg_value(args: PackedStringArray, flag: String) -> String:
+	var idx := args.find(flag)
+	if idx == -1 or idx + 1 >= args.size():
+		return ""
+	return args[idx + 1]
 
 
 func set_snapshot(snapshot: Dictionary) -> void:
