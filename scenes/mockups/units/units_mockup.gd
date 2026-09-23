@@ -50,3 +50,15 @@ func qa_tick_until_flash(max_ticks: int) -> int:
 
 func qa_command(kind: String, uids: Array, x: float, z: float) -> void:
 	_hud.qa_command(kind, uids, x, z)
+
+
+func qa_drag_start(x: float, y: float) -> void:
+	_hud.qa_drag_start(x, y)
+
+
+func qa_drag_to(x: float, y: float) -> void:
+	_hud.qa_drag_to(x, y)
+
+
+func qa_drag_end(x: float, y: float) -> void:
+	_hud.qa_drag_end(x, y)
