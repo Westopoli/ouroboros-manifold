@@ -41,6 +41,19 @@ func _ready() -> void:
 		_accent = ThemeConstants.get_era_accent(_data.get("era_id", "roman"))
 		_accent_dim = ThemeConstants.get_era_accent_dim(_data.get("era_id", "roman"))
 		_accent_border = ThemeConstants.get_era_accent_border(_data.get("era_id", "roman"))
+		# C8 flow spine: self-load the fixture mission frame on a fresh
+		# route-in (no setup() params reached this scene). load_frame()'s
+		# _apply_frame_to_data() overwrites the mock backfill's prose
+		# fields with neutral placeholders, so calling it after the mock
+		# backfill above gives real frame-derived data plus neutral
+		# placeholders for what the frame doesn't carry.
+		var f := FileAccess.open("res://tests/fixtures/mission_frame_seed11.json", FileAccess.READ)
+		if f != null:
+			var parsed = JSON.parse_string(f.get_as_text())
+			f.close()
+			if parsed is Dictionary:
+				load_frame(parsed)
+				return
 	_build_ui()
 
 
@@ -622,10 +635,11 @@ func _build_footer(parent: Control) -> void:
 	parent.add_child(footer)
 
 	var deploy_btn = load("res://theme/components/tm_button.tscn").instantiate()
+	deploy_btn.name = "Deploy"
 	deploy_btn.text = "DEPLOY FORCES"
 	deploy_btn.accent_color = _accent
 	deploy_btn.pressed.connect(func():
-		SceneRouter.go_to("tactical")
+		SceneRouter.go_to("tactical_c")
 	)
 	footer.add_child(deploy_btn)
 
