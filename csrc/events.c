@@ -452,6 +452,7 @@ static uint32_t evt_admin_chain_spawn(om_evt_state *s, om_world *w, evt_sink *si
                                        uint32_t region_idx, const om_event_template *t,
                                        int32_t chain_tag, int32_t source_faction, uint32_t L) {
     uint32_t cs = t->admin_chain_step;
+    /* constants-table: docs/bible/epics/E-04-events-and-chains.md S-030 */
     if (cs == 0 || cs >= 5 || L < OM_ADMIN_REVOLT_CHAIN_MIN) return 0;
     if (L > OM_ADMIN_REVOLT_CHAIN_MAX) L = OM_ADMIN_REVOLT_CHAIN_MAX;
     uint32_t Sn = OM_ADMIN_REVOLT_CHAIN_MIN + (L - OM_ADMIN_REVOLT_CHAIN_MIN) / 2;
@@ -462,6 +463,7 @@ static uint32_t evt_admin_chain_spawn(om_evt_state *s, om_world *w, evt_sink *si
     if (Sn >= 5) included[ni++] = 3;
     included[ni++] = 4;
     included[ni++] = 5;
+    /* end constants-table */
 
     uint32_t idx = 0;
     int found = 0;
@@ -668,8 +670,8 @@ static void evt_resolve_queue(om_evt_state *s, om_world *w, double snap[][OM_F_C
             uint32_t nmax = 0;
             for (uint32_t k = 0; k < mn; k++) {
                 double p = cand[members[k]].probability;
-                if (p > maxp + 1e-12) { maxp = p; nmax = 0; maxidxs[nmax++] = members[k]; }
-                else if (fabs(p - maxp) <= 1e-12) { maxidxs[nmax++] = members[k]; }
+                if (p > maxp + OM_TIE_EPSILON) { maxp = p; nmax = 0; maxidxs[nmax++] = members[k]; }
+                else if (fabs(p - maxp) <= OM_TIE_EPSILON) { maxidxs[nmax++] = members[k]; }
             }
             uint32_t winner;
             if (nmax == 1) {
