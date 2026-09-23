@@ -193,6 +193,7 @@ void om_events_load_launch(om_world *w) {
     om_evt_state *s = evt_reset_slot(w);
     om_event_template t[TID_LAUNCH_COUNT];
 
+    /* constants-table: docs/bible/epics/E-04-events-and-chains.md S-030 */
     evt_mk(&t[TID_GARRISON_COLLAPSE], "Garrison Collapse", OM_TRIG_BELOW, OM_F_MILITARY, 30.0,
            0.0, 0.0, 0, -2.0, 0.0, 3.0, 0.0, OM_EXCL_NONE, 0, 0);
     evt_spawn(&t[TID_GARRISON_COLLAPSE], TID_BORDER_INCURSION, 3, 7, 0.55, OM_COND_BELOW, OM_F_MILITARY, 18.0);
@@ -282,6 +283,7 @@ void om_events_load_launch(om_world *w) {
 
     evt_mk(&t[TID_ADMIN_BREAKAWAY], "Admin Breakaway", OM_TRIG_NONE, 0, 0.0,
            0.0, 0.0, 0, -4.0, -3.0, 5.0, -2.0, OM_EXCL_NONE, 1, 5);
+    /* end constants-table */
 
     evt_install(s, t, TID_LAUNCH_COUNT);
 }
@@ -432,7 +434,7 @@ int om_event_queue_external(om_world *w, uint32_t region_idx, uint32_t template_
     if (due_tick <= w->tick) return -1;
     if (probability < 0.0 || probability > 1.0) return -1;
     if (s->templates[template_id].admin_chain_step > 0 && chain_length != 0 &&
-        (chain_length < 3 || chain_length > 8)) return -1;
+        (chain_length < OM_ADMIN_REVOLT_CHAIN_MIN || chain_length > OM_ADMIN_REVOLT_CHAIN_MAX)) return -1;
 
     evt_sink sink = { w->event_queue, s->queue_source, &w->event_queue_n, OM_EVT_QUEUE_CAP };
     int32_t tag = s->chain_counter;
@@ -450,9 +452,9 @@ static uint32_t evt_admin_chain_spawn(om_evt_state *s, om_world *w, evt_sink *si
                                        uint32_t region_idx, const om_event_template *t,
                                        int32_t chain_tag, int32_t source_faction, uint32_t L) {
     uint32_t cs = t->admin_chain_step;
-    if (cs == 0 || cs >= 5 || L < 3) return 0;
-    if (L > 8) L = 8;
-    uint32_t Sn = 3 + (L - 3) / 2;
+    if (cs == 0 || cs >= 5 || L < OM_ADMIN_REVOLT_CHAIN_MIN) return 0;
+    if (L > OM_ADMIN_REVOLT_CHAIN_MAX) L = OM_ADMIN_REVOLT_CHAIN_MAX;
+    uint32_t Sn = OM_ADMIN_REVOLT_CHAIN_MIN + (L - OM_ADMIN_REVOLT_CHAIN_MIN) / 2;
     uint32_t included[5];
     uint32_t ni = 0;
     included[ni++] = 1;
@@ -787,7 +789,7 @@ static void evt_evaluate_triggers(om_evt_state *s, om_world *w, double snap[][OM
                 int64_t last = s->last_fired[r][tid];
                 if (last >= 0 && (int64_t)tick - last < (int64_t)t->cooldown_ticks) continue;
                 double fv = live ? evt_live_field(w, r, t->trigger_field) : reads[t->trigger_field];
-                double p = t->prob_base * om_pow(fv / 100.0, t->prob_exponent);
+                double p = t->prob_base * om_pow(fv / OM_FIELD_MAX, t->prob_exponent);
                 double rr = om_rng_draw(w);
                 if (rr < p) {
                     revolt_fire = 1;
