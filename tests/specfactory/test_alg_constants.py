@@ -260,13 +260,27 @@ def test_lint_negative_control_real_csrc_passes():
     assert "CONSTANTS LINT OK" in proc.stdout
 
 
-@pytest.mark.parametrize("literal", ["0", "1", "-1", "2", "0.0", "1.0", "-1.0", "2.0"])
+@pytest.mark.parametrize(
+    "literal", ["0", "1", "-1", "2", "0.0", "1.0", "-1.0", "2.0", "0.5"]
+)
 def test_lint_always_exempt_values_never_flagged(tmp_path, literal):
     csrc = tmp_path / "csrc"
     csrc.mkdir()
     (csrc / "newmodule.c").write_text(f"double f(double x) {{ return x * {literal}; }}\n")
     proc = _run("--lint", str(csrc))
     assert proc.returncode == 0, proc.stdout + proc.stderr
+
+
+@pytest.mark.parametrize("literal", ["0.25", "3"])
+def test_lint_arithmetic_exemption_does_not_widen_to_nearby_values(tmp_path, literal):
+    """0.5 and 2/2.0 are exempt as arithmetic constants; 0.25 and 3 are not
+    -- the exemption is exactly {0, 1, -1, 2, 0.5}, nothing wider."""
+    csrc = tmp_path / "csrc"
+    csrc.mkdir()
+    (csrc / "newmodule.c").write_text(f"double f(double x) {{ return x * {literal}; }}\n")
+    proc = _run("--lint", str(csrc))
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert literal in proc.stdout
 
 
 def test_lint_array_size_in_declaration_exempt(tmp_path):
@@ -338,6 +352,42 @@ def test_lint_string_literal_with_digits_not_flagged(tmp_path):
     )
     proc = _run("--lint", str(csrc))
     assert proc.returncode == 0, proc.stdout + proc.stderr
+
+
+def test_lint_exponent_literal_reported_as_whole_token(tmp_path):
+    """A literal with a negative exponent and no decimal point (`1e-12`) is
+    one token, not its exponent digits -- regression for the tokenizer
+    splitting it and reporting `12`."""
+    csrc = tmp_path / "csrc"
+    csrc.mkdir()
+    (csrc / "newmodule.c").write_text("double f(double x) { return x * 1e-12; }\n")
+    proc = _run("--lint", str(csrc))
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert "`1e-12`" in proc.stdout
+    assert "`12`" not in proc.stdout
+
+
+def test_lint_exponent_literal_with_decimal_mantissa_reported_whole(tmp_path):
+    csrc = tmp_path / "csrc"
+    csrc.mkdir()
+    (csrc / "newmodule.c").write_text("double f(double x) { return x * 2.5e3; }\n")
+    proc = _run("--lint", str(csrc))
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert "`2.5e3`" in proc.stdout
+
+
+def test_lint_constants_table_exempts_an_exponent_literal(tmp_path):
+    csrc = tmp_path / "csrc"
+    csrc.mkdir()
+    (csrc / "events.c").write_text(
+        "/* constants-table: docs/bible/epics/E-04-events-and-chains.md S-030 */\n"
+        "static const double thresholds[1] = { 1e-12 };\n"
+        "/* end constants-table */\n"
+        "double f(double x) { return x; }\n"
+    )
+    proc = _run("--lint", str(csrc))
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert "1 table literals exempted" in proc.stdout
 
 
 def test_lint_new_module_is_not_grandfathered(tmp_path):
@@ -502,15 +552,15 @@ def test_find_violations_with_occurrence_counts_repeats_in_order():
         "double f(double x) {\n"
         "    double a = x * 0.33;\n"
         "    double b = x * 0.33;\n"
-        "    double c = x * 0.5;\n"
+        "    double c = x * 0.25;\n"
         "    return a + b + c;\n"
         "}\n"
     )
     keyed = ac.find_violations_with_occurrence(text)
     occ_033 = [occurrence for _, _, token, occurrence in keyed if token == "0.33"]
     assert occ_033 == [1, 2]
-    occ_05 = [occurrence for _, _, token, occurrence in keyed if token == "0.5"]
-    assert occ_05 == [1]
+    occ_025 = [occurrence for _, _, token, occurrence in keyed if token == "0.25"]
+    assert occ_025 == [1]
 
 
 def test_parse_allowlist_lines_matches_by_token_and_occurrence_not_position():

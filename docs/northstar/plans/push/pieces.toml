@@ -42,7 +42,7 @@ acceptance = [
     "tests/csim/test_E05_S039_wiring.py",
 ]
 depends_on = []
-status = "pending"
+status = { state = "attached", attach_sha = "35964fd" }
 size_estimate = "ALG-23/24, 6 tests (E-05 S-039 minus R-039-05, held by Q-039-01)"
 
 [[piece]]
