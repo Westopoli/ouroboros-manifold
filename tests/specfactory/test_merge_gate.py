@@ -104,6 +104,44 @@ def test_every_step_before_the_first_reject_prints_a_line(tmp_path):
         assert f"GATE {step} " in proc.stdout, proc.stdout + proc.stderr
 
 
+def test_acceptance_increment_warns_full_id_rejects(tmp_path):
+    """Straggler rule end-to-end (F6 item 1, straggler follow-up): a red
+    acceptance test rejects under the FULL piece id, but the identical
+    candidate submitted under an INCREMENT id of that piece (B10-2, push
+    plan straggler rule) warns instead, naming the green/red split."""
+    repo = _init_fixture_repo(tmp_path / "repo", makefile=FAST_MAKEFILE)
+    pieces = tmp_path / "pieces.toml"
+    _write_pieces(pieces, [{
+        "id": "B10",
+        "owns": ["tests/accept/test_a.py"],
+        "acceptance": ["tests/accept/test_a.py::test_pass", "tests/accept/test_a.py::test_fail"],
+    }])
+
+    (repo / "tests" / "accept").mkdir()
+    (repo / "tests" / "accept" / "test_a.py").write_text(
+        "def test_pass():\n    assert True\n\n"
+        "def test_fail():\n    assert False\n"
+    )
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "candidate")
+
+    env = {"MERGE_GATE_PIECES": str(pieces), "PATH": "/usr/bin:/bin:/home/westopoli/Projects/agora/.venv/bin"}
+
+    full = subprocess.run(
+        ["bash", str(GATE), str(repo), "HEAD~1", "B10"],
+        capture_output=True, text=True, env=env, timeout=90,
+    )
+    assert "GATE acceptance REJECT" in full.stdout, full.stdout + full.stderr
+
+    increment = subprocess.run(
+        ["bash", str(GATE), str(repo), "HEAD~1", "B10-2"],
+        capture_output=True, text=True, env=env, timeout=90,
+    )
+    assert "GATE acceptance WARN" in increment.stdout, increment.stdout + increment.stderr
+    assert "increment B10-2 of B10: 1/2 acceptance ids green" in increment.stdout
+    assert "GATE acceptance REJECT" not in increment.stdout
+
+
 def test_unknown_candidate_dir_is_a_usage_error():
     proc = subprocess.run(
         ["bash", str(GATE), "/nonexistent/path", "HEAD", "B1"],

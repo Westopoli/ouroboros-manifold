@@ -20,6 +20,7 @@ var _frame_deadline_ticks: int = 0
 var _frame_objectives: Array = []
 var _frame_force: Dictionary = {}
 var _plant_marker_from_frame: bool = false
+var _frame_loaded: bool = false
 
 var _data: Dictionary = {}
 var _accent: Color
@@ -731,11 +732,75 @@ func _animate_entrance() -> void:
 
 
 func load_frame(mission: Dictionary) -> void:
+	_frame_loaded = true
 	_frame_archetype = int(mission.get("archetype", 0))
 	_frame_region = int(mission.get("region", 0))
 	_frame_deadline_ticks = int(mission.get("deadline_ticks", 0))
 	_frame_objectives = (mission.get("objectives", []) as Array).duplicate(true)
 	_frame_force = (mission.get("force", {}) as Dictionary).duplicate(true)
+	_apply_frame_to_data()
+	_clear_ui()
+	_build_ui()
+
+
+# Piece C4-1 (extended C4-2): overlays what the C-transport mission frame
+# carries onto the legacy _build_ui() data shape (_data), so _build_ui()
+# does not need a second rendering path. Only objective_primary/
+# objectives_secondary and the tick display are frame-derived. Every
+# other _data key the frame doesn't carry is a prose field that only
+# ever came from UIDataBus.get_mission_briefing()'s mock fixture — on a
+# frame-driven load _ready() has typically already backfilled _data from
+# that mock (see _ready()) before load_frame() ever runs, so those keys
+# must be reset to neutral placeholders here rather than left showing
+# mock_001's fake situation text, enemy assessment, force roster, region
+# name, and commander lineage. era_id is left alone (not prose; it only
+# selects the accent color/badge and the frame carries no era field).
+# Marker names go through the existing _marker_name_for_node() table
+# lookup, never the frame's raw node id.
+func _apply_frame_to_data() -> void:
+	_data["tick_counter"] = _frame_deadline_ticks
+
+	var primary_obj: Dictionary = {}
+	var secondary_objs: Array = []
+	for o in _frame_objectives:
+		var node := int(o.get("node", 0))
+		var entry := {
+			"text": _marker_name_for_node(node),
+			"detail": "",
+		}
+		if bool(o.get("primary", false)):
+			primary_obj = entry
+		else:
+			secondary_objs.append(entry)
+	_data["objective_primary"] = primary_obj
+	_data["objectives_secondary"] = secondary_objs
+
+	if _frame_loaded:
+		_data["mission_id_label"] = ""
+		_data["chapter"] = 0
+		_data["generation"] = 0
+		_data["mission_title"] = ""
+		_data["mission_subtitle"] = ""
+		_data["situation_text"] = ""
+		_data["enemy_assessment"] = {}
+		_data["player_force"] = {}
+		_data["region_state"] = {}
+		_data["commander_lineage"] = {}
+		_data["reinforcement_note"] = ""
+
+
+# Piece C4-1: makes _build_ui() safe to call more than once (load_frame()
+# calls it on every rebind). Mirrors scenes/world/chronicle_scroll_panel.gd's
+# begin_time_jump(), which clears _entry_container's children before
+# rebuilding, except this clears the root's own direct children (bg,
+# margin) since _build_ui() adds straight to self. remove_child() first so
+# a load_frame() call that immediately rebuilds again (no frame boundary in
+# between, as the fenced test does) does not see stale children still
+# reporting as present.
+func _clear_ui() -> void:
+	for child in get_children():
+		remove_child(child)
+		child.queue_free()
 
 
 func qa_state() -> Dictionary:

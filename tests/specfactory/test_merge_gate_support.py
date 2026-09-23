@@ -323,6 +323,82 @@ def test_acceptance_ids_b15m_unchanged(tmp_path):
     assert godot_ids == []
 
 
+# ---------------------------------------------------------------- acceptance-verdict (increment WARN vs REJECT) --
+
+def test_is_increment_resolves_known_base():
+    assert mgs.is_increment("B10-2", {"B10": {}}) == "B10"
+
+
+def test_is_increment_full_id_is_not_an_increment():
+    assert mgs.is_increment("B10", {"B10": {}}) is None
+
+
+def test_is_increment_unresolvable_id_is_not_an_increment():
+    assert mgs.is_increment("Z9-1", {"B1": {}}) is None
+
+
+def test_partition_pytest_ids_whole_file_red_from_node_id():
+    ids = ["tests/csim/test_a.py", "tests/csim/test_b.py::test_pass"]
+    failing = ["tests/csim/test_a.py::test_broken"]
+    green, red = mgs.partition_pytest_ids(ids, failing)
+    assert red == ["tests/csim/test_a.py"]
+    assert green == ["tests/csim/test_b.py::test_pass"]
+
+
+def test_partition_godot_ids_from_log_text():
+    ids = ["tests/test_a.gd", "tests/test_b.gd"]
+    log = (
+        "=== Running res://tests/test_a.gd (timeout 300s) ===\n"
+        "PASS: res://tests/test_a.gd\n"
+        "=== Running res://tests/test_b.gd (timeout 300s) ===\n"
+        "FAIL: res://tests/test_b.gd (exit 1)\n"
+    )
+    green, red = mgs.partition_godot_ids(ids, log)
+    assert green == ["tests/test_a.gd"]
+    assert red == ["tests/test_b.gd"]
+
+
+def test_acceptance_warn_detail_format():
+    detail = mgs.acceptance_warn_detail("B10-2", "B10", ["a"], ["a", "b"], ["b"])
+    assert detail == "increment B10-2 of B10: 1/2 acceptance ids green; red: ['b']"
+
+
+def test_cli_acceptance_verdict_increment_warns_full_id_rejects(tmp_path):
+    """The same red acceptance id: WARN under the increment id (B10-2),
+    bare REJECT under the full id (B10) -- merge_gate.sh's step 7 turns the
+    REJECT case into its own `reject acceptance` line using the pytest log
+    tail instead, since acceptance-verdict itself carries no log detail for
+    a full id."""
+    pieces = tmp_path / "pieces.toml"
+    pieces.write_text(
+        '[[piece]]\nid = "B10"\nowns = []\n'
+        'acceptance = ["tests/csim/test_a.py::test_pass", "tests/csim/test_a.py::test_fail"]\n'
+    )
+    ids_file = tmp_path / "ids.txt"
+    ids_file.write_text("tests/csim/test_a.py::test_pass\ntests/csim/test_a.py::test_fail\n")
+    pytest_log = tmp_path / "pytest.log"
+    pytest_log.write_text("FAILED tests/csim/test_a.py::test_fail - assert False\n1 passed, 1 failed\n")
+
+    support = str(REPO / "scripts" / "specfactory" / "merge_gate_support.py")
+
+    increment = subprocess.run(
+        [sys.executable, support, "acceptance-verdict", "B10-2",
+         "--pieces", str(pieces), "--ids-file", str(ids_file), "--pytest-log", str(pytest_log)],
+        capture_output=True, text=True,
+    )
+    assert increment.returncode == 0, increment.stdout + increment.stderr
+    assert increment.stdout.startswith("WARN increment B10-2 of B10: 1/2 acceptance ids green")
+    assert "tests/csim/test_a.py::test_fail" in increment.stdout
+
+    full = subprocess.run(
+        [sys.executable, support, "acceptance-verdict", "B10",
+         "--pieces", str(pieces), "--ids-file", str(ids_file), "--pytest-log", str(pytest_log)],
+        capture_output=True, text=True,
+    )
+    assert full.returncode == 1, full.stdout + full.stderr
+    assert full.stdout.strip() == "REJECT"
+
+
 # ---------------------------------------------------------------- DEF_RE / _diff_added_definitions --
 
 def test_positive_control_def_re_return_type_variants(tmp_path):

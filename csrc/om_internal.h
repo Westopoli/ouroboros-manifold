@@ -8,7 +8,10 @@
 #include "ouroboros_sim.h"
 
 #define OM_MAX_NEIGHBORS 32
-#define OM_MAX_REGIONS 64
+/* F2d: raised 64 -> 128 so every region-indexed and per-tick-record bound
+ * covers E-03's full draw range (OM_WORLD_REGION_COUNT_RANGE_HI = 110,
+ * om_constants.h). */
+#define OM_MAX_REGIONS 128
 #define OM_DAMAGE_HISTORY_CAP 64
 #define OM_TIE_EPSILON 1e-12
 
@@ -61,27 +64,29 @@ struct om_world {
     int          faction_used[OM_MAX_FACTIONS];
     uint32_t     faction_n;
     int64_t     *region_held_since;
-    om_edge_type region_edge[64][64];
+    om_edge_type region_edge[OM_MAX_REGIONS][OM_MAX_REGIONS];
     uint64_t     rng_state, rng_inc;
     double       rng_forced[4096];
     uint32_t     rng_forced_head, rng_forced_len;
 
-    /* E-05 decision and resolution state */
-    om_decision        decisions[64];
+    /* E-05 decision and resolution state. Each log holds at most one record
+     * per region per tick, so it is sized OM_MAX_REGIONS (F2d), matching the
+     * n_regions bound every writer already loops on. */
+    om_decision        decisions[OM_MAX_REGIONS];
     uint32_t           decisions_n;
-    om_telegraph       telegraphs[64];
+    om_telegraph       telegraphs[OM_MAX_REGIONS];
     uint32_t           telegraphs_n;
-    om_attack_result   attacks[64];
+    om_attack_result   attacks[OM_MAX_REGIONS];
     uint32_t           attacks_n;
-    om_collision       collisions[64];
+    om_collision       collisions[OM_MAX_REGIONS];
     uint32_t           collisions_n;
-    om_reinforce       reinforces[64];
+    om_reinforce       reinforces[OM_MAX_REGIONS];
     uint32_t           reinforces_n;
-    om_colonize_result colonizations[64];
+    om_colonize_result colonizations[OM_MAX_REGIONS];
     uint32_t           colonizations_n;
-    om_friction        frictions[64];
+    om_friction        frictions[OM_MAX_REGIONS];
     uint32_t           frictions_n;
-    om_admin_roll      admin_rolls[64];
+    om_admin_roll      admin_rolls[OM_MAX_REGIONS];
     uint32_t           admin_rolls_n;
 
     /* event queue, shared with E-04 (ouroboros_sim.h ~line 454): entries are
@@ -145,6 +150,40 @@ struct om_world {
      * keyed by om_world* (save/load and the checksum must see it) */
     void *tactical_state;
     void (*tactical_state_free)(void *);
+
+    /* E-08 generational module state, same convention as tactical_state
+     * above: never a file static keyed by om_world*. */
+    void *generational_state;
+    void (*generational_state_free)(void *);
+
+    /* B1-3: csrc/events.c per-world state, same convention as
+     * tactical_state above -- events.c kept it in a file-static slot table
+     * keyed by om_world*, invisible to save/load and the checksum. */
+    void *events_state;
+    void (*events_state_free)(void *);
+
+    /* F2e: E-06 diplomacy storage backing the om_faction_stance_counter /
+     * om_faction_cooperative_since / om_faction_last_knowledge_lost
+     * accessors (csrc/ouroboros_sim.h; card B5 fills the read/write bodies
+     * in csrc/diplomacy.c, still STUBs here). ALG-38: per neutral ordered
+     * pair sharing a border edge, ticks since the last attack between them,
+     * reset to 0 on an attack; 0 is also the pair's never-counted-yet
+     * starting value, so 0 carries both meanings, matching the STUB
+     * accessors' current 0 return. ALG-39: cooperative_since is the tick a
+     * successful overture applied (S-043 R-043-05); 0 doubles as "never
+     * cooperative" since om_faction_cooperative_since's restype is the
+     * unsigned uint64_t tick counter (no negative sentinel available,
+     * unlike the int64_t fields below). */
+    uint32_t faction_stance_counter[OM_MAX_FACTIONS][OM_MAX_FACTIONS];
+    uint64_t faction_cooperative_since[OM_MAX_FACTIONS][OM_MAX_FACTIONS];
+
+    /* ALG-27b Knowledge Lost: tick of each faction's last Knowledge Lost
+     * event. -1 sentinel for "never", matching the header's existing
+     * int64_t never-yet convention (om_region_held_since, om_event_last_fired
+     * both < 0 = never); om_faction_last_knowledge_lost's restype is the
+     * signed int64_t, unlike cooperative_since above, so -1 is available and
+     * unambiguous. */
+    int64_t faction_last_knowledge_lost[OM_MAX_FACTIONS];
 
     /* Bumped from a file-static counter in om_world_new (csrc/region.c),
      * starting at 1: a cheap way for any module to detect a reused
