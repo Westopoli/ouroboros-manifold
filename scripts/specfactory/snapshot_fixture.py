@@ -25,8 +25,17 @@ unexported and no adjacency ever set) an empty edge list.
 regions, a ring plus periodic chords, and seed-derived, distinct per-region
 fields -- so the fixture exercises owners/edges/tiers, not an all-zero galaxy.
 
-Deterministic: same seed/regions/ticks/features/populate flag, byte-identical
-JSON, every run.
+`--generate` builds the world the way `pipe/ouroboros_pipe`'s `set_seed` now
+must (docs/architecture.md "C transport v1"): `om_world_new(n_regions, seed)`,
+the requested features, then `om_world_generate(w)`. It raises if
+`om_world_generated(w)` comes back 0 (a pinned `n_regions` below the
+generator's feasibility floor, csrc/worldgen.c) rather than silently writing
+an empty-looking fixture -- the whole point of `--generate` is a fixture with
+real generated owners/edges/tiers, not a fixture that only looks like one.
+`--populate` and `--generate` are mutually exclusive.
+
+Deterministic: same seed/regions/ticks/features/populate-or-generate flag,
+byte-identical JSON, every run.
 """
 from __future__ import annotations
 
@@ -61,6 +70,7 @@ def load_lib() -> ctypes.CDLL:
     handle = ctypes.CDLL(str(csim.LIB_PATH))
     csim._configure_common(handle)
     csim._bind_e05(handle)
+    csim._bind_e03(handle)
     version = handle.om_abi_version()
     if version != csim.EXPECTED_ABI_VERSION:
         raise RuntimeError(
@@ -166,7 +176,9 @@ def populate_world(lib: ctypes.CDLL, w, seed: int, n_regions: int) -> None:
 
 
 def build_snapshot(seed: int, n_regions: int, n_ticks: int, features: list[int],
-                    populate: bool = False) -> dict:
+                    populate: bool = False, generate: bool = False) -> dict:
+    if populate and generate:
+        raise ValueError("--populate and --generate are mutually exclusive")
     lib = load_lib()
     w = lib.om_world_new(n_regions, seed)
     if not w:
@@ -177,6 +189,15 @@ def build_snapshot(seed: int, n_regions: int, n_ticks: int, features: list[int],
 
         for f in features:
             lib.om_world_set_feature(w, f, 1)
+
+        if generate:
+            lib.om_world_generate(w)
+            if not lib.om_world_generated(w):
+                raise RuntimeError(
+                    f"om_world_generate failed for seed={seed} n_regions={n_regions} "
+                    "(n_regions is below the generator's feasibility floor for the "
+                    "default faction count -- csrc/worldgen.c om_world_generate)"
+                )
 
         tick = 0
         for _ in range(n_ticks):
@@ -236,8 +257,8 @@ def build_snapshot(seed: int, n_regions: int, n_ticks: int, features: list[int],
 
 
 def write_snapshot(out_path: Path, seed: int, n_regions: int, n_ticks: int, features: list[int],
-                    populate: bool = False) -> dict:
-    snapshot = build_snapshot(seed, n_regions, n_ticks, features, populate=populate)
+                    populate: bool = False, generate: bool = False) -> dict:
+    snapshot = build_snapshot(seed, n_regions, n_ticks, features, populate=populate, generate=generate)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with open(out_path, "w") as f:
         json.dump(snapshot, f, indent=2)
@@ -254,11 +275,15 @@ def main(argv: list[str] | None = None) -> int:
                     help=f"comma-separated om_feature ids (default {DEFAULT_FEATURES})")
     ap.add_argument("--populate", action="store_true",
                     help="deterministic populated world (4 factions, ring+chords) instead of an all-zero one")
+    ap.add_argument("--generate", action="store_true",
+                    help="build the world through om_world_generate, the way the pipe's set_seed now must")
     ap.add_argument("--out", required=True)
     args = ap.parse_args(argv)
+    if args.populate and args.generate:
+        ap.error("--populate and --generate are mutually exclusive")
 
     write_snapshot(Path(args.out), args.seed, args.regions, args.ticks, parse_features(args.features),
-                   populate=args.populate)
+                   populate=args.populate, generate=args.generate)
     return 0
 
 

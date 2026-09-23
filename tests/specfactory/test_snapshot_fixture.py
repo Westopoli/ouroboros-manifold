@@ -26,10 +26,12 @@ def _run(*args: str) -> subprocess.CompletedProcess:
 
 
 def _generate(out_path: Path, *, seed: int, regions: int, ticks: int,
-              populate: bool = False) -> subprocess.CompletedProcess:
+              populate: bool = False, generate: bool = False) -> subprocess.CompletedProcess:
     args = ["--seed", str(seed), "--regions", str(regions), "--ticks", str(ticks), "--out", str(out_path)]
     if populate:
         args.append("--populate")
+    if generate:
+        args.append("--generate")
     return _run(*args)
 
 
@@ -72,12 +74,15 @@ def test_generator_seed_and_ticks_change_the_tick_field(tmp_path):
 
 
 def test_checked_in_fixture_matches_current_generator_output(tmp_path):
-    """tests/transport/fixtures/snapshot_seed1_tick10.json (seed 1, 60 regions,
-    10 ticks, --populate) is exactly what the generator produces right now --
-    not a stale snapshot from an earlier build."""
+    """tests/transport/fixtures/snapshot_seed1_tick10.json (seed 1, 80 regions,
+    10 ticks, --generate) is exactly what the generator produces right now --
+    not a stale snapshot from an earlier build. 80, not the doc examples' 60:
+    60 is below om_world_generate's feasibility floor for the default
+    15-faction generator on every seed (worst case needed is 15 * 4 + 15 = 75,
+    csrc/worldgen.c); 80 clears it for any seed."""
     assert FIXTURE.exists()
     out = tmp_path / "regenerated.json"
-    proc = _generate(out, seed=1, regions=60, ticks=10, populate=True)
+    proc = _generate(out, seed=1, regions=80, ticks=10, generate=True)
     assert proc.returncode == 0, proc.stdout + proc.stderr
     assert out.read_bytes() == FIXTURE.read_bytes()
 
