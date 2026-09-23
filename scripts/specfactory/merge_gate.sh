@@ -110,6 +110,15 @@ else
     ok footprint "$(cat "$FP_LOG")"
 fi
 
+# -------------------------------------------------------------- 4b. gd class_name uniqueness
+GDCLS_LOG="$SCRATCH_ROOT/gd_class_names.log"
+"$PYTHON" "$GATE_DIR/merge_gate_support.py" gd-class-names "$CANDIDATE" >"$GDCLS_LOG" 2>&1
+if [[ $? -ne 0 ]]; then
+    reject gd_class_names "$(head -n1 "$GDCLS_LOG")"
+else
+    ok gd_class_names "$(cat "$GDCLS_LOG")"
+fi
+
 # -------------------------------------------------------------- 5. symbol-ownership lint
 SYM_LOG="$SCRATCH_ROOT/symbols.log"
 "$PYTHON" "$GATE_DIR/merge_gate_support.py" symbols "$CANDIDATE" "$BASE_REF" \
