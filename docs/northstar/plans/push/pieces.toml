@@ -25,7 +25,7 @@ acceptance = [
     "tests/csim/test_E04_wiring.py",
 ]
 depends_on = []
-status = "pending"
+status = { state = "attached", attach_sha = "4b2ae50" }
 size_estimate = "749 py lines, 31 tests (E-04)"
 
 [[piece]]
