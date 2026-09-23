@@ -3,6 +3,7 @@ extends Control
 const QaPlants := preload("res://scenes/mockups/_shared/qa_plants.gd")
 const TICKS_PER_SEC := 20.0
 const FADE_TICKS := 4
+const KEYFRAME_FLASH_COLOR := Color(1.0, 0.85, 0.3)
 
 const PLANTS: Array[String] = [
 	"order-shuffled",
@@ -22,16 +23,21 @@ var _current_seed: int = 11
 var _map_fraction: float = 1.0
 var _regen_count: int = 0
 var _load_ms: float = 0.0
+var _fired_keyframes: Dictionary = {}
 
 var _map_viewport: SubViewportContainer
-var _mini_galaxy: Node3D
+var _galaxy_view: Node3D
+var _orbit_camera: Node3D
 var _scroll
 var _hud
 
 
 func _ready() -> void:
 	_map_viewport = get_node("MapViewport")
-	_mini_galaxy = get_node("MapViewport/SubViewport/MiniGalaxy")
+	_galaxy_view = get_node("MapViewport/SubViewport/World/GalaxyView")
+	_orbit_camera = get_node("MapViewport/SubViewport/OrbitCamera")
+	_orbit_camera.set_galaxy_view(_galaxy_view)
+	_galaxy_view.attach_camera(_orbit_camera)
 	_scroll = get_node("Scroll")
 	_hud = get_node("HUD")
 	_scroll.setup(self)
@@ -45,13 +51,14 @@ func _process(delta: float) -> void:
 		while _tick_accum >= 1.0:
 			_tick_accum -= 1.0
 			_tick += 1
+			_apply_due_keyframes()
 			if _all_entries_printed():
 				_finish()
 	_sync_view()
 
 
 func _sync_view() -> void:
-	_mini_galaxy.update_tick(_tick)
+	_galaxy_view.update_view(_orbit_camera.get_distance(), _orbit_camera.get_focused(), -1, -1)
 	_scroll.render(_render_rows(), _expanded_id)
 	_hud.refresh(qa_state())
 
@@ -89,28 +96,43 @@ func _start_jump(seed_n: int) -> void:
 	_tick_accum = 0.0
 	_phase = "narrating"
 	_expanded_id = ""
+	_fired_keyframes.clear()
 	_map_fraction = 0.62
 	_apply_map_fraction()
-	_mini_galaxy.set_data(_jump.galaxy.get("systems", []), _jump.galaxy.get("edges", []))
-	_mini_galaxy.set_morph_events(_build_morph_events())
+	var galaxy: Galaxy = GalaxyGen.new().generate(seed_n)
+	_galaxy_view.build(galaxy)
 	_scroll.begin()
 	_regen_count += 1
 	_load_ms = (Time.get_ticks_usec() - t0) / 1000.0
 	_sync_view()
 
 
-func _build_morph_events() -> Array:
-	var owners_now: Dictionary = {}
-	for s in _jump.galaxy.get("systems", []):
-		owners_now[String(s.get("id", ""))] = String(s.get("owner", ""))
-	var out: Array = []
-	for ot in _jump.ownership_timeline:
-		var sid := String(ot.get("system_id", ""))
-		var from_owner: String = owners_now.get(sid, "")
-		var to_owner := String(ot.get("owner", ""))
-		out.append({"tick": int(ot.get("tick", 0)), "system_id": sid, "from_owner": from_owner, "to_owner": to_owner})
-		owners_now[sid] = to_owner
-	return out
+# Every keyframe (not only the ones that change ownership) drives set_owner
+# plus a flash, the same recolour-plus-flash mechanism galaxy_mockup's own
+# replay uses (hud.gd's _advance_replay()) — a keyframe whose owner already
+# matches is a harmless no-op recolour, still worth the flash as a "this
+# system matters right now" narrative beat. Fired once per keyframe (keyed
+# by tick+system_id, not just tick, since two keyframes can share a tick),
+# not once per frame, and in a way that survives a Skip landing on the final
+# tick in one jump (see _do_skip()).
+func _apply_due_keyframes() -> void:
+	var g: Galaxy = _galaxy_view.get_galaxy()
+	if g == null:
+		return
+	for kf in _jump.keyframes:
+		var kt := int(kf.get("tick", -1))
+		if _tick < kt:
+			continue
+		var kid := String(kf.get("system_id", ""))
+		var key := "%d:%s" % [kt, kid]
+		if _fired_keyframes.has(key):
+			continue
+		_fired_keyframes[key] = true
+		var sid := int(kid)
+		if sid < 0 or sid >= g.systems.size():
+			continue
+		_galaxy_view.flash(sid, KEYFRAME_FLASH_COLOR)
+		_galaxy_view.set_system_owner(sid, int(kf.get("owner", -1)))
 
 
 func _apply_map_fraction() -> void:
@@ -182,6 +204,16 @@ func _render_rows() -> Array:
 	return rows
 
 
+func _owners_state() -> Dictionary:
+	var out: Dictionary = {}
+	var g: Galaxy = _galaxy_view.get_galaxy()
+	if g == null:
+		return out
+	for sys in g.systems:
+		out[sys.id] = sys.owner
+	return out
+
+
 func qa_state() -> Dictionary:
 	var entries_state: Array = []
 	for e in _jump.entries:
@@ -203,7 +235,7 @@ func qa_state() -> Dictionary:
 		"phase": _phase,
 		"entries": entries_state,
 		"expanded_id": _expanded_id,
-		"owners": _mini_galaxy.get_owners(),
+		"owners": _owners_state(),
 		"map_width_fraction": _map_fraction,
 		"pace": {"word_interval_s": 0.08, "fade_s": 0.20},
 		"dropped_entries": _jump.dropped_entries,
@@ -265,6 +297,7 @@ func qa_tick(n: int) -> void:
 	if advancing:
 		for i in range(n):
 			_tick += 1
+			_apply_due_keyframes()
 			if _all_entries_printed():
 				_finish()
 	_sync_view()
@@ -272,6 +305,7 @@ func qa_tick(n: int) -> void:
 
 func _do_skip() -> void:
 	_tick = max(_tick, _jump.total_span_ticks())
+	_apply_due_keyframes()
 	_expanded_id = ""
 	_phase = "done"
 	_map_fraction = 1.0

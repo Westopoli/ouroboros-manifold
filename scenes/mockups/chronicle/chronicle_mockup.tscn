@@ -1,10 +1,11 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scenes/mockups/chronicle/chronicle_mockup.gd" id="1"]
 [ext_resource type="Script" path="res://scenes/mockups/_shared/qa_driver.gd" id="2"]
-[ext_resource type="Script" path="res://scenes/mockups/chronicle/mini_galaxy.gd" id="3"]
-[ext_resource type="Script" path="res://scenes/mockups/chronicle/scroll_panel.gd" id="4"]
-[ext_resource type="Script" path="res://scenes/mockups/chronicle/hud.gd" id="5"]
+[ext_resource type="Script" path="res://scenes/mockups/galaxy/galaxy_view.gd" id="3"]
+[ext_resource type="Script" path="res://scenes/mockups/galaxy/orbit_camera.gd" id="4"]
+[ext_resource type="Script" path="res://scenes/mockups/chronicle/scroll_panel.gd" id="5"]
+[ext_resource type="Script" path="res://scenes/mockups/chronicle/hud.gd" id="6"]
 
 [sub_resource type="Environment" id="Environment_1"]
 background_mode = 1
@@ -46,22 +47,25 @@ stretch = true
 transparent_bg = false
 size = Vector2i(1600, 900)
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="MapViewport/SubViewport"]
+[node name="World" type="Node3D" parent="MapViewport/SubViewport"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="MapViewport/SubViewport/World"]
 environment = SubResource("Environment_1")
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="MapViewport/SubViewport"]
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="MapViewport/SubViewport/World"]
 rotation_degrees = Vector3(-55, -25, 0)
 light_energy = 1.1
 
-[node name="Camera3D" type="Camera3D" parent="MapViewport/SubViewport"]
-position = Vector3(0, 900, 650)
-rotation_degrees = Vector3(-54, 0, 0)
-fov = 45.0
-near = 1.0
-far = 6000.0
-
-[node name="MiniGalaxy" type="Node3D" parent="MapViewport/SubViewport"]
+[node name="GalaxyView" type="Node3D" parent="MapViewport/SubViewport/World"]
 script = ExtResource("3")
+
+[node name="OrbitCamera" type="Node3D" parent="MapViewport/SubViewport"]
+script = ExtResource("4")
+
+[node name="Camera3D" type="Camera3D" parent="MapViewport/SubViewport/OrbitCamera"]
+fov = 45.0
+near = 0.5
+far = 800.0
 
 [node name="Scroll" type="Control" parent="."]
 anchor_left = 0.62
@@ -74,7 +78,7 @@ offset_top = 24.0
 offset_bottom = -24.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("4")
+script = ExtResource("5")
 
 [node name="HUD" type="CanvasLayer" parent="."]
-script = ExtResource("5")
+script = ExtResource("6")

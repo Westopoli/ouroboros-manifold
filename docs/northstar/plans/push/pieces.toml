@@ -490,7 +490,7 @@ owns = []
 owns_glob = ["scenes/mockups/layers/**", "docs/northstar/research/mockups/layers/**"]
 acceptance = []
 depends_on = []
-status = "pending"
+status = { state = "attached", attach_sha = "eb42a70" }
 
 [[piece]]
 id = "MK-chronicle"
