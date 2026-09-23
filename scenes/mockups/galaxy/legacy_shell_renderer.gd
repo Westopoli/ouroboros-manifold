@@ -12,6 +12,10 @@ const INFLUENCE_RADIUS := 5.0
 const BOX_MARGIN := 8.0
 const ISO_THRESHOLD := 0.6
 const SHELL_RES_DIVISOR := 2
+# The raymarch shader's alpha is boosted up to 2.5x at border seams (rim +
+# gap glow); a flat stand-in quad has no such boost, so its base opacity is
+# raised to stay visible at the same _opacity_* values.
+const STAND_IN_OPACITY_MULTIPLIER := 1.8
 
 var _wv_data: Node
 var _zoom_controller: Node
@@ -30,16 +34,32 @@ var _opacity_overview := 0.50
 var _opacity_regional := 0.12
 var _opacity_local := 0.05
 
+# Measured (mockup_qa.sh run galaxy, 1920x1080, boot state, this rig's own
+# ambient+filaments already built): fps_ms 131 with this shader disabled vs
+# 1961 with it on — the raymarch metaball shader (20 raymarch steps, each up
+# to ~80 texture-sampled field evals, plus a second SubViewport scene pass at
+# half-res) is ~15x the frame cost under llvmpipe/gl_compatibility, blowing
+# past the pass-2 "not more than twice pass 1's fps_ms" budget by itself. It
+# renders correctly (docs/northstar/research/mockups/galaxy/pass2/probe/
+# filament_and_shell.png) — this is a speed problem, not a compile failure —
+# so per the brief's relaxation clause this is a per-system stand-in, not a
+# whole-shader swap: Westley's Forward+ seat (a real GPU) keeps the raymarch
+# shell, the Compatibility/llvmpipe QA render gets one flat translucent
+# billboard per faction instead (see _rebuild_faction_shell()).
+var _stand_in := false
+
 
 func setup(data: Node, zoom_controller: Node) -> void:
 	_wv_data = data
 	_zoom_controller = zoom_controller
-	_shell_shader = load("res://scenes/mockups/galaxy/shaders/shell_metaball.gdshader")
+	_stand_in = RenderingServer.get_current_rendering_method() == "gl_compatibility"
+	if not _stand_in:
+		_shell_shader = load("res://scenes/mockups/galaxy/shaders/shell_metaball.gdshader")
+		_setup_low_res_viewport()
 	_wv_data.territory_set.connect(_on_territory_changed)
 	_wv_data.territory_updated.connect(_on_territory_changed)
 	_wv_data.territory_removed.connect(_on_territory_removed)
 	_wv_data.regions_cleared.connect(_on_regions_cleared)
-	_setup_low_res_viewport()
 
 
 func _setup_low_res_viewport() -> void:
@@ -155,9 +175,12 @@ func _process(_delta: float) -> void:
 
 	for faction_id in _faction_meshes:
 		var mesh: MeshInstance3D = _faction_meshes[faction_id]
-		var mat: ShaderMaterial = mesh.material_override
-		if mat:
-			mat.set_shader_parameter("shell_opacity", target_opacity)
+		var mat: Material = mesh.material_override
+		if mat is ShaderMaterial:
+			(mat as ShaderMaterial).set_shader_parameter("shell_opacity", target_opacity)
+		elif mat is StandardMaterial3D:
+			var std_mat := mat as StandardMaterial3D
+			std_mat.albedo_color.a = target_opacity * STAND_IN_OPACITY_MULTIPLIER
 
 	for faction_id in _faction_labels:
 		var label: Label3D = _faction_labels[faction_id]
@@ -244,33 +267,6 @@ func _rebuild_faction_shell(faction_id: String) -> void:
 	var box_center := (min_pos + max_pos) * 0.5
 	var box_size := max_pos - min_pos
 
-	var img := Image.create(64, 1, false, Image.FORMAT_RGBAF)
-	var idx := 0
-	for entry in systems.values():
-		if idx >= 64:
-			break
-		var pos: Vector3 = entry["center"]
-		var sig := clampf(entry["radius"] / maxf(max_sig, 0.01), 0.0, 1.0)
-		img.set_pixel(idx, 0, Color(pos.x, pos.y, pos.z, sig))
-		idx += 1
-	var tex := ImageTexture.create_from_image(img)
-
-	var rival_img := Image.create(256, 1, false, Image.FORMAT_RGBAF)
-	var rival_idx := 0
-	for other_fk in _faction_systems:
-		if other_fk == faction_id:
-			continue
-		for rival_entry in _faction_systems[other_fk].values():
-			if rival_idx >= 256:
-				break
-			var rpos: Vector3 = rival_entry["center"]
-			var rsig := clampf(rival_entry["radius"] / maxf(max_sig, 0.01), 0.0, 1.0)
-			rival_img.set_pixel(rival_idx, 0, Color(rpos.x, rpos.y, rpos.z, rsig))
-			rival_idx += 1
-		if rival_idx >= 256:
-			break
-	var rival_tex := ImageTexture.create_from_image(rival_img)
-
 	var mesh_inst: MeshInstance3D
 	if faction_id in _faction_meshes:
 		mesh_inst = _faction_meshes[faction_id]
@@ -278,29 +274,78 @@ func _rebuild_faction_shell(faction_id: String) -> void:
 		mesh_inst = MeshInstance3D.new()
 		mesh_inst.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		mesh_inst.transparency = 0.5
-		_shell_container.add_child(mesh_inst)
+		if _stand_in:
+			add_child(mesh_inst)
+		else:
+			_shell_container.add_child(mesh_inst)
 		_faction_meshes[faction_id] = mesh_inst
 
-	var box := BoxMesh.new()
-	box.size = box_size
-	mesh_inst.mesh = box
-	mesh_inst.position = box_center
+	if _stand_in:
+		var sphere := SphereMesh.new()
+		sphere.radius = 1.0
+		sphere.height = 2.0
+		sphere.radial_segments = 16
+		sphere.rings = 10
+		mesh_inst.mesh = sphere
+		mesh_inst.position = box_center
+		mesh_inst.scale = box_size * 0.5
 
-	var mat := ShaderMaterial.new()
-	mat.shader = _shell_shader
-	mat.set_shader_parameter("system_positions", tex)
-	mat.set_shader_parameter("system_count", idx)
-	mat.set_shader_parameter("rival_positions", rival_tex)
-	mat.set_shader_parameter("rival_count", rival_idx)
-	mat.set_shader_parameter("shell_color", Vector3(color.r, color.g, color.b))
-	mat.set_shader_parameter("influence_radius", INFLUENCE_RADIUS)
-	mat.set_shader_parameter("iso_threshold", ISO_THRESHOLD)
-	mat.set_shader_parameter("shell_opacity", _opacity_regional)
-	mat.set_shader_parameter("gap_strength", 0.5)
-	mat.set_shader_parameter("box_min_world", min_pos)
-	mat.set_shader_parameter("box_max_world", max_pos)
-	mat.render_priority = -2
-	mesh_inst.material_override = mat
+		var std_mat := StandardMaterial3D.new()
+		std_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		std_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		std_mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+		std_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+		std_mat.albedo_color = Color(color.r, color.g, color.b, _opacity_regional * STAND_IN_OPACITY_MULTIPLIER)
+		std_mat.render_priority = -2
+		mesh_inst.material_override = std_mat
+	else:
+		var img := Image.create(64, 1, false, Image.FORMAT_RGBAF)
+		var idx := 0
+		for entry in systems.values():
+			if idx >= 64:
+				break
+			var pos: Vector3 = entry["center"]
+			var sig := clampf(entry["radius"] / maxf(max_sig, 0.01), 0.0, 1.0)
+			img.set_pixel(idx, 0, Color(pos.x, pos.y, pos.z, sig))
+			idx += 1
+		var tex := ImageTexture.create_from_image(img)
+
+		var rival_img := Image.create(256, 1, false, Image.FORMAT_RGBAF)
+		var rival_idx := 0
+		for other_fk in _faction_systems:
+			if other_fk == faction_id:
+				continue
+			for rival_entry in _faction_systems[other_fk].values():
+				if rival_idx >= 256:
+					break
+				var rpos: Vector3 = rival_entry["center"]
+				var rsig := clampf(rival_entry["radius"] / maxf(max_sig, 0.01), 0.0, 1.0)
+				rival_img.set_pixel(rival_idx, 0, Color(rpos.x, rpos.y, rpos.z, rsig))
+				rival_idx += 1
+			if rival_idx >= 256:
+				break
+		var rival_tex := ImageTexture.create_from_image(rival_img)
+
+		var box := BoxMesh.new()
+		box.size = box_size
+		mesh_inst.mesh = box
+		mesh_inst.position = box_center
+
+		var mat := ShaderMaterial.new()
+		mat.shader = _shell_shader
+		mat.set_shader_parameter("system_positions", tex)
+		mat.set_shader_parameter("system_count", idx)
+		mat.set_shader_parameter("rival_positions", rival_tex)
+		mat.set_shader_parameter("rival_count", rival_idx)
+		mat.set_shader_parameter("shell_color", Vector3(color.r, color.g, color.b))
+		mat.set_shader_parameter("influence_radius", INFLUENCE_RADIUS)
+		mat.set_shader_parameter("iso_threshold", ISO_THRESHOLD)
+		mat.set_shader_parameter("shell_opacity", _opacity_regional)
+		mat.set_shader_parameter("gap_strength", 0.5)
+		mat.set_shader_parameter("box_min_world", min_pos)
+		mat.set_shader_parameter("box_max_world", max_pos)
+		mat.render_priority = -2
+		mesh_inst.material_override = mat
 
 	var label: Label3D
 	if faction_id in _faction_labels:
