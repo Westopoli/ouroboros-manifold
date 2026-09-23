@@ -500,7 +500,7 @@ owns = []
 owns_glob = ["scenes/mockups/chronicle/**", "docs/northstar/research/mockups/chronicle/**"]
 acceptance = []
 depends_on = []
-status = "pending"
+status = { state = "attached", attach_sha = "" }
 [[piece]]
 id = "C8"
 manager = "M3"
