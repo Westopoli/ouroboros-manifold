@@ -88,6 +88,8 @@ om_world *om_world_new(uint32_t n_regions, uint64_t seed) {
     w->tactical_state_free = NULL;
     w->generational_state = NULL;
     w->generational_state_free = NULL;
+    w->events_state = NULL;
+    w->events_state_free = NULL;
 
     /* F2e: E-06 diplomacy storage. calloc above already zeroes
      * faction_stance_counter/faction_cooperative_since (0 = never-counted /
@@ -123,6 +125,9 @@ void om_world_free(om_world *w) {
     }
     if (w->generational_state && w->generational_state_free) {
         w->generational_state_free(w->generational_state);
+    }
+    if (w->events_state && w->events_state_free) {
+        w->events_state_free(w->events_state);
     }
     free(w->region_previous_owner);
     free(w->regions);
