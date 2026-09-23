@@ -85,9 +85,11 @@ func _pick_friendly(screen_pos: Vector2) -> int:
 
 
 func _regenerate(p_seed: int) -> void:
+	_truth.load_fixture(FIXTURE_PATH)
 	_truth.load_scenario(SCENARIO_PATH)
 	_truth.generate(p_seed)
 	_grid.setup(GRID_DIM, CELL_SIZE)
+	_fog_view.rebuild_terrain(_truth)
 	_phase = "recon"
 	_selected_uid = -1
 	_sync_view()
@@ -161,12 +163,15 @@ func qa_state() -> Dictionary:
 			total += d
 		avg_us = float(total) / float(_tick_durations_us.size())
 
+	var pan: Vector2 = _camera_rig.get_pan_position() if _camera_rig != null else Vector2.ZERO
+
 	return {
 		"seed": _truth.seed,
 		"hash": _truth.compute_hash(),
 		"phase": _phase,
 		"tick": _truth.tick,
 		"memory": _grid.memory,
+		"camera_pan": [pan.x, pan.y],
 		"visible_enemy_uids": vis.visible_enemy_uids,
 		"view_enemy_uids": _fog_view.get_enemy_uids(),
 		"enemy_count_total": _truth.enemies.size(),

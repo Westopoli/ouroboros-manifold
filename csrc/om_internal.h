@@ -8,7 +8,9 @@
 #include "ouroboros_sim.h"
 
 #define OM_MAX_NEIGHBORS 32
+#define OM_MAX_REGIONS 64
 #define OM_DAMAGE_HISTORY_CAP 64
+#define OM_TIE_EPSILON 1e-12
 
 typedef struct {
     om_tier  tier;
@@ -106,6 +108,48 @@ struct om_world {
     om_template faction_template[OM_MAX_FACTIONS];
     int         generated;
     uint32_t    edge_count;
+
+    /* F2c: E-07 lifecycle storage (docs/bible/epics/E-07-civilizational-lifecycle.md,
+     * ALG-41..44). csrc/lifecycle.c (card B6) is the sole writer; these are
+     * distinct from E-05's admin_rolls[] above (S-040 admin revolts, not
+     * lifecycle revolts). Named lc_* so a lifecycle revolt/reversion/
+     * absorption is never confused with an E-05 record of the same shape.
+     * Per-tick logs like attacks[]/reinforces[]/decisions[] above: the tests
+     * (tests/csim/test_E07_S049/S050/S051) only ever check a log for the
+     * same tick that produced the record, so om_step_lifecycle must zero
+     * lc_revolts_n/lc_reversions_n/lc_absorptions_n at its own top, the way
+     * om_step_resolve zeros attacks_n (csrc/resolve.c) -- not done here
+     * because om_step_lifecycle's body is card B6's, not F2c's. */
+    om_revolt_record     lc_revolts[OM_MAX_REGIONS];
+    uint32_t             lc_revolts_n;
+    om_reversion_record  lc_reversions[OM_MAX_REGIONS];
+    uint32_t             lc_reversions_n;
+    om_absorption_record lc_absorptions[OM_MAX_REGIONS];
+    uint32_t             lc_absorptions_n;
+    uint64_t faction_created_tick[OM_MAX_FACTIONS];
+    int      faction_conquered_this_tick[OM_MAX_FACTIONS];
+    uint32_t faction_window_total[OM_MAX_FACTIONS];
+    uint32_t faction_window_revolts[OM_MAX_FACTIONS];
+    uint32_t faction_window_attacks[OM_MAX_FACTIONS];
+    uint32_t faction_window_colonizations[OM_MAX_FACTIONS];
+    /* -1 default (no previous owner). Lazily calloc'd on first write, same
+     * convention as region_held_since above: NULL until
+     * om_region_set_previous_owner's first call, -1 returned by
+     * om_region_previous_owner while NULL (both in csrc/lifecycle.c,
+     * card B6). Unlike region_held_since, om_world_free below does free
+     * this one -- region_held_since's own leak is pre-existing and out of
+     * F2c's scope. */
+    int32_t *region_previous_owner;
+
+    /* tactical modules keep per-world state here, never in file statics
+     * keyed by om_world* (save/load and the checksum must see it) */
+    void *tactical_state;
+    void (*tactical_state_free)(void *);
+
+    /* Bumped from a file-static counter in om_world_new (csrc/region.c),
+     * starting at 1: a cheap way for any module to detect a reused
+     * om_world* address (e.g. a stale cached pointer after free/realloc). */
+    uint64_t world_serial;
 };
 
 /* Debug-build mirror of the E-03 generation fields above, for the F2b storage

@@ -150,6 +150,122 @@ def test_unknown_piece_id_rejected(tmp_path):
     assert "NOPE" in detail
 
 
+# ---------------------------------------------------------------- resolve_piece_id --
+
+def test_footprint_check_increment_id_resolves_to_base_piece(tmp_path):
+    """A straggler leaf pushes an increment as `push/C2-1`; the footprint
+    fence resolves `C2-1` to `C2` and checks against C2's owns."""
+    repo = _init_repo(tmp_path / "repo")
+    pieces = tmp_path / "pieces.toml"
+    _write_pieces(pieces, [{"id": "C2", "owns_glob": ["scenes/galaxy/**"]}])
+
+    (repo / "scenes" / "galaxy").mkdir(parents=True)
+    (repo / "scenes" / "galaxy" / "view.gd").write_text("extends Node\n")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "candidate")
+
+    ok, detail = mgs.footprint_check(repo, "HEAD~1", "C2-1", pieces_path=pieces)
+    assert ok is True, detail
+
+
+def test_footprint_check_b15m_id_unchanged(tmp_path):
+    """B15m has no trailing `-<digits>`, so resolution must leave it as-is
+    rather than mistaking its own name for an increment suffix."""
+    repo = _init_repo(tmp_path / "repo")
+    pieces = tmp_path / "pieces.toml"
+    _write_pieces(pieces, [{"id": "B15m", "owns": ["csrc/events.c"]}])
+
+    (repo / "csrc" / "events.c").write_text("int om_event_stub(void) { return 1; }\n")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "candidate")
+
+    ok, detail = mgs.footprint_check(repo, "HEAD~1", "B15m", pieces_path=pieces)
+    assert ok is True, detail
+
+
+def test_footprint_check_increment_id_with_no_base_piece_still_unknown(tmp_path):
+    """`Z9-1` strips to `Z9`, which is not a piece either -- still rejected
+    as unknown, not silently accepted."""
+    repo = _init_repo(tmp_path / "repo")
+    pieces = tmp_path / "pieces.toml"
+    _write_pieces(pieces, [{"id": "B1", "owns": ["csrc/events.c"]}])
+    ok, detail = mgs.footprint_check(repo, "HEAD", "Z9-1", pieces_path=pieces)
+    assert ok is False
+    assert "Z9-1" in detail
+
+
+# ---------------------------------------------------------------- gd_class_names_check --
+
+def test_positive_control_duplicate_class_name_rejected_with_both_paths(tmp_path):
+    """2026-09-22 defect: GalaxyGen declared in two scripts on main; a
+    `--script` test run in a fresh worktree does not catch this, but
+    Godot's global class registry does once a project imports both."""
+    root = tmp_path / "tree"
+    (root / "scenes" / "galaxy").mkdir(parents=True)
+    (root / "scenes" / "mockups" / "galaxy").mkdir(parents=True)
+    (root / "scenes" / "galaxy" / "galaxy_gen.gd").write_text(
+        "class_name GalaxyGen\nextends Node\n"
+    )
+    (root / "scenes" / "mockups" / "galaxy" / "galaxy_gen.gd").write_text(
+        "class_name GalaxyGen\nextends Node2D\n"
+    )
+
+    ok, detail = mgs.gd_class_names_check(root)
+    assert ok is False
+    assert "GalaxyGen" in detail
+    assert "scenes/galaxy/galaxy_gen.gd" in detail
+    assert "scenes/mockups/galaxy/galaxy_gen.gd" in detail
+
+
+def test_unique_class_names_pass(tmp_path):
+    root = tmp_path / "tree"
+    (root / "scenes").mkdir(parents=True)
+    (root / "scenes" / "a.gd").write_text("class_name GalaxyGen\nextends Node\n")
+    (root / "scenes" / "b.gd").write_text("class_name FogView\nextends Node\n")
+
+    ok, detail = mgs.gd_class_names_check(root)
+    assert ok is True
+    assert "2 classes unique" in detail
+
+
+def test_class_name_in_comment_or_string_not_counted(tmp_path):
+    root = tmp_path / "tree"
+    root.mkdir(parents=True)
+    (root / "a.gd").write_text(
+        "# class_name GalaxyGen\n"
+        "extends Node\n"
+        'var note = "class_name GalaxyGen"\n'
+    )
+    (root / "b.gd").write_text("class_name GalaxyGen\nextends Node2D\n")
+
+    ok, detail = mgs.gd_class_names_check(root)
+    assert ok is True
+    assert "1 classes unique" in detail
+
+
+def test_ignored_dirs_never_double_count_a_class(tmp_path):
+    """merge worktrees live under runs/merge/ in the integrator clone, and
+    any ad hoc worktree carries a `worktrees/` path component -- both are
+    full second copies of the tree and must not double every class."""
+    root = tmp_path / "tree"
+    (root / "scenes").mkdir(parents=True)
+    (root / "scenes" / "a.gd").write_text("class_name GalaxyGen\nextends Node\n")
+    (root / "runs" / "merge" / "scenes").mkdir(parents=True)
+    (root / "runs" / "merge" / "scenes" / "a.gd").write_text("class_name GalaxyGen\nextends Node\n")
+    (root / ".swarm" / "worktrees" / "leaf-01" / "scenes").mkdir(parents=True)
+    (root / ".swarm" / "worktrees" / "leaf-01" / "scenes" / "a.gd").write_text(
+        "class_name GalaxyGen\nextends Node\n"
+    )
+    (root / "build" / "scenes").mkdir(parents=True)
+    (root / "build" / "scenes" / "a.gd").write_text("class_name GalaxyGen\nextends Node\n")
+    (root / ".godot" / "scenes").mkdir(parents=True)
+    (root / ".godot" / "scenes" / "a.gd").write_text("class_name GalaxyGen\nextends Node\n")
+
+    ok, detail = mgs.gd_class_names_check(root)
+    assert ok is True, detail
+    assert "1 classes unique" in detail
+
+
 # ---------------------------------------------------------------- acceptance_ids --
 
 def test_acceptance_ids_splits_pytest_and_godot(tmp_path):
@@ -184,6 +300,103 @@ def test_acceptance_ids_unknown_piece_returns_empty(tmp_path):
     pytest_ids, godot_ids = mgs.acceptance_ids("NOPE", pieces_path=pieces)
     assert pytest_ids == []
     assert godot_ids == []
+
+
+def test_acceptance_ids_increment_id_resolves_to_base_piece(tmp_path):
+    pieces = tmp_path / "pieces.toml"
+    pieces.write_text(
+        '[[piece]]\n'
+        'id = "C2"\n'
+        'owns = []\n'
+        'acceptance = ["tests/csim/test_E04_wiring.py", "tests/test_c_bridge.gd"]\n'
+    )
+    pytest_ids, godot_ids = mgs.acceptance_ids("C2-1", pieces_path=pieces)
+    assert pytest_ids == ["tests/csim/test_E04_wiring.py"]
+    assert godot_ids == ["tests/test_c_bridge.gd"]
+
+
+def test_acceptance_ids_b15m_unchanged(tmp_path):
+    pieces = tmp_path / "pieces.toml"
+    pieces.write_text('[[piece]]\nid = "B15m"\nowns = []\nacceptance = ["tests/csim/test_x.py"]\n')
+    pytest_ids, godot_ids = mgs.acceptance_ids("B15m", pieces_path=pieces)
+    assert pytest_ids == ["tests/csim/test_x.py"]
+    assert godot_ids == []
+
+
+# ---------------------------------------------------------------- acceptance-verdict (increment WARN vs REJECT) --
+
+def test_is_increment_resolves_known_base():
+    assert mgs.is_increment("B10-2", {"B10": {}}) == "B10"
+
+
+def test_is_increment_full_id_is_not_an_increment():
+    assert mgs.is_increment("B10", {"B10": {}}) is None
+
+
+def test_is_increment_unresolvable_id_is_not_an_increment():
+    assert mgs.is_increment("Z9-1", {"B1": {}}) is None
+
+
+def test_partition_pytest_ids_whole_file_red_from_node_id():
+    ids = ["tests/csim/test_a.py", "tests/csim/test_b.py::test_pass"]
+    failing = ["tests/csim/test_a.py::test_broken"]
+    green, red = mgs.partition_pytest_ids(ids, failing)
+    assert red == ["tests/csim/test_a.py"]
+    assert green == ["tests/csim/test_b.py::test_pass"]
+
+
+def test_partition_godot_ids_from_log_text():
+    ids = ["tests/test_a.gd", "tests/test_b.gd"]
+    log = (
+        "=== Running res://tests/test_a.gd (timeout 300s) ===\n"
+        "PASS: res://tests/test_a.gd\n"
+        "=== Running res://tests/test_b.gd (timeout 300s) ===\n"
+        "FAIL: res://tests/test_b.gd (exit 1)\n"
+    )
+    green, red = mgs.partition_godot_ids(ids, log)
+    assert green == ["tests/test_a.gd"]
+    assert red == ["tests/test_b.gd"]
+
+
+def test_acceptance_warn_detail_format():
+    detail = mgs.acceptance_warn_detail("B10-2", "B10", ["a"], ["a", "b"], ["b"])
+    assert detail == "increment B10-2 of B10: 1/2 acceptance ids green; red: ['b']"
+
+
+def test_cli_acceptance_verdict_increment_warns_full_id_rejects(tmp_path):
+    """The same red acceptance id: WARN under the increment id (B10-2),
+    bare REJECT under the full id (B10) -- merge_gate.sh's step 7 turns the
+    REJECT case into its own `reject acceptance` line using the pytest log
+    tail instead, since acceptance-verdict itself carries no log detail for
+    a full id."""
+    pieces = tmp_path / "pieces.toml"
+    pieces.write_text(
+        '[[piece]]\nid = "B10"\nowns = []\n'
+        'acceptance = ["tests/csim/test_a.py::test_pass", "tests/csim/test_a.py::test_fail"]\n'
+    )
+    ids_file = tmp_path / "ids.txt"
+    ids_file.write_text("tests/csim/test_a.py::test_pass\ntests/csim/test_a.py::test_fail\n")
+    pytest_log = tmp_path / "pytest.log"
+    pytest_log.write_text("FAILED tests/csim/test_a.py::test_fail - assert False\n1 passed, 1 failed\n")
+
+    support = str(REPO / "scripts" / "specfactory" / "merge_gate_support.py")
+
+    increment = subprocess.run(
+        [sys.executable, support, "acceptance-verdict", "B10-2",
+         "--pieces", str(pieces), "--ids-file", str(ids_file), "--pytest-log", str(pytest_log)],
+        capture_output=True, text=True,
+    )
+    assert increment.returncode == 0, increment.stdout + increment.stderr
+    assert increment.stdout.startswith("WARN increment B10-2 of B10: 1/2 acceptance ids green")
+    assert "tests/csim/test_a.py::test_fail" in increment.stdout
+
+    full = subprocess.run(
+        [sys.executable, support, "acceptance-verdict", "B10",
+         "--pieces", str(pieces), "--ids-file", str(ids_file), "--pytest-log", str(pytest_log)],
+        capture_output=True, text=True,
+    )
+    assert full.returncode == 1, full.stdout + full.stderr
+    assert full.stdout.strip() == "REJECT"
 
 
 # ---------------------------------------------------------------- DEF_RE / _diff_added_definitions --
