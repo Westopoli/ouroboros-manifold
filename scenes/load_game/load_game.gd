@@ -1,8 +1,13 @@
 extends Control
 
+const CURRENT_SAVE_VERSION := 1
+
 var _slot_list: VBoxContainer
 var _empty_label: Label
 var _confirm_overlay: Control
+
+var _bridge = null
+var _bridge_rows: Array = []
 
 func _ready() -> void:
 	_build_ui()
@@ -230,3 +235,40 @@ func _show_delete_confirm(slot_id: String) -> void:
 			_confirm_overlay.visible = false
 			_refresh_slots()
 		)
+
+
+func qa_set_bridge(bridge) -> void:
+	_bridge = bridge
+	_bridge_rows = []
+	for entry in _bridge.list_saves():
+		var slot: String = str(entry.get("slot", ""))
+		var tick: int = int(entry.get("tick", 0))
+		var chapter: int = int(entry.get("chapter", 0))
+		var version: int = int(entry.get("version", 0))
+		var refused: bool = version != CURRENT_SAVE_VERSION
+		var label_text: String
+		if refused:
+			label_text = "Chapter %d — build v%d, save v%d — incompatible" % [chapter, CURRENT_SAVE_VERSION, version]
+		else:
+			label_text = "Chapter %d" % chapter
+		_bridge_rows.append({
+			"slot": slot,
+			"tick": tick,
+			"chapter": chapter,
+			"version": version,
+			"refused": refused,
+			"label_text": label_text,
+		})
+
+
+func qa_state() -> Dictionary:
+	return {
+		"slot_count": _bridge_rows.size(),
+		"current_version": CURRENT_SAVE_VERSION,
+		"has_save_button": false,
+		"rows": _bridge_rows,
+	}
+
+
+func qa_load_slot(slot_id: String) -> Dictionary:
+	return _bridge.load(slot_id)
