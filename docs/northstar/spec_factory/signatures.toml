@@ -6,7 +6,7 @@
 
 [meta]
 abi_version = 2
-symbol_count = 618
+symbol_count = 620
 struct_count = 38
 ambiguous_remaining = 0
 
@@ -1280,6 +1280,26 @@ params = [{ name = "w", ctype = "const om_world*" }]
 epics = ["E-09"]
 confidence = "certain"
 note = "Header verbatim: uint32_t om_event_template_count(const om_world *w); E-04 owns."
+
+[[symbols]]
+name = "om_event_register_external"
+module = "events.c"
+restype = "int32_t"
+params = [{ name = "w", ctype = "om_world*" }, { name = "name", ctype = "const char*" }, { name = "significance_tier", ctype = "int32_t" }]
+epics = ["E-06"]
+confidence = "certain"
+source_tests = ["tests/csim/test_E04_S030_external_templates.py"]
+note = "Header verbatim (F2h, freeze M0 2026-09-22): int32_t om_event_register_external(om_world *w, const char *name, int32_t significance_tier). E-04 owns events.c; E-06's Knowledge Lost (R-045-07, ALG-27b) is the first caller, registering a template outside the 26-row launch library. Same-name re-register returns the same id; om_event_template_count excludes registrations. epics omits E-04 on purpose, same as om_event_get_attached_character/om_event_template_count/om_events_load_launch above: E-04 already has a hand-written legacy _bind_e04 for its 27 pre-existing symbols, and sig_table.py buckets a row under epics[0], so an E-04-first epics list would emit a *second*, generated _bind_e04 that shadows (last-def-wins) the legacy one and silently drops those 27 bindings."
+
+[[symbols]]
+name = "om_event_template_name"
+module = "events.c"
+restype = "const char*"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "template_id", ctype = "uint32_t" }]
+epics = ["E-06"]
+confidence = "certain"
+source_tests = ["tests/csim/test_E04_S030_external_templates.py"]
+note = "Header verbatim (F2h): const char *om_event_template_name(const om_world *w, uint32_t template_id). No existing accessor maps id -> name (om_event_template_by_name is name -> id; om_event_template_get returns the whole struct). NULL if id out of range. epics omits E-04 for the same _bind_e04-collision reason as om_event_register_external above."
 
 [[symbols]]
 name = "om_events_load_launch"
