@@ -63,7 +63,7 @@ func _build_ui() -> void:
 	content.add_child(spacer2)
 
 	var menu_data := [
-		{"label": "NEW GAME", "action": "new_game"},
+		{"label": "NEW GAME", "action": "galaxy"},
 		{"label": "CONTINUE", "action": "load_game"},
 		{"label": "ERA LIBRARY", "action": "era_library"},
 		{"label": "SETTINGS", "action": "settings"},
@@ -77,6 +77,8 @@ func _build_ui() -> void:
 		if item_data["action"] == "load_game" and not has_saves:
 			item.modulate.a = 0.3
 			item.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		if item_data["action"] == "galaxy":
+			item.name = "NewGame"
 		content.add_child(item)
 		_menu_items.append(item)
 
