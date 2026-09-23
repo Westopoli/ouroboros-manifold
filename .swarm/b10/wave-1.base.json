@@ -1,0 +1,17 @@
+{
+ "wave": 1,
+ "slug": "b10",
+ "base_sha": "6ab0455196b280c446a23e1fa160f01d37eb9fe1",
+ "integration_sha": "6ab0455196b280c446a23e1fa160f01d37eb9fe1",
+ "user_branch": "main",
+ "created_at": "2026-09-22T23:37:46+00:00",
+ "leaves": {
+  "leaf-01": {
+   "branch": "swarm/b10/leaf-01",
+   "worktree": ".swarm/b10/worktrees/leaf-01",
+   "commit": "a2a55e0632df5922259a63cd5857f0e58a5adfc5",
+   "created_at": "2026-09-22T23:37:49+00:00",
+   "committed_at": "2026-09-23T00:44:24+00:00"
+  }
+ }
+}
