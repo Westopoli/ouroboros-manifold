@@ -2,8 +2,9 @@
  * 26-template launch library, threshold/probability triggers (ALG-32..34),
  * pending-queue resolver (ALG-35..37: condition, exclusion, probability,
  * spawns), 9 OM_BUG_* positive controls under OM_DEBUG_INJECT. Per-world
- * event state has no home in om_world/om_region (parent-owned); lives in a
- * private pointer-keyed slot table below — see leaf-01.ASSUMPTIONS.md and
+ * event state lives in one struct calloc'd on first use and hung off
+ * w->events_state (om_internal.h), freed via w->events_state_free on
+ * om_world_free (region.c) -- see leaf-01.ASSUMPTIONS.md and
  * questions/leaf-01-Q1..4.md for the escalations this file works around
  * (missing OM_FIELD_CEILING, no struct field for this state, and a class
  * of acceptance tests that stay red against a rule-faithful
@@ -13,12 +14,12 @@
 #include "om_internal.h"
 #include "om_constants.h"
 #include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
 #include <math.h>
 
 #define OM_EVT_FIELD_CEILING 100.0
 
-#define OM_EVT_MAX_SLOTS    128
 #define OM_EVT_MAX_REGIONS  64
 #define OM_EVT_LOG_CAP      128
 #define OM_EVT_QUEUE_CAP    64
@@ -40,9 +41,6 @@ typedef struct {
 } om_evt_manual_fire;
 
 typedef struct {
-    const om_world *owner;
-    int      in_use;
-
     om_event_template templates[OM_MAX_TEMPLATES];
     uint32_t n_templates;
 
@@ -70,54 +68,46 @@ typedef struct {
     uint32_t           manual_next_id; /* last id handed out; 0 means none yet */
 } om_evt_state;
 
-static om_evt_state g_evt_slots[OM_EVT_MAX_SLOTS];
-
 static om_evt_state *evt_find(const om_world *w) {
     if (!w) return NULL;
-    for (uint32_t i = 0; i < OM_EVT_MAX_SLOTS; i++) {
-        if (g_evt_slots[i].in_use && g_evt_slots[i].owner == w) return &g_evt_slots[i];
-    }
-    return NULL;
+    return (om_evt_state *)w->events_state;
 }
 
-static om_evt_state *evt_reset_slot(const om_world *w) {
-    om_evt_state *s = evt_find(w);
-    if (!s) {
-        for (uint32_t i = 0; i < OM_EVT_MAX_SLOTS; i++) {
-            if (!g_evt_slots[i].in_use) { s = &g_evt_slots[i]; break; }
-        }
-        if (!s) s = &g_evt_slots[0]; /* out of slots: last resort, reuse slot 0 */
-    }
+static void evt_state_reset_fields(om_evt_state *s) {
     memset(s, 0, sizeof(*s));
-    s->owner = w;
-    s->in_use = 1;
     for (uint32_t r = 0; r < OM_EVT_MAX_REGIONS; r++) {
         for (uint32_t t = 0; t < OM_MAX_TEMPLATES; t++) {
             s->last_fired[r][t] = -1;
         }
     }
+}
+
+/* Allocates w->events_state on first use; w already owns and frees this
+ * pointer (om_internal.h struct om_world, region.c om_world_free). */
+static om_evt_state *evt_alloc(om_world *w) {
+    om_evt_state *s = calloc(1, sizeof(om_evt_state));
+    if (!s) return NULL;
+    evt_state_reset_fields(s);
+    w->events_state = s;
+    w->events_state_free = free;
+    return s;
+}
+
+static om_evt_state *evt_reset_slot(om_world *w) {
+    if (!w) return NULL;
+    om_evt_state *s = (om_evt_state *)w->events_state;
+    if (!s) return evt_alloc(w);
+    evt_state_reset_fields(s);
     return s;
 }
 
 /* Like evt_reset_slot, but never clears state that already exists -- used
  * by om_event_fire_manual, which must not discard a world's loaded
  * templates just because it runs before the first om_events_load. */
-static om_evt_state *evt_ensure(const om_world *w) {
-    om_evt_state *s = evt_find(w);
-    if (s) return s;
-    for (uint32_t i = 0; i < OM_EVT_MAX_SLOTS; i++) {
-        if (!g_evt_slots[i].in_use) { s = &g_evt_slots[i]; break; }
-    }
-    if (!s) return NULL; /* out of slots */
-    memset(s, 0, sizeof(*s));
-    s->owner = w;
-    s->in_use = 1;
-    for (uint32_t r = 0; r < OM_EVT_MAX_REGIONS; r++) {
-        for (uint32_t t = 0; t < OM_MAX_TEMPLATES; t++) {
-            s->last_fired[r][t] = -1;
-        }
-    }
-    return s;
+static om_evt_state *evt_ensure(om_world *w) {
+    if (!w) return NULL;
+    if (w->events_state) return (om_evt_state *)w->events_state;
+    return evt_alloc(w);
 }
 
 static double evt_clamp(double v, double lo, double hi) {
@@ -171,6 +161,7 @@ static int evt_install(om_evt_state *s, const om_event_template *src, uint32_t n
 int om_events_load(om_world *w, const om_event_template *templates, uint32_t n) {
     if (!w || !templates) return -1;
     om_evt_state *s = evt_reset_slot(w);
+    if (!s) return -1;
     if (evt_install(s, templates, n) != 0) {
         s->n_templates = 0;
         return -1;
@@ -232,6 +223,7 @@ enum {
 void om_events_load_launch(om_world *w) {
     if (!w) return;
     om_evt_state *s = evt_reset_slot(w);
+    if (!s) return;
     om_event_template t[TID_LAUNCH_COUNT];
 
     /* constants-table: docs/bible/epics/E-04-events-and-chains.md S-030 */

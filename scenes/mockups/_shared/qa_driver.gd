@@ -13,6 +13,7 @@ var _os_inputs := 0
 var _last_input := ""
 var _mouse_pos: Vector2 = Vector2.ZERO
 var _shots: Array = []
+var _last_state: Dictionary = {}
 
 
 func _ready() -> void:
@@ -103,6 +104,9 @@ func _do(action: Array) -> void:
 			await _do_screenshot(action[1])
 		"state":
 			_do_state(action[1])
+		"expect":
+			var value = action[3] if action.size() > 3 else null
+			_do_expect(action[1], action[2], value)
 		"tree":
 			_do_tree(action[1])
 		"move":
@@ -145,8 +149,46 @@ func _do_call(action: Array) -> void:
 
 func _do_state(name: String) -> void:
 	var d: Dictionary = _root.qa_state()
+	_last_state = d.duplicate(true)
 	d["_qa"] = _qa_info()
 	_write_json(name, d)
+
+
+func _do_expect(path: String, mode: String, value) -> void:
+	var current: Dictionary = _root.qa_state()
+	var cur_val = _resolve_path(current, path)
+	var ok := false
+	match mode:
+		"equals":
+			ok = cur_val == value
+		"changed":
+			ok = cur_val != _resolve_path(_last_state, path)
+		"increased":
+			var base_val = _resolve_path(_last_state, path)
+			ok = (cur_val is int or cur_val is float) and (base_val is int or base_val is float) and cur_val > base_val
+		_:
+			_fail(3, "expect: unknown mode %s" % mode)
+			return
+	print("QA_EXPECT %s %s" % ["ok" if ok else "FAIL", path])
+
+
+func _resolve_path(d, path: String):
+	var cur = d
+	for part in path.split("."):
+		if cur is Dictionary:
+			if not cur.has(part):
+				return null
+			cur = cur[part]
+		elif cur is Array:
+			if not part.is_valid_int():
+				return null
+			var idx := int(part)
+			if idx < 0 or idx >= cur.size():
+				return null
+			cur = cur[idx]
+		else:
+			return null
+	return cur
 
 
 func _do_tree(name: String) -> void:
@@ -346,6 +388,8 @@ func _is_uniform(img: Image) -> bool:
 
 
 func _make_motion(pos: Vector2) -> InputEventMouseMotion:
+	if DisplayServer.get_name() != "headless":
+		DisplayServer.warp_mouse(Vector2i(pos))
 	var e := InputEventMouseMotion.new()
 	e.position = pos
 	e.global_position = pos

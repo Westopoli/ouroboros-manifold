@@ -17,10 +17,11 @@ All synchronous: side effects complete on return; the driver adds frames. Add `s
 
 A mockup's fault site is one line: `var s := 11 if QaPlants.is_active("seed-ignored") else p_seed`, with `const QaPlants := preload("res://scenes/mockups/_shared/qa_plants.gd")` at the top of the file. Three entry points, one registry: the `MOCKUP_PLANT` env var (headless verify and `run --plant`), the driver's `plant` verb, and the root's own `qa_plant`.
 
-## The two commands
+## The commands
 
 ```
 scripts/mockup_qa.sh run <mockup> <script.json> <outdir> [--res 1280x720] [--grab engine|external] [--plant id[,id]] [--timeout 600]
+scripts/mockup_qa.sh firstlook <mockup> <outdir> [--res 2560x1440] [--timeout 600]
 scripts/mockup_qa.sh liveness <mockup> <outdir>
 scripts/mockup_qa.sh diff <a.png> <b.png> [fuzz%=5] [heatmap.png]
 scripts/mockup_qa.sh scan <outdir>
@@ -48,10 +49,50 @@ scripts/mockup_verify.sh <mockup> [--plant id[,id]] [--timeout 120] [--refresh-c
 | `pause` | true/false | `get_tree().paused` |
 | `screenshot` | "name" | engine or external grab, see below |
 | `state` | "name" | `root.qa_state()` + `_qa` info, to `<out>/<name>.json` |
+| `expect` | "state.key.path", "changed"\|"increased"\|"equals" [, value] | reads `root.qa_state()` live, compares the value at `path` (dot-separated, numeric segments index into arrays) against the last `state` verb's dump (`changed`/`increased`) or the literal `value` (`equals`); prints `QA_EXPECT ok|FAIL <path>` |
 | `tree` | "name" | visible Controls + all Node3Ds, to `<out>/<name>.json` |
 | `wait_file` | "name", max_frames | poll for `<out>/<name>` |
 
 Exit codes: 0 finished, 2 bad args/JSON, 3 harness error (unknown verb/node/method/plant). GDScript runtime errors do not change the exit code — `scan` greps the logs for those.
+
+## First look
+
+Why: the builders' and screenshot reviewers' QA drove every mockup only through `call qa_*` verbs at 1280x720 with the sim stepped by `qa_tick` — never through the real buttons, keys and edges at Westley's resolution with the clock running. Three mockups shipped past that QA broken: nothing moved (the sims start paused), buttons did nothing (they act on a selection a click never made), seed/reset did nothing, and edge scroll only worked toward the top-left (mouse compared in canvas space against window pixels, which only diverge on a screen bigger than 1920x1080). `firstlook` drives real input only, at his resolution, with the sim running.
+
+```
+scripts/mockup_qa.sh firstlook <mockup> <outdir> [--res 2560x1440] [--timeout 600]
+```
+
+- Runs `scenes/mockups/<mockup>/qa/firstlook.json` at 2560x1440 by default (his desktop is 4480x1440; 2560x1440 keeps the same 1440 height and exceeds the 1920x1080 base canvas on both axes — the exact condition his bug reports needed).
+- Boots with `--qa-live` (sets the `QA_LIVE` env var; a mockup's "paused under QA" rule must key off its absence, not just "`--qa-script` is present" — see Rules below).
+- No `--fixed-fps`: the sim's own clock runs at real wall speed, so `wait_frames` is real time here, not simulated ticks.
+- Refuses to run (exit 2, printing the offending line) a script containing `call`, `seed`, `plant`, or `pause` — only real-input verbs are allowed: `move`, `click`, `click_node`, `drag`, `wheel`, `key`, `key_down`, `key_up`, `wait_frames`, `screenshot`, `state`, `expect`.
+
+### The convention
+
+Every mockup's `qa/firstlook.json` follows the same shape; adapt the exact state keys and controls to what that mockup's `qa_state()` and its own controls doc actually expose — not every mockup has a `tick`, a `selected`, or all four bindings:
+
+1. Launch, wait 5 s of real time, `expect tick increased` — the sim runs by itself. A mockup with no autonomous clock (a static generator like `landscape`) instead asserts nothing changes without input (`regen_count`/`seed`/`kit`/etc. all `equals` their launch defaults): the point is "the mockup does what it claims at rest," not "every mockup ticks."
+2. `move` to each of the four screen edges for 2 s (real-time budget — a slow llvmpipe frame already moves the camera a long way, so a handful of `wait_frames` covers it), `expect` the field that shows camera motion (`camera.x`/`camera.z` if `qa_state()` exposes them, or a fixed world point's projected pixel otherwise) `changed` in the direction that edge should pan. Prefer `changed` over a directional `increased` for anything measured across more than one edge test chained on the same running camera: `firstlook` scripts have no reset verb (`call`/`seed`/`pause` are banned), so edge N's test always starts from wherever edge N-1 left the camera, and a field that projects both world axes onto one screen axis (a 3D camera's projected point) can read a *different but still genuine* sign for the same edge depending on that leftover position — `changed` (any non-zero move, either direction) catches a dead edge exactly as strictly as `increased` once the noise floor below is zero, without being fooled by a context-dependent sign flip on a working one. If the motion field is also driven by something that settles asymptotically every time the camera stops moving (a ground-follow height lerp, an easing pan), `move` back to a neutral point and `wait_frames` long enough for that settle to fully finish (35 real frames was enough to reach bit-exact convergence under this harness's llvmpipe timing on `landscape`, confirmed by two `state` dumps 15 frames apart matching to the last printed digit) *before* the `state` an edge's `expect` will be measured against — an unsettled baseline leaves a residual few-pixel drift each frame that registers as `changed` on its own, with no edge scroll at all, and undermines a positive control's planted-fault case (the "no motion happened" reading needs to be exact, not "close to").
+3. `move` onto a HUD control for 2 s; `expect` no side effect from hovering alone (camera unchanged, or, where the mockup exposes no camera field and the hover point isn't near a screen edge anyway, an integer like `regen_count` that only a real click moves, held `equals` its pre-hover value).
+4. `click_node` every button the mockup's controls list, each followed by `expect` of the state key that button owns (regenerate changes `hash` or bumps `regen_count`, reset returns `tick` to 0, play toggles `playing`, kit toggle changes `kit`).
+5. `key` every hotkey the mockup binds, with the same expectations as the button it duplicates.
+6. A real `click` on a unit's projected pixel taken from a previous `state`'s `units_px` (or equivalent — the literal pixel the script author read from a prior run), `expect selected changed`; a `drag` box, `expect selected changed` — only for mockups with a selection system.
+7. A `screenshot` after each group.
+
+The mockup's own controls list (its README section or `qa/checklist.md`) is the contract `firstlook` tests: every documented button and hotkey gets an entry, or the doc is wrong.
+
+### Rules
+
+- A mockup's sim runs on an interactive launch, and pauses only under `--qa-script` **without** `--qa-live` — check for `QA_LIVE` being unset, not just "`--qa-script` is present."
+- Every mouse comparison happens in one coordinate space. Two correct patterns: canvas everywhere (`get_viewport().get_mouse_position()` against `get_viewport().get_visible_rect().size`), or window pixels everywhere (`get_final_transform()`). Mixing them (one side canvas, one side `DisplayServer.window_get_size()`) is exactly the "edge scroll only works top-left" bug: it dead-zones the far threshold on a window bigger than the 1920x1080 base canvas, while the near threshold (compared against a small constant near zero) reads the same in either space and keeps working.
+- No edge scroll while `gui_get_hovered_control()` is non-null.
+- A button that acts on a selection acts on all friendlies when nothing is selected, and says so (label or tooltip) — never a silent no-op.
+- **`get_viewport().get_mouse_position()` — and anything a mockup polls from it every frame — does not update from the driver's synthetic `move`/`click`/`drag` verbs.** It reflects the real OS/`DisplayServer` cursor, which `Input.parse_input_event()` alone never moves; the `InputEventMouseMotion` delivered to `_input()` on that same call always carries the correct, already-canvas-transformed position. A mockup that needs "where is the mouse" for anything `firstlook` must prove (edge scroll, hover checks) should track its own `_mouse_pos` from `_input()` instead of polling — correct in real play too, since Godot always delivers `_input` mouse events pre-transformed into viewport-local units. `qa_driver.gd`'s synthetic moves now also warp the real cursor (see Facts below), so a mockup that still polls is provable by `firstlook`, but tracking from `_input()` remains the pattern to write into a new camera rig — it doesn't depend on `warp_mouse` behaving identically on every platform and display driver, and a mockup that polls has no fallback if it ever doesn't.
+
+### Reviewer
+
+A fresh-eyes reviewer runs `firstlook` itself and reads its `QA_EXPECT` lines and screenshots before reading the builder's checklist. A checklist claim ("edge scroll works", "regenerate changes the map") that `firstlook` didn't independently exercise is not yet reviewed.
 
 ## Facts this harness proved, not assumed
 
@@ -64,3 +105,5 @@ Exit codes: 0 finished, 2 bad args/JSON, 3 harness error (unknown verb/node/meth
 - `scan` ignores Godot's Compatibility-renderer shutdown noise (`... were leaked at exit`, `Pages in use exist at exit`, `... were never freed`, `Buffer ... leaked N bytes`), so `errors.txt` is 0 on a clean run.
 - The class_name cache (`.godot/global_script_class_cache.cfg`) is gitignored and cold on a fresh worktree; a fresh checkout needs one `godot --headless --path . --import` before any `run`/`verify` invocation resolves `FieldMap`/`Placer`/etc. `mockup_verify.sh --refresh-cache` does this; `mockup_qa.sh run` does not (call it yourself once per fresh worktree).
 - `--quit-after 100000` is a main-loop iteration cap, not a wall-clock timeout; the wrapper's own `timeout --kill-after=10 "$TIMEOUT"` is what actually bounds a run.
+- `qa_driver.gd`'s `_make_motion` (used by `move`/`click`/`drag`) also calls `DisplayServer.warp_mouse()` (skipped under `--headless`, where it errors with no display). Proven on `landscape` at 2560x1440, camera parked over a fixed world point: without the warp, repeated `move` calls into the right edge zone left `objective_px` drifting <2px per frame (the residual ground-follow lerp settling, not a pan — `camera_rig.gd`'s edge-scroll polls `get_viewport().get_mouse_position()`, unmoved by the synthetic events); with the warp, the identical script panned the camera cleanly on all four edges (`objective_px` moving 60-230px per frame while parked at an edge). This is what makes `landscape/qa/firstlook.json` (`scenes/mockups/landscape/camera_rig.gd` is unmodified, still polling) a real positive control instead of one that can never move regardless of whether the coordinate-space bug is present.
+- `scan`'s `errors.txt` also counts `QA_EXPECT FAIL` lines (the same grep as the other error classes, so the same "at exit/never freed/leaked bytes" exclusions apply); `marks.txt` lists every `QA_EXPECT ok`/`FAIL` line alongside `QA_WARN`/`QA_CALL`/timing.

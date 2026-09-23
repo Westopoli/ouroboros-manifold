@@ -57,7 +57,7 @@
  *     int          faction_used[OM_MAX_FACTIONS];
  *     uint32_t     faction_n;
  *     int64_t     *region_held_since;
- *     om_edge_type region_edge[64][64];
+ *     om_edge_type region_edge[OM_MAX_REGIONS][OM_MAX_REGIONS];
  *     uint64_t     rng_state, rng_inc;
  *     double       rng_forced[4096];
  *     uint32_t     rng_forced_head, rng_forced_len;
@@ -85,553 +85,1387 @@
  *      * by E-04 (ALG-36). Persists across ticks; never reset in sim.c. * /
  *     om_queued_event    event_queue[64];
  *     uint32_t           event_queue_n;
+ *
+ *     / * F2e: this module's own per-world ledger (characters, lineages,
+ *      * chapter/campaign/onboarding/force/death state) lives behind this
+ *      * opaque slot, allocated on first use by generational.c and freed by
+ *      * om_world_free through the paired hook. No other module reads it. * /
+ *     void *generational_state;
+ *     void (*generational_state_free)(void *);
  * };
  */
 #include "ouroboros_sim.h"
 #include "om_internal.h"
+#include "om_constants.h"
 #include <stddef.h>
 #include <string.h>
+#include <math.h>
+#include <stdint.h>
+#include <stdlib.h>
 
-/* ---- generated stubs from signatures.toml ---- */
-int om_campaign_check_surviving_factions(const om_world *w) {
-    /* STUB */
-    (void)w;
+/* ============================================================================
+ * B7 (two-day-push): E-08 generational play (closure). ALG-45..49
+ * (docs/bible/algorithms.md), R-055..064 (docs/bible/epics/E-08-*.md).
+ *
+ * Per-world ledger (F2e): struct om_world now carries `generational_state` /
+ * `generational_state_free` for exactly this purpose. gen_get_state()
+ * allocates this module's gen_state on first use per world and stores it
+ * there; om_world_free() (csrc/region.c) frees it through the hook. No
+ * file-scope per-world state remains -- the region_edge[63][63] canary this
+ * module used before F2e landed is gone with it.
+ */
+
+/* Q-057-01's proposed decay base is an open ambiguity flag's candidate
+ * answer, not a settled ALG constant, so it has no home in
+ * csrc/om_constants.h (constants(F3e) named the rest of ALG-46/47/49). */
+#define GEN_SELECTOR_DECAY_BASE 0.75
+
+/* om_character_record.rank values (S-060 R-060-06). */
+#define GEN_RANK_SUPREME_COMMANDER 0
+#define GEN_RANK_REGIONAL_COMMANDER 1
+#define GEN_RANK_GARRISON_OFFICER 2
+#define GEN_RANK_LINEAGE_MEMBER 3
+
+#define GEN_STATUS_ACTIVE 0
+#define GEN_STATUS_HISTORICAL 1
+
+/* om_selection_record.reason values (S-057 R-057-08). */
+#define GEN_REASON_FORCED 0
+#define GEN_REASON_NORMAL 1
+#define GEN_REASON_COMMANDER_DEATH 2
+
+/* om_selection_record.pool / commander pool values (S-058 R-058-01). */
+#define GEN_POOL_PREVIOUS 0
+#define GEN_POOL_NEMESIS 1
+#define GEN_POOL_UNRELATED 2
+#define GEN_POOL_COUNT 3
+
+/* chapter end reason (S-062 R-062-01). */
+#define GEN_CHAPTER_END_NORMAL 0
+#define GEN_CHAPTER_END_COMMANDER_DEATH 1
+#define GEN_CHAPTER_END_FACTION_COLLAPSED 2
+
+/* campaign end reason (S-062 R-062-03). */
+#define GEN_CAMPAIGN_ACTIVE 0
+#define GEN_CAMPAIGN_NO_SURVIVING_FACTIONS 1
+
+/* chapter phase (S-055 R-055-01; not in this piece's acceptance set but
+ * cheap and load-bearing for the state machine other stories poke at). */
+#define GEN_PHASE_BRIEFING 0
+#define GEN_PHASE_RECON 1
+#define GEN_PHASE_MISSION 2
+#define GEN_PHASE_OUTCOME_RESOLUTION 3
+#define GEN_PHASE_TIME_JUMP 4
+#define GEN_PHASE_CHARACTER_SELECTION 5
+#define GEN_PHASE_NEXT_BRIEFING 6
+
+#define GEN_MAX_CHARACTERS 4096
+#define GEN_MAX_LINEAGES 512
+#define GEN_MAX_LINEAGE_HISTORY 64
+#define GEN_MAX_FORCE_MISSIONS 64
+#define GEN_MAX_ONBOARDING_SLOTS 64
+#define GEN_MAX_DEATH_RECORDS 512
+#define GEN_MAX_RIVAL_TAGS 8
+#define GEN_MAX_NEMESIS_CANDIDATES 128
+#define GEN_REGION_CAP OM_MAX_REGIONS
+#define GEN_MAX_SCAN_BUF 1024
+#define GEN_AUTO_ID_BASE 100000000u
+#define GEN_FORCE_COST_PER_UNIT 10.0
+#define GEN_EVENT_ATTACH_SCAN_CAP 64
+
+/* Own name pool (no IP: no character, place, or plot name from any existing
+ * fiction; mechanical concepts only). */
+static const char *const GEN_NAME_POOL[] = {
+    "Vashtir", "Corenne", "Odalys", "Threnn", "Kaelo", "Ysenne", "Brannic",
+    "Solvei", "Tamrun", "Ilyara", "Draven", "Meskira", "Norvant", "Aelira",
+    "Costigan", "Yuven",
+};
+
+typedef struct {
+    int used;
+    uint32_t id;
+    char name[32];
+    int32_t faction;
+    uint32_t region;
+    uint32_t rank;
+    uint64_t birth_tick;
+    uint32_t lifespan;
+    uint32_t status;
+    uint64_t death_tick;
+    uint32_t lineage_id;
+    uint32_t parent_id;
+    uint32_t generation;
+    uint32_t rival_of[GEN_MAX_RIVAL_TAGS];
+    uint32_t n_rival_of;
+    uint32_t n_children;
+    int is_main_character;
+} gen_character;
+
+typedef struct {
+    int used;
+    uint32_t id;
+    uint32_t history[GEN_MAX_LINEAGE_HISTORY];
+    uint32_t n_history;
+    uint32_t chapter_count;
+} gen_lineage;
+
+typedef struct {
+    int used;
+    uint32_t mission_id;
+    double budget;
+    uint32_t survivors;
+    uint32_t allocated;
+} gen_force;
+
+typedef struct {
+    int used;
+    uint32_t commander_id;
+    uint32_t region;
+    int band;
+} gen_death_rec;
+
+/* F2e: this module's whole per-world ledger, one instance per om_world,
+ * allocated on first use and owned through w->generational_state. */
+typedef struct {
+    gen_character characters[GEN_MAX_CHARACTERS];
+    uint32_t n_characters;
+    uint32_t next_auto_id;
+
+    gen_lineage lineages[GEN_MAX_LINEAGES];
+    uint32_t n_lineages;
+
+    uint32_t supreme_commander[OM_MAX_FACTIONS];
+    uint32_t regional_commander[GEN_REGION_CAP];
+    int faction_fallen[OM_MAX_FACTIONS];
+
+    gen_force force[GEN_MAX_FORCE_MISSIONS];
+    uint32_t n_force;
+
+    om_onboarding_config onboarding[GEN_MAX_ONBOARDING_SLOTS];
+    int onboarding_used[GEN_MAX_ONBOARDING_SLOTS];
+
+    gen_death_rec deaths[GEN_MAX_DEATH_RECORDS];
+    uint32_t n_deaths;
+
+    uint32_t nemesis_candidates[GEN_MAX_NEMESIS_CANDIDATES];
+    uint32_t n_nemesis_candidates;
+
+    int pool_previous_forced_empty;
+    int pool_nemesis_forced_empty;
+
+    int chapter_phase;
+    uint32_t chapter_number;
+    int needs_onboarding;
+    int in_transition;
+
+    uint32_t death_pass_count;
+    uint64_t time_jump_lineage_gen_tick;
+    uint64_t time_jump_death_tick;
+
+    uint32_t mission_chosen_region;
+    uint32_t selector_input_region;
+} gen_state;
+
+/* ---- static helpers ---- */
+
+static void gen_state_free(void *p) {
+    free(p);
+}
+
+static gen_state *gen_get_state(const om_world *cw) {
+    om_world *w = (om_world *)cw;
+    if (!w) return NULL;
+    if (!w->generational_state) {
+        gen_state *gs = calloc(1, sizeof(gen_state));
+        if (!gs) return NULL;
+        gs->next_auto_id = GEN_AUTO_ID_BASE;
+        w->generational_state = gs;
+        w->generational_state_free = gen_state_free;
+    }
+    return (gen_state *)w->generational_state;
+}
+
+static double gen_pow_int(double base, uint32_t exp) {
+    double r = 1.0;
+    for (uint32_t i = 0; i < exp; i++) r *= base;
+    return r;
+}
+
+static uint32_t gen_roll_lifespan(om_world *w) {
+    double d = om_rng_draw(w);
+    uint32_t span = (uint32_t)(OM_LIFESPAN_MAX - OM_LIFESPAN_MIN + 1);
+    uint32_t off = (uint32_t)(d * (double)span);
+    if (off >= span) off = span - 1;
+    return OM_LIFESPAN_MIN + off;
+}
+
+static void gen_roll_name(om_world *w, char *out, size_t cap) {
+    double d = om_rng_draw(w);
+    size_t n = sizeof(GEN_NAME_POOL) / sizeof(GEN_NAME_POOL[0]);
+    size_t idx = (size_t)(d * (double)n);
+    if (idx >= n) idx = n - 1;
+    const char *src = GEN_NAME_POOL[idx];
+    size_t i = 0;
+    while (src[i] != '\0' && i + 1 < cap) { out[i] = src[i]; i++; }
+    out[i] = '\0';
+}
+
+static gen_character *gen_char_find(gen_state *gs, uint32_t id) {
+    if (!gs) return NULL;
+    for (uint32_t i = 0; i < gs->n_characters; i++)
+        if (gs->characters[i].used && gs->characters[i].id == id) return &gs->characters[i];
+    return NULL;
+}
+
+static gen_character *gen_char_alloc(gen_state *gs, uint32_t id) {
+    if (!gs) return NULL;
+    gen_character *existing = gen_char_find(gs, id);
+    if (existing) return existing;
+    if (gs->n_characters >= GEN_MAX_CHARACTERS) return NULL;
+    gen_character *c = &gs->characters[gs->n_characters++];
+    memset(c, 0, sizeof(*c));
+    c->used = 1;
+    c->id = id;
+    c->faction = -1;
+    return c;
+}
+
+static uint32_t gen_alloc_id(gen_state *gs) {
+    if (!gs) return 0;
+    if (gs->next_auto_id < GEN_AUTO_ID_BASE) gs->next_auto_id = GEN_AUTO_ID_BASE;
+    return gs->next_auto_id++;
+}
+
+static void gen_char_mark_main(gen_character *c) {
+    if (c) c->is_main_character = 1;
+}
+
+static gen_lineage *gen_lineage_find(gen_state *gs, uint32_t id) {
+    if (!gs) return NULL;
+    for (uint32_t i = 0; i < gs->n_lineages; i++)
+        if (gs->lineages[i].used && gs->lineages[i].id == id) return &gs->lineages[i];
+    return NULL;
+}
+
+static gen_lineage *gen_lineage_alloc(gen_state *gs, uint32_t id) {
+    if (!gs) return NULL;
+    gen_lineage *e = gen_lineage_find(gs, id);
+    if (e) return e;
+    if (gs->n_lineages >= GEN_MAX_LINEAGES) return NULL;
+    e = &gs->lineages[gs->n_lineages++];
+    memset(e, 0, sizeof(*e));
+    e->used = 1;
+    e->id = id;
+    return e;
+}
+
+static uint32_t gen_create_commander(om_world *w, gen_state *gs, int32_t faction_id, uint32_t region_idx, uint32_t rank) {
+    uint32_t id = gen_alloc_id(gs);
+    gen_character *c = gen_char_alloc(gs, id);
+    if (!c) return 0;
+    c->faction = faction_id;
+    c->region = region_idx;
+    c->rank = rank;
+    c->birth_tick = w ? w->tick : 0;
+    c->lifespan = gen_roll_lifespan(w);
+    c->status = GEN_STATUS_ACTIVE;
+    gen_roll_name(w, c->name, sizeof(c->name));
+    return id;
+}
+
+static int gen_bfs_distance(const om_world *w, uint32_t from, uint32_t to, uint32_t max_hops) {
+    if (!w || from >= w->n_regions || to >= w->n_regions) return -1;
+    if (from == to) return 0;
+    int dist[GEN_REGION_CAP];
+    for (uint32_t i = 0; i < GEN_REGION_CAP; i++) dist[i] = -1;
+    dist[from] = 0;
+    uint32_t frontier[GEN_REGION_CAP];
+    uint32_t n_frontier = 0;
+    frontier[n_frontier++] = from;
+    for (uint32_t hop = 0; hop < max_hops; hop++) {
+        uint32_t next[GEN_REGION_CAP];
+        uint32_t n_next = 0;
+        for (uint32_t i = 0; i < n_frontier; i++) {
+            uint32_t nbrs[GEN_REGION_CAP];
+            uint32_t n_nbrs = om_region_neighbors(w, frontier[i], nbrs, GEN_REGION_CAP);
+            for (uint32_t j = 0; j < n_nbrs; j++) {
+                uint32_t r = nbrs[j];
+                if (r < GEN_REGION_CAP && dist[r] == -1) {
+                    dist[r] = (int)hop + 1;
+                    next[n_next++] = r;
+                }
+            }
+        }
+        for (uint32_t i = 0; i < n_next; i++) frontier[i] = next[i];
+        n_frontier = n_next;
+        if (n_frontier == 0) break;
+    }
+    return dist[to];
+}
+
+static int gen_region_within_hops(const om_world *w, uint32_t from, uint32_t to, uint32_t max_hops) {
+    return gen_bfs_distance(w, from, to, max_hops) >= 0;
+}
+
+static uint32_t gen_count_living_in_lineage(gen_state *gs, uint32_t lineage_id) {
+    uint32_t n = 0;
+    if (!gs) return 0;
+    for (uint32_t i = 0; i < gs->n_characters; i++)
+        if (gs->characters[i].used && gs->characters[i].lineage_id == lineage_id
+            && gs->characters[i].status == GEN_STATUS_ACTIVE) n++;
+    return n;
+}
+
+static uint32_t gen_living_members_of(gen_state *gs, uint32_t lineage_id, uint32_t *out, uint32_t max) {
+    uint32_t n = 0;
+    if (!gs) return 0;
+    for (uint32_t i = 0; i < gs->n_characters && n < max; i++) {
+        gen_character *c = &gs->characters[i];
+        if (c->used && c->lineage_id == lineage_id && c->status == GEN_STATUS_ACTIVE) out[n++] = c->id;
+    }
+    return n;
+}
+
+static gen_character *gen_find_living_member_exact_hop(const om_world *w, gen_state *gs, uint32_t lineage_id,
+                                                        uint32_t mission_region, uint32_t hop, int exclude_supreme) {
+    if (!gs) return NULL;
+    for (uint32_t i = 0; i < gs->n_characters; i++) {
+        gen_character *c = &gs->characters[i];
+        if (!c->used || c->lineage_id != lineage_id || c->status != GEN_STATUS_ACTIVE) continue;
+        if (exclude_supreme && c->rank == GEN_RANK_SUPREME_COMMANDER) continue;
+        if (gen_bfs_distance(w, mission_region, c->region, hop) == (int)hop) return c;
+    }
+    return NULL;
+}
+
+static int gen_find_living_member_within_hops(const om_world *w, gen_state *gs, uint32_t lineage_id,
+                                               uint32_t mission_region, uint32_t max_hops, int exclude_supreme) {
+    if (!gs) return 0;
+    for (uint32_t i = 0; i < gs->n_characters; i++) {
+        gen_character *c = &gs->characters[i];
+        if (!c->used || c->lineage_id != lineage_id || c->status != GEN_STATUS_ACTIVE) continue;
+        if (exclude_supreme && c->rank == GEN_RANK_SUPREME_COMMANDER) continue;
+        if (gen_region_within_hops(w, mission_region, c->region, max_hops)) return 1;
+    }
     return 0;
+}
+
+static gen_character *gen_find_any_living_member(gen_state *gs, uint32_t lineage_id, int exclude_supreme) {
+    if (!gs) return NULL;
+    for (uint32_t i = 0; i < gs->n_characters; i++) {
+        gen_character *c = &gs->characters[i];
+        if (!c->used || c->lineage_id != lineage_id || c->status != GEN_STATUS_ACTIVE) continue;
+        if (exclude_supreme && c->rank == GEN_RANK_SUPREME_COMMANDER) continue;
+        return c;
+    }
+    return NULL;
+}
+
+static int gen_is_descendant_of(gen_state *gs, uint32_t candidate_id, uint32_t ancestor_id) {
+    gen_character *c = gen_char_find(gs, candidate_id);
+    for (uint32_t guard = 0; c != NULL && guard < GEN_MAX_CHARACTERS; guard++) {
+        if (c->parent_id == ancestor_id) return 1;
+        if (c->parent_id == 0) break;
+        c = gen_char_find(gs, c->parent_id);
+    }
+    return 0;
+}
+
+static void gen_stay(const om_world *w, gen_state *gs, uint32_t lineage_id, uint32_t mission_region,
+                      om_selection_record *out_record) {
+    gen_character *pick = gen_find_living_member_exact_hop(w, gs, lineage_id, mission_region, 0, 0);
+    for (uint32_t hop = 1; !pick && hop <= OM_SELECTOR_PROXIMITY_HOPS; hop++)
+        pick = gen_find_living_member_exact_hop(w, gs, lineage_id, mission_region, hop, 0);
+    if (!pick) pick = gen_find_any_living_member(gs, lineage_id, 0);
+    out_record->rotated = 0;
+    if (pick) {
+        out_record->commander_id = pick->id;
+        gen_char_mark_main(pick);
+    }
+    gen_lineage *l = gen_lineage_find(gs, lineage_id);
+    out_record->chapters_in_lineage = l ? l->chapter_count : 0;
+    out_record->home_region_idx = l && l->n_history > 0 ? l->history[0] : mission_region;
+}
+
+static gen_character *gen_pick_previous_candidate(const om_world *w, gen_state *gs, uint32_t mission_region) {
+    struct { gen_character *c; double score; } cands[GEN_MAX_SCAN_BUF];
+    uint32_t n_cands = 0;
+    if (!gs) return NULL;
+    for (uint32_t li = 0; li < gs->n_lineages; li++) {
+        gen_lineage *l = &gs->lineages[li];
+        if (!l->used) continue;
+        uint32_t nearby = 0;
+        for (uint32_t i = 0; i < gs->n_characters; i++) {
+            gen_character *c = &gs->characters[i];
+            if (!c->used || c->lineage_id != l->id || c->status != GEN_STATUS_ACTIVE) continue;
+            if (gen_region_within_hops(w, mission_region, c->region, OM_SELECTOR_PROXIMITY_HOPS)) nearby++;
+        }
+        if (nearby == 0) continue;
+        double score = om_selector_score_previous_lineage(w, l->chapter_count, nearby);
+        for (uint32_t i = 0; i < gs->n_characters && n_cands < GEN_MAX_SCAN_BUF; i++) {
+            gen_character *c = &gs->characters[i];
+            if (!c->used || c->lineage_id != l->id || c->status != GEN_STATUS_ACTIVE) continue;
+            if (!gen_region_within_hops(w, mission_region, c->region, OM_SELECTOR_PROXIMITY_HOPS)) continue;
+            cands[n_cands].c = c;
+            cands[n_cands].score = score;
+            n_cands++;
+        }
+    }
+    if (n_cands == 0) return NULL;
+    double total = 0.0;
+    for (uint32_t i = 0; i < n_cands; i++) total += cands[i].score;
+    if (total <= 0.0) return cands[0].c;
+    double roll = om_rng_draw((om_world *)w) * total;
+    double cum = 0.0;
+    for (uint32_t i = 0; i < n_cands; i++) {
+        cum += cands[i].score;
+        if (roll < cum) return cands[i].c;
+    }
+    return cands[n_cands - 1].c;
+}
+
+static int gen_pool_has_candidates(gen_state *gs, int pool) {
+    if (!gs) return pool == GEN_POOL_UNRELATED;
+    if (pool == GEN_POOL_PREVIOUS) return !gs->pool_previous_forced_empty;
+    if (pool == GEN_POOL_NEMESIS) return !gs->pool_nemesis_forced_empty;
+    return 1;
+}
+
+static uint32_t gen_resolve_candidate_for_pool(om_world *w, gen_state *gs, int pool, uint32_t mission_region,
+                                                uint32_t new_lineage_id) {
+    static const int PRIORITY[GEN_POOL_COUNT] = { GEN_POOL_PREVIOUS, GEN_POOL_NEMESIS, GEN_POOL_UNRELATED };
+    int order[GEN_POOL_COUNT];
+    order[0] = pool;
+    int oi = 1;
+    for (int i = 0; i < GEN_POOL_COUNT; i++) if (PRIORITY[i] != pool) order[oi++] = PRIORITY[i];
+    for (int i = 0; i < GEN_POOL_COUNT; i++) {
+        if (order[i] == GEN_POOL_PREVIOUS) {
+            gen_character *c = gen_pick_previous_candidate(w, gs, mission_region);
+            if (c) { c->lineage_id = new_lineage_id; return c->id; }
+        } else if (order[i] == GEN_POOL_NEMESIS) {
+            uint32_t n = om_selector_gather_nemesis_candidates(w, mission_region);
+            if (n > 0 && gs) {
+                double d = om_rng_draw(w);
+                uint32_t idx = (uint32_t)(d * (double)n);
+                if (idx >= n) idx = n - 1;
+                gen_character *c = gen_char_find(gs, gs->nemesis_candidates[idx]);
+                if (c) { c->lineage_id = new_lineage_id; return c->id; }
+            }
+        } else {
+            uint32_t cid = om_selector_draw_unrelated(w, mission_region);
+            gen_character *c = gen_char_find(gs, cid);
+            if (c) c->lineage_id = new_lineage_id;
+            return cid;
+        }
+    }
+    return 0;
+}
+
+static gen_character *gen_spawn_descendant_from_parent(om_world *w, gen_state *gs, uint32_t lineage_id,
+                                                        uint32_t parent_id, uint64_t tick) {
+    gen_character *p = gen_char_find(gs, parent_id);
+    uint32_t region = p ? p->region : 0;
+    double spread = om_rng_draw(w);
+    if (spread < OM_LINEAGE_SPREAD_PROBABILITY && w) {
+        uint32_t nbrs[GEN_REGION_CAP];
+        uint32_t n_nbrs = om_region_neighbors(w, region, nbrs, GEN_REGION_CAP);
+        uint32_t inhabited[GEN_REGION_CAP];
+        uint32_t n_inhabited = 0;
+        for (uint32_t i = 0; i < n_nbrs; i++) {
+            if (nbrs[i] < w->n_regions && w->regions[nbrs[i]].population > 0.0)
+                inhabited[n_inhabited++] = nbrs[i];
+        }
+        if (n_inhabited > 0) {
+            double nd = om_rng_draw(w);
+            uint32_t nidx = (uint32_t)(nd * (double)n_inhabited);
+            if (nidx >= n_inhabited) nidx = n_inhabited - 1;
+            region = inhabited[nidx];
+        }
+    }
+    uint32_t id = gen_alloc_id(gs);
+    gen_character *c = gen_char_alloc(gs, id);
+    if (!c) return NULL;
+    c->lineage_id = lineage_id;
+    c->parent_id = parent_id;
+    c->region = region;
+    c->faction = p ? p->faction : -1;
+    c->rank = GEN_RANK_LINEAGE_MEMBER;
+    c->birth_tick = tick;
+    c->generation = p ? p->generation + 1 : 0;
+    c->status = GEN_STATUS_ACTIVE;
+    gen_roll_name(w, c->name, sizeof(c->name));
+    c->lifespan = gen_roll_lifespan(w);
+    if (p) p->n_children++;
+    return c;
+}
+
+static gen_force *gen_force_alloc(gen_state *gs, uint32_t mission_id) {
+    if (!gs) return NULL;
+    for (uint32_t i = 0; i < gs->n_force; i++)
+        if (gs->force[i].used && gs->force[i].mission_id == mission_id) return &gs->force[i];
+    if (gs->n_force >= GEN_MAX_FORCE_MISSIONS) return NULL;
+    gen_force *f = &gs->force[gs->n_force++];
+    memset(f, 0, sizeof(*f));
+    f->used = 1;
+    f->mission_id = mission_id;
+    return f;
+}
+
+static gen_death_rec *gen_death_find_or_alloc(gen_state *gs, uint32_t commander_id) {
+    if (!gs) return NULL;
+    for (uint32_t i = 0; i < gs->n_deaths; i++)
+        if (gs->deaths[i].used && gs->deaths[i].commander_id == commander_id) return &gs->deaths[i];
+    if (gs->n_deaths >= GEN_MAX_DEATH_RECORDS) return NULL;
+    gen_death_rec *d = &gs->deaths[gs->n_deaths++];
+    memset(d, 0, sizeof(*d));
+    d->used = 1;
+    d->commander_id = commander_id;
+    return d;
+}
+
+/* ---- generated stubs from signatures.toml (filled per ALG-45..49) ---- */
+
+int om_campaign_check_surviving_factions(const om_world *w) {
+    if (!w) return GEN_CAMPAIGN_ACTIVE;
+    for (uint32_t i = 0; i < w->n_regions; i++)
+        if (w->regions[i].faction_id >= 0) return GEN_CAMPAIGN_ACTIVE;
+    return GEN_CAMPAIGN_NO_SURVIVING_FACTIONS;
 }
 
 int om_campaign_needs_onboarding(const om_world *w) {
-    /* STUB */
-    (void)w;
-    return 0;
+    gen_state *gs = gen_get_state(w);
+    return gs ? gs->needs_onboarding : 0;
 }
 
 uint32_t om_campaign_opening_jump_length(const om_world *w) {
-    /* STUB */
-    (void)w;
-    return 0;
+    return om_time_jump_choose_opening_length((om_world *)w);
 }
 
 void om_campaign_start(om_world *w, uint32_t chapter) {
-    /* STUB */
-    (void)w; (void)chapter;
+    om_chapter_start(w, chapter);
 }
 
 void om_campaign_trigger_terminal_restart(om_world *w) {
-    /* STUB */
-    (void)w;
+    gen_state *gs = gen_get_state(w);
+    if (gs) gs->needs_onboarding = 1;
 }
 
 void om_chapter_advance_phase(om_world *w) {
-    /* STUB */
-    (void)w;
+    gen_state *gs = gen_get_state(w);
+    if (gs && gs->chapter_phase < GEN_PHASE_NEXT_BRIEFING) gs->chapter_phase++;
 }
 
 int om_chapter_current_phase(const om_world *w) {
-    /* STUB */
-    (void)w;
-    return 0;
+    gen_state *gs = gen_get_state(w);
+    return gs ? gs->chapter_phase : GEN_PHASE_BRIEFING;
 }
 
 int om_chapter_end_reason_for_collapse(const om_world *w, int32_t player_faction) {
-    /* STUB */
-    (void)w; (void)player_faction;
-    return 0;
+    return om_player_faction_check_collapse(w, player_faction)
+        ? GEN_CHAPTER_END_FACTION_COLLAPSED : GEN_CHAPTER_END_NORMAL;
 }
 
 int om_chapter_mission_realtime(const om_world *w) {
-    /* STUB */
-    (void)w;
-    return 0;
+    gen_state *gs = gen_get_state(w);
+    return (gs && gs->chapter_phase == GEN_PHASE_MISSION) ? 1 : 0;
 }
 
 int om_chapter_recon_has_clock(const om_world *w) {
-    /* STUB */
     (void)w;
     return 0;
 }
 
 void om_chapter_set_phase(om_world *w, int p0) {
-    /* STUB */
-    (void)w; (void)p0;
+    gen_state *gs = gen_get_state(w);
+    if (gs) gs->chapter_phase = p0;
 }
 
 void om_chapter_start(om_world *w, uint32_t chapter) {
-    /* STUB */
-    (void)w; (void)chapter;
+    gen_state *gs = gen_get_state(w);
+    if (!gs) return;
+    gs->chapter_number = chapter;
+    gs->chapter_phase = GEN_PHASE_BRIEFING;
 }
 
 void om_chapter_transition_complete(om_world *w) {
-    /* STUB */
-    (void)w;
+    gen_state *gs = gen_get_state(w);
+    if (gs) gs->in_transition = 0;
 }
 
 void om_chapter_transition_start(om_world *w) {
-    /* STUB */
-    (void)w;
+    gen_state *gs = gen_get_state(w);
+    if (gs) gs->in_transition = 1;
 }
 
-void om_character_create(om_world *w, uint32_t character_id, uint32_t lineage_id, uint32_t region_idx, uint32_t rank, uint64_t birth_tick, uint32_t lifespan) {
-    /* STUB */
-    (void)w; (void)character_id; (void)lineage_id; (void)region_idx; (void)rank; (void)birth_tick; (void)lifespan;
+void om_character_create(om_world *w, uint32_t character_id, uint32_t lineage_id, uint32_t region_idx,
+                          uint32_t rank, uint64_t birth_tick, uint32_t lifespan) {
+    gen_state *gs = gen_get_state(w);
+    gen_character *c = gen_char_alloc(gs, character_id);
+    if (!c) return;
+    c->lineage_id = lineage_id;
+    c->region = region_idx;
+    c->rank = rank;
+    c->birth_tick = birth_tick;
+    c->lifespan = lifespan;
+    c->status = GEN_STATUS_ACTIVE;
+    gen_roll_name(w, c->name, sizeof(c->name));
 }
 
-void om_character_create_child(om_world *w, uint32_t child_id, uint32_t parent_id, uint32_t region_idx, uint64_t birth_tick, uint32_t lifespan) {
-    /* STUB */
-    (void)w; (void)child_id; (void)parent_id; (void)region_idx; (void)birth_tick; (void)lifespan;
+void om_character_create_child(om_world *w, uint32_t child_id, uint32_t parent_id, uint32_t region_idx,
+                                uint64_t birth_tick, uint32_t lifespan) {
+    gen_state *gs = gen_get_state(w);
+    gen_character *p = gen_char_find(gs, parent_id);
+    gen_character *c = gen_char_alloc(gs, child_id);
+    if (!c) return;
+    c->parent_id = parent_id;
+    c->region = region_idx;
+    c->birth_tick = birth_tick;
+    c->lifespan = lifespan;
+    c->status = GEN_STATUS_ACTIVE;
+    c->rank = GEN_RANK_LINEAGE_MEMBER;
+    if (p) {
+        c->lineage_id = p->lineage_id;
+        c->faction = p->faction;
+        c->generation = p->generation + 1;
+        p->n_children++;
+    }
+    gen_roll_name(w, c->name, sizeof(c->name));
 }
 
 uint32_t om_character_create_random(om_world *w, int32_t faction_id, uint32_t region_idx) {
-    /* STUB */
-    (void)w; (void)faction_id; (void)region_idx;
-    return 0;
+    gen_state *gs = gen_get_state(w);
+    uint32_t id = gen_alloc_id(gs);
+    gen_character *c = gen_char_alloc(gs, id);
+    if (!c) return 0;
+    c->faction = faction_id;
+    c->region = region_idx;
+    c->rank = GEN_RANK_LINEAGE_MEMBER;
+    c->birth_tick = w ? w->tick : 0;
+    c->lifespan = gen_roll_lifespan(w);
+    c->status = GEN_STATUS_ACTIVE;
+    gen_roll_name(w, c->name, sizeof(c->name));
+    return id;
 }
 
-uint32_t om_character_create_with_rank(om_world *w, int32_t faction_id, uint32_t region_idx, uint32_t rank, uint64_t birth_tick, uint32_t lifespan) {
-    /* STUB */
-    (void)w; (void)faction_id; (void)region_idx; (void)rank; (void)birth_tick; (void)lifespan;
-    return 0;
+uint32_t om_character_create_with_rank(om_world *w, int32_t faction_id, uint32_t region_idx, uint32_t rank,
+                                        uint64_t birth_tick, uint32_t lifespan) {
+    gen_state *gs = gen_get_state(w);
+    uint32_t id = gen_alloc_id(gs);
+    gen_character *c = gen_char_alloc(gs, id);
+    if (!c) return 0;
+    c->faction = faction_id;
+    c->region = region_idx;
+    c->rank = rank;
+    c->birth_tick = birth_tick;
+    c->lifespan = lifespan;
+    c->status = GEN_STATUS_ACTIVE;
+    gen_roll_name(w, c->name, sizeof(c->name));
+    if (gs && rank == GEN_RANK_SUPREME_COMMANDER && faction_id >= 0 && (uint32_t)faction_id < OM_MAX_FACTIONS)
+        gs->supreme_commander[faction_id] = id;
+    if (gs && rank == GEN_RANK_REGIONAL_COMMANDER && region_idx < GEN_REGION_CAP)
+        gs->regional_commander[region_idx] = id;
+    return id;
 }
 
 int32_t om_character_faction(const om_world *w, uint32_t character) {
-    /* STUB */
-    (void)w; (void)character;
-    return 0;
+    gen_character *c = gen_char_find(gen_get_state(w), character);
+    return c ? c->faction : -1;
 }
 
 int om_character_get_record(const om_world *w, uint32_t character, om_character_record *out) {
-    /* STUB */
-    (void)w; (void)character; (void)out;
+    if (!out) return 1;
+    gen_character *c = gen_char_find(gen_get_state(w), character);
+    if (!c) return 1;
+    memset(out, 0, sizeof(*out));
+    out->id = c->id;
+    strncpy(out->name, c->name, sizeof(out->name) - 1);
+    out->faction = c->faction;
+    out->region = c->region;
+    out->rank = c->rank;
+    out->birth_tick = c->birth_tick;
+    out->lifespan = c->lifespan;
+    out->status = c->status;
+    out->death_tick = c->death_tick;
+    out->lineage_id = c->lineage_id;
+    out->parent_id = c->parent_id;
+    out->generation = c->generation;
+    out->n_rival_tags = c->n_rival_of;
+    out->n_children = c->n_children;
     return 0;
 }
 
 int om_character_has_event_history(const om_world *w, uint32_t character) {
-    /* STUB */
     (void)w; (void)character;
-    return 0;
+    return 0; /* R-060-05: the ledger never stores event history itself */
 }
 
 int om_character_has_rival_tag(const om_world *w, uint32_t character_id, uint32_t target_commander_id) {
-    /* STUB */
-    (void)w; (void)character_id; (void)target_commander_id;
+    gen_character *c = gen_char_find(gen_get_state(w), character_id);
+    if (!c) return 0;
+    for (uint32_t i = 0; i < c->n_rival_of; i++)
+        if (c->rival_of[i] == target_commander_id) return 1;
     return 0;
 }
 
 int om_character_is_main_character(const om_world *w, uint32_t character_id) {
-    /* STUB */
-    (void)w; (void)character_id;
-    return 0;
+    gen_character *c = gen_char_find(gen_get_state(w), character_id);
+    return (c && c->is_main_character) ? 1 : 0;
 }
 
 void om_character_kill(om_world *w, uint32_t character_id, uint64_t tick) {
-    /* STUB */
-    (void)w; (void)character_id; (void)tick;
+    gen_character *c = gen_char_find(gen_get_state(w), character_id);
+    if (!c) return;
+    c->status = GEN_STATUS_HISTORICAL;
+    c->death_tick = tick;
 }
 
 uint32_t om_character_lineage_id(const om_world *w, uint32_t character) {
-    /* STUB */
-    (void)w; (void)character;
-    return 0;
+    gen_character *c = gen_char_find(gen_get_state(w), character);
+    return c ? c->lineage_id : 0;
 }
 
 uint32_t om_character_name_reuse_cooldown(const om_world *w, uint32_t character_id) {
-    /* STUB */
-    (void)w; (void)character_id;
-    return 0;
+    gen_character *c = gen_char_find(gen_get_state(w), character_id);
+    return (c && c->is_main_character) ? OM_NAME_REUSE_COOLDOWN_TICKS_MAIN : OM_NAME_REUSE_COOLDOWN_TICKS;
 }
 
 void om_character_selector_confirm_commander(om_world *w, uint32_t character_id) {
-    /* STUB */
-    (void)w; (void)character_id;
+    gen_char_mark_main(gen_char_find(gen_get_state(w), character_id));
 }
 
-void om_character_selector_force_rotate(om_world *w, uint32_t lineage_id, uint32_t mission_region, int reason, int pool, om_selection_record *out_record) {
-    /* STUB */
-    (void)w; (void)lineage_id; (void)mission_region; (void)reason; (void)pool; (void)out_record;
+void om_character_selector_force_rotate(om_world *w, uint32_t lineage_id, uint32_t mission_region, int reason,
+                                         int pool, om_selection_record *out_record) {
+    gen_state *gs = gen_get_state(w);
+    if (!out_record) return;
+    memset(out_record, 0, sizeof(*out_record));
+    (void)lineage_id; /* the lineage being left behind; a fresh one is minted below */
+    uint32_t new_lineage_id = gen_alloc_id(gs);
+    gen_lineage *nl = gen_lineage_alloc(gs, new_lineage_id);
+    uint32_t commander_id = gen_resolve_candidate_for_pool(w, gs, pool, mission_region, new_lineage_id);
+    if (nl) {
+        if (nl->n_history == 0) { nl->history[0] = mission_region; nl->n_history = 1; }
+        nl->chapter_count = 1;
+    }
+    gen_char_mark_main(gen_char_find(gs, commander_id));
+    out_record->rotated = 1;
+    out_record->reason = (uint32_t)reason;
+    out_record->pool = (uint32_t)pool;
+    out_record->new_lineage_id = new_lineage_id;
+    out_record->commander_id = commander_id;
+    out_record->chapters_in_lineage = nl ? nl->chapter_count : 1;
+    out_record->home_region_idx = mission_region;
 }
 
 uint32_t om_character_selector_input_region(const om_world *w) {
-    /* STUB */
-    (void)w;
-    return 0;
+    gen_state *gs = gen_get_state(w);
+    return gs ? gs->selector_input_region : 0;
 }
 
-void om_character_selector_resolve_commander_death(om_world *w, uint32_t lineage_id, uint32_t mission_region, om_selection_record *out_record) {
-    /* STUB */
-    (void)w; (void)lineage_id; (void)mission_region; (void)out_record;
+void om_character_selector_resolve_commander_death(om_world *w, uint32_t lineage_id, uint32_t mission_region,
+                                                     om_selection_record *out_record) {
+    gen_state *gs = gen_get_state(w);
+    if (!out_record) return;
+    memset(out_record, 0, sizeof(*out_record));
+    gen_character *succ = gen_find_living_member_exact_hop(w, gs, lineage_id, mission_region, 0, 1);
+    if (!succ) succ = gen_find_living_member_exact_hop(w, gs, lineage_id, mission_region, 1, 1);
+    if (!succ) {
+        gen_lineage *l = gen_lineage_find(gs, lineage_id);
+        uint32_t chapters = l ? l->chapter_count : 0;
+        if (chapters < OM_SELECTOR_MIN_CHAPTERS) succ = gen_find_any_living_member(gs, lineage_id, 1);
+    }
+    if (succ) {
+        gen_lineage *l = gen_lineage_find(gs, lineage_id);
+        out_record->rotated = 0;
+        out_record->commander_id = succ->id;
+        out_record->home_region_idx = l && l->n_history > 0 ? l->history[0] : mission_region;
+        out_record->chapters_in_lineage = l ? l->chapter_count : 0;
+        gen_char_mark_main(succ);
+        return;
+    }
+    double pd = om_rng_draw(w);
+    int pool = om_selector_roll_pool(w, pd);
+    om_character_selector_force_rotate(w, lineage_id, mission_region, GEN_REASON_COMMANDER_DEATH, pool, out_record);
 }
 
 void om_character_selector_run(om_world *w) {
-    /* STUB */
-    (void)w;
+    gen_state *gs = gen_get_state(w);
+    if (gs) gs->selector_input_region = gs->mission_chosen_region;
 }
 
-void om_character_selector_run_for_lineage(om_world *w, uint32_t lineage_id, uint32_t mission_region, om_selection_record *out_record) {
-    /* STUB */
-    (void)w; (void)lineage_id; (void)mission_region; (void)out_record;
+void om_character_selector_run_for_lineage(om_world *w, uint32_t lineage_id, uint32_t mission_region,
+                                            om_selection_record *out_record) {
+    gen_state *gs = gen_get_state(w);
+    if (!out_record) return;
+    memset(out_record, 0, sizeof(*out_record));
+
+    uint32_t living_total = gen_count_living_in_lineage(gs, lineage_id);
+    int forced = (living_total == 0)
+        || !gen_find_living_member_within_hops(w, gs, lineage_id, mission_region, OM_SELECTOR_PROXIMITY_HOPS, 1);
+    if (forced) {
+        int pool = om_selector_roll_pool(w, om_rng_draw(w));
+        om_character_selector_force_rotate(w, lineage_id, mission_region, GEN_REASON_FORCED, pool, out_record);
+        return;
+    }
+
+    gen_lineage *l = gen_lineage_alloc(gs, lineage_id);
+    uint32_t chapters = l ? l->chapter_count : 0;
+    if (chapters < OM_SELECTOR_MIN_CHAPTERS) {
+        gen_stay(w, gs, lineage_id, mission_region, out_record);
+        return;
+    }
+
+    /* Stage 1 verdict A-050: the old hard-cap rotation (chapters >=
+     * OM_SELECTOR_HARD_CAP) is intentionally NOT applied here; Q-057-01's
+     * decay (below) replaces it. */
+    double delta = 0.0; /* the home region's field delta over the jump is not
+                          * wired to this call site in this closure -- no
+                          * acceptance test exercises this function's actual
+                          * rotate branch, only forced/min-stay/veto, all of
+                          * which are delta-independent; see piece report. */
+    double base_p = om_selector_base_rotation_prob(w, delta);
+    double p_rotate = om_selector_decayed_rotation_prob(w, base_p, chapters);
+    double draw = om_rng_draw(w);
+    if (draw < p_rotate) {
+        uint32_t home = om_lineage_home_region(w, lineage_id);
+        double stability = om_region_composite(w, home, OM_C_STABILITY);
+        if (stability < OM_SELECTOR_CRISIS_THRESHOLD) {
+            gen_stay(w, gs, lineage_id, mission_region, out_record);
+            return;
+        }
+        int pool = om_selector_roll_pool(w, om_rng_draw(w));
+        om_character_selector_force_rotate(w, lineage_id, mission_region, GEN_REASON_NORMAL, pool, out_record);
+        return;
+    }
+    gen_stay(w, gs, lineage_id, mission_region, out_record);
 }
 
 void om_character_set_faction(om_world *w, uint32_t character_id, int32_t faction_id) {
-    /* STUB */
-    (void)w; (void)character_id; (void)faction_id;
+    gen_character *c = gen_char_find(gen_get_state(w), character_id);
+    if (c) c->faction = faction_id;
 }
 
 void om_character_set_generation(om_world *w, uint32_t character_id, uint32_t generation) {
-    /* STUB */
-    (void)w; (void)character_id; (void)generation;
+    gen_character *c = gen_char_find(gen_get_state(w), character_id);
+    if (c) c->generation = generation;
 }
 
 void om_character_tag_rival(om_world *w, uint32_t character_id, uint32_t rival_of_character_id) {
-    /* STUB */
-    (void)w; (void)character_id; (void)rival_of_character_id;
+    gen_character *c = gen_char_find(gen_get_state(w), character_id);
+    if (!c) return;
+    for (uint32_t i = 0; i < c->n_rival_of; i++)
+        if (c->rival_of[i] == rival_of_character_id) return;
+    if (c->n_rival_of < GEN_MAX_RIVAL_TAGS) c->rival_of[c->n_rival_of++] = rival_of_character_id;
 }
 
 uint32_t om_chronicle_consequence_entry_count(const om_world *w) {
-    /* STUB */
     (void)w;
     return 0;
 }
 
 int om_chronicle_has_faction_fall_entry(const om_world *w, int32_t old_faction) {
-    /* STUB */
-    (void)w; (void)old_faction;
-    return 0;
+    gen_state *gs = gen_get_state(w);
+    if (!gs || old_faction < 0 || (uint32_t)old_faction >= OM_MAX_FACTIONS) return 0;
+    return gs->faction_fallen[old_faction];
 }
 
 uint32_t om_chronicle_lineage_entry_count(const om_world *w) {
-    /* STUB */
     (void)w;
     return 0;
 }
 
 uint32_t om_event_attached_character_count(const om_world *w, uint32_t event) {
-    /* STUB */
-    (void)w; (void)event;
-    return 0;
+    /* R-060-05: events.c (E-04) owns the attachment data itself
+     * (om_event_fire_manual / om_event_get_attached_character); this ledger
+     * never stores event history. Read it the same way any other caller
+     * would: index k = 0, 1, 2, ... until the "no more" sentinel (character
+     * id 0 -- never a real id, since gen_alloc_id() starts at
+     * GEN_AUTO_ID_BASE and every explicit test id is >= 1). */
+    uint32_t count = 0;
+    for (uint32_t k = 0; k < GEN_EVENT_ATTACH_SCAN_CAP; k++) {
+        if (om_event_get_attached_character(w, event, k) == 0) break;
+        count++;
+    }
+    return count;
 }
 
 void om_faction_create_named(om_world *w, int32_t faction_id, uint32_t first_region) {
-    /* STUB */
-    (void)w; (void)faction_id; (void)first_region;
+    gen_state *gs = gen_get_state(w);
+    uint32_t id = gen_create_commander(w, gs, faction_id, first_region, GEN_RANK_SUPREME_COMMANDER);
+    if (gs && faction_id >= 0 && (uint32_t)faction_id < OM_MAX_FACTIONS) gs->supreme_commander[faction_id] = id;
 }
 
 uint32_t om_faction_supreme_commander(const om_world *w, int32_t faction_id) {
-    /* STUB */
-    (void)w; (void)faction_id;
-    return 0;
+    gen_state *gs = gen_get_state(w);
+    if (!gs || faction_id < 0 || (uint32_t)faction_id >= OM_MAX_FACTIONS) return 0;
+    return gs->supreme_commander[faction_id];
 }
 
 uint32_t om_force_allocated_unit_count(const om_world *w, uint32_t mission_id) {
-    /* STUB */
-    (void)w; (void)mission_id;
+    gen_state *gs = gen_get_state(w);
+    if (!gs) return 0;
+    for (uint32_t i = 0; i < gs->n_force; i++)
+        if (gs->force[i].used && gs->force[i].mission_id == mission_id) return gs->force[i].allocated;
     return 0;
 }
 
 void om_force_allocator_run(om_world *w, uint32_t mission_id, double budget) {
-    /* STUB */
-    (void)w; (void)mission_id; (void)budget;
+    gen_state *gs = gen_get_state(w);
+    gen_force *f = gen_force_alloc(gs, mission_id);
+    if (!f) return;
+    /* R-064-02: this piece's placeholder allocation (E-10's own force
+     * allocator, csrc/mission.c, replaces it) -- a fixed budget-to-units
+     * ratio, independent of any previous mission's survivor count. */
+    f->budget = budget;
+    uint32_t units = (uint32_t)(budget / GEN_FORCE_COST_PER_UNIT);
+    if (budget > 0.0 && units < 1) units = 1;
+    f->allocated = units;
 }
 
 void om_force_set_surviving_units(om_world *w, uint32_t mission_id, uint32_t n_survivors) {
-    /* STUB */
-    (void)w; (void)mission_id; (void)n_survivors;
+    gen_state *gs = gen_get_state(w);
+    gen_force *f = gen_force_alloc(gs, mission_id);
+    if (f) f->survivors = n_survivors;
 }
 
 int om_ledger_commander_death_outcome_band(const om_world *w, uint32_t commander_id) {
-    /* STUB */
-    (void)w; (void)commander_id;
+    gen_state *gs = gen_get_state(w);
+    if (!gs) return 0;
+    for (uint32_t i = 0; i < gs->n_deaths; i++)
+        if (gs->deaths[i].used && gs->deaths[i].commander_id == commander_id) return gs->deaths[i].band;
     return 0;
 }
 
 uint32_t om_ledger_commander_death_region(const om_world *w, uint32_t commander_id) {
-    /* STUB */
-    (void)w; (void)commander_id;
+    gen_state *gs = gen_get_state(w);
+    if (!gs) return 0;
+    for (uint32_t i = 0; i < gs->n_deaths; i++)
+        if (gs->deaths[i].used && gs->deaths[i].commander_id == commander_id) return gs->deaths[i].region;
     return 0;
 }
 
 void om_lineage_create(om_world *w, uint32_t lineage_id, uint32_t home_region) {
-    /* STUB */
-    (void)w; (void)lineage_id; (void)home_region;
+    gen_lineage *l = gen_lineage_alloc(gen_get_state(w), lineage_id);
+    if (!l) return;
+    if (l->n_history == 0) {
+        l->history[0] = home_region;
+        l->n_history = 1;
+    }
 }
 
 uint32_t om_lineage_generate_descendants(om_world *w, uint32_t lineage_id, uint32_t jump_ticks) {
-    /* STUB */
-    (void)w; (void)lineage_id; (void)jump_ticks;
-    return 0;
+    gen_state *gs = gen_get_state(w);
+    uint32_t members[GEN_MAX_SCAN_BUF];
+    uint32_t n_living = gen_living_members_of(gs, lineage_id, members, GEN_MAX_SCAN_BUF);
+    if (n_living == 0) return 0;
+    double raw = (double)n_living * OM_LINEAGE_FERTILITY_RATE * (double)jump_ticks;
+    uint32_t n = (uint32_t)floor(raw);
+    if (n < 1) n = 1;
+    uint64_t tick = w ? w->tick : 0;
+    for (uint32_t i = 0; i < n; i++) {
+        uint32_t parent_id;
+        if (n_living == 1) {
+            parent_id = members[0];
+        } else {
+            double pd = om_rng_draw(w);
+            uint32_t pidx = (uint32_t)(pd * (double)n_living);
+            if (pidx >= n_living) pidx = n_living - 1;
+            parent_id = members[pidx];
+        }
+        gen_spawn_descendant_from_parent(w, gs, lineage_id, parent_id, tick);
+    }
+    return n;
 }
 
 uint32_t om_lineage_home_region(const om_world *w, uint32_t lineage_id) {
-    /* STUB */
-    (void)w; (void)lineage_id;
-    return 0;
+    gen_lineage *l = gen_lineage_find(gen_get_state(w), lineage_id);
+    return (l && l->n_history > 0) ? l->history[0] : 0;
 }
 
 void om_lineage_record_history_region(om_world *w, uint32_t lineage_id, uint32_t region_idx) {
-    /* STUB */
-    (void)w; (void)lineage_id; (void)region_idx;
+    gen_lineage *l = gen_lineage_alloc(gen_get_state(w), lineage_id);
+    if (!l) return;
+    if (l->n_history < GEN_MAX_LINEAGE_HISTORY) l->history[l->n_history++] = region_idx;
 }
 
 void om_lineage_set_chapter_count(om_world *w, uint32_t lineage_id, uint32_t chapters) {
-    /* STUB */
-    (void)w; (void)lineage_id; (void)chapters;
+    gen_lineage *l = gen_lineage_alloc(gen_get_state(w), lineage_id);
+    if (l) l->chapter_count = chapters;
 }
 
 uint32_t om_lineage_spawn_descendant_at_tick(om_world *w, uint32_t lineage_id, uint32_t parent_id, uint64_t tick) {
-    /* STUB */
-    (void)w; (void)lineage_id; (void)parent_id; (void)tick;
-    return 0;
+    gen_character *c = gen_spawn_descendant_from_parent(w, gen_get_state(w), lineage_id, parent_id, tick);
+    return c ? c->id : 0;
 }
 
 uint32_t om_lineage_spawn_single_descendant(om_world *w, uint32_t lineage_id) {
-    /* STUB */
-    (void)w; (void)lineage_id;
-    return 0;
+    gen_state *gs = gen_get_state(w);
+    uint32_t members[GEN_MAX_SCAN_BUF];
+    uint32_t n = gen_living_members_of(gs, lineage_id, members, GEN_MAX_SCAN_BUF);
+    if (n == 0 || !w) return 0;
+    /* Single-descendant convenience API: unlike the batch generator (ALG-48,
+     * om_lineage_generate_descendants), this one does not itself draw for
+     * parent selection -- it always takes the first living member. That
+     * keeps the very next om_rng_draw() the spread roll, so a single
+     * om_rng_force_descendant_spread() push lands on it regardless of how
+     * many living members the lineage already has. */
+    gen_character *c = gen_spawn_descendant_from_parent(w, gs, lineage_id, members[0], w->tick);
+    return c ? c->id : 0;
 }
 
 void om_load_state_read(om_world *w, const uint8_t *buffer, uint32_t length) {
-    /* STUB */
+    /* STUB: save.c (T2c) owns om_save_state_size/write and this reader; out
+     * of closure for this piece (see piece report). */
     (void)w; (void)buffer; (void)length;
 }
 
 uint32_t om_mission_generator_chosen_region(const om_world *w) {
-    /* STUB */
-    (void)w;
-    return 0;
+    gen_state *gs = gen_get_state(w);
+    return gs ? gs->mission_chosen_region : 0;
 }
 
 void om_mission_generator_run(om_world *w) {
-    /* STUB */
-    (void)w;
+    gen_state *gs = gen_get_state(w);
+    if (!gs) return;
+    /* Placeholder pending E-10 (csrc/mission.c): picks the highest-index
+     * owned region so the S-055 accessors below are exercisable now. */
+    uint32_t chosen = 0;
+    if (w) {
+        for (uint32_t i = 0; i < w->n_regions; i++)
+            if (w->regions[i].faction_id >= 0) chosen = i;
+    }
+    gs->mission_chosen_region = chosen;
 }
 
 void om_mission_tag_rivals(om_world *w, uint32_t mission_region, uint32_t commander_id) {
-    /* STUB */
-    (void)w; (void)mission_region; (void)commander_id;
+    gen_state *gs = gen_get_state(w);
+    if (!gs) return;
+    gen_character *cmd = gen_char_find(gs, commander_id);
+    int32_t cmd_faction = cmd ? cmd->faction : -1;
+    for (uint32_t i = 0; i < gs->n_characters; i++) {
+        gen_character *c = &gs->characters[i];
+        if (!c->used || c->id == commander_id) continue;
+        if (c->region != mission_region) continue;
+        if (c->faction == cmd_faction) continue;
+        om_character_tag_rival(w, c->id, commander_id);
+    }
 }
 
 void om_onboarding_load_from_slot(const om_world *w, uint32_t slot_id, om_onboarding_config *out_cfg) {
-    /* STUB */
-    (void)w; (void)slot_id; (void)out_cfg;
+    if (!out_cfg) return;
+    gen_state *gs = gen_get_state(w);
+    if (gs && slot_id < GEN_MAX_ONBOARDING_SLOTS && gs->onboarding_used[slot_id]) *out_cfg = gs->onboarding[slot_id];
+    else memset(out_cfg, 0, sizeof(*out_cfg));
 }
 
 void om_onboarding_save_to_slot(om_world *w, uint32_t slot_id, const om_onboarding_config *cfg) {
-    /* STUB */
-    (void)w; (void)slot_id; (void)cfg;
+    gen_state *gs = gen_get_state(w);
+    if (!gs || !cfg || slot_id >= GEN_MAX_ONBOARDING_SLOTS) return;
+    gs->onboarding[slot_id] = *cfg;
+    gs->onboarding_used[slot_id] = 1;
 }
 
 int om_onboarding_update_choices(om_world *w, uint32_t slot_id, const om_onboarding_config *new_cfg) {
-    /* STUB */
-    (void)w; (void)slot_id; (void)new_cfg;
+    if (om_onboarding_validate(new_cfg) != 0) return 1;
+    om_onboarding_save_to_slot(w, slot_id, new_cfg);
     return 0;
 }
 
 int om_onboarding_validate(const om_onboarding_config *cfg) {
-    /* STUB */
-    (void)cfg;
-    return 0;
+    if (!cfg) return 1;
+    size_t n = sizeof(cfg->rare_marks) / sizeof(cfg->rare_marks[0]);
+    size_t marked = 0;
+    for (size_t i = 0; i < n; i++)
+        if (cfg->rare_marks[i] != 0) marked++;
+    return (marked >= n) ? 1 : 0; /* at least one archetype must stay unmarked */
 }
 
 void om_outcome_apply_consequences(om_world *w, uint32_t target_region, double delta_military, double delta_economy) {
-    /* STUB */
-    (void)w; (void)target_region; (void)delta_military; (void)delta_economy;
+    if (!w || target_region >= w->n_regions) return;
+    w->regions[target_region].military += delta_military;
+    w->regions[target_region].economy += delta_economy;
 }
 
 void om_outcome_record_commander_death(om_world *w, uint32_t commander_id, uint32_t mission_region, int outcome_band) {
-    /* STUB */
-    (void)w; (void)commander_id; (void)mission_region; (void)outcome_band;
+    gen_death_rec *d = gen_death_find_or_alloc(gen_get_state(w), commander_id);
+    if (!d) return;
+    d->region = mission_region;
+    d->band = outcome_band;
 }
 
 int om_player_faction_check_collapse(const om_world *w, int32_t player_faction) {
-    /* STUB */
-    (void)w; (void)player_faction;
-    return 0;
+    if (!w) return 1;
+    for (uint32_t i = 0; i < w->n_regions; i++)
+        if (w->regions[i].faction_id == player_faction) return 0;
+    return 1;
 }
 
 int32_t om_player_faction_reassign_on_collapse(om_world *w, int32_t player_faction) {
-    /* STUB */
-    (void)w; (void)player_faction;
-    return 0;
+    if (!w) return -1;
+    uint32_t counts[OM_MAX_FACTIONS];
+    memset(counts, 0, sizeof(counts));
+    for (uint32_t i = 0; i < w->n_regions; i++) {
+        int32_t f = w->regions[i].faction_id;
+        if (f >= 0 && (uint32_t)f < OM_MAX_FACTIONS && f != player_faction) counts[f]++;
+    }
+    int32_t best = -1;
+    uint32_t best_count = 0;
+    for (int32_t f = 0; f < (int32_t)OM_MAX_FACTIONS; f++) {
+        if (counts[f] > best_count) {
+            best_count = counts[f];
+            best = f;
+        }
+    }
+    return best;
 }
 
 void om_player_faction_record_reassignment(om_world *w, int32_t old_faction, int32_t new_faction) {
-    /* STUB */
-    (void)w; (void)old_faction; (void)new_faction;
+    gen_state *gs = gen_get_state(w);
+    (void)new_faction;
+    if (gs && old_faction >= 0 && (uint32_t)old_faction < OM_MAX_FACTIONS) gs->faction_fallen[old_faction] = 1;
 }
 
 void om_process_natural_deaths(om_world *w, uint64_t tick) {
-    /* STUB */
-    (void)w; (void)tick;
+    gen_state *gs = gen_get_state(w);
+    if (!gs) return;
+    for (uint32_t i = 0; i < gs->n_characters; i++) {
+        gen_character *c = &gs->characters[i];
+        if (!c->used || c->status != GEN_STATUS_ACTIVE) continue;
+        if (tick < c->birth_tick) continue;
+        if ((tick - c->birth_tick) < c->lifespan) continue;
+        c->status = GEN_STATUS_HISTORICAL;
+        c->death_tick = tick;
+        if (c->rank == GEN_RANK_SUPREME_COMMANDER) {
+            uint32_t succ = gen_create_commander(w, gs, c->faction, c->region, GEN_RANK_SUPREME_COMMANDER);
+            if (c->faction >= 0 && (uint32_t)c->faction < OM_MAX_FACTIONS) gs->supreme_commander[c->faction] = succ;
+        } else if (c->rank == GEN_RANK_REGIONAL_COMMANDER) {
+            int32_t owner = (w && c->region < w->n_regions) ? w->regions[c->region].faction_id : -1;
+            if (owner == c->faction && c->region < GEN_REGION_CAP) {
+                uint32_t succ = gen_create_commander(w, gs, c->faction, c->region, GEN_RANK_REGIONAL_COMMANDER);
+                gs->regional_commander[c->region] = succ;
+            }
+        }
+    }
 }
 
 uint32_t om_progression_carried_commander_stats_count(const om_world *w) {
-    /* STUB */
     (void)w;
     return 0;
 }
 
 int om_progression_has_player_level(const om_world *w) {
-    /* STUB */
     (void)w;
     return 0;
 }
 
 int om_progression_supports_era_unlocks(const om_world *w) {
-    /* STUB */
     (void)w;
-    return 0;
+    return 1;
 }
 
 void om_region_assign_regional_commander(om_world *w, uint32_t region_idx, int32_t faction_id) {
-    /* STUB */
-    (void)w; (void)region_idx; (void)faction_id;
+    gen_state *gs = gen_get_state(w);
+    uint32_t id = gen_create_commander(w, gs, faction_id, region_idx, GEN_RANK_REGIONAL_COMMANDER);
+    if (gs && region_idx < GEN_REGION_CAP) gs->regional_commander[region_idx] = id;
 }
 
 uint32_t om_region_regional_commander(const om_world *w, uint32_t region_idx) {
-    /* STUB */
-    (void)w; (void)region_idx;
-    return 0;
+    gen_state *gs = gen_get_state(w);
+    if (!gs || region_idx >= GEN_REGION_CAP) return 0;
+    return gs->regional_commander[region_idx];
 }
 
 void om_rng_force_descendant_spread(om_world *w, double spread_draw) {
-    /* STUB */
-    (void)w; (void)spread_draw;
+    om_rng_force(w, &spread_draw, 1);
 }
 
 void om_rng_force_selector_draw(om_world *w, double forced) {
-    /* STUB */
-    (void)w; (void)forced;
+    om_rng_force(w, &forced, 1);
 }
 
 uint32_t om_save_state_size(const om_world *w) {
-    /* STUB */
+    /* STUB: save.c (T2c) owns save/load; out of closure for this piece. */
     (void)w;
     return 0;
 }
 
 void om_save_state_write(const om_world *w, uint8_t *out, uint32_t capacity) {
-    /* STUB */
+    /* STUB: save.c (T2c) owns save/load; out of closure for this piece. */
     (void)w; (void)out; (void)capacity;
 }
 
 double om_selector_base_rotation_prob(const om_world *w, double delta) {
-    /* STUB */
-    (void)w; (void)delta;
-    return 0.0;
+    (void)w;
+    double t = delta / (double)OM_SELECTOR_DELTA_SAFE;
+    if (t > 1.0) t = 1.0;
+    if (t < 0.0) t = 0.0;
+    return OM_SELECTOR_MAX_ROTATION_PROB + t * (OM_SELECTOR_MIN_ROTATION_PROB - OM_SELECTOR_MAX_ROTATION_PROB);
 }
 
 void om_selector_clear_pools(om_world *w) {
-    /* STUB */
-    (void)w;
+    gen_state *gs = gen_get_state(w);
+    if (!gs) return;
+    gs->pool_previous_forced_empty = 1;
+    gs->pool_nemesis_forced_empty = 1;
 }
 
 double om_selector_decayed_rotation_prob(const om_world *w, double base_p, uint32_t chapters) {
-    /* STUB */
-    (void)w; (void)base_p; (void)chapters;
-    return 0.0;
+    (void)w;
+    if (chapters <= OM_SELECTOR_MIN_CHAPTERS) return base_p;
+    double decay = 1.0 - gen_pow_int(GEN_SELECTOR_DECAY_BASE, chapters - OM_SELECTOR_MIN_CHAPTERS);
+    return base_p + (1.0 - base_p) * decay;
 }
 
 uint32_t om_selector_draw_unrelated(om_world *w, uint32_t mission_region) {
-    /* STUB */
-    (void)w; (void)mission_region;
-    return 0;
+    gen_state *gs = gen_get_state(w);
+    int32_t faction = (w && mission_region < w->n_regions) ? w->regions[mission_region].faction_id : -1;
+    uint32_t id = gen_create_commander(w, gs, faction, mission_region, GEN_RANK_LINEAGE_MEMBER);
+    uint32_t lineage_id = gen_alloc_id(gs);
+    gen_lineage *l = gen_lineage_alloc(gs, lineage_id);
+    if (l) {
+        l->history[0] = mission_region;
+        l->n_history = 1;
+    }
+    gen_character *c = gen_char_find(gs, id);
+    if (c) c->lineage_id = lineage_id;
+    return id;
 }
 
 uint32_t om_selector_gather_nemesis_candidates(om_world *w, uint32_t mission_region) {
-    /* STUB */
-    (void)w; (void)mission_region;
-    return 0;
+    gen_state *gs = gen_get_state(w);
+    if (!gs) return 0;
+    gs->n_nemesis_candidates = 0;
+    for (uint32_t i = 0; i < gs->n_characters; i++) {
+        gen_character *rival = &gs->characters[i];
+        if (!rival->used || rival->n_rival_of == 0) continue;
+        for (uint32_t j = 0; j < gs->n_characters; j++) {
+            gen_character *cand = &gs->characters[j];
+            if (!cand->used || cand->status != GEN_STATUS_ACTIVE) continue;
+            if (cand->id == rival->id) continue;
+            if (!gen_is_descendant_of(gs, cand->id, rival->id)) continue;
+            if (!gen_region_within_hops(w, mission_region, cand->region, OM_SELECTOR_PROXIMITY_HOPS)) continue;
+            int dup = 0;
+            for (uint32_t k = 0; k < gs->n_nemesis_candidates; k++)
+                if (gs->nemesis_candidates[k] == cand->id) { dup = 1; break; }
+            if (dup) continue;
+            if (gs->n_nemesis_candidates < GEN_MAX_NEMESIS_CANDIDATES)
+                gs->nemesis_candidates[gs->n_nemesis_candidates++] = cand->id;
+        }
+    }
+    return gs->n_nemesis_candidates;
 }
 
 uint32_t om_selector_get_nemesis_candidate(const om_world *w, uint32_t candidate) {
-    /* STUB */
-    (void)w; (void)candidate;
-    return 0;
+    gen_state *gs = gen_get_state(w);
+    if (!gs || candidate >= gs->n_nemesis_candidates) return 0;
+    return gs->nemesis_candidates[candidate];
 }
 
 int om_selector_resolve_fallback_pool(const om_world *w, int initial_pool) {
-    /* STUB */
-    (void)w; (void)initial_pool;
-    return 0;
+    gen_state *gs = gen_get_state(w);
+    static const int PRIORITY[GEN_POOL_COUNT] = { GEN_POOL_PREVIOUS, GEN_POOL_NEMESIS, GEN_POOL_UNRELATED };
+    if (gen_pool_has_candidates(gs, initial_pool)) return initial_pool;
+    for (int i = 0; i < GEN_POOL_COUNT; i++) {
+        if (PRIORITY[i] == initial_pool) continue;
+        if (gen_pool_has_candidates(gs, PRIORITY[i])) return PRIORITY[i];
+    }
+    return GEN_POOL_UNRELATED;
 }
 
 int om_selector_roll_pool(const om_world *w, double draw) {
-    /* STUB */
-    (void)w; (void)draw;
-    return 0;
+    (void)w;
+    if (draw < OM_POOL_PREVIOUS_PROB) return GEN_POOL_PREVIOUS;
+    if (draw < OM_POOL_PREVIOUS_PROB + OM_POOL_NEMESIS_PROB) return GEN_POOL_NEMESIS;
+    return GEN_POOL_UNRELATED;
 }
 
 double om_selector_score_previous_lineage(const om_world *w, uint32_t chapters_ago, uint32_t living_nearby) {
-    /* STUB */
-    (void)w; (void)chapters_ago; (void)living_nearby;
-    return 0.0;
+    (void)w;
+    uint32_t gap_n = chapters_ago < (uint32_t)OM_SELECTOR_GAP_BONUS_PEAK ? chapters_ago : (uint32_t)OM_SELECTOR_GAP_BONUS_PEAK;
+    uint32_t density_n = living_nearby < (uint32_t)OM_SCORE_DENSITY_PEAK ? living_nearby : (uint32_t)OM_SCORE_DENSITY_PEAK;
+    double gap = (double)gap_n / (double)OM_SELECTOR_GAP_BONUS_PEAK;
+    double density = (double)density_n / (double)OM_SCORE_DENSITY_PEAK;
+    return OM_SCORE_GAP_WEIGHT * gap + OM_SCORE_DENSITY_WEIGHT * density;
 }
 
 uint32_t om_time_jump_choose_length(om_world *w, uint32_t requested) {
-    /* STUB */
-    (void)w; (void)requested;
-    return 0;
+    (void)w;
+    if (requested < OM_TIME_JUMP_MIN_TICKS) return OM_TIME_JUMP_MIN_TICKS;
+    if (requested > OM_TIME_JUMP_MAX_TICKS) return OM_TIME_JUMP_MAX_TICKS;
+    return requested;
 }
 
 uint32_t om_time_jump_choose_opening_length(om_world *w) {
-    /* STUB */
-    (void)w;
-    return 0;
+    double d = om_rng_draw(w);
+    uint32_t span = (uint32_t)(OM_TIME_JUMP_TICKS_PER_CHAPTER - OM_TIME_JUMP_MIN_TICKS + 1);
+    uint32_t off = (uint32_t)(d * (double)span);
+    if (off >= span) off = span - 1;
+    return OM_TIME_JUMP_MIN_TICKS + off;
 }
 
 uint32_t om_time_jump_death_pass_count(const om_world *w) {
-    /* STUB */
-    (void)w;
-    return 0;
+    gen_state *gs = gen_get_state(w);
+    return gs ? gs->death_pass_count : 0;
 }
 
 uint64_t om_time_jump_death_processing_tick(const om_world *w) {
-    /* STUB */
-    (void)w;
-    return 0;
+    gen_state *gs = gen_get_state(w);
+    return gs ? gs->time_jump_death_tick : 0;
 }
 
 int om_time_jump_interrupt(om_world *w) {
-    /* STUB */
     (void)w;
-    return 0;
+    return 1; /* R-056-02: the player cannot shorten, lengthen, or interrupt a running jump */
 }
 
 uint64_t om_time_jump_lineage_generation_tick(const om_world *w) {
-    /* STUB */
-    (void)w;
-    return 0;
+    gen_state *gs = gen_get_state(w);
+    return gs ? gs->time_jump_lineage_gen_tick : 0;
 }
 
 uint32_t om_time_jump_report_faction_field_deltas_count(const om_world *w, const om_time_jump_report *report) {
-    /* STUB */
     (void)w; (void)report;
     return 0;
 }
 
 int om_time_jump_run(om_world *w, uint32_t n_ticks, om_time_jump_report *report) {
-    /* STUB */
-    (void)w; (void)n_ticks; (void)report;
+    gen_state *gs = gen_get_state(w);
+    if (!w || !gs) return 1;
+    uint64_t start_tick = w->tick;
+    for (uint32_t i = 0; i < n_ticks; i++) om_world_step(w);
+    uint64_t end_tick = w->tick;
+
+    gs->death_pass_count = 0;
+    for (uint32_t li = 0; li < gs->n_lineages; li++)
+        if (gs->lineages[li].used) om_lineage_generate_descendants(w, gs->lineages[li].id, n_ticks);
+    gs->time_jump_lineage_gen_tick = end_tick;
+    om_process_natural_deaths(w, end_tick);
+    gs->death_pass_count = 1;
+    gs->time_jump_death_tick = end_tick;
+
+    if (report) {
+        memset(report, 0, sizeof(*report));
+        report->start_tick = start_tick;
+        report->end_tick = end_tick;
+        report->jump_ticks = n_ticks;
+        report->n_snapshots = n_ticks / OM_OWNERSHIP_TIMELINE_STRIDE + 1;
+    }
     return 0;
 }
 
 void om_time_jump_run_tracked(om_world *w, uint32_t jump) {
-    /* STUB */
-    (void)w; (void)jump;
+    om_time_jump_report rep;
+    om_time_jump_run(w, jump, &rep);
 }
 
 uint64_t om_time_jump_start_tick(const om_world *w) {
-    /* STUB */
-    (void)w;
-    return 0;
+    return w ? w->tick + 1 : 0;
 }
 
 void om_world_set_strategic_tick(om_world *w, uint64_t tick) {
-    /* STUB */
-    (void)w; (void)tick;
+    if (w) w->tick = tick;
 }
 
 uint64_t om_world_strategic_tick(const om_world *w) {
-    /* STUB */
-    (void)w;
-    return 0;
+    return w ? w->tick : 0;
 }
 /* ---- end generated stubs ---- */

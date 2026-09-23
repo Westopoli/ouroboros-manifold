@@ -1,0 +1,73 @@
+[
+  ["state", "boot"],
+  ["expect", "regen_count", "equals", 1],
+  ["expect", "seed", "equals", 11],
+  ["expect", "kit", "equals", "greek"],
+  ["expect", "canvas_wu", "equals", 24000.0],
+  ["screenshot", "boot"],
+
+  ["move", 1280, 720],
+  ["wait_frames", 35],
+  ["state", "settled_0"],
+  ["move", 2540, 720],
+  ["wait_frames", 8],
+  ["expect", "objective_px.0", "changed"],
+  ["screenshot", "edge_right"],
+
+  ["move", 1280, 720],
+  ["wait_frames", 35],
+  ["state", "settled_1"],
+  ["move", 20, 720],
+  ["wait_frames", 8],
+  ["expect", "objective_px.0", "changed"],
+  ["screenshot", "edge_left"],
+
+  ["move", 1280, 720],
+  ["wait_frames", 35],
+  ["state", "settled_2"],
+  ["move", 1280, 20],
+  ["wait_frames", 8],
+  ["expect", "objective_px.1", "changed"],
+  ["screenshot", "edge_top"],
+
+  ["move", 1280, 720],
+  ["wait_frames", 35],
+  ["state", "settled_3"],
+  ["move", 1280, 1420],
+  ["wait_frames", 8],
+  ["expect", "objective_px.1", "changed"],
+  ["screenshot", "edge_bottom"],
+
+  ["move", 1280, 720],
+  ["wait_frames", 35],
+  ["state", "settled_4"],
+  ["move", 325, 161],
+  ["wait_frames", 8],
+  ["expect", "regen_count", "equals", 1],
+  ["screenshot", "hover_hud"],
+
+  ["state", "before_regen"],
+  ["click_node", "HUD/VBoxContainer/RegenerateButton"],
+  ["expect", "regen_count", "increased"],
+  ["screenshot", "after_regen"],
+
+  ["state", "before_kit"],
+  ["click_node", "HUD/VBoxContainer/KitToggleButton"],
+  ["expect", "kit", "changed"],
+  ["screenshot", "after_kit"],
+
+  ["state", "before_canvas"],
+  ["click_node", "HUD/VBoxContainer/CanvasToggleButton"],
+  ["expect", "canvas_wu", "changed"],
+  ["screenshot", "after_canvas"],
+
+  ["state", "before_keyr"],
+  ["key", "R"],
+  ["expect", "regen_count", "increased"],
+  ["screenshot", "after_keyr"],
+
+  ["state", "before_keytab"],
+  ["key", "Tab"],
+  ["expect", "kit", "changed"],
+  ["screenshot", "after_keytab"]
+]
