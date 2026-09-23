@@ -17,6 +17,9 @@ var _highlighted_layer: int = 1
 @onready var _unit_list: VBoxContainer = $UnitList
 @onready var _strip_l1: Button = $LayerStrip/L1Button
 @onready var _strip_l2: Button = $LayerStrip/L2Button
+@onready var _paused_label: Label = $PausedLabel
+@onready var _selection_label: Label = $VBox/SelectionLabel
+@onready var _demo_label: Label = $DemoLabel
 
 
 func _ready() -> void:
@@ -26,6 +29,7 @@ func _ready() -> void:
 	_seed_spinbox.focus_mode = Control.FOCUS_NONE
 
 	_reset_button.pressed.connect(func(): _root.reset(int(_seed_spinbox.value)))
+	_seed_spinbox.value_changed.connect(func(v): _root.reset(int(v)))
 	_step_button.pressed.connect(func(): _root.step_ticks(1))
 	_play_button.pressed.connect(func(): _root.toggle_play())
 	_to1_button.pressed.connect(func(): _root.transfer_selected(1))
@@ -60,6 +64,18 @@ func refresh() -> void:
 	_strip_l2.text = "L2*" if _highlighted_layer == 2 else "L2"
 	_strip_l1.modulate = Color(1, 1, 1, 1) if _highlighted_layer == 1 else Color(0.5, 0.5, 0.5, 1)
 	_strip_l2.modulate = Color(1, 1, 1, 1) if _highlighted_layer == 2 else Color(0.5, 0.5, 0.5, 1)
+
+	_paused_label.visible = not _root.is_playing()
+
+	if _root.has_selection():
+		var sel: Dictionary = sim.units[_root.get_selected_uid()]
+		_selection_label.text = "Selected: unit %d (%s)" % [_root.get_selected_uid(), sel.type]
+	else:
+		_selection_label.text = "Selected: none — Q/E apply to every friendly"
+
+	var narration: String = _root.get_demo_narration()
+	_demo_label.visible = narration != ""
+	_demo_label.text = narration
 
 	for child in _unit_list.get_children():
 		child.free()

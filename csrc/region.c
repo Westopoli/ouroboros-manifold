@@ -86,6 +86,16 @@ om_world *om_world_new(uint32_t n_regions, uint64_t seed) {
     w->region_previous_owner = NULL;
     w->tactical_state = NULL;
     w->tactical_state_free = NULL;
+    w->generational_state = NULL;
+    w->generational_state_free = NULL;
+
+    /* F2e: E-06 diplomacy storage. calloc above already zeroes
+     * faction_stance_counter/faction_cooperative_since (0 = never-counted /
+     * never-cooperative, om_internal.h); faction_last_knowledge_lost needs
+     * the explicit -1 "never fired" sentinel calloc cannot give it. */
+    for (int32_t i = 0; i < OM_MAX_FACTIONS; i++) {
+        w->faction_last_knowledge_lost[i] = -1;
+    }
     w->world_serial = om_world_serial_counter++;
     return w;
 }
@@ -110,6 +120,9 @@ void om_world_free(om_world *w) {
     if (!w) return;
     if (w->tactical_state && w->tactical_state_free) {
         w->tactical_state_free(w->tactical_state);
+    }
+    if (w->generational_state && w->generational_state_free) {
+        w->generational_state_free(w->generational_state);
     }
     free(w->region_previous_owner);
     free(w->regions);

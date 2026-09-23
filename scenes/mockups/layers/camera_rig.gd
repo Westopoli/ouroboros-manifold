@@ -11,6 +11,7 @@ const PITCH_DEG := 60.0
 
 var _height: float = 2500.0
 var _pan_target: Vector3 = Vector3.ZERO
+var _mouse_pos: Vector2 = Vector2.ZERO
 
 @onready var _camera: Camera3D = $Camera3D
 
@@ -18,6 +19,7 @@ var _pan_target: Vector3 = Vector3.ZERO
 func _ready() -> void:
 	_pan_target = Vector3(canvas_size * 0.5, 0.0, canvas_size * 0.5)
 	position = _pan_target
+	_mouse_pos = get_viewport().get_visible_rect().size * 0.5
 	_update_camera()
 
 
@@ -37,16 +39,17 @@ func _handle_pan(delta: float) -> void:
 	if Input.is_key_pressed(KEY_S):
 		dir.z += 1.0
 
-	var mouse := get_viewport().get_mouse_position()
-	var vp := get_viewport().get_visible_rect().size
-	if mouse.x < EDGE_SCROLL_ZONE:
-		dir.x -= 1.0
-	if mouse.x > vp.x - EDGE_SCROLL_ZONE:
-		dir.x += 1.0
-	if mouse.y < EDGE_SCROLL_ZONE:
-		dir.z -= 1.0
-	if mouse.y > vp.y - EDGE_SCROLL_ZONE:
-		dir.z += 1.0
+	if get_viewport().gui_get_hovered_control() == null:
+		var mouse := _mouse_pos
+		var vp := get_viewport().get_visible_rect().size
+		if mouse.x < EDGE_SCROLL_ZONE:
+			dir.x -= 1.0
+		if mouse.x > vp.x - EDGE_SCROLL_ZONE:
+			dir.x += 1.0
+		if mouse.y < EDGE_SCROLL_ZONE:
+			dir.z -= 1.0
+		if mouse.y > vp.y - EDGE_SCROLL_ZONE:
+			dir.z += 1.0
 
 	if dir != Vector3.ZERO:
 		_pan_target += dir.normalized() * PAN_SPEED * delta
@@ -62,6 +65,9 @@ func _clamp_pan_target() -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if event is InputEventMouseMotion:
+		_mouse_pos = (event as InputEventMouseMotion).position
+		return
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
 		if mb.pressed:
@@ -85,6 +91,10 @@ func _update_camera() -> void:
 
 func get_height() -> float:
 	return _height
+
+
+func get_pan() -> Vector2:
+	return Vector2(_pan_target.x, _pan_target.z)
 
 
 func get_camera() -> Camera3D:

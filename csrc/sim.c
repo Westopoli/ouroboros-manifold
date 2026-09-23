@@ -403,7 +403,17 @@ uint64_t om_world_step(om_world *w) {
              * S-015, kept for R-015-01/02) or the E-03 edge graph, and never
              * across a border-only edge either way. See also: csrc/agent.c's
              * om_region_edge-driven neighbor scans (E-05 targeting reads any
-             * edge type; this term is narrower -- trade or both only). */
+             * edge type; this term is narrower -- trade or both only).
+             *
+             * R-042-04 (E-06, ALG-06): also counts a neighbor of a different
+             * faction when this region's faction holds a cooperative stance
+             * toward it -- ALG-06's own wording ("whose faction this
+             * region's faction holds a cooperative stance toward") names the
+             * direction, so this is the one directed om_faction_stance(from
+             * this region's faction, toward the neighbor's), not a
+             * both-ways check; S-043 R-043-05 sets an overture's stance both
+             * ways on success, so a formed peace still passes this either
+             * direction it is read from. */
             int seen[OM_MAX_REGIONS] = {0};
             for (uint32_t k = 0; k < r->n_neighbors; k++) {
                 uint32_t nidx = r->neighbors[k];
@@ -413,7 +423,8 @@ uint64_t om_world_step(om_world *w) {
                 if (om_region_edge(w, i, nidx, &et) && et == OM_EDGE_BORDER) continue;
                 const om_region *nb = &w->regions[nidx];
                 if (nb->tier == OM_TIER_EMPTY) continue;
-                if (nb->faction_id != r->faction_id) continue;
+                if (nb->faction_id != r->faction_id
+                    && om_faction_stance(w, r->faction_id, nb->faction_id) != OM_STANCE_COOPERATIVE) continue;
                 adjacency += 0.05 * (nb->economy / 100.0);
             }
             for (uint32_t j = 0; j < w->n_regions; j++) {
@@ -423,7 +434,8 @@ uint64_t om_world_step(om_world *w) {
                 if (et != OM_EDGE_TRADE && et != OM_EDGE_BOTH) continue;
                 const om_region *nb = &w->regions[j];
                 if (nb->tier == OM_TIER_EMPTY) continue;
-                if (nb->faction_id != r->faction_id) continue;
+                if (nb->faction_id != r->faction_id
+                    && om_faction_stance(w, r->faction_id, nb->faction_id) != OM_STANCE_COOPERATIVE) continue;
                 adjacency += 0.05 * (nb->economy / 100.0);
             }
         }

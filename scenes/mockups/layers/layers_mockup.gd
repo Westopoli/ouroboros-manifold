@@ -2,6 +2,7 @@ extends Node3D
 
 const QaPlants := preload("res://scenes/mockups/_shared/qa_plants.gd")
 const FIXTURE_PATH := "res://scenes/mockups/layers/fixtures/map_seed11.json"
+const DEMO_PATH := "res://scenes/mockups/layers/fixtures/demo.json"
 const PICK_RADIUS_WU := 150.0
 const TICK_INTERVAL_S := 1.0 / 20.0
 
@@ -12,6 +13,7 @@ const PLANTS: Array[String] = [
 	"ring-colour-same",
 	"no-dimming",
 	"wrong-height",
+	"seed-ignored",
 ]
 
 var _sim: ToySim
@@ -25,6 +27,12 @@ var _selected_uid: int = -1
 var _regen_count: int = 0
 var _playing: bool = false
 var _play_accum: float = 0.0
+var _qa_scripted: bool = false
+var _demo: Array = []
+var _demo_idx: int = 0
+var _demo_time: float = 0.0
+var _demo_running: bool = false
+var _demo_narration: String = ""
 
 
 func _ready() -> void:
@@ -32,23 +40,40 @@ func _ready() -> void:
 	_hud = get_node("HUD")
 	_layer_view = get_node("World/LayerView")
 
+	_qa_scripted = OS.get_cmdline_user_args().has("--qa-script")
+
 	_sim = ToySim.new()
 	_sim.load_fixture(FIXTURE_PATH)
 	_sim.generate(_seed)
 	_regen_count += 1
 	_layer_view.setup(_sim)
 	_camera_rig.canvas_size = _sim.canvas_wu
+	_load_demo()
 	_sync_view()
+
+	# See also: "What Westley reported, verbatim" in the pass-2 brief — the sim
+	# never advanced on its own, so ordering a transfer never visibly moved a
+	# unit. Interactive launches now run; a QA-scripted launch stays paused so
+	# qa_tick keeps deterministic control.
+	_playing = not _qa_scripted
+	if not _qa_scripted:
+		start_demo()
 
 
 func _process(delta: float) -> void:
-	if not _playing:
-		return
-	_play_accum += delta
-	while _play_accum >= TICK_INTERVAL_S:
-		_play_accum -= TICK_INTERVAL_S
-		_sim.step(1)
-	_sync_view()
+	if _playing:
+		_play_accum += delta
+		while _play_accum >= TICK_INTERVAL_S:
+			_play_accum -= TICK_INTERVAL_S
+			_sim.step(1)
+		_sync_view()
+	if _demo_running:
+		_demo_time += delta
+		while _demo_idx < _demo.size() and _demo_time >= float(_demo[_demo_idx].get("t", 0.0)):
+			_run_demo_entry(_demo[_demo_idx])
+			_demo_idx += 1
+		if _demo_idx >= _demo.size():
+			_demo_running = false
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -70,6 +95,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				transfer_selected(1)
 			KEY_E:
 				transfer_selected(2)
+			KEY_D:
+				start_demo()
 		return
 
 	if event is InputEventMouseButton and event.pressed:
@@ -171,6 +198,7 @@ func reset(seed_n: int) -> void:
 	_selected_uid = -1
 	_playing = false
 	_play_accum = 0.0
+	_layer_view.rebuild_blocked_patch()
 	_sync_view()
 
 
@@ -185,9 +213,56 @@ func toggle_play() -> void:
 
 
 func transfer_selected(layer: int) -> void:
-	if _selected_uid < 0:
+	var uids: Array = _targets_for_command()
+	if uids.is_empty():
 		return
-	qa_transfer(_selected_uid, layer)
+	if not _playing:
+		toggle_play()
+	for uid in uids:
+		qa_transfer(uid, layer)
+
+
+func _targets_for_command() -> Array:
+	if _selected_uid >= 0:
+		return [_selected_uid]
+	var out: Array = []
+	for uid in _sim.units.keys():
+		if _sim.units[uid].faction == 0:
+			out.append(uid)
+	out.sort()
+	return out
+
+
+func has_selection() -> bool:
+	return _selected_uid >= 0
+
+
+func get_demo_narration() -> String:
+	return _demo_narration
+
+
+func _load_demo() -> void:
+	var text := FileAccess.get_file_as_string(DEMO_PATH)
+	var parsed = JSON.parse_string(text)
+	_demo = parsed if typeof(parsed) == TYPE_ARRAY else []
+
+
+func start_demo() -> void:
+	reset(_seed)
+	_playing = true
+	_demo_idx = 0
+	_demo_time = 0.0
+	_demo_running = not _demo.is_empty()
+	_demo_narration = ""
+
+
+func _run_demo_entry(entry: Dictionary) -> void:
+	if entry.has("narrate"):
+		_demo_narration = String(entry.narrate)
+	if entry.has("call"):
+		var method: String = entry.call
+		var args: Array = entry.get("args", [])
+		callv(method, args)
 
 
 func qa_state() -> Dictionary:
@@ -214,6 +289,7 @@ func qa_state() -> Dictionary:
 		if u.faction == 0:
 			rings[str(uid)] = "#" + _layer_view.ring_color(u).to_html(false)
 
+	var pan: Vector2 = _camera_rig.get_pan()
 	return {
 		"seed": _seed,
 		"hash": _sim.compute_hash(),
@@ -227,6 +303,11 @@ func qa_state() -> Dictionary:
 		"ring_px": _layer_view.sensor_ring_px(cam),
 		"timing_ms": {"tick_avg": _sim.tick_avg_ms()},
 		"regen_count": _regen_count,
+		"selected_uid": _selected_uid,
+		"camera": {"x": pan.x, "z": pan.y},
+		"canvas_px": [get_viewport().get_visible_rect().size.x, get_viewport().get_visible_rect().size.y],
+		"playing": _playing,
+		"demo_narration": _demo_narration,
 	}
 
 
@@ -236,6 +317,7 @@ func qa_plant(id: String) -> bool:
 	QaPlants.activate(id)
 	_sim.generate(_seed)
 	_regen_count += 1
+	_layer_view.rebuild_blocked_patch()
 	_sync_view()
 	return true
 
