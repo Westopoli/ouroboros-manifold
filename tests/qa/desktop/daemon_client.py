@@ -29,6 +29,15 @@ _USER_DATA_DIR = Path(os.environ.get("XDG_DATA_HOME", str(Path.home() / ".local/
 PRIVACY_FLAG_PATH = _USER_DATA_DIR / "privacy_accepted"
 
 
+def write_privacy_flag() -> None:
+    """Creates user://privacy_accepted the way privacy_modal.gd's
+    _on_accept_pressed() does: FileAccess.open(FLAG_PATH, FileAccess.WRITE)
+    then close() -- an empty file. Used by S-C8-07 to force the flag-present
+    boot path (see GodotGame's reset_privacy_flag=False)."""
+    _USER_DATA_DIR.mkdir(parents=True, exist_ok=True)
+    PRIVACY_FLAG_PATH.touch()
+
+
 def find_godot() -> str:
     for candidate in ("godot", os.path.expanduser("~/.local/bin/godot")):
         if shutil.which(candidate):
@@ -92,10 +101,12 @@ class GodotGame:
     argument) under Xvfb with --qa-port/--seed. One instance per test
     module (see the `game` fixture in test_flow_spine.py)."""
 
-    def __init__(self, qa_port: int, seed: int = 1, resolution: str = "1280x720"):
+    def __init__(self, qa_port: int, seed: int = 1, resolution: str = "1280x720",
+                 reset_privacy_flag: bool = True):
         self.qa_port = qa_port
         self.seed = seed
         self.resolution = resolution
+        self.reset_privacy_flag = reset_privacy_flag
         self.scratch = Path(tempfile.mkdtemp(prefix="qa_flow_spine."))
         self.out_dir = self.scratch / "out"
         self.out_dir.mkdir(parents=True, exist_ok=True)
@@ -114,11 +125,14 @@ class GodotGame:
         # (flag absent) does not race the same way and reaches main_menu in
         # under a second. Deleting the flag before every launch is this
         # fenced test's own determinism fixture, not a game fix -- S-C8-01
-        # drives the real Accept click either way.
-        try:
-            PRIVACY_FLAG_PATH.unlink()
-        except FileNotFoundError:
-            pass
+        # drives the real Accept click either way. S-C8-07 sets
+        # reset_privacy_flag=False (and writes the flag itself first) to
+        # prove the bug rather than dodge it.
+        if self.reset_privacy_flag:
+            try:
+                PRIVACY_FLAG_PATH.unlink()
+            except FileNotFoundError:
+                pass
 
         godot = find_godot()
         env = dict(os.environ)

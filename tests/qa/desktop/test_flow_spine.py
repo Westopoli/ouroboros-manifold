@@ -1,5 +1,5 @@
 # spec: docs/northstar/plans/push/specs/C8.md::Acceptance
-"""Piece C8 "flow spine" fenced acceptance test (S-C8-01..06, piece-local
+"""Piece C8 "flow spine" fenced acceptance test (S-C8-01..07, piece-local
 ids -- M0 maps them to real S-###/R-###-## story ids once C8 is queued).
 
 Launches the real game (project.godot's run/main_scene, no scene argument)
@@ -24,6 +24,16 @@ drives through it (clicking privacy_modal's existing AcceptButton if seen)
 because user://privacy_accepted is a per-machine OS file
 (config/use_custom_user_dir + custom_user_dir_name="data" in project.godot),
 not something a fresh --qa-port launch can assume is already set.
+
+S-C8-07 is a second rule, not boot plumbing: boot must reach the main menu
+whether or not user://privacy_accepted already exists. It launches its own
+second game instance with the flag pre-created (the way the game itself
+writes it), instead of using the module-scoped `game` fixture (which always
+deletes the flag first for the other six tests' own determinism). See
+docs/northstar/plans/push/specs/C8.md "Findings" for the reproduced bug
+this proves: SimBridge's sim_ready fires while SceneRouter is still
+mid-transition from privacy_modal, go_to() drops the request, and nothing
+ever retries it.
 """
 from __future__ import annotations
 
@@ -38,6 +48,7 @@ from daemon_client import (
     find_control,
     pick_free_port,
     wait_for,
+    write_privacy_flag,
 )
 
 PRIVACY_MODAL_SCENE = "res://scenes/privacy_modal/privacy_modal.tscn"
@@ -54,6 +65,10 @@ CHRONICLE_SCENE = "res://scenes/world/chronicle_scroll_panel.tscn"
 BOOT_TIMEOUT_S = 45.0
 STEP_TIMEOUT_S = 10.0
 PORT_TIMEOUT_S = 60.0
+# S-C8-07's bug hangs forever (confirmed with a 90s wait while writing this
+# test); 15s is plenty to prove red without burning minutes on every future
+# run once it's fixed and green.
+PRIVACY_FLAG_BOOT_TIMEOUT_S = 15.0
 
 SCREENSHOT_HINT = (
     "user://qa/%s.png (globalized: ~/.local/share/data/qa/%s.png per "
@@ -199,3 +214,33 @@ def test_s_c8_06_return_to_galaxy_then_shutdown(game):
     assert resp.get("ok"), "S-C8-06: daemon not responsive for final state check: %r" % resp
 
     game.stop()
+
+
+def test_s_c8_07_boot_reaches_main_menu_with_privacy_flag_present():
+    """Boot must reach the main menu whether or not user://privacy_accepted
+    already exists (real players hit this on their second-ever launch).
+    Uses its own game instance -- reset_privacy_flag=False so start() does
+    not delete the flag this test just wrote."""
+    write_privacy_flag()
+    port = pick_free_port()
+    g = GodotGame(qa_port=port, seed=1, reset_privacy_flag=False)
+    g.start()
+    try:
+        g.wait_for_port(timeout=PORT_TIMEOUT_S)
+        client = g.client
+        deadline = time.monotonic() + PRIVACY_FLAG_BOOT_TIMEOUT_S
+        last_scene = None
+        while time.monotonic() < deadline:
+            resp = client.state()
+            assert resp.get("ok"), "S-C8-07: state call failed: %r" % resp
+            last_scene = resp["result"].get("scene")
+            if last_scene == MAIN_MENU_SCENE:
+                return
+            time.sleep(0.5)
+        raise AssertionError(
+            "S-C8-07: never reached main menu (%s) within %ss with "
+            "user://privacy_accepted present; last scene seen = %r"
+            % (MAIN_MENU_SCENE, PRIVACY_FLAG_BOOT_TIMEOUT_S, last_scene)
+        )
+    finally:
+        g.stop()
