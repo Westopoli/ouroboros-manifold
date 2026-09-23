@@ -358,7 +358,7 @@ acceptance = [
     "tests/test_galaxy_view.gd",
 ]
 depends_on = ["freeze"]
-status = "pending"
+status = { state = "attached", attach_sha = "a3e6dfb" }
 tests_pending = true
 size_estimate = "replaces 5181 lines coupled to scenes/shared/world_view; rebind to T1 when it attaches"
 
