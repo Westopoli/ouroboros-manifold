@@ -142,6 +142,68 @@ def test_acceptance_increment_warns_full_id_rejects(tmp_path):
     assert "GATE acceptance REJECT" not in increment.stdout
 
 
+FAKE_GODOT = """\
+#!/usr/bin/env bash
+echo "$@" >> "$GODOT_ARGS_LOG"
+exit 0
+"""
+
+
+def test_godot_import_runs_before_desktop_acceptance_and_not_for_csim_piece(tmp_path):
+    """C8's test_flow_spine.py (tests/qa/desktop/) launches the real game
+    against the candidate worktree, which has no .godot/imported cache;
+    without an import first, the boot fails on missing imports before its
+    own assertions run (gate gap, 2026-09-22). A fake `godot` on PATH
+    stands in for the real import (~60-90s); this only proves ordering and
+    that a csim-only piece pays nothing."""
+    repo = _init_fixture_repo(tmp_path / "repo", makefile=FAST_MAKEFILE)
+    (repo / "tests" / "qa" / "desktop").mkdir()
+    (repo / "tests" / "qa" / "desktop" / "test_x.py").write_text(
+        "def test_pass():\n    assert True\n"
+    )
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "candidate")
+
+    pieces = tmp_path / "pieces.toml"
+    _write_pieces(pieces, [
+        {"id": "D1", "owns": ["tests/qa/desktop/test_x.py"],
+         "acceptance": ["tests/qa/desktop/test_x.py::test_pass"]},
+        {"id": "B1", "owns": ["csrc/stub.c"], "acceptance": []},
+    ])
+
+    fake_bin = tmp_path / "fakebin"
+    fake_bin.mkdir()
+    godot_path = fake_bin / "godot"
+    godot_path.write_text(FAKE_GODOT)
+    godot_path.chmod(0o755)
+    args_log = tmp_path / "godot_args.log"
+
+    env = {
+        "MERGE_GATE_PIECES": str(pieces),
+        "PATH": f"{fake_bin}:/usr/bin:/bin:/home/westopoli/Projects/agora/.venv/bin",
+        "GODOT_ARGS_LOG": str(args_log),
+    }
+
+    desktop = subprocess.run(
+        ["bash", str(GATE), str(repo), "HEAD~1", "D1"],
+        capture_output=True, text=True, env=env, timeout=60,
+    )
+    assert "GATE godot_import OK" in desktop.stdout, desktop.stdout + desktop.stderr
+    import_line = next(i for i, l in enumerate(desktop.stdout.splitlines()) if "GATE godot_import" in l)
+    accept_line = next(i for i, l in enumerate(desktop.stdout.splitlines()) if "GATE acceptance " in l)
+    assert import_line < accept_line, desktop.stdout
+    assert "--import" in args_log.read_text()
+    assert "--headless" in args_log.read_text()
+
+    args_log.write_text("")
+    csim_only = subprocess.run(
+        ["bash", str(GATE), str(repo), "HEAD~1", "B1"],
+        capture_output=True, text=True, env=env, timeout=60,
+    )
+    assert "GATE godot_import" not in csim_only.stdout, csim_only.stdout + csim_only.stderr
+    assert args_log.read_text() == ""
+
+
 def test_unknown_candidate_dir_is_a_usage_error():
     proc = subprocess.run(
         ["bash", str(GATE), "/nonexistent/path", "HEAD", "B1"],

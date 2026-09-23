@@ -165,6 +165,50 @@ ACCEPT_IDS="$(echo "$ACCEPT_SPLIT" | sed -n 's/^PY //p')"
 GODOT_IDS="$(echo "$ACCEPT_SPLIT" | sed -n 's/^GD //p')"
 GODOT_COUNT="$(echo "$GODOT_IDS" | grep -c . || true)"
 
+# -------------------------------------------------------------- 6c. godot import (desktop/scene acceptance only)
+# A fresh candidate worktree has no .godot/imported cache; a desktop QA test
+# (tests/qa/desktop/*) or a .gd acceptance id launches the real project and
+# fails on missing imports before it ever reaches its own assertions
+# (2026-09-22, C8's test_flow_spine.py failed in the gate while green in an
+# imported checkout). Importing once here, before either acceptance step
+# runs, fixes that; a csim-only piece has neither id shape and pays nothing.
+NEED_GODOT_IMPORT=0
+if [[ -n "$GODOT_IDS" ]]; then
+    NEED_GODOT_IMPORT=1
+fi
+while IFS= read -r ACCEPT_ID_LINE; do
+    [[ -z "$ACCEPT_ID_LINE" ]] && continue
+    if [[ "$ACCEPT_ID_LINE" == tests/qa/desktop/* ]]; then
+        NEED_GODOT_IMPORT=1
+    fi
+done <<< "$ACCEPT_IDS"
+
+if [[ "$NEED_GODOT_IMPORT" -eq 1 ]]; then
+    GODOT_BIN=""
+    if command -v godot >/dev/null 2>&1; then
+        GODOT_BIN="godot"
+    elif [[ -x "/Applications/Godot.app/Contents/MacOS/Godot" ]]; then
+        GODOT_BIN="/Applications/Godot.app/Contents/MacOS/Godot"
+    elif [[ -x "/Applications/Godot_mono.app/Contents/MacOS/Godot" ]]; then
+        GODOT_BIN="/Applications/Godot_mono.app/Contents/MacOS/Godot"
+    fi
+    if [[ -z "$GODOT_BIN" ]]; then
+        reject godot_import "godot binary not found (see scripts/run_godot_tests.sh lookup)"
+    else
+        IMPORT_LOG="$SCRATCH_ROOT/godot_import.log"
+        IMPORT_START=$(date +%s)
+        timeout 300 env -u DISPLAY -u WAYLAND_DISPLAY -u XAUTHORITY \
+            "$GODOT_BIN" --headless --path "$CANDIDATE" --import >"$IMPORT_LOG" 2>&1
+        IMPORT_RC=$?
+        IMPORT_SECS=$(( $(date +%s) - IMPORT_START ))
+        if [[ $IMPORT_RC -ne 0 ]]; then
+            reject godot_import "$(tail_oneline "$IMPORT_LOG" 15)"
+        else
+            ok godot_import "${IMPORT_SECS}s"
+        fi
+    fi
+fi
+
 if [[ -n "$ACCEPT_IDS" ]]; then
     ACCEPT_LOG="$SCRATCH_ROOT/acceptance.log"
     ( cd "$CANDIDATE" && "$PYTHON" -m pytest -q -p no:cacheprovider $ACCEPT_IDS ) >"$ACCEPT_LOG" 2>&1
