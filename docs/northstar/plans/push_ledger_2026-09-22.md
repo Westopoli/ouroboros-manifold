@@ -153,3 +153,5 @@ One row per event: freeze steps, attaches, reverts, parks, rung gates, harness e
 | day1 | merge C7-1 | daemon `plant` verb on main; increment of C7 |
 | day1 | merge F2h | `om_event_register_external` / `om_event_template_name` declarations, table rows, binding and the red pinned test on main through the docs profile under the lock; B1-5 proceeds |
 | day1 | attach C1 | main menu: C1-1 on main (`764ed59`; title font-load race fixed, empty-array guard), boot parse and privacy modal green; `pieces.toml` C1 attached; tag `attach/C1` |
+| day1 | merge C8-look-2 | six galaxy plant screenshots and per-plant explanation on main (docs profile); all six plants activate through the new `plant` verb; the shots equal the clean view because the pipe world is still unowned until T1-1 (set_seed generates) lands |
+| day1 23:3x | queue drained | every queued merge landed (B1-4, B7-1, B4-1, B6-1, B5-1, MK-harness, docs branches, C3-2, C7-1, F2h, C1-1, C8-look, C8-look-2); m0's bookkeeping pushed; stray `.gd.uid` sidecars from Godot runs had to be removed from the integrator clone before merging (upstream now tracks one) |
