@@ -150,3 +150,31 @@ changed in value; only imports, one bug-for-bug call-site correction
 (`read_drift`/`set_region` -> the function/arguments the surrounding lines
 already clearly intend), and one loop-bound cap needed to keep the file
 runnable at all.
+
+## R-083-03 aura test: category multiplier confound (M2/B10-2 finding)
+
+File: `tests/csim/test_E11_S083_stats_traits_ability.py::test_R_083_03_that_unit_takes_10_percent`.
+
+Bug: enemy attacker spawned RAIDER (Strike). Target VANGUARD (Line). R-081-01
++ ALG-60 say Strike->Line carries a 0.75 category multiplier, unconditional,
+same file family (`test_E11_S081_three_categories_a_soft_triangle.py`)
+confirms 0.75 in the M matrix. Old fixture ignored it, asserted flat
+`base_hit * 0.90` (45.0) and `base_hit` (50.0) -- only true if multiplier is
+1.0. Confound: aura-reduction rule tangled with the category-triangle rule.
+
+Fix: changed enemy attacker from RAIDER to VANGUARD (same Line category as
+both friendly targets). Line->Line multiplier is 1.0, so aura isolation
+holds and old/new numbers match:
+
+| Value | Old (RAIDER attacker, wrong) | New (VANGUARD attacker, isolated) |
+|---|---|---|
+| friendly_in dmg (10% reduced) | 45.0 (asserted, should've been 33.75 with the confound) | 45.0 (correct, multiplier 1.0 x 0.90) |
+| friendly_out dmg (no reduction) | 50.0 (asserted, should've been 37.5 with the confound) | 50.0 (correct, multiplier 1.0) |
+
+Rule id, docstring, 10% assertion, and friendly control unchanged. One line
+changed: enemy unit type RAIDER -> VANGUARD.
+
+Verification:
+1. Red at stub, main (`b4d6391`): `pytest tests/csim/test_E11_S083_stats_traits_ability.py::test_R_083_03_that_unit_takes_10_percent -q` fails at line 86, `assert lib.om_unit_hp(w, friendly_in) == pytest.approx(400.075, ...)`, obtained 0.0 (unit.c stub).
+2. Green, `origin/push/B10-2` (worktree `/tmp/b10fix`, detached `10ce7e5`): fixed test file copied over, built `libouroboros.so`, ran whole S083 file: `3 passed in 0.03s` (file has 3 tests total, not 13 -- brief's "13/13" expectation didn't match file size; all 3 pass, full green).
+3. Rest of E-11 unaffected on main: `pytest tests/csim/ -k E11 -q` before and after this edit both give `52 failed, 5 passed` (only fixture content in one already-failing test changed, stub result identical).

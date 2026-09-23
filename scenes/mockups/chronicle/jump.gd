@@ -15,7 +15,6 @@ var span_years: int = 0
 var faction_names: Dictionary = {}
 var ownership_timeline: Array = []
 var keyframes: Array = []
-var galaxy: Dictionary = {}
 var entries: Array = []
 var dropped_entries: Array = []
 var errors: Array = []
@@ -46,7 +45,6 @@ func load_dict(fixture: Dictionary) -> bool:
 	faction_names = start.get("faction_names", {})
 	ownership_timeline = start.get("ownership_timeline", [])
 	keyframes = fixture.get("keyframes", [])
-	galaxy = fixture.get("galaxy", {"systems": [], "edges": []})
 
 	var raw: Array = fixture.get("entries", []).duplicate(true)
 	if QaPlants.is_active("entries-duplicate") and raw.size() >= 3:

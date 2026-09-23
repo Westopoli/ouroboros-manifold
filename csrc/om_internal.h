@@ -156,6 +156,12 @@ struct om_world {
     void *generational_state;
     void (*generational_state_free)(void *);
 
+    /* B1-3: csrc/events.c per-world state, same convention as
+     * tactical_state above -- events.c kept it in a file-static slot table
+     * keyed by om_world*, invisible to save/load and the checksum. */
+    void *events_state;
+    void (*events_state_free)(void *);
+
     /* F2e: E-06 diplomacy storage backing the om_faction_stance_counter /
      * om_faction_cooperative_since / om_faction_last_knowledge_lost
      * accessors (csrc/ouroboros_sim.h; card B5 fills the read/write bodies
