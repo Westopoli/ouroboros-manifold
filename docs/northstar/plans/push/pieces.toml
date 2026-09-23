@@ -483,6 +483,25 @@ tests_pending = true
 size_estimate = "cross-repo piece (lives in the agora checkout, not this repo); QA campaign files, planted-bug catalog, per-epic gate cards; data lint, no pytest id"
 
 [[piece]]
+id = "MK-layers"
+manager = "mockup"
+wave = 3
+owns = []
+owns_glob = ["scenes/mockups/layers/**", "docs/northstar/research/mockups/layers/**"]
+acceptance = []
+depends_on = []
+status = "pending"
+
+[[piece]]
+id = "MK-chronicle"
+manager = "mockup"
+wave = 3
+owns = []
+owns_glob = ["scenes/mockups/chronicle/**", "docs/northstar/research/mockups/chronicle/**"]
+acceptance = []
+depends_on = []
+status = "pending"
+[[piece]]
 id = "C8"
 manager = "M3"
 wave = 3

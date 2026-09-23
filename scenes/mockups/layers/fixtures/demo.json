@@ -1,0 +1,20 @@
+[
+  {"t": 2.0, "call": "qa_select", "args": [1]},
+  {"t": 2.0, "call": "qa_transfer", "args": [1, 2]},
+  {"t": 2.0, "narrate": "fast unit rising, 1 s"},
+  {"t": 3.5, "call": "qa_select", "args": [2]},
+  {"t": 3.5, "call": "qa_transfer", "args": [2, 2]},
+  {"t": 3.5, "narrate": "slow unit rising, 5 s"},
+  {"t": 4.5, "narrate": "layer-1 enemy hidden, layer-2 enemy in half range"},
+  {"t": 9.0, "call": "qa_select", "args": [1]},
+  {"t": 9.0, "call": "qa_transfer", "args": [1, 1]},
+  {"t": 9.0, "narrate": "fast unit ordered back down to layer 1"},
+  {"t": 10.5, "call": "qa_move", "args": [1, 2000.0, 2300.0]},
+  {"t": 10.5, "narrate": "walking onto the blocked patch"},
+  {"t": 19.0, "call": "qa_transfer", "args": [1, 2]},
+  {"t": 19.0, "narrate": "ordered back up — blocked, waiting"},
+  {"t": 21.0, "call": "qa_move", "args": [1, 2000.0, 2500.0]},
+  {"t": 21.0, "narrate": "walking clear of the blocked patch"},
+  {"t": 23.5, "narrate": "layer clear — fast unit continuing to layer 2"},
+  {"t": 27.0, "narrate": "your turn — Tab/1/2 focus layer, Q/E transfer (all friendlies if none selected), click select, right-click move, T step, Space play/pause, R reset, D replay"}
+]
