@@ -120,7 +120,7 @@ acceptance = [
     "tests/csim/test_E07_wiring.py",
 ]
 depends_on = ["freeze"]
-status = "pending"
+status = { state = "attached", attach_sha = "2f918f1" }
 size_estimate = "51 py lines plus tick.py parts, 28 tests (E-07)"
 
 [[piece]]
