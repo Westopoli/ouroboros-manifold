@@ -533,4 +533,4 @@ owns = []
 owns_glob = ["scenes/main_menu/**"]
 acceptance = ["tests/test_boot_scripts_parse.gd", "tests/test_privacy_modal.gd"]
 depends_on = []
-status = "pending"
+status = { state = "attached", attach_sha = "764ed59" }

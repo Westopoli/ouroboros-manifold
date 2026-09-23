@@ -152,3 +152,4 @@ One row per event: freeze steps, attaches, reverts, parks, rung gates, harness e
 | day1 | merge docs | `docs/mockup-ledger` (mockup chat's ledger rows) on main through the docs profile; all three pass-2 branches landed through the gate |
 | day1 | merge C7-1 | daemon `plant` verb on main; increment of C7 |
 | day1 | merge F2h | `om_event_register_external` / `om_event_template_name` declarations, table rows, binding and the red pinned test on main through the docs profile under the lock; B1-5 proceeds |
+| day1 | attach C1 | main menu: C1-1 on main (`764ed59`; title font-load race fixed, empty-array guard), boot parse and privacy modal green; `pieces.toml` C1 attached; tag `attach/C1` |
