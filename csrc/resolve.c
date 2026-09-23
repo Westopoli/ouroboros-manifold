@@ -542,7 +542,24 @@ void om_step_resolve(om_world *w) {
         w->regions[target_idx].economy = economy;
         w->regions[target_idx].tension = tension;
         w->regions[target_idx].population = population;
-        
+
+        /* S-024 R-024-04: the colonized region's edges to the colonizer's own
+         * regions and to its cooperative partners' regions become BOTH.
+         * Colonize targets an unowned region, so there is no former owner to
+         * retype toward (unlike ALG-22 conquest above); every other edge
+         * (a hostile third party, say) is left as it was. */
+        for (uint32_t j = 0; j < w->n_regions; ++j) {
+            if (j == target_idx) continue;
+            om_edge_type et;
+            if (!om_region_edge(w, target_idx, j, &et)) continue;
+            int32_t nbr = w->regions[j].faction_id;
+            if (nbr == f) {
+                om_region_set_edge(w, target_idx, j, OM_EDGE_BOTH);
+            } else if (nbr >= 0 && w->faction_stance[f][nbr] == OM_STANCE_COOPERATIVE) {
+                om_region_set_edge(w, target_idx, j, OM_EDGE_BOTH);
+            }
+        }
+
         /* Record in w->colonizations */
         if (w->colonizations_n < 64) {
             om_colonize_result *c = &w->colonizations[w->colonizations_n++];
