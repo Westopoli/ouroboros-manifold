@@ -16,7 +16,9 @@ from conftest import (
     OMTier,
     force_draws,
     isolate_agents,
+    load_only_templates,
     queue_external,
+    template_id,
     set_faction,
     set_owner,
     set_region,
@@ -46,6 +48,8 @@ def test_R_050_01_with_probability_0_5_one(lib, world_factory):
     # Case A: draw < 0.5 -> reverts to B (Faction 1)
     w_revert = world_factory(n_regions=2)
     isolate_agents(lib, w_revert)
+    lib.om_world_set_feature(w_revert, OMFeature.FACTIONS, 0)
+    load_only_templates(lib, w_revert, "Revolt Entrenched")
     lib.om_world_set_feature(w_revert, OMFeature.EVENTS, 1)
     lib.om_world_set_feature(w_revert, OMFeature.LIFECYCLE, 1)
 
@@ -68,11 +72,11 @@ def test_R_050_01_with_probability_0_5_one(lib, world_factory):
     set_owner(lib, w_revert, 1, 1, held_since=-1)
 
     due = lib.om_world_step(w_revert) + 1
-    queue_external(lib, w_revert, 0, 100, due_tick=due, probability=1.0)
+    queue_external(lib, w_revert, 0, template_id(lib, w_revert, "Revolt Entrenched"), due_tick=due, probability=1.0)
 
     # Draws: success rate draw = 0.50 (rate 0.725), success check draw = 0.10 (passes),
     # reversion draw = 0.20 (< 0.50 -> reverts to B)
-    force_draws(lib, w_revert, [0.50, 0.10, 0.20])
+    force_draws(lib, w_revert, [0.99, 0.50, 0.10, 0.20])
     lib.om_world_step(w_revert)
 
     assert lib.om_region_owner(w_revert, 0) == 1
@@ -81,6 +85,8 @@ def test_R_050_01_with_probability_0_5_one(lib, world_factory):
     # Case B: draw >= 0.5 -> forms breakaway instead of reverting
     w_no_revert = world_factory(n_regions=2)
     isolate_agents(lib, w_no_revert)
+    lib.om_world_set_feature(w_no_revert, OMFeature.FACTIONS, 0)
+    load_only_templates(lib, w_no_revert, "Revolt Entrenched")
     lib.om_world_set_feature(w_no_revert, OMFeature.EVENTS, 1)
     lib.om_world_set_feature(w_no_revert, OMFeature.LIFECYCLE, 1)
 
@@ -99,10 +105,10 @@ def test_R_050_01_with_probability_0_5_one(lib, world_factory):
     set_owner(lib, w_no_revert, 1, 1, held_since=-1)
 
     due2 = lib.om_world_step(w_no_revert) + 1
-    queue_external(lib, w_no_revert, 0, 100, due_tick=due2, probability=1.0)
+    queue_external(lib, w_no_revert, 0, template_id(lib, w_no_revert, "Revolt Entrenched"), due_tick=due2, probability=1.0)
 
     # Reversion draw = 0.70 (>= 0.50 -> does not revert, forms breakaway)
-    force_draws(lib, w_no_revert, [0.50, 0.10, 0.70, 0.50])
+    force_draws(lib, w_no_revert, [0.99, 0.50, 0.10, 0.70, 0.50])
     lib.om_world_step(w_no_revert)
 
     assert lib.om_region_owner(w_no_revert, 0) != 1
@@ -113,6 +119,8 @@ def test_R_050_02_it_never_reverts(lib, world_factory):
     """Given the conquest was 21 or more ticks ago, When a revolt succeeds, Then it never reverts."""
     w = world_factory(n_regions=2)
     isolate_agents(lib, w)
+    lib.om_world_set_feature(w, OMFeature.FACTIONS, 0)
+    load_only_templates(lib, w, "Revolt Entrenched")
     lib.om_world_set_feature(w, OMFeature.EVENTS, 1)
     lib.om_world_set_feature(w, OMFeature.LIFECYCLE, 1)
 
@@ -132,10 +140,10 @@ def test_R_050_02_it_never_reverts(lib, world_factory):
     set_owner(lib, w, 1, 1, held_since=-1)
 
     due = lib.om_world_step(w) + 1
-    queue_external(lib, w, 0, 100, due_tick=due, probability=1.0)
+    queue_external(lib, w, 0, template_id(lib, w, "Revolt Entrenched"), due_tick=due, probability=1.0)
 
     # Draw < 0.50 offered, but conquest was >= 21 ticks ago, so latent loyalty window has expired
-    force_draws(lib, w, [0.50, 0.10, 0.10, 0.50])
+    force_draws(lib, w, [0.99, 0.50, 0.10, 0.10, 0.50])
     lib.om_world_step(w)
 
     # It never reverts to B
@@ -146,6 +154,8 @@ def test_R_050_03_it_never_reverts(lib, world_factory):
     """Given B no longer exists, When a revolt succeeds, Then it never reverts."""
     w = world_factory(n_regions=1)
     isolate_agents(lib, w)
+    lib.om_world_set_feature(w, OMFeature.FACTIONS, 0)
+    load_only_templates(lib, w, "Revolt Entrenched")
     lib.om_world_set_feature(w, OMFeature.EVENTS, 1)
     lib.om_world_set_feature(w, OMFeature.LIFECYCLE, 1)
 
@@ -162,20 +172,25 @@ def test_R_050_03_it_never_reverts(lib, world_factory):
         lib.om_world_step(w)
 
     due = lib.om_world_step(w) + 1
-    queue_external(lib, w, 0, 100, due_tick=due, probability=1.0)
+    queue_external(lib, w, 0, template_id(lib, w, "Revolt Entrenched"), due_tick=due, probability=1.0)
 
     # Draw would pass reversion check, but B no longer exists
-    force_draws(lib, w, [0.50, 0.10, 0.10, 0.50])
+    force_draws(lib, w, [0.99, 0.50, 0.10, 0.10, 0.50])
     lib.om_world_step(w)
 
-    # Never reverts to B
-    assert lib.om_region_owner(w, 0) != 1
+    # Never reverts to B: no reversion record logged. (A fresh breakaway can
+    # legitimately land in faction slot 1 -- B's old, now-free slot -- so
+    # checking the owner id against 1 is a false positive; the rule is about
+    # reversion happening at all, which the reversion log settles directly.)
+    assert len(read_reversions(lib, w)) == 0
 
 
 def test_R_050_04_region_s_owner_b_held(lib, world_factory):
     """Given a reversion, When applied, Then the region's owner is B, held-since is the current tick, previous owner is cleared, and the same split and floors as R-049-03 apply."""
     w = world_factory(n_regions=2)
     isolate_agents(lib, w)
+    lib.om_world_set_feature(w, OMFeature.FACTIONS, 0)
+    load_only_templates(lib, w, "Revolt Entrenched")
     lib.om_world_set_feature(w, OMFeature.EVENTS, 1)
     lib.om_world_set_feature(w, OMFeature.LIFECYCLE, 1)
 
@@ -200,9 +215,9 @@ def test_R_050_04_region_s_owner_b_held(lib, world_factory):
 
     step_tick = lib.om_world_step(w)
     due = step_tick + 1
-    queue_external(lib, w, 0, 100, due_tick=due, probability=1.0)
+    queue_external(lib, w, 0, template_id(lib, w, "Revolt Entrenched"), due_tick=due, probability=1.0)
 
-    force_draws(lib, w, [0.50, 0.10, 0.20])
+    force_draws(lib, w, [0.99, 0.50, 0.10, 0.20])
     current_tick = lib.om_world_step(w)
 
     assert lib.om_region_owner(w, 0) == 1
@@ -219,6 +234,8 @@ def test_R_050_05_it_records_original_restored_factions(lib, world_factory):
     """Given a reversion, When the log is read, Then it records the original and restored factions and the stolen amounts."""
     w = world_factory(n_regions=2)
     isolate_agents(lib, w)
+    lib.om_world_set_feature(w, OMFeature.FACTIONS, 0)
+    load_only_templates(lib, w, "Revolt Entrenched")
     lib.om_world_set_feature(w, OMFeature.EVENTS, 1)
     lib.om_world_set_feature(w, OMFeature.LIFECYCLE, 1)
 
@@ -238,9 +255,9 @@ def test_R_050_05_it_records_original_restored_factions(lib, world_factory):
     set_owner(lib, w, 1, 1, held_since=-1)
 
     due = lib.om_world_step(w) + 1
-    queue_external(lib, w, 0, 100, due_tick=due, probability=1.0)
+    queue_external(lib, w, 0, template_id(lib, w, "Revolt Entrenched"), due_tick=due, probability=1.0)
 
-    force_draws(lib, w, [0.50, 0.10, 0.20])
+    force_draws(lib, w, [0.99, 0.50, 0.10, 0.20])
     lib.om_world_step(w)
 
     reversions = read_reversions(lib, w)
