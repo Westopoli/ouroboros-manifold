@@ -973,18 +973,6 @@ uint32_t om_chronicle_lineage_entry_count(const om_world *w) {
     return 0;
 }
 
-/* weak: csrc/events.c (B1-2) provides the strong definition once it lands;
- * delete this stub after attach/B1-2 (mirrors csrc/region.c's
- * om_world_generate weak stub for the same not-yet-attached-card reason).
- * Without it, this branch's libouroboros.so has an undefined symbol the
- * moment anything calls om_event_attached_character_count, and this
- * environment binds symbols eagerly at dlopen -- an unresolved *strong*
- * reference would fail to load the whole library, not just this call. */
-__attribute__((weak)) uint32_t om_event_get_attached_character(const om_world *w, uint32_t event, uint32_t p1) {
-    (void)w; (void)event; (void)p1;
-    return 0;
-}
-
 uint32_t om_event_attached_character_count(const om_world *w, uint32_t event) {
     /* R-060-05: events.c (E-04) owns the attachment data itself
      * (om_event_fire_manual / om_event_get_attached_character); this ledger
