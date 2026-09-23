@@ -33,7 +33,10 @@ from conftest import (
 def test_R_043_01_their_non_aggression_counter_increments(lib, world_factory):
     """Given a neutral pair that shares at least one border edge, When a tick passes with no attack between them, Then their non-aggression counter increments by 1; an attack between them resets it to 0."""
     w = world_factory(n_regions=2)
-    set_faction(lib, w, 0, OMArchetype.DEFAULT, budget=0.0, tech=0.0)
+    # commit=10.0 below needs faction 0 to hold budget >= commit or
+    # om_intent_inject rejects the injection (rc=-1) and the attack never
+    # happens -- budget=20.0 gives it headroom.
+    set_faction(lib, w, 0, OMArchetype.DEFAULT, budget=20.0, tech=0.0)
     set_faction(lib, w, 1, OMArchetype.DEFAULT, budget=0.0, tech=0.0)
     set_stance(lib, w, 0, 1, OMStance.NEUTRAL)
 
@@ -44,6 +47,11 @@ def test_R_043_01_their_non_aggression_counter_increments(lib, world_factory):
     set_edge(lib, w, 0, 1, OMEdge.BORDER)
 
     lib.om_world_set_feature(w, OMFeature.DIPLOMACY, 1)
+    # FACTIONS must be on too: the injected attack below is a decision
+    # (om_intent_inject), and only om_step_resolve (3f, gated on
+    # OM_FEAT_FACTIONS) turns a decision into a w->attacks record --
+    # the record om__pair_attacked_this_tick checks to reset the counter.
+    lib.om_world_set_feature(w, OMFeature.FACTIONS, 1)
 
     lib.om_world_step(w)
     assert lib.om_faction_stance_counter(w, 0, 1) == 1
@@ -122,14 +130,16 @@ def test_R_043_04_p_min_1_0_5(lib, world_factory):
     """Given an overture between factions with average economies 60 and 40, minimum border stability 50, dispositions 2.0 and 1.5, When success is rolled, Then p = min(1, 0.5 · (1 − 0.2) · 0.5 · 2.0 · 1.5) = 0.6, one draw."""
     # Faction 0: Fortifier (disp 2.0), eco 60
     # Faction 1: Player (disp 1.5), eco 40
-    # Stability = 50.0 -> stab / 100 = 0.5
+    # ALG-09 stability from mil=50, tension=50.0, pop=50:
+    #   s = 50*0.4 + (100-50)*0.35 + 50*0.25 = 20 + 17.5 + 12.5 = 50.0
+    #   -> stab / 100 = 0.5
     # p = min(1, 0.5 * (1 - 0.2) * 0.5 * 2.0 * 1.5) = 0.60
     w_success = world_factory(n_regions=2)
     set_faction(lib, w_success, 0, OMArchetype.FORTIFIER, budget=0.0, tech=0.0)
     set_faction(lib, w_success, 1, OMArchetype.PLAYER, budget=0.0, tech=0.0)
     set_stance(lib, w_success, 0, 1, OMStance.NEUTRAL)
-    set_region(lib, w_success, 0, tier=OMTier.HOME, military=50.0, economy=60.0, tension=42.86, population=50.0)
-    set_region(lib, w_success, 1, tier=OMTier.HOME, military=50.0, economy=40.0, tension=42.86, population=50.0)
+    set_region(lib, w_success, 0, tier=OMTier.HOME, military=50.0, economy=60.0, tension=50.0, population=50.0)
+    set_region(lib, w_success, 1, tier=OMTier.HOME, military=50.0, economy=40.0, tension=50.0, population=50.0)
     set_owner(lib, w_success, 0, 0, held_since=-1)
     set_owner(lib, w_success, 1, 1, held_since=-1)
     set_edge(lib, w_success, 0, 1, OMEdge.BORDER)
@@ -146,8 +156,8 @@ def test_R_043_04_p_min_1_0_5(lib, world_factory):
     set_faction(lib, w_fail, 0, OMArchetype.FORTIFIER, budget=0.0, tech=0.0)
     set_faction(lib, w_fail, 1, OMArchetype.PLAYER, budget=0.0, tech=0.0)
     set_stance(lib, w_fail, 0, 1, OMStance.NEUTRAL)
-    set_region(lib, w_fail, 0, tier=OMTier.HOME, military=50.0, economy=60.0, tension=42.86, population=50.0)
-    set_region(lib, w_fail, 1, tier=OMTier.HOME, military=50.0, economy=40.0, tension=42.86, population=50.0)
+    set_region(lib, w_fail, 0, tier=OMTier.HOME, military=50.0, economy=60.0, tension=50.0, population=50.0)
+    set_region(lib, w_fail, 1, tier=OMTier.HOME, military=50.0, economy=40.0, tension=50.0, population=50.0)
     set_owner(lib, w_fail, 0, 0, held_since=-1)
     set_owner(lib, w_fail, 1, 1, held_since=-1)
     set_edge(lib, w_fail, 0, 1, OMEdge.BORDER)
@@ -186,12 +196,17 @@ def test_R_043_05_pair_becomes_cooperative_cooperative_since(lib, world_factory)
 
 def test_R_043_06_pair_stays_neutral_counter_resets(lib, world_factory):
     """Given the overture fails, When applied, Then the pair stays neutral and the counter resets to 0."""
+    # Fortifier (disp 2.0) vs Opportunist (disp 1.0); equal economies (50/50)
+    # so the |avg_e_A - avg_e_B| term is 0. ALG-09 stability from mil=50,
+    # tension=50.0, pop=50: s = 50*0.4 + (100-50)*0.35 + 50*0.25 = 50.0,
+    # stab/100 = 0.5. p = clamp(0.5 * 1 * 0.5 * 2.0 * 1.0, 0, 1) = 0.5, so
+    # a forced draw of 0.99 (>= p) lands in the failure branch.
     w = world_factory(n_regions=2)
     set_faction(lib, w, 0, OMArchetype.FORTIFIER, budget=0.0, tech=0.0)
-    set_faction(lib, w, 1, OMArchetype.FORTIFIER, budget=0.0, tech=0.0)
+    set_faction(lib, w, 1, OMArchetype.OPPORTUNIST, budget=0.0, tech=0.0)
     set_stance(lib, w, 0, 1, OMStance.NEUTRAL)
-    set_region(lib, w, 0, tier=OMTier.HOME, military=50.0, economy=50.0, tension=0.0, population=50.0)
-    set_region(lib, w, 1, tier=OMTier.HOME, military=50.0, economy=50.0, tension=0.0, population=50.0)
+    set_region(lib, w, 0, tier=OMTier.HOME, military=50.0, economy=50.0, tension=50.0, population=50.0)
+    set_region(lib, w, 1, tier=OMTier.HOME, military=50.0, economy=50.0, tension=50.0, population=50.0)
     set_owner(lib, w, 0, 0, held_since=-1)
     set_owner(lib, w, 1, 1, held_since=-1)
     set_edge(lib, w, 0, 1, OMEdge.BORDER)
