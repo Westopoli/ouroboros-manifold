@@ -139,11 +139,13 @@ def test_R_032_03_it_uses_attack_weight_0(lib, world_factory):
     set_edge(lib, w, 1, 2, OMEdge.BOTH)
     set_edge(lib, w, 1, 3, OMEdge.BOTH)
 
-    # Pin telegraph mode selection draw for Player's attack decision (pref = 0.6, draw 0.1 < 0.6)
-    force_draws(lib, w, [0.1])
-
-    lib.om_world_step(w)
-
+    # Read candidates before the step: om_faction_candidates reads live
+    # region state on every call, not a step-3d snapshot (DECISIONS.md R8a).
+    # Step 3d computes this same faction's decision from this same
+    # pre-resolution region state; reading here (rather than after the step)
+    # avoids the colonize decision's own 3f resolution -- taking region 3 --
+    # changing what a *later* read of the candidate list would see for
+    # region 1's neighbor set.
     # Verify attractiveness weights: weakness 0.60, value 0.25, position 0.15
     candidates = read_candidates(lib, w, 0)
     cand_1 = next(c for c in candidates if c.kind == OMCandKind.ATTACK and c.region_idx == 1)
@@ -162,6 +164,11 @@ def test_R_032_03_it_uses_attack_weight_0(lib, world_factory):
     # 0.60 * 1.0 + 0.25 * 0 + 0.15 * 0.56 = 0.684
     cand_3 = next(c for c in candidates if c.kind == OMCandKind.COLONIZE and c.region_idx == 3)
     assert cand_3.attractiveness == pytest.approx(0.684, abs=1e-6)
+
+    # Pin telegraph mode selection draw for Player's attack decision (pref = 0.6, draw 0.1 < 0.6)
+    force_draws(lib, w, [0.1])
+
+    lib.om_world_step(w)
 
     # Verify decision weights: attack weight 0.3, expand weight 0.5
     # potential commit = 70.0; net = 70 - 30 * 0.55 * 2.0 = 37.0
