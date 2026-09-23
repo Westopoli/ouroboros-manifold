@@ -410,7 +410,7 @@ acceptance = [
     "tests/test_load_game.gd",
 ]
 depends_on = ["T2c", "T1"]
-status = "pending"
+status = { state = "attached", attach_sha = "36535f1" }
 tests_pending = true
 size_estimate = "Godot save-slot layer over T2c, rebind to T1"
 
@@ -500,7 +500,7 @@ owns = []
 owns_glob = ["scenes/mockups/chronicle/**", "docs/northstar/research/mockups/chronicle/**"]
 acceptance = []
 depends_on = []
-status = "pending"
+status = { state = "attached", attach_sha = "6abaff8" }
 [[piece]]
 id = "C8"
 manager = "M3"
