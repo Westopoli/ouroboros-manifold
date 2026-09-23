@@ -13,5 +13,22 @@
   ["call", "qa_replay_step"],
   ["call", "qa_replay_step"],
   ["call", "qa_replay_step"],
-  ["screenshot", "mid_replay_seed12"]
+  ["screenshot", "mid_replay_seed12"],
+  ["seed", 12],
+  ["call", "qa_camera", 50, -1],
+  ["call", "qa_replay_step"],
+  ["screenshot", "flash_seed12"],
+  ["call", "qa_replay_step"],
+  ["call", "qa_replay_step"],
+  ["call", "qa_replay_step"],
+  ["call", "qa_replay_step"],
+  ["call", "qa_replay_step"],
+  ["call", "qa_replay_step"],
+  ["call", "qa_replay_step"],
+  ["call", "qa_replay_step"],
+  ["call", "qa_replay_step"],
+  ["call", "qa_replay_step"],
+  ["call", "qa_replay_step"],
+  ["screenshot", "replay_end_seed12"],
+  ["state", "replay_end_seed12"]
 ]
