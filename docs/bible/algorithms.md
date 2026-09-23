@@ -111,7 +111,7 @@ Then, if the target is owned by a faction that is not a collider, or is owned by
 
 ## Border friction (`tick.py`, `_apply_border_friction`)
 
-**ALG-25.** For each inhabited region with an owner, over every neighbor across a `border` or `both` edge (trade-only edges contribute nothing; Q-041-01, 2026-09-13) that is owned by a different faction where either side's stance toward the other is hostile: `tension_f = BORDER_FRICTION_TENSION = 0.15` and `economy_f = BORDER_FRICTION_ECONOMY = 0.05`, flat per hostile neighbor, not scaled by the neighbor's military. Sum over hostile neighbors; `t = min(100, t + Σ tension_f)`, `e = max(ECONOMY_FLOOR, e − Σ economy_f)`; composites recompute.
+**ALG-25.** For each inhabited region with an owner, over every neighbor across a `border` or `both` edge (trade-only edges contribute nothing; Q-041-01, 2026-09-13) that is owned by a different faction where either side's stance toward the other is hostile: `tension_f = BORDER_FRICTION_TENSION = 0.15` and `economy_f = BORDER_FRICTION_ECONOMY = 0.05`, flat per hostile neighbor, not scaled by the neighbor's military. Sum over hostile neighbors; `t = min(FIELD_MAX = 100, t + Σ tension_f)`, `e = max(ECONOMY_FLOOR, e − Σ economy_f)`; composites recompute.
 
 The Python code counted every edge type; the dead module `simulation/border_friction.py` scaled by military. Neither is the design; the C rewrite implements the version above.
 
@@ -137,7 +137,7 @@ The Python code counted every edge type; the dead module `simulation/border_fric
 
 ## Administrative revolts (`admin_revolt.py`)
 
-**ALG-29.** Per faction: `excess = max(0, territory_count − ADMIN_REVOLT_INFLECTION_POINT = 4)`; `chance = ADMIN_REVOLT_BASE_RATE + ADMIN_REVOLT_SCALING_RATE · excess²`, base `0.001`, scaling `0.0005`. One RNG draw per owned region per tick; a draw below `chance` takes one more integer draw `L` uniform in [3, 8] and queues an `evt_admin_separatist` chain of length `L` ticks on that region for the next tick (short chain for L in [3, 4], medium [5, 6], long [7, 8]; E-05 R-040-03, E-04 S-030; Q-040-01, 2026-09-12).
+**ALG-29.** Per faction: `excess = max(0, territory_count − ADMIN_REVOLT_INFLECTION_POINT = 4)`; `chance = ADMIN_REVOLT_BASE_RATE + ADMIN_REVOLT_SCALING_RATE · excess²`, base `0.001`, scaling `0.0005`. One RNG draw per owned region per tick; a draw below `chance` takes one more integer draw `L` uniform in [ADMIN_REVOLT_CHAIN_MIN = 3, ADMIN_REVOLT_CHAIN_MAX = 8] and queues an `evt_admin_separatist` chain of length `L` ticks on that region for the next tick (short chain for L in [3, 4], medium [5, 6], long [7, 8]; E-05 R-040-03, E-04 S-030; Q-040-01, 2026-09-12).
 
 ## Events (`events.py`)
 
