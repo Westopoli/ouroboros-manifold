@@ -328,3 +328,83 @@ unchanged by this commit:
 None of these six files were touched by this commit; their failures are
 pre-existing on the leaf and out of scope for this brief (S-043 fixtures
 only).
+
+## R-032-03 / R-037-07: test-defect fixes under the test-fix gate
+
+Both classified `test-defect` by the core doer with evidence; fixed under
+the test-fix gate (`assertions_preserved`, `red_at_stub` not applicable --
+E-05 is built, so "before/after on main's current tree" substitutes --
+`two_agent_confound` n/a, single file each).
+
+### `test_E05_S032_every_faction_is_a_person.py::test_R_032_03_it_uses_attack_weight_0`
+
+Bug: `om_faction_candidates` reads live region state on every call, not a
+step-3d snapshot (DECISIONS.md R8a, same shape). The fixture read candidates
+*after* `om_world_step`. In that step the player's own decision (colonize
+region 3, `colonize_score` 0.342 > `attack_score` 0.2775, both per the
+test's own commented math) resolves in 3f and region 3 becomes owned by the
+player, so a post-step candidate read for region 1's ATTACK candidate
+computes `position` from only one remaining non-self neighbor (region 2,
+score 0.44) instead of the mean over two (region 2 at 0.44, region 3 at the
+unowned-neighbor constant 0.15) -- `mean(0.44, 0.15) = 0.295` collapses to
+`0.44`.
+
+Fix: moved the `read_candidates` call (and the `cand_1`/`cand_3` assertions
+that depend on it) to *before* `force_draws`/`om_world_step`, rewrote the
+inline comment to say why. Step 3d computes this same faction's decision
+scores from this identical pre-resolution region state (the resolution that
+mutates region 3 happens after, in 3f), so `read_decisions` after the step
+still yields the unchanged `attack_score`/`colonize_score` (0.2775, 0.342 --
+both assertions untouched). No assertion value changed; the `0.295` and
+`0.74425` assertions are preserved verbatim, only their read is moved
+earlier in the same test body.
+
+Derivation of the kept 0.295 (unchanged from the original fixture):
+`position = mean( (region2: 40*0.60+50*0.40)/100, (region3, unowned: 0.15) ) = mean(0.44, 0.15) = 0.295`.
+
+### `test_E05_S037_battles_have_a_shape.py::test_R_037_07_attacker_s_committed_budget_spent`
+
+Bug: fixture asserted final attacker budget 9.0 on the premise that the
+same-tick breakthrough (crushing region 1's military to 0 in step 3c) causes
+the Conqueror's step-3d decision loop to immediately re-declare a second
+telegraph against the same, now-defenseless target in the same tick (spending
+a further 21.0 of the remaining 30.0). That premise is the interim reading
+from DECISIONS.md's Seventh round (R8e/R8f investigation), superseded by
+Westley's final C3 ruling in the same round: "at most one resolved attack per
+attacker-target pair [per tick]... step 3d does not re-declare against a
+target whose attack this faction already resolved this tick" (a follow-up
+against the same target waits for the next tick). The comment in the fixture
+narrated the superseded interim reading, not the final rule.
+
+Fix: recomputed the expected value under the final rule and rewrote the
+stale comment. With no same-tick re-declaration, the only spend this tick is
+the one already-proven committed budget (`att_tele.budget_spent == 70.0`,
+untouched assertion): `100.0 - 70.0 = 30.0`. Region 0's economy is pinned at
+the maintenance baseline (8.0) throughout, so zero passive ALG-17 budget
+growth applies in any of the four ticks -- 30.0 is exact, not rounded.
+Assertion recomputed: `9.0` -> `30.0`. The "committed budget is spent in
+full" assertion two lines above (`att_tele.budget_spent == pytest.approx(70.0, ...)`)
+is untouched.
+
+### Verification (both tests)
+
+1. Before, main (`a742857`): via a throwaway detached worktree
+   (`git worktree add --detach /tmp/e05t HEAD`, `git stash` forbidden) both
+   fail exactly as on the live tree --
+   `test_R_032_03_it_uses_attack_weight_0`: `assert 0.44 == 0.295 +/- 1e-06`
+   at the `cand_1.position` line; `test_R_037_07_...`: `assert 30.0 == 9.0
+   +/- 1e-06` at the final `om_faction_budget` line. Confirmed identical on
+   the live main tree before editing.
+2. After: copied both edited files into the same worktree, reran --
+   `tests/csim/test_E05_S032_every_faction_is_a_person.py
+   tests/csim/test_E05_S037_battles_have_a_shape.py`: `12 passed` (4 + 8, the
+   full contents of both files). `rm -rf /tmp/e05t && git worktree prune`.
+3. Rest of both files unchanged: `test_R_032_01`, `test_R_032_02`,
+   `test_R_032_04` (S032) and the other seven S037 tests
+   (`test_R_037_01`..`test_R_037_06`, `test_R_037_08`) pass before and after
+   in every run above -- same 4/4 and 8/8 split, no new failure and no
+   assertion in any of those tests touched.
+
+Files touched: `tests/csim/test_E05_S032_every_faction_is_a_person.py`,
+`tests/csim/test_E05_S037_battles_have_a_shape.py`. No file outside
+`tests/csim/` touched.
