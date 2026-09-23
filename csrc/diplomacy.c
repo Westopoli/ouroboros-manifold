@@ -591,12 +591,18 @@ void om_tech_step(om_world *w) {
 
         double sum_e = 0.0, sum_p = 0.0;
         uint32_t n = 0;
+        uint32_t highest_pop_idx = 0;
+        double highest_pop = -1.0;
         for (uint32_t i = 0; i < w->n_regions; i++) {
             if (w->regions[i].faction_id != f) continue;
             if (w->regions[i].tier == OM_TIER_EMPTY) continue;
             sum_e += w->regions[i].economy;
             sum_p += w->regions[i].population;
             n++;
+            if (w->regions[i].population > highest_pop) {
+                highest_pop = w->regions[i].population;
+                highest_pop_idx = i;
+            }
         }
         if (n == 0) continue; /* R-045-04: no owned regions, nothing changes */
 
@@ -626,10 +632,19 @@ void om_tech_step(om_world *w) {
             if (draw < OM_KNOWLEDGE_LOST_P) {
                 w->faction_tech[f] = fmax(0.0, w->faction_tech[f] - OM_KNOWLEDGE_LOST_DELTA);
                 om_faction_set_last_knowledge_lost(w, f, (int64_t)w->tick);
-                /* The fired-event record (template Knowledge Lost, the
-                 * faction's highest-population region, next chain tag) is
-                 * not written: csrc/events.c's om_tick_events is a STUB
-                 * with no fired-event log storage yet (E-04's own card). */
+                /* B1-2's om_event_fire_manual (ALG-49) records this on the
+                 * faction's highest-population region and, at this tier,
+                 * attaches its regional/supreme commander. It writes to
+                 * events.c's own manual-fire table, not the trigger-pipeline
+                 * s->fired[]/om_tick_events log (that log is only ever
+                 * appended by evt_fire, a static function reached through a
+                 * loaded om_event_template and its own template_id -- there
+                 * is no "Knowledge Lost" template and no public way to
+                 * append an arbitrary record to that log from here). So a
+                 * read_events()/om_tick_events() query still will not see
+                 * this firing; om_event_get_attached_character(w, id, ...)
+                 * is the observable this call produces today. */
+                om_event_fire_manual(w, highest_pop_idx, OM_CHARACTER_ATTACHMENT_TIER_THRESHOLD);
             }
         }
     }
