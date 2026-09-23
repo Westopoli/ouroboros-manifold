@@ -55,7 +55,7 @@ func qa_state() -> Dictionary:
 		"pinned_faction": _hud.get_pin_faction(),
 		"systems_px": systems_px,
 		"owners": owners,
-		"replay": {"index": _hud.get_replay_index(), "done": _hud.is_replay_done()},
+		"replay": {"index": _hud.get_replay_index(), "done": _hud.is_replay_done(), "total": _hud.get_replay_total()},
 		"timing_ms": _hud.get_timing_ms(),
 		"regen_count": _hud.get_regen_count(),
 	}
@@ -87,3 +87,7 @@ func qa_camera(distance: float, target_system_id: int) -> void:
 
 func qa_replay_step() -> void:
 	_hud.qa_replay_step()
+
+
+func qa_replay_restart() -> void:
+	_hud.qa_replay_restart()

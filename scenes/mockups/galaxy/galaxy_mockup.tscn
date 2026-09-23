@@ -77,4 +77,7 @@ text = "Band: —"
 [node name="CountLabel" type="Label" parent="HUD/VBoxContainer"]
 text = "Systems: — Edges: —"
 
+[node name="ReplayLabel" type="Label" parent="HUD/VBoxContainer"]
+text = "replay 0/0"
+
 [node name="FactionList" type="VBoxContainer" parent="HUD/VBoxContainer"]
