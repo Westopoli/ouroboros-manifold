@@ -95,6 +95,41 @@ def test_ignored_paths_never_count_against_the_fence(tmp_path):
     assert detail == "OK"
 
 
+def test_claude_swarm_toml_ignored_alongside_owned_file(tmp_path):
+    """B10-1 merge reject 2026-09-22: a leaf commit sweeps in manager-mode's
+    per-clone .claude-swarm.toml from the shared worktree. It rides along
+    with the real diff and must never count against the fence."""
+    repo = _init_repo(tmp_path / "repo")
+    pieces = tmp_path / "pieces.toml"
+    _write_pieces(pieces, [{"id": "B10", "owns": ["csrc/events.c"]}])
+
+    (repo / "csrc" / "events.c").write_text("int om_event_stub(void) { return 1; }\n")
+    (repo / ".claude-swarm.toml").write_text("clone = \"leaf-01\"\n")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "candidate")
+
+    ok, detail = mgs.footprint_check(repo, "HEAD~1", "B10", pieces_path=pieces)
+    assert ok is True, detail
+
+
+def test_claude_swarm_toml_does_not_mask_a_real_unowned_file(tmp_path):
+    """The ignore is for .claude-swarm.toml specifically, not a blanket pass:
+    an unowned csrc file riding alongside it must still reject."""
+    repo = _init_repo(tmp_path / "repo")
+    pieces = tmp_path / "pieces.toml"
+    _write_pieces(pieces, [{"id": "B10", "owns": ["csrc/events.c"]}])
+
+    (repo / "csrc" / "events.c").write_text("int om_event_stub(void) { return 1; }\n")
+    (repo / ".claude-swarm.toml").write_text("clone = \"leaf-01\"\n")
+    (repo / "csrc" / "x.c").write_text("int om_x_stub(void) { return 0; }\n")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "candidate")
+
+    ok, detail = mgs.footprint_check(repo, "HEAD~1", "B10", pieces_path=pieces)
+    assert ok is False
+    assert "csrc/x.c" in detail
+
+
 def test_gd_uid_sidecar_counts_as_its_gd_file(tmp_path):
     repo = _init_repo(tmp_path / "repo")
     pieces = tmp_path / "pieces.toml"
