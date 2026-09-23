@@ -1,1 +1,17 @@
 2026-09-22T23:45:07+00:00 | /home/westopoli/Projects/om-push/m3 | git status --porcelain | exit 0
+2026-09-22T23:45:07+00:00 | /home/westopoli/Projects/om-push/m3 | git add -A -- .swarm/c2-1/worktrees/leaf-01 .swarm/c3/git-ops.log .swarm/c3/audits .swarm/c3/briefs/leaf-01.ASSUMPTIONS.md .swarm/c3/wave-1.base.json .swarm/c3/worktrees .swarm/c5 docs/northstar/plans/push/specs/C5.md | exit 0
+2026-09-22T23:45:07+00:00 | /home/westopoli/Projects/om-push/m3 | git commit -q -m 'swarm(c5): wave 1 base — spec/contract/umbrella/briefs/tests' | exit 0
+2026-09-22T23:45:07+00:00 | /home/westopoli/Projects/om-push/m3 | git rev-parse --abbrev-ref HEAD | exit 0
+2026-09-22T23:45:07+00:00 | /home/westopoli/Projects/om-push/m3 | git rev-parse HEAD | exit 0
+2026-09-22T23:45:07+00:00 | /home/westopoli/Projects/om-push/m3 | git show-ref --verify --quiet refs/heads/swarm/c5/integration | exit 1
+2026-09-22T23:45:07+00:00 | /home/westopoli/Projects/om-push/m3 | git branch swarm/c5/integration 1f2c607ca5b1fded300a1e71d61b9c8c17dd4c67 | exit 0
+2026-09-22T23:45:08+00:00 | /home/westopoli/Projects/om-push/m3 | git worktree add /home/westopoli/Projects/om-push/m3/.swarm/c5/worktrees/integration swarm/c5/integration | exit 0
+2026-09-22T23:45:08+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/c5/worktrees/integration | git rev-parse --git-path info/exclude | exit 0
+2026-09-22T23:45:08+00:00 | /home/westopoli/Projects/om-push/m3 | git rev-parse swarm/c5/integration | exit 0
+2026-09-22T23:45:10+00:00 | /home/westopoli/Projects/om-push/m3 | git worktree add -b swarm/c5/leaf-01 /home/westopoli/Projects/om-push/m3/.swarm/c5/worktrees/leaf-01 1f2c607ca5b1fded300a1e71d61b9c8c17dd4c67 | exit 0
+2026-09-22T23:45:10+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/c5/worktrees/leaf-01 | git rev-parse --git-path info/exclude | exit 0
+2026-09-23T00:27:24+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/c5/worktrees/leaf-01 | git rev-parse HEAD | exit 0
+2026-09-23T00:27:26+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/c5/worktrees/leaf-01 | git status --porcelain --untracked-files=all | exit 0
+2026-09-23T00:27:26+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/c5/worktrees/leaf-01 | git add -- scenes/tactical_c/tactical_view.tscn scenes/tactical_c/tactical_view.gd | exit 0
+2026-09-23T00:27:26+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/c5/worktrees/leaf-01 | git commit -q -m 'swarm(c5): leaf-01 — Build a fresh `scenes/tactical_c/tactical_view.tscn` + backing script pe' | exit 0
+2026-09-23T00:27:26+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/c5/worktrees/leaf-01 | git rev-parse HEAD | exit 0
