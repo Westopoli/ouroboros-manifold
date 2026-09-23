@@ -1,1 +1,17 @@
 2026-09-23T00:35:12+00:00 | /home/westopoli/Projects/om-push/m3 | git status --porcelain | exit 0
+2026-09-23T00:35:12+00:00 | /home/westopoli/Projects/om-push/m3 | git add -A -- .swarm/c5/git-ops.log .swarm/c2-2 .swarm/c4-1 .swarm/c5/audits .swarm/c5/briefs/leaf-01.ASSUMPTIONS.md .swarm/c5/wave-1.base.json .swarm/c5/worktrees .swarm/t2g docs/northstar/plans/push/specs/T2g.md | exit 0
+2026-09-23T00:35:12+00:00 | /home/westopoli/Projects/om-push/m3 | git commit -q -m 'swarm(t2g): wave 1 base — spec/contract/umbrella/briefs/tests' | exit 0
+2026-09-23T00:35:12+00:00 | /home/westopoli/Projects/om-push/m3 | git rev-parse --abbrev-ref HEAD | exit 0
+2026-09-23T00:35:12+00:00 | /home/westopoli/Projects/om-push/m3 | git rev-parse HEAD | exit 0
+2026-09-23T00:35:12+00:00 | /home/westopoli/Projects/om-push/m3 | git show-ref --verify --quiet refs/heads/swarm/t2g/integration | exit 1
+2026-09-23T00:35:12+00:00 | /home/westopoli/Projects/om-push/m3 | git branch swarm/t2g/integration 444c3181971f578ed9e65bf8caa26fd886da7a60 | exit 0
+2026-09-23T00:35:13+00:00 | /home/westopoli/Projects/om-push/m3 | git worktree add /home/westopoli/Projects/om-push/m3/.swarm/t2g/worktrees/integration swarm/t2g/integration | exit 0
+2026-09-23T00:35:13+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/t2g/worktrees/integration | git rev-parse --git-path info/exclude | exit 0
+2026-09-23T00:35:13+00:00 | /home/westopoli/Projects/om-push/m3 | git rev-parse swarm/t2g/integration | exit 0
+2026-09-23T00:35:15+00:00 | /home/westopoli/Projects/om-push/m3 | git worktree add -b swarm/t2g/leaf-01 /home/westopoli/Projects/om-push/m3/.swarm/t2g/worktrees/leaf-01 444c3181971f578ed9e65bf8caa26fd886da7a60 | exit 0
+2026-09-23T00:35:15+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/t2g/worktrees/leaf-01 | git rev-parse --git-path info/exclude | exit 0
+2026-09-23T00:36:03+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/t2g/worktrees/leaf-01 | git rev-parse HEAD | exit 0
+2026-09-23T00:36:04+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/t2g/worktrees/leaf-01 | git status --porcelain --untracked-files=all | exit 0
+2026-09-23T00:36:04+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/t2g/worktrees/leaf-01 | git add -- scenes/load_game/load_game.gd | exit 0
+2026-09-23T00:36:04+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/t2g/worktrees/leaf-01 | git commit -q -m 'swarm(t2g): leaf-01 — Add `qa_set_bridge(bridge) -> void`, `qa_state() -> Dictionary`,' | exit 0
+2026-09-23T00:36:04+00:00 | /home/westopoli/Projects/om-push/m3/.swarm/t2g/worktrees/leaf-01 | git rev-parse HEAD | exit 0
