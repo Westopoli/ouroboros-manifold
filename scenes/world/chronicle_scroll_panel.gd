@@ -21,8 +21,9 @@ var _expansion_overlay: Control
 
 # Piece C3 rebind — reads a C transport v1 "chronicle" frame (see file
 # header) independent of the legacy begin_time_jump()/queue_entry() path
-# above. R-069-02's bible-mandated pace, reported as data by qa_state(),
-# not read from chronicle_entry.gd's own (older, mismatched) print timer.
+# above. R-069-02's bible-mandated pace: reported by qa_state() and also
+# the actual source of truth for chronicle_entry.gd's print timer, wired
+# in via set_pace() in queue_entry() below.
 const CHRONICLE_PACE := {
 	"word_interval_s": 0.08,
 	"fade_s": 0.20,
@@ -132,6 +133,7 @@ func queue_entry(entry_data: Dictionary) -> void:
 	var entry_scene := load("res://scenes/world/chronicle_entry.tscn")
 	var entry_node: Node = entry_scene.instantiate()
 	entry_node.setup(entry_data, _accent, _faction_colors)
+	entry_node.set_pace(CHRONICLE_PACE["word_interval_s"], CHRONICLE_PACE["fade_s"])
 	entry_node.finished_printing.connect(_on_entry_finished)
 	entry_node.expansion_requested.connect(_on_expansion_requested)
 	entry_node.mention_clicked.connect(_on_mention_clicked)

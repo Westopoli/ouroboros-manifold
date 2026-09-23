@@ -25,7 +25,7 @@ acceptance = [
     "tests/csim/test_E04_wiring.py",
 ]
 depends_on = []
-status = "pending"
+status = { state = "attached", attach_sha = "4b2ae50" }
 size_estimate = "749 py lines, 31 tests (E-04)"
 
 [[piece]]
@@ -56,7 +56,7 @@ acceptance = [
 ]
 # test_R_040_04 is skipped under Q-040-02 and does not count until the flag closes
 depends_on = []
-status = "pending"
+status = { state = "attached", attach_sha = "ee5ef97" }
 size_estimate = "ALG-25, ALG-29 (E-05 S-040, S-041)"
 
 [[piece]]
