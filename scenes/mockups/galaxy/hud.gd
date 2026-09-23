@@ -28,6 +28,7 @@ var _replay_playing: bool = false
 @onready var _regenerate_button: Button = $VBoxContainer/RegenerateButton
 @onready var _play_button: Button = $VBoxContainer/PlayButton
 @onready var _count_label: Label = $VBoxContainer/CountLabel
+@onready var _replay_label: Label = $VBoxContainer/ReplayLabel
 @onready var _faction_list: VBoxContainer = $VBoxContainer/FactionList
 @onready var _tooltip: Label = $Tooltip
 
@@ -64,7 +65,15 @@ func _process(delta: float) -> void:
 			_replay_timer = 0.0
 			if not _advance_replay():
 				_replay_playing = false
+	_update_replay_label()
 	_update_tooltip()
+
+
+func _update_replay_label() -> void:
+	if is_replay_done():
+		_replay_label.text = "done, press J to replay"
+	else:
+		_replay_label.text = "replay %d/%d" % [_replay_index, _replay_events.size()]
 
 
 func _update_tooltip() -> void:
@@ -156,9 +165,21 @@ func _on_regenerate_pressed() -> void:
 	_regenerate()
 
 
+# Westley's bug report: after the fixture runs out, pressing Play again did
+# nothing (_replay_playing kept toggling on, then _advance_replay() returning
+# false at the very next tick flipped it straight back off). Play now checks
+# for done and restarts the fixture instead of toggling.
 func _on_play_pressed() -> void:
+	if is_replay_done():
+		_restart_replay()
+		return
 	_replay_playing = not _replay_playing
 	_replay_timer = 0.0
+
+
+func _restart_replay() -> void:
+	_regenerate()
+	_replay_playing = true
 
 
 func _load_replay() -> void:
@@ -189,6 +210,10 @@ func _advance_replay() -> bool:
 
 func qa_replay_step() -> void:
 	_advance_replay()
+
+
+func qa_replay_restart() -> void:
+	_restart_replay()
 
 
 func qa_regenerate() -> void:
@@ -235,3 +260,7 @@ func get_replay_index() -> int:
 
 func is_replay_done() -> bool:
 	return _replay_index >= _replay_events.size()
+
+
+func get_replay_total() -> int:
+	return _replay_events.size()
