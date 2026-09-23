@@ -17,14 +17,14 @@ int om_world_feature(const om_world *w, om_feature f) {
 }
 
 void om_region_set_edge(om_world *w, uint32_t a, uint32_t b, om_edge_type t) {
-    if (w == NULL || a >= 64 || b >= 64)
+    if (w == NULL || a >= OM_MAX_REGIONS || b >= OM_MAX_REGIONS)
         return;
     w->region_edge[a][b] = t;
     w->region_edge[b][a] = t;
 }
 
 int om_region_edge(const om_world *w, uint32_t a, uint32_t b, om_edge_type *out) {
-    if (w == NULL || a >= 64 || b >= 64)
+    if (w == NULL || a >= OM_MAX_REGIONS || b >= OM_MAX_REGIONS)
         return 0;
     if ((int)w->region_edge[a][b] < 0)
         return 0;
