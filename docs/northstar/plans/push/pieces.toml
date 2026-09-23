@@ -424,7 +424,7 @@ acceptance = [
     "tests/test_chronicle_scroll.gd",
 ]
 depends_on = ["B8", "T1"]
-status = "pending"
+status = { state = "attached", attach_sha = "2531652" }
 tests_pending = true
 size_estimate = "rebind scroll to B8's output through T1; mockup p7 plants"
 
