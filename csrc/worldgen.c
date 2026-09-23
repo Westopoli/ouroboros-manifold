@@ -214,8 +214,15 @@ void om_world_generate(om_world *w) {
     for (uint32_t fid = 0; fid < n_factions; fid++)
         min_inhabited += gen_template_min_size(templates[fid]);
     uint32_t needed_with_corridors = min_inhabited + n_factions;
-    if (n_regions < needed_with_corridors)
-        return;
+    if (n_regions < needed_with_corridors) {
+        /* Q-021-07: a DRAWN count below the feasible minimum is lifted to
+         * it, with no extra draw, so every seed generates; a PINNED count
+         * (om_world_new(n, seed), n > 0) below the minimum still fails
+         * cleanly, keeping the tested "count too small" boundary cases. */
+        if (w->n_regions > 0)
+            return;
+        n_regions = needed_with_corridors;
+    }
     uint32_t gen_twin_slack = n_regions - needed_with_corridors;
 
     if (w->n_regions == 0) {
