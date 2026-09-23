@@ -3,7 +3,7 @@ extends SceneTree
 const FIXTURE_PATH := "res://scenes/mockups/layers/fixtures/map_seed11.json"
 const MOCKUP_SCENE := "res://scenes/mockups/layers/layers_mockup.tscn"
 const PLANTS := ["instant-transfer", "blocked-ignored", "cross-layer-full-range",
-	"ring-colour-same", "no-dimming", "wrong-height"]
+	"ring-colour-same", "no-dimming", "wrong-height", "seed-ignored"]
 
 var _failures := 0
 var _root: Node

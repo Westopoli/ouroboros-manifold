@@ -28,6 +28,7 @@ var _seed: int = 11
 var _rng := RandomNumberGenerator.new()
 var _tick_usec_total: int = 0
 var _tick_count: int = 0
+var _blocked_cells: Dictionary = {}
 
 
 func load_fixture(path: String) -> void:
@@ -37,8 +38,12 @@ func load_fixture(path: String) -> void:
 
 
 func generate(seed_n: int) -> void:
-	_seed = seed_n
-	_rng.seed = seed_n
+	# See also: qa/README seed-ignored plant — a fault site collapsing every
+	# requested seed onto 11, so the seed-perturbation pixel oracle has a
+	# positive control.
+	var s: int = 11 if QaPlants.is_active("seed-ignored") else seed_n
+	_seed = s
+	_rng.seed = s
 	tick = 0
 	units.clear()
 
@@ -58,10 +63,38 @@ func generate(seed_n: int) -> void:
 	var vm_pos: Array = vm.get("pos", [3200.0, 700.0])
 	vantage_pos = Vector2(vm_pos[0], vm_pos[1])
 
+	_build_blocked_cells(s)
+
 	for f in _fixture.get("friendlies", []):
 		_add_unit(f, 0)
 	for e in _fixture.get("enemies", []):
 		_add_unit(e, 1)
+
+
+func _cell_key(c: Vector2) -> String:
+	return "%d:%d" % [int(c.x), int(c.y)]
+
+
+func _build_blocked_cells(seed_n: int) -> void:
+	_blocked_cells.clear()
+	var center_cell := _cell_center(blocked_center)
+	var reach: int = int(ceil(blocked_radius / CELL_WU)) + 1
+	var base_cx: int = int(floor(blocked_center.x / CELL_WU))
+	var base_cz: int = int(floor(blocked_center.y / CELL_WU))
+	for dx in range(-reach, reach + 1):
+		for dz in range(-reach, reach + 1):
+			var cx: int = base_cx + dx
+			var cz: int = base_cz + dz
+			var cell := Vector2(cx * CELL_WU + CELL_WU * 0.5, cz * CELL_WU + CELL_WU * 0.5)
+			if cell.distance_to(center_cell) > blocked_radius:
+				continue
+			var blocked: bool
+			if cell == center_cell:
+				blocked = true
+			else:
+				blocked = posmod(cx + cz + seed_n, 2) == 0
+			if blocked:
+				_blocked_cells[_cell_key(cell)] = true
 
 
 func _jitter() -> Vector2:
@@ -73,7 +106,7 @@ func _jitter() -> Vector2:
 func _add_unit(data: Dictionary, faction: int) -> void:
 	var uid := int(data.get("uid", 0))
 	var raw_pos: Array = data.get("pos", [0.0, 0.0])
-	var pos := Vector2(raw_pos[0], raw_pos[1]) + (_jitter() if faction == 0 else Vector2.ZERO)
+	var pos := Vector2(raw_pos[0], raw_pos[1]) + _jitter()
 	var type_name: String = data.get("type", "fast")
 	units[uid] = {
 		"uid": uid,
@@ -95,12 +128,20 @@ func _cell_center(pos: Vector2) -> Vector2:
 	return Vector2(cx, cz)
 
 
+func blocked_cell_centers() -> Array:
+	var out: Array = []
+	for key in _blocked_cells.keys():
+		var parts: PackedStringArray = String(key).split(":")
+		out.append(Vector2(float(parts[0]), float(parts[1])))
+	return out
+
+
 func is_blocked(layer: int, pos: Vector2) -> bool:
 	if QaPlants.is_active("blocked-ignored"):
 		return false
 	if layer != 2:
 		return false
-	return _cell_center(pos).distance_to(_cell_center(blocked_center)) <= blocked_radius
+	return _blocked_cells.has(_cell_key(_cell_center(pos)))
 
 
 func transfer(uid: int, layer: int) -> void:
