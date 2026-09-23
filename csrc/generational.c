@@ -120,22 +120,12 @@
 #define GEN_CANARY_C 63
 #define GEN_CANARY_MAGIC 24242
 
-/* ---- ALG-46/47/49 constants named in docs/bible/algorithms.md but not
- * captured by scripts/specfactory/alg_constants.py --emit (the prose ties a
- * name to its value inside a formula or a trailing "with 0.8 and 0.1" clause
- * that the extractor's patterns do not match) -- so they are missing from
- * csrc/om_constants.h. Per the two-day-push gate rule, never inlined: defined
- * here instead of csrc/om_constants.h (header edits are out of scope for this
- * piece; proposed as the real fix in the piece report). */
-#define GEN_SELECTOR_MAX_ROTATION_PROB 0.8   /* ALG-46 */
-#define GEN_SELECTOR_MIN_ROTATION_PROB 0.1   /* ALG-46 */
-#define GEN_SELECTOR_DECAY_BASE 0.75         /* Q-057-01 proposed decay base */
-#define GEN_POOL_PREVIOUS_PROB 0.70          /* ALG-47 */
-#define GEN_POOL_NEMESIS_PROB 0.20           /* ALG-47 (unrelated = remainder) */
-#define GEN_SCORE_GAP_WEIGHT 0.6             /* ALG-47 */
-#define GEN_SCORE_DENSITY_WEIGHT 0.4         /* ALG-47 */
-#define GEN_SCORE_DENSITY_PEAK 5             /* ALG-47 "min(living_nearby, 5)/5" */
-#define GEN_NAME_REUSE_COOLDOWN_TICKS_MAIN 4500 /* ALG-49 "4500 for a main character" */
+/* ALG-46/47/49's other named constants (max/min rotation prob, pool draw
+ * weights, score weights and cap, the main-character name-reuse cooldown)
+ * now live in csrc/om_constants.h (constants(F3e)). Q-057-01's decay base is
+ * a proposed answer to an open ambiguity flag, not a settled ALG constant,
+ * so it stays local here. */
+#define GEN_SELECTOR_DECAY_BASE 0.75
 
 /* om_character_record.rank values (S-060 R-060-06). */
 #define GEN_RANK_SUPREME_COMMANDER 0
@@ -851,7 +841,7 @@ uint32_t om_character_lineage_id(const om_world *w, uint32_t character) {
 uint32_t om_character_name_reuse_cooldown(const om_world *w, uint32_t character_id) {
     gen_touch_world(w);
     gen_character *c = gen_char_find(character_id);
-    return (c && c->is_main_character) ? GEN_NAME_REUSE_COOLDOWN_TICKS_MAIN : OM_NAME_REUSE_COOLDOWN_TICKS;
+    return (c && c->is_main_character) ? OM_NAME_REUSE_COOLDOWN_TICKS_MAIN : OM_NAME_REUSE_COOLDOWN_TICKS;
 }
 
 void om_character_selector_confirm_commander(om_world *w, uint32_t character_id) {
@@ -1327,7 +1317,7 @@ double om_selector_base_rotation_prob(const om_world *w, double delta) {
     double t = delta / (double)OM_SELECTOR_DELTA_SAFE;
     if (t > 1.0) t = 1.0;
     if (t < 0.0) t = 0.0;
-    return GEN_SELECTOR_MAX_ROTATION_PROB + t * (GEN_SELECTOR_MIN_ROTATION_PROB - GEN_SELECTOR_MAX_ROTATION_PROB);
+    return OM_SELECTOR_MAX_ROTATION_PROB + t * (OM_SELECTOR_MIN_ROTATION_PROB - OM_SELECTOR_MAX_ROTATION_PROB);
 }
 
 void om_selector_clear_pools(om_world *w) {
@@ -1400,18 +1390,18 @@ int om_selector_resolve_fallback_pool(const om_world *w, int initial_pool) {
 
 int om_selector_roll_pool(const om_world *w, double draw) {
     gen_touch_world(w);
-    if (draw < GEN_POOL_PREVIOUS_PROB) return GEN_POOL_PREVIOUS;
-    if (draw < GEN_POOL_PREVIOUS_PROB + GEN_POOL_NEMESIS_PROB) return GEN_POOL_NEMESIS;
+    if (draw < OM_POOL_PREVIOUS_PROB) return GEN_POOL_PREVIOUS;
+    if (draw < OM_POOL_PREVIOUS_PROB + OM_POOL_NEMESIS_PROB) return GEN_POOL_NEMESIS;
     return GEN_POOL_UNRELATED;
 }
 
 double om_selector_score_previous_lineage(const om_world *w, uint32_t chapters_ago, uint32_t living_nearby) {
     gen_touch_world(w);
     uint32_t gap_n = chapters_ago < (uint32_t)OM_SELECTOR_GAP_BONUS_PEAK ? chapters_ago : (uint32_t)OM_SELECTOR_GAP_BONUS_PEAK;
-    uint32_t density_n = living_nearby < (uint32_t)GEN_SCORE_DENSITY_PEAK ? living_nearby : (uint32_t)GEN_SCORE_DENSITY_PEAK;
+    uint32_t density_n = living_nearby < (uint32_t)OM_SCORE_DENSITY_PEAK ? living_nearby : (uint32_t)OM_SCORE_DENSITY_PEAK;
     double gap = (double)gap_n / (double)OM_SELECTOR_GAP_BONUS_PEAK;
-    double density = (double)density_n / (double)GEN_SCORE_DENSITY_PEAK;
-    return GEN_SCORE_GAP_WEIGHT * gap + GEN_SCORE_DENSITY_WEIGHT * density;
+    double density = (double)density_n / (double)OM_SCORE_DENSITY_PEAK;
+    return OM_SCORE_GAP_WEIGHT * gap + OM_SCORE_DENSITY_WEIGHT * density;
 }
 
 uint32_t om_time_jump_choose_length(om_world *w, uint32_t requested) {
