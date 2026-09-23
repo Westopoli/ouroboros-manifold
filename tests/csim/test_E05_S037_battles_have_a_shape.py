@@ -586,14 +586,15 @@ def test_R_037_07_attacker_s_committed_budget_spent(lib, world_factory):
     # The final remaining-budget check below is not that same fact restated: step
     # 3c (telegraph maturation) runs before 3d (decisions) in the same tick, so
     # this breakthrough (net 48.0) crushes region 1's military to 0 before 3d
-    # runs, and the attacker's still-Conqueror decision loop immediately
-    # re-declares a second telegraph against the now-defenseless region this
-    # same tick (commit 21.0 = the remaining 30.0 budget's own 0.70 fraction,
-    # deterministic under this fixture's seed, verified directly) -- correct
-    # engine behavior (the same faction re-evaluating every tick, no memory of
-    # "already attacking this target," per bible S-032), not part of what this
-    # rule tests. 30.0 - 21.0 = 9.0.
-    assert lib.om_faction_budget(w_tele, 0) == pytest.approx(9.0, abs=1e-6)
+    # runs. Under the final C3 ruling (DECISIONS.md Seventh round: "at most one
+    # resolved attack per attacker-target pair [per tick]... step 3d does not
+    # re-declare against a target whose attack this faction already resolved
+    # this tick"), the attacker's still-Conqueror decision loop does not
+    # re-declare against the now-defenseless region this same tick -- the
+    # follow-up (if any) waits for the next tick, which this fixture does not
+    # run. So the only spend this tick is the one committed budget already
+    # proven above: 100.0 - 70.0 = 30.0, unchanged by any second declaration.
+    assert lib.om_faction_budget(w_tele, 0) == pytest.approx(30.0, abs=1e-6)
 
 
 def test_R_037_08_attacker_s_own_regions_fields(lib, world_factory):

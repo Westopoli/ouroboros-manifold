@@ -77,6 +77,9 @@ csrc/agent.c:0.20:5
 csrc/agent.c:0.05:3
 csrc/agent.c:20.0:1
 csrc/agent.c:20.0:2
+csrc/faction.c:100.0:1
+csrc/faction.c:100.0:2
+csrc/faction.c:100.0:3
 csrc/faction.c:9:1
 csrc/faction.c:9:2
 csrc/faction.c:6.0:1

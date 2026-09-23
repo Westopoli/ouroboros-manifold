@@ -459,7 +459,17 @@ void om_step_resolve(om_world *w) {
         if (!conquered) continue;
 
         double garrison = r->commit * 0.65;
-        target->military += garrison;
+#ifdef OM_DEBUG_INJECT
+        if (w->inject == OM_BUG_GARRISON_BEFORE_DAMAGE) {
+            /* Fault: garrison added before damage, so the attack's own
+             * damage (r->d_military, already applied once above to reach
+             * the current post-damage military) reduces the garrison too. */
+            target->military = fmax(0.0, target->military + garrison + r->d_military);
+        } else
+#endif
+        {
+            target->military += garrison;
+        }
         /* The economy floor (8.0) is bypassed for the conquest disruption
          * itself, even though it already applied to the base ALG-21 damage. */
         target->economy -= 5.0;

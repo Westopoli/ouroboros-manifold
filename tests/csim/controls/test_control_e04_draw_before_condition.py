@@ -10,10 +10,26 @@ test_R_027_03_one_rng_draw_r_made, which both watch `om_rng_forced_remaining`
 to prove a draw is or is not consumed. "Border Incursion" fires
 unconditionally on tick 1 and spawns "Regional Revolt" (condition: tension
 above 40.0) due tick 4; tension is held at 20.0 throughout, so the condition
-fails at resolution. A clean build (R-027-02) drops it without a probability
-roll -- zero RNG draws consumed. Against the debug build with
-OM_BUG_DRAW_BEFORE_CONDITION injected, asserts the detector now trips: the
-forced sentinel draw for tick 4 is consumed even though the condition fails.
+fails at resolution.
+
+Original version of this control forced exactly one sentinel draw for tick 4
+and expected it to survive untouched on a clean build. Dead as written
+(control_liveness: both the as-written and neutralized runs passed): "Regional
+Revolt" is itself a standalone `OM_TRIG_PROBABILITY` trigger
+(evt_evaluate_triggers, csrc/events.c), independent of the due-queue spawn
+this control targets, and it draws one RNG value for region 0 on every
+non-grace tick regardless of the queued candidate's own condition -- so the
+lone sentinel was always consumed at tick 4 by that unrelated roll, clean or
+not, and the assertion could never tell the two builds apart. Confirmed by
+direct instrumentation: forcing two sentinels before tick 4 and reading
+`om_rng_forced_remaining` after leaves 1 remaining on a clean build (the
+standalone trigger takes the first; the due-queue candidate's condition fails
+before its own probability roll, so the second is never drawn) and 0 on the
+debug build with OM_BUG_DRAW_BEFORE_CONDITION injected (the candidate's own
+roll is now made before its condition is checked, consuming the first
+sentinel for a result it discards; the standalone trigger still takes the
+second). Two sentinels isolate the queued candidate's own draw-before-check
+fault from the unrelated per-tick standalone roll that was masking it.
 """
 from conftest import (
     OMBugE04,
@@ -53,20 +69,22 @@ def test_control_draw_before_condition_trips_the_detector(dbg, dbg_world_factory
     for _ in range(2):
         dbg.om_world_step(w)  # ticks 2 and 3
 
-    # One sentinel draw forced for tick 4. A clean build never touches it:
-    # the condition check (R-027-02) fails before any probability roll would
-    # be made, so no RNG draw is consumed.
-    force_draws(dbg, w, [0.99])
-    assert dbg.om_rng_forced_remaining(w) == 1, (
-        "the sentinel draw for tick 4 was not queued as forced RNG input -- "
-        "this control's own setup is broken, not the detector"
+    # Two sentinels forced for tick 4: region 0's standalone "Regional
+    # Revolt" OM_TRIG_PROBABILITY roll (evt_evaluate_triggers) always takes
+    # one, clean or not -- the second is the one that isolates the due-queue
+    # candidate's own draw-before-check fault (see module docstring).
+    force_draws(dbg, w, [0.99, 0.98])
+    assert dbg.om_rng_forced_remaining(w) == 2, (
+        "the two sentinel draws for tick 4 were not queued as forced RNG "
+        "input -- this control's own setup is broken, not the detector"
     )
 
     dbg.om_world_step(w)  # tick 4: condition check should fail before any roll
 
     assert dbg.om_rng_forced_remaining(w) == 0, (
-        "OM_BUG_DRAW_BEFORE_CONDITION injected but the sentinel draw for tick "
-        "4 is still unconsumed -- a probability roll was not made ahead of "
-        "the condition check -- the draw-before-condition detector did not "
-        "trip"
+        "OM_BUG_DRAW_BEFORE_CONDITION injected but only the standalone "
+        "Regional Revolt trigger's own roll consumed a sentinel (1 left, same "
+        "as a clean build) -- the due-queue candidate's probability roll was "
+        "not made ahead of its condition check -- the draw-before-condition "
+        "detector did not trip"
     )

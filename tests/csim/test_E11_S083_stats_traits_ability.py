@@ -76,8 +76,10 @@ def test_R_083_03_that_unit_takes_10_percent(lib, world_factory):
     friendly_out = lib.om_unit_spawn(w, OMUnitType.VANGUARD, 0, 350.0, 0.0, 0)
     lib.om_unit_set_hp(w, friendly_out, 400.0)
 
-    # Enemy attacker
-    enemy = lib.om_unit_spawn(w, OMUnitType.RAIDER, 1, 100.0, 50.0, 0)
+    # Enemy attacker: same category (Line) as the Vanguard targets so the
+    # R-081-01 category multiplier (Strike->Line 0.75x, see ALG-60) does not
+    # confound the aura reduction this rule is testing.
+    enemy = lib.om_unit_spawn(w, OMUnitType.VANGUARD, 1, 100.0, 50.0, 0)
 
     # Advance 1 tick: Warden aura repairs friendly_in by 0.075 HP, friendly_out by 0.0
     lib.om_tactical_step(w)

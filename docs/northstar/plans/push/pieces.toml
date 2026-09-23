@@ -410,7 +410,7 @@ acceptance = [
     "tests/test_load_game.gd",
 ]
 depends_on = ["T2c", "T1"]
-status = "pending"
+status = { state = "attached", attach_sha = "36535f1" }
 tests_pending = true
 size_estimate = "Godot save-slot layer over T2c, rebind to T1"
 
@@ -500,13 +500,13 @@ owns = []
 owns_glob = ["scenes/mockups/chronicle/**", "docs/northstar/research/mockups/chronicle/**"]
 acceptance = []
 depends_on = []
-status = "pending"
+status = { state = "attached", attach_sha = "6abaff8" }
 [[piece]]
 id = "C8"
 manager = "M3"
 wave = 3
 owns = ["autoload/scene_router.gd", "autoload/c_bridge.gd"]
-owns_glob = ["scenes/main_menu/**", "scenes/galaxy/**", "scenes/mission_briefing/**", "scenes/debrief/**", "scenes/tactical_c/**", "scenes/world/chronicle_*"]
+owns_glob = ["scenes/main_menu/**", "scenes/galaxy/**", "scenes/mission_briefing/**", "scenes/debrief/**", "scenes/tactical_c/**", "scenes/world/chronicle_*", "scenes/loading_screen/**"]
 acceptance = [
     "tests/qa/desktop/test_flow_spine.py",
 ]
@@ -515,3 +515,12 @@ status = "pending"
 tests_pending = true
 size_estimate = "wires scene_router's SCENES dict (no \"galaxy\" entry today) through main_menu -> galaxy -> mission_briefing -> tactical_c -> debrief -> chronicle -> galaxy; adds NewGame/Mission/Deploy/EndMission/Continue/Return controls, none of which exist yet"
 
+[[piece]]
+id = "MK-harness"
+manager = "mockup"
+wave = 3
+owns = ["scripts/mockup_qa.sh", "scripts/mockup_verify.sh"]
+owns_glob = ["scenes/mockups/_shared/**", "scenes/mockups/landscape/qa/**"]
+acceptance = []
+depends_on = []
+status = "pending"

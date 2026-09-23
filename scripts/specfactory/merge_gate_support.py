@@ -32,6 +32,10 @@ DEFAULT_IGNORES = (".swarm/**", ".claude/**", "logs/**",
     # manager-mode artefacts that ride along with a leaf commit: the adapter
     # test and the per-piece spec are M0-reviewed documents, never a footprint
     "tests/push/**", "docs/northstar/plans/push/specs/**",
+    # manager-mode's per-clone config (manager mode, not the leaf) -- a leaf
+    # commit sometimes sweeps this in from the shared worktree; never a piece's
+    # own footprint. See also: B10-1 merge reject 2026-09-22, owns ['csrc/...']
+    ".claude-swarm.toml",
 )
 # A C return type: any run of qualifier/type words (const, static, unsigned,
 # a `_t` typedef, an om_-prefixed struct/enum name, ...) plus optional
