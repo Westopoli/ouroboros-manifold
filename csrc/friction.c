@@ -97,7 +97,7 @@ void om_step_friction(om_world *w) {
 
         double tension_before = r->tension;
         double economy_before = r->economy;
-        double tension_after = fmin(100.0, tension_before + sum_tension);
+        double tension_after = fmin(OM_FIELD_MAX, tension_before + sum_tension);
         double economy_after = fmax(OM_ECONOMY_FLOOR, economy_before - sum_economy);
         r->tension = tension_after;
         r->economy = economy_after;
@@ -155,7 +155,8 @@ void om_step_admin_revolts(om_world *w) {
         if (!triggered) continue;
 
         double l_draw = om_rng_draw(w);
-        int32_t chain_length = 3 + (int32_t)floor(l_draw * 6.0);
+        int32_t chain_length = OM_ADMIN_REVOLT_CHAIN_MIN
+            + (int32_t)floor(l_draw * (OM_ADMIN_REVOLT_CHAIN_MAX - OM_ADMIN_REVOLT_CHAIN_MIN + 1));
 
         if (w->event_queue_n < sizeof(w->event_queue) / sizeof(w->event_queue[0])) {
             om_queued_event *ev = &w->event_queue[w->event_queue_n++];
