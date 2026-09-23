@@ -207,7 +207,7 @@ acceptance = [
     "tests/csim/test_E11_wiring.py",
 ]
 depends_on = ["freeze"]
-status = { state = "attached", attach_sha = "" }
+status = "pending"
 size_estimate = "1128 py lines, 45 tests (E-11 minus S-084/S-085/S-087, held for B10b: need tactical_move.c)"
 
 [[piece]]
