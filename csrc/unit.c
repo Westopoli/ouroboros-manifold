@@ -36,16 +36,18 @@
 #include "om_internal.h"
 #include "om_constants.h"
 #include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
 
-/* ---- B10-1: E-11 roster table, category multiplier, stationary combat ----
- * All unit/tactical state is private to this file (om_world/om_internal.h
- * carry none -- see the PRIVATE LAYOUT block above and the B10 spec's
- * architecture decision). A single static registry tracks one "current"
- * om_world*; every entry point rebinds (clears) it when the caller's world
- * pointer differs from the bound owner, which is also the defense against
- * a freed om_world's malloc address being reused by a later world_factory
- * world in the same test session. */
+/* ---- B10-1/B10-2: E-11 roster table, category multiplier, stationary
+ * combat, traits/ability contract, Warden aura ----
+ * All unit/tactical state lives in w->tactical_state (om_tac_state below),
+ * heap-allocated per om_world and freed by om_world_free through the
+ * registered tactical_state_free hook (csrc/region.c) -- no file-static
+ * state keyed by om_world* identity, so a freed test world's malloc
+ * address being reused by a later world can never alias another world's
+ * units (see leaf-01-Q1.md for the ABA hazard this structurally
+ * eliminates). */
 
 #define OM_MAX_UNITS 4096
 #define OM_MAX_CUSTOM_TYPES 64
@@ -167,33 +169,40 @@ typedef struct {
     om_unit_type_profile profile;
 } om_custom_type_row;
 
-static struct {
-    const om_world     *owner;
+typedef struct {
     om_unit_row         units[OM_MAX_UNITS];
     uint32_t            n_units;
     uint32_t            next_unit_id;
     om_custom_type_row  custom_types[OM_MAX_CUSTOM_TYPES];
     uint32_t            n_custom_types;
-    /* Set once om_tactical_run/run_until_eliminated has ticked this bound
-     * world's battle at least once since the last (re)bind. A world_factory
-     * test world is freed at test teardown and the next om_world_new can be
-     * handed the exact same malloc address (glibc tcache reuse for a fixed
-     * struct size in a tight alloc/free loop is not a corner case here --
-     * it reproduces every run), so "owner == w" alone cannot tell a still-
-     * live world apart from a new one wearing a dead one's address. A test
-     * that spawns units for a fresh scenario always does so before ever
-     * ticking combat; one that spawns MORE units into a battle already
-     * ticked is, in every fenced B10-1 case, doing so only right after an
-     * explicit om_tactical_reset (which clears this flag). So an
-     * om_unit_spawn* call that finds this flag still set is never a
-     * legitimate mid-battle reinforcement in this increment's scope -- it
-     * is either the same stale world's registry (harmless to clear, the
-     * battle already resolved) or a same-address-new-world collision
-     * (must be cleared). See leaf-01-Q1.md for the header-level fix this
-     * stands in for (a generation counter on om_world) that a future
-     * increment needing real mid-battle reinforcement will need instead. */
-    int                 battle_ticked;
-} g_unit_registry;
+} om_tac_state;
+
+static void om_tac_state_free(void *p) {
+    free(p);
+}
+
+/* Lazily calloc's the per-world tactical state into w->tactical_state on
+ * first use and registers the free hook om_world_free calls; every other
+ * call returns the existing pointer. Needs a non-const om_world* since it
+ * writes w->tactical_state -- om_unit_get_hp (const om_world*) goes
+ * through om_tac_ro instead, which never allocates. */
+static om_tac_state *om_tac(om_world *w) {
+    om_tac_state *st = (om_tac_state *)w->tactical_state;
+    if (!st) {
+        st = (om_tac_state *)calloc(1, sizeof(om_tac_state));
+        st->next_unit_id = 1;
+        w->tactical_state = st;
+        w->tactical_state_free = om_tac_state_free;
+    }
+    return st;
+}
+
+/* Read-only: returns the existing tactical state, or NULL if none has been
+ * allocated yet -- never allocates, so it is safe to call through a const
+ * om_world*. */
+static om_tac_state *om_tac_ro(const om_world *w) {
+    return (om_tac_state *)w->tactical_state;
+}
 
 static const om_unit_type_profile OM_BUILTIN_PROFILES[OM_UNIT_TYPE_COUNT] = {
     [OM_UT_RAIDER] = {
@@ -240,37 +249,12 @@ static const om_unit_type_profile OM_BUILTIN_PROFILES[OM_UNIT_TYPE_COUNT] = {
     },
 };
 
-/* registry.owner != w: a new om_world (possibly a freed one's reused malloc
- * address) -- clear every row and rebind rather than trust stale state. */
-static void om_registry_bind(const om_world *w) {
-    if (g_unit_registry.owner != w) {
-        memset(&g_unit_registry, 0, sizeof(g_unit_registry));
-        g_unit_registry.owner = w;
-        g_unit_registry.next_unit_id = 1;
-    }
-}
-
-/* See the battle_ticked comment on the registry struct: a spawn that lands
- * after this bound registry's battle has already been ticked at least once
- * is always the start of a new scenario in this increment's scope, whether
- * "w" is the same still-live world reused for a second fight or a brand
- * new world that happens to share a freed one's address. Clear units and
- * custom types alike, exactly like an explicit om_tactical_reset, and keep
- * the same owner/id-counter reset semantics. */
-static void om_registry_start_new_battle_if_stale(const om_world *w) {
-    if (g_unit_registry.battle_ticked) {
-        memset(&g_unit_registry, 0, sizeof(g_unit_registry));
-        g_unit_registry.owner = w;
-        g_unit_registry.next_unit_id = 1;
-    }
-}
-
-static om_unit_row *om_registry_find(uint32_t unit_id) {
+static om_unit_row *om_registry_find_in(om_tac_state *st, uint32_t unit_id) {
     uint32_t i;
-    if (unit_id == 0) return NULL;
-    for (i = 0; i < g_unit_registry.n_units; i++) {
-        if (g_unit_registry.units[i].in_use && g_unit_registry.units[i].unit_id == unit_id) {
-            return &g_unit_registry.units[i];
+    if (!st || unit_id == 0) return NULL;
+    for (i = 0; i < st->n_units; i++) {
+        if (st->units[i].in_use && st->units[i].unit_id == unit_id) {
+            return &st->units[i];
         }
     }
     return NULL;
@@ -282,16 +266,17 @@ static const om_unit_type_profile *om_get_builtin_profile(int unit_type) {
 }
 
 /* Builtin roster entries are compile-time constants (no per-world state);
- * only a custom registration needs the owner-bound registry. */
-static const om_unit_type_profile *om_get_profile(const om_world *w, int unit_type) {
+ * only a custom registration needs the per-world tactical state. */
+static const om_unit_type_profile *om_get_profile(om_world *w, int unit_type) {
     const om_unit_type_profile *builtin = om_get_builtin_profile(unit_type);
+    om_tac_state *st;
     uint32_t i;
     if (builtin) return builtin;
-    om_registry_bind(w);
-    for (i = 0; i < g_unit_registry.n_custom_types; i++) {
-        if (g_unit_registry.custom_types[i].in_use
-            && g_unit_registry.custom_types[i].type_id == (uint32_t)unit_type) {
-            return &g_unit_registry.custom_types[i].profile;
+    st = om_tac(w);
+    for (i = 0; i < st->n_custom_types; i++) {
+        if (st->custom_types[i].in_use
+            && st->custom_types[i].type_id == (uint32_t)unit_type) {
+            return &st->custom_types[i].profile;
         }
     }
     return NULL;
@@ -301,13 +286,12 @@ static uint32_t om_unit_spawn_internal(om_world *w, int unit_type, int32_t facti
                                         double x, double y, uint32_t layer) {
     const om_unit_type_profile *prof;
     om_unit_row *row;
-    om_registry_bind(w);
-    om_registry_start_new_battle_if_stale(w);
-    if (g_unit_registry.n_units >= OM_MAX_UNITS) return 0;
+    om_tac_state *st = om_tac(w);
+    if (st->n_units >= OM_MAX_UNITS) return 0;
     prof = om_get_profile(w, unit_type);
-    row = &g_unit_registry.units[g_unit_registry.n_units++];
+    row = &st->units[st->n_units++];
     memset(row, 0, sizeof(*row));
-    row->unit_id = g_unit_registry.next_unit_id++;
+    row->unit_id = st->next_unit_id++;
     row->in_use = 1;
     row->unit_type = unit_type;
     row->faction_id = faction_id;
@@ -346,12 +330,12 @@ static double om_tactical_dist2(const om_unit_row *a, const om_unit_row *b) {
  * resolve on category/HP math alone, so target selection is not cut off
  * by attack_range here. No movement/pathing either way -- that is B12's
  * tactical_move.c. */
-static om_unit_row *om_tactical_pick_target(const om_unit_row *attacker) {
+static om_unit_row *om_tactical_pick_target(om_tac_state *st, const om_unit_row *attacker) {
     om_unit_row *best = NULL;
     double best_d2 = 0.0;
     uint32_t j;
-    for (j = 0; j < g_unit_registry.n_units; j++) {
-        om_unit_row *cand = &g_unit_registry.units[j];
+    for (j = 0; j < st->n_units; j++) {
+        om_unit_row *cand = &st->units[j];
         double d2;
         if (!cand->in_use || cand->hp <= 0.0) continue;
         if (cand->faction_id == attacker->faction_id) continue;
@@ -384,31 +368,32 @@ static void om_tactical_apply_hit(om_world *w, om_unit_row *attacker, om_unit_ro
  * base_damage x category_multiplier. Fixed spawn-order iteration every
  * tick (determinism contract). */
 static void om_tactical_tick_once(om_world *w) {
+    om_tac_state *st = om_tac(w);
     uint32_t i;
-    for (i = 0; i < g_unit_registry.n_units; i++) {
-        om_unit_row *u = &g_unit_registry.units[i];
+    for (i = 0; i < st->n_units; i++) {
+        om_unit_row *u = &st->units[i];
         om_unit_row *target = NULL;
         if (!u->in_use || u->hp <= 0.0) continue;
         if (u->cooldown > 0.0) { u->cooldown -= 1.0; continue; }
         if (u->target_id != 0) {
-            om_unit_row *explicit_target = om_registry_find(u->target_id);
+            om_unit_row *explicit_target = om_registry_find_in(st, u->target_id);
             if (explicit_target && explicit_target->hp > 0.0
                 && explicit_target->faction_id != u->faction_id) {
                 target = explicit_target;
             }
         }
-        if (!target) target = om_tactical_pick_target(u);
+        if (!target) target = om_tactical_pick_target(st, u);
         if (!target) continue;
         om_tactical_apply_hit(w, u, target);
     }
 }
 
-static int om_tactical_multiple_factions_alive(void) {
+static int om_tactical_multiple_factions_alive(const om_tac_state *st) {
     int32_t first_faction = 0;
     int have_first = 0;
     uint32_t i;
-    for (i = 0; i < g_unit_registry.n_units; i++) {
-        om_unit_row *u = &g_unit_registry.units[i];
+    for (i = 0; i < st->n_units; i++) {
+        const om_unit_row *u = &st->units[i];
         if (!u->in_use || u->hp <= 0.0) continue;
         if (!have_first) { first_faction = u->faction_id; have_first = 1; continue; }
         if (u->faction_id != first_faction) return 1;
@@ -416,11 +401,54 @@ static int om_tactical_multiple_factions_alive(void) {
     return 0;
 }
 
-/* ---- end B10-1 registry ---- */
+/* R-083-03/Q-084-01: n Wardens in range give diminishing reduction (first
+ * 0.10, each additional Warden half the previous one's contribution --
+ * equivalently 1 - (1 - OM_WARDEN_AURA_DAMAGE_REDUCTION)^n), computed by
+ * repeated multiplication rather than a libm pow() call (determinism
+ * contract, scripts/specfactory/libm_lint.py bans pow()). */
+static double om_warden_aura_reduction_for(const om_tac_state *st, const om_unit_row *target) {
+    uint32_t j;
+    int n = 0;
+    double undamaged_factor;
+    for (j = 0; j < st->n_units; j++) {
+        const om_unit_row *cand = &st->units[j];
+        if (!cand->in_use || cand->hp <= 0.0) continue;
+        if (cand->unit_type != OM_UT_WARDEN) continue;
+        if (cand->faction_id != target->faction_id) continue;
+        if (om_tactical_dist2(target, cand) <= OM_WARDEN_AURA_RADIUS * OM_WARDEN_AURA_RADIUS) n++;
+    }
+    if (n <= 0) return 0.0;
+    undamaged_factor = 1.0;
+    while (n-- > 0) undamaged_factor *= (1.0 - OM_WARDEN_AURA_DAMAGE_REDUCTION);
+    return 1.0 - undamaged_factor;
+}
+
+/* R-083-03: healing stacks linearly, unlike the damage reduction above. */
+static void om_tactical_apply_aura_regen(om_world *w) {
+    om_tac_state *st = om_tac(w);
+    uint32_t i, j;
+    for (i = 0; i < st->n_units; i++) {
+        om_unit_row *u = &st->units[i];
+        int n_wardens = 0;
+        if (!u->in_use || u->hp <= 0.0) continue;
+        for (j = 0; j < st->n_units; j++) {
+            const om_unit_row *cand = &st->units[j];
+            if (!cand->in_use || cand->hp <= 0.0) continue;
+            if (cand->unit_type != OM_UT_WARDEN) continue;
+            if (cand->faction_id != u->faction_id) continue;
+            if (om_tactical_dist2(u, cand) <= OM_WARDEN_AURA_RADIUS * OM_WARDEN_AURA_RADIUS) n_wardens++;
+        }
+        if (n_wardens > 0) {
+            u->hp += OM_WARDEN_AURA_REPAIR_RATE * (double)n_wardens;
+            if (u->hp > u->max_hp) u->hp = u->max_hp;
+        }
+    }
+}
+
+/* ---- end B10-1/B10-2 tactical state ---- */
 
 uint64_t om_tactical_step(om_world *w) {
-    /* STUB */
-    (void)w;
+    om_tactical_apply_aura_regen(w);
     return 0;
 }
 
@@ -438,10 +466,10 @@ int om_command_attack_move(om_world *w, const uint32_t *unit_ids, uint32_t n_uni
 }
 
 int om_command_attack_target(om_world *w, const uint32_t *unit_ids, uint32_t n_units, uint32_t target_unit) {
+    om_tac_state *st = om_tac(w);
     uint32_t i;
-    om_registry_bind(w);
     for (i = 0; i < n_units; i++) {
-        om_unit_row *u = om_registry_find(unit_ids[i]);
+        om_unit_row *u = om_registry_find_in(st, unit_ids[i]);
         if (u) u->target_id = target_unit;
     }
     return 0;
@@ -460,21 +488,21 @@ int om_era_elevation_damage_bonus_enabled(om_world *w) {
 }
 
 int om_roster_register_custom_unit(om_world *w, uint32_t type_id, int category, const char *role, double max_hp, double base_damage, double attack_interval, double attack_range, double speed, double sensor_radius, double layer_transition_time, double aoe_radius, int ability_id) {
+    om_tac_state *st = om_tac(w);
     om_custom_type_row *row;
     uint32_t i;
     (void)role; (void)ability_id;
-    om_registry_bind(w);
     if (om_get_builtin_profile((int)type_id) != NULL) return -1;
     row = NULL;
-    for (i = 0; i < g_unit_registry.n_custom_types; i++) {
-        if (g_unit_registry.custom_types[i].in_use && g_unit_registry.custom_types[i].type_id == type_id) {
-            row = &g_unit_registry.custom_types[i];
+    for (i = 0; i < st->n_custom_types; i++) {
+        if (st->custom_types[i].in_use && st->custom_types[i].type_id == type_id) {
+            row = &st->custom_types[i];
             break;
         }
     }
     if (!row) {
-        if (g_unit_registry.n_custom_types >= OM_MAX_CUSTOM_TYPES) return -1;
-        row = &g_unit_registry.custom_types[g_unit_registry.n_custom_types++];
+        if (st->n_custom_types >= OM_MAX_CUSTOM_TYPES) return -1;
+        row = &st->custom_types[st->n_custom_types++];
         row->type_id = type_id;
         row->in_use = 1;
     }
@@ -509,27 +537,26 @@ void om_tactical_disable_abilities(om_world *w) {
 }
 
 void om_tactical_reset(om_world *w) {
-    memset(&g_unit_registry, 0, sizeof(g_unit_registry));
-    g_unit_registry.owner = w;
-    g_unit_registry.next_unit_id = 1;
+    om_tac_state *st = om_tac(w);
+    memset(st, 0, sizeof(*st));
+    st->next_unit_id = 1;
 }
 
 uint64_t om_tactical_run(om_world *w, uint64_t n_ticks) {
     uint64_t i;
-    om_registry_bind(w);
-    g_unit_registry.battle_ticked = 1;
     for (i = 0; i < n_ticks; i++) {
         om_tactical_tick_once(w);
+        om_tactical_step(w);
     }
     return n_ticks;
 }
 
 uint64_t om_tactical_run_until_eliminated(om_world *w) {
     uint64_t ticks = 0;
-    om_registry_bind(w);
-    g_unit_registry.battle_ticked = 1;
-    while (ticks < OM_TACTICAL_MAX_RUN_TICKS && om_tactical_multiple_factions_alive()) {
+    om_tac_state *st = om_tac(w);
+    while (ticks < OM_TACTICAL_MAX_RUN_TICKS && om_tactical_multiple_factions_alive(st)) {
         om_tactical_tick_once(w);
+        om_tactical_step(w);
         ticks++;
     }
     return ticks;
@@ -589,15 +616,14 @@ double om_unit_ability_cooldown(om_world *w, uint32_t unit_id) {
 }
 
 int om_unit_alive(om_world *w, uint32_t unit_id) {
-    om_unit_row *row;
-    om_registry_bind(w);
-    row = om_registry_find(unit_id);
+    om_unit_row *row = om_registry_find_in(om_tac(w), unit_id);
     return (row && row->hp > 0.0) ? 1 : 0;
 }
 
 void om_unit_apply_trait_modifier(om_world *w, uint32_t unit_id, int stat_field, double delta) {
-    /* STUB */
-    (void)w; (void)unit_id; (void)stat_field; (void)delta;
+    om_unit_row *row = om_registry_find_in(om_tac(w), unit_id);
+    if (!row) return;
+    if (stat_field == 0) row->hp += delta;
 }
 
 void om_unit_attack(om_world *w, uint32_t attacker, uint32_t target) {
@@ -612,14 +638,15 @@ double om_unit_damage_reduction(om_world *w, uint32_t unit_id) {
 }
 
 void om_unit_deal_damage(om_world *w, uint32_t p1, uint32_t p2, double p3) {
+    om_tac_state *st = om_tac(w);
     om_unit_row *attacker, *target;
-    double mult, dmg;
-    om_registry_bind(w);
-    attacker = om_registry_find(p1);
-    target = om_registry_find(p2);
+    double mult, dmg, reduction;
+    attacker = om_registry_find_in(st, p1);
+    target = om_registry_find_in(st, p2);
     if (!attacker || !target) return;
     mult = om_resolve_hit_multiplier(w, attacker->category, target);
-    dmg = p3 * mult;
+    reduction = om_warden_aura_reduction_for(st, target);
+    dmg = p3 * mult * (1.0 - reduction);
     target->hp -= dmg;
     if (target->hp < 0.0) target->hp = 0.0;
 }
@@ -636,9 +663,7 @@ void om_unit_fire_aoe_attack(om_world *w, uint32_t attacker_id, uint32_t target_
 }
 
 double om_unit_get_hp(const om_world *w, uint32_t unit) {
-    om_unit_row *row;
-    om_registry_bind(w);
-    row = om_registry_find(unit);
+    om_unit_row *row = om_registry_find_in(om_tac_ro(w), unit);
     return row ? row->hp : 0.0;
 }
 
@@ -683,9 +708,8 @@ double om_unit_position_y(om_world *w, uint32_t unit_id) {
 }
 
 uint32_t om_unit_profile_ability_count(om_world *w, int unit_type) {
-    /* STUB */
-    (void)w; (void)unit_type;
-    return 0;
+    const om_unit_type_profile *p = om_get_profile(w, unit_type);
+    return p ? 1u : 0u;
 }
 
 double om_unit_profile_aoe_radius(om_world *w, int unit_type) {
@@ -740,7 +764,10 @@ double om_unit_profile_speed(om_world *w, int unit_type) {
 }
 
 uint32_t om_unit_profile_trait_count(om_world *w, int unit_type) {
-    /* STUB */
+    /* Q-083-01 resolved: no trait exists in the launch roster's code today;
+     * every built-in (and custom) unit type reports 0 until a trait pool
+     * is built. om_unit_apply_trait_modifier below still works generically
+     * for any future trait. */
     (void)w; (void)unit_type;
     return 0;
 }
@@ -778,8 +805,8 @@ void om_unit_set_fortify_active(om_world *w, uint32_t unit_id, int on) {
 }
 
 void om_unit_set_hp(om_world *w, uint32_t p0, double p1) {
-    /* STUB */
-    (void)w; (void)p0; (void)p1;
+    om_unit_row *row = om_registry_find_in(om_tac(w), p0);
+    if (row) row->hp = p1;
 }
 
 void om_unit_set_stealth(om_world *w, uint32_t unit_id, int on) {
