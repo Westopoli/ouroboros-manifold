@@ -34,12 +34,38 @@ var _selected: Dictionary = {}
 var _sel_rings: Dictionary = {}
 var _pings: Array = []
 var _ping_root: Node3D
+var _playing_hint: bool = true
+
+const PING_WALL_MSEC := 1500
 
 
 func _ready() -> void:
 	_ping_root = Node3D.new()
 	_ping_root.name = "Pings"
 	add_child(_ping_root)
+
+
+func set_playing(v: bool) -> void:
+	_playing_hint = v
+
+
+func pings_active() -> int:
+	return _pings.size()
+
+
+func _process(_delta: float) -> void:
+	# Tick-based expiry in _update_pings only runs while the sim is stepping. Paused
+	# (Mockup review 1: "waypoints stay forever"), pings age on wall time instead so a
+	# paused scene never accumulates them.
+	if _playing_hint:
+		return
+	var now := Time.get_ticks_msec()
+	var i := _pings.size() - 1
+	while i >= 0:
+		if now - int(_pings[i].created_msec) > PING_WALL_MSEC:
+			_pings[i].node.queue_free()
+			_pings.remove_at(i)
+		i -= 1
 
 
 func set_roster(r: Roster) -> void:
@@ -301,7 +327,7 @@ func add_ping(pos: Vector2, is_attack_move: bool) -> void:
 	mi.material_override = mat
 	mi.position = Vector3(pos.x, 1.0, pos.y)
 	_ping_root.add_child(mi)
-	_pings.append({"node": mi, "tick": current_tick})
+	_pings.append({"node": mi, "tick": current_tick, "created_msec": Time.get_ticks_msec()})
 
 
 func _update_pings(tick: int) -> void:
