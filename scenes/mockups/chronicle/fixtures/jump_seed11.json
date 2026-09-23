@@ -12,13 +12,13 @@
     "ownership_timeline": [
       {
         "tick": 463,
-        "system_id": "r_moorwick",
-        "owner": "f_ostrel"
+        "system_id": "11",
+        "owner": "0"
       },
       {
         "tick": 1010,
-        "system_id": "r_pellast",
-        "owner": "f_kaine"
+        "system_id": "24",
+        "owner": "1"
       }
     ]
   },
@@ -36,7 +36,7 @@
       "mentions": [
         {
           "kind": "region",
-          "id": "r_halven",
+          "id": "2",
           "form": "base",
           "span_start": 0,
           "span_end": 12
@@ -52,7 +52,7 @@
       "expanded_mentions": [
         {
           "kind": "region",
-          "id": "r_halven",
+          "id": "2",
           "form": "expanded",
           "span_start": 0,
           "span_end": 12
@@ -93,14 +93,14 @@
       "mentions": [
         {
           "kind": "region",
-          "id": "r_halven",
+          "id": "2",
           "form": "base",
           "span_start": 8,
           "span_end": 20
         },
         {
           "kind": "region",
-          "id": "r_kestrel",
+          "id": "6",
           "form": "base",
           "span_start": 29,
           "span_end": 41
@@ -116,14 +116,14 @@
       "expanded_mentions": [
         {
           "kind": "region",
-          "id": "r_halven",
+          "id": "2",
           "form": "expanded",
           "span_start": 8,
           "span_end": 20
         },
         {
           "kind": "region",
-          "id": "r_kestrel",
+          "id": "6",
           "form": "expanded",
           "span_start": 29,
           "span_end": 41
@@ -157,7 +157,7 @@
       "mentions": [
         {
           "kind": "region",
-          "id": "r_moorwick",
+          "id": "11",
           "form": "base",
           "span_start": 0,
           "span_end": 8
@@ -180,7 +180,7 @@
       "expanded_mentions": [
         {
           "kind": "region",
-          "id": "r_moorwick",
+          "id": "11",
           "form": "expanded",
           "span_start": 0,
           "span_end": 8
@@ -221,7 +221,7 @@
       "mentions": [
         {
           "kind": "region",
-          "id": "r_pellast",
+          "id": "24",
           "form": "base",
           "span_start": 0,
           "span_end": 7
@@ -244,7 +244,7 @@
       "expanded_mentions": [
         {
           "kind": "region",
-          "id": "r_pellast",
+          "id": "24",
           "form": "expanded",
           "span_start": 0,
           "span_end": 7
@@ -285,7 +285,7 @@
       "mentions": [
         {
           "kind": "region",
-          "id": "r_dray",
+          "id": "20",
           "form": "base",
           "span_start": 0,
           "span_end": 13
@@ -294,14 +294,14 @@
       "expanded_mentions": [
         {
           "kind": "region",
-          "id": "r_dray",
+          "id": "20",
           "form": "expanded",
           "span_start": 0,
           "span_end": 13
         },
         {
           "kind": "region",
-          "id": "r_moorwick",
+          "id": "11",
           "form": "expanded",
           "span_start": 257,
           "span_end": 265
@@ -321,7 +321,7 @@
       "mentions": [
         {
           "kind": "region",
-          "id": "r_underfell",
+          "id": "1",
           "form": "base",
           "span_start": 0,
           "span_end": 9
@@ -344,7 +344,7 @@
       "expanded_mentions": [
         {
           "kind": "region",
-          "id": "r_underfell",
+          "id": "1",
           "form": "expanded",
           "span_start": 0,
           "span_end": 9
@@ -385,14 +385,14 @@
       "mentions": [
         {
           "kind": "region",
-          "id": "r_ashcombe",
+          "id": "22",
           "form": "base",
           "span_start": 0,
           "span_end": 8
         },
         {
           "kind": "region",
-          "id": "r_halven",
+          "id": "2",
           "form": "base",
           "span_start": 31,
           "span_end": 43
@@ -401,14 +401,14 @@
       "expanded_mentions": [
         {
           "kind": "region",
-          "id": "r_ashcombe",
+          "id": "22",
           "form": "expanded",
           "span_start": 0,
           "span_end": 8
         },
         {
           "kind": "region",
-          "id": "r_halven",
+          "id": "2",
           "form": "expanded",
           "span_start": 31,
           "span_end": 43
@@ -435,7 +435,7 @@
       "mentions": [
         {
           "kind": "region",
-          "id": "r_thistlewake",
+          "id": "9",
           "form": "base",
           "span_start": 0,
           "span_end": 11
@@ -444,7 +444,7 @@
       "expanded_mentions": [
         {
           "kind": "region",
-          "id": "r_thistlewake",
+          "id": "9",
           "form": "expanded",
           "span_start": 0,
           "span_end": 11
@@ -459,312 +459,66 @@
       ]
     }
   ],
-  "galaxy": {
-    "systems": [
-      {
-        "id": "r_halven",
-        "x": 120.0,
-        "y": 40.0,
-        "owner": "f_ostrel"
-      },
-      {
-        "id": "r_kestrel",
-        "x": 60.0,
-        "y": 160.0,
-        "owner": "f_ostrel"
-      },
-      {
-        "id": "r_moorwick",
-        "x": -180.0,
-        "y": 90.0,
-        "owner": "f_kaine"
-      },
-      {
-        "id": "r_pellast",
-        "x": -140.0,
-        "y": -160.0,
-        "owner": "f_ostrel"
-      },
-      {
-        "id": "r_dray",
-        "x": 220.0,
-        "y": -120.0,
-        "owner": "f_ostrel"
-      },
-      {
-        "id": "r_underfell",
-        "x": -40.0,
-        "y": 240.0,
-        "owner": "f_kaine"
-      },
-      {
-        "id": "r_ashcombe",
-        "x": 200.0,
-        "y": 180.0,
-        "owner": "f_ostrel"
-      },
-      {
-        "id": "r_thistlewake",
-        "x": -260.0,
-        "y": -40.0,
-        "owner": "f_kaine"
-      },
-      {
-        "id": "s00",
-        "x": 454.8,
-        "y": 68.7,
-        "owner": "f_ostrel"
-      },
-      {
-        "id": "s01",
-        "x": 380.0,
-        "y": 259.3,
-        "owner": "f_kaine"
-      },
-      {
-        "id": "s02",
-        "x": 229.8,
-        "y": 398.5,
-        "owner": ""
-      },
-      {
-        "id": "s03",
-        "x": 34.2,
-        "y": 458.7,
-        "owner": "f_ostrel"
-      },
-      {
-        "id": "s04",
-        "x": -168.2,
-        "y": 428.1,
-        "owner": "f_kaine"
-      },
-      {
-        "id": "s05",
-        "x": -337.3,
-        "y": 312.7,
-        "owner": "f_ostrel"
-      },
-      {
-        "id": "s06",
-        "x": -439.6,
-        "y": 135.4,
-        "owner": "f_kaine"
-      },
-      {
-        "id": "s07",
-        "x": -454.8,
-        "y": -68.7,
-        "owner": ""
-      },
-      {
-        "id": "s08",
-        "x": -380.0,
-        "y": -259.3,
-        "owner": "f_ostrel"
-      },
-      {
-        "id": "s09",
-        "x": -229.8,
-        "y": -398.5,
-        "owner": "f_kaine"
-      },
-      {
-        "id": "s10",
-        "x": -34.2,
-        "y": -458.7,
-        "owner": "f_ostrel"
-      },
-      {
-        "id": "s11",
-        "x": 168.2,
-        "y": -428.1,
-        "owner": "f_kaine"
-      },
-      {
-        "id": "s12",
-        "x": 337.3,
-        "y": -312.7,
-        "owner": ""
-      },
-      {
-        "id": "s13",
-        "x": 439.6,
-        "y": -135.4,
-        "owner": "f_ostrel"
-      }
-    ],
-    "edges": [
-      [
-        "r_halven",
-        "r_kestrel"
-      ],
-      [
-        "r_kestrel",
-        "r_moorwick"
-      ],
-      [
-        "r_moorwick",
-        "r_pellast"
-      ],
-      [
-        "r_pellast",
-        "r_dray"
-      ],
-      [
-        "r_dray",
-        "r_underfell"
-      ],
-      [
-        "r_underfell",
-        "r_ashcombe"
-      ],
-      [
-        "r_ashcombe",
-        "r_thistlewake"
-      ],
-      [
-        "r_thistlewake",
-        "r_halven"
-      ],
-      [
-        "s00",
-        "s01"
-      ],
-      [
-        "s01",
-        "s02"
-      ],
-      [
-        "s02",
-        "s03"
-      ],
-      [
-        "s03",
-        "s04"
-      ],
-      [
-        "s04",
-        "s05"
-      ],
-      [
-        "s05",
-        "s06"
-      ],
-      [
-        "s06",
-        "s07"
-      ],
-      [
-        "s07",
-        "s08"
-      ],
-      [
-        "s08",
-        "s09"
-      ],
-      [
-        "s09",
-        "s10"
-      ],
-      [
-        "s10",
-        "s11"
-      ],
-      [
-        "s11",
-        "s12"
-      ],
-      [
-        "s12",
-        "s13"
-      ],
-      [
-        "s13",
-        "s00"
-      ],
-      [
-        "r_halven",
-        "s00"
-      ],
-      [
-        "r_pellast",
-        "s03"
-      ],
-      [
-        "r_ashcombe",
-        "s06"
-      ],
-      [
-        "r_kestrel",
-        "s09"
-      ],
-      [
-        "r_dray",
-        "s12"
-      ]
-    ]
-  },
   "keyframes": [
     {
       "tick": 40,
-      "system_id": "s03",
-      "owner": ""
+      "system_id": "3",
+      "owner": "-1"
     },
     {
       "tick": 75,
-      "system_id": "r_halven",
-      "owner": "f_ostrel"
+      "system_id": "2",
+      "owner": "0"
     },
     {
       "tick": 270,
-      "system_id": "r_kestrel",
-      "owner": "f_ostrel"
+      "system_id": "6",
+      "owner": "0"
     },
     {
       "tick": 463,
-      "system_id": "r_moorwick",
-      "owner": "f_ostrel"
+      "system_id": "11",
+      "owner": "0"
     },
     {
       "tick": 700,
-      "system_id": "s07",
-      "owner": ""
+      "system_id": "4",
+      "owner": "-1"
     },
     {
       "tick": 1010,
-      "system_id": "r_pellast",
-      "owner": "f_kaine"
+      "system_id": "24",
+      "owner": "1"
     },
     {
       "tick": 1550,
-      "system_id": "r_dray",
-      "owner": "f_ostrel"
+      "system_id": "20",
+      "owner": "0"
     },
     {
       "tick": 1600,
-      "system_id": "s10",
-      "owner": ""
+      "system_id": "7",
+      "owner": "-1"
     },
     {
       "tick": 1925,
-      "system_id": "r_underfell",
-      "owner": "f_kaine"
+      "system_id": "1",
+      "owner": "1"
     },
     {
       "tick": 2165,
-      "system_id": "r_ashcombe",
-      "owner": "f_ostrel"
+      "system_id": "22",
+      "owner": "0"
     },
     {
       "tick": 2200,
-      "system_id": "s12",
-      "owner": ""
+      "system_id": "8",
+      "owner": "-1"
     },
     {
       "tick": 2340,
-      "system_id": "r_thistlewake",
-      "owner": "f_kaine"
+      "system_id": "9",
+      "owner": "1"
     }
   ]
 }
