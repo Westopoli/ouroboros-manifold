@@ -53,3 +53,13 @@
 2026-09-23T01:10:12+00:00 | /home/westopoli/Projects/om-push/m2/.swarm/b10/worktrees/leaf-02 | git add -- csrc/unit.c | exit 0
 2026-09-23T01:10:12+00:00 | /home/westopoli/Projects/om-push/m2/.swarm/b10/worktrees/leaf-02 | git commit -q -m 'swarm(b10): leaf-02 — Extend `csrc/unit.c` (already carries B10-1'"'"'s S-081/S-082 work — read th' | exit 0
 2026-09-23T01:10:12+00:00 | /home/westopoli/Projects/om-push/m2/.swarm/b10/worktrees/leaf-02 | git rev-parse HEAD | exit 0
+2026-09-23T01:18:56+00:00 | /home/westopoli/Projects/om-push/m2 | git worktree list --porcelain | exit 0
+2026-09-23T01:18:56+00:00 | /home/westopoli/Projects/om-push/m2 | git branch --list '--format=%(refname:short)' 'swarm/b10/**' | exit 0
+2026-09-23T01:18:56+00:00 | /home/westopoli/Projects/om-push/m2 | git merge-base --is-ancestor swarm/b10/integration HEAD | exit 0
+2026-09-23T01:18:57+00:00 | /home/westopoli/Projects/om-push/m2 | git worktree remove --force /home/westopoli/Projects/om-push/m2/.swarm/b10/worktrees/leaf-02 | exit 0
+2026-09-23T01:18:57+00:00 | /home/westopoli/Projects/om-push/m2 | git branch -D swarm/b10/leaf-02 | exit 0
+2026-09-23T01:18:57+00:00 | /home/westopoli/Projects/om-push/m2 | git worktree remove --force /home/westopoli/Projects/om-push/m2/.swarm/b10/worktrees/integration | exit 0
+2026-09-23T01:18:57+00:00 | /home/westopoli/Projects/om-push/m2 | git branch -d swarm/b10/integration | exit 0
+2026-09-23T01:18:57+00:00 | /home/westopoli/Projects/om-push/m2 | git worktree prune | exit 0
+2026-09-23T01:18:57+00:00 | /home/westopoli/Projects/om-push/m2 | git worktree list --porcelain | exit 0
+2026-09-23T01:18:57+00:00 | /home/westopoli/Projects/om-push/m2 | git branch --list '--format=%(refname:short)' 'swarm/b10/**' | exit 0
