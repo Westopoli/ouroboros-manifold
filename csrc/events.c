@@ -18,10 +18,26 @@
 
 #define OM_EVT_FIELD_CEILING 100.0
 
-#define OM_EVT_MAX_SLOTS   128
-#define OM_EVT_MAX_REGIONS 64
-#define OM_EVT_LOG_CAP     128
-#define OM_EVT_QUEUE_CAP   64
+#define OM_EVT_MAX_SLOTS    128
+#define OM_EVT_MAX_REGIONS  64
+#define OM_EVT_LOG_CAP      128
+#define OM_EVT_QUEUE_CAP    64
+#define OM_EVT_MANUAL_CAP   256
+#define OM_EVT_MAX_ATTACHED 8
+
+/* A manually-fired event (om_event_fire_manual) and the characters ALG-49
+ * attaches to it. om_fired_event (the tick log, ouroboros_sim.h ~line 609)
+ * has no field for attached character ids and is parent-owned, so this
+ * record -- and the id om_event_fire_manual hands out -- lives here, next
+ * to the rest of the per-world event state this file already keeps outside
+ * om_world (see the file header comment). */
+typedef struct {
+    uint32_t id;
+    uint32_t region_idx;
+    uint32_t tier;
+    uint32_t attached[OM_EVT_MAX_ATTACHED];
+    uint32_t n_attached;
+} om_evt_manual_fire;
 
 typedef struct {
     const om_world *owner;
@@ -48,6 +64,10 @@ typedef struct {
     uint32_t         pruned_n;
     om_delayed_event delayed[OM_EVT_LOG_CAP];
     uint32_t         delayed_n;
+
+    om_evt_manual_fire manual[OM_EVT_MANUAL_CAP];
+    uint32_t           manual_n;
+    uint32_t           manual_next_id; /* last id handed out; 0 means none yet */
 } om_evt_state;
 
 static om_evt_state g_evt_slots[OM_EVT_MAX_SLOTS];
@@ -68,6 +88,27 @@ static om_evt_state *evt_reset_slot(const om_world *w) {
         }
         if (!s) s = &g_evt_slots[0]; /* out of slots: last resort, reuse slot 0 */
     }
+    memset(s, 0, sizeof(*s));
+    s->owner = w;
+    s->in_use = 1;
+    for (uint32_t r = 0; r < OM_EVT_MAX_REGIONS; r++) {
+        for (uint32_t t = 0; t < OM_MAX_TEMPLATES; t++) {
+            s->last_fired[r][t] = -1;
+        }
+    }
+    return s;
+}
+
+/* Like evt_reset_slot, but never clears state that already exists -- used
+ * by om_event_fire_manual, which must not discard a world's loaded
+ * templates just because it runs before the first om_events_load. */
+static om_evt_state *evt_ensure(const om_world *w) {
+    om_evt_state *s = evt_find(w);
+    if (s) return s;
+    for (uint32_t i = 0; i < OM_EVT_MAX_SLOTS; i++) {
+        if (!g_evt_slots[i].in_use) { s = &g_evt_slots[i]; break; }
+    }
+    if (!s) return NULL; /* out of slots */
     memset(s, 0, sizeof(*s));
     s->owner = w;
     s->in_use = 1;
@@ -915,4 +956,63 @@ uint32_t om_tick_delayed(const om_world *w, om_delayed_event *out, uint32_t max)
     uint32_t n = s->delayed_n < max ? s->delayed_n : max;
     memcpy(out, s->delayed, n * sizeof(om_delayed_event));
     return n;
+}
+
+/* ---- manual event firing + ALG-49 character attachment (E-08/E-09) ---- */
+
+/* Attaches char_id to mf if it names a living character actually in the
+ * fired region: om_character_get_record succeeds, its region matches, and
+ * its status is 0 (generational.c's GEN_STATUS_ACTIVE -- private to that
+ * module, not exposed here, so compared by the ALWAYS_EXEMPT_VALUES literal
+ * rather than a name events.c has no header access to). Skips duplicates
+ * and stops at OM_EVT_MAX_ATTACHED. char_id 0 is generational.c's own
+ * "none" sentinel (om_faction_supreme_commander / om_region_regional_commander
+ * return 0 for no commander), so it is never a real character. */
+static void evt_manual_try_attach(om_evt_manual_fire *mf, const om_world *w, uint32_t char_id) {
+    if (char_id == 0 || mf->n_attached >= OM_EVT_MAX_ATTACHED) return;
+    for (uint32_t i = 0; i < mf->n_attached; i++) {
+        if (mf->attached[i] == char_id) return;
+    }
+    om_character_record rec;
+    if (om_character_get_record(w, char_id, &rec) != 0) return;
+    if (rec.region != mf->region_idx) return;
+    if (rec.status != 0) return;
+    mf->attached[mf->n_attached++] = char_id;
+}
+
+uint32_t om_event_fire_manual(om_world *w, uint32_t region_idx, uint32_t tier) {
+    if (!w || region_idx >= w->n_regions) return 0;
+    om_evt_state *s = evt_ensure(w);
+    if (!s || s->manual_n >= OM_EVT_MANUAL_CAP) return 0;
+
+    om_evt_manual_fire *mf = &s->manual[s->manual_n++];
+    memset(mf, 0, sizeof(*mf));
+    mf->id = ++s->manual_next_id;
+    mf->region_idx = region_idx;
+    mf->tier = tier;
+
+    if (tier >= OM_CHARACTER_ATTACHMENT_TIER_THRESHOLD) {
+        evt_manual_try_attach(mf, w, om_region_regional_commander(w, region_idx));
+        int32_t owner = w->regions[region_idx].faction_id;
+        if (owner >= 0) {
+            evt_manual_try_attach(mf, w, om_faction_supreme_commander(w, owner));
+        }
+    }
+
+    return mf->id;
+}
+
+static om_evt_manual_fire *evt_manual_find(om_evt_state *s, uint32_t event_id) {
+    for (uint32_t i = 0; i < s->manual_n; i++) {
+        if (s->manual[i].id == event_id) return &s->manual[i];
+    }
+    return NULL;
+}
+
+uint32_t om_event_get_attached_character(const om_world *w, uint32_t event, uint32_t p1) {
+    om_evt_state *s = evt_find(w);
+    if (!s) return 0;
+    om_evt_manual_fire *mf = evt_manual_find(s, event);
+    if (!mf || p1 >= mf->n_attached) return 0;
+    return mf->attached[p1];
 }

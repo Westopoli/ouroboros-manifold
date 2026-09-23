@@ -1,18 +1,18 @@
 {
   "type": "snapshot",
   "tick": 10,
-  "checksum": 12722833627761862361,
+  "checksum": 6143253420779326886,
   "regions": [
     {
       "i": 0,
       "owner": 0,
       "tier": 2,
-      "military": 39.26,
-      "economy": 31.97,
+      "military": 39.27,
+      "economy": 32.0,
       "tension": 25.0,
       "population": 39.87,
       "stability": 51.92,
-      "capacity": 35.83
+      "capacity": 35.84
     },
     {
       "i": 1,
@@ -63,7 +63,7 @@
       "owner": 0,
       "tier": 1,
       "military": 64.15,
-      "economy": 50.63,
+      "economy": 50.62,
       "tension": 20.69,
       "population": 57.87,
       "stability": 67.89,
@@ -117,41 +117,41 @@
       "i": 10,
       "owner": 0,
       "tier": 1,
-      "military": 33.71,
-      "economy": 31.88,
-      "tension": 40.2,
-      "population": 38.64,
-      "stability": 44.07,
-      "capacity": 34.52
+      "military": 30.01,
+      "economy": 31.5,
+      "tension": 40.27,
+      "population": 38.58,
+      "stability": 42.56,
+      "capacity": 33.75
     },
     {
       "i": 11,
       "owner": 0,
       "tier": 1,
-      "military": 46.41,
-      "economy": 29.05,
-      "tension": 7.13,
-      "population": 50.8,
-      "stability": 63.77,
-      "capacity": 39.27
+      "military": 46.3,
+      "economy": 28.52,
+      "tension": 8.62,
+      "population": 50.77,
+      "stability": 63.19,
+      "capacity": 38.97
     },
     {
       "i": 12,
       "owner": 1,
       "tier": 2,
-      "military": 15.57,
-      "economy": 19.39,
-      "tension": 17.73,
-      "population": 31.21,
-      "stability": 42.83,
-      "capacity": 14.92
+      "military": 15.47,
+      "economy": 18.85,
+      "tension": 19.22,
+      "population": 31.17,
+      "stability": 42.25,
+      "capacity": 14.73
     },
     {
       "i": 13,
       "owner": 1,
       "tier": 1,
       "military": 43.09,
-      "economy": 19.63,
+      "economy": 19.62,
       "tension": 24.01,
       "population": 76.24,
       "stability": 62.89,
@@ -161,34 +161,34 @@
       "i": 14,
       "owner": 1,
       "tier": 1,
-      "military": 31.46,
-      "economy": 19.89,
-      "tension": 33.03,
-      "population": 19.59,
-      "stability": 30.69,
-      "capacity": 9.79
+      "military": 31.43,
+      "economy": 19.56,
+      "tension": 34.08,
+      "population": 19.56,
+      "stability": 30.4,
+      "capacity": 9.71
     },
     {
       "i": 15,
-      "owner": 1,
+      "owner": 0,
       "tier": 1,
-      "military": 47.04,
-      "economy": 50.51,
-      "tension": 10.63,
-      "population": 71.22,
-      "stability": 67.9,
-      "capacity": 57.24
+      "military": 49.54,
+      "economy": 23.35,
+      "tension": 49.86,
+      "population": 68.0,
+      "stability": 54.36,
+      "capacity": 42.91
     },
     {
       "i": 16,
       "owner": 1,
       "tier": 1,
-      "military": 41.0,
-      "economy": 13.88,
-      "tension": 20.58,
-      "population": 25.82,
-      "stability": 50.65,
-      "capacity": 14.38
+      "military": 40.99,
+      "economy": 13.33,
+      "tension": 21.63,
+      "population": 25.79,
+      "stability": 50.27,
+      "capacity": 14.2
     },
     {
       "i": 17,
@@ -228,11 +228,11 @@
       "owner": 1,
       "tier": 1,
       "military": 32.16,
-      "economy": 9.62,
-      "tension": 17.24,
-      "population": 15.06,
-      "stability": 34.19,
-      "capacity": 6.78
+      "economy": 9.21,
+      "tension": 18.3,
+      "population": 14.73,
+      "stability": 33.86,
+      "capacity": 6.64
     },
     {
       "i": 21,
@@ -250,44 +250,44 @@
       "owner": 1,
       "tier": 1,
       "military": 16.81,
-      "economy": 13.25,
+      "economy": 13.22,
       "tension": 27.17,
       "population": 15.22,
-      "stability": 27.02,
-      "capacity": 6.59
+      "stability": 27.01,
+      "capacity": 6.58
     },
     {
       "i": 23,
       "owner": 1,
       "tier": 1,
-      "military": 62.54,
-      "economy": 43.28,
-      "tension": 28.49,
-      "population": 50.64,
-      "stability": 62.7,
-      "capacity": 48.74
+      "military": 25.6,
+      "economy": 34.83,
+      "tension": 52.56,
+      "population": 49.64,
+      "stability": 39.25,
+      "capacity": 38.63
     },
     {
       "i": 24,
-      "owner": 2,
+      "owner": 1,
       "tier": 2,
-      "military": 52.42,
-      "economy": 39.87,
-      "tension": 28.91,
-      "population": 46.26,
-      "stability": 57.41,
-      "capacity": 43.99
+      "military": 55.94,
+      "economy": 26.31,
+      "tension": 62.32,
+      "population": 42.75,
+      "stability": 46.25,
+      "capacity": 36.51
     },
     {
       "i": 25,
       "owner": 2,
       "tier": 1,
-      "military": 48.06,
-      "economy": 30.05,
-      "tension": 28.41,
-      "population": 80.06,
-      "stability": 64.29,
-      "capacity": 50.26
+      "military": 48.86,
+      "economy": 29.52,
+      "tension": 29.46,
+      "population": 80.05,
+      "stability": 64.25,
+      "capacity": 50.11
     },
     {
       "i": 26,
@@ -338,11 +338,11 @@
       "owner": 2,
       "tier": 1,
       "military": 41.46,
-      "economy": 19.39,
+      "economy": 19.37,
       "tension": 27.25,
       "population": 39.3,
       "stability": 51.87,
-      "capacity": 19.29
+      "capacity": 19.28
     },
     {
       "i": 31,
@@ -382,33 +382,33 @@
       "owner": 2,
       "tier": 1,
       "military": 36.82,
-      "economy": 38.39,
+      "economy": 38.38,
       "tension": 29.44,
-      "population": 43.54,
-      "stability": 50.31,
-      "capacity": 39.96
+      "population": 43.53,
+      "stability": 50.3,
+      "capacity": 39.95
     },
     {
       "i": 35,
       "owner": 2,
       "tier": 1,
-      "military": 39.73,
-      "economy": 10.34,
-      "tension": 16.4,
-      "population": 14.23,
-      "stability": 36.53,
-      "capacity": 7.33
+      "military": 20.57,
+      "economy": 8.0,
+      "tension": 30.1,
+      "population": 10.86,
+      "stability": 26.56,
+      "capacity": 4.95
     },
     {
       "i": 36,
       "owner": 3,
       "tier": 2,
       "military": 35.11,
-      "economy": 10.82,
-      "tension": 22.36,
-      "population": 16.9,
-      "stability": 34.08,
-      "capacity": 7.55
+      "economy": 10.56,
+      "tension": 23.86,
+      "population": 16.86,
+      "stability": 33.68,
+      "capacity": 7.48
     },
     {
       "i": 37,
@@ -437,7 +437,7 @@
       "owner": 3,
       "tier": 1,
       "military": 26.17,
-      "economy": 22.99,
+      "economy": 22.98,
       "tension": 25.52,
       "population": 29.68,
       "stability": 43.96,
@@ -447,19 +447,19 @@
       "i": 40,
       "owner": 3,
       "tier": 1,
-      "military": 31.59,
-      "economy": 19.61,
-      "tension": 14.87,
-      "population": 36.32,
-      "stability": 51.51,
-      "capacity": 17.72
+      "military": 25.72,
+      "economy": 17.21,
+      "tension": 19.57,
+      "population": 36.25,
+      "stability": 47.5,
+      "capacity": 16.35
     },
     {
       "i": 41,
       "owner": 3,
       "tier": 1,
       "military": 29.4,
-      "economy": 29.14,
+      "economy": 29.13,
       "tension": 34.74,
       "population": 34.82,
       "stability": 43.3,
@@ -502,12 +502,12 @@
       "i": 45,
       "owner": 3,
       "tier": 1,
-      "military": 21.59,
-      "economy": 25.04,
+      "military": 21.58,
+      "economy": 25.02,
       "tension": 18.72,
       "population": 46.73,
       "stability": 48.76,
-      "capacity": 32.12
+      "capacity": 32.1
     },
     {
       "i": 46,
@@ -557,12 +557,12 @@
       "i": 50,
       "owner": 3,
       "tier": 1,
-      "military": 11.33,
-      "economy": 16.33,
-      "tension": 19.29,
-      "population": 25.68,
-      "stability": 39.2,
-      "capacity": 12.25
+      "military": 9.78,
+      "economy": 13.86,
+      "tension": 18.8,
+      "population": 25.29,
+      "stability": 27.06,
+      "capacity": 11.21
     },
     {
       "i": 51,
@@ -599,25 +599,25 @@
     },
     {
       "i": 54,
-      "owner": -1,
-      "tier": 0,
-      "military": 0.0,
-      "economy": 0.0,
-      "tension": 0.0,
-      "population": 0.0,
-      "stability": 0.0,
-      "capacity": 0.0
+      "owner": 0,
+      "tier": 1,
+      "military": 11.02,
+      "economy": 16.86,
+      "tension": 18.65,
+      "population": 25.23,
+      "stability": 39.19,
+      "capacity": 12.29
     },
     {
       "i": 55,
-      "owner": -1,
-      "tier": 0,
-      "military": 0.0,
-      "economy": 0.0,
-      "tension": 0.0,
-      "population": 0.0,
-      "stability": 0.0,
-      "capacity": 0.0
+      "owner": 0,
+      "tier": 1,
+      "military": 7.49,
+      "economy": 10.54,
+      "tension": 19.81,
+      "population": 24.69,
+      "stability": 26.07,
+      "capacity": 9.77
     },
     {
       "i": 56,
@@ -680,7 +680,7 @@
     {
       "id": 1,
       "archetype": 1,
-      "budget": 9.900000000000002,
+      "budget": 23.931366860574634,
       "tech": 1.1,
       "stance": [
         0,
@@ -692,7 +692,7 @@
     {
       "id": 2,
       "archetype": 2,
-      "budget": 0.0,
+      "budget": 34.547789767376514,
       "tech": 1.2,
       "stance": [
         0,
@@ -704,7 +704,7 @@
     {
       "id": 3,
       "archetype": 3,
-      "budget": 0.0,
+      "budget": 11.504295071101835,
       "tech": 1.3,
       "stance": [
         0,
@@ -728,7 +728,7 @@
     {
       "a": 0,
       "b": 55,
-      "t": 1
+      "t": 2
     },
     {
       "a": 0,
@@ -793,7 +793,7 @@
     {
       "a": 10,
       "b": 15,
-      "t": 1
+      "t": 2
     },
     {
       "a": 11,
@@ -813,17 +813,17 @@
     {
       "a": 14,
       "b": 15,
-      "t": 2
+      "t": 0
     },
     {
       "a": 15,
       "b": 16,
-      "t": 2
+      "t": 0
     },
     {
       "a": 15,
       "b": 20,
-      "t": 1
+      "t": 0
     },
     {
       "a": 16,
@@ -873,7 +873,7 @@
     {
       "a": 24,
       "b": 25,
-      "t": 2
+      "t": 0
     },
     {
       "a": 25,
@@ -1003,7 +1003,7 @@
     {
       "a": 45,
       "b": 50,
-      "t": 1
+      "t": 2
     },
     {
       "a": 46,
@@ -1076,5 +1076,12 @@
       "t": 2
     }
   ],
-  "telegraphs": []
+  "telegraphs": [
+    {
+      "attacker": 1,
+      "target": 25,
+      "commit": 31.220442340700004,
+      "declared_tick": 9
+    }
+  ]
 }
