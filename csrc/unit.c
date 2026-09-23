@@ -846,6 +846,11 @@ static void om_ability_advance_all(om_world *w) {
 /* ---- end B10-3 ability system ---- */
 
 uint64_t om_tactical_step(om_world *w) {
+    /* No-op until a tactical battle actually exists (tests/csim/test_E11_wiring.py
+     * ::test_R_wiring_tactical_step_is_callable): a strategic-only world with no
+     * units spawned must not advance the tactical tick counter at all. */
+    om_tac_state *ro = om_tac_ro(w);
+    if (!ro || ro->n_units == 0) return ro ? ro->current_tick : 0;
     om_tactical_apply_aura_regen(w);
     om_ability_advance_all(w);
     return om_tac(w)->current_tick;
