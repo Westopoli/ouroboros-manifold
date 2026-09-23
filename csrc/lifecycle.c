@@ -36,8 +36,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define LC_TEMPLATE_ADMIN_BREAKAWAY 101
-
 #define LC_PHASE_FRAGMENTATION 0
 #define LC_PHASE_OVEREXTENSION 1
 #define LC_PHASE_CONFLICT      2
@@ -79,13 +77,18 @@ static int32_t lc_free_faction_slot(const om_world *w) {
     return -1;
 }
 
-static void lc_split_region(om_region *rg) {
-    rg->military -= rg->military * OM_REVOLT_MILITARY_STEAL;
-    rg->economy  -= rg->economy  * OM_REVOLT_ECONOMY_STEAL;
-    if (rg->tension > OM_REVOLT_TENSION_CAP)
-        rg->tension = OM_REVOLT_TENSION_CAP;
-    if (rg->population < OM_REVOLT_BREAKAWAY_POP_FLOOR)
-        rg->population = OM_REVOLT_BREAKAWAY_POP_FLOOR;
+/* ALG-41 split, applied to the region's PRE-effect fields (the epic's worked
+ * example: military 40 -> 16 exactly, population unchanged -- the same
+ * tick's own event effect, applied earlier in steps 1-2, is not part of the
+ * split's input). Callers pass the snapshot recovered via
+ * om_region_event_delta, not rg's live fields. */
+static void lc_apply_split(om_region *rg, double pre_military, double pre_economy,
+                            double pre_tension, double pre_population) {
+    rg->military = pre_military - pre_military * OM_REVOLT_MILITARY_STEAL;
+    rg->economy  = pre_economy  - pre_economy  * OM_REVOLT_ECONOMY_STEAL;
+    rg->tension  = (pre_tension > OM_REVOLT_TENSION_CAP) ? OM_REVOLT_TENSION_CAP : pre_tension;
+    rg->population = (pre_population < OM_REVOLT_BREAKAWAY_POP_FLOOR)
+        ? OM_REVOLT_BREAKAWAY_POP_FLOOR : pre_population;
     if (rg->economy < OM_REVOLT_ECONOMY_FLOOR)
         rg->economy = OM_REVOLT_ECONOMY_FLOOR;
 }
@@ -144,7 +147,20 @@ static void lc_resolve_faction_creation(om_world *w, uint32_t region_idx, uint32
     if (old_owner < 0 || old_owner >= OM_MAX_FACTIONS)
         return;
 
-    int is_admin = (template_id == LC_TEMPLATE_ADMIN_BREAKAWAY);
+    /* Pre-effect snapshot: steps 1-2 (events) already wrote this same
+     * tick's Revolt Entrenched / Admin Breakaway effect delta into rg
+     * before step 6 runs. The epic's worked example splits the region as
+     * it stood before that delta (military 40 -> 16 exactly, population
+     * unchanged), so recover it via the delta events.c already tracked. */
+    double delta[OM_F_COUNT] = { 0.0, 0.0, 0.0, 0.0 };
+    om_region_event_delta(w, region_idx, delta);
+    double pre_military = rg->military - delta[OM_F_MILITARY];
+    double pre_economy = rg->economy - delta[OM_F_ECONOMY];
+    double pre_tension = rg->tension - delta[OM_F_TENSION];
+    double pre_population = rg->population - delta[OM_F_POPULATION];
+
+    int32_t admin_tid = om_event_template_by_name(w, "Admin Breakaway");
+    int is_admin = (admin_tid >= 0 && template_id == (uint32_t)admin_tid);
     double rate = 1.0;
     double check = 0.0;
 
@@ -156,7 +172,7 @@ static void lc_resolve_faction_creation(om_world *w, uint32_t region_idx, uint32
             lc_log_revolt(w, region_idx, old_owner, rate, check, 0, -1, 0.0, 0.0, -1);
             return;
         }
-        if (rg->population < OM_REVOLT_BREAKAWAY_POP_FLOOR) {
+        if (pre_population < OM_REVOLT_BREAKAWAY_POP_FLOOR) {
             lc_log_revolt(w, region_idx, old_owner, rate, check, 0, -1, 0.0, 0.0, -1);
             return;
         }
@@ -173,9 +189,9 @@ static void lc_resolve_faction_creation(om_world *w, uint32_t region_idx, uint32
     if (prev >= 0 && prev != old_owner && age <= OM_LATENT_LOYALTY_TICKS) {
         double reversion_draw = om_rng_draw(w);
         if (reversion_draw < OM_LATENT_LOYALTY_REVERT_CHANCE && om_faction_is_active(w, prev)) {
-            double military_stolen = rg->military * OM_REVOLT_MILITARY_STEAL;
-            double economy_stolen = rg->economy * OM_REVOLT_ECONOMY_STEAL;
-            lc_split_region(rg);
+            double military_stolen = pre_military * OM_REVOLT_MILITARY_STEAL;
+            double economy_stolen = pre_economy * OM_REVOLT_ECONOMY_STEAL;
+            lc_apply_split(rg, pre_military, pre_economy, pre_tension, pre_population);
             om_region_set_owner(w, region_idx, prev, (int64_t)w->tick);
             om_region_set_previous_owner(w, region_idx, -1);
             lc_log_reversion(w, region_idx, old_owner, prev, military_stolen, economy_stolen);
@@ -215,9 +231,9 @@ static void lc_resolve_faction_creation(om_world *w, uint32_t region_idx, uint32
         om_faction_set_stance(w, f, new_fid, OM_STANCE_HOSTILE);
     }
 
-    double military_stolen = rg->military * OM_REVOLT_MILITARY_STEAL;
-    double economy_stolen = rg->economy * OM_REVOLT_ECONOMY_STEAL;
-    lc_split_region(rg);
+    double military_stolen = pre_military * OM_REVOLT_MILITARY_STEAL;
+    double economy_stolen = pre_economy * OM_REVOLT_ECONOMY_STEAL;
+    lc_apply_split(rg, pre_military, pre_economy, pre_tension, pre_population);
     om_region_set_owner(w, region_idx, new_fid, (int64_t)w->tick);
     om_region_set_previous_owner(w, region_idx, old_owner);
     lc_borderize_edges(w, region_idx);
