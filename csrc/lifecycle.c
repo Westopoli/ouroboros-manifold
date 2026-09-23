@@ -36,15 +36,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* B6 gap: om_constants.h has no named constant for ALG-42 pass 1's "5 ticks"
- * ghost-removal age (algorithms.md: "creation tick is >= 5 ticks ago";
- * unlike ZOMBIE_CLEANUP_TICKS = 50 for pass 2, this one is never backtick-
- * named in the doc, so alg_constants.py never emitted it, and card_lint
- * forbids inlining a bare 5). Proposed: OM_ZOMBIE_GHOST_TICKS 5 in
- * om_constants.h under "ALG-42 Zombie cleanup", plus the matching name in
- * algorithms.md. Pass 1 (zero-region breakaway removal) is not implemented
- * below pending that constant; R-051-01 stays red for this reason alone. */
-
 #define LC_TEMPLATE_ADMIN_BREAKAWAY 101
 
 #define LC_PHASE_FRAGMENTATION 0
@@ -235,10 +226,30 @@ static void lc_resolve_faction_creation(om_world *w, uint32_t region_idx, uint32
                   economy_stolen, -1);
 }
 
-/* ALG-42 zombie cleanup, pass 2 only (pass 1 blocked; see the header gap
- * above). Skips a breakaway that conquered a region this tick, then clears
- * that per-tick flag once every faction has been checked. */
+/* ALG-42 zombie cleanup. Pass 1 removes a zero-region breakaway once it is
+ * ZOMBIE_GHOST_TICKS old; pass 2 (below) hands a lone-region breakaway's
+ * region to its strongest border neighbor. Pass 2 skips a breakaway that
+ * conquered a region this tick, then clears that per-tick flag once every
+ * faction has been checked. */
 static void lc_zombie_cleanup(om_world *w) {
+    for (int32_t f = 0; f < OM_MAX_FACTIONS; f++) {
+        if (!w->faction_used[f] || w->faction_archetype[f] != OM_ARCH_BREAKAWAY)
+            continue;
+        if (om_faction_territory(w, f) != 0)
+            continue;
+        uint64_t age = w->tick - w->faction_created_tick[f];
+#ifdef OM_DEBUG_INJECT
+        int ghost_due = (w->inject == OM_BUG_ZOMBIE_PASS1_GE_NOT_GT)
+            ? (age > OM_ZOMBIE_GHOST_TICKS)
+            : (age >= OM_ZOMBIE_GHOST_TICKS);
+#else
+        int ghost_due = (age >= OM_ZOMBIE_GHOST_TICKS);
+#endif
+        if (!ghost_due)
+            continue;
+        om_faction_remove(w, f);
+    }
+
     for (int32_t f = 0; f < OM_MAX_FACTIONS; f++) {
         if (!w->faction_used[f] || w->faction_archetype[f] != OM_ARCH_BREAKAWAY)
             continue;
