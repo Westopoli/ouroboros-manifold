@@ -167,7 +167,7 @@ cmd_scan() {
     local err_lines=""
     for log in "$outdir/stdout.log" "$outdir/stderr.log"; do
         [[ -f "$log" ]] || continue
-        err_lines+="$(grep -nE 'SCRIPT ERROR|^ERROR:|^USER ERROR|Node not found' "$log" | grep -vE 'at exit|never freed|leaked [0-9]+ bytes' || true)"$'\n'
+        err_lines+="$(grep -nE 'SCRIPT ERROR|^ERROR:|^USER ERROR|Node not found|QA_EXPECT FAIL' "$log" | grep -vE 'at exit|never freed|leaked [0-9]+ bytes' || true)"$'\n'
     done
     err_lines="$(printf '%s' "$err_lines" | sed '/^$/d')"
     local err_count=0
@@ -196,7 +196,7 @@ cmd_scan() {
     : > "$marks_file"
     for log in "$outdir/stdout.log" "$outdir/stderr.log"; do
         [[ -f "$log" ]] || continue
-        grep -nE 'QA_WARN|QA_CALL|timing' "$log" >> "$marks_file" || true
+        grep -nE 'QA_WARN|QA_CALL|QA_EXPECT|timing' "$log" >> "$marks_file" || true
     done
 }
 
