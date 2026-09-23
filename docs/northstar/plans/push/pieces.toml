@@ -501,6 +501,7 @@ owns_glob = ["scenes/mockups/chronicle/**", "docs/northstar/research/mockups/chr
 acceptance = []
 depends_on = []
 status = "pending"
+[[piece]]
 id = "C8"
 manager = "M3"
 wave = 3
