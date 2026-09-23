@@ -491,3 +491,13 @@ owns_glob = ["scenes/mockups/layers/**", "docs/northstar/research/mockups/layers
 acceptance = []
 depends_on = []
 status = "pending"
+
+[[piece]]
+id = "MK-chronicle"
+manager = "mockup"
+wave = 3
+owns = []
+owns_glob = ["scenes/mockups/chronicle/**", "docs/northstar/research/mockups/chronicle/**"]
+acceptance = []
+depends_on = []
+status = "pending"
