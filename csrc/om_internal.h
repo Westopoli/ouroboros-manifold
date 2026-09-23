@@ -151,6 +151,34 @@ struct om_world {
     void *tactical_state;
     void (*tactical_state_free)(void *);
 
+    /* E-08 generational module state, same convention as tactical_state
+     * above: never a file static keyed by om_world*. */
+    void *generational_state;
+    void (*generational_state_free)(void *);
+
+    /* F2e: E-06 diplomacy storage backing the om_faction_stance_counter /
+     * om_faction_cooperative_since / om_faction_last_knowledge_lost
+     * accessors (csrc/ouroboros_sim.h; card B5 fills the read/write bodies
+     * in csrc/diplomacy.c, still STUBs here). ALG-38: per neutral ordered
+     * pair sharing a border edge, ticks since the last attack between them,
+     * reset to 0 on an attack; 0 is also the pair's never-counted-yet
+     * starting value, so 0 carries both meanings, matching the STUB
+     * accessors' current 0 return. ALG-39: cooperative_since is the tick a
+     * successful overture applied (S-043 R-043-05); 0 doubles as "never
+     * cooperative" since om_faction_cooperative_since's restype is the
+     * unsigned uint64_t tick counter (no negative sentinel available,
+     * unlike the int64_t fields below). */
+    uint32_t faction_stance_counter[OM_MAX_FACTIONS][OM_MAX_FACTIONS];
+    uint64_t faction_cooperative_since[OM_MAX_FACTIONS][OM_MAX_FACTIONS];
+
+    /* ALG-27b Knowledge Lost: tick of each faction's last Knowledge Lost
+     * event. -1 sentinel for "never", matching the header's existing
+     * int64_t never-yet convention (om_region_held_since, om_event_last_fired
+     * both < 0 = never); om_faction_last_knowledge_lost's restype is the
+     * signed int64_t, unlike cooperative_since above, so -1 is available and
+     * unambiguous. */
+    int64_t faction_last_knowledge_lost[OM_MAX_FACTIONS];
+
     /* Bumped from a file-static counter in om_world_new (csrc/region.c),
      * starting at 1: a cheap way for any module to detect a reused
      * om_world* address (e.g. a stale cached pointer after free/realloc). */
