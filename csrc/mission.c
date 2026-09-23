@@ -89,8 +89,282 @@
  */
 #include "ouroboros_sim.h"
 #include "om_internal.h"
+#include "om_constants.h"
 #include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
+
+/* B9 (S-072/S-073): per-world mission state lives in w->mission_state /
+ * w->mission_state_free, mirroring csrc/unit.c's om_tac/om_tac_ro
+ * (tactical_state) convention exactly -- never a file-static registry keyed
+ * by om_world* (the ABA hazard B10-1 hit and B10-2 fixed via this header
+ * slot mechanism). */
+#define OM_MISSION_N_ARCHETYPES 10
+#define OM_MISSION_N_UNIT_TYPES 6
+#define OM_MISSION_MAX_CANDIDATES 512
+#define OM_MISSION_MAX_LAYOUTS 4
+
+/* ALG-55 score weights (ties GENERATOR_URGENCY/RELEVANCE/PREFERENCE_WEIGHT --
+ * only PREFERENCE's own two endpoints are already named in om_constants.h). */
+#define OM_MISSION_SCORE_URGENCY_WEIGHT 0.5
+#define OM_MISSION_SCORE_RELEVANCE_WEIGHT 0.3
+#define OM_MISSION_SCORE_PREFERENCE_WEIGHT 0.2
+
+/* ALG-55 relevance weights (RELEVANCE_LINEAGE/PROXIMITY/ARCHETYPE_WEIGHT). */
+#define OM_MISSION_RELEVANCE_LINEAGE_WEIGHT 0.4
+#define OM_MISSION_RELEVANCE_PROXIMITY_WEIGHT 0.3
+#define OM_MISSION_RELEVANCE_ARCHETYPE_WEIGHT 0.3
+
+/* ALG-55 deficit: mean of three (100 - field)/100 terms == sum/300. */
+#define OM_MISSION_DEFICIT_FIELD_MAX 100.0
+#define OM_MISSION_DEFICIT_DIVISOR 300.0
+/* OM_BUG_URGENCY_DEFICIT_DIVISOR_WRONG (ouroboros_sim.h, ALG-55): the F5
+ * window control divides the same sum by 200 instead of 300. */
+#define OM_MISSION_DEFICIT_DIVISOR_BUGGED 200.0
+
+/* ALG-55 conflict sub-terms. */
+#define OM_MISSION_CONFLICT_BORDER_DIVISOR 70.0
+#define OM_MISSION_CONFLICT_ATTACK_COUNT_WEIGHT 0.5
+#define OM_MISSION_CONFLICT_ATTACK_BUDGET_DIVISOR 600.0
+#define OM_MISSION_CONFLICT_ATTACK_TERM_WEIGHT 0.5
+#define OM_MISSION_CONFLICT_LOSS_COUNT_WEIGHT 0.5
+#define OM_MISSION_CONFLICT_LOSS_TERM_WEIGHT 0.3
+
+/* ALG-55 chain. */
+#define OM_MISSION_CHAIN_EVENT_WEIGHT 0.3
+
+/* Trigger gates ported from simulation/mission_generator.py / config.py
+ * (no event_log/action_log/conquest_log in the C world; adapted to the
+ * live region/faction/edge state the C ABI exposes). */
+#define OM_MISSION_HOSTILE_MIL_THRESHOLD 50.0
+#define OM_MISSION_ASSAULT_MIL_GATE 60.0
+#define OM_MISSION_ASSAULT_STABILITY_GATE 50.0
+#define OM_MISSION_SIEGE_MIL_GATE 40.0
+#define OM_MISSION_SIEGE_ECO_GATE 40.0
+#define OM_MISSION_SIEGE_MIN_HELD_TICKS 200
+#define OM_MISSION_SUPPRESSION_MAX_AGE_TICKS 300
+#define OM_MISSION_EVAC_MIL_THRESHOLD 15.0
+#define OM_MISSION_EVAC_ECO_THRESHOLD 20.0
+#define OM_MISSION_EVAC_STAB_THRESHOLD 15.0
+#define OM_MISSION_MULTI_FRONT_MIN_SOURCES 2
+#define OM_MISSION_CONTAINMENT_MIN_REVOLTS 2
+#define OM_MISSION_DEFAULT_TIME_LIMIT_TICKS 300
+
+/* Mission archetype ids -- plain uint32_t 0-9 (OMMissionArchetype in every
+ * E-10 test file), unrelated to the om_archetype enum (faction archetypes:
+ * conqueror/warlord/...). */
+#define OM_MISSION_ARCH_DEFENSIVE_STAND 0
+#define OM_MISSION_ARCH_SIEGE_BREAKING 1
+#define OM_MISSION_ARCH_RECONQUEST 2
+#define OM_MISSION_ARCH_ASSAULT 3
+#define OM_MISSION_ARCH_SUPPRESSION 4
+#define OM_MISSION_ARCH_MULTI_FRONT_DEFENSE 5
+#define OM_MISSION_ARCH_INTERCEPTION 6
+#define OM_MISSION_ARCH_EVACUATION 7
+#define OM_MISSION_ARCH_CONTAINMENT 8
+#define OM_MISSION_ARCH_COUNTERINSURGENCY 9
+
+typedef struct {
+    uint32_t recent_attacks;
+    double   attack_budget_sum;
+    uint32_t adjacent_lost;
+    int      conflict_set;
+    uint32_t recent_revolt_events;
+    int      revolt_set;
+    double   lineage;
+    uint32_t hops;
+    uint32_t times_run;
+    int      lineage_set;
+} om_mission_region_ctx;
+
+typedef struct {
+    om_archetype_metadata meta;
+    double   profile[OM_MISSION_N_UNIT_TYPES];
+    int      profile_set;
+} om_mission_archetype_row;
+
+typedef struct {
+    om_mission_candidate pool[OM_MISSION_MAX_CANDIDATES];
+    uint32_t n_pool;
+
+    int      library_loaded;
+    om_mission_archetype_row archetypes[OM_MISSION_N_ARCHETYPES];
+
+    double   preference_weight[OM_MISSION_N_ARCHETYPES];
+    int      preference_set[OM_MISSION_N_ARCHETYPES];
+
+    om_mission_region_ctx region_ctx[OM_MAX_REGIONS];
+
+    uint32_t mission_region;
+    uint32_t mission_archetype;
+    int      lineage_connection;
+    int      mission_set;
+} om_mission_state;
+
+static void om_mis_state_free(void *p) {
+    free(p);
+}
+
+/* Lazily calloc's the per-world mission state, mirroring om_tac() in
+ * csrc/unit.c exactly. Writes w->mission_state -- read-only entry points on
+ * a const om_world* go through om_mis_ro() instead, which never allocates. */
+static om_mission_state *om_mis(om_world *w) {
+    om_mission_state *st = (om_mission_state *)w->mission_state;
+    if (!st) {
+        st = (om_mission_state *)calloc(1, sizeof(om_mission_state));
+        w->mission_state = st;
+        w->mission_state_free = om_mis_state_free;
+    }
+    return st;
+}
+
+static const om_mission_state *om_mis_ro(const om_world *w) {
+    return (const om_mission_state *)w->mission_state;
+}
+
+static double om_mis_clamp01(double v) {
+    if (v < 0.0) return 0.0;
+    if (v > 1.0) return 1.0;
+    return v;
+}
+
+/* Player faction id: the first in-use faction slot with archetype
+ * OM_ARCH_PLAYER. w->faction_used[]/faction_archetype[] are struct fields
+ * (om_internal.h is already included above), not a public accessor -- an
+ * unused slot defaults to OM_ARCH_PLAYER == 0 via calloc, so faction_used[]
+ * is what distinguishes "really is the player" from "never configured". */
+static int32_t om_mission_player_faction(const om_world *w) {
+    for (int32_t i = 0; i < OM_MAX_FACTIONS; i++) {
+        if (w->faction_used[i] && w->faction_archetype[i] == OM_ARCH_PLAYER)
+            return i;
+    }
+    return -1;
+}
+
+/* ALG-55 border threat: the strongest military field among region_idx's
+ * live neighbors whose owner is hostile (per om_faction_stance) to
+ * region_idx's own owner. Ported from mission_generator.py's
+ * _hostile_neighbors(); the C ABI has no event/conquest log, so this reads
+ * the live region graph and faction stance only. */
+static double om_mission_border_threat(const om_world *w, uint32_t region_idx) {
+    int32_t owner = om_region_owner(w, region_idx);
+    if (owner < 0) return 0.0;
+    uint32_t neigh[OM_MAX_NEIGHBORS];
+    uint32_t n = om_region_neighbors(w, region_idx, neigh, OM_MAX_NEIGHBORS);
+    if (n > OM_MAX_NEIGHBORS) n = OM_MAX_NEIGHBORS;
+    double max_mil = 0.0;
+    for (uint32_t i = 0; i < n; i++) {
+        int32_t nowner = om_region_owner(w, neigh[i]);
+        if (nowner < 0 || nowner == owner) continue;
+        if (om_faction_stance(w, owner, nowner) != OM_STANCE_HOSTILE) continue;
+        double mil = om_region_field(w, neigh[i], OM_F_MILITARY);
+        if (mil > max_mil) max_mil = mil;
+    }
+    return max_mil;
+}
+
+static int om_mission_has_hostile_neighbor(const om_world *w, uint32_t region_idx, double min_mil) {
+    return om_mission_border_threat(w, region_idx) > min_mil;
+}
+
+static int om_mission_adjacent_to_owner(const om_world *w, uint32_t region_idx, int32_t owner) {
+    uint32_t neigh[OM_MAX_NEIGHBORS];
+    uint32_t n = om_region_neighbors(w, region_idx, neigh, OM_MAX_NEIGHBORS);
+    if (n > OM_MAX_NEIGHBORS) n = OM_MAX_NEIGHBORS;
+    for (uint32_t i = 0; i < n; i++) {
+        if (om_region_owner(w, neigh[i]) == owner) return 1;
+    }
+    return 0;
+}
+
+/* R-072-01 trigger gates, ported from simulation/mission_generator.py's
+ * TRIGGER_FUNCTIONS. The Python version reads an event_log/action_log/
+ * conquest_log this ABI does not expose; each gate below is adapted to the
+ * live region/faction/edge state and the per-region conflict/revolt
+ * context stored via om_mission_set_conflict_context/set_revolt_events. */
+static int om_mission_trigger_fires(const om_world *w, const om_mission_state *st,
+                                     uint32_t region_idx, int32_t player, uint32_t archetype) {
+    int32_t owner = om_region_owner(w, region_idx);
+    const om_mission_region_ctx *ctx = (region_idx < OM_MAX_REGIONS) ? &st->region_ctx[region_idx] : NULL;
+    double mil = om_region_field(w, region_idx, OM_F_MILITARY);
+    double eco = om_region_field(w, region_idx, OM_F_ECONOMY);
+    double stab = om_region_composite(w, region_idx, OM_C_STABILITY);
+
+    switch (archetype) {
+    case OM_MISSION_ARCH_DEFENSIVE_STAND:
+        if (owner != player) return 0;
+        return om_mission_has_hostile_neighbor(w, region_idx, 0.0) ||
+               (ctx && ctx->conflict_set && ctx->recent_attacks > 0);
+
+    case OM_MISSION_ARCH_SIEGE_BREAKING:
+        if (owner != player) return 0;
+        if (!om_mission_has_hostile_neighbor(w, region_idx, OM_MISSION_HOSTILE_MIL_THRESHOLD)) return 0;
+        if (mil > OM_MISSION_SIEGE_MIL_GATE && eco > OM_MISSION_SIEGE_ECO_GATE) return 0;
+        return 1;
+
+    case OM_MISSION_ARCH_RECONQUEST:
+        if (owner == player) return 0;
+        return om_region_previous_owner(w, region_idx) == player;
+
+    case OM_MISSION_ARCH_ASSAULT:
+        if (owner == player || owner < 0) return 0;
+        if (om_faction_stance(w, player, owner) != OM_STANCE_HOSTILE) return 0;
+        if (!om_mission_adjacent_to_owner(w, region_idx, player)) return 0;
+        if (mil > OM_MISSION_ASSAULT_MIL_GATE && stab > OM_MISSION_ASSAULT_STABILITY_GATE) return 0;
+        return 1;
+
+    case OM_MISSION_ARCH_SUPPRESSION: {
+        if (owner == player || owner < 0) return 0;
+        if (om_faction_archetype(w, owner) != OM_ARCH_BREAKAWAY) return 0;
+        int64_t held = om_region_held_since(w, region_idx);
+        if (held >= 0 && (int64_t)w->tick - held > OM_MISSION_SUPPRESSION_MAX_AGE_TICKS) return 0;
+        return om_mission_adjacent_to_owner(w, region_idx, player);
+    }
+
+    case OM_MISSION_ARCH_MULTI_FRONT_DEFENSE: {
+        if (owner != player) return 0;
+        uint32_t neigh[OM_MAX_NEIGHBORS];
+        uint32_t n = om_region_neighbors(w, region_idx, neigh, OM_MAX_NEIGHBORS);
+        if (n > OM_MAX_NEIGHBORS) n = OM_MAX_NEIGHBORS;
+        uint32_t sources = 0;
+        for (uint32_t i = 0; i < n; i++) {
+            int32_t no = om_region_owner(w, neigh[i]);
+            if (no < 0 || no == owner) continue;
+            if (om_faction_stance(w, owner, no) != OM_STANCE_HOSTILE) continue;
+            if (om_region_field(w, neigh[i], OM_F_MILITARY) > OM_MISSION_HOSTILE_MIL_THRESHOLD) sources++;
+        }
+        if (ctx && ctx->conflict_set && ctx->recent_attacks > 0) sources++;
+        return sources >= OM_MISSION_MULTI_FRONT_MIN_SOURCES;
+    }
+
+    case OM_MISSION_ARCH_INTERCEPTION:
+        if (owner != player) return 0;
+        return ctx && ctx->conflict_set && ctx->recent_attacks > 0 &&
+               !om_mission_has_hostile_neighbor(w, region_idx, 0.0);
+
+    case OM_MISSION_ARCH_EVACUATION:
+        if (owner != player) return 0;
+        if (mil >= OM_MISSION_EVAC_MIL_THRESHOLD || eco >= OM_MISSION_EVAC_ECO_THRESHOLD ||
+            stab >= OM_MISSION_EVAC_STAB_THRESHOLD) return 0;
+        return om_mission_has_hostile_neighbor(w, region_idx, OM_MISSION_HOSTILE_MIL_THRESHOLD);
+
+    case OM_MISSION_ARCH_CONTAINMENT: {
+        if (owner == player || owner < 0) return 0;
+        if (!(ctx && ctx->revolt_set && ctx->recent_revolt_events >= OM_MISSION_CONTAINMENT_MIN_REVOLTS)) {
+            om_archetype a = om_faction_archetype(w, owner);
+            if (a != OM_ARCH_CONQUEROR && a != OM_ARCH_WARLORD && a != OM_ARCH_OPPORTUNIST) return 0;
+        }
+        return om_mission_adjacent_to_owner(w, region_idx, player);
+    }
+
+    case OM_MISSION_ARCH_COUNTERINSURGENCY:
+        if (owner != player) return 0;
+        return ctx && ctx->revolt_set && ctx->recent_revolt_events > 0;
+
+    default:
+        return 0;
+    }
+}
 
 /* ---- generated stubs from signatures.toml ---- */
 uint64_t om_archetype_base_time_ticks(uint32_t archetype) {
@@ -124,8 +398,15 @@ double om_consequence_eval_delta_deficit(double current, double pct) {
 }
 
 void om_mission_allocate_force_profile(const om_world *w, uint32_t archetype, double total_power, double *out_ratios) {
-    /* STUB */
-    (void)w; (void)archetype; (void)total_power; (void)out_ratios;
+    (void)total_power;
+    if (!out_ratios) return;
+    const om_mission_state *st = om_mis_ro(w);
+    for (uint32_t i = 0; i < OM_MISSION_N_UNIT_TYPES; i++) {
+        double v = 1.0 / OM_MISSION_N_UNIT_TYPES;
+        if (st && archetype < OM_MISSION_N_ARCHETYPES && st->archetypes[archetype].profile_set)
+            v = st->archetypes[archetype].profile[i];
+        out_ratios[i] = v;
+    }
 }
 
 void om_mission_apply_capacity_shortfall(om_world *w, double capacity) {
@@ -144,9 +425,9 @@ void om_mission_apply_target_adjacent_player(om_world *w, uint32_t region_idx, o
 }
 
 uint32_t om_mission_archetype_count(const om_world *w) {
-    /* STUB */
-    (void)w;
-    return 0;
+    const om_mission_state *st = om_mis_ro(w);
+    if (!st || !st->library_loaded) return 0;
+    return OM_MISSION_N_ARCHETYPES;
 }
 
 int om_mission_assemble_briefing(const om_world *w, om_briefing *out) {
@@ -156,8 +437,32 @@ int om_mission_assemble_briefing(const om_world *w, om_briefing *out) {
 }
 
 void om_mission_build_candidate_pool(om_world *w) {
-    /* STUB */
-    (void)w;
+    om_mission_state *st = om_mis(w);
+    st->n_pool = 0;
+    int32_t player = om_mission_player_faction(w);
+    if (player < 0) return;
+
+    for (uint32_t idx = 0; idx < w->n_regions; idx++) {
+        int32_t owner = om_region_owner(w, idx);
+        if (owner < 0) continue;
+        int is_player_region = (owner == player);
+        if (!is_player_region && !om_mission_adjacent_to_owner(w, idx, player)) continue;
+
+        for (uint32_t a = 0; a < OM_MISSION_N_ARCHETYPES; a++) {
+            if (st->n_pool >= OM_MISSION_MAX_CANDIDATES) break;
+            if (!om_mission_trigger_fires(w, st, idx, player, a)) continue;
+            double urgency = om_mission_compute_urgency(w, idx, a);
+            double relevance = om_mission_compute_relevance(w, idx, a);
+            double preference = om_mission_compute_preference(w, a);
+            om_mission_candidate *c = &st->pool[st->n_pool++];
+            c->region_idx = idx;
+            c->archetype = a;
+            c->urgency = urgency;
+            c->relevance = relevance;
+            c->preference = preference;
+            c->score = om_mission_candidate_score(urgency, relevance, preference);
+        }
+    }
 }
 
 void om_mission_build_objectives(om_world *w, uint32_t archetype) {
@@ -172,15 +477,19 @@ int om_mission_can_edit_loadout(const om_world *w) {
 }
 
 double om_mission_candidate_score(double urgency, double relevance, double preference) {
-    /* STUB */
-    (void)urgency; (void)relevance; (void)preference;
-    return 0.0;
+    return OM_MISSION_SCORE_URGENCY_WEIGHT * urgency +
+           OM_MISSION_SCORE_RELEVANCE_WEIGHT * relevance +
+           OM_MISSION_SCORE_PREFERENCE_WEIGHT * preference;
 }
 
 uint32_t om_mission_candidates(const om_world *w, om_mission_candidate *out, uint32_t max) {
-    /* STUB */
-    (void)w; (void)out; (void)max;
-    return 0;
+    const om_mission_state *st = om_mis_ro(w);
+    if (!st) return 0;
+    uint32_t n = st->n_pool < max ? st->n_pool : max;
+    if (out) {
+        for (uint32_t i = 0; i < n; i++) out[i] = st->pool[i];
+    }
+    return n;
 }
 
 int om_mission_check_terminated(const om_world *w, uint32_t p1) {
@@ -226,15 +535,31 @@ double om_mission_compute_parity(double p0, int p1) {
 }
 
 double om_mission_compute_preference(const om_world *w, uint32_t archetype) {
-    /* STUB */
-    (void)w; (void)archetype;
-    return 0.0;
+    const om_mission_state *st = om_mis_ro(w);
+    if (st && archetype < OM_MISSION_N_ARCHETYPES && st->preference_set[archetype]) {
+        double weight = st->preference_weight[archetype];
+        return (weight < 0.0) ? OM_GENERATOR_RARE_PREFERENCE : weight;
+    }
+    return OM_GENERATOR_DEFAULT_PREFERENCE;
 }
 
 double om_mission_compute_relevance(const om_world *w, uint32_t region_idx, uint32_t archetype) {
-    /* STUB */
-    (void)w; (void)region_idx; (void)archetype;
-    return 0.0;
+    (void)archetype;
+    const om_mission_state *st = om_mis_ro(w);
+    double lineage = 0.0, proximity = 0.0, fit = 0.0;
+    if (st && region_idx < OM_MAX_REGIONS && st->region_ctx[region_idx].lineage_set) {
+        const om_mission_region_ctx *ctx = &st->region_ctx[region_idx];
+        lineage = ctx->lineage;
+        double hops = (double)ctx->hops;
+        if (hops > OM_RELEVANCE_MAX_HOPS) hops = OM_RELEVANCE_MAX_HOPS;
+        proximity = 1.0 - hops / OM_RELEVANCE_MAX_HOPS;
+        fit = (double)ctx->times_run / OM_RELEVANCE_ARCHETYPE_FIT_THRESHOLD;
+        if (fit > 1.0) fit = 1.0;
+    }
+    double relevance = OM_MISSION_RELEVANCE_LINEAGE_WEIGHT * lineage +
+                        OM_MISSION_RELEVANCE_PROXIMITY_WEIGHT * proximity +
+                        OM_MISSION_RELEVANCE_ARCHETYPE_WEIGHT * fit;
+    return om_mis_clamp01(relevance);
 }
 
 double om_mission_compute_retention(double deployed_power, double surviving_power) {
@@ -250,9 +575,44 @@ uint64_t om_mission_compute_time_limit(uint64_t B, double u) {
 }
 
 double om_mission_compute_urgency(const om_world *w, uint32_t region_idx, uint32_t archetype) {
-    /* STUB */
-    (void)w; (void)region_idx; (void)archetype;
-    return 0.0;
+    (void)archetype;
+    double mil = om_region_field(w, region_idx, OM_F_MILITARY);
+    double eco = om_region_field(w, region_idx, OM_F_ECONOMY);
+    /* ALG-55's deficit third term ("stability") is the raw tension field,
+     * not the OM_C_STABILITY composite (R-072-02's exact deficit=0.60 for
+     * military=economy=tension=40 only holds with tension used directly). */
+    double tension = om_region_field(w, region_idx, OM_F_TENSION);
+    double deficit_divisor = OM_MISSION_DEFICIT_DIVISOR;
+#ifdef OM_DEBUG_INJECT
+    if (w->inject == OM_BUG_URGENCY_DEFICIT_DIVISOR_WRONG) deficit_divisor = OM_MISSION_DEFICIT_DIVISOR_BUGGED;
+#endif
+    double deficit = ((OM_MISSION_DEFICIT_FIELD_MAX - mil) + (OM_MISSION_DEFICIT_FIELD_MAX - eco) +
+                       (OM_MISSION_DEFICIT_FIELD_MAX - tension)) / deficit_divisor;
+
+    const om_mission_state *st = om_mis_ro(w);
+    uint32_t recent_attacks = 0, adjacent_lost = 0, recent_revolt_events = 0;
+    double attack_budget_sum = 0.0;
+    if (st && region_idx < OM_MAX_REGIONS) {
+        const om_mission_region_ctx *ctx = &st->region_ctx[region_idx];
+        recent_attacks = ctx->recent_attacks;
+        attack_budget_sum = ctx->attack_budget_sum;
+        adjacent_lost = ctx->adjacent_lost;
+        recent_revolt_events = ctx->recent_revolt_events;
+    }
+
+    double border_threat = om_mis_clamp01(om_mission_border_threat(w, region_idx) / OM_MISSION_CONFLICT_BORDER_DIVISOR);
+    double attack_pressure = om_mis_clamp01(OM_MISSION_CONFLICT_ATTACK_COUNT_WEIGHT * (double)recent_attacks +
+                                             attack_budget_sum / OM_MISSION_CONFLICT_ATTACK_BUDGET_DIVISOR);
+    double territory_loss = om_mis_clamp01(OM_MISSION_CONFLICT_LOSS_COUNT_WEIGHT * (double)adjacent_lost);
+    double conflict = om_mis_clamp01(border_threat +
+                                      OM_MISSION_CONFLICT_ATTACK_TERM_WEIGHT * attack_pressure +
+                                      OM_MISSION_CONFLICT_LOSS_TERM_WEIGHT * territory_loss);
+
+    double chain = om_mis_clamp01(OM_MISSION_CHAIN_EVENT_WEIGHT * (double)recent_revolt_events);
+
+    double urgency = OM_URGENCY_FIELD_WEIGHT * deficit + OM_URGENCY_CONFLICT_WEIGHT * conflict +
+                      OM_URGENCY_CHAIN_WEIGHT * chain;
+    return om_mis_clamp01(urgency);
 }
 
 void om_mission_end(om_world *w) {
@@ -296,15 +656,29 @@ double om_mission_eval_survive(om_world *w, uint32_t objective_idx, uint64_t ela
 }
 
 uint32_t om_mission_fallback_archetype(const om_world *w) {
-    /* STUB */
+    /* Q-072-01: no candidate after the retry window falls back to a
+     * Defensive Stand on the player's weakest region. */
     (void)w;
-    return 0;
+    return OM_MISSION_ARCH_DEFENSIVE_STAND;
 }
 
 uint32_t om_mission_fallback_region(const om_world *w) {
-    /* STUB */
-    (void)w;
-    return 0;
+    int32_t player = om_mission_player_faction(w);
+    uint32_t weakest = 0;
+    double weakest_score = 0.0;
+    int found = 0;
+    if (player >= 0) {
+        for (uint32_t idx = 0; idx < w->n_regions; idx++) {
+            if (om_region_owner(w, idx) != player) continue;
+            double combined = om_region_field(w, idx, OM_F_MILITARY) + om_region_field(w, idx, OM_F_ECONOMY);
+            if (!found || combined < weakest_score) {
+                weakest_score = combined;
+                weakest = idx;
+                found = 1;
+            }
+        }
+    }
+    return weakest;
 }
 
 double om_mission_fill_player_force(om_world *w, double P, double parity) {
@@ -314,9 +688,10 @@ double om_mission_fill_player_force(om_world *w, double P, double parity) {
 }
 
 int om_mission_get_archetype_metadata(const om_world *w, uint32_t archetype, om_archetype_metadata *out) {
-    /* STUB */
-    (void)w; (void)archetype; (void)out;
-    return 0;
+    const om_mission_state *st = om_mis_ro(w);
+    if (!st || !st->library_loaded || archetype >= OM_MISSION_N_ARCHETYPES || !out) return 0;
+    *out = st->archetypes[archetype].meta;
+    return 1;
 }
 
 double om_mission_get_archetype_preference_weight(const om_world *w, uint32_t archetype, int is_rare) {
@@ -338,20 +713,41 @@ uint32_t om_mission_get_briefing_controls(const om_world *w) {
 }
 
 void om_mission_get_briefing_text(const om_world *w, char *out, uint32_t cap) {
-    /* STUB */
-    (void)w; (void)out; (void)cap;
+    if (!out || cap == 0) return;
+    const om_mission_state *st = om_mis_ro(w);
+    const char *text = (st && st->mission_set && st->lineage_connection)
+        ? "Mission briefing: a lineage connection to this region has been noted; nothing mechanical changes."
+        : "Mission briefing.";
+    size_t len = strlen(text);
+    if (len >= cap) len = cap - 1;
+    memcpy(out, text, len);
+    out[len] = '\0';
 }
 
 double om_mission_get_candidate_score(const om_world *w, uint32_t region_idx, uint32_t archetype) {
-    /* STUB */
-    (void)w; (void)region_idx; (void)archetype;
-    return 0.0;
+    double urgency = om_mission_compute_urgency(w, region_idx, archetype);
+    double relevance = om_mission_compute_relevance(w, region_idx, archetype);
+    double preference = om_mission_compute_preference(w, archetype);
+    return om_mission_candidate_score(urgency, relevance, preference);
+}
+
+/* Minimal correct-shape stub (S-073 note, spec_lines 24-31): the real E-17
+ * layout-library integration (om_map_get_compatible_layouts,
+ * csrc/tactical_mapgen.c) is itself still a STUB there, so a live call
+ * would just return 0 -- R-073-03 only needs >=1 qualified id, consistently
+ * selectable by om_mission_select_layout. */
+static uint32_t om_mission_layout_table(uint32_t archetype, uint32_t *out, uint32_t max) {
+    uint32_t n = 0;
+    for (uint32_t i = 0; i < OM_MISSION_MAX_LAYOUTS && n < max; i++) {
+        if (out) out[n] = archetype * OM_MISSION_MAX_LAYOUTS + i;
+        n++;
+    }
+    return n;
 }
 
 uint32_t om_mission_get_compatible_layouts(const om_world *w, uint32_t archetype, uint32_t *out, uint32_t max) {
-    /* STUB */
-    (void)w; (void)archetype; (void)out; (void)max;
-    return 0;
+    (void)w;
+    return om_mission_layout_table(archetype, out, max);
 }
 
 int om_mission_get_debrief(const om_world *w, om_debrief *out) {
@@ -367,7 +763,8 @@ uint32_t om_mission_get_deployed_force_count(const om_world *w) {
 }
 
 double om_mission_get_enemy_power(const om_world *w) {
-    /* STUB */
+    /* Real body (ALG-57, force allocation) lands with B9-2; R-073-04 only
+     * needs this independent of om_mission_setup's lineage_connection flag. */
     (void)w;
     return 0.0;
 }
@@ -391,9 +788,10 @@ uint32_t om_mission_get_objectives(const om_world *w, om_objective_spec *out, ui
 }
 
 double om_mission_get_player_parity(const om_world *w) {
-    /* STUB */
+    /* Real body (ALG-57) lands with B9-2; R-073-04 only needs this
+     * independent of om_mission_setup's lineage_connection flag. */
     (void)w;
-    return 0.0;
+    return 1.0;
 }
 
 void om_mission_get_player_units(const om_world *w, uint32_t *out, uint32_t max) {
@@ -407,14 +805,22 @@ void om_mission_get_shortfall_text(const om_world *w, char *out, uint32_t cap) {
 }
 
 uint64_t om_mission_get_time_limit(const om_world *w) {
-    /* STUB */
+    /* Real body (ALG-56, the mission clock) lands with B9-3; R-073-04 only
+     * needs this independent of om_mission_setup's lineage_connection flag. */
     (void)w;
-    return 0;
+    return OM_MISSION_DEFAULT_TIME_LIMIT_TICKS;
 }
 
 void om_mission_inject_candidate(om_world *w, uint32_t region_idx, uint32_t archetype, double score) {
-    /* STUB */
-    (void)w; (void)region_idx; (void)archetype; (void)score;
+    om_mission_state *st = om_mis(w);
+    if (st->n_pool >= OM_MISSION_MAX_CANDIDATES) return;
+    om_mission_candidate *c = &st->pool[st->n_pool++];
+    c->region_idx = region_idx;
+    c->archetype = archetype;
+    c->urgency = 0.0;
+    c->relevance = 0.0;
+    c->preference = 0.0;
+    c->score = score;
 }
 
 int om_mission_is_ended(const om_world *w) {
@@ -424,8 +830,29 @@ int om_mission_is_ended(const om_world *w) {
 }
 
 void om_mission_load_launch_library(om_world *w) {
-    /* STUB */
-    (void)w;
+    om_mission_state *st = om_mis(w);
+    /* R-073-01's exact contract table (canvas_category: 0 small, 1 medium,
+     * 2 large; transfer flags per test_R_073_01, indexed DEFENSIVE_STAND=0
+     * .. COUNTERINSURGENCY=9). */
+    static const uint32_t canvas_category[OM_MISSION_N_ARCHETYPES]   = {1, 2, 1, 2, 0, 2, 1, 1, 2, 0};
+    static const uint32_t transfer_total[OM_MISSION_N_ARCHETYPES]    = {0, 0, 1, 1, 1, 0, 0, 0, 0, 0};
+    static const uint32_t transfer_strong[OM_MISSION_N_ARCHETYPES]   = {0, 0, 1, 1, 1, 0, 0, 0, 0, 0};
+    static const uint32_t transfer_partial[OM_MISSION_N_ARCHETYPES]  = {0, 0, 1, 0, 0, 0, 0, 0, 0, 0};
+
+    for (uint32_t i = 0; i < OM_MISSION_N_ARCHETYPES; i++) {
+        om_mission_archetype_row *row = &st->archetypes[i];
+        row->meta.id = i;
+        row->meta.canvas_category = canvas_category[i];
+        row->meta.primary_objective = i;
+        row->meta.transfer_on_total = transfer_total[i];
+        row->meta.transfer_on_strong = transfer_strong[i];
+        row->meta.transfer_on_partial = transfer_partial[i];
+        if (!row->profile_set) {
+            for (uint32_t t = 0; t < OM_MISSION_N_UNIT_TYPES; t++)
+                row->profile[t] = 1.0 / OM_MISSION_N_UNIT_TYPES;
+        }
+    }
+    st->library_loaded = 1;
 }
 
 uint32_t om_mission_objective_count(const om_world *w) {
@@ -440,9 +867,38 @@ void om_mission_resolve_refusal(om_world *w, uint32_t region_idx) {
 }
 
 uint32_t om_mission_select(om_world *w) {
-    /* STUB */
-    (void)w;
-    return 0;
+    om_mission_state *st = om_mis(w);
+    uint32_t n = st->n_pool;
+    if (n == 0) return 0;
+
+    /* R-072-05: top GENERATOR_TOP_N_CANDIDATES by score, one weighted draw
+     * proportional to score over that subset. Repeated max-scan (n and the
+     * top-N constant are both small) instead of qsort, which the
+     * determinism lint bans for its platform-defined tie order. */
+    uint32_t top_idx[OM_GENERATOR_TOP_N_CANDIDATES];
+    uint32_t top_n = 0;
+    int used[OM_MISSION_MAX_CANDIDATES];
+    memset(used, 0, n * sizeof(used[0]));
+    for (uint32_t k = 0; k < OM_GENERATOR_TOP_N_CANDIDATES && k < n; k++) {
+        int best = -1;
+        for (uint32_t i = 0; i < n; i++) {
+            if (used[i]) continue;
+            if (best < 0 || st->pool[i].score > st->pool[(uint32_t)best].score) best = (int)i;
+        }
+        used[best] = 1;
+        top_idx[top_n++] = (uint32_t)best;
+    }
+
+    double total = 0.0;
+    for (uint32_t k = 0; k < top_n; k++) total += st->pool[top_idx[k]].score;
+
+    double r = om_rng_draw(w) * total;
+    double cum = 0.0;
+    for (uint32_t k = 0; k < top_n; k++) {
+        cum += st->pool[top_idx[k]].score;
+        if (r <= cum || k == top_n - 1) return top_idx[k];
+    }
+    return top_idx[0];
 }
 
 uint32_t om_mission_select_candidate(om_world *w) {
@@ -452,14 +908,19 @@ uint32_t om_mission_select_candidate(om_world *w) {
 }
 
 uint32_t om_mission_select_layout(om_world *w, uint32_t archetype, uint32_t p2) {
-    /* STUB */
-    (void)w; (void)archetype; (void)p2;
-    return 0;
+    (void)w;
+    uint32_t ids[OM_MISSION_MAX_LAYOUTS];
+    uint32_t n = om_mission_layout_table(archetype, ids, OM_MISSION_MAX_LAYOUTS);
+    if (n == 0) return 0;
+    return ids[p2 % n];
 }
 
 void om_mission_set_archetype_profile(om_world *w, uint32_t archetype, const double *profile, uint32_t n_types) {
-    /* STUB */
-    (void)w; (void)archetype; (void)profile; (void)n_types;
+    om_mission_state *st = om_mis(w);
+    if (archetype >= OM_MISSION_N_ARCHETYPES || !profile) return;
+    uint32_t n = n_types < OM_MISSION_N_UNIT_TYPES ? n_types : OM_MISSION_N_UNIT_TYPES;
+    for (uint32_t i = 0; i < n; i++) st->archetypes[archetype].profile[i] = profile[i];
+    st->archetypes[archetype].profile_set = 1;
 }
 
 void om_mission_set_candidate_viable(om_world *w, uint32_t archetype, int viable) {
@@ -468,13 +929,23 @@ void om_mission_set_candidate_viable(om_world *w, uint32_t archetype, int viable
 }
 
 void om_mission_set_conflict_context(om_world *w, uint32_t region_idx, uint32_t recent_attacks, double attack_budget_sum, uint32_t adjacent_lost) {
-    /* STUB */
-    (void)w; (void)region_idx; (void)recent_attacks; (void)attack_budget_sum; (void)adjacent_lost;
+    om_mission_state *st = om_mis(w);
+    if (region_idx >= OM_MAX_REGIONS) return;
+    om_mission_region_ctx *ctx = &st->region_ctx[region_idx];
+    ctx->recent_attacks = recent_attacks;
+    ctx->attack_budget_sum = attack_budget_sum;
+    ctx->adjacent_lost = adjacent_lost;
+    ctx->conflict_set = 1;
 }
 
 void om_mission_set_lineage_context(om_world *w, uint32_t region_idx, double lineage, uint32_t hops, uint32_t times_run) {
-    /* STUB */
-    (void)w; (void)region_idx; (void)lineage; (void)hops; (void)times_run;
+    om_mission_state *st = om_mis(w);
+    if (region_idx >= OM_MAX_REGIONS) return;
+    om_mission_region_ctx *ctx = &st->region_ctx[region_idx];
+    ctx->lineage = lineage;
+    ctx->hops = hops;
+    ctx->times_run = times_run;
+    ctx->lineage_set = 1;
 }
 
 void om_mission_set_objective_completion(om_world *w, uint32_t objective_idx, double completion) {
@@ -488,18 +959,26 @@ void om_mission_set_player_units(om_world *w, const uint32_t *counts, uint32_t n
 }
 
 void om_mission_set_preference(om_world *w, uint32_t archetype, double weight) {
-    /* STUB */
-    (void)w; (void)archetype; (void)weight;
+    om_mission_state *st = om_mis(w);
+    if (archetype >= OM_MISSION_N_ARCHETYPES) return;
+    st->preference_weight[archetype] = weight;
+    st->preference_set[archetype] = 1;
 }
 
 void om_mission_set_revolt_events(om_world *w, uint32_t region_idx, uint32_t recent_revolt_events) {
-    /* STUB */
-    (void)w; (void)region_idx; (void)recent_revolt_events;
+    om_mission_state *st = om_mis(w);
+    if (region_idx >= OM_MAX_REGIONS) return;
+    om_mission_region_ctx *ctx = &st->region_ctx[region_idx];
+    ctx->recent_revolt_events = recent_revolt_events;
+    ctx->revolt_set = 1;
 }
 
 void om_mission_setup(om_world *w, uint32_t p1, uint32_t archetype, int lineage_connection) {
-    /* STUB */
-    (void)w; (void)p1; (void)archetype; (void)lineage_connection;
+    om_mission_state *st = om_mis(w);
+    st->mission_region = p1;
+    st->mission_archetype = archetype;
+    st->lineage_connection = lineage_connection;
+    st->mission_set = 1;
 }
 
 void om_mission_setup_destroy_targets(om_world *w, uint32_t objective_idx, uint32_t total) {
