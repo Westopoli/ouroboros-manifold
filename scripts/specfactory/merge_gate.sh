@@ -169,7 +169,19 @@ if [[ -n "$ACCEPT_IDS" ]]; then
     ACCEPT_LOG="$SCRATCH_ROOT/acceptance.log"
     ( cd "$CANDIDATE" && "$PYTHON" -m pytest -q -p no:cacheprovider $ACCEPT_IDS ) >"$ACCEPT_LOG" 2>&1
     if [[ $? -ne 0 ]]; then
-        reject acceptance "$(tail_oneline "$ACCEPT_LOG" 15)"
+        # A straggler increment (push/<piece>-<n>) submits before the rest of
+        # its piece's acceptance is green; merge_gate_support.py resolves the
+        # id and reports WARN with the green/red split instead of REJECT. A
+        # full piece id (acceptance-verdict prints bare REJECT) keeps reject.
+        IDS_FILE="$SCRATCH_ROOT/acceptance_ids.txt"
+        printf '%s\n' $ACCEPT_IDS > "$IDS_FILE"
+        VERDICT="$("$PYTHON" "$GATE_DIR/merge_gate_support.py" acceptance-verdict "$PIECE_ID" \
+            --pieces "$PIECES_TOML" --ids-file "$IDS_FILE" --pytest-log "$ACCEPT_LOG")"
+        if [[ "$VERDICT" == WARN* ]]; then
+            warn acceptance "${VERDICT#WARN }"
+        else
+            reject acceptance "$(tail_oneline "$ACCEPT_LOG" 15)"
+        fi
     else
         ok acceptance ""
     fi
@@ -186,8 +198,16 @@ if [[ -n "$GODOT_IDS" ]]; then
     if [[ $? -eq 0 ]]; then
         ok acceptance_godot "$(grep -c '^PASS: res://' "$GODOT_LOG") files PASS"
     else
-        FIRST_FAIL="$(grep -m1 '^FAIL: res://' "$GODOT_LOG")"
-        reject acceptance_godot "${FIRST_FAIL:-$(tail_oneline "$GODOT_LOG" 10)}"
+        GD_IDS_FILE="$SCRATCH_ROOT/godot_ids.txt"
+        printf '%s\n' $GODOT_IDS > "$GD_IDS_FILE"
+        VERDICT="$("$PYTHON" "$GATE_DIR/merge_gate_support.py" acceptance-verdict "$PIECE_ID" \
+            --pieces "$PIECES_TOML" --ids-file "$GD_IDS_FILE" --godot-log "$GODOT_LOG")"
+        if [[ "$VERDICT" == WARN* ]]; then
+            warn acceptance_godot "${VERDICT#WARN }"
+        else
+            FIRST_FAIL="$(grep -m1 '^FAIL: res://' "$GODOT_LOG")"
+            reject acceptance_godot "${FIRST_FAIL:-$(tail_oneline "$GODOT_LOG" 10)}"
+        fi
     fi
 fi
 
