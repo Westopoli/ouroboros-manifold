@@ -23,3 +23,18 @@
 2026-09-23T00:54:16+00:00 | /home/westopoli/Projects/om-push/m2 | git status --porcelain --untracked-files=normal | exit 0
 2026-09-23T00:54:16+00:00 | /home/westopoli/Projects/om-push/m2 | git worktree list --porcelain | exit 0
 2026-09-23T00:54:16+00:00 | /home/westopoli/Projects/om-push/m2 | git branch --list '--format=%(refname:short)' 'swarm/b10/**' | exit 0
+2026-09-23T00:54:44+00:00 | /home/westopoli/Projects/om-push/m2 | git worktree list --porcelain | exit 0
+2026-09-23T00:54:44+00:00 | /home/westopoli/Projects/om-push/m2 | git branch --list '--format=%(refname:short)' 'swarm/b10/**' | exit 0
+2026-09-23T00:54:44+00:00 | /home/westopoli/Projects/om-push/m2 | git merge-base --is-ancestor swarm/b10/integration HEAD | exit 0
+2026-09-23T00:54:44+00:00 | /home/westopoli/Projects/om-push/m2 | git worktree remove --force /home/westopoli/Projects/om-push/m2/.swarm/b10/worktrees/leaf-01 | exit 0
+2026-09-23T00:54:44+00:00 | /home/westopoli/Projects/om-push/m2 | git branch -D swarm/b10/leaf-01 | exit 0
+2026-09-23T00:54:44+00:00 | /home/westopoli/Projects/om-push/m2 | git worktree remove --force /home/westopoli/Projects/om-push/m2/.swarm/b10/worktrees/integration | exit 0
+2026-09-23T00:54:44+00:00 | /home/westopoli/Projects/om-push/m2 | git branch -d swarm/b10/integration | exit 0
+2026-09-23T00:54:44+00:00 | /home/westopoli/Projects/om-push/m2 | git worktree prune | exit 0
+2026-09-23T00:54:44+00:00 | /home/westopoli/Projects/om-push/m2 | git worktree list --porcelain | exit 0
+2026-09-23T00:54:44+00:00 | /home/westopoli/Projects/om-push/m2 | git branch --list '--format=%(refname:short)' 'swarm/b10/**' | exit 0
+2026-09-23T00:54:47+00:00 | /home/westopoli/Projects/om-push/m2 | git rev-parse --git-dir | exit 0
+2026-09-23T00:54:47+00:00 | /home/westopoli/Projects/om-push/m2 | git rev-parse --abbrev-ref HEAD | exit 0
+2026-09-23T00:54:47+00:00 | /home/westopoli/Projects/om-push/m2 | git status --porcelain --untracked-files=normal | exit 0
+2026-09-23T00:54:47+00:00 | /home/westopoli/Projects/om-push/m2 | git worktree list --porcelain | exit 0
+2026-09-23T00:54:47+00:00 | /home/westopoli/Projects/om-push/m2 | git branch --list '--format=%(refname:short)' 'swarm/b10/**' | exit 0
