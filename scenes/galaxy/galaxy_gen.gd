@@ -1,4 +1,3 @@
-class_name GalaxyGen
 extends RefCounted
 
 # Lays out one Vector3 per region id on a jittered disc, seeded. C5 rule
