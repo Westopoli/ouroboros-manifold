@@ -9,6 +9,21 @@ const BAND_NAMES := ["total_failure", "partial_failure", "partial_success", "str
 
 const PLANTS := ["band-off-by-one"]
 
+# Piece C8 self-load pattern (docs/northstar/plans/push/specs/C8-M3.md
+# "Self-loading pattern"): SceneRouter never passes data into a scene
+# reached without setup() params, so debrief self-loads a fixture frame
+# in _ready() when reached that way. Fallback mirrors
+# tests/test_briefing_debrief.gd's own _build_minimal_debrief() verbatim
+# so a missing/unreadable fixture still shows real content, not defaults.
+const _DEBRIEF_FIXTURE_PATH := "res://tests/fixtures/debrief_frame_seed11.json"
+const _FALLBACK_DEBRIEF_FRAME := {
+	"type": "debrief",
+	"band": 2,
+	"achieved": 0.8,
+	"brought_home": 0.6,
+	"region_delta": {"military": -4.0, "economy": 2.0, "tension": -3.0, "population": 0.0},
+}
+
 var _params: Dictionary = {}
 var _accent: Color = ThemeConstants.DEFAULT_ACCENT
 
@@ -22,6 +37,28 @@ func setup(params: Dictionary) -> void:
 	if era_id != "":
 		_accent = ThemeConstants.get_era_accent(era_id)
 	_build_ui()
+
+
+# Piece C8: no setup() call means nothing routed data in (SceneRouter's
+# _swap_scene only calls setup() when a scene has one and params were
+# passed); mirrors mission_briefing.gd's own "if _data.is_empty(): ...
+# _build_ui()" fresh-reached branch in its _ready().
+func _ready() -> void:
+	if _params.is_empty():
+		_build_ui()
+		load_frame(_load_fixture_debrief_frame())
+
+
+func _load_fixture_debrief_frame() -> Dictionary:
+	var f := FileAccess.open(_DEBRIEF_FIXTURE_PATH, FileAccess.READ)
+	if f == null:
+		return _FALLBACK_DEBRIEF_FRAME
+	var text := f.get_as_text()
+	f.close()
+	var data = JSON.parse_string(text)
+	if data is Dictionary:
+		return data
+	return _FALLBACK_DEBRIEF_FRAME
 
 
 func _input(event: InputEvent) -> void:
@@ -136,6 +173,7 @@ func _build_ui() -> void:
 	var continue_btn = load("res://theme/components/tm_button.tscn").instantiate()
 	continue_btn.text = "CONTINUE"
 	continue_btn.accent_color = _accent
+	continue_btn.name = "Continue"
 	continue_btn.pressed.connect(_on_continue)
 	footer.add_child(continue_btn)
 
@@ -498,7 +536,7 @@ func _on_continue() -> void:
 	debrief_completed.emit()
 	if SimBridge.USE_LIVE_SIM:
 		SimBridge.send_command({"type": "command", "cmd": "continue_from_debrief"})
-	SceneRouter.go_to("time_jump")
+	SceneRouter.go_to("chronicle")
 
 
 func _on_exit() -> void:
