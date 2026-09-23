@@ -963,6 +963,22 @@ def load_launch_events(lib, w):
     lib.om_events_load_launch(w)
 
 
+def load_only_templates(lib, w, *names):
+    """Load just the named launch templates (their real values, pulled off the
+    full launch library) so a queued-event test never shares the region with
+    the other 25 templates' own thresholds -- the E-04 Testing Rigor
+    Directive's "fields, external spawns, and noise offsets hard-fixtured"
+    isolation, extended to which templates exist at all. Every id an E-07
+    fixture resolves by name still resolves after this (position in the
+    smaller array, not the launch library's row)."""
+    _bind_e04(lib)
+    lib.om_events_load_launch(w)
+    picked = [get_template(lib, w, template_id(lib, w, name)) for name in names]
+    arr = (OmEventTemplate * len(picked))(*picked)
+    rc = lib.om_events_load(w, arr, len(picked))
+    assert rc == 0, f"om_events_load failed loading {names}: rc={rc}"
+
+
 def template_id(lib, w, name):
     _bind_e04(lib)
     tid = lib.om_event_template_by_name(w, name.encode("utf-8"))

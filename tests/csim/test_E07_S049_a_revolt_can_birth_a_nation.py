@@ -18,7 +18,9 @@ from conftest import (
     OMTier,
     force_draws,
     isolate_agents,
+    load_only_templates,
     queue_external,
+    template_id,
     read_pruned,
     set_edge,
     set_faction,
@@ -54,6 +56,8 @@ def test_R_049_01_one_draw_sets_success_rate(lib, world_factory):
     # Case A: second draw > rate -> no faction forms
     w_fail = world_factory(n_regions=2)
     isolate_agents(lib, w_fail)
+    lib.om_world_set_feature(w_fail, OMFeature.FACTIONS, 0)
+    load_only_templates(lib, w_fail, "Revolt Entrenched")
     lib.om_world_set_feature(w_fail, OMFeature.EVENTS, 1)
     lib.om_world_set_feature(w_fail, OMFeature.LIFECYCLE, 1)
 
@@ -65,11 +69,11 @@ def test_R_049_01_one_draw_sets_success_rate(lib, world_factory):
     set_owner(lib, w_fail, 1, 0, held_since=-1)
 
     # Queue Revolt Entrenched (template_id 100 or external event) due tick 2
-    queue_external(lib, w_fail, 0, 100, due_tick=2, probability=1.0)
+    queue_external(lib, w_fail, 0, template_id(lib, w_fail, "Revolt Entrenched"), due_tick=1, probability=1.0)
 
     # Draw 1: 0.50 -> rate = 0.50 + (0.95 - 0.50) * 0.50 = 0.725
     # Draw 2: 0.80 > 0.725 -> fails, no faction forms
-    force_draws(lib, w_fail, [0.50, 0.80])
+    force_draws(lib, w_fail, [0.99, 0.50, 0.80])
     lib.om_world_step(w_fail)
 
     revolts_fail = read_revolts(lib, w_fail)
@@ -81,6 +85,8 @@ def test_R_049_01_one_draw_sets_success_rate(lib, world_factory):
     # Case B: second draw <= rate -> faction forms
     w_pass = world_factory(n_regions=2)
     isolate_agents(lib, w_pass)
+    lib.om_world_set_feature(w_pass, OMFeature.FACTIONS, 0)
+    load_only_templates(lib, w_pass, "Revolt Entrenched")
     lib.om_world_set_feature(w_pass, OMFeature.EVENTS, 1)
     lib.om_world_set_feature(w_pass, OMFeature.LIFECYCLE, 1)
 
@@ -91,10 +97,10 @@ def test_R_049_01_one_draw_sets_success_rate(lib, world_factory):
     set_region(lib, w_pass, 1, tier=OMTier.HOME, military=50.0, economy=50.0, tension=0.0, population=50.0, faction_id=0)
     set_owner(lib, w_pass, 1, 0, held_since=-1)
 
-    queue_external(lib, w_pass, 0, 100, due_tick=2, probability=1.0)
+    queue_external(lib, w_pass, 0, template_id(lib, w_pass, "Revolt Entrenched"), due_tick=1, probability=1.0)
 
     # Draw 1: 0.50 -> rate = 0.725; Draw 2: 0.50 <= 0.725 -> passes
-    force_draws(lib, w_pass, [0.50, 0.50, 0.50])  # rate, check, confidence draw
+    force_draws(lib, w_pass, [0.99, 0.50, 0.50, 0.50])  # queue-fire, rate, check, confidence draw
     lib.om_world_step(w_pass)
 
     revolts_pass = read_revolts(lib, w_pass)
@@ -109,6 +115,8 @@ def test_R_049_02_no_faction_forms(lib, world_factory):
     """Given the success draw passes but the region's population is below 25, When resolved, Then no faction forms."""
     w = world_factory(n_regions=2)
     isolate_agents(lib, w)
+    lib.om_world_set_feature(w, OMFeature.FACTIONS, 0)
+    load_only_templates(lib, w, "Revolt Entrenched")
     lib.om_world_set_feature(w, OMFeature.EVENTS, 1)
     lib.om_world_set_feature(w, OMFeature.LIFECYCLE, 1)
 
@@ -120,10 +128,10 @@ def test_R_049_02_no_faction_forms(lib, world_factory):
     set_region(lib, w, 1, tier=OMTier.HOME, military=50.0, economy=50.0, tension=0.0, population=50.0, faction_id=0)
     set_owner(lib, w, 1, 0, held_since=-1)
 
-    queue_external(lib, w, 0, 100, due_tick=2, probability=1.0)
+    queue_external(lib, w, 0, template_id(lib, w, "Revolt Entrenched"), due_tick=1, probability=1.0)
 
     # Success draw passes (rate=0.725, draw=0.10 <= 0.725)
-    force_draws(lib, w, [0.50, 0.10])
+    force_draws(lib, w, [0.99, 0.50, 0.10])
     lib.om_world_step(w)
 
     revolts = read_revolts(lib, w)
@@ -139,6 +147,8 @@ def test_R_049_03_region_keeps_military_0_40(lib, world_factory):
     """Given a breakaway forms, When the region is split, Then the region keeps military · 0.40 and economy · 0.60 (the revolt takes 60 percent of the army and 40 percent of the economy), then tension is capped at 40, population floored at 25, economy floored at 20."""
     w = world_factory(n_regions=2)
     isolate_agents(lib, w)
+    lib.om_world_set_feature(w, OMFeature.FACTIONS, 0)
+    load_only_templates(lib, w, "Revolt Entrenched")
     lib.om_world_set_feature(w, OMFeature.EVENTS, 1)
     lib.om_world_set_feature(w, OMFeature.LIFECYCLE, 1)
 
@@ -153,8 +163,8 @@ def test_R_049_03_region_keeps_military_0_40(lib, world_factory):
     set_region(lib, w, 1, tier=OMTier.HOME, military=50.0, economy=50.0, tension=0.0, population=50.0, faction_id=0)
     set_owner(lib, w, 1, 0, held_since=-1)
 
-    queue_external(lib, w, 0, 100, due_tick=2, probability=1.0)
-    force_draws(lib, w, [0.50, 0.10, 0.50])
+    queue_external(lib, w, 0, template_id(lib, w, "Revolt Entrenched"), due_tick=1, probability=1.0)
+    force_draws(lib, w, [0.99, 0.50, 0.10, 0.50])
     lib.om_world_step(w)
 
     assert lib.om_region_field(w, 0, OMField.MILITARY) == pytest.approx(20.0, abs=1e-6)
@@ -167,6 +177,8 @@ def test_R_049_04_its_id_breakaway_tick_region(lib, world_factory):
     """Given a breakaway forms, When the faction is created, Then its id is `breakaway_<tick>_<region>`, archetype `breakaway`, budget 0, growth rate 0.025, attack confidence uniform in [2, 5], tech equal to the parent's, stance hostile with every faction both ways, and a color distinct from every existing faction's hue by more than 0.08."""
     w = world_factory(n_regions=2)
     isolate_agents(lib, w)
+    lib.om_world_set_feature(w, OMFeature.FACTIONS, 0)
+    load_only_templates(lib, w, "Revolt Entrenched")
     lib.om_world_set_feature(w, OMFeature.EVENTS, 1)
     lib.om_world_set_feature(w, OMFeature.LIFECYCLE, 1)
 
@@ -177,8 +189,8 @@ def test_R_049_04_its_id_breakaway_tick_region(lib, world_factory):
     set_region(lib, w, 1, tier=OMTier.HOME, military=50.0, economy=50.0, tension=0.0, population=50.0, faction_id=0)
     set_owner(lib, w, 1, 0, held_since=-1)
 
-    queue_external(lib, w, 0, 100, due_tick=2, probability=1.0)
-    force_draws(lib, w, [0.50, 0.10, 0.50])
+    queue_external(lib, w, 0, template_id(lib, w, "Revolt Entrenched"), due_tick=1, probability=1.0)
+    force_draws(lib, w, [0.99, 0.50, 0.10, 0.50])
     lib.om_world_step(w)
 
     assert lib.om_faction_count(w) == 2
@@ -200,6 +212,8 @@ def test_R_049_05_success_rate_1_0_with(lib, world_factory):
     """Given Admin Breakaway fires (E-05 S-040), When resolved, Then the success rate is 1.0 with no population check, and the archetype is one draw from conqueror, fortifier, warlord, opportunist, schism."""
     w = world_factory(n_regions=2)
     isolate_agents(lib, w, admin=True)
+    lib.om_world_set_feature(w, OMFeature.FACTIONS, 0)
+    load_only_templates(lib, w, "Admin Breakaway")
     lib.om_world_set_feature(w, OMFeature.EVENTS, 1)
     lib.om_world_set_feature(w, OMFeature.LIFECYCLE, 1)
 
@@ -212,11 +226,11 @@ def test_R_049_05_success_rate_1_0_with(lib, world_factory):
     set_owner(lib, w, 1, 0, held_since=-1)
 
     # Queue Admin Breakaway event (template 101 / admin breakaway)
-    queue_external(lib, w, 0, 101, due_tick=2, probability=1.0, source_faction=0, chain_length=3)
+    queue_external(lib, w, 0, template_id(lib, w, "Admin Breakaway"), due_tick=1, probability=1.0, source_faction=0, chain_length=3)
 
     # One draw from [conqueror, fortifier, warlord, opportunist, schism]
     # Draw 0.0 -> conqueror
-    force_draws(lib, w, [0.0, 0.50])
+    force_draws(lib, w, [0.99, 0.0, 0.50])
     lib.om_world_step(w)
 
     assert lib.om_faction_count(w) == 2
@@ -235,6 +249,8 @@ def test_R_049_06_nothing_happens_chain_pruned(lib, world_factory):
     """Given an admin chain whose region changed owner after the chain started, When Admin Breakaway fires, Then nothing happens (the chain is pruned)."""
     w = world_factory(n_regions=2)
     isolate_agents(lib, w, admin=True)
+    lib.om_world_set_feature(w, OMFeature.FACTIONS, 0)
+    load_only_templates(lib, w, "Admin Breakaway")
     lib.om_world_set_feature(w, OMFeature.EVENTS, 1)
     lib.om_world_set_feature(w, OMFeature.LIFECYCLE, 1)
 
@@ -247,7 +263,7 @@ def test_R_049_06_nothing_happens_chain_pruned(lib, world_factory):
     set_region(lib, w, 0, tier=OMTier.HOME, military=50.0, economy=50.0, tension=20.0, population=50.0, faction_id=0)
     set_owner(lib, w, 0, 0, held_since=-1)
 
-    queue_external(lib, w, 0, 101, due_tick=3, probability=1.0, source_faction=0, chain_length=3)
+    queue_external(lib, w, 0, template_id(lib, w, "Admin Breakaway"), due_tick=2, probability=1.0, source_faction=0, chain_length=3)
 
     # Owner changes to Faction 1 after chain started
     set_owner(lib, w, 0, 1, held_since=1)
@@ -257,7 +273,7 @@ def test_R_049_06_nothing_happens_chain_pruned(lib, world_factory):
     lib.om_world_step(w)
 
     pruned = read_pruned(lib, w)
-    assert any(p.template_id == 101 for p in pruned)
+    assert any(p.template_id == template_id(lib, w, "Admin Breakaway") for p in pruned)
 
     # Chain is pruned: owner remains 1, no breakaway forms
     assert lib.om_faction_count(w) == 2
@@ -268,6 +284,8 @@ def test_R_049_07_every_edge_touching_it_becomes(lib, world_factory):
     """Given the region's edges, When ownership changes to the breakaway, Then every edge touching it becomes `border`."""
     w = world_factory(n_regions=3)
     isolate_agents(lib, w)
+    lib.om_world_set_feature(w, OMFeature.FACTIONS, 0)
+    load_only_templates(lib, w, "Revolt Entrenched")
     lib.om_world_set_feature(w, OMFeature.EVENTS, 1)
     lib.om_world_set_feature(w, OMFeature.LIFECYCLE, 1)
 
@@ -281,8 +299,8 @@ def test_R_049_07_every_edge_touching_it_becomes(lib, world_factory):
     set_edge(lib, w, 0, 1, OMEdge.TRADE)
     set_edge(lib, w, 0, 2, OMEdge.BOTH)
 
-    queue_external(lib, w, 0, 100, due_tick=2, probability=1.0)
-    force_draws(lib, w, [0.50, 0.10, 0.50])
+    queue_external(lib, w, 0, template_id(lib, w, "Revolt Entrenched"), due_tick=1, probability=1.0)
+    force_draws(lib, w, [0.99, 0.50, 0.10, 0.50])
     lib.om_world_step(w)
 
     # When ownership changes to breakaway, every edge touching Region 0 becomes border

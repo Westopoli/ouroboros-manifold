@@ -217,8 +217,12 @@ def test_R_044_07_q_045_01_decides_commit(lib, world_factory):
     attacks = read_attacks(lib, w)
     betrayal_attack = [a for a in attacks if a.attacker == 0 and a.defender == 1]
     assert len(betrayal_attack) == 1
-    # Current contract commits entire budget at full efficiency (mode multiplier 1.0, not surprise penalty 0.5)
-    assert betrayal_attack[0].commit == pytest.approx(42.5, abs=1e-5)
+    # Q-045-01 (closed, c): betrayer commits its entire budget at fire time (ALG-40).
+    # Budget grows in step 3b before betrayal fires in step 3.5 (ALG-17): faction 0
+    # owns region 0, economy 50.0, tech 0.0 -> tech_economy multiplier 1.0 (ALG-26).
+    # Δbudget = (50.0 - REGION_MAINTENANCE_COST 8.0) * BUDGET_GROWTH_RATE 0.025 * 1.0 = 1.05
+    # budget at fire time = 42.5 + 1.05 = 43.55
+    assert betrayal_attack[0].commit == pytest.approx(43.55, abs=1e-5)
     # Effective attack with full efficiency (commit * 1.0 + mil * 0.1 * 1.0)
     assert betrayal_attack[0].effective_attack >= 42.5
 
