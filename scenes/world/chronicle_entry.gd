@@ -25,6 +25,14 @@ var _word_colors: PackedColorArray = []
 var _word_mentions: Array = []  # parallel to _words; entry is {kind,id} or {}
 var _mention_just_clicked: bool = false
 
+# Pace defaults match the original hardcoded cadence (0.125s/word, 8.0s fade)
+# so any caller that never calls set_pace() keeps the old behavior unchanged.
+# See also: scenes/world/chronicle_scroll_panel.gd CHRONICLE_PACE — the
+# bible-mandated numbers (0.08/0.20) now flow in via set_pace() instead of
+# being reported as inert qa_state() data only.
+var _word_interval_s: float = 0.125
+var _fade_duration_s: float = 8.0
+
 
 func setup(entry_data: Dictionary, accent: Color, faction_colors: Dictionary = {}) -> void:
 	_entry_id = entry_data.get("entry_id", "")
@@ -38,6 +46,11 @@ func setup(entry_data: Dictionary, accent: Color, faction_colors: Dictionary = {
 	var mentions: Array = entry_data.get("mentions", [])
 	_compute_word_mentions(text, mentions)
 	_build_ui()
+
+
+func set_pace(word_interval_s: float, fade_s: float) -> void:
+	_word_interval_s = word_interval_s
+	_fade_duration_s = fade_s
 
 
 func _compute_word_mentions(text: String, mentions: Array) -> void:
@@ -146,8 +159,11 @@ func _process(_delta: float) -> void:
 
 
 func _schedule_next_tick() -> void:
-	var jitter := randf_range(-0.06, 0.06)
-	_cadence_timer.wait_time = maxf(0.05, 0.125 + jitter)
+	# Jitter/floor ratios (0.48, 0.4) preserve the original tuning at the
+	# original 0.125s base (jitter ±0.06, floor 0.05) while scaling with
+	# whatever _word_interval_s is set to via set_pace().
+	var jitter := randf_range(-_word_interval_s * 0.48, _word_interval_s * 0.48)
+	_cadence_timer.wait_time = maxf(_word_interval_s * 0.4, _word_interval_s + jitter)
 	_cadence_timer.start()
 
 
@@ -158,8 +174,11 @@ func _on_cadence_tick() -> void:
 	var idx := _words_started
 	_words_started += 1
 
-	var fade_jitter := randf_range(-0.2, 0.2)
-	var fade_dur := maxf(3.0, 8.0 + fade_jitter)
+	# Same ratio-preservation trick as _schedule_next_tick(): 0.025/0.375
+	# reproduce the original ±0.2 jitter / 3.0 floor at the original 8.0s
+	# base, scaled to whatever _fade_duration_s is set to via set_pace().
+	var fade_jitter := randf_range(-_fade_duration_s * 0.025, _fade_duration_s * 0.025)
+	var fade_dur := maxf(_fade_duration_s * 0.375, _fade_duration_s + fade_jitter)
 	var tw := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
 	tw.tween_method(func(p: float):
 		_word_alphas[idx] = p
