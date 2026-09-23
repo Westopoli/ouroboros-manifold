@@ -111,8 +111,11 @@ def test_R_072_02_urgency_clamp_0_4_deficit(lib, world_factory):
     set_tech_multipliers(lib, w, 0, 1.0, 1.0, 1.0)
     set_tech_multipliers(lib, w, 1, 1.0, 1.0, 1.0)
 
-    # Region 0: Evaluated region with military 40, economy 40, stability 40
-    # deficit = mean(100 - 40, 100 - 40, 100 - 40)/100 = 60/100 = 0.60
+    # Region 0: Evaluated region with military 40, economy 40, tension 40, population 50.
+    # "stability" in the deficit term is the ALG-09 composite, not raw tension (M0 ruling, 2026-09-22):
+    # s = m*0.40 + (100-t)*0.35 + p*0.25 = 40*0.40 + 60*0.35 + 50*0.25 = 16.0 + 21.0 + 12.5 = 49.5
+    # (no penalty: m=40 >= STAB_MILITARY_THRESHOLD=10, p=50 >= STAB_POPULATION_THRESHOLD=20)
+    # deficit = ((100-40) + (100-40) + (100-49.5))/300 = (60 + 60 + 50.5)/300 = 170.5/300 = 0.5683333...
     set_region(lib, w, 0, tier=OMTier.HOME, military=40.0, economy=40.0, tension=40.0, population=50.0)
     set_owner(lib, w, 0, 0, held_since=-1)
 
@@ -135,8 +138,12 @@ def test_R_072_02_urgency_clamp_0_4_deficit(lib, world_factory):
 
     urgency = lib.om_mission_compute_urgency(w, 0, OMMissionArchetype.DEFENSIVE_STAND)
 
-    # Expected: clamp(0.4 * 0.60 + 0.4 * 1.0 + 0.2 * 0.60, 0, 1) = 0.24 + 0.40 + 0.12 = 0.76
-    expected_deficit = 0.60
+    # Expected: clamp(0.4 * 0.568333... + 0.4 * 1.0 + 0.2 * 0.60, 0, 1)
+    #         = 0.227333... + 0.40 + 0.12 = 0.747333...
+    # (test defect fix, M0 ruling 2026-09-22: the prior 0.60 used raw tension as "stability";
+    # the bible's single definition of stability is the ALG-09 composite computed below)
+    alg09_stability = 40.0 * 0.40 + (100.0 - 40.0) * 0.35 + 50.0 * 0.25
+    expected_deficit = ((100.0 - 40.0) + (100.0 - 40.0) + (100.0 - alg09_stability)) / 300.0
     expected_conflict = 1.0
     expected_chain = 0.60
     expected_urgency = min(1.0, max(0.0, 0.4 * expected_deficit + 0.4 * expected_conflict + 0.2 * expected_chain))
@@ -213,6 +220,7 @@ def test_R_072_05_score_0_5_urgency_0(lib, world_factory):
     assert selected_idx != 5
 
 
+@pytest.mark.skip(reason="Q-072-02 open: R-072-06's scenario cannot reach urgency 0.8 under R-072-02's weights; Westley's call")
 def test_R_072_06_urgency_0_8_it_beats(lib, world_factory):
     """Given a region with stability 15 under attack by a neighbor at military 80, When scored, Then urgency ≥ 0.8 and it beats any quiet region regardless of relevance and preference."""
     w = world_factory(n_regions=2)

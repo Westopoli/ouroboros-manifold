@@ -555,3 +555,76 @@ attacks.
 
 Files touched: `tests/csim/test_E07_S052_no_plot_armor.py`. No file outside
 `tests/csim/` touched.
+
+## R-072-02 / R-072-06: E-10 S-072 urgency composite stability + unreachable ceiling (M0 design-lane ruling, 2026-09-22)
+
+### `test_E10_S072_orders_come_from_where_the_world_hurts.py::test_R_072_02_urgency_clamp_0_4_deficit`
+
+"stability" in ALG-55's deficit term (`docs/bible/algorithms.md`) is the
+ALG-09 composite stability (`m*0.40 + (100-t)*0.35 + p*0.25`, with the two
+threshold penalties), the bible's only definition of stability — the E-10
+window control `tests/csim/controls/test_control_e10_window_urgency_deficit_divisor_wrong.py`
+already reads it that way. The test's `expected_deficit = 0.60` used raw
+tension (40) as a stand-in for stability instead of computing the composite:
+test defect, per CLAUDE.md's `test-defect` class (a fixture whose own
+numbers never reach the branch it claims to test).
+
+Fixture: region 0 military=40.0, economy=40.0, tension=40.0, population=50.0.
+`alg09_stability = 40*0.40 + (100-40)*0.35 + 50*0.25 = 16.0 + 21.0 + 12.5 =
+49.5` (no penalty: m=40 >= 10, p=50 >= 20). `expected_deficit = ((100-40) +
+(100-40) + (100-49.5))/300 = 170.5/300 = 0.5683333...`. With
+`expected_conflict = 1.0` and `expected_chain = 0.60` unchanged,
+`expected_urgency = clamp(0.4*0.568333... + 0.4*1.0 + 0.2*0.60, 0, 1) =
+0.227333... + 0.40 + 0.12 = 0.747333...`.
+
+Fix: replaced the hardcoded `expected_deficit = 0.60` with the ALG-09
+computation from the fixture's own fields, inline in the test, plus a
+derivation comment; `expected_conflict`, `expected_chain`, and the clamp
+line are untouched. No other assertion in the file changed for this rule.
+
+Verified red at stub on main both before and after: `assert urgency ==
+pytest.approx(expected_urgency, abs=1e-6)` fails both times because
+`om_mission_compute_urgency` is a stub returning `0.0` (`Obtained: 0.0`
+against `Expected: 0.76` before, `Expected: 0.7473333333333334` after) —
+same failure, corrected expected value. B9-2 (the branch that lands
+ALG-55's composite stability) is expected to turn this green; B9-1 does not
+(it used raw tension), confirmed by reading that branch's mission.c diff,
+not by running it.
+
+### `test_R_072_06_urgency_0_8_it_beats`
+
+R-072-06 ("stability 15 under attack by a neighbor at military 80 -> urgency
+>= 0.8") cannot hold under R-072-02's exact weights: `urgency = 0.4*deficit
++ 0.4*conflict + 0.2*chain`, each term capped at 1.0, so 0.8 requires
+`deficit=1.0` and `conflict=1.0` simultaneously (every field at 0) with the
+chain term contributing nothing extra; the fixture holds military and
+economy at 20 (not 0), giving a ceiling around 0.75, not 0.8. R-072-02's
+form stays as tested (see above); this is a genuine scenario/threshold
+conflict between two rules in the same story, not a fixture bug.
+
+Fix: opened `Q-072-02` in `docs/northstar/ambiguity_register.md` (the id
+`Q-072-01` is already taken — closed, unrelated, answers R-072-07's
+no-candidate-in-pool fallback, and `test_R_072_07_q_072_01` already depends
+on that closed answer) with the arithmetic above and three candidates: (a)
+an active revolt chain in the region (two revolt events, chain 0.6 -> +0.12
+closes most of the gap); (b) threshold drops to >= 0.7; (c) the weights
+change (e.g. conflict weight 0.5). Marked
+`test_R_072_06_urgency_0_8_it_beats` with
+`@pytest.mark.skip(reason="Q-072-02 open: ...")` — a skip under an open
+flag, the assertion itself untouched.
+
+### Verification (both rules)
+
+1. Before edit: `pytest -q tests/csim/test_E10_S072_orders_come_from_where_the_world_hurts.py`
+   -> `7 failed` (all seven rule tests fail on the stub; R-072-01/03/04/05/07
+   fail on unimplemented `om_mission_*` symbols returning 0/defaults,
+   R-072-02 on the wrong expected value, R-072-06 on `urgency_0 >= 0.8`).
+2. After edit: same command -> `6 failed, 1 skipped` — R-072-06 now skipped
+   under Q-072-02, every other test in the file fails for the same reason
+   as before (stub), R-072-02 fails on the corrected `0.7473333333333334`
+   expected value against the stub's `0.0`.
+3. No file outside `tests/csim/test_E10_S072_orders_come_from_where_the_world_hurts.py`
+   and `docs/northstar/ambiguity_register.md` touched for this fix.
+
+Files touched: `tests/csim/test_E10_S072_orders_come_from_where_the_world_hurts.py`,
+`docs/northstar/ambiguity_register.md`.
