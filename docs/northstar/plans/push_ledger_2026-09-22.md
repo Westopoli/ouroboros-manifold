@@ -226,3 +226,54 @@ One row per event: freeze steps, attaches, reverts, parks, rung gates, harness e
 | day2 | merge B8-1 | REJECT again: `REJECT harness whole suite red after rebase: GATE make HARNESS COMPILE ERROR (rc=2):   869 |                 strncpy(out->words[out->n], clean, sizeof(out->words[out->n]) - 1);       |                 ^ csrc/chronicle.c: In function 'chron_dedup_echo_words': csrc/chronicle.c:937:17: error: '__` — harness step runs before acceptance, straggler id never reached, same compile error |
 | day2 | sweep | after ff to origin/main + `make -j8` (clean build, no WERROR): E-09(B8) 0 passed/39 failed (chronicle.c never attached, both B8 runs rejected); E-11(B10b) 32 passed/16 failed (`test_E11_S084_*`x4, `test_E11_S085_*`x4, `test_E11_S087_*`x8 — all B10b's held stories, B10b never landed); E-12(B11) 11 passed/12 failed (B11-1 landed but acceptance still shows these same reds pre-existing in the suite, cross-piece: S089x5, S090x1, S091x1, S092x2, S093x1, S094x2); E-13(B12) 2 passed/33 failed (B12 never landed, tactical_move.c stories all red: S095x7, S096x7, S097x9, S098x1, S099x2, S100x3, S101x2, S102x2); E-14(B13) 16 passed/6 failed (B13-1 landed, remaining reds: S120x1, S122x1, S123x1, S124x2, S125x1); E-15(B14) 19 passed/6 failed (B14-1 landed, remaining reds: S126x1, S129x2, S130x3); E-10(B9) 38 passed/6 failed/1 skipped (S076x1, S078x4, S080x1); E-16(T2c) 0 passed/9 failed (`test_E16_S111_saving.py` all 9, T2c-2 never landed, save.c symbol-ownership still unresolved); tests/qa/t1 collection ERROR: `ModuleNotFoundError: No module named 'scripts.qa'` in `test_rts_detectors.py` (Q2 never landed, `scripts/qa/rts_detectors` module absent) |
 | day2 | rulings | T2c-2 rejected on ownership only because the gate read m0's stale signatures.toml before bk-6 landed there (requeued); C7-2 rejected because pieces.toml's C7 row lacked scripts/qa_harness.sh (added, requeued); Q2 rejected on two "new" failures in tests/qa/t1 that are the pre-existing empty_drifts and osc_as_level control reds, invisible to the baseline while the module was missing (collection error) — merged through the docs profile with this row as the waiver; B12 requeued as B12-1 now that B15m-2's cover geometry is on main; B10b requeued as B10b-1; B8's -Werror stringop-truncation in chronicle.c goes to a doer |
+| day2 | docs push/harness-regen-save | OK  collection and lints OK |
+| day2 | merge B1-7 | OK  merged |
+| day2 | merge B7-4 | OK  merged |
+| day2 | docs push/F2m | OK  collection and lints OK |
+| day2 | docs push/F2n | OK  collection and lints OK |
+| day2 | docs push/tests-fix-3 | REJECT merge-conflict rebase onto fresh main failed: Auto-merging csrc/om_internal.h / CONFLICT (content): Merge conflict in csrc/region.c / could not apply 975288e9 freeze(F2i) |
+| day2 | docs push/B8-4 | OK  collection and lints OK |
+| day2 | merge B8-5 | REJECT merge-conflict apply 216d283731123340beaff1a506f26ef85f2241cf onto fresh main failed: patch failed csrc/generational.c:272, patch does not apply |
+| day2 | docs push/C8-look-4 | OK  collection and lints OK |
+| day2 | docs bk-13 | OK  collection and lints OK |
+| day2 | docs bk-14 | OK  collection and lints OK |
+| day2 | docs push/T1-2-tests | OK  collection and lints OK |
+| day2 | docs push/B14-4 | OK  collection and lints OK -- two-file increment (tactical_support.c + one internal declaration), docs profile, leaf's suite diff clean |
+| day2 | docs push/tests-fix-4 | OK  collection and lints OK |
+| day2 | merge B9-5 | OK  merged (0385c1e39e5e4afda3196f04063c19d0e8875899 skipped, already applied to main) |
+| day2 | docs push/F2o | REJECT merge-conflict rebase onto fresh main failed: CONFLICT (content) csrc/events.c, could not apply dffef720 F2o generational/chronicle/events header syms |
+| day2 | merge T1-3 (push/T1-3b) | REJECT GATE footprint diff touches files outside T1-3 own set: tests/transport/test_pipe_load_tick.py (whole suite otherwise green: 575p/174f csim, 31p/2f qa_t1, 14p/0f transport, checksum MATCH) |
+| day2 | docs push/T1-3b | OK  collection and lints OK |
+| day2 | docs push/T1-4-tests | OK  collection and lints OK |
+| day2 | merge T1-4 | REJECT merge-conflict apply 355c2f73bd20e35b3aab90ed4e06d127c8748ad1 onto fresh main failed: patch failed csrc/pipe/om_pipe.c:11 |
+| day2 | merge B13-2 | REJECT merge-conflict apply ed3da8bd6c92093782c0bc0ca506a0911aa06a2a onto fresh main failed: patch failed csrc/enemy_macro.c:118 |
+| day2 | merge B14-2 | REJECT merge-conflict apply 2ab78fa198d2f176d799a7fab443b946a15a7c50 onto fresh main failed: patch failed csrc/tactical_support.c:225 |
+| day2 | merge B9-4 | REJECT merge-conflict apply 0385c1e39e5e4afda3196f04063c19d0e8875899 onto fresh main failed: patch failed csrc/mission.c:150 (commit already landed via B9-5) |
+| day2 | merge B12-3 | REJECT regression GATE transport failing (10 tests in test_pipe_mission_begin.py, test_pipe_shapes.py); checksum_trace MATCH; undertest_check WARN om_move_in_recon 3/3 mutants survived line 654 |
+| day2 | docs push/harness-godot-import | OK  collection and lints OK |
+| day2 | docs push/harness-godot-runner | OK  collection and lints OK |
+| day2 | docs harness-runner-savedir (from queue.txt) | OK  collection and lints OK |
+| day2 | merge C7-2 | REJECT regression GATE transport: 10 new failures in test_pipe_mission_begin.py, test_pipe_shapes.py (same set as B12-3); checksum_trace MATCH |
+| day2 | docs push/C2-5-tests | OK  collection and lints OK |
+| day2 | merge C2-5 | SKIPPED per M0 -- conflicts with C2-6, replacement push/C2-5b pending |
+| day2 | docs push/C4-3-tests | OK  collection and lints OK |
+| day2 | merge C4-3 | REJECT regression GATE transport: same 10 failures as B12-3/C7-2 (test_pipe_mission_begin.py x8, test_pipe_shapes.py x2); acceptance_godot WARN 0/1 green (test_briefing_debrief.gd red); checksum MATCH -- 3rd consecutive REJECT with identical transport failure set, looks systemic on main baseline not per-leaf |
+| day2 | docs push/C3-3-tests | OK  collection and lints OK |
+| day2 | merge C3-3 | REJECT footprint (diff touches scenes/debrief/debrief.gd, scenes/mission_briefing/mission_briefing.gd outside C3-3 owns) + transport regression (same 10 failures as before); acceptance_godot WARN test_chronicle_scroll.gd red |
+| day2 | docs push/C5-2-tests | OK  collection and lints OK |
+| day2 | merge C5-2 | REJECT merge-conflict apply ae750e6ab16f75f5e57489d02c84788f8adf064f onto fresh main failed: patch failed autoload/c_bridge.gd:30, scenes/debrief/debrief.gd:11, scenes/mission_briefing/mission_briefing.gd:41 |
+| day2 | docs push/T2g-3-tests | OK  collection and lints OK |
+| day2 | merge T2g-3 | REJECT merge-conflict apply ae750e6ab16f75f5e57489d02c84788f8adf064f onto fresh main failed: same patch/files as C5-2 (autoload/c_bridge.gd, scenes/debrief/debrief.gd, scenes/mission_briefing/mission_briefing.gd) -- shared c_bridge.gd chain (C2>C3>C4>C5>T2g>C8 per pieces.toml) appears stuck on a stale base |
+| day2 | docs push/C2-4b-tests | OK  collection and lints OK |
+| day2 | merge C2-4b | REJECT merge-conflict apply ae750e6ab16f75f5e57489d02c84788f8adf064f onto fresh main failed: identical c_bridge.gd/debrief.gd/mission_briefing.gd patch failure (4th time: C5-2, T2g-3, C2-4b) |
+| day2 | docs push/C2-6-tests | OK  collection and lints OK |
+| day2 | merge C2-6 | REJECT merge-conflict apply ae750e6ab16f75f5e57489d02c84788f8adf064f onto fresh main failed: identical c_bridge.gd chain failure (5th: C5-2,T2g-3,C2-4b,C2-6). Root cause candidate: commit ae750e6a (autoload/c_bridge.gd + scenes/debrief/debrief.gd + scenes/mission_briefing/mission_briefing.gd) never landed on main; every leaf carrying it fails identically. |
+| day2 | docs push/B10c | REJECT merge-conflict rebase onto fresh main failed: CONFLICT (content) csrc/region.c, could not apply 975288e9 freeze(F2i) fog_state/chronicle_state/move_state/macro_state/support_state slots in om_world (same freeze commit conflict as tests-fix-3 earlier) |
+| day2 | docs push/B15m-4 | OK  collection and lints OK |
+| day2 | docs bk-17 | OK  collection and lints OK |
+| day2 | docs B14-4 (queue.txt, re-verify) | OK  collection and lints OK (already landed) |
+| day2 | docs C8-look-5 (queue.txt) | OK  collection and lints OK |
+| day2 | sweep | after ff to origin/main + `make -j8` (clean build): E-04 36p/0f; E-08 49p/1f (`test_R_055_04_character_selector_runs_after_it`); E-09 35p/4f (`test_R_065_04_one_lineage_quiet_cluster_included`, `test_R_067_01_event_lineage_event_if_lineage`, `test_R_070_01_it_receives_0_8_lineage`, `test_R_070_02_lineage_member_attached_to_event`); E-10 43p/1f/1skip (`test_R_078_06_resulting_events_carry_mission_consequence`); E-11 35p/13f (`test_R_084_01_one_attack_lands_for_base`, `test_R_085_02/03/04/05`, `test_R_087_01..08`); E-12 11p/12f (`test_R_089_01/02/03/04/06`, `test_R_090_03`, `test_R_091_02/03`, `test_R_092_02`, `test_R_093_02`, `test_R_094_01/02`); E-13 26p/9f (`test_R_096_01..05`, `test_R_098_01`, `test_R_099_01`, `test_R_100_01`, `test_R_101_01`); E-14 20p/2f (`test_R_123_01_every_enemy_command_identical_on`, `test_R_124_02_units_enter_at_map_edge`); E-15 21p/4f (`test_R_129_01_it_never_acquires_target_never`, `test_R_130_02/03/04`); E-16 8p/1f (`test_control_R_111_02_om_bug_save_skips_rng_state_trips_the_detector`); tests/transport 3p/19f (`test_pipe_load_tick.py::test_load_restores_the_saved_tick_in_the_snapshot`, all 8 `test_pipe_mission_begin.py`, 10 `test_pipe_shapes.py`); tests/qa/t1 31p/2f/1skip (`test_control_empty_drifts_trips_empty_region_drifted`, `test_control_osc_as_level_trips_oscillator_as_level`) |
+| day2 | finding | transport suite red across the board (mission_begin + pipe_shapes + load_tick, 19/22) traces to T1-4 (om_pipe.c mission-begin impl) never landing: patch failed `csrc/pipe/om_pipe.c:11` both attempts. Tests are already on main (harness-regen-save, T1-2-tests, T1-3b, T1-4-tests) but the implementation leaf keeps rejecting, so every merge whose gate runs the full transport suite (B12-3, C7-2, C4-3) REJECTs on the same 10 tests as "new failures" |
+| day2 | finding | c_bridge.gd chain (C2-4b, C2-6, C5-2, T2g-3) all REJECT identically on the same patch sha `ae750e6a` touching `autoload/c_bridge.gd:30`, `scenes/debrief/debrief.gd:11`, `scenes/mission_briefing/mission_briefing.gd:41` — looks like the root commit carrying these three files never applied cleanly to current main; every downstream leaf in the C2>C3>C4>C5>T2g>C8 chain (per pieces.toml) will keep rejecting until that's resolved |
+| day2 | finding | docs push/B10c and docs push/tests-fix-3 both REJECT on the identical conflict: could not apply `975288e9` freeze(F2i) onto `csrc/region.c` — same root freeze commit blocking two unrelated docs branches |
