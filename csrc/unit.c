@@ -51,6 +51,14 @@
  * eliminates). */
 
 #define OM_MAX_UNITS 4096
+/* Spatial grid (om_grid_query_circle): cell edge in world units, the cell
+ * count cap per axis (a wider bounding box enlarges the cell instead), and
+ * the slack added to a query's cell range so a rounding step in the cell
+ * arithmetic can never drop a unit the exact circle test accepts. */
+#define OM_GRID_CELL_SIZE 400.0
+#define OM_GRID_MAX_DIM 256
+#define OM_GRID_PAD 1e-6
+#define OM_GRID_INSERTION_SORT_MAX 32
 #define OM_MAX_CUSTOM_TYPES 64
 #define OM_UNIT_TYPE_COUNT 6
 
@@ -332,6 +340,22 @@ typedef struct {
     om_unit_type_profile profile;
 } om_custom_type_row;
 
+/* Spatial hash grid over every in_use unit row (see om_grid_query_circle in
+ * om_internal.h for the contract). Cells are a linked list of unit index + 1
+ * (0 ends a list); rebuilt over the current bounding box every tactical tick
+ * and updated in place when unit.c moves or spawns a unit. */
+typedef struct {
+    int       built;
+    double    ox, oy, cell;
+    int32_t   cols, rows;
+    uint32_t *head;
+    uint32_t  head_cap;
+    uint32_t  next[OM_MAX_UNITS];
+    uint32_t  prev[OM_MAX_UNITS];
+    uint32_t  cell_of[OM_MAX_UNITS];
+    uint32_t  scratch[OM_MAX_UNITS];
+} om_grid;
+
 typedef struct {
     om_unit_row         units[OM_MAX_UNITS];
     uint32_t            n_units;
@@ -345,9 +369,12 @@ typedef struct {
     uint64_t            current_tick;
     int                 abilities_disabled;
     uint64_t            validated_tick;
+    om_grid             grid;
+    uint32_t            aura_count[OM_MAX_UNITS];
 } om_tac_state;
 
 static void om_tac_state_free(void *p) {
+    if (p) free(((om_tac_state *)p)->grid.head);
     free(p);
 }
 
@@ -451,6 +478,171 @@ static const om_unit_type_profile *om_get_profile(om_world *w, int unit_type) {
     return NULL;
 }
 
+static int om_tac_dist_le(double dx, double dy, double r) {
+    return (dx * dx + dy * dy) <= (r * r);
+}
+
+static int32_t om_grid_coord(double v, double origin, double cell, int32_t dim) {
+    double t = (v - origin) / cell;
+    if (!(t > 0.0)) return 0;
+    if (t >= (double)dim) return dim - 1;
+    return (int32_t)t;
+}
+
+static uint32_t om_grid_cell_of_row(const om_grid *g, const om_unit_row *u) {
+    return (uint32_t)om_grid_coord(u->y, g->oy, g->cell, g->rows) * (uint32_t)g->cols
+           + (uint32_t)om_grid_coord(u->x, g->ox, g->cell, g->cols);
+}
+
+static void om_grid_link(om_tac_state *st, uint32_t i) {
+    om_grid *g = &st->grid;
+    uint32_t cell = om_grid_cell_of_row(g, &st->units[i]);
+    g->cell_of[i] = cell;
+    g->prev[i] = 0;
+    g->next[i] = g->head[cell];
+    if (g->head[cell]) g->prev[g->head[cell] - 1] = i + 1;
+    g->head[cell] = i + 1;
+}
+
+static void om_grid_unlink(om_tac_state *st, uint32_t i) {
+    om_grid *g = &st->grid;
+    if (g->prev[i]) g->next[g->prev[i] - 1] = g->next[i];
+    else g->head[g->cell_of[i]] = g->next[i];
+    if (g->next[i]) g->prev[g->next[i] - 1] = g->prev[i];
+}
+
+static void om_grid_rebuild(om_tac_state *st) {
+    om_grid *g = &st->grid;
+    double minx = 0.0, miny = 0.0, maxx = 0.0, maxy = 0.0, span, cell = OM_GRID_CELL_SIZE;
+    uint32_t i, ncells;
+    int any = 0;
+    for (i = 0; i < st->n_units; i++) {
+        const om_unit_row *u = &st->units[i];
+        if (!u->in_use) continue;
+        if (!any) { minx = maxx = u->x; miny = maxy = u->y; any = 1; continue; }
+        if (u->x < minx) minx = u->x;
+        if (u->x > maxx) maxx = u->x;
+        if (u->y < miny) miny = u->y;
+        if (u->y > maxy) maxy = u->y;
+    }
+    g->built = 0;
+    if (!any) return;
+    span = (maxx - minx > maxy - miny) ? maxx - minx : maxy - miny;
+    if (span > cell * (double)(OM_GRID_MAX_DIM - 1)) cell = span / (double)(OM_GRID_MAX_DIM - 1);
+    g->ox = minx; g->oy = miny; g->cell = cell;
+    g->cols = om_grid_coord(maxx, minx, cell, OM_GRID_MAX_DIM) + 1;
+    g->rows = om_grid_coord(maxy, miny, cell, OM_GRID_MAX_DIM) + 1;
+    ncells = (uint32_t)g->cols * (uint32_t)g->rows;
+    if (ncells > g->head_cap) {
+        free(g->head);
+        g->head = (uint32_t *)malloc((size_t)ncells * sizeof(uint32_t));
+        g->head_cap = g->head ? ncells : 0;
+        if (!g->head) return;
+    }
+    memset(g->head, 0, (size_t)ncells * sizeof(uint32_t));
+    for (i = st->n_units; i-- > 0;) {
+        if (st->units[i].in_use) om_grid_link(st, i);
+    }
+    g->built = 1;
+}
+
+static void om_grid_move(om_tac_state *st, uint32_t i) {
+    om_grid *g = &st->grid;
+    if (!g->built) return;
+    if (om_grid_cell_of_row(g, &st->units[i]) == g->cell_of[i]) return;
+    om_grid_unlink(st, i);
+    om_grid_link(st, i);
+}
+
+/* Contract (om_internal.h om_grid_iter): visits every unit row whose cached
+ * position lies within r of (x, y), inclusive, in cell order (row-major,
+ * within a cell the last-linked unit first). */
+static void om_grid_iter_begin_st(om_grid_iter *it, om_tac_state *st, double x, double y, double r) {
+    om_grid *g = &st->grid;
+    double reach = (r < 0.0 ? -r : r) + OM_GRID_PAD;
+    if (!g->built) om_grid_rebuild(st);
+    it->state = st;
+    it->x = x; it->y = y; it->r = r;
+    it->done = !g->built;
+    it->cur = 0;
+    if (it->done) return;
+    it->cx0 = om_grid_coord(x - reach, g->ox, g->cell, g->cols);
+    it->cx1 = om_grid_coord(x + reach, g->ox, g->cell, g->cols);
+    it->cy1 = om_grid_coord(y + reach, g->oy, g->cell, g->rows);
+    it->cx = it->cx0;
+    it->cy = om_grid_coord(y - reach, g->oy, g->cell, g->rows);
+    it->cur = g->head[(uint32_t)it->cy * (uint32_t)g->cols + (uint32_t)it->cx];
+}
+
+uint32_t om_grid_iter_next(om_grid_iter *it) {
+    om_tac_state *st = (om_tac_state *)it->state;
+    const om_grid *g;
+    if (it->done) return 0;
+    g = &st->grid;
+    for (;;) {
+        while (it->cur) {
+            const om_unit_row *u = &st->units[it->cur - 1];
+            it->cur = g->next[it->cur - 1];
+            if (om_tac_dist_le(u->x - it->x, u->y - it->y, it->r)) return u->unit_id;
+        }
+        if (++it->cx > it->cx1) {
+            it->cx = it->cx0;
+            if (++it->cy > it->cy1) { it->done = 1; return 0; }
+        }
+        it->cur = g->head[(uint32_t)it->cy * (uint32_t)g->cols + (uint32_t)it->cx];
+    }
+}
+
+void om_grid_iter_begin(om_grid_iter *it, om_world *w, double x, double y, double r) {
+    om_grid_iter_begin_st(it, om_tac(w), x, y, r);
+}
+
+static void om_grid_sift_down(uint32_t *a, uint32_t root, uint32_t n) {
+    for (;;) {
+        uint32_t child = 2 * root + 1, t;
+        if (child >= n) return;
+        if (child + 1 < n && a[child + 1] > a[child]) child++;
+        if (a[root] >= a[child]) return;
+        t = a[root]; a[root] = a[child]; a[child] = t;
+        root = child;
+    }
+}
+
+/* Ascending unit ids: insertion sort for the usual handful of candidates,
+ * heapsort past OM_GRID_INSERTION_SORT_MAX (ids are unique, so the order is
+ * total and no stability question arises). */
+static void om_grid_sort_ids(uint32_t *a, uint32_t n) {
+    uint32_t i, j;
+    if (n > OM_GRID_INSERTION_SORT_MAX) {
+        for (i = n / 2; i-- > 0;) om_grid_sift_down(a, i, n);
+        for (i = n; i-- > 1;) {
+            uint32_t t = a[0]; a[0] = a[i]; a[i] = t;
+            om_grid_sift_down(a, 0, i);
+        }
+        return;
+    }
+    for (i = 1; i < n; i++) {
+        uint32_t v = a[i];
+        for (j = i; j > 0 && a[j - 1] > v; j--) a[j] = a[j - 1];
+        a[j] = v;
+    }
+}
+
+static uint32_t om_grid_query_st(om_tac_state *st, double x, double y, double r, uint32_t *out_ids, uint32_t max) {
+    uint32_t *buf = st->grid.scratch;
+    uint32_t n = 0, i, id;
+    om_grid_iter it;
+    om_grid_iter_begin_st(&it, st, x, y, r);
+    while ((id = om_grid_iter_next(&it)) != 0) buf[n++] = id;
+    om_grid_sort_ids(buf, n);
+    for (i = 0; i < n && i < max; i++) out_ids[i] = buf[i];
+    return n;
+}
+
+uint32_t om_grid_query_circle(om_world *w, double x, double y, double r, uint32_t *out_ids, uint32_t max) {
+    return om_grid_query_st(om_tac(w), x, y, r, out_ids, max);
+}
+
 static uint32_t om_unit_spawn_internal(om_world *w, int unit_type, int32_t faction_id,
                                         double x, double y, uint32_t layer) {
     const om_unit_type_profile *prof;
@@ -484,13 +676,8 @@ static uint32_t om_unit_spawn_internal(om_world *w, int unit_type, int32_t facti
         row->attack_interval = OM_UNIT_FALLBACK_INTERVAL;
         row->attack_range = OM_UNIT_FALLBACK_RANGE;
     }
+    if (st->grid.built) om_grid_link(st, st->n_units - 1);
     return row->unit_id;
-}
-
-static double om_tactical_dist2(const om_unit_row *a, const om_unit_row *b) {
-    double dx = a->x - b->x;
-    double dy = a->y - b->y;
-    return dx * dx + dy * dy;
 }
 
 /* R-081-03's "Siege exception to Strike-beats-Siege": the Bastion (anchor
@@ -543,16 +730,18 @@ static int om_tactical_multiple_factions_alive(const om_tac_state *st) {
  * equivalently 1 - (1 - OM_WARDEN_AURA_DAMAGE_REDUCTION)^n), computed by
  * repeated multiplication rather than a libm pow() call (determinism
  * contract, scripts/specfactory/libm_lint.py bans pow()). */
-static double om_warden_aura_reduction_for(const om_tac_state *st, const om_unit_row *target) {
-    uint32_t j;
+static double om_warden_aura_reduction_for(om_tac_state *st, const om_unit_row *target) {
+    uint32_t id;
     int n = 0;
     double undamaged_factor;
-    for (j = 0; j < st->n_units; j++) {
-        const om_unit_row *cand = &st->units[j];
-        if (!cand->in_use || cand->hp <= 0.0) continue;
+    om_grid_iter it;
+    om_grid_iter_begin_st(&it, st, target->x, target->y, (double)OM_WARDEN_AURA_RADIUS);
+    while ((id = om_grid_iter_next(&it)) != 0) {
+        const om_unit_row *cand = &st->units[id - 1];
+        if (cand->hp <= 0.0) continue;
         if (cand->unit_type != OM_UT_WARDEN) continue;
         if (cand->faction_id != target->faction_id) continue;
-        if (om_tactical_dist2(target, cand) <= OM_WARDEN_AURA_RADIUS * OM_WARDEN_AURA_RADIUS) n++;
+        n++;
     }
     if (n <= 0) return 0.0;
     undamaged_factor = 1.0;
@@ -563,20 +752,23 @@ static double om_warden_aura_reduction_for(const om_tac_state *st, const om_unit
 /* R-083-03: healing stacks linearly, unlike the damage reduction above. */
 static void om_tactical_apply_aura_regen(om_world *w) {
     om_tac_state *st = om_tac(w);
-    uint32_t i, j;
+    uint32_t i, id;
+    memset(st->aura_count, 0, (size_t)st->n_units * sizeof(uint32_t));
+    for (i = 0; i < st->n_units; i++) {
+        const om_unit_row *warden = &st->units[i];
+        om_grid_iter it;
+        if (!warden->in_use || warden->hp <= 0.0 || warden->unit_type != OM_UT_WARDEN) continue;
+        om_grid_iter_begin_st(&it, st, warden->x, warden->y, (double)OM_WARDEN_AURA_RADIUS);
+        while ((id = om_grid_iter_next(&it)) != 0) {
+            const om_unit_row *cand = &st->units[id - 1];
+            if (cand->hp <= 0.0 || cand->faction_id != warden->faction_id) continue;
+            st->aura_count[id - 1]++;
+        }
+    }
     for (i = 0; i < st->n_units; i++) {
         om_unit_row *u = &st->units[i];
-        int n_wardens = 0;
-        if (!u->in_use || u->hp <= 0.0) continue;
-        for (j = 0; j < st->n_units; j++) {
-            const om_unit_row *cand = &st->units[j];
-            if (!cand->in_use || cand->hp <= 0.0) continue;
-            if (cand->unit_type != OM_UT_WARDEN) continue;
-            if (cand->faction_id != u->faction_id) continue;
-            if (om_tactical_dist2(u, cand) <= OM_WARDEN_AURA_RADIUS * OM_WARDEN_AURA_RADIUS) n_wardens++;
-        }
-        if (n_wardens > 0) {
-            u->hp += OM_WARDEN_AURA_REPAIR_RATE * (double)n_wardens;
+        if (st->aura_count[i] > 0) {
+            u->hp += OM_WARDEN_AURA_REPAIR_RATE * (double)st->aura_count[i];
             if (u->hp > u->max_hp) u->hp = u->max_hp;
         }
     }
@@ -592,73 +784,77 @@ static void om_tactical_apply_aura_regen(om_world *w) {
  * this way). Ability id == unit_type (1:1, OMAbility in the test file
  * matches OMUnitType by declared order). */
 
-static int om_tac_dist_le(double dx, double dy, double r) {
-    return (dx * dx + dy * dy) <= (r * r);
-}
-
-static int om_tac_enemy_within_range(const om_tac_state *st, const om_unit_row *self, double range) {
-    uint32_t j;
-    for (j = 0; j < st->n_units; j++) {
-        const om_unit_row *cand = &st->units[j];
-        if (!cand->in_use || cand->hp <= 0.0) continue;
+static int om_tac_enemy_within_range(om_tac_state *st, const om_unit_row *self, double range) {
+    uint32_t id;
+    om_grid_iter it;
+    om_grid_iter_begin_st(&it, st, self->x, self->y, range);
+    while ((id = om_grid_iter_next(&it)) != 0) {
+        const om_unit_row *cand = &st->units[id - 1];
+        if (cand->hp <= 0.0) continue;
         if (cand->faction_id == self->faction_id) continue;
         if (cand->layer != self->layer) continue;
-        if (om_tac_dist_le(cand->x - self->x, cand->y - self->y, range)) return 1;
+        return 1;
     }
     return 0;
 }
 
 static om_unit_row *om_tac_nearest_enemy_within_range(om_tac_state *st, const om_unit_row *self, double range) {
     om_unit_row *best = NULL;
-    double best_d2 = 0.0, r2 = range * range;
-    uint32_t j;
-    for (j = 0; j < st->n_units; j++) {
-        om_unit_row *cand = &st->units[j];
+    double best_d2 = 0.0;
+    uint32_t ids[OM_MAX_UNITS];
+    uint32_t j, n = om_grid_query_st(st, self->x, self->y, range, ids, OM_MAX_UNITS);
+    for (j = 0; j < n; j++) {
+        om_unit_row *cand = &st->units[ids[j] - 1];
         double dx, dy, d2;
-        if (!cand->in_use || cand->hp <= 0.0) continue;
+        if (cand->hp <= 0.0) continue;
         if (cand->faction_id == self->faction_id) continue;
         if (cand->layer != self->layer) continue;
         dx = cand->x - self->x; dy = cand->y - self->y; d2 = dx * dx + dy * dy;
-        if (d2 > r2) continue;
         if (!best || d2 < best_d2) { best = cand; best_d2 = d2; }
     }
     return best;
 }
 
-static int om_tac_enemy_category_within(const om_tac_state *st, const om_unit_row *self, int category, double range) {
-    uint32_t j;
-    for (j = 0; j < st->n_units; j++) {
-        const om_unit_row *cand = &st->units[j];
-        if (!cand->in_use || cand->hp <= 0.0) continue;
+static int om_tac_enemy_category_within(om_tac_state *st, const om_unit_row *self, int category, double range) {
+    uint32_t id;
+    om_grid_iter it;
+    om_grid_iter_begin_st(&it, st, self->x, self->y, range);
+    while ((id = om_grid_iter_next(&it)) != 0) {
+        const om_unit_row *cand = &st->units[id - 1];
+        if (cand->hp <= 0.0) continue;
         if (cand->faction_id == self->faction_id) continue;
         if (cand->layer != self->layer) continue;
         if (cand->category != category) continue;
-        if (om_tac_dist_le(cand->x - self->x, cand->y - self->y, range)) return 1;
+        return 1;
     }
     return 0;
 }
 
-static int om_tac_badly_damaged_friendly_within(const om_tac_state *st, const om_unit_row *self, double range) {
-    uint32_t j;
-    for (j = 0; j < st->n_units; j++) {
-        const om_unit_row *cand = &st->units[j];
-        if (!cand->in_use || cand->hp <= 0.0) continue;
+static int om_tac_badly_damaged_friendly_within(om_tac_state *st, const om_unit_row *self, double range) {
+    uint32_t id;
+    om_grid_iter it;
+    om_grid_iter_begin_st(&it, st, self->x, self->y, range);
+    while ((id = om_grid_iter_next(&it)) != 0) {
+        const om_unit_row *cand = &st->units[id - 1];
+        if (cand->hp <= 0.0) continue;
         if (cand->faction_id != self->faction_id) continue;
         if (cand->hp >= cand->max_hp * OM_ABILITY_RALLY_AUTOTRIGGER_HP_FRACTION) continue;
-        if (om_tac_dist_le(cand->x - self->x, cand->y - self->y, range)) return 1;
+        return 1;
     }
     return 0;
 }
 
-static int om_tac_count_friendlies_within(const om_tac_state *st, const om_unit_row *self, double range) {
-    uint32_t j;
+static int om_tac_count_friendlies_within(om_tac_state *st, const om_unit_row *self, double range) {
+    uint32_t id;
     int n = 0;
-    for (j = 0; j < st->n_units; j++) {
-        const om_unit_row *cand = &st->units[j];
-        if (!cand->in_use || cand->hp <= 0.0) continue;
+    om_grid_iter it;
+    om_grid_iter_begin_st(&it, st, self->x, self->y, range);
+    while ((id = om_grid_iter_next(&it)) != 0) {
+        const om_unit_row *cand = &st->units[id - 1];
+        if (cand->hp <= 0.0) continue;
         if (cand == self) continue;
         if (cand->faction_id != self->faction_id) continue;
-        if (om_tac_dist_le(cand->x - self->x, cand->y - self->y, range)) n++;
+        n++;
     }
     return n;
 }
@@ -713,12 +909,13 @@ static void om_ability_start_or_cancel_brace(om_tac_state *st, om_unit_row *u) {
 }
 
 static void om_ability_do_rally(om_tac_state *st, om_unit_row *u) {
-    uint32_t j;
-    for (j = 0; j < st->n_units; j++) {
-        om_unit_row *cand = &st->units[j];
-        if (!cand->in_use || cand->hp <= 0.0) continue;
+    uint32_t id;
+    om_grid_iter it;
+    om_grid_iter_begin_st(&it, st, u->x, u->y, OM_ABILITY_RALLY_RADIUS);
+    while ((id = om_grid_iter_next(&it)) != 0) {
+        om_unit_row *cand = &st->units[id - 1];
+        if (cand->hp <= 0.0) continue;
         if (cand->faction_id != u->faction_id) continue;
-        if (!om_tac_dist_le(cand->x - u->x, cand->y - u->y, OM_ABILITY_RALLY_RADIUS)) continue;
         cand->hp += OM_ABILITY_RALLY_HEAL_AMOUNT;
         if (cand->hp > cand->max_hp) cand->hp = cand->max_hp;
     }
@@ -745,14 +942,14 @@ static void om_ability_resolve_barrage_damage(om_world *w, om_tac_state *st, om_
     double per_hit_base = u->base_damage * OM_ABILITY_BARRAGE_DAMAGE_MULT;
     double cap = per_hit_base * OM_AOE_DAMAGE_CAP_MULTIPLIER;
     double total = 0.0;
-    uint32_t j;
-    for (j = 0; j < st->n_units; j++) {
-        om_unit_row *cand = &st->units[j];
+    uint32_t ids[OM_MAX_UNITS];
+    uint32_t j, n = om_grid_query_st(st, u->ability_target_x, u->ability_target_y, OM_ABILITY_BARRAGE_RADIUS, ids, OM_MAX_UNITS);
+    for (j = 0; j < n; j++) {
+        om_unit_row *cand = &st->units[ids[j] - 1];
         double mult, dmg, remaining;
-        if (!cand->in_use || cand->hp <= 0.0) continue;
+        if (cand->hp <= 0.0) continue;
         if (cand->faction_id == u->faction_id) continue;
         if (cand->layer != u->layer) continue;
-        if (!om_tac_dist_le(cand->x - u->ability_target_x, cand->y - u->ability_target_y, OM_ABILITY_BARRAGE_RADIUS)) continue;
         if (total >= cap) break;
         mult = om_resolve_hit_multiplier(w, u->category, cand);
         dmg = per_hit_base * mult;
@@ -967,14 +1164,14 @@ static int om_tac_within(const om_unit_row *a, const om_unit_row *b, double r) {
 static om_unit_row *om_tac_nearest_hostile(om_tac_state *st, const om_unit_row *self, double radius) {
     om_unit_row *best = NULL;
     double best_d2 = 0.0;
-    uint32_t j;
-    for (j = 0; j < st->n_units; j++) {
-        om_unit_row *cand = &st->units[j];
+    uint32_t ids[OM_MAX_UNITS];
+    uint32_t j, n = om_grid_query_st(st, self->x, self->y, radius, ids, OM_MAX_UNITS);
+    for (j = 0; j < n; j++) {
+        om_unit_row *cand = &st->units[ids[j] - 1];
         double dx, dy, d2;
-        if (!cand->in_use || cand->hp <= 0.0 || cand->stealth) continue;
+        if (cand->hp <= 0.0 || cand->stealth) continue;
         if (!om_tac_hostile(self, cand) || cand->layer != self->layer) continue;
         dx = cand->x - self->x; dy = cand->y - self->y; d2 = dx * dx + dy * dy;
-        if (d2 > radius * radius) continue;
         if (!best || d2 < best_d2 - OM_TIE_EPSILON) { best = cand; best_d2 = d2; }
     }
     return best;
@@ -988,6 +1185,7 @@ static void om_tac_refresh_positions(om_world *w, om_tac_state *st) {
         if (!u->in_use) continue;
         if (om_unit_get_pos(w, u->unit_id, &x, &y)) { u->x = x; u->y = y; }
     }
+    om_grid_rebuild(st);
 }
 
 /* One tick of unit.c-driven movement at the unit's effective speed
@@ -1004,6 +1202,7 @@ static int om_tac_step_toward(om_world *w, om_unit_row *u, double tx, double ty)
         u->x += dx / d * step;
         u->y += dy / d * step;
     }
+    om_grid_move(om_tac(w), u->unit_id - 1);
     om_unit_set_pos(w, u->unit_id, u->x, u->y);
     return d <= step;
 }
@@ -1372,6 +1571,7 @@ void om_tactical_disable_abilities(om_world *w) {
  * lazily on the next command or read. */
 void om_tactical_reset(om_world *w) {
     om_tac_state *st = om_tac(w);
+    free(st->grid.head);
     memset(st, 0, sizeof(*st));
     st->next_unit_id = 1;
     if (w->move_state && w->move_state_free) {
@@ -1551,7 +1751,7 @@ double om_unit_damage_reduction(om_world *w, uint32_t unit_id) {
     om_tac_state *st = om_tac(w);
     om_unit_row *row = om_registry_find_in(st, unit_id);
     double reduction = 0.0;
-    uint32_t j;
+    uint32_t id;
     int fortify_hit = 0;
     int brace_hit;
     if (!row) return 0.0;
@@ -1562,13 +1762,16 @@ double om_unit_damage_reduction(om_world *w, uint32_t unit_id) {
     if (row->force_fortify_reduction) {
         fortify_hit = 1;
     } else {
-        for (j = 0; j < st->n_units; j++) {
-            const om_unit_row *cand = &st->units[j];
-            if (!cand->in_use || cand->hp <= 0.0) continue;
+        om_grid_iter it;
+        om_grid_iter_begin_st(&it, st, row->x, row->y, OM_FORTIFY_RADIUS);
+        while ((id = om_grid_iter_next(&it)) != 0) {
+            const om_unit_row *cand = &st->units[id - 1];
+            if (cand->hp <= 0.0) continue;
             if (cand->unit_type != OM_UT_BASTION) continue;
             if (cand->ability_phase != OM_ABILITY_PHASE_ACTIVE) continue;
             if (cand->faction_id != row->faction_id) continue;
-            if (om_tac_dist_le(cand->x - row->x, cand->y - row->y, OM_FORTIFY_RADIUS)) { fortify_hit = 1; break; }
+            fortify_hit = 1;
+            break;
         }
     }
     if (fortify_hit) reduction += OM_ABILITY_FORTIFY_DAMAGE_REDUCTION;
@@ -1636,16 +1839,17 @@ void om_unit_fire_aoe_attack(om_world *w, uint32_t attacker_id, uint32_t target_
     om_unit_row *attacker = om_registry_find_in(st, attacker_id);
     om_unit_row *center = om_registry_find_in(st, target_id);
     double cap, total = 0.0;
-    uint32_t j;
+    uint32_t ids[OM_MAX_UNITS];
+    uint32_t j, n;
     if (!attacker || !center) return;
     cap = attacker->base_damage * OM_AOE_DAMAGE_CAP_MULTIPLIER;
-    for (j = 0; j < st->n_units; j++) {
-        om_unit_row *cand = &st->units[j];
+    n = om_grid_query_st(st, center->x, center->y, radius, ids, OM_MAX_UNITS);
+    for (j = 0; j < n; j++) {
+        om_unit_row *cand = &st->units[ids[j] - 1];
         double mult, dmg, remaining;
-        if (!cand->in_use || cand->hp <= 0.0) continue;
+        if (cand->hp <= 0.0) continue;
         if (cand->faction_id == attacker->faction_id) continue;
         if (cand->layer != attacker->layer) continue;
-        if (!om_tac_dist_le(cand->x - center->x, cand->y - center->y, radius)) continue;
         if (total >= cap) break;
         mult = om_resolve_hit_multiplier(w, attacker->category, cand);
         dmg = attacker->base_damage * mult * om_unit_output_multiplier(w, attacker_id)
