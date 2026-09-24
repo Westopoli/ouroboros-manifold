@@ -11,7 +11,7 @@
 | Every visible-surface story has a reference | **No.** Every story in this epic is a visible surface; `references/E-16/notes.md` is a stub. The IGoP HUD screenshots the bible cites (`docs/design_questions/igop_hud_reference_alpha.png`, `_beta.png`) are the first entries once Westley confirms them. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on 7 open flags and references. This epic is client-ladder work and is built only after the sim ladders are green (Stage 4 roadmap); Q-103-01 (the multi-perspective camera Westley promoted to launch scope pending research, A-145) is the biggest open design item in the whole bible.
+**Gate verdict: not passed.** Blocked on open flags and references. The camera is chosen (Q-103-03, the Angle Rack and the Layer Peel with a flip key); its control specifics (Q-103-04) and the map view prototype (Q-103-05) are the load-bearing open items. This epic is client-ladder work and is built only after the sim ladders are green (Stage 4 roadmap).
 
 ## Purpose
 
@@ -21,7 +21,7 @@ The design rule for every panel here is the player-perception rule adopted in St
 
 ## Obviously working in 60 seconds
 
-Start a mission. The HUD shows objectives top-left, clock top-right, portraits and cooldown rings bottom-center, a minimap, control-group tabs, the commander bottom-right, and a five-slot layer strip on the right edge. Pan, zoom, box-select, bind a control group to 1, press 1: the group is selected and the tab highlights. End the mission: the camera pulls back until the battlefield is a point of light, the galaxy fades in, the scroll panel slides in and prints, a border visibly morphs over two seconds, Proceed pushes the camera into the next system and the briefing appears. No loading screen anywhere.
+Start a mission. The HUD shows objectives top-left, clock top-right, portraits and cooldown rings bottom-center, no minimap (the map view of S-161 replaces it), control-group tabs, the commander bottom-right, and a five-slot layer strip on the right edge. Pan, zoom, box-select, bind a control group to 1, press 1: the group is selected and the tab highlights. End the mission: the camera pulls back until the battlefield is a point of light, the galaxy fades in, the scroll panel slides in and prints, a border visibly morphs over two seconds, Proceed pushes the camera into the next system and the briefing appears. No loading screen anywhere.
 
 ## Stories
 
@@ -29,14 +29,31 @@ Start a mission. The HUD shows objectives top-left, clock top-right, portraits a
 As a commander, I want a free camera I manage myself, so that attention is my skill and the camera is never the enemy.
 
 Rules
-- R-103-01  Given a mission, When the player pans, zooms, or edge-scrolls, Then the camera moves freely with no auto-anchoring, no forced follow, and no camera modes.
+- R-103-01  Given a mission, When the player pans, zooms, or edge-scrolls, Then the camera moves freely with no forced follow; the classic view has one auto-anchor home the player returns to by key, and the designed views of R-103-05 and R-103-06 are the only camera modes.
 - R-103-02  Given any zoom level, When the viewport is read, Then the mission canvas edges bound the camera; it never leaves the map.
-- R-103-03  Given the launch build, When the camera angle is read, Then it is the fixed top-down interim (A-145); the multi-perspective camera (top-down, 45° overhead, horizontal, 45° upward, unit POV) is committed later scope behind a Track R research task, and the interim ships in every playtest round regardless of that task's state.
+- R-103-03  Given the launch build, When the camera is read, Then the default is the classic RTS view with an auto-anchor home, the camera keeps its height above the ground under it through elevation changes (the Halo Wars floor), and the multi-perspective camera of R-103-05 and R-103-06 ships from launch; the classic view ships in every playtest round regardless of the designed views' state.
+- R-103-05  Given the Angle Rack, When the player enters it, Then five fixed vantage angles (top-down, 45° overhead, horizontal, 45° upward, unit POV) are hopped between by hotkey with a short tween, pan, zoom, and edge-scroll work inside each, and a home key returns to the classic view [Q-103-04: the keys].
+- R-103-06  Given the Layer Peel, When the player enables it (an option, off by default), Then the five layers fan apart around the focus point into translucent planes, scrolling walks focus between planes, the fan pans and zooms as one, and releasing closes the planes to true height; fog and cross-layer vision are untouched. The peel is a player option [Q-103-04: its default state, and whether the peel's plane focus and the layer strip's focus are one control].
+- R-103-07  Given any view, When the player presses the flip key, Then the camera turns 180 degrees about a center, keeping its pitch and distance, so a 45° view facing south becomes a 45° view facing north [Q-103-04: the key and the center it turns about].
 - R-103-04  Given the camera, When it moves, Then it is never bound to a layer; the layer strip changes focus, not the camera.
 
 Inputs: mouse, keyboard, edge scroll.
 Outputs: viewport transform.
-Open flags: none.
+Open flags: Q-103-04 (control specifics for the chosen camera: keys, the flip center, height floor per view, peel focus versus strip focus). Chosen through the options pass, `docs/northstar/research/options/camera/`, Q-103-03.
+
+### S-161 — The map view
+As a commander, I want to pull the camera back until the battle reads as a map, give groups basic orders from there, and zoom back in, so that a 20 to 30 screen battlefield is one continuous space.
+
+Rules
+- R-161-01  Given the camera pulled back past the tactical band, When the map view opens, Then it replaces the minimap; there is no corner minimap [Q-103-05: whether an always-visible glance survives].
+- R-161-02  Given the map view, When the player selects a group and clicks a point or a visible enemy, Then the only orders are move and attack-move; every other command needs the tactical band.
+- R-161-03  Given the map view, When groups are drawn, Then layers collapse into one icon per group carrying a mark for Upper (layers 4 and 5), Lower (1 and 2), or Expansive (1 to 5) [Q-103-06: a group entirely on layer 3, and indicators beyond pins].
+- R-161-04  Given the map view, When it is read, Then it shows the mission only, never the galaxy; the galaxy view lives outside missions.
+- R-161-05  Given the map view, When it is drawn, Then the overlay moves with the terrain and fog applies as everywhere; the look is the Sand Table candidate, a shrunken three-dimensional model of the ground with groups as pins, with a 45° view of the same table in which the layers sit far enough apart that specific sets of units read; committed only after a prototype [Q-103-05].
+
+Inputs: mouse, keyboard.
+Outputs: viewport transform; orders.
+Open flags: Q-103-05 (Sand Table prototype before commitment), Q-103-06 (layer marks for groups beyond pins). Chosen direction through the options pass, `docs/northstar/research/options/map-view/`.
 
 ### S-104 — The HUD tells me what I need and nothing else
 As a commander, I want a lean HUD that shows objectives, my selection, my groups, my structures, the clock, and my commander, and stays out of the way, so that the world is what I look at.
@@ -46,7 +63,7 @@ Rules
 - R-104-02  Given nothing mission-significant has happened, When the top-center is read, Then it is empty; Given a structure falls or an objective band threshold is crossed, Then a banner appears there and clears within 5 s.
 - R-104-03  Given a mission, When the top-right is read, Then it shows elapsed mission time and a pause or menu button [Q-104-01: pause in a real-time multiplayer match].
 - R-104-04  Given a selection, When the bottom-center is read, Then it shows the selected units' portraits, summed HP, and one ability slot per unit type with a cooldown ring, and no contextual prompt or "ready" notification.
-- R-104-05  Given the minimap, When read, Then friendly units are bright, visible enemies dim, terrain contours drawn from obstacle and elevation gradients, objectives marked, reinforcement structures colored by owner.
+- R-104-05  Given the map view (S-161) in place of a minimap, When the player pulls the camera back, Then friendly groups are bright, visible enemies dim, terrain reads as ground, objectives are marked, and reinforcement structures are colored by owner.
 - R-104-06  Given player-owned reinforcement structures, When the structure panel is read, Then one row per owned structure shows the production timer bar, next unit icon, and structure HP; neutral and enemy structures do not appear.
 - R-104-07  Given control groups 1 through 0, When the tabs are read, Then each bound group shows its unit-type icon and count.
 - R-104-08  Given a mission, When the bottom-right is read, Then it shows the commander's portrait, name, and lineage marker.
@@ -67,10 +84,12 @@ Rules
 - R-105-03  Given the player presses Tab, When the layer strip has focus, Then focus cycles to the next layer.
 - R-105-04  Given the client, When any input is checked, Then no select-all, select-all-army, or select-all-of-type command exists (Principle 4; A-300 killed the hotkey).
 - R-105-05  Given Shift plus click, When pressed, Then the unit is added to or removed from the current selection.
+- R-105-07  Given a bound group that spans layers, When the player holds its digit, Then the layer strip blooms into one bar per layer the group occupies, sized by unit count; dragging across one or more bars and releasing makes those layers the selection, and releasing the digit collapses the strip (the Comb). Tap-to-recall and narrowing by layer hotkey (R-105-02, R-105-06) stay the default for control groups and multi-layer movement; the comb is how individual layers inside a group are moved.
+- R-105-08  Given a selection and a right-click move, When issued, Then every unit stays on its own layer; a layer change is a deliberate act on a manual selection.
 
 Inputs: mouse, keyboard.
 Outputs: selection set; control group state.
-Open flags: Q-106-01 (A-301: which accessibility affordance replaces the all-army hotkey's convenience).
+Open flags: none. Q-106-01 is closed: no replacement affordance; the control-group hotkeys stand. Chosen through the options pass, `docs/northstar/research/options/control-groups/`, Q-105-02.
 
 ### S-106 — The galaxy between missions
 As a player, I want to orbit a 3D star map where territory glows, borders touch, and war flashes, so that the world reads at a glance.
@@ -136,10 +155,11 @@ Rules
 - R-110-01  Given launch, When the main menu shows, Then the galaxy particle structure runs behind it at 70 percent opacity with an autonomous camera cycling six moods with 5 s transitions, and the menu offers New Campaign, Continue, Settings, and Quit.
 - R-110-02  Given Settings, When opened, Then it offers resolution, fullscreen, master and music volume, key rebinding for the layer modifier and control groups, and edge-scroll on or off; accessibility options (colorblind palette, UI scale) are a later story, not in the first playtest rounds.
 - R-110-03  Given Continue, When pressed with a save at a chapter boundary, Then the campaign resumes at that boundary.
+- R-110-04  Given any loading screen the game shows (campaign load, era switch), When displayed, Then it carries information the player would otherwise never see, in the register of the chronicle (what the Long Horizon foreshadows), never wallpaper art or a bare spinner [Q-110-03: what is shown]. No loading screen exists between mission and galaxy (S-108).
 
 Inputs: menu input.
 Outputs: screens.
-Open flags: none.
+Open flags: Q-110-03 (loading screen content; decided before launch).
 
 ### S-111 — Saving
 As a player, I want the game saved at every chapter boundary without asking, and to be able to leave at those boundaries, so that I never lose an evening.
@@ -187,7 +207,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Ways this could be wrong
 
-- Control-group depth. Westley's target (2026-09-14): a talented player runs three armies with two or three layers inside each, so control groups need sub-groups per layer without violating exclusive membership (Principle 4). Open research item RL-Q75; no story yet. The risk is that R-105-02's flat digit groups make multi-layer armies unmanageable and players ask for the all-army button we refuse.
+- Control-group depth. Westley's target (2026-09-14): a talented player runs three armies with two or three layers inside each. RL-Q75 answered it with the Comb (R-105-07). The risk is that the held-digit bloom reads too slowly in a fight and players ask for the all-army button we refuse.
 
 - Camera anchors to the selection.
 - Box-select ignores layer focus (or honors it) contrary to Q-105-01's answer.

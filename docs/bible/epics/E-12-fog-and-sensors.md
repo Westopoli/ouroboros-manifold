@@ -38,7 +38,7 @@ Rules
 
 Inputs: unit positions, layers, sensor radii; interference at each position; cover geometry.
 Outputs: per-unit visible set and player-visible list in the tick delta; fog render.
-Open flags: Q-089-01 (last-seen ghost markers, shared with Q-006-02).
+Open flags: Q-089-01 (last-seen ghost markers, shared with Q-006-02), Q-E12-01 (a costly seer unit with wide cross-layer vision, Westley's desired piece of the layer system).
 
 ### S-090 — Hiding in the storm
 As a commander, I want a zone of interference to shrink what units inside it can see and what outsiders can see into it, so that I can hide a force or fear one.

@@ -158,12 +158,13 @@ As a commander, I want hard mode to give me less to work with, never to give the
 
 Rules
 - R-080-01  Given any difficulty, When forces are generated, Then both sides draw from the same unit profiles; no stat differs by difficulty.
-- R-080-02  Given easy, medium, hard, When parity is computed, Then R-074-03 applies and nothing else changes at launch [Q-080-01].
+- R-080-02  Given easy, medium, hard, When a mission is generated, Then difficulty sets parity (R-074-03), time width, resource generosity, and the complication odds, and how fast those compress across generations [Q-080-03: the values].
+- R-080-04  Given a mission is generated, When the complication roll fires (about 1 percent of missions, a celebrated rarity), Then one complication is fixed at generation and never live: a report, a status, or an expected friendly asset turns out false mid-mission (Crossed Signals); it never changes an enemy stat, is never foreshadowed, and at most one fires per mission; the debrief names it apart from the tallies and the chronicle gives it one entry when it changed the region's fate.
 - R-080-03  Given a mission preference marked rare, When the world has no other viable candidate, Then the rare archetype can still be chosen (preference 0.1, never 0).
 
 Inputs: difficulty; onboarding.
 Outputs: parity; candidate scores.
-Open flags: Q-080-01 (the bible's constraint compression across generations, time width, complication frequency; none exists in code, complications are deferred), Q-079-01 (multiplayer: who owns difficulty, preferences, and accept/refuse in a shared match; Stage 1 A-454, A-456, A-457).
+Open flags: Q-080-03 (the compression values). Q-080-01 is closed: the full ramp ships. Q-080-02 is closed: Crossed Signals, chosen through the options pass, `docs/northstar/research/options/complications/`. Q-079-01 is closed: single-player team model, the host owns difficulty and preferences.
 
 ## Inputs
 

@@ -66,3 +66,9 @@ Follow the common template in `../README.md` ("Sub-agent template"). Sections 4 
 - Every question in section 6 is deliberately open; Westley wants wide variance. Go wide.
 - A roster of 20 to 40 unit types per era (Q-082-02) is available as a feel lever: eras may differ by what fights in them.
 - Every difference must be expressible as pack content or config the engine consumes uniformly; no engine branch on era.
+
+## 10. Decision (2026-09-23)
+
+Westley, verbatim: "For era feel, I like the climate of war, but I'm confused by "the long look", I don't understand how a loading screen insertion is supposed to account for the whole differentiation across eras, it seems like more of a side-note than a strategy for era differentiation. This is a good idea though, mark down as a decision that I'd like to make the loading screens interesting in some manner, sharing with the users information that usually would just be wallpaper art or a loading animation. What exactly we'll show, don't know yet, but pre-launch we'll come up with something like The Long Horizon (pairs well with the chronicle story, could be sourced from there)."
+
+Recorded as: The Climate of War (Q-151-01). The Long Look is not an era-feel strategy; its idea became a decision that loading screens carry interesting information (E-16 R-110-04, Q-110-03).

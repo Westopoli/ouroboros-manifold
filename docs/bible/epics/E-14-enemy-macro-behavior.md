@@ -90,16 +90,16 @@ Outputs: briefing text; spawn; bus flag.
 Open flags: Q-124-01.
 
 ### S-125 — How hard the enemy tries
-As a player, I want a difficulty knob that changes how much the enemy has, not how well its units fight, so that I always lose to my own limits.
+As a player, I want a difficulty knob that changes how much the enemy has and how well it reads the layers, never how its units fight, so that I always lose to my own limits.
 
 Rules
-- R-125-01  Given difficulty, When the enemy force is generated, Then only force parity (E-10 R-074-03) changes at launch [Q-125-01: A-156 interim knob; whether unit counts or script aggression also scale].
-- R-125-02  Given any difficulty, When the enemy's units act, Then their decision loop, stats, and abilities are identical to the player's.
+- R-125-01  Given difficulty, When the enemy is set up, Then two things scale: its economic prosperity (more resources to field and replenish) and its multi-layer intelligence (positional awareness: which units on which layers trump the player's units on theirs, informed surrounds the player cannot see until too late) [Q-125-03: how each scales and what hard mode strives for].
+- R-125-02  Given any difficulty, When the enemy's units act, Then their stats and abilities are identical to the player's, and the macro layer never sees what a player could not see; only how much the enemy has and how well it reads layers differs.
 - R-125-03  Given external playtesters, When sessions run, Then command streams and outcomes are captured for the future learned-opponent target (A-156, data capture only).
 
 Inputs: difficulty.
-Outputs: enemy force size; captured session logs.
-Open flags: Q-125-01.
+Outputs: enemy force size and prosperity; macro layer awareness; captured session logs.
+Open flags: Q-125-03. Q-125-01 is closed by Q-125-02: prosperity and multi-layer intelligence, chosen through the options pass, `docs/northstar/research/options/difficulty-knobs/`.
 
 ## Inputs
 

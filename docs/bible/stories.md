@@ -86,7 +86,7 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-080 | E-10 | "Hard mode gives me less to work with, never gives the enemy better units." | Spec'd | `epics/E-10-missions.md` S-080 |
 | S-081 | E-11 | "Strike beats Siege, Siege beats Line, Line beats Strike, and none of it is a death sentence." | Spec'd | `epics/E-11-units-and-combat.md` S-081 |
 | S-082 | E-11 | "A roster of 20 to 40 unit types per era, each with a job I can learn." | Spec'd, blocked on Q-082-03 to Q-082-05 | `epics/E-11-units-and-combat.md` S-082 |
-| S-083 | E-11 | "Each unit is its stats plus one or two traits plus one ability." | Spec'd | `epics/E-11-units-and-combat.md` S-083 |
+| S-083 | E-11 | "I unlock trait cards and build a force that plays my way, and cards never beat positioning." | Spec'd, post-launch, blocked on Q-083-03 | `epics/E-11-units-and-combat.md` S-083 |
 | S-084 | E-11 | "Damage is simple: base times matchup, full damage in range, area damage capped." | Spec'd | `epics/E-11-units-and-combat.md` S-084 |
 | S-085 | E-11 | "Fights last long enough to read, reposition, and retreat." | Spec'd | `epics/E-11-units-and-combat.md` S-085 |
 | S-086 | E-11 | "Each unit has exactly one ability that amplifies its role and costs something." | Spec'd | `epics/E-11-units-and-combat.md` S-086 |
@@ -106,7 +106,7 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-100 | E-13 | "Units face what they shoot and where they go, and turn rather than snap." | Spec'd | `epics/E-13-movement-and-command.md` S-100 |
 | S-101 | E-13 | "I see units turn, slow behind blockers, and settle into their slots." | Spec'd, needs reference | `epics/E-13-movement-and-command.md` S-101 |
 | S-102 | E-13 | "Every peer computes the same movement from the same commands." | Spec'd | `epics/E-13-movement-and-command.md` S-102 |
-| S-103 | E-16 | "A free camera I manage myself." | Spec'd | `epics/E-16-client-camera-hud-and-world-view.md` S-103 |
+| S-103 | E-16 | "A free camera I manage myself, with the Angle Rack, the Layer Peel, and a flip key." | Spec'd, blocked on Q-103-04 | `epics/E-16-client-camera-hud-and-world-view.md` S-103 |
 | S-104 | E-16 | "A lean HUD that shows what I need and stays out of the way." | Spec'd, needs reference | `epics/E-16-client-camera-hud-and-world-view.md` S-104 |
 | S-105 | E-16 | "Click, box-select, bind groups, and never an all-army button." | Spec'd | `epics/E-16-client-camera-hud-and-world-view.md` S-105 |
 | S-106 | E-16 | "A 3D star map where territory glows, borders touch, and war flashes." | Spec'd, needs reference | `epics/E-16-client-camera-hud-and-world-view.md` S-106 |
@@ -164,3 +164,4 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-158 | E-21 | "Agora reads distilled rules derived from these epics, never the bible." | Spec'd | `epics/E-21-offline-ai-pipeline.md` S-158 |
 | S-159 | E-19 | "Someday, a visible, growing economy: player-run in pairs, or running itself alone." | Deferred (Q-159-01, Q-159-02) | `epics/E-19-multiplayer.md` S-159 |
 | S-160 | E-02 | "A feature I switch off actually skips its step; a fresh world drifts by default." | Ready | `epics/E-02-region-fields-and-drift.md` S-160 |
+| S-161 | E-16 | "I pull the camera back until the battle reads as a map and give groups move orders from there." | Spec'd, blocked on Q-103-05 | `epics/E-16-client-camera-hud-and-world-view.md` S-161 |

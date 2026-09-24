@@ -79,3 +79,9 @@ Follow the common template in `../README.md` ("Sub-agent template"). Sections 4 
 - The per-unit grid's visibility is about 50 percent on the unit's own layer, 10 to 20 percent on adjacent layers, 5 percent two away. Strip focus dims non-focused layers "slightly"; each option shows how much.
 - No fixed spacing: each option sets its own vertical scale and says why; spacing is per era (large in space, small on land). Five layers in every era, including land eras without flying units.
 - Assume same-layer combat; note where a cross-layer variant would change the picture.
+
+## 10. Decision (2026-09-23)
+
+Westley, verbatim: "For layer system I'd like to combine Terrace Reading with Floor Spindle and have both display, but the neither should be visually loud, just a subdued indicator (not blocking the view). We'll need to come up with a method to indicate to the player that there are units blocked by their current perspective, like a little exlamation point on the blocking units, this is to be determined and open, but I think it'd be good game design for us to indiciate to the user that they're not seeing the whole picture in some fashion."
+
+Recorded as: Terrace Reading combined with Floor Spindle, both subdued; an occlusion indicator for hidden units is open (Q-E01-08 closed, Q-009-02).

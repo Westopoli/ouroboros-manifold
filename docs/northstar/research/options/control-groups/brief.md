@@ -74,3 +74,9 @@ Follow the common template in `../README.md` ("Sub-agent template"). Sections 4 
 - A right-click move keeps every unit on its layer; a layer change is a deliberate act on a manual selection.
 - How exclusive membership reads when a group has layer slices inside it, and what the HUD tabs show for a group spread across layers.
 - The target: three armies with two or three layers each, run by one skilled player, with no select-all of any kind.
+
+## 10. Decision (2026-09-23)
+
+Westley, verbatim: "For control group depth, I want to combine Recall and Narrow with The Comb, recall can be the default for control groups and multi-layer movement, and comb can be the way to move individual layers within a group."
+
+Recorded as: Recall and Narrow as the default for groups and multi-layer movement, the Comb for moving individual layers within a group (Q-105-02).

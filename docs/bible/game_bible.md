@@ -73,7 +73,7 @@ These are non-negotiable. Any feature that violates them is wrong.
 1. **Genuine stochasticity.** Outcomes are truly uncertain. Player effects, faction agents, and universe noise compete every tick and none fully controls the result. Never fake uncertainty.
 2. **Layered civilizational state.** Granular per-region fields (military strength, economic output, factional tension, population) are the ground truth. Composite axes (stability, capacity) are derived from them and govern big-picture decisions. Real state exists at both levels.
 3. **Era-agnostic architecture.** The engine speaks only in abstract mechanical terms: region, not star system; heavy combat unit, not battleship; military strength, not fleet power. Per-era variation is config the engine consumes uniformly; no code branches on era. This principle applies to this document: engine sections speak the engine's language, and theme terms appear only where the setting is being described.
-4. **Skill ceiling as the design target.** Every system is judged by whether it lets a better-positioned, better-reading player beat a bigger force. Opt-in complexity: a new player plays without understanding every system; a skilled player plays differently because they read the situation better.
+4. **Skill ceiling as the design target.** Every system is judged by whether it lets a better-positioned, better-reading player beat a bigger force. Opt-in complexity: a new player plays without understanding every system; a skilled player plays differently because they read the situation better. Traits and abilities never outrank positioning: a player with weak cards who reads the layer system beats a player with strong cards who does not, and layer position weighs more than any ability or passive.
 5. **Game-theoretic depth.** Decisions have counters, counters have counters, and none is dominant. Soft rock-paper-scissors, never hard.
 6. **Positional thinking over command shortcuts.** Any feature that lets the player issue an order without thinking about where their units are is excluded, at every difficulty. There is no all-army command. Control-group exclusive membership is the canonical instance. Accessibility comes from parity tuning, opponent behavior at low difficulty, and opt-in assistive toggles labeled as such, never from flattening space.
 7. **Bible describes now.** Rewrite, never append.
@@ -88,7 +88,7 @@ The player does not manage an economy or build a base. The civilization allocate
 
 A visible, growing economy and city are under exploration as a deferred idea (`E-19` S-159, speculative, open flags `Q-159-01`, `Q-159-02`): a paired multiplayer mode where one player commands the city while the other commands the military, and, even in the core single-commander game, the same economy and city present but running themselves, unmanaged, as a visual draw. Neither changes this rule for the core commander game described above; the player watches and may someday nudge it, but does not administer it.
 
-Onboarding asks two things before the first chapter, difficulty and mission-type preferences, and both can be changed later. The only progression unlock is era unlocks.
+Onboarding asks two things before the first chapter, difficulty and mission-type preferences, and both can be changed later. Progression unlocks are era unlocks and, after launch, trait cards (E-11 S-083); there is no player level.
 
 ## Tone and Feel
 
@@ -128,7 +128,7 @@ Commander or god? Chronicle material? Era-agnostic? Is losing interesting? Does 
 
 ## Monetization
 
-Steam, one base SKU at $10 to $15 containing three eras: past, present, and future. Additional eras are $3 packs; some are earnable through play, some are purchase-only. No subscription, no in-game store, no Workshop at launch. The three launch eras share identical mechanics; only art, names, and prose differ. Eras that feel mechanically different are a later idea, revisited only if built eras feel too alike.
+Steam, one base SKU at $10 to $15 containing three eras: past, present, and future. Additional eras are $3 packs; some are earnable through play, some are purchase-only. No subscription, no in-game store, no Workshop at launch. The three launch eras share identical mechanics; only art, names, and prose differ. Eras that feel different come after launch, through per-era fog, pace, and reinforcement (E-20 S-151).
 
 ## The Systems
 

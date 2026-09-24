@@ -80,6 +80,10 @@ Append to every sub-agent prompt: *"Report-back caveman mode (drop articles/fill
 
 A change that lands a behavior change also deletes or rewrites every doc claim it makes wrong, in the same PR. This is part of the Definition of Done.
 
+### C4 model per version
+
+Before the MVP becomes the full game, a C4 model of the system is drawn and kept beside the bible under `docs/architecture/c4/`, one per version. Each version's model builds on the previous one; the MVP has the first. A new feature builds off three things together: the prototype, the current C4 model, and the documentation, never the prototype alone. Read the current C4 model when designing a manager-mode cascade and when authoring Agora tests, and update it in the same change as any behavior that alters a container, component, or boundary it shows. Decided by Westley, 2026-09-23.
+
 ### Tests are the spec
 
 Every story exists as failing tests before Agora touches code. Tests live in fenced paths Agora cannot edit. Every test names the `S-###`/`R-###-##` it proves. A test that cannot fail is a defect: every detector ships with a positive control. The build worker never edits a test. The escalator may fix a test only when a finding is classed `test-defect` (a dead control, a fixture whose own numbers never reach the branch it claims to test, a filter that excludes the real record instead of a confound), under the test-fix gate (`assertions_preserved`, `red_at_stub`, `two_agent_confound`), with a ledger row recording what changed and why. Westley owns every threshold and tolerance; neither the worker nor the escalator may loosen one.

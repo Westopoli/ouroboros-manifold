@@ -11,13 +11,13 @@
 | Every visible-surface story has a reference | Not applicable in this epic; era looks are E-18. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** vision_v2 Q7 named the era-differentiation mechanism on one skeleton as open Stage 2 work; this epic frames it and raises the flags but cannot close it without Westley. Stage 1 A-321 fixes one side: no mechanical or feel differentiation between eras at launch.
+**Gate verdict: not passed.** Blocked on open flags. The era-feel mechanism is chosen (Q-151-01, the Climate of War, after launch); the transition trigger is chosen (Q-148-01, the Long Horizon) with its measure open (Q-148-05); the launch eras' names (Q-147-01) and the roster size per era (Q-082-05) still need Westley.
 
 ## Purpose
 
 The engine is a skeleton that never names an era. Eras are packs: names, art, prose, unit models by tier, structure and environment assets, naming pools, chronicle and briefing fragments, and per-era config values the engine consumes uniformly. Maps, era systems, and civilizations are built as transferable systems, Fortnite-skin style, so any map, any skin, any civilization works in any era. The base game ships three eras (past, present, future) for $10 to $15 on Steam; further eras are $3 packs, some earnable through play and some exclusive. Era unlocks are the one progression unlock at launch. A campaign can move chronologically through eras the player owns.
 
-At launch every era plays the same: same fog, same tempo, same reinforcement. Differentiation of feel is pinned for later, to be revisited only if built eras feel too alike.
+At launch every era plays the same: same fog, same tempo, same reinforcement. Differentiation of feel comes after launch as the Climate of War (S-151): per-era fog thickness, engagement pace, and reinforcement rate.
 
 ## Obviously working in 60 seconds
 
@@ -67,14 +67,14 @@ Open flags: Q-147-01, Q-147-02.
 As a player, I want a campaign to move chronologically through the eras I own, so that a bloodline can span the ages.
 
 Rules
-- R-148-01  Given a campaign in era k and the player owns era k + 1, When [Q-148-01: the trigger], Then the next time jump lands in era k + 1 with the same galaxy, the same factions, and the same ledger.
+- R-148-01  Given a campaign in era k and the player owns era k + 1, When the leading civilization's reach for its age tops out, after the chronicle has spent several chapters naming that age being outgrown (the Long Horizon), Then the next time jump lands in era k + 1 with the same galaxy, the same factions, and the same ledger [Q-148-05: the reach measure and its ceiling per age].
 - R-148-02  Given the era transition, When the world carries over, Then region fields, ownership, edges, and characters persist and tech is rescaled so that no faction arrives at late game and the leading faction still leads; only the pack changes; the chronicle frames the transition, and characters from earlier eras fade into distant myths with fewer mentions the farther the timeline moves from them.
 - R-148-03  Given the last owned era, When the next time jump comes, Then history loops: the jump lands in the first owned era with the same galaxy, the same factions, and the same ledger, in solo campaigns and in matches alike [Q-148-04: what the loop does to tech, characters, and the chronicle, and how it relates to the deferred Ouroboros restart, S-054].
 - R-148-04  Given a multiplayer match, When eras traverse, Then E-19 S-143 applies.
 
 Inputs: ownership; campaign state.
 Outputs: era in the save; chronicle entry.
-Open flags: Q-148-01 (what triggers an era transition: elapsed years, tech, chapter count, or a choice), Q-148-04 (the loop's effect on tech, characters, and the chronicle). Q-148-02 is closed: tech rescales at the boundary, nobody arrives at late game, the leading civilization still leads.
+Open flags: Q-148-04 (the loop's effect on tech, characters, and the chronicle), Q-148-05 (the reach measure behind the Long Horizon). Q-148-01 is closed: the Long Horizon, chosen through the options pass. Q-148-02 is closed: tech rescales at the boundary, nobody arrives at late game, the leading civilization still leads.
 
 ### S-149 — Buying and earning eras
 As a player, I want a fair price and the chance to earn expansions by playing, so that the game respects my time and my wallet.
@@ -107,11 +107,11 @@ Open flags: Q-150-01 (what "civilization" content transfers across eras beyond a
 As a player, I may someday want the ancient era to be scout-blind and the future era all-seeing, so that time changes how war feels.
 
 Rules
-- R-151-01  Deferred (A-321, A-339, A-344, A-362, A-544 through A-546). No rule at launch. Recorded so the branch-system idea is not lost: per-era fog, tempo, HP scale, and reinforcement constants would become manifest values consumed uniformly.
+- R-151-01  Deferred past launch (A-321). When built, the difference is the Climate of War: each era sets its own fog thickness, engagement pace, and reinforcement rate as manifest values the engine consumes uniformly; units, categories, and counters never change with the era. Chosen through the options pass, `docs/northstar/research/options/era-feel/`, Q-151-01.
 
 Inputs: none yet.
 Outputs: none yet.
-Open flags: none; deferred by Westley's Stage 1 decision, reopen only if built eras feel too similar.
+Open flags: none; the values per era are set when the story is scheduled.
 
 ## Inputs
 
