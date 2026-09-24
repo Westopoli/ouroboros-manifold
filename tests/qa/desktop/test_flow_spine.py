@@ -38,6 +38,7 @@ ever retries it.
 from __future__ import annotations
 
 import time
+from pathlib import Path
 
 import pytest
 
@@ -76,16 +77,29 @@ SCREENSHOT_HINT = (
 )
 
 
+def _real_saves_snapshot() -> dict:
+    """Every file in the player's real save directory with its mtime and size."""
+    root = Path.home() / ".local/share/data/saves"
+    if not root.exists():
+        return {}
+    return {str(p): (p.stat().st_mtime_ns, p.stat().st_size) for p in root.rglob("*") if p.is_file()}
+
+
 @pytest.fixture(scope="module")
 def game():
     port = pick_free_port()
     g = GodotGame(qa_port=port, seed=1)
+    real_before = _real_saves_snapshot()
     g.start()
     g.wait_for_port(timeout=PORT_TIMEOUT_S)
     try:
         yield g
     finally:
         g.stop()
+    # C1-3: the flow's autosaves (mission start, debrief, chronicle jump) went to the
+    # per-run OM_SAVE_DIR; the player's real save directory must be untouched.
+    assert _real_saves_snapshot() == real_before, "the flow wrote into the real save directory"
+    assert any(g.save_dir.glob("campaign_*.omsave")), "control: the flow wrote no autosave at all into OM_SAVE_DIR"
 
 
 def _shoot(client, name: str) -> None:

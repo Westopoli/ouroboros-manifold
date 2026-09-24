@@ -2,18 +2,17 @@
 """Piece C1-2: main-menu CONTINUE loads a live save slot into the galaxy.
 
 Writes one real campaign save (seed 3, 100 ticks, through the pipe's own `save`
-command into the game's save directory), launches the real game, and walks
+command into the game's per-run OM_SAVE_DIR), launches the real game, and walks
 boot -> main menu -> CONTINUE -> the slot's LOAD button -> galaxy. The galaxy must
 then be the saved world (its live tick is the saved 100, not a fresh game's 0), the
 main menu must have shown CONTINUE enabled, and NewGame afterwards must start a
-fresh world (tick 0). Cleans up its own save files.
+fresh world (tick 0). The save directory is the game's per-run temp directory, so nothing is left behind.
 """
 from __future__ import annotations
 
 import json
 import subprocess
 import time
-from pathlib import Path
 
 import pytest
 
@@ -30,7 +29,6 @@ MAIN_MENU_SCENE = "res://scenes/main_menu/main_menu.tscn"
 PRIVACY_MODAL_SCENE = "res://scenes/privacy_modal/privacy_modal.tscn"
 LOAD_GAME_SCENE = "res://scenes/load_game/load_game.tscn"
 GALAXY_SCENE = "res://scenes/galaxy/galaxy_view.tscn"
-SAVES_DIR = Path.home() / ".local/share/data/saves"
 SLOT = "campaign_3"
 SAVED_TICK = 100
 BOOT_TIMEOUT_S = 45.0
@@ -44,9 +42,9 @@ def _frame(obj):
 
 
 @pytest.fixture()
-def saved_campaign():
-    SAVES_DIR.mkdir(parents=True, exist_ok=True)
-    path = SAVES_DIR / (SLOT + ".omsave")
+def game():
+    g = GodotGame(qa_port=pick_free_port(), seed=1)
+    path = g.save_dir / (SLOT + ".omsave")
     cmds = [
         {"type": "cmd", "name": "set_seed", "seed": 3, "n_regions": 80, "features": FEATURES},
         {"type": "cmd", "name": "step", "n": SAVED_TICK},
@@ -55,17 +53,7 @@ def saved_campaign():
     ]
     subprocess.run([str(REPO_ROOT / "pipe/ouroboros_pipe")], input=b"".join(_frame(c) for c in cmds),
                    capture_output=True, timeout=60, check=True)
-    assert path.exists() and (SAVES_DIR / (SLOT + ".omsave.json")).exists()
-    try:
-        yield path
-    finally:
-        for f in (path, SAVES_DIR / (SLOT + ".omsave.json")):
-            f.unlink(missing_ok=True)
-
-
-@pytest.fixture()
-def game(saved_campaign):
-    g = GodotGame(qa_port=pick_free_port(), seed=1)
+    assert path.exists() and (g.save_dir / (SLOT + ".omsave.json")).exists()
     g.start()
     g.wait_for_port(timeout=60.0)
     try:
