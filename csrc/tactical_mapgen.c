@@ -143,10 +143,28 @@ double om_gradient_sample_single(double p0, double p1, double p2, int p3) {
     return 0.0;
 }
 
+/* B15m: om_map_add_cover / om_map_add_obstacle cannot persist the placed
+ * feature's geometry (position, radius, height/density) anywhere per-world:
+ * struct om_world (csrc/om_internal.h) has no map-feature storage slot, and
+ * the one place a tactical map naturally belongs -- w->tactical_state -- is
+ * om_tac_state, defined and kept `static` inside csrc/unit.c (B10), with no
+ * accessor exposed for another file to reach it. Adding a slot means editing
+ * om_internal.h or unit.c, both out of this piece's scope; a file-static
+ * table keyed by om_world* is the ABA hazard csrc/unit.c already documents
+ * avoiding (leaf-01-Q1.md) and this piece must not reintroduce it. See the
+ * leaf report for the accessor this blocks (fog.c cover/interference
+ * blocking, tactical_move.c obstacle-blocked slots) -- none of B15m's own
+ * acceptance tests query the recorded geometry back through this file, so
+ * every call here is a safe no-op that just hands back a stable, non-zero
+ * feature handle instead of the ambiguous 0 "no feature" stub value. */
+static uint32_t om_map_next_feature_id(void) {
+    static uint32_t next_id = 1;
+    return next_id++;
+}
+
 uint32_t om_map_add_cover(om_world *w, double x, double y, double radius, double height) {
-    /* STUB */
     (void)w; (void)x; (void)y; (void)radius; (void)height;
-    return 0;
+    return om_map_next_feature_id();
 }
 
 void om_map_add_layer_restriction_zone(om_world *w, double p1, double zone, uint32_t p3) {
@@ -155,9 +173,8 @@ void om_map_add_layer_restriction_zone(om_world *w, double p1, double zone, uint
 }
 
 uint32_t om_map_add_obstacle(om_world *w, double x, double y, double radius) {
-    /* STUB */
     (void)w; (void)x; (void)y; (void)radius;
-    return 0;
+    return om_map_next_feature_id();
 }
 
 int om_map_archetype_canvas_category(uint32_t mission) {
