@@ -1105,12 +1105,18 @@ static void handle_mission_start(const char *json) {
     write_mission(archetype, region, om_mission_get_time_limit(W));
 }
 
+/* R-092-02: during recon (the mission phase holds, mission_begin not yet
+ * sent) the mission clock has not started and no unit moves. */
+static int in_recon(void) {
+    return om_chapter_mission_realtime(W) && !om_mission_is_started(W);
+}
+
 static void handle_mission_begin(void) {
     if (!W) {
         write_error("mission_begin", "no world");
         return;
     }
-    if (!om_chapter_mission_realtime(W) || om_mission_is_started(W)) {
+    if (!in_recon()) {
         write_error("mission_begin", "not in recon");
         return;
     }
@@ -1132,6 +1138,10 @@ static void handle_mission_end(void) {
 static void handle_tactical_step(const char *json) {
     if (!W) {
         write_error("tactical_step", "no world");
+        return;
+    }
+    if (in_recon()) {
+        write_error("tactical_step", "not begun");
         return;
     }
     int64_t n = 1;
@@ -1173,6 +1183,10 @@ static void handle_jump(const char *json) {
 static void handle_command(const char *json) {
     if (!W) {
         write_error("command", "no world");
+        return;
+    }
+    if (in_recon()) {
+        write_error("command", "not begun");
         return;
     }
     char verb[32] = {0};

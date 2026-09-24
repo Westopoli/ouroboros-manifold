@@ -1,0 +1,83 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "mission.schema.json",
+ "type": "object",
+ "required": [
+  "type",
+  "archetype",
+  "region",
+  "deadline_ticks",
+  "objectives",
+  "force"
+ ],
+ "properties": {
+  "type": {
+   "const": "mission"
+  },
+  "archetype": {
+   "type": "integer"
+  },
+  "region": {
+   "type": "integer"
+  },
+  "deadline_ticks": {
+   "type": "integer"
+  },
+  "objectives": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "i",
+     "kind",
+     "primary",
+     "progress"
+    ],
+    "properties": {
+     "i": {
+      "type": "integer"
+     },
+     "kind": {
+      "type": "integer"
+     },
+     "node": {
+      "type": "integer"
+     },
+     "primary": {
+      "type": "boolean"
+     },
+     "radius": {
+      "type": "number"
+     },
+     "progress": {
+      "type": "number"
+     }
+    },
+    "additionalProperties": true
+   }
+  },
+  "force": {
+   "type": "object",
+   "required": [
+    "types",
+    "tiers"
+   ],
+   "properties": {
+    "types": {
+     "type": "array",
+     "items": {
+      "type": "integer"
+     }
+    },
+    "tiers": {
+     "type": "array",
+     "items": {
+      "type": "integer"
+     }
+    }
+   },
+   "additionalProperties": true
+  }
+ },
+ "additionalProperties": true
+}

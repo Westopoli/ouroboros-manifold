@@ -79,3 +79,22 @@ def test_begin_after_the_mission_ended_answers_error():
     types = [f["type"] for f in frames]
     assert types[:3] == ["mission", "debrief", "snapshot"], frames
     _assert_refused(frames[3])
+
+
+def test_tactical_step_and_command_are_refused_in_recon():
+    """R-092-02: during recon the mission clock has not started and no unit moves, so the
+    pipe refuses the two commands that would advance or order the tactical sim."""
+    cmd = {"type": "cmd", "name": "command", "verb": "hold", "units": [4]}
+    frames = _run([SET_SEED, START, STEP, cmd])
+    assert frames[0]["type"] == "mission", frames
+    for refused, name in ((frames[1], "tactical_step"), (frames[2], "command")):
+        assert refused["type"] == "error" and refused["name"] == name, frames
+        assert refused["reason"] == "not begun", frames
+
+
+def test_tactical_step_and_command_are_accepted_after_begin():
+    cmd = {"type": "cmd", "name": "command", "verb": "bogus_verb", "units": [4]}
+    frames = _run([SET_SEED, START, BEGIN, STEP, cmd])
+    assert [f["type"] for f in frames[:3]] == ["mission", "tactical", "tactical"], frames
+    assert frames[3]["type"] == "error" and frames[3]["name"] == "command", frames
+    assert frames[3]["reason"] != "not begun", "a begun mission must not be refused as recon: %r" % frames

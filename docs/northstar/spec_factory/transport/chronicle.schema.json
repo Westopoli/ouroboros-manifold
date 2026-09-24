@@ -1,0 +1,86 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "chronicle.schema.json",
+ "type": "object",
+ "required": [
+  "type",
+  "jump",
+  "entries"
+ ],
+ "properties": {
+  "type": {
+   "const": "chronicle"
+  },
+  "jump": {
+   "type": "object",
+   "required": [
+    "from_tick",
+    "to_tick"
+   ],
+   "properties": {
+    "from_tick": {
+     "type": "integer"
+    },
+    "to_tick": {
+     "type": "integer"
+    }
+   },
+   "additionalProperties": true
+  },
+  "entries": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "id",
+     "start_tick",
+     "end_tick",
+     "category"
+    ],
+    "properties": {
+     "id": {
+      "type": "integer"
+     },
+     "start_tick": {
+      "type": "integer"
+     },
+     "end_tick": {
+      "type": "integer"
+     },
+     "category": {
+      "type": "integer"
+     },
+     "cluster_type": {
+      "type": "integer"
+     },
+     "refs": {
+      "type": "object",
+      "properties": {
+       "regions": {
+        "type": "array",
+        "items": {
+         "type": "integer"
+        }
+       },
+       "factions": {
+        "type": "array",
+        "items": {
+         "type": "integer"
+        }
+       }
+      },
+      "additionalProperties": true
+     },
+     "fragment": {
+      "type": "integer"
+     },
+     "significance": {
+      "type": "number"
+     }
+    },
+    "additionalProperties": true
+   }
+  }
+ },
+ "additionalProperties": true
+}
