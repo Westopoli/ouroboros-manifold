@@ -39,6 +39,8 @@ var _snapshot: Dictionary = {}
 var _last_error: String = ""
 var _mission: Dictionary = {}
 var _debrief: Dictionary = {}
+var _chronicle: Dictionary = {}
+var _chronicle_snapshot: Dictionary = {}
 
 
 func load_snapshot_file(path: String) -> bool:
@@ -85,6 +87,16 @@ func last_error() -> String:
 	return _last_error
 
 
+# The --seed user arg the game was launched with (the galaxy reads the same
+# arg), 1 when absent.
+func live_seed() -> int:
+	var args := OS.get_cmdline_user_args()
+	var idx := args.find("--seed")
+	if idx == -1 or idx + 1 >= args.size():
+		return 1
+	return int(args[idx + 1])
+
+
 func mission_frame() -> Dictionary:
 	return _mission
 
@@ -93,35 +105,57 @@ func debrief_frame() -> Dictionary:
 	return _debrief
 
 
+func chronicle_frame() -> Dictionary:
+	return _chronicle
+
+
+func chronicle_snapshot() -> Dictionary:
+	return _chronicle_snapshot
+
+
 # Same script-up-front pattern as load_snapshot_live (a blocking pipe read
 # cannot be interleaved with writes): a fresh world, 10 steps, mission_start
 # answers the mission frame.
 func load_mission_live(seed: int, n_regions: int, features: Array) -> bool:
 	_mission = {}
-	var frame: Dictionary = _run_live_script(seed, n_regions, features,
-		[{"type": "cmd", "name": "mission_start", "faction": 0}], "mission")
-	if frame.is_empty():
+	var frames: Dictionary = _run_live_script(seed, n_regions, features,
+		[{"type": "cmd", "name": "mission_start", "faction": 0}], ["mission"])
+	if frames.is_empty():
 		return false
-	_mission = frame
+	_mission = frames["mission"]
 	return true
 
 
 # ... and mission_end after it answers the debrief frame.
 func load_debrief_live(seed: int, n_regions: int, features: Array) -> bool:
 	_debrief = {}
-	var frame: Dictionary = _run_live_script(seed, n_regions, features,
-		[{"type": "cmd", "name": "mission_start", "faction": 0}, {"type": "cmd", "name": "mission_end"}], "debrief")
-	if frame.is_empty():
+	var frames: Dictionary = _run_live_script(seed, n_regions, features,
+		[{"type": "cmd", "name": "mission_start", "faction": 0}, {"type": "cmd", "name": "mission_end"}], ["debrief"])
+	if frames.is_empty():
 		return false
-	_debrief = frame
+	_debrief = frames["debrief"]
+	return true
+
+
+# ... and a 50-tick jump after it answers the chronicle frame, then a
+# snapshot of the world after the jump.
+func load_chronicle_live(seed: int, n_regions: int, features: Array) -> bool:
+	_chronicle = {}
+	_chronicle_snapshot = {}
+	var frames: Dictionary = _run_live_script(seed, n_regions, features,
+		[{"type": "cmd", "name": "jump", "ticks": 50}], ["chronicle", "snapshot"])
+	if frames.is_empty():
+		return false
+	_chronicle = frames["chronicle"]
+	_chronicle_snapshot = frames["snapshot"]
 	return true
 
 
 # See also: load_snapshot_live above, the v1 stopgap that goes when C2-4's
 # persistent session lands; this shares its framing and read loop, and
-# returns the first frame of stop_type ({} on any error frame, timeout or
-# spawn failure, with last_error() set for error frames).
-func _run_live_script(seed: int, n_regions: int, features: Array, tail: Array, stop_type: String) -> Dictionary:
+# returns the first frame of each type in want ({type: frame}); {} on any
+# error frame, timeout, closed pipe or spawn failure, with last_error() set.
+func _run_live_script(seed: int, n_regions: int, features: Array, tail: Array, want: Array) -> Dictionary:
 	_last_error = ""
 	var exe := ProjectSettings.globalize_path(PIPE_BIN_RES_PATH)
 	if not FileAccess.file_exists(exe):
@@ -152,7 +186,7 @@ func _run_live_script(seed: int, n_regions: int, features: Array, tail: Array, s
 	while Time.get_ticks_msec() < deadline_msec:
 		var msg: Variant = _read_live_frame(stdio)
 		if msg == null:
-			_last_error = "pipe closed before a %s frame" % stop_type
+			_last_error = "pipe closed before every wanted frame (%s)" % ", ".join(want)
 			break
 		if not (msg is Dictionary):
 			continue
@@ -160,12 +194,17 @@ func _run_live_script(seed: int, n_regions: int, features: Array, tail: Array, s
 		if msg_type == "error":
 			_last_error = String(msg.get("reason", ""))
 			break
-		if msg_type == stop_type:
-			found = msg
-			break
+		if want.has(msg_type) and not found.has(msg_type):
+			found[msg_type] = msg
+			if found.size() == want.size():
+				break
 
 	if OS.is_process_running(pid):
 		OS.kill(pid)
+	if found.size() != want.size():
+		if _last_error == "":
+			_last_error = "timed out waiting for %s" % ", ".join(want)
+		return {}
 	return found
 
 

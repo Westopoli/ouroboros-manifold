@@ -50,19 +50,11 @@ func _ready() -> void:
 		# keeps the mock backfill and logs the reason; it never falls back
 		# to a fixture frame (C4-3).
 		var bridge = load("res://autoload/c_bridge.gd").new()
-		if bridge.load_mission_live(_live_seed(), bridge.DEFAULT_N_REGIONS, bridge.DEFAULT_FEATURES):
+		if bridge.load_mission_live(bridge.live_seed(), bridge.DEFAULT_N_REGIONS, bridge.DEFAULT_FEATURES):
 			load_frame(bridge.mission_frame())
 			return
 		push_error("mission_briefing: live mission frame failed: %s" % bridge.last_error())
 	_build_ui()
-
-
-func _live_seed() -> int:
-	var args := OS.get_cmdline_user_args()
-	var idx := args.find("--seed")
-	if idx == -1 or idx + 1 >= args.size():
-		return 1
-	return int(args[idx + 1])
 
 
 func _input(event: InputEvent) -> void:
