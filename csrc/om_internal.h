@@ -341,6 +341,8 @@ void om_step_technology(om_world *w);
 void om_step_lifecycle(om_world *w);
 /* Per-tick drifting-objective centre refresh (csrc/tactical_support.c); called by unit.c om_tactical_step right after om_macro_tick. */
 void om_support_tick(om_world *w);
+/* Deadline-baseline hook (csrc/mission.c); called by fog.c om_mission_begin right after the phase moves to tactical. */
+void om_mission_on_begin(om_world *w);
 
 /* The world RNG (ouroboros_sim.h "the world RNG contract"), csrc/sim.c.
  * om_rng_seed derives rng_state/rng_inc from the seed (om_world_new,

@@ -1593,6 +1593,13 @@ int om_mission_is_ended(const om_world *w) {
     return elapsed >= st->tactical_time_limit ? 1 : 0;
 }
 
+void om_mission_on_begin(om_world *w) {
+    if (!w) return;
+    om_mission_state *st = om_mis(w);
+    st->tactical_baseline_tick = om_tactical_tick(w);
+    st->tactical_baseline_pending = 0;
+}
+
 void om_mission_load_launch_library(om_world *w) {
     om_mission_state *st = om_mis(w);
     /* R-073-01's exact contract table (canvas_category: 0 small, 1 medium,

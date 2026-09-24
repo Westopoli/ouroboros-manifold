@@ -371,6 +371,7 @@ void om_mission_begin(om_world *w) {
     st->mission_started = 1;
     st->mission_phase = OM_FOG_PHASE_TACTICAL;
     st->mission_begin_tick = w->tick;
+    om_mission_on_begin(w);
 }
 
 uint64_t om_mission_get_clock(const om_world *w) {
