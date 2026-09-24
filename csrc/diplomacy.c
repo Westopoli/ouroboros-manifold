@@ -58,6 +58,27 @@
 #define OM_ALG21_BREAKTHROUGH_ECO 0.3
 #define OM_ALG21_BREAKTHROUGH_TENSION 0.5
 #define OM_ALG21_BREAKTHROUGH_TENSION_CAP 30.0
+/* S-048 R-048-01 tier boundaries: no ALG id -- algorithms.md has no ALG
+ * paragraph for tech tiers, only the epic's own Inputs line
+ * (docs/bible/epics/E-06-diplomacy-and-technology.md: "tier boundaries
+ * [0, 34, 67]"). Missing from om_constants.h; reported, not silently
+ * added there since this card may only edit this file. */
+#define OM_TECH_TIER_1_MAX 34.0
+#define OM_TECH_TIER_2_MAX 67.0
+#define OM_TECH_TIER_1 1
+#define OM_TECH_TIER_2 2
+#define OM_TECH_TIER_3 3
+/* Mission id encoding for om_mission_start/om_mission_unit_tier (R-048-02):
+ * csrc/mission.c (card B9, not yet built) owns real per-mission state;
+ * this card may only edit diplomacy.c and om_internal.h's om_world layout
+ * is fixed for this card, so there is nowhere to store a mission ->
+ * fielded-tier table. The tier a mission fields is instead encoded
+ * directly into its id (tick in the high bits, tier in the low 2 bits),
+ * so a running mission's tier reads back the value it was given at
+ * om_mission_start regardless of any later change to the faction's
+ * current tech tier. */
+#define OM_MISSION_TIER_BITS 2
+#define OM_MISSION_TIER_MASK 0x3u
 #define OM_ALG21_CONTESTED_MIL 0.5
 #define OM_ALG21_CONTESTED_ECO 0.2
 #define OM_ALG21_CONTESTED_TENSION 0.4
@@ -727,59 +748,108 @@ void om_step_technology(om_world *w) {
     om_tech_step(w);
 }
 
-/* ---- S-048 (later card, B5b): tech tiers, mission unit profiles, chronicle
- * candidates. Left as the original stubs; not this card's scope. ---- */
+/* ---- S-048 (card B5b): tech tiers, mission unit profiles, chronicle
+ * candidates. ---- */
 
-uint32_t om_chronicle_distill_candidates(const om_world *w, uint32_t *out, uint32_t max) {
-    /* STUB */
-    (void)w; (void)out; (void)max;
-    return 0;
-}
-
-uint32_t om_faction_next_mission_unit_tier(const om_world *w, int32_t faction_id) {
-    /* STUB */
-    (void)w; (void)faction_id;
-    return 0;
+uint32_t om_tech_tier(double tech) {
+    if (tech < OM_TECH_TIER_1_MAX) return OM_TECH_TIER_1;
+    if (tech < OM_TECH_TIER_2_MAX) return OM_TECH_TIER_2;
+    return OM_TECH_TIER_3;
 }
 
 uint32_t om_faction_tech_tier(const om_world *w, int32_t faction_id) {
-    /* STUB */
-    (void)w; (void)faction_id;
-    return 0;
+    return om_tech_tier(om_faction_tech(w, faction_id));
 }
 
-int om_faction_tier_transition_candidate(const om_world *w, int32_t faction_id) {
-    /* STUB */
-    (void)w; (void)faction_id;
-    return 0;
-}
-
+/* R-048-02/03: the tier a faction's NEXT mission fields is just its current
+ * tier at generation time -- a faction that crossed a boundary already
+ * reads the new tier here, whether it rose or fell. Unit profile selection
+ * itself (E-11 UNIT_STATS per tier) is csrc/unit.c's own lookup; this only
+ * hands it the tier number, csrc/unit.c does not yet expose a
+ * tier -> profile accessor to call further. */
 uint32_t om_faction_unit_tier(const om_world *w, int32_t faction_id) {
-    /* STUB */
-    (void)w; (void)faction_id;
-    return 0;
+    return om_faction_tech_tier(w, faction_id);
 }
 
+uint32_t om_faction_next_mission_unit_tier(const om_world *w, int32_t faction_id) {
+    return om_faction_tech_tier(w, faction_id);
+}
+
+/* R-048-02: a mission already fielded keeps the tier it started with even
+ * after its faction's tech tier later changes. csrc/mission.c (card B9) is
+ * not built yet and om_internal.h's om_world layout is fixed for this
+ * card, so there is no mission -> tier table to write into; the fielded
+ * tier is instead encoded into the id itself (see OM_MISSION_TIER_MASK
+ * above), which is stateless and needs no such table. */
 uint32_t om_mission_start(om_world *w, int32_t faction_id) {
-    /* STUB */
-    (void)w; (void)faction_id;
-    return 0;
+    if (!w) return 0;
+    uint32_t tier = om_faction_tech_tier(w, faction_id);
+    return ((uint32_t)w->tick << OM_MISSION_TIER_BITS) | (tier & OM_MISSION_TIER_MASK);
 }
 
 uint32_t om_mission_unit_tier(const om_world *w, uint32_t mission_id) {
-    /* STUB */
-    (void)w; (void)mission_id;
-    return 0;
+    (void)w;
+    return mission_id & OM_MISSION_TIER_MASK;
 }
 
-uint32_t om_tech_tier(double tech) {
-    /* STUB */
-    (void)tech;
-    return 0;
+/* R-048-04: a tier-transition chronicle candidate needs to know the tier a
+ * tick ago, but om_world carries no tech history (om_internal.h is fixed
+ * for this card) and the real chronicle window/distillation machinery is
+ * csrc/chronicle.c's (card B8), not touched here. This instead re-derives
+ * the pre-step tech from the CURRENT region fields through the same ALG-27
+ * growth formula om_tech_step already applies: exact when nothing has
+ * touched those regions' economy/population since the step that produced
+ * today's tech (true for a query made shortly after that step, as in
+ * R-048-04's own scenario), but not a real multi-tick window lookback --
+ * a later query, after other ticks moved those fields, would recompute
+ * against the wrong baseline. Convergence (ALG-28) and Knowledge Lost
+ * (ALG-27b) deltas from the same step are not un-applied here, so a
+ * transition driven purely by one of those (no owned regions, i.e. no
+ * growth term) is not caught by this reconstruction. */
+static int om__faction_tier_just_transitioned(const om_world *w, int32_t faction_id) {
+    if (!w || faction_id < 0 || faction_id >= OM_MAX_FACTIONS) return 0;
+    if (!w->faction_used[faction_id]) return 0;
+
+    double sum_e = 0.0, sum_p = 0.0;
+    uint32_t n = 0;
+    for (uint32_t i = 0; i < w->n_regions; i++) {
+        if (w->regions[i].faction_id != faction_id) continue;
+        if (w->regions[i].tier == OM_TIER_EMPTY) continue;
+        sum_e += w->regions[i].economy;
+        sum_p += w->regions[i].population;
+        n++;
+    }
+    if (n == 0) return 0;
+
+    double avg_e = sum_e / (double)n;
+    double avg_p = sum_p / (double)n;
+    double pop_ratio = avg_p / OM_PCT_SCALE;
+    double pop_factor = (pop_ratio > OM_TECH_POPULATION_FLOOR) ? pop_ratio : OM_TECH_POPULATION_FLOOR;
+    double growth = OM_BASE_TECH_RATE * (avg_e / OM_PCT_SCALE) * pop_factor;
+
+    double current_tech = w->faction_tech[faction_id];
+    double prev_tech = current_tech - growth;
+    if (prev_tech < 0.0) prev_tech = 0.0;
+
+    return om_tech_tier(prev_tech) != om_tech_tier(current_tech);
+}
+
+int om_faction_tier_transition_candidate(const om_world *w, int32_t faction_id) {
+    return om__faction_tier_just_transitioned(w, faction_id);
 }
 
 int om_tier_transition_candidate_exists(const om_world *w, int32_t faction_id) {
-    /* STUB */
-    (void)w; (void)faction_id;
-    return 0;
+    return om__faction_tier_just_transitioned(w, faction_id);
+}
+
+uint32_t om_chronicle_distill_candidates(const om_world *w, uint32_t *out, uint32_t max) {
+    if (!w) return 0;
+    uint32_t n_out = 0;
+    for (int32_t f = 0; f < OM_MAX_FACTIONS; f++) {
+        if (!w->faction_used[f]) continue;
+        if (!om__faction_tier_just_transitioned(w, f)) continue;
+        if (out && n_out < max) out[n_out] = (uint32_t)f;
+        n_out++;
+    }
+    return n_out;
 }
