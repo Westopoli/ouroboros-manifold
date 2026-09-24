@@ -178,6 +178,11 @@
 
 #define OM_ABILITY_DAMAGE_REDUCTION_CAP 0.9
 
+/* ALG-60: "after firing the unit's movement pauses ATTACK_BACKSWING_SEC =
+ * 0.5" -- OM_ATTACK_BACKSWING_SEC/OM_TACTICAL_TICK_RATE are both already
+ * declared in om_constants.h. */
+#define OM_BACKSWING_TICKS ((uint32_t)(OM_ATTACK_BACKSWING_SEC * (double)OM_TACTICAL_TICK_RATE))
+
 #define OM_ABILITY_EVENT_BUFFER_CAP 256
 
 #define OM_ABILITY_PHASE_IDLE 0
@@ -243,6 +248,17 @@ typedef struct {
     uint32_t ability_ticks_remaining;
     double   ability_cooldown;
     double   ability_target_x, ability_target_y;
+    /* B10b/S-084 (ALG-60): backswing pause after a landed attack, and the
+     * three test-facing forced-reduction flags om_unit_set_brace_active/
+     * om_unit_set_fortify_active/om_unit_set_warden_aura_active drive
+     * directly (independent of the real Brace/Fortify ability phase or a
+     * nearby Warden, so a test can force exactly one reduction term without
+     * standing up the whole ability chain). */
+    uint32_t backswing_ticks_remaining;
+    int      backswing_active;
+    int      force_brace_reduction;
+    int      force_fortify_reduction;
+    int      force_warden_aura_reduction;
 } om_unit_row;
 
 typedef struct {
@@ -444,10 +460,14 @@ static double om_resolve_hit_multiplier(om_world *w, int attacker_category, cons
 
 static void om_tactical_apply_hit(om_world *w, om_unit_row *attacker, om_unit_row *target) {
     double mult = om_resolve_hit_multiplier(w, attacker->category, target);
-    double dmg = attacker->base_damage * mult;
+    double output_mult = om_unit_output_multiplier(w, attacker->unit_id);
+    double reduction = om_unit_damage_reduction(w, target->unit_id);
+    double dmg = attacker->base_damage * mult * output_mult * (1.0 - reduction);
     target->hp -= dmg;
     if (target->hp < 0.0) target->hp = 0.0;
     attacker->cooldown = attacker->attack_interval * (double)OM_TACTICAL_TICK_RATE;
+    attacker->backswing_ticks_remaining = OM_BACKSWING_TICKS;
+    attacker->backswing_active = 1;
 }
 
 /* One stationary combat tick: alive units off cooldown, with a living
@@ -866,6 +886,26 @@ static void om_ability_advance_all(om_world *w) {
 
 /* ---- end B10-3 ability system ---- */
 
+/* ALG-60 backswing: counts down the pause a landed hit (om_unit_deal_damage,
+ * om_unit_fire_aoe_attack) puts on its attacker. backswing_active reports
+ * "still paused as of the tick just simulated" -- it stays 1 through the
+ * tick that consumes the last remaining count, and only reads 0 starting
+ * the tick after, so a hit landed with OM_BACKSWING_TICKS remaining reads
+ * in-backswing for exactly that many om_tactical_step calls. */
+static void om_tactical_advance_backswing(om_tac_state *st) {
+    uint32_t i;
+    for (i = 0; i < st->n_units; i++) {
+        om_unit_row *u = &st->units[i];
+        if (!u->in_use) continue;
+        if (u->backswing_ticks_remaining > 0) {
+            u->backswing_ticks_remaining--;
+            u->backswing_active = 1;
+        } else {
+            u->backswing_active = 0;
+        }
+    }
+}
+
 uint64_t om_tactical_step(om_world *w) {
     /* No-op until a tactical battle actually exists (tests/csim/test_E11_wiring.py
      * ::test_R_wiring_tactical_step_is_callable): a strategic-only world with no
@@ -873,6 +913,7 @@ uint64_t om_tactical_step(om_world *w) {
     const om_tac_state *ro = om_tac_ro(w);
     if (!ro || ro->n_units == 0) return ro ? ro->current_tick : 0;
     om_tactical_apply_aura_regen(w);
+    om_tactical_advance_backswing(om_tac(w));
     om_ability_advance_all(w);
     return om_tac(w)->current_tick;
 }
@@ -1082,28 +1123,41 @@ void om_unit_attack(om_world *w, uint32_t attacker, uint32_t target) {
 /* ALG-60: Brace 0.50 (self, while its bonus is granted) + Fortify 0.20
  * (any friendly within OM_FORTIFY_RADIUS of an active Bastion) + Warden
  * aura (om_warden_aura_reduction_for, already diminishing per extra
- * Warden), capped at OM_ABILITY_DAMAGE_REDUCTION_CAP. */
+ * Warden), capped at OM_ABILITY_DAMAGE_REDUCTION_CAP. Brace/Fortify/Warden
+ * each also have a force_*_reduction flag (om_unit_set_brace_active,
+ * om_unit_set_fortify_active, om_unit_set_warden_aura_active) that a test
+ * can set directly on any unit type, independent of the real Vanguard
+ * Brace phase, a nearby active Bastion, or a nearby real Warden --
+ * test_control_e11_window_brace_reduction_wrong_constant forces Brace on a
+ * Raider and still expects exactly 0.50. */
 double om_unit_damage_reduction(om_world *w, uint32_t unit_id) {
     om_tac_state *st = om_tac(w);
     om_unit_row *row = om_registry_find_in(st, unit_id);
     double reduction = 0.0;
     uint32_t j;
     int fortify_hit = 0;
+    int brace_hit;
     if (!row) return 0.0;
-    if (row->unit_type == OM_UT_VANGUARD && row->ability_bonus_on
-        && row->ability_phase != OM_ABILITY_PHASE_IDLE) {
-        reduction += OM_ABILITY_BRACE_DAMAGE_REDUCTION;
-    }
-    for (j = 0; j < st->n_units; j++) {
-        const om_unit_row *cand = &st->units[j];
-        if (!cand->in_use || cand->hp <= 0.0) continue;
-        if (cand->unit_type != OM_UT_BASTION) continue;
-        if (cand->ability_phase != OM_ABILITY_PHASE_ACTIVE) continue;
-        if (cand->faction_id != row->faction_id) continue;
-        if (om_tac_dist_le(cand->x - row->x, cand->y - row->y, OM_FORTIFY_RADIUS)) { fortify_hit = 1; break; }
+    brace_hit = row->force_brace_reduction
+        || (row->unit_type == OM_UT_VANGUARD && row->ability_bonus_on
+            && row->ability_phase != OM_ABILITY_PHASE_IDLE);
+    if (brace_hit) reduction += OM_ABILITY_BRACE_DAMAGE_REDUCTION;
+    if (row->force_fortify_reduction) {
+        fortify_hit = 1;
+    } else {
+        for (j = 0; j < st->n_units; j++) {
+            const om_unit_row *cand = &st->units[j];
+            if (!cand->in_use || cand->hp <= 0.0) continue;
+            if (cand->unit_type != OM_UT_BASTION) continue;
+            if (cand->ability_phase != OM_ABILITY_PHASE_ACTIVE) continue;
+            if (cand->faction_id != row->faction_id) continue;
+            if (om_tac_dist_le(cand->x - row->x, cand->y - row->y, OM_FORTIFY_RADIUS)) { fortify_hit = 1; break; }
+        }
     }
     if (fortify_hit) reduction += OM_ABILITY_FORTIFY_DAMAGE_REDUCTION;
-    reduction += om_warden_aura_reduction_for(st, row);
+    reduction += row->force_warden_aura_reduction
+        ? OM_WARDEN_AURA_DAMAGE_REDUCTION
+        : om_warden_aura_reduction_for(st, row);
     if (reduction > OM_ABILITY_DAMAGE_REDUCTION_CAP) reduction = OM_ABILITY_DAMAGE_REDUCTION_CAP;
     return reduction;
 }
@@ -1111,21 +1165,28 @@ double om_unit_damage_reduction(om_world *w, uint32_t unit_id) {
 void om_unit_deal_damage(om_world *w, uint32_t p1, uint32_t p2, double p3) {
     om_tac_state *st = om_tac(w);
     om_unit_row *attacker, *target;
-    double mult, dmg, reduction;
+    double mult, dmg, reduction, output_mult;
     attacker = om_registry_find_in(st, p1);
     target = om_registry_find_in(st, p2);
     if (!attacker || !target) return;
     mult = om_resolve_hit_multiplier(w, attacker->category, target);
-    reduction = om_warden_aura_reduction_for(st, target);
-    dmg = p3 * mult * (1.0 - reduction);
+    output_mult = om_unit_output_multiplier(w, p1);
+    reduction = om_unit_damage_reduction(w, p2);
+    dmg = p3 * mult * output_mult * (1.0 - reduction);
     target->hp -= dmg;
     if (target->hp < 0.0) target->hp = 0.0;
+    /* ALG-60: "after firing the unit's movement pauses ATTACK_BACKSWING_SEC"
+     * -- any landed hit through this path (auto-fire, manual command, or a
+     * test driving the attack directly) pauses the attacker the same way. */
+    attacker->backswing_ticks_remaining = OM_BACKSWING_TICKS;
+    attacker->backswing_active = 1;
 }
 
 double om_unit_effective_speed(om_world *w, uint32_t unit_id) {
     om_unit_row *row = om_registry_find_in(om_tac(w), unit_id);
     double base;
     if (!row) return 0.0;
+    if (row->backswing_active) return 0.0;
     base = om_unit_profile_speed(w, row->unit_type);
     switch (row->unit_type) {
         case OM_UT_RAIDER:
@@ -1145,9 +1206,39 @@ double om_unit_effective_speed(om_world *w, uint32_t unit_id) {
     return base;
 }
 
+/* ALG-61: every enemy on the attacker's layer within `radius` of the
+ * (already-resolved) target's position takes ALG-60 per-target damage,
+ * fixed registry (spawn/unit_id) order, running total capped at
+ * base * OM_AOE_DAMAGE_CAP_MULTIPLIER -- same shape as
+ * om_ability_resolve_barrage_damage's Barrage cap, but at the caller's own
+ * base_damage (no ability multiplier: this is the direct command path,
+ * not the Barrage ability). */
 void om_unit_fire_aoe_attack(om_world *w, uint32_t attacker_id, uint32_t target_id, double radius) {
-    /* STUB */
-    (void)w; (void)attacker_id; (void)target_id; (void)radius;
+    om_tac_state *st = om_tac(w);
+    om_unit_row *attacker = om_registry_find_in(st, attacker_id);
+    om_unit_row *center = om_registry_find_in(st, target_id);
+    double cap, total = 0.0;
+    uint32_t j;
+    if (!attacker || !center) return;
+    cap = attacker->base_damage * OM_AOE_DAMAGE_CAP_MULTIPLIER;
+    for (j = 0; j < st->n_units; j++) {
+        om_unit_row *cand = &st->units[j];
+        double mult, dmg, remaining;
+        if (!cand->in_use || cand->hp <= 0.0) continue;
+        if (cand->faction_id == attacker->faction_id) continue;
+        if (cand->layer != attacker->layer) continue;
+        if (!om_tac_dist_le(cand->x - center->x, cand->y - center->y, radius)) continue;
+        if (total >= cap) break;
+        mult = om_resolve_hit_multiplier(w, attacker->category, cand);
+        dmg = attacker->base_damage * mult;
+        remaining = cap - total;
+        if (dmg > remaining) dmg = remaining;
+        cand->hp -= dmg;
+        if (cand->hp < 0.0) cand->hp = 0.0;
+        total += dmg;
+    }
+    attacker->backswing_ticks_remaining = OM_BACKSWING_TICKS;
+    attacker->backswing_active = 1;
 }
 
 double om_unit_get_hp(const om_world *w, uint32_t unit) {
@@ -1166,9 +1257,8 @@ double om_unit_hp(om_world *w, uint32_t unit_id) {
 }
 
 int om_unit_in_backswing(om_world *w, uint32_t unit_id) {
-    /* STUB */
-    (void)w; (void)unit_id;
-    return 0;
+    om_unit_row *row = om_registry_find_in(om_tac(w), unit_id);
+    return (row && row->backswing_active) ? 1 : 0;
 }
 
 int om_unit_in_flinch(om_world *w, uint32_t unit_id) {
@@ -1236,9 +1326,9 @@ int om_unit_profile_category(om_world *w, int unit_type) {
 }
 
 double om_unit_profile_dps(om_world *w, int unit_type) {
-    /* STUB */
-    (void)w; (void)unit_type;
-    return 0.0;
+    const om_unit_type_profile *p = om_get_profile(w, unit_type);
+    if (!p || p->attack_interval <= 0.0) return 0.0;
+    return p->base_damage / p->attack_interval;
 }
 
 double om_unit_profile_layer_transition_time(om_world *w, int unit_type) {
@@ -1294,8 +1384,8 @@ void om_unit_set_ability_cooldown(om_world *w, uint32_t unit_id, double ticks) {
 }
 
 void om_unit_set_brace_active(om_world *w, uint32_t unit_id, int on) {
-    /* STUB */
-    (void)w; (void)unit_id; (void)on;
+    om_unit_row *row = om_registry_find_in(om_tac(w), unit_id);
+    if (row) row->force_brace_reduction = on ? 1 : 0;
 }
 
 void om_unit_set_elevation_tier(om_world *w, uint32_t unit_id, int tier) {
@@ -1304,8 +1394,8 @@ void om_unit_set_elevation_tier(om_world *w, uint32_t unit_id, int tier) {
 }
 
 void om_unit_set_fortify_active(om_world *w, uint32_t unit_id, int on) {
-    /* STUB */
-    (void)w; (void)unit_id; (void)on;
+    om_unit_row *row = om_registry_find_in(om_tac(w), unit_id);
+    if (row) row->force_fortify_reduction = on ? 1 : 0;
 }
 
 void om_unit_set_hp(om_world *w, uint32_t p0, double p1) {
@@ -1319,8 +1409,8 @@ void om_unit_set_stealth(om_world *w, uint32_t unit_id, int on) {
 }
 
 void om_unit_set_warden_aura_active(om_world *w, uint32_t unit_id, int on) {
-    /* STUB */
-    (void)w; (void)unit_id; (void)on;
+    om_unit_row *row = om_registry_find_in(om_tac(w), unit_id);
+    if (row) row->force_warden_aura_reduction = on ? 1 : 0;
 }
 
 uint32_t om_unit_spawn(om_world *w, int unit_type, int32_t faction_id, double x, double y, uint32_t layer) {
