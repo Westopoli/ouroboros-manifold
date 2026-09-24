@@ -24,6 +24,7 @@
 "enemy_macro.c"     = "E-14"
 "tactical_support.c"= "E-15"
 "tactical_mapgen.c" = "E-17"
+"save.c"            = "E-16"
 
 [symbols]
 # characters, lineages, time jump: generational (E-08)
