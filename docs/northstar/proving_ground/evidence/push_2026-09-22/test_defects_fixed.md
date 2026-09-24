@@ -628,3 +628,190 @@ flag, the assertion itself untouched.
 
 Files touched: `tests/csim/test_E10_S072_orders_come_from_where_the_world_hurts.py`,
 `docs/northstar/ambiguity_register.md`.
+
+## E-06 (B5-3) test-fix gate, 2026-09-24
+
+Branch `push/E06-tests-1`, worktree `~/Projects/om-push/wt/e06-tests` (main),
+verify worktree `~/Projects/om-push/wt/e06-verify` (detached `origin/push/B5-3`,
+build fresh via `make -j8` both sides). Three tests classed test-defect by
+design lane, fixed under test-fix gate. Assertions preserved every case —
+none loosened, none deleted.
+
+### `test_R_045_07_one_uniform_draw_made_if`
+
+Confound: Knowledge Lost now a registered external event
+(`om_event_register_external` + `om_event_queue_external`, csrc/diplomacy.c,
+B5-3 only). Reaches `om_tick_events`/`read_events` one tick after it fires
+(due_tick = fire tick + 1), and only with `OM_FEAT_EVENTS` on. Fixture's
+`isolate_agents` turns EVENTS off; world_factory only turns DIPLOMACY +
+TECHNOLOGY on for E-06 module (mvp_features.toml).
+
+Change: added `lib.om_world_set_feature(w, OMFeature.EVENTS, 1)` right after
+TECHNOLOGY is turned on. After the tech-step assertions (tech value,
+last-knowledge-lost tick — both read right after the first `om_world_step`,
+untouched by what follows), added a second `lib.om_world_step(w)` to reach
+the due tick before reading events. Cooldown (last_knowledge_lost just set
+to 106) rules out a second draw firing on that extra step. Swapped the dead
+`e.region_idx == 0` filter for `template_name(lib, w, e.template_id) ==
+"Knowledge Lost"` (F2h binding, conftest.py's `template_name` helper), kept
+a `region_idx == 0` check on the found record so the rule's "highest
+population region" clause still gets checked.
+
+Red/green: main — red both before and after (main's diplomacy.c never
+registers/queues the record at all, `om_event_fire_manual` only, no
+`om_tick_events` path exists for it). B5-3 — red before, green after.
+
+Control: extra step removed -> `assert len(kl_events) >= 1` fails, `assert 0
+>= 1`, same line, no setup error. Template name misspelled ("Knowledge
+lost") -> same failure, same line. Both restored after.
+
+### `test_R_045_09_mean_over_all_windows_between`
+
+Confound 1 (directed fix): dead filter. `OmFiredEvent` has no
+`is_knowledge_lost` field; `getattr(e, "is_knowledge_lost", False)` always
+took the `False` default, so the filter never matched a real record no
+matter what fired.
+
+Change: `lib.om_world_set_feature(w, OMFeature.EVENTS, 1)` added right after
+`generate()` (E-06 isolation never turns EVENTS on for this module either).
+Filter swapped to `template_name(lib, w, e.template_id) == "Knowledge
+Lost"`, same F2h binding as R-045-07. The one-tick queue lag does not need a
+skipped read here — the loop already reads events every tick, so a record
+queued at tick T just gets counted on the T+1 read instead of T, inside the
+same or an adjacent window.
+
+Control (isolated from confound 2 below): reused R-045-07's own eligible
+fixture (forced draw 0.01, cooldown cleared, EVENTS on, stepped twice) in a
+throwaway probe and read the resulting record through both filters —
+`getattr(e, "is_knowledge_lost", False)` -> 0, `template_name(...) ==
+"Knowledge Lost"` -> >=1, on the identical event list. Proves the new filter
+is not itself vacuous; not committed (probe only, not one of the two test
+files).
+
+Red/green: main — red before and after (same reason as R-045-07: nothing to
+register on main). B5-3 — **still red after the directed fix**: `expected
+mean Knowledge Lost events between 1.0 and 2.0, got 0.0`.
+
+Confound 2 (found while fixing, not in the original finding, NOT fixed —
+reporting per "propose, do not fix"): under E-06 isolation
+(DIPLOMACY+TECHNOLOGY only, mvp_features.toml), nothing ever touches region
+economy or population — no DRIFT, no FACTIONS, no FRICTION. Measured a
+freshly generated 50-faction/100-150-region world (seed 12345): starting
+avg economy per faction 34.3-57.3, never dips near the eligibility floor of
+20.0 over the run; population never moves at all (0.0 max drop over 2000
+ticks measured). R-045-07's own eligibility clause ("avg economy < 20.0, or
+avg population fallen >= 10.0 over 50 ticks") can never fire from this
+fixture as constructed — Knowledge Lost is structurally unreachable, not
+just poorly filtered. Confirmed by direct instrumentation (min avg economy
+over 2000 ticks: 30.66 even with EVENTS+FACTIONS+FRICTION+ADMIN_REVOLTS+
+DRIFT all forced on for the probe; population drop stayed exactly 0.0).
+
+Real C gap found chasing confound 2 (propose, do not fix): turning on
+FACTIONS for the probe still produced 0 attacks and budget stuck at exactly
+0.0 for every one of the 50 factions after 1000 ticks, direct
+`om_faction_step_budget` calls included. Root cause, isolated by comparison
+against a hand-built fixture (which grows budget correctly:
+`(100-8)*0.025*2 = 4.6`, confirmed empirically): `csrc/worldgen.c`'s
+per-faction setup loop (~line 237-253) sets `w->faction_tech[fid] = 0.0`
+directly but never calls `om_faction_tech_multipliers_recalc` (or otherwise
+populates `w->faction_tech_attack/defense/economy[]`), so every
+procedurally generated faction's tech-economy multiplier cache stays at its
+calloc default of `0.0`. `om_faction_step_budget` (csrc/faction.c:250)
+does `delta *= w->faction_tech_economy[f]`, so the whole per-tick budget
+accrual is multiplied by zero for every generated faction, forever — no
+faction can ever afford an attack, so combat, population loss, and any
+economy dip past drift's own small amplitude never happen for a purely
+generated world. Confirmed by calling `om_faction_set` on one generated
+faction mid-run (which does call the recalc): that faction's budget growth
+starts working immediately afterward (500.0 -> 503.999...). This would
+also silently zero every generated faction's attack/defense multipliers
+(ALG-26), not just economy — anything that exercises a *generated* faction
+in combat without re-calling `om_faction_set`/`set_faction` on it first is
+getting tech multiplier 0.0 (mult = 1.0, i.e. tech has zero effect) instead
+of the real value. Not fixed here — out of scope (no C edits authorized for
+this card) and a worldgen behavior change, not a test fixture.
+
+Net: R-045-09 fixed for the directed confound (dead filter, EVENTS off) and
+left red, correctly, for a second, deeper, unfixed defect that needs a
+design-lane call: either "the launch config" in this rule's Given clause
+means turning on a fuller feature set for this fixture specifically (which
+alone still would not be enough while the worldgen tech-multiplier gap
+above stands), or the C gap gets fixed first. Recommend opening a
+`Q-045-0x` ambiguity register row for "what feature set does R-045-09's
+'launch config' mean" plus a bug ticket for the worldgen tech-multiplier
+gap.
+
+### `test_R_046_04_effective_attack_multiplied_by_it`
+
+Confound 1: defender (faction 1, Fortifier, budget=100.0) had a viable
+attack of its own against faction 0's region under `om_faction_candidates`/
+`om_step_decisions` (csrc/agent.c) — `potential_commit = budget_snapshot *
+0.70 = 70.0`, comfortably beats faction 0's military-50 region. Two attacks
+resolved in one step (`len(attacks) == 2`), so `assert len(attacks) == 1`
+failed before the effective_attack/effective_defense assertions ever ran.
+
+Confound 2: the fixture's own arithmetic comment did not follow ALG-20
+(docs/bible/algorithms.md: `effective_attack = commit * ATTACK_EFFICIENCY *
+tech_attack(attacker) * surprise` — no military term at all).
+`csrc/resolve.c`'s `om_step_resolve` matches ALG-20 exactly (`effective_attack
+= commit * 1.0 * tech_attack * surprise_mult`, confirmed by reading the
+source). The old comment's `20.0 * 0.5 + 50.0 * 0.1 * 0.5 = 12.5` invented a
+military term ALG-20 does not have, then `12.5 * 1.096 = 13.7` compounded
+the error into the asserted expected value. The old defense comment also
+dropped `RESISTANCE_FACTOR` entirely (`40.0 * 1.054`, no `0.55`).
+
+Fix: `set_faction` for faction 1 changed `budget=100.0` -> `budget=0.0`
+(same convention as `tests/csim/test_core_intent_inject.py`'s own R8f pin,
+which also holds the non-injected hostile counterpart at budget 0.0 so only
+one decision is viable). `effective_defense` never reads the defender's
+budget (`csrc/resolve.c` uses `target->military` and tech only), so this
+does not touch the value under test. Recomputed both expected values from
+ALG-20 with the fixture's own numbers instead of the old comment:
+
+```
+effective_attack = commit * ATTACK_EFFICIENCY * tech_attack(conqueror@60) * surprise
+                  = 20.0  * 1.0               * 1.096                    * 0.5
+                  = 10.96
+
+effective_defense = target.military * RESISTANCE_FACTOR * tech_defense(fortifier@60) * entrenchment
+entrenchment: held_since=0, om_world_step increments tick to 1 before resolving,
+              ent = 1.0 + min(1, (1-0)/100) = 1.01
+                   = 40.0            * 0.55              * 1.054                     * 1.01
+                   = 23.41988
+```
+
+Both values confirmed empirically by reading `att.effective_attack` /
+`att.effective_defense` straight off a run of the fixed fixture (not just
+hand math): `eff_atk 10.96 eff_def 23.419880000000003`.
+
+Red/green: main — red before (2 attacks), green after. B5-3 — same (B5-3's
+diplomacy.c diff does not touch csrc/resolve.c or csrc/agent.c, so this
+rule's behavior is identical on both branches).
+
+Control: attacker tech dropped to 0.0 (attack multiplier forced to 1.0) ->
+`assert att.effective_attack == pytest.approx(20.0 * 1.0 * 1.096 * 0.5,
+abs=1e-3)` fails, `Obtained: 10.0, Expected: 10.96 ± 0.001` — the assertion
+catches an unapplied multiplier. Restored after.
+
+### Whole-suite check (verify worktree, B5-3 + fixed test files)
+
+`tests/csim` full run, before fix (B5-3's own two test files) vs after
+(fixed test files copied in, no other change): `342 failed, 398 passed` ->
+`340 failed, 400 passed`. Diffed sorted FAILED id lists
+(`grep -E '^FAILED' | sed 's/ - .*//' | sort`): the only two lines removed
+are `test_R_045_07_one_uniform_draw_made_if` and
+`test_R_046_04_effective_attack_multiplied_by_it`; zero lines added. No new
+red anywhere in the suite. `test_R_045_09_mean_over_all_windows_between`
+stays on both lists (confound 2 above).
+
+`tests/qa/t1`: `test_rts_detectors.py` fails collection
+(`ModuleNotFoundError: No module named 'scripts.qa'`, its own comment says
+"expected red: module does not exist yet") and
+`test_control_empty_drifts_trips_empty_region_drifted` /
+`test_control_osc_as_level_trips_oscillator_as_level` fail — all three
+identical on unmodified main and on the verify worktree before touching
+anything; unrelated to E-06, not touched.
+
+Files touched: `tests/csim/test_E06_S045_a_faction_s_technology_is_one_number.py`,
+`tests/csim/test_E06_S046_archetypes_spend_tech_differently.py`,
+this evidence file.
