@@ -352,6 +352,41 @@ void om_step_lifecycle(om_world *w);
 /* Per-tick drifting-objective centre refresh (csrc/tactical_support.c); called by unit.c om_tactical_step right after om_macro_tick. */
 void om_support_tick(om_world *w);
 
+/* Spatial hash grid over the tactical units (csrc/unit.c; state in
+ * w->tactical_state, rebuilt every tactical tick, updated in place when
+ * unit.c moves or spawns a unit). Indexes every living unit (hp > 0; a unit
+ * that dies is dropped, one revived by om_unit_set_hp is added back) regardless
+ * of faction or layer, at the position unit.c caches (refreshed at the top of
+ * each om_tactical_step, so a caller running inside that refresh sees the
+ * previous tick's positions: pad r by one tick of movement and re-test with
+ * its own positions). A unit matches when dx*dx + dy*dy <= r*r; callers
+ * filter everything else.
+ * om_grid_query_circle: writes the matching unit ids ascending into out_ids
+ * (the lowest `max` when more match) and returns the total match count, so a
+ * return above `max` means truncated; a buffer of om_unit_count(w) entries
+ * never truncates. The result order is the all-pairs id order.
+ * om_grid_iter: for order-independent reductions (any-of, count, sum of
+ * per-unit independent updates). Call om_grid_iter_begin, then
+ * om_grid_iter_next until it returns 0 (no unit has id 0). Order is
+ * deterministic but NOT id order (cell row-major, then last-linked first). The
+ * grid must not change (spawn, move, a unit dying) while an iterator is live. */
+typedef struct {
+    void    *state;
+    double   x, y, r;
+    int32_t  cx0, cx1, cx, cy, cy1;
+    uint32_t cur;
+    int      done;
+} om_grid_iter;
+uint32_t om_grid_query_circle(om_world *w, double x, double y, double r, uint32_t *out_ids, uint32_t max);
+void     om_grid_iter_begin(om_grid_iter *it, om_world *w, double x, double y, double r);
+uint32_t om_grid_iter_next(om_grid_iter *it);
+/* For tactical_move.c: sets unit.c's cached position of a living or dead unit
+ * and moves it in the grid, so a query made before the next om_tactical_step
+ * sees the new position. Unknown id, NULL world or a world with no tactical
+ * state: no-op. Call it after every write of a unit's position outside
+ * om_tactical_step (teleport, set_pos, move sync). */
+void om_tac_unit_sync_position(om_world *w, uint32_t unit_id, double x, double y);
+
 /* The world RNG (ouroboros_sim.h "the world RNG contract"), csrc/sim.c.
  * om_rng_seed derives rng_state/rng_inc from the seed (om_world_new,
  * om_world_set_seed). om_rng_draw is the one uniform-in-[0,1) draw every
