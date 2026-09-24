@@ -1783,6 +1783,9 @@ void om_mission_setup(om_world *w, uint32_t p1, uint32_t archetype, int lineage_
     st->lineage_connection = lineage_connection;
     st->mission_set = 1;
     om_mission_compose_force(w, st);
+    /* Recon runs until the player presses Begin: fog.c's om_mission_begin is
+     * the only path that moves the phase on to tactical. */
+    om_mission_set_phase(w, 0 /* OM_FOG_PHASE_RECON, csrc/fog.c */);
 }
 
 void om_mission_setup_destroy_targets(om_world *w, uint32_t objective_idx, uint32_t total) {
