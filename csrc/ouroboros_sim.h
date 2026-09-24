@@ -1770,6 +1770,8 @@ void om_tactical_spawn_force_composition(om_world *w, int32_t faction_id, uint32
 int om_tactical_target_validation_runs_every_tick(om_world *w);
 int om_tactical_telegraph_active(om_world *w, double x, double y);
 uint64_t om_tactical_tick(om_world *w);
+/* E-13 R-099-03: base ticks elapsed in the battle (sum of every step's period); the step index is om_tactical_tick. */
+uint64_t om_tactical_base_tick(const om_world *w);
 /* E-13 R-099-03: base ticks per tactical step, 1 or 2 (2 above 1,000 live units). */
 uint32_t om_tactical_tick_period(const om_world *w);
 uint64_t om_tactical_tick_to(om_world *w, uint64_t tick);
