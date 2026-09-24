@@ -1576,6 +1576,8 @@ int om_mission_is_ended(const om_world *w) {
     const om_mission_state *st = om_mis_ro(w);
     if (!st) return 0;
     if (st->tactical_ended) return 1;
+    /* Recon runs until the player presses Begin; the deadline does not tick yet. */
+    if (om_mission_get_phase(w) == 0 /* OM_FOG_PHASE_RECON, csrc/fog.c */) return 0;
     uint64_t now = om_tactical_tick((om_world *)w);
     uint64_t elapsed = now - st->tactical_baseline_tick;
     return elapsed >= st->tactical_time_limit ? 1 : 0;
@@ -1830,18 +1832,25 @@ static void om_mission_spawn_force(om_world *w, const uint32_t *counts, int32_t 
 }
 
 static void om_mission_instantiate_map(om_world *w, om_mission_state *st) {
-    if (st->map_instantiated) return;
     int cat = om_map_archetype_canvas_category(st->mission_archetype);
     double canvas = om_map_get_canvas_base_dimension(cat);
     if (canvas <= 0.0) return;
-    st->map_instantiated = 1;
     int32_t player = om_mission_player_faction(w);
     if (player < 0) player = 0;
     int32_t enemy = om_mission_enemy_faction(w, st->mission_region, player);
     double edge = OM_UNIT_COLLISION_RADIUS;
-    om_map_add_spine_node(w, canvas / 2.0, canvas / 2.0, OM_MISSION_SPINE_NODE_OBJECTIVE);
-    om_map_add_spawn_point(w, canvas / 2.0, edge, player);
-    om_map_add_spawn_point(w, canvas / 2.0, canvas - edge, enemy);
+    /* A later mission in the same world clears the previous battle's units
+     * (om_tactical_reset). No public call clears map nodes, so they are added
+     * only once: proposed om_map_clear(om_world *w) in csrc/tactical_mapgen.c
+     * would let each mission lay its own. */
+    if (st->map_instantiated) {
+        om_tactical_reset(w);
+    } else {
+        st->map_instantiated = 1;
+        om_map_add_spine_node(w, canvas / 2.0, canvas / 2.0, OM_MISSION_SPINE_NODE_OBJECTIVE);
+        om_map_add_spawn_point(w, canvas / 2.0, edge, player);
+        om_map_add_spawn_point(w, canvas / 2.0, canvas - edge, enemy);
+    }
     om_mission_spawn_force(w, st->player_units, player, canvas / 2.0, edge, 1.0);
     om_mission_spawn_force(w, st->enemy_units, enemy, canvas / 2.0, canvas - edge, -1.0);
 }
