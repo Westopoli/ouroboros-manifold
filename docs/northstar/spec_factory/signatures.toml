@@ -176,6 +176,15 @@ confidence = "likely"
 note = "Return unused."
 
 [[symbols]]
+name = "om_character_count"
+module = "generational.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }]
+epics = ["E-08", "E-09"]
+confidence = "likely"
+note = "F2s: B7-8 stub. Count of living (GEN_STATUS_ACTIVE) characters, for om_character_id_at enumeration."
+
+[[symbols]]
 name = "om_character_create"
 module = "generational.c"
 restype = "void"
@@ -251,6 +260,15 @@ epics = ["E-08"]
 confidence = "likely"
 kwargs = ["character_id", "target_commander_id"]
 note = "== 1 / == 0."
+
+[[symbols]]
+name = "om_character_id_at"
+module = "generational.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "index", ctype = "uint32_t" }]
+epics = ["E-08", "E-09"]
+confidence = "likely"
+note = "F2s: B7-8 stub. index-th living (GEN_STATUS_ACTIVE) character id in enumeration order; 0 past the end (character ids nonzero)."
 
 [[symbols]]
 name = "om_character_is_main_character"
@@ -1851,6 +1869,15 @@ kwargs = ["commander_id"]
 note = "Region index == 2."
 
 [[symbols]]
+name = "om_lineage_count"
+module = "generational.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }]
+epics = ["E-08", "E-09"]
+confidence = "likely"
+note = "F2s: B7-8 stub. Count of used lineages, for om_lineage_id_at enumeration."
+
+[[symbols]]
 name = "om_lineage_create"
 module = "generational.c"
 restype = "void"
@@ -1859,6 +1886,15 @@ epics = ["E-08", "E-09"]
 confidence = "likely"
 kwargs = ["home_region", "lineage_id"]
 note = "E-08 owns (generational.c). E-08 sites use same kwargs. Return unused."
+
+[[symbols]]
+name = "om_lineage_first_member_region"
+module = "generational.c"
+restype = "int32_t"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "lineage_id", ctype = "uint32_t" }]
+epics = ["E-08", "E-09"]
+confidence = "likely"
+note = "F2s: B7-8 stub. Region of the lineage's first living member (enumeration order); -1 none living."
 
 [[symbols]]
 name = "om_lineage_generate_descendants"
@@ -1897,6 +1933,15 @@ params = [{ name = "w", ctype = "const om_world*" }, { name = "lineage_id", ctyp
 epics = ["E-08"]
 confidence = "likely"
 note = "F2o: B7-6 stub. 1 if any living lineage member resides in region_idx, else 0."
+
+[[symbols]]
+name = "om_lineage_id_at"
+module = "generational.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "index", ctype = "uint32_t" }]
+epics = ["E-08", "E-09"]
+confidence = "likely"
+note = "F2s: B7-8 stub. index-th used lineage id in enumeration order; 0 past the end (lineage ids nonzero)."
 
 [[symbols]]
 name = "om_lineage_record_history_region"
@@ -2405,6 +2450,15 @@ params = [{ name = "delta", ctype = "double" }]
 epics = ["E-17"]
 confidence = "likely"
 note = "No world. p0 = delta (c_double). Return clamped to [-0.25, 0.25]."
+
+[[symbols]]
+name = "om_map_clear"
+module = "tactical_mapgen.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "F2s: B15m-5 stub. Clears nodes, structures, cover, and obstacles; keeps nothing but the allocated mapgen_state slot."
 
 [[symbols]]
 name = "om_map_compute_chokepoint_width"
