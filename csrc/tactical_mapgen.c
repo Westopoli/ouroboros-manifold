@@ -299,6 +299,23 @@ uint32_t om_map_count_nodes_of_type(om_world *w, int p1) {
     return 0;
 }
 
+int om_map_cover_at(const om_world *w, uint32_t index, double *x, double *y, double *radius, double *height) {
+    const om_mapgen_state *st = om_mgs_ro(w);
+    if (!st || index >= st->n_cover) return 0;
+    const om_mapgen_cover_row *row = &st->cover[index];
+    if (x) *x = row->x;
+    if (y) *y = row->y;
+    if (radius) *radius = row->radius;
+    if (height) *height = row->height;
+    return 1;
+}
+
+uint32_t om_map_cover_count(const om_world *w) {
+    const om_mapgen_state *st = om_mgs_ro(w);
+    if (!st) return 0;
+    return st->n_cover;
+}
+
 double om_map_flavoring_stability_multiplier(double stability) {
     /* STUB */
     (void)stability;

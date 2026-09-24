@@ -34,6 +34,8 @@ om_lineage_record_history_region    = "generational.c"
 om_time_jump_run                    = "generational.c"
 # chronicle entries: E-09
 om_chronicle_entry_count            = "chronicle.c"
+# F2n: mission.c objective-drift leaf needs a set/get pair; chronicle reader (B8-4)
+om_chronicle_entry_get              = "chronicle.c"
 # event system, including manual firing and character attachment: E-04
 om_event_fire_manual                = "events.c"
 om_event_get_attached_character     = "events.c"
@@ -59,6 +61,8 @@ om_mission_compute_parity           = "mission.c"
 om_mission_end                      = "mission.c"
 om_mission_get_objective_completion = "mission.c"
 om_objective_get_center             = "mission.c"
+# F2n: tactical_support.c drifted objective centre write (B9-5)
+om_objective_set_center             = "mission.c"
 # units, combat, the tactical tick orchestrator: E-11
 # (om_tactical_tick and om_tactical_step are a second orchestrator for tick-stage
 # closure; specfactory.toml must list them once they exist)
@@ -81,6 +85,8 @@ om_unit_get_unit_type               = "unit.c"
 om_unit_count                       = "unit.c"
 om_unit_id_at                       = "unit.c"
 om_unit_brace_phase                 = "unit.c"
+# F2n addendum: layer reader (B10c)
+om_unit_get_layer                   = "unit.c"
 # movement and position: E-13
 om_command_move                     = "tactical_move.c"
 om_unit_get_pos                     = "tactical_move.c"
@@ -90,3 +96,6 @@ om_visibility_compute               = "fog.c"
 # tactical map pieces: E-17
 om_map_add_cover                    = "tactical_mapgen.c"
 om_map_add_obstacle                 = "tactical_mapgen.c"
+# F2n addendum: cover geometry readers, B15m-2's mapgen_state rows (E-17)
+om_map_cover_count                  = "tactical_mapgen.c"
+om_map_cover_at                     = "tactical_mapgen.c"

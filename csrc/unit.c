@@ -1858,6 +1858,12 @@ int32_t om_unit_get_faction(const om_world *w, uint32_t unit_id) {
     return -1;
 }
 
+int32_t om_unit_get_layer(const om_world *w, uint32_t unit_id) {
+    /* STUB: B10c implements */
+    (void)w; (void)unit_id;
+    return -1;
+}
+
 int32_t om_unit_get_unit_type(const om_world *w, uint32_t unit_id) {
     /* STUB: B10c implements */
     (void)w; (void)unit_id;

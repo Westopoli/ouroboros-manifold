@@ -1811,4 +1811,10 @@ double om_unit_power(uint32_t unit_type) {
 
     return (raw / anchor_raw) * OM_MISSION_POWER_ANCHOR_VALUE;
 }
+
+int om_objective_set_center(om_world *w, uint32_t objective_idx, double x, double y) {
+    /* STUB: B9-5 implements */
+    (void)w; (void)objective_idx; (void)x; (void)y;
+    return 0;
+}
 /* ---- end generated stubs ---- */
