@@ -89,326 +89,885 @@
  */
 #include "ouroboros_sim.h"
 #include "om_internal.h"
+#include "om_constants.h"
 #include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
-/* ---- generated stubs from signatures.toml ---- */
-void om_drift_interpolate(const om_vec2 *p0, uint32_t waypoint, uint64_t period, int p3, uint64_t tick, om_vec2 *byref) {
-    /* STUB */
-    (void)p0; (void)waypoint; (void)period; (void)p3; (void)tick; (void)byref;
+/* ======================================================================
+ * B14 (E-15): reinforcement structures, garrisons, non-combat units,
+ * hazards, and drifting battlefields. All per-world state lives in
+ * w->support_state / w->support_state_free (F2i), mirroring csrc/mission.c's
+ * om_mis()/om_mis_ro() convention exactly -- never a file-static registry
+ * keyed by om_world*.
+ * ====================================================================== */
+
+#define OM_SUP_MAX_STRUCTURES 64
+#define OM_SUP_MAX_OBJECTIVES 32
+#define OM_SUP_MAX_HAZARDS 16
+#define OM_SUP_MAX_UNIT_EXT 512
+#define OM_SUP_TICKER_QUEUE_CAP 8
+#define OM_SUP_TICKER_MSG_LEN 128
+
+/* Map-size bucket ids match OMMapSize in tests/csim/test_E15_S126_*.py. */
+#define OM_SUP_MAP_SMALL 0
+#define OM_SUP_MAP_MEDIUM 1
+#define OM_SUP_MAP_LARGE 2
+
+/* om_unit_category ids match OMUnitCategory in tests/csim/test_E15_S128_*.py. */
+#define OM_SUP_CAT_LINE 0
+#define OM_SUP_CAT_STRIKE 1
+#define OM_SUP_CAT_SIEGE 2
+
+/* OMNonCombatKind ids match tests/csim/test_E15_S129_*.py. */
+#define OM_SUP_NC_CONVOY 0
+#define OM_SUP_NC_EVACUEE 1
+#define OM_SUP_NC_SCIENCE 2
+#define OM_SUP_NC_INTELLIGENCE 3
+#define OM_SUP_NC_CULTURAL 4
+#define OM_SUP_NC_NONE (-1)
+
+/* OMHazardType ids match tests/csim/test_E15_S131_*.py; only SENSOR_INTERFERENCE
+ * ships at launch (R-131-02). */
+#define OM_SUP_HAZARD_SENSOR_INTERFERENCE 0
+#define OM_SUP_HAZARD_LAUNCH_COUNT 1
+
+/* R-126-01's owner-id space is a fixture convention distinct from E-05's
+ * faction id space (0 = player there); here 1 = player, 2 = enemy, 0 =
+ * neutral, per signatures.toml's om_structure_set_owner note. */
+#define OM_SUP_PLAYER_OWNER 1
+
+/* om_drift_interpolate's OMDriftMode (tests/csim/test_E15_S130_*.py). */
+#define OM_SUP_DRIFT_PING_PONG 0
+#define OM_SUP_DRIFT_LOOP 1
+
+/* Mirrors csrc/sim.c's static OM_TWO_PI (om_sin's own range reduction) so a
+ * polar spawn draw and om_sin/om_cos-via-om_sin stay in step; om_cos is not
+ * part of the deterministic sine wrapper's public surface, so cos(a) is
+ * read off the same om_sin as sin(a + HALF_PI). */
+#define OM_SUP_TWO_PI 6.28318530717958647692528676655900577
+#define OM_SUP_HALF_PI 1.57079632679489661923132169163975144
+
+/* No bible-specified roam distance exists for a drifting objective's
+ * synthetic second waypoint (om_objective_setup_drifting's freeze note:
+ * "waypoints and mode not passed; implied defaults") -- half the capture
+ * radius keeps a drifting structure/objective's loop inside the same
+ * neighborhood ALG-75 already scales structures to. */
+#define OM_SUP_DRIFT_SPAN (OM_REINFORCEMENT_CAPTURE_RADIUS / 2.0)
+
+/* Live sampling radius for the one launch hazard (sensor interference).
+ * Not an ALG-71 gradient-placement constant (that table is map-generation
+ * time, tactical_mapgen.c's/B15m's territory); this is the falloff this
+ * pure live-query sampler uses, R-130-04's "follows the source" behavior
+ * only needs monotonic falloff with distance. */
+#define OM_SUP_HAZARD_INTERFERENCE_RADIUS 500.0
+
+/* R-131-01 render ids: any distinct values satisfy the acceptance test
+ * (structure silhouette != every unit silhouette id; three distinct owner
+ * colors), no other module reads these back today. */
+#define OM_SUP_RENDER_STRUCTURE_SILHOUETTE 99
+#define OM_SUP_RENDER_COLOR_PLAYER 0x2060C0u
+#define OM_SUP_RENDER_COLOR_ENEMY 0xC02020u
+#define OM_SUP_RENDER_COLOR_NEUTRAL 0x808080u
+
+/* R-130-02 bound for om_objective_is_contested's best-effort unit scan
+ * (see its own comment for the missing-accessor gap this works around). */
+#define OM_SUP_CONTEST_SCAN_CAP 512
+
+/* Floating-point slack for a sum-to-1.0/progress-reaches-1.0 comparison
+ * (200 additions of a non-exact double like 1/20/10 can land a few ULPs
+ * either side of the mathematical target). */
+#define OM_SUP_EPSILON 1e-9
+
+/* R-126-04: starting force is 0.20 * F; structures alone are tuned to
+ * deliver the remaining 0.80 * F by the mission's time limit. */
+#define OM_SUP_STARTING_FORCE_FRACTION 0.20
+
+typedef struct {
+    int      in_use;
+    int32_t  owner;
+    int      destroyed;
+    double   hp;
+    double   power;
+    uint32_t unit_type;
+    uint64_t timer;
+    double   capture_progress;
+    int32_t  capturing_faction;
+    int      contested;
+    double   x, y;
+    double   last_spawn_distance;
+    double   last_spawn_x, last_spawn_y;
+    uint32_t pending_spawns;
+    int      drifting;
+    uint64_t drift_period;
+    om_vec2  drift_wp[2];
+} om_sup_structure;
+
+typedef struct {
+    int     in_use;
+    int     drifting;
+    uint64_t drift_period;
+    om_vec2 drift_wp[2];
+    om_vec2 center;
+} om_sup_objective;
+
+typedef struct {
+    int    in_use;
+    om_vec2 src, dst;
+    uint64_t travel_ticks;
+} om_sup_hazard;
+
+typedef struct {
+    int      in_use;
+    uint32_t unit_id;
+    int      nc_kind;      /* OM_SUP_NC_NONE for a plain combat unit */
+    double   last_hp;
+    int      has_order;
+    om_vec2  order_dest;
+} om_sup_unit_ext;
+
+typedef struct {
+    om_sup_structure structures[OM_SUP_MAX_STRUCTURES];
+    om_sup_objective objectives[OM_SUP_MAX_OBJECTIVES];
+    om_sup_hazard    hazards[OM_SUP_MAX_HAZARDS];
+    uint32_t         n_hazards;
+    om_sup_unit_ext  unit_ext[OM_SUP_MAX_UNIT_EXT];
+    uint32_t         n_unit_ext;
+
+    om_vec2  extraction_point;
+    double   extraction_radius;
+    int      extraction_set;
+    uint32_t held_structures_count;
+
+    char     ticker_queue[OM_SUP_TICKER_QUEUE_CAP][OM_SUP_TICKER_MSG_LEN];
+    uint32_t ticker_head, ticker_count;
+} om_sup_state;
+
+static void om_sup_state_free(void *p) {
+    free(p);
 }
 
-void om_enemy_production_adapt_target(const om_composition_ratio *byref, const om_composition_ratio *p1, om_composition_ratio *p2) {
-    /* STUB */
-    (void)byref; (void)p1; (void)p2;
+/* Lazily calloc's the per-world support state, mirroring om_mis()/om_tac()
+ * exactly -- writes w->support_state. */
+static om_sup_state *om_sup(om_world *w) {
+    om_sup_state *st = (om_sup_state *)w->support_state;
+    if (!st) {
+        st = (om_sup_state *)calloc(1, sizeof(om_sup_state));
+        w->support_state = st;
+        w->support_state_free = om_sup_state_free;
+    }
+    return st;
 }
 
-int om_enemy_production_select_category(const om_composition_ratio *byref, const om_composition_ratio *p1) {
-    /* STUB */
-    (void)byref; (void)p1;
-    return 0;
+static om_sup_structure *om_sup_structure_at(om_world *w, uint32_t idx) {
+    om_sup_state *st = om_sup(w);
+    om_sup_structure *s;
+    if (idx >= OM_SUP_MAX_STRUCTURES) idx = OM_SUP_MAX_STRUCTURES - 1;
+    s = &st->structures[idx];
+    if (!s->in_use) {
+        memset(s, 0, sizeof(*s));
+        s->in_use = 1;
+        s->owner = 0;
+        s->hp = OM_REINFORCEMENT_STRUCTURE_HP;
+        s->power = (double)OM_POWER_NORMALIZATION;
+        s->capturing_faction = OM_SUP_NC_NONE;
+    }
+    return s;
 }
 
-void om_hazard_get_launch_types(uint32_t *p0, uint32_t max) {
-    /* STUB */
-    (void)p0; (void)max;
+static om_sup_objective *om_sup_objective_at(om_world *w, uint32_t idx) {
+    om_sup_state *st = om_sup(w);
+    om_sup_objective *o;
+    if (idx >= OM_SUP_MAX_OBJECTIVES) idx = OM_SUP_MAX_OBJECTIVES - 1;
+    o = &st->objectives[idx];
+    if (!o->in_use) {
+        memset(o, 0, sizeof(*o));
+        o->in_use = 1;
+    }
+    return o;
 }
 
-int om_hazard_is_enabled_at_launch(int p0) {
-    /* STUB */
-    (void)p0;
-    return 0;
+static om_sup_unit_ext *om_sup_unit_ext_find(om_sup_state *st, uint32_t unit_id) {
+    uint32_t i;
+    for (i = 0; i < st->n_unit_ext; i++) {
+        if (st->unit_ext[i].in_use && st->unit_ext[i].unit_id == unit_id) return &st->unit_ext[i];
+    }
+    return NULL;
 }
 
-uint32_t om_hazard_launch_type_count(void) {
-    /* STUB */
-    return 0;
+static om_sup_unit_ext *om_sup_unit_ext_get_or_create(om_world *w, uint32_t unit_id) {
+    om_sup_state *st = om_sup(w);
+    om_sup_unit_ext *e = om_sup_unit_ext_find(st, unit_id);
+    if (e) return e;
+    if (st->n_unit_ext >= OM_SUP_MAX_UNIT_EXT) return NULL;
+    e = &st->unit_ext[st->n_unit_ext++];
+    memset(e, 0, sizeof(*e));
+    e->in_use = 1;
+    e->unit_id = unit_id;
+    e->nc_kind = OM_SUP_NC_NONE;
+    return e;
 }
 
-double om_hazard_sample_interference(om_world *w, double p1, double c_double) {
-    /* STUB */
-    (void)w; (void)p1; (void)c_double;
-    return 0.0;
+static double om_sup_clamp01(double v) {
+    if (v < 0.0) return 0.0;
+    if (v > 1.0) return 1.0;
+    return v;
 }
 
-uint32_t om_hazard_spawn_moving_interference(om_world *w, double p1, double p2, double p3, double c_double, uint64_t p5) {
-    /* STUB */
-    (void)w; (void)p1; (void)p2; (void)p3; (void)c_double; (void)p5;
-    return 0;
+static void om_sup_push_ticker(om_world *w, const char *msg) {
+    om_sup_state *st = om_sup(w);
+    uint32_t slot;
+    if (st->ticker_count >= OM_SUP_TICKER_QUEUE_CAP) {
+        /* drop the oldest to make room, same behavior as any bounded event feed */
+        st->ticker_head = (st->ticker_head + 1) % OM_SUP_TICKER_QUEUE_CAP;
+        st->ticker_count--;
+    }
+    slot = (st->ticker_head + st->ticker_count) % OM_SUP_TICKER_QUEUE_CAP;
+    strncpy(st->ticker_queue[slot], msg, OM_SUP_TICKER_MSG_LEN - 1);
+    st->ticker_queue[slot][OM_SUP_TICKER_MSG_LEN - 1] = '\0';
+    st->ticker_count++;
 }
 
-void om_mission_check_extraction_objectives(om_world *w) {
-    /* STUB */
-    (void)w;
+/* ---- ALG-75 archetype structure split / count (R-126-01) ---- */
+
+#define OM_SUP_ARCHETYPE_COUNT 10
+
+/* constants-table: docs/bible/epics/E-15-reinforcement-structures.md R-126-01 */
+static const uint32_t OM_SUP_STRUCT_COUNT_MIN[3] = { 2, 3, 4 };
+static const uint32_t OM_SUP_STRUCT_COUNT_MAX[3] = { 4, 6, 8 };
+/* Indexed by OMMissionArchetype (csrc/mission.c): DEFENSIVE_STAND,
+ * SIEGE_BREAKING, RECONQUEST, ASSAULT, SUPPRESSION, MULTI_FRONT_DEFENSE,
+ * INTERCEPTION, EVACUATION, CONTAINMENT, COUNTERINSURGENCY. {player, enemy,
+ * neutral} fractions. */
+static const double OM_SUP_ARCHETYPE_SPLIT[OM_SUP_ARCHETYPE_COUNT][3] = {
+    { 0.50, 0.25, 0.25 },
+    { 0.33, 0.33, 0.34 },
+    { 0.25, 0.50, 0.25 },
+    { 0.25, 0.50, 0.25 },
+    { 0.40, 0.30, 0.30 },
+    { 0.40, 0.35, 0.25 },
+    { 0.33, 0.34, 0.33 },
+    { 0.50, 0.25, 0.25 },
+    { 0.33, 0.34, 0.33 },
+    { 0.40, 0.30, 0.30 },
+};
+/* end constants-table */
+
+uint32_t om_structure_compute_count(double military, int map_size) {
+    double raw;
+    uint32_t count;
+    if (map_size < 0 || map_size > OM_SUP_MAP_LARGE) map_size = OM_SUP_MAP_SMALL;
+    raw = floor(military * OM_MILITARY_TO_STRUCTURES_SCALE);
+    count = (raw < 0.0) ? 0 : (uint32_t)raw;
+    if (count < OM_SUP_STRUCT_COUNT_MIN[map_size]) count = OM_SUP_STRUCT_COUNT_MIN[map_size];
+    if (count > OM_SUP_STRUCT_COUNT_MAX[map_size]) count = OM_SUP_STRUCT_COUNT_MAX[map_size];
+    return count;
 }
 
-double om_mission_compute_reinforcement_capacity(double c_double, uint64_t time) {
-    /* STUB */
-    (void)c_double; (void)time;
-    return 0.0;
+void om_structure_assign_owners(int mission, uint32_t total, uint32_t *player, uint32_t *enemy, uint32_t *neutral) {
+    int idx = (mission >= 0 && mission < OM_SUP_ARCHETYPE_COUNT) ? mission : 0;
+    double pf = OM_SUP_ARCHETYPE_SPLIT[idx][0];
+    double ef = OM_SUP_ARCHETYPE_SPLIT[idx][1];
+    double p = floor((double)total * pf + 0.5);
+    double e = floor((double)total * ef + 0.5);
+    double n;
+    if (p + e > (double)total) e = (double)total - p;
+    n = (double)total - p - e;
+    if (p < 1.0 && total >= 1) {
+        p = 1.0;
+        if (n >= 1.0) n -= 1.0;
+        else if (e >= 1.0) e -= 1.0;
+    }
+    if (player) *player = (uint32_t)p;
+    if (enemy) *enemy = (uint32_t)e;
+    if (neutral) *neutral = (uint32_t)n;
 }
 
-double om_mission_compute_starting_force(double c_double) {
-    /* STUB */
-    (void)c_double;
-    return 0.0;
+/* ---- ALG-75 enemy production target adaptation (R-128-01/02/03) ---- */
+
+static double om_sup_ratio_get(const om_composition_ratio *r, int cat) {
+    switch (cat) {
+        case OM_SUP_CAT_LINE: return r->line;
+        case OM_SUP_CAT_STRIKE: return r->strike;
+        default: return r->siege;
+    }
 }
 
-uint32_t om_mission_get_reinforcement_trickle(om_world *w) {
-    /* STUB */
-    (void)w;
-    return 0;
+static void om_sup_ratio_set(om_composition_ratio *r, int cat, double v) {
+    switch (cat) {
+        case OM_SUP_CAT_LINE: r->line = v; break;
+        case OM_SUP_CAT_STRIKE: r->strike = v; break;
+        default: r->siege = v; break;
+    }
 }
 
-void om_mission_set_player_held_structures_count(om_world *w, uint32_t held) {
-    /* STUB */
-    (void)w; (void)held;
+int om_enemy_production_select_category(const om_composition_ratio *target, const om_composition_ratio *current) {
+    int c, best_cat = OM_SUP_CAT_LINE;
+    double best_deficit = om_sup_ratio_get(target, OM_SUP_CAT_LINE) - om_sup_ratio_get(current, OM_SUP_CAT_LINE);
+    for (c = OM_SUP_CAT_STRIKE; c <= OM_SUP_CAT_SIEGE; c++) {
+        double deficit = om_sup_ratio_get(target, c) - om_sup_ratio_get(current, c);
+        if (deficit > best_deficit) { best_deficit = deficit; best_cat = c; }
+    }
+    return best_cat;
 }
 
-void om_mission_setup_extraction_point(om_world *w, double p1, double c_double, double p3) {
-    /* STUB */
-    (void)w; (void)p1; (void)c_double; (void)p3;
+/* R-128-02: Strike counters Siege, Line counters Strike, Siege counters
+ * Line -- a player category at or above COMPOSITION_SKEW_THRESHOLD shifts
+ * COMPOSITION_SHIFT_MAGNITUDE of the target to the category that counters
+ * it, taken proportionally from the other two, then renormalized. */
+static int om_sup_counter_category(int skewed) {
+    switch (skewed) {
+        case OM_SUP_CAT_STRIKE: return OM_SUP_CAT_LINE;
+        case OM_SUP_CAT_LINE:   return OM_SUP_CAT_SIEGE;
+        default:                return OM_SUP_CAT_STRIKE; /* SIEGE-heavy */
+    }
 }
 
-int om_objective_is_contested(om_world *w, uint32_t objective) {
-    /* STUB */
-    (void)w; (void)objective;
-    return 0;
+static int om_sup_skewed_category(const om_composition_ratio *player) {
+    if (player->line >= OM_COMPOSITION_SKEW_THRESHOLD) return OM_SUP_CAT_LINE;
+    if (player->strike >= OM_COMPOSITION_SKEW_THRESHOLD) return OM_SUP_CAT_STRIKE;
+    if (player->siege >= OM_COMPOSITION_SKEW_THRESHOLD) return OM_SUP_CAT_SIEGE;
+    return OM_SUP_NC_NONE;
 }
 
-void om_objective_setup_drifting(om_world *w, uint32_t objective, uint64_t period) {
-    /* STUB */
-    (void)w; (void)objective; (void)period;
+void om_enemy_production_adapt_target(const om_composition_ratio *target, const om_composition_ratio *player, om_composition_ratio *out) {
+    int skewed, counter, others[2], oi = 0, c;
+    double o0, o1, total_others, shift, sum;
+    *out = *target;
+    skewed = om_sup_skewed_category(player);
+    if (skewed == OM_SUP_NC_NONE) return;
+    counter = om_sup_counter_category(skewed);
+    for (c = OM_SUP_CAT_LINE; c <= OM_SUP_CAT_SIEGE; c++) {
+        if (c != counter) others[oi++] = c;
+    }
+    o0 = om_sup_ratio_get(target, others[0]);
+    o1 = om_sup_ratio_get(target, others[1]);
+    total_others = o0 + o1;
+    shift = OM_COMPOSITION_SHIFT_MAGNITUDE;
+    om_sup_ratio_set(out, counter, om_sup_ratio_get(target, counter) + shift);
+    if (total_others > OM_SUP_EPSILON) {
+        om_sup_ratio_set(out, others[0], o0 - shift * (o0 / total_others));
+        om_sup_ratio_set(out, others[1], o1 - shift * (o1 / total_others));
+    }
+    sum = om_sup_ratio_get(out, OM_SUP_CAT_LINE) + om_sup_ratio_get(out, OM_SUP_CAT_STRIKE) + om_sup_ratio_get(out, OM_SUP_CAT_SIEGE);
+    if (sum > OM_SUP_EPSILON) {
+        om_sup_ratio_set(out, OM_SUP_CAT_LINE, om_sup_ratio_get(out, OM_SUP_CAT_LINE) / sum);
+        om_sup_ratio_set(out, OM_SUP_CAT_STRIKE, om_sup_ratio_get(out, OM_SUP_CAT_STRIKE) / sum);
+        om_sup_ratio_set(out, OM_SUP_CAT_SIEGE, om_sup_ratio_get(out, OM_SUP_CAT_SIEGE) / sum);
+    }
 }
 
-uint32_t om_render_get_owner_color(int32_t owner) {
-    /* STUB */
-    (void)owner;
-    return 0;
+/* ---- R-126-02/03/04/05/06: structures ---- */
+
+double om_mission_compute_starting_force(double full_force) {
+    return full_force * OM_SUP_STARTING_FORCE_FRACTION;
 }
 
-uint32_t om_render_get_structure_silhouette_id(void) {
-    /* STUB */
-    return 0;
+/* Pure by design (no world, no structure/military context): the game is
+ * tuned so the map's structures, held from the start, deliver the
+ * remaining 0.80 * F by whatever time_limit_ticks the caller's mission
+ * actually runs -- this contract value is what R-126-04 asserts, not a
+ * per-tick production simulation (that needs a real structure roster,
+ * out of a (double, uint64_t) function's reach). time_limit_ticks is kept
+ * as a parameter (0 rejected) so a future per-duration model can use it. */
+double om_mission_compute_reinforcement_capacity(double full_force, uint64_t time_limit_ticks) {
+    if (time_limit_ticks == 0) return 0.0;
+    return full_force * (1.0 - OM_SUP_STARTING_FORCE_FRACTION);
 }
 
-uint32_t om_render_get_unit_silhouette_id(uint32_t unit) {
-    /* STUB */
-    (void)unit;
-    return 0;
+uint32_t om_structure_production_interval_ticks(double power) {
+    double interval_sec = (double)OM_BASE_PRODUCTION_TIME_SEC * power / (double)OM_POWER_NORMALIZATION;
+    double ticks = interval_sec * (double)OM_TACTICAL_TICK_RATE;
+    if (ticks < 0.0) ticks = 0.0;
+    return (uint32_t)(ticks + 0.5);
 }
 
-int om_render_is_volume_obscuring(int p0) {
-    /* STUB */
-    (void)p0;
-    return 0;
+void om_structure_init(om_world *w, uint32_t structure, uint32_t unit_type, double power) {
+    om_sup_structure *s = &om_sup(w)->structures[structure < OM_SUP_MAX_STRUCTURES ? structure : OM_SUP_MAX_STRUCTURES - 1];
+    memset(s, 0, sizeof(*s));
+    s->in_use = 1;
+    s->owner = 0;
+    s->destroyed = 0;
+    s->hp = OM_REINFORCEMENT_STRUCTURE_HP;
+    s->power = power;
+    s->unit_type = unit_type;
+    s->timer = 0;
+    s->capture_progress = 0.0;
+    s->capturing_faction = OM_SUP_NC_NONE;
+    s->contested = 0;
+    s->x = 0.0;
+    s->y = 0.0;
 }
 
-void om_structure_apply_damage(om_world *w, uint32_t structure, double c_double, uint32_t attacker) {
-    /* STUB */
-    (void)w; (void)structure; (void)c_double; (void)attacker;
-}
-
-void om_structure_assign_owners(int mission, uint32_t total, uint32_t *p2, uint32_t *p3, uint32_t *byref) {
-    /* STUB */
-    (void)mission; (void)total; (void)p2; (void)p3; (void)byref;
-}
-
-uint32_t om_structure_compute_count(double ctypes, int p1) {
-    /* STUB */
-    (void)ctypes; (void)p1;
-    return 0;
-}
-
-double om_structure_get_base_max_hp(void) {
-    /* STUB */
-    return 0.0;
-}
-
-double om_structure_get_capture_progress(om_world *w, uint32_t structure) {
-    /* STUB */
-    (void)w; (void)structure;
-    return 0.0;
-}
-
-double om_structure_get_hp(om_world *w, uint32_t structure) {
-    /* STUB */
-    (void)w; (void)structure;
-    return 0.0;
-}
-
-void om_structure_get_hud_data(om_world *w, uint32_t structure, om_structure_hud *byref) {
-    /* STUB */
-    (void)w; (void)structure; (void)byref;
-}
-
-double om_structure_get_last_spawn_distance(om_world *w, uint32_t structure) {
-    /* STUB */
-    (void)w; (void)structure;
-    return 0.0;
-}
-
-double om_structure_get_matchup_multiplier(uint32_t attacker) {
-    /* STUB */
-    (void)attacker;
-    return 0.0;
-}
-
-int32_t om_structure_get_owner(om_world *w, uint32_t structure) {
-    /* STUB */
-    (void)w; (void)structure;
-    return 0;
-}
-
-void om_structure_get_position(om_world *w, uint32_t structure, om_vec2 *byref) {
-    /* STUB */
-    (void)w; (void)structure; (void)byref;
-}
-
-uint64_t om_structure_get_timer(om_world *w, uint32_t structure) {
-    /* STUB */
-    (void)w; (void)structure;
-    return 0;
+void om_structure_switch_unit_type(om_world *w, uint32_t structure, uint32_t new_type) {
+    om_sup_structure *s = om_sup_structure_at(w, structure);
+    /* R-126-03: production switches to the new type at once; the current
+     * timer continues (not reset). om_unit_power(new_type) would be the
+     * right source for the new type's power, but it is still a STUB in
+     * csrc/mission.c (B9-2, in flight) -- power stays whatever
+     * om_structure_init was given until B9-2 lands. */
+    s->unit_type = new_type;
 }
 
 uint32_t om_structure_get_unit_type(om_world *w, uint32_t structure) {
-    /* STUB */
-    (void)w; (void)structure;
-    return 0;
-}
-
-void om_structure_init(om_world *w, uint32_t structure, uint32_t unit, double c_double) {
-    /* STUB */
-    (void)w; (void)structure; (void)unit; (void)c_double;
-}
-
-void om_structure_init_drifting(om_world *w, uint32_t structure, uint64_t period) {
-    /* STUB */
-    (void)w; (void)structure; (void)period;
-}
-
-int om_structure_is_destroyed(om_world *w, uint32_t structure) {
-    /* STUB */
-    (void)w; (void)structure;
-    return 0;
-}
-
-int om_structure_is_in_capture_radius(om_world *w, uint32_t structure, double p2, double x) {
-    /* STUB */
-    (void)w; (void)structure; (void)p2; (void)x;
-    return 0;
-}
-
-void om_structure_on_owner_changed(om_world *w, uint32_t structure, int32_t old, int32_t new) {
-    /* STUB */
-    (void)w; (void)structure; (void)old; (void)new;
-}
-
-int om_structure_pop_spawned_unit(om_world *w, uint32_t structure) {
-    /* STUB */
-    (void)w; (void)structure;
-    return 0;
-}
-
-uint32_t om_structure_production_interval_ticks(double c_double) {
-    /* STUB */
-    (void)c_double;
-    return 0;
-}
-
-void om_structure_set_capture_progress(om_world *w, uint32_t structure, double c_double) {
-    /* STUB */
-    (void)w; (void)structure; (void)c_double;
-}
-
-void om_structure_set_capturing_faction(om_world *w, uint32_t structure, int32_t unopposed) {
-    /* STUB */
-    (void)w; (void)structure; (void)unopposed;
-}
-
-void om_structure_set_contested(om_world *w, uint32_t structure, int on) {
-    /* STUB */
-    (void)w; (void)structure; (void)on;
-}
-
-void om_structure_set_owner(om_world *w, uint32_t structure, int32_t owner) {
-    /* STUB */
-    (void)w; (void)structure; (void)owner;
+    return om_sup_structure_at(w, structure)->unit_type;
 }
 
 void om_structure_set_timer(om_world *w, uint32_t structure, uint64_t timer) {
-    /* STUB */
-    (void)w; (void)structure; (void)timer;
+    om_sup_structure_at(w, structure)->timer = timer;
 }
 
-void om_structure_switch_unit_type(om_world *w, uint32_t structure, uint32_t new) {
-    /* STUB */
-    (void)w; (void)structure; (void)new;
-}
-
-void om_structure_tick_capture(om_world *w, uint32_t structure) {
-    /* STUB */
-    (void)w; (void)structure;
+uint64_t om_structure_get_timer(om_world *w, uint32_t structure) {
+    return om_sup_structure_at(w, structure)->timer;
 }
 
 void om_structure_tick_production(om_world *w, uint32_t structure) {
-    /* STUB */
-    (void)w; (void)structure;
+    om_sup_structure *s = om_sup_structure_at(w, structure);
+    uint32_t interval = om_structure_production_interval_ticks(s->power);
+    double angle, dist;
+    if (interval == 0 || s->timer < interval) return;
+    s->timer -= interval;
+    s->pending_spawns++;
+    /* R-126-02: spawn position from two world-stream draws, angle then
+     * distance, within half the capture radius -- never any other
+     * generator. cos(angle) is read off om_sin(angle + HALF_PI) since the
+     * deterministic sine wrapper has no cosine sibling (csrc/sim.c). */
+    angle = om_rng_draw(w) * OM_SUP_TWO_PI;
+    dist = om_rng_draw(w) * (OM_REINFORCEMENT_CAPTURE_RADIUS / 2.0);
+    s->last_spawn_distance = dist;
+    s->last_spawn_x = s->x + dist * om_sin(angle + OM_SUP_HALF_PI);
+    s->last_spawn_y = s->y + dist * om_sin(angle);
+}
+
+int om_structure_pop_spawned_unit(om_world *w, uint32_t structure) {
+    om_sup_structure *s = om_sup_structure_at(w, structure);
+    if (s->pending_spawns == 0) return 0;
+    s->pending_spawns--;
+    return 1;
+}
+
+double om_structure_get_last_spawn_distance(om_world *w, uint32_t structure) {
+    return om_sup_structure_at(w, structure)->last_spawn_distance;
+}
+
+double om_structure_get_base_max_hp(void) {
+    return (double)OM_REINFORCEMENT_STRUCTURE_HP;
+}
+
+void om_structure_get_hud_data(om_world *w, uint32_t structure, om_structure_hud *out) {
+    om_sup_structure *s;
+    uint32_t interval;
+    if (!out) return;
+    s = om_sup_structure_at(w, structure);
+    interval = om_structure_production_interval_ticks(s->power);
+    out->timer_progress = interval ? om_sup_clamp01((double)s->timer / (double)interval) : 0.0;
+    out->next_unit_type = s->unit_type;
+    out->hp = s->hp;
+    /* OM_BUG_STRUCTURE_MAX_HP_WRONG_CONSTANT (ALG-75, ouroboros_sim.h):
+     * plants the capture-radius constant where the structure-HP constant
+     * belongs. */
+    out->max_hp = (double)OM_REINFORCEMENT_STRUCTURE_HP;
+#ifdef OM_DEBUG_INJECT
+    if (w->inject == OM_BUG_STRUCTURE_MAX_HP_WRONG_CONSTANT) {
+        out->max_hp = (double)OM_REINFORCEMENT_CAPTURE_RADIUS;
+    }
+#endif
 }
 
 uint32_t om_structure_unit_cost(uint32_t unit) {
-    /* STUB */
     (void)unit;
+    return 0; /* R-126-06: units have no cost */
+}
+
+uint32_t om_mission_get_reinforcement_trickle(om_world *w) {
+    (void)om_sup(w);
+    return 0; /* R-126-06: the only reinforcement is R-126-02's structure production */
+}
+
+void om_mission_set_player_held_structures_count(om_world *w, uint32_t held) {
+    om_sup(w)->held_structures_count = held;
+}
+
+/* ---- R-127: capture, damage, ownership, ticker ---- */
+
+double om_structure_get_matchup_multiplier(uint32_t attacker) {
+    (void)attacker;
+    return 1.0; /* R-127-05: no category multiplier applies to structures */
+}
+
+void om_structure_set_owner(om_world *w, uint32_t structure, int32_t owner) {
+    om_sup_structure_at(w, structure)->owner = owner;
+}
+
+int32_t om_structure_get_owner(om_world *w, uint32_t structure) {
+    return om_sup_structure_at(w, structure)->owner;
+}
+
+void om_structure_set_capturing_faction(om_world *w, uint32_t structure, int32_t unopposed) {
+    om_sup_structure_at(w, structure)->capturing_faction = unopposed;
+}
+
+void om_structure_set_contested(om_world *w, uint32_t structure, int on) {
+    om_sup_structure_at(w, structure)->contested = on;
+}
+
+void om_structure_set_capture_progress(om_world *w, uint32_t structure, double progress) {
+    om_sup_structure_at(w, structure)->capture_progress = progress;
+}
+
+double om_structure_get_capture_progress(om_world *w, uint32_t structure) {
+    return om_sup_structure_at(w, structure)->capture_progress;
+}
+
+void om_structure_tick_capture(om_world *w, uint32_t structure) {
+    om_sup_structure *s = om_sup_structure_at(w, structure);
+    /* R-127-01/02: exactly one non-owner faction present and no owner
+     * present advances progress; two-or-more non-owner factions or the
+     * owner present resets it. The actual per-tick faction census at the
+     * structure's 300 wu radius is fed in by om_structure_set_capturing_
+     * faction / om_structure_set_contested (the orchestrator's job, out of
+     * this card's declared symbols); this function only advances/resets
+     * the stored progress from that census. */
+    if (s->contested || s->capturing_faction == OM_SUP_NC_NONE || s->capturing_faction == s->owner) {
+        s->capture_progress = 0.0;
+        return;
+    }
+    s->capture_progress += (1.0 / (double)OM_TACTICAL_TICK_RATE) / (double)OM_REINFORCEMENT_CAPTURE_DURATION_SEC;
+    if (s->capture_progress >= 1.0 - OM_SUP_EPSILON) {
+        s->owner = s->capturing_faction;
+        s->capture_progress = 0.0;
+    }
+}
+
+void om_structure_apply_damage(om_world *w, uint32_t structure, double damage, uint32_t attacker) {
+    om_sup_structure *s = om_sup_structure_at(w, structure);
+    double mult;
+    if (s->destroyed) return;
+    mult = om_structure_get_matchup_multiplier(attacker);
+    s->hp -= damage * mult;
+    if (s->hp <= 0.0) {
+        s->hp = 0.0;
+        s->destroyed = 1; /* R-127-03: removed for the rest of the mission, never rebuilt */
+    }
+}
+
+int om_structure_is_destroyed(om_world *w, uint32_t structure) {
+    return om_sup_structure_at(w, structure)->destroyed;
+}
+
+double om_structure_get_hp(om_world *w, uint32_t structure) {
+    return om_sup_structure_at(w, structure)->hp;
+}
+
+void om_structure_on_owner_changed(om_world *w, uint32_t structure, int32_t old_owner, int32_t new_owner) {
+    (void)structure;
+    /* R-127-04/E-16 R-104-01: from the player's perspective only -- the
+     * player either just gained or just lost the structure. */
+    if (new_owner == OM_SUP_PLAYER_OWNER) {
+        om_sup_push_ticker(w, "Structure captured.");
+    } else if (old_owner == OM_SUP_PLAYER_OWNER) {
+        om_sup_push_ticker(w, "Structure lost.");
+    } else {
+        om_sup_push_ticker(w, "Structure changed hands.");
+    }
+}
+
+void om_ticker_pop_message(om_world *w, char *out, uint32_t out_size) {
+    om_sup_state *st = om_sup(w);
+    if (!out || out_size == 0) return;
+    if (st->ticker_count == 0) {
+        out[0] = '\0';
+        return;
+    }
+    strncpy(out, st->ticker_queue[st->ticker_head], out_size - 1);
+    out[out_size - 1] = '\0';
+    st->ticker_head = (st->ticker_head + 1) % OM_SUP_TICKER_QUEUE_CAP;
+    st->ticker_count--;
+}
+
+/* ---- R-130: drifting structures, objectives, and hazards ---- */
+
+/* Pure: ping-pong is a triangle wave over one period (out and back), loop
+ * is a sawtooth (wrap and repeat); both map tick -> overall path fraction
+ * u in [0,1], then u maps onto the waypoint-count - 1 segments in order.
+ * waypoint_count == 2 (every caller today) collapses to a single lerp. */
+void om_drift_interpolate(const om_vec2 *waypoints, uint32_t waypoint_count, uint64_t period, int mode, uint64_t tick, om_vec2 *out) {
+    double phase, u, seg_len, seg_u;
+    uint32_t n_segs, seg_idx;
+    if (!out) return;
+    if (!waypoints || waypoint_count < 2 || period == 0) {
+        if (waypoints && waypoint_count >= 1) *out = waypoints[0];
+        else { out->x = 0.0; out->y = 0.0; }
+        return;
+    }
+    phase = (double)(tick % period);
+    if (mode == OM_SUP_DRIFT_PING_PONG) {
+        u = 1.0 - fabs(1.0 - 2.0 * (phase / (double)period));
+    } else {
+        u = phase / (double)period;
+    }
+    n_segs = waypoint_count - 1;
+    seg_len = 1.0 / (double)n_segs;
+    seg_idx = (uint32_t)(u / seg_len);
+    if (seg_idx > n_segs - 1) seg_idx = n_segs - 1;
+    seg_u = (u - (double)seg_idx * seg_len) / seg_len;
+    out->x = waypoints[seg_idx].x + (waypoints[seg_idx + 1].x - waypoints[seg_idx].x) * seg_u;
+    out->y = waypoints[seg_idx].y + (waypoints[seg_idx + 1].y - waypoints[seg_idx].y) * seg_u;
+}
+
+/* Synthesizes a second waypoint OM_SUP_DRIFT_SPAN from the current point,
+ * angle drawn from the world stream -- om_structure_init_drifting/
+ * om_objective_setup_drifting are never given waypoints or a mode
+ * (signatures.toml freeze note), so a fixture calling them gets a real,
+ * seed-derived loop rather than an invented fixed offset. */
+static void om_sup_synthesize_drift_wp(om_world *w, double cx, double cy, om_vec2 wp[2]) {
+    double angle = om_rng_draw(w) * OM_SUP_TWO_PI;
+    wp[0].x = cx;
+    wp[0].y = cy;
+    wp[1].x = cx + OM_SUP_DRIFT_SPAN * om_sin(angle + OM_SUP_HALF_PI);
+    wp[1].y = cy + OM_SUP_DRIFT_SPAN * om_sin(angle);
+}
+
+void om_structure_init_drifting(om_world *w, uint32_t structure, uint64_t period) {
+    om_sup_structure *s = om_sup_structure_at(w, structure);
+    s->drifting = 1;
+    s->drift_period = period;
+    om_sup_synthesize_drift_wp(w, s->x, s->y, s->drift_wp);
+}
+
+static void om_sup_structure_refresh_position(om_world *w, om_sup_structure *s) {
+    om_vec2 pos;
+    if (!s->drifting) return;
+    om_drift_interpolate(s->drift_wp, 2, s->drift_period, OM_SUP_DRIFT_PING_PONG, om_tactical_tick(w), &pos);
+    s->x = pos.x;
+    s->y = pos.y;
+}
+
+void om_structure_get_position(om_world *w, uint32_t structure, om_vec2 *out) {
+    om_sup_structure *s = om_sup_structure_at(w, structure);
+    om_sup_structure_refresh_position(w, s);
+    if (out) { out->x = s->x; out->y = s->y; }
+}
+
+int om_structure_is_in_capture_radius(om_world *w, uint32_t structure, double x, double y) {
+    om_sup_structure *s = om_sup_structure_at(w, structure);
+    double dx, dy, dist2;
+    om_sup_structure_refresh_position(w, s);
+    dx = x - s->x;
+    dy = y - s->y;
+    dist2 = dx * dx + dy * dy;
+    return dist2 <= (double)OM_REINFORCEMENT_CAPTURE_RADIUS * (double)OM_REINFORCEMENT_CAPTURE_RADIUS;
+}
+
+void om_objective_setup_drifting(om_world *w, uint32_t objective, uint64_t period) {
+    om_sup_objective *o = om_sup_objective_at(w, objective);
+    o->drifting = 1;
+    o->drift_period = period;
+    om_sup_synthesize_drift_wp(w, o->center.x, o->center.y, o->drift_wp);
+}
+
+/* Best-effort: no public unit.c accessor exposes a unit's faction id
+ * (only om_unit_alive/om_unit_get_position are exposed here), so this
+ * cannot yet tell an enemy from a friendly inside the zone -- closure
+ * leftover, needs e.g. om_unit_get_faction_id from unit.c. Until then,
+ * any living unit within the drifted zone counts, which never
+ * over-reports "not contested". */
+int om_objective_is_contested(om_world *w, uint32_t objective) {
+    om_sup_objective *o = om_sup_objective_at(w, objective);
+    om_vec2 center;
+    uint32_t id;
+    if (o->drifting) {
+        om_drift_interpolate(o->drift_wp, 2, o->drift_period, OM_SUP_DRIFT_PING_PONG, om_tactical_tick(w), &center);
+    } else {
+        center = o->center;
+    }
+    for (id = 1; id <= OM_SUP_CONTEST_SCAN_CAP; id++) {
+        om_vec2 pos;
+        double dx, dy;
+        if (!om_unit_alive(w, id)) continue;
+        om_unit_get_position(w, id, &pos);
+        dx = pos.x - center.x;
+        dy = pos.y - center.y;
+        if (dx * dx + dy * dy <= (double)OM_REINFORCEMENT_CAPTURE_RADIUS * (double)OM_REINFORCEMENT_CAPTURE_RADIUS) return 1;
+    }
     return 0;
 }
 
-void om_ticker_pop_message(om_world *w, char *create_string_buffer, uint32_t buffer) {
-    /* STUB */
-    (void)w; (void)create_string_buffer; (void)buffer;
+uint32_t om_hazard_spawn_moving_interference(om_world *w, double x0, double y0, double x1, double y1, uint64_t travel_ticks) {
+    om_sup_state *st = om_sup(w);
+    uint32_t id;
+    if (st->n_hazards >= OM_SUP_MAX_HAZARDS) return 0;
+    id = st->n_hazards++;
+    st->hazards[id].in_use = 1;
+    st->hazards[id].src.x = x0;
+    st->hazards[id].src.y = y0;
+    st->hazards[id].dst.x = x1;
+    st->hazards[id].dst.y = y1;
+    st->hazards[id].travel_ticks = travel_ticks;
+    return id;
+}
+
+/* Live sampling: linear one-way travel from src to dst over travel_ticks
+ * (clamped at the destination after), then a falloff with distance from
+ * wherever the source currently is (R-130-04/E-12 R-090-04: "interference
+ * at any point follows the source"). With no hazard yet spawned, no point
+ * reads as interfered. */
+double om_hazard_sample_interference(om_world *w, double x, double y) {
+    om_sup_state *st = om_sup(w);
+    uint32_t i;
+    double best = 0.0;
+    uint64_t tick = om_tactical_tick(w);
+    for (i = 0; i < st->n_hazards; i++) {
+        om_sup_hazard *h = &st->hazards[i];
+        double u, sx, sy, dx, dy, dist, intensity;
+        if (!h->in_use) continue;
+        u = h->travel_ticks ? (double)tick / (double)h->travel_ticks : 1.0;
+        if (u > 1.0) u = 1.0;
+        sx = h->src.x + (h->dst.x - h->src.x) * u;
+        sy = h->src.y + (h->dst.y - h->src.y) * u;
+        dx = x - sx;
+        dy = y - sy;
+        dist = sqrt(dx * dx + dy * dy);
+        intensity = 1.0 - dist / OM_SUP_HAZARD_INTERFERENCE_RADIUS;
+        if (intensity < 0.0) intensity = 0.0;
+        if (intensity > best) best = intensity;
+    }
+    return best;
+}
+
+void om_hazard_get_launch_types(uint32_t *out, uint32_t max) {
+    if (!out || max == 0) return;
+    out[0] = OM_SUP_HAZARD_SENSOR_INTERFERENCE;
+}
+
+uint32_t om_hazard_launch_type_count(void) {
+    return OM_SUP_HAZARD_LAUNCH_COUNT;
+}
+
+int om_hazard_is_enabled_at_launch(int hazard_type) {
+    return hazard_type == OM_SUP_HAZARD_SENSOR_INTERFERENCE;
+}
+
+/* ---- R-131: reading structures and hazards on screen ---- */
+
+uint32_t om_render_get_structure_silhouette_id(void) {
+    return OM_SUP_RENDER_STRUCTURE_SILHOUETTE;
+}
+
+uint32_t om_render_get_unit_silhouette_id(uint32_t unit_type) {
+    return unit_type; /* 0..5, disjoint from OM_SUP_RENDER_STRUCTURE_SILHOUETTE */
+}
+
+uint32_t om_render_get_owner_color(int32_t owner) {
+    if (owner == OM_SUP_PLAYER_OWNER) return OM_SUP_RENDER_COLOR_PLAYER;
+    if (owner == 0) return OM_SUP_RENDER_COLOR_NEUTRAL;
+    return OM_SUP_RENDER_COLOR_ENEMY;
+}
+
+int om_render_is_volume_obscuring(int hazard_type) {
+    return hazard_type == OM_SUP_HAZARD_SENSOR_INTERFERENCE;
+}
+
+/* ---- R-129: non-combat units (convoys, evacuees) ---- */
+
+int om_unit_is_non_combat_supported(int kind) {
+    return kind == OM_SUP_NC_CONVOY || kind == OM_SUP_NC_EVACUEE;
+}
+
+int om_unit_has_non_combat_visual_tag(int kind_or_type) {
+    return kind_or_type == OM_SUP_NC_CONVOY || kind_or_type == OM_SUP_NC_EVACUEE;
+}
+
+uint32_t om_unit_spawn_non_combat(om_world *w, int kind, double x, double y) {
+    /* Registered as a real tactical unit (om_unit_spawn, faction unstated
+     * per signatures.toml -> neutral) so om_unit_get_position/get_hp/alive
+     * work for it like any other unit everywhere else in the sim; the
+     * OM_SUP_NC_* kind and the E-15-only behaviors (no target, no return
+     * fire, flinch tracking, order destination) live in our own
+     * unit_ext table, keyed by that real unit id. */
+    uint32_t unit_id = om_unit_spawn(w, 0, -1, x, y, 0);
+    om_sup_unit_ext *e = om_sup_unit_ext_get_or_create(w, unit_id);
+    if (e) {
+        e->nc_kind = kind;
+        e->last_hp = om_unit_get_hp(w, unit_id);
+    }
+    return unit_id;
 }
 
 int om_unit_can_return_fire(om_world *w, uint32_t unit) {
-    /* STUB */
-    (void)w; (void)unit;
-    return 0;
-}
-
-void om_unit_get_order_destination(om_world *w, uint32_t unit, om_vec2 *byref) {
-    /* STUB */
-    (void)w; (void)unit; (void)byref;
-}
-
-int om_unit_has_non_combat_visual_tag(int p0) {
-    /* STUB */
-    (void)p0;
-    return 0;
+    om_sup_unit_ext *e = om_sup_unit_ext_find(om_sup(w), unit);
+    if (e && e->nc_kind != OM_SUP_NC_NONE) return 0; /* R-129-01: never returns fire */
+    return 1;
 }
 
 int om_unit_is_flinching(om_world *w, uint32_t unit) {
-    /* STUB */
-    (void)w; (void)unit;
+    om_sup_unit_ext *e = om_sup_unit_ext_find(om_sup(w), unit);
+    double hp;
+    if (!e || e->nc_kind == OM_SUP_NC_NONE) return 0;
+    hp = om_unit_get_hp(w, unit);
+    if (hp < e->last_hp) {
+        e->last_hp = hp;
+        return 1;
+    }
+    e->last_hp = hp;
     return 0;
 }
 
-int om_unit_is_non_combat_supported(int p0) {
-    /* STUB */
-    (void)p0;
-    return 0;
+void om_unit_order_move(om_world *w, uint32_t unit, double x, double y) {
+    om_sup_unit_ext *e = om_sup_unit_ext_get_or_create(w, unit);
+    if (!e) return;
+    e->has_order = 1;
+    e->order_dest.x = x;
+    e->order_dest.y = y;
 }
 
-void om_unit_order_move(om_world *w, uint32_t unit, double p2, double c_double) {
-    /* STUB */
-    (void)w; (void)unit; (void)p2; (void)c_double;
-}
-
-uint32_t om_unit_spawn_non_combat(om_world *w, int p1, double p2, double c_double) {
-    /* STUB */
-    (void)w; (void)p1; (void)p2; (void)c_double;
-    return 0;
+void om_unit_get_order_destination(om_world *w, uint32_t unit, om_vec2 *out) {
+    om_sup_unit_ext *e = om_sup_unit_ext_find(om_sup(w), unit);
+    if (!out) return;
+    if (e && e->has_order) *out = e->order_dest;
+    else { out->x = 0.0; out->y = 0.0; }
 }
 
 void om_unit_tick_decision_loop(om_world *w, uint32_t unit) {
-    /* STUB */
+    /* R-129-01: a non-combat unit never acquires a target, never returns
+     * fire, and otherwise holds or follows its move order -- so its
+     * decision loop is a no-op. Combat-unit decision-making is unit.c's
+     * own tactical step (om_tactical_step / the ability system), not this
+     * E-15-only hook. */
     (void)w; (void)unit;
 }
-/* ---- end generated stubs ---- */
+
+/* ---- R-129-02: escort/evacuation extraction ---- */
+
+void om_mission_setup_extraction_point(om_world *w, double x, double y, double radius) {
+    om_sup_state *st = om_sup(w);
+    st->extraction_point.x = x;
+    st->extraction_point.y = y;
+    st->extraction_radius = radius;
+    st->extraction_set = 1;
+}
+
+/* Records which tracked non-combat units have reached extraction alive.
+ * The read side (om_mission_get_objective_completion) is mission.c's own
+ * STUB (B9-2, in flight) with no shared storage this module can reach
+ * into (om_mission_state is private to csrc/mission.c) -- closure
+ * leftover until B9-2 lands or exposes a write path here. */
+void om_mission_check_extraction_objectives(om_world *w) {
+    om_sup_state *st = om_sup(w);
+    uint32_t i;
+    if (!st->extraction_set) return;
+    for (i = 0; i < st->n_unit_ext; i++) {
+        om_sup_unit_ext *e = &st->unit_ext[i];
+        om_vec2 pos;
+        double dx, dy;
+        if (!e->in_use || e->nc_kind == OM_SUP_NC_NONE) continue;
+        if (!om_unit_alive(w, e->unit_id)) continue;
+        om_unit_get_position(w, e->unit_id, &pos);
+        dx = pos.x - st->extraction_point.x;
+        dy = pos.y - st->extraction_point.y;
+        if (dx * dx + dy * dy <= st->extraction_radius * st->extraction_radius) {
+            e->nc_kind = OM_SUP_NC_NONE; /* extracted: stop tracking/re-counting it */
+        }
+    }
+}
