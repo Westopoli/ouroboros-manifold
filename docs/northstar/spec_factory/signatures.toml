@@ -5100,6 +5100,15 @@ confidence = "likely"
 note = "signature differs across epics: E-12:[('w', 'om_world*'), ('attacker', 'uint32_t'), ('target', 'uint32_t')]->void | E-13:[('w', 'om_world*'), ('p0', 'uint32_t'), ('p1', 'uint32_t')]->void ; Owned by unit.c per toml. 1 site, return unused; E-11/E-13 may return damage double."
 
 [[symbols]]
+name = "om_unit_brace_phase"
+module = "unit.c"
+restype = "int32_t"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "unit_id", ctype = "uint32_t" }]
+epics = ["E-12", "E-13", "E-15"]
+confidence = "likely"
+note = "F2l: fog/movement/support leaves need the ability phase reader. Values match unit.c's OM_ABILITY_PHASE_* macros: 0 idle, 1 windup, 2 active, 3 cancelling; -1 when unit_id has no live unit."
+
+[[symbols]]
 name = "om_unit_can_return_fire"
 module = "tactical_support.c"
 restype = "int"
@@ -5134,6 +5143,15 @@ params = [{ name = "w", ctype = "const om_world*" }, { name = "p0", ctype = "uin
 epics = ["E-13"]
 confidence = "likely"
 note = "Pure query: (unit, obstacle_density) -> wu/s; 150*(1-0.5d) band, 0.0 at d>=0.75. Note test expects 0.70 -> 97.5 (not blocked) but R-097-01 says >0.7 blocked; consistent. Inferred p0=unit_id, p1=densit"
+
+[[symbols]]
+name = "om_unit_count"
+module = "unit.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }]
+epics = ["E-12", "E-13", "E-15"]
+confidence = "likely"
+note = "F2l: live unit count for iteration alongside om_unit_id_at."
 
 [[symbols]]
 name = "om_unit_damage_reduction"
@@ -5245,6 +5263,15 @@ confidence = "likely"
 note = "Radians, compared approx to 0.0 / pi/2 / 6.0/20.0. Inferred p0=unit_id."
 
 [[symbols]]
+name = "om_unit_get_faction"
+module = "unit.c"
+restype = "int32_t"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "unit_id", ctype = "uint32_t" }]
+epics = ["E-12", "E-13", "E-15"]
+confidence = "likely"
+note = "F2l: fog/movement/support leaves need faction ownership by unit id; -1 when no such unit."
+
+[[symbols]]
 name = "om_unit_get_hp"
 module = "unit.c"
 restype = "double"
@@ -5309,6 +5336,15 @@ confidence = "likely"
 note = "canonical form set by the design lane (D-F1); void callers ignore the return ; signature differs across epics: E-12:[('w', 'const om_world*'), ('unit', 'uint32_t')]->uint32_t | E-13:[('w', 'const om_world*'), ('p0', 'uint32_t')]->uint32_t | E-15:[('w', 'om_world*'), ('p1', 'uint32_t')]->uint32_t ; Owned by unit.c per toml. 2 sites: == friendly_in_range (unit id) and == 0 (none). So 0 = no target, "
 
 [[symbols]]
+name = "om_unit_get_unit_type"
+module = "unit.c"
+restype = "int32_t"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "unit_id", ctype = "uint32_t" }]
+epics = ["E-12", "E-13", "E-15"]
+confidence = "likely"
+note = "F2l: fog/movement/support leaves need unit type by unit id; -1 when no such unit."
+
+[[symbols]]
 name = "om_unit_has_active_buff"
 module = "tactical_move.c"
 restype = "int"
@@ -5334,6 +5370,15 @@ params = [{ name = "w", ctype = "om_world*" }, { name = "unit_id", ctype = "uint
 epics = ["E-11"]
 confidence = "likely"
 note = "43 call sites; result subtracted, approx-compared to 400.075 -> double. E-12 tests call om_unit_get_hp for same purpose; two names for one reader (om_unit_get_hp is unit.c per symbol_modules.toml)."
+
+[[symbols]]
+name = "om_unit_id_at"
+module = "unit.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "index", ctype = "uint32_t" }]
+epics = ["E-12", "E-13", "E-15"]
+confidence = "likely"
+note = "F2l: paired with om_unit_count for iteration; ids start at 1, 0 past the end."
 
 [[symbols]]
 name = "om_unit_in_backswing"
