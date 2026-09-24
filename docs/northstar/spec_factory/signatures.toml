@@ -460,6 +460,15 @@ kwargs = ["entry_id", "text"]
 note = "Fixture."
 
 [[symbols]]
+name = "om_chronicle_add_regional_event"
+module = "chronicle.c"
+restype = "int"
+params = [{ name = "w", ctype = "om_world*" }, { name = "region_idx", ctype = "uint32_t" }, { name = "category", ctype = "uint32_t" }, { name = "score", ctype = "double" }]
+epics = ["E-09"]
+confidence = "likely"
+note = "F2o: B8-5 stub. Caller-supplied category for growth/decline and chain clusters, ALG-51 step 4."
+
+[[symbols]]
 name = "om_chronicle_apply_slot_echo_anaphora"
 module = "chronicle.c"
 restype = "const char*"
@@ -1273,6 +1282,15 @@ confidence = "likely"
 note = "E-04 owns. Positional (w, ev_id, 0): p0 = event id from om_event_fire_manual, p1 = 0 (attachment slot index, guess). Return compared == 10 (character id); int32_t if -1 sentinel. E-08 S060 same positi"
 
 [[symbols]]
+name = "om_event_template_significance_tier"
+module = "events.c"
+restype = "int32_t"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "template_id", ctype = "uint32_t" }]
+epics = ["E-08", "E-09"]
+confidence = "likely"
+note = "F2o: B1-8 stub. -1 unknown template_id. Launch template tiers: docs/bible/algorithms.md ALG-50 OM_EVENT_TIER_* constants-table, transcribed from simulation/events.py TEMPLATES[*][\"significance_tier\"]."
+
+[[symbols]]
 name = "om_event_template_chronicle_prose"
 module = "chronicle.c"
 restype = "const char*"
@@ -1853,6 +1871,15 @@ kwargs = ["jump_ticks", "lineage_id"]
 note = "Count created: max(1, floor(n*0.03*T)), 0 when no living."
 
 [[symbols]]
+name = "om_lineage_history_region"
+module = "generational.c"
+restype = "int32_t"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "lineage_id", ctype = "uint32_t" }, { name = "idx", ctype = "uint32_t" }]
+epics = ["E-08"]
+confidence = "likely"
+note = "F2o: B7-6 stub. idx 0 = oldest recorded history region; -1 past the end."
+
+[[symbols]]
 name = "om_lineage_home_region"
 module = "generational.c"
 restype = "uint32_t"
@@ -1861,6 +1888,15 @@ epics = ["E-08"]
 confidence = "likely"
 kwargs = ["lineage_id"]
 note = "Region index == 2."
+
+[[symbols]]
+name = "om_lineage_member_in_region"
+module = "generational.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "lineage_id", ctype = "uint32_t" }, { name = "region_idx", ctype = "uint32_t" }]
+epics = ["E-08"]
+confidence = "likely"
+note = "F2o: B7-6 stub. 1 if any living lineage member resides in region_idx, else 0."
 
 [[symbols]]
 name = "om_lineage_record_history_region"

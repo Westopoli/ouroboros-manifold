@@ -1056,3 +1056,11 @@ uint32_t om_event_get_attached_character(const om_world *w, uint32_t event, uint
     if (!mf || p1 >= mf->n_attached) return 0;
     return mf->attached[p1];
 }
+
+/* ---- generated stubs from signatures.toml ---- */
+int32_t om_event_template_significance_tier(const om_world *w, uint32_t template_id) {
+    /* STUB: B1-8 implements */
+    (void)w; (void)template_id;
+    return -1;
+}
+/* ---- end generated stubs ---- */

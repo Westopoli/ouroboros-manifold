@@ -1179,6 +1179,7 @@ void om_chronicle_add_lineage_event(om_world *w, uint32_t lineage_id, uint32_t r
 void om_chronicle_add_mock_entry(om_world *w, uint32_t entry_id, uint64_t start_tick, uint64_t end_tick);
 void om_chronicle_add_ownership_change_event(om_world *w, uint32_t region_idx, uint64_t tick);
 void om_chronicle_add_raw_entry(om_world *w, uint32_t entry_id, const char *text);
+int om_chronicle_add_regional_event(om_world *w, uint32_t region_idx, uint32_t category, double score);
 const char *om_chronicle_apply_slot_echo_anaphora(om_world *w, const char *fragment1_slot, const char *fragment2_slot);
 const char *om_chronicle_apply_word_echo_synonym(om_world *w, const char *text);
 int om_chronicle_assemble_cluster_entry(om_world *w, uint32_t category, uint32_t region_idx, om_chronicle_entry *out_entry);
@@ -1328,6 +1329,7 @@ const void *om_unit_get_decision_loop_ptr(uint32_t p0, int p1);
 /* ---- generated from signatures.toml: events.c ---- */
 uint32_t om_event_fire_manual(om_world *w, uint32_t region_idx, uint32_t tier);
 uint32_t om_event_get_attached_character(const om_world *w, uint32_t event, uint32_t p1);
+int32_t om_event_template_significance_tier(const om_world *w, uint32_t template_id);
 /* ---- end generated: events.c ---- */
 
 /* ---- generated from signatures.toml: fog.c ---- */
@@ -1416,7 +1418,9 @@ int om_ledger_commander_death_outcome_band(const om_world *w, uint32_t commander
 uint32_t om_ledger_commander_death_region(const om_world *w, uint32_t commander_id);
 void om_lineage_create(om_world *w, uint32_t lineage_id, uint32_t home_region);
 uint32_t om_lineage_generate_descendants(om_world *w, uint32_t lineage_id, uint32_t jump_ticks);
+int32_t om_lineage_history_region(const om_world *w, uint32_t lineage_id, uint32_t idx);
 uint32_t om_lineage_home_region(const om_world *w, uint32_t lineage_id);
+int om_lineage_member_in_region(const om_world *w, uint32_t lineage_id, uint32_t region_idx);
 void om_lineage_record_history_region(om_world *w, uint32_t lineage_id, uint32_t region_idx);
 void om_lineage_set_chapter_count(om_world *w, uint32_t lineage_id, uint32_t chapters);
 uint32_t om_lineage_spawn_descendant_at_tick(om_world *w, uint32_t lineage_id, uint32_t parent_id, uint64_t tick);

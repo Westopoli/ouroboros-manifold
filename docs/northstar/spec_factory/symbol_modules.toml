@@ -32,10 +32,15 @@ om_character_create                 = "generational.c"
 om_lineage_create                   = "generational.c"
 om_lineage_record_history_region    = "generational.c"
 om_time_jump_run                    = "generational.c"
+# F2o: lineage history readers, chronicle clustering needs them (B7-6)
+om_lineage_history_region            = "generational.c"
+om_lineage_member_in_region          = "generational.c"
 # chronicle entries: E-09
 om_chronicle_entry_count            = "chronicle.c"
 # F2n: mission.c objective-drift leaf needs a set/get pair; chronicle reader (B8-4)
 om_chronicle_entry_get              = "chronicle.c"
+# F2o: regional/chain cluster event writer, ALG-51 step 4 (B8-5)
+om_chronicle_add_regional_event      = "chronicle.c"
 # event system, including manual firing and character attachment: E-04
 om_event_fire_manual                = "events.c"
 om_event_get_attached_character     = "events.c"
@@ -46,6 +51,8 @@ om_event_template_name              = "events.c"
 om_tick_pruned                      = "events.c"
 om_event_template_count             = "events.c"
 om_events_load_launch               = "events.c"
+# F2o: launch template significance tier reader (B1-8)
+om_event_template_significance_tier  = "events.c"
 # border friction: E-05 (live card 206a)
 om_tick_friction                    = "friction.c"
 # world generation: E-03
