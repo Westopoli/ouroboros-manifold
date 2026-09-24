@@ -454,10 +454,19 @@ static int om_mission_trigger_fires(const om_world *w, const om_mission_state *s
 }
 
 /* ---- generated stubs from signatures.toml ---- */
+/* R-076-02 / Q-076-01 (answered, closed: use the minutes table, ×60×tick
+ * rate; the seconds table was the implementation error). Minutes are
+ * prose in the bible/ambiguity register, not an "IDENT = value" line, so
+ * alg_constants.py's emitter never lands them in om_constants.h. */
 uint64_t om_archetype_base_time_ticks(uint32_t archetype) {
-    /* STUB */
-    (void)archetype;
-    return 0;
+    if (archetype >= OM_MISSION_N_ARCHETYPES) return 0;
+    /* constants-table: docs/bible/algorithms.md ALG-56 (Q-076-01 answer a, minutes table, times 60 seconds/minute) */
+    static const double minutes[OM_MISSION_N_ARCHETYPES] = {
+        3.0, 4.5, 3.5, 4.0, 2.5, 4.5, 3.0, 2.5, 4.0, 3.0,
+    };
+    double ticks = minutes[archetype] * 60.0 * (double)OM_TACTICAL_TICK_RATE;
+    /* end constants-table */
+    return (uint64_t)ticks;
 }
 
 int om_chronicle_has_mission_consequence_flag(const om_world *w) {
@@ -612,9 +621,39 @@ void om_mission_build_candidate_pool(om_world *w) {
     }
 }
 
+/* R-075-01 / S-073 table: one primary objective, weight 1.0, kind from the
+ * archetype's row (docs/bible/epics/E-10-missions.md S-073's "Primary
+ * objective" column). No secondaries yet -- 0 secondaries is a valid count
+ * per R-075-01 ("0 to 3 secondary"), and none of the ten archetypes' S-073
+ * rows describe a secondary objective to build. */
 void om_mission_build_objectives(om_world *w, uint32_t archetype) {
-    /* STUB */
-    (void)w; (void)archetype;
+    om_mission_state *st = om_mis(w);
+    /* constants-table: docs/bible/epics/E-10-missions.md S-073 table (Primary objective column) */
+    static const uint32_t primary_kind[OM_MISSION_N_ARCHETYPES] = {
+        OM_MISSION_OBJ_HOLD_ZONE,        /* Defensive Stand */
+        OM_MISSION_OBJ_DESTROY_TARGETS,  /* Siege Breaking */
+        OM_MISSION_OBJ_HOLD_ZONE,        /* Reconquest (table says hold_zone or destroy_targets) */
+        OM_MISSION_OBJ_DESTROY_TARGETS,  /* Assault */
+        OM_MISSION_OBJ_ELIMINATE_FORCE,  /* Suppression */
+        OM_MISSION_OBJ_HOLD_ZONE,        /* Multi-Front Defense */
+        OM_MISSION_OBJ_DESTROY_TARGETS,  /* Interception */
+        OM_MISSION_OBJ_ESCORT_TO_EXTRACTION, /* Evacuation */
+        OM_MISSION_OBJ_HOLD_ZONE,        /* Containment */
+        OM_MISSION_OBJ_ELIMINATE_FORCE,  /* Counterinsurgency */
+    };
+    /* end constants-table */
+
+    memset(st->objectives, 0, sizeof(st->objectives));
+    st->n_objectives = 0;
+    uint32_t kind = (archetype < OM_MISSION_N_ARCHETYPES) ? primary_kind[archetype] : OM_MISSION_OBJ_HOLD_ZONE;
+
+    om_mission_objective *o = &st->objectives[0];
+    o->spec.id = 0;
+    o->spec.kind = kind;
+    o->spec.is_primary = 1;
+    o->spec.weight = 1.0;
+    o->used = 1;
+    st->n_objectives = 1;
 }
 
 int om_mission_can_edit_loadout(const om_world *w) {
@@ -639,9 +678,17 @@ uint32_t om_mission_candidates(const om_world *w, om_mission_candidate *out, uin
     return n;
 }
 
+/* R-075-07: first of every primary objective complete or failed, the time
+ * limit reached, or the player's force eliminated. Termination context is
+ * one flat scalar set (om_mission_setup_termination) -- a single active
+ * mission per world, same model as mission_region/mission_archetype above. */
 int om_mission_check_terminated(const om_world *w, uint32_t p1) {
-    /* STUB */
-    (void)w; (void)p1;
+    (void)p1;
+    const om_mission_state *st = om_mis_ro(w);
+    if (!st) return 0;
+    if (st->term_primary_complete || st->term_primary_failed) return 1;
+    if (st->term_tick >= st->term_time_limit) return 1;
+    if (!st->term_player_alive) return 1;
     return 0;
 }
 
@@ -763,10 +810,14 @@ double om_mission_compute_retention(double deployed_power, double surviving_powe
     return 0.0;
 }
 
+/* R-076-01 / ALG-56: limit = max(B * (1 - TIME_PRESSURE_SCALING * u),
+ * TIME_LIMIT_FLOOR_PCT * B). */
 uint64_t om_mission_compute_time_limit(uint64_t B, double u) {
-    /* STUB */
-    (void)B; (void)u;
-    return 0;
+    double b = (double)B;
+    double candidate = b * (1.0 - OM_TIME_PRESSURE_SCALING * u);
+    double floor_val = b * OM_TIME_LIMIT_FLOOR_PCT;
+    double limit = candidate > floor_val ? candidate : floor_val;
+    return (uint64_t)(limit + 0.5);
 }
 
 double om_mission_compute_urgency(const om_world *w, uint32_t region_idx, uint32_t archetype) {
@@ -811,9 +862,13 @@ double om_mission_compute_urgency(const om_world *w, uint32_t region_idx, uint32
     return om_mis_clamp01(urgency);
 }
 
+/* R-076-03: freezes the clock. Objective completion values are already
+ * whatever they were last set to (om_mission_get_objective_score reads
+ * them directly, with no time term), so this only needs to stop
+ * om_mission_is_ended from re-deriving "ended" off the clock afterward. */
 void om_mission_end(om_world *w) {
-    /* STUB */
-    (void)w;
+    om_mission_state *st = om_mis(w);
+    st->tactical_ended = 1;
 }
 
 int32_t om_mission_eval_commander_fate(double hp, double max_hp) {
@@ -822,33 +877,60 @@ int32_t om_mission_eval_commander_fate(double hp, double max_hp) {
     return 0;
 }
 
+/* R-075-03: completion = destroyed designated targets / total. */
 double om_mission_eval_destroy_targets(om_world *w, uint32_t objective_idx, uint32_t destroyed) {
-    /* STUB */
-    (void)w; (void)objective_idx; (void)destroyed;
-    return 0.0;
+    om_mission_state *st = om_mis(w);
+    om_mission_objective *o = om_mission_ensure_objective(st, objective_idx);
+    if (!o) return 0.0;
+    double c = (o->destroy_total > 0) ? (double)destroyed / (double)o->destroy_total : 0.0;
+    o->spec.completion = c;
+    return c;
 }
 
+/* R-075-06: completion = enemy HP destroyed / initial enemy HP. */
 double om_mission_eval_eliminate(om_world *w, uint32_t objective_idx, double hp_destroyed) {
-    /* STUB */
-    (void)w; (void)objective_idx; (void)hp_destroyed;
-    return 0.0;
+    om_mission_state *st = om_mis(w);
+    om_mission_objective *o = om_mission_ensure_objective(st, objective_idx);
+    if (!o) return 0.0;
+    double c = (o->eliminate_initial_hp > 0.0) ? hp_destroyed / o->eliminate_initial_hp : 0.0;
+    o->spec.completion = c;
+    return c;
 }
 
+/* R-075-04: completion = escort units that reached extraction alive / total. */
 double om_mission_eval_escort(om_world *w, uint32_t objective_idx, uint32_t reached_alive) {
-    /* STUB */
-    (void)w; (void)objective_idx; (void)reached_alive;
-    return 0.0;
+    om_mission_state *st = om_mis(w);
+    om_mission_objective *o = om_mission_ensure_objective(st, objective_idx);
+    if (!o) return 0.0;
+    double c = (o->escort_total > 0) ? (double)reached_alive / (double)o->escort_total : 0.0;
+    o->spec.completion = c;
+    return c;
 }
 
+/* R-075-02: the hold timer advances only while no enemy unit is inside the
+ * zone radius; completion = elapsed / required. */
 void om_mission_eval_hold_zone(om_world *w, uint32_t objective_idx, uint32_t enemies_inside) {
-    /* STUB */
-    (void)w; (void)objective_idx; (void)enemies_inside;
+    om_mission_state *st = om_mis(w);
+    om_mission_objective *o = om_mission_ensure_objective(st, objective_idx);
+    if (!o) return;
+    if (enemies_inside == 0) o->hold_elapsed_ticks++;
+    if (o->hold_required_ticks > 0) {
+        o->spec.completion = (double)o->hold_elapsed_ticks / (double)o->hold_required_ticks;
+    }
 }
 
+/* R-075-05: completion = elapsed / required, 0 if every player unit is
+ * dead before the time. */
 double om_mission_eval_survive(om_world *w, uint32_t objective_idx, uint64_t elapsed_ticks, int player_alive) {
-    /* STUB */
-    (void)w; (void)objective_idx; (void)elapsed_ticks; (void)player_alive;
-    return 0.0;
+    om_mission_state *st = om_mis(w);
+    om_mission_objective *o = om_mission_ensure_objective(st, objective_idx);
+    if (!o) return 0.0;
+    double c = 0.0;
+    if (player_alive && o->survive_required_ticks > 0) {
+        c = (double)elapsed_ticks / (double)o->survive_required_ticks;
+    }
+    o->spec.completion = c;
+    return c;
 }
 
 uint32_t om_mission_fallback_archetype(const om_world *w) {
@@ -1005,21 +1087,35 @@ double om_mission_get_enemy_power(const om_world *w) {
 }
 
 double om_mission_get_objective_completion(const om_world *w, uint32_t objective_idx) {
-    /* STUB */
-    (void)w; (void)objective_idx;
-    return 0.0;
+    const om_mission_state *st = om_mis_ro(w);
+    if (!st || objective_idx >= OM_MISSION_MAX_OBJECTIVES || !st->objectives[objective_idx].used) return 0.0;
+    return st->objectives[objective_idx].spec.completion;
 }
 
+/* ALG-58 objective_score = sum weight * (0 if failed else completion); the
+ * "no time bonus" half of R-076-03 falls out for free -- nothing here reads
+ * a tick or a deadline, so ending early or late never changes the value. */
 double om_mission_get_objective_score(const om_world *w) {
-    /* STUB */
-    (void)w;
-    return 0.0;
+    const om_mission_state *st = om_mis_ro(w);
+    if (!st) return 0.0;
+    double score = 0.0;
+    for (uint32_t i = 0; i < st->n_objectives && i < OM_MISSION_MAX_OBJECTIVES; i++) {
+        const om_mission_objective *o = &st->objectives[i];
+        if (!o->used) continue;
+        score += o->spec.weight * (o->spec.is_failed ? 0.0 : o->spec.completion);
+    }
+    return score;
 }
 
 uint32_t om_mission_get_objectives(const om_world *w, om_objective_spec *out, uint32_t max) {
-    /* STUB */
-    (void)w; (void)out; (void)max;
-    return 0;
+    const om_mission_state *st = om_mis_ro(w);
+    if (!st) return 0;
+    uint32_t n = st->n_objectives < max ? st->n_objectives : max;
+    if (n > OM_MISSION_MAX_OBJECTIVES) n = OM_MISSION_MAX_OBJECTIVES;
+    if (out) {
+        for (uint32_t i = 0; i < n; i++) out[i] = st->objectives[i].spec;
+    }
+    return n;
 }
 
 double om_mission_get_player_parity(const om_world *w) {
@@ -1065,10 +1161,18 @@ void om_mission_inject_candidate(om_world *w, uint32_t region_idx, uint32_t arch
     c->score = score;
 }
 
+/* R-076-03: ended once the deadline passes (or om_mission_end froze it
+ * early). om_tactical_tick takes a non-const om_world* as a getter-only
+ * call (it never allocates or mutates when tactical state already exists);
+ * casting the const away here follows the same precedent as
+ * csrc/generational.c's om_rng_draw((om_world *)w) calls. */
 int om_mission_is_ended(const om_world *w) {
-    /* STUB */
-    (void)w;
-    return 0;
+    const om_mission_state *st = om_mis_ro(w);
+    if (!st) return 0;
+    if (st->tactical_ended) return 1;
+    uint64_t now = om_tactical_tick((om_world *)w);
+    uint64_t elapsed = now - st->tactical_baseline_tick;
+    return elapsed >= st->tactical_time_limit ? 1 : 0;
 }
 
 void om_mission_load_launch_library(om_world *w) {
@@ -1098,9 +1202,8 @@ void om_mission_load_launch_library(om_world *w) {
 }
 
 uint32_t om_mission_objective_count(const om_world *w) {
-    /* STUB */
-    (void)w;
-    return 0;
+    const om_mission_state *st = om_mis_ro(w);
+    return st ? st->n_objectives : 0;
 }
 
 void om_mission_resolve_refusal(om_world *w, uint32_t region_idx) {
@@ -1191,8 +1294,10 @@ void om_mission_set_lineage_context(om_world *w, uint32_t region_idx, double lin
 }
 
 void om_mission_set_objective_completion(om_world *w, uint32_t objective_idx, double completion) {
-    /* STUB */
-    (void)w; (void)objective_idx; (void)completion;
+    om_mission_state *st = om_mis(w);
+    om_mission_objective *o = om_mission_ensure_objective(st, objective_idx);
+    if (!o) return;
+    o->spec.completion = completion;
 }
 
 void om_mission_set_player_units(om_world *w, const uint32_t *counts, uint32_t n_types) {
@@ -1226,38 +1331,72 @@ void om_mission_setup(om_world *w, uint32_t p1, uint32_t archetype, int lineage_
 }
 
 void om_mission_setup_destroy_targets(om_world *w, uint32_t objective_idx, uint32_t total) {
-    /* STUB */
-    (void)w; (void)objective_idx; (void)total;
+    om_mission_state *st = om_mis(w);
+    om_mission_objective *o = om_mission_ensure_objective(st, objective_idx);
+    if (!o) return;
+    o->spec.kind = OM_MISSION_OBJ_DESTROY_TARGETS;
+    o->destroy_total = total;
+    o->spec.completion = 0.0;
 }
 
 void om_mission_setup_eliminate(om_world *w, uint32_t objective_idx, double initial_hp) {
-    /* STUB */
-    (void)w; (void)objective_idx; (void)initial_hp;
+    om_mission_state *st = om_mis(w);
+    om_mission_objective *o = om_mission_ensure_objective(st, objective_idx);
+    if (!o) return;
+    o->spec.kind = OM_MISSION_OBJ_ELIMINATE_FORCE;
+    o->eliminate_initial_hp = initial_hp;
+    o->spec.completion = 0.0;
 }
 
 void om_mission_setup_escort(om_world *w, uint32_t objective_idx, uint32_t total) {
-    /* STUB */
-    (void)w; (void)objective_idx; (void)total;
+    om_mission_state *st = om_mis(w);
+    om_mission_objective *o = om_mission_ensure_objective(st, objective_idx);
+    if (!o) return;
+    o->spec.kind = OM_MISSION_OBJ_ESCORT_TO_EXTRACTION;
+    o->escort_total = total;
+    o->spec.completion = 0.0;
 }
 
 void om_mission_setup_hold_zone(om_world *w, uint32_t objective_idx, uint64_t required_ticks) {
-    /* STUB */
-    (void)w; (void)objective_idx; (void)required_ticks;
+    om_mission_state *st = om_mis(w);
+    om_mission_objective *o = om_mission_ensure_objective(st, objective_idx);
+    if (!o) return;
+    o->spec.kind = OM_MISSION_OBJ_HOLD_ZONE;
+    o->hold_required_ticks = required_ticks;
+    o->hold_elapsed_ticks = 0;
+    o->spec.completion = 0.0;
 }
 
 void om_mission_setup_survive(om_world *w, uint32_t objective_idx, uint64_t required_ticks) {
-    /* STUB */
-    (void)w; (void)objective_idx; (void)required_ticks;
+    om_mission_state *st = om_mis(w);
+    om_mission_objective *o = om_mission_ensure_objective(st, objective_idx);
+    if (!o) return;
+    o->spec.kind = OM_MISSION_OBJ_SURVIVE_DURATION;
+    o->survive_required_ticks = required_ticks;
+    o->spec.completion = 0.0;
 }
 
+/* R-076: the tactical clock. Baseline is the tactical tick at setup time,
+ * read through the public om_tactical_tick(w) getter (csrc/unit.c) so
+ * om_mission_is_ended below compares against the same clock the tactical
+ * engine advances -- see that function's note on om_tactical_tick's own
+ * gap (it does not advance on its own without a spawned unit / a step). */
 void om_mission_setup_tactical(om_world *w, uint32_t p1, uint64_t time_limit) {
-    /* STUB */
-    (void)w; (void)p1; (void)time_limit;
+    om_mission_state *st = om_mis(w);
+    (void)p1;
+    st->tactical_time_limit = time_limit;
+    st->tactical_baseline_tick = om_tactical_tick(w);
+    st->tactical_ended = 0;
 }
 
 void om_mission_setup_termination(om_world *w, uint32_t p1, int primary_complete, int p3, uint64_t tick, uint64_t time_limit, int player_alive) {
-    /* STUB */
-    (void)w; (void)p1; (void)primary_complete; (void)p3; (void)tick; (void)time_limit; (void)player_alive;
+    om_mission_state *st = om_mis(w);
+    (void)p1;
+    st->term_primary_complete = primary_complete;
+    st->term_primary_failed = p3;
+    st->term_tick = tick;
+    st->term_time_limit = time_limit;
+    st->term_player_alive = player_alive;
 }
 
 int om_objective_get_center(const om_world *w, uint32_t objective_idx, om_vec2 *out) {
