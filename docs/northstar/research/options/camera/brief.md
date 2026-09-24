@@ -85,3 +85,9 @@ Follow the common template in `../README.md` ("Sub-agent template"). Sections 4 
 - How the five layers read from each view in the option; the Halo Wars height floor holds in every view.
 - Augmented-reality perception and legibility research is an explicit lead for wild options. Read `docs/research/topics/delegated_command_precedents.md` first; a literal Battle Room arena was already judged a bad fit.
 - Unit POV: optional; if an option includes it, say what the player does there.
+
+## 10. Decision (2026-09-23)
+
+Westley, verbatim: "For the camera, I'd like to implement both the layer peel and the angle rack and give the player the option to use the layer peel if they want. I'd also like the users to be able to have a key that "flips" their current perspective 180 degrees, so if they're at 45 pointing south, they can click a key combination and point 45 north (maintaining angle, but swapping perspective relative to some center tbd) Record the decsion with a marker that now that the choice is made that we'll need to dive into control specifics later."
+
+Recorded as: Angle Rack and Layer Peel both, Layer Peel as a player option, plus a 180-degree flip key; control specifics later (Q-103-03, Q-103-04).

@@ -74,3 +74,9 @@ Follow the common template in `../README.md` ("Sub-agent template"). Sections 4 
 - Primary prior art: StarCraft 2's built-in AI difficulty levels. Research how those opponents decide and play at each level, with citations; no learned model, no LLM.
 - The knob changes how much the enemy has, not how it behaves, for now. Cheating vision never happens at any difficulty.
 - Each option says what the player chooses, what changes in the first ten minutes from easy to hard, and how a loss on hard still reads as the player's own limit.
+
+## 10. Decision (2026-09-23)
+
+Westley, verbatim: "For enemy macro, I don't like either of those. I think that there are two places that we need to scale the AI's ability: economic prosperity (more resources), and multi-layer intelligence. I had an idea that I want you to record as a desired piece of the layer system: players can invest (though costly) in units that give them better vision, a unit like the units in Starcraft that were invisible, but could see. The intelligent player gets one but has a slightly smaller army, but wins the fight because they knew where the opponents army was and created an intelligent surround with units on specific layers organized so that the opponent couldn't see it until it was too late. This is something the AI's should strive for when they're on hard mode, positional awareness and awareness of what combination of units would need to be on what layers in order to trump the other player's units given what layers those units are on."
+
+Recorded as: Neither. Difficulty scales the enemy's economic prosperity and its multi-layer intelligence; a costly seer unit is a desired piece of the layer system (Q-125-02, Q-125-03, Q-E12-01).

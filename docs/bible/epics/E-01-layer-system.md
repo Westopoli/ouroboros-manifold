@@ -142,20 +142,22 @@ Rules
 
 Inputs: attacker layer, target layer, range, visibility.
 Outputs: attack events; HP changes in the tick delta.
-Open flags: Q-008-01 (blocking; this story cannot be tested until answered).
+Open flags: Q-008-01 (prototype: same-layer only), Q-008-02 (the cross-layer damage and vision design and its research program; the game's most important undefined mechanic).
 
 ### S-009 — I can see what layer every unit is on
 As a commander, I want to see at a glance which layer each unit is on and which layer I am focused on, so that I never have to guess who can see whom.
 
 Rules
 - R-009-01  Given any unit on screen, When the player looks at it, Then a ring under the unit shows one color per layer, and the color changes on the tick the unit's layer changes.
-- R-009-02  Given a unit with a layer preference, When the player looks at it, Then a second, smaller indicator shows the preferred layer's color, distinct from the current-layer ring [A-299: exact visual pending Track R research; a stand-in indicator is acceptable until then].
+- R-009-02  Given a unit toggled toward another layer, When the player looks at it, Then the target disc on its spindle (R-009-05) gains an outline and a chevron, a waypoint-like mark of where it is going, distinct from the lit current-layer disc.
+- R-009-05  Given any unit on screen, When drawn, Then a thin rod beside it carries five small discs, one per layer, the unit's own disc lit at about 50 percent, adjacent discs at 10 to 20 percent, discs two away at 5 percent (the Floor Spindle); and its grid tiers are flat discs that tilt to the ground's slope at each layer's height (Terrace Reading). Both are subdued, never loud, and never block the view of the battlefield behind them.
+- R-009-06  Given units hidden from the player by the current perspective (behind terrain or another layer's ground), When the player looks at the scene, Then something tells them they are not seeing the whole picture [Q-009-02: the mechanism, such as a small mark on the occluding units].
 - R-009-03  Given the layer strip on the HUD, When the player clicks a layer or presses Tab, Then the focused layer changes and the strip highlights the new one.
 - R-009-04  Given the same selection and camera, When a T2 screenshot is taken, Then the ring colors match the sim's per-unit layer field for every unit in view.
 
 Inputs: unit layer, preferred layer; focus click or Tab.
-Outputs: ring color per unit; preference indicator; focused layer on the strip.
-Open flags: Q-009-01 (what focus does mechanically). Reference required: `references/E-01/notes.md`, missing.
+Outputs: ring color per unit; spindle and terrace discs; target mark; focused layer on the strip.
+Open flags: Q-009-02 (the occlusion indicator). Q-009-01 is closed: focus is purely visual, other layers dim slightly. Look chosen through the options pass, `docs/northstar/research/options/layer-system/`, Q-E01-08; Godot renders of it fill `references/E-01/notes.md`.
 
 ### S-010 — Layers read as height on screen
 As a commander, I want a unit on a higher layer to sit visibly higher than one on a lower layer, so that the layer stack reads as a stack and not as a color code.
