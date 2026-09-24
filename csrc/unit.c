@@ -392,6 +392,9 @@ typedef struct {
      * stay put. Not saved: tactical_state has no write hook, and the next
      * step recomputes it. See also: om_tactical_tick_period. */
     uint32_t            tick_period_ticks;
+    /* Sum of every step's period since the last reset: real battle time in
+     * base ticks (== current_tick at period 1). See also: om_tactical_base_tick. */
+    uint64_t            base_tick;
     int                 abilities_disabled;
     uint64_t            validated_tick;
     om_grid             grid;
@@ -1709,6 +1712,7 @@ uint64_t om_tactical_step(om_world *w) {
     if (!ro || ro->n_units == 0) return ro ? ro->current_tick : 0;
     st = om_tac(w);
     om_tac_update_period(st);
+    st->base_tick += st->tick_period_ticks;
     om_tac_refresh_positions(w, st);
     om_tactical_ai_tick(w, st);
     om_tactical_apply_aura_regen(w);
@@ -1849,10 +1853,11 @@ void om_tactical_reset(om_world *w) {
 uint64_t om_tactical_run(om_world *w, uint64_t n_ticks) {
     uint64_t done = 0;
     while (done < n_ticks) {
-        const om_tac_state *ro;
+        uint64_t before = om_tactical_base_tick(w);
+        uint64_t after;
         om_tactical_step(w);
-        ro = om_tac_ro(w);
-        done += ro ? om_tac_period(ro) : 1;
+        after = om_tactical_base_tick(w);
+        done += after > before ? after - before : 1;
     }
     return n_ticks;
 }
@@ -1860,12 +1865,13 @@ uint64_t om_tactical_run(om_world *w, uint64_t n_ticks) {
 uint64_t om_tactical_run_until_eliminated(om_world *w) {
     uint64_t ticks = 0;
     om_tac_state *st = om_tac(w);
+    uint64_t start = st->base_tick;
     double lowest_hp = om_tactical_total_hp(st);
     uint64_t last_progress = 0;
     while (ticks < OM_TACTICAL_MAX_RUN_TICKS && om_tactical_multiple_factions_alive(st)) {
         double hp;
         om_tactical_step(w);
-        ticks += om_tac_period(st);
+        ticks = st->base_tick - start;
         hp = om_tactical_total_hp(st);
         if (hp < lowest_hp - OM_TIE_EPSILON) { lowest_hp = hp; last_progress = ticks; }
         if (ticks - last_progress >= OM_TACTICAL_STALEMATE_TICKS) break;
@@ -1875,14 +1881,14 @@ uint64_t om_tactical_run_until_eliminated(om_world *w) {
 
 uint64_t om_tactical_run_until_engagement_ends(om_world *w, uint32_t unit_id) {
     om_tac_state *st = om_tac(w);
-    uint64_t ticks = 0;
+    uint64_t start = st->base_tick, ticks = 0;
     om_unit_row *u = om_registry_find_in(st, unit_id);
     if (!u) return 0;
     while (ticks < OM_TACTICAL_MAX_RUN_TICKS
            && u->hp > 0.0
            && om_tac_enemy_within_range(st, u, u->attack_range)) {
         om_tactical_step(w);
-        ticks += om_tac_period(st);
+        ticks = st->base_tick - start;
     }
     if (u->unit_type == OM_UT_INTERCEPTOR && u->ability_phase == OM_ABILITY_PHASE_ACTIVE) {
         u->ability_phase = OM_ABILITY_PHASE_IDLE;
@@ -1963,6 +1969,7 @@ uint64_t om_tactical_tick_to(om_world *w, uint64_t tick) {
             om_tactical_step(w);
         } else {
             st->current_tick++;
+            st->base_tick++;
             om_macro_tick(w, st->current_tick);
             om_support_tick(w);
         }
@@ -2403,8 +2410,7 @@ uint32_t om_tactical_tick_period(const om_world *w) {
     return st ? om_tac_period(st) : 1;
 }
 uint64_t om_tactical_base_tick(const om_world *w) {
-    /* STUB */
-    (void)w;
-    return 0;
+    const om_tac_state *st = w ? om_tac_ro(w) : NULL;
+    return st ? st->base_tick : 0;
 }
 /* ---- end generated stubs ---- */
