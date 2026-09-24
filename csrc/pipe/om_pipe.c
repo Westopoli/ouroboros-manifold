@@ -1105,6 +1105,12 @@ static void handle_mission_start(const char *json) {
     write_mission(archetype, region, om_mission_get_time_limit(W));
 }
 
+/* R-092-02: during recon (the mission phase holds, mission_begin not yet
+ * sent) the mission clock has not started and no unit moves. */
+static int in_recon(void) {
+    return om_chapter_mission_realtime(W) && !om_mission_is_started(W);
+}
+
 static void handle_mission_begin(void) {
     if (!W) {
         write_error("mission_begin", "no world");
@@ -1127,12 +1133,6 @@ static void handle_mission_end(void) {
     write_debrief();
     om_chapter_set_phase(W, OM_PIPE_CHAPTER_PHASE_BRIEFING);
     write_snapshot();
-}
-
-/* R-092-02: during recon (the mission phase holds, mission_begin not yet
- * sent) the mission clock has not started and no unit moves. */
-static int in_recon(void) {
-    return om_chapter_mission_realtime(W) && !om_mission_is_started(W);
 }
 
 static void handle_tactical_step(const char *json) {
