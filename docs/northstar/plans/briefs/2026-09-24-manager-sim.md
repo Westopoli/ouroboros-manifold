@@ -8,7 +8,7 @@ First action in the chat: when the rate-limit prompt ever appears, choose "wait 
 
 A dependency counts as met when its branch is on origin (`git ls-remote --heads origin 'push/*'`), not only when it is tagged or merged: the leaf bases on or merges that branch (see leaf-mechanics.md). Only a dependency that has not been pushed at all blocks a piece. Landing on main is M0's serialized step and never gates starting work.
 
-Take the next piece in the list below whose dependencies are tagged (`git fetch --tags; git tag -l 'attach/*'`) or merged as increments (ledger). One Sonnet leaf per piece, in its own worktree, direct (no overlord, no shard testers). Never two live leaves on one file. When a leaf reports, forward the report to M0 in one message (`SendMessage` to `parallel-backend-client-mvp`: branch, sha, green/red counts, leftovers, test defects, missing constants) and take the next piece. Do not spawn for a piece whose branch already exists on origin unless M0 asked for an increment.
+Take the next piece in the list below whose dependencies are tagged (`git fetch --tags; git tag -l 'attach/*'`) or merged as increments (ledger). One leaf per piece, in its own worktree, direct (no overlord, no shard testers), spawned with `subagent_type: sonnet46-doer` (Sonnet 4.6, pinned by the agent definition) — never the bare `sonnet` alias, which resolves to Sonnet 5. Never two live leaves on one file. When a leaf reports, forward the report to M0 in one message (`SendMessage` to `parallel-backend-client-mvp`: branch, sha, green/red counts, leftovers, test defects, missing constants) and take the next piece. Do not spawn for a piece whose branch already exists on origin unless M0 asked for an increment.
 
 ## Queue on 2026-09-24 (in order)
 
