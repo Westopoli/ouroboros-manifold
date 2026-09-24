@@ -1,5 +1,7 @@
 extends Control
 
+const SimSession := preload("res://autoload/sim_session.gd")
+
 const CURRENT_SAVE_VERSION := 1
 
 var _slot_list: VBoxContainer
@@ -11,7 +13,7 @@ var _bridge_rows: Array = []
 
 func _ready() -> void:
 	_build_ui()
-	qa_set_bridge(load("res://autoload/c_bridge.gd").new())
+	qa_set_bridge(SimSession.bridge())
 
 
 func _input(event: InputEvent) -> void:
@@ -265,8 +267,8 @@ func qa_set_bridge(bridge) -> void:
 
 # Replaces the legacy UIDataBus cards with one row per bridge slot: the row
 # text, and a LOAD button (disabled for a refused save) that loads the slot
-# through the bridge. Routing a loaded slot into the galaxy needs C2-4's
-# persistent pipe session, so a click only loads and reports a refusal.
+# through the bridge and, once loaded, opens the galaxy on that world (the
+# shared session keeps it); a refusal is shown on the row.
 func _render_bridge_rows() -> void:
 	for child in _slot_list.get_children():
 		if child != _empty_label:
@@ -283,10 +285,13 @@ func _render_bridge_rows() -> void:
 		load_btn.text = "LOAD"
 		load_btn.disabled = bool(row["refused"])
 		var slot_id: String = row["slot"]
+		load_btn.name = "Load_" + slot_id
 		load_btn.pressed.connect(func():
 			var snap: Dictionary = _bridge.load(slot_id)
 			if snap.is_empty():
 				label.text = "%s -- %s" % [row["label_text"], _bridge.last_error()]
+			else:
+				SceneRouter.go_to("galaxy")
 		)
 		box.add_child(load_btn)
 		_slot_list.add_child(box)
