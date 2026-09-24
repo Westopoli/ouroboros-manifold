@@ -75,7 +75,7 @@ func _load_live_snapshot() -> void:
 	var seed_str := _arg_value(OS.get_cmdline_user_args(), "--seed")
 	var seed := int(seed_str) if seed_str != "" else DEFAULT_SEED
 	_bridge = SimSession.bridge()
-	if not _bridge.ensure_session(seed, CBridge.DEFAULT_N_REGIONS, CBridge.DEFAULT_FEATURES):
+	if not _bridge.ensure_world(seed, CBridge.DEFAULT_N_REGIONS, CBridge.DEFAULT_FEATURES):
 		push_error("galaxy_view: live snapshot failed: %s" % _bridge.last_error())
 		_bridge = null
 		return

@@ -212,8 +212,9 @@ func open_session(seed: int, n_regions: int, features: Array) -> bool:
 	_mutex.unlock()
 	_reader = Thread.new()
 	_reader.start(_reader_loop)
-	send_command({"type": "cmd", "name": "set_seed", "seed": seed, "n_regions": n_regions, "features": features})
-	send_command({"type": "cmd", "name": "snapshot"})
+	if n_regions > 0:
+		send_command({"type": "cmd", "name": "set_seed", "seed": seed, "n_regions": n_regions, "features": features})
+		send_command({"type": "cmd", "name": "snapshot"})
 	return true
 
 
@@ -337,8 +338,22 @@ func ensure_session(seed: int, n_regions: int, features: Array) -> bool:
 	return true
 
 
+# A session for commands that need no world (list_saves): opened without one
+# (n_regions 0 skips set_seed) so the main menu does not generate a galaxy
+# just to list saves.
 func _ensure_any_session() -> bool:
-	return _session_pid > 0 or ensure_session(live_seed(), DEFAULT_N_REGIONS, DEFAULT_FEATURES)
+	return _session_pid > 0 or open_session(0, 0, [])
+
+
+func has_world() -> bool:
+	return not (_snapshot.get("regions", []) as Array).is_empty()
+
+
+# The world the scenes read: the one already open (a new game, or a loaded
+# save) if there is one, else a fresh world for these arguments. ensure_session
+# is the stricter form that reopens when the arguments differ.
+func ensure_world(seed: int, n_regions: int, features: Array) -> bool:
+	return has_world() or ensure_session(seed, n_regions, features)
 
 
 # Sends the commands, pumps until the first frame of every type in want has
@@ -380,7 +395,7 @@ func _ensure_mission() -> bool:
 # running (one already running is reused), then autosaved (R-111-01).
 func load_mission_live(seed: int, n_regions: int, features: Array) -> bool:
 	_mission = {}
-	if not ensure_session(seed, n_regions, features) or not _ensure_mission() or not _autosave():
+	if not ensure_world(seed, n_regions, features) or not _ensure_mission() or not _autosave():
 		return false
 	_mission = _session_mission
 	return true
@@ -390,7 +405,7 @@ func load_mission_live(seed: int, n_regions: int, features: Array) -> bool:
 # none is running), then autosaves.
 func load_debrief_live(seed: int, n_regions: int, features: Array) -> bool:
 	_debrief = {}
-	if not ensure_session(seed, n_regions, features) or not _ensure_mission():
+	if not ensure_world(seed, n_regions, features) or not _ensure_mission():
 		return false
 	var frames: Dictionary = _request([{"type": "cmd", "name": "mission_end"}], ["debrief", "snapshot"])
 	if frames.is_empty() or not _autosave():
@@ -404,7 +419,7 @@ func load_debrief_live(seed: int, n_regions: int, features: Array) -> bool:
 func load_chronicle_live(seed: int, n_regions: int, features: Array) -> bool:
 	_chronicle = {}
 	_chronicle_snapshot = {}
-	if not ensure_session(seed, n_regions, features):
+	if not ensure_world(seed, n_regions, features):
 		return false
 	var frames: Dictionary = _request([{"type": "cmd", "name": "jump", "ticks": 50}], ["chronicle", "snapshot"])
 	if frames.is_empty() or not _autosave():
@@ -417,7 +432,7 @@ func load_chronicle_live(seed: int, n_regions: int, features: Array) -> bool:
 # ... mission_begin, the player's Begin, ends recon and answers the first
 # tactical frame; idempotent once begun. Never autosaved: R-111-04.
 func begin_mission_live(seed: int, n_regions: int, features: Array) -> bool:
-	if not ensure_session(seed, n_regions, features) or not _ensure_mission():
+	if not ensure_world(seed, n_regions, features) or not _ensure_mission():
 		return false
 	if _mission_begun:
 		return true
