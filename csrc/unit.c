@@ -65,6 +65,9 @@
 #define OM_GRID_MAX_DIM 256
 #define OM_GRID_PAD 1e-6
 #define OM_GRID_INSERTION_SORT_MAX 32
+/* om_tac_nearest_hostile: a second-nearest distance within this of the
+ * nearest hands the choice back to the ordered reference scan. */
+#define OM_TIE_SCAN_WINDOW (4.0 * OM_TIE_EPSILON)
 #define OM_MAX_CUSTOM_TYPES 64
 #define OM_UNIT_TYPE_COUNT 6
 
@@ -380,6 +383,10 @@ typedef struct {
     uint64_t            validated_tick;
     om_grid             grid;
     uint32_t           *aura_count;
+    /* units of each type ever spawned since the last reset (a unit's type
+     * never changes): zero means no candidate can match, so the aura and
+     * fortify scans in om_unit_damage_reduction are skipped. */
+    uint32_t            n_wardens, n_bastions;
 } om_tac_state;
 
 static void om_tac_release_arrays(om_tac_state *st) {
@@ -755,6 +762,8 @@ static uint32_t om_unit_spawn_internal(om_world *w, int unit_type, int32_t facti
         row->attack_interval = OM_UNIT_FALLBACK_INTERVAL;
         row->attack_range = OM_UNIT_FALLBACK_RANGE;
     }
+    if (unit_type == OM_UT_WARDEN) st->n_wardens++;
+    if (unit_type == OM_UT_BASTION) st->n_bastions++;
     st->grid.cell_of[st->n_units - 1] = OM_GRID_UNLINKED;
     om_grid_sync(st, st->n_units - 1);
     return row->unit_id;
@@ -816,6 +825,10 @@ static double om_warden_aura_reduction_for(om_tac_state *st, const om_unit_row *
     int n = 0;
     double undamaged_factor;
     om_grid_iter it;
+    if (st->n_wardens == 0) {
+        if (!st->grid.built) om_grid_rebuild(st);
+        return 0.0;
+    }
     om_grid_iter_begin_st(&it, st, target->x, target->y, (double)OM_WARDEN_AURA_RADIUS);
     while ((id = om_grid_iter_next(&it)) != 0) {
         const om_unit_row *cand = &st->units[id - 1];
@@ -865,12 +878,79 @@ static void om_tactical_apply_aura_regen(om_world *w) {
  * this way). Ability id == unit_type (1:1, OMAbility in the test file
  * matches OMUnitType by declared order). */
 
-static int om_tac_enemy_within_range(om_tac_state *st, const om_unit_row *self, double range) {
+/* The unit ids ascend in the old sorted scan and only a strictly smaller
+ * distance replaced the best, so the answer is the lowest id at the minimum
+ * distance; the unordered grid walk reaches it by comparing (d2, id). */
+static om_unit_row *om_tac_nearest_enemy_within_range(om_tac_state *st, const om_unit_row *self, double range) {
+    om_unit_row *best = NULL;
+    double best_d2 = 0.0;
     uint32_t id;
     om_grid_iter it;
     om_grid_iter_begin_st(&it, st, self->x, self->y, range);
     while ((id = om_grid_iter_next(&it)) != 0) {
-        const om_unit_row *cand = &st->units[id - 1];
+        om_unit_row *cand = &st->units[id - 1];
+        double dx, dy, d2;
+        if (cand->hp <= 0.0) continue;
+        if (cand->faction_id == self->faction_id) continue;
+        if (cand->layer != self->layer) continue;
+        dx = cand->x - self->x; dy = cand->y - self->y; d2 = dx * dx + dy * dy;
+        if (!best || d2 < best_d2 || (d2 == best_d2 && id < best->unit_id)) { best = cand; best_d2 = d2; }
+    }
+    return best;
+}
+
+/* Cell range a circle query covers (the same one om_grid_iter_begin_st
+ * computes) plus the cell holding the query centre, which callers walk first:
+ * a near hit there lets the rest be skipped or pruned. Returns 0 when there
+ * is no grid. */
+typedef struct {
+    int32_t cx0, cx1, cy0, cy1, hx, hy;
+} om_cell_span;
+
+static int om_grid_span(om_tac_state *st, double x, double y, double r, om_cell_span *sp) {
+    const om_grid *g = &st->grid;
+    double reach = (r < 0.0 ? -r : r) + OM_GRID_PAD;
+    if (!g->built) om_grid_rebuild(st);
+    if (!g->built) return 0;
+    sp->cx0 = om_grid_coord(x - reach, g->ox, g->cell, g->cols);
+    sp->cx1 = om_grid_coord(x + reach, g->ox, g->cell, g->cols);
+    sp->cy0 = om_grid_coord(y - reach, g->oy, g->cell, g->rows);
+    sp->cy1 = om_grid_coord(y + reach, g->oy, g->cell, g->rows);
+    sp->hx = om_grid_coord(x, g->ox, g->cell, g->cols);
+    sp->hy = om_grid_coord(y, g->oy, g->cell, g->rows);
+    return 1;
+}
+
+/* Squared distance from (x, y) to the rectangle a grid cell covers, widened
+ * by OM_GRID_PAD; the outermost cells also hold every unit clamped into them
+ * from beyond the grid box, so they are unbounded outward. */
+static double om_grid_cell_gap2(const om_grid *g, int32_t cx, int32_t cy, double x, double y) {
+    double dx = 0.0, dy = 0.0, lo, hi;
+    if (cx > 0) {
+        lo = g->ox + (double)cx * g->cell - OM_GRID_PAD;
+        if (x < lo) dx = lo - x;
+    }
+    if (cx < g->cols - 1) {
+        hi = g->ox + (double)(cx + 1) * g->cell + OM_GRID_PAD;
+        if (x > hi) dx = x - hi;
+    }
+    if (cy > 0) {
+        lo = g->oy + (double)cy * g->cell - OM_GRID_PAD;
+        if (y < lo) dy = lo - y;
+    }
+    if (cy < g->rows - 1) {
+        hi = g->oy + (double)(cy + 1) * g->cell + OM_GRID_PAD;
+        if (y > hi) dy = y - hi;
+    }
+    return dx * dx + dy * dy;
+}
+
+static int om_tac_enemy_in_cell(om_tac_state *st, const om_unit_row *self, double range, uint32_t cell) {
+    const om_grid *g = &st->grid;
+    uint32_t cur;
+    for (cur = g->head[cell]; cur; cur = g->next[cur - 1]) {
+        const om_unit_row *cand = &st->units[cur - 1];
+        if (!om_tac_dist_le(cand->x - self->x, cand->y - self->y, range)) continue;
         if (cand->hp <= 0.0) continue;
         if (cand->faction_id == self->faction_id) continue;
         if (cand->layer != self->layer) continue;
@@ -879,21 +959,22 @@ static int om_tac_enemy_within_range(om_tac_state *st, const om_unit_row *self, 
     return 0;
 }
 
-static om_unit_row *om_tac_nearest_enemy_within_range(om_tac_state *st, const om_unit_row *self, double range) {
-    om_unit_row *best = NULL;
-    double best_d2 = 0.0;
-    uint32_t ids[st->n_units + 1];
-    uint32_t j, n = om_grid_query_st(st, self->x, self->y, range, ids, st->n_units);
-    for (j = 0; j < n; j++) {
-        om_unit_row *cand = &st->units[ids[j] - 1];
-        double dx, dy, d2;
-        if (cand->hp <= 0.0) continue;
-        if (cand->faction_id == self->faction_id) continue;
-        if (cand->layer != self->layer) continue;
-        dx = cand->x - self->x; dy = cand->y - self->y; d2 = dx * dx + dy * dy;
-        if (!best || d2 < best_d2) { best = cand; best_d2 = d2; }
+/* Any-of, so the walk order is free: the unit's own cell first, cells the
+ * circle cannot reach skipped. */
+static int om_tac_enemy_within_range(om_tac_state *st, const om_unit_row *self, double range) {
+    const om_grid *g = &st->grid;
+    om_cell_span sp;
+    int32_t cx, cy;
+    if (!om_grid_span(st, self->x, self->y, range, &sp)) return 0;
+    if (om_tac_enemy_in_cell(st, self, range, (uint32_t)sp.hy * (uint32_t)g->cols + (uint32_t)sp.hx)) return 1;
+    for (cy = sp.cy0; cy <= sp.cy1; cy++) {
+        for (cx = sp.cx0; cx <= sp.cx1; cx++) {
+            if (cx == sp.hx && cy == sp.hy) continue;
+            if (om_grid_cell_gap2(g, cx, cy, self->x, self->y) > range * range) continue;
+            if (om_tac_enemy_in_cell(st, self, range, (uint32_t)cy * (uint32_t)g->cols + (uint32_t)cx)) return 1;
+        }
     }
-    return best;
+    return 0;
 }
 
 static int om_tac_enemy_category_within(om_tac_state *st, const om_unit_row *self, int category, double range) {
@@ -1243,7 +1324,9 @@ static int om_tac_within(const om_unit_row *a, const om_unit_row *b, double r) {
     return om_tac_dist_le(a->x - b->x, a->y - b->y, r);
 }
 
-static om_unit_row *om_tac_nearest_hostile(om_tac_state *st, const om_unit_row *self, double radius) {
+/* The reference scan: candidates in ascending id order, a later one replaces
+ * the best only when closer by more than OM_TIE_EPSILON. */
+static om_unit_row *om_tac_nearest_hostile_ordered(om_tac_state *st, const om_unit_row *self, double radius) {
     om_unit_row *best = NULL;
     double best_d2 = 0.0;
     uint32_t ids[st->n_units + 1];
@@ -1257,6 +1340,78 @@ static om_unit_row *om_tac_nearest_hostile(om_tac_state *st, const om_unit_row *
         if (!best || d2 < best_d2 - OM_TIE_EPSILON) { best = cand; best_d2 = d2; }
     }
     return best;
+}
+
+typedef struct {
+    om_unit_row *best;
+    double       best_d2, next_d2;
+    int          have_next;
+} om_nearest_acc;
+
+static void om_tac_nearest_scan_cell(om_tac_state *st, const om_unit_row *self, double radius, uint32_t cell, om_nearest_acc *acc) {
+    const om_grid *g = &st->grid;
+    uint32_t cur;
+    for (cur = g->head[cell]; cur; cur = g->next[cur - 1]) {
+        om_unit_row *cand = &st->units[cur - 1];
+        double dx = cand->x - self->x, dy = cand->y - self->y, d2;
+        if (!om_tac_dist_le(dx, dy, radius)) continue;
+        if (cand->hp <= 0.0 || cand->stealth) continue;
+        if (!om_tac_hostile(self, cand) || cand->layer != self->layer) continue;
+        d2 = dx * dx + dy * dy;
+        if (!acc->best) {
+            acc->best = cand; acc->best_d2 = d2;
+        } else if (d2 < acc->best_d2) {
+            acc->next_d2 = acc->best_d2; acc->have_next = 1;
+            acc->best = cand; acc->best_d2 = d2;
+        } else if (d2 == acc->best_d2) {
+            if (cand->unit_id < acc->best->unit_id) acc->best = cand;
+        } else if (!acc->have_next || d2 < acc->next_d2) {
+            acc->next_d2 = d2; acc->have_next = 1;
+        }
+    }
+}
+
+/* Same answer as the reference scan without sorting the candidates. When no
+ * candidate lies within OM_TIE_SCAN_WINDOW above the minimum distance m, the
+ * candidates are the ones at exactly m and ones too far to hold the best
+ * against a first candidate at m, so the reference scan ends on the lowest id
+ * at m. A candidate inside the window makes the answer depend on the whole
+ * id-order chain, and the reference scan runs instead. The unit's own cell is
+ * walked first, then every other cell in range unless the cell's nearest edge
+ * is already farther than the best plus the window: nothing in it can be the
+ * answer or sit inside the window. */
+static om_unit_row *om_tac_nearest_hostile(om_tac_state *st, const om_unit_row *self, double radius) {
+    const om_grid *g = &st->grid;
+    om_nearest_acc acc = { NULL, 0.0, 0.0, 0 };
+    om_cell_span sp;
+    int32_t cx, cy;
+    if (!om_grid_span(st, self->x, self->y, radius, &sp)) return NULL;
+    om_tac_nearest_scan_cell(st, self, radius, (uint32_t)sp.hy * (uint32_t)g->cols + (uint32_t)sp.hx, &acc);
+    for (cy = sp.cy0; cy <= sp.cy1; cy++) {
+        for (cx = sp.cx0; cx <= sp.cx1; cx++) {
+            double gap2;
+            if (cx == sp.hx && cy == sp.hy) continue;
+            gap2 = om_grid_cell_gap2(g, cx, cy, self->x, self->y);
+            if (gap2 > radius * radius) continue;
+            if (acc.best && gap2 > acc.best_d2 + OM_TIE_SCAN_WINDOW) continue;
+            om_tac_nearest_scan_cell(st, self, radius, (uint32_t)cy * (uint32_t)g->cols + (uint32_t)cx, &acc);
+        }
+    }
+    if (acc.have_next && acc.next_d2 - acc.best_d2 <= OM_TIE_SCAN_WINDOW) return om_tac_nearest_hostile_ordered(st, self, radius);
+    return acc.best;
+}
+
+static int om_tac_hostile_within(om_tac_state *st, const om_unit_row *self, double radius) {
+    uint32_t id;
+    om_grid_iter it;
+    om_grid_iter_begin_st(&it, st, self->x, self->y, radius);
+    while ((id = om_grid_iter_next(&it)) != 0) {
+        const om_unit_row *cand = &st->units[id - 1];
+        if (cand->hp <= 0.0 || cand->stealth) continue;
+        if (!om_tac_hostile(self, cand) || cand->layer != self->layer) continue;
+        return 1;
+    }
+    return 0;
 }
 
 static void om_tac_refresh_positions(om_world *w, om_tac_state *st) {
@@ -1486,7 +1641,7 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
     } else if (u->order == OM_ORDER_ATTACK_MOVE) {
         const om_unit_type_profile *prof = om_get_profile(w, u->unit_type);
         om_unit_row *seen;
-        if (om_tac_nearest_hostile(st, u, u->attack_range)) {
+        if (om_tac_hostile_within(st, u, u->attack_range)) {
             om_tac_hold(w, u, 0);
         } else if (prof && prof->sensor_radius > u->attack_range
                    && (seen = om_tac_nearest_hostile(st, u, prof->sensor_radius)) != NULL) {
@@ -1840,6 +1995,8 @@ double om_unit_damage_reduction(om_world *w, uint32_t unit_id) {
     if (brace_hit) reduction += OM_ABILITY_BRACE_DAMAGE_REDUCTION;
     if (row->force_fortify_reduction) {
         fortify_hit = 1;
+    } else if (st->n_bastions == 0) {
+        if (!st->grid.built) om_grid_rebuild(st);
     } else {
         om_grid_iter it;
         om_grid_iter_begin_st(&it, st, row->x, row->y, OM_FORTIFY_RADIUS);
