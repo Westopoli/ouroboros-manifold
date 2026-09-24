@@ -217,7 +217,55 @@ func _run_live_tests() -> void:
 		_assert(false, "debrief root has no qa_state()")
 	debrief.queue_free()
 	await process_frame
+
+	# Piece C4-4 (docs/architecture.md "session commands (v1.1)", E-12 S-092):
+	# a started mission is in recon (clock not started) until the player
+	# presses Begin, the briefing's DEPLOY FORCES button (control name
+	# Deploy), which sends mission_begin over the shared session and answers
+	# the first tactical frame. begin_mission_live is idempotent; the
+	# scene's begin_mission() reports whether the mission is begun.
+	for m in ["begin_mission_live", "mission_begun"]:
+		_assert(bridge.has_method(m), "c_bridge.gd missing method (piece C4-4 not attached yet): " + m)
+		if not bridge.has_method(m):
+			return
+	var recon = CBridge.new()
+	_assert(recon.load_mission_live(1, CBridge.DEFAULT_N_REGIONS, CBridge.DEFAULT_FEATURES), "load_mission_live failed for the recon check: %s" % recon.last_error())
+	_assert(not recon.mission_begun(), "a freshly started mission is already begun (it must be in recon until Begin)")
+	_assert(recon.begin_mission_live(1, CBridge.DEFAULT_N_REGIONS, CBridge.DEFAULT_FEATURES), "begin_mission_live failed: %s" % recon.last_error())
+	_assert(recon.mission_begun(), "mission_begun() is false after begin_mission_live")
+	_assert(recon.tactical_frame().get("type", "") == "tactical", "begin_mission_live did not keep the tactical frame it was answered with")
+	_assert(recon.begin_mission_live(1, CBridge.DEFAULT_N_REGIONS, CBridge.DEFAULT_FEATURES), "a second begin_mission_live was not idempotent: %s" % recon.last_error())
+	recon.close_session()
+
+	var SimSession = load("res://autoload/sim_session.gd")
+	SimSession.reset()
+	var scene: Node = (load(BRIEFING_SCENE_PATH) as PackedScene).instantiate()
+	get_root().add_child(scene)
+	await process_frame
+	await process_frame
+	_assert(scene.has_method("begin_mission"), "mission_briefing root has no begin_mission()")
+	if scene.has_method("begin_mission"):
+		var shared = SimSession.bridge()
+		_assert(shared.mission_active() and not shared.mission_begun(), "the briefing scene should leave the mission in recon before Begin")
+		_assert(scene.begin_mission(), "begin_mission() returned false (last_error = %s)" % shared.last_error())
+		_assert(shared.mission_begun(), "the shared mission is not begun after the briefing's begin_mission()")
+		_assert(shared.tactical_frame().get("type", "") == "tactical", "no tactical frame after the briefing's begin_mission()")
+	var deploy = _find_named(scene, "Deploy")
+	_assert(deploy != null, "positive control: no control named Deploy in the briefing (the flow spine clicks it)")
+	scene.queue_free()
+	await process_frame
+	SimSession.reset()
 	_live_tests_completed = true
+
+
+func _find_named(node: Node, node_name: String):
+	if node.name == node_name:
+		return node
+	for c in node.get_children():
+		var found = _find_named(c, node_name)
+		if found != null:
+			return found
+	return null
 
 
 func _check_briefing_json_safe(root: Node) -> void:
