@@ -1112,12 +1112,6 @@ uint32_t om_lineage_spawn_single_descendant(om_world *w, uint32_t lineage_id) {
     return c ? c->id : 0;
 }
 
-void om_load_state_read(om_world *w, const uint8_t *buffer, uint32_t length) {
-    /* STUB: save.c (T2c) owns om_save_state_size/write and this reader; out
-     * of closure for this piece (see piece report). */
-    (void)w; (void)buffer; (void)length;
-}
-
 uint32_t om_mission_generator_chosen_region(const om_world *w) {
     gen_state *gs = gen_get_state(w);
     return gs ? gs->mission_chosen_region : 0;
@@ -1280,17 +1274,6 @@ void om_rng_force_descendant_spread(om_world *w, double spread_draw) {
 
 void om_rng_force_selector_draw(om_world *w, double forced) {
     om_rng_force(w, &forced, 1);
-}
-
-uint32_t om_save_state_size(const om_world *w) {
-    /* STUB: save.c (T2c) owns save/load; out of closure for this piece. */
-    (void)w;
-    return 0;
-}
-
-void om_save_state_write(const om_world *w, uint8_t *out, uint32_t capacity) {
-    /* STUB: save.c (T2c) owns save/load; out of closure for this piece. */
-    (void)w; (void)out; (void)capacity;
 }
 
 double om_selector_base_rotation_prob(const om_world *w, double delta) {
