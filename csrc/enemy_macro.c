@@ -168,6 +168,7 @@ typedef struct {
     uint32_t n_hook_binds;
 
     uint64_t last_tick_evaluated;
+    uint64_t prev_clock;
     int has_evaluated;
 
     om_replay_command replay[OM_MACRO_MAX_REPLAY];
@@ -493,17 +494,32 @@ void om_macro_set_state(om_world *w, uint32_t p1, int p2, int p3) {
     f->hidden = (p2 == OM_MACRO_AMBUSH && !f->ambush_triggered) ? 1 : 0;
 }
 
+/* Real-time clock for every tick-counted quantity: base ticks (see also:
+ * om_tactical_base_tick, csrc/unit.c), which advance by the tactical period per
+ * step. A step index would run at half real speed at period 2. Base tick 0
+ * means no tactical step has run (a direct call), so the caller's tick stands. */
+static uint64_t om_macro_clock(const om_world *w, uint64_t tick) {
+    uint64_t base = om_tactical_base_tick(w);
+    return base ? base : tick;
+}
+
 void om_macro_tick(om_world *w, uint64_t p1) {
     om_macro_state *st = om_macro_st(w);
+    uint64_t now = om_macro_clock(w, p1);
+    uint64_t slot = now - now % OM_SCRIPT_EVAL_INTERVAL_TICKS;
+    uint64_t prev_slot = st->prev_clock - st->prev_clock % OM_SCRIPT_EVAL_INTERVAL_TICKS;
     uint32_t i;
     om_macro_force_at(st, 0); /* R-120-04: force 0 is evaluated by default */
-    st->last_tick_evaluated = p1;
-    st->has_evaluated = (p1 % OM_SCRIPT_EVAL_INTERVAL_TICKS == 0) ? 1 : 0;
+    st->last_tick_evaluated = now;
+    /* The interval boundary is crossed, not landed on: a period-2 step can hop over it. A repeated
+     * call at the same clock re-evaluates only when it sits on a boundary. */
+    st->has_evaluated = (now == st->prev_clock ? now == slot : slot > prev_slot) ? 1 : 0;
+    st->prev_clock = now;
     if (!st->has_evaluated) return;
     for (i = 0; i < st->n_forces; i++) {
         om_macro_force *f = &st->forces[i];
         f->last_issued_command_type = om_macro_command_for_behavior(f->behavior);
-        om_macro_log_command(w, p1, i, f->last_issued_command_type);
+        om_macro_log_command(w, slot, i, f->last_issued_command_type);
     }
 }
 
@@ -576,7 +592,7 @@ void om_mission_check_external_reinforcements(om_world *w) {
     om_macro_state *st = om_macro_st(w);
     if (!st->wave_set || !st->wave.is_scheduled) return;
     if (st->reinforcement_spawned) return;
-    if (om_tactical_tick(w) < st->wave.arrival_tick) return;
+    if (om_tactical_base_tick(w) < st->wave.arrival_tick) return;
     st->reinforcement_spawned = 1;
     st->wave.is_spawned = 1;
     om_macro_bus_set_flag(w, "reinforcements_arrived", 1);
@@ -640,7 +656,7 @@ void om_mission_schedule_external_reinforcement(om_world *w, om_reinforcement_wa
         p1->is_scheduled = 1;
         p1->direction = (uint32_t)(om_rng_draw(w) * (double)OM_MACRO_DIR_COUNT);
         /* Untuned guess (1..40 ticks) pending Q-124-02. */
-        p1->arrival_tick = om_tactical_tick(w) + (uint64_t)(om_rng_draw(w) * (double)OM_SCRIPT_EVAL_INTERVAL_TICKS) + 1;
+        p1->arrival_tick = om_tactical_base_tick(w) + (uint64_t)(om_rng_draw(w) * (double)OM_SCRIPT_EVAL_INTERVAL_TICKS) + 1;
     } else {
         p1->is_scheduled = 0;
         p1->direction = 0;
