@@ -271,6 +271,13 @@
  * tests/csim/test_E17_S113_*.py; csrc/tactical_mapgen.c does not export it). */
 #define OM_MISSION_SPINE_NODE_OBJECTIVE 0
 
+/* ALG-71 / R-114-03 objective cover row (GRADIENT_OBJECTIVE_COVER_INTENSITY
+ * 0.50, GRADIENT_OBJECTIVE_COVER_RADIUS 400 in simulation/config.py); only the
+ * radius is used, om_map_add_cover takes no intensity. The height has no table
+ * value: Q-098-01 placeholder, inert because fog.c blocks on any cover disc. */
+#define OM_MISSION_OBJECTIVE_COVER_RADIUS 400.0
+#define OM_MISSION_OBJECTIVE_COVER_HEIGHT 5.0
+
 /* R-079-03/04: debrief retention prose bands -- no bible-given cutoffs
  * (the debrief only has to show retention qualitatively, not a formula),
  * chosen so "most" reads as "the force came home largely intact". */
@@ -342,6 +349,7 @@ typedef struct {
     /* S-076 clock */
     uint64_t tactical_time_limit;
     uint64_t tactical_baseline_tick;
+    int      tactical_baseline_pending;
     int      tactical_ended;
 
     /* S-077 result (band revealed only at om_mission_end / resolve_refusal) */
@@ -373,6 +381,10 @@ typedef struct {
      * from objectives[] so setting a centre never creates an objective. */
     om_vec2  objective_center[OM_MISSION_MAX_OBJECTIVES];
     int      objective_center_set[OM_MISSION_MAX_OBJECTIVES];
+
+    /* B9-6 fixed MVP tactical layout, instantiated once at om_mission_setup. */
+    uint32_t enemy_units[OM_MISSION_N_UNIT_TYPES];
+    int      map_instantiated;
 } om_mission_state;
 
 static void om_mis_state_free(void *p) {
@@ -1572,9 +1584,27 @@ int om_mission_is_ended(const om_world *w) {
     const om_mission_state *st = om_mis_ro(w);
     if (!st) return 0;
     if (st->tactical_ended) return 1;
+    /* Recon runs until the player presses Begin; the deadline does not tick
+     * yet, and its baseline is taken the first time this sees a phase past
+     * recon (fog.c's om_mission_begin has no hook into this file, so a first
+     * read late after Begin starts the count late). */
+    int phase = om_mission_get_phase(w);
+    if (phase == 0 /* OM_FOG_PHASE_RECON, csrc/fog.c */) return 0;
     uint64_t now = om_tactical_tick((om_world *)w);
+    if (st->tactical_baseline_pending) {
+        om_mission_state *mst = (om_mission_state *)w->mission_state;
+        mst->tactical_baseline_tick = now;
+        mst->tactical_baseline_pending = 0;
+    }
     uint64_t elapsed = now - st->tactical_baseline_tick;
     return elapsed >= st->tactical_time_limit ? 1 : 0;
+}
+
+void om_mission_on_begin(om_world *w) {
+    if (!w) return;
+    om_mission_state *st = om_mis(w);
+    st->tactical_baseline_tick = om_tactical_tick(w);
+    st->tactical_baseline_pending = 0;
 }
 
 void om_mission_load_launch_library(om_world *w) {
@@ -1774,6 +1804,80 @@ static void om_mission_compose_force(om_world *w, om_mission_state *st) {
     }
     st->enemy_power = enemy_power;
     st->player_parity = parity;
+    memcpy(st->enemy_units, enemy_counts, sizeof(st->enemy_units));
+}
+
+/* B9-6: the enemy faction is the mission region's owner when that is not the
+ * player, else the owner of its strongest hostile neighbour; with neither it
+ * is the first faction id that is not the player's. */
+static int32_t om_mission_enemy_faction(const om_world *w, uint32_t region_idx, int32_t player) {
+    int32_t owner = om_region_owner(w, region_idx);
+    if (owner >= 0 && owner != player) return owner;
+    if (owner >= 0) {
+        uint32_t neigh[OM_MAX_NEIGHBORS];
+        uint32_t n = om_region_neighbors(w, region_idx, neigh, OM_MAX_NEIGHBORS);
+        if (n > OM_MAX_NEIGHBORS) n = OM_MAX_NEIGHBORS;
+        int32_t best = -1;
+        double best_mil = 0.0;
+        for (uint32_t i = 0; i < n; i++) {
+            int32_t nowner = om_region_owner(w, neigh[i]);
+            if (nowner < 0 || nowner == owner) continue;
+            if (om_faction_stance(w, owner, nowner) != OM_STANCE_HOSTILE) continue;
+            double mil = om_region_field(w, neigh[i], OM_F_MILITARY);
+            if (best < 0 || mil > best_mil) { best = nowner; best_mil = mil; }
+        }
+        if (best >= 0) return best;
+    }
+    return player == 0 ? 1 : 0;
+}
+
+/* B9-6 fixed MVP layout (the E-17 generator is out of scope; no setter
+ * exists for the canvas): a square canvas of the archetype's base dimension,
+ * one objective node at its centre, one spawn point per side on opposite
+ * edges (inset by one unit collision radius), and each force in a square-ish
+ * grid at 2 * OM_UNIT_COLLISION_RADIUS spacing running inward from its spawn
+ * point. The player is faction 0 when no player faction is configured
+ * (csrc/fog.c OM_FOG_PLAYER_FACTION). See also: csrc/tactical_mapgen.c for
+ * the node storage these calls fill. */
+static void om_mission_spawn_force(om_world *w, const uint32_t *counts, int32_t faction, double x0, double y0, double dir) {
+    uint32_t total = 0;
+    for (uint32_t t = 0; t < OM_MISSION_N_UNIT_TYPES; t++) total += counts[t];
+    uint32_t cols = 1;
+    while (cols * cols < total) cols++;
+    double spacing = 2.0 * OM_UNIT_COLLISION_RADIUS;
+    uint32_t k = 0;
+    for (uint32_t t = 0; t < OM_MISSION_N_UNIT_TYPES; t++) {
+        for (uint32_t c = 0; c < counts[t]; c++, k++) {
+            double x = x0 + ((double)(k % cols) - (double)(cols - 1) / 2.0) * spacing;
+            double y = y0 + dir * (double)(k / cols) * spacing;
+            om_unit_spawn(w, (int)t, faction, x, y, 0);
+        }
+    }
+}
+
+static void om_mission_instantiate_map(om_world *w, om_mission_state *st) {
+    int cat = om_map_archetype_canvas_category(st->mission_archetype);
+    double canvas = om_map_get_canvas_base_dimension(cat);
+    if (canvas <= 0.0) return;
+    int32_t player = om_mission_player_faction(w);
+    if (player < 0) player = 0;
+    int32_t enemy = om_mission_enemy_faction(w, st->mission_region, player);
+    double edge = OM_UNIT_COLLISION_RADIUS;
+    /* A later mission in the same world clears the previous battle's units
+     * (om_tactical_reset). No public call clears map nodes, so they are added
+     * only once: proposed om_map_clear(om_world *w) in csrc/tactical_mapgen.c
+     * would let each mission lay its own. */
+    if (st->map_instantiated) {
+        om_tactical_reset(w);
+    } else {
+        st->map_instantiated = 1;
+        om_map_add_spine_node(w, canvas / 2.0, canvas / 2.0, OM_MISSION_SPINE_NODE_OBJECTIVE);
+        om_map_add_cover(w, canvas / 2.0, canvas / 2.0, OM_MISSION_OBJECTIVE_COVER_RADIUS, OM_MISSION_OBJECTIVE_COVER_HEIGHT);
+        om_map_add_spawn_point(w, canvas / 2.0, edge, player);
+        om_map_add_spawn_point(w, canvas / 2.0, canvas - edge, enemy);
+    }
+    om_mission_spawn_force(w, st->player_units, player, canvas / 2.0, edge, 1.0);
+    om_mission_spawn_force(w, st->enemy_units, enemy, canvas / 2.0, canvas - edge, -1.0);
 }
 
 void om_mission_setup(om_world *w, uint32_t p1, uint32_t archetype, int lineage_connection) {
@@ -1786,6 +1890,8 @@ void om_mission_setup(om_world *w, uint32_t p1, uint32_t archetype, int lineage_
     /* Recon runs until the player presses Begin: fog.c's om_mission_begin is
      * the only path that moves the phase on to tactical. */
     om_mission_set_phase(w, 0 /* OM_FOG_PHASE_RECON, csrc/fog.c */);
+    st->tactical_baseline_pending = 1;
+    om_mission_instantiate_map(w, st);
 }
 
 void om_mission_setup_destroy_targets(om_world *w, uint32_t objective_idx, uint32_t total) {
@@ -1844,6 +1950,7 @@ void om_mission_setup_tactical(om_world *w, uint32_t p1, uint64_t time_limit) {
     (void)p1;
     st->tactical_time_limit = time_limit;
     st->tactical_baseline_tick = om_tactical_tick(w);
+    st->tactical_baseline_pending = om_mission_get_phase(w) == 0 /* OM_FOG_PHASE_RECON, csrc/fog.c */;
     st->tactical_ended = 0;
 }
 
