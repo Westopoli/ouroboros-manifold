@@ -1302,3 +1302,61 @@ Files touched:
 `tests/csim/test_E14_S123_the_enemy_replays_like_i_do.py`,
 `tests/csim/test_E08_S055_one_commander_one_mission_then_the_world_moves.py`,
 this evidence file.
+
+## R-099-03: `tests/csim/test_core_tick_period.py` tests 1/2 -- position getter one-step lag, not scale bug
+
+Confound: `om_unit_position_x/y` (csrc/unit.c) read the row cache, refreshed
+lazy by tactical_move.c only at the top of the next step. Read right after
+one `om_tactical_step` call still shows the pre-move position. Test 1
+compared that stale read against origin -- `dist = hypot(x, y)` -- so it
+measured zero movement, not 7.5 wu. Test 3
+(`test_R_099_03_period_returns_to_1_crossing_back_down`) already dodged
+this: it reads before a step and after a step, delta of the two. Tests 1
+and 2 did not.
+
+Fix: tests 1 and 2 now step once (period check unchanged), read p1, step
+again, read p2, assert `hypot(p2-p1)`. Lag cancels between two consecutive
+post-step reads same as test 3. Every other assertion untouched: period
+value, Surge 30-step-at-period-2 loop, expiry, cooldown, positive control.
+
+### `test_R_099_03_period_1_at_or_below_1000_live_units`
+
+Red before (lag bug, wrong measurement): `assert 0.0 ± 0.001 == 7.5` (dist
+0.0, stale pre-move read).
+Green after (delta of two post-step reads): pass.
+
+### `test_R_099_03_period_2_above_1000_live_units`
+
+Red before (same lag bug): `assert 0.0 ± 0.001 == 15.0` (stale read again).
+Green after fixing the measurement, red for a different, real reason:
+`assert 7.499999578057882 ± 0.001 == 15.0` -- tactical_move.c does not scale
+per-step distance by the tick period yet. csrc/tactical_move.c:764: `step_dist
+= speed / (double)OM_TACTICAL_TICK_RATE;` -- no `* om_tactical_tick_period(w)`
+term, unlike unit.c's own `om_tac_step_toward` (csrc/unit.c), which does
+scale. Module gap, not a test defect: tactical_move.c owns this line.
+Period value (`== 2`), Surge 30-step loop, expiry, and cooldown assertions
+in the same test all pass (verified standalone past the known-red distance
+line).
+
+### Verification
+
+Worktree: `origin/main` + `origin/push/B10c-8` (ancestor `origin/push/B10c-8-decl`
+already included) merged. csrc/fog.c and csrc/om_internal.h conflicts
+resolved to `origin/main`'s side -- both sides carried the same already-
+landed grid/fog functionality under a different lineage (B10c-6/B11-7 vs
+main's own B10c-5/B11-6 rebuild), unrelated to R-099-03. csrc/unit.c
+conflicts resolved the same way except the isolated R-099-03 hunks
+(`origin/push/B10c-7..origin/push/B10c-8` diff, csrc/unit.c only, 244 lines,
+no other file) applied clean on top. `make -j8`: clean, zero warnings.
+
+`tests/csim` full run, before edit (original test file) vs after (this
+fix), same merged tree, no C changed: `135 failed, 618 passed` ->
+`134 failed, 619 passed, 49 skipped, 1 xfailed`. Failing-id sets outside
+`test_core_tick_period.py` are identical (133 ids both runs, diffed). Test 1
+flips red -> green; test 3 and 4
+(`test_R_099_03_period_returns_to_1_crossing_back_down`,
+`test_R_099_03_determinism_across_peers_on_the_crossing_tick`) green
+unchanged both runs; test 2 red both runs, different assertion line (period/
+Surge/positive-control lines all green in isolation).
+
+Files touched: `tests/csim/test_core_tick_period.py`, this evidence file.
