@@ -1396,6 +1396,7 @@ static void handle_load(const char *json) {
         write_error("load", "corrupt");
         return;
     }
+    g_tick = om_world_strategic_tick(W);
     g_n_regions = om_region_count(W);
     realloc_regions(g_n_regions);
     capture_baseline();
