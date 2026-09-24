@@ -122,11 +122,14 @@ func tactical_frame() -> Dictionary:
 
 
 # Save slots (docs/architecture.md "Save slots (T2g-2 rulings)"): the slot
-# directory is user://saves passed absolute; a slot id is the file name
+# directory is user://saves passed absolute, or the OM_SAVE_DIR environment
+# variable when set (QA runs point it at a per-run temp directory, C1-3); a slot id is the file name
 # without ".omsave". The live mission/debrief/chronicle loads autosave to
 # campaign_<seed> (R-111-01); the tactical load never does (R-111-04).
 func saves_dir() -> String:
-	var dir := ProjectSettings.globalize_path("user://saves")
+	var dir := OS.get_environment("OM_SAVE_DIR")
+	if dir == "":
+		dir = ProjectSettings.globalize_path("user://saves")
 	DirAccess.make_dir_recursive_absolute(dir)
 	return dir
 
