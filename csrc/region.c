@@ -92,6 +92,16 @@ om_world *om_world_new(uint32_t n_regions, uint64_t seed) {
     w->events_state_free = NULL;
     w->mission_state = NULL;
     w->mission_state_free = NULL;
+    w->fog_state = NULL;
+    w->fog_state_free = NULL;
+    w->chronicle_state = NULL;
+    w->chronicle_state_free = NULL;
+    w->move_state = NULL;
+    w->move_state_free = NULL;
+    w->macro_state = NULL;
+    w->macro_state_free = NULL;
+    w->support_state = NULL;
+    w->support_state_free = NULL;
 
     /* F2e: E-06 diplomacy storage. calloc above already zeroes
      * faction_stance_counter/faction_cooperative_since (0 = never-counted /
@@ -133,6 +143,21 @@ void om_world_free(om_world *w) {
     }
     if (w->mission_state && w->mission_state_free) {
         w->mission_state_free(w->mission_state);
+    }
+    if (w->fog_state && w->fog_state_free) {
+        w->fog_state_free(w->fog_state);
+    }
+    if (w->chronicle_state && w->chronicle_state_free) {
+        w->chronicle_state_free(w->chronicle_state);
+    }
+    if (w->move_state && w->move_state_free) {
+        w->move_state_free(w->move_state);
+    }
+    if (w->macro_state && w->macro_state_free) {
+        w->macro_state_free(w->macro_state);
+    }
+    if (w->support_state && w->support_state_free) {
+        w->support_state_free(w->support_state);
     }
     free(w->region_previous_owner);
     free(w->regions);
