@@ -89,8 +89,84 @@
  */
 #include "ouroboros_sim.h"
 #include "om_internal.h"
+#include "om_constants.h"
 #include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
+
+/* B15m: per-world cover/obstacle storage lives in w->mapgen_state /
+ * w->mapgen_state_free (F2k), mirroring csrc/mission.c's om_mis/om_mis_ro
+ * (mission_state) convention exactly -- never a file-static registry keyed
+ * by om_world* (the ABA hazard csrc/unit.c's own comment documents avoiding).
+ * Handles are 1-based row indices (index + 1); 0 stays the "no feature"
+ * sentinel used everywhere else in this file's stub family, returned when
+ * the fixed-size table is full. Geometry (position, radius, cover height)
+ * is recorded verbatim; nothing here decides what "blocking" means for a
+ * given height -- that judgment belongs to the module that reads it back
+ * (fog.c line-of-sight, tactical_move.c route blocking), same as
+ * om_map_sample_obstacle_density below only reports density, not a
+ * pass/fail. */
+#define OM_MAPGEN_MAX_COVER 256
+#define OM_MAPGEN_MAX_OBSTACLES 256
+
+typedef struct {
+    double x, y, radius, height;
+} om_mapgen_cover_row;
+
+typedef struct {
+    double x, y, radius;
+} om_mapgen_obstacle_row;
+
+typedef struct {
+    om_mapgen_cover_row    cover[OM_MAPGEN_MAX_COVER];
+    uint32_t               n_cover;
+    om_mapgen_obstacle_row obstacles[OM_MAPGEN_MAX_OBSTACLES];
+    uint32_t               n_obstacles;
+} om_mapgen_state;
+
+static void om_mapgen_state_free(void *p) {
+    free(p);
+}
+
+/* Lazily calloc's the per-world mapgen state, mirroring om_mis()/om_tac()
+ * exactly. Writes w->mapgen_state -- read-only entry points go through
+ * om_mgs_ro() instead, which never allocates (a world with no recorded
+ * features yet must not fault on a pure query). */
+static om_mapgen_state *om_mgs(om_world *w) {
+    om_mapgen_state *st = (om_mapgen_state *)w->mapgen_state;
+    if (!st) {
+        st = (om_mapgen_state *)calloc(1, sizeof(om_mapgen_state));
+        w->mapgen_state = st;
+        w->mapgen_state_free = om_mapgen_state_free;
+    }
+    return st;
+}
+
+static const om_mapgen_state *om_mgs_ro(const om_world *w) {
+    return (const om_mapgen_state *)w->mapgen_state;
+}
+
+/* Feature lookup by handle: 1-based index back to the recorded row, or NULL
+ * for an out-of-range or never-allocated handle. Internal only -- no public
+ * symbol in ouroboros_sim.h takes a cover/obstacle handle back in, so this
+ * stays a private helper for the sample functions below. */
+static const om_mapgen_cover_row *om_mgs_cover_at(const om_mapgen_state *st, uint32_t handle) {
+    if (!st || handle == 0 || handle > st->n_cover) return NULL;
+    return &st->cover[handle - 1];
+}
+
+static const om_mapgen_obstacle_row *om_mgs_obstacle_at(const om_mapgen_state *st, uint32_t handle) {
+    if (!st || handle == 0 || handle > st->n_obstacles) return NULL;
+    return &st->obstacles[handle - 1];
+}
+
+/* Squared distance avoids a libm sqrt call entirely: comparing against
+ * radius^2 is exact where comparing against radius would need one. */
+static double om_mgs_dist_sq(double ax, double ay, double bx, double by) {
+    double dx = ax - bx;
+    double dy = ay - by;
+    return dx * dx + dy * dy;
+}
 
 /* ---- generated stubs from signatures.toml ---- */
 void om_fairness_evaluate(om_world *w, om_fairness_score *byref) {
@@ -143,28 +219,15 @@ double om_gradient_sample_single(double p0, double p1, double p2, int p3) {
     return 0.0;
 }
 
-/* B15m: om_map_add_cover / om_map_add_obstacle cannot persist the placed
- * feature's geometry (position, radius, height/density) anywhere per-world:
- * struct om_world (csrc/om_internal.h) has no map-feature storage slot, and
- * the one place a tactical map naturally belongs -- w->tactical_state -- is
- * om_tac_state, defined and kept `static` inside csrc/unit.c (B10), with no
- * accessor exposed for another file to reach it. Adding a slot means editing
- * om_internal.h or unit.c, both out of this piece's scope; a file-static
- * table keyed by om_world* is the ABA hazard csrc/unit.c already documents
- * avoiding (leaf-01-Q1.md) and this piece must not reintroduce it. See the
- * leaf report for the accessor this blocks (fog.c cover/interference
- * blocking, tactical_move.c obstacle-blocked slots) -- none of B15m's own
- * acceptance tests query the recorded geometry back through this file, so
- * every call here is a safe no-op that just hands back a stable, non-zero
- * feature handle instead of the ambiguous 0 "no feature" stub value. */
-static uint32_t om_map_next_feature_id(void) {
-    static uint32_t next_id = 1;
-    return next_id++;
-}
-
 uint32_t om_map_add_cover(om_world *w, double x, double y, double radius, double height) {
-    (void)w; (void)x; (void)y; (void)radius; (void)height;
-    return om_map_next_feature_id();
+    om_mapgen_state *st = om_mgs(w);
+    if (st->n_cover >= OM_MAPGEN_MAX_COVER) return 0;
+    st->cover[st->n_cover].x = x;
+    st->cover[st->n_cover].y = y;
+    st->cover[st->n_cover].radius = radius;
+    st->cover[st->n_cover].height = height;
+    st->n_cover++;
+    return st->n_cover;
 }
 
 void om_map_add_layer_restriction_zone(om_world *w, double p1, double zone, uint32_t p3) {
@@ -173,8 +236,13 @@ void om_map_add_layer_restriction_zone(om_world *w, double p1, double zone, uint
 }
 
 uint32_t om_map_add_obstacle(om_world *w, double x, double y, double radius) {
-    (void)w; (void)x; (void)y; (void)radius;
-    return om_map_next_feature_id();
+    om_mapgen_state *st = om_mgs(w);
+    if (st->n_obstacles >= OM_MAPGEN_MAX_OBSTACLES) return 0;
+    st->obstacles[st->n_obstacles].x = x;
+    st->obstacles[st->n_obstacles].y = y;
+    st->obstacles[st->n_obstacles].radius = radius;
+    st->n_obstacles++;
+    return st->n_obstacles;
 }
 
 int om_map_archetype_canvas_category(uint32_t mission) {
@@ -375,9 +443,33 @@ int32_t om_map_node_get_owner(om_world *w, uint32_t vantage) {
     return 0;
 }
 
+/* Cover/obstacle density here is binary (1.0 inside the recorded radius,
+ * else 0.0) -- the intensity-and-falloff gradient model (ALG-71) belongs to
+ * the E-17 map generator, held; this piece only makes B15m's own recorded
+ * discs queryable. sensor_interference/elevation/layer_accessibility_* stay
+ * zeroed: those come from interference zones (fog.c) and layer masks
+ * (om_map_add_layer_restriction_zone), neither wired yet. */
 void om_map_sample_gradients(om_world *w, double p1, double x, om_gradient_properties *byref) {
-    /* STUB */
-    (void)w; (void)p1; (void)x; (void)byref;
+    const om_mapgen_state *st = om_mgs_ro(w);
+    double px = p1, py = x;
+    uint32_t h;
+    if (!byref) return;
+    memset(byref, 0, sizeof(*byref));
+    if (!st) return;
+    for (h = 1; h <= st->n_obstacles; h++) {
+        const om_mapgen_obstacle_row *o = om_mgs_obstacle_at(st, h);
+        if (om_mgs_dist_sq(px, py, o->x, o->y) <= o->radius * o->radius) {
+            byref->obstacle_density = 1.0;
+            break;
+        }
+    }
+    for (h = 1; h <= st->n_cover; h++) {
+        const om_mapgen_cover_row *c = om_mgs_cover_at(st, h);
+        if (om_mgs_dist_sq(px, py, c->x, c->y) <= c->radius * c->radius) {
+            byref->cover_density = 1.0;
+            break;
+        }
+    }
 }
 
 int om_map_sample_layer_accessibility(om_world *w, double p1, double x, uint32_t layer) {
@@ -387,8 +479,16 @@ int om_map_sample_layer_accessibility(om_world *w, double p1, double x, uint32_t
 }
 
 double om_map_sample_obstacle_density(om_world *w, double p1, double x) {
-    /* STUB */
-    (void)w; (void)p1; (void)x;
+    const om_mapgen_state *st = om_mgs_ro(w);
+    double px = p1, py = x;
+    uint32_t h;
+    if (!st) return 0.0;
+    for (h = 1; h <= st->n_obstacles; h++) {
+        const om_mapgen_obstacle_row *o = om_mgs_obstacle_at(st, h);
+        if (om_mgs_dist_sq(px, py, o->x, o->y) <= o->radius * o->radius) {
+            return 1.0;
+        }
+    }
     return 0.0;
 }
 
@@ -432,10 +532,10 @@ int om_render_detect_repeated_tile_boundary(om_world *w) {
     return 0;
 }
 
+/* ALG-67 Routing: "blocked where obstacle density > NAVMESH_OBSTACLE_THRESHOLD
+ * (0.7)" (docs/bible/algorithms.md). */
 int om_route_grid_is_cell_blocked(double obstacle) {
-    /* STUB */
-    (void)obstacle;
-    return 0;
+    return obstacle > OM_NAVMESH_OBSTACLE_THRESHOLD;
 }
 
 void om_unit_get_position(om_world *w, uint32_t unit_id, om_vec2 *byref) {
