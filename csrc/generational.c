@@ -1891,32 +1891,53 @@ int om_lineage_member_in_region(const om_world *w, uint32_t lineage_id, uint32_t
 
 
 uint32_t om_character_count(const om_world *w) {
-    /* STUB: B7-8 implements */
-    (void)w;
-    return 0;
+    gen_state *gs = gen_get_state(w);
+    if (!gs) return 0;
+    uint32_t n = 0;
+    for (uint32_t i = 0; i < gs->n_characters; i++)
+        if (gs->characters[i].used && gs->characters[i].status == GEN_STATUS_ACTIVE) n++;
+    return n;
 }
 
 uint32_t om_character_id_at(const om_world *w, uint32_t index) {
-    /* STUB: B7-8 implements */
-    (void)w; (void)index;
+    gen_state *gs = gen_get_state(w);
+    if (!gs) return 0;
+    uint32_t seen = 0;
+    for (uint32_t i = 0; i < gs->n_characters; i++) {
+        gen_character *c = &gs->characters[i];
+        if (!c->used || c->status != GEN_STATUS_ACTIVE) continue;
+        if (seen++ == index) return c->id;
+    }
     return 0;
 }
 
 uint32_t om_lineage_count(const om_world *w) {
-    /* STUB: B7-8 implements */
-    (void)w;
-    return 0;
+    gen_state *gs = gen_get_state(w);
+    if (!gs) return 0;
+    uint32_t n = 0;
+    for (uint32_t i = 0; i < gs->n_lineages; i++)
+        if (gs->lineages[i].used) n++;
+    return n;
 }
 
 uint32_t om_lineage_id_at(const om_world *w, uint32_t index) {
-    /* STUB: B7-8 implements */
-    (void)w; (void)index;
+    gen_state *gs = gen_get_state(w);
+    if (!gs) return 0;
+    uint32_t seen = 0;
+    for (uint32_t i = 0; i < gs->n_lineages; i++) {
+        if (!gs->lineages[i].used) continue;
+        if (seen++ == index) return gs->lineages[i].id;
+    }
     return 0;
 }
 
 int32_t om_lineage_first_member_region(const om_world *w, uint32_t lineage_id) {
-    /* STUB: B7-8 implements */
-    (void)w; (void)lineage_id;
+    gen_state *gs = gen_get_state(w);
+    if (!gs) return -1;
+    for (uint32_t i = 0; i < gs->n_characters; i++) {
+        gen_character *c = &gs->characters[i];
+        if (c->used && c->lineage_id == lineage_id && c->status == GEN_STATUS_ACTIVE) return (int32_t)c->region;
+    }
     return -1;
 }
 /* ---- end generated stubs ---- */
