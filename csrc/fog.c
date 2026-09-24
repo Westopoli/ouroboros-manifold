@@ -161,7 +161,7 @@ typedef struct {
 
     int mission_phase;
     int mission_started;
-    uint64_t mission_begin_tick;
+    uint64_t mission_begin_base_tick;
 
     int player_fog_on;
     int player_fog_on_set;
@@ -422,14 +422,16 @@ void om_mission_begin(om_world *w) {
     if (st->mission_started) return;
     st->mission_started = 1;
     st->mission_phase = OM_FOG_PHASE_TACTICAL;
-    st->mission_begin_tick = w->tick;
+    st->mission_begin_base_tick = om_tactical_base_tick(w);
     om_mission_on_begin(w);
 }
 
 uint64_t om_mission_get_clock(const om_world *w) {
     const om_fog_state *st = om_fog_ro(w);
+    uint64_t base;
     if (!st || !st->mission_started) return 0;
-    return (w->tick >= st->mission_begin_tick) ? (w->tick - st->mission_begin_tick) : 0;
+    base = om_tactical_base_tick(w);
+    return (base >= st->mission_begin_base_tick) ? (base - st->mission_begin_base_tick) : 0;
 }
 
 int om_mission_get_phase(const om_world *w) {
