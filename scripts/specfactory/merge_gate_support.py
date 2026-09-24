@@ -11,6 +11,8 @@ from __future__ import annotations
 
 import argparse
 import fnmatch
+import hashlib
+import json
 import re
 import shutil
 import subprocess
@@ -400,9 +402,62 @@ def _normalize_worktree_paths(text: str, *roots: Path) -> str:
     return text
 
 
+def _harness_sha() -> str:
+    """Content hash of suite_regression.py -- folded into every cache entry
+    so a harness change (new comparison rule, new junit parsing) invalidates
+    every baseline cached under the old behaviour, even though the main sha
+    the file name is keyed on hasn't moved."""
+    return hashlib.sha256(Path(__file__).with_name("suite_regression.py").read_bytes()).hexdigest()[:16]
+
+
+def _baseline_cache_path(merge_root: Path, main_sha: str) -> Path:
+    return Path(merge_root) / "baseline_cache" / f"{main_sha}.json"
+
+
+def _load_cached_baseline(cache_path: Path, harness_sha: str, suite_key: str) -> sr.RunResult | None:
+    if not cache_path.exists():
+        return None
+    try:
+        data = json.loads(cache_path.read_text())
+    except (OSError, ValueError):
+        return None
+    if data.get("harness_sha") != harness_sha:
+        return None
+    entry = data.get("suites", {}).get(suite_key)
+    if entry is None:
+        return None
+    return sr.RunResult(passed=entry["passed"], failed=entry["failed"],
+                         failing_ids=tuple(entry["failing_ids"]), wall_s=0.0,
+                         returncode=entry["returncode"], first_assertion=dict(entry["first_assertion"]),
+                         skipped=entry["skipped"], xfailed=entry["xfailed"])
+
+
+def _store_cached_baseline(cache_path: Path, harness_sha: str, main_sha: str,
+                            suite_key: str, result: sr.RunResult) -> None:
+    data = {"main_sha": main_sha, "harness_sha": harness_sha, "suites": {}}
+    if cache_path.exists():
+        try:
+            existing = json.loads(cache_path.read_text())
+            if existing.get("harness_sha") == harness_sha and existing.get("main_sha") == main_sha:
+                data = existing
+        except (OSError, ValueError):
+            pass
+    data.setdefault("suites", {})[suite_key] = {
+        "passed": result.passed, "failed": result.failed,
+        "failing_ids": list(result.failing_ids), "returncode": result.returncode,
+        "first_assertion": dict(result.first_assertion),
+        "skipped": result.skipped, "xfailed": result.xfailed,
+    }
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = cache_path.with_suffix(".json.tmp")
+    tmp_path.write_text(json.dumps(data))
+    tmp_path.replace(cache_path)
+
+
 def regression_check(candidate_dir: Path, base_ref: str, test_args: list[str], *,
                       python_exe: str = sr.DEFAULT_PYTHON, timeout: int = 600,
-                      junit: bool = True, worktree_root: Path | None = None) -> tuple[bool, str, sr.RegressionReport]:
+                      junit: bool = True, worktree_root: Path | None = None,
+                      merge_root: Path | None = None) -> tuple[bool, str, sr.RegressionReport]:
     """(ok, detail, report). Runs `test_args` against `base_ref` (a throwaway
     `git worktree add --detach` sibling of `candidate_dir`, never the live
     checkout, removed before returning) and against `candidate_dir` itself
@@ -411,18 +466,62 @@ def regression_check(candidate_dir: Path, base_ref: str, test_args: list[str], *
     suite_regression.compare_runs. `test_args` must be all-tests/csim or
     all-tests/qa/t1 -- never mixed (the two directories' bare-named
     conftest.py files collide in one pytest invocation; the caller is
-    responsible for the two separate calls this implies)."""
+    responsible for the two separate calls this implies).
+
+    `merge_root`, when given: the base-ref run is identical for every
+    candidate gated against the same main commit, so before building and
+    running it, look for `<merge_root>/baseline_cache/<main_sha>.json`
+    (main_sha = base_ref resolved from candidate_dir, no worktree needed for
+    that) with a matching harness_sha (_harness_sha, invalidates on a
+    suite_regression.py change) and a `suites[test_args joined]` entry; if
+    found, reuse it as `before` and skip the worktree build + pytest run
+    entirely. Otherwise run as without caching and write the entry after.
+    Prints one `baseline: cached <sha>` or `baseline: computed <sha>` line.
+    Omitted, behaviour is unchanged (no cache read or write)."""
+    suite_key = " ".join(test_args)
+    main_sha = None
+    cache_path = None
+    harness_sha = None
+    cached_before = None
+    if merge_root is not None:
+        rev = subprocess.run(["git", "rev-parse", "--verify", "-q", base_ref],
+                              cwd=str(candidate_dir), capture_output=True, text=True)
+        if rev.returncode == 0:
+            main_sha = rev.stdout.strip()
+            harness_sha = _harness_sha()
+            cache_path = _baseline_cache_path(Path(merge_root), main_sha)
+            cached_before = _load_cached_baseline(cache_path, harness_sha, suite_key)
+
     worktree_root = Path(worktree_root) if worktree_root else Path(tempfile.gettempdir())
-    tmp = worktree_root / f"merge_gate_before_{uuid.uuid4().hex[:10]}"
-    add = subprocess.run(["git", "worktree", "add", "--detach", str(tmp), base_ref],
-                          cwd=str(candidate_dir), capture_output=True, text=True)
-    if add.returncode != 0:
-        return False, f"could not create base-ref worktree at {base_ref}: {add.stderr[-800:]}", None
+    tmp = None
+    if cached_before is not None:
+        before = cached_before
+        print(f"baseline: cached {main_sha}")
+    else:
+        tmp = worktree_root / f"merge_gate_before_{uuid.uuid4().hex[:10]}"
+        add = subprocess.run(["git", "worktree", "add", "--detach", str(tmp), base_ref],
+                              cwd=str(candidate_dir), capture_output=True, text=True)
+        if add.returncode != 0:
+            return False, f"could not create base-ref worktree at {base_ref}: {add.stderr[-800:]}", None
+        if main_sha is None:
+            rev2 = subprocess.run(["git", "rev-parse", "HEAD"], cwd=str(tmp),
+                                   capture_output=True, text=True)
+            main_sha = rev2.stdout.strip() if rev2.returncode == 0 else base_ref
+        print(f"baseline: computed {main_sha}")
     try:
         with tempfile.TemporaryDirectory(prefix="merge_gate_junit_") as jtmp:
-            before_xml = Path(jtmp) / "before.xml" if junit else None
             after_xml = Path(jtmp) / "after.xml" if junit else None
-            before = sr.run_pytest(tmp, python_exe, test_args, timeout, junit_path=before_xml)
+            if tmp is not None:
+                before_xml = Path(jtmp) / "before.xml" if junit else None
+                before = sr.run_pytest(tmp, python_exe, test_args, timeout, junit_path=before_xml)
+                # See regression_check's cache comment above: normalize before
+                # caching so a cached entry replayed from a since-removed `tmp`
+                # already reads "<WORKTREE>", matching whatever this run's own
+                # `after` normalizes its candidate_dir path down to.
+                before.first_assertion = {k: _normalize_worktree_paths(v, tmp)
+                                           for k, v in before.first_assertion.items()}
+                if cache_path is not None:
+                    _store_cached_baseline(cache_path, harness_sha, main_sha, suite_key, before)
             after = sr.run_pytest(candidate_dir, python_exe, test_args, timeout, junit_path=after_xml)
         # Every unbuilt-symbol failure (extremely common in this codebase --
         # most of E-06..E-17 is still STUB) raises a ctypes AttributeError
@@ -433,10 +532,10 @@ def regression_check(candidate_dir: Path, base_ref: str, test_args: list[str], *
         # before/after even when nothing about the failure itself changed --
         # found building the F6 rejection replays: a pure docs-only diff
         # came back REJECT "changed assertions" over exactly this. Normalize
-        # both worktree roots to one placeholder before comparing.
-        before.first_assertion = {k: _normalize_worktree_paths(v, tmp, candidate_dir)
-                                   for k, v in before.first_assertion.items()}
-        after.first_assertion = {k: _normalize_worktree_paths(v, tmp, candidate_dir)
+        # both worktree roots to one placeholder before comparing. `before`
+        # is already normalized above (freshly run) or already normalized in
+        # the cache (a prior run); only `after` still needs it here.
+        after.first_assertion = {k: _normalize_worktree_paths(v, candidate_dir)
                                   for k, v in after.first_assertion.items()}
         report = sr.compare_runs(before, after)
         # A red test whose first assertion line moves is a WARN, not a reject:
@@ -461,8 +560,9 @@ def regression_check(candidate_dir: Path, base_ref: str, test_args: list[str], *
             detail = "; ".join(parts)
         return accept, detail, report
     finally:
-        subprocess.run(["git", "worktree", "remove", "--force", str(tmp)],
-                        cwd=str(candidate_dir), capture_output=True, text=True)
+        if tmp is not None:
+            subprocess.run(["git", "worktree", "remove", "--force", str(tmp)],
+                            cwd=str(candidate_dir), capture_output=True, text=True)
 
 
 def main(argv: list[str]) -> int:
@@ -509,6 +609,7 @@ def main(argv: list[str]) -> int:
     rg.add_argument("--python", default=sr.DEFAULT_PYTHON)
     rg.add_argument("--timeout", type=int, default=600)
     rg.add_argument("--no-junit", action="store_true")
+    rg.add_argument("--merge-root", default=None)
 
     args = ap.parse_args(argv)
 
@@ -551,7 +652,8 @@ def main(argv: list[str]) -> int:
     else:
         ok, detail, _report = regression_check(Path(args.candidate_dir), args.base_ref, args.test_args,
                                                  python_exe=args.python, timeout=args.timeout,
-                                                 junit=not args.no_junit)
+                                                 junit=not args.no_junit,
+                                                 merge_root=Path(args.merge_root) if args.merge_root else None)
     print(f"{'OK' if ok else 'REJECT'} {detail}")
     return 0 if ok else 1
 
