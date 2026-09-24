@@ -677,6 +677,12 @@ typedef struct {
 
     int paused;
 
+    /* Set once a distill consumed the candidate pool: the ownership changes
+     * recorded so far belong to that finished jump, so the next
+     * add_ownership_change_event starts a fresh list and om_chronicle_add_event
+     * ignores the stale one. */
+    int own_stale;
+
     int fragments_loaded;
     int invalid_fragment_injected;
     uint32_t invalid_fragment_category;
@@ -1468,6 +1474,7 @@ static void chron_run_selection(om_world *w) {
     uint32_t cat_count[CHRON_SELECTION_CAT_BUCKETS];
     memset(cat_count, 0, sizeof(cat_count));
 
+    if (st->n_candidates == 0) return;
     st->n_clusters = 0;
 
     for (uint32_t i = 0; i < st->n_candidates && st->n_clusters < CHRON_MAX_FINAL; i++) {
@@ -1674,7 +1681,13 @@ void om_chronicle_add_consequence_event(om_world *w, uint32_t region_idx, uint32
 
 void om_chronicle_add_event(om_world *w, uint32_t region_idx, double score) {
     if (!w) return;
-    chron_push_candidate(chron(w), CTYPE_REGIONAL, CAT_REGIONAL_STABLE, region_idx, score, -1, 0, 0);
+    chron_state *st = chron(w);
+    /* ALG-51 step 4: a region whose owner changed during the window is a faction shift. */
+    uint32_t category = CAT_REGIONAL_STABLE;
+    for (uint32_t i = 0; i < st->n_ownership_changes && !st->own_stale; i++) {
+        if (st->ownership_changes[i].region == region_idx) { category = CAT_REGIONAL_FACTION_SHIFT; break; }
+    }
+    chron_push_candidate(st, CTYPE_REGIONAL, category, region_idx, score, -1, 0, 0);
 }
 
 void om_chronicle_add_lineage_event(om_world *w, uint32_t lineage_id, uint32_t region_idx, double score) {
@@ -1697,6 +1710,7 @@ void om_chronicle_add_mock_entry(om_world *w, uint32_t entry_id, uint64_t start_
 void om_chronicle_add_ownership_change_event(om_world *w, uint32_t region_idx, uint64_t tick) {
     if (!w) return;
     chron_state *st = chron(w);
+    if (st->own_stale) { st->n_ownership_changes = 0; st->own_stale = 0; }
     if (st->n_ownership_changes >= CHRON_MAX_OWNERSHIP_CHANGES) return;
     chron_ownership_change *e = &st->ownership_changes[st->n_ownership_changes++];
     e->region = region_idx;
@@ -1760,6 +1774,8 @@ void om_chronicle_assemble_with_seed(om_world *w, uint64_t seed) {
         chron_run_selection(w);
     }
     chron_assemble_all(w, seed);
+    st->n_candidates = 0;
+    st->own_stale = 1;
 }
 
 uint32_t om_chronicle_build_chain_clusters(om_world *w) {
@@ -1857,6 +1873,8 @@ void om_chronicle_distill_and_assemble(om_world *w) {
     if (!w) return;
     chron_run_selection(w);
     chron_assemble_all(w, w->tick);
+    chron(w)->n_candidates = 0;
+    chron(w)->own_stale = 1;
 }
 
 uint32_t om_chronicle_entry_count(const om_world *w) {
