@@ -2306,6 +2306,7 @@ def _bind_e13(lib):
     _wrap_out_pair(lib, "om_steering_get_obstacle_repulsion")
     _bind(lib, "om_steering_get_sweep_angle_at", [W, ctypes.c_uint32], ctypes.c_double, ("w", "p0"))
     _bind(lib, "om_steering_get_sweep_angle_count", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_tactical_base_tick", [W], ctypes.c_uint64, ("w",))
     _bind(lib, "om_tactical_tick_period", [W], ctypes.c_uint32, ("w",))
     _bind(lib, "om_unit_clear_orders", [W, ctypes.c_uint32], None, ("w", "p0"))
     _bind(lib, "om_unit_compute_terrain_speed", [W, ctypes.c_uint32, ctypes.c_double], ctypes.c_double, ("w", "p0", "p1"))
