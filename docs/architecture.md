@@ -286,11 +286,11 @@ Tactical positions are sim state (units move in the sim), so they are sent; stra
 
 ### chronicle frame, mission frame, debrief frame (on `snapshot` after a jump, mission start, mission end)
 ```json
-{"type":"chronicle","jump":{"from_tick":100,"to_tick":150},"entries":[{"id":12,"start_tick":103,"end_tick":110,"category":3,"cluster_type":1,"refs":{"regions":[3,4],"factions":[0]},"fragment":417,"significance":0.8}]}
+{"type":"chronicle","jump":{"from_tick":100,"to_tick":150},"entries":[{"id":12,"start_tick":103,"end_tick":110,"category":3,"cluster_type":1,"fragments":[417,12,-1],"refs":{"region":3,"faction":0,"lineage":-1},"significance":0.8}]}
 {"type":"mission","archetype":2,"region":7,"deadline_ticks":900,"objectives":[{"i":0,"kind":1,"node":3,"primary":true,"radius":300.0,"progress":0.0}],"force":{"types":[2,2,1,0,0,0],"tiers":[2,2,1,0,0,0]}}
 {"type":"debrief","band":2,"achieved":0.8,"brought_home":0.6,"region_delta":{"military":-4.0,"economy":2.0,"tension":-3.0,"population":0.0}}
 ```
-`fragment` is a library id; the client renders prose from `library/chronicle/fragments.json`. Objective `kind` and `node` are E-10/E-17 enums and node indices; names come from the client's layout pass.
+`fragments` are the entry's opening/detail/closing library ids (`om_chronicle_entry.fragment_ids`, -1 unused) into `library/chronicle/fragments.json`; `refs` are `region_ref`/`faction_ref`/`lineage_ref` (-1 none). The client renders all prose from the library; `base_text`/`expanded_text` are sim-internal (E-09 tests only) and never cross the pipe. Objective `kind` and `node` are E-10/E-17 enums and node indices; names come from the client's layout pass.
 
 ### session commands (v1.1, 2026-09-24; T1-2 builds them test-first)
 The frames above already say what a mission, a jump and a tactical stream look like; these are the commands that produce them. The pipe session is persistent: the client keeps the process open for the whole run and consumes `delta` frames as they stream (the one-shot set_seed/step/snapshot/quit script in `autoload/c_bridge.gd` is the v1 stopgap and goes with C2-4). The client requests the launch strategic feature set (`features` = every strategic `om_feature` id, defined once as `DEFAULT_FEATURES` beside `DEFAULT_N_REGIONS` in `c_bridge.gd`); with `[6]` alone nothing ever changes owner.

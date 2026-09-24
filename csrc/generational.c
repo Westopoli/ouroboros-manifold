@@ -1465,4 +1465,34 @@ int om_lineage_member_in_region(const om_world *w, uint32_t lineage_id, uint32_t
     (void)w; (void)lineage_id; (void)region_idx;
     return 0;
 }
+
+uint32_t om_character_count(const om_world *w) {
+    /* STUB: B7-8 implements */
+    (void)w;
+    return 0;
+}
+
+uint32_t om_character_id_at(const om_world *w, uint32_t index) {
+    /* STUB: B7-8 implements */
+    (void)w; (void)index;
+    return 0;
+}
+
+uint32_t om_lineage_count(const om_world *w) {
+    /* STUB: B7-8 implements */
+    (void)w;
+    return 0;
+}
+
+uint32_t om_lineage_id_at(const om_world *w, uint32_t index) {
+    /* STUB: B7-8 implements */
+    (void)w; (void)index;
+    return 0;
+}
+
+int32_t om_lineage_first_member_region(const om_world *w, uint32_t lineage_id) {
+    /* STUB: B7-8 implements */
+    (void)w; (void)lineage_id;
+    return -1;
+}
 /* ---- end generated stubs ---- */
