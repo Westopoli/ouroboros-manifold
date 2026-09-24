@@ -370,6 +370,12 @@ typedef struct {
 uint32_t om_grid_query_circle(om_world *w, double x, double y, double r, uint32_t *out_ids, uint32_t max);
 void     om_grid_iter_begin(om_grid_iter *it, om_world *w, double x, double y, double r);
 uint32_t om_grid_iter_next(om_grid_iter *it);
+/* For tactical_move.c: sets unit.c's cached position of a living or dead unit
+ * and moves it in the grid, so a query made before the next om_tactical_step
+ * sees the new position. Unknown id, NULL world or a world with no tactical
+ * state: no-op. Call it after every write of a unit's position outside
+ * om_tactical_step (teleport, set_pos, move sync). */
+void om_tac_unit_sync_position(om_world *w, uint32_t unit_id, double x, double y);
 
 /* The world RNG (ouroboros_sim.h "the world RNG contract"), csrc/sim.c.
  * om_rng_seed derives rng_state/rng_inc from the seed (om_world_new,

@@ -711,6 +711,17 @@ uint32_t om_grid_query_circle(om_world *w, double x, double y, double r, uint32_
     return om_grid_query_st(om_tac(w), x, y, r, out_ids, max);
 }
 
+/* See om_internal.h: for tactical_move.c, which owns a unit's live position
+ * and writes it outside unit.c's own refresh (teleport, set_pos, move sync). */
+void om_tac_unit_sync_position(om_world *w, uint32_t unit_id, double x, double y) {
+    om_tac_state *st = w ? (om_tac_state *)w->tactical_state : NULL;
+    om_unit_row *u = om_registry_find_in(st, unit_id);
+    if (!u) return;
+    u->x = x;
+    u->y = y;
+    om_grid_move(st, unit_id - 1);
+}
+
 static uint32_t om_unit_spawn_internal(om_world *w, int unit_type, int32_t faction_id,
                                         double x, double y, uint32_t layer) {
     const om_unit_type_profile *prof;
