@@ -321,6 +321,9 @@ typedef struct {
     /* the current Brace was started by the threshold scan, not by a player
      * activation: a later order cancels it (om_tac_unit_ai). */
     int      brace_auto;
+    /* where an attack-target order last saw its target (S-093): refreshed
+     * every tick the target is visible to the unit's faction. */
+    double   last_seen_x, last_seen_y;
 } om_unit_row;
 
 typedef struct {
@@ -1045,6 +1048,19 @@ static void om_tac_start_flinch(om_unit_row *u, const om_unit_row *from) {
     u->flinch_y = u->y + dy / d * OM_RETURN_FIRE_FLEE_DIST;
 }
 
+/* Visible to the unit's faction: any living friendly (itself included) can
+ * see it through fog.c's om_unit_can_see, and it is not stealthed. */
+static int om_tac_faction_sees(om_world *w, om_tac_state *st, const om_unit_row *self, const om_unit_row *t) {
+    uint32_t j;
+    if (t->stealth) return 0;
+    for (j = 0; j < st->n_units; j++) {
+        const om_unit_row *obs = &st->units[j];
+        if (!obs->in_use || obs->hp <= 0.0 || obs->faction_id != self->faction_id) continue;
+        if (om_unit_can_see(w, obs->unit_id, t->unit_id)) return 1;
+    }
+    return 0;
+}
+
 static void om_tac_drop_orders(om_unit_row *u) {
     u->order = OM_ORDER_NONE;
     u->target_id = 0;
@@ -1128,6 +1144,18 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
         int drop;
         t = om_registry_find_in(st, u->target_id);
         drop = !t || t->hp <= 0.0 || !om_tac_hostile(u, t);
+        if (!drop && u->order == OM_ORDER_ATTACK_TARGET) {
+            /* S-093: the engine keeps no information the player lost. A
+             * target the faction no longer sees is dropped and the unit
+             * attack-moves to where it was last seen. */
+            if (om_tac_faction_sees(w, st, u, t)) {
+                u->last_seen_x = t->x; u->last_seen_y = t->y;
+            } else {
+                double lx = u->last_seen_x, ly = u->last_seen_y;
+                om_command_attack_move(w, &u->unit_id, 1, lx, ly);
+                return;
+            }
+        }
         if (!drop && u->order != OM_ORDER_ATTACK_TARGET) {
             if (t->layer != u->layer || t->stealth || !om_tac_within(u, t, u->attack_range)) {
                 drop = 1;
@@ -1273,6 +1301,7 @@ int om_command_attack_target(om_world *w, const uint32_t *unit_ids, uint32_t n_u
         u->flinching = 0;
         u->order = OM_ORDER_ATTACK_TARGET;
         u->target_id = target_unit;
+        u->last_seen_x = t->x; u->last_seen_y = t->y;
         u->issued_x = t->x; u->issued_y = t->y;
         om_command_move(w, &u->unit_id, 1, t->x, t->y);
     }
