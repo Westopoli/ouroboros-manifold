@@ -118,6 +118,14 @@ enum { OM_MACRO_DIR_N, OM_MACRO_DIR_E, OM_MACRO_DIR_S, OM_MACRO_DIR_W, OM_MACRO_
 #define OM_MACRO_CAPTURE_BUF_CAP 65536
 #define OM_MACRO_BUS_NAME_CAP 64
 #define OM_MACRO_UNIT_TYPE_SLOTS 8
+/* Not in om_constants.h: R-120-03 pins the modifier speeds in prose
+ * (E-14 epic; Q-120-01 is still flagged on them). */
+#define OM_MACRO_SPEED_MULT_CAUTIOUS 0.6
+#define OM_MACRO_SPEED_MULT_AGGRESSIVE 1.2
+/* Not in om_constants.h: Q-122-01 closed (a), routed below 20 percent HP. */
+#define OM_MACRO_ROUT_HP_THRESHOLD 0.20
+/* Not in om_constants.h: Q-124-01 closed (a), p = 0.07 per mission. */
+#define OM_MACRO_EXTERNAL_REINFORCEMENT_PROB 0.07
 
 typedef struct {
     int behavior;
@@ -130,6 +138,7 @@ typedef struct {
     int objective_entered;
     int32_t faction_id;
     double hp_pct;
+    int hp_pct_set;
     double threshold_noise;
     int threshold_noise_drawn;
     double timer_noise;
@@ -374,15 +383,8 @@ uint32_t om_macro_get_phased_subgroups(om_world *w, uint32_t p1) {
 }
 
 double om_macro_get_speed_multiplier(int p0) {
-    /* Q-120-01 closed 2026-09-16 as (b): "AI postures deferred; enemy
-     * macro scripts use baseline movement/targeting speeds." No
-     * OM_MACRO_SPEED_MULT_CAUTIOUS / OM_MACRO_SPEED_MULT_AGGRESSIVE
-     * constant exists in csrc/om_constants.h (no ALG-74 sub-entry cites
-     * them) -- baseline 1.0 for every modifier per the closed decision,
-     * reported rather than guessed. See report: the epic's own open-flag
-     * example numbers (cautious x0.6, aggressive x1.2) are stale against
-     * this closed answer. */
-    (void)p0;
+    if (p0 == OM_MACRO_MOD_CAUTIOUS) return OM_MACRO_SPEED_MULT_CAUTIOUS;
+    if (p0 == OM_MACRO_MOD_AGGRESSIVE) return OM_MACRO_SPEED_MULT_AGGRESSIVE;
     return 1.0;
 }
 
@@ -466,7 +468,7 @@ void om_macro_set_base_transition_true(om_world *w, uint32_t p1, int p2) {
 void om_macro_set_force_hp_pct(om_world *w, uint32_t p1, double p2) {
     om_macro_state *st = om_macro_st(w);
     om_macro_force *f = om_macro_force_at(st, p1);
-    if (f) f->hp_pct = p2;
+    if (f) { f->hp_pct = p2; f->hp_pct_set = 1; }
 }
 
 void om_macro_set_hook_true(om_world *w, uint32_t p1, int p2) {
@@ -513,11 +515,10 @@ void om_macro_update_bus_runner(om_world *w) {
     char name[OM_MACRO_BUS_NAME_CAP];
     for (i = 0; i < st->n_forces; i++) {
         om_macro_force *f = &st->forces[i];
-        /* Q-122-01 closed (a): "the runner sets force_<id>_routed when
-         * force HP < 20 percent." OM_MACRO_ROUT_HP_THRESHOLD is not in
-         * csrc/om_constants.h (no ALG-74 sub-entry cites it) -- reported
-         * as a missing constant rather than hardcoded here; the routed
-         * flag is intentionally left unset until it lands. */
+        if (f->hp_pct_set && f->hp_pct < OM_MACRO_ROUT_HP_THRESHOLD) {
+            snprintf(name, sizeof(name), "force_%u_routed", (unsigned)i);
+            om_macro_bus_set_flag(w, name, 1);
+        }
         if (f->objective_entered) {
             snprintf(name, sizeof(name), "objective_%u_contested", (unsigned)i);
             om_macro_bus_set_flag(w, name, 1);
@@ -567,7 +568,7 @@ void om_mission_check_external_reinforcements(om_world *w) {
     om_macro_state *st = om_macro_st(w);
     if (!st->wave_set || !st->wave.is_scheduled) return;
     if (st->reinforcement_spawned) return;
-    if (w->tick < st->wave.arrival_tick) return;
+    if (om_tactical_tick(w) < st->wave.arrival_tick) return;
     st->reinforcement_spawned = 1;
     st->wave.is_spawned = 1;
     om_macro_bus_set_flag(w, "reinforcements_arrived", 1);
@@ -596,12 +597,7 @@ void om_mission_check_external_reinforcements(om_world *w) {
 }
 
 double om_mission_get_external_reinforcement_prob(void) {
-    /* Q-124-01 closed 2026-09-16 as (a): p = 0.07. No
-     * OM_MISSION_EXTERNAL_REINFORCEMENT_PROB constant exists in
-     * csrc/om_constants.h (no ALG entry cites it) -- reported as a
-     * missing constant rather than hardcoded here; see report. Kept at
-     * 0.0 (never schedules) until it lands, rather than guessed. */
-    return 0.0;
+    return OM_MACRO_EXTERNAL_REINFORCEMENT_PROB;
 }
 
 uint32_t om_mission_get_reinforcement_foreshadow_text(om_world *w, char *p1, uint32_t p2) {
@@ -635,7 +631,7 @@ void om_mission_schedule_external_reinforcement(om_world *w, om_reinforcement_wa
     if (roll < prob) {
         p1->is_scheduled = 1;
         p1->direction = (uint32_t)(om_rng_draw(w) * (double)OM_MACRO_DIR_COUNT);
-        p1->arrival_tick = w->tick + (uint64_t)(om_rng_draw(w) * (double)OM_SCRIPT_EVAL_INTERVAL_TICKS) + 1;
+        p1->arrival_tick = om_tactical_tick(w) + (uint64_t)(om_rng_draw(w) * (double)OM_SCRIPT_EVAL_INTERVAL_TICKS) + 1;
     } else {
         p1->is_scheduled = 0;
         p1->direction = 0;
