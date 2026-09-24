@@ -11,10 +11,11 @@
  * lifecycle window counters, the two persistent pending queues --
  * event_queue and telegraphs), then one length-prefixed blob per om_world
  * module slot (om_internal.h) in a fixed order -- 0 bytes when that
- * slot's _size hook is NULL, i.e. no module wires these hooks in this
- * piece, so every blob is empty today (leftover: events.c's om_chain_counter
- * lives in events_state and does not round-trip until events.c gets its
- * own hooks).
+ * slot's _size hook is NULL. F2m wires the events and generational hooks
+ * onto every world at om_world_new (csrc/region.c), so those two slots
+ * round-trip (events.c's om_chain_counter among them) even on a world that
+ * never otherwise touched the module; the other eight slots stay NULL,
+ * i.e. empty, until their own module lands its hooks.
  *
  * Everything is explicit little-endian, fixed width, no struct memcpy, no
  * padding: om_save_writer/om_save_reader below pack/unpack one scalar at a
@@ -23,13 +24,16 @@
  * IEEE-754 bit pattern (memcpy of a scalar reinterpret, not a struct).
  *
  * om_load_state_read validates the ENTIRE buffer (magic, version, every
- * count against its compile-time cap, every blob's bounds) with sv_parse
- * run once against a NULL-mutation target before it is run a second time
- * to actually apply -- so a refused load never touches the destination
- * world (R-111-03). Both passes walk the identical field sequence, so a
- * bounds/cap failure caught in the first pass is guaranteed to be caught
- * at the same offset in the second (or never reached, since the first
- * pass returning ok means every subsequent read in the second pass is
+ * count against its compile-time cap, every blob's bounds, and -- F2m --
+ * every module slot's own read hook run against a scratch shadow world,
+ * not the destination) before it is run a second time to actually apply --
+ * so a refused load never touches the destination world (R-111-03), even
+ * when the refusal is a module's own semantic failure on an
+ * otherwise well-formed slot blob, not just a top-level bounds/cap miss.
+ * Both passes walk the identical field sequence, so a bounds/cap failure
+ * caught in the first pass is guaranteed to be caught at the same offset
+ * in the second (or never reached, since the first pass returning ok
+ * means every subsequent read in the second pass is
  * in-bounds). */
 #include "ouroboros_sim.h"
 #include "om_internal.h"
@@ -158,8 +162,24 @@ static void sv_write_slots(sv_writer *sw, const om_world *w) {
     sv_write_one_slot(sw, w, OM_SAVE_SLOT_MAPGEN,       w->mapgen_state_size,       w->mapgen_state_write);
 }
 
-static void sv_parse_one_slot(sv_reader *sr, om_world *w, int apply, uint8_t expect_id,
+/* F2m (R-111-03 atomic refusal): apply == 0 (the validate pass) used to
+ * skip read_fn entirely, so a structurally-valid but semantically-corrupt
+ * slot blob (right id, right length, garbage inside -- e.g. a module count
+ * over its own cap) was only ever caught in the apply pass, by which point
+ * sv_parse_body had already written tick/seed/regions/factions/etc onto
+ * the real w above (R-111-03 violation: a refused load must never touch
+ * the target). Validate now runs read_fn too, but against shadow (a
+ * scratch om_world, own module-slot fields only, allocated once by the
+ * caller) instead of w, so a semantic failure is caught before the apply
+ * pass -- and therefore before any core field write -- ever runs; the
+ * fresh state read_fn built on shadow is then discarded through shadow's
+ * own newly-set free hook (shadow_state/shadow_free_fn), never through
+ * w's, which may still be NULL on a world that has not allocated this slot
+ * yet. */
+static void sv_parse_one_slot(sv_reader *sr, om_world *w, om_world *shadow, int apply,
+                               uint8_t expect_id,
                                void **state, void (*free_fn)(void *),
+                               void **shadow_state, void (**shadow_free_fn)(void *),
                                int (*read_fn)(om_world *, const uint8_t *, uint32_t)) {
     uint8_t id = sv_get_u8(sr);
     if (sr->ok && id != expect_id) sr->ok = 0;
@@ -172,30 +192,76 @@ static void sv_parse_one_slot(sv_reader *sr, om_world *w, int apply, uint8_t exp
         if (read_fn) {
             if (read_fn(w, blob, blen) != 0) sr->ok = 0;
         }
+    } else if (read_fn) {
+        if (read_fn(shadow, blob, blen) != 0) sr->ok = 0;
+        if (*shadow_state && *shadow_free_fn) (*shadow_free_fn)(*shadow_state);
+        *shadow_state = NULL;
+        *shadow_free_fn = NULL;
     }
 }
 
 static void sv_parse_slots(sv_reader *sr, om_world *w, int apply) {
-    sv_parse_one_slot(sr, w, apply, OM_SAVE_SLOT_TACTICAL,
-                       &w->tactical_state, w->tactical_state_free, w->tactical_state_read);
-    sv_parse_one_slot(sr, w, apply, OM_SAVE_SLOT_GENERATIONAL,
-                       &w->generational_state, w->generational_state_free, w->generational_state_read);
-    sv_parse_one_slot(sr, w, apply, OM_SAVE_SLOT_EVENTS,
-                       &w->events_state, w->events_state_free, w->events_state_read);
-    sv_parse_one_slot(sr, w, apply, OM_SAVE_SLOT_MISSION,
-                       &w->mission_state, w->mission_state_free, w->mission_state_read);
-    sv_parse_one_slot(sr, w, apply, OM_SAVE_SLOT_FOG,
-                       &w->fog_state, w->fog_state_free, w->fog_state_read);
-    sv_parse_one_slot(sr, w, apply, OM_SAVE_SLOT_CHRONICLE,
-                       &w->chronicle_state, w->chronicle_state_free, w->chronicle_state_read);
-    sv_parse_one_slot(sr, w, apply, OM_SAVE_SLOT_MOVE,
-                       &w->move_state, w->move_state_free, w->move_state_read);
-    sv_parse_one_slot(sr, w, apply, OM_SAVE_SLOT_MACRO,
-                       &w->macro_state, w->macro_state_free, w->macro_state_read);
-    sv_parse_one_slot(sr, w, apply, OM_SAVE_SLOT_SUPPORT,
-                       &w->support_state, w->support_state_free, w->support_state_read);
-    sv_parse_one_slot(sr, w, apply, OM_SAVE_SLOT_MAPGEN,
-                       &w->mapgen_state, w->mapgen_state_free, w->mapgen_state_read);
+    /* Only the validate pass (apply == 0) needs a shadow target; the apply
+     * pass reads straight into w as before. One shadow, calloc'd so the
+     * (large, OM_MAX_REGIONS/OM_MAX_FACTIONS-sized) om_world is never put
+     * on the stack, covers all ten slot calls below -- each call only ever
+     * touches its own module's pair of fields on it. */
+    om_world *shadow = NULL;
+    if (!apply) {
+        shadow = calloc(1, sizeof(om_world));
+        if (!shadow) { sr->ok = 0; return; }
+    }
+    sv_parse_one_slot(sr, w, shadow, apply, OM_SAVE_SLOT_TACTICAL,
+                       &w->tactical_state, w->tactical_state_free,
+                       shadow ? &shadow->tactical_state : NULL,
+                       shadow ? &shadow->tactical_state_free : NULL,
+                       w->tactical_state_read);
+    sv_parse_one_slot(sr, w, shadow, apply, OM_SAVE_SLOT_GENERATIONAL,
+                       &w->generational_state, w->generational_state_free,
+                       shadow ? &shadow->generational_state : NULL,
+                       shadow ? &shadow->generational_state_free : NULL,
+                       w->generational_state_read);
+    sv_parse_one_slot(sr, w, shadow, apply, OM_SAVE_SLOT_EVENTS,
+                       &w->events_state, w->events_state_free,
+                       shadow ? &shadow->events_state : NULL,
+                       shadow ? &shadow->events_state_free : NULL,
+                       w->events_state_read);
+    sv_parse_one_slot(sr, w, shadow, apply, OM_SAVE_SLOT_MISSION,
+                       &w->mission_state, w->mission_state_free,
+                       shadow ? &shadow->mission_state : NULL,
+                       shadow ? &shadow->mission_state_free : NULL,
+                       w->mission_state_read);
+    sv_parse_one_slot(sr, w, shadow, apply, OM_SAVE_SLOT_FOG,
+                       &w->fog_state, w->fog_state_free,
+                       shadow ? &shadow->fog_state : NULL,
+                       shadow ? &shadow->fog_state_free : NULL,
+                       w->fog_state_read);
+    sv_parse_one_slot(sr, w, shadow, apply, OM_SAVE_SLOT_CHRONICLE,
+                       &w->chronicle_state, w->chronicle_state_free,
+                       shadow ? &shadow->chronicle_state : NULL,
+                       shadow ? &shadow->chronicle_state_free : NULL,
+                       w->chronicle_state_read);
+    sv_parse_one_slot(sr, w, shadow, apply, OM_SAVE_SLOT_MOVE,
+                       &w->move_state, w->move_state_free,
+                       shadow ? &shadow->move_state : NULL,
+                       shadow ? &shadow->move_state_free : NULL,
+                       w->move_state_read);
+    sv_parse_one_slot(sr, w, shadow, apply, OM_SAVE_SLOT_MACRO,
+                       &w->macro_state, w->macro_state_free,
+                       shadow ? &shadow->macro_state : NULL,
+                       shadow ? &shadow->macro_state_free : NULL,
+                       w->macro_state_read);
+    sv_parse_one_slot(sr, w, shadow, apply, OM_SAVE_SLOT_SUPPORT,
+                       &w->support_state, w->support_state_free,
+                       shadow ? &shadow->support_state : NULL,
+                       shadow ? &shadow->support_state_free : NULL,
+                       w->support_state_read);
+    sv_parse_one_slot(sr, w, shadow, apply, OM_SAVE_SLOT_MAPGEN,
+                       &w->mapgen_state, w->mapgen_state_free,
+                       shadow ? &shadow->mapgen_state : NULL,
+                       shadow ? &shadow->mapgen_state_free : NULL,
+                       w->mapgen_state_read);
+    if (shadow) free(shadow);
 }
 
 /* ------------------------------------------------------------- the body */

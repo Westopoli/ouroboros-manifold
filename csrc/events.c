@@ -74,6 +74,18 @@ static uint32_t evt_save_size(const om_world *w);
 static void evt_save_write(const om_world *w, uint8_t *out);
 static int evt_save_read(om_world *w, const uint8_t *buf, uint32_t len);
 
+/* F2m (om_internal.h): wires the three save hooks onto a world that has not
+ * yet allocated w->events_state, so a fresh world's read hook is never NULL
+ * (evt_save_read below already copes with a NULL events_state / len == 0 by
+ * building fresh state or writing a 0-length blob). Called once from
+ * om_world_new (csrc/region.c); evt_alloc below sets the same three
+ * pointers again once state actually exists, so this never allocates. */
+void om_events_install_save_hooks(om_world *w) {
+    w->events_state_size = evt_save_size;
+    w->events_state_write = evt_save_write;
+    w->events_state_read = evt_save_read;
+}
+
 static om_evt_state *evt_find(const om_world *w) {
     if (!w) return NULL;
     return (om_evt_state *)w->events_state;

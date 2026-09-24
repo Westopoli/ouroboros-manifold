@@ -316,6 +316,16 @@ typedef struct {
 void om_debug_gen_config(const om_world *w, om_debug_gen_config_row *out);
 #endif
 
+/* F2m: wires each module's save hooks onto a fresh world at om_world_new
+ * (csrc/region.c) time, so a world that never touched the module still has
+ * a working events_state_read/generational_state_read before any save/load
+ * -- the module's own lazy allocators (evt_alloc csrc/events.c,
+ * gen_get_state csrc/generational.c) set the same three pointers again the
+ * first time state is actually needed, so this only pre-wires the hooks;
+ * it never allocates the state itself. */
+void om_events_install_save_hooks(om_world *w);
+void om_generational_install_save_hooks(om_world *w);
+
 /* Internal step hooks. om_step_collisions runs between om_step_reinforce
  * (3e) and om_step_resolve (3f): it groups this tick's pending intents in
  * w->decisions[] by target, resolves every target with two or more intents

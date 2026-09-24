@@ -99,6 +99,13 @@ om_world *om_world_new(uint32_t n_regions, uint64_t seed) {
     w->events_state_size = NULL;
     w->events_state_write = NULL;
     w->events_state_read = NULL;
+    /* F2m: install the two modules' save hooks now, on the just-zeroed
+     * slots above, so a world that never touches events/generational still
+     * has a working read hook if a save is loaded into it (om_internal.h;
+     * csrc/events.c / csrc/generational.c set the same pointers again, not
+     * the state itself, the first time either module is actually used). */
+    om_events_install_save_hooks(w);
+    om_generational_install_save_hooks(w);
     w->mission_state = NULL;
     w->mission_state_free = NULL;
     w->mission_state_size = NULL;
