@@ -14,6 +14,39 @@
 #define OM_MAX_REGIONS 128
 #define OM_DAMAGE_HISTORY_CAP 64
 #define OM_TIE_EPSILON 1e-12
+/* F2j: named so save.c (T2c) can bound-check a loaded count against the
+ * same cap the struct below was declared with, instead of repeating the
+ * bare literal (alg_constants.py --lint csrc only globs csrc slash star
+ * dot c, not this header, but save.c's own lines must still name every
+ * cap). */
+#define OM_RNG_FORCED_CAP 4096
+#define OM_FEATURE_COUNT 9
+#define OM_EVENT_QUEUE_CAP 64
+
+/* F2j: save.c (S-111, card T2c) format constants. Magic is the save
+ * blob's first 4 bytes; a mismatch is R-111-03's version refusal.
+ * Format version bumps whenever save.c's own field layout changes shape
+ * (not on unrelated om_world additions with no save-format impact). Byte
+ * bits/mask are named so save.c's manual little-endian pack/unpack loops
+ * never carry a bare shift/mask literal the lint would flag. Slot ids fix
+ * the on-disk order of the nine per-module blobs below (om_world's own
+ * field order, F2i). */
+#define OM_SAVE_MAGIC "OMSV"
+#define OM_SAVE_MAGIC_LEN 4
+#define OM_SAVE_FORMAT_VERSION 1
+#define OM_SAVE_BYTE_BITS 8
+#define OM_SAVE_BYTE_MASK 0xFFu
+#define OM_SAVE_SLOT_TACTICAL     0
+#define OM_SAVE_SLOT_GENERATIONAL 1
+#define OM_SAVE_SLOT_EVENTS       2
+#define OM_SAVE_SLOT_MISSION      3
+#define OM_SAVE_SLOT_FOG          4
+#define OM_SAVE_SLOT_CHRONICLE    5
+#define OM_SAVE_SLOT_MOVE         6
+#define OM_SAVE_SLOT_MACRO        7
+#define OM_SAVE_SLOT_SUPPORT      8
+#define OM_SAVE_SLOT_MAPGEN       9
+#define OM_SAVE_SLOT_COUNT        10
 
 typedef struct {
     om_tier  tier;
@@ -51,7 +84,7 @@ struct om_world {
     /* E-05 faction, ownership, typed edges, and RNG state.
      * features[] is sized for every om_feature id (OM_FEAT_EVENTS ..
      * OM_FEAT_TACTICAL, 9 today); bump alongside a new om_feature value. */
-    int          features[9];
+    int          features[OM_FEATURE_COUNT];
     double       faction_budget[OM_MAX_FACTIONS];
     double       faction_budget_snapshot[OM_MAX_FACTIONS];
     double       faction_tech[OM_MAX_FACTIONS];
@@ -66,7 +99,7 @@ struct om_world {
     int64_t     *region_held_since;
     om_edge_type region_edge[OM_MAX_REGIONS][OM_MAX_REGIONS];
     uint64_t     rng_state, rng_inc;
-    double       rng_forced[4096];
+    double       rng_forced[OM_RNG_FORCED_CAP];
     uint32_t     rng_forced_head, rng_forced_len;
 
     /* E-05 decision and resolution state. Each log holds at most one record
@@ -92,7 +125,7 @@ struct om_world {
     /* event queue, shared with E-04 (ouroboros_sim.h ~line 454): entries are
      * queued by E-05 (conquest-unrest, admin-separatist chains) and resolved
      * by E-04 (ALG-36). Persists across ticks; never reset in sim.c. */
-    om_queued_event    event_queue[64];
+    om_queued_event    event_queue[OM_EVENT_QUEUE_CAP];
     uint32_t           event_queue_n;
 
     /* E-03 generation config and result (freeze/F2b). Config is written by
@@ -150,52 +183,92 @@ struct om_world {
      * keyed by om_world* (save/load and the checksum must see it) */
     void *tactical_state;
     void (*tactical_state_free)(void *);
+    /* F2j: save hooks beside tactical_state_free above (same convention). NULL means the slot is not saved; see csrc/save.c. */
+    uint32_t (*tactical_state_size)(const om_world *w);
+    void (*tactical_state_write)(const om_world *w, uint8_t *out);
+    int (*tactical_state_read)(om_world *w, const uint8_t *buf, uint32_t len);
 
     /* E-08 generational module state, same convention as tactical_state
      * above: never a file static keyed by om_world*. */
     void *generational_state;
     void (*generational_state_free)(void *);
+    /* F2j: save hooks beside generational_state_free above (same convention). NULL means the slot is not saved; see csrc/save.c. */
+    uint32_t (*generational_state_size)(const om_world *w);
+    void (*generational_state_write)(const om_world *w, uint8_t *out);
+    int (*generational_state_read)(om_world *w, const uint8_t *buf, uint32_t len);
 
     /* B1-3: csrc/events.c per-world state, same convention as
      * tactical_state above -- events.c kept it in a file-static slot table
      * keyed by om_world*, invisible to save/load and the checksum. */
     void *events_state;
     void (*events_state_free)(void *);
+    /* F2j: save hooks beside events_state_free above (same convention). NULL means the slot is not saved; see csrc/save.c. */
+    uint32_t (*events_state_size)(const om_world *w);
+    void (*events_state_write)(const om_world *w, uint8_t *out);
+    int (*events_state_read)(om_world *w, const uint8_t *buf, uint32_t len);
 
     /* B9: csrc/mission.c per-world state, same convention as tactical_state
      * above. */
     void *mission_state;
     void (*mission_state_free)(void *);
+    /* F2j: save hooks beside mission_state_free above (same convention). NULL means the slot is not saved; see csrc/save.c. */
+    uint32_t (*mission_state_size)(const om_world *w);
+    void (*mission_state_write)(const om_world *w, uint8_t *out);
+    int (*mission_state_read)(om_world *w, const uint8_t *buf, uint32_t len);
 
     /* F2i: csrc/fog.c per-world state, same convention as tactical_state
      * above. */
     void *fog_state;
     void (*fog_state_free)(void *);
+    /* F2j: save hooks beside fog_state_free above (same convention). NULL means the slot is not saved; see csrc/save.c. */
+    uint32_t (*fog_state_size)(const om_world *w);
+    void (*fog_state_write)(const om_world *w, uint8_t *out);
+    int (*fog_state_read)(om_world *w, const uint8_t *buf, uint32_t len);
 
     /* F2i: csrc/chronicle.c per-world state, same convention as
      * tactical_state above. */
     void *chronicle_state;
     void (*chronicle_state_free)(void *);
+    /* F2j: save hooks beside chronicle_state_free above (same convention). NULL means the slot is not saved; see csrc/save.c. */
+    uint32_t (*chronicle_state_size)(const om_world *w);
+    void (*chronicle_state_write)(const om_world *w, uint8_t *out);
+    int (*chronicle_state_read)(om_world *w, const uint8_t *buf, uint32_t len);
 
     /* F2i: csrc/tactical_move.c per-world state, same convention as
      * tactical_state above. */
     void *move_state;
     void (*move_state_free)(void *);
+    /* F2j: save hooks beside move_state_free above (same convention). NULL means the slot is not saved; see csrc/save.c. */
+    uint32_t (*move_state_size)(const om_world *w);
+    void (*move_state_write)(const om_world *w, uint8_t *out);
+    int (*move_state_read)(om_world *w, const uint8_t *buf, uint32_t len);
 
     /* F2i: csrc/enemy_macro.c per-world state, same convention as
      * tactical_state above. */
     void *macro_state;
     void (*macro_state_free)(void *);
+    /* F2j: save hooks beside macro_state_free above (same convention). NULL means the slot is not saved; see csrc/save.c. */
+    uint32_t (*macro_state_size)(const om_world *w);
+    void (*macro_state_write)(const om_world *w, uint8_t *out);
+    int (*macro_state_read)(om_world *w, const uint8_t *buf, uint32_t len);
 
     /* F2i: csrc/tactical_support.c per-world state, same convention as
      * tactical_state above. */
     void *support_state;
     void (*support_state_free)(void *);
+    /* F2j: save hooks beside support_state_free above (same convention). NULL means the slot is not saved; see csrc/save.c. */
+    uint32_t (*support_state_size)(const om_world *w);
+    void (*support_state_write)(const om_world *w, uint8_t *out);
+    int (*support_state_read)(om_world *w, const uint8_t *buf, uint32_t len);
 
     /* F2k: csrc/tactical_mapgen.c per-world state, same convention as
      * tactical_state above. */
     void *mapgen_state;
     void (*mapgen_state_free)(void *);
+    /* F2j-2: save hooks beside mapgen_state_free above (same convention). NULL means the slot is not saved; see csrc/save.c. */
+    uint32_t (*mapgen_state_size)(const om_world *w);
+    void (*mapgen_state_write)(const om_world *w, uint8_t *out);
+    int (*mapgen_state_read)(om_world *w, const uint8_t *buf, uint32_t len);
 
     /* F2e: E-06 diplomacy storage backing the om_faction_stance_counter /
      * om_faction_cooperative_since / om_faction_last_knowledge_lost

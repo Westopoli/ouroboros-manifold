@@ -1896,7 +1896,7 @@ note = "Returns new character id, fed to om_character_get_record."
 [[symbols]]
 name = "om_load_state_read"
 module = "generational.c"
-restype = "void"
+restype = "int"
 params = [{ name = "w", ctype = "om_world*" }, { name = "buffer", ctype = "const uint8_t*" }, { name = "length", ctype = "uint32_t" }]
 epics = ["E-08"]
 confidence = "likely"
