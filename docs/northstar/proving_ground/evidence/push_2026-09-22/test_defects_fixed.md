@@ -1060,3 +1060,81 @@ Files touched: `tests/csim/test_E09_S065_five_to_ten_entries_in_the_right_order.
 `tests/csim/test_E15_S126_most_of_my_force_is_out_there.py`,
 `docs/bible/epics/E-14-enemy-macro-behavior.md`,
 this evidence file.
+
+### tests-fix-6: `test_R_123_01` and `test_R_055_04`
+
+#### R-123-01 (`test_E14_S123_the_enemy_replays_like_i_do.py::test_R_123_01_every_enemy_command_identical_on`)
+
+Confound: fixture drove the tactical clock with `for tick in range(200):
+lib.om_tactical_tick(w1); lib.om_tactical_tick(w2)`. `om_tactical_tick`
+(csrc/unit.c:1457) is a read-only getter — `return om_tac(w)->current_tick;`
+— it never advances anything. Both worlds sat at tick 0 for the whole loop,
+`om_macro_tick` never ran, no enemy command was ever logged.
+
+Fix: `lib.om_tactical_tick_to(w1, 200)` / `lib.om_tactical_tick_to(w2, 200)`
+(real on B10c-2, merged onto this branch) in place of the getter loop.
+`om_tactical_tick_to` (csrc/unit.c:1461) drives `current_tick` forward one
+tick at a time and calls `om_macro_tick` each step. Probed both worlds
+after the fix: each logs 5 commands, at ticks 40, 80, 120, 160, 200 (every
+`OM_SCRIPT_EVAL_INTERVAL_TICKS`-th tick, om_constants.h:468, = 40), force 0
+(`om_macro_force_at(st, 0)` always exists per R-120-04), same command_type
+and zero target on both worlds since seed 424242 drives no RNG draw on this
+code path.
+
+Red before: `assert count1 > 0` — `assert 0 > 0`.
+Green after: passes.
+Control: with both worlds driven to tick 200 and identical, manually
+`om_replay_log_command(w2, 201, 1, 9, 1.0, 2.0, 0)` to inject a divergent
+command into w2 only. Reran the assertion chain: `count1 == count2` fails
+(`assert 5 == 6`) before even reaching the per-command loop — the
+identical-replay check is not vacuous, it catches a real divergence.
+
+#### R-055-04 (`test_E08_S055_one_commander_one_mission_then_the_world_moves.py::test_R_055_04_character_selector_runs_after_it`)
+
+Confound: fixture was `w = world_factory(n_regions=4)` with no faction
+registered and no region owned — the comment claimed "region 2 was set up
+as the mission target" but nothing set up region 2. `om_mission_generator_run`
+(csrc/generational.c:1441) calls `om_mission_build_candidate_pool` +
+`om_mission_candidates`; with no player faction and no owned regions the
+pool is empty (n == 0), so it falls back to `om_mission_fallback_region`
+(csrc/mission.c:1270), which returns 0 when `om_mission_player_faction`
+finds no faction with `OM_ARCH_PLAYER` in use (`player < 0`, loop body
+never runs, `weakest` stays its initial 0). `chosen_region != 0` failed
+against this real (not stubbed) fallback path.
+
+Fix: mirrored `test_E10_S072_orders_come_from_where_the_world_hurts.py`'s
+candidate-pool fixture — `set_faction(w, 0, PLAYER, budget=50)`,
+`set_faction(w, 1, CONQUEROR, budget=100)`, `set_stance(w, 0, 1, HOSTILE)`,
+`set_tech_multipliers` for both factions, region 2 as a player-owned
+frontier (military=30, economy=40, tension=20, population=50, same field
+shape as S-072's region-0 defensive_stand trigger), region 3 as the hostile
+neighbor, `set_edge(w, 2, 3, BORDER)`. Regions 0 and 1 left unset (owner
+-1, no candidate). Probed standalone: `om_mission_generator_run` now builds
+exactly one candidate (region 2, defensive_stand), `om_mission_select`
+picks index 0 trivially (only candidate), `chosen_region == 2`. Strengthened
+the assertion from `!= 0` to `== 2` since the pool is no longer empty.
+
+Red before: `assert chosen_region != 0, "chosen region must be a real
+(nonzero) mission target"` — `assert 0 != 0`.
+Green after: passes (`chosen_region == 2`, `read_region == chosen_region`).
+Control: called `om_character_selector_run(w)` *before*
+`om_mission_generator_run(w)` (breaking the rule's "runs after it"
+ordering) against the same fixture. `om_character_selector_input_region`
+then reads the stale `selector_input_region` (0) while `chosen_region` is
+2 — `read_region == chosen_region` fails (`assert 0 == 2`). The ordering
+assertion is not vacuous; it catches a real ordering violation.
+
+### Whole-suite check (`tests/csim`, before vs after, this branch)
+
+Merged build (origin/main + B10c-2 + B13-4 + B7-9), `make -j8` clean, zero
+warnings. Ran `tests/csim` full before the two test edits: `148 failed, 601
+passed, 7 skipped, 1 xfailed`. Applied both fixes, rebuilt (no-op, no C
+changed), ran again: `146 failed, 603 passed, 7 skipped, 1 xfailed`.
+Diffed sorted `FAILED` lines: exactly 2 removed (`test_R_123_01_every_
+enemy_command_identical_on`, `test_R_055_04_character_selector_runs_after_
+it`), 0 added. No new red anywhere in the suite.
+
+Files touched:
+`tests/csim/test_E14_S123_the_enemy_replays_like_i_do.py`,
+`tests/csim/test_E08_S055_one_commander_one_mission_then_the_world_moves.py`,
+this evidence file.
