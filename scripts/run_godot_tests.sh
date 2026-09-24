@@ -41,12 +41,37 @@ for TEST_PATH in "$@"; do
     RES_PATH="res://${TEST_PATH#./}"
     echo "=== Running $RES_PATH (timeout ${TIMEOUT}s) ==="
 
+    RUN_LOG="$(mktemp)"
     set +e
-    "$GODOT" --headless --path . --script "$RES_PATH" --quit-after "$TIMEOUT"
-    TEST_EXIT=$?
+    "$GODOT" --headless --path . --script "$RES_PATH" --quit-after "$TIMEOUT" 2>&1 | tee "$RUN_LOG"
+    TEST_EXIT="${PIPESTATUS[0]}"
     set -e
 
-    if [[ $TEST_EXIT -ne 0 ]]; then
+    # A GDScript SCRIPT ERROR (missing method/constant, bad call) halts the
+    # erroring function on the spot but does not throw -- the awaiting
+    # coroutine in _initialize() resumes anyway, the test still prints its
+    # summary with whatever partial pass/fail counts it reached, and Godot
+    # still exits 0. Exit code and the summary line both lie in that case,
+    # so a SCRIPT ERROR line anywhere in the run is fail-worthy on its own,
+    # ahead of the exit-code check below.
+    SCRIPT_ERR_LINE="$(grep -m1 'SCRIPT ERROR' "$RUN_LOG" || true)"
+
+    # A test that hangs (awaits a signal/frame that never comes) never
+    # reaches its own summary print; --quit-after force-quits it with exit
+    # 0 once the timeout elapses, which the old exit-code-only check read
+    # as PASS. Every test file's convention (tests/test_c_bridge.gd,
+    # tests/test_galaxy_view.gd, etc.) is to print `PASS: N  FAIL: M`
+    # right before quitting, so its absence means the run aborted.
+    HAS_SUMMARY="$(grep -cE '^PASS: [0-9]+ +FAIL: [0-9]+$' "$RUN_LOG" || true)"
+    rm -f "$RUN_LOG"
+
+    if [[ -n "$SCRIPT_ERR_LINE" ]]; then
+        echo "FAIL: $RES_PATH (script error: $SCRIPT_ERR_LINE)"
+        EXIT_CODE=1
+    elif [[ "${HAS_SUMMARY:-0}" -eq 0 ]]; then
+        echo "FAIL: $RES_PATH (no summary: aborted)"
+        EXIT_CODE=1
+    elif [[ $TEST_EXIT -ne 0 ]]; then
         echo "FAIL: $RES_PATH (exit $TEST_EXIT)"
         EXIT_CODE=1
     else
