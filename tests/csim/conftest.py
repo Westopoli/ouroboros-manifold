@@ -1915,7 +1915,7 @@ def _bind_e08(lib):
     _bind(lib, "om_lineage_set_chapter_count", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "lineage_id", "chapters"), kw=True)
     _bind(lib, "om_lineage_spawn_descendant_at_tick", [W, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint64], ctypes.c_uint32, ("w", "lineage_id", "parent_id", "tick"), kw=True)
     _bind(lib, "om_lineage_spawn_single_descendant", [W, ctypes.c_uint32], ctypes.c_uint32, ("w", "lineage_id"), kw=True)
-    _bind(lib, "om_load_state_read", [W, P(ctypes.c_uint8), ctypes.c_uint32], None, ("w", "buffer", "length"))
+    _bind(lib, "om_load_state_read", [W, P(ctypes.c_uint8), ctypes.c_uint32], ctypes.c_int, ("w", "buffer", "length"))
     _bind(lib, "om_mission_generator_chosen_region", [W], ctypes.c_uint32, ("w",))
     _bind(lib, "om_mission_generator_run", [W], None, ("w",))
     _bind(lib, "om_mission_tag_rivals", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "mission_region", "commander_id"), kw=True)
