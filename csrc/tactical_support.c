@@ -761,14 +761,17 @@ int om_structure_is_in_capture_radius(om_world *w, uint32_t structure, double x,
 
 void om_objective_setup_drifting(om_world *w, uint32_t objective, uint64_t period) {
     om_sup_objective *o = om_sup_objective_at(w, objective);
+    om_vec2 seed = {0.0, 0.0};
     o->drifting = 1;
     o->drift_period = period;
+    if (om_objective_get_center(w, objective, &seed)) o->center = seed;
     om_sup_synthesize_drift_wp(w, o->center.x, o->center.y, o->drift_wp);
 }
 
-/* R-130-02: this file's private centre stays the source; mission.c's copy
- * (om_objective_get_center) is only ever written, through the public
- * om_objective_set_center, whenever a drifted centre is recomputed. */
+/* R-130-02: this file's private centre stays the source; mission.c's copy is
+ * read once by om_objective_setup_drifting to seed it, then only written,
+ * through om_objective_set_center, whenever a drifted centre is recomputed
+ * (om_support_tick each tick, om_objective_is_contested on demand). */
 static om_vec2 om_sup_objective_current_center(om_world *w, om_sup_objective *o, uint32_t objective) {
     if (o->drifting) {
         om_vec2 pos;
@@ -779,6 +782,16 @@ static om_vec2 om_sup_objective_current_center(om_world *w, om_sup_objective *o,
         }
     }
     return o->center;
+}
+
+void om_support_tick(om_world *w) {
+    om_sup_state *st;
+    uint32_t i;
+    if (!w || !w->support_state) return;
+    st = (om_sup_state *)w->support_state;
+    for (i = 0; i < OM_SUP_MAX_OBJECTIVES; i++) {
+        if (st->objectives[i].in_use && st->objectives[i].drifting) om_sup_objective_current_center(w, &st->objectives[i], i);
+    }
 }
 
 /* Best-effort: no public unit.c accessor exposes a unit's faction id
