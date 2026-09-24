@@ -150,6 +150,9 @@
 #define OM_MISSION_MULTI_FRONT_MIN_SOURCES 2
 #define OM_MISSION_CONTAINMENT_MIN_REVOLTS 2
 #define OM_MISSION_DEFAULT_TIME_LIMIT_TICKS 300
+/* OMDifficulty.MEDIUM in the E-10 tests (easy 0, hard 2 in
+ * om_mission_compute_difficulty_parity). */
+#define OM_MISSION_DIFFICULTY_MEDIUM 1
 
 /* Mission archetype ids -- plain uint32_t 0-9 (OMMissionArchetype in every
  * E-10 test file), unrelated to the om_archetype enum (faction archetypes:
@@ -261,6 +264,12 @@
 /* R-078-05: refusal's tension rise is 8 percent of the region's deficit. */
 #define OM_MISSION_REFUSAL_TENSION_DEFICIT_PCT 8.0
 #define OM_MISSION_MAX_CONSEQUENCE_DELTAS 8
+/* Debrief prose: a region field counts as changed only past this. */
+#define OM_MISSION_DEBRIEF_DELTA_EPSILON 1e-9
+
+/* R-113-01 spine node type id for an objective (OMSpineNodeType.OBJECTIVE in
+ * tests/csim/test_E17_S113_*.py; csrc/tactical_mapgen.c does not export it). */
+#define OM_MISSION_SPINE_NODE_OBJECTIVE 0
 
 /* R-079-03/04: debrief retention prose bands -- no bible-given cutoffs
  * (the debrief only has to show retention qualitatively, not a formula),
@@ -345,6 +354,17 @@ typedef struct {
 
     /* S-078 refusal: no force deployed */
     int      refused;
+
+    /* S-078 applied consequences: the last region the table touched and what
+     * changed there, so the debrief can describe it in prose (R-079-03/04). */
+    int      end_applied;
+    int      consequence_seen;
+    double   consequence_delta[OM_F_COUNT];
+    int      consequence_transferred;
+
+    /* S-074 composed force for the started mission (om_mission_setup) */
+    double   enemy_power;
+    double   player_parity;
 
     /* B9-3 R-080-03 candidate viability, keyed by mission archetype id */
     int      candidate_viable[OM_MISSION_N_ARCHETYPES];
@@ -737,24 +757,35 @@ static uint32_t om_mission_consequence_table(uint32_t archetype, int32_t band, o
     return 0;
 }
 
-/* R-078-04 / S-073 table: transfer_on_total/strong/partial (loaded by
- * om_mission_load_launch_library) name which bands hand the region to the
- * player for this archetype; E-03's om_region_set_owner resets held_since
- * to the tick passed in (R-024-03), so the current world tick is correct. */
-static void om_mission_apply_transfer(om_world *w, uint32_t region_idx, uint32_t archetype, int32_t band) {
-    om_archetype_metadata meta;
-    if (!om_mission_get_archetype_metadata(w, archetype, &meta)) return;
-    int transfer = (band == OM_MISSION_BAND_TOTAL_SUCCESS && meta.transfer_on_total) ||
-                   (band == OM_MISSION_BAND_STRONG_SUCCESS && meta.transfer_on_strong) ||
-                   (band == OM_MISSION_BAND_PARTIAL_SUCCESS && meta.transfer_on_partial);
-    if (!transfer) return;
+/* R-078-04 / R-073-01 transfer table (which bands hand the region to the
+ * player for each archetype), indexed DEFENSIVE_STAND=0 .. COUNTERINSURGENCY=9.
+ * Shared with om_mission_load_launch_library so the two never drift; read
+ * directly here so applying consequences never depends on the library load. */
+static const uint32_t om_mission_transfer_total[OM_MISSION_N_ARCHETYPES]   = {0, 0, 1, 1, 1, 0, 0, 0, 0, 0};
+static const uint32_t om_mission_transfer_strong[OM_MISSION_N_ARCHETYPES]  = {0, 0, 1, 1, 1, 0, 0, 0, 0, 0};
+static const uint32_t om_mission_transfer_partial[OM_MISSION_N_ARCHETYPES] = {0, 0, 1, 0, 0, 0, 0, 0, 0, 0};
+
+/* E-03's om_region_set_owner resets held_since to the tick passed in
+ * (R-024-03), so the current world tick is correct. */
+static int om_mission_apply_transfer(om_world *w, uint32_t region_idx, uint32_t archetype, int32_t band) {
+    if (archetype >= OM_MISSION_N_ARCHETYPES) return 0;
+    int transfer = (band == OM_MISSION_BAND_TOTAL_SUCCESS && om_mission_transfer_total[archetype]) ||
+                   (band == OM_MISSION_BAND_STRONG_SUCCESS && om_mission_transfer_strong[archetype]) ||
+                   (band == OM_MISSION_BAND_PARTIAL_SUCCESS && om_mission_transfer_partial[archetype]);
+    if (!transfer) return 0;
     int32_t player = om_mission_player_faction(w);
-    if (player < 0) return;
+    if (player < 0) return 0;
     om_region_set_owner(w, region_idx, player, (int64_t)w->tick);
+    return 1;
 }
 
 void om_mission_apply_consequences(om_world *w, uint32_t region_idx, uint32_t archetype, int32_t band) {
-    om_mission_apply_transfer(w, region_idx, archetype, band);
+    if (!w || region_idx >= w->n_regions) return;
+    om_mission_state *st = om_mis(w);
+    double before[OM_F_COUNT];
+    for (int f = 0; f < OM_F_COUNT; f++) before[f] = om_region_field(w, region_idx, (om_field)f);
+
+    int transferred = om_mission_apply_transfer(w, region_idx, archetype, band);
 
     om_consequence_delta deltas[OM_MISSION_MAX_CONSEQUENCE_DELTAS];
     uint32_t n = om_mission_consequence_table(archetype, band, deltas, OM_MISSION_MAX_CONSEQUENCE_DELTAS);
@@ -766,6 +797,11 @@ void om_mission_apply_consequences(om_world *w, uint32_t region_idx, uint32_t ar
             : om_consequence_eval_delta_current(*fp, deltas[i].pct);
         *fp = om_consequence_apply_clamped(*fp, raw);
     }
+
+    st->consequence_seen = 1;
+    st->consequence_transferred = transferred;
+    for (int f = 0; f < OM_F_COUNT; f++)
+        st->consequence_delta[f] = om_region_field(w, region_idx, (om_field)f) - before[f];
 }
 
 /* R-078-07: target `adjacent_player` applies delta to every player-owned
@@ -1148,6 +1184,10 @@ void om_mission_end(om_world *w) {
         st->commander_fate = OM_COMMANDER_FATE_SURVIVED;
         st->commander_fate_set = 1;
     }
+    if (st->mission_set && !st->end_applied) {
+        st->end_applied = 1;
+        om_mission_apply_consequences(w, st->mission_region, st->mission_archetype, st->band);
+    }
 }
 
 /* R-077-03 / Q-077-01: killed at 0 HP, wounded below the 30% line, else
@@ -1247,12 +1287,9 @@ uint32_t om_mission_fallback_region(const om_world *w) {
  * share and the next unit does not overshoot the remaining budget by more
  * than OM_MISSION_FILL_OVERSHOOT_MULT. Stores the resulting counts into
  * player_units (same slot om_mission_apply_capacity_shortfall reads). */
-double om_mission_fill_player_force(om_world *w, double P, double parity) {
-    om_mission_state *st = om_mis(w);
-    double budget = P * parity;
-
+static double om_mission_fill_counts(const om_world *w, uint32_t archetype, double budget, uint32_t *counts) {
     double ratios[OM_MISSION_N_UNIT_TYPES];
-    om_mission_allocate_force_profile(w, st->mission_archetype, budget, ratios);
+    om_mission_allocate_force_profile(w, archetype, budget, ratios);
 
     uint32_t order[OM_MISSION_N_UNIT_TYPES];
     for (uint32_t i = 0; i < OM_MISSION_N_UNIT_TYPES; i++) order[i] = i;
@@ -1264,7 +1301,7 @@ double om_mission_fill_player_force(om_world *w, double P, double parity) {
         uint32_t tmp = order[i]; order[i] = order[best]; order[best] = tmp;
     }
 
-    uint32_t counts[OM_MISSION_N_UNIT_TYPES] = {0};
+    for (uint32_t i = 0; i < OM_MISSION_N_UNIT_TYPES; i++) counts[i] = 0;
     double remaining = budget;
     double total_allocated = 0.0;
     for (uint32_t k = 0; k < OM_MISSION_N_UNIT_TYPES; k++) {
@@ -1281,9 +1318,15 @@ double om_mission_fill_player_force(om_world *w, double P, double parity) {
             total_allocated += pr;
         }
     }
-
-    for (uint32_t i = 0; i < OM_MISSION_N_UNIT_TYPES; i++) st->player_units[i] = counts[i];
     return total_allocated;
+}
+
+double om_mission_fill_player_force(om_world *w, double P, double parity) {
+    om_mission_state *st = om_mis(w);
+    uint32_t counts[OM_MISSION_N_UNIT_TYPES];
+    double total = om_mission_fill_counts(w, st->mission_archetype, P * parity, counts);
+    for (uint32_t i = 0; i < OM_MISSION_N_UNIT_TYPES; i++) st->player_units[i] = counts[i];
+    return total;
 }
 
 int om_mission_get_archetype_metadata(const om_world *w, uint32_t archetype, om_archetype_metadata *out) {
@@ -1396,11 +1439,35 @@ int om_mission_get_debrief(const om_world *w, om_debrief *out) {
     const char *retention_word = (out->retention >= OM_MISSION_DEBRIEF_RETENTION_MOST_CUTOFF) ? "most of the force"
         : (out->retention >= OM_MISSION_DEBRIEF_RETENTION_SOME_CUTOFF) ? "some of the force"
         : "little of the force";
-    snprintf(out->text, sizeof(out->text),
-             "Debrief: %s. The commander is %s. %s came home.",
-             om_mission_band_name(out->band),
-             om_mission_commander_fate_name(out->commander_fate),
-             retention_word);
+    int n = snprintf(out->text, sizeof(out->text),
+                     "Debrief: %s. The commander is %s. %s came home.",
+                     om_mission_band_name(out->band),
+                     om_mission_commander_fate_name(out->commander_fate),
+                     retention_word);
+    size_t len = (n > 0) ? (size_t)n : 0;
+    if (st->consequence_seen) {
+        static const char *const rose[OM_F_COUNT] = {
+            "military strength rose", "the economy grew", "tension rose", "the population grew",
+        };
+        static const char *const fell[OM_F_COUNT] = {
+            "military strength fell", "the economy shrank", "tension eased", "the population shrank",
+        };
+        int wrote = 0;
+        for (int f = 0; f < OM_F_COUNT && len < sizeof(out->text); f++) {
+            double d = st->consequence_delta[f];
+            if (d > -OM_MISSION_DEBRIEF_DELTA_EPSILON && d < OM_MISSION_DEBRIEF_DELTA_EPSILON) continue;
+            n = snprintf(out->text + len, sizeof(out->text) - len, "%s%s", wrote ? ", " : " In the region: ",
+                         d > 0.0 ? rose[f] : fell[f]);
+            if (n > 0) len += (size_t)n;
+            wrote = 1;
+        }
+        if (wrote && len < sizeof(out->text)) {
+            n = snprintf(out->text + len, sizeof(out->text) - len, ".");
+            if (n > 0) len += (size_t)n;
+        }
+        if (st->consequence_transferred && len < sizeof(out->text))
+            snprintf(out->text + len, sizeof(out->text) - len, " The region now answers to the player.");
+    }
     return 1;
 }
 
@@ -1414,10 +1481,8 @@ uint32_t om_mission_get_deployed_force_count(const om_world *w) {
 }
 
 double om_mission_get_enemy_power(const om_world *w) {
-    /* Real body (ALG-57, force allocation) lands with B9-2; R-073-04 only
-     * needs this independent of om_mission_setup's lineage_connection flag. */
-    (void)w;
-    return 0.0;
+    const om_mission_state *st = om_mis_ro(w);
+    return st ? st->enemy_power : 0.0;
 }
 
 double om_mission_get_objective_completion(const om_world *w, uint32_t objective_idx) {
@@ -1453,10 +1518,8 @@ uint32_t om_mission_get_objectives(const om_world *w, om_objective_spec *out, ui
 }
 
 double om_mission_get_player_parity(const om_world *w) {
-    /* Real body (ALG-57) lands with B9-2; R-073-04 only needs this
-     * independent of om_mission_setup's lineage_connection flag. */
-    (void)w;
-    return 1.0;
+    const om_mission_state *st = om_mis_ro(w);
+    return (st && st->mission_set) ? st->player_parity : 1.0;
 }
 
 void om_mission_get_player_units(const om_world *w, uint32_t *out, uint32_t max) {
@@ -1512,21 +1575,17 @@ int om_mission_is_ended(const om_world *w) {
 void om_mission_load_launch_library(om_world *w) {
     om_mission_state *st = om_mis(w);
     /* R-073-01's exact contract table (canvas_category: 0 small, 1 medium,
-     * 2 large; transfer flags per test_R_073_01, indexed DEFENSIVE_STAND=0
-     * .. COUNTERINSURGENCY=9). */
-    static const uint32_t canvas_category[OM_MISSION_N_ARCHETYPES]   = {1, 2, 1, 2, 0, 2, 1, 1, 2, 0};
-    static const uint32_t transfer_total[OM_MISSION_N_ARCHETYPES]    = {0, 0, 1, 1, 1, 0, 0, 0, 0, 0};
-    static const uint32_t transfer_strong[OM_MISSION_N_ARCHETYPES]   = {0, 0, 1, 1, 1, 0, 0, 0, 0, 0};
-    static const uint32_t transfer_partial[OM_MISSION_N_ARCHETYPES]  = {0, 0, 1, 0, 0, 0, 0, 0, 0, 0};
-
+     * 2 large, indexed DEFENSIVE_STAND=0 .. COUNTERINSURGENCY=9; transfer
+     * flags are the file-scope om_mission_transfer_* tables above). */
+    static const uint32_t canvas_category[OM_MISSION_N_ARCHETYPES] = {1, 2, 1, 2, 0, 2, 1, 1, 2, 0};
     for (uint32_t i = 0; i < OM_MISSION_N_ARCHETYPES; i++) {
         om_mission_archetype_row *row = &st->archetypes[i];
         row->meta.id = i;
         row->meta.canvas_category = canvas_category[i];
         row->meta.primary_objective = i;
-        row->meta.transfer_on_total = transfer_total[i];
-        row->meta.transfer_on_strong = transfer_strong[i];
-        row->meta.transfer_on_partial = transfer_partial[i];
+        row->meta.transfer_on_total = om_mission_transfer_total[i];
+        row->meta.transfer_on_strong = om_mission_transfer_strong[i];
+        row->meta.transfer_on_partial = om_mission_transfer_partial[i];
         if (!row->profile_set) {
             for (uint32_t t = 0; t < OM_MISSION_N_UNIT_TYPES; t++)
                 row->profile[t] = 1.0 / OM_MISSION_N_UNIT_TYPES;
@@ -1673,12 +1732,52 @@ void om_mission_set_revolt_events(om_world *w, uint32_t region_idx, uint32_t rec
     ctx->revolt_set = 1;
 }
 
+/* ALG-57 allocate_forces (simulation/force_allocator.py), run once when the
+ * mission starts: enemy force from the region, the player's force at parity
+ * (medium difficulty: the world carries no difficulty setting), shortfall at
+ * low capacity, then the PARITY_FLOOR top-up with the cheapest unit type.
+ * Independent of lineage_connection (R-073-04). */
+static void om_mission_compose_force(om_world *w, om_mission_state *st) {
+    uint32_t r = st->mission_region;
+    if (r >= w->n_regions || r >= OM_MAX_REGIONS) return;
+    const om_mission_region_ctx *ctx = &st->region_ctx[r];
+    double committed = ctx->conflict_set ? ctx->attack_budget_sum : 0.0;
+    double enemy_power = om_mission_compute_enemy_power(w, st->mission_archetype, committed,
+                                                        om_region_field(w, r, OM_F_MILITARY),
+                                                        om_region_field(w, r, OM_F_POPULATION));
+    uint32_t enemy_counts[OM_MISSION_N_UNIT_TYPES];
+    double enemy_total = om_mission_fill_counts(w, st->mission_archetype, enemy_power, enemy_counts);
+
+    double capacity = om_region_composite(w, r, OM_C_CAPACITY) / OM_MISSION_DEFICIT_FIELD_MAX;
+    double parity = om_mission_compute_difficulty_parity(om_mission_compute_base_parity(capacity), OM_MISSION_DIFFICULTY_MEDIUM);
+    om_mission_fill_player_force(w, enemy_total, parity);
+    om_mission_apply_capacity_shortfall(w, capacity);
+
+    if (enemy_total > 0.0) {
+        uint32_t cheapest = 0;
+        double cheapest_power = 0.0;
+        double total = 0.0;
+        for (uint32_t t = 0; t < OM_MISSION_N_UNIT_TYPES; t++) {
+            double pr = om_unit_power(t);
+            total += pr * (double)st->player_units[t];
+            if (pr > 0.0 && (cheapest_power <= 0.0 || pr < cheapest_power)) { cheapest = t; cheapest_power = pr; }
+        }
+        while (cheapest_power > 0.0 && total / enemy_total < OM_PARITY_FLOOR) {
+            st->player_units[cheapest]++;
+            total += cheapest_power;
+        }
+    }
+    st->enemy_power = enemy_power;
+    st->player_parity = parity;
+}
+
 void om_mission_setup(om_world *w, uint32_t p1, uint32_t archetype, int lineage_connection) {
     om_mission_state *st = om_mis(w);
     st->mission_region = p1;
     st->mission_archetype = archetype;
     st->lineage_connection = lineage_connection;
     st->mission_set = 1;
+    om_mission_compose_force(w, st);
 }
 
 void om_mission_setup_destroy_targets(om_world *w, uint32_t objective_idx, uint32_t total) {
@@ -1750,10 +1849,22 @@ void om_mission_setup_termination(om_world *w, uint32_t p1, int primary_complete
     st->term_player_alive = player_alive;
 }
 
+/* R-118-01 / R-130-02: the objective zone is centred on its spine node, read
+ * live so a drifting node carries the zone with it. om_map_* take a
+ * non-const world but these two are pure getters (same cast precedent as
+ * om_mission_is_ended). See also: csrc/tactical_support.c -- its own drifting
+ * objective centre is not visible here until an om_objective_set_center is
+ * declared for it to push into. */
 int om_objective_get_center(const om_world *w, uint32_t objective_idx, om_vec2 *out) {
-    /* STUB */
-    (void)w; (void)objective_idx; (void)out;
-    return 0;
+    if (!out) return 0;
+    out->x = 0.0;
+    out->y = 0.0;
+    if (!w) return 0;
+    om_world *mw = (om_world *)w;
+    if (om_map_count_nodes_of_type(mw, OM_MISSION_SPINE_NODE_OBJECTIVE) <= objective_idx) return 0;
+    uint32_t node = om_map_get_nth_node_of_type(mw, OM_MISSION_SPINE_NODE_OBJECTIVE, objective_idx);
+    om_map_get_node_pos(mw, node, out);
+    return 1;
 }
 
 /* B9-3: plain wrappers over E-05's om_region_held_since / om_region_owner
