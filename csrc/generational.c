@@ -272,6 +272,307 @@ static void gen_state_free(void *p) {
     free(p);
 }
 
+/* ---- save hooks (F2j-2 slots, consumed by csrc/save.c) ----
+ * Explicit little-endian scalars, no struct memcpy. Only the used prefix of
+ * each array is written (n_characters, n_lineages, n_force, n_deaths, ...);
+ * everything past it is zero in a live state, so a read into a calloc'd
+ * state reproduces it byte for byte. A world with no allocated state writes
+ * a 0-byte blob. See also: csrc/save.c sv_write_slots -- calls these. */
+
+#define GEN_ONBOARDING_ARRAY_LEN ((uint32_t)(sizeof(((om_onboarding_config *)0)->weights) / sizeof(double)))
+
+typedef struct {
+    uint8_t *buf; /* NULL: size-only pass */
+    uint32_t pos;
+} gen_sw;
+
+static void gen_sw_uint(gen_sw *sw, uint64_t v, uint32_t width) {
+    if (sw->buf) {
+        for (uint32_t i = 0; i < width; i++)
+            sw->buf[sw->pos + i] = (uint8_t)((v >> (OM_SAVE_BYTE_BITS * i)) & OM_SAVE_BYTE_MASK);
+    }
+    sw->pos += width;
+}
+static void gen_sw_u8(gen_sw *sw, uint32_t v) { gen_sw_uint(sw, v, (uint32_t)sizeof(uint8_t)); }
+static void gen_sw_u32(gen_sw *sw, uint32_t v) { gen_sw_uint(sw, v, (uint32_t)sizeof(uint32_t)); }
+static void gen_sw_u64(gen_sw *sw, uint64_t v) { gen_sw_uint(sw, v, (uint32_t)sizeof(uint64_t)); }
+static void gen_sw_i32(gen_sw *sw, int32_t v) { gen_sw_uint(sw, (uint32_t)v, (uint32_t)sizeof(int32_t)); }
+static void gen_sw_f64(gen_sw *sw, double v) {
+    uint64_t bits;
+    memcpy(&bits, &v, sizeof(bits));
+    gen_sw_u64(sw, bits);
+}
+static void gen_sw_bytes(gen_sw *sw, const char *src, uint32_t n) {
+    if (sw->buf) memcpy(sw->buf + sw->pos, src, n);
+    sw->pos += n;
+}
+
+static void gen_state_put(gen_sw *sw, const gen_state *gs) {
+    gen_sw_u32(sw, gs->n_characters);
+    for (uint32_t i = 0; i < gs->n_characters; i++) {
+        const gen_character *c = &gs->characters[i];
+        gen_sw_u8(sw, (uint32_t)c->used);
+        gen_sw_u32(sw, c->id);
+        gen_sw_bytes(sw, c->name, (uint32_t)sizeof(c->name));
+        gen_sw_i32(sw, c->faction);
+        gen_sw_u32(sw, c->region);
+        gen_sw_u32(sw, c->rank);
+        gen_sw_u64(sw, c->birth_tick);
+        gen_sw_u32(sw, c->lifespan);
+        gen_sw_u32(sw, c->status);
+        gen_sw_u64(sw, c->death_tick);
+        gen_sw_u32(sw, c->lineage_id);
+        gen_sw_u32(sw, c->parent_id);
+        gen_sw_u32(sw, c->generation);
+        for (uint32_t k = 0; k < GEN_MAX_RIVAL_TAGS; k++) gen_sw_u32(sw, c->rival_of[k]);
+        gen_sw_u32(sw, c->n_rival_of);
+        gen_sw_u32(sw, c->n_children);
+        gen_sw_u8(sw, (uint32_t)c->is_main_character);
+    }
+    gen_sw_u32(sw, gs->next_auto_id);
+
+    gen_sw_u32(sw, gs->n_lineages);
+    for (uint32_t i = 0; i < gs->n_lineages; i++) {
+        const gen_lineage *l = &gs->lineages[i];
+        gen_sw_u8(sw, (uint32_t)l->used);
+        gen_sw_u32(sw, l->id);
+        for (uint32_t k = 0; k < GEN_MAX_LINEAGE_HISTORY; k++) gen_sw_u32(sw, l->history[k]);
+        gen_sw_u32(sw, l->n_history);
+        gen_sw_u32(sw, l->chapter_count);
+    }
+
+    for (uint32_t i = 0; i < OM_MAX_FACTIONS; i++) gen_sw_u32(sw, gs->supreme_commander[i]);
+    for (uint32_t i = 0; i < GEN_REGION_CAP; i++) gen_sw_u32(sw, gs->regional_commander[i]);
+    for (uint32_t i = 0; i < OM_MAX_FACTIONS; i++) gen_sw_i32(sw, gs->faction_fallen[i]);
+
+    gen_sw_u32(sw, gs->n_force);
+    for (uint32_t i = 0; i < gs->n_force; i++) {
+        const gen_force *f = &gs->force[i];
+        gen_sw_u8(sw, (uint32_t)f->used);
+        gen_sw_u32(sw, f->mission_id);
+        gen_sw_f64(sw, f->budget);
+        gen_sw_u32(sw, f->survivors);
+        gen_sw_u32(sw, f->allocated);
+    }
+
+    for (uint32_t i = 0; i < GEN_MAX_ONBOARDING_SLOTS; i++) {
+        gen_sw_u8(sw, (uint32_t)gs->onboarding_used[i]);
+        const om_onboarding_config *o = &gs->onboarding[i];
+        gen_sw_u32(sw, o->difficulty);
+        for (uint32_t k = 0; k < GEN_ONBOARDING_ARRAY_LEN; k++) gen_sw_f64(sw, o->weights[k]);
+        for (uint32_t k = 0; k < GEN_ONBOARDING_ARRAY_LEN; k++) gen_sw_u32(sw, o->rare_marks[k]);
+    }
+
+    gen_sw_u32(sw, gs->n_deaths);
+    for (uint32_t i = 0; i < gs->n_deaths; i++) {
+        const gen_death_rec *d = &gs->deaths[i];
+        gen_sw_u8(sw, (uint32_t)d->used);
+        gen_sw_u32(sw, d->commander_id);
+        gen_sw_u32(sw, d->region);
+        gen_sw_i32(sw, d->band);
+    }
+
+    gen_sw_u32(sw, gs->n_nemesis_candidates);
+    for (uint32_t i = 0; i < gs->n_nemesis_candidates; i++) gen_sw_u32(sw, gs->nemesis_candidates[i]);
+
+    gen_sw_u8(sw, (uint32_t)gs->pool_previous_forced_empty);
+    gen_sw_u8(sw, (uint32_t)gs->pool_nemesis_forced_empty);
+    gen_sw_i32(sw, gs->chapter_phase);
+    gen_sw_u32(sw, gs->chapter_number);
+    gen_sw_u8(sw, (uint32_t)gs->needs_onboarding);
+    gen_sw_u8(sw, (uint32_t)gs->in_transition);
+    gen_sw_u32(sw, gs->death_pass_count);
+    gen_sw_u64(sw, gs->time_jump_lineage_gen_tick);
+    gen_sw_u64(sw, gs->time_jump_death_tick);
+    gen_sw_u32(sw, gs->mission_chosen_region);
+    gen_sw_u32(sw, gs->selector_input_region);
+}
+
+typedef struct {
+    const uint8_t *p;
+    uint32_t len;
+    uint32_t pos;
+    int ok;
+} gen_sr;
+
+static uint64_t gen_sr_uint(gen_sr *sr, uint32_t width) {
+    if (!sr->ok || width > sr->len - sr->pos) {
+        sr->ok = 0;
+        return 0;
+    }
+    uint64_t v = 0;
+    for (uint32_t i = 0; i < width; i++) v |= ((uint64_t)sr->p[sr->pos + i]) << (OM_SAVE_BYTE_BITS * i);
+    sr->pos += width;
+    return v;
+}
+static uint32_t gen_sr_u8(gen_sr *sr) { return (uint32_t)gen_sr_uint(sr, (uint32_t)sizeof(uint8_t)); }
+static uint32_t gen_sr_u32(gen_sr *sr) { return (uint32_t)gen_sr_uint(sr, (uint32_t)sizeof(uint32_t)); }
+static uint64_t gen_sr_u64(gen_sr *sr) { return gen_sr_uint(sr, (uint32_t)sizeof(uint64_t)); }
+static int32_t gen_sr_i32(gen_sr *sr) { return (int32_t)gen_sr_uint(sr, (uint32_t)sizeof(int32_t)); }
+static double gen_sr_f64(gen_sr *sr) {
+    uint64_t bits = gen_sr_u64(sr);
+    double v;
+    memcpy(&v, &bits, sizeof(v));
+    return v;
+}
+static uint32_t gen_sr_count(gen_sr *sr, uint32_t cap) {
+    uint32_t n = gen_sr_u32(sr);
+    if (n > cap) {
+        sr->ok = 0;
+        return 0;
+    }
+    return n;
+}
+static uint32_t gen_sr_flag(gen_sr *sr) {
+    uint32_t v = gen_sr_u8(sr);
+    if (v > 1) sr->ok = 0;
+    return v;
+}
+
+static void gen_state_get(gen_sr *sr, gen_state *gs) {
+    gs->n_characters = gen_sr_count(sr, GEN_MAX_CHARACTERS);
+    for (uint32_t i = 0; i < gs->n_characters && sr->ok; i++) {
+        gen_character *c = &gs->characters[i];
+        c->used = (int)gen_sr_flag(sr);
+        c->id = gen_sr_u32(sr);
+        if (sr->ok && sizeof(c->name) <= sr->len - sr->pos) {
+            memcpy(c->name, sr->p + sr->pos, sizeof(c->name));
+            sr->pos += (uint32_t)sizeof(c->name);
+            c->name[sizeof(c->name) - 1] = '\0';
+        } else {
+            sr->ok = 0;
+        }
+        c->faction = gen_sr_i32(sr);
+        c->region = gen_sr_u32(sr);
+        c->rank = gen_sr_u32(sr);
+        c->birth_tick = gen_sr_u64(sr);
+        c->lifespan = gen_sr_u32(sr);
+        c->status = gen_sr_u32(sr);
+        c->death_tick = gen_sr_u64(sr);
+        c->lineage_id = gen_sr_u32(sr);
+        c->parent_id = gen_sr_u32(sr);
+        c->generation = gen_sr_u32(sr);
+        for (uint32_t k = 0; k < GEN_MAX_RIVAL_TAGS; k++) c->rival_of[k] = gen_sr_u32(sr);
+        c->n_rival_of = gen_sr_u32(sr);
+        if (c->n_rival_of > GEN_MAX_RIVAL_TAGS) sr->ok = 0;
+        c->n_children = gen_sr_u32(sr);
+        c->is_main_character = (int)gen_sr_flag(sr);
+    }
+    gs->next_auto_id = gen_sr_u32(sr);
+
+    gs->n_lineages = gen_sr_count(sr, GEN_MAX_LINEAGES);
+    for (uint32_t i = 0; i < gs->n_lineages && sr->ok; i++) {
+        gen_lineage *l = &gs->lineages[i];
+        l->used = (int)gen_sr_flag(sr);
+        l->id = gen_sr_u32(sr);
+        for (uint32_t k = 0; k < GEN_MAX_LINEAGE_HISTORY; k++) l->history[k] = gen_sr_u32(sr);
+        l->n_history = gen_sr_u32(sr);
+        if (l->n_history > GEN_MAX_LINEAGE_HISTORY) sr->ok = 0;
+        l->chapter_count = gen_sr_u32(sr);
+    }
+
+    for (uint32_t i = 0; i < OM_MAX_FACTIONS; i++) gs->supreme_commander[i] = gen_sr_u32(sr);
+    for (uint32_t i = 0; i < GEN_REGION_CAP; i++) gs->regional_commander[i] = gen_sr_u32(sr);
+    for (uint32_t i = 0; i < OM_MAX_FACTIONS; i++) gs->faction_fallen[i] = gen_sr_i32(sr);
+
+    gs->n_force = gen_sr_count(sr, GEN_MAX_FORCE_MISSIONS);
+    for (uint32_t i = 0; i < gs->n_force && sr->ok; i++) {
+        gen_force *f = &gs->force[i];
+        f->used = (int)gen_sr_flag(sr);
+        f->mission_id = gen_sr_u32(sr);
+        f->budget = gen_sr_f64(sr);
+        f->survivors = gen_sr_u32(sr);
+        f->allocated = gen_sr_u32(sr);
+    }
+
+    for (uint32_t i = 0; i < GEN_MAX_ONBOARDING_SLOTS && sr->ok; i++) {
+        gs->onboarding_used[i] = (int)gen_sr_flag(sr);
+        om_onboarding_config *o = &gs->onboarding[i];
+        o->difficulty = gen_sr_u32(sr);
+        for (uint32_t k = 0; k < GEN_ONBOARDING_ARRAY_LEN; k++) o->weights[k] = gen_sr_f64(sr);
+        for (uint32_t k = 0; k < GEN_ONBOARDING_ARRAY_LEN; k++) o->rare_marks[k] = gen_sr_u32(sr);
+    }
+
+    gs->n_deaths = gen_sr_count(sr, GEN_MAX_DEATH_RECORDS);
+    for (uint32_t i = 0; i < gs->n_deaths && sr->ok; i++) {
+        gen_death_rec *d = &gs->deaths[i];
+        d->used = (int)gen_sr_flag(sr);
+        d->commander_id = gen_sr_u32(sr);
+        d->region = gen_sr_u32(sr);
+        d->band = gen_sr_i32(sr);
+    }
+
+    gs->n_nemesis_candidates = gen_sr_count(sr, GEN_MAX_NEMESIS_CANDIDATES);
+    for (uint32_t i = 0; i < gs->n_nemesis_candidates && sr->ok; i++) gs->nemesis_candidates[i] = gen_sr_u32(sr);
+
+    gs->pool_previous_forced_empty = (int)gen_sr_flag(sr);
+    gs->pool_nemesis_forced_empty = (int)gen_sr_flag(sr);
+    gs->chapter_phase = gen_sr_i32(sr);
+    gs->chapter_number = gen_sr_u32(sr);
+    gs->needs_onboarding = (int)gen_sr_flag(sr);
+    gs->in_transition = (int)gen_sr_flag(sr);
+    gs->death_pass_count = gen_sr_u32(sr);
+    gs->time_jump_lineage_gen_tick = gen_sr_u64(sr);
+    gs->time_jump_death_tick = gen_sr_u64(sr);
+    gs->mission_chosen_region = gen_sr_u32(sr);
+    gs->selector_input_region = gen_sr_u32(sr);
+}
+
+/* A state nothing has written to (allocated lazily by any accessor, including
+ * the per-tick hooks) carries no information: it saves as an empty blob and
+ * comes back lazily on the next access, the same as a world that never
+ * touched this module. */
+static int gen_state_pristine(const gen_state *gs) {
+    if (gs->n_characters || gs->n_lineages || gs->n_force || gs->n_deaths || gs->n_nemesis_candidates) return 0;
+    if (gs->next_auto_id != GEN_AUTO_ID_BASE) return 0;
+    if (gs->pool_previous_forced_empty || gs->pool_nemesis_forced_empty) return 0;
+    if (gs->chapter_phase || gs->chapter_number || gs->needs_onboarding || gs->in_transition) return 0;
+    if (gs->death_pass_count || gs->time_jump_lineage_gen_tick || gs->time_jump_death_tick) return 0;
+    if (gs->mission_chosen_region || gs->selector_input_region) return 0;
+    for (uint32_t i = 0; i < OM_MAX_FACTIONS; i++)
+        if (gs->supreme_commander[i] || gs->faction_fallen[i]) return 0;
+    for (uint32_t i = 0; i < GEN_REGION_CAP; i++)
+        if (gs->regional_commander[i]) return 0;
+    for (uint32_t i = 0; i < GEN_MAX_ONBOARDING_SLOTS; i++)
+        if (gs->onboarding_used[i]) return 0;
+    return 1;
+}
+
+static uint32_t gen_state_size_hook(const om_world *w) {
+    const gen_state *gs = (const gen_state *)w->generational_state;
+    if (!gs || gen_state_pristine(gs)) return 0;
+    gen_sw sw = { NULL, 0 };
+    gen_state_put(&sw, gs);
+    return sw.pos;
+}
+
+static void gen_state_write_hook(const om_world *w, uint8_t *out) {
+    const gen_state *gs = (const gen_state *)w->generational_state;
+    if (!gs || gen_state_pristine(gs)) return;
+    gen_sw sw = { out, 0 };
+    gen_state_put(&sw, gs);
+}
+
+static int gen_state_read_hook(om_world *w, const uint8_t *buf, uint32_t len) {
+    if (len == 0) return 0;
+    if (!buf) return 1;
+    gen_state *gs = calloc(1, sizeof(gen_state));
+    if (!gs) return 1;
+    gen_sr sr = { buf, len, 0, 1 };
+    gen_state_get(&sr, gs);
+    if (!sr.ok || sr.pos != len) {
+        free(gs);
+        return 1;
+    }
+    if (w->generational_state) gen_state_free(w->generational_state);
+    w->generational_state = gs;
+    w->generational_state_free = gen_state_free;
+    w->generational_state_size = gen_state_size_hook;
+    w->generational_state_write = gen_state_write_hook;
+    w->generational_state_read = gen_state_read_hook;
+    return 0;
+}
+
 static gen_state *gen_get_state(const om_world *cw) {
     om_world *w = (om_world *)cw;
     if (!w) return NULL;
@@ -281,6 +582,9 @@ static gen_state *gen_get_state(const om_world *cw) {
         gs->next_auto_id = GEN_AUTO_ID_BASE;
         w->generational_state = gs;
         w->generational_state_free = gen_state_free;
+        w->generational_state_size = gen_state_size_hook;
+        w->generational_state_write = gen_state_write_hook;
+        w->generational_state_read = gen_state_read_hook;
     }
     return (gen_state *)w->generational_state;
 }
