@@ -368,6 +368,11 @@ typedef struct {
 
     /* B9-3 R-080-03 candidate viability, keyed by mission archetype id */
     int      candidate_viable[OM_MISSION_N_ARCHETYPES];
+
+    /* B9-5 objective centres pushed by om_objective_set_center; kept apart
+     * from objectives[] so setting a centre never creates an objective. */
+    om_vec2  objective_center[OM_MISSION_MAX_OBJECTIVES];
+    int      objective_center_set[OM_MISSION_MAX_OBJECTIVES];
 } om_mission_state;
 
 static void om_mis_state_free(void *p) {
@@ -1849,17 +1854,23 @@ void om_mission_setup_termination(om_world *w, uint32_t p1, int primary_complete
     st->term_player_alive = player_alive;
 }
 
-/* R-118-01 / R-130-02: the objective zone is centred on its spine node, read
- * live so a drifting node carries the zone with it. om_map_* take a
- * non-const world but these two are pure getters (same cast precedent as
- * om_mission_is_ended). See also: csrc/tactical_support.c -- its own drifting
- * objective centre is not visible here until an om_objective_set_center is
- * declared for it to push into. */
+/* R-118-01 / R-130-02: a centre pushed by om_objective_set_center wins (a
+ * drifting objective moves the zone); otherwise the zone is centred on its
+ * spine node, read live so a drifting node carries the zone with it.
+ * om_map_* take a non-const world but these two are pure getters (same cast
+ * precedent as om_mission_is_ended). See also: csrc/tactical_support.c --
+ * owns the drifting objective centre and is the caller expected to push it
+ * through om_objective_set_center. */
 int om_objective_get_center(const om_world *w, uint32_t objective_idx, om_vec2 *out) {
     if (!out) return 0;
     out->x = 0.0;
     out->y = 0.0;
     if (!w) return 0;
+    const om_mission_state *st = om_mis_ro(w);
+    if (st && objective_idx < OM_MISSION_MAX_OBJECTIVES && st->objective_center_set[objective_idx]) {
+        *out = st->objective_center[objective_idx];
+        return 1;
+    }
     om_world *mw = (om_world *)w;
     if (om_map_count_nodes_of_type(mw, OM_MISSION_SPINE_NODE_OBJECTIVE) <= objective_idx) return 0;
     uint32_t node = om_map_get_nth_node_of_type(mw, OM_MISSION_SPINE_NODE_OBJECTIVE, objective_idx);
@@ -1924,8 +1935,11 @@ double om_unit_power(uint32_t unit_type) {
 }
 
 int om_objective_set_center(om_world *w, uint32_t objective_idx, double x, double y) {
-    /* STUB: B9-5 implements */
-    (void)w; (void)objective_idx; (void)x; (void)y;
-    return 0;
+    if (!w || objective_idx >= OM_MISSION_MAX_OBJECTIVES) return 0;
+    om_mission_state *st = om_mis(w);
+    st->objective_center[objective_idx].x = x;
+    st->objective_center[objective_idx].y = y;
+    st->objective_center_set[objective_idx] = 1;
+    return 1;
 }
 /* ---- end generated stubs ---- */
