@@ -84,7 +84,7 @@ cmd_run() {
 
     set +e
     ( cd "$scratch" && env -u DISPLAY -u WAYLAND_DISPLAY -u XAUTHORITY \
-        LIBGL_ALWAYS_SOFTWARE=1 GALLIUM_DRIVER=llvmpipe \
+        LIBGL_ALWAYS_SOFTWARE=1 GALLIUM_DRIVER=llvmpipe OM_SAVE_DIR="$scratch/saves" \
         timeout --kill-after=10 "$timeout" \
         xvfb-run -a -s "-screen 0 ${res}x24" \
         "$GODOT" --path "$REPO_ROOT" --display-driver x11 --rendering-driver opengl3 \
@@ -143,7 +143,7 @@ cmd_liveness() {
     # daemon reports the harness as the current scene.
     set +e
     ( cd "$scratch" && env -u DISPLAY -u WAYLAND_DISPLAY -u XAUTHORITY \
-        LIBGL_ALWAYS_SOFTWARE=1 GALLIUM_DRIVER=llvmpipe \
+        LIBGL_ALWAYS_SOFTWARE=1 GALLIUM_DRIVER=llvmpipe OM_SAVE_DIR="$scratch/saves" \
         timeout --kill-after=10 "$timeout" \
         xvfb-run -a -s "-screen 0 1280x720x24" \
         python3 - "$REPO_ROOT" "$GODOT" "$HARNESS_SCENE" "$qa_port" "$out_abs" "$timeout" <<'LIVENESS_PY'
