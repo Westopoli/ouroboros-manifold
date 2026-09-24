@@ -311,3 +311,33 @@ content" on the very first screen after starting a new game, not as a
 minor cosmetic gap. This is the single highest-value bug this look found:
 the whole point of T1-1 (the pipe generates a real world now) is invisible
 in actual play because of one wrong number three lines away.
+
+## Look 4 (galaxy live over the C2-3 / C7-2 fixes), 2026-09-24
+
+Base: `origin/main` (`dd11142`, C2-3 on main) plus `origin/push/C7-2` merged (daemon `state` carries the scene's `qa_state()`). C7-2 is not on main yet (last merge attempt rejected at the godot_import gate). Seed 1, 1280x720, real boot -> NewGame -> galaxy under Xvfb, real daemon protocol, one fresh game per plant so plants do not stack (`qa_plant` has no unplant). Driver is scratch tooling, not in repo. Screenshots in `look4/`, numbers in `look4/look4.json`.
+
+**Held claims, not passes: what one Xvfb/software-GL run rendered.**
+
+### Bottom line
+
+Galaxy data is live and correct. Galaxy pixels are not: every dot and edge draws black, so owners are not visible on screen.
+
+- `state["qa"]`: `system_count` 80, 51 owned regions, 15 distinct owners, 16 distinct region colours, edge counts 52 at strength 0 and 36 at strength 2. Matches the pipe (80 / 51 / 88). Fenced flow spine 8/8 on this tree (S-C8-08 included).
+- `galaxy_live_clean.png`: 80 black dots and a black edge tangle on flat grey, centre of screen, MISSION button bottom-right. No owner colours anywhere in the pixels although `region_colours` holds 16 different values. Brief expected owners coloured: not met on screen.
+
+### Plants vs clean (pixel diff, 921600 px)
+
+| plant | diff px | qa_state change | read |
+|---|---|---|---|
+| `seed-ignored` | 0 | none | behaviour-only, matches look 2 reasoning |
+| `owner-colour-flat` | 0 | `region_colours` changed | colours change in state, no pixel change: because owner colours never reach the pixels in the clean shot either |
+| `edges-2d-overlay` | 28599 | `edges_3d` true -> false | differs, real visual |
+| `pick-radius-zero` | 0 | `pick_radius_px` changed | behaviour-only (click radius) |
+| `bands-frozen` | 0 | none | behaviour-only (zoom band) |
+| `conquest-no-recolour` | 0 | none | needs a conquest to show, see C2-4 |
+
+Brief expected all six plants to differ by pixels. Only `edges-2d-overlay` does. `owner-colour-flat` is the one that should and does not: that is the same root cause as the black dots. Cause not investigated (docs-only pass): suspect the dot and edge materials do not apply `region_colours` (unshaded/emission missing) or the software-GL path drops it; check `scenes/galaxy/galaxy_view.gd` material setup against the colour dict.
+
+### Follow-up owed
+
+Galaxy render fix as a test-first story: screenshot-level assertion that the drawn pixels of an owned region differ from an unowned one (a colour-in-pixels detector), then the material fix. C2-4 conquest recolour stays blocked behind it.

@@ -1,0 +1,88 @@
+{
+ "state": {
+  "scene": "res://scenes/galaxy/galaxy_view.tscn",
+  "tick": 0,
+  "qa_summary": {
+   "system_count": 80,
+   "owned": 51,
+   "distinct_owners": 15,
+   "distinct_region_colours": 16,
+   "edge_counts": {
+    "0": 52,
+    "2": 36
+   },
+   "edges_3d": true,
+   "pick_radius_px": 14.0,
+   "band": "Overview",
+   "distance": 180.0
+  }
+ },
+ "plants": {
+  "seed-ignored": {
+   "plant_resp": {
+    "ok": true,
+    "result": {
+     "activated": true,
+     "id": "seed-ignored"
+    }
+   },
+   "diff_px": 0,
+   "of": 921600
+  },
+  "owner-colour-flat": {
+   "plant_resp": {
+    "ok": true,
+    "result": {
+     "activated": true,
+     "id": "owner-colour-flat"
+    }
+   },
+   "diff_px": 0,
+   "of": 921600
+  },
+  "edges-2d-overlay": {
+   "plant_resp": {
+    "ok": true,
+    "result": {
+     "activated": true,
+     "id": "edges-2d-overlay"
+    }
+   },
+   "diff_px": 28599,
+   "of": 921600
+  },
+  "pick-radius-zero": {
+   "plant_resp": {
+    "ok": true,
+    "result": {
+     "activated": true,
+     "id": "pick-radius-zero"
+    }
+   },
+   "diff_px": 0,
+   "of": 921600
+  },
+  "bands-frozen": {
+   "plant_resp": {
+    "ok": true,
+    "result": {
+     "activated": true,
+     "id": "bands-frozen"
+    }
+   },
+   "diff_px": 0,
+   "of": 921600
+  },
+  "conquest-no-recolour": {
+   "plant_resp": {
+    "ok": true,
+    "result": {
+     "activated": true,
+     "id": "conquest-no-recolour"
+    }
+   },
+   "diff_px": 0,
+   "of": 921600
+  }
+ }
+}
