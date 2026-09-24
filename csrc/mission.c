@@ -342,6 +342,7 @@ typedef struct {
     /* S-076 clock */
     uint64_t tactical_time_limit;
     uint64_t tactical_baseline_tick;
+    int      tactical_baseline_pending;
     int      tactical_ended;
 
     /* S-077 result (band revealed only at om_mission_end / resolve_refusal) */
@@ -1576,9 +1577,18 @@ int om_mission_is_ended(const om_world *w) {
     const om_mission_state *st = om_mis_ro(w);
     if (!st) return 0;
     if (st->tactical_ended) return 1;
-    /* Recon runs until the player presses Begin; the deadline does not tick yet. */
-    if (om_mission_get_phase(w) == 0 /* OM_FOG_PHASE_RECON, csrc/fog.c */) return 0;
+    /* Recon runs until the player presses Begin; the deadline does not tick
+     * yet, and its baseline is taken the first time this sees a phase past
+     * recon (fog.c's om_mission_begin has no hook into this file, so a first
+     * read late after Begin starts the count late). */
+    int phase = om_mission_get_phase(w);
+    if (phase == 0 /* OM_FOG_PHASE_RECON, csrc/fog.c */) return 0;
     uint64_t now = om_tactical_tick((om_world *)w);
+    if (st->tactical_baseline_pending) {
+        om_mission_state *mst = (om_mission_state *)w->mission_state;
+        mst->tactical_baseline_tick = now;
+        mst->tactical_baseline_pending = 0;
+    }
     uint64_t elapsed = now - st->tactical_baseline_tick;
     return elapsed >= st->tactical_time_limit ? 1 : 0;
 }
@@ -1865,6 +1875,7 @@ void om_mission_setup(om_world *w, uint32_t p1, uint32_t archetype, int lineage_
     /* Recon runs until the player presses Begin: fog.c's om_mission_begin is
      * the only path that moves the phase on to tactical. */
     om_mission_set_phase(w, 0 /* OM_FOG_PHASE_RECON, csrc/fog.c */);
+    st->tactical_baseline_pending = 1;
     om_mission_instantiate_map(w, st);
 }
 
@@ -1924,6 +1935,7 @@ void om_mission_setup_tactical(om_world *w, uint32_t p1, uint64_t time_limit) {
     (void)p1;
     st->tactical_time_limit = time_limit;
     st->tactical_baseline_tick = om_tactical_tick(w);
+    st->tactical_baseline_pending = om_mission_get_phase(w) == 0 /* OM_FOG_PHASE_RECON, csrc/fog.c */;
     st->tactical_ended = 0;
 }
 
