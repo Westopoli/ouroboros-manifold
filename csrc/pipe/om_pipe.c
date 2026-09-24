@@ -11,7 +11,59 @@
  * (tests/transport/test_pipe_shapes.py) asserts the ten frames right after
  * hello are all "delta" once set_seed/step(n:10) run, which only holds if
  * set_seed is silent.
+ *
+ * T1-2 (session commands, v1.1, 2026-09-24): mission_start/mission_end/
+ * jump/tactical_step/command/list_saves. Real gaps found while wiring
+ * these against csrc/ouroboros_sim.h, all handled by leaving the affected
+ * frame keys at 0/empty rather than inventing values -- see the comment at
+ * each spot below and the T1-2 leaf report:
+ *   - om_mission_start (csrc/diplomacy.c) is NOT a "start the mission"
+ *     entrypoint; it only encodes the calling faction's tech tier into an
+ *     opaque id for om_force_allocator_run/om_mission_unit_tier. The real
+ *     region/archetype/objective/phase wiring is composed here from
+ *     om_mission_build_candidate_pool + om_mission_select +
+ *     om_mission_candidates + om_mission_setup + om_mission_build_objectives
+ *     + om_mission_begin, none of which docs/architecture.md's session
+ *     commands text names.
+ *   - No accessor wires a force composition into a started mission
+ *     (om_mission_get_player_units reads st->player_units[], which nothing
+ *     in the reachable API sets before mission_start); "force":{"types":
+ *     [],"tiers":[]} is always empty.
+ *   - om_objective_spec has no "node" or "radius" field (id, kind,
+ *     is_primary, weight, completion, is_complete, is_failed only); both
+ *     keys are emitted as 0.
+ *   - om_debrief has no region_delta fields; om_mission_apply_consequences
+ *     applies deltas into the world but returns none, and isn't part of the
+ *     documented mission_end call sequence (om_mission_end +
+ *     om_mission_get_debrief only). "region_delta" is always zeros.
+ *   - om_chronicle_entry has no accessor to read it back by id (only
+ *     om_chronicle_entry_count/_is_retained); om_chronicle_get_cluster's
+ *     om_chronicle_cluster is used instead (type/category/region/peak_score/
+ *     start_tick/end_tick). It has one region, not a regions[] list, no
+ *     faction refs, and no fragment id -- "refs.factions" and "fragment"
+ *     are always empty/0.
+ *   - Every om_map_get_* node/canvas accessor and om_tactical_step itself
+ *     are STUBs (csrc/tactical_mapgen.c, csrc/unit.c: E-11 wiring, card
+ *     B10/B12 not landed). There is also no enumerator for live tactical
+ *     unit ids at all (only per-id accessors like om_unit_get_pos, and no
+ *     om_map_get_cover/obstacle count+get pair even once B10 lands map
+ *     nodes). "map.nodes" reflects the stub (always empty), "map.cover" and
+ *     "map.obstacles" are always empty, and "units"/"visible" are always
+ *     empty. "tick" is this file's own g_tactical_tick counter, since
+ *     om_tactical_step's real counter does not advance with zero units.
+ *   - There is no om_command_hold symbol (only om_unit_order_hold_node(w,
+ *     unit_id, node_id), which needs a node this command frame does not
+ *     carry); verb "hold" always answers error.
+ *   - om_load_state_read returns one bool for both "version mismatch" and
+ *     "corrupt" (csrc/save.c); this file always reports "corrupt".
+ *   - No public getter reads back the chapter number set by
+ *     om_chapter_start; the save sidecar's "chapter" is always 0.
+ *   - GEN_PHASE_BRIEFING/GEN_PHASE_MISSION are private #defines in
+ *     csrc/generational.c, not exported by ouroboros_sim.h; mirrored below
+ *     as OM_PIPE_CHAPTER_PHASE_* since om_chapter_set_phase/
+ *     om_chapter_mission_realtime take/read the raw int.
  */
+#include <dirent.h>
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -19,6 +71,11 @@
 #include <string.h>
 
 #include "ouroboros_sim.h"
+
+/* csrc/generational.c GEN_PHASE_BRIEFING / GEN_PHASE_MISSION, not exported
+ * by ouroboros_sim.h. See the file-header comment above. */
+#define OM_PIPE_CHAPTER_PHASE_BRIEFING 0
+#define OM_PIPE_CHAPTER_PHASE_MISSION 2
 
 /* ---------------------------------------------------------------------
  * Frame I/O
@@ -178,6 +235,16 @@ static int get_i64(const char *json, const char *key, int64_t *out) {
     return 1;
 }
 
+static int get_f64(const char *json, const char *key, double *out) {
+    const char *p = find_key(json, key);
+    if (!p) return 0;
+    char *end;
+    double v = strtod(p, &end);
+    if (end == p) return 0;
+    *out = v;
+    return 1;
+}
+
 static int get_bool(const char *json, const char *key, int *out) {
     const char *p = find_key(json, key);
     if (!p) return 0;
@@ -216,6 +283,7 @@ static int get_int_array(const char *json, const char *key, int *out, int max) {
 static om_world *W = NULL;
 static uint64_t g_tick = 0;
 static uint32_t g_n_regions = 0;
+static uint64_t g_tactical_tick = 0;
 
 static int32_t *prev_owner = NULL;
 static double *prev_mil = NULL, *prev_econ = NULL, *prev_ten = NULL;
@@ -697,6 +765,233 @@ static void write_delta(void) {
 }
 
 /* ---------------------------------------------------------------------
+ * session command frames: mission, debrief, chronicle, tactical, saves
+ * (docs/architecture.md, "C transport v1", "session commands"). See the
+ * file-header comment for every field this file cannot fill from the
+ * current C API.
+ * --------------------------------------------------------------------- */
+
+static void write_mission(uint32_t archetype, uint32_t region, uint64_t deadline_ticks) {
+    jbuf j;
+    jb_init(&j);
+    jb_putc(&j, '{');
+    jb_key(&j, "type");
+    jb_str(&j, "mission");
+    jb_putc(&j, ',');
+    jb_key(&j, "archetype");
+    jb_uint(&j, archetype);
+    jb_putc(&j, ',');
+    jb_key(&j, "region");
+    jb_uint(&j, region);
+    jb_putc(&j, ',');
+    jb_key(&j, "deadline_ticks");
+    jb_uint(&j, deadline_ticks);
+    jb_putc(&j, ',');
+
+    jb_key(&j, "objectives");
+    jb_putc(&j, '[');
+    {
+        static om_objective_spec obuf[64];
+        uint32_t n = om_mission_get_objectives(W, obuf, 64);
+        if (n > 64) n = 64;
+        for (uint32_t k = 0; k < n; k++) {
+            if (k > 0) jb_putc(&j, ',');
+            const om_objective_spec *o = &obuf[k];
+            jb_putc(&j, '{');
+            jb_key(&j, "i");
+            jb_uint(&j, o->id);
+            jb_putc(&j, ',');
+            jb_key(&j, "kind");
+            jb_uint(&j, o->kind);
+            jb_putc(&j, ',');
+            jb_key(&j, "node"); /* no field in om_objective_spec; reported */
+            jb_uint(&j, 0);
+            jb_putc(&j, ',');
+            jb_key(&j, "primary");
+            jb_bool(&j, o->is_primary);
+            jb_putc(&j, ',');
+            jb_key(&j, "radius"); /* no field in om_objective_spec; reported */
+            jb_double(&j, 0.0);
+            jb_putc(&j, ',');
+            jb_key(&j, "progress");
+            jb_double(&j, o->completion);
+            jb_putc(&j, '}');
+        }
+    }
+    jb_raw(&j, "],");
+
+    /* "force": no accessor wires a composition into a started mission; see
+     * the file-header comment. Always empty. */
+    jb_key(&j, "force");
+    jb_raw(&j, "{\"types\":[],\"tiers\":[]}");
+    jb_putc(&j, '}');
+    write_frame(j.buf, (uint32_t)j.len);
+    jb_free(&j);
+}
+
+static void write_debrief(void) {
+    om_debrief d;
+    memset(&d, 0, sizeof d);
+    om_mission_get_debrief(W, &d);
+
+    jbuf j;
+    jb_init(&j);
+    jb_putc(&j, '{');
+    jb_key(&j, "type");
+    jb_str(&j, "debrief");
+    jb_putc(&j, ',');
+    jb_key(&j, "band");
+    jb_int(&j, d.band);
+    jb_putc(&j, ',');
+    jb_key(&j, "achieved");
+    jb_double(&j, d.objective_score);
+    jb_putc(&j, ',');
+    jb_key(&j, "brought_home");
+    jb_double(&j, d.retention);
+    jb_putc(&j, ',');
+    /* "region_delta": no accessor returns applied deltas; see the
+     * file-header comment. Always zeros. */
+    jb_key(&j, "region_delta");
+    jb_raw(&j, "{\"military\":0,\"economy\":0,\"tension\":0,\"population\":0}");
+    jb_putc(&j, '}');
+    write_frame(j.buf, (uint32_t)j.len);
+    jb_free(&j);
+}
+
+static void write_chronicle(uint64_t from_tick, uint64_t to_tick) {
+    jbuf j;
+    jb_init(&j);
+    jb_putc(&j, '{');
+    jb_key(&j, "type");
+    jb_str(&j, "chronicle");
+    jb_putc(&j, ',');
+    jb_key(&j, "jump");
+    jb_putc(&j, '{');
+    jb_key(&j, "from_tick");
+    jb_uint(&j, from_tick);
+    jb_putc(&j, ',');
+    jb_key(&j, "to_tick");
+    jb_uint(&j, to_tick);
+    jb_putc(&j, '}');
+    jb_putc(&j, ',');
+
+    jb_key(&j, "entries");
+    jb_putc(&j, '[');
+    {
+        uint32_t n = om_chronicle_entry_count(W);
+        int wrote = 0;
+        for (uint32_t i = 0; i < n; i++) {
+            if (!om_chronicle_entry_is_retained(W, i)) continue;
+            om_chronicle_cluster c;
+            memset(&c, 0, sizeof c);
+            if (!om_chronicle_get_cluster(W, i, &c)) continue;
+            if (wrote) jb_putc(&j, ',');
+            wrote = 1;
+            jb_putc(&j, '{');
+            jb_key(&j, "id");
+            jb_uint(&j, i);
+            jb_putc(&j, ',');
+            jb_key(&j, "start_tick");
+            jb_uint(&j, c.start_tick);
+            jb_putc(&j, ',');
+            jb_key(&j, "end_tick");
+            jb_uint(&j, c.end_tick);
+            jb_putc(&j, ',');
+            jb_key(&j, "category");
+            jb_uint(&j, c.category);
+            jb_putc(&j, ',');
+            jb_key(&j, "cluster_type");
+            jb_uint(&j, c.type);
+            jb_putc(&j, ',');
+            jb_key(&j, "refs");
+            jb_putc(&j, '{');
+            jb_key(&j, "regions");
+            jb_putc(&j, '[');
+            jb_uint(&j, c.region);
+            jb_putc(&j, ']');
+            jb_putc(&j, ',');
+            jb_key(&j, "factions"); /* no faction refs on a cluster; reported */
+            jb_raw(&j, "[]");
+            jb_putc(&j, '}');
+            jb_putc(&j, ',');
+            jb_key(&j, "fragment"); /* no fragment id accessor; reported */
+            jb_uint(&j, 0);
+            jb_putc(&j, ',');
+            jb_key(&j, "significance");
+            jb_double(&j, c.peak_score);
+            jb_putc(&j, '}');
+        }
+    }
+    jb_raw(&j, "]}");
+    write_frame(j.buf, (uint32_t)j.len);
+    jb_free(&j);
+}
+
+static void write_tactical(void) {
+    jbuf j;
+    jb_init(&j);
+    jb_putc(&j, '{');
+    jb_key(&j, "type");
+    jb_str(&j, "tactical");
+    jb_putc(&j, ',');
+    jb_key(&j, "tick");
+    jb_uint(&j, g_tactical_tick);
+    jb_putc(&j, ',');
+
+    jb_key(&j, "map");
+    jb_putc(&j, '{');
+    /* canvas/nodes: om_map_get_canvas_base_dimension and every
+     * om_map_get_node_* accessor are STUBs (E-11 wiring, card B10/B12 not
+     * landed); always 0.0 / empty. See the file-header comment. */
+    jb_key(&j, "canvas");
+    jb_double(&j, om_map_get_canvas_base_dimension(0));
+    jb_putc(&j, ',');
+    jb_key(&j, "nodes");
+    jb_putc(&j, '[');
+    {
+        uint32_t n = om_map_get_node_count(W);
+        for (uint32_t i = 0; i < n; i++) {
+            if (i > 0) jb_putc(&j, ',');
+            om_vec2 pos;
+            memset(&pos, 0, sizeof pos);
+            om_map_get_node_pos(W, i, &pos);
+            jb_putc(&j, '{');
+            jb_key(&j, "i");
+            jb_uint(&j, i);
+            jb_putc(&j, ',');
+            jb_key(&j, "kind");
+            jb_int(&j, om_map_get_node_type(W, i));
+            jb_putc(&j, ',');
+            jb_key(&j, "x");
+            jb_double(&j, pos.x);
+            jb_putc(&j, ',');
+            jb_key(&j, "y");
+            jb_double(&j, pos.y);
+            jb_putc(&j, '}');
+        }
+    }
+    jb_raw(&j, "],");
+    /* cover/obstacles: om_map_add_cover/om_map_add_obstacle exist but
+     * nothing enumerates them back (no _count/_get pair); always empty. */
+    jb_key(&j, "cover");
+    jb_raw(&j, "[],");
+    jb_key(&j, "obstacles");
+    jb_raw(&j, "[]");
+    jb_putc(&j, '}');
+    jb_putc(&j, ',');
+
+    /* units/visible: no accessor enumerates live tactical unit ids at all;
+     * always empty. See the file-header comment. */
+    jb_key(&j, "units");
+    jb_raw(&j, "[],");
+    jb_key(&j, "visible");
+    jb_raw(&j, "{}");
+    jb_putc(&j, '}');
+    write_frame(j.buf, (uint32_t)j.len);
+    jb_free(&j);
+}
+
+/* ---------------------------------------------------------------------
  * Command handlers
  * --------------------------------------------------------------------- */
 
@@ -726,6 +1021,12 @@ static void handle_step(const char *json) {
         write_error("step", "no world");
         return;
     }
+    if (om_chapter_mission_realtime(W)) {
+        /* R-055-02: the strategic sim is stopped for a mission's whole
+         * duration. */
+        write_error("step", "mission running");
+        return;
+    }
     int64_t n = 1;
     get_i64(json, "n", &n);
     for (int64_t i = 0; i < n; i++) {
@@ -738,6 +1039,12 @@ static void handle_step(const char *json) {
 static void handle_run_to(const char *json) {
     if (!W) {
         write_error("run_to", "no world");
+        return;
+    }
+    if (om_chapter_mission_realtime(W)) {
+        /* R-055-02: the strategic sim is stopped for a mission's whole
+         * duration. */
+        write_error("run_to", "mission running");
         return;
     }
     int64_t target = 0;
@@ -765,6 +1072,214 @@ static void handle_set_feature(const char *json) {
     }
     om_world_set_feature(W, (om_feature)feature, on);
     write_ack("set_feature");
+}
+
+static void handle_mission_start(const char *json) {
+    if (!W) {
+        write_error("mission_start", "no world");
+        return;
+    }
+    int64_t faction = 0;
+    get_i64(json, "faction", &faction);
+
+    /* om_mission_start itself does not start anything (see the file-header
+     * comment); the real region/archetype/objective wiring is composed here
+     * from the lower-level mission.c/fog.c API. */
+    (void)om_mission_start(W, (int32_t)faction);
+    om_mission_build_candidate_pool(W);
+    uint32_t idx = om_mission_select(W);
+    static om_mission_candidate pool[256];
+    uint32_t n = om_mission_candidates(W, pool, 256);
+    uint32_t region = 0, archetype = 0;
+    if (idx < n) {
+        region = pool[idx].region_idx;
+        archetype = pool[idx].archetype;
+    }
+    om_mission_setup(W, region, archetype, 0);
+    om_mission_build_objectives(W, archetype);
+    om_mission_begin(W);
+    om_chapter_set_phase(W, OM_PIPE_CHAPTER_PHASE_MISSION);
+    g_tactical_tick = 0;
+
+    write_mission(archetype, region, om_mission_get_time_limit(W));
+}
+
+static void handle_mission_end(void) {
+    if (!W) {
+        write_error("mission_end", "no world");
+        return;
+    }
+    om_mission_end(W);
+    write_debrief();
+    om_chapter_set_phase(W, OM_PIPE_CHAPTER_PHASE_BRIEFING);
+    write_snapshot();
+}
+
+static void handle_tactical_step(const char *json) {
+    if (!W) {
+        write_error("tactical_step", "no world");
+        return;
+    }
+    int64_t n = 1;
+    get_i64(json, "n", &n);
+    for (int64_t i = 0; i < n; i++) {
+        om_tactical_step(W);
+        g_tactical_tick++;
+        write_tactical();
+    }
+}
+
+static void handle_jump(const char *json) {
+    if (!W) {
+        write_error("jump", "no world");
+        return;
+    }
+    int64_t ticks = 0;
+    if (!get_i64(json, "ticks", &ticks)) {
+        write_error("jump", "missing ticks");
+        return;
+    }
+    om_time_jump_report report;
+    memset(&report, 0, sizeof report);
+    if (om_time_jump_run(W, (uint32_t)ticks, &report) != 0) {
+        /* a mission is running (R-055-02: a jump cannot start or silently
+         * continue while one is). */
+        write_error("jump", "mission running");
+        return;
+    }
+    g_tick = report.end_tick;
+    /* Many ticks passed without streaming a delta per tick; reset the diff
+     * baseline so the next step/run_to's delta is relative to post-jump
+     * state, not pre-jump state. */
+    capture_baseline();
+    write_chronicle(report.start_tick, report.end_tick);
+    write_snapshot();
+}
+
+static void handle_command(const char *json) {
+    if (!W) {
+        write_error("command", "no world");
+        return;
+    }
+    char verb[32] = {0};
+    if (!get_str(json, "verb", verb, sizeof verb)) {
+        write_error("command", "missing verb");
+        return;
+    }
+    int units_i[256];
+    int n_units = get_int_array(json, "units", units_i, 256);
+    uint32_t unit_ids[256];
+    for (int i = 0; i < n_units; i++) unit_ids[i] = (uint32_t)units_i[i];
+
+    int ret;
+    if (!strcmp(verb, "move")) {
+        double x = 0.0, y = 0.0;
+        get_f64(json, "x", &x);
+        get_f64(json, "y", &y);
+        ret = om_command_move(W, unit_ids, (uint32_t)n_units, x, y);
+    } else if (!strcmp(verb, "attack_move")) {
+        double x = 0.0, y = 0.0;
+        get_f64(json, "x", &x);
+        get_f64(json, "y", &y);
+        ret = om_command_attack_move(W, unit_ids, (uint32_t)n_units, x, y);
+    } else if (!strcmp(verb, "attack_target")) {
+        int64_t target = -1;
+        get_i64(json, "target", &target);
+        ret = om_command_attack_target(W, unit_ids, (uint32_t)n_units, (uint32_t)target);
+    } else if (!strcmp(verb, "hold")) {
+        /* No om_command_hold symbol; only om_unit_order_hold_node(w, unit_id,
+         * node_id), which needs a node this command frame doesn't carry.
+         * Reported, not implemented. */
+        write_error("command", "hold not supported: no om_command_hold symbol");
+        return;
+    } else {
+        write_error("command", "unknown verb");
+        return;
+    }
+    if (ret != 0) {
+        write_error("command", "command failed");
+        return;
+    }
+    write_ack("command");
+}
+
+static void handle_list_saves(const char *json) {
+    char dir[1024];
+    if (!get_str(json, "dir", dir, sizeof dir)) {
+        write_error("list_saves", "missing dir");
+        return;
+    }
+    jbuf j;
+    jb_init(&j);
+    jb_putc(&j, '{');
+    jb_key(&j, "type");
+    jb_str(&j, "saves");
+    jb_putc(&j, ',');
+    jb_key(&j, "slots");
+    jb_putc(&j, '[');
+
+    DIR *d = opendir(dir);
+    int wrote = 0;
+    if (d) {
+        struct dirent *ent;
+        while ((ent = readdir(d)) != NULL) {
+            size_t nlen = strlen(ent->d_name);
+            if (nlen < 6 || strcmp(ent->d_name + nlen - 5, ".json") != 0) continue;
+
+            char full[2048];
+            snprintf(full, sizeof full, "%s/%s", dir, ent->d_name);
+            FILE *f = fopen(full, "rb");
+            if (!f) continue;
+            fseek(f, 0, SEEK_END);
+            long sz = ftell(f);
+            fseek(f, 0, SEEK_SET);
+            if (sz <= 0) {
+                fclose(f);
+                continue;
+            }
+            char *sbuf = malloc((size_t)sz + 1);
+            size_t got = fread(sbuf, 1, (size_t)sz, f);
+            fclose(f);
+            sbuf[got] = '\0';
+
+            int64_t tick = 0, chapter = 0, phase = 0, seed = 0, format_version = 0;
+            get_i64(sbuf, "tick", &tick);
+            get_i64(sbuf, "chapter", &chapter);
+            get_i64(sbuf, "phase", &phase);
+            get_i64(sbuf, "seed", &seed);
+            get_i64(sbuf, "format_version", &format_version);
+            free(sbuf);
+
+            char slot_path[2048];
+            snprintf(slot_path, sizeof slot_path, "%s/%.*s", dir, (int)(nlen - 5), ent->d_name);
+
+            if (wrote) jb_putc(&j, ',');
+            wrote = 1;
+            jb_putc(&j, '{');
+            jb_key(&j, "path");
+            jb_str(&j, slot_path);
+            jb_putc(&j, ',');
+            jb_key(&j, "tick");
+            jb_int(&j, tick);
+            jb_putc(&j, ',');
+            jb_key(&j, "chapter");
+            jb_int(&j, chapter);
+            jb_putc(&j, ',');
+            jb_key(&j, "phase");
+            jb_int(&j, phase);
+            jb_putc(&j, ',');
+            jb_key(&j, "seed");
+            jb_int(&j, seed);
+            jb_putc(&j, ',');
+            jb_key(&j, "format_version");
+            jb_int(&j, format_version);
+            jb_putc(&j, '}');
+        }
+        closedir(d);
+    }
+    jb_raw(&j, "]}");
+    write_frame(j.buf, (uint32_t)j.len);
+    jb_free(&j);
 }
 
 static void handle_inject(const char *json) {
@@ -808,6 +1323,36 @@ static void handle_save(const char *json) {
     fwrite(buf, 1, need, f);
     fclose(f);
     free(buf);
+
+    char sidecar[1032];
+    snprintf(sidecar, sizeof sidecar, "%s.json", path);
+    FILE *sf = fopen(sidecar, "wb");
+    if (sf) {
+        jbuf sj;
+        jb_init(&sj);
+        jb_putc(&sj, '{');
+        jb_key(&sj, "tick");
+        jb_uint(&sj, g_tick);
+        jb_putc(&sj, ',');
+        jb_key(&sj, "chapter"); /* no getter for the chapter number; reported */
+        jb_uint(&sj, 0);
+        jb_putc(&sj, ',');
+        jb_key(&sj, "phase");
+        jb_int(&sj, om_chapter_current_phase(W));
+        jb_putc(&sj, ',');
+        jb_key(&sj, "seed");
+        jb_uint(&sj, om_world_seed(W));
+        jb_putc(&sj, ',');
+        jb_key(&sj, "n_regions");
+        jb_uint(&sj, g_n_regions);
+        jb_putc(&sj, ',');
+        jb_key(&sj, "format_version");
+        jb_uint(&sj, 1);
+        jb_putc(&sj, '}');
+        fwrite(sj.buf, 1, sj.len, sf);
+        fclose(sf);
+        jb_free(&sj);
+    }
     write_ack("save");
 }
 
@@ -839,8 +1384,18 @@ static void handle_load(const char *json) {
         return;
     }
     if (!W) W = om_world_new(1, 0);
-    om_load_state_read(W, buf, (uint32_t)sz);
+    int rc = om_load_state_read(W, buf, (uint32_t)sz);
     free(buf);
+    if (rc != 0) {
+        /* R-111-03: the world is left untouched. om_load_state_read
+         * validates before it applies and returns nonzero without mutating
+         * W when validation fails, so no restore is needed here. Its return
+         * doesn't distinguish a version mismatch from a corrupt buffer
+         * (csrc/save.c); "corrupt" covers both, see the file-header
+         * comment. */
+        write_error("load", "corrupt");
+        return;
+    }
     g_n_regions = om_region_count(W);
     realloc_regions(g_n_regions);
     capture_baseline();
@@ -910,6 +1465,18 @@ int main(void) {
             handle_save(buf);
         } else if (!strcmp(name, "load")) {
             handle_load(buf);
+        } else if (!strcmp(name, "mission_start")) {
+            handle_mission_start(buf);
+        } else if (!strcmp(name, "mission_end")) {
+            handle_mission_end();
+        } else if (!strcmp(name, "jump")) {
+            handle_jump(buf);
+        } else if (!strcmp(name, "tactical_step")) {
+            handle_tactical_step(buf);
+        } else if (!strcmp(name, "command")) {
+            handle_command(buf);
+        } else if (!strcmp(name, "list_saves")) {
+            handle_list_saves(buf);
         } else if (!strcmp(name, "quit")) {
             free(buf);
             fflush(stdout);
