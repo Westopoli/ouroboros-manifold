@@ -651,6 +651,11 @@ typedef struct {
 typedef struct {
     om_chronicle_cluster candidates[CHRON_MAX_CANDIDATES];
     uint32_t n_candidates;
+    /* Lineage id behind each candidate / final cluster (-1 none); parallel to
+     * candidates[] and clusters[], which the frozen om_chronicle_cluster has
+     * no field for. Feeds om_chronicle_entry.lineage_ref. */
+    int32_t candidate_lineage[CHRON_MAX_CANDIDATES];
+    int32_t cluster_lineage[CHRON_MAX_FINAL];
 
     chron_raw_chain_event raw_chain[CHRON_MAX_RAW_CHAIN];
     uint32_t n_raw_chain;
@@ -659,6 +664,13 @@ typedef struct {
     uint32_t n_clusters;
 
     char full_scroll_text[CHRON_FULL_TEXT_CAP];
+
+    /* One slot per cluster, index-aligned; entry_valid is 0 for a cluster whose
+     * assembly failed or that cross-entry dedup dropped. Cleared whenever the
+     * cluster list is rebuilt. */
+    om_chronicle_entry entries[CHRON_MAX_FINAL];
+    uint8_t entry_valid[CHRON_MAX_FINAL];
+    uint32_t n_entries;
 
     chron_text_entry text_entries[CHRON_MAX_TEXT_ENTRIES];
     uint32_t n_text_entries;
@@ -1257,7 +1269,7 @@ static void chron_apply_echo_between(const char *tmpl_a, const char *tmpl_b, chr
  * distill pipeline and the direct om_chronicle_assemble_cluster_entry seam. */
 static int chron_assemble(const om_world *w, uint32_t category, uint32_t region_idx,
                            uint64_t *rng, char *base_out, size_t base_cap,
-                           char *expanded_out, size_t expanded_cap) {
+                           char *expanded_out, size_t expanded_cap, int32_t *fragment_ids) {
     om_chronicle_cluster synth;
     memset(&synth, 0, sizeof(synth));
     synth.type = (category >= CAT_CONSEQUENCE_SUCCESS) ? CTYPE_CONSEQUENCE
@@ -1273,6 +1285,9 @@ static int chron_assemble(const om_world *w, uint32_t category, uint32_t region_
     const chron_fragment *detail = chron_pick_fragment(category, 1, rng);
     const chron_fragment *closing = chron_pick_fragment(category, 2, rng);
     if (!opening || !detail) return 0;
+    fragment_ids[0] = (int32_t)(opening - CHRON_FRAGMENTS);
+    fragment_ids[1] = (int32_t)(detail - CHRON_FRAGMENTS);
+    fragment_ids[2] = closing ? (int32_t)(closing - CHRON_FRAGMENTS) : -1;
 
     if (closing) chron_apply_echo_between(detail->text, closing->text, slots, rng);
     chron_apply_echo_between(opening->text, detail->text, slots, rng);
@@ -1378,6 +1393,13 @@ static void chron_push_candidate(chron_state *st, uint32_t type, uint32_t catego
     c->chain_tag = chain_tag;
     c->start_tick = start_tick;
     c->end_tick = end_tick;
+    st->candidate_lineage[st->n_candidates - 1] = -1;
+}
+
+static void chron_push_lineage_candidate(chron_state *st, uint32_t lineage_id, uint32_t region, double score) {
+    uint32_t n = st->n_candidates;
+    chron_push_candidate(st, CTYPE_LINEAGE, CAT_LINEAGE_QUIET, region, score, -1, 0, 0);
+    if (st->n_candidates > n) st->candidate_lineage[n] = (int32_t)lineage_id;
 }
 
 /* R-067-03: raw chain events merge by chain_tag (primary region = first
@@ -1421,26 +1443,47 @@ static uint32_t chron_build_chain_clusters(chron_state *st) {
     return n_merged;
 }
 
-/* R-067-01: only the two disjuncts answerable from the frozen ABI (attached
- * character's own lineage; region == last mission region). "a lineage
- * member lives in its region" (the third disjunct) needs a region-residency
- * query generational.c does not expose publicly -- see piece report. */
+static int chron_region_has_lineage_member(const om_world *w, uint32_t region_idx) {
+    uint32_t n = om_lineage_count(w);
+    for (uint32_t i = 0; i < n; i++) {
+        if (om_lineage_member_in_region(w, om_lineage_id_at(w, i), region_idx)) return 1;
+    }
+    return 0;
+}
+
+/* R-067-01: a lineage member lives in the region, or the attached character
+ * is in the lineage, or the region is the last mission's region. */
 static int chron_is_lineage_event(const om_world *w, uint32_t lineage_id, uint32_t region_idx,
                                    uint32_t attached_character_id, uint32_t mission_region) {
     if (region_idx == mission_region) return 1;
     if (attached_character_id != 0 && om_character_lineage_id(w, attached_character_id) == lineage_id) return 1;
-    return 0;
+    return om_lineage_member_in_region(w, lineage_id, region_idx);
 }
 
+/* ALG-50 with only the lineage term derivable from region_idx alone; the
+ * mission-region, attached-character and chain-length terms need per-event
+ * context this entry point is not given. */
 static double chron_score_event(const om_world *w, uint32_t region_idx, uint32_t tier, double delta_sum) {
-    (void)w; (void)region_idx;
-    /* has_lineage_member cannot be derived here without a region-residency
-     * query into generational.c's lineage/character state -- see piece
-     * report; defaults to 0 (in_mission_region/has_character/chain_length
-     * are likewise unavailable from region_idx alone). */
     double base = chron_score_base(tier, delta_sum);
-    double mult = chron_context_multiplier(0, 0, 0, 0);
+    double mult = chron_context_multiplier(0, 0, 0, chron_region_has_lineage_member(w, region_idx));
     return base * mult;
+}
+
+/* ALG-51 step 2, "none" case: with no lineage cluster among the candidates,
+ * one lineage_quiet cluster for the first lineage, in its first active
+ * member's region, else its last history region. */
+static void chron_add_quiet_lineage_cluster(const om_world *w, chron_state *st) {
+    for (uint32_t i = 0; i < st->n_candidates; i++) {
+        if (st->candidates[i].type == CTYPE_LINEAGE) return;
+    }
+    if (om_lineage_count(w) == 0) return;
+    uint32_t id = om_lineage_id_at(w, 0);
+    int32_t region = om_lineage_first_member_region(w, id);
+    if (region < 0) {
+        for (uint32_t k = 0; om_lineage_history_region(w, id, k) >= 0; k++) region = om_lineage_history_region(w, id, k);
+    }
+    if (region < 0) return;
+    chron_push_lineage_candidate(st, id, (uint32_t)region, 0.0);
 }
 
 /* Stable descending-score insertion sort -- qsort's tie-break order is
@@ -1475,7 +1518,10 @@ static void chron_run_selection(om_world *w) {
     memset(cat_count, 0, sizeof(cat_count));
 
     if (st->n_candidates == 0) return;
+    chron_add_quiet_lineage_cluster(w, st);
     st->n_clusters = 0;
+    st->n_entries = 0;
+    memset(st->cluster_lineage, 0xFF, sizeof(st->cluster_lineage));
 
     for (uint32_t i = 0; i < st->n_candidates && st->n_clusters < CHRON_MAX_FINAL; i++) {
         if (st->candidates[i].type == CTYPE_CONSEQUENCE) {
@@ -1484,6 +1530,7 @@ static void chron_run_selection(om_world *w) {
     }
     for (uint32_t i = 0; i < st->n_candidates && st->n_clusters < CHRON_MAX_FINAL; i++) {
         if (st->candidates[i].type == CTYPE_LINEAGE) {
+            st->cluster_lineage[st->n_clusters] = st->candidate_lineage[i];
             st->clusters[st->n_clusters++] = st->candidates[i];
         }
     }
@@ -1526,6 +1573,8 @@ static void chron_synth_opening(om_world *w) {
     if (n < OM_CHRON_OPENING_MIN_ENTRIES) n = OM_CHRON_OPENING_MIN_ENTRIES;
     if (n > OM_CHRON_OPENING_MAX_ENTRIES) n = OM_CHRON_OPENING_MAX_ENTRIES;
     st->n_clusters = 0;
+    st->n_entries = 0;
+    memset(st->cluster_lineage, 0xFF, sizeof(st->cluster_lineage));
     for (uint32_t i = 0; i < n && st->n_clusters < CHRON_MAX_FINAL; i++) {
         om_chronicle_cluster *c = &st->clusters[st->n_clusters++];
         c->type = CTYPE_REGIONAL;
@@ -1548,13 +1597,14 @@ static void chron_assemble_all(om_world *w, uint64_t seed) {
     char bases[CHRON_MAX_FINAL][1024];
     char expandeds[CHRON_MAX_FINAL][1600];
     int ok[CHRON_MAX_FINAL];
+    int32_t frags[CHRON_MAX_FINAL][3];
     uint32_t n_seen_regions = 0;
     uint32_t seen_regions[CHRON_MAX_FINAL];
 
     for (uint32_t i = 0; i < st->n_clusters; i++) {
         uint32_t eff_cat = chron_effective_category(&st->clusters[i]);
         ok[i] = chron_assemble(w, eff_cat, st->clusters[i].region, &rng,
-                                bases[i], sizeof(bases[i]), expandeds[i], sizeof(expandeds[i]));
+                                bases[i], sizeof(bases[i]), expandeds[i], sizeof(expandeds[i]), frags[i]);
         if (ok[i]) {
             int first = 1;
             for (uint32_t j = 0; j < n_seen_regions; j++) {
@@ -1591,6 +1641,8 @@ static void chron_assemble_all(om_world *w, uint64_t seed) {
     uint32_t n_kept = 0;
 
     st->full_scroll_text[0] = '\0';
+    st->n_entries = st->n_clusters;
+    memset(st->entry_valid, 0, sizeof(st->entry_valid));
     size_t pos = 0;
     for (uint32_t i = 0; i < st->n_clusters; i++) {
         if (!ok[i]) continue;
@@ -1612,6 +1664,20 @@ static void chron_assemble_all(om_world *w, uint64_t seed) {
         if (dup) continue;
         kept_sets[n_kept] = words;
         n_kept++;
+        om_chronicle_entry *ent = &st->entries[i];
+        memset(ent, 0, sizeof(*ent));
+        st->entry_valid[i] = 1;
+        ent->id = i;
+        ent->category = chron_effective_category(&st->clusters[i]);
+        ent->region = st->clusters[i].region;
+        memcpy(ent->fragment_ids, frags[i], sizeof(ent->fragment_ids));
+        ent->region_ref = (int32_t)st->clusters[i].region;
+        ent->faction_ref = om_region_owner(w, st->clusters[i].region);
+        ent->lineage_ref = st->cluster_lineage[i];
+        ent->start_tick = st->clusters[i].start_tick;
+        ent->end_tick = st->clusters[i].end_tick;
+        snprintf(ent->base_text, sizeof(ent->base_text), "%.511s", bases[i]);
+        snprintf(ent->expanded_text, sizeof(ent->expanded_text), "%.1023s", expandeds[i]);
         int n = snprintf(st->full_scroll_text + pos, CHRON_FULL_TEXT_CAP - pos, "%s%s",
                           pos > 0 ? "\n\n" : "", bases[i]);
         if (n > 0) pos += (size_t)n;
@@ -1692,8 +1758,7 @@ void om_chronicle_add_event(om_world *w, uint32_t region_idx, double score) {
 
 void om_chronicle_add_lineage_event(om_world *w, uint32_t lineage_id, uint32_t region_idx, double score) {
     if (!w) return;
-    (void)lineage_id;
-    chron_push_candidate(chron(w), CTYPE_LINEAGE, CAT_LINEAGE_QUIET, region_idx, score, -1, 0, 0);
+    chron_push_lineage_candidate(chron(w), lineage_id, region_idx, score);
 }
 
 void om_chronicle_add_mock_entry(om_world *w, uint32_t entry_id, uint64_t start_tick, uint64_t end_tick) {
@@ -1755,7 +1820,8 @@ int om_chronicle_assemble_cluster_entry(om_world *w, uint32_t category, uint32_t
      * an odd mixing constant. */
     uint64_t rng = (uint64_t)category * CHRON_RNG_GOLDEN + region_idx;
     char base[CHRON_BASE_TEXT_CAP], expanded[CHRON_EXPANDED_TEXT_CAP];
-    int ok = chron_assemble(w, category, region_idx, &rng, base, sizeof(base), expanded, sizeof(expanded));
+    int32_t frags[3];
+    int ok = chron_assemble(w, category, region_idx, &rng, base, sizeof(base), expanded, sizeof(expanded), frags);
     memset(out_entry, 0, sizeof(*out_entry));
     out_entry->fragment_ids[0] = -1;
     out_entry->fragment_ids[1] = -1;
@@ -1764,6 +1830,9 @@ int om_chronicle_assemble_cluster_entry(om_world *w, uint32_t category, uint32_t
     out_entry->faction_ref = -1;
     out_entry->lineage_ref = -1;
     if (!ok) return 0;
+    memcpy(out_entry->fragment_ids, frags, sizeof(frags));
+    out_entry->region_ref = (int32_t)region_idx;
+    out_entry->faction_ref = om_region_owner(w, region_idx);
     out_entry->category = category;
     out_entry->region = region_idx;
     snprintf(out_entry->base_text, sizeof(out_entry->base_text), "%s", base);
@@ -2142,15 +2211,20 @@ const char *om_event_template_chronicle_prose(const om_world *w, uint32_t templa
 }
 
 int om_chronicle_entry_get(const om_world *w, uint32_t index, om_chronicle_entry *out) {
-    /* STUB: B8-4 implements */
-    (void)w; (void)index; (void)out;
-    return 0;
+    const chron_state *st = chron_ro(w);
+    if (!st || !out || index >= st->n_entries || !st->entry_valid[index]) return 0;
+    *out = st->entries[index];
+    return 1;
 }
 
-/* ---- generated stubs from signatures.toml ---- */
 int om_chronicle_add_regional_event(om_world *w, uint32_t region_idx, uint32_t category, double score) {
-    /* STUB: B8-5 implements */
-    (void)w; (void)region_idx; (void)category; (void)score;
-    return 0;
+    if (!w || region_idx >= w->n_regions) return 0;
+    uint32_t type;
+    if (category >= CAT_REGIONAL_FACTION_SHIFT && category <= CAT_REGIONAL_STABLE) type = CTYPE_REGIONAL;
+    else if (category >= CAT_CHAIN_REVOLT_SPAWNED && category <= CAT_CHAIN_CRISIS_RESOLVED_BADLY) type = CTYPE_CHAIN;
+    else return 0;
+    chron_state *st = chron(w);
+    if (st->n_candidates >= CHRON_MAX_CANDIDATES) return 0;
+    chron_push_candidate(st, type, category, region_idx, score, -1, 0, 0);
+    return 1;
 }
-/* ---- end generated stubs ---- */
