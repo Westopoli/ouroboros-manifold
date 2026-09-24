@@ -335,6 +335,13 @@ uint32_t om_macro_evaluation_interval_ticks(void) {
     return OM_SCRIPT_EVAL_INTERVAL_TICKS;
 }
 
+/* R-123-02: enemy commands enter the same replay stream as the player's,
+ * force_id first. The macro layer holds no target position, so the target
+ * fields are zero. */
+static void om_macro_log_command(om_world *w, uint64_t tick, uint32_t force_id, int cmd) {
+    om_replay_log_command(w, tick, force_id, (uint32_t)cmd, 0.0, 0.0, 0);
+}
+
 int om_macro_execute_behavior(om_world *w, uint32_t p1, int p2, int p3) {
     om_macro_state *st = om_macro_st(w);
     om_macro_force *f = om_macro_force_at(st, p1);
@@ -343,6 +350,7 @@ int om_macro_execute_behavior(om_world *w, uint32_t p1, int p2, int p3) {
     if (!f) return OM_MACRO_CMD_MOVE;
     cmd = om_macro_command_for_behavior(p2);
     f->last_issued_command_type = cmd;
+    om_macro_log_command(w, st->last_tick_evaluated, p1, cmd);
     return cmd;
 }
 
@@ -495,6 +503,7 @@ void om_macro_tick(om_world *w, uint64_t p1) {
     for (i = 0; i < st->n_forces; i++) {
         om_macro_force *f = &st->forces[i];
         f->last_issued_command_type = om_macro_command_for_behavior(f->behavior);
+        om_macro_log_command(w, p1, i, f->last_issued_command_type);
     }
 }
 
