@@ -1561,6 +1561,7 @@ void om_mission_setup_survive(om_world *w, uint32_t objective_idx, uint64_t requ
 void om_mission_setup_tactical(om_world *w, uint32_t p1, uint64_t time_limit);
 void om_mission_setup_termination(om_world *w, uint32_t p1, int primary_complete, int p3, uint64_t tick, uint64_t time_limit, int player_alive);
 int om_objective_get_center(const om_world *w, uint32_t objective_idx, om_vec2 *out);
+int om_objective_set_center(om_world *w, uint32_t objective_idx, double x, double y);
 int64_t om_region_get_held_since(const om_world *w, uint32_t idx);
 int32_t om_region_get_owner(const om_world *w, uint32_t idx);
 void om_set_neighbors(om_world *w, uint32_t a, uint32_t b);
@@ -1693,7 +1694,6 @@ uint32_t om_mission_get_reinforcement_trickle(om_world *w);
 void om_mission_set_player_held_structures_count(om_world *w, uint32_t held);
 void om_mission_setup_extraction_point(om_world *w, double p1, double c_double, double p3);
 int om_objective_is_contested(om_world *w, uint32_t objective);
-int om_objective_set_center(om_world *w, uint32_t objective_idx, double x, double y);
 void om_objective_setup_drifting(om_world *w, uint32_t objective, uint64_t period);
 uint32_t om_render_get_owner_color(int32_t owner);
 uint32_t om_render_get_structure_silhouette_id(void);
