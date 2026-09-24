@@ -1454,4 +1454,39 @@ uint32_t om_tick_read_ability_events(om_world *w, om_ability_event *out, uint32_
     st->n_ability_events = 0;
     return n;
 }
+int32_t om_unit_brace_phase(const om_world *w, uint32_t unit_id) {
+    /* STUB: B10c implements */
+    (void)w; (void)unit_id;
+    return -1;
+}
+
+uint32_t om_unit_count(const om_world *w) {
+    /* STUB: B10c implements */
+    (void)w;
+    return 0;
+}
+
+int32_t om_unit_get_faction(const om_world *w, uint32_t unit_id) {
+    /* STUB: B10c implements */
+    (void)w; (void)unit_id;
+    return -1;
+}
+
+int32_t om_unit_get_layer(const om_world *w, uint32_t unit_id) {
+    /* STUB: B10c implements */
+    (void)w; (void)unit_id;
+    return -1;
+}
+
+int32_t om_unit_get_unit_type(const om_world *w, uint32_t unit_id) {
+    /* STUB: B10c implements */
+    (void)w; (void)unit_id;
+    return -1;
+}
+
+uint32_t om_unit_id_at(const om_world *w, uint32_t index) {
+    /* STUB: B10c implements */
+    (void)w; (void)index;
+    return 0;
+}
 /* ---- end generated stubs ---- */
