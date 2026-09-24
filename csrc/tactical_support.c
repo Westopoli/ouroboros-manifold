@@ -192,9 +192,13 @@ typedef struct {
     double   power;
     uint32_t unit_type;
     uint64_t timer;
+    int      prod_accruing;
+    uint64_t prod_last_base;
     double   capture_progress;
     int      capture_accruing;
     uint64_t capture_last_base;
+    int      capture_driven;
+    uint64_t capture_driven_base;
     int32_t  capturing_faction;
     int      contested;
     double   x, y;
@@ -620,8 +624,10 @@ double om_structure_get_capture_progress(om_world *w, uint32_t structure) {
     return om_sup_structure_at(w, structure)->capture_progress;
 }
 
-void om_structure_tick_capture(om_world *w, uint32_t structure) {
-    om_sup_structure *s = om_sup_structure_at(w, structure);
+/* driven: the call comes from om_support_tick. Any call in a base tick the
+ * driver already accrued adds nothing, so a caller that steps and also ticks
+ * capture by hand, or a duplicate driver call, does not count the tick twice. */
+static void om_sup_capture_accrue(om_world *w, om_sup_structure *s, int driven) {
     uint64_t now, elapsed;
     /* R-127-01/02: exactly one non-owner faction present and no owner
      * present advances progress; two-or-more non-owner factions or the
@@ -633,6 +639,7 @@ void om_structure_tick_capture(om_world *w, uint32_t structure) {
     if (s->contested || s->capturing_faction == OM_SUP_NC_NONE || s->capturing_faction == s->owner) {
         s->capture_progress = 0.0;
         s->capture_accruing = 0;
+        s->capture_driven = 0;
         return;
     }
     /* Progress accrues per BASE tick (real time): the base ticks elapsed since
@@ -641,6 +648,9 @@ void om_structure_tick_capture(om_world *w, uint32_t structure) {
      * base tick elapsed (a caller driving ticks without stepping the world),
      * counts as one step: the current tick period in base ticks. */
     now = om_tactical_base_tick(w);
+    if (s->capture_driven && s->capture_driven_base == now) return;
+    s->capture_driven = driven;
+    s->capture_driven_base = now;
     elapsed = (s->capture_accruing && now > s->capture_last_base) ? now - s->capture_last_base : (uint64_t)om_tactical_tick_period(w);
     s->capture_accruing = 1;
     s->capture_last_base = now;
@@ -649,7 +659,12 @@ void om_structure_tick_capture(om_world *w, uint32_t structure) {
         s->owner = s->capturing_faction;
         s->capture_progress = 0.0;
         s->capture_accruing = 0;
+        s->capture_driven = 0;
     }
+}
+
+void om_structure_tick_capture(om_world *w, uint32_t structure) {
+    om_sup_capture_accrue(w, om_sup_structure_at(w, structure), 0);
 }
 
 void om_structure_apply_damage(om_world *w, uint32_t structure, double damage, uint32_t attacker) {
@@ -793,6 +808,36 @@ static void om_sup_objective_refresh_center(om_world *w, om_sup_objective *o, ui
     om_objective_set_center(w, objective, pos.x, pos.y);
 }
 
+/* Production timer accrues in base ticks (real time), like capture: the base
+ * ticks elapsed since this structure's last accrual, so a period-2 step adds 2
+ * and a duplicate call in the same base tick adds 0. The first accrual counts
+ * one step (the current period). Destroyed and neutral structures do not
+ * produce and restart their accrual when they do again.
+ * See also: om_structure_tick_capture, which does the same for capture. */
+static void om_sup_structure_tick_production_driver(om_world *w, om_sup_structure *s, uint32_t idx) {
+    uint64_t now, elapsed;
+    uint32_t interval;
+    if (s->destroyed || s->owner == 0) {
+        s->prod_accruing = 0;
+        return;
+    }
+    now = om_tactical_base_tick(w);
+    if (!s->prod_accruing || now < s->prod_last_base) elapsed = om_tactical_tick_period(w);
+    else elapsed = now - s->prod_last_base;
+    s->prod_accruing = 1;
+    s->prod_last_base = now;
+    s->timer += elapsed;
+    interval = om_structure_production_interval_ticks(s->power);
+    if (interval == 0) return;
+    om_sup_structure_refresh_position(w, s);
+    while (s->timer >= interval) om_structure_tick_production(w, idx);
+}
+
+/* Per-step driver: om_tactical_step calls this once per step after
+ * om_macro_tick. Capture is fed by om_structure_set_capturing_faction /
+ * om_structure_set_contested (the census stays the caller's input; the
+ * fenced fixtures set it directly), and om_structure_tick_capture applies
+ * its own advance/reset rules to every live structure. */
 void om_support_tick(om_world *w) {
     om_sup_state *st;
     uint32_t i;
@@ -800,6 +845,12 @@ void om_support_tick(om_world *w) {
     st = (om_sup_state *)w->support_state;
     for (i = 0; i < OM_SUP_MAX_OBJECTIVES; i++) {
         if (st->objectives[i].in_use && st->objectives[i].drifting) om_sup_objective_refresh_center(w, &st->objectives[i], i);
+    }
+    for (i = 0; i < OM_SUP_MAX_STRUCTURES; i++) {
+        om_sup_structure *s = &st->structures[i];
+        if (!s->in_use || s->destroyed) continue;
+        om_sup_capture_accrue(w, s, 1);
+        om_sup_structure_tick_production_driver(w, s, i);
     }
 }
 
