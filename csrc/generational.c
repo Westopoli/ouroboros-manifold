@@ -1440,13 +1440,20 @@ uint32_t om_mission_generator_chosen_region(const om_world *w) {
 
 void om_mission_generator_run(om_world *w) {
     gen_state *gs = gen_get_state(w);
-    if (!gs) return;
-    /* Placeholder pending E-10 (csrc/mission.c): picks the highest-index
-     * owned region so the S-055 accessors below are exercisable now. */
-    uint32_t chosen = 0;
-    if (w) {
-        for (uint32_t i = 0; i < w->n_regions; i++)
-            if (w->regions[i].faction_id >= 0) chosen = i;
+    if (!gs || !w) return;
+    om_mission_build_candidate_pool(w);
+    uint32_t n = om_mission_candidates(w, NULL, UINT32_MAX);
+    uint32_t chosen;
+    if (n == 0) {
+        /* Q-072-01 fallback: no candidate triggered anywhere. */
+        chosen = om_mission_fallback_region(w);
+    } else {
+        uint32_t idx = om_mission_select(w);
+        om_mission_candidate *pool = malloc((size_t)n * sizeof(*pool));
+        if (!pool) return;
+        om_mission_candidates(w, pool, n);
+        chosen = pool[idx < n ? idx : 0].region_idx;
+        free(pool);
     }
     gs->mission_chosen_region = chosen;
 }
@@ -1864,5 +1871,20 @@ void om_world_set_strategic_tick(om_world *w, uint64_t tick) {
 
 uint64_t om_world_strategic_tick(const om_world *w) {
     return w ? w->tick : 0;
+}
+int32_t om_lineage_history_region(const om_world *w, uint32_t lineage_id, uint32_t idx) {
+    gen_lineage *l = gen_lineage_find(gen_get_state(w), lineage_id);
+    if (!l || idx >= l->n_history) return -1;
+    return (int32_t)l->history[idx];
+}
+
+int om_lineage_member_in_region(const om_world *w, uint32_t lineage_id, uint32_t region_idx) {
+    gen_state *gs = gen_get_state(w);
+    if (!gs) return 0;
+    for (uint32_t i = 0; i < gs->n_characters; i++) {
+        gen_character *c = &gs->characters[i];
+        if (c->used && c->lineage_id == lineage_id && c->status == GEN_STATUS_ACTIVE && c->region == region_idx) return 1;
+    }
+    return 0;
 }
 /* ---- end generated stubs ---- */

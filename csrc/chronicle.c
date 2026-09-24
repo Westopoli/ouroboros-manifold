@@ -2140,3 +2140,11 @@ int om_chronicle_entry_get(const om_world *w, uint32_t index, om_chronicle_entry
     (void)w; (void)index; (void)out;
     return 0;
 }
+
+/* ---- generated stubs from signatures.toml ---- */
+int om_chronicle_add_regional_event(om_world *w, uint32_t region_idx, uint32_t category, double score) {
+    /* STUB: B8-5 implements */
+    (void)w; (void)region_idx; (void)category; (void)score;
+    return 0;
+}
+/* ---- end generated stubs ---- */
