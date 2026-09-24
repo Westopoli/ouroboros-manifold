@@ -2360,4 +2360,14 @@ uint32_t om_unit_id_at(const om_world *w, uint32_t index) {
     if (!st || index >= st->n_units || !st->units[index].in_use) return 0;
     return st->units[index].unit_id;
 }
+uint32_t om_tactical_tick_period(const om_world *w) {
+    /* STUB */
+    (void)w;
+    return 1;
+}
+uint64_t om_tactical_base_tick(const om_world *w) {
+    /* STUB */
+    (void)w;
+    return 0;
+}
 /* ---- end generated stubs ---- */

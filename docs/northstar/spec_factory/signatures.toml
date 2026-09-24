@@ -4971,6 +4971,24 @@ confidence = "likely"
 note = "canonical form set by the design lane (D-F1); void callers ignore the return ; signature differs across epics: E-14:[('w', 'om_world*')]->uint64_t | E-17:[('w', 'om_world*')]->uint64_t | E-15:[('w', 'om_world*')]->void | E-11:[('w', 'om_world*')]->uint64_t | E-10:[('w', 'om_world*')]->uint64_t ; Owned by unit.c (E-11) per symbol_modules.toml; card 303a1 wrongly lists it under enemy_macro.c. E-14 i"
 
 [[symbols]]
+name = "om_tactical_base_tick"
+module = "unit.c"
+restype = "uint64_t"
+params = [{ name = "w", ctype = "const om_world*" }]
+epics = ["E-13"]
+confidence = "likely"
+note = "R-099-03 (M0 ruling: real time = base ticks): base ticks elapsed in the tactical battle, the sum of the period of every step; equals the step index at period 1. Owned by unit.c (E-11); mission.c, tactical_support.c and enemy_macro.c read it for real-time deadlines and intervals."
+
+[[symbols]]
+name = "om_tactical_tick_period"
+module = "unit.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }]
+epics = ["E-13"]
+confidence = "likely"
+note = "R-099-03 (decision A): current tactical tick period in base ticks, 1 at 20 ticks/s, 2 at 10 ticks/s above 1,000 live units. Owned by unit.c (E-11); tactical_move.c and enemy_macro.c read it to scale per-step distances."
+
+[[symbols]]
 name = "om_tactical_tick_to"
 module = "unit.c"
 restype = "uint64_t"

@@ -82,6 +82,8 @@ om_objective_set_center             = "mission.c"
 # closure; specfactory.toml must list them once they exist)
 om_tactical_step                    = "unit.c"
 om_tactical_tick                    = "unit.c"
+om_tactical_base_tick               = "unit.c"
+om_tactical_tick_period             = "unit.c"
 om_tactical_tick_to                 = "unit.c"
 om_unit_spawn                       = "unit.c"
 om_unit_spawn_combat                = "unit.c"
