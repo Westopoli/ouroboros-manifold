@@ -182,7 +182,7 @@ Open flags: none beyond the missing reference. Reference required: `references/E
 
 ## Scale requirements
 
-Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): targeting and damage for 1,000 units in under 2 ms per tick, 10,000 in under 25 ms.
+Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): targeting and damage for 1,000 units in under 2 ms per tick, 10,000 in under 25 ms. The 10,000-unit figure is measured at the 10 ticks/s rate the sim drops to above 1,000 live units (E-13 R-099-03), a 100 ms tick; the 1,000-unit figure at 20 ticks/s.
 
 ## Look and behavior references
 

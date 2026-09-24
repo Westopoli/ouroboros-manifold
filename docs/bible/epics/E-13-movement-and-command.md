@@ -91,6 +91,7 @@ As a commander, I want my fast units to flow around a stalled front faster than 
 Rules
 - R-099-01  Given a Strike wing and a Line force both approaching an engaged, immovable friendly front, When they arrive, Then the Strike wing reaches the flank slots first, purely from the steering rules of S-097.
 - R-099-02  Given a Raider, When it moves, Then it covers 150 wu per second at 20 ticks per second, 7.5 wu per tick.
+- R-099-03  Given more than 1,000 live units on the battlefield, When the tactical tick rate drops from 20 to 10 ticks per second (and returns above that count is crossed downward), Then every per-second quantity (speed, attack interval, ability duration and cooldown, drift) is unchanged in real time because per-tick values scale with the tick period, the change happens on a tick boundary, and every peer in a multiplayer session switches on the same tick (decision A, Westley 2026-09-24).
 
 Inputs: none beyond S-097.
 Outputs: positions.
@@ -156,7 +157,7 @@ Open flags: none.
 
 ## Scale requirements
 
-Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): movement and collision for 1,000 units in under 3 ms per tick, 10,000 in under 30 ms; route queries under 1,000 per second at 60 wu cells.
+Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): movement and collision for 1,000 units in under 3 ms per tick, 10,000 in under 30 ms; route queries under 1,000 per second at 60 wu cells. The 10,000-unit figure is measured at the 10 ticks/s rate the sim drops to above 1,000 live units (E-13 R-099-03), a 100 ms tick; the 1,000-unit figure at 20 ticks/s.
 
 ## Look and behavior references
 

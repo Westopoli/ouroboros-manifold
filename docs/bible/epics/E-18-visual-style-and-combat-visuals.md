@@ -141,7 +141,7 @@ Open flags: none. Reference required: `references/E-18/notes.md`, missing.
 
 ## Scale requirements
 
-Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): 60 fps at 200 v 200 with full effects at medium zoom; 30 fps floor at 1,000 units with LOD.
+Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): 60 fps at 200 v 200 with full effects at medium zoom; 30 fps floor at 1,000 units with LOD; both on the minimum-spec machine (`game_bible.md` "Reference Hardware": about 110 and 55 fps on the forge's RTX 3060).
 
 ## Look and behavior references
 
