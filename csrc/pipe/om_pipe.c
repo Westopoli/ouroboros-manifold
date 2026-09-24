@@ -76,6 +76,10 @@
  * by ouroboros_sim.h. See the file-header comment above. */
 #define OM_PIPE_CHAPTER_PHASE_BRIEFING 0
 #define OM_PIPE_CHAPTER_PHASE_MISSION 2
+/* Upper bound on unit slots scanned with om_unit_id_at, and on distinct
+ * factions listed in a tactical frame's "visible". */
+#define OM_PIPE_UNIT_SCAN_MAX 1000000
+#define OM_PIPE_MAX_FACTION_KEYS 32
 
 /* ---------------------------------------------------------------------
  * Frame I/O
@@ -927,6 +931,8 @@ static void write_chronicle(uint64_t from_tick, uint64_t to_tick) {
     jb_free(&j);
 }
 
+static uint32_t g_mission_archetype = 0;
+
 static void write_tactical(void) {
     jbuf j;
     jb_init(&j);
@@ -940,11 +946,8 @@ static void write_tactical(void) {
 
     jb_key(&j, "map");
     jb_putc(&j, '{');
-    /* canvas/nodes: om_map_get_canvas_base_dimension and every
-     * om_map_get_node_* accessor are STUBs (E-11 wiring, card B10/B12 not
-     * landed); always 0.0 / empty. See the file-header comment. */
     jb_key(&j, "canvas");
-    jb_double(&j, om_map_get_canvas_base_dimension(0));
+    jb_double(&j, om_map_get_canvas_base_dimension(om_map_archetype_canvas_category(g_mission_archetype)));
     jb_putc(&j, ',');
     jb_key(&j, "nodes");
     jb_putc(&j, '[');
@@ -971,22 +974,134 @@ static void write_tactical(void) {
         }
     }
     jb_raw(&j, "],");
-    /* cover/obstacles: om_map_add_cover/om_map_add_obstacle exist but
-     * nothing enumerates them back (no _count/_get pair); always empty. */
     jb_key(&j, "cover");
-    jb_raw(&j, "[],");
+    jb_putc(&j, '[');
+    {
+        uint32_t n = om_map_cover_count(W);
+        for (uint32_t i = 0; i < n; i++) {
+            double x = 0.0, y = 0.0, r = 0.0, h = 0.0;
+            if (!om_map_cover_at(W, i, &x, &y, &r, &h)) continue;
+            if (i > 0) jb_putc(&j, ',');
+            jb_putc(&j, '{');
+            jb_key(&j, "x");
+            jb_double(&j, x);
+            jb_putc(&j, ',');
+            jb_key(&j, "y");
+            jb_double(&j, y);
+            jb_putc(&j, ',');
+            jb_key(&j, "r");
+            jb_double(&j, r);
+            jb_putc(&j, ',');
+            jb_key(&j, "h");
+            jb_double(&j, h);
+            jb_putc(&j, '}');
+        }
+    }
+    jb_raw(&j, "],");
+    /* No accessor enumerates obstacles (om_map_add_obstacle only), so the
+     * list stays empty; see the file-header comment. */
     jb_key(&j, "obstacles");
     jb_raw(&j, "[]");
     jb_putc(&j, '}');
     jb_putc(&j, ',');
 
-    /* units/visible: no accessor enumerates live tactical unit ids at all;
-     * always empty. See the file-header comment. */
+    /* Units: om_unit_id_at scans the unit slots (0 for an unused one), so
+     * collect om_unit_count ids. "tier" and "state" have no accessor and are
+     * sent as 0. */
+    uint32_t count = om_unit_count(W);
+    uint32_t *ids = malloc(sizeof(uint32_t) * (count ? count : 1));
+    uint32_t n_ids = 0;
+    for (uint32_t i = 0; n_ids < count && i < OM_PIPE_UNIT_SCAN_MAX; i++) {
+        uint32_t id = om_unit_id_at(W, i);
+        if (id) ids[n_ids++] = id;
+    }
     jb_key(&j, "units");
-    jb_raw(&j, "[],");
+    jb_putc(&j, '[');
+    for (uint32_t k = 0; k < n_ids; k++) {
+        uint32_t id = ids[k];
+        double x = 0.0, y = 0.0;
+        om_unit_get_pos(W, id, &x, &y);
+        if (k > 0) jb_putc(&j, ',');
+        jb_putc(&j, '{');
+        jb_key(&j, "id");
+        jb_uint(&j, id);
+        jb_putc(&j, ',');
+        jb_key(&j, "faction");
+        jb_int(&j, om_unit_get_faction(W, id));
+        jb_putc(&j, ',');
+        jb_key(&j, "type");
+        jb_int(&j, om_unit_get_unit_type(W, id));
+        jb_putc(&j, ',');
+        jb_key(&j, "tier");
+        jb_int(&j, 0);
+        jb_putc(&j, ',');
+        jb_key(&j, "x");
+        jb_double(&j, x);
+        jb_putc(&j, ',');
+        jb_key(&j, "y");
+        jb_double(&j, y);
+        jb_putc(&j, ',');
+        jb_key(&j, "hp");
+        jb_double(&j, om_unit_get_hp(W, id));
+        jb_putc(&j, ',');
+        jb_key(&j, "layer");
+        jb_int(&j, om_unit_get_layer(W, id));
+        jb_putc(&j, ',');
+        jb_key(&j, "facing");
+        jb_double(&j, om_unit_get_facing(W, id));
+        jb_putc(&j, ',');
+        jb_key(&j, "target");
+        jb_int(&j, om_unit_target(W, id));
+        jb_putc(&j, ',');
+        jb_key(&j, "state");
+        jb_int(&j, 0);
+        jb_putc(&j, '}');
+    }
+    jb_raw(&j, "],");
+
+    /* visible[faction]: the unit ids that faction can see, for every faction
+     * that has units. */
     jb_key(&j, "visible");
-    jb_raw(&j, "{}");
+    jb_putc(&j, '{');
+    {
+        int32_t seen[OM_PIPE_MAX_FACTION_KEYS];
+        uint32_t n_seen = 0;
+        for (uint32_t k = 0; k < n_ids; k++) {
+            int32_t f = om_unit_get_faction(W, ids[k]);
+            int known = 0;
+            for (uint32_t m = 0; m < n_seen; m++) {
+                if (seen[m] == f) known = 1;
+            }
+            if (!known && n_seen < OM_PIPE_MAX_FACTION_KEYS) seen[n_seen++] = f;
+        }
+        for (uint32_t a = 1; a < n_seen; a++) {
+            int32_t key = seen[a];
+            uint32_t b = a;
+            while (b > 0 && seen[b - 1] > key) {
+                seen[b] = seen[b - 1];
+                b--;
+            }
+            seen[b] = key;
+        }
+        for (uint32_t m = 0; m < n_seen; m++) {
+            if (m > 0) jb_putc(&j, ',');
+            char key[16];
+            snprintf(key, sizeof key, "%d", (int)seen[m]);
+            jb_key(&j, key);
+            jb_putc(&j, '[');
+            int first = 1;
+            for (uint32_t k = 0; k < n_ids; k++) {
+                if (!om_player_can_see_unit(W, seen[m], ids[k])) continue;
+                if (!first) jb_putc(&j, ',');
+                first = 0;
+                jb_uint(&j, ids[k]);
+            }
+            jb_putc(&j, ']');
+        }
+    }
     jb_putc(&j, '}');
+    jb_putc(&j, '}');
+    free(ids);
     write_frame(j.buf, (uint32_t)j.len);
     jb_free(&j);
 }
@@ -1097,11 +1212,32 @@ static void handle_mission_start(const char *json) {
     }
     om_mission_setup(W, region, archetype, 0);
     om_mission_build_objectives(W, archetype);
-    om_mission_begin(W);
+    g_mission_archetype = archetype;
+    /* Recon (E-12 S-092): the mission is not begun here; mission_begin is the
+     * player's Begin. */
     om_chapter_set_phase(W, OM_PIPE_CHAPTER_PHASE_MISSION);
     g_tactical_tick = 0;
 
     write_mission(archetype, region, om_mission_get_time_limit(W));
+}
+
+/* R-092-02: during recon (the mission phase holds, mission_begin not yet
+ * sent) the mission clock has not started and no unit moves. */
+static int in_recon(void) {
+    return om_chapter_mission_realtime(W) && !om_mission_is_started(W);
+}
+
+static void handle_mission_begin(void) {
+    if (!W) {
+        write_error("mission_begin", "no world");
+        return;
+    }
+    if (!in_recon()) {
+        write_error("mission_begin", "not in recon");
+        return;
+    }
+    om_mission_begin(W);
+    write_tactical();
 }
 
 static void handle_mission_end(void) {
@@ -1118,6 +1254,10 @@ static void handle_mission_end(void) {
 static void handle_tactical_step(const char *json) {
     if (!W) {
         write_error("tactical_step", "no world");
+        return;
+    }
+    if (in_recon()) {
+        write_error("tactical_step", "not begun");
         return;
     }
     int64_t n = 1;
@@ -1159,6 +1299,10 @@ static void handle_jump(const char *json) {
 static void handle_command(const char *json) {
     if (!W) {
         write_error("command", "no world");
+        return;
+    }
+    if (in_recon()) {
+        write_error("command", "not begun");
         return;
     }
     char verb[32] = {0};
@@ -1468,6 +1612,8 @@ int main(void) {
             handle_load(buf);
         } else if (!strcmp(name, "mission_start")) {
             handle_mission_start(buf);
+        } else if (!strcmp(name, "mission_begin")) {
+            handle_mission_begin();
         } else if (!strcmp(name, "mission_end")) {
             handle_mission_end();
         } else if (!strcmp(name, "jump")) {
