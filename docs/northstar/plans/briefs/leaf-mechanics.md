@@ -2,6 +2,8 @@
 
 Read once per leaf. The manager's assignment adds only: piece id, owned files, acceptance ids, known leftovers, the state slot name.
 
+Every leaf and doer is spawned with `subagent_type: sonnet46-doer` (Sonnet 4.6, pinned by the agent definition at `.claude/agents/sonnet46-doer.md`), never the bare `sonnet` alias — that alias resolves to Sonnet 5.
+
 ## Where you work
 
 - Clones: `~/Projects/om-push/m1` (sim modules), `~/Projects/om-push/m3` (client and pipe), `~/Projects/om-push/m0` (M0 only). Never touch `~/Projects/ouroboros-manifold` (Westley's live checkout) and never run Godot with it as cwd.

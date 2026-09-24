@@ -8,7 +8,7 @@ First action in the chat: when the rate-limit prompt ever appears, choose "wait 
 
 A dependency counts as met when its branch is on origin (`git ls-remote --heads origin 'push/*'`), not only when it is tagged or merged: the leaf bases on or merges that branch (see leaf-mechanics.md). Only a dependency that has not been pushed at all blocks a piece. Landing on main is M0's serialized step and never gates starting work.
 
-Same as M-sim: next piece whose dependencies are met, one direct Sonnet leaf per piece in its own worktree, forward each report to M0 in one message, never two leaves on one file. Client leaves verify with `scripts/run_godot_tests.sh` and, for desktop pieces, `scripts/qa_harness.sh liveness` plus `tests/qa/desktop/test_flow_spine.py`; every visual claim is filed as held with a screenshot path, never as pass.
+Same as M-sim: next piece whose dependencies are met, one direct leaf per piece in its own worktree, spawned with `subagent_type: sonnet46-doer` (Sonnet 4.6, pinned by the agent definition) — never the bare `sonnet` alias, which resolves to Sonnet 5 — forward each report to M0 in one message, never two leaves on one file. Client leaves verify with `scripts/run_godot_tests.sh` and, for desktop pieces, `scripts/qa_harness.sh liveness` plus `tests/qa/desktop/test_flow_spine.py`; every visual claim is filed as held with a screenshot path, never as pass.
 
 ## Queue on 2026-09-24 (in order)
 

@@ -28,6 +28,9 @@ fi
 if [[ "$CMD" =~ git[[:space:]]+push[[:space:]]+(.*[[:space:]])?(-f|--force) ]]; then
   deny "force push is blocked by git-guard"
 fi
+if [[ "$CMD" =~ git[[:space:]]+push[^\;\&\|]*[[:space:]]: ]]; then
+  deny "git push with an empty-source refspec (delete) is blocked by git-guard"
+fi
 if [[ "$CMD" =~ git[[:space:]]+commit[[:space:]]+(.*[[:space:]])?--no-verify ]]; then
   deny "--no-verify is blocked by git-guard (don't bypass hooks)"
 fi
