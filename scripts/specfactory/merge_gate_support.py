@@ -14,6 +14,7 @@ import fnmatch
 import hashlib
 import json
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -457,7 +458,8 @@ def _store_cached_baseline(cache_path: Path, harness_sha: str, main_sha: str,
 def regression_check(candidate_dir: Path, base_ref: str, test_args: list[str], *,
                       python_exe: str = sr.DEFAULT_PYTHON, timeout: int = 600,
                       junit: bool = True, worktree_root: Path | None = None,
-                      merge_root: Path | None = None) -> tuple[bool, str, sr.RegressionReport]:
+                      merge_root: Path | None = None,
+                      before_build: list[str] | None = None) -> tuple[bool, str, sr.RegressionReport]:
     """(ok, detail, report). Runs `test_args` against `base_ref` (a throwaway
     `git worktree add --detach` sibling of `candidate_dir`, never the live
     checkout, removed before returning) and against `candidate_dir` itself
@@ -477,7 +479,26 @@ def regression_check(candidate_dir: Path, base_ref: str, test_args: list[str], *
     found, reuse it as `before` and skip the worktree build + pytest run
     entirely. Otherwise run as without caching and write the entry after.
     Prints one `baseline: cached <sha>` or `baseline: computed <sha>` line.
-    Omitted, behaviour is unchanged (no cache read or write)."""
+    Omitted, behaviour is unchanged (no cache read or write).
+
+    `before_build`, when given: run as a subprocess in the base-ref worktree
+    right before the pytest call, on a fresh (non-cached) baseline only.
+    tests/csim and tests/qa/t1 self-build inside their own conftest.py
+    (mirrors the proving-ground conftest -- see tests/csim/conftest.py's
+    `_build_libs`), so both sides of the comparison are always apples to
+    apples there. tests/transport has no such fixture: `pipe/ouroboros_pipe`
+    is built once, by the gate script, only in `candidate_dir` -- the
+    base-ref worktree never gets it, so every transport test there
+    `skipif`s instead of running. A skip-before/fail-after pair reads as a
+    brand new failure to compare_runs even when the candidate changed
+    nothing transport-related and the same test would already fail against
+    main's own build (2026-09-24 false rejects: B5-3, B9-1-2, both far
+    outside tests/transport's owners, both rejected on the same two ids that
+    pass clean against a freshly built main). A failed `before_build` is not
+    raised -- the base-ref worktree just keeps skipping, same as before this
+    parameter existed, so an unbuilt dependency (T1 not yet attached, no
+    om_pipe.c on main yet) degrades to the old behaviour instead of crashing
+    the gate."""
     suite_key = " ".join(test_args)
     main_sha = None
     cache_path = None
@@ -508,6 +529,10 @@ def regression_check(candidate_dir: Path, base_ref: str, test_args: list[str], *
                                    capture_output=True, text=True)
             main_sha = rev2.stdout.strip() if rev2.returncode == 0 else base_ref
         print(f"baseline: computed {main_sha}")
+        if before_build:
+            build = subprocess.run(before_build, cwd=str(tmp), capture_output=True, text=True, timeout=timeout)
+            status = "ok" if build.returncode == 0 else f"failed (rc={build.returncode})"
+            print(f"baseline before_build {' '.join(before_build)}: {status}")
     try:
         with tempfile.TemporaryDirectory(prefix="merge_gate_junit_") as jtmp:
             after_xml = Path(jtmp) / "after.xml" if junit else None
@@ -610,6 +635,9 @@ def main(argv: list[str]) -> int:
     rg.add_argument("--timeout", type=int, default=600)
     rg.add_argument("--no-junit", action="store_true")
     rg.add_argument("--merge-root", default=None)
+    rg.add_argument("--before-build", default=None,
+                     help="shell-split command run in the base-ref worktree before its pytest call "
+                          "(fresh baselines only); see regression_check's before_build docstring")
 
     args = ap.parse_args(argv)
 
@@ -653,7 +681,9 @@ def main(argv: list[str]) -> int:
         ok, detail, _report = regression_check(Path(args.candidate_dir), args.base_ref, args.test_args,
                                                  python_exe=args.python, timeout=args.timeout,
                                                  junit=not args.no_junit,
-                                                 merge_root=Path(args.merge_root) if args.merge_root else None)
+                                                 merge_root=Path(args.merge_root) if args.merge_root else None,
+                                                 before_build=shlex.split(args.before_build)
+                                                 if args.before_build else None)
     print(f"{'OK' if ok else 'REJECT'} {detail}")
     return 0 if ok else 1
 

@@ -694,6 +694,41 @@ def test_regression_check_accepts_clean_candidate(tmp_path):
     assert report.new_failures == []
 
 
+def test_before_build_prevents_skip_to_fail_false_new_failure(tmp_path):
+    """2026-09-24 transport-gate defect: tests/transport's tests skipif on a
+    binary the gate builds only in candidate_dir, never in the base-ref
+    worktree, so an always-failing test reads as skip(before)/fail(after) --
+    a false new failure -- for every candidate, independent of what the
+    candidate itself touched (B5-3, B9-1-2 both rejected on ids that fail the
+    same way against a freshly built main). `before_build` fixes this by
+    building the same dependency on the base-ref side too."""
+    repo = _init_pytest_repo(tmp_path / "repo", test_text=(
+        "import pathlib\nimport pytest\n"
+        "MARKER = pathlib.Path(__file__).resolve().parent / 'built_marker'\n"
+        "pytestmark = pytest.mark.skipif(not MARKER.exists(), reason='not built')\n"
+        "def test_a():\n    assert 1 == 2\n"
+    ))
+    base_sha = _git(repo, "rev-parse", "HEAD").stdout.strip()
+    (repo / "README.md").write_text("docs only\n")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "candidate")
+    (repo / "built_marker").write_text("built\n")  # candidate_dir only, as the gate's own make step does
+
+    ok, detail, report = mgs.regression_check(repo, base_sha, ["test_synth.py"],
+                                               python_exe=PYTHON, worktree_root=tmp_path,
+                                               junit=False)
+    assert ok is False
+    assert report.new_failures == ["test_synth.py::test_a"]
+
+    ok2, detail2, report2 = mgs.regression_check(
+        repo, base_sha, ["test_synth.py"], python_exe=PYTHON, worktree_root=tmp_path,
+        junit=False, before_build=["touch", "built_marker"],
+    )
+    assert ok2 is True, detail2
+    assert report2.new_failures == []
+    assert "test_synth.py::test_a" in report2.before.failing_ids
+
+
 def test_regression_check_removes_its_worktree(tmp_path):
     repo = _init_pytest_repo(tmp_path / "repo", test_text=GOOD_TEST)
     base_sha = _git(repo, "rev-parse", "HEAD").stdout.strip()

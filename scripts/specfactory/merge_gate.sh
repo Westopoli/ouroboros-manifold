@@ -312,11 +312,19 @@ if [[ -d "$CANDIDATE/tests/transport" ]]; then
     if [[ $? -eq 0 ]]; then
         TRANSPORT_LOG="$SCRATCH_ROOT/transport.log"
         "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/transport \
-            --python "$PYTHON" --timeout "$SUITE_TIMEOUT" >"$TRANSPORT_LOG" 2>&1
+            --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" \
+            --before-build "make -s pipe/ouroboros_pipe" >"$TRANSPORT_LOG" 2>&1
         if [[ $? -ne 0 ]]; then
-            # Until piece T1 is attached the pipe binary is a placeholder that
-            # exists only on the candidate side (the gate builds it), so the
-            # hello test flips skip->fail by construction; WARN until attach/T1.
+            # --before-build (merge_gate_support.py's regression_check) now
+            # builds pipe/ouroboros_pipe on the base-ref side too, same as this
+            # step already does for $CANDIDATE, so a REJECT here means an id
+            # newly fails against a REAL main build, not the old skip(before)
+            # -> fail(after) false positive from an unbuilt baseline
+            # (2026-09-24: B5-3, B9-1-2 rejected on ids that pass clean against
+            # a freshly built main). Before piece T1 attaches, main has no
+            # om_pipe.c at all -- the before_build there just fails and the
+            # base-ref worktree falls back to skipping, same as always; WARN
+            # until attach/T1 for that one case.
             if git -C "$CANDIDATE" tag -l 'attach/T1' | grep -q .; then
                 reject transport "$(cat "$TRANSPORT_LOG")"
             else
