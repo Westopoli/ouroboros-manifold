@@ -157,10 +157,12 @@ def test_pipe_tactical_step_tick_advances_by_one_per_call():
     tactical frame per call"."""
     schema = json.load(open(SCHEMAS / "tactical.schema.json"))
     frames = _run([SET_SEED, {"type": "cmd", "name": "mission_start", "faction": 0},
+                   {"type": "cmd", "name": "mission_begin"},
                    {"type": "cmd", "name": "tactical_step", "n": 1},
                    {"type": "cmd", "name": "tactical_step", "n": 1},
                    {"type": "cmd", "name": "quit"}])
-    tac1, tac2 = frames[2], frames[3]
+    assert frames[2]["type"] == "tactical", "mission_begin answers the tactical frame: %r" % frames
+    tac1, tac2 = frames[3], frames[4]
     assert tac1["type"] == "tactical" and tac2["type"] == "tactical", frames
     assert _required_keys(schema) <= set(tac1)
     _validate(tac1, schema)
@@ -172,10 +174,12 @@ def test_pipe_command_move_acks_and_unknown_verb_errors():
     """session commands: "command maps verb onto om_command_move, ... and
     answers ack; an unknown unit id or verb answers error"."""
     frames = _run([SET_SEED, {"type": "cmd", "name": "mission_start", "faction": 0},
+                   {"type": "cmd", "name": "mission_begin"},
                    {"type": "cmd", "name": "command", "verb": "move", "units": [4, 5], "x": 100.0, "y": 200.0},
                    {"type": "cmd", "name": "command", "verb": "bogus_verb", "units": [4]},
                    {"type": "cmd", "name": "quit"}])
-    move_resp, bogus_resp = frames[2], frames[3]
+    assert frames[2]["type"] == "tactical", "mission_begin answers the tactical frame: %r" % frames
+    move_resp, bogus_resp = frames[3], frames[4]
     assert move_resp["type"] == "ack" and move_resp["name"] == "command", frames
     assert bogus_resp["type"] == "error" and bogus_resp["name"] == "command", frames
 
