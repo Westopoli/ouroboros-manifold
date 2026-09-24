@@ -35,7 +35,16 @@ const DEFAULT_N_REGIONS := 80
 # ever changes owner (docs/architecture.md "session commands (v1.1)").
 const DEFAULT_FEATURES := [0, 1, 2, 3, 4, 5, 6, 7]
 
+signal frame_received(frame)
+signal snapshot_changed(tick)
+
 var _snapshot: Dictionary = {}
+var _region_index: Dictionary = {}
+var _session_pid: int = -1
+var _session_stdio: FileAccess = null
+var _reader: Thread = null
+var _mutex := Mutex.new()
+var _queue: Array = []
 var _last_error: String = ""
 var _mission: Dictionary = {}
 var _debrief: Dictionary = {}
@@ -158,6 +167,123 @@ func load(slot_id: String) -> Dictionary:
 
 func _autosave_cmd(seed: int) -> Dictionary:
 	return {"type": "cmd", "name": "save", "path": saves_dir().path_join("campaign_%d.omsave" % seed)}
+
+
+# Persistent session (docs/architecture.md "persistent client session
+# (v1.1)"): one pipe process for the whole run. A reader Thread decodes
+# frames into a mutex-guarded queue (reads block, so they cannot run on the
+# main thread), pump() applies them in order on the main thread (the owning
+# scene calls it from its _process; this RefCounted has no _process), and
+# writes happen on the main thread only. A delta is merged into the current
+# snapshot in place: region rows by index, faction rows by id, the tick, and
+# the checksum on the cadence ticks that carry one (kept from the last
+# cadence tick otherwise). Deltas carry no edges, so the edge list is the one
+# the last snapshot frame had; request a snapshot to refresh it. Replies are
+# not matched against a FIFO of sent commands: an error frame names its
+# command and sets last_error(), every other frame is announced through
+# frame_received for whoever awaits that type. The owner must call
+# close_session() (a RefCounted cannot do it from its own destructor).
+func open_session(seed: int, n_regions: int, features: Array) -> bool:
+	close_session()
+	_last_error = ""
+	var exe := ProjectSettings.globalize_path(PIPE_BIN_RES_PATH)
+	if not FileAccess.file_exists(exe):
+		_last_error = "pipe binary missing"
+		return false
+	var result: Dictionary = OS.execute_with_pipe(exe, PackedStringArray())
+	if result.is_empty() or not result.has("pid"):
+		_last_error = "pipe spawn failed"
+		return false
+	_session_pid = result["pid"]
+	_session_stdio = result.get("stdio") as FileAccess
+	if _session_stdio == null:
+		close_session()
+		_last_error = "pipe has no stdio"
+		return false
+	_snapshot = {}
+	_region_index = {}
+	_mutex.lock()
+	_queue = []
+	_mutex.unlock()
+	_reader = Thread.new()
+	_reader.start(_reader_loop)
+	send_command({"type": "cmd", "name": "set_seed", "seed": seed, "n_regions": n_regions, "features": features})
+	send_command({"type": "cmd", "name": "snapshot"})
+	return true
+
+
+func send_command(cmd: Dictionary) -> void:
+	if _session_stdio != null:
+		_session_stdio.store_buffer(_frame_cmd(cmd))
+
+
+func step(n: int) -> void:
+	send_command({"type": "cmd", "name": "step", "n": n})
+
+
+func pump() -> int:
+	_mutex.lock()
+	var frames: Array = _queue
+	_queue = []
+	_mutex.unlock()
+	for frame in frames:
+		var changed := false
+		match String(frame.get("type", "")):
+			"snapshot":
+				_snapshot = frame
+				_region_index = {}
+				var rows: Array = _snapshot.get("regions", [])
+				for idx in range(rows.size()):
+					_region_index[int(rows[idx].get("i", -1))] = idx
+				changed = true
+			"delta":
+				_apply_delta(frame)
+				changed = true
+			"error":
+				_last_error = String(frame.get("reason", ""))
+		frame_received.emit(frame)
+		if changed:
+			snapshot_changed.emit(int(_snapshot.get("tick", 0)))
+	return frames.size()
+
+
+func close_session() -> void:
+	if _session_pid > 0 and OS.is_process_running(_session_pid):
+		OS.kill(_session_pid)
+	if _reader != null:
+		_reader.wait_to_finish()
+		_reader = null
+	_session_pid = -1
+	_session_stdio = null
+
+
+func _reader_loop() -> void:
+	while true:
+		var msg: Variant = _read_live_frame(_session_stdio)
+		if msg == null:
+			return
+		_mutex.lock()
+		_queue.append(msg)
+		_mutex.unlock()
+
+
+func _apply_delta(delta: Dictionary) -> void:
+	if _snapshot.is_empty():
+		return
+	var rows: Array = _snapshot.get("regions", [])
+	for row in delta.get("regions", []):
+		var idx: int = _region_index.get(int(row.get("i", -1)), -1)
+		if idx >= 0:
+			(rows[idx] as Dictionary).merge(row, true)
+	var factions: Array = _snapshot.get("factions", [])
+	for row in delta.get("factions", []):
+		for f in factions:
+			if int(f.get("id", -1)) == int(row.get("id", -2)):
+				(f as Dictionary).merge(row, true)
+	_snapshot["tick"] = delta.get("tick", _snapshot.get("tick", 0))
+	var checksum: int = int(delta.get("checksum", 0))
+	if checksum != 0:
+		_snapshot["checksum"] = checksum
 
 
 # Same script-up-front pattern as load_snapshot_live (a blocking pipe read
