@@ -1097,11 +1097,25 @@ static void handle_mission_start(const char *json) {
     }
     om_mission_setup(W, region, archetype, 0);
     om_mission_build_objectives(W, archetype);
-    om_mission_begin(W);
+    /* Recon (E-12 S-092): the mission is not begun here; mission_begin is the
+     * player's Begin. */
     om_chapter_set_phase(W, OM_PIPE_CHAPTER_PHASE_MISSION);
     g_tactical_tick = 0;
 
     write_mission(archetype, region, om_mission_get_time_limit(W));
+}
+
+static void handle_mission_begin(void) {
+    if (!W) {
+        write_error("mission_begin", "no world");
+        return;
+    }
+    if (!om_chapter_mission_realtime(W) || om_mission_is_started(W)) {
+        write_error("mission_begin", "not in recon");
+        return;
+    }
+    om_mission_begin(W);
+    write_tactical();
 }
 
 static void handle_mission_end(void) {
@@ -1468,6 +1482,8 @@ int main(void) {
             handle_load(buf);
         } else if (!strcmp(name, "mission_start")) {
             handle_mission_start(buf);
+        } else if (!strcmp(name, "mission_begin")) {
+            handle_mission_begin();
         } else if (!strcmp(name, "mission_end")) {
             handle_mission_end();
         } else if (!strcmp(name, "jump")) {
