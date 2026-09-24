@@ -947,8 +947,7 @@ static void om_tactical_advance_backswing(om_tac_state *st) {
  * unit.c is holding a unit (in range of a target, or approaching by its own
  * stepping) it engages the unit there so tactical_move.c does not also
  * move it; om_tac_release hands the route back. See also:
- * csrc/tactical_move.c om_move_sync -- its clock is w->tick, which is why
- * om_tactical_advance_one bumps w->tick for the run helpers. */
+ * csrc/tactical_move.c om_move_sync -- steps off om_tactical_tick(w). */
 
 static int om_tac_hostile(const om_unit_row *a, const om_unit_row *b) {
     return a->faction_id >= 0 && b->faction_id >= 0 && a->faction_id != b->faction_id;
@@ -1228,30 +1227,22 @@ uint64_t om_tactical_step(om_world *w) {
     return st->current_tick;
 }
 
-/* One tactical tick for the run helpers below. tactical_move.c only steps
- * movement off w->tick (see its file header), and om_world_step is the only
- * other thing that advances it, so a helper that drives om_tactical_step
- * directly advances w->tick too -- except during a realtime mission, where
- * om_world_step itself holds w->tick still (R-055-02). */
-static void om_tactical_advance_one(om_world *w) {
-    if (!om_chapter_mission_realtime(w)) w->tick++;
-    om_tactical_step(w);
-}
-
 /* ---- generated stubs from signatures.toml ---- */
 int om_command_activate_ability(om_world *w, const uint32_t *unit_ids, uint32_t n_units, double target_x, double target_y) {
     om_tac_state *st = om_tac(w);
     uint32_t i;
     om_unit_row *u;
+    int activated = 0;
+    /* R-096-05: each unit with its ability ready activates; an unready or
+     * unknown unit is skipped. Returns 0 if at least one activated, else 1
+     * (R-086-07: an all-rejected command reports rejection). */
     for (i = 0; i < n_units; i++) {
         u = om_registry_find_in(st, unit_ids[i]);
-        if (!u || !om_ability_can_manually_activate(u)) return 1;
-    }
-    for (i = 0; i < n_units; i++) {
-        u = om_registry_find_in(st, unit_ids[i]);
+        if (!u || !om_ability_can_manually_activate(u)) continue;
         om_ability_manual_activate(w, st, u, target_x, target_y);
+        activated = 1;
     }
-    return 0;
+    return activated ? 0 : 1;
 }
 
 int om_command_attack_move(om_world *w, const uint32_t *unit_ids, uint32_t n_units, double x, double y) {
@@ -1363,7 +1354,7 @@ void om_tactical_reset(om_world *w) {
 uint64_t om_tactical_run(om_world *w, uint64_t n_ticks) {
     uint64_t i;
     for (i = 0; i < n_ticks; i++) {
-        om_tactical_advance_one(w);
+        om_tactical_step(w);
     }
     return n_ticks;
 }
@@ -1375,7 +1366,7 @@ uint64_t om_tactical_run_until_eliminated(om_world *w) {
     uint64_t last_progress = 0;
     while (ticks < OM_TACTICAL_MAX_RUN_TICKS && om_tactical_multiple_factions_alive(st)) {
         double hp;
-        om_tactical_advance_one(w);
+        om_tactical_step(w);
         ticks++;
         hp = om_tactical_total_hp(st);
         if (hp < lowest_hp - OM_TIE_EPSILON) { lowest_hp = hp; last_progress = ticks; }
@@ -1392,7 +1383,7 @@ uint64_t om_tactical_run_until_engagement_ends(om_world *w, uint32_t unit_id) {
     while (ticks < OM_TACTICAL_MAX_RUN_TICKS
            && u->hp > 0.0
            && om_tac_enemy_within_range(st, u, u->attack_range)) {
-        om_tactical_advance_one(w);
+        om_tactical_step(w);
         ticks++;
     }
     if (u->unit_type == OM_UT_INTERCEPTOR && u->ability_phase == OM_ABILITY_PHASE_ACTIVE) {
@@ -1471,7 +1462,7 @@ uint64_t om_tactical_tick_to(om_world *w, uint64_t tick) {
     om_tac_state *st = om_tac(w);
     while (st->current_tick < tick) {
         if (st->n_units > 0) {
-            om_tactical_advance_one(w);
+            om_tactical_step(w);
         } else {
             st->current_tick++;
             om_macro_tick(w, st->current_tick);
