@@ -344,21 +344,22 @@ void om_support_tick(om_world *w);
 
 /* Spatial hash grid over the tactical units (csrc/unit.c; state in
  * w->tactical_state, rebuilt every tactical tick, updated in place when
- * unit.c moves or spawns a unit). Indexes every in_use unit regardless of
- * faction, layer or hp, at the position unit.c caches (refreshed at the top of
+ * unit.c moves or spawns a unit). Indexes every living unit (hp > 0; a unit
+ * that dies is dropped, one revived by om_unit_set_hp is added back) regardless
+ * of faction or layer, at the position unit.c caches (refreshed at the top of
  * each om_tactical_step, so a caller running inside that refresh sees the
  * previous tick's positions: pad r by one tick of movement and re-test with
  * its own positions). A unit matches when dx*dx + dy*dy <= r*r; callers
  * filter everything else.
  * om_grid_query_circle: writes the matching unit ids ascending into out_ids
  * (the lowest `max` when more match) and returns the total match count, so a
- * return above `max` means truncated; a buffer of the world's unit count
- * (4096) never truncates. The result order is the all-pairs id order.
+ * return above `max` means truncated; a buffer of om_unit_count(w) entries
+ * never truncates. The result order is the all-pairs id order.
  * om_grid_iter: for order-independent reductions (any-of, count, sum of
  * per-unit independent updates). Call om_grid_iter_begin, then
  * om_grid_iter_next until it returns 0 (no unit has id 0). Order is
  * deterministic but NOT id order (cell row-major, then last-linked first). The
- * grid must not change (spawn, move) while an iterator is live. */
+ * grid must not change (spawn, move, a unit dying) while an iterator is live. */
 typedef struct {
     void    *state;
     double   x, y, r;
