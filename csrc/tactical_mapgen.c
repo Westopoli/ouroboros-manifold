@@ -655,11 +655,6 @@ int om_route_grid_is_cell_blocked(double obstacle) {
     return obstacle > OM_NAVMESH_OBSTACLE_THRESHOLD;
 }
 
-void om_unit_get_position(om_world *w, uint32_t unit_id, om_vec2 *byref) {
-    /* STUB */
-    (void)w; (void)unit_id; (void)byref;
-}
-
 void om_unit_order_hold_node(om_world *w, uint32_t unit_id, uint32_t node_id) {
     /* STUB */
     (void)w; (void)unit_id; (void)node_id;
