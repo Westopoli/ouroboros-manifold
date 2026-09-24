@@ -325,6 +325,12 @@ void om_world_generate(om_world *w) {
         }
 
         w->faction_tech[fid] = (pop_count > 0) ? (pop_sum / (double)pop_count) * OM_STARTING_TECH_RATIO : 0.0;
+        /* See also: csrc/faction.c om_faction_set -- the recalc must run
+         * wherever archetype/tech land, and worldgen writes both fields
+         * directly instead of going through that setter (avoids its RNG
+         * confidence roll, R-022-04), so the cache would stay 0.0 forever
+         * without this call. */
+        om_faction_tech_multipliers_recalc(w, (int32_t)fid);
     }
 
     uint32_t total_inhabited = cursor;
