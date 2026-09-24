@@ -400,6 +400,23 @@ uint32_t om_map_cover_count(const om_world *w) {
     return st->n_cover;
 }
 
+int om_map_cover_at(const om_world *w, uint32_t index, double *x, double *y, double *radius, double *height) {
+    const om_mapgen_state *st = om_mgs_ro(w);
+    if (!st || index >= st->n_cover) return 0;
+    const om_mapgen_cover_row *row = &st->cover[index];
+    if (x) *x = row->x;
+    if (y) *y = row->y;
+    if (radius) *radius = row->radius;
+    if (height) *height = row->height;
+    return 1;
+}
+
+uint32_t om_map_cover_count(const om_world *w) {
+    const om_mapgen_state *st = om_mgs_ro(w);
+    if (!st) return 0;
+    return st->n_cover;
+}
+
 double om_map_flavoring_stability_multiplier(double stability) {
     /* STUB */
     (void)stability;
@@ -653,11 +670,6 @@ int om_render_detect_repeated_tile_boundary(om_world *w) {
  * (0.7)" (docs/bible/algorithms.md). */
 int om_route_grid_is_cell_blocked(double obstacle) {
     return obstacle > OM_NAVMESH_OBSTACLE_THRESHOLD;
-}
-
-void om_unit_get_position(om_world *w, uint32_t unit_id, om_vec2 *byref) {
-    /* STUB */
-    (void)w; (void)unit_id; (void)byref;
 }
 
 void om_unit_order_hold_node(om_world *w, uint32_t unit_id, uint32_t node_id) {
