@@ -1853,14 +1853,18 @@ uint64_t om_world_strategic_tick(const om_world *w) {
     return w ? w->tick : 0;
 }
 int32_t om_lineage_history_region(const om_world *w, uint32_t lineage_id, uint32_t idx) {
-    /* STUB: B7-6 implements */
-    (void)w; (void)lineage_id; (void)idx;
-    return -1;
+    gen_lineage *l = gen_lineage_find(gen_get_state(w), lineage_id);
+    if (!l || idx >= l->n_history) return -1;
+    return (int32_t)l->history[idx];
 }
 
 int om_lineage_member_in_region(const om_world *w, uint32_t lineage_id, uint32_t region_idx) {
-    /* STUB: B7-6 implements */
-    (void)w; (void)lineage_id; (void)region_idx;
+    gen_state *gs = gen_get_state(w);
+    if (!gs) return 0;
+    for (uint32_t i = 0; i < gs->n_characters; i++) {
+        gen_character *c = &gs->characters[i];
+        if (c->used && c->lineage_id == lineage_id && c->status == GEN_STATUS_ACTIVE && c->region == region_idx) return 1;
+    }
     return 0;
 }
 /* ---- end generated stubs ---- */
