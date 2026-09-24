@@ -1330,16 +1330,10 @@ static void om_tac_start_flinch(om_unit_row *u, const om_unit_row *from) {
 }
 
 /* Visible to the unit's faction: any living friendly (itself included) can
- * see it through fog.c's om_unit_can_see, and it is not stealthed. */
-static int om_tac_faction_sees(om_world *w, om_tac_state *st, const om_unit_row *self, const om_unit_row *t) {
-    uint32_t j;
+ * see it through fog.c's om_fog_faction_sees, and it is not stealthed. */
+static int om_tac_faction_sees(om_world *w, const om_unit_row *self, const om_unit_row *t) {
     if (t->stealth) return 0;
-    for (j = 0; j < st->n_units; j++) {
-        const om_unit_row *obs = &st->units[j];
-        if (!obs->in_use || obs->hp <= 0.0 || obs->faction_id != self->faction_id) continue;
-        if (om_unit_can_see(w, obs->unit_id, t->unit_id)) return 1;
-    }
-    return 0;
+    return om_fog_faction_sees(w, self->faction_id, t->unit_id);
 }
 
 static void om_tac_drop_orders(om_unit_row *u) {
@@ -1429,7 +1423,7 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
             /* S-093: the engine keeps no information the player lost. A
              * target the faction no longer sees is dropped and the unit
              * attack-moves to where it was last seen. */
-            if (om_tac_faction_sees(w, st, u, t)) {
+            if (om_tac_faction_sees(w, u, t)) {
                 u->last_seen_x = t->x; u->last_seen_y = t->y;
             } else {
                 double lx = u->last_seen_x, ly = u->last_seen_y;
