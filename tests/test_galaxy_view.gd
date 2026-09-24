@@ -15,7 +15,7 @@ const SCENE_PATH := "res://scenes/galaxy/galaxy_view.tscn"
 const BRIDGE_SCRIPT_PATH := "res://autoload/c_bridge.gd"
 const FIXTURE_PATH := "res://tests/transport/fixtures/snapshot_seed1_tick10.json"
 const FALLBACK_PATH := "user://test_galaxy_view_fallback_snapshot.json"
-const N_REGIONS := 60
+const FALLBACK_N_REGIONS := 60
 const PLANTS := ["seed-ignored", "owner-colour-flat", "edges-2d-overlay",
 	"pick-radius-zero", "bands-frozen", "conquest-no-recolour"]
 
@@ -99,15 +99,17 @@ func _check_qa_state_json_safe() -> void:
 
 func _check_system_count_S106_R106_01() -> void:
 	var state: Dictionary = _root.qa_state()
-	_assert(int(state.get("system_count", -1)) == N_REGIONS,
-		"S-106/R-106-01: system_count = %s, expected %d" % [state.get("system_count"), N_REGIONS])
+	var expected_n: int = _snapshot.get("regions", []).size()
+	_assert(int(state.get("system_count", -1)) == expected_n,
+		"S-106/R-106-01: system_count = %s, expected %d" % [state.get("system_count"), expected_n])
 
 
 func _check_owners_S106_R106_02() -> void:
 	var state: Dictionary = _root.qa_state()
 	var owners: Dictionary = state.get("owners", {})
-	_assert(owners.size() == N_REGIONS,
-		"S-106/R-106-02: owners has %d entries, expected %d" % [owners.size(), N_REGIONS])
+	var expected_n: int = _snapshot.get("regions", []).size()
+	_assert(owners.size() == expected_n,
+		"S-106/R-106-02: owners has %d entries, expected %d" % [owners.size(), expected_n])
 	var mismatches := 0
 	for r in _snapshot.get("regions", []):
 		var i := int(r.get("i", -1))
@@ -133,8 +135,9 @@ func _check_edge_counts_S106_R106_02() -> void:
 func _check_systems_px_S106_R106_01() -> void:
 	var state: Dictionary = _root.qa_state()
 	var px: Dictionary = state.get("systems_px", {})
-	_assert(px.size() == N_REGIONS,
-		"S-106/R-106-01: systems_px has %d entries, expected %d (one drawn point per region)" % [px.size(), N_REGIONS])
+	var expected_n: int = _snapshot.get("regions", []).size()
+	_assert(px.size() == expected_n,
+		"S-106/R-106-01: systems_px has %d entries, expected %d (one drawn point per region)" % [px.size(), expected_n])
 	var vp := Vector2(get_root().size)
 	if vp.x <= 0 or vp.y <= 0:
 		vp = Vector2(1920, 1080)
@@ -152,8 +155,9 @@ func _check_owner_colour_S106_R106_01_02() -> void:
 	var owners: Dictionary = state.get("owners", {})
 	var region_colours: Dictionary = state.get("region_colours", {})
 	var owner_colours: Dictionary = state.get("owner_colours", {})
-	_assert(region_colours.size() == N_REGIONS,
-		"S-106/R-106-01: region_colours has %d entries, expected %d" % [region_colours.size(), N_REGIONS])
+	var expected_n: int = _snapshot.get("regions", []).size()
+	_assert(region_colours.size() == expected_n,
+		"S-106/R-106-01: region_colours has %d entries, expected %d" % [region_colours.size(), expected_n])
 	var mismatches := 0
 	for i in owners:
 		var owner = owners[i]
