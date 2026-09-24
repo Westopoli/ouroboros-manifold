@@ -11,10 +11,10 @@
  * calls om_tactical_step (csrc/unit.c), never anything of this file's --
  * there is no per-tick callback into tactical_move.c. Every accessor below
  * therefore starts by calling om_move_sync(), which replays this module's
- * own tick loop from its last-seen w->tick up to the current one before
- * reading or writing anything. w->tick is read directly (om_internal.h),
- * never written. This makes every command "apply immediately" (no tick
- * boundary needed to observe it) while still producing a real per-tick
+ * own tick loop from its last-seen tactical tick (om_tactical_tick,
+ * csrc/unit.c; the strategic w->tick is a distinct clock, R-055-02) up to
+ * the current one before reading or writing anything. This makes every
+ * command "apply immediately" (no tick boundary needed to observe it) while still producing a real per-tick
  * simulation for position/facing/collision -- see om_move_sync/
  * om_move_tick_once below.
  *
@@ -655,7 +655,7 @@ static int om_move_in_recon(const om_world *w) {
 
 static void om_move_sync(om_world *w) {
     om_move_state *ms = om_ms(w);
-    uint64_t target = w->tick;
+    uint64_t target = om_tactical_tick(w);
     uint64_t t;
     if (ms->last_synced_tick > target) ms->last_synced_tick = target;
     if (om_move_in_recon(w)) {
@@ -673,7 +673,7 @@ static void om_move_enqueue(om_world *w, om_move_state *ms, int kind, uint32_t u
     if (ms->n_queue >= OM_MOVE_MAX_QUEUE) return;
     q = &ms->queue[ms->n_queue++];
     q->in_use = 1;
-    q->tick = w->tick;
+    q->tick = om_tactical_tick(w);
     q->kind = kind;
     q->unit_id = unit;
     q->x = x;
