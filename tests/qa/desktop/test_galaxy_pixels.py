@@ -208,3 +208,27 @@ def test_control_owner_colour_flat_trips_the_detector(galaxy_game):
         "control is dead: the detector reported no problem on a galaxy whose regions all share one "
         "colour (%d samples)" % len(samples)
     )
+
+
+MIN_PLANT_DIFF_PX = 500
+
+
+def test_c2_5b_owner_colour_flat_plant_reaches_the_pixels(galaxy_game):
+    """look 5: the plant changed region_colours in qa_state() but never re-rendered the
+    points, so the screen kept the real owner colours (0 of 921600 pixels differed).
+    A fault planted in the render path must show in the render."""
+    client = galaxy_game.client
+    client.screenshot("c2_5b_before")
+    time.sleep(0.5)
+    before = _read_png_rgb(QA_SHOT_DIR / "c2_5b_before.png")
+    resp = client.call("plant", "owner-colour-flat")
+    assert resp.get("ok") and resp["result"].get("activated"), "plant did not activate: %r" % resp
+    time.sleep(1.5)
+    client.screenshot("c2_5b_after")
+    time.sleep(0.5)
+    after = _read_png_rgb(QA_SHOT_DIR / "c2_5b_after.png")
+    differing = int(np.any(before != after, axis=2).sum())
+    assert differing >= MIN_PLANT_DIFF_PX, (
+        "owner-colour-flat changed %d of %d pixels (need >= %d): the plant is state-only"
+        % (differing, before.shape[0] * before.shape[1], MIN_PLANT_DIFF_PX)
+    )
