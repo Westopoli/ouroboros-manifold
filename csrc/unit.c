@@ -2402,4 +2402,9 @@ uint32_t om_tactical_tick_period(const om_world *w) {
     const om_tac_state *st = om_tac_ro(w);
     return st ? om_tac_period(st) : 1;
 }
+uint64_t om_tactical_base_tick(const om_world *w) {
+    /* STUB */
+    (void)w;
+    return 0;
+}
 /* ---- end generated stubs ---- */
