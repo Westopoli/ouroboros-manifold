@@ -391,7 +391,7 @@ size_estimate = "rubber-band/stuck/backwards/dropped-order detectors over a scri
 id = "T2c"
 manager = "M1"
 wave = 2
-owns = ["csrc/save.c"]
+owns = ["csrc/save.c", "csrc/generational.c", "csrc/om_internal.h", "csrc/region.c"]
 acceptance = [
     "tests/csim/test_E16_S111_saving.py",
 ]
