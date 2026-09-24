@@ -591,7 +591,7 @@ void   om_event_set_noise(om_world *w, uint32_t region_idx, uint32_t template_id
 double om_event_noise(const om_world *w, uint32_t region_idx, uint32_t template_id);
 int     om_event_breached(const om_world *w, uint32_t region_idx, uint32_t template_id);  /* the stored 'was' flag */
 int64_t om_event_last_fired(const om_world *w, uint32_t region_idx, uint32_t template_id); /* -1 if never (cooldown) */
-int32_t om_chain_counter(const om_world *w);   /* next chain_NNNN; saved with the world */
+int32_t om_chain_counter(const om_world *w);   /* last-assigned chain tag (tags start at 1), 0 if none yet; saved with the world */
 uint32_t om_region_faction_creation_pending(const om_world *w, uint32_t region_idx); /* template id + 1 that marked it this tick, 0 if none */
 
 /* ---- external spawns (E-05 calls these; tests may too) ---- */

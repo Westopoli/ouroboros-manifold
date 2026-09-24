@@ -573,6 +573,19 @@ static int gen_state_read_hook(om_world *w, const uint8_t *buf, uint32_t len) {
     return 0;
 }
 
+/* F2m (om_internal.h): wires the three save hooks onto a world that has not
+ * yet allocated w->generational_state, so a fresh world's read hook is
+ * never NULL (gen_state_read_hook above already copes with a NULL
+ * generational_state / len == 0 by building fresh state or writing a
+ * 0-length blob). Called once from om_world_new (csrc/region.c);
+ * gen_get_state below sets the same three pointers again once state
+ * actually exists, so this never allocates. */
+void om_generational_install_save_hooks(om_world *w) {
+    w->generational_state_size = gen_state_size_hook;
+    w->generational_state_write = gen_state_write_hook;
+    w->generational_state_read = gen_state_read_hook;
+}
+
 static gen_state *gen_get_state(const om_world *cw) {
     om_world *w = (om_world *)cw;
     if (!w) return NULL;
