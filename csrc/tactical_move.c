@@ -126,6 +126,7 @@ typedef struct {
     int      in_use;
     uint32_t unit_id;
     double   x, y;
+    double   pushed_x, pushed_y;
     double   facing;
     double   prev_x, prev_y, prev_facing;
     int      has_dest;
@@ -403,6 +404,8 @@ static om_move_unit *om_move_touch(om_world *w, om_move_state *ms, uint32_t unit
         mu->x = om_unit_position_x(w, unit_id);
         mu->y = om_unit_position_y(w, unit_id);
         mu->facing = 0.0;
+        mu->pushed_x = mu->x;
+        mu->pushed_y = mu->y;
         mu->prev_x = mu->x;
         mu->prev_y = mu->y;
         mu->prev_facing = 0.0;
@@ -815,6 +818,20 @@ static int om_move_in_recon(const om_world *w) {
     return om_mission_get_phase(w) == 0;
 }
 
+/* Hands unit.c every position that changed since the last hand-off (once per
+ * unit per sync, not per collision iteration), so its cached row and grid
+ * track this module's positions without waiting for its next refresh. */
+static void om_move_push_positions(om_world *w, om_move_state *ms) {
+    uint32_t id;
+    for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
+        om_move_unit *mu = &ms->units[id];
+        if (!mu->in_use || (mu->x == mu->pushed_x && mu->y == mu->pushed_y)) continue;
+        mu->pushed_x = mu->x;
+        mu->pushed_y = mu->y;
+        om_tac_unit_sync_position(w, id, mu->x, mu->y);
+    }
+}
+
 static void om_move_sync(om_world *w) {
     om_move_state *ms = om_ms(w);
     uint64_t target = om_tactical_tick(w);
@@ -827,6 +844,7 @@ static void om_move_sync(om_world *w) {
     for (t = ms->last_synced_tick + 1; t <= target; t++) {
         om_move_tick_once(w, ms, t);
     }
+    if (ms->last_synced_tick < target) om_move_push_positions(w, ms);
     ms->last_synced_tick = target;
 }
 
@@ -850,6 +868,7 @@ void om_collision_pass(om_world *w) {
     om_move_sync(w);
     ms = om_ms(w);
     om_move_collision_pass_internal(w, ms);
+    om_move_push_positions(w, ms);
 }
 
 int om_combat_can_shoot(const om_world *w, uint32_t p0, uint32_t p1) {
@@ -1333,6 +1352,9 @@ void om_unit_set_pos(om_world *w, uint32_t p0, double p1, double p2) {
     mu->y = p2;
     mu->prev_x = p1;
     mu->prev_y = p2;
+    mu->pushed_x = p1;
+    mu->pushed_y = p2;
+    om_tac_unit_sync_position(w, p0, p1, p2);
 }
 
 void om_unit_set_visible_to_faction(om_world *w, uint32_t p0, int32_t p1, int p2) {
@@ -1359,4 +1381,7 @@ void om_unit_teleport(om_world *w, uint32_t unit, double x, double y, uint32_t l
     mu->y = y;
     mu->prev_x = x;
     mu->prev_y = y;
+    mu->pushed_x = x;
+    mu->pushed_y = y;
+    om_tac_unit_sync_position(w, unit, x, y);
 }
