@@ -12,6 +12,7 @@ extends Node3D
 # qa_state() key names and plant ids.
 
 const GalaxyGen := preload("res://scenes/galaxy/galaxy_gen.gd")
+const CBridge := preload("res://autoload/c_bridge.gd")
 
 const PLANTS := ["seed-ignored", "owner-colour-flat", "edges-2d-overlay",
 	"pick-radius-zero", "bands-frozen", "conquest-no-recolour"]
@@ -66,7 +67,7 @@ func _load_live_snapshot() -> void:
 	var seed_str := _arg_value(OS.get_cmdline_user_args(), "--seed")
 	var seed := int(seed_str) if seed_str != "" else DEFAULT_SEED
 	var bridge = load("res://autoload/c_bridge.gd").new()
-	if bridge.load_snapshot_live(seed, 60, [6]):
+	if bridge.load_snapshot_live(seed, CBridge.DEFAULT_N_REGIONS, [6]):
 		set_snapshot(bridge.snapshot())
 
 

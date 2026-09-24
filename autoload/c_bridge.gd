@@ -9,20 +9,30 @@ extends RefCounted
 # load_snapshot_live spawns pipe/ouroboros_pipe directly and talks the same
 # 4-byte-big-endian-length-prefix + UTF-8 JSON framing sim_bridge.gd uses for
 # reading (see autoload/sim_bridge.gd's header comment for the Godot 4.6
-# stdio caveat). Unlike sim_bridge.gd, om_pipe.c has no temp-file command
-# channel — it reads commands framed on stdin only — so this writes its
-# whole command script to the bidirectional stdio handle in a single
-# store_buffer call, then only reads afterward, never writing again. The
-# script steps the sim LIVE_SNAPSHOT_STEPS ticks before requesting the
-# snapshot (set_seed, step n, snapshot, quit) so the checksum lands on the
-# same post-step cadence tests/transport/test_pipe_shapes.py verifies via
-# ctypes — a tick-0 snapshot (no step) would carry a different checksum.
+# stdio caveat, including that the pipe FileAccess only ever answers with
+# whatever bytes are already queued — there is no non-blocking peek, so
+# reads that wait on a frame that never comes would hang forever). Unlike
+# sim_bridge.gd, om_pipe.c has no temp-file command channel — it reads
+# commands framed on stdin only — so this writes its whole command script
+# (set_seed, step n, snapshot, quit) to the bidirectional stdio handle in a
+# single store_buffer call, then only reads afterward, never writing again.
+# The script steps the sim LIVE_SNAPSHOT_STEPS ticks before requesting the
+# snapshot so the checksum lands on the same post-step cadence
+# tests/transport/test_pipe_shapes.py verifies via ctypes — a tick-0
+# snapshot (no step) would carry a different checksum. A below-floor
+# n_regions makes set_seed answer an error frame instead of silence
+# (csrc/pipe/om_pipe.c write_error); the read loop below stops the instant
+# it sees that frame and kills the process, so the already-queued step and
+# snapshot commands are never acted on by the sim even though their bytes
+# were sent.
 
 const PIPE_BIN_RES_PATH := "res://pipe/ouroboros_pipe"
 const LIVE_READ_TIMEOUT_MSEC := 5000
 const LIVE_SNAPSHOT_STEPS := 10
+const DEFAULT_N_REGIONS := 80
 
 var _snapshot: Dictionary = {}
+var _last_error: String = ""
 
 
 func load_snapshot_file(path: String) -> bool:
@@ -65,7 +75,26 @@ func snapshot() -> Dictionary:
 	return _snapshot
 
 
+func last_error() -> String:
+	return _last_error
+
+
+# The pipe's stdio FileAccess.get_buffer() blocks at the OS level when no
+# bytes are queued (there is no non-blocking peek available here), so
+# set_seed, step, snapshot and quit are all written up front in one buffer,
+# exactly as before, and the reply is classified frame by frame instead of
+# holding step/snapshot back: the pipe writes an unsolicited "hello" frame
+# on startup (skipped), then either an error frame ({"type":"error",
+# "name":"set_seed","reason":...}, csrc/pipe/om_pipe.c write_error) if
+# n_regions is below the feasibility floor for the requested faction count,
+# or nothing at all for set_seed on success (om_pipe.c handle_set_seed
+# comment: "no frame at all on success, not even an ack") before the
+# step/snapshot replies arrive. Reading stops the instant an error frame is
+# seen -- the process is killed immediately after, so step/snapshot/quit are
+# never acted on by the sim even though their bytes were already queued on
+# its stdin.
 func load_snapshot_live(seed: int, n_regions: int, features: Array, steps: int = LIVE_SNAPSHOT_STEPS) -> bool:
+	_last_error = ""
 	var exe := ProjectSettings.globalize_path(PIPE_BIN_RES_PATH)
 	if not FileAccess.file_exists(exe):
 		return false
@@ -95,19 +124,32 @@ func load_snapshot_live(seed: int, n_regions: int, features: Array, steps: int =
 		return false
 
 	var snapshot_msg: Variant = null
+	var failed := false
 	var deadline_msec := Time.get_ticks_msec() + LIVE_READ_TIMEOUT_MSEC
 	while Time.get_ticks_msec() < deadline_msec:
 		var msg: Variant = _read_live_frame(stdio)
 		if msg == null:
 			break
-		if msg is Dictionary and msg.get("type", "") == "snapshot":
+		if not (msg is Dictionary):
+			continue
+		var msg_type: String = msg.get("type", "")
+		if msg_type == "error":
+			_last_error = String(msg.get("reason", ""))
+			failed = true
+			break
+		if msg_type == "snapshot":
 			snapshot_msg = msg
 			break
 
 	if OS.is_process_running(pid):
 		OS.kill(pid)
 
+	if failed:
+		return false
 	if not (snapshot_msg is Dictionary) or not snapshot_msg.has("regions"):
+		return false
+	var regions_arr: Array = snapshot_msg.get("regions", [])
+	if regions_arr.is_empty():
 		return false
 
 	_snapshot = snapshot_msg
