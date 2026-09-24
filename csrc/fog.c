@@ -166,6 +166,10 @@ typedef struct {
     int player_fog_on;
     int player_fog_on_set;
 
+    uint32_t bound_scanned;
+    double max_sensor;
+    int max_elev;
+
     om_client_snapshot snapshot;
 } om_fog_state;
 
@@ -282,6 +286,39 @@ static int om_fog_elevation(const om_fog_state *st, uint32_t unit_id) {
     return t ? t->elevation_tier : 0;
 }
 
+/* Grid candidate radii (om_grid_query_circle / om_grid_iter, csrc/unit.c).
+ * A fog effective radius can exceed the sensor radius only through the
+ * elevation bonus (cross-layer factors are capped at 1.0, interference only
+ * shrinks), so an upper bound is sensor * (1 + bonus * highest tier) with a
+ * relative slack that absorbs rounding. Candidates are re-tested exactly by
+ * om_unit_can_see, so the bound only has to never be too small. Units are
+ * never removed and their ids are dense from 1, so the world-wide maximum
+ * sensor radius is extended incrementally over the ids not yet scanned. */
+#define OM_FOG_BOUND_SLACK 1e-9
+
+static double om_fog_elev_scale(int max_elev) {
+    return (max_elev > 0) ? 1.0 + OM_ELEVATION_SENSOR_BONUS_PER_TIER * (double)max_elev : 1.0;
+}
+
+static double om_fog_world_bound(const om_world *w) {
+    om_fog_state *st = om_fog((om_world *)w);
+    om_world *mw = (om_world *)w;
+    int type;
+    while ((type = om_unit_get_unit_type(w, st->bound_scanned + 1)) >= 0) {
+        double sr = om_unit_profile_sensor_radius(mw, type);
+        if (sr > st->max_sensor) st->max_sensor = sr;
+        st->bound_scanned++;
+    }
+    return st->max_sensor * om_fog_elev_scale(st->max_elev) * (1.0 + OM_FOG_BOUND_SLACK);
+}
+
+static double om_fog_observer_bound(const om_fog_state *st, const om_world *w, uint32_t observer) {
+    int type = om_unit_get_unit_type(w, observer);
+    if (type < 0) return 0.0;
+    return om_unit_profile_sensor_radius((om_world *)w, type) *
+           om_fog_elev_scale(om_fog_elevation(st, observer)) * (1.0 + OM_FOG_BOUND_SLACK);
+}
+
 /* ALG-65 effective sensor radius for an observer: base radius by unit type
  * (om_unit_profile_sensor_radius) scaled down by the observer's own
  * interference on the observer's layer (R-089-01, R-090-03: only the
@@ -309,6 +346,23 @@ static double om_fog_effective_radius(const om_fog_state *st, const om_world *w,
     return effective;
 }
 
+/* Any living unit of `faction` that can see `target`, by candidate observers
+ * on the grid around the target; an any-of, so the iterator's order does not
+ * matter. Ignores the player fog switch (the engine's own view, unit.c
+ * om_tac_faction_sees could call this). */
+static int om_fog_faction_sees(const om_world *w, int32_t faction, uint32_t target) {
+    om_grid_iter it;
+    double tx, ty;
+    uint32_t observer;
+    if (!om_fog_unit_pos(w, target, &tx, &ty)) return 0;
+    om_grid_iter_begin(&it, (om_world *)w, tx, ty, om_fog_world_bound(w));
+    while ((observer = om_grid_iter_next(&it)) != 0) {
+        if (om_unit_get_faction(w, observer) != faction) continue;
+        if (om_unit_can_see(w, observer, target)) return 1;
+    }
+    return 0;
+}
+
 /* ---- generated stubs from signatures.toml ---- */
 double om_fog_get_drawn_sensor_circle_radius(const om_world *w, uint32_t unit) {
     return om_fog_effective_radius(om_fog_ro(w), w, unit, 0, 0);
@@ -317,9 +371,10 @@ double om_fog_get_drawn_sensor_circle_radius(const om_world *w, uint32_t unit) {
 int om_fog_get_treatment_at(const om_world *w, double x, double y, uint32_t layer) {
     const om_fog_state *st = om_fog_ro(w);
     om_world *mw = (om_world *)w;
-    uint32_t i, n = om_unit_count(w);
-    for (i = 0; i < n; i++) {
-        uint32_t id = om_unit_id_at(w, i);
+    om_grid_iter it;
+    uint32_t id;
+    om_grid_iter_begin(&it, mw, x, y, om_fog_world_bound(w));
+    while ((id = om_grid_iter_next(&it)) != 0) {
         double ux, uy;
         if (om_unit_get_faction(w, id) != OM_FOG_PLAYER_FACTION || !om_unit_alive(mw, id)) continue;
         if (!om_fog_unit_pos(w, id, &ux, &uy)) continue;
@@ -406,18 +461,11 @@ int om_player_can_see_friendly(const om_world *w, uint32_t unit) {
 
 int om_player_can_see_unit(const om_world *w, int32_t p0, uint32_t unit) {
     const om_fog_state *st = om_fog_ro(w);
-    uint32_t i, n;
     int32_t target_faction = om_unit_get_faction(w, unit);
     if (target_faction < 0) return 0;
     if (target_faction == p0) return 1;
     if (st && st->player_fog_on_set && !st->player_fog_on) return 1; /* fog explicitly off: omniscient (S-093 R-093-01) */
-    n = om_unit_count(w);
-    for (i = 0; i < n; i++) {
-        uint32_t observer = om_unit_id_at(w, i);
-        if (om_unit_get_faction(w, observer) != p0) continue;
-        if (om_unit_can_see(w, observer, unit)) return 1;
-    }
-    return 0;
+    return om_fog_faction_sees(w, p0, unit);
 }
 
 double om_recon_get_terrain_visibility_ratio(const om_world *w) {
@@ -477,15 +525,16 @@ double om_strategic_agent_read_region_field(const om_world *w, int32_t p0, uint3
 }
 
 void om_unit_acquire_target(om_world *w, uint32_t unit) {
-    uint32_t i, n = om_unit_count(w);
-    uint32_t best = 0;
+    const om_fog_state *st = om_fog_ro(w);
+    om_grid_iter it;
+    uint32_t cand, best = 0;
     double best_dist = 0.0;
     int found = 0;
     int32_t self_faction = om_unit_get_faction(w, unit);
     double sx, sy;
     if (self_faction < 0 || !om_fog_unit_pos(w, unit, &sx, &sy)) return;
-    for (i = 0; i < n; i++) {
-        uint32_t cand = om_unit_id_at(w, i);
+    om_grid_iter_begin(&it, w, sx, sy, om_fog_observer_bound(st, w, unit));
+    while ((cand = om_grid_iter_next(&it)) != 0) {
         double d, cx, cy;
         int32_t f = om_unit_get_faction(w, cand);
         if (cand == unit || f < 0 || f == self_faction) continue;
@@ -493,7 +542,7 @@ void om_unit_acquire_target(om_world *w, uint32_t unit) {
         if (!om_unit_can_see(w, unit, cand)) continue;
         if (!om_fog_unit_pos(w, cand, &cx, &cy)) continue;
         d = om_fog_dist(sx, sy, cx, cy);
-        if (!found || d < best_dist) { found = 1; best_dist = d; best = cand; }
+        if (!found || d < best_dist || (d == best_dist && cand < best)) { found = 1; best_dist = d; best = cand; }
     }
     if (found) om_command_attack_target(w, &unit, 1, best);
 }
@@ -540,6 +589,7 @@ double om_unit_get_effective_sensor_radius_to_target_elevation(const om_world *w
 uint32_t om_unit_spawn_with_elevation(om_world *w, int unit_type, int32_t faction_id, double x, double y, uint32_t layer, uint32_t elevation_tier) {
     om_fog_state *st = om_fog(w);
     uint32_t id = om_unit_spawn(w, unit_type, faction_id, x, y, layer);
+    if (id != 0 && (int)elevation_tier > st->max_elev) st->max_elev = (int)elevation_tier;
     if (id != 0 && st->n_units < OM_FOG_MAX_TRACKED_UNITS) {
         st->units[st->n_units].unit_id = id;
         st->units[st->n_units].elevation_tier = (int)elevation_tier;
@@ -549,13 +599,14 @@ uint32_t om_unit_spawn_with_elevation(om_world *w, int unit_type, int32_t factio
 }
 
 void om_visibility_compute(om_world *w) {
-    /* R-089-04: visibility is a pure function of current positions, computed
-     * fresh by om_unit_can_see/om_player_can_see* on every call -- nothing
-     * here needs to be cached or carried forward. This entry point exists
-     * for callers that expect an explicit compute step (S-089/S-090/S-091
-     * fixtures all call it before querying); it just makes sure the fog
-     * state exists yet. */
-    (void)om_fog(w);
+    /* R-089-04 / Q-089-01: visibility is a pure function of current positions
+     * with no memory, so nothing is cached here. The on-demand queries
+     * (om_unit_can_see, om_player_can_see*, om_fog_get_treatment_at,
+     * om_unit_acquire_target) find their candidates on unit.c's grid; this call
+     * only extends the world-wide sensor bound they size that query with over
+     * any units spawned since, so the first query of a tick does not pay for
+     * it. */
+    (void)om_fog_world_bound(w);
 }
 
 void om_visibility_set_player_fog(om_world *w, int on) {
