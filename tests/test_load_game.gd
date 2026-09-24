@@ -46,6 +46,7 @@ var _pass_count := 0
 var _fail_count := 0
 var _fail_msgs: Array[String] = []
 var _root: Node
+var _live_tests_completed := false
 
 
 class FakeBridge:
@@ -117,6 +118,109 @@ func _run_tests() -> void:
 	_check_unlimited_slots_thirty_rows_R111_04(current_version)
 
 	_root.queue_free()
+
+	await _run_live_tests(current_version)
+	_assert(_live_tests_completed, "the live-save checks did not run to the end (a script error aborted them, or c_bridge.gd lacks saves_dir / list_saves / load / DEFAULT_FEATURES)")
+
+
+# Piece T2g-2 (docs/architecture.md "Save slots (T2g-2 rulings)"): c_bridge.gd
+# is the real bridge behind the scene. The live mission/debrief/chronicle
+# loads autosave the world to <saves_dir>/campaign_<seed>.omsave (R-111-01,
+# never mid-mission: no autosave from the tactical load), list_saves()
+# reads the sidecars through the pipe's list_saves command, and load(slot)
+# answers the post-load snapshot or {} with last_error() set (R-111-03).
+# The scene shows the live rows when no bridge was injected. Known gap when
+# this was written: routing a loaded slot into the galaxy needs C2-4's
+# persistent pipe session, so a card click loads through the bridge only.
+func _run_live_tests(current_version: int) -> void:
+	var CBridge = load("res://autoload/c_bridge.gd")
+	var bridge = CBridge.new()
+	for m in ["saves_dir", "list_saves", "load", "load_mission_live", "last_error"]:
+		_assert(bridge.has_method(m), "c_bridge.gd missing method (piece T2g-2 not attached yet): " + m)
+		if not bridge.has_method(m):
+			return
+	if not CBridge.get_script_constant_map().has("DEFAULT_FEATURES"):
+		_assert(false, "c_bridge.gd missing constant DEFAULT_FEATURES")
+		return
+
+	var dir: String = bridge.saves_dir()
+	_assert(dir.begins_with("/") and DirAccess.dir_exists_absolute(dir), "saves_dir() = %s is not an existing absolute directory" % dir)
+	for f in ["campaign_1.omsave", "campaign_1.omsave.json", "campaign_bad.omsave", "campaign_bad.omsave.json"]:
+		DirAccess.remove_absolute(dir.path_join(f))
+
+	_assert(bridge.load_mission_live(1, CBridge.DEFAULT_N_REGIONS, CBridge.DEFAULT_FEATURES), "load_mission_live failed (last_error = %s)" % bridge.last_error())
+	var rows: Array = bridge.list_saves()
+	var row = _row_for(rows, "campaign_1")
+	_assert(row != null, "no campaign_1 row after the live mission load's autosave (R-111-01); slots = %s" % str(rows.map(func(r): return r.get("slot"))))
+	if row == null:
+		return
+	_assert(int(row.get("tick", -1)) == 10, "autosave row tick = %s, expected 10 (10 steps then mission_start)" % row.get("tick"))
+	_assert(int(row.get("version", -1)) == current_version, "autosave row version = %s, the scene's current_version is %s" % [row.get("version"), current_version])
+
+	var snap: Dictionary = bridge.load("campaign_1")
+	_assert(snap.get("type", "") == "snapshot" and (snap.get("regions", []) as Array).size() == CBridge.DEFAULT_N_REGIONS,
+		"load(campaign_1) did not answer an 80-region snapshot (last_error = %s)" % bridge.last_error())
+	_assert(int(snap.get("tick", -1)) == 10, "loaded snapshot tick = %s, expected 10" % snap.get("tick", -1))
+	var snap2: Dictionary = bridge.load("campaign_1")
+	_assert(snap2.get("checksum", 1) == snap.get("checksum", 2), "loading the same slot twice gave different checksums (R-111-02)")
+
+	var tactical = CBridge.new()
+	DirAccess.remove_absolute(dir.path_join("campaign_1.omsave"))
+	DirAccess.remove_absolute(dir.path_join("campaign_1.omsave.json"))
+	tactical.load_tactical_live(1, CBridge.DEFAULT_N_REGIONS, CBridge.DEFAULT_FEATURES)
+	_assert(_row_for(tactical.list_saves(), "campaign_1") == null, "the tactical (mid-mission) load wrote an autosave (R-111-04)")
+	bridge.load_mission_live(1, CBridge.DEFAULT_N_REGIONS, CBridge.DEFAULT_FEATURES)
+
+	var bytes := FileAccess.get_file_as_bytes(dir.path_join("campaign_1.omsave"))
+	_assert(bytes.size() > 8, "campaign_1.omsave missing or too short")
+	if bytes.size() > 8:
+		bytes[4] = 231
+		bytes[5] = 3
+		bytes[6] = 0
+		bytes[7] = 0
+		var bad_file := FileAccess.open(dir.path_join("campaign_bad.omsave"), FileAccess.WRITE)
+		bad_file.store_buffer(bytes)
+		bad_file.close()
+		var sidecar = JSON.parse_string(FileAccess.get_file_as_string(dir.path_join("campaign_1.omsave.json")))
+		sidecar["format_version"] = 999
+		var bad_side := FileAccess.open(dir.path_join("campaign_bad.omsave.json"), FileAccess.WRITE)
+		bad_side.store_string(JSON.stringify(sidecar))
+		bad_side.close()
+		var refused: Dictionary = bridge.load("campaign_bad")
+		_assert(refused.is_empty(), "load of a version-999 save answered a frame instead of refusing (R-111-03)")
+		_assert(bridge.last_error() == "version mismatch", "refused load last_error = '%s', expected 'version mismatch'" % bridge.last_error())
+
+	var fresh: Node = (load(SCENE_PATH) as PackedScene).instantiate()
+	get_root().add_child(fresh)
+	await process_frame
+	await process_frame
+	var st: Dictionary = fresh.qa_state()
+	var live_rows: Array = bridge.list_saves()
+	_assert(int(st.get("slot_count", -1)) == live_rows.size() and live_rows.size() >= 2,
+		"scene with no injected bridge shows %s slots, the live bridge lists %d" % [st.get("slot_count"), live_rows.size()])
+	var good = _row_for(st.get("rows", []), "campaign_1")
+	var bad = _row_for(st.get("rows", []), "campaign_bad")
+	_assert(good != null and not bool(good.get("refused", true)), "live campaign_1 row missing or refused")
+	_assert(bad != null and bool(bad.get("refused", false)) and str(bad.get("label_text", "")).contains("999") and str(bad.get("label_text", "")).contains(str(current_version)),
+		"live campaign_bad row not refused with both versions in its label")
+	if good != null:
+		_assert(_find_label_with_text(fresh, str(good.get("label_text", ""))) != null, "no Label on screen shows the live row text '%s'" % good.get("label_text"))
+	fresh.queue_free()
+	await process_frame
+
+	for f in ["campaign_1.omsave", "campaign_1.omsave.json", "campaign_bad.omsave", "campaign_bad.omsave.json"]:
+		DirAccess.remove_absolute(dir.path_join(f))
+	_live_tests_completed = true
+
+
+func _find_label_with_text(node: Node, text: String):
+	if node is Label and (node as Label).text == text:
+		return node
+	for c in node.get_children():
+		var found = _find_label_with_text(c, text)
+		if found != null:
+			return found
+	return null
 
 
 func _check_qa_state_json_safe() -> void:
