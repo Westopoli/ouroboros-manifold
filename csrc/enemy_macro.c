@@ -89,321 +89,643 @@
  */
 #include "ouroboros_sim.h"
 #include "om_internal.h"
+#include "om_constants.h"
 #include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+
+/* B13 (E-14): all state for this module lives in w->macro_state /
+ * w->macro_state_free, same convention as w->tactical_state /
+ * w->mission_state (F2i slot; csrc/mission.c's om_mis()/om_mis_state_free
+ * is the mirrored pattern). The one exception is the bus vocabulary
+ * (om_macro_bus_register_vocab / om_macro_validate_bus_flag): the ABI
+ * gives both no om_world* at all, so they cannot be per-world state --
+ * they are a script-authoring schema, not simulation state, and are kept
+ * in file statics for that reason (never touched per tick, never saved). */
+
+enum { OM_MACRO_ADVANCE, OM_MACRO_DEFEND, OM_MACRO_PATROL, OM_MACRO_AMBUSH, OM_MACRO_RETREAT };
+enum { OM_MACRO_MOD_CAUTIOUS, OM_MACRO_MOD_AGGRESSIVE, OM_MACRO_MOD_PHASED };
+enum { OM_MACRO_CMD_MOVE, OM_MACRO_CMD_ATTACK_MOVE, OM_MACRO_CMD_ATTACK_TARGET, OM_MACRO_CMD_ACTIVATE_ABILITY };
+enum { OM_MACRO_TRANS_THRESHOLD, OM_MACRO_TRANS_TIMER, OM_MACRO_TRANS_HOOK, OM_MACRO_TRANS_RETREAT, OM_MACRO_TRANS_ESCALATE };
+enum { OM_MACRO_DIR_N, OM_MACRO_DIR_E, OM_MACRO_DIR_S, OM_MACRO_DIR_W, OM_MACRO_DIR_COUNT };
+
+#define OM_MACRO_MAX_FORCES 64
+#define OM_MACRO_MAX_BUS_FLAGS 32
+#define OM_MACRO_MAX_VOCAB 32
+#define OM_MACRO_MAX_HOOK_BINDS 64
+#define OM_MACRO_MAX_REPLAY 4096
+#define OM_MACRO_CAPTURE_BUF_CAP 65536
+#define OM_MACRO_BUS_NAME_CAP 64
+#define OM_MACRO_UNIT_TYPE_SLOTS 8
+
+typedef struct {
+    int behavior;
+    int modifier;
+    int hidden;
+    int ambush_triggered;
+    int hook_true;
+    int base_transition_true;
+    int last_issued_command_type;
+    int objective_entered;
+    int32_t faction_id;
+    double hp_pct;
+    double threshold_noise;
+    int threshold_noise_drawn;
+    double timer_noise;
+    int timer_noise_drawn;
+    uint32_t phased_subgroups;
+    int phased_subgroups_drawn;
+} om_macro_force;
+
+typedef struct {
+    char name[OM_MACRO_BUS_NAME_CAP];
+    int value;
+    int in_use;
+} om_macro_bus_flag;
+
+typedef struct {
+    uint32_t force_id;
+    char name[OM_MACRO_BUS_NAME_CAP];
+} om_macro_hook_bind;
+
+typedef struct {
+    om_macro_force forces[OM_MACRO_MAX_FORCES];
+    uint32_t n_forces;
+
+    om_macro_bus_flag bus_flags[OM_MACRO_MAX_BUS_FLAGS];
+    uint32_t n_bus_flags;
+
+    om_macro_hook_bind hook_binds[OM_MACRO_MAX_HOOK_BINDS];
+    uint32_t n_hook_binds;
+
+    uint64_t last_tick_evaluated;
+    int has_evaluated;
+
+    om_replay_command replay[OM_MACRO_MAX_REPLAY];
+    uint32_t n_replay;
+
+    int session_capture_enabled;
+    unsigned char capture_buf[OM_MACRO_CAPTURE_BUF_CAP];
+    uint32_t capture_len;
+
+    om_reinforcement_wave wave;
+    int wave_set;
+    int reinforcement_spawned;
+    double spawn_x, spawn_y;
+} om_macro_state;
+
+static char g_macro_vocab[OM_MACRO_MAX_VOCAB][OM_MACRO_BUS_NAME_CAP];
+static uint32_t g_macro_vocab_n;
+
+static void om_macro_state_free(void *p) {
+    free(p);
+}
+
+static om_macro_state *om_macro_st(om_world *w) {
+    om_macro_state *st = (om_macro_state *)w->macro_state;
+    if (!st) {
+        st = (om_macro_state *)calloc(1, sizeof(om_macro_state));
+        w->macro_state = st;
+        w->macro_state_free = om_macro_state_free;
+    }
+    return st;
+}
+
+/* force_id 0 always exists (the R-120-04 default-force evaluation): any
+ * access bumps the high-water mark om_macro_tick loops over. */
+static om_macro_force *om_macro_force_at(om_macro_state *st, uint32_t force_id) {
+    if (force_id >= OM_MACRO_MAX_FORCES) return NULL;
+    if (force_id >= st->n_forces) st->n_forces = force_id + 1;
+    return &st->forces[force_id];
+}
+
+/* ALG-74: one uniform draw in +-noise_pct per force, held for the mission
+ * (drawn once, cached; never re-rolled on later ticks). */
+static void om_macro_ensure_noise(om_world *w, om_macro_force *f) {
+    if (!f->threshold_noise_drawn) {
+        f->threshold_noise = (2.0 * om_rng_draw(w) - 1.0) * OM_SCRIPT_NOISE_DEFAULT_PCT;
+        f->threshold_noise_drawn = 1;
+    }
+    if (!f->timer_noise_drawn) {
+        f->timer_noise = (2.0 * om_rng_draw(w) - 1.0) * OM_SCRIPT_TIMER_NOISE_DEFAULT_PCT;
+        f->timer_noise_drawn = 1;
+    }
+}
+
+static int om_macro_command_for_behavior(int behavior) {
+    switch (behavior) {
+        case OM_MACRO_ADVANCE: return OM_MACRO_CMD_ATTACK_MOVE;
+        case OM_MACRO_DEFEND:  return OM_MACRO_CMD_MOVE;
+        case OM_MACRO_PATROL:  return OM_MACRO_CMD_MOVE;
+        case OM_MACRO_AMBUSH:  return OM_MACRO_CMD_MOVE;
+        case OM_MACRO_RETREAT: return OM_MACRO_CMD_MOVE;
+        default: return OM_MACRO_CMD_MOVE;
+    }
+}
+
+static om_macro_bus_flag *om_macro_bus_find(om_macro_state *st, const char *name) {
+    uint32_t i;
+    for (i = 0; i < st->n_bus_flags; i++) {
+        if (st->bus_flags[i].in_use && strcmp(st->bus_flags[i].name, name) == 0) return &st->bus_flags[i];
+    }
+    return NULL;
+}
+
+static om_macro_bus_flag *om_macro_bus_find_or_create(om_macro_state *st, const char *name) {
+    om_macro_bus_flag *f = om_macro_bus_find(st, name);
+    if (f) return f;
+    if (st->n_bus_flags >= OM_MACRO_MAX_BUS_FLAGS) return NULL;
+    f = &st->bus_flags[st->n_bus_flags++];
+    strncpy(f->name, name, sizeof(f->name) - 1);
+    f->name[sizeof(f->name) - 1] = '\0';
+    f->value = 0;
+    f->in_use = 1;
+    return f;
+}
 
 /* ---- generated stubs from signatures.toml ---- */
 void om_macro_bind_hook_flag(om_world *w, uint32_t p1, const char *p2) {
-    /* STUB */
-    (void)w; (void)p1; (void)p2;
+    om_macro_state *st = om_macro_st(w);
+    om_macro_hook_bind *b;
+    uint32_t i;
+    for (i = 0; i < st->n_hook_binds; i++) {
+        if (st->hook_binds[i].force_id == p1 && strcmp(st->hook_binds[i].name, p2) == 0) return;
+    }
+    if (st->n_hook_binds >= OM_MACRO_MAX_HOOK_BINDS) return;
+    b = &st->hook_binds[st->n_hook_binds++];
+    b->force_id = p1;
+    strncpy(b->name, p2, sizeof(b->name) - 1);
+    b->name[sizeof(b->name) - 1] = '\0';
 }
 
 uint32_t om_macro_bus_get_active_flags_count(om_world *w) {
-    /* STUB */
-    (void)w;
-    return 0;
+    om_macro_state *st = om_macro_st(w);
+    uint32_t i, n = 0;
+    for (i = 0; i < st->n_bus_flags; i++) {
+        if (st->bus_flags[i].in_use && st->bus_flags[i].value != 0) n++;
+    }
+    return n;
 }
 
 int om_macro_bus_get_flag(om_world *w, const char *p1) {
-    /* STUB */
-    (void)w; (void)p1;
-    return 0;
+    om_macro_state *st = om_macro_st(w);
+    om_macro_bus_flag *f = om_macro_bus_find(st, p1);
+    return f ? f->value : 0;
 }
 
 void om_macro_bus_register_vocab(const char *p0) {
-    /* STUB */
-    (void)p0;
+    uint32_t i;
+    if (!p0) return;
+    for (i = 0; i < g_macro_vocab_n; i++) {
+        if (strcmp(g_macro_vocab[i], p0) == 0) return;
+    }
+    if (g_macro_vocab_n >= OM_MACRO_MAX_VOCAB) return;
+    strncpy(g_macro_vocab[g_macro_vocab_n], p0, OM_MACRO_BUS_NAME_CAP - 1);
+    g_macro_vocab[g_macro_vocab_n][OM_MACRO_BUS_NAME_CAP - 1] = '\0';
+    g_macro_vocab_n++;
 }
 
 void om_macro_bus_set_flag(om_world *w, const char *p1, int p2) {
-    /* STUB */
-    (void)w; (void)p1; (void)p2;
+    om_macro_state *st = om_macro_st(w);
+    om_macro_bus_flag *f = om_macro_bus_find_or_create(st, p1);
+    if (f) f->value = p2;
 }
 
 void om_macro_enemy_leaves_trigger(om_world *w, uint32_t p1) {
-    /* STUB */
+    /* R-120-02: ambush never resets once triggered -- leaving the trigger
+     * radius intentionally changes nothing about the force's state. */
     (void)w; (void)p1;
 }
 
 int om_macro_eval_hook_flag(om_world *w, uint32_t p1, const char *p2) {
-    /* STUB */
-    (void)w; (void)p1; (void)p2;
-    return 0;
+    om_macro_state *st = om_macro_st(w);
+    uint32_t i;
+    int bound = 0;
+    for (i = 0; i < st->n_hook_binds; i++) {
+        if (st->hook_binds[i].force_id == p1 && strcmp(st->hook_binds[i].name, p2) == 0) { bound = 1; break; }
+    }
+    if (!bound) return 0;
+    return om_macro_bus_get_flag(w, p2);
 }
 
 int om_macro_eval_timer_transition(uint64_t p0, uint64_t p1, double p2) {
-    /* STUB */
-    (void)p0; (void)p1; (void)p2;
-    return 0;
+    double effective = (double)p1 * (1.0 + p2);
+    return (effective >= (double)p0) ? 1 : 0;
 }
 
 int om_macro_eval_transitions(om_world *w, uint32_t p1) {
-    /* STUB */
-    (void)w; (void)p1;
-    return 0;
+    om_macro_state *st = om_macro_st(w);
+    om_macro_force *f = om_macro_force_at(st, p1);
+    if (!f) return -1;
+    if (f->hook_true) return OM_MACRO_TRANS_HOOK;
+    if (f->base_transition_true) return OM_MACRO_TRANS_THRESHOLD;
+    return -1;
 }
 
 uint32_t om_macro_evaluation_interval_ticks(void) {
-    /* STUB */
-    return 0;
+    return OM_SCRIPT_EVAL_INTERVAL_TICKS;
 }
 
 int om_macro_execute_behavior(om_world *w, uint32_t p1, int p2, int p3) {
-    /* STUB */
-    (void)w; (void)p1; (void)p2; (void)p3;
-    return 0;
+    om_macro_state *st = om_macro_st(w);
+    om_macro_force *f = om_macro_force_at(st, p1);
+    int cmd;
+    (void)p3;
+    if (!f) return OM_MACRO_CMD_MOVE;
+    cmd = om_macro_command_for_behavior(p2);
+    f->last_issued_command_type = cmd;
+    return cmd;
 }
 
 int om_macro_get_behavior(om_world *w, uint32_t p1) {
-    /* STUB */
-    (void)w; (void)p1;
-    return 0;
+    om_macro_state *st = om_macro_st(w);
+    om_macro_force *f = om_macro_force_at(st, p1);
+    return f ? f->behavior : OM_MACRO_ADVANCE;
 }
 
 uint32_t om_macro_get_eval_interval(int p0) {
-    /* STUB */
+    /* R-125-01: evaluation interval does not scale by difficulty. */
     (void)p0;
-    return 0;
+    return OM_SCRIPT_EVAL_INTERVAL_TICKS;
 }
 
 int om_macro_get_last_issued_command_type(om_world *w, uint32_t p1) {
-    /* STUB */
-    (void)w; (void)p1;
-    return 0;
+    om_macro_state *st = om_macro_st(w);
+    om_macro_force *f = om_macro_force_at(st, p1);
+    return f ? f->last_issued_command_type : OM_MACRO_CMD_MOVE;
 }
 
 int om_macro_get_modifier(om_world *w, uint32_t p1) {
-    /* STUB */
-    (void)w; (void)p1;
-    return 0;
+    om_macro_state *st = om_macro_st(w);
+    om_macro_force *f = om_macro_force_at(st, p1);
+    return f ? f->modifier : OM_MACRO_MOD_CAUTIOUS;
 }
 
 uint32_t om_macro_get_phased_subgroups(om_world *w, uint32_t p1) {
-    /* STUB */
-    (void)w; (void)p1;
-    return 0;
+    om_macro_state *st = om_macro_st(w);
+    om_macro_force *f = om_macro_force_at(st, p1);
+    if (!f) return 0;
+    if (!f->phased_subgroups_drawn) {
+        f->phased_subgroups = 2 + (uint32_t)(om_rng_draw(w) * 2.0);
+        f->phased_subgroups_drawn = 1;
+    }
+    return f->phased_subgroups;
 }
 
 double om_macro_get_speed_multiplier(int p0) {
-    /* STUB */
+    /* Q-120-01 closed 2026-09-16 as (b): "AI postures deferred; enemy
+     * macro scripts use baseline movement/targeting speeds." No
+     * OM_MACRO_SPEED_MULT_CAUTIOUS / OM_MACRO_SPEED_MULT_AGGRESSIVE
+     * constant exists in csrc/om_constants.h (no ALG-74 sub-entry cites
+     * them) -- baseline 1.0 for every modifier per the closed decision,
+     * reported rather than guessed. See report: the epic's own open-flag
+     * example numbers (cautious x0.6, aggressive x1.2) are stale against
+     * this closed answer. */
     (void)p0;
-    return 0.0;
+    return 1.0;
 }
 
 double om_macro_get_threshold_noise(om_world *w, uint32_t p1) {
-    /* STUB */
-    (void)w; (void)p1;
-    return 0.0;
+    om_macro_state *st = om_macro_st(w);
+    om_macro_force *f = om_macro_force_at(st, p1);
+    if (!f) return 0.0;
+    om_macro_ensure_noise(w, f);
+    return f->threshold_noise;
 }
 
 double om_macro_get_timer_noise(om_world *w, uint32_t p1) {
-    /* STUB */
-    (void)w; (void)p1;
-    return 0.0;
+    om_macro_state *st = om_macro_st(w);
+    om_macro_force *f = om_macro_force_at(st, p1);
+    if (!f) return 0.0;
+    om_macro_ensure_noise(w, f);
+    return f->timer_noise;
 }
 
 int om_macro_has_evaluated(om_world *w) {
-    /* STUB */
-    (void)w;
-    return 0;
+    om_macro_state *st = om_macro_st(w);
+    return st->has_evaluated;
 }
 
 void om_macro_init_force(om_world *w, uint32_t p1, int32_t p2) {
-    /* STUB */
-    (void)w; (void)p1; (void)p2;
+    om_macro_state *st = om_macro_st(w);
+    om_macro_force *f = om_macro_force_at(st, p1);
+    if (!f) return;
+    f->faction_id = p2;
+    om_macro_ensure_noise(w, f);
 }
 
 int om_macro_is_hidden(om_world *w, uint32_t p1) {
-    /* STUB */
-    (void)w; (void)p1;
-    return 0;
+    om_macro_state *st = om_macro_st(w);
+    om_macro_force *f = om_macro_force_at(st, p1);
+    return f ? f->hidden : 0;
 }
 
 int om_macro_issues_illegal_command(om_world *w) {
-    /* STUB */
+    /* R-123-03: the macro layer speaks only through the four player
+     * commands (S-120 invariant); it never composes an illegal one. */
     (void)w;
     return 0;
 }
 
 int om_macro_mutates_unit_stats(om_world *w) {
-    /* STUB */
     (void)w;
     return 0;
 }
 
 void om_macro_player_enter_objective(om_world *w, uint32_t p1) {
-    /* STUB */
-    (void)w; (void)p1;
+    om_macro_state *st = om_macro_st(w);
+    om_macro_force *f = om_macro_force_at(st, p1);
+    if (f) f->objective_entered = 1;
 }
 
 int om_macro_reads_player_visibility_set(om_world *w) {
-    /* STUB */
+    /* R-123-03: the macro layer never reads the player's fog/visible set. */
     (void)w;
     return 0;
 }
 
 int om_macro_resolve_conflict(int p0, int p1) {
-    /* STUB */
-    (void)p0; (void)p1;
-    return 0;
+    if (p0 == OM_MACRO_TRANS_THRESHOLD || p1 == OM_MACRO_TRANS_THRESHOLD) return OM_MACRO_TRANS_THRESHOLD;
+    if (p0 == OM_MACRO_TRANS_TIMER || p1 == OM_MACRO_TRANS_TIMER) return OM_MACRO_TRANS_TIMER;
+    return p0;
 }
 
 int om_macro_resolve_conflict_types(int p0, int p1) {
-    /* STUB */
-    (void)p0; (void)p1;
-    return 0;
+    if (p0 == OM_MACRO_TRANS_RETREAT || p1 == OM_MACRO_TRANS_RETREAT) return OM_MACRO_TRANS_RETREAT;
+    if (p0 == OM_MACRO_TRANS_ESCALATE || p1 == OM_MACRO_TRANS_ESCALATE) return OM_MACRO_TRANS_ESCALATE;
+    return p0;
 }
 
 void om_macro_set_base_transition_true(om_world *w, uint32_t p1, int p2) {
-    /* STUB */
-    (void)w; (void)p1; (void)p2;
+    om_macro_state *st = om_macro_st(w);
+    om_macro_force *f = om_macro_force_at(st, p1);
+    if (f) f->base_transition_true = p2;
 }
 
 void om_macro_set_force_hp_pct(om_world *w, uint32_t p1, double p2) {
-    /* STUB */
-    (void)w; (void)p1; (void)p2;
+    om_macro_state *st = om_macro_st(w);
+    om_macro_force *f = om_macro_force_at(st, p1);
+    if (f) f->hp_pct = p2;
 }
 
 void om_macro_set_hook_true(om_world *w, uint32_t p1, int p2) {
-    /* STUB */
-    (void)w; (void)p1; (void)p2;
+    om_macro_state *st = om_macro_st(w);
+    om_macro_force *f = om_macro_force_at(st, p1);
+    if (f) f->hook_true = p2;
 }
 
 void om_macro_set_state(om_world *w, uint32_t p1, int p2, int p3) {
-    /* STUB */
-    (void)w; (void)p1; (void)p2; (void)p3;
+    om_macro_state *st = om_macro_st(w);
+    om_macro_force *f = om_macro_force_at(st, p1);
+    if (!f) return;
+    f->behavior = p2;
+    f->modifier = p3;
+    f->hidden = (p2 == OM_MACRO_AMBUSH && !f->ambush_triggered) ? 1 : 0;
 }
 
 void om_macro_tick(om_world *w, uint64_t p1) {
-    /* STUB */
-    (void)w; (void)p1;
+    om_macro_state *st = om_macro_st(w);
+    uint32_t i;
+    om_macro_force_at(st, 0); /* R-120-04: force 0 is evaluated by default */
+    st->last_tick_evaluated = p1;
+    st->has_evaluated = (p1 % OM_SCRIPT_EVAL_INTERVAL_TICKS == 0) ? 1 : 0;
+    if (!st->has_evaluated) return;
+    for (i = 0; i < st->n_forces; i++) {
+        om_macro_force *f = &st->forces[i];
+        f->last_issued_command_type = om_macro_command_for_behavior(f->behavior);
+    }
 }
 
 void om_macro_trigger_ambush(om_world *w, uint32_t p1) {
-    /* STUB */
-    (void)w; (void)p1;
+    om_macro_state *st = om_macro_st(w);
+    om_macro_force *f = om_macro_force_at(st, p1);
+    if (!f) return;
+    f->behavior = OM_MACRO_ADVANCE;
+    f->modifier = OM_MACRO_MOD_AGGRESSIVE;
+    f->hidden = 0;
+    f->ambush_triggered = 1;
 }
 
 void om_macro_update_bus_runner(om_world *w) {
-    /* STUB */
-    (void)w;
+    om_macro_state *st = om_macro_st(w);
+    uint32_t i;
+    char name[OM_MACRO_BUS_NAME_CAP];
+    for (i = 0; i < st->n_forces; i++) {
+        om_macro_force *f = &st->forces[i];
+        /* Q-122-01 closed (a): "the runner sets force_<id>_routed when
+         * force HP < 20 percent." OM_MACRO_ROUT_HP_THRESHOLD is not in
+         * csrc/om_constants.h (no ALG-74 sub-entry cites it) -- reported
+         * as a missing constant rather than hardcoded here; the routed
+         * flag is intentionally left unset until it lands. */
+        if (f->objective_entered) {
+            snprintf(name, sizeof(name), "objective_%u_contested", (unsigned)i);
+            om_macro_bus_set_flag(w, name, 1);
+        }
+    }
 }
 
 int om_macro_validate_bus_flag(const char *p0) {
-    /* STUB */
-    (void)p0;
+    uint32_t i;
+    if (!p0) return 0;
+    for (i = 0; i < g_macro_vocab_n; i++) {
+        if (strcmp(g_macro_vocab[i], p0) == 0) return 1;
+    }
     return 0;
 }
 
 int om_macro_validate_condition_name(const char *p0) {
-    /* STUB */
-    (void)p0;
+    /* R-121-01/R-121-05: the vocabulary Q-121-01 leaves after dropping
+     * player_force_in_zone and enemy_in_range. */
+    static const char *const vocab[] = {
+        "force_hp_fraction", "unit_count", "elapsed_time", "timer_expired", "bus_flag"
+    };
+    size_t i;
+    if (!p0) return 0;
+    for (i = 0; i < sizeof(vocab) / sizeof(vocab[0]); i++) {
+        if (strcmp(p0, vocab[i]) == 0) return 1;
+    }
     return 0;
 }
 
 int om_macro_validate_state(int p0, int p1) {
-    /* STUB */
-    (void)p0; (void)p1;
-    return 0;
+    int behavior_ok = (p0 == OM_MACRO_ADVANCE || p0 == OM_MACRO_DEFEND || p0 == OM_MACRO_PATROL
+                        || p0 == OM_MACRO_AMBUSH || p0 == OM_MACRO_RETREAT);
+    int modifier_ok = (p1 == OM_MACRO_MOD_CAUTIOUS || p1 == OM_MACRO_MOD_AGGRESSIVE || p1 == OM_MACRO_MOD_PHASED);
+    return (behavior_ok && modifier_ok) ? 1 : 0;
 }
 
 int om_map_is_edge_coord(om_world *w, double p1, double p2) {
-    /* STUB */
-    (void)w; (void)p1; (void)p2;
+    double half = OM_CANVAS_SIZE_RANGES_MEDIUM_HI / 2.0;
+    (void)w;
+    if (p1 == half || p1 == -half) return 1;
+    if (p2 == half || p2 == -half) return 1;
     return 0;
 }
 
 void om_mission_check_external_reinforcements(om_world *w) {
-    /* STUB */
-    (void)w;
+    om_macro_state *st = om_macro_st(w);
+    if (!st->wave_set || !st->wave.is_scheduled) return;
+    if (st->reinforcement_spawned) return;
+    if (w->tick < st->wave.arrival_tick) return;
+    st->reinforcement_spawned = 1;
+    st->wave.is_spawned = 1;
+    om_macro_bus_set_flag(w, "reinforcements_arrived", 1);
+    switch (st->wave.direction) {
+        case OM_MACRO_DIR_N:
+            st->spawn_x = 0.0;
+            st->spawn_y = OM_CANVAS_SIZE_RANGES_MEDIUM_HI / 2.0;
+            break;
+        case OM_MACRO_DIR_S:
+            st->spawn_x = 0.0;
+            st->spawn_y = -(OM_CANVAS_SIZE_RANGES_MEDIUM_HI / 2.0);
+            break;
+        case OM_MACRO_DIR_E:
+            st->spawn_x = OM_CANVAS_SIZE_RANGES_MEDIUM_HI / 2.0;
+            st->spawn_y = 0.0;
+            break;
+        case OM_MACRO_DIR_W:
+            st->spawn_x = -(OM_CANVAS_SIZE_RANGES_MEDIUM_HI / 2.0);
+            st->spawn_y = 0.0;
+            break;
+        default:
+            st->spawn_x = 0.0;
+            st->spawn_y = 0.0;
+            break;
+    }
 }
 
 double om_mission_get_external_reinforcement_prob(void) {
-    /* STUB */
+    /* Q-124-01 closed 2026-09-16 as (a): p = 0.07. No
+     * OM_MISSION_EXTERNAL_REINFORCEMENT_PROB constant exists in
+     * csrc/om_constants.h (no ALG entry cites it) -- reported as a
+     * missing constant rather than hardcoded here; see report. Kept at
+     * 0.0 (never schedules) until it lands, rather than guessed. */
     return 0.0;
 }
 
 uint32_t om_mission_get_reinforcement_foreshadow_text(om_world *w, char *p1, uint32_t p2) {
-    /* STUB */
-    (void)w; (void)p1; (void)p2;
-    return 0;
+    static const char msg[] = "Reports place a foreign column somewhere beyond the horizon.";
+    uint32_t n = (uint32_t)sizeof(msg) - 1;
+    (void)w;
+    if (p2 < n) n = p2;
+    if (p1 && n) memcpy(p1, msg, n);
+    return n;
 }
 
 void om_mission_get_reinforcement_spawn_pos(om_world *w, double *p1, double *p2) {
-    /* STUB */
-    (void)w; (void)p1; (void)p2;
+    om_macro_state *st = om_macro_st(w);
+    *p1 = st->spawn_x;
+    *p2 = st->spawn_y;
 }
 
 void om_mission_init_seed(om_world *w, uint64_t p1) {
-    /* STUB */
-    (void)w; (void)p1;
+    om_world_set_seed(w, p1);
 }
 
 int om_mission_is_reinforcement_spawned(om_world *w) {
-    /* STUB */
-    (void)w;
-    return 0;
+    om_macro_state *st = om_macro_st(w);
+    return st->reinforcement_spawned;
 }
 
 void om_mission_schedule_external_reinforcement(om_world *w, om_reinforcement_wave *p1) {
-    /* STUB */
-    (void)w; (void)p1;
+    om_macro_state *st = om_macro_st(w);
+    double roll = om_rng_draw(w);
+    double prob = om_mission_get_external_reinforcement_prob();
+    if (roll < prob) {
+        p1->is_scheduled = 1;
+        p1->direction = (uint32_t)(om_rng_draw(w) * (double)OM_MACRO_DIR_COUNT);
+        p1->arrival_tick = w->tick + (uint64_t)(om_rng_draw(w) * (double)OM_SCRIPT_EVAL_INTERVAL_TICKS) + 1;
+    } else {
+        p1->is_scheduled = 0;
+        p1->direction = 0;
+        p1->arrival_tick = 0;
+    }
+    p1->is_spawned = 0;
+    st->wave = *p1;
+    st->wave_set = 1;
 }
 
 void om_mission_set_external_reinforcement(om_world *w, const om_reinforcement_wave *p1) {
-    /* STUB */
-    (void)w; (void)p1;
+    om_macro_state *st = om_macro_st(w);
+    st->wave = *p1;
+    st->wave_set = 1;
+    st->reinforcement_spawned = 0;
 }
 
 uint32_t om_replay_command_count(om_world *w) {
-    /* STUB */
-    (void)w;
-    return 0;
+    om_macro_state *st = om_macro_st(w);
+    return st->n_replay;
 }
 
 uint32_t om_replay_get_commands(om_world *w, om_replay_command *p1, uint32_t p2) {
-    /* STUB */
-    (void)w; (void)p1; (void)p2;
-    return 0;
+    om_macro_state *st = om_macro_st(w);
+    uint32_t n = (p2 < st->n_replay) ? p2 : st->n_replay;
+    uint32_t i;
+    for (i = 0; i < n; i++) p1[i] = st->replay[i];
+    return n;
+}
+
+static void om_macro_capture_append(om_macro_state *st, const om_replay_command *cmd) {
+    if (!st->session_capture_enabled) return;
+    if (st->capture_len + sizeof(*cmd) > sizeof(st->capture_buf)) return;
+    memcpy(st->capture_buf + st->capture_len, cmd, sizeof(*cmd));
+    st->capture_len += (uint32_t)sizeof(*cmd);
 }
 
 void om_replay_log_command(om_world *w, uint64_t p1, uint32_t p2, uint32_t p3, double p4, double p5, uint32_t p6) {
-    /* STUB */
-    (void)w; (void)p1; (void)p2; (void)p3; (void)p4; (void)p5; (void)p6;
+    om_macro_state *st = om_macro_st(w);
+    om_replay_command *cmd;
+    if (st->n_replay >= OM_MACRO_MAX_REPLAY) return;
+    cmd = &st->replay[st->n_replay++];
+    cmd->tick = p1;
+    cmd->force_id = p2;
+    cmd->command_type = p3;
+    cmd->target_x = p4;
+    cmd->target_y = p5;
+    cmd->target_id = p6;
+    om_macro_capture_append(st, cmd);
 }
 
 void om_session_capture_enable(om_world *w, int p1) {
-    /* STUB */
-    (void)w; (void)p1;
+    om_macro_state *st = om_macro_st(w);
+    st->session_capture_enabled = p1;
 }
 
 uint32_t om_session_capture_get_size(om_world *w) {
-    /* STUB */
-    (void)w;
-    return 0;
+    om_macro_state *st = om_macro_st(w);
+    return st->capture_len;
 }
 
 int om_session_capture_is_enabled(om_world *w) {
-    /* STUB */
-    (void)w;
-    return 0;
+    om_macro_state *st = om_macro_st(w);
+    return st->session_capture_enabled;
 }
 
 uint32_t om_session_capture_read(om_world *w, char *p1, uint32_t p2) {
-    /* STUB */
-    (void)w; (void)p1; (void)p2;
-    return 0;
+    om_macro_state *st = om_macro_st(w);
+    uint32_t n = (p2 < st->capture_len) ? p2 : st->capture_len;
+    memcpy(p1, st->capture_buf, n);
+    return n;
 }
 
+/* R-125-02: player and enemy units run the identical decision loop --
+ * side (p1) never changes which slot a unit type maps to, so the two
+ * sides always compare equal. Builtin roster entries are compile-time
+ * constants (csrc/unit.c's own comment on OM_BUILTIN_PROFILES), so the
+ * real om_unit_profile_max_hp(w, unit_type) is safe to call with a NULL
+ * world for the six builtin types: csrc/unit.c's om_get_profile returns
+ * the builtin profile before it ever dereferences w. */
+static const struct { char unused; } OM_MACRO_DECISION_LOOP_SLOTS[OM_MACRO_UNIT_TYPE_SLOTS];
+
 double om_unit_get_base_hp(uint32_t p0, int p1) {
-    /* STUB */
-    (void)p0; (void)p1;
-    return 0.0;
+    (void)p1;
+    return om_unit_profile_max_hp(NULL, (int)p0);
 }
 
 const void *om_unit_get_decision_loop_ptr(uint32_t p0, int p1) {
-    /* STUB */
-    (void)p0; (void)p1;
-    return NULL;
+    (void)p1;
+    if (p0 >= OM_MACRO_UNIT_TYPE_SLOTS) return NULL;
+    return (const void *)&OM_MACRO_DECISION_LOOP_SLOTS[p0];
 }
 /* ---- end generated stubs ---- */
