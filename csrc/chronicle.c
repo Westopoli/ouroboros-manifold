@@ -660,9 +660,11 @@ typedef struct {
 
     char full_scroll_text[CHRON_FULL_TEXT_CAP];
 
-    /* Entries that survived assembly and cross-entry dedup, in scroll order;
-     * cleared whenever the cluster list is rebuilt. */
+    /* One slot per cluster, index-aligned; entry_valid is 0 for a cluster whose
+     * assembly failed or that cross-entry dedup dropped. Cleared whenever the
+     * cluster list is rebuilt. */
     om_chronicle_entry entries[CHRON_MAX_FINAL];
+    uint8_t entry_valid[CHRON_MAX_FINAL];
     uint32_t n_entries;
 
     chron_text_entry text_entries[CHRON_MAX_TEXT_ENTRIES];
@@ -1598,7 +1600,8 @@ static void chron_assemble_all(om_world *w, uint64_t seed) {
     uint32_t n_kept = 0;
 
     st->full_scroll_text[0] = '\0';
-    st->n_entries = 0;
+    st->n_entries = st->n_clusters;
+    memset(st->entry_valid, 0, sizeof(st->entry_valid));
     size_t pos = 0;
     for (uint32_t i = 0; i < st->n_clusters; i++) {
         if (!ok[i]) continue;
@@ -1620,9 +1623,10 @@ static void chron_assemble_all(om_world *w, uint64_t seed) {
         if (dup) continue;
         kept_sets[n_kept] = words;
         n_kept++;
-        om_chronicle_entry *ent = &st->entries[st->n_entries];
+        om_chronicle_entry *ent = &st->entries[i];
         memset(ent, 0, sizeof(*ent));
-        ent->id = st->n_entries++;
+        st->entry_valid[i] = 1;
+        ent->id = i;
         ent->category = chron_effective_category(&st->clusters[i]);
         ent->region = st->clusters[i].region;
         ent->start_tick = st->clusters[i].start_tick;
@@ -2154,7 +2158,7 @@ const char *om_event_template_chronicle_prose(const om_world *w, uint32_t templa
 
 int om_chronicle_entry_get(const om_world *w, uint32_t index, om_chronicle_entry *out) {
     const chron_state *st = chron_ro(w);
-    if (!st || !out || index >= st->n_entries) return 0;
+    if (!st || !out || index >= st->n_entries || !st->entry_valid[index]) return 0;
     *out = st->entries[index];
     return 1;
 }
