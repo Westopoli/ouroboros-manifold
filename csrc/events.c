@@ -70,6 +70,10 @@ typedef struct {
     uint32_t           manual_next_id; /* last id handed out; 0 means none yet */
 } om_evt_state;
 
+static uint32_t evt_save_size(const om_world *w);
+static void evt_save_write(const om_world *w, uint8_t *out);
+static int evt_save_read(om_world *w, const uint8_t *buf, uint32_t len);
+
 static om_evt_state *evt_find(const om_world *w) {
     if (!w) return NULL;
     return (om_evt_state *)w->events_state;
@@ -92,6 +96,9 @@ static om_evt_state *evt_alloc(om_world *w) {
     evt_state_reset_fields(s);
     w->events_state = s;
     w->events_state_free = free;
+    w->events_state_size = evt_save_size;
+    w->events_state_write = evt_save_write;
+    w->events_state_read = evt_save_read;
     return s;
 }
 
@@ -419,11 +426,13 @@ int64_t om_event_last_fired(const om_world *w, uint32_t region_idx, uint32_t tem
 }
 
 int32_t om_chain_counter(const om_world *w) {
-    /* Most-recently-assigned tag (0 default), not next-to-assign -- see
-     * leaf-01.ASSUMPTIONS.md (R-026-05 vs. chain_counter_unsaved control). */
+    /* Most-recently-assigned tag, 0 while none has been assigned: tags start
+     * at 1, so the counter is both "last used" (R-026-05 and the
+     * chain_counter_unsaved control read it that way) and never 0 once a chain
+     * exists (test_R_111_02 load-restores test). */
     om_evt_state *s = evt_find(w);
     if (!s) return 0;
-    return (s->chain_counter > 0) ? (s->chain_counter - 1) : 0;
+    return s->chain_counter;
 }
 
 uint32_t om_region_faction_creation_pending(const om_world *w, uint32_t region_idx) {
@@ -503,12 +512,12 @@ int om_event_queue_external(om_world *w, uint32_t region_idx, uint32_t template_
         (chain_length < OM_ADMIN_REVOLT_CHAIN_MIN || chain_length > OM_ADMIN_REVOLT_CHAIN_MAX)) return -1;
 
     evt_sink sink = { w->event_queue, s->queue_source, &w->event_queue_n, OM_EVT_QUEUE_CAP };
-    int32_t tag = s->chain_counter;
+    int32_t tag = s->chain_counter + 1;
     if (!evt_enqueue(s, w, &sink, region_idx, template_id, due_tick, probability,
                       source_faction, chain_length, OM_COND_NONE, 0, 0.0, tag, OM_SRC_EXTERNAL)) {
         return -1;
     }
-    s->chain_counter++;
+    s->chain_counter = tag;
     return tag;
 }
 
@@ -884,7 +893,7 @@ static void evt_evaluate_triggers(om_evt_state *s, om_world *w, double snap[][OM
 
         for (uint32_t tid = 0; tid < s->n_templates; tid++) {
             if (!should_fire[tid]) continue;
-            int32_t tag = s->chain_counter++;
+            int32_t tag = ++s->chain_counter;
             evt_fire(s, w, r, tid, tag, OM_SRC_TRIGGER, -1.0, -1, 0, snap[r], sink);
 #ifdef OM_DEBUG_INJECT
             if (w->inject == OM_BUG_TRIGGERS_READ_LIVE) {
@@ -899,7 +908,7 @@ static void evt_evaluate_triggers(om_evt_state *s, om_world *w, double snap[][OM
         }
 
         if (revolt_fire) {
-            int32_t tag = s->chain_counter++;
+            int32_t tag = ++s->chain_counter;
             evt_fire(s, w, r, revolt_tid, tag, OM_SRC_TRIGGER, revolt_draw, -1, 0, snap[r], sink);
         }
     }
@@ -1020,6 +1029,25 @@ static void evt_manual_try_attach(om_evt_manual_fire *mf, const om_world *w, uin
     mf->attached[mf->n_attached++] = char_id;
 }
 
+/* E-09 R-070-02: no public accessor enumerates characters (om_lineage_member_in_region
+ * only answers yes/no), so lineage members are found by probing the two id ranges
+ * generational.c hands out: explicit ids 1..GEN_MAX_CHARACTERS and auto ids from
+ * GEN_AUTO_ID_BASE. Both are private there. See also: csrc/generational.c. */
+#define EVT_LINEAGE_PROBE_SPAN 4096u
+#define EVT_LINEAGE_AUTO_ID_BASE 100000000u
+
+static void evt_manual_attach_lineage(om_evt_manual_fire *mf, const om_world *w) {
+    static const uint32_t base[2] = {1u, EVT_LINEAGE_AUTO_ID_BASE};
+    for (uint32_t b = 0; b < 2; b++) {
+        for (uint32_t id = base[b]; id < base[b] + EVT_LINEAGE_PROBE_SPAN; id++) {
+            om_character_record rec;
+            if (mf->n_attached >= OM_EVT_MAX_ATTACHED) return;
+            if (om_character_get_record(w, id, &rec) != 0 || rec.lineage_id == 0) continue;
+            evt_manual_try_attach(mf, w, id);
+        }
+    }
+}
+
 uint32_t om_event_fire_manual(om_world *w, uint32_t region_idx, uint32_t tier) {
     if (!w || region_idx >= w->n_regions) return 0;
     om_evt_state *s = evt_ensure(w);
@@ -1037,6 +1065,7 @@ uint32_t om_event_fire_manual(om_world *w, uint32_t region_idx, uint32_t tier) {
         if (owner >= 0) {
             evt_manual_try_attach(mf, w, om_faction_supreme_commander(w, owner));
         }
+        evt_manual_attach_lineage(mf, w);
     }
 
     return mf->id;
@@ -1057,10 +1086,351 @@ uint32_t om_event_get_attached_character(const om_world *w, uint32_t event, uint
     return mf->attached[p1];
 }
 
-/* ---- generated stubs from signatures.toml ---- */
-int32_t om_event_template_significance_tier(const om_world *w, uint32_t template_id) {
-    /* STUB: B1-8 implements */
-    (void)w; (void)template_id;
-    return -1;
+/* ---- save/load slot (S-111, csrc/save.c OM_SAVE_SLOT_EVENTS) ----
+ * Blob: n_regions rows (min(w->n_regions, OM_EVT_MAX_REGIONS)) by n_templates
+ * columns for the per-(region, template) tables, then the queue's parallel
+ * source array, the tick logs and the manual-fire records, each as a count
+ * plus that many entries. Explicit little-endian scalars, no struct memcpy.
+ * The pending queue itself (w->event_queue) and telegraphs are written by
+ * csrc/save.c's body; only queue_source lives here. A zero-length blob
+ * restores "no events state", the same as a world that never loaded events. */
+
+typedef struct {
+    uint8_t *buf; /* NULL: size-only pass */
+    uint32_t pos;
+} evt_wr;
+
+static void evt_put(evt_wr *o, uint64_t v, uint32_t width) {
+    if (o->buf) {
+        for (uint32_t i = 0; i < width; i++) {
+            o->buf[o->pos + i] = (uint8_t)((v >> (OM_SAVE_BYTE_BITS * i)) & OM_SAVE_BYTE_MASK);
+        }
+    }
+    o->pos += width;
 }
-/* ---- end generated stubs ---- */
+
+static void evt_put_u8(evt_wr *o, uint64_t v)  { evt_put(o, v, (uint32_t)sizeof(uint8_t)); }
+static void evt_put_u32(evt_wr *o, uint64_t v) { evt_put(o, v, (uint32_t)sizeof(uint32_t)); }
+static void evt_put_u64(evt_wr *o, uint64_t v) { evt_put(o, v, (uint32_t)sizeof(uint64_t)); }
+
+static void evt_put_f64(evt_wr *o, double d) {
+    uint64_t bits;
+    memcpy(&bits, &d, sizeof(bits));
+    evt_put_u64(o, bits);
+}
+
+static void evt_put_name(evt_wr *o, const char *name) {
+    if (o->buf) memcpy(o->buf + o->pos, name, OM_TEMPLATE_NAME);
+    o->pos += OM_TEMPLATE_NAME;
+}
+
+static void evt_put_template(evt_wr *o, const om_event_template *t) {
+    evt_put_u32(o, t->id);
+    evt_put_name(o, t->name);
+    evt_put_u32(o, t->trigger_kind);
+    evt_put_u32(o, t->trigger_field);
+    evt_put_f64(o, t->threshold);
+    evt_put_f64(o, t->prob_base);
+    evt_put_f64(o, t->prob_exponent);
+    evt_put_u32(o, t->cooldown_ticks);
+    evt_put_u32(o, t->n_spawns);
+    for (uint32_t f = 0; f < OM_F_COUNT; f++) evt_put_f64(o, t->effect[f]);
+    for (uint32_t j = 0; j < OM_MAX_SPAWNS; j++) {
+        const om_spawn *sp = &t->spawns[j];
+        evt_put_u32(o, sp->template_id);
+        evt_put_u32(o, sp->delay_min);
+        evt_put_u32(o, sp->delay_max);
+        evt_put_u32(o, sp->cond_kind);
+        evt_put_u32(o, sp->cond_field);
+        evt_put_f64(o, sp->probability);
+        evt_put_f64(o, sp->cond_value);
+    }
+    evt_put_u32(o, t->exclusion_tag);
+    evt_put_u32(o, t->creates_faction);
+    evt_put_u32(o, t->admin_chain_step);
+}
+
+static void evt_save_body(const om_world *w, const om_evt_state *s, evt_wr *o) {
+    uint32_t nreg = (w->n_regions < OM_EVT_MAX_REGIONS) ? w->n_regions : OM_EVT_MAX_REGIONS;
+    uint32_t nq = (w->event_queue_n < OM_EVT_QUEUE_CAP) ? w->event_queue_n : OM_EVT_QUEUE_CAP;
+
+    evt_put_u32(o, s->n_templates);
+    evt_put_u32(o, s->launch_count);
+    evt_put_u32(o, nreg);
+    evt_put_u32(o, (uint32_t)s->chain_counter);
+    for (uint32_t t = 0; t < s->n_templates; t++) {
+        evt_put_template(o, &s->templates[t]);
+        evt_put_u32(o, (uint32_t)s->significance_tier[t]);
+    }
+    for (uint32_t r = 0; r < nreg; r++) {
+        for (uint32_t t = 0; t < s->n_templates; t++) {
+            evt_put_f64(o, s->noise[r][t]);
+            evt_put_u8(o, s->breached[r][t] ? 1 : 0);
+            evt_put_u64(o, (uint64_t)s->last_fired[r][t]);
+        }
+        evt_put_u32(o, s->faction_pending[r]);
+        for (uint32_t f = 0; f < OM_F_COUNT; f++) evt_put_f64(o, s->applied_delta[r][f]);
+        evt_put_u8(o, s->touched[r] ? 1 : 0);
+    }
+
+    evt_put_u32(o, nq);
+    for (uint32_t i = 0; i < nq; i++) evt_put_u32(o, s->queue_source[i]);
+
+    evt_put_u32(o, s->fired_n);
+    for (uint32_t i = 0; i < s->fired_n; i++) {
+        const om_fired_event *e = &s->fired[i];
+        evt_put_u64(o, e->tick);
+        evt_put_u32(o, e->region_idx);
+        evt_put_u32(o, e->template_id);
+        evt_put_u32(o, (uint32_t)e->chain_tag);
+        evt_put_u32(o, e->source);
+        for (uint32_t f = 0; f < OM_F_COUNT; f++) evt_put_f64(o, e->delta[f]);
+        evt_put_f64(o, e->draw);
+        evt_put_u32(o, e->creates_faction);
+        evt_put_u32(o, e->n_spawned);
+    }
+    evt_put_u32(o, s->pruned_n);
+    for (uint32_t i = 0; i < s->pruned_n; i++) {
+        const om_pruned_event *e = &s->pruned[i];
+        evt_put_u64(o, e->tick);
+        evt_put_u32(o, e->region_idx);
+        evt_put_u32(o, e->template_id);
+        evt_put_u32(o, (uint32_t)e->chain_tag);
+        evt_put_u32(o, e->cond_kind);
+        evt_put_u32(o, e->cond_field);
+        evt_put_f64(o, e->cond_value);
+        evt_put_f64(o, e->field_value);
+    }
+    evt_put_u32(o, s->delayed_n);
+    for (uint32_t i = 0; i < s->delayed_n; i++) {
+        const om_delayed_event *e = &s->delayed[i];
+        evt_put_u64(o, e->tick);
+        evt_put_u32(o, e->region_idx);
+        evt_put_u32(o, e->template_id);
+        evt_put_u32(o, (uint32_t)e->chain_tag);
+        evt_put_u32(o, e->exclusion_tag);
+        evt_put_u32(o, e->kept_template_id);
+        evt_put_u64(o, e->new_due);
+    }
+
+    evt_put_u32(o, s->manual_n);
+    evt_put_u32(o, s->manual_next_id);
+    for (uint32_t i = 0; i < s->manual_n; i++) {
+        const om_evt_manual_fire *m = &s->manual[i];
+        evt_put_u32(o, m->id);
+        evt_put_u32(o, m->region_idx);
+        evt_put_u32(o, m->tier);
+        evt_put_u32(o, m->n_attached);
+        for (uint32_t k = 0; k < m->n_attached; k++) evt_put_u32(o, m->attached[k]);
+    }
+}
+
+static uint32_t evt_save_size(const om_world *w) {
+    const om_evt_state *s = evt_find(w);
+    if (!s) return 0;
+    evt_wr o = { NULL, 0 };
+    evt_save_body(w, s, &o);
+    return o.pos;
+}
+
+static void evt_save_write(const om_world *w, uint8_t *out) {
+    const om_evt_state *s = evt_find(w);
+    if (!s || !out) return;
+    evt_wr o = { out, 0 };
+    evt_save_body(w, s, &o);
+}
+
+typedef struct {
+    const uint8_t *p;
+    uint32_t len;
+    uint32_t pos;
+    int ok;
+} evt_rd;
+
+static uint64_t evt_get(evt_rd *r, uint32_t width) {
+    uint64_t v = 0;
+    if (!r->ok || width > r->len - r->pos) { r->ok = 0; return 0; }
+    for (uint32_t i = 0; i < width; i++) {
+        v |= ((uint64_t)r->p[r->pos + i]) << (OM_SAVE_BYTE_BITS * i);
+    }
+    r->pos += width;
+    return v;
+}
+
+static uint8_t  evt_get_u8(evt_rd *r)  { return (uint8_t)evt_get(r, (uint32_t)sizeof(uint8_t)); }
+static uint32_t evt_get_u32(evt_rd *r) { return (uint32_t)evt_get(r, (uint32_t)sizeof(uint32_t)); }
+static uint64_t evt_get_u64(evt_rd *r) { return evt_get(r, (uint32_t)sizeof(uint64_t)); }
+
+static double evt_get_f64(evt_rd *r) {
+    uint64_t bits = evt_get_u64(r);
+    double d;
+    memcpy(&d, &bits, sizeof(d));
+    return d;
+}
+
+/* Reads a count and fails the reader when it exceeds cap. */
+static uint32_t evt_get_count(evt_rd *r, uint32_t cap) {
+    uint32_t n = (uint32_t)evt_get_u32(r);
+    if (n > cap) { r->ok = 0; return 0; }
+    return n;
+}
+
+static void evt_get_template(evt_rd *r, om_event_template *t) {
+    memset(t, 0, sizeof(*t));
+    t->id = (uint32_t)evt_get_u32(r);
+    for (uint32_t i = 0; i < OM_TEMPLATE_NAME; i++) t->name[i] = (char)evt_get_u8(r);
+    t->trigger_kind = (uint32_t)evt_get_u32(r);
+    t->trigger_field = (uint32_t)evt_get_u32(r);
+    t->threshold = evt_get_f64(r);
+    t->prob_base = evt_get_f64(r);
+    t->prob_exponent = evt_get_f64(r);
+    t->cooldown_ticks = (uint32_t)evt_get_u32(r);
+    t->n_spawns = evt_get_count(r, OM_MAX_SPAWNS);
+    for (uint32_t f = 0; f < OM_F_COUNT; f++) t->effect[f] = evt_get_f64(r);
+    for (uint32_t j = 0; j < OM_MAX_SPAWNS; j++) {
+        om_spawn *sp = &t->spawns[j];
+        sp->template_id = (uint32_t)evt_get_u32(r);
+        sp->delay_min = (uint32_t)evt_get_u32(r);
+        sp->delay_max = (uint32_t)evt_get_u32(r);
+        sp->cond_kind = (uint32_t)evt_get_u32(r);
+        sp->cond_field = (uint32_t)evt_get_u32(r);
+        sp->probability = evt_get_f64(r);
+        sp->cond_value = evt_get_f64(r);
+    }
+    t->exclusion_tag = (uint32_t)evt_get_u32(r);
+    t->creates_faction = (uint32_t)evt_get_u32(r);
+    t->admin_chain_step = (uint32_t)evt_get_u32(r);
+}
+
+static void evt_load_body(evt_rd *r, om_evt_state *s) {
+    s->n_templates = evt_get_count(r, OM_MAX_TEMPLATES);
+    s->launch_count = evt_get_count(r, s->n_templates);
+    uint32_t nreg = evt_get_count(r, OM_EVT_MAX_REGIONS);
+    s->chain_counter = (int32_t)evt_get_u32(r);
+    for (uint32_t t = 0; t < s->n_templates && r->ok; t++) {
+        evt_get_template(r, &s->templates[t]);
+        s->significance_tier[t] = (int32_t)evt_get_u32(r);
+    }
+    for (uint32_t i = 0; i < nreg && r->ok; i++) {
+        for (uint32_t t = 0; t < s->n_templates && r->ok; t++) {
+            s->noise[i][t] = evt_get_f64(r);
+            s->breached[i][t] = (int)evt_get_u8(r);
+            s->last_fired[i][t] = (int64_t)evt_get_u64(r);
+        }
+        s->faction_pending[i] = (uint32_t)evt_get_u32(r);
+        for (uint32_t f = 0; f < OM_F_COUNT; f++) s->applied_delta[i][f] = evt_get_f64(r);
+        s->touched[i] = (int)evt_get_u8(r);
+    }
+
+    uint32_t nq = evt_get_count(r, OM_EVT_QUEUE_CAP);
+    for (uint32_t i = 0; i < nq && r->ok; i++) s->queue_source[i] = (uint32_t)evt_get_u32(r);
+
+    s->fired_n = evt_get_count(r, OM_EVT_LOG_CAP);
+    for (uint32_t i = 0; i < s->fired_n && r->ok; i++) {
+        om_fired_event *e = &s->fired[i];
+        e->tick = evt_get_u64(r);
+        e->region_idx = (uint32_t)evt_get_u32(r);
+        e->template_id = (uint32_t)evt_get_u32(r);
+        e->chain_tag = (int32_t)evt_get_u32(r);
+        e->source = (uint32_t)evt_get_u32(r);
+        for (uint32_t f = 0; f < OM_F_COUNT; f++) e->delta[f] = evt_get_f64(r);
+        e->draw = evt_get_f64(r);
+        e->creates_faction = (uint32_t)evt_get_u32(r);
+        e->n_spawned = (uint32_t)evt_get_u32(r);
+    }
+    s->pruned_n = evt_get_count(r, OM_EVT_LOG_CAP);
+    for (uint32_t i = 0; i < s->pruned_n && r->ok; i++) {
+        om_pruned_event *e = &s->pruned[i];
+        e->tick = evt_get_u64(r);
+        e->region_idx = (uint32_t)evt_get_u32(r);
+        e->template_id = (uint32_t)evt_get_u32(r);
+        e->chain_tag = (int32_t)evt_get_u32(r);
+        e->cond_kind = (uint32_t)evt_get_u32(r);
+        e->cond_field = (uint32_t)evt_get_u32(r);
+        e->cond_value = evt_get_f64(r);
+        e->field_value = evt_get_f64(r);
+    }
+    s->delayed_n = evt_get_count(r, OM_EVT_LOG_CAP);
+    for (uint32_t i = 0; i < s->delayed_n && r->ok; i++) {
+        om_delayed_event *e = &s->delayed[i];
+        e->tick = evt_get_u64(r);
+        e->region_idx = (uint32_t)evt_get_u32(r);
+        e->template_id = (uint32_t)evt_get_u32(r);
+        e->chain_tag = (int32_t)evt_get_u32(r);
+        e->exclusion_tag = (uint32_t)evt_get_u32(r);
+        e->kept_template_id = (uint32_t)evt_get_u32(r);
+        e->new_due = evt_get_u64(r);
+    }
+
+    s->manual_n = evt_get_count(r, OM_EVT_MANUAL_CAP);
+    s->manual_next_id = (uint32_t)evt_get_u32(r);
+    for (uint32_t i = 0; i < s->manual_n && r->ok; i++) {
+        om_evt_manual_fire *m = &s->manual[i];
+        m->id = (uint32_t)evt_get_u32(r);
+        m->region_idx = (uint32_t)evt_get_u32(r);
+        m->tier = (uint32_t)evt_get_u32(r);
+        m->n_attached = evt_get_count(r, OM_EVT_MAX_ATTACHED);
+        for (uint32_t k = 0; k < m->n_attached && r->ok; k++) m->attached[k] = (uint32_t)evt_get_u32(r);
+    }
+}
+
+static int evt_save_read(om_world *w, const uint8_t *buf, uint32_t len) {
+    if (!w) return -1;
+    if (len == 0) {
+        if (w->events_state && w->events_state_free) w->events_state_free(w->events_state);
+        w->events_state = NULL;
+        return 0;
+    }
+    if (!buf) return -1;
+    om_evt_state *s = calloc(1, sizeof(om_evt_state));
+    if (!s) return -1;
+    evt_state_reset_fields(s);
+    evt_rd r = { buf, len, 0, 1 };
+    evt_load_body(&r, s);
+    if (!r.ok || r.pos != len) {
+        free(s);
+        return -1;
+    }
+    if (w->events_state && w->events_state_free) w->events_state_free(w->events_state);
+    w->events_state = s;
+    w->events_state_free = free;
+    w->events_state_size = evt_save_size;
+    w->events_state_write = evt_save_write;
+    w->events_state_read = evt_save_read;
+    return 0;
+}
+
+int32_t om_event_template_significance_tier(const om_world *w, uint32_t template_id) {
+    static const int32_t launch_tier[TID_LAUNCH_COUNT] = {
+        [TID_GARRISON_COLLAPSE] = OM_EVENT_TIER_EVT_GARRISON_COLLAPSE,
+        [TID_BORDER_INCURSION] = OM_EVENT_TIER_EVT_BORDER_INCURSION,
+        [TID_EMERGENCY_LEVY] = OM_EVENT_TIER_EVT_EMERGENCY_LEVY,
+        [TID_REGIONAL_REVOLT] = OM_EVENT_TIER_EVT_REGIONAL_REVOLT,
+        [TID_REVOLT_CRUSHED] = OM_EVENT_TIER_EVT_REVOLT_CRUSHED,
+        [TID_REVOLT_ENTRENCHED] = OM_EVENT_TIER_EVT_REVOLT_ENTRENCHED,
+        [TID_TRADE_BOOM] = OM_EVENT_TIER_EVT_TRADE_BOOM,
+        [TID_PROSPERITY_UNREST] = OM_EVENT_TIER_EVT_PROSPERITY_UNREST,
+        [TID_POPULATION_CRISIS] = OM_EVENT_TIER_EVT_POPULATION_CRISIS,
+        [TID_RESISTANCE_MOVEMENT] = OM_EVENT_TIER_EVT_RESISTANCE_MOVEMENT,
+        [TID_CONQUEST_UNREST] = OM_EVENT_TIER_CONQUEST_UNREST,
+        [TID_LABOR_SHORTAGE] = OM_EVENT_TIER_EVT_LABOR_SHORTAGE,
+        [TID_IMMIGRATION_WAVE] = OM_EVENT_TIER_EVT_IMMIGRATION_WAVE,
+        [TID_INFRASTRUCTURE_DECAY] = OM_EVENT_TIER_EVT_INFRASTRUCTURE_DECAY,
+        [TID_MILITARY_BUILDUP] = OM_EVENT_TIER_EVT_MILITARY_BUILDUP,
+        [TID_WAR_WEARINESS] = OM_EVENT_TIER_EVT_WAR_WEARINESS,
+        [TID_CULTURAL_RENAISSANCE] = OM_EVENT_TIER_EVT_CULTURAL_RENAISSANCE,
+        [TID_FAMINE] = OM_EVENT_TIER_EVT_FAMINE,
+        [TID_FAMINE_RELIEF] = OM_EVENT_TIER_EVT_FAMINE_RELIEF,
+        [TID_DIPLOMATIC_INCIDENT] = OM_EVENT_TIER_EVT_DIPLOMATIC_INCIDENT,
+        [TID_HARVEST_SURPLUS] = OM_EVENT_TIER_EVT_HARVEST_SURPLUS,
+        [TID_ADMIN_SEPARATIST] = OM_EVENT_TIER_EVT_ADMIN_SEPARATIST,
+        [TID_ADMIN_POLITICAL_CRISIS] = OM_EVENT_TIER_EVT_ADMIN_POLITICAL_CRISIS,
+        [TID_ADMIN_POPULAR_SUPPORT] = OM_EVENT_TIER_EVT_ADMIN_POPULAR_SUPPORT,
+        [TID_ADMIN_MILITARY_DEFECTION] = OM_EVENT_TIER_EVT_ADMIN_MILITARY_DEFECTION,
+        [TID_ADMIN_BREAKAWAY] = OM_EVENT_TIER_EVT_ADMIN_BREAKAWAY,
+    };
+    om_evt_state *s = evt_find(w);
+    if (!s || template_id >= s->n_templates) return -1;
+    if (template_id < TID_LAUNCH_COUNT) return launch_tier[template_id];
+    return s->significance_tier[template_id];
+}
