@@ -201,6 +201,73 @@
 
 #define OM_MISSION_MAX_OBJECTIVES 4
 
+/* B9-3 (S-077) band ids (OMMissionBand in every E-10 test file). UNKNOWN is
+ * the "not decided yet" sentinel R-077-04 requires during play; REFUSAL
+ * (S-078, R-078-05) is a sixth outcome outside the classify_band ladder. */
+#define OM_MISSION_BAND_TOTAL_FAILURE 0
+#define OM_MISSION_BAND_PARTIAL_FAILURE 1
+#define OM_MISSION_BAND_PARTIAL_SUCCESS 2
+#define OM_MISSION_BAND_STRONG_SUCCESS 3
+#define OM_MISSION_BAND_TOTAL_SUCCESS 4
+#define OM_MISSION_BAND_REFUSAL 5
+#define OM_MISSION_BAND_UNKNOWN (-1)
+
+/* B9-3 (S-077) commander fate ids (OMCommanderFate in every E-10 test file). */
+#define OM_COMMANDER_FATE_KILLED 0
+#define OM_COMMANDER_FATE_WOUNDED 1
+#define OM_COMMANDER_FATE_SURVIVED 2
+
+/* R-077-03 / Q-077-01: the hub names killed/wounded/survived but the bible
+ * gives no numeric split; test_R_077_03 in
+ * tests/csim/test_E10_S077_five_ways_it_can_go.py fixes 30% HP as the
+ * wounded/survived line (25/100 = wounded, 50/100 = survived) -- no
+ * simulation/config.py precedent exists for this threshold (Q-077-01 is
+ * still an open flag), so this reproduces the test's own concrete number. */
+#define OM_MISSION_COMMANDER_WOUNDED_HP_FRACTION 0.30
+
+/* R-077-02 / ALG-58 band thresholds [t1, t2, t3, t4], simulation/config.py
+ * OUTCOME_THRESHOLDS verbatim -- three groups share the standard row. */
+#define OM_MISSION_BAND_THRESHOLDS_STANDARD_T1 0.20
+#define OM_MISSION_BAND_THRESHOLDS_STANDARD_T2 0.40
+#define OM_MISSION_BAND_THRESHOLDS_STANDARD_T3 0.60
+#define OM_MISSION_BAND_THRESHOLDS_STANDARD_T4 0.80
+#define OM_MISSION_BAND_THRESHOLDS_RECONQUEST_ASSAULT_T1 0.25
+#define OM_MISSION_BAND_THRESHOLDS_RECONQUEST_ASSAULT_T2 0.45
+#define OM_MISSION_BAND_THRESHOLDS_RECONQUEST_ASSAULT_T3 0.65
+#define OM_MISSION_BAND_THRESHOLDS_RECONQUEST_ASSAULT_T4 0.82
+#define OM_MISSION_BAND_THRESHOLDS_MULTI_FRONT_T1 0.15
+#define OM_MISSION_BAND_THRESHOLDS_MULTI_FRONT_T2 0.35
+#define OM_MISSION_BAND_THRESHOLDS_MULTI_FRONT_T3 0.55
+#define OM_MISSION_BAND_THRESHOLDS_MULTI_FRONT_T4 0.75
+#define OM_MISSION_BAND_THRESHOLDS_EVACUATION_T1 0.30
+#define OM_MISSION_BAND_THRESHOLDS_EVACUATION_T2 0.50
+#define OM_MISSION_BAND_THRESHOLDS_EVACUATION_T3 0.65
+#define OM_MISSION_BAND_THRESHOLDS_EVACUATION_T4 0.80
+
+/* B9-3 (S-079) briefing control bitmask (OMBriefingSection / control bits in
+ * tests/csim/test_E10_S079_orders_not_menus.py). */
+#define OM_MISSION_BRIEFING_CONTROL_ACCEPT (1u << 0)
+#define OM_MISSION_BRIEFING_CONTROL_REFUSE (1u << 1)
+#define OM_MISSION_BRIEFING_CONTROL_EDIT_LOADOUT (1u << 2)
+
+/* R-078-01/02/03 consequence deltas: deficit form (100 - current) * pct/100,
+ * or current form current * pct/100 (Q-078-01's table is E-21 library data,
+ * not built; only defensive_stand/total_success has bible-given numbers --
+ * docs/bible/epics/E-10-missions.md R-078-02/03). */
+#define OM_CONSEQUENCE_FORM_DEFICIT 0
+#define OM_CONSEQUENCE_FORM_CURRENT 1
+#define OM_CONSEQUENCE_FIELD_MIN 0.0
+#define OM_CONSEQUENCE_FIELD_MAX 100.0
+/* R-078-05: refusal's tension rise is 8 percent of the region's deficit. */
+#define OM_MISSION_REFUSAL_TENSION_DEFICIT_PCT 8.0
+#define OM_MISSION_MAX_CONSEQUENCE_DELTAS 8
+
+/* R-079-03/04: debrief retention prose bands -- no bible-given cutoffs
+ * (the debrief only has to show retention qualitatively, not a formula),
+ * chosen so "most" reads as "the force came home largely intact". */
+#define OM_MISSION_DEBRIEF_RETENTION_MOST_CUTOFF 0.75
+#define OM_MISSION_DEBRIEF_RETENTION_SOME_CUTOFF 0.4
+
 typedef struct {
     uint32_t recent_attacks;
     double   attack_budget_sum;
@@ -267,6 +334,20 @@ typedef struct {
     uint64_t tactical_time_limit;
     uint64_t tactical_baseline_tick;
     int      tactical_ended;
+
+    /* S-077 result (band revealed only at om_mission_end / resolve_refusal) */
+    int32_t  band;
+    int      band_set;
+    double   last_objective_score;
+    double   last_retention;
+    int32_t  commander_fate;
+    int      commander_fate_set;
+
+    /* S-078 refusal: no force deployed */
+    int      refused;
+
+    /* B9-3 R-080-03 candidate viability, keyed by mission archetype id */
+    int      candidate_viable[OM_MISSION_N_ARCHETYPES];
 } om_mission_state;
 
 static void om_mis_state_free(void *p) {
@@ -294,6 +375,58 @@ static double om_mis_clamp01(double v) {
     if (v < 0.0) return 0.0;
     if (v > 1.0) return 1.0;
     return v;
+}
+
+/* R-075-01 / S-073 table (docs/bible/epics/E-10-missions.md "Primary
+ * objective" column), shared by om_mission_build_objectives and the
+ * briefing's Objective section below. */
+static const uint32_t om_mission_primary_kind[OM_MISSION_N_ARCHETYPES] = {
+    OM_MISSION_OBJ_HOLD_ZONE,        /* Defensive Stand */
+    OM_MISSION_OBJ_DESTROY_TARGETS,  /* Siege Breaking */
+    OM_MISSION_OBJ_HOLD_ZONE,        /* Reconquest (table says hold_zone or destroy_targets) */
+    OM_MISSION_OBJ_DESTROY_TARGETS,  /* Assault */
+    OM_MISSION_OBJ_ELIMINATE_FORCE,  /* Suppression */
+    OM_MISSION_OBJ_HOLD_ZONE,        /* Multi-Front Defense */
+    OM_MISSION_OBJ_DESTROY_TARGETS,  /* Interception */
+    OM_MISSION_OBJ_ESCORT_TO_EXTRACTION, /* Evacuation */
+    OM_MISSION_OBJ_HOLD_ZONE,        /* Containment */
+    OM_MISSION_OBJ_ELIMINATE_FORCE,  /* Counterinsurgency */
+};
+
+static const char *om_mission_archetype_name(uint32_t archetype) {
+    static const char *names[OM_MISSION_N_ARCHETYPES] = {
+        "Defensive Stand", "Siege Breaking", "Reconquest", "Assault",
+        "Suppression", "Multi-Front Defense", "Interception",
+        "Rear Guard / Evacuation", "Containment", "Counterinsurgency",
+    };
+    return (archetype < OM_MISSION_N_ARCHETYPES) ? names[archetype] : "Unclassified Action";
+}
+
+static const char *om_mission_objective_kind_name(uint32_t kind) {
+    switch (kind) {
+    case OM_MISSION_OBJ_HOLD_ZONE:            return "hold the zone";
+    case OM_MISSION_OBJ_DESTROY_TARGETS:      return "destroy the designated targets";
+    case OM_MISSION_OBJ_ESCORT_TO_EXTRACTION: return "escort the force to extraction";
+    case OM_MISSION_OBJ_SURVIVE_DURATION:     return "survive until relief arrives";
+    case OM_MISSION_OBJ_ELIMINATE_FORCE:      return "eliminate the enemy force";
+    default:                                  return "carry out the order";
+    }
+}
+
+/* B9-3 (S-078): the ABI has no per-field setter (only the all-at-once
+ * fixture om_region_set), so consequence application writes the internal
+ * om_region struct directly -- same PRIVATE LAYOUT precedent as this file's
+ * header comment and om_mission_border_threat's use of w->regions[]. */
+static double *om_mission_region_field_ptr(om_world *w, uint32_t region_idx, om_field field) {
+    if (!w || region_idx >= w->n_regions) return NULL;
+    om_region *r = &w->regions[region_idx];
+    switch (field) {
+    case OM_F_MILITARY:   return &r->military;
+    case OM_F_ECONOMY:    return &r->economy;
+    case OM_F_TENSION:    return &r->tension;
+    case OM_F_POPULATION: return &r->population;
+    default:              return NULL;
+    }
 }
 
 /* S-075: lazily creates objective_idx as a full-weight primary (weight 1.0)
@@ -469,28 +602,36 @@ uint64_t om_archetype_base_time_ticks(uint32_t archetype) {
     return (uint64_t)ticks;
 }
 
+/* R-078-06 closure leftover (B9-3): "the resulting events carry the
+ * mission-consequence flag for the chronicle" needs the event/chronicle
+ * pipeline (csrc/events.c's om_queued_event / csrc/generational.c's
+ * om_time_jump_run chronicle distillation) to tag the events a mission's
+ * applied deltas produce -- that tagging is events.c/generational.c's to
+ * add, not a flag mission.c can fake from its own state. Left STUB; a
+ * mission.c-local flag here would satisfy this accessor's own return value
+ * without the chronicle entries actually carrying anything, which is not
+ * what R-078-06 asks for. */
 int om_chronicle_has_mission_consequence_flag(const om_world *w) {
-    /* STUB */
     (void)w;
     return 0;
 }
 
+/* R-078-01: clamp the resulting value to [0, 100], not the delta. */
 double om_consequence_apply_clamped(double current, double delta) {
-    /* STUB */
-    (void)current; (void)delta;
-    return 0.0;
+    double v = current + delta;
+    if (v < OM_CONSEQUENCE_FIELD_MIN) v = OM_CONSEQUENCE_FIELD_MIN;
+    if (v > OM_CONSEQUENCE_FIELD_MAX) v = OM_CONSEQUENCE_FIELD_MAX;
+    return v;
 }
 
+/* R-078-01 current form: current * pct/100. */
 double om_consequence_eval_delta_current(double current, double pct) {
-    /* STUB */
-    (void)current; (void)pct;
-    return 0.0;
+    return current * (pct / OM_CONSEQUENCE_FIELD_MAX);
 }
 
+/* R-078-01 deficit form: (100 - current) * pct/100. */
 double om_consequence_eval_delta_deficit(double current, double pct) {
-    /* STUB */
-    (void)current; (void)pct;
-    return 0.0;
+    return (OM_CONSEQUENCE_FIELD_MAX - current) * (pct / OM_CONSEQUENCE_FIELD_MAX);
 }
 
 void om_mission_allocate_force_profile(const om_world *w, uint32_t archetype, double total_power, double *out_ratios) {
@@ -570,14 +711,79 @@ void om_mission_apply_capacity_shortfall(om_world *w, double capacity) {
     }
 }
 
-void om_mission_apply_consequences(om_world *w, uint32_t region_idx, uint32_t archetype, int32_t band) {
-    /* STUB */
-    (void)w; (void)region_idx; (void)archetype; (void)band;
+typedef struct {
+    om_field field;
+    int      form;
+    double   pct;
+} om_consequence_delta;
+
+/* R-078-01/02/03: per (archetype, band) consequence deltas applied to the
+ * mission region itself. Q-078-01 flags that the S-078 consequence table is
+ * E-21 library data (like S-073's asset profiles, om_mission_archetype_row
+ * above) not yet built; docs/bible/epics/E-10-missions.md only gives
+ * concrete numbers for defensive_stand/total_success (R-078-02/03), so that
+ * is the only populated row -- every other (archetype, band) applies no
+ * field deltas here (transfer, handled separately below, still applies). */
+static uint32_t om_mission_consequence_table(uint32_t archetype, int32_t band, om_consequence_delta *out, uint32_t max) {
+    if (archetype == OM_MISSION_ARCH_DEFENSIVE_STAND && band == OM_MISSION_BAND_TOTAL_SUCCESS) {
+        uint32_t n = 0;
+        /* constants-table: docs/bible/epics/E-10-missions.md R-078-02/03 (defensive_stand total_success) */
+        if (n < max) out[n++] = (om_consequence_delta){ OM_F_MILITARY, OM_CONSEQUENCE_FORM_DEFICIT, 15.0 };
+        if (n < max) out[n++] = (om_consequence_delta){ OM_F_TENSION,  OM_CONSEQUENCE_FORM_CURRENT, -10.0 };
+        if (n < max) out[n++] = (om_consequence_delta){ OM_F_ECONOMY,  OM_CONSEQUENCE_FORM_CURRENT, -2.0 };
+        /* end constants-table */
+        return n;
+    }
+    return 0;
 }
 
+/* R-078-04 / S-073 table: transfer_on_total/strong/partial (loaded by
+ * om_mission_load_launch_library) name which bands hand the region to the
+ * player for this archetype; E-03's om_region_set_owner resets held_since
+ * to the tick passed in (R-024-03), so the current world tick is correct. */
+static void om_mission_apply_transfer(om_world *w, uint32_t region_idx, uint32_t archetype, int32_t band) {
+    om_archetype_metadata meta;
+    if (!om_mission_get_archetype_metadata(w, archetype, &meta)) return;
+    int transfer = (band == OM_MISSION_BAND_TOTAL_SUCCESS && meta.transfer_on_total) ||
+                   (band == OM_MISSION_BAND_STRONG_SUCCESS && meta.transfer_on_strong) ||
+                   (band == OM_MISSION_BAND_PARTIAL_SUCCESS && meta.transfer_on_partial);
+    if (!transfer) return;
+    int32_t player = om_mission_player_faction(w);
+    if (player < 0) return;
+    om_region_set_owner(w, region_idx, player, (int64_t)w->tick);
+}
+
+void om_mission_apply_consequences(om_world *w, uint32_t region_idx, uint32_t archetype, int32_t band) {
+    om_mission_apply_transfer(w, region_idx, archetype, band);
+
+    om_consequence_delta deltas[OM_MISSION_MAX_CONSEQUENCE_DELTAS];
+    uint32_t n = om_mission_consequence_table(archetype, band, deltas, OM_MISSION_MAX_CONSEQUENCE_DELTAS);
+    for (uint32_t i = 0; i < n; i++) {
+        double *fp = om_mission_region_field_ptr(w, region_idx, deltas[i].field);
+        if (!fp) continue;
+        double raw = (deltas[i].form == OM_CONSEQUENCE_FORM_DEFICIT)
+            ? om_consequence_eval_delta_deficit(*fp, deltas[i].pct)
+            : om_consequence_eval_delta_current(*fp, deltas[i].pct);
+        *fp = om_consequence_apply_clamped(*fp, raw);
+    }
+}
+
+/* R-078-07: target `adjacent_player` applies delta to every player-owned
+ * neighbor of the mission region (delta already resolved by the caller --
+ * om_consequence_eval_delta_current/deficit -- this only fans it out and
+ * clamps, same as om_mission_apply_consequences above). */
 void om_mission_apply_target_adjacent_player(om_world *w, uint32_t region_idx, om_field field, double delta) {
-    /* STUB */
-    (void)w; (void)region_idx; (void)field; (void)delta;
+    if (!w || region_idx >= w->n_regions) return;
+    int32_t player = om_mission_player_faction(w);
+    if (player < 0) return;
+    om_region *r = &w->regions[region_idx];
+    for (uint32_t i = 0; i < r->n_neighbors; i++) {
+        uint32_t nb = r->neighbors[i];
+        if (om_region_owner(w, nb) != player) continue;
+        double *fp = om_mission_region_field_ptr(w, nb, field);
+        if (!fp) continue;
+        *fp = om_consequence_apply_clamped(*fp, delta);
+    }
 }
 
 uint32_t om_mission_archetype_count(const om_world *w) {
@@ -586,10 +792,42 @@ uint32_t om_mission_archetype_count(const om_world *w) {
     return OM_MISSION_N_ARCHETYPES;
 }
 
+/* R-079-01/02/04: three authored sections, Situation/Objective/Assets, in
+ * that order, slots filled from trigger context/ledger/force composition --
+ * never a raw field number (R-079-04), so every slot below is a qualitative
+ * word or an archetype/objective name, never an interpolated double. */
 int om_mission_assemble_briefing(const om_world *w, om_briefing *out) {
-    /* STUB */
-    (void)w; (void)out;
-    return 0;
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    const om_mission_state *st = om_mis_ro(w);
+    uint32_t archetype = st ? st->mission_archetype : 0;
+    uint32_t kind = (st && st->n_objectives > 0 && st->objectives[0].used)
+        ? st->objectives[0].spec.kind
+        : ((archetype < OM_MISSION_N_ARCHETYPES) ? om_mission_primary_kind[archetype] : OM_MISSION_OBJ_HOLD_ZONE);
+
+    const char *lineage_note = (st && st->lineage_connection)
+        ? " The ledger notes a lineage connection to this region."
+        : "";
+    snprintf(out->situation_text, sizeof(out->situation_text),
+             "Situation: %s conditions have developed on the frontier.%s",
+             om_mission_archetype_name(archetype), lineage_note);
+    out->has_situation = 1;
+
+    snprintf(out->objective_text, sizeof(out->objective_text),
+             "Objective: %s.", om_mission_objective_kind_name(kind));
+    out->has_objective = 1;
+
+    const char *shortfall = (st && st->shortfall_text[0]) ? st->shortfall_text : NULL;
+    if (shortfall) {
+        snprintf(out->assets_text, sizeof(out->assets_text),
+                 "Assets: forces committed at parity, though the civilization could not spare everything asked. %s",
+                 shortfall);
+    } else {
+        snprintf(out->assets_text, sizeof(out->assets_text),
+                 "Assets: forces committed at parity with the enemy; no shortfall reported.");
+    }
+    out->has_assets = 1;
+    return 1;
 }
 
 void om_mission_build_candidate_pool(om_world *w) {
@@ -628,24 +866,9 @@ void om_mission_build_candidate_pool(om_world *w) {
  * rows describe a secondary objective to build. */
 void om_mission_build_objectives(om_world *w, uint32_t archetype) {
     om_mission_state *st = om_mis(w);
-    /* constants-table: docs/bible/epics/E-10-missions.md S-073 table (Primary objective column) */
-    static const uint32_t primary_kind[OM_MISSION_N_ARCHETYPES] = {
-        OM_MISSION_OBJ_HOLD_ZONE,        /* Defensive Stand */
-        OM_MISSION_OBJ_DESTROY_TARGETS,  /* Siege Breaking */
-        OM_MISSION_OBJ_HOLD_ZONE,        /* Reconquest (table says hold_zone or destroy_targets) */
-        OM_MISSION_OBJ_DESTROY_TARGETS,  /* Assault */
-        OM_MISSION_OBJ_ELIMINATE_FORCE,  /* Suppression */
-        OM_MISSION_OBJ_HOLD_ZONE,        /* Multi-Front Defense */
-        OM_MISSION_OBJ_DESTROY_TARGETS,  /* Interception */
-        OM_MISSION_OBJ_ESCORT_TO_EXTRACTION, /* Evacuation */
-        OM_MISSION_OBJ_HOLD_ZONE,        /* Containment */
-        OM_MISSION_OBJ_ELIMINATE_FORCE,  /* Counterinsurgency */
-    };
-    /* end constants-table */
-
     memset(st->objectives, 0, sizeof(st->objectives));
     st->n_objectives = 0;
-    uint32_t kind = (archetype < OM_MISSION_N_ARCHETYPES) ? primary_kind[archetype] : OM_MISSION_OBJ_HOLD_ZONE;
+    uint32_t kind = (archetype < OM_MISSION_N_ARCHETYPES) ? om_mission_primary_kind[archetype] : OM_MISSION_OBJ_HOLD_ZONE;
 
     om_mission_objective *o = &st->objectives[0];
     o->spec.id = 0;
@@ -656,8 +879,9 @@ void om_mission_build_objectives(om_world *w, uint32_t archetype) {
     st->n_objectives = 1;
 }
 
+/* R-079-02: never a force/loadout edit -- the briefing is Accept/Refuse
+ * only, always, no per-world state changes this. */
 int om_mission_can_edit_loadout(const om_world *w) {
-    /* STUB */
     (void)w;
     return 0;
 }
@@ -692,10 +916,43 @@ int om_mission_check_terminated(const om_world *w, uint32_t p1) {
     return 0;
 }
 
+/* R-077-02 / ALG-58: final < t1 total_failure, < t2 partial_failure,
+ * < t3 partial_success, < t4 strong_success, else total_success.
+ * Thresholds by archetype group, simulation/config.py OUTCOME_THRESHOLDS. */
 int32_t om_mission_classify_band(uint32_t archetype, double final) {
-    /* STUB */
-    (void)archetype; (void)final;
-    return 0;
+    double t1, t2, t3, t4;
+    switch (archetype) {
+    case OM_MISSION_ARCH_RECONQUEST:
+    case OM_MISSION_ARCH_ASSAULT:
+        t1 = OM_MISSION_BAND_THRESHOLDS_RECONQUEST_ASSAULT_T1;
+        t2 = OM_MISSION_BAND_THRESHOLDS_RECONQUEST_ASSAULT_T2;
+        t3 = OM_MISSION_BAND_THRESHOLDS_RECONQUEST_ASSAULT_T3;
+        t4 = OM_MISSION_BAND_THRESHOLDS_RECONQUEST_ASSAULT_T4;
+        break;
+    case OM_MISSION_ARCH_MULTI_FRONT_DEFENSE:
+        t1 = OM_MISSION_BAND_THRESHOLDS_MULTI_FRONT_T1;
+        t2 = OM_MISSION_BAND_THRESHOLDS_MULTI_FRONT_T2;
+        t3 = OM_MISSION_BAND_THRESHOLDS_MULTI_FRONT_T3;
+        t4 = OM_MISSION_BAND_THRESHOLDS_MULTI_FRONT_T4;
+        break;
+    case OM_MISSION_ARCH_EVACUATION:
+        t1 = OM_MISSION_BAND_THRESHOLDS_EVACUATION_T1;
+        t2 = OM_MISSION_BAND_THRESHOLDS_EVACUATION_T2;
+        t3 = OM_MISSION_BAND_THRESHOLDS_EVACUATION_T3;
+        t4 = OM_MISSION_BAND_THRESHOLDS_EVACUATION_T4;
+        break;
+    default:
+        t1 = OM_MISSION_BAND_THRESHOLDS_STANDARD_T1;
+        t2 = OM_MISSION_BAND_THRESHOLDS_STANDARD_T2;
+        t3 = OM_MISSION_BAND_THRESHOLDS_STANDARD_T3;
+        t4 = OM_MISSION_BAND_THRESHOLDS_STANDARD_T4;
+        break;
+    }
+    if (final < t1) return OM_MISSION_BAND_TOTAL_FAILURE;
+    if (final < t2) return OM_MISSION_BAND_PARTIAL_FAILURE;
+    if (final < t3) return OM_MISSION_BAND_PARTIAL_SUCCESS;
+    if (final < t4) return OM_MISSION_BAND_STRONG_SUCCESS;
+    return OM_MISSION_BAND_TOTAL_SUCCESS;
 }
 
 /* R-074-02 / ALG-57 base parity: piecewise linear through PARITY_BREAKPOINTS,
@@ -764,16 +1021,16 @@ double om_mission_compute_enemy_power(om_world *w, uint32_t archetype, double co
     }
 }
 
+/* R-077-01 / ALG-58: final = 0.75 * o + 0.25 * r. */
 double om_mission_compute_final_score(double o, double r) {
-    /* STUB */
-    (void)o; (void)r;
-    return 0.0;
+    return OM_OUTCOME_WEIGHT_OBJECTIVE * o + OM_OUTCOME_WEIGHT_RETENTION * r;
 }
 
+/* R-080-02: public alias of om_mission_compute_difficulty_parity (R-074-03),
+ * same (base, difficulty) signature -- both tests/csim/test_E10_S080 and
+ * tests/csim/test_E14_S125 call this name. */
 double om_mission_compute_parity(double p0, int p1) {
-    /* STUB */
-    (void)p0; (void)p1;
-    return 0.0;
+    return om_mission_compute_difficulty_parity(p0, p1);
 }
 
 double om_mission_compute_preference(const om_world *w, uint32_t archetype) {
@@ -804,10 +1061,15 @@ double om_mission_compute_relevance(const om_world *w, uint32_t region_idx, uint
     return om_mis_clamp01(relevance);
 }
 
+/* R-077-01: retention = surviving unit power / deployed power, capped at 1
+ * (damaged units already weighted by HP fraction into surviving_power by
+ * the caller). No deployed force means nothing to retain. */
 double om_mission_compute_retention(double deployed_power, double surviving_power) {
-    /* STUB */
-    (void)deployed_power; (void)surviving_power;
-    return 0.0;
+    if (deployed_power <= 0.0) return 0.0;
+    double r = surviving_power / deployed_power;
+    if (r < 0.0) r = 0.0;
+    if (r > 1.0) r = 1.0;
+    return r;
 }
 
 /* R-076-01 / ALG-56: limit = max(B * (1 - TIME_PRESSURE_SCALING * u),
@@ -866,15 +1128,35 @@ double om_mission_compute_urgency(const om_world *w, uint32_t region_idx, uint32
  * whatever they were last set to (om_mission_get_objective_score reads
  * them directly, with no time term), so this only needs to stop
  * om_mission_is_ended from re-deriving "ended" off the clock afterward. */
+/* R-077-01/04: bands final = 0.75*o + 0.25*r once, here, and never again
+ * (om_mission_get_band just returns the stored value). Retention has no
+ * live source yet -- surviving/deployed unit power is unit.c/tactical
+ * combat state (B10), not wired into om_mission_state -- so r defaults to
+ * full retention (1.0) until that lands; om_mission_compute_retention is
+ * already correct and ready for that wiring (see also: csrc/unit.c). */
 void om_mission_end(om_world *w) {
     om_mission_state *st = om_mis(w);
     st->tactical_ended = 1;
+    double o = om_mission_get_objective_score(w);
+    double r = om_mission_compute_retention(1.0, 1.0);
+    st->last_objective_score = o;
+    st->last_retention = r;
+    double final = om_mission_compute_final_score(o, r);
+    st->band = om_mission_classify_band(st->mission_archetype, final);
+    st->band_set = 1;
+    if (!st->commander_fate_set) {
+        st->commander_fate = OM_COMMANDER_FATE_SURVIVED;
+        st->commander_fate_set = 1;
+    }
 }
 
+/* R-077-03 / Q-077-01: killed at 0 HP, wounded below the 30% line, else
+ * survived (OM_MISSION_COMMANDER_WOUNDED_HP_FRACTION). */
 int32_t om_mission_eval_commander_fate(double hp, double max_hp) {
-    /* STUB */
-    (void)hp; (void)max_hp;
-    return 0;
+    if (hp <= 0.0) return OM_COMMANDER_FATE_KILLED;
+    double frac = (max_hp > 0.0) ? hp / max_hp : 0.0;
+    if (frac < OM_MISSION_COMMANDER_WOUNDED_HP_FRACTION) return OM_COMMANDER_FATE_WOUNDED;
+    return OM_COMMANDER_FATE_SURVIVED;
 }
 
 /* R-075-03: completion = destroyed designated targets / total. */
@@ -1011,22 +1293,30 @@ int om_mission_get_archetype_metadata(const om_world *w, uint32_t archetype, om_
     return 1;
 }
 
+/* R-072-04 / R-080-03: 0.1 for a rare archetype (never 0, so it can still
+ * be drawn), else the player's stored weight, default 0.5. */
 double om_mission_get_archetype_preference_weight(const om_world *w, uint32_t archetype, int is_rare) {
-    /* STUB */
-    (void)w; (void)archetype; (void)is_rare;
-    return 0.0;
+    if (is_rare) return OM_GENERATOR_RARE_PREFERENCE;
+    const om_mission_state *st = om_mis_ro(w);
+    if (st && archetype < OM_MISSION_N_ARCHETYPES && st->preference_set[archetype]) {
+        double weight = st->preference_weight[archetype];
+        return (weight < 0.0) ? OM_GENERATOR_RARE_PREFERENCE : weight;
+    }
+    return OM_GENERATOR_DEFAULT_PREFERENCE;
 }
 
+/* R-077-04: unknown until om_mission_end (or om_mission_resolve_refusal)
+ * sets it -- never derived from in-progress tactical state. */
 int32_t om_mission_get_band(const om_world *w) {
-    /* STUB */
-    (void)w;
-    return 0;
+    const om_mission_state *st = om_mis_ro(w);
+    if (!st || !st->band_set) return OM_MISSION_BAND_UNKNOWN;
+    return st->band;
 }
 
+/* R-079-02: Accept and Refuse only, always -- no world state changes this. */
 uint32_t om_mission_get_briefing_controls(const om_world *w) {
-    /* STUB */
     (void)w;
-    return 0;
+    return OM_MISSION_BRIEFING_CONTROL_ACCEPT | OM_MISSION_BRIEFING_CONTROL_REFUSE;
 }
 
 void om_mission_get_briefing_text(const om_world *w, char *out, uint32_t cap) {
@@ -1067,16 +1357,60 @@ uint32_t om_mission_get_compatible_layouts(const om_world *w, uint32_t archetype
     return om_mission_layout_table(archetype, out, max);
 }
 
-int om_mission_get_debrief(const om_world *w, om_debrief *out) {
-    /* STUB */
-    (void)w; (void)out;
-    return 0;
+static const char *om_mission_band_name(int32_t band) {
+    switch (band) {
+    case OM_MISSION_BAND_TOTAL_FAILURE:   return "total failure";
+    case OM_MISSION_BAND_PARTIAL_FAILURE: return "partial failure";
+    case OM_MISSION_BAND_PARTIAL_SUCCESS: return "partial success";
+    case OM_MISSION_BAND_STRONG_SUCCESS:  return "strong success";
+    case OM_MISSION_BAND_TOTAL_SUCCESS:   return "total success";
+    case OM_MISSION_BAND_REFUSAL:         return "refusal";
+    default:                              return "undecided";
+    }
 }
 
+static const char *om_mission_commander_fate_name(int32_t fate) {
+    switch (fate) {
+    case OM_COMMANDER_FATE_KILLED:   return "killed";
+    case OM_COMMANDER_FATE_WOUNDED:  return "wounded";
+    case OM_COMMANDER_FATE_SURVIVED: return "survived";
+    default:                         return "unaccounted for";
+    }
+}
+
+/* R-079-03/04: band, objectives with completion, retention, commander fate
+ * -- described in prose (band/fate names, "most/some/little of the force"
+ * for retention), never the raw objective_score/retention doubles that
+ * out->objective_score / out->retention already carry as struct fields. */
+int om_mission_get_debrief(const om_world *w, om_debrief *out) {
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    const om_mission_state *st = om_mis_ro(w);
+    if (!st || !st->band_set) return 0;
+
+    out->band = st->band;
+    out->objective_score = st->last_objective_score;
+    out->retention = st->last_retention;
+    out->commander_fate = st->commander_fate_set ? st->commander_fate : OM_COMMANDER_FATE_SURVIVED;
+
+    const char *retention_word = (out->retention >= OM_MISSION_DEBRIEF_RETENTION_MOST_CUTOFF) ? "most of the force"
+        : (out->retention >= OM_MISSION_DEBRIEF_RETENTION_SOME_CUTOFF) ? "some of the force"
+        : "little of the force";
+    snprintf(out->text, sizeof(out->text),
+             "Debrief: %s. The commander is %s. %s came home.",
+             om_mission_band_name(out->band),
+             om_mission_commander_fate_name(out->commander_fate),
+             retention_word);
+    return 1;
+}
+
+/* R-078-05: refusal deploys no force. */
 uint32_t om_mission_get_deployed_force_count(const om_world *w) {
-    /* STUB */
-    (void)w;
-    return 0;
+    const om_mission_state *st = om_mis_ro(w);
+    if (!st || st->refused) return 0;
+    uint32_t total = 0;
+    for (uint32_t i = 0; i < OM_MISSION_N_UNIT_TYPES; i++) total += st->player_units[i];
+    return total;
 }
 
 double om_mission_get_enemy_power(const om_world *w) {
@@ -1206,9 +1540,18 @@ uint32_t om_mission_objective_count(const om_world *w) {
     return st ? st->n_objectives : 0;
 }
 
+/* R-078-05: band = refusal, no force deployed, tension rises 8% of its
+ * deficit (deficit form, om_consequence_eval_delta_deficit). */
 void om_mission_resolve_refusal(om_world *w, uint32_t region_idx) {
-    /* STUB */
-    (void)w; (void)region_idx;
+    om_mission_state *st = om_mis(w);
+    st->refused = 1;
+    st->band = OM_MISSION_BAND_REFUSAL;
+    st->band_set = 1;
+    double *tension = om_mission_region_field_ptr(w, region_idx, OM_F_TENSION);
+    if (tension) {
+        double delta = om_consequence_eval_delta_deficit(*tension, OM_MISSION_REFUSAL_TENSION_DEFICIT_PCT);
+        *tension = om_consequence_apply_clamped(*tension, delta);
+    }
 }
 
 uint32_t om_mission_select(om_world *w) {
@@ -1246,9 +1589,16 @@ uint32_t om_mission_select(om_world *w) {
     return top_idx[0];
 }
 
+/* R-080-03: the first marked-viable archetype -- rare candidates are still
+ * viable (om_mission_get_archetype_preference_weight never returns 0 for a
+ * rare archetype), so a world with no other viable candidate still selects
+ * one. */
 uint32_t om_mission_select_candidate(om_world *w) {
-    /* STUB */
-    (void)w;
+    const om_mission_state *st = om_mis_ro(w);
+    if (!st) return 0;
+    for (uint32_t a = 0; a < OM_MISSION_N_ARCHETYPES; a++) {
+        if (st->candidate_viable[a]) return a;
+    }
     return 0;
 }
 
@@ -1269,8 +1619,9 @@ void om_mission_set_archetype_profile(om_world *w, uint32_t archetype, const dou
 }
 
 void om_mission_set_candidate_viable(om_world *w, uint32_t archetype, int viable) {
-    /* STUB */
-    (void)w; (void)archetype; (void)viable;
+    om_mission_state *st = om_mis(w);
+    if (archetype >= OM_MISSION_N_ARCHETYPES) return;
+    st->candidate_viable[archetype] = viable;
 }
 
 void om_mission_set_conflict_context(om_world *w, uint32_t region_idx, uint32_t recent_attacks, double attack_budget_sum, uint32_t adjacent_lost) {
@@ -1405,27 +1756,38 @@ int om_objective_get_center(const om_world *w, uint32_t objective_idx, om_vec2 *
     return 0;
 }
 
+/* B9-3: plain wrappers over E-05's om_region_held_since / om_region_owner
+ * (csrc/faction.c) -- the E-10 test suite's own accessor names, same data. */
 int64_t om_region_get_held_since(const om_world *w, uint32_t idx) {
-    /* STUB */
-    (void)w; (void)idx;
-    return 0;
+    return om_region_held_since(w, idx);
 }
 
 int32_t om_region_get_owner(const om_world *w, uint32_t idx) {
-    /* STUB */
-    (void)w; (void)idx;
-    return 0;
+    return om_region_owner(w, idx);
 }
 
+/* B9-3 (R-078-07 fixture helper): one-directional adjacency, appending b to
+ * a's neighbor list -- the PRIVATE LAYOUT om_region.neighbors[]/n_neighbors
+ * this file's header comment already documents. */
 void om_set_neighbors(om_world *w, uint32_t a, uint32_t b) {
-    /* STUB */
-    (void)w; (void)a; (void)b;
+    if (!w || a >= w->n_regions) return;
+    om_region *r = &w->regions[a];
+    if (r->n_neighbors >= OM_MAX_NEIGHBORS) return;
+    r->neighbors[r->n_neighbors++] = b;
 }
 
+/* R-080-01: identical stats at every difficulty -- difficulty is unused by
+ * design, reading E-11's own builtin roster (w = NULL, see om_unit_power's
+ * comment below for why that is safe). */
 int om_unit_get_profile(uint32_t unit_type, int difficulty, om_unit_profile *out) {
-    /* STUB */
-    (void)unit_type; (void)difficulty; (void)out;
-    return 0;
+    (void)difficulty;
+    if (!out) return 0;
+    out->unit_type = unit_type;
+    out->hp = om_unit_profile_max_hp(NULL, (int)unit_type);
+    out->base_damage = om_unit_profile_base_damage(NULL, (int)unit_type);
+    out->attack_interval = om_unit_profile_attack_interval(NULL, (int)unit_type);
+    out->power = om_unit_power(unit_type);
+    return 1;
 }
 
 /* R-074-06 / Q-074-01: power = HP * base_damage / attack_interval,
