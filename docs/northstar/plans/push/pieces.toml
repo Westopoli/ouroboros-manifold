@@ -352,7 +352,7 @@ id = "C2"
 manager = "M3"
 wave = 1
 owns = ["autoload/c_bridge.gd"]
-owns_glob = ["scenes/galaxy/**"]
+owns_glob = ["scenes/galaxy/**", "autoload/sim_session.gd"]
 acceptance = [
     "tests/test_c_bridge.gd",
     "tests/test_galaxy_view.gd",
