@@ -110,6 +110,10 @@ class GodotGame:
         self.scratch = Path(tempfile.mkdtemp(prefix="qa_flow_spine."))
         self.out_dir = self.scratch / "out"
         self.out_dir.mkdir(parents=True, exist_ok=True)
+        # C1-3: campaign autosaves land here (OM_SAVE_DIR read by c_bridge.saves_dir()),
+        # never in the player's real save directory.
+        self.save_dir = self.scratch / "saves"
+        self.save_dir.mkdir(parents=True, exist_ok=True)
         self.client = DaemonClient(qa_port)
         self.proc: subprocess.Popen | None = None
         self._stdout_f = None
@@ -138,6 +142,7 @@ class GodotGame:
         env = dict(os.environ)
         for var in ("DISPLAY", "WAYLAND_DISPLAY", "XAUTHORITY"):
             env.pop(var, None)
+        env["OM_SAVE_DIR"] = str(self.save_dir)
         env["LIBGL_ALWAYS_SOFTWARE"] = "1"
         env["GALLIUM_DRIVER"] = "llvmpipe"
         cmd = [
