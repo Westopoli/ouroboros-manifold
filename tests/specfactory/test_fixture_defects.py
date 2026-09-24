@@ -25,6 +25,13 @@ R7E_COMMIT = "d3273fa"
 R7E_FILE = "tests/csim/test_E05_S036_declared_or_sprung.py"
 R7E_NODE = "test_R_036_05_with_probability_min_1_defend"
 
+# R7h control (tests/csim/controls/test_control_e05_agent_reads_live.py) went
+# live-fixed in 2a6fb4f -- the unsatisfiable 3d-reads-after-3f pattern this
+# check detects no longer exists in that file. R7H_COMMIT pins the pre-fix
+# blob so the positive control still has something real to bite.
+R7H_COMMIT = "66f4128"
+R7H_FILE = "tests/csim/controls/test_control_e05_agent_reads_live.py"
+
 
 def _git_show(rev: str, path: str) -> str:
     return subprocess.run(
@@ -150,13 +157,23 @@ def test_tick_order_reachability_silent_for_telegraph_mode(tmp_path):
 
 # ---- check 1 against the real R7h incident and a real clean counterpart --
 
-def test_tick_order_reachability_flags_the_real_r7h_control():
-    result = fd.tick_order_reachability(REPO / "tests/csim/controls/test_control_e05_agent_reads_live.py")
+def test_tick_order_reachability_flags_the_real_r7h_control(tmp_path):
+    frozen = _git_show(R7H_COMMIT, R7H_FILE)
+    p = tmp_path / "frozen_r7h.py"
+    p.write_text(frozen)
+    result = fd.tick_order_reachability(p)
     assert result["flag"] == "UNSATISFIABLE_BY_ORDER"
     f = result["findings"][0]
     assert f["reader"] == "read_candidates"
     assert f["reader_step"] == "3d"
     assert f["mutator_step"] == "3f"
+
+
+def test_tick_order_reachability_silent_on_the_live_r7h_control_after_its_fix():
+    # Fixed live in 2a6fb4f: the unsatisfiable pattern is gone, so the tool
+    # correctly finds nothing against the current file.
+    result = fd.tick_order_reachability(REPO / R7H_FILE)
+    assert result == {"flag": None, "findings": []}
 
 
 def test_tick_order_reachability_silent_on_real_conquest_on_band_control():
