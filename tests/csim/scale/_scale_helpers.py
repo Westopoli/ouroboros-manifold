@@ -132,12 +132,14 @@ def median_ns_with_setup(setup, op, n=100, warmup=5):
 CANVAS = 24000.0
 
 
-def spawn_grid(lib, w, n, faction_id, unit_type, layer=0):
-    """n units in a grid spanning the 24000 wu canvas (the brief's build
-    recipe for the tactical scale epics), evenly split faction/layer as
-    passed by the caller."""
+def spawn_grid(lib, w, n, faction_id, unit_type, layer=0, canvas=CANVAS):
+    """n units in a grid spanning a `canvas`-wu square (default the 24000 wu
+    canvas, the brief's build recipe for the tactical scale epics -- the
+    sparse case), evenly split faction/layer as passed by the caller. A
+    smaller `canvas` packs the same n units closer together (the dense
+    case some epics also measure)."""
     cols = max(1, math.ceil(math.sqrt(n)))
-    spacing = CANVAS / cols
+    spacing = canvas / cols
     ids = []
     for i in range(n):
         gx, gy = i % cols, i // cols

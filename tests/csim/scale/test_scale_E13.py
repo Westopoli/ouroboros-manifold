@@ -26,6 +26,10 @@ ROUTE_BUDGET_NS = 1_000_000_000  # 1,000 queries within 1 s
 def _build(lib, n, seed):
     # Single faction: this is a movement/collision measurement, not combat --
     # every unit is issued a move order so the tick has real movement work.
+    # Spawned on the 24,000 wu canvas grid (sparse -- the 10,000-unit case
+    # is ~240 wu apart); no dense variant here, this file's cost is
+    # movement/collision, not all-pairs targeting density (see E-11's file
+    # header for the dense/sparse split that applies there).
     w = raw_world(lib, 1, seed, features=[])
     ids = spawn_grid(lib, w, n, 0, RAIDER)
     return w, ids
