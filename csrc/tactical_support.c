@@ -225,6 +225,7 @@ typedef struct {
     double   last_hp;
     int      has_order;
     om_vec2  order_dest;
+    int      extracted;
 } om_sup_unit_ext;
 
 typedef struct {
@@ -503,10 +504,8 @@ void om_structure_init(om_world *w, uint32_t structure, uint32_t unit_type, doub
 void om_structure_switch_unit_type(om_world *w, uint32_t structure, uint32_t new_type) {
     om_sup_structure *s = om_sup_structure_at(w, structure);
     /* R-126-03: production switches to the new type at once; the current
-     * timer continues (not reset). om_unit_power(new_type) would be the
-     * right source for the new type's power, but it is still a STUB in
-     * csrc/mission.c (B9-2, in flight) -- power stays whatever
-     * om_structure_init was given until B9-2 lands. */
+     * timer continues (not reset), and the interval follows the new type's power. */
+    s->power = om_unit_power(new_type);
     s->unit_type = new_type;
 }
 
@@ -762,33 +761,54 @@ int om_structure_is_in_capture_radius(om_world *w, uint32_t structure, double x,
 
 void om_objective_setup_drifting(om_world *w, uint32_t objective, uint64_t period) {
     om_sup_objective *o = om_sup_objective_at(w, objective);
+    om_vec2 seed = {0.0, 0.0};
     o->drifting = 1;
     o->drift_period = period;
+    if (om_objective_get_center(w, objective, &seed)) o->center = seed;
     om_sup_synthesize_drift_wp(w, o->center.x, o->center.y, o->drift_wp);
 }
 
+/* R-130-02: this file's private centre stays the source; mission.c's copy is
+ * read once by om_objective_setup_drifting to seed it, then only written,
+ * through om_objective_set_center, whenever a drifted centre is recomputed
+ * (om_support_tick each tick, om_objective_is_contested on demand). */
+static om_vec2 om_sup_objective_current_center(om_world *w, om_sup_objective *o, uint32_t objective) {
+    if (o->drifting) {
+        om_vec2 pos;
+        om_drift_interpolate(o->drift_wp, 2, o->drift_period, OM_SUP_DRIFT_PING_PONG, om_tactical_tick(w), &pos);
+        if (pos.x != o->center.x || pos.y != o->center.y) {
+            o->center = pos;
+            om_objective_set_center(w, objective, pos.x, pos.y);
+        }
+    }
+    return o->center;
+}
+
+void om_support_tick(om_world *w) {
+    om_sup_state *st;
+    uint32_t i;
+    if (!w || !w->support_state) return;
+    st = (om_sup_state *)w->support_state;
+    for (i = 0; i < OM_SUP_MAX_OBJECTIVES; i++) {
+        if (st->objectives[i].in_use && st->objectives[i].drifting) om_sup_objective_current_center(w, &st->objectives[i], i);
+    }
+}
+
 /* Best-effort: no public unit.c accessor exposes a unit's faction id
- * (only om_unit_alive/om_unit_get_position are exposed here), so this
+ * (only om_unit_alive/om_unit_position_x/y are used here), so this
  * cannot yet tell an enemy from a friendly inside the zone -- closure
  * leftover, needs e.g. om_unit_get_faction_id from unit.c. Until then,
  * any living unit within the drifted zone counts, which never
  * over-reports "not contested". */
 int om_objective_is_contested(om_world *w, uint32_t objective) {
     om_sup_objective *o = om_sup_objective_at(w, objective);
-    om_vec2 center;
+    om_vec2 center = om_sup_objective_current_center(w, o, objective);
     uint32_t id;
-    if (o->drifting) {
-        om_drift_interpolate(o->drift_wp, 2, o->drift_period, OM_SUP_DRIFT_PING_PONG, om_tactical_tick(w), &center);
-    } else {
-        center = o->center;
-    }
     for (id = 1; id <= OM_SUP_CONTEST_SCAN_CAP; id++) {
-        om_vec2 pos;
         double dx, dy;
         if (!om_unit_alive(w, id)) continue;
-        om_unit_get_position(w, id, &pos);
-        dx = pos.x - center.x;
-        dy = pos.y - center.y;
+        dx = om_unit_position_x(w, id) - center.x;
+        dy = om_unit_position_y(w, id) - center.y;
         if (dx * dx + dy * dy <= (double)OM_REINFORCEMENT_CAPTURE_RADIUS * (double)OM_REINFORCEMENT_CAPTURE_RADIUS) return 1;
     }
     return 0;
@@ -948,26 +968,26 @@ void om_mission_setup_extraction_point(om_world *w, double x, double y, double r
     st->extraction_set = 1;
 }
 
-/* Records which tracked non-combat units have reached extraction alive.
- * The read side (om_mission_get_objective_completion) is mission.c's own
- * STUB (B9-2, in flight) with no shared storage this module can reach
- * into (om_mission_state is private to csrc/mission.c) -- closure
- * leftover until B9-2 lands or exposes a write path here. */
+/* R-129-02 / E-10 R-075-04: completion = non-combat units that reached the
+ * extraction point alive / tracked non-combat units, written to objective 0
+ * (the only escort/evacuation objective slot the E-15 tests and the
+ * mission fixtures use). */
 void om_mission_check_extraction_objectives(om_world *w) {
     om_sup_state *st = om_sup(w);
-    uint32_t i;
+    uint32_t i, total = 0, reached = 0;
     if (!st->extraction_set) return;
     for (i = 0; i < st->n_unit_ext; i++) {
         om_sup_unit_ext *e = &st->unit_ext[i];
-        om_vec2 pos;
         double dx, dy;
         if (!e->in_use || e->nc_kind == OM_SUP_NC_NONE) continue;
+        total++;
         if (!om_unit_alive(w, e->unit_id)) continue;
-        om_unit_get_position(w, e->unit_id, &pos);
-        dx = pos.x - st->extraction_point.x;
-        dy = pos.y - st->extraction_point.y;
-        if (dx * dx + dy * dy <= st->extraction_radius * st->extraction_radius) {
-            e->nc_kind = OM_SUP_NC_NONE; /* extracted: stop tracking/re-counting it */
+        if (!e->extracted) {
+            dx = om_unit_position_x(w, e->unit_id) - st->extraction_point.x;
+            dy = om_unit_position_y(w, e->unit_id) - st->extraction_point.y;
+            if (dx * dx + dy * dy <= st->extraction_radius * st->extraction_radius) e->extracted = 1;
         }
+        if (e->extracted) reached++;
     }
+    if (total > 0) om_mission_set_objective_completion(w, 0, (double)reached / (double)total);
 }

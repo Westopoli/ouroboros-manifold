@@ -349,6 +349,8 @@ void om_step_admin_revolts(om_world *w);
 void om_step_diplomacy(om_world *w);
 void om_step_technology(om_world *w);
 void om_step_lifecycle(om_world *w);
+/* Per-tick drifting-objective centre refresh (csrc/tactical_support.c); called by unit.c om_tactical_step right after om_macro_tick. */
+void om_support_tick(om_world *w);
 
 /* The world RNG (ouroboros_sim.h "the world RNG contract"), csrc/sim.c.
  * om_rng_seed derives rng_state/rng_inc from the seed (om_world_new,
