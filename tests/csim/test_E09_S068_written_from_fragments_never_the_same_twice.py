@@ -10,6 +10,7 @@ import re
 import pytest
 
 from conftest import (
+    OmChronicleEntry,
     OMFeature,
     OMField,
     OMTier,
@@ -17,18 +18,6 @@ from conftest import (
     set_owner,
     set_region,
 )
-
-
-class OmChronicleEntry(ctypes.Structure):
-    _fields_ = [
-        ("id", ctypes.c_uint32),
-        ("category", ctypes.c_uint32),
-        ("region", ctypes.c_uint32),
-        ("base_text", ctypes.c_char * 512),
-        ("expanded_text", ctypes.c_char * 1024),
-        ("start_tick", ctypes.c_uint64),
-        ("end_tick", ctypes.c_uint64),
-    ]
 
 
 def test_R_068_01_opening_detail_closing_each_drawn(lib, world_factory):
