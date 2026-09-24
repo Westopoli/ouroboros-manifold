@@ -1041,6 +1041,25 @@ static void evt_manual_try_attach(om_evt_manual_fire *mf, const om_world *w, uin
     mf->attached[mf->n_attached++] = char_id;
 }
 
+/* E-09 R-070-02: no public accessor enumerates characters (om_lineage_member_in_region
+ * only answers yes/no), so lineage members are found by probing the two id ranges
+ * generational.c hands out: explicit ids 1..GEN_MAX_CHARACTERS and auto ids from
+ * GEN_AUTO_ID_BASE. Both are private there. See also: csrc/generational.c. */
+#define EVT_LINEAGE_PROBE_SPAN 4096u
+#define EVT_LINEAGE_AUTO_ID_BASE 100000000u
+
+static void evt_manual_attach_lineage(om_evt_manual_fire *mf, const om_world *w) {
+    static const uint32_t base[2] = {1u, EVT_LINEAGE_AUTO_ID_BASE};
+    for (uint32_t b = 0; b < 2; b++) {
+        for (uint32_t id = base[b]; id < base[b] + EVT_LINEAGE_PROBE_SPAN; id++) {
+            om_character_record rec;
+            if (mf->n_attached >= OM_EVT_MAX_ATTACHED) return;
+            if (om_character_get_record(w, id, &rec) != 0 || rec.lineage_id == 0) continue;
+            evt_manual_try_attach(mf, w, id);
+        }
+    }
+}
+
 uint32_t om_event_fire_manual(om_world *w, uint32_t region_idx, uint32_t tier) {
     if (!w || region_idx >= w->n_regions) return 0;
     om_evt_state *s = evt_ensure(w);
@@ -1058,6 +1077,7 @@ uint32_t om_event_fire_manual(om_world *w, uint32_t region_idx, uint32_t tier) {
         if (owner >= 0) {
             evt_manual_try_attach(mf, w, om_faction_supreme_commander(w, owner));
         }
+        evt_manual_attach_lineage(mf, w);
     }
 
     return mf->id;
@@ -1392,10 +1412,37 @@ static int evt_save_read(om_world *w, const uint8_t *buf, uint32_t len) {
     return 0;
 }
 
-/* ---- generated stubs from signatures.toml ---- */
 int32_t om_event_template_significance_tier(const om_world *w, uint32_t template_id) {
-    /* STUB: B1-8 implements */
-    (void)w; (void)template_id;
-    return -1;
+    static const int32_t launch_tier[TID_LAUNCH_COUNT] = {
+        [TID_GARRISON_COLLAPSE] = OM_EVENT_TIER_EVT_GARRISON_COLLAPSE,
+        [TID_BORDER_INCURSION] = OM_EVENT_TIER_EVT_BORDER_INCURSION,
+        [TID_EMERGENCY_LEVY] = OM_EVENT_TIER_EVT_EMERGENCY_LEVY,
+        [TID_REGIONAL_REVOLT] = OM_EVENT_TIER_EVT_REGIONAL_REVOLT,
+        [TID_REVOLT_CRUSHED] = OM_EVENT_TIER_EVT_REVOLT_CRUSHED,
+        [TID_REVOLT_ENTRENCHED] = OM_EVENT_TIER_EVT_REVOLT_ENTRENCHED,
+        [TID_TRADE_BOOM] = OM_EVENT_TIER_EVT_TRADE_BOOM,
+        [TID_PROSPERITY_UNREST] = OM_EVENT_TIER_EVT_PROSPERITY_UNREST,
+        [TID_POPULATION_CRISIS] = OM_EVENT_TIER_EVT_POPULATION_CRISIS,
+        [TID_RESISTANCE_MOVEMENT] = OM_EVENT_TIER_EVT_RESISTANCE_MOVEMENT,
+        [TID_CONQUEST_UNREST] = OM_EVENT_TIER_CONQUEST_UNREST,
+        [TID_LABOR_SHORTAGE] = OM_EVENT_TIER_EVT_LABOR_SHORTAGE,
+        [TID_IMMIGRATION_WAVE] = OM_EVENT_TIER_EVT_IMMIGRATION_WAVE,
+        [TID_INFRASTRUCTURE_DECAY] = OM_EVENT_TIER_EVT_INFRASTRUCTURE_DECAY,
+        [TID_MILITARY_BUILDUP] = OM_EVENT_TIER_EVT_MILITARY_BUILDUP,
+        [TID_WAR_WEARINESS] = OM_EVENT_TIER_EVT_WAR_WEARINESS,
+        [TID_CULTURAL_RENAISSANCE] = OM_EVENT_TIER_EVT_CULTURAL_RENAISSANCE,
+        [TID_FAMINE] = OM_EVENT_TIER_EVT_FAMINE,
+        [TID_FAMINE_RELIEF] = OM_EVENT_TIER_EVT_FAMINE_RELIEF,
+        [TID_DIPLOMATIC_INCIDENT] = OM_EVENT_TIER_EVT_DIPLOMATIC_INCIDENT,
+        [TID_HARVEST_SURPLUS] = OM_EVENT_TIER_EVT_HARVEST_SURPLUS,
+        [TID_ADMIN_SEPARATIST] = OM_EVENT_TIER_EVT_ADMIN_SEPARATIST,
+        [TID_ADMIN_POLITICAL_CRISIS] = OM_EVENT_TIER_EVT_ADMIN_POLITICAL_CRISIS,
+        [TID_ADMIN_POPULAR_SUPPORT] = OM_EVENT_TIER_EVT_ADMIN_POPULAR_SUPPORT,
+        [TID_ADMIN_MILITARY_DEFECTION] = OM_EVENT_TIER_EVT_ADMIN_MILITARY_DEFECTION,
+        [TID_ADMIN_BREAKAWAY] = OM_EVENT_TIER_EVT_ADMIN_BREAKAWAY,
+    };
+    om_evt_state *s = evt_find(w);
+    if (!s || template_id >= s->n_templates) return -1;
+    if (template_id < TID_LAUNCH_COUNT) return launch_tier[template_id];
+    return s->significance_tier[template_id];
 }
-/* ---- end generated stubs ---- */
