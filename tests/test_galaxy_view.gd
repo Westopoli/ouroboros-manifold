@@ -90,6 +90,49 @@ func _run_tests() -> void:
 	_check_plant_bands_frozen_R106_03()
 	_check_plant_conquest_no_recolour_R106_02_04()
 	_check_plant_nope_is_false()
+	await _check_real_boot_loads_80_regions_S106()
+
+
+# P1 rung finding (galaxy screen empty in real play): scenes/galaxy/
+# galaxy_view.gd:69 _load_live_snapshot() asks the live pipe for only 60
+# regions, below the 75-region feasibility floor for the default 15-faction
+# generator (csrc/ouroboros_sim.h om_world_generate; tests/transport/
+# test_pipe_shapes.py's n_regions=80 comment), the pipe answers an error
+# frame on set_seed, and nothing surfaces -- qa_state().system_count stays 0.
+# Unlike every other check in this file (which calls set_snapshot() directly,
+# bypassing _ready()'s own live-load path entirely), this instantiates its
+# own galaxy_view through the real boot path -- add_child triggers _ready(),
+# which calls _load_live_snapshot() -- and never calls set_snapshot(), so it
+# is the real S-106/R-106-01 boot-time content check (docs/bible/epics/
+# E-16-client-camera-hud-and-world-view.md), not a check of the render pass
+# alone. Requires pipe/ouroboros_pipe to be built (`make pipe/ouroboros_pipe`).
+func _check_real_boot_loads_80_regions_S106() -> void:
+	var packed = load(SCENE_PATH)
+	if packed == null or not (packed is PackedScene):
+		_assert(false, "cannot load %s for the live-boot check" % SCENE_PATH)
+		return
+
+	var live_root = (packed as PackedScene).instantiate()
+	_assert(live_root != null, "%s failed to instantiate for the live-boot check" % SCENE_PATH)
+	if live_root == null:
+		return
+
+	get_root().add_child(live_root)
+	await process_frame
+	await process_frame
+
+	if not live_root.has_method("qa_state"):
+		_assert(false, "galaxy_view root (live boot) missing method: qa_state")
+		live_root.queue_free()
+		return
+
+	var state: Dictionary = live_root.qa_state()
+	_assert(int(state.get("system_count", -1)) == 80,
+		"S-106/R-106-01 (real boot path, scenes/galaxy/galaxy_view.gd:69 _load_live_snapshot -> "
+		+ "c_bridge.gd load_snapshot_live, docs/architecture.md \"C transport v1\"): system_count = %s, expected 80"
+		% state.get("system_count"))
+
+	live_root.queue_free()
 
 
 func _check_qa_state_json_safe() -> void:
