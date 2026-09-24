@@ -351,6 +351,8 @@ void om_step_technology(om_world *w);
 void om_step_lifecycle(om_world *w);
 /* Per-tick drifting-objective centre refresh (csrc/tactical_support.c); called by unit.c om_tactical_step right after om_macro_tick. */
 void om_support_tick(om_world *w);
+/* Engine visibility (csrc/fog.c; ignores the player-fog switch, S-093 R-093-01): 1 if any living unit of `faction` can see `target`, else 0; unknown ids or no state: 0. */
+int om_fog_faction_sees(const om_world *w, int32_t faction, uint32_t target);
 
 /* Spatial hash grid over the tactical units (csrc/unit.c; state in
  * w->tactical_state, rebuilt every tactical tick, updated in place when

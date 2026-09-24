@@ -346,11 +346,8 @@ static double om_fog_effective_radius(const om_fog_state *st, const om_world *w,
     return effective;
 }
 
-/* Any living unit of `faction` that can see `target`, by candidate observers
- * on the grid around the target; an any-of, so the iterator's order does not
- * matter. Ignores the player fog switch (the engine's own view, unit.c
- * om_tac_faction_sees could call this). */
-static int om_fog_faction_sees(const om_world *w, int32_t faction, uint32_t target) {
+/* Candidate observers come from the grid around the target; an any-of, so the iterator's order does not matter. */
+int om_fog_faction_sees(const om_world *w, int32_t faction, uint32_t target) {
     om_grid_iter it;
     double tx, ty;
     uint32_t observer;
