@@ -265,6 +265,10 @@ func _do_pause(p: bool) -> Dictionary:
 
 func _do_step(n: int) -> Dictionary:
 	tick += n
+	var t := get_tree()
+	var scene: Node = t.current_scene if t != null else null
+	if scene != null and scene.has_method("qa_step"):
+		scene.qa_step(n)
 	return {"tick": tick}
 
 
