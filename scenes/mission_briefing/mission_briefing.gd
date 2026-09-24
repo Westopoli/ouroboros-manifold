@@ -1,5 +1,7 @@
 extends Control
 
+const SimSession := preload("res://autoload/sim_session.gd")
+
 # C transport v1 rebind (piece C4, leaf-01). load_frame()/qa_state()/
 # qa_plant() are the new entry point that consumes a mission frame
 # (docs/architecture.md "chronicle frame, mission frame, debrief frame")
@@ -49,7 +51,7 @@ func _ready() -> void:
 		# placeholders for what the frame doesn't carry. A failed live load
 		# keeps the mock backfill and logs the reason; it never falls back
 		# to a fixture frame (C4-3).
-		var bridge = load("res://autoload/c_bridge.gd").new()
+		var bridge = SimSession.bridge()
 		if bridge.load_mission_live(bridge.live_seed(), bridge.DEFAULT_N_REGIONS, bridge.DEFAULT_FEATURES):
 			load_frame(bridge.mission_frame())
 			return

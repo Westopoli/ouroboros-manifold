@@ -1,34 +1,23 @@
 extends RefCounted
 
-# C transport v1 bridge (docs/architecture.md "C transport v1"). Loaded and
-# instantiated directly (res://autoload/c_bridge.gd).new()), never as a
-# project autoload. Parses a snapshot JSON file written by the sim and
-# exposes it to callers without transmitting anything beyond the wire shape
-# (no positions, no names — C5 rule).
+# C transport v1 bridge (docs/architecture.md "C transport v1" and "persistent
+# client session (v1.1)"). Instantiated directly
+# (res://autoload/c_bridge.gd).new()), never as a project autoload; the game
+# shares ONE instance through autoload/sim_session.gd. Parses a snapshot JSON
+# file written by the sim and exposes it to callers without transmitting
+# anything beyond the wire shape (no positions, no names -- C5 rule).
 #
-# load_snapshot_live spawns pipe/ouroboros_pipe directly and talks the same
-# 4-byte-big-endian-length-prefix + UTF-8 JSON framing sim_bridge.gd uses for
-# reading (see autoload/sim_bridge.gd's header comment for the Godot 4.6
-# stdio caveat, including that the pipe FileAccess only ever answers with
-# whatever bytes are already queued — there is no non-blocking peek, so
-# reads that wait on a frame that never comes would hang forever). Unlike
-# sim_bridge.gd, om_pipe.c has no temp-file command channel — it reads
-# commands framed on stdin only — so this writes its whole command script
-# (set_seed, step n, snapshot, quit) to the bidirectional stdio handle in a
-# single store_buffer call, then only reads afterward, never writing again.
-# The script steps the sim LIVE_SNAPSHOT_STEPS ticks before requesting the
-# snapshot so the checksum lands on the same post-step cadence
-# tests/transport/test_pipe_shapes.py verifies via ctypes — a tick-0
-# snapshot (no step) would carry a different checksum. A below-floor
-# n_regions makes set_seed answer an error frame instead of silence
-# (csrc/pipe/om_pipe.c write_error); the read loop below stops the instant
-# it sees that frame and kills the process, so the already-queued step and
-# snapshot commands are never acted on by the sim even though their bytes
-# were sent.
+# The bridge keeps one pipe/ouroboros_pipe process open (open_session /
+# ensure_session) and talks the same 4-byte-big-endian-length-prefix + UTF-8
+# JSON framing sim_bridge.gd uses for reading (see autoload/sim_bridge.gd's
+# header comment for the Godot 4.6 stdio caveat: reads block, so a reader
+# Thread decodes frames into a queue that pump() drains on the main thread).
+# The load_*_live methods and list_saves / load are requests over that open
+# session: they send a command, pump until the wanted reply frames arrive,
+# and keep them for the accessors below.
 
 const PIPE_BIN_RES_PATH := "res://pipe/ouroboros_pipe"
 const LIVE_READ_TIMEOUT_MSEC := 5000
-const LIVE_SNAPSHOT_STEPS := 10
 const DEFAULT_N_REGIONS := 80
 # Every strategic om_feature id (csrc/ouroboros_sim.h OM_FEAT_EVENTS ..
 # OM_FEAT_LIFECYCLE); OM_FEAT_TACTICAL (8) stays off. With [6] alone nothing
@@ -51,6 +40,10 @@ var _debrief: Dictionary = {}
 var _chronicle: Dictionary = {}
 var _chronicle_snapshot: Dictionary = {}
 var _tactical: Dictionary = {}
+var _session_args: Array = []
+var _session_id: int = 0
+var _mission_active := false
+var _session_mission: Dictionary = {}
 
 
 func load_snapshot_file(path: String) -> bool:
@@ -138,7 +131,9 @@ func saves_dir() -> String:
 
 
 func list_saves() -> Array:
-	var frames: Dictionary = _run_live_script(0, 0, [], [{"type": "cmd", "name": "list_saves", "dir": saves_dir()}], ["saves"], false)
+	if not _ensure_any_session():
+		return []
+	var frames: Dictionary = _request([{"type": "cmd", "name": "list_saves", "dir": saves_dir()}], ["saves"])
 	var rows := []
 	for slot in frames.get("saves", {}).get("slots", []):
 		rows.append({
@@ -152,21 +147,25 @@ func list_saves() -> Array:
 
 # The post-load snapshot, or {} with last_error() set ("corrupt" covers a
 # version mismatch too, csrc/pipe/om_pipe.c handle_load; R-111-03). The pipe
-# can only load into a world with the save's region count, so the script
-# sets that world up first from the sidecar's seed and n_regions.
+# can only load into a world with the save's region count, so the session is
+# first opened for that world from the sidecar's seed and n_regions.
 func load(slot_id: String) -> Dictionary:
 	var path := saves_dir().path_join(slot_id + ".omsave")
 	var sidecar = JSON.parse_string(FileAccess.get_file_as_string(path + ".json"))
 	if not (sidecar is Dictionary) or not sidecar.has("seed") or not sidecar.has("n_regions"):
 		_last_error = "save sidecar missing or unreadable"
 		return {}
-	var frames: Dictionary = _run_live_script(int(sidecar["seed"]), int(sidecar["n_regions"]), DEFAULT_FEATURES,
-		[{"type": "cmd", "name": "load", "path": path}], ["snapshot"])
+	if not ensure_session(int(sidecar["seed"]), int(sidecar["n_regions"]), DEFAULT_FEATURES):
+		return {}
+	var frames: Dictionary = _request([{"type": "cmd", "name": "load", "path": path}], ["snapshot"])
 	return frames.get("snapshot", {})
 
 
-func _autosave_cmd(seed: int) -> Dictionary:
-	return {"type": "cmd", "name": "save", "path": saves_dir().path_join("campaign_%d.omsave" % seed)}
+# R-111-01: written after every mission start, debrief and chronicle jump as
+# campaign_<seed>; the tactical load never calls it (R-111-04).
+func _autosave() -> bool:
+	var path := saves_dir().path_join("campaign_%d.omsave" % int(_session_args[0]))
+	return not _request([{"type": "cmd", "name": "save", "path": path}], ["ack:save"]).is_empty()
 
 
 # Persistent session (docs/architecture.md "persistent client session
@@ -202,6 +201,10 @@ func open_session(seed: int, n_regions: int, features: Array) -> bool:
 		return false
 	_snapshot = {}
 	_region_index = {}
+	_session_args = [seed, n_regions, features]
+	_session_id += 1
+	_mission_active = false
+	_session_mission = {}
 	_mutex.lock()
 	_queue = []
 	_mutex.unlock()
@@ -239,6 +242,12 @@ func pump() -> int:
 			"delta":
 				_apply_delta(frame)
 				changed = true
+			"mission":
+				_mission_active = true
+				_session_mission = frame
+			"debrief":
+				_mission_active = false
+				_session_mission = {}
 			"error":
 				_last_error = String(frame.get("reason", ""))
 		frame_received.emit(frame)
@@ -248,6 +257,7 @@ func pump() -> int:
 
 
 func close_session() -> void:
+	_session_args = []
 	if _session_pid > 0 and OS.is_process_running(_session_pid):
 		OS.kill(_session_pid)
 	if _reader != null:
@@ -286,111 +296,61 @@ func _apply_delta(delta: Dictionary) -> void:
 		_snapshot["checksum"] = checksum
 
 
-# Same script-up-front pattern as load_snapshot_live (a blocking pipe read
-# cannot be interleaved with writes): a fresh world, 10 steps, mission_start
-# answers the mission frame.
-func load_mission_live(seed: int, n_regions: int, features: Array) -> bool:
-	_mission = {}
-	var frames: Dictionary = _run_live_script(seed, n_regions, features,
-		[{"type": "cmd", "name": "mission_start", "faction": 0}, _autosave_cmd(seed)], ["mission", "ack:save"])
-	if frames.is_empty():
+func session_id() -> int:
+	return _session_id
+
+
+func mission_active() -> bool:
+	return _mission_active
+
+
+# Opens the session for this world if none is open, reuses it when the same
+# arguments are already open, reopens it when they differ; blocks until the
+# first snapshot. False (session closed again, last_error() set) when the
+# pipe cannot spawn or set_seed fails.
+func ensure_session(seed: int, n_regions: int, features: Array) -> bool:
+	if _session_pid > 0 and _session_args == [seed, n_regions, features]:
+		return true
+	if not open_session(seed, n_regions, features):
 		return false
-	_mission = frames["mission"]
-	return true
-
-
-# ... and mission_end after it answers the debrief frame.
-func load_debrief_live(seed: int, n_regions: int, features: Array) -> bool:
-	_debrief = {}
-	var frames: Dictionary = _run_live_script(seed, n_regions, features,
-		[{"type": "cmd", "name": "mission_start", "faction": 0}, {"type": "cmd", "name": "mission_end"}, _autosave_cmd(seed)], ["debrief", "ack:save"])
-	if frames.is_empty():
-		return false
-	_debrief = frames["debrief"]
-	return true
-
-
-# ... and a 50-tick jump after it answers the chronicle frame, then a
-# snapshot of the world after the jump.
-func load_chronicle_live(seed: int, n_regions: int, features: Array) -> bool:
-	_chronicle = {}
-	_chronicle_snapshot = {}
-	var frames: Dictionary = _run_live_script(seed, n_regions, features,
-		[{"type": "cmd", "name": "jump", "ticks": 50}, _autosave_cmd(seed)], ["chronicle", "snapshot", "ack:save"])
-	if frames.is_empty():
-		return false
-	_chronicle = frames["chronicle"]
-	_chronicle_snapshot = frames["snapshot"]
-	return true
-
-
-# ... and mission_start plus one tactical_step answers the first tactical
-# frame (a static first frame: units moving over time needs C2-4's
-# persistent session).
-func load_tactical_live(seed: int, n_regions: int, features: Array) -> bool:
-	_tactical = {}
-	var frames: Dictionary = _run_live_script(seed, n_regions, features,
-		[{"type": "cmd", "name": "mission_start", "faction": 0}, {"type": "cmd", "name": "tactical_step", "n": 1}], ["tactical"])
-	if frames.is_empty():
-		return false
-	_tactical = frames["tactical"]
-	return true
-
-
-# See also: load_snapshot_live above, the v1 stopgap that goes when C2-4's
-# persistent session lands; this shares its framing and read loop, and
-# returns the first frame of each type in want ({type: frame}); {} on any
-# error frame, timeout, closed pipe or spawn failure, with last_error() set.
-# An ack is keyed "ack:<command name>"; with_world false skips the leading
-# set_seed and step for commands that need no world (list_saves, load).
-func _run_live_script(seed: int, n_regions: int, features: Array, tail: Array, want: Array, with_world: bool = true) -> Dictionary:
-	_last_error = ""
-	var exe := ProjectSettings.globalize_path(PIPE_BIN_RES_PATH)
-	if not FileAccess.file_exists(exe):
-		_last_error = "pipe binary missing"
-		return {}
-	var result: Dictionary = OS.execute_with_pipe(exe, PackedStringArray())
-	if result.is_empty() or not result.has("pid"):
-		_last_error = "pipe spawn failed"
-		return {}
-	var pid: int = result["pid"]
-	var stdio: FileAccess = result.get("stdio") as FileAccess
-	if stdio == null:
-		if OS.is_process_running(pid):
-			OS.kill(pid)
-		_last_error = "pipe has no stdio"
-		return {}
-
-	var script := PackedByteArray()
-	if with_world:
-		script.append_array(_frame_cmd({"type": "cmd", "name": "set_seed", "seed": seed, "n_regions": n_regions, "features": features}))
-		script.append_array(_frame_cmd({"type": "cmd", "name": "step", "n": LIVE_SNAPSHOT_STEPS}))
-	for cmd in tail:
-		script.append_array(_frame_cmd(cmd))
-	script.append_array(_frame_cmd({"type": "cmd", "name": "quit"}))
-	stdio.store_buffer(script)
-
-	var found: Dictionary = {}
 	var deadline_msec := Time.get_ticks_msec() + LIVE_READ_TIMEOUT_MSEC
-	while Time.get_ticks_msec() < deadline_msec:
-		var msg: Variant = _read_live_frame(stdio)
-		if msg == null:
-			_last_error = "pipe closed before every wanted frame (%s)" % ", ".join(want)
-			break
-		if not (msg is Dictionary):
-			continue
-		var msg_type: String = msg.get("type", "")
-		if msg_type == "error":
-			_last_error = String(msg.get("reason", ""))
-			break
-		var key: String = msg_type if msg_type != "ack" else "ack:%s" % msg.get("name", "")
-		if want.has(key) and not found.has(key):
-			found[key] = msg
-			if found.size() == want.size():
-				break
+	while Time.get_ticks_msec() < deadline_msec and _last_error == "" and (_snapshot.get("regions", []) as Array).is_empty():
+		pump()
+		OS.delay_msec(5)
+	if (_snapshot.get("regions", []) as Array).is_empty():
+		if _last_error == "":
+			_last_error = "timed out waiting for the first snapshot"
+		close_session()
+		return false
+	return true
 
-	if OS.is_process_running(pid):
-		OS.kill(pid)
+
+func _ensure_any_session() -> bool:
+	return _session_pid > 0 or ensure_session(live_seed(), DEFAULT_N_REGIONS, DEFAULT_FEATURES)
+
+
+# Sends the commands, pumps until the first frame of every type in want has
+# arrived ({type: frame}; an ack is keyed "ack:<command name>"); {} on an
+# error frame, a timeout or a session that is not open, with last_error() set.
+func _request(cmds: Array, want: Array) -> Dictionary:
+	_last_error = ""
+	if _session_pid <= 0:
+		_last_error = "no open session"
+		return {}
+	var found := {}
+	var on_frame := func(frame):
+		var type_name: String = String(frame.get("type", ""))
+		var key: String = type_name if type_name != "ack" else "ack:%s" % frame.get("name", "")
+		if want.has(key) and not found.has(key):
+			found[key] = frame
+	frame_received.connect(on_frame)
+	for cmd in cmds:
+		send_command(cmd)
+	var deadline_msec := Time.get_ticks_msec() + LIVE_READ_TIMEOUT_MSEC
+	while found.size() < want.size() and _last_error == "" and Time.get_ticks_msec() < deadline_msec:
+		if pump() == 0:
+			OS.delay_msec(5)
+	frame_received.disconnect(on_frame)
 	if found.size() != want.size():
 		if _last_error == "":
 			_last_error = "timed out waiting for %s" % ", ".join(want)
@@ -398,80 +358,60 @@ func _run_live_script(seed: int, n_regions: int, features: Array, tail: Array, w
 	return found
 
 
-# The pipe's stdio FileAccess.get_buffer() blocks at the OS level when no
-# bytes are queued (there is no non-blocking peek available here), so
-# set_seed, step, snapshot and quit are all written up front in one buffer,
-# exactly as before, and the reply is classified frame by frame instead of
-# holding step/snapshot back: the pipe writes an unsolicited "hello" frame
-# on startup (skipped), then either an error frame ({"type":"error",
-# "name":"set_seed","reason":...}, csrc/pipe/om_pipe.c write_error) if
-# n_regions is below the feasibility floor for the requested faction count,
-# or nothing at all for set_seed on success (om_pipe.c handle_set_seed
-# comment: "no frame at all on success, not even an ack") before the
-# step/snapshot replies arrive. Reading stops the instant an error frame is
-# seen -- the process is killed immediately after, so step/snapshot/quit are
-# never acted on by the sim even though their bytes were already queued on
-# its stdin.
-func load_snapshot_live(seed: int, n_regions: int, features: Array, steps: int = LIVE_SNAPSHOT_STEPS) -> bool:
-	_last_error = ""
-	var exe := ProjectSettings.globalize_path(PIPE_BIN_RES_PATH)
-	if not FileAccess.file_exists(exe):
+func _ensure_mission() -> bool:
+	if _mission_active:
+		return true
+	return not _request([{"type": "cmd", "name": "mission_start", "faction": 0}], ["mission"]).is_empty()
+
+
+# The mission frame of the shared world: a mission is started if none is
+# running (one already running is reused), then autosaved (R-111-01).
+func load_mission_live(seed: int, n_regions: int, features: Array) -> bool:
+	_mission = {}
+	if not ensure_session(seed, n_regions, features) or not _ensure_mission() or not _autosave():
 		return false
+	_mission = _session_mission
+	return true
 
-	var result: Dictionary = OS.execute_with_pipe(exe, PackedStringArray())
-	if result.is_empty() or not result.has("pid"):
+
+# ... mission_end answers the debrief frame (a mission is started first if
+# none is running), then autosaves.
+func load_debrief_live(seed: int, n_regions: int, features: Array) -> bool:
+	_debrief = {}
+	if not ensure_session(seed, n_regions, features) or not _ensure_mission():
 		return false
-
-	var pid: int = result["pid"]
-	var stdio: FileAccess = result.get("stdio") as FileAccess
-	if stdio == null:
-		if OS.is_process_running(pid):
-			OS.kill(pid)
+	var frames: Dictionary = _request([{"type": "cmd", "name": "mission_end"}], ["debrief", "snapshot"])
+	if frames.is_empty() or not _autosave():
 		return false
+	_debrief = frames["debrief"]
+	return true
 
-	var script := PackedByteArray()
-	script.append_array(_frame_cmd({"type": "cmd", "name": "set_seed", "seed": seed, "n_regions": n_regions, "features": features}))
-	if steps > 0:
-		script.append_array(_frame_cmd({"type": "cmd", "name": "step", "n": steps}))
-	script.append_array(_frame_cmd({"type": "cmd", "name": "snapshot"}))
-	script.append_array(_frame_cmd({"type": "cmd", "name": "quit"}))
 
-	stdio.store_buffer(script)
-	if stdio.get_error() != OK:
-		if OS.is_process_running(pid):
-			OS.kill(pid)
+# ... a 50-tick jump answers the chronicle frame, then a snapshot of the
+# world after the jump, and autosaves. Refused while a mission is running.
+func load_chronicle_live(seed: int, n_regions: int, features: Array) -> bool:
+	_chronicle = {}
+	_chronicle_snapshot = {}
+	if not ensure_session(seed, n_regions, features):
 		return false
-
-	var snapshot_msg: Variant = null
-	var failed := false
-	var deadline_msec := Time.get_ticks_msec() + LIVE_READ_TIMEOUT_MSEC
-	while Time.get_ticks_msec() < deadline_msec:
-		var msg: Variant = _read_live_frame(stdio)
-		if msg == null:
-			break
-		if not (msg is Dictionary):
-			continue
-		var msg_type: String = msg.get("type", "")
-		if msg_type == "error":
-			_last_error = String(msg.get("reason", ""))
-			failed = true
-			break
-		if msg_type == "snapshot":
-			snapshot_msg = msg
-			break
-
-	if OS.is_process_running(pid):
-		OS.kill(pid)
-
-	if failed:
+	var frames: Dictionary = _request([{"type": "cmd", "name": "jump", "ticks": 50}], ["chronicle", "snapshot"])
+	if frames.is_empty() or not _autosave():
 		return false
-	if not (snapshot_msg is Dictionary) or not snapshot_msg.has("regions"):
-		return false
-	var regions_arr: Array = snapshot_msg.get("regions", [])
-	if regions_arr.is_empty():
-		return false
+	_chronicle = frames["chronicle"]
+	_chronicle_snapshot = frames["snapshot"]
+	return true
 
-	_snapshot = snapshot_msg
+
+# ... one tactical_step of the running mission answers the tactical frame
+# (never autosaved: R-111-04).
+func load_tactical_live(seed: int, n_regions: int, features: Array) -> bool:
+	_tactical = {}
+	if not ensure_session(seed, n_regions, features) or not _ensure_mission():
+		return false
+	var frames: Dictionary = _request([{"type": "cmd", "name": "tactical_step", "n": 1}], ["tactical"])
+	if frames.is_empty():
+		return false
+	_tactical = frames["tactical"]
 	return true
 
 

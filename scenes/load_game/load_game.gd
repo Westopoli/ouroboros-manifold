@@ -1,5 +1,7 @@
 extends Control
 
+const SimSession := preload("res://autoload/sim_session.gd")
+
 const CURRENT_SAVE_VERSION := 1
 
 var _slot_list: VBoxContainer
@@ -11,7 +13,7 @@ var _bridge_rows: Array = []
 
 func _ready() -> void:
 	_build_ui()
-	qa_set_bridge(load("res://autoload/c_bridge.gd").new())
+	qa_set_bridge(SimSession.bridge())
 
 
 func _input(event: InputEvent) -> void:

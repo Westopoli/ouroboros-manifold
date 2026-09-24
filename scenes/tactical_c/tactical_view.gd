@@ -1,5 +1,7 @@
 extends Node2D
 
+const SimSession := preload("res://autoload/sim_session.gd")
+
 # Piece C5: minimal tactical view over a C transport v1 "tactical" snapshot
 # (docs/architecture.md "C transport v1"). Fresh scene, no legacy code. See
 # docs/northstar/plans/push/specs/C5.md and
@@ -30,7 +32,7 @@ func _ready() -> void:
 	# view self-loads the first live tactical frame on a fresh route-in. A
 	# failed live load leaves the view empty and logs the reason; it never
 	# falls back to a fixture (C5-2).
-	var bridge = load("res://autoload/c_bridge.gd").new()
+	var bridge = SimSession.bridge()
 	if bridge.load_tactical_live(bridge.live_seed(), bridge.DEFAULT_N_REGIONS, bridge.DEFAULT_FEATURES):
 		load_frame(bridge.tactical_frame())
 	else:

@@ -13,6 +13,7 @@ extends Node3D
 
 const GalaxyGen := preload("res://scenes/galaxy/galaxy_gen.gd")
 const CBridge := preload("res://autoload/c_bridge.gd")
+const SimSession := preload("res://autoload/sim_session.gd")
 
 const PLANTS := ["seed-ignored", "owner-colour-flat", "edges-2d-overlay",
 	"pick-radius-zero", "bands-frozen", "conquest-no-recolour"]
@@ -61,30 +62,29 @@ func _ready() -> void:
 
 # Self-loading pattern (docs/northstar/plans/push/specs/C8-M3.md
 # "Self-loading pattern"): SceneRouter._swap_scene never passes data into a
-# scene unless it has setup(), so galaxy_view opens its own persistent pipe
-# session here (docs/architecture.md "persistent client session (v1.1)"),
+# scene unless it has setup(), so galaxy_view joins the run's shared pipe
+# session (autoload/sim_session.gd) here (docs/architecture.md "persistent client session (v1.1)"),
 # waits for the first snapshot, and from then on redraws whenever the
 # session applies a frame (set_snapshot re-renders, so a conquest recolours,
 # R-106-02). On failure (binary missing, pipe error) the scene stays exactly
 # as it is pre-set_snapshot -- qa_state() already handles empty
 # _regions/_edges gracefully (proven by tests/test_galaxy_view.gd's own
-# fallback-snapshot path). The session lives and dies with this scene.
+# fallback-snapshot path). The session outlives this scene: the world the
+# galaxy stepped is the one the other scenes read.
 func _load_live_snapshot() -> void:
 	var seed_str := _arg_value(OS.get_cmdline_user_args(), "--seed")
 	var seed := int(seed_str) if seed_str != "" else DEFAULT_SEED
-	_bridge = load("res://autoload/c_bridge.gd").new()
-	if not _bridge.open_session(seed, CBridge.DEFAULT_N_REGIONS, CBridge.DEFAULT_FEATURES):
-		return
-	_bridge.snapshot_changed.connect(func(_tick): _bridge_dirty = true)
-	var deadline := Time.get_ticks_msec() + LIVE_SNAPSHOT_TIMEOUT_MSEC
-	while Time.get_ticks_msec() < deadline and _bridge.last_error() == "" and not _bridge_dirty:
-		_bridge.pump()
-		OS.delay_msec(5)
-	if _bridge_dirty:
-		_bridge_dirty = false
-		set_snapshot(_bridge.snapshot())
-	else:
+	_bridge = SimSession.bridge()
+	if not _bridge.ensure_session(seed, CBridge.DEFAULT_N_REGIONS, CBridge.DEFAULT_FEATURES):
 		push_error("galaxy_view: live snapshot failed: %s" % _bridge.last_error())
+		_bridge = null
+		return
+	_bridge.snapshot_changed.connect(_on_bridge_changed)
+	set_snapshot(_bridge.snapshot())
+
+
+func _on_bridge_changed(_tick) -> void:
+	_bridge_dirty = true
 
 
 func _process(_delta: float) -> void:
@@ -97,8 +97,8 @@ func _process(_delta: float) -> void:
 
 
 func _exit_tree() -> void:
-	if _bridge != null:
-		_bridge.close_session()
+	if _bridge != null and _bridge.snapshot_changed.is_connected(_on_bridge_changed):
+		_bridge.snapshot_changed.disconnect(_on_bridge_changed)
 
 
 # Advances the live sim n ticks; the redraw follows as the deltas arrive.
