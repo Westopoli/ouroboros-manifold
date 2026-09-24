@@ -1443,19 +1443,10 @@ static uint32_t chron_build_chain_clusters(chron_state *st) {
     return n_merged;
 }
 
-/* No public lineage enumerator exists yet (see report: om_lineage_count /
- * om_lineage_id_at), so lineage ids are probed over a fixed window; a lineage
- * exists when its history has an oldest entry. Auto-minted lineage ids sit
- * far above this window and are not seen. */
-#define CHRON_LINEAGE_PROBE_MAX 512
-
-static int chron_lineage_exists(const om_world *w, uint32_t lineage_id) {
-    return om_lineage_history_region(w, lineage_id, 0) >= 0;
-}
-
 static int chron_region_has_lineage_member(const om_world *w, uint32_t region_idx) {
-    for (uint32_t id = 0; id < CHRON_LINEAGE_PROBE_MAX; id++) {
-        if (chron_lineage_exists(w, id) && om_lineage_member_in_region(w, id, region_idx)) return 1;
+    uint32_t n = om_lineage_count(w);
+    for (uint32_t i = 0; i < n; i++) {
+        if (om_lineage_member_in_region(w, om_lineage_id_at(w, i), region_idx)) return 1;
     }
     return 0;
 }
@@ -1479,20 +1470,20 @@ static double chron_score_event(const om_world *w, uint32_t region_idx, uint32_t
 }
 
 /* ALG-51 step 2, "none" case: with no lineage cluster among the candidates,
- * one lineage_quiet cluster for the first lineage, in its last history region
- * (its first active member's region needs a member accessor generational.c
- * does not expose). */
+ * one lineage_quiet cluster for the first lineage, in its first active
+ * member's region, else its last history region. */
 static void chron_add_quiet_lineage_cluster(const om_world *w, chron_state *st) {
     for (uint32_t i = 0; i < st->n_candidates; i++) {
         if (st->candidates[i].type == CTYPE_LINEAGE) return;
     }
-    for (uint32_t id = 0; id < CHRON_LINEAGE_PROBE_MAX; id++) {
-        if (!chron_lineage_exists(w, id)) continue;
-        int32_t region = 0;
+    if (om_lineage_count(w) == 0) return;
+    uint32_t id = om_lineage_id_at(w, 0);
+    int32_t region = om_lineage_first_member_region(w, id);
+    if (region < 0) {
         for (uint32_t k = 0; om_lineage_history_region(w, id, k) >= 0; k++) region = om_lineage_history_region(w, id, k);
-        chron_push_lineage_candidate(st, id, (uint32_t)region, 0.0);
-        return;
     }
+    if (region < 0) return;
+    chron_push_lineage_candidate(st, id, (uint32_t)region, 0.0);
 }
 
 /* Stable descending-score insertion sort -- qsort's tie-break order is
