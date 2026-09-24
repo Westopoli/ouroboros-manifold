@@ -196,6 +196,14 @@ def test_s_c8_04_deploy_reaches_tactical(game):
     cx, cy = control_center(control)
     client.click(cx, cy)
     wait_for(client, lambda s: s.get("scene") == TACTICAL_SCENE, STEP_TIMEOUT_S, label="S-C8-04")
+    # C4-4: Deploy is the player's Begin. It sends mission_begin over the shared session
+    # and the tactical view then steps the begun mission once, so its live tick is 1 (a
+    # mission still in recon refuses the step and the view stays at tick 0).
+    tactical_qa = client.state()["result"].get("qa", {})
+    assert int(tactical_qa.get("tick", -1)) == 1, (
+        "S-C8-04: tactical view tick = %r after Deploy, expected 1 (mission_begin then one tactical_step); qa = %r"
+        % (tactical_qa.get("tick"), sorted(tactical_qa.keys()))
+    )
     _shoot(client, "flow_04_tactical")
 
 
