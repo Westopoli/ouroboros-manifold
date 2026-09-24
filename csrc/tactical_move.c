@@ -11,11 +11,12 @@
  * calls om_tactical_step (csrc/unit.c), never anything of this file's --
  * there is no per-tick callback into tactical_move.c. Every accessor below
  * therefore starts by calling om_move_sync(), which replays this module's
- * own tick loop from its last-seen w->tick up to the current one before
- * reading or writing anything. w->tick is read directly (om_internal.h),
- * never written. This makes every command "apply immediately" (no tick
- * boundary needed to observe it) while still producing a real per-tick
- * simulation for position/facing/collision -- see om_move_sync/
+ * own tick loop from its last-seen tactical tick (om_tactical_tick,
+ * csrc/unit.c; the strategic w->tick is a distinct clock, R-055-02) up to
+ * the current one before reading or writing anything. This makes every
+ * command "apply immediately" (no tick boundary needed to observe it)
+ * while still producing a real per-tick simulation for
+ * position/facing/collision -- see om_move_sync/
  * om_move_tick_once below.
  *
  * Known cross-module gaps (unit.c/B10b, tactical_mapgen.c/B15m, fog.c/B11
@@ -647,11 +648,21 @@ static void om_move_tick_once(om_world *w, om_move_state *ms, uint64_t new_tick)
     om_move_groups_check_arrival(ms);
 }
 
+/* R-092-02: no unit moves in the recon phase. Phase -1 (no mission) and
+ * tactical both let movement run; recon ends when the player begins. */
+static int om_move_in_recon(const om_world *w) {
+    return om_mission_get_phase(w) == 0;
+}
+
 static void om_move_sync(om_world *w) {
     om_move_state *ms = om_ms(w);
-    uint64_t target = w->tick;
+    uint64_t target = om_tactical_tick(w);
     uint64_t t;
     if (ms->last_synced_tick > target) ms->last_synced_tick = target;
+    if (om_move_in_recon(w)) {
+        ms->last_synced_tick = target;
+        return;
+    }
     for (t = ms->last_synced_tick + 1; t <= target; t++) {
         om_move_tick_once(w, ms, t);
     }
@@ -663,7 +674,7 @@ static void om_move_enqueue(om_world *w, om_move_state *ms, int kind, uint32_t u
     if (ms->n_queue >= OM_MOVE_MAX_QUEUE) return;
     q = &ms->queue[ms->n_queue++];
     q->in_use = 1;
-    q->tick = w->tick;
+    q->tick = om_tactical_tick(w);
     q->kind = kind;
     q->unit_id = unit;
     q->x = x;
@@ -1120,23 +1131,28 @@ int om_unit_get_pos(const om_world *w, uint32_t unit, double *out_x, double *out
     return 1;
 }
 
+/* Braced is the toggle the player sees: windup (1) and active (2) count,
+ * canceling (3) and idle (0) do not. */
+static int om_move_brace_toggled(om_world *w, uint32_t unit) {
+    int32_t phase = om_unit_brace_phase(w, unit);
+    return phase == 1 || phase == 2;
+}
+
 int om_unit_has_active_buff(const om_world *w, uint32_t p0, const char *p1) {
     om_world *ww = (om_world *)w;
     if (!w || !p1) return 0;
+    if (strcmp(p1, "brace") == 0) return om_move_brace_toggled(ww, p0);
     /* No public accessor names which ability is active, only that one is
-     * (om_unit_ability_active, csrc/unit.c) -- see file header. Both named
-     * buffs this suite checks (Raider Surge, Vanguard Brace) are manual
-     * ability activations, so this is the best available proxy. */
-    if (strcmp(p1, "surge") == 0 || strcmp(p1, "brace") == 0) {
-        return om_unit_ability_active(ww, p0);
-    }
+     * (om_unit_ability_active, csrc/unit.c) -- see file header. Raider Surge
+     * is a manual ability activation, so this is the best available proxy. */
+    if (strcmp(p1, "surge") == 0) return om_unit_ability_active(ww, p0);
     return 0;
 }
 
 int om_unit_is_braced(const om_world *w, uint32_t p0) {
     om_world *ww = (om_world *)w;
     if (!w) return 0;
-    return om_unit_ability_active(ww, p0);
+    return om_move_brace_toggled(ww, p0);
 }
 
 void om_unit_set_facing(om_world *w, uint32_t p0, double p1) {
