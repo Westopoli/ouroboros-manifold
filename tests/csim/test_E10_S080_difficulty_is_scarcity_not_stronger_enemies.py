@@ -51,27 +51,27 @@ def test_R_080_01_both_sides_draw_from_same(lib, world_factory):
 
 def test_R_080_02_r_074_03_applies_nothing(lib, world_factory):
     """Given easy, medium, hard, When parity is computed, Then R-074-03 applies and nothing else changes at launch [Q-080-01]."""
-    # base_parity = 1.2
-    # easy: max(1.0, 1.2) = 1.2
+    # base_parity = 1.2 (R-074-03: easy floor 0.95, hard ceiling 0.85)
+    # easy: max(0.95, 1.2) = 1.2
     # medium: 1.2
-    # hard: min(1.0, 1.2) = 1.0
+    # hard: min(0.85, 1.2) = 0.85
     p_easy = lib.om_mission_compute_parity(ctypes.c_double(1.2), OMDifficulty.EASY)
     p_med = lib.om_mission_compute_parity(ctypes.c_double(1.2), OMDifficulty.MEDIUM)
     p_hard = lib.om_mission_compute_parity(ctypes.c_double(1.2), OMDifficulty.HARD)
 
     assert ctypes.c_double(p_easy).value == pytest.approx(1.2, abs=1e-5)
     assert ctypes.c_double(p_med).value == pytest.approx(1.2, abs=1e-5)
-    assert ctypes.c_double(p_hard).value == pytest.approx(1.0, abs=1e-5)
+    assert ctypes.c_double(p_hard).value == pytest.approx(0.85, abs=1e-5)
 
     # base_parity = 0.8
-    # easy: max(1.0, 0.8) = 1.0
+    # easy: max(0.95, 0.8) = 0.95
     # medium: 0.8
-    # hard: min(1.0, 0.8) = 0.8
+    # hard: min(0.85, 0.8) = 0.8
     p_easy_low = lib.om_mission_compute_parity(ctypes.c_double(0.8), OMDifficulty.EASY)
     p_med_low = lib.om_mission_compute_parity(ctypes.c_double(0.8), OMDifficulty.MEDIUM)
     p_hard_low = lib.om_mission_compute_parity(ctypes.c_double(0.8), OMDifficulty.HARD)
 
-    assert ctypes.c_double(p_easy_low).value == pytest.approx(1.0, abs=1e-5)
+    assert ctypes.c_double(p_easy_low).value == pytest.approx(0.95, abs=1e-5)
     assert ctypes.c_double(p_med_low).value == pytest.approx(0.8, abs=1e-5)
     assert ctypes.c_double(p_hard_low).value == pytest.approx(0.8, abs=1e-5)
 

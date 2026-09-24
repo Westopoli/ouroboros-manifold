@@ -815,3 +815,248 @@ anything; unrelated to E-06, not touched.
 Files touched: `tests/csim/test_E06_S045_a_faction_s_technology_is_one_number.py`,
 `tests/csim/test_E06_S046_archetypes_spend_tech_differently.py`,
 this evidence file.
+
+## push/tests-fix-4 test-fix gate, 2026-09-24
+
+Branch `push/tests-fix-4`, worktree `~/Projects/om-push/wt/tests-fix-4`,
+base origin/main merged with origin/push/B9-4, origin/push/B13-2,
+origin/push/B14-2 (all clean merges, ort strategy, no conflicts). 9 items
+from design lane, all classed test-defect. Assertions preserved everywhere
+fixed — none loosened, none deleted. One item (R-123-01) left red and
+reported, module gap not a fixture bug.
+
+### R-078-04 / R-078-07 (`test_E10_S078_a_battle_becomes_history.py`)
+
+Confound: no faction registered as player. `om_mission_player_faction`
+(csrc/mission.c:476) scans `faction_used[]`/`faction_archetype[]` for
+`OM_ARCH_PLAYER`; unset slot defaults `faction_archetype==0==PLAYER` via
+calloc but `faction_used==0`, so it never matches — returns -1, transfer
+and adjacent_player-target code both bail early.
+
+Fix: added `set_faction(lib, w, 1, 0)` (archetype 0 = PLAYER) before owner
+setup in both tests. R-078-07 also had `om_region_set_owner` calls BEFORE
+`set_region` — `set_region` resets `faction_id` to -1, wiping the ownership
+set_owner had just written. Reordered: `set_region` first, `set_owner`
+after.
+
+Red before: `test_R_078_04` — `assert owner == player_faction`, `assert 2
+== 1`. `test_R_078_07` — `assert lib.om_region_field(w, 1, ...) ==
+approx(55.0)`, `Obtained: 50.0`.
+Green after: both pass.
+Control: `set_faction` player id changed to an unregistered faction (3 for
+078-04, 5 for 078-07), rerun, same failures as red-before reproduced
+exactly. Reverted, green restored.
+
+### R-078-05 (`test_E10_S078_a_battle_becomes_history.py`)
+
+Confound: `read_drift(lib, w, 0, OMField.TENSION)` — conftest's
+`read_drift(lib, w, idx)` takes 3 args (returns `(rc, row)` from
+`om_region_drift`), not 4; called with a 4th positional arg (`OMField.
+TENSION`), TypeError.
+
+Fix: read the field with `om_region_field(w, 0, OMField.TENSION)` (4-arg
+getter) instead.
+
+Red before: `TypeError: read_drift() takes 3 positional arguments but 4
+were given`.
+Green after: passes, tension == 44.8.
+Control: `OM_MISSION_REFUSAL_TENSION_DEFICIT_PCT` (csrc/mission.c:265)
+flipped 8.0 -> 20.0, rebuilt, rerun: `assert 52.0 == 44.8 ± 1e-4`. Reverted,
+rebuilt, green restored.
+
+### R-080-02 (`test_E10_S080_...py`) and R-125-01 (`test_E14_S125_...py`)
+
+Confound: both pin easy-floor/hard-ceiling at 1.0. `om_mission_compute_
+parity` is a public alias (csrc/mission.c:1068) of `om_mission_compute_
+difficulty_parity`, which uses `OM_MISSION_PARITY_EASY_FLOOR 0.95` /
+`OM_MISSION_PARITY_HARD_CEILING 0.85` (csrc/mission.c:189-190) — the same
+constants the already-green `test_R_074_03` asserts. R-074-03 is the rule
+both tests cite.
+
+Fix: recomputed expected values with 0.95/0.85 instead of 1.0/1.0. Only
+the hard-difficulty branch actually changes value in both tests (easy
+floor 0.95 never binds against the fixture's base parities of 1.2, 0.8, or
+1.0).
+
+Red before: `test_R_080_02` — `assert 1.0 == 1.0` masked the bug at
+base=1.2 (floor never binds there) but `p_easy_low` (base=0.8) asserted
+1.0, `Obtained: 0.95`; `test_R_125_01` — `p_hard` asserted 1.0, `Obtained:
+0.85`.
+Green after: both pass.
+Control: `OM_MISSION_PARITY_HARD_CEILING` flipped 0.85 -> 0.99, rebuilt,
+both tests fail at their hard-difficulty assertion (`0.99 == 0.85 ± 1e-5`).
+Reverted, rebuilt, green restored.
+
+### R-120-03 (`test_E14_S120_five_behaviors_three_moods.py`)
+
+Confound: pins cautious/aggressive speed multipliers at 0.6/1.2, the
+bible's own example numbers. Q-120-01 (ambiguity register) closed (b),
+2026-09-16: AI postures deferred, baseline speeds, no modifier-based speed
+or spacing change. Code (`OM_MACRO_SPEED_MULT_CAUTIOUS`/`_AGGRESSIVE`,
+csrc/enemy_macro.c:122-123) already implements the closed decision (both
+1.0).
+
+Fix: test expectations changed to 1.0/1.0. Also rewrote the E-14 epic
+(docs/bible/epics/E-14-enemy-macro-behavior.md): R-120-03's prose dropped
+the stale 0.6×/1.2× example (now "baseline speed" for both postures), and
+the stale "Open flags: Q-120-01 ..." line under S-120 replaced with the
+closed decision (rewrite, not append — no PIVOT marker, old text deleted).
+This is the only bible file touched, per assignment.
+
+Red before: `assert 0.6 == 1.0 ± 1e-5`.
+Green after: passes.
+Control: `OM_MACRO_SPEED_MULT_CAUTIOUS`/`_AGGRESSIVE` flipped back to
+0.6/1.2, rebuilt, rerun: `assert 0.6 == 1.0 ± 1e-5` (same failure as
+red-before). Reverted, rebuilt, green restored.
+
+### R-123-01 and R-076-03 (getter-loop driver swap)
+
+Both drove the tactical clock with `om_tactical_tick(w)` in a loop —
+`om_tactical_tick` is a pure getter (csrc/mission.c:1562 comment confirms:
+"never allocates or mutates"), so the loop did nothing every iteration.
+The freeze's real drivers are `om_tactical_step`/`om_world_step`.
+`om_tactical_step` is a no-op returning 0 when zero units exist
+(csrc/unit.c:909-919, current_tick only increments inside `om_ability_
+advance_all`, which the zero-unit guard skips entirely).
+
+**R-076-03** (`test_E10_S076_the_clock.py`): fixed. Neither fixture spawned
+a unit. Added `lib.om_unit_spawn(w, OMUnitType.VANGUARD, 0, 0.0, 0.0, 0)`
+(new local `OMUnitType` class, same enum other E-1x test files define
+locally) before the tick loop, swapped `om_tactical_tick` -> `om_tactical_
+step` in the 1000-iteration loop. `om_mission_get_objective_score` doesn't
+read tick state at all (csrc/mission.c:1497 comment: "nothing here reads a
+tick or a deadline"), so only the `om_mission_is_ended` deadline check
+needed the clock to actually move.
+
+Red before: `assert lib.om_mission_is_ended(w) == 1` — `assert 0 == 1`
+(clock frozen at baseline the whole loop).
+Green after: passes, both halves.
+Control: loop range dropped 1000 -> 999 (one tick short of the 1000-tick
+deadline), rerun: `assert lib.om_mission_is_ended(w) == 1` fails, `assert 0
+== 1` (same assertion line as red-before, now correctly catching "not
+there yet" instead of "never moved"). Reverted, green restored.
+
+**R-123-01** (`test_E14_S123_the_enemy_replays_like_i_do.py`): NOT fixed,
+left red, reported. Swapping the driver alone is not enough — probed
+empirically (unit spawned in both worlds, `om_tactical_tick` -> `om_
+tactical_step` in the 200-tick loop, ran under pytest): `om_replay_
+command_count(w1) == 0` still. Traced why: nothing in the C source calls
+`om_replay_log_command` except tests themselves (`grep -rn
+om_replay_log_command csrc/*.c` — only the definition site, csrc/enemy_
+macro.c:672). `om_macro_tick` (csrc/enemy_macro.c:488) is never called by
+`om_tactical_step`, `om_world_step`, or any other tick driver — it's a
+free-standing function only ever invoked directly by tests (see test_
+R_120_04's own `lib.om_macro_tick(w, 39)` calls). So even with the clock
+correctly advancing, no code path exists that turns enemy macro decisions
+into replay-log entries automatically. This is a module gap — enemy macro
+output is not wired to the replay stream at all yet — not a test driver
+bug. Per leaf-mechanics.md ("A behavior another module must provide is
+reported as a closure leftover naming the symbol and the owning module,
+never stubbed across files"), reporting instead of forcing: closure
+leftover, symbol `om_replay_log_command`, owning module enemy_macro.c (or
+wherever the eventual auto-log call site lands), needs a call site inside
+the macro evaluation path (`om_macro_tick` or whatever finally drives it
+per-tick) before R-123-01 can pass without the test manually faking log
+entries. Probe edit reverted, file left untouched (0-line diff).
+
+### R-126-04 (`test_E15_S126_most_of_my_force_is_out_there.py`)
+
+Confound: `assert ctypes.c_double(reinforcement_cap).value >= pytest.
+approx(80.0, abs=1e-5)` — `>=` is not defined between `float` and pytest's
+`ApproxScalar`, `TypeError`.
+
+Fix: `>= 80.0 - 1e-5` (same tolerance, plain float compare, no `pytest.
+approx`).
+
+Red before: `TypeError: '>=' not supported between instances of 'float'
+and 'ApproxScalar'`.
+Green after: passes.
+Control: `OM_SUP_STARTING_FORCE_FRACTION` (csrc/tactical_support.c:185)
+inlined as 0.5 at both call sites (`om_mission_compute_starting_force`,
+`om_mission_compute_reinforcement_capacity`), rebuilt, rerun: `assert
+ctypes.c_double(starting_force).value == approx(20.0)` fails first,
+`Obtained: 50.0` (this line runs before the fixed `>=` line, so it's the
+one that catches the flip — confirms the whole test still bites on a real
+regression, not just the TypeError). Reverted, rebuilt, green restored.
+
+### R-092-04 (`test_E12_S092_recon_then_fog.py`)
+
+Confound: `set_region(w2, 0, OMField.MILITARY, 0.95)` — conftest's
+`set_region(lib, w, idx, *, tier=..., military=..., ...)` is keyword-only
+past `idx` and takes `lib` as first arg; called with 4 positional args (no
+`lib`, and `OMField.MILITARY`/`0.95` positional instead of `military=
+0.95`), `TypeError: takes 3 positional arguments but 4 were given`.
+
+Fix: `set_region(lib, w2, 0, military=0.95)`.
+
+Red before: `TypeError: set_region() takes 3 positional arguments but 4
+were given`.
+Green after: passes.
+Control: `om_recon_get_terrain_visibility_ratio` (csrc/fog.c:415-418,
+already a hardcoded `return 1.0` by design — "regardless of world state")
+flipped to `return 0.5`, rebuilt, rerun: `assert approx(0.5) == 1.0` fails,
+`Obtained: 1.0` (comparison order from `pytest.approx` on the left makes
+the message read backwards but the failure is real). Reverted, rebuilt,
+green restored.
+
+### R-065-05 vs R-065-06 (`test_E09_S065_five_to_ten_entries_in_the_right_order.py`)
+
+Read both rules (docs/bible/epics/E-09-chronicle.md:36-37). R-065-05:
+standard fill takes clusters in descending score, capped at 2 per
+category, until 10 entries. R-065-06: "Given fewer than 5 entries after
+ranking ... skipped clusters are added in score order until 5" — no cap
+caveat on the fallback add, it just says skipped clusters go back in by
+score until 5. `test_R_065_06` (single category, 5 clusters, cap would
+give 2) already passes on unfixed code with `entry_count == 5` — code
+already implements "fallback overrides the cap for the minimum". Probed
+`test_R_065_05`'s actual scenario (5 clusters cat 10 + 3 clusters cat 11):
+cap-fill gives 4 (2+2), which is < 5, so the R-065-06 fallback fires and
+adds the next-highest skipped cluster (cat 10's 7.0 score) to reach 5 —
+`cat10_count` ends at 3, `entry_count` at 5. R-065-05's pinned total of 4
+(and its `cat10_count <= 2` assertion) is the defect: the epic's own
+composition of both rules (065-05's cap plus 065-06's fallback) puts this
+fixture's real answer at 5, not 4.
+
+Fix: `cat10_count == 3` (was `<= 2`), `cat11_count == 2` (was `<= 2`),
+`entry_count == 5` (was `== 4`). `R-065-04` (same file) and `R-078-06`,
+`R-092-02` (other files) also failed on this branch but are not part of
+this assignment — left untouched, unrelated confounds (not investigated
+further, out of scope).
+
+Red before: `assert cat10_count <= 2` — `assert 3 <= 2`.
+Green after: passes.
+Control: `OM_CHRONICLE_MIN_ENTRIES` (csrc/om_constants.h:345) flipped 5 ->
+4, rebuilt, rerun: `assert cat10_count == 3` fails, `assert 2 == 3` (with
+the fallback target lowered to 4, cap-fill's 4 entries already satisfy the
+floor, so no fallback add happens, cat10 stays capped at 2). Reverted,
+rebuilt, green restored.
+
+### Whole-suite check (`tests/csim`, before vs after)
+
+`git stash` (all 9 test-file edits + epic doc), rebuilt (no-op, C
+untouched), ran `tests/csim` full: `187 failed, 562 passed, 7 skipped, 1
+xfailed`. `git stash pop`, rebuilt (no-op again — confirms no leftover
+flipped constant from any control run), ran again: `177 failed, 572
+passed, 7 skipped, 1 xfailed`. Diffed sorted FAILED-id lists (`LC_ALL=C
+sort`): 10 lines removed (exactly the 10 fixed assertions above across 8
+files — note R-078-04/05/07 are 3 ids from one file), 0 lines added. No
+new red anywhere in the suite. `test_R_123_01`, `test_R_065_04`, `test_
+R_078_06`, `test_R_092_02` all present on both lists, confirmed unchanged
+(the first left red and reported per above; the other three untouched,
+out of assignment).
+
+Both lints (`scripts/specfactory/libm_lint.py csrc`,
+`scripts/specfactory/alg_constants.py --lint csrc`) clean. `make -j8`
+clean from a from-scratch build (`.so` files removed first), zero
+warnings.
+
+Files touched: `tests/csim/test_E09_S065_five_to_ten_entries_in_the_right_order.py`,
+`tests/csim/test_E10_S076_the_clock.py`,
+`tests/csim/test_E10_S078_a_battle_becomes_history.py`,
+`tests/csim/test_E10_S080_difficulty_is_scarcity_not_stronger_enemies.py`,
+`tests/csim/test_E12_S092_recon_then_fog.py`,
+`tests/csim/test_E14_S120_five_behaviors_three_moods.py`,
+`tests/csim/test_E14_S125_how_hard_the_enemy_tries.py`,
+`tests/csim/test_E15_S126_most_of_my_force_is_out_there.py`,
+`docs/bible/epics/E-14-enemy-macro-behavior.md`,
+this evidence file.

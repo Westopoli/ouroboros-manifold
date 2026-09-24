@@ -147,13 +147,15 @@ def test_R_065_05_they_taken_in_descending_peak(lib, world_factory):
     cat10_count = lib.om_chronicle_selected_category_count(w, category=10)
     cat11_count = lib.om_chronicle_selected_category_count(w, category=11)
 
-    # Cap of 2 entries per category during standard fill
-    assert cat10_count <= 2
-    assert cat11_count <= 2
+    # Cap of 2 entries per category during standard fill leaves only 4
+    # entries (2 from category 10, 2 from category 11) -- below 5, so
+    # R-065-06's minimum-fill fallback adds the next-highest skipped cluster
+    # (category 10's 7.0) to reach 5, taking category 10 over the standard
+    # fill's cap of 2.
+    assert cat10_count == 3
+    assert cat11_count == 2
     assert lib.om_chronicle_entry_count(w) <= 10
-    # `0 <= 2` and `0 <= 10` both pass with nothing selected at all. Pin the
-    # real total: 2 from category 10 + 2 from category 11 = 4 entries.
-    assert lib.om_chronicle_entry_count(w) == 4
+    assert lib.om_chronicle_entry_count(w) == 5
 
 
 def test_R_065_06_skipped_clusters_added_in_score(lib, world_factory):

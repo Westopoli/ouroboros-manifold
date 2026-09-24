@@ -22,14 +22,15 @@ def test_R_125_01_only_force_parity_e_10(lib, world_factory):
     """Given difficulty, When the enemy force is generated, Then only force parity (E-10 R-074-03) changes at launch [Q-125-01: A-156 interim knob; whether unit counts or script aggression also scale]."""
     w = world_factory(n_regions=1)
 
-    # Base parity = 1.0. Force parity scales by difficulty
+    # Base parity = 1.0. Force parity scales by difficulty (R-074-03: easy
+    # floor 0.95, hard ceiling 0.85).
     p_easy = lib.om_mission_compute_parity(ctypes.c_double(1.0), OMDifficulty.EASY)
     p_med = lib.om_mission_compute_parity(ctypes.c_double(1.0), OMDifficulty.MEDIUM)
     p_hard = lib.om_mission_compute_parity(ctypes.c_double(1.0), OMDifficulty.HARD)
 
     assert ctypes.c_double(p_easy).value == pytest.approx(1.0, abs=1e-5)
     assert ctypes.c_double(p_med).value == pytest.approx(1.0, abs=1e-5)
-    assert ctypes.c_double(p_hard).value == pytest.approx(1.0, abs=1e-5)
+    assert ctypes.c_double(p_hard).value == pytest.approx(0.85, abs=1e-5)
 
     # But script aggression / evaluation interval does NOT scale by difficulty (Q-125-01)
     interval_easy = lib.om_macro_get_eval_interval(OMDifficulty.EASY)
