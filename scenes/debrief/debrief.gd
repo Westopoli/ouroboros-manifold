@@ -11,18 +11,8 @@ const PLANTS := ["band-off-by-one"]
 
 # Piece C8 self-load pattern (docs/northstar/plans/push/specs/C8-M3.md
 # "Self-loading pattern"): SceneRouter never passes data into a scene
-# reached without setup() params, so debrief self-loads a fixture frame
-# in _ready() when reached that way. Fallback mirrors
-# tests/test_briefing_debrief.gd's own _build_minimal_debrief() verbatim
-# so a missing/unreadable fixture still shows real content, not defaults.
-const _DEBRIEF_FIXTURE_PATH := "res://tests/fixtures/debrief_frame_seed11.json"
-const _FALLBACK_DEBRIEF_FRAME := {
-	"type": "debrief",
-	"band": 2,
-	"achieved": 0.8,
-	"brought_home": 0.6,
-	"region_delta": {"military": -4.0, "economy": 2.0, "tension": -3.0, "population": 0.0},
-}
+# reached without setup() params, so debrief self-loads the live debrief
+# frame in _ready() when reached that way (C4-3).
 
 var _params: Dictionary = {}
 var _accent: Color = ThemeConstants.DEFAULT_ACCENT
@@ -46,19 +36,19 @@ func setup(params: Dictionary) -> void:
 func _ready() -> void:
 	if _params.is_empty():
 		_build_ui()
-		load_frame(_load_fixture_debrief_frame())
+		var bridge = load("res://autoload/c_bridge.gd").new()
+		if bridge.load_debrief_live(_live_seed(), bridge.DEFAULT_N_REGIONS, bridge.DEFAULT_FEATURES):
+			load_frame(bridge.debrief_frame())
+		else:
+			push_error("debrief: live debrief frame failed: %s" % bridge.last_error())
 
 
-func _load_fixture_debrief_frame() -> Dictionary:
-	var f := FileAccess.open(_DEBRIEF_FIXTURE_PATH, FileAccess.READ)
-	if f == null:
-		return _FALLBACK_DEBRIEF_FRAME
-	var text := f.get_as_text()
-	f.close()
-	var data = JSON.parse_string(text)
-	if data is Dictionary:
-		return data
-	return _FALLBACK_DEBRIEF_FRAME
+func _live_seed() -> int:
+	var args := OS.get_cmdline_user_args()
+	var idx := args.find("--seed")
+	if idx == -1 or idx + 1 >= args.size():
+		return 1
+	return int(args[idx + 1])
 
 
 func _input(event: InputEvent) -> void:

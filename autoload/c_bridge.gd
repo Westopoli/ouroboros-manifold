@@ -30,9 +30,15 @@ const PIPE_BIN_RES_PATH := "res://pipe/ouroboros_pipe"
 const LIVE_READ_TIMEOUT_MSEC := 5000
 const LIVE_SNAPSHOT_STEPS := 10
 const DEFAULT_N_REGIONS := 80
+# Every strategic om_feature id (csrc/ouroboros_sim.h OM_FEAT_EVENTS ..
+# OM_FEAT_LIFECYCLE); OM_FEAT_TACTICAL (8) stays off. With [6] alone nothing
+# ever changes owner (docs/architecture.md "session commands (v1.1)").
+const DEFAULT_FEATURES := [0, 1, 2, 3, 4, 5, 6, 7]
 
 var _snapshot: Dictionary = {}
 var _last_error: String = ""
+var _mission: Dictionary = {}
+var _debrief: Dictionary = {}
 
 
 func load_snapshot_file(path: String) -> bool:
@@ -77,6 +83,90 @@ func snapshot() -> Dictionary:
 
 func last_error() -> String:
 	return _last_error
+
+
+func mission_frame() -> Dictionary:
+	return _mission
+
+
+func debrief_frame() -> Dictionary:
+	return _debrief
+
+
+# Same script-up-front pattern as load_snapshot_live (a blocking pipe read
+# cannot be interleaved with writes): a fresh world, 10 steps, mission_start
+# answers the mission frame.
+func load_mission_live(seed: int, n_regions: int, features: Array) -> bool:
+	_mission = {}
+	var frame: Dictionary = _run_live_script(seed, n_regions, features,
+		[{"type": "cmd", "name": "mission_start", "faction": 0}], "mission")
+	if frame.is_empty():
+		return false
+	_mission = frame
+	return true
+
+
+# ... and mission_end after it answers the debrief frame.
+func load_debrief_live(seed: int, n_regions: int, features: Array) -> bool:
+	_debrief = {}
+	var frame: Dictionary = _run_live_script(seed, n_regions, features,
+		[{"type": "cmd", "name": "mission_start", "faction": 0}, {"type": "cmd", "name": "mission_end"}], "debrief")
+	if frame.is_empty():
+		return false
+	_debrief = frame
+	return true
+
+
+# See also: load_snapshot_live above, the v1 stopgap that goes when C2-4's
+# persistent session lands; this shares its framing and read loop, and
+# returns the first frame of stop_type ({} on any error frame, timeout or
+# spawn failure, with last_error() set for error frames).
+func _run_live_script(seed: int, n_regions: int, features: Array, tail: Array, stop_type: String) -> Dictionary:
+	_last_error = ""
+	var exe := ProjectSettings.globalize_path(PIPE_BIN_RES_PATH)
+	if not FileAccess.file_exists(exe):
+		_last_error = "pipe binary missing"
+		return {}
+	var result: Dictionary = OS.execute_with_pipe(exe, PackedStringArray())
+	if result.is_empty() or not result.has("pid"):
+		_last_error = "pipe spawn failed"
+		return {}
+	var pid: int = result["pid"]
+	var stdio: FileAccess = result.get("stdio") as FileAccess
+	if stdio == null:
+		if OS.is_process_running(pid):
+			OS.kill(pid)
+		_last_error = "pipe has no stdio"
+		return {}
+
+	var script := PackedByteArray()
+	script.append_array(_frame_cmd({"type": "cmd", "name": "set_seed", "seed": seed, "n_regions": n_regions, "features": features}))
+	script.append_array(_frame_cmd({"type": "cmd", "name": "step", "n": LIVE_SNAPSHOT_STEPS}))
+	for cmd in tail:
+		script.append_array(_frame_cmd(cmd))
+	script.append_array(_frame_cmd({"type": "cmd", "name": "quit"}))
+	stdio.store_buffer(script)
+
+	var found: Dictionary = {}
+	var deadline_msec := Time.get_ticks_msec() + LIVE_READ_TIMEOUT_MSEC
+	while Time.get_ticks_msec() < deadline_msec:
+		var msg: Variant = _read_live_frame(stdio)
+		if msg == null:
+			_last_error = "pipe closed before a %s frame" % stop_type
+			break
+		if not (msg is Dictionary):
+			continue
+		var msg_type: String = msg.get("type", "")
+		if msg_type == "error":
+			_last_error = String(msg.get("reason", ""))
+			break
+		if msg_type == stop_type:
+			found = msg
+			break
+
+	if OS.is_process_running(pid):
+		OS.kill(pid)
+	return found
 
 
 # The pipe's stdio FileAccess.get_buffer() blocks at the OS level when no
