@@ -327,7 +327,7 @@ id = "C7"
 manager = "M3"
 wave = 1
 owns = []
-owns_glob = ["autoload/qa_daemon.gd", "scenes/harness/**"]
+owns_glob = ["autoload/qa_daemon.gd", "scenes/harness/**", "scripts/qa_harness.sh"]
 acceptance = [
     "tests/test_qa_daemon.gd",
 ]
