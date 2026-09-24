@@ -1236,3 +1236,69 @@ Files touched: `tests/csim/test_E13_S098_firing_through_friends.py`,
 `tests/csim/test_E12_S092_recon_then_fog.py`,
 `tests/csim/test_E12_S093_fog_is_for_the_player_not_the_engine.py`,
 this evidence file.
+
+### tests-fix-6c: `test_R_123_01` and `test_R_055_04`
+
+#### R-123-01 (`test_E14_S123_the_enemy_replays_like_i_do.py::test_R_123_01_every_enemy_command_identical_on`)
+
+Confound: fixture drove the tactical clock with `for tick in range(200):
+lib.om_tactical_tick(w1); lib.om_tactical_tick(w2)`. `om_tactical_tick`
+(csrc/unit.c:1457) is a read-only getter -- `return om_tac(w)->current_tick;`
+-- it never advances anything. Both worlds sat at tick 0 for the whole loop,
+`om_macro_tick` never ran, no enemy command was ever logged.
+
+Fix: `lib.om_tactical_tick_to(w1, 200)` / `lib.om_tactical_tick_to(w2, 200)`
+in place of the getter loop. `om_tactical_tick_to` (csrc/unit.c:1461) drives
+`current_tick` forward one tick at a time and calls `om_macro_tick` each
+step. Both worlds now log commands and stay identical (same seed, same
+command stream).
+
+Red before: `assert count1 > 0` -- `assert 0 > 0`.
+Green after: passes.
+
+#### R-055-04 (`test_E08_S055_one_commander_one_mission_then_the_world_moves.py::test_R_055_04_character_selector_runs_after_it`)
+
+Confound: fixture was `w = world_factory(n_regions=4)` with no faction
+registered and no region owned -- `om_mission_generator_run`
+(csrc/generational.c:1441) falls back to `om_mission_fallback_region`
+(csrc/mission.c:1270) when the candidate pool is empty, which returns 0
+when no player faction is found. `chosen_region != 0` failed against this
+real (not stubbed) fallback path.
+
+Fix: registered a player faction owning region 2 (frontier, under threat
+from a hostile neighbor on region 3) so `om_mission_build_candidate_pool`
+has a real candidate to build. tests-fix-6b's first attempt at this fix
+additionally hardcoded `assert chosen_region == 2`, which is wrong: on
+current main the candidate pool's scoring picks region 3 (the higher-value
+target), not region 2, so that assertion failed (`assert 3 == 2`) even
+though the underlying behavior is correct -- the generator did pick a real,
+scored candidate. `om_mission_generator_run` already consumes the weighted-
+draw RNG state internally (it calls `om_mission_select` once), so
+re-invoking `om_mission_select` from the test to check the pick would draw
+again and could disagree with the generator's own choice; instead this
+version reads the candidate pool back with the side-effect-free
+`om_mission_candidates` accessor (same helper as
+`test_E10_S072_orders_come_from_where_the_world_hurts.py`'s
+`read_mission_candidates`) and asserts `chosen_region` is one of the real
+candidates the generator scored -- self-consistent whichever region
+actually wins, not a hardcoded region number.
+
+Red before (tests-fix-6b's `== 2` version): `assert chosen_region == 2` --
+`assert 3 == 2`.
+Green after: `assert chosen_region != 0` and `assert any(c.region_idx ==
+chosen_region for c in candidates)` both pass.
+
+### Whole-suite check (`tests/csim`, before vs after, this branch)
+
+Merged build (fresh `origin/main`, includes B10c/B10c-5/B11-2/B11-5/B11-6/
+B12-5/B12-8/B13-2/B14-2/B15m-5 already landed by the push clerk), `make -j8`
+clean, zero warnings. Ran `tests/csim` full before the two test edits: `139
+failed, 614 passed, 49 skipped, 1 xfailed`. Applied both fixes, reran (no C
+changed): `137 failed, 616 passed, 49 skipped, 1 xfailed`. Exactly 2 fewer
+failures, 2 more passes, both target tests. No new red anywhere in the
+suite.
+
+Files touched:
+`tests/csim/test_E14_S123_the_enemy_replays_like_i_do.py`,
+`tests/csim/test_E08_S055_one_commander_one_mission_then_the_world_moves.py`,
+this evidence file.

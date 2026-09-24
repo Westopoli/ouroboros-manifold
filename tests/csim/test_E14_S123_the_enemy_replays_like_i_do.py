@@ -32,10 +32,11 @@ def test_R_123_01_every_enemy_command_identical_on(lib, world_factory):
     lib.om_mission_init_seed(w1, seed)
     lib.om_mission_init_seed(w2, seed)
 
-    # Run 200 ticks on both worlds
-    for tick in range(200):
-        lib.om_tactical_tick(w1)
-        lib.om_tactical_tick(w2)
+    # Drive the tactical clock with om_tactical_tick_to -- om_tactical_tick
+    # is a read-only getter (returns current_tick, never advances it), so a
+    # loop calling it left both worlds at tick 0 forever, logging nothing.
+    lib.om_tactical_tick_to(w1, 200)
+    lib.om_tactical_tick_to(w2, 200)
 
     count1 = lib.om_replay_command_count(w1)
     count2 = lib.om_replay_command_count(w2)
