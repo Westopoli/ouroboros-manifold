@@ -1,0 +1,125 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "tactical.schema.json",
+ "type": "object",
+ "required": [
+  "type",
+  "tick",
+  "map",
+  "units",
+  "visible"
+ ],
+ "properties": {
+  "type": {
+   "const": "tactical"
+  },
+  "tick": {
+   "type": "integer"
+  },
+  "map": {
+   "type": "object",
+   "required": [
+    "canvas",
+    "nodes"
+   ],
+   "properties": {
+    "canvas": {
+     "type": "number"
+    },
+    "nodes": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "required": [
+       "i",
+       "kind",
+       "x",
+       "y"
+      ],
+      "properties": {
+       "i": {
+        "type": "integer"
+       },
+       "kind": {
+        "type": "integer"
+       },
+       "x": {
+        "type": "number"
+       },
+       "y": {
+        "type": "number"
+       }
+      },
+      "additionalProperties": true
+     }
+    },
+    "cover": {
+     "type": "array"
+    },
+    "obstacles": {
+     "type": "array"
+    }
+   },
+   "additionalProperties": true
+  },
+  "units": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "id",
+     "faction",
+     "type",
+     "tier",
+     "x",
+     "y",
+     "hp",
+     "layer",
+     "facing",
+     "target",
+     "state"
+    ],
+    "properties": {
+     "id": {
+      "type": "integer"
+     },
+     "faction": {
+      "type": "integer"
+     },
+     "type": {
+      "type": "integer"
+     },
+     "tier": {
+      "type": "integer"
+     },
+     "x": {
+      "type": "number"
+     },
+     "y": {
+      "type": "number"
+     },
+     "hp": {
+      "type": "number"
+     },
+     "layer": {
+      "type": "integer"
+     },
+     "facing": {
+      "type": "number"
+     },
+     "target": {
+      "type": "integer"
+     },
+     "state": {
+      "type": "integer"
+     }
+    },
+    "additionalProperties": true
+   }
+  },
+  "visible": {
+   "type": "object"
+  }
+ },
+ "additionalProperties": true
+}
