@@ -192,6 +192,11 @@ struct om_world {
     void *support_state;
     void (*support_state_free)(void *);
 
+    /* F2k: csrc/tactical_mapgen.c per-world state, same convention as
+     * tactical_state above. */
+    void *mapgen_state;
+    void (*mapgen_state_free)(void *);
+
     /* F2e: E-06 diplomacy storage backing the om_faction_stance_counter /
      * om_faction_cooperative_since / om_faction_last_knowledge_lost
      * accessors (csrc/ouroboros_sim.h; card B5 fills the read/write bodies
