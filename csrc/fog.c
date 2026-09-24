@@ -613,13 +613,14 @@ uint32_t om_unit_spawn_with_elevation(om_world *w, int unit_type, int32_t factio
 }
 
 void om_visibility_compute(om_world *w) {
-    /* R-089-04: visibility is a pure function of current positions, computed
-     * fresh by om_unit_can_see/om_player_can_see* on every call -- nothing
-     * here needs to be cached or carried forward. This entry point exists
-     * for callers that expect an explicit compute step (S-089/S-090/S-091
-     * fixtures all call it before querying); it just makes sure the fog
-     * state exists yet. */
-    (void)om_fog(w);
+    /* R-089-04 / Q-089-01: visibility is a pure function of current positions
+     * with no memory, so nothing is cached here. The on-demand queries
+     * (om_unit_can_see, om_player_can_see*, om_fog_get_treatment_at,
+     * om_unit_acquire_target) find their candidates on unit.c's grid; this call
+     * only extends the world-wide sensor bound they size that query with over
+     * any units spawned since, so the first query of a tick does not pay for
+     * it. */
+    (void)om_fog_world_bound(w);
 }
 
 void om_visibility_set_player_fog(om_world *w, int on) {
