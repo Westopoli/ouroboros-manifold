@@ -6017,7 +6017,7 @@ fields = [{ name = "type", ctype = "uint32_t" }, { name = "category", ctype = "u
 [[structs]]
 name = "OmChronicleEntry"
 source_test = "tests/csim/test_E09_S068_written_from_fragments_never_the_same_twice.py"
-fields = [{ name = "id", ctype = "uint32_t" }, { name = "category", ctype = "uint32_t" }, { name = "region", ctype = "uint32_t" }, { name = "base_text", ctype = "char[512]" }, { name = "expanded_text", ctype = "char[1024]" }, { name = "start_tick", ctype = "uint64_t" }, { name = "end_tick", ctype = "uint64_t" }]
+fields = [{ name = "id", ctype = "uint32_t" }, { name = "category", ctype = "uint32_t" }, { name = "region", ctype = "uint32_t" }, { name = "base_text", ctype = "char[512]" }, { name = "expanded_text", ctype = "char[1024]" }, { name = "start_tick", ctype = "uint64_t" }, { name = "end_tick", ctype = "uint64_t" }, { name = "fragment_ids", ctype = "int32_t[3]" }, { name = "region_ref", ctype = "int32_t" }, { name = "faction_ref", ctype = "int32_t" }, { name = "lineage_ref", ctype = "int32_t" }]
 
 [[structs]]
 name = "OmFragmentPoolCounts"
@@ -6072,7 +6072,7 @@ fields = [{ name = "type", ctype = "uint32_t" }, { name = "category", ctype = "u
 [[structs]]
 name = "om_chronicle_entry"
 source_test = "tests/csim/test_E09_S068_written_from_fragments_never_the_same_twice.py"
-fields = [{ name = "id", ctype = "uint32_t" }, { name = "category", ctype = "uint32_t" }, { name = "region", ctype = "uint32_t" }, { name = "base_text", ctype = "char[512]" }, { name = "expanded_text", ctype = "char[1024]" }, { name = "start_tick", ctype = "uint64_t" }, { name = "end_tick", ctype = "uint64_t" }]
+fields = [{ name = "id", ctype = "uint32_t" }, { name = "category", ctype = "uint32_t" }, { name = "region", ctype = "uint32_t" }, { name = "base_text", ctype = "char[512]" }, { name = "expanded_text", ctype = "char[1024]" }, { name = "start_tick", ctype = "uint64_t" }, { name = "end_tick", ctype = "uint64_t" }, { name = "fragment_ids", ctype = "int32_t[3]" }, { name = "region_ref", ctype = "int32_t" }, { name = "faction_ref", ctype = "int32_t" }, { name = "lineage_ref", ctype = "int32_t" }]
 
 [[structs]]
 name = "om_client_snapshot"

@@ -1012,6 +1012,10 @@ typedef struct om_chronicle_entry {
     char expanded_text[1024];
     uint64_t start_tick;
     uint64_t end_tick;
+    int32_t fragment_ids[3];
+    int32_t region_ref;
+    int32_t faction_ref;
+    int32_t lineage_ref;
 } om_chronicle_entry;
 
 typedef struct om_client_unit {

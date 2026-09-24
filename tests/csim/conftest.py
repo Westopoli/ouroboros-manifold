@@ -1490,6 +1490,10 @@ class OmChronicleEntry(ctypes.Structure):
         ("expanded_text", ctypes.c_char * 1024),
         ("start_tick", ctypes.c_uint64),
         ("end_tick", ctypes.c_uint64),
+        ("fragment_ids", ctypes.c_int32 * 3),
+        ("region_ref", ctypes.c_int32),
+        ("faction_ref", ctypes.c_int32),
+        ("lineage_ref", ctypes.c_int32),
     ]
 
 
