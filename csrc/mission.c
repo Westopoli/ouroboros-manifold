@@ -271,6 +271,13 @@
  * tests/csim/test_E17_S113_*.py; csrc/tactical_mapgen.c does not export it). */
 #define OM_MISSION_SPINE_NODE_OBJECTIVE 0
 
+/* ALG-71 / R-114-03 objective cover row (GRADIENT_OBJECTIVE_COVER_INTENSITY
+ * 0.50, GRADIENT_OBJECTIVE_COVER_RADIUS 400 in simulation/config.py); only the
+ * radius is used, om_map_add_cover takes no intensity. The height has no table
+ * value: Q-098-01 placeholder, inert because fog.c blocks on any cover disc. */
+#define OM_MISSION_OBJECTIVE_COVER_RADIUS 400.0
+#define OM_MISSION_OBJECTIVE_COVER_HEIGHT 5.0
+
 /* R-079-03/04: debrief retention prose bands -- no bible-given cutoffs
  * (the debrief only has to show retention qualitatively, not a formula),
  * chosen so "most" reads as "the force came home largely intact". */
@@ -375,9 +382,8 @@ typedef struct {
     om_vec2  objective_center[OM_MISSION_MAX_OBJECTIVES];
     int      objective_center_set[OM_MISSION_MAX_OBJECTIVES];
 
-    /* B9-6 fixed MVP tactical layout, instantiated once at om_mission_setup. */
+    /* B9-6 fixed MVP tactical layout, instantiated at every om_mission_setup. */
     uint32_t enemy_units[OM_MISSION_N_UNIT_TYPES];
-    int      map_instantiated;
 } om_mission_state;
 
 static void om_mis_state_free(void *p) {
@@ -1240,12 +1246,13 @@ double om_mission_eval_escort(om_world *w, uint32_t objective_idx, uint32_t reac
 }
 
 /* R-075-02: the hold timer advances only while no enemy unit is inside the
- * zone radius; completion = elapsed / required. */
+ * zone radius; completion = elapsed / required. One call is one tactical
+ * step, so it adds that step's base ticks (1 at period 1, 2 at period 2). */
 void om_mission_eval_hold_zone(om_world *w, uint32_t objective_idx, uint32_t enemies_inside) {
     om_mission_state *st = om_mis(w);
     om_mission_objective *o = om_mission_ensure_objective(st, objective_idx);
     if (!o) return;
-    if (enemies_inside == 0) o->hold_elapsed_ticks++;
+    if (enemies_inside == 0) o->hold_elapsed_ticks += om_tactical_tick_period(w);
     if (o->hold_required_ticks > 0) {
         o->spec.completion = (double)o->hold_elapsed_ticks / (double)o->hold_required_ticks;
     }
@@ -1569,10 +1576,9 @@ void om_mission_inject_candidate(om_world *w, uint32_t region_idx, uint32_t arch
 }
 
 /* R-076-03: ended once the deadline passes (or om_mission_end froze it
- * early). om_tactical_tick takes a non-const om_world* as a getter-only
- * call (it never allocates or mutates when tactical state already exists);
- * casting the const away here follows the same precedent as
- * csrc/generational.c's om_rng_draw((om_world *)w) calls. */
+ * early). The deadline is real battle time, so it counts base ticks
+ * (om_tactical_base_tick: the step index at period 1, the period summed per
+ * step at period 2), never tactical steps. */
 int om_mission_is_ended(const om_world *w) {
     const om_mission_state *st = om_mis_ro(w);
     if (!st) return 0;
@@ -1583,7 +1589,7 @@ int om_mission_is_ended(const om_world *w) {
      * read late after Begin starts the count late). */
     int phase = om_mission_get_phase(w);
     if (phase == 0 /* OM_FOG_PHASE_RECON, csrc/fog.c */) return 0;
-    uint64_t now = om_tactical_tick((om_world *)w);
+    uint64_t now = om_tactical_base_tick(w);
     if (st->tactical_baseline_pending) {
         om_mission_state *mst = (om_mission_state *)w->mission_state;
         mst->tactical_baseline_tick = now;
@@ -1596,7 +1602,7 @@ int om_mission_is_ended(const om_world *w) {
 void om_mission_on_begin(om_world *w) {
     if (!w) return;
     om_mission_state *st = om_mis(w);
-    st->tactical_baseline_tick = om_tactical_tick(w);
+    st->tactical_baseline_tick = om_tactical_base_tick(w);
     st->tactical_baseline_pending = 0;
 }
 
@@ -1856,18 +1862,15 @@ static void om_mission_instantiate_map(om_world *w, om_mission_state *st) {
     if (player < 0) player = 0;
     int32_t enemy = om_mission_enemy_faction(w, st->mission_region, player);
     double edge = OM_UNIT_COLLISION_RADIUS;
-    /* A later mission in the same world clears the previous battle's units
-     * (om_tactical_reset). No public call clears map nodes, so they are added
-     * only once: proposed om_map_clear(om_world *w) in csrc/tactical_mapgen.c
-     * would let each mission lay its own. */
-    if (st->map_instantiated) {
-        om_tactical_reset(w);
-    } else {
-        st->map_instantiated = 1;
-        om_map_add_spine_node(w, canvas / 2.0, canvas / 2.0, OM_MISSION_SPINE_NODE_OBJECTIVE);
-        om_map_add_spawn_point(w, canvas / 2.0, edge, player);
-        om_map_add_spawn_point(w, canvas / 2.0, canvas - edge, enemy);
-    }
+    /* Every mission lays its own battle: the previous one's units, map and
+     * pushed objective centres are cleared first. */
+    om_tactical_reset(w);
+    om_map_clear(w);
+    memset(st->objective_center_set, 0, sizeof(st->objective_center_set));
+    om_map_add_spine_node(w, canvas / 2.0, canvas / 2.0, OM_MISSION_SPINE_NODE_OBJECTIVE);
+    om_map_add_cover(w, canvas / 2.0, canvas / 2.0, OM_MISSION_OBJECTIVE_COVER_RADIUS, OM_MISSION_OBJECTIVE_COVER_HEIGHT);
+    om_map_add_spawn_point(w, canvas / 2.0, edge, player);
+    om_map_add_spawn_point(w, canvas / 2.0, canvas - edge, enemy);
     om_mission_spawn_force(w, st->player_units, player, canvas / 2.0, edge, 1.0);
     om_mission_spawn_force(w, st->enemy_units, enemy, canvas / 2.0, canvas - edge, -1.0);
 }
@@ -1932,16 +1935,15 @@ void om_mission_setup_survive(om_world *w, uint32_t objective_idx, uint64_t requ
     o->spec.completion = 0.0;
 }
 
-/* R-076: the tactical clock. Baseline is the tactical tick at setup time,
- * read through the public om_tactical_tick(w) getter (csrc/unit.c) so
- * om_mission_is_ended below compares against the same clock the tactical
- * engine advances -- see that function's note on om_tactical_tick's own
- * gap (it does not advance on its own without a spawned unit / a step). */
+/* R-076: the tactical clock. Baseline is the base tick at setup time, read
+ * through the public om_tactical_base_tick(w) getter (csrc/unit.c) so
+ * om_mission_is_ended compares against the same clock the tactical engine
+ * advances: base ticks, which stay real time when the step period is 2. */
 void om_mission_setup_tactical(om_world *w, uint32_t p1, uint64_t time_limit) {
     om_mission_state *st = om_mis(w);
     (void)p1;
     st->tactical_time_limit = time_limit;
-    st->tactical_baseline_tick = om_tactical_tick(w);
+    st->tactical_baseline_tick = om_tactical_base_tick(w);
     st->tactical_baseline_pending = om_mission_get_phase(w) == 0 /* OM_FOG_PHASE_RECON, csrc/fog.c */;
     st->tactical_ended = 0;
 }
