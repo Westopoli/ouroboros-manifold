@@ -75,6 +75,7 @@
 #define OM_MOVE_GRID_BUCKETS 16384
 #define OM_MOVE_GRID_CELL (4.0 * OM_UNIT_COLLISION_RADIUS)
 #define OM_MOVE_GRID_COORD_LIMIT 1.0e9
+#define OM_MOVE_INSERTION_SORT_MAX 96
 #define OM_MOVE_GRID_HASH_X 73856093u
 #define OM_MOVE_GRID_HASH_Y 19349663u
 
@@ -205,6 +206,12 @@ typedef struct {
     int32_t  grid_cy[OM_MOVE_MAX_UNITS];
     uint8_t  grid_in[OM_MOVE_MAX_UNITS];
     uint32_t grid_scratch[OM_MOVE_MAX_UNITS];
+
+    int      settle_valid;
+    uint32_t settle_max;
+    uint8_t  settle_flag[OM_MOVE_MAX_UNITS];
+    double   settle_x[OM_MOVE_MAX_UNITS];
+    double   settle_y[OM_MOVE_MAX_UNITS];
 } om_move_state;
 
 static void om_move_state_free_fn(void *p) {
@@ -366,6 +373,14 @@ static void om_move_sift_down(uint32_t *a, uint32_t root, uint32_t n) {
 static void om_move_sort_ids(uint32_t *a, uint32_t n) {
     uint32_t i;
     if (n < 2) return;
+    if (n <= OM_MOVE_INSERTION_SORT_MAX) {
+        for (i = 1; i < n; i++) {
+            uint32_t v = a[i], j = i;
+            while (j > 0 && a[j - 1] > v) { a[j] = a[j - 1]; j--; }
+            a[j] = v;
+        }
+        return;
+    }
     for (i = n / 2; i-- > 0;) om_move_sift_down(a, i, n);
     for (i = n - 1; i > 0; i--) {
         uint32_t t = a[0]; a[0] = a[i]; a[i] = t;
@@ -582,13 +597,17 @@ static int om_move_probe_clear(om_world *w, om_move_state *ms, uint32_t self_id,
     return 1;
 }
 
-/* One colliding pair, a's id below b's. */
-static void om_move_collide_pair(om_move_state *ms, om_move_unit *a, om_move_unit *b) {
+/* One colliding pair, a's id below b's; returns 1 when a position was
+ * written. d2 >= target^2 implies sqrt(d2) >= target (sqrt is monotonic and
+ * exact at target^2), so that early return matches the sqrt compare. */
+static int om_move_collide_pair(om_move_state *ms, om_move_unit *a, om_move_unit *b) {
     double dx, dy, dist, target, overlap, ux, uy;
+    int changed = 0;
     dx = b->x - a->x; dy = b->y - a->y;
-    dist = sqrt(dx * dx + dy * dy);
     target = 2.0 * OM_UNIT_COLLISION_RADIUS;
-    if (dist >= target) return;
+    if (dx * dx + dy * dy >= target * target) return 0;
+    dist = sqrt(dx * dx + dy * dy);
+    if (dist >= target) return 0;
     if (dist < OM_COLLISION_EXACT_EPS) {
         /* R-097-07: exact overlap -- the lower unit id (a, since
          * a's id < b's always here) moves in the canonical +x
@@ -596,6 +615,7 @@ static void om_move_collide_pair(om_move_state *ms, om_move_unit *a, om_move_uni
         double half = target / 2.0;
         a->x += half;
         b->x -= half;
+        changed = 1;
     } else {
         int a_stat = om_move_is_stationary(a);
         int b_stat = om_move_is_stationary(b);
@@ -607,15 +627,19 @@ static void om_move_collide_pair(om_move_state *ms, om_move_unit *a, om_move_uni
              * not exercised by any acceptance test. */
         } else if (a_stat) {
             b->x += ux * overlap; b->y += uy * overlap;
+            changed = 1;
         } else if (b_stat) {
             a->x -= ux * overlap; a->y -= uy * overlap;
+            changed = 1;
         } else {
             a->x -= ux * overlap * 0.5; a->y -= uy * overlap * 0.5;
             b->x += ux * overlap * 0.5; b->y += uy * overlap * 0.5;
+            changed = 1;
         }
     }
     om_move_grid_update(ms, a);
     om_move_grid_update(ms, b);
+    return changed;
 }
 
 /* Same pairs in the same order as an all-pairs i < j sweep with live
@@ -623,11 +647,12 @@ static void om_move_collide_pair(om_move_state *ms, om_move_unit *a, om_move_uni
  * reach + slack of a's position when queried; b never moves before its own
  * pair with a, and a is re-queried once it has drifted more than half the
  * slack, so no pair the sweep would have resolved is missed. */
-static void om_move_collision_once(om_world *w, om_move_state *ms) {
+static int om_move_collision_once(om_world *w, om_move_state *ms) {
     const double target = 2.0 * OM_UNIT_COLLISION_RADIUS;
     const double slack = target;
     const double drift2 = (slack * 0.5) * (slack * 0.5);
     uint32_t id_i;
+    int changed = 0;
     for (id_i = 1; id_i <= ms->discovery_max; id_i++) {
         om_move_unit *a = om_move_get(ms, id_i);
         uint32_t n, k, last = id_i;
@@ -646,19 +671,59 @@ static void om_move_collision_once(om_world *w, om_move_state *ms) {
                 if (k >= n) break;
                 id_j = ms->grid_scratch[k];
             }
-            om_move_collide_pair(ms, a, &ms->units[id_j]);
+            if (om_move_collide_pair(ms, a, &ms->units[id_j])) changed = 1;
             last = id_j;
         }
     }
     (void)w;
+    return changed;
+}
+
+/* A collision pass reads only each unit's x/y, its stationary flag, and
+ * whether it is in the grid. A pass that writes nothing is a fixpoint: the
+ * same state gives the same (empty) pass again, so the remaining iterations
+ * and, next time this state is seen, the whole pass are skipped. settle_*
+ * holds that state exactly (bit-compared). */
+static uint8_t om_move_settle_flag(const om_move_unit *mu, int live) {
+    return (uint8_t)((live ? 1 : 0) | (om_move_is_stationary(mu) ? 2 : 0));
+}
+
+static int om_move_settle_matches(om_world *w, om_move_state *ms) {
+    uint32_t id;
+    if (!ms->settle_valid || !ms->grid_live || ms->settle_max != ms->discovery_max) return 0;
+    for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
+        const om_move_unit *mu = &ms->units[id];
+        int live = mu->in_use && om_unit_alive(w, id);
+        if (live != (int)ms->grid_in[id] || om_move_settle_flag(mu, live) != ms->settle_flag[id]) return 0;
+        if (live && (memcmp(&mu->x, &ms->settle_x[id], sizeof(double)) != 0
+                  || memcmp(&mu->y, &ms->settle_y[id], sizeof(double)) != 0)) return 0;
+    }
+    return 1;
+}
+
+static void om_move_settle_record(om_move_state *ms) {
+    uint32_t id;
+    ms->settle_max = ms->discovery_max;
+    for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
+        const om_move_unit *mu = &ms->units[id];
+        ms->settle_flag[id] = om_move_settle_flag(mu, ms->grid_in[id]);
+        ms->settle_x[id] = mu->x;
+        ms->settle_y[id] = mu->y;
+    }
+    ms->settle_valid = 1;
 }
 
 static void om_move_collision_pass_internal(om_world *w, om_move_state *ms) {
     int iter;
     om_move_discover(w, ms);
+    if (om_move_settle_matches(w, ms)) return;
     om_move_grid_rebuild(w, ms);
+    ms->settle_valid = 0;
     for (iter = 0; iter < OM_COLLISION_MAX_ITER; iter++) {
-        om_move_collision_once(w, ms);
+        if (!om_move_collision_once(w, ms)) {
+            om_move_settle_record(ms);
+            break;
+        }
     }
 }
 
