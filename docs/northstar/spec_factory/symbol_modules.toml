@@ -75,6 +75,12 @@ om_unit_get_target                  = "unit.c"
 om_command_attack_move              = "unit.c"
 om_command_attack_target            = "unit.c"
 om_command_activate_ability         = "unit.c"
+# F2l header accessors (fog B11, movement B12b, support B14 leaves need these)
+om_unit_get_faction                 = "unit.c"
+om_unit_get_unit_type               = "unit.c"
+om_unit_count                       = "unit.c"
+om_unit_id_at                       = "unit.c"
+om_unit_brace_phase                 = "unit.c"
 # movement and position: E-13
 om_command_move                     = "tactical_move.c"
 om_unit_get_pos                     = "tactical_move.c"
