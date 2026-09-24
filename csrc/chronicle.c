@@ -1428,26 +1428,56 @@ static uint32_t chron_build_chain_clusters(chron_state *st) {
     return n_merged;
 }
 
-/* R-067-01: only the two disjuncts answerable from the frozen ABI (attached
- * character's own lineage; region == last mission region). "a lineage
- * member lives in its region" (the third disjunct) needs a region-residency
- * query generational.c does not expose publicly -- see piece report. */
+/* No public lineage enumerator exists yet (see report: om_lineage_count /
+ * om_lineage_id_at), so lineage ids are probed over a fixed window; a lineage
+ * exists when its history has an oldest entry. Auto-minted lineage ids sit
+ * far above this window and are not seen. */
+#define CHRON_LINEAGE_PROBE_MAX 512
+
+static int chron_lineage_exists(const om_world *w, uint32_t lineage_id) {
+    return om_lineage_history_region(w, lineage_id, 0) >= 0;
+}
+
+static int chron_region_has_lineage_member(const om_world *w, uint32_t region_idx) {
+    for (uint32_t id = 0; id < CHRON_LINEAGE_PROBE_MAX; id++) {
+        if (chron_lineage_exists(w, id) && om_lineage_member_in_region(w, id, region_idx)) return 1;
+    }
+    return 0;
+}
+
+/* R-067-01: a lineage member lives in the region, or the attached character
+ * is in the lineage, or the region is the last mission's region. */
 static int chron_is_lineage_event(const om_world *w, uint32_t lineage_id, uint32_t region_idx,
                                    uint32_t attached_character_id, uint32_t mission_region) {
     if (region_idx == mission_region) return 1;
     if (attached_character_id != 0 && om_character_lineage_id(w, attached_character_id) == lineage_id) return 1;
-    return 0;
+    return om_lineage_member_in_region(w, lineage_id, region_idx);
 }
 
+/* ALG-50 with only the lineage term derivable from region_idx alone; the
+ * mission-region, attached-character and chain-length terms need per-event
+ * context this entry point is not given. */
 static double chron_score_event(const om_world *w, uint32_t region_idx, uint32_t tier, double delta_sum) {
-    (void)w; (void)region_idx;
-    /* has_lineage_member cannot be derived here without a region-residency
-     * query into generational.c's lineage/character state -- see piece
-     * report; defaults to 0 (in_mission_region/has_character/chain_length
-     * are likewise unavailable from region_idx alone). */
     double base = chron_score_base(tier, delta_sum);
-    double mult = chron_context_multiplier(0, 0, 0, 0);
+    double mult = chron_context_multiplier(0, 0, 0, chron_region_has_lineage_member(w, region_idx));
     return base * mult;
+}
+
+/* ALG-51 step 2, "none" case: with no lineage cluster among the candidates,
+ * one lineage_quiet cluster for the first lineage, in its last history region
+ * (its first active member's region needs a member accessor generational.c
+ * does not expose). */
+static void chron_add_quiet_lineage_cluster(const om_world *w, chron_state *st) {
+    for (uint32_t i = 0; i < st->n_candidates; i++) {
+        if (st->candidates[i].type == CTYPE_LINEAGE) return;
+    }
+    for (uint32_t id = 0; id < CHRON_LINEAGE_PROBE_MAX; id++) {
+        if (!chron_lineage_exists(w, id)) continue;
+        int32_t region = 0;
+        for (uint32_t k = 0; om_lineage_history_region(w, id, k) >= 0; k++) region = om_lineage_history_region(w, id, k);
+        chron_push_candidate(st, CTYPE_LINEAGE, CAT_LINEAGE_QUIET, (uint32_t)region, 0.0, -1, 0, 0);
+        return;
+    }
 }
 
 /* Stable descending-score insertion sort -- qsort's tie-break order is
@@ -1482,6 +1512,7 @@ static void chron_run_selection(om_world *w) {
     memset(cat_count, 0, sizeof(cat_count));
 
     if (st->n_candidates == 0) return;
+    chron_add_quiet_lineage_cluster(w, st);
     st->n_clusters = 0;
     st->n_entries = 0;
 
@@ -2163,10 +2194,14 @@ int om_chronicle_entry_get(const om_world *w, uint32_t index, om_chronicle_entry
     return 1;
 }
 
-/* ---- generated stubs from signatures.toml ---- */
 int om_chronicle_add_regional_event(om_world *w, uint32_t region_idx, uint32_t category, double score) {
-    /* STUB: B8-5 implements */
-    (void)w; (void)region_idx; (void)category; (void)score;
-    return 0;
+    if (!w || region_idx >= w->n_regions) return 0;
+    uint32_t type;
+    if (category >= CAT_REGIONAL_FACTION_SHIFT && category <= CAT_REGIONAL_STABLE) type = CTYPE_REGIONAL;
+    else if (category >= CAT_CHAIN_REVOLT_SPAWNED && category <= CAT_CHAIN_CRISIS_RESOLVED_BADLY) type = CTYPE_CHAIN;
+    else return 0;
+    chron_state *st = chron(w);
+    if (st->n_candidates >= CHRON_MAX_CANDIDATES) return 0;
+    chron_push_candidate(st, type, category, region_idx, score, -1, 0, 0);
+    return 1;
 }
-/* ---- end generated stubs ---- */
