@@ -118,10 +118,9 @@ enum { OM_MACRO_DIR_N, OM_MACRO_DIR_E, OM_MACRO_DIR_S, OM_MACRO_DIR_W, OM_MACRO_
 #define OM_MACRO_CAPTURE_BUF_CAP 65536
 #define OM_MACRO_BUS_NAME_CAP 64
 #define OM_MACRO_UNIT_TYPE_SLOTS 8
-/* Not in om_constants.h: R-120-03 pins the modifier speeds in prose
- * (E-14 epic; Q-120-01 is still flagged on them). */
-#define OM_MACRO_SPEED_MULT_CAUTIOUS 0.6
-#define OM_MACRO_SPEED_MULT_AGGRESSIVE 1.2
+/* Not in om_constants.h: Q-120-01 closed (b), no posture differentiation. */
+#define OM_MACRO_SPEED_MULT_CAUTIOUS 1.0
+#define OM_MACRO_SPEED_MULT_AGGRESSIVE 1.0
 /* Not in om_constants.h: Q-122-01 closed (a), routed below 20 percent HP. */
 #define OM_MACRO_ROUT_HP_THRESHOLD 0.20
 /* Not in om_constants.h: Q-124-01 closed (a), p = 0.07 per mission. */
@@ -631,6 +630,7 @@ void om_mission_schedule_external_reinforcement(om_world *w, om_reinforcement_wa
     if (roll < prob) {
         p1->is_scheduled = 1;
         p1->direction = (uint32_t)(om_rng_draw(w) * (double)OM_MACRO_DIR_COUNT);
+        /* Untuned guess (1..40 ticks) pending Q-124-02. */
         p1->arrival_tick = om_tactical_tick(w) + (uint64_t)(om_rng_draw(w) * (double)OM_SCRIPT_EVAL_INTERVAL_TICKS) + 1;
     } else {
         p1->is_scheduled = 0;
