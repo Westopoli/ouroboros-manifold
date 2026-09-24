@@ -24,6 +24,7 @@ const BAND_SPLIT_LOW := 32.5
 const BAND_SPLIT_HIGH := 70.0
 const FLAT_COLOUR := Color(1.0, 1.0, 1.0, 1.0)
 const FILAMENT_RADIUS := 0.5
+const FILAMENT_COLOUR := Color(0.6, 0.6, 0.6, 1.0)
 const POINT_RADIUS := 1.2
 const OWNER_SAT := 0.65
 const OWNER_VAL := 0.85
@@ -41,6 +42,8 @@ var _plants: Dictionary = {}
 var _frozen_band: String = ""
 
 var _gen := GalaxyGen.new()
+var _point_material: StandardMaterial3D
+var _filament_material: StandardMaterial3D
 
 @onready var _world: Node3D = $World
 @onready var _points: MultiMeshInstance3D = $World/Points
@@ -49,11 +52,25 @@ var _gen := GalaxyGen.new()
 
 
 func _ready() -> void:
+	_build_materials()
 	_camera_rig.set_view(DEFAULT_DISTANCE, Vector3.ZERO)
 	_load_live_snapshot()
 	var mission_btn := get_node_or_null("UI/Mission")
 	if mission_btn:
 		mission_btn.pressed.connect(func(): SceneRouter.go_to("mission_briefing"))
+
+
+# The scene has no light or environment, so a default lit material draws
+# every mesh black (look 4, first_look/README.md): both materials are
+# unshaded, and the points read the per-instance owner colour as albedo.
+func _build_materials() -> void:
+	_point_material = StandardMaterial3D.new()
+	_point_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	_point_material.vertex_color_use_as_albedo = true
+	_point_material.vertex_color_is_srgb = true
+	_filament_material = StandardMaterial3D.new()
+	_filament_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	_filament_material.albedo_color = FILAMENT_COLOUR
 
 
 # Self-loading pattern (docs/northstar/plans/push/specs/C8-M3.md
@@ -262,6 +279,7 @@ func _build_tube(from_pos: Vector3, to_pos: Vector3) -> MeshInstance3D:
 	mesh.bottom_radius = FILAMENT_RADIUS
 	mesh.height = maxf(from_pos.distance_to(to_pos), 0.001)
 	mi.mesh = mesh
+	mi.material_override = _filament_material
 	var dir := to_pos - from_pos
 	var basis := Basis()
 	if dir.length_squared() > 0.0001:
@@ -285,3 +303,4 @@ func _render_points() -> void:
 		mm.set_instance_transform(idx, Transform3D(Basis(), _positions[i]))
 		mm.set_instance_color(idx, _region_colours.get(i, FLAT_COLOUR))
 	_points.multimesh = mm
+	_points.material_override = _point_material
