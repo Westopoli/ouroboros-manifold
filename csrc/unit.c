@@ -65,6 +65,9 @@
 #define OM_GRID_MAX_DIM 256
 #define OM_GRID_PAD 1e-6
 #define OM_GRID_INSERTION_SORT_MAX 32
+/* om_tac_nearest_hostile: a second-nearest distance within this of the
+ * nearest hands the choice back to the ordered reference scan. */
+#define OM_TIE_SCAN_WINDOW (4.0 * OM_TIE_EPSILON)
 #define OM_MAX_CUSTOM_TYPES 64
 #define OM_UNIT_TYPE_COUNT 6
 
@@ -184,6 +187,13 @@
  * anybody, or Warden aura regen outpacing the damage) then returns in a
  * moment instead of at the 1M-tick cap. */
 #define OM_TACTICAL_STALEMATE_TICKS ((uint64_t)OM_ABILITY_BARRAGE_COOLDOWN_TICKS)
+
+/* E-13 R-099-03 (decision A): above OM_TACTICAL_HIGH_LOAD_UNITS live units
+ * (hp > 0) each tactical step spans OM_TACTICAL_HIGH_LOAD_PERIOD base ticks
+ * (20 -> 10 ticks per second). Neither number has an ALG id or a
+ * simulation/config.py name; the bible pins them in prose only. */
+#define OM_TACTICAL_HIGH_LOAD_UNITS 1000
+#define OM_TACTICAL_HIGH_LOAD_PERIOD 2
 
 /* S-086/ALG-63: one ability per unit type, exact numbers per
  * tests/csim/test_E11_S086_one_ability_each.py. OM_FORTIFY_RADIUS,
@@ -376,10 +386,20 @@ typedef struct {
     om_ability_event    ability_events[OM_ABILITY_EVENT_BUFFER_CAP];
     uint32_t            n_ability_events;
     uint64_t            current_tick;
+    /* R-099-03: base ticks the current step spans, recomputed from the live
+     * count at the start of every step; 0 (fresh or reset state) reads as 1.
+     * Every per-step quantity in this file scales by it so per-second values
+     * stay put. Not saved: tactical_state has no write hook, and the next
+     * step recomputes it. See also: om_tactical_tick_period. */
+    uint32_t            tick_period_ticks;
     int                 abilities_disabled;
     uint64_t            validated_tick;
     om_grid             grid;
     uint32_t           *aura_count;
+    /* units of each type ever spawned since the last reset (a unit's type
+     * never changes): zero means no candidate can match, so the aura and
+     * fortify scans in om_unit_damage_reduction are skipped. */
+    uint32_t            n_wardens, n_bastions;
 } om_tac_state;
 
 static void om_tac_release_arrays(om_tac_state *st) {
@@ -445,6 +465,24 @@ static om_tac_state *om_tac(om_world *w) {
  * om_world*. */
 static om_tac_state *om_tac_ro(const om_world *w) {
     return (om_tac_state *)w->tactical_state;
+}
+
+static uint32_t om_tac_period(const om_tac_state *st) {
+    return st->tick_period_ticks ? st->tick_period_ticks : 1;
+}
+
+/* Called at the top of every step: the boundary at which the period may change. */
+static void om_tac_update_period(om_tac_state *st) {
+    uint32_t i, live = 0;
+    for (i = 0; i < st->n_units; i++) {
+        if (st->units[i].in_use && st->units[i].hp > 0.0) live++;
+    }
+    st->tick_period_ticks = live > OM_TACTICAL_HIGH_LOAD_UNITS ? OM_TACTICAL_HIGH_LOAD_PERIOD : 1;
+}
+
+/* A countdown in base ticks advanced by one step of `period` base ticks. */
+static uint32_t om_ticks_down(uint32_t remaining, uint32_t period) {
+    return remaining > period ? remaining - period : 0;
 }
 
 static const om_unit_type_profile OM_BUILTIN_PROFILES[OM_UNIT_TYPE_COUNT] = {
@@ -755,6 +793,8 @@ static uint32_t om_unit_spawn_internal(om_world *w, int unit_type, int32_t facti
         row->attack_interval = OM_UNIT_FALLBACK_INTERVAL;
         row->attack_range = OM_UNIT_FALLBACK_RANGE;
     }
+    if (unit_type == OM_UT_WARDEN) st->n_wardens++;
+    if (unit_type == OM_UT_BASTION) st->n_bastions++;
     st->grid.cell_of[st->n_units - 1] = OM_GRID_UNLINKED;
     om_grid_sync(st, st->n_units - 1);
     return row->unit_id;
@@ -816,6 +856,10 @@ static double om_warden_aura_reduction_for(om_tac_state *st, const om_unit_row *
     int n = 0;
     double undamaged_factor;
     om_grid_iter it;
+    if (st->n_wardens == 0) {
+        if (!st->grid.built) om_grid_rebuild(st);
+        return 0.0;
+    }
     om_grid_iter_begin_st(&it, st, target->x, target->y, (double)OM_WARDEN_AURA_RADIUS);
     while ((id = om_grid_iter_next(&it)) != 0) {
         const om_unit_row *cand = &st->units[id - 1];
@@ -849,7 +893,7 @@ static void om_tactical_apply_aura_regen(om_world *w) {
     for (i = 0; i < st->n_units; i++) {
         om_unit_row *u = &st->units[i];
         if (st->aura_count[i] > 0) {
-            u->hp += OM_WARDEN_AURA_REPAIR_RATE * (double)st->aura_count[i];
+            u->hp += OM_WARDEN_AURA_REPAIR_RATE * (double)st->aura_count[i] * (double)om_tac_period(st);
             if (u->hp > u->max_hp) u->hp = u->max_hp;
         }
     }
@@ -865,12 +909,79 @@ static void om_tactical_apply_aura_regen(om_world *w) {
  * this way). Ability id == unit_type (1:1, OMAbility in the test file
  * matches OMUnitType by declared order). */
 
-static int om_tac_enemy_within_range(om_tac_state *st, const om_unit_row *self, double range) {
+/* The unit ids ascend in the old sorted scan and only a strictly smaller
+ * distance replaced the best, so the answer is the lowest id at the minimum
+ * distance; the unordered grid walk reaches it by comparing (d2, id). */
+static om_unit_row *om_tac_nearest_enemy_within_range(om_tac_state *st, const om_unit_row *self, double range) {
+    om_unit_row *best = NULL;
+    double best_d2 = 0.0;
     uint32_t id;
     om_grid_iter it;
     om_grid_iter_begin_st(&it, st, self->x, self->y, range);
     while ((id = om_grid_iter_next(&it)) != 0) {
-        const om_unit_row *cand = &st->units[id - 1];
+        om_unit_row *cand = &st->units[id - 1];
+        double dx, dy, d2;
+        if (cand->hp <= 0.0) continue;
+        if (cand->faction_id == self->faction_id) continue;
+        if (cand->layer != self->layer) continue;
+        dx = cand->x - self->x; dy = cand->y - self->y; d2 = dx * dx + dy * dy;
+        if (!best || d2 < best_d2 || (d2 == best_d2 && id < best->unit_id)) { best = cand; best_d2 = d2; }
+    }
+    return best;
+}
+
+/* Cell range a circle query covers (the same one om_grid_iter_begin_st
+ * computes) plus the cell holding the query centre, which callers walk first:
+ * a near hit there lets the rest be skipped or pruned. Returns 0 when there
+ * is no grid. */
+typedef struct {
+    int32_t cx0, cx1, cy0, cy1, hx, hy;
+} om_cell_span;
+
+static int om_grid_span(om_tac_state *st, double x, double y, double r, om_cell_span *sp) {
+    const om_grid *g = &st->grid;
+    double reach = (r < 0.0 ? -r : r) + OM_GRID_PAD;
+    if (!g->built) om_grid_rebuild(st);
+    if (!g->built) return 0;
+    sp->cx0 = om_grid_coord(x - reach, g->ox, g->cell, g->cols);
+    sp->cx1 = om_grid_coord(x + reach, g->ox, g->cell, g->cols);
+    sp->cy0 = om_grid_coord(y - reach, g->oy, g->cell, g->rows);
+    sp->cy1 = om_grid_coord(y + reach, g->oy, g->cell, g->rows);
+    sp->hx = om_grid_coord(x, g->ox, g->cell, g->cols);
+    sp->hy = om_grid_coord(y, g->oy, g->cell, g->rows);
+    return 1;
+}
+
+/* Squared distance from (x, y) to the rectangle a grid cell covers, widened
+ * by OM_GRID_PAD; the outermost cells also hold every unit clamped into them
+ * from beyond the grid box, so they are unbounded outward. */
+static double om_grid_cell_gap2(const om_grid *g, int32_t cx, int32_t cy, double x, double y) {
+    double dx = 0.0, dy = 0.0, lo, hi;
+    if (cx > 0) {
+        lo = g->ox + (double)cx * g->cell - OM_GRID_PAD;
+        if (x < lo) dx = lo - x;
+    }
+    if (cx < g->cols - 1) {
+        hi = g->ox + (double)(cx + 1) * g->cell + OM_GRID_PAD;
+        if (x > hi) dx = x - hi;
+    }
+    if (cy > 0) {
+        lo = g->oy + (double)cy * g->cell - OM_GRID_PAD;
+        if (y < lo) dy = lo - y;
+    }
+    if (cy < g->rows - 1) {
+        hi = g->oy + (double)(cy + 1) * g->cell + OM_GRID_PAD;
+        if (y > hi) dy = y - hi;
+    }
+    return dx * dx + dy * dy;
+}
+
+static int om_tac_enemy_in_cell(om_tac_state *st, const om_unit_row *self, double range, uint32_t cell) {
+    const om_grid *g = &st->grid;
+    uint32_t cur;
+    for (cur = g->head[cell]; cur; cur = g->next[cur - 1]) {
+        const om_unit_row *cand = &st->units[cur - 1];
+        if (!om_tac_dist_le(cand->x - self->x, cand->y - self->y, range)) continue;
         if (cand->hp <= 0.0) continue;
         if (cand->faction_id == self->faction_id) continue;
         if (cand->layer != self->layer) continue;
@@ -879,21 +990,22 @@ static int om_tac_enemy_within_range(om_tac_state *st, const om_unit_row *self, 
     return 0;
 }
 
-static om_unit_row *om_tac_nearest_enemy_within_range(om_tac_state *st, const om_unit_row *self, double range) {
-    om_unit_row *best = NULL;
-    double best_d2 = 0.0;
-    uint32_t ids[st->n_units + 1];
-    uint32_t j, n = om_grid_query_st(st, self->x, self->y, range, ids, st->n_units);
-    for (j = 0; j < n; j++) {
-        om_unit_row *cand = &st->units[ids[j] - 1];
-        double dx, dy, d2;
-        if (cand->hp <= 0.0) continue;
-        if (cand->faction_id == self->faction_id) continue;
-        if (cand->layer != self->layer) continue;
-        dx = cand->x - self->x; dy = cand->y - self->y; d2 = dx * dx + dy * dy;
-        if (!best || d2 < best_d2) { best = cand; best_d2 = d2; }
+/* Any-of, so the walk order is free: the unit's own cell first, cells the
+ * circle cannot reach skipped. */
+static int om_tac_enemy_within_range(om_tac_state *st, const om_unit_row *self, double range) {
+    const om_grid *g = &st->grid;
+    om_cell_span sp;
+    int32_t cx, cy;
+    if (!om_grid_span(st, self->x, self->y, range, &sp)) return 0;
+    if (om_tac_enemy_in_cell(st, self, range, (uint32_t)sp.hy * (uint32_t)g->cols + (uint32_t)sp.hx)) return 1;
+    for (cy = sp.cy0; cy <= sp.cy1; cy++) {
+        for (cx = sp.cx0; cx <= sp.cx1; cx++) {
+            if (cx == sp.hx && cy == sp.hy) continue;
+            if (om_grid_cell_gap2(g, cx, cy, self->x, self->y) > range * range) continue;
+            if (om_tac_enemy_in_cell(st, self, range, (uint32_t)cy * (uint32_t)g->cols + (uint32_t)cx)) return 1;
+        }
     }
-    return best;
+    return 0;
 }
 
 static int om_tac_enemy_category_within(om_tac_state *st, const om_unit_row *self, int category, double range) {
@@ -1123,10 +1235,10 @@ static void om_ability_autotrigger_scan(om_tac_state *st) {
     }
 }
 
-static void om_ability_tick_surge(om_unit_row *u) {
+static void om_ability_tick_surge(om_unit_row *u, uint32_t period) {
     if (u->ability_phase != OM_ABILITY_PHASE_ACTIVE) return;
     if (u->ability_ticks_remaining > 0) {
-        u->ability_ticks_remaining--;
+        u->ability_ticks_remaining = om_ticks_down(u->ability_ticks_remaining, period);
     } else {
         u->ability_phase = OM_ABILITY_PHASE_IDLE;
         u->ability_bonus_on = 0;
@@ -1134,10 +1246,10 @@ static void om_ability_tick_surge(om_unit_row *u) {
     }
 }
 
-static void om_ability_tick_brace(om_unit_row *u) {
+static void om_ability_tick_brace(om_unit_row *u, uint32_t period) {
     if (u->ability_phase != OM_ABILITY_PHASE_WINDUP && u->ability_phase != OM_ABILITY_PHASE_CANCELING) return;
     if (u->ability_ticks_remaining > 0) {
-        u->ability_ticks_remaining--;
+        u->ability_ticks_remaining = om_ticks_down(u->ability_ticks_remaining, period);
         return;
     }
     if (u->ability_phase == OM_ABILITY_PHASE_WINDUP) {
@@ -1149,10 +1261,10 @@ static void om_ability_tick_brace(om_unit_row *u) {
     }
 }
 
-static void om_ability_tick_barrage(om_world *w, om_tac_state *st, om_unit_row *u) {
+static void om_ability_tick_barrage(om_world *w, om_tac_state *st, om_unit_row *u, uint32_t period) {
     if (u->ability_phase != OM_ABILITY_PHASE_TELEGRAPH) return;
     if (u->ability_ticks_remaining > 0) {
-        u->ability_ticks_remaining--;
+        u->ability_ticks_remaining = om_ticks_down(u->ability_ticks_remaining, period);
         return;
     }
     om_ability_resolve_barrage_damage(w, st, u);
@@ -1160,37 +1272,38 @@ static void om_ability_tick_barrage(om_world *w, om_tac_state *st, om_unit_row *
     u->ability_cooldown = OM_ABILITY_BARRAGE_COOLDOWN_TICKS;
 }
 
-static void om_ability_tick_fortify(om_unit_row *u) {
+static void om_ability_tick_fortify(om_unit_row *u, uint32_t period) {
     if (u->ability_phase != OM_ABILITY_PHASE_ACTIVE) return;
     if (u->ability_ticks_remaining > 0) {
-        u->ability_ticks_remaining--;
+        u->ability_ticks_remaining = om_ticks_down(u->ability_ticks_remaining, period);
     } else {
         u->ability_phase = OM_ABILITY_PHASE_IDLE;
         u->ability_bonus_on = 0;
     }
 }
 
-/* Cooldown decrements once per tactical tick, first, so a value freshly
+/* Cooldown decrements once per tactical step (by the step's period in base
+ * ticks), first, so a value freshly
  * set by this same call's autotrigger/expiry processing (Surge, Barrage,
  * Rally set theirs on completion; Brace/Fortify set theirs at activation)
  * is never decremented before the caller can observe it. */
 static void om_ability_advance_all(om_world *w) {
     om_tac_state *st = om_tac(w);
-    uint32_t i;
+    uint32_t i, period = om_tac_period(st);
     for (i = 0; i < st->n_units; i++) {
         om_unit_row *u = &st->units[i];
         if (!u->in_use) continue;
-        if (u->ability_cooldown > 0.0) u->ability_cooldown -= 1.0;
+        if (u->ability_cooldown > 0.0) u->ability_cooldown -= (double)period;
     }
     if (!st->abilities_disabled) om_ability_autotrigger_scan(st);
     for (i = 0; i < st->n_units; i++) {
         om_unit_row *u = &st->units[i];
         if (!u->in_use || u->hp <= 0.0) continue;
         switch (u->unit_type) {
-            case OM_UT_RAIDER:   om_ability_tick_surge(u); break;
-            case OM_UT_VANGUARD: om_ability_tick_brace(u); break;
-            case OM_UT_BOMBARD:  om_ability_tick_barrage(w, st, u); break;
-            case OM_UT_BASTION:  om_ability_tick_fortify(u); break;
+            case OM_UT_RAIDER:   om_ability_tick_surge(u, period); break;
+            case OM_UT_VANGUARD: om_ability_tick_brace(u, period); break;
+            case OM_UT_BOMBARD:  om_ability_tick_barrage(w, st, u, period); break;
+            case OM_UT_BASTION:  om_ability_tick_fortify(u, period); break;
             default: break;
         }
     }
@@ -1206,12 +1319,12 @@ static void om_ability_advance_all(om_world *w) {
  * the tick after, so a hit landed with OM_BACKSWING_TICKS remaining reads
  * in-backswing for exactly that many om_tactical_step calls. */
 static void om_tactical_advance_backswing(om_tac_state *st) {
-    uint32_t i;
+    uint32_t i, period = om_tac_period(st);
     for (i = 0; i < st->n_units; i++) {
         om_unit_row *u = &st->units[i];
         if (!u->in_use) continue;
         if (u->backswing_ticks_remaining > 0) {
-            u->backswing_ticks_remaining--;
+            u->backswing_ticks_remaining = om_ticks_down(u->backswing_ticks_remaining, period);
             u->backswing_active = 1;
         } else {
             u->backswing_active = 0;
@@ -1243,7 +1356,9 @@ static int om_tac_within(const om_unit_row *a, const om_unit_row *b, double r) {
     return om_tac_dist_le(a->x - b->x, a->y - b->y, r);
 }
 
-static om_unit_row *om_tac_nearest_hostile(om_tac_state *st, const om_unit_row *self, double radius) {
+/* The reference scan: candidates in ascending id order, a later one replaces
+ * the best only when closer by more than OM_TIE_EPSILON. */
+static om_unit_row *om_tac_nearest_hostile_ordered(om_tac_state *st, const om_unit_row *self, double radius) {
     om_unit_row *best = NULL;
     double best_d2 = 0.0;
     uint32_t ids[st->n_units + 1];
@@ -1259,6 +1374,78 @@ static om_unit_row *om_tac_nearest_hostile(om_tac_state *st, const om_unit_row *
     return best;
 }
 
+typedef struct {
+    om_unit_row *best;
+    double       best_d2, next_d2;
+    int          have_next;
+} om_nearest_acc;
+
+static void om_tac_nearest_scan_cell(om_tac_state *st, const om_unit_row *self, double radius, uint32_t cell, om_nearest_acc *acc) {
+    const om_grid *g = &st->grid;
+    uint32_t cur;
+    for (cur = g->head[cell]; cur; cur = g->next[cur - 1]) {
+        om_unit_row *cand = &st->units[cur - 1];
+        double dx = cand->x - self->x, dy = cand->y - self->y, d2;
+        if (!om_tac_dist_le(dx, dy, radius)) continue;
+        if (cand->hp <= 0.0 || cand->stealth) continue;
+        if (!om_tac_hostile(self, cand) || cand->layer != self->layer) continue;
+        d2 = dx * dx + dy * dy;
+        if (!acc->best) {
+            acc->best = cand; acc->best_d2 = d2;
+        } else if (d2 < acc->best_d2) {
+            acc->next_d2 = acc->best_d2; acc->have_next = 1;
+            acc->best = cand; acc->best_d2 = d2;
+        } else if (d2 == acc->best_d2) {
+            if (cand->unit_id < acc->best->unit_id) acc->best = cand;
+        } else if (!acc->have_next || d2 < acc->next_d2) {
+            acc->next_d2 = d2; acc->have_next = 1;
+        }
+    }
+}
+
+/* Same answer as the reference scan without sorting the candidates. When no
+ * candidate lies within OM_TIE_SCAN_WINDOW above the minimum distance m, the
+ * candidates are the ones at exactly m and ones too far to hold the best
+ * against a first candidate at m, so the reference scan ends on the lowest id
+ * at m. A candidate inside the window makes the answer depend on the whole
+ * id-order chain, and the reference scan runs instead. The unit's own cell is
+ * walked first, then every other cell in range unless the cell's nearest edge
+ * is already farther than the best plus the window: nothing in it can be the
+ * answer or sit inside the window. */
+static om_unit_row *om_tac_nearest_hostile(om_tac_state *st, const om_unit_row *self, double radius) {
+    const om_grid *g = &st->grid;
+    om_nearest_acc acc = { NULL, 0.0, 0.0, 0 };
+    om_cell_span sp;
+    int32_t cx, cy;
+    if (!om_grid_span(st, self->x, self->y, radius, &sp)) return NULL;
+    om_tac_nearest_scan_cell(st, self, radius, (uint32_t)sp.hy * (uint32_t)g->cols + (uint32_t)sp.hx, &acc);
+    for (cy = sp.cy0; cy <= sp.cy1; cy++) {
+        for (cx = sp.cx0; cx <= sp.cx1; cx++) {
+            double gap2;
+            if (cx == sp.hx && cy == sp.hy) continue;
+            gap2 = om_grid_cell_gap2(g, cx, cy, self->x, self->y);
+            if (gap2 > radius * radius) continue;
+            if (acc.best && gap2 > acc.best_d2 + OM_TIE_SCAN_WINDOW) continue;
+            om_tac_nearest_scan_cell(st, self, radius, (uint32_t)cy * (uint32_t)g->cols + (uint32_t)cx, &acc);
+        }
+    }
+    if (acc.have_next && acc.next_d2 - acc.best_d2 <= OM_TIE_SCAN_WINDOW) return om_tac_nearest_hostile_ordered(st, self, radius);
+    return acc.best;
+}
+
+static int om_tac_hostile_within(om_tac_state *st, const om_unit_row *self, double radius) {
+    uint32_t id;
+    om_grid_iter it;
+    om_grid_iter_begin_st(&it, st, self->x, self->y, radius);
+    while ((id = om_grid_iter_next(&it)) != 0) {
+        const om_unit_row *cand = &st->units[id - 1];
+        if (cand->hp <= 0.0 || cand->stealth) continue;
+        if (!om_tac_hostile(self, cand) || cand->layer != self->layer) continue;
+        return 1;
+    }
+    return 0;
+}
+
 static void om_tac_refresh_positions(om_world *w, om_tac_state *st) {
     uint32_t i;
     for (i = 0; i < st->n_units; i++) {
@@ -1270,12 +1457,13 @@ static void om_tac_refresh_positions(om_world *w, om_tac_state *st) {
     om_grid_rebuild(st);
 }
 
-/* One tick of unit.c-driven movement at the unit's effective speed
+/* One step of unit.c-driven movement at the unit's effective speed
  * (0 during backswing or a Brace). Returns 1 once (tx, ty) is reached. */
 static int om_tac_step_toward(om_world *w, om_unit_row *u, double tx, double ty) {
     double dx = tx - u->x, dy = ty - u->y;
     double d = sqrt(dx * dx + dy * dy);
-    double step = om_unit_effective_speed(w, u->unit_id) / (double)OM_TACTICAL_TICK_RATE;
+    double step = om_unit_effective_speed(w, u->unit_id) / (double)OM_TACTICAL_TICK_RATE
+                  * (double)om_tac_period(om_tac(w));
     if (d <= OM_TIE_EPSILON) return 1;
     if (step <= 0.0) return 0;
     if (d <= step) {
@@ -1351,7 +1539,7 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
     int noncombat = om_tac_noncombat(u);
     om_unit_row *t;
 
-    if (u->cooldown < interval_ticks) u->cooldown += 1.0;
+    if (u->cooldown < interval_ticks) u->cooldown += (double)om_tac_period(st);
     u->suppress_auto = 0;
 
     /* What tactical_move.c currently believes about this unit's route vs
@@ -1486,7 +1674,7 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
     } else if (u->order == OM_ORDER_ATTACK_MOVE) {
         const om_unit_type_profile *prof = om_get_profile(w, u->unit_type);
         om_unit_row *seen;
-        if (om_tac_nearest_hostile(st, u, u->attack_range)) {
+        if (om_tac_hostile_within(st, u, u->attack_range)) {
             om_tac_hold(w, u, 0);
         } else if (prof && prof->sensor_radius > u->attack_range
                    && (seen = om_tac_nearest_hostile(st, u, prof->sensor_radius)) != NULL) {
@@ -1520,6 +1708,7 @@ uint64_t om_tactical_step(om_world *w) {
     om_tac_state *st;
     if (!ro || ro->n_units == 0) return ro ? ro->current_tick : 0;
     st = om_tac(w);
+    om_tac_update_period(st);
     om_tac_refresh_positions(w, st);
     om_tactical_ai_tick(w, st);
     om_tactical_apply_aura_regen(w);
@@ -1656,10 +1845,14 @@ void om_tactical_reset(om_world *w) {
     }
 }
 
+/* n_ticks counts base ticks: a step at period 2 accounts for two. */
 uint64_t om_tactical_run(om_world *w, uint64_t n_ticks) {
-    uint64_t i;
-    for (i = 0; i < n_ticks; i++) {
+    uint64_t done = 0;
+    while (done < n_ticks) {
+        const om_tac_state *ro;
         om_tactical_step(w);
+        ro = om_tac_ro(w);
+        done += ro ? om_tac_period(ro) : 1;
     }
     return n_ticks;
 }
@@ -1672,7 +1865,7 @@ uint64_t om_tactical_run_until_eliminated(om_world *w) {
     while (ticks < OM_TACTICAL_MAX_RUN_TICKS && om_tactical_multiple_factions_alive(st)) {
         double hp;
         om_tactical_step(w);
-        ticks++;
+        ticks += om_tac_period(st);
         hp = om_tactical_total_hp(st);
         if (hp < lowest_hp - OM_TIE_EPSILON) { lowest_hp = hp; last_progress = ticks; }
         if (ticks - last_progress >= OM_TACTICAL_STALEMATE_TICKS) break;
@@ -1689,7 +1882,7 @@ uint64_t om_tactical_run_until_engagement_ends(om_world *w, uint32_t unit_id) {
            && u->hp > 0.0
            && om_tac_enemy_within_range(st, u, u->attack_range)) {
         om_tactical_step(w);
-        ticks++;
+        ticks += om_tac_period(st);
     }
     if (u->unit_type == OM_UT_INTERCEPTOR && u->ability_phase == OM_ABILITY_PHASE_ACTIVE) {
         u->ability_phase = OM_ABILITY_PHASE_IDLE;
@@ -1840,6 +2033,8 @@ double om_unit_damage_reduction(om_world *w, uint32_t unit_id) {
     if (brace_hit) reduction += OM_ABILITY_BRACE_DAMAGE_REDUCTION;
     if (row->force_fortify_reduction) {
         fortify_hit = 1;
+    } else if (st->n_bastions == 0) {
+        if (!st->grid.built) om_grid_rebuild(st);
     } else {
         om_grid_iter it;
         om_grid_iter_begin_st(&it, st, row->x, row->y, OM_FORTIFY_RADIUS);
@@ -2202,5 +2397,9 @@ uint32_t om_unit_id_at(const om_world *w, uint32_t index) {
     const om_tac_state *st = om_tac_ro(w);
     if (!st || index >= st->n_units || !st->units[index].in_use) return 0;
     return st->units[index].unit_id;
+}
+uint32_t om_tactical_tick_period(const om_world *w) {
+    const om_tac_state *st = om_tac_ro(w);
+    return st ? om_tac_period(st) : 1;
 }
 /* ---- end generated stubs ---- */
