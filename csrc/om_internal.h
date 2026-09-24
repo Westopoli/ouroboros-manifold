@@ -269,4 +269,10 @@ void om_step_lifecycle(om_world *w);
 void   om_rng_seed(om_world *w, uint64_t seed);
 double om_rng_draw(om_world *w);
 
+/* ALG-26 cache recompute (csrc/faction.c). Called by om_faction_set whenever
+ * archetype/tech change, and by csrc/worldgen.c's om_world_generate after it
+ * writes w->faction_archetype/faction_tech directly (it bypasses om_faction_set
+ * to avoid that setter's RNG-consuming confidence roll, R-022-04). */
+void om_faction_tech_multipliers_recalc(om_world *w, int32_t faction_id);
+
 #endif /* OM_INTERNAL_H */

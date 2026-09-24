@@ -13,7 +13,7 @@
  * has no default-archetype row in algorithms.md's ALG-26 table), so its
  * multiplier is a flat 1.0 regardless of tech, matching Python's
  * config.ARCHETYPE_TECH_MULTIPLIERS.get(archetype, {...: 0.0}). */
-static void om_faction_tech_multipliers_recalc(om_world *w, int32_t faction_id) {
+void om_faction_tech_multipliers_recalc(om_world *w, int32_t faction_id) {
     static const double axis[8][3] = {
         [OM_ARCH_PLAYER]      = { OM_ARCHETYPE_TECH_MULTIPLIERS_PLAYER_CIVILIZATION_ATTACK,
                                    OM_ARCHETYPE_TECH_MULTIPLIERS_PLAYER_CIVILIZATION_DEFENSE,
