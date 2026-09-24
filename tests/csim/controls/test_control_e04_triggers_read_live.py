@@ -1,25 +1,57 @@
 """Positive control for OM_BUG_TRIGGERS_READ_LIVE (om_bug_e04 = 208).
 
-Watch-for (docs/bible/epics/E-04-events-and-chains.md, "Ways this could be
-wrong"): "Fresh triggers evaluated region by region against live fields, so
-one region's crisis hides or causes another's on the same tick." (R-026-07;
-QA signature "Live field cross-region trigger pollution": region B's outcome
-differs when region evaluation order is reversed.)
+Snapshot-versus-live reads (docs/northstar/e2e/E-04.md, "Snapshot-versus-live
+reads" and "Order of operations" step 6): "Deltas from due queued events and
+fired fresh triggers sum per region, and that combined delta applies once
+against the tick-start snapshot" (R-026-07, ALG-33, ALG-36). The matching
+watch-for's own wording covers this for the due-queue side ("Sequential
+same-tick queue application", R-028-01: "per-region net field change != the
+clamped sum of individual deltas applied once against tick-start fields").
+This control proves the same requirement for two independent FRESH TRIGGERS
+that both cross their own tick-start threshold in the same region on the
+same tick.
 
-Reuses the fixture shape of
-test_E04_S026_crises_start_when_a_line_is_crossed.py's
-test_R_026_07_both_judged_against_tick_start, specifically its "region order
-independence" check (part 4): the same pair of tick-start crossings is run
-twice, with which region holds which crossing swapped between runs. A clean
-build judges every region against tick-start fields (R-026-07), so each
-region fires its own crossing regardless of which index it occupies or which
-order regions are evaluated in. Against the debug build with
-OM_BUG_TRIGGERS_READ_LIVE injected, asserts the detector now trips: in at
-least one of the two runs, one of the two independent tick-start crossings
-fails to fire.
+Direct code trace + empirical measurement (2026-09-22, against
+csrc/events.c on branch push/B1-5, both in a throwaway worktree): the
+original cross-region-swap fixture this file used to carry could never
+observe OM_BUG_TRIGGERS_READ_LIVE, because `should_fire[]` for every
+template in a region is fully decided in evt_evaluate_triggers's first pass
+(all reads happen before any effect is applied), regardless of the
+live/snapshot switch -- confirmed directly: swapping which region holds
+which crossing, or making one trigger's effect field overlap another
+trigger's threshold field, never changes which templates fire, on the
+clean build or with this bug injected. The bug's actual reachable effect
+sits downstream of firing entirely, in om_step_events's end-of-tick batch
+apply: that block (which would otherwise clamp the whole tick's summed
+delta against the tick-start snapshot once) is skipped for this bug --
+`push/B1-5`'s events.c fix -- so a touched region is left holding whatever
+evt_evaluate_triggers's own inline mutation wrote as each trigger fired,
+in template-table order, each clamped separately. Two triggers firing in
+the same region on the same tick therefore apply sequentially with an
+intermediate clamp instead of once against the snapshot: template A's
+effect can clamp the field to its floor, and template B's effect then
+adds to that clamped floor value instead of to the true (lower, unclamped)
+intermediate the snapshot rule requires.
+
+Fixture: military pinned at 1.0 (deliberately just above its 0.0 floor).
+"Population Crisis" (tid 8, POP < 20, effect military -2.0) and
+"Diplomatic Incident" (tid 19, TEN > 35, effect military +1.0) both cross
+their own tick-start threshold on the same tick, in the same region --
+population drops from 25.0 to 15.0, tension rises from 20.0 to 36.0;
+neither crossing is caused by the other's effect. A clean build sums both
+military deltas (-2.0 + 1.0 = -1.0) against the tick-start snapshot once:
+1.0 - 1.0 = 0.0, which does not even reach the 0.0 floor. Measured
+directly: clean final military = 0.0. With OM_BUG_TRIGGERS_READ_LIVE
+injected, Population Crisis (lower template id, fires first) applies -2.0
+inline and clamps to the floor (1.0 - 2.0 = -1.0 -> 0.0), then Diplomatic
+Incident applies +1.0 on top of that already-floored value (0.0 + 1.0 =
+1.0), since the reconciling batch-apply that would otherwise redo this
+against the snapshot is skipped for this bug. Measured directly: injected
+final military = 1.0.
 """
 from conftest import (
     OMBugE04,
+    OMField,
     OMSource,
     OMTier,
     force_draws,
@@ -34,18 +66,17 @@ from conftest import (
 )
 
 
-def _run(dbg, dbg_world_factory, military_region, economy_region):
-    w = dbg_world_factory(n_regions=2)
+def test_control_triggers_read_live_trips_the_detector(dbg, dbg_world_factory):
+    w = dbg_world_factory(n_regions=1)
     isolate_events(dbg, w)
     load_launch_events(dbg, w)
     zero_all_noise(dbg, w)
 
-    tid_collapse = template_id(dbg, w, "Garrison Collapse")  # military below 30.0
-    tid_decay = template_id(dbg, w, "Infrastructure Decay")  # economy below 40.0
+    tid_crisis = template_id(dbg, w, "Population Crisis")     # POP < 20, effect military -2.0
+    tid_incident = template_id(dbg, w, "Diplomatic Incident")  # TEN > 35, effect military +1.0
 
-    for r in range(2):
-        set_region(dbg, w, r, tier=OMTier.HOME, military=40.0, economy=48.0, tension=20.0, population=45.0)
-        set_owner(dbg, w, r, 0, held_since=-1)
+    set_region(dbg, w, 0, tier=OMTier.HOME, military=1.0, economy=48.0, tension=20.0, population=25.0)
+    set_owner(dbg, w, 0, 0, held_since=-1)
     set_tech_multipliers(dbg, w, 0, 1.0, 1.0, 1.0)
     force_draws(dbg, w, [1.0] * 50)
     dbg.om_debug_inject(w, OMBugE04.TRIGGERS_READ_LIVE)
@@ -53,37 +84,31 @@ def _run(dbg, dbg_world_factory, military_region, economy_region):
     for _ in range(3):
         dbg.om_world_step(w)
 
-    # military_region crosses Garrison Collapse; economy_region crosses
-    # Infrastructure Decay; both judged against the same tick-start snapshot.
-    set_region(dbg, w, military_region, tier=OMTier.HOME, military=25.0, economy=48.0, tension=20.0, population=45.0)
-    set_region(dbg, w, economy_region, tier=OMTier.HOME, military=40.0, economy=38.0, tension=20.0, population=45.0)
+    # Tick 4: two independent tick-start crossings in the same region --
+    # population falls below 20 (Population Crisis), tension rises above 35
+    # (Diplomatic Incident). Neither crossing is caused by the other's effect;
+    # both are judged against this tick's own tick-start snapshot.
+    set_region(dbg, w, 0, tier=OMTier.HOME, military=1.0, economy=48.0, tension=36.0, population=15.0)
     dbg.om_world_step(w)
 
     events = read_events(dbg, w)
-    fired_collapse = any(e.region_idx == military_region and e.template_id == tid_collapse
-                          and e.source == OMSource.TRIGGER for e in events)
-    fired_decay = any(e.region_idx == economy_region and e.template_id == tid_decay
-                       and e.source == OMSource.TRIGGER for e in events)
-    return fired_collapse, fired_decay
-
-
-def test_control_triggers_read_live_trips_the_detector(dbg, dbg_world_factory):
-    # Run 1: region 0 crosses military, region 1 crosses economy.
-    run1 = _run(dbg, dbg_world_factory, military_region=0, economy_region=1)
-    assert all(run1), (
+    fired_ids = {e.template_id for e in events if e.region_idx == 0 and e.source == OMSource.TRIGGER}
+    assert tid_crisis in fired_ids and tid_incident in fired_ids, (
         "the forward run did not fire both independent tick-start crossings "
         "-- this control's own setup is broken, not the detector"
     )
 
-    # Run 2: roles swapped -- region 0 crosses economy, region 1 crosses military.
-    run2 = _run(dbg, dbg_world_factory, military_region=1, economy_region=0)
+    military = dbg.om_region_field(w, 0, OMField.MILITARY)
 
-    # A clean build fires both independent tick-start crossings in both runs,
-    # regardless of which region index holds which crossing (R-026-07). A
-    # build with OM_BUG_TRIGGERS_READ_LIVE injected loses one of them once
-    # the region roles (and therefore the evaluation order) are swapped.
-    assert not all(run2), (
-        "OM_BUG_TRIGGERS_READ_LIVE injected but both regions still fired "
-        "their independent tick-start crossings after the region roles were "
-        "swapped -- the live cross-region read detector did not trip"
+    # A clean build sums both military deltas (-2.0 + 1.0 = -1.0) against the
+    # tick-start snapshot once (1.0 - 1.0 = 0.0, never reaching the floor).
+    # OM_BUG_TRIGGERS_READ_LIVE applies Population Crisis's -2.0 inline first
+    # (floor-clamped to 0.0), then Diplomatic Incident's +1.0 on top of that
+    # already-floored value (0.0 + 1.0 = 1.0), because the batch-apply that
+    # would otherwise reconcile the tick's summed delta against the snapshot
+    # is skipped for this bug.
+    assert military == 1.0, (
+        f"OM_BUG_TRIGGERS_READ_LIVE injected but final military == {military!r}, "
+        "not the 1.0 the sequential-clamp compounding produces -- the live "
+        "trigger-effect detector did not trip"
     )

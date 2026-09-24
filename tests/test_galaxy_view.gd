@@ -357,10 +357,11 @@ func _load_snapshot_via_bridge() -> Dictionary:
 
 # Minimal valid instance of docs/northstar/spec_factory/transport/snapshot.schema.json,
 # same shape as tests/test_c_bridge.gd's fallback (kept independent per-file: fenced
-# tests do not share a non-fenced helper module).
+# tests do not share a non-fenced helper module). Used only when the real fixture
+# is missing; FALLBACK_N_REGIONS is fallback-only data, not the expected count.
 func _build_minimal_snapshot() -> Dictionary:
 	var regions := []
-	for i in range(N_REGIONS):
+	for i in range(FALLBACK_N_REGIONS):
 		regions.append({
 			"i": i,
 			"owner": (i % 3) - 1,
@@ -373,7 +374,7 @@ func _build_minimal_snapshot() -> Dictionary:
 			"capacity": 10.0,
 		})
 	var edges := []
-	for i in range(N_REGIONS - 1):
+	for i in range(FALLBACK_N_REGIONS - 1):
 		edges.append({"a": i, "b": i + 1, "t": i % 2})
 	var factions := []
 	for f in range(3):
