@@ -30,6 +30,24 @@ if [[ $# -lt 1 ]]; then
     exit 2
 fi
 
+# Tests save (test_load_game.gd deletes/rewrites campaign_1; live-frame
+# sections autosave). Without OM_SAVE_DIR, autoload/c_bridge.gd's saves_dir()
+# falls back to the real user save directory and a test run destroys a
+# developer's saves. Point it at a throwaway temp dir unless the caller
+# already set one, and clean it up on exit.
+OM_SAVE_DIR_CREATED=""
+if [[ -z "${OM_SAVE_DIR:-}" ]]; then
+    OM_SAVE_DIR="$(mktemp -d)"
+    export OM_SAVE_DIR
+    OM_SAVE_DIR_CREATED="$OM_SAVE_DIR"
+fi
+cleanup() {
+    if [[ -n "$OM_SAVE_DIR_CREATED" ]]; then
+        rm -rf "$OM_SAVE_DIR_CREATED"
+    fi
+}
+trap cleanup EXIT
+
 EXIT_CODE=0
 for TEST_PATH in "$@"; do
     if [[ ! -f "$TEST_PATH" ]]; then
