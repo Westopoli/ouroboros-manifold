@@ -110,8 +110,15 @@ def test_R_099_03_period_1_at_or_below_1000_live_units(lib, world_factory):
     period = lib.om_tactical_tick_period(w)
     assert period == 1, "R-099-03: 1,000 live units is the threshold itself, not above it -- period must stay 1"
 
-    x, y = lib.om_unit_position_x(w, mover), lib.om_unit_position_y(w, mover)
-    dist = math.hypot(x, y)
+    # om_unit_position_x/y read unit.c's row cache, refreshed at the start of
+    # the next om_tactical_step (tactical_move.c syncs lazily): a read right
+    # after a step still reflects the position before that step's move. Two
+    # consecutive reads, one step apart, cancel the lag and isolate the
+    # distance moved during the one step between them.
+    x1, y1 = lib.om_unit_position_x(w, mover), lib.om_unit_position_y(w, mover)
+    lib.om_tactical_step(w)
+    x2, y2 = lib.om_unit_position_x(w, mover), lib.om_unit_position_y(w, mover)
+    dist = math.hypot(x2 - x1, y2 - y1)
     assert pytest.approx(dist, abs=1e-3) == RAIDER_SPEED_PER_TICK_AT_PERIOD_1, (
         "R-099-03: at period 1 a Raider still covers exactly 7.5 wu per om_tactical_step"
     )
@@ -148,8 +155,14 @@ def test_R_099_03_period_2_above_1000_live_units(lib, world_factory):
         "boundary that crosses the threshold"
     )
 
-    x, y = lib.om_unit_position_x(w, mover), lib.om_unit_position_y(w, mover)
-    dist = math.hypot(x, y)
+    # See test_R_099_03_period_1_at_or_below_1000_live_units: the position
+    # getter lags one step behind tactical_move.c's lazy sync, so the delta
+    # between two consecutive post-step reads is what isolates one step's
+    # distance.
+    x1, y1 = lib.om_unit_position_x(w, mover), lib.om_unit_position_y(w, mover)
+    lib.om_tactical_step(w)
+    x2, y2 = lib.om_unit_position_x(w, mover), lib.om_unit_position_y(w, mover)
+    dist = math.hypot(x2 - x1, y2 - y1)
     assert pytest.approx(dist, abs=1e-3) == 2 * RAIDER_SPEED_PER_TICK_AT_PERIOD_1, (
         "R-099-03: per-tick distance doubles at period 2 so the Raider's 150 wu/s "
         "real-time speed (R-099-02) is unchanged"
