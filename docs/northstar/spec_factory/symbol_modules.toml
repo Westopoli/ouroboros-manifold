@@ -32,6 +32,13 @@ om_character_create                 = "generational.c"
 om_lineage_create                   = "generational.c"
 om_lineage_record_history_region    = "generational.c"
 om_time_jump_run                    = "generational.c"
+# F2s: living character enumeration for chronicle/lineage clustering (B7-8)
+om_character_count                  = "generational.c"
+om_character_id_at                  = "generational.c"
+# F2s: lineage enumeration and first-living-member region reader (B7-8)
+om_lineage_count                    = "generational.c"
+om_lineage_id_at                    = "generational.c"
+om_lineage_first_member_region      = "generational.c"
 # chronicle entries: E-09
 om_chronicle_entry_count            = "chronicle.c"
 # F2n: mission.c objective-drift leaf needs a set/get pair; chronicle reader (B8-4)
@@ -99,3 +106,5 @@ om_map_add_obstacle                 = "tactical_mapgen.c"
 # F2n addendum: cover geometry readers, B15m-2's mapgen_state rows (E-17)
 om_map_cover_count                  = "tactical_mapgen.c"
 om_map_cover_at                     = "tactical_mapgen.c"
+# F2s: full-reset clear, keeps only the allocated mapgen_state slot (B15m-5)
+om_map_clear                        = "tactical_mapgen.c"
