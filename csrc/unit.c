@@ -50,7 +50,13 @@
  * units (see leaf-01-Q1.md for the ABA hazard this structurally
  * eliminates). */
 
-#define OM_MAX_UNITS 4096
+/* Unit capacity of one tactical battle: E-11's 10,000-unit scale requirement
+ * plus headroom. The per-unit arrays in om_tac_state grow from
+ * OM_UNITS_INITIAL_CAP by doubling (om_tac_reserve), so a world that never
+ * fights allocates nothing and a small fight allocates little. */
+#define OM_MAX_UNITS 10100
+#define OM_UNITS_INITIAL_CAP 64
+#define OM_GRID_UNLINKED 0xFFFFFFFFu
 /* Spatial grid (om_grid_query_circle): cell edge in world units, the cell
  * count cap per axis (a wider bounding box enlarges the cell instead), and
  * the slack added to a query's cell range so a rounding step in the cell
@@ -340,24 +346,27 @@ typedef struct {
     om_unit_type_profile profile;
 } om_custom_type_row;
 
-/* Spatial hash grid over every in_use unit row (see om_grid_query_circle in
- * om_internal.h for the contract). Cells are a linked list of unit index + 1
+/* Spatial hash grid over every living unit row, hp > 0 (see om_grid_query_circle
+ * in om_internal.h for the contract). Cells are a linked list of unit index + 1
  * (0 ends a list); rebuilt over the current bounding box every tactical tick
- * and updated in place when unit.c moves or spawns a unit. */
+ * and updated in place when unit.c moves, spawns or kills a unit. cell_of is
+ * OM_GRID_UNLINKED for a unit that is not in the grid. The per-unit arrays are
+ * sized by om_tac_reserve. */
 typedef struct {
     int       built;
     double    ox, oy, cell;
     int32_t   cols, rows;
     uint32_t *head;
     uint32_t  head_cap;
-    uint32_t  next[OM_MAX_UNITS];
-    uint32_t  prev[OM_MAX_UNITS];
-    uint32_t  cell_of[OM_MAX_UNITS];
-    uint32_t  scratch[OM_MAX_UNITS];
+    uint32_t *next;
+    uint32_t *prev;
+    uint32_t *cell_of;
+    uint32_t *scratch;
 } om_grid;
 
 typedef struct {
-    om_unit_row         units[OM_MAX_UNITS];
+    om_unit_row        *units;
+    uint32_t            unit_cap;
     uint32_t            n_units;
     uint32_t            next_unit_id;
     om_custom_type_row  custom_types[OM_MAX_CUSTOM_TYPES];
@@ -370,12 +379,49 @@ typedef struct {
     int                 abilities_disabled;
     uint64_t            validated_tick;
     om_grid             grid;
-    uint32_t            aura_count[OM_MAX_UNITS];
+    uint32_t           *aura_count;
 } om_tac_state;
 
+static void om_tac_release_arrays(om_tac_state *st) {
+    free(st->units);
+    free(st->aura_count);
+    free(st->grid.head);
+    free(st->grid.next);
+    free(st->grid.prev);
+    free(st->grid.cell_of);
+    free(st->grid.scratch);
+}
+
 static void om_tac_state_free(void *p) {
-    if (p) free(((om_tac_state *)p)->grid.head);
+    if (p) om_tac_release_arrays((om_tac_state *)p);
     free(p);
+}
+
+/* Grows every per-unit array to hold at least `need` units (doubling, capped
+ * at OM_MAX_UNITS). Rows move when the arrays grow: never keep an om_unit_row
+ * pointer across a spawn. Returns 0 when `need` exceeds the cap or an
+ * allocation fails, leaving the state as it was. */
+static int om_tac_reserve(om_tac_state *st, uint32_t need) {
+    uint32_t cap = st->unit_cap ? st->unit_cap : OM_UNITS_INITIAL_CAP;
+    void *p;
+    if (need <= st->unit_cap) return 1;
+    if (need > OM_MAX_UNITS) return 0;
+    while (cap < need) cap *= 2;
+    if (cap > OM_MAX_UNITS) cap = OM_MAX_UNITS;
+    if (!(p = realloc(st->units, (size_t)cap * sizeof(om_unit_row)))) return 0;
+    st->units = (om_unit_row *)p;
+    if (!(p = realloc(st->aura_count, (size_t)cap * sizeof(uint32_t)))) return 0;
+    st->aura_count = (uint32_t *)p;
+    if (!(p = realloc(st->grid.next, (size_t)cap * sizeof(uint32_t)))) return 0;
+    st->grid.next = (uint32_t *)p;
+    if (!(p = realloc(st->grid.prev, (size_t)cap * sizeof(uint32_t)))) return 0;
+    st->grid.prev = (uint32_t *)p;
+    if (!(p = realloc(st->grid.cell_of, (size_t)cap * sizeof(uint32_t)))) return 0;
+    st->grid.cell_of = (uint32_t *)p;
+    if (!(p = realloc(st->grid.scratch, (size_t)cap * sizeof(uint32_t)))) return 0;
+    st->grid.scratch = (uint32_t *)p;
+    st->unit_cap = cap;
+    return 1;
 }
 
 /* Lazily calloc's the per-world tactical state into w->tactical_state on
@@ -511,6 +557,27 @@ static void om_grid_unlink(om_tac_state *st, uint32_t i) {
     if (g->next[i]) g->prev[g->next[i] - 1] = g->prev[i];
 }
 
+/* Living, in the sense every caller filters on: `hp <= 0.0` is dead, so a NaN
+ * hp still counts as living. */
+static int om_grid_living(const om_unit_row *u) {
+    return !(u->hp <= 0.0);
+}
+
+/* Call after any write to a unit's hp: links a revived unit, unlinks a dead
+ * one, so a query never returns a unit the all-pairs scan would have skipped
+ * as dead and never misses one it would have accepted. */
+static void om_grid_sync(om_tac_state *st, uint32_t i) {
+    om_grid *g = &st->grid;
+    int living = om_grid_living(&st->units[i]);
+    if (!g->built) return;
+    if (living && g->cell_of[i] == OM_GRID_UNLINKED) {
+        om_grid_link(st, i);
+    } else if (!living && g->cell_of[i] != OM_GRID_UNLINKED) {
+        om_grid_unlink(st, i);
+        g->cell_of[i] = OM_GRID_UNLINKED;
+    }
+}
+
 static void om_grid_rebuild(om_tac_state *st) {
     om_grid *g = &st->grid;
     double minx = 0.0, miny = 0.0, maxx = 0.0, maxy = 0.0, span, cell = OM_GRID_CELL_SIZE;
@@ -518,7 +585,7 @@ static void om_grid_rebuild(om_tac_state *st) {
     int any = 0;
     for (i = 0; i < st->n_units; i++) {
         const om_unit_row *u = &st->units[i];
-        if (!u->in_use) continue;
+        if (!u->in_use || !om_grid_living(u)) continue;
         if (!any) { minx = maxx = u->x; miny = maxy = u->y; any = 1; continue; }
         if (u->x < minx) minx = u->x;
         if (u->x > maxx) maxx = u->x;
@@ -541,14 +608,15 @@ static void om_grid_rebuild(om_tac_state *st) {
     }
     memset(g->head, 0, (size_t)ncells * sizeof(uint32_t));
     for (i = st->n_units; i-- > 0;) {
-        if (st->units[i].in_use) om_grid_link(st, i);
+        if (st->units[i].in_use && om_grid_living(&st->units[i])) om_grid_link(st, i);
+        else g->cell_of[i] = OM_GRID_UNLINKED;
     }
     g->built = 1;
 }
 
 static void om_grid_move(om_tac_state *st, uint32_t i) {
     om_grid *g = &st->grid;
-    if (!g->built) return;
+    if (!g->built || g->cell_of[i] == OM_GRID_UNLINKED) return;
     if (om_grid_cell_of_row(g, &st->units[i]) == g->cell_of[i]) return;
     om_grid_unlink(st, i);
     om_grid_link(st, i);
@@ -643,12 +711,23 @@ uint32_t om_grid_query_circle(om_world *w, double x, double y, double r, uint32_
     return om_grid_query_st(om_tac(w), x, y, r, out_ids, max);
 }
 
+/* See om_internal.h: for tactical_move.c, which owns a unit's live position
+ * and writes it outside unit.c's own refresh (teleport, set_pos, move sync). */
+void om_tac_unit_sync_position(om_world *w, uint32_t unit_id, double x, double y) {
+    om_tac_state *st = w ? (om_tac_state *)w->tactical_state : NULL;
+    om_unit_row *u = om_registry_find_in(st, unit_id);
+    if (!u) return;
+    u->x = x;
+    u->y = y;
+    om_grid_move(st, unit_id - 1);
+}
+
 static uint32_t om_unit_spawn_internal(om_world *w, int unit_type, int32_t faction_id,
                                         double x, double y, uint32_t layer) {
     const om_unit_type_profile *prof;
     om_unit_row *row;
     om_tac_state *st = om_tac(w);
-    if (st->n_units >= OM_MAX_UNITS) return 0;
+    if (!om_tac_reserve(st, st->n_units + 1)) return 0;
     prof = om_get_profile(w, unit_type);
     row = &st->units[st->n_units++];
     memset(row, 0, sizeof(*row));
@@ -676,7 +755,8 @@ static uint32_t om_unit_spawn_internal(om_world *w, int unit_type, int32_t facti
         row->attack_interval = OM_UNIT_FALLBACK_INTERVAL;
         row->attack_range = OM_UNIT_FALLBACK_RANGE;
     }
-    if (st->grid.built) om_grid_link(st, st->n_units - 1);
+    st->grid.cell_of[st->n_units - 1] = OM_GRID_UNLINKED;
+    om_grid_sync(st, st->n_units - 1);
     return row->unit_id;
 }
 
@@ -697,6 +777,7 @@ static void om_tactical_apply_hit(om_world *w, om_unit_row *attacker, om_unit_ro
     double dmg = attacker->base_damage * mult * output_mult * (1.0 - reduction);
     target->hp -= dmg;
     if (target->hp < 0.0) target->hp = 0.0;
+    om_grid_sync(om_tac(w), target->unit_id - 1);
     target->last_attacker = attacker->unit_id;
     attacker->cooldown = 0.0;
     attacker->backswing_ticks_remaining = OM_BACKSWING_TICKS;
@@ -801,8 +882,8 @@ static int om_tac_enemy_within_range(om_tac_state *st, const om_unit_row *self, 
 static om_unit_row *om_tac_nearest_enemy_within_range(om_tac_state *st, const om_unit_row *self, double range) {
     om_unit_row *best = NULL;
     double best_d2 = 0.0;
-    uint32_t ids[OM_MAX_UNITS];
-    uint32_t j, n = om_grid_query_st(st, self->x, self->y, range, ids, OM_MAX_UNITS);
+    uint32_t ids[st->n_units + 1];
+    uint32_t j, n = om_grid_query_st(st, self->x, self->y, range, ids, st->n_units);
     for (j = 0; j < n; j++) {
         om_unit_row *cand = &st->units[ids[j] - 1];
         double dx, dy, d2;
@@ -942,8 +1023,8 @@ static void om_ability_resolve_barrage_damage(om_world *w, om_tac_state *st, om_
     double per_hit_base = u->base_damage * OM_ABILITY_BARRAGE_DAMAGE_MULT;
     double cap = per_hit_base * OM_AOE_DAMAGE_CAP_MULTIPLIER;
     double total = 0.0;
-    uint32_t ids[OM_MAX_UNITS];
-    uint32_t j, n = om_grid_query_st(st, u->ability_target_x, u->ability_target_y, OM_ABILITY_BARRAGE_RADIUS, ids, OM_MAX_UNITS);
+    uint32_t ids[st->n_units + 1];
+    uint32_t j, n = om_grid_query_st(st, u->ability_target_x, u->ability_target_y, OM_ABILITY_BARRAGE_RADIUS, ids, st->n_units);
     for (j = 0; j < n; j++) {
         om_unit_row *cand = &st->units[ids[j] - 1];
         double mult, dmg, remaining;
@@ -957,6 +1038,7 @@ static void om_ability_resolve_barrage_damage(om_world *w, om_tac_state *st, om_
         if (dmg > remaining) dmg = remaining;
         cand->hp -= dmg;
         if (cand->hp < 0.0) cand->hp = 0.0;
+        om_grid_sync(st, cand->unit_id - 1);
         total += dmg;
     }
 }
@@ -1164,8 +1246,8 @@ static int om_tac_within(const om_unit_row *a, const om_unit_row *b, double r) {
 static om_unit_row *om_tac_nearest_hostile(om_tac_state *st, const om_unit_row *self, double radius) {
     om_unit_row *best = NULL;
     double best_d2 = 0.0;
-    uint32_t ids[OM_MAX_UNITS];
-    uint32_t j, n = om_grid_query_st(st, self->x, self->y, radius, ids, OM_MAX_UNITS);
+    uint32_t ids[st->n_units + 1];
+    uint32_t j, n = om_grid_query_st(st, self->x, self->y, radius, ids, st->n_units);
     for (j = 0; j < n; j++) {
         om_unit_row *cand = &st->units[ids[j] - 1];
         double dx, dy, d2;
@@ -1571,7 +1653,7 @@ void om_tactical_disable_abilities(om_world *w) {
  * lazily on the next command or read. */
 void om_tactical_reset(om_world *w) {
     om_tac_state *st = om_tac(w);
-    free(st->grid.head);
+    om_tac_release_arrays(st);
     memset(st, 0, sizeof(*st));
     st->next_unit_id = 1;
     if (w->move_state && w->move_state_free) {
@@ -1724,7 +1806,10 @@ int om_unit_alive(om_world *w, uint32_t unit_id) {
 void om_unit_apply_trait_modifier(om_world *w, uint32_t unit_id, int stat_field, double delta) {
     om_unit_row *row = om_registry_find_in(om_tac(w), unit_id);
     if (!row) return;
-    if (stat_field == 0) row->hp += delta;
+    if (stat_field == 0) {
+        row->hp += delta;
+        om_grid_sync(om_tac(w), unit_id - 1);
+    }
 }
 
 void om_unit_attack(om_world *w, uint32_t attacker, uint32_t target) {
@@ -1795,6 +1880,7 @@ void om_unit_deal_damage(om_world *w, uint32_t p1, uint32_t p2, double p3) {
     dmg = p3 * mult * output_mult * (1.0 - reduction);
     target->hp -= dmg;
     if (target->hp < 0.0) target->hp = 0.0;
+    om_grid_sync(st, target->unit_id - 1);
     target->last_attacker = attacker->unit_id;
     /* ALG-60: "after firing the unit's movement pauses ATTACK_BACKSWING_SEC"
      * -- any landed hit through this path (auto-fire, manual command, or a
@@ -1839,11 +1925,11 @@ void om_unit_fire_aoe_attack(om_world *w, uint32_t attacker_id, uint32_t target_
     om_unit_row *attacker = om_registry_find_in(st, attacker_id);
     om_unit_row *center = om_registry_find_in(st, target_id);
     double cap, total = 0.0;
-    uint32_t ids[OM_MAX_UNITS];
+    uint32_t ids[st->n_units + 1];
     uint32_t j, n;
     if (!attacker || !center) return;
     cap = attacker->base_damage * OM_AOE_DAMAGE_CAP_MULTIPLIER;
-    n = om_grid_query_st(st, center->x, center->y, radius, ids, OM_MAX_UNITS);
+    n = om_grid_query_st(st, center->x, center->y, radius, ids, st->n_units);
     for (j = 0; j < n; j++) {
         om_unit_row *cand = &st->units[ids[j] - 1];
         double mult, dmg, remaining;
@@ -1858,6 +1944,7 @@ void om_unit_fire_aoe_attack(om_world *w, uint32_t attacker_id, uint32_t target_
         if (dmg > remaining) dmg = remaining;
         cand->hp -= dmg;
         if (cand->hp < 0.0) cand->hp = 0.0;
+        om_grid_sync(st, cand->unit_id - 1);
         cand->last_attacker = attacker_id;
         total += dmg;
     }
@@ -2023,7 +2110,10 @@ void om_unit_set_fortify_active(om_world *w, uint32_t unit_id, int on) {
 
 void om_unit_set_hp(om_world *w, uint32_t p0, double p1) {
     om_unit_row *row = om_registry_find_in(om_tac(w), p0);
-    if (row) row->hp = p1;
+    if (row) {
+        row->hp = p1;
+        om_grid_sync(om_tac(w), p0 - 1);
+    }
 }
 
 void om_unit_set_stealth(om_world *w, uint32_t unit_id, int on) {
