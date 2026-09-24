@@ -211,16 +211,44 @@ if [[ "$NEED_GODOT_IMPORT" -eq 1 ]]; then
             ln -s "$VENV_TARGET" "$CANDIDATE/.venv"
             echo "ok venv_link \"$VENV_TARGET\""
         fi
+        run_godot_import() {
+            timeout 300 env -u DISPLAY -u WAYLAND_DISPLAY -u XAUTHORITY \
+                "$GODOT_BIN" --headless --path "$CANDIDATE" --import >"$1" 2>&1
+        }
+        # rc 124 (timeout) or rc >= 128 (killed by signal, e.g. 139 = SIGSEGV)
+        # is Godot dying mid-reimport, not the candidate's code
+        # (push_C7-2-20260924-092100.log line 23, "Segmentation fault (core
+        # dumped)" rejected a candidate that had nothing wrong with it). A
+        # plain nonzero exit (bad scene, real import error) is still the
+        # candidate's fault and stays REJECT.
+        is_signal_or_timeout() { [[ "$1" -eq 124 || "$1" -ge 128 ]]; }
+
         IMPORT_LOG="$SCRATCH_ROOT/godot_import.log"
         IMPORT_START=$(date +%s)
-        timeout 300 env -u DISPLAY -u WAYLAND_DISPLAY -u XAUTHORITY \
-            "$GODOT_BIN" --headless --path "$CANDIDATE" --import >"$IMPORT_LOG" 2>&1
+        run_godot_import "$IMPORT_LOG"
         IMPORT_RC=$?
         IMPORT_SECS=$(( $(date +%s) - IMPORT_START ))
-        if [[ $IMPORT_RC -ne 0 ]]; then
-            reject godot_import "$(tail_oneline "$IMPORT_LOG" 15)"
-        else
+        if [[ $IMPORT_RC -eq 0 ]]; then
             ok godot_import "${IMPORT_SECS}s"
+        elif is_signal_or_timeout "$IMPORT_RC"; then
+            # One retry after wiping the partial cache the crash/timeout left
+            # behind, before deciding this is a harness fault.
+            rm -rf "$CANDIDATE/.godot/imported"
+            IMPORT_LOG2="$SCRATCH_ROOT/godot_import_retry.log"
+            IMPORT_START=$(date +%s)
+            run_godot_import "$IMPORT_LOG2"
+            IMPORT_RC2=$?
+            IMPORT_SECS=$(( $(date +%s) - IMPORT_START ))
+            if [[ $IMPORT_RC2 -eq 0 ]]; then
+                ok godot_import "${IMPORT_SECS}s (retry after rc=$IMPORT_RC, cache cleared)"
+            elif is_signal_or_timeout "$IMPORT_RC2"; then
+                harness godot_import "rc=$IMPORT_RC2 after retry (first rc=$IMPORT_RC): $(tail_oneline "$IMPORT_LOG2" 3)"
+                exit 3
+            else
+                reject godot_import "retry rc=$IMPORT_RC2: $(tail_oneline "$IMPORT_LOG2" 15)"
+            fi
+        else
+            reject godot_import "$(tail_oneline "$IMPORT_LOG" 15)"
         fi
     fi
 fi
