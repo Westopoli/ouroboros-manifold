@@ -1,5 +1,7 @@
 extends PanelContainer
 
+const SimSession := preload("res://autoload/sim_session.gd")
+
 signal entry_finished_printing(entry_id: String)
 signal entry_expansion_opened(entry_id: String)
 signal entry_expansion_closed(entry_id: String)
@@ -60,7 +62,7 @@ var _plant_entries_dropped: bool = false
 func _ready() -> void:
 	_accent = ThemeConstants.get_era_accent(EraConfig.ACTIVE_ERA_ID)
 	_build_ui()
-	var bridge = load("res://autoload/c_bridge.gd").new()
+	var bridge = SimSession.bridge()
 	if bridge.load_chronicle_live(bridge.live_seed(), bridge.DEFAULT_N_REGIONS, bridge.DEFAULT_FEATURES):
 		set_snapshot(bridge.chronicle_snapshot())
 		load_frame(bridge.chronicle_frame())
