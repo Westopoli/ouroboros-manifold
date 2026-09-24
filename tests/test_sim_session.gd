@@ -83,8 +83,11 @@ func _mount(path: String) -> Node:
 
 func _run_tests() -> void:
 	var holder = SimSession
-	_assert(holder.has_method("bridge") and holder.has_method("reset"), "autoload/sim_session.gd lacks static bridge() / reset()")
-	if not (holder.has_method("bridge") and holder.has_method("reset")):
+	var names := []
+	for m in (holder as GDScript).get_script_method_list():
+		names.append(m["name"])
+	_assert(names.has("bridge") and names.has("reset"), "autoload/sim_session.gd lacks static bridge() / reset()")
+	if not (names.has("bridge") and names.has("reset")):
 		return
 	holder.reset()
 	var bridge = holder.bridge()
