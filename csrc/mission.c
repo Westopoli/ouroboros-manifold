@@ -91,6 +91,7 @@
 #include "om_internal.h"
 #include "om_constants.h"
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -164,6 +165,42 @@
 #define OM_MISSION_ARCH_CONTAINMENT 8
 #define OM_MISSION_ARCH_COUNTERINSURGENCY 9
 
+/* B9-2 (S-074): ALG-57's "population <= 25" / "population >= 70" interpolation
+ * bounds are prose, not an "IDENT = value" line, so alg_constants.py's
+ * mechanical emitter never lands them in om_constants.h -- same gap as
+ * simulation/config.py's INSURGENT_POP_LOW_THRESHOLD / _HIGH_THRESHOLD,
+ * which name these exact two numbers in the Python reference this C rewrite
+ * reproduces verbatim. Named locally here, same precedent as B9-1's
+ * OM_MISSION_SCORE_.. and OM_MISSION_RELEVANCE_.. weights above (also
+ * cited by the bible, also missing from the mechanical extraction). */
+#define OM_MISSION_INSURGENT_POP_LOW_THRESHOLD 25.0
+#define OM_MISSION_INSURGENT_POP_HIGH_THRESHOLD 70.0
+
+/* ALG-57 Fill: "power <= 1.15 * remaining" -- inline in the formula prose,
+ * same UNPARSED-by-the-emitter situation as the population thresholds above. */
+#define OM_MISSION_FILL_OVERSHOOT_MULT 1.15
+
+/* ALG-57 difficulty parity: "easy max(base, 0.95), hard min(base, 0.85)" --
+ * same prose-not-IDENT gap; named PARITY_EASY_FLOOR / PARITY_HARD_CEILING
+ * in simulation/config.py. */
+#define OM_MISSION_PARITY_EASY_FLOOR 0.95
+#define OM_MISSION_PARITY_HARD_CEILING 0.85
+
+/* Q-074-01: unit power is HP * base_damage / attack_interval, normalized so
+ * the anchor unit type (Vanguard, unit_type 2 in csrc/unit.c's OM_UT_VANGUARD
+ * -- E-11 owns that enum, not exported here) reads 100.0. */
+#define OM_MISSION_POWER_ANCHOR_UNIT_TYPE 2
+#define OM_MISSION_POWER_ANCHOR_VALUE 100.0
+
+/* R-075-01 objective kinds (OMObjectiveKind in every E-10 test file). */
+#define OM_MISSION_OBJ_HOLD_ZONE 0
+#define OM_MISSION_OBJ_DESTROY_TARGETS 1
+#define OM_MISSION_OBJ_ESCORT_TO_EXTRACTION 2
+#define OM_MISSION_OBJ_SURVIVE_DURATION 3
+#define OM_MISSION_OBJ_ELIMINATE_FORCE 4
+
+#define OM_MISSION_MAX_OBJECTIVES 4
+
 typedef struct {
     uint32_t recent_attacks;
     double   attack_budget_sum;
@@ -183,6 +220,19 @@ typedef struct {
     int      profile_set;
 } om_mission_archetype_row;
 
+/* S-075 objective slot. Holds the public om_objective_spec plus each kind's
+ * own private progress state (only the fields its own kind touches). */
+typedef struct {
+    om_objective_spec spec;
+    uint64_t hold_required_ticks;
+    uint64_t hold_elapsed_ticks;
+    uint32_t destroy_total;
+    uint32_t escort_total;
+    uint64_t survive_required_ticks;
+    double   eliminate_initial_hp;
+    int      used;
+} om_mission_objective;
+
 typedef struct {
     om_mission_candidate pool[OM_MISSION_MAX_CANDIDATES];
     uint32_t n_pool;
@@ -199,6 +249,24 @@ typedef struct {
     uint32_t mission_archetype;
     int      lineage_connection;
     int      mission_set;
+
+    /* S-074 force generation */
+    uint32_t player_units[OM_MISSION_N_UNIT_TYPES];
+    char     shortfall_text[256];
+
+    /* S-075 objectives and termination */
+    om_mission_objective objectives[OM_MISSION_MAX_OBJECTIVES];
+    uint32_t n_objectives;
+    int      term_primary_complete;
+    int      term_primary_failed;
+    uint64_t term_tick;
+    uint64_t term_time_limit;
+    int      term_player_alive;
+
+    /* S-076 clock */
+    uint64_t tactical_time_limit;
+    uint64_t tactical_baseline_tick;
+    int      tactical_ended;
 } om_mission_state;
 
 static void om_mis_state_free(void *p) {
@@ -226,6 +294,25 @@ static double om_mis_clamp01(double v) {
     if (v < 0.0) return 0.0;
     if (v > 1.0) return 1.0;
     return v;
+}
+
+/* S-075: lazily creates objective_idx as a full-weight primary (weight 1.0)
+ * the first time any setup_.. / eval_.. / set_objective_completion call touches
+ * it, so a test can call om_mission_setup_hold_zone(w, 0, ...) directly
+ * without om_mission_build_objectives -- mirrors om_mis()'s own lazy-init
+ * convention at the per-objective level. */
+static om_mission_objective *om_mission_ensure_objective(om_mission_state *st, uint32_t idx) {
+    if (idx >= OM_MISSION_MAX_OBJECTIVES) return NULL;
+    om_mission_objective *o = &st->objectives[idx];
+    if (!o->used) {
+        memset(o, 0, sizeof(*o));
+        o->spec.id = idx;
+        o->spec.is_primary = 1;
+        o->spec.weight = 1.0;
+        o->used = 1;
+    }
+    if (st->n_objectives <= idx) st->n_objectives = idx + 1;
+    return o;
 }
 
 /* Player faction id: the first in-use faction slot with archetype
@@ -409,9 +496,69 @@ void om_mission_allocate_force_profile(const om_world *w, uint32_t archetype, do
     }
 }
 
+/* R-074-05 / ALG-57 Shortfall, ported from simulation/force_allocator.py
+ * apply_shortfall(): types_by_count is a fixed snapshot taken once (sorted
+ * descending by starting count), not re-sorted as counts fall, so the
+ * round-robin always visits types in that original order. */
 void om_mission_apply_capacity_shortfall(om_world *w, double capacity) {
-    /* STUB */
-    (void)w; (void)capacity;
+    om_mission_state *st = om_mis(w);
+    st->shortfall_text[0] = '\0';
+    if (capacity >= OM_CAPACITY_SHORTFALL_THRESHOLD) return;
+
+    uint32_t total = 0;
+    for (uint32_t i = 0; i < OM_MISSION_N_UNIT_TYPES; i++) total += st->player_units[i];
+    if (total == 0) return;
+
+    uint32_t target = (uint32_t)((double)total * (1.0 - OM_CAPACITY_SHORTFALL_REDUCTION));
+    if (target < 1) target = 1;
+    if (target >= total) return;
+    uint32_t to_remove = total - target;
+
+    uint32_t order[OM_MISSION_N_UNIT_TYPES];
+    uint32_t counts[OM_MISSION_N_UNIT_TYPES];
+    for (uint32_t i = 0; i < OM_MISSION_N_UNIT_TYPES; i++) {
+        order[i] = i;
+        counts[i] = st->player_units[i];
+    }
+    for (uint32_t i = 0; i < OM_MISSION_N_UNIT_TYPES; i++) {
+        uint32_t best = i;
+        for (uint32_t j = i + 1; j < OM_MISSION_N_UNIT_TYPES; j++) {
+            if (counts[order[j]] > counts[order[best]]) best = j;
+        }
+        uint32_t tmp = order[i]; order[i] = order[best]; order[best] = tmp;
+    }
+
+    uint32_t removed_per_type[OM_MISSION_N_UNIT_TYPES] = {0};
+    uint32_t removed = 0, idx = 0;
+    while (removed < to_remove) {
+        int any_left = 0;
+        for (uint32_t k = 0; k < OM_MISSION_N_UNIT_TYPES; k++) {
+            if (counts[order[k]] > 0) { any_left = 1; break; }
+        }
+        if (!any_left) break;
+        uint32_t t = order[idx % OM_MISSION_N_UNIT_TYPES];
+        if (counts[t] > 0) {
+            counts[t]--;
+            removed_per_type[t]++;
+            removed++;
+        }
+        idx++;
+    }
+
+    for (uint32_t i = 0; i < OM_MISSION_N_UNIT_TYPES; i++) st->player_units[i] = counts[i];
+
+    char *out = st->shortfall_text;
+    size_t cap_bytes = sizeof(st->shortfall_text);
+    int n = snprintf(out, cap_bytes, "Shortfall: the civilization could not spare");
+    size_t len = (n > 0) ? (size_t)n : 0;
+    int wrote_any = 0;
+    for (uint32_t i = 0; i < OM_MISSION_N_UNIT_TYPES && len < cap_bytes; i++) {
+        if (removed_per_type[i] == 0) continue;
+        n = snprintf(out + len, cap_bytes - len, "%s %u of unit type %u",
+                     wrote_any ? "," : "", removed_per_type[i], i);
+        if (n > 0) len += (size_t)n;
+        wrote_any = 1;
+    }
 }
 
 void om_mission_apply_consequences(om_world *w, uint32_t region_idx, uint32_t archetype, int32_t band) {
@@ -504,22 +651,70 @@ int32_t om_mission_classify_band(uint32_t archetype, double final) {
     return 0;
 }
 
+/* R-074-02 / ALG-57 base parity: piecewise linear through PARITY_BREAKPOINTS,
+ * c already the [0, 1] capacity fraction (ALG-57 divides region capacity by
+ * 100 before this call). */
 double om_mission_compute_base_parity(double c) {
-    /* STUB */
-    (void)c;
-    return 0.0;
+    static const double xs[OM_PARITY_BREAKPOINTS_N] = {
+        OM_PARITY_BREAKPOINTS_0_X, OM_PARITY_BREAKPOINTS_1_X, OM_PARITY_BREAKPOINTS_2_X,
+        OM_PARITY_BREAKPOINTS_3_X, OM_PARITY_BREAKPOINTS_4_X,
+    };
+    static const double ys[OM_PARITY_BREAKPOINTS_N] = {
+        OM_PARITY_BREAKPOINTS_0_Y, OM_PARITY_BREAKPOINTS_1_Y, OM_PARITY_BREAKPOINTS_2_Y,
+        OM_PARITY_BREAKPOINTS_3_Y, OM_PARITY_BREAKPOINTS_4_Y,
+    };
+    if (c <= xs[0]) return ys[0];
+    if (c >= xs[OM_PARITY_BREAKPOINTS_N - 1]) return ys[OM_PARITY_BREAKPOINTS_N - 1];
+    for (uint32_t i = 0; i + 1 < OM_PARITY_BREAKPOINTS_N; i++) {
+        if (c >= xs[i] && c <= xs[i + 1]) {
+            double t = (c - xs[i]) / (xs[i + 1] - xs[i]);
+            return ys[i] + t * (ys[i + 1] - ys[i]);
+        }
+    }
+    return ys[OM_PARITY_BREAKPOINTS_N - 1];
 }
 
+/* R-074-03 / ALG-57: easy raises the floor, hard lowers the ceiling, medium
+ * passes base through; PARITY_FLOOR always wins last. */
 double om_mission_compute_difficulty_parity(double base, int difficulty) {
-    /* STUB */
-    (void)base; (void)difficulty;
-    return 0.0;
+    double parity;
+    if (difficulty == 0) { /* easy */
+        parity = base > OM_MISSION_PARITY_EASY_FLOOR ? base : OM_MISSION_PARITY_EASY_FLOOR;
+    } else if (difficulty == 2) { /* hard */
+        parity = base < OM_MISSION_PARITY_HARD_CEILING ? base : OM_MISSION_PARITY_HARD_CEILING;
+    } else {
+        parity = base;
+    }
+    return parity < OM_PARITY_FLOOR ? OM_PARITY_FLOOR : parity;
 }
 
+/* R-074-01 / ALG-57 enemy power. Archetype classification (BUDGET_ARCHETYPES
+ * / INSURGENT_ARCHETYPES / else) ported verbatim from
+ * simulation/force_allocator.py's determine_enemy_power(). */
 double om_mission_compute_enemy_power(om_world *w, uint32_t archetype, double committed_budget, double military, double population) {
-    /* STUB */
-    (void)w; (void)archetype; (void)committed_budget; (void)military; (void)population;
-    return 0.0;
+    switch (archetype) {
+    case OM_MISSION_ARCH_DEFENSIVE_STAND:
+    case OM_MISSION_ARCH_MULTI_FRONT_DEFENSE:
+    case OM_MISSION_ARCH_INTERCEPTION:
+        return committed_budget * OM_BUDGET_TO_POWER_SCALE;
+
+    case OM_MISSION_ARCH_SUPPRESSION:
+    case OM_MISSION_ARCH_COUNTERINSURGENCY: {
+        double t = (population - OM_MISSION_INSURGENT_POP_LOW_THRESHOLD) /
+                   (OM_MISSION_INSURGENT_POP_HIGH_THRESHOLD - OM_MISSION_INSURGENT_POP_LOW_THRESHOLD);
+        t = om_mis_clamp01(t);
+        double lo = OM_INSURGENT_MIL_LOW_POP_RANGE_LO +
+                    t * (OM_INSURGENT_MIL_HIGH_POP_RANGE_LO - OM_INSURGENT_MIL_LOW_POP_RANGE_LO);
+        double hi = OM_INSURGENT_MIL_LOW_POP_RANGE_HI +
+                    t * (OM_INSURGENT_MIL_HIGH_POP_RANGE_HI - OM_INSURGENT_MIL_LOW_POP_RANGE_HI);
+        double r = om_rng_draw(w);
+        double insurgent_m = lo + r * (hi - lo);
+        return insurgent_m * OM_MILITARY_TO_POWER_SCALE;
+    }
+
+    default:
+        return military * OM_MILITARY_TO_POWER_SCALE;
+    }
 }
 
 double om_mission_compute_final_score(double o, double r) {
@@ -682,10 +877,49 @@ uint32_t om_mission_fallback_region(const om_world *w) {
     return weakest;
 }
 
+/* R-074-04 / ALG-57 Fill, ported from simulation/force_allocator.py
+ * _fill_force(): budget = P * parity, spent per unit type in descending
+ * profile-ratio order, adding units while short of that type's target
+ * share and the next unit does not overshoot the remaining budget by more
+ * than OM_MISSION_FILL_OVERSHOOT_MULT. Stores the resulting counts into
+ * player_units (same slot om_mission_apply_capacity_shortfall reads). */
 double om_mission_fill_player_force(om_world *w, double P, double parity) {
-    /* STUB */
-    (void)w; (void)P; (void)parity;
-    return 0.0;
+    om_mission_state *st = om_mis(w);
+    double budget = P * parity;
+
+    double ratios[OM_MISSION_N_UNIT_TYPES];
+    om_mission_allocate_force_profile(w, st->mission_archetype, budget, ratios);
+
+    uint32_t order[OM_MISSION_N_UNIT_TYPES];
+    for (uint32_t i = 0; i < OM_MISSION_N_UNIT_TYPES; i++) order[i] = i;
+    for (uint32_t i = 0; i < OM_MISSION_N_UNIT_TYPES; i++) {
+        uint32_t best = i;
+        for (uint32_t j = i + 1; j < OM_MISSION_N_UNIT_TYPES; j++) {
+            if (ratios[order[j]] > ratios[order[best]]) best = j;
+        }
+        uint32_t tmp = order[i]; order[i] = order[best]; order[best] = tmp;
+    }
+
+    uint32_t counts[OM_MISSION_N_UNIT_TYPES] = {0};
+    double remaining = budget;
+    double total_allocated = 0.0;
+    for (uint32_t k = 0; k < OM_MISSION_N_UNIT_TYPES; k++) {
+        uint32_t t = order[k];
+        double pr = om_unit_power(t);
+        if (pr <= 0.0) continue;
+        double target = budget * ratios[t];
+        double allocated = 0.0;
+        while (allocated < target && remaining > 0.0) {
+            if (pr > remaining * OM_MISSION_FILL_OVERSHOOT_MULT) break;
+            counts[t]++;
+            allocated += pr;
+            remaining -= pr;
+            total_allocated += pr;
+        }
+    }
+
+    for (uint32_t i = 0; i < OM_MISSION_N_UNIT_TYPES; i++) st->player_units[i] = counts[i];
+    return total_allocated;
 }
 
 int om_mission_get_archetype_metadata(const om_world *w, uint32_t archetype, om_archetype_metadata *out) {
@@ -796,13 +1030,20 @@ double om_mission_get_player_parity(const om_world *w) {
 }
 
 void om_mission_get_player_units(const om_world *w, uint32_t *out, uint32_t max) {
-    /* STUB */
-    (void)w; (void)out; (void)max;
+    if (!out) return;
+    const om_mission_state *st = om_mis_ro(w);
+    uint32_t n = max < OM_MISSION_N_UNIT_TYPES ? max : OM_MISSION_N_UNIT_TYPES;
+    for (uint32_t i = 0; i < n; i++) out[i] = st ? st->player_units[i] : 0;
 }
 
 void om_mission_get_shortfall_text(const om_world *w, char *out, uint32_t cap) {
-    /* STUB */
-    (void)w; (void)out; (void)cap;
+    if (!out || cap == 0) return;
+    const om_mission_state *st = om_mis_ro(w);
+    const char *text = (st && st->shortfall_text[0]) ? st->shortfall_text : "";
+    size_t len = strlen(text);
+    if (len >= cap) len = cap - 1;
+    memcpy(out, text, len);
+    out[len] = '\0';
 }
 
 uint64_t om_mission_get_time_limit(const om_world *w) {
@@ -955,8 +1196,10 @@ void om_mission_set_objective_completion(om_world *w, uint32_t objective_idx, do
 }
 
 void om_mission_set_player_units(om_world *w, const uint32_t *counts, uint32_t n_types) {
-    /* STUB */
-    (void)w; (void)counts; (void)n_types;
+    if (!counts) return;
+    om_mission_state *st = om_mis(w);
+    uint32_t n = n_types < OM_MISSION_N_UNIT_TYPES ? n_types : OM_MISSION_N_UNIT_TYPES;
+    for (uint32_t i = 0; i < n; i++) st->player_units[i] = counts[i];
 }
 
 void om_mission_set_preference(om_world *w, uint32_t archetype, double weight) {
@@ -1046,9 +1289,25 @@ int om_unit_get_profile(uint32_t unit_type, int difficulty, om_unit_profile *out
     return 0;
 }
 
+/* R-074-06 / Q-074-01: power = HP * base_damage / attack_interval,
+ * normalized so the anchor type reads OM_MISSION_POWER_ANCHOR_VALUE. Reads
+ * E-11's own per-type accessors (csrc/unit.c) with w = NULL: every id below
+ * OM_UNIT_TYPE_COUNT is a builtin roster entry and om_get_profile's builtin
+ * branch never dereferences w, so this never needs a world. */
 double om_unit_power(uint32_t unit_type) {
-    /* STUB */
-    (void)unit_type;
-    return 0.0;
+    double hp = om_unit_profile_max_hp(NULL, (int)unit_type);
+    double dmg = om_unit_profile_base_damage(NULL, (int)unit_type);
+    double interval = om_unit_profile_attack_interval(NULL, (int)unit_type);
+    if (interval <= 0.0) return 0.0;
+    double raw = hp * dmg / interval;
+
+    double anchor_hp = om_unit_profile_max_hp(NULL, OM_MISSION_POWER_ANCHOR_UNIT_TYPE);
+    double anchor_dmg = om_unit_profile_base_damage(NULL, OM_MISSION_POWER_ANCHOR_UNIT_TYPE);
+    double anchor_interval = om_unit_profile_attack_interval(NULL, OM_MISSION_POWER_ANCHOR_UNIT_TYPE);
+    if (anchor_interval <= 0.0) return 0.0;
+    double anchor_raw = anchor_hp * anchor_dmg / anchor_interval;
+    if (anchor_raw <= 0.0) return 0.0;
+
+    return (raw / anchor_raw) * OM_MISSION_POWER_ANCHOR_VALUE;
 }
 /* ---- end generated stubs ---- */
