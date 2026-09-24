@@ -42,6 +42,12 @@ CANDIDATE="$(cd "$1" && pwd)"
 BASE_REF="$2"
 PIECE_ID="$3"
 
+# merge_queue.py always checks a candidate out at <merge_root>/wt-<name>, so
+# the candidate's own parent dir IS the runs/merge dir the gate never
+# otherwise names -- reusable as the baseline-cache location without an
+# agora-side change. See merge_gate_support.py's regression_check.
+MERGE_ROOT="$(dirname "$CANDIDATE")"
+
 SCRATCH_ROOT="$(mktemp -d -t merge_gate.XXXXXX)"
 cleanup() { rm -rf "$SCRATCH_ROOT"; }
 trap cleanup EXIT
@@ -142,7 +148,7 @@ fi
 # -------------------------------------------------------------- 6. suite_regression, tests/csim and tests/qa/t1 separately
 REG_CSIM_LOG="$SCRATCH_ROOT/regression_csim.log"
 "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/csim \
-    --python "$PYTHON" --timeout "$SUITE_TIMEOUT" >"$REG_CSIM_LOG" 2>&1
+    --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" >"$REG_CSIM_LOG" 2>&1
 if [[ $? -ne 0 ]]; then
     reject regression_csim "$(cat "$REG_CSIM_LOG")"
 else
@@ -151,7 +157,7 @@ fi
 
 REG_QA_LOG="$SCRATCH_ROOT/regression_qa_t1.log"
 "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/qa/t1 \
-    --python "$PYTHON" --timeout "$SUITE_TIMEOUT" >"$REG_QA_LOG" 2>&1
+    --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" >"$REG_QA_LOG" 2>&1
 if [[ $? -ne 0 ]]; then
     reject regression_qa_t1 "$(cat "$REG_QA_LOG")"
 else
