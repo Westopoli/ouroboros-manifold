@@ -1420,7 +1420,7 @@ void om_lineage_record_history_region(om_world *w, uint32_t lineage_id, uint32_t
 void om_lineage_set_chapter_count(om_world *w, uint32_t lineage_id, uint32_t chapters);
 uint32_t om_lineage_spawn_descendant_at_tick(om_world *w, uint32_t lineage_id, uint32_t parent_id, uint64_t tick);
 uint32_t om_lineage_spawn_single_descendant(om_world *w, uint32_t lineage_id);
-void om_load_state_read(om_world *w, const uint8_t *buffer, uint32_t length);
+int om_load_state_read(om_world *w, const uint8_t *buffer, uint32_t length);
 uint32_t om_mission_generator_chosen_region(const om_world *w);
 void om_mission_generator_run(om_world *w);
 void om_mission_tag_rivals(om_world *w, uint32_t mission_region, uint32_t commander_id);
