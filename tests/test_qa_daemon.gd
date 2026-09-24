@@ -74,5 +74,38 @@ func _run_tests() -> void:
 		_assert(d.has("scene"), "qa daemon state() missing key 'scene'")
 		_assert(d.has("tick"), "qa daemon state() missing key 'tick'")
 
+	_check_step_reaches_the_scene_qa_step(script)
+
 	if daemon is Node:
 		(daemon as Node).free()
+
+
+# Piece C7-3: the daemon's step verb also calls the current scene's
+# qa_step(n) when it has one (the way plant reaches qa_plant), so a desktop
+# test can advance a scene that owns a live sim session (C2-4). A scene
+# without qa_step is left alone and the daemon's own counter still moves.
+func _check_step_reaches_the_scene_qa_step(script) -> void:
+	var gs := GDScript.new()
+	gs.source_code = "extends Node\nvar got := -1\nfunc qa_step(n: int) -> void:\n\tgot = n\n"
+	_assert(gs.reload() == OK, "step test stub script failed to compile")
+	var stub := Node.new()
+	stub.set_script(gs)
+	var plain := Node.new()
+	var d = (script as Script).new()
+	get_root().add_child(d)
+	get_root().add_child(stub)
+	get_root().add_child(plain)
+
+	current_scene = stub
+	var r: Dictionary = d._dispatch("step", [7])
+	_assert(bool(r.get("ok", false)) and int(r["result"].get("tick", -1)) == 7, "step verb did not answer ok with tick 7: %s" % str(r))
+	_assert(int(stub.get("got")) == 7, "step verb did not reach the scene's qa_step (got %s, expected 7)" % stub.get("got"))
+
+	current_scene = plain
+	var r2: Dictionary = d._dispatch("step", [3])
+	_assert(bool(r2.get("ok", false)) and int(r2["result"].get("tick", -1)) == 10, "step verb on a scene without qa_step failed: %s" % str(r2))
+	_assert(int(stub.get("got")) == 7, "step verb reached a scene that is no longer current")
+
+	current_scene = null
+	for n in [d, stub, plain]:
+		n.free()
