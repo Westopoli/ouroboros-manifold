@@ -271,6 +271,13 @@
  * tests/csim/test_E17_S113_*.py; csrc/tactical_mapgen.c does not export it). */
 #define OM_MISSION_SPINE_NODE_OBJECTIVE 0
 
+/* ALG-71 / R-114-03 objective cover row (GRADIENT_OBJECTIVE_COVER_INTENSITY
+ * 0.50, GRADIENT_OBJECTIVE_COVER_RADIUS 400 in simulation/config.py); only the
+ * radius is used, om_map_add_cover takes no intensity. The height has no table
+ * value: Q-098-01 placeholder, inert because fog.c blocks on any cover disc. */
+#define OM_MISSION_OBJECTIVE_COVER_RADIUS 400.0
+#define OM_MISSION_OBJECTIVE_COVER_HEIGHT 5.0
+
 /* R-079-03/04: debrief retention prose bands -- no bible-given cutoffs
  * (the debrief only has to show retention qualitatively, not a formula),
  * chosen so "most" reads as "the force came home largely intact". */
@@ -1865,6 +1872,7 @@ static void om_mission_instantiate_map(om_world *w, om_mission_state *st) {
     } else {
         st->map_instantiated = 1;
         om_map_add_spine_node(w, canvas / 2.0, canvas / 2.0, OM_MISSION_SPINE_NODE_OBJECTIVE);
+        om_map_add_cover(w, canvas / 2.0, canvas / 2.0, OM_MISSION_OBJECTIVE_COVER_RADIUS, OM_MISSION_OBJECTIVE_COVER_HEIGHT);
         om_map_add_spawn_point(w, canvas / 2.0, edge, player);
         om_map_add_spawn_point(w, canvas / 2.0, canvas - edge, enemy);
     }
