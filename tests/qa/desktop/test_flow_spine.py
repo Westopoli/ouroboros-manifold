@@ -138,6 +138,41 @@ def test_s_c8_02_new_game_reaches_galaxy(game):
     _shoot(client, "flow_02_galaxy")
 
 
+def test_S_C8_08_galaxy_has_content(game):
+    """P1 rung finding: scenes/galaxy/galaxy_view.gd:69 asks the live pipe
+    for only 60 regions (below the 75-region feasibility floor for the
+    default 15-faction generator), the pipe answers an error frame on
+    set_seed, and the galaxy screen is empty in real play. Proves S-106/
+    R-106-01 (docs/bible/epics/E-16-client-camera-hud-and-world-view.md)
+    end to end through the daemon: the "state" frame must carry the current
+    scene's qa_state() dict merged in under a "qa" key (autoload/
+    qa_daemon.gd's state() does not do this yet -- the fix doer adds it),
+    and that dict's system_count/owners must reflect an 80-region, at-least-
+    partially-owned galaxy, not the empty one the 60-region request produces
+    today."""
+    client = game.client
+    resp = client.state()
+    assert resp.get("ok"), "S-C8-08: state call failed: %r" % resp
+    result = resp["result"]
+    assert "qa" in result, (
+        "S-C8-08: state frame has no \"qa\" key -- autoload/qa_daemon.gd's state() "
+        "must merge the current scene's qa_state() dict in under \"qa\" when the "
+        "scene defines a qa_state() method; state result keys = %r" % sorted(result.keys())
+    )
+    qa = result["qa"]
+    assert qa.get("system_count") == 80, (
+        "S-C8-08: qa.system_count = %r, expected 80 (S-106/R-106-01; scenes/galaxy/"
+        "galaxy_view.gd:69 _load_live_snapshot must request >= the 75-region "
+        "feasibility floor, not 60)" % qa.get("system_count")
+    )
+    owners = qa.get("owners", {})
+    assert len(owners) == 80, (
+        "S-C8-08: qa.owners has %d entries, expected 80" % len(owners)
+    )
+    owned = sum(1 for v in owners.values() if int(v) >= 0)
+    assert owned >= 1, "S-C8-08: qa.owners has no owned region (all -1); expected at least 1"
+
+
 def test_s_c8_03_mission_reaches_briefing(game):
     client = game.client
     tree_resp = client.tree()

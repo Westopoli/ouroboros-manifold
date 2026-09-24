@@ -11,7 +11,7 @@ const BRIDGE_SCRIPT_PATH := "res://autoload/c_bridge.gd"
 const FIXTURE_PATH := "res://tests/transport/fixtures/snapshot_seed1_tick10.json"
 const FALLBACK_PATH := "user://test_c_bridge_fallback_snapshot.json"
 const BAD_PATH := "user://test_c_bridge_bad_snapshot.json"
-const N_REGIONS := 60
+const FALLBACK_N_REGIONS := 60
 
 var _pass_count := 0
 var _fail_count := 0
@@ -70,9 +70,10 @@ func _run_tests() -> void:
 	var ok = bridge.load_snapshot_file(expected.path)
 	_assert(bool(ok), "load_snapshot_file(%s) did not report success" % expected.path)
 
+	var expected_n: int = expected.data.get("regions", []).size()
 	var regions: Array = bridge.regions()
-	_assert(regions.size() == N_REGIONS,
-		"regions().size() = %d, expected %d" % [regions.size(), N_REGIONS])
+	_assert(regions.size() == expected_n,
+		"regions().size() = %d, expected %d" % [regions.size(), expected_n])
 
 	var expected_owner_0 = _region_owner(expected.data, 0)
 	var actual_owner_0 = bridge.owner_of(0)
@@ -136,7 +137,7 @@ func _region_owner(snapshot: Dictionary, idx: int):
 # no names/positions/prose (C5 rule, docs/architecture.md "C transport v1").
 func _build_minimal_snapshot() -> Dictionary:
 	var regions := []
-	for i in range(N_REGIONS):
+	for i in range(FALLBACK_N_REGIONS):
 		regions.append({
 			"i": i,
 			"owner": (i % 3) - 1,
@@ -149,7 +150,7 @@ func _build_minimal_snapshot() -> Dictionary:
 			"capacity": 10.0,
 		})
 	var edges := []
-	for i in range(N_REGIONS - 1):
+	for i in range(FALLBACK_N_REGIONS - 1):
 		edges.append({"a": i, "b": i + 1, "t": i % 2})
 	var factions := []
 	for f in range(3):

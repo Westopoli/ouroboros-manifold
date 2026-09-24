@@ -72,7 +72,7 @@ acceptance = [
     "tests/csim/test_E03_S025_nobody_starts_on_your_doorstep.py",
 ]
 depends_on = ["freeze"]
-status = "pending"
+status = { state = "attached", attach_sha = "45c4441" }
 size_estimate = "217+ py lines, 28 tests (E-03); needs F2's weak om_world_generate attribute"
 
 [[piece]]
@@ -140,7 +140,7 @@ acceptance = [
     "tests/csim/test_E08_S064_what_carries_over.py",
 ]
 depends_on = ["freeze"]
-status = "pending"
+status = { state = "attached", attach_sha = "84bdfa5" }
 size_estimate = "1263 py lines, 50 tests (E-08 minus S-055, held for B7b: needs chronicle.c and unit.c)"
 
 [[piece]]
@@ -371,7 +371,7 @@ acceptance = [
     "tests/specfactory/test_pack_validate.py",
 ]
 depends_on = []
-status = "pending"
+status = { state = "attached", attach_sha = "84107fd" }
 size_estimate = "PX-10 already wrote the test, banned_words.txt and both fixture packs; only pack_validate.py itself is unbuilt"
 
 [[piece]]
@@ -466,7 +466,7 @@ acceptance = [
     "tests/specfactory/test_pack_validate.py",
 ]
 depends_on = ["K1"]
-status = "pending"
+status = { state = "attached", attach_sha = "a59b13e" }
 tests_pending = true
 size_estimate = "second placeholder era pack (Greek kit from the mockup); path name a candidate, see report"
 
@@ -534,3 +534,11 @@ owns_glob = ["scenes/main_menu/**"]
 acceptance = ["tests/test_boot_scripts_parse.gd", "tests/test_privacy_modal.gd"]
 depends_on = []
 status = { state = "attached", attach_sha = "764ed59" }
+
+[[piece]]
+id = "core"
+manager = "M0"
+wave = 0
+owns = ["csrc/sim.c", "csrc/region.c", "csrc/om_internal.h", "csrc/ouroboros_sim.h", "csrc/om_constants.h", "Makefile"]
+acceptance = []
+depends_on = []

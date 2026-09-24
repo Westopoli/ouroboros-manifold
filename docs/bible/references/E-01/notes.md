@@ -8,7 +8,7 @@
 2. **Claude develops a plan to build several layer-system options in Godot** on top of that prototype — different looks and interactions for the stack, height changes, the layer ring/strip, and pulses — that Westley can play with and choose between.
 3. Westley picks; the chosen option becomes the E-01 visual end-state and these references are filled with Godot renders of it.
 
-Until step 3, the "references" for E-01 are Godot mockups we produce, not images Westley supplies. Flag Q-E01-08 stays open, but its resolution path is this design phase, not a screenshot hunt.
+Step 3 happened on paper: the options pass (`docs/northstar/research/options/layer-system/`) put four looks in front of Westley and on 2026-09-23 he chose Terrace Reading combined with Floor Spindle, both subdued (E-01 R-009-05), with a waypoint-like target mark (R-009-02) and an occlusion indicator still open (Q-009-02). Q-E01-08 is closed; the slots below are filled with Godot renders of that look as they are built.
 
 ## Westley's recorded layer ideas
 

@@ -84,3 +84,9 @@ Follow the common template in `../README.md` ("Sub-agent template"). Sections 4 
 - History loops: after the last owned era the next time jump returns to the first, in solo campaigns as well as matches; when a peer lacks the next pack the jump keeps going until an era every peer owns. Options show what the player sees when history comes around again: the same galaxy and ledger, characters faded to myth.
 - Earlier characters fade into distant myths and legends in the chronicle, mentioned less the farther the timeline moves.
 - Propose what decides which time jump crosses the boundary. Do not name the past and present eras.
+
+## 10. Decision (2026-09-23)
+
+Westley, verbatim: "For era transitions I like the long horizon."
+
+Recorded as: The Long Horizon (Q-148-01 closed; the reach measure is Q-148-05).

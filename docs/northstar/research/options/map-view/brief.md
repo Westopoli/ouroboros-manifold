@@ -71,3 +71,9 @@ Follow the common template in `../README.md` ("Sub-agent template"). Sections 4 
 - How the player picks a group from above and gives the order; what the order looks like on the map and on the ground when they zoom back in.
 - Groups carry a mark for Upper (layers 4 and 5), Lower (1 and 2), or Expansive (1 to 5); propose how a group entirely on layer 3 reads.
 - What the transition between the tactical band and the map band looks and feels like, and how fog reads from above.
+
+## 10. Decision (2026-09-23)
+
+Westley, verbatim: "For the zoom band, I really like the sand table idea, but I'd like to see a prototype before I commit to it. This is the sort of thing that's really hard to pull off, but I'd really like to see something like the sand table from Dune, the execution would have to be really good on this, we'd need to make a prototype that's low resolution (large blocks to represent height), and design it such that the resolution (size of the grains of sand, and hence detail) could be turned up and down. Obviously once it gets really fine grained, the detail will be immense but so will the graphics load. It'd also be nice if the users had a 45 degree angle option of the same map, with layers seperated enough for specific sets of units to be visible. This is worth significant protytping and tuning, this is a complex mechanism. I'd like to brainstorm additional options for indicating which layer specific units and unit groups are one, because the pin option is a good option but I don't think it has to be the only one. Mark further research needed."
+
+Recorded as: Sand Table is the candidate, prototype before commitment (block-resolution table with a grain-size dial, plus a 45° view with layers separated); more layer-mark ideas beyond pins wanted (Q-103-05, Q-103-06; E-16 S-161).

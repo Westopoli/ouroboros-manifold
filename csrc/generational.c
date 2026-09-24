@@ -1430,6 +1430,9 @@ uint32_t om_time_jump_report_faction_field_deltas_count(const om_world *w, const
 int om_time_jump_run(om_world *w, uint32_t n_ticks, om_time_jump_report *report) {
     gen_state *gs = gen_get_state(w);
     if (!w || !gs) return 1;
+    /* R-055-02: the strategic sim is stopped for a mission's whole duration;
+     * a time jump cannot start (or silently continue) while one is running. */
+    if (gs->chapter_phase == GEN_PHASE_MISSION) return 1;
     uint64_t start_tick = w->tick;
     for (uint32_t i = 0; i < n_ticks; i++) om_world_step(w);
     uint64_t end_tick = w->tick;

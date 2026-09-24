@@ -75,3 +75,9 @@ Follow the common template in `../README.md` ("Sub-agent template"). Sections 4 
 - Design the post-launch version: perk-card customization in the Dead by Daylight register, on top of a 20 to 40 unit roster, individualized to a player's style, nerfed when abused.
 - A trait may change a rule. HUD visibility depends on the trait.
 - Each option says where cards come from, who holds them (unit type, unit, commander, force), whether the enemy fields them, and how it squares with no persistent player level (A-061) and both sides drawing the same profiles (R-080-01).
+
+## 10. Decision (2026-09-23)
+
+Westley, verbatim: "For passive traits, I'd kinda like them to be unlockable, like Dead by Daylight or Age of Empires 3. However, traits and abilities are never more powerful than a player's positioning ability, this is a core rule for the game: a player with "weak" abilities/traits that understands strategy and the layer system better will trump any player with "strong" abilities/traits that doesn't. Layer system damage is weighted much more heavily than abilities/passives, and we'll minimize traits/abilities that are unlockable that give players an "edge" in terms of vision across layers. This one is pretty decided (we'll make the cards cool so the players have a desire to unlock them), no need for a second pass on this decision."
+
+Recorded as: Unlockable trait cards (Dead by Daylight, Age of Empires 3 register) under a core rule: cards and abilities never outrank positioning, layer damage weighs more, cross-layer-vision cards minimized. Decided, no second pass (Q-083-02, Q-083-03).

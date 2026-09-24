@@ -15,7 +15,7 @@ const SCENE_PATH := "res://scenes/galaxy/galaxy_view.tscn"
 const BRIDGE_SCRIPT_PATH := "res://autoload/c_bridge.gd"
 const FIXTURE_PATH := "res://tests/transport/fixtures/snapshot_seed1_tick10.json"
 const FALLBACK_PATH := "user://test_galaxy_view_fallback_snapshot.json"
-const N_REGIONS := 60
+const FALLBACK_N_REGIONS := 60
 const PLANTS := ["seed-ignored", "owner-colour-flat", "edges-2d-overlay",
 	"pick-radius-zero", "bands-frozen", "conquest-no-recolour"]
 
@@ -90,6 +90,49 @@ func _run_tests() -> void:
 	_check_plant_bands_frozen_R106_03()
 	_check_plant_conquest_no_recolour_R106_02_04()
 	_check_plant_nope_is_false()
+	await _check_real_boot_loads_80_regions_S106()
+
+
+# P1 rung finding (galaxy screen empty in real play): scenes/galaxy/
+# galaxy_view.gd:69 _load_live_snapshot() asks the live pipe for only 60
+# regions, below the 75-region feasibility floor for the default 15-faction
+# generator (csrc/ouroboros_sim.h om_world_generate; tests/transport/
+# test_pipe_shapes.py's n_regions=80 comment), the pipe answers an error
+# frame on set_seed, and nothing surfaces -- qa_state().system_count stays 0.
+# Unlike every other check in this file (which calls set_snapshot() directly,
+# bypassing _ready()'s own live-load path entirely), this instantiates its
+# own galaxy_view through the real boot path -- add_child triggers _ready(),
+# which calls _load_live_snapshot() -- and never calls set_snapshot(), so it
+# is the real S-106/R-106-01 boot-time content check (docs/bible/epics/
+# E-16-client-camera-hud-and-world-view.md), not a check of the render pass
+# alone. Requires pipe/ouroboros_pipe to be built (`make pipe/ouroboros_pipe`).
+func _check_real_boot_loads_80_regions_S106() -> void:
+	var packed = load(SCENE_PATH)
+	if packed == null or not (packed is PackedScene):
+		_assert(false, "cannot load %s for the live-boot check" % SCENE_PATH)
+		return
+
+	var live_root = (packed as PackedScene).instantiate()
+	_assert(live_root != null, "%s failed to instantiate for the live-boot check" % SCENE_PATH)
+	if live_root == null:
+		return
+
+	get_root().add_child(live_root)
+	await process_frame
+	await process_frame
+
+	if not live_root.has_method("qa_state"):
+		_assert(false, "galaxy_view root (live boot) missing method: qa_state")
+		live_root.queue_free()
+		return
+
+	var state: Dictionary = live_root.qa_state()
+	_assert(int(state.get("system_count", -1)) == 80,
+		"S-106/R-106-01 (real boot path, scenes/galaxy/galaxy_view.gd:69 _load_live_snapshot -> "
+		+ "c_bridge.gd load_snapshot_live, docs/architecture.md \"C transport v1\"): system_count = %s, expected 80"
+		% state.get("system_count"))
+
+	live_root.queue_free()
 
 
 func _check_qa_state_json_safe() -> void:
@@ -99,15 +142,17 @@ func _check_qa_state_json_safe() -> void:
 
 func _check_system_count_S106_R106_01() -> void:
 	var state: Dictionary = _root.qa_state()
-	_assert(int(state.get("system_count", -1)) == N_REGIONS,
-		"S-106/R-106-01: system_count = %s, expected %d" % [state.get("system_count"), N_REGIONS])
+	var expected_n: int = _snapshot.get("regions", []).size()
+	_assert(int(state.get("system_count", -1)) == expected_n,
+		"S-106/R-106-01: system_count = %s, expected %d" % [state.get("system_count"), expected_n])
 
 
 func _check_owners_S106_R106_02() -> void:
 	var state: Dictionary = _root.qa_state()
 	var owners: Dictionary = state.get("owners", {})
-	_assert(owners.size() == N_REGIONS,
-		"S-106/R-106-02: owners has %d entries, expected %d" % [owners.size(), N_REGIONS])
+	var expected_n: int = _snapshot.get("regions", []).size()
+	_assert(owners.size() == expected_n,
+		"S-106/R-106-02: owners has %d entries, expected %d" % [owners.size(), expected_n])
 	var mismatches := 0
 	for r in _snapshot.get("regions", []):
 		var i := int(r.get("i", -1))
@@ -133,8 +178,9 @@ func _check_edge_counts_S106_R106_02() -> void:
 func _check_systems_px_S106_R106_01() -> void:
 	var state: Dictionary = _root.qa_state()
 	var px: Dictionary = state.get("systems_px", {})
-	_assert(px.size() == N_REGIONS,
-		"S-106/R-106-01: systems_px has %d entries, expected %d (one drawn point per region)" % [px.size(), N_REGIONS])
+	var expected_n: int = _snapshot.get("regions", []).size()
+	_assert(px.size() == expected_n,
+		"S-106/R-106-01: systems_px has %d entries, expected %d (one drawn point per region)" % [px.size(), expected_n])
 	var vp := Vector2(get_root().size)
 	if vp.x <= 0 or vp.y <= 0:
 		vp = Vector2(1920, 1080)
@@ -152,8 +198,9 @@ func _check_owner_colour_S106_R106_01_02() -> void:
 	var owners: Dictionary = state.get("owners", {})
 	var region_colours: Dictionary = state.get("region_colours", {})
 	var owner_colours: Dictionary = state.get("owner_colours", {})
-	_assert(region_colours.size() == N_REGIONS,
-		"S-106/R-106-01: region_colours has %d entries, expected %d" % [region_colours.size(), N_REGIONS])
+	var expected_n: int = _snapshot.get("regions", []).size()
+	_assert(region_colours.size() == expected_n,
+		"S-106/R-106-01: region_colours has %d entries, expected %d" % [region_colours.size(), expected_n])
 	var mismatches := 0
 	for i in owners:
 		var owner = owners[i]

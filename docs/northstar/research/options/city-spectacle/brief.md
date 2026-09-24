@@ -73,3 +73,9 @@ Follow the common template in `../README.md` ("Sub-agent template"). Sections 4 
 - Every side has a city: the defender's home, the attacker's forward base. If a side's city dies, its battle is over: no reinforcements, no replenishment.
 - Damage persists after a short time jump; rebuilding speed follows the civilization's economic state.
 - Propose the smallest nudge a solo commander has over the city, and what would cross into managing an economy.
+
+## 10. Decision (2026-09-23)
+
+Westley, verbatim: "For self-running city, I'm not a fan of any of these. What would be cool is if the types of buildings that players don't build (static visual architecture) expands outward automatically as the city grows, but small settlements (that can get bigger) crop up where the production facilities or resource objectives are. If a resource is critical enough, a whole city can be built around it, with trade visibly moving between cities on the map. The home base should have a reason it's there in terms of resources, but it should not be the only source of resources, and people go where money can be made (resources to be found), and trade to happen (between cities with various resources). Let's explore a couple ideas based off of this in a second pass."
+
+Recorded as: None. New direction: static architecture expands outward on its own as the city grows; small settlements crop up at production facilities and resource objectives and can grow into cities around a critical resource; trade moves visibly between cities; the home base has a resource reason to exist but is not the only source; people go where money and resources are. Second pass with a couple of ideas on this.

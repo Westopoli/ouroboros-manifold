@@ -65,17 +65,18 @@ Inputs: unit profile table (per tier, per era pack).
 Outputs: loaded roster; contract test.
 Open flags: Q-082-03 (categories, roles, and the roster invariants past six types), Q-082-04 (the balance scoring mechanism), Q-082-05 (launch roster size per era and the conflict swing).
 
-### S-083 — Stats, traits, ability
-As a commander, I want each unit to be its stats plus one or two passive traits plus one ability, so that units within a category differ in kind and not only in number.
+### S-083 — Stats, trait cards, ability
+As a commander, I want to unlock trait cards and build a force that plays my way, so that units differ in kind, and never in a way that beats positioning.
 
 Rules
-- R-083-01  Given a unit type, When its profile is read, Then it has the stats of S-082, zero to two traits, and exactly one ability.
-- R-083-02  Given a trait, When applied, Then it modifies one stat or one multiplier by a fixed amount stated in the profile [Q-083-01: no trait exists in code].
-- R-083-03  Given a Warden, When any friendly unit is within 300 wu, Then that unit takes 10 percent less damage and regains 0.075 HP per tick (the Warden's passive aura), stacking with no other Warden.
+- R-083-01  Given a unit type, When its profile is read, Then it has the stats of S-082, zero to two trait cards the player has chosen, and exactly one ability.
+- R-083-02  Given a trait card, When applied, Then it changes a stat or a rule; no card or ability ever outweighs positioning: layer position and cross-layer geometry weigh more than any trait or ability, and cards granting vision across layers are kept to a minimum [Q-083-03: the weighting test].
+- R-083-04  Given a player, When they play, Then trait cards are unlocked through play, in the register of Dead by Daylight and Age of Empires 3, and abused cards are nerfed after launch [Q-083-03: what earns a card, where it persists, whether the enemy fields cards].
+- R-083-03  Given a Warden, When any friendly unit is within 300 wu, Then that unit takes 10 percent less damage and regains 0.075 HP per tick (the Warden's passive aura); a second Warden in range adds 0.05 reduction, not 0.10, and healing stacks per Warden.
 
 Inputs: profile table.
 Outputs: effective stats.
-Open flags: Q-083-01 (traits: build the pool or delete the claim), Q-084-01 (aura stacking with multiple Wardens is unspecified; code applies each Warden's reduction additively).
+Open flags: Q-083-03 (unlock mechanism and the positioning-over-cards weighting test). Q-083-01 is closed: cards ship after launch; launch units are stats plus one ability. Q-084-01 is closed: a second Warden's reduction diminishes to 0.05. Chosen through the options pass, `docs/northstar/research/options/unit-traits/`, Q-083-02.
 
 ### S-084 — Flat damage
 As a commander, I want damage to be simple and legible: base times matchup, full damage at any range within reach, area damage capped, so that I can predict a fight.

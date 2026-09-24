@@ -158,7 +158,7 @@ As a player, I want the world to remember everything and my character to start f
 Rules
 - R-064-01  Given any chapter transition, When the next chapter starts, Then every region field, ownership, faction, tech level, edge type, event queue, and ledger record persists unchanged except by the sim itself.
 - R-064-02  Given a new chapter, When forces are assigned, Then they come only from the mission generator's allocation (E-10); nothing carries from the previous mission's surviving units.
-- R-064-03  Given progression, When read, Then there is no player level and no stat carried between commanders; the only unlock type at launch is era unlocks (E-20).
+- R-064-03  Given progression, When read, Then there is no player level and no stat carried between commanders; the unlock types are era unlocks (E-20) at launch and trait cards (E-11 S-083) after launch.
 - R-064-04  Given a save and load between chapters, When loaded, Then the next time jump produces the same trace as if never saved (determinism includes the RNG state and the chain tag counter).
 
 Inputs: none.

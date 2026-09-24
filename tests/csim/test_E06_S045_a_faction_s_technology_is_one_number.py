@@ -21,6 +21,7 @@ from conftest import (
     set_faction,
     set_owner,
     set_region,
+    template_name,
 )
 
 
@@ -133,6 +134,13 @@ def test_R_045_07_one_uniform_draw_made_if(lib, world_factory):
     w = world_factory(n_regions=2)
     isolate_agents(lib, w)
     lib.om_world_set_feature(w, OMFeature.TECHNOLOGY, 1)
+    # test-defect fix (push_2026-09-22/test_defects_fixed.md): the Knowledge
+    # Lost record is a registered external event (om_event_register_external
+    # + om_event_queue_external, csrc/diplomacy.c) that only reaches
+    # om_tick_events/read_events one tick after it queues, and only with
+    # OM_FEAT_EVENTS on. isolate_agents turns EVENTS off; turn it back on so
+    # the fixture can observe the record at all.
+    lib.om_world_set_feature(w, OMFeature.EVENTS, 1)
 
     # Average economy 15.0 < 20.0 -> eligible for Knowledge Lost
     set_faction(lib, w, 0, OMArchetype.DEFAULT, budget=0.0, tech=30.0)
@@ -155,10 +163,17 @@ def test_R_045_07_one_uniform_draw_made_if(lib, world_factory):
     assert lib.om_faction_tech(w, 0) == pytest.approx(25.02625, abs=1e-3)
     assert lib.om_faction_last_knowledge_lost(w, 0) == 106
 
+    # The record queues for due_tick = (tick at fire) + 1, so it only shows
+    # up in om_tick_events/read_events one step later -- step once more to
+    # reach that due tick before reading. Cooldown (last_knowledge_lost just
+    # set to 106) rules out a second draw on this extra step.
+    lib.om_world_step(w)
+
     # Verify fired event on highest-population region (region 0 with pop 60.0)
     events = read_events(lib, w)
-    kl_events = [e for e in events if e.region_idx == 0]
+    kl_events = [e for e in events if template_name(lib, w, e.template_id) == "Knowledge Lost"]
     assert len(kl_events) >= 1
+    assert kl_events[0].region_idx == 0
 
 
 def test_R_045_08_no_draw_made_tech_never(lib, world_factory):
@@ -185,6 +200,12 @@ def test_R_045_09_mean_over_all_windows_between(lib, world_factory):
     gen_set_faction_count(lib, w, 50)
     gen_set_region_range(lib, w, 100, 150)
     assert generate(lib, w) == 1
+    # test-defect fix (push_2026-09-22/test_defects_fixed.md): E-06's isolation
+    # set is ["DIPLOMACY", "TECHNOLOGY"] (mvp_features.toml), so EVENTS is off
+    # on this world by default -- turn it on so the queued Knowledge Lost
+    # record (om_event_queue_external, csrc/diplomacy.c) reaches
+    # om_tick_events/read_events at all.
+    lib.om_world_set_feature(w, OMFeature.EVENTS, 1)
 
     kl_counts = []
     total_windows = 100  # 5,000 ticks / 50 ticks per window
@@ -194,8 +215,16 @@ def test_R_045_09_mean_over_all_windows_between(lib, world_factory):
         for _ in range(50):
             lib.om_world_step(w)
             events = read_events(lib, w)
-            # Count Knowledge Lost events this tick
-            window_events += sum(1 for e in events if getattr(e, "is_knowledge_lost", False))
+            # Count Knowledge Lost events this tick. `is_knowledge_lost` was
+            # never a field of OmFiredEvent, so getattr(..., False) always
+            # took the default and this filter never matched a real record
+            # (dead filter/test-defect). The record queues a tick after it
+            # fires, but that one-tick lag just shifts which of these
+            # per-tick reads counts it -- every tick is read here, so nothing
+            # is lost, only relabeled across a window boundary at worst.
+            window_events += sum(
+                1 for e in events if template_name(lib, w, e.template_id) == "Knowledge Lost"
+            )
         kl_counts.append(window_events)
 
     mean_events = sum(kl_counts) / len(kl_counts)

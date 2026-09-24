@@ -219,7 +219,8 @@ static void om__set_hostile_to_all_used(om_world *w, int32_t new_id) {
 static void om__betrayal_fire(om_world *w, int32_t attacker, int32_t victim) {
     w->faction_stance[attacker][victim] = OM_STANCE_HOSTILE;
     w->faction_stance[victim][attacker] = OM_STANCE_HOSTILE;
-    om__set_shared_edges(w, attacker, victim, OM_EDGE_BORDER);
+    /* Edge retype (R-024-02) is om__enforce_stance_edges's job, run once at
+     * the end of om_diplomacy_step over every pair's current stance. */
 
     uint32_t target_idx;
     if (!om__find_weakest_bordering(w, attacker, victim, &target_idx)) return;
@@ -382,7 +383,8 @@ static void om__peace_check_overture(om_world *w, int32_t a, int32_t b) {
         w->faction_stance[b][a] = OM_STANCE_COOPERATIVE;
         w->faction_cooperative_since[a][b] = w->tick;
         w->faction_cooperative_since[b][a] = w->tick;
-        om__set_shared_edges(w, a, b, OM_EDGE_BOTH);
+        /* Edge retype (R-024-01) is om__enforce_stance_edges's job, run once
+         * at the end of om_diplomacy_step over every pair's current stance. */
     } else {
         om_faction_set_stance_counter(w, a, b, 0);
     }
@@ -632,19 +634,30 @@ void om_tech_step(om_world *w) {
             if (draw < OM_KNOWLEDGE_LOST_P) {
                 w->faction_tech[f] = fmax(0.0, w->faction_tech[f] - OM_KNOWLEDGE_LOST_DELTA);
                 om_faction_set_last_knowledge_lost(w, f, (int64_t)w->tick);
-                /* B1-2's om_event_fire_manual (ALG-49) records this on the
-                 * faction's highest-population region and, at this tier,
-                 * attaches its regional/supreme commander. It writes to
-                 * events.c's own manual-fire table, not the trigger-pipeline
-                 * s->fired[]/om_tick_events log (that log is only ever
-                 * appended by evt_fire, a static function reached through a
-                 * loaded om_event_template and its own template_id -- there
-                 * is no "Knowledge Lost" template and no public way to
-                 * append an arbitrary record to that log from here). So a
-                 * read_events()/om_tick_events() query still will not see
-                 * this firing; om_event_get_attached_character(w, id, ...)
-                 * is the observable this call produces today. */
+                /* B1-2's om_event_fire_manual (ALG-49) attaches the region's
+                 * regional/supreme commander at this significance tier; it
+                 * writes to events.c's manual-fire table, not the
+                 * trigger-pipeline s->fired[]/om_tick_events log.
+                 * F2h's om_event_register_external gets Knowledge Lost a
+                 * real template id in that same pipeline (idempotent by
+                 * name, so registering again next time is a lookup, not a
+                 * duplicate); om_event_queue_external then queues it so it
+                 * reaches om_tick_events -- but only one tick later, at the
+                 * queued due_tick's own step 1-2 (om_event_queue_external
+                 * rejects due_tick <= the current tick), and only if
+                 * OM_FEAT_EVENTS is on (csrc/sim.c gates om_step_events on
+                 * it; E-06's test fixtures leave it off -- isolate_agents
+                 * turns it off explicitly, and it is not one of the two
+                 * features world_factory turns on for this epic's module).
+                 * A single-step E-06 test, or one that never enables
+                 * EVENTS, will not see this record in read_events(). */
                 om_event_fire_manual(w, highest_pop_idx, OM_CHARACTER_ATTACHMENT_TIER_THRESHOLD);
+                int32_t kl_template = om_event_register_external(w, "Knowledge Lost",
+                    OM_CHARACTER_ATTACHMENT_TIER_THRESHOLD);
+                if (kl_template >= 0) {
+                    om_event_queue_external(w, highest_pop_idx, (uint32_t)kl_template,
+                        w->tick + 1, 1.0, f, 0);
+                }
             }
         }
     }
@@ -676,10 +689,34 @@ void om_tech_step(om_world *w) {
  * steps 4.25 and 4.5; om_diplomacy_step is the same body under its own
  * public name, per the om_tech_step / om_step_technology pairing). ---- */
 
+/* E-03 S-024 invariant (R-024-01/02, docs/bible/epics/E-03-*.md; matches the
+ * E-06 epic's own "cooperative implies both, hostile implies border"
+ * invariant): every shared edge follows the pair's current stance,
+ * regardless of how that stance got there -- the direct om_faction_set_stance
+ * setter included, per test_E03_S024_politics_redraws_the_routes.py's own
+ * fixtures. Run once, after betrayal and peace have applied this tick's
+ * transitions, so it retypes from the up-to-date stance table. A neutral
+ * pair's edges are left as they are (no invariant governs them). */
+static void om__enforce_stance_edges(om_world *w) {
+    for (int32_t a = 0; a < OM_MAX_FACTIONS; a++) {
+        if (!w->faction_used[a]) continue;
+        for (int32_t b = a + 1; b < OM_MAX_FACTIONS; b++) {
+            if (!w->faction_used[b]) continue;
+            om_stance s = w->faction_stance[a][b];
+            if (s == OM_STANCE_COOPERATIVE) {
+                om__set_shared_edges(w, a, b, OM_EDGE_BOTH);
+            } else if (s == OM_STANCE_HOSTILE) {
+                om__set_shared_edges(w, a, b, OM_EDGE_BORDER);
+            }
+        }
+    }
+}
+
 void om_diplomacy_step(om_world *w) {
     if (!w) return;
     om__betrayal_pass(w);
     om__peace_pass(w);
+    om__enforce_stance_edges(w);
 }
 
 void om_step_diplomacy(om_world *w) {

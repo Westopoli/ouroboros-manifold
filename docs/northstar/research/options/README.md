@@ -26,6 +26,28 @@ Precedent for this shape: `../landscape_design/README.md`, the P2 design phase. 
 
 All eleven option sets, side by side with their diagrams, on one page: https://claude.ai/artifact/6571aySFhmoQ1i4XswDhNm (private to Westley). Rebuilt from the files here whenever an options.md changes.
 
+## Decisions (2026-09-23)
+
+Westley read the atlas and answered per feature; his words are verbatim in each brief's section 10, and every pick is folded into the bible with its flag id.
+
+| Feature | Outcome | Decision |
+|---|---|---|
+| camera | picked | Angle Rack and Layer Peel both, Layer Peel as a player option, plus a 180-degree flip key; control specifics later (Q-103-03, Q-103-04). |
+| map-view | prototype | Sand Table is the candidate, prototype before commitment (block-resolution table with a grain-size dial, plus a 45° view with layers separated); more layer-mark ideas beyond pins wanted (Q-103-05, Q-103-06; E-16 S-161). |
+| control-groups | picked | Recall and Narrow as the default for groups and multi-layer movement, the Comb for moving individual layers within a group (Q-105-02). |
+| layer-system | picked | Terrace Reading combined with Floor Spindle, both subdued; an occlusion indicator for hidden units is open (Q-E01-08 closed, Q-009-02). |
+| era-transitions | picked | The Long Horizon (Q-148-01 closed; the reach measure is Q-148-05). |
+| era-feel | picked | The Climate of War (Q-151-01). The Long Look is not an era-feel strategy; its idea became a decision that loading screens carry interesting information (E-16 R-110-04, Q-110-03). |
+| paired-economy | second pass | None yet. The Works is good but not unique; the Two Clocks needs concrete player actions; the Commons is too broad and not about emotions. Second pass: building and designing efficient pathways and systems as the economy player's task. |
+| city-spectacle | second pass | None. New direction: static architecture expands outward on its own as the city grows; small settlements crop up at production facilities and resource objectives and can grow into cities around a critical resource; trade moves visibly between cities; the home base has a resource reason to exist but is not the only source; people go where money and resources are. Second pass with a couple of ideas on this. |
+| unit-traits | picked | Unlockable trait cards (Dead by Daylight, Age of Empires 3 register) under a core rule: cards and abilities never outrank positioning, layer damage weighs more, cross-layer-vision cards minimized. Decided, no second pass (Q-083-02, Q-083-03). |
+| complications | picked | Crossed Signals (Q-080-02). |
+| difficulty-knobs | picked | Neither. Difficulty scales the enemy's economic prosperity and its multi-layer intelligence; a costly seer unit is a desired piece of the layer system (Q-125-02, Q-125-03, Q-E12-01). |
+
+Cross-cutting from the same answers: cross-layer damage and vision are the game's most important undefined mechanic and get a research program with prototypes and humans in the loop (register Q-008-02, research queue Q76); a costly seer unit is a desired piece of the layer system (Q-E12-01); loading screens carry chronicle-register information (E-16 R-110-04); and before the MVP becomes the full game a C4 model of the system is drawn and kept beside the bible (CLAUDE.md).
+
+Second pass owed: paired economy (building and efficient pathways as the task, concrete actions) and self-running city (settlements at resource sites, trade between cities, the home base as one source among many).
+
 ## Status
 
 | Feature | Slug | Batch | Brief | Confirmed | Options |

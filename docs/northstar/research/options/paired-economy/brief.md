@@ -72,3 +72,9 @@ Follow the common template in `../README.md` ("Sub-agent template"). Sections 4 
 - The economy persists through time jumps and must not grow without bound: each option includes its reset or load-capping mechanism (one idea: upgrades that automate earlier tasks).
 - The economic role exists only in the paired queue; a universe locks its player count, slots, and eras at creation and can only continue with the same. When nobody holds the role, the city runs itself. An optional shared mode where both players do both is welcome.
 - How the economy player's work becomes the commander's units, walls, and positions, and how the pair talks.
+
+## 10. Decision (2026-09-23)
+
+Westley, verbatim: "For paired economy multiplayer mode, the works is good but it's not unique. The Two clocks is a cool idea, but it needs to be more concrete, a phased system of actions is too broad, I'd like a second pass on this idea with more concrete examples of player actions (like the works, specific). Same for The Commons, it could be good but it's too broad, we don't have to literally define what the players would do, but managing "emotions" isn't what I had in mind for managing the economy. I'd like their task to be building mostly, and designing efficient pathways/systems. Let's explore more options in that direction during a second pass on these ideas."
+
+Recorded as: None yet. The Works is good but not unique; the Two Clocks needs concrete player actions; the Commons is too broad and not about emotions. Second pass: building and designing efficient pathways and systems as the economy player's task.

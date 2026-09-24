@@ -77,3 +77,9 @@ Follow the common template in `../README.md` ("Sub-agent template"). Sections 4 
 - Options: 2, of which 1 wild.
 - Surface level. About 1 percent of missions, a celebrated rarity like an easter egg. Decided at generation, a true surprise, at most one per mission.
 - Cap: 400 to 700 words plus tables.
+
+## 10. Decision (2026-09-23)
+
+Westley, verbatim: "For mission complications, I like crossed signals, let's do that."
+
+Recorded as: Crossed Signals (Q-080-02).
