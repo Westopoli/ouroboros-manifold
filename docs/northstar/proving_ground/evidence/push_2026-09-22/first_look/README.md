@@ -148,3 +148,166 @@ Passed clean.
 - `14_plant_conquest-no-recolour.png` -- galaxy view, `conquest-no-recolour` planted; byte-identical to `02_galaxy.png` (behavioral not visual, see "gap closed" section)
 
 Driver script(s) used to produce this run were scratch tooling under `/tmp`, deleted after the run -- not in this worktree, not in this evidence dir.
+
+## Look 3 (live world), 2026-09-24
+
+Same real-flow walk, redone after T1-1 landed on main (`set_seed` generates
+world). Seed 1, res 1280x720 (fenced-suite res, not look-1/2's 1920x1080).
+Real boot -> NewGame -> galaxy, same daemon protocol. Driver script scratch
+tooling under `/tmp`, deleted, not in this dir.
+
+**Held claim, not a pass: screenshots below show what the daemon rendered
+in one run under Xvfb/software GL. Not a green test result.**
+
+### Bottom line up front: galaxy view still empty in real play. Root cause found and pinned to one line.
+
+Look 2 said "no factions/edges -- expected, world gen (B4) not landed yet."
+World gen (T1-1) is landed now and works -- confirmed independently, pipe
+alone: `set_seed(seed=1, n_regions=80, features=[6])` + `step(n=10)` +
+`snapshot` gives 80 regions, 51 owned, 88 edges (exact numbers below,
+reproduced twice via a bare `pipe/ouroboros_pipe` subprocess, no Godot).
+But `scenes/galaxy/galaxy_view.gd:69`'s live-load call is
+`bridge.load_snapshot_live(seed, 60, [6])` -- hardcoded `60`, not `80`.
+`tests/transport/test_pipe_shapes.py`'s own comment says why that number is
+wrong: "60 is below the feasible minimum for the default 15-faction
+generator on every seed ... confirmed empirically, 0/5000 seeds generate at
+n_regions=60." Proved this exact failure mode standalone (bare pipe
+subprocess, `set_seed` script, no Godot):
+
+```
+set_seed(seed=1, n_regions=60, features=[6]) -> {"type":"error","name":"set_seed","reason":"generation failed"}
+... step/snapshot still answered, but on the ungenerated world: 0 regions, 0 edges, 0 factions
+```
+
+`autoload/c_bridge.gd`'s `load_snapshot_live` sends `set_seed`, `step n:10`,
+`snapshot`, `quit` as one fixed script regardless of whether `set_seed`
+succeeded, so it does get a `"snapshot"` frame back -- just one with empty
+`regions`/`edges`. `galaxy_view.gd`'s `_load_live_snapshot()` only calls
+`set_snapshot()` when `load_snapshot_live()` returns `true`; it returns
+`true` here (a snapshot frame did arrive), so `set_snapshot({"regions":[],
+"edges":[]})` runs and the scene renders nothing. Net effect: the galaxy
+scene silently renders an empty galaxy every real launch, with no error
+surfaced to the player or the log -- looks exactly like "world gen not
+landed," which is what fooled look 2's "expected" call.
+
+Confirmed live, in Godot, under Xvfb: `galaxy_live.png` (below) and every
+one of the six plant shots are byte-identical (md5
+`1215ac7d90ff7ac2cde9d21e3574d34a`, same hash `flow_02_galaxy.png` and
+`flow_06_return.png` from this same run's fenced-test screenshots got) --
+same empty flat-grey view as look 2's `02_galaxy.png`, not the populated
+80-region galaxy T1-1 actually produces when asked for the right count.
+
+**Fix is a one-line change, not investigated further here (docs-only QA
+pass, no code touched):** `scenes/galaxy/galaxy_view.gd:69`,
+`bridge.load_snapshot_live(seed, 60, [6])` -> some `n_regions` at or above
+the feasible floor (80 is proven to work at seed 1; whether 80 is the right
+number for every seed or the call should ask the C side for the floor is a
+design call, not this QA pass's to make).
+
+### `["state"]` dump
+
+Daemon's generic `state` verb only ever returns `{"scene", "tick"}` --
+confirmed again this pass, same gap look 2 flagged for `qa_plant`: no verb
+forwards to `galaxy_view.gd`'s own `qa_state()` (system_count/owners/
+edge_counts/region_colours/etc.), so region count / owned count / edge
+count / colour-equals-owner cannot be read from the live daemon at all
+today, only inferred by driving the pipe directly (which is what "bottom
+line" above does). Real `state()` result from this run:
+
+```
+{"ok": true, "result": {"scene": "res://scenes/galaxy/galaxy_view.tscn", "tick": 0}}
+```
+
+Counts asked for (region 80 / owned 51 / edge 88) are the true numbers
+`pipe/ouroboros_pipe` produces for seed 1 at the CORRECT n_regions=80 --
+verified twice, standalone, no Godot in the loop (command script above).
+They are not what the live scene shows today (it shows 0/0/0, per the bug
+above) and could not be read off the daemon even if they were, per the gap
+just described. Region-colour-equals-owner rule from
+`tests/test_galaxy_view.gd::_check_owner_colour_S106_R106_01_02` is a
+GDScript-level unit-test rule against a fixture snapshot -- confirmed green
+there (44/44 pass, see test run section below) but not independently
+checkable from the live daemon for the same reason.
+
+### Screenshots
+
+- `galaxy_live.png` -- galaxy view after real NewGame click, live pipe
+  world, seed 1. Flat grey, no dots, no edges -- empty, per the bug above.
+  Pixel-identical to look 2's `02_galaxy.png`/`07_return_galaxy.png` and to
+  this run's own fenced-suite `flow_02_galaxy.png`/`flow_06_return.png`
+  (all md5 `1215ac7d90ff7ac2cde9d21e3574d34a`).
+- `galaxy_plant_seed_ignored.png`, `galaxy_plant_owner_colour_flat.png`,
+  `galaxy_plant_edges_2d_overlay.png`, `galaxy_plant_pick_radius_zero.png`,
+  `galaxy_plant_bands_frozen.png`, `galaxy_plant_conquest_no_recolour.png`
+  -- one per plant id, taken right after `["plant", id]` each returned
+  `ok: true, activated: true` (all six did, no silent skips). Every one is
+  byte-identical to `galaxy_live.png` (md5 matches, pixel diff 0/921600 via
+  PIL for every plant, table below) -- same root cause as look 2's "gap
+  closed, take 2" section (owner-colour-flat and edges-2d-overlay were the
+  two plants expected to finally show a visible difference once world gen
+  landed; they still show nothing, because the live world the plants act on
+  is empty per the bug above, not because world gen never landed).
+
+Pixel-difference table (`PIL`, `Image.getdata()`, RGBA, 1280x720 =
+921600 px, exact equality per pixel):
+
+| plant id | diff pixels | note |
+|---|---|---|
+| `seed-ignored` | 0 / 921600 | behavior-only plant either way (per look 2) |
+| `owner-colour-flat` | 0 / 921600 | expected to diverge once world gen landed; still 0 because the live world is empty (bug above), not because world gen is missing |
+| `edges-2d-overlay` | 0 / 921600 | same as owner-colour-flat -- expected to diverge, still 0, same root cause |
+| `pick-radius-zero` | 0 / 921600 | behavior-only plant either way |
+| `bands-frozen` | 0 / 921600 | behavior-only plant either way |
+| `conquest-no-recolour` | 0 / 921600 | behavior-only plant either way |
+
+Held claim: none of the six plants show a visible difference from clean in
+this run. For the two that were expected to (`owner-colour-flat`,
+`edges-2d-overlay`) this is the bug above, not a plant defect -- rerun this
+same check once `galaxy_view.gd:69`'s region count is fixed, expect those
+two to diverge and the other four to keep matching clean (by design, per
+look 2's per-plant breakdown, unchanged reasoning).
+
+### Test/build numbers from this same worktree, same session (for cross-reference)
+
+- `make -j8 && make pipe/ouroboros_pipe`: clean, no warnings.
+- `~/Projects/agora/.venv/bin/python -m pytest tests/transport -q`: 4
+  passed. `test_pipe_hello_snapshot_and_checksum_match_ctypes` (n_regions=80,
+  the one that actually drives the pipe) is green -- pipe checksum ==
+  ctypes checksum == `9459460945690250679` for seed 1, n_regions=80,
+  feature 6 (DRIFT), tick 10. That number does NOT match the checked-in
+  fixture's stored checksum (`tests/transport/fixtures/snapshot_seed1_tick10.json`,
+  `8319589330152745038`) -- the fenced test never actually asserts pipe-vs-
+  fixture equality (only pipe-vs-ctypes, both computed fresh, both agree),
+  so this is not a red test, just a heads up that the checked-in fixture
+  file looks stale relative to current `csrc/worldgen.c`, worth a look
+  separately.
+- Godot suite (`scripts/run_godot_tests.sh tests/test_galaxy_view.gd
+  tests/test_c_bridge.gd tests/test_qa_daemon.gd`): 44/0, 18/0, 9/0, all
+  green.
+- `scripts/qa_harness.sh liveness`: failed twice cold (`logs/` didn't
+  exist in the fresh worktree, so `SimBridge`'s cmd-file `FileAccess.open`
+  failed silently, sim never reached ready, boot fell through to
+  `error_screen.tscn`; separately, no `.venv/` in the worktree so
+  `sim_bridge.gd` fell back to system `python3`, which doesn't have the
+  packages the sim needs -- "reader got null after 0 msgs"). Fixed by
+  `mkdir logs` and symlinking `.venv` to `~/Projects/agora/.venv` (same
+  target `~/Projects/om-push/m3`'s own `.venv` symlink already points at) --
+  infra-only, no test/code/doc edits. Third run: `LIVENESS OK os_inputs=3
+  scene=res://scenes/harness/harness.tscn`. Real gap for future fresh
+  worktrees: nothing in the repo creates `logs/` or a `.venv` symlink on
+  its own; every QA doer hitting a brand new worktree will hit this twice
+  before finding it.
+- `tests/qa/desktop/test_flow_spine.py`: 7/7 passed (S-C8-07's boot race
+  did not reproduce this run).
+
+### What a player would notice
+
+Boots fine, main menu fine, New Game click works, lands on the galaxy
+screen -- and it is empty. No systems, no borders, no factions, no error,
+no loading spinner stuck, nothing to click on except the Mission button
+(which per C8's own fixture-vs-live notes still routes off a fixture, not
+this empty live snapshot). A player would read this as "the game has no
+content" on the very first screen after starting a new game, not as a
+minor cosmetic gap. This is the single highest-value bug this look found:
+the whole point of T1-1 (the pipe generates a real world now) is invisible
+in actual play because of one wrong number three lines away.
