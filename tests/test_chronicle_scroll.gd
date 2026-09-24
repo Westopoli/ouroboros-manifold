@@ -32,6 +32,7 @@ var _fail_msgs: Array[String] = []
 var _root: Node
 var _snapshot: Dictionary
 var _frame: Dictionary
+var _live_tests_completed := false
 
 
 func _initialize() -> void:
@@ -98,6 +99,66 @@ func _run_tests() -> void:
 	_check_plant_refs_unresolved()
 	_check_plant_entries_dropped()
 	_check_plant_nope_is_false()
+
+	await _run_live_tests()
+	_assert(_live_tests_completed, "the live-frame checks did not run to the end (a script error aborted them, or c_bridge.gd lacks load_chronicle_live / chronicle_frame / chronicle_snapshot / DEFAULT_FEATURES)")
+
+
+# Piece C3-3 (docs/architecture.md "session commands (v1.1)"): with no
+# load_frame() call the panel reads the frame the live pipe answers to
+# jump (c_bridge.gd load_chronicle_live: fresh world, 10 steps, a 50-tick
+# jump), plus the snapshot that follows it for ref resolution, not the
+# tests/fixtures and tests/transport/fixtures files. The live world's frame
+# differs from the fixture (its jump ticks and entry list), so a panel that
+# still shows the fixture cannot pass the hash comparison. Known sim-side
+# gap when this was written: the live frame's entries list arrives empty
+# (chronicle refs and fragment ids owed by the sim), so the panel is only
+# asserted to show exactly what the live frame carries, whatever that is.
+func _run_live_tests() -> void:
+	var CBridge = load("res://autoload/c_bridge.gd")
+	var bridge = CBridge.new()
+	for m in ["load_chronicle_live", "chronicle_frame", "chronicle_snapshot", "last_error"]:
+		_assert(bridge.has_method(m), "c_bridge.gd missing method (piece C3-3 not attached yet): " + m)
+		if not bridge.has_method(m):
+			return
+	if not CBridge.get_script_constant_map().has("DEFAULT_FEATURES"):
+		_assert(false, "c_bridge.gd missing constant DEFAULT_FEATURES")
+		return
+
+	var ok: bool = bridge.load_chronicle_live(1, CBridge.DEFAULT_N_REGIONS, CBridge.DEFAULT_FEATURES)
+	_assert(ok, "load_chronicle_live(1, %d, DEFAULT_FEATURES) returned false (last_error = %s)" % [CBridge.DEFAULT_N_REGIONS, bridge.last_error()])
+	var live_frame: Dictionary = bridge.chronicle_frame()
+	var live_snapshot: Dictionary = bridge.chronicle_snapshot()
+	_assert(live_frame.get("type", "") == "chronicle", "live chronicle frame type = %s, expected chronicle" % live_frame.get("type", ""))
+	var jump: Dictionary = live_frame.get("jump", {})
+	_assert(int(jump.get("to_tick", 0)) - int(jump.get("from_tick", 0)) == 50, "live jump spans %s ticks, expected 50" % (int(jump.get("to_tick", 0)) - int(jump.get("from_tick", 0))))
+	_assert(live_frame.get("entries", null) is Array, "live chronicle frame has no entries array")
+	_assert(live_snapshot.get("type", "") == "snapshot" and (live_snapshot.get("regions", []) as Array).size() == CBridge.DEFAULT_N_REGIONS,
+		"the snapshot after the jump is missing or has the wrong region count")
+
+	var again = CBridge.new()
+	again.load_chronicle_live(1, CBridge.DEFAULT_N_REGIONS, CBridge.DEFAULT_FEATURES)
+	_assert(again.chronicle_frame() == live_frame, "same seed answered two different chronicle frames (determinism)")
+
+	var bad = CBridge.new()
+	_assert(not bad.load_chronicle_live(1, 30, CBridge.DEFAULT_FEATURES), "load_chronicle_live at 30 regions (below the feasibility floor) returned true")
+	_assert(bad.last_error() != "", "a failed live chronicle load left last_error empty (silent failure)")
+	_assert(bad.chronicle_frame().is_empty(), "a failed live chronicle load still exposed a chronicle frame")
+
+	_assert(hash(live_frame) != hash(_frame), "live chronicle frame equals the fixture; the live check below cannot tell them apart (fixture control)")
+
+	var fresh: Node = (load(SCENE_PATH) as PackedScene).instantiate()
+	get_root().add_child(fresh)
+	await process_frame
+	await process_frame
+	var st: Dictionary = fresh.qa_state()
+	_assert(int(st.get("hash", 0)) == hash(live_frame),
+		"panel with no load_frame() call shows frame hash %s, live frame hash is %s (still showing the fixture?)" % [st.get("hash"), hash(live_frame)])
+	_assert((st.get("entries", []) as Array).size() + int(st.get("dropped_entries", 0)) == (live_frame.get("entries", []) as Array).size(),
+		"panel shows %d entries + %d dropped, live frame carries %d" % [(st.get("entries", []) as Array).size(), int(st.get("dropped_entries", 0)), (live_frame.get("entries", []) as Array).size()])
+	fresh.queue_free()
+	await process_frame
+	_live_tests_completed = true
 
 
 func _check_qa_state_json_safe() -> void:
