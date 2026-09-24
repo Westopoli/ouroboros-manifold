@@ -43,6 +43,7 @@ var _tactical: Dictionary = {}
 var _session_args: Array = []
 var _session_id: int = 0
 var _mission_active := false
+var _mission_begun := false
 var _session_mission: Dictionary = {}
 
 
@@ -204,6 +205,7 @@ func open_session(seed: int, n_regions: int, features: Array) -> bool:
 	_session_args = [seed, n_regions, features]
 	_session_id += 1
 	_mission_active = false
+	_mission_begun = false
 	_session_mission = {}
 	_mutex.lock()
 	_queue = []
@@ -244,9 +246,13 @@ func pump() -> int:
 				changed = true
 			"mission":
 				_mission_active = true
+				_mission_begun = false
 				_session_mission = frame
+			"tactical":
+				_mission_begun = true
 			"debrief":
 				_mission_active = false
+				_mission_begun = false
 				_session_mission = {}
 			"error":
 				_last_error = String(frame.get("reason", ""))
@@ -302,6 +308,12 @@ func session_id() -> int:
 
 func mission_active() -> bool:
 	return _mission_active
+
+
+# False while a started mission is still in recon (E-12 S-092: clock not
+# started, no unit moves); true once mission_begin has been answered.
+func mission_begun() -> bool:
+	return _mission_begun
 
 
 # Opens the session for this world if none is open, reuses it when the same
@@ -402,11 +414,25 @@ func load_chronicle_live(seed: int, n_regions: int, features: Array) -> bool:
 	return true
 
 
-# ... one tactical_step of the running mission answers the tactical frame
-# (never autosaved: R-111-04).
+# ... mission_begin, the player's Begin, ends recon and answers the first
+# tactical frame; idempotent once begun. Never autosaved: R-111-04.
+func begin_mission_live(seed: int, n_regions: int, features: Array) -> bool:
+	if not ensure_session(seed, n_regions, features) or not _ensure_mission():
+		return false
+	if _mission_begun:
+		return true
+	var frames: Dictionary = _request([{"type": "cmd", "name": "mission_begin"}], ["tactical"])
+	if frames.is_empty():
+		return false
+	_tactical = frames["tactical"]
+	return true
+
+
+# ... one tactical_step of the begun mission (begun here if the player has
+# not pressed Begin yet) answers the tactical frame.
 func load_tactical_live(seed: int, n_regions: int, features: Array) -> bool:
 	_tactical = {}
-	if not ensure_session(seed, n_regions, features) or not _ensure_mission():
+	if not begin_mission_live(seed, n_regions, features):
 		return false
 	var frames: Dictionary = _request([{"type": "cmd", "name": "tactical_step", "n": 1}], ["tactical"])
 	if frames.is_empty():
