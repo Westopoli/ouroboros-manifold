@@ -30,8 +30,8 @@ def test_R_099_01_strike_wing_reaches_flank_slots(lib, world_factory):
     enemy = lib.om_unit_spawn(w, OMUnitType.BASTION, 1, 350.0, 100.0, 0)
     lib.om_unit_engage(w, front, enemy)
 
-    # Flank destination is at (300.0, 250.0)
-    flank_x, flank_y = 300.0, 250.0
+    # Flank destination is at (300.0, 130.0) -- see docs/northstar/proving_ground/evidence/push_2026-09-22/test_defects_fixed.md
+    flank_x, flank_y = 300.0, 130.0
 
     # Strike unit (Raider, 150 wu/s) and Line unit (Vanguard, 65 wu/s) starting at (0, 100)
     strike = lib.om_unit_spawn(w, OMUnitType.RAIDER, 0, 0.0, 100.0, 0)

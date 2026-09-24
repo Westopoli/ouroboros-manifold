@@ -373,17 +373,33 @@ def test_control_R_111_02_om_bug_save_skips_rng_state_trips_the_detector(dbg, db
                     tension=10.0, population=50.0, faction_id=idx % 2)
         set_owner(dbg, w, idx, idx % 2, held_since=-1)
     set_edge(dbg, w, 0, 1, OMEdge.BOTH)
+    # See docs/northstar/proving_ground/evidence/push_2026-09-22/test_defects_fixed.md:
+    # this fixture originally drew no RNG at all in its 5 ticks (no events
+    # loaded, no intents, no adjacent hostiles for friction), so a save that
+    # drops the RNG state changed nothing -- a dead control. events.c's own
+    # module state does not round-trip through save/load yet (save.c's own
+    # header comment: "events.c's om_chain_counter lives in events_state and
+    # does not round-trip until events.c gets its own hooks"), so routing
+    # this fixture's RNG draw through a launch template (as
+    # test_R_111_02_load_restores_tick_regions_factions_telegraphs_chain_and_rng
+    # above does) would trip on that gap instead: a same-tick SURPRISE attack
+    # resolves through om_step_resolve (csrc/resolve.c), which draws the real
+    # PCG32 stream and applies the result straight to military/economy/tension
+    # the same tick, with no module-level state of its own to round-trip.
     for _ in range(5):
-        dbg.om_world_step(w)  # advance the live RNG stream away from its seeded start, nothing forced
+        inject_intent(dbg, w, 0, OMAction.ATTACK, 1, 0, 30.0, OMMode.SURPRISE)
+        dbg.om_world_step(w)  # advance the live RNG stream, one resolved attack roll per tick
 
     buf, size = _save(dbg, w)
 
+    inject_intent(dbg, w, 0, OMAction.ATTACK, 1, 0, 30.0, OMMode.SURPRISE)
     reference_tick = dbg.om_world_step(w)
     reference_checksum = dbg.om_world_get_state_checksum(w)
 
     w_loaded = dbg_world_factory(n_regions=4, seed=999999)
     rc = _load(dbg, w_loaded, buf, size)
     assert rc == 0, f"the bug skips RNG state, not the whole load, rc={rc}"
+    inject_intent(dbg, w_loaded, 0, OMAction.ATTACK, 1, 0, 30.0, OMMode.SURPRISE)
     loaded_tick = dbg.om_world_step(w_loaded)
     loaded_checksum = dbg.om_world_get_state_checksum(w_loaded)
 

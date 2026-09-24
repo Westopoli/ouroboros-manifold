@@ -815,3 +815,108 @@ anything; unrelated to E-06, not touched.
 Files touched: `tests/csim/test_E06_S045_a_faction_s_technology_is_one_number.py`,
 `tests/csim/test_E06_S046_archetypes_spend_tech_differently.py`,
 this evidence file.
+
+## 2026-09-24: push/tests-fix-3 (M-sim B12b, B1-7 findings)
+
+Branch `push/tests-fix-3`, worktree `~/Projects/om-push/wt/tests-fix-3`,
+merged `origin/push/B12b` in first (movement C under test). Both fixes
+verified red-before / green-after on the merged build, plus a positive
+control each, per test-fix gate.
+
+### test_E13_S099_speed_is_position.py::test_R_099_01_strike_wing_reaches_flank_slots
+
+Confound (M-sim B12b): flank checkpoint (300, 250) r=30 unreachable under
+S-097 steering (ALG-68). Strike wing passes front at ~(300,133), line unit
+~(300,133) too, both >100 wu from checkpoint — nobody ever arrives, test
+red on `assert strike_arrival_tick is not None`, not on the ordering claim.
+
+Fix: fixture-only. Moved checkpoint to (300, 130), radius stays 30 (the
+existing `< 30.0` check). Rule's claim untouched: strike still must reach
+first.
+
+Red before (merged B12b build): `assert None is not None`,
+`test_E13_S099_speed_is_position.py:57`.
+
+Green after: `1 passed`.
+
+Positive control: swapped the final assert to
+`assert line_arrival_tick < strike_arrival_tick` (line reaches first) —
+fails: `assert 79 < 35` (strike arrives tick 35, line tick 79, so a
+line-first claim is false). Confirms the test can fail on a wrong ordering
+claim, not just pass trivially. Reverted to the real assert, re-ran green.
+
+### test_E16_S111_saving.py::test_control_R_111_02_om_bug_save_skips_rng_state_trips_the_detector
+
+Confound (M-sim B1-7): fixture's 5 pre-save ticks draw zero RNG (no events
+loaded, no intents, no adjacent hostiles for friction, DRIFT is
+deterministic) so save.c's `OM_BUG_SAVE_SKIPS_RNG_STATE` (zeroing
+rng_state/rng_inc on save) changes nothing observable — dead control.
+Red before: `assert loaded_checksum != reference_checksum` fails,
+`14442809927178765997 == 14442809927178765997`,
+`test_E16_S111_saving.py:391`.
+
+First attempt (wrong, caught before shipping): mirrored the neighbour test's
+own recipe — `load_launch_events` + `queue_external("Emergency Levy",
+due_tick=1, probability=1.0)`, same as
+`test_R_111_02_load_restores_tick_regions_factions_telegraphs_chain_and_rng`
+above it. This DOES draw RNG (evt_resolve_queue's phase-2 probability roll
+draws unconditionally per candidate) and DOES make the target assertion
+pass — but for the wrong reason. Traced with manual ctypes scripts
+(scratchpad, not committed): the checksum differs after save/load whether or
+not the bug is injected, because `csrc/events.c`'s own module state
+(chain_counter, last_fired, breached, noise, the template table) is not
+wired into save.c's per-slot round-trip yet — save.c's own header comment
+says so verbatim ("events.c's om_chain_counter lives in events_state and
+does not round-trip until events.c gets its own hooks"). Confirmed this is
+a real, pre-existing, out-of-scope defect, not something introduced here:
+the neighbour test itself is currently red on its own fixture setup
+(`assert chain_before > 0` fails, `0 > 0`,
+`test_E16_S111_saving.py:218`) on this exact merged build, before any load
+ever runs — same queue-never-fires symptom, unrelated to save/load. Left
+that neighbour test untouched (out of scope, not one of the two assigned
+tests); flagging here only.
+
+Two_agent_confound check that caught it: ran the queue_external fixture on
+the *clean* (non-debug) build and separately on the dbg build *without*
+injecting the bug — both diverged anyway (`ref=438986427304003542
+loaded=12178267614692161081`, `not equal`), proving the control would
+"pass" even with the target bug absent. Rejected this approach.
+
+Real fix: swapped the RNG source from the events pipeline to a same-tick
+combat resolve, which has no cross-tick module state to round-trip: a
+SURPRISE-mode ATTACK intent each of the 5 pre-save ticks (and once more
+pre/post the save-load boundary), resolved by `csrc/resolve.c`'s
+`om_step_resolve` — draws the real PCG32 stream and applies the roll
+straight to military/economy/tension the same tick. Kept the original
+assertion unchanged.
+
+Red before (same assertion, same line, confirmed on both the old and new
+fixture pre-fix).
+
+Green after: `1 passed`.
+
+Positive control (the literally-specified one: clean build, same fixture,
+must give equal checksums): ran the finished fixture on the plain
+(non-`OM_DEBUG_INJECT`) `libouroboros.so` — `reference_checksum ==
+loaded_checksum == 9441529307910818479`. Detector silent on clean, as
+required. Cross-checked on the dbg build with `om_debug_inject` *not*
+called: same equal result. Only calling `om_debug_inject(w,
+1600)` flips it to unequal (`9441529307910818479` vs a different value each
+run of the dbg build with injection). Confound ruled out: the divergence
+tracks the injected bug and only the injected bug.
+
+Files touched: `tests/csim/test_E13_S099_speed_is_position.py`,
+`tests/csim/test_E16_S111_saving.py`, this evidence file.
+
+Flag for Westley/M0 (not fixed here, out of scope for this leaf): on the
+current `push/B12b`-merged build,
+`test_E16_S111_saving.py::test_R_111_02_load_restores_tick_regions_factions_telegraphs_chain_and_rng`
+and
+`test_E16_S111_saving.py::test_R_111_02_integration_two_hundred_ticks_save_two_hundred_more_checksums_match`
+are both red, independent of anything in this leaf (confirmed red before and
+after this branch's two changes, same failures both times). Root cause
+looks real: `om_event_queue_external`-queued candidates with
+`probability=1.0, due_tick=1` never fire (`om_chain_counter` stays 0), and
+separately `events.c`'s own module state does not round-trip through
+save/load at all yet. Two candidate real bugs, not test defects; left for
+whoever owns save.c/events.c next.
