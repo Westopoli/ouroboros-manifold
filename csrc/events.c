@@ -1041,22 +1041,13 @@ static void evt_manual_try_attach(om_evt_manual_fire *mf, const om_world *w, uin
     mf->attached[mf->n_attached++] = char_id;
 }
 
-/* E-09 R-070-02: no public accessor enumerates characters (om_lineage_member_in_region
- * only answers yes/no), so lineage members are found by probing the two id ranges
- * generational.c hands out: explicit ids 1..GEN_MAX_CHARACTERS and auto ids from
- * GEN_AUTO_ID_BASE. Both are private there. See also: csrc/generational.c. */
-#define EVT_LINEAGE_PROBE_SPAN 4096u
-#define EVT_LINEAGE_AUTO_ID_BASE 100000000u
-
 static void evt_manual_attach_lineage(om_evt_manual_fire *mf, const om_world *w) {
-    static const uint32_t base[2] = {1u, EVT_LINEAGE_AUTO_ID_BASE};
-    for (uint32_t b = 0; b < 2; b++) {
-        for (uint32_t id = base[b]; id < base[b] + EVT_LINEAGE_PROBE_SPAN; id++) {
-            om_character_record rec;
-            if (mf->n_attached >= OM_EVT_MAX_ATTACHED) return;
-            if (om_character_get_record(w, id, &rec) != 0 || rec.lineage_id == 0) continue;
-            evt_manual_try_attach(mf, w, id);
-        }
+    uint32_t n = om_character_count(w);
+    for (uint32_t i = 0; i < n && mf->n_attached < OM_EVT_MAX_ATTACHED; i++) {
+        uint32_t id = om_character_id_at(w, i);
+        om_character_record rec;
+        if (om_character_get_record(w, id, &rec) != 0 || rec.lineage_id == 0) continue;
+        evt_manual_try_attach(mf, w, id);
     }
 }
 
