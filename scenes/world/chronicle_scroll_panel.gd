@@ -33,13 +33,9 @@ const PLANTS := ["entries-dropped", "refs-unresolved"]
 
 # Piece C8 self-load pattern (docs/northstar/plans/push/specs/C8-M3.md
 # "Self-loading pattern"): this panel becomes a directly-routed top-level
-# scene with no setup() call, so it self-loads its own snapshot + frame
-# fixtures in _ready(). Fallbacks mirror tests/test_chronicle_scroll.gd's
-# own _build_minimal_snapshot()/_build_minimal_chronicle_frame() verbatim
-# so a missing/unreadable fixture still degrades to the same 6-entry shape
-# instead of a blank panel.
-const _SNAPSHOT_FIXTURE_PATH := "res://tests/transport/fixtures/snapshot_seed1_tick10.json"
-const _FRAME_FIXTURE_PATH := "res://tests/fixtures/chronicle_frame_seed11.json"
+# scene with no setup() call, so it self-loads the live chronicle frame and
+# the snapshot after the jump in _ready() (C3-3). A failed live load leaves
+# the panel empty and logs the reason; it never falls back to a fixture.
 
 var _snapshot_data: Dictionary = {}
 var _snapshot_region_ids: Dictionary = {}
@@ -64,69 +60,17 @@ var _plant_entries_dropped: bool = false
 func _ready() -> void:
 	_accent = ThemeConstants.get_era_accent(EraConfig.ACTIVE_ERA_ID)
 	_build_ui()
-	set_snapshot(_load_fixture_or_fallback(_SNAPSHOT_FIXTURE_PATH, _fallback_snapshot()))
-	load_frame(_load_fixture_or_fallback(_FRAME_FIXTURE_PATH, _fallback_chronicle_frame()))
+	var bridge = load("res://autoload/c_bridge.gd").new()
+	if bridge.load_chronicle_live(bridge.live_seed(), bridge.DEFAULT_N_REGIONS, bridge.DEFAULT_FEATURES):
+		set_snapshot(bridge.chronicle_snapshot())
+		load_frame(bridge.chronicle_frame())
+	else:
+		push_error("chronicle_scroll_panel: live chronicle frame failed: %s" % bridge.last_error())
 	# Stage 11g — listen to the world-view pause coordinator so any holder
 	# (region/faction panel, expansion) halts entry printing.
 	# See also: scenes/world/world_view_inspection_state.gd
 	if FeatureFlags.ENABLE_INSPECTION_PAUSE:
 		InspectionState.pause_changed.connect(_on_inspection_pause_changed)
-
-
-func _load_fixture_or_fallback(path: String, fallback: Dictionary) -> Dictionary:
-	var f := FileAccess.open(path, FileAccess.READ)
-	if f == null:
-		return fallback
-	var text := f.get_as_text()
-	f.close()
-	var data = JSON.parse_string(text)
-	if data is Dictionary:
-		return data
-	return fallback
-
-
-func _fallback_snapshot() -> Dictionary:
-	var regions := []
-	for i in range(60):
-		regions.append({
-			"i": i,
-			"owner": (i % 3) - 1,
-			"tier": 1,
-			"military": 10.0,
-			"economy": 10.0,
-			"tension": 10.0,
-			"population": 10.0,
-			"stability": 10.0,
-			"capacity": 10.0,
-		})
-	var edges := []
-	for i in range(59):
-		edges.append({"a": i, "b": i + 1, "t": i % 2})
-	var factions := []
-	for f in range(3):
-		factions.append({"id": f, "archetype": 0, "budget": 100.0, "tech": 1.0, "stance": [1, 1, 1]})
-	return {"type": "snapshot", "tick": 10, "checksum": 424242, "regions": regions, "factions": factions, "edges": edges}
-
-
-func _fallback_chronicle_frame() -> Dictionary:
-	return {
-		"type": "chronicle",
-		"jump": {"from_tick": 100, "to_tick": 150},
-		"entries": [
-			{"id": 201, "start_tick": 102, "end_tick": 109, "category": 0, "cluster_type": 0,
-				"refs": {"regions": [3], "factions": [0]}, "fragment": 910201, "significance": 0.92},
-			{"id": 202, "start_tick": 111, "end_tick": 116, "category": 5, "cluster_type": 1,
-				"refs": {"regions": [4], "factions": [0]}, "fragment": 910202, "significance": 0.71},
-			{"id": 203, "start_tick": 119, "end_tick": 131, "category": 10, "cluster_type": 2,
-				"refs": {"regions": [12, 13], "factions": [1]}, "fragment": 910203, "significance": 0.83},
-			{"id": 204, "start_tick": 133, "end_tick": 137, "category": 16, "cluster_type": 3,
-				"refs": {"regions": [24], "factions": [2, 0]}, "fragment": 910204, "significance": 0.68},
-			{"id": 205, "start_tick": 139, "end_tick": 143, "category": 16, "cluster_type": 3,
-				"refs": {"regions": [25], "factions": [2, 0]}, "fragment": 910205, "significance": 0.62},
-			{"id": 206, "start_tick": 145, "end_tick": 149, "category": 17, "cluster_type": 3,
-				"refs": {"regions": [13], "factions": [1]}, "fragment": 910206, "significance": 0.51},
-		],
-	}
 
 
 func _on_return_pressed() -> void:
