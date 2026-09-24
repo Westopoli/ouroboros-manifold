@@ -650,6 +650,15 @@ confidence = "likely"
 note = "Used as count and range bound. Owned chronicle.c per symbol_modules.toml; E-08 S055 also calls it."
 
 [[symbols]]
+name = "om_chronicle_entry_get"
+module = "chronicle.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "index", ctype = "uint32_t" }, { name = "out", ctype = "om_chronicle_entry*" }]
+epics = ["E-09"]
+confidence = "likely"
+note = "F2n: index over retained entries in chronicle order; 1 on success, 0 out of range. om_chronicle_entry struct already in header."
+
+[[symbols]]
 name = "om_chronicle_entry_is_retained"
 module = "chronicle.c"
 restype = "int"
@@ -2416,6 +2425,24 @@ confidence = "likely"
 note = "p1 = OMSpineNodeType enum value. Return compared >= 1, used in range()."
 
 [[symbols]]
+name = "om_map_cover_at"
+module = "tactical_mapgen.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "index", ctype = "uint32_t" }, { name = "x", ctype = "double*" }, { name = "y", ctype = "double*" }, { name = "radius", ctype = "double*" }, { name = "height", ctype = "double*" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "F2n addendum: real implementation, reads B15m-2's mapgen_state cover rows by 0-based index; 1 on success, 0 past the end."
+
+[[symbols]]
+name = "om_map_cover_count"
+module = "tactical_mapgen.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }]
+epics = ["E-17"]
+confidence = "likely"
+note = "F2n addendum: real implementation, count of recorded cover rows in mapgen_state (om_map_add_cover)."
+
+[[symbols]]
 name = "om_map_flavoring_stability_multiplier"
 module = "tactical_mapgen.c"
 restype = "double"
@@ -3666,6 +3693,15 @@ params = [{ name = "w", ctype = "om_world*" }, { name = "objective", ctype = "ui
 epics = ["E-15"]
 confidence = "likely"
 note = "p1 = objective idx. Return == 0 flag."
+
+[[symbols]]
+name = "om_objective_set_center"
+module = "mission.c"
+restype = "int"
+params = [{ name = "w", ctype = "om_world*" }, { name = "objective_idx", ctype = "uint32_t" }, { name = "x", ctype = "double" }, { name = "y", ctype = "double" }]
+epics = ["E-10"]
+confidence = "likely"
+note = "F2n: tactical_support.c pushes a drifted objective centre here; om_objective_get_center prefers a set centre over the map node. 1 on success."
 
 [[symbols]]
 name = "om_objective_setup_drifting"
@@ -5279,6 +5315,15 @@ params = [{ name = "w", ctype = "const om_world*" }, { name = "unit", ctype = "u
 epics = ["E-12", "E-13"]
 confidence = "likely"
 note = "signature differs across epics: E-12:[('w', 'const om_world*'), ('unit', 'uint32_t')]->double | E-13:[('w', 'const om_world*'), ('p0', 'uint32_t')]->double ; Owned by unit.c per toml. 6 sites, float arithmetic and approx compare."
+
+[[symbols]]
+name = "om_unit_get_layer"
+module = "unit.c"
+restype = "int32_t"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "unit_id", ctype = "uint32_t" }]
+epics = ["E-12", "E-13", "E-15"]
+confidence = "likely"
+note = "F2n addendum: fog/movement/support leaves need layer ownership by unit id; -1 when no such unit."
 
 [[symbols]]
 name = "om_unit_get_order_destination"
