@@ -405,7 +405,7 @@ id = "T2g"
 manager = "M3"
 wave = 2
 owns = []
-owns_glob = ["scenes/load_game/**"]
+owns_glob = ["scenes/load_game/**", "autoload/c_bridge.gd"]
 acceptance = [
     "tests/test_load_game.gd",
 ]
@@ -419,7 +419,7 @@ id = "C3"
 manager = "M3"
 wave = 2
 owns = []
-owns_glob = ["scenes/world/chronicle_*"]
+owns_glob = ["scenes/world/chronicle_*", "autoload/c_bridge.gd"]
 acceptance = [
     "tests/test_chronicle_scroll.gd",
 ]
@@ -433,7 +433,7 @@ id = "C4"
 manager = "M3"
 wave = 2
 owns = []
-owns_glob = ["scenes/mission_briefing/**", "scenes/debrief/**"]
+owns_glob = ["scenes/mission_briefing/**", "scenes/debrief/**", "autoload/c_bridge.gd"]
 acceptance = [
     "tests/test_briefing_debrief.gd",
 ]
@@ -447,7 +447,7 @@ id = "C5"
 manager = "M3"
 wave = 2
 owns = []
-owns_glob = ["scenes/tactical_c/**"]
+owns_glob = ["scenes/tactical_c/**", "autoload/c_bridge.gd"]
 acceptance = [
     "tests/test_tactical_view.gd",
 ]
