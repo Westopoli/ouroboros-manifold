@@ -1012,6 +1012,10 @@ typedef struct om_chronicle_entry {
     char expanded_text[1024];
     uint64_t start_tick;
     uint64_t end_tick;
+    int32_t fragment_ids[3];
+    int32_t region_ref;
+    int32_t faction_ref;
+    int32_t lineage_ref;
 } om_chronicle_entry;
 
 typedef struct om_client_unit {
@@ -1179,6 +1183,7 @@ void om_chronicle_add_lineage_event(om_world *w, uint32_t lineage_id, uint32_t r
 void om_chronicle_add_mock_entry(om_world *w, uint32_t entry_id, uint64_t start_tick, uint64_t end_tick);
 void om_chronicle_add_ownership_change_event(om_world *w, uint32_t region_idx, uint64_t tick);
 void om_chronicle_add_raw_entry(om_world *w, uint32_t entry_id, const char *text);
+int om_chronicle_add_regional_event(om_world *w, uint32_t region_idx, uint32_t category, double score);
 const char *om_chronicle_apply_slot_echo_anaphora(om_world *w, const char *fragment1_slot, const char *fragment2_slot);
 const char *om_chronicle_apply_word_echo_synonym(om_world *w, const char *text);
 int om_chronicle_assemble_cluster_entry(om_world *w, uint32_t category, uint32_t region_idx, om_chronicle_entry *out_entry);
@@ -1328,6 +1333,7 @@ const void *om_unit_get_decision_loop_ptr(uint32_t p0, int p1);
 /* ---- generated from signatures.toml: events.c ---- */
 uint32_t om_event_fire_manual(om_world *w, uint32_t region_idx, uint32_t tier);
 uint32_t om_event_get_attached_character(const om_world *w, uint32_t event, uint32_t p1);
+int32_t om_event_template_significance_tier(const om_world *w, uint32_t template_id);
 /* ---- end generated: events.c ---- */
 
 /* ---- generated from signatures.toml: fog.c ---- */
@@ -1382,6 +1388,7 @@ void om_chapter_set_phase(om_world *w, int p0);
 void om_chapter_start(om_world *w, uint32_t chapter);
 void om_chapter_transition_complete(om_world *w);
 void om_chapter_transition_start(om_world *w);
+uint32_t om_character_count(const om_world *w);
 void om_character_create(om_world *w, uint32_t character_id, uint32_t lineage_id, uint32_t region_idx, uint32_t rank, uint64_t birth_tick, uint32_t lifespan);
 void om_character_create_child(om_world *w, uint32_t child_id, uint32_t parent_id, uint32_t region_idx, uint64_t birth_tick, uint32_t lifespan);
 uint32_t om_character_create_random(om_world *w, int32_t faction_id, uint32_t region_idx);
@@ -1390,6 +1397,7 @@ int32_t om_character_faction(const om_world *w, uint32_t character);
 int om_character_get_record(const om_world *w, uint32_t character, om_character_record *out);
 int om_character_has_event_history(const om_world *w, uint32_t character);
 int om_character_has_rival_tag(const om_world *w, uint32_t character_id, uint32_t target_commander_id);
+uint32_t om_character_id_at(const om_world *w, uint32_t index);
 int om_character_is_main_character(const om_world *w, uint32_t character_id);
 void om_character_kill(om_world *w, uint32_t character_id, uint64_t tick);
 uint32_t om_character_lineage_id(const om_world *w, uint32_t character);
@@ -1414,9 +1422,14 @@ void om_force_allocator_run(om_world *w, uint32_t mission_id, double budget);
 void om_force_set_surviving_units(om_world *w, uint32_t mission_id, uint32_t n_survivors);
 int om_ledger_commander_death_outcome_band(const om_world *w, uint32_t commander_id);
 uint32_t om_ledger_commander_death_region(const om_world *w, uint32_t commander_id);
+uint32_t om_lineage_count(const om_world *w);
 void om_lineage_create(om_world *w, uint32_t lineage_id, uint32_t home_region);
+int32_t om_lineage_first_member_region(const om_world *w, uint32_t lineage_id);
 uint32_t om_lineage_generate_descendants(om_world *w, uint32_t lineage_id, uint32_t jump_ticks);
+int32_t om_lineage_history_region(const om_world *w, uint32_t lineage_id, uint32_t idx);
 uint32_t om_lineage_home_region(const om_world *w, uint32_t lineage_id);
+uint32_t om_lineage_id_at(const om_world *w, uint32_t index);
+int om_lineage_member_in_region(const om_world *w, uint32_t lineage_id, uint32_t region_idx);
 void om_lineage_record_history_region(om_world *w, uint32_t lineage_id, uint32_t region_idx);
 void om_lineage_set_chapter_count(om_world *w, uint32_t lineage_id, uint32_t chapters);
 uint32_t om_lineage_spawn_descendant_at_tick(om_world *w, uint32_t lineage_id, uint32_t parent_id, uint64_t tick);
@@ -1591,6 +1604,7 @@ uint32_t om_map_add_obstacle(om_world *w, double x, double y, double radius);
 int om_map_archetype_canvas_category(uint32_t mission);
 double om_map_check_boundary_gradient_discontinuity(om_world *w, double p1, double boundary);
 double om_map_clamp_flavoring_delta(double delta);
+void om_map_clear(om_world *w);
 double om_map_compute_chokepoint_width(double width);
 double om_map_compute_economy_obstacle_delta(double economy);
 double om_map_compute_modified_canvas(uint32_t archetype, double p1, double p2);

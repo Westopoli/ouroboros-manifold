@@ -195,6 +195,37 @@ Added in Stage 2 from source (2026-09-10).
 
 **ALG-50 Significance.** `base = tier + min(|Δ|_sum / SIGNIFICANCE_DELTA_SCALE, SIGNIFICANCE_DELTA_CAP)`, scale `50.0`, cap `3.0`, tier from the template (default 2). `context = 1.0 + 0.5·[region == last mission region] + 0.3·[character attached] + 0.1·min(chain_length, CHAIN_LENGTH_CAP = 5)·[chain_length > 1] + 0.8·[a lineage member lives in the region]` (`SIGNIFICANCE_MISSION_REGION_BONUS`, `_CHARACTER_BONUS`, `_CHAIN_LENGTH_BONUS`, `_LINEAGE_REGION_BONUS`). `score = base · context`.
 
+constants-table: simulation/events.py TEMPLATES[*]["significance_tier"], the 26 launch templates' tier, transcribed verbatim (Python dict keys shown, upper-cased)
+```
+EVENT_TIER_EVT_GARRISON_COLLAPSE = 4
+EVENT_TIER_EVT_BORDER_INCURSION = 4
+EVENT_TIER_EVT_EMERGENCY_LEVY = 3
+EVENT_TIER_EVT_REGIONAL_REVOLT = 4
+EVENT_TIER_EVT_REVOLT_CRUSHED = 3
+EVENT_TIER_EVT_REVOLT_ENTRENCHED = 5
+EVENT_TIER_EVT_TRADE_BOOM = 3
+EVENT_TIER_EVT_PROSPERITY_UNREST = 2
+EVENT_TIER_EVT_POPULATION_CRISIS = 4
+EVENT_TIER_EVT_RESISTANCE_MOVEMENT = 3
+EVENT_TIER_CONQUEST_UNREST = 4
+EVENT_TIER_EVT_LABOR_SHORTAGE = 3
+EVENT_TIER_EVT_IMMIGRATION_WAVE = 2
+EVENT_TIER_EVT_INFRASTRUCTURE_DECAY = 3
+EVENT_TIER_EVT_MILITARY_BUILDUP = 3
+EVENT_TIER_EVT_WAR_WEARINESS = 3
+EVENT_TIER_EVT_CULTURAL_RENAISSANCE = 2
+EVENT_TIER_EVT_FAMINE = 4
+EVENT_TIER_EVT_FAMINE_RELIEF = 3
+EVENT_TIER_EVT_DIPLOMATIC_INCIDENT = 2
+EVENT_TIER_EVT_HARVEST_SURPLUS = 2
+EVENT_TIER_EVT_ADMIN_SEPARATIST = 5
+EVENT_TIER_EVT_ADMIN_POLITICAL_CRISIS = 5
+EVENT_TIER_EVT_ADMIN_POPULAR_SUPPORT = 5
+EVENT_TIER_EVT_ADMIN_MILITARY_DEFECTION = 5
+EVENT_TIER_EVT_ADMIN_BREAKAWAY = 6
+```
+end constants-table (`om_event_template_significance_tier` reads this table by template id, F2o/B1-8)
+
 **ALG-51 Clustering.** (1) Events flagged `mission_consequence` form one consequence cluster, category by outcome: success, failure, else mixed. (2) Lineage events (lineage member in region, or attached character in the lineage, or region == last mission region) cluster by region; category by E-09 R-067-02; if none, one `lineage_quiet` cluster in the lineage's first active member's region, else its last history region, else the mission region. (3) Remaining events with a chain tag cluster by tag, category by R-067-04, then clusters with equal (primary region, category) merge. (4) Remaining untagged events cluster by region, category by R-067-05. Primary region = most common region in the cluster. Peak score = max event score.
 
 **ALG-52 Selection.** Order: consequence clusters, then lineage clusters, then the rest by peak score descending, skipping any category already used twice, until `CHRONICLE_MAX_ENTRIES = 10`; if fewer than `CHRONICLE_MIN_ENTRIES = 5`, add skipped clusters in order while a category has fewer than 2.

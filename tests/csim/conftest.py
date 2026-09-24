@@ -1490,6 +1490,10 @@ class OmChronicleEntry(ctypes.Structure):
         ("expanded_text", ctypes.c_char * 1024),
         ("start_tick", ctypes.c_uint64),
         ("end_tick", ctypes.c_uint64),
+        ("fragment_ids", ctypes.c_int32 * 3),
+        ("region_ref", ctypes.c_int32),
+        ("faction_ref", ctypes.c_int32),
+        ("lineage_ref", ctypes.c_int32),
     ]
 
 
@@ -1873,6 +1877,7 @@ def _bind_e08(lib):
     _bind(lib, "om_chapter_start", [W, ctypes.c_uint32], None, ("w", "chapter"), kw=True)
     _bind(lib, "om_chapter_transition_complete", [W], None, ("w",))
     _bind(lib, "om_chapter_transition_start", [W], None, ("w",))
+    _bind(lib, "om_character_count", [W], ctypes.c_uint32, ("w",))
     _bind(lib, "om_character_create", [W, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint64, ctypes.c_uint32], None, ("w", "character_id", "lineage_id", "region_idx", "rank", "birth_tick", "lifespan"), kw=True)
     _bind(lib, "om_character_create_child", [W, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint64, ctypes.c_uint32], None, ("w", "child_id", "parent_id", "region_idx", "birth_tick", "lifespan"), kw=True)
     _bind(lib, "om_character_create_random", [W, ctypes.c_int32, ctypes.c_uint32], ctypes.c_uint32, ("w", "faction_id", "region_idx"), kw=True)
@@ -1881,6 +1886,7 @@ def _bind_e08(lib):
     _bind(lib, "om_character_get_record", [W, ctypes.c_uint32, V], ctypes.c_int, ("w", "character", "out"))
     _bind(lib, "om_character_has_event_history", [W, ctypes.c_uint32], ctypes.c_int, ("w", "character"))
     _bind(lib, "om_character_has_rival_tag", [W, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_int, ("w", "character_id", "target_commander_id"), kw=True)
+    _bind(lib, "om_character_id_at", [W, ctypes.c_uint32], ctypes.c_uint32, ("w", "index"))
     _bind(lib, "om_character_is_main_character", [W, ctypes.c_uint32], ctypes.c_int, ("w", "character_id"), kw=True)
     _bind(lib, "om_character_kill", [W, ctypes.c_uint32, ctypes.c_uint64], None, ("w", "character_id", "tick"), kw=True)
     _bind(lib, "om_character_lineage_id", [W, ctypes.c_uint32], ctypes.c_uint32, ("w", "character"))
@@ -1901,6 +1907,7 @@ def _bind_e08(lib):
     _bind(lib, "om_event_attached_character_count", [W, ctypes.c_uint32], ctypes.c_uint32, ("w", "event"))
     _bind(lib, "om_event_fire_manual", [W, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_uint32, ("w", "region_idx", "tier"), kw=True)
     _bind(lib, "om_event_get_attached_character", [W, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_uint32, ("w", "event", "p1"))
+    _bind(lib, "om_event_template_significance_tier", [W, ctypes.c_uint32], ctypes.c_int32, ("w", "template_id"))
     _bind(lib, "om_faction_create_named", [W, ctypes.c_int32, ctypes.c_uint32], None, ("w", "faction_id", "first_region"), kw=True)
     _bind(lib, "om_faction_supreme_commander", [W, ctypes.c_int32], ctypes.c_uint32, ("w", "faction_id"), kw=True)
     _bind(lib, "om_force_allocated_unit_count", [W, ctypes.c_uint32], ctypes.c_uint32, ("w", "mission_id"), kw=True)
@@ -1908,9 +1915,14 @@ def _bind_e08(lib):
     _bind(lib, "om_force_set_surviving_units", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "mission_id", "n_survivors"), kw=True)
     _bind(lib, "om_ledger_commander_death_outcome_band", [W, ctypes.c_uint32], ctypes.c_int, ("w", "commander_id"), kw=True)
     _bind(lib, "om_ledger_commander_death_region", [W, ctypes.c_uint32], ctypes.c_uint32, ("w", "commander_id"), kw=True)
+    _bind(lib, "om_lineage_count", [W], ctypes.c_uint32, ("w",))
     _bind(lib, "om_lineage_create", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "lineage_id", "home_region"), kw=True)
+    _bind(lib, "om_lineage_first_member_region", [W, ctypes.c_uint32], ctypes.c_int32, ("w", "lineage_id"))
     _bind(lib, "om_lineage_generate_descendants", [W, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_uint32, ("w", "lineage_id", "jump_ticks"), kw=True)
+    _bind(lib, "om_lineage_history_region", [W, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_int32, ("w", "lineage_id", "idx"))
     _bind(lib, "om_lineage_home_region", [W, ctypes.c_uint32], ctypes.c_uint32, ("w", "lineage_id"), kw=True)
+    _bind(lib, "om_lineage_id_at", [W, ctypes.c_uint32], ctypes.c_uint32, ("w", "index"))
+    _bind(lib, "om_lineage_member_in_region", [W, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_int, ("w", "lineage_id", "region_idx"))
     _bind(lib, "om_lineage_record_history_region", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "lineage_id", "region_idx"), kw=True)
     _bind(lib, "om_lineage_set_chapter_count", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "lineage_id", "chapters"), kw=True)
     _bind(lib, "om_lineage_spawn_descendant_at_tick", [W, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint64], ctypes.c_uint32, ("w", "lineage_id", "parent_id", "tick"), kw=True)
@@ -1979,6 +1991,7 @@ def _bind_e09(lib):
     _bind(lib, "om_chronicle_add_mock_entry", [W, ctypes.c_uint32, ctypes.c_uint64, ctypes.c_uint64], None, ("w", "entry_id", "start_tick", "end_tick"), kw=True)
     _bind(lib, "om_chronicle_add_ownership_change_event", [W, ctypes.c_uint32, ctypes.c_uint64], None, ("w", "region_idx", "tick"), kw=True)
     _bind(lib, "om_chronicle_add_raw_entry", [W, ctypes.c_uint32, ctypes.c_char_p], None, ("w", "entry_id", "text"), kw=True)
+    _bind(lib, "om_chronicle_add_regional_event", [W, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_double], ctypes.c_int, ("w", "region_idx", "category", "score"))
     _bind(lib, "om_chronicle_apply_slot_echo_anaphora", [W, ctypes.c_char_p, ctypes.c_char_p], ctypes.c_char_p, ("w", "fragment1_slot", "fragment2_slot"), kw=True)
     _bind(lib, "om_chronicle_apply_word_echo_synonym", [W, ctypes.c_char_p], ctypes.c_char_p, ("w", "text"), kw=True)
     _bind(lib, "om_chronicle_assemble_cluster_entry", [W, ctypes.c_uint32, ctypes.c_uint32, V], ctypes.c_int, ("w", "category", "region_idx", "out_entry"), kw=True)
@@ -2463,6 +2476,7 @@ def _bind_e17(lib):
     _bind(lib, "om_map_archetype_canvas_category", [ctypes.c_uint32], ctypes.c_int, ("mission",))
     _bind(lib, "om_map_check_boundary_gradient_discontinuity", [W, ctypes.c_double, ctypes.c_double], ctypes.c_double, ("w", "p1", "boundary"))
     _bind(lib, "om_map_clamp_flavoring_delta", [ctypes.c_double], ctypes.c_double, ("delta",))
+    _bind(lib, "om_map_clear", [W], None, ("w",))
     _bind(lib, "om_map_compute_chokepoint_width", [ctypes.c_double], ctypes.c_double, ("width",))
     _bind(lib, "om_map_compute_economy_obstacle_delta", [ctypes.c_double], ctypes.c_double, ("economy",))
     _bind(lib, "om_map_compute_modified_canvas", [ctypes.c_uint32, ctypes.c_double, ctypes.c_double], ctypes.c_double, ("archetype", "p1", "p2"))

@@ -1391,3 +1391,11 @@ static int evt_save_read(om_world *w, const uint8_t *buf, uint32_t len) {
     w->events_state_read = evt_save_read;
     return 0;
 }
+
+/* ---- generated stubs from signatures.toml ---- */
+int32_t om_event_template_significance_tier(const om_world *w, uint32_t template_id) {
+    /* STUB: B1-8 implements */
+    (void)w; (void)template_id;
+    return -1;
+}
+/* ---- end generated stubs ---- */
