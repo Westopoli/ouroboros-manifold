@@ -542,3 +542,11 @@ wave = 0
 owns = ["csrc/sim.c", "csrc/region.c", "csrc/om_internal.h", "csrc/ouroboros_sim.h", "csrc/om_constants.h", "Makefile"]
 acceptance = []
 depends_on = []
+
+[[piece]]
+id = "B10c"
+manager = "M2"
+wave = 3
+owns = ["csrc/unit.c"]
+acceptance = []
+depends_on = ["B10b"]
