@@ -1,5 +1,7 @@
 extends Control
 
+const SimSession := preload("res://autoload/sim_session.gd")
+
 const HOVER_GLYPH_CAP := 12
 const HOVER_GLYPHS := ["✦", "·"]
 const HOVER_GLYPH_COUNTS := {
@@ -8,6 +10,9 @@ const HOVER_GLYPH_COUNTS := {
 const GLYPH_COLOR := Color("#FFFFFF")
 
 var _menu_items: Array[Control] = []
+var _bridge = null
+var _continue_item: Control = null
+var _slot_count := 0
 var _world_view: Node
 var _title_heartbeat: Control
 var _hover_layer: Control
@@ -70,17 +75,16 @@ func _build_ui() -> void:
 		{"label": "QUIT", "action": "quit"},
 	]
 
-	var has_saves := UIDataBus.get_save_slots().size() > 0
-
 	for item_data in menu_data:
 		var item := _create_menu_item(item_data["label"], item_data["action"])
-		if item_data["action"] == "load_game" and not has_saves:
-			item.modulate.a = 0.3
-			item.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		if item_data["action"] == "load_game":
+			item.name = "Continue"
+			_continue_item = item
 		if item_data["action"] == "galaxy":
 			item.name = "NewGame"
 		content.add_child(item)
 		_menu_items.append(item)
+	qa_set_bridge(SimSession.bridge())
 
 	var spacer3 := Control.new()
 	spacer3.custom_minimum_size.y = 52
@@ -311,8 +315,30 @@ func _on_menu_action(action: String) -> void:
 	match action:
 		"quit":
 			get_tree().quit()
+		"galaxy":
+			SimSession.reset()
+			SceneRouter.go_to(action)
 		_:
 			SceneRouter.go_to(action)
+
+
+# CONTINUE is enabled by the live save list (bridge.list_saves(), C1-2), not
+# the legacy UIDataBus.get_save_slots(). The dim is on the item's label: the
+# entrance animation tweens the item's own modulate to 1.0.
+func qa_set_bridge(bridge) -> void:
+	_bridge = bridge
+	_slot_count = (_bridge.list_saves() as Array).size()
+	if _continue_item == null:
+		return
+	var enabled := _slot_count > 0
+	_continue_item.mouse_filter = Control.MOUSE_FILTER_STOP if enabled else Control.MOUSE_FILTER_IGNORE
+	for c in _continue_item.get_children():
+		if c is Label:
+			(c as Label).modulate.a = 1.0 if enabled else 0.3
+
+
+func qa_state() -> Dictionary:
+	return {"continue_enabled": _slot_count > 0, "slot_count": _slot_count}
 
 
 func _animate_entrance() -> void:
