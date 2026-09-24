@@ -27,13 +27,14 @@ var _unit_visuals: Dictionary = {}
 func _ready() -> void:
 	# C8 flow spine: SceneRouter._swap_scene never passes data into a
 	# scene routed to via go_to() (no setup() call on this path), so this
-	# view self-loads the fixture tactical frame on a fresh route-in.
-	var f := FileAccess.open("res://tests/fixtures/tactical_frame_seed11.json", FileAccess.READ)
-	if f != null:
-		var parsed = JSON.parse_string(f.get_as_text())
-		f.close()
-		if parsed is Dictionary:
-			load_frame(parsed)
+	# view self-loads the first live tactical frame on a fresh route-in. A
+	# failed live load leaves the view empty and logs the reason; it never
+	# falls back to a fixture (C5-2).
+	var bridge = load("res://autoload/c_bridge.gd").new()
+	if bridge.load_tactical_live(bridge.live_seed(), bridge.DEFAULT_N_REGIONS, bridge.DEFAULT_FEATURES):
+		load_frame(bridge.tactical_frame())
+	else:
+		push_error("tactical_view: live tactical frame failed: %s" % bridge.last_error())
 	var end_mission_btn := get_node_or_null("CanvasLayer/EndMission")
 	if end_mission_btn != null:
 		end_mission_btn.pressed.connect(func():
@@ -44,7 +45,7 @@ func _ready() -> void:
 func load_frame(frame: Dictionary) -> void:
 	_frame = frame
 	_canvas = float(frame.get("map", {}).get("canvas", 0.0))
-	if not _camera_initialized:
+	if not _camera_initialized and _canvas > 0.0:
 		_camera = Vector2(_canvas * 0.5, _canvas * 0.5)
 		_camera_initialized = true
 	if _facing_fixed:

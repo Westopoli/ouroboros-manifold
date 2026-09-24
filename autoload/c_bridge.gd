@@ -41,6 +41,7 @@ var _mission: Dictionary = {}
 var _debrief: Dictionary = {}
 var _chronicle: Dictionary = {}
 var _chronicle_snapshot: Dictionary = {}
+var _tactical: Dictionary = {}
 
 
 func load_snapshot_file(path: String) -> bool:
@@ -113,6 +114,10 @@ func chronicle_snapshot() -> Dictionary:
 	return _chronicle_snapshot
 
 
+func tactical_frame() -> Dictionary:
+	return _tactical
+
+
 # Same script-up-front pattern as load_snapshot_live (a blocking pipe read
 # cannot be interleaved with writes): a fresh world, 10 steps, mission_start
 # answers the mission frame.
@@ -148,6 +153,19 @@ func load_chronicle_live(seed: int, n_regions: int, features: Array) -> bool:
 		return false
 	_chronicle = frames["chronicle"]
 	_chronicle_snapshot = frames["snapshot"]
+	return true
+
+
+# ... and mission_start plus one tactical_step answers the first tactical
+# frame (a static first frame: units moving over time needs C2-4's
+# persistent session).
+func load_tactical_live(seed: int, n_regions: int, features: Array) -> bool:
+	_tactical = {}
+	var frames: Dictionary = _run_live_script(seed, n_regions, features,
+		[{"type": "cmd", "name": "mission_start", "faction": 0}, {"type": "cmd", "name": "tactical_step", "n": 1}], ["tactical"])
+	if frames.is_empty():
+		return false
+	_tactical = frames["tactical"]
 	return true
 
 
