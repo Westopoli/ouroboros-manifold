@@ -107,8 +107,19 @@ def test_R_046_04_effective_attack_multiplied_by_it(lib, world_factory):
 
     # Attacker 0: Conqueror at tech 60.0 -> attack multiplier = 1.096
     set_faction(lib, w, 0, OMArchetype.CONQUEROR, budget=100.0, tech=60.0)
-    # Defender 1: Fortifier at tech 60.0 -> defense multiplier = 1.054
-    set_faction(lib, w, 1, OMArchetype.FORTIFIER, budget=100.0, tech=60.0)
+    # Defender 1: Fortifier at tech 60.0 -> defense multiplier = 1.054.
+    # test-defect fix (push_2026-09-22/test_defects_fixed.md): budget=100.0
+    # here let the defender's own om_step_decisions (csrc/agent.c) find its
+    # own viable attack against faction 0's region, so two attacks resolved
+    # in one step and polluted the observable (attacks had len 2, not 1) --
+    # the assertions below never got to run. budget=0.0 makes
+    # potential_commit (= budget_snapshot * 0.70) 0, so the defender's own
+    # candidate is never viable (net = potential_commit - military * 0.55 *
+    # entrenchment goes negative); it does not touch effective_defense, which
+    # csrc/resolve.c computes from target->military and tech only, never the
+    # defender's budget. Same convention as
+    # tests/csim/test_core_intent_inject.py's own faction-1 budget=0.0 (R8f).
+    set_faction(lib, w, 1, OMArchetype.FORTIFIER, budget=0.0, tech=60.0)
     set_stance(lib, w, 0, 1, OMStance.HOSTILE)
 
     set_region(lib, w, 0, tier=OMTier.HOME, military=50.0, economy=50.0, tension=10.0, population=50.0)
@@ -117,11 +128,21 @@ def test_R_046_04_effective_attack_multiplied_by_it(lib, world_factory):
     set_owner(lib, w, 1, 1, held_since=0)
     set_edge(lib, w, 0, 1, OMEdge.BORDER)
 
-    # Inject attack: commit 20.0, mode SURPRISE (mode multiplier 0.5)
-    # Base attack = 20.0 * 0.5 + 50.0 * 0.1 * 0.5 = 10.0 + 2.5 = 12.5
-    # Expected effective_attack = base_attack * 1.096 = 12.5 * 1.096 = 13.7
-    # Base defense = 40.0 + 0 entrenchment (held_since=now) = 40.0
-    # Expected effective_defense = 40.0 * 1.054 = 42.16
+    # Inject attack: commit 20.0, mode SURPRISE (surprise multiplier 0.5).
+    # test-defect fix: ALG-20 (docs/bible/algorithms.md) is
+    # effective_attack = commit * ATTACK_EFFICIENCY * tech_attack(attacker) * surprise,
+    # with no military term -- csrc/resolve.c's om_step_resolve matches this
+    # exactly (effective_attack = commit * 1.0 * tech_attack * surprise_mult).
+    # The old comment's "+ 50.0 * 0.1 * 0.5" term and its 13.7 total were not
+    # this formula; recomputed from the fixture's own numbers:
+    # effective_attack = 20.0 * 1.0 * 1.096 * 0.5 = 10.96
+    # effective_defense = target.military * RESISTANCE_FACTOR(0.55) *
+    #   tech_defense(1.054) * entrenchment; held_since=0 and the attack
+    #   resolves at tick 1 (om_world_step increments the tick first), so
+    #   entrenchment = 1.0 + min(1, (1-0)/100) = 1.01:
+    # effective_defense = 40.0 * 0.55 * 1.054 * 1.01 = 23.41988
+    # (both confirmed by reading att.effective_attack/effective_defense back
+    # off a run of this exact fixture -- see test_defects_fixed.md).
     inject_intent(lib, w, 0, OMAction.ATTACK, 1, 0, 20.0, OMMode.SURPRISE)
     force_draws(lib, w, [1.0])  # stochastic draw 1.0
 
@@ -130,8 +151,8 @@ def test_R_046_04_effective_attack_multiplied_by_it(lib, world_factory):
     attacks = read_attacks(lib, w)
     assert len(attacks) == 1
     att = attacks[0]
-    assert att.effective_attack == pytest.approx(12.5 * 1.096, abs=1e-3)
-    assert att.effective_defense == pytest.approx(40.0 * 1.054, abs=1e-3)
+    assert att.effective_attack == pytest.approx(20.0 * 1.0 * 1.096 * 0.5, abs=1e-3)
+    assert att.effective_defense == pytest.approx(40.0 * 0.55 * 1.054 * 1.01, abs=1e-3)
 
 
 def test_R_046_05_q_048_01_nothing_in(lib, world_factory):
