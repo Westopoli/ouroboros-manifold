@@ -945,8 +945,12 @@ uint32_t om_campaign_opening_jump_length(const om_world *w) {
     return om_time_jump_choose_opening_length((om_world *)w);
 }
 
+static int gen_time_jump(om_world *w, uint32_t n_ticks, om_time_jump_report *report, int opening);
+
 void om_campaign_start(om_world *w, uint32_t chapter) {
     om_chapter_start(w, chapter);
+    /* R-055-05: the campaign's first chapter opens with a time jump before the first briefing. */
+    if (chapter == 1) gen_time_jump(w, om_time_jump_choose_opening_length(w), NULL, 1);
 }
 
 void om_campaign_trigger_terminal_restart(om_world *w) {
@@ -1714,14 +1718,63 @@ uint32_t om_time_jump_report_faction_field_deltas_count(const om_world *w, const
     return 0;
 }
 
-int om_time_jump_run(om_world *w, uint32_t n_ticks, om_time_jump_report *report) {
+/* Significance tier per launch event template id (S-030 table order), from
+ * simulation/events.py significance_tier; the bible table does not carry it
+ * and no public getter exists yet. Ids past the launch library score the
+ * ALG-50 default tier. */
+/* constants-table: docs/bible/epics/E-09-chronicle.md R-066-01 */
+static const uint8_t GEN_LAUNCH_EVENT_TIER[] = {
+    4, 4, 3, 4, 3, 5, 3, 2, 4, 3, 4, 3, 2, 3, 3, 3, 2, 4, 3, 2, 2, 5, 5, 5, 5, 6,
+};
+/* end constants-table */
+#define GEN_DEFAULT_EVENT_TIER 2
+#define GEN_OWNERSHIP_CHANGE_TIER 4 /* conquest-grade: CONQUEST_UNREST's tier */
+#define GEN_JUMP_EVENT_BUF 128
+
+/* E-09 S-065: feeds the jump's notable regions to the chronicle and assembles
+ * the scroll. Regions that changed owner or fired events are candidates scored
+ * by ALG-50; each lineage adds its always-present quiet cluster; a jump too
+ * quiet to reach the minimum is padded with score-0 regional entries. The
+ * opening jump has no history to distill and gets the synthetic opening scroll. */
+static int gen_time_jump(om_world *w, uint32_t n_ticks, om_time_jump_report *report, int opening) {
     gen_state *gs = gen_get_state(w);
     if (!w || !gs) return 1;
     /* R-055-02: the strategic sim is stopped for a mission's whole duration;
      * a time jump cannot start (or silently continue) while one is running. */
     if (gs->chapter_phase == GEN_PHASE_MISSION) return 1;
     uint64_t start_tick = w->tick;
-    for (uint32_t i = 0; i < n_ticks; i++) om_world_step(w);
+    uint32_t nr = w->n_regions < OM_MAX_REGIONS ? w->n_regions : OM_MAX_REGIONS;
+    int32_t start_owner[OM_MAX_REGIONS], last_owner[OM_MAX_REGIONS];
+    uint64_t change_tick[OM_MAX_REGIONS];
+    double peak[OM_MAX_REGIONS];
+    int active[OM_MAX_REGIONS];
+    for (uint32_t r = 0; r < nr; r++) {
+        start_owner[r] = last_owner[r] = om_region_owner(w, r);
+        change_tick[r] = 0;
+        peak[r] = 0.0;
+        active[r] = 0;
+    }
+    int track_events = om_world_feature(w, OM_FEAT_EVENTS);
+    om_fired_event fired[GEN_JUMP_EVENT_BUF];
+    for (uint32_t i = 0; i < n_ticks; i++) {
+        om_world_step(w);
+        for (uint32_t r = 0; r < nr; r++) {
+            int32_t o = om_region_owner(w, r);
+            if (o != last_owner[r]) { last_owner[r] = o; change_tick[r] = w->tick; }
+        }
+        if (!track_events) continue;
+        uint32_t nf = om_tick_events(w, fired, GEN_JUMP_EVENT_BUF);
+        for (uint32_t k = 0; k < nf; k++) {
+            if (fired[k].region_idx >= nr) continue;
+            uint32_t tier = fired[k].template_id < sizeof(GEN_LAUNCH_EVENT_TIER)
+                          ? GEN_LAUNCH_EVENT_TIER[fired[k].template_id] : GEN_DEFAULT_EVENT_TIER;
+            double dsum = 0.0;
+            for (uint32_t f = 0; f < OM_F_COUNT; f++) dsum += fabs(fired[k].delta[f]);
+            double score = om_chronicle_score_event(w, fired[k].region_idx, tier, dsum);
+            if (!active[fired[k].region_idx] || score > peak[fired[k].region_idx]) peak[fired[k].region_idx] = score;
+            active[fired[k].region_idx] = 1;
+        }
+    }
     uint64_t end_tick = w->tick;
 
     gs->death_pass_count = 0;
@@ -1732,14 +1785,55 @@ int om_time_jump_run(om_world *w, uint32_t n_ticks, om_time_jump_report *report)
     gs->death_pass_count = 1;
     gs->time_jump_death_tick = end_tick;
 
+    uint32_t n_territory = 0;
+    for (uint32_t r = 0; r < nr; r++) {
+        if (start_owner[r] == last_owner[r]) continue;
+        n_territory++;
+        if (opening) continue;
+        om_chronicle_add_ownership_change_event(w, r, change_tick[r]);
+        double score = om_chronicle_score_event(w, r, GEN_OWNERSHIP_CHANGE_TIER, 0.0);
+        if (!active[r] || score > peak[r]) peak[r] = score;
+        active[r] = 1;
+    }
+    if (opening) {
+        om_chronicle_build_opening_scroll(w);
+    } else {
+        uint32_t n_candidates = 0;
+        for (uint32_t r = 0; r < nr; r++) {
+            if (!active[r]) continue;
+            om_chronicle_add_event(w, r, peak[r]);
+            n_candidates++;
+        }
+        for (uint32_t li = 0; li < gs->n_lineages; li++) {
+            gen_lineage *ln = &gs->lineages[li];
+            if (!ln->used) continue;
+            uint32_t region = ln->n_history ? ln->history[ln->n_history - 1] : om_lineage_home_region(w, ln->id);
+            om_chronicle_add_lineage_event(w, ln->id, region, 0.0);
+            n_candidates++;
+        }
+        for (uint32_t r = 0; r < nr && n_candidates < OM_CHRONICLE_MIN_ENTRIES; r++) {
+            if (active[r] || om_region_owner(w, r) < 0) continue;
+            om_chronicle_add_event(w, r, 0.0);
+            n_candidates++;
+        }
+        if (n_candidates == 0) om_chronicle_build_opening_scroll(w);
+    }
+    om_chronicle_assemble_with_seed(w, start_tick);
+
     if (report) {
         memset(report, 0, sizeof(*report));
         report->start_tick = start_tick;
         report->end_tick = end_tick;
         report->jump_ticks = n_ticks;
+        report->n_territory_changes = n_territory;
+        report->n_chronicle_entries = om_chronicle_entry_count(w);
         report->n_snapshots = n_ticks / OM_OWNERSHIP_TIMELINE_STRIDE + 1;
     }
     return 0;
+}
+
+int om_time_jump_run(om_world *w, uint32_t n_ticks, om_time_jump_report *report) {
+    return gen_time_jump(w, n_ticks, report, 0);
 }
 
 void om_time_jump_run_tracked(om_world *w, uint32_t jump) {
