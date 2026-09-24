@@ -61,6 +61,7 @@ var _fail_msgs: Array[String] = []
 var _root: Node
 var _frame0: Dictionary
 var _frame10: Dictionary
+var _live_tests_completed := false
 
 
 func _initialize() -> void:
@@ -132,6 +133,62 @@ func _run_tests() -> void:
 	await _check_plant_facing_fixed_R100_01()
 	_check_select_all_never_exists_R105_04()
 	_check_plant_nope_and_all_real_plants_true()
+
+	await _run_live_tests()
+	_assert(_live_tests_completed, "the live-frame checks did not run to the end (a script error aborted them, or c_bridge.gd lacks load_tactical_live / tactical_frame / DEFAULT_FEATURES)")
+
+
+# Piece C5-2 (docs/architecture.md "session commands (v1.1)"): with no
+# load_frame() call the view reads the first frame the live pipe answers to
+# mission_start + tactical_step (c_bridge.gd load_tactical_live), not
+# tests/fixtures/tactical_frame_seed11.json. Known sim-side gap when this was
+# written: mission_start loads no tactical map and no force, so the live
+# frame arrives with canvas 0 and no units; the view is asserted to show
+# exactly what the live frame carries (its tick and unit count), which the
+# 12-unit fixture cannot satisfy. Units moving live needs the persistent
+# pipe session (C2-4's design) and is not tested here.
+func _run_live_tests() -> void:
+	var CBridge = load("res://autoload/c_bridge.gd")
+	var bridge = CBridge.new()
+	for m in ["load_tactical_live", "tactical_frame", "last_error"]:
+		_assert(bridge.has_method(m), "c_bridge.gd missing method (piece C5-2 not attached yet): " + m)
+		if not bridge.has_method(m):
+			return
+	if not CBridge.get_script_constant_map().has("DEFAULT_FEATURES"):
+		_assert(false, "c_bridge.gd missing constant DEFAULT_FEATURES")
+		return
+
+	var ok: bool = bridge.load_tactical_live(1, CBridge.DEFAULT_N_REGIONS, CBridge.DEFAULT_FEATURES)
+	_assert(ok, "load_tactical_live(1, %d, DEFAULT_FEATURES) returned false (last_error = %s)" % [CBridge.DEFAULT_N_REGIONS, bridge.last_error()])
+	var live: Dictionary = bridge.tactical_frame()
+	_assert(live.get("type", "") == "tactical", "live tactical frame type = %s, expected tactical" % live.get("type", ""))
+	_assert(live.get("units", null) is Array and live.get("map", null) is Dictionary, "live tactical frame lacks units or map")
+	_assert(int(live.get("tick", -1)) == 1, "first live tactical frame tick = %s, expected 1 (one tactical_step)" % live.get("tick", -1))
+
+	var again = CBridge.new()
+	again.load_tactical_live(1, CBridge.DEFAULT_N_REGIONS, CBridge.DEFAULT_FEATURES)
+	_assert(again.tactical_frame() == live, "same seed answered two different tactical frames (determinism)")
+
+	var bad = CBridge.new()
+	_assert(not bad.load_tactical_live(1, 30, CBridge.DEFAULT_FEATURES), "load_tactical_live at 30 regions (below the feasibility floor) returned true")
+	_assert(bad.last_error() != "", "a failed live tactical load left last_error empty (silent failure)")
+	_assert(bad.tactical_frame().is_empty(), "a failed live tactical load still exposed a tactical frame")
+
+	_assert((live.get("units", []) as Array).size() != (_frame0.get("units", []) as Array).size() or int(live.get("tick", -1)) != int(_frame0.get("tick", -2)),
+		"live tactical frame equals the fixture; the live check below cannot tell them apart (fixture control)")
+
+	var fresh: Node = (load(SCENE_PATH) as PackedScene).instantiate()
+	get_root().add_child(fresh)
+	await process_frame
+	await process_frame
+	var st: Dictionary = fresh.qa_state()
+	_assert(int(st.get("tick", -1)) == int(live.get("tick", -2)),
+		"view with no load_frame() call shows tick %s, live frame says %s (still showing the fixture?)" % [st.get("tick"), live.get("tick")])
+	_assert((st.get("units", {}) as Dictionary).size() == (live.get("units", []) as Array).size(),
+		"view with no load_frame() call shows %d units, live frame carries %d" % [(st.get("units", {}) as Dictionary).size(), (live.get("units", []) as Array).size()])
+	fresh.queue_free()
+	await process_frame
+	_live_tests_completed = true
 
 
 func _check_qa_state_json_safe() -> void:
