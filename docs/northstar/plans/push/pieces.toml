@@ -391,7 +391,7 @@ size_estimate = "rubber-band/stuck/backwards/dropped-order detectors over a scri
 id = "T2c"
 manager = "M1"
 wave = 2
-owns = ["csrc/save.c", "csrc/generational.c", "csrc/om_internal.h", "csrc/region.c"]
+owns = ["csrc/save.c"]
 acceptance = [
     "tests/csim/test_E16_S111_saving.py",
 ]
@@ -534,3 +534,11 @@ owns_glob = ["scenes/main_menu/**"]
 acceptance = ["tests/test_boot_scripts_parse.gd", "tests/test_privacy_modal.gd"]
 depends_on = []
 status = { state = "attached", attach_sha = "764ed59" }
+
+[[piece]]
+id = "core"
+manager = "M0"
+wave = 0
+owns = ["csrc/sim.c", "csrc/region.c", "csrc/om_internal.h", "csrc/ouroboros_sim.h", "csrc/om_constants.h", "Makefile"]
+acceptance = []
+depends_on = []
