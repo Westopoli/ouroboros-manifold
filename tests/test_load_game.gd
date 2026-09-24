@@ -154,13 +154,13 @@ func _run_live_tests(current_version: int) -> void:
 	_assert(row != null, "no campaign_1 row after the live mission load's autosave (R-111-01); slots = %s" % str(rows.map(func(r): return r.get("slot"))))
 	if row == null:
 		return
-	_assert(int(row.get("tick", -1)) == 10, "autosave row tick = %s, expected 10 (10 steps then mission_start)" % row.get("tick"))
+	_assert(int(row.get("tick", -1)) == 0, "autosave row tick = %s, expected 0 (mission_start on a fresh world, C2-6 no longer pre-steps)" % row.get("tick"))
 	_assert(int(row.get("version", -1)) == current_version, "autosave row version = %s, the scene's current_version is %s" % [row.get("version"), current_version])
 
 	var snap: Dictionary = bridge.load("campaign_1")
 	_assert(snap.get("type", "") == "snapshot" and (snap.get("regions", []) as Array).size() == CBridge.DEFAULT_N_REGIONS,
 		"load(campaign_1) did not answer an 80-region snapshot (last_error = %s)" % bridge.last_error())
-	_assert(int(snap.get("tick", -1)) == 10, "loaded snapshot tick = %s, expected 10" % snap.get("tick", -1))
+	_assert(int(snap.get("tick", -1)) == 0, "loaded snapshot tick = %s, expected 0" % snap.get("tick", -1))
 	var snap2: Dictionary = bridge.load("campaign_1")
 	_assert(snap2.get("checksum", 1) == snap.get("checksum", 2), "loading the same slot twice gave different checksums (R-111-02)")
 

@@ -147,6 +147,10 @@ func _run_live_tests() -> void:
 
 	_assert(hash(live_frame) != hash(_frame), "live chronicle frame equals the fixture; the live check below cannot tell them apart (fixture control)")
 
+	# The scenes share one process-wide session (autoload/sim_session.gd, C2-6):
+	# start the scene under test on a fresh world, the one the private bridge
+	# above answered from.
+	load("res://autoload/sim_session.gd").reset()
 	var fresh: Node = (load(SCENE_PATH) as PackedScene).instantiate()
 	get_root().add_child(fresh)
 	await process_frame
