@@ -841,6 +841,7 @@ static void handle_load(const char *json) {
     if (!W) W = om_world_new(1, 0);
     om_load_state_read(W, buf, (uint32_t)sz);
     free(buf);
+    g_tick = om_world_strategic_tick(W);
     g_n_regions = om_region_count(W);
     realloc_regions(g_n_regions);
     capture_baseline();
