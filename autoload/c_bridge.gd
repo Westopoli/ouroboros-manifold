@@ -118,13 +118,55 @@ func tactical_frame() -> Dictionary:
 	return _tactical
 
 
+# Save slots (docs/architecture.md "Save slots (T2g-2 rulings)"): the slot
+# directory is user://saves passed absolute; a slot id is the file name
+# without ".omsave". The live mission/debrief/chronicle loads autosave to
+# campaign_<seed> (R-111-01); the tactical load never does (R-111-04).
+func saves_dir() -> String:
+	var dir := ProjectSettings.globalize_path("user://saves")
+	DirAccess.make_dir_recursive_absolute(dir)
+	return dir
+
+
+func list_saves() -> Array:
+	var frames: Dictionary = _run_live_script(0, 0, [], [{"type": "cmd", "name": "list_saves", "dir": saves_dir()}], ["saves"], false)
+	var rows := []
+	for slot in frames.get("saves", {}).get("slots", []):
+		rows.append({
+			"slot": String(slot.get("path", "")).get_file().get_basename(),
+			"tick": int(slot.get("tick", 0)),
+			"chapter": int(slot.get("chapter", 0)),
+			"version": int(slot.get("format_version", 0)),
+		})
+	return rows
+
+
+# The post-load snapshot, or {} with last_error() set ("corrupt" covers a
+# version mismatch too, csrc/pipe/om_pipe.c handle_load; R-111-03). The pipe
+# can only load into a world with the save's region count, so the script
+# sets that world up first from the sidecar's seed and n_regions.
+func load(slot_id: String) -> Dictionary:
+	var path := saves_dir().path_join(slot_id + ".omsave")
+	var sidecar = JSON.parse_string(FileAccess.get_file_as_string(path + ".json"))
+	if not (sidecar is Dictionary) or not sidecar.has("seed") or not sidecar.has("n_regions"):
+		_last_error = "save sidecar missing or unreadable"
+		return {}
+	var frames: Dictionary = _run_live_script(int(sidecar["seed"]), int(sidecar["n_regions"]), DEFAULT_FEATURES,
+		[{"type": "cmd", "name": "load", "path": path}], ["snapshot"])
+	return frames.get("snapshot", {})
+
+
+func _autosave_cmd(seed: int) -> Dictionary:
+	return {"type": "cmd", "name": "save", "path": saves_dir().path_join("campaign_%d.omsave" % seed)}
+
+
 # Same script-up-front pattern as load_snapshot_live (a blocking pipe read
 # cannot be interleaved with writes): a fresh world, 10 steps, mission_start
 # answers the mission frame.
 func load_mission_live(seed: int, n_regions: int, features: Array) -> bool:
 	_mission = {}
 	var frames: Dictionary = _run_live_script(seed, n_regions, features,
-		[{"type": "cmd", "name": "mission_start", "faction": 0}], ["mission"])
+		[{"type": "cmd", "name": "mission_start", "faction": 0}, _autosave_cmd(seed)], ["mission", "ack:save"])
 	if frames.is_empty():
 		return false
 	_mission = frames["mission"]
@@ -135,7 +177,7 @@ func load_mission_live(seed: int, n_regions: int, features: Array) -> bool:
 func load_debrief_live(seed: int, n_regions: int, features: Array) -> bool:
 	_debrief = {}
 	var frames: Dictionary = _run_live_script(seed, n_regions, features,
-		[{"type": "cmd", "name": "mission_start", "faction": 0}, {"type": "cmd", "name": "mission_end"}], ["debrief"])
+		[{"type": "cmd", "name": "mission_start", "faction": 0}, {"type": "cmd", "name": "mission_end"}, _autosave_cmd(seed)], ["debrief", "ack:save"])
 	if frames.is_empty():
 		return false
 	_debrief = frames["debrief"]
@@ -148,7 +190,7 @@ func load_chronicle_live(seed: int, n_regions: int, features: Array) -> bool:
 	_chronicle = {}
 	_chronicle_snapshot = {}
 	var frames: Dictionary = _run_live_script(seed, n_regions, features,
-		[{"type": "cmd", "name": "jump", "ticks": 50}], ["chronicle", "snapshot"])
+		[{"type": "cmd", "name": "jump", "ticks": 50}, _autosave_cmd(seed)], ["chronicle", "snapshot", "ack:save"])
 	if frames.is_empty():
 		return false
 	_chronicle = frames["chronicle"]
@@ -173,7 +215,9 @@ func load_tactical_live(seed: int, n_regions: int, features: Array) -> bool:
 # persistent session lands; this shares its framing and read loop, and
 # returns the first frame of each type in want ({type: frame}); {} on any
 # error frame, timeout, closed pipe or spawn failure, with last_error() set.
-func _run_live_script(seed: int, n_regions: int, features: Array, tail: Array, want: Array) -> Dictionary:
+# An ack is keyed "ack:<command name>"; with_world false skips the leading
+# set_seed and step for commands that need no world (list_saves, load).
+func _run_live_script(seed: int, n_regions: int, features: Array, tail: Array, want: Array, with_world: bool = true) -> Dictionary:
 	_last_error = ""
 	var exe := ProjectSettings.globalize_path(PIPE_BIN_RES_PATH)
 	if not FileAccess.file_exists(exe):
@@ -192,8 +236,9 @@ func _run_live_script(seed: int, n_regions: int, features: Array, tail: Array, w
 		return {}
 
 	var script := PackedByteArray()
-	script.append_array(_frame_cmd({"type": "cmd", "name": "set_seed", "seed": seed, "n_regions": n_regions, "features": features}))
-	script.append_array(_frame_cmd({"type": "cmd", "name": "step", "n": LIVE_SNAPSHOT_STEPS}))
+	if with_world:
+		script.append_array(_frame_cmd({"type": "cmd", "name": "set_seed", "seed": seed, "n_regions": n_regions, "features": features}))
+		script.append_array(_frame_cmd({"type": "cmd", "name": "step", "n": LIVE_SNAPSHOT_STEPS}))
 	for cmd in tail:
 		script.append_array(_frame_cmd(cmd))
 	script.append_array(_frame_cmd({"type": "cmd", "name": "quit"}))
@@ -212,8 +257,9 @@ func _run_live_script(seed: int, n_regions: int, features: Array, tail: Array, w
 		if msg_type == "error":
 			_last_error = String(msg.get("reason", ""))
 			break
-		if want.has(msg_type) and not found.has(msg_type):
-			found[msg_type] = msg
+		var key: String = msg_type if msg_type != "ack" else "ack:%s" % msg.get("name", "")
+		if want.has(key) and not found.has(key):
+			found[key] = msg
 			if found.size() == want.size():
 				break
 

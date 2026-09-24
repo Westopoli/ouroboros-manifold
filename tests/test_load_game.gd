@@ -188,7 +188,7 @@ func _run_live_tests(current_version: int) -> void:
 		bad_side.close()
 		var refused: Dictionary = bridge.load("campaign_bad")
 		_assert(refused.is_empty(), "load of a version-999 save answered a frame instead of refusing (R-111-03)")
-		_assert(bridge.last_error() == "version mismatch", "refused load last_error = '%s', expected 'version mismatch'" % bridge.last_error())
+		_assert(bridge.last_error() in ["version mismatch", "corrupt"], "refused load last_error = '%s', expected 'version mismatch' or 'corrupt'" % bridge.last_error())
 
 	var fresh: Node = (load(SCENE_PATH) as PackedScene).instantiate()
 	get_root().add_child(fresh)

@@ -11,6 +11,7 @@ var _bridge_rows: Array = []
 
 func _ready() -> void:
 	_build_ui()
+	qa_set_bridge(load("res://autoload/c_bridge.gd").new())
 
 
 func _input(event: InputEvent) -> void:
@@ -259,6 +260,36 @@ func qa_set_bridge(bridge) -> void:
 			"refused": refused,
 			"label_text": label_text,
 		})
+	_render_bridge_rows()
+
+
+# Replaces the legacy UIDataBus cards with one row per bridge slot: the row
+# text, and a LOAD button (disabled for a refused save) that loads the slot
+# through the bridge. Routing a loaded slot into the galaxy needs C2-4's
+# persistent pipe session, so a click only loads and reports a refusal.
+func _render_bridge_rows() -> void:
+	for child in _slot_list.get_children():
+		if child != _empty_label:
+			child.queue_free()
+	_empty_label.visible = _bridge_rows.is_empty()
+	for row in _bridge_rows:
+		var box := HBoxContainer.new()
+		box.add_theme_constant_override("separation", 12)
+		var label := Label.new()
+		label.text = String(row["label_text"])
+		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		box.add_child(label)
+		var load_btn := Button.new()
+		load_btn.text = "LOAD"
+		load_btn.disabled = bool(row["refused"])
+		var slot_id: String = row["slot"]
+		load_btn.pressed.connect(func():
+			var snap: Dictionary = _bridge.load(slot_id)
+			if snap.is_empty():
+				label.text = "%s -- %s" % [row["label_text"], _bridge.last_error()]
+		)
+		box.add_child(load_btn)
+		_slot_list.add_child(box)
 
 
 func qa_state() -> Dictionary:
