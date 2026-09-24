@@ -33,6 +33,13 @@ def test_R_084_01_one_attack_lands_for_base(lib, world_factory):
     lib.om_unit_set_fortify_active(w, target, 1)      # 0.20 reduction
     lib.om_unit_set_warden_aura_active(w, target, 1)  # 0.10 reduction
 
+    # An explicit order suppresses the ability auto-trigger scan
+    # (om_tac_unit_ai: u->order != OM_ORDER_NONE -> suppress_auto = 1), so
+    # the attacker's own Surge (which else auto-fires the instant an enemy
+    # is within its attack range, doubling its output) never starts; this
+    # keeps the attack timing and target acquisition otherwise unchanged.
+    lib.om_command_attack_target(w, attacker, target)
+
     hp_initial = lib.om_unit_hp(w, target)
 
     # Step until attack timer elapses (16 ticks)

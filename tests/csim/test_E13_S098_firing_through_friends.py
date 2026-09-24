@@ -23,7 +23,9 @@ def test_R_098_01_shot_lands_friendly_units_never(lib, world_factory):
     """Given a ranged unit with an ally between it and its target, When it fires, Then the shot lands; friendly units never block fire."""
     w = world_factory(n_regions=1)
 
-    # Ranged Bombard (faction 0) at (0, 0), attack range 600 wu, flat damage 110.0
+    # Ranged Bombard (faction 0) at (0, 0). Roster base damage 17.5
+    # (OM_ROSTER_BOMBARD_DAMAGE) times the Siege-vs-Strike matchup 0.20
+    # (OM_CATEGORY_MULTIPLIER_SIEGE_STRIKE, csrc/om_constants.h, ALG-60) = 3.5.
     attacker = lib.om_unit_spawn(w, OMUnitType.BOMBARD, 0, 0.0, 0.0, 0)
 
     # Ally Bastion (faction 0) directly in line of fire at (100, 0)
@@ -40,7 +42,7 @@ def test_R_098_01_shot_lands_friendly_units_never(lib, world_factory):
 
     # Friendly unit never blocks fire: shot lands on enemy
     damage_dealt = hp_enemy_before - lib.om_unit_get_hp(w, enemy)
-    assert pytest.approx(damage_dealt, abs=1e-4) == 110.0
+    assert pytest.approx(damage_dealt, abs=1e-4) == 3.5
 
     # Ally takes 0 damage
     assert pytest.approx(lib.om_unit_get_hp(w, ally), abs=1e-4) == hp_ally_before

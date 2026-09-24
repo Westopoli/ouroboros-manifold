@@ -63,14 +63,15 @@ def test_R_093_02_it_uses_its_own_visible(lib, world_factory):
     """Given an enemy unit, When it acquires targets, Then it uses its own visible set with the same rules as the player's units."""
     w = world_factory(n_regions=1)
 
-    # Enemy Raider (base sensor radius 300 wu) at (0, 0)
+    # Enemy Raider (base sensor radius 800 wu, OM_ROSTER_RAIDER_SENSOR,
+    # csrc/unit.c) at (0, 0)
     enemy = lib.om_unit_spawn(w, OMUnitType.RAIDER, 1, 0.0, 0.0, 0)
 
-    # Friendly target 1 inside sensor radius: (200, 0) (distance 200 <= 300)
-    friendly_in_range = lib.om_unit_spawn(w, OMUnitType.VANGUARD, 0, 200.0, 0.0, 0)
+    # Friendly target 1 inside sensor radius: (700, 0) (distance 700 <= 800)
+    friendly_in_range = lib.om_unit_spawn(w, OMUnitType.VANGUARD, 0, 700.0, 0.0, 0)
 
-    # Friendly target 2 outside sensor radius: (500, 0) (distance 500 > 300)
-    friendly_out_of_range = lib.om_unit_spawn(w, OMUnitType.VANGUARD, 0, 500.0, 0.0, 0)
+    # Friendly target 2 outside sensor radius: (900, 0) (distance 900 > 800)
+    friendly_out_of_range = lib.om_unit_spawn(w, OMUnitType.VANGUARD, 0, 900.0, 0.0, 0)
 
     lib.om_visibility_compute(w)
 
@@ -83,7 +84,7 @@ def test_R_093_02_it_uses_its_own_visible(lib, world_factory):
     assert lib.om_unit_get_target(w, enemy) == friendly_in_range
 
     # If target 1 is hidden behind blocking cover, enemy can no longer acquire it
-    lib.om_map_add_cover(w, 100.0, 0.0, 20.0, 5.0)
+    lib.om_map_add_cover(w, 350.0, 0.0, 20.0, 5.0)
     lib.om_visibility_compute(w)
     assert lib.om_unit_can_see(w, enemy, friendly_in_range) == 0
 

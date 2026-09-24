@@ -86,10 +86,10 @@ def test_R_092_03_fog_applies_per_s_089(lib, world_factory):
     lib.om_mission_set_phase(w, OMPhase.RECON)
     obs_id = lib.om_map_add_obstacle(w, 100.0, 100.0, 30.0)
 
-    # Friendly unit with sensor radius 300 at (0, 0)
+    # Friendly unit with sensor radius 800 (OM_ROSTER_RAIDER_SENSOR, csrc/unit.c) at (0, 0)
     friendly = lib.om_unit_spawn(w, OMUnitType.RAIDER, 0, 0.0, 0.0, 0)
-    # Enemy at distance 500 (beyond 300 sensor radius)
-    enemy = lib.om_unit_spawn(w, OMUnitType.RAIDER, 1, 500.0, 0.0, 0)
+    # Enemy at distance 900 (beyond the 800 sensor radius)
+    enemy = lib.om_unit_spawn(w, OMUnitType.RAIDER, 1, 900.0, 0.0, 0)
 
     # Player presses Begin Mission
     lib.om_mission_begin(w)

@@ -815,3 +815,179 @@ anything; unrelated to E-06, not touched.
 Files touched: `tests/csim/test_E06_S045_a_faction_s_technology_is_one_number.py`,
 `tests/csim/test_E06_S046_archetypes_spend_tech_differently.py`,
 this evidence file.
+
+## push/tests-fix-5 (2026-09-24)
+
+Branch `push/tests-fix-5`, worktree off origin/main, merged in
+`origin/push/B10c` (one mechanical conflict in `csrc/unit.c`: HEAD had
+`/* STUB: B10c implements */` stubs for `om_unit_brace_phase`,
+`om_unit_count`, `om_unit_get_faction`, `om_unit_get_layer`,
+`om_unit_get_unit_type`, `om_unit_id_at`; B10c side had the real bodies.
+Took B10c side whole, no hand-edit), `origin/push/B11-3`, `origin/push/B12-4`
+(both clean merges). 5 items from the design lane, all classed test-defect.
+Method same as above sections: git-stash isolate before/after, quote first
+assertion line, one positive control per item, whole-`tests/csim` failing-id
+diff before/after on the merged build.
+
+### `test_E13_S098_firing_through_friends.py::test_R_098_01_shot_lands_friendly_units_never`
+
+Confound: fixture assumed Bombard flat damage 110.0 vs a Raider target —
+no roster entry has 110. Real numbers: `OM_ROSTER_BOMBARD_DAMAGE` 17.5
+(csrc/unit.c), Bombard category Siege, Raider category Strike,
+`OM_CATEGORY_MULTIPLIER_SIEGE_STRIKE` 0.20 (csrc/om_constants.h, ALG-60) —
+`17.5 * 0.20 = 3.5`. Fix: comment + expected value 110.0 -> 3.5. Friendly-
+never-blocks-fire claim untouched.
+
+Red before: `assert 3.5 ± 1.0e-04 == 110.0` (Obtained 110.0, Expected
+3.5 ± 1.0e-4 — pytest's approx prints LHS/RHS reversed from the usual
+"got/want" order; the sim's own hit was 3.5 both times). Green after: 2
+passed. Control: flipped expected to 4.5, `assert 3.5 ± 1.0e-04 == 4.5`
+failed, reverted.
+
+### `test_E13_S100_facing.py::test_R_100_01_it_faces_target_moving_with`
+
+Confound: step 3 assumed the Raider still sits at (0, 0) when it commands
+attack-target; the 5 move ticks in step 1 already put it at x = 37.5
+(150 wu/s / 20 tps = 7.5 wu/tick). Fix: read the unit's actual position
+back (`om_unit_position_x/y`) right before spawning the enemy, compute the
+expected facing as `atan2(target_y - uy, target_x - ux)` instead of the
+hardcoded `pi/2`.
+
+Red before: `assert 1.9285857182272876 ± 0.01 == 1.5707963267948966`
+(sim's real facing 1.9285857182272876, old fixture wanted pi/2). Green
+after: 3 passed. Control: added `+ 0.5` to the computed expected value,
+`assert 1.9285857182272876 ± 0.01 == 2.429566978569376` failed, reverted.
+
+### `test_E11_S087_every_unit_thinks_the_same_way.py::test_R_087_01_it_moves_200_wu_directly`
+
+Confound: run length 80 ticks outlives the stealthed Bombard's own attack
+interval (`OM_ROSTER_BOMBARD_INTERVAL` 3.0s = 60 ticks). Debug trace
+(position/in_flinch/target per tick) showed the victim's flinch completes
+exactly at tick 51 (200 wu at Vanguard 80 wu/s = 4 wu/tick), holds flat at
+x = -200 through tick 60, then at tick 61 the Bombard's real auto-fire
+lands, restarts a second flinch from the already-fled position, and by
+tick 80 the victim has over-shot to x = -276 (two flinches, not one).
+Fix: shortened the run to 56 ticks — past arrival (tick 51) but under the
+Bombard's own re-fire (tick 60~61) — and picked 56 (not just any value in
+[51,59]) so the single extra `om_tactical_step` after the visibility flip
+lands on the victim's own targeting-cohort tick (`unit_id % 4 == tick % 4`;
+victim id 1, tick 57 % 4 == 1), matching the original test's structure of
+one run + one extra step.
+
+Red before: `assert -276.0 == -200.0 ± 5` (first assertion; a first attempt
+at 50 ticks passed this line but then failed the second assertion,
+`AssertionError: assert -1 == 2`, because the flinch had not yet fully
+arrived and the extra step landed off-cohort — both diagnosed with the
+debug trace before picking 56). Green after: 8 passed. Control: reverted
+the run length to 80, `assert -276.0 == -200.0 ± 5` failed again
+(reproduces the original confound exactly), reverted back to 56.
+
+### `test_E11_S084_flat_damage.py::test_R_084_01_one_attack_lands_for_base`
+
+Confound: the attacker Raider is idle with no order in step 1, so
+`om_ability_autotrigger_scan` (csrc/unit.c) fires Surge on it the instant
+the target is in range (`OM_UT_RAIDER` case: `if
+(om_tac_enemy_within_range(...)) om_ability_start_surge(...)`), doubling
+its output (`OM_ABILITY_SURGE_OUTPUT_MULT` 2.0) for the whole 16-tick
+window before the fixture's one deliberate attack ever lands: 1.35 * 2 =
+2.7. Fix: added one line, `lib.om_command_attack_target(w, attacker,
+target)`, before the wait loop — an explicit order sets
+`u->order != OM_ORDER_NONE`, which `om_tac_unit_ai` uses to suppress the
+auto-trigger scan for that unit (`u->suppress_auto = 1`), same mechanism
+B10c's brace-suppression rule uses for Vanguard. Attack timing and target
+acquisition unaffected (same 16-tick interval, same in-range fire). Did
+not touch `test_R_081_04` (symmetric Strike-vs-Line case, different file,
+still 4/4 green after).
+
+Red before: `assert 2.6999999999999886 == 1.35 ± 1.0e-06`. Green after: 7
+passed. Control: flipped expected to 1.50, `assert 1.3500000000000227 ==
+1.5 ± 1.0e-06` failed, reverted.
+
+### `test_E12_S091_standing_high.py::test_R_091_03_it_affects_sensors_only_never`
+
+Confound: fixture assumed Raider flat damage 40.0 and base sensor radius
+300.0; roster is `OM_ROSTER_RAIDER_DAMAGE` 9.0, `OM_ROSTER_RAIDER_SENSOR`
+800.0 (csrc/unit.c). Fix: 40.0 -> 9.0 (Strike-vs-Strike matchup 1.0, no
+elevation damage bonus in Settled Reach — rule's own claim), and the
+sensor-radius base in the elevation-multiplier assertion 300.0 -> 800.0
+(`800 * 1.30 = 1040.0`).
+
+Red before: `assert 9.0 ± 1.0e-04 == 40.0`. Green after: 3 passed.
+Control: flipped expected damage to 10.0, `assert 9.0 ± 1.0e-04 == 10.0`
+failed, reverted.
+
+### `test_E12_S092_recon_then_fog.py::test_R_092_03_fog_applies_per_s_089`
+
+Confound: fixture put the enemy at distance 500 assuming a 300 sensor
+radius; real Raider sensor is 800, so 500 wu is inside range and
+`om_unit_can_see` correctly returned 1, not the 0 the test wanted. Fix:
+moved the enemy to distance 900 (outside 800) instead of 500. Terrain-
+stays-visible claim untouched. `test_R_092_04` in the same file is a
+distinct, pre-existing confound (`set_region(w2, 0, OMField.MILITARY,
+0.95)` — `set_region()` takes 3 positional args, this call passes 4) —
+not part of this item, not touched, still red before and after.
+
+Red before: `AssertionError: assert 1 == 0` on
+`lib.om_unit_can_see(w, friendly, enemy)`. Green after (this one id):
+`test_R_092_03` passes; `test_R_092_04` stays red, unrelated and
+unassigned. Control: reverted the enemy distance to 500, same
+`assert 1 == 0` failure reproduced, reverted back to 900.
+
+### `test_E12_S093_fog_is_for_the_player_not_the_engine.py::test_R_093_02_it_uses_its_own_visible`
+
+Confound as assigned: fixture assumed Raider sensor 300 (in-range target
+at 200, out-of-range at 500); real sensor 800, so the out-of-range target
+was actually visible. Fixed the assigned part: in-range target moved to
+700, out-of-range to 900, cover node moved from x=100 to x=350 (kept
+roughly at the midpoint between observer and the in-range target so it
+still sits on the line of sight). `can_see` assertions and the "acquire
+target 1, not target 2" assertion all pass after this fix, confirmed with
+a control (temporarily set the out-of-range target to 750, `assert
+lib.om_unit_can_see(...) == 0` failed as expected — obtained 1 — reverted).
+
+Left red, not fixed, reported instead of guessed: the test's last
+assertion (`assert lib.om_unit_get_target(w, enemy) == 0` after cover
+blocks line of sight to the previously-acquired target) still fails —
+`om_unit_get_target` still returns the old target id. Traced with a
+throwaway debug script (ctypes, direct calls, not committed): once
+`om_unit_acquire_target` (csrc/fog.c) finds a target it calls
+`om_command_attack_target`, which sets `u->order = OM_ORDER_ATTACK_TARGET`.
+`om_tac_unit_ai`'s (csrc/unit.c) target-drop-on-lost-visibility check is
+gated `if (!drop && u->order != OM_ORDER_ATTACK_TARGET)` — it explicitly
+skips the visibility check once the unit is under an ATTACK_TARGET order,
+so the stale target is never dropped, by a re-call of
+`om_unit_acquire_target` or by `om_tactical_step`(both tried, same
+result: target stays 2). This looks like a real gap (an enemy that
+already "acquired" a target 1-shot ignores its own visible set from then
+on, contradicting "same rules as the player's units" once cover moves in)
+rather than a test-authoring mistake, and fixing it means touching
+`csrc/unit.c` or `csrc/fog.c`, both out of a test-fix leaf's file list.
+Not classed by the design lane as part of this item's confound either.
+Leaving it red and naming it here rather than guessing at the C fix or
+loosening the assertion.
+
+### Whole-`tests/csim` check (merged build, before vs after this leaf's edits)
+
+Before (5 test files at origin/main + B10c + B11-3 + B12-4, before any
+edit): 161 failed, 588 passed, 7 skipped, 1 xfailed. After (7 edits across
+the 5 named files): 155 failed, 594 passed, 7 skipped, 1 xfailed. Diffed
+sorted `FAILED` id lists: exactly 6 lines removed
+(`test_R_084_01_one_attack_lands_for_base`,
+`test_R_087_01_it_moves_200_wu_directly`,
+`test_R_091_03_it_affects_sensors_only_never`,
+`test_R_092_03_fog_applies_per_s_089`,
+`test_R_098_01_shot_lands_friendly_units_never`,
+`test_R_100_01_it_faces_target_moving_with`), zero lines added. No new red
+anywhere in the suite. `make -j8` clean on the merged build (both
+`libouroboros.so` and `libouroboros_dbg.so`).
+`scripts/specfactory/libm_lint.py csrc` -> `LIBM LINT OK`.
+`scripts/specfactory/alg_constants.py --lint csrc` -> `CONSTANTS LINT OK`.
+
+Files touched: `tests/csim/test_E13_S098_firing_through_friends.py`,
+`tests/csim/test_E13_S100_facing.py`,
+`tests/csim/test_E11_S087_every_unit_thinks_the_same_way.py`,
+`tests/csim/test_E11_S084_flat_damage.py`,
+`tests/csim/test_E12_S091_standing_high.py`,
+`tests/csim/test_E12_S092_recon_then_fog.py`,
+`tests/csim/test_E12_S093_fog_is_for_the_player_not_the_engine.py`,
+this evidence file.
