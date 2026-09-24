@@ -36,6 +36,7 @@ var _fail_count := 0
 var _fail_msgs: Array[String] = []
 var _mission: Dictionary
 var _debrief: Dictionary
+var _live_tests_completed := false
 
 
 func _initialize() -> void:
@@ -69,6 +70,8 @@ func _run_tests() -> void:
 
 	await _run_briefing_tests()
 	await _run_debrief_tests()
+	await _run_live_tests()
+	_assert(_live_tests_completed, "the live-frame checks did not run to the end (a script error aborted them, or c_bridge.gd lacks load_mission_live / load_debrief_live / mission_frame / debrief_frame / DEFAULT_FEATURES)")
 
 
 func _run_briefing_tests() -> void:
@@ -137,6 +140,84 @@ func _run_debrief_tests() -> void:
 
 	root.queue_free()
 	await process_frame
+
+
+# Piece C4-3 (docs/architecture.md "session commands (v1.1)"): with no
+# setup() params the briefing and debrief scenes read the frame the live pipe
+# answers to mission_start / mission_end (c_bridge.gd load_mission_live /
+# load_debrief_live), not tests/fixtures/*_frame_seed11.json. The fixtures
+# carry 3 objectives (archetype 2) and band 2; the live seed-1 world answers
+# a different mission and a different band, so a scene that still shows the
+# fixture cannot pass.
+func _run_live_tests() -> void:
+	var CBridge = load("res://autoload/c_bridge.gd")
+	var bridge = CBridge.new()
+	for m in ["load_mission_live", "load_debrief_live", "mission_frame", "debrief_frame", "last_error"]:
+		_assert(bridge.has_method(m), "c_bridge.gd missing method (piece C4-3 not attached yet): " + m)
+		if not bridge.has_method(m):
+			return
+	_assert(CBridge.get_script_constant_map().has("DEFAULT_FEATURES"), "c_bridge.gd missing constant DEFAULT_FEATURES")
+	if not CBridge.get_script_constant_map().has("DEFAULT_FEATURES"):
+		return
+	var live_ok: bool = bridge.load_mission_live(1, CBridge.DEFAULT_N_REGIONS, CBridge.DEFAULT_FEATURES)
+	_assert(live_ok, "load_mission_live(1, %d, DEFAULT_FEATURES) returned false (last_error = %s)" % [CBridge.DEFAULT_N_REGIONS, bridge.last_error()])
+	var live_mission: Dictionary = bridge.mission_frame()
+	_assert(live_mission.get("type", "") == "mission", "live mission frame type = %s, expected mission" % live_mission.get("type", ""))
+	_assert((live_mission.get("objectives", []) as Array).size() >= 1, "live mission frame has no objectives")
+
+	var again = CBridge.new()
+	again.load_mission_live(1, CBridge.DEFAULT_N_REGIONS, CBridge.DEFAULT_FEATURES)
+	_assert(again.mission_frame() == live_mission, "same seed answered two different mission frames (determinism)")
+
+	var bad = CBridge.new()
+	var bad_ok: bool = bad.load_mission_live(1, 30, CBridge.DEFAULT_FEATURES)
+	_assert(not bad_ok, "load_mission_live at 30 regions (below the feasibility floor) returned true")
+	_assert(bad.last_error() != "", "a failed live mission load left last_error empty (silent failure)")
+	_assert(bad.mission_frame().is_empty(), "a failed live mission load still exposed a mission frame")
+
+	var live_debrief_ok: bool = bridge.load_debrief_live(1, CBridge.DEFAULT_N_REGIONS, CBridge.DEFAULT_FEATURES)
+	_assert(live_debrief_ok, "load_debrief_live returned false (last_error = %s)" % bridge.last_error())
+	var live_debrief: Dictionary = bridge.debrief_frame()
+	_assert(live_debrief.get("type", "") == "debrief", "live debrief frame type = %s, expected debrief" % live_debrief.get("type", ""))
+
+	_assert(int(live_mission.get("archetype", -1)) != int(_mission.get("archetype")) or (live_mission.get("objectives", []) as Array).size() != (_mission.get("objectives", []) as Array).size(),
+		"live mission frame equals the fixture; the live check below cannot tell them apart (fixture control)")
+	_assert(int(live_debrief.get("band", -1)) != int(_debrief.get("band")),
+		"live debrief band equals the fixture band; the live check below cannot tell them apart (fixture control)")
+
+	var briefing: Node = (load(BRIEFING_SCENE_PATH) as PackedScene).instantiate()
+	get_root().add_child(briefing)
+	await process_frame
+	await process_frame
+	if briefing.has_method("qa_state"):
+		var b: Dictionary = briefing.qa_state()
+		_assert(int(b.get("archetype", -1)) == int(live_mission.get("archetype", -2)),
+			"briefing with no setup() shows archetype %s, live frame says %s" % [b.get("archetype"), live_mission.get("archetype")])
+		_assert(int(b.get("deadline_ticks", -1)) == int(live_mission.get("deadline_ticks", -2)),
+			"briefing with no setup() shows deadline_ticks %s, live frame says %s" % [b.get("deadline_ticks"), live_mission.get("deadline_ticks")])
+		_assert((b.get("objectives", []) as Array).size() == (live_mission.get("objectives", []) as Array).size(),
+			"briefing with no setup() shows %d objectives, live frame has %d" % [(b.get("objectives", []) as Array).size(), (live_mission.get("objectives", []) as Array).size()])
+	else:
+		_assert(false, "mission_briefing root has no qa_state()")
+	briefing.queue_free()
+	await process_frame
+
+	var debrief: Node = (load(DEBRIEF_SCENE_PATH) as PackedScene).instantiate()
+	get_root().add_child(debrief)
+	await process_frame
+	await process_frame
+	if debrief.has_method("qa_state"):
+		var d: Dictionary = debrief.qa_state()
+		var expected_band: String = BAND_NAMES[int(live_debrief.get("band", 0))]
+		_assert(str(d.get("band", "")) == expected_band,
+			"debrief with no setup() shows band %s, live frame says %s" % [d.get("band"), expected_band])
+		_assert(is_equal_approx(float(d.get("brought_home_pct", -1.0)), float(live_debrief.get("brought_home", 0.0)) * 100.0),
+			"debrief with no setup() shows brought_home_pct %s, live frame says %s" % [d.get("brought_home_pct"), float(live_debrief.get("brought_home", 0.0)) * 100.0])
+	else:
+		_assert(false, "debrief root has no qa_state()")
+	debrief.queue_free()
+	await process_frame
+	_live_tests_completed = true
 
 
 func _check_briefing_json_safe(root: Node) -> void:
