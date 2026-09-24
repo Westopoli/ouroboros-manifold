@@ -185,6 +185,13 @@
  * moment instead of at the 1M-tick cap. */
 #define OM_TACTICAL_STALEMATE_TICKS ((uint64_t)OM_ABILITY_BARRAGE_COOLDOWN_TICKS)
 
+/* E-13 R-099-03 (decision A): above OM_TACTICAL_HIGH_LOAD_UNITS live units
+ * (hp > 0) each tactical step spans OM_TACTICAL_HIGH_LOAD_PERIOD base ticks
+ * (20 -> 10 ticks per second). Neither number has an ALG id or a
+ * simulation/config.py name; the bible pins them in prose only. */
+#define OM_TACTICAL_HIGH_LOAD_UNITS 1000
+#define OM_TACTICAL_HIGH_LOAD_PERIOD 2
+
 /* S-086/ALG-63: one ability per unit type, exact numbers per
  * tests/csim/test_E11_S086_one_ability_each.py. OM_FORTIFY_RADIUS,
  * OM_INTERCEPT_DETECTION_RADIUS, OM_AOE_DAMAGE_CAP_MULTIPLIER and the
@@ -376,6 +383,12 @@ typedef struct {
     om_ability_event    ability_events[OM_ABILITY_EVENT_BUFFER_CAP];
     uint32_t            n_ability_events;
     uint64_t            current_tick;
+    /* R-099-03: base ticks the current step spans, recomputed from the live
+     * count at the start of every step; 0 (fresh or reset state) reads as 1.
+     * Every per-step quantity in this file scales by it so per-second values
+     * stay put. Not saved: tactical_state has no write hook, and the next
+     * step recomputes it. See also: om_tactical_tick_period. */
+    uint32_t            tick_period_ticks;
     int                 abilities_disabled;
     uint64_t            validated_tick;
     om_grid             grid;
@@ -445,6 +458,24 @@ static om_tac_state *om_tac(om_world *w) {
  * om_world*. */
 static om_tac_state *om_tac_ro(const om_world *w) {
     return (om_tac_state *)w->tactical_state;
+}
+
+static uint32_t om_tac_period(const om_tac_state *st) {
+    return st->tick_period_ticks ? st->tick_period_ticks : 1;
+}
+
+/* Called at the top of every step: the boundary at which the period may change. */
+static void om_tac_update_period(om_tac_state *st) {
+    uint32_t i, live = 0;
+    for (i = 0; i < st->n_units; i++) {
+        if (st->units[i].in_use && st->units[i].hp > 0.0) live++;
+    }
+    st->tick_period_ticks = live > OM_TACTICAL_HIGH_LOAD_UNITS ? OM_TACTICAL_HIGH_LOAD_PERIOD : 1;
+}
+
+/* A countdown in base ticks advanced by one step of `period` base ticks. */
+static uint32_t om_ticks_down(uint32_t remaining, uint32_t period) {
+    return remaining > period ? remaining - period : 0;
 }
 
 static const om_unit_type_profile OM_BUILTIN_PROFILES[OM_UNIT_TYPE_COUNT] = {
@@ -849,7 +880,7 @@ static void om_tactical_apply_aura_regen(om_world *w) {
     for (i = 0; i < st->n_units; i++) {
         om_unit_row *u = &st->units[i];
         if (st->aura_count[i] > 0) {
-            u->hp += OM_WARDEN_AURA_REPAIR_RATE * (double)st->aura_count[i];
+            u->hp += OM_WARDEN_AURA_REPAIR_RATE * (double)st->aura_count[i] * (double)om_tac_period(st);
             if (u->hp > u->max_hp) u->hp = u->max_hp;
         }
     }
@@ -1123,10 +1154,10 @@ static void om_ability_autotrigger_scan(om_tac_state *st) {
     }
 }
 
-static void om_ability_tick_surge(om_unit_row *u) {
+static void om_ability_tick_surge(om_unit_row *u, uint32_t period) {
     if (u->ability_phase != OM_ABILITY_PHASE_ACTIVE) return;
     if (u->ability_ticks_remaining > 0) {
-        u->ability_ticks_remaining--;
+        u->ability_ticks_remaining = om_ticks_down(u->ability_ticks_remaining, period);
     } else {
         u->ability_phase = OM_ABILITY_PHASE_IDLE;
         u->ability_bonus_on = 0;
@@ -1134,10 +1165,10 @@ static void om_ability_tick_surge(om_unit_row *u) {
     }
 }
 
-static void om_ability_tick_brace(om_unit_row *u) {
+static void om_ability_tick_brace(om_unit_row *u, uint32_t period) {
     if (u->ability_phase != OM_ABILITY_PHASE_WINDUP && u->ability_phase != OM_ABILITY_PHASE_CANCELING) return;
     if (u->ability_ticks_remaining > 0) {
-        u->ability_ticks_remaining--;
+        u->ability_ticks_remaining = om_ticks_down(u->ability_ticks_remaining, period);
         return;
     }
     if (u->ability_phase == OM_ABILITY_PHASE_WINDUP) {
@@ -1149,10 +1180,10 @@ static void om_ability_tick_brace(om_unit_row *u) {
     }
 }
 
-static void om_ability_tick_barrage(om_world *w, om_tac_state *st, om_unit_row *u) {
+static void om_ability_tick_barrage(om_world *w, om_tac_state *st, om_unit_row *u, uint32_t period) {
     if (u->ability_phase != OM_ABILITY_PHASE_TELEGRAPH) return;
     if (u->ability_ticks_remaining > 0) {
-        u->ability_ticks_remaining--;
+        u->ability_ticks_remaining = om_ticks_down(u->ability_ticks_remaining, period);
         return;
     }
     om_ability_resolve_barrage_damage(w, st, u);
@@ -1160,37 +1191,38 @@ static void om_ability_tick_barrage(om_world *w, om_tac_state *st, om_unit_row *
     u->ability_cooldown = OM_ABILITY_BARRAGE_COOLDOWN_TICKS;
 }
 
-static void om_ability_tick_fortify(om_unit_row *u) {
+static void om_ability_tick_fortify(om_unit_row *u, uint32_t period) {
     if (u->ability_phase != OM_ABILITY_PHASE_ACTIVE) return;
     if (u->ability_ticks_remaining > 0) {
-        u->ability_ticks_remaining--;
+        u->ability_ticks_remaining = om_ticks_down(u->ability_ticks_remaining, period);
     } else {
         u->ability_phase = OM_ABILITY_PHASE_IDLE;
         u->ability_bonus_on = 0;
     }
 }
 
-/* Cooldown decrements once per tactical tick, first, so a value freshly
+/* Cooldown decrements once per tactical step (by the step's period in base
+ * ticks), first, so a value freshly
  * set by this same call's autotrigger/expiry processing (Surge, Barrage,
  * Rally set theirs on completion; Brace/Fortify set theirs at activation)
  * is never decremented before the caller can observe it. */
 static void om_ability_advance_all(om_world *w) {
     om_tac_state *st = om_tac(w);
-    uint32_t i;
+    uint32_t i, period = om_tac_period(st);
     for (i = 0; i < st->n_units; i++) {
         om_unit_row *u = &st->units[i];
         if (!u->in_use) continue;
-        if (u->ability_cooldown > 0.0) u->ability_cooldown -= 1.0;
+        if (u->ability_cooldown > 0.0) u->ability_cooldown -= (double)period;
     }
     if (!st->abilities_disabled) om_ability_autotrigger_scan(st);
     for (i = 0; i < st->n_units; i++) {
         om_unit_row *u = &st->units[i];
         if (!u->in_use || u->hp <= 0.0) continue;
         switch (u->unit_type) {
-            case OM_UT_RAIDER:   om_ability_tick_surge(u); break;
-            case OM_UT_VANGUARD: om_ability_tick_brace(u); break;
-            case OM_UT_BOMBARD:  om_ability_tick_barrage(w, st, u); break;
-            case OM_UT_BASTION:  om_ability_tick_fortify(u); break;
+            case OM_UT_RAIDER:   om_ability_tick_surge(u, period); break;
+            case OM_UT_VANGUARD: om_ability_tick_brace(u, period); break;
+            case OM_UT_BOMBARD:  om_ability_tick_barrage(w, st, u, period); break;
+            case OM_UT_BASTION:  om_ability_tick_fortify(u, period); break;
             default: break;
         }
     }
@@ -1206,12 +1238,12 @@ static void om_ability_advance_all(om_world *w) {
  * the tick after, so a hit landed with OM_BACKSWING_TICKS remaining reads
  * in-backswing for exactly that many om_tactical_step calls. */
 static void om_tactical_advance_backswing(om_tac_state *st) {
-    uint32_t i;
+    uint32_t i, period = om_tac_period(st);
     for (i = 0; i < st->n_units; i++) {
         om_unit_row *u = &st->units[i];
         if (!u->in_use) continue;
         if (u->backswing_ticks_remaining > 0) {
-            u->backswing_ticks_remaining--;
+            u->backswing_ticks_remaining = om_ticks_down(u->backswing_ticks_remaining, period);
             u->backswing_active = 1;
         } else {
             u->backswing_active = 0;
@@ -1270,12 +1302,13 @@ static void om_tac_refresh_positions(om_world *w, om_tac_state *st) {
     om_grid_rebuild(st);
 }
 
-/* One tick of unit.c-driven movement at the unit's effective speed
+/* One step of unit.c-driven movement at the unit's effective speed
  * (0 during backswing or a Brace). Returns 1 once (tx, ty) is reached. */
 static int om_tac_step_toward(om_world *w, om_unit_row *u, double tx, double ty) {
     double dx = tx - u->x, dy = ty - u->y;
     double d = sqrt(dx * dx + dy * dy);
-    double step = om_unit_effective_speed(w, u->unit_id) / (double)OM_TACTICAL_TICK_RATE;
+    double step = om_unit_effective_speed(w, u->unit_id) / (double)OM_TACTICAL_TICK_RATE
+                  * (double)om_tac_period(om_tac(w));
     if (d <= OM_TIE_EPSILON) return 1;
     if (step <= 0.0) return 0;
     if (d <= step) {
@@ -1357,7 +1390,7 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
     int noncombat = om_tac_noncombat(u);
     om_unit_row *t;
 
-    if (u->cooldown < interval_ticks) u->cooldown += 1.0;
+    if (u->cooldown < interval_ticks) u->cooldown += (double)om_tac_period(st);
     u->suppress_auto = 0;
 
     /* What tactical_move.c currently believes about this unit's route vs
@@ -1526,6 +1559,7 @@ uint64_t om_tactical_step(om_world *w) {
     om_tac_state *st;
     if (!ro || ro->n_units == 0) return ro ? ro->current_tick : 0;
     st = om_tac(w);
+    om_tac_update_period(st);
     om_tac_refresh_positions(w, st);
     om_tactical_ai_tick(w, st);
     om_tactical_apply_aura_regen(w);
@@ -1662,10 +1696,14 @@ void om_tactical_reset(om_world *w) {
     }
 }
 
+/* n_ticks counts base ticks: a step at period 2 accounts for two. */
 uint64_t om_tactical_run(om_world *w, uint64_t n_ticks) {
-    uint64_t i;
-    for (i = 0; i < n_ticks; i++) {
+    uint64_t done = 0;
+    while (done < n_ticks) {
+        const om_tac_state *ro;
         om_tactical_step(w);
+        ro = om_tac_ro(w);
+        done += ro ? om_tac_period(ro) : 1;
     }
     return n_ticks;
 }
@@ -1678,7 +1716,7 @@ uint64_t om_tactical_run_until_eliminated(om_world *w) {
     while (ticks < OM_TACTICAL_MAX_RUN_TICKS && om_tactical_multiple_factions_alive(st)) {
         double hp;
         om_tactical_step(w);
-        ticks++;
+        ticks += om_tac_period(st);
         hp = om_tactical_total_hp(st);
         if (hp < lowest_hp - OM_TIE_EPSILON) { lowest_hp = hp; last_progress = ticks; }
         if (ticks - last_progress >= OM_TACTICAL_STALEMATE_TICKS) break;
@@ -1695,7 +1733,7 @@ uint64_t om_tactical_run_until_engagement_ends(om_world *w, uint32_t unit_id) {
            && u->hp > 0.0
            && om_tac_enemy_within_range(st, u, u->attack_range)) {
         om_tactical_step(w);
-        ticks++;
+        ticks += om_tac_period(st);
     }
     if (u->unit_type == OM_UT_INTERCEPTOR && u->ability_phase == OM_ABILITY_PHASE_ACTIVE) {
         u->ability_phase = OM_ABILITY_PHASE_IDLE;
@@ -2208,5 +2246,9 @@ uint32_t om_unit_id_at(const om_world *w, uint32_t index) {
     const om_tac_state *st = om_tac_ro(w);
     if (!st || index >= st->n_units || !st->units[index].in_use) return 0;
     return st->units[index].unit_id;
+}
+uint32_t om_tactical_tick_period(const om_world *w) {
+    const om_tac_state *st = om_tac_ro(w);
+    return st ? om_tac_period(st) : 1;
 }
 /* ---- end generated stubs ---- */
