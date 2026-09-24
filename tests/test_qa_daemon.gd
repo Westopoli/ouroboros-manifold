@@ -16,7 +16,7 @@ var _fail_msgs: Array[String] = []
 
 
 func _initialize() -> void:
-	_run_tests()
+	await _run_tests()
 	print("\n=== QA Daemon Test Results ===")
 	print("PASS: %d  FAIL: %d" % [_pass_count, _fail_count])
 	if _fail_count > 0:
@@ -74,7 +74,7 @@ func _run_tests() -> void:
 		_assert(d.has("scene"), "qa daemon state() missing key 'scene'")
 		_assert(d.has("tick"), "qa daemon state() missing key 'tick'")
 
-	_check_step_reaches_the_scene_qa_step(script)
+	await _check_step_reaches_the_scene_qa_step(script)
 
 	if daemon is Node:
 		(daemon as Node).free()
@@ -95,6 +95,7 @@ func _check_step_reaches_the_scene_qa_step(script) -> void:
 	get_root().add_child(d)
 	get_root().add_child(stub)
 	get_root().add_child(plain)
+	await process_frame
 
 	current_scene = stub
 	var r: Dictionary = d._dispatch("step", [7])
