@@ -152,9 +152,9 @@ typedef struct {
     uint32_t               n_cover;
     om_mapgen_obstacle_row obstacles[OM_MAPGEN_MAX_OBSTACLES];
     uint32_t               n_obstacles;
-    /* Index-ordered; a node id is its 0-based index. Spine nodes (faction 0) and spawn points share
+    /* Index-ordered; rows are in insertion order. Spine nodes (faction 0) and spawn points share
      * this table, as spawn_point is a spine node type. Structures have no spine type and are kept
-     * apart; their ids are indices into their own table. */
+     * apart; the ids the add functions return are 1-based indices into these tables. */
     om_mapgen_node_row      nodes[OM_MAPGEN_MAX_NODES];
     uint32_t                n_nodes;
     om_mapgen_structure_row structures[OM_MAPGEN_MAX_STRUCTURES];
@@ -278,10 +278,13 @@ static uint32_t om_mgs_add_node(om_world *w, double x, double y, int type, int32
     if (st->n_nodes >= OM_MAPGEN_MAX_NODES) return OM_MAPGEN_NO_NODE;
     row = &st->nodes[st->n_nodes];
     row->x = x; row->y = y; row->type = type; row->faction = faction;
-    return st->n_nodes++;
+    return ++st->n_nodes;
 }
 
-/* See also: these three lived in csrc/fog.c as counter-bump stubs until B15m-4. */
+/* See also: these three lived in csrc/fog.c as counter-bump stubs until B15m-4.
+ * The ids they return are 1-based (index + 1; 0 means none). The readers below
+ * (om_map_get_node_pos / type / nth_node_of_type) take and return the 0-based
+ * enumeration index instead, because the S-113 and S-118 tests loop from 0. */
 uint32_t om_map_add_spine_node(om_world *w, double x, double y, int p2) {
     return om_mgs_add_node(w, x, y, p2, 0);
 }
@@ -296,7 +299,7 @@ uint32_t om_map_add_structure(om_world *w, double x, double y, int32_t owner_fac
     if (st->n_structures >= OM_MAPGEN_MAX_STRUCTURES) return OM_MAPGEN_NO_NODE;
     row = &st->structures[st->n_structures];
     row->x = x; row->y = y; row->owner_faction = owner_faction;
-    return st->n_structures++;
+    return ++st->n_structures;
 }
 
 uint32_t om_map_add_obstacle(om_world *w, double x, double y, double radius) {
@@ -453,7 +456,7 @@ uint32_t om_map_get_node_count(om_world *w) {
     return st ? st->n_nodes : 0;
 }
 
-/* Node ids here are 0-based indices in insertion order (the R-113 tests loop 0..count-1). */
+/* The node parameter here is the 0-based enumeration index, not the 1-based id om_map_add_* returned. */
 void om_map_get_node_pos(om_world *w, uint32_t node, om_vec2 *byref) {
     const om_mapgen_state *st = om_mgs_ro(w);
     if (!byref) return;
@@ -658,5 +661,10 @@ int om_route_grid_is_cell_blocked(double obstacle) {
 void om_unit_order_hold_node(om_world *w, uint32_t unit_id, uint32_t node_id) {
     /* STUB */
     (void)w; (void)unit_id; (void)node_id;
+}
+
+void om_map_clear(om_world *w) {
+    if (!w || !w->mapgen_state) return;
+    memset(w->mapgen_state, 0, sizeof(om_mapgen_state));
 }
 /* ---- end generated stubs ---- */
