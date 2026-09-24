@@ -2134,3 +2134,9 @@ const char *om_event_template_chronicle_prose(const om_world *w, uint32_t templa
     out[n] = '\0';
     return out;
 }
+
+int om_chronicle_entry_get(const om_world *w, uint32_t index, om_chronicle_entry *out) {
+    /* STUB: B8-4 implements */
+    (void)w; (void)index; (void)out;
+    return 0;
+}
