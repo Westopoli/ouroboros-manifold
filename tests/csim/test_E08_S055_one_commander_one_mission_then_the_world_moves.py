@@ -9,12 +9,17 @@ import pytest
 
 from conftest import (
     OMArchetype,
+    OMEdge,
     OMFeature,
     OMField,
+    OMStance,
     OMTier,
+    set_edge,
     set_faction,
     set_owner,
     set_region,
+    set_stance,
+    set_tech_multipliers,
 )
 
 
@@ -109,6 +114,25 @@ def test_R_055_04_character_selector_runs_after_it(lib, world_factory):
     w = world_factory(n_regions=4)
     lib.om_chapter_start(w, 1)
 
+    # Register a player faction owning region 2 (a frontier region under
+    # attack, the same defensive_stand trigger shape as
+    # test_E10_S072's fixture) and a hostile neighbor on region 3, so the
+    # mission candidate pool is non-empty and region 2 is the only candidate
+    # instead of a bare world falling back to region 0.
+    set_faction(lib, w, 0, OMArchetype.PLAYER, budget=50.0)
+    set_faction(lib, w, 1, OMArchetype.CONQUEROR, budget=100.0)
+    set_stance(lib, w, 0, 1, OMStance.HOSTILE)
+    set_tech_multipliers(lib, w, 0, 1.0, 1.0, 1.0)
+    set_tech_multipliers(lib, w, 1, 1.0, 1.0, 1.0)
+
+    set_region(lib, w, 2, tier=OMTier.HOME, military=30.0, economy=40.0, tension=20.0, population=50.0)
+    set_owner(lib, w, 2, 0, held_since=-1)
+
+    set_region(lib, w, 3, tier=OMTier.HOME, military=40.0, economy=50.0, tension=15.0, population=50.0)
+    set_owner(lib, w, 3, 1, held_since=-1)
+
+    set_edge(lib, w, 2, 3, OMEdge.BORDER)
+
     # Complete time jump phase
     lib.om_chapter_set_phase(w, OMChapterPhase.TIME_JUMP)
     lib.om_time_jump_run(w, 50)
@@ -120,6 +144,7 @@ def test_R_055_04_character_selector_runs_after_it(lib, world_factory):
     # below trivially true against an equally-stubbed reader; region 2 was set
     # up as the mission target, so 0 alone is not a valid chosen region here.
     assert chosen_region != 0, "chosen region must be a real (nonzero) mission target"
+    assert chosen_region == 2, "the only candidate in the pool is region 2's defensive_stand trigger"
 
     # Character selector runs after mission generator and reads the chosen region
     lib.om_character_selector_run(w)
