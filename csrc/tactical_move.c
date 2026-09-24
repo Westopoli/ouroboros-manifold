@@ -186,6 +186,7 @@ typedef struct {
     uint32_t      next_group_id;
 
     uint64_t last_synced_tick;
+    uint32_t period_seen;
 
     om_move_density_cell density_cells[OM_MOVE_MAX_DENSITY_CELLS];
     uint32_t              n_density_cells;
@@ -267,9 +268,9 @@ static double om_move_turn_rate_for(double native_speed) {
     return OM_SIEGE;
 }
 
-static double om_move_turn_toward(double current, double target, double rate_per_sec) {
+static double om_move_turn_toward(double current, double target, double rate_per_sec, uint32_t period) {
     double delta = om_wrap_pi(target - current);
-    double max_step = rate_per_sec / (double)OM_TACTICAL_TICK_RATE;
+    double max_step = rate_per_sec * (double)period / (double)OM_TACTICAL_TICK_RATE;
     if (delta > max_step) delta = max_step;
     if (delta < -max_step) delta = -max_step;
     return current + delta;
@@ -750,7 +751,7 @@ static void om_move_apply_queue_for_tick(om_world *w, om_move_state *ms, uint64_
     }
 }
 
-static void om_move_tick_unit(om_world *w, om_move_state *ms, uint32_t id) {
+static void om_move_tick_unit(om_world *w, om_move_state *ms, uint32_t id, uint32_t period) {
     om_move_unit *mu = om_move_get(ms, id);
     double heading, speed, dist_to_dest, step_dist;
 
@@ -767,7 +768,7 @@ static void om_move_tick_unit(om_world *w, om_move_state *ms, uint32_t id) {
                            + (mu->dest_y - mu->y) * (mu->dest_y - mu->y));
         heading = om_atan2(mu->dest_y - mu->y, mu->dest_x - mu->x);
         speed = om_unit_effective_speed(w, id);
-        step_dist = speed / (double)OM_TACTICAL_TICK_RATE;
+        step_dist = speed * (double)period / (double)OM_TACTICAL_TICK_RATE;
         if (step_dist >= dist_to_dest) {
             mu->x = mu->dest_x; mu->y = mu->dest_y;
         } else if (step_dist > 0.0) {
@@ -826,7 +827,7 @@ static void om_move_tick_unit(om_world *w, om_move_state *ms, uint32_t id) {
     speed = (mu->group_id != 0) ? mu->speed_cap : om_unit_effective_speed(w, id);
     speed *= om_move_terrain_multiplier(om_move_density_at_pos(ms, mu->x, mu->y, 0));
 
-    step_dist = speed / (double)OM_TACTICAL_TICK_RATE;
+    step_dist = speed * (double)period / (double)OM_TACTICAL_TICK_RATE;
     if (step_dist >= dist_to_dest) {
         mu->x = mu->dest_x;
         mu->y = mu->dest_y;
@@ -839,7 +840,7 @@ static void om_move_tick_unit(om_world *w, om_move_state *ms, uint32_t id) {
     if (mu->deflecting) {
         mu->facing = heading; /* pinned for the whole detour segment */
     } else {
-        mu->facing = om_move_turn_toward(mu->facing, heading, om_move_turn_rate_for(mu->native_speed));
+        mu->facing = om_move_turn_toward(mu->facing, heading, om_move_turn_rate_for(mu->native_speed), period);
     }
 }
 
@@ -865,13 +866,13 @@ static void om_move_groups_check_arrival(om_move_state *ms) {
     }
 }
 
-static void om_move_tick_once(om_world *w, om_move_state *ms, uint64_t new_tick) {
+static void om_move_tick_once(om_world *w, om_move_state *ms, uint64_t new_tick, uint32_t period) {
     uint32_t id;
     om_move_discover(w, ms);
     om_move_apply_queue_for_tick(w, ms, new_tick - 1);
     om_move_grid_rebuild(w, ms);
     for (id = 1; id <= ms->discovery_max; id++) {
-        om_move_tick_unit(w, ms, id);
+        om_move_tick_unit(w, ms, id, period);
     }
     om_move_collision_pass_internal(w, ms);
     om_move_groups_check_arrival(ms);
@@ -897,20 +898,28 @@ static void om_move_push_positions(om_world *w, om_move_state *ms) {
     }
 }
 
+/* R-099-03: a replayed tick is a step of the period that step ran at, not
+ * the period now: unit.c recomputes the period at the top of a step, then its
+ * position refresh syncs here, so the tick being replayed belongs to the
+ * previous step. period_seen is the period at the last sync (0 = none yet). */
 static void om_move_sync(om_world *w) {
     om_move_state *ms = om_ms(w);
     uint64_t target = om_tactical_tick(w);
+    uint32_t now = om_tactical_tick_period(w);
+    uint32_t period = ms->period_seen ? ms->period_seen : now;
     uint64_t t;
     if (ms->last_synced_tick > target) ms->last_synced_tick = target;
     if (om_move_in_recon(w)) {
         ms->last_synced_tick = target;
+        ms->period_seen = now;
         return;
     }
     for (t = ms->last_synced_tick + 1; t <= target; t++) {
-        om_move_tick_once(w, ms, t);
+        om_move_tick_once(w, ms, t, period);
     }
     if (ms->last_synced_tick < target) om_move_push_positions(w, ms);
     ms->last_synced_tick = target;
+    ms->period_seen = now;
 }
 
 static void om_move_enqueue(om_world *w, om_move_state *ms, int kind, uint32_t unit, double x, double y) {
