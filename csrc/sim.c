@@ -193,6 +193,22 @@ static void om_trace_append(om_world *w, const om_trace_row *row) {
 
 uint64_t om_world_step(om_world *w) {
     if (!w) return 0;
+
+    /* R-055-02 (E-08 S-055): while a mission is running, the strategic sim
+     * is stopped for the mission's duration -- only the tactical step runs,
+     * under the same OM_FEAT_TACTICAL gate used below, and w->tick (also
+     * the strategic tick, see om_world_strategic_tick in generational.c)
+     * does not advance. No bare mission-phase literal here: no phase enum
+     * is exposed in ouroboros_sim.h, so this reuses the header's own
+     * mission-phase accessor (om_chapter_mission_realtime, generational.c)
+     * instead of comparing om_chapter_current_phase(w) to one. */
+    if (om_chapter_mission_realtime(w)) {
+        if (om_world_feature(w, OM_FEAT_TACTICAL)) {
+            om_tactical_step(w);
+        }
+        return w->tick;
+    }
+
     w->tick++;
     uint64_t tick = w->tick;
 
