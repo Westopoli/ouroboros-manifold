@@ -2390,7 +2390,7 @@ note = "canonical form set by the design lane (D-F1); void callers ignore the re
 
 [[symbols]]
 name = "om_map_add_spawn_point"
-module = "fog.c"
+module = "tactical_mapgen.c"
 restype = "uint32_t"
 params = [{ name = "w", ctype = "om_world*" }, { name = "x", ctype = "double" }, { name = "y", ctype = "double" }, { name = "faction_id", ctype = "int32_t" }]
 epics = ["E-12"]
@@ -2399,7 +2399,7 @@ note = "1 site (700.0, 700.0, 1) comment 'enemy spawn point'; return stored as s
 
 [[symbols]]
 name = "om_map_add_spine_node"
-module = "fog.c"
+module = "tactical_mapgen.c"
 restype = "uint32_t"
 params = [{ name = "w", ctype = "om_world*" }, { name = "x", ctype = "double" }, { name = "y", ctype = "double" }, { name = "p2", ctype = "int" }]
 epics = ["E-12"]
@@ -2408,7 +2408,7 @@ note = "1 site (400.0, 100.0, 1); return stored as node_id. p2 int literal, unna
 
 [[symbols]]
 name = "om_map_add_structure"
-module = "fog.c"
+module = "tactical_mapgen.c"
 restype = "uint32_t"
 params = [{ name = "w", ctype = "om_world*" }, { name = "x", ctype = "double" }, { name = "y", ctype = "double" }, { name = "owner_faction", ctype = "int32_t" }]
 epics = ["E-12"]

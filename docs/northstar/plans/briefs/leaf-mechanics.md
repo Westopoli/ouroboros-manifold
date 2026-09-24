@@ -20,7 +20,7 @@ Read once per leaf. The manager's assignment adds only: piece id, owned files, a
 
 - git-guard denies rebase, reset --hard, clean, -D, --amend, force push, and any command text containing both "push" and "-f" (so never `pgrep -f` or `pkill -f` in a command that also has "push"; a pkill pattern must not appear literally in your own command, use `B9-[2]`-style brackets). Merge, never rebase. If your branch falls behind main and conflicts, do not merge main in; rebuild by copy on a fresh branch from origin/main (`push/<piece>-N`).
 - Commit only your files with caveman messages; push `push/<piece>` after each green story so partial progress is on origin. After the final push, `git switch --detach -q` in your worktree so the harness can fetch your branch.
-- Never push to main. Never remove worktrees you did not create.
+- Never push to main. Never remove worktrees you did not create. Never `git stash` in a shared clone: every worktree shares one stash list, and a stash from one leaf has landed in another leaf's tree; park an edit by copying its diff to your scratchpad instead.
 
 ## What you verify (and nothing more)
 
