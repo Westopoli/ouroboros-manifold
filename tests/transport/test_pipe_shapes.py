@@ -105,3 +105,178 @@ def test_pipe_set_seed_generation_failure_is_an_error_frame():
     assert kinds[0] == "hello"
     errors = [f for f in frames if f["type"] == "error" and f.get("name") == "set_seed"]
     assert len(errors) == 1, frames
+
+
+# ---------------------------------------------------------------------
+# session commands (docs/architecture.md, "C transport v1", "session
+# commands (v1.1, 2026-09-24; T1-2 builds them test-first)"). Same
+# seed/n_regions/features as the hello test above (80, not 60: below
+# the feasible minimum, see that test's comment).
+# ---------------------------------------------------------------------
+
+SET_SEED = {"type": "cmd", "name": "set_seed", "seed": 1, "n_regions": 80, "features": [6]}
+
+
+def _run(cmds, timeout=60):
+    script = b"".join(_frame(c) for c in cmds)
+    proc = subprocess.run([str(PIPE)], input=script, capture_output=True, timeout=timeout)
+    return _read_frames(proc.stdout)
+
+
+@pytest.mark.skipif(not PIPE.exists(), reason="pipe/ouroboros_pipe not built (piece T1)")
+def test_pipe_mission_start_answers_mission_frame_with_documented_keys():
+    """session commands: "mission_start calls om_mission_start(w, faction) and
+    answers the mission frame (fields from om_mission_get_objectives and the
+    force allocation; archetype, region, deadline_ticks from the mission
+    accessors)"."""
+    schema = json.load(open(SCHEMAS / "mission.schema.json"))
+    frames = _run([SET_SEED, {"type": "cmd", "name": "mission_start", "faction": 0},
+                   {"type": "cmd", "name": "quit"}])
+    mission = frames[1]
+    assert mission["type"] == "mission", frames
+    assert _required_keys(schema) <= set(mission)
+    _validate(mission, schema)
+
+
+@pytest.mark.skipif(not PIPE.exists(), reason="pipe/ouroboros_pipe not built (piece T1)")
+def test_pipe_step_and_run_to_refused_during_mission():
+    """session commands: "while the mission phase holds, step and run_to are
+    refused with error (R-055-02: the strategic sim is stopped)"."""
+    frames = _run([SET_SEED, {"type": "cmd", "name": "mission_start", "faction": 0},
+                   {"type": "cmd", "name": "step", "n": 1},
+                   {"type": "cmd", "name": "run_to", "tick": 5},
+                   {"type": "cmd", "name": "quit"}])
+    step_resp, run_to_resp = frames[2], frames[3]
+    assert step_resp["type"] == "error" and step_resp["name"] == "step", frames
+    assert run_to_resp["type"] == "error" and run_to_resp["name"] == "run_to", frames
+
+
+@pytest.mark.skipif(not PIPE.exists(), reason="pipe/ouroboros_pipe not built (piece T1)")
+def test_pipe_tactical_step_tick_advances_by_one_per_call():
+    """session commands: "tactical_step drives om_tactical_step and answers a
+    tactical frame per call"."""
+    schema = json.load(open(SCHEMAS / "tactical.schema.json"))
+    frames = _run([SET_SEED, {"type": "cmd", "name": "mission_start", "faction": 0},
+                   {"type": "cmd", "name": "tactical_step", "n": 1},
+                   {"type": "cmd", "name": "tactical_step", "n": 1},
+                   {"type": "cmd", "name": "quit"}])
+    tac1, tac2 = frames[2], frames[3]
+    assert tac1["type"] == "tactical" and tac2["type"] == "tactical", frames
+    assert _required_keys(schema) <= set(tac1)
+    _validate(tac1, schema)
+    assert tac2["tick"] == tac1["tick"] + 1, frames
+
+
+@pytest.mark.skipif(not PIPE.exists(), reason="pipe/ouroboros_pipe not built (piece T1)")
+def test_pipe_command_move_acks_and_unknown_verb_errors():
+    """session commands: "command maps verb onto om_command_move, ... and
+    answers ack; an unknown unit id or verb answers error"."""
+    frames = _run([SET_SEED, {"type": "cmd", "name": "mission_start", "faction": 0},
+                   {"type": "cmd", "name": "command", "verb": "move", "units": [4, 5], "x": 100.0, "y": 200.0},
+                   {"type": "cmd", "name": "command", "verb": "bogus_verb", "units": [4]},
+                   {"type": "cmd", "name": "quit"}])
+    move_resp, bogus_resp = frames[2], frames[3]
+    assert move_resp["type"] == "ack" and move_resp["name"] == "command", frames
+    assert bogus_resp["type"] == "error" and bogus_resp["name"] == "command", frames
+
+
+@pytest.mark.skipif(not PIPE.exists(), reason="pipe/ouroboros_pipe not built (piece T1)")
+def test_pipe_mission_end_answers_debrief_then_snapshot():
+    """session commands: "mission_end calls om_mission_end, answers the
+    debrief frame (om_mission_get_debrief) and then a snapshot"."""
+    schema = json.load(open(SCHEMAS / "debrief.schema.json"))
+    frames = _run([SET_SEED, {"type": "cmd", "name": "mission_start", "faction": 0},
+                   {"type": "cmd", "name": "mission_end"},
+                   {"type": "cmd", "name": "quit"}])
+    assert len(frames) >= 4, frames
+    debrief, snap = frames[2], frames[3]
+    assert debrief["type"] == "debrief", frames
+    assert _required_keys(schema) <= set(debrief)
+    _validate(debrief, schema)
+    assert snap["type"] == "snapshot", frames
+
+
+@pytest.mark.skipif(not PIPE.exists(), reason="pipe/ouroboros_pipe not built (piece T1)")
+def test_pipe_jump_outside_mission_answers_chronicle_then_snapshot_and_advances_tick():
+    """session commands: "jump calls om_time_jump_run(w, ticks, &report); ...
+    success answers the chronicle frame (om_chronicle_entry_count entries,
+    retained only) and then a snapshot"."""
+    schema = json.load(open(SCHEMAS / "chronicle.schema.json"))
+    frames = _run([SET_SEED, {"type": "cmd", "name": "jump", "ticks": 50},
+                   {"type": "cmd", "name": "quit"}])
+    assert len(frames) >= 3, frames
+    chronicle, snap = frames[1], frames[2]
+    assert chronicle["type"] == "chronicle", frames
+    assert _required_keys(schema) <= set(chronicle)
+    _validate(chronicle, schema)
+    assert chronicle["jump"]["from_tick"] == 0 and chronicle["jump"]["to_tick"] == 50, frames
+    assert snap["type"] == "snapshot" and snap["tick"] == 50, frames
+
+
+@pytest.mark.skipif(not PIPE.exists(), reason="pipe/ouroboros_pipe not built (piece T1)")
+def test_pipe_jump_inside_mission_answers_error():
+    """session commands: "a nonzero return (a mission is running) answers
+    error"."""
+    frames = _run([SET_SEED, {"type": "cmd", "name": "mission_start", "faction": 0},
+                   {"type": "cmd", "name": "jump", "ticks": 10},
+                   {"type": "cmd", "name": "quit"}])
+    jump_resp = frames[2]
+    assert jump_resp["type"] == "error" and jump_resp["name"] == "jump", frames
+
+
+@pytest.mark.skipif(not PIPE.exists(), reason="pipe/ouroboros_pipe not built (piece T1)")
+def test_pipe_save_writes_sidecar_and_list_saves_lists_it(tmp_path):
+    """session commands, "Save slots (T2g-2 rulings)": "save writes the state
+    bytes to path and a sidecar path + '.json' with {"tick","chapter","phase",
+    "seed","n_regions","format_version"} ... list_saves answers
+    {"type":"saves","slots":[...]} from the sidecars in dir". The autosave
+    timing rule (R-111-01: after mission/debrief/chronicle frames, never
+    mid-mission -- R-111-04) is client-side (docs/architecture.md: "autosave
+    ... is client-side"); this test proves the save/list_saves shape that
+    rule depends on, not the client's trigger timing."""
+    schema = json.load(open(SCHEMAS / "saves.schema.json"))
+    save_path = str(tmp_path / "slot1.omsave")
+    frames = _run([SET_SEED, {"type": "cmd", "name": "save", "path": save_path},
+                   {"type": "cmd", "name": "list_saves", "dir": str(tmp_path)},
+                   {"type": "cmd", "name": "quit"}])
+    save_resp, saves_resp = frames[1], frames[2]
+    assert save_resp["type"] == "ack" and save_resp["name"] == "save", frames
+    assert os.path.exists(save_path), "save did not write the state file"
+    sidecar_path = save_path + ".json"
+    assert os.path.exists(sidecar_path), "save did not write the .json sidecar"
+    sidecar = json.load(open(sidecar_path))
+    assert {"tick", "chapter", "phase", "seed", "n_regions", "format_version"} <= set(sidecar)
+    assert saves_resp["type"] == "saves", frames
+    assert _required_keys(schema) <= set(saves_resp)
+    _validate(saves_resp, schema)
+    assert any(s["path"] == save_path for s in saves_resp["slots"]), saves_resp
+
+
+@pytest.mark.skipif(not PIPE.exists(), reason="pipe/ouroboros_pipe not built (piece T1)")
+def test_pipe_load_corrupt_file_errors_and_leaves_checksum_unchanged(tmp_path):
+    """Save slots (T2g-2 rulings): "load answers error with reason 'version
+    mismatch' or 'corrupt' when om_load_state_read returns nonzero (R-111-03)
+    and the world is left untouched". The C API's own bool return does not
+    distinguish the two reasons (csrc/save.c om_load_state_read), so either
+    string is accepted here -- the pipe is free to pick one consistently."""
+    save_path = str(tmp_path / "slot2.omsave")
+    frames = _run([SET_SEED, {"type": "cmd", "name": "step", "n": 5},
+                   {"type": "cmd", "name": "save", "path": save_path},
+                   {"type": "cmd", "name": "quit"}])
+    assert frames[-1]["type"] == "ack" and frames[-1]["name"] == "save", frames
+
+    raw = bytearray(open(save_path, "rb").read())
+    raw[0:4] = bytes((b ^ 0xFF) for b in raw[0:4])
+    corrupt_path = str(tmp_path / "slot2_corrupt.omsave")
+    open(corrupt_path, "wb").write(bytes(raw))
+
+    frames = _run([SET_SEED, {"type": "cmd", "name": "step", "n": 5},
+                   {"type": "cmd", "name": "snapshot"},
+                   {"type": "cmd", "name": "load", "path": corrupt_path},
+                   {"type": "cmd", "name": "snapshot"},
+                   {"type": "cmd", "name": "quit"}])
+    snap1, load_resp, snap2 = frames[-3], frames[-2], frames[-1]
+    assert snap1["type"] == "snapshot" and snap2["type"] == "snapshot", frames
+    assert load_resp["type"] == "error" and load_resp["name"] == "load", frames
+    assert load_resp["reason"] in ("version mismatch", "corrupt"), frames
+    assert snap1["checksum"] == snap2["checksum"], "load must leave the world untouched on error"
