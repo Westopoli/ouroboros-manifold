@@ -660,6 +660,11 @@ typedef struct {
 
     char full_scroll_text[CHRON_FULL_TEXT_CAP];
 
+    /* Entries that survived assembly and cross-entry dedup, in scroll order;
+     * cleared whenever the cluster list is rebuilt. */
+    om_chronicle_entry entries[CHRON_MAX_FINAL];
+    uint32_t n_entries;
+
     chron_text_entry text_entries[CHRON_MAX_TEXT_ENTRIES];
     uint32_t n_text_entries;
 
@@ -1476,6 +1481,7 @@ static void chron_run_selection(om_world *w) {
 
     if (st->n_candidates == 0) return;
     st->n_clusters = 0;
+    st->n_entries = 0;
 
     for (uint32_t i = 0; i < st->n_candidates && st->n_clusters < CHRON_MAX_FINAL; i++) {
         if (st->candidates[i].type == CTYPE_CONSEQUENCE) {
@@ -1526,6 +1532,7 @@ static void chron_synth_opening(om_world *w) {
     if (n < OM_CHRON_OPENING_MIN_ENTRIES) n = OM_CHRON_OPENING_MIN_ENTRIES;
     if (n > OM_CHRON_OPENING_MAX_ENTRIES) n = OM_CHRON_OPENING_MAX_ENTRIES;
     st->n_clusters = 0;
+    st->n_entries = 0;
     for (uint32_t i = 0; i < n && st->n_clusters < CHRON_MAX_FINAL; i++) {
         om_chronicle_cluster *c = &st->clusters[st->n_clusters++];
         c->type = CTYPE_REGIONAL;
@@ -1591,6 +1598,7 @@ static void chron_assemble_all(om_world *w, uint64_t seed) {
     uint32_t n_kept = 0;
 
     st->full_scroll_text[0] = '\0';
+    st->n_entries = 0;
     size_t pos = 0;
     for (uint32_t i = 0; i < st->n_clusters; i++) {
         if (!ok[i]) continue;
@@ -1612,6 +1620,15 @@ static void chron_assemble_all(om_world *w, uint64_t seed) {
         if (dup) continue;
         kept_sets[n_kept] = words;
         n_kept++;
+        om_chronicle_entry *ent = &st->entries[st->n_entries];
+        memset(ent, 0, sizeof(*ent));
+        ent->id = st->n_entries++;
+        ent->category = chron_effective_category(&st->clusters[i]);
+        ent->region = st->clusters[i].region;
+        ent->start_tick = st->clusters[i].start_tick;
+        ent->end_tick = st->clusters[i].end_tick;
+        snprintf(ent->base_text, sizeof(ent->base_text), "%.511s", bases[i]);
+        snprintf(ent->expanded_text, sizeof(ent->expanded_text), "%.1023s", expandeds[i]);
         int n = snprintf(st->full_scroll_text + pos, CHRON_FULL_TEXT_CAP - pos, "%s%s",
                           pos > 0 ? "\n\n" : "", bases[i]);
         if (n > 0) pos += (size_t)n;
@@ -2136,7 +2153,8 @@ const char *om_event_template_chronicle_prose(const om_world *w, uint32_t templa
 }
 
 int om_chronicle_entry_get(const om_world *w, uint32_t index, om_chronicle_entry *out) {
-    /* STUB: B8-4 implements */
-    (void)w; (void)index; (void)out;
-    return 0;
+    const chron_state *st = chron_ro(w);
+    if (!st || !out || index >= st->n_entries) return 0;
+    *out = st->entries[index];
+    return 1;
 }
