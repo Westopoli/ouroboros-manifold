@@ -18,6 +18,7 @@ const PLANTS := ["seed-ignored", "owner-colour-flat", "edges-2d-overlay",
 	"pick-radius-zero", "bands-frozen", "conquest-no-recolour"]
 
 const DEFAULT_SEED := 1
+const LIVE_SNAPSHOT_TIMEOUT_MSEC := 8000
 const DEFAULT_DISTANCE := 180.0
 const PICK_RADIUS_PX := 14.0
 const BAND_SPLIT_LOW := 32.5
@@ -41,6 +42,8 @@ var _plants: Dictionary = {}
 var _frozen_band: String = ""
 
 var _gen := GalaxyGen.new()
+var _bridge = null
+var _bridge_dirty := false
 
 @onready var _world: Node3D = $World
 @onready var _points: MultiMeshInstance3D = $World/Points
@@ -58,17 +61,51 @@ func _ready() -> void:
 
 # Self-loading pattern (docs/northstar/plans/push/specs/C8-M3.md
 # "Self-loading pattern"): SceneRouter._swap_scene never passes data into a
-# scene unless it has setup(), so galaxy_view loads its own seed-driven
-# snapshot here instead. On failure (binary missing, pipe error) the scene
-# stays exactly as it is pre-set_snapshot -- qa_state() already handles
-# empty _regions/_edges gracefully (proven by tests/test_galaxy_view.gd's
-# own fallback-snapshot path).
+# scene unless it has setup(), so galaxy_view opens its own persistent pipe
+# session here (docs/architecture.md "persistent client session (v1.1)"),
+# waits for the first snapshot, and from then on redraws whenever the
+# session applies a frame (set_snapshot re-renders, so a conquest recolours,
+# R-106-02). On failure (binary missing, pipe error) the scene stays exactly
+# as it is pre-set_snapshot -- qa_state() already handles empty
+# _regions/_edges gracefully (proven by tests/test_galaxy_view.gd's own
+# fallback-snapshot path). The session lives and dies with this scene.
 func _load_live_snapshot() -> void:
 	var seed_str := _arg_value(OS.get_cmdline_user_args(), "--seed")
 	var seed := int(seed_str) if seed_str != "" else DEFAULT_SEED
-	var bridge = load("res://autoload/c_bridge.gd").new()
-	if bridge.load_snapshot_live(seed, CBridge.DEFAULT_N_REGIONS, [6]):
-		set_snapshot(bridge.snapshot())
+	_bridge = load("res://autoload/c_bridge.gd").new()
+	if not _bridge.open_session(seed, CBridge.DEFAULT_N_REGIONS, CBridge.DEFAULT_FEATURES):
+		return
+	_bridge.snapshot_changed.connect(func(_tick): _bridge_dirty = true)
+	var deadline := Time.get_ticks_msec() + LIVE_SNAPSHOT_TIMEOUT_MSEC
+	while Time.get_ticks_msec() < deadline and _bridge.last_error() == "" and not _bridge_dirty:
+		_bridge.pump()
+		OS.delay_msec(5)
+	if _bridge_dirty:
+		_bridge_dirty = false
+		set_snapshot(_bridge.snapshot())
+	else:
+		push_error("galaxy_view: live snapshot failed: %s" % _bridge.last_error())
+
+
+func _process(_delta: float) -> void:
+	if _bridge == null:
+		return
+	_bridge.pump()
+	if _bridge_dirty:
+		_bridge_dirty = false
+		set_snapshot(_bridge.snapshot())
+
+
+func _exit_tree() -> void:
+	if _bridge != null:
+		_bridge.close_session()
+
+
+# Advances the live sim n ticks; the redraw follows as the deltas arrive.
+# The daemon's step verb reaches this the way its plant verb reaches qa_plant.
+func qa_step(n: int) -> void:
+	if _bridge != null:
+		_bridge.step(n)
 
 
 func _arg_value(args: PackedStringArray, flag: String) -> String:
@@ -125,6 +162,7 @@ func qa_state() -> Dictionary:
 		"pick_radius_px": 0.0 if _plants.get("pick-radius-zero", false) else PICK_RADIUS_PX,
 		"edges_3d": not bool(_plants.get("edges-2d-overlay", false)),
 		"hash": _hash,
+		"tick": int(_bridge.snapshot().get("tick", 0)) if _bridge != null else 0,
 	}
 
 
