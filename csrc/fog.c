@@ -396,7 +396,7 @@ uint64_t om_mission_get_clock(const om_world *w) {
 
 int om_mission_get_phase(const om_world *w) {
     const om_fog_state *st = om_fog_ro(w);
-    return st ? st->mission_phase : OM_FOG_PHASE_RECON;
+    return st ? st->mission_phase : -1;
 }
 
 int om_mission_is_started(const om_world *w) {
