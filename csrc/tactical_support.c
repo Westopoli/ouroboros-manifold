@@ -193,6 +193,8 @@ typedef struct {
     uint32_t unit_type;
     uint64_t timer;
     double   capture_progress;
+    int      capture_accruing;
+    uint64_t capture_last_base;
     int32_t  capturing_faction;
     int      contested;
     double   x, y;
@@ -620,6 +622,7 @@ double om_structure_get_capture_progress(om_world *w, uint32_t structure) {
 
 void om_structure_tick_capture(om_world *w, uint32_t structure) {
     om_sup_structure *s = om_sup_structure_at(w, structure);
+    uint64_t now, elapsed;
     /* R-127-01/02: exactly one non-owner faction present and no owner
      * present advances progress; two-or-more non-owner factions or the
      * owner present resets it. The actual per-tick faction census at the
@@ -629,12 +632,23 @@ void om_structure_tick_capture(om_world *w, uint32_t structure) {
      * the stored progress from that census. */
     if (s->contested || s->capturing_faction == OM_SUP_NC_NONE || s->capturing_faction == s->owner) {
         s->capture_progress = 0.0;
+        s->capture_accruing = 0;
         return;
     }
-    s->capture_progress += (1.0 / (double)OM_TACTICAL_TICK_RATE) / (double)OM_REINFORCEMENT_CAPTURE_DURATION_SEC;
+    /* Progress accrues per BASE tick (real time): the base ticks elapsed since
+     * this structure's last accrual, so a step that spans 2 base ticks accrues
+     * 2 and a skipped call is made up. The first accrual, and any call with no
+     * base tick elapsed (a caller driving ticks without stepping the world),
+     * counts as one step: the current tick period in base ticks. */
+    now = om_tactical_base_tick(w);
+    elapsed = (s->capture_accruing && now > s->capture_last_base) ? now - s->capture_last_base : (uint64_t)om_tactical_tick_period(w);
+    s->capture_accruing = 1;
+    s->capture_last_base = now;
+    s->capture_progress += ((double)elapsed / (double)OM_TACTICAL_TICK_RATE) / (double)OM_REINFORCEMENT_CAPTURE_DURATION_SEC;
     if (s->capture_progress >= 1.0 - OM_SUP_EPSILON) {
         s->owner = s->capturing_faction;
         s->capture_progress = 0.0;
+        s->capture_accruing = 0;
     }
 }
 
@@ -737,7 +751,7 @@ void om_structure_init_drifting(om_world *w, uint32_t structure, uint64_t period
 static void om_sup_structure_refresh_position(om_world *w, om_sup_structure *s) {
     om_vec2 pos;
     if (!s->drifting) return;
-    om_drift_interpolate(s->drift_wp, 2, s->drift_period, OM_SUP_DRIFT_PING_PONG, om_tactical_tick(w), &pos);
+    om_drift_interpolate(s->drift_wp, 2, s->drift_period, OM_SUP_DRIFT_PING_PONG, om_tactical_base_tick(w), &pos);
     s->x = pos.x;
     s->y = pos.y;
 }
@@ -775,7 +789,7 @@ void om_objective_setup_drifting(om_world *w, uint32_t objective, uint64_t perio
 static void om_sup_objective_refresh_center(om_world *w, om_sup_objective *o, uint32_t objective) {
     om_vec2 pos;
     if (!o->drifting) return;
-    om_drift_interpolate(o->drift_wp, 2, o->drift_period, OM_SUP_DRIFT_PING_PONG, om_tactical_tick(w), &pos);
+    om_drift_interpolate(o->drift_wp, 2, o->drift_period, OM_SUP_DRIFT_PING_PONG, om_tactical_base_tick(w), &pos);
     om_objective_set_center(w, objective, pos.x, pos.y);
 }
 
@@ -834,7 +848,7 @@ double om_hazard_sample_interference(om_world *w, double x, double y) {
     om_sup_state *st = om_sup(w);
     uint32_t i;
     double best = 0.0;
-    uint64_t tick = om_tactical_tick(w);
+    uint64_t tick = om_tactical_base_tick(w);
     for (i = 0; i < st->n_hazards; i++) {
         om_sup_hazard *h = &st->hazards[i];
         double u, sx, sy, dx, dy, dist, intensity;
