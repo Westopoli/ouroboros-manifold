@@ -1420,7 +1420,6 @@ void om_lineage_record_history_region(om_world *w, uint32_t lineage_id, uint32_t
 void om_lineage_set_chapter_count(om_world *w, uint32_t lineage_id, uint32_t chapters);
 uint32_t om_lineage_spawn_descendant_at_tick(om_world *w, uint32_t lineage_id, uint32_t parent_id, uint64_t tick);
 uint32_t om_lineage_spawn_single_descendant(om_world *w, uint32_t lineage_id);
-int om_load_state_read(om_world *w, const uint8_t *buffer, uint32_t length);
 uint32_t om_mission_generator_chosen_region(const om_world *w);
 void om_mission_generator_run(om_world *w);
 void om_mission_tag_rivals(om_world *w, uint32_t mission_region, uint32_t commander_id);
@@ -1441,8 +1440,6 @@ void om_region_assign_regional_commander(om_world *w, uint32_t region_idx, int32
 uint32_t om_region_regional_commander(const om_world *w, uint32_t region_idx);
 void om_rng_force_descendant_spread(om_world *w, double spread_draw);
 void om_rng_force_selector_draw(om_world *w, double forced);
-uint32_t om_save_state_size(const om_world *w);
-void om_save_state_write(const om_world *w, uint8_t *out, uint32_t capacity);
 double om_selector_base_rotation_prob(const om_world *w, double delta);
 void om_selector_clear_pools(om_world *w);
 double om_selector_decayed_rotation_prob(const om_world *w, double base_p, uint32_t chapters);
@@ -1569,6 +1566,12 @@ void om_set_neighbors(om_world *w, uint32_t a, uint32_t b);
 int om_unit_get_profile(uint32_t unit_type, int difficulty, om_unit_profile *out);
 double om_unit_power(uint32_t unit_type);
 /* ---- end generated: mission.c ---- */
+
+/* ---- generated from signatures.toml: save.c ---- */
+int om_load_state_read(om_world *w, const uint8_t *buffer, uint32_t length);
+uint32_t om_save_state_size(const om_world *w);
+void om_save_state_write(const om_world *w, uint8_t *out, uint32_t capacity);
+/* ---- end generated: save.c ---- */
 
 /* ---- generated from signatures.toml: tactical_mapgen.c ---- */
 void om_fairness_evaluate(om_world *w, om_fairness_score *byref);
