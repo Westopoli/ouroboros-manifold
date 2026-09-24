@@ -1440,13 +1440,20 @@ uint32_t om_mission_generator_chosen_region(const om_world *w) {
 
 void om_mission_generator_run(om_world *w) {
     gen_state *gs = gen_get_state(w);
-    if (!gs) return;
-    /* Placeholder pending E-10 (csrc/mission.c): picks the highest-index
-     * owned region so the S-055 accessors below are exercisable now. */
-    uint32_t chosen = 0;
-    if (w) {
-        for (uint32_t i = 0; i < w->n_regions; i++)
-            if (w->regions[i].faction_id >= 0) chosen = i;
+    if (!gs || !w) return;
+    om_mission_build_candidate_pool(w);
+    uint32_t n = om_mission_candidates(w, NULL, UINT32_MAX);
+    uint32_t chosen;
+    if (n == 0) {
+        /* Q-072-01 fallback: no candidate triggered anywhere. */
+        chosen = om_mission_fallback_region(w);
+    } else {
+        uint32_t idx = om_mission_select(w);
+        om_mission_candidate *pool = malloc((size_t)n * sizeof(*pool));
+        if (!pool) return;
+        om_mission_candidates(w, pool, n);
+        chosen = pool[idx < n ? idx : 0].region_idx;
+        free(pool);
     }
     gs->mission_chosen_region = chosen;
 }
@@ -1743,6 +1750,13 @@ static const uint8_t GEN_LAUNCH_EVENT_TIER[] = {
 #define GEN_DEFAULT_EVENT_TIER 2
 #define GEN_OWNERSHIP_CHANGE_TIER 4 /* conquest-grade: CONQUEST_UNREST's tier */
 #define GEN_JUMP_EVENT_BUF 128
+/* ALG-51 step 4 (simulation/chronicle_distiller.py _classify_regional_cluster):
+ * regional cluster is growth above +3.0 and decline below -3.0 of the summed
+ * economy + population event deltas. Category ids match chronicle.c. */
+#define OM_CHRON_REGIONAL_GROWTH_MIN 3.0
+#define OM_CHRON_REGIONAL_DECLINE_MAX -3.0
+#define GEN_CAT_REGIONAL_GROWTH 21
+#define GEN_CAT_REGIONAL_DECLINE 22
 
 /* E-09 S-065: feeds the jump's notable regions to the chronicle and assembles
  * the scroll. Regions that changed owner or fired events are candidates scored
@@ -1759,12 +1773,13 @@ static int gen_time_jump(om_world *w, uint32_t n_ticks, om_time_jump_report *rep
     uint32_t nr = w->n_regions < OM_MAX_REGIONS ? w->n_regions : OM_MAX_REGIONS;
     int32_t start_owner[OM_MAX_REGIONS], last_owner[OM_MAX_REGIONS];
     uint64_t change_tick[OM_MAX_REGIONS];
-    double peak[OM_MAX_REGIONS];
+    double peak[OM_MAX_REGIONS], net[OM_MAX_REGIONS];
     int active[OM_MAX_REGIONS];
     for (uint32_t r = 0; r < nr; r++) {
         start_owner[r] = last_owner[r] = om_region_owner(w, r);
         change_tick[r] = 0;
         peak[r] = 0.0;
+        net[r] = 0.0;
         active[r] = 0;
     }
     int track_events = om_world_feature(w, OM_FEAT_EVENTS);
@@ -1783,6 +1798,7 @@ static int gen_time_jump(om_world *w, uint32_t n_ticks, om_time_jump_report *rep
                           ? GEN_LAUNCH_EVENT_TIER[fired[k].template_id] : GEN_DEFAULT_EVENT_TIER;
             double dsum = 0.0;
             for (uint32_t f = 0; f < OM_F_COUNT; f++) dsum += fabs(fired[k].delta[f]);
+            net[fired[k].region_idx] += fired[k].delta[OM_F_ECONOMY] + fired[k].delta[OM_F_POPULATION];
             double score = om_chronicle_score_event(w, fired[k].region_idx, tier, dsum);
             if (!active[fired[k].region_idx] || score > peak[fired[k].region_idx]) peak[fired[k].region_idx] = score;
             active[fired[k].region_idx] = 1;
@@ -1816,6 +1832,11 @@ static int gen_time_jump(om_world *w, uint32_t n_ticks, om_time_jump_report *rep
             if (!active[r]) continue;
             om_chronicle_add_event(w, r, peak[r]);
             n_candidates++;
+            if (start_owner[r] != last_owner[r]) continue;
+            if (net[r] > OM_CHRON_REGIONAL_GROWTH_MIN)
+                om_chronicle_add_regional_event(w, r, GEN_CAT_REGIONAL_GROWTH, peak[r]);
+            else if (net[r] < OM_CHRON_REGIONAL_DECLINE_MAX)
+                om_chronicle_add_regional_event(w, r, GEN_CAT_REGIONAL_DECLINE, peak[r]);
         }
         for (uint32_t li = 0; li < gs->n_lineages; li++) {
             gen_lineage *ln = &gs->lineages[li];
@@ -1866,14 +1887,18 @@ uint64_t om_world_strategic_tick(const om_world *w) {
     return w ? w->tick : 0;
 }
 int32_t om_lineage_history_region(const om_world *w, uint32_t lineage_id, uint32_t idx) {
-    /* STUB: B7-6 implements */
-    (void)w; (void)lineage_id; (void)idx;
-    return -1;
+    gen_lineage *l = gen_lineage_find(gen_get_state(w), lineage_id);
+    if (!l || idx >= l->n_history) return -1;
+    return (int32_t)l->history[idx];
 }
 
 int om_lineage_member_in_region(const om_world *w, uint32_t lineage_id, uint32_t region_idx) {
-    /* STUB: B7-6 implements */
-    (void)w; (void)lineage_id; (void)region_idx;
+    gen_state *gs = gen_get_state(w);
+    if (!gs) return 0;
+    for (uint32_t i = 0; i < gs->n_characters; i++) {
+        gen_character *c = &gs->characters[i];
+        if (c->used && c->lineage_id == lineage_id && c->status == GEN_STATUS_ACTIVE && c->region == region_idx) return 1;
+    }
     return 0;
 }
 
