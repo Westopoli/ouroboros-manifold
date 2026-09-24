@@ -766,6 +766,21 @@ void om_objective_setup_drifting(om_world *w, uint32_t objective, uint64_t perio
     om_sup_synthesize_drift_wp(w, o->center.x, o->center.y, o->drift_wp);
 }
 
+/* R-130-02: this file's private centre stays the source; mission.c's copy
+ * (om_objective_get_center) is only ever written, through the public
+ * om_objective_set_center, whenever a drifted centre is recomputed. */
+static om_vec2 om_sup_objective_current_center(om_world *w, om_sup_objective *o, uint32_t objective) {
+    if (o->drifting) {
+        om_vec2 pos;
+        om_drift_interpolate(o->drift_wp, 2, o->drift_period, OM_SUP_DRIFT_PING_PONG, om_tactical_tick(w), &pos);
+        if (pos.x != o->center.x || pos.y != o->center.y) {
+            o->center = pos;
+            om_objective_set_center(w, objective, pos.x, pos.y);
+        }
+    }
+    return o->center;
+}
+
 /* Best-effort: no public unit.c accessor exposes a unit's faction id
  * (only om_unit_alive/om_unit_position_x/y are used here), so this
  * cannot yet tell an enemy from a friendly inside the zone -- closure
@@ -774,13 +789,8 @@ void om_objective_setup_drifting(om_world *w, uint32_t objective, uint64_t perio
  * over-reports "not contested". */
 int om_objective_is_contested(om_world *w, uint32_t objective) {
     om_sup_objective *o = om_sup_objective_at(w, objective);
-    om_vec2 center;
+    om_vec2 center = om_sup_objective_current_center(w, o, objective);
     uint32_t id;
-    if (o->drifting) {
-        om_drift_interpolate(o->drift_wp, 2, o->drift_period, OM_SUP_DRIFT_PING_PONG, om_tactical_tick(w), &center);
-    } else {
-        center = o->center;
-    }
     for (id = 1; id <= OM_SUP_CONTEST_SCAN_CAP; id++) {
         double dx, dy;
         if (!om_unit_alive(w, id)) continue;
