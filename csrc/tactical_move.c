@@ -647,11 +647,21 @@ static void om_move_tick_once(om_world *w, om_move_state *ms, uint64_t new_tick)
     om_move_groups_check_arrival(ms);
 }
 
+/* R-092-02: no unit moves in the recon phase. Phase -1 (no mission) and
+ * tactical both let movement run; recon ends when the player begins. */
+static int om_move_in_recon(const om_world *w) {
+    return om_mission_get_phase(w) == 0;
+}
+
 static void om_move_sync(om_world *w) {
     om_move_state *ms = om_ms(w);
     uint64_t target = w->tick;
     uint64_t t;
     if (ms->last_synced_tick > target) ms->last_synced_tick = target;
+    if (om_move_in_recon(w)) {
+        ms->last_synced_tick = target;
+        return;
+    }
     for (t = ms->last_synced_tick + 1; t <= target; t++) {
         om_move_tick_once(w, ms, t);
     }
