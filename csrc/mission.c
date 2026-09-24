@@ -1246,12 +1246,13 @@ double om_mission_eval_escort(om_world *w, uint32_t objective_idx, uint32_t reac
 }
 
 /* R-075-02: the hold timer advances only while no enemy unit is inside the
- * zone radius; completion = elapsed / required. */
+ * zone radius; completion = elapsed / required. One call is one tactical
+ * step, so it adds that step's base ticks (1 at period 1, 2 at period 2). */
 void om_mission_eval_hold_zone(om_world *w, uint32_t objective_idx, uint32_t enemies_inside) {
     om_mission_state *st = om_mis(w);
     om_mission_objective *o = om_mission_ensure_objective(st, objective_idx);
     if (!o) return;
-    if (enemies_inside == 0) o->hold_elapsed_ticks++;
+    if (enemies_inside == 0) o->hold_elapsed_ticks += om_tactical_tick_period(w);
     if (o->hold_required_ticks > 0) {
         o->spec.completion = (double)o->hold_elapsed_ticks / (double)o->hold_required_ticks;
     }
@@ -1575,10 +1576,9 @@ void om_mission_inject_candidate(om_world *w, uint32_t region_idx, uint32_t arch
 }
 
 /* R-076-03: ended once the deadline passes (or om_mission_end froze it
- * early). om_tactical_tick takes a non-const om_world* as a getter-only
- * call (it never allocates or mutates when tactical state already exists);
- * casting the const away here follows the same precedent as
- * csrc/generational.c's om_rng_draw((om_world *)w) calls. */
+ * early). The deadline is real battle time, so it counts base ticks
+ * (om_tactical_base_tick: the step index at period 1, the period summed per
+ * step at period 2), never tactical steps. */
 int om_mission_is_ended(const om_world *w) {
     const om_mission_state *st = om_mis_ro(w);
     if (!st) return 0;
@@ -1589,7 +1589,7 @@ int om_mission_is_ended(const om_world *w) {
      * read late after Begin starts the count late). */
     int phase = om_mission_get_phase(w);
     if (phase == 0 /* OM_FOG_PHASE_RECON, csrc/fog.c */) return 0;
-    uint64_t now = om_tactical_tick((om_world *)w);
+    uint64_t now = om_tactical_base_tick(w);
     if (st->tactical_baseline_pending) {
         om_mission_state *mst = (om_mission_state *)w->mission_state;
         mst->tactical_baseline_tick = now;
@@ -1602,7 +1602,7 @@ int om_mission_is_ended(const om_world *w) {
 void om_mission_on_begin(om_world *w) {
     if (!w) return;
     om_mission_state *st = om_mis(w);
-    st->tactical_baseline_tick = om_tactical_tick(w);
+    st->tactical_baseline_tick = om_tactical_base_tick(w);
     st->tactical_baseline_pending = 0;
 }
 
@@ -1935,16 +1935,15 @@ void om_mission_setup_survive(om_world *w, uint32_t objective_idx, uint64_t requ
     o->spec.completion = 0.0;
 }
 
-/* R-076: the tactical clock. Baseline is the tactical tick at setup time,
- * read through the public om_tactical_tick(w) getter (csrc/unit.c) so
- * om_mission_is_ended below compares against the same clock the tactical
- * engine advances -- see that function's note on om_tactical_tick's own
- * gap (it does not advance on its own without a spawned unit / a step). */
+/* R-076: the tactical clock. Baseline is the base tick at setup time, read
+ * through the public om_tactical_base_tick(w) getter (csrc/unit.c) so
+ * om_mission_is_ended compares against the same clock the tactical engine
+ * advances: base ticks, which stay real time when the step period is 2. */
 void om_mission_setup_tactical(om_world *w, uint32_t p1, uint64_t time_limit) {
     om_mission_state *st = om_mis(w);
     (void)p1;
     st->tactical_time_limit = time_limit;
-    st->tactical_baseline_tick = om_tactical_tick(w);
+    st->tactical_baseline_tick = om_tactical_base_tick(w);
     st->tactical_baseline_pending = om_mission_get_phase(w) == 0 /* OM_FOG_PHASE_RECON, csrc/fog.c */;
     st->tactical_ended = 0;
 }
