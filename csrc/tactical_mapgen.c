@@ -108,6 +108,12 @@
  * pass/fail. */
 #define OM_MAPGEN_MAX_COVER 256
 #define OM_MAPGEN_MAX_OBSTACLES 256
+/* No header cap exists. Spine is 10 to 30 nodes (R-113, E-17); headroom for spawn points and structures. */
+#define OM_MAPGEN_MAX_NODES 128
+/* simulation/config.py CANVAS_SMALL / CANVAS_MEDIUM / CANVAS_LARGE; Q-118-01 closed (a): fixed base, +-30 percent by region. No om_constants.h names. */
+#define OM_MAPGEN_CANVAS_BASE_SMALL 8000.0
+#define OM_MAPGEN_CANVAS_BASE_MEDIUM 16000.0
+#define OM_MAPGEN_CANVAS_BASE_LARGE 24000.0
 
 typedef struct {
     double x, y, radius, height;
@@ -118,10 +124,19 @@ typedef struct {
 } om_mapgen_obstacle_row;
 
 typedef struct {
+    double x, y;
+    int    type;
+} om_mapgen_node_row;
+
+typedef struct {
     om_mapgen_cover_row    cover[OM_MAPGEN_MAX_COVER];
     uint32_t               n_cover;
     om_mapgen_obstacle_row obstacles[OM_MAPGEN_MAX_OBSTACLES];
     uint32_t               n_obstacles;
+    /* Index-ordered. Written by om_map_add_spine_node / spawn_point / structure, which live in
+     * csrc/fog.c and do not record here yet, so this stays empty until they do. */
+    om_mapgen_node_row     nodes[OM_MAPGEN_MAX_NODES];
+    uint32_t               n_nodes;
 } om_mapgen_state;
 
 static void om_mapgen_state_free(void *p) {
@@ -294,9 +309,12 @@ uint32_t om_map_count_distinct_routes_staging_to_objective(om_world *w, uint32_t
 }
 
 uint32_t om_map_count_nodes_of_type(om_world *w, int p1) {
-    /* STUB */
-    (void)w; (void)p1;
-    return 0;
+    const om_mapgen_state *st = om_mgs_ro(w);
+    uint32_t i, n = 0;
+    if (!st) return 0;
+    for (i = 0; i < st->n_nodes; i++)
+        if (st->nodes[i].type == p1) n++;
+    return n;
 }
 
 int om_map_cover_at(const om_world *w, uint32_t index, double *x, double *y, double *radius, double *height) {
@@ -344,9 +362,12 @@ uint64_t om_map_get_active_seed(om_world *w) {
 }
 
 double om_map_get_canvas_base_dimension(int p0) {
-    /* STUB */
-    (void)p0;
-    return 0.0;
+    switch (p0) {
+    case 0: return OM_MAPGEN_CANVAS_BASE_SMALL;
+    case 1: return OM_MAPGEN_CANVAS_BASE_MEDIUM;
+    case 2: return OM_MAPGEN_CANVAS_BASE_LARGE;
+    default: return 0.0;
+    }
 }
 
 uint32_t om_map_get_compatible_layout_count(om_world *w, uint32_t archetype) {
@@ -362,26 +383,39 @@ uint32_t om_map_get_compatible_layouts(om_world *w, uint32_t archetype, uint32_t
 }
 
 uint32_t om_map_get_node_count(om_world *w) {
-    /* STUB */
-    (void)w;
-    return 0;
+    const om_mapgen_state *st = om_mgs_ro(w);
+    return st ? st->n_nodes : 0;
 }
 
+/* Node ids here are 0-based indices in insertion order (the R-113 tests loop 0..count-1). */
 void om_map_get_node_pos(om_world *w, uint32_t node, om_vec2 *byref) {
-    /* STUB */
-    (void)w; (void)node; (void)byref;
+    const om_mapgen_state *st = om_mgs_ro(w);
+    if (!byref) return;
+    if (!st || node >= st->n_nodes) {
+        byref->x = 0.0;
+        byref->y = 0.0;
+        return;
+    }
+    byref->x = st->nodes[node].x;
+    byref->y = st->nodes[node].y;
 }
 
 int om_map_get_node_type(om_world *w, uint32_t node) {
-    /* STUB */
-    (void)w; (void)node;
-    return 0;
+    const om_mapgen_state *st = om_mgs_ro(w);
+    if (!st || node >= st->n_nodes) return -1;
+    return st->nodes[node].type;
 }
 
 uint32_t om_map_get_nth_node_of_type(om_world *w, int p1, uint32_t nth) {
-    /* STUB */
-    (void)w; (void)p1; (void)nth;
-    return 0;
+    const om_mapgen_state *st = om_mgs_ro(w);
+    uint32_t i, seen = 0;
+    if (!st) return UINT32_MAX;
+    for (i = 0; i < st->n_nodes; i++) {
+        if (st->nodes[i].type != p1) continue;
+        if (seen == nth) return i;
+        seen++;
+    }
+    return UINT32_MAX;
 }
 
 int om_map_get_simulation_coupling(om_world *w) {
