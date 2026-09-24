@@ -79,6 +79,9 @@
 #define OM_OBSTACLE_DENSITY_LOW_THRESHOLD 0.3
 #define OM_TERRAIN_SPEED_PENALTY_COEF 0.5
 
+/* Shot line-of-sight sampling resolution: one world unit. */
+#define OM_LOS_SAMPLE_STEP 1.0
+
 #define OM_COLLISION_MAX_ITER 3
 #define OM_COLLISION_EXACT_EPS 1e-9
 
@@ -348,8 +351,12 @@ static double om_move_density_at_pos(om_move_state *ms, double x, double y, uint
     return om_move_density_cell_get(ms, cx, cy, layer);
 }
 
-static int om_move_slot_blocked(om_move_state *ms, double x, double y) {
-    return om_move_density_at_pos(ms, x, y, 0) > OM_NAVMESH_OBSTACLE_THRESHOLD;
+/* Formation slot walkability: this module's own density cells plus the
+ * obstacle discs tactical_mapgen.c records (om_map_add_obstacle), read back
+ * through its public sampler. */
+static int om_move_slot_blocked(om_world *w, om_move_state *ms, double x, double y) {
+    if (om_move_density_at_pos(ms, x, y, 0) > OM_NAVMESH_OBSTACLE_THRESHOLD) return 1;
+    return om_map_sample_obstacle_density(w, x, y) > OM_NAVMESH_OBSTACLE_THRESHOLD;
 }
 
 static void om_move_route_touch(om_move_state *ms, uint32_t layer, double dest_x, double dest_y) {
@@ -674,12 +681,32 @@ void om_collision_pass(om_world *w) {
 }
 
 int om_combat_can_shoot(const om_world *w, uint32_t p0, uint32_t p1) {
-    /* R-098-01: friendly units never block fire -- always true here, since
-     * this module tracks no "ally in the way" state at all. R-098-02
-     * (cover blocks exactly like vision) needs tactical_mapgen.c's
-     * om_map_add_cover, which is STUB with no public reader (see file
-     * header); always clear until that lands. */
-    (void)w; (void)p0; (void)p1;
+    /* R-098-01: units never block fire, so no unit is consulted between the
+     * endpoints. R-098-02: terrain (this module's density cells) and the
+     * cover/obstacle discs tactical_mapgen.c records block the line the same
+     * way they block a sight line; the discs are read through its public
+     * sampler, which reports presence only (no cover height). Only points
+     * strictly between the two units are sampled, at one-wu resolution. */
+    om_world *ww = (om_world *)w;
+    om_move_state *ms;
+    double x0, y0, dx, dy, dist;
+    int steps, i;
+    if (!w) return 0;
+    ms = om_ms(ww);
+    x0 = om_unit_position_x(ww, p0);
+    y0 = om_unit_position_y(ww, p0);
+    dx = om_unit_position_x(ww, p1) - x0;
+    dy = om_unit_position_y(ww, p1) - y0;
+    dist = sqrt(dx * dx + dy * dy);
+    steps = (int)(dist / OM_LOS_SAMPLE_STEP);
+    for (i = 1; i < steps; i++) {
+        double t = (double)i / (double)steps;
+        double px = x0 + t * dx, py = y0 + t * dy;
+        om_gradient_properties g;
+        if (om_move_density_at_pos(ms, px, py, 0) > OM_NAVMESH_OBSTACLE_THRESHOLD) return 0;
+        om_map_sample_gradients(ww, px, py, &g);
+        if (g.cover_density > 0.0 || g.obstacle_density > OM_NAVMESH_OBSTACLE_THRESHOLD) return 0;
+    }
     return 1;
 }
 
@@ -776,7 +803,7 @@ uint32_t om_command_group_move(om_world *w, const uint32_t *ids, uint32_t n, dou
             slot_x = x + (mu->x - cx);
             slot_y = y + (mu->y - cy);
         }
-        if (om_move_slot_blocked(ms, slot_x, slot_y)) {
+        if (om_move_slot_blocked(w, ms, slot_x, slot_y)) {
             slot_x = x;
             slot_y = y;
         }
