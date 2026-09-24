@@ -118,7 +118,7 @@ def test_R_092_04_terrain_visibility_complete_regardless_world(lib, world_factor
 
     # State 2: World with heavy military and dense interference field
     w2 = world_factory(n_regions=1)
-    set_region(w2, 0, OMField.MILITARY, 0.95)
+    set_region(lib, w2, 0, military=0.95)
     lib.om_map_add_interference_zone(w2, 0.0, 0.0, 0, 1.0, 1000.0)
     lib.om_mission_set_phase(w2, OMPhase.RECON)
     assert pytest.approx(lib.om_recon_get_terrain_visibility_ratio(w2), abs=1e-4) == 1.00

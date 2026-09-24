@@ -101,7 +101,7 @@ def test_R_126_04_starting_force_0_20_f(lib, world_factory):
 
     # Structure reinforcement capacity over time limit >= 80%
     reinforcement_cap = lib.om_mission_compute_reinforcement_capacity(ctypes.c_double(total_force_f), 3600)  # 3600 ticks
-    assert ctypes.c_double(reinforcement_cap).value >= pytest.approx(80.0, abs=1e-5)
+    assert ctypes.c_double(reinforcement_cap).value >= 80.0 - 1e-5
 
 
 def test_R_126_05_player_sees_timer_bar_next(lib, world_factory):

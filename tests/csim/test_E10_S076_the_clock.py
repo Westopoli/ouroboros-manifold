@@ -12,6 +12,15 @@ import pytest
 from conftest import OMField, OMTier, read_drift, set_region  # adjust imports to what this epic's fixtures need
 
 
+class OMUnitType:
+    RAIDER = 0
+    INTERCEPTOR = 1
+    VANGUARD = 2
+    WARDEN = 3
+    BOMBARD = 4
+    BASTION = 5
+
+
 def test_R_076_01_limit_max_b_1_0(lib, world_factory):
     """Given an archetype base time B in tactical ticks and urgency u, When the limit is set, Then limit = max(B · (1 − 0.2 · u), 0.6 · B)."""
     base_ticks = 3600  # e.g. defensive stand base ticks
@@ -60,9 +69,13 @@ def test_R_076_03_current_objective_completion_values_final(lib, world_factory):
     lib.om_mission_setup_tactical(w, 0, 1000)  # limit = 1000 ticks
     lib.om_mission_set_objective_completion(w, 0, ctypes.c_double(0.75))
 
+    # om_tactical_step is a no-op (and never advances the clock) with zero
+    # units in play, so a unit must be spawned to drive the tactical tick.
+    lib.om_unit_spawn(w, OMUnitType.VANGUARD, 0, 0.0, 0.0, 0)
+
     # Advance to deadline
     for _ in range(1000):
-        lib.om_tactical_tick(w)
+        lib.om_tactical_step(w)
 
     assert lib.om_mission_is_ended(w) == 1
     score_at_deadline = lib.om_mission_get_objective_score(w)

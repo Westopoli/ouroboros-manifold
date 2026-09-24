@@ -31,12 +31,12 @@ As a commander, I want enemy forces to advance, hold, patrol, ambush, or retreat
 Rules
 - R-120-01  Given a script state, When read, Then its behavior is one of advance, defend, patrol, ambush, retreat and its modifier one of cautious, aggressive, phased; any other value fails script validation.
 - R-120-02  Given advance, When executed, Then the force attack-moves toward its target (a position, a spine node, or a unit group); given defend, Then it holds position and units auto-engage without pursuit; given patrol, Then it plain-moves through its waypoints in a cycle and auto-engages on contact; given ambush, Then it holds hidden until an enemy enters its trigger radius, then becomes advance_aggressive toward the trigger and never resets; given retreat, Then it plain-moves to its fallback point.
-- R-120-03  Given cautious, When executed, Then the force's move speed is × 0.6, spacing wider, and it transitions to retreat or defend when force HP lost since state entry exceeds the contact threshold; given aggressive, Then speed × 1.2, spacing tighter, no break-off; given phased, Then the force is split into 2 or 3 sub-groups that advance one at a time, each starting when the previous engages or reaches its waypoint.
+- R-120-03  Given cautious, When executed, Then the force moves at baseline speed and it transitions to retreat or defend when force HP lost since state entry exceeds the contact threshold; given aggressive, Then baseline speed, no break-off; given phased, Then the force is split into 2 or 3 sub-groups that advance one at a time, each starting when the previous engages or reaches its waypoint.
 - R-120-04  Given a macro evaluation, When it runs, Then it runs every 40 ticks (2 s) and issues commands only through move, attack_move, attack_target, activate_ability.
 
 Inputs: script (states, transitions, hooks, forces); tactical state.
 Outputs: enemy commands in the command log; force state in the T1 trace.
-Open flags: Q-120-01 (speed multipliers and spacing for the modifiers are examples in the bible and not in config; confirm 0.6 and 1.2 and define spacing).
+Q-120-01 closed: AI postures deferred; enemy macro scripts use baseline movement speeds for every modifier (no modifier-based speed or spacing change). Decided by Westley, 2026-09-16.
 
 ### S-121 — Timers and thresholds, with noise
 As a commander, I want the enemy to escalate on a schedule and react to what I do, with the exact moment shifting each time, so that no two runs of the same mission are the same.

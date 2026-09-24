@@ -7,7 +7,7 @@ here is the spec, not a bug in the test.
 """
 import pytest
 
-from conftest import OMField, OMTier, read_drift, set_region  # adjust imports to what this epic's fixtures need
+from conftest import OMField, OMTier, read_drift, set_region, set_faction  # adjust imports to what this epic's fixtures need
 
 
 import ctypes
@@ -71,6 +71,8 @@ def test_R_078_04_region_s_owner_becomes_player(lib, world_factory):
     player_faction = 1
     enemy_faction = 2
 
+    set_faction(lib, w, player_faction, 0)  # archetype 0 == OMArchetype.PLAYER
+
     lib.om_region_set_owner(w, 1, enemy_faction, 100)  # region 1 owned by enemy since tick 100
     current_tick = 500
     lib.om_world_set_tick(w, current_tick)
@@ -99,7 +101,7 @@ def test_R_078_05_band_refusal_no_force_deployed(lib, world_factory):
     deployed_count = lib.om_mission_get_deployed_force_count(w)
     assert deployed_count == 0
 
-    assert read_drift(lib, w, 0, OMField.TENSION) == pytest.approx(44.8, abs=1e-4)
+    assert lib.om_region_field(w, 0, OMField.TENSION) == pytest.approx(44.8, abs=1e-4)
 
 
 def test_R_078_06_resulting_events_carry_mission_consequence(lib, world_factory):
@@ -124,13 +126,16 @@ def test_R_078_07_delta_applies_to_every_player(lib, world_factory):
     lib.om_set_neighbors(w, 0, 2)
     lib.om_set_neighbors(w, 0, 3)
 
-    lib.om_region_set_owner(w, 1, 1, 0)
-    lib.om_region_set_owner(w, 2, 2, 0)
-    lib.om_region_set_owner(w, 3, 1, 0)
+    set_faction(lib, w, 1, 0)  # archetype 0 == OMArchetype.PLAYER
 
+    # set_region resets faction_id to -1, so ownership is set after it.
     set_region(lib, w, 1, tension=50.0)
     set_region(lib, w, 2, tension=50.0)
     set_region(lib, w, 3, tension=50.0)
+
+    lib.om_region_set_owner(w, 1, 1, 0)
+    lib.om_region_set_owner(w, 2, 2, 0)
+    lib.om_region_set_owner(w, 3, 1, 0)
 
     # Apply consequence with adjacent_player target on tension (+5.0)
     lib.om_mission_apply_target_adjacent_player(w, 0, OMField.TENSION, ctypes.c_double(5.0))

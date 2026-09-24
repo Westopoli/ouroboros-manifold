@@ -79,11 +79,13 @@ def test_R_120_03_force_s_move_speed_0(lib, world_factory):
     """Given cautious, When executed, Then the force's move speed is × 0.6, spacing wider, and it transitions to retreat or defend when force HP lost since state entry exceeds the contact threshold; given aggressive, Then speed × 1.2, spacing tighter, no break-off; given phased, Then the force is split into 2 or 3 sub-groups that advance one at a time, each starting when the previous engages or reaches its waypoint."""
     w = world_factory(n_regions=1)
 
+    # Q-120-01 closed (b): AI postures deferred, baseline speeds -- no
+    # modifier-based speed scaling.
     speed_cautious = lib.om_macro_get_speed_multiplier(OMMacroModifier.CAUTIOUS)
-    assert ctypes.c_double(speed_cautious).value == pytest.approx(0.6, abs=1e-5)
+    assert ctypes.c_double(speed_cautious).value == pytest.approx(1.0, abs=1e-5)
 
     speed_aggressive = lib.om_macro_get_speed_multiplier(OMMacroModifier.AGGRESSIVE)
-    assert ctypes.c_double(speed_aggressive).value == pytest.approx(1.2, abs=1e-5)
+    assert ctypes.c_double(speed_aggressive).value == pytest.approx(1.0, abs=1e-5)
 
     # Phased splits force into 2 or 3 sub-groups
     subgroup_count = lib.om_macro_get_phased_subgroups(w, 0)
