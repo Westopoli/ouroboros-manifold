@@ -1,5 +1,7 @@
 extends Node2D
 
+const SimSession := preload("res://autoload/sim_session.gd")
+
 # Piece C5: minimal tactical view over a C transport v1 "tactical" snapshot
 # (docs/architecture.md "C transport v1"). Fresh scene, no legacy code. See
 # docs/northstar/plans/push/specs/C5.md and
@@ -17,6 +19,7 @@ var _frame: Dictionary = {}
 var _canvas: float = 0.0
 var _camera := Vector2.ZERO
 var _camera_initialized := false
+var _camera_canvas: float = 0.0
 var _camera_unbounded := false
 var _facing_fixed := false
 var _frozen_facing: Dictionary = {}
@@ -30,7 +33,7 @@ func _ready() -> void:
 	# view self-loads the first live tactical frame on a fresh route-in. A
 	# failed live load leaves the view empty and logs the reason; it never
 	# falls back to a fixture (C5-2).
-	var bridge = load("res://autoload/c_bridge.gd").new()
+	var bridge = SimSession.bridge()
 	if bridge.load_tactical_live(bridge.live_seed(), bridge.DEFAULT_N_REGIONS, bridge.DEFAULT_FEATURES):
 		load_frame(bridge.tactical_frame())
 	else:
@@ -45,9 +48,10 @@ func _ready() -> void:
 func load_frame(frame: Dictionary) -> void:
 	_frame = frame
 	_canvas = float(frame.get("map", {}).get("canvas", 0.0))
-	if not _camera_initialized and _canvas > 0.0:
+	if _canvas > 0.0 and (not _camera_initialized or _canvas != _camera_canvas):
 		_camera = Vector2(_canvas * 0.5, _canvas * 0.5)
 		_camera_initialized = true
+		_camera_canvas = _canvas
 	if _facing_fixed:
 		for u in frame.get("units", []):
 			var id := int(u.get("id"))
