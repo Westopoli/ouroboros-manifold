@@ -110,6 +110,19 @@
 #define OM_MAPGEN_MAX_OBSTACLES 256
 /* No header cap exists. Spine is 10 to 30 nodes (R-113, E-17); headroom for spawn points and structures. */
 #define OM_MAPGEN_MAX_NODES 128
+#define OM_MAPGEN_MAX_STRUCTURES 64
+/* E-17 S-113 spine node type list order: objective, staging, transit, chokepoint, flank_route, vantage, hazard_anchor, spawn_point, extraction. */
+#define OM_MAPGEN_NODE_SPAWN_POINT 7
+/* Returned by the add functions when their table is full, and by the node lookups for "none". */
+#define OM_MAPGEN_NO_NODE UINT32_MAX
+/* simulation/config.py CANVAS_SIMULATION_MODIFIER_RANGE. Region fields run 0..100 (R-116-02 tests), centred on 50. */
+#define OM_MAPGEN_CANVAS_MODIFIER_RANGE 0.30
+/* E-10 S-073 archetype indices with a stated canvas direction. */
+#define OM_MAPGEN_ARCH_DEFENSIVE_STAND 0
+#define OM_MAPGEN_ARCH_SUPPRESSION 4
+#define OM_MAPGEN_ARCH_COUNTERINSURGENCY 9
+#define OM_MAPGEN_FIELD_MID 50.0
+#define OM_MAPGEN_FIELD_MAX 100.0
 /* simulation/config.py CANVAS_SMALL / CANVAS_MEDIUM / CANVAS_LARGE; Q-118-01 closed (a): fixed base, +-30 percent by region. No om_constants.h names. */
 #define OM_MAPGEN_CANVAS_BASE_SMALL 8000.0
 #define OM_MAPGEN_CANVAS_BASE_MEDIUM 16000.0
@@ -124,19 +137,28 @@ typedef struct {
 } om_mapgen_obstacle_row;
 
 typedef struct {
-    double x, y;
-    int    type;
+    double  x, y;
+    int     type;
+    int32_t faction;
 } om_mapgen_node_row;
+
+typedef struct {
+    double  x, y;
+    int32_t owner_faction;
+} om_mapgen_structure_row;
 
 typedef struct {
     om_mapgen_cover_row    cover[OM_MAPGEN_MAX_COVER];
     uint32_t               n_cover;
     om_mapgen_obstacle_row obstacles[OM_MAPGEN_MAX_OBSTACLES];
     uint32_t               n_obstacles;
-    /* Index-ordered. Written by om_map_add_spine_node / spawn_point / structure, which live in
-     * csrc/fog.c and do not record here yet, so this stays empty until they do. */
-    om_mapgen_node_row     nodes[OM_MAPGEN_MAX_NODES];
-    uint32_t               n_nodes;
+    /* Index-ordered; a node id is its 0-based index. Spine nodes (faction 0) and spawn points share
+     * this table, as spawn_point is a spine node type. Structures have no spine type and are kept
+     * apart; their ids are indices into their own table. */
+    om_mapgen_node_row      nodes[OM_MAPGEN_MAX_NODES];
+    uint32_t                n_nodes;
+    om_mapgen_structure_row structures[OM_MAPGEN_MAX_STRUCTURES];
+    uint32_t                n_structures;
 } om_mapgen_state;
 
 static void om_mapgen_state_free(void *p) {
@@ -250,6 +272,33 @@ void om_map_add_layer_restriction_zone(om_world *w, double p1, double zone, uint
     (void)w; (void)p1; (void)zone; (void)p3;
 }
 
+static uint32_t om_mgs_add_node(om_world *w, double x, double y, int type, int32_t faction) {
+    om_mapgen_state *st = om_mgs(w);
+    om_mapgen_node_row *row;
+    if (st->n_nodes >= OM_MAPGEN_MAX_NODES) return OM_MAPGEN_NO_NODE;
+    row = &st->nodes[st->n_nodes];
+    row->x = x; row->y = y; row->type = type; row->faction = faction;
+    return st->n_nodes++;
+}
+
+/* See also: these three lived in csrc/fog.c as counter-bump stubs until B15m-4. */
+uint32_t om_map_add_spine_node(om_world *w, double x, double y, int p2) {
+    return om_mgs_add_node(w, x, y, p2, 0);
+}
+
+uint32_t om_map_add_spawn_point(om_world *w, double x, double y, int32_t faction_id) {
+    return om_mgs_add_node(w, x, y, OM_MAPGEN_NODE_SPAWN_POINT, faction_id);
+}
+
+uint32_t om_map_add_structure(om_world *w, double x, double y, int32_t owner_faction) {
+    om_mapgen_state *st = om_mgs(w);
+    om_mapgen_structure_row *row;
+    if (st->n_structures >= OM_MAPGEN_MAX_STRUCTURES) return OM_MAPGEN_NO_NODE;
+    row = &st->structures[st->n_structures];
+    row->x = x; row->y = y; row->owner_faction = owner_faction;
+    return st->n_structures++;
+}
+
 uint32_t om_map_add_obstacle(om_world *w, double x, double y, double radius) {
     om_mapgen_state *st = om_mgs(w);
     if (st->n_obstacles >= OM_MAPGEN_MAX_OBSTACLES) return 0;
@@ -260,10 +309,12 @@ uint32_t om_map_add_obstacle(om_world *w, double x, double y, double radius) {
     return st->n_obstacles;
 }
 
+/* E-10 S-073 canvas column, in archetype order; simulation/config.py ARCHETYPE_BASE_CANVAS
+ * (0 small, 1 medium, 2 large). See also: csrc/mission.c meta.canvas_category, the same table. */
 int om_map_archetype_canvas_category(uint32_t mission) {
-    /* STUB */
-    (void)mission;
-    return 0;
+    static const int category[] = {1, 2, 1, 2, 0, 2, 1, 1, 2, 0};
+    if (mission >= sizeof category / sizeof category[0]) return -1;
+    return category[mission];
 }
 
 double om_map_check_boundary_gradient_discontinuity(om_world *w, double p1, double boundary) {
@@ -290,10 +341,25 @@ double om_map_compute_economy_obstacle_delta(double economy) {
     return 0.0;
 }
 
+/* p1 = economy, p2 = tension, both 0..100. No world is passed, so there is no RNG draw: the
+ * +-30 percent swing is a linear function of the driving field, 0 at the midpoint. Directions
+ * (R-116-02): defensive stand (0) grows with economy, suppression (4) shrinks with tension,
+ * counterinsurgency (9) grows with tension. E-17 gives no direction for the other archetypes,
+ * so they stay at base. */
 double om_map_compute_modified_canvas(uint32_t archetype, double p1, double p2) {
-    /* STUB */
-    (void)archetype; (void)p1; (void)p2;
-    return 0.0;
+    int cat = om_map_archetype_canvas_category(archetype);
+    double base, field, dir;
+    if (cat < 0) return 0.0;
+    base = om_map_get_canvas_base_dimension(cat);
+    switch (archetype) {
+    case OM_MAPGEN_ARCH_DEFENSIVE_STAND: field = p1; dir = 1.0; break;
+    case OM_MAPGEN_ARCH_SUPPRESSION: field = p2; dir = -1.0; break;
+    case OM_MAPGEN_ARCH_COUNTERINSURGENCY: field = p2; dir = 1.0; break;
+    default: return base;
+    }
+    if (field < 0.0) field = 0.0;
+    if (field > OM_MAPGEN_FIELD_MAX) field = OM_MAPGEN_FIELD_MAX;
+    return base * (1.0 + dir * OM_MAPGEN_CANVAS_MODIFIER_RANGE * (field - OM_MAPGEN_FIELD_MID) / OM_MAPGEN_FIELD_MID);
 }
 
 double om_map_compute_tension_cover_delta(double tension) {
@@ -409,13 +475,13 @@ int om_map_get_node_type(om_world *w, uint32_t node) {
 uint32_t om_map_get_nth_node_of_type(om_world *w, int p1, uint32_t nth) {
     const om_mapgen_state *st = om_mgs_ro(w);
     uint32_t i, seen = 0;
-    if (!st) return UINT32_MAX;
+    if (!st) return OM_MAPGEN_NO_NODE;
     for (i = 0; i < st->n_nodes; i++) {
         if (st->nodes[i].type != p1) continue;
         if (seen == nth) return i;
         seen++;
     }
-    return UINT32_MAX;
+    return OM_MAPGEN_NO_NODE;
 }
 
 int om_map_get_simulation_coupling(om_world *w) {

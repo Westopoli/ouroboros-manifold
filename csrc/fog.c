@@ -354,23 +354,8 @@ void om_map_add_moving_interference_zone(om_world *w, double x, double y, uint32
     z->moving = 1; z->vx = vx; z->vy = vy; z->start_tick = w->tick;
 }
 
-uint32_t om_map_add_spawn_point(om_world *w, double x, double y, int32_t faction_id) {
-    om_fog_state *st = om_fog(w);
-    (void)x; (void)y; (void)faction_id;
-    return ++st->next_feature_id;
-}
-
-uint32_t om_map_add_spine_node(om_world *w, double x, double y, int p2) {
-    om_fog_state *st = om_fog(w);
-    (void)x; (void)y; (void)p2;
-    return ++st->next_feature_id;
-}
-
-uint32_t om_map_add_structure(om_world *w, double x, double y, int32_t owner_faction) {
-    om_fog_state *st = om_fog(w);
-    (void)x; (void)y; (void)owner_faction;
-    return ++st->next_feature_id;
-}
+/* om_map_add_spawn_point / om_map_add_spine_node / om_map_add_structure moved to csrc/tactical_mapgen.c (B15m-4):
+ * they record into the mapgen node storage. next_feature_id now only numbers hazard zones. */
 
 void om_map_add_vantage_node(om_world *w, double x, double y, double radius) {
     om_fog_state *st = om_fog(w);
