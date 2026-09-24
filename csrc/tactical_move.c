@@ -53,6 +53,9 @@
 #include <stddef.h>
 #include <string.h>
 #include <stdlib.h>
+#if defined(__SSE2__)
+#include <emmintrin.h>
+#endif
 
 /* ---------------------------------------------------------------- setup */
 
@@ -66,18 +69,47 @@
 #define OM_MOVE_BFS_CAP 512
 #define OM_MOVE_BFS_DIR_COUNT 4
 
-/* Spatial hash over this module's own unit positions (om_move_unit x/y).
+/* Spatial index over this module's own unit positions (om_move_unit x/y).
  * unit.c's grid (om_grid_query_circle) holds unit.c's position cache, which
  * lags this module's positions (the sync runs before the cache refresh, and
  * collision pushes move units mid-pass), so the exact all-pairs results
- * would not survive using it. OM_MOVE_GRID_CELL is twice the collision
- * diameter so a circle query of collision reach spans at most 3x3 cells. */
-#define OM_MOVE_GRID_BUCKETS 16384
-#define OM_MOVE_GRID_CELL (4.0 * OM_UNIT_COLLISION_RADIUS)
-#define OM_MOVE_GRID_COORD_LIMIT 1.0e9
+ * would not survive using it.
+ *
+ * The index is a dense grid: living units are filed once, sorted by cell
+ * (ids ascending inside a cell) into flat slot arrays, so a row of cells is
+ * one run of slots and a query is a few straight loops. A unit that moves is
+ * not re-filed; it keeps its slot and its position is updated in place, and a
+ * query widens its cell range by how far any filed unit has moved
+ * (grid_disp). A unit that gets more than OM_MOVE_GRID_MARGIN from where it
+ * was filed goes to a short spill list that every query scans as well; a
+ * full spill list refiles everything (from the index itself, without touching
+ * the units). Results never depend on this layout: a query returns exactly
+ * the units within its radius. */
+#define OM_MOVE_GRID_MAX_CELLS 8192
+#define OM_MOVE_GRID_BASE_CELL (4.0 * OM_UNIT_COLLISION_RADIUS)
+#define OM_MOVE_GRID_MARGIN (3.0 * OM_UNIT_COLLISION_RADIUS)
+#define OM_MOVE_GRID_SPILL_MAX 48
+#define OM_MOVE_GRID_BOUND_PAD 1.0e-6
+#define OM_MOVE_GRID_FAR 1.0e300
+#define OM_MOVE_FLOOR_LIMIT 1.0e9
 #define OM_MOVE_INSERTION_SORT_MAX 96
-#define OM_MOVE_GRID_HASH_X 73856093u
-#define OM_MOVE_GRID_HASH_Y 19349663u
+#define OM_MOVE_NET_SMALL 8
+#define OM_MOVE_NET_LARGE 16
+#define OM_MOVE_MASK_BITS 64
+
+/* The neighbour list of the collision sweep (om_move_collision_once). */
+#define OM_MOVE_LIST_REACH (4.0 * OM_UNIT_COLLISION_RADIUS)
+#define OM_MOVE_COLLISION_SLACK (OM_UNIT_COLLISION_RADIUS)
+
+/* Steering probe: the largest gap between a probe point computed with
+ * om_sin/om_cos and one computed with om_move_sincos_approx is under 0.05 wu;
+ * a probe is taken as blocked without om_sin/om_cos when a unit is closer than
+ * the collision diameter by this much to the approximate point. */
+#define OM_MOVE_PROBE_SURE_MARGIN 0.1
+#define OM_MOVE_PROBE_HINTS 2
+/* A probe point is OM_STEERING_PROBE_DIST from its unit, give or take the
+ * om_sin/om_cos error (under 5e-4 per component): under this. */
+#define OM_MOVE_PROBE_REACH 40.1
 
 /* ALG-69/R-100-02 turn-rate category, inferred from native speed -- see
  * the file header note. Strike >= 100, Line [60,100), Siege < 60; the
@@ -200,12 +232,22 @@ typedef struct {
     uint32_t            n_queue;
 
     int      grid_live;
-    uint32_t grid_head[OM_MOVE_GRID_BUCKETS];
-    uint32_t grid_next[OM_MOVE_MAX_UNITS];
-    uint32_t grid_prev[OM_MOVE_MAX_UNITS];
-    int32_t  grid_cx[OM_MOVE_MAX_UNITS];
-    int32_t  grid_cy[OM_MOVE_MAX_UNITS];
+    double   grid_ox, grid_oy, grid_cell, grid_inv;
+    int32_t  grid_w, grid_h;
+    uint32_t grid_start[OM_MOVE_GRID_MAX_CELLS + 1];
+    uint32_t grid_fill[OM_MOVE_GRID_MAX_CELLS];
+    uint32_t slot_base, n_spill;
+    double   grid_disp;
+    uint32_t slot_id[OM_MOVE_MAX_UNITS + OM_MOVE_GRID_SPILL_MAX];
+    double   slot_x[OM_MOVE_MAX_UNITS + OM_MOVE_GRID_SPILL_MAX];
+    double   slot_y[OM_MOVE_MAX_UNITS + OM_MOVE_GRID_SPILL_MAX];
+    double   slot_fx[OM_MOVE_MAX_UNITS], slot_fy[OM_MOVE_MAX_UNITS];
+    uint32_t unit_slot[OM_MOVE_MAX_UNITS];
+    uint32_t unit_cell[OM_MOVE_MAX_UNITS];
+    double   scan_x[OM_MOVE_MAX_UNITS], scan_y[OM_MOVE_MAX_UNITS];
     uint8_t  grid_in[OM_MOVE_MAX_UNITS];
+    double   sweep_cos[OM_STEERING_SWEEP_COUNT], sweep_sin[OM_STEERING_SWEEP_COUNT];
+    uint8_t  stat[OM_MOVE_MAX_UNITS];
     uint32_t grid_scratch[OM_MOVE_MAX_UNITS];
 
     int      settle_valid;
@@ -217,17 +259,6 @@ typedef struct {
 
 static void om_move_state_free_fn(void *p) {
     free(p);
-}
-
-static om_move_state *om_ms(om_world *w) {
-    om_move_state *ms = (om_move_state *)w->move_state;
-    if (!ms) {
-        ms = (om_move_state *)calloc(1, sizeof(om_move_state));
-        ms->next_group_id = 1;
-        w->move_state = ms;
-        w->move_state_free = om_move_state_free_fn;
-    }
-    return ms;
 }
 
 /* -------------------------------------------------------------- geometry */
@@ -262,6 +293,21 @@ static double om_wrap_pi(double a) {
     return a;
 }
 
+/* Fast sine and cosine for the steering probe's blocked-for-sure test: Taylor
+ * series on [-pi, pi] whose first dropped terms bound the error (alternating,
+ * decreasing): under 2.3e-5 for sin, 4.4e-6 for cos. Not om_sin: it stands in
+ * for om_sin only where a margin covers the difference (see
+ * om_move_probe_sure_blocked). The series are single-line defines because the
+ * constants lint reads a #define line as a named constant. */
+#define OM_MOVE_TAYLOR_SIN(r, r2) ((r) * (1.0 + (r2) * (-1.0 / 6.0 + (r2) * (1.0 / 120.0 + (r2) * (-1.0 / 5040.0 + (r2) * (1.0 / 362880.0 + (r2) * (-1.0 / 39916800.0 + (r2) * (1.0 / 6227020800.0))))))))
+#define OM_MOVE_TAYLOR_COS(r2) (1.0 + (r2) * (-1.0 / 2.0 + (r2) * (1.0 / 24.0 + (r2) * (-1.0 / 720.0 + (r2) * (1.0 / 40320.0 + (r2) * (-1.0 / 3628800.0 + (r2) * (1.0 / 479001600.0 + (r2) * (-1.0 / 87178291200.0))))))))
+
+static void om_move_sincos_approx(double a, double *s, double *c) {
+    double r = om_wrap_pi(a), r2 = r * r;
+    *s = OM_MOVE_TAYLOR_SIN(r, r2);
+    *c = OM_MOVE_TAYLOR_COS(r2);
+}
+
 static double om_move_turn_rate_for(double native_speed) {
     if (native_speed >= OM_MOVE_CAT_STRIKE_SPEED_MIN) return OM_FACING_ROTATION_SPEED_STRIKE;
     if (native_speed >= OM_MOVE_CAT_LINE_SPEED_MIN) return OM_LINE;
@@ -294,6 +340,21 @@ static const double OM_STEERING_SWEEP_ANGLES[OM_STEERING_SWEEP_COUNT] = {
     OM_STEERING_SWEEP_DELTA_RAD_6X, -OM_STEERING_SWEEP_DELTA_RAD_6X,
 };
 
+static om_move_state *om_ms(om_world *w) {
+    om_move_state *ms = (om_move_state *)w->move_state;
+    if (!ms) {
+        uint32_t k;
+        ms = (om_move_state *)calloc(1, sizeof(om_move_state));
+        for (k = 0; k < OM_STEERING_SWEEP_COUNT; k++) {
+            om_move_sincos_approx(OM_STEERING_SWEEP_ANGLES[k], &ms->sweep_sin[k], &ms->sweep_cos[k]);
+        }
+        ms->next_group_id = 1;
+        w->move_state = ms;
+        w->move_state_free = om_move_state_free_fn;
+    }
+    return ms;
+}
+
 /* ---------------------------------------------------------- unit lookup */
 
 static om_move_unit *om_move_get(om_move_state *ms, uint32_t unit_id) {
@@ -301,59 +362,284 @@ static om_move_unit *om_move_get(om_move_state *ms, uint32_t unit_id) {
     return &ms->units[unit_id];
 }
 
-static int32_t om_move_grid_coord(double v) {
-    double c = floor(v / OM_MOVE_GRID_CELL);
-    if (c > OM_MOVE_GRID_COORD_LIMIT) c = OM_MOVE_GRID_COORD_LIMIT;
-    if (c < -OM_MOVE_GRID_COORD_LIMIT) c = -OM_MOVE_GRID_COORD_LIMIT;
-    return (int32_t)c;
+/* floor(t) as an int32, clamped to +-1e9 (NaN counts as -1e9); monotone in t.
+ * The grid indexes with this instead of libm's floor, which is a call
+ * without SSE4.1 and dominates a query's setup. */
+static int32_t om_move_floor_i(double t) {
+    int32_t i;
+    if (!(t > -OM_MOVE_FLOOR_LIMIT)) return -(int32_t)OM_MOVE_FLOOR_LIMIT;
+    if (t > OM_MOVE_FLOOR_LIMIT) return (int32_t)OM_MOVE_FLOOR_LIMIT;
+    i = (int32_t)t;
+    return (double)i > t ? i - 1 : i;
 }
 
-static uint32_t om_move_grid_bucket(int32_t cx, int32_t cy) {
-    return (((uint32_t)cx * OM_MOVE_GRID_HASH_X) ^ ((uint32_t)cy * OM_MOVE_GRID_HASH_Y)) & (OM_MOVE_GRID_BUCKETS - 1);
+/* Cell of v along one axis, clamped into [0, n); monotone in v, so a query's
+ * cell range and a unit's filed cell always agree. */
+static int32_t om_move_grid_axis_cell(double v, double origin, double inv_cell, int32_t n) {
+    int32_t t = om_move_floor_i((v - origin) * inv_cell);
+    return t < 0 ? 0 : (t >= n ? n - 1 : t);
 }
 
-static void om_move_grid_link(om_move_state *ms, uint32_t id, int32_t cx, int32_t cy) {
-    uint32_t b = om_move_grid_bucket(cx, cy);
-    ms->grid_cx[id] = cx;
-    ms->grid_cy[id] = cy;
-    ms->grid_prev[id] = 0;
-    ms->grid_next[id] = ms->grid_head[b];
-    if (ms->grid_head[b]) ms->grid_prev[ms->grid_head[b]] = id;
-    ms->grid_head[b] = id;
-    ms->grid_in[id] = 1;
-}
+static void om_move_grid_rebuild(om_world *w, om_move_state *ms, int from_units);
 
-static void om_move_grid_unlink(om_move_state *ms, uint32_t id) {
-    uint32_t nx = ms->grid_next[id], pv = ms->grid_prev[id];
-    if (pv) ms->grid_next[pv] = nx;
-    else ms->grid_head[om_move_grid_bucket(ms->grid_cx[id], ms->grid_cy[id])] = nx;
-    if (nx) ms->grid_prev[nx] = pv;
-    ms->grid_in[id] = 0;
-}
-
-/* Re-files a unit after its x/y changed; a unit outside the grid (not
- * alive when the grid was built) stays outside. */
-static void om_move_grid_update(om_move_state *ms, const om_move_unit *mu) {
-    uint32_t id = mu->unit_id;
-    int32_t cx, cy;
-    if (!ms->grid_live || !ms->grid_in[id]) return;
-    cx = om_move_grid_coord(mu->x);
-    cy = om_move_grid_coord(mu->y);
-    if (cx == ms->grid_cx[id] && cy == ms->grid_cy[id]) return;
-    om_move_grid_unlink(ms, id);
-    om_move_grid_link(ms, id, cx, cy);
-}
-
-static void om_move_grid_rebuild(om_world *w, om_move_state *ms) {
-    uint32_t id;
-    memset(ms->grid_head, 0, sizeof(ms->grid_head));
-    memset(ms->grid_in, 0, sizeof(ms->grid_in));
-    ms->grid_live = 1;
-    for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
-        const om_move_unit *mu = &ms->units[id];
-        if (!mu->in_use || !om_unit_alive(w, id)) continue;
-        om_move_grid_link(ms, id, om_move_grid_coord(mu->x), om_move_grid_coord(mu->y));
+/* Moves a filed unit to (x, y). A unit that gets more than
+ * OM_MOVE_GRID_MARGIN from where it was filed leaves its cell for the spill
+ * list (its cell slot goes NaN, which no distance test passes), so every
+ * unit still in a cell is within grid_disp of its filed position. A full
+ * spill list refiles everything instead. */
+static void om_move_grid_set(om_move_state *ms, uint32_t id, double x, double y) {
+    uint32_t s = ms->unit_slot[id], t;
+    double d;
+    ms->slot_x[s] = x;
+    ms->slot_y[s] = y;
+    if (s >= ms->slot_base) return;
+    d = fabs(x - ms->slot_fx[s]);
+    if (fabs(y - ms->slot_fy[s]) > d) d = fabs(y - ms->slot_fy[s]);
+    if (d <= OM_MOVE_GRID_MARGIN) {
+        if (d > ms->grid_disp) ms->grid_disp = d;
+        return;
     }
+    if (ms->n_spill == OM_MOVE_GRID_SPILL_MAX) {
+        om_move_grid_rebuild(NULL, ms, 0);
+        return;
+    }
+    t = ms->slot_base + ms->n_spill++;
+    ms->slot_x[s] = ms->slot_y[s] = 0.0 / 0.0;
+    ms->slot_id[t] = id;
+    ms->slot_x[t] = x;
+    ms->slot_y[t] = y;
+    ms->unit_slot[id] = t;
+}
+
+static double om_move_grid_x(const om_move_state *ms, uint32_t id) {
+    return ms->slot_x[ms->unit_slot[id]];
+}
+
+static double om_move_grid_y(const om_move_state *ms, uint32_t id) {
+    return ms->slot_y[ms->unit_slot[id]];
+}
+
+/* Mirrors a unit's x/y into the index after this module moved it. */
+static void om_move_grid_update(om_move_state *ms, const om_move_unit *mu) {
+    if (!ms->grid_live || !ms->grid_in[mu->unit_id]) return;
+    om_move_grid_set(ms, mu->unit_id, mu->x, mu->y);
+}
+
+/* Files every living unit from its current position: from the units' x/y
+ * (and their liveness), or, to file the same units again, from the index
+ * itself, which mirrors every position this module moves. */
+static void om_move_grid_rebuild(om_world *w, om_move_state *ms, int from_units) {
+    double minx = OM_MOVE_GRID_FAR, miny = OM_MOVE_GRID_FAR, maxx = -OM_MOVE_GRID_FAR, maxy = -OM_MOVE_GRID_FAR;
+    double cell = OM_MOVE_GRID_BASE_CELL, spanx, spany;
+    uint32_t id, c, n = 0, cells;
+    int32_t gw, gh;
+    for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
+        int live;
+        double x = 0.0, y = 0.0;
+        if (from_units) {
+            const om_move_unit *mu = &ms->units[id];
+            live = mu->in_use && om_unit_alive(w, id);
+            x = mu->x;
+            y = mu->y;
+        } else {
+            live = ms->grid_in[id];
+            if (live) {
+                x = ms->slot_x[ms->unit_slot[id]];
+                y = ms->slot_y[ms->unit_slot[id]];
+            }
+        }
+        ms->grid_in[id] = (uint8_t)live;
+        if (!live) continue;
+        ms->scan_x[id] = x;
+        ms->scan_y[id] = y;
+        if (x < minx) minx = x;
+        if (x > maxx) maxx = x;
+        if (y < miny) miny = y;
+        if (y > maxy) maxy = y;
+        n++;
+    }
+    if (n == 0) { minx = miny = maxx = maxy = 0.0; }
+    spanx = maxx - minx;
+    spany = maxy - miny;
+    if (!(spanx < OM_MOVE_GRID_FAR)) spanx = OM_MOVE_GRID_FAR;
+    if (!(spany < OM_MOVE_GRID_FAR)) spany = OM_MOVE_GRID_FAR;
+    while ((floor(spanx / cell) + 1.0) * (floor(spany / cell) + 1.0) > (double)OM_MOVE_GRID_MAX_CELLS) cell *= 2.0;
+    gw = (int32_t)(floor(spanx / cell) + 1.0);
+    gh = (int32_t)(floor(spany / cell) + 1.0);
+    cells = (uint32_t)gw * (uint32_t)gh;
+    ms->grid_ox = minx;
+    ms->grid_oy = miny;
+    ms->grid_cell = cell;
+    ms->grid_inv = 1.0 / cell;
+    ms->grid_w = gw;
+    ms->grid_h = gh;
+    memset(ms->grid_start, 0, (cells + 1) * sizeof(uint32_t));
+    for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
+        if (!ms->grid_in[id]) continue;
+        c = (uint32_t)om_move_grid_axis_cell(ms->scan_y[id], miny, ms->grid_inv, gh) * (uint32_t)gw
+            + (uint32_t)om_move_grid_axis_cell(ms->scan_x[id], minx, ms->grid_inv, gw);
+        ms->unit_cell[id] = c;
+        ms->grid_start[c + 1]++;
+    }
+    for (c = 0; c < cells; c++) {
+        ms->grid_start[c + 1] += ms->grid_start[c];
+        ms->grid_fill[c] = ms->grid_start[c];
+    }
+    for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
+        uint32_t slot;
+        if (!ms->grid_in[id]) continue;
+        slot = ms->grid_fill[ms->unit_cell[id]]++;
+        ms->unit_slot[id] = slot;
+        ms->slot_id[slot] = id;
+        ms->slot_x[slot] = ms->slot_fx[slot] = ms->scan_x[id];
+        ms->slot_y[slot] = ms->slot_fy[slot] = ms->scan_y[id];
+    }
+    ms->slot_base = n;
+    ms->n_spill = 0;
+    ms->grid_disp = 0.0;
+    ms->grid_live = 1;
+}
+
+/* The cells that can hold a unit within r of (x, y): every unit still in a
+ * cell is within grid_disp of where it was filed. The cells of one row are
+ * consecutive slots. Returns 0 when there are none. */
+static inline int om_move_grid_box(const om_move_state *ms, double x, double y, double r, int32_t *x0, int32_t *x1, int32_t *y0, int32_t *y1) {
+    double reach = r + ms->grid_disp + OM_MOVE_GRID_BOUND_PAD;
+    int32_t xa = om_move_floor_i((x - reach - ms->grid_ox) * ms->grid_inv), xb = om_move_floor_i((x + reach - ms->grid_ox) * ms->grid_inv);
+    int32_t ya = om_move_floor_i((y - reach - ms->grid_oy) * ms->grid_inv), yb = om_move_floor_i((y + reach - ms->grid_oy) * ms->grid_inv);
+    if (xa >= ms->grid_w || xb < 0 || ya >= ms->grid_h || yb < 0) return 0;
+    *x0 = xa > 0 ? xa : 0;
+    *x1 = xb >= ms->grid_w ? ms->grid_w - 1 : xb;
+    *y0 = ya > 0 ? ya : 0;
+    *y1 = yb >= ms->grid_h ? ms->grid_h - 1 : yb;
+    return 1;
+}
+
+static void om_move_grid_refresh(om_world *w, om_move_state *ms) {
+    if (!ms->grid_live) om_move_grid_rebuild(w, ms, 1);
+}
+
+/* Sorting networks (Batcher's odd-even merge sort) for the short candidate
+ * lists a collision query yields: fixed compare-exchanges with no data-
+ * dependent branch, which beat insertion sort on lists this short. */
+#define OM_MOVE_CE(lo, hi) do { t = (lo) < (hi) ? (lo) : (hi); (hi) = (lo) < (hi) ? (hi) : (lo); (lo) = t; } while (0)
+
+static void om_move_sort8(uint32_t *a) {
+    const uint32_t *in = a;
+    uint32_t *out = a;
+    uint32_t v0 = *in++, v1 = *in++, v2 = *in++, v3 = *in++, v4 = *in++, v5 = *in++, v6 = *in++, v7 = *in++, t;
+    OM_MOVE_CE(v0, v1);
+    OM_MOVE_CE(v2, v3);
+    OM_MOVE_CE(v4, v5);
+    OM_MOVE_CE(v6, v7);
+    OM_MOVE_CE(v0, v2);
+    OM_MOVE_CE(v1, v3);
+    OM_MOVE_CE(v4, v6);
+    OM_MOVE_CE(v5, v7);
+    OM_MOVE_CE(v1, v2);
+    OM_MOVE_CE(v5, v6);
+    OM_MOVE_CE(v0, v4);
+    OM_MOVE_CE(v1, v5);
+    OM_MOVE_CE(v2, v6);
+    OM_MOVE_CE(v3, v7);
+    OM_MOVE_CE(v2, v4);
+    OM_MOVE_CE(v3, v5);
+    OM_MOVE_CE(v1, v2);
+    OM_MOVE_CE(v3, v4);
+    OM_MOVE_CE(v5, v6);
+    *out++ = v0;
+    *out++ = v1;
+    *out++ = v2;
+    *out++ = v3;
+    *out++ = v4;
+    *out++ = v5;
+    *out++ = v6;
+    *out++ = v7;
+}
+
+static void om_move_sort16(uint32_t *a) {
+    const uint32_t *in = a;
+    uint32_t *out = a;
+    uint32_t v0 = *in++, v1 = *in++, v2 = *in++, v3 = *in++, v4 = *in++, v5 = *in++, v6 = *in++, v7 = *in++, v8 = *in++, v9 = *in++, v10 = *in++, v11 = *in++, v12 = *in++, v13 = *in++, v14 = *in++, v15 = *in++, t;
+    OM_MOVE_CE(v0, v1);
+    OM_MOVE_CE(v2, v3);
+    OM_MOVE_CE(v4, v5);
+    OM_MOVE_CE(v6, v7);
+    OM_MOVE_CE(v8, v9);
+    OM_MOVE_CE(v10, v11);
+    OM_MOVE_CE(v12, v13);
+    OM_MOVE_CE(v14, v15);
+    OM_MOVE_CE(v0, v2);
+    OM_MOVE_CE(v1, v3);
+    OM_MOVE_CE(v4, v6);
+    OM_MOVE_CE(v5, v7);
+    OM_MOVE_CE(v8, v10);
+    OM_MOVE_CE(v9, v11);
+    OM_MOVE_CE(v12, v14);
+    OM_MOVE_CE(v13, v15);
+    OM_MOVE_CE(v1, v2);
+    OM_MOVE_CE(v5, v6);
+    OM_MOVE_CE(v9, v10);
+    OM_MOVE_CE(v13, v14);
+    OM_MOVE_CE(v0, v4);
+    OM_MOVE_CE(v1, v5);
+    OM_MOVE_CE(v2, v6);
+    OM_MOVE_CE(v3, v7);
+    OM_MOVE_CE(v8, v12);
+    OM_MOVE_CE(v9, v13);
+    OM_MOVE_CE(v10, v14);
+    OM_MOVE_CE(v11, v15);
+    OM_MOVE_CE(v2, v4);
+    OM_MOVE_CE(v3, v5);
+    OM_MOVE_CE(v10, v12);
+    OM_MOVE_CE(v11, v13);
+    OM_MOVE_CE(v1, v2);
+    OM_MOVE_CE(v3, v4);
+    OM_MOVE_CE(v5, v6);
+    OM_MOVE_CE(v9, v10);
+    OM_MOVE_CE(v11, v12);
+    OM_MOVE_CE(v13, v14);
+    OM_MOVE_CE(v0, v8);
+    OM_MOVE_CE(v1, v9);
+    OM_MOVE_CE(v2, v10);
+    OM_MOVE_CE(v3, v11);
+    OM_MOVE_CE(v4, v12);
+    OM_MOVE_CE(v5, v13);
+    OM_MOVE_CE(v6, v14);
+    OM_MOVE_CE(v7, v15);
+    OM_MOVE_CE(v4, v8);
+    OM_MOVE_CE(v5, v9);
+    OM_MOVE_CE(v6, v10);
+    OM_MOVE_CE(v7, v11);
+    OM_MOVE_CE(v2, v4);
+    OM_MOVE_CE(v3, v5);
+    OM_MOVE_CE(v6, v8);
+    OM_MOVE_CE(v7, v9);
+    OM_MOVE_CE(v10, v12);
+    OM_MOVE_CE(v11, v13);
+    OM_MOVE_CE(v1, v2);
+    OM_MOVE_CE(v3, v4);
+    OM_MOVE_CE(v5, v6);
+    OM_MOVE_CE(v7, v8);
+    OM_MOVE_CE(v9, v10);
+    OM_MOVE_CE(v11, v12);
+    OM_MOVE_CE(v13, v14);
+    *out++ = v0;
+    *out++ = v1;
+    *out++ = v2;
+    *out++ = v3;
+    *out++ = v4;
+    *out++ = v5;
+    *out++ = v6;
+    *out++ = v7;
+    *out++ = v8;
+    *out++ = v9;
+    *out++ = v10;
+    *out++ = v11;
+    *out++ = v12;
+    *out++ = v13;
+    *out++ = v14;
+    *out++ = v15;
 }
 
 static void om_move_sift_down(uint32_t *a, uint32_t root, uint32_t n) {
@@ -369,11 +655,23 @@ static void om_move_sift_down(uint32_t *a, uint32_t root, uint32_t n) {
     a[root] = v;
 }
 
-/* Heapsort: ids are unique, and libm_lint bans qsort (its result on ties
- * and its algorithm are the platform's). */
+/* Sorts ids (unique). Up to 16 go through a network on a copy padded with
+ * the largest value; more use insertion sort, then heapsort: libm_lint bans
+ * qsort (its result on ties and its algorithm are the platform's). The array
+ * must have room for 16 entries. */
 static void om_move_sort_ids(uint32_t *a, uint32_t n) {
     uint32_t i;
     if (n < 2) return;
+    if (n <= OM_MOVE_NET_SMALL) {
+        for (i = n; i < OM_MOVE_NET_SMALL; i++) a[i] = 0xFFFFFFFFu;
+        om_move_sort8(a);
+        return;
+    }
+    if (n <= OM_MOVE_NET_LARGE) {
+        for (i = n; i < OM_MOVE_NET_LARGE; i++) a[i] = 0xFFFFFFFFu;
+        om_move_sort16(a);
+        return;
+    }
     if (n <= OM_MOVE_INSERTION_SORT_MAX) {
         for (i = 1; i < n; i++) {
             uint32_t v = a[i], j = i;
@@ -389,24 +687,129 @@ static void om_move_sort_ids(uint32_t *a, uint32_t n) {
     }
 }
 
+/* Bit i of the result is set when slot lo + i (i < OM_MOVE_MASK_BITS, lo + i < hi) holds a
+ * unit within sqrt(r2) of (x, y); a NaN slot (a free or vacated one) never
+ * passes. The SSE2 path does the same IEEE double arithmetic two slots at a
+ * time, so both paths agree. */
+static uint64_t om_move_near_mask(const om_move_state *ms, uint32_t lo, uint32_t hi, double x, double y, double r2) {
+    const double *sx = ms->slot_x + lo, *sy = ms->slot_y + lo;
+    uint32_t count = hi - lo > OM_MOVE_MASK_BITS ? OM_MOVE_MASK_BITS : hi - lo, i = 0;
+    uint64_t mask = 0;
+#if defined(__SSE2__)
+    const __m128d vx = _mm_set1_pd(x), vy = _mm_set1_pd(y), vr2 = _mm_set1_pd(r2);
+    for (; i + 2 <= count; i += 2) {
+        __m128d dx = _mm_sub_pd(_mm_loadu_pd(sx + i), vx), dy = _mm_sub_pd(_mm_loadu_pd(sy + i), vy);
+        mask |= (uint64_t)(uint32_t)_mm_movemask_pd(_mm_cmple_pd(_mm_add_pd(_mm_mul_pd(dx, dx), _mm_mul_pd(dy, dy)), vr2)) << i;
+    }
+#endif
+    for (; i < count; i++) {
+        double dx = sx[i] - x, dy = sy[i] - y;
+        mask |= (uint64_t)(dx * dx + dy * dy <= r2) << i;
+    }
+    return mask;
+}
+
+/* Index of the lowest set bit of a nonzero mask. */
+static uint32_t om_move_lowest_bit(uint64_t mask) {
+#if defined(__GNUC__)
+    return (uint32_t)__builtin_ctzll(mask);
+#else
+    uint32_t i = 0;
+    while (!(mask & 1u)) { mask >>= 1; i++; }
+    return i;
+#endif
+}
+
+/* The scans below test slots [lo, hi) for a unit within sqrt(r2) of
+ * (x, y) and append the hits from index n on, returning the new count. */
+static uint32_t om_move_scan_ids(om_move_state *ms, uint32_t lo, uint32_t hi, double x, double y, double r2, uint32_t min_id, uint32_t n) {
+    uint32_t base;
+    for (base = lo; base < hi; base += OM_MOVE_MASK_BITS) {
+        uint64_t mask = om_move_near_mask(ms, base, hi, x, y, r2);
+        while (mask) {
+            uint32_t id = ms->slot_id[base + om_move_lowest_bit(mask)];
+            mask &= mask - 1;
+            ms->grid_scratch[n] = id;
+            n += (uint32_t)(id > min_id);
+        }
+    }
+    return n;
+}
+
+static uint32_t om_move_scan_pos(om_move_state *ms, uint32_t lo, uint32_t hi, double x, double y, double r2, uint32_t self_id, uint32_t n) {
+    uint32_t base;
+    for (base = lo; base < hi; base += OM_MOVE_MASK_BITS) {
+        uint64_t mask = om_move_near_mask(ms, base, hi, x, y, r2);
+        while (mask) {
+            uint32_t slot = base + om_move_lowest_bit(mask);
+            mask &= mask - 1;
+            ms->scan_x[n] = ms->slot_x[slot];
+            ms->scan_y[n] = ms->slot_y[slot];
+            n += (uint32_t)(ms->slot_id[slot] != self_id);
+        }
+    }
+    return n;
+}
+
 /* Ids above min_id whose unit lies within r of (x, y), ascending, into
- * ms->grid_scratch; returns the count. */
-static uint32_t om_move_grid_collect(om_move_state *ms, double x, double y, double r, uint32_t min_id) {
-    int32_t cx0 = om_move_grid_coord(x - r), cx1 = om_move_grid_coord(x + r);
-    int32_t cy0 = om_move_grid_coord(y - r), cy1 = om_move_grid_coord(y + r);
-    int32_t cx, cy;
-    uint32_t n = 0, id;
-    for (cy = cy0; cy <= cy1; cy++) {
-        for (cx = cx0; cx <= cx1; cx++) {
-            for (id = ms->grid_head[om_move_grid_bucket(cx, cy)]; id; id = ms->grid_next[id]) {
-                double dx, dy;
-                if (id <= min_id || ms->grid_cx[id] != cx || ms->grid_cy[id] != cy) continue;
-                dx = ms->units[id].x - x; dy = ms->units[id].y - y;
-                if (dx * dx + dy * dy <= r * r) ms->grid_scratch[n++] = id;
-            }
+ * ms->grid_scratch; returns the count. The cells of one grid row are
+ * consecutive, so a row of the query's cell range is one run of slots. */
+static uint32_t om_move_grid_collect(om_world *w, om_move_state *ms, double x, double y, double r, uint32_t min_id) {
+    const double r2 = r * r;
+    int32_t cx0, cx1, cy0, cy1, cy;
+    uint32_t n;
+    om_move_grid_refresh(w, ms);
+    n = om_move_scan_ids(ms, ms->slot_base, ms->slot_base + ms->n_spill, x, y, r2, min_id, 0);
+    if (om_move_grid_box(ms, x, y, r, &cx0, &cx1, &cy0, &cy1)) {
+        for (cy = cy0; cy <= cy1; cy++) {
+            uint32_t row = (uint32_t)cy * (uint32_t)ms->grid_w;
+            n = om_move_scan_ids(ms, ms->grid_start[row + (uint32_t)cx0], ms->grid_start[row + (uint32_t)cx1 + 1], x, y, r2, min_id, n);
         }
     }
     om_move_sort_ids(ms->grid_scratch, n);
+    return n;
+}
+
+/* Whether any unit above min_id lies within r of (x, y). */
+static int om_move_grid_any_above(om_world *w, om_move_state *ms, double x, double y, double r, uint32_t min_id) {
+    const double r2 = r * r;
+    int32_t cx0, cx1, cy0, cy1, cy;
+    uint32_t i, base, lo, hi;
+    om_move_grid_refresh(w, ms);
+    for (i = ms->slot_base; i < ms->slot_base + ms->n_spill; i++) {
+        double dx = ms->slot_x[i] - x, dy = ms->slot_y[i] - y;
+        if (ms->slot_id[i] > min_id && dx * dx + dy * dy <= r2) return 1;
+    }
+    if (!om_move_grid_box(ms, x, y, r, &cx0, &cx1, &cy0, &cy1)) return 0;
+    for (cy = cy0; cy <= cy1; cy++) {
+        uint32_t row = (uint32_t)cy * (uint32_t)ms->grid_w;
+        lo = ms->grid_start[row + (uint32_t)cx0];
+        hi = ms->grid_start[row + (uint32_t)cx1 + 1];
+        for (base = lo; base < hi; base += OM_MOVE_MASK_BITS) {
+            uint64_t mask = om_move_near_mask(ms, base, hi, x, y, r2);
+            while (mask) {
+                if (ms->slot_id[base + om_move_lowest_bit(mask)] > min_id) return 1;
+                mask &= mask - 1;
+            }
+        }
+    }
+    return 0;
+}
+
+/* Positions of every unit but self_id within r of (x, y), into ms->scan_x/
+ * scan_y (unordered); returns the count. */
+static uint32_t om_move_grid_gather(om_world *w, om_move_state *ms, uint32_t self_id, double x, double y, double r) {
+    const double r2 = r * r;
+    int32_t cx0, cx1, cy0, cy1, cy;
+    uint32_t n;
+    om_move_grid_refresh(w, ms);
+    n = om_move_scan_pos(ms, ms->slot_base, ms->slot_base + ms->n_spill, x, y, r2, self_id, 0);
+    if (om_move_grid_box(ms, x, y, r, &cx0, &cx1, &cy0, &cy1)) {
+        for (cy = cy0; cy <= cy1; cy++) {
+            uint32_t row = (uint32_t)cy * (uint32_t)ms->grid_w;
+            n = om_move_scan_pos(ms, ms->grid_start[row + (uint32_t)cx0], ms->grid_start[row + (uint32_t)cx1 + 1], x, y, r2, self_id, n);
+        }
+    }
     return n;
 }
 
@@ -443,9 +846,7 @@ static om_move_unit *om_move_touch(om_world *w, om_move_state *ms, uint32_t unit
         mu->waiting = 0;
         for (f = 0; f < OM_MAX_FACTIONS; f++) mu->visible[f] = 1;
         if (unit_id > ms->discovery_max) ms->discovery_max = unit_id;
-        if (ms->grid_live && om_unit_alive(w, unit_id)) {
-            om_move_grid_link(ms, unit_id, om_move_grid_coord(mu->x), om_move_grid_coord(mu->y));
-        }
+        if (ms->grid_live && om_unit_alive(w, unit_id)) ms->grid_live = 0;
     }
     return mu;
 }
@@ -576,35 +977,66 @@ static uint32_t om_move_bfs_path_len(om_move_state *ms, double x0, double y0, do
 
 /* ------------------------------------------------------------ collision */
 
-static int om_move_probe_clear(om_world *w, om_move_state *ms, uint32_t self_id, double cand_x, double cand_y) {
-    double block_r = 2.0 * OM_UNIT_COLLISION_RADIUS;
-    double reach = block_r + 1.0;
-    int32_t cx0 = om_move_grid_coord(cand_x - reach), cx1 = om_move_grid_coord(cand_x + reach);
-    int32_t cy0 = om_move_grid_coord(cand_y - reach), cy1 = om_move_grid_coord(cand_y + reach);
-    int32_t cx, cy;
-    uint32_t id;
-    (void)w;
-    for (cy = cy0; cy <= cy1; cy++) {
-        for (cx = cx0; cx <= cx1; cx++) {
-            for (id = ms->grid_head[om_move_grid_bucket(cx, cy)]; id; id = ms->grid_next[id]) {
-                double dx, dy, dist;
-                if (id == self_id || ms->grid_cx[id] != cx || ms->grid_cy[id] != cy) continue;
-                dx = ms->units[id].x - cand_x; dy = ms->units[id].y - cand_y;
-                dist = sqrt(dx * dx + dy * dy);
-                if (dist < block_r) return 0;
-            }
+/* The steering probe of R-097-03 for one unit: probe_clear asks whether
+ * (cand_x, cand_y) is at least the two collision radii from every other unit,
+ * against the units gathered around the probing unit. Every probe point is
+ * OM_STEERING_PROBE_DIST (om_sin/om_cos are off by under 5e-4 each, so
+ * under 40.1) from that unit, so its blockers all lie within the gather
+ * radius. */
+static uint32_t om_move_probe_gather(om_world *w, om_move_state *ms, uint32_t self_id, double x, double y) {
+    return om_move_grid_gather(w, ms, self_id, x, y, OM_MOVE_PROBE_REACH + 2.0 * OM_UNIT_COLLISION_RADIUS);
+}
+
+/* Whether any gathered unit is closer than sqrt(limit2) to (cand_x, cand_y).
+ * Neighbouring probe points share blockers, so the last few blockers found
+ * (hints, indexes into the gathered list) are tried first; whether any unit
+ * blocks does not depend on the order they are tried in. */
+static int om_move_probe_blocked(const om_move_state *ms, uint32_t n_near, uint32_t *hints, double cand_x, double cand_y, double limit2) {
+    uint32_t i, h;
+    if (n_near == 0) return 0;
+    for (h = 0; h < OM_MOVE_PROBE_HINTS; h++) {
+        double dx = ms->scan_x[hints[h]] - cand_x, dy = ms->scan_y[hints[h]] - cand_y;
+        if (dx * dx + dy * dy < limit2) return 1;
+    }
+    for (i = 0; i < n_near; i++) {
+        double dx = ms->scan_x[i] - cand_x, dy = ms->scan_y[i] - cand_y;
+        if (dx * dx + dy * dy < limit2) {
+            for (h = OM_MOVE_PROBE_HINTS - 1; h > 0; h--) hints[h] = hints[h - 1];
+            hints[0] = i;
+            return 1;
         }
     }
-    return 1;
+    return 0;
+}
+
+/* sqrt(d2) < block_r exactly when d2 < block_r^2 (sqrt is correctly rounded
+ * and rounds the predecessor of block_r^2 below block_r), so this is the
+ * sqrt compare of R-097-03 without the sqrt. */
+static int om_move_probe_clear(const om_move_state *ms, uint32_t n_near, uint32_t *hints, double cand_x, double cand_y) {
+    return !om_move_probe_blocked(ms, n_near, hints, cand_x, cand_y, (2.0 * OM_UNIT_COLLISION_RADIUS) * (2.0 * OM_UNIT_COLLISION_RADIUS));
+}
+
+/* A probe point computed with om_sin/om_cos is within 0.05 of the same point
+ * computed with om_move_sincos_approx (om_sin is off by under 4.6e-4 and the
+ * approximation by under 2.3e-5 per component, times the 40 wu probe
+ * distance, times sqrt(2)), so a unit closer to the approximate point than
+ * the collision diameter less OM_MOVE_PROBE_SURE_MARGIN is closer than the
+ * diameter to the real one: the probe is blocked without evaluating
+ * om_sin/om_cos for it. */
+static int om_move_probe_sure_blocked(const om_move_state *ms, uint32_t n_near, uint32_t *hints, double cand_x, double cand_y) {
+    const double sure = 2.0 * OM_UNIT_COLLISION_RADIUS - OM_MOVE_PROBE_SURE_MARGIN;
+    return om_move_probe_blocked(ms, n_near, hints, cand_x, cand_y, sure * sure);
 }
 
 /* One colliding pair, a's id below b's; returns 1 when a position was
  * written. d2 >= target^2 implies sqrt(d2) >= target (sqrt is monotonic and
  * exact at target^2), so that early return matches the sqrt compare. */
-static int om_move_collide_pair(om_move_state *ms, om_move_unit *a, om_move_unit *b) {
+static int om_move_collide_pair(om_move_state *ms, uint32_t ia, uint32_t ib) {
     double dx, dy, dist, target, overlap, ux, uy;
+    double ax = om_move_grid_x(ms, ia), ay = om_move_grid_y(ms, ia);
+    double bx = om_move_grid_x(ms, ib), by = om_move_grid_y(ms, ib);
     int changed = 0;
-    dx = b->x - a->x; dy = b->y - a->y;
+    dx = bx - ax; dy = by - ay;
     target = 2.0 * OM_UNIT_COLLISION_RADIUS;
     if (dx * dx + dy * dy >= target * target) return 0;
     dist = sqrt(dx * dx + dy * dy);
@@ -614,12 +1046,12 @@ static int om_move_collide_pair(om_move_state *ms, om_move_unit *a, om_move_unit
          * a's id < b's always here) moves in the canonical +x
          * direction, the higher id the opposite way. */
         double half = target / 2.0;
-        a->x += half;
-        b->x -= half;
+        ax += half;
+        bx -= half;
         changed = 1;
     } else {
-        int a_stat = om_move_is_stationary(a);
-        int b_stat = om_move_is_stationary(b);
+        int a_stat = ms->stat[ia];
+        int b_stat = ms->stat[ib];
         overlap = target - dist;
         ux = dx / dist; uy = dy / dist;
         if (a_stat && b_stat) {
@@ -627,56 +1059,63 @@ static int om_move_collide_pair(om_move_state *ms, om_move_unit *a, om_move_unit
              * "stationary takes zero push" rule for either side;
              * not exercised by any acceptance test. */
         } else if (a_stat) {
-            b->x += ux * overlap; b->y += uy * overlap;
+            bx += ux * overlap; by += uy * overlap;
             changed = 1;
         } else if (b_stat) {
-            a->x -= ux * overlap; a->y -= uy * overlap;
+            ax -= ux * overlap; ay -= uy * overlap;
             changed = 1;
         } else {
-            a->x -= ux * overlap * 0.5; a->y -= uy * overlap * 0.5;
-            b->x += ux * overlap * 0.5; b->y += uy * overlap * 0.5;
+            ax -= ux * overlap * 0.5; ay -= uy * overlap * 0.5;
+            bx += ux * overlap * 0.5; by += uy * overlap * 0.5;
             changed = 1;
         }
     }
-    om_move_grid_update(ms, a);
-    om_move_grid_update(ms, b);
+    om_move_grid_set(ms, ia, ax, ay);
+    om_move_grid_set(ms, ib, bx, by);
     return changed;
 }
 
-/* Same pairs in the same order as an all-pairs i < j sweep with live
- * positions. For unit a the candidates are the ids above it within
- * reach + slack of a's position when queried; b never moves before its own
- * pair with a, and a is re-queried once it has drifted more than half the
- * slack, so no pair the sweep would have resolved is missed. */
+/* One collision iteration: units in ascending id order; for unit a, its
+ * partners (the units above it that overlap it) in ascending id order, each
+ * resolved against a's position as the earlier ones left it, which is the
+ * order of an all-pairs i < j sweep with live positions. Nothing but a's own
+ * pairs moves a partner b during a's turn, so the partners come from a
+ * neighbour list: the units above a within target + slack of a's position
+ * when queried. It stays complete while a is within slack of that position,
+ * and a is re-queried once it has moved further.
+ *
+ * Kept from the sweep this replaced (see also: OM_MOVE_LIST_REACH): that sweep
+ * built its list at twice the reach and examined a's drift only before its
+ * next listed candidate, so a unit that drifted past the slack after its last
+ * listed candidate ended its turn without a re-query, whatever it now
+ * overlapped. Results match it bit for bit, so that stop is reproduced: the
+ * turn ends when the wider list has no candidate left
+ * (om_move_grid_any_above). */
 static int om_move_collision_once(om_world *w, om_move_state *ms) {
     const double target = 2.0 * OM_UNIT_COLLISION_RADIUS;
-    const double slack = target;
-    const double drift2 = (slack * 0.5) * (slack * 0.5);
+    const double slack = OM_MOVE_COLLISION_SLACK;
+    const double drift2 = slack * slack;
     uint32_t id_i;
     int changed = 0;
     for (id_i = 1; id_i <= ms->discovery_max; id_i++) {
-        om_move_unit *a = om_move_get(ms, id_i);
-        uint32_t n, k, last = id_i;
+        uint32_t n, k;
         double ax0, ay0;
-        if (!a || !a->in_use || !ms->grid_in[id_i]) continue;
-        ax0 = a->x; ay0 = a->y;
-        n = om_move_grid_collect(ms, ax0, ay0, target + slack, last);
+        if (!ms->grid_in[id_i]) continue;
+        ax0 = om_move_grid_x(ms, id_i); ay0 = om_move_grid_y(ms, id_i);
+        n = om_move_grid_collect(w, ms, ax0, ay0, target + slack, id_i);
         for (k = 0; k < n; k++) {
             uint32_t id_j = ms->grid_scratch[k];
-            double mx = a->x - ax0, my = a->y - ay0;
+            double mx, my;
+            if (om_move_collide_pair(ms, id_i, id_j)) changed = 1;
+            mx = om_move_grid_x(ms, id_i) - ax0; my = om_move_grid_y(ms, id_i) - ay0;
             if (mx * mx + my * my > drift2) {
-                ax0 = a->x; ay0 = a->y;
-                n = om_move_grid_collect(ms, ax0, ay0, target + slack, last);
-                k = 0;
-                while (k < n && ms->grid_scratch[k] <= last) k++;
-                if (k >= n) break;
-                id_j = ms->grid_scratch[k];
+                if (k + 1 >= n && !om_move_grid_any_above(w, ms, ax0, ay0, OM_MOVE_LIST_REACH, id_j)) break;
+                ax0 = om_move_grid_x(ms, id_i); ay0 = om_move_grid_y(ms, id_i);
+                n = om_move_grid_collect(w, ms, ax0, ay0, target + slack, id_j);
+                k = (uint32_t)-1;
             }
-            if (om_move_collide_pair(ms, a, &ms->units[id_j])) changed = 1;
-            last = id_j;
         }
     }
-    (void)w;
     return changed;
 }
 
@@ -715,17 +1154,27 @@ static void om_move_settle_record(om_move_state *ms) {
 }
 
 static void om_move_collision_pass_internal(om_world *w, om_move_state *ms) {
-    int iter;
+    int iter, settled = 0;
+    uint32_t id;
     om_move_discover(w, ms);
     if (om_move_settle_matches(w, ms)) return;
-    om_move_grid_rebuild(w, ms);
+    om_move_grid_rebuild(w, ms, 1);
     ms->settle_valid = 0;
+    for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
+        ms->stat[id] = (uint8_t)om_move_is_stationary(&ms->units[id]);
+    }
     for (iter = 0; iter < OM_COLLISION_MAX_ITER; iter++) {
         if (!om_move_collision_once(w, ms)) {
-            om_move_settle_record(ms);
+            settled = 1;
             break;
         }
     }
+    for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
+        if (!ms->grid_in[id]) continue;
+        ms->units[id].x = om_move_grid_x(ms, id);
+        ms->units[id].y = om_move_grid_y(ms, id);
+    }
+    if (settled) om_move_settle_record(ms);
 }
 
 /* -------------------------------------------------------------- ticking */
@@ -796,13 +1245,18 @@ static void om_move_tick_unit(om_world *w, om_move_state *ms, uint32_t id, uint3
     }
 
     if (!mu->deflecting) {
-        uint32_t k;
+        uint32_t k, hints[OM_MOVE_PROBE_HINTS] = {0}, n_near = om_move_probe_gather(w, ms, id, mu->x, mu->y);
+        double sin_h = 0.0, cos_h = 0.0;
         int found = 0;
+        if (n_near) om_move_sincos_approx(heading, &sin_h, &cos_h);
         for (k = 0; k < OM_STEERING_SWEEP_COUNT; k++) {
             double test_heading = heading + OM_STEERING_SWEEP_ANGLES[k];
+            if (n_near && om_move_probe_sure_blocked(ms, n_near, hints,
+                    mu->x + OM_STEERING_PROBE_DIST * (cos_h * ms->sweep_cos[k] - sin_h * ms->sweep_sin[k]),
+                    mu->y + OM_STEERING_PROBE_DIST * (sin_h * ms->sweep_cos[k] + cos_h * ms->sweep_sin[k]))) continue;
             double px = mu->x + OM_STEERING_PROBE_DIST * om_cos(test_heading);
             double py = mu->y + OM_STEERING_PROBE_DIST * om_sin(test_heading);
-            if (om_move_probe_clear(w, ms, id, px, py)) {
+            if (om_move_probe_clear(ms, n_near, hints, px, py)) {
                 heading = test_heading;
                 found = 1;
                 if (OM_STEERING_SWEEP_ANGLES[k] != 0.0) {
@@ -870,7 +1324,7 @@ static void om_move_tick_once(om_world *w, om_move_state *ms, uint64_t new_tick,
     uint32_t id;
     om_move_discover(w, ms);
     om_move_apply_queue_for_tick(w, ms, new_tick - 1);
-    om_move_grid_rebuild(w, ms);
+    om_move_grid_rebuild(w, ms, 1);
     for (id = 1; id <= ms->discovery_max; id++) {
         om_move_tick_unit(w, ms, id, period);
     }
