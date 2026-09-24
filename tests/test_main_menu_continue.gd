@@ -11,7 +11,9 @@ extends SceneTree
 #   qa_set_bridge(bridge) -> void   bridge has list_saves() -> Array; re-evaluates CONTINUE
 #   qa_state() -> Dictionary        JSON-safe: continue_enabled (bool), slot_count (int)
 # and of the CONTINUE menu item: a control named "Continue" (NewGame's sibling naming),
-# dimmed (modulate.a < 1) and ignoring the mouse when there are no saves.
+# dimmed and ignoring the mouse when there are no saves. The dim lives on the item's
+# Label child: the entrance animation tweens every menu item's own modulate to 1.0 and
+# would erase a dim set there.
 
 const SCENE_PATH := "res://scenes/main_menu/main_menu.tscn"
 
@@ -63,6 +65,13 @@ func _find_named(node: Node, node_name: String):
 	return null
 
 
+func _label_alpha(item: Node) -> float:
+	for c in item.get_children():
+		if c is Label:
+			return (c as Label).modulate.a
+	return -1.0
+
+
 func _run_tests() -> void:
 	var scene: Node = (load(SCENE_PATH) as PackedScene).instantiate()
 	get_root().add_child(scene)
@@ -83,8 +92,8 @@ func _run_tests() -> void:
 	var item = _find_named(scene, "Continue")
 	_assert(item != null, "no control named Continue in the main menu")
 	if item != null:
-		_assert((item as Control).modulate.a < 1.0 and (item as Control).mouse_filter == Control.MOUSE_FILTER_IGNORE,
-			"with no saves the Continue item should be dimmed and ignore the mouse (alpha %s, filter %s)" % [(item as Control).modulate.a, (item as Control).mouse_filter])
+		_assert(_label_alpha(item) < 1.0 and (item as Control).mouse_filter == Control.MOUSE_FILTER_IGNORE,
+			"with no saves the Continue item should be dimmed and ignore the mouse (label alpha %s, filter %s)" % [_label_alpha(item), (item as Control).mouse_filter])
 
 	fake.slots = [{"slot": "campaign_1", "tick": 10, "chapter": 0, "version": 1}]
 	scene.qa_set_bridge(fake)
@@ -92,8 +101,8 @@ func _run_tests() -> void:
 	_assert(int(some.get("slot_count", -1)) == 1 and bool(some.get("continue_enabled", false)),
 		"with one save: slot_count %s continue_enabled %s, expected 1 / true" % [some.get("slot_count"), some.get("continue_enabled")])
 	if item != null:
-		_assert((item as Control).mouse_filter != Control.MOUSE_FILTER_IGNORE and is_equal_approx((item as Control).modulate.a, 1.0),
-			"with a save the Continue item should be enabled (alpha %s, filter %s)" % [(item as Control).modulate.a, (item as Control).mouse_filter])
+		_assert((item as Control).mouse_filter != Control.MOUSE_FILTER_IGNORE and is_equal_approx(_label_alpha(item), 1.0),
+			"with a save the Continue item should be enabled (label alpha %s, filter %s)" % [_label_alpha(item), (item as Control).mouse_filter])
 
 	scene.queue_free()
 	await process_frame
