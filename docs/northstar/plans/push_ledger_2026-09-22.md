@@ -327,3 +327,23 @@ One row per event: freeze steps, attaches, reverts, parks, rung gates, harness e
 | day2 | squash conflicts | after the net-diff harness (agora 66ead53), every chain tip whose merge-base predates the F2 stub it fills conflicts add/add against main's stub, and M0's bk-14/17/19 conflicted on the ledger and register tails; ruling: chain tips are rebuilt by copy on current main (owned files only, suffix -r), M0's branches likewise (tests-fix-5b/6b, scale-suite-b, bk-21), and ledger rows travel through the clerk's passes only |
 | day2 | mirror | the bare mirror was found emptied after the first squash run (cause not reproduced; the corrupted copy is kept beside it); agora e89c50b validates the mirror, moves an invalid one aside and re-clones, and refuses any cleanup that resolves to the bare dir |
 | day2 | finding | `docs B11-2 push/B11-3` and `merge B11-2 push/B11-3` both REJECT with empty squash diff (content already on main), so the queue's `after: B11-2` gate never flips true even though the substance landed; `B11-5`/`B9-4`/`B9-9`/`B9-10-r` stay blocked on this bookkeeping gap. Flagging for M0 to either land a trivial B11-2 marker commit or tell the clerk to treat empty-diff REJECTs as landed for gating purposes. |
+| day2 | docs client-tests-r (3rd attempt, fetch+retry per M0 ruling) | REJECT harness fetch push/client-tests-r failed: could not find remote ref, persists -- recorded, moving on |
+| day2 | tests-fix-6b resolution attempt | mechanical part works (test diff applies clean to fresh main, evidence-file append-only conflict resolved by appending branch's new tail section after main's current tail); E14/S123 fix passes (3/3) against current main's build; but E08/S055's strengthened assertion `chosen_region == 2` FAILS against current main (`assert 3 == 2`) -- the fixture's own logic is fine (matches its own base) but current main's mission_generator/candidate-pool now resolves region 3 (the hostile neighbor, higher military/economy) instead of region 2 (player-owned frontier) as the chosen target. This is a real behavior mismatch against a later landed change, not a mechanical conflict -- did not push, out of clerk scope, flagging for M0/design |
+| day2 | docs B11-5 (push/B11-5, old) | REJECT harness fetch failed: could not find remote ref (branch never pushed, superseded by push/B11-5-r) |
+| day2 | docs bk-16 | OK  collection and lints OK |
+| day2 | merge B7-7 (push/B7-10-r) | OK  merged |
+| day2 | merge B1-7 (push/B1-8-r) | OK  merged |
+| day2 | docs B11-5 (push/B11-5-r) | OK  collection and lints OK |
+| day2 | docs B10c-5-r | OK  collection and lints OK |
+| day2 | merge B9-4 (push/B9-10, old) | REJECT merge-conflict squash apply onto fresh main failed: conflict in csrc/mission.c |
+| day2 | merge B7-8 (push/B7-8, old) | REJECT merge-conflict squash apply onto fresh main failed: conflict in csrc/generational.c |
+| day2 | docs B15m-4 (re-run) | REJECT merge-conflict squash apply onto fresh main failed: conflict in csrc/chronicle.c, csrc/mission.c, csrc/tactical_mapgen.c, csrc/unit.c, symbol_modules.toml (already landed earlier this session, likely stale base now) |
+| day2 | merge B9-4 (push/B9-10-r) | REJECT merge-conflict squash apply onto fresh main failed: conflict in csrc/mission.c (likely stale vs B10c-5-r, just landed, heavy mission.c changes) |
+| day2 | merge B7-8 (push/B7-8-r) | OK  merged |
+| day2 | merge B11-6 (push/B11-6-r) | OK  merged |
+| day2 | merge B12-8 (push/B12-8-r) | OK  merged |
+| day2 | merge B1-9 (push/B1-9, old) | REJECT merge-conflict squash apply onto fresh main failed: conflict in csrc/events.c |
+| day2 | merge B1-9 (push/B1-9-r) | REJECT merge-conflict squash apply onto fresh main failed: conflict in csrc/events.c |
+| day2 | docs tests-tick-period | REJECT harness fetch failed: could not find remote ref, persists after fetch+retry (branch not on origin yet) |
+| day2 | docs B11-7 | REJECT harness fetch failed: could not find remote ref, persists after fetch+retry (branch not on origin yet) |
+| day2 | sweep (pass 4, after ff to origin/main + `make -j8` clean build) | E-04 36p/0f; E-08 49p/1f (`test_R_055_04`); E-09 39p/0f, fully green (was 35/4); E-10 43p/1f/1skip (`test_R_078_06`); E-11 46p/2f (`test_R_085_02`, `test_R_085_04`); E-12 22p/1f (`test_R_093_02`); E-13 33p/2f (`test_R_099_01`, `test_R_101_01`); E-14 21p/1f (`test_R_123_01`); E-15 24p/1f (`test_R_130_02`); E-16 8p/1f (`test_control_R_111_02`); transport 12p/10f unchanged; qa/t1 31p/2f/1skip unchanged. Landed this pass: B11-2 (retroactively, empty-diff ruling), B11-5, bk-16, B7-7, B1-7, B7-8, B11-6, B12-8 (mostly via -r rebuilds) |
