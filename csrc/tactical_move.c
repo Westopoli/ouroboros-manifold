@@ -1133,20 +1133,18 @@ int om_unit_get_pos(const om_world *w, uint32_t unit, double *out_x, double *out
 int om_unit_has_active_buff(const om_world *w, uint32_t p0, const char *p1) {
     om_world *ww = (om_world *)w;
     if (!w || !p1) return 0;
+    if (strcmp(p1, "brace") == 0) return om_unit_brace_phase(ww, p0) == 2;
     /* No public accessor names which ability is active, only that one is
-     * (om_unit_ability_active, csrc/unit.c) -- see file header. Both named
-     * buffs this suite checks (Raider Surge, Vanguard Brace) are manual
-     * ability activations, so this is the best available proxy. */
-    if (strcmp(p1, "surge") == 0 || strcmp(p1, "brace") == 0) {
-        return om_unit_ability_active(ww, p0);
-    }
+     * (om_unit_ability_active, csrc/unit.c) -- see file header. Raider Surge
+     * is a manual ability activation, so this is the best available proxy. */
+    if (strcmp(p1, "surge") == 0) return om_unit_ability_active(ww, p0);
     return 0;
 }
 
 int om_unit_is_braced(const om_world *w, uint32_t p0) {
     om_world *ww = (om_world *)w;
     if (!w) return 0;
-    return om_unit_ability_active(ww, p0);
+    return om_unit_brace_phase(ww, p0) == 2;
 }
 
 void om_unit_set_facing(om_world *w, uint32_t p0, double p1) {
