@@ -58,15 +58,20 @@ func _ready() -> void:
 func state() -> Dictionary:
 	var scene_name := ""
 	var tick_val := tick
+	var result := {"scene": scene_name, "tick": tick_val}
 	var t := get_tree()
 	if t != null:
 		var cur := t.current_scene
 		if cur != null:
 			scene_name = cur.scene_file_path if cur.scene_file_path != "" else String(cur.name)
+			if cur.has_method("qa_state"):
+				result["qa"] = cur.qa_state()
 		var tb := get_node_or_null("/root/TacticalBridge")
 		if tb != null and "current_tick" in tb:
 			tick_val = tb.current_tick
-	return {"scene": scene_name, "tick": tick_val}
+	result["scene"] = scene_name
+	result["tick"] = tick_val
+	return result
 
 
 func tree() -> Dictionary:

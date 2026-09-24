@@ -45,6 +45,17 @@ require_harness() {
     fi
 }
 
+# A fresh worktree has neither logs/ (autoload/sim_bridge.gd and
+# scenes/tactical/perf_logger.gd both write cwd-relative log files even
+# under --path) nor .venv (the harness's own Python deps) and boots straight
+# to the error screen without them.
+ensure_worktree_setup() {
+    mkdir -p "$REPO_ROOT/logs"
+    if [[ ! -e "$REPO_ROOT/.venv" ]]; then
+        ln -s "$HOME/Projects/agora/.venv" "$REPO_ROOT/.venv"
+    fi
+}
+
 # A fresh directory outside the checkout: Godot writes crash/perf logs and
 # other cwd-relative files (autoload/sim_bridge.gd's logs/, perf_logger.gd)
 # even with --path pinning the project root elsewhere, and this is real
@@ -56,6 +67,7 @@ scratch_dir() {
 
 cmd_run() {
     require_harness
+    ensure_worktree_setup
     local res="1280x720" timeout="120"
     while [[ $# -gt 0 ]]; do
         case "$1" in
@@ -105,6 +117,7 @@ for _ in range(50):
 
 cmd_liveness() {
     require_harness
+    ensure_worktree_setup
     local timeout="60"
     while [[ $# -gt 0 ]]; do
         case "$1" in
