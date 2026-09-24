@@ -1,5 +1,7 @@
 extends Control
 
+const SimSession := preload("res://autoload/sim_session.gd")
+
 # C transport v1 rebind (piece C4, leaf-01). load_frame()/qa_state()/
 # qa_plant() are the new entry point that consumes a mission frame
 # (docs/architecture.md "chronicle frame, mission frame, debrief frame")
@@ -49,7 +51,7 @@ func _ready() -> void:
 		# placeholders for what the frame doesn't carry. A failed live load
 		# keeps the mock backfill and logs the reason; it never falls back
 		# to a fixture frame (C4-3).
-		var bridge = load("res://autoload/c_bridge.gd").new()
+		var bridge = SimSession.bridge()
 		if bridge.load_mission_live(bridge.live_seed(), bridge.DEFAULT_N_REGIONS, bridge.DEFAULT_FEATURES):
 			load_frame(bridge.mission_frame())
 			return
@@ -629,6 +631,16 @@ func _build_lineage_card(parent: Control) -> void:
 		content.add_child(first_line)
 
 
+# The player's Begin (E-12 S-092): ends recon over the shared session. The
+# tactical view is only routed to when the pipe accepted it.
+func begin_mission() -> bool:
+	var bridge = SimSession.bridge()
+	if bridge.begin_mission_live(bridge.live_seed(), bridge.DEFAULT_N_REGIONS, bridge.DEFAULT_FEATURES):
+		return true
+	push_error("mission_briefing: Begin failed: %s" % bridge.last_error())
+	return false
+
+
 func _build_footer(parent: Control) -> void:
 	var footer := HBoxContainer.new()
 	footer.add_theme_constant_override("separation", 12)
@@ -639,7 +651,8 @@ func _build_footer(parent: Control) -> void:
 	deploy_btn.text = "DEPLOY FORCES"
 	deploy_btn.accent_color = _accent
 	deploy_btn.pressed.connect(func():
-		SceneRouter.go_to("tactical_c")
+		if begin_mission():
+			SceneRouter.go_to("tactical_c")
 	)
 	footer.add_child(deploy_btn)
 

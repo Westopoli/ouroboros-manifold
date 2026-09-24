@@ -1,5 +1,7 @@
 extends Control
 
+const SimSession := preload("res://autoload/sim_session.gd")
+
 signal debrief_completed
 
 # C transport v1 debrief frame band int -> display string, worst to best.
@@ -36,7 +38,7 @@ func setup(params: Dictionary) -> void:
 func _ready() -> void:
 	if _params.is_empty():
 		_build_ui()
-		var bridge = load("res://autoload/c_bridge.gd").new()
+		var bridge = SimSession.bridge()
 		if bridge.load_debrief_live(bridge.live_seed(), bridge.DEFAULT_N_REGIONS, bridge.DEFAULT_FEATURES):
 			load_frame(bridge.debrief_frame())
 		else:
