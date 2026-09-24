@@ -14,8 +14,9 @@
  * own tick loop from its last-seen tactical tick (om_tactical_tick,
  * csrc/unit.c; the strategic w->tick is a distinct clock, R-055-02) up to
  * the current one before reading or writing anything. This makes every
- * command "apply immediately" (no tick boundary needed to observe it) while still producing a real per-tick
- * simulation for position/facing/collision -- see om_move_sync/
+ * command "apply immediately" (no tick boundary needed to observe it)
+ * while still producing a real per-tick simulation for
+ * position/facing/collision -- see om_move_sync/
  * om_move_tick_once below.
  *
  * Known cross-module gaps (unit.c/B10b, tactical_mapgen.c/B15m, fog.c/B11
