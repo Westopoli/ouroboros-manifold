@@ -353,3 +353,42 @@ One row per event: freeze steps, attaches, reverts, parks, rung gates, harness e
 | day2 | docs tests-fix-6c | OK  collection and lints OK -- R-123-01 tick-advance fix + R-055-04 self-consistent candidate-pool check (chosen_region must be one of the scored candidates, not hardcoded == 2); whole-suite 139f/614p -> 137f/616p, exactly the 2 targeted tests, no new red |
 | day2 | sweep (pass 5, after ff to origin/main, no C changes since pass 4) | E-04 36p/0f; E-08 50p/0f, fully green (was 49/1, tests-fix-6c landed); E-09 39p/0f; E-10 43p/1f/1skip (`test_R_078_06`); E-11 46p/2f (`test_R_085_02`, `test_R_085_04`); E-12 22p/1f (`test_R_093_02`); E-13 33p/2f (`test_R_099_01`, `test_R_101_01`); E-14 22p/0f, fully green (was 21/1, tests-fix-6c landed); E-15 24p/1f (`test_R_130_02`); E-16 8p/1f (`test_control_R_111_02`); transport 12p/10f/5errors -- the 5 errors are new, from `tests/transport/test_pipe_tactical_world.py` (landed via `client-tests-r`), all failing the same module-scope fixture assertion (`len(tactical) == 2`, gets 1) -- same root cause as the standing transport blocker (T1-3/T1-4/T1-5's om_pipe.c mission-begin implementation never landed cleanly all session, patch conflicts every attempt); qa/t1 31p/2f/1skip unchanged |
 | day2 | tests-fix-6c | resolved per M0's R-055-04 ruling: fixture registers a real player faction + candidate regions (needed so the pool isn't empty and `chosen_region != 0` is meaningful, not a fallback-to-zero artifact); assertion reads the candidate pool back via the side-effect-free `om_mission_candidates` accessor (same helper `test_E10_S072`'s `read_mission_candidates` uses) and checks `chosen_region` names one of the real scored candidates, instead of hardcoding `== 2` -- self-consistent whichever region wins. Caught and avoided a hazard: `om_mission_generator_run` already consumes the weighted-draw RNG internally (calls `om_mission_select` once), so re-invoking `om_mission_select` from the test to verify the pick would draw again and could legitimately disagree with the generator's own choice; used the read-only candidates accessor instead. Whole-suite `tests/csim`: 139f/614p -> 137f/616p, exactly the 2 targeted tests (R-123-01, R-055-04), no new red. Landed as `push/tests-fix-6c` (22efdba8), supersedes tests-fix-6 and tests-fix-6b (both REJECTed on unrelated evidence-file conflicts, never landed). |
+| day2 | merge T1-5 (push/T1-5, old) | landed (empty diff) -- content already on main via T1-3/T1-4 |
+| day2 | docs B11-7-r | OK  collection and lints OK |
+| day2 | merge B12-9 | REJECT merge-conflict squash apply onto fresh main failed: conflict in csrc/tactical_move.c |
+| day2 | merge C7-2 (push/C7-4) | OK  merged |
+| day2 | merge B10c-6 | REJECT harness unknown piece id 'B10c-6' (not in pieces.toml yet) |
+| day2 | merge C7-3 (push/C7-4) | landed (empty diff) -- content already captured by C7-2's merge from the same tip |
+| day2 | docs scale-dense-moving | OK  collection and lints OK |
+| day2 | merge C7-4 (push/C7-4) | landed (empty diff) -- content already captured by C7-2/C7-3's merges from the same tip |
+| day2 | merge C4-3 (push/C1-3b, old) | REJECT merge-conflict squash apply onto fresh main failed: conflict in c_bridge.gd chain files |
+| day2 | merge C4-3 (push/C1-3b-r) | OK  merged -- unblocks the c_bridge.gd chain (C3-3, C5-2, T2g-3, C2-4, C2-6, C4-4, C1-2, C1-3) |
+| day2 | merge C3-3 (push/C1-3b, old) | REJECT merge-conflict squash apply onto fresh main failed: conflict in scenes/world/chronicle_scroll_panel.gd |
+| day2 | merge C3-3 (push/C1-3b-r) | OK  merged |
+| day2 | docs B10c-6-r | OK  collection and lints OK |
+| day2 | merge C5-2 (push/C1-3b, old) | REJECT merge-conflict squash apply onto fresh main failed: conflict in scenes/tactical_c/tactical_view.gd |
+| day2 | merge C5-2 (push/C1-3b-r) | OK  merged |
+| day2 | merge B10c-7 | REJECT harness unknown piece id 'B10c-7' (not in pieces.toml yet) |
+| day2 | docs B10c-7-r | OK  collection and lints OK |
+| day2 | docs tests-tick-period-2 | OK  collection and lints OK |
+| day2 | merge T2g-3 (push/C1-3b, old) | REJECT merge-conflict squash apply onto fresh main failed: conflict in scenes/load_game/load_game.gd |
+| day2 | merge T2g-3 (push/C1-3b-r) | OK  merged |
+| day2 | docs tp-decl-r | REJECT merge-conflict squash apply onto fresh main failed: conflict in csrc/ouroboros_sim.h, csrc/unit.c, signatures.toml, symbol_modules.toml, tests/csim/conftest.py |
+| day2 | merge C2-4 (push/C1-3b, old) | REJECT merge-conflict squash apply onto fresh main failed: conflict in scenes/galaxy/galaxy_view.gd |
+| day2 | merge C2-4 (push/C1-3b-r) | OK  merged |
+| day2 | merge C2-6 (push/C1-3b, old) | landed (empty diff) -- content likely already captured via C1-3b-r chain |
+| day2 | merge C2-6 (push/C1-3b-r) | landed (empty diff) -- content already captured via C1-3b-r chain |
+| day2 | merge B12-9 (push/B12-9-r) | OK  merged |
+| day2 | merge C4-4 (push/C1-3b, old) | landed (empty diff) -- content already captured via C1-3b-r chain |
+| day2 | merge C4-4 (push/C1-3b-r) | landed (empty diff) -- content already captured via C1-3b-r chain |
+| day2 | docs bt-decl (push/B10c-9-decl-r) | OK  collection and lints OK |
+| day2 | merge B12-10 | OK  merged |
+| day2 | merge C1-2 (push/C1-3b, old) | OK  merged |
+| day2 | merge C1-2 (push/C1-3b-r) | landed (empty diff) -- content already captured via push/C1-3b's merge |
+| day2 | docs B10c-9-r2 | REJECT merge-conflict squash apply onto fresh main failed: conflict in csrc/unit.c |
+| day2 | docs C1-3-tests | REJECT merge-conflict squash apply onto fresh main failed: conflict in tactical_view.gd, plus tests/test_c_bridge_live.gd does not exist in index (deleted upstream) |
+| day2 | merge C1-3 (push/C1-3b-r) | landed (empty diff) -- content already captured via earlier C1-3b-r chain merges |
+| day2 | merge C2-5b | REJECT harness unknown piece id 'C2-5b' (not in pieces.toml yet) |
+| day2 | sweep (pass 6, after ff to origin/main + `make -j8` clean build + `make -s pipe/ouroboros_pipe` rebuild) | E-04 36p/0f; E-08 50p/0f; E-09 39p/0f; E-10 43p/1f/1skip (`test_R_078_06`); E-11 46p/2f (`test_R_085_02`, `test_R_085_04`); E-12 22p/1f (`test_R_093_02`); E-13 33p/2f (`test_R_099_01`, `test_R_101_01`); E-14 22p/0f; E-15 24p/1f (`test_R_130_02`); E-16 8p/1f (`test_control_R_111_02`); transport 27p/0f, fully green -- M0's hunch was right, the standing "10 failed" was a stale `pipe/ouroboros_pipe` binary, not a real regression; the 5 test_pipe_tactical_world.py errors from pass 5 are also gone now; qa/t1 31p/2f/1skip unchanged. Correcting pass 5's transport row: that reading was a stale-binary artifact, not real red. |
+| day2 | c_bridge chain landed | the whole C2>C3>C4>C5>T2g>C2-4>C2-6>C4-4>C1-2>C1-3 chain that was stuck all session on commit `ae750e6a` finally landed via the `-r` rebuilds: C4-3, C3-3, C5-2, T2g-3, C2-4 landed for real (each on its first `-r` attempt after the plain branch hit a genuine per-piece conflict); C2-6, C4-4, C1-2(old branch), C1-3 landed via empty-diff (content already captured by an earlier piece in the same tip). Also landed this pass: B12-9, B12-10, B11-7, T1-5/T1-4/C7-2/C7-3/C7-4 (mostly empty-diff, content captured by T1-3/C7-2's own merges), B10c-6-r, B10c-7-r, bt-decl, tests-tick-period(-2), scale-dense-moving. |
+| day2 | still stuck | `merge B10c-6`/`B10c-7`/`B12-9`(old branch)/`B10c-3`/`C2-5b` all REJECT "unknown piece id" -- not yet added to pieces.toml; `docs B10c-9-r2` and `docs tp-decl-r` REJECT real conflicts in csrc/unit.c and csrc/ouroboros_sim.h/unit.c/spec_factory tomls respectively; `docs C1-3-tests` REJECTs on tactical_view.gd conflict plus `tests/test_c_bridge_live.gd` no longer existing (deleted upstream, branch still references it). |
