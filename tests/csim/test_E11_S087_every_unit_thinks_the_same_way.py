@@ -33,8 +33,15 @@ def test_R_087_01_it_moves_200_wu_directly(lib, world_factory):
     init_x = lib.om_unit_position_x(w, victim)
     lib.om_unit_deal_damage(w, attacker_unseen, victim, 20.0)
 
-    # Unit flinches: moves 200 wu away (-x direction) and stops
-    lib.om_tactical_run(w, 80)
+    # Unit flinches: moves 200 wu away (-x direction) and stops. Run 56
+    # ticks: enough for the flinch (200 wu at the Vanguard's 4 wu/tick,
+    # done by tick 51) to finish arriving, but under the Bombard's own
+    # 60-tick attack interval (OM_ROSTER_BOMBARD_INTERVAL 3.0s * 20 tps),
+    # so it never lands a second real hit that would start a second flinch
+    # from the victim's already-fled position and over-shoot the pinned
+    # 200 wu; 56 also keeps the single extra step below on the victim's
+    # own targeting-cohort tick (unit_id 1, tick % 4 == 1 at tick 57).
+    lib.om_tactical_run(w, 56)
     end_x = lib.om_unit_position_x(w, victim)
     assert end_x == pytest.approx(init_x - 200.0, abs=5.0)
 

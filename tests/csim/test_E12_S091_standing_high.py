@@ -86,7 +86,8 @@ def test_R_091_03_it_affects_sensors_only_never(lib, world_factory):
     lib.om_set_era_name(w, b"Settled Reach")
 
     # Attacker Raider at elevation tier 3, Defender Raider at elevation tier 1 (tier diff d = 2)
-    # Raider base damage is 40.0 flat damage
+    # Raider base damage per the S-082 roster (OM_ROSTER_RAIDER_DAMAGE,
+    # csrc/unit.c) is 9.0 flat damage; Strike-vs-Strike matchup is 1.0.
     attacker = lib.om_unit_spawn_with_elevation(w, OMUnitType.RAIDER, 0, 0.0, 0.0, 0, 3)
     target = lib.om_unit_spawn_with_elevation(w, OMUnitType.RAIDER, 1, 100.0, 0.0, 0, 1)
 
@@ -94,11 +95,12 @@ def test_R_091_03_it_affects_sensors_only_never(lib, world_factory):
     lib.om_unit_attack(w, attacker, target)
     hp_after = lib.om_unit_get_hp(w, target)
 
-    # In Settled Reach, elevation does NOT increase damage (bonus is 0.0, damage dealt is exact flat 40.0)
+    # In Settled Reach, elevation does NOT increase damage (bonus is 0.0, damage dealt is exact flat 9.0)
     damage_dealt = hp_before - hp_after
-    assert pytest.approx(damage_dealt, abs=1e-4) == 40.0
+    assert pytest.approx(damage_dealt, abs=1e-4) == 9.0
 
-    # But sensors DO receive the elevation bonus
+    # But sensors DO receive the elevation bonus. Raider base sensor radius
+    # per the roster (OM_ROSTER_RAIDER_SENSOR) is 800.0, not 300.0.
     eff_radius = lib.om_unit_get_effective_sensor_radius_to_target_elevation(w, attacker, 1)
-    assert pytest.approx(eff_radius, abs=1e-4) == 300.0 * (1.0 + 0.15 * 2)  # Raider base 300 * 1.3 = 390.0
+    assert pytest.approx(eff_radius, abs=1e-4) == 800.0 * (1.0 + 0.15 * 2)  # Raider base 800 * 1.3 = 1040.0
 

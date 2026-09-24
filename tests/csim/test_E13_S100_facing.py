@@ -40,14 +40,20 @@ def test_R_100_01_it_faces_target_moving_with(lib, world_factory):
     facing_idle = lib.om_unit_get_facing(w, u)
     assert pytest.approx(facing_idle, abs=1e-3) == facing_move
 
-    # 3. Attacking a target: faces the target (placed at (0, 100) -> angle = +pi/2)
+    # 3. Attacking a target: faces the target. The 5 move ticks in step 1
+    # left u at x = 37.5 (Raider speed 150 wu/s / 20 tps = 7.5 wu/tick), not
+    # at the origin, so the expected angle is read back from the unit's
+    # actual position rather than assumed to be (0, 0).
+    ux = lib.om_unit_position_x(w, u)
+    uy = lib.om_unit_position_y(w, u)
     enemy = lib.om_unit_spawn(w, OMUnitType.RAIDER, 1, 0.0, 100.0, 0)
     lib.om_command_attack_target(w, u, enemy)
     # Step until turned toward target
     for _ in range(20):
         lib.om_world_step(w)
     facing_target = lib.om_unit_get_facing(w, u)
-    assert pytest.approx(facing_target, abs=1e-2) == math.pi / 2
+    expected_facing = math.atan2(100.0 - uy, 0.0 - ux)
+    assert pytest.approx(facing_target, abs=1e-2) == expected_facing
 
 
 def test_R_100_02_turn_rate_capped_at_6(lib, world_factory):
