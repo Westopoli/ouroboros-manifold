@@ -1,0 +1,50 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "saves.schema.json",
+ "type": "object",
+ "required": [
+  "type",
+  "slots"
+ ],
+ "properties": {
+  "type": {
+   "const": "saves"
+  },
+  "slots": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "path",
+     "tick",
+     "chapter",
+     "phase",
+     "seed",
+     "format_version"
+    ],
+    "properties": {
+     "path": {
+      "type": "string"
+     },
+     "tick": {
+      "type": "integer"
+     },
+     "chapter": {
+      "type": "integer"
+     },
+     "phase": {
+      "type": "integer"
+     },
+     "seed": {
+      "type": "integer"
+     },
+     "format_version": {
+      "type": "integer"
+     }
+    },
+    "additionalProperties": true
+   }
+  }
+ },
+ "additionalProperties": true
+}

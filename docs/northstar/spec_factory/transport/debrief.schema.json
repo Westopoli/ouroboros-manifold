@@ -1,0 +1,51 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "debrief.schema.json",
+ "type": "object",
+ "required": [
+  "type",
+  "band",
+  "achieved",
+  "brought_home",
+  "region_delta"
+ ],
+ "properties": {
+  "type": {
+   "const": "debrief"
+  },
+  "band": {
+   "type": "integer"
+  },
+  "achieved": {
+   "type": "number"
+  },
+  "brought_home": {
+   "type": "number"
+  },
+  "region_delta": {
+   "type": "object",
+   "required": [
+    "military",
+    "economy",
+    "tension",
+    "population"
+   ],
+   "properties": {
+    "military": {
+     "type": "number"
+    },
+    "economy": {
+     "type": "number"
+    },
+    "tension": {
+     "type": "number"
+    },
+    "population": {
+     "type": "number"
+    }
+   },
+   "additionalProperties": true
+  }
+ },
+ "additionalProperties": true
+}
