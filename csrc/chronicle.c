@@ -1757,6 +1757,12 @@ int om_chronicle_assemble_cluster_entry(om_world *w, uint32_t category, uint32_t
     char base[CHRON_BASE_TEXT_CAP], expanded[CHRON_EXPANDED_TEXT_CAP];
     int ok = chron_assemble(w, category, region_idx, &rng, base, sizeof(base), expanded, sizeof(expanded));
     memset(out_entry, 0, sizeof(*out_entry));
+    out_entry->fragment_ids[0] = -1;
+    out_entry->fragment_ids[1] = -1;
+    out_entry->fragment_ids[2] = -1;
+    out_entry->region_ref = -1;
+    out_entry->faction_ref = -1;
+    out_entry->lineage_ref = -1;
     if (!ok) return 0;
     out_entry->category = category;
     out_entry->region = region_idx;

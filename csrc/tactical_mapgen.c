@@ -564,4 +564,9 @@ void om_unit_order_hold_node(om_world *w, uint32_t unit_id, uint32_t node_id) {
     /* STUB */
     (void)w; (void)unit_id; (void)node_id;
 }
+
+void om_map_clear(om_world *w) {
+    /* STUB: B15m-5 implements */
+    (void)w;
+}
 /* ---- end generated stubs ---- */
