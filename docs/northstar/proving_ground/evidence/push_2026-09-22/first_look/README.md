@@ -341,3 +341,29 @@ Brief expected all six plants to differ by pixels. Only `edges-2d-overlay` does.
 ### Follow-up owed
 
 Galaxy render fix as a test-first story: screenshot-level assertion that the drawn pixels of an owned region differ from an unowned one (a colour-in-pixels detector), then the material fix. C2-4 conquest recolour stays blocked behind it.
+
+## Look 5 (the live client, 2026-09-24)
+
+Base: a scratch merge of the whole client stack (C2-6 shared session, C4-4 Begin, C1-2 Continue, C1-3 save dir, C2-5 galaxy materials, T1-5 real tactical frame on B10c and B9-6). Seed 1, 1280x720, real boot -> menu -> NewGame -> galaxy -> Mission -> Deploy -> End Mission -> Continue, real daemon protocol, real clicks on named controls, per-run `OM_SAVE_DIR`. Driver is scratch tooling, not in repo. Screenshots and the numbers below are in `look5/` (`look5.json`).
+
+**Held claims, not passes: what one Xvfb/software-GL run rendered.**
+
+### What works end to end (state read from `qa_state()`, not pixels)
+
+- Main menu: `continue_enabled` false with no saves; true with a seed-3 100-tick campaign written into the save dir first (`06_menu_continue_enabled.png`).
+- Galaxy: 80 systems, 51 owned, 16 distinct region colours, and the dots are coloured on screen (`01_galaxy.png`). One shared pipe session from here on.
+- Briefing after stepping the galaxy 10 ticks (`step` verb): archetype 3, deadline 300, one objective (`02_briefing.png`); text panels are empty headers and zeros (force, enemy, region state come from sim fields that are 0 or absent).
+- Deploy sends `mission_begin`, then the tactical view loads the live frame in 2.9 s: tick 1, canvas 24000, **572 units** (276 faction 0, 296 faction 1).
+- Debrief reads the live frame: band `partial_failure`, achieved 0 %, brought home 100 %, region deltas all 0 (`04_debrief.png`).
+- Chronicle after the 50-tick jump: 0 entries (`05_chronicle.png`).
+- Continue: Continue -> load screen (one row, `07_load_game.png`) -> LOAD -> galaxy at tick 100 with 80 systems (`08_galaxy_loaded.png`): the saved world, not a fresh one.
+- Autosaves after the flow: `campaign_1.omsave` in `OM_SAVE_DIR`; the real save dir is untouched.
+
+### Findings
+
+1. **The tactical view draws nothing on a real mission.** `03_tactical.png` is flat grey plus the END MISSION button, although `qa_state()` reports 276 drawn units. The view's fixed `WORLD_SCALE` (0.25) with the camera at the canvas centre shows a 7680 x 4320 world-unit window; the real canvas is 24000, and the sim puts the forces on opposite edges (faction 0 at y = 15, faction 1 at y = 23985, x 11745..12255). All 276 drawn units sit at screen y -2456..-2336, off screen. Fix belongs to C5: scale the view to the canvas (or pan/zoom to the local force); `tests/test_tactical_view.gd` pins fixture positions, so this is a test-first change M0 has to rule on.
+2. **Without a pre-step the flow has no forces.** A fresh galaxy at tick 0 selects archetype 0 (seed 1); the tactical frame then has canvas 16000 and 0 units (sim side: archetype 0 spawns nothing, seed 2 and 4 the same). The look above steps the galaxy 10 ticks first to reach the archetype-3 mission with 572 units.
+3. **Galaxy plants, pixel diff against the clean shot (921600 px):** `edges-2d-overlay` 31029 (differs, real); `seed-ignored`, `pick-radius-zero`, `bands-frozen`, `conquest-no-recolour` 0 (behaviour-only, as before); `owner-colour-flat` **0, and it should not be**: the plant recomputes `region_colours` (state changes) but `qa_plant` never re-renders the points, so the screen keeps the real owner colours. C2-5b fixes it, test first.
+4. The load screen row reads only "Chapter 0": no slot name, tick or seed.
+5. Briefing and debrief panels show empty text and zero bars: the frames carry no force composition, objective node names or region deltas yet (sim side, listed in the T1-2 gaps).
+6. The sim never generates cover in a mission (all seeds tried): `map.cover` is empty by data, not by a pipe gap.

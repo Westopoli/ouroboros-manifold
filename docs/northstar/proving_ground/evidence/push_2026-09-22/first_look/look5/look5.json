@@ -1,0 +1,84 @@
+{
+ "menu_qa": {
+  "continue_enabled": false,
+  "slot_count": 0
+ },
+ "galaxy": {
+  "system_count": 80,
+  "tick": 0,
+  "owned": 51,
+  "distinct_colours": 16
+ },
+ "galaxy_after_step": {
+  "tick": 10
+ },
+ "briefing_qa": {
+  "archetype": 3,
+  "deadline_ticks": 300,
+  "objectives": 1
+ },
+ "deploy_seconds": 2.9,
+ "tactical": {
+  "tick": 1,
+  "units": 572,
+  "units_px_drawn": 276,
+  "canvas": 24000.0,
+  "factions": [
+   0,
+   1
+  ]
+ },
+ "debrief_qa": {
+  "achieved_pct": 0.0,
+  "band": "partial_failure",
+  "brought_home_pct": 100.0,
+  "region_delta": {
+   "economy": 0.0,
+   "military": 0.0,
+   "population": 0.0,
+   "tension": 0.0
+  }
+ },
+ "chronicle_qa": {
+  "dropped_entries": 0,
+  "entries": 0,
+  "unresolved_refs": 0
+ },
+ "autosaves": [
+  "campaign_1.omsave"
+ ],
+ "plants": {
+  "seed-ignored": {
+   "diff_px": 0,
+   "of": 921600
+  },
+  "owner-colour-flat": {
+   "diff_px": 0,
+   "of": 921600
+  },
+  "edges-2d-overlay": {
+   "diff_px": 31029,
+   "of": 921600
+  },
+  "pick-radius-zero": {
+   "diff_px": 0,
+   "of": 921600
+  },
+  "bands-frozen": {
+   "diff_px": 0,
+   "of": 921600
+  },
+  "conquest-no-recolour": {
+   "diff_px": 0,
+   "of": 921600
+  }
+ },
+ "continue_menu_qa": {
+  "continue_enabled": true,
+  "slot_count": 1
+ },
+ "continue_galaxy": {
+  "tick": 100,
+  "system_count": 80
+ }
+}
