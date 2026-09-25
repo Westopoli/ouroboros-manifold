@@ -74,6 +74,7 @@ om_region_neighbors                 = "faction.c"
 om_mission_compute_parity           = "mission.c"
 om_mission_end                      = "mission.c"
 om_mission_get_objective_completion = "mission.c"
+om_mission_get_region_delta         = "mission.c"
 om_objective_get_center             = "mission.c"
 # F2n: tactical_support.c drifted objective centre write (B9-5)
 om_objective_set_center             = "mission.c"

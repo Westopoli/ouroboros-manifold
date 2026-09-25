@@ -1547,6 +1547,7 @@ double om_mission_get_objective_score(const om_world *w);
 uint32_t om_mission_get_objectives(const om_world *w, om_objective_spec *out, uint32_t max);
 double om_mission_get_player_parity(const om_world *w);
 void om_mission_get_player_units(const om_world *w, uint32_t *out, uint32_t max);
+int om_mission_get_region_delta(const om_world *w, double *military, double *economy, double *tension, double *population);
 void om_mission_get_shortfall_text(const om_world *w, char *out, uint32_t cap);
 uint64_t om_mission_get_time_limit(const om_world *w);
 void om_mission_inject_candidate(om_world *w, uint32_t region_idx, uint32_t archetype, double score);

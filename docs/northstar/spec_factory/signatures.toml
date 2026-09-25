@@ -3361,6 +3361,15 @@ confidence = "likely"
 note = "Return unused; reader pattern would return uint32_t count, either fits."
 
 [[symbols]]
+name = "om_mission_get_region_delta"
+module = "mission.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "military", ctype = "double*" }, { name = "economy", ctype = "double*" }, { name = "tension", ctype = "double*" }, { name = "population", ctype = "double*" }]
+epics = ["E-10"]
+confidence = "certain"
+note = "Returns 1 when consequence applied for current mission, 0 otherwise; out params untouched on 0; NULL tolerated; last applied delta from mission slot state, overwritten on new mission start. T1-8."
+
+[[symbols]]
 name = "om_mission_get_reinforcement_foreshadow_text"
 module = "enemy_macro.c"
 restype = "uint32_t"
