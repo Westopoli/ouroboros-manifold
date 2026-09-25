@@ -363,3 +363,14 @@ func _build_purchase_overlay() -> void:
 func _show_purchase_modal() -> void:
 	UIDataBus.initiate_purchase(_era_id, "dlc")
 	_purchase_overlay.visible = true
+
+
+func qa_state() -> Dictionary:
+	return {
+		"scene": "era_detail",
+		"tick": -1,
+		"era_id": _era_id,
+		"is_owned": bool(_era.get("is_owned", false)),
+		"purchase_overlay_visible": _purchase_overlay != null and is_instance_valid(_purchase_overlay) and _purchase_overlay.visible,
+		"plants": [],
+	}

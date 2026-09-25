@@ -343,3 +343,12 @@ func _on_command_sent(cmd: Dictionary) -> void:
 	var indicator: Node3D = preload("res://scenes/tactical/command_indicator.gd").new()
 	indicator.setup(world_pos, kind == "attack_move")
 	_command_indicators.add_child(indicator)
+
+
+func qa_state() -> Dictionary:
+	return {
+		"scene": "tactical",
+		"tick": TacticalBridge.current_tick,
+		"unit_count": TacticalBridge.unit_count,
+		"plants": [],
+	}

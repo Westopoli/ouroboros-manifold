@@ -28,3 +28,12 @@ func _route_to_loading() -> void:
 	var router := get_node_or_null("/root/SceneRouter")
 	if router != null and router.has_method("go_to"):
 		router.go_to("loading_screen")
+
+
+func qa_state() -> Dictionary:
+	return {
+		"scene": "privacy_modal",
+		"tick": -1,
+		"accepted": _skip_to_loading_screen,
+		"plants": [],
+	}

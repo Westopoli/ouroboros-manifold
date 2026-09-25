@@ -171,6 +171,9 @@ func qa_state() -> Dictionary:
 	var band: String = _frozen_band if _plants.get("bands-frozen", false) else _band_for(distance)
 
 	return {
+		"scene": "galaxy_view",
+		"tick": int(_bridge.snapshot().get("tick", 0)) if _bridge != null else 0,
+		"plants": PLANTS.duplicate(),
 		"system_count": _regions.size(),
 		"owners": owners,
 		"edge_counts": edge_counts,
@@ -182,7 +185,6 @@ func qa_state() -> Dictionary:
 		"pick_radius_px": 0.0 if _plants.get("pick-radius-zero", false) else PICK_RADIUS_PX,
 		"edges_3d": not bool(_plants.get("edges-2d-overlay", false)),
 		"hash": _hash,
-		"tick": int(_bridge.snapshot().get("tick", 0)) if _bridge != null else 0,
 	}
 
 

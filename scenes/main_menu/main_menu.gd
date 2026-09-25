@@ -338,7 +338,13 @@ func qa_set_bridge(bridge) -> void:
 
 
 func qa_state() -> Dictionary:
-	return {"continue_enabled": _slot_count > 0, "slot_count": _slot_count}
+	return {
+		"scene": "main_menu",
+		"tick": -1,
+		"continue_enabled": _slot_count > 0,
+		"slot_count": _slot_count,
+		"plants": [],
+	}
 
 
 func _animate_entrance() -> void:

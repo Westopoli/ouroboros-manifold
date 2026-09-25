@@ -74,3 +74,12 @@ func _on_restart() -> void:
 
 func _on_quit() -> void:
 	get_tree().quit()
+
+
+func qa_state() -> Dictionary:
+	return {
+		"scene": "error_screen",
+		"tick": -1,
+		"button_count": 2,
+		"plants": [],
+	}

@@ -98,7 +98,9 @@ func qa_state() -> Dictionary:
 			"y": float(u.get("y", 0.0)),
 		}
 	return {
+		"scene": "tactical_view",
 		"tick": int(_frame.get("tick", 0)),
+		"plants": ["facing-fixed", "camera-unbounded"],
 		"canvas": _canvas,
 		"scale": _world_scale,
 		"unit_count": _frame.get("units", []).size(),

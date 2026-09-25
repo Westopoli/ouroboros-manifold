@@ -866,6 +866,9 @@ func qa_state() -> Dictionary:
 			"marker_name": _marker_name_for_node(node),
 		})
 	return {
+		"scene": "mission_briefing",
+		"tick": -1,
+		"plants": ["marker-from-frame"],
 		"archetype": _frame_archetype,
 		"deadline_ticks": _frame_deadline_ticks,
 		"objectives": objectives,
