@@ -81,6 +81,10 @@
  * factions listed in a tactical frame's "visible". */
 #define OM_PIPE_UNIT_SCAN_MAX 1000000
 #define OM_PIPE_MAX_FACTION_KEYS 32
+/* Mirror of OM_MAX_UNITS in unit.c (E-11 10k-unit scale requirement + headroom,
+ * unit.c:57).  Not exported from ouroboros_sim.h; mirrored here for the
+ * command unit-list buffer in handle_command. */
+#define OM_MAX_UNITS 10100
 
 /* ---------------------------------------------------------------------
  * Frame I/O
@@ -1315,9 +1319,9 @@ static void handle_command(const char *json) {
         write_error("command", "missing verb");
         return;
     }
-    int units_i[256];
-    int n_units = get_int_array(json, "units", units_i, 256);
-    uint32_t unit_ids[256];
+    int units_i[OM_MAX_UNITS];
+    int n_units = get_int_array(json, "units", units_i, OM_MAX_UNITS);
+    uint32_t unit_ids[OM_MAX_UNITS];
     for (int i = 0; i < n_units; i++) unit_ids[i] = (uint32_t)units_i[i];
 
     int ret;
