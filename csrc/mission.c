@@ -254,11 +254,14 @@
 #define OM_MISSION_BRIEFING_CONTROL_EDIT_LOADOUT (1u << 2)
 
 /* R-078-01/02/03 consequence deltas: deficit form (100 - current) * pct/100,
- * or current form current * pct/100 (Q-078-01's table is E-21 library data,
- * not built; only defensive_stand/total_success has bible-given numbers --
- * docs/bible/epics/E-10-missions.md R-078-02/03). */
+ * or current form current * pct/100.  All 50 cells from simulation/config.py
+ * CONSEQUENCE_TABLES (ALG-59 names it as the source). */
 #define OM_CONSEQUENCE_FORM_DEFICIT 0
 #define OM_CONSEQUENCE_FORM_CURRENT 1
+/* R-078-07: consequence delta targets.  home/exposed both map to mission
+ * region itself (Q-078-01 closed, 2026-09-12). */
+#define OM_CTARGET_MISSION          0
+#define OM_CTARGET_ADJACENT_PLAYER  1
 #define OM_CONSEQUENCE_FIELD_MIN 0.0
 #define OM_CONSEQUENCE_FIELD_MAX 100.0
 /* R-078-05: refusal's tension rise is 8 percent of the region's deficit. */
@@ -751,27 +754,177 @@ typedef struct {
     om_field field;
     int      form;
     double   pct;
+    int      target; /* OM_CTARGET_MISSION or OM_CTARGET_ADJACENT_PLAYER */
 } om_consequence_delta;
 
-/* R-078-01/02/03: per (archetype, band) consequence deltas applied to the
- * mission region itself. Q-078-01 flags that the S-078 consequence table is
- * E-21 library data (like S-073's asset profiles, om_mission_archetype_row
- * above) not yet built; docs/bible/epics/E-10-missions.md only gives
- * concrete numbers for defensive_stand/total_success (R-078-02/03), so that
- * is the only populated row -- every other (archetype, band) applies no
- * field deltas here (transfer, handled separately below, still applies). */
-static uint32_t om_mission_consequence_table(uint32_t archetype, int32_t band, om_consequence_delta *out, uint32_t max) {
-    if (archetype == OM_MISSION_ARCH_DEFENSIVE_STAND && band == OM_MISSION_BAND_TOTAL_SUCCESS) {
-        uint32_t n = 0;
-        /* constants-table: docs/bible/epics/E-10-missions.md R-078-02/03 (defensive_stand total_success) */
-        if (n < max) out[n++] = (om_consequence_delta){ OM_F_MILITARY, OM_CONSEQUENCE_FORM_DEFICIT, 15.0 };
-        if (n < max) out[n++] = (om_consequence_delta){ OM_F_TENSION,  OM_CONSEQUENCE_FORM_CURRENT, -10.0 };
-        if (n < max) out[n++] = (om_consequence_delta){ OM_F_ECONOMY,  OM_CONSEQUENCE_FORM_CURRENT, -2.0 };
-        /* end constants-table */
-        return n;
+/* R-078-01/02/03: per (archetype, band) consequence deltas.  All 50 cells
+ * populated from simulation/config.py CONSEQUENCE_TABLES (ALG-59).
+ * Empty cells (assault/total_success, assault/strong_success,
+ * suppression/partial_success, interception/partial_success,
+ * interception/partial_failure, evacuation/partial_failure) return n=0.
+ * target field: OM_CTARGET_MISSION = mission/home/exposed (Q-078-01),
+ *               OM_CTARGET_ADJACENT_PLAYER = applied per player-owned neighbour. */
+
+/* table entry helpers (file-local, undef'd after this function) */
+#define _CM(f,frm,p) do { if (n < max) out[n++] = (om_consequence_delta){(f),(frm),(p),OM_CTARGET_MISSION}; } while(0)
+#define _CA(f,frm,p) do { if (n < max) out[n++] = (om_consequence_delta){(f),(frm),(p),OM_CTARGET_ADJACENT_PLAYER}; } while(0)
+#define DEF OM_CONSEQUENCE_FORM_DEFICIT
+#define CUR OM_CONSEQUENCE_FORM_CURRENT
+
+/* constants-table: simulation/config.py CONSEQUENCE_TABLES, ALG-59 */
+static uint32_t om_mission_consequence_table(uint32_t archetype, int32_t band,
+                                              om_consequence_delta *out, uint32_t max) {
+    uint32_t n = 0;
+    switch (archetype) {
+
+    case OM_MISSION_ARCH_DEFENSIVE_STAND:
+        switch (band) {
+        case OM_MISSION_BAND_TOTAL_SUCCESS:
+            _CM(OM_F_MILITARY, DEF,  15.0); _CM(OM_F_TENSION, CUR, -10.0); _CM(OM_F_ECONOMY, CUR,  -2.0); break;
+        case OM_MISSION_BAND_STRONG_SUCCESS:
+            _CM(OM_F_MILITARY, DEF,   8.0); _CM(OM_F_TENSION, CUR,  -5.0); _CM(OM_F_ECONOMY, CUR,  -5.0); break;
+        case OM_MISSION_BAND_PARTIAL_SUCCESS:
+            _CM(OM_F_MILITARY, CUR,  -5.0); _CM(OM_F_TENSION, DEF,   5.0); _CM(OM_F_ECONOMY, CUR, -10.0); break;
+        case OM_MISSION_BAND_PARTIAL_FAILURE:
+            _CM(OM_F_MILITARY, CUR, -15.0); _CM(OM_F_TENSION, DEF,  10.0); _CM(OM_F_ECONOMY, CUR, -15.0); break;
+        case OM_MISSION_BAND_TOTAL_FAILURE:
+            _CM(OM_F_MILITARY, CUR, -30.0); _CM(OM_F_TENSION, DEF,  20.0); _CM(OM_F_ECONOMY, CUR, -20.0);
+            _CM(OM_F_POPULATION, CUR, -5.0); break;
+        } break;
+
+    case OM_MISSION_ARCH_SIEGE_BREAKING:
+        switch (band) {
+        case OM_MISSION_BAND_TOTAL_SUCCESS:
+            _CM(OM_F_MILITARY, DEF,  10.0); _CM(OM_F_TENSION, CUR, -15.0); _CM(OM_F_ECONOMY, DEF,  10.0); break;
+        case OM_MISSION_BAND_STRONG_SUCCESS:
+            _CM(OM_F_MILITARY, DEF,   5.0); _CM(OM_F_TENSION, CUR, -10.0); _CM(OM_F_ECONOMY, DEF,   5.0); break;
+        case OM_MISSION_BAND_PARTIAL_SUCCESS:
+            _CM(OM_F_MILITARY, CUR,  -3.0); _CM(OM_F_TENSION, CUR,  -5.0); _CM(OM_F_ECONOMY, DEF,   3.0); break;
+        case OM_MISSION_BAND_PARTIAL_FAILURE:
+            _CM(OM_F_MILITARY, CUR, -10.0); _CM(OM_F_TENSION, DEF,   5.0); _CM(OM_F_ECONOMY, CUR,  -5.0); break;
+        case OM_MISSION_BAND_TOTAL_FAILURE:
+            _CM(OM_F_MILITARY, CUR, -20.0); _CM(OM_F_TENSION, DEF,  15.0); _CM(OM_F_ECONOMY, CUR, -10.0); break;
+        } break;
+
+    case OM_MISSION_ARCH_RECONQUEST:
+        switch (band) {
+        case OM_MISSION_BAND_TOTAL_SUCCESS:
+            _CM(OM_F_TENSION, CUR, -10.0); _CM(OM_F_ECONOMY, DEF,   5.0); break;
+        case OM_MISSION_BAND_STRONG_SUCCESS:
+            _CM(OM_F_TENSION, CUR,  -5.0); _CM(OM_F_ECONOMY, CUR,  -5.0); break;
+        case OM_MISSION_BAND_PARTIAL_SUCCESS:
+            _CM(OM_F_TENSION, DEF,   5.0); _CM(OM_F_ECONOMY, CUR, -15.0); break;
+        case OM_MISSION_BAND_PARTIAL_FAILURE:
+            _CA(OM_F_TENSION, DEF,   5.0); break;
+        case OM_MISSION_BAND_TOTAL_FAILURE:
+            _CA(OM_F_TENSION, DEF,  10.0); _CA(OM_F_MILITARY, CUR,  -5.0); break;
+        } break;
+
+    case OM_MISSION_ARCH_ASSAULT:
+        switch (band) {
+        /* total_success, strong_success: empty (transfer handles it) */
+        case OM_MISSION_BAND_PARTIAL_SUCCESS:
+            _CM(OM_F_MILITARY, CUR, -30.0); break;
+        case OM_MISSION_BAND_PARTIAL_FAILURE:
+            /* home -> mission (Q-078-01) */
+            _CM(OM_F_MILITARY, CUR, -10.0); _CM(OM_F_TENSION, DEF,   5.0); break;
+        case OM_MISSION_BAND_TOTAL_FAILURE:
+            /* home -> mission (Q-078-01); two military entries applied in order */
+            _CM(OM_F_MILITARY, CUR,  -3.0); _CM(OM_F_TENSION, DEF,  15.0);
+            _CM(OM_F_MILITARY, CUR, -10.0); break;
+        } break;
+
+    case OM_MISSION_ARCH_SUPPRESSION:
+        switch (band) {
+        case OM_MISSION_BAND_TOTAL_SUCCESS:
+            _CM(OM_F_TENSION, CUR, -15.0); _CM(OM_F_ECONOMY, DEF,   5.0); break;
+        case OM_MISSION_BAND_STRONG_SUCCESS:
+            _CM(OM_F_TENSION, CUR,  -8.0); break;
+        /* partial_success: empty */
+        case OM_MISSION_BAND_PARTIAL_FAILURE:
+            _CA(OM_F_TENSION, DEF,   5.0); break;
+        case OM_MISSION_BAND_TOTAL_FAILURE:
+            _CA(OM_F_TENSION, DEF,  10.0); break;
+        } break;
+
+    case OM_MISSION_ARCH_MULTI_FRONT_DEFENSE:
+        switch (band) {
+        case OM_MISSION_BAND_TOTAL_SUCCESS:
+            _CM(OM_F_MILITARY, DEF,  10.0); _CM(OM_F_TENSION, CUR, -10.0); _CM(OM_F_ECONOMY, CUR,  -5.0); break;
+        case OM_MISSION_BAND_STRONG_SUCCESS:
+            _CM(OM_F_TENSION, CUR,   -5.0); _CM(OM_F_ECONOMY, CUR, -10.0); break;
+        case OM_MISSION_BAND_PARTIAL_SUCCESS:
+            _CM(OM_F_MILITARY, CUR, -10.0); _CM(OM_F_TENSION, DEF,   5.0); _CM(OM_F_ECONOMY, CUR, -15.0); break;
+        case OM_MISSION_BAND_PARTIAL_FAILURE:
+            _CM(OM_F_MILITARY, CUR, -20.0); _CM(OM_F_TENSION, DEF,  15.0); _CM(OM_F_ECONOMY, CUR, -20.0);
+            _CM(OM_F_POPULATION, CUR,  -5.0); break;
+        case OM_MISSION_BAND_TOTAL_FAILURE:
+            _CM(OM_F_MILITARY, CUR, -35.0); _CM(OM_F_TENSION, DEF,  25.0); _CM(OM_F_ECONOMY, CUR, -25.0);
+            _CM(OM_F_POPULATION, CUR, -10.0); break;
+        } break;
+
+    case OM_MISSION_ARCH_INTERCEPTION:
+        switch (band) {
+        case OM_MISSION_BAND_TOTAL_SUCCESS:
+            _CM(OM_F_TENSION, CUR,  -5.0); break;
+        case OM_MISSION_BAND_STRONG_SUCCESS:
+            _CM(OM_F_MILITARY, CUR,  -3.0); break;
+        /* partial_success, partial_failure: empty */
+        case OM_MISSION_BAND_TOTAL_FAILURE:
+            _CM(OM_F_MILITARY, CUR, -15.0); break;
+        } break;
+
+    case OM_MISSION_ARCH_EVACUATION:
+        switch (band) {
+        case OM_MISSION_BAND_TOTAL_SUCCESS:
+            _CA(OM_F_ECONOMY, DEF, 5.0); _CA(OM_F_POPULATION, DEF, 3.0); break;
+        case OM_MISSION_BAND_STRONG_SUCCESS:
+            _CA(OM_F_ECONOMY, DEF, 3.0); _CA(OM_F_POPULATION, DEF, 2.0); break;
+        case OM_MISSION_BAND_PARTIAL_SUCCESS:
+            _CA(OM_F_ECONOMY, DEF, 1.0); _CA(OM_F_POPULATION, DEF, 1.0); break;
+        /* partial_failure: empty */
+        case OM_MISSION_BAND_TOTAL_FAILURE:
+            _CA(OM_F_TENSION, DEF, 10.0); break;
+        } break;
+
+    case OM_MISSION_ARCH_CONTAINMENT:
+        switch (band) {
+        case OM_MISSION_BAND_TOTAL_SUCCESS:
+            _CA(OM_F_TENSION, CUR,  -5.0); break;
+        case OM_MISSION_BAND_STRONG_SUCCESS:
+            _CA(OM_F_TENSION, CUR,  -3.0); break;
+        case OM_MISSION_BAND_PARTIAL_SUCCESS:
+            /* exposed -> mission (Q-078-01) */
+            _CM(OM_F_TENSION, DEF,   5.0); break;
+        case OM_MISSION_BAND_PARTIAL_FAILURE:
+            /* exposed -> mission (Q-078-01) */
+            _CM(OM_F_TENSION, DEF,  10.0); _CM(OM_F_ECONOMY, CUR,  -5.0); break;
+        case OM_MISSION_BAND_TOTAL_FAILURE:
+            _CA(OM_F_TENSION, DEF,  15.0); _CA(OM_F_ECONOMY, CUR, -10.0); break;
+        } break;
+
+    case OM_MISSION_ARCH_COUNTERINSURGENCY:
+        switch (band) {
+        case OM_MISSION_BAND_TOTAL_SUCCESS:
+            _CM(OM_F_TENSION, CUR, -20.0); _CM(OM_F_MILITARY, DEF,   5.0); break;
+        case OM_MISSION_BAND_STRONG_SUCCESS:
+            _CM(OM_F_TENSION, CUR, -12.0); _CM(OM_F_MILITARY, DEF,   3.0); _CM(OM_F_ECONOMY, CUR,  -3.0); break;
+        case OM_MISSION_BAND_PARTIAL_SUCCESS:
+            _CM(OM_F_TENSION, CUR,  -5.0); _CM(OM_F_ECONOMY, CUR,  -8.0); break;
+        case OM_MISSION_BAND_PARTIAL_FAILURE:
+            _CM(OM_F_TENSION, DEF,   5.0); _CM(OM_F_ECONOMY, CUR, -12.0); break;
+        case OM_MISSION_BAND_TOTAL_FAILURE:
+            _CM(OM_F_TENSION, DEF,  15.0); _CM(OM_F_ECONOMY, CUR, -15.0); _CM(OM_F_MILITARY, CUR,  -5.0); break;
+        } break;
+
     }
-    return 0;
+    return n;
 }
+/* end constants-table */
+#undef _CM
+#undef _CA
+#undef DEF
+#undef CUR
 
 /* R-078-04 / R-073-01 transfer table (which bands hand the region to the
  * player for each archetype), indexed DEFENSIVE_STAND=0 .. COUNTERINSURGENCY=9.
@@ -795,6 +948,28 @@ static int om_mission_apply_transfer(om_world *w, uint32_t region_idx, uint32_t 
     return 1;
 }
 
+/* Per-neighbour adjacent_player consequence entry: computes delta from each
+ * neighbour's own field value (mirrors Python outcome_resolver.py).
+ * om_mission_apply_target_adjacent_player takes a pre-resolved fixed delta
+ * so cannot express this; this helper is used by om_mission_apply_consequences
+ * only -- the public function signature is unchanged (R-078-07 compatibility). */
+static void om_consequence_apply_adjacent_player_entry(
+        om_world *w, uint32_t region_idx, const om_consequence_delta *d) {
+    int32_t player = om_mission_player_faction(w);
+    if (player < 0) return;
+    om_region *r = &w->regions[region_idx];
+    for (uint32_t i = 0; i < r->n_neighbors; i++) {
+        uint32_t nb = r->neighbors[i];
+        if (om_region_owner(w, nb) != player) continue;
+        double *fp = om_mission_region_field_ptr(w, nb, d->field);
+        if (!fp) continue;
+        double raw = (d->form == OM_CONSEQUENCE_FORM_DEFICIT)
+            ? om_consequence_eval_delta_deficit(*fp, d->pct)
+            : om_consequence_eval_delta_current(*fp, d->pct);
+        *fp = om_consequence_apply_clamped(*fp, raw);
+    }
+}
+
 void om_mission_apply_consequences(om_world *w, uint32_t region_idx, uint32_t archetype, int32_t band) {
     if (!w || region_idx >= w->n_regions) return;
     om_mission_state *st = om_mis(w);
@@ -806,12 +981,16 @@ void om_mission_apply_consequences(om_world *w, uint32_t region_idx, uint32_t ar
     om_consequence_delta deltas[OM_MISSION_MAX_CONSEQUENCE_DELTAS];
     uint32_t n = om_mission_consequence_table(archetype, band, deltas, OM_MISSION_MAX_CONSEQUENCE_DELTAS);
     for (uint32_t i = 0; i < n; i++) {
-        double *fp = om_mission_region_field_ptr(w, region_idx, deltas[i].field);
-        if (!fp) continue;
-        double raw = (deltas[i].form == OM_CONSEQUENCE_FORM_DEFICIT)
-            ? om_consequence_eval_delta_deficit(*fp, deltas[i].pct)
-            : om_consequence_eval_delta_current(*fp, deltas[i].pct);
-        *fp = om_consequence_apply_clamped(*fp, raw);
+        if (deltas[i].target == OM_CTARGET_ADJACENT_PLAYER) {
+            om_consequence_apply_adjacent_player_entry(w, region_idx, &deltas[i]);
+        } else {
+            double *fp = om_mission_region_field_ptr(w, region_idx, deltas[i].field);
+            if (!fp) continue;
+            double raw = (deltas[i].form == OM_CONSEQUENCE_FORM_DEFICIT)
+                ? om_consequence_eval_delta_deficit(*fp, deltas[i].pct)
+                : om_consequence_eval_delta_current(*fp, deltas[i].pct);
+            *fp = om_consequence_apply_clamped(*fp, raw);
+        }
     }
 
     st->consequence_seen = 1;
