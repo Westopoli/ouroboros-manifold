@@ -356,11 +356,25 @@ func load_frame(frame: Dictionary) -> void:
 
 		var region_id: int = int(region_refs[0]) if region_refs.size() > 0 else -1
 		var faction_id: int = int(faction_refs[0]) if faction_refs.size() > 0 else -1
-		var fragment_id := int(entry.get("fragment", -1))
+		# Prefer fragment_ids (T1-9 shape); fall back to legacy "fragment" key for
+		# frames that pre-date T1-9 (fixture frames, C3-4 test frames).
+		var raw_fids = entry.get("fragment_ids", null)
+		var fragment_ids_arr: Array
+		if raw_fids is Array and (raw_fids as Array).size() == 3:
+			fragment_ids_arr = [int((raw_fids as Array)[0]), int((raw_fids as Array)[1]), int((raw_fids as Array)[2])]
+		else:
+			fragment_ids_arr = [int(entry.get("fragment", -1)), -1, -1]
+		var all_minus_one: bool = fragment_ids_arr[0] == -1 and fragment_ids_arr[1] == -1 and fragment_ids_arr[2] == -1
+		var text: String
+		if all_minus_one:
+			text = _structural_line(entry, region_id)
+		else:
+			text = _resolve_fragment_ids(fragment_ids_arr, region_id, faction_id)
 		_qa_entries.append({
 			"entry_id": int(entry.get("id", -1)),
-			"fragment_id": fragment_id,
-			"text": _resolve_fragment_text(fragment_id, region_id, faction_id),
+			"fragment_id": fragment_ids_arr[0],
+			"fragment_ids": fragment_ids_arr,
+			"text": text,
 		})
 
 	for child in _entry_container.get_children():
@@ -457,3 +471,37 @@ func _resolve_fragment_text(fragment_id: int, region_id: int = -1, faction_id: i
 			return _chronicle_names.fill_template(raw, region_id, faction_id)
 		return raw
 	return "[fragment %d]" % fragment_id
+
+
+# Resolve text from fragment_ids array: concatenate all non-(-1) ids with a
+# space. Each id that is -1 contributes nothing. Returns "" when the array is
+# all -1 (callers should check all_minus_one before calling).
+func _resolve_fragment_ids(fragment_ids_arr: Array, region_id: int, faction_id: int) -> String:
+	var parts: Array = []
+	for raw_id in fragment_ids_arr:
+		var fid := int(raw_id)
+		if fid == -1:
+			continue
+		var resolved := _resolve_fragment_text(fid, region_id, faction_id)
+		if resolved != "":
+			parts.append(resolved)
+	return " ".join(PackedStringArray(parts))
+
+
+# Structural line for entries with no fragment text (all ids -1): category
+# number, resolved region name (from name tables), and tick range. Never
+# contains {, }, or [ characters.
+func _structural_line(entry: Dictionary, region_id: int) -> String:
+	_ensure_fragment_library()
+	var category := int(entry.get("category", 0))
+	var start_tick := int(entry.get("start_tick", 0))
+	var end_tick := int(entry.get("end_tick", 0))
+	var region_label: String
+	if _chronicle_names != null and region_id >= 0:
+		region_label = _chronicle_names.fill_template("{region_name}", region_id, -1)
+		# fill_template returns "[region]" when tables are empty; fall back to numeric.
+		if "[" in region_label:
+			region_label = "region %d" % region_id
+	else:
+		region_label = "region %d" % region_id
+	return "Cat. %d — %s — t%d–t%d" % [category, region_label, start_tick, end_tick]
