@@ -62,6 +62,7 @@ var _root: Node
 var _frame0: Dictionary
 var _frame10: Dictionary
 var _live_tests_completed := false
+var _c53_completed := false
 
 
 func _initialize() -> void:
@@ -134,6 +135,8 @@ func _run_tests() -> void:
 	_check_select_all_never_exists_R105_04()
 	_check_plant_nope_and_all_real_plants_true()
 
+	await _run_c53_tests()
+	_assert(_c53_completed, "the C5-3 checks did not run to the end (a script error aborted them, or the view lacks send_command / qa_step / the stuck and rubber-band plants)")
 	await _run_live_tests()
 	_assert(_live_tests_completed, "the live-frame checks did not run to the end (a script error aborted them, or c_bridge.gd lacks load_tactical_live / tactical_frame / DEFAULT_FEATURES)")
 
@@ -193,6 +196,143 @@ func _run_live_tests() -> void:
 	fresh.queue_free()
 	await process_frame
 	_live_tests_completed = true
+
+
+func _unit(id: int, faction: int, x: float, y: float) -> Dictionary:
+	return {"id": id, "faction": faction, "type": 0, "tier": 0, "x": x, "y": y, "hp": 100.0, "layer": 0, "facing": 0.0, "target": -1, "state": 0}
+
+
+func _mount_view() -> Node:
+	var v: Node = (load(SCENE_PATH) as PackedScene).instantiate()
+	get_root().add_child(v)
+	await process_frame
+	await process_frame
+	return v
+
+
+func _px_of(view: Node, id: int) -> Array:
+	return (view.qa_state().get("units_px", {}) as Dictionary).get(str(id), [])
+
+
+# Piece C5-3 (look 5, first_look/README.md finding 1): a real mission's canvas is
+# 24000 with the forces on opposite edges, and the view's fixed 0.25 scale drew every
+# unit off screen. The view scales the whole canvas into the screen height, sends unit
+# commands over the shared session, steps the live mission (qa_step), and carries the
+# plants the QA detectors need: "stuck" (a unit's drawn position stops following the
+# frames) and "rubber-band" (every third load_frame draws the units where the frame
+# before it had them, a snap backwards). Known sim-side gap when this was written:
+# ordered units do not move over the pipe (movement steps off w->tick, held still while
+# the mission phase holds), so movement itself is proven on fixture frames here, not live.
+func _run_c53_tests() -> void:
+	SimSession_reset()
+	var big := {
+		"type": "tactical", "tick": 1,
+		"map": {"canvas": 24000.0, "nodes": [], "cover": [], "obstacles": []},
+		"units": [_unit(1, 0, 11760.0, 15.0), _unit(2, 0, 12240.0, 15.0), _unit(3, 1, 11745.0, 23985.0)],
+		"visible": {"0": [1, 2, 3]},
+	}
+	var view: Node = await _mount_view()
+	for m in ["send_command", "qa_step"]:
+		_assert(view.has_method(m), "tactical_view root missing method (piece C5-3 not attached yet): " + m)
+		if not view.has_method(m):
+			view.queue_free()
+			return
+	view.load_frame(big)
+	await process_frame
+	var st: Dictionary = view.qa_state()
+	_assert(st.has("scale") and is_equal_approx(float(st["scale"]), 1080.0 / 24000.0), "qa_state().scale = %s, expected the canvas fitted to the screen height (%s)" % [st.get("scale"), 1080.0 / 24000.0])
+	var px: Dictionary = st.get("units_px", {})
+	_assert(px.size() == 3, "expected 3 drawn units on the 24000 canvas, got %d" % px.size())
+	for k in px:
+		var p: Array = px[k]
+		_assert(p[0] >= 0.0 and p[0] <= 1920.0 and p[1] >= 0.0 and p[1] <= 1080.0, "unit %s drawn at %s, outside the 1920x1080 screen on a real-size canvas" % [k, str(p)])
+
+	# Commands over the shared session, on the live mission.
+	view.queue_free()
+	await process_frame
+	SimSession_reset()
+	# Advance the shared session's strategic world to tick 10 so the mission
+	# has units; seed-1 at tick 0 is archetype 0 with 0 units, at tick 10 it
+	# is archetype 3 with 572 units. Test defect: the fixture never stepped
+	# the world before mounting the view (see assignment brief).
+	var _b = load("res://autoload/sim_session.gd").bridge()
+	var _CBridge = load("res://autoload/c_bridge.gd")
+	_b.ensure_session(1, _CBridge.DEFAULT_N_REGIONS, _CBridge.DEFAULT_FEATURES)
+	_b.step(10)
+	var _step_ddl := Time.get_ticks_msec() + 5000
+	while Time.get_ticks_msec() < _step_ddl and int(_b.snapshot().get("tick", 0)) < 10:
+		_b.pump()
+		OS.delay_msec(5)
+	var live_view: Node = await _mount_view()
+	var live: Dictionary = live_view.qa_state()
+	var own: Array = []
+	for k in live.get("units", {}):
+		if int(live["units"][k]["faction"]) == 0 and own.size() < 3:
+			own.append(int(k))
+	_assert(own.size() == 3, "live mission has fewer than 3 faction-0 units (%d)" % own.size())
+	_assert(live_view.send_command({"kind": "move", "unit_ids": own, "x": 12000.0, "y": 6000.0}), "send_command(move) was not acknowledged")
+	var last: Dictionary = live_view.qa_state().get("last_command", {})
+	_assert(bool(last.get("ok", false)) and last.get("kind", "") == "move" and int(last.get("units", 0)) == 3, "qa_state().last_command after a move = %s" % str(last))
+	_assert(not live_view.send_command({"kind": "no-such-kind", "unit_ids": own}), "an unknown command kind was reported as sent")
+	_assert(not bool(live_view.qa_state().get("last_command", {}).get("ok", true)), "last_command.ok stayed true after a refused command")
+	var tick0 := int(live_view.qa_state().get("tick", -1))
+	live_view.qa_step(3)
+	_assert(int(live_view.qa_state().get("tick", -1)) == tick0 + 3, "qa_step(3) moved the view from tick %d to %s, expected %d" % [tick0, live_view.qa_state().get("tick"), tick0 + 3])
+	live_view.queue_free()
+	await process_frame
+
+	# Plants, on the two fixture frames (units move between them).
+	var moved := -1
+	var u0 := {}
+	for u in _frame0.get("units", []):
+		u0[int(u["id"])] = u
+	for u in _frame10.get("units", []):
+		var id := int(u["id"])
+		if u0.has(id) and (abs(float(u["x"]) - float(u0[id]["x"])) > 1.0 or abs(float(u["y"]) - float(u0[id]["y"])) > 1.0):
+			moved = id
+			break
+	_assert(moved != -1, "fixture setup bug: no unit moves between the tick-0 and tick-10 frames")
+	if moved == -1:
+		return
+	var clean: Node = await _mount_view()
+	clean.load_frame(_frame0.duplicate(true))
+	var clean_a: Array = _px_of(clean, moved)
+	clean.load_frame(_frame10.duplicate(true))
+	var clean_b: Array = _px_of(clean, moved)
+	clean.load_frame(_frame10.duplicate(true))
+	var clean_c: Array = _px_of(clean, moved)
+	_assert(clean_a != clean_b, "control: the moved unit's drawn position did not change between the two fixture frames")
+	_assert(clean_c == clean_b, "control: reloading the same frame moved the drawn unit")
+	clean.queue_free()
+	await process_frame
+
+	var stuck: Node = await _mount_view()
+	_assert(stuck.qa_plant("stuck"), "qa_plant(stuck) was not accepted")
+	stuck.load_frame(_frame0.duplicate(true))
+	var stuck_a: Array = _px_of(stuck, moved)
+	stuck.load_frame(_frame10.duplicate(true))
+	_assert(_px_of(stuck, moved) == stuck_a, "stuck plant: the drawn unit still followed the frames (%s vs %s)" % [str(_px_of(stuck, moved)), str(stuck_a)])
+	stuck.queue_free()
+	await process_frame
+
+	var band: Node = await _mount_view()
+	_assert(band.qa_plant("rubber-band"), "qa_plant(rubber-band) was not accepted")
+	band.load_frame(_frame0.duplicate(true))
+	var band_a: Array = _px_of(band, moved)
+	band.load_frame(_frame10.duplicate(true))
+	var band_b: Array = _px_of(band, moved)
+	band.load_frame(_frame10.duplicate(true))
+	var band_c: Array = _px_of(band, moved)
+	_assert(band_b == clean_b, "rubber-band plant: the second frame should still draw the frame's own position (%s vs %s)" % [str(band_b), str(clean_b)])
+	_assert(band_c == band_a, "rubber-band plant: the third load should snap the unit back to where the frame before had it (%s vs %s)" % [str(band_c), str(band_a)])
+	band.queue_free()
+	await process_frame
+	SimSession_reset()
+	_c53_completed = true
+
+
+func SimSession_reset() -> void:
+	load("res://autoload/sim_session.gd").reset()
 
 
 func _check_qa_state_json_safe() -> void:

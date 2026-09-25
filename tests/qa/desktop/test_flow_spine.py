@@ -37,9 +37,12 @@ ever retries it.
 """
 from __future__ import annotations
 
+import struct
 import time
+import zlib
 from pathlib import Path
 
+import numpy as np
 import pytest
 
 from daemon_client import (
@@ -75,6 +78,11 @@ SCREENSHOT_HINT = (
     "user://qa/%s.png (globalized: ~/.local/share/data/qa/%s.png per "
     "project.godot's config/custom_user_dir_name=\"data\")"
 )
+# C5-3: tactical screenshot must differ from blank grey by this many pixels.
+# 572 units drawn as ~1-px dots each give ~500 non-grey pixels; HUD text
+# alone (0 units case) gives ~50-150. 300 is comfortably between the two.
+QA_SHOT_DIR = Path.home() / ".local/share/data/qa"
+MIN_TACTICAL_DIFF_PX = 300
 
 
 def _real_saves_snapshot() -> dict:
@@ -100,6 +108,62 @@ def game():
     # per-run OM_SAVE_DIR; the player's real save directory must be untouched.
     assert _real_saves_snapshot() == real_before, "the flow wrote into the real save directory"
     assert any(g.save_dir.glob("campaign_*.omsave")), "control: the flow wrote no autosave at all into OM_SAVE_DIR"
+
+
+def _read_png_rgb(path: Path) -> "np.ndarray":
+    """Minimal pure-Python PNG decoder; returns uint8 array (H, W, 3)."""
+    data = path.read_bytes()
+    assert data[:8] == b"\x89PNG\r\n\x1a\n", "not a PNG: %s" % path
+    pos, width, height, depth, ctype = 8, 0, 0, 0, 0
+    idat = b""
+    while pos < len(data):
+        (length,) = struct.unpack(">I", data[pos:pos + 4])
+        tag = data[pos + 4:pos + 8]
+        body = data[pos + 8:pos + 8 + length]
+        if tag == b"IHDR":
+            width, height, depth, ctype = struct.unpack(">IIBB", body[:10])
+        elif tag == b"IDAT":
+            idat += body
+        pos += 12 + length
+    assert depth == 8 and ctype in (2, 6), "unsupported PNG (depth %d type %d)" % (depth, ctype)
+    bpp = 3 if ctype == 2 else 4
+    raw = zlib.decompress(idat)
+    stride = width * bpp
+    out = np.zeros((height, stride), dtype=np.uint8)
+    prev = np.zeros(stride, dtype=np.int32)
+    offset = 0
+    for y in range(height):
+        ftype = raw[offset]
+        line = np.frombuffer(raw, dtype=np.uint8, count=stride, offset=offset + 1).astype(np.int32)
+        offset += 1 + stride
+        if ftype == 0:
+            cur = line
+        elif ftype == 1:
+            cur = line.copy()
+            for x in range(bpp, stride):
+                cur[x] = (cur[x] + cur[x - bpp]) & 255
+        elif ftype == 2:
+            cur = (line + prev) & 255
+        elif ftype == 3:
+            cur = line.copy()
+            for x in range(stride):
+                left = cur[x - bpp] if x >= bpp else 0
+                cur[x] = (cur[x] + ((left + prev[x]) >> 1)) & 255
+        elif ftype == 4:
+            cur = line.copy()
+            for x in range(stride):
+                a = cur[x - bpp] if x >= bpp else 0
+                b = prev[x]
+                c = prev[x - bpp] if x >= bpp else 0
+                p = a + b - c
+                pa, pb, pc = abs(p - a), abs(p - b), abs(p - c)
+                pred = a if (pa <= pb and pa <= pc) else (b if pb <= pc else c)
+                cur[x] = (cur[x] + pred) & 255
+        else:
+            raise AssertionError("bad PNG filter %d" % ftype)
+        out[y] = cur
+        prev = cur
+    return out.reshape(height, width, bpp)[:, :, :3]
 
 
 def _shoot(client, name: str) -> None:
@@ -189,6 +253,12 @@ def test_S_C8_08_galaxy_has_content(game):
 
 def test_s_c8_03_mission_reaches_briefing(game):
     client = game.client
+    # C5-3: advance the galaxy 10 strategic ticks so the mission is archetype 3
+    # (572 units); a tick-0 world is archetype 0 with 0 units. Mirrors
+    # test_tactical_play.py::_to_tactical's step call. Test defect: the flow
+    # never stepped the world before clicking Mission.
+    client.call("step", 10)
+    wait_for(client, lambda s: int(s.get("qa", {}).get("tick", 0)) >= 10, STEP_TIMEOUT_S, label="galaxy tick 10")
     tree_resp = client.tree()
     control = find_control(tree_resp, "Mission")
     assert control is not None, (
@@ -219,6 +289,27 @@ def test_s_c8_04_deploy_reaches_tactical(game):
         % (tactical_qa.get("tick"), sorted(tactical_qa.keys()))
     )
     _shoot(client, "flow_04_tactical")
+    # C5-3: unit count -- archetype-3 mission at galaxy tick 10 has 572 units.
+    assert int(tactical_qa.get("unit_count", -1)) == 572, (
+        "S-C8-04: qa.unit_count = %r after Deploy, expected 572 (archetype-3 "
+        "mission; galaxy must be stepped 10 strategic ticks before Mission click; "
+        "known leftover: flow spine does not yet call step(10) in galaxy view)"
+        % tactical_qa.get("unit_count")
+    )
+    # C5-3: tactical screenshot must not be blank grey -- the view must draw
+    # unit markers. Use the median pixel value as the background reference so
+    # the check is robust against the exact Godot clear colour.
+    time.sleep(0.5)
+    shot_path = QA_SHOT_DIR / "flow_04_tactical.png"
+    assert shot_path.exists(), "S-C8-04: screenshot not written at %s" % shot_path
+    shot = _read_png_rgb(shot_path)
+    bg = int(np.median(shot))
+    diff_px = int(np.any(np.abs(shot.astype(int) - bg) > 30, axis=2).sum())
+    assert diff_px >= MIN_TACTICAL_DIFF_PX, (
+        "S-C8-04: tactical screenshot looks blank (bg grey%d; %d pixels differ "
+        "by > 30, need >= %d; unit markers must be drawn)"
+        % (bg, diff_px, MIN_TACTICAL_DIFF_PX)
+    )
 
 
 def test_s_c8_05_end_mission_reaches_chronicle(game):
