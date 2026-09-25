@@ -436,3 +436,4 @@ One row per event: freeze steps, attaches, reverts, parks, rung gates, harness e
 | day4 | merge B12-12 | OK  merged |
 | day4 | merge B10c-4 | REJECT merge-conflict in csrc/unit.c |
 | day4 | merge B11-6 | REJECT merge-conflict in csrc/fog.c |
+| day4 | docs tests-collision-reference | OK  collection and lints OK |
