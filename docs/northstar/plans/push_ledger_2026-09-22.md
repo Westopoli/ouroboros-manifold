@@ -460,3 +460,10 @@ One row per event: freeze steps, attaches, reverts, parks, rung gates, harness e
 | day4 | docs T1-7-tests (push/T1-7) | OK  collection and lints OK -- tests/transport/test_pipe_units_move.py + test_core_mission_region_delta.py landed |
 | day4 | docs brief-client3 (push/brief-client3) | OK  collection and lints OK |
 | day4 | sweep (bk-38; make -j8 clean, pipe clean) | transport: 27p/0f; E09: 39p/0f; E13: 33p/2f (S099, S101 pre-existing); E10: 43p/1f/1s (S078 pre-existing); core: 61p/0f; qa/t1: 31p/2f/1s (detector controls, pre-existing). No new reds from T1-7/T1-8 pieces. |
+| day4 | merge T1-9 (push/T1-9-r2) | OK  merged |
+| day4 | merge T1-10 (push/B8-9-r2, T1-10) | REJECT merge-conflict csrc/pipe/om_pipe.c -- real conflict, pipe lane rebuild needed (ouroboros-manifold-8d) |
+| day4 | docs T1-9-tests (push/T1-9-r2) | OK  collection and lints OK -- tests/transport/test_pipe_chronicle_fragments.py + docs/architecture.md landed |
+| day4 | merge T1-7-3 (push/T1-7-3) | REJECT unknown piece id -- not in pieces.toml; M0 rules |
+| day4 | merge T1-12 (push/T1-12) | landed (empty diff) -- csrc/pipe/om_pipe.c already on main via T1-9 |
+| day4 | docs T1-12-tests (push/T1-12) | OK  collection and lints OK |
+| day4 | sweep (bk-39; make -j8 clean, pipe clean) | transport: 34p/0f; E09: 39p/0f; E13: 33p/2f (S099, S101 pre-existing); E10: 43p/1f/1s (S078 pre-existing); core: 61p/0f; qa/t1: 31p/2f/1s (detector controls, pre-existing). No new reds from T1-9/T1-12 pieces. |
