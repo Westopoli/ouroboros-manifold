@@ -1158,7 +1158,7 @@ static void om_move_collision_pass_internal(om_world *w, om_move_state *ms) {
     uint32_t id;
     om_move_discover(w, ms);
     if (om_move_settle_matches(w, ms)) return;
-    om_move_grid_rebuild(w, ms, 1);
+    if (!ms->grid_live) om_move_grid_rebuild(w, ms, 1);
     ms->settle_valid = 0;
     for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
         ms->stat[id] = (uint8_t)om_move_is_stationary(&ms->units[id]);
@@ -1244,20 +1244,25 @@ static void om_move_tick_unit(om_world *w, om_move_state *ms, uint32_t id, uint3
         }
     }
 
+    int found = 0;
+    double move_cos = 0.0, move_sin = 0.0;
     if (!mu->deflecting) {
         uint32_t k, hints[OM_MOVE_PROBE_HINTS] = {0}, n_near = om_move_probe_gather(w, ms, id, mu->x, mu->y);
         double sin_h = 0.0, cos_h = 0.0;
-        int found = 0;
         if (n_near) om_move_sincos_approx(heading, &sin_h, &cos_h);
         for (k = 0; k < OM_STEERING_SWEEP_COUNT; k++) {
             double test_heading = heading + OM_STEERING_SWEEP_ANGLES[k];
             if (n_near && om_move_probe_sure_blocked(ms, n_near, hints,
                     mu->x + OM_STEERING_PROBE_DIST * (cos_h * ms->sweep_cos[k] - sin_h * ms->sweep_sin[k]),
                     mu->y + OM_STEERING_PROBE_DIST * (sin_h * ms->sweep_cos[k] + cos_h * ms->sweep_sin[k]))) continue;
-            double px = mu->x + OM_STEERING_PROBE_DIST * om_cos(test_heading);
-            double py = mu->y + OM_STEERING_PROBE_DIST * om_sin(test_heading);
+            double ch = om_cos(test_heading);
+            double sh = om_sin(test_heading);
+            double px = mu->x + OM_STEERING_PROBE_DIST * ch;
+            double py = mu->y + OM_STEERING_PROBE_DIST * sh;
             if (om_move_probe_clear(ms, n_near, hints, px, py)) {
                 heading = test_heading;
+                move_cos = ch;
+                move_sin = sh;
                 found = 1;
                 if (OM_STEERING_SWEEP_ANGLES[k] != 0.0) {
                     /* R-097-04: a freshly chosen deflection snaps facing to
@@ -1286,8 +1291,8 @@ static void om_move_tick_unit(om_world *w, om_move_state *ms, uint32_t id, uint3
         mu->x = mu->dest_x;
         mu->y = mu->dest_y;
     } else if (step_dist > 0.0) {
-        mu->x += step_dist * om_cos(heading);
-        mu->y += step_dist * om_sin(heading);
+        mu->x += step_dist * (found ? move_cos : om_cos(heading));
+        mu->y += step_dist * (found ? move_sin : om_sin(heading));
     }
     om_move_grid_update(ms, mu);
 
