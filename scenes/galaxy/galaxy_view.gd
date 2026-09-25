@@ -27,6 +27,8 @@ const BAND_SPLIT_HIGH := 70.0
 const FLAT_COLOUR := Color(1.0, 1.0, 1.0, 1.0)
 const FILAMENT_RADIUS := 0.5
 const FILAMENT_COLOUR := Color(0.6, 0.6, 0.6, 1.0)
+const EDGE_2D_WIDTH := 1.5
+const EDGE_2D_COLOUR := Color(0.6, 0.6, 0.6, 1.0)
 const POINT_RADIUS := 1.2
 const OWNER_SAT := 0.65
 const OWNER_VAL := 0.85
@@ -48,6 +50,7 @@ var _point_material: StandardMaterial3D
 var _filament_material: StandardMaterial3D
 var _bridge = null
 var _bridge_dirty := false
+var _edge_canvas: Node2D = null  # Node2D in a CanvasLayer; valid only while edges-2d-overlay plant is active
 
 @onready var _world: Node3D = $World
 @onready var _points: MultiMeshInstance3D = $World/Points
@@ -302,6 +305,7 @@ func _render_filaments() -> void:
 	for child in _filaments.get_children():
 		child.free()
 	if _plants.get("edges-2d-overlay", false):
+		_render_filaments_2d()
 		return
 	for e in _edges:
 		var a := int(e.get("a", -1))
@@ -309,6 +313,35 @@ func _render_filaments() -> void:
 		if not (_positions.has(a) and _positions.has(b)):
 			continue
 		_filaments.add_child(_build_tube(_positions[a], _positions[b]))
+
+
+# Draws each galaxy edge as a Line2D in a CanvasLayer overlay, using the
+# camera's canvas-space projection of the 3D system positions. Called only
+# when the edges-2d-overlay plant is active; replaces the 3D tube render.
+func _render_filaments_2d() -> void:
+	if _edge_canvas == null:
+		var layer := CanvasLayer.new()
+		layer.layer = 10
+		add_child(layer)
+		_edge_canvas = Node2D.new()
+		layer.add_child(_edge_canvas)
+	else:
+		for child in _edge_canvas.get_children():
+			child.free()
+	var cam: Camera3D = _camera_rig.get_camera()
+	for e in _edges:
+		var a := int(e.get("a", -1))
+		var b := int(e.get("b", -1))
+		if not (_positions.has(a) and _positions.has(b)):
+			continue
+		var pa: Vector2 = cam.unproject_position(_positions[a])
+		var pb: Vector2 = cam.unproject_position(_positions[b])
+		var line := Line2D.new()
+		line.add_point(pa)
+		line.add_point(pb)
+		line.width = EDGE_2D_WIDTH
+		line.default_color = EDGE_2D_COLOUR
+		_edge_canvas.add_child(line)
 
 
 func _build_tube(from_pos: Vector3, to_pos: Vector3) -> MeshInstance3D:
