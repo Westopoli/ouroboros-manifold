@@ -232,3 +232,46 @@ def test_c2_5b_owner_colour_flat_plant_reaches_the_pixels(galaxy_game):
         "owner-colour-flat changed %d of %d pixels (need >= %d): the plant is state-only"
         % (differing, before.shape[0] * before.shape[1], MIN_PLANT_DIFF_PX)
     )
+
+
+MIN_EDGES_2D_DIFF_PX = 200
+
+
+def test_c2_7_edges_2d_overlay_plant_reaches_the_pixels(galaxy_game):
+    """QA-002: edges-2d-overlay plant removed all edges (drew nothing).
+    After the fix, planting edges-2d-overlay must draw 2D lines between
+    system screen positions, changing >= MIN_EDGES_2D_DIFF_PX pixels
+    compared to the clean screenshot. Also verifies edge_counts is
+    preserved (the plant changes rendering, never the edge data)."""
+    client = galaxy_game.client
+
+    qa_clean = client.state()["result"]["qa"]
+    clean_edge_total = sum(int(v) for v in qa_clean.get("edge_counts", {}).values())
+
+    client.screenshot("c2_7_clean")
+    time.sleep(0.5)
+    clean_img = _read_png_rgb(QA_SHOT_DIR / "c2_7_clean.png")
+
+    resp = client.call("plant", "edges-2d-overlay")
+    assert resp.get("ok") and resp["result"].get("activated"), (
+        "plant did not activate: %r" % resp
+    )
+    time.sleep(1.5)
+
+    qa_planted = client.state()["result"]["qa"]
+    planted_edge_total = sum(int(v) for v in qa_planted.get("edge_counts", {}).values())
+    assert planted_edge_total == clean_edge_total, (
+        "QA-002: edge_counts total changed after plant: clean=%d planted=%d"
+        % (clean_edge_total, planted_edge_total)
+    )
+
+    client.screenshot("c2_7_planted")
+    time.sleep(0.5)
+    planted_img = _read_png_rgb(QA_SHOT_DIR / "c2_7_planted.png")
+
+    differing = int(np.any(clean_img != planted_img, axis=2).sum())
+    assert differing >= MIN_EDGES_2D_DIFF_PX, (
+        "QA-002 edges-2d-overlay: plant changed %d of %d pixels (need >= %d); "
+        "the plant drew nothing (all edges vanished)"
+        % (differing, clean_img.shape[0] * clean_img.shape[1], MIN_EDGES_2D_DIFF_PX)
+    )

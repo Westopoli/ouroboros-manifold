@@ -86,6 +86,7 @@ func _run_tests() -> void:
 	_check_plant_seed_ignored()
 	_check_plant_owner_colour_flat()
 	_check_plant_edges_2d_overlay()
+	_check_plant_edges_2d_overlay_draws_lines()
 	_check_plant_pick_radius_zero_R107_01()
 	_check_plant_bands_frozen_R106_03()
 	_check_plant_conquest_no_recolour_R106_02_04()
@@ -309,6 +310,41 @@ func _check_plant_conquest_no_recolour_R106_02_04() -> void:
 	_assert(_colour_eq(planted_before, planted_after),
 		"PLANT conquest-no-recolour: region_colours[%d] should stay unchanged after the owner changes, was %s now %s" % [target_i, planted_before, planted_after])
 	_root.set_snapshot(_snapshot)
+
+
+# QA-002: edges-2d-overlay plant drew nothing because the 2D branch had no
+# assets and returned early (scenes/galaxy/galaxy_view.gd _render_filaments).
+# After the fix, Line2D nodes must appear in the scene tree (one per edge).
+# Also verifies that edge_counts in qa_state() is preserved by the plant
+# (the plant changes rendering, never the underlying edge data).
+func _check_plant_edges_2d_overlay_draws_lines() -> void:
+	# edges-2d-overlay was planted in _check_plant_edges_2d_overlay().
+	var expected_edges: int = _snapshot.get("edges", []).size()
+	if expected_edges == 0:
+		return
+	var line2d_count := _count_line2d_nodes(_root)
+	_assert(line2d_count > 0,
+		"QA-002/PLANT edges-2d-overlay: 0 Line2D nodes in scene tree (%d edges in snapshot); plant drew nothing"
+		% expected_edges)
+	_assert(line2d_count == expected_edges,
+		"QA-002/PLANT edges-2d-overlay: %d Line2D nodes, expected %d (one per edge)"
+		% [line2d_count, expected_edges])
+	var edge_counts: Dictionary = _root.qa_state().get("edge_counts", {})
+	var total := 0
+	for k in edge_counts:
+		total += int(edge_counts[k])
+	_assert(total == expected_edges,
+		"QA-002/PLANT edges-2d-overlay: edge_counts total is %d after plant, expected %d (data must be preserved)"
+		% [total, expected_edges])
+
+
+func _count_line2d_nodes(node: Node) -> int:
+	var count := 0
+	if node is Line2D:
+		count += 1
+	for child in node.get_children():
+		count += _count_line2d_nodes(child)
+	return count
 
 
 func _check_plant_nope_is_false() -> void:
