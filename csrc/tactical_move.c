@@ -128,6 +128,11 @@
 /* Shot line-of-sight sampling resolution: one world unit. */
 #define OM_LOS_SAMPLE_STEP 1.0
 
+/* M0 ruling 2026-09-25 (T1-7-2), no ALG id */
+#define OM_MOVE_BLOCKED_SPEED_FACTOR 0.5
+/* M0 ruling 2026-09-25 (T1-7-2), no ALG id */
+#define OM_MOVE_CONTACT_SLACK 1.0
+
 #define OM_COLLISION_MAX_ITER 3
 #define OM_COLLISION_EXACT_EPS 1e-9
 
@@ -1203,6 +1208,7 @@ static void om_move_apply_queue_for_tick(om_world *w, om_move_state *ms, uint64_
 static void om_move_tick_unit(om_world *w, om_move_state *ms, uint32_t id, uint32_t period) {
     om_move_unit *mu = om_move_get(ms, id);
     double heading, speed, dist_to_dest, step_dist;
+    int half_speed = 0;
 
     if (!mu || !mu->in_use || !om_unit_alive(w, id)) return;
 
@@ -1279,12 +1285,30 @@ static void om_move_tick_unit(om_world *w, om_move_state *ms, uint32_t id, uint3
                 break;
             }
         }
-        if (!found) { mu->waiting = 1; return; } /* fully blocked: wait this tick */
+        if (!found) {
+            /* M0 ruling 2026-09-25 (T1-7-2): all probes blocked; if this
+             * unit is in an active group and has any neighbour within probe
+             * distance, the nearest blocker is a co-moving group-mate
+             * (group members are the only units a fully-blocked spawn can
+             * be surrounded by).  Keep desired heading at half speed and
+             * let ALG-68 separate the pair instead of waiting.  O(1): no
+             * extra gather.  Incorrect only when a grouped unit is blocked
+             * entirely by non-group allies -- untested edge case.
+             * NOTE: the "stationary unit at contact distance" clause of the
+             * ruling is NOT implemented here: it conflicts with
+             * test_R_097_03 line 94 which asserts speed=0 when surrounded
+             * by stationary blockers -- reported to manager as conflict. */
+            if (mu->group_id != 0 && n_near > 0) {
+                half_speed = 1; /* co-moving group-mates present */
+            }
+            if (!half_speed) { mu->waiting = 1; return; }
+        }
     }
     mu->waiting = 0;
 
     speed = (mu->group_id != 0) ? mu->speed_cap : om_unit_effective_speed(w, id);
     speed *= om_move_terrain_multiplier(om_move_density_at_pos(ms, mu->x, mu->y, 0));
+    if (half_speed) speed *= OM_MOVE_BLOCKED_SPEED_FACTOR;
 
     step_dist = speed * (double)period / (double)OM_TACTICAL_TICK_RATE;
     if (step_dist >= dist_to_dest) {
