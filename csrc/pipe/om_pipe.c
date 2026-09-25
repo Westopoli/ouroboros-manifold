@@ -1319,7 +1319,11 @@ static void handle_command(const char *json) {
         double x = 0.0, y = 0.0;
         get_f64(json, "x", &x);
         get_f64(json, "y", &y);
-        ret = om_command_move(W, unit_ids, (uint32_t)n_units, x, y);
+        /* R-095-01: group_move caps all units at the slowest member's speed
+         * and assigns formation slots.  om_command_move is the per-unit
+         * primitive; the pipe always issues a group order for move commands
+         * so the client's multi-unit selection behaves like the scale test. */
+        ret = (om_command_group_move(W, unit_ids, (uint32_t)n_units, x, y) != 0) ? 0 : 1;
     } else if (!strcmp(verb, "attack_move")) {
         double x = 0.0, y = 0.0;
         get_f64(json, "x", &x);

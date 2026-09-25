@@ -8,21 +8,32 @@ the pipe in a real mission.
 
 Setup (same seed/region/feature/step count as the other transport tests):
   set_seed 1, 80 regions, strategic features 1..7, step 10, mission_start faction 0,
-  mission_begin, then a move command on player unit 17 (id=17 in this world; the
-  rightmost unit in the first spawn row, at the edge of the spawn cluster and the
-  only one in its neighbourhood with a clear NE path), then 20 tactical_step frames.
+  mission_begin.
 
-Positive control: the begin frame must show unit 17 at its spawn position; if it
-does not, the world diverged from the expected setup and the move-distance assertion
-would be vacuously correct.
+Part 1 -- single edge unit (R-095-07):
+  Unit 17 (id=17, rightmost of the first spawn row, clear NE path) is commanded alone
+  to (SPAWN_X+500, SPAWN_Y+500).  After 20 tactical_step frames the unit must have
+  moved >= 75 wu toward the destination.
 
-Acceptance: R-095-07 (a single unit moves at its own speed to the click point):
-  - After 20 steps the unit's position must differ from spawn by at least the
-    minimum step-distance times the step count (at 20 tps, Raider speed 150 wu/s,
-    step_dist = 7.5 wu/tick; 20 ticks x 7.5 = 150 wu total; steering deflections
-    and collision reduce this, so we require >= 50% of theoretical: 75 wu).
-  - The displacement vector from spawn to final position must point toward the
-    commanded destination (dot product with the destination direction > 0).
+Part 2 -- group speed-sync (R-095-01):
+  The client sends all selected units in ONE command frame; handle_command must call
+  om_command_group_move (not per-unit om_command_move) so the slowest member caps
+  the group's speed (R-095-01: "all units move at the speed of the slowest member
+  until the group has spread further than the magic box").
+
+  Unit 17 (Raider, type 0, ~147 wu/s) and unit 276 (Bastion, type 5, ~40 wu/s)
+  are both at the edge of the spawn formation and can both move.  Commanded together
+  with om_command_move (the unfixed pipe), unit 17 races at Raider speed while
+  unit 276 moves at Bastion speed: ratio ~3.7x.  With om_command_group_move (fixed),
+  both are capped at the Bastion's speed: ratio ~1.0x.
+
+  Positive controls:
+    - Unit 17 must move (sanity check on the begin frame position).
+    - Unit 276 must move (confirms the slow unit also has a clear path).
+
+Seed-stability: unit ids and spawn positions are deterministic for seed 1 / 80 regions /
+features [1..7] / 10 strategic steps / faction 0.  If the world changes, the begin-frame
+position checks will fail first, making the cause obvious.
 """
 import json
 import subprocess
@@ -52,6 +63,25 @@ DEST_Y = SPAWN_Y + 500.0
 # step_dist = 150 / 20 = 7.5 wu/tick. 20 ticks x 7.5 = 150 wu theoretical.
 # Require at least 50% (75 wu) to tolerate steering and minor collision pushback.
 MIN_DIST_WU = 75.0
+
+# Part 2 -- speed-sync group: Raider + Bastion edge pair (R-095-01).
+# Both units are at the right/top edge of the formation and have a clear NE path.
+# Unit 17: type 0 (Raider), ~147 wu/s solo.  Unit 276: type 5 (Bastion), ~40 wu/s solo.
+# When commanded together via om_command_group_move (the fix), both move at Bastion speed.
+# When commanded via om_command_move (the defect), Raider races ahead at 3.7x Bastion speed.
+FAST_ID = 17    # Raider at (12240, 15)
+SLOW_ID = 276   # Bastion at (11850, 495)
+SLOW_SPAWN_X = 11850.0
+SLOW_SPAWN_Y = 495.0
+# Shared destination: 1000 wu NE of the midpoint between the two units.
+GROUP_DEST_X = (SPAWN_X + SLOW_SPAWN_X) / 2.0 + 1000.0   # 13045
+GROUP_DEST_Y = (SPAWN_Y + SLOW_SPAWN_Y) / 2.0 + 1000.0   # 1255
+# After 20 steps at Bastion speed (~40 wu/s, 2 wu/tick) both units should move ~40 wu.
+# The solo Raider speed is ~147 wu/s (7.35 wu/tick × 20 = 147 wu).
+# Both must have moved, and their displacement ratio must be <= 1.5 (speed-capped group).
+GROUP_N_STEPS = 20
+MAX_SPEED_RATIO = 1.5
+
 N_STEPS = 20
 
 pytestmark = pytest.mark.skipif(not PIPE.exists(), reason="pipe/ouroboros_pipe not built (piece T1)")
@@ -75,6 +105,7 @@ def _run(cmds):
 
 @pytest.fixture(scope="module")
 def movement_frames():
+    """Single-unit edge command (Part 1): unit 17 commanded alone."""
     cmds = [SET_SEED, STEP10, START, BEGIN,
             {"type": "cmd", "name": "command", "verb": "move",
              "units": [UNIT_ID], "x": DEST_X, "y": DEST_Y}]
@@ -82,14 +113,30 @@ def movement_frames():
         cmds.append({"type": "cmd", "name": "tactical_step", "n": 1})
     frames = _run(cmds)
     tactical = [f for f in frames if f["type"] == "tactical"]
-    # mission_begin writes one tactical frame; N_STEPS more follow.
     assert len(tactical) == N_STEPS + 1, (
         "expected %d tactical frames (1 begin + %d steps), got %d: %r"
         % (N_STEPS + 1, N_STEPS, len(tactical), [f["type"] for f in frames]))
-    begin = tactical[0]
-    final = tactical[-1]
-    return begin, final
+    return tactical[0], tactical[-1]
 
+
+@pytest.fixture(scope="module")
+def group_frames():
+    """Group command (Part 2): Raider + Bastion commanded together to shared destination."""
+    cmds = [SET_SEED, STEP10, START, BEGIN,
+            {"type": "cmd", "name": "command", "verb": "move",
+             "units": [FAST_ID, SLOW_ID], "x": GROUP_DEST_X, "y": GROUP_DEST_Y}]
+    for _ in range(GROUP_N_STEPS):
+        cmds.append({"type": "cmd", "name": "tactical_step", "n": 1})
+    frames = _run(cmds)
+    tactical = [f for f in frames if f["type"] == "tactical"]
+    assert len(tactical) == GROUP_N_STEPS + 1, (
+        "expected %d tactical frames, got %d" % (GROUP_N_STEPS + 1, len(tactical)))
+    return tactical[0], tactical[-1]
+
+
+# ---------------------------------------------------------------------------
+# Part 1 tests (single unit, R-095-07)
+# ---------------------------------------------------------------------------
 
 def test_unit_at_spawn_in_begin_frame(movement_frames):
     """Positive control: unit UNIT_ID must start at SPAWN_X, SPAWN_Y in the begin
@@ -133,10 +180,8 @@ def test_unit_moved_toward_destination(movement_frames):
         "unit %d missing from begin or final frame" % UNIT_ID)
     bu = begin_units[UNIT_ID]
     fu = final_units[UNIT_ID]
-    # displacement vector
     disp_x = fu["x"] - bu["x"]
     disp_y = fu["y"] - bu["y"]
-    # toward-destination direction
     toward_x = DEST_X - bu["x"]
     toward_y = DEST_Y - bu["y"]
     dot = disp_x * toward_x + disp_y * toward_y
@@ -144,3 +189,68 @@ def test_unit_moved_toward_destination(movement_frames):
         "unit %d moved away from destination: spawn=(%.2f,%.2f) final=(%.2f,%.2f) "
         "dest=(%.2f,%.2f) dot=%.2f"
         % (UNIT_ID, bu["x"], bu["y"], fu["x"], fu["y"], DEST_X, DEST_Y, dot))
+
+
+# ---------------------------------------------------------------------------
+# Part 2 tests (group speed-sync, R-095-01)
+# ---------------------------------------------------------------------------
+
+def test_group_spawn_positions(group_frames):
+    """Positive control: both units must start at their known spawn positions.
+    If they diverge, the speed-ratio assertion would compare units at wrong positions."""
+    begin, _ = group_frames
+    units = {u["id"]: u for u in begin.get("units", [])}
+    assert FAST_ID in units, "unit %d (Raider) absent from begin frame" % FAST_ID
+    assert SLOW_ID in units, "unit %d (Bastion) absent from begin frame" % SLOW_ID
+    fu = units[FAST_ID]
+    su = units[SLOW_ID]
+    assert fu["x"] == pytest.approx(SPAWN_X, abs=1.0), (
+        "unit %d spawn x: %.2f != %.2f" % (FAST_ID, fu["x"], SPAWN_X))
+    assert fu["y"] == pytest.approx(SPAWN_Y, abs=1.0), (
+        "unit %d spawn y: %.2f != %.2f" % (FAST_ID, fu["y"], SPAWN_Y))
+    assert su["x"] == pytest.approx(SLOW_SPAWN_X, abs=1.0), (
+        "unit %d spawn x: %.2f != %.2f" % (SLOW_ID, su["x"], SLOW_SPAWN_X))
+    assert su["y"] == pytest.approx(SLOW_SPAWN_Y, abs=1.0), (
+        "unit %d spawn y: %.2f != %.2f" % (SLOW_ID, su["y"], SLOW_SPAWN_Y))
+
+
+def test_group_both_units_moved(group_frames):
+    """Both the Raider and the Bastion must move (confirms both have a clear
+    path and the command reached the sim)."""
+    begin, final = group_frames
+    begin_units = {u["id"]: u for u in begin.get("units", [])}
+    final_units = {u["id"]: u for u in final.get("units", [])}
+    for uid in (FAST_ID, SLOW_ID):
+        assert uid in begin_units and uid in final_units, (
+            "unit %d missing from begin or final frame" % uid)
+        bu = begin_units[uid]
+        fu = final_units[uid]
+        dist = ((fu["x"] - bu["x"]) ** 2 + (fu["y"] - bu["y"]) ** 2) ** 0.5
+        assert dist >= 5.0, (
+            "unit %d did not move after %d steps: spawn=(%.2f,%.2f) final=(%.2f,%.2f)"
+            % (uid, GROUP_N_STEPS, bu["x"], bu["y"], fu["x"], fu["y"]))
+
+
+def test_group_speed_sync(group_frames):
+    """R-095-01: when both units are commanded together via a single move command,
+    the pipe must issue a group order (om_command_group_move) so their speeds are
+    capped at the slowest member.  The Raider's solo speed is ~147 wu/s and the
+    Bastion's is ~40 wu/s (ratio 3.7x); with speed-capping both move at ~40 wu/s
+    (ratio ~1.0x).  The assertion allows up to %.1fx to tolerate minor path
+    differences between the two units' trajectories.""" % MAX_SPEED_RATIO
+    begin, final = group_frames
+    begin_units = {u["id"]: u for u in begin.get("units", [])}
+    final_units = {u["id"]: u for u in final.get("units", [])}
+    bu_fast = begin_units[FAST_ID]
+    fu_fast = final_units[FAST_ID]
+    bu_slow = begin_units[SLOW_ID]
+    fu_slow = final_units[SLOW_ID]
+    fast_dist = ((fu_fast["x"] - bu_fast["x"]) ** 2 + (fu_fast["y"] - bu_fast["y"]) ** 2) ** 0.5
+    slow_dist = ((fu_slow["x"] - bu_slow["x"]) ** 2 + (fu_slow["y"] - bu_slow["y"]) ** 2) ** 0.5
+    assert slow_dist > 0.0, "slow unit %d did not move (denominator)" % SLOW_ID
+    ratio = fast_dist / slow_dist
+    assert ratio <= MAX_SPEED_RATIO, (
+        "speed-sync not enforced: Raider moved %.1f wu but Bastion moved %.1f wu "
+        "(ratio %.2f > %.1f); pipe is issuing a per-unit order instead of a group order "
+        "(handle_command must call om_command_group_move for multi-unit move commands)"
+        % (fast_dist, slow_dist, ratio, MAX_SPEED_RATIO))
