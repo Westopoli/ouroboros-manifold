@@ -441,3 +441,14 @@ One row per event: freeze steps, attaches, reverts, parks, rung gates, harness e
 | day4 | merge C2-7 | OK  merged |
 | day4 | merge C4-6 | OK  merged |
 | day4 | merge C6-1 | REJECT harness unknown piece id 'C6-1' (not in pieces.toml) |
+| day4 | merge B10c-4 (line 71, 3rd attempt push/B10c-4) | REJECT merge-conflict csrc/unit.c -- same conflict as line 162; real conflict, needs M0 rebuild |
+| day4 | docs prep-batch3 (push/prep-batch3) | OK  collection and lints OK |
+| day4 | merge C3-4 (push/C3-4b) | OK  merged |
+| day4 | merge Q1 (push/C3-4b, tip shares with C3-4) | landed (empty diff) -- Q1 content captured in C3-4 squash |
+| day4 | merge C4-7 (push/C6-1, C6-1 lands as C4-7) | OK  merged |
+| day4 | docs C2-7-tests (push/C2-7) | OK  collection and lints OK |
+| day4 | docs C5-3-tests (push/C5-3-r) | OK  collection and lints OK |
+| day4 | docs C4-6-tests (push/C4-6) | OK  collection and lints OK |
+| day4 | docs C4-7-tests (push/C6-1) | OK  collection and lints OK |
+| day4 | docs C3-4-tests (push/C3-4b) | OK  collection and lints OK |
+| day4 | sweep (bk-37; make -j8 clean, pipe clean) | csim: 132f/658p/51skip/1xfail; transport: 27p; qa/t1: 2f/31p/1skip. Failures pre-existing (E17 main; control tests; 2 qa/t1 detector controls unchanged from day4 prior rows). No new reds from client pieces. |
