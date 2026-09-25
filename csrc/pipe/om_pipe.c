@@ -32,10 +32,11 @@
  *   - om_objective_spec has no "node" or "radius" field (id, kind,
  *     is_primary, weight, completion, is_complete, is_failed only); both
  *     keys are emitted as 0.
- *   - om_debrief has no region_delta fields; om_mission_apply_consequences
- *     applies deltas into the world but returns none, and isn't part of the
- *     documented mission_end call sequence (om_mission_end +
- *     om_mission_get_debrief only). "region_delta" is always zeros.
+ *   - "region_delta" in the debrief frame is from om_mission_get_region_delta
+ *     (T1-8 accessor). om_mission_apply_consequences runs inside om_mission_end
+ *     when mission_set is true and end_applied is false; the accessor returns
+ *     the stored delta. When the accessor returns 0 (no consequence applied)
+ *     all four keys are 0.
  *   - om_chronicle_entry has no accessor to read it back by id (only
  *     om_chronicle_entry_count/_is_retained); om_chronicle_get_cluster's
  *     om_chronicle_cluster is used instead (type/category/region/peak_score/
@@ -853,10 +854,15 @@ static void write_debrief(void) {
     jb_key(&j, "brought_home");
     jb_double(&j, d.retention);
     jb_putc(&j, ',');
-    /* "region_delta": no accessor returns applied deltas; see the
-     * file-header comment. Always zeros. */
+    double mil = 0.0, eco = 0.0, ten = 0.0, pop = 0.0;
+    om_mission_get_region_delta(W, &mil, &eco, &ten, &pop);
     jb_key(&j, "region_delta");
-    jb_raw(&j, "{\"military\":0,\"economy\":0,\"tension\":0,\"population\":0}");
+    jb_putc(&j, '{');
+    jb_key(&j, "military"); jb_double(&j, mil); jb_putc(&j, ',');
+    jb_key(&j, "economy");  jb_double(&j, eco); jb_putc(&j, ',');
+    jb_key(&j, "tension");  jb_double(&j, ten); jb_putc(&j, ',');
+    jb_key(&j, "population"); jb_double(&j, pop);
+    jb_putc(&j, '}');
     jb_putc(&j, '}');
     write_frame(j.buf, (uint32_t)j.len);
     jb_free(&j);
