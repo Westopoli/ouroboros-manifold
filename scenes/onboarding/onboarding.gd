@@ -384,3 +384,14 @@ func _on_confirm() -> void:
 	var forward_params := _params.duplicate()
 	forward_params["onboarding"] = onboarding_data
 	SceneRouter.go_to("time_jump", forward_params)
+
+
+func qa_state() -> Dictionary:
+	return {
+		"scene": "onboarding",
+		"tick": -1,
+		"selected_difficulty": _selected_difficulty,
+		"rare_marks": _rare_marks.duplicate(),
+		"archetype_count": _archetype_cards.size(),
+		"plants": [],
+	}

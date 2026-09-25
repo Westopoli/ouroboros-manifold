@@ -299,10 +299,13 @@ func _render_bridge_rows() -> void:
 
 func qa_state() -> Dictionary:
 	return {
+		"scene": "load_game",
+		"tick": -1,
 		"slot_count": _bridge_rows.size(),
 		"current_version": CURRENT_SAVE_VERSION,
 		"has_save_button": false,
 		"rows": _bridge_rows,
+		"plants": [],
 	}
 
 

@@ -78,6 +78,15 @@ func _build_ui() -> void:
 	footer.add_child(hint)
 
 
+func qa_state() -> Dictionary:
+	return {
+		"scene": "era_library",
+		"tick": -1,
+		"era_count": UIDataBus.get_all_eras().size(),
+		"plants": [],
+	}
+
+
 func _add_era_card(parent: Control, era: Dictionary) -> void:
 	var card = load("res://theme/components/tm_card.tscn").instantiate()
 	card.custom_minimum_size = Vector2(300, 350)
