@@ -1,0 +1,7 @@
+{
+  "type": "debrief",
+  "band": 3,
+  "achieved": 0.75,
+  "brought_home": 0.5,
+  "region_delta": {"military": 3.0, "economy": -2.5, "tension": 1.0, "population": -4.0}
+}

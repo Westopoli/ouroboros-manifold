@@ -114,10 +114,83 @@ def test_debrief_brought_home_matches_pipe(pipe_debrief, ctypes_debrief):
             pipe_debrief["brought_home"], ctypes_debrief.retention)
 
 
-def test_debrief_region_delta_military_is_zero(pipe_debrief):
-    """Known gap: om_debrief has no region_delta fields; pipe always emits zeros.
-    This test pins the shape so a future non-zero value triggers a review.
-    Owner: csrc/pipe/om_pipe.c (write_debrief, no return path from
-    om_mission_apply_consequences)."""
-    assert float(pipe_debrief.get("region_delta", {}).get("military", -1.0)) == pytest.approx(0.0), \
-        "pipe region_delta.military is not zero: %r" % pipe_debrief.get("region_delta")
+@pytest.fixture(scope="module")
+def ctypes_region_delta():
+    """om_mission_get_region_delta for the same seed/faction/sequence as pipe_debrief.
+
+    Replicates handle_mission_start in csrc/pipe/om_pipe.c (build_candidate_pool
+    -> select -> setup -> build_objectives) so mission_set is true and
+    om_mission_apply_consequences runs inside om_mission_end, setting
+    consequence_seen.  om_mission_get_region_delta returns 0 and leaves out
+    params untouched when consequence_seen is false.
+    """
+    sys.path.insert(0, str(ROOT / "tests/csim"))
+    import conftest as csim
+    lib = csim.load_lib()
+    # load_lib() already calls _bind_generated which includes _bind_e06/_bind_e10;
+    # bind om_mission_get_region_delta directly (not emitted by specfactory yet).
+    lib.om_mission_get_region_delta.argtypes = [
+        ctypes.c_void_p,
+        ctypes.POINTER(ctypes.c_double),
+        ctypes.POINTER(ctypes.c_double),
+        ctypes.POINTER(ctypes.c_double),
+        ctypes.POINTER(ctypes.c_double),
+    ]
+    lib.om_mission_get_region_delta.restype = ctypes.c_int
+
+    w = lib.om_world_new(ctypes.c_uint32(N_REGIONS), ctypes.c_uint64(SEED))
+    assert w, "om_world_new returned NULL"
+    for f in FEATURES:
+        lib.om_world_set_feature(w, f, 1)
+    lib.om_world_generate(w)
+
+    # Replicate pipe handle_mission_start: start -> build pool -> select ->
+    # get candidates -> setup -> build objectives (sets mission_set = 1).
+    lib.om_mission_start(w, ctypes.c_int32(0))
+    lib.om_mission_build_candidate_pool(w)
+    idx = lib.om_mission_select(w)
+    pool = (csim.OMMissionCandidate * 256)()
+    n = lib.om_mission_candidates(w, ctypes.cast(pool, ctypes.c_void_p),
+                                   ctypes.c_uint32(256))
+    region = ctypes.c_uint32(0)
+    archetype = ctypes.c_uint32(0)
+    if idx < n:
+        region = ctypes.c_uint32(pool[idx].region_idx)
+        archetype = ctypes.c_uint32(pool[idx].archetype)
+    lib.om_mission_setup(w, region, archetype, ctypes.c_int(0))
+    lib.om_mission_build_objectives(w, archetype)
+
+    lib.om_mission_end(w)
+
+    mil = ctypes.c_double()
+    eco = ctypes.c_double()
+    ten = ctypes.c_double()
+    pop = ctypes.c_double()
+    rc = lib.om_mission_get_region_delta(w, ctypes.byref(mil), ctypes.byref(eco),
+                                          ctypes.byref(ten), ctypes.byref(pop))
+    lib.om_world_free(w)
+    assert rc == 1, "om_mission_get_region_delta returned %d (expected 1; consequence_seen not set)" % rc
+    return {"military": mil.value, "economy": eco.value, "tension": ten.value,
+            "population": pop.value}
+
+
+def test_region_delta_matches_pipe(pipe_debrief, ctypes_region_delta):
+    """C4-8: pipe region_delta matches om_mission_get_region_delta for all four
+    fields (same seed, same faction, same world sequence)."""
+    pipe_rd = pipe_debrief.get("region_delta", {})
+    for field in ("military", "economy", "tension", "population"):
+        assert float(pipe_rd.get(field, None)) == pytest.approx(
+            float(ctypes_region_delta[field]), abs=1e-6), \
+            "pipe region_delta.%s=%r ctypes=%r (seed=%d faction=0)" % (
+                field, pipe_rd.get(field), ctypes_region_delta[field], SEED)
+
+
+def test_debrief_region_delta_military_is_zero(pipe_debrief, ctypes_region_delta):
+    """Gap closed by T1-12: pipe region_delta.military now equals the ctypes read.
+    Updated from 'pin zero' to 'pin pipe == ctypes' (test defect: old assertion
+    pinned the pre-T1-12 always-zero state; conftest comment updated accordingly).
+    See test_region_delta_matches_pipe for all four fields."""
+    pipe_val = float(pipe_debrief.get("region_delta", {}).get("military", None))
+    assert pipe_val == pytest.approx(float(ctypes_region_delta["military"]), abs=1e-6), \
+        "pipe region_delta.military=%r ctypes=%r (seed=%d faction=0)" % (
+            pipe_val, ctypes_region_delta["military"], SEED)

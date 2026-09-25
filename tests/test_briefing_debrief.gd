@@ -20,6 +20,7 @@ const BRIEFING_SCENE_PATH := "res://scenes/mission_briefing/mission_briefing.tsc
 const DEBRIEF_SCENE_PATH := "res://scenes/debrief/debrief.tscn"
 const MISSION_FIXTURE_PATH := "res://tests/fixtures/mission_frame_seed11.json"
 const DEBRIEF_FIXTURE_PATH := "res://tests/fixtures/debrief_frame_seed11.json"
+const DEBRIEF_NONZERO_DELTA_PATH := "res://tests/fixtures/debrief_frame_nonzero_delta.json"
 const MISSION_FALLBACK_PATH := "user://test_briefing_debrief_fallback_mission.json"
 const DEBRIEF_FALLBACK_PATH := "user://test_briefing_debrief_fallback_debrief.json"
 
@@ -73,6 +74,7 @@ func _run_tests() -> void:
 	await _run_live_tests()
 	_assert(_live_tests_completed, "the live-frame checks did not run to the end (a script error aborted them, or c_bridge.gd lacks load_mission_live / load_debrief_live / mission_frame / debrief_frame / DEFAULT_FEATURES)")
 	await _run_live_debrief_tests()
+	await _run_region_delta_text_tests()
 
 
 func _run_briefing_tests() -> void:
@@ -484,6 +486,80 @@ func _write_json(path: String, data: Dictionary) -> bool:
 	f.store_string(JSON.stringify(data))
 	f.close()
 	return true
+
+
+# Piece C4-8 (R-077-02): region_delta_text in qa_state() carries all four
+# rendered strings (+3, -2.5, "no change" for zero). Two frames tested:
+# nonzero fixture (all four have values with sign) and an all-zero frame
+# (all four render "no change", never blank, never "+0").
+func _run_region_delta_text_tests() -> void:
+	var packed = load(DEBRIEF_SCENE_PATH)
+	if packed == null or not (packed is PackedScene):
+		_assert(false, "C4-8: cannot load debrief scene")
+		return
+
+	# --- nonzero fixture ---
+	var nonzero: Dictionary = {}
+	if FileAccess.file_exists(DEBRIEF_NONZERO_DELTA_PATH):
+		nonzero = _read_json(DEBRIEF_NONZERO_DELTA_PATH)
+	if nonzero.is_empty():
+		nonzero = {
+			"type": "debrief", "band": 3, "achieved": 0.75, "brought_home": 0.5,
+			"region_delta": {"military": 3.0, "economy": -2.5, "tension": 1.0, "population": -4.0},
+		}
+	var r1: Node = (packed as PackedScene).instantiate()
+	get_root().add_child(r1)
+	await process_frame
+	await process_frame
+	r1.load_frame(nonzero.duplicate(true))
+	await process_frame
+	_check_region_delta_text_nonzero(r1, nonzero.get("region_delta", {}))
+	r1.queue_free()
+	await process_frame
+
+	# --- all-zero frame ---
+	var zero_frame: Dictionary = {
+		"type": "debrief", "band": 2, "achieved": 0.5, "brought_home": 0.5,
+		"region_delta": {"military": 0.0, "economy": 0.0, "tension": 0.0, "population": 0.0},
+	}
+	var r2: Node = (packed as PackedScene).instantiate()
+	get_root().add_child(r2)
+	await process_frame
+	await process_frame
+	r2.load_frame(zero_frame)
+	await process_frame
+	_check_region_delta_text_zero(r2)
+	r2.queue_free()
+	await process_frame
+
+
+func _check_region_delta_text_nonzero(root: Node, expected_delta: Dictionary) -> void:
+	var state: Dictionary = root.qa_state()
+	var rdt: Dictionary = state.get("region_delta_text", {})
+	_assert(rdt.size() == 4,
+		"C4-8 region_delta_text nonzero: expected 4 keys, got %d" % rdt.size())
+	# military: 3.0 -> "+3"
+	_assert(str(rdt.get("military", "")) == "+3",
+		"C4-8 region_delta_text nonzero: military = '%s', expected '+3'" % str(rdt.get("military", "")))
+	# economy: -2.5 -> "-2.5"
+	_assert(str(rdt.get("economy", "")) == "-2.5",
+		"C4-8 region_delta_text nonzero: economy = '%s', expected '-2.5'" % str(rdt.get("economy", "")))
+	# tension: 1.0 -> "+1"
+	_assert(str(rdt.get("tension", "")) == "+1",
+		"C4-8 region_delta_text nonzero: tension = '%s', expected '+1'" % str(rdt.get("tension", "")))
+	# population: -4.0 -> "-4"
+	_assert(str(rdt.get("population", "")) == "-4",
+		"C4-8 region_delta_text nonzero: population = '%s', expected '-4'" % str(rdt.get("population", "")))
+
+
+func _check_region_delta_text_zero(root: Node) -> void:
+	var state: Dictionary = root.qa_state()
+	var rdt: Dictionary = state.get("region_delta_text", {})
+	_assert(rdt.size() == 4,
+		"C4-8 region_delta_text zero: expected 4 keys, got %d" % rdt.size())
+	for k in ["military", "economy", "tension", "population"]:
+		_assert(str(rdt.get(k, "")) == "no change",
+			"C4-8 region_delta_text zero: %s = '%s', expected 'no change'" % [k, str(rdt.get(k, ""))])
 
 
 # Piece C6-1 (S-077 R-077-01/02): live debrief frame band, achieved,
