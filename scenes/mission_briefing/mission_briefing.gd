@@ -23,6 +23,9 @@ var _frame_objectives: Array = []
 var _frame_force: Dictionary = {}
 var _plant_marker_from_frame: bool = false
 var _frame_loaded: bool = false
+var _deploy_btn: BaseButton = null
+var _deploy_error_label: Label = null
+var _plant_begin_refused: bool = false
 
 var _data: Dictionary = {}
 var _accent: Color
@@ -632,12 +635,17 @@ func _build_lineage_card(parent: Control) -> void:
 
 
 # The player's Begin (E-12 S-092): ends recon over the shared session. The
-# tactical view is only routed to when the pipe accepted it.
+# tactical view is only routed to when the pipe accepted it. On failure,
+# last_error() is surfaced in _deploy_error_label (C4-6: QA-004/005/006).
 func begin_mission() -> bool:
 	var bridge = SimSession.bridge()
-	if bridge.begin_mission_live(bridge.live_seed(), bridge.DEFAULT_N_REGIONS, bridge.DEFAULT_FEATURES):
+	if not _plant_begin_refused and bridge.begin_mission_live(bridge.live_seed(), bridge.DEFAULT_N_REGIONS, bridge.DEFAULT_FEATURES):
 		return true
-	push_error("mission_briefing: Begin failed: %s" % bridge.last_error())
+	var err: String = "begin refused (plant)" if _plant_begin_refused else bridge.last_error()
+	push_error("mission_briefing: Begin failed: %s" % err)
+	if _deploy_error_label != null:
+		_deploy_error_label.text = err
+		_deploy_error_label.visible = true
 	return false
 
 
@@ -650,6 +658,11 @@ func _build_footer(parent: Control) -> void:
 	deploy_btn.name = "Deploy"
 	deploy_btn.text = "DEPLOY FORCES"
 	deploy_btn.accent_color = _accent
+	# C4-6 (QA-004/005/006): disabled until the session has an active mission in
+	# recon (active but not yet begun); mission_begin is refused outside recon.
+	var bridge = SimSession.bridge()
+	deploy_btn.disabled = not bridge.mission_active() or bridge.mission_begun()
+	_deploy_btn = deploy_btn
 	deploy_btn.pressed.connect(func():
 		if begin_mission():
 			SceneRouter.go_to("tactical_c")
@@ -681,6 +694,17 @@ func _build_footer(parent: Control) -> void:
 	hints.add_theme_color_override("font_color", ThemeConstants.TERTIARY)
 	hints.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	footer.add_child(hints)
+
+	# C4-6: error label shown on screen when mission_begin is refused (QA-006).
+	var err_label := Label.new()
+	err_label.name = "DeployError"
+	err_label.text = ""
+	err_label.visible = false
+	err_label.add_theme_font_override("font", ThemeConstants.font_mono_regular)
+	err_label.add_theme_font_size_override("font_size", ThemeConstants.BODY_DATA_SIZE)
+	err_label.add_theme_color_override("font_color", ThemeConstants.DANGER)
+	parent.add_child(err_label)
+	_deploy_error_label = err_label
 
 
 func _show_stub_modal(message: String) -> void:
@@ -845,6 +869,8 @@ func qa_state() -> Dictionary:
 		"archetype": _frame_archetype,
 		"deadline_ticks": _frame_deadline_ticks,
 		"objectives": objectives,
+		"deploy_enabled": _deploy_btn != null and not _deploy_btn.disabled,
+		"deploy_error": _deploy_error_label.text if _deploy_error_label != null else "",
 	}
 
 
@@ -852,6 +878,9 @@ func qa_plant(id: String) -> bool:
 	match id:
 		"marker-from-frame":
 			_plant_marker_from_frame = true
+			return true
+		"begin-refused":
+			_plant_begin_refused = true
 			return true
 		_:
 			return false
