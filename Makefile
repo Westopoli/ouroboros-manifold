@@ -71,10 +71,21 @@ pipe/ouroboros_pipe: csrc/pipe/om_pipe.c libouroboros.so
 	mkdir -p pipe
 	$(CC) $(CFLAGS) -o $@ csrc/pipe/om_pipe.c -L. -louroboros -lm -Wl,-rpath,'$$ORIGIN/..'
 
+# Debug pipe: same as pipe/ouroboros_pipe but compiled with -DOM_DEBUG_INJECT so
+# the inject/objective_complete handlers are active (om_pipe.c #ifdef gate).
+# Uses a separate object dir (pipe/obj_dbg/) so the two binaries never share .o files.
+pipe/obj_dbg/om_pipe.o: csrc/pipe/om_pipe.c $(HDR)
+	mkdir -p pipe/obj_dbg
+	$(CC) $(CFLAGS) -DOM_DEBUG_INJECT -c -o $@ $<
+
+pipe/ouroboros_pipe_dbg: pipe/obj_dbg/om_pipe.o libouroboros_dbg.so
+	mkdir -p pipe
+	$(CC) $(CFLAGS) -o $@ $< -L. -louroboros_dbg -lm -Wl,-rpath,'$$ORIGIN/..'
+
 # Convenience: build then run the fenced C-sim test suite.
 test: all
 	python3 -m pytest tests/csim -p no:cacheprovider
 
 clean:
-	rm -f libouroboros.so libouroboros_dbg.so pipe/ouroboros_pipe
-	rm -rf build
+	rm -f libouroboros.so libouroboros_dbg.so pipe/ouroboros_pipe pipe/ouroboros_pipe_dbg
+	rm -rf build pipe/obj_dbg

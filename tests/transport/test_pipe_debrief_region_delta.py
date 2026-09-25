@@ -26,10 +26,8 @@ PIPE_DBG = ROOT / "pipe/ouroboros_pipe_dbg"
 
 FEATURES = [0, 1, 2, 3, 4, 5, 6, 7]
 
-pytestmark = pytest.mark.skipif(
-    not PIPE_DBG.exists(),
-    reason="pipe/ouroboros_pipe_dbg not built (make -j8 then build debug pipe)"
-)
+if not PIPE_DBG.exists():
+    pytest.fail("pipe/ouroboros_pipe_dbg missing: run make pipe/ouroboros_pipe_dbg")
 
 
 def _frame(obj):

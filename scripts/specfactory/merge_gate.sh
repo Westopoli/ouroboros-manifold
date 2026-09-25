@@ -310,6 +310,11 @@ if [[ -d "$CANDIDATE/tests/transport" ]]; then
     PIPE_LOG="$SCRATCH_ROOT/pipe_build.log"
     ( cd "$CANDIDATE" && timeout "$MAKE_TIMEOUT" make -s pipe/ouroboros_pipe ) >"$PIPE_LOG" 2>&1
     if [[ $? -eq 0 ]]; then
+        PIPE_DBG_LOG="$SCRATCH_ROOT/pipe_dbg_build.log"
+        ( cd "$CANDIDATE" && timeout "$MAKE_TIMEOUT" make -s pipe/ouroboros_pipe_dbg ) >"$PIPE_DBG_LOG" 2>&1
+        if [[ $? -ne 0 ]]; then
+            warn transport "pipe/ouroboros_pipe_dbg did not build: $(tail_oneline "$PIPE_DBG_LOG")"
+        fi
         TRANSPORT_LOG="$SCRATCH_ROOT/transport.log"
         "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/transport \
             --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" \
