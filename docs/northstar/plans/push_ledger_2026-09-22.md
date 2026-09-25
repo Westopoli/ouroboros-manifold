@@ -452,3 +452,4 @@ One row per event: freeze steps, attaches, reverts, parks, rung gates, harness e
 | day4 | docs C4-7-tests (push/C6-1) | OK  collection and lints OK |
 | day4 | docs C3-4-tests (push/C3-4b) | OK  collection and lints OK |
 | day4 | sweep (bk-37; make -j8 clean, pipe clean) | csim: 132f/658p/51skip/1xfail; transport: 27p; qa/t1: 2f/31p/1skip. Failures pre-existing (E17 main; control tests; 2 qa/t1 detector controls unchanged from day4 prior rows). No new reds from client pieces. |
+| day4 | register | six rows: Q-057-02, Q-120-03, Q-124-03, Q-060-02 open; player-id and B12-11 break closed by M0 ruling |
