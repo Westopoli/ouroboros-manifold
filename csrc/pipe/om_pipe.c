@@ -1458,6 +1458,24 @@ static void handle_inject(const char *json) {
 #endif
 }
 
+static void handle_objective_complete(const char *json) {
+#ifdef OM_DEBUG_INJECT
+    if (!W) {
+        write_error("objective_complete", "no world");
+        return;
+    }
+    int64_t objective = 0;
+    get_i64(json, "objective", &objective);
+    double completion = 1.0;
+    get_f64(json, "completion", &completion);
+    om_mission_set_objective_completion(W, (uint32_t)objective, completion);
+    write_ack("objective_complete");
+#else
+    (void)json;
+    write_error("objective_complete", "debug build required");
+#endif
+}
+
 static void handle_save(const char *json) {
     if (!W) {
         write_error("save", "no world");
@@ -1619,6 +1637,8 @@ int main(void) {
             handle_set_feature(buf);
         } else if (!strcmp(name, "inject")) {
             handle_inject(buf);
+        } else if (!strcmp(name, "objective_complete")) {
+            handle_objective_complete(buf);
         } else if (!strcmp(name, "save")) {
             handle_save(buf);
         } else if (!strcmp(name, "load")) {
