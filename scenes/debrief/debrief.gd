@@ -69,6 +69,9 @@ func qa_state() -> Dictionary:
 	if _plant_band_off_by_one:
 		band_index = mini(band_index + 1, BAND_NAMES.size() - 1)
 	var region_delta: Dictionary = _frame.get("region_delta", {})
+	var region_delta_text: Dictionary = {}
+	for k in ["military", "economy", "tension", "population"]:
+		region_delta_text[k] = _format_delta(float(region_delta.get(k, 0.0)))
 	return {
 		"scene": "debrief",
 		"tick": -1,
@@ -82,6 +85,7 @@ func qa_state() -> Dictionary:
 			"tension": region_delta.get("tension", 0.0),
 			"population": region_delta.get("population", 0.0),
 		},
+		"region_delta_text": region_delta_text,
 	}
 
 
@@ -412,14 +416,7 @@ func _build_impact_section(parent: Control) -> void:
 	for field_name in ["military", "tension", "economy", "population"]:
 		var fd: Dictionary = field_deltas.get(field_name, {})
 		var raw: float = fd.get("raw", 0.0)
-		if absf(raw) < 0.01:
-			continue
-		var direction: String = fd.get("direction", "stable")
-		var arrow := "\u25b2" if direction == "up" else "\u25bc"
-		var delta_color := Color(0.3, 0.9, 0.4) if direction == "up" else Color(0.9, 0.4, 0.3)
-		# Tension is inverted — up is bad, down is good
-		if field_name == "tension":
-			delta_color = Color(0.9, 0.4, 0.3) if direction == "up" else Color(0.3, 0.9, 0.4)
+		var is_zero := absf(raw) < 0.01
 
 		var delta_vbox := VBoxContainer.new()
 		delta_vbox.add_theme_constant_override("separation", 2)
@@ -433,10 +430,20 @@ func _build_impact_section(parent: Control) -> void:
 		delta_vbox.add_child(field_label)
 
 		var val_label := Label.new()
-		val_label.text = "%s %+.1f" % [arrow, raw]
+		if is_zero:
+			val_label.text = "no change"
+			val_label.add_theme_color_override("font_color", ThemeConstants.TERTIARY)
+		else:
+			var direction: String = fd.get("direction", "stable")
+			var arrow := "\u25b2" if direction == "up" else "\u25bc"
+			var delta_color := Color(0.3, 0.9, 0.4) if direction == "up" else Color(0.9, 0.4, 0.3)
+			# Tension is inverted — up is bad, down is good
+			if field_name == "tension":
+				delta_color = Color(0.9, 0.4, 0.3) if direction == "up" else Color(0.3, 0.9, 0.4)
+			val_label.text = "%s %s" % [arrow, _format_delta(raw)]
+			val_label.add_theme_color_override("font_color", delta_color)
 		val_label.add_theme_font_override("font", ThemeConstants.font_mono_regular)
 		val_label.add_theme_font_size_override("font_size", ThemeConstants.BODY_DATA_SIZE)
-		val_label.add_theme_color_override("font_color", delta_color)
 		delta_vbox.add_child(val_label)
 
 
@@ -458,6 +465,17 @@ func _add_stat(parent: Control, label_text: String, value_text: String, value_co
 	val.add_theme_font_size_override("font_size", 24)
 	val.add_theme_color_override("font_color", value_color)
 	vbox.add_child(val)
+
+
+# C4-8: signed string for a region_delta value; "no change" for |val| < 0.01,
+# otherwise +3 / -2.5 style (strip trailing .0).
+func _format_delta(val: float) -> String:
+	if absf(val) < 0.01:
+		return "no change"
+	var s := "%+.1f" % val
+	if s.ends_with(".0"):
+		s = s.left(s.length() - 2)
+	return s
 
 
 func _band_color(band: String) -> Color:
