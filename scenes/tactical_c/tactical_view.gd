@@ -254,6 +254,12 @@ func qa_box_select(x0: float, y0: float, x1: float, y1: float) -> Array:
 	return out
 
 
+func qa_set_selected(ids: Array) -> void:
+	_selected = []
+	for v in ids:
+		_selected.append(int(v))
+
+
 func qa_pan(x: float, y: float) -> void:
 	if _camera_unbounded:
 		_camera = Vector2(x, y)

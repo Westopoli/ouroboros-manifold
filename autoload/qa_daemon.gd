@@ -206,6 +206,8 @@ func _dispatch(verb: String, args: Array) -> Dictionary:
 			return {"ok": true, "result": name}
 		"input":
 			return await _dispatch_input(args)
+		"qa_select":
+			return _do_qa_select(args)
 		_:
 			return {"ok": false, "error": "unknown verb %s" % verb}
 
@@ -276,6 +278,16 @@ func _do_inject(bug_id: String) -> Dictionary:
 	var known := KNOWN_BUG_IDS.has(bug_id)
 	_injected_bugs[bug_id] = known
 	return {"bug_id": bug_id, "known": known}
+
+
+func _do_qa_select(args: Array) -> Dictionary:
+	var t := get_tree()
+	var scene: Node = t.current_scene if t != null else null
+	if scene == null or not scene.has_method("qa_set_selected"):
+		return {"ok": false, "error": "qa_select: scene has no qa_set_selected"}
+	var ids: Array = args[0] if args.size() > 0 and typeof(args[0]) == TYPE_ARRAY else []
+	scene.call("qa_set_selected", ids)
+	return {"ok": true, "result": {"count": ids.size()}}
 
 
 func _do_plant(id: String) -> Dictionary:
