@@ -172,6 +172,12 @@ func _assert(cond: bool, msg: String) -> void:
 func _run_tests() -> void:
 	for entry in REQUIRED_SCENES:
 		await _test_scene(entry)
+	# C3-4b: close the leftover -- chronicle screen must match the same contract.
+	await _test_scene({
+		"path": CHRONICLE_PATH,
+		"scene_name": "chronicle",
+		"setup": {},
+	})
 
 
 func _test_scene(entry: Dictionary) -> void:
