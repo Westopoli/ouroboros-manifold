@@ -627,7 +627,7 @@ double om_structure_get_capture_progress(om_world *w, uint32_t structure) {
 /* driven: the call comes from om_support_tick. Any call in a base tick the
  * driver already accrued adds nothing, so a caller that steps and also ticks
  * capture by hand, or a duplicate driver call, does not count the tick twice. */
-static void om_sup_capture_accrue(om_world *w, om_sup_structure *s, int driven) {
+static void om_sup_capture_accrue(om_world *w, om_sup_structure *s, int driven, uint32_t idx) {
     uint64_t now, elapsed;
     /* R-127-01/02: exactly one non-owner faction present and no owner
      * present advances progress; two-or-more non-owner factions or the
@@ -656,15 +656,17 @@ static void om_sup_capture_accrue(om_world *w, om_sup_structure *s, int driven) 
     s->capture_last_base = now;
     s->capture_progress += ((double)elapsed / (double)OM_TACTICAL_TICK_RATE) / (double)OM_REINFORCEMENT_CAPTURE_DURATION_SEC;
     if (s->capture_progress >= 1.0 - OM_SUP_EPSILON) {
+        int32_t old_owner = s->owner;
         s->owner = s->capturing_faction;
         s->capture_progress = 0.0;
         s->capture_accruing = 0;
         s->capture_driven = 0;
+        if (driven) om_structure_on_owner_changed(w, idx, old_owner, s->owner);
     }
 }
 
 void om_structure_tick_capture(om_world *w, uint32_t structure) {
-    om_sup_capture_accrue(w, om_sup_structure_at(w, structure), 0);
+    om_sup_capture_accrue(w, om_sup_structure_at(w, structure), 0, structure);
 }
 
 void om_structure_apply_damage(om_world *w, uint32_t structure, double damage, uint32_t attacker) {
@@ -849,7 +851,7 @@ void om_support_tick(om_world *w) {
     for (i = 0; i < OM_SUP_MAX_STRUCTURES; i++) {
         om_sup_structure *s = &st->structures[i];
         if (!s->in_use || s->destroyed) continue;
-        om_sup_capture_accrue(w, s, 1);
+        om_sup_capture_accrue(w, s, 1, i);
         om_sup_structure_tick_production_driver(w, s, i);
     }
 }
