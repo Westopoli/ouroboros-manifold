@@ -430,3 +430,9 @@ One row per event: freeze steps, attaches, reverts, parks, rung gates, harness e
 | day4 | docs look6 | OK  collection and lints OK |
 | day4 | docs qa-2026-09-25-1 | REJECT merge-conflict squash onto fresh main failed: conflict in docs/northstar/qa_backlog.md (look6 added the file first) |
 | day4 | docs qa-2026-09-25-2 | REJECT merge-conflict squash onto fresh main failed: conflict in docs/northstar/qa_backlog.md (look6 added the file first) |
+| day4 | merge B14-8 | OK  merged |
+| day4 | merge T1-6 (push/QA-003-sim) | OK  merged |
+| day4 | merge B10c-3 (push/B10c-3-r) | OK  merged |
+| day4 | merge B12-12 | OK  merged |
+| day4 | merge B10c-4 | REJECT merge-conflict in csrc/unit.c |
+| day4 | merge B11-6 | REJECT merge-conflict in csrc/fog.c |
