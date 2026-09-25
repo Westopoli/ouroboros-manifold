@@ -467,3 +467,16 @@ One row per event: freeze steps, attaches, reverts, parks, rung gates, harness e
 | day4 | merge T1-12 (push/T1-12) | landed (empty diff) -- csrc/pipe/om_pipe.c already on main via T1-9 |
 | day4 | docs T1-12-tests (push/T1-12) | OK  collection and lints OK |
 | day4 | sweep (bk-39; make -j8 clean, pipe clean) | transport: 34p/0f; E09: 39p/0f; E13: 33p/2f (S099, S101 pre-existing); E10: 43p/1f/1s (S078 pre-existing); core: 61p/0f; qa/t1: 31p/2f/1s (detector controls, pre-existing). No new reds from T1-9/T1-12 pieces. |
+| day5 | void marks (T1-10/B8-9-r2, T1-7-3, T1-11, docs thereof) | marked void in queue; relanding as T1-13 per M0 ruling |
+| day5 | merge T1-13 (push/T1-13) | OK  merged -- csrc/pipe/om_pipe.c: command-cap, debrief delta, jump-entry-ticks pipe paths |
+| day5 | docs T1-13-tests (push/T1-13) | OK  collection and lints OK -- tests/transport: test_pipe_command_cap.py, test_pipe_debrief_region_delta.py, test_pipe_jump_entry_ticks.py + docs/architecture.md |
+| day5 | docs pipe-dbg (push/pipe-dbg) | OK  collection and lints OK -- Makefile + merge_gate.sh: pipe/ouroboros_pipe_dbg target added; test_pipe_debrief_region_delta.py debug fixture updated |
+| day5 | merge B12-13 (push/T1-7-2-r) | OK  merged -- csrc/tactical_move.c: unstuck probe rework |
+| day5 | docs B12-13-tests (push/T1-7-2-r) | OK  collection and lints OK -- tests/transport/test_pipe_units_unstuck.py landed |
+| day5 | merge C3-6 (push/C3-6) | OK  merged -- scenes/world/chronicle_scroll_panel.gd: scroll expand |
+| day5 | merge C4-8 (push/C4-8) | OK  merged -- scenes/debrief/debrief.gd: debrief layout improvements |
+| day5 | docs C3-6-tests (push/C3-6) | OK  collection and lints OK -- tests/qa/desktop/test_flow_spine.py, tests/test_chronicle_scroll.gd |
+| day5 | docs C4-8-tests (push/C4-8) | OK  collection and lints OK -- tests/fixtures/debrief_frame_nonzero_delta.json, tests/test_briefing_debrief.gd, tests/test_debrief_live_ctypes.py |
+| day5 | docs qa-backlog (push/qa-backlog) | OK  collection and lints OK -- docs/northstar/qa_backlog.md updated |
+| day5 | merge B12-14 (push/B12-14) | REJECT merge-conflict csrc/tactical_move.c -- base mismatch after B12-13 rework; rebuild needed |
+| day5 | sweep (bk-40; make -j8 clean, pipe clean, pipe_dbg clean) | transport: 44p/0f; E09: 39p/0f; E13: 34p/1f (S099 pre-existing; S101 resolved vs bk-39); E10: 43p/1f/1s (S078 pre-existing); core: 111p/0f (50 new vs bk-39 core batch); scale(OM_SCALE=1): 32p/3f/6skip/1xfail/2xpass (E02 memory, E13 dense-moving, E17 field-sampling timing -- all pre-existing); qa/t1: 31p/2f/1s (detector controls, pre-existing). No new reds from T1-13/pipe-dbg/B12-13/C3-6/C4-8 pieces. |
