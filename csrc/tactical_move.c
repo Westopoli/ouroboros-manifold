@@ -736,20 +736,6 @@ static uint32_t om_move_scan_ids(om_move_state *ms, uint32_t lo, uint32_t hi, do
     return n;
 }
 
-static uint32_t om_move_scan_pos(om_move_state *ms, uint32_t lo, uint32_t hi, double x, double y, double r2, uint32_t self_id, uint32_t n) {
-    uint32_t base;
-    for (base = lo; base < hi; base += OM_MOVE_MASK_BITS) {
-        uint64_t mask = om_move_near_mask(ms, base, hi, x, y, r2);
-        while (mask) {
-            uint32_t slot = base + om_move_lowest_bit(mask);
-            mask &= mask - 1;
-            ms->scan_x[n] = ms->slot_x[slot];
-            ms->scan_y[n] = ms->slot_y[slot];
-            n += (uint32_t)(ms->slot_id[slot] != self_id);
-        }
-    }
-    return n;
-}
 
 /* Ids above min_id whose unit lies within r of (x, y), ascending, into
  * ms->grid_scratch; returns the count. The cells of one grid row are
@@ -796,22 +782,6 @@ static int om_move_grid_any_above(om_world *w, om_move_state *ms, double x, doub
     return 0;
 }
 
-/* Positions of every unit but self_id within r of (x, y), into ms->scan_x/
- * scan_y (unordered); returns the count. */
-static uint32_t om_move_grid_gather(om_world *w, om_move_state *ms, uint32_t self_id, double x, double y, double r) {
-    const double r2 = r * r;
-    int32_t cx0, cx1, cy0, cy1, cy;
-    uint32_t n;
-    om_move_grid_refresh(w, ms);
-    n = om_move_scan_pos(ms, ms->slot_base, ms->slot_base + ms->n_spill, x, y, r2, self_id, 0);
-    if (om_move_grid_box(ms, x, y, r, &cx0, &cx1, &cy0, &cy1)) {
-        for (cy = cy0; cy <= cy1; cy++) {
-            uint32_t row = (uint32_t)cy * (uint32_t)ms->grid_w;
-            n = om_move_scan_pos(ms, ms->grid_start[row + (uint32_t)cx0], ms->grid_start[row + (uint32_t)cx1 + 1], x, y, r2, self_id, n);
-        }
-    }
-    return n;
-}
 
 static om_move_unit *om_move_touch(om_world *w, om_move_state *ms, uint32_t unit_id) {
     om_move_unit *mu = om_move_get(ms, unit_id);
@@ -983,8 +953,51 @@ static uint32_t om_move_bfs_path_len(om_move_state *ms, double x0, double y0, do
  * OM_STEERING_PROBE_DIST (om_sin/om_cos are off by under 5e-4 each, so
  * under 40.1) from that unit, so its blockers all lie within the gather
  * radius. */
-static uint32_t om_move_probe_gather(om_world *w, om_move_state *ms, uint32_t self_id, double x, double y) {
-    return om_move_grid_gather(w, ms, self_id, x, y, OM_MOVE_PROBE_REACH + 2.0 * OM_UNIT_COLLISION_RADIUS);
+/* Same-group mates (self_group nonzero, candidate group_id == self_group) are
+ * not blockers for a group-move probe: the ALG-68 collision pass separates
+ * them after the tick. All other units (different group, group 0, stationary)
+ * still block. */
+static uint32_t om_move_probe_gather(om_world *w, om_move_state *ms, uint32_t self_id, uint32_t self_group, double x, double y) {
+    const double r = OM_MOVE_PROBE_REACH + 2.0 * OM_UNIT_COLLISION_RADIUS;
+    const double r2 = r * r;
+    int32_t cx0, cx1, cy0, cy1, cy;
+    uint32_t n = 0, base;
+    om_move_grid_refresh(w, ms);
+    for (base = ms->slot_base; base < ms->slot_base + ms->n_spill; base += OM_MOVE_MASK_BITS) {
+        uint32_t hi2 = ms->slot_base + ms->n_spill;
+        uint64_t mask = om_move_near_mask(ms, base, hi2, x, y, r2);
+        while (mask) {
+            uint32_t slot = base + om_move_lowest_bit(mask);
+            uint32_t cid = ms->slot_id[slot];
+            mask &= mask - 1;
+            if (cid == self_id) continue;
+            if (self_group != 0 && ms->units[cid].group_id == self_group) continue;
+            ms->scan_x[n] = ms->slot_x[slot];
+            ms->scan_y[n] = ms->slot_y[slot];
+            n++;
+        }
+    }
+    if (om_move_grid_box(ms, x, y, r, &cx0, &cx1, &cy0, &cy1)) {
+        for (cy = cy0; cy <= cy1; cy++) {
+            uint32_t row = (uint32_t)cy * (uint32_t)ms->grid_w;
+            uint32_t lo = ms->grid_start[row + (uint32_t)cx0];
+            uint32_t hi = ms->grid_start[row + (uint32_t)cx1 + 1];
+            for (base = lo; base < hi; base += OM_MOVE_MASK_BITS) {
+                uint64_t mask = om_move_near_mask(ms, base, hi, x, y, r2);
+                while (mask) {
+                    uint32_t slot = base + om_move_lowest_bit(mask);
+                    uint32_t cid = ms->slot_id[slot];
+                    mask &= mask - 1;
+                    if (cid == self_id) continue;
+                    if (self_group != 0 && ms->units[cid].group_id == self_group) continue;
+                    ms->scan_x[n] = ms->slot_x[slot];
+                    ms->scan_y[n] = ms->slot_y[slot];
+                    n++;
+                }
+            }
+        }
+    }
+    return n;
 }
 
 /* Whether any gathered unit is closer than sqrt(limit2) to (cand_x, cand_y).
@@ -1247,7 +1260,7 @@ static void om_move_tick_unit(om_world *w, om_move_state *ms, uint32_t id, uint3
     int found = 0;
     double move_cos = 0.0, move_sin = 0.0;
     if (!mu->deflecting) {
-        uint32_t k, hints[OM_MOVE_PROBE_HINTS] = {0}, n_near = om_move_probe_gather(w, ms, id, mu->x, mu->y);
+        uint32_t k, hints[OM_MOVE_PROBE_HINTS] = {0}, n_near = om_move_probe_gather(w, ms, id, mu->group_id, mu->x, mu->y);
         double sin_h = 0.0, cos_h = 0.0;
         if (n_near) om_move_sincos_approx(heading, &sin_h, &cos_h);
         for (k = 0; k < OM_STEERING_SWEEP_COUNT; k++) {
