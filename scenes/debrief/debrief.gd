@@ -70,6 +70,9 @@ func qa_state() -> Dictionary:
 		band_index = mini(band_index + 1, BAND_NAMES.size() - 1)
 	var region_delta: Dictionary = _frame.get("region_delta", {})
 	return {
+		"scene": "debrief",
+		"tick": -1,
+		"plants": ["band-off-by-one"],
 		"band": BAND_NAMES[band_index],
 		"achieved_pct": float(_frame.get("achieved", 0.0)) * 100.0,
 		"brought_home_pct": float(_frame.get("brought_home", 0.0)) * 100.0,

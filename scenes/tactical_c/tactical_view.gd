@@ -84,7 +84,9 @@ func qa_state() -> Dictionary:
 		if visible_ids.has(id):
 			units_px[str(id)] = _to_screen(float(u.get("x", 0.0)), float(u.get("y", 0.0)))
 	return {
+		"scene": "tactical_view",
 		"tick": int(_frame.get("tick", 0)),
+		"plants": ["facing-fixed", "camera-unbounded"],
 		"canvas": _canvas,
 		"units": units,
 		"units_px": units_px,

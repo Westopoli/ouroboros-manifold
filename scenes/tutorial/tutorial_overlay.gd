@@ -256,3 +256,13 @@ func _on_acknowledge_pressed() -> void:
 	hide_beat()
 	if dismissed_id != "":
 		beat_dismissed.emit(dismissed_id)
+
+
+func qa_state() -> Dictionary:
+	return {
+		"scene": "tutorial_overlay",
+		"tick": -1,
+		"beat_id": _current_beat_id,
+		"card_visible": _card != null and is_instance_valid(_card),
+		"plants": [],
+	}

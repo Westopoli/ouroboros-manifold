@@ -280,3 +280,14 @@ func _add_slider(parent: Control, label_text: String, initial: float, callback: 
 		val_label.text = "%d%%" % int(val)
 		callback.call(val)
 	)
+
+
+func qa_state() -> Dictionary:
+	return {
+		"scene": "settings",
+		"tick": -1,
+		"resolution_index": int(_settings.get("resolution_index", 2)),
+		"fullscreen": bool(_settings.get("fullscreen", false)),
+		"vsync": bool(_settings.get("vsync", true)),
+		"plants": [],
+	}

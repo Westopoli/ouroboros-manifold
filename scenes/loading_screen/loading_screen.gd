@@ -180,3 +180,13 @@ func _on_progress_updated(step: String, pct: float) -> void:
 
 func _on_sim_ready(_metadata: Dictionary) -> void:
 	_skip_to_main = true
+
+
+func qa_state() -> Dictionary:
+	return {
+		"scene": "loading_screen",
+		"tick": -1,
+		"step": _current_step,
+		"progress_pct": int(_current_pct * 100),
+		"plants": [],
+	}

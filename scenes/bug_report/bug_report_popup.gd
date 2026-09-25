@@ -88,3 +88,13 @@ func _input(event: InputEvent) -> void:
 
 func _dismiss() -> void:
 	queue_free()
+
+
+func qa_state() -> Dictionary:
+	return {
+		"scene": "bug_report_popup",
+		"tick": -1,
+		"downloads_path": _downloads_path,
+		"reports_path": _reports_path,
+		"plants": [],
+	}

@@ -605,3 +605,14 @@ func _region_rows_for_faction(faction_id: String) -> Array:
 			"tier": String(r.get("tier", "")),
 		})
 	return rows
+
+
+func qa_state() -> Dictionary:
+	return {
+		"scene": "time_jump",
+		"tick": -1,
+		"phase": _phase,
+		"entries_total": _total_entries,
+		"entries_printed": _entries_printed,
+		"plants": [],
+	}

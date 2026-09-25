@@ -204,3 +204,14 @@ func _on_begin() -> void:
 		slot_name = _name_input.placeholder_text
 	UIDataBus.create_save_slot(_selected_era_id, slot_name)
 	SceneRouter.go_to("onboarding", {"era_id": _selected_era_id, "slot_name": slot_name})
+
+
+func qa_state() -> Dictionary:
+	return {
+		"scene": "new_game",
+		"tick": -1,
+		"selected_era_id": _selected_era_id,
+		"era_count": _era_cards.size(),
+		"begin_enabled": _begin_btn != null and not _begin_btn.disabled,
+		"plants": [],
+	}
