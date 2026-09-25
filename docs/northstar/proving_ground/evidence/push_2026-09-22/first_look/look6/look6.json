@@ -1,0 +1,102 @@
+{
+ "menu_qa": {
+  "continue_enabled": false,
+  "slot_count": 0
+ },
+ "galaxy_before_step": {
+  "tick": 0,
+  "system_count": 80,
+  "owned": 51,
+  "distinct_colours": 16
+ },
+ "galaxy_after_step": {
+  "tick": 200,
+  "owner_changes": 29,
+  "recoloured": 29
+ },
+ "plants": {
+  "seed-ignored": {
+   "activated": true,
+   "diff_px": 0,
+   "of": 921600
+  },
+  "owner-colour-flat": {
+   "activated": true,
+   "diff_px": 5907,
+   "of": 921600
+  },
+  "edges-2d-overlay": {
+   "activated": true,
+   "diff_px": 36936,
+   "of": 921600
+  },
+  "pick-radius-zero": {
+   "activated": true,
+   "diff_px": 36936,
+   "of": 921600
+  },
+  "bands-frozen": {
+   "activated": true,
+   "diff_px": 36936,
+   "of": 921600
+  },
+  "conquest-no-recolour": {
+   "activated": true,
+   "diff_px": 36936,
+   "of": 921600
+  }
+ },
+ "briefing_qa": {
+  "archetype": 3,
+  "deadline_ticks": 300,
+  "objectives": null
+ },
+ "tactical_qa": {
+  "tick": 1,
+  "units": 0,
+  "factions": []
+ },
+ "debrief_qa": {
+  "band": "partial_failure",
+  "achieved_pct": 0.0,
+  "brought_home_pct": 100.0,
+  "region_delta": {
+   "economy": 0.0,
+   "military": 0.0,
+   "population": 0.0,
+   "tension": 0.0
+  }
+ },
+ "chronicle_qa": {
+  "entries": 0,
+  "dropped": 0,
+  "unresolved_refs": 0
+ },
+ "return_galaxy": {
+  "tick": 250,
+  "system_count": 80
+ },
+ "autosaves": [
+  "campaign_1.omsave"
+ ],
+ "continue_menu_qa": {
+  "continue_enabled": true,
+  "slot_count": 1
+ },
+ "continue_galaxy": {
+  "tick": 250,
+  "system_count": 80,
+  "expected_tick": 250
+ },
+ "timings": {
+  "boot_to_menu_s": 1.1,
+  "menu_to_galaxy_s": 0.73,
+  "step_200_s": 0.91,
+  "galaxy_to_briefing_s": 0.94,
+  "deploy_to_tactical_s": 0.69,
+  "tactical_to_debrief_s": 0.62,
+  "debrief_to_chronicle_s": 0.62,
+  "chronicle_to_galaxy_s": 0.62,
+  "run2_boot_s": 1.1
+ }
+}
