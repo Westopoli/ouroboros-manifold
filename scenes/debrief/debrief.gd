@@ -473,8 +473,6 @@ func _band_color(band: String) -> Color:
 
 
 func _debrief() -> Dictionary:
-	if _params.has("debrief"):
-		return _params.get("debrief", {})
 	if not _frame.is_empty():
 		return _debrief_from_frame()
 	return {}
