@@ -255,6 +255,17 @@ typedef struct {
     uint8_t  settle_flag[OM_MOVE_MAX_UNITS];
     double   settle_x[OM_MOVE_MAX_UNITS];
     double   settle_y[OM_MOVE_MAX_UNITS];
+
+    /* Per-cell group sentinel for probe_gather cell skip.
+     * UINT32_MAX = all units in cell share the same group_id (or cell empty).
+     * 0          = heterogeneous (no skip possible).
+     * other      = that group_id (skip safe for a probe with self_group == it).
+     * Recomputed by om_move_grid_rebuild. */
+    uint32_t cell_group[OM_MOVE_GRID_MAX_CELLS];
+    /* Flat group_id mirror: unit_group[id] == units[id].group_id.
+     * 140-byte stride to units[] trashes cache in the probe inner loop;
+     * this array keeps group_id at a 4-byte stride. */
+    uint32_t unit_group[OM_MOVE_MAX_UNITS];
 } om_move_state;
 
 static void om_move_state_free_fn(void *p) {
@@ -494,6 +505,24 @@ static void om_move_grid_rebuild(om_world *w, om_move_state *ms, int from_units)
         ms->slot_x[slot] = ms->slot_fx[slot] = ms->scan_x[id];
         ms->slot_y[slot] = ms->slot_fy[slot] = ms->scan_y[id];
     }
+    /* Compute per-cell group sentinel and flat unit_group mirror.
+     * cell_group[c] starts as UINT32_MAX (homogeneous / empty).
+     * First unit in c sets it to its group_id.
+     * A second unit with a different group_id sets it to 0 (mixed). */
+    memset(ms->cell_group, 0xFF, cells * sizeof(uint32_t));
+    for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
+        uint32_t gid, cc;
+        if (!ms->grid_in[id]) continue;
+        gid = ms->units[id].group_id;
+        ms->unit_group[id] = gid;
+        cc = ms->unit_cell[id];
+        if (ms->cell_group[cc] == (uint32_t)~0u) {
+            ms->cell_group[cc] = gid;
+        } else if (ms->cell_group[cc] != gid) {
+            ms->cell_group[cc] = 0;
+        }
+    }
+
     ms->slot_base = n;
     ms->n_spill = 0;
     ms->grid_disp = 0.0;
@@ -980,19 +1009,30 @@ static uint32_t om_move_probe_gather(om_world *w, om_move_state *ms, uint32_t se
     if (om_move_grid_box(ms, x, y, r, &cx0, &cx1, &cy0, &cy1)) {
         for (cy = cy0; cy <= cy1; cy++) {
             uint32_t row = (uint32_t)cy * (uint32_t)ms->grid_w;
-            uint32_t lo = ms->grid_start[row + (uint32_t)cx0];
-            uint32_t hi = ms->grid_start[row + (uint32_t)cx1 + 1];
-            for (base = lo; base < hi; base += OM_MOVE_MASK_BITS) {
-                uint64_t mask = om_move_near_mask(ms, base, hi, x, y, r2);
-                while (mask) {
-                    uint32_t slot = base + om_move_lowest_bit(mask);
-                    uint32_t cid = ms->slot_id[slot];
-                    mask &= mask - 1;
-                    if (cid == self_id) continue;
-                    if (self_group != 0 && ms->units[cid].group_id == self_group) continue;
-                    ms->scan_x[n] = ms->slot_x[slot];
-                    ms->scan_y[n] = ms->slot_y[slot];
-                    n++;
+            int32_t cx;
+            for (cx = cx0; cx <= cx1; cx++) {
+                uint32_t ci = row + (uint32_t)cx;
+                uint32_t lo, hi;
+                /* Skip cells where every unit is in the same group as self:
+                 * all would be filtered by the per-unit check below.
+                 * cell_group[ci] == UINT32_MAX means empty or first-unit not
+                 * yet encountered (cannot happen post-rebuild), so the guard
+                 * self_group != 0 prevents a false skip for ungrouped probes. */
+                if (self_group != 0 && ms->cell_group[ci] == self_group) continue;
+                lo = ms->grid_start[ci];
+                hi = ms->grid_start[ci + 1];
+                for (base = lo; base < hi; base += OM_MOVE_MASK_BITS) {
+                    uint64_t mask = om_move_near_mask(ms, base, hi, x, y, r2);
+                    while (mask) {
+                        uint32_t slot = base + om_move_lowest_bit(mask);
+                        uint32_t cid = ms->slot_id[slot];
+                        mask &= mask - 1;
+                        if (cid == self_id) continue;
+                        if (self_group != 0 && ms->unit_group[cid] == self_group) continue;
+                        ms->scan_x[n] = ms->slot_x[slot];
+                        ms->scan_y[n] = ms->slot_y[slot];
+                        n++;
+                    }
                 }
             }
         }
@@ -1068,9 +1108,13 @@ static int om_move_collide_pair(om_move_state *ms, uint32_t ia, uint32_t ib) {
         overlap = target - dist;
         ux = dx / dist; uy = dy / dist;
         if (a_stat && b_stat) {
-            /* both fixed: cannot resolve without violating the
-             * "stationary takes zero push" rule for either side;
-             * not exercised by any acceptance test. */
+            /* Both fixed: cannot resolve without violating the
+             * "stationary takes zero push" rule for either side.
+             * Return 0 without calling grid_set: positions are
+             * unchanged so the grid_set would be a no-op anyway,
+             * and skipping it saves the grid_disp bookkeeping on
+             * every such pair in a settled pile. */
+            return 0;
         } else if (a_stat) {
             bx += ux * overlap; by += uy * overlap;
             changed = 1;
