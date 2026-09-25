@@ -453,3 +453,10 @@ One row per event: freeze steps, attaches, reverts, parks, rung gates, harness e
 | day4 | docs C3-4-tests (push/C3-4b) | OK  collection and lints OK |
 | day4 | sweep (bk-37; make -j8 clean, pipe clean) | csim: 132f/658p/51skip/1xfail; transport: 27p; qa/t1: 2f/31p/1skip. Failures pre-existing (E17 main; control tests; 2 qa/t1 detector controls unchanged from day4 prior rows). No new reds from client pieces. |
 | day4 | register | six rows: Q-057-02, Q-120-03, Q-124-03, Q-060-02 open; player-id and B12-11 break closed by M0 ruling |
+| day4 | docs T1-8 (push/T1-8) | OK  collection and lints OK -- header+mission.c changes outside T1 ownership landed via docs profile |
+| day4 | merge T1-9 (push/T1-9-r) | REJECT merge-conflict in csrc/pipe/om_pipe.c (stacked on T1-8; pipe lane rebuild needed) |
+| day4 | merge T1-10 (push/B8-9-r, B8-9 lands as T1-10) | REJECT merge-conflict in csrc/pipe/om_pipe.c (stacked on T1-9; pipe lane rebuild needed) |
+| day4 | merge T1-7 (push/T1-7) | OK  merged |
+| day4 | docs T1-7-tests (push/T1-7) | OK  collection and lints OK -- tests/transport/test_pipe_units_move.py + test_core_mission_region_delta.py landed |
+| day4 | docs brief-client3 (push/brief-client3) | OK  collection and lints OK |
+| day4 | sweep (bk-38; make -j8 clean, pipe clean) | transport: 27p/0f; E09: 39p/0f; E13: 33p/2f (S099, S101 pre-existing); E10: 43p/1f/1s (S078 pre-existing); core: 61p/0f; qa/t1: 31p/2f/1s (detector controls, pre-existing). No new reds from T1-7/T1-8 pieces. |
