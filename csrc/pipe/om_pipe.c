@@ -885,7 +885,6 @@ static void write_chronicle(uint64_t from_tick, uint64_t to_tick) {
         uint32_t n = om_chronicle_entry_count(W);
         int wrote = 0;
         for (uint32_t i = 0; i < n; i++) {
-            if (!om_chronicle_entry_is_retained(W, i)) continue;
             om_chronicle_cluster c;
             memset(&c, 0, sizeof c);
             if (!om_chronicle_get_cluster(W, i, &c)) continue;
