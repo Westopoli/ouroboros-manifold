@@ -901,6 +901,11 @@ static void write_chronicle(uint64_t from_tick, uint64_t to_tick) {
                 frags[1] = ent.fragment_ids[1];
                 frags[2] = ent.fragment_ids[2];
             }
+            /* B8-9: clusters with no event ticks (start_tick==end_tick==0;
+             * all REGIONAL/LINEAGE/CONSEQUENCE are pushed 0,0 by chronicle.c)
+             * take the jump window so the client can place them on the timeline. */
+            uint64_t tick_lo = (c.start_tick == 0 && c.end_tick == 0) ? from_tick : c.start_tick;
+            uint64_t tick_hi = (c.start_tick == 0 && c.end_tick == 0) ? to_tick   : c.end_tick;
             if (wrote) jb_putc(&j, ',');
             wrote = 1;
             jb_putc(&j, '{');
@@ -908,10 +913,10 @@ static void write_chronicle(uint64_t from_tick, uint64_t to_tick) {
             jb_uint(&j, i);
             jb_putc(&j, ',');
             jb_key(&j, "start_tick");
-            jb_uint(&j, c.start_tick);
+            jb_uint(&j, tick_lo);
             jb_putc(&j, ',');
             jb_key(&j, "end_tick");
-            jb_uint(&j, c.end_tick);
+            jb_uint(&j, tick_hi);
             jb_putc(&j, ',');
             jb_key(&j, "category");
             jb_uint(&j, c.category);
