@@ -37,12 +37,11 @@
  *     when mission_set is true and end_applied is false; the accessor returns
  *     the stored delta. When the accessor returns 0 (no consequence applied)
  *     all four keys are 0.
- *   - om_chronicle_entry has no accessor to read it back by id (only
- *     om_chronicle_entry_count/_is_retained); om_chronicle_get_cluster's
- *     om_chronicle_cluster is used instead (type/category/region/peak_score/
- *     start_tick/end_tick). It has one region, not a regions[] list, no
- *     faction refs, and no fragment id -- "refs.factions" and "fragment"
- *     are always empty/0.
+ *   - om_chronicle_entry_get (T1-9) is used alongside om_chronicle_get_cluster
+ *     to read fragment_ids[3] per entry; emitted as "fragment_ids":[id0,id1,id2]
+ *     and "fragment":id0. When om_chronicle_entry_get returns 0 (cluster exists
+ *     but text pass never ran for it) fragment_ids is [-1,-1,-1] and fragment is
+ *     -1. refs.factions is still always [] (no faction refs on a cluster).
  *   - Every om_map_get_* node/canvas accessor and om_tactical_step itself
  *     are STUBs (csrc/tactical_mapgen.c, csrc/unit.c: E-11 wiring, card
  *     B10/B12 not landed). There is also no enumerator for live tactical
@@ -894,6 +893,14 @@ static void write_chronicle(uint64_t from_tick, uint64_t to_tick) {
             om_chronicle_cluster c;
             memset(&c, 0, sizeof c);
             if (!om_chronicle_get_cluster(W, i, &c)) continue;
+            om_chronicle_entry ent;
+            memset(&ent, 0, sizeof ent);
+            int32_t frags[3] = { -1, -1, -1 };
+            if (om_chronicle_entry_get(W, i, &ent)) {
+                frags[0] = ent.fragment_ids[0];
+                frags[1] = ent.fragment_ids[1];
+                frags[2] = ent.fragment_ids[2];
+            }
             if (wrote) jb_putc(&j, ',');
             wrote = 1;
             jb_putc(&j, '{');
@@ -919,12 +926,19 @@ static void write_chronicle(uint64_t from_tick, uint64_t to_tick) {
             jb_uint(&j, c.region);
             jb_putc(&j, ']');
             jb_putc(&j, ',');
-            jb_key(&j, "factions"); /* no faction refs on a cluster; reported */
+            jb_key(&j, "factions"); /* no faction refs on a cluster */
             jb_raw(&j, "[]");
             jb_putc(&j, '}');
             jb_putc(&j, ',');
-            jb_key(&j, "fragment"); /* no fragment id accessor; reported */
-            jb_uint(&j, 0);
+            jb_key(&j, "fragment");
+            jb_int(&j, frags[0]);
+            jb_putc(&j, ',');
+            jb_key(&j, "fragment_ids");
+            jb_putc(&j, '[');
+            jb_int(&j, frags[0]); jb_putc(&j, ',');
+            jb_int(&j, frags[1]); jb_putc(&j, ',');
+            jb_int(&j, frags[2]);
+            jb_putc(&j, ']');
             jb_putc(&j, ',');
             jb_key(&j, "significance");
             jb_double(&j, c.peak_score);
