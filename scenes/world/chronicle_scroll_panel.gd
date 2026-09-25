@@ -55,6 +55,7 @@ var _qa_hash = 0
 var _qa_load_ms: float = 0.0
 var _qa_regen_count: int = 0
 var _qa_expanded_id: int = -1
+var _qa_tick: int = -1
 
 var _plant_refs_unresolved: bool = false
 var _plant_entries_dropped: bool = false
@@ -371,6 +372,7 @@ func load_frame(frame: Dictionary) -> void:
 			"mentions": [],
 		})
 
+	_qa_tick = int(frame.get("jump", {}).get("to_tick", -1))
 	_qa_hash = hash(frame)
 	_qa_regen_count += 1
 	_qa_load_ms = float(Time.get_ticks_usec() - start_usec) / 1000.0
@@ -381,6 +383,9 @@ func qa_state() -> Dictionary:
 	for rid in _qa_owners:
 		owners_out[str(rid)] = _qa_owners[rid]
 	return {
+		"scene": "chronicle",
+		"tick": _qa_tick,
+		"plants": PLANTS.duplicate(),
 		"hash": _qa_hash,
 		"timing_ms": {"load": _qa_load_ms},
 		"regen_count": _qa_regen_count,
