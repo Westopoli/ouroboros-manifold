@@ -100,6 +100,10 @@ func _run_tests() -> void:
 	_check_plant_entries_dropped()
 	_check_plant_nope_is_false()
 
+	# C3-4: library resolution and server-field isolation.
+	_check_library_fragment_resolves_C3_4()
+	_check_poisoned_server_text_ignored_C3_4()
+
 	await _run_live_tests()
 	_assert(_live_tests_completed, "the live-frame checks did not run to the end (a script error aborted them, or c_bridge.gd lacks load_chronicle_live / chronicle_frame / chronicle_snapshot / DEFAULT_FEATURES)")
 
@@ -451,3 +455,67 @@ func _write_json(path: String, data: Dictionary) -> bool:
 	f.store_string(JSON.stringify(data))
 	f.close()
 	return true
+
+
+# --- C3-4: library resolution and server-field isolation -------------------
+
+# Fragment id 0 (LT_O_001) with region_id=3 must resolve to named prose:
+#   {region_name} -> "the Iron Vale"   (CHRON_REGION_NAMES[3 % 16])
+#   {lineage_name} -> "Ashworth"       (CHRON_LINEAGE_SURNAMES[3 % 8])
+# The raw slot strings must not appear in the result.
+func _check_library_fragment_resolves_C3_4() -> void:
+	var lib_frame := {
+		"type": "chronicle",
+		"jump": {"from_tick": 0, "to_tick": 50},
+		"entries": [
+			{"id": 1, "start_tick": 1, "end_tick": 10, "category": 2, "cluster_type": 0,
+				"refs": {"regions": [3], "factions": [0]}, "fragment": 0,
+				"significance": 0.9},
+		],
+	}
+	_root.set_snapshot(_snapshot)
+	_root.load_frame(lib_frame)
+	var state: Dictionary = _root.qa_state()
+	var entries: Array = state.get("entries", [])
+	_assert(entries.size() == 1,
+		"C3-4 library: expected 1 entry from lib_frame, got %d" % entries.size())
+	if entries.size() > 0:
+		var text: String = str(entries[0].get("text", ""))
+		_assert("{region_name}" not in text,
+			"C3-4: raw slot {region_name} must not appear in resolved text: %s" % text)
+		_assert("the Iron Vale" in text,
+			"C3-4: region_id=3 must yield 'the Iron Vale' in text (CHRON_REGION_NAMES[3 %% 16]), got: %s" % text)
+		_assert("Ashworth" in text,
+			"C3-4: region_id=3 must yield lineage 'Ashworth' in text (CHRON_LINEAGE_SURNAMES[3 %% 8]), got: %s" % text)
+		_assert("[fragment 0]" not in text,
+			"C3-4: fragment id 0 must resolve to library text, not the fallback placeholder: %s" % text)
+	_root.load_frame(_frame.duplicate(true))
+
+
+# A frame entry carrying server-side base_text / expanded_text must not
+# affect what the panel renders; the panel resolves fragment id from the
+# library and ignores all prose fields on the frame entry.
+func _check_poisoned_server_text_ignored_C3_4() -> void:
+	var poisoned_frame := {
+		"type": "chronicle",
+		"jump": {"from_tick": 0, "to_tick": 50},
+		"entries": [
+			{"id": 1, "start_tick": 1, "end_tick": 10, "category": 2, "cluster_type": 0,
+				"refs": {"regions": [3], "factions": [0]}, "fragment": 0,
+				"base_text": "POISONED_BASE", "expanded_text": "POISONED_EXPANDED",
+				"significance": 0.9},
+		],
+	}
+	_root.set_snapshot(_snapshot)
+	_root.load_frame(poisoned_frame)
+	var state: Dictionary = _root.qa_state()
+	var entries: Array = state.get("entries", [])
+	_assert(entries.size() == 1,
+		"C3-4 poisoned: expected 1 entry, got %d" % entries.size())
+	if entries.size() > 0:
+		var text: String = str(entries[0].get("text", ""))
+		_assert("POISONED_BASE" not in text,
+			"C3-4: base_text='POISONED_BASE' from frame must not appear in rendered text (R-068-02: no prose from server): %s" % text)
+		_assert("POISONED_EXPANDED" not in text,
+			"C3-4: expanded_text='POISONED_EXPANDED' from frame must not appear in rendered text: %s" % text)
+	_root.load_frame(_frame.duplicate(true))
