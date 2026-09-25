@@ -30,7 +30,7 @@ const CHRONICLE_PACE := {
 	"word_interval_s": 0.08,
 	"fade_s": 0.20,
 }
-const FRAGMENTS_LIBRARY_PATH := "res://simulation/library/chronicle/fragments.json"
+const FRAGMENTS_LIBRARY_PATH := "res://library/chronicle/fragments.json"
 const PLANTS := ["entries-dropped", "refs-unresolved"]
 
 # Piece C8 self-load pattern (docs/northstar/plans/push/specs/C8-M3.md
@@ -45,12 +45,13 @@ var _snapshot_faction_ids: Dictionary = {}
 
 var _fragment_library_loaded: bool = false
 var _fragment_library_text_by_id: Dictionary = {}
+var _chronicle_names = null  # ChronicleNames instance, lazy-loaded in _ensure_fragment_library
 
 var _qa_entries: Array = []
 var _qa_owners: Dictionary = {}
 var _qa_dropped_entries: int = 0
 var _qa_unresolved_refs: int = 0
-var _qa_hash = null
+var _qa_hash = 0
 var _qa_load_ms: float = 0.0
 var _qa_regen_count: int = 0
 var _qa_expanded_id: int = -1
@@ -352,11 +353,13 @@ func load_frame(frame: Dictionary) -> void:
 			_qa_dropped_entries += 1
 			continue
 
+		var region_id: int = int(region_refs[0]) if region_refs.size() > 0 else -1
+		var faction_id: int = int(faction_refs[0]) if faction_refs.size() > 0 else -1
 		var fragment_id := int(entry.get("fragment", -1))
 		_qa_entries.append({
 			"entry_id": int(entry.get("id", -1)),
 			"fragment_id": fragment_id,
-			"text": _resolve_fragment_text(fragment_id),
+			"text": _resolve_fragment_text(fragment_id, region_id, faction_id),
 		})
 
 	for child in _entry_container.get_children():
@@ -421,21 +424,31 @@ func _ensure_fragment_library() -> void:
 	if _fragment_library_loaded:
 		return
 	_fragment_library_loaded = true
+	if _chronicle_names == null:
+		_chronicle_names = load("res://scenes/world/chronicle_names.gd").new()
 	var f := FileAccess.open(FRAGMENTS_LIBRARY_PATH, FileAccess.READ)
 	if f == null:
 		return
 	var text := f.get_as_text()
 	f.close()
 	var data = JSON.parse_string(text)
-	if data is Array:
+	if data is Dictionary:
+		_chronicle_names.load_tables(data.get("name_tables", {}))
+		for fragment in data.get("fragments", []):
+			if fragment is Dictionary and fragment.has("id"):
+				_fragment_library_text_by_id[str(int(fragment["id"]))] = str(fragment.get("text", ""))
+	elif data is Array:
 		for fragment in data:
 			if fragment is Dictionary and fragment.has("id"):
 				_fragment_library_text_by_id[str(fragment["id"])] = str(fragment.get("text", ""))
 
 
-func _resolve_fragment_text(fragment_id: int) -> String:
+func _resolve_fragment_text(fragment_id: int, region_id: int = -1, faction_id: int = -1) -> String:
 	_ensure_fragment_library()
 	var key := str(fragment_id)
 	if _fragment_library_text_by_id.has(key):
-		return _fragment_library_text_by_id[key]
+		var raw: String = _fragment_library_text_by_id[key]
+		if _chronicle_names != null:
+			return _chronicle_names.fill_template(raw, region_id, faction_id)
+		return raw
 	return "[fragment %d]" % fragment_id
