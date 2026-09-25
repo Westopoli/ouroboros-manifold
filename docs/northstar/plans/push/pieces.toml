@@ -419,7 +419,7 @@ id = "C3"
 manager = "M3"
 wave = 2
 owns = []
-owns_glob = ["scenes/world/chronicle_*", "autoload/c_bridge.gd"]
+owns_glob = ["scenes/world/chronicle_*", "autoload/c_bridge.gd", "library/**", "scripts/library/**"]
 acceptance = [
     "tests/test_chronicle_scroll.gd",
 ]
@@ -475,12 +475,12 @@ id = "Q1"
 manager = "M0"
 wave = 2
 owns = []
-owns_glob = ["agora/projects/ouroboros/**"]
-acceptance = []
-depends_on = ["C7"]
+owns_glob = ["agora/projects/ouroboros/**", "scenes/**/*.gd"]
+acceptance = ["tests/test_qa_state_scenes.gd"]
+depends_on = ["C7", "C3", "C1", "C4", "C5", "C8", "T2g", "MK-layers", "MK-chronicle", "MK-harness"]
 status = "pending"
 tests_pending = true
-size_estimate = "cross-repo piece (lives in the agora checkout, not this repo); QA campaign files, planted-bug catalog, per-epic gate cards; data lint, no pytest id"
+size_estimate = "per-scene qa_state on every REQUIRED scene script (C7-5 on push/C3-4b); the scene glob is a one-off for that landing"
 
 [[piece]]
 id = "MK-layers"
