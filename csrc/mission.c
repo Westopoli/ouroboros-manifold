@@ -820,6 +820,20 @@ void om_mission_apply_consequences(om_world *w, uint32_t region_idx, uint32_t ar
         st->consequence_delta[f] = om_region_field(w, region_idx, (om_field)f) - before[f];
 }
 
+/* T1-8: accessor for the last applied consequence delta (set above).
+ * Returns 1 when a consequence has been applied for the current mission,
+ * 0 otherwise; out params are untouched when 0; NULL out params tolerated. */
+int om_mission_get_region_delta(const om_world *w, double *military, double *economy,
+                                double *tension, double *population) {
+    const om_mission_state *st = om_mis_ro(w);
+    if (!st || !st->consequence_seen) return 0;
+    if (military)   *military   = st->consequence_delta[OM_F_MILITARY];
+    if (economy)    *economy    = st->consequence_delta[OM_F_ECONOMY];
+    if (tension)    *tension    = st->consequence_delta[OM_F_TENSION];
+    if (population) *population = st->consequence_delta[OM_F_POPULATION];
+    return 1;
+}
+
 /* R-078-07: target `adjacent_player` applies delta to every player-owned
  * neighbor of the mission region (delta already resolved by the caller --
  * om_consequence_eval_delta_current/deficit -- this only fans it out and
