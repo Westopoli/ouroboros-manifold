@@ -72,6 +72,7 @@ func _run_tests() -> void:
 	await _run_debrief_tests()
 	await _run_live_tests()
 	_assert(_live_tests_completed, "the live-frame checks did not run to the end (a script error aborted them, or c_bridge.gd lacks load_mission_live / load_debrief_live / mission_frame / debrief_frame / DEFAULT_FEATURES)")
+	await _run_live_debrief_tests()
 
 
 func _run_briefing_tests() -> void:
@@ -483,3 +484,74 @@ func _write_json(path: String, data: Dictionary) -> bool:
 	f.store_string(JSON.stringify(data))
 	f.close()
 	return true
+
+
+# Piece C6-1 (S-077 R-077-01/02): live debrief frame band, achieved,
+# brought_home, and region_delta.military shown by the scene equal the
+# pipe's answer; once load_frame() sets _frame, the _params["debrief"]
+# legacy path is not consulted (debrief.gd _debrief() priority order).
+func _run_live_debrief_tests() -> void:
+	var CBridge = load("res://autoload/c_bridge.gd")
+	var probe = CBridge.new()
+	if not probe.load_debrief_live(1, CBridge.DEFAULT_N_REGIONS, CBridge.DEFAULT_FEATURES):
+		_assert(false, "C6-1 probe: load_debrief_live(1) failed -- %s" % probe.last_error())
+		probe.close_session()
+		return
+	var live: Dictionary = probe.debrief_frame()
+	probe.close_session()
+
+	# no-setup path: achieved_pct and region_delta.military match live frame.
+	var SimSession = load("res://autoload/sim_session.gd")
+	SimSession.reset()
+	var d1: Node = (load(DEBRIEF_SCENE_PATH) as PackedScene).instantiate()
+	get_root().add_child(d1)
+	await process_frame
+	await process_frame
+	if d1.has_method("qa_state"):
+		var s1: Dictionary = d1.qa_state()
+		_assert(is_equal_approx(float(s1.get("achieved_pct", -1.0)), float(live.get("achieved", 0.0)) * 100.0),
+			"C6-1 no-setup achieved_pct = %s, live frame has %s" % [s1.get("achieved_pct"), float(live.get("achieved", 0.0)) * 100.0])
+		var s1_delta: Dictionary = s1.get("region_delta", {})
+		var live_delta: Dictionary = live.get("region_delta", {})
+		_assert(is_equal_approx(float(s1_delta.get("military", -999.0)), float(live_delta.get("military", -998.0))),
+			"C6-1 no-setup region_delta.military = %s, live frame has %s" % [s1_delta.get("military"), live_delta.get("military")])
+	else:
+		_assert(false, "C6-1 no-setup: debrief missing qa_state()")
+	d1.queue_free()
+	await process_frame
+	SimSession.reset()
+
+	# live frame wins over _params["debrief"] once load_frame() is called.
+	# alt fixture carries conspicuously wrong values so any contamination is obvious.
+	var alt := {
+		"type": "debrief", "band": 4, "achieved": 0.11, "brought_home": 0.22,
+		"region_delta": {"military": 99.0, "economy": 99.0, "tension": 99.0, "population": 99.0},
+	}
+	SimSession.reset()
+	var d2: Node = (load(DEBRIEF_SCENE_PATH) as PackedScene).instantiate()
+	get_root().add_child(d2)
+	await process_frame
+	await process_frame
+	if not (d2.has_method("setup") and d2.has_method("load_frame") and d2.has_method("qa_state")):
+		_assert(false, "C6-1 legacy-wins: debrief missing setup/load_frame/qa_state")
+		d2.queue_free()
+		return
+	d2.setup({"debrief": alt})
+	await process_frame
+	d2.load_frame(live.duplicate(true))
+	await process_frame
+	var s2: Dictionary = d2.qa_state()
+	var expected_band: String = BAND_NAMES[clampi(int(live.get("band", 0)), 0, BAND_NAMES.size() - 1)]
+	_assert(str(s2.get("band", "")) == expected_band,
+		"C6-1 S-077/R-077-02: live frame wins over _params[debrief] -- band=%s expected %s" % [s2.get("band"), expected_band])
+	_assert(is_equal_approx(float(s2.get("achieved_pct", -1.0)), float(live.get("achieved", 0.0)) * 100.0),
+		"C6-1: live frame wins -- achieved_pct=%s expected %s" % [s2.get("achieved_pct"), float(live.get("achieved", 0.0)) * 100.0])
+	_assert(is_equal_approx(float(s2.get("brought_home_pct", -1.0)), float(live.get("brought_home", 0.0)) * 100.0),
+		"C6-1: live frame wins -- brought_home_pct=%s expected %s" % [s2.get("brought_home_pct"), float(live.get("brought_home", 0.0)) * 100.0])
+	var live_delta2: Dictionary = live.get("region_delta", {})
+	var s2_delta: Dictionary = s2.get("region_delta", {})
+	_assert(is_equal_approx(float(s2_delta.get("military", -999.0)), float(live_delta2.get("military", -998.0))),
+		"C6-1: live frame wins -- region_delta.military=%s expected %s" % [s2_delta.get("military"), live_delta2.get("military")])
+	d2.queue_free()
+	await process_frame
+	SimSession.reset()
