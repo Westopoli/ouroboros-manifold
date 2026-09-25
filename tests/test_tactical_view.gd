@@ -63,6 +63,7 @@ var _frame0: Dictionary
 var _frame10: Dictionary
 var _live_tests_completed := false
 var _c53_completed := false
+var _c54_completed := false
 
 
 func _initialize() -> void:
@@ -139,6 +140,8 @@ func _run_tests() -> void:
 	_assert(_c53_completed, "the C5-3 checks did not run to the end (a script error aborted them, or the view lacks send_command / qa_step / the stuck and rubber-band plants)")
 	await _run_live_tests()
 	_assert(_live_tests_completed, "the live-frame checks did not run to the end (a script error aborted them, or c_bridge.gd lacks load_tactical_live / tactical_frame / DEFAULT_FEATURES)")
+	await _run_c54_tests()
+	_assert(_c54_completed, "the C5-4 checks did not run to the end (a script error aborted them, or tactical_view.gd lacks commands_sent_last_order / units_in_last_command / move-order-dropped plant)")
 
 
 # Piece C5-2 (docs/architecture.md "session commands (v1.1)"): with no
@@ -333,6 +336,69 @@ func _run_c53_tests() -> void:
 
 func SimSession_reset() -> void:
 	load("res://autoload/sim_session.gd").reset()
+
+
+# Piece C5-4: group move order reaches pipe as ONE command; move-order-dropped
+# plant sends one command per unit (detector).
+func _run_c54_tests() -> void:
+	SimSession_reset()
+	var _b = load("res://autoload/sim_session.gd").bridge()
+	var _CBridge = load("res://autoload/c_bridge.gd")
+	_b.ensure_session(1, _CBridge.DEFAULT_N_REGIONS, _CBridge.DEFAULT_FEATURES)
+	_b.step(10)
+	var _step_ddl := Time.get_ticks_msec() + 5000
+	while Time.get_ticks_msec() < _step_ddl and int(_b.snapshot().get("tick", 0)) < 10:
+		_b.pump()
+		OS.delay_msec(5)
+	var view: Node = await _mount_view()
+	var live: Dictionary = view.qa_state()
+
+	# qa_state() must expose the new counter keys and list move-order-dropped
+	_assert(live.has("commands_sent_last_order"),
+		"C5-4: qa_state() missing commands_sent_last_order")
+	_assert(live.has("units_in_last_command"),
+		"C5-4: qa_state() missing units_in_last_command")
+	_assert(live.has("plants") and (live.get("plants") as Array).has("move-order-dropped"),
+		"C5-4: qa_state().plants does not include move-order-dropped")
+
+	# Gather up to 3 faction-0 unit ids from the live mission frame
+	var own: Array = []
+	for k in live.get("units", {}):
+		if int(live["units"][k]["faction"]) == 0 and own.size() < 3:
+			own.append(int(k))
+	_assert(own.size() >= 2,
+		"C5-4: live mission has fewer than 2 faction-0 units (%d); cannot test counter" % own.size())
+	if own.size() < 2:
+		view.queue_free()
+		await process_frame
+		SimSession_reset()
+		return
+
+	# Counter test (clean): one group order -> one pipe command
+	view.send_command({"kind": "move", "unit_ids": own, "x": 12000.0, "y": 6000.0})
+	var st: Dictionary = view.qa_state()
+	_assert(int(st.get("commands_sent_last_order", -1)) == 1,
+		"C5-4: commands_sent_last_order should be 1 for a group move (got %s)" % st.get("commands_sent_last_order"))
+	_assert(int(st.get("units_in_last_command", -1)) == own.size(),
+		"C5-4: units_in_last_command should be %d (got %s)" % [own.size(), st.get("units_in_last_command")])
+
+	# Detector: plant makes counter equal selection size (> 1 for multi-unit)
+	_assert(view.qa_plant("move-order-dropped"),
+		"C5-4: qa_plant(move-order-dropped) must return true")
+	# Positive control (clean): without the plant the one-command check passed above.
+	# Planted run: counter must NOT be 1 (= one per unit) -- this is the caught case.
+	view.send_command({"kind": "move", "unit_ids": own, "x": 12000.0, "y": 6000.0})
+	var st2: Dictionary = view.qa_state()
+	var dropped: int = int(st2.get("commands_sent_last_order", -1))
+	_assert(dropped == own.size(),
+		"C5-4 PLANT: commands_sent_last_order should equal %d (one per unit) with move-order-dropped, got %d" % [own.size(), dropped])
+	_assert(dropped != 1,
+		"C5-4 DETECTOR: move-order-dropped plant must break the one-command invariant (commands_sent_last_order=%d)" % dropped)
+
+	view.queue_free()
+	await process_frame
+	SimSession_reset()
+	_c54_completed = true
 
 
 func _check_qa_state_json_safe() -> void:
