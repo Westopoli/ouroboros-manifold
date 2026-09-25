@@ -345,6 +345,18 @@ def test_s_c8_05_end_mission_reaches_chronicle(game):
     wait_for(client, _reached_chronicle, STEP_TIMEOUT_S, label="S-C8-05 (chronicle)")
     _shoot(client, "flow_05_chronicle")
 
+    # C3-6: chronicle screen must have at least one rendered entry after the
+    # strategic run and jump. Reads qa_state().entries via the daemon's state verb.
+    chronicle_result = client.state().get("result", {})
+    chronicle_qa = chronicle_result.get("qa", {})
+    chronicle_entries = chronicle_qa.get("entries", [])
+    assert len(chronicle_entries) >= 1, (
+        "C3-6: chronicle screen has %d entries after end-mission jump; "
+        "expected >= 1 (qa_state().entries = %r; if sim returns 0 entries "
+        "this is blocked on sim csrc/chronicle.c)"
+        % (len(chronicle_entries), chronicle_entries)
+    )
+
 
 def test_s_c8_06_return_to_galaxy_then_shutdown(game):
     client = game.client

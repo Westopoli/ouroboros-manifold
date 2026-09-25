@@ -104,6 +104,10 @@ func _run_tests() -> void:
 	_check_library_fragment_resolves_C3_4()
 	_check_poisoned_server_text_ignored_C3_4()
 
+	# C3-6: fragment_ids array support (-1 structural line and real ids).
+	_check_fragment_ids_all_minus_one_C3_6()
+	_check_fragment_ids_real_C3_6()
+
 	await _run_live_tests()
 	_assert(_live_tests_completed, "the live-frame checks did not run to the end (a script error aborted them, or c_bridge.gd lacks load_chronicle_live / chronicle_frame / chronicle_snapshot / DEFAULT_FEATURES)")
 
@@ -518,4 +522,67 @@ func _check_poisoned_server_text_ignored_C3_4() -> void:
 			"C3-4: base_text='POISONED_BASE' from frame must not appear in rendered text (R-068-02: no prose from server): %s" % text)
 		_assert("POISONED_EXPANDED" not in text,
 			"C3-4: expanded_text='POISONED_EXPANDED' from frame must not appear in rendered text: %s" % text)
+	_root.load_frame(_frame.duplicate(true))
+
+
+# --- C3-6: fragment_ids array support -----------------------------------------
+
+# Entry with fragment_ids [-1,-1,-1]: must render structural line (category,
+# resolved region name, tick range). No fragment prose, no {/}/[ tokens.
+func _check_fragment_ids_all_minus_one_C3_6() -> void:
+	var minus_frame := {
+		"type": "chronicle",
+		"jump": {"from_tick": 0, "to_tick": 50},
+		"entries": [
+			{"id": 901, "start_tick": 50, "end_tick": 60, "category": 3, "cluster_type": 1,
+				"refs": {"regions": [5], "factions": [0]},
+				"fragment": -1, "fragment_ids": [-1, -1, -1], "significance": 0.5},
+		],
+	}
+	_root.set_snapshot(_snapshot)
+	_root.load_frame(minus_frame)
+	var state: Dictionary = _root.qa_state()
+	var entries: Array = state.get("entries", [])
+	_assert(entries.size() == 1,
+		"C3-6 all-minus-one: expected 1 entry, got %d" % entries.size())
+	if entries.size() > 0:
+		var text: String = str(entries[0].get("text", ""))
+		_assert(text != "",
+			"C3-6 all-minus-one: structural line must not be empty")
+		_assert("{" not in text,
+			"C3-6 all-minus-one: no { in structural line (unfilled placeholder): %s" % text)
+		_assert("}" not in text,
+			"C3-6 all-minus-one: no } in structural line (unfilled placeholder): %s" % text)
+		_assert("[" not in text,
+			"C3-6 all-minus-one: no [ in structural line (placeholder token): %s" % text)
+	_root.load_frame(_frame.duplicate(true))
+
+
+# Entry with fragment_ids [0,-1,-1] and region_id=3: must resolve prose from
+# library id 0 with names filled; qa_state entry must carry fragment_ids[3].
+func _check_fragment_ids_real_C3_6() -> void:
+	var fids_frame := {
+		"type": "chronicle",
+		"jump": {"from_tick": 0, "to_tick": 50},
+		"entries": [
+			{"id": 902, "start_tick": 1, "end_tick": 10, "category": 2, "cluster_type": 0,
+				"refs": {"regions": [3], "factions": [0]},
+				"fragment": 0, "fragment_ids": [0, -1, -1], "significance": 0.9},
+		],
+	}
+	_root.set_snapshot(_snapshot)
+	_root.load_frame(fids_frame)
+	var state: Dictionary = _root.qa_state()
+	var entries: Array = state.get("entries", [])
+	_assert(entries.size() == 1,
+		"C3-6 fragment_ids real: expected 1 entry, got %d" % entries.size())
+	if entries.size() > 0:
+		var fids = entries[0].get("fragment_ids", null)
+		_assert(fids != null and fids is Array and (fids as Array).size() == 3,
+			"C3-6: qa_state entry must carry fragment_ids Array[3], got %s" % str(fids))
+		var text: String = str(entries[0].get("text", ""))
+		_assert("the Iron Vale" in text,
+			"C3-6: fragment_ids[0]=0 region_id=3 must yield 'the Iron Vale' in text, got: %s" % text)
+		_assert("{region_name}" not in text,
+			"C3-6: raw slot {region_name} must not appear in resolved text: %s" % text)
 	_root.load_frame(_frame.duplicate(true))
