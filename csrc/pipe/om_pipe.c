@@ -80,6 +80,10 @@
  * factions listed in a tactical frame's "visible". */
 #define OM_PIPE_UNIT_SCAN_MAX 1000000
 #define OM_PIPE_MAX_FACTION_KEYS 32
+/* Mirror of OM_MAX_UNITS in unit.c (E-11 10k-unit scale requirement + headroom,
+ * unit.c:57).  Not exported from ouroboros_sim.h; mirrored here for the
+ * command unit-list buffer in handle_command. */
+#define OM_MAX_UNITS 10100
 
 /* ---------------------------------------------------------------------
  * Frame I/O
@@ -901,6 +905,11 @@ static void write_chronicle(uint64_t from_tick, uint64_t to_tick) {
                 frags[1] = ent.fragment_ids[1];
                 frags[2] = ent.fragment_ids[2];
             }
+            /* B8-9: clusters with no event ticks (start_tick==end_tick==0;
+             * all REGIONAL/LINEAGE/CONSEQUENCE are pushed 0,0 by chronicle.c)
+             * take the jump window so the client can place them on the timeline. */
+            uint64_t tick_lo = (c.start_tick == 0 && c.end_tick == 0) ? from_tick : c.start_tick;
+            uint64_t tick_hi = (c.start_tick == 0 && c.end_tick == 0) ? to_tick   : c.end_tick;
             if (wrote) jb_putc(&j, ',');
             wrote = 1;
             jb_putc(&j, '{');
@@ -908,10 +917,10 @@ static void write_chronicle(uint64_t from_tick, uint64_t to_tick) {
             jb_uint(&j, i);
             jb_putc(&j, ',');
             jb_key(&j, "start_tick");
-            jb_uint(&j, c.start_tick);
+            jb_uint(&j, tick_lo);
             jb_putc(&j, ',');
             jb_key(&j, "end_tick");
-            jb_uint(&j, c.end_tick);
+            jb_uint(&j, tick_hi);
             jb_putc(&j, ',');
             jb_key(&j, "category");
             jb_uint(&j, c.category);
@@ -1329,9 +1338,9 @@ static void handle_command(const char *json) {
         write_error("command", "missing verb");
         return;
     }
-    int units_i[256];
-    int n_units = get_int_array(json, "units", units_i, 256);
-    uint32_t unit_ids[256];
+    int units_i[OM_MAX_UNITS];
+    int n_units = get_int_array(json, "units", units_i, OM_MAX_UNITS);
+    uint32_t unit_ids[OM_MAX_UNITS];
     for (int i = 0; i < n_units; i++) unit_ids[i] = (uint32_t)units_i[i];
 
     int ret;
@@ -1465,6 +1474,24 @@ static void handle_inject(const char *json) {
 #else
     (void)json;
     write_error("inject", "debug build required");
+#endif
+}
+
+static void handle_objective_complete(const char *json) {
+#ifdef OM_DEBUG_INJECT
+    if (!W) {
+        write_error("objective_complete", "no world");
+        return;
+    }
+    int64_t objective = 0;
+    get_i64(json, "objective", &objective);
+    double completion = 1.0;
+    get_f64(json, "completion", &completion);
+    om_mission_set_objective_completion(W, (uint32_t)objective, completion);
+    write_ack("objective_complete");
+#else
+    (void)json;
+    write_error("objective_complete", "debug build required");
 #endif
 }
 
@@ -1629,6 +1656,8 @@ int main(void) {
             handle_set_feature(buf);
         } else if (!strcmp(name, "inject")) {
             handle_inject(buf);
+        } else if (!strcmp(name, "objective_complete")) {
+            handle_objective_complete(buf);
         } else if (!strcmp(name, "save")) {
             handle_save(buf);
         } else if (!strcmp(name, "load")) {
