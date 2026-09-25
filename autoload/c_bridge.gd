@@ -388,6 +388,67 @@ func _request(cmds: Array, want: Array) -> Dictionary:
 	return found
 
 
+# Sends a unit command (move/attack_move/attack_target) over the open session.
+# Wire format: {"type":"cmd","name":"command","verb":"<kind>","units":[...],...}
+# (docs/architecture.md "session commands (v1.1)").
+# Validates the kind and unit_ids; returns false for unknown kinds or empty
+# unit_ids without sending (avoids poisoning the pipe with error frames that
+# would stall the next _request).
+func send_unit_command(cmd: Dictionary) -> bool:
+	var kind := str(cmd.get("kind", ""))
+	var unit_ids: Array = cmd.get("unit_ids", [])
+	if not kind in ["move", "attack_move", "attack_target"]:
+		return false
+	var pipe_cmd := {
+		"type": "cmd",
+		"name": "command",
+		"verb": kind,
+		"units": unit_ids,
+	}
+	if kind in ["move", "attack_move"]:
+		pipe_cmd["x"] = float(cmd.get("x", 0.0))
+		pipe_cmd["y"] = float(cmd.get("y", 0.0))
+	elif kind == "attack_target":
+		pipe_cmd["target"] = int(cmd.get("target", -1))
+	send_command(pipe_cmd)
+	return true
+
+
+# Advances the already-begun mission by n tactical ticks and captures the
+# last (n-th) tactical frame. Returns false (leaves _tactical empty) if the
+# session is not open, the pipe sends an error, or the step times out.
+# Note: tactical_step n=k sends k tactical frames; this waits for all k and
+# stores the last one so the caller gets the final tick, not an intermediate.
+func tactical_step_n(n: int) -> bool:
+	if n <= 0:
+		return true
+	if _session_pid <= 0:
+		_last_error = "no open session"
+		return false
+	_tactical = {}
+	_last_error = ""
+	# Use a dict so the lambda can mutate state visible outside it; GDScript 4
+	# captures primitives by value (int counter wouldn't propagate out).
+	var state := {"count": 0, "last": {}}
+	var on_frame := func(frame):
+		if String(frame.get("type", "")) == "tactical":
+			state["count"] = int(state["count"]) + 1
+			state["last"] = frame
+	frame_received.connect(on_frame)
+	send_command({"type": "cmd", "name": "tactical_step", "n": n})
+	var deadline_msec := Time.get_ticks_msec() + LIVE_READ_TIMEOUT_MSEC
+	while int(state["count"]) < n and _last_error == "" and Time.get_ticks_msec() < deadline_msec:
+		if pump() == 0:
+			OS.delay_msec(5)
+	frame_received.disconnect(on_frame)
+	if int(state["count"]) != n:
+		if _last_error == "":
+			_last_error = "timed out waiting for %d tactical frames (got %d)" % [n, int(state["count"])]
+		return false
+	_tactical = state["last"]
+	return true
+
+
 func _ensure_mission() -> bool:
 	if _mission_active:
 		return true

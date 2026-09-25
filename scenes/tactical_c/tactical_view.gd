@@ -11,12 +11,14 @@ const SimSession := preload("res://autoload/sim_session.gd")
 
 const SCREEN_W := 1920.0
 const SCREEN_H := 1080.0
+# Fallback scale for a zero-canvas frame; replaced dynamically once canvas > 0.
 const WORLD_SCALE := 0.25
 const UNIT_SIZE := 24.0
 const LOCAL_FACTION := 0
 
 var _frame: Dictionary = {}
 var _canvas: float = 0.0
+var _world_scale: float = WORLD_SCALE
 var _camera := Vector2.ZERO
 var _camera_initialized := false
 var _camera_canvas: float = 0.0
@@ -25,6 +27,19 @@ var _facing_fixed := false
 var _frozen_facing: Dictionary = {}
 var _selected: Array = []
 var _unit_visuals: Dictionary = {}
+var _display_px: Dictionary = {}
+var _last_command: Dictionary = {}
+
+# Plants: stuck freezes drawn positions after first load_frame; rubber-band snaps
+# back to the position from two loads ago on every third load (N%3==0).
+var _stuck := false
+var _rubber_band := false
+var _rubber_band_count := 0
+var _rubber_band_prev_px: Dictionary = {}
+var _rubber_band_prev_prev_px: Dictionary = {}
+
+# Desktop input: left-drag start position; -1 means no drag in progress.
+var _drag_start := Vector2(-1.0, -1.0)
 
 
 func _ready() -> void:
@@ -48,6 +63,8 @@ func _ready() -> void:
 func load_frame(frame: Dictionary) -> void:
 	_frame = frame
 	_canvas = float(frame.get("map", {}).get("canvas", 0.0))
+	if _canvas > 0.0:
+		_world_scale = SCREEN_H / _canvas
 	if _canvas > 0.0 and (not _camera_initialized or _canvas != _camera_canvas):
 		_camera = Vector2(_canvas * 0.5, _canvas * 0.5)
 		_camera_initialized = true
@@ -58,13 +75,12 @@ func load_frame(frame: Dictionary) -> void:
 			if not _frozen_facing.has(id):
 				_frozen_facing[id] = float(u.get("facing", 0.0))
 	_prune_selected()
+	_update_display_px()
 	_redraw()
 
 
 func qa_state() -> Dictionary:
-	var visible_ids := _visible_ids()
 	var units := {}
-	var units_px := {}
 	for u in _frame.get("units", []):
 		var id := int(u.get("id"))
 		var facing := float(u.get("facing", 0.0))
@@ -81,16 +97,17 @@ func qa_state() -> Dictionary:
 			"x": float(u.get("x", 0.0)),
 			"y": float(u.get("y", 0.0)),
 		}
-		if visible_ids.has(id):
-			units_px[str(id)] = _to_screen(float(u.get("x", 0.0)), float(u.get("y", 0.0)))
 	return {
 		"tick": int(_frame.get("tick", 0)),
 		"canvas": _canvas,
+		"scale": _world_scale,
+		"unit_count": _frame.get("units", []).size(),
 		"units": units,
-		"units_px": units_px,
+		"units_px": _display_px.duplicate(),
 		"local_faction": LOCAL_FACTION,
 		"selected": _selected.duplicate(),
 		"camera": {"x": _camera.x, "y": _camera.y},
+		"last_command": _last_command.duplicate(),
 	}
 
 
@@ -106,6 +123,21 @@ func qa_plant(id: String) -> bool:
 			return true
 		"camera-unbounded":
 			_camera_unbounded = true
+			return true
+		"stuck":
+			# Freeze drawn positions at whatever they are when the next
+			# load_frame computes them.
+			_stuck = true
+			_display_px = {}
+			return true
+		"rubber-band":
+			# Every third load_frame snaps units back to where they were
+			# two loads ago.
+			_rubber_band = true
+			_rubber_band_count = 0
+			_rubber_band_prev_px = {}
+			_rubber_band_prev_prev_px = {}
+			_display_px = {}
 			return true
 		"select-all-exists":
 			# R-105-04: no select-all command may ever exist. Permanent
@@ -147,22 +179,43 @@ func issue_command(cmd: Dictionary) -> Dictionary:
 			return {"type": "cmd", "name": "", "unit_ids": unit_ids}
 
 
+# Sends the command over the shared session; returns true if the kind is known
+# and the command was fired, false if the kind is unknown (command dropped).
+# Updates qa_state().last_command regardless.
+func send_command(cmd: Dictionary) -> bool:
+	var kind := str(cmd.get("kind", ""))
+	var unit_ids: Array = cmd.get("unit_ids", []).duplicate()
+	var bridge = SimSession.bridge()
+	var ok: bool = bridge.send_unit_command({
+		"kind": kind,
+		"unit_ids": unit_ids,
+		"x": float(cmd.get("x", 0.0)),
+		"y": float(cmd.get("y", 0.0)),
+		"target": int(cmd.get("target", -1)),
+	})
+	_last_command = {"ok": ok, "kind": kind, "units": unit_ids.size()}
+	return ok
+
+
+# Advances the live mission by n tactical ticks and reloads the view.
+func qa_step(n: int) -> void:
+	var bridge = SimSession.bridge()
+	if bridge.tactical_step_n(n):
+		load_frame(bridge.tactical_frame())
+
+
 func qa_box_select(x0: float, y0: float, x1: float, y1: float) -> Array:
 	var rx0: float = min(x0, x1)
 	var ry0: float = min(y0, y1)
 	var rx1: float = max(x0, x1)
 	var ry1: float = max(y0, y1)
-	var visible_ids := _visible_ids()
 	var out: Array = []
-	for u in _frame.get("units", []):
-		var id := int(u.get("id"))
-		if not visible_ids.has(id):
-			continue
-		var px: Array = _to_screen(float(u.get("x", 0.0)), float(u.get("y", 0.0)))
-		var sx: float = px[0]
-		var sy: float = px[1]
+	for id_str in _display_px:
+		var p: Array = _display_px[id_str]
+		var sx: float = p[0]
+		var sy: float = p[1]
 		if sx >= rx0 and sx <= rx1 and sy >= ry0 and sy <= ry1:
-			out.append(id)
+			out.append(int(id_str))
 	_selected = out.duplicate()
 	return out
 
@@ -175,6 +228,22 @@ func qa_pan(x: float, y: float) -> void:
 	_redraw()
 
 
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		var mb := event as InputEventMouseButton
+		if mb.button_index == MOUSE_BUTTON_LEFT:
+			if mb.pressed:
+				_drag_start = mb.position
+			else:
+				if _drag_start.x >= 0.0:
+					qa_box_select(_drag_start.x, _drag_start.y, mb.position.x, mb.position.y)
+					_drag_start = Vector2(-1.0, -1.0)
+		elif mb.button_index == MOUSE_BUTTON_RIGHT and mb.pressed:
+			var wx: float = (mb.position.x - SCREEN_W * 0.5) / _world_scale + _camera.x
+			var wy: float = (mb.position.y - SCREEN_H * 0.5) / _world_scale + _camera.y
+			send_command({"kind": "move", "unit_ids": _selected.duplicate(), "x": wx, "y": wy})
+
+
 func _visible_ids() -> Dictionary:
 	var out := {}
 	for v in _frame.get("visible", {}).get(str(LOCAL_FACTION), []):
@@ -183,8 +252,8 @@ func _visible_ids() -> Dictionary:
 
 
 func _to_screen(wx: float, wy: float) -> Array:
-	var sx := (wx - _camera.x) * WORLD_SCALE + SCREEN_W * 0.5
-	var sy := (wy - _camera.y) * WORLD_SCALE + SCREEN_H * 0.5
+	var sx := (wx - _camera.x) * _world_scale + SCREEN_W * 0.5
+	var sy := (wy - _camera.y) * _world_scale + SCREEN_H * 0.5
 	return [sx, sy]
 
 
@@ -199,22 +268,50 @@ func _prune_selected() -> void:
 	_selected = kept
 
 
+func _update_display_px() -> void:
+	var visible_ids := _visible_ids()
+	var current_px: Dictionary = {}
+	for u in _frame.get("units", []):
+		var id := int(u.get("id"))
+		if visible_ids.has(id):
+			current_px[str(id)] = _to_screen(float(u.get("x", 0.0)), float(u.get("y", 0.0)))
+
+	if _stuck:
+		# Freeze: populate once on first load_frame after planting; never update after.
+		if _display_px.is_empty():
+			_display_px = current_px
+	elif _rubber_band:
+		_rubber_band_count += 1
+		if _rubber_band_count % 3 == 0:
+			# Snap back to positions from two loads ago.
+			_display_px = _rubber_band_prev_prev_px.duplicate()
+		else:
+			_display_px = current_px
+		_rubber_band_prev_prev_px = _rubber_band_prev_px.duplicate()
+		_rubber_band_prev_px = current_px.duplicate()
+	else:
+		_display_px = current_px
+
+
 func _redraw() -> void:
 	if not is_inside_tree():
 		return
-	var visible_ids := _visible_ids()
-	var seen := {}
+	# Build a faction lookup for color selection.
+	var faction_of: Dictionary = {}
 	for u in _frame.get("units", []):
-		var id := int(u.get("id"))
-		if not visible_ids.has(id):
-			continue
+		faction_of[str(int(u.get("id")))] = int(u.get("faction", 0))
+
+	var seen := {}
+	for id_str in _display_px:
+		var id := int(id_str)
 		seen[id] = true
-		var px: Array = _to_screen(float(u.get("x", 0.0)), float(u.get("y", 0.0)))
+		var px: Array = _display_px[id_str]
+		var faction := int(faction_of.get(id_str, 0))
 		var poly: Polygon2D
 		if _unit_visuals.has(id):
 			poly = _unit_visuals[id]
 		else:
-			poly = _make_unit_visual(int(u.get("faction", 0)))
+			poly = _make_unit_visual(faction)
 			add_child(poly)
 			_unit_visuals[id] = poly
 		poly.position = Vector2(float(px[0]), float(px[1]))
