@@ -1504,7 +1504,16 @@ uint32_t om_command_group_move(om_world *w, const uint32_t *ids, uint32_t n, dou
     cx /= (double)n;
     cy /= (double)n;
     for (i = 0; i < n; i++) {
-        double sp = om_unit_effective_speed(w, ids[i]);
+        /* R-095-01: group pace = slowest member's profile speed.
+         * om_unit_effective_speed returns ability-modified speed, so a
+         * Fortify-active Bastion (0.4x, 16 wu/s) would drag the whole group
+         * to 0.8 wu/tick.  native_speed is set from om_unit_effective_speed
+         * at first discovery, which always precedes om_ability_autotrigger_scan
+         * in the same tactical_step (refresh_positions runs before ability
+         * advance), so it reliably holds the unmodified profile speed. */
+        om_move_unit *tmp = om_move_touch(w, ms, ids[i]);
+        double sp = (tmp && tmp->native_speed > 0.0) ? tmp->native_speed
+                                                     : om_unit_effective_speed(w, ids[i]);
         if (i == 0 || sp < min_speed) min_speed = sp;
     }
     for (i = 0; i < n; i++) {
