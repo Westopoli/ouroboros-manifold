@@ -506,3 +506,4 @@ One row per event: freeze steps, attaches, reverts, parks, rung gates, harness e
 | day5 | register | duplicate id Q-045-01 split: S-045 Knowledge Lost row renumbered to Q-045-02; R-045-09 red is that open flag (bisect: red at 353888d, HDR3, bk-42), not a regression |
 | day5 | register | Westley answers: Q-057-02 25, Q-120-03 rout 0.35, Q-124-03 reinforcement 0.21 (tripled), Q-060-02 0.75, Q-045-02 build population-drop; ALG-76/77 added; Q-124-04 opened (player-side stream) |
 | day5 | register | Q-124-04 closed as-is (enemy-only, once per mission, 0.21 per 40 ticks) pending testing |
+| day5 | test-fix R-124-01 | fixture literal 0.07 -> 0.21 after Westley's Q-124-03 answer; assertions_preserved yes, red_at_stub yes (red on main, green with CONST-1), two_agent_confound: sim lane found, M0 classified; Q-057-02 premise corrected |
