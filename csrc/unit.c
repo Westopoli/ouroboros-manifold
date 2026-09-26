@@ -345,6 +345,11 @@ typedef struct {
     /* the current Brace was started by the threshold scan, not by a player
      * activation: a later order cancels it (om_tac_unit_ai). */
     int      brace_auto;
+    /* the current Fortify was started by the threshold scan, not by a player
+     * activation: a later order cancels it (om_tac_unit_ai) per R-087-02.
+     * om_unit_effective_speed returns native speed (not 0.4x) when set, so
+     * om_command_group_move computes speed_cap at the native rate. */
+    int      fortify_auto;
     /* where an attack-target order last saw its target (S-093): refreshed
      * every tick the target is visible to the unit's faction. */
     double   last_seen_x, last_seen_y;
@@ -1166,6 +1171,17 @@ static void om_ability_start_fortify(om_tac_state *st, om_unit_row *u) {
     om_ability_emit_event(st, u, u->x, u->y, OM_ABILITY_FORTIFY_DURATION_TICKS, 0, OM_CUE_NONE, OM_FORTIFY_RADIUS);
 }
 
+/* Cancel an auto-started Fortify when a player order arrives (R-087-02).
+ * Mirrors the Brace cancel: applies cooldown and emits an event (duration 0
+ * signals termination to the renderer). fortify_auto is cleared. */
+static void om_ability_cancel_fortify(om_tac_state *st, om_unit_row *u) {
+    u->ability_phase = OM_ABILITY_PHASE_IDLE;
+    u->ability_bonus_on = 0;
+    u->ability_cooldown = OM_ABILITY_FORTIFY_COOLDOWN_TICKS;
+    u->fortify_auto = 0;
+    om_ability_emit_event(st, u, u->x, u->y, 0, 0, OM_CUE_NONE, OM_FORTIFY_RADIUS);
+}
+
 /* R-086-02: never manually activated -- always rejected here, regardless
  * of cooldown/phase. R-086-03: Brace is the one manual-activation special
  * case (never rejected while eligible at all -- reactivating while braced
@@ -1185,7 +1201,10 @@ static void om_ability_manual_activate(om_world *w, om_tac_state *st, om_unit_ro
         case OM_UT_VANGUARD: om_ability_start_or_cancel_brace(st, u); break;
         case OM_UT_WARDEN:   om_ability_do_rally(st, u); break;
         case OM_UT_BOMBARD:  om_ability_start_barrage(st, u, target_x, target_y); break;
-        case OM_UT_BASTION:  om_ability_start_fortify(st, u); break;
+        case OM_UT_BASTION:
+            om_ability_start_fortify(st, u);
+            u->fortify_auto = 0;
+            break;
         default: (void)w; break;
     }
 }
@@ -1231,7 +1250,10 @@ static void om_ability_autotrigger_scan(om_tac_state *st) {
                 break;
             }
             case OM_UT_BASTION:
-                if (om_tac_count_friendlies_within(st, u, OM_FORTIFY_RADIUS) >= 2) om_ability_start_fortify(st, u);
+                if (om_tac_count_friendlies_within(st, u, OM_FORTIFY_RADIUS) >= 2) {
+                    om_ability_start_fortify(st, u);
+                    u->fortify_auto = 1;
+                }
                 break;
             default: break;
         }
@@ -1282,6 +1304,7 @@ static void om_ability_tick_fortify(om_unit_row *u, uint32_t period) {
     } else {
         u->ability_phase = OM_ABILITY_PHASE_IDLE;
         u->ability_bonus_on = 0;
+        u->fortify_auto = 0;
     }
 }
 
@@ -1566,6 +1589,10 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
         && (u->ability_phase == OM_ABILITY_PHASE_WINDUP || u->ability_phase == OM_ABILITY_PHASE_ACTIVE)) {
         om_ability_start_or_cancel_brace(st, u);
         u->brace_auto = 0;
+    }
+    if (u->fortify_auto && (u->order != OM_ORDER_NONE || (has_dest && !arrived))
+        && u->ability_phase == OM_ABILITY_PHASE_ACTIVE) {
+        om_ability_cancel_fortify(st, u);
     }
     if (u->order == OM_ORDER_NONE && has_dest && !arrived) {
         /* plain move: never acquires, never returns fire, never stops */
@@ -2102,7 +2129,8 @@ double om_unit_effective_speed(om_world *w, uint32_t unit_id) {
             if (row->ability_phase != OM_ABILITY_PHASE_IDLE) return 0.0;
             break;
         case OM_UT_BASTION:
-            if (row->ability_phase == OM_ABILITY_PHASE_ACTIVE) return base * OM_ABILITY_FORTIFY_SPEED_MULT;
+            if (row->ability_phase == OM_ABILITY_PHASE_ACTIVE && !row->fortify_auto)
+                return base * OM_ABILITY_FORTIFY_SPEED_MULT;
             break;
         default: break;
     }
