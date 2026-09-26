@@ -52,14 +52,6 @@ def _run(cmds):
     return out[1:]  # drop hello
 
 
-@pytest.mark.xfail(
-    strict=False,
-    reason=(
-        "needs W-1d structure owner = E-05 faction id: on today's main the "
-        "production driver guards s->owner==0 as neutral; owner=0 (E-05 player "
-        "faction) only produces once W-1d changes neutral to -1."
-    ),
-)
 def test_player_structure_adds_unit_within_timer():
     """A player-owned production structure adds a player-faction unit within
     its production interval, visible as a new unit in the tactical frame.
