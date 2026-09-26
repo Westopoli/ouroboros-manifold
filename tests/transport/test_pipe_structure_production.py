@@ -8,15 +8,12 @@ mission_start faction 0, mission_begin. The 10 strategic steps produce units in
 the tactical world so om_tactical_step calls om_support_tick (tactical_step is
 a no-op when n_units==0; om_support_tick drives production per base tick).
 
-place_structure kind=0 (RAIDER), owner=0 (E-05 player faction id; with W-1d
-neutral becomes -1, so owner=0 means player faction 0). Then step 600 ticks
+place_structure kind=0 (RAIDER), owner=0 (E-05 player faction id; W-1d landed:
+neutral = -1, owner=0 = player faction 0). Then step 600 ticks
 (RAIDER production interval ~540 ticks at power~90/100); a new unit must appear.
 
-Owner-convention note: on today's main the production driver guards s->owner==0
-as neutral and skips production. With W-1d (neutral = -1), owner=0 is treated as
-E-05 faction 0 (player), enabling production. This test is therefore:
-  - RED on main (without W-1d): no production for owner=0 -> unit count unchanged.
-  - GREEN after W-1d lands: owner=0 drives player spawn.
+Owner convention (W-1d, on main): owner = E-05 faction id directly; neutral = -1.
+owner=0 is faction 0 (player), production enabled. Test passes.
 """
 import json
 import subprocess
@@ -60,8 +57,7 @@ def test_player_structure_adds_unit_within_timer():
     mission). 600 tactical steps exceed the ~540-tick RAIDER production interval
     (power~90, 30s*0.9 = 27s, 27*20 ticks = 540). Unit count must increase.
 
-    Red on main (without W-1d): owner=0 treated as neutral, no production.
-    Green after W-1d: owner=0 is E-05 faction 0, production spawns player unit.
+    W-1d on main: owner=0 = E-05 faction 0, production spawns player unit. Passes.
     """
     cmds = [
         {"type": "cmd", "name": "set_seed", "seed": 1, "n_regions": 80,
@@ -88,7 +84,7 @@ def test_player_structure_adds_unit_within_timer():
         {"type": "cmd", "name": "mission_start", "faction": 0},
         {"type": "cmd", "name": "mission_begin"},
         # owner=0 = E-05 faction 0 (player with mission_start faction=0).
-        # W-1d required: on main owner=0 is neutral, no production.
+        # W-1d on main: owner=0 = E-05 faction 0, production enabled.
         {"type": "cmd", "name": "place_structure", "kind": 0, "owner": 0,
          "x": 0.0, "y": 0.0},
         {"type": "cmd", "name": "tactical_step", "n": 600},

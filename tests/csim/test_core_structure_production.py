@@ -57,7 +57,7 @@ def test_player_structure_spawns_legacy_faction(lib, world_factory):
     faction = lib.om_unit_get_faction(w, spawned_id)
     assert faction == 1, (
         f"R-126-02: no player faction configured -- spawned unit must have "
-        f"faction 1 (OM_SUP_PLAYER_OWNER_FALLBACK), got {faction}"
+        f"faction 1 (owner id 1 = faction id 1 direct per W-1d), got {faction}"
     )
 
 
@@ -124,14 +124,14 @@ def test_neutral_structure_produces_nothing(lib, world_factory):
     power = 10.0
     interval = lib.om_structure_production_interval_ticks(ctypes.c_double(power))
     lib.om_structure_init(w, 0, OMUnitType.RAIDER, ctypes.c_double(power))
-    # owner defaults to 0 (neutral) from om_structure_init
+    # owner defaults to -1 (neutral per W-1d) from om_structure_init
 
     for _ in range(interval):
         lib.om_tactical_step(w)
 
     spawned_id = initial_id + 1
     assert not lib.om_unit_alive(w, spawned_id), (
-        "R-126-02: neutral structure (owner=0) must not spawn any unit"
+        "R-126-02: neutral structure (owner=-1) must not spawn any unit"
     )
 
 
