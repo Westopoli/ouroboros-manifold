@@ -293,6 +293,17 @@ struct om_world {
      * unambiguous. */
     int64_t faction_last_knowledge_lost[OM_MAX_FACTIONS];
 
+    /* ALG-27b pop-drop leg: per-faction ring of avg_p samples (window = 50 ticks,
+     * literal below -- OM_KNOWLEDGE_LOST_POP_WINDOW is a local #define in
+     * diplomacy.c; struct array dimensions are exempt from the alg_constants lint).
+     * head = next write index (0..49); len = samples stored (0..50).
+     * Initialized to 0 at world creation (calloc in om_world_new/region.c).
+     * Not serialized in save.c -- a save/load cycle resets history (pop leg
+     * ineligible for the first 50 post-load ticks). Needs F2j hook in save.c. */
+    double   faction_pop_history[OM_MAX_FACTIONS][50];
+    uint32_t faction_pop_history_head[OM_MAX_FACTIONS];
+    uint32_t faction_pop_history_len[OM_MAX_FACTIONS];
+
     /* Bumped from a file-static counter in om_world_new (csrc/region.c),
      * starting at 1: a cheap way for any module to detect a reused
      * om_world* address (e.g. a stale cached pointer after free/realloc). */

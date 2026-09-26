@@ -576,6 +576,11 @@ void om_faction_set_last_knowledge_lost(om_world *w, int32_t faction_id, int64_t
     w->faction_last_knowledge_lost[faction_id] = tick;
 }
 
+/* ALG-27b: 50-tick population-history window. Not in om_constants.h
+ * (no Python precedent; algorithms.md states the value but gives it no
+ * named constant). Reported as missing in the B5c-1 leaf report. */
+#define OM_KNOWLEDGE_LOST_POP_WINDOW 50
+
 void om_tech_step(om_world *w) {
     if (!w) return;
 #ifdef OM_DEBUG_INJECT
@@ -618,11 +623,21 @@ void om_tech_step(om_world *w) {
         double tech = w->faction_tech[f] + growth;
         w->faction_tech[f] = (tech > OM_PCT_SCALE) ? OM_PCT_SCALE : tech;
 
-        /* ALG-27b Knowledge Lost: only the economy leg of eligibility runs.
-         * The population-drop leg (avg_p now vs. tick - 50) needs a
-         * per-faction population history om_world has no storage for. */
+        /* ALG-27b Knowledge Lost: sample avg_p into the per-faction ring (50
+         * ticks). Read the oldest slot BEFORE overwriting it; pl is the
+         * pre-push length. Pop-drop eligible on the 51st push (pl==50 before
+         * push), when ring[ph] holds the sample from exactly 50 pushes ago. */
+        uint32_t ph = w->faction_pop_history_head[f];
+        uint32_t pl = w->faction_pop_history_len[f];
+        double old_avg_p = w->faction_pop_history[f][ph];
+        w->faction_pop_history[f][ph] = avg_p;
+        w->faction_pop_history_head[f] = (ph + 1) % OM_KNOWLEDGE_LOST_POP_WINDOW;
+        if (pl < OM_KNOWLEDGE_LOST_POP_WINDOW)
+            w->faction_pop_history_len[f] = pl + 1;
+        int pop_drop_eligible = (pl == OM_KNOWLEDGE_LOST_POP_WINDOW) &&
+            (avg_p <= old_avg_p - OM_KNOWLEDGE_LOST_POP_DROP);
         int64_t last_kl = om_faction_last_knowledge_lost(w, f);
-        int eligible = avg_e < OM_KNOWLEDGE_LOST_ECONOMY;
+        int eligible = (avg_e < OM_KNOWLEDGE_LOST_ECONOMY) || pop_drop_eligible;
         if (eligible && ((int64_t)w->tick - last_kl) >= OM_KNOWLEDGE_LOST_COOLDOWN) {
             double draw = om_rng_draw(w);
             if (draw < OM_KNOWLEDGE_LOST_P) {
