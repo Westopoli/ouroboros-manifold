@@ -1347,6 +1347,7 @@ static void om_move_tick_unit(om_world *w, om_move_state *ms, uint32_t id, uint3
     if (step_dist >= dist_to_dest) {
         mu->x = mu->dest_x;
         mu->y = mu->dest_y;
+        mu->has_dest = 0;
     } else if (step_dist > 0.0) {
         mu->x += step_dist * (found ? move_cos : om_cos(heading));
         mu->y += step_dist * (found ? move_sin : om_sin(heading));
