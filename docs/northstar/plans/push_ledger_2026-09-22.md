@@ -505,3 +505,4 @@ One row per event: freeze steps, attaches, reverts, parks, rung gates, harness e
 | day6 | sweep (bk-42; make nothing-to-do, pipe clean, pipe_dbg clean) | E11+E13+core: 3f/205p (R-085-02/04 E11 pre-existing from bk-41; R-099-01 E13 S099 now fixed test-defect in test-fix row above; core clean); transport: 47p/0f; qa/t1: 2f/31p/1skip (detector controls pre-existing). Desktop suite: skipped (m0 not Godot-imported). 3hr quiet timeout reached. |
 | day5 | register | duplicate id Q-045-01 split: S-045 Knowledge Lost row renumbered to Q-045-02; R-045-09 red is that open flag (bisect: red at 353888d, HDR3, bk-42), not a regression |
 | day5 | register | Westley answers: Q-057-02 25, Q-120-03 rout 0.35, Q-124-03 reinforcement 0.21 (tripled), Q-060-02 0.75, Q-045-02 build population-drop; ALG-76/77 added; Q-124-04 opened (player-side stream) |
+| day5 | register | Q-124-04 closed as-is (enemy-only, once per mission, 0.21 per 40 ticks) pending testing |
