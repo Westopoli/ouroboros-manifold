@@ -14,6 +14,8 @@ asserted here (fixture frames prove the plants in tests/test_tactical_view.gd).
 """
 from __future__ import annotations
 
+import ctypes
+import pathlib
 import time
 
 import pytest
@@ -101,4 +103,159 @@ def test_c5_3_real_drag_selects_and_right_click_orders_a_move(tactical_game):
     last = _qa(client).get("last_command", {})
     assert last.get("ok") is True and last.get("kind") == "move" and int(last.get("units", 0)) == len(selected), (
         "last_command after the right-click = %r" % last
+    )
+
+
+def test_c5_4_move_order_single_command_and_units_move(tactical_game):
+    """C5-4: one group move order = one pipe command; selected edge units
+    advance at >= 90% of the slowest member's pace (Q-E03-01 Halo Wars model).
+
+    Speed source: om_unit_profile_speed(None, unit_type) from libouroboros.so
+    (builtin types do not require a live world pointer).  Returned unit: wu/s
+    (world-units per second).  Divided by OM_TACTICAL_TICK_RATE (20) to give
+    wu per tactical tick at period=1 (this mission has 572 units, below the
+    1000-unit high-load threshold).  steps_actually_advanced is
+    qa_state()["tick"] after the step minus before it; qa["tick"] is the
+    pipe's g_tactical_tick counter, which increments once per
+    om_tactical_step call independent of tick period.
+
+    Selection step is daemon-driven: world positions from qa_state()["units"]
+    identify the max-world-Y band of faction-0 units (front edge, nearest
+    enemy side, fewest same-faction obstacles ahead); qa_set_selected is called
+    on the scene via the daemon 'qa_select' verb (scenes/tactical_c/
+    tactical_view.gd, autoload/qa_daemon.gd -- additive only).  The move
+    order itself is a real right-click through the pipe command path.
+
+    Screen-space dragging cannot isolate edge units at the default tactical
+    zoom: all faction-0 units cluster on the same canvas pixel.  World-space
+    selection avoids this; no threshold or step count is changed.
+    """
+    client = tactical_game.client
+    qa = _qa(client)
+    units_world = qa.get("units", {})
+    assert units_world, "no units in qa_state before edge selection"
+
+    # Front-edge subset: faction-0 units at the highest world-Y (front line,
+    # fewest same-faction units blocking the advance toward +Y / enemy side).
+    f0 = {uid: u for uid, u in units_world.items() if int(u.get("faction", -1)) == 0}
+    assert f0, "no faction-0 units found in tactical frame"
+    max_wy = max(float(u["y"]) for u in f0.values())
+    band_wu = 50.0
+    front = [
+        (int(uid), float(u["x"]), float(u["y"]))
+        for uid, u in f0.items()
+        if float(u["y"]) >= max_wy - band_wu
+    ]
+    front.sort(key=lambda t: -t[2])
+    edge_ids = [t[0] for t in front[:255]]
+    assert edge_ids, "no front-edge units in %.1f-wu band (max_wy=%.1f)" % (band_wu, max_wy)
+    assert len(edge_ids) < 256, "edge_ids=%d exceeds 255 pipe cap" % len(edge_ids)
+
+    # Set selection via daemon verb (calls scene.qa_set_selected).
+    client.call("qa_select", edge_ids)
+    selected = _qa(client).get("selected", [])
+    assert len(selected) == len(edge_ids), (
+        "qa_select set %d units, expected %d" % (len(selected), len(edge_ids))
+    )
+
+    # Record pre-order world positions.
+    pre_pos = {
+        str(i): (float(units_world[str(i)]["x"]), float(units_world[str(i)]["y"]))
+        for i in selected
+        if str(i) in units_world
+    }
+
+    # Compute move target: 200 wu in +Y from selected centroid (toward enemy).
+    CANVAS_W, CANVAS_H = 1920.0, 1080.0
+    WIN_W, WIN_H = 1280.0, 720.0
+    cw_scale = WIN_W / CANVAS_W
+    ch_scale = WIN_H / CANVAS_H
+    world_scale = float(qa.get("scale", 1.0))
+    camera = qa.get("camera", {"x": 0.0, "y": 0.0})
+    cam_x, cam_y = float(camera["x"]), float(camera["y"])
+    mean_wx = sum(v[0] for v in pre_pos.values()) / len(pre_pos)
+    mean_wy = sum(v[1] for v in pre_pos.values()) / len(pre_pos)
+    target_wx = mean_wx
+    target_wy = mean_wy + 200.0
+    target_cx = (target_wx - cam_x) * world_scale + CANVAS_W * 0.5
+    target_cy = (target_wy - cam_y) * world_scale + CANVAS_H * 0.5
+    target_px = target_cx * cw_scale
+    target_py = target_cy * ch_scale
+
+    if 0.0 <= target_px <= WIN_W and 0.0 <= target_py <= WIN_H:
+        client.click(target_px, target_py, 2)
+        _move_via = "right-click at window (%.0f, %.0f)" % (target_px, target_py)
+    else:
+        safe_px, safe_py = WIN_W * 0.5, WIN_H * 0.02
+        client.click(safe_px, safe_py, 2)
+        _move_via = "fallback right-click (target off-screen: %.0f,%.0f)" % (target_px, target_py)
+    time.sleep(0.3)
+
+    # One group command must have been sent (not one-per-unit).
+    st_order = _qa(client)
+    commands_sent = st_order.get("commands_sent_last_order", -1)
+    assert commands_sent == 1, (
+        "C5-4: expected 1 pipe command for group move, got %r "
+        "(move_via=%s; move-order-dropped plant active? or counter not wired)" % (commands_sent, _move_via)
+    )
+    units_in_cmd = st_order.get("units_in_last_command", -1)
+    assert units_in_cmd == len(selected), (
+        "C5-4: units_in_last_command=%r, expected %d" % (units_in_cmd, len(selected))
+    )
+
+    tick_before = st_order["tick"]
+
+    # Step 60 tactical ticks (qa_step is synchronous; returns when done).
+    client.call("step", 60)
+    time.sleep(0.5)
+
+    # Selected edge units must have advanced at >= 90% of slowest member's pace.
+    qa_post = _qa(client)
+    steps_actually_advanced = qa_post["tick"] - tick_before
+    units_post = qa_post.get("units", {})
+    all_dists = []
+    for uid in selected:
+        if str(uid) in pre_pos and str(uid) in units_post:
+            px_pre, py_pre = pre_pos[str(uid)]
+            px_post = float(units_post[str(uid)]["x"])
+            py_post = float(units_post[str(uid)]["y"])
+            dist = ((px_post - px_pre) ** 2 + (py_post - py_pre) ** 2) ** 0.5
+            all_dists.append((dist, uid))
+    all_dists.sort(reverse=True)
+    best_dist = all_dists[0][0] if all_dists else 0.0
+    best_uid = all_dists[0][1] if all_dists else None
+    top5 = [(uid, "%.2f" % d) for d, uid in all_dists[:5]]
+
+    _LIB_PATH = pathlib.Path(__file__).resolve().parents[3] / "libouroboros.so"
+    assert _LIB_PATH.exists(), (
+        "C5-4: libouroboros.so not found at %s; cannot determine unit speed" % _LIB_PATH
+    )
+    _lib = ctypes.CDLL(str(_LIB_PATH))
+    _lib.om_unit_profile_speed.argtypes = [ctypes.c_void_p, ctypes.c_int]
+    _lib.om_unit_profile_speed.restype = ctypes.c_double
+    _OM_TACTICAL_TICK_RATE = 20
+    selected_types = {int(units_world[str(uid)]["type"]) for uid in selected if str(uid) in units_world}
+    assert selected_types, "C5-4: no unit types found for selected units"
+    slowest_wu_per_s = min(
+        _lib.om_unit_profile_speed(None, ctypes.c_int(t)) for t in selected_types
+    )
+    assert slowest_wu_per_s > 0.0, (
+        "C5-4: slowest unit type speed = 0 (types=%r)" % sorted(selected_types)
+    )
+    slowest_wu_per_tick = slowest_wu_per_s / _OM_TACTICAL_TICK_RATE
+    assert best_dist >= 0.9 * slowest_wu_per_tick * steps_actually_advanced, (
+        "C5-4: selected edge units moved less than 90%% of slowest member's pace "
+        "(slowest=%.1f wu/s = %.3f wu/tac-tick [om_unit_profile_speed/libouroboros.so], "
+        "ticks_advanced=%d, min_expected=%.2f wu, best=%.2f wu for unit %s, "
+        "ratio=%.3f, %d units selected, move_via=%s, top5=%r, "
+        "order=move +200wu from %.1f,%.1f)" % (
+            slowest_wu_per_s, slowest_wu_per_tick,
+            steps_actually_advanced,
+            0.9 * slowest_wu_per_tick * steps_actually_advanced,
+            best_dist, best_uid,
+            best_dist / (slowest_wu_per_tick * steps_actually_advanced)
+            if steps_actually_advanced > 0 else 0.0,
+            len(selected), _move_via, top5,
+            mean_wx, mean_wy,
+        )
     )
