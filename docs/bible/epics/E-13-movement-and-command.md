@@ -4,7 +4,7 @@
 
 | Check | Result |
 |---|---|
-| Every story has at least one Given/When/Then rule with concrete values | Yes, 8 stories, 41 rules, numbers from `algorithms.md` ALG-66 through ALG-69 and config. |
+| Every story has at least one Given/When/Then rule with concrete values | Yes, 8 stories, 42 rules, numbers from `algorithms.md` ALG-66 through ALG-69 and config. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
 | Implied-but-unstated behavior turned into flags | 5 new flags, Q-095-01, Q-098-01, Q-099-01, Q-101-01. |
@@ -92,6 +92,7 @@ Rules
 - R-099-01  Given a Strike wing and a Line force both approaching an engaged, immovable friendly front, When they arrive, Then the Strike wing reaches the flank slots first, purely from the steering rules of S-097.
 - R-099-02  Given a Raider, When it moves, Then it covers 150 wu per second at 20 ticks per second, 7.5 wu per tick.
 - R-099-03  Given more than 1,000 live units on the battlefield, When the tactical tick rate drops from 20 to 10 ticks per second (and returns above that count is crossed downward), Then every per-second quantity (speed, attack interval, ability duration and cooldown, drift) is unchanged in real time because per-tick values scale with the tick period, the change happens on a tick boundary, and every peer in a multiplayer session switches on the same tick (decision A, Westley 2026-09-24).
+- R-099-04  Given a unit whose step distance in a tick reaches its remaining distance to its destination, When it snaps to the destination, Then its destination is cleared and it is stationary from that tick onward, and any later displacement by collision or direct position change leaves it at the new position with no re-approach.
 
 Inputs: none beyond S-097.
 Outputs: positions.
