@@ -1172,12 +1172,14 @@ static void om_ability_start_fortify(om_tac_state *st, om_unit_row *u) {
 }
 
 /* Cancel an auto-started Fortify when a player order arrives (R-087-02).
- * Mirrors the Brace cancel: applies cooldown and emits an event (duration 0
- * signals termination to the renderer). fortify_auto is cleared. */
+ * No cooldown: the player never chose it, so they pay nothing.  The scan
+ * may re-trigger on the next idle tick if the unit is still near 2+
+ * friendlies.  Emits a duration-0 event to signal termination to the
+ * renderer.  fortify_auto is cleared. */
 static void om_ability_cancel_fortify(om_tac_state *st, om_unit_row *u) {
     u->ability_phase = OM_ABILITY_PHASE_IDLE;
     u->ability_bonus_on = 0;
-    u->ability_cooldown = OM_ABILITY_FORTIFY_COOLDOWN_TICKS;
+    u->ability_cooldown = 0.0;
     u->fortify_auto = 0;
     om_ability_emit_event(st, u, u->x, u->y, 0, 0, OM_CUE_NONE, OM_FORTIFY_RADIUS);
 }
