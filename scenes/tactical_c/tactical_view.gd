@@ -32,11 +32,17 @@ var _last_command: Dictionary = {}
 
 # Plants: stuck freezes drawn positions after first load_frame; rubber-band snaps
 # back to the position from two loads ago on every third load (N%3==0).
+# move-order-dropped: sends one command per unit instead of one group command.
 var _stuck := false
 var _rubber_band := false
 var _rubber_band_count := 0
 var _rubber_band_prev_px: Dictionary = {}
 var _rubber_band_prev_prev_px: Dictionary = {}
+var _move_order_dropped := false
+
+# C5-4 counters: updated by send_command on every player order.
+var _commands_sent_last_order: int = 0
+var _units_in_last_command: int = 0
 
 # Desktop input: left-drag start position; -1 means no drag in progress.
 var _drag_start := Vector2(-1.0, -1.0)
@@ -100,7 +106,7 @@ func qa_state() -> Dictionary:
 	return {
 		"scene": "tactical_view",
 		"tick": int(_frame.get("tick", 0)),
-		"plants": ["facing-fixed", "camera-unbounded"],
+		"plants": ["facing-fixed", "camera-unbounded", "move-order-dropped"],
 		"canvas": _canvas,
 		"scale": _world_scale,
 		"unit_count": _frame.get("units", []).size(),
@@ -110,6 +116,8 @@ func qa_state() -> Dictionary:
 		"selected": _selected.duplicate(),
 		"camera": {"x": _camera.x, "y": _camera.y},
 		"last_command": _last_command.duplicate(),
+		"commands_sent_last_order": _commands_sent_last_order,
+		"units_in_last_command": _units_in_last_command,
 	}
 
 
@@ -125,6 +133,11 @@ func qa_plant(id: String) -> bool:
 			return true
 		"camera-unbounded":
 			_camera_unbounded = true
+			return true
+		"move-order-dropped":
+			# Plant: send_command issues one pipe command per unit instead of one
+			# group command. Detector: commands_sent_last_order != 1 under this plant.
+			_move_order_dropped = true
 			return true
 		"stuck":
 			# Freeze drawn positions at whatever they are when the next
@@ -183,18 +196,37 @@ func issue_command(cmd: Dictionary) -> Dictionary:
 
 # Sends the command over the shared session; returns true if the kind is known
 # and the command was fired, false if the kind is unknown (command dropped).
-# Updates qa_state().last_command regardless.
+# Updates qa_state().last_command, commands_sent_last_order, units_in_last_command.
+# With the move-order-dropped plant active, sends one pipe command per selected
+# unit instead of one group command (detector fault site).
 func send_command(cmd: Dictionary) -> bool:
 	var kind := str(cmd.get("kind", ""))
 	var unit_ids: Array = cmd.get("unit_ids", []).duplicate()
 	var bridge = SimSession.bridge()
-	var ok: bool = bridge.send_unit_command({
-		"kind": kind,
-		"unit_ids": unit_ids,
-		"x": float(cmd.get("x", 0.0)),
-		"y": float(cmd.get("y", 0.0)),
-		"target": int(cmd.get("target", -1)),
-	})
+	var ok: bool
+	if _move_order_dropped:
+		# Plant: one pipe command per unit (trips the one-command invariant).
+		_commands_sent_last_order = unit_ids.size()
+		ok = false
+		for uid in unit_ids:
+			var r: bool = bridge.send_unit_command({
+				"kind": kind,
+				"unit_ids": [uid],
+				"x": float(cmd.get("x", 0.0)),
+				"y": float(cmd.get("y", 0.0)),
+				"target": int(cmd.get("target", -1)),
+			})
+			ok = ok or r
+	else:
+		ok = bridge.send_unit_command({
+			"kind": kind,
+			"unit_ids": unit_ids,
+			"x": float(cmd.get("x", 0.0)),
+			"y": float(cmd.get("y", 0.0)),
+			"target": int(cmd.get("target", -1)),
+		})
+		_commands_sent_last_order = 1
+	_units_in_last_command = unit_ids.size()
 	_last_command = {"ok": ok, "kind": kind, "units": unit_ids.size()}
 	return ok
 
@@ -220,6 +252,12 @@ func qa_box_select(x0: float, y0: float, x1: float, y1: float) -> Array:
 			out.append(int(id_str))
 	_selected = out.duplicate()
 	return out
+
+
+func qa_set_selected(ids: Array) -> void:
+	_selected = []
+	for v in ids:
+		_selected.append(int(v))
 
 
 func qa_pan(x: float, y: float) -> void:
