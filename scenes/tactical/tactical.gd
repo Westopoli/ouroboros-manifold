@@ -2,6 +2,8 @@
 ## Connects to TacticalBridge and passes connection state to child renderers.
 extends Node3D
 
+const SimSession := preload("res://autoload/sim_session.gd")
+
 const PAN_SPEED        := 1500.0
 const ZOOM_STEP        := 300.0
 const ZOOM_MIN         := 150.0
@@ -52,7 +54,7 @@ func _ready() -> void:
 	_ability_overlays = preload("res://scenes/tactical/visuals/ability_overlay_manager.gd").new()
 	_ability_overlays.name = "AbilityOverlayManager"
 	add_child(_ability_overlays)
-	_ability_overlays.setup($Camera3D, 0, _attack_visuals)
+	_ability_overlays.setup($Camera3D, SimSession.bridge().player_faction(), _attack_visuals)
 
 	_impact_feedback = preload("res://scenes/tactical/visuals/impact_feedback_manager.gd").new()
 	_impact_feedback.name = "ImpactFeedbackManager"
@@ -114,7 +116,7 @@ func _on_first_snapshot(_snap: Dictionary) -> void:
 	for uid: int in range(TacticalBridge.unit_count):
 		if TacticalBridge.display_alive[uid] == 0:
 			continue
-		if TacticalBridge.units.get(uid, {}).get("faction", -1) == 0:
+		if TacticalBridge.units.get(uid, {}).get("faction", -1) == SimSession.bridge().player_faction():
 			sum += Vector3(TacticalBridge.display_x[uid], 0.0, TacticalBridge.display_y[uid])
 			count += 1
 	if count > 0:

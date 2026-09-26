@@ -29,7 +29,7 @@ var _active_glows: Array[Dictionary] = []
 var _distortion_timer: float = 0.0
 var _camera: Camera3D
 var _base_fov: float = 75.0
-var _player_faction: int = 0
+var _player_faction: int = -1
 
 var _torus_mesh: TorusMesh
 var _glow_mesh: SphereMesh

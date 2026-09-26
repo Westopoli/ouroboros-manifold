@@ -14,7 +14,12 @@ const SCREEN_H := 1080.0
 # Fallback scale for a zero-canvas frame; replaced dynamically once canvas > 0.
 const WORLD_SCALE := 0.25
 const UNIT_SIZE := 24.0
-const LOCAL_FACTION := 0
+
+# Player faction: read from the loaded frame when the frame carries
+# "player_faction"; falls back to SimSession.bridge().player_faction()
+# so live play also works when the frame does not carry the key.
+# -1 means not yet set; visible["−1"] in a frame would be empty.
+var _local_faction: int = -1
 
 var _frame: Dictionary = {}
 var _canvas: float = 0.0
@@ -66,8 +71,16 @@ func _ready() -> void:
 		)
 
 
+func _get_local_faction() -> int:
+	if _local_faction >= 0:
+		return _local_faction
+	return SimSession.bridge().player_faction()
+
+
 func load_frame(frame: Dictionary) -> void:
 	_frame = frame
+	if frame.has("player_faction"):
+		_local_faction = int(frame["player_faction"])
 	_canvas = float(frame.get("map", {}).get("canvas", 0.0))
 	if _canvas > 0.0:
 		_world_scale = SCREEN_H / _canvas
@@ -112,7 +125,7 @@ func qa_state() -> Dictionary:
 		"unit_count": _frame.get("units", []).size(),
 		"units": units,
 		"units_px": _display_px.duplicate(),
-		"local_faction": LOCAL_FACTION,
+		"local_faction": _get_local_faction(),
 		"selected": _selected.duplicate(),
 		"camera": {"x": _camera.x, "y": _camera.y},
 		"last_command": _last_command.duplicate(),
@@ -286,7 +299,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _visible_ids() -> Dictionary:
 	var out := {}
-	for v in _frame.get("visible", {}).get(str(LOCAL_FACTION), []):
+	for v in _frame.get("visible", {}).get(str(_get_local_faction()), []):
 		out[int(v)] = true
 	return out
 
@@ -367,5 +380,5 @@ func _make_unit_visual(faction: int) -> Polygon2D:
 	poly.polygon = PackedVector2Array([
 		Vector2(-h, -h), Vector2(h, -h), Vector2(h, h), Vector2(-h, h),
 	])
-	poly.color = Color(0.2, 0.6, 1.0) if faction == LOCAL_FACTION else Color(1.0, 0.3, 0.3)
+	poly.color = Color(0.2, 0.6, 1.0) if faction == _get_local_faction() else Color(1.0, 0.3, 0.3)
 	return poly

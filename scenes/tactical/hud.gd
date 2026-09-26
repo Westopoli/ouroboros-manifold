@@ -4,6 +4,8 @@
 ## active_layer from sibling InputRouter each frame.
 extends CanvasLayer
 
+const _SimSession := preload("res://autoload/sim_session.gd")
+
 const _PANEL_BG := Color(0.05, 0.08, 0.12, 0.82)
 const _PANEL_BORDER := Color(0.35, 0.45, 0.55, 0.9)
 const _TEXT := Color(0.92, 0.93, 0.95)
@@ -610,7 +612,7 @@ class _Minimap extends Control:
 			var u: Dictionary = TacticalBridge.units.get(uid, {})
 			var faction: int = int(u.get("faction", 0))
 			var col: Color = faction_colors[faction] if faction < faction_colors.size() else Color.WHITE
-			if faction != 0:
+			if faction != _SimSession.bridge().player_faction():
 				col.a = EraConfig.MINIMAP_ENEMY_DIM_ALPHA
 			draw_circle(Vector2(px * sx, py * sy), 2.0, col)
 		for uid in TacticalBridge.structures:

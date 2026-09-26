@@ -4,6 +4,8 @@
 ## See also: attack_visual_manager.gd — spawns the projectile/beam that caused the hit.
 extends Node3D
 
+const _SimSession := preload("res://autoload/sim_session.gd")
+
 const BURST_POOL_SIZE := 64
 const BLOOM_POOL_SIZE := 64
 
@@ -156,6 +158,8 @@ var _attacker_faction_cache: Dictionary = {}  # target_uid → attacker_faction
 var _cache_tick: int = -1
 
 func _find_attacker_faction(target_uid: int) -> int:
+	var pf: int = _SimSession.bridge().player_faction()
+	var opponent: int = 1 - pf if pf >= 0 else 1
 	if TacticalBridge.current_tick != _cache_tick:
 		_cache_tick = TacticalBridge.current_tick
 		_attacker_faction_cache.clear()
@@ -165,8 +169,8 @@ func _find_attacker_faction(target_uid: int) -> int:
 			var unit: Dictionary = TacticalBridge.units.get(uid, {})
 			var atk_target: int = int(unit.get("attack_target", -1))
 			if atk_target >= 0:
-				_attacker_faction_cache[atk_target] = int(unit.get("faction", 1))
-	return int(_attacker_faction_cache.get(target_uid, 1))
+				_attacker_faction_cache[atk_target] = int(unit.get("faction", opponent))
+	return int(_attacker_faction_cache.get(target_uid, opponent))
 
 
 func _spawn_burst(pos: Vector3, damage: float, color: Color) -> void:
