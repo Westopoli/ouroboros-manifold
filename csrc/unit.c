@@ -55,11 +55,8 @@
 /* OM_MAX_UNITS 10100 -- see ouroboros_sim.h */
 #define OM_UNITS_INITIAL_CAP 64
 #define OM_GRID_UNLINKED 0xFFFFFFFFu
-/* Spatial grid (om_grid_query_circle): cell edge in world units, the cell
- * count cap per axis (a wider bounding box enlarges the cell instead), and
- * the slack added to a query's cell range so a rounding step in the cell
- * arithmetic can never drop a unit the exact circle test accepts. */
-#define OM_GRID_CELL_SIZE 400.0
+/* OM_GRID_CELL_SIZE promoted to csrc/om_constants.h (ALG-66, CONST-1). */
+/* Spatial grid count cap and buffer pad are plumbing, stay local. */
 #define OM_GRID_MAX_DIM 256
 #define OM_GRID_PAD 1e-6
 #define OM_GRID_INSERTION_SORT_MAX 32
@@ -82,60 +79,26 @@
 #define OM_CAT_LINE 1
 #define OM_CAT_SIEGE 2
 
-/* S-082 launch roster (tests/csim/test_E11_S082_the_six.py ROSTER_TABLE,
- * the fenced source of truth) -- one #define per stat per unit type so the
- * alg_constants.py lint sees no bare literal outside a #define line. */
-#define OM_ROSTER_RAIDER_HP 250.0
-#define OM_ROSTER_RAIDER_DAMAGE 9.0
-#define OM_ROSTER_RAIDER_INTERVAL 0.8
-#define OM_ROSTER_RAIDER_RANGE 200.0
-#define OM_ROSTER_RAIDER_SPEED 150.0
-#define OM_ROSTER_RAIDER_SENSOR 800.0
+/* S-082 launch roster: OM_ROSTER_*_HP/DAMAGE/INTERVAL/RANGE/SPEED/SENSOR/AOE
+ * promoted to csrc/om_constants.h (ALG-60/61, CONST-1).
+ * LAYER_TRANSITION constants not in original inventory (added after c882449);
+ * kept local pending a future F3 pass that covers them. AOE 0.0 trivially
+ * excluded per inventory criterion. */
 #define OM_ROSTER_RAIDER_LAYER_TRANSITION 1.0
 #define OM_ROSTER_RAIDER_AOE 0.0
 
-#define OM_ROSTER_INTERCEPTOR_HP 325.0
-#define OM_ROSTER_INTERCEPTOR_DAMAGE 6.0
-#define OM_ROSTER_INTERCEPTOR_INTERVAL 1.0
-#define OM_ROSTER_INTERCEPTOR_RANGE 250.0
-#define OM_ROSTER_INTERCEPTOR_SPEED 130.0
-#define OM_ROSTER_INTERCEPTOR_SENSOR 1000.0
 #define OM_ROSTER_INTERCEPTOR_LAYER_TRANSITION 1.2
 #define OM_ROSTER_INTERCEPTOR_AOE 0.0
 
-#define OM_ROSTER_VANGUARD_HP 500.0
-#define OM_ROSTER_VANGUARD_DAMAGE 7.5
-#define OM_ROSTER_VANGUARD_INTERVAL 1.2
-#define OM_ROSTER_VANGUARD_RANGE 300.0
-#define OM_ROSTER_VANGUARD_SPEED 80.0
-#define OM_ROSTER_VANGUARD_SENSOR 700.0
 #define OM_ROSTER_VANGUARD_LAYER_TRANSITION 2.5
 #define OM_ROSTER_VANGUARD_AOE 0.0
 
-#define OM_ROSTER_WARDEN_HP 375.0
-#define OM_ROSTER_WARDEN_DAMAGE 4.0
-#define OM_ROSTER_WARDEN_INTERVAL 1.5
-#define OM_ROSTER_WARDEN_RANGE 350.0
-#define OM_ROSTER_WARDEN_SPEED 70.0
-#define OM_ROSTER_WARDEN_SENSOR 800.0
 #define OM_ROSTER_WARDEN_LAYER_TRANSITION 2.0
 #define OM_ROSTER_WARDEN_AOE 0.0
 
-#define OM_ROSTER_BOMBARD_HP 400.0
-#define OM_ROSTER_BOMBARD_DAMAGE 17.5
-#define OM_ROSTER_BOMBARD_INTERVAL 3.0
-#define OM_ROSTER_BOMBARD_RANGE 1200.0
-#define OM_ROSTER_BOMBARD_SPEED 50.0
-#define OM_ROSTER_BOMBARD_SENSOR 300.0
 #define OM_ROSTER_BOMBARD_LAYER_TRANSITION 4.0
-#define OM_ROSTER_BOMBARD_AOE 150.0
+/* OM_ROSTER_BOMBARD_AOE promoted to csrc/om_constants.h (ALG-61, CONST-1). */
 
-#define OM_ROSTER_BASTION_HP 1050.0
-#define OM_ROSTER_BASTION_DAMAGE 7.0
-#define OM_ROSTER_BASTION_INTERVAL 1.8
-#define OM_ROSTER_BASTION_RANGE 800.0
-#define OM_ROSTER_BASTION_SPEED 40.0
-#define OM_ROSTER_BASTION_SENSOR 300.0
 #define OM_ROSTER_BASTION_LAYER_TRANSITION 5.0
 #define OM_ROSTER_BASTION_AOE 0.0
 
@@ -147,13 +110,8 @@
 #define OM_UNIT_FALLBACK_INTERVAL 1.0
 #define OM_UNIT_FALLBACK_RANGE 100.0
 
-/* ALG-62 `_RETURN_FIRE_FLEE_DIST` (simulation/damage.py): a unit that
- * cannot return fire moves this far directly away from the attacker.
- * R-087-05's anchor leash (simulation/movement.py `_ATTACK_MOVE_LEASH_SQ`
- * = 200 * 200) is the same distance. Neither has an IDENT binding in
- * algorithms.md, so om_constants.h has no OM_ name for them. */
-#define OM_RETURN_FIRE_FLEE_DIST 200.0
-#define OM_ATTACK_MOVE_LEASH_DIST 200.0
+/* OM_RETURN_FIRE_FLEE_DIST, OM_ATTACK_MOVE_LEASH_DIST promoted to
+ * csrc/om_constants.h (ALG-62/68, CONST-1). */
 
 /* order kinds unit.c itself records (attack-move and attack-target;
  * a plain move and no order at all are read back from tactical_move.c) */
@@ -161,18 +119,7 @@
 #define OM_ORDER_ATTACK_MOVE 1
 #define OM_ORDER_ATTACK_TARGET 2
 
-/* om_tactical_spawn_force_composition("default_balanced"): the only source
- * for the mix is the fenced test's own example (tests/csim/
- * test_E11_S085_long_enough_to_think.py::test_R_085_02: 15 Raider, 10
- * Interceptor, 15 Vanguard, 5 Warden, 3 Bombard, 2 Bastion per 50); the
- * bible names no numbers. Shares are per 50 units. */
-#define OM_COMPOSITION_BASE 50
-#define OM_COMPOSITION_RAIDER 15
-#define OM_COMPOSITION_INTERCEPTOR 10
-#define OM_COMPOSITION_VANGUARD 15
-#define OM_COMPOSITION_WARDEN 5
-#define OM_COMPOSITION_BOMBARD 3
-#define OM_COMPOSITION_BASTION 2
+/* OM_COMPOSITION_* promoted to csrc/om_constants.h (ALG-75, CONST-1). */
 
 /* S-081's stationary fight loop needs a hard iteration cap so a real bug
  * (e.g. two forces that can never reach each other) fails fast instead of
@@ -193,48 +140,13 @@
 #define OM_TACTICAL_HIGH_LOAD_UNITS 1000
 #define OM_TACTICAL_HIGH_LOAD_PERIOD 2
 
-/* S-086/ALG-63: one ability per unit type, exact numbers per
- * tests/csim/test_E11_S086_one_ability_each.py. OM_FORTIFY_RADIUS,
- * OM_INTERCEPT_DETECTION_RADIUS, OM_AOE_DAMAGE_CAP_MULTIPLIER and the
- * Warden aura constants already live in om_constants.h (ALG-60/61/63) and
- * are reused here rather than redefined. */
-#define OM_ABILITY_SURGE_DURATION_TICKS 60
-#define OM_ABILITY_SURGE_SPEED_MULT 2.5
-#define OM_ABILITY_SURGE_OUTPUT_MULT 2.0
-#define OM_ABILITY_SURGE_COOLDOWN_TICKS 1500.0
-
-#define OM_ABILITY_INTERCEPT_SPEED_MULT 1.8
-#define OM_ABILITY_INTERCEPT_OUTPUT_MULT 1.5
-#define OM_ABILITY_INTERCEPT_COOLDOWN_TICKS 600.0
-
-#define OM_ABILITY_BRACE_WINDUP_TICKS 40
-#define OM_ABILITY_BRACE_DAMAGE_REDUCTION 0.50
-#define OM_ABILITY_BRACE_OUTPUT_MULT 1.3
-#define OM_ABILITY_BRACE_COOLDOWN_TICKS 700.0
-
-#define OM_ABILITY_RALLY_HEAL_AMOUNT 112.0
-#define OM_ABILITY_RALLY_RADIUS 400.0
-#define OM_ABILITY_RALLY_COOLDOWN_TICKS 1500.0
-/* Auto-trigger only ("a damaged friendly", R-086-08) reads as meaningfully
- * wounded, not merely off full HP: test_R_083_03 (must stay green) has a
- * Warden with a friendly at 400/500 HP (0.80) in radius that must NOT
- * auto-fire Rally (only the passive aura applies that tick), while
- * test_R_086_08 has one at 200/500 (0.40) that must. 0.5 cleanly separates
- * them; the manual/instant heal itself (om_ability_do_rally) has no such
- * gate -- it heals every friendly in radius regardless of current HP,
- * per R-086-04. */
+/* OM_ABILITY_SURGE_*, OM_ABILITY_INTERCEPT_*, OM_ABILITY_BRACE_*,
+ * OM_ABILITY_RALLY_HEAL_AMOUNT/_RADIUS/_COOLDOWN_TICKS,
+ * OM_ABILITY_BARRAGE_*, OM_ABILITY_FORTIFY_* promoted to csrc/om_constants.h
+ * (ALG-63, CONST-1).
+ * OM_ABILITY_RALLY_AUTOTRIGGER_HP_FRACTION 0.5: no ALG/config source; kept local.
+ * OM_ABILITY_DAMAGE_REDUCTION_CAP 0.9: no ALG/config source; kept local. */
 #define OM_ABILITY_RALLY_AUTOTRIGGER_HP_FRACTION 0.5
-
-#define OM_ABILITY_BARRAGE_TELEGRAPH_TICKS 30
-#define OM_ABILITY_BARRAGE_DAMAGE_MULT 3.0
-#define OM_ABILITY_BARRAGE_RADIUS 100.0
-#define OM_ABILITY_BARRAGE_COOLDOWN_TICKS 1800.0
-
-#define OM_ABILITY_FORTIFY_DURATION_TICKS 400
-#define OM_ABILITY_FORTIFY_DAMAGE_REDUCTION 0.20
-#define OM_ABILITY_FORTIFY_SPEED_MULT 0.4
-#define OM_ABILITY_FORTIFY_COOLDOWN_TICKS 1400.0
-
 #define OM_ABILITY_DAMAGE_REDUCTION_CAP 0.9
 
 /* ALG-60: "after firing the unit's movement pauses ATTACK_BACKSWING_SEC =

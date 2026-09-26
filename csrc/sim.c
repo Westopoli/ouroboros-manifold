@@ -21,6 +21,7 @@
  */
 #include "ouroboros_sim.h"
 #include "om_internal.h"
+#include "om_constants.h"
 #include <math.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -28,7 +29,7 @@
 
 /* ---------------------------------------------------------------- om_sin */
 
-static const double OM_TWO_PI = 6.28318530717958647692528676655900577;
+/* OM_TWO_PI from om_constants.h (math constant, full precision). */
 static const double OM_LN2 = 0.69314718055994530941723212145817657;
 
 /* Deterministic, portable sine: range-reduce into [-pi, pi], then a
@@ -120,10 +121,9 @@ static double om_osc_prev(double amplitude, double period, double phase, uint64_
     return om_osc(amplitude, period, phase, tick - 1);
 }
 
-#define ECON_AMPLITUDE 6.0
-#define ECON_PERIOD 15.0
-#define TENSION_AMPLITUDE 2.0
-#define TENSION_PERIOD 18.0
+/* Oscillation constants from om_constants.h (ALG-01).
+ * Period ints 15/18 are passed to om_osc(double period) — implicit int-to-double
+ * promotion, no integer-division hazard; same bit value as 15.0/18.0. */
 
 /* ---------------------------------------------------------------- world RNG */
 
@@ -360,10 +360,10 @@ uint64_t om_world_step(om_world *w) {
         composite_pre_clamp = (w->inject == OM_BUG_COMPOSITE_PRE_CLAMP);
 #endif
 
-        double osc_econ_now = om_osc(ECON_AMPLITUDE, ECON_PERIOD, r->econ_phase, tick);
-        double osc_econ_prev = om_osc_prev(ECON_AMPLITUDE, ECON_PERIOD, r->econ_phase, tick);
-        double osc_tension_now = om_osc(TENSION_AMPLITUDE, TENSION_PERIOD, r->tension_phase, tick);
-        double osc_tension_prev = om_osc_prev(TENSION_AMPLITUDE, TENSION_PERIOD, r->tension_phase, tick);
+        double osc_econ_now = om_osc(OM_ECON_OSCILLATION_AMPLITUDE, OM_ECON_OSCILLATION_PERIOD, r->econ_phase, tick);
+        double osc_econ_prev = om_osc_prev(OM_ECON_OSCILLATION_AMPLITUDE, OM_ECON_OSCILLATION_PERIOD, r->econ_phase, tick);
+        double osc_tension_now = om_osc(OM_TENSION_OSCILLATION_AMPLITUDE, OM_TENSION_OSCILLATION_PERIOD, r->tension_phase, tick);
+        double osc_tension_prev = om_osc_prev(OM_TENSION_OSCILLATION_AMPLITUDE, OM_TENSION_OSCILLATION_PERIOD, r->tension_phase, tick);
 
         double d_osc_econ = osc_as_level ? osc_econ_now : (osc_econ_now - osc_econ_prev);
         double d_osc_tension = osc_as_level ? osc_tension_now : (osc_tension_now - osc_tension_prev);

@@ -173,21 +173,10 @@
  * mechanical emitter never lands them in om_constants.h -- same gap as
  * simulation/config.py's INSURGENT_POP_LOW_THRESHOLD / _HIGH_THRESHOLD,
  * which name these exact two numbers in the Python reference this C rewrite
- * reproduces verbatim. Named locally here, same precedent as B9-1's
- * OM_MISSION_SCORE_.. and OM_MISSION_RELEVANCE_.. weights above (also
- * cited by the bible, also missing from the mechanical extraction). */
-#define OM_MISSION_INSURGENT_POP_LOW_THRESHOLD 25.0
-#define OM_MISSION_INSURGENT_POP_HIGH_THRESHOLD 70.0
-
-/* ALG-57 Fill: "power <= 1.15 * remaining" -- inline in the formula prose,
- * same UNPARSED-by-the-emitter situation as the population thresholds above. */
-#define OM_MISSION_FILL_OVERSHOOT_MULT 1.15
-
-/* ALG-57 difficulty parity: "easy max(base, 0.95), hard min(base, 0.85)" --
- * same prose-not-IDENT gap; named PARITY_EASY_FLOOR / PARITY_HARD_CEILING
- * in simulation/config.py. */
-#define OM_MISSION_PARITY_EASY_FLOOR 0.95
-#define OM_MISSION_PARITY_HARD_CEILING 0.85
+ * reproduces verbatim.
+ * OM_MISSION_INSURGENT_POP_LOW_THRESHOLD, _HIGH_THRESHOLD,
+ * OM_MISSION_FILL_OVERSHOOT_MULT, OM_MISSION_PARITY_EASY_FLOOR,
+ * OM_MISSION_PARITY_HARD_CEILING promoted to csrc/om_constants.h (ALG-57, CONST-1). */
 
 /* Q-074-01: unit power is HP * base_damage / attack_interval, normalized so
  * the anchor unit type (Vanguard, unit_type 2 in csrc/unit.c's OM_UT_VANGUARD
@@ -220,32 +209,8 @@
 #define OM_COMMANDER_FATE_WOUNDED 1
 #define OM_COMMANDER_FATE_SURVIVED 2
 
-/* R-077-03 / Q-077-01: the hub names killed/wounded/survived but the bible
- * gives no numeric split; test_R_077_03 in
- * tests/csim/test_E10_S077_five_ways_it_can_go.py fixes 30% HP as the
- * wounded/survived line (25/100 = wounded, 50/100 = survived) -- no
- * simulation/config.py precedent exists for this threshold (Q-077-01 is
- * still an open flag), so this reproduces the test's own concrete number. */
-#define OM_MISSION_COMMANDER_WOUNDED_HP_FRACTION 0.30
-
-/* R-077-02 / ALG-58 band thresholds [t1, t2, t3, t4], simulation/config.py
- * OUTCOME_THRESHOLDS verbatim -- three groups share the standard row. */
-#define OM_MISSION_BAND_THRESHOLDS_STANDARD_T1 0.20
-#define OM_MISSION_BAND_THRESHOLDS_STANDARD_T2 0.40
-#define OM_MISSION_BAND_THRESHOLDS_STANDARD_T3 0.60
-#define OM_MISSION_BAND_THRESHOLDS_STANDARD_T4 0.80
-#define OM_MISSION_BAND_THRESHOLDS_RECONQUEST_ASSAULT_T1 0.25
-#define OM_MISSION_BAND_THRESHOLDS_RECONQUEST_ASSAULT_T2 0.45
-#define OM_MISSION_BAND_THRESHOLDS_RECONQUEST_ASSAULT_T3 0.65
-#define OM_MISSION_BAND_THRESHOLDS_RECONQUEST_ASSAULT_T4 0.82
-#define OM_MISSION_BAND_THRESHOLDS_MULTI_FRONT_T1 0.15
-#define OM_MISSION_BAND_THRESHOLDS_MULTI_FRONT_T2 0.35
-#define OM_MISSION_BAND_THRESHOLDS_MULTI_FRONT_T3 0.55
-#define OM_MISSION_BAND_THRESHOLDS_MULTI_FRONT_T4 0.75
-#define OM_MISSION_BAND_THRESHOLDS_EVACUATION_T1 0.30
-#define OM_MISSION_BAND_THRESHOLDS_EVACUATION_T2 0.50
-#define OM_MISSION_BAND_THRESHOLDS_EVACUATION_T3 0.65
-#define OM_MISSION_BAND_THRESHOLDS_EVACUATION_T4 0.80
+/* OM_MISSION_COMMANDER_WOUNDED_HP_FRACTION, all OM_MISSION_BAND_THRESHOLDS_*
+ * promoted to csrc/om_constants.h (ALG-57/58, CONST-1). */
 
 /* B9-3 (S-079) briefing control bitmask (OMBriefingSection / control bits in
  * tests/csim/test_E10_S079_orders_not_menus.py). */
@@ -264,8 +229,7 @@
 #define OM_CTARGET_ADJACENT_PLAYER  1
 #define OM_CONSEQUENCE_FIELD_MIN 0.0
 #define OM_CONSEQUENCE_FIELD_MAX 100.0
-/* R-078-05: refusal's tension rise is 8 percent of the region's deficit. */
-#define OM_MISSION_REFUSAL_TENSION_DEFICIT_PCT 8.0
+/* OM_MISSION_REFUSAL_TENSION_DEFICIT_PCT promoted to csrc/om_constants.h (ALG-59, CONST-1). */
 #define OM_MISSION_MAX_CONSEQUENCE_DELTAS 8
 /* Debrief prose: a region field counts as changed only past this. */
 #define OM_MISSION_DEBRIEF_DELTA_EPSILON 1e-9
@@ -274,18 +238,9 @@
  * tests/csim/test_E17_S113_*.py; csrc/tactical_mapgen.c does not export it). */
 #define OM_MISSION_SPINE_NODE_OBJECTIVE 0
 
-/* ALG-71 / R-114-03 objective cover row (GRADIENT_OBJECTIVE_COVER_INTENSITY
- * 0.50, GRADIENT_OBJECTIVE_COVER_RADIUS 400 in simulation/config.py); only the
- * radius is used, om_map_add_cover takes no intensity. The height has no table
- * value: Q-098-01 placeholder, inert because fog.c blocks on any cover disc. */
-#define OM_MISSION_OBJECTIVE_COVER_RADIUS 400.0
-#define OM_MISSION_OBJECTIVE_COVER_HEIGHT 5.0
-
-/* R-079-03/04: debrief retention prose bands -- no bible-given cutoffs
- * (the debrief only has to show retention qualitatively, not a formula),
- * chosen so "most" reads as "the force came home largely intact". */
-#define OM_MISSION_DEBRIEF_RETENTION_MOST_CUTOFF 0.75
-#define OM_MISSION_DEBRIEF_RETENTION_SOME_CUTOFF 0.4
+/* OM_MISSION_OBJECTIVE_COVER_RADIUS, OM_MISSION_OBJECTIVE_COVER_HEIGHT,
+ * OM_MISSION_DEBRIEF_RETENTION_MOST_CUTOFF, OM_MISSION_DEBRIEF_RETENTION_SOME_CUTOFF
+ * promoted to csrc/om_constants.h (ALG-71/E-10, CONST-1). */
 
 typedef struct {
     uint32_t recent_attacks;

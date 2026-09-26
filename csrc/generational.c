@@ -115,10 +115,8 @@
  * module used before F2e landed is gone with it.
  */
 
-/* Q-057-01's proposed decay base is an open ambiguity flag's candidate
- * answer, not a settled ALG constant, so it has no home in
- * csrc/om_constants.h (constants(F3e) named the rest of ALG-46/47/49). */
-#define GEN_SELECTOR_DECAY_BASE 0.75
+/* GEN_SELECTOR_DECAY_BASE promoted to csrc/om_constants.h as OM_SELECTOR_DECAY_BASE
+ * (ALG-77, Q-060-02, Westley 2026-09-26). */
 
 /* om_character_record.rank values (S-060 R-060-06). */
 #define GEN_RANK_SUPREME_COMMANDER 0
@@ -1622,7 +1620,7 @@ void om_selector_clear_pools(om_world *w) {
 double om_selector_decayed_rotation_prob(const om_world *w, double base_p, uint32_t chapters) {
     (void)w;
     if (chapters <= OM_SELECTOR_MIN_CHAPTERS) return base_p;
-    double decay = 1.0 - gen_pow_int(GEN_SELECTOR_DECAY_BASE, chapters - OM_SELECTOR_MIN_CHAPTERS);
+    double decay = 1.0 - gen_pow_int(OM_SELECTOR_DECAY_BASE, chapters - OM_SELECTOR_MIN_CHAPTERS);
     return base_p + (1.0 - base_p) * decay;
 }
 

@@ -44,33 +44,10 @@
 #include <ctype.h>
 #include <math.h>
 
-/* ---- ALG-50 significance context bonuses. Named in docs/bible/algorithms.md
- * (SIGNIFICANCE_MISSION_REGION_BONUS/_CHARACTER_BONUS/_CHAIN_LENGTH_BONUS/
- * _LINEAGE_REGION_BONUS) but not yet promoted to csrc/om_constants.h by an
- * F3 pass -- report to F3, do not hand-add to the shared header from here.
- * OM_SIGNIFICANCE_DELTA_SCALE, OM_SIGNIFICANCE_DELTA_CAP, OM_CHAIN_LENGTH_CAP
- * already exist there and are used as-is below. */
-#define OM_SIGNIFICANCE_MISSION_REGION_BONUS 0.5
-#define OM_SIGNIFICANCE_CHARACTER_BONUS 0.3
-#define OM_SIGNIFICANCE_CHAIN_LENGTH_BONUS 0.1
-#define OM_SIGNIFICANCE_LINEAGE_REGION_BONUS 0.8
-
-/* ---- R-067-02..R-067-05 category thresholds (docs/bible/epics/E-09-chronicle.md).
- * Business-rule numbers from the epic's Given/When/Then text, not ALG-numbered
- * formulas; named here per the same never-a-bare-literal discipline. */
-#define OM_CHRON_THRIVED_ECO_MIN 2.0
-#define OM_CHRON_THRIVED_MIL_MIN 2.0
-#define OM_CHRON_SUFFERED_ECO_MAX -3.0
-#define OM_CHRON_SUFFERED_TEN_MIN 5.0
-#define OM_CHRON_CASCADE_MIN_EVENTS 4
-#define OM_CHRON_VICTORY_MIL_MIN 2.0
-#define OM_CHRON_VICTORY_TEN_MAX 3.0
-#define OM_CHRON_DEFEAT_MIL_MAX -2.0
-#define OM_CHRON_DEFEAT_TEN_MIN 3.0
-#define OM_CHRON_STALEMATE_MIL_ABS_MAX 2.0
-#define OM_CHRON_STALEMATE_TEN_MIN 2.0
-#define OM_CHRON_REGIONAL_GROWTH_MIN 3.0
-#define OM_CHRON_REGIONAL_DECLINE_MAX -3.0
+/* OM_SIGNIFICANCE_*_BONUS constants and R-067-02..05 thresholds (OM_CHRON_THRIVED_*,
+ * OM_CHRON_SUFFERED_*, OM_CHRON_CASCADE_MIN_EVENTS, OM_CHRON_VICTORY_*, OM_CHRON_DEFEAT_*,
+ * OM_CHRON_STALEMATE_*, OM_CHRON_REGIONAL_*) promoted to csrc/om_constants.h
+ * (ALG-50/E-09, CONST-1). */
 
 /* ALG-52 selection. */
 #define OM_CHRON_CATEGORY_CAP 2
@@ -105,17 +82,8 @@
 #define OM_CHRON_WORD_FADE_SEC 0.20
 #define OM_CHRON_ENTRY_HOLD_SEC 3.0
 
-/* Chronicle prose bands (region composite/field -> qualitative word), epic
- * E-09 R-068-03; not ALG-numbered. */
-#define OM_CHRON_STABILITY_HIGH 70.0
-#define OM_CHRON_STABILITY_MID 50.0
-#define OM_CHRON_STABILITY_LOW 30.0
-#define OM_CHRON_CAPACITY_HIGH 70.0
-#define OM_CHRON_CAPACITY_MID 50.0
-#define OM_CHRON_CAPACITY_LOW 30.0
-#define OM_CHRON_TENSION_HIGH 60.0
-#define OM_CHRON_TENSION_MID 40.0
-#define OM_CHRON_TENSION_LOW 20.0
+/* OM_CHRON_STABILITY_x, OM_CHRON_CAPACITY_x, OM_CHRON_TENSION_x prose bands
+ * promoted to csrc/om_constants.h (E-09 R-068-03, CONST-1). */
 #define OM_CHRON_DURATION_DAYS_MAX 5
 #define OM_CHRON_DURATION_WEEKS_MAX 15
 #define OM_CHRON_DURATION_MONTHS_MAX 30

@@ -150,11 +150,8 @@ static int32_t sup_player_owner_id(const om_world *w) {
 #define OM_SUP_DRIFT_PING_PONG 0
 #define OM_SUP_DRIFT_LOOP 1
 
-/* Mirrors csrc/sim.c's static OM_TWO_PI (om_sin's own range reduction) so a
- * polar spawn draw and om_sin/om_cos-via-om_sin stay in step; om_cos is not
- * part of the deterministic sine wrapper's public surface, so cos(a) is
- * read off the same om_sin as sin(a + HALF_PI). */
-#define OM_SUP_TWO_PI 6.28318530717958647692528676655900577
+/* OM_SUP_TWO_PI promoted to csrc/om_constants.h as OM_TWO_PI (CONST-1).
+ * OM_SUP_HALF_PI kept local: used only in this file (CONST-1 rule: single-file). */
 #define OM_SUP_HALF_PI 1.57079632679489661923132169163975144
 
 /* No bible-specified roam distance exists for a drifting objective's
@@ -164,12 +161,7 @@ static int32_t sup_player_owner_id(const om_world *w) {
  * neighborhood ALG-75 already scales structures to. */
 #define OM_SUP_DRIFT_SPAN (OM_REINFORCEMENT_CAPTURE_RADIUS / 2.0)
 
-/* Live sampling radius for the one launch hazard (sensor interference).
- * Not an ALG-71 gradient-placement constant (that table is map-generation
- * time, tactical_mapgen.c's/B15m's territory); this is the falloff this
- * pure live-query sampler uses, R-130-04's "follows the source" behavior
- * only needs monotonic falloff with distance. */
-#define OM_SUP_HAZARD_INTERFERENCE_RADIUS 500.0
+/* OM_SUP_HAZARD_INTERFERENCE_RADIUS promoted to csrc/om_constants.h (ALG-71, CONST-1). */
 
 /* R-131-01 render ids: any distinct values satisfy the acceptance test
  * (structure silhouette != every unit silhouette id; three distinct owner
@@ -545,7 +537,7 @@ void om_structure_tick_production(om_world *w, uint32_t structure) {
      * distance, within half the capture radius -- never any other
      * generator. cos(angle) is read off om_sin(angle + HALF_PI) since the
      * deterministic sine wrapper has no cosine sibling (csrc/sim.c). */
-    angle = om_rng_draw(w) * OM_SUP_TWO_PI;
+    angle = om_rng_draw(w) * OM_TWO_PI;
     dist = om_rng_draw(w) * (OM_REINFORCEMENT_CAPTURE_RADIUS / 2.0);
     s->last_spawn_distance = dist;
     s->last_spawn_x = s->x + dist * om_sin(angle + OM_SUP_HALF_PI);
@@ -766,7 +758,7 @@ void om_drift_interpolate(const om_vec2 *waypoints, uint32_t waypoint_count, uin
  * (signatures.toml freeze note), so a fixture calling them gets a real,
  * seed-derived loop rather than an invented fixed offset. */
 static void om_sup_synthesize_drift_wp(om_world *w, double cx, double cy, om_vec2 wp[2]) {
-    double angle = om_rng_draw(w) * OM_SUP_TWO_PI;
+    double angle = om_rng_draw(w) * OM_TWO_PI;
     wp[0].x = cx;
     wp[0].y = cy;
     wp[1].x = cx + OM_SUP_DRIFT_SPAN * om_sin(angle + OM_SUP_HALF_PI);

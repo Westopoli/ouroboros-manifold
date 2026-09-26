@@ -121,10 +121,9 @@ enum { OM_MACRO_DIR_N, OM_MACRO_DIR_E, OM_MACRO_DIR_S, OM_MACRO_DIR_W, OM_MACRO_
 /* Not in om_constants.h: Q-120-01 closed (b), no posture differentiation. */
 #define OM_MACRO_SPEED_MULT_CAUTIOUS 1.0
 #define OM_MACRO_SPEED_MULT_AGGRESSIVE 1.0
-/* Not in om_constants.h: Q-122-01 closed (a), routed below 20 percent HP. */
-#define OM_MACRO_ROUT_HP_THRESHOLD 0.20
-/* Not in om_constants.h: Q-124-01 closed (a), p = 0.07 per mission. */
-#define OM_MACRO_EXTERNAL_REINFORCEMENT_PROB 0.07
+/* OM_MACRO_ROUT_HP_THRESHOLD 0.35 and OM_MACRO_EXTERNAL_REINFORCEMENT_PROB 0.21
+ * now in csrc/om_constants.h (ALG-76, Q-120-03, Q-124-03, CONST-1 promotion;
+ * values updated from 0.20/0.07 by Westley 2026-09-26). */
 
 typedef struct {
     int behavior;

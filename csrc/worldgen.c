@@ -39,11 +39,10 @@
 #include <stdlib.h>
 #include <math.h>
 
-/* Not an ALG-tuned constant (algorithms.md never names it as an IDENT =
- * value); matches the literal already used for the same purpose in
- * csrc/sim.c's static OM_TWO_PI so the two stay in step. */
-#define OM_GEN_TWO_PI 6.28318530717958647692528676655900577
-/* ALG-30's field clamp target; no named IDENT in the doc's own prose. */
+/* OM_GEN_TWO_PI promoted to csrc/om_constants.h as OM_TWO_PI (CONST-1). */
+/* ALG-30's field clamp target; no named IDENT in the doc's own prose.
+ * OM_GEN_FIELD_MAX 100.0 kept local: header has OM_FIELD_MAX 100 (int),
+ * different type; not provably equivalent in all double contexts (CONST-1). */
 #define OM_GEN_FIELD_MIN 0.0
 #define OM_GEN_FIELD_MAX 100.0
 
@@ -163,8 +162,8 @@ static void gen_place_region(om_world *w, uint32_t idx, om_tier tier, int32_t fi
     }
     double j3 = gen_uniform(w, -OM_STARTING_FIELD_JITTER, OM_STARTING_FIELD_JITTER);
     double tension_val = gen_clamp(pop * OM_STARTING_TENSION_RATIO + j3);
-    double econ_phase = gen_uniform(w, OM_GEN_FIELD_MIN, OM_GEN_TWO_PI);
-    double tension_phase = gen_uniform(w, OM_GEN_FIELD_MIN, OM_GEN_TWO_PI);
+    double econ_phase = gen_uniform(w, OM_GEN_FIELD_MIN, OM_TWO_PI);
+    double tension_phase = gen_uniform(w, OM_GEN_FIELD_MIN, OM_TWO_PI);
 
     om_region_set(w, idx, tier, mil_val, econ_val, tension_val, pop, econ_phase, tension_phase, fid);
     om_region_set_owner(w, idx, fid, -1);

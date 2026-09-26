@@ -44,45 +44,18 @@
 #include <stddef.h>
 #include <string.h>
 
-/* ---- constants missing from csrc/om_constants.h (proposed additions noted
- * in the B5 report; kept local, named, and never inlined per the C-rewrite
- * constants-lint rule since this file is not grandfathered) ---- */
-#define OM_PCT_SCALE 100.0                 /* ALG-26/27/28/39: 0-100 field to a 0-1 fraction, and the tech ceiling */
-#define OM_BETRAYAL_OPPORTUNITY_CAP 3.0    /* ALG-40 opportunity cap */
-#define OM_BETRAYAL_TENSION_SCALE 50.0     /* ALG-40 pressure = max(1, avg_tension / this) */
-/* ALG-21 damage bands, duplicated from csrc/resolve.c's om_step_resolve
- * (grandfathered, so its literals are unnamed) because ALG-40 resolves a
- * betrayal attack immediately, inside this file's tick step, rather than
- * through resolve.c's own pass. See also: csrc/resolve.c om_step_resolve. */
-#define OM_ALG21_BREAKTHROUGH_MIL 0.8
-#define OM_ALG21_BREAKTHROUGH_ECO 0.3
-#define OM_ALG21_BREAKTHROUGH_TENSION 0.5
-#define OM_ALG21_BREAKTHROUGH_TENSION_CAP 30.0
-/* S-048 R-048-01 tier boundaries: no ALG id -- algorithms.md has no ALG
- * paragraph for tech tiers, only the epic's own Inputs line
- * (docs/bible/epics/E-06-diplomacy-and-technology.md: "tier boundaries
- * [0, 34, 67]"). Missing from om_constants.h; reported, not silently
- * added there since this card may only edit this file. */
-#define OM_TECH_TIER_1_MAX 34.0
-#define OM_TECH_TIER_2_MAX 67.0
+/* OM_PCT_SCALE, OM_BETRAYAL_OPPORTUNITY_CAP, OM_BETRAYAL_TENSION_SCALE,
+ * OM_ALG21_* band constants, OM_TECH_TIER_1_MAX, OM_TECH_TIER_2_MAX now in
+ * csrc/om_constants.h (CONST-1 promotion). */
+/* ALG-21 damage bands: see also csrc/resolve.c om_step_resolve (grandfathered
+ * bare literals). */
+/* S-048 tier-id plumbing (not a bible value: plain enum): */
 #define OM_TECH_TIER_1 1
 #define OM_TECH_TIER_2 2
 #define OM_TECH_TIER_3 3
-/* Mission id encoding for om_mission_start/om_mission_unit_tier (R-048-02):
- * csrc/mission.c (card B9, not yet built) owns real per-mission state;
- * this card may only edit diplomacy.c and om_internal.h's om_world layout
- * is fixed for this card, so there is nowhere to store a mission ->
- * fielded-tier table. The tier a mission fields is instead encoded
- * directly into its id (tick in the high bits, tier in the low 2 bits),
- * so a running mission's tier reads back the value it was given at
- * om_mission_start regardless of any later change to the faction's
- * current tech tier. */
+/* Mission id encoding (plumbing): */
 #define OM_MISSION_TIER_BITS 2
 #define OM_MISSION_TIER_MASK 0x3u
-#define OM_ALG21_CONTESTED_MIL 0.5
-#define OM_ALG21_CONTESTED_ECO 0.2
-#define OM_ALG21_CONTESTED_TENSION 0.4
-#define OM_ALG21_REPELLED_MIL 0.10
 
 /* ---- shared helpers ---- */
 

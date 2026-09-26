@@ -111,22 +111,11 @@
  * om_sin/om_cos error (under 5e-4 per component): under this. */
 #define OM_MOVE_PROBE_REACH 40.1
 
-/* ALG-69/R-100-02 turn-rate category, inferred from native speed -- see
- * the file header note. Strike >= 100, Line [60,100), Siege < 60; the
- * launch roster (csrc/unit.c) never puts a type within 20 wu/s of either
- * boundary. */
-#define OM_MOVE_CAT_STRIKE_SPEED_MIN 100.0
-#define OM_MOVE_CAT_LINE_SPEED_MIN 60.0
-
-/* ALG-67/68: "d is in [0.3, 0.7]" and "(1 - 0.5 . d)" never bind an IDENT
- * to 0.3 or 0.5 in algorithms.md's prose (alg_constants.py --emit only
- * extracts `IDENT = value`), so om_constants.h has no OM_ name for either
- * -- reported here rather than left as a bare literal. */
-#define OM_OBSTACLE_DENSITY_LOW_THRESHOLD 0.3
-#define OM_TERRAIN_SPEED_PENALTY_COEF 0.5
-
-/* Shot line-of-sight sampling resolution: one world unit. */
-#define OM_LOS_SAMPLE_STEP 1.0
+/* OM_MOVE_CAT_STRIKE_SPEED_MIN, OM_MOVE_CAT_LINE_SPEED_MIN, OM_OBSTACLE_DENSITY_LOW_THRESHOLD,
+ * OM_TERRAIN_SPEED_PENALTY_COEF, OM_LOS_SAMPLE_STEP, OM_STEERING_SWEEP_COUNT,
+ * OM_STEERING_SWEEP_DELTA_RAD promoted to csrc/om_constants.h (CONST-1, ALG-67/68/69).
+ * OM_TWO_PI_LOCAL promoted to csrc/om_constants.h as OM_TWO_PI (CONST-1, math).
+ * OM_MOVE_PROBE_REACH 40.1 kept local: deliberately not 40.0 (tolerance note above). */
 
 #define OM_COLLISION_MAX_ITER 3
 #define OM_COLLISION_EXACT_EPS 1e-9
@@ -134,7 +123,6 @@
 #define OM_PI 3.14159265358979323846
 #define OM_PI_2 1.57079632679489661923
 #define OM_PI_4 0.78539816339744830962
-#define OM_TWO_PI_LOCAL 6.28318530717958647692
 
 /* Deterministic atan(x) on [-1, 1] (Anderson's cheap-trig rational
  * approximation, |error| < 0.005 rad); every test tolerance in this suite
@@ -144,11 +132,9 @@
 #define OM_ATAN_COEF_A 0.2447
 #define OM_ATAN_COEF_B 0.0663
 
-/* Fixed, world-independent steering sweep: [0, +d, -d, +2d, -2d, +3d, -3d]
- * (R-102-02: same sequence regardless of seed, forward first, positive
- * before negative, symmetric magnitude). */
-#define OM_STEERING_SWEEP_COUNT 13
-#define OM_STEERING_SWEEP_DELTA_RAD 0.2617993878
+/* Multiples of OM_STEERING_SWEEP_DELTA_RAD (om_constants.h); pre-computed
+ * to avoid repeated multiply in the sweep loop. */
+#define OM_STEERING_SWEEP_DELTA_RAD_2X 0.5235987756
 #define OM_STEERING_SWEEP_DELTA_RAD_2X 0.5235987756
 #define OM_STEERING_SWEEP_DELTA_RAD_3X 0.7853981634
 #define OM_STEERING_SWEEP_DELTA_RAD_4X 1.0471975512
@@ -299,8 +285,8 @@ static double om_atan2(double y, double x) {
 }
 
 static double om_wrap_pi(double a) {
-    while (a > OM_PI) a -= OM_TWO_PI_LOCAL;
-    while (a <= -OM_PI) a += OM_TWO_PI_LOCAL;
+    while (a > OM_PI) a -= OM_TWO_PI;
+    while (a <= -OM_PI) a += OM_TWO_PI;
     return a;
 }
 
