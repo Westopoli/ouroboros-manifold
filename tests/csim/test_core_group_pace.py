@@ -285,3 +285,65 @@ def test_auto_fortify_cancelled_by_move_order(lib):
         "(R-086-08); fix broke auto-trigger")
 
     lib.om_world_free(w)
+
+
+def test_auto_fortify_cancel_no_cooldown_and_re_fortifies(lib):
+    """R-087-02 / B10c-11: auto-Fortify cancel leaves cooldown at 0; unit
+    re-fortifies on the next idle scan tick after arrival.
+
+    Two assertions (both red on unmodified B10c-10 main):
+      1. ability_cooldown == 0.0 one step after the cancel -- the player never
+         chose auto-Fortify, so they pay no cooldown penalty.  Pre-fix (B10c-10
+         cancel) applies FORTIFY_COOLDOWN_TICKS (1400.0) -- this assertion
+         catches that.
+      2. Bastion re-fortifies within 10 ticks of arrival at destination --
+         cooldown=0 means the autotrigger scan fires on the first idle tick.
+         Pre-fix: cooldown=1400 prevents re-trigger for 70 seconds game-time.
+    """
+    w = _make_world(lib)
+    # Raiders placed on the y-axis so the Bastion can move freely along x
+    # without collision-steering interference (Raiders still within 350 wu
+    # of the Bastion's full travel range, so auto-fortify conditions hold).
+    bastion = lib.om_unit_spawn(w, _OM_UT_BASTION, _FACTION,   0.0,   0.0, _LAYER)
+    lib.om_unit_spawn(w,           _OM_UT_RAIDER,  _FACTION,   0.0,  50.0, _LAYER)
+    lib.om_unit_spawn(w,           _OM_UT_RAIDER,  _FACTION,   0.0, 100.0, _LAYER)
+
+    # Step until Bastion auto-fortifies (2+ friendlies within 350 wu).
+    triggered = False
+    for _ in range(5):
+        lib.om_world_step(w)
+        if lib.om_unit_ability_active(w, bastion):
+            triggered = True
+            break
+    assert triggered, (
+        "Bastion did not auto-fortify within 5 steps with 2 friendlies within 350 wu; "
+        "test fixture invalid")
+
+    # Issue a short move along x (10 wu; Bastion moves 2 wu/tick at native 40 wu/s).
+    ids = (ctypes.c_uint32 * 1)(bastion)
+    lib.om_command_move(w, ids, 1, 10.0, 0.0)
+
+    # One step: AI cancels auto-Fortify; unit still travelling (suppress_auto=1).
+    lib.om_world_step(w)
+    assert lib.om_unit_ability_active(w, bastion) == 0, (
+        "Auto-Fortify not cancelled after move order + one step (R-087-02)")
+    cd = lib.om_unit_ability_cooldown(w, bastion)
+    assert cd == pytest.approx(0.0, abs=1e-6), (
+        "om_ability_cancel_fortify must leave cooldown at 0.0 (B10c-11 adjustment); "
+        "got %.6f.  Pre-fix (B10c-10) applied FORTIFY_COOLDOWN_TICKS (1400.0) -- "
+        "auto-yield imposes no cost on the player." % cd)
+
+    # Step until arrival and re-fortify (10 ticks covers a 10 wu move at 2 wu/tick
+    # plus one idle scan tick; scan fires immediately because cooldown=0).
+    re_fortified = False
+    for _ in range(10):
+        lib.om_world_step(w)
+        if lib.om_unit_ability_active(w, bastion):
+            re_fortified = True
+            break
+    assert re_fortified, (
+        "Bastion did not re-fortify after arriving at destination with 2 friendlies "
+        "in range (cooldown=0 should allow scan to fire on the first idle tick; "
+        "pre-fix cooldown=1400 prevents re-trigger for ~70 s)")
+
+    lib.om_world_free(w)
