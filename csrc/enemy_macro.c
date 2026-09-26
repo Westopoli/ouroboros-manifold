@@ -514,11 +514,20 @@ void om_macro_tick(om_world *w, uint64_t p1) {
      * call at the same clock re-evaluates only when it sits on a boundary. */
     st->has_evaluated = (now == st->prev_clock ? now == slot : slot > prev_slot) ? 1 : 0;
     st->prev_clock = now;
+    /* R-124-02: check every tick; sets flag + spawn position, no unit spawn here (size
+     * pending Q-124-02). */
+    om_mission_check_external_reinforcements(w);
     if (!st->has_evaluated) return;
     for (i = 0; i < st->n_forces; i++) {
         om_macro_force *f = &st->forces[i];
         f->last_issued_command_type = om_macro_command_for_behavior(f->behavior);
         om_macro_log_command(w, slot, i, f->last_issued_command_type);
+    }
+    /* R-124-01: once per mission, roll the wave at the evaluation boundary while in
+     * tactical phase; wave_set = 1 after any roll so this fires exactly once. */
+    if (!st->wave_set && om_mission_get_phase(w) > 0) {
+        om_reinforcement_wave wave_out;
+        om_mission_schedule_external_reinforcement(w, &wave_out);
     }
 }
 

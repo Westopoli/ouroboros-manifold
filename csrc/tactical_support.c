@@ -839,7 +839,12 @@ static void om_sup_structure_tick_production_driver(om_world *w, om_sup_structur
     interval = om_structure_production_interval_ticks(s->power);
     if (interval == 0) return;
     om_sup_structure_refresh_position(w, s);
-    while (s->timer >= interval) om_structure_tick_production(w, idx);
+    /* R-126-02: spawn a unit for each production tick; pending_spawns stays as a visible
+     * count (pop callers unaffected). layer 0: structure has no layer field. */
+    while (s->timer >= interval) {
+        om_structure_tick_production(w, idx);
+        om_unit_spawn(w, (int)s->unit_type, s->owner, s->last_spawn_x, s->last_spawn_y, 0);
+    }
 }
 
 /* Per-step driver: om_tactical_step calls this once per step after
