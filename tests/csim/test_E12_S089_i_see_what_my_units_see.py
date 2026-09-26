@@ -72,9 +72,9 @@ def test_R_089_02_player_visible_enemy_list_their(lib, world_factory):
     assert lib.om_unit_can_see(w, f2, e1) == 0
 
     # Player-visible list is the exact union: contains e1 and e2, not e3
-    assert lib.om_player_can_see(w, e1) == 1
-    assert lib.om_player_can_see(w, e2) == 1
-    assert lib.om_player_can_see(w, e3) == 0
+    assert lib.om_player_can_see(w, 0, e1) == 1
+    assert lib.om_player_can_see(w, 0, e2) == 1
+    assert lib.om_player_can_see(w, 0, e3) == 0
 
 
 def test_R_089_03_it_not_drawn_its_hp(lib, world_factory):
@@ -86,7 +86,7 @@ def test_R_089_03_it_not_drawn_its_hp(lib, world_factory):
     unseen_enemy = lib.om_unit_spawn(w, OMUnitType.RAIDER, 1, 5000.0, 5000.0, 0)
 
     lib.om_visibility_compute(w)
-    assert lib.om_player_can_see(w, unseen_enemy) == 0
+    assert lib.om_player_can_see(w, 0, unseen_enemy) == 0
 
     # Verify client snapshot excludes unseen enemy position and HP
     client_data = lib.om_client_snapshot_read(w)
@@ -107,12 +107,12 @@ def test_R_089_04_it_recomputed_every_tick_from(lib, world_factory):
 
     # Tick 1: enemy in sensor range (200 wu) -> visible
     lib.om_tactical_step(w)
-    assert lib.om_player_can_see(w, e) == 1
+    assert lib.om_player_can_see(w, 0, e) == 1
 
     # Tick 2: enemy moves far outside sensor range (1500 wu) -> immediately not visible
     lib.om_unit_teleport(w, e, 1500.0, 0.0, 0)
     lib.om_tactical_step(w)
-    assert lib.om_player_can_see(w, e) == 0
+    assert lib.om_player_can_see(w, 0, e) == 0
 
 
 def test_R_089_05_friendly_units_always_visible_to(lib, world_factory):
@@ -124,8 +124,8 @@ def test_R_089_05_friendly_units_always_visible_to(lib, world_factory):
     f2 = lib.om_unit_spawn(w, OMUnitType.VANGUARD, 0, 50000.0, 50000.0, 0)
 
     lib.om_visibility_compute(w)
-    assert lib.om_player_can_see_friendly(w, f1) == 1
-    assert lib.om_player_can_see_friendly(w, f2) == 1
+    assert lib.om_player_can_see_friendly(w, 0, f1) == 1
+    assert lib.om_player_can_see_friendly(w, 0, f2) == 1
 
 
 def test_R_089_06_b_seeing_computed_independently_asymmetric(lib, world_factory):

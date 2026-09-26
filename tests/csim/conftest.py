@@ -61,7 +61,7 @@ _build_libs()
 # Bumped to 2 at freeze/F2 (OM_FEAT_TACTICAL, the E-06/E-07/E-11 tick-order
 # bug ids, and om_world_get_state_checksum / om_world_set_tick /
 # om_abi_layout_check are new since version 1).
-EXPECTED_ABI_VERSION = 2
+EXPECTED_ABI_VERSION = 3
 
 
 # ---- enum mirrors (om_field / om_composite / om_tier / om_bug) ----
@@ -1103,7 +1103,7 @@ def _bind_e03(lib):
     lib.om_gen_set_region_range.argtypes = [V, ctypes.c_uint32, ctypes.c_uint32]; lib.om_gen_set_region_range.restype = None
     lib.om_gen_set_faction_count.argtypes = [V, ctypes.c_uint32]; lib.om_gen_set_faction_count.restype = None
     lib.om_gen_set_extra_edge_ratio.argtypes = [V, ctypes.c_double]; lib.om_gen_set_extra_edge_ratio.restype = None
-    lib.om_gen_set_player_preference.argtypes = [V, ctypes.c_int]; lib.om_gen_set_player_preference.restype = None
+    lib.om_gen_set_player_preference.argtypes = [V, ctypes.c_int32, ctypes.c_int]; lib.om_gen_set_player_preference.restype = None
     lib.om_gen_set_preference_weight.argtypes = [V, ctypes.c_double]; lib.om_gen_set_preference_weight.restype = None
     lib.om_gen_set_extra_edges_enabled.argtypes = [V, ctypes.c_int]; lib.om_gen_set_extra_edges_enabled.restype = None
     lib.om_gen_set_home_range.argtypes = [V, ctypes.c_int, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double]
@@ -1134,9 +1134,9 @@ def gen_set_extra_edge_ratio(lib, w, ratio):
     lib.om_gen_set_extra_edge_ratio(w, ratio)
 
 
-def gen_set_player_preference(lib, w, template):
+def gen_set_player_preference(lib, w, template, faction_id=0):
     _bind_e03(lib)
-    lib.om_gen_set_player_preference(w, template)
+    lib.om_gen_set_player_preference(w, faction_id, template)
 
 
 def gen_set_preference_weight(lib, w, preferred):
@@ -1846,7 +1846,7 @@ def _bind_e07(lib):
     _bind(lib, "om_faction_set_created_tick", [W, ctypes.c_int32, ctypes.c_uint64], None, ("w", "faction_id", "tick"))
     _bind(lib, "om_faction_set_event_window_counts", [W, ctypes.c_int32, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "faction_id", "total_events", "revolts", "attacks", "colonizations"), kw=True)
     _bind(lib, "om_faction_territory", [W, ctypes.c_int32], ctypes.c_uint32, ("w", "faction_id"))
-    _bind(lib, "om_player_faction_collapsed", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_player_faction_collapsed", [W, ctypes.c_int32], ctypes.c_int, ("w", "faction_id"))
     _bind(lib, "om_region_held_since", [W, ctypes.c_uint32], ctypes.c_int64, ("w", "idx"))
     _bind(lib, "om_region_previous_owner", [W, ctypes.c_uint32], ctypes.c_int32, ("w", "idx"))
     _bind(lib, "om_region_set_previous_owner", [W, ctypes.c_uint32, ctypes.c_int32], None, ("w", "idx", "faction_id"))
@@ -2108,8 +2108,9 @@ def _bind_e10(lib):
     _bind(lib, "om_mission_get_objective_completion", [W, ctypes.c_uint32], ctypes.c_double, ("w", "objective_idx"))
     _bind(lib, "om_mission_get_objective_score", [W], ctypes.c_double, ("w",))
     _bind(lib, "om_mission_get_objectives", [W, V, ctypes.c_uint32], ctypes.c_uint32, ("w", "out", "max"))
-    _bind(lib, "om_mission_get_player_parity", [W], ctypes.c_double, ("w",))
-    _bind(lib, "om_mission_get_player_units", [W, P(ctypes.c_uint32), ctypes.c_uint32], None, ("w", "out", "max"))
+    _bind(lib, "om_mission_get_player_parity", [W, ctypes.c_int32], ctypes.c_double, ("w", "faction_id"))
+    _bind(lib, "om_mission_get_player_units", [W, ctypes.c_int32, P(ctypes.c_uint32), ctypes.c_uint32], None, ("w", "faction_id", "out", "max"))
+    _bind(lib, "om_mission_get_region_delta", [W, P(ctypes.c_double), P(ctypes.c_double), P(ctypes.c_double), P(ctypes.c_double)], ctypes.c_int, ("w", "military", "economy", "tension", "population"))
     _bind(lib, "om_mission_get_shortfall_text", [W, ctypes.c_char_p, ctypes.c_uint32], None, ("w", "out", "cap"))
     _bind(lib, "om_mission_get_time_limit", [W], ctypes.c_uint64, ("w",))
     _bind(lib, "om_mission_inject_candidate", [W, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_double], None, ("w", "region_idx", "archetype", "score"))
@@ -2125,7 +2126,7 @@ def _bind_e10(lib):
     _bind(lib, "om_mission_set_conflict_context", [W, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_double, ctypes.c_uint32], None, ("w", "region_idx", "recent_attacks", "attack_budget_sum", "adjacent_lost"))
     _bind(lib, "om_mission_set_lineage_context", [W, ctypes.c_uint32, ctypes.c_double, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "region_idx", "lineage", "hops", "times_run"))
     _bind(lib, "om_mission_set_objective_completion", [W, ctypes.c_uint32, ctypes.c_double], None, ("w", "objective_idx", "completion"))
-    _bind(lib, "om_mission_set_player_units", [W, P(ctypes.c_uint32), ctypes.c_uint32], None, ("w", "counts", "n_types"))
+    _bind(lib, "om_mission_set_player_units", [W, ctypes.c_int32, P(ctypes.c_uint32), ctypes.c_uint32], None, ("w", "faction_id", "counts", "n_types"))
     _bind(lib, "om_mission_set_preference", [W, ctypes.c_uint32, ctypes.c_double], None, ("w", "archetype", "weight"))
     _bind(lib, "om_mission_set_revolt_events", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "region_idx", "recent_revolt_events"))
     _bind(lib, "om_mission_setup", [W, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_int], None, ("w", "p1", "archetype", "lineage_connection"))
@@ -2137,6 +2138,7 @@ def _bind_e10(lib):
     _bind(lib, "om_mission_setup_tactical", [W, ctypes.c_uint32, ctypes.c_uint64], None, ("w", "p1", "time_limit"))
     _bind(lib, "om_mission_setup_termination", [W, ctypes.c_uint32, ctypes.c_int, ctypes.c_int, ctypes.c_uint64, ctypes.c_uint64, ctypes.c_int], None, ("w", "p1", "primary_complete", "p3", "tick", "time_limit", "player_alive"))
     _bind(lib, "om_objective_set_center", [W, ctypes.c_uint32, ctypes.c_double, ctypes.c_double], ctypes.c_int, ("w", "objective_idx", "x", "y"))
+    _bind(lib, "om_player_faction", [W], ctypes.c_int32, ("w",))
     _bind(lib, "om_region_get_held_since", [W, ctypes.c_uint32], ctypes.c_int64, ("w", "idx"))
     _bind(lib, "om_region_get_owner", [W, ctypes.c_uint32], ctypes.c_int32, ("w", "idx"))
     _bind(lib, "om_region_set_owner", [W, ctypes.c_uint32, ctypes.c_int32, ctypes.c_int64], None, ("w", "idx", "faction_id", "held_since_tick"))
@@ -2243,8 +2245,8 @@ def _bind_e12(lib):
     _bind(lib, "om_mission_get_phase", [W], ctypes.c_int, ("w",))
     _bind(lib, "om_mission_is_started", [W], ctypes.c_int, ("w",))
     _bind(lib, "om_mission_set_phase", [W, ctypes.c_int], None, ("w", "phase"))
-    _bind(lib, "om_player_can_see", [W, ctypes.c_uint32], ctypes.c_int, ("w", "unit"))
-    _bind(lib, "om_player_can_see_friendly", [W, ctypes.c_uint32], ctypes.c_int, ("w", "unit"))
+    _bind(lib, "om_player_can_see", [W, ctypes.c_int32, ctypes.c_uint32], ctypes.c_int, ("w", "faction_id", "unit"))
+    _bind(lib, "om_player_can_see_friendly", [W, ctypes.c_int32, ctypes.c_uint32], ctypes.c_int, ("w", "faction_id", "unit"))
     _bind(lib, "om_player_can_see_unit", [W, ctypes.c_int32, ctypes.c_uint32], ctypes.c_int, ("w", "p0", "unit"))
     _bind(lib, "om_recon_get_terrain_visibility_ratio", [W], ctypes.c_double, ("w",))
     _bind(lib, "om_recon_is_enemy_visible", [W, ctypes.c_uint32], ctypes.c_int, ("w", "unit"))
@@ -2408,7 +2410,7 @@ def _bind_e15(lib):
     _bind(lib, "om_mission_compute_reinforcement_capacity", [ctypes.c_double, ctypes.c_uint64], ctypes.c_double, ("c_double", "time"))
     _bind(lib, "om_mission_compute_starting_force", [ctypes.c_double], ctypes.c_double, ("c_double",))
     _bind(lib, "om_mission_get_reinforcement_trickle", [W], ctypes.c_uint32, ("w",))
-    _bind(lib, "om_mission_set_player_held_structures_count", [W, ctypes.c_uint32], None, ("w", "held"))
+    _bind(lib, "om_mission_set_player_held_structures_count", [W, ctypes.c_int32, ctypes.c_uint32], None, ("w", "faction_id", "held"))
     _bind(lib, "om_mission_setup_extraction_point", [W, ctypes.c_double, ctypes.c_double, ctypes.c_double], None, ("w", "p1", "c_double", "p3"))
     _bind(lib, "om_objective_get_center", [W, ctypes.c_uint32, V], ctypes.c_int, ("w", "objective_idx", "out"))
     _bind(lib, "om_objective_is_contested", [W, ctypes.c_uint32], ctypes.c_int, ("w", "objective"))

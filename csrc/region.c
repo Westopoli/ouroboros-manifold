@@ -312,7 +312,7 @@ uint32_t om_checksum_cadence(void) {
 
 
 uint32_t om_abi_version(void) {
-    return 2;
+    return OM_ABI_VERSION;
 }
 
 /* Card-201 (sim.c) functions as WEAK stubs: lets the E-02 fenced suite load the

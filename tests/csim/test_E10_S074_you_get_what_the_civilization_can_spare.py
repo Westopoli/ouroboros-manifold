@@ -120,14 +120,14 @@ def test_R_074_05_20_percent_player_s_units(lib, world_factory):
 
     # 10 units initially allocated: 5 Vanguard, 3 Raider, 2 Bombard
     initial_counts = (ctypes.c_uint32 * 3)(5, 3, 2)
-    lib.om_mission_set_player_units(w, initial_counts, 3)
+    lib.om_mission_set_player_units(w, 0, initial_counts, 3)
 
     # Capacity 0.35 < 0.4 triggers shortfall
     lib.om_mission_apply_capacity_shortfall(w, 0.35)
 
     # 20% of 10 units = 2 units removed round-robin from most numerous (Vanguard was 5, Raider 3)
     final_counts = (ctypes.c_uint32 * 3)()
-    lib.om_mission_get_player_units(w, final_counts, 3)
+    lib.om_mission_get_player_units(w, 0, final_counts, 3)
 
     total_remaining = sum(final_counts[i] for i in range(3))
     assert total_remaining == 8  # 10 - 2 = 8

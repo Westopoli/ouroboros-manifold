@@ -50,11 +50,9 @@
  * units (see leaf-01-Q1.md for the ABA hazard this structurally
  * eliminates). */
 
-/* Unit capacity of one tactical battle: E-11's 10,000-unit scale requirement
- * plus headroom. The per-unit arrays in om_tac_state grow from
- * OM_UNITS_INITIAL_CAP by doubling (om_tac_reserve), so a world that never
- * fights allocates nothing and a small fight allocates little. */
-#define OM_MAX_UNITS 10100
+/* OM_MAX_UNITS is now defined in csrc/ouroboros_sim.h (HDR3) as a public macro.
+ * OM_UNITS_INITIAL_CAP and per-unit internal arrays remain local. */
+/* OM_MAX_UNITS 10100 -- see ouroboros_sim.h */
 #define OM_UNITS_INITIAL_CAP 64
 #define OM_GRID_UNLINKED 0xFFFFFFFFu
 /* Spatial grid (om_grid_query_circle): cell edge in world units, the cell

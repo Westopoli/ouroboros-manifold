@@ -410,6 +410,16 @@ static const om_mission_state *om_mis_ro(const om_world *w) {
     return (const om_mission_state *)w->mission_state;
 }
 
+/* HDR3 legacy-compat rule: the mission state holds one player's data slot.
+ * When no player faction is configured (om_player_faction returns -1), any
+ * faction_id may access the slot (backward compat for unconfigured worlds).
+ * When a player IS configured to F, only faction_id==F accesses it; others
+ * get the empty value / setter is no-op. */
+static int mission_faction_is_player(const om_world *w, int32_t faction_id) {
+    int32_t pf = om_player_faction(w);
+    return pf < 0 || faction_id == pf;
+}
+
 static double om_mis_clamp01(double v) {
     if (v < 0.0) return 0.0;
     if (v > 1.0) return 1.0;
@@ -487,17 +497,20 @@ static om_mission_objective *om_mission_ensure_objective(om_mission_state *st, u
     return o;
 }
 
-/* Player faction id: the first in-use faction slot with archetype
- * OM_ARCH_PLAYER. w->faction_used[]/faction_archetype[] are struct fields
- * (om_internal.h is already included above), not a public accessor -- an
- * unused slot defaults to OM_ARCH_PLAYER == 0 via calloc, so faction_used[]
- * is what distinguishes "really is the player" from "never configured". */
-static int32_t om_mission_player_faction(const om_world *w) {
+/* Public player-faction accessor (HDR3): first in-use faction with archetype
+ * OM_ARCH_PLAYER, or -1 when none. faction_used[] distinguishes "really is the
+ * player" from "slot defaulted to OM_ARCH_PLAYER==0 via calloc". */
+int32_t om_player_faction(const om_world *w) {
+    if (!w) return -1;
     for (int32_t i = 0; i < OM_MAX_FACTIONS; i++) {
         if (w->faction_used[i] && w->faction_archetype[i] == OM_ARCH_PLAYER)
             return i;
     }
     return -1;
+}
+/* Thin alias for internal callers that pre-date the public accessor. */
+static int32_t om_mission_player_faction(const om_world *w) {
+    return om_player_faction(w);
 }
 
 /* ALG-55 border threat: the strongest military field among region_idx's
@@ -1727,13 +1740,19 @@ uint32_t om_mission_get_objectives(const om_world *w, om_objective_spec *out, ui
     return n;
 }
 
-double om_mission_get_player_parity(const om_world *w) {
+double om_mission_get_player_parity(const om_world *w, int32_t faction_id) {
+    if (!mission_faction_is_player(w, faction_id)) return 1.0;
     const om_mission_state *st = om_mis_ro(w);
     return (st && st->mission_set) ? st->player_parity : 1.0;
 }
 
-void om_mission_get_player_units(const om_world *w, uint32_t *out, uint32_t max) {
+void om_mission_get_player_units(const om_world *w, int32_t faction_id, uint32_t *out, uint32_t max) {
     if (!out) return;
+    if (!mission_faction_is_player(w, faction_id)) {
+        uint32_t n = max < OM_MISSION_N_UNIT_TYPES ? max : OM_MISSION_N_UNIT_TYPES;
+        for (uint32_t i = 0; i < n; i++) out[i] = 0;
+        return;
+    }
     const om_mission_state *st = om_mis_ro(w);
     uint32_t n = max < OM_MISSION_N_UNIT_TYPES ? max : OM_MISSION_N_UNIT_TYPES;
     for (uint32_t i = 0; i < n; i++) out[i] = st ? st->player_units[i] : 0;
@@ -1937,8 +1956,9 @@ void om_mission_set_objective_completion(om_world *w, uint32_t objective_idx, do
     o->spec.completion = completion;
 }
 
-void om_mission_set_player_units(om_world *w, const uint32_t *counts, uint32_t n_types) {
+void om_mission_set_player_units(om_world *w, int32_t faction_id, const uint32_t *counts, uint32_t n_types) {
     if (!counts) return;
+    if (!mission_faction_is_player(w, faction_id)) return; /* no-op for non-player */
     om_mission_state *st = om_mis(w);
     uint32_t n = n_types < OM_MISSION_N_UNIT_TYPES ? n_types : OM_MISSION_N_UNIT_TYPES;
     for (uint32_t i = 0; i < n; i++) st->player_units[i] = counts[i];

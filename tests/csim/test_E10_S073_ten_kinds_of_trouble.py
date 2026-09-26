@@ -146,13 +146,13 @@ def test_R_073_04_briefing_notes_it_nothing_mechanical(lib, world_factory):
 
     # Mechanical fields: enemy power, player parity, time limit
     pwr_with = lib.om_mission_get_enemy_power(w)
-    parity_with = lib.om_mission_get_player_parity(w)
+    parity_with = lib.om_mission_get_player_parity(w, 0)
     limit_with = lib.om_mission_get_time_limit(w)
 
     # Setup mission without lineage connection
     lib.om_mission_setup(w, 0, OMMissionArchetype.DEFENSIVE_STAND, 0)  # lineage connection = 0
     pwr_without = lib.om_mission_get_enemy_power(w)
-    parity_without = lib.om_mission_get_player_parity(w)
+    parity_without = lib.om_mission_get_player_parity(w, 0)
     limit_without = lib.om_mission_get_time_limit(w)
 
     assert pwr_with == pytest.approx(pwr_without, abs=1e-6)

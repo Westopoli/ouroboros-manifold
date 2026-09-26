@@ -25,6 +25,9 @@
 extern "C" {
 #endif
 
+/* ABI version reported by om_abi_version(). Bump when signatures change. */
+#define OM_ABI_VERSION 3
+
 /* Opaque world handle. */
 typedef struct om_world om_world;
 
@@ -98,13 +101,28 @@ typedef struct om_trace_row {
 /* The test harness asserts this matches what it was written against. Bump on any
  * breaking change to a signature or struct layout. Bumped to 2 at freeze/F2
  * (OM_FEAT_TACTICAL, the E-06/E-07/E-11 tick-order bug ids, and the three
- * core symbols below are new since version 1). */
+ * core symbols below are new since version 1). Bumped to 3 (HDR3): added
+ * om_player_faction(), OM_MAX_UNITS, and faction_id params to om_player_can_see,
+ * om_player_can_see_friendly, om_player_faction_collapsed,
+ * om_mission_get_player_parity, om_mission_get_player_units,
+ * om_mission_set_player_units, om_mission_set_player_held_structures_count,
+ * om_gen_set_player_preference. */
 uint32_t om_abi_version(void);
 /* T1's pipe hello checks the caller's struct sizes against the library's own
  * before trusting anything else over the wire (audit 2026-09-21, A F-8-5):
  * returns 1 when every size matches this build's sizeof, 0 otherwise. */
 int      om_abi_layout_check(uint32_t sizeof_trace_row, uint32_t sizeof_drift_row,
                              uint32_t sizeof_collision);
+
+/* OM_MAX_UNITS: hard cap on simultaneous tactical units (E-11 10k-unit scale
+ * requirement + headroom, ALG-32-01). Single definition for all modules. */
+#define OM_MAX_UNITS 10100
+
+/* om_player_faction: returns the faction id of the first in-use faction whose
+ * archetype is OM_ARCH_PLAYER, or -1 when no such faction is configured.
+ * Used by callers that need the world's authoritative player id rather than
+ * a hardcoded constant. */
+int32_t om_player_faction(const om_world *w);
 
 /* ---- lifecycle ---- */
 om_world *om_world_new(uint32_t n_regions, uint64_t seed);
@@ -726,7 +744,7 @@ void om_gen_set_extra_edge_ratio(om_world *w, double ratio);          /* default
 /* Player faction (id 0) template preference (R-021-04): raises that template's
  * weight in the player roll only, never locks it, and consumes no RNG that would
  * shift any NPC roll. OM_TMPL_NONE (default) = equal weight, same as an NPC. */
-void om_gen_set_player_preference(om_world *w, om_template pref);
+void om_gen_set_player_preference(om_world *w, int32_t faction_id, om_template pref);
 /* Player-preference weight (Q-021-06, configurable): the probability the player's
  * own template roll gives the preferred template when a preference is set; the
  * other two split the remainder equally. Default WORLD_PLAYER_PREFERENCE_WEIGHT
@@ -1343,17 +1361,14 @@ int om_fog_get_treatment_at(const om_world *w, double x, double y, uint32_t laye
 uint32_t om_map_add_hazard_zone(om_world *w, double x, double y, double p2);
 void om_map_add_interference_zone(om_world *w, double x, double y, uint32_t layer, double intensity, double radius);
 void om_map_add_moving_interference_zone(om_world *w, double x, double y, uint32_t layer, double intensity, double radius, double vx, double vy);
-uint32_t om_map_add_spawn_point(om_world *w, double x, double y, int32_t faction_id);
-uint32_t om_map_add_spine_node(om_world *w, double x, double y, int p2);
-uint32_t om_map_add_structure(om_world *w, double x, double y, int32_t owner_faction);
 void om_map_add_vantage_node(om_world *w, double x, double y, double radius);
 void om_mission_begin(om_world *w);
 uint64_t om_mission_get_clock(const om_world *w);
 int om_mission_get_phase(const om_world *w);
 int om_mission_is_started(const om_world *w);
 void om_mission_set_phase(om_world *w, int phase);
-int om_player_can_see(const om_world *w, uint32_t unit);
-int om_player_can_see_friendly(const om_world *w, uint32_t unit);
+int om_player_can_see(const om_world *w, int32_t faction_id, uint32_t unit);
+int om_player_can_see_friendly(const om_world *w, int32_t faction_id, uint32_t unit);
 int om_player_can_see_unit(const om_world *w, int32_t p0, uint32_t unit);
 double om_recon_get_terrain_visibility_ratio(const om_world *w);
 int om_recon_is_enemy_visible(const om_world *w, uint32_t unit);
@@ -1484,7 +1499,7 @@ int om_faction_phase(const om_world *w, int32_t faction_id);
 void om_faction_remove(om_world *w, int32_t faction_id);
 void om_faction_set_created_tick(om_world *w, int32_t faction_id, uint64_t tick);
 void om_faction_set_event_window_counts(om_world *w, int32_t faction_id, uint32_t total_events, uint32_t revolts, uint32_t attacks, uint32_t colonizations);
-int om_player_faction_collapsed(const om_world *w);
+int om_player_faction_collapsed(const om_world *w, int32_t faction_id);
 int32_t om_region_previous_owner(const om_world *w, uint32_t idx);
 void om_region_set_previous_owner(om_world *w, uint32_t idx, int32_t faction_id);
 uint32_t om_tick_absorptions(const om_world *w, om_absorption_record *out, uint32_t max);
@@ -1545,8 +1560,8 @@ double om_mission_get_enemy_power(const om_world *w);
 double om_mission_get_objective_completion(const om_world *w, uint32_t objective_idx);
 double om_mission_get_objective_score(const om_world *w);
 uint32_t om_mission_get_objectives(const om_world *w, om_objective_spec *out, uint32_t max);
-double om_mission_get_player_parity(const om_world *w);
-void om_mission_get_player_units(const om_world *w, uint32_t *out, uint32_t max);
+double om_mission_get_player_parity(const om_world *w, int32_t faction_id);
+void om_mission_get_player_units(const om_world *w, int32_t faction_id, uint32_t *out, uint32_t max);
 int om_mission_get_region_delta(const om_world *w, double *military, double *economy, double *tension, double *population);
 void om_mission_get_shortfall_text(const om_world *w, char *out, uint32_t cap);
 uint64_t om_mission_get_time_limit(const om_world *w);
@@ -1563,7 +1578,7 @@ void om_mission_set_candidate_viable(om_world *w, uint32_t archetype, int viable
 void om_mission_set_conflict_context(om_world *w, uint32_t region_idx, uint32_t recent_attacks, double attack_budget_sum, uint32_t adjacent_lost);
 void om_mission_set_lineage_context(om_world *w, uint32_t region_idx, double lineage, uint32_t hops, uint32_t times_run);
 void om_mission_set_objective_completion(om_world *w, uint32_t objective_idx, double completion);
-void om_mission_set_player_units(om_world *w, const uint32_t *counts, uint32_t n_types);
+void om_mission_set_player_units(om_world *w, int32_t faction_id, const uint32_t *counts, uint32_t n_types);
 void om_mission_set_preference(om_world *w, uint32_t archetype, double weight);
 void om_mission_set_revolt_events(om_world *w, uint32_t region_idx, uint32_t recent_revolt_events);
 void om_mission_setup(om_world *w, uint32_t p1, uint32_t archetype, int lineage_connection);
@@ -1602,6 +1617,9 @@ double om_gradient_sample_single(double p0, double p1, double p2, int p3);
 uint32_t om_map_add_cover(om_world *w, double x, double y, double radius, double height);
 void om_map_add_layer_restriction_zone(om_world *w, double p1, double zone, uint32_t p3);
 uint32_t om_map_add_obstacle(om_world *w, double x, double y, double radius);
+uint32_t om_map_add_spawn_point(om_world *w, double x, double y, int32_t faction_id);
+uint32_t om_map_add_spine_node(om_world *w, double x, double y, int p2);
+uint32_t om_map_add_structure(om_world *w, double x, double y, int32_t owner_faction);
 int om_map_archetype_canvas_category(uint32_t mission);
 double om_map_check_boundary_gradient_discontinuity(om_world *w, double p1, double boundary);
 double om_map_clamp_flavoring_delta(double delta);
@@ -1706,7 +1724,7 @@ void om_mission_check_extraction_objectives(om_world *w);
 double om_mission_compute_reinforcement_capacity(double c_double, uint64_t time);
 double om_mission_compute_starting_force(double c_double);
 uint32_t om_mission_get_reinforcement_trickle(om_world *w);
-void om_mission_set_player_held_structures_count(om_world *w, uint32_t held);
+void om_mission_set_player_held_structures_count(om_world *w, int32_t faction_id, uint32_t held);
 void om_mission_setup_extraction_point(om_world *w, double p1, double c_double, double p3);
 int om_objective_is_contested(om_world *w, uint32_t objective);
 void om_objective_setup_drifting(om_world *w, uint32_t objective, uint64_t period);
@@ -1771,9 +1789,7 @@ void om_tactical_spawn_force_composition(om_world *w, int32_t faction_id, uint32
 int om_tactical_target_validation_runs_every_tick(om_world *w);
 int om_tactical_telegraph_active(om_world *w, double x, double y);
 uint64_t om_tactical_tick(om_world *w);
-/* E-13 R-099-03: base ticks elapsed in the battle (sum of every step's period); the step index is om_tactical_tick. */
 uint64_t om_tactical_base_tick(const om_world *w);
-/* E-13 R-099-03: base ticks per tactical step, 1 or 2 (2 above 1,000 live units). */
 uint32_t om_tactical_tick_period(const om_world *w);
 uint64_t om_tactical_tick_to(om_world *w, uint64_t tick);
 int om_tactical_zone_visible_to_enemy(om_world *w, uint32_t unit_id);

@@ -135,8 +135,16 @@
 
 /* R-126-01's owner-id space is a fixture convention distinct from E-05's
  * faction id space (0 = player there); here 1 = player, 2 = enemy, 0 =
- * neutral, per signatures.toml's om_structure_set_owner note. */
-#define OM_SUP_PLAYER_OWNER 1
+ * neutral, per signatures.toml's om_structure_set_owner note. HDR3 legacy
+ * fallback: worlds with no configured player faction still treat owner 1 as
+ * "player" in captured/lost ticker messages. */
+#define OM_SUP_PLAYER_OWNER_FALLBACK 1
+
+/* HDR3 rule 2: use configured player faction when available, else fallback 1. */
+static int32_t sup_player_owner_id(const om_world *w) {
+    int32_t pf = om_player_faction(w);
+    return pf >= 0 ? pf : OM_SUP_PLAYER_OWNER_FALLBACK;
+}
 
 /* om_drift_interpolate's OMDriftMode (tests/csim/test_E15_S130_*.py). */
 #define OM_SUP_DRIFT_PING_PONG 0
@@ -589,7 +597,11 @@ uint32_t om_mission_get_reinforcement_trickle(om_world *w) {
     return 0; /* R-126-06: the only reinforcement is R-126-02's structure production */
 }
 
-void om_mission_set_player_held_structures_count(om_world *w, uint32_t held) {
+void om_mission_set_player_held_structures_count(om_world *w, int32_t faction_id, uint32_t held) {
+    /* HDR3 legacy-compat: unconfigured worlds allow any faction_id; configured
+     * worlds only allow the player faction. Mirrors mission.c's rule. */
+    int32_t pf = om_player_faction(w);
+    if (pf >= 0 && faction_id != pf) return; /* no-op for non-player */
     om_sup(w)->held_structures_count = held;
 }
 
@@ -692,10 +704,13 @@ double om_structure_get_hp(om_world *w, uint32_t structure) {
 void om_structure_on_owner_changed(om_world *w, uint32_t structure, int32_t old_owner, int32_t new_owner) {
     (void)structure;
     /* R-127-04/E-16 R-104-01: from the player's perspective only -- the
-     * player either just gained or just lost the structure. */
-    if (new_owner == OM_SUP_PLAYER_OWNER) {
+     * player either just gained or just lost the structure. HDR3: uses
+     * sup_player_owner_id(w) which returns the configured player faction or
+     * falls back to OM_SUP_PLAYER_OWNER_FALLBACK (1) for unconfigured worlds. */
+    int32_t player = sup_player_owner_id(w);
+    if (new_owner == player) {
         om_sup_push_ticker(w, "Structure captured.");
-    } else if (old_owner == OM_SUP_PLAYER_OWNER) {
+    } else if (old_owner == player) {
         om_sup_push_ticker(w, "Structure lost.");
     } else {
         om_sup_push_ticker(w, "Structure changed hands.");
@@ -944,7 +959,7 @@ uint32_t om_render_get_unit_silhouette_id(uint32_t unit_type) {
 }
 
 uint32_t om_render_get_owner_color(int32_t owner) {
-    if (owner == OM_SUP_PLAYER_OWNER) return OM_SUP_RENDER_COLOR_PLAYER;
+    if (owner == OM_SUP_PLAYER_OWNER_FALLBACK) return OM_SUP_RENDER_COLOR_PLAYER;
     if (owner == 0) return OM_SUP_RENDER_COLOR_NEUTRAL;
     return OM_SUP_RENDER_COLOR_ENEMY;
 }

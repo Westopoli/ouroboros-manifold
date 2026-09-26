@@ -116,7 +116,15 @@
 #define OM_FOG_TREATMENT_FOGGED 1
 #define OM_FOG_TREATMENT_INTERFERENCE 2
 
-#define OM_FOG_PLAYER_FACTION 0
+/* HDR3 legacy fallback: worlds with no configured player faction still reveal
+ * fog to faction 0 in tile queries and the snapshot builder. */
+#define OM_FOG_PLAYER_FACTION_FALLBACK 0
+
+/* HDR3 rule 2: use configured player faction when available, else fallback 0. */
+static int32_t fog_player_faction_id(const om_world *w) {
+    int32_t pf = om_player_faction(w);
+    return pf >= 0 ? pf : OM_FOG_PLAYER_FACTION_FALLBACK;
+}
 
 typedef struct {
     double x, y;
@@ -370,10 +378,11 @@ int om_fog_get_treatment_at(const om_world *w, double x, double y, uint32_t laye
     om_world *mw = (om_world *)w;
     om_grid_iter it;
     uint32_t id;
+    int32_t viewer = fog_player_faction_id(w); /* HDR3 rule 2 */
     om_grid_iter_begin(&it, mw, x, y, om_fog_world_bound(w));
     while ((id = om_grid_iter_next(&it)) != 0) {
         double ux, uy;
-        if (om_unit_get_faction(w, id) != OM_FOG_PLAYER_FACTION || !om_unit_alive(mw, id)) continue;
+        if (om_unit_get_faction(w, id) != viewer || !om_unit_alive(mw, id)) continue;
         if (!om_fog_unit_pos(w, id, &ux, &uy)) continue;
         if (om_fog_dist(x, y, ux, uy) <=
             om_fog_effective_radius(st, w, id, 0, 0)) return OM_FOG_TREATMENT_REVEALED;
@@ -449,13 +458,13 @@ void om_mission_set_phase(om_world *w, int phase) {
     st->mission_phase = phase;
 }
 
-int om_player_can_see(const om_world *w, uint32_t unit) {
-    return om_player_can_see_unit(w, OM_FOG_PLAYER_FACTION, unit);
+int om_player_can_see(const om_world *w, int32_t faction_id, uint32_t unit) {
+    return om_player_can_see_unit(w, faction_id, unit);
 }
 
-int om_player_can_see_friendly(const om_world *w, uint32_t unit) {
+int om_player_can_see_friendly(const om_world *w, int32_t faction_id, uint32_t unit) {
     int32_t f = om_unit_get_faction(w, unit);
-    return f < 0 || f == OM_FOG_PLAYER_FACTION;
+    return f < 0 || f == faction_id;
 }
 
 int om_player_can_see_unit(const om_world *w, int32_t p0, uint32_t unit) {
@@ -624,10 +633,11 @@ om_client_snapshot *om_client_snapshot_read(const om_world *w) {
     om_client_snapshot *snap = &st->snapshot;
     uint32_t i, n = om_unit_count(w);
     memset(snap, 0, sizeof(*snap));
+    int32_t viewer = fog_player_faction_id(w); /* HDR3 rule 2 */
     for (i = 0; i < n && snap->unit_count < (uint32_t)(sizeof(snap->units) / sizeof(snap->units[0])); i++) {
         uint32_t id = om_unit_id_at(w, i);
         int32_t f = om_unit_get_faction(w, id);
-        if (f < 0 || !om_player_can_see_unit(w, OM_FOG_PLAYER_FACTION, id)) continue;
+        if (f < 0 || !om_player_can_see_unit(w, viewer, id)) continue;
         snap->units[snap->unit_count].id = id;
         snap->units[snap->unit_count].faction_id = f;
         snap->unit_count++;

@@ -80,10 +80,7 @@
  * factions listed in a tactical frame's "visible". */
 #define OM_PIPE_UNIT_SCAN_MAX 1000000
 #define OM_PIPE_MAX_FACTION_KEYS 32
-/* Mirror of OM_MAX_UNITS in unit.c (E-11 10k-unit scale requirement + headroom,
- * unit.c:57).  Not exported from ouroboros_sim.h; mirrored here for the
- * command unit-list buffer in handle_command. */
-#define OM_MAX_UNITS 10100
+/* OM_MAX_UNITS is now defined in csrc/ouroboros_sim.h (HDR3); no local mirror needed. */
 
 /* ---------------------------------------------------------------------
  * Frame I/O
@@ -1624,6 +1621,12 @@ int main(void) {
     jb_raw(&hello, "[],");
     jb_key(&hello, "checksum_cadence");
     jb_uint(&hello, om_checksum_cadence());
+    jb_putc(&hello, ',');
+    /* HDR3: additive field. -1 at hello time (no world yet); the client uses
+     * om_player_faction() via ctypes after set_seed to get the live value.
+     * See docs/architecture.md "hello frame". */
+    jb_key(&hello, "player_faction");
+    jb_int(&hello, -1);
     jb_putc(&hello, '}');
     write_frame(hello.buf, (uint32_t)hello.len);
     jb_free(&hello);

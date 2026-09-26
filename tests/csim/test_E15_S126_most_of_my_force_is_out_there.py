@@ -126,7 +126,7 @@ def test_R_126_06_units_have_no_cost_player(lib, world_factory):
     assert cost == 0
 
     # Holding 0 structures -> 0 trickle
-    lib.om_mission_set_player_held_structures_count(w, 0)
+    lib.om_mission_set_player_held_structures_count(w, 1, 0)
     trickle = lib.om_mission_get_reinforcement_trickle(w)
     assert trickle == 0
 

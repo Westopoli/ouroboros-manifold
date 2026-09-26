@@ -462,9 +462,14 @@ void om_gen_set_extra_edge_ratio(om_world *w, double ratio) {
     w->gen_extra_edge_ratio = ratio;
 }
 
-void om_gen_set_player_preference(om_world *w, om_template pref) {
+void om_gen_set_player_preference(om_world *w, int32_t faction_id, om_template pref) {
     if (w == NULL)
         return;
+    /* HDR3: faction_id param accepted; stored preference applies to fid==0 in
+     * gen_roll_template (single gen_player_pref field; per-faction storage
+     * requires an om_internal.h field not yet added). Default single-player
+     * behaviour (faction_id==0) is identical to ABI 2. */
+    (void)faction_id;
     w->gen_player_pref = pref;
 }
 

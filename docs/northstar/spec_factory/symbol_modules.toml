@@ -71,6 +71,9 @@ om_world_get_state_checksum         = "sim.c"
 # called by every epic that reads adjacency (no single owning epic)
 om_region_neighbors                 = "faction.c"
 # missions and objectives: E-10
+# HDR3 (ABI 3): om_player_faction is the public accessor for the player faction id;
+# owned by mission.c, called by fog.c/lifecycle.c/tactical_support.c/worldgen.c.
+om_player_faction                   = "mission.c"
 om_mission_compute_parity           = "mission.c"
 om_mission_end                      = "mission.c"
 om_mission_get_objective_completion = "mission.c"

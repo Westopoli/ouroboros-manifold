@@ -390,16 +390,12 @@ void om_faction_set_event_window_counts(om_world *w, int32_t faction_id, uint32_
     w->faction_window_colonizations[faction_id] = colonizations;
 }
 
-int om_player_faction_collapsed(const om_world *w) {
-    if (!w)
+int om_player_faction_collapsed(const om_world *w, int32_t faction_id) {
+    if (!w || faction_id < 0 || faction_id >= OM_MAX_FACTIONS)
         return 0;
-    for (int32_t f = 0; f < OM_MAX_FACTIONS; f++) {
-        if (!w->faction_used[f] || w->faction_archetype[f] != OM_ARCH_PLAYER)
-            continue;
-        if (om_faction_territory(w, f) == 0)
-            return 1;
-    }
-    return 0;
+    if (!w->faction_used[faction_id] || w->faction_archetype[faction_id] != OM_ARCH_PLAYER)
+        return 0;
+    return om_faction_territory(w, faction_id) == 0;
 }
 
 uint32_t om_tick_absorptions(const om_world *w, om_absorption_record *out, uint32_t max) {

@@ -67,7 +67,7 @@ def test_R_052_01_it_has_zero_regions_its(lib, world_factory):
     assert lib.om_faction_budget(w, 0) == pytest.approx(0.0, abs=1e-6)
 
     # Generational structure handles player collapse
-    assert lib.om_player_faction_collapsed(w) == 1
+    assert lib.om_player_faction_collapsed(w, 0) == 1
 
 
 def test_R_052_02_no_rule_anywhere_checks_whether(lib, world_factory):
