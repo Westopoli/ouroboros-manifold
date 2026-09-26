@@ -289,6 +289,7 @@ static om_world *W = NULL;
 static uint64_t g_tick = 0;
 static uint32_t g_n_regions = 0;
 static uint64_t g_tactical_tick = 0;
+static uint32_t g_n_placed_structures = 0;
 
 static int32_t *prev_owner = NULL;
 static double *prev_mil = NULL, *prev_econ = NULL, *prev_ten = NULL;
@@ -1151,6 +1152,7 @@ static void handle_set_seed(const char *json) {
     if (W) om_world_free(W);
     W = om_world_new((uint32_t)n_regions, (uint64_t)seed);
     g_tick = 0;
+    g_n_placed_structures = 0;
     for (int i = 0; i < nf; i++) om_world_set_feature(W, (om_feature)feats[i], 1);
     om_world_generate(W);
     if (!om_world_generated(W)) {
@@ -1498,6 +1500,51 @@ static void handle_objective_complete(const char *json) {
 #endif
 }
 
+#ifdef OM_DEBUG_INJECT
+static void handle_place_structure(const char *json) {
+    if (!W) {
+        write_error("place_structure", "no world");
+        return;
+    }
+    if (g_n_placed_structures >= 64) {
+        write_error("place_structure", "structure limit");
+        return;
+    }
+    int64_t kind = -1;
+    if (!get_i64(json, "kind", &kind)) {
+        write_error("place_structure", "missing kind");
+        return;
+    }
+    if (kind < 0 || kind > 5) {
+        write_error("place_structure", "kind out of range");
+        return;
+    }
+    int64_t owner = INT64_MIN;
+    if (!get_i64(json, "owner", &owner)) {
+        write_error("place_structure", "missing owner");
+        return;
+    }
+    double x = 0.0, y = 0.0;
+    get_f64(json, "x", &x);
+    get_f64(json, "y", &y);
+    (void)x; (void)y; /* no public om_structure_set_position; structure placed at (0,0) */
+    uint32_t slot = g_n_placed_structures++;
+    om_structure_init(W, slot, (uint32_t)kind, om_unit_power((uint32_t)kind));
+    om_structure_set_owner(W, slot, (int32_t)owner);
+    jbuf j;
+    jb_init(&j);
+    jb_putc(&j, '{');
+    jb_key(&j, "type");
+    jb_str(&j, "ok");
+    jb_putc(&j, ',');
+    jb_key(&j, "structure");
+    jb_uint(&j, (uint64_t)slot);
+    jb_putc(&j, '}');
+    write_frame(j.buf, (uint32_t)j.len);
+    jb_free(&j);
+}
+#endif
+
 static void handle_save(const char *json) {
     if (!W) {
         write_error("save", "no world");
@@ -1667,6 +1714,10 @@ int main(void) {
             handle_inject(buf);
         } else if (!strcmp(name, "objective_complete")) {
             handle_objective_complete(buf);
+#ifdef OM_DEBUG_INJECT
+        } else if (!strcmp(name, "place_structure")) {
+            handle_place_structure(buf);
+#endif
         } else if (!strcmp(name, "save")) {
             handle_save(buf);
         } else if (!strcmp(name, "load")) {
