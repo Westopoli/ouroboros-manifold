@@ -25,9 +25,9 @@ def test_R_124_01_wave_scheduled_with_probability_p(lib, world_factory):
     """Given mission generation, When the external-reinforcement roll is made, Then the wave is scheduled with probability p [Q-124-01: 1 in 10 to 20 in the bible; nothing in code], its direction is named in the briefing, its arrival tick is fixed at generation and not shown."""
     w = world_factory(n_regions=1)
 
-    # Probability p = 0.07 per Q-124-01
+    # Probability p = 0.21 per Q-124-03 / ALG-76 (Westley 2026-09-26)
     prob = lib.om_mission_get_external_reinforcement_prob()
-    assert ctypes.c_double(prob).value == pytest.approx(0.07, abs=1e-4)
+    assert ctypes.c_double(prob).value == pytest.approx(0.21, abs=1e-4)
 
     # Generate wave schedule with fixed seed
     wave = OMReinforcementWave()
