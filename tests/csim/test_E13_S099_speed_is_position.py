@@ -30,28 +30,37 @@ def test_R_099_01_strike_wing_reaches_flank_slots(lib, world_factory):
     enemy = lib.om_unit_spawn(w, OMUnitType.BASTION, 1, 350.0, 100.0, 0)
     lib.om_unit_engage(w, front, enemy)
 
-    # Flank destination is at (300.0, 250.0)
-    flank_x, flank_y = 300.0, 250.0
+    # Two flank slots 40 wu apart (> 2 * OM_UNIT_COLLISION_RADIUS = 30) so each unit
+    # can reach its own slot without the other blocking it.
+    # Rule says "flank slots" (plural); one slot per wing.
+    strike_flank_x, strike_flank_y = 280.0, 250.0
+    line_flank_x, line_flank_y = 320.0, 250.0
 
     # Strike unit (Raider, 150 wu/s) and Line unit (Vanguard, 65 wu/s) starting at (0, 100)
     strike = lib.om_unit_spawn(w, OMUnitType.RAIDER, 0, 0.0, 100.0, 0)
     line = lib.om_unit_spawn(w, OMUnitType.VANGUARD, 0, 0.0, 100.0, 0)
 
-    lib.om_command_move(w, strike, 400.0, 100.0)
-    lib.om_command_move(w, line, 400.0, 100.0)
+    # Orders target the flank slots; R-099-01 says "reaches the flank slots first"
+    lib.om_command_move(w, strike, strike_flank_x, strike_flank_y)
+    lib.om_command_move(w, line, line_flank_x, line_flank_y)
 
-    # Run ticks and record arrival at flank slots
+    # Arrival radius: OM_ARRIVAL_TOLERANCE_MULT (1.5, om_constants.h:441)
+    #                 * OM_UNIT_COLLISION_RADIUS (15, om_constants.h:443) = 22.5 wu
+    arrival_radius = 22.5
+
+    # Run ticks and record first-tick arrival at each unit's flank slot.
+    # Raider: 7.5 wu/tick to ~318 wu -> ~43 ticks; Vanguard: 3.25 wu/tick to ~353 wu -> ~109 ticks.
     strike_arrival_tick = None
     line_arrival_tick = None
 
-    for tick in range(100):
+    for tick in range(150):
         lib.om_world_step(w)
         s_x, s_y = lib.om_unit_get_pos(w, strike)
         l_x, l_y = lib.om_unit_get_pos(w, line)
 
-        if strike_arrival_tick is None and math.hypot(s_x - flank_x, s_y - flank_y) < 30.0:
+        if strike_arrival_tick is None and math.hypot(s_x - strike_flank_x, s_y - strike_flank_y) < arrival_radius:
             strike_arrival_tick = tick
-        if line_arrival_tick is None and math.hypot(l_x - flank_x, l_y - flank_y) < 30.0:
+        if line_arrival_tick is None and math.hypot(l_x - line_flank_x, l_y - line_flank_y) < arrival_radius:
             line_arrival_tick = tick
 
     assert strike_arrival_tick is not None
