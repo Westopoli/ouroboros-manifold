@@ -931,7 +931,26 @@ static void evt_evaluate_triggers(om_evt_state *s, om_world *w, double snap[][OM
 void om_step_events(om_world *w) {
     if (!w) return;
     om_evt_state *s = evt_find(w);
-    if (!s || s->n_templates == 0) return;
+    if (!s || s->n_templates == 0) {
+        /* No template library loaded. Drain any due entries written directly to
+         * w->event_queue by om_step_admin_revolts (ALG-29) and faction conquest
+         * (ALG-22) so they do not accumulate to OM_EVT_QUEUE_CAP and block future
+         * om_event_queue_external calls. Non-due entries are kept in case templates
+         * are loaded before their due_tick arrives. */
+        uint64_t tick = w->tick;
+        uint32_t kn = 0;
+        for (uint32_t i = 0; i < w->event_queue_n; i++) {
+            if (w->event_queue[i].due_tick > tick) {
+                if (kn != i) {
+                    w->event_queue[kn] = w->event_queue[i];
+                    if (s) s->queue_source[kn] = s->queue_source[i];
+                }
+                kn++;
+            }
+        }
+        w->event_queue_n = kn;
+        return;
+    }
 
 #ifdef OM_DEBUG_INJECT
     if (w->inject == OM_BUG_NOISE_REROLLED) evt_roll_noise_internal(s, w);
