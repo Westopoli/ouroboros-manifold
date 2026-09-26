@@ -552,7 +552,15 @@ void om_unit_acquire_target(om_world *w, uint32_t unit) {
         d = om_fog_dist(sx, sy, cx, cy);
         if (!found || d < best_dist || (d == best_dist && cand < best)) { found = 1; best_dist = d; best = cand; }
     }
-    if (found) om_command_attack_target(w, &unit, 1, best);
+    if (found) {
+        om_command_attack_target(w, &unit, 1, best);
+    } else if (om_unit_get_target(w, unit) != 0) {
+        /* S-093: nothing visible; drop stale target so om_unit_get_target
+         * never returns information this unit can no longer see.
+         * Attack-move to own position: clears target_id via om_tac_drop_orders
+         * without duplicating om_tac_unit_ai's last-seen fallback (R-087). */
+        om_command_attack_move(w, &unit, 1, sx, sy);
+    }
 }
 
 int om_unit_can_see(const om_world *w, uint32_t observer, uint32_t target) {

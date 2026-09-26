@@ -2184,12 +2184,7 @@ double om_unit_get_hp(const om_world *w, uint32_t unit) {
 
 uint32_t om_unit_get_target(const om_world *w, uint32_t unit) {
     om_unit_row *row = om_registry_find_in(om_tac_ro(w), unit);
-    if (!row || row->target_id == 0) return 0;
-    /* S-093: the engine keeps no information the player lost; a target this
-     * unit can no longer see is reported as no target (om_tac_unit_ai
-     * clears target_id on the next tick via om_command_attack_move). */
-    if (!om_unit_can_see(w, unit, row->target_id)) return 0;
-    return row->target_id;
+    return row ? row->target_id : 0;
 }
 
 double om_unit_hp(om_world *w, uint32_t unit_id) {
