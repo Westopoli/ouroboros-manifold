@@ -30,10 +30,10 @@ def test_R_131_01_structures_distinguishable_by_owner_color(lib, world_factory):
         unit_sil = lib.om_render_get_unit_silhouette_id(unit_type)
         assert structure_sil != unit_sil
 
-    # Distinguishable colors by owner: player (1), enemy (2), neutral (0)
-    color_p = lib.om_render_get_owner_color(1)
-    color_e = lib.om_render_get_owner_color(2)
-    color_n = lib.om_render_get_owner_color(0)
+    # Distinguishable colors by owner: faction 0 (player slot), faction 1 (enemy slot), neutral (-1)
+    color_p = lib.om_render_get_owner_color(0)
+    color_e = lib.om_render_get_owner_color(1)
+    color_n = lib.om_render_get_owner_color(-1)
     assert color_p != color_e
     assert color_p != color_n
     assert color_e != color_n

@@ -4725,7 +4725,7 @@ restype = "int32_t"
 params = [{ name = "w", ctype = "om_world*" }, { name = "structure", ctype = "uint32_t" }]
 epics = ["E-15"]
 confidence = "likely"
-note = "p1 = structure idx. Return == 1 faction id."
+note = "p1 = structure idx. Returns E-05 faction id; -1 = neutral (W-1d/option a)."
 
 [[symbols]]
 name = "om_structure_get_position"
@@ -4851,7 +4851,7 @@ restype = "void"
 params = [{ name = "w", ctype = "om_world*" }, { name = "structure", ctype = "uint32_t" }, { name = "owner", ctype = "int32_t" }]
 epics = ["E-15"]
 confidence = "likely"
-note = "p1 = structure idx; p2 = owner faction (2 enemy, 0 neutral, 1 player per comments; differs from E-05 faction id space where 0 = player). Return unused."
+note = "p1 = structure idx; p2 = owner as E-05 faction id (-1 = neutral, 0+ = faction). W-1d/option (a): neutral is -1, not 0. Return unused."
 
 [[symbols]]
 name = "om_structure_set_timer"

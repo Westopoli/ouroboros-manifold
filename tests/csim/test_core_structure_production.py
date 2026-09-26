@@ -81,7 +81,7 @@ def test_player_structure_spawns_configured_player_faction(lib, world_factory):
     power = 10.0
     interval = lib.om_structure_production_interval_ticks(ctypes.c_double(power))
     lib.om_structure_init(w, 0, OMUnitType.RAIDER, ctypes.c_double(power))
-    lib.om_structure_set_owner(w, 0, 1)
+    lib.om_structure_set_owner(w, 0, 0)
 
     for _ in range(interval):
         lib.om_tactical_step(w)
@@ -176,8 +176,8 @@ def test_player_capture_owner0_skips_production(lib, world_factory):
     power = 10.0
     interval = lib.om_structure_production_interval_ticks(ctypes.c_double(power))
     lib.om_structure_init(w, 0, OMUnitType.RAIDER, ctypes.c_double(power))
-    # Live capture by player faction 0 -> s->owner = 0 (E-05 faction id).
-    lib.om_structure_set_owner(w, 0, 0)
+    # Neutral structure (owner -1); analogous to pre-capture state.
+    lib.om_structure_set_owner(w, 0, -1)
 
     for _ in range(interval):
         lib.om_tactical_step(w)
