@@ -42,6 +42,7 @@ var _chronicle_snapshot: Dictionary = {}
 var _tactical: Dictionary = {}
 var _session_args: Array = []
 var _session_id: int = 0
+var _player_faction: int = -1
 var _mission_active := false
 var _mission_begun := false
 var _session_mission: Dictionary = {}
@@ -207,6 +208,7 @@ func open_session(seed: int, n_regions: int, features: Array) -> bool:
 	_region_index = {}
 	_session_args = [seed, n_regions, features]
 	_session_id += 1
+	_player_faction = -1
 	_mission_active = false
 	_mission_begun = false
 	_session_mission = {}
@@ -244,6 +246,8 @@ func pump() -> int:
 				var rows: Array = _snapshot.get("regions", [])
 				for idx in range(rows.size()):
 					_region_index[int(rows[idx].get("i", -1))] = idx
+				if _snapshot.has("player_faction"):
+					_player_faction = int(_snapshot["player_faction"])
 				changed = true
 			"delta":
 				_apply_delta(frame)
@@ -308,6 +312,10 @@ func _apply_delta(delta: Dictionary) -> void:
 
 func session_id() -> int:
 	return _session_id
+
+
+func player_faction() -> int:
+	return _player_faction
 
 
 func mission_active() -> bool:
