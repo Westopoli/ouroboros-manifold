@@ -137,7 +137,15 @@
  * faction id space (0 = player there); here 1 = player, 2 = enemy, 0 =
  * neutral, per signatures.toml's om_structure_set_owner note. HDR3 legacy
  * fallback: worlds with no configured player faction still treat owner 1 as
- * "player" in captured/lost ticker messages. */
+ * "player" in captured/lost ticker messages.
+ * Spawn-time mapping in om_sup_structure_tick_production_driver: owner 1 ->
+ * sup_player_owner_id(w), owner 2 -> skip spawn (mission.c has no public
+ * om_mission_get_enemy_faction; leftover W-1b), any other value -> passed
+ * through as an E-05 faction id (live capture sets s->owner = capturing_faction
+ * directly, an E-05 id). Owner 0 = neutral is guarded by the early-return
+ * at the top of the driver.
+ * option (a): owner = E-05 faction id with neutral = -1 is the eventual
+ * multiplayer-proper form of this map. */
 #define OM_SUP_PLAYER_OWNER_FALLBACK 1
 
 /* HDR3 rule 2: use configured player faction when available, else fallback 1. */
@@ -839,7 +847,22 @@ static void om_sup_structure_tick_production_driver(om_world *w, om_sup_structur
     interval = om_structure_production_interval_ticks(s->power);
     if (interval == 0) return;
     om_sup_structure_refresh_position(w, s);
-    while (s->timer >= interval) om_structure_tick_production(w, idx);
+    while (s->timer >= interval) {
+        int32_t faction;
+        om_structure_tick_production(w, idx);
+        /* owner 1 = player: map through configured player faction or fallback.
+         * owner 2 = enemy: no public om_mission_get_enemy_faction in mission.c
+         *   (mission_region stored at mission.c:289; static fn at mission.c:1980);
+         *   skip spawn until accessor is added. leftover W-1b.
+         * other: E-05 faction id from live capture (s->owner = capturing_faction). */
+        if (s->owner == 1)
+            faction = sup_player_owner_id(w);
+        else if (s->owner == 2)
+            continue;
+        else
+            faction = s->owner;
+        om_unit_spawn(w, (int)s->unit_type, faction, s->last_spawn_x, s->last_spawn_y, 0);
+    }
 }
 
 /* Per-step driver: om_tactical_step calls this once per step after
