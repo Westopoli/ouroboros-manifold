@@ -509,3 +509,16 @@ One row per event: freeze steps, attaches, reverts, parks, rung gates, harness e
 | day5 | test-fix R-124-01 | fixture literal 0.07 -> 0.21 after Westley's Q-124-03 answer; assertions_preserved yes, red_at_stub yes (red on main, green with CONST-1), two_agent_confound: sim lane found, M0 classified; Q-057-02 premise corrected |
 | day5 | test-fix R-045-09 | test-defect: load_launch_events never called so om_event_template_name returned None for every id and the Knowledge Lost filter never matched (0 events counted); add load_launch_events(lib, w) after generate + EVENTS enable; assertions_preserved yes, red_at_stub yes (0.0 before fix, 1.29 after -- within 1.0-2.0 band so test GREEN), two_agent_confound: sim lane found, M0 classified |
 | day5 | test-fix R-111-02 control | test-defect: EVENTS on but no templates loaded so PCG32 made zero draws in one post-load tick; checksums identical with or without RNG state; fix: load_launch_events on both worlds, step 3 ticks (_N_POST_LOAD_TICKS=3; min diverge tick=1 across seeds 2468/1111/3579, margin 2); assertions_preserved yes, red_at_stub yes (same-checksum assert red before fix, different-checksum assert green after), two_agent_confound: sim lane found, M0 classified |
+| day6 | docs q124-close (push/q124-close) | OK  collection and lints OK |
+| day6 | docs CONST-1 (push/CONST-1) | OK  collection and lints OK -- ambiguity_register: Q-124-04 closed |
+| day6 | docs B5c-1 (push/B5c-1) | OK  collection and lints OK -- docs/bible/epics/E-05-B5c |
+| day6 | docs tests-fix-r124 (push/tests-fix-r124) | OK  collection and lints OK |
+| day6 | docs SAVE-1 (push/SAVE-1) | OK  collection and lints OK -- diplomacy.c, events.c, om_constants.h, om_internal.h, save.c, test_core_event_queue_drains.py, test_core_save_pop_history.py (library rebuilt) |
+| day6 | docs EVT-1 (push/EVT-1) | OK  collection and lints OK |
+| day6 | merge W-1a (push/W-1a) | REJECT unknown piece id (W-1a not in pieces.toml) |
+| day6 | docs W-1a (push/W-1a) | OK  collection and lints OK |
+| day6 | docs W-1b (push/W-1b) | OK  collection and lints OK |
+| day6 | docs tests-fix-7 (push/tests-fix-7) | OK  collection and lints OK |
+| day6 | docs W-1c (push/W-1c) | OK  collection and lints OK |
+| day6 | docs W-1d (push/W-1d) | OK  collection and lints OK |
+| day6 | sweep (bk-43; make rebuilt-on-SAVE-1-EVT-1-then-nothing-to-do, pipe clean, pipe_dbg clean) | E06: 1f/37p (R-045-09 pre-existing bisected bk-41/42); E14: 0f/18p; E15: 1f/17p (R-130-02 pre-existing from bk-41); core: 0f/142p; transport: 0f/47p; qa/t1: 2f/31p/1skip (detector controls pre-existing). checksum_trace seed=1 ticks=500 final=12966767929705903382; CONST-1 is docs-only (no lib change), before==after trivially. |
