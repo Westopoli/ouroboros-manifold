@@ -147,4 +147,22 @@ func _run_tests() -> void:
 	_assert(bad.last_error() == "generation failed", "last_error = '%s', expected the pipe's 'generation failed'" % bad.last_error())
 	bad.close_session()
 
+	# C2-8: c_bridge.gd stores player_faction from the snapshot frame.
+	# Before any world: player_faction() == -1.
+	# After the first snapshot from set_seed: player_faction() == snapshot["player_faction"].
+	var pf_bridge = CBridge.new()
+	_assert(pf_bridge.has_method("player_faction"), "c_bridge.gd missing method player_faction (piece C2-8 not attached yet)")
+	if not pf_bridge.has_method("player_faction"):
+		return
+	_assert(pf_bridge.player_faction() == -1, "player_faction() should be -1 before any world exists, got %d" % pf_bridge.player_faction())
+
+	_assert(pf_bridge.open_session(SEED, CBridge.DEFAULT_N_REGIONS, CBridge.DEFAULT_FEATURES), "open_session for player_faction test returned false: %s" % pf_bridge.last_error())
+	var got_snap_pf := _pump_until(pf_bridge, func(): return (pf_bridge.snapshot().get("regions", []) as Array).size() > 0, SNAPSHOT_TIMEOUT_MS)
+	_assert(got_snap_pf, "no snapshot within %d ms for player_faction test (last_error = %s)" % [SNAPSHOT_TIMEOUT_MS, pf_bridge.last_error()])
+	if got_snap_pf:
+		var snap_pf: int = int(pf_bridge.snapshot().get("player_faction", -999))
+		_assert(snap_pf != -999, "snapshot frame missing player_faction key (T1-14 not on this branch)")
+		_assert(pf_bridge.player_faction() == snap_pf, "bridge.player_faction() = %d, snapshot['player_faction'] = %d (mismatch)" % [pf_bridge.player_faction(), snap_pf])
+	pf_bridge.close_session()
+
 	_completed = true

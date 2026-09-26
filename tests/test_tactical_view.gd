@@ -49,6 +49,7 @@ extends SceneTree
 const SCENE_PATH := "res://scenes/tactical_c/tactical_view.tscn"
 const FIXTURE_TICK0_PATH := "res://tests/fixtures/tactical_frame_seed11.json"
 const FIXTURE_TICK10_PATH := "res://tests/fixtures/tactical_frame_seed11_tick10.json"
+const FIXTURE_PF1_PATH := "res://tests/fixtures/tactical_frame_seed11_pf1.json"
 const N_UNITS := 12
 const LOCAL_FACTION := 0
 const PLANTS := ["facing-fixed", "camera-unbounded"]
@@ -64,6 +65,7 @@ var _frame10: Dictionary
 var _live_tests_completed := false
 var _c53_completed := false
 var _c54_completed := false
+var _c28_completed := false
 
 
 func _initialize() -> void:
@@ -142,6 +144,8 @@ func _run_tests() -> void:
 	_assert(_live_tests_completed, "the live-frame checks did not run to the end (a script error aborted them, or c_bridge.gd lacks load_tactical_live / tactical_frame / DEFAULT_FEATURES)")
 	await _run_c54_tests()
 	_assert(_c54_completed, "the C5-4 checks did not run to the end (a script error aborted them, or tactical_view.gd lacks commands_sent_last_order / units_in_last_command / move-order-dropped plant)")
+	await _run_c28_tests()
+	_assert(_c28_completed, "the C2-8 checks did not run to the end (a script error aborted them, or tactical_view.gd does not read player_faction from the loaded frame)")
 
 
 # Piece C5-2 (docs/architecture.md "session commands (v1.1)"): with no
@@ -596,6 +600,81 @@ func _check_plant_nope_and_all_real_plants_true() -> void:
 	_assert(not _root.qa_plant("nope"), "qa_plant('nope') must return false")
 	for id in PLANTS:
 		_assert(_root.qa_plant(id), "qa_plant(%s) must return true" % id)
+
+
+# Piece C2-8: the view reads player_faction from the loaded frame so that
+# faction-1 units are the player's when player_faction == 1.
+# RED before source change: LOCAL_FACTION constant is 0, so the pf=1 fixture
+# drives the view as if the player were faction 0 (wrong colours, wrong visible
+# set used).
+func _run_c28_tests() -> void:
+	SimSession_reset()
+	var frame_pf1: Dictionary = _read_json(FIXTURE_PF1_PATH)
+	_assert(not frame_pf1.is_empty(), "C2-8 fixture missing or unparsable: " + FIXTURE_PF1_PATH)
+	if frame_pf1.is_empty():
+		return
+	_assert(int(frame_pf1.get("player_faction", -999)) == 1, "C2-8 fixture bug: player_faction should be 1, got %s" % frame_pf1.get("player_faction"))
+
+	# The pf=1 fixture lists visible["1"] as the player's set and visible["0"]
+	# as the opponent's set.  faction-1 unit ids: 7..12.  faction-0 ids: 1..6.
+	# visible["1"] = [7,8,9,10,11,12,1,2,3,4]; 5 and 6 are outside that set.
+	var expected_pf1: Array = frame_pf1.get("visible", {}).get("1", [])
+	var faction1_ids: Array = []
+	var faction0_ids: Array = []
+	for u in frame_pf1.get("units", []):
+		if int(u.get("faction", -1)) == 1:
+			faction1_ids.append(int(u.get("id")))
+		else:
+			faction0_ids.append(int(u.get("id")))
+	_assert(faction1_ids.size() > 0, "C2-8 fixture bug: no faction-1 units")
+	_assert(faction0_ids.size() > 0, "C2-8 fixture bug: no faction-0 units")
+
+	var view: Node = await _mount_view()
+	view.load_frame(frame_pf1)
+	await process_frame
+	var st: Dictionary = view.qa_state()
+
+	# local_faction must equal the frame's player_faction (1) once the source is fixed.
+	# RED: local_faction == 0 because LOCAL_FACTION is a literal constant.
+	_assert(int(st.get("local_faction", -1)) == 1,
+		"C2-8: local_faction should be 1 when frame carries player_faction=1, got %s" % st.get("local_faction"))
+
+	# The visible set for pf=1 is visible["1"]; drawn units should equal that set.
+	var drawn_pf1: Array = _int_keys(st.get("units_px", {}))
+	_assert(_same_set(drawn_pf1, expected_pf1),
+		"C2-8 pf=1: drawn ids %s should equal visible['1'] %s" % [str(drawn_pf1), str(expected_pf1)])
+
+	# faction-1 units inside visible["1"] must appear; faction-0 units outside it must not.
+	for id in faction1_ids:
+		_assert(drawn_pf1.has(id),
+			"C2-8 pf=1: faction-1 unit %d should be drawn (own faction)" % id)
+	var invisible_f0: Array = []
+	for id in faction0_ids:
+		if not (expected_pf1 as Array).map(func(v): return int(v)).has(id):
+			invisible_f0.append(id)
+	for id in invisible_f0:
+		_assert(not drawn_pf1.has(id),
+			"C2-8 pf=1: faction-0 unit %d is outside visible['1'] and must not be drawn" % id)
+
+	view.queue_free()
+	await process_frame
+
+	# The pf=0 path: original fixture (no player_faction field) still works as before.
+	SimSession_reset()
+	var view0: Node = await _mount_view()
+	view0.load_frame(_frame0)
+	await process_frame
+	var st0: Dictionary = view0.qa_state()
+	_assert(int(st0.get("local_faction", -1)) == 0,
+		"C2-8 pf=0: local_faction should be 0 with the original fixture, got %s" % st0.get("local_faction"))
+	var expected_pf0: Array = _frame0.get("visible", {}).get("0", [])
+	var drawn_pf0: Array = _int_keys(st0.get("units_px", {}))
+	_assert(_same_set(drawn_pf0, expected_pf0),
+		"C2-8 pf=0: drawn ids %s should equal visible['0'] %s" % [str(drawn_pf0), str(expected_pf0)])
+	view0.queue_free()
+	await process_frame
+	SimSession_reset()
+	_c28_completed = true
 
 
 func _int_keys(d: Dictionary) -> Array:

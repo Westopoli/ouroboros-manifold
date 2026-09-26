@@ -3,7 +3,7 @@
 ## Consumers: unit_renderer.gd, hud.gd (_Minimap), input_router.gd
 extends Node
 
-const PLAYER_FACTION := 0
+const _SimSession := preload("res://autoload/sim_session.gd")
 
 
 func is_unit_visible_to_player(uid: int) -> bool:
@@ -11,8 +11,14 @@ func is_unit_visible_to_player(uid: int) -> bool:
 	if unit.is_empty():
 		return false
 	var faction: int = int(unit.get("faction", -1))
-	if faction == PLAYER_FACTION:
+	var pf: int = _SimSession.bridge().player_faction()
+	if pf < 0:
+		# No player faction known yet: nothing is own; use fog visibility only.
+		return TacticalBridge.player_visible_unit_uids.has(uid)
+	if faction == pf:
 		return true
-	if faction != 1:
+	# In a two-faction game opponent is 1 - pf; neutrals (any other id) are visible.
+	var opponent: int = 1 - pf
+	if faction != opponent:
 		return true
 	return TacticalBridge.player_visible_unit_uids.has(uid)
