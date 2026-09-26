@@ -517,6 +517,12 @@ static void write_snapshot(void) {
         }
     }
     jb_putc(&j, ']');
+    jb_putc(&j, ',');
+    /* T1-14: additive key; real value from om_player_faction after set_seed.
+     * -1 if no player faction is configured (should not occur in a generated
+     * world, but guard matches the hello-frame contract). */
+    jb_key(&j, "player_faction");
+    jb_int(&j, om_player_faction(W));
 
     jb_putc(&j, '}');
     write_frame(j.buf, (uint32_t)j.len);
