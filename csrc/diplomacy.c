@@ -650,54 +650,49 @@ void om_tech_step(om_world *w) {
         double tech = w->faction_tech[f] + growth;
         w->faction_tech[f] = (tech > OM_PCT_SCALE) ? OM_PCT_SCALE : tech;
 
-        /* ALG-27b Knowledge Lost: push avg_p into the per-faction ring (50
-         * ticks), then check both eligibility legs.
-         * Sample point: after growth (w->faction_tech[f] already updated),
-         * before the eligibility read -- the push uses avg_p computed from
-         * the current region fields; the oldest ring slot is only consulted
-         * after the push, so the read always sees data from exactly 50 prior
-         * pushes, never the value just written. */
-        {
-            uint32_t ph = w->faction_pop_history_head[f];
-            uint32_t pl = w->faction_pop_history_len[f];
-            w->faction_pop_history[f][ph] = avg_p;
-            uint32_t ph_new = (ph + 1) % OM_KNOWLEDGE_LOST_POP_WINDOW;
-            w->faction_pop_history_head[f] = ph_new;
-            if (pl < OM_KNOWLEDGE_LOST_POP_WINDOW)
-                w->faction_pop_history_len[f] = ++pl;
-            int pop_drop_eligible = (pl == OM_KNOWLEDGE_LOST_POP_WINDOW) &&
-                (avg_p <= w->faction_pop_history[f][ph_new] - OM_KNOWLEDGE_LOST_POP_DROP);
-            int64_t last_kl = om_faction_last_knowledge_lost(w, f);
-            int eligible = (avg_e < OM_KNOWLEDGE_LOST_ECONOMY) || pop_drop_eligible;
-            if (eligible && ((int64_t)w->tick - last_kl) >= OM_KNOWLEDGE_LOST_COOLDOWN) {
-                double draw = om_rng_draw(w);
-                if (draw < OM_KNOWLEDGE_LOST_P) {
-                    w->faction_tech[f] = fmax(0.0, w->faction_tech[f] - OM_KNOWLEDGE_LOST_DELTA);
-                    om_faction_set_last_knowledge_lost(w, f, (int64_t)w->tick);
-                    /* B1-2's om_event_fire_manual (ALG-49) attaches the region's
-                     * regional/supreme commander at this significance tier; it
-                     * writes to events.c's manual-fire table, not the
-                     * trigger-pipeline s->fired[]/om_tick_events log.
-                     * F2h's om_event_register_external gets Knowledge Lost a
-                     * real template id in that same pipeline (idempotent by
-                     * name, so registering again next time is a lookup, not a
-                     * duplicate); om_event_queue_external then queues it so it
-                     * reaches om_tick_events -- but only one tick later, at the
-                     * queued due_tick's own step 1-2 (om_event_queue_external
-                     * rejects due_tick <= the current tick), and only if
-                     * OM_FEAT_EVENTS is on (csrc/sim.c gates om_step_events on
-                     * it; E-06's test fixtures leave it off -- isolate_agents
-                     * turns it off explicitly, and it is not one of the two
-                     * features world_factory turns on for this epic's module).
-                     * A single-step E-06 test, or one that never enables
-                     * EVENTS, will not see this record in read_events(). */
-                    om_event_fire_manual(w, highest_pop_idx, OM_CHARACTER_ATTACHMENT_TIER_THRESHOLD);
-                    int32_t kl_template = om_event_register_external(w, "Knowledge Lost",
-                        OM_CHARACTER_ATTACHMENT_TIER_THRESHOLD);
-                    if (kl_template >= 0) {
-                        om_event_queue_external(w, highest_pop_idx, (uint32_t)kl_template,
-                            w->tick + 1, 1.0, f, 0);
-                    }
+        /* ALG-27b Knowledge Lost: sample avg_p into the per-faction ring (50
+         * ticks). Read the oldest slot BEFORE overwriting it; pl is the
+         * pre-push length. Pop-drop eligible on the 51st push (pl==50 before
+         * push), when ring[ph] holds the sample from exactly 50 pushes ago. */
+        uint32_t ph = w->faction_pop_history_head[f];
+        uint32_t pl = w->faction_pop_history_len[f];
+        double old_avg_p = w->faction_pop_history[f][ph];
+        w->faction_pop_history[f][ph] = avg_p;
+        w->faction_pop_history_head[f] = (ph + 1) % OM_KNOWLEDGE_LOST_POP_WINDOW;
+        if (pl < OM_KNOWLEDGE_LOST_POP_WINDOW)
+            w->faction_pop_history_len[f] = pl + 1;
+        int pop_drop_eligible = (pl == OM_KNOWLEDGE_LOST_POP_WINDOW) &&
+            (avg_p <= old_avg_p - OM_KNOWLEDGE_LOST_POP_DROP);
+        int64_t last_kl = om_faction_last_knowledge_lost(w, f);
+        int eligible = (avg_e < OM_KNOWLEDGE_LOST_ECONOMY) || pop_drop_eligible;
+        if (eligible && ((int64_t)w->tick - last_kl) >= OM_KNOWLEDGE_LOST_COOLDOWN) {
+            double draw = om_rng_draw(w);
+            if (draw < OM_KNOWLEDGE_LOST_P) {
+                w->faction_tech[f] = fmax(0.0, w->faction_tech[f] - OM_KNOWLEDGE_LOST_DELTA);
+                om_faction_set_last_knowledge_lost(w, f, (int64_t)w->tick);
+                /* B1-2's om_event_fire_manual (ALG-49) attaches the region's
+                 * regional/supreme commander at this significance tier; it
+                 * writes to events.c's manual-fire table, not the
+                 * trigger-pipeline s->fired[]/om_tick_events log.
+                 * F2h's om_event_register_external gets Knowledge Lost a
+                 * real template id in that same pipeline (idempotent by
+                 * name, so registering again next time is a lookup, not a
+                 * duplicate); om_event_queue_external then queues it so it
+                 * reaches om_tick_events -- but only one tick later, at the
+                 * queued due_tick's own step 1-2 (om_event_queue_external
+                 * rejects due_tick <= the current tick), and only if
+                 * OM_FEAT_EVENTS is on (csrc/sim.c gates om_step_events on
+                 * it; E-06's test fixtures leave it off -- isolate_agents
+                 * turns it off explicitly, and it is not one of the two
+                 * features world_factory turns on for this epic's module).
+                 * A single-step E-06 test, or one that never enables
+                 * EVENTS, will not see this record in read_events(). */
+                om_event_fire_manual(w, highest_pop_idx, OM_CHARACTER_ATTACHMENT_TIER_THRESHOLD);
+                int32_t kl_template = om_event_register_external(w, "Knowledge Lost",
+                    OM_CHARACTER_ATTACHMENT_TIER_THRESHOLD);
+                if (kl_template >= 0) {
+                    om_event_queue_external(w, highest_pop_idx, (uint32_t)kl_template,
+                        w->tick + 1, 1.0, f, 0);
                 }
             }
         }
