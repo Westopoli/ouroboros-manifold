@@ -373,17 +373,32 @@ def test_control_R_111_02_om_bug_save_skips_rng_state_trips_the_detector(dbg, db
                     tension=10.0, population=50.0, faction_id=idx % 2)
         set_owner(dbg, w, idx, idx % 2, held_since=-1)
     set_edge(dbg, w, 0, 1, OMEdge.BOTH)
+    # test-defect fix: load the 26 event templates so EVENTS draws from the PCG32
+    # stream each tick; without them, EVENTS is on but inert -- one post-load tick
+    # makes zero random draws and checksums stay identical regardless of RNG state.
+    # Seeds 2468, 1111, 3579 all diverge at tick 1 with templates loaded.
+    load_launch_events(dbg, w)
     for _ in range(5):
         dbg.om_world_step(w)  # advance the live RNG stream away from its seeded start, nothing forced
 
     buf, size = _save(dbg, w)
 
+    # test-defect fix: minimum divergence is tick 1 (3 seeds); _N_POST_LOAD_TICKS = 3 adds
+    # a margin of 2 above the minimum so a single unlucky draw cannot hide the bug.
+    _N_POST_LOAD_TICKS = 3
+    for _ in range(_N_POST_LOAD_TICKS - 1):
+        dbg.om_world_step(w)
     reference_tick = dbg.om_world_step(w)
     reference_checksum = dbg.om_world_get_state_checksum(w)
 
     w_loaded = dbg_world_factory(n_regions=4, seed=999999)
+    # test-defect fix: mirror the same event library so the divergence is purely
+    # the missing RNG state, not a missing-templates no-op.
+    load_launch_events(dbg, w_loaded)
     rc = _load(dbg, w_loaded, buf, size)
     assert rc == 0, f"the bug skips RNG state, not the whole load, rc={rc}"
+    for _ in range(_N_POST_LOAD_TICKS - 1):
+        dbg.om_world_step(w_loaded)
     loaded_tick = dbg.om_world_step(w_loaded)
     loaded_checksum = dbg.om_world_get_state_checksum(w_loaded)
 
