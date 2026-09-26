@@ -1,0 +1,11 @@
+# Client lane batch 4 (M-client, cwd `~/Projects/om-push/m3`), 2026-09-25
+
+Standing rules as batch 3 (`2026-09-24-manager-client.md`, `leaf-mechanics.md`; sonnet46-doer leaves; red first; fresh worktrees from origin/main; never stack branches; queue lines to `~/Projects/om-push/queue.txt`; report to M0 ONCE; no Claude agent plays the game).
+
+Start when `origin/main` carries T1-14: the pipe hello frame emits a real `player_faction` after `mission_start` (check `tests/transport/` for the T1-14 test file; wait with inline sleeps, 5 minutes apart, up to 3 hours).
+
+Facts: ABI is 3 (HDR3 on main). The sim has one player id, `om_player_faction(w)`, and the pipe now reports it as `player_faction` in the hello frame (-1 before a world exists). The client must stop assuming 0.
+
+Order:
+1. **C2-8, faction from the frame.** `autoload/c_bridge.gd` stores `player_faction` from the hello frame (and re-reads it after `mission_start`), exposes `player_faction()`; the `mission_start` command still names the faction the player chose in New Game (today 0), and the stored value is what the pipe echoes back. Every site below reads `SimSession.bridge().player_faction()` instead of a literal 0 or a `!= 1` enemy test: `scripts/tactical/visibility.gd:6,14,16`; `scenes/tactical/hud.gd:611-613`; `scenes/tactical/tactical.gd:117`; `scenes/tactical/visuals/ability_overlay_manager.gd:32,70,84-85` (feed `setup()` from the bridge); `scenes/tactical/unit_renderer.gd:133,336`; `scenes/tactical/visuals/destruction_manager.gd:138,153`; `scenes/tactical/visuals/attack_visual_manager.gd:100`; `scenes/tactical/visuals/impact_feedback_manager.gd:141,168`; `scenes/tactical_c/tactical_view.gd:96,342`. Mockups and debug scenes are exempt (toy ids). Tests: `tests/test_c_bridge_live.gd`-style live test asserts `player_faction()` equals the hello value; a fixture frame with `player_faction: 1` drives `test_tactical_view.gd` so player units are the faction-1 ones and enemies the rest (red first with the literal 0). Ownership: these files span C2, C5, and the tactical scene family; land as ONE run under id Q1 (its scene glob) plus c_bridge under C2: queue `merge C2-8 push/C2-8 after: C2-7` then `merge Q1 push/C2-8 after: C2-8`, then `docs C2-8-tests push/C2-8 after: Q1`.
+2. **Sweep row.** Godot tests touched, `tests/qa/desktop` in one invocation; report counts.
