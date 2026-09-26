@@ -33,7 +33,7 @@
  * field order, F2i). */
 #define OM_SAVE_MAGIC "OMSV"
 #define OM_SAVE_MAGIC_LEN 4
-#define OM_SAVE_FORMAT_VERSION 1
+#define OM_SAVE_FORMAT_VERSION 2 /* bumped: SAVE-1 adds faction_pop_history ring */
 #define OM_SAVE_BYTE_BITS 8
 #define OM_SAVE_BYTE_MASK 0xFFu
 #define OM_SAVE_SLOT_TACTICAL     0
@@ -296,10 +296,11 @@ struct om_world {
     /* ALG-27b pop-drop leg: per-faction ring of avg_p samples (window = 50 ticks,
      * literal below -- OM_KNOWLEDGE_LOST_POP_WINDOW is a local #define in
      * diplomacy.c; struct array dimensions are exempt from the alg_constants lint).
+     * Window = OM_KNOWLEDGE_LOST_POP_WINDOW (om_constants.h, ALG-27b); dimension
+     * stays literal 50 here since om_constants.h is not included in this header.
      * head = next write index (0..49); len = samples stored (0..50).
      * Initialized to 0 at world creation (calloc in om_world_new/region.c).
-     * Not serialized in save.c -- a save/load cycle resets history (pop leg
-     * ineligible for the first 50 post-load ticks). Needs F2j hook in save.c. */
+     * Serialized by SAVE-1 (save.c sv_write_body / sv_parse_body). */
     double   faction_pop_history[OM_MAX_FACTIONS][50];
     uint32_t faction_pop_history_head[OM_MAX_FACTIONS];
     uint32_t faction_pop_history_len[OM_MAX_FACTIONS];

@@ -576,11 +576,6 @@ void om_faction_set_last_knowledge_lost(om_world *w, int32_t faction_id, int64_t
     w->faction_last_knowledge_lost[faction_id] = tick;
 }
 
-/* ALG-27b: 50-tick population-history window. Not in om_constants.h
- * (no Python precedent; algorithms.md states the value but gives it no
- * named constant). Reported as missing in the B5c-1 leaf report. */
-#define OM_KNOWLEDGE_LOST_POP_WINDOW 50
-
 void om_tech_step(om_world *w) {
     if (!w) return;
 #ifdef OM_DEBUG_INJECT

@@ -223,6 +223,7 @@
 #define OM_KNOWLEDGE_LOST_ECONOMY 20.0
 #define OM_KNOWLEDGE_LOST_P 0.03
 #define OM_KNOWLEDGE_LOST_POP_DROP 10.0
+#define OM_KNOWLEDGE_LOST_POP_WINDOW 50 /* ALG-27b: population-history window, ticks */
 /* ALG-28 Convergence */
 #define OM_ADMIN_REVOLT_BASE_RATE 0.001
 #define OM_ADMIN_REVOLT_CHAIN_MAX 8

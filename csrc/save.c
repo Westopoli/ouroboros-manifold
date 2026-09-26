@@ -37,6 +37,7 @@
  * in-bounds). */
 #include "ouroboros_sim.h"
 #include "om_internal.h"
+#include "om_constants.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -367,6 +368,13 @@ static void sv_write_body(sv_writer *sw, const om_world *w) {
         for (uint32_t b = 0; b < OM_MAX_FACTIONS; b++) sv_put_u64(sw, w->faction_cooperative_since[a][b]);
     }
     for (uint32_t f = 0; f < OM_MAX_FACTIONS; f++) sv_put_i64(sw, w->faction_last_knowledge_lost[f]);
+    for (uint32_t f = 0; f < OM_MAX_FACTIONS; f++) {
+        for (uint32_t j = 0; j < OM_KNOWLEDGE_LOST_POP_WINDOW; j++) {
+            sv_put_f64(sw, w->faction_pop_history[f][j]);
+        }
+    }
+    for (uint32_t f = 0; f < OM_MAX_FACTIONS; f++) sv_put_u32(sw, w->faction_pop_history_head[f]);
+    for (uint32_t f = 0; f < OM_MAX_FACTIONS; f++) sv_put_u32(sw, w->faction_pop_history_len[f]);
     for (uint32_t f = 0; f < OM_MAX_FACTIONS; f++) sv_put_u64(sw, w->faction_created_tick[f]);
     for (uint32_t f = 0; f < OM_MAX_FACTIONS; f++) sv_put_u8(sw, (uint8_t)(w->faction_conquered_this_tick[f] ? 1 : 0));
     for (uint32_t f = 0; f < OM_MAX_FACTIONS; f++) sv_put_u32(sw, w->faction_window_total[f]);
@@ -579,6 +587,14 @@ static void sv_parse_body(sv_reader *sr, om_world *w, int apply) {
     }
     if (!sr->ok) return;
     for (uint32_t f = 0; f < OM_MAX_FACTIONS && sr->ok; f++) { int64_t v = sv_get_i64(sr); if (apply) w->faction_last_knowledge_lost[f] = v; }
+    for (uint32_t f = 0; f < OM_MAX_FACTIONS && sr->ok; f++) {
+        for (uint32_t j = 0; j < OM_KNOWLEDGE_LOST_POP_WINDOW && sr->ok; j++) {
+            double v = sv_get_f64(sr); if (apply) w->faction_pop_history[f][j] = v;
+        }
+    }
+    for (uint32_t f = 0; f < OM_MAX_FACTIONS && sr->ok; f++) { uint32_t v = sv_get_u32(sr); if (apply) w->faction_pop_history_head[f] = v; }
+    for (uint32_t f = 0; f < OM_MAX_FACTIONS && sr->ok; f++) { uint32_t v = sv_get_u32(sr); if (apply) w->faction_pop_history_len[f] = v; }
+    if (!sr->ok) return;
     for (uint32_t f = 0; f < OM_MAX_FACTIONS && sr->ok; f++) { uint64_t v = sv_get_u64(sr); if (apply) w->faction_created_tick[f] = v; }
     for (uint32_t f = 0; f < OM_MAX_FACTIONS && sr->ok; f++) { uint8_t v = sv_get_u8(sr); if (apply) w->faction_conquered_this_tick[f] = v ? 1 : 0; }
     for (uint32_t f = 0; f < OM_MAX_FACTIONS && sr->ok; f++) { uint32_t v = sv_get_u32(sr); if (apply) w->faction_window_total[f] = v; }
