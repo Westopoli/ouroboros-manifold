@@ -2104,6 +2104,7 @@ def _bind_e10(lib):
     _bind(lib, "om_mission_get_compatible_layouts", [W, ctypes.c_uint32, P(ctypes.c_uint32), ctypes.c_uint32], ctypes.c_uint32, ("w", "archetype", "out", "max"))
     _bind(lib, "om_mission_get_debrief", [W, V], ctypes.c_int, ("w", "out"))
     _bind(lib, "om_mission_get_deployed_force_count", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_mission_get_enemy_faction", [W], ctypes.c_int32, ("w",))
     _bind(lib, "om_mission_get_enemy_power", [W], ctypes.c_double, ("w",))
     _bind(lib, "om_mission_get_objective_completion", [W, ctypes.c_uint32], ctypes.c_double, ("w", "objective_idx"))
     _bind(lib, "om_mission_get_objective_score", [W], ctypes.c_double, ("w",))

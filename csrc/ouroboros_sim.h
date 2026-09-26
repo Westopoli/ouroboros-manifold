@@ -1556,6 +1556,7 @@ double om_mission_get_candidate_score(const om_world *w, uint32_t region_idx, ui
 uint32_t om_mission_get_compatible_layouts(const om_world *w, uint32_t archetype, uint32_t *out, uint32_t max);
 int om_mission_get_debrief(const om_world *w, om_debrief *out);
 uint32_t om_mission_get_deployed_force_count(const om_world *w);
+int32_t om_mission_get_enemy_faction(const om_world *w);
 double om_mission_get_enemy_power(const om_world *w);
 double om_mission_get_objective_completion(const om_world *w, uint32_t objective_idx);
 double om_mission_get_objective_score(const om_world *w);

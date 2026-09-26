@@ -1658,6 +1658,14 @@ uint32_t om_mission_get_deployed_force_count(const om_world *w) {
     return total;
 }
 
+static int32_t om_mission_enemy_faction(const om_world *w, uint32_t region_idx, int32_t player);
+
+int32_t om_mission_get_enemy_faction(const om_world *w) {
+    const om_mission_state *st = om_mis_ro(w);
+    if (!st || !st->mission_set) return -1;
+    return om_mission_enemy_faction(w, st->mission_region, om_mission_player_faction(w));
+}
+
 double om_mission_get_enemy_power(const om_world *w) {
     const om_mission_state *st = om_mis_ro(w);
     return st ? st->enemy_power : 0.0;
