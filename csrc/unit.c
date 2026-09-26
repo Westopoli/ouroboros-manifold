@@ -2187,6 +2187,12 @@ uint32_t om_unit_get_target(const om_world *w, uint32_t unit) {
     return row ? row->target_id : 0;
 }
 
+void om_unit_clear_target(om_world *w, uint32_t unit_id) {
+    om_unit_row *row = om_registry_find_in(om_tac(w), unit_id);
+    if (!row) return;
+    row->target_id = 0;
+}
+
 double om_unit_hp(om_world *w, uint32_t unit_id) {
     return om_unit_get_hp(w, unit_id);
 }

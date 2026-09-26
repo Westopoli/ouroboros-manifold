@@ -390,6 +390,8 @@ uint32_t om_grid_iter_next(om_grid_iter *it);
  * state: no-op. Call it after every write of a unit's position outside
  * om_tactical_step (teleport, set_pos, move sync). */
 void om_tac_unit_sync_position(om_world *w, uint32_t unit_id, double x, double y);
+/* For fog.c: clear only target_id, no order change. Unknown id: no-op. */
+void om_unit_clear_target(om_world *w, uint32_t unit_id);
 
 /* The world RNG (ouroboros_sim.h "the world RNG contract"), csrc/sim.c.
  * om_rng_seed derives rng_state/rng_inc from the seed (om_world_new,
