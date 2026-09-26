@@ -189,6 +189,9 @@ Added in Stage 2 from source (2026-09-10).
 
 **ALG-49 Lifespan and succession.** `lifespan = randint(LIFESPAN_MIN = 150, LIFESPAN_MAX = 350)` at creation. At jump end, every active character with `tick − born ≥ lifespan` becomes historical with `death_tick = tick`; its name returns to the pool after `NAME_REUSE_COOLDOWN_TICKS = 500` (`NAME_REUSE_COOLDOWN_TICKS_MAIN = 4500` for a main character); a supreme commander is succeeded in the faction's first region and a regional commander in its region if still owned. Event attachment: events of significance tier `≥ CHARACTER_ATTACHMENT_TIER_THRESHOLD = 3` attach the region's characters.
 
+
+**ALG-77 Selector history decay.** A lineage's history weight in the commander pools decays by `SELECTOR_DECAY_BASE = 0.75` per generation (Westley 2026-09-26, Q-060-02).
+
 ## Chronicle (`chronicle_distiller.py`, `chronicle_assembler.py`)
 
 Added in Stage 2 from source (2026-09-10).
@@ -242,7 +245,7 @@ Added in Stage 2 from source (2026-09-10).
 
 **ALG-56 Time limit.** `limit = max(B · (1 − urgency · TIME_PRESSURE_SCALING = 0.2), B · TIME_LIMIT_FLOOR_PCT = 0.6)`, B from `ARCHETYPE_TIME_LIMITS` (see Q-076-01: two definitions exist in config; the later one, 250 to 450 ticks, wins at import).
 
-**ALG-57 Force parity.** Enemy power: attack-driven archetypes `budget_committed · BUDGET_TO_POWER_SCALE = 300`; insurgent archetypes `insurgent_m · MILITARY_TO_POWER_SCALE = 2000` with `insurgent_m = U(lo, hi)`, `lo, hi` linearly interpolated from `INSURGENT_MIL_LOW_POP_RANGE = (20, 50)` at population `≤ 25` to `INSURGENT_MIL_HIGH_POP_RANGE = (40, 70)` at `≥ 70`; others `region.m · 2000`. Parity: piecewise linear through `PARITY_BREAKPOINTS = [(0, 0.80), (0.3, 0.85), (0.5, 0.90), (0.7, 0.95), (1.0, 1.00)]` on region capacity/100; easy `max(base, 0.95)`, hard `min(base, 0.85)`; then `max(parity, PARITY_FLOOR = 0.75)`. Fill: for each unit type in descending profile ratio, add units while `allocated < budget · ratio` and `power ≤ 1.15 · remaining`. Shortfall: if capacity `< CAPACITY_SHORTFALL_THRESHOLD = 0.4`, remove `CAPACITY_SHORTFALL_REDUCTION = 0.20` of the units round-robin from the most numerous types, keeping at least 1.
+**ALG-57 Force parity.** Enemy power: attack-driven archetypes `budget_committed · BUDGET_TO_POWER_SCALE = 300`; insurgent archetypes `insurgent_m · MILITARY_TO_POWER_SCALE = 2000` with `insurgent_m = U(lo, hi)`, `lo, hi` linearly interpolated from `INSURGENT_MIL_LOW_POP_RANGE = (20, 50)` at population `≤ 25` to `INSURGENT_MIL_HIGH_POP_RANGE = (40, 70)` at `≥ 70`; others `region.m · 2000`. Parity: piecewise linear through `PARITY_BREAKPOINTS = [(0, 0.80), (0.3, 0.85), (0.5, 0.90), (0.7, 0.95), (1.0, 1.00)]` on region capacity/100; easy `max(base, 0.95)`, hard `min(base, 0.85)`; then `max(parity, PARITY_FLOOR = 0.75)`. Fill: for each unit type in descending profile ratio, add units while `allocated < budget · ratio` and `power ≤ 1.15 · remaining`. Shortfall: if capacity `< CAPACITY_SHORTFALL_THRESHOLD = 0.4`, remove `CAPACITY_SHORTFALL_REDUCTION = 0.20` of the units round-robin from the most numerous types, keeping at least 1. Threshold confirmed at 25 (Westley 2026-09-26, Q-057-02); the header duplicate at 20 is removed.
 
 **ALG-58 Outcome.** `objective_score = Σ weight · (0 if failed else completion)`; `retention = min(1, Σ surviving unit power (HP-scaled) / initial power)`; `final = OUTCOME_WEIGHT_OBJECTIVE = 0.75 · objective_score + OUTCOME_WEIGHT_RETENTION = 0.25 · retention`; band by `OUTCOME_THRESHOLDS[archetype]` (E-10 R-077-02), strict less-than. Terminal: every primary complete or failed, or `tick ≥ limit`, or no living player unit. Commander survived = commander unit alive.
 
@@ -291,6 +294,9 @@ Added in Stage 2 from source (2026-09-10).
 ## Enemy macro behavior (`behavior_runner.py`, `trigger_bus.py`)
 
 **ALG-74 Behavior runner.** Per force at mission start: for every transition and hook, one uniform draw in ±`noise_pct` (default `SCRIPT_NOISE_DEFAULT_PCT = 0.15`, timers `SCRIPT_TIMER_NOISE_DEFAULT_PCT = 0.20`). Every `SCRIPT_EVAL_INTERVAL_TICKS = 40` ticks, for each force with living units: context = force HP fraction (× (1 + noise) for threshold checks), unit count, elapsed seconds since mission start (× (1 + noise) for timers), timer expired, bus flags. Hooks evaluate first, then transitions; the target state's behavior and modifier drive the commands issued. Bus flags are plain named booleans plus named values, saved with the mission. The context functions for player force in zone and enemy in range are stubbed (return 1.0 and False; Q-121-01).
+
+
+**ALG-76 Macro rout and external reinforcement.** An enemy force routs when its remaining hit points fall below `OM_MACRO_ROUT_HP_THRESHOLD = 0.35` of its starting total (Westley 2026-09-26, Q-120-03; was 0.20 unsourced). At each macro evaluation (interval: the value the enemy macro uses today, name it in the promotion leaf) an external reinforcement wave arrives with probability `OM_MACRO_EXTERNAL_REINFORCEMENT_PROB = 0.21` (Westley 2026-09-26, Q-124-03, "triple it"; was 0.07); window and size per Q-124-02.
 
 ## Reinforcement structures (`reinforcement.py`)
 
