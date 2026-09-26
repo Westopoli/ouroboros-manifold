@@ -522,3 +522,5 @@ One row per event: freeze steps, attaches, reverts, parks, rung gates, harness e
 | day6 | docs W-1c (push/W-1c) | OK  collection and lints OK |
 | day6 | docs W-1d (push/W-1d) | OK  collection and lints OK |
 | day6 | sweep (bk-43; make rebuilt-on-SAVE-1-EVT-1-then-nothing-to-do, pipe clean, pipe_dbg clean) | E06: 1f/37p (R-045-09 pre-existing bisected bk-41/42); E14: 0f/18p; E15: 1f/17p (R-130-02 pre-existing from bk-41); core: 0f/142p; transport: 0f/47p; qa/t1: 2f/31p/1skip (detector controls pre-existing). checksum_trace seed=1 ticks=500 final=12966767929705903382; CONST-1 is docs-only (no lib change), before==after trivially. |
+| day5 | test-literals W-1d | fixture literals updated with the structure-owner convention (owner = E-05 faction id, neutral -1), authorised by M0: test_E15_S127 line 43, test_core_structure_production lines 84 and 180, test_E15_S131 lines 34-36; assertions_preserved yes; recorded in sim-lane commit 7cabdd2 |
+| day5 | test-hygiene | structure_production docstrings updated, redundant neutral test removed, pipe production test un-xfailed (passes with dbg pipe) |

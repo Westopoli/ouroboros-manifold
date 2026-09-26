@@ -5,15 +5,12 @@ owner's faction per production interval, positioned within half the capture
 radius, driven by om_tactical_step.
 R-126-06: om_mission_get_reinforcement_trickle stays 0.
 
-Faction mapping (fixture convention -> E-05 faction id):
-  owner 1 = player -> sup_player_owner_id(w): om_player_faction(w) when >= 0,
-                      else OM_SUP_PLAYER_OWNER_FALLBACK = 1 (no player configured).
-  owner 2 = enemy  -> spawn skipped (no public om_mission_get_enemy_faction;
-                      mission.c:1980 static fn uses mission_region from private
-                      state at mission.c:289). Leftover W-1b.
-  owner 0 = neutral -> no production (guarded in driver; tested below).
-  live capture sets s->owner = E-05 faction id directly; player faction 0 = owner 0
-      = treated as neutral = no production (known interaction gap; documented in (e)).
+Faction mapping (W-1d: owner = E-05 faction id, neutral -1):
+  owner >= 0  = faction id used directly; driver spawns for s->owner.
+  owner -1    = neutral -> no production (guarded in driver: s->owner < 0).
+  owner 2     = enemy   -> spawn skipped (no public om_mission_get_enemy_faction;
+                mission.c:1980 static fn uses mission_region from private
+                state at mission.c:289). Leftover W-1b.
 """
 import ctypes
 
@@ -35,8 +32,8 @@ def _tactical_world(lib, world_factory, *, seed=1):
 # ---- (a) player-held structure, no player faction configured (legacy fallback) ----
 
 def test_player_structure_spawns_legacy_faction(lib, world_factory):
-    """R-126-02: owner 1, no configured player faction -> om_player_faction
-    returns -1 -> fallback faction 1 (OM_SUP_PLAYER_OWNER_FALLBACK).
+    """R-126-02: owner 1 = faction id 1 (E-05 direct per W-1d).
+    om_player_faction unconfigured (-1); owner used as faction id directly.
     Spawned unit must have faction 1."""
     w = _tactical_world(lib, world_factory, seed=20)
     assert lib.om_player_faction(w) == -1, (
@@ -120,7 +117,7 @@ def test_enemy_structure_spawns_enemy_faction(lib, world_factory):
 # ---- (c) neutral structure produces nothing ----
 
 def test_neutral_structure_produces_nothing(lib, world_factory):
-    """R-126-02: owner 0 (neutral) must not spawn any unit."""
+    """R-126-02: owner -1 (neutral per W-1d) must not spawn any unit."""
     w = _tactical_world(lib, world_factory, seed=22)
     initial_id = lib.om_unit_spawn(w, OMUnitType.RAIDER, 0, 0.0, 100_000.0, 0)
 
@@ -157,34 +154,4 @@ def test_zero_structures_no_units_spawned(lib, world_factory):
     assert not lib.om_unit_alive(w, spawned_id), (
         "R-126-06: no structures -- no unit must appear after stepping "
         f"{interval} tactical steps"
-    )
-
-
-# ---- (e) live-capture interaction ----
-
-def test_player_capture_owner0_skips_production(lib, world_factory):
-    """Interaction (R-126-02 / live-capture path): live capture writes
-    s->owner = capturing_faction (an E-05 faction id). If the player is
-    faction 0, s->owner = 0. The production driver guards owner == 0 as
-    neutral (tactical_support.c line 829) and skips production. This is
-    a known interaction gap: player-captured structures (faction 0) do not
-    produce under the current mapping; option (a) resolves this by switching
-    the owner id space to E-05 faction ids with neutral = -1."""
-    w = _tactical_world(lib, world_factory, seed=24)
-    initial_id = lib.om_unit_spawn(w, OMUnitType.RAIDER, 0, 0.0, 0.0, 0)
-
-    power = 10.0
-    interval = lib.om_structure_production_interval_ticks(ctypes.c_double(power))
-    lib.om_structure_init(w, 0, OMUnitType.RAIDER, ctypes.c_double(power))
-    # Neutral structure (owner -1); analogous to pre-capture state.
-    lib.om_structure_set_owner(w, 0, -1)
-
-    for _ in range(interval):
-        lib.om_tactical_step(w)
-
-    spawned_id = initial_id + 1
-    assert not lib.om_unit_alive(w, spawned_id), (
-        "Interaction: owner=0 from live capture (player faction 0) is treated as "
-        "neutral by the production driver (line 829) -- no unit is produced. "
-        "Known gap: option (a) needed to distinguish neutral (-1) from player (0)."
     )
