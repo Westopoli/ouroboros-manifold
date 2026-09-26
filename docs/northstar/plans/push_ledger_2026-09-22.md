@@ -480,3 +480,17 @@ One row per event: freeze steps, attaches, reverts, parks, rung gates, harness e
 | day5 | docs qa-backlog (push/qa-backlog) | OK  collection and lints OK -- docs/northstar/qa_backlog.md updated |
 | day5 | merge B12-14 (push/B12-14) | REJECT merge-conflict csrc/tactical_move.c -- base mismatch after B12-13 rework; rebuild needed |
 | day5 | sweep (bk-40; make -j8 clean, pipe clean, pipe_dbg clean) | transport: 44p/0f; E09: 39p/0f; E13: 34p/1f (S099 pre-existing; S101 resolved vs bk-39); E10: 43p/1f/1s (S078 pre-existing); core: 111p/0f (50 new vs bk-39 core batch); scale(OM_SCALE=1): 32p/3f/6skip/1xfail/2xpass (E02 memory, E13 dense-moving, E17 field-sampling timing -- all pre-existing); qa/t1: 31p/2f/1s (detector controls, pre-existing). No new reds from T1-13/pipe-dbg/B12-13/C3-6/C4-8 pieces. |
+| day5 | merge B12-14 (push/B12-14-r) | OK merged -- csrc/tactical_move.c rebuild on fresh main after B12-13 rework |
+| day5 | merge B10c-10 (push/B10c-10) | OK merged (ran before M0 void ruling; ruling arrived mid-wait) -- auto-Fortify yields to move order (R-087-02); B10c-10 stays on main per M0 |
+| day5 | docs B10c-10-tests (push/B10c-10) | OK  collection and lints OK (re-opened by M0 ruling) |
+| day5 | merge C5-4 (push/C5-4c) | OK merged -- group move pace: tactical_view.gd, tactical_move.c, unit.c |
+| day5 | docs C5-4-tests (push/C5-4c) | OK  collection and lints OK -- tests/csim/test_core_group_pace.py |
+| day5 | merge B10c-11 (push/B10c-11-r) | landed (empty diff) -- content already on main via push/B10c-11 (landed before queue line was replaced) |
+| day5 | docs B10c-11-tests (push/B10c-11-r) | OK  collection and lints OK -- tests/qa/desktop/test_tactical_play.py |
+| day5 | docs e11-note (push/e11-note) | OK  collection and lints OK -- docs/bible/epics/E-11-units-and-combat.md |
+| day5 | docs HDR3 (push/HDR3) | OK  collection and lints OK |
+| day5 | docs B11-9 (push/B11-9) | OK  collection and lints OK (ran before M0 void ruling) -- fog.c, lifecycle.c, mission.c, ouroboros_sim.h, pipe/om_pipe.c, region.c, tactical_support.c, unit.c, worldgen.c, arch.md, signatures.toml, symbol_modules.toml, conftest.py, test_core_player_faction.py + test updates |
+| day5 | docs brief-client4 (push/brief-client4) | OK  collection and lints OK |
+| day5 | docs B11-10 (push/B11-10) | OK  collection and lints OK |
+| day5 | docs T1-14 (push/T1-14) | OK  collection and lints OK |
+| day5 | sweep (bk-41; make nothing-to-do, pipe clean, pipe_dbg clean) | E-epic csim: 32f/572p/7skip/1xfail (E06 R-045-09 possibly new; E10 R-078-06 pre-existing S078; E11 R-085-02/04 possibly new from B10c-11; E13 R-099-01 pre-existing S099; E15 R-130-02 possibly new; E16 control R-111-02 pre-existing; E17 pre-existing); core: 125p/0f (14 new vs bk-40); transport: 44p/0f; qa/t1: 2f/31p/1skip (detector controls pre-existing). Desktop suite: skipped pending Xvfb setup in m0. |
