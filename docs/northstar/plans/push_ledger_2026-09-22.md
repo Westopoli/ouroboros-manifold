@@ -530,3 +530,7 @@ One row per event: freeze steps, attaches, reverts, parks, rung gates, harness e
 | day7 | docs W-1e (push/W-1e) | OK  collection and lints OK -- structure set_position: om_structure_set_position in tactical_support.c, test_core_structure_set_position.py, test_pipe_place_structure_position.py (3 new transport tests) |
 | day7 | sweep (bk-45; W-1e landed) | E15: 1f/24p (R-130-02 pre-existing); core: 164p/1xfailed (+3 new from W-1e, all green); transport: 57p (+1 new from W-1e); qa/t1: 2f/31p/1skip (detector controls pre-existing). build clean, pipe clean, pipe_dbg clean. |
 | day7 | register | Q-124-02 closed: wave = ALG-75 standard composition, arrival delay as coded; W-1f building; Agora dispatcher enabled on Westley's go |
+| day7 | M0 ruling: W-1f lands as B13-7 (enemy_macro.c owned by B13) | queue rewritten; B13-7 used (free) |
+| day7 | merge B13-7 (push/W-1f) | landed (empty diff) -- content already on main |
+| day7 | docs B13-7-tests (push/W-1f) | landed (empty diff) -- content already on main |
+| day7 | sweep (bk-46; B13-7 landed, both empty-diff) | E14: 0f/22p; core: 0f/168p/1xfailed; transport: 0f/59p; qa/t1: 2f/31p/1skip (detector controls pre-existing, same as bk-45). build clean, pipe clean, pipe_dbg clean. |
