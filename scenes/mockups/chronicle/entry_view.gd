@@ -6,6 +6,7 @@ var entry_id: String = ""
 var _root: Node
 var _label: RichTextLabel
 var _cursor: Label
+var _mention_just_clicked: bool = false
 
 
 func setup(root: Node) -> void:
@@ -17,7 +18,8 @@ func setup(root: Node) -> void:
 	_label.bbcode_enabled = true
 	_label.fit_content = true
 	_label.scroll_active = false
-	_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_label.mouse_filter = Control.MOUSE_FILTER_PASS
+	_label.meta_clicked.connect(_on_meta_clicked)
 	_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_label.add_theme_font_override("normal_font", SERIF_FONT)
 	_label.add_theme_font_size_override("normal_font_size", 22)
@@ -54,8 +56,23 @@ func render(row: Dictionary) -> void:
 	_cursor.visible = printed >= int(row.total_words)
 
 
+func _on_meta_clicked(meta: Variant) -> void:
+	var meta_str := String(meta)
+	var sep := meta_str.find(":")
+	if sep < 0:
+		return
+	var kind := meta_str.substr(0, sep)
+	var id := meta_str.substr(sep + 1)
+	_mention_just_clicked = true
+	if _root != null and _root.has_method("qa_click_mention"):
+		_root.qa_click_mention(kind, id)
+
+
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if _mention_just_clicked:
+			_mention_just_clicked = false
+			return
 		if _root != null:
 			_root.qa_click_entry(entry_id)
 

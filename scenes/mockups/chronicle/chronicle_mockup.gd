@@ -283,6 +283,12 @@ func qa_click_entry(entry) -> void:
 	_sync_view()
 
 
+func qa_click_mention(kind: String, id: String) -> void:
+	if kind == "region":
+		var sid := int(id)
+		_orbit_camera.focus_system(sid)
+
+
 func qa_dismiss() -> void:
 	if _expanded_id == "":
 		return
