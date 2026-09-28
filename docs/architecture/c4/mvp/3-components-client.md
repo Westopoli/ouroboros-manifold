@@ -65,12 +65,9 @@ exists, falling back to its own `tick` counter otherwise).
 flowchart LR
     PM["privacy_modal (boot)"] --> LS["loading_screen"]
     LS --> MM["main_menu"]
-    MM -->|NEW GAME| NG["new_game"]
-    NG --> OB["onboarding"]
-    OB -->|"go_to time_jump\n(onboarding.gd:386, legacy SimBridge)"| TJ["world/time_jump_sequencer"]
+    MM -->|"NEW GAME\nmain_menu.gd:71,314-320\n(direct, no intermediate scene)"| GX["galaxy"]
     MM -->|CONTINUE| LG["load_game\n(two save-slot lists, see gaps.md #4)"]
-    LG --> GX["galaxy"]
-    OB --> GX
+    LG --> GX
     MM -->|"ERA LIBRARY / SETTINGS"| EL["era_library / settings\n(UIDataBus, legacy transport)"]
     GX -->|"MISSION button\ngalaxy_view.gd:67"| MB["mission_briefing"]
     MB -->|"Deploy, mission_briefing.gd:668"| TC["tactical_c (live)"]
@@ -79,11 +76,23 @@ flowchart LR
     DB -->|"Exit, debrief.gd:546"| MM
     CH -->|"Return, chronicle_scroll_panel.gd:81"| GX
     T2["tactical (legacy, unreached)\nscenes/tactical/"]
+    NG["new_game (unreached)"]
+    OB["onboarding (unreached)"]
+    TJ["world/time_jump_sequencer (unreached)"]
+    NG --> OB
+    OB -->|"go_to time_jump\n(onboarding.gd:386, legacy SimBridge)"| TJ
     style T2 stroke-dasharray: 5 5
+    style NG stroke-dasharray: 5 5
+    style OB stroke-dasharray: 5 5
+    style TJ stroke-dasharray: 5 5
 ```
 
-`tactical` (dashed) is registered in `SceneRouter.SCENES` but has no live `go_to()` call site — see
-`gaps.md` item 9.
+`tactical`, `new_game`, `onboarding`, and `world/time_jump_sequencer` (all dashed) are registered in
+`SceneRouter.SCENES` but none has a live `go_to()` call site reachable from `main_menu` — see
+`gaps.md` items 5 and 9. `new_game`/`onboarding`/`time_jump_sequencer` are drawn as their own
+disconnected chain because they only call each other (`new_game.gd:206` -> `onboarding.tscn`;
+`onboarding.gd:386` -> `time_jump_sequencer.tscn`), never receiving a call from anything in the
+reachable graph rooted at `main_menu`.
 
 Boot: `project.godot` `run/main_scene` is `scenes/privacy_modal/privacy_modal.tscn`. On accept, it
 calls `SceneRouter.go_to("loading_screen")` (`privacy_modal.gd:29-30`), and
@@ -94,8 +103,9 @@ ordinary boot path).
 every `SceneRouter.go_to(...)` call site against it gives the confirmed live path:
 
 ```
-main_menu -> galaxy (galaxy_view.gd:67, MISSION button)
-galaxy -> mission_briefing
+main_menu -> galaxy (main_menu.gd:71,314-320, NEW GAME button, direct)
+main_menu -> load_game -> galaxy (CONTINUE, load_game.gd:294)
+galaxy -> mission_briefing (galaxy_view.gd:67, MISSION button)
 mission_briefing -> tactical_c (mission_briefing.gd:668, after a successful Deploy)
 tactical_c -> debrief (tactical_view.gd:70, End Mission)
 debrief -> chronicle (debrief.gd:542) or main_menu (debrief.gd:546)
@@ -109,14 +119,18 @@ directly (`scenes/tactical/tactical.gd:86-90`, `input_router.gd:335-336`); it is
 `tests/test_b3_tutorial_integration.gd` and `tests/test_qa_state_scenes.gd`, not by the live scene
 graph. See `gaps.md`.
 
-`scenes/onboarding/onboarding.gd:386` calls `go_to("time_jump", forward_params)` — the one live
-caller of the `"time_jump"` `SCENES` entry (`scenes/world/time_jump_sequencer.tscn`). This is a
-**separate, legacy time-jump presentation** (driven by `SimBridge`'s
+`scenes/new_game/new_game.gd:206` calls `go_to("onboarding", ...)`, and
+`scenes/onboarding/onboarding.gd:386` calls `go_to("time_jump", forward_params)` — the only caller
+of the `"time_jump"` `SCENES` entry (`scenes/world/time_jump_sequencer.tscn`). But
+`main_menu.gd`'s `"NEW GAME"` button routes straight to `"galaxy"` (`main_menu.gd:71`), and no
+`go_to("new_game"` call site exists anywhere in `scenes/` (confirmed by grep). So `new_game.tscn`,
+`onboarding.tscn`, and `time_jump_sequencer.tscn` form a three-scene chain that only calls itself —
+orphaned from the graph reachable out of `main_menu`, the same way `scenes/tactical/` is orphaned.
+The legacy time-jump presentation this chain would show (driven by `SimBridge`'s
 `time_jump_started`/`time_jump_keyframe`/`chronicle_entry`/`time_jump_ended` signals via
-`UIDataBus`, `ui_data_bus.gd:5-8`) used once, for the campaign-opening jump during onboarding.
-Every later jump goes through `chronicle_scroll_panel.gd`'s C-transport path instead
-(`load_chronicle_live`, above). Two chronicle-presentation code paths exist for this reason — see
-`gaps.md`.
+`UIDataBus`, `ui_data_bus.gd:5-8`) therefore never runs in the live game today. Every jump a player
+can actually trigger goes through `chronicle_scroll_panel.gd`'s C-transport `load_chronicle_live`
+path instead (above) — see `gaps.md`.
 
 ### Scene folders
 
@@ -125,14 +139,14 @@ Every later jump goes through `chronicle_scroll_panel.gd`'s C-transport path ins
 | `privacy_modal/` | `privacy_modal.gd` | Yes — boot entry (`run/main_scene`). |
 | `loading_screen/` | `loading_screen.gd` | Yes — transitional, forwards to `_target_scene`. |
 | `main_menu/` | `main_menu.gd` | Yes — root of the live flow. |
-| `new_game/` | `new_game.gd` | Yes, from main menu's NEW GAME; creates a save slot via `UIDataBus.create_save_slot` (`new_game.gd:205`) then `go_to("onboarding", ...)` (`:206`). |
-| `onboarding/` | `onboarding.gd` | Yes; also the sole caller of `go_to("time_jump")` (above). |
+| `new_game/` | `new_game.gd` | **No.** Main menu's NEW GAME button routes directly to `"galaxy"` (`main_menu.gd:71`), not `"new_game"`; no `go_to("new_game"` call site exists anywhere in `scenes/`. `new_game.gd` itself would create a save slot via `UIDataBus.create_save_slot` (`new_game.gd:205`) then `go_to("onboarding", ...)` (`:206`), but nothing calls in. |
+| `onboarding/` | `onboarding.gd` | **No.** Reachable only from `new_game.gd:206`, which is itself unreached (row above). Also the sole caller of `go_to("time_jump")` (below), so that call never fires in the live game either. |
 | `galaxy/` | `galaxy_view.gd` | Yes — opens the C-transport session (`SimSession.bridge()`, `:97`). |
 | `mission_briefing/` | `mission_briefing.gd` | Yes. |
 | `tactical_c/` | `tactical_view.gd` | Yes — the live tactical scene. |
 | `tactical/` | `tactical.gd`, `hud.gd`, `terrain_renderer.gd`, `unit_renderer.gd`, `input_router.gd`, `visuals/*` | **No** — legacy, unreached by `go_to()`; uses `SimBridge`/`TacticalBridge`/`Visibility` directly. |
 | `debrief/` | `debrief.gd` | Yes. |
-| `world/` | `chronicle_scroll_panel.gd`, `time_jump_sequencer.gd`, `world_view_inspection_state.gd`, `chronicle_entry*.gd`, `*_info_panel.gd` | Yes (`chronicle_scroll_panel.gd` from debrief; `time_jump_sequencer.gd` from onboarding only). |
+| `world/` | `chronicle_scroll_panel.gd`, `time_jump_sequencer.gd`, `world_view_inspection_state.gd`, `chronicle_entry*.gd`, `*_info_panel.gd` | Split: `chronicle_scroll_panel.gd` is reached from `debrief.gd:542` — yes. `time_jump_sequencer.gd`'s only caller is `onboarding.gd:386`, which is itself unreached (see `onboarding/` row above) — no. |
 | `load_game/` | `load_game.gd` | Yes, from main menu's CONTINUE; renders **both** `UIDataBus.get_save_slots()` cards and separate C-bridge `list_saves()` rows in the same list — see `gaps.md`. |
 | `era_library/` | `era_library.gd`, `era_detail.gd` | Yes, from main menu's ERA LIBRARY. |
 | `settings/` | `settings.gd` | Yes, from main menu's SETTINGS. |

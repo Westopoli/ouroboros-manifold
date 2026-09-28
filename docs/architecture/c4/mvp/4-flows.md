@@ -10,16 +10,15 @@ sent it.
 ```mermaid
 sequenceDiagram
     participant Player
-    participant NewGame as new_game.gd
-    participant UIDataBus
+    participant MainMenu as main_menu.gd
     participant Galaxy as galaxy_view.gd
     participant Bridge as c_bridge.gd (via SimSession)
     participant Pipe as pipe/ouroboros_pipe
     participant Sim as libouroboros.so
 
-    Player->>NewGame: pick era, name slot
-    NewGame->>UIDataBus: create_save_slot(era_id, slot_name) (new_game.gd:205)
-    NewGame->>Galaxy: SceneRouter.go_to("onboarding" then eventually "galaxy") (new_game.gd:206)
+    Player->>MainMenu: click NEW GAME
+    MainMenu->>MainMenu: SimSession.reset() (main_menu.gd:316)
+    MainMenu->>Galaxy: SceneRouter.go_to("galaxy") (main_menu.gd:71,314-320, _on_menu_action)
     Galaxy->>Bridge: SimSession.bridge() (galaxy_view.gd:97)
     Galaxy->>Bridge: ensure_world(seed, DEFAULT_N_REGIONS, DEFAULT_FEATURES) (galaxy_view.gd:98)
     Bridge->>Pipe: spawn pipe/ouroboros_pipe (c_bridge.gd:190-223, open_session)
@@ -33,18 +32,28 @@ sequenceDiagram
 
 | Step | Source |
 |---|---|
-| create_save_slot | `scenes/new_game/new_game.gd:205`, `autoload/ui_data_bus.gd` |
-| go_to onboarding/galaxy | `scenes/new_game/new_game.gd:206` |
+| NEW GAME click -> action "galaxy" | `scenes/main_menu/main_menu.gd:71` (`menu_data`, `{"label": "NEW GAME", "action": "galaxy"}`) |
+| SimSession.reset() then go_to("galaxy") | `scenes/main_menu/main_menu.gd:314-320` (`_on_menu_action`, the `"galaxy"` match arm) |
 | SimSession.bridge() / ensure_world | `scenes/galaxy/galaxy_view.gd:97-98` |
 | open_session spawns the pipe | `autoload/c_bridge.gd:190-223` |
 | set_seed frame | `autoload/c_bridge.gd:221`; handled by `handle_set_seed`, `csrc/pipe/om_pipe.c:1145-1165` |
 | om_world_generate | `csrc/pipe/om_pipe.c:1157`, defined `csrc/worldgen.c:175` |
 | snapshot frame | `autoload/c_bridge.gd:222`; the galaxy reads it via `regions()`/`edges()` (`autoload/c_bridge.gd:68,83`) |
 
-Note: the exact scene between `new_game` and `galaxy` (onboarding, difficulty
-picker) was not traced step-by-step; `new_game.gd:206` routes to `"onboarding"`,
-and `galaxy_view.gd` is the first scene confirmed to open a sim session. The
-onboarding-to-galaxy handoff is unverified in this pass — see `gaps.md`.
+Correction from an earlier pass of this model: `scenes/new_game/new_game.tscn` and
+`scenes/onboarding/onboarding.tscn` are **not** on this path. `main_menu.gd`'s
+`menu_data` array binds the `"NEW GAME"` label directly to `action: "galaxy"`
+(`main_menu.gd:71`), and `_on_menu_action`'s `"galaxy"` match arm calls
+`SimSession.reset()` then `SceneRouter.go_to("galaxy")` with no intermediate
+scene (`main_menu.gd:314-320`). A repo-wide search
+(`grep -rn 'go_to("new_game"' scenes/`) finds no caller at all for the
+`"new_game"` `SCENES` entry, and `go_to("onboarding"` has exactly one caller,
+`scenes/new_game/new_game.gd:206` — inside the very scene nothing routes to.
+Both scenes, and everything reachable only through them (see `gaps.md`), are
+orphaned from the live boot path. This matches Agora's QA profile
+(`~/Projects/agora/projects/ouroboros/qa.toml`), whose main-menu screen
+description names only the five menu buttons and does not mention an
+era-select or difficulty step between NEW GAME and the galaxy.
 
 ## Flow 2 — Briefing to deploy to tactical play to debrief
 
@@ -151,10 +160,11 @@ or derived from elapsed time; see `gaps.md`.
 
 - `scenes/world/time_jump_sequencer.gd` exists and drives the legacy
   `SimBridge`/Python pipe with its own `time_jump_started`/`time_jump_keyframe`/
-  `chronicle_entry` signal sequence, but nothing in the confirmed live
-  `SceneRouter` flow routes to it (`chronicle` resolves straight to
-  `chronicle_scroll_panel.tscn`). It is a second, unreached time-jump path — see
-  `gaps.md`.
+  `chronicle_entry` signal sequence. Its only caller is
+  `scenes/onboarding/onboarding.gd:386`, and `onboarding.tscn` is itself
+  unreached from the live boot path (see the correction under Flow 1 and
+  `gaps.md`) — so this whole presentation is orphaned, not merely a second path
+  used for one jump.
 - Save/load (the `save`/`load`/`list_saves` pipe commands) and the settings,
   era-library, and onboarding scenes are not traced as flows here; they are
   covered structurally in `3-components-client.md`.

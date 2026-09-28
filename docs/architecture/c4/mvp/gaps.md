@@ -22,14 +22,32 @@ which is the intended long-term API)?
 The comment block at `csrc/pipe/om_pipe.c:1-65` (dated to the "T1-2" wiring pass, 2026-09-24)
 states flatly: `"map.nodes" reflects the stub (always empty), "map.cover" and "map.obstacles" are
 always empty, and "units"/"visible" are always empty"` (`:50-52`) because "there is also no
-enumerator for live tactical unit ids at all" (`:47-48`). The code below it
-(`csrc/pipe/om_pipe.c:1043-1048`) does enumerate real unit ids via `om_unit_count`/`om_unit_id_at`
-and builds populated `units[]` and `visible{}` entries. `om_unit_count`/`om_unit_id_at` are real,
-non-stub E-11 accessors (piece B10, attached per `pieces.toml:196-210`) that evidently landed
-after this comment was written. The `map.nodes`/`map.cover`/`map.obstacles` portion of the claim
-is still accurate (confirmed independently: `csrc/tactical_mapgen.c`'s `om_map_get_*` accessors
-are still `/* STUB */`), but the units/visible portion is not. A comment that is half true and half
-stale is worse than either; it should be re-split or re-dated at the next touch of this file.
+enumerator for live tactical unit ids at all" (`:47-48`). Checked against the current body, all
+three parts of this claim are now stale, not just the units/visible part:
+
+- **units/visible**: `csrc/pipe/om_pipe.c:1043-1048` enumerates real unit ids via
+  `om_unit_count`/`om_unit_id_at` and builds populated `units[]` and `visible{}` entries, using
+  `om_unit_get_faction`/`om_player_can_see_unit` (`csrc/fog.c:470`). `om_unit_count`/`om_unit_id_at`
+  are real, non-stub E-11 accessors (piece B10, attached per `pieces.toml:196-210`).
+- **map.nodes**: `om_map_get_node_count`/`om_map_get_node_pos`/`om_map_get_node_type`
+  (`csrc/tactical_mapgen.c:454-476`) are real, non-stub accessors reading a live `om_mapgen_state`
+  struct, not hardcoded returns. Every mission populates three real nodes: `om_mission_setup`
+  (`csrc/mission.c:2054-2065`) calls `om_mission_instantiate_map`, which calls
+  `om_map_add_spine_node` and `om_map_add_spawn_point` twice (`mission.c:2046,2048-2049`), both
+  real functions (`tactical_mapgen.c:288-295`, backed by the same `om_mgs_add_node` helper `cover`
+  uses). `"map.nodes"` is not always empty; it is always (at least) 3 after `mission_start`.
+- **map.cover**: also real and populated — `om_map_add_cover` (`mission.c:2047`) places the
+  objective's cover circle, read back by `om_map_cover_count`/`om_map_cover_at`
+  (`csrc/pipe/om_pipe.c:1012-1015`), both real (see gap 7's correction).
+- **map.obstacles**: this part of the original claim is still accurate.
+  `om_map_add_obstacle` (`tactical_mapgen.c:306`) is real and not a stub, but no production code
+  was found to call it (`grep -rn "om_map_add_obstacle(" csrc/*.c` outside `tactical_mapgen.c`
+  itself returns nothing), and separately `csrc/pipe/om_pipe.c:1033-1036` has its own comment
+  confirming no accessor enumerates obstacles at all, so the field is hardcoded `[]` regardless.
+
+A comment that is right about one field, wrong about two, and half-right about the reason (a real
+unit enumerator now exists) is worse than a comment that is simply outdated; it should be re-split
+or re-dated at the next touch of this file.
 
 ## 3. Two live simulation transports, both spawned by the running client
 
@@ -52,28 +70,45 @@ concrete visible consequence.
 (`:272-297`, called after a `list_saves` round-trip through the C-bridge) builds a second set of
 plain `HBoxContainer` rows from `_bridge.load(slot_id)` (the new C-transport save format). Both
 write into the same `_slot_list` container. Only the C-bridge rows' Load button actually navigates
-to `"galaxy"` (`load_game.gd:290`, inside `_render_bridge_rows`); the legacy cards' click handler
+to `"galaxy"` (`load_game.gd:294`, inside `_render_bridge_rows`); the legacy cards' click handler
 was not traced as reaching the live galaxy scene. **Question for Westley**: is the legacy
 `UIDataBus` save-slot card meant to be removed now that the C-bridge path (piece `T2g`, attached)
 covers real loading, or is it still load-bearing for something the C-bridge path doesn't yet do
 (e.g. showing era/name/playtime metadata `UIDataBus`'s mock schema carries and the sidecar JSON
 does not)?
 
-## 5. Two chronicle/time-jump presentations exist, reached from different places
+## 5. `new_game` / `onboarding` / `time_jump_sequencer` are a three-scene chain, all orphaned from the live boot path
 
-`scenes/onboarding/onboarding.gd:386` is the only live caller of `SceneRouter.go_to("time_jump")`,
-which opens `scenes/world/time_jump_sequencer.tscn` — a scene driven by `SimBridge`'s
-`time_jump_started`/`time_jump_keyframe`/`chronicle_entry`/`time_jump_ended` signals (relayed
-through `UIDataBus`, `autoload/ui_data_bus.gd:5-8`), i.e. the **legacy Python transport**, for the
-one campaign-opening jump. Every subsequent jump (after a mission's debrief) goes through
+`scenes/main_menu/main_menu.gd:71` binds the `"NEW GAME"` label directly to `action: "galaxy"`, and
+`_on_menu_action`'s `"galaxy"` arm (`main_menu.gd:314-320`) calls `SceneRouter.go_to("galaxy")` with
+no intermediate scene. A repo-wide search finds **no** `go_to("new_game"` call site anywhere in
+`scenes/`, so `scenes/new_game/new_game.tscn` is unreachable from the confirmed live flow, even
+though it is registered in `SceneRouter.SCENES` (`scene_router.gd:7`) and is a complete, working
+scene (creates a save slot via `UIDataBus.create_save_slot`, `new_game.gd:205`, then calls
+`go_to("onboarding", ...)`, `new_game.gd:206`). Since that caller never fires,
+`scenes/onboarding/onboarding.tscn` is unreachable too, and since `onboarding.gd:386` is the only
+caller of `go_to("time_jump", ...)`, `scenes/world/time_jump_sequencer.tscn` — the scene driven by
+`SimBridge`'s `time_jump_started`/`time_jump_keyframe`/`chronicle_entry`/`time_jump_ended` signals,
+relayed through `UIDataBus` (`autoload/ui_data_bus.gd:5-8`), i.e. the **legacy Python transport** —
+is unreachable as well. This is the client-side equivalent of gap 9's orphaned `scenes/tactical/`, except it is three
+scenes deep; like `scenes/tactical/`, it is still exercised directly by `tests/test_qa_state_scenes.gd`
+(`grep -rln "new_game\|onboarding\|time_jump_sequencer" tests/*.gd`), so it is tested-unreachable
+rather than untested. Agora's QA profile (`~/Projects/agora/projects/ouroboros/qa.toml`) corroborates this
+independently: its main-menu screen description names only the five menu buttons and describes
+NEW GAME leading straight to the galaxy, with no era-select or difficulty step mentioned.
+
+Every jump a player can actually trigger today goes through
 `scenes/world/chronicle_scroll_panel.gd`'s `load_chronicle_live` (`autoload/c_bridge.gd:491-503`),
 the **C transport**, which hardcodes a 50-tick jump (`c_bridge.gd:496`) regardless of how much time
-has actually passed since the last jump. Two different chronicle UIs, on two different transports,
-with two different jump-length policies (an animated multi-keyframe sequence for the first jump;
-a single flat 50-tick request for every later one). Agora's QA profile documents **QA-003**: the
-chronicle list is empty after a multi-tick game (`~/Projects/agora/projects/ouroboros/qa.toml`,
-screen description for `chronicle_scroll_panel`) — this split is a plausible contributing cause,
-not confirmed as the root cause; not investigated further here.
+has actually passed since the last one. The bible describes onboarding as asking the player
+difficulty and mission-type preferences before the first chapter (`docs/bible/game_bible.md`, "The
+Player's Toolkit"); none of that reaches the player in this checkout — not because the scene is
+missing, but because nothing routes to it. **Question for Westley**: is `main_menu.gd:71`'s direct
+`"galaxy"` binding a deliberate short-circuit for this stage of development, or a wiring regression
+that should call `"new_game"` instead? Agora's QA profile documents **QA-003**: the chronicle list
+is empty after a multi-tick game (`qa.toml`, screen description for `chronicle_scroll_panel`) —
+unrelated to this orphaning (QA-003 is filed against the live `chronicle_scroll_panel` path, not the
+unreached legacy one), not investigated further here.
 
 ## 6. `om_mission_begin`/`om_mission_is_started`/`om_mission_get_clock`/`om_mission_get_phase` are defined in `csrc/fog.c`, not `csrc/mission.c`
 
@@ -84,17 +119,37 @@ calls them correctly (`om_mission_begin` from `handle_mission_begin`, `csrc/pipe
 gap, not a wiring gap, but it means a reader looking for mission lifecycle logic in `mission.c`
 will not find where recon/begin state is actually stored (`om_fog_state`).
 
-## 7. `csrc/tactical_mapgen.c` is almost entirely `/* STUB */`, one function deep
+## 7. `csrc/tactical_mapgen.c`: the mission-setup primitives are real; the procedural generator is not
 
-The file's own header says so: `"has a file to read; every body below is a STUB the build card
-replaces"` (`tactical_mapgen.c:5`). Of the module's public surface, only `om_map_add_cover` has a
-real production caller (`csrc/mission.c:2047`, placing the objective's own cover circle) and
-`om_map_add_obstacle` compiles but was not found to have any caller. Every `om_map_get_*` accessor
-is a stub (`tactical_mapgen.c:210-442` and onward). Piece `B15m` (`pieces.toml:308-323`) is scoped
-explicitly to "fixture functions only... not the full 1575-line/29-test E-17 generator (held)".
-This means tactical maps in the live game today have no real cover/obstacle layout beyond the one
-circle `mission.c` places by hand — the bible's E-17 map-generation epic describes a system that
-does not exist yet in the running game.
+The file's header comment is boilerplate carried over from the skeleton-generation template
+(`"has a file to read; every body below is a STUB the build card replaces"`, `tactical_mapgen.c:5`)
+and, read literally, overstates how much of the file is still stub — the same pattern found in
+every other `sig_table.py`-generated module that has since landed real code (`agent.c`, `resolve.c`,
+`collision.c`, `friction.c`, `diplomacy.c`, `lifecycle.c` all carry the identical boilerplate and are
+fully built; see `3-components-sim.md`). Checked function by function, `tactical_mapgen.c` splits
+into two groups:
+
+- **Real and called from production code**: `om_map_add_cover` (`:260`), `om_map_add_spine_node`
+  (`:288`), `om_map_add_spawn_point` (`:292`), `om_map_add_structure` (`:297`), `om_map_add_obstacle`
+  (`:306`, real but no caller found — see gap 2), `om_map_cover_count`/`om_map_cover_at`,
+  `om_map_clear`, and the read-back accessors `om_map_get_node_count`/`_pos`/`_type`/
+  `_nth_node_of_type` (`:454-483`) and `om_map_get_canvas_base_dimension` (`:434`). All of these are
+  called from `csrc/mission.c`'s `om_mission_instantiate_map`/`om_mission_setup`
+  (`mission.c:2033-2065`) and read back by `csrc/pipe/om_pipe.c`'s `write_tactical` — see the
+  corrected gap 2.
+- **Still `/* STUB */`**: `om_map_add_layer_restriction_zone` (`:271`), `om_map_get_active_seed`
+  (`:428`), `om_map_get_compatible_layout_count`/`_layouts` (`:443,449`), `om_map_get_simulation_coupling`
+  (`:491`) — layout-selection and seed/coupling accessors, not the node/cover/obstacle primitives a
+  single hand-placed mission map needs.
+
+What genuinely does not exist is the **procedural generator** — the piece that would call these
+primitives many times over to lay out cover fields, obstacle clusters, and multiple spine nodes into
+a real tactical map, instead of the one spine node, two spawn points, and one cover circle
+`om_mission_instantiate_map` places by hand for every mission regardless of archetype. Piece `B15m`
+(`pieces.toml:308-323`) is scoped explicitly to "fixture functions only... not the full
+1575-line/29-test E-17 generator (held)" — that generator, not the primitives it would call, is
+what is missing. The bible's E-17 map-generation epic (archetype-driven, varied layouts) describes
+a system that does not exist yet; a single fixed three-node micro-map does.
 
 ## 8. `csrc/fog.c`'s `om_visibility_compute` — real code, exercised only by tests
 
