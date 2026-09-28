@@ -8,7 +8,7 @@ extends Node3D
 # galaxy_adapter.gd, not the live game's slug ids, so the label just title-
 # cases that key directly instead of consulting a region's own record).
 
-const INFLUENCE_RADIUS := 5.0
+const INFLUENCE_RADIUS := 0.25
 const BOX_MARGIN := 8.0
 const ISO_THRESHOLD := 0.6
 const SHELL_RES_DIVISOR := 2
@@ -299,10 +299,10 @@ func _rebuild_faction_shell(faction_id: String) -> void:
 		std_mat.render_priority = -2
 		mesh_inst.material_override = std_mat
 	else:
-		var img := Image.create(64, 1, false, Image.FORMAT_RGBAF)
+		var img := Image.create(512, 1, false, Image.FORMAT_RGBAF)
 		var idx := 0
 		for entry in systems.values():
-			if idx >= 64:
+			if idx >= 512:
 				break
 			var pos: Vector3 = entry["center"]
 			var sig := clampf(entry["radius"] / maxf(max_sig, 0.01), 0.0, 1.0)
@@ -310,19 +310,19 @@ func _rebuild_faction_shell(faction_id: String) -> void:
 			idx += 1
 		var tex := ImageTexture.create_from_image(img)
 
-		var rival_img := Image.create(256, 1, false, Image.FORMAT_RGBAF)
+		var rival_img := Image.create(2048, 1, false, Image.FORMAT_RGBAF)
 		var rival_idx := 0
 		for other_fk in _faction_systems:
 			if other_fk == faction_id:
 				continue
 			for rival_entry in _faction_systems[other_fk].values():
-				if rival_idx >= 256:
+				if rival_idx >= 2048:
 					break
 				var rpos: Vector3 = rival_entry["center"]
 				var rsig := clampf(rival_entry["radius"] / maxf(max_sig, 0.01), 0.0, 1.0)
 				rival_img.set_pixel(rival_idx, 0, Color(rpos.x, rpos.y, rpos.z, rsig))
 				rival_idx += 1
-			if rival_idx >= 256:
+			if rival_idx >= 2048:
 				break
 		var rival_tex := ImageTexture.create_from_image(rival_img)
 

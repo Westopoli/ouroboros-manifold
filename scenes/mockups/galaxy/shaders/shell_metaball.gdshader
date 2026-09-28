@@ -6,7 +6,7 @@ uniform int system_count = 0;
 uniform sampler2D rival_positions : filter_nearest;
 uniform int rival_count = 0;
 uniform vec3 shell_color = vec3(0.3, 0.6, 1.0);
-uniform float influence_radius = 5.0;
+uniform float influence_radius = 0.25;
 uniform float iso_threshold = 0.6;
 uniform float shell_opacity = 0.12;
 uniform float gap_strength = 0.8;
@@ -21,9 +21,9 @@ void vertex() {
 
 float eval_own_field(vec3 p) {
 	float field = 0.0;
-	for (int i = 0; i < 64; i++) {
+	for (int i = 0; i < 512; i++) {
 		if (i >= system_count) break;
-		float u = (float(i) + 0.5) / 64.0;
+		float u = (float(i) + 0.5) / 512.0;
 		vec4 sys = texture(system_positions, vec2(u, 0.5));
 		vec3 diff = p - sys.xyz;
 		float r = influence_radius * (0.6 + sys.w * 0.4);
@@ -35,9 +35,9 @@ float eval_own_field(vec3 p) {
 
 float eval_rival_field(vec3 p) {
 	float best = 0.0;
-	for (int i = 0; i < 256; i++) {
+	for (int i = 0; i < 2048; i++) {
 		if (i >= rival_count) break;
-		float u = (float(i) + 0.5) / 256.0;
+		float u = (float(i) + 0.5) / 2048.0;
 		vec4 sys = texture(rival_positions, vec2(u, 0.5));
 		vec3 diff = p - sys.xyz;
 		float r = influence_radius * (0.6 + sys.w * 0.4);
