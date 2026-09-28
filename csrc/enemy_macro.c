@@ -124,6 +124,9 @@ enum { OM_MACRO_DIR_N, OM_MACRO_DIR_E, OM_MACRO_DIR_S, OM_MACRO_DIR_W, OM_MACRO_
 /* OM_MACRO_ROUT_HP_THRESHOLD 0.35 and OM_MACRO_EXTERNAL_REINFORCEMENT_PROB 0.21
  * now in csrc/om_constants.h (ALG-76, Q-120-03, Q-124-03, CONST-1 promotion;
  * values updated from 0.20/0.07 by Westley 2026-09-26). */
+/* ALG-75 (Q-124-02): count of unit types in the standard wave composition.
+ * OM_UNIT_TYPE_COUNT is file-static in unit.c; we mirror it here locally. */
+#define OM_WAVE_N_TYPES 6
 
 typedef struct {
     int behavior;
@@ -625,6 +628,101 @@ void om_mission_check_external_reinforcements(om_world *w) {
             st->spawn_x = 0.0;
             st->spawn_y = 0.0;
             break;
+    }
+
+    /* ALG-75 (Q-124-02, Westley 2026-09-28): spawn OM_COMPOSITION_BASE units.
+     * If enemy faction is not derivable, wave flag is set but units do not spawn. */
+    {
+        int32_t enemy_fac = om_mission_get_enemy_faction(w);
+        if (enemy_fac < 0) return;
+
+        /* Largest-remainder split (exact at count=OM_COMPOSITION_BASE=50).
+         * OM_COMPOSITION_* from om_constants.h; OM_UNIT_TYPE_COUNT is file-static
+         * in unit.c (not in header), so we enumerate the 6 types explicitly. */
+        static const uint32_t wave_shares[OM_WAVE_N_TYPES] = {
+            OM_COMPOSITION_RAIDER, OM_COMPOSITION_INTERCEPTOR, OM_COMPOSITION_VANGUARD,
+            OM_COMPOSITION_WARDEN, OM_COMPOSITION_BOMBARD, OM_COMPOSITION_BASTION,
+        };
+        uint32_t count = OM_COMPOSITION_BASE;
+        uint32_t n[OM_WAVE_N_TYPES], rem[OM_WAVE_N_TYPES];
+        uint32_t placed = 0;
+        uint32_t t;
+        for (t = 0; t < OM_WAVE_N_TYPES; t++) {
+            n[t]   = count * wave_shares[t] / OM_COMPOSITION_BASE;
+            rem[t] = count * wave_shares[t] % OM_COMPOSITION_BASE;
+            placed += n[t];
+        }
+        for (uint32_t left = count - placed; left > 0; left--) {
+            uint32_t best = 0;
+            for (t = 1; t < OM_WAVE_N_TYPES; t++) {
+                if (rem[t] > rem[best]) best = t;
+            }
+            n[best]++;
+            rem[best] = 0;
+        }
+
+        /* Destination: objective 0 centre if available, else player centroid.
+         * R-124-02: "run their own script" -- a group_move to the mission
+         * objective is the minimal literal reading; a real macro-force script
+         * can replace this later. */
+        double dest_x = 0.0, dest_y = 0.0;
+        if (om_mission_objective_count(w) > 0) {
+            om_vec2 ctr;
+            ctr.x = 0.0; ctr.y = 0.0;
+            if (om_objective_get_center(w, 0, &ctr)) {
+                dest_x = ctr.x;
+                dest_y = ctr.y;
+            }
+        } else {
+            int32_t player_fac = om_player_faction(w);
+            uint32_t total_in_reg = om_unit_count(w);
+            uint32_t scanned = 0, player_cnt = 0;
+            double px_sum = 0.0, py_sum = 0.0;
+            uint32_t i;
+            for (i = 0; scanned < total_in_reg && i < (uint32_t)OM_MAX_UNITS; i++) {
+                uint32_t uid = om_unit_id_at(w, i);
+                if (!uid) { continue; }
+                scanned++;
+                if (om_unit_get_faction(w, uid) == player_fac && om_unit_alive(w, uid)) {
+                    double ux = 0.0, uy = 0.0;
+                    om_unit_get_pos(w, uid, &ux, &uy);
+                    px_sum += ux; py_sum += uy;
+                    player_cnt++;
+                }
+            }
+            dest_x = (player_cnt > 0) ? px_sum / (double)player_cnt : 0.0;
+            dest_y = (player_cnt > 0) ? py_sum / (double)player_cnt : 0.0;
+        }
+
+        /* Grid centred on (spawn_x, spawn_y); rows = ceil(sqrt(count)).
+         * spacing = 2 * OM_UNIT_COLLISION_RADIUS; margin = one radius from edge. */
+        uint32_t rows = 1;
+        while (rows * rows < count) rows++;
+        uint32_t n_cols = (count + rows - 1) / rows;
+        double spacing = 2.0 * (double)OM_UNIT_COLLISION_RADIUS;
+        double half = OM_CANVAS_SIZE_RANGES_MEDIUM_HI / 2.0 - (double)OM_UNIT_COLLISION_RADIUS;
+
+        uint32_t unit_ids[OM_COMPOSITION_BASE];
+        uint32_t n_spawned = 0;
+        uint32_t k = 0;
+        for (t = 0; t < OM_WAVE_N_TYPES; t++) {
+            uint32_t j;
+            for (j = 0; j < n[t]; j++, k++) {
+                uint32_t col     = k / rows;
+                uint32_t row_idx = k % rows;
+                double x = st->spawn_x + ((double)col     - (double)(n_cols - 1) * 0.5) * spacing;
+                double y = st->spawn_y + ((double)row_idx - (double)(rows  - 1) * 0.5) * spacing;
+                if (x < -half) x = -half;
+                if (x >  half) x =  half;
+                if (y < -half) y = -half;
+                if (y >  half) y =  half;
+                uint32_t id = om_unit_spawn(w, (int)t, enemy_fac, x, y, 0);
+                if (id && n_spawned < OM_COMPOSITION_BASE) unit_ids[n_spawned++] = id;
+            }
+        }
+        if (n_spawned > 0) {
+            om_command_group_move(w, unit_ids, n_spawned, dest_x, dest_y);
+        }
     }
 }
 
