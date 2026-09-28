@@ -133,18 +133,10 @@
 #define OM_SUP_HAZARD_SENSOR_INTERFERENCE 0
 #define OM_SUP_HAZARD_LAUNCH_COUNT 1
 
-/* R-126-01's owner-id space is a fixture convention distinct from E-05's
- * faction id space (0 = player there); here 1 = player, 2 = enemy, 0 =
- * neutral, per signatures.toml's om_structure_set_owner note. HDR3 legacy
- * fallback: worlds with no configured player faction still treat owner 1 as
- * "player" in captured/lost ticker messages. */
-#define OM_SUP_PLAYER_OWNER_FALLBACK 1
-
-/* HDR3 rule 2: use configured player faction when available, else fallback 1. */
-static int32_t sup_player_owner_id(const om_world *w) {
-    int32_t pf = om_player_faction(w);
-    return pf >= 0 ? pf : OM_SUP_PLAYER_OWNER_FALLBACK;
-}
+/* W-1d/option (a): structure owner is an E-05 faction id; neutral = -1.
+ * Production driver spawns for s->owner directly; neutral guard: s->owner < 0.
+ * Ticker legacy: worlds with no configured player faction (om_player_faction
+ * == -1) treat faction 1 as player for captured/lost messages (HDR3). */
 
 /* om_drift_interpolate's OMDriftMode (tests/csim/test_E15_S130_*.py). */
 #define OM_SUP_DRIFT_PING_PONG 0
@@ -274,7 +266,7 @@ static om_sup_structure *om_sup_structure_at(om_world *w, uint32_t idx) {
     if (!s->in_use) {
         memset(s, 0, sizeof(*s));
         s->in_use = 1;
-        s->owner = 0;
+        s->owner = -1;
         s->hp = OM_REINFORCEMENT_STRUCTURE_HP;
         s->power = (double)OM_POWER_NORMALIZATION;
         s->capturing_faction = OM_SUP_NC_NONE;
@@ -493,7 +485,7 @@ void om_structure_init(om_world *w, uint32_t structure, uint32_t unit_type, doub
     om_sup_structure *s = &om_sup(w)->structures[structure < OM_SUP_MAX_STRUCTURES ? structure : OM_SUP_MAX_STRUCTURES - 1];
     memset(s, 0, sizeof(*s));
     s->in_use = 1;
-    s->owner = 0;
+    s->owner = -1;
     s->destroyed = 0;
     s->hp = OM_REINFORCEMENT_STRUCTURE_HP;
     s->power = power;
@@ -608,6 +600,13 @@ void om_structure_set_owner(om_world *w, uint32_t structure, int32_t owner) {
     om_sup_structure_at(w, structure)->owner = owner;
 }
 
+int om_structure_set_position(om_world *w, uint32_t slot, double x, double y) {
+    om_sup_structure *s = om_sup_structure_at(w, slot);
+    s->x = x;
+    s->y = y;
+    return 0;
+}
+
 int32_t om_structure_get_owner(om_world *w, uint32_t structure) {
     return om_sup_structure_at(w, structure)->owner;
 }
@@ -694,12 +693,13 @@ double om_structure_get_hp(om_world *w, uint32_t structure) {
 }
 
 void om_structure_on_owner_changed(om_world *w, uint32_t structure, int32_t old_owner, int32_t new_owner) {
+    int32_t pf, player;
     (void)structure;
-    /* R-127-04/E-16 R-104-01: from the player's perspective only -- the
-     * player either just gained or just lost the structure. HDR3: uses
-     * sup_player_owner_id(w) which returns the configured player faction or
-     * falls back to OM_SUP_PLAYER_OWNER_FALLBACK (1) for unconfigured worlds. */
-    int32_t player = sup_player_owner_id(w);
+    /* R-127-04/E-16 R-104-01: player perspective only. Legacy: faction 1 when
+     * no player configured (HDR3; smaller than adding om_faction_set to those
+     * fixtures). */
+    pf = om_player_faction(w);
+    player = pf >= 0 ? pf : 1;
     if (new_owner == player) {
         om_sup_push_ticker(w, "Structure captured.");
     } else if (old_owner == player) {
@@ -826,7 +826,7 @@ static void om_sup_objective_refresh_center(om_world *w, om_sup_objective *o, ui
 static void om_sup_structure_tick_production_driver(om_world *w, om_sup_structure *s, uint32_t idx) {
     uint64_t now, elapsed;
     uint32_t interval;
-    if (s->destroyed || s->owner == 0) {
+    if (s->destroyed || s->owner < 0) {
         s->prod_accruing = 0;
         return;
     }
@@ -839,7 +839,10 @@ static void om_sup_structure_tick_production_driver(om_world *w, om_sup_structur
     interval = om_structure_production_interval_ticks(s->power);
     if (interval == 0) return;
     om_sup_structure_refresh_position(w, s);
-    while (s->timer >= interval) om_structure_tick_production(w, idx);
+    while (s->timer >= interval) {
+        om_structure_tick_production(w, idx);
+        om_unit_spawn(w, (int)s->unit_type, s->owner, s->last_spawn_x, s->last_spawn_y, 0);
+    }
 }
 
 /* Per-step driver: om_tactical_step calls this once per step after
@@ -951,8 +954,8 @@ uint32_t om_render_get_unit_silhouette_id(uint32_t unit_type) {
 }
 
 uint32_t om_render_get_owner_color(int32_t owner) {
-    if (owner == OM_SUP_PLAYER_OWNER_FALLBACK) return OM_SUP_RENDER_COLOR_PLAYER;
-    if (owner == 0) return OM_SUP_RENDER_COLOR_NEUTRAL;
+    if (owner < 0) return OM_SUP_RENDER_COLOR_NEUTRAL;
+    if (owner == 0) return OM_SUP_RENDER_COLOR_PLAYER;
     return OM_SUP_RENDER_COLOR_ENEMY;
 }
 

@@ -40,7 +40,7 @@ def test_R_127_02_progress_resets_to_0(lib, world_factory):
     """Given units of two or more non-owner factions inside, or the owner also present, When ticks pass, Then progress resets to 0."""
     w = world_factory(n_regions=1)
     lib.om_structure_init(w, 0, 0, ctypes.c_double(100.0))
-    lib.om_structure_set_owner(w, 0, 0)  # neutral
+    lib.om_structure_set_owner(w, 0, -1)  # neutral
     lib.om_structure_set_capture_progress(w, 0, ctypes.c_double(0.6))
 
     # Contest: owner enters or two non-owner factions present

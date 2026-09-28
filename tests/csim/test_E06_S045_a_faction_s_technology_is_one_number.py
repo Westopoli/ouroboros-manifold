@@ -17,6 +17,7 @@ from conftest import (
     gen_set_region_range,
     generate,
     isolate_agents,
+    load_launch_events,
     read_events,
     set_faction,
     set_owner,
@@ -206,6 +207,11 @@ def test_R_045_09_mean_over_all_windows_between(lib, world_factory):
     # record (om_event_queue_external, csrc/diplomacy.c) reaches
     # om_tick_events/read_events at all.
     lib.om_world_set_feature(w, OMFeature.EVENTS, 1)
+    # test-defect fix: without load_launch_events the event template library is
+    # never loaded, om_event_template_name returns None for every id, and the
+    # "Knowledge Lost" filter never matches -- total_events drops to zero even
+    # though the sim fires them. Mirror every other launch-config test.
+    load_launch_events(lib, w)
 
     kl_counts = []
     total_windows = 100  # 5,000 ticks / 50 ticks per window

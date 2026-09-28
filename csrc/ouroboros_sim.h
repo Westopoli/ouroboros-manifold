@@ -1556,6 +1556,7 @@ double om_mission_get_candidate_score(const om_world *w, uint32_t region_idx, ui
 uint32_t om_mission_get_compatible_layouts(const om_world *w, uint32_t archetype, uint32_t *out, uint32_t max);
 int om_mission_get_debrief(const om_world *w, om_debrief *out);
 uint32_t om_mission_get_deployed_force_count(const om_world *w);
+int32_t om_mission_get_enemy_faction(const om_world *w);
 double om_mission_get_enemy_power(const om_world *w);
 double om_mission_get_objective_completion(const om_world *w, uint32_t objective_idx);
 double om_mission_get_objective_score(const om_world *w);
@@ -1756,6 +1757,7 @@ void om_structure_set_capture_progress(om_world *w, uint32_t structure, double c
 void om_structure_set_capturing_faction(om_world *w, uint32_t structure, int32_t unopposed);
 void om_structure_set_contested(om_world *w, uint32_t structure, int on);
 void om_structure_set_owner(om_world *w, uint32_t structure, int32_t owner);
+int om_structure_set_position(om_world *w, uint32_t slot, double x, double y);
 void om_structure_set_timer(om_world *w, uint32_t structure, uint64_t timer);
 void om_structure_switch_unit_type(om_world *w, uint32_t structure, uint32_t new);
 void om_structure_tick_capture(om_world *w, uint32_t structure);
