@@ -4854,6 +4854,15 @@ confidence = "likely"
 note = "p1 = structure idx; p2 = owner as E-05 faction id (-1 = neutral, 0+ = faction). W-1d/option (a): neutral is -1, not 0. Return unused."
 
 [[symbols]]
+name = "om_structure_set_position"
+module = "tactical_support.c"
+restype = "int"
+params = [{ name = "w", ctype = "om_world*" }, { name = "slot", ctype = "uint32_t" }, { name = "x", ctype = "double" }, { name = "y", ctype = "double" }]
+epics = ["E-15"]
+confidence = "confirmed"
+note = "W-1e: sets s->x/s->y; does not touch last_spawn_x/y (set only by om_structure_tick_production). Returns 0. Slot clamped by om_sup_structure_at like all other setters."
+
+[[symbols]]
 name = "om_structure_set_timer"
 module = "tactical_support.c"
 restype = "void"

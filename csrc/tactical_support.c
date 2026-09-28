@@ -600,6 +600,13 @@ void om_structure_set_owner(om_world *w, uint32_t structure, int32_t owner) {
     om_sup_structure_at(w, structure)->owner = owner;
 }
 
+int om_structure_set_position(om_world *w, uint32_t slot, double x, double y) {
+    om_sup_structure *s = om_sup_structure_at(w, slot);
+    s->x = x;
+    s->y = y;
+    return 0;
+}
+
 int32_t om_structure_get_owner(om_world *w, uint32_t structure) {
     return om_sup_structure_at(w, structure)->owner;
 }

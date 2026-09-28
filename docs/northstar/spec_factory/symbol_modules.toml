@@ -122,3 +122,5 @@ om_map_cover_count                  = "tactical_mapgen.c"
 om_map_cover_at                     = "tactical_mapgen.c"
 # F2s: full-reset clear, keeps only the allocated mapgen_state slot (B15m-5)
 om_map_clear                        = "tactical_mapgen.c"
+# W-1e: structure position setter (E-15, called by pipe place_structure verb)
+om_structure_set_position           = "tactical_support.c"

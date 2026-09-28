@@ -2444,6 +2444,7 @@ def _bind_e15(lib):
     _bind(lib, "om_structure_set_capturing_faction", [W, ctypes.c_uint32, ctypes.c_int32], None, ("w", "structure", "unopposed"))
     _bind(lib, "om_structure_set_contested", [W, ctypes.c_uint32, ctypes.c_int], None, ("w", "structure", "on"))
     _bind(lib, "om_structure_set_owner", [W, ctypes.c_uint32, ctypes.c_int32], None, ("w", "structure", "owner"))
+    _bind(lib, "om_structure_set_position", [W, ctypes.c_uint32, ctypes.c_double, ctypes.c_double], ctypes.c_int, ("w", "slot", "x", "y"))
     _bind(lib, "om_structure_set_timer", [W, ctypes.c_uint32, ctypes.c_uint64], None, ("w", "structure", "timer"))
     _bind(lib, "om_structure_switch_unit_type", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "structure", "new"))
     _bind(lib, "om_structure_tick_capture", [W, ctypes.c_uint32], None, ("w", "structure"))

@@ -1527,10 +1527,10 @@ static void handle_place_structure(const char *json) {
     double x = 0.0, y = 0.0;
     get_f64(json, "x", &x);
     get_f64(json, "y", &y);
-    (void)x; (void)y; /* no public om_structure_set_position; structure placed at (0,0) */
     uint32_t slot = g_n_placed_structures++;
     om_structure_init(W, slot, (uint32_t)kind, om_unit_power((uint32_t)kind));
     om_structure_set_owner(W, slot, (int32_t)owner);
+    om_structure_set_position(W, slot, x, y);
     jbuf j;
     jb_init(&j);
     jb_putc(&j, '{');

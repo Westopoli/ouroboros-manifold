@@ -1757,6 +1757,7 @@ void om_structure_set_capture_progress(om_world *w, uint32_t structure, double c
 void om_structure_set_capturing_faction(om_world *w, uint32_t structure, int32_t unopposed);
 void om_structure_set_contested(om_world *w, uint32_t structure, int on);
 void om_structure_set_owner(om_world *w, uint32_t structure, int32_t owner);
+int om_structure_set_position(om_world *w, uint32_t slot, double x, double y);
 void om_structure_set_timer(om_world *w, uint32_t structure, uint64_t timer);
 void om_structure_switch_unit_type(om_world *w, uint32_t structure, uint32_t new);
 void om_structure_tick_capture(om_world *w, uint32_t structure);
