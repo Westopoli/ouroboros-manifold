@@ -135,6 +135,41 @@ else
     ok symbol_ownership "$(cat "$SYM_LOG")"
 fi
 
+# -------------------------------------------------------------- 5b. reachability lint
+# Gap-fix plan (witty-cuddling-goblet.md, Wave 0 item 3): every tested public
+# csrc/ouroboros_sim.h symbol must be reachable from a real tick/jump/pipe
+# root, or allowlisted. Runs here, ahead of the REVERT_MODE early return
+# below, so it is part of both this script's profiles: the full merge run,
+# and the lighter revert/docs-shaped run that stops right after this block.
+#
+# --base-ref: regression mode, not absolute -- origin/main carries ~337
+# pre-existing tested-but-unreachable symbols today (most of E-06..E-17 is
+# real, tested, and simply not wired into a live path yet), and gating on
+# the absolute count would reject every candidate against that baseline
+# forever. Only a symbol newly unreachable in this candidate versus the
+# rebased base (regressed, or new-and-unreachable) rejects, mirroring how
+# regression_csim/regression_qa_t1 above compare failing-id sets rather than
+# absolute pass/fail counts.
+REACH_LOG="$SCRATCH_ROOT/reach_lint.log"
+"$PYTHON" "$GATE_DIR/reach_lint.py" --ref "HEAD" --base-ref "$BASE_REF" --project "$CANDIDATE" >"$REACH_LOG" 2>&1
+if [[ $? -ne 0 ]]; then
+    reject reach_lint "$(tail_oneline "$REACH_LOG" 10)"
+else
+    ok reach_lint "$(tail_oneline "$REACH_LOG" 1)"
+fi
+
+# -------------------------------------------------------------- 5c. single-owner lint
+# Same gap-fix plan item: no file owned by two in-flight pieces. Reads
+# THIS repo's own pieces.toml ($PIECES_TOML), never the candidate's copy
+# (same rule this whole script follows for every other spec-factory tool).
+OWNER_LOG="$SCRATCH_ROOT/owner_lint.log"
+"$PYTHON" "$GATE_DIR/owner_lint.py" --pieces "$PIECES_TOML" >"$OWNER_LOG" 2>&1
+if [[ $? -ne 0 ]]; then
+    reject owner_lint "$(cat "$OWNER_LOG")"
+else
+    ok owner_lint "$(tail_oneline "$OWNER_LOG" 1)"
+fi
+
 # `merge_cli.py revert`: only make, lints and footprint (decision 8: "no
 # acceptance, no regression" -- a revert's job is to get main back to a
 # known-good state fast, not to re-prove the piece it's undoing).
@@ -382,6 +417,19 @@ for line in m.undertest_warn('$CANDIDATE', '$BASE_REF', '$PIECE_ID', pieces_path
     print(line)
 " 2>&1)"
 warn undertest_check "$(echo "$UT_OUT" | tr '\n' '; ')"
+
+# -------------------------------------------------------------- 12. size_lint (WARN only, merge profile only)
+# Gap-fix plan Wave 0 item 3: this step only runs past the REVERT_MODE
+# early return above, so it is merge-profile-only by construction (a revert
+# or a docs-profile run never reaches here). Always warn, never reject,
+# regardless of size_lint.py's own exit code: --hard-cap-lines is off by
+# default (Westley sets it later), and even once it is set, promoting a
+# size finding from warn to reject in the live gate is his call to make
+# separately, not something this wiring change decides on his behalf.
+SIZE_LOG="$SCRATCH_ROOT/size_lint.log"
+"$PYTHON" "$GATE_DIR/size_lint.py" HEAD "$BASE_REF" --piece-id "$PIECE_ID" \
+    --pieces "$PIECES_TOML" --project "$CANDIDATE" >"$SIZE_LOG" 2>&1
+warn size_lint "$(tail_oneline "$SIZE_LOG" 3)"
 
 # --------------------------------------------------------------
 if [[ "$REJECTED" -eq 1 ]]; then
