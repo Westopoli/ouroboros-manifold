@@ -66,6 +66,7 @@ var _live_tests_completed := false
 var _c53_completed := false
 var _c54_completed := false
 var _c28_completed := false
+var _realtime_step_completed := false
 
 
 func _initialize() -> void:
@@ -112,6 +113,17 @@ func _run_tests() -> void:
 		return
 	get_root().add_child(_root)
 	await process_frame
+	# B9-N: tactical_view now steps the live mission on its own from
+	# _process() (real-time play). Every other section here drives ticks
+	# explicitly (load_frame()/qa_step()) and asserts exact tick/frame
+	# state, so automatic stepping is switched off for every view this test
+	# file mounts; _run_realtime_step_tests() below is the one section that
+	# exercises _process() itself, and it does so by calling it directly.
+	# Godot auto-enables processing once a script defines _process(), on the
+	# node's own _ready() (deferred to this first awaited frame, not
+	# synchronous inside add_child()), so set_process(false) only sticks once
+	# called after that frame has run.
+	_root.set_process(false)
 	await process_frame
 
 	for m in CONTRACT_METHODS:
@@ -147,6 +159,8 @@ func _run_tests() -> void:
 	await _run_c28_tests()
 	_assert(_c28_completed, "the C2-8 checks did not run to the end (a script error aborted them, or tactical_view.gd does not read player_faction from the loaded frame)")
 	await _run_mission_over_routing_test()
+	await _run_realtime_step_tests()
+	_assert(_realtime_step_completed, "the real-time stepping checks did not run to the end (a script error aborted them, or tactical_view.gd lacks _process real-time stepping)")
 
 
 # Piece C5-2 (docs/architecture.md "session commands (v1.1)"): with no
@@ -195,6 +209,7 @@ func _run_live_tests() -> void:
 	var fresh: Node = (load(SCENE_PATH) as PackedScene).instantiate()
 	get_root().add_child(fresh)
 	await process_frame
+	fresh.set_process(false)  # see the _root mount above for why
 	await process_frame
 	var st: Dictionary = fresh.qa_state()
 	_assert(int(st.get("tick", -1)) == int(live.get("tick", -2)),
@@ -214,6 +229,7 @@ func _mount_view() -> Node:
 	var v: Node = (load(SCENE_PATH) as PackedScene).instantiate()
 	get_root().add_child(v)
 	await process_frame
+	v.set_process(false)  # see the _root mount above for why
 	await process_frame
 	return v
 
@@ -444,6 +460,70 @@ func _run_c54_tests() -> void:
 	await process_frame
 	SimSession_reset()
 	_c54_completed = true
+
+
+# Piece C5-N (2026-09-28 QA-run wiring brief): before this fix, a deployed
+# mission only ever advanced through the qa_step() QA hook -- _process() did
+# nothing, so real play froze at tick 0. Same live-mission setup as
+# _run_c54_tests (seed 1 stepped to strategic tick 10: archetype 3, 572
+# units, so om_tactical_step is not the zero-unit no-op, csrc/unit.c:1651).
+# Rate: OM_TACTICAL_TICK_RATE = 20 base ticks/sec (csrc/om_constants.h;
+# E-13 R-099-02, docs/bible/epics/E-13-tactical-combat.md).
+func _run_realtime_step_tests() -> void:
+	SimSession_reset()
+	var _b = load("res://autoload/sim_session.gd").bridge()
+	var _CBridge = load("res://autoload/c_bridge.gd")
+	var _TacticalView = load("res://scenes/tactical_c/tactical_view.gd")
+	_b.ensure_session(1, _CBridge.DEFAULT_N_REGIONS, _CBridge.DEFAULT_FEATURES)
+	_b.step(10)
+	var _step_ddl := Time.get_ticks_msec() + 5000
+	while Time.get_ticks_msec() < _step_ddl and int(_b.snapshot().get("tick", 0)) < 10:
+		_b.pump()
+		OS.delay_msec(5)
+
+	var view: Node = await _mount_view()
+	if not view.has_method("_process"):
+		_assert(false, "tactical_view root missing _process (piece C5-N not attached yet)")
+		view.queue_free()
+		await process_frame
+		SimSession_reset()
+		return
+
+	# _mount_view() already disabled automatic per-frame processing (see its
+	# comment); _process() is driven directly below with a fixed delta so
+	# the expected-ticks arithmetic is exact, not at the mercy of real
+	# wall-clock frame timing.
+	var tick0 := int(view.qa_state().get("tick", -1))
+	_assert(tick0 >= 0, "no tick in qa_state() before real-time stepping")
+
+	var rate: float = float(_TacticalView.TACTICAL_BASE_TICKS_PER_SECOND)
+	var frame_dt := 1.0 / 60.0
+	for _i in range(60):
+		view._process(frame_dt)
+	var tick1 := int(view.qa_state().get("tick", -1))
+	var advanced := tick1 - tick0
+	var expected := int(round(rate))
+	var frame_tolerance := int(ceil(rate * frame_dt))
+	_assert(abs(advanced - expected) <= frame_tolerance,
+		"~1s of _process() advanced tick by %d, expected ~%d (rate %s ticks/sec), tolerance +-%d" % [advanced, expected, rate, frame_tolerance])
+
+	# Stepping must stop once a frame reports mission_over, even though the
+	# accumulator still owes ticks -- _mission_over_seen latches in
+	# load_frame() (docs/architecture.md "C transport v1", tactical snapshot).
+	var over_frame: Dictionary = _frame0.duplicate(true)
+	over_frame["tick"] = tick1
+	over_frame["mission_over"] = true
+	view.load_frame(over_frame)
+	for _i in range(60):
+		view._process(frame_dt)
+	var tick2 := int(view.qa_state().get("tick", -1))
+	_assert(tick2 == tick1,
+		"_process() kept stepping after a mission_over frame: tick moved from %d to %d" % [tick1, tick2])
+
+	view.queue_free()
+	await process_frame
+	SimSession_reset()
+	_realtime_step_completed = true
 
 
 func _check_qa_state_json_safe() -> void:
