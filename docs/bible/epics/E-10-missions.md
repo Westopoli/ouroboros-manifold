@@ -11,7 +11,7 @@
 | Every visible-surface story has a reference | **No.** S-079 (briefing and debrief screens) has a visible surface and no reference. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on 6 open flags and one missing reference (Q-076-01, the live-time-limits-vs-config defect, is answered: the minutes table is the design, wired live in `om_mission_get_time_limit`).
+**Gate verdict: not passed.** Blocked on 7 open flags and one missing reference. Q-076-02 (each archetype's base time within 30 to 60 minutes) is new; until it closes, `om_mission_get_time_limit` still reads the retired 3 to 4.5 minute table.
 
 ## Purpose
 
@@ -104,12 +104,12 @@ As a commander, I want a deadline that tightens when the situation is urgent, so
 
 Rules
 - R-076-01  Given an archetype base time B in tactical ticks and urgency u, When the limit is set, Then limit = max(B · (1 − 0.2 · u), 0.6 · B).
-- R-076-02  Given base times, When read, Then they are the minutes in the table (Q-076-01 answered 2026-09-12: the minutes table is the design; a since-removed seconds table was an implementation error).
+- R-076-02  Given base times, When read, Then each archetype's base time B lies between 30 and 60 minutes of battle time (Q-076-01, Westley 2026-09-29) [Q-076-02: the per-archetype values and whether the urgency floor may take the limit below 30 minutes].
 - R-076-03  Given the deadline passes, When the mission ends, Then the current objective completion values are final; finishing early never raises the score.
 
 Inputs: archetype; urgency.
 Outputs: time limit in the mission setup; HUD clock.
-Open flags: none.
+Open flags: Q-076-02.
 
 ### S-077 — Five ways it can go
 As a commander, I want the result to be a spectrum weighing what I achieved and who I brought home, judged by what is reasonable for that kind of mission, so that a costly win and a clean win are not the same.
@@ -214,12 +214,12 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 - Band thresholds applied inclusively.
 - Deficit and current forms swapped for negative deltas.
 - Transfer applied on partial success for assault.
-- Time limit uses the overridden 250-tick table.
+- Time limit on a minutes-scale table (3 to 4.5 minutes, or seconds) instead of 30 to 60 minutes.
 - Refusal deploys a force.
 
 ## Open ambiguity flags
 
-Q-072-01, Q-074-01, Q-077-01, Q-078-01, Q-079-01, Q-080-01 (Q-076-01 answered 2026-09-12, closed). Details in `docs/northstar/ambiguity_register.md`.
+Q-072-01, Q-074-01, Q-076-02, Q-077-01, Q-078-01, Q-079-01, Q-080-01 (Q-076-01 closed 2026-09-29: missions are 30 to 60 minutes). Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
