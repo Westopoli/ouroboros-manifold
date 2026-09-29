@@ -119,10 +119,11 @@ Rules
 - R-077-02  Given the archetype's thresholds [t1, t2, t3, t4], When classified, Then final < t1 is total_failure, < t2 partial_failure, < t3 partial_success, < t4 strong_success, else total_success; thresholds: defensive_stand, siege_breaking, suppression, interception, containment, counterinsurgency [0.20, 0.40, 0.60, 0.80]; reconquest and assault [0.25, 0.45, 0.65, 0.82]; multi_front_defense [0.15, 0.35, 0.55, 0.75]; evacuation [0.30, 0.50, 0.65, 0.80].
 - R-077-03  Given the mission ends, When the commander's unit is dead, Then commander fate is killed, else survived [Q-077-01: the hub also names wounded].
 - R-077-04  Given the result, When shown, Then the band is revealed only at mission end, never during play.
+- R-077-05  Given a mission starts, When the player's force is spawned, Then it includes exactly one commander unit, tied to the lineage character the HUD shows, and that unit's id is held in mission state for the whole mission; R-077-03 reads commander fate from this unit [Q-077-02: the commander's unit type and on-screen marker]. (Westley, 2026-09-28: a dedicated unit.)
 
 Inputs: objectives; unit store; initial power; commander unit id.
 Outputs: mission result (band, objective score, retention, per-objective, commander fate, ticks elapsed) in the save file and debrief.
-Open flags: Q-077-01.
+Open flags: Q-077-01, Q-077-02.
 
 ### S-078 — A battle becomes history
 As a commander, I want the outcome to change the region in proportion to how it was doing, so that saving a desperate region matters more than polishing a strong one.
