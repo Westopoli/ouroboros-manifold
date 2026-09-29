@@ -141,8 +141,17 @@ fi
 # root, or allowlisted. Runs here, ahead of the REVERT_MODE early return
 # below, so it is part of both this script's profiles: the full merge run,
 # and the lighter revert/docs-shaped run that stops right after this block.
+#
+# --base-ref: regression mode, not absolute -- origin/main carries ~337
+# pre-existing tested-but-unreachable symbols today (most of E-06..E-17 is
+# real, tested, and simply not wired into a live path yet), and gating on
+# the absolute count would reject every candidate against that baseline
+# forever. Only a symbol newly unreachable in this candidate versus the
+# rebased base (regressed, or new-and-unreachable) rejects, mirroring how
+# regression_csim/regression_qa_t1 above compare failing-id sets rather than
+# absolute pass/fail counts.
 REACH_LOG="$SCRATCH_ROOT/reach_lint.log"
-"$PYTHON" "$GATE_DIR/reach_lint.py" --ref "HEAD" --project "$CANDIDATE" >"$REACH_LOG" 2>&1
+"$PYTHON" "$GATE_DIR/reach_lint.py" --ref "HEAD" --base-ref "$BASE_REF" --project "$CANDIDATE" >"$REACH_LOG" 2>&1
 if [[ $? -ne 0 ]]; then
     reject reach_lint "$(tail_oneline "$REACH_LOG" 10)"
 else

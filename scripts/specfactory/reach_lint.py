@@ -95,6 +95,44 @@ whenever a new save slot's hooks are wired (`csrc/save.c`'s ten-slot
 comment names them), since a hook that starts calling a public accessor
 would not get credit for the reachability that pointer-indirected call
 still genuinely provides.
+
+Baseline (regression) mode. Run bare (no `--base-ref`), this lint is
+absolute: on origin/main today it reports 480 tested-but-unreachable
+symbols, because most of E-06..E-17 is real, tested, but not yet wired into
+any live path (`merge_cli.py`'s own words) -- wiring this into a merge gate
+unconditionally would reject every candidate against that pre-existing
+480-symbol baseline forever. `--base-ref <ref>` switches to regression
+mode, mirroring `suite_regression.py`'s `compare_runs`: compute the
+unreachable-symbol SET at `--base-ref` and at `--ref` (the candidate)
+independently -- each is just another `git archive` of a ref, so this needs
+no worktree, unlike `suite_regression.py`'s diff-apply approach -- and
+report only `set(after) - set(before)`: a symbol already unreachable on the
+base is a pre-existing finding no candidate is responsible for fixing; a
+symbol the candidate newly tests that comes up unreachable is caught for
+free by the same set difference (it is in `after`, never in `before`). The
+bare, absolute mode (no `--base-ref`) is unchanged and still available for
+a full read of where the codebase stands.
+
+Read exemption. A getter/predicate a human or the client calls to display
+state (`om_unit_get_hp`, `om_region_count`, `om_world_is_terminal`,
+`om_unit_has_active_buff`) is naturally exercised by tests and by the
+client without the SIMULATION's own tick/jump/pipe code ever needing to
+call it back -- flagging it as "unreachable" is noise, not a finding; the
+real defect class this lint exists for is behaviour a rule says happens in
+play (a fate eval, a state transition, an apply/resolve/setup step) that
+nothing ever drives. The obvious rule -- "first parameter is `const
+om_world *` (or no world parameter at all), and the return type is not
+void, is a read accessor" -- was tried first and rejected: checked against
+`om_mission_eval_commander_fate(double hp, double max_hp)` (declared
+`ouroboros_sim.h:1541`), which takes NO `om_world *` parameter at all and
+returns `int32_t`, so that rule would have exempted the exact symbol this
+lint's own acceptance bar (Wave 0 item 4) requires it to keep reporting.
+The rule actually used, per the fallback the gap-fix plan specifies: a pure
+NAME-pattern exemption, no signature involved -- `om_*_get_*`, `*_count`,
+`*_is_*`, `*_has_*`. `om_mission_eval_commander_fate` matches none of these
+and stays a finding. `--include-reads` turns the exemption off and shows
+every tested-but-unreachable symbol, reads included, same as before this
+mode existed.
 """
 
 from __future__ import annotations
@@ -134,6 +172,15 @@ CALL_ATTR_RE = re.compile(r"\.\s*(om_[A-Za-z0-9_]+)\s*\(")
 GETATTR_RE = re.compile(r"""getattr\(\s*[A-Za-z_][A-Za-z0-9_]*\s*,\s*["'](om_[A-Za-z0-9_]+)["']""")
 
 CALL_IDENT_RE = re.compile(r"\b([A-Za-z_][A-Za-z0-9_]*)\s*\(")
+
+# Read-accessor exemption (see module docstring "Read exemption" section for
+# why this is a pure name pattern and not the signature-based rule tried
+# first): om_*_get_*, *_count, *_is_*, *_has_*.
+READ_NAME_RE = re.compile(r"_get_|_count$|_is_|_has_")
+
+
+def is_read_accessor(name: str) -> bool:
+    return bool(READ_NAME_RE.search(name))
 
 
 def _strip_comments(text: str) -> str:
@@ -330,9 +377,13 @@ def archive_ref(project: Path, ref: str, dest: Path) -> None:
     _archive_path(project, ref, "tests", dest)
 
 
-def run(project: Path, ref: str, allowlist_path: Path) -> tuple[list[dict], int]:
-    """Returns (findings, n_tested_public_symbols). Each finding is
-    {"symbol": str, "test_file": str}."""
+def compute_unreachable(project: Path, ref: str, allowlist_path: Path, *,
+                         include_reads: bool = False) -> tuple[dict[str, str], int]:
+    """({symbol: one calling test file}, n_tested_public_symbols) for every
+    tested public header symbol that is not reachable, not allowlisted, and
+    (unless include_reads) not a read accessor by name. The two callers
+    (`run`, the absolute/bare mode; `regression`, the base-vs-candidate
+    mode) both just need this one ref's own unreachable set."""
     with tempfile.TemporaryDirectory(prefix="reach_lint_src_") as scratch:
         scratch_path = Path(scratch)
         archive_ref(project, ref, scratch_path)
@@ -364,14 +415,43 @@ def run(project: Path, ref: str, allowlist_path: Path) -> tuple[list[dict], int]
 
         tested_public = {s: files for s, files in tested.items() if s in public_symbols}
 
-        findings = []
+        unreachable: dict[str, str] = {}
         for sym in sorted(tested_public):
             if sym in reachable:
                 continue
             if sym in allowlist:
                 continue
-            findings.append({"symbol": sym, "test_file": tested_public[sym][0]})
-        return findings, len(tested_public)
+            if not include_reads and is_read_accessor(sym):
+                continue
+            unreachable[sym] = tested_public[sym][0]
+        return unreachable, len(tested_public)
+
+
+def run(project: Path, ref: str, allowlist_path: Path, *,
+        include_reads: bool = False) -> tuple[list[dict], int]:
+    """Absolute/bare mode: every finding at `ref` on its own. Returns
+    (findings, n_tested_public_symbols). Each finding is {"symbol": str,
+    "test_file": str}."""
+    unreachable, n_tested = compute_unreachable(project, ref, allowlist_path, include_reads=include_reads)
+    findings = [{"symbol": s, "test_file": unreachable[s]} for s in sorted(unreachable)]
+    return findings, n_tested
+
+
+def regression(project: Path, base_ref: str, candidate_ref: str, allowlist_path: Path, *,
+               include_reads: bool = False) -> tuple[list[dict], dict[str, str], dict[str, str]]:
+    """(new_findings, before_map, after_map). Mirrors suite_regression.py's
+    compare_runs: new_findings = after's unreachable set MINUS before's. A
+    symbol already unreachable on `base_ref` is a pre-existing finding this
+    candidate did not create (not counted); a symbol the candidate newly
+    tests that comes up unreachable is never in `before` at all, so the set
+    difference reports it for free -- both cases the brief asks for
+    ("unreachable in the candidate but reachable in the base, or new and
+    unreachable") collapse to the one set operation."""
+    before, _ = compute_unreachable(project, base_ref, allowlist_path, include_reads=include_reads)
+    after, _ = compute_unreachable(project, candidate_ref, allowlist_path, include_reads=include_reads)
+    new_syms = sorted(set(after) - set(before))
+    findings = [{"symbol": s, "test_file": after[s]} for s in new_syms]
+    return findings, before, after
 
 
 def main(argv: list[str]) -> int:
@@ -379,22 +459,52 @@ def main(argv: list[str]) -> int:
         prog="reach_lint.py",
         description="Reachability gate: every tested public sim symbol must be reachable "
                      "from om_world_step, om_tactical_step, the time-jump entry, or a pipe "
-                     "handler, or be in reach_allowlist.toml.",
+                     "handler, or be in reach_allowlist.toml. Bare, this is an absolute "
+                     "report (everything tested-but-unreachable at --ref); with --base-ref, "
+                     "it is a regression gate (only what's newly unreachable versus the base).",
     )
     ap.add_argument("--ref", default="HEAD", help="git ref to analyze (default: HEAD)")
+    ap.add_argument("--base-ref", default=None,
+                     help="if given, report only symbols unreachable at --ref that were "
+                          "reachable (or untested) at this base ref -- a regression gate, "
+                          "mirroring suite_regression.py's before/after comparison. Omit "
+                          "for the full absolute list at --ref alone.")
     ap.add_argument("--project", default=str(REPO), help="repo root (default: this checkout)")
     ap.add_argument("--allowlist", default=str(DEFAULT_ALLOWLIST),
                      help="path to reach_allowlist.toml")
+    ap.add_argument("--include-reads", action="store_true",
+                     help="do not exempt om_*_get_*/*_count/*_is_*/*_has_* read-accessor "
+                          "names; show the full unreachable set, reads included")
     args = ap.parse_args(argv)
 
     try:
-        findings, n_tested = run(Path(args.project), args.ref, Path(args.allowlist))
+        if args.base_ref:
+            findings, before, after = regression(
+                Path(args.project), args.base_ref, args.ref, Path(args.allowlist),
+                include_reads=args.include_reads,
+            )
+        else:
+            findings, n_tested = run(Path(args.project), args.ref, Path(args.allowlist),
+                                      include_reads=args.include_reads)
     except RuntimeError as exc:
         print(f"reach_lint.py: HARNESS ERROR: {exc}", file=sys.stderr)
         return 2
 
+    if args.base_ref:
+        if not findings:
+            print(f"REACH LINT OK (regression: {len(after)} unreachable at {args.ref}, "
+                  f"{len(before)} at base {args.base_ref}, none new)")
+            return 0
+        for f in findings:
+            print(f"NEW UNREACHABLE {f['symbol']}: tested by {f['test_file']}, unreachable at "
+                  f"{args.ref}, reachable or untested at base {args.base_ref}")
+        print(f"REACH LINT FAILED (regression: {len(findings)} newly unreachable; "
+              f"{len(after)} total at {args.ref} vs {len(before)} at base {args.base_ref})")
+        return 1
+
     if not findings:
-        print(f"REACH LINT OK ({n_tested} tested public symbols, all reachable or allowlisted)")
+        print(f"REACH LINT OK ({n_tested} tested public symbols, all reachable, allowlisted, "
+              f"or read accessors)")
         return 0
 
     for f in findings:
