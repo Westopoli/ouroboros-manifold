@@ -45,7 +45,8 @@ def _run(cmds):
 def test_load_restores_the_saved_tick_in_the_snapshot():
     with tempfile.TemporaryDirectory() as d:
         path = str(Path(d) / "slot.omsave")
-        seed = {"type": "cmd", "name": "set_seed", "seed": 1, "n_regions": 80, "features": FEATURES}
+        seed = {"type": "cmd", "name": "set_seed", "seed": 1, "n_regions": 80, "features": FEATURES,
+                "new_campaign": False}
         saved = _run([seed, {"type": "cmd", "name": "step", "n": 10},
                       {"type": "cmd", "name": "save", "path": path}])
         assert any(f["type"] == "ack" and f["name"] == "save" and f["tick"] == 10 for f in saved)

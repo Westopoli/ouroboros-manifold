@@ -92,7 +92,9 @@ func _run_tests() -> void:
 	bridge.frame_received.connect(func(_f): frames_seen[0] += 1)
 	bridge.snapshot_changed.connect(func(t): last_tick[0] = int(t))
 
-	_assert(bridge.open_session(SEED, CBridge.DEFAULT_N_REGIONS, CBridge.DEFAULT_FEATURES), "open_session returned false (last_error = %s)" % bridge.last_error())
+	# new_campaign:false -- this test is about the session/step/frame-signal
+	# mechanics, not R-056-04's opening jump; it needs a raw tick-0 world.
+	_assert(bridge.open_session(SEED, CBridge.DEFAULT_N_REGIONS, CBridge.DEFAULT_FEATURES, false), "open_session returned false (last_error = %s)" % bridge.last_error())
 	var got_snapshot := _pump_until(bridge, func(): return (bridge.snapshot().get("regions", []) as Array).size() > 0, SNAPSHOT_TIMEOUT_MS)
 	_assert(got_snapshot, "no snapshot within %d ms of open_session (last_error = %s)" % [SNAPSHOT_TIMEOUT_MS, bridge.last_error()])
 	if not got_snapshot:

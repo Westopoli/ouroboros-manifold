@@ -22,7 +22,8 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 PIPE = ROOT / "pipe/ouroboros_pipe"
 FEATURES = [1, 2, 3, 4, 5, 6, 7]
-SET_SEED = {"type": "cmd", "name": "set_seed", "seed": 1, "n_regions": 80, "features": FEATURES}
+SET_SEED = {"type": "cmd", "name": "set_seed", "seed": 1, "n_regions": 80, "features": FEATURES,
+            "new_campaign": False}
 CHAPTER_PHASE_MISSION = 2  # csrc/generational.c GEN_PHASE_MISSION, not exported by the header
 
 pytestmark = pytest.mark.skipif(not PIPE.exists(), reason="pipe/ouroboros_pipe not built (piece T1)")

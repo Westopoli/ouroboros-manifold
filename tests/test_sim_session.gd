@@ -100,12 +100,15 @@ func _run_tests() -> void:
 	var features = CBridge.DEFAULT_FEATURES
 	var n: int = CBridge.DEFAULT_N_REGIONS
 
-	_assert(bridge.ensure_session(1, n, features), "ensure_session(1) failed: %s" % bridge.last_error())
+	# new_campaign:false throughout -- this test is about session identity
+	# (reuse/reopen/recover), not R-056-04's opening jump; the tick check
+	# below needs a raw tick-0 world.
+	_assert(bridge.ensure_session(1, n, features, false), "ensure_session(1) failed: %s" % bridge.last_error())
 	var id1: int = bridge.session_id()
-	_assert(bridge.ensure_session(1, n, features) and bridge.session_id() == id1, "the same arguments reopened the session (id %d -> %d)" % [id1, bridge.session_id()])
-	_assert(bridge.ensure_session(2, n, features) and bridge.session_id() == id1 + 1, "different arguments did not reopen the session")
-	_assert(not bridge.ensure_session(1, 30, features) and bridge.last_error() == "generation failed", "ensure_session below the region floor did not fail with 'generation failed' (last_error = %s)" % bridge.last_error())
-	_assert(bridge.ensure_session(1, n, features), "ensure_session(1) after a failed open did not recover: %s" % bridge.last_error())
+	_assert(bridge.ensure_session(1, n, features, false) and bridge.session_id() == id1, "the same arguments reopened the session (id %d -> %d)" % [id1, bridge.session_id()])
+	_assert(bridge.ensure_session(2, n, features, false) and bridge.session_id() == id1 + 1, "different arguments did not reopen the session")
+	_assert(not bridge.ensure_session(1, 30, features, false) and bridge.last_error() == "generation failed", "ensure_session below the region floor did not fail with 'generation failed' (last_error = %s)" % bridge.last_error())
+	_assert(bridge.ensure_session(1, n, features, false), "ensure_session(1) after a failed open did not recover: %s" % bridge.last_error())
 
 	# The galaxy steps the world; leaving the scene must not end it.
 	var galaxy: Node = await _mount(GALAXY_SCENE)

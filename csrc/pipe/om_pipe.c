@@ -1160,6 +1160,15 @@ static void handle_set_seed(const char *json) {
     get_i64(json, "n_regions", &n_regions);
     int feats[64];
     int nf = get_int_array(json, "features", feats, 64);
+    /* R-056-04: a NEW campaign opens with a jump of [20, 50] ticks before
+     * anything else happens; a world set_seed is building only to be
+     * overwritten by a following `load` (autoload/c_bridge.gd's load()) is
+     * not a new campaign and passes new_campaign:false to skip the wasted
+     * jump. Default true: set_seed always meant "start fresh" until now,
+     * and every other production caller (a real new campaign) wants it.
+     * See also: csrc/generational.c om_campaign_start -- the jump itself. */
+    int new_campaign = 1;
+    get_bool(json, "new_campaign", &new_campaign);
 
     if (W) om_world_free(W);
     W = om_world_new((uint32_t)n_regions, (uint64_t)seed);
@@ -1171,6 +1180,15 @@ static void handle_set_seed(const char *json) {
         write_error("set_seed", "generation failed");
         return;
     }
+    /* om_mission_archetype_count/om_mission_select_candidate (both used by
+     * handle_mission_start's R-080-03 fallback below) read st->library_loaded,
+     * which nothing else in production code ever sets; without this they
+     * silently act as if there were 0 archetypes. Dependency of the R-080-03
+     * fallback, not new scope: a pure in-memory table fill, no side effects
+     * beyond om_mission_state (csrc/mission.c om_mission_load_launch_library). */
+    om_mission_load_launch_library(W);
+    if (new_campaign) om_campaign_start(W, 1);
+    g_tick = om_world_strategic_tick(W);
     realloc_regions(om_region_count(W));
     capture_baseline();
     /* Deviation from docs/architecture.md: no frame at all on success, not even an ack. */
@@ -1251,11 +1269,73 @@ static void handle_mission_start(const char *json) {
     static om_mission_candidate pool[256];
     uint32_t n = om_mission_candidates(W, pool, 256);
     uint32_t region = 0, archetype = 0;
+    int have_mission = 0;
     if (idx < n) {
         region = pool[idx].region_idx;
         archetype = pool[idx].archetype;
+        have_mission = 1;
+    } else {
+        /* R-080-03: the trigger-scored pool found nothing (an early-campaign
+         * tick, or an unlucky seed). Never silently fall back to region 0 /
+         * archetype 0 -- region 0 may be unowned or disconnected from the
+         * player, which composes a mission with zero units. Mark every
+         * archetype viable (there is no trigger-scored preference to defer
+         * to here) and let om_mission_select_candidate (csrc/mission.c)
+         * guarantee a pick, then use the player's own first owned region
+         * instead of a raw index. */
+        for (uint32_t a = 0; a < om_mission_archetype_count(W); a++)
+            om_mission_set_candidate_viable(W, a, 1);
+        archetype = om_mission_select_candidate(W);
+        int32_t player = om_player_faction(W);
+        uint32_t n_regions = om_region_count(W);
+        for (uint32_t i = 0; i < n_regions; i++) {
+            if (om_region_owner(W, i) == player) {
+                region = i;
+                have_mission = 1;
+                break;
+            }
+        }
     }
-    om_mission_setup(W, region, archetype, 0);
+    if (have_mission) {
+        om_mission_setup(W, region, archetype, 0);
+        /* Never compose a zero-unit mission silently: some archetypes'
+         * enemy-power formula (csrc/mission.c om_mission_compute_enemy_power,
+         * OM_MISSION_ARCH_DEFENSIVE_STAND/MULTI_FRONT_DEFENSE/INTERCEPTION)
+         * reads a committed-attack-budget field that no production code
+         * populates yet (om_mission_set_conflict_context has no caller
+         * outside mission.c itself) -- a separate, pre-existing gap, not
+         * this fix's bug; report it, do not fix it here. Detect it instead
+         * of sending an empty mission. */
+        if (om_mission_get_deployed_force_count(W) == 0 || om_mission_get_enemy_power(W) <= 0.0)
+            have_mission = 0;
+    }
+    if (!have_mission) {
+        /* Whatever came out of the trigger-scored pool or the R-080-03
+         * fallback above composed with no real force on one side. Scan
+         * every archetype against every player-owned region for one that
+         * actually produces units on both sides before giving up -- bounded
+         * (archetype count x region count), only reached on the already-rare
+         * path above. */
+        int32_t player = om_player_faction(W);
+        uint32_t n_regions = om_region_count(W);
+        uint32_t n_arch = om_mission_archetype_count(W);
+        for (uint32_t a = 0; a < n_arch && !have_mission; a++) {
+            for (uint32_t i = 0; i < n_regions; i++) {
+                if (om_region_owner(W, i) != player) continue;
+                om_mission_setup(W, i, a, 0);
+                if (om_mission_get_deployed_force_count(W) > 0 && om_mission_get_enemy_power(W) > 0.0) {
+                    region = i;
+                    archetype = a;
+                    have_mission = 1;
+                    break;
+                }
+            }
+        }
+    }
+    if (!have_mission) {
+        write_error("mission_start", "no viable mission");
+        return;
+    }
     om_mission_build_objectives(W, archetype);
     g_mission_archetype = archetype;
     /* Recon (E-12 S-092): the mission is not begun here; mission_begin is the

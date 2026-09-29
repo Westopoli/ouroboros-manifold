@@ -63,7 +63,7 @@ def test_debrief_region_delta_has_at_least_one_nonzero_after_decided_mission():
     """
     cmds = [
         {"type": "cmd", "name": "set_seed", "seed": 1, "n_regions": 80,
-         "features": FEATURES},
+         "features": FEATURES, "new_campaign": False},
         {"type": "cmd", "name": "mission_start", "faction": 0},
         {"type": "cmd", "name": "objective_complete", "objective": 0, "completion": 1.0},
         {"type": "cmd", "name": "mission_end"},

@@ -281,20 +281,26 @@ def test_s_c8_04_deploy_reaches_tactical(game):
     client.click(cx, cy)
     wait_for(client, lambda s: s.get("scene") == TACTICAL_SCENE, STEP_TIMEOUT_S, label="S-C8-04")
     # C4-4: Deploy is the player's Begin. It sends mission_begin over the shared session
-    # and the tactical view then steps the begun mission once, so its live tick is 1 (a
-    # mission still in recon refuses the step and the view stays at tick 0).
+    # and the tactical view then steps the begun mission (a mission still in recon
+    # refuses the step and the view stays at tick 0). Since C5-6, the mission steps in
+    # real time, so by the time this check runs the tick has already advanced past 1 --
+    # the subject is "reached a live mission frame", not a frozen single step.
     tactical_qa = client.state()["result"].get("qa", {})
-    assert int(tactical_qa.get("tick", -1)) == 1, (
-        "S-C8-04: tactical view tick = %r after Deploy, expected 1 (mission_begin then one tactical_step); qa = %r"
+    assert int(tactical_qa.get("tick", -1)) >= 1, (
+        "S-C8-04: tactical view tick = %r after Deploy, expected >= 1 (mission_begin then real-time stepping); qa = %r"
         % (tactical_qa.get("tick"), sorted(tactical_qa.keys()))
     )
     _shoot(client, "flow_04_tactical")
-    # C5-3: unit count -- archetype-3 mission at galaxy tick 10 has 572 units.
-    assert int(tactical_qa.get("unit_count", -1)) == 572, (
-        "S-C8-04: qa.unit_count = %r after Deploy, expected 572 (archetype-3 "
-        "mission; galaxy must be stepped 10 strategic ticks before Mission click; "
-        "known leftover: flow spine does not yet call step(10) in galaxy view)"
-        % tactical_qa.get("unit_count")
+    # C5-3: units must be present and the reported count must match the live
+    # tactical frame's own unit list (R-056-04: the galaxy now opens after the
+    # opening jump, so the mission's composed force size is no longer a fixed
+    # 572 -- read it from the frame instead of a magic number).
+    unit_count = int(tactical_qa.get("unit_count", -1))
+    units = tactical_qa.get("units", {})
+    assert unit_count > 0, "S-C8-04: qa.unit_count = %r after Deploy, expected > 0" % unit_count
+    assert unit_count == len(units), (
+        "S-C8-04: qa.unit_count = %r does not match len(qa.units) = %r"
+        % (unit_count, len(units))
     )
     # C5-3: tactical screenshot must not be blank grey -- the view must draw
     # unit markers. Use the median pixel value as the background reference so
