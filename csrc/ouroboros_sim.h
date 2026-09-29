@@ -1319,6 +1319,10 @@ int om_macro_reads_player_visibility_set(om_world *w);
 int om_macro_resolve_conflict(int p0, int p1);
 int om_macro_resolve_conflict_types(int p0, int p1);
 void om_macro_set_base_transition_true(om_world *w, uint32_t p1, int p2);
+/* B13-8/R-120-02 (Q-120-02): the rout fallback point for this force, set once
+ * by the mission at setup (csrc/mission.c om_mission_instantiate_map) to the
+ * enemy's own spawn anchor. */
+void om_macro_set_force_fallback_point(om_world *w, uint32_t p1, double p2, double p3);
 void om_macro_set_force_hp_pct(om_world *w, uint32_t p1, double p2);
 void om_macro_set_hook_true(om_world *w, uint32_t p1, int p2);
 void om_macro_set_state(om_world *w, uint32_t p1, int p2, int p3);
