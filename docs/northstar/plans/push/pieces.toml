@@ -475,11 +475,10 @@ id = "Q1"
 manager = "M0"
 wave = 2
 owns = []
-owns_glob = ["agora/projects/ouroboros/**", "scenes/**/*.gd"]
+owns_glob = ["agora/projects/ouroboros/**"]
 acceptance = ["tests/test_qa_state_scenes.gd"]
 depends_on = ["C7", "C3", "C1", "C4", "C5", "C8", "T2g", "MK-layers", "MK-chronicle", "MK-harness"]
-status = "pending"
-tests_pending = true
+status = { state = "attached", attach_sha = "d7cf54c4" }
 size_estimate = "per-scene qa_state on every REQUIRED scene script (C7-5 on push/C3-4b); the scene glob is a one-off for that landing"
 
 [[piece]]
@@ -550,3 +549,91 @@ wave = 3
 owns = ["csrc/unit.c"]
 acceptance = []
 depends_on = ["B10b"]
+
+[[piece]]
+id = "G-uidatabus"
+manager = "M3"
+wave = 3
+owns = []
+owns_glob = ["autoload/ui_data_bus.gd"]
+acceptance = []
+depends_on = []
+status = "pending"
+tests_pending = true
+
+[[piece]]
+id = "G-tacticalbridge"
+manager = "M3"
+wave = 3
+owns = []
+owns_glob = ["autoload/tactical_bridge.gd"]
+acceptance = []
+depends_on = []
+status = "pending"
+tests_pending = true
+
+[[piece]]
+id = "G-simbridge"
+manager = "M3"
+wave = 3
+owns = []
+owns_glob = ["autoload/sim_bridge.gd", "autoload/sim_bridge_data_source.gd", "autoload/mock_data_source.gd"]
+acceptance = []
+depends_on = []
+status = "pending"
+tests_pending = true
+
+[[piece]]
+id = "G-errorscreen"
+manager = "M3"
+wave = 3
+owns = []
+owns_glob = ["scenes/error_screen/**"]
+acceptance = []
+depends_on = []
+status = "pending"
+tests_pending = true
+
+[[piece]]
+id = "G-settings"
+manager = "M3"
+wave = 3
+owns = []
+owns_glob = ["scenes/settings/**"]
+acceptance = []
+depends_on = []
+status = "pending"
+tests_pending = true
+
+[[piece]]
+id = "G-eralib"
+manager = "M3"
+wave = 3
+owns = []
+owns_glob = ["scenes/era_library/**"]
+acceptance = []
+depends_on = []
+status = "pending"
+tests_pending = true
+
+[[piece]]
+id = "G-bugreport"
+manager = "M3"
+wave = 3
+owns = []
+owns_glob = ["scenes/bug_report/**", "autoload/bug_report_manager.gd"]
+acceptance = []
+depends_on = []
+status = "pending"
+tests_pending = true
+
+[[piece]]
+id = "G-debug"
+manager = "M3"
+wave = 3
+owns = []
+owns_glob = ["scenes/debug/**"]
+acceptance = []
+depends_on = []
+status = "pending"
+tests_pending = true
