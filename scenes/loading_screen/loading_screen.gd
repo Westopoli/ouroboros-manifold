@@ -24,21 +24,7 @@ func setup(params: Dictionary) -> void:
 func _ready() -> void:
 	_build_ui()
 	_load_tips()
-
-	if not SimBridge.USE_LIVE_SIM:
-		SceneRouter.go_to(_target_scene)
-		return
-
-	if SimBridge._ready_received:
-		_skip_to_main = true
-		return
-
-	SimBridge.progress_updated.connect(_on_progress_updated)
-	SimBridge.sim_ready.connect(_on_sim_ready)
-
-	_update_progress_display()
-	if not _tips.is_empty():
-		_flavor_label.text = _tips[0]
+	SceneRouter.go_to(_target_scene)
 
 
 func _process(delta: float) -> void:
