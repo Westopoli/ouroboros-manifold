@@ -637,3 +637,15 @@ acceptance = []
 depends_on = []
 status = "pending"
 tests_pending = true
+
+[[piece]]
+id = "G-projectgodot"
+manager = "M3"
+wave = 3
+owns = ["project.godot"]
+owns_glob = []
+acceptance = []
+depends_on = []
+status = "pending"
+tests_pending = true
+size_estimate = "autoload removals for G1 (SimBridge) then G6 (TacticalBridge), one unit each, in that order"
