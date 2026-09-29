@@ -8,6 +8,7 @@ signal time_jump_keyframe(keyframe_data: Dictionary)
 signal chronicle_entry(entry_data: Dictionary)
 signal time_jump_ended(time_jump_id: String)
 
+const SimSession := preload("res://autoload/sim_session.gd")
 const SETTINGS_PATH := "user://settings.cfg"
 const VALID_RESOLUTION_COUNT := 6
 
@@ -74,10 +75,7 @@ func get_bug_report_path() -> String:
 
 
 func trigger_autosave(loop_phase: String) -> void:
-	if SimBridge.USE_LIVE_SIM:
-		SimBridge.send_command({"type": "autosave", "loop_phase": loop_phase})
-	else:
-		print("UIDataBus: autosave skipped (mock mode, loop_phase=%s)" % loop_phase)
+	SimSession.bridge()._autosave()
 
 
 func exit_to_main_menu() -> void:
