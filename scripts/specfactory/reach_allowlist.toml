@@ -1,0 +1,53 @@
+# reach_allowlist.toml -- exemptions for scripts/specfactory/reach_lint.py.
+#
+# Every entry is a symbol from csrc/ouroboros_sim.h that some test calls but
+# that no static call graph rooted at om_world_step, om_tactical_step,
+# om_time_jump_run, or a csrc/pipe/om_pipe.c dispatch handler can reach --
+# verified genuinely test-only (a fixture builder, a debug-only hook, or a
+# documented test-only branch), never used to hide a real gap. Each entry
+# names its one-line reason. Seeded 2026-09-28 (gap-fix plan, Wave 0 item 3);
+# M0 to review.
+
+[[allow]]
+symbol = "om_region_set_adjacency"
+reason = "hard-fixture path (isolation testing); ouroboros_sim.h's own comment says om_region_set_edge replaces it for E-05 and later -- kept only so earlier isolation tests still build a world without edges. seeded 2026-09-28, M0 to review."
+
+[[allow]]
+symbol = "om_region_set_faction_modifier"
+reason = "hard-fixture path (isolation testing), ALG-04: pins a per-faction field modifier directly so a test does not have to earn it through play. no production caller (verified: zero call sites in csrc/*.c outside its own definition). seeded 2026-09-28, M0 to review."
+
+[[allow]]
+symbol = "om_faction_set_tech_multipliers"
+reason = "faction fixture: 'Fixture pins them per faction (1.0, 1.0, 1.0 = no tech)' per its own header comment; E-06 computes the real multipliers from tech and archetype instead. seeded 2026-09-28, M0 to review."
+
+[[allow]]
+symbol = "om_region_add_damage"
+reason = "damage history (fixture and reader): 'this fixture records one as if an attack had landed', per its own header comment -- the resolver records real losses itself. seeded 2026-09-28, M0 to review."
+
+[[allow]]
+symbol = "om_rng_force"
+reason = "forced RNG draws (fixture): queues exact values for the next stream draws so a test can hit a documented case ('a draw of 1.0') without hunting for a seed. seeded 2026-09-28, M0 to review."
+
+[[allow]]
+symbol = "om_rng_forced_remaining"
+reason = "reader paired with om_rng_force (forced RNG draws fixture); lets a test assert the forced queue drained. seeded 2026-09-28, M0 to review."
+
+[[allow]]
+symbol = "om_rng_force_descendant_spread"
+reason = "forced RNG draws (fixture), E-08-specific: forces the descendant-spread draw for a lineage-generation test. seeded 2026-09-28, M0 to review."
+
+[[allow]]
+symbol = "om_rng_force_selector_draw"
+reason = "forced RNG draws (fixture), E-08-specific: forces the character-selector's rotation draw for a test. seeded 2026-09-28, M0 to review."
+
+[[allow]]
+symbol = "om_intent_inject"
+reason = "intent injection (fixture): 'places an intent... so a test controls exactly which intents collide', per its own header comment -- real intents come from each faction's own step-3d decision. seeded 2026-09-28, M0 to review."
+
+[[allow]]
+symbol = "om_world_set_tick"
+reason = "header comment calls it a 'Fixture setter (E-06/E-10): moves the tick counter directly, with no other side effect' -- real play only ever advances the tick through om_world_step. seeded 2026-09-28, M0 to review."
+
+[[allow]]
+symbol = "om_tactical_step"
+reason = "already reachable as its own root (this lint always treats it as one), so this entry changes no verdict. Documents, per the gap-fix plan's Wave 0 item 3, that om_world_step's OM_FEAT_TACTICAL branch (csrc/sim.c ~206, 230, 547) calling om_tactical_step is a test-only path -- the live path is csrc/pipe/om_pipe.c's own dedicated tactical_step handler. seeded 2026-09-28, M0 to review."
