@@ -1529,6 +1529,8 @@ uint32_t om_mission_get_compatible_layouts(const om_world *w, uint32_t archetype
 int om_mission_get_debrief(const om_world *w, om_debrief *out);
 uint32_t om_mission_get_deployed_force_count(const om_world *w);
 double om_mission_get_enemy_power(const om_world *w);
+uint32_t om_mission_get_force_count(const om_world *w);
+int om_mission_get_force_unit(const om_world *w, uint32_t i, int32_t *type, int32_t *tier);
 double om_mission_get_objective_completion(const om_world *w, uint32_t objective_idx);
 double om_mission_get_objective_score(const om_world *w);
 uint32_t om_mission_get_objectives(const om_world *w, om_objective_spec *out, uint32_t max);
@@ -1561,6 +1563,7 @@ void om_mission_setup_survive(om_world *w, uint32_t objective_idx, uint64_t requ
 void om_mission_setup_tactical(om_world *w, uint32_t p1, uint64_t time_limit);
 void om_mission_setup_termination(om_world *w, uint32_t p1, int primary_complete, int p3, uint64_t tick, uint64_t time_limit, int player_alive);
 int om_objective_get_center(const om_world *w, uint32_t objective_idx, om_vec2 *out);
+int32_t om_objective_get_node(const om_world *w, uint32_t objective_idx);
 int om_objective_set_center(om_world *w, uint32_t objective_idx, double x, double y);
 int64_t om_region_get_held_since(const om_world *w, uint32_t idx);
 int32_t om_region_get_owner(const om_world *w, uint32_t idx);

@@ -309,6 +309,17 @@ typedef struct {
     int      used;
 } om_mission_objective;
 
+/* HDR4-2: mirrors unit.c's OM_MAX_UNITS (4096); #define macros don't cross
+ * translation units so this is a local duplicate, same pattern as
+ * enemy_macro.c's OM_WAVE_N_TYPES. */
+#define OM_MISSION_FORCE_ARRAY_MAX 4096
+
+typedef struct {
+    uint32_t unit_id;
+    int32_t  faction;
+    int32_t  type;
+} om_mission_force_entry;
+
 typedef struct {
     om_mission_candidate pool[OM_MISSION_MAX_CANDIDATES];
     uint32_t n_pool;
@@ -377,6 +388,10 @@ typedef struct {
     /* B9-6 fixed MVP tactical layout, instantiated once at om_mission_setup. */
     uint32_t enemy_units[OM_MISSION_N_UNIT_TYPES];
     int      map_instantiated;
+
+    /* HDR4-2: every unit spawned by om_mission_spawn_force, player then enemy. */
+    om_mission_force_entry force_units[OM_MISSION_FORCE_ARRAY_MAX];
+    uint32_t n_force_units;
 } om_mission_state;
 
 static void om_mis_state_free(void *p) {
@@ -1813,7 +1828,7 @@ static int32_t om_mission_enemy_faction(const om_world *w, uint32_t region_idx, 
  * point. The player is faction 0 when no player faction is configured
  * (csrc/fog.c OM_FOG_PLAYER_FACTION). See also: csrc/tactical_mapgen.c for
  * the node storage these calls fill. */
-static void om_mission_spawn_force(om_world *w, const uint32_t *counts, int32_t faction, double x0, double y0, double dir) {
+static void om_mission_spawn_force(om_world *w, om_mission_state *st, const uint32_t *counts, int32_t faction, double x0, double y0, double dir) {
     uint32_t total = 0;
     for (uint32_t t = 0; t < OM_MISSION_N_UNIT_TYPES; t++) total += counts[t];
     uint32_t cols = 1;
@@ -1824,7 +1839,13 @@ static void om_mission_spawn_force(om_world *w, const uint32_t *counts, int32_t 
         for (uint32_t c = 0; c < counts[t]; c++, k++) {
             double x = x0 + ((double)(k % cols) - (double)(cols - 1) / 2.0) * spacing;
             double y = y0 + dir * (double)(k / cols) * spacing;
-            om_unit_spawn(w, (int)t, faction, x, y, 0);
+            uint32_t id = om_unit_spawn(w, (int)t, faction, x, y, 0);
+            if (id != 0 && st->n_force_units < OM_MISSION_FORCE_ARRAY_MAX) {
+                st->force_units[st->n_force_units].unit_id = id;
+                st->force_units[st->n_force_units].faction = faction;
+                st->force_units[st->n_force_units].type    = (int32_t)t;
+                st->n_force_units++;
+            }
         }
     }
 }
@@ -1842,8 +1863,8 @@ static void om_mission_instantiate_map(om_world *w, om_mission_state *st) {
     om_map_add_spine_node(w, canvas / 2.0, canvas / 2.0, OM_MISSION_SPINE_NODE_OBJECTIVE);
     om_map_add_spawn_point(w, canvas / 2.0, edge, player);
     om_map_add_spawn_point(w, canvas / 2.0, canvas - edge, enemy);
-    om_mission_spawn_force(w, st->player_units, player, canvas / 2.0, edge, 1.0);
-    om_mission_spawn_force(w, st->enemy_units, enemy, canvas / 2.0, canvas - edge, -1.0);
+    om_mission_spawn_force(w, st, st->player_units, player, canvas / 2.0, edge, 1.0);
+    om_mission_spawn_force(w, st, st->enemy_units, enemy, canvas / 2.0, canvas - edge, -1.0);
 }
 
 void om_mission_setup(om_world *w, uint32_t p1, uint32_t archetype, int lineage_connection) {
@@ -2015,5 +2036,46 @@ int om_objective_set_center(om_world *w, uint32_t objective_idx, double x, doubl
     st->objective_center[objective_idx].y = y;
     st->objective_center_set[objective_idx] = 1;
     return 1;
+}
+/* HDR4-2: player force count and per-entry accessor. Tier has no real source
+ * in this codebase today (no per-type tier table, no per-mission tier per
+ * unit); om_mission_get_force_unit always writes 0 for tier. Open point. */
+uint32_t om_mission_get_force_count(const om_world *w) {
+    const om_mission_state *st = om_mis_ro(w);
+    if (!st) return 0;
+    int32_t player = om_mission_player_faction(w);
+    if (player < 0) player = 0;
+    uint32_t count = 0;
+    for (uint32_t i = 0; i < st->n_force_units; i++) {
+        if (st->force_units[i].faction == player) count++;
+    }
+    return count;
+}
+
+int om_mission_get_force_unit(const om_world *w, uint32_t i, int32_t *type, int32_t *tier) {
+    const om_mission_state *st = om_mis_ro(w);
+    if (!st) return 0;
+    int32_t player = om_mission_player_faction(w);
+    if (player < 0) player = 0;
+    uint32_t found = 0;
+    for (uint32_t j = 0; j < st->n_force_units; j++) {
+        if (st->force_units[j].faction != player) continue;
+        if (found == i) {
+            if (type) *type = st->force_units[j].type;
+            if (tier) *tier = 0;
+            return 1;
+        }
+        found++;
+    }
+    return 0;
+}
+
+/* HDR4-2: map-node index of objective_idx's spine node, or -1 if absent.
+ * Mirrors om_objective_get_center's spine-node lookup path exactly. */
+int32_t om_objective_get_node(const om_world *w, uint32_t objective_idx) {
+    if (!w) return -1;
+    om_world *mw = (om_world *)w;
+    if (om_map_count_nodes_of_type(mw, OM_MISSION_SPINE_NODE_OBJECTIVE) <= objective_idx) return -1;
+    return (int32_t)om_map_get_nth_node_of_type(mw, OM_MISSION_SPINE_NODE_OBJECTIVE, objective_idx);
 }
 /* ---- end generated stubs ---- */
