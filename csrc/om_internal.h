@@ -365,6 +365,12 @@ void om_step_lifecycle(om_world *w);
 void om_support_tick(om_world *w);
 /* Deadline-baseline hook (csrc/mission.c); called by fog.c om_mission_begin right after the phase moves to tactical. */
 void om_mission_on_begin(om_world *w);
+/* Resets the one-shot mission_started latch (csrc/fog.c); called by mission.c
+ * om_mission_setup so a new mission's recon phase can be re-entered via
+ * om_mission_begin. Without this, om_mission_is_started stays true forever
+ * after the first mission, and the pipe's in_recon() refuses every later
+ * mission_begin ("not in recon"). */
+void om_mission_reset_started(om_world *w);
 /* Engine visibility (csrc/fog.c; ignores the player-fog switch, S-093 R-093-01): 1 if any living unit of `faction` can see `target`, else 0; unknown ids or no state: 0. */
 int om_fog_faction_sees(const om_world *w, int32_t faction, uint32_t target);
 
