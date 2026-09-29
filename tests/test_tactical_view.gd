@@ -146,6 +146,7 @@ func _run_tests() -> void:
 	_assert(_c54_completed, "the C5-4 checks did not run to the end (a script error aborted them, or tactical_view.gd lacks commands_sent_last_order / units_in_last_command / move-order-dropped plant)")
 	await _run_c28_tests()
 	_assert(_c28_completed, "the C2-8 checks did not run to the end (a script error aborted them, or tactical_view.gd does not read player_faction from the loaded frame)")
+	await _run_mission_over_routing_test()
 
 
 # Piece C5-2 (docs/architecture.md "session commands (v1.1)"): with no
@@ -215,6 +216,46 @@ func _mount_view() -> Node:
 	await process_frame
 	await process_frame
 	return v
+
+
+# B9-N (2026-09-28 QA-run wiring brief): load_frame() routes to the debrief
+# scene the same way the End Mission button does (see the pressed handler in
+# _ready() above) the moment a loaded frame carries "mission_over": true --
+# docs/architecture.md "C transport v1", tactical snapshot. SceneRouter.go_to()
+# sets _current_scene_name synchronously before its fade tween runs (see
+# tests/test_briefing_debrief.gd's C4-9 pin for the same pattern), so no
+# await is needed after load_frame() to observe the routing target.
+func _run_mission_over_routing_test() -> void:
+	var view := await _mount_view()
+	var scene_router := get_root().get_node("SceneRouter")
+
+	# Earlier sections in this same script run their own SceneRouter.go_to()
+	# calls (the live-frame checks route through an error screen on a
+	# feasibility-floor failure); its one-shot _transitioning lock can still
+	# be mid-fade when this section starts, which would silently drop this
+	# section's own go_to() call below. Wait it out first.
+	var settle_guard := 0
+	while bool(scene_router.get("_transitioning")) and settle_guard < 60:
+		await process_frame
+		settle_guard += 1
+
+	# Control: an ordinary frame (no mission_over key at all, matching every
+	# fixture above) must not route away from tactical_c.
+	view.load_frame(_frame0)
+	await process_frame
+	_assert(str(scene_router.get("_current_scene_name")) != "debrief",
+		"a frame with no mission_over key routed to debrief (false positive)")
+
+	var over_frame: Dictionary = _frame0.duplicate(true)
+	over_frame["mission_over"] = true
+	over_frame["band"] = 4
+	view.load_frame(over_frame)
+	await process_frame
+	_assert(str(scene_router.get("_current_scene_name")) == "debrief",
+		"load_frame() with mission_over=true did not route to debrief, SceneRouter._current_scene_name = %s" % str(scene_router.get("_current_scene_name")))
+
+	view.queue_free()
+	await process_frame
 
 
 func _px_of(view: Node, id: int) -> Array:

@@ -1659,6 +1659,7 @@ uint64_t om_tactical_step(om_world *w) {
     om_ability_advance_all(w);
     om_macro_tick(w, st->current_tick);
     om_support_tick(w);
+    om_mission_tactical_tick(w);
     return st->current_tick;
 }
 

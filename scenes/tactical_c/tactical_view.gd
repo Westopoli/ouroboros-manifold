@@ -81,6 +81,12 @@ func load_frame(frame: Dictionary) -> void:
 	_frame = frame
 	if frame.has("player_faction"):
 		_local_faction = int(frame["player_faction"])
+	# docs/architecture.md "C transport v1", tactical snapshot: the sim itself
+	# ended the mission (R-075-07 termination, checked live every tactical
+	# tick -- not only in response to the player's own End Mission press).
+	# Route to debrief the same way the End Mission button does, above.
+	if bool(frame.get("mission_over", false)):
+		SceneRouter.go_to("debrief")
 	_canvas = float(frame.get("map", {}).get("canvas", 0.0))
 	if _canvas > 0.0:
 		_world_scale = SCREEN_H / _canvas

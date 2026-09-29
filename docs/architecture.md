@@ -281,11 +281,15 @@ Only regions whose stored values changed appear; `checksum` is the world checksu
 
 ### tactical snapshot (v1 tactical, once B10/B12 attach; sent on `snapshot` when a tactical map is loaded)
 ```json
-{"type":"tactical","tick":120,"map":{"canvas":16000,"nodes":[{"i":0,"kind":0,"x":8000.0,"y":9200.0}],"cover":[{"x":1.0,"y":2.0,"r":120.0,"h":40.0}],"obstacles":[{"x":1.0,"y":2.0,"r":200.0}]},
+{"type":"tactical","tick":120,"mission_over":false,"band":-1,"map":{"canvas":16000,"nodes":[{"i":0,"kind":0,"x":8000.0,"y":9200.0}],"cover":[{"x":1.0,"y":2.0,"r":120.0,"h":40.0}],"obstacles":[{"x":1.0,"y":2.0,"r":200.0}]},
  "units":[{"id":4,"faction":0,"type":1,"tier":2,"x":100.0,"y":200.0,"hp":80.0,"layer":1,"facing":1.57,"target":-1,"state":0}],
  "visible":{"0":[4,5,9]}}
 ```
 Tactical positions are sim state (units move in the sim), so they are sent; strategic region positions are not. `visible[faction]` is built per unit from `om_player_can_see_unit` (`csrc/pipe/om_pipe.c:1126`), not from `om_visibility_compute`, which is a cache primer with no caller in play.
+
+`mission_over` (B9-N, 2026-09-28) is `om_mission_has_ended(w)`: true once the sim itself has ended the current mission (R-075-07's termination check, run every tactical tick by `om_mission_tactical_tick`, `csrc/mission.c`, off the real objective completion and the real R-076-01 time limit -- not only in response to an explicit `mission_end` command). `band` is `om_mission_get_band(w)`, the `om_mission_band` enum int (same values the debrief frame's `band` carries) or `-1` (`OM_MISSION_BAND_UNKNOWN`) while the mission is still running. Both are `false`/`-1` on every tactical frame until the sim ends the mission, then stay fixed at their ending values (R-076-03: the result is decided once). The client routes to the debrief the same way its own End Mission control does (`scenes/tactical_c/tactical_view.gd`) the first time it sees `mission_over` true; sending an explicit `mission_end` afterward still works unchanged and answers the normal `debrief`/`snapshot` pair.
+
+Live wiring gap (see `docs/bible/epics/E-10-missions.md` S-075): only the `hold_zone` and `eliminate_force` primary objective kinds are evaluated from real battlefield state today (enemy units inside the objective radius; live enemy HP against the HP recorded at spawn). `destroy_targets` and `escort_to_extraction` (Siege Breaking, Assault, Interception, Evacuation) stay at 0 completion for the whole mission -- no live mission marks a "designated target" subset distinct from the whole enemy force, and none places an extraction point -- so those four archetypes only ever reach `mission_over` via the time limit or the player's force being wiped, never via their own objective. `survive_duration` is never a live archetype's primary kind and is not evaluated either.
 
 ### chronicle frame, mission frame, debrief frame (on `snapshot` after a jump, mission start, mission end)
 ```json
@@ -361,7 +365,7 @@ The debug build (`OM_DEBUG_INJECT`) can additionally reorder several of these
 steps as positive-control fault injections (`csrc/sim.c:227-360`); the order
 diagrammed above is the non-injected (real play) order.
 
-### Tactical tick — `om_tactical_step`, `csrc/unit.c:1645-1663`
+### Tactical tick — `om_tactical_step`, `csrc/unit.c:1645-1664`
 
 ```mermaid
 flowchart TD
@@ -376,6 +380,7 @@ flowchart TD
     H --> I["om_ability_advance_all, unit.c:1659"]
     I --> J["om_macro_tick, unit.c:1660 -> csrc/enemy_macro.c (E-14)"]
     J --> K["om_support_tick, unit.c:1661 -> csrc/tactical_support.c (E-15)"]
+    K --> L["om_mission_tactical_tick, unit.c:1662 -> csrc/mission.c (E-10): live objective eval + R-075-07 termination check, ends the mission via om_mission_end when terminated"]
 ```
 
 `om_visibility_compute` (`csrc/fog.c:615`, E-12) is **not** in this call chain
