@@ -1870,6 +1870,7 @@ def _bind_e08(lib):
     _bind(lib, "om_campaign_trigger_terminal_restart", [W], None, ("w",))
     _bind(lib, "om_chapter_advance_phase", [W], None, ("w",))
     _bind(lib, "om_chapter_current_phase", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_chapter_get_number", [W], ctypes.c_uint32, ("w",))
     _bind(lib, "om_chapter_end_reason_for_collapse", [W, ctypes.c_int32], ctypes.c_int, ("w", "player_faction"), kw=True)
     _bind(lib, "om_chapter_mission_realtime", [W], ctypes.c_int, ("w",))
     _bind(lib, "om_chapter_recon_has_clock", [W], ctypes.c_int, ("w",))

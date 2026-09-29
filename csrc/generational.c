@@ -979,6 +979,11 @@ int om_chapter_current_phase(const om_world *w) {
     return gs ? gs->chapter_phase : GEN_PHASE_BRIEFING;
 }
 
+uint32_t om_chapter_get_number(const om_world *w) {
+    gen_state *gs = gen_get_state(w);
+    return gs ? gs->chapter_number : 0;
+}
+
 int om_chapter_end_reason_for_collapse(const om_world *w, int32_t player_faction) {
     return om_player_faction_check_collapse(w, player_faction)
         ? GEN_CHAPTER_END_FACTION_COLLAPSED : GEN_CHAPTER_END_NORMAL;

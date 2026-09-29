@@ -1396,6 +1396,7 @@ void om_campaign_start(om_world *w, uint32_t chapter);
 void om_campaign_trigger_terminal_restart(om_world *w);
 void om_chapter_advance_phase(om_world *w);
 int om_chapter_current_phase(const om_world *w);
+uint32_t om_chapter_get_number(const om_world *w);
 int om_chapter_end_reason_for_collapse(const om_world *w, int32_t player_faction);
 int om_chapter_mission_realtime(const om_world *w);
 int om_chapter_recon_has_clock(const om_world *w);
