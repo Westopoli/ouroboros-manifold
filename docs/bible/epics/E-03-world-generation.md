@@ -29,7 +29,7 @@ Generate three worlds from seeds 1, 2, 3. Each has between 60 and 110 regions an
 As a commander starting a campaign, I want a galaxy that is small enough to learn and large enough to feel vast, different every time, so that no two campaigns share a map.
 
 Rules
-- R-021-01  Given a seed, When the world is generated, Then the region count is an integer drawn uniformly from [60, 110] and the faction count is 15.
+- R-021-01  Given a seed, When the world is generated, Then the region count is an integer drawn uniformly from [250, 400] and the faction count is 15.
 - R-021-02  Given generation, When factions are placed, Then faction 0 is the player civilization and factions 1 through 14 cycle conqueror, fortifier, opportunist in that order.
 - R-021-03  Given a faction, When its template is rolled, Then it draws independently from Isolated, Twin Colony, Archipelago with equal weight by default; the player faction's weights are swayed toward their chosen preference (R-021-04) and every NPC faction always uses equal weight.
 - R-021-04  Given the player, When they set a template preference before generation, Then it is one of Isolated, Twin Colony, Archipelago, or no preference; a set preference gives that template probability `WORLD_PLAYER_PREFERENCE_WEIGHT`, default 0.50, and the other two templates split the remainder equally (default 0.25 each), in the player faction's own roll only — configurable for playtesting, never locking the outcome, never affecting any NPC faction's roll.
@@ -42,7 +42,7 @@ Rules
 
 Inputs: seed (64-bit integer); config ranges; player template preference (optional).
 Outputs: world graph in the strategic snapshot; galaxy view (E-16); each faction's rolled template (T1 trace, save file).
-Open flags: none. Q-021-01 through Q-021-06 are closed and folded: every faction independently rolls one of the three named templates, keeping the templates' own region counts (3 for Isolated, 4 to 6 for Twin Colony, 4 for Archipelago) rather than rescaling to a fixed two regions; the galaxy region-count range is [60, 110], confirmed; the player's preference weight is a configurable parameter, default 2:1:1 (0.50/0.25/0.25).
+Open flags: none. Q-021-01 through Q-021-06 are closed and folded: every faction independently rolls one of the three named templates, keeping the templates' own region counts (3 for Isolated, 4 to 6 for Twin Colony, 4 for Archipelago) rather than rescaling to a fixed two regions; the galaxy region-count range is [250, 400] (Westley 2026-09-28, from the approved galaxy prototype; replaces [60, 110]); the player's preference weight is a configurable parameter, default 2:1:1 (0.50/0.25/0.25).
 
 ### S-022 — Homes are strong, frontiers are new
 As a commander, I want my home region to feel established and my frontier to feel recently settled, so that the starting shape of my civilization tells a story.
@@ -103,7 +103,7 @@ Open flags: none. Closed by Q-025-01 (Westley, 2026-09-12): the buffer is player
 | Input | Source | Range | Rejection |
 |---|---|---|---|
 | Seed | Campaign start | any 64-bit integer | none |
-| Region count range | Config | (60, 110), confirmed | count < sum of every rolled faction's template size + 1 fails generation |
+| Region count range | Config | (250, 400), Westley 2026-09-28 | count < sum of every rolled faction's template size + 1 fails generation |
 | Factions per game | Config | 15 at launch | < 2 fails generation |
 | Extra edge ratio | Config | 0.12 | < 0 fails generation |
 | Population ranges, ratios, jitter | Config | as ALG-30, per-archetype home ranges as R-022-05 | ranges outside [0, 100] fail generation |
@@ -128,7 +128,7 @@ Open flags: none. Closed by Q-025-01 (Westley, 2026-09-12): the buffer is player
 
 ## Scale requirements
 
-Confirmed by Westley, 2026-09-15 (never loosened by Agora; a miss is escalated): generate a 110-region world in under 5 ms; generation is O(N + E). Re-timed from the original 60-region figure (2026-09-14) after the region-count range widened to [60, 110] folding Q-021-04 (variable per-template region counts) — 110 is the new range's max, per Q-021-05.
+Confirmed by Westley, 2026-09-15 (never loosened by Agora; a miss is escalated): generate a 110-region world in under 5 ms; generation is O(N + E). Re-timed from the original 60-region figure (2026-09-14) after the region-count range widened to [60, 110] folding Q-021-04 (variable per-template region counts) — 110 is the new range's max, per Q-021-05. [Q-021-08: re-timing at 400 regions, pending Westley's confirmation of a measured figure.]
 
 ## Look and behavior references
 
