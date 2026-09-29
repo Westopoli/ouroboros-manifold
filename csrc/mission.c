@@ -2061,6 +2061,11 @@ void om_mission_setup(om_world *w, uint32_t p1, uint32_t archetype, int lineage_
     /* Recon runs until the player presses Begin: fog.c's om_mission_begin is
      * the only path that moves the phase on to tactical. */
     om_mission_set_phase(w, 0 /* OM_FOG_PHASE_RECON, csrc/fog.c */);
+    /* See also: csrc/fog.c om_mission_begin — its mission_started latch is
+     * one-shot and never resets itself, so every mission after the first was
+     * refused by the pipe's in_recon() check ("not in recon"). Reset it here
+     * alongside the phase so a new mission can re-enter recon. */
+    om_mission_reset_started(w);
     st->tactical_baseline_pending = 1;
     om_mission_instantiate_map(w, st);
 }
