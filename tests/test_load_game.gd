@@ -116,11 +116,21 @@ func _run_tests() -> void:
 	_check_version_mismatch_refused_R111_03(current_version)
 	_check_load_calls_bridge_and_checksum_matches_R111_02(current_version)
 	_check_unlimited_slots_thirty_rows_R111_04(current_version)
+	_check_no_dead_delete_ui_T2g_4()
+	_check_live_row_button_and_qa_state_shape_T2g_4(current_version)
 
 	_root.queue_free()
 
 	await _run_live_tests(current_version)
 	_assert(_live_tests_completed, "the live-save checks did not run to the end (a script error aborted them, or c_bridge.gd lacks saves_dir / list_saves / load / DEFAULT_FEATURES)")
+
+	# T2g-4 item 4: the live (qa_set_bridge-driven) render/click path must be
+	# unaffected by the dead-code removal. This runs last, with no
+	# `await process_frame` between the click below and the process quitting
+	# in _initialize(), so SceneRouter's fade tween (real seconds of wall
+	# time) never gets a frame to advance on and cannot try to actually swap
+	# in scenes/galaxy/galaxy_view.tscn mid-test-run.
+	await _check_load_click_routes_to_galaxy_T2g_4(current_version)
 
 
 # Piece T2g-2 (docs/architecture.md "Save slots (T2g-2 rulings)"): c_bridge.gd
@@ -319,6 +329,129 @@ func _check_unlimited_slots_thirty_rows_R111_04(current_version: int) -> void:
 		"R-111-04: no fixed slot limit; slot_count should be 30, got %s" % state.get("slot_count"))
 	_assert(state.get("rows", []).size() == 30,
 		"R-111-04: 30 fixture slots should render 30 rows, got %d" % state.get("rows", []).size())
+
+
+# T2g-4 (docs/northstar/plans/2026-09-28-gap-fix-and-migration-plan.md, G1):
+# load_game.gd carries a dead legacy save-card path (_refresh_slots,
+# _add_slot_card, _format_playtime) and an unused delete-confirm overlay
+# (_build_confirm_overlay, _show_delete_confirm) built into the scene tree
+# on every load even though nothing calls it -- no E-16 rule covers deleting
+# a save, so none of this should exist after the cleanup. Positive control:
+# qa_state's own has_method check proves has_method() finds a method that IS
+# still there, so a false result below means the method is genuinely gone,
+# not a broken check.
+func _check_no_dead_delete_ui_T2g_4() -> void:
+	_assert(_root.has_method("qa_state"), "positive control failed: qa_state should still exist on the root")
+
+	var overlay := _root.find_child("DeleteConfirmBtn", true, false)
+	_assert(overlay == null,
+		"T2g-4: found a node named 'DeleteConfirmBtn' in the scene tree (dead delete-confirm overlay should be gone): " + str(overlay))
+
+	var glyph_btn := _find_button_with_exact_text(_root, "×")
+	_assert(glyph_btn == null,
+		"T2g-4: found a Button with the delete glyph '×' as its text (dead per-row delete button should be gone): " + str(glyph_btn))
+
+	for m in ["_refresh_slots", "_add_slot_card", "_show_delete_confirm", "_build_confirm_overlay", "_format_playtime"]:
+		_assert(not _root.has_method(m),
+			"T2g-4: load_game.gd should no longer define dead method " + m)
+
+
+# T2g-4 item 4: the live path (qa_set_bridge -> _render_bridge_rows, the
+# real production code, not the dead legacy cards) must render exactly one
+# row per slot with a "LOAD" button, and qa_state()'s shape/values the
+# dead-code removal is not supposed to touch must stay exactly as they are
+# today.
+func _check_live_row_button_and_qa_state_shape_T2g_4(current_version: int) -> void:
+	if current_version < 0:
+		return
+	# Earlier fixture checks in this pass called qa_set_bridge() back to back
+	# with no `await process_frame` between them, so their own queue_free()'d
+	# rows (different slot ids: slot_ok/slot_bad/slot_x/slot_0.../slot_29)
+	# can still be children of the list here (deferred, not yet actually
+	# freed). Harmless for this check since each row's LOAD button is named
+	# "Load_<slot id>" and this batch's ids (slot_a/b/c) are disjoint from
+	# every earlier batch's, but it rules out a plain "count every LOAD-text
+	# button in the whole tree" assertion, which would double-count those
+	# leftovers. The per-slot exact-name lookups below are unaffected.
+	var bridge := FakeBridge.new()
+	bridge.slots = [
+		{"slot": "slot_a", "tick": 10, "chapter": 1, "version": current_version},
+		{"slot": "slot_b", "tick": 20, "chapter": 2, "version": current_version},
+		{"slot": "slot_c", "tick": 30, "chapter": 3, "version": current_version},
+	]
+	_root.qa_set_bridge(bridge)
+
+	for slot in bridge.slots:
+		var matches := _root.find_children("Load_" + str(slot["slot"]), "", true, false)
+		_assert(matches.size() == 1,
+			"T2g-4: expected exactly one LOAD button named 'Load_%s', found %d" % [slot["slot"], matches.size()])
+		if matches.size() >= 1:
+			_assert(matches[0] is Button and (matches[0] as Button).text == "LOAD",
+				"T2g-4: node named 'Load_%s' is not a Button with text 'LOAD'" % slot["slot"])
+
+	var state: Dictionary = _root.qa_state()
+	var expected_keys := ["scene", "tick", "slot_count", "current_version", "has_save_button", "rows", "plants"]
+	for k in expected_keys:
+		_assert(state.has(k), "T2g-4: qa_state() is missing key '%s' (shape changed)" % k)
+	_assert(state.keys().size() == expected_keys.size(),
+		"T2g-4: qa_state() has %d keys, expected exactly %d (%s), got %s" % [state.keys().size(), expected_keys.size(), str(expected_keys), str(state.keys())])
+	_assert(str(state.get("scene", "")) == "load_game", "T2g-4: qa_state().scene changed, got '%s'" % state.get("scene"))
+	_assert(int(state.get("tick", 0)) == -1, "T2g-4: qa_state().tick changed, got %s" % state.get("tick"))
+	_assert(bool(state.get("has_save_button", true)) == false, "T2g-4: qa_state().has_save_button changed, got %s" % state.get("has_save_button"))
+	_assert((state.get("plants", null) as Array) == [], "T2g-4: qa_state().plants changed, got %s" % [state.get("plants")])
+	_assert(int(state.get("slot_count", -1)) == bridge.slots.size(), "T2g-4: qa_state().slot_count = %s, expected %d" % [state.get("slot_count"), bridge.slots.size()])
+
+
+# T2g-4 item 4, continued: a click on a LOAD row must still call through to
+# the injected bridge and still route to the galaxy exactly as before. Must
+# run last in _run_tests() with no further `await process_frame` -- see the
+# comment at the call site.
+func _check_load_click_routes_to_galaxy_T2g_4(current_version: int) -> void:
+	if current_version < 0:
+		return
+	var scene: Node = (load(SCENE_PATH) as PackedScene).instantiate()
+	get_root().add_child(scene)
+	await process_frame
+	await process_frame
+
+	var bridge := FakeBridge.new()
+	bridge.slots = [{"slot": "slot_click", "tick": 5, "chapter": 1, "version": current_version}]
+	bridge.load_results["slot_click"] = {"type": "snapshot", "tick": 5, "checksum": 7, "regions": [], "factions": [], "edges": []}
+	scene.qa_set_bridge(bridge)
+
+	var load_btn: Node = scene.find_child("Load_slot_click", true, false)
+	_assert(load_btn != null and load_btn is Button, "T2g-4: no LOAD button found for slot_click to click")
+	if load_btn == null:
+		scene.queue_free()
+		return
+
+	# SceneRouter is a project autoload; this test script is itself the
+	# SceneTree's main --script entry, loaded before autoload globals are
+	# registered as compile-time identifiers, so it is reached by node path
+	# instead of the bare "SceneRouter" identifier (which fails to compile
+	# here even though it resolves fine from a normally-loaded scene script
+	# like load_game.gd or scene_router.gd itself).
+	var scene_router: Node = get_root().get_node("SceneRouter")
+	scene_router.set("_current_scene_name", "not_galaxy_yet_T2g_4_sentinel")
+	(load_btn as Button).pressed.emit()
+
+	_assert(bridge.load_calls == ["slot_click"],
+		"T2g-4: clicking LOAD should call the bridge's load exactly once with 'slot_click', calls were %s" % str(bridge.load_calls))
+	var routed_name: String = str(scene_router.get("_current_scene_name"))
+	_assert(routed_name == "galaxy",
+		"T2g-4: clicking LOAD on a successful slot should route to the galaxy (SceneRouter._current_scene_name = '%s')" % routed_name)
+
+
+func _find_button_with_exact_text(root: Node, text: String) -> Node:
+	if root is BaseButton:
+		var raw = (root as BaseButton).get("text")
+		if raw != null and str(raw) == text:
+			return root
+	for child in root.get_children():
+		var found := _find_button_with_exact_text(child, text)
+		if found != null:
+			return found
+	return null
 
 
 func _row_for(rows: Array, slot_id: String):
