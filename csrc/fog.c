@@ -435,6 +435,14 @@ void om_mission_begin(om_world *w) {
     om_mission_on_begin(w);
 }
 
+/* See also: csrc/mission.c om_mission_setup — resets this one-shot latch so a
+ * new mission can re-enter recon; without it, om_mission_is_started (and the
+ * pipe's in_recon() check) stays true for every mission after the first. */
+void om_mission_reset_started(om_world *w) {
+    om_fog_state *st = om_fog(w);
+    st->mission_started = 0;
+}
+
 uint64_t om_mission_get_clock(const om_world *w) {
     const om_fog_state *st = om_fog_ro(w);
     uint64_t base;
