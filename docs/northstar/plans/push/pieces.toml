@@ -649,3 +649,130 @@ depends_on = []
 status = "pending"
 tests_pending = true
 size_estimate = "autoload removals for G1 (SimBridge) then G6 (TacticalBridge), one unit each, in that order"
+
+[[piece]]
+id = "G-swarmarchive"
+manager = "M3"
+wave = 3
+owns = []
+owns_glob = [".swarm/**"]
+acceptance = []
+depends_on = []
+status = "pending"
+tests_pending = true
+size_estimate = "remove bare SimBridge/TacticalBridge references so the file parses without the autoload"
+
+[[piece]]
+id = "G-legacytactical"
+manager = "M3"
+wave = 3
+owns = []
+owns_glob = ["scenes/tactical/**"]
+acceptance = []
+depends_on = []
+status = "pending"
+tests_pending = true
+size_estimate = "remove bare SimBridge/TacticalBridge references so the file parses without the autoload"
+
+[[piece]]
+id = "G-mockupqa"
+manager = "M3"
+wave = 3
+owns = []
+owns_glob = ["scenes/mockups/galaxy/qa/**", "scenes/mockups/hud/qa/**", "scenes/mockups/menus/qa/**"]
+acceptance = []
+depends_on = []
+status = "pending"
+tests_pending = true
+size_estimate = "remove bare SimBridge/TacticalBridge references so the file parses without the autoload"
+
+[[piece]]
+id = "G-qadesktoptests"
+manager = "M3"
+wave = 3
+owns = []
+owns_glob = ["tests/qa/desktop/**"]
+acceptance = []
+depends_on = []
+status = "pending"
+tests_pending = true
+size_estimate = "remove bare SimBridge/TacticalBridge references so the file parses without the autoload"
+
+[[piece]]
+id = "G-legacytests"
+manager = "M3"
+wave = 3
+owns = [
+    "tests/test_briefing_debrief.gd",
+    "tests/test_cover_render.gd",
+    "tests/test_error_screen.gd",
+    "tests/test_input_router_control_groups.gd",
+    "tests/test_input_router_selection.gd",
+    "tests/test_qa_state_scenes.gd",
+]
+owns_glob = []
+acceptance = []
+depends_on = []
+status = "pending"
+tests_pending = true
+size_estimate = "remove bare SimBridge/TacticalBridge references so the file parses without the autoload"
+
+[[piece]]
+id = "G-timejump"
+manager = "M3"
+wave = 3
+owns = ["scenes/world/time_jump_sequencer.gd"]
+owns_glob = []
+acceptance = []
+depends_on = []
+status = "pending"
+tests_pending = true
+size_estimate = "remove bare SimBridge/TacticalBridge references so the file parses without the autoload"
+
+[[piece]]
+id = "G-tacticalvisibility"
+manager = "M3"
+wave = 3
+owns = ["scripts/tactical/visibility.gd"]
+owns_glob = []
+acceptance = []
+depends_on = []
+status = "pending"
+tests_pending = true
+size_estimate = "remove bare SimBridge/TacticalBridge references so the file parses without the autoload"
+
+[[piece]]
+id = "G-debugoverlay"
+manager = "M3"
+wave = 3
+owns = ["autoload/debug_overlay.gd"]
+owns_glob = []
+acceptance = []
+depends_on = []
+status = "pending"
+tests_pending = true
+size_estimate = "remove bare SimBridge/TacticalBridge references so the file parses without the autoload"
+
+[[piece]]
+id = "G-missionmetrics"
+manager = "M3"
+wave = 3
+owns = ["autoload/mission_metrics_recorder.gd"]
+owns_glob = []
+acceptance = []
+depends_on = []
+status = "pending"
+tests_pending = true
+size_estimate = "remove bare SimBridge/TacticalBridge references so the file parses without the autoload"
+
+[[piece]]
+id = "G-wsinputsanitizer"
+manager = "M3"
+wave = 3
+owns = ["autoload/ws_input_sanitizer.gd"]
+owns_glob = []
+acceptance = []
+depends_on = []
+status = "pending"
+tests_pending = true
+size_estimate = "remove bare SimBridge/TacticalBridge references so the file parses without the autoload"
