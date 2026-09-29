@@ -75,6 +75,8 @@ func _run_tests() -> void:
 	_assert(_live_tests_completed, "the live-frame checks did not run to the end (a script error aborted them, or c_bridge.gd lacks load_mission_live / load_debrief_live / mission_frame / debrief_frame / DEFAULT_FEATURES)")
 	await _run_live_debrief_tests()
 	await _run_region_delta_text_tests()
+	_check_debrief_no_simbridge_reference()
+	await _run_debrief_on_continue_pin()
 
 
 func _run_briefing_tests() -> void:
@@ -631,3 +633,61 @@ func _run_live_debrief_tests() -> void:
 	d2.queue_free()
 	await process_frame
 	SimSession.reset()
+
+
+# Piece C4-9 (docs/northstar/plans/2026-09-28-gap-fix-and-migration-plan.md
+# G1): scenes/debrief/debrief.gd's _on_continue() drops its dead
+# "if SimBridge.USE_LIVE_SIM: SimBridge.send_command({...continue_from_debrief...})"
+# block (SimBridge is being retired, see G1). Source-grep guard mirrors the
+# established pattern (tests/test_b2_briefing_scene.gd's router_script_src
+# find() checks): once G1 lands, the script's raw source must not mention
+# SimBridge anywhere.
+func _check_debrief_no_simbridge_reference() -> void:
+	var f := FileAccess.open("res://scenes/debrief/debrief.gd", FileAccess.READ)
+	var src := ""
+	if f != null:
+		src = f.get_as_text()
+		f.close()
+	_assert(src != "", "C4-9: could not read scenes/debrief/debrief.gd source")
+	_assert(src.find("SimBridge") < 0,
+		"C4-9 (G1): scenes/debrief/debrief.gd still references SimBridge; _on_continue() must drop the dead continue_from_debrief send")
+
+
+# Piece C4-9 pin: _on_continue()'s three surviving effects --
+# UIDataBus.trigger_autosave("post_debrief"), debrief_completed.emit(), and
+# SceneRouter.go_to("chronicle") -- must fire in the same order before and
+# after the SimBridge block is dropped. autoload/ui_data_bus.gd's
+# trigger_autosave() has no signal or log seam to observe directly (it either
+# sends over SimBridge in live mode or just prints in mock mode), so this pin
+# asserts what is safely observable: the call does not error, debrief_completed
+# fires, and SceneRouter's routing target reaches "chronicle" (go_to() sets
+# _current_scene_name synchronously before its fade tween runs, see
+# autoload/scene_router.gd go_to()). This must pass unchanged both before and
+# after the G1 edit -- it is a pin on unrelated behavior, not a red check.
+func _run_debrief_on_continue_pin() -> void:
+	var packed = load(DEBRIEF_SCENE_PATH)
+	if packed == null or not (packed is PackedScene):
+		_assert(false, "C4-9 pin: cannot load debrief scene")
+		return
+	var root: Node = (packed as PackedScene).instantiate()
+	get_root().add_child(root)
+	await process_frame
+	await process_frame
+	if not root.has_method("_on_continue"):
+		_assert(false, "C4-9 pin: debrief root has no _on_continue()")
+		root.queue_free()
+		return
+
+	var completed := [false]
+	root.debrief_completed.connect(func(): completed[0] = true)
+
+	root._on_continue()
+	await process_frame
+
+	var scene_router := get_root().get_node("SceneRouter")
+	_assert(completed[0] == true, "C4-9 pin: _on_continue() must still emit debrief_completed")
+	_assert(str(scene_router.get("_current_scene_name")) == "chronicle",
+		"C4-9 pin: _on_continue() must still route to chronicle, SceneRouter._current_scene_name = %s" % str(scene_router.get("_current_scene_name")))
+
+	root.queue_free()
+	await process_frame
