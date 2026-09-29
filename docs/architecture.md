@@ -285,7 +285,7 @@ Only regions whose stored values changed appear; `checksum` is the world checksu
  "units":[{"id":4,"faction":0,"type":1,"tier":2,"x":100.0,"y":200.0,"hp":80.0,"layer":1,"facing":1.57,"target":-1,"state":0}],
  "visible":{"0":[4,5,9]}}
 ```
-Tactical positions are sim state (units move in the sim), so they are sent; strategic region positions are not. `visible[faction]` is `om_visibility_compute`'s set for that faction.
+Tactical positions are sim state (units move in the sim), so they are sent; strategic region positions are not. `visible[faction]` is built per unit from `om_player_can_see_unit` (`csrc/pipe/om_pipe.c:1126`), not from `om_visibility_compute`, which is a cache primer with no caller in play.
 
 ### chronicle frame, mission frame, debrief frame (on `snapshot` after a jump, mission start, mission end)
 ```json
@@ -313,11 +313,70 @@ The frames above already say what a mission, a jump and a tactical stream look l
 
 Save slots (T2g-2 rulings): `save` writes the state bytes to `path` and a sidecar `path + ".json"` with `{"tick","chapter","phase","seed","n_regions","format_version"}` so the client can list slots without parsing the binary; `list_saves` answers `{"type":"saves","slots":[{"path":"saves/slot1.omsave","tick":120,"chapter":2,"phase":0,"seed":1,"format_version":1}]}` from the sidecars in `dir`; the slot directory is the client's `user://saves` path passed absolute; `load` needs a world whose region count equals the save's (the client sends `set_seed` with the sidecar's `seed` and `n_regions` first; a fresh pipe process has a 1-region world and refuses); it answers `error` with `reason` `"version mismatch"` or `"corrupt"` (until save.c distinguishes them, T2c-3, the pipe says `corrupt` for both) when `om_load_state_read` returns nonzero (R-111-03) and the world is left untouched, else the post-load `snapshot`; autosave (R-111-01) is client-side, a `save` sent after the `mission` frame, after the `debrief` frame and after the `chronicle` frame, never mid-mission (R-111-04).
 
-### persistent client session (v1.1, 2026-09-24; C2-4 builds it)
-`autoload/c_bridge.gd` keeps one `pipe/ouroboros_pipe` process open for the whole run (`OS.execute_with_pipe`, Godot 4.6), instead of a script-up-front one-shot per scene. Reads block on Godot's pipe `FileAccess`, so the bridge owns one reader `Thread` that decodes frames (4-byte length prefix, JSON) and pushes them onto a mutex-guarded queue; the main thread drains the queue in `_process`, applies each frame in order, and emits `frame_received(frame)`. Writes happen on the main thread only. The bridge holds the current snapshot; a `delta` frame is applied to it in place (region rows by index, faction rows by id, `tick`, and `checksum` on cadence ticks, checked against the digits off the wire); `snapshot_changed(tick)` fires after every applied frame, and scenes redraw from the bridge's snapshot (galaxy recolours on owner change: R-106-02, plant `conquest-no-recolour`). `step n` and `run_to` therefore animate without a reload. A scene that needs a whole frame type (mission, chronicle, debrief, tactical, saves) awaits `frame_received` for that type after sending its command; `last_error()` is set from any `error` frame and the awaiting scene gets it instead of a frame. Ordering guarantee: the server answers commands strictly in the order sent, so the bridge keeps a FIFO of pending command names and matches replies to it. Scene tests inject a bridge as today (`qa_set_bridge`); the live tests drive the real one against the built pipe.
-
-### persistent client session (v1.1, 2026-09-24; C2-4 builds it)
-`autoload/c_bridge.gd` keeps one `pipe/ouroboros_pipe` process open for the whole run (`OS.execute_with_pipe`, Godot 4.6), instead of a script-up-front one-shot per scene. Reads block on Godot's pipe `FileAccess`, so the bridge owns one reader `Thread` that decodes frames (4-byte length prefix, JSON) and pushes them onto a mutex-guarded queue; the main thread drains the queue in `_process`, applies each frame in order, and emits `frame_received(frame)`. Writes happen on the main thread only. The bridge holds the current snapshot; a `delta` frame is applied to it in place (region rows by index, faction rows by id, `tick`, and `checksum` on cadence ticks, checked against the digits off the wire); `snapshot_changed(tick)` fires after every applied frame, and scenes redraw from the bridge's snapshot (galaxy recolours on owner change: R-106-02, plant `conquest-no-recolour`). `step n` and `run_to` therefore animate without a reload. A scene that needs a whole frame type (mission, chronicle, debrief, tactical, saves) awaits `frame_received` for that type after sending its command; `last_error()` is set from any `error` frame and the awaiting scene gets it instead of a frame. Ordering guarantee: the server answers commands strictly in the order sent, so the bridge keeps a FIFO of pending command names and matches replies to it. Scene tests inject a bridge as today (`qa_set_bridge`); the live tests drive the real one against the built pipe.
-
 ### Schemas and fixture
 `docs/northstar/spec_factory/transport/{snapshot,delta,command}.schema.json` (JSON Schema, draft 2020-12, `additionalProperties: true`, required keys as above); `tests/transport/fixtures/snapshot_seed1_tick10.json` is produced through ctypes by `scripts/specfactory/snapshot_fixture.py --seed 1 --regions 80 --ticks 10 --generate` (80, not `set_seed`'s doc-example 60: 60 sits below `om_world_generate`'s feasibility floor for the default 15-faction generator on every seed, `csrc/worldgen.c`) and is the client pieces' stand-in until T1 attaches; `tests/transport/test_pipe_shapes.py` validates the fixture against the schema and, once `pipe/ouroboros_pipe` exists, drives it with a 10-step script and asserts the streamed checksum equals `om_world_get_state_checksum` through ctypes.
+
+## Tick order
+
+Two orchestrators exist: the strategic tick (`om_world_step`, runs once per
+`step`/`run_to` pipe command while no mission is active) and the tactical tick
+(`om_tactical_step`, runs once per `tactical_step` pipe command, and also once
+at the end of every strategic tick when `OM_FEAT_TACTICAL` is on and a mission
+is realtime). The live game drives tactical play through the pipe's
+`tactical_step` verb (`om_tactical_step`); `om_world_step`'s `OM_FEAT_TACTICAL`
+branch runs the tactical step inside the strategic tick and is used by tests
+only.
+
+### Strategic tick — `om_world_step`, `csrc/sim.c:194-552`
+
+```mermaid
+flowchart TD
+    A["om_world_step csrc/sim.c:194"] --> B{"om_chapter_mission_realtime(w)? sim.c:205"}
+    B -- yes --> BT["om_tactical_step only, sim.c:206-209 (strategic tick does not advance)"]
+    B -- no --> C["w->tick++, sim.c:212"]
+    C --> D["1-2: om_step_events, sim.c:243 -> csrc/events.c:931 (E-04)"]
+    D --> E["3a: snapshot faction_budget, sim.c:249"]
+    E --> F["3b: om_faction_step_budget, sim.c:250 -> csrc/faction.c:250 (E-05)"]
+    F --> G["3c: om_step_telegraphs, sim.c:261 -> csrc/resolve.c:157 (E-05)"]
+    G --> H["3d: om_step_decisions, sim.c:262 -> csrc/agent.c:248 (E-05)"]
+    H --> I["3e: om_step_reinforce, sim.c:263 -> csrc/resolve.c:264 (E-05)"]
+    I --> J["om_step_collisions, sim.c:275 -> csrc/collision.c:190 (E-05, S-039)"]
+    J --> K["3f: om_step_resolve, sim.c:276 -> csrc/resolve.c:328 (E-05)"]
+    K --> L["4: om_step_friction, sim.c:292 -> csrc/friction.c:60 (E-05)"]
+    L --> M["4.1: om_step_admin_revolts, sim.c:300 -> csrc/friction.c:115 (E-05)"]
+    M --> N["4.25: om_step_diplomacy, sim.c:312 -> csrc/diplomacy.c:726 (E-06)"]
+    N --> O["4.5: om_step_technology, sim.c:315 -> csrc/diplomacy.c:730 (E-06)"]
+    O --> P["5: drift loop, inline sim.c:330-539 (E-02, ALG-02..ALG-09)"]
+    P --> Q["6: om_step_lifecycle, sim.c:543 -> csrc/lifecycle.c:328 (E-07)"]
+    Q --> R["tactical orchestrator: om_tactical_step, sim.c:548 -> csrc/unit.c:1645 (E-11), if OM_FEAT_TACTICAL"]
+```
+
+Every step is gated by an `om_world_feature(w, OM_FEAT_*)` check
+(`csrc/ouroboros_sim.h:253-261` for the enum: `OM_FEAT_EVENTS=0` steps 1-2,
+`OM_FEAT_FACTIONS=1` step 3, `OM_FEAT_FRICTION=2` step 4,
+`OM_FEAT_ADMIN_REVOLTS=3` step 4.1, `OM_FEAT_DIPLOMACY=4` step 4.25,
+`OM_FEAT_TECHNOLOGY=5` step 4.5, `OM_FEAT_DRIFT=6` step 5,
+`OM_FEAT_LIFECYCLE=7` step 6, `OM_FEAT_TACTICAL=8` the tactical orchestrator).
+The debug build (`OM_DEBUG_INJECT`) can additionally reorder several of these
+steps as positive-control fault injections (`csrc/sim.c:227-360`); the order
+diagrammed above is the non-injected (real play) order.
+
+### Tactical tick — `om_tactical_step`, `csrc/unit.c:1645-1663`
+
+```mermaid
+flowchart TD
+    A["om_tactical_step, unit.c:1645"] --> B{"n_units == 0? unit.c:1651"}
+    B -- yes --> Z["no-op, counter does not advance"]
+    B -- no --> C["om_tac_update_period(st), unit.c:1653"]
+    C --> D["base_tick += tick_period_ticks, unit.c:1654"]
+    D --> E["om_tac_refresh_positions, unit.c:1655 (static, unit.c) -- reads om_unit_get_pos, tactical_move.c (E-13)"]
+    E --> F["om_tactical_ai_tick, unit.c:1656,1632 (static, unit.c)"]
+    F --> G["om_tactical_apply_aura_regen, unit.c:1657"]
+    G --> H["om_tactical_advance_backswing, unit.c:1658"]
+    H --> I["om_ability_advance_all, unit.c:1659"]
+    I --> J["om_macro_tick, unit.c:1660 -> csrc/enemy_macro.c (E-14)"]
+    J --> K["om_support_tick, unit.c:1661 -> csrc/tactical_support.c (E-15)"]
+```
+
+`om_visibility_compute` (`csrc/fog.c:615`, E-12) is **not** in this call chain
+and has no other caller anywhere in `csrc/`.
