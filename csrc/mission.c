@@ -1072,11 +1072,43 @@ void om_mission_build_candidate_pool(om_world *w) {
     }
 }
 
+/* Forward decl: defined further down (B9-6 fixed MVP layout section);
+ * om_mission_build_objectives and om_mission_tactical_tick both need the
+ * live enemy faction id ahead of that point in the file. */
+static int32_t om_mission_enemy_faction(const om_world *w, uint32_t region_idx, int32_t player);
+
+/* B9-N (R-075-06, shared with om_mission_tactical_tick): sum of every live
+ * unit's current HP for `faction` -- the real "enemy HP" R-075-06 reads,
+ * both for the initial total at spawn and for the remaining total each
+ * tactical tick (a dead unit's row reports hp 0, so it drops out of the sum
+ * on its own with no separate alive check needed). */
+static double om_mission_sum_faction_hp(const om_world *w, int32_t faction) {
+    double total = 0.0;
+    uint32_t n = om_unit_count(w);
+    for (uint32_t i = 0; i < n; i++) {
+        uint32_t id = om_unit_id_at(w, i);
+        if (!id) continue;
+        if (om_unit_get_faction(w, id) != faction) continue;
+        total += om_unit_get_hp(w, id);
+    }
+    return total;
+}
+
 /* R-075-01 / S-073 table: one primary objective, weight 1.0, kind from the
  * archetype's row (docs/bible/epics/E-10-missions.md S-073's "Primary
  * objective" column). No secondaries yet -- 0 secondaries is a valid count
  * per R-075-01 ("0 to 3 secondary"), and none of the ten archetypes' S-073
- * rows describe a secondary objective to build. */
+ * rows describe a secondary objective to build.
+ *
+ * B9-N: the primary kind's own setup_* now seeds the real total the live
+ * battlefield can supply (R-075-02's hold quota, R-075-06's initial enemy
+ * HP), so om_mission_tactical_tick has real data to score against. Left
+ * out: destroy_targets and escort_to_extraction (Siege Breaking, Assault,
+ * Interception, Evacuation) -- no live mission marks a "designated target"
+ * subset distinct from the whole enemy force, and none places an extraction
+ * point, so there is no real per-kind total to read yet; see the report.
+ * survive_duration is never a live archetype's primary kind
+ * (om_mission_primary_kind) and is not handled here either. */
 void om_mission_build_objectives(om_world *w, uint32_t archetype) {
     om_mission_state *st = om_mis(w);
     memset(st->objectives, 0, sizeof(st->objectives));
@@ -1085,11 +1117,29 @@ void om_mission_build_objectives(om_world *w, uint32_t archetype) {
 
     om_mission_objective *o = &st->objectives[0];
     o->spec.id = 0;
-    o->spec.kind = kind;
     o->spec.is_primary = 1;
     o->spec.weight = 1.0;
     o->used = 1;
     st->n_objectives = 1;
+
+    switch (kind) {
+    case OM_MISSION_OBJ_HOLD_ZONE:
+        /* R-075-02's "required" is the mission's own time limit: hold the
+         * zone clear of the enemy for the mission's whole duration (see the
+         * report -- no rule states a separate hold quota). */
+        om_mission_setup_hold_zone(w, 0, om_mission_get_time_limit(w));
+        break;
+    case OM_MISSION_OBJ_ELIMINATE_FORCE: {
+        int32_t player = om_mission_player_faction(w);
+        if (player < 0) player = 0;
+        int32_t enemy = om_mission_enemy_faction(w, st->mission_region, player);
+        om_mission_setup_eliminate(w, 0, om_mission_sum_faction_hp(w, enemy));
+        break;
+    }
+    default:
+        o->spec.kind = kind;
+        break;
+    }
 }
 
 /* R-079-02: never a force/loadout edit -- the briefing is Accept/Refuse
@@ -1127,6 +1177,76 @@ int om_mission_check_terminated(const om_world *w, uint32_t p1) {
     if (st->term_tick >= st->term_time_limit) return 1;
     if (!st->term_player_alive) return 1;
     return 0;
+}
+
+/* B9-N (R-075-02/03/06, R-075-07, R-076-01/03): the live per-tactical-tick
+ * mission hook, declared in om_internal.h and called from csrc/unit.c's
+ * om_tactical_step right after every other tactical system has run for the
+ * tick, so unit positions/HP are current. Evaluates the live primary
+ * objective from real battlefield state, feeds R-075-07's termination
+ * inputs through the same om_mission_setup_termination/om_mission_check_terminated
+ * pair the fixed-value tests already exercise, and when terminated ends the
+ * mission through the same om_mission_end() call handle_mission_end uses --
+ * so the result band, commander fate and consequences are computed exactly
+ * as they are today, just triggered by the sim instead of the client.
+ *
+ * No-op before a mission is set up, before om_mission_build_objectives has
+ * run (no objective to score), or once the mission has already ended
+ * (R-076-03: values freeze, no further evaluation). destroy_targets and
+ * escort_to_extraction are not evaluated here -- see the report and the
+ * comment on om_mission_build_objectives -- so a mission of one of those
+ * kinds only ever ends via the time limit or the player's force being
+ * wiped, never via its own objective. */
+void om_mission_tactical_tick(om_world *w) {
+    const om_mission_state *ro = om_mis_ro(w);
+    if (!ro || !ro->mission_set || ro->tactical_ended || ro->n_objectives == 0) return;
+    om_mission_state *st = om_mis(w);
+
+    int32_t player = om_mission_player_faction(w);
+    if (player < 0) player = 0;
+    int32_t enemy = om_mission_enemy_faction(w, st->mission_region, player);
+
+    om_vec2 center;
+    memset(&center, 0, sizeof center);
+    int has_center = om_objective_get_center(w, 0, &center);
+    double radius = OM_MISSION_OBJECTIVE_COVER_RADIUS;
+
+    uint32_t enemies_inside = 0;
+    int player_alive = 0;
+    uint32_t n = om_unit_count(w);
+    for (uint32_t i = 0; i < n; i++) {
+        uint32_t id = om_unit_id_at(w, i);
+        if (!id || !om_unit_alive(w, id)) continue;
+        int32_t f = om_unit_get_faction(w, id);
+        if (f == player) {
+            player_alive = 1;
+        } else if (f == enemy && has_center) {
+            double x = 0.0, y = 0.0;
+            om_unit_get_pos(w, id, &x, &y);
+            double dx = x - center.x, dy = y - center.y;
+            if (dx * dx + dy * dy <= radius * radius) enemies_inside++;
+        }
+    }
+
+    uint32_t kind = st->objectives[0].spec.kind;
+    if (kind == OM_MISSION_OBJ_HOLD_ZONE) {
+        om_mission_eval_hold_zone(w, 0, enemies_inside);
+    } else if (kind == OM_MISSION_OBJ_ELIMINATE_FORCE) {
+        double now_hp = om_mission_sum_faction_hp(w, enemy);
+        double destroyed = st->objectives[0].eliminate_initial_hp - now_hp;
+        if (destroyed < 0.0) destroyed = 0.0;
+        om_mission_eval_eliminate(w, 0, destroyed);
+    }
+
+    int primary_complete = st->objectives[0].spec.completion >= 1.0;
+    uint64_t now = om_tactical_base_tick(w);
+    uint64_t elapsed = (now >= st->tactical_baseline_tick) ? now - st->tactical_baseline_tick : 0;
+    uint64_t limit = om_mission_get_time_limit(w);
+    om_mission_setup_termination(w, st->mission_region, primary_complete, 0, elapsed, limit, player_alive);
+
+    if (om_mission_check_terminated(w, 0)) {
+        om_mission_end(w);
+    }
 }
 
 /* R-077-02 / ALG-58: final < t1 total_failure, < t2 partial_failure,
@@ -1658,8 +1778,6 @@ uint32_t om_mission_get_deployed_force_count(const om_world *w) {
     return total;
 }
 
-static int32_t om_mission_enemy_faction(const om_world *w, uint32_t region_idx, int32_t player);
-
 int32_t om_mission_get_enemy_faction(const om_world *w) {
     const om_mission_state *st = om_mis_ro(w);
     if (!st || !st->mission_set) return -1;
@@ -1731,11 +1849,20 @@ void om_mission_get_shortfall_text(const om_world *w, char *out, uint32_t cap) {
     out[len] = '\0';
 }
 
+/* R-076-01 / ALG-56, wired live (B9-N): B from the archetype's own base-time
+ * table (om_archetype_base_time_ticks, Q-076-01 answered), u recomputed from
+ * the mission's live region/archetype the same way candidate scoring did
+ * (om_mission_compute_urgency) -- the strategic sim is stopped for a
+ * mission's whole duration (R-055-02), so the region fields this reads are
+ * frozen for the mission and this returns the same value on every call. No
+ * mission set up yet: the old fixed default, so a caller before
+ * om_mission_setup still gets a sane fallback instead of a bogus 0. */
 uint64_t om_mission_get_time_limit(const om_world *w) {
-    /* Real body (ALG-56, the mission clock) lands with B9-3; R-073-04 only
-     * needs this independent of om_mission_setup's lineage_connection flag. */
-    (void)w;
-    return OM_MISSION_DEFAULT_TIME_LIMIT_TICKS;
+    const om_mission_state *st = om_mis_ro(w);
+    if (!st || !st->mission_set) return OM_MISSION_DEFAULT_TIME_LIMIT_TICKS;
+    uint64_t B = om_archetype_base_time_ticks(st->mission_archetype);
+    double u = om_mission_compute_urgency(w, st->mission_region, st->mission_archetype);
+    return om_mission_compute_time_limit(B, u);
 }
 
 void om_mission_inject_candidate(om_world *w, uint32_t region_idx, uint32_t archetype, double score) {
@@ -1772,6 +1899,20 @@ int om_mission_is_ended(const om_world *w) {
     }
     uint64_t elapsed = now - st->tactical_baseline_tick;
     return elapsed >= st->tactical_time_limit ? 1 : 0;
+}
+
+/* B9-N: true once om_mission_end has actually run (the R-075-07 termination
+ * flag, set by om_mission_end itself), read by the pipe for the tactical
+ * frame's "mission_over". Deliberately not om_mission_is_ended above: that
+ * getter also lazily latches the separate tactical_baseline_pending and
+ * tactical_time_limit clock on every call (a different, currently-unwired
+ * mechanism from the term_ fields and om_mission_check_terminated pair
+ * om_mission_tactical_tick drives), and calling it from every tactical
+ * frame would give that dead pair a live mutation side effect this change
+ * does not intend. */
+int om_mission_has_ended(const om_world *w) {
+    const om_mission_state *st = om_mis_ro(w);
+    return (st && st->tactical_ended) ? 1 : 0;
 }
 
 void om_mission_on_begin(om_world *w) {
@@ -2065,6 +2206,28 @@ void om_mission_setup(om_world *w, uint32_t p1, uint32_t archetype, int lineage_
     st->mission_archetype = archetype;
     st->lineage_connection = lineage_connection;
     st->mission_set = 1;
+
+    /* B9-N: a fresh mission clears the previous one's termination/result
+     * state. Without this, the second mission of a multi-mission session
+     * (tests/transport/test_pipe_mission_cycle.py's three-cycle replay; live
+     * play across a chapter) reads tactical_ended still latched from mission
+     * 1 and om_mission_tactical_tick never evaluates objectives or auto-ends
+     * it again -- the player would have to End Mission manually forever
+     * after the first mission. */
+    st->tactical_ended = 0;
+    st->band_set = 0;
+    st->band = OM_MISSION_BAND_UNKNOWN;
+    st->commander_fate_set = 0;
+    st->end_applied = 0;
+    st->consequence_seen = 0;
+    st->consequence_transferred = 0;
+    memset(st->consequence_delta, 0, sizeof(st->consequence_delta));
+    st->term_primary_complete = 0;
+    st->term_primary_failed = 0;
+    st->term_tick = 0;
+    st->term_time_limit = 0;
+    st->term_player_alive = 1;
+
     om_mission_compose_force(w, st);
     /* Recon runs until the player presses Begin: fog.c's om_mission_begin is
      * the only path that moves the phase on to tactical. */
