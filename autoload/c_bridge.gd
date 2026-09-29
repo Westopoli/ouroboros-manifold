@@ -160,7 +160,11 @@ func load(slot_id: String) -> Dictionary:
 	if not (sidecar is Dictionary) or not sidecar.has("seed") or not sidecar.has("n_regions"):
 		_last_error = "save sidecar missing or unreadable"
 		return {}
-	if not ensure_session(int(sidecar["seed"]), int(sidecar["n_regions"]), DEFAULT_FEATURES):
+	# R-056-04: the world this opens is only scaffolding for the `load`
+	# command below to overwrite (tick, regions, chapter all come from the
+	# save); it is not a new campaign, so the R-056-04 opening jump must not
+	# run for it (new_campaign:false, csrc/pipe/om_pipe.c handle_set_seed).
+	if not ensure_session(int(sidecar["seed"]), int(sidecar["n_regions"]), DEFAULT_FEATURES, false):
 		return {}
 	var frames: Dictionary = _request([{"type": "cmd", "name": "load", "path": path}], ["snapshot"])
 	return frames.get("snapshot", {})
@@ -187,7 +191,7 @@ func _autosave() -> bool:
 # command and sets last_error(), every other frame is announced through
 # frame_received for whoever awaits that type. The owner must call
 # close_session() (a RefCounted cannot do it from its own destructor).
-func open_session(seed: int, n_regions: int, features: Array) -> bool:
+func open_session(seed: int, n_regions: int, features: Array, new_campaign: bool = true) -> bool:
 	close_session()
 	_last_error = ""
 	var exe := ProjectSettings.globalize_path(PIPE_BIN_RES_PATH)
@@ -218,7 +222,7 @@ func open_session(seed: int, n_regions: int, features: Array) -> bool:
 	_reader = Thread.new()
 	_reader.start(_reader_loop)
 	if n_regions > 0:
-		send_command({"type": "cmd", "name": "set_seed", "seed": seed, "n_regions": n_regions, "features": features})
+		send_command({"type": "cmd", "name": "set_seed", "seed": seed, "n_regions": n_regions, "features": features, "new_campaign": new_campaign})
 		send_command({"type": "cmd", "name": "snapshot"})
 	return true
 
@@ -332,10 +336,10 @@ func mission_begun() -> bool:
 # arguments are already open, reopens it when they differ; blocks until the
 # first snapshot. False (session closed again, last_error() set) when the
 # pipe cannot spawn or set_seed fails.
-func ensure_session(seed: int, n_regions: int, features: Array) -> bool:
+func ensure_session(seed: int, n_regions: int, features: Array, new_campaign: bool = true) -> bool:
 	if _session_pid > 0 and _session_args == [seed, n_regions, features]:
 		return true
-	if not open_session(seed, n_regions, features):
+	if not open_session(seed, n_regions, features, new_campaign):
 		return false
 	var deadline_msec := Time.get_ticks_msec() + LIVE_READ_TIMEOUT_MSEC
 	while Time.get_ticks_msec() < deadline_msec and _last_error == "" and (_snapshot.get("regions", []) as Array).is_empty():
