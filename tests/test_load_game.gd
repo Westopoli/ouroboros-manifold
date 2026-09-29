@@ -158,6 +158,11 @@ func _run_live_tests(current_version: int) -> void:
 	for f in ["campaign_1.omsave", "campaign_1.omsave.json", "campaign_bad.omsave", "campaign_bad.omsave.json"]:
 		DirAccess.remove_absolute(dir.path_join(f))
 
+	# new_campaign:false -- this test is about the save/load round trip
+	# (R-111-01/02), not R-056-04's opening jump; pre-opening the session this
+	# way means load_mission_live's own ensure_world reuses it as-is
+	# (has_world() is already true) instead of running set_seed again.
+	_assert(bridge.ensure_session(1, CBridge.DEFAULT_N_REGIONS, CBridge.DEFAULT_FEATURES, false), "ensure_session(1) failed: %s" % bridge.last_error())
 	_assert(bridge.load_mission_live(1, CBridge.DEFAULT_N_REGIONS, CBridge.DEFAULT_FEATURES), "load_mission_live failed (last_error = %s)" % bridge.last_error())
 	var rows: Array = bridge.list_saves()
 	var row = _row_for(rows, "campaign_1")

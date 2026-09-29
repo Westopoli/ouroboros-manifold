@@ -68,7 +68,8 @@ def test_pipe_hello_snapshot_and_checksum_match_ctypes():
     # om_world_generate) -- confirmed empirically, 0/5000 seeds generate at
     # n_regions=60. 80 clears that floor for any seed. See M0's report.
     script = b"".join(_frame(c) for c in [
-        {"type": "cmd", "name": "set_seed", "seed": 1, "n_regions": 80, "features": [6]},
+        {"type": "cmd", "name": "set_seed", "seed": 1, "n_regions": 80, "features": [6],
+         "new_campaign": False},
         {"type": "cmd", "name": "step", "n": 10},
         {"type": "cmd", "name": "snapshot"},
         {"type": "cmd", "name": "quit"},
@@ -114,7 +115,8 @@ def test_pipe_set_seed_generation_failure_is_an_error_frame():
 # the feasible minimum, see that test's comment).
 # ---------------------------------------------------------------------
 
-SET_SEED = {"type": "cmd", "name": "set_seed", "seed": 1, "n_regions": 80, "features": [6]}
+SET_SEED = {"type": "cmd", "name": "set_seed", "seed": 1, "n_regions": 80, "features": [6],
+            "new_campaign": False}
 
 
 def _run(cmds, timeout=60):

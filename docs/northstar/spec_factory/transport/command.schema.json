@@ -35,6 +35,9 @@
   "n_regions": {
    "type": "integer"
   },
+  "new_campaign": {
+   "type": "boolean"
+  },
   "features": {
    "type": "array",
    "items": {

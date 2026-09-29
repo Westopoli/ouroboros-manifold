@@ -46,7 +46,8 @@ def game():
     g = GodotGame(qa_port=pick_free_port(), seed=1)
     path = g.save_dir / (SLOT + ".omsave")
     cmds = [
-        {"type": "cmd", "name": "set_seed", "seed": 3, "n_regions": 80, "features": FEATURES},
+        {"type": "cmd", "name": "set_seed", "seed": 3, "n_regions": 80, "features": FEATURES,
+         "new_campaign": False},
         {"type": "cmd", "name": "step", "n": SAVED_TICK},
         {"type": "cmd", "name": "save", "path": str(path)},
         {"type": "cmd", "name": "quit"},

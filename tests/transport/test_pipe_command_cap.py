@@ -17,7 +17,8 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 PIPE = ROOT / "pipe/ouroboros_pipe"
 FEATURES = [1, 2, 3, 4, 5, 6, 7]
-SET_SEED = {"type": "cmd", "name": "set_seed", "seed": 1, "n_regions": 80, "features": FEATURES}
+SET_SEED = {"type": "cmd", "name": "set_seed", "seed": 1, "n_regions": 80, "features": FEATURES,
+            "new_campaign": False}
 STEP10 = {"type": "cmd", "name": "step", "n": 10}
 START = {"type": "cmd", "name": "mission_start", "faction": 0}
 BEGIN = {"type": "cmd", "name": "mission_begin"}

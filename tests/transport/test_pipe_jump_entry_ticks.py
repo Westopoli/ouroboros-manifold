@@ -51,7 +51,7 @@ def test_jump_entry_ticks_within_jump_window():
     """
     cmds = [
         {"type": "cmd", "name": "set_seed", "seed": 1, "n_regions": 80,
-         "features": FEATURES},
+         "features": FEATURES, "new_campaign": False},
         {"type": "cmd", "name": "jump", "ticks": 250},
         {"type": "cmd", "name": "jump", "ticks": 50},
     ]
