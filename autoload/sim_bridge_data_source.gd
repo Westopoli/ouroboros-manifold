@@ -1,22 +1,7 @@
 extends RefCounted
 
-var _latest_state: Dictionary = {}
-var _mission_briefing: Dictionary = {}
-
-func _init() -> void:
-	SimBridge.state_updated.connect(_on_state_updated)
-
-
-func _on_state_updated(state: Dictionary) -> void:
-	if state.get("type") == "sim_state":
-		if state.has("mission_briefing"):
-			_mission_briefing = state["mission_briefing"]
-	else:
-		_latest_state = state
-
-
 func get_all_eras() -> Array[Dictionary]:
-	var settled_reach_owned: bool = SimBridge.ENTITLEMENT_SETTLED_REACH
+	var settled_reach_owned: bool = true  # ENTITLEMENT_SETTLED_REACH was true (autoload/sim_bridge.gd:31, removed with that autoload)
 	return [
 		{
 			"id": "roman",
@@ -150,7 +135,9 @@ func delete_save_slot(_slot_id: String) -> bool:
 
 
 func get_mission_briefing(_mission_id: String) -> Dictionary:
-	return _mission_briefing
+	# no live push source populates a briefing dict under the current pipe transport;
+	# callers self-load via SimSession/c_bridge instead (see scenes/mission_briefing/mission_briefing.gd)
+	return {}
 
 
 func open_steam_dlc_page(era_id: String) -> void:

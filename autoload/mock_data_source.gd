@@ -54,7 +54,7 @@ func get_all_eras() -> Array[Dictionary]:
 			"name": "Settled Reach",
 			"description": "Far-future conflict across the void. Full 2.5D layer combat — orbital stations, surface strongholds, and deep-space engagements. The premium sci-fi experience.",
 			"accent_color": "#4a9eb8",
-			"is_owned": SimBridge.ENTITLEMENT_SETTLED_REACH,
+			"is_owned": true,  # ENTITLEMENT_SETTLED_REACH was true (autoload/sim_bridge.gd:31, removed with that autoload)
 			"tier_progress": {"current_tier": 1, "progress_to_next": 0.0, "max_tier_unlocked": 1},
 			"mastery_progress": 0.0,
 			"unit_roster": [
