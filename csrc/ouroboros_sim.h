@@ -1571,6 +1571,11 @@ void om_mission_get_player_units(const om_world *w, int32_t faction_id, uint32_t
 int om_mission_get_region_delta(const om_world *w, double *military, double *economy, double *tension, double *population);
 void om_mission_get_shortfall_text(const om_world *w, char *out, uint32_t cap);
 uint64_t om_mission_get_time_limit(const om_world *w);
+/* B9-N: true once om_mission_end has run for the current mission (R-075-07
+ * termination, reached live via om_mission_tactical_tick or by the client's
+ * own mission_end command) -- the pipe's tactical frame reads this for
+ * "mission_over" without re-deriving it from another mechanism. */
+int om_mission_has_ended(const om_world *w);
 void om_mission_inject_candidate(om_world *w, uint32_t region_idx, uint32_t archetype, double score);
 int om_mission_is_ended(const om_world *w);
 void om_mission_load_launch_library(om_world *w);

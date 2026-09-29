@@ -371,6 +371,13 @@ void om_mission_on_begin(om_world *w);
  * after the first mission, and the pipe's in_recon() refuses every later
  * mission_begin ("not in recon"). */
 void om_mission_reset_started(om_world *w);
+/* B9-N (R-075-02/03/06, R-075-07): the live per-tactical-tick objective
+ * evaluation and termination check (csrc/mission.c); called by unit.c
+ * om_tactical_step right after om_support_tick, so unit positions/HP are
+ * current for the tick. No-op before a mission is set up, before
+ * om_mission_build_objectives has run, or after the mission has already
+ * ended. */
+void om_mission_tactical_tick(om_world *w);
 /* Engine visibility (csrc/fog.c; ignores the player-fog switch, S-093 R-093-01): 1 if any living unit of `faction` can see `target`, else 0; unknown ids or no state: 0. */
 int om_fog_faction_sees(const om_world *w, int32_t faction, uint32_t target);
 
