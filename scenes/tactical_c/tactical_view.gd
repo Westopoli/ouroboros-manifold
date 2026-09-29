@@ -15,6 +15,25 @@ const SCREEN_H := 1080.0
 const WORLD_SCALE := 0.25
 const UNIT_SIZE := 24.0
 
+# Real-time stepping (B9-N, 2026-09-28 QA-run wiring brief): before this, a
+# deployed mission only ever advanced through the qa_step() QA hook, so real
+# play froze at tick 0. _process() accumulates real time and requests whole
+# tactical ticks at the sim's own rate: 20 base ticks/sec at or below 1,000
+# live units (csrc/om_constants.h OM_TACTICAL_TICK_RATE; docs/bible/epics/
+# E-13-tactical-combat.md R-099-02). Above 1,000 live units each
+# om_tactical_step call spans OM_TACTICAL_HIGH_LOAD_PERIOD (2, csrc/unit.c)
+# base ticks instead of 1 (R-099-03), so holding the same 20 base-ticks/sec
+# in real time needs only 10 tactical_step_n calls/sec -- this is the "tick
+# rate drops from 20 to 10" R-099-03 describes; base_tick itself keeps
+# advancing at 20/sec regardless, which is the invariant R-099-03 requires.
+const TACTICAL_BASE_TICKS_PER_SECOND := 20.0
+const TACTICAL_HIGH_LOAD_UNITS := 1000
+const TACTICAL_HIGH_LOAD_PERIOD := 2
+# Cap on tactical_step_n's n per _process call so a stalled frame (long GC
+# pause, breakpoint, etc.) never floods the pipe with a huge catch-up
+# request; any ticks still owed after the cap carry over to later frames.
+const TACTICAL_MAX_STEPS_PER_FRAME := 10
+
 # Player faction: read from the loaded frame when the frame carries
 # "player_faction"; falls back to SimSession.bridge().player_faction()
 # so live play also works when the frame does not carry the key.
@@ -34,6 +53,16 @@ var _selected: Array = []
 var _unit_visuals: Dictionary = {}
 var _display_px: Dictionary = {}
 var _last_command: Dictionary = {}
+
+# Real-time stepping state (see TACTICAL_BASE_TICKS_PER_SECOND above).
+# _tactical_calls_due carries fractional tactical_step_n calls across frames
+# so the average call rate matches the target over time even though each
+# frame can only request a whole number of calls. _mission_over_seen latches
+# once a loaded frame reports mission_over so _process never steps a mission
+# that has already ended (the view still routes to debrief the moment it
+# sees the flag, in load_frame() below; this only stops further stepping).
+var _tactical_calls_due: float = 0.0
+var _mission_over_seen := false
 
 # Plants: stuck freezes drawn positions after first load_frame; rubber-band snaps
 # back to the position from two loads ago on every third load (N%3==0).
@@ -84,8 +113,10 @@ func load_frame(frame: Dictionary) -> void:
 	# docs/architecture.md "C transport v1", tactical snapshot: the sim itself
 	# ended the mission (R-075-07 termination, checked live every tactical
 	# tick -- not only in response to the player's own End Mission press).
-	# Route to debrief the same way the End Mission button does, above.
+	# Route to debrief the same way the End Mission button does, above, and
+	# latch _mission_over_seen so _process() stops requesting more ticks.
 	if bool(frame.get("mission_over", false)):
+		_mission_over_seen = true
 		SceneRouter.go_to("debrief")
 	_canvas = float(frame.get("map", {}).get("canvas", 0.0))
 	if _canvas > 0.0:
@@ -250,7 +281,48 @@ func send_command(cmd: Dictionary) -> bool:
 	return ok
 
 
-# Advances the live mission by n tactical ticks and reloads the view.
+# Drives the live mission every frame once it has begun (see the constants
+# block above for the rate and R-099-03 rationale). No wall-clock read: only
+# `delta`, the engine's own frame time, decides how many whole tactical ticks
+# are due; the client never adds randomness or timing input to the sim
+# itself, only the count of ticks it requests. Does nothing while the
+# mission has not begun yet or has already ended (_mission_over_seen); the
+# scene has no pause/menu state to also gate on.
+func _process(delta: float) -> void:
+	if _mission_over_seen:
+		return
+	var bridge = SimSession.bridge()
+	if not bridge.mission_begun():
+		return
+	_tactical_calls_due += delta * TACTICAL_BASE_TICKS_PER_SECOND / float(_tactical_tick_period())
+	var k := int(_tactical_calls_due)
+	if k <= 0:
+		return
+	if k > TACTICAL_MAX_STEPS_PER_FRAME:
+		k = TACTICAL_MAX_STEPS_PER_FRAME
+	_tactical_calls_due -= float(k)
+	qa_step(k)
+
+
+# R-099-03: the tick period the engine is currently spanning per
+# om_tactical_step call, inferred client-side from the live unit count in
+# the last loaded frame (the pipe does not expose om_tactical_tick_period
+# directly). Mirrors csrc/unit.c's om_tac_update_period live-unit count
+# (in-use units with hp > 0).
+func _tactical_tick_period() -> int:
+	return TACTICAL_HIGH_LOAD_PERIOD if _live_unit_count() > TACTICAL_HIGH_LOAD_UNITS else 1
+
+
+func _live_unit_count() -> int:
+	var n := 0
+	for u in _frame.get("units", []):
+		if float(u.get("hp", 0.0)) > 0.0:
+			n += 1
+	return n
+
+
+# Advances the live mission by n tactical ticks and reloads the view. Used
+# directly by QA (unchanged) and by _process() above for real-time play.
 func qa_step(n: int) -> void:
 	var bridge = SimSession.bridge()
 	if bridge.tactical_step_n(n):
