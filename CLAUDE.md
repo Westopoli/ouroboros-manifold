@@ -16,7 +16,7 @@ Tiers are roles; the model behind a tier can change.
 
 `DOER_BACKEND = sonnet46` · `TEST_WRITER = sonnet5`
 
-Split a task that mixes tiers. Every spawn names its model. Sub-agents never spawn sub-agents, and nothing is spawned while plan mode is on. On a message from another chat, do no large unprompted work: pause for Westley, except for small blockers.
+Split a task that mixes tiers. Every spawn names its model. Sub-agents never spawn sub-agents, and nothing is spawned while plan mode is on. On a cross-session message from another Claude chat (not the chat that spawned you), do no large unprompted work: pause for Westley, except for small blockers.
 
 ## The Bible
 
