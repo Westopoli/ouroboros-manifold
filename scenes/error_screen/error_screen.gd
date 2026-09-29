@@ -1,5 +1,7 @@
 extends Control
 
+const SimSession := preload("res://autoload/sim_session.gd")
+
 
 func _ready() -> void:
 	_build_ui()
@@ -50,7 +52,7 @@ func _build_ui() -> void:
 	vbox.add_child(buttons)
 
 	var restart_btn := _make_button("RESTART")
-	restart_btn.pressed.connect(_on_restart)
+	restart_btn.pressed.connect(_on_retry)
 	buttons.add_child(restart_btn)
 
 	var quit_btn := _make_button("QUIT")
@@ -67,9 +69,9 @@ func _make_button(label_text: String) -> Button:
 	return btn
 
 
-func _on_restart() -> void:
-	SimBridge.restart()
-	SceneRouter.go_to("loading_screen")
+func _on_retry() -> void:
+	SimSession.reset()
+	SceneRouter.go_to("main_menu")
 
 
 func _on_quit() -> void:
