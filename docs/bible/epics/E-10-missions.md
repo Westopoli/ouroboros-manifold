@@ -11,7 +11,7 @@
 | Every visible-surface story has a reference | **No.** S-079 (briefing and debrief screens) has a visible surface and no reference. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on 7 open flags and one missing reference. Q-076-01 (the live time limits are 250 to 450 tactical ticks, 12 to 22 seconds, because a second config table overrides the first) is a real defect, not a design question, but it needs Westley to confirm the intended minutes.
+**Gate verdict: not passed.** Blocked on 6 open flags and one missing reference (Q-076-01, the live-time-limits-vs-config defect, is answered: the minutes table is the design, wired live in `om_mission_get_time_limit`).
 
 ## Purpose
 
@@ -104,12 +104,12 @@ As a commander, I want a deadline that tightens when the situation is urgent, so
 
 Rules
 - R-076-01  Given an archetype base time B in tactical ticks and urgency u, When the limit is set, Then limit = max(B · (1 − 0.2 · u), 0.6 · B).
-- R-076-02  Given base times, When read, Then they are the minutes in the table [Q-076-01: the bible's table (3 to 4.5 minutes) is overridden in config by 250 to 450 ticks, 12 to 22 seconds].
+- R-076-02  Given base times, When read, Then they are the minutes in the table (Q-076-01 answered 2026-09-12: the minutes table is the design; a since-removed seconds table was an implementation error).
 - R-076-03  Given the deadline passes, When the mission ends, Then the current objective completion values are final; finishing early never raises the score.
 
 Inputs: archetype; urgency.
 Outputs: time limit in the mission setup; HUD clock.
-Open flags: Q-076-01.
+Open flags: none.
 
 ### S-077 — Five ways it can go
 As a commander, I want the result to be a spectrum weighing what I achieved and who I brought home, judged by what is reasonable for that kind of mission, so that a costly win and a clean win are not the same.
@@ -219,7 +219,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-072-01, Q-074-01, Q-076-01, Q-077-01, Q-078-01, Q-079-01, Q-080-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-072-01, Q-074-01, Q-077-01, Q-078-01, Q-079-01, Q-080-01 (Q-076-01 answered 2026-09-12, closed). Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

@@ -5,6 +5,8 @@
  "required": [
   "type",
   "tick",
+  "mission_over",
+  "band",
   "map",
   "units",
   "visible"
@@ -14,6 +16,12 @@
    "const": "tactical"
   },
   "tick": {
+   "type": "integer"
+  },
+  "mission_over": {
+   "type": "boolean"
+  },
+  "band": {
    "type": "integer"
   },
   "map": {
