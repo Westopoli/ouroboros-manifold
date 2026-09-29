@@ -2049,6 +2049,14 @@ static void om_mission_instantiate_map(om_world *w, om_mission_state *st) {
     om_map_add_spawn_point(w, canvas / 2.0, canvas - edge, enemy);
     om_mission_spawn_force(w, st->player_units, player, canvas / 2.0, edge, 1.0);
     om_mission_spawn_force(w, st->enemy_units, enemy, canvas / 2.0, canvas - edge, -1.0);
+    /* B9-13/Q-123-01: the mission's enemy units are macro force 0 (enemy
+     * macro forces are indexed separately from the player's force -- the
+     * player is never a macro force). Fallback point is the enemy's own
+     * spawn anchor, the rout target R-120-02 names.
+     * See also: csrc/enemy_macro.c om_macro_tick / om_macro_issue_group_orders,
+     * the only reader of this registration. */
+    om_macro_init_force(w, 0, enemy);
+    om_macro_set_force_fallback_point(w, 0, canvas / 2.0, canvas - edge);
 }
 
 void om_mission_setup(om_world *w, uint32_t p1, uint32_t archetype, int lineage_connection) {

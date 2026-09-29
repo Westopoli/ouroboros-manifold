@@ -146,6 +146,23 @@ typedef struct {
     int timer_noise_drawn;
     uint32_t phased_subgroups;
     int phased_subgroups_drawn;
+    /* B13-8 (R-120-02, Q-120-02, Q-123-01): real group orders. faction_id_set
+     * distinguishes a force the mission actually registered (om_macro_init_force)
+     * from the R-120-04 default force 0 every om_macro_tick touches, whose
+     * faction_id is otherwise indistinguishable from a real faction 0. */
+    int faction_id_set;
+    int has_contact;
+    double hp_sum_last_eval;
+    int hp_sum_last_eval_set;
+    double fallback_x, fallback_y;
+    int fallback_set;
+    /* last group order actually issued, so a later evaluation reissues only
+     * on a changed target, a changed behavior, or a changed unit count
+     * (reinforcements joining the force) -- never every evaluation. */
+    int last_order_valid;
+    int last_order_behavior;
+    double last_order_x, last_order_y;
+    uint32_t last_order_n;
 } om_macro_force;
 
 typedef struct {
@@ -345,6 +362,133 @@ static void om_macro_log_command(om_world *w, uint64_t tick, uint32_t force_id, 
     om_replay_log_command(w, tick, force_id, (uint32_t)cmd, 0.0, 0.0, 0);
 }
 
+/* B13-8 (R-120-02, R-123-02/Q-123-01, R-124-02): the macro layer's real group
+ * orders. Mission registration (csrc/mission.c om_mission_instantiate_map)
+ * calls om_macro_init_force / om_macro_set_force_fallback_point once per
+ * mission; every force this evaluation gathers had faction_id_set from that
+ * call, so an un-registered force (every existing S-120/121/122/123/125 unit
+ * test, which never call om_macro_init_force with a live mission) sees no
+ * behavior change here at all -- see also: om_macro_tick below. */
+#define OM_MACRO_ORDER_CAP 2048
+
+static uint32_t om_macro_collect_faction_units(om_world *w, int32_t faction_id, uint32_t *out, uint32_t cap) {
+    uint32_t total = om_unit_count(w);
+    uint32_t scanned = 0, n = 0, i;
+    for (i = 0; scanned < total && i < (uint32_t)OM_MAX_UNITS; i++) {
+        uint32_t uid = om_unit_id_at(w, i);
+        if (!uid) continue;
+        scanned++;
+        if (om_unit_get_faction(w, uid) != faction_id) continue;
+        if (!om_unit_alive(w, uid)) continue;
+        if (n < cap) out[n++] = uid;
+    }
+    return n;
+}
+
+static double om_macro_centroid(om_world *w, const uint32_t *ids, uint32_t n, double *out_y) {
+    double sx = 0.0, sy = 0.0;
+    uint32_t i;
+    for (i = 0; i < n; i++) {
+        double x = 0.0, y = 0.0;
+        om_unit_get_pos(w, ids[i], &x, &y);
+        sx += x; sy += y;
+    }
+    *out_y = (n > 0) ? sy / (double)n : 0.0;
+    return (n > 0) ? sx / (double)n : 0.0;
+}
+
+/* Only reissues when the destination, the behavior, or the commanded unit
+ * count (reinforcements joining the force) has changed since the last order
+ * this force was actually given -- never on every 40-tick evaluation. */
+static int om_macro_target_changed(const om_macro_force *f, int behavior, double x, double y, uint32_t n) {
+    if (!f->last_order_valid) return 1;
+    if (f->last_order_behavior != behavior) return 1;
+    if (f->last_order_x != x || f->last_order_y != y) return 1;
+    if (f->last_order_n != n) return 1;
+    return 0;
+}
+
+static void om_macro_remember_order(om_macro_force *f, int behavior, double x, double y, uint32_t n) {
+    f->last_order_valid = 1;
+    f->last_order_behavior = behavior;
+    f->last_order_x = x;
+    f->last_order_y = y;
+    f->last_order_n = n;
+}
+
+static void om_macro_issue_group_orders(om_world *w, om_macro_force *f) {
+    static uint32_t force_ids[OM_MACRO_ORDER_CAP];
+    static uint32_t player_ids[OM_MACRO_ORDER_CAP];
+    uint32_t n_force, n_player, i, j;
+    double hp_sum = 0.0;
+    int contact_now = 0;
+    double dest_x = 0.0, dest_y = 0.0;
+    int have_dest = 0;
+
+    n_force = om_macro_collect_faction_units(w, f->faction_id, force_ids, OM_MACRO_ORDER_CAP);
+    if (n_force == 0) return; /* force not yet spawned or wiped out: nothing to command */
+
+    for (i = 0; i < n_force; i++) hp_sum += om_unit_get_hp(w, force_ids[i]);
+
+    n_player = om_macro_collect_faction_units(w, om_player_faction(w), player_ids, OM_MACRO_ORDER_CAP);
+
+    /* Contact (Q-120-02): took damage this evaluation (force hp sum fell
+     * since the last evaluation)... */
+    if (f->hp_sum_last_eval_set && hp_sum < f->hp_sum_last_eval) contact_now = 1;
+    /* ...or any of its units has a visible player unit in range. */
+    for (i = 0; i < n_force && !contact_now; i++) {
+        for (j = 0; j < n_player; j++) {
+            if (om_unit_can_see(w, force_ids[i], player_ids[j])) { contact_now = 1; break; }
+        }
+    }
+    f->hp_sum_last_eval = hp_sum;
+    f->hp_sum_last_eval_set = 1;
+    if (contact_now) f->has_contact = 1; /* sticky, like ambush's trigger (R-120-02) */
+
+    if (f->behavior == OM_MACRO_ADVANCE) {
+        if (f->has_contact && n_player > 0) {
+            dest_x = om_macro_centroid(w, player_ids, n_player, &dest_y);
+            have_dest = 1;
+        } else {
+            om_vec2 ctr;
+            if (om_objective_get_center(w, 0, &ctr)) {
+                dest_x = ctr.x; dest_y = ctr.y; have_dest = 1;
+            } else if (n_player > 0) {
+                /* No objective placed: fall back to the player centroid, the
+                 * same convention om_mission_check_external_reinforcements
+                 * below uses for the wave's destination. */
+                dest_x = om_macro_centroid(w, player_ids, n_player, &dest_y);
+                have_dest = 1;
+            }
+        }
+        if (have_dest && om_macro_target_changed(f, f->behavior, dest_x, dest_y, n_force)) {
+            om_command_attack_move(w, force_ids, n_force, dest_x, dest_y);
+            om_macro_remember_order(f, f->behavior, dest_x, dest_y, n_force);
+        }
+    } else if (f->behavior == OM_MACRO_DEFEND) {
+        /* "Hold": move to the objective and stay there. */
+        om_vec2 ctr;
+        if (om_objective_get_center(w, 0, &ctr)) {
+            dest_x = ctr.x; dest_y = ctr.y; have_dest = 1;
+        }
+        if (have_dest && om_macro_target_changed(f, f->behavior, dest_x, dest_y, n_force)) {
+            om_command_move(w, force_ids, n_force, dest_x, dest_y);
+            om_macro_remember_order(f, f->behavior, dest_x, dest_y, n_force);
+        }
+    } else if (f->behavior == OM_MACRO_RETREAT) {
+        /* "Rout": move back toward the enemy spawn edge. */
+        if (f->fallback_set) {
+            dest_x = f->fallback_x; dest_y = f->fallback_y; have_dest = 1;
+        }
+        if (have_dest && om_macro_target_changed(f, f->behavior, dest_x, dest_y, n_force)) {
+            om_command_move(w, force_ids, n_force, dest_x, dest_y);
+            om_macro_remember_order(f, f->behavior, dest_x, dest_y, n_force);
+        }
+    }
+    /* PATROL and AMBUSH keep their current (log-only) meaning -- neither is
+     * in this brief's scope; see the finishing report. */
+}
+
 int om_macro_execute_behavior(om_world *w, uint32_t p1, int p2, int p3) {
     om_macro_state *st = om_macro_st(w);
     om_macro_force *f = om_macro_force_at(st, p1);
@@ -424,6 +568,7 @@ void om_macro_init_force(om_world *w, uint32_t p1, int32_t p2) {
     om_macro_force *f = om_macro_force_at(st, p1);
     if (!f) return;
     f->faction_id = p2;
+    f->faction_id_set = 1;
     om_macro_ensure_noise(w, f);
 }
 
@@ -473,6 +618,15 @@ void om_macro_set_base_transition_true(om_world *w, uint32_t p1, int p2) {
     om_macro_state *st = om_macro_st(w);
     om_macro_force *f = om_macro_force_at(st, p1);
     if (f) f->base_transition_true = p2;
+}
+
+/* B13-8: see also csrc/mission.c om_mission_instantiate_map, the only caller,
+ * which sets this to the enemy's own spawn anchor right after registering
+ * the force (om_macro_init_force). Consumed by om_macro_tick's rout order. */
+void om_macro_set_force_fallback_point(om_world *w, uint32_t p1, double p2, double p3) {
+    om_macro_state *st = om_macro_st(w);
+    om_macro_force *f = om_macro_force_at(st, p1);
+    if (f) { f->fallback_x = p2; f->fallback_y = p3; f->fallback_set = 1; }
 }
 
 void om_macro_set_force_hp_pct(om_world *w, uint32_t p1, double p2) {
@@ -525,6 +679,11 @@ void om_macro_tick(om_world *w, uint64_t p1) {
         om_macro_force *f = &st->forces[i];
         f->last_issued_command_type = om_macro_command_for_behavior(f->behavior);
         om_macro_log_command(w, slot, i, f->last_issued_command_type);
+        /* B13-8: only a force the mission actually registered gets real
+         * group orders; the default force 0 above and every other
+         * unregistered force keep the log-only behavior this loop already
+         * had. */
+        if (f->faction_id_set) om_macro_issue_group_orders(w, f);
     }
     /* R-124-01: once per mission, roll the wave at the evaluation boundary while in
      * tactical phase; wave_set = 1 after any roll so this fires exactly once. */
