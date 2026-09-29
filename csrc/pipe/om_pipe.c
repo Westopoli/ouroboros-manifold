@@ -976,6 +976,18 @@ static void write_tactical(void) {
     jb_uint(&j, g_tactical_tick);
     jb_putc(&j, ',');
 
+    /* docs/architecture.md "C transport v1", tactical snapshot: true once the
+     * sim itself has ended the mission (om_mission_tactical_tick's R-075-07
+     * check, or an explicit mission_end), so the client can route to the
+     * debrief without waiting for the player to press End Mission. `band`
+     * is -1 (OM_MISSION_BAND_UNKNOWN in the C ABI) until then. */
+    jb_key(&j, "mission_over");
+    jb_bool(&j, om_mission_has_ended(W));
+    jb_putc(&j, ',');
+    jb_key(&j, "band");
+    jb_int(&j, om_mission_get_band(W));
+    jb_putc(&j, ',');
+
     jb_key(&j, "map");
     jb_putc(&j, '{');
     jb_key(&j, "canvas");
