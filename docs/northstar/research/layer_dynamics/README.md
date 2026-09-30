@@ -92,11 +92,24 @@ The category multiplier matrix (attacker row, target column) is `OM_CATEGORY_MUL
 
 | Variable | Range | Production value | Rung | Pattern |
 |---|---|---|---|---|
-| Accessibility mask preset (flat, plateau, ridge, cliff, valley) | 5 presets plus size | map generator output, binary per layer per position | R1 | P1, P4 |
+| Accessibility mask preset (flat, block, wall, barrier, lane; defined below) | 5 footprints | map generator output, binary per layer per position | R1 | P1, P4 |
+| Blocked height h: the mask blocks layers 1 to h inside the footprint | 1 to 4 | E-01 S-001 example: h = 2 | R1 | P1, P4 |
 | Layer spacing | 10 to 200 | none in the sim (Q-E01-01 fixes on-screen elevation only) | R1 | P1 |
 | Cover discs: position, radius, height in layers | 0 to 5 layers | per E-01 S-007 | R1 | P1, P4 |
 | Vantage nodes | count, radius | per E-01 S-005 | R1 | P1 |
 | Interference zones | count, radius, intensity 0 to 1 | per E-01 S-005 | R1 | P1 |
+
+The terrain presets are one mechanism at five footprints. Terrain in this game is only a binary mask: each layer is open or blocked at each position (E-01 R-001-04). There are no slopes. A preset is a footprint (where layers 1 to h are blocked) and the height h; layers above h stay open everywhere. They differ by whether a unit on a blocked layer can walk around, and how far.
+
+| Preset | Footprint | Unit on layers 1 to h, crossing it | Unit above h | What it tests |
+|---|---|---|---|---|
+| flat | none: all five layers open everywhere | nothing in the way | nothing in the way | the control; no terrain effect |
+| block | one compact region in the middle | goes around it, a short detour | flies straight over | high and low layers take different routes; the side that goes over can shoot down into the detour |
+| wall | one long thin region across the arena, with open ends | goes around an end, a long detour | flies over | a line to hold; the flank around the end is the vulnerability |
+| barrier | a region that spans the full arena width: no end to go around | cannot cross on its layer; must change layer (E-01 R-001-05, the ruling) | flies over | the terrain-forced auto-transition; with the ruling off, the unit stops at the edge |
+| lane | two blocks with an open channel between them, open on all five layers | funnels through the channel | flies over the blocks or uses the channel | a choke on the low layers that the high layers bypass |
+
+Block and wall differ only in shape (how long the detour is); barrier is the same wall made so long that there is no detour. Lane is two blocks facing each other. I kept five because each produces a different route decision; if two are not worth separate runs, merge them.
 
 ### Cross-layer rules (owner: the rule set; the unknowns the lab exists to find)
 
@@ -114,9 +127,26 @@ The category multiplier matrix (attacker row, target column) is `OM_CATEGORY_MUL
 | Terrain-forced auto-transition | on or off (off is the control) | on (E-01 R-001-05); edges per Q-001-04 | R1 | P4 |
 | Movement speed during a transition | 0 to 1.0 times | none (mid-transition movement is unspecified in the bible beyond Q-004-02) | R1 | P1 |
 
-### Outcomes (what a run reports)
+### Outcomes and expected winners
 
-Winner (A, B, stalemate, tick cap, mutual); survivors; HP-remaining ratio; cost lost per side; ticks to resolve; side and tick of first shot; first-contact tick; unanswered-fire ticks per side (ticks a side fired while the other, able to see or fire, did not); number of transitions and shots.
+A run reports: winner (A, B, stalemate, tick cap, mutual); survivors; HP-remaining ratio; cost lost per side; ticks to resolve; side and tick of first shot; first-contact tick; unanswered-fire ticks per side (ticks a side fired while the other, able to see or fire, did not); number of transitions and shots.
+
+Each scenario carries an expected winner, stated before the run, from Westley's pillars (§2, §4). The expected winner is what a knowledgeable player would predict from the conditions alone. A run that disagrees with its expectation is first a question about the harness (check the controls), and only then a finding about the rules. Scenarios are at equal cost, count and type unless stated.
+
+| # | Scenario | Expected winner | Basis | Outcome that proves it |
+|---|---|---|---|---|
+| X0 | Mirror: identical forces, flat, same layer, same formation | none; win rate near 0.5 | control, not a pillar | split of winners across seeds (the noise floor) |
+| X1 | 10 against 5 of one type, flat | the 10 | positive control, not a pillar | winner, survivors |
+| X2 | A one layer above B; A sees B; B cannot see A; A may fire down | A | "when units have a layer advantage, they can shoot without being shot back" | A's unanswered-fire ticks above 0, B's at 0 until B can see; HP-remaining ratio |
+| X3 | As X2, but B sees A and cannot fire up | A | same | unanswered-fire ticks for A; B's shots 0 |
+| X4 | As X2, but B sees A and can fire up at equal range and damage | none expected from the pillar; this is where the crossing v* lives | the pillar names no winner once both can answer | win rate as B's vision or fire-up value rises; the value where it crosses 0.5 |
+| X5 | Same layer; A in the concave around B's line | A | "when units have a surround, the units in the concave with the surround win" | winner, HP-remaining ratio across formation and count |
+| X6 | As X5 with the formations swapped | B | same | same; the mirror of X5 |
+| X7 | Each side has one fragile, slow, expensive unit with a burst ability; A screens it, B leaves it exposed to fast enemies | A, as a higher win rate across seeds, not a certain win | "A player that effectively protects them has a higher chance of winning" | win rate across seeds as screen radius varies against enemy speed; burst damage landed; cost lost |
+| X8 | A smaller than B, with layer advantage and concave; B a flat line | A, but only as far as the conditions carry it; the smallest count ratio at which A still wins is the measurement, not an assumption | "Organizing your units in specific patterns can lead to better engagements"; the E-01 promise that a smaller force that understands position beats a larger one | winner across count ratios; the ratio where it crosses 0.5 |
+| X9 | A smaller force with one costly seer against a larger force on layers it cannot see | A, same caveat as X8 | Westley, 2026-09-23 (`Q-E12-01`), not the 2026-09-30 prompt | winner; first-contact tick; unanswered-fire ticks |
+
+Movement checks (the auto-transition ruling across a block, wall or barrier) have no expected winner. They expect an arrival: on layer 3 at the destination with the ruling on, stopped at the edge with it off.
 
 ### How the map is used
 
