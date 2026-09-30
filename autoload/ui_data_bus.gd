@@ -17,10 +17,7 @@ var _settings: Dictionary = {}
 
 
 func _ready() -> void:
-	if SimBridge.USE_LIVE_SIM:
-		_source = load("res://autoload/sim_bridge_data_source.gd").new()
-	else:
-		_source = load("res://autoload/mock_data_source.gd").new()
+	_source = load("res://autoload/sim_bridge_data_source.gd").new()
 	_load_settings()
 
 
@@ -63,7 +60,7 @@ func refresh_entitlements() -> void:
 
 
 func proceed_to_next_mission() -> void:
-	SimBridge.send_command({"type": "command", "cmd": "proceed_to_next_mission"})
+	SceneRouter.go_to("mission_briefing")
 
 
 func get_mission_metrics() -> Dictionary:
