@@ -11,7 +11,7 @@
 | Every visible-surface story has a reference | **No.** S-079 (briefing and debrief screens) has a visible surface and no reference. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on 7 open flags and one missing reference. Q-076-02 (each archetype's base time within 30 to 60 minutes) is new; until it closes, `om_mission_get_time_limit` still reads the retired 3 to 4.5 minute table.
+**Gate verdict: not passed.** Blocked on 6 open flags and one missing reference. Q-076-01 and Q-076-02 are closed (30 to 60 minute missions); `om_mission_get_time_limit` still reads the retired 3 to 4.5 minute table until the clock rewire lands.
 
 ## Purpose
 
@@ -104,12 +104,12 @@ As a commander, I want a deadline that tightens when the situation is urgent, so
 
 Rules
 - R-076-01  Given an archetype base time B in tactical ticks and urgency u, When the limit is set, Then limit = max(B · (1 − 0.2 · u), 0.6 · B).
-- R-076-02  Given base times, When read, Then each archetype's base time B lies between 30 and 60 minutes of battle time (Q-076-01, Westley 2026-09-29) [Q-076-02: the per-archetype values and whether the urgency floor may take the limit below 30 minutes].
+- R-076-02  Given base times, When read, Then B by archetype is: siege breaking 60, multi-front defense 60, assault 52.5, containment 52.5, reconquest 45, defensive stand 37.5, interception 37.5, counterinsurgency 37.5, suppression 30, rear guard/evacuation 30 minutes of battle time (Q-076-01 and Q-076-02, Westley 2026-09-29); the R-076-01 floor of 0.6·B stands, so the shortest possible mission is 18 minutes.
 - R-076-03  Given the deadline passes, When the mission ends, Then the current objective completion values are final; finishing early never raises the score.
 
 Inputs: archetype; urgency.
 Outputs: time limit in the mission setup; HUD clock.
-Open flags: Q-076-02.
+Open flags: none.
 
 ### S-077 — Five ways it can go
 As a commander, I want the result to be a spectrum weighing what I achieved and who I brought home, judged by what is reasonable for that kind of mission, so that a costly win and a clean win are not the same.
@@ -219,7 +219,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-072-01, Q-074-01, Q-076-02, Q-077-01, Q-078-01, Q-079-01, Q-080-01 (Q-076-01 closed 2026-09-29: missions are 30 to 60 minutes). Details in `docs/northstar/ambiguity_register.md`.
+Q-072-01, Q-074-01, Q-077-01, Q-078-01, Q-079-01, Q-080-01 (Q-076-01 and Q-076-02 closed 2026-09-29: missions are 30 to 60 minutes). Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
