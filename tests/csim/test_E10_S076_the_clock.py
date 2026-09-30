@@ -23,38 +23,38 @@ class OMUnitType:
 
 def test_R_076_01_limit_max_b_1_0(lib, world_factory):
     """Given an archetype base time B in tactical ticks and urgency u, When the limit is set, Then limit = max(B · (1 − 0.2 · u), 0.6 · B)."""
-    base_ticks = 3600  # e.g. defensive stand base ticks
+    base_ticks = 45000  # DEFENSIVE_STAND: 37.5 min × 60 s × 20 ticks/s
 
-    # u = 0.0 -> limit = 3600 * (1 - 0) = 3600
+    # u = 0.0 -> limit = 45000 * (1 - 0) = 45000
     limit_0 = lib.om_mission_compute_time_limit(base_ticks, ctypes.c_double(0.0))
-    assert limit_0 == 3600
+    assert limit_0 == 45000
 
-    # u = 1.0 -> limit = 3600 * (1 - 0.2) = 2880
+    # u = 1.0 -> limit = 45000 * (1 - 0.2) = 36000
     limit_1 = lib.om_mission_compute_time_limit(base_ticks, ctypes.c_double(1.0))
-    assert limit_1 == 2880
+    assert limit_1 == 36000
 
-    # u = 1.5 -> limit = 3600 * (1 - 0.3) = 2520
+    # u = 1.5 -> limit = 45000 * (1 - 0.3) = 31500 = 0.7 * B, above floor of 27000
     limit_15 = lib.om_mission_compute_time_limit(base_ticks, ctypes.c_double(1.5))
-    assert limit_15 == 2520
+    assert limit_15 == 31500
 
-    # u = 3.0 -> B * (1 - 0.6) = 0.4 * B, clamped to 0.6 * B = 2160
-    limit_3 = lib.om_mission_compute_time_limit(base_ticks, ctypes.c_double(3.0))
-    assert limit_3 == int(0.6 * base_ticks)
+    # u = 2.5 -> candidate 0.5 * B = 22500, below floor 0.6 * B = 27000, clamped
+    limit_25 = lib.om_mission_compute_time_limit(base_ticks, ctypes.c_double(2.5))
+    assert limit_25 == 27000
 
 
 def test_R_076_02_they_minutes_in_table_q(lib, world_factory):
-    """Given base times, When read, Then they are the minutes in the table [Q-076-01: the bible's table (3 to 4.5 minutes) is overridden in config by 250 to 450 ticks, 12 to 22 seconds]."""
+    """Given base times, When read, Then each archetype's base time is the minutes in the R-076-02 table (30 to 60 minutes of battle time; Q-076-01 and Q-076-02, Westley 2026-09-29)."""
     expected_minutes = {
-        0: 3.0,  # DEFENSIVE_STAND
-        1: 4.5,  # SIEGE_BREAKING
-        2: 3.5,  # RECONQUEST
-        3: 4.0,  # ASSAULT
-        4: 2.5,  # SUPPRESSION
-        5: 4.5,  # MULTI_FRONT_DEFENSE
-        6: 3.0,  # INTERCEPTION
-        7: 2.5,  # EVACUATION
-        8: 4.0,  # CONTAINMENT
-        9: 3.0,  # COUNTERINSURGENCY
+        0: 37.5,  # DEFENSIVE_STAND
+        1: 60.0,  # SIEGE_BREAKING
+        2: 45.0,  # RECONQUEST
+        3: 52.5,  # ASSAULT
+        4: 30.0,  # SUPPRESSION
+        5: 60.0,  # MULTI_FRONT_DEFENSE
+        6: 37.5,  # INTERCEPTION
+        7: 30.0,  # EVACUATION
+        8: 52.5,  # CONTAINMENT
+        9: 37.5,  # COUNTERINSURGENCY
     }
     for archetype_id, minutes in expected_minutes.items():
         base_ticks = lib.om_archetype_base_time_ticks(archetype_id)
