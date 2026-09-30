@@ -48,7 +48,81 @@ Depth holds for a cross-layer rule set when each pattern is true under at least 
 
 ## 5. The dimension map
 
-Drafted as the last step of the design phase; Westley confirms it before the toy build starts.
+Every variable an engagement in the lab has, where it lives, its range, the production value where one exists, the rung that makes it sweepable, and which depth pattern (§4) it is expected to touch. Production numbers: `csrc/om_constants.h:479-531, 560-567` (roster, category matrix, vision factors, pulse), `csrc/unit.c:84-102` (transition times), `csrc/om_constants.h:595-599` and `csrc/tactical_move.c:308` (turn rates). Damage and interval are per hit and per second as production states them; speed and range are world units per second and world units. "None" means production has no such value and the lab sets a starting one, marked lab-only.
+
+Rungs: R0 flat combat; R1 terrain, vision, transitions, every cross-layer knob; R2 facing, formations, the storm-shaped ability; R3 sweeps and replay. A variable is fixed in the rung before the one that sweeps it.
+
+### Unit type (owner: roster)
+
+| Variable | Range | Production value | Rung | Pattern |
+|---|---|---|---|---|
+| HP | 100 to 1,500 | Raider 250, Interceptor 325, Vanguard 500, Warden 375, Bombard 400, Bastion 1,050 | R0 | P3, P4 |
+| Damage per hit | 1 to 30 | Raider 9.0, Interceptor 6.0, Vanguard 7.5, Warden 4.0, Bombard 17.5, Bastion 7.0 | R0 | P1, P4 |
+| Attack interval (s) | 0.5 to 4 | Raider 0.8, Interceptor 1.0, Vanguard 1.2, Warden 1.5, Bombard 3.0, Bastion 1.8 | R0 | P1, P2 |
+| Range | 150 to 1,500 | Raider 200, Interceptor 250, Vanguard 300, Warden 350, Bombard 1,200, Bastion 800 | R0 | P1, P2 |
+| Speed | 30 to 200 | Raider 150, Interceptor 130, Vanguard 80, Warden 70, Bombard 50, Bastion 40 | R0 | P3, P4 |
+| Sensor radius | 300 to 1,000 | Raider 800, Interceptor 1,000, Vanguard 700, Warden 800, Bombard 300, Bastion 300 | R1 | P1 |
+| Layer transition time (s) | 0.5 to 6 | Raider 1.0, Interceptor 1.2, Vanguard 2.5, Warden 2.0, Bombard 4.0, Bastion 5.0 | R1 | P1, P4 |
+| Area radius | 0 to 300 | Bombard 150, all others 0 | R0 | P2, P3 |
+| Category (Strike, Line, Siege) | 3 values | Raider, Interceptor Strike; Vanguard, Warden Line; Bombard, Bastion Siege | R0 | P2, P4 |
+| Turn rate (rad/s) | 1 to 8 | Strike 6.0, Line 4.0, Siege 2.5, chosen by speed (Strike at 100 and above, Line at 60 and above) | R2 | P2 |
+| Firing arc (degrees) | 30 to 360 | None; lab-only, 360 means no arc | R2 | P2, P3 |
+| Cost | 50 to 600 | None; lab-only, used only to report cost lost | R0 | P3, P4 |
+| Ability archetype: burst with windup and cooldown (the "storm" shape) | damage multiplier, radius, windup, cooldown, minimum targets | Bombard barrage: 3.0 times damage, radius 100, telegraph 30 ticks, cooldown 1,800 ticks | R2 | P3 |
+| Pulse-capable | yes or no | Pulse radius 500, reveal 40 ticks, cooldown 400 ticks | R1 | P1 |
+
+The category multiplier matrix (attacker row, target column) is `OM_CATEGORY_MULTIPLIER_*`: Strike 1.0, 0.75, 1.5 against Strike, Line, Siege; Line 1.5, 1.0, 0.75; Siege 0.20, 1.5, 1.0. Area damage is capped at 4.0 times a hit (`OM_AOE_DAMAGE_CAP_MULTIPLIER`). The lab leaves out Warden aura, brace, fortify, backswing, cohort targeting and the high-load halving (production behaviours with no bearing on layer geometry); they return only if a finding needs them.
+
+### Engagement (owner: the scenario)
+
+| Variable | Range | Production value | Rung | Pattern |
+|---|---|---|---|---|
+| Composition per side (types) | any roster mix | none (scripted) | R0 | P2, P3, P4 |
+| Count per side | 1 to 50 | none | R0 | P2, P4 |
+| Formation (line, concave, box, screen, column) | 5 presets plus spacing | none | R2 | P2, P3 |
+| Initial position and separation | 0 to 2,000 | none | R0 | P1, P4 |
+| Initial facing (degrees) | 0 to 360 | none | R2 | P2 |
+| Initial layer per group | 1 to 5 | none | R1 | P1, P4 |
+| Orders (hold, move, attack-move) and destination | per group | none | R0 | P1, P4 |
+| Initiative (which side moves into range) | A, B, both | none | R0 | P1, P4 |
+| Initial vision (blind or pre-revealed) | 2 values | none | R1 | P1 |
+| Spawn jitter and attack-phase offset | seeded | none | R0 | none (seed spread) |
+
+### World (owner: the map)
+
+| Variable | Range | Production value | Rung | Pattern |
+|---|---|---|---|---|
+| Accessibility mask preset (flat, plateau, ridge, cliff, valley) | 5 presets plus size | map generator output, binary per layer per position | R1 | P1, P4 |
+| Layer spacing | 10 to 200 | none in the sim (Q-E01-01 fixes on-screen elevation only) | R1 | P1 |
+| Cover discs: position, radius, height in layers | 0 to 5 layers | per E-01 S-007 | R1 | P1, P4 |
+| Vantage nodes | count, radius | per E-01 S-005 | R1 | P1 |
+| Interference zones | count, radius, intensity 0 to 1 | per E-01 S-005 | R1 | P1 |
+
+### Cross-layer rules (owner: the rule set; the unknowns the lab exists to find)
+
+| Variable | Range | Production value | Rung | Pattern |
+|---|---|---|---|---|
+| Vision factor by signed offset (target minus observer, 9 values) | 0 to 1 each | symmetric: 1.0, 0.50, 0.20, 0, 0 at absolute offset 0 to 4 (`OM_CONE_LAYER_1_FACTOR`, `OM_CONE_LAYER_2_FACTOR`, `csrc/fog.c:585`); E-01 R-005-05 implies 0 for two below (Q-005-02) | R1 | P1 |
+| Vantage vision factor by signed offset | 0 to 1 each | 1.0, 1.00, 0.40, 0.20, 0 at absolute offset 0 to 4 (E-01 R-005-06) | R1 | P1 |
+| Sensor bonus per layer of elevation | 0 to 0.5 | 0.15 (`OM_ELEVATION_SENSOR_BONUS_PER_TIER`) | R1 | P1 |
+| Range multiplier by signed offset (target minus attacker, 9 values) | 0 to 2 | none; same-layer only (Q-008-01) | R1 | P1 |
+| Damage multiplier by signed offset | 0 to 2 | none | R1 | P1, P4 |
+| Area-damage multiplier by signed offset | 0 to 2 | none | R1 | P2, P3 |
+| Fire requires vision | on or off | none decided; E-01 R-007-03 lets a hidden attacker hit an observer that cannot see it, so the flag is about the attacker's own sight; the lab uses one visibility function for target choice and for the fire check | R1 | P1 |
+| Facing gates fire | on or off | none | R2 | P2 |
+| Halfway rule during a transition | both always targetable, per rule (old layer until halfway, new layer after), untargetable | per rule (Q-004-02) | R1 | P1, P4 |
+| Terrain-forced auto-transition | on or off (off is the control) | on (E-01 R-001-05); edges per Q-001-04 | R1 | P4 |
+| Movement speed during a transition | 0 to 1.0 times | none (mid-transition movement is unspecified in the bible beyond Q-004-02) | R1 | P1 |
+
+### Outcomes (what a run reports)
+
+Winner (A, B, stalemate, tick cap, mutual); survivors; HP-remaining ratio; cost lost per side; ticks to resolve; side and tick of first shot; first-contact tick; unanswered-fire ticks per side (ticks a side fired while the other, able to see or fire, did not); number of transitions and shots.
+
+### How the map is used
+
+The table is the lab's configuration surface and the axis list for §6. Each sweep picks one row as v, optionally one as w, and fixes every other row at the value the scenario states. The map is complete when every variable that the bible lets the player or the map change appears here; a variable that an experiment finds is missing is added in the same commit as the run that found it.
+
+Status: draft, awaiting Westley's confirmation before the toy build starts.
 
 ## 6. The "lines cross" hypothesis, stated testably
 
