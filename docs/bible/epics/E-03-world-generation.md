@@ -128,7 +128,7 @@ Open flags: none. Closed by Q-025-01 (Westley, 2026-09-12): the buffer is player
 
 ## Scale requirements
 
-Confirmed by Westley, 2026-09-15 (never loosened by Agora; a miss is escalated): generate a 110-region world in under 5 ms; generation is O(N + E). Re-timed from the original 60-region figure (2026-09-14) after the region-count range widened to [60, 110] folding Q-021-04 (variable per-template region counts) — 110 is the new range's max, per Q-021-05. [Q-021-08: re-timing at 400 regions, pending Westley's confirmation of a measured figure.]
+Governing budget (Westley, 2026-09-28): a time jump of 150 ticks at 400 regions completes in under 2 s; the transition animation, stubbed by reusing the boot loading animation, covers the wait. Measured about 2 ms per pipe step, about 0.3 s for 150 ticks. Per-module micro budgets are informational under this governing figure. Generation target (confirmed by Westley, 2026-09-15, never loosened by Agora; a miss is escalated): generate a 110-region world in under 5 ms; generation is O(N + E). Re-timed from the original 60-region figure (2026-09-14) after the region-count range widened to [60, 110] folding Q-021-04 (variable per-template region counts) — 110 is the new range's max, per Q-021-05.
 
 ## Look and behavior references
 
@@ -148,7 +148,7 @@ None required in this epic. The galaxy view is E-16.
 
 ## Open ambiguity flags
 
-None. Q-021-01 through Q-021-06, Q-022-01, Q-022-02, Q-024-01, Q-025-01 are closed and folded above.
+None. Q-021-01 through Q-021-06, Q-021-08, Q-022-01, Q-022-02, Q-024-01, Q-025-01 are closed and folded above.
 
 ## Depends on
 

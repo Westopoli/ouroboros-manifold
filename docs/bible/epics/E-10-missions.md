@@ -117,13 +117,13 @@ As a commander, I want the result to be a spectrum weighing what I achieved and 
 Rules
 - R-077-01  Given objective score o (weighted completion, failed objectives count 0) and retention r (surviving unit power/deployed power, capped at 1, with damaged units counted by HP fraction), When the final score is computed, Then final = 0.75 · o + 0.25 · r.
 - R-077-02  Given the archetype's thresholds [t1, t2, t3, t4], When classified, Then final < t1 is total_failure, < t2 partial_failure, < t3 partial_success, < t4 strong_success, else total_success; thresholds: defensive_stand, siege_breaking, suppression, interception, containment, counterinsurgency [0.20, 0.40, 0.60, 0.80]; reconquest and assault [0.25, 0.45, 0.65, 0.82]; multi_front_defense [0.15, 0.35, 0.55, 0.75]; evacuation [0.30, 0.50, 0.65, 0.80].
-- R-077-03  Given the mission ends, When the commander's unit is dead, Then commander fate is killed, else survived [Q-077-01: the hub also names wounded].
+- R-077-03  Given the mission ends, When the commander's unit is dead, Then commander fate is killed; when the commander's unit ended alive but below 30 percent HP, Then fate is wounded (cosmetic and chronicle only, no mechanical impact); else fate is survived.
 - R-077-04  Given the result, When shown, Then the band is revealed only at mission end, never during play.
-- R-077-05  Given a mission starts, When the player's force is spawned, Then it includes exactly one commander unit, tied to the lineage character the HUD shows, and that unit's id is held in mission state for the whole mission; R-077-03 reads commander fate from this unit [Q-077-02: the commander's unit type and on-screen marker]. (Westley, 2026-09-28: a dedicated unit.)
+- R-077-05  Given a mission starts, When the player's force is spawned, Then the player assigns the commander to one of their deployed units and may reassign them to another unit during the mission; the assigned unit's id is held in mission state for the whole mission; R-077-03 reads commander fate from this unit. The commander's chance-based fate — probability of being wounded or killed rising with fire the assigned unit takes, not the unit's own survival — is to be determined after the MVP.
 
 Inputs: objectives; unit store; initial power; commander unit id.
 Outputs: mission result (band, objective score, retention, per-objective, commander fate, ticks elapsed) in the save file and debrief.
-Open flags: Q-077-01, Q-077-02.
+Open flags: none. Q-077-01 closed 2026-09-12: wounded = commander ends below 30% HP, cosmetic/chronicle only (folded into R-077-03). Q-077-02 closed 2026-09-28: commander is assigned to a player-chosen unit, may be reassigned during the mission (folded into R-077-05).
 
 ### S-078 — A battle becomes history
 As a commander, I want the outcome to change the region in proportion to how it was doing, so that saving a desperate region matters more than polishing a strong one.
@@ -219,7 +219,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-072-01, Q-074-01, Q-077-01, Q-078-01, Q-079-01, Q-080-01 (Q-076-01 and Q-076-02 closed 2026-09-29: missions are 30 to 60 minutes). Details in `docs/northstar/ambiguity_register.md`.
+Q-072-01, Q-074-01, Q-078-01, Q-079-01, Q-080-01 (Q-076-01 and Q-076-02 closed 2026-09-29: missions are 30 to 60 minutes; Q-077-01 and Q-077-02 closed 2026-09-28: wounded fate cosmetic, commander assigned to player-chosen unit). Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
