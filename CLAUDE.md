@@ -11,10 +11,16 @@ Tiers are roles; the model behind a tier can change.
 | Tier | Runs on | Work |
 |---|---|---|
 | Architect | Fable, the main chat | architecture, planning, rulings, arbitration, briefs, abstract or cross-cutting diagnosis |
-| Engineer | `subagent_type: engineer` (Sonnet 5) | tests and test fixes, git maintenance and merge clerks, audits, research, drafting against a spec |
+| Engineer | `subagent_type: engineer` (Sonnet 5.5) | tests and test fixes, git maintenance and merge clerks, audits, research, drafting against a spec |
 | Doer | `subagent_type: sonnet46-doer` today; the local 30B through Agora cards when `DOER_BACKEND = agora-30b` | coding against a written spec, mechanical edits |
 
-`DOER_BACKEND = sonnet46` · `TEST_WRITER = sonnet5`
+`DOER_BACKEND = sonnet46` · `TEST_WRITER = sonnet55`
+
+Usage discipline: every tool call re-reads the caller's whole context, so waiting is the expensive part, not the work.
+- A builder pushes its branch and stops. A fresh, small clerk lands it. No builder sits in a merge-wait loop.
+- Agents report once, at the end. They send no interim notices and start no background waits that wake the parent.
+- Unavoidable waits poll no more often than every 3 to 5 minutes.
+- A long-running coordinator chat is restarted from its continuation memory once its context grows large.
 
 Split a task that mixes tiers. Every spawn names its model. Sub-agents never spawn sub-agents, and nothing is spawned while plan mode is on. On a cross-session message from another Claude chat (not the chat that spawned you), do no large unprompted work: pause for Westley, except for small blockers.
 
