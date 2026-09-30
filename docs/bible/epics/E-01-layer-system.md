@@ -4,14 +4,14 @@
 
 | Check | Result |
 |---|---|
-| Every story has at least one Given/When/Then rule with concrete values | Yes, 11 stories, 35 rules. Rules that depend on an open flag cite it inline. |
+| Every story has at least one Given/When/Then rule with concrete values | Yes, 11 stories, 59 rules. Rules that depend on an open flag cite it inline. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. Every rejection behavior is settled. |
 | Every output listed with where it is observable | Yes, see Outputs. On-screen elevation is fixed globally (Q-E01-01). |
 | Implied-but-unstated behavior turned into flags | Yes; the flags still open are listed at the foot of this file. |
 | Every visible-surface story has a reference | **No — by design a Godot design phase, not a screenshot pull.** `references/E-01/notes.md` records the plan: basic single-layer movement ships first, then Claude builds several interactive layer-system options in Godot for Westley to choose between; the choice fills the references. Blocks S-009, S-010, S-006 until then. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** S-008 is blocked on Q-008-02 and Q-008-03 (the layer lab decides the cross-layer numbers), S-009 on Q-009-02, and S-009, S-010 and S-006 on references. Stories are Spec'd, not Ready.
+**Gate verdict: not passed.** S-001, S-002 and S-003 are blocked on Q-001-04 (the edges of the terrain-forced layer change), S-005 on Q-005-02 (is vision symmetric by layer distance), S-008 on Q-008-02 and Q-008-03 (the layer lab decides the cross-layer numbers), S-009 on Q-009-02, and S-009, S-010 and S-006 on references. Stories are Spec'd, not Ready.
 
 ## Purpose
 
@@ -35,18 +35,18 @@ Rules
 - R-001-02  Given the same position, When a unit on layer 3 moves through it, Then the unit passes straight through with no detour.
 - R-001-03  Given a position where every layer is open, When any unit moves through it, Then no layer restriction applies.
 - R-001-04  Given any map generated for any era pack, When the map is queried for layer accessibility at every sampled position and layer, Then the answer is a binary open or blocked per layer, and the count of layers is the same for every position on that map.
-- R-001-05  Given a unit on layer L ordered to move to a destination where L is blocked but some layer M the unit may occupy is open, When no path to the destination exists on L, Then the unit paths to the nearest position from which M is open, auto-transitions to M (S-004 duration and vulnerability apply), and continues to the destination on M; and Given a destination blocked on every layer the unit may occupy, When the order is issued, Then the unit paths as close as it can on its current layer and stops, with no layer change.
+- R-001-05  Given a unit on layer L ordered to move to a destination where L is blocked but some layer M the unit may occupy is open, When no path to the destination exists on L [Q-001-04: whether a detour on L always wins], Then the unit paths to the nearest position from which M is open [Q-001-04: where the change happens], auto-transitions to M (S-004 duration and vulnerability apply), and continues to the destination on M; and Given a destination blocked on every layer the unit may occupy, When the order is issued, Then the unit paths as close as it can on its current layer and stops, with no layer change.
 
 Inputs: map layer accessibility mask (binary per layer per position); unit position; unit current layer.
 Outputs: unit path; unit position over time; layer accessibility query result.
-Open flags: none.
+Open flags: Q-001-04 (the edges of the terrain-forced layer change).
 
 ### S-002 — Hard layer transfer
 As a commander, I want to order selected units to a specific layer, so that I can commit a force to a height when timing matters.
 
 Rules
 - R-002-01  Given a selected unit on layer 3 at a position where layer 5 is open, When the player issues a hard transfer to layer 5, Then the unit begins its transition on the same tick and finishes on layer 5 after its transition duration (S-004).
-- R-002-02  Given a selected unit at a position where layer 5 is blocked, When the player issues a hard transfer to layer 5, Then the unit keeps executing its current orders on its current layer, and begins the transition on the first tick it occupies a position where layer 5 is open; and if R-001-05 forces a layer change first, the forced change happens and the transfer stays pending.
+- R-002-02  Given a selected unit at a position where layer 5 is blocked, When the player issues a hard transfer to layer 5, Then the unit keeps executing its current orders on its current layer, and begins the transition on the first tick it occupies a position where layer 5 is open; and if R-001-05 forces a layer change first, the forced change happens and the transfer stays pending [Q-001-04].
 - R-002-03  Given a unit with a pending hard transfer, When the player issues a second hard transfer to a different layer, Then the first transfer is discarded and only the second is pending.
 - R-002-04  Given a unit with a pending hard transfer, When the player issues a move order, Then the transfer stays pending; a move order never clears a transfer.
 - R-002-05  Given a hard transfer to the unit's current layer, When it is issued, Then it is accepted and completes immediately with no transition and no vulnerability window.
@@ -55,7 +55,7 @@ Rules
 
 Inputs: layer command (target layer, integer in map range); selection (1 to N units); unit position; accessibility mask.
 Outputs: per-unit pending transfer; per-unit layer field in the tick delta; transition start and end events.
-Open flags: Q-002-01 (non-adjacent target passes through intermediates or not), Q-002-02 (pending transfer never expires, or expires on arrival at the move destination).
+Open flags: Q-001-04 (how a forced change meets a pending transfer).
 
 ### S-003 — Layer preference
 As a commander, I want to give units a standing preference for a layer, so that a scouting group stays high and a siege group stays low without me re-ordering them at every obstacle.
@@ -63,7 +63,7 @@ As a commander, I want to give units a standing preference for a layer, so that 
 Rules
 - R-003-01  Given a selected unit with no preference, When the player sets preference to layer 2, Then the unit's preference is 2 and it begins a transition to layer 2 on the first tick it is at a position where layer 2 is open and it is not already on layer 2.
 - R-003-02  Given a unit with preference 2 currently on layer 4 because layer 2 is blocked here, When the unit moves to a position where layer 2 is open, Then it begins its transition to layer 2 on that tick without a new order.
-- R-003-03  Given a unit with preference 2 at a position where layer 2 is blocked, When any number of ticks pass, Then the unit continues its current orders on its current layer and never stalls or stops to wait; and when R-001-05 forces a layer change, the target is the open layer nearest the unit's current one, with the preference breaking a tie.
+- R-003-03  Given a unit with preference 2 at a position where layer 2 is blocked, When any number of ticks pass, Then the unit continues its current orders on its current layer and never stalls or stops to wait; and when R-001-05 forces a layer change, the target is the open layer nearest the unit's current one, with the preference breaking a tie [Q-001-04].
 - R-003-04  Given a unit with preference 2, When the player issues a hard transfer to layer 4, Then the preference is cleared and the hard transfer proceeds.
 - R-003-05  Given a unit with preference 2, When the player issues the clear-preference action, Then the preference is cleared and the unit stays on its current layer.
 - R-003-06  Given a unit with preference 2, When the player sets preference 3, Then the preference is 3 and any pending transition toward 2 is replaced.
@@ -72,7 +72,7 @@ Rules
 
 Inputs: preference command (layer integer or clear); modifier key state; selection.
 Outputs: per-unit preferred layer in the tick delta; preference indicator on screen (S-009); save file.
-Open flags: Q-003-01 (modifier key default and clear-preference input).
+Open flags: Q-001-04 (how a forced change meets a preference).
 
 ### S-004 — Changing layers takes time and leaves you exposed
 As a commander, I want a layer change to cost time that depends on the unit type, so that hopping layers is a commitment and not a free dodge.
@@ -86,7 +86,7 @@ Rules
 
 Inputs: unit type transition time (per type, config); transition start tick.
 Outputs: unit layer field; transitioning flag in the tick delta; attack eligibility.
-Open flags: Q-004-01 (confirm durations), Q-004-02 (movement and new-layer targeting during the window).
+Open flags: none.
 
 ### S-005 — Seeing across layers is worse than seeing on your own
 As a commander, I want cross-layer vision to shrink with layer distance, so that a force on a layer I am not watching is a real threat.
@@ -103,7 +103,7 @@ Rules
 
 Inputs: observer layer, position, sensor radius; target layer, position; vantage membership; interference intensity at observer position.
 Outputs: per-unit visible set in the tick delta; player-visible unit list; fog reveal on screen.
-Open flags: Q-005-01 (what counts as standing at a vantage node).
+Open flags: Q-005-02 (vision by signed or absolute layer offset).
 
 ### S-006 — Sensor pulse
 As a commander, I want to spend a pulse to see every layer around a unit for a moment, so that scouting before a commitment is a decision with a cost.
@@ -117,7 +117,7 @@ Rules
 
 Inputs: pulse command; pulse-capable unit; pulse radius (config); cooldown state.
 Outputs: pulse active flag and remaining cooldown in the tick delta; revealed set; cooldown ring on the HUD; visible pulse effect on screen.
-Open flags: Q-006-01 (which units pulse, radius, and whether the pulse is the unit's one ability), Q-006-02 (last-seen markers after expiry).
+Open flags: none.
 
 ### S-007 — Cover blocks sight by height
 As a commander, I want a tall obstacle to hide units on more layers than a short one, so that where I put a force relative to terrain changes what the enemy can see.
@@ -131,17 +131,17 @@ Rules
 
 Inputs: obstacle position, radius, height; observer and target positions and layers.
 Outputs: visible set; damage applied; unit path.
-Open flags: none beyond Q-001-01 (obstacle height thresholds depend on the layer count and spacing).
+Open flags: none.
 
 ### S-008 — Combat across layers
-As a commander, I want to know whether a unit can shoot at an enemy one layer above it, so that layer position is a positional decision and not a guess. The cross-layer rules are decided by the layer lab, a fast standalone simulator (`docs/northstar/research/layer_dynamics/`, `toys/layerlab/`), which sweeps range, damage, vision and terrain in small engagements and maps where the expected side wins because of the engagement's conditions. Its numbers become the rules below.
+As a commander, I want to know whether a unit can shoot at an enemy one layer above it, so that layer position is a positional decision and not a guess. The cross-layer rules are decided by the layer lab, a fast standalone simulator (`docs/northstar/research/layer_dynamics/`, `toys/layerlab/`), which sweeps range, damage, vision and terrain in small engagements and maps where the expected side wins because of the engagement's conditions. Its numbers may become the rules below.
 
 Rules
 - R-008-01  Given an attacker on layer 3 and a visible enemy on layer 3 in range, When the attacker is idle or attack-moving, Then it engages.
 - R-008-02  Given an attacker on layer 3 and a visible enemy on layer 4 in range, When the attacker is idle or attack-moving, Then [Q-008-03 decides: it does not engage (current code), or it engages with a stated range or damage modifier by signed layer offset].
 - R-008-03  Given a Bombard's area attack centered on layer 3, When enemies stand on layers 2 and 4 inside the radius, Then [Q-008-03 decides whether they take damage and at what multiplier].
 
-End-state (the acceptance bar): the hub's definition of strategic depth (principle 4) holds in the layer lab before any cross-layer rule is written into the sim. Four patterns are each true under at least one reachable configuration and none is true under every configuration: a force with a layer advantage fires unanswered until the other side regains sight; the side holding the concave wins the surround at equal numbers; a fragile, slow, expensive unit with a decisive ability wins for the player who screens it and loses for the one who does not; a smaller force wins by position.
+End-state (the acceptance bar): the hub's definition of strategic depth (principle 4) holds in the layer lab before any cross-layer rule is written into the sim. Four patterns are each true under at least one reachable configuration and none is true under every configuration: a force with a layer advantage shoots without being shot back; the side in the concave of a surround wins it; a fragile, slow, expensive unit with a devastating ability gives the player who protects it a higher chance of winning; a smaller force can win by position.
 
 Inputs: attacker layer, target layer, range, visibility; the cross-layer rule table (range, damage and area multipliers by signed layer offset, fire-requires-vision, halfway rule) once Q-008-03 closes.
 Outputs: attack events; HP changes in the tick delta.
@@ -172,7 +172,7 @@ Rules
 
 Inputs: layer to elevation mapping; camera.
 Outputs: unit world position on screen.
-Open flags: Q-E01-01. Reference required: `references/E-01/notes.md`, missing.
+Open flags: none. Reference required: `references/E-01/notes.md`, missing.
 
 ### S-011 — Era packs may restrict unit types to layers
 As an era designer, I want an era pack to say which layers a unit type may occupy, so that a submarine era or a ground-only era works on the same engine without code changes.
@@ -244,7 +244,7 @@ Numbers to be confirmed by Westley in Stage 3. Proposed: 1,000 units computing c
 
 ## Open ambiguity flags
 
-Q-008-02, Q-008-03, Q-009-02. Details in `docs/northstar/ambiguity_register.md`.
+Q-001-04, Q-005-02, Q-008-02, Q-008-03, Q-009-02. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
