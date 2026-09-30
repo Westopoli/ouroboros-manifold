@@ -27,7 +27,7 @@ These come from the bible and the register; the lab does not vary them unless a 
 - Five layers, always; layer 1 is the bottom (Q-001-01, Q-001-02). A unit is on exactly one layer at every tick.
 - Terrain blocks layers at places (E-01 S-001). A unit never occupies a blocked position and layer.
 - Terrain-forced auto-transition: a move order to a place blocked on the unit's layer but open on another auto-transitions it (E-01 R-001-05). The lab has an off switch for it only because a control needs an off state; the ruling itself is settled. The edges the ruling leaves open are `Q-001-04`; the lab takes the recommended reading there and can vary it.
-- A transition is one transition of one duration regardless of distance (Q-002-01), by unit type (Q-004-01: Raider 1.0 s, Interceptor 1.2 s, Vanguard 2.5 s, Warden 2.0 s, Bombard 4.0 s, Bastion 5.0 s). The old layer may attack the unit until the halfway point, the new layer from the halfway point on; visibility follows the normal cross-layer sensor rules (Q-004-02). E-01 R-004-02 still says the old layer cannot attack a transitioning unit; that is an existing conflict between the epic and the register, not settled here, and the lab runs the register's halfway rule.
+- A transition is one transition of one duration regardless of distance (Q-002-01), by unit type (Q-004-01: Raider 1.0 s, Interceptor 1.2 s, Vanguard 2.5 s, Warden 2.0 s, Bombard 4.0 s, Bastion 5.0 s). The old layer may attack the unit until the halfway point, the new layer from the halfway point on; visibility follows the normal cross-layer sensor rules (Q-004-02). E-01 R-004-02 carries the same rule.
 - Vision across layers shrinks with distance: production uses factor 0.50 one layer away, 0.20 two layers away, none beyond, by absolute offset in either direction (`csrc/fog.c:585`); E-01 R-005-05 says two layers below is never visible, which disagrees (`Q-005-02`), so the lab takes vision by signed offset and can test both; vantage nodes and interference zones modify it; cover blocks sight by height and never changes damage or movement (E-01 S-007).
 - Production combat is same-layer only (Q-008-01). Every cross-layer rule in the lab is a hypothesis under test, not a fact about the game.
 - Layer damage is weighted much more heavily than abilities and passives (Q-083-02, hub principle 4): an ability never outranks position in the lab either.
@@ -67,7 +67,8 @@ Rungs: R0 flat combat; R1 terrain, vision, transitions, every cross-layer knob; 
 | Category (Strike, Line, Siege) | 3 values | Raider, Interceptor Strike; Vanguard, Warden Line; Bombard, Bastion Siege | R0 | P2, P4 |
 | Turn rate (rad/s) | 1 to 8 | Strike 6.0, Line 4.0, Siege 2.5, chosen by speed (Strike at 100 and above, Line at 60 and above) | R2 | P2 |
 | Firing arc (degrees) | 30 to 360 | None; lab-only, 360 means no arc | R2 | P2, P3 |
-| Cost | 50 to 600 | None; lab-only, used only to report cost lost | R0 | P3, P4 |
+| Cost | 20 to 200 | The interim power rating, HP × damage per hit / attack interval, normalized so a Vanguard is 100 (Q-074-01): Raider 90.0, Interceptor 62.4, Vanguard 100.0, Warden 32.0, Bombard 74.7, Bastion 130.7 | R0 | P3, P4 |
+| Body radius (units cannot overlap) | 5 to 60 | 15 for every type (`OM_UNIT_COLLISION_RADIUS`) | R2 | P2 |
 | Ability archetype: burst with windup and cooldown (the "storm" shape) | damage multiplier, radius, windup, cooldown, minimum targets | Bombard barrage: 3.0 times damage, radius 100, telegraph 30 ticks, cooldown 1,800 ticks | R2 | P3 |
 | Pulse-capable | yes or no | Pulse radius 500, reveal 40 ticks, cooldown 400 ticks | R1 | P1 |
 
@@ -86,6 +87,7 @@ The category multiplier matrix (attacker row, target column) is `OM_CATEGORY_MUL
 | Orders (hold, move, attack-move) and destination | per group | none | R0 | P1, P4 |
 | Initiative (which side moves into range) | A, B, both | none | R0 | P1, P4 |
 | Initial vision (blind or pre-revealed) | 2 values | none | R1 | P1 |
+| Target selection (nearest in range, focus the lowest HP, focus the highest cost) | 3 policies per side | nearest in range, same layer | R0 | P2, P3 |
 | Spawn jitter and attack-phase offset | seeded | none | R0 | none (seed spread) |
 
 ### World (owner: the map)
@@ -158,7 +160,7 @@ Status: draft, awaiting Westley's confirmation before the toy build starts.
 
 Take a variable v (for example the range multiplier for fire from above) and hold every other variable fixed. The expected side's win probability is a function of v. It crosses 0.5 at some value v*. Depth exists on that axis when v* is reachable in play, meaning v* lies inside the range of values the game can produce. Now move a second variable w. Depth grows when w moves v* to another reachable value, or when w creates a second crossing, so two configurations of variables induce depth instead of one. That is Westley's "lines cross".
 
-Pass criterion for the lab, proposed here for Westley to confirm or change (he owns it): at least one crossing on a layer-rule axis, and at least one two-variable interaction that adds a crossing.
+Pass criterion for the lab, proposed here for Westley to confirm or change (he owns it): one shared cross-layer rule set under which all four patterns of §4 hold (each true in at least one reachable configuration, none true in every configuration), with at least one crossing on a layer-rule axis and at least one two-variable interaction that adds a crossing. A separate tuned rule set per pattern does not pass.
 
 Negative control: with the cross-layer rules off (multipliers zero, no cross-layer fire), no crossing on that axis. A detector that finds crossings with the mechanism off is measuring the harness, not the game. Positive control: the count ratio between two equal forces on flat ground, swept from 1:2 to 2:1, must show its crossing near 1:1; a detector that misses that is not reading.
 
