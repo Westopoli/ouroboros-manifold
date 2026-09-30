@@ -600,9 +600,9 @@ static int om_mission_trigger_fires(const om_world *w, const om_mission_state *s
  * alg_constants.py's emitter never lands them in om_constants.h. */
 uint64_t om_archetype_base_time_ticks(uint32_t archetype) {
     if (archetype >= OM_MISSION_N_ARCHETYPES) return 0;
-    /* constants-table: docs/bible/algorithms.md ALG-56 (Q-076-01 answer a, minutes table, times 60 seconds/minute) */
+    /* constants-table: docs/bible/algorithms.md ALG-56 (Q-076-01 and Q-076-02: 30 to 60 minutes of battle time by archetype, times 60 seconds/minute) */
     static const double minutes[OM_MISSION_N_ARCHETYPES] = {
-        3.0, 4.5, 3.5, 4.0, 2.5, 4.5, 3.0, 2.5, 4.0, 3.0,
+        37.5, 60.0, 45.0, 52.5, 30.0, 60.0, 37.5, 30.0, 52.5, 37.5,
     };
     double ticks = minutes[archetype] * 60.0 * (double)OM_TACTICAL_TICK_RATE;
     /* end constants-table */
