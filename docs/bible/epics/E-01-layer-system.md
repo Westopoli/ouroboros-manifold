@@ -4,18 +4,18 @@
 
 | Check | Result |
 |---|---|
-| Every story has at least one Given/When/Then rule with concrete values | Yes, 11 stories, 34 rules. Rules that depend on an open flag cite it inline. |
-| Every input listed with range and rejection behavior | Yes, see Inputs. Two rejection behaviors are open (Q-002-02, Q-003-01). |
-| Every output listed with where it is observable | Yes, see Outputs. On-screen elevation is open (Q-E01-01). |
-| Implied-but-unstated behavior turned into flags | 14 new flags raised, Q-001-01 through Q-009-01. |
+| Every story has at least one Given/When/Then rule with concrete values | Yes, 11 stories, 35 rules. Rules that depend on an open flag cite it inline. |
+| Every input listed with range and rejection behavior | Yes, see Inputs. Every rejection behavior is settled. |
+| Every output listed with where it is observable | Yes, see Outputs. On-screen elevation is fixed globally (Q-E01-01). |
+| Implied-but-unstated behavior turned into flags | Yes; the flags still open are listed at the foot of this file. |
 | Every visible-surface story has a reference | **No — by design a Godot design phase, not a screenshot pull.** `references/E-01/notes.md` records the plan: basic single-layer movement ships first, then Claude builds several interactive layer-system options in Godot for Westley to choose between; the choice fills the references. Blocks S-009, S-010, S-006 until then. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on 15 open flags (Q-E01-01 plus 14 new) and on references. Stories are Spec'd, not Ready.
+**Gate verdict: not passed.** S-008 is blocked on Q-008-02 and Q-008-03 (the layer lab decides the cross-layer numbers), S-009 on Q-009-02, and S-009, S-010 and S-006 on references. Stories are Spec'd, not Ready.
 
 ## Purpose
 
-The layer system is the game's strategic defining characteristic. The battlefield is not a flat plane. It is a stack of three to five vertical layers, and a unit is always on exactly one of them. Terrain blocks layers at specific places, so a force can go over an obstacle on a high layer or around it on a low one. Vision across layers is worse than vision on your own layer, so a force on a layer you cannot see is a threat you do not know about. Changing layers costs time and leaves the unit briefly vulnerable.
+The layer system is the game's strategic defining characteristic. The battlefield is not a flat plane. It is a stack of five vertical layers, and a unit is always on exactly one of them. Terrain blocks layers at specific places, so a force can go over an obstacle on a high layer or around it on a low one. Vision across layers is worse than vision on your own layer, so a force on a layer you cannot see is a threat you do not know about. Changing layers costs time and leaves the unit briefly vulnerable.
 
 The promise this keeps for the player (vision_v2 Q6): a smaller force that understands surrounds, high ground, and layers beats a larger force that does not. Every rule below exists to make that promise testable.
 
@@ -23,7 +23,7 @@ Era-agnostic: the engine knows "layers 1 and 2 are blocked here." The era pack d
 
 ## Obviously working in 60 seconds
 
-Spawn a Raider and a Bastion on layer 3 next to a tall obstacle. Order both to layer 5. The Raider rises visibly within a second, the Bastion takes several seconds, and each unit's ring changes color when its layer changes. Place an enemy on layer 1 under the obstacle: neither unit sees it. Move an enemy onto layer 4 within half the Raider's sensor range: the Raider sees it, the Bastion does not until it is closer. Fire a pulse: the layer-1 enemy appears for two seconds, then vanishes. Order the Raider to layer 1 through the obstacle: it does not change layer until it moves clear of the blocked zone, then drops.
+Spawn a Raider and a Bastion on layer 3 next to a tall obstacle. Order both to layer 5. The Raider rises visibly within a second, the Bastion takes several seconds, and each unit's ring changes color when its layer changes. Place an enemy on layer 1 under the obstacle: neither unit sees it. Move an enemy onto layer 4 within half the Raider's sensor range: the Raider sees it, the Bastion does not until it is closer. Fire a pulse: the layer-1 enemy appears for two seconds, then vanishes. Put the Raider on layer 1 on one side of the obstacle and order it to a point on the far side where layers 1 and 2 are blocked and layer 3 is open: it walks to the obstacle's edge, rises to layer 3 on its own, crosses, and arrives; with no open layer at the destination it stops as close as it can get on layer 1.
 
 ## Stories
 
@@ -31,21 +31,22 @@ Spawn a Raider and a Bastion on layer 3 next to a tall obstacle. Order both to l
 As a commander, I want terrain to block specific layers at specific places, so that going over, going around, and hiding in the blocked layers are real choices.
 
 Rules
-- R-001-01  Given a map position where layers 1 and 2 are blocked and layers 3 to 5 are open, When any unit on layer 1 or 2 is ordered to move through that position, Then its path avoids the blocked area on its current layer and the unit never occupies the blocked position on layers 1 or 2.
+- R-001-01  Given a map position where layers 1 and 2 are blocked and layers 3 to 5 are open, When any unit on layer 1 or 2 is ordered to move through that position, Then the unit never occupies the blocked position on layers 1 or 2; its path detours around the blocked area on its current layer, or changes layer under R-001-05.
 - R-001-02  Given the same position, When a unit on layer 3 moves through it, Then the unit passes straight through with no detour.
 - R-001-03  Given a position where every layer is open, When any unit moves through it, Then no layer restriction applies.
 - R-001-04  Given any map generated for any era pack, When the map is queried for layer accessibility at every sampled position and layer, Then the answer is a binary open or blocked per layer, and the count of layers is the same for every position on that map.
+- R-001-05  Given a unit on layer L ordered to move to a destination where L is blocked but some layer M the unit may occupy is open, When no path to the destination exists on L, Then the unit paths to the nearest position from which M is open, auto-transitions to M (S-004 duration and vulnerability apply), and continues to the destination on M; and Given a destination blocked on every layer the unit may occupy, When the order is issued, Then the unit paths as close as it can on its current layer and stops, with no layer change.
 
 Inputs: map layer accessibility mask (binary per layer per position); unit position; unit current layer.
 Outputs: unit path; unit position over time; layer accessibility query result.
-Open flags: Q-001-01 (layer count per map), Q-001-02 (which end is layer 1), Q-001-03 (no route on current layer).
+Open flags: none.
 
 ### S-002 — Hard layer transfer
 As a commander, I want to order selected units to a specific layer, so that I can commit a force to a height when timing matters.
 
 Rules
 - R-002-01  Given a selected unit on layer 3 at a position where layer 5 is open, When the player issues a hard transfer to layer 5, Then the unit begins its transition on the same tick and finishes on layer 5 after its transition duration (S-004).
-- R-002-02  Given a selected unit at a position where layer 5 is blocked, When the player issues a hard transfer to layer 5, Then the unit keeps executing its current orders on its current layer, and begins the transition on the first tick it occupies a position where layer 5 is open.
+- R-002-02  Given a selected unit at a position where layer 5 is blocked, When the player issues a hard transfer to layer 5, Then the unit keeps executing its current orders on its current layer, and begins the transition on the first tick it occupies a position where layer 5 is open; and if R-001-05 forces a layer change first, the forced change happens and the transfer stays pending.
 - R-002-03  Given a unit with a pending hard transfer, When the player issues a second hard transfer to a different layer, Then the first transfer is discarded and only the second is pending.
 - R-002-04  Given a unit with a pending hard transfer, When the player issues a move order, Then the transfer stays pending; a move order never clears a transfer.
 - R-002-05  Given a hard transfer to the unit's current layer, When it is issued, Then it is accepted and completes immediately with no transition and no vulnerability window.
@@ -62,7 +63,7 @@ As a commander, I want to give units a standing preference for a layer, so that 
 Rules
 - R-003-01  Given a selected unit with no preference, When the player sets preference to layer 2, Then the unit's preference is 2 and it begins a transition to layer 2 on the first tick it is at a position where layer 2 is open and it is not already on layer 2.
 - R-003-02  Given a unit with preference 2 currently on layer 4 because layer 2 is blocked here, When the unit moves to a position where layer 2 is open, Then it begins its transition to layer 2 on that tick without a new order.
-- R-003-03  Given a unit with preference 2 at a position where layer 2 is blocked, When any number of ticks pass, Then the unit continues its current orders on its current layer and never stalls or stops to wait.
+- R-003-03  Given a unit with preference 2 at a position where layer 2 is blocked, When any number of ticks pass, Then the unit continues its current orders on its current layer and never stalls or stops to wait; and when R-001-05 forces a layer change, the target is the open layer nearest the unit's current one, with the preference breaking a tie.
 - R-003-04  Given a unit with preference 2, When the player issues a hard transfer to layer 4, Then the preference is cleared and the hard transfer proceeds.
 - R-003-05  Given a unit with preference 2, When the player issues the clear-preference action, Then the preference is cleared and the unit stays on its current layer.
 - R-003-06  Given a unit with preference 2, When the player sets preference 3, Then the preference is 3 and any pending transition toward 2 is replaced.
@@ -133,16 +134,18 @@ Outputs: visible set; damage applied; unit path.
 Open flags: none beyond Q-001-01 (obstacle height thresholds depend on the layer count and spacing).
 
 ### S-008 — Combat across layers
-As a commander, I want to know whether a unit can shoot at an enemy one layer above it, so that layer position is a positional decision and not a guess.
+As a commander, I want to know whether a unit can shoot at an enemy one layer above it, so that layer position is a positional decision and not a guess. The cross-layer rules are decided by the layer lab, a fast standalone simulator (`docs/northstar/research/layer_dynamics/`, `toys/layerlab/`), which sweeps range, damage, vision and terrain in small engagements and maps where the expected side wins because of the engagement's conditions. Its numbers become the rules below.
 
 Rules
 - R-008-01  Given an attacker on layer 3 and a visible enemy on layer 3 in range, When the attacker is idle or attack-moving, Then it engages.
-- R-008-02  Given an attacker on layer 3 and a visible enemy on layer 4 in range, When the attacker is idle or attack-moving, Then [Q-008-01 decides: it does not engage (current code), or it engages with a stated range or damage modifier].
-- R-008-03  Given a Bombard's area attack centered on layer 3, When enemies stand on layers 2 and 4 inside the radius, Then [Q-008-01 decides whether they take damage].
+- R-008-02  Given an attacker on layer 3 and a visible enemy on layer 4 in range, When the attacker is idle or attack-moving, Then [Q-008-03 decides: it does not engage (current code), or it engages with a stated range or damage modifier by signed layer offset].
+- R-008-03  Given a Bombard's area attack centered on layer 3, When enemies stand on layers 2 and 4 inside the radius, Then [Q-008-03 decides whether they take damage and at what multiplier].
 
-Inputs: attacker layer, target layer, range, visibility.
+End-state (the acceptance bar): the hub's definition of strategic depth (principle 4) holds in the layer lab before any cross-layer rule is written into the sim. Four patterns are each true under at least one reachable configuration and none is true under every configuration: a force with a layer advantage fires unanswered until the other side regains sight; the side holding the concave wins the surround at equal numbers; a fragile, slow, expensive unit with a decisive ability wins for the player who screens it and loses for the one who does not; a smaller force wins by position.
+
+Inputs: attacker layer, target layer, range, visibility; the cross-layer rule table (range, damage and area multipliers by signed layer offset, fire-requires-vision, halfway rule) once Q-008-03 closes.
 Outputs: attack events; HP changes in the tick delta.
-Open flags: Q-008-01 (prototype: same-layer only), Q-008-02 (the cross-layer damage and vision design and its research program; the game's most important undefined mechanic).
+Open flags: Q-008-02 (the layer lab: the research program that decides the cross-layer design), Q-008-03 (the cross-layer numbers). Q-008-01 is closed: the prototype is same-layer only until the lab reports.
 
 ### S-009 — I can see what layer every unit is on
 As a commander, I want to see at a glance which layer each unit is on and which layer I am focused on, so that I never have to guess who can see whom.
@@ -189,7 +192,7 @@ Open flags: none. Launch scope: capability present, mask absent (A-294, A-321).
 | Input | Source | Range | Rejection |
 |---|---|---|---|
 | Layer accessibility mask | Map generator | Binary per layer per sampled position | Not player-issued |
-| Layer count | Map or engine | 3 to 5 [Q-001-01] | Map generation fails outside range |
+| Layer count | Engine | 5, fixed [Q-001-01] | Not player-issued |
 | Hard transfer | Player | Target layer in map range, selection 1 to N | Out of range: rejected, no state change. Era mask forbids: rejected |
 | Preference set | Player | Layer in map range or clear | Same as hard transfer |
 | Modifier key | Player | Held or released | None |
@@ -234,14 +237,14 @@ Numbers to be confirmed by Westley in Stage 3. Proposed: 1,000 units computing c
 - Vantage doubling applied to same-layer radius instead of cross-layer only.
 - Pulse reveal persists after expiry, or cooldown resets on save and load.
 - Preference and hard transfer both set but the wrong one wins.
-- Blocked-layer path routes around on the wrong layer, or the unit auto-changes layer without an order.
+- Blocked-layer path routes around on the wrong layer, or the unit auto-changes layer when its current layer was open at the destination.
 - Ring colors read from the render's last-known layer instead of the delta.
 - Cover blocks movement, or reduces damage, because a physics layer was reused.
 - Layer count 5 in config with only 3 elevation bands, so layers 4 and 5 draw at layer 3's height.
 
 ## Open ambiguity flags
 
-Q-E01-01, Q-001-01, Q-001-02, Q-001-03, Q-002-01, Q-002-02, Q-003-01, Q-004-01, Q-004-02, Q-005-01, Q-006-01, Q-006-02, Q-008-01, Q-009-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-008-02, Q-008-03, Q-009-02. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

@@ -12,7 +12,7 @@ Step 3 happened on paper: the options pass (`docs/northstar/research/options/lay
 
 ## Westley's recorded layer ideas
 
-Westley's layer decisions from this planning round are captured as closed rows in `docs/northstar/ambiguity_register.md` (Q-001-xx, Q-002-xx, Q-008-01): always 5 layers engine-wide; layer 1 is the bottom; no auto layer-change (the player owns it); one transition of 1–2 s regardless of distance; cross-layer combat is an intended strategic tuning lever (range/damage vary by layer offset), still under research. The Godot options in step 2 must honor these.
+Westley's layer decisions from this planning round are captured as closed rows in `docs/northstar/ambiguity_register.md` (Q-001-xx, Q-002-xx, Q-008-01): always 5 layers engine-wide; layer 1 is the bottom; the player owns the layer and only terrain forces a change (a move order to a place blocked on the current layer but open on another auto-transitions, like walking up a mountain); one transition of 1–2 s regardless of distance; cross-layer combat is an intended strategic tuning lever (range/damage vary by layer offset), still under research. The Godot options in step 2 must honor these.
 
 ## Slots to fill once the Godot options exist
 
