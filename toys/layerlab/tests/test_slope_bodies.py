@@ -312,7 +312,18 @@ def test_front_stopped_on_a_wide_slope_never_has_a_unit_within_29():
     """SPEC 5.9 Bodies on a slope (red today): the same scenario on sw 200. The rear may queue in the front's
     lane or take another lane (SPEC 5.9, either); whichever, the two on-slope units are never closer than 29.
     Non-vacuous: the front stops on the slope at the goal and both are on the slope together for 100+ ticks."""
-    res = runmod.run(_queue_scn(200.0), seed=0, trace=True)
+    # On a wide slope the front unit mounts in the lane nearest where it arrives (SPEC 5.9: here +30, not 0: it
+    # arrives about 15 off the axis), and a goal on the axis can never be reached from another lane (the arrival
+    # radius is 22.5), so the unit would climb past it. So: a first run finds the lane the front unit takes, and the
+    # run under test gives it a goal in that lane. (The first version assumed lane 0: a test defect found by the
+    # slope-bodies builder.)
+    probe = runmod.run(_queue_scn(200.0), seed=0, trace=True)
+    p0 = unit_trace(probe, 0)
+    first = int(np.flatnonzero(p0.on_slope)[0])
+    lane = 30.0 * round((p0.y[first] - AXIS_Y) / 30.0)
+    scn = _queue_scn(200.0)
+    scn["groups"][0]["goal"] = [GOAL_ON_SLOPE[0], AXIS_Y + lane]
+    res = runmod.run(scn, seed=0, trace=True)
     f, r = unit_trace(res, 0), unit_trace(res, 1)
     assert f.on_slope[-1] and abs(f.x[-1] - GOAL_ON_SLOPE[0]) <= 1.5 * R + 1e-6
     both = f.on_slope & r.on_slope
