@@ -189,7 +189,7 @@ func _build_keybinds_card(parent: Control) -> void:
 		["Select", "LMB"],
 		["Box Select", "LMB Drag"],
 		["Move", "RMB"],
-		["Attack Move", "A + RMB"],
+		["Attack Move", "A, then left-click"],
 		["Stop", "S"],
 		["Control Group Assign", "Ctrl+1-9"],
 		["Control Group Select", "1-9"],
