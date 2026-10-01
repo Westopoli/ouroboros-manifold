@@ -186,3 +186,9 @@ The coordinator's defaults stand except where this says otherwise.
 The dependency fix in d33aa64f removed the only ordering between `B5-chronicle` and `B7b`, and `owner_lint` failed on main. Fixed in this commit: the order on `csrc/generational.c` is `B5-chronicle`, then the new row `B6-lifecycle` (which also owns `csrc/chronicle.c`, after `B8`), then `B7b`. `owner_lint` passes (63 pieces).
 
 **A19.** The F1 and F2 accessors live in `csrc/unit.c` and `csrc/om_internal.h`, which have owners; they need no rows of their own. The `symbol_ownership` lint counting an `extern` declaration that ends in `;` as a definition is a harness defect: approved as a harness piece for an Engineer, with a positive control (a planted declaration is ignored, a planted definition in the wrong file is still caught).
+
+## Addendum 8, 2026-10-01 (the mission-over test after B6)
+
+With B6 the drawn mission changed and the test takes 495 s against its 500 s hang guard; the transport suite takes 562 s against the gate's 600 s.
+
+**A20. Option (c): a smaller fixture mission.** The Engineer searches seeds for a campaign whose first mission has a short deadline (a 30-minute-base archetype) and a small force, and the test uses that seed. The rule proved is unchanged: `tactical_step` alone reaches `mission_over` within the deadline the frame states, read from the frame as now. This is a fixture choice, recorded with a ledger row naming the seed, the archetype and the deadline; the hang guard and `SUITE_TIMEOUT` are not touched. Target: the test under about 200 s, so the suite keeps real headroom. If no seed in 1 to 400 gets there, report the best found and stop; the timeouts stay Westley's.

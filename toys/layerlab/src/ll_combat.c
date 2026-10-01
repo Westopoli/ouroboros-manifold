@@ -53,13 +53,13 @@ void ll_acquire(ll_state *s) {
             if (!vis && !fire_vis) continue;
             int off;
             if (!ll_eligible(s, u, e, &off)) continue;
-            if (!(r->range_mult[off] > 0.0)) continue;
+            if (!(r->range_mult[off] > 0.0) || !(ll_reach_mult(u, off) > 0.0)) continue;
             if (u->ty->aoe_r > 0.0 ? !(r->aoe_layer_mult[off] > 0.0) : !(r->dmg_mult[off] > 0.0)) continue;
             double dx = e->x - u->x, dy = e->y - u->y;
             double d3 = ll_dist3(dx, dy, u->layer - e->layer, s->ter->layer_spacing);
             if (vis && (u->chase < 0 || d3 < dc)) { u->chase = j; dc = d3; }
             if (!fire_vis) continue;
-            if (d3 > u->ty->range * r->range_mult[off]) continue;
+            if (d3 > u->ty->range * r->range_mult[off] * ll_reach_mult(u, off)) continue;
             if (u->aim < 0 || better(u->policy, e, d3, &s->u[u->aim], da)) { u->aim = j; da = d3; }
             if (u->arc_gate && d3 > 0.0) {
                 double bd = sqrt(dx * dx + dy * dy);
@@ -187,9 +187,9 @@ static int burst_pick(const ll_state *s, const ll_unit *u) {
         if (r->fire_requires_vision && !s->sees[u->side][j]) continue;
         int off;
         if (!ll_eligible(s, u, e, &off)) continue;
-        if (!(r->range_mult[off] > 0.0) || !(r->dmg_mult[off] > 0.0)) continue;
+        if (!(r->range_mult[off] > 0.0) || !(r->dmg_mult[off] > 0.0) || !(ll_reach_mult(u, off) > 0.0)) continue;
         double d3 = ll_dist3(e->x - u->x, e->y - u->y, u->layer - e->layer, s->ter->layer_spacing);
-        if (d3 > u->ty->range * r->range_mult[off]) continue;
+        if (d3 > u->ty->range * r->range_mult[off] * ll_reach_mult(u, off)) continue;
         int n = 0;
         for (int k = 0; k < s->n; k++) {
             const ll_unit *f = &s->u[k];

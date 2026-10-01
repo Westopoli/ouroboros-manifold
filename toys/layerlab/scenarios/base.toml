@@ -37,6 +37,17 @@ forced_change_penalty   = 0      # Q-001-04 closed 2026-10-01: the shortest rout
                                  # an extra cost in world units per layer changed (100000 = a detour always wins)
 timed_new_layer_at_half = 1      # Q-004-05 reading (a4)
 
+# Layer actions (Q-005-03 closed 2026-10-01, E-01 S-162 to S-164; SPEC section 15). Off by default: with emit_on = 0
+# and no per-type reach table the behaviour is the legacy one. Starting values are Q-005-04's recommendations,
+# for the lab to tune.
+emit_on        = 0                # 1 turns the emit/silent sight multipliers on
+emit_see_mult  = [1.0, 1.5]       # cross-layer sight of an observer: [silent, emitting]
+emit_seen_mult = [0.5, 1.5]       # how far a target is seen from other layers: [silent, emitting]
+ping_reach      = 1200.0          # a ping reaches a place this far from the pinger (passive cross-layer sight is about 400)
+ping_radius     = 250.0           # the revealed circle around the pinged place
+ping_s          = 0.5             # a very short burst
+ping_cooldown_s = 6.0             # the only limit on repeated pings
+
 [terrain]
 preset = "flat"
 w_cells = 80
