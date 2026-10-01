@@ -360,6 +360,15 @@ typedef struct {
     /* Unit id of the player-assigned commander (R-077-05); 0 = none. Set by
      * the B7 assign piece, never by this module's accessors. */
     uint32_t commander_unit;
+
+    /* A3 quiet-world fallback (R-072-07/08): enemy faction and power set by
+     * om_mission_setup_fallback for the one om_mission_setup call it makes.
+     * fallback_pending is consumed there; fallback_active stays set until the
+     * next plain om_mission_setup. */
+    int      fallback_pending;
+    int      fallback_active;
+    int32_t  fallback_enemy;
+    double   fallback_power;
 } om_mission_state;
 
 static void om_mis_state_free(void *p) {
@@ -2183,11 +2192,21 @@ static void om_mission_compose_force(om_world *w, om_mission_state *st) {
     if (r >= w->n_regions || r >= OM_MAX_REGIONS) return;
     const om_mission_region_ctx *ctx = &st->region_ctx[r];
     double committed = ctx->conflict_set ? ctx->attack_budget_sum : 0.0;
-    double enemy_power = om_mission_compute_enemy_power(w, st->mission_archetype, committed,
-                                                        om_region_field(w, r, OM_F_MILITARY),
-                                                        om_region_field(w, r, OM_F_POPULATION));
+    double enemy_power = st->fallback_active ? st->fallback_power
+        : om_mission_compute_enemy_power(w, st->mission_archetype, committed,
+                                         om_region_field(w, r, OM_F_MILITARY),
+                                         om_region_field(w, r, OM_F_POPULATION));
     uint32_t enemy_counts[OM_MISSION_N_UNIT_TYPES];
     double enemy_total = om_mission_fill_counts(w, st->mission_archetype, enemy_power, enemy_counts);
+    if (st->fallback_active && enemy_total <= 0.0) {
+        double cheapest_power = 0.0;
+        for (uint32_t t = 0; t < OM_MISSION_N_UNIT_TYPES; t++) {
+            double pr = om_unit_power(t);
+            if (pr > 0.0 && (cheapest_power <= 0.0 || pr < cheapest_power)) cheapest_power = pr;
+        }
+        enemy_power = cheapest_power;
+        enemy_total = om_mission_fill_counts(w, st->mission_archetype, enemy_power, enemy_counts);
+    }
 
     double capacity = om_region_composite(w, r, OM_C_CAPACITY) / OM_MISSION_DEFICIT_FIELD_MAX;
     double parity = om_mission_compute_difficulty_parity(om_mission_compute_base_parity(capacity), OM_MISSION_DIFFICULTY_MEDIUM);
@@ -2217,6 +2236,8 @@ static void om_mission_compose_force(om_world *w, om_mission_state *st) {
  * player, else the owner of its strongest hostile neighbour; with neither it
  * is the first faction id that is not the player's. */
 static int32_t om_mission_enemy_faction(const om_world *w, uint32_t region_idx, int32_t player) {
+    const om_mission_state *st = om_mis_ro(w);
+    if (st && st->fallback_active) return st->fallback_enemy;
     int32_t owner = om_region_owner(w, region_idx);
     if (owner >= 0 && owner != player) return owner;
     if (owner >= 0) {
@@ -2303,6 +2324,8 @@ void om_mission_setup(om_world *w, uint32_t p1, uint32_t archetype, int lineage_
     st->mission_archetype = archetype;
     st->lineage_connection = lineage_connection;
     st->mission_set = 1;
+    st->fallback_active = st->fallback_pending;
+    st->fallback_pending = 0;
 
     /* B9-N: a fresh mission clears the previous one's termination/result
      * state. Without this, the second mission of a multi-mission session
@@ -2336,6 +2359,23 @@ void om_mission_setup(om_world *w, uint32_t p1, uint32_t archetype, int lineage_
     om_mission_reset_started(w);
     st->tactical_baseline_pending = 1;
     om_mission_instantiate_map(w, st);
+}
+
+/* R-074-01 default form: enemy power = the enemy faction's strongest region's
+ * military x 2000 (OM_MILITARY_TO_POWER_SCALE). R-074-04: the player's budget is
+ * that power x parity, which om_mission_compose_force already applies. */
+void om_mission_setup_fallback(om_world *w, uint32_t region_idx, int32_t enemy_faction) {
+    om_mission_state *st = om_mis(w);
+    double strongest = 0.0;
+    for (uint32_t r = 0; r < w->n_regions; r++) {
+        if (om_region_owner(w, r) != enemy_faction) continue;
+        double mil = om_region_field(w, r, OM_F_MILITARY);
+        if (mil > strongest) strongest = mil;
+    }
+    st->fallback_pending = 1;
+    st->fallback_enemy = enemy_faction;
+    st->fallback_power = strongest * OM_MILITARY_TO_POWER_SCALE;
+    om_mission_setup(w, region_idx, OM_MISSION_ARCH_DEFENSIVE_STAND, 0);
 }
 
 void om_mission_setup_destroy_targets(om_world *w, uint32_t objective_idx, uint32_t total) {
