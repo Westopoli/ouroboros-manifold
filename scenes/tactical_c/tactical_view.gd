@@ -472,7 +472,7 @@ func _pan_input(delta: float) -> void:
 		dir.y -= 1.0
 	if Input.is_key_pressed(KEY_DOWN):
 		dir.y += 1.0
-	if _pointer_seen:
+	if _pointer_seen and _edge_scroll_enabled():
 		var vp := get_viewport()
 		var m := vp.get_mouse_position()
 		var r := vp.get_visible_rect().size
@@ -487,6 +487,11 @@ func _pan_input(delta: float) -> void:
 	if dir != Vector2.ZERO and _world_scale > 0.0:
 		var step := dir.normalized() * PAN_SPEED_PX * delta / _world_scale
 		qa_pan(_camera.x + step.x, _camera.y + step.y)
+
+
+func _edge_scroll_enabled() -> bool:
+	var bus := get_node_or_null("/root/UIDataBus")
+	return bus == null or bool(bus.get_settings().get("edge_scroll", true))
 
 
 func _unhandled_input(event: InputEvent) -> void:
