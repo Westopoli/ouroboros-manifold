@@ -1542,18 +1542,23 @@ int32_t om_mission_generator_chosen_archetype(const om_world *w) {
 void om_mission_generator_run(om_world *w) {
     gen_state *gs = gen_get_state(w);
     if (!gs || !w) return;
+    for (uint32_t ri = 0; ri < om_region_count(w); ri++) om_mission_refresh_context(w, (int32_t)ri);
     om_mission_build_candidate_pool(w);
     uint32_t n = om_mission_candidates(w, NULL, UINT32_MAX);
     uint32_t chosen;
     if (n == 0) {
         /* Q-072-01 fallback: no candidate triggered anywhere. */
         chosen = om_mission_fallback_region(w);
+        gs->has_candidate = 0;
+        gs->chosen_archetype = -1;
     } else {
         uint32_t idx = om_mission_select(w);
         om_mission_candidate *pool = malloc((size_t)n * sizeof(*pool));
         if (!pool) return;
         om_mission_candidates(w, pool, n);
         chosen = pool[idx < n ? idx : 0].region_idx;
+        gs->chosen_archetype = (int32_t)pool[idx < n ? idx : 0].archetype;
+        gs->has_candidate = 1;
         free(pool);
     }
     gs->mission_chosen_region = chosen;
@@ -2032,8 +2037,26 @@ static int gen_time_jump(om_world *w, uint32_t n_ticks, om_time_jump_report *rep
         if (om_player_faction_check_collapse(w, om_player_faction(w))) gs->last_end_reason = GEN_CHAPTER_END_FACTION_COLLAPSED;
         else if (om_mission_get_debrief(w, &dbf) == 1 && dbf.commander_fate == 0) gs->last_end_reason = GEN_CHAPTER_END_COMMANDER_DEATH;
     }
-    om_mission_generator_run(w);
-    if (opening || post_mission) om_character_selector_run(w);
+    int terminal = 0;
+    if (gs->last_end_reason == GEN_CHAPTER_END_FACTION_COLLAPSED) {
+        /* A15: reassign before the generator, which needs a player faction that holds regions. */
+        int32_t old_pf = om_player_faction(w);
+        if (om_campaign_check_surviving_factions(w) == GEN_CAMPAIGN_NO_SURVIVING_FACTIONS) {
+            om_campaign_trigger_terminal_restart(w);
+            terminal = 1;
+        } else {
+            int32_t nf = om_player_faction_reassign_on_collapse(w, old_pf);
+            if (nf >= 0) {
+                if (old_pf >= 0) w->faction_archetype[old_pf] = OM_ARCH_DEFAULT;
+                w->faction_archetype[nf] = OM_ARCH_PLAYER;
+            }
+        }
+    }
+    if (!terminal) {
+        om_mission_generator_run(w);
+        if (opening || post_mission) om_character_selector_run(w);
+        if (post_mission) gs->chapter_number++;
+    }
 
     if (report) {
         memset(report, 0, sizeof(*report));
