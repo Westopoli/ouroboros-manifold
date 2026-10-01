@@ -636,20 +636,6 @@ uint64_t om_archetype_base_time_ticks(uint32_t archetype) {
     return (uint64_t)ticks;
 }
 
-/* R-078-06 closure leftover (B9-3): "the resulting events carry the
- * mission-consequence flag for the chronicle" needs the event/chronicle
- * pipeline (csrc/events.c's om_queued_event / csrc/generational.c's
- * om_time_jump_run chronicle distillation) to tag the events a mission's
- * applied deltas produce -- that tagging is events.c/generational.c's to
- * add, not a flag mission.c can fake from its own state. Left STUB; a
- * mission.c-local flag here would satisfy this accessor's own return value
- * without the chronicle entries actually carrying anything, which is not
- * what R-078-06 asks for. */
-int om_chronicle_has_mission_consequence_flag(const om_world *w) {
-    (void)w;
-    return 0;
-}
-
 /* R-078-01: clamp the resulting value to [0, 100], not the delta. */
 double om_consequence_apply_clamped(double current, double delta) {
     double v = current + delta;
@@ -1494,8 +1480,12 @@ double om_mission_compute_urgency(const om_world *w, uint32_t region_idx, uint32
  * combat state (B10), not wired into om_mission_state -- so r defaults to
  * full retention (1.0) until that lands; om_mission_compute_retention is
  * already correct and ready for that wiring (see also: csrc/unit.c). */
+/* See also: csrc/generational.c om_gen_consequence_rearm (owns consequence_consumed). */
+void om_gen_consequence_rearm(om_world *w);
+
 void om_mission_end(om_world *w) {
     om_mission_state *st = om_mis(w);
+    om_gen_consequence_rearm(w);
     st->tactical_ended = 1;
     double o = om_mission_get_objective_score(w);
     double r = om_mission_compute_retention(1.0, 1.0);
@@ -1980,6 +1970,7 @@ uint32_t om_mission_objective_count(const om_world *w) {
  * deficit (deficit form, om_consequence_eval_delta_deficit). */
 void om_mission_resolve_refusal(om_world *w, uint32_t region_idx) {
     om_mission_state *st = om_mis(w);
+    om_gen_consequence_rearm(w);
     st->refused = 1;
     st->band = OM_MISSION_BAND_REFUSAL;
     st->band_set = 1;

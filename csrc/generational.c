@@ -607,6 +607,21 @@ void om_generational_install_save_hooks(om_world *w) {
     w->generational_state_read = gen_state_read_hook;
 }
 
+/* R-078-06 / architect rulings 2 section 1.3: 1 while the last mission has a known band and
+ * its consequence is not yet consumed by a jump. */
+int om_chronicle_has_mission_consequence_flag(const om_world *w) {
+    const gen_state *gs = (const gen_state *)w->generational_state;
+    if (gs && gs->consequence_consumed) return 0;
+    return om_mission_get_band(w) != GEN_BAND_UNKNOWN;
+}
+
+/* See also: csrc/mission.c om_mission_end / om_mission_resolve_refusal call this: a new result
+ * gets its own consequence in the next jump. Not declared in a header (mission.c declares it). */
+void om_gen_consequence_rearm(om_world *w) {
+    gen_state *gs = (gen_state *)w->generational_state;
+    if (gs) gs->consequence_consumed = 0;
+}
+
 static gen_state *gen_get_state(const om_world *cw) {
     om_world *w = (om_world *)cw;
     if (!w) return NULL;
