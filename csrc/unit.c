@@ -601,17 +601,18 @@ static void om_grid_iter_begin_st(om_grid_iter *it, om_tac_state *st, double x, 
 uint32_t om_grid_iter_next(om_grid_iter *it) {
     om_tac_state *st = (om_tac_state *)it->state;
     const om_grid *g;
-    if (it->done) return 0;
+    if (it->done & 1) return 0;
     g = &st->grid;
     for (;;) {
         while (it->cur) {
             const om_unit_row *u = &st->units[it->cur - 1];
             it->cur = g->next[it->cur - 1];
+            if ((it->done & ~1) && u->faction_id != (int32_t)((uint32_t)it->done >> 1) - 1) continue;
             if (om_tac_dist_le(u->x - it->x, u->y - it->y, it->r)) return u->unit_id;
         }
         if (++it->cx > it->cx1) {
             it->cx = it->cx0;
-            if (++it->cy > it->cy1) { it->done = 1; return 0; }
+            if (++it->cy > it->cy1) { it->done |= 1; return 0; }
         }
         it->cur = g->head[(uint32_t)it->cy * (uint32_t)g->cols + (uint32_t)it->cx];
     }
@@ -619,6 +620,15 @@ uint32_t om_grid_iter_next(om_grid_iter *it) {
 
 void om_grid_iter_begin(om_grid_iter *it, om_world *w, double x, double y, double r) {
     om_grid_iter_begin_st(it, om_tac(w), x, y, r);
+}
+
+/* Faction-filtered iterator: `done` bit 0 is the finished flag, bits 1.. hold
+ * faction + 1 (0 = unfiltered), so om_grid_iter needs no new field. A negative
+ * or out-of-range faction matches nothing. */
+void om_grid_iter_begin_faction(om_grid_iter *it, om_world *w, int32_t faction, double x, double y, double r) {
+    om_grid_iter_begin_st(it, om_tac(w), x, y, r);
+    if (faction < 0 || faction >= 0x3fffffff) { it->done |= 1; return; }
+    it->done |= (int)((uint32_t)(faction + 1) << 1);
 }
 
 static void om_grid_sift_down(uint32_t *a, uint32_t root, uint32_t n) {
@@ -665,6 +675,17 @@ static uint32_t om_grid_query_st(om_tac_state *st, double x, double y, double r,
 
 uint32_t om_grid_query_circle(om_world *w, double x, double y, double r, uint32_t *out_ids, uint32_t max) {
     return om_grid_query_st(om_tac(w), x, y, r, out_ids, max);
+}
+
+uint32_t om_grid_query_circle_faction(om_world *w, int32_t faction, double x, double y, double r, uint32_t *out_ids, uint32_t max) {
+    uint32_t *buf = om_tac(w)->grid.scratch;
+    uint32_t n = 0, i, id;
+    om_grid_iter it;
+    om_grid_iter_begin_faction(&it, w, faction, x, y, r);
+    while ((id = om_grid_iter_next(&it)) != 0) buf[n++] = id;
+    om_grid_sort_ids(buf, n);
+    for (i = 0; i < n && i < max; i++) out_ids[i] = buf[i];
+    return n;
 }
 
 /* See om_internal.h: for tactical_move.c, which owns a unit's live position
