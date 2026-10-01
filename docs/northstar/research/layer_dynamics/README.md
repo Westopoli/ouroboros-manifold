@@ -26,13 +26,15 @@ These come from the bible and the register; the lab does not vary them unless a 
 
 - Five layers, always; layer 1 is the bottom (Q-001-01, Q-001-02). A unit is on exactly one layer at every tick.
 - Terrain blocks layers at places (E-01 S-001). A unit never occupies a blocked position and layer.
-- Terrain-forced auto-transition: a move order to a place blocked on the unit's layer but open on another auto-transitions it (E-01 R-001-05). The lab has an off switch for it only because a control needs an off state; the ruling itself is settled. The edges the ruling leaves open are `Q-001-04`; the lab takes the recommended reading there and can vary it.
+- Layer changes on the route: a unit takes the shortest route to its goal across every layer it may use, changing layer on the way where that is shorter (E-01 R-001-05, `Q-001-04` closed 2026-10-01). The lab keeps an off switch only because a control needs an off state. What the ruling leaves open is `Q-001-05` (distance or time, the layer a flying unit ends on, pending transfers and preferences); the lab takes the recommended reading there and can vary it.
 - A transition is one transition of one duration regardless of distance (Q-002-01), by unit type (Q-004-01: Raider 1.0 s, Interceptor 1.2 s, Vanguard 2.5 s, Warden 2.0 s, Bombard 4.0 s, Bastion 5.0 s). The old layer may attack the unit until the halfway point, the new layer from the halfway point on; visibility follows the normal cross-layer sensor rules (Q-004-02). E-01 R-004-02 carries the same rule.
 - Slopes (Q-004-03, Westley 2026-09-30: "Choice 2 set by the slope, no need for a switch."): a slope is a band of ground joining two layers, adjacent or not. On a slope the transition is the unit's position along it, not a timer: the time is slope length divided by unit speed, the halfway point is the slope's midline, and a unit may stop or turn back (E-01 R-001-06, R-004-06 to R-004-08). The timed rule above applies only to a transfer away from a slope. The lab builds this one way, with no timed-versus-slope switch. A unit on a slope counts as on the layer on its side of the midline (Q-004-04).
 - Unit movement kinds (Q-004-04, Westley 2026-09-30): flying and swimming units change layer anywhere nothing blocks, by a timed transfer; walking units stand only where a layer has land, change layer only by walking a slope, and never rise in place (E-01 R-001-07).
 - A transitioning unit may attack, in a timed transfer or on a slope, while it can see its target, and stops when the transition takes that sight away (E-01 R-004-02).
-- What these rulings leave open is `Q-004-05` (which types walk, how the map marks land, cross-overs on a slope spanning several layers, the layer of a unit in a timed transfer, a walking unit given a layer order); the lab takes the recommended reading there and can vary it.
-- Vision across layers shrinks with distance: production uses factor 0.50 one layer away, 0.20 two layers away, none beyond, by absolute offset in either direction (`csrc/fog.c:585`); E-01 R-005-05 says two layers below is never visible, which disagrees (`Q-005-02`), so the lab takes vision by signed offset and can test both; vantage nodes and interference zones modify it; cover blocks sight by height and never changes damage or movement (E-01 S-007).
+- `Q-004-05` is closed with the recommended readings (2026-10-01): movement kind is set per unit type in the era pack and every Settled Reach type flies; the map carries a ground flag per layer; a slope spanning several layers has a cross-over at each layer boundary; a walking unit ordered to a layer paths to a slope, or the order is rejected.
+- Every transition has a cross-over point: halfway through a timed transfer, the midline of a slope. Before it the unit is on the layer it is leaving, for attacking, being attacked and sensing; after it, on the layer it is moving to (E-01 R-004-02, the invariants). It is a matter of location, not timing.
+- A unit never fires at a target it cannot see (`Q-008-04`, E-01 R-008-04). There is no blind fire.
+- Vision across layers shrinks with distance: production uses factor 0.50 one layer away, 0.20 two layers away, none beyond, by absolute offset in either direction (`csrc/fog.c:585`); vision is symmetric by layer distance to start (`Q-005-02`, closed 2026-10-01), and asymmetric vision stays a candidate only if the top layer gets a counter; vantage nodes and interference zones modify it; cover blocks sight by height and never changes damage or movement (E-01 S-007).
 - Production combat is same-layer only (Q-008-01). Every cross-layer rule in the lab is a hypothesis under test, not a fact about the game.
 - Layer damage is weighted much more heavily than abilities and passives (Q-083-02, hub principle 4): an ability never outranks position in the lab either.
 - Determinism: same seed and command stream give a byte-identical trace.
@@ -74,7 +76,7 @@ Rungs: R0 flat combat; R1 terrain, vision, transitions, every cross-layer knob; 
 | Cost | 20 to 200 | The interim power rating, HP × damage per hit / attack interval, normalized so a Vanguard is 100 (Q-074-01): Raider 90.0, Interceptor 62.4, Vanguard 100.0, Warden 32.0, Bombard 74.7, Bastion 130.7 | R0 | P3, P4 |
 | Body radius (units cannot overlap) | 5 to 60 | 15 for every type (`OM_UNIT_COLLISION_RADIUS`) | R2 | P2 |
 | Ability archetype: burst with windup and cooldown (the "storm" shape) | damage multiplier, radius, windup, cooldown, minimum targets | Bombard barrage: 3.0 times damage, radius 100, telegraph 30 ticks, cooldown 1,800 ticks | R2 | P3 |
-| Movement kind (walking, or flying or swimming) | 2 values | none; which types walk is Q-004-05 | R1 | P1, P4 |
+| Movement kind (walking, or flying or swimming) | 2 values | none in production; set per unit type in the era pack, every Settled Reach type flying | R1 | P1, P4 |
 | Pulse-capable | yes or no | Pulse radius 500, reveal 40 ticks, cooldown 400 ticks | R1 | P1 |
 
 The category multiplier matrix (attacker row, target column) is `OM_CATEGORY_MULTIPLIER_*`: Strike 1.0, 0.75, 1.5 against Strike, Line, Siege; Line 1.5, 1.0, 0.75; Siege 0.20, 1.5, 1.0. Area damage is capped at 4.0 times a hit (`OM_AOE_DAMAGE_CAP_MULTIPLIER`). The lab leaves out Warden aura, brace, fortify, backswing, cohort targeting and the high-load halving (production behaviours with no bearing on layer geometry); they return only if a finding needs them.
@@ -101,7 +103,7 @@ The category multiplier matrix (attacker row, target column) is `OM_CATEGORY_MUL
 |---|---|---|---|---|
 | Accessibility mask preset (flat, block, wall, barrier, lane, ramp; defined below) | 6 footprints | map generator output, binary per layer per position | R1 | P1, P4 |
 | Blocked height h: the mask blocks layers 1 to h inside the footprint | 1 to 4 | E-01 S-001 example: h = 2 | R1 | P1, P4 |
-| Land per layer: where a walking unit can stand | per layer per position | none; how the map marks it is Q-004-05 | R1 | P1, P4 |
+| Land per layer: where a walking unit can stand | per layer per position | none in production; a ground flag per layer per position | R1 | P1, P4 |
 | Slopes: position, width, length, and the layers joined (adjacent or not) | length 100 to 1,000; width 100 to 600 | none in the sim; E-01 R-004-07 uses lengths 150 and 600 | R1 | P1, P4 |
 | Layer spacing | 10 to 200 | none in the sim (Q-E01-01 fixes on-screen elevation only) | R1 | P1 |
 | Cover discs: position, radius, height in layers | 0 to 5 layers | per E-01 S-007 | R1 | P1, P4 |
@@ -125,16 +127,16 @@ Block and wall differ only in shape (how long the detour is); barrier is the sam
 
 | Variable | Range | Production value | Rung | Pattern |
 |---|---|---|---|---|
-| Vision factor by signed offset (target minus observer, 9 values) | 0 to 1 each | symmetric: 1.0, 0.50, 0.20, 0, 0 at absolute offset 0 to 4 (`OM_CONE_LAYER_1_FACTOR`, `OM_CONE_LAYER_2_FACTOR`, `csrc/fog.c:585`); E-01 R-005-05 implies 0 for two below (Q-005-02) | R1 | P1 |
+| Vision factor by signed offset (target minus observer, 9 values) | 0 to 1 each | symmetric: 1.0, 0.50, 0.20, 0, 0 at absolute offset 0 to 4 (`OM_CONE_LAYER_1_FACTOR`, `OM_CONE_LAYER_2_FACTOR`, `csrc/fog.c:585`); symmetric to start (Q-005-02 closed); the asymmetric variant is a later candidate | R1 | P1 |
 | Vantage vision factor by signed offset | 0 to 1 each | 1.0, 1.00, 0.40, 0.20, 0 at absolute offset 0 to 4 (E-01 R-005-06) | R1 | P1 |
 | Sensor bonus per layer of elevation | 0 to 0.5 | none per layer: production's 0.15 (`OM_ELEVATION_SENSOR_BONUS_PER_TIER`) is per elevation tier, which is not a layer; lab default 0, so R-005's numbers hold | R1 | P1 |
 | Range multiplier by signed offset (target minus attacker, 9 values) | 0 to 2 | none; same-layer only (Q-008-01) | R1 | P1 |
 | Damage multiplier by signed offset | 0 to 2 | none | R1 | P1, P4 |
 | Area-damage multiplier by signed offset | 0 to 2 | none | R1 | P2, P3 |
-| Fire requires vision | on or off | none decided; E-01 R-007-03 lets a hidden attacker hit an observer that cannot see it, so the flag is about the attacker's own sight; the lab uses one visibility function for target choice and for the fire check | R1 | P1 |
+| Fire requires vision | fixed on | a unit never fires at a target it cannot see (Q-008-04, E-01 R-008-04); the lab uses one visibility function for target choice and for the fire check | R1 | P1 |
 | Facing gates fire | on or off | none | R2 | P2 |
 | Halfway rule during a transition | both always targetable, per rule (old layer until halfway, new layer after), untargetable | per rule (Q-004-02); on a slope the halfway point is the midline, by position (Q-004-03) | R1 | P1, P4 |
-| Terrain-forced auto-transition | on or off (off is the control) | on (E-01 R-001-05); edges per Q-001-04 | R1 | P4 |
+| Layer changes on the shortest route | on or off (off is the control) | on (E-01 R-001-05); edges per Q-001-05 | R1 | P4 |
 | Movement speed during a timed transfer (not on a slope, where the unit moves at its own speed) | 0 to 1.0 times | none (mid-transition movement is unspecified in the bible beyond Q-004-02) | R1 | P1 |
 
 ### Outcomes and expected winners
@@ -170,7 +172,7 @@ Status: Westley told the build to go ahead on this map, 2026-09-30 ("continue wi
 
 Take a variable v (for example the range multiplier for fire from above) and hold every other variable fixed. The expected side's win probability is a function of v. It crosses 0.5 at some value v*. Depth exists on that axis when v* is reachable in play, meaning v* lies inside the range of values the game can produce. Now move a second variable w. Depth grows when w moves v* to another reachable value, or when w creates a second crossing, so two configurations of variables induce depth instead of one. That is Westley's "lines cross".
 
-Pass criterion for the lab, proposed here for Westley to confirm or change (he owns it): one shared cross-layer rule set under which all four patterns of §4 hold (each true in at least one reachable configuration, none true in every configuration), with at least one crossing on a layer-rule axis and at least one two-variable interaction that adds a crossing. A separate tuned rule set per pattern does not pass.
+Pass criterion for the lab, confirmed by Westley 2026-10-01 with the fragile-unit pattern (P3) set aside until abilities are in scope: one shared cross-layer rule set under which patterns P1, P2 and P4 of §4 hold (each true in at least one reachable configuration, none true in every configuration), with at least one crossing on a layer-rule axis and at least one two-variable interaction that adds a crossing. A separate tuned rule set per pattern does not pass.
 
 Negative control: with the cross-layer rules off (multipliers zero, no cross-layer fire), no crossing on that axis. A detector that finds crossings with the mechanism off is measuring the harness, not the game. Positive control: the count ratio between two equal forces on flat ground, swept from 1:2 to 2:1, must show its crossing near 1:1; a detector that misses that is not reading.
 
@@ -230,16 +232,45 @@ Source: `docs/research/topics/lanchester_and_combat_theory.md` (the brief; confi
 | E1 | Choke breadth. 20 against 10 identical units; sweep how many can engage at once (the lane preset's channel width against unit range) | Survivors slide from the square-law answer, sqrt(20² − 10²) = 17.3, toward the linear answer, 10, as the engaged width shrinks. A cap is a switch of regime (linear while both sides exceed the cap, square once both are under it), not a smooth exponent | lane preset; the per-tick firing counts already built |
 | E2 | Defeat in detail. 20 against 20, the second side arriving in k equal packets with a gap between them | The concentrated side keeps 20 × sqrt(1 − 1/k): 14.1 for two packets, 17.3 for four. The penalty shrinks as the gap closes and vanishes when packets overlap fully | staggered spawn or staggered orders per group |
 | E3 | The slope as a trickle. A force climbs a ramp toward a defender at the top; sweep slope length and unit speed | A long slope strings the climbers out, which is E2 with the packet size set by the slope; slow units on long slopes should fare worst. Lanchester adds that the rule fails when the small force is concealed | ramp preset (slopes, R1) |
-| E4 | Vision as a dial, not a switch. Sweep the fraction of the low side's units that can see the high side (sensor radius, or a few units placed with sight) | The blind side reaches parity with about 1.41 times the numbers when fully blind, 1.28 at one-tenth information, 1.11 at half, 1.03 at four-fifths (derived from the generalized ambush model's kill-rate figures). In that model the blind side still fires, into an area, at reduced effect; in the lab today a blind unit cannot fire at all, which is where pass 1's cliff comes from | no new rule if done by fraction of units with sight; a blind-fire rule (firing at a last-known position at reduced effect) would be a new mechanic and needs Westley's go-ahead |
+| E4 | Vision as a dial, not a switch. Sweep the fraction of the low side's units that can see the high side (sensor radius, or a few units placed with sight) | The blind side reaches parity with about 1.41 times the numbers when fully blind, 1.28 at one-tenth information, 1.11 at half, 1.03 at four-fifths (derived from the generalized ambush model's kill-rate figures). In that model the blind side still fires, into an area, at reduced effect; in the lab today a blind unit cannot fire at all, which is where pass 1's cliff comes from | done by the fraction of units with sight; there is no blind fire (Q-008-04) |
 | E5 | Staying power. Sweep hits-to-kill (health over damage per shot) with a fixed head start for one side | When hits-to-kill is low, striking first decides the fight and the stronger side can lose; when it is high, the head start washes out. For a duel at equal rates, a head start of one mean kill time raises the win chance from 0.50 to about 0.82 | roster health and damage (R0); a delayed-vision or delayed-order knob for the head start |
 | E6 | Guns that bear. A line crossing the head of a column, with firing arcs on | The firing-count ratio equals the ratio of units whose arc bears, and decays as the column turns; the outcome follows that ratio | facing and arcs (R2) |
 
 Two levers the research points at:
 
 - Height as initiative. Air-combat sources value height as the choice of when to engage and as first sight, and note that regaining height costs more time than spending it. A transfer that is quicker going down than up would express that. Westley, 2026-10-01, verbatim: "Let's skip faster descending than to climb. For space battles. But that might be helpful in aerial battles for eras that have ships flying through the air." So it is not built or tested for space eras, the Settled Reach included, where a transfer costs the same both ways; it stays a candidate for an era with units flying through air.
-- Scouting as a multiplier. Naval salvo theory puts scouting on the striking side's effectiveness and alertness on the defender's reply. That is the costly seer unit (`Q-E12-01`) stated as a number to tune.
+- Scouting as a multiplier. Naval salvo theory puts scouting on the striking side's effectiveness and alertness on the defender's reply. That is the costly seer unit stated as a number to tune. `Q-E12-01` is closed (2026-10-01): a roster unit, costly, with wide cross-layer sight and no attack; the lab tunes its cost and its counter.
 
 On the instrument: pass 1 showed the whole-fight prediction restates the outcome and the opening-window form does not. The theory agrees with the opening-window form: Lanchester's quantity is the number firing at each moment, and the early count is what the conditions of the engagement set, before attrition feeds back into it.
+
+### 6.3 Westley's decisions, 2026-10-01, and what the lab builds next
+
+Ten open choices were put to Westley; his answers, verbatim where they are more than a letter:
+
+- The lever that carries the layer advantage: "I'd like to see what engagement looks like for all 3 of these options, let's build the lab to run simulations with all 3 of these knobs \"turned\"". Not a pick; a comparison (below).
+- Blind fire: no. A unit never fires at a target it cannot see (`Q-008-04`).
+- Expected winners: set by the principle, not by hand, with this correction: "it's not just opening firing advantage, it's consistent firing advantage (the number that we really care about is number of units firing, if A and B both have the same number of units firing than the engagement ends up even)".
+- Pass criterion: three patterns for now (P1, P2, P4); P3 returns with abilities.
+- The seer: a roster unit, costly, wide cross-layer sight, no attack (`Q-E12-01` closed).
+- Experiment order: E1, E2, then E3.
+- Vision: symmetric to start (`Q-005-02` closed); asymmetric stays a candidate if the top layer gets a counter.
+- Routing: the shortest route wins, across layers (`Q-001-04` closed; edges `Q-001-05`).
+- Walking and flying units: the recommended readings (`Q-004-05` closed).
+- Attacking mid-transition: by location. The unit attacks from the layer it is leaving until the cross-over point, then from the layer it is moving to.
+
+**The three lever configurations.** One rule set each, everything else equal, run over the same scenarios so the engagements can be watched side by side (a replay per configuration, not only a table).
+
+| Configuration | Vision across layers | Range across layers | Damage across layers | What should carry the advantage |
+|---|---|---|---|---|
+| LA: vision only | symmetric 0.50 / 0.20 | same as on the unit's own layer | same | only what terrain, cover height and sensor radius do to who sees whom; in open ground with symmetric vision a layer gives nothing (pass 1, X4) |
+| LB: vision and reach | as LA | shorter firing up than firing down | same | who is in reach: the higher side fires first and from further |
+| LC: vision, reach and a damage penalty | as LA | as LB | lower firing up than firing down | the above plus a number per shot; pass 1 measured this lever alone at about 10 / sqrt(d) |
+
+The values for "shorter" and "lower" are swept, not fixed here. Scenarios to run under all three: the mirror and high-ground set (X0, X4), a tall-cover scenario where the high side sees over and the low side does not, E1 (choke), E2 (packets), and E3 (the ramp) once slopes are in.
+
+**The instrument, restated.** The quantity is the number of units firing on each side, over the whole engagement, not only its opening. The claim to test: when both sides have the same number firing, the exchange is even; when one side holds more firing consistently, it is winning the exchange by about that ratio (weighted by unit type). Pass 1 showed that a whole-fight winner prediction leaks the ending, so the sustained form should compare rates, not predict the winner from totals: per window of ticks, each side's share of units firing against its share of damage dealt and of losses taken. A window where the firing share and the exchange disagree is a number overriding position. The opening-window predictor stays as the forecast; the windowed exchange is the check on "consistent". One thing for the lab to report and Westley to rule on if it matters: an even exchange is not an even outcome when the totals differ, because the side with more units in reserve outlasts the other, which is his own choke example (holding it "as long as they stay at that choke").
+
+Next, in order: the windowed firing-share exchange in `analysis.py`; the three configurations as scenario overlays; E1 and E2 under each; slopes and movement kinds (R1 additions from E-01 R-001-06, R-001-07, R-004-06 to R-004-08) and then E3.
 
 ## 7. The lab
 
