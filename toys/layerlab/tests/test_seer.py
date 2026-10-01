@@ -110,7 +110,9 @@ def test_a_seer_does_not_chase(order, chase):
     assert np.allclose(ut.x, 2000.0) and np.allclose(ut.y, 1000.0)
     assert not can_fire(res, 0).any()
     _, ctl = _solo("armed", **kw)
-    assert unit_trace(ctl, 0).x[-1] > 2200.0, "the control did not chase: the test above proves nothing"
+    # The enemy chases too (chase_when_idle is global), so the two meet after the armed unit has moved only
+    # about 112 units (it stops once the enemy is within its range 300); 2050 is far above the seer's 2000.
+    assert unit_trace(ctl, 0).x[-1] > 2050.0, "the control did not chase: the test above proves nothing"
 
 
 def test_a_seer_goes_where_move_sends_it_and_then_stays():
