@@ -1768,6 +1768,10 @@ static void handle_command(const char *json) {
     write_ack("command");
 }
 
+static int slot_name_cmp(const void *a, const void *b) {
+    return strcmp((const char *)a, (const char *)b);
+}
+
 static void handle_list_saves(const char *json) {
     char dir[1024];
     if (!get_str(json, "dir", dir, sizeof dir)) {
@@ -1786,13 +1790,29 @@ static void handle_list_saves(const char *json) {
     DIR *d = opendir(dir);
     int wrote = 0;
     if (d) {
+        enum { SLOT_NAME_MAX = 256 };
+        char (*names)[SLOT_NAME_MAX] = NULL;
+        size_t n_names = 0, cap_names = 0;
         struct dirent *ent;
         while ((ent = readdir(d)) != NULL) {
             size_t nlen = strlen(ent->d_name);
-            if (nlen < 6 || strcmp(ent->d_name + nlen - 5, ".json") != 0) continue;
+            if (nlen < 6 || nlen >= SLOT_NAME_MAX || strcmp(ent->d_name + nlen - 5, ".json") != 0) continue;
+            if (n_names == cap_names) {
+                cap_names = cap_names ? cap_names * 2 : 16;
+                char (*grown)[SLOT_NAME_MAX] = realloc(names, cap_names * sizeof *names);
+                if (!grown) break;
+                names = grown;
+            }
+            memcpy(names[n_names++], ent->d_name, nlen + 1);
+        }
+        closedir(d);
+        if (n_names > 1) qsort(names, n_names, SLOT_NAME_MAX, slot_name_cmp);
+        for (size_t ni = 0; ni < n_names; ni++) {
+            const char *name = names[ni];
+            size_t nlen = strlen(name);
 
             char full[2048];
-            snprintf(full, sizeof full, "%s/%s", dir, ent->d_name);
+            snprintf(full, sizeof full, "%s/%s", dir, name);
             FILE *f = fopen(full, "rb");
             if (!f) continue;
             fseek(f, 0, SEEK_END);
@@ -1816,7 +1836,7 @@ static void handle_list_saves(const char *json) {
             free(sbuf);
 
             char slot_path[2048];
-            snprintf(slot_path, sizeof slot_path, "%s/%.*s", dir, (int)(nlen - 5), ent->d_name);
+            snprintf(slot_path, sizeof slot_path, "%s/%.*s", dir, (int)(nlen - 5), name);
 
             if (wrote) jb_putc(&j, ',');
             wrote = 1;
@@ -1840,7 +1860,7 @@ static void handle_list_saves(const char *json) {
             jb_int(&j, format_version);
             jb_putc(&j, '}');
         }
-        closedir(d);
+        free(names);
     }
     jb_raw(&j, "]}");
     write_frame(j.buf, (uint32_t)j.len);
