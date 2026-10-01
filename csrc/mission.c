@@ -392,6 +392,76 @@ static const om_mission_state *om_mis_ro(const om_world *w) {
     return (const om_mission_state *)w->mission_state;
 }
 
+/* S-111 save hooks: only a resolved result is saved (band, region, refusal, commander fate);
+ * a mission still in progress is not (no mid-battle save). Without a result the blob is 0 bytes.
+ * Little-endian scalars. See also: csrc/save.c OM_SAVE_SLOT_MISSION, csrc/region.c om_world_new
+ * (installs these through om_mission_install_save_hooks). */
+#define OM_MIS_SAVE_WORD 4u
+#define OM_MIS_SAVE_LEN 16u
+#define OM_MIS_FLAG_REFUSED 1u
+#define OM_MIS_FLAG_END_APPLIED 2u
+#define OM_MIS_FLAG_FATE_SET 4u
+
+static void om_mis_put_u32(uint8_t *out, uint32_t *pos, uint32_t v) {
+    for (uint32_t i = 0; i < OM_MIS_SAVE_WORD; i++)
+        out[(*pos)++] = (uint8_t)((v >> (OM_SAVE_BYTE_BITS * i)) & OM_SAVE_BYTE_MASK);
+}
+
+static uint32_t om_mis_get_u32(const uint8_t *buf, uint32_t *pos) {
+    uint32_t v = 0;
+    for (uint32_t i = 0; i < OM_MIS_SAVE_WORD; i++) v |= (uint32_t)buf[(*pos)++] << (OM_SAVE_BYTE_BITS * i);
+    return v;
+}
+
+static void om_mis_put(uint8_t *out, const om_mission_state *st) {
+    uint32_t pos = 0;
+    om_mis_put_u32(out, &pos, (uint32_t)st->band);
+    om_mis_put_u32(out, &pos, st->mission_region);
+    om_mis_put_u32(out, &pos, (uint32_t)st->commander_fate);
+    uint32_t flags = (st->refused ? OM_MIS_FLAG_REFUSED : 0) | (st->end_applied ? OM_MIS_FLAG_END_APPLIED : 0)
+                   | (st->commander_fate_set ? OM_MIS_FLAG_FATE_SET : 0);
+    om_mis_put_u32(out, &pos, flags);
+}
+
+static uint32_t om_mis_save_size(const om_world *w) {
+    const om_mission_state *st = om_mis_ro(w);
+    return (st && st->band_set) ? OM_MIS_SAVE_LEN : 0;
+}
+
+static void om_mis_save_write(const om_world *w, uint8_t *out) {
+    const om_mission_state *st = om_mis_ro(w);
+    if (st && st->band_set) om_mis_put(out, st);
+}
+
+static int om_mis_save_read(om_world *w, const uint8_t *buf, uint32_t len) {
+    if (len == 0) return 0;
+    if (!buf || len != OM_MIS_SAVE_LEN) return 1;
+    uint32_t pos = 0;
+    uint32_t band = om_mis_get_u32(buf, &pos);
+    uint32_t region = om_mis_get_u32(buf, &pos);
+    uint32_t fate = om_mis_get_u32(buf, &pos);
+    uint32_t flags = om_mis_get_u32(buf, &pos);
+    om_mission_state *st = (om_mission_state *)calloc(1, sizeof(om_mission_state));
+    if (!st) return 1;
+    st->band = (int32_t)band;
+    st->band_set = 1;
+    st->mission_region = region;
+    st->commander_fate = (int32_t)fate;
+    st->refused = (flags & OM_MIS_FLAG_REFUSED) != 0;
+    st->end_applied = (flags & OM_MIS_FLAG_END_APPLIED) != 0;
+    st->commander_fate_set = (flags & OM_MIS_FLAG_FATE_SET) != 0;
+    if (w->mission_state && w->mission_state_free) w->mission_state_free(w->mission_state);
+    w->mission_state = st;
+    w->mission_state_free = om_mis_state_free;
+    return 0;
+}
+
+void om_mission_install_save_hooks(om_world *w) {
+    w->mission_state_size = om_mis_save_size;
+    w->mission_state_write = om_mis_save_write;
+    w->mission_state_read = om_mis_save_read;
+}
+
 /* HDR3 legacy-compat rule: the mission state holds one player's data slot.
  * When no player faction is configured (om_player_faction returns -1), any
  * faction_id may access the slot (backward compat for unconfigured worlds).
@@ -634,20 +704,6 @@ uint64_t om_archetype_base_time_ticks(uint32_t archetype) {
     double ticks = minutes[archetype] * 60.0 * (double)OM_TACTICAL_TICK_RATE;
     /* end constants-table */
     return (uint64_t)ticks;
-}
-
-/* R-078-06 closure leftover (B9-3): "the resulting events carry the
- * mission-consequence flag for the chronicle" needs the event/chronicle
- * pipeline (csrc/events.c's om_queued_event / csrc/generational.c's
- * om_time_jump_run chronicle distillation) to tag the events a mission's
- * applied deltas produce -- that tagging is events.c/generational.c's to
- * add, not a flag mission.c can fake from its own state. Left STUB; a
- * mission.c-local flag here would satisfy this accessor's own return value
- * without the chronicle entries actually carrying anything, which is not
- * what R-078-06 asks for. */
-int om_chronicle_has_mission_consequence_flag(const om_world *w) {
-    (void)w;
-    return 0;
 }
 
 /* R-078-01: clamp the resulting value to [0, 100], not the delta. */
@@ -1494,8 +1550,12 @@ double om_mission_compute_urgency(const om_world *w, uint32_t region_idx, uint32
  * combat state (B10), not wired into om_mission_state -- so r defaults to
  * full retention (1.0) until that lands; om_mission_compute_retention is
  * already correct and ready for that wiring (see also: csrc/unit.c). */
+/* See also: csrc/generational.c om_gen_consequence_rearm (owns consequence_consumed). */
+void om_gen_consequence_rearm(om_world *w);
+
 void om_mission_end(om_world *w) {
     om_mission_state *st = om_mis(w);
+    om_gen_consequence_rearm(w);
     st->tactical_ended = 1;
     double o = om_mission_get_objective_score(w);
     double r = om_mission_compute_retention(1.0, 1.0);
@@ -1986,6 +2046,7 @@ uint32_t om_mission_objective_count(const om_world *w) {
  * deficit (deficit form, om_consequence_eval_delta_deficit). */
 void om_mission_resolve_refusal(om_world *w, uint32_t region_idx) {
     om_mission_state *st = om_mis(w);
+    om_gen_consequence_rearm(w);
     st->refused = 1;
     st->band = OM_MISSION_BAND_REFUSAL;
     st->band_set = 1;
