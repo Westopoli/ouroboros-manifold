@@ -283,6 +283,11 @@ typedef struct {
     uint32_t mission_chosen_region;
     uint32_t selector_input_region;
     int consequence_consumed;
+    uint32_t current_commander;
+    uint32_t current_lineage;
+    int32_t chosen_archetype;
+    int has_candidate;
+    int last_end_reason;
 } gen_state;
 
 /* ---- static helpers ---- */
@@ -406,6 +411,11 @@ static void gen_state_put(gen_sw *sw, const gen_state *gs) {
     gen_sw_u32(sw, gs->mission_chosen_region);
     gen_sw_u32(sw, gs->selector_input_region);
     gen_sw_u8(sw, (uint32_t)gs->consequence_consumed);
+    gen_sw_u32(sw, gs->current_commander);
+    gen_sw_u32(sw, gs->current_lineage);
+    gen_sw_i32(sw, gs->chosen_archetype);
+    gen_sw_u8(sw, (uint32_t)gs->has_candidate);
+    gen_sw_i32(sw, gs->last_end_reason);
 }
 
 typedef struct {
@@ -537,6 +547,11 @@ static void gen_state_get(gen_sr *sr, gen_state *gs) {
     gs->mission_chosen_region = gen_sr_u32(sr);
     gs->selector_input_region = gen_sr_u32(sr);
     gs->consequence_consumed = (int)gen_sr_flag(sr);
+    gs->current_commander = gen_sr_u32(sr);
+    gs->current_lineage = gen_sr_u32(sr);
+    gs->chosen_archetype = gen_sr_i32(sr);
+    gs->has_candidate = (int)gen_sr_flag(sr);
+    gs->last_end_reason = gen_sr_i32(sr);
 }
 
 /* A state nothing has written to (allocated lazily by any accessor, including
@@ -550,6 +565,7 @@ static int gen_state_pristine(const gen_state *gs) {
     if (gs->chapter_phase || gs->chapter_number || gs->needs_onboarding || gs->in_transition) return 0;
     if (gs->death_pass_count || gs->time_jump_lineage_gen_tick || gs->time_jump_death_tick) return 0;
     if (gs->mission_chosen_region || gs->selector_input_region || gs->consequence_consumed) return 0;
+    if (gs->current_commander || gs->current_lineage || gs->chosen_archetype || gs->has_candidate || gs->last_end_reason) return 0;
     for (uint32_t i = 0; i < OM_MAX_FACTIONS; i++)
         if (gs->supreme_commander[i] || gs->faction_fallen[i]) return 0;
     for (uint32_t i = 0; i < GEN_REGION_CAP; i++)
@@ -907,7 +923,12 @@ static uint32_t gen_resolve_candidate_for_pool(om_world *w, gen_state *gs, int p
         } else {
             uint32_t cid = om_selector_draw_unrelated(w, mission_region);
             gen_character *c = gen_char_find(gs, cid);
-            if (c) c->lineage_id = new_lineage_id;
+            if (c) {
+                /* R-058-04: one lineage per unrelated rotation; drop the one the draw minted. */
+                gen_lineage *stray = gen_lineage_find(gs, c->lineage_id);
+                if (stray && c->lineage_id != new_lineage_id) stray->used = 0;
+                c->lineage_id = new_lineage_id;
+            }
             return cid;
         }
     }
@@ -1251,7 +1272,33 @@ void om_character_selector_resolve_commander_death(om_world *w, uint32_t lineage
 
 void om_character_selector_run(om_world *w) {
     gen_state *gs = gen_get_state(w);
-    if (gs) gs->selector_input_region = gs->mission_chosen_region;
+    if (!gs) return;
+    uint32_t region = gs->mission_chosen_region;
+    gs->selector_input_region = region;
+    uint32_t had_commander = gs->current_commander;
+    om_selection_record rec;
+    om_debrief d;
+    if (had_commander == 0) {
+        int pool = om_selector_roll_pool(w, om_rng_draw(w));
+        om_character_selector_force_rotate(w, 0, region, GEN_REASON_FORCED, pool, &rec);
+    } else if (om_mission_get_debrief(w, &d) == 1 && d.commander_fate == 0) {
+        om_character_selector_resolve_commander_death(w, gs->current_lineage, region, &rec);
+    } else {
+        om_character_selector_run_for_lineage(w, gs->current_lineage, region, &rec);
+    }
+    if (rec.commander_id) gs->current_commander = rec.commander_id;
+    if (rec.rotated) {
+        gs->current_lineage = rec.new_lineage_id;
+    } else {
+        /* R-057-08, A17: a selection that keeps the lineage is one more chapter in it. */
+        gen_lineage *kept = gen_lineage_find(gs, gs->current_lineage);
+        if (kept) kept->chapter_count++;
+    }
+}
+
+uint32_t om_lineage_chapter_count(const om_world *w, uint32_t lineage_id) {
+    gen_lineage *l = gen_lineage_find(gen_get_state(w), lineage_id);
+    return l ? l->chapter_count : 0;
 }
 
 void om_character_selector_run_for_lineage(om_world *w, uint32_t lineage_id, uint32_t mission_region,
@@ -1483,21 +1530,46 @@ uint32_t om_mission_generator_chosen_region(const om_world *w) {
     return gs ? gs->mission_chosen_region : 0;
 }
 
+uint32_t om_campaign_commander(const om_world *w) {
+    gen_state *gs = gen_get_state(w);
+    return gs ? gs->current_commander : 0;
+}
+
+uint32_t om_campaign_lineage(const om_world *w) {
+    gen_state *gs = gen_get_state(w);
+    return gs ? gs->current_lineage : 0;
+}
+
+int om_chapter_last_end_reason(const om_world *w) {
+    gen_state *gs = gen_get_state(w);
+    return gs ? gs->last_end_reason : GEN_CHAPTER_END_NORMAL;
+}
+
+int32_t om_mission_generator_chosen_archetype(const om_world *w) {
+    gen_state *gs = gen_get_state(w);
+    return (gs && gs->has_candidate) ? gs->chosen_archetype : -1;
+}
+
 void om_mission_generator_run(om_world *w) {
     gen_state *gs = gen_get_state(w);
     if (!gs || !w) return;
+    for (uint32_t ri = 0; ri < om_region_count(w); ri++) om_mission_refresh_context(w, (int32_t)ri);
     om_mission_build_candidate_pool(w);
     uint32_t n = om_mission_candidates(w, NULL, UINT32_MAX);
     uint32_t chosen;
     if (n == 0) {
         /* Q-072-01 fallback: no candidate triggered anywhere. */
         chosen = om_mission_fallback_region(w);
+        gs->has_candidate = 0;
+        gs->chosen_archetype = -1;
     } else {
         uint32_t idx = om_mission_select(w);
         om_mission_candidate *pool = malloc((size_t)n * sizeof(*pool));
         if (!pool) return;
         om_mission_candidates(w, pool, n);
         chosen = pool[idx < n ? idx : 0].region_idx;
+        gs->chosen_archetype = (int32_t)pool[idx < n ? idx : 0].archetype;
+        gs->has_candidate = 1;
         free(pool);
     }
     gs->mission_chosen_region = chosen;
@@ -1821,6 +1893,14 @@ static int gen_time_jump(om_world *w, uint32_t n_ticks, om_time_jump_report *rep
     if (gs->chapter_phase == GEN_PHASE_MISSION) return 1;
     uint64_t start_tick = w->tick;
     uint32_t nr = w->n_regions < OM_MAX_REGIONS ? w->n_regions : OM_MAX_REGIONS;
+    /* Architect rulings 2 section 1.3: read once; the chronicle build below flips the flag. */
+    int post_mission = !opening && om_chronicle_has_mission_consequence_flag(w);
+    double start_eco[OM_MAX_REGIONS], start_mil[OM_MAX_REGIONS], start_ten[OM_MAX_REGIONS];
+    for (uint32_t r = 0; r < nr; r++) {
+        start_eco[r] = om_region_field(w, r, OM_F_ECONOMY);
+        start_mil[r] = om_region_field(w, r, OM_F_MILITARY);
+        start_ten[r] = om_region_field(w, r, OM_F_TENSION);
+    }
     int event_fired[OM_MAX_REGIONS];
     int32_t start_owner[OM_MAX_REGIONS], last_owner[OM_MAX_REGIONS];
     uint64_t change_tick[OM_MAX_REGIONS];
@@ -1940,7 +2020,17 @@ static int gen_time_jump(om_world *w, uint32_t n_ticks, om_time_jump_report *rep
             gen_lineage *ln = &gs->lineages[li];
             if (!ln->used) continue;
             uint32_t region = ln->n_history ? ln->history[ln->n_history - 1] : om_lineage_home_region(w, ln->id);
-            om_chronicle_add_lineage_event(w, ln->id, region, 0.0);
+            const char *lname = "";
+            for (uint32_t g = 0; g < n_chains; g++)
+                if (chains[g].region == region) { lname = om_event_template_name(w, chains[g].template_id); break; }
+            double d_eco = 0.0, d_mil = 0.0, d_ten = 0.0;
+            if (region < nr) {
+                d_eco = om_region_field(w, region, OM_F_ECONOMY) - start_eco[region];
+                d_mil = om_region_field(w, region, OM_F_MILITARY) - start_mil[region];
+                d_ten = om_region_field(w, region, OM_F_TENSION) - start_ten[region];
+            }
+            uint32_t lcat = om_chronicle_categorize_lineage_cluster(w, lname, d_eco, d_mil, d_ten);
+            om_chronicle_add_lineage_event(w, ln->id, region, lcat, 0.0);
             n_candidates++;
         }
         for (uint32_t r = 0; r < nr && n_candidates < OM_CHRONICLE_MIN_ENTRIES; r++) {
@@ -1951,6 +2041,33 @@ static int gen_time_jump(om_world *w, uint32_t n_ticks, om_time_jump_report *rep
         if (n_candidates == 0) om_chronicle_build_opening_scroll(w);
     }
     om_chronicle_assemble_with_seed(w, start_tick);
+
+    gs->last_end_reason = GEN_CHAPTER_END_NORMAL;
+    if (post_mission) {
+        om_debrief dbf;
+        if (om_player_faction_check_collapse(w, om_player_faction(w))) gs->last_end_reason = GEN_CHAPTER_END_FACTION_COLLAPSED;
+        else if (om_mission_get_debrief(w, &dbf) == 1 && dbf.commander_fate == 0) gs->last_end_reason = GEN_CHAPTER_END_COMMANDER_DEATH;
+    }
+    int terminal = 0;
+    if (gs->last_end_reason == GEN_CHAPTER_END_FACTION_COLLAPSED) {
+        /* A15: reassign before the generator, which needs a player faction that holds regions. */
+        int32_t old_pf = om_player_faction(w);
+        if (om_campaign_check_surviving_factions(w) == GEN_CAMPAIGN_NO_SURVIVING_FACTIONS) {
+            om_campaign_trigger_terminal_restart(w);
+            terminal = 1;
+        } else {
+            int32_t nf = om_player_faction_reassign_on_collapse(w, old_pf);
+            if (nf >= 0) {
+                if (old_pf >= 0) w->faction_archetype[old_pf] = OM_ARCH_DEFAULT;
+                w->faction_archetype[nf] = OM_ARCH_PLAYER;
+            }
+        }
+    }
+    if (!terminal) {
+        om_mission_generator_run(w);
+        if (opening || post_mission) om_character_selector_run(w);
+        if (post_mission) gs->chapter_number++;
+    }
 
     if (report) {
         memset(report, 0, sizeof(*report));

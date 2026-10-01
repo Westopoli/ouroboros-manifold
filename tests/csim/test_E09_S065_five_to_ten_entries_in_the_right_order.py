@@ -81,8 +81,8 @@ def test_R_065_03_every_lineage_cluster_included_regardless(lib, world_factory):
 
     lib.om_lineage_create(w, lineage_id=1, home_region=0)
     # Add lineage events in regions 1 and 2 with low scores
-    lib.om_chronicle_add_lineage_event(w, lineage_id=1, region_idx=1, score=1.0)
-    lib.om_chronicle_add_lineage_event(w, lineage_id=1, region_idx=2, score=1.2)
+    lib.om_chronicle_add_lineage_event(w, lineage_id=1, region_idx=1, category=4, score=1.0)
+    lib.om_chronicle_add_lineage_event(w, lineage_id=1, region_idx=2, category=4, score=1.2)
 
     # Add 10 non-lineage events with high scores (e.g. 10.0)
     for r in range(10):
