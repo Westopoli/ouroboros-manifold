@@ -219,14 +219,14 @@ def _span(res):
 def test_corridor_throughput_is_bounded_by_body_size():
     """SPEC 5.10 / README 6.2 choke: ten walkers from a 5-wide box (spacing 37.5, so they arrive at
     the channel mouth together) cannot leave a one-body-wide corridor faster than single file: from
-    the first exit to the last is at least 9 gaps * 29 / 7.5 = 34.8 ticks (asserted >= 33; the
-    brief's 10 * 30 / 150 = 2.0 s is the same bound with 10 bodies for 9 gaps and no tolerance:
-    40 ticks, which the 1.0 tolerance in the SPEC's own overlap definition does not support).
-    Red today: the soft build funnels them through overlapping, exits within about 18 ticks.
-    Note the channel cell is 50 wide and a body 30, so this also pins that the build keeps the
-    corridor single file (SPEC: 'a corridor one body wide')."""
+    the first exit to the last is bounded by body size. The channel cell is 50 wide and a body 30
+    across, so the 20 units of lateral room let a column stagger: consecutive bodies then sit
+    sqrt(30^2 - 20^2) = 22.4 apart along x (they still never touch: minimum pair distance 30.0), so
+    9 gaps * 22.4 / 7.5 = 26.8 ticks is the floor (asserted >= 25). A strict single file would need
+    9 * 29 / 7.5 = 34.8 ticks; that was this test's first bound and ignored the stagger (test defect
+    found by the sidestep builder: measured 31). Red with the soft build: exits within about 18 ticks."""
     span = _span(runmod.run(_corridor(1, start="box"), seed=0, trace=True))
-    assert span >= 33, "first to last exit took %d ticks, a single file of 10 bodies needs >= 34.8" % span
+    assert span >= 25, "first to last exit took %d ticks, a staggered column of 10 bodies needs >= 26.8" % span
 
 
 def test_corridor_overlapping_column_still_leaves_single_file():
