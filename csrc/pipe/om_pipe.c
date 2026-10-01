@@ -1581,6 +1581,11 @@ static void handle_command(const char *json) {
         int64_t target = -1;
         get_i64(json, "target", &target);
         ret = om_command_attack_target(W, unit_ids, (uint32_t)n_units, (uint32_t)target);
+    } else if (!strcmp(verb, "activate_ability")) {
+        double x = 0.0, y = 0.0;
+        get_f64(json, "x", &x);
+        get_f64(json, "y", &y);
+        ret = om_command_activate_ability(W, unit_ids, (uint32_t)n_units, x, y);
     } else if (!strcmp(verb, "hold")) {
         /* No om_command_hold symbol; only om_unit_order_hold_node(w, unit_id,
          * node_id), which needs a node this command frame doesn't carry.
