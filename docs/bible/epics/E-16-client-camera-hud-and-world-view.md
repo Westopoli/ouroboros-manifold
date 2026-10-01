@@ -153,7 +153,7 @@ Open flags: none new; references shared with E-08 and E-10.
 As a player, I want a main menu that sets the tone and a settings screen that covers the basics, so that the first thing I see is the game and the second is control.
 
 Rules
-- R-110-01  Given launch, When the main menu shows, Then the galaxy particle structure runs behind it at 70 percent opacity with an autonomous camera cycling six moods with 5 s transitions, and the menu offers New Campaign, Continue, Settings, and Quit.
+- R-110-01  Given launch, When the main menu shows, Then the galaxy particle structure runs behind it at 70 percent opacity with an autonomous camera cycling six moods with 5 s transitions, and the menu offers New Campaign, Continue, Era Library, Settings, and Quit, and nothing else.
 - R-110-02  Given Settings, When opened, Then it offers resolution, fullscreen, master and music volume, key rebinding for the layer modifier and control groups, and edge-scroll on or off; accessibility options (colorblind palette, UI scale) are a later story, not in the first playtest rounds.
 - R-110-03  Given Continue, When pressed with a save at a chapter boundary, Then the campaign resumes at that boundary.
 - R-110-04  Given any loading screen the game shows (campaign load, era switch), When displayed, Then it carries information the player would otherwise never see, in the register of the chronicle (what the Long Horizon foreshadows), never wallpaper art or a bare spinner [Q-110-03: what is shown]. No loading screen exists between mission and galaxy (S-108).

@@ -491,6 +491,9 @@ int32_t om_player_faction(const om_world *w) {
     return -1;
 }
 /* Thin alias for internal callers that pre-date the public accessor. */
+/* R-075-02: hold the zone for 10 minutes = 12,000 base ticks. */
+#define OM_MISSION_HOLD_ZONE_REQUIRED_TICKS 12000
+
 static int32_t om_mission_player_faction(const om_world *w) {
     return om_player_faction(w);
 }
@@ -627,9 +630,9 @@ static int om_mission_trigger_fires(const om_world *w, const om_mission_state *s
  * alg_constants.py's emitter never lands them in om_constants.h. */
 uint64_t om_archetype_base_time_ticks(uint32_t archetype) {
     if (archetype >= OM_MISSION_N_ARCHETYPES) return 0;
-    /* constants-table: docs/bible/algorithms.md ALG-56 (Q-076-01 answer a, minutes table, times 60 seconds/minute) */
+    /* constants-table: docs/bible/algorithms.md ALG-56 (Q-076-01 and Q-076-02: 30 to 60 minutes of battle time by archetype, times 60 seconds/minute) */
     static const double minutes[OM_MISSION_N_ARCHETYPES] = {
-        3.0, 4.5, 3.5, 4.0, 2.5, 4.5, 3.0, 2.5, 4.0, 3.0,
+        37.5, 60.0, 45.0, 52.5, 30.0, 60.0, 37.5, 30.0, 52.5, 37.5,
     };
     double ticks = minutes[archetype] * 60.0 * (double)OM_TACTICAL_TICK_RATE;
     /* end constants-table */
@@ -1151,10 +1154,7 @@ void om_mission_build_objectives(om_world *w, uint32_t archetype) {
 
     switch (kind) {
     case OM_MISSION_OBJ_HOLD_ZONE:
-        /* R-075-02's "required" is the mission's own time limit: hold the
-         * zone clear of the enemy for the mission's whole duration (see the
-         * report -- no rule states a separate hold quota). */
-        om_mission_setup_hold_zone(w, 0, om_mission_get_time_limit(w));
+        om_mission_setup_hold_zone(w, 0, OM_MISSION_HOLD_ZONE_REQUIRED_TICKS);
         break;
     case OM_MISSION_OBJ_ELIMINATE_FORCE: {
         int32_t player = om_mission_player_faction(w);
@@ -1494,6 +1494,15 @@ double om_mission_compute_urgency(const om_world *w, uint32_t region_idx, uint32
  * combat state (B10), not wired into om_mission_state -- so r defaults to
  * full retention (1.0) until that lands; om_mission_compute_retention is
  * already correct and ready for that wiring (see also: csrc/unit.c). */
+static uint32_t om_mission_main_commander(const om_world *w) {
+    uint32_t n = om_character_count(w);
+    for (uint32_t i = 0; i < n; i++) {
+        uint32_t id = om_character_id_at(w, i);
+        if (om_character_is_main_character(w, id)) return id;
+    }
+    return 0;
+}
+
 void om_mission_end(om_world *w) {
     om_mission_state *st = om_mis(w);
     st->tactical_ended = 1;
@@ -1511,6 +1520,9 @@ void om_mission_end(om_world *w) {
     if (st->mission_set && !st->end_applied) {
         st->end_applied = 1;
         om_mission_apply_consequences(w, st->mission_region, st->mission_archetype, st->band);
+        /* R-058-05 */
+        uint32_t commander = om_mission_main_commander(w);
+        if (commander != 0) om_mission_tag_rivals(w, st->mission_region, commander);
     }
 }
 
