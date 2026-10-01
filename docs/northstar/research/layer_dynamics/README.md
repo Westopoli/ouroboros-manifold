@@ -66,7 +66,7 @@ Rungs: R0 flat combat; R1 terrain, vision, transitions, every cross-layer knob; 
 | Range | 150 to 1,500 | Raider 200, Interceptor 250, Vanguard 300, Warden 350, Bombard 1,200, Bastion 800 | R0 | P1, P2 |
 | Speed | 30 to 200 | Raider 150, Interceptor 130, Vanguard 80, Warden 70, Bombard 50, Bastion 40 | R0 | P3, P4 |
 | Sensor radius | 300 to 1,000 | Raider 800, Interceptor 1,000, Vanguard 700, Warden 800, Bombard 300, Bastion 300 | R1 | P1 |
-| Layer transition time (s) | 0.5 to 6 | Raider 1.0, Interceptor 1.2, Vanguard 2.5, Warden 2.0, Bombard 4.0, Bastion 5.0 | R1 | P1, P4 |
+| Layer transition time (s), for a timed transfer; on a slope the time is length over speed | 0.5 to 6 | Raider 1.0, Interceptor 1.2, Vanguard 2.5, Warden 2.0, Bombard 4.0, Bastion 5.0 | R1 | P1, P4 |
 | Area radius | 0 to 300 | Bombard 150, all others 0 | R0 | P2, P3 |
 | Category (Strike, Line, Siege) | 3 values | Raider, Interceptor Strike; Vanguard, Warden Line; Bombard, Bastion Siege | R0 | P2, P4 |
 | Turn rate (rad/s) | 1 to 8 | Strike 6.0, Line 4.0, Siege 2.5, chosen by speed (Strike at 100 and above, Line at 60 and above) | R2 | P2 |
@@ -119,7 +119,7 @@ Terrain in this game is a binary mask, each layer open or blocked at each positi
 | lane | two blocks with an open channel between them, open on all five layers | funnels through the channel | flies over the blocks or uses the channel | a choke on the low layers that the high layers bypass |
 | ramp | a barrier with one slope up its face, joining layer h to layer h+1 | walks up the slope; below the midline only the lower layer can hit it, above it only the upper layer (E-01 R-004-06) | a flying unit flies over; a walking unit on the high ground comes down only by the slope | high ground with one way up for walking units: the midline is the line to hold, and the slope's length sets how long a climber is exposed |
 
-Block and wall differ only in shape (how long the detour is); barrier is the same wall made so long that there is no detour. Lane is two blocks facing each other. Ramp is the barrier with a slope. Each produces a different route decision; if two are not worth separate runs, merge them. No scenario in the table below uses a slope yet: the high-ground-with-a-ramp scenarios and their expected winners are still to be written.
+Block and wall differ only in shape (how long the detour is); barrier is the same wall made so long that there is no detour. Lane is two blocks facing each other. Ramp is the barrier with a slope. Each produces a different route decision; if two are not worth separate runs, merge them.
 
 ### Cross-layer rules (owner: the rule set; the unknowns the lab exists to find)
 
@@ -155,14 +155,16 @@ Each scenario carries an expected winner, stated before the run, from Westley's 
 | X7 | Each side has one fragile, slow, expensive unit with a burst ability; A screens it, B leaves it exposed to fast enemies | A, as a higher win rate across seeds, not a certain win | "A player that effectively protects them has a higher chance of winning" | win rate across seeds as screen radius varies against enemy speed; burst damage landed; cost lost |
 | X8 | A smaller than B, with layer advantage and concave; B a flat line | A, but only as far as the conditions carry it; the smallest count ratio at which A still wins is the measurement, not an assumption | "Organizing your units in specific patterns can lead to better engagements"; the E-01 promise that a smaller force that understands position beats a larger one | winner across count ratios; the ratio where it crosses 0.5 |
 | X9 | A smaller force with one costly seer against a larger force on layers it cannot see | A, same caveat as X8 | Westley, 2026-09-23 (`Q-E12-01`), not the 2026-09-30 prompt | winner; first-contact tick; unanswered-fire ticks |
+| X10 | Ramp preset, walking units on both sides: A holds the top of the slope, B climbs it; equal forces | A | "when units have a layer advantage, they can shoot without being shot back"; E-01 R-004-06: below the midline only the lower layer can hit a climber, above it only the upper layer | A's unanswered-fire ticks; win rate across slope length and count ratio; the slope length where it crosses 0.5 |
+| X11 | As X10 with flying units on both sides | none; the ramp binds only walking units, so B flies up in a timed transfer and meets A on its layer | E-01 R-001-07 | win rate near 0.5; set against X10 it shows what the movement kind does |
 
-Movement checks (the auto-transition ruling across a block, wall or barrier) have no expected winner. They expect an arrival: on layer 3 at the destination with the ruling on, stopped at the edge with it off.
+Movement checks have no expected winner. They expect an arrival or a time. The auto-transition ruling across a block, wall or barrier: a flying unit is on layer 3 at the destination with the ruling on and stopped at the edge with it off. A walking unit at a barrier with no slope does not cross. On a 600-unit slope a Raider takes 4.0 s and a Bastion 15.0 s (E-01 R-004-07). A unit that turns back before the midline has not changed layer (E-01 R-004-08).
 
 ### How the map is used
 
 The table is the lab's configuration surface and the axis list for §6. Each sweep picks one row as v, optionally one as w, and fixes every other row at the value the scenario states. The map is complete when every variable that the bible lets the player or the map change appears here; a variable that an experiment finds is missing is added in the same commit as the run that found it.
 
-Status: draft, awaiting Westley's confirmation before the toy build starts.
+Status: Westley told the build to go ahead on this map, 2026-09-30 ("continue with plan execution given the new rules/info"). The pass criterion in §6 stays proposed until he confirms it.
 
 ## 6. The "lines cross" hypothesis, stated testably
 
