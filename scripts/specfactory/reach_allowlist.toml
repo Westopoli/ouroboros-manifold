@@ -51,3 +51,7 @@ reason = "header comment calls it a 'Fixture setter (E-06/E-10): moves the tick 
 [[allow]]
 symbol = "om_tactical_step"
 reason = "already reachable as its own root (this lint always treats it as one), so this entry changes no verdict. Documents, per the gap-fix plan's Wave 0 item 3, that om_world_step's OM_FEAT_TACTICAL branch (csrc/sim.c ~206, 230, 547) calling om_tactical_step is a test-only path -- the live path is csrc/pipe/om_pipe.c's own dedicated tactical_step handler. seeded 2026-09-28, M0 to review."
+
+[[allow]]
+symbol = "om_lineage_chapter_count"
+reason = "test-observability accessor (Addendum 9 A21): the selector reads the counter in play through internal state (R-057-02, R-057-04); the getter exists for the A17 tests and no player-facing surface shows it."

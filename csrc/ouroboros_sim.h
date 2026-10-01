@@ -1197,7 +1197,9 @@ void om_chronicle_add_chain_event(om_world *w, int32_t chain_tag, uint32_t regio
 void om_chronicle_add_cluster_direct(om_world *w, uint32_t cluster_type, uint32_t category, double score);
 void om_chronicle_add_consequence_event(om_world *w, uint32_t region_idx, uint32_t outcome);
 void om_chronicle_add_event(om_world *w, uint32_t region_idx, double score);
-void om_chronicle_add_lineage_event(om_world *w, uint32_t lineage_id, uint32_t region_idx, double score);
+/* B6 (A1): category is the lineage cluster category the caller computed
+ * (om_chronicle_categorize_lineage_cluster, R-067-02); the cluster stores it. */
+void om_chronicle_add_lineage_event(om_world *w, uint32_t lineage_id, uint32_t region_idx, uint32_t category, double score);
 void om_chronicle_add_mock_entry(om_world *w, uint32_t entry_id, uint64_t start_tick, uint64_t end_tick);
 void om_chronicle_add_ownership_change_event(om_world *w, uint32_t region_idx, uint64_t tick);
 void om_chronicle_add_raw_entry(om_world *w, uint32_t entry_id, const char *text);
@@ -1394,6 +1396,11 @@ double om_zone_sample_interference(const om_world *w, double x, double y, uint32
 
 /* ---- generated from signatures.toml: generational.c ---- */
 int om_campaign_check_surviving_factions(const om_world *w);
+/* B6: character id of the current chapter's commander (the selector's latest
+ * pick), 0 before the first selection. */
+uint32_t om_campaign_commander(const om_world *w);
+/* B6: lineage id of that selection (R-057-09), 0 before the first selection. */
+uint32_t om_campaign_lineage(const om_world *w);
 int om_campaign_needs_onboarding(const om_world *w);
 uint32_t om_campaign_opening_jump_length(const om_world *w);
 void om_campaign_start(om_world *w, uint32_t chapter);
@@ -1401,6 +1408,12 @@ void om_campaign_trigger_terminal_restart(om_world *w);
 void om_chapter_advance_phase(om_world *w);
 int om_chapter_current_phase(const om_world *w);
 uint32_t om_chapter_get_number(const om_world *w);
+/* B6 (R-055-06, A14): the end reason the latest time jump carried, a
+ * GEN_CHAPTER_END_* value (0 normal, 1 commander death, 2 faction collapsed;
+ * collapse wins when both hold). Per jump: 0 when that jump ended no chapter
+ * (the opening jump and any retry jump), so it can read 0 after a jump that
+ * followed a chapter ending in collapse. 0 before any jump. */
+int om_chapter_last_end_reason(const om_world *w);
 int om_chapter_end_reason_for_collapse(const om_world *w, int32_t player_faction);
 int om_chapter_mission_realtime(const om_world *w);
 int om_chapter_recon_has_clock(const om_world *w);
@@ -1442,6 +1455,11 @@ void om_force_allocator_run(om_world *w, uint32_t mission_id, double budget);
 void om_force_set_surviving_units(om_world *w, uint32_t mission_id, uint32_t n_survivors);
 int om_ledger_commander_death_outcome_band(const om_world *w, uint32_t commander_id);
 uint32_t om_ledger_commander_death_region(const om_world *w, uint32_t commander_id);
+/* B6 (A17, R-057-08): chapters played in the lineage: 1 when the lineage is
+ * created, +1 on each later selection that keeps it (stay, or successor after
+ * the commander's death), once per selection; retry jumps add nothing. 0 for
+ * an unknown lineage. */
+uint32_t om_lineage_chapter_count(const om_world *w, uint32_t lineage_id);
 uint32_t om_lineage_count(const om_world *w);
 void om_lineage_create(om_world *w, uint32_t lineage_id, uint32_t home_region);
 int32_t om_lineage_first_member_region(const om_world *w, uint32_t lineage_id);
@@ -1455,6 +1473,8 @@ void om_lineage_set_chapter_count(om_world *w, uint32_t lineage_id, uint32_t cha
 uint32_t om_lineage_spawn_descendant_at_tick(om_world *w, uint32_t lineage_id, uint32_t parent_id, uint64_t tick);
 uint32_t om_lineage_spawn_single_descendant(om_world *w, uint32_t lineage_id);
 uint32_t om_mission_generator_chosen_region(const om_world *w);
+/* B6: archetype the generator drew with that region, -1 when it found no candidate. */
+int32_t om_mission_generator_chosen_archetype(const om_world *w);
 void om_mission_generator_run(om_world *w);
 void om_mission_tag_rivals(om_world *w, uint32_t mission_region, uint32_t commander_id);
 void om_onboarding_load_from_slot(const om_world *w, uint32_t slot_id, om_onboarding_config *out_cfg);
