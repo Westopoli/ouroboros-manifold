@@ -69,13 +69,15 @@ def tactical_frames():
         {"type": "cmd", "name": "step", "n": 10},
         {"type": "cmd", "name": "mission_start", "faction": 0},
         {"type": "cmd", "name": "mission_begin"},
-        {"type": "cmd", "name": "tactical_step", "n": 600},
+        {"type": "cmd", "name": "tactical_step", "n": 600, "full": True},
     ]
     frames = _run(cmds)
     tacticals = [f for f in frames if f["type"] == "tactical"]
-    # mission_begin itself writes one tactical frame (tick 0, before any
-    # tactical_step), then one more per tactical_step tick.
-    assert len(tacticals) == 601, "expected mission_begin's frame plus 600 tactical_step frames"
+    # A7: mission_begin writes one full frame (tick 0); a tactical_step with n > 1
+    # runs all n steps and writes only the last frame, full here because it is requested.
+    assert len(tacticals) == 2, "expected mission_begin's frame plus one frame for the 600-step call"
+    assert all(f["full"] for f in tacticals), "the distance read needs full frames (map, units)"
+    assert tacticals[-1]["tick"] == tacticals[0]["tick"] + 600, "the last frame is for step 600"
     return tacticals
 
 

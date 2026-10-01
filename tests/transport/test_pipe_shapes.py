@@ -166,8 +166,19 @@ def test_pipe_tactical_step_tick_advances_by_one_per_call():
     assert frames[2]["type"] == "tactical", "mission_begin answers the tactical frame: %r" % frames
     tac1, tac2 = frames[3], frames[4]
     assert tac1["type"] == "tactical" and tac2["type"] == "tactical", frames
-    assert _required_keys(schema) <= set(tac1)
-    _validate(tac1, schema)
+    full = frames[2]
+    assert full["full"] is True, "mission_begin writes a full frame (A7)"
+    assert _required_keys(schema) <= set(full)
+    _validate(full, schema)
+    # A7: a tactical_step frame is a delta; it carries no map and no units (the delta schema
+    # is the architecture.md "Delta frame" key list, tactical.schema.json describes full frames).
+    delta_keys = {"type", "tick", "mission_over", "band", "full", "units_changed", "units_removed", "visible"}
+    assert tac1["full"] is False, tac1
+    assert delta_keys <= set(tac1), "delta frame lacks keys: %r" % (delta_keys - set(tac1))
+    assert "map" not in tac1 and "units" not in tac1, tac1
+    unit_schema = schema["properties"]["units"]
+    _validate(tac1["units_changed"], unit_schema)
+    assert all(isinstance(i, int) for i in tac1["units_removed"])
     assert tac2["tick"] == tac1["tick"] + 1, frames
 
 
