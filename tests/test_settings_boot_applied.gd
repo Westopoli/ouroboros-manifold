@@ -1,9 +1,9 @@
 extends SceneTree
 
-# Piece C3-G5 (docs/northstar/plans/2026-09-28-gap-fix-and-migration-plan.md G5; E-16 R-110-02):
-# stored settings are applied at boot. Today autoload/ui_data_bus.gd only loads
-# user://settings.cfg into memory; the audio buses, window and tactical camera are
-# touched only when the Settings scene is opened and a control moved.
+# Piece C3-G5 (docs/northstar/plans/2026-09-28-gap-fix-and-migration-plan.md G5; E-16 R-110-02;
+# Architect ruling 2026-10-01 addendum 4 A10): stored settings are applied at boot. Today
+# autoload/ui_data_bus.gd only loads user://settings.cfg into memory; the audio buses and
+# the tactical camera are touched only when the Settings scene is opened and a control moved.
 #
 # The check boots a real child Godot process on a settings.cfg fixture (the fixture
 # lives in a throwaway XDG_DATA_HOME, never the player's user dir) and reads what the
@@ -12,13 +12,19 @@ extends SceneTree
 #
 #   audio  Master and Music bus volume_db follow master_volume / music_volume
 #          (linear_to_db(value / 100.0), the mapping scenes/settings/settings.gd uses).
-#   edge   the live tactical_c camera pans farther per second at edge_scroll_speed 3000
-#          than at 600, mouse at the viewport edge.
+#   edge   R-110-02 / Q-110-01: edge scroll is an on/off TOGGLE. Settings stores the boolean
+#          [camera] edge_scroll (default true); the live tactical_c camera edge-pans, mouse at
+#          the viewport edge, only when it is on. The speed slider is gone: the stored dict has
+#          no edge_scroll_speed, the Settings scene offers no speed slider, and a stale
+#          edge_scroll_speed key in the file does not change the pan (pan speed stays the
+#          A6 constant PAN_SPEED_PX).
+#   display  (desktop only) resolution and fullscreen at boot (window mode read before the first
+#          frame, size after it); read by
+#          tests/qa/desktop/test_settings_boot_display.py under a real Xvfb display, because
+#          the headless DisplayServer is a dummy and window mode and size do not read back.
 #
-# Not covered here: resolution and fullscreen. The headless DisplayServer is a dummy
-# (window mode and size do not read back), so those two need a desktop Xvfb QA test
-# (tests/qa/desktop); flagged for the Architect. R-110-02 asks for edge scroll "on or
-# off" while the stored key is edge_scroll_speed; this test pins speed only.
+# The correction note: the first version of this test pinned edge_scroll_speed (a speed
+# comparison); the rule wins over the stored key, so that assertion was replaced by the toggle.
 # Linux/XDG only (XDG_DATA_HOME redirects user://).
 
 const SCRIPT_PATH := "res://tests/test_settings_boot_applied.gd"
@@ -61,6 +67,9 @@ func _assert(cond: bool, msg: String) -> void:
 # ---- child ------------------------------------------------------------------
 
 func _probe(mode: String) -> void:
+	# Under Xvfb there is no window manager, so a fullscreen request reverts a frame after boot:
+	# the window mode is read before the first frame, the size after the boot settles.
+	var early_mode := DisplayServer.window_get_mode()
 	await process_frame
 	await process_frame
 	var out := {"mode": mode}
@@ -81,6 +90,12 @@ func _probe(mode: String) -> void:
 		view._pan_input(0.1)
 		var after: Vector2 = view.get("_camera")
 		out["moved"] = before.distance_to(after)
+	elif mode == "display":
+		for _i in 30:
+			await process_frame
+		out["window_mode"] = early_mode
+		out["window_size"] = [DisplayServer.window_get_size().x, DisplayServer.window_get_size().y]
+		out["screen_size"] = [DisplayServer.screen_get_size().x, DisplayServer.screen_get_size().y]
 	print("PROBE ", JSON.stringify(out))
 	quit(0)
 
@@ -131,16 +146,30 @@ func _run_tests() -> void:
 		_assert(absf(float(audio.get("music_db", 99.0)) - want_music) < 0.1,
 			"G5: Music bus is %s dB at boot, expected %.2f dB for music_volume 10" % [audio.get("music_db"), want_music])
 
-	var slow := _boot_child("[camera]\nedge_scroll_speed=600\n", "edge")
-	var fast := _boot_child("[camera]\nedge_scroll_speed=3000\n", "edge")
-	_assert(not slow.has("error") and not fast.has("error"),
-		"G5 edge: a child boot failed: %s / %s" % [slow.get("error", ""), fast.get("error", "")])
-	if not slow.has("error") and not fast.has("error"):
-		_assert(int((slow.get("stored", {}) as Dictionary).get("edge_scroll_speed", -1)) == 600
-			and int((fast.get("stored", {}) as Dictionary).get("edge_scroll_speed", -1)) == 3000,
-			"G5 control: the children did not load the edge_scroll_speed fixtures")
-		var s := float(slow.get("moved", 0.0))
-		var f := float(fast.get("moved", 0.0))
-		_assert(s > 0.0, "G5 control: the camera did not edge-pan at all at speed 600 (moved %s), so the comparison proves nothing" % s)
-		_assert(f > s, "G5: edge pan at stored speed 3000 (%s px) is not farther than at 600 (%s px): the tactical camera ignores edge_scroll_speed" % [f, s])
+	var off := _boot_child("[camera]\nedge_scroll=false\n", "edge")
+	var on := _boot_child("[camera]\nedge_scroll=true\n", "edge")
+	var stale := _boot_child("[camera]\nedge_scroll=true\nedge_scroll_speed=3000\n", "edge")
+	_assert(not off.has("error") and not on.has("error") and not stale.has("error"),
+		"G5 edge: a child boot failed: %s / %s / %s" % [off.get("error", ""), on.get("error", ""), stale.get("error", "")])
+	if not off.has("error") and not on.has("error") and not stale.has("error"):
+		var s_off: Dictionary = off.get("stored", {})
+		var s_on: Dictionary = on.get("stored", {})
+		_assert(s_off.get("edge_scroll", null) is bool and s_off.get("edge_scroll") == false
+			and s_on.get("edge_scroll", null) is bool and s_on.get("edge_scroll") == true,
+			"G5 control: Settings does not store edge scroll as a boolean (off fixture -> %s, on fixture -> %s)" % [s_off.get("edge_scroll", "<absent>"), s_on.get("edge_scroll", "<absent>")])
+		_assert(not s_on.has("edge_scroll_speed") and not (stale.get("stored", {}) as Dictionary).has("edge_scroll_speed"),
+			"G5: Settings still stores edge_scroll_speed; the speed slider is gone (R-110-02 is on/off)")
+		var m_on := float(on.get("moved", 0.0))
+		var m_off := float(off.get("moved", 0.0))
+		var m_stale := float(stale.get("moved", 0.0))
+		_assert(m_on > 0.0, "G5 control: the camera did not edge-pan with edge scroll on (moved %s), so the off case proves nothing" % m_on)
+		_assert(m_off == 0.0, "G5: the tactical camera edge-panned %s px with edge_scroll=false at boot; off must not pan" % m_off)
+		_assert(absf(m_stale - m_on) < 0.001,
+			"G5: a stale edge_scroll_speed changed the pan (%s px vs %s px); pan speed is the constant" % [m_stale, m_on])
+
+	var src := FileAccess.get_file_as_string("res://scenes/settings/settings.gd")
+	_assert(src != "", "cannot read scenes/settings/settings.gd")
+	_assert(src.find("Edge Scroll Speed") == -1 and src.find("edge_scroll_speed") == -1,
+		"G5: scenes/settings/settings.gd still offers the edge scroll speed slider")
+	_assert(src.find("Edge Scroll") != -1, "G5: scenes/settings/settings.gd has no Edge Scroll toggle")
 	_completed = true
