@@ -26,7 +26,7 @@
 
 #include <stdint.h>
 
-#define LL_ABI_VERSION     1u
+#define LL_ABI_VERSION     2u
 
 #define LL_LAYERS          5
 #define LL_TICKS_PER_SEC   20
@@ -194,6 +194,9 @@ typedef struct ll_result {
     int32_t first_shot_tick;         /* -1 none */
     int32_t first_contact_tick;      /* first tick a side saw an enemy; -1 none */
     int32_t unanswered_ticks[2];     /* ticks on which this side fired and the other side did not */
+    int32_t alive_ticks[2];
+    int32_t firing_ticks[2];
+    double  firing_weight[2];
     ll_unit_out unit[LL_MAX_UNITS];
 } ll_result;
 
@@ -202,7 +205,8 @@ typedef struct ll_trace_rec {        /* 20 bytes */
     float   x, y, hp;
     float   progress;                /* transition progress 0..1, 0 when not changing layer */
     uint8_t layer, side, alive, flags;   /* flags: bit0 changing layer, bit1 fired this tick,
-                                            bit2 on a slope, bit3 visible to the other side */
+                                            bit2 on a slope, bit3 visible to the other side,
+                                            bit4 can fire this tick */
 } ll_trace_rec;
 
 typedef struct ll_trace {
