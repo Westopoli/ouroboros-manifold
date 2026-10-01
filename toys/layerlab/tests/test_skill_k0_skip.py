@@ -13,13 +13,20 @@ Conventions the tests fix where SPEC 14.1 is silent (reported to the Architect):
   * A refinement point is a ratio the solver chose itself; if `build` raises for one, it is skipped the
     same way (not exercised here: every planted bracket lies below the build limit).
   * `short_scan` is asserted as a flag only; whether `valid` changes is not tested.
+
+Revised for SPEC 14.5 (test-defect fix, Architect-approved): the scripted `build` makes real group scenarios
+(one raider group per side, counts from the ratio, as test_skill_k0r.py does) because `rstar` now reports the
+cost ratio from the scenarios, and the scripted fight results carry alive_ticks, firing_ticks and heads. The
+default `win_margin` is 0.02 and would move the planted crossing from 2.5 to about 2.4333; these tests are
+about skipping, so the scripted `Script.run` passes `win_margin=0.0` unless a test gives its own.
 """
+import copy
 import importlib
 import math
-from types import SimpleNamespace
 
 import pytest
 
+from conftest import grp, make_scenario
 from layerlab import ffi, scenario
 
 rstarmod = importlib.import_module("layerlab.skill.rstar")
@@ -36,8 +43,24 @@ def base(r):
     return max(-0.8, min(0.8, (2.5 - r) * 0.3))
 
 
+class FakeFight:
+    """What a scripted run_fights returns: every field a FightResult carries (SPEC 14.5 item 3)."""
+
+    def __init__(self, margin, outcome, heads):
+        self.margin, self.raw_margin, self.outcome = margin, margin, outcome
+        self.ticks, self.contact, self.survivors, self.error = 100, True, (1, 1), None
+        self.first_contact_tick = 50
+        self.alive_ticks, self.firing_ticks, self.heads = (100, 100), (50, 50), tuple(heads)
+
+    def firing_per_head(self, label):
+        return self.firing_ticks[label] / self.heads[label] if self.heads[label] else 0.0
+
+
 class Script:
-    """A scripted `run_fights` and a `build` that raises ValueError when `unbuildable(ratio, swap)`.
+    """A scripted `run_fights` and a `build` that raises ValueError when `unbuildable(ratio, swap)`, else makes
+    a REAL scenario dict with groups: 8 skilled raiders against round(8 * ratio) naive raiders, the skilled
+    side on label B when swap is True. `run` passes `win_margin=0.0` unless the test gives one (see the
+    module docstring).
 
     skilled(ratio, seed, swap) -> the SKILLED side's margin; the fight's own A-minus-B margin is that on
     label A (swap False) and its negative on label B (swap True)."""
@@ -45,7 +68,7 @@ class Script:
     def __init__(self, monkeypatch, skilled, unbuildable):
         self.skilled, self.unbuildable = skilled, unbuildable
         self.seen = []            # (ratio, swap, seed) for every fight the solver asked for
-        self.built = {}           # id(scenario) -> scenario, to prove scenarios pass through untouched
+        self.built = {}           # id(scenario) -> (scenario, snapshot, ratio, swap), to prove scenarios pass through untouched
         self.build_calls = []     # (ratio, swap) for every build call, raising ones included
         monkeypatch.setattr(rstarmod, "run_fights", self.run_fights)
 
@@ -53,24 +76,27 @@ class Script:
         self.build_calls.append((ratio, swap))
         if self.unbuildable(ratio, swap):
             raise ValueError("ratio %g does not fit: %d units exceed LL_MAX_UNITS" % (ratio, 144))
-        scn = {"ratio": ratio, "swap": swap}
-        self.built[id(scn)] = scn
+        sk, nv = ("B", "A") if swap else ("A", "B")
+        scn = make_scenario([grp(sk, "raider", 1000, 1000, 3, count=8),
+                             grp(nv, "raider", 3000, 1000, 3, count=max(1, round(8 * ratio)))])
+        scn["groups"].sort(key=lambda g: g["side"])
+        self.built[id(scn)] = (scn, copy.deepcopy(scn), ratio, swap)
         return scn
 
     def run_fights(self, jobs, *args, **kwargs):
         out = []
         for scn, seed in jobs:
-            assert self.built.get(id(scn)) is scn and set(scn) == {"ratio", "swap"}, "scenario was altered"
-            r, sw = scn["ratio"], scn["swap"]
+            keep, snapshot, r, sw = self.built[id(scn)]
+            assert keep is scn and scn == snapshot, "scenario was altered"
             self.seen.append((r, sw, seed))
             m = self.skilled(r, seed, sw)
             m = -m if sw else m
-            out.append(SimpleNamespace(
-                margin=m, raw_margin=m, outcome="win_A" if m > 0 else "win_B", ticks=100,
-                first_contact_tick=50, contact=True, survivors=(1, 1), error=None))
+            n_nv = max(1, round(8 * r))
+            out.append(FakeFight(m, "win_A" if m > 0 else "win_B", (n_nv, 8) if sw else (8, n_nv)))
         return out
 
     def run(self, **kw):
+        kw.setdefault("win_margin", 0.0)
         return rstar(self.build, **kw)
 
     def ratios_run(self):
