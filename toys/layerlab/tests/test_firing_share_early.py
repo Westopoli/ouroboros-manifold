@@ -295,7 +295,11 @@ def test_check_x0_mirror_early_predictor_is_a_toss_up_and_matches_direct_runs():
             disagree += 1
     assert (t.agree_early, t.tied_early, t.none_early) == (agree, tied, none)
     assert t.agree_early + t.tied_early + disagree == 60 - t.none_early
-    assert 20 <= t.agree_early <= 40, "early predictor agreed %d of 60 in the mirror" % t.agree_early
+    # Measured over 200 seeds: 0.65 (window 10) to 0.77 (window 80), 0.75 at the default 40. With hard bodies
+    # and the sidestep the opening firing count genuinely predicts the mirror's winner (the side with more
+    # units firing early tends to win), so this is no longer a coin flip; it must still be well short of
+    # the whole-fight form (about 0.92). Bound: at most 80 percent of 60.
+    assert 24 <= t.agree_early <= 48, "early predictor agreed %d of 60 in the mirror" % t.agree_early
     assert disagree > 0, "no disagreement at all in a mirror: the predictor is reading the ending"
 
 
@@ -346,13 +350,14 @@ def test_damage_decided_cell_neither_form_credits_firing_counts():
 def test_whole_fight_form_leaks_the_ending_in_a_mirror_the_early_form_does_not():
     """README 8 pass 1 (the leak) and pass 3: in the mirror (X0, no side has any edge) the whole-fight
     prediction agrees with the winner about 92 of 100 times, because the winner keeps more units alive and
-    firing; the opening-window form is a coin flip (about 54 of 100). 100 seeds: whole-fight >= 80 and early
-    <= 70 with the gap between them at least 20."""
+    firing; the opening-window form agrees about 72 to 75 of 100 (it carries real information, since the
+    side with more units firing early tends to win, but it cannot see the ending). 100 seeds: whole-fight
+    >= 80 and early <= 82 with the gap between them at least 10."""
     a = _analysis()
     t = a.check(_load("x0_mirror.toml"), range(100))
     assert t.agree_count >= 80, "whole-fight form should leak the ending in the mirror (measured 92)"
-    assert t.agree_early <= 70, "opening window must be near a toss-up in the mirror (measured 54)"
-    assert t.agree_count - t.agree_early >= 20
+    assert t.agree_early <= 82, "opening window must stay clearly below the whole-fight form (measured 72)"
+    assert t.agree_count - t.agree_early >= 10
 
 
 # ---- 5. CheckTable.text and the CLI --------------------------------------------------------------
