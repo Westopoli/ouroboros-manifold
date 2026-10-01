@@ -2083,6 +2083,78 @@ void om_mission_set_revolt_events(om_world *w, uint32_t region_idx, uint32_t rec
     ctx->revolt_set = 1;
 }
 
+uint32_t om_mission_last_region(const om_world *w) {
+    const om_mission_state *st = om_mis_ro(w);
+    return st ? st->mission_region : 0;
+}
+
+/* R-072-02/03: fills the conflict and lineage inputs from world state. Revolt
+ * events and campaign preference have no persistent source, so they stay unset
+ * (chain term 0, preference default). Lineage archetype history is not exposed,
+ * so times_run is 0. */
+void om_mission_refresh_context(om_world *w, int32_t region) {
+    if (!w || region < 0 || (uint32_t)region >= w->n_regions || (uint32_t)region >= OM_MAX_REGIONS) return;
+    uint32_t r = (uint32_t)region;
+    int32_t player = om_mission_player_faction(w);
+
+    uint32_t attacks = 0;
+    double budget = 0.0;
+    om_telegraph tg[OM_MAX_REGIONS];
+    uint32_t nt = om_pending_telegraphs(w, tg, OM_MAX_REGIONS);
+    for (uint32_t i = 0; i < nt; i++) {
+        if (tg[i].target_idx != r) continue;
+        attacks++;
+        budget += tg[i].commit;
+    }
+
+    uint32_t lost = 0;
+    uint32_t neigh[OM_MAX_NEIGHBORS];
+    uint32_t n = om_region_neighbors(w, r, neigh, OM_MAX_NEIGHBORS);
+    if (n > OM_MAX_NEIGHBORS) n = OM_MAX_NEIGHBORS;
+    for (uint32_t i = 0; i < n; i++) {
+        int32_t owner = om_region_owner(w, neigh[i]);
+        if (owner >= 0 && owner != player && om_region_previous_owner(w, neigh[i]) == player) lost++;
+    }
+    om_mission_set_conflict_context(w, r, attacks, budget, lost);
+
+    double connection = 0.0;
+    uint32_t hops = OM_RELEVANCE_MAX_HOPS;
+    uint32_t nl = om_lineage_count(w);
+    if (nl > 0) {
+        uint32_t lid = om_lineage_id_at(w, nl - 1);
+        int in_history = 0;
+        for (uint32_t i = 0; om_lineage_history_region(w, lid, i) >= 0; i++) {
+            if (om_lineage_history_region(w, lid, i) == region) { in_history = 1; break; }
+        }
+        if (om_lineage_member_in_region(w, lid, r)) connection = 1.0;
+        else if (in_history) connection = 0.5;
+
+        int32_t home = om_lineage_history_region(w, lid, 0);
+        if (home >= 0 && (uint32_t)home < w->n_regions) {
+            uint8_t dist[OM_MAX_REGIONS];
+            uint32_t queue[OM_MAX_REGIONS];
+            for (uint32_t i = 0; i < w->n_regions; i++) dist[i] = 0xFF;
+            uint32_t head = 0, tail = 0;
+            dist[home] = 0;
+            queue[tail++] = (uint32_t)home;
+            while (head < tail) {
+                uint32_t cur = queue[head++];
+                if (cur == r) { hops = dist[cur]; break; }
+                if (dist[cur] >= OM_RELEVANCE_MAX_HOPS) continue;
+                uint32_t nb[OM_MAX_NEIGHBORS];
+                uint32_t k = om_region_neighbors(w, cur, nb, OM_MAX_NEIGHBORS);
+                if (k > OM_MAX_NEIGHBORS) k = OM_MAX_NEIGHBORS;
+                for (uint32_t j = 0; j < k; j++) {
+                    if (dist[nb[j]] != 0xFF) continue;
+                    dist[nb[j]] = (uint8_t)(dist[cur] + 1);
+                    queue[tail++] = nb[j];
+                }
+            }
+        }
+    }
+    om_mission_set_lineage_context(w, r, connection, hops, 0);
+}
+
 /* ALG-57 allocate_forces (simulation/force_allocator.py), run once when the
  * mission starts: enemy force from the region, the player's force at parity
  * (medium difficulty: the world carries no difficulty setting), shortfall at
