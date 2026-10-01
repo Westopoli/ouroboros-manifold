@@ -97,6 +97,8 @@ A rule set passes when its skill profile meets all of these across many sampled 
 5. Which map families count, and in what proportion.
 6. Whether the multiple is by cost or by headcount when unit types differ.
 
+Under review, 2026-10-01: the layer skill (S3). Westley accepted the draft list of plays for the other four skills ("Otherwise your list looks good") and raised a flaw in S3: with constant vision and equal range two forces just trade fire on sight, so the layers need an action from the player to be distinctive. His sketch is a targeted ping at a chosen layer and place. The question is `Q-005-03`; research is queue Q78. Until it is answered the lab's layer play is provisional.
+
 Settled 2026-10-01, the band arithmetic. Under the square law advantages multiply, so the size of one skill and the size of all five pin each other down. Offered: (a) small singles that multiply to 2x; (b) larger singles that saturate at 2x; (c) singles of about 30 percent and a higher ceiling. Westley: "I like C".
 
 The labels P1 to P4 in §5's tables are the earlier patterns: P1 (layer advantage) is now S3 and S4, P2 (the concave) is S2, P4 (the smaller force) is the target as a whole, and P3 (the protected fragile unit) waits until abilities are in scope.
