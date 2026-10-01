@@ -171,17 +171,31 @@ static void mount(ll_unit *u, const ll_slope *sl, int index, int dir) {
 enum { STEER_STAND = 0, STEER_TARGET = 1, STEER_MOUNTED = 2 };
 
 /* Chooses the point to steer toward: straight at the goal when the segment is clear, else down the flow
- * field. Starts a forced timed transfer or mounts a slope when the field says so (SPEC 5.10). */
-static int steer(ll_state *s, ll_unit *u, double gx, double gy, double *tx, double *ty) {
+ * field. Starts a forced timed transfer or mounts a slope when the field says so (SPEC 5.10). `olayer` is
+ * the layer the unit was ordered on, or 0 when it has none (a spawn transfer chose its layer for it). */
+static int steer(ll_state *s, ll_unit *u, int olayer, double gx, double gy, double *tx, double *ty) {
     const ll_terrain *t = s->ter;
     int wk = is_walker(u);
     for (int pass = 0; pass < 2; pass++) {
         int nl = u->xfer_to ? u->xfer_to : u->layer;
-        if (ll_segment_clear(t, u->x, u->y, gx, gy, nl, wk)) { *tx = gx; *ty = gy; return STEER_TARGET; }
+        int ol = olayer ? olayer : nl;
+        if (ll_segment_clear(t, u->x, u->y, gx, gy, nl, wk)) {
+            /* Past the obstacle that forced a change: the route ends on the ordered layer (SPEC 5.10 goal layer). */
+            int snapped0;
+            int gc0 = ll_goal_cell(t, gx, gy, ol, wk, &snapped0);
+            int gl0 = gc0 < 0 ? 0 : snapped0 ? ol : ll_goal_layer(t, gc0, ol, wk);
+            if (!wk && !u->xfer_to && gl0 && gl0 != nl && ll_segment_clear(t, u->x, u->y, gx, gy, gl0, 0)) {
+                begin_transfer(u, gl0);
+                continue;
+            }
+            *tx = gx; *ty = gy;
+            return STEER_TARGET;
+        }
         int snapped;
-        int gc = ll_goal_cell(t, gx, gy, nl, wk, &snapped);
+        int gc = ll_goal_cell(t, gx, gy, ol, wk, &snapped);
         if (gc < 0) return STEER_STAND;
-        const ll_field *f = ll_nav_field(s, gc, wk);
+        int gl = snapped ? ol : ll_goal_layer(t, gc, ol, wk);
+        const ll_field *f = gl ? ll_nav_field(s, gc, gl, u->type) : 0;
         int cell = ll_terrain_cell(t, u->x, u->y);
         double cost = f && cell >= 0 ? ll_field_cost(f, cell, nl) : LL_FAR;
         ll_step st = {0, 0, 0, -1};
@@ -223,13 +237,14 @@ static double edge_cost(const ll_terrain *t, const ll_field *f, const ll_slope *
 
 /* A unit on a slope re-chooses its goal each tick and heads for the edge with the cheaper cost-to-go
  * (ties keep the direction); with no goal it stops (SPEC 5.9). Returns the travel direction, 0 if stopped. */
-static int ride(ll_state *s, ll_unit *u, int have, double gx, double gy) {
+static int ride(ll_state *s, ll_unit *u, int olayer, int have, double gx, double gy) {
     const ll_terrain *t = s->ter;
     const ll_slope *sl = &t->slope[u->slope];
     if (!have) return 0;
-    int snapped;
-    int gc = ll_goal_cell(t, gx, gy, u->layer, 1, &snapped);
-    const ll_field *f = gc >= 0 ? ll_nav_field(s, gc, 1) : 0;
+    int snapped, ol = olayer ? olayer : u->layer;
+    int gc = ll_goal_cell(t, gx, gy, ol, 1, &snapped);
+    int gl = gc < 0 ? 0 : snapped ? ol : ll_goal_layer(t, gc, ol, 1);
+    const ll_field *f = gl ? ll_nav_field(s, gc, gl, u->type) : 0;
     if (f) {
         double cb = edge_cost(t, f, sl, 0), ct = edge_cost(t, f, sl, 1);
         if (ct < cb) u->slope_dir = 1;
@@ -262,10 +277,12 @@ void ll_move_units(ll_state *s) {
         if (!u->alive || u->winding) continue;
         double gx = 0.0, gy = 0.0;
         int have = pick_goal(s, u, px, py, &gx, &gy);
+        const ll_spawn *sp = &s->sc->spawns[i];
+        int olayer = sp->transfer_layer ? 0 : sp->layer;
 
         if (u->slope >= 0) {
             const ll_slope *sl = &ter->slope[u->slope];
-            int dir = ride(s, u, have, gx, gy);
+            int dir = ride(s, u, olayer, have, gx, gy);
             if (u->aim >= 0) turn_toward(u, px[u->aim] - u->x, py[u->aim] - u->y);
             else if (dir) turn_toward(u, sl->dx * (double)dir, sl->dy * (double)dir);
             continue;
@@ -273,7 +290,7 @@ void ll_move_units(ll_state *s) {
 
         double tx = 0.0, ty = 0.0, mdx = 0.0, mdy = 0.0;
         int steering = STEER_STAND;
-        if (have) steering = steer(s, u, gx, gy, &tx, &ty);
+        if (have) steering = steer(s, u, olayer, gx, gy, &tx, &ty);
         if (steering == STEER_TARGET) {
             mdx = tx - u->x; mdy = ty - u->y;
             double d = sqrt(mdx * mdx + mdy * mdy);
