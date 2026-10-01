@@ -1,0 +1,11 @@
+# X5: the range lever. As X4 (everything symmetric, 10 v 10 raiders, A on layer 4, B on 3, both
+# attack-moving), except that units firing DOWN one layer reach further than units firing UP:
+# rules.range_mult[3] (A shooting down) is the knob, rules.range_mult[5] (B shooting up) stays 1.0.
+# Pillar (Westley, 2026-09-30, README 6.1): what matters is how many units can get shots off.
+# Expected winner: A, by however many shots its extra reach buys before B closes the gap.
+# What decides how much that is: how far B has to walk through A's fire, so (range_mult[3] - 1)
+# * 200 units at B's speed 150; and whether B walks at all (see x5_range_advantage_hold.toml).
+extends = "x4_high_ground_both_answer.toml"
+
+[rules]
+range_mult = [0.0, 0.0, 0.0, 1.3, 1.0, 1.0, 0.0, 0.0, 0.0]

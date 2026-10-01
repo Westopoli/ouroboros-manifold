@@ -1,0 +1,29 @@
+# X5 (hold): as x5_range_advantage.toml, but B holds its position instead of attack-moving.
+# A stops at its own firing range from the nearest B unit; if that is beyond B's range (200),
+# B never fires. This is the "kiting" geometry and the one where range is a cliff: any
+# range_mult[3] above 1.0 puts A outside B's reach. Expected winner: A for any range_mult[3] > 1.
+extends = "x5_range_advantage.toml"
+
+[[groups]]
+side = "A"
+type = "raider"
+count = 10
+formation = "line"
+x = 1000.0
+y = 1000.0
+facing = 0.0
+layer = 4
+order = "attack_move"
+goal = [3000.0, 1000.0]
+
+[[groups]]
+side = "B"
+type = "raider"
+count = 10
+formation = "line"
+x = 3000.0
+y = 1000.0
+facing = 180.0
+layer = 3
+order = "hold"
+goal = [3000.0, 1000.0]

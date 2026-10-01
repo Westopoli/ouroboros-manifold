@@ -35,6 +35,7 @@ Rules
 - R-103-05  Given the Angle Rack, When the player enters it, Then five fixed vantage angles (top-down, 45° overhead, horizontal, 45° upward, unit POV) are hopped between by hotkey with a short tween, pan, zoom, and edge-scroll work inside each, and a home key returns to the classic view [Q-103-04: the keys].
 - R-103-06  Given the Layer Peel, When the player enables it (an option, off by default), Then the five layers fan apart around the focus point into translucent planes, scrolling walks focus between planes, the fan pans and zooms as one, and releasing closes the planes to true height; fog and cross-layer vision are untouched. The peel is a player option [Q-103-04: its default state, and whether the peel's plane focus and the layer strip's focus are one control].
 - R-103-07  Given any view, When the player presses the flip key, Then the camera turns 180 degrees about a center, keeping its pitch and distance, so a 45° view facing south becomes a 45° view facing north [Q-103-04: the key and the center it turns about].
+- R-103-08  Given a selection in the tactical view, When the player presses A and then left-clicks a point or a visible enemy, Then the selection attack-moves there; right-click alone is move (Westley 2026-10-01; the rest of the control scheme stays under Q-103-04).
 - R-103-04  Given the camera, When it moves, Then it is never bound to a layer; the layer strip changes focus, not the camera.
 
 Inputs: mouse, keyboard, edge scroll.

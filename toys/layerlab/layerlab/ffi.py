@@ -24,7 +24,7 @@ TARGET_NEAREST, TARGET_LOWEST_HP, TARGET_HIGHEST_COST = 0, 1, 2
 HALFWAY_BOTH, HALFWAY_RULE, HALFWAY_UNTARGETABLE = 0, 1, 2
 WIN_NONE, WIN_A, WIN_B, WIN_STALEMATE, WIN_CAP, WIN_MUTUAL = 0, 1, 2, 3, 4, 5
 
-ABI_VERSION = 1
+ABI_VERSION = 2
 
 d, i32, u8, f32 = C.c_double, C.c_int32, C.c_uint8, C.c_float
 
@@ -177,6 +177,9 @@ class ll_result(C.Structure):
         ("first_shot_tick", i32),
         ("first_contact_tick", i32),
         ("unanswered_ticks", i32 * 2),
+        ("alive_ticks", i32 * 2),
+        ("firing_ticks", i32 * 2),
+        ("firing_weight", d * 2),
         ("unit", ll_unit_out * MAX_UNITS),
     ]
 

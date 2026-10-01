@@ -229,6 +229,17 @@ int ll_run(const ll_scenario *sc, uint64_t seed, ll_result *out, ll_trace *trace
         ll_acquire(&s);                                       /* step 4 */
         ll_fire(&s);
         ll_burst_update(&s);
+        uint8_t can_fire[LL_MAX_UNITS];                       /* SPEC 5.11a: measurement only */
+        for (int i = 0; i < s.n; i++) {
+            const ll_unit *u = &s.u[i];
+            can_fire[i] = 0;
+            if (!u->alive) continue;
+            out->alive_ticks[u->side]++;
+            if (u->winding || u->target < 0) continue;
+            can_fire[i] = 1;
+            out->firing_ticks[u->side]++;
+            out->firing_weight[u->side] += sc->rules.category_mult[u->ty->category][s.u[u->target].ty->category];
+        }
         if (out->first_shot_tick < 0 && (s.fired_side[0] || s.fired_side[1])) {
             out->first_shot_tick = tick;
             out->first_shot_side = s.fired_side[0] ? 0 : 1;
@@ -257,7 +268,8 @@ int ll_run(const ll_scenario *sc, uint64_t seed, ll_result *out, ll_trace *trace
                 rec[i].side = (uint8_t)u->side;
                 rec[i].alive = (uint8_t)u->alive;
                 rec[i].flags = (uint8_t)((u->changing ? 1 : 0) | (u->fired ? 2 : 0) |
-                                         (u->slope >= 0 ? 4 : 0) | (s.sees[1 - u->side][i] ? 8 : 0));
+                                         (u->slope >= 0 ? 4 : 0) | (s.sees[1 - u->side][i] ? 8 : 0) |
+                                         (can_fire[i] ? 16 : 0));
             }
             trace->ticks_written++;
         }
