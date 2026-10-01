@@ -2,20 +2,16 @@ extends Control
 
 const SimSession := preload("res://autoload/sim_session.gd")
 
-# C transport v1 rebind (piece C4, leaf-01). load_frame()/qa_state()/
-# qa_plant() are the new entry point that consumes a mission frame
-# (docs/architecture.md "chronicle frame, mission frame, debrief frame")
-# instead of the legacy UIDataBus.get_mission_briefing() dict above. The
-# frame carries no names (C5 rule); marker_name is looked up from
-# _NODE_MARKER_NAMES, a client-side node id -> display name table, never
-# echoed straight from the frame's "node" field.
-const _NODE_MARKER_NAMES := {
-	3: "Ridge Point",
-	7: "Forward Camp",
-	12: "Hollow Crossing",
-}
-const _FALLBACK_MARKER_NAME := "Unmarked Position"
+# C transport v1 rebind (piece C4, leaf-01; A4-client). load_frame()/qa_state()/
+# qa_plant() consume a mission frame (docs/architecture.md "chronicle frame,
+# mission frame, debrief frame"). The frame carries no names (C5 rule): a
+# position name is derived from node and region through chronicle_names.gd,
+# never echoed from the frame's "node" field. "parity" is data, never rendered.
+const _FRAGMENTS_PATH := "res://library/chronicle/fragments.json"
+const _UNIT_NAMES := ["Raider", "Interceptor", "Vanguard", "Warden", "Bombard", "Bastion"]
 
+var _names = null
+var _frame_briefing: Dictionary = {}
 var _frame_archetype: int = 0
 var _frame_region: int = 0
 var _frame_deadline_ticks: int = 0
@@ -465,18 +461,19 @@ func _build_force_card(parent: Control) -> void:
 	parent.add_child(card)
 	var content = card.get_content_container()
 
-	var parity_bar = load("res://theme/components/tm_progress_bar.tscn").instantiate()
-	parity_bar.label_text = "FORCE PARITY"
-	parity_bar.show_label = true
-	parity_bar.show_value = true
-	parity_bar.value = force.get("parity_percentage", 0) / 100.0
-	parity_bar.max_display_value = 100.0
-	parity_bar.bar_color = ThemeConstants.INFO
-	content.add_child(parity_bar)
+	if force.has("parity_percentage"):
+		var parity_bar = load("res://theme/components/tm_progress_bar.tscn").instantiate()
+		parity_bar.label_text = "FORCE PARITY"
+		parity_bar.show_label = true
+		parity_bar.show_value = true
+		parity_bar.value = force.get("parity_percentage", 0) / 100.0
+		parity_bar.max_display_value = 100.0
+		parity_bar.bar_color = ThemeConstants.INFO
+		content.add_child(parity_bar)
 
-	var spacer := Control.new()
-	spacer.custom_minimum_size.y = 4
-	content.add_child(spacer)
+		var spacer := Control.new()
+		spacer.custom_minimum_size.y = 4
+		content.add_child(spacer)
 
 	var units: Array = force.get("units", [])
 	for unit in units:
@@ -747,6 +744,7 @@ func load_frame(mission: Dictionary) -> void:
 	_frame_deadline_ticks = int(mission.get("deadline_ticks", 0))
 	_frame_objectives = (mission.get("objectives", []) as Array).duplicate(true)
 	_frame_force = (mission.get("force", {}) as Dictionary).duplicate(true)
+	_frame_briefing = (mission.get("briefing", {}) as Dictionary).duplicate(true)
 	_apply_frame_to_data()
 	_clear_ui()
 	_build_ui()
@@ -790,9 +788,12 @@ func _apply_frame_to_data() -> void:
 		_data["generation"] = 0
 		_data["mission_title"] = ""
 		_data["mission_subtitle"] = ""
-		_data["situation_text"] = ""
+		var situation: String = str(_frame_briefing.get("situation", ""))
+		var assets: String = str(_frame_briefing.get("assets", ""))
+		_data["situation_text"] = (situation + "\n\n" + assets).strip_edges()
+		_data["objective"] = str(_frame_briefing.get("objective", ""))
 		_data["enemy_assessment"] = {}
-		_data["player_force"] = {}
+		_data["player_force"] = {"units": _roster_units()}
 		_data["region_state"] = {}
 		_data["commander_lineage"] = {}
 		_data["reinforcement_note"] = ""
@@ -847,7 +848,23 @@ func qa_plant(id: String) -> bool:
 			return false
 
 
+# Smallest derivation chronicle_names.gd supports: its region-name table indexed
+# by region + node, so the name moves with either (no node-and-region formula is pinned).
 func _marker_name_for_node(node: int) -> String:
 	if _plant_marker_from_frame:
 		return "Node %d" % node
-	return _NODE_MARKER_NAMES.get(node, _FALLBACK_MARKER_NAME)
+	if _names == null:
+		_names = load("res://scenes/world/chronicle_names.gd").new()
+		var data = JSON.parse_string(FileAccess.get_file_as_string(_FRAGMENTS_PATH))
+		if data is Dictionary:
+			_names.load_tables(data.get("name_tables", {}))
+	return _names.fill_template("{region_name}", _frame_region + maxi(node, 0), 0)
+
+
+func _roster_units() -> Array:
+	var units: Array = []
+	var counts: Array = _frame_force.get("types", [])
+	for i in mini(counts.size(), _UNIT_NAMES.size()):
+		if int(counts[i]) > 0:
+			units.append({"type_display_name": _UNIT_NAMES[i], "count": int(counts[i])})
+	return units
