@@ -19,7 +19,7 @@ _ORDER = {"hold": ffi.ORDER_HOLD, "move": ffi.ORDER_MOVE, "attack_move": ffi.ORD
 _POLICY = {"nearest": ffi.TARGET_NEAREST, "lowest_hp": ffi.TARGET_LOWEST_HP,
            "highest_cost": ffi.TARGET_HIGHEST_COST}
 _SIDE = {"A": 0, "B": 1}
-_GROUP_KEYS = {"side", "type", "count", "formation", "x", "y", "facing", "layer", "order", "goal",
+_GROUP_KEYS = {"side", "type", "count", "formation", "x", "y", "facing", "layer", "order", "goal", "goals",
                "pre_revealed", "transfer_layer", "transfer_tick", "pulse_tick", "target_policy", "spacing",
                "cols", "center", "R", "arc_deg", "screen_r"}
 _FORMATION_KEYS = ("cols", "center", "R", "arc_deg", "screen_r")
@@ -238,6 +238,11 @@ def to_c(scn):
             raise ValueError("%s: layer %d outside 1..%d" % (where, layer, ffi.LAYERS))
         ti = index[g["type"]]
         spacing = float(g["spacing"]) if "spacing" in g else 2.5 * sc.types[ti].body_radius
+        if "goal" in g and "goals" in g:
+            raise ValueError("%s: 'goal' and 'goals' together" % where)
+        goals = g.get("goals")
+        if goals is not None and len(goals) != count:
+            raise ValueError("%s: goals has %d entries for %d units" % (where, len(goals), count))
         gx, gy = g.get("goal", [g["x"], g["y"]])
         params = {k: g[k] for k in _FORMATION_KEYS if k in g}
         places = formations.place(g.get("formation", "line"), count, float(g["x"]), float(g["y"]),
@@ -247,6 +252,8 @@ def to_c(scn):
             _check_spawn(sc.terrain, sc.rules.spawn_jitter, "%s unit %d" % (where, k), x, y, layer, walker)
             s = sc.spawns[n]
             s.side, s.type, s.x, s.y, s.facing_deg, s.layer = side, ti, x, y, facing, layer
+            if goals is not None:
+                gx, gy = goals[k]
             s.order, s.gx, s.gy = order, float(gx), float(gy)
             s.pre_revealed = int(g.get("pre_revealed", 0))
             s.transfer_layer = int(g.get("transfer_layer", 0))
