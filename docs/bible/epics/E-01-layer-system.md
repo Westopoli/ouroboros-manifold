@@ -4,14 +4,14 @@
 
 | Check | Result |
 |---|---|
-| Every story has at least one Given/When/Then rule with concrete values | Yes, 11 stories, 63 rules. Rules that depend on an open flag cite it inline. |
+| Every story has at least one Given/When/Then rule with concrete values | Yes, 11 stories, 64 rules. Rules that depend on an open flag cite it inline. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. Every rejection behavior is settled. |
 | Every output listed with where it is observable | Yes, see Outputs. On-screen elevation is fixed globally (Q-E01-01). |
 | Implied-but-unstated behavior turned into flags | Yes; the flags still open are listed at the foot of this file. |
 | Every visible-surface story has a reference | **No — by design a Godot design phase, not a screenshot pull.** `references/E-01/notes.md` records the plan: basic single-layer movement ships first, then Claude builds several interactive layer-system options in Godot for Westley to choose between; the choice fills the references. Blocks S-009, S-010, S-006 until then. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** S-001, S-002 and S-003 are blocked on Q-001-04 (the edges of the terrain-forced layer change), S-004 on Q-004-04 (what the slope ruling leaves open), S-005 on Q-005-02 (is vision symmetric by layer distance), S-008 on Q-008-02 and Q-008-03 (the layer lab decides the cross-layer numbers), S-009 on Q-009-02, and S-009, S-010 and S-006 on references. Stories are Spec'd, not Ready.
+**Gate verdict: not passed.** S-001, S-002 and S-003 are blocked on Q-001-04 (the edges of the terrain-forced layer change), S-001 and S-004 on Q-004-05 (walking and flying units, land, slopes that span several layers), S-005 on Q-005-02 (is vision symmetric by layer distance), S-008 on Q-008-02 and Q-008-03 (the layer lab decides the cross-layer numbers), S-009 on Q-009-02, and S-009, S-010 and S-006 on references. Stories are Spec'd, not Ready.
 
 ## Purpose
 
@@ -36,7 +36,8 @@ Rules
 - R-001-03  Given a position where every layer is open, When any unit moves through it, Then no layer restriction applies.
 - R-001-04  Given any map generated for any era pack, When the map is queried for layer accessibility at every sampled position and layer, Then the answer is a binary open or blocked per layer, and the count of layers is the same for every position on that map.
 - R-001-05  Given a unit on layer L ordered to move to a destination where L is blocked but some layer M the unit may occupy is open, When no path to the destination exists on L [Q-001-04: whether a detour on L always wins], Then the unit paths to the nearest position from which M is open [Q-001-04: where the change happens], auto-transitions to M (S-004 duration and vulnerability apply), and continues to the destination on M; and Given a destination blocked on every layer the unit may occupy, When the order is issued, Then the unit paths as close as it can on its current layer and stops, with no layer change.
-- R-001-06  Given a map with a slope, When the slope is queried, Then it is a band of ground that joins two adjacent layers [Q-004-04: whether a slope may span more], with a bottom edge on the lower layer, a top edge on the upper layer, a length between them, and a midline halfway along that length; a unit moving along it passes from one layer to the other (S-004), and a terrain-forced change (R-001-05) between two layers a slope joins is made by walking that slope [Q-004-04: whether a unit may also change layer away from a slope where the ground is solid]. A map with no slopes, such as open space, has only timed transfers.
+- R-001-06  Given a map with a slope, When the slope is queried, Then it is a band of ground that joins two layers, adjacent or not (a slope may climb several layers), with a bottom edge on the lower layer, a top edge on the upper layer, a length between them, and a midline halfway along that length [Q-004-05: the cross-overs on a slope that spans more than two layers]; a unit moving along it passes from one layer to the other (S-004). A map with no slopes, such as open space, has only timed transfers.
+- R-001-07  Given a flying or swimming unit at a position where the target layer is open and nothing blocks it, When it is ordered or forced (R-001-05) to change layer, Then it makes a timed transfer there (S-004); and Given a walking unit, When it moves, Then it occupies only a layer that has land at its position, it changes layer only by walking a slope that joins the two layers, and it never changes layer in place or skips layers without ground under it; a terrain-forced change (R-001-05) for a walking unit is made by walking a slope [Q-004-05: which unit types walk, how the map marks land, and what a walking unit does with a hard transfer or a preference].
 
 Inputs: map layer accessibility mask (binary per layer per position); unit position; unit current layer.
 Outputs: unit path; unit position over time; layer accessibility query result.
@@ -79,18 +80,18 @@ Open flags: Q-001-04 (how a forced change meets a preference).
 As a commander, I want a layer change to cost time, set by the unit type for a transfer in the open and by the slope's length and my unit's speed on a slope, so that changing layers always exposes the unit and the halfway point of a slope is a line on the map I can read and hold.
 
 Rules
-- R-004-01  Given a Raider ordered from layer 3 to layer 4 at an open position away from any slope, When the transition starts, Then the unit is on layer 4 exactly one transition duration later, with the duration taken from the unit type's transition time [Q-004-01 for the confirmed numbers; current config: Raider 1.0 s, Interceptor 1.2 s, Vanguard 2.5 s, Warden 2.0 s, Bombard 4.0 s, Bastion 5.0 s].
-- R-004-02  Given a unit mid-transition, When a unit on its old layer would attack it, Then the attack may target it until the transition is halfway completed (half the duration for a timed transfer; the midline for a slope, R-004-06) and not after; and When a unit on its new layer would attack it, Then the attack may target it from the halfway point on and not before; whether either attacker sees it follows the normal cross-layer sensor rules (S-005); and the transitioning unit itself cannot attack [Q-004-04: whether that holds on a slope].
+- R-004-01  Given a Raider that flies or swims (R-001-07) ordered from layer 3 to layer 4 at an open position away from any slope, When the transition starts, Then the unit is on layer 4 exactly one transition duration later, with the duration taken from the unit type's transition time [Q-004-01 for the confirmed numbers; current config: Raider 1.0 s, Interceptor 1.2 s, Vanguard 2.5 s, Warden 2.0 s, Bombard 4.0 s, Bastion 5.0 s].
+- R-004-02  Given a unit mid-transition, When a unit on its old layer would attack it, Then the attack may target it until the transition is halfway completed (half the duration for a timed transfer; the midline for a slope, R-004-06) and not after; and When a unit on its new layer would attack it, Then the attack may target it from the halfway point on and not before; whether either attacker sees it follows the normal cross-layer sensor rules (S-005); and the transitioning unit itself may attack, in a timed transfer or on a slope, any target it can see under the cross-layer sensor rules (S-005) and may otherwise attack (S-008), and stops attacking a target the moment the transition takes its sight of that target away.
 - R-004-03  Given two units of different types ordered to the same layer at the same tick, When the faster type completes, Then the slower type is still mid-transition, and completion order always matches transition-time order.
 - R-004-04  Given a unit mid-transition, When a new hard transfer to another layer is issued, Then the unit completes the current transition first and the new transfer becomes pending.
 - R-004-05  Given the same seed and the same command stream, When the mission runs twice, Then every transition starts and ends on the same tick both times.
-- R-004-06  Given a unit on a slope that joins layers L and L+1, When it is at any point along the slope's length, Then its transition progress is its position along the slope, not a timer: below the midline, units on layer L may attack it and units on layer L+1 may not; at or above the midline, units on layer L+1 may attack it and units on layer L may not; the same holds going up or down.
+- R-004-06  Given a unit on a slope that joins layers L and L+1, When it is at any point along the slope's length, Then its transition progress is its position along the slope, not a timer: below the midline, units on layer L may attack it and units on layer L+1 may not; at or above the midline, units on layer L+1 may attack it and units on layer L may not; the same holds going up or down [Q-004-05: the same on a slope that spans more than two layers].
 - R-004-07  Given a slope 600 world units long, When a Raider (speed 150) and a Bastion (speed 40) each move along it without stopping, Then the Raider takes 4.0 seconds and the Bastion 15.0 seconds; on a slope 150 long they take 1.0 and 3.75 seconds; the unit type's transition time (R-004-01) plays no part on a slope.
-- R-004-08  Given a unit part-way along a slope, When the player orders it to stop or to move back the way it came, Then it stops or turns back; R-004-04's rule that a transition completes first applies only to timed transfers; a unit that leaves the slope by the edge it entered has not changed layer [Q-004-04: which layer it counts as being on while on the slope].
+- R-004-08  Given a unit part-way along a slope, When the player orders it to stop or to move back the way it came, Then it stops or turns back; R-004-04's rule that a transition completes first applies only to timed transfers; while on the slope the unit counts as being on the layer on its side of the midline, for its own sensing and for what may attack it, so a unit that turns back before the midline has not changed layer and one that crosses the midline and comes back has changed twice.
 
 Inputs: unit type transition time (per type, config); transition start tick; slope position, length and the two layers it joins (map); unit speed and position.
 Outputs: unit layer field; transitioning flag and progress in the tick delta; attack eligibility.
-Open flags: Q-004-04 (what the slope ruling leaves open).
+Open flags: Q-004-05 (unit movement kinds, land, slopes that span several layers, the layer of a unit in a timed transfer).
 
 ### S-005 — Seeing across layers is worse than seeing on your own
 As a commander, I want cross-layer vision to shrink with layer distance, so that a force on a layer I am not watching is a real threat.
@@ -202,7 +203,9 @@ Open flags: none. Launch scope: capability present, mask absent (A-294, A-321).
 | Modifier key | Player | Held or released | None |
 | Pulse | Player | Pulse-capable selected unit, cooldown ready | On cooldown or not capable: rejected |
 | Unit type transition time | Config | 1.0 to 5.0 s [Q-004-01] | Not player-issued |
-| Slopes | Map generator | Position, length, and the two adjacent layers joined [Q-004-04] | Not player-issued |
+| Slopes | Map generator | Position, length, and the layers joined, adjacent or not | Not player-issued |
+| Land per layer | Map generator | Where each layer has ground a walking unit can stand on [Q-004-05] | Not player-issued |
+| Unit movement kind | Roster or era pack [Q-004-05] | Walking, or flying or swimming | Not player-issued |
 | Sensor radius, vantage membership, interference intensity | Sim | Per unit, per position | Not player-issued |
 | Era restriction mask | Era pack | Per unit type, subset of layers, or absent | Malformed pack fails to load |
 
@@ -220,7 +223,8 @@ Open flags: none. Launch scope: capability present, mask absent (A-294, A-321).
 
 ## Invariants
 
-- A unit is on exactly one layer at every tick, including mid-transition (it is on its old layer until the transition completes).
+- A unit is on exactly one layer at every tick, including mid-transition: on a slope, the layer on its side of the midline; in a timed transfer, its old layer until the transfer completes [Q-004-05].
+- A walking unit never occupies a layer and position without land, and never changes layer except along a slope.
 - No unit ever occupies a position and layer the mask marks blocked.
 - Visible set is symmetric in rule, not in outcome: A sees B does not imply B sees A.
 - Same seed and command stream produce identical layer, visibility, and transition traces.
@@ -245,12 +249,14 @@ Numbers to be confirmed by Westley in Stage 3. Proposed: 1,000 units computing c
 - Blocked-layer path routes around on the wrong layer, or the unit auto-changes layer when its current layer was open at the destination.
 - Ring colors read from the render's last-known layer instead of the delta.
 - Cover blocks movement, or reduces damage, because a physics layer was reused.
+- A transitioning unit keeps firing at a target its transition has hidden from it, or is barred from firing at one it still sees.
+- A walking unit rises in place at a cliff edge like a flying one.
 - A unit on a slope runs its type's transition timer instead of reading its position, so the cross-over is a moment and not the midline; or a unit that turns back on a slope finishes the change anyway.
 - Layer count 5 in config with only 3 elevation bands, so layers 4 and 5 draw at layer 3's height.
 
 ## Open ambiguity flags
 
-Q-001-04, Q-004-04, Q-005-02, Q-008-02, Q-008-03, Q-009-02. Details in `docs/northstar/ambiguity_register.md`.
+Q-001-04, Q-004-05, Q-005-02, Q-008-02, Q-008-03, Q-009-02. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
