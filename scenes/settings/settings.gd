@@ -147,8 +147,8 @@ func _build_camera_card(parent: Control) -> void:
 	parent.add_child(card)
 	var content = card.get_content_container()
 
-	_add_slider(content, "Edge Scroll Speed", _settings.get("edge_scroll_speed", 1500) / 60.0, func(val: float) -> void:
-		_settings["edge_scroll_speed"] = int(val * 60.0)
+	_add_toggle(content, "Edge Scroll", _settings.get("edge_scroll", true), func(toggled: bool):
+		_settings["edge_scroll"] = toggled
 	)
 
 
