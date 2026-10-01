@@ -108,23 +108,16 @@ static const char *validate_spawn(const ll_scenario *sc, int i) {
     if (p->pulse_tick < -1) return "spawn: pulse_tick must be >= -1";
     if (p->target_policy < LL_TARGET_NEAREST || p->target_policy > LL_TARGET_HIGHEST_COST)
         return "spawn: target_policy out of range";
-    const ll_unit_type *ty = &sc->types[p->type];
-    if (ty->movement_kind == LL_MOVE_WALK)
-        return "unimplemented feature: walking units (movement_kind = LL_MOVE_WALK) arrive in rung R1";
-    if (p->transfer_layer != 0)
-        return "unimplemented feature: timed transfer (spawn.transfer_layer != 0) arrives in rung R1";
-    if (p->pulse_tick >= 0)
-        return "unimplemented feature: pulse (spawn.pulse_tick >= 0) arrives in rung R1";
-    if (ty->ability_kind != LL_ABILITY_NONE)
-        return "unimplemented feature: burst ability (ability_kind != NONE) arrives in rung R2";
     return 0;
 }
 
 static int validate(const ll_scenario *sc) {
     const char *e = validate_rules(&sc->rules);
     if (!e) e = ll_terrain_validate(&sc->terrain);
-    if (!e && sc->rules.cover_mode == 1 && sc->terrain.n_cover > 0)
-        e = "unimplemented feature: cover (cover_mode = 1 with n_cover > 0) arrives in rung R1";
+    /* Feature gates belong to the module that implements the feature. */
+    if (!e) e = ll_move_validate(sc);
+    if (!e) e = ll_vision_validate(sc);
+    if (!e) e = ll_combat_validate(sc);
     if (!e && (sc->n_types < 1 || sc->n_types > LL_MAX_TYPES)) e = "scenario: n_types out of range";
     if (!e && (sc->n_spawns < 0 || sc->n_spawns > LL_MAX_UNITS)) e = "scenario: n_spawns out of range";
     for (int i = 0; !e && i < sc->n_types; i++) e = validate_type(&sc->types[i]);
@@ -175,8 +168,10 @@ static int setup(ll_state *s, const ll_scenario *sc, uint64_t seed) {
         u->gx = p->gx;
         u->gy = p->gy;
         u->target = u->aim = u->chase = -1;
+        u->slope = -1;
+        u->xfer_ordered = p->transfer_layer;
         ll_face_init(u, p->facing_deg);
-        u->arc_gate = u->ty->arc_deg < 360.0;
+        u->arc_gate = sc->rules.facing_gates_fire && u->ty->arc_deg < 360.0;   /* SPEC 5.4, 5.12 */
         if (u->arc_gate) {
             double sn, cs;
             ll_sincos(u->ty->arc_deg * 0.5 * (LL_PI / 180.0), &sn, &cs);
@@ -211,6 +206,7 @@ int ll_run(const ll_scenario *sc, uint64_t seed, ll_result *out, ll_trace *trace
 
     ll_state s;
     if (setup(&s, sc, seed)) return 1;
+    if (ll_nav_init(&s)) return 1;
 
     double hp0[2] = {0.0, 0.0};
     for (int i = 0; i < s.n; i++) hp0[s.u[i].side] += s.u[i].hp0;
@@ -225,11 +221,25 @@ int ll_run(const ll_scenario *sc, uint64_t seed, ll_result *out, ll_trace *trace
             alive_start[s.u[i].side]++;
             s.u[i].cooldown -= LL_DT;
         }
-        ll_update_arrival(&s);                                /* step 2: layers never change in R0 */
-        if (ll_side_vision(&s) && out->first_contact_tick < 0) /* step 3 */
+        ll_layers_update(&s);                                 /* step 2: effective layers, transfers */
+        ll_update_arrival(&s);
+        ll_pulse_update(&s);                                  /* step 3: pulses, then vision */
+        if (ll_side_vision(&s) && out->first_contact_tick < 0)
             out->first_contact_tick = tick;
         ll_acquire(&s);                                       /* step 4 */
         ll_fire(&s);
+        ll_burst_update(&s);
+        uint8_t can_fire[LL_MAX_UNITS];                       /* SPEC 5.11a: measurement only */
+        for (int i = 0; i < s.n; i++) {
+            const ll_unit *u = &s.u[i];
+            can_fire[i] = 0;
+            if (!u->alive) continue;
+            out->alive_ticks[u->side]++;
+            if (u->winding || u->target < 0) continue;
+            can_fire[i] = 1;
+            out->firing_ticks[u->side]++;
+            out->firing_weight[u->side] += sc->rules.category_mult[u->ty->category][s.u[u->target].ty->category];
+        }
         if (out->first_shot_tick < 0 && (s.fired_side[0] || s.fired_side[1])) {
             out->first_shot_tick = tick;
             out->first_shot_side = s.fired_side[0] ? 0 : 1;
@@ -253,12 +263,13 @@ int ll_run(const ll_scenario *sc, uint64_t seed, ll_result *out, ll_trace *trace
                 rec[i].x = (float)u->x;
                 rec[i].y = (float)u->y;
                 rec[i].hp = (float)u->hp;
-                rec[i].progress = 0.0f;
+                rec[i].progress = (float)u->progress;
                 rec[i].layer = (uint8_t)u->layer;
                 rec[i].side = (uint8_t)u->side;
                 rec[i].alive = (uint8_t)u->alive;
                 rec[i].flags = (uint8_t)((u->changing ? 1 : 0) | (u->fired ? 2 : 0) |
-                                         (s.sees[1 - u->side][i] ? 8 : 0));
+                                         (u->slope >= 0 ? 4 : 0) | (s.sees[1 - u->side][i] ? 8 : 0) |
+                                         (can_fire[i] ? 16 : 0));
             }
             trace->ticks_written++;
         }
@@ -271,6 +282,7 @@ int ll_run(const ll_scenario *sc, uint64_t seed, ll_result *out, ll_trace *trace
         if (tick + 1 == max_ticks) { out->winner = LL_WIN_CAP; break; }
     }
 
+    ll_nav_free(&s);
     out->ticks = ran;
     double hp_left[2] = {0.0, 0.0};
     for (int i = 0; i < s.n; i++) {

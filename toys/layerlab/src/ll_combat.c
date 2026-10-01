@@ -1,5 +1,4 @@
-/* ll_combat.c -- acquisition (SPEC 5.4), fire and damage (5.5). The burst ability (5.6) is R2:
- * scenarios that use it are rejected at validation. */
+/* ll_combat.c -- acquisition (SPEC 5.4), fire and damage (5.5), the burst ability (5.6). */
 #include <math.h>
 #include <string.h>
 #include "ll_internal.h"
@@ -42,7 +41,7 @@ void ll_acquire(ll_state *s) {
     for (int i = 0; i < s->n; i++) {
         ll_unit *u = &s->u[i];
         u->target = u->aim = u->chase = -1;
-        if (!u->alive) continue;
+        if (!u->alive || u->winding) continue;                    /* a winding caster does not fire (SPEC 5.6) */
         if (u->order == LL_ORDER_MOVE && !u->arrived) continue;   /* does not acquire or fire */
         double dt_ = 0.0, da = 0.0, dc = 0.0;
         for (int j = 0; j < s->n; j++) {
@@ -133,4 +132,97 @@ int ll_apply_damage(ll_state *s) {
         }
     }
     return any;
+}
+
+/* ---- burst ability (SPEC 5.6) ---- */
+
+const char *ll_combat_validate(const ll_scenario *sc) {
+    for (int i = 0; i < sc->n_spawns; i++) {
+        const ll_spawn *p = &sc->spawns[i];
+        if (p->type < 0 || p->type >= sc->n_types) continue;   /* reported by the spawn check */
+        const ll_unit_type *t = &sc->types[p->type];
+        if (t->ability_kind != LL_ABILITY_BURST) continue;
+        if (t->ab_min_targets < 1) return "type: burst ab_min_targets must be >= 1";
+        if (!ll_finite(t->ab_radius) || !(t->ab_radius > 0.0)) return "type: burst ab_radius must be > 0";
+        if (!ll_finite(t->ab_windup_s) || t->ab_windup_s < 0.0) return "type: burst ab_windup_s must be >= 0";
+        if (!ll_finite(t->ab_cooldown_s) || t->ab_cooldown_s < 0.0) return "type: burst ab_cooldown_s must be >= 0";
+        if (!ll_finite(t->ab_dmg_mult)) return "type: burst ab_dmg_mult must be finite";
+    }
+    return 0;
+}
+
+static double xy_dist(double dx, double dy) { return sqrt(dx * dx + dy * dy); }
+
+/* Resolves the cast: every alive enemy within ab_radius of the locked centre takes
+ * dmg * ab_dmg_mult * aoe_layer_mult[off], no category multiplier, uncapped (s->direct). */
+static void burst_cast(ll_state *s, ll_unit *u) {
+    const ll_rules *r = s->rules;
+    for (int j = 0; j < s->n; j++) {
+        const ll_unit *e = &s->u[j];
+        if (!e->alive || e->side == u->side) continue;
+        if (xy_dist(e->x - u->ab_cx, e->y - u->ab_cy) > u->ty->ab_radius) continue;
+        int off;
+        if (!ll_eligible(s, u, e, &off)) continue;
+        if (!(r->aoe_layer_mult[off] > 0.0)) continue;
+        s->direct[j] += u->ty->dmg * u->ty->ab_dmg_mult * r->aoe_layer_mult[off];
+    }
+    s->shots[u->side]++;
+    s->fired_side[u->side]++;
+    u->fired = 1;
+    u->ab_cd = u->ty->ab_cooldown_s;
+    u->winding = 0;
+}
+
+/* Picks the cast centre: among visible, eligible enemies in range, the one with the most eligible
+ * visible enemies within ab_radius of it (ties nearest, then lowest index). Returns its index when
+ * the count reaches ab_min_targets, else -1. */
+static int burst_pick(const ll_state *s, const ll_unit *u) {
+    const ll_rules *r = s->rules;
+    int best = -1, best_n = 0;
+    double best_d = 0.0;
+    for (int j = 0; j < s->n; j++) {
+        const ll_unit *e = &s->u[j];
+        if (!e->alive || e->side == u->side) continue;
+        if (r->fire_requires_vision && !s->sees[u->side][j]) continue;
+        int off;
+        if (!ll_eligible(s, u, e, &off)) continue;
+        if (!(r->range_mult[off] > 0.0) || !(r->dmg_mult[off] > 0.0)) continue;
+        double d3 = ll_dist3(e->x - u->x, e->y - u->y, u->layer - e->layer, s->ter->layer_spacing);
+        if (d3 > u->ty->range * r->range_mult[off]) continue;
+        int n = 0;
+        for (int k = 0; k < s->n; k++) {
+            const ll_unit *f = &s->u[k];
+            if (!f->alive || f->side == u->side) continue;
+            if (r->fire_requires_vision && !s->sees[u->side][k]) continue;
+            int foff;
+            if (!ll_eligible(s, u, f, &foff)) continue;
+            if (!(r->aoe_layer_mult[foff] > 0.0)) continue;
+            if (xy_dist(f->x - e->x, f->y - e->y) <= u->ty->ab_radius) n++;
+        }
+        if (n > best_n || (n == best_n && n > 0 && d3 < best_d)) { best = j; best_n = n; best_d = d3; }
+    }
+    return best_n >= u->ty->ab_min_targets ? best : -1;
+}
+
+void ll_burst_update(ll_state *s) {
+    for (int i = 0; i < s->n; i++) {
+        ll_unit *u = &s->u[i];
+        if (u->ty->ability_kind != LL_ABILITY_BURST) continue;
+        if (!u->alive) { u->winding = 0; continue; }          /* died in its windup: no cast, no shot */
+        u->ab_cd -= LL_DT;
+        if (u->winding) {
+            u->ab_wind_left -= LL_DT;
+            if (u->ab_wind_left <= 0.0) burst_cast(s, u);
+            continue;
+        }
+        if (u->ab_cd > 0.0) continue;
+        if (u->order == LL_ORDER_MOVE && !u->arrived) continue;
+        int c = burst_pick(s, u);
+        if (c < 0) continue;
+        u->ab_cx = s->u[c].x;
+        u->ab_cy = s->u[c].y;
+        u->winding = 1;
+        u->ab_wind_left = u->ty->ab_windup_s;
+        if (u->ab_wind_left <= 0.0) burst_cast(s, u);
+    }
 }

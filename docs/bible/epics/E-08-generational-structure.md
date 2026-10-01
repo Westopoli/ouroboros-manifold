@@ -34,6 +34,7 @@ Rules
 - R-055-03  Given the mission resolves, When the outcome resolver applies its consequence bundle (E-10), Then those field changes land before the first tick of the time jump.
 - R-055-04  Given the time jump completes, When the mission generator runs, Then the character selector runs after it and reads the chosen mission region.
 - R-055-05  Given the campaign's first chapter, When the world is generated, Then an opening time jump runs before the first briefing and its chronicle shows 3 to 5 world entries only.
+- R-055-06  Given the chapter counter, When read, Then the campaign starts in chapter 1, the opening jump belongs to chapter 1 and does not advance it, and the counter advances by one at the end of each time jump that follows a mission (played or refused); a retry jump with no mission (E-10 R-072-07) never advances it. At the end of such a jump the order is: collapse check (S-062), mission generator, character selector (R-055-04), chapter advance.
 
 Inputs: mission outcome; world state.
 Outputs: chapter record (number, faction, character, start and end tick, end reason) in the save file.

@@ -1,0 +1,11 @@
+# X3: as X2, but B can see A (production 0.50 looking up) and cannot fire up.
+# Expected winner: A (B has sight and no way to answer). What differs from X2:
+#   rules.vis_factor[5] = 0.5 (B sees A out to 400); rules.range_mult[5] = 0 and
+#   rules.dmg_mult[5] = 0 (B cannot hit a unit one layer above it).
+extends = "x2_high_ground_blind.toml"
+
+[rules]
+vis_factor         = [0.0, 0.0, 0.2, 0.5, 1.0, 0.5, 0.2, 0.0, 0.0]
+range_mult         = [0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0]
+dmg_mult           = [0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0]
+aoe_layer_mult     = [0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0]
