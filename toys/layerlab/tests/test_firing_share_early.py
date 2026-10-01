@@ -327,22 +327,32 @@ def test_check_bad_window_raises_value_error(bad):
 
 # ---- 4. the cell where the whole-fight form misleads ---------------------------------------------
 
-def test_damage_decided_cell_whole_fight_reads_right_early_form_does_not():
-    """README 8 pass 1 (d = 0.8, equal counts): X4 with rules.dmg_mult[5] = 0.8 and 10 v 10, 20 seeds.
-    A wins all 20 on damage alone. The whole-fight form agrees 20 of 20, which reads "position
-    decided" when a damage number did. The opening-window form does not: README 8 has 7 of 15
-    decided runs right and the rest tied, so agree_early <= 10 here. This assertion documents the
-    leak of the whole-fight form: if agree_early climbs towards 20 the early form has started reading
-    the ending."""
+def test_damage_decided_cell_neither_form_credits_firing_counts():
+    """README 8 pass 1 and pass 3 (d = 0.8, equal counts): X4 with rules.dmg_mult[5] = 0.8 and 10 v 10.
+    A wins about 94 of 100 on damage alone, with the firing counts level. Neither prediction should read
+    that as "position decided": with hard bodies the whole-fight form agrees 42 of 100 and the opening
+    window 56 of 100 (6 tied), both chance level. (With soft, overlapping bodies the whole-fight form
+    agreed 20 of 20 here; that was an artifact of the old movement, see the mirror test below for the
+    leak that remains.)"""
     a = _analysis()
     scn = scenario.set_path(_load("x4_high_ground_both_answer.toml"), "rules.dmg_mult[5]", 0.8)
     scn = scenario.set_path(scn, "groups[1].count", 10)
-    t = a.check(scn, range(20))
-    assert t.wins_A == 20, "damage alone decides this cell (README 8): A wins 20 of 20"
-    assert t.agree_count == 20, "whole-fight form should read this as right (the leak)"
-    assert t.agree_early <= 10, ("early form agreed %d of 20; README 8 has 7 of 15 decided: the "
-                                 "whole-fight form leaks the ending, the early form must not" % t.agree_early)
-    assert t.agree_early < t.agree_count
+    t = a.check(scn, range(100))
+    assert t.wins_A >= 85, "damage alone decides this cell: A wins most of 100 (measured 94)"
+    assert t.agree_count <= 60, "whole-fight form must not read a damage-decided cell as firing-decided (measured 42)"
+    assert t.agree_early <= 70, "opening window must not either (measured 56 of 100)"
+
+
+def test_whole_fight_form_leaks_the_ending_in_a_mirror_the_early_form_does_not():
+    """README 8 pass 1 (the leak) and pass 3: in the mirror (X0, no side has any edge) the whole-fight
+    prediction agrees with the winner about 92 of 100 times, because the winner keeps more units alive and
+    firing; the opening-window form is a coin flip (about 54 of 100). 100 seeds: whole-fight >= 80 and early
+    <= 70 with the gap between them at least 20."""
+    a = _analysis()
+    t = a.check(_load("x0_mirror.toml"), range(100))
+    assert t.agree_count >= 80, "whole-fight form should leak the ending in the mirror (measured 92)"
+    assert t.agree_early <= 70, "opening window must be near a toss-up in the mirror (measured 54)"
+    assert t.agree_count - t.agree_early >= 20
 
 
 # ---- 5. CheckTable.text and the CLI --------------------------------------------------------------
