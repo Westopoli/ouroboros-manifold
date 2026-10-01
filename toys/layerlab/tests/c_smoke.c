@@ -77,6 +77,7 @@ static void build(ll_scenario *sc) {
             p->gx = side == 0 ? 3000 : 1000;
             p->gy = 1000;
             p->pulse_tick = -1;
+            p->ping_tick = -1;       /* test-defect fix 2026-10-01: zero means "ping at tick 0" since ABI 3 validates it */
             p->target_policy = LL_TARGET_NEAREST;
         }
     }
