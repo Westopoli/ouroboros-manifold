@@ -65,6 +65,9 @@
 
 #include "ouroboros_sim.h"
 
+/* Mirrors OM_SAVE_FORMAT_VERSION in om_internal.h (not visible to the pipe). */
+#define OM_PIPE_SAVE_FORMAT_VERSION 3
+
 /* csrc/generational.c GEN_PHASE_BRIEFING / GEN_PHASE_MISSION, not exported
  * by ouroboros_sim.h. See the file-header comment above. */
 #define OM_PIPE_CHAPTER_PHASE_BRIEFING 0
@@ -1917,7 +1920,7 @@ static void handle_save(const char *json) {
         jb_uint(&sj, g_n_regions);
         jb_putc(&sj, ',');
         jb_key(&sj, "format_version");
-        jb_uint(&sj, 1);
+        jb_uint(&sj, OM_PIPE_SAVE_FORMAT_VERSION);
         jb_putc(&sj, '}');
         fwrite(sj.buf, 1, sj.len, sf);
         fclose(sf);
