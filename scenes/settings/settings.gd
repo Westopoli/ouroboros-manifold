@@ -147,9 +147,9 @@ func _build_camera_card(parent: Control) -> void:
 	parent.add_child(card)
 	var content = card.get_content_container()
 
-	_add_toggle(content, "Edge Scroll", _settings.get("edge_scroll", true), func(toggled: bool):
-		_settings["edge_scroll"] = toggled
-	)
+	_add_slider(content, "Pan Speed", float(_settings.get("pan_speed", 1.0)), func(val: float) -> void:
+		_settings["pan_speed"] = val
+	, 0.5, 2.0, 0.1)
 
 
 func _build_audio_card(parent: Control) -> void:
@@ -247,7 +247,8 @@ func _add_toggle(parent: Control, label_text: String, initial: bool, callback: C
 	row.add_child(toggle)
 
 
-func _add_slider(parent: Control, label_text: String, initial: float, callback: Callable) -> void:
+func _add_slider(parent: Control, label_text: String, initial: float, callback: Callable, min_v := 0.0, max_v := 100.0, step := 1.0) -> void:
+	var pct := max_v == 100.0
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
 	parent.add_child(row)
@@ -261,15 +262,16 @@ func _add_slider(parent: Control, label_text: String, initial: float, callback: 
 	row.add_child(label)
 
 	var slider := HSlider.new()
-	slider.min_value = 0
-	slider.max_value = 100
+	slider.min_value = min_v
+	slider.max_value = max_v
+	slider.step = step
 	slider.value = initial
 	slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	slider.custom_minimum_size.x = 200
 	row.add_child(slider)
 
 	var val_label := Label.new()
-	val_label.text = "%d%%" % int(initial)
+	val_label.text = ("%d%%" % int(initial)) if pct else "%.1fx" % initial
 	val_label.add_theme_font_override("font", ThemeConstants.font_mono_regular)
 	val_label.add_theme_font_size_override("font_size", ThemeConstants.BODY_DATA_SIZE)
 	val_label.add_theme_color_override("font_color", ThemeConstants.PRIMARY)
@@ -277,7 +279,7 @@ func _add_slider(parent: Control, label_text: String, initial: float, callback: 
 	row.add_child(val_label)
 
 	slider.value_changed.connect(func(val: float):
-		val_label.text = "%d%%" % int(val)
+		val_label.text = ("%d%%" % int(val)) if pct else "%.1fx" % val
 		callback.call(val)
 	)
 
