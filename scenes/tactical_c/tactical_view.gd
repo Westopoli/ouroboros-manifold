@@ -145,12 +145,7 @@ func _update_hud() -> void:
 	_clock_label.text = "%02d:%02d" % [secs / 60, secs % 60]
 	var lines: Array[String] = []
 	var bridge = SimSession.bridge()
-	# mission_frame() is empty when this scene is mounted without the briefing
-	# (tests, QA); _session_mission always holds the running mission's frame.
-	# See also: autoload/c_bridge.gd -- needs a public accessor, owned elsewhere.
-	var mission: Dictionary = bridge.mission_frame()
-	if mission.is_empty():
-		mission = bridge.get("_session_mission")
+	var mission: Dictionary = bridge.mission()
 	for o in mission.get("objectives", []):
 		if bool(o.get("primary", true)):
 			lines.append("%s %d%%" % [HUD_OBJECTIVE_NAMES.get(int(o.get("kind", -1)), HUD_OBJECTIVE_FALLBACK),

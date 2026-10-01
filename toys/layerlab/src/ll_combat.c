@@ -42,6 +42,7 @@ void ll_acquire(ll_state *s) {
         ll_unit *u = &s->u[i];
         u->target = u->aim = u->chase = -1;
         if (!u->alive || u->winding) continue;                    /* a winding caster does not fire (SPEC 5.6) */
+        if (u->ty->dmg == 0.0 && u->ty->ability_kind == LL_ABILITY_NONE) continue;   /* a seer never acquires (SPEC 5.4) */
         if (u->order == LL_ORDER_MOVE && !u->arrived) continue;   /* does not acquire or fire */
         double dt_ = 0.0, da = 0.0, dc = 0.0;
         for (int j = 0; j < s->n; j++) {
