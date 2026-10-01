@@ -71,10 +71,10 @@
 #define OM_PIPE_CHAPTER_PHASE_MISSION 2
 /* csrc/mission.c OM_MISSION_BAND_REFUSAL, not exported by ouroboros_sim.h. */
 #define OM_PIPE_MISSION_BAND_REFUSAL 5
-/* Upper bound on unit slots scanned with om_unit_id_at, and on distinct
- * factions listed in a tactical frame's "visible". */
+/* Upper bound on unit slots scanned with om_unit_id_at. */
 #define OM_PIPE_UNIT_SCAN_MAX 1000000
-#define OM_PIPE_MAX_FACTION_KEYS 32
+/* docs/architecture.md tactical frame: a full frame every 20th step. */
+#define OM_PIPE_FULL_PERIOD 20
 /* OM_MAX_UNITS is now defined in csrc/ouroboros_sim.h (HDR3); no local mirror needed. */
 
 /* ---------------------------------------------------------------------
@@ -999,7 +999,24 @@ static void write_chronicle(uint64_t from_tick, uint64_t to_tick) {
 
 static uint32_t g_mission_archetype = 0;
 
-static void write_tactical(void) {
+typedef struct {
+    uint32_t id;
+    int32_t faction, type, layer, target;
+    double x, y, hp, facing;
+    uint64_t seen;
+} tac_unit;
+
+/* A7 delta-frame state: the unit values in the last tactical frame written,
+ * indexed by unit id, and the sim steps run since mission_begin. */
+static struct {
+    tac_unit *by_id;
+    uint32_t cap;
+    uint32_t *prev_ids;
+    uint32_t n_prev, cap_prev;
+    uint64_t serial, steps;
+} g_tac;
+
+static void write_tactical(int full) {
     jbuf j;
     jb_init(&j);
     jb_putc(&j, '{');
@@ -1022,162 +1039,212 @@ static void write_tactical(void) {
     jb_int(&j, om_mission_get_band(W));
     jb_putc(&j, ',');
 
-    jb_key(&j, "map");
-    jb_putc(&j, '{');
-    jb_key(&j, "canvas");
-    jb_double(&j, om_map_get_canvas_base_dimension(om_map_archetype_canvas_category(g_mission_archetype)));
+    jb_key(&j, "full");
+    jb_bool(&j, full);
     jb_putc(&j, ',');
-    jb_key(&j, "nodes");
+    jb_key(&j, "objectives");
     jb_putc(&j, '[');
     {
-        uint32_t n = om_map_get_node_count(W);
-        for (uint32_t i = 0; i < n; i++) {
-            if (i > 0) jb_putc(&j, ',');
-            om_vec2 pos;
-            memset(&pos, 0, sizeof pos);
-            om_map_get_node_pos(W, i, &pos);
+        om_objective_spec obuf[64];
+        uint32_t n = om_mission_get_objectives(W, obuf, 64);
+        if (n > 64) n = 64;
+        for (uint32_t k = 0; k < n; k++) {
+            if (k > 0) jb_putc(&j, ',');
             jb_putc(&j, '{');
             jb_key(&j, "i");
-            jb_uint(&j, i);
+            jb_uint(&j, obuf[k].id);
             jb_putc(&j, ',');
-            jb_key(&j, "kind");
-            jb_int(&j, om_map_get_node_type(W, i));
-            jb_putc(&j, ',');
-            jb_key(&j, "x");
-            jb_double(&j, pos.x);
-            jb_putc(&j, ',');
-            jb_key(&j, "y");
-            jb_double(&j, pos.y);
+            jb_key(&j, "progress");
+            jb_double(&j, obuf[k].completion);
             jb_putc(&j, '}');
         }
     }
     jb_raw(&j, "],");
-    jb_key(&j, "cover");
-    jb_putc(&j, '[');
-    {
-        uint32_t n = om_map_cover_count(W);
-        for (uint32_t i = 0; i < n; i++) {
-            double x = 0.0, y = 0.0, r = 0.0, h = 0.0;
-            if (!om_map_cover_at(W, i, &x, &y, &r, &h)) continue;
-            if (i > 0) jb_putc(&j, ',');
-            jb_putc(&j, '{');
-            jb_key(&j, "x");
-            jb_double(&j, x);
-            jb_putc(&j, ',');
-            jb_key(&j, "y");
-            jb_double(&j, y);
-            jb_putc(&j, ',');
-            jb_key(&j, "r");
-            jb_double(&j, r);
-            jb_putc(&j, ',');
-            jb_key(&j, "h");
-            jb_double(&j, h);
-            jb_putc(&j, '}');
-        }
-    }
-    jb_raw(&j, "],");
-    /* No accessor enumerates obstacles (om_map_add_obstacle only), so the
-     * list stays empty; see the file-header comment. */
-    jb_key(&j, "obstacles");
-    jb_raw(&j, "[]");
-    jb_putc(&j, '}');
-    jb_putc(&j, ',');
 
-    /* Units: om_unit_id_at scans the unit slots (0 for an unused one), so
-     * collect om_unit_count ids. "tier" and "state" have no accessor and are
-     * sent as 0. */
+    if (full) {
+        jb_key(&j, "map");
+        jb_putc(&j, '{');
+        jb_key(&j, "canvas");
+        jb_double(&j, om_map_get_canvas_base_dimension(om_map_archetype_canvas_category(g_mission_archetype)));
+        jb_putc(&j, ',');
+        jb_key(&j, "nodes");
+        jb_putc(&j, '[');
+        {
+            uint32_t n = om_map_get_node_count(W);
+            for (uint32_t i = 0; i < n; i++) {
+                if (i > 0) jb_putc(&j, ',');
+                om_vec2 pos;
+                memset(&pos, 0, sizeof pos);
+                om_map_get_node_pos(W, i, &pos);
+                jb_putc(&j, '{');
+                jb_key(&j, "i");
+                jb_uint(&j, i);
+                jb_putc(&j, ',');
+                jb_key(&j, "kind");
+                jb_int(&j, om_map_get_node_type(W, i));
+                jb_putc(&j, ',');
+                jb_key(&j, "x");
+                jb_double(&j, pos.x);
+                jb_putc(&j, ',');
+                jb_key(&j, "y");
+                jb_double(&j, pos.y);
+                jb_putc(&j, '}');
+            }
+        }
+        jb_raw(&j, "],");
+        jb_key(&j, "cover");
+        jb_putc(&j, '[');
+        {
+            uint32_t n = om_map_cover_count(W);
+            for (uint32_t i = 0; i < n; i++) {
+                double x = 0.0, y = 0.0, r = 0.0, h = 0.0;
+                if (!om_map_cover_at(W, i, &x, &y, &r, &h)) continue;
+                if (i > 0) jb_putc(&j, ',');
+                jb_putc(&j, '{');
+                jb_key(&j, "x");
+                jb_double(&j, x);
+                jb_putc(&j, ',');
+                jb_key(&j, "y");
+                jb_double(&j, y);
+                jb_putc(&j, ',');
+                jb_key(&j, "r");
+                jb_double(&j, r);
+                jb_putc(&j, ',');
+                jb_key(&j, "h");
+                jb_double(&j, h);
+                jb_putc(&j, '}');
+            }
+        }
+        jb_raw(&j, "],");
+        /* No accessor enumerates obstacles (om_map_add_obstacle only), so the
+         * list stays empty; see the file-header comment. */
+        jb_key(&j, "obstacles");
+        jb_raw(&j, "[]");
+        jb_putc(&j, '}');
+        jb_putc(&j, ',');
+
+    }
+
+    /* Live units only (a dead unit leaves full frames and shows once in the
+     * next delta's units_removed). "tier" and "state" have no accessor and
+     * are sent as 0. */
     uint32_t count = om_unit_count(W);
     uint32_t *ids = malloc(sizeof(uint32_t) * (count ? count : 1));
     uint32_t n_ids = 0;
+    uint32_t max_id = 0;
     for (uint32_t i = 0; n_ids < count && i < OM_PIPE_UNIT_SCAN_MAX; i++) {
         uint32_t id = om_unit_id_at(W, i);
-        if (id) ids[n_ids++] = id;
+        if (!id || !om_unit_alive(W, id)) continue;
+        ids[n_ids++] = id;
+        if (id > max_id) max_id = id;
     }
-    jb_key(&j, "units");
+    if (max_id >= g_tac.cap) {
+        uint32_t cap = max_id + 1024;
+        g_tac.by_id = realloc(g_tac.by_id, sizeof(tac_unit) * cap);
+        memset(g_tac.by_id + g_tac.cap, 0, sizeof(tac_unit) * (cap - g_tac.cap));
+        g_tac.cap = cap;
+    }
+    g_tac.serial++;
+    jb_key(&j, full ? "units" : "units_changed");
     jb_putc(&j, '[');
+    int wrote = 0;
     for (uint32_t k = 0; k < n_ids; k++) {
-        uint32_t id = ids[k];
-        double x = 0.0, y = 0.0;
-        om_unit_get_pos(W, id, &x, &y);
-        if (k > 0) jb_putc(&j, ',');
+        tac_unit cur;
+        memset(&cur, 0, sizeof cur);
+        cur.id = ids[k];
+        om_unit_get_pos(W, cur.id, &cur.x, &cur.y);
+        cur.faction = om_unit_get_faction(W, cur.id);
+        cur.type = om_unit_get_unit_type(W, cur.id);
+        cur.hp = om_unit_get_hp(W, cur.id);
+        cur.layer = om_unit_get_layer(W, cur.id);
+        cur.facing = om_unit_get_facing(W, cur.id);
+        cur.target = om_unit_target(W, cur.id);
+        tac_unit *old = &g_tac.by_id[cur.id];
+        int changed = full || !old->id || old->faction != cur.faction || old->type != cur.type ||
+                      old->layer != cur.layer || old->target != cur.target || old->x != cur.x ||
+                      old->y != cur.y || old->hp != cur.hp || old->facing != cur.facing;
+        cur.seen = g_tac.serial;
+        *old = cur;
+        if (!changed) continue;
+        if (wrote) jb_putc(&j, ',');
+        wrote = 1;
         jb_putc(&j, '{');
         jb_key(&j, "id");
-        jb_uint(&j, id);
+        jb_uint(&j, cur.id);
         jb_putc(&j, ',');
         jb_key(&j, "faction");
-        jb_int(&j, om_unit_get_faction(W, id));
+        jb_int(&j, cur.faction);
         jb_putc(&j, ',');
         jb_key(&j, "type");
-        jb_int(&j, om_unit_get_unit_type(W, id));
+        jb_int(&j, cur.type);
         jb_putc(&j, ',');
         jb_key(&j, "tier");
         jb_int(&j, 0);
         jb_putc(&j, ',');
         jb_key(&j, "x");
-        jb_double(&j, x);
+        jb_double(&j, cur.x);
         jb_putc(&j, ',');
         jb_key(&j, "y");
-        jb_double(&j, y);
+        jb_double(&j, cur.y);
         jb_putc(&j, ',');
         jb_key(&j, "hp");
-        jb_double(&j, om_unit_get_hp(W, id));
+        jb_double(&j, cur.hp);
         jb_putc(&j, ',');
         jb_key(&j, "layer");
-        jb_int(&j, om_unit_get_layer(W, id));
+        jb_int(&j, cur.layer);
         jb_putc(&j, ',');
         jb_key(&j, "facing");
-        jb_double(&j, om_unit_get_facing(W, id));
+        jb_double(&j, cur.facing);
         jb_putc(&j, ',');
         jb_key(&j, "target");
-        jb_int(&j, om_unit_target(W, id));
+        jb_int(&j, cur.target);
         jb_putc(&j, ',');
         jb_key(&j, "state");
         jb_int(&j, 0);
         jb_putc(&j, '}');
     }
     jb_raw(&j, "],");
-
-    /* visible[faction]: the unit ids that faction can see, for every faction
-     * that has units. */
-    jb_key(&j, "visible");
-    jb_putc(&j, '{');
-    {
-        int32_t seen[OM_PIPE_MAX_FACTION_KEYS];
-        uint32_t n_seen = 0;
-        for (uint32_t k = 0; k < n_ids; k++) {
-            int32_t f = om_unit_get_faction(W, ids[k]);
-            int known = 0;
-            for (uint32_t m = 0; m < n_seen; m++) {
-                if (seen[m] == f) known = 1;
-            }
-            if (!known && n_seen < OM_PIPE_MAX_FACTION_KEYS) seen[n_seen++] = f;
-        }
-        for (uint32_t a = 1; a < n_seen; a++) {
-            int32_t key = seen[a];
-            uint32_t b = a;
-            while (b > 0 && seen[b - 1] > key) {
-                seen[b] = seen[b - 1];
-                b--;
-            }
-            seen[b] = key;
-        }
-        for (uint32_t m = 0; m < n_seen; m++) {
-            if (m > 0) jb_putc(&j, ',');
-            char key[16];
-            snprintf(key, sizeof key, "%d", (int)seen[m]);
-            jb_key(&j, key);
-            jb_putc(&j, '[');
-            int first = 1;
-            for (uint32_t k = 0; k < n_ids; k++) {
-                if (!om_player_can_see_unit(W, seen[m], ids[k])) continue;
-                if (!first) jb_putc(&j, ',');
-                first = 0;
-                jb_uint(&j, ids[k]);
-            }
-            jb_putc(&j, ']');
-        }
+    if (!full) {
+        jb_key(&j, "units_removed");
+        jb_putc(&j, '[');
+        wrote = 0;
     }
-    jb_putc(&j, '}');
+    for (uint32_t k = 0; k < g_tac.n_prev; k++) {
+        uint32_t id = g_tac.prev_ids[k];
+        if (g_tac.by_id[id].seen == g_tac.serial) continue;
+        g_tac.by_id[id].id = 0;
+        if (full) continue;
+        if (wrote) jb_putc(&j, ',');
+        wrote = 1;
+        jb_uint(&j, id);
+    }
+    if (!full) jb_raw(&j, "],");
+    if (n_ids > g_tac.cap_prev) {
+        g_tac.prev_ids = realloc(g_tac.prev_ids, sizeof(uint32_t) * n_ids);
+        g_tac.cap_prev = n_ids;
+    }
+    memcpy(g_tac.prev_ids, ids, sizeof(uint32_t) * n_ids);
+    g_tac.n_prev = n_ids;
+
+    /* visible: the player's faction only, the complete id list each frame. */
+    {
+        int32_t player = om_player_faction(W);
+        char key[16];
+        snprintf(key, sizeof key, "%d", (int)player);
+        jb_key(&j, "visible");
+        jb_putc(&j, '{');
+        jb_key(&j, key);
+        jb_putc(&j, '[');
+        int first = 1;
+        for (uint32_t k = 0; k < n_ids; k++) {
+            if (!om_player_can_see_unit(W, player, ids[k])) continue;
+            if (!first) jb_putc(&j, ',');
+            first = 0;
+            jb_uint(&j, ids[k]);
+        }
+        jb_putc(&j, ']');
+        jb_putc(&j, '}');
+    }
     jb_putc(&j, '}');
     free(ids);
     write_frame(j.buf, (uint32_t)j.len);
@@ -1486,7 +1553,9 @@ static void handle_mission_begin(void) {
         return;
     }
     om_mission_begin(W);
-    write_tactical();
+    g_tac.steps = 0;
+    g_tac.n_prev = 0;
+    write_tactical(1);
 }
 
 static int mission_refused(void) {
@@ -1542,11 +1611,16 @@ static void handle_tactical_step(const char *json) {
     }
     int64_t n = 1;
     get_i64(json, "n", &n);
+    int want_full = 0;
+    get_bool(json, "full", &want_full);
+    uint64_t before = g_tac.steps;
     for (int64_t i = 0; i < n; i++) {
         om_tactical_step(W);
         g_tactical_tick++;
-        write_tactical();
+        g_tac.steps++;
     }
+    if (n < 0) return;
+    write_tactical(want_full || n == 0 || g_tac.steps / OM_PIPE_FULL_PERIOD > before / OM_PIPE_FULL_PERIOD);
 }
 
 static void handle_jump(const char *json) {
@@ -1957,6 +2031,7 @@ int main(void) {
                 write_error("snapshot", "no world");
             } else {
                 write_snapshot();
+                if (om_chapter_mission_realtime(W) && om_mission_is_started(W)) write_tactical(1);
             }
         } else if (!strcmp(name, "set_seed")) {
             handle_set_seed(buf);
