@@ -393,6 +393,9 @@ static void write_snapshot(void) {
     jb_key(&j, "commander");
     jb_uint(&j, om_campaign_commander(W));
     jb_putc(&j, ',');
+    jb_key(&j, "lineage");
+    jb_uint(&j, om_campaign_lineage(W));
+    jb_putc(&j, ',');
     jb_key(&j, "checksum");
     jb_uint(&j, om_world_get_state_checksum(W));
     jb_putc(&j, ',');
