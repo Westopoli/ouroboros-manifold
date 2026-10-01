@@ -19,7 +19,11 @@ extends SceneTree
 #     by each of the five scenes: the ErrorPanel node is that scene's root or lies inside an
 #     instance of it (checked by scene_file_path up the parent chain)
 # The failure is injected with FailBridge, a c_bridge.gd subclass whose live loads
-# refuse, installed as SimSession's bridge (no seam in the scenes is needed). One
+# refuse, installed as SimSession's bridge (no seam in the scenes is needed). The debrief
+# no longer loads anything (A39/A44): its failure case is NoFrameBridge, a bridge that holds
+# no debrief frame (and reports REASON as its last_error, as after a failed mission_end);
+# Retry re-reads the held frame (attempts counts debrief_frame() reads), and its healthy
+# control is a bridge holding the frame of a mission ended through it. One
 # scene (briefing) is also failed for real, by killing the pipe process. Every scene
 # has a positive control on a healthy real pipe: no panel.
 
@@ -66,6 +70,18 @@ class FailBridge:
 
 	func load_tactical_live(_s, _n, _f) -> bool:
 		return _refuse()
+
+
+class NoFrameBridge:
+	extends "res://autoload/c_bridge.gd"
+	var attempts := 0
+
+	func _init() -> void:
+		_last_error = "pipe exploded (test reason 7731)"
+
+	func debrief_frame() -> Dictionary:
+		attempts += 1
+		return {}
 
 
 func _initialize() -> void:
@@ -146,7 +162,7 @@ func _run_tests() -> void:
 
 
 func _test_failure_shows_panel(scene_name: String) -> void:
-	var fb := FailBridge.new()
+	var fb = NoFrameBridge.new() if scene_name == "debrief" else FailBridge.new()
 	_session().reset()
 	_session()._bridge = fb
 	var scene := await _mount(scene_name)
@@ -156,7 +172,7 @@ func _test_failure_shows_panel(scene_name: String) -> void:
 	_assert(panel != null, "%s: no ErrorPanel node after a refused live load (blank scene plus push_error)" % tag)
 	_assert(_panel_showing(scene), "%s: ErrorPanel exists but is not visible" % tag)
 	_assert(_qa_flag(scene), "%s: qa_state()['error_panel'] is not true while the panel shows" % tag)
-	_assert(fb.attempts >= 1, "control %s: the scene never attempted the live load" % tag)
+	_assert(fb.attempts >= 1, "control %s: the scene never attempted the %s" % [tag, "read of the held frame" if scene_name == "debrief" else "live load"])
 	_assert(ResourceLoader.exists(SHARED_PANEL), "%s: %s does not exist" % [tag, SHARED_PANEL])
 	if panel != null:
 		_assert(_is_shared_instance(panel, scene),
@@ -169,11 +185,11 @@ func _test_failure_shows_panel(scene_name: String) -> void:
 		_assert(retry is Button and not (retry as Button).disabled, "%s: no enabled Retry button" % tag)
 		_assert(back is Button and not (back as Button).disabled, "%s: no enabled MainMenu button" % tag)
 		if retry is Button:
-			var before := fb.attempts
+			var before: int = fb.attempts
 			(retry as Button).pressed.emit()
 			await process_frame
 			await process_frame
-			_assert(fb.attempts > before, "%s: Retry did not run the live load again" % tag)
+			_assert(fb.attempts > before, "%s: Retry did not run the %s again" % [tag, "read of the held frame" if scene_name == "debrief" else "live load"])
 			_assert(_panel_showing(scene), "%s: panel vanished after Retry although the pipe is still failing" % tag)
 		if back is Button and _router() != null:
 			_router().set("_current_scene_name", "")
@@ -188,6 +204,16 @@ func _test_failure_shows_panel(scene_name: String) -> void:
 
 func _test_healthy_pipe_has_no_panel(scene_name: String) -> void:
 	_session().reset()
+	if scene_name == "debrief":
+		var held = _session().bridge()
+		_assert(held.load_mission_live(1, CBridge.DEFAULT_N_REGIONS, CBridge.DEFAULT_FEATURES),
+			"G2 control debrief setup: load_mission_live failed: %s" % held.last_error())
+		held.send_command({"type": "cmd", "name": "mission_end"})
+		var deadline := Time.get_ticks_msec() + 5000
+		while held.debrief_frame().is_empty() and Time.get_ticks_msec() < deadline:
+			if held.pump() == 0:
+				OS.delay_msec(5)
+		_assert(not held.debrief_frame().is_empty(), "G2 control debrief setup: mission_end was not answered with a frame in 5 s")
 	var scene := await _mount(scene_name)
 	var tag := "G2 control %s" % scene_name
 	var bridge = _session().bridge()
