@@ -6,7 +6,10 @@ csrc/om_constants.h ending with `#include "om_constants_extra.h"`.
 The macro golden (tests/specfactory/fixtures/om_constants_macros.txt) is the
 `cc -dM -E` name/value set seen through om_constants.h, recorded from the
 header of origin/push/HDR5-ver-td 46db3f71 (OM_WORLD_REGION_COUNT_RANGE_LO/HI
-250/400), because HDR5 had not landed on origin/main when it was recorded."""
+250/400), because HDR5 had not landed on origin/main when it was recorded.
+HDR5 has not landed: main's committed header still has 60/110, but docs/bible/
+algorithms.md already says 250/400, so test 1 goes green once piece 1 regenerates
+the header. The match is exact: no extra names allowed."""
 import re
 import shutil
 import subprocess
@@ -21,10 +24,9 @@ HEADER = CSRC / "om_constants.h"
 EXTRA = CSRC / "om_constants_extra.h"
 INCLUDE = '#include "om_constants_extra.h"'
 
-# Emitter-only names that enter the macro set through the first full --emit
-# (piece 1) or after the names fix (piece 3). Allowed but not required, so the
-# golden stays green in either order of the pieces.
-EMITTER_ONLY = {
+# The 12 emitter-only names the emitter must skip until piece 3 fixes the name
+# parse (A41/A42): ten OM_TACTICAL_TICK_RATE_<ARCH>, two doubled-prefix OM_OM_MACRO_*.
+SKIPPED_NAMES = {
     "OM_OM_MACRO_EXTERNAL_REINFORCEMENT_PROB",
     "OM_OM_MACRO_ROUT_HP_THRESHOLD",
     "OM_TACTICAL_TICK_RATE_ASSAULT",
@@ -73,7 +75,7 @@ def _golden_diff(seen: dict[str, str]) -> list[str]:
         elif seen[name] != value:
             problems.append(f"changed {name}: {gold[name]} -> {seen[name]}")
     for name in seen:
-        if name not in gold and name not in EMITTER_ONLY:
+        if name not in gold:
             problems.append(f"unexpected {name}")
     return problems
 
@@ -105,6 +107,31 @@ def _csrc_copy(tmp_path: Path) -> Path:
 def test_macro_set_through_om_constants_h_matches_golden():
     problems = _golden_diff(_macros(CSRC))
     assert not problems, "\n".join(problems[:20])
+
+
+def test_emit_output_contains_none_of_the_skipped_names(tmp_path):
+    emitted = set(_define_names(_emit_to(tmp_path / "om_constants.h")))
+    leaked = emitted & SKIPPED_NAMES
+    assert not leaked, sorted(leaked)
+
+
+def test_emitter_skip_list_is_explicit_and_cites_a41():
+    lines = TOOL.read_text().splitlines()
+    idx = [i for i, ln in enumerate(lines)
+           if re.match(r"[A-Z][A-Z0-9_]*SKIP[A-Z0-9_]*\s*(:[^=]+)?=", ln)]
+    assert idx, "no named SKIP constant in alg_constants.py"
+    i = idx[0]
+    comment = [lines[i]]
+    j = i - 1
+    while j >= 0 and lines[j].lstrip().startswith("#"):
+        comment.append(lines[j])
+        j -= 1
+    text = "\n".join(comment)
+    assert "A41" in text, text
+    assert "removed by piece 3" in text, text
+    body = "\n".join(lines[i:i + 20])
+    missing = [n for n in SKIPPED_NAMES if n not in body]
+    assert not missing, missing
 
 
 # --- (2) --emit reproduces om_constants.h exactly ---------------------------
@@ -167,3 +194,26 @@ def test_control_constant_removed_from_extra_fails_golden(tmp_path):
             hit = True
     assert hit, f"{target} not defined in any om_constants*.h"
     assert f"missing {target}" in _golden_diff(_macros(csrc))
+
+
+def test_control_planted_emitted_name_outside_skip_list_fails_exactness(tmp_path):
+    """Temp copy of the emitter that also emits one extra name: the exactness
+    check must report it as unexpected."""
+    root = tmp_path / "repo"
+    tool_dir = root / "scripts" / "specfactory"
+    tool_dir.mkdir(parents=True)
+    (root / "docs").mkdir()
+    (root / "docs" / "bible").symlink_to(REPO / "docs" / "bible")
+    src = TOOL.read_text()
+    marker = '    lines.append("#endif /* OM_CONSTANTS_H */")'
+    assert marker in src
+    (tool_dir / "alg_constants.py").write_text(
+        src.replace(marker, '    lines.append("#define OM_PLANTED_CONTROL 1")\n' + marker, 1))
+    out = tmp_path / "planted.h"
+    proc = subprocess.run(
+        [sys.executable, str(tool_dir / "alg_constants.py"), "--emit", str(out)],
+        capture_output=True, text=True,
+    )
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    problems = _golden_diff(_parse_macros(out.read_text()))
+    assert "unexpected OM_PLANTED_CONTROL" in problems
