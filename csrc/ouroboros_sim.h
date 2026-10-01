@@ -1607,6 +1607,10 @@ void om_mission_setup(om_world *w, uint32_t p1, uint32_t archetype, int lineage_
 void om_mission_setup_destroy_targets(om_world *w, uint32_t objective_idx, uint32_t total);
 void om_mission_setup_eliminate(om_world *w, uint32_t objective_idx, double initial_hp);
 void om_mission_setup_escort(om_world *w, uint32_t objective_idx, uint32_t total);
+/* A3/R-072-08: quiet-world fallback. Sets the archetype to Defensive Stand,
+ * the mission region, and the enemy faction (the pipe picks both); enemy power
+ * follows inside mission.c from that faction's strongest region. */
+void om_mission_setup_fallback(om_world *w, uint32_t region_idx, int32_t enemy_faction);
 void om_mission_setup_hold_zone(om_world *w, uint32_t objective_idx, uint64_t required_ticks);
 void om_mission_setup_survive(om_world *w, uint32_t objective_idx, uint64_t required_ticks);
 void om_mission_setup_tactical(om_world *w, uint32_t p1, uint64_t time_limit);
