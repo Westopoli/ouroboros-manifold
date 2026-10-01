@@ -147,29 +147,40 @@ def test_R_065_05_they_taken_in_descending_peak(lib, world_factory):
     cat10_count = lib.om_chronicle_selected_category_count(w, category=10)
     cat11_count = lib.om_chronicle_selected_category_count(w, category=11)
 
-    # Cap of 2 entries per category during standard fill leaves only 4
-    # entries (2 from category 10, 2 from category 11) -- below 5, so
-    # R-065-06's minimum-fill fallback adds the next-highest skipped cluster
-    # (category 10's 7.0) to reach 5, taking category 10 over the standard
-    # fill's cap of 2.
-    assert cat10_count == 3
+    # Cap of 2 entries per category: 2 from category 10, 2 from category 11.
+    # R-065-06 (Q-065-01 ruling 2026-10-01): the cap wins over the minimum of
+    # 5, so the scroll stops at 4. Reversed from the earlier expectation of
+    # cat10 == 3 and 5 entries (test-defect, push ledger).
+    assert cat10_count == 2
     assert cat11_count == 2
-    assert lib.om_chronicle_entry_count(w) <= 10
-    assert lib.om_chronicle_entry_count(w) == 5
+    assert lib.om_chronicle_entry_count(w) == 4
 
 
 def test_R_065_06_skipped_clusters_added_in_score(lib, world_factory):
-    """Given fewer than 5 entries after ranking, When the budget is filled, Then skipped clusters are added in score order until 5 or the clusters run out."""
+    """Given fewer than 5 entries after ranking, When the budget is filled, Then skipped clusters are added in score order only from categories that still have fewer than 2 entries; the cap wins, so a quiet jump may show 4."""
     w = world_factory(n_regions=4)
 
-    # Only 1 category present, but with 5 clusters
+    # One category with 5 clusters: the cap holds it to 2 even though that is below 5.
     for s in [10.0, 9.0, 8.0, 7.0, 6.0]:
         lib.om_chronicle_add_cluster_direct(w, cluster_type=OMClusterType.REGIONAL, category=10, score=s)
-
-    # Normally cap of 2 would yield only 2 entries (< 5); fallback adds skipped to reach at least 5
     lib.om_chronicle_select_clusters(w)
-    entry_count = lib.om_chronicle_entry_count(w)
-    assert entry_count == 5
+    assert lib.om_chronicle_entry_count(w) == 2
+    assert lib.om_chronicle_selected_category_count(w, category=10) == 2
+
+
+def test_R_065_06_a_quiet_jump_may_show_four_entries(lib, world_factory):
+    """Given two categories with 3 clusters each, When the budget is filled, Then 4 entries are selected (2 per category) and the minimum of 5 does not break the cap."""
+    w = world_factory(n_regions=4)
+
+    for s in [10.0, 9.0, 8.0]:
+        lib.om_chronicle_add_cluster_direct(w, cluster_type=OMClusterType.REGIONAL, category=10, score=s)
+    for s in [9.5, 8.5, 7.5]:
+        lib.om_chronicle_add_cluster_direct(w, cluster_type=OMClusterType.REGIONAL, category=11, score=s)
+    lib.om_chronicle_select_clusters(w)
+
+    assert lib.om_chronicle_entry_count(w) == 4
+    assert lib.om_chronicle_selected_category_count(w, category=10) == 2
+    assert lib.om_chronicle_selected_category_count(w, category=11) == 2
 
 
 def test_R_065_07_it_has_3_to_5(lib, world_factory):

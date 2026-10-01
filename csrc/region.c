@@ -8,6 +8,8 @@
 
 static uint64_t om_world_serial_counter = 1;
 
+void om_mission_install_save_hooks(om_world *w); /* csrc/mission.c, not in a header */
+
 om_world *om_world_new(uint32_t n_regions, uint64_t seed) {
     om_world *w = calloc(1, sizeof(om_world));
     if (!w) return NULL;
@@ -111,6 +113,7 @@ om_world *om_world_new(uint32_t n_regions, uint64_t seed) {
     w->mission_state_size = NULL;
     w->mission_state_write = NULL;
     w->mission_state_read = NULL;
+    om_mission_install_save_hooks(w);
     w->fog_state = NULL;
     w->fog_state_free = NULL;
     w->fog_state_size = NULL;
