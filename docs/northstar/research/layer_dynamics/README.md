@@ -39,11 +39,11 @@ These come from the bible and the register; the lab does not vary them unless a 
 - Layer damage is weighted much more heavily than abilities and passives (Q-083-02, hub principle 4): an ability never outranks position in the lab either.
 - Determinism: same seed and command stream give a byte-identical trace.
 
-## 4. The target: understanding beats numbers (Stage 1 draft, not yet signed)
+## 4. The target: understanding beats numbers (Stage 1, confirmed by Westley 2026-10-01)
 
 Westley, 2026-10-01, verbatim: "players with better understanding of the landscape, unit formation, layer awareness/intentionality, and the other players current position can defeat a much larger force. The goal is to create a game with significant strategic depth. We get to this goal by tuning all the variables we laid out such that that sentence becomes a reality."
 
-This section replaces the four test patterns the lab started with. It is being defined with Westley in batches; what he has ruled is marked, and the rest is draft. The plan it belongs to has three stages: define the conditions (this section), say concretely what the data must show (§6), then change the prototype (§7).
+This section replaces the four test patterns the lab started with. It was defined with Westley in batches on 2026-10-01; his words are quoted where he ruled. Two numbers remain drafts: the share of maps in C8 and the winning margin. The plan it belongs to has three stages: define the conditions (this section), say concretely what the data must show (§6), then change the prototype (§7).
 
 ### 4.1 Five skills
 
@@ -101,27 +101,37 @@ Settled 2026-10-01, verbatim: "Yes refusing a fight counts as a counter, a skill
 - **Skill profile.** For one rule set: the premium of every combination of the five skills (5 singles, 10 pairs, 10 triples, 5 fours, the full set), plus controls and counter-plays.
 - **An honest R\*.** A stalemate is not a win, and the larger, naive side always has to attack, or a side that never moves never loses. "Naive" is a ladder: a blob, a line abreast, and a line that holds still; the last isolates the "side that holds still wins" effect found in pass 1. Bands are judged against the line abreast.
 
-### 4.3 The conditions (draft; every number is Westley's to set)
+### 4.3 The conditions (restated around units firing; confirmed by Westley 2026-10-01: "yes it matches, proceed")
 
-A rule set passes when its skill profile meets all of these across many sampled maps and unit mixes, not one arena.
+Westley, 2026-10-01, on fixed pass marks per skill, verbatim: "Q4: Remember, it depends on the number of units that can get shots, not a basic ratio. We need to capture and track the number of units that are able to get shots off on each side, and compare the about of time and number for both. That will indicate the quality of the choke, not just that they should do *1.3x* better because it's not as simple as that."
 
-| # | Condition | Draft target |
+So a skill has no fixed worth. A play is worth what it does to the firing count in that situation: a wide choke is worth little, a narrow one a great deal. The lab therefore tracks, for every fight and each side, how many units are able to fire and for how long (unit-seconds of fire, and the count through time), and judges a rule set on two things: whether skill wins the firing count, and whether the result follows it.
+
+- **Firing advantage** of a play in a situation: the skilled side's unit-seconds of fire per head, against the naive side's, and the same comparison window by window through the fight. This is the "quality of the choke" in his words, and the quality of any other position.
+- **R\*** stays the measure of the result (§4.2): the headcount multiple at which the fight is even.
+
+A rule set passes when all of these hold across the sampled maps:
+
+| # | Condition | What is checked |
 |---|---|---|
-| C0 | Control: identical forces, identical play, mirrored map | R\* = 1.0 (the larger force wins) |
-| C1 | Each skill alone gives a modest edge | about 1.3 for each of S1 to S5 (draft band 1.2 to 1.4) |
-| C2 | All five together give the big upset | 3 or more (five at 1.3 multiply to 3.7; draft band 3 to 4) |
-| C3 | Skills stack | every combination beats each of its parts |
-| C4 | No dominant skill | no single skill reaches the full-mastery level alone |
-| C5 | No dead skill | removing any one skill from the full set lowers R\* noticeably |
-| C6 | Skilled plays have answers (hub principle 5) | on most maps, met by its counter-play, R\* falls back toward 1; refusing the fight counts; a sprung trap or a full surround may have none |
-| C7 | Robust | holds in a large majority of sampled situations (say 80 percent) |
-| C8 | Position, not a number, decides | where the skilled side wins it holds the higher share of units firing (§6.1) |
+| C0 | Control | identical forces, identical play, mirrored map: equal firing counts and R\* = 1.0 |
+| C1 | Skill wins the firing count | each skilled play, where the map offers it, gives its side more units firing for longer than the naive side gets |
+| C2 | The result follows the firing count | R\* rises and falls with the firing advantage, situation by situation: a position that lets three times as many units fire holds about three times the force. A rule set where some other number (a damage multiplier, health, raw range) decides the fight against the firing count fails |
+| C3 | Skills stack | a combination of plays gives a larger firing advantage, and a larger R\*, than each of its parts |
+| C4 | No dominant skill | no single skill produces by itself the advantage the full set does |
+| C5 | No dead skill | removing any one skill from the full set lowers the firing advantage and R\* noticeably |
+| C6 | Skilled plays have answers (hub principle 5) | on most maps the counter-play takes the firing advantage back; refusing the fight counts; a sprung trap or a full surround may have none |
+| C7 | The ceiling is high | in the best situations, with every skill used, the skilled side beats three times its number or more (Westley's choice on the band arithmetic) |
+| C8 | Robust | C1 to C6 hold in a large majority of sampled situations (draft: 80 percent) |
 | C9 | Fights stay readable | fight length stays inside E-11 S-085's window while knobs move |
 
-### 4.4 Open with Westley
+Rough sizes for orientation, not pass marks: a single skill in an ordinary situation is worth about 30 percent more army; the full set three times or more. Draft numbers still to confirm: the 80 percent in C8, and the winning margin (a few percent of starting strength).
 
-1. The exact bands in C1, C2 and C7 (the drafts above follow from his choice of 30 percent per skill).
-5. Which map families count, and in what proportion.
+### 4.4 Maps
+
+Westley, 2026-10-01, verbatim: "Q3: C, space doesn't have ramps but it does have very free layers that can be taken advantage of." The test set has two parts, reported separately. Space maps (the launch era: every unit flies, no ramps) are the ones a rule set must pass: open space, obstacles to go around or over, lanes between obstacles, cover fields, and above all the five free layers, which are the terrain of a space fight. Land maps (ramps, walking units, ground that exists only on some layers) are measured and reported but do not block.
+
+### 4.5 Record of Stage 1 decisions
 
 Decided 2026-10-01, the layer skill (S3). Westley accepted the draft plays for the other four skills ("Otherwise your list looks good") and found the layer system static without an action from the player. After research (queue Q78) he chose three actions together, verbatim: "I think we should give players all 3: going dark, reach by unit type, and the pinging. To avoid the dislike for the short scan for money, these options will be free, we want to induce strategic depth. - units will still see others passively, just a shorter range, the pinging can have a much longer range. I'd also like the player being pinged to get an alert that they were pinged, and a ~60 degree direction that they were pinged from (like the direction indicator skill from World of Warships)." They are E-01 S-162 (targeted ping), S-163 (going dark) and S-164 (reach by unit type). Their numbers are `Q-005-04` and are tuned here. The lab needs all three in the engine before S3 can be measured: a ping aimed at a layer and place, an emit or silent state per group that changes sight and visibility, and a reach table per unit type in place of one range table for everyone.
 
@@ -249,15 +259,25 @@ Status: Westley told the build to go ahead on this map, 2026-09-30 ("continue wi
 
 "Lines crossing" was Westley's first name for the thing to find. Stated as a win probability crossing 0.5 it does not fit a system with no dice, and it never said what a good result looks like. In the terms of §4:
 
-- A **line** is a break-even contour: the set of knob values at which a play's premium equals its target.
-- The **crossing** is the region of rule space where every condition C0 to C9 holds at once.
+- A **line** is the edge, in the space of rule knobs, of where one condition of §4.3 holds: on one side skill wins the firing count and the result follows it, on the other it does not.
+- The **crossing** is the region where every condition C0 to C9 holds at once.
 - **Depth** is that region being non-empty and not a knife-edge: a small change to one knob should not throw a rule set out.
 
-What the lab delivers from its data: (1) the rule sets that pass; (2) for each knob, which skills' premiums it moves and by how much; (3) the rule sets that nearly pass and the condition each misses.
+What the lab delivers from its data: (1) the rule sets that pass; (2) for each knob, which skills' firing advantage and break-even ratio it moves and by how much; (3) the rule sets that nearly pass and the condition each misses; (4) for every rule set, the plot of result against firing advantage, with the fights that fall off the line listed, since those are where a number other than position decided.
 
-The first result is the **baseline profile**: the skill profile of today's default rules, under the base table and the three lever tables of §6.3. It says how far each skill is from its band before anything is tuned. What the runs so far suggest (§8): the layer skill has no edge under vision alone; a concave is worth less than one unit; blindness is worth about one unit and a seer helps only above a sight threshold; the ramp goes from a win to a wipe-out between slope lengths 150 and 200.
+The first result is the **baseline profile**: the skill profile of today's default rules, under the base table and the three lever tables of §6.3. It says, before anything is tuned, whether each skilled play wins the firing count and whether results follow it. What the runs so far suggest (§8): the layer skill has no edge under vision alone; a concave is worth less than one unit; blindness is worth about one unit and a seer helps only above a sight threshold; the ramp goes from a win to a wipe-out between slope lengths 150 and 200.
 
 Controls. Negative: identical forces and plays on a mirrored flat map give R\* = 1.0 within one unit; a detector that reads an advantage there is measuring the harness. Positive: a planted advantage of known direction (the unseen high side of pass 1) gives R\* well above 1.
+
+### Assessment of the prototype against the target (Stage 2, 2026-10-01)
+
+Kept and reused: the engine (five layers, the terrain presets, cover, slopes, walking and flying units, hard bodies, routing across layers, three target policies); the batch runner with one data row per fight; many-variable sampling; replays; the firing counters and the windowed exchange; the test suite and the determinism gate.
+
+Missing for the target: a signed margin; the break-even solver; plays (a unit has one order for the whole fight, so a bait, an ambush or a fall-back cannot be scripted); situations sampled as asymmetric space and land maps, with something hidden; the skill profile and the check of result against firing advantage; guards against the two known artefacts (spawn overlap, units leaving a slope inside enemy bodies); and the three layer actions of `Q-005-03` (the aimed ping, going dark, reach by unit type), without which the layer skill cannot be measured at all.
+
+Dropped: win rate as the headline measure and the crossing search built on it; the proposed randomness knob; experiment E5 in its probability form; E1 and E2 as written.
+
+What the passes so far say about the starting point, each to be re-measured as a firing advantage: a layer gives nothing under symmetric vision alone (pass 3); reach and damage penalties are steep, decisive within 20 percent (pass 3); a concave is worth less than one unit (pass 4); blindness is worth about one unit (pass 4); the ramp turns from a win to a wipe-out between slope lengths 150 and 200 (pass 4).
 
 ### Two ways to search, run side by side
 
@@ -275,7 +295,7 @@ Draft order for the incremental track, to be confirmed against the baseline prof
 
 How the two are compared: whether each reaches a rule set that passes C0 to C9; how many fights it took; how the result holds on situations neither search saw; and how well each step of the path can be explained.
 
-The sections below are the record of how the lab got here. §6.1's firing-share measure is kept as condition C8. §6.2's experiments E1 and E2 are confounded as written (the side that holds still wins) and E5 asks a probability question the lab cannot answer; all three are replaced by the skill profile. §6.3's rulings stand.
+The sections below are the record of how the lab got here. §6.1's firing-share measure is now the centre of the conditions (C1 and C2). §6.2's experiments E1 and E2 are confounded as written (the side that holds still wins) and E5 asks a probability question the lab cannot answer; all three are replaced by the skill profile. §6.3's rulings stand.
 
 ### 6.1 The firing-share hypothesis (2026-09-30, first check in §8)
 
