@@ -6,6 +6,7 @@
 
 #define EPS 1e-9    /* absorbs the rounding of a time or position accumulated tick by tick */
 #define LL_SEPARATION_PASSES 8    /* SPEC 5.10 */
+#define LL_MOUTH_RADIUS 40.0      /* SPEC 5.10 slope mouths */
 
 void ll_face_init(ll_unit *u, double facing_deg) {
     double s, c;
@@ -175,8 +176,30 @@ static int body_blocked(const ll_state *s, const ll_unit *u, double x, double y)
     return 0;
 }
 
+/* Slope mouths (SPEC 5.10): 1 when (x,y) is within LL_MOUTH_RADIUS of the centre of a slope edge that lies on
+ * `layer`. Inside it bodies neither block steps nor are pushed, or two walkers a body width apart at the entry,
+ * whose centre can sit on a flow-field cell boundary, each stand where the other must step and wait forever. */
+static int in_mouth(const ll_terrain *t, int layer, double x, double y) {
+    for (int k = 0; k < t->n_slope; k++) {
+        const ll_slope *sl = &t->slope[k];
+        for (int top = 0; top < 2; top++) {
+            if ((top ? sl->top_layer : sl->bottom_layer) != layer) continue;
+            double ex, ey;
+            ll_slope_edge(sl, top, &ex, &ey);
+            double dx = x - ex, dy = y - ey;
+            if (dx * dx + dy * dy <= LL_MOUTH_RADIUS * LL_MOUTH_RADIUS) return 1;
+        }
+    }
+    return 0;
+}
+
 static int can_step(const ll_state *s, const ll_unit *u, double x, double y) {
-    return can_stand(s, u, x, y) && !body_blocked(s, u, x, y);
+    return can_stand(s, u, x, y) && (in_mouth(s->ter, u->layer, x, y) || !body_blocked(s, u, x, y));
+}
+
+/* How near a walker must be to a slope's edge centre to mount it (SPEC 5.9). */
+static double mount_reach(const ll_state *s, const ll_unit *u) {
+    return u->ty->body_radius > 0.5 * s->ter->cell ? u->ty->body_radius : 0.5 * s->ter->cell;
 }
 
 static void mount(ll_unit *u, const ll_slope *sl, int index, int dir) {
@@ -239,7 +262,7 @@ static int steer(ll_state *s, ll_unit *u, int olayer, double gx, double gy, doub
         int dir = st.layer == sl->top_layer ? 1 : -1;
         double ex, ey;
         ll_slope_edge(sl, dir < 0, &ex, &ey);
-        double reach = u->ty->body_radius > 0.5 * t->cell ? u->ty->body_radius : 0.5 * t->cell;
+        double reach = mount_reach(s, u);
         if (sqrt((ex - u->x) * (ex - u->x) + (ey - u->y) * (ey - u->y)) <= reach) {
             mount(u, sl, st.slope, dir);
             return STEER_MOUNTED;
@@ -350,6 +373,7 @@ void ll_move_units(ll_state *s) {
             for (int j = i + 1; j < s->n; j++) {
                 ll_unit *b = &s->u[j];
                 if (!b->alive || b->slope >= 0 || a->layer != b->layer) continue;
+                if (in_mouth(s->ter, a->layer, a->x, a->y) || in_mouth(s->ter, b->layer, b->x, b->y)) continue;
                 double dx = b->x - a->x, dy = b->y - a->y;
                 double dist = sqrt(dx * dx + dy * dy);
                 double overlap = a->ty->body_radius + b->ty->body_radius - dist;

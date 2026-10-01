@@ -346,7 +346,7 @@ Reach and damage each carry the advantage on their own, and each crosses 0.5 at 
 
 Not run: the tall-cover scenario of 6.3, because the cover rule is symmetric (both sight lines pass the same obstacle at the same height) and a high-side-sees-over advantage would be a vision asymmetry, which `Q-005-02` closed as symmetric.
 
-What changes next: add the opening-window prediction to `analysis.py` with its own tests; sweep the range-by-offset lever (the other way a layer can decide who gets shots off) and compare it with damage by the firing-share measure; then P2 (the concave) with the lever fixed. Westley's review of this pass goes here.
+Everything this pass proposed is done in passes 2 and 3 (the opening-window prediction, the range lever, the windowed exchange). Westley's review of this pass goes here.
 
 
 ## 9. Verdict and fold
