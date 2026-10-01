@@ -1,6 +1,6 @@
 # Plan: from "every item landed" to a mission that plays (2026-10)
 
-Approved by Westley 2026-09-30. The coordinating chat (any tier) runs Waves A to C from this file; Wave 0 was done by the Architect and its outputs are listed under "Wave 0 status" below. Companion: `docs/northstar/plans/2026-09-30-work-list.md` (the reach-triage mapping, written by the Engineer).
+Approved by Westley 2026-09-30. The coordinating chat (any tier) runs Waves A to C from this file; Wave 0 was done by the Architect and its outputs are listed under "Wave 0 status" below. Companion: `docs/northstar/plans/2026-09-30-work-list.md` (the reach-triage mapping, 89 rows, landed 0848ebb). Architect rulings on its flagged rows: `om_chronicle_generate_map_keyframes` stays with C5 (G-C3); the four R-061 commander-death symbols belong to B7; the R-126-04 force-sizing pair moves into B4; the event wrappers and breakaway creators under the C6 sweep go live through A1 and need no unit of their own.
 
 
 ## Context
@@ -41,11 +41,11 @@ Lane merge (2026-09-30): every lane branch is landed or superseded except `push/
 
 ## Wave A: the game does something (sim and pipe; blockers)
 
-A1. **Events load in play** (E-04, cluster 1). `handle_set_seed` in `csrc/pipe/om_pipe.c` calls `om_events_load_launch` and applies the launch feature set after `om_world_generate`, exactly as `tests/csim/conftest.py`'s `world_factory` does (copy its order, do not invent one). Test: transport test that after `set_seed` + one `jump`, the chronicle frame carries at least one event-derived entry, and the E-04 isolation test's template count matches in play. Owner `T1-N`. Everything downstream depends on this.
+A1. **Events load in play** (E-04, cluster 1). `handle_set_seed` in `csrc/pipe/om_pipe.c` calls `om_events_load_launch` and applies the launch feature set after `om_world_generate` and **before `om_campaign_start`** (the opening jump must see the templates; today it runs with none), exactly as `tests/csim/conftest.py`'s `world_factory` does (copy its order, do not invent one). Test: transport test that after `set_seed` + one `jump`, the chronicle frame carries at least one event-derived entry, and the E-04 isolation test's template count matches in play. Owner `T1-N`. Everything downstream depends on this.
 
 A2. **Mission-selection context is real** (E-10 R-072-02, cluster 2, item 7). One `B9-N` unit adds `om_mission_refresh_context(w, region)` that computes the four setters' inputs from world state: recent attacks and attack budget from the event log (`csrc/events.c` accessors), adjacent lost regions from ownership history, revolt events, lineage context from `generational.c`, preference from the campaign settings. One `T1-N` unit calls it from `handle_mission_start` before scoring. Test: a seeded world where a telegraphed attack exists selects a Defensive Stand (the R-072 fixture), through the pipe, not the test seam. Removes the 2,000 to 5,000 unit fallback battles.
 
-A3. **Q-072-01 fallback aligned.** The pipe's silent region-0/archetype-0 default becomes the answered rule (retry up to 5 jumps of 20 ticks, then Defensive Stand on the weakest player region). `T1-N`. Test through the pipe with a world where nothing triggers.
+A3. **Q-072-01 fallback aligned.** Since 0682e05 `handle_mission_start` falls back through R-080-03 (a rare archetype may still be chosen) instead of a silent region-0/archetype-0 default; the answered Q-072-01 rule (retry up to 5 jumps of 20 ticks, then Defensive Stand on the weakest player region) is still unbuilt and sits in front of that fallback. `T1-N`. Test through the pipe with a world where nothing triggers.
 
 A4. **Briefing is assembled and shipped** (E-10 S-079, item 8; gap-fix S2). `handle_mission_start` calls `om_mission_assemble_briefing`; the mission frame carries `node`, `radius`, `force[]` (HDR4 accessors exist), `position_name`, `parity`, `objective` text. Contract: the frame fields are already documented in `docs/architecture.md` (verify; if not, a docs piece first). `T1-N`, then `C6-N`: `mission_briefing.gd` renders them, the `mock_001` fallback leaves the live path, the zeros go. Test: transport worked example; a Godot test that the briefing shows a non-empty position and a roster.
 
