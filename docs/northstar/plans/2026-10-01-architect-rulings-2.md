@@ -328,3 +328,15 @@ If the emitter cannot parse one of these forms as written, the Engineer reports 
 4. The A5 "Refuse disabled" assertion becomes a test-defect row when the button is wired, as ruled in section 5.
 
 **A40. The fallback picks move into core,** option (c). The pipe keeps the five retries and the `quiet_world` flag and asks core for the picks; it holds no tie-break of its own, so it needs no access to `OM_TIE_EPSILON`. The weakest player region comes from the function the mission generator already uses for the same fallback (`om_mission_fallback_region`), so the pipe and the generator cannot disagree. The enemy pick of A3-1 (nearest by hops, then highest total military, then lowest faction id) moves into `mission.c`; if no public function returns it, the contract gains `int32_t om_mission_fallback_enemy(const om_world *w, uint32_t region_idx);`, landing with its implementation. If the generator's fallback region rule differs from the pipe's current pick in any case, report the difference before changing either. The four `push/A3tie-tests` tests stay as they are and must pass through the pipe.
+
+## Addendum 20, 2026-10-02 (the fallback region: one rule, one function)
+
+The generator's `om_mission_fallback_region` picks the player region with the lowest military plus economy; the pipe picks the lowest stability composite. They differ on 18 to 66 of 400 seeds.
+
+**A41. Option (b): the core function is brought to the rule.** Both paths implement the same answer, Q-072-01, and Westley fixed its meaning on 2026-09-30: weakest is the lowest ALG-09 stability composite, ties to the lowest region index (R-072-07). The military-plus-economy form predates that and is stale. `om_mission_fallback_region` is changed to the rule, the pipe calls it and loses its own copy, and no second function is added. `om_mission_fallback_enemy` is added as in A40.
+
+- The assertions in `tests/csim/test_E10_S072_orders_come_from_where_the_world_hurts.py` and `test_E08_S055...` that pin the old form are test-defects (the rule was clarified after they were written); ledger rows. The four A3tie tests pass unchanged.
+- The determinism checksum moves on seeds where the generator's fallback fires; the ledger row says so.
+- The function reads the player faction through `om_mission_player_faction`, the pipe through `om_player_faction`. If the two can ever return different factions, report it before landing; there should be one answer to "who is the player".
+
+**A42. Harness piece 1 filters the 12 names.** The split piece keeps the macro set identical, as ruled: its emit skips the ten wrong `OM_TACTICAL_TICK_RATE_*` names and the two `OM_OM_MACRO_*` names through an explicit, commented skip list, and piece 3 removes that list when it fixes the parse. The piece-1 test allows no extras.
