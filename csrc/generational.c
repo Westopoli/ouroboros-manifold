@@ -856,7 +856,12 @@ static void gen_stay(const om_world *w, gen_state *gs, uint32_t lineage_id, uint
     out_record->home_region_idx = l && l->n_history > 0 ? l->history[0] : mission_region;
 }
 
-static gen_character *gen_pick_previous_candidate(const om_world *w, gen_state *gs, uint32_t mission_region) {
+static int gen_faction_survives(const uint32_t *surviving_regions, int32_t faction) {
+    return faction >= 0 && (uint32_t)faction < OM_MAX_FACTIONS && surviving_regions[faction] > 0;
+}
+
+static gen_character *gen_pick_previous_candidate(const om_world *w, gen_state *gs, uint32_t mission_region,
+                                                   const uint32_t *surviving_regions) {
     struct { gen_character *c; double score; } cands[GEN_MAX_SCAN_BUF];
     uint32_t n_cands = 0;
     if (!gs) return NULL;
@@ -867,6 +872,7 @@ static gen_character *gen_pick_previous_candidate(const om_world *w, gen_state *
         for (uint32_t i = 0; i < gs->n_characters; i++) {
             gen_character *c = &gs->characters[i];
             if (!c->used || c->lineage_id != l->id || c->status != GEN_STATUS_ACTIVE) continue;
+            if (surviving_regions && !gen_faction_survives(surviving_regions, c->faction)) continue;
             if (gen_region_within_hops(w, mission_region, c->region, OM_SELECTOR_PROXIMITY_HOPS)) nearby++;
         }
         if (nearby == 0) continue;
@@ -874,6 +880,7 @@ static gen_character *gen_pick_previous_candidate(const om_world *w, gen_state *
         for (uint32_t i = 0; i < gs->n_characters && n_cands < GEN_MAX_SCAN_BUF; i++) {
             gen_character *c = &gs->characters[i];
             if (!c->used || c->lineage_id != l->id || c->status != GEN_STATUS_ACTIVE) continue;
+            if (surviving_regions && !gen_faction_survives(surviving_regions, c->faction)) continue;
             if (!gen_region_within_hops(w, mission_region, c->region, OM_SELECTOR_PROXIMITY_HOPS)) continue;
             cands[n_cands].c = c;
             cands[n_cands].score = score;
@@ -909,7 +916,7 @@ static uint32_t gen_resolve_candidate_for_pool(om_world *w, gen_state *gs, int p
     for (int i = 0; i < GEN_POOL_COUNT; i++) if (PRIORITY[i] != pool) order[oi++] = PRIORITY[i];
     for (int i = 0; i < GEN_POOL_COUNT; i++) {
         if (order[i] == GEN_POOL_PREVIOUS) {
-            gen_character *c = gen_pick_previous_candidate(w, gs, mission_region);
+            gen_character *c = gen_pick_previous_candidate(w, gs, mission_region, NULL);
             if (c) { c->lineage_id = new_lineage_id; return c->id; }
         } else if (order[i] == GEN_POOL_NEMESIS) {
             uint32_t n = om_selector_gather_nemesis_candidates(w, mission_region);
@@ -1640,21 +1647,63 @@ int om_player_faction_check_collapse(const om_world *w, int32_t player_faction) 
 
 int32_t om_player_faction_reassign_on_collapse(om_world *w, int32_t player_faction) {
     if (!w) return -1;
+    gen_state *gs = gen_get_state(w);
     uint32_t counts[OM_MAX_FACTIONS];
     memset(counts, 0, sizeof(counts));
     for (uint32_t i = 0; i < w->n_regions; i++) {
         int32_t f = w->regions[i].faction_id;
         if (f >= 0 && (uint32_t)f < OM_MAX_FACTIONS && f != player_faction) counts[f]++;
     }
-    int32_t best = -1;
-    uint32_t best_count = 0;
-    for (int32_t f = 0; f < (int32_t)OM_MAX_FACTIONS; f++) {
-        if (counts[f] > best_count) {
-            best_count = counts[f];
-            best = f;
+    /* R-062-02, A24, A26: previous then nemesis pools, surviving factions only, 2 hops from the last mission region. */
+    uint32_t region = om_mission_last_region(w);
+    gen_character *prev_probe = NULL;
+    uint32_t nem_ids[GEN_MAX_NEMESIS_CANDIDATES];
+    uint32_t n_nem = 0;
+    if (gs) {
+        uint32_t n = om_selector_gather_nemesis_candidates(w, region);
+        for (uint32_t i = 0; i < n; i++) {
+            gen_character *c = gen_char_find(gs, gs->nemesis_candidates[i]);
+            if (c && gen_faction_survives(counts, c->faction)) nem_ids[n_nem++] = c->id;
+        }
+        /* probe without drawing: the previous pool is non-empty iff a surviving lineage member is in range */
+        for (uint32_t i = 0; i < gs->n_characters && !prev_probe; i++) {
+            gen_character *c = &gs->characters[i];
+            gen_lineage *l = gen_lineage_find(gs, c->lineage_id);
+            if (!c->used || c->status != GEN_STATUS_ACTIVE || !l) continue;
+            if (!gen_faction_survives(counts, c->faction)) continue;
+            if (gen_region_within_hops(w, region, c->region, OM_SELECTOR_PROXIMITY_HOPS)) prev_probe = c;
         }
     }
-    return best;
+    if (prev_probe || n_nem > 0) {
+        int pool = om_selector_roll_pool(w, om_rng_draw(w));
+        if (pool == GEN_POOL_UNRELATED) pool = GEN_POOL_PREVIOUS;
+        for (int step = 0; step < 2; step++) {
+            if (pool == GEN_POOL_PREVIOUS) {
+                gen_character *c = prev_probe ? gen_pick_previous_candidate(w, gs, region, counts) : NULL;
+                if (c) return c->faction;
+                pool = GEN_POOL_NEMESIS;
+            } else {
+                if (n_nem > 0) {
+                    uint32_t idx = (uint32_t)(om_rng_draw(w) * (double)n_nem);
+                    if (idx >= n_nem) idx = n_nem - 1;
+                    return gen_char_find(gs, nem_ids[idx])->faction;
+                }
+                pool = GEN_POOL_PREVIOUS;
+            }
+        }
+    }
+    uint32_t best_count = 0;
+    for (int32_t f = 0; f < (int32_t)OM_MAX_FACTIONS; f++)
+        if (counts[f] > best_count) best_count = counts[f];
+    if (best_count == 0) return -1;
+    int32_t tied[OM_MAX_FACTIONS];
+    uint32_t n_tied = 0;
+    for (int32_t f = 0; f < (int32_t)OM_MAX_FACTIONS; f++)
+        if (counts[f] == best_count) tied[n_tied++] = f;
+    if (n_tied == 1) return tied[0];
+    uint32_t idx = (uint32_t)(om_rng_draw(w) * (double)n_tied);
+    if (idx >= n_tied) idx = n_tied - 1;
+    return tied[idx];
 }
 
 void om_player_faction_record_reassignment(om_world *w, int32_t old_faction, int32_t new_faction) {
