@@ -907,6 +907,11 @@ static void write_debrief(void) {
     jb_key(&j, "tension");  jb_double(&j, ten); jb_putc(&j, ',');
     jb_key(&j, "population"); jb_double(&j, pop);
     jb_putc(&j, '}');
+    if (d.band != OM_PIPE_MISSION_BAND_REFUSAL) {
+        jb_putc(&j, ',');
+        jb_key(&j, "commander_fate");
+        jb_int(&j, d.commander_fate);
+    }
     jb_putc(&j, '}');
     write_frame(j.buf, (uint32_t)j.len);
     jb_free(&j);
@@ -1599,6 +1604,47 @@ static void handle_mission_end(void) {
     write_snapshot();
 }
 
+static void handle_assign_commander(const char *json) {
+    if (!W) {
+        write_error("assign_commander", "no world");
+        return;
+    }
+    if (om_mission_has_ended(W) || mission_refused()) {
+        write_error("assign_commander", "mission ended");
+        return;
+    }
+    if (!om_chapter_mission_realtime(W)) {
+        write_error("assign_commander", "mission not started");
+        return;
+    }
+    int64_t id = 0;
+    if (!get_i64(json, "unit_id", &id)) {
+        write_error("assign_commander", "missing unit_id");
+        return;
+    }
+    uint32_t cur = om_mission_get_commander_unit(W);
+    if (cur && !om_unit_alive(W, cur)) {
+        write_error("assign_commander", "commander dead");
+        return;
+    }
+    uint32_t uid = (id > 0 && id <= (int64_t)om_unit_count(W)) ? (uint32_t)id : 0;
+    int in_force = uid && om_unit_get_faction(W, uid) == om_player_faction(W);
+    if (!in_force) {
+        write_error("assign_commander", "unit not in force");
+        return;
+    }
+    if (!om_unit_alive(W, uid)) {
+        write_error("assign_commander", "unit dead");
+        return;
+    }
+    int rc = om_mission_assign_commander(W, uid);
+    if (rc) {
+        write_error("assign_commander", rc == 2 ? "commander dead" : "unit not in force");
+        return;
+    }
+    write_ack("assign_commander");
+}
+
 static void handle_tactical_step(const char *json) {
     if (!W) {
         write_error("tactical_step", "no world");
@@ -2060,6 +2106,8 @@ int main(void) {
             handle_mission_refuse();
         } else if (!strcmp(name, "mission_end")) {
             handle_mission_end();
+        } else if (!strcmp(name, "assign_commander")) {
+            handle_assign_commander(buf);
         } else if (!strcmp(name, "jump")) {
             handle_jump(buf);
         } else if (!strcmp(name, "tactical_step")) {
