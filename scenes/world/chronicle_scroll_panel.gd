@@ -20,6 +20,7 @@ var _faction_colors: Dictionary = {}
 var _scroll: ScrollContainer
 var _entry_container: VBoxContainer
 var _expansion_overlay: Control
+var _error_panel: Control
 
 # Piece C3 rebind — reads a C transport v1 "chronicle" frame (see file
 # header) independent of the legacy begin_time_jump()/queue_entry() path
@@ -64,17 +65,29 @@ var _plant_entries_dropped: bool = false
 func _ready() -> void:
 	_accent = ThemeConstants.get_era_accent(EraConfig.ACTIVE_ERA_ID)
 	_build_ui()
-	var bridge = SimSession.bridge()
-	if bridge.load_chronicle_live(bridge.live_seed(), bridge.DEFAULT_N_REGIONS, bridge.DEFAULT_FEATURES):
-		set_snapshot(bridge.chronicle_snapshot())
-		load_frame(bridge.chronicle_frame())
-	else:
-		push_error("chronicle_scroll_panel: live chronicle frame failed: %s" % bridge.last_error())
+	_load_live()
 	# Stage 11g — listen to the world-view pause coordinator so any holder
 	# (region/faction panel, expansion) halts entry printing.
 	# See also: scenes/world/world_view_inspection_state.gd
 	if FeatureFlags.ENABLE_INSPECTION_PAUSE:
 		InspectionState.pause_changed.connect(_on_inspection_pause_changed)
+
+
+func _load_live() -> void:
+	var bridge = SimSession.bridge()
+	if bridge.load_chronicle_live(bridge.live_seed(), bridge.DEFAULT_N_REGIONS, bridge.DEFAULT_FEATURES):
+		if _error_panel != null:
+			_error_panel.hide_error()
+		set_snapshot(bridge.chronicle_snapshot())
+		load_frame(bridge.chronicle_frame())
+	else:
+		var reason: String = bridge.last_error()
+		push_error("chronicle_scroll_panel: live chronicle frame failed: %s" % reason)
+		if _error_panel == null:
+			_error_panel = load("res://scenes/shared/error_panel.tscn").instantiate()
+			_error_panel.retry_pressed.connect(_load_live)
+			add_child(_error_panel)
+		_error_panel.show_error(reason if reason != "" else "chronicle load failed")
 
 
 func _on_return_pressed() -> void:
@@ -398,6 +411,7 @@ func qa_state() -> Dictionary:
 		owners_out[str(rid)] = _qa_owners[rid]
 	return {
 		"scene": "chronicle",
+		"error_panel": _error_panel != null and _error_panel.visible and _error_panel.get_node("ErrorPanel").visible,
 		"tick": _qa_tick,
 		"plants": PLANTS.duplicate(),
 		"hash": _qa_hash,

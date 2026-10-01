@@ -21,6 +21,7 @@ var _accent: Color = ThemeConstants.DEFAULT_ACCENT
 
 var _frame: Dictionary = {}
 var _plant_band_off_by_one := false
+var _error_panel: Control
 
 
 func setup(params: Dictionary) -> void:
@@ -37,12 +38,23 @@ func setup(params: Dictionary) -> void:
 # _build_ui()" fresh-reached branch in its _ready().
 func _ready() -> void:
 	if _params.is_empty():
-		_build_ui()
-		var bridge = SimSession.bridge()
-		if bridge.load_debrief_live(bridge.live_seed(), bridge.DEFAULT_N_REGIONS, bridge.DEFAULT_FEATURES):
-			load_frame(bridge.debrief_frame())
-		else:
-			push_error("debrief: live debrief frame failed: %s" % bridge.last_error())
+		_load_live()
+
+
+func _load_live() -> void:
+	var bridge = SimSession.bridge()
+	if bridge.load_debrief_live(bridge.live_seed(), bridge.DEFAULT_N_REGIONS, bridge.DEFAULT_FEATURES):
+		if _error_panel != null:
+			_error_panel.hide_error()
+		load_frame(bridge.debrief_frame())
+		return
+	var reason: String = bridge.last_error()
+	push_error("debrief: live debrief frame failed: %s" % reason)
+	if _error_panel == null:
+		_error_panel = load("res://scenes/shared/error_panel.tscn").instantiate()
+		_error_panel.retry_pressed.connect(_load_live)
+		add_child(_error_panel)
+	_error_panel.show_error(reason if reason != "" else "debrief load failed")
 
 
 func _input(event: InputEvent) -> void:
@@ -86,6 +98,7 @@ func qa_state() -> Dictionary:
 			"population": region_delta.get("population", 0.0),
 		},
 		"region_delta_text": region_delta_text,
+		"error_panel": _error_panel != null and _error_panel.visible and _error_panel.get_node("ErrorPanel").visible,
 	}
 
 
@@ -108,6 +121,8 @@ func qa_plant(id: String) -> bool:
 # reporting as present.
 func _clear_ui() -> void:
 	for child in get_children():
+		if child == _error_panel:
+			continue
 		remove_child(child)
 		child.queue_free()
 

@@ -108,6 +108,8 @@ var _units_in_last_command: int = 0
 # Desktop input: left-drag start position; -1 means no drag in progress.
 var _drag_start := Vector2(-1.0, -1.0)
 
+var _error_panel: Control
+
 
 func _ready() -> void:
 	# C8 flow spine: SceneRouter._swap_scene never passes data into a
@@ -115,11 +117,7 @@ func _ready() -> void:
 	# view self-loads the first live tactical frame on a fresh route-in. A
 	# failed live load leaves the view empty and logs the reason; it never
 	# falls back to a fixture (C5-2).
-	var bridge = SimSession.bridge()
-	if bridge.load_tactical_live(bridge.live_seed(), bridge.DEFAULT_N_REGIONS, bridge.DEFAULT_FEATURES):
-		load_frame(bridge.tactical_frame())
-	else:
-		push_error("tactical_view: live tactical frame failed: %s" % bridge.last_error())
+	_load_live()
 	_clock_label = _make_hud_label(Vector2(1500.0, 20.0))
 	_objective_label = _make_hud_label(Vector2(20.0, 20.0))
 	_selection_label = _make_hud_label(Vector2(20.0, SCREEN_H - 60.0))
@@ -129,6 +127,22 @@ func _ready() -> void:
 		end_mission_btn.pressed.connect(func():
 			SceneRouter.go_to("debrief")
 		)
+
+
+func _load_live() -> void:
+	var bridge = SimSession.bridge()
+	if bridge.load_tactical_live(bridge.live_seed(), bridge.DEFAULT_N_REGIONS, bridge.DEFAULT_FEATURES):
+		if _error_panel != null:
+			_error_panel.hide_error()
+		load_frame(bridge.tactical_frame())
+		return
+	var reason: String = bridge.last_error()
+	push_error("tactical_view: live tactical frame failed: %s" % reason)
+	if _error_panel == null:
+		_error_panel = load("res://scenes/shared/error_panel.tscn").instantiate()
+		_error_panel.retry_pressed.connect(_load_live)
+		add_child(_error_panel)
+	_error_panel.show_error(reason if reason != "" else "tactical load failed")
 
 
 func _make_hud_label(pos: Vector2) -> Label:
@@ -229,6 +243,7 @@ func qa_state() -> Dictionary:
 		"last_command": _last_command.duplicate(),
 		"commands_sent_last_order": _commands_sent_last_order,
 		"units_in_last_command": _units_in_last_command,
+		"error_panel": _error_panel != null and _error_panel.visible and _error_panel.get_node("ErrorPanel").visible,
 	}
 
 
