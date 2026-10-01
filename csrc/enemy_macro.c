@@ -163,6 +163,11 @@ typedef struct {
     int last_order_behavior;
     double last_order_x, last_order_y;
     uint32_t last_order_n;
+    /* B1-2 (R-120-02): patrol loop anchor (squad centroid when patrol was first ordered) and
+     * the waypoint it is heading for. */
+    int patrol_anchor_set;
+    double patrol_anchor_x, patrol_anchor_y;
+    uint32_t patrol_idx;
 } om_macro_force;
 
 typedef struct {
@@ -370,6 +375,10 @@ static void om_macro_log_command(om_world *w, uint64_t tick, uint32_t force_id, 
  * test, which never call om_macro_init_force with a live mission) sees no
  * behavior change here at all -- see also: om_macro_tick below. */
 #define OM_MACRO_ORDER_CAP 2048
+/* B1-2: no bible value (R-120-02 says only "waypoints in a cycle"); local choices. */
+#define OM_MACRO_PATROL_RADIUS 600.0
+#define OM_MACRO_PATROL_WAYPOINTS 4
+#define OM_MACRO_PATROL_ARRIVE 60.0
 
 static uint32_t om_macro_collect_faction_units(om_world *w, int32_t faction_id, uint32_t *out, uint32_t cap) {
     uint32_t total = om_unit_count(w);
@@ -444,6 +453,9 @@ static void om_macro_issue_group_orders(om_world *w, om_macro_force *f) {
     f->hp_sum_last_eval = hp_sum;
     f->hp_sum_last_eval_set = 1;
     if (contact_now) f->has_contact = 1; /* sticky, like ambush's trigger (R-120-02) */
+    /* B1-3 (R-120-02): ambush holds until contact, then becomes advance_aggressive; the
+     * advance branch below attack-moves at the player. */
+    if (f->behavior == OM_MACRO_AMBUSH && f->has_contact) om_macro_trigger_ambush(w, (uint32_t)(f - om_macro_st(w)->forces));
 
     if (f->behavior == OM_MACRO_ADVANCE) {
         if (f->has_contact && n_player > 0) {
@@ -484,9 +496,27 @@ static void om_macro_issue_group_orders(om_world *w, om_macro_force *f) {
             om_command_move(w, force_ids, n_force, dest_x, dest_y);
             om_macro_remember_order(f, f->behavior, dest_x, dest_y, n_force);
         }
+    } else if (f->behavior == OM_MACRO_PATROL) {
+        /* B1-2 (R-120-02): plain-move round a diamond of waypoints about the anchor. */
+        static const double dx[OM_MACRO_PATROL_WAYPOINTS] = { 1.0, 0.0, -1.0, 0.0 };
+        static const double dy[OM_MACRO_PATROL_WAYPOINTS] = { 0.0, 1.0, 0.0, -1.0 };
+        double cy, cx = om_macro_centroid(w, force_ids, n_force, &cy);
+        if (!f->patrol_anchor_set) {
+            f->patrol_anchor_x = cx; f->patrol_anchor_y = cy; f->patrol_anchor_set = 1;
+        }
+        dest_x = f->patrol_anchor_x + dx[f->patrol_idx] * OM_MACRO_PATROL_RADIUS;
+        dest_y = f->patrol_anchor_y + dy[f->patrol_idx] * OM_MACRO_PATROL_RADIUS;
+        if ((cx - dest_x) * (cx - dest_x) + (cy - dest_y) * (cy - dest_y) < OM_MACRO_PATROL_ARRIVE * OM_MACRO_PATROL_ARRIVE) {
+            f->patrol_idx = (f->patrol_idx + 1) % OM_MACRO_PATROL_WAYPOINTS;
+            dest_x = f->patrol_anchor_x + dx[f->patrol_idx] * OM_MACRO_PATROL_RADIUS;
+            dest_y = f->patrol_anchor_y + dy[f->patrol_idx] * OM_MACRO_PATROL_RADIUS;
+        }
+        if (om_macro_target_changed(f, f->behavior, dest_x, dest_y, n_force)) {
+            om_command_move(w, force_ids, n_force, dest_x, dest_y);
+            om_macro_remember_order(f, f->behavior, dest_x, dest_y, n_force);
+        }
     }
-    /* PATROL and AMBUSH keep their current (log-only) meaning -- neither is
-     * in this brief's scope; see the finishing report. */
+    /* AMBUSH issues no order until it triggers. */
 }
 
 int om_macro_execute_behavior(om_world *w, uint32_t p1, int p2, int p3) {
@@ -677,6 +707,9 @@ void om_macro_tick(om_world *w, uint64_t p1) {
     if (!st->has_evaluated) return;
     for (i = 0; i < st->n_forces; i++) {
         om_macro_force *f = &st->forces[i];
+        /* B1-1 (R-121-04, R-121-01): a true hook or threshold transition retreats the force
+         * (the contract has no to_state; R-120-03 names retreat). */
+        if (om_macro_eval_transitions(w, i) >= 0) f->behavior = OM_MACRO_RETREAT;
         f->last_issued_command_type = om_macro_command_for_behavior(f->behavior);
         om_macro_log_command(w, slot, i, f->last_issued_command_type);
         /* B13-8: only a force the mission actually registered gets real

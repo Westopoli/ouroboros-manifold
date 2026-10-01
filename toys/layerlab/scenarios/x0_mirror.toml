@@ -1,0 +1,27 @@
+# X0, the mirror: identical forces, flat, same layer, same formation.
+# Expected winner: none; win rate near 0.5 (the noise floor). README section 5. Not a pillar.
+extends = "r0_raiders_10v5.toml"
+
+[[groups]]
+side = "A"
+type = "raider"
+count = 10
+formation = "line"
+x = 1000.0
+y = 1000.0
+facing = 0.0
+layer = 3
+order = "attack_move"
+goal = [3000.0, 1000.0]
+
+[[groups]]
+side = "B"
+type = "raider"
+count = 10
+formation = "line"
+x = 3000.0
+y = 1000.0
+facing = 180.0
+layer = 3
+order = "attack_move"
+goal = [1000.0, 1000.0]
