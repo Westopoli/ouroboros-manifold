@@ -323,6 +323,17 @@ void ll_move_units(ll_state *s) {
                 if (can_step(s, u, u->x + sx, u->y + sy)) { u->x += sx; u->y += sy; }
                 else if (can_step(s, u, u->x + sx, u->y)) u->x += sx;
                 else if (can_step(s, u, u->x, u->y + sy)) u->y += sy;
+                else {
+                    /* sidestep (SPEC 5.10): +45, -45, +90, -90 degrees for even indices, mirrored for odd */
+                    static const double rcos[4] = {0.7071067811865476, 0.7071067811865476, 0.0, 0.0};
+                    static const double rsin[4] = {0.7071067811865476, -0.7071067811865476, 1.0, -1.0};
+                    double side = (i & 1) ? -1.0 : 1.0;
+                    for (int k = 0; k < 4; k++) {
+                        double rx = rcos[k] * sx - side * rsin[k] * sy;
+                        double ry = side * rsin[k] * sx + rcos[k] * sy;
+                        if (can_step(s, u, u->x + rx, u->y + ry)) { u->x += rx; u->y += ry; break; }
+                    }
+                }
             } else steering = STEER_STAND;
         }
 
