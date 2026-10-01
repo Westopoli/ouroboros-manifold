@@ -1562,6 +1562,11 @@ uint32_t om_mission_get_compatible_layouts(const om_world *w, uint32_t archetype
 /* HDR4-2-r/A4: id of the unit the player assigned as commander (R-077-05), 0
  * if none is assigned or the mission has no force. */
 uint32_t om_mission_get_commander_unit(const om_world *w);
+/* B7 (Q-077-02, R-077-05): make unit_id the commander. 0 on success; 1 when
+ * the unit does not exist or is not the player's; 2 when the currently
+ * assigned commander is dead (its fate is settled). May be called again to
+ * reassign while the assigned unit lives. */
+int om_mission_assign_commander(om_world *w, uint32_t unit_id);
 int om_mission_get_debrief(const om_world *w, om_debrief *out);
 uint32_t om_mission_get_deployed_force_count(const om_world *w);
 int32_t om_mission_get_enemy_faction(const om_world *w);
