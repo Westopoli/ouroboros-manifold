@@ -1775,11 +1775,16 @@ static const uint8_t GEN_LAUNCH_EVENT_TIER[] = {
 #define GEN_DEFAULT_EVENT_TIER 2
 #define GEN_OWNERSHIP_CHANGE_TIER 4 /* conquest-grade: CONQUEST_UNREST's tier */
 #define GEN_JUMP_EVENT_BUF 128
+#define GEN_JUMP_CHAIN_CAP 32
+
+typedef struct {
+    int32_t tag;
+    uint32_t region, template_id, n_events;
+    double mil, eco, ten;
+} gen_jump_chain;
 /* ALG-51 step 4 (simulation/chronicle_distiller.py _classify_regional_cluster):
  * regional cluster is growth above +3.0 and decline below -3.0 of the summed
  * economy + population event deltas. Category ids match chronicle.c. */
-#define OM_CHRON_REGIONAL_GROWTH_MIN 3.0
-#define OM_CHRON_REGIONAL_DECLINE_MAX -3.0
 #define GEN_CAT_REGIONAL_GROWTH 21
 #define GEN_CAT_REGIONAL_DECLINE 22
 
@@ -1809,6 +1814,8 @@ static int gen_time_jump(om_world *w, uint32_t n_ticks, om_time_jump_report *rep
     }
     int track_events = om_world_feature(w, OM_FEAT_EVENTS);
     om_fired_event fired[GEN_JUMP_EVENT_BUF];
+    gen_jump_chain chains[GEN_JUMP_CHAIN_CAP];
+    uint32_t n_chains = 0;
     for (uint32_t i = 0; i < n_ticks; i++) {
         om_world_step(w);
         for (uint32_t r = 0; r < nr; r++) {
@@ -1823,6 +1830,23 @@ static int gen_time_jump(om_world *w, uint32_t n_ticks, om_time_jump_report *rep
                           ? GEN_LAUNCH_EVENT_TIER[fired[k].template_id] : GEN_DEFAULT_EVENT_TIER;
             double dsum = 0.0;
             for (uint32_t f = 0; f < OM_F_COUNT; f++) dsum += fabs(fired[k].delta[f]);
+            if (fired[k].chain_tag > 0) {
+                uint32_t g = 0;
+                while (g < n_chains && chains[g].tag != fired[k].chain_tag) g++;
+                if (g == n_chains && n_chains < GEN_JUMP_CHAIN_CAP) {
+                    memset(&chains[g], 0, sizeof(chains[g]));
+                    chains[g].tag = fired[k].chain_tag;
+                    chains[g].region = fired[k].region_idx;
+                    chains[g].template_id = fired[k].template_id;
+                    n_chains++;
+                }
+                if (g < n_chains) {
+                    chains[g].n_events++;
+                    chains[g].mil += fired[k].delta[OM_F_MILITARY];
+                    chains[g].eco += fired[k].delta[OM_F_ECONOMY];
+                    chains[g].ten += fired[k].delta[OM_F_TENSION];
+                }
+            }
             net[fired[k].region_idx] += fired[k].delta[OM_F_ECONOMY] + fired[k].delta[OM_F_POPULATION];
             double score = om_chronicle_score_event(w, fired[k].region_idx, tier, dsum);
             if (!active[fired[k].region_idx] || score > peak[fired[k].region_idx]) peak[fired[k].region_idx] = score;
@@ -1853,6 +1877,8 @@ static int gen_time_jump(om_world *w, uint32_t n_ticks, om_time_jump_report *rep
         om_chronicle_build_opening_scroll(w);
     } else {
         uint32_t n_candidates = 0;
+        uint32_t tier_transitions[OM_MAX_FACTIONS];
+        (void)om_chronicle_distill_candidates(w, tier_transitions, OM_MAX_FACTIONS);
         int32_t band = om_mission_get_band(w);
         if (band == GEN_BAND_UNKNOWN) gs->consequence_consumed = 0;
         else if (!gs->consequence_consumed) {
@@ -1865,11 +1891,18 @@ static int gen_time_jump(om_world *w, uint32_t n_ticks, om_time_jump_report *rep
             om_chronicle_add_event(w, r, peak[r]);
             n_candidates++;
             if (start_owner[r] != last_owner[r]) continue;
-            if (net[r] > OM_CHRON_REGIONAL_GROWTH_MIN)
-                om_chronicle_add_regional_event(w, r, GEN_CAT_REGIONAL_GROWTH, peak[r]);
-            else if (net[r] < OM_CHRON_REGIONAL_DECLINE_MAX)
-                om_chronicle_add_regional_event(w, r, GEN_CAT_REGIONAL_DECLINE, peak[r]);
+            uint32_t rcat = om_chronicle_categorize_regional_cluster(w, 0, net[r]);
+            if (rcat == GEN_CAT_REGIONAL_GROWTH || rcat == GEN_CAT_REGIONAL_DECLINE)
+                om_chronicle_add_regional_event(w, r, rcat, peak[r]);
         }
+        for (uint32_t g = 0; g < n_chains; g++) {
+            const char *name = om_event_template_name(w, chains[g].template_id);
+            uint32_t ccat = om_chronicle_categorize_chain_cluster(w, name, chains[g].n_events,
+                                                                   chains[g].mil, chains[g].eco, chains[g].ten);
+            om_chronicle_add_chain_event(w, chains[g].tag, chains[g].region, ccat);
+        }
+        uint32_t n_chain_clusters = om_chronicle_build_chain_clusters(w);
+        n_candidates += n_chain_clusters;
         for (uint32_t li = 0; li < gs->n_lineages; li++) {
             gen_lineage *ln = &gs->lineages[li];
             if (!ln->used) continue;
