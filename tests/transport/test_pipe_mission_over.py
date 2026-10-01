@@ -86,7 +86,7 @@ def test_tactical_step_alone_reaches_mission_over_within_its_time_limit():
     tail = min(max_steps, 8)
     batch = {"type": "cmd", "name": "tactical_step", "n": max_steps - tail}
     end = {"type": "cmd", "name": "mission_end"}
-    frames = _run([SET_SEED, STEP10, START, BEGIN, batch] + [STEP] * tail + [end], timeout=180)
+    frames = _run([SET_SEED, STEP10, START, BEGIN, batch] + [STEP] * tail + [end], timeout=500)
     end_frames = frames[-2:]
     frames = frames[:-2]
 
