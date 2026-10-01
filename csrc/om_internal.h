@@ -8,10 +8,10 @@
 #include "ouroboros_sim.h"
 
 #define OM_MAX_NEIGHBORS 32
-/* F2d: raised 64 -> 128 so every region-indexed and per-tick-record bound
- * covers E-03's full draw range (OM_WORLD_REGION_COUNT_RANGE_HI = 110,
- * om_constants.h). */
-#define OM_MAX_REGIONS 128
+/* HDR5 (A27): raised 128 -> 512 so every region-indexed and per-tick-record
+ * bound covers E-03's full draw range (OM_WORLD_REGION_COUNT_RANGE_HI = 400,
+ * om_constants.h). om_world_new rejects more than this. */
+#define OM_MAX_REGIONS 512
 #define OM_DAMAGE_HISTORY_CAP 64
 #define OM_TIE_EPSILON 1e-12
 /* F2j: named so save.c (T2c) can bound-check a loaded count against the

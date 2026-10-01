@@ -738,7 +738,7 @@ typedef enum {
  * generation (R-021-01). A pinned or drawn count below the minimum feasible
  * total (sum of every rolled template's size + one corridor empty per faction)
  * makes generation fail its feasibility check (om_world_generated() == 0). */
-void om_gen_set_region_range(om_world *w, uint32_t lo, uint32_t hi);   /* default [60, 110] (Q-021-05) */
+void om_gen_set_region_range(om_world *w, uint32_t lo, uint32_t hi);   /* default [250, 400] (R-021-01, ALG-31) */
 void om_gen_set_faction_count(om_world *w, uint32_t n);                /* default 15 (R-021-01) */
 void om_gen_set_extra_edge_ratio(om_world *w, double ratio);          /* default 0.12 (R-021-08) */
 /* Player faction (id 0) template preference (R-021-04): raises that template's
