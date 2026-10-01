@@ -12,7 +12,7 @@ import sys
 
 import pytest
 
-from layerlab import analysis, scenario
+from layerlab import analysis, ffi, scenario
 from layerlab.batch import read_rows, run_rows, write_rows
 from layerlab.ffi import WIN_A, WIN_B, WIN_CAP, WIN_MUTUAL, WIN_STALEMATE
 from layerlab.run import run
@@ -151,7 +151,7 @@ def test_error_rows_instead_of_exceptions(mirror, setting, message_part):
     """SPEC 8: a ValueError from the scenario (a group over the unit limit, a spawn off the arena)
     gives a row with `error` set to the message and every measure None; no exception, neighbours
     unharmed. Serial and pooled."""
-    bad = {"count": {COUNT: 200}, "x": {"groups[1].x": -5000.0}}[setting]
+    bad = {"count": {COUNT: ffi.MAX_UNITS + 1}, "x": {"groups[1].x": -5000.0}}[setting]
     jobs = [_job(mirror, 0), _job(mirror, 1, bad), _job(mirror, 2)]
     for procs in (0, 2):
         rows = run_rows(jobs, processes=procs)
