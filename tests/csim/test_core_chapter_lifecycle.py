@@ -459,11 +459,11 @@ def _collapse_jump(lib, w):
 
 
 def test_R_062_02_collapse_jump_reassigns_the_player_faction_to_a_surviving_faction(lib, world_factory):
-    """The reassignment is the code's current choice (most regions, Q-062-01 stays open on
-    which faction): the new player faction is the survivor holding the most regions at the
-    collapse check, not the collapsed faction. The check runs at the end of the jump and
-    nothing after it moves an owner, so the world's owners after the jump are the owners the
-    reassignment saw."""
+    """R-062-02, A24/A26: the new player faction is a faction that still holds a region at
+the collapse check, not the collapsed faction. Which survivor the pools pick is proved in
+test_E08_S062_collapse_pick (including most-regions when both pools are empty). The check
+runs at the end of the jump and nothing after it moves an owner, so the world's owners
+after the jump are the owners the reassignment saw."""
     w = _campaign(lib, world_factory)
     assert lib.om_player_faction(w) == PLAYER
     _collapse_jump(lib, w)
@@ -472,7 +472,6 @@ def test_R_062_02_collapse_jump_reassigns_the_player_faction_to_a_surviving_fact
     assert new >= 0 and new != PLAYER, "the player faction was not reassigned in the collapse jump"
     counts = _survivor_counts(lib, w, PLAYER)
     assert new in counts, "reassigned to a faction that holds nothing"
-    assert counts[new] == max(counts.values())
     assert lib.om_campaign_needs_onboarding(w) == 0, "a survivor exists: not the terminal path"
 
 
