@@ -177,26 +177,27 @@ def test_ramp_land_rules_and_slope(h, g, ground_land, plateau):
     """R-001-06 / R-001-07 (SPEC 6 ramp, x1 40, sl 600, sw 200): a barrier from column 40 to the
     far edge (the plateau) blocks layers 1..h in open. Land outside the plateau is only the ground
     layer g; land inside is only layers h + 1..5; open outside is all five layers. One slope on the
-    face at mid-y: bottom edge centre (2000, 1000) on layer g, direction +x, length 600, width 200,
-    top layer h + 1; its top edge centre (2600, 1000) is a plateau cell that is land on the top
+    face at mid-y: bottom edge centre (1975, 1000) (the centre of the last ground column, SPEC 6) on
+    layer g, direction +x, length 600, width 200, top layer h + 1; its top edge centre (2575, 1000)
+    is a plateau cell that is land on the top
     layer, and the cell just outside the face is land on layer g."""
     t = build("ramp", h=h, g=g)
     o, l = masks(t)
     assert (o[:, :40] == ALL).all() and (l[:, :40] == ground_land).all()
     assert (o[:, 40:] == plateau).all() and (l[:, 40:] == plateau).all()
     assert t.n_slope == 1
-    assert _slope_fields(t.slope[0]) == (2000.0, 1000.0, 1.0, 0.0, 600.0, 200.0, g, h + 1)
+    assert _slope_fields(t.slope[0]) == (1975.0, 1000.0, 1.0, 0.0, 600.0, 200.0, g, h + 1)
     assert l[20, 39] & (1 << (g - 1))
-    assert l[20, 52] & (1 << h)          # top edge cell (2600, 1000) on layer h + 1
+    assert l[20, 52] & (1 << h)          # top edge cell (2575, 1000) on layer h + 1
 
 
 def test_ramp_parameters_move_the_plateau_and_the_slope():
     """SPEC 6 ramp keys x1 and sl: x1 = 30, sl = 300 puts the plateau at column 30, the slope's
-    bottom edge at (1500, 1000) and its top edge at (1800, 1000), a plateau cell."""
+    bottom edge at (1475, 1000) and its top edge at (1775, 1000), a plateau cell."""
     t = build("ramp", h=1, x1=30, sl=300.0)
     o, l = masks(t)
     assert (o[:, :30] == ALL).all() and (o[:, 30:] == 0b11110).all()
-    assert _slope_fields(t.slope[0])[:5] == (1500.0, 1000.0, 1.0, 0.0, 300.0)
+    assert _slope_fields(t.slope[0])[:5] == (1475.0, 1000.0, 1.0, 0.0, 300.0)
     assert l[20, 36] & 0b10
 
 
