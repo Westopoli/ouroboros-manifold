@@ -189,20 +189,20 @@ def test_unstuck_determinism():
 # ---------------------------------------------------------------------------
 
 def test_single_unit_group_still_blocked():
-    """Group-move ONLY unit 19 to the destination.  Unit 19 (spawn 11790,45)
-    has all four cardinal 30-wu neighbours (ids 2, 18, 20, 36); all have
+    """Group-move ONLY unit 20 to the destination.  Unit 20 (spawn 11775,45)
+    has all four cardinal 30-wu neighbours (ids 2, 19, 21, 38); all have
     group_id 0 in this scenario (they were not included in the group command).
 
     The fix excludes only same-nonzero-group mates.  group_id-0 units are still
-    blockers.  All 13 probe directions from unit 19 are blocked by its four
-    stationary non-group neighbours, so unit 19 must NOT move > 1 wu after
+    blockers.  All 13 probe directions from unit 20 are blocked by its four
+    stationary non-group neighbours, so unit 20 must NOT move > 1 wu after
     60 steps.
 
     Positive control for the exclusion being exact: if the fix incorrectly
-    excluded all units (or all stationary units), unit 19 would escape here.
+    excluded all units (or all stationary units), unit 20 would escape here.
     """
     move_single = {"type": "cmd", "name": "command", "verb": "move",
-                   "units": [19], "x": DEST_X, "y": DEST_Y}
+                   "units": [20], "x": DEST_X, "y": DEST_Y}
     cmds = [SET_SEED, STEP10, START, BEGIN, move_single]
     for _ in range(N_STEPS):
         cmds.append({"type": "cmd", "name": "tactical_step", "n": 1})
@@ -211,11 +211,11 @@ def test_single_unit_group_still_blocked():
     assert len(tactical) >= 2, "expected begin frame + at least 1 step"
     begin_map = {u["id"]: u for u in tactical[0].get("units", [])}
     final_map = {u["id"]: u for u in tactical[-1].get("units", [])}
-    assert 19 in begin_map, "unit 19 absent from begin frame"
-    assert 19 in final_map, "unit 19 absent from final frame"
-    bu, fu = begin_map[19], final_map[19]
+    assert 20 in begin_map, "unit 20 absent from begin frame"
+    assert 20 in final_map, "unit 20 absent from final frame"
+    bu, fu = begin_map[20], final_map[20]
     dist = ((fu["x"] - bu["x"]) ** 2 + (fu["y"] - bu["y"]) ** 2) ** 0.5
     assert dist <= MIN_MOVE_WU, (
-        "unit 19 moved %.3f wu despite being surrounded by non-group stationary "
+        "unit 20 moved %.3f wu despite being surrounded by non-group stationary "
         "units; exclusion is too broad (spawn=(%.2f,%.2f) final=(%.2f,%.2f))"
         % (dist, bu["x"], bu["y"], fu["x"], fu["y"]))
