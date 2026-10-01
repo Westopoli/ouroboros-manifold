@@ -83,6 +83,11 @@ om_mission_get_objective_completion = "mission.c"
 om_mission_get_region_delta         = "mission.c"
 om_objective_get_center             = "mission.c"
 om_mission_setup_fallback           = "mission.c"
+om_objective_get_node               = "mission.c"
+om_objective_get_radius             = "mission.c"
+om_mission_get_force_count          = "mission.c"
+om_mission_get_force_unit           = "mission.c"
+om_mission_get_commander_unit       = "mission.c"
 # F2n: tactical_support.c drifted objective centre write (B9-5)
 om_objective_set_center             = "mission.c"
 # units, combat, the tactical tick orchestrator: E-11

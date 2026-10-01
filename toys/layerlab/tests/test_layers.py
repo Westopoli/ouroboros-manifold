@@ -234,15 +234,17 @@ def _arrival_tick(ut, goal, tol=30.0):
 
 
 def test_barrier_auto_transition_crosses_on_the_nearest_open_layer():
-    """Q-001-03 ruling / R-001-05 (SPEC test 7): a `barrier` with h = 2 (layers 1 and 2 blocked
-    across the whole map), a flying raider on layer 1 ordered across, auto_transition 1: it
-    arrives at the goal on layer 3 (the nearest open layer), having been in a timed transfer
-    that began before it reached the strip. R-001-01 invariant: no tick has it on layer 1 or 2
-    inside the strip."""
+    """Q-001-03 ruling / R-001-05, Q-001-05 reading a2 (SPEC test 7): a `barrier` with h = 2 (layers 1 and 2
+    blocked across the whole map), a flying raider on layer 1 ordered across to a point on layer 1,
+    auto_transition 1: it crosses the strip on layer 3 (the nearest open layer), having been in a timed
+    transfer that began before it reached the strip, and ends on the layer it was ordered on, layer 1
+    (two changes). R-001-01 invariant: no tick has it on layer 1 or 2 inside the strip. (Superseded
+    expectation: it used to end on layer 3, 'the nearest open layer of the barrier'; that is now only the
+    goal layer when the goal itself is blocked on layers 1 and 2, see test_routing.py.)"""
     scn, res = _mover({"preset": "barrier", "h": 2})
     ut = unit_trace(res, 0)
-    assert res.unit[0]["layer"] == 3
-    assert res.unit[0]["transitions"] >= 1
+    assert res.unit[0]["layer"] == 1
+    assert res.unit[0]["transitions"] == 2
     assert np.hypot(res.unit[0]["x"] - 3000.0, res.unit[0]["y"] - 1000.0) <= 30.0
     first_change = int(np.flatnonzero(ut.changing)[0])
     assert ut.x[first_change] < 1900.0
@@ -271,10 +273,11 @@ def _in_wall_core(ut):
 
 def test_wall_zero_change_penalty_takes_the_shorter_route_over_the_wall():
     """Q-001-04 reading (b) (forced_change_penalty 0, SPEC test 7): a `wall` with open ends 300
-    units from the map edges, h = 2; a layer-1 flyer ordered across the middle. A free layer
-    change makes the straight line the cheapest route, so the unit changes layer (transitions
+    units from the map edges, h = 2; a layer-1 flyer ordered across the middle. The detour costs
+    about 580 units more than the straight line, more than the two timed transfers (2 * 1.0 s * 150 =
+    300 units), so the shortest route by time goes over: the unit changes layer (transitions
     >= 1), crosses the wall's blocked rows on a layer above 2, and arrives sooner than the
-    detour does (compared in the next test)."""
+    detour does (compared in the next test). The crossover itself is in test_routing.py."""
     scn, res = _mover(WALL, rules={"forced_change_penalty": 0})
     ut = unit_trace(res, 0)
     over = _in_wall_core(ut)
@@ -284,7 +287,8 @@ def test_wall_zero_change_penalty_takes_the_shorter_route_over_the_wall():
 
 
 def test_wall_large_change_penalty_takes_the_detour_through_the_open_end():
-    """Q-001-04 reading (a) (forced_change_penalty 100000, the default; SPEC test 7): the same
+    """Q-001-04 reading (a), the earlier reading, kept as a knob (forced_change_penalty 100000, set
+    explicitly; the default is now 0; SPEC test 7): the same
     wall and order: a detour on the current layer always beats a change, so the unit stays on
     layer 1 (transitions 0), passes the strip only through an open end (y under 300 or from 1700
     up), and arrives later than the penalty-0 unit (negative case of the test above)."""
@@ -448,13 +452,13 @@ def test_walker_at_a_barrier_with_no_slope_never_crosses_but_a_flyer_does():
     """R-001-07 (SPEC test 8): a walking raider ordered across a `barrier` (h = 2, no slope) with
     auto_transition on stands at the near edge on layer 1 with transitions 0 and never changes
     layer in place (negative). Positive control: the identical scenario with a flying raider
-    crosses and arrives on layer 3."""
+    crosses and, ordered to a point on layer 1, arrives back on layer 1 (Q-001-05 reading a2)."""
     _, walk = _mover({"preset": "barrier", "h": 2}, kind="walk")
     wu, ut = walk.unit[0], unit_trace(walk, 0)
     assert wu["layer"] == 1 and wu["transitions"] == 0 and wu["x"] < 1900.0
     assert not ut.changing.any() and not ut.on_slope.any()
     _, fly = _mover({"preset": "barrier", "h": 2}, kind="fly")
-    assert fly.unit[0]["layer"] == 3 and fly.unit[0]["x"] > 2800.0
+    assert fly.unit[0]["layer"] == 1 and fly.unit[0]["x"] > 2800.0 and fly.unit[0]["transitions"] == 2
 
 
 def test_flyer_ignores_the_slope_and_crosses_by_timed_transfer():
