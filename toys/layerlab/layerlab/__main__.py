@@ -35,7 +35,7 @@ def _run(args):
 
 def _check(args):
     from .analysis import check
-    print(check(_load(args), range(args.seeds)).text)
+    print(check(_load(args), range(args.seeds), window=args.window).text)
 
 
 def _sweep(args):
@@ -78,6 +78,7 @@ def main(argv=None):
     c = sub.add_parser("check", help="compare the firing-share prediction with actual winners")
     c.add_argument("scenario")
     c.add_argument("--seeds", type=int, default=20, help="N means seeds 0..N-1")
+    c.add_argument("--window", type=int, default=40, help="opening-window ticks from the first shot; 0 turns it off")
     c.add_argument("--set", action="append", metavar="PATH=VALUE")
     c.set_defaults(fn=_check)
 
