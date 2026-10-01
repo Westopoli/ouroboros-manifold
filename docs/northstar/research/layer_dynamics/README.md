@@ -90,12 +90,13 @@ A counter is what the larger side does to pull the skilled play's edge back towa
 
 Almost every counter is another skill, which is hub principle 5 (counters have counters). The seer is no longer the scouting tool: the ping replaces it, or it stays only at a very high cost (Westley, 2026-10-01; `Q-005-04`).
 
-Still open on counters: whether refusing the fight counts as a counter (in the lab the larger side is made to attack); and whether every play must have a counter on every map or only on most.
+Settled 2026-10-01, verbatim: "Yes refusing a fight counts as a counter, a skilled player only takes a battle that they can win, skilled players make it so that the opponent doesn't have a choice. - must have a counter only on most, some situations are unbeatable (like a full surround or a trap where the door gets closed). 1: ending ahead by a margin 2: headcount" So: refusing the fight is a counter, and the mark of skill is leaving the opponent no choice; a play needs a counter on most maps, not all, and a closed trap or a full surround is allowed to have none. In the lab the larger side is made to attack, so R\* measures what a play is worth once the fight is taken; whether the fight could have been refused is recorded per situation, and the plays that remove the choice (the bait, the ambush, the surround) are the ones expected to have no counter once sprung.
 
 ### 4.2 The measure
 
 - **Margin.** One signed number per fight: the share of side A's starting strength left, minus side B's. It replaces win rate, which is a probability in a system with no dice (pass 4: combat is deterministic once units are in contact).
-- **Break-even ratio, R\*.** For one rule set, one situation and one pair of plays (a skilled side against a naive side): the enemy force, as a multiple of the skilled side's force, at which the fight is even. R\* = 1.3 means the play is worth 30 percent more army. Force is counted by cost (the Q-074-01 power rating) so mixed unit types compare.
+- **Break-even ratio, R\*.** For one rule set, one situation and one pair of plays (a skilled side against a naive side): the enemy force, as a multiple of the skilled side's force, at which the fight is even. R\* = 1.3 means the play is worth 30 percent more army. The multiple is by headcount (Westley, 2026-10-01). So that a head on one side is worth a head on the other, both sides field the same mix of unit types in the same proportions; cost (the Q-074-01 power rating) is reported beside it, not used for the multiple.
+- **Beating.** The skilled side beats a force when it ends ahead by a margin, not when it wipes the enemy out (Westley, 2026-10-01). The size of the margin that counts is set with the bands.
 - **Premium.** Real maps are not symmetric, so a map can favour one start. R0 is the break-even of naive against naive on that map; a skill's premium is R\* / R0. The bands below are judged on the premium.
 - **Skill profile.** For one rule set: the premium of every combination of the five skills (5 singles, 10 pairs, 10 triples, 5 fours, the full set), plus controls and counter-plays.
 - **An honest R\*.** A stalemate is not a win, and the larger, naive side always has to attack, or a side that never moves never loses. "Naive" is a ladder: a blob, a line abreast, and a line that holds still; the last isolates the "side that holds still wins" effect found in pass 1. Bands are judged against the line abreast.
@@ -112,7 +113,7 @@ A rule set passes when its skill profile meets all of these across many sampled 
 | C3 | Skills stack | every combination beats each of its parts |
 | C4 | No dominant skill | no single skill reaches the full-mastery level alone |
 | C5 | No dead skill | removing any one skill from the full set lowers R\* noticeably |
-| C6 | Every skilled play has an answer (hub principle 5) | met by its counter-play, R\* falls back toward 1 |
+| C6 | Skilled plays have answers (hub principle 5) | on most maps, met by its counter-play, R\* falls back toward 1; refusing the fight counts; a sprung trap or a full surround may have none |
 | C7 | Robust | holds in a large majority of sampled situations (say 80 percent) |
 | C8 | Position, not a number, decides | where the skilled side wins it holds the higher share of units firing (§6.1) |
 | C9 | Fights stay readable | fight length stays inside E-11 S-085's window while knobs move |
@@ -120,10 +121,7 @@ A rule set passes when its skill profile meets all of these across many sampled 
 ### 4.4 Open with Westley
 
 1. The exact bands in C1, C2 and C7 (the drafts above follow from his choice of 30 percent per skill).
-2. Two questions on counters (§4.1a): does refusing the fight count, and must every play have a counter on every map.
-4. What "beats" means: wipes the enemy out, or ends ahead by a margin.
 5. Which map families count, and in what proportion.
-6. Whether the multiple is by cost or by headcount when unit types differ.
 
 Decided 2026-10-01, the layer skill (S3). Westley accepted the draft plays for the other four skills ("Otherwise your list looks good") and found the layer system static without an action from the player. After research (queue Q78) he chose three actions together, verbatim: "I think we should give players all 3: going dark, reach by unit type, and the pinging. To avoid the dislike for the short scan for money, these options will be free, we want to induce strategic depth. - units will still see others passively, just a shorter range, the pinging can have a much longer range. I'd also like the player being pinged to get an alert that they were pinged, and a ~60 degree direction that they were pinged from (like the direction indicator skill from World of Warships)." They are E-01 S-162 (targeted ping), S-163 (going dark) and S-164 (reach by unit type). Their numbers are `Q-005-04` and are tuned here. The lab needs all three in the engine before S3 can be measured: a ping aimed at a layer and place, an emit or silent state per group that changes sight and visibility, and a reach table per unit type in place of one range table for everyone.
 
