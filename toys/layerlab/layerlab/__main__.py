@@ -1,4 +1,4 @@
-"""Command line: python3 -m layerlab run | sweep | replay (SPEC.md section 8)."""
+"""Command line: python3 -m layerlab run | check | sweep | replay (SPEC.md section 8)."""
 import argparse
 import sys
 import tomllib
@@ -31,6 +31,11 @@ def _run(args):
     res = run(_load(args), seed=args.seed)
     print("winner %s  ticks %d  survivors %d %d" % (_WINNER.get(res.winner, res.winner), res.ticks, *res.survivors))
     print("hp_ratio A %.3f B %.3f  cost_lost A %g B %g" % (*res.hp_ratio, *res.cost_lost))
+
+
+def _check(args):
+    from .analysis import check
+    print(check(_load(args), range(args.seeds), window=args.window).text)
 
 
 def _sweep(args):
@@ -69,6 +74,13 @@ def main(argv=None):
     r.add_argument("--seed", type=int, default=0)
     r.add_argument("--set", action="append", metavar="PATH=VALUE", help="override a scenario path (TOML literal)")
     r.set_defaults(fn=_run)
+
+    c = sub.add_parser("check", help="compare the firing-share prediction with actual winners")
+    c.add_argument("scenario")
+    c.add_argument("--seeds", type=int, default=20, help="N means seeds 0..N-1")
+    c.add_argument("--window", type=int, default=40, help="opening-window ticks from the first shot; 0 turns it off")
+    c.add_argument("--set", action="append", metavar="PATH=VALUE")
+    c.set_defaults(fn=_check)
 
     s = sub.add_parser("sweep", help="sweep one or two scenario paths over several seeds")
     s.add_argument("scenario")
