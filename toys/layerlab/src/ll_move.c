@@ -7,6 +7,7 @@
 #define EPS 1e-9    /* absorbs the rounding of a time or position accumulated tick by tick */
 #define LL_SEPARATION_PASSES 8    /* SPEC 5.10 */
 #define LL_MOUTH_RADIUS 40.0      /* SPEC 5.10 slope mouths */
+#define LL_LANE_PITCH 30.0        /* SPEC 5.9 lanes: a body width, fixed in the lab */
 
 void ll_face_init(ll_unit *u, double facing_deg) {
     double s, c;
@@ -176,6 +177,23 @@ static int body_blocked(const ll_state *s, const ll_unit *u, double x, double y)
     return 0;
 }
 
+/* Bodies on a slope (SPEC 5.9): the step to (x,y) is refused when it lands closer than r_i + r_j to another alive
+ * unit on the SAME slope, unless already that close and not getting nearer. Units off the slope never count. */
+static int slope_blocked(const ll_state *s, const ll_unit *u, double x, double y) {
+    for (int j = 0; j < s->n; j++) {
+        const ll_unit *o = &s->u[j];
+        if (o == u || !o->alive || o->slope != u->slope) continue;
+        double reach = u->ty->body_radius + o->ty->body_radius;
+        double nx = x - o->x, ny = y - o->y;
+        double after = nx * nx + ny * ny;
+        if (!(after < reach * reach)) continue;
+        double bx = u->x - o->x, by = u->y - o->y;
+        if (bx * bx + by * by < reach * reach && after >= bx * bx + by * by) continue;
+        return 1;
+    }
+    return 0;
+}
+
 /* Slope mouths (SPEC 5.10): 1 when (x,y) is within LL_MOUTH_RADIUS of the centre of a slope edge that lies on
  * `layer`. Inside it bodies neither block steps nor are pushed, or two walkers a body width apart at the entry,
  * whose centre can sit on a flow-field cell boundary, each stand where the other must step and wait forever. */
@@ -202,15 +220,58 @@ static double mount_reach(const ll_state *s, const ll_unit *u) {
     return u->ty->body_radius > 0.5 * s->ter->cell ? u->ty->body_radius : 0.5 * s->ter->cell;
 }
 
-static void mount(ll_unit *u, const ll_slope *sl, int index, int dir) {
+/* SPEC 5.9 lanes: lane i of a slope for a unit of body radius r is at offset 0, +30, -30, +60, -60, ... along the left
+ * normal; there are 1 + 2 * m lanes where m is the number of multiples of 30 within the usable half-width. */
+static int lane_count(const ll_slope *sl, double r) {
+    double h = 0.5 * sl->width - r;
+    int m = 0;
+    while ((double)(m + 1) * LL_LANE_PITCH <= h + EPS) m++;
+    return 1 + 2 * m;
+}
+
+static double lane_offset(int i) {
+    return (double)((i + 1) / 2) * LL_LANE_PITCH * (i & 1 ? 1.0 : -1.0);
+}
+
+/* Mounts at the unit's lane (SPEC 5.9): the nearest lane to its own lateral position, or the nearest free one when
+ * another unit on the slope is within a body width of the entry along the axis on that lane. Returns 0, leaving the
+ * unit where it is, when every lane is occupied. Mounting is never blocked by bodies off the slope. */
+static int mount(const ll_state *s, ll_unit *u, const ll_slope *sl, int index, int dir) {
+    int n = lane_count(sl, u->ty->body_radius);
+    double h = 0.5 * (double)(n - 1) * LL_LANE_PITCH;
+    double lat = (u->x - sl->x0) * -sl->dy + (u->y - sl->y0) * sl->dx;
+    if (lat > h) lat = h;
+    if (lat < -h) lat = -h;
+    double t0 = dir > 0 ? 0.0 : 1.0;
+    int best = -1;
+    double bestd = 0.0;
+    for (int i = 0; i < n; i++) {
+        double off = lane_offset(i);
+        int taken = 0;
+        for (int j = 0; j < s->n && !taken; j++) {
+            const ll_unit *o = &s->u[j];
+            if (o == u || !o->alive || o->slope != index) continue;
+            double d = (o->slope_t - t0) * sl->length;
+            if ((d < 0.0 ? -d : d) < LL_LANE_PITCH - EPS && o->slope_lane - off < EPS && off - o->slope_lane < EPS) taken = 1;
+        }
+        if (taken) continue;
+        double d = lat - off;
+        if (d < 0.0) d = -d;
+        if (best < 0 || d < bestd - EPS) { best = i; bestd = d; }
+    }
+    if (best < 0) return 0;
     u->slope = index;
     u->slope_dir = dir;
-    u->slope_t = dir > 0 ? 0.0 : 1.0;
+    u->slope_t = t0;
+    u->slope_lane = lane_offset(best);
     ll_slope_edge(sl, dir < 0, &u->x, &u->y);
+    u->x -= sl->dy * u->slope_lane;
+    u->y += sl->dx * u->slope_lane;
     u->changing = 1;
     u->chg_from = sl->bottom_layer;
     u->chg_to = sl->top_layer;
     u->progress = u->slope_t;
+    return 1;
 }
 
 enum { STEER_STAND = 0, STEER_TARGET = 1, STEER_MOUNTED = 2 };
@@ -264,8 +325,7 @@ static int steer(ll_state *s, ll_unit *u, int olayer, double gx, double gy, doub
         ll_slope_edge(sl, dir < 0, &ex, &ey);
         double reach = mount_reach(s, u);
         if (sqrt((ex - u->x) * (ex - u->x) + (ey - u->y) * (ey - u->y)) <= reach) {
-            mount(u, sl, st.slope, dir);
-            return STEER_MOUNTED;
+            return mount(s, u, sl, st.slope, dir) ? STEER_MOUNTED : STEER_STAND;
         }
         *tx = ex; *ty = ey;
         return STEER_TARGET;
@@ -295,19 +355,26 @@ static int ride(ll_state *s, ll_unit *u, int olayer, int have, double gx, double
         if (ct < cb) u->slope_dir = 1;
         else if (cb < ct) u->slope_dir = -1;
     }
-    u->slope_t += (double)u->slope_dir * u->ty->speed * LL_DT / sl->length;
-    if (u->slope_dir > 0 ? u->slope_t >= 1.0 - EPS : u->slope_t <= EPS) {
-        int top = u->slope_dir > 0;
+    double nt = u->slope_t + (double)u->slope_dir * u->ty->speed * LL_DT / sl->length;
+    int done = u->slope_dir > 0 ? nt >= 1.0 - EPS : nt <= EPS;
+    double ax = sl->x0 + sl->dx * sl->length * nt, ay = sl->y0 + sl->dy * sl->length * nt;
+    if (done) ll_slope_edge(sl, u->slope_dir > 0, &ax, &ay);
+    ax -= sl->dy * u->slope_lane;
+    ay += sl->dx * u->slope_lane;
+    if (slope_blocked(s, u, ax, ay)) return u->slope_dir;
+    if (done) {
         u->slope = -1;
         u->changing = 0;
         u->chg_from = u->chg_to = 0;
         u->progress = 0.0;
-        ll_slope_edge(sl, top, &u->x, &u->y);
-        set_layer(u, top ? sl->top_layer : sl->bottom_layer);
+        u->x = ax;
+        u->y = ay;
+        set_layer(u, u->slope_dir > 0 ? sl->top_layer : sl->bottom_layer);
         return 0;
     }
-    u->x = sl->x0 + sl->dx * sl->length * u->slope_t;
-    u->y = sl->y0 + sl->dy * sl->length * u->slope_t;
+    u->slope_t = nt;
+    u->x = ax;
+    u->y = ay;
     u->progress = u->slope_t;
     return u->slope_dir;
 }
