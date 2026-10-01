@@ -263,3 +263,13 @@ Source: `docs/northstar/plans/2026-10-02-alg-emit-lossy.md` on `push/INV-algemit
 3. **Names.** The doubled `OM_OM_MACRO_*` prefix is fixed in the emitter and its consumers renamed in the same piece, values untouched. The 10 names the emitter produces that the header lacks are bible-derived and enter the header through the emit in piece 1; a clash with a hand constant of the same name is reported, not resolved by picking one. The 20 names `--emit` lists as unparsed come to the Architect as a list with the ALG text of each: the fix is either in the emitter or in the bible's wording, decided per name.
 
 A constant that carries a play-tuned or provisional value belongs in the hand-owned header with its comment; a value the bible states belongs in the generated one. Nobody moves a value between them without saying which it is.
+
+## Addendum 15, 2026-10-02 (C2: the memory-per-region budget is red for a real reason)
+
+`tests/csim/scale/test_scale_E02.py::test_e02_memory_per_region_under_256_bytes`: the marginal save-state cost between 60 and 512 regions is 1,601 bytes per region against Westley's 256 (E-02, confirmed 2026-09-14, "a miss is escalated").
+
+**A32. It stays red as a finding and goes to Westley.** Nobody edits the test, the budget or the metric. It was red before HDR5 (for a false reason), so HDR5 lands with it listed as a known red in its ledger row, with the real numbers.
+
+One read-only Engineer task so he can decide on facts: break the 1,601 bytes down by save slot (region fields, edge matrix, events, generational, chronicle, mission, each history ring), at 60, 250, 400 and 512 regions, and say which parts grow with the square of the region count. Append the table to the HDR5 ledger row or a short report. No fix is designed until he has seen it.
+
+The four version-4 pins in `tests/test_load_game_wrong_version.gd` are a test-defect as the coordinator says: the version went to 5 by ruling; ledger row.
