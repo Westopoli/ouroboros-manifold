@@ -11,8 +11,8 @@ from dataclasses import dataclass, field
 
 from .. import formations, scenario, terrain
 from . import situation
-from .cost import counts_for_cost, unit_cost
-from .rstar import rstar as _rstar
+from .cost import counts_for_heads
+from .rstar import rstar as _rstar, rstar_windows
 
 SKILLS = ("S1", "S2", "S3", "S4", "S5")
 SLOT = {"S1": "where", "S2": "shape", "S3": "layer", "S4": "info", "S5": "matchup"}
@@ -330,7 +330,9 @@ def _beat_order(sit, base, side, order, counts, enemy, ladder):
     return sorted(order, key=key)
 
 
-def _compose(sit, base, side, counts, skills, ladder, enemy, attack, arc=_ARC, layer=None):
+def _compose(sit, base, side, counts, skills, ladder, enemy, larger, arc=_ARC, layer=None):
+    """`larger`: this side has more heads than the enemy. The larger side attacks (R* is measured with it made to
+    attack); a side that holds by choice (S1's point, or the hold ladder) does so only when it is not larger."""
     letter = "AB"[side]
     own, foe = _anchor(sit, side), _anchor(sit, 1 - side)
     sp = _spacing(sit)
@@ -352,7 +354,7 @@ def _compose(sit, base, side, counts, skills, ladder, enemy, attack, arc=_ARC, l
             p0 = (p0[0] - outward[0] * _EDGE_STEP, p0[1] - outward[1] * _EDGE_STEP)
     if "S5" in skills:
         order = _beat_order(sit, base, side, order, counts, enemy, ladder)
-    hold = s1 or ("S2" not in skills and not attack)
+    hold = (s1 and not larger) or ("S2" not in skills and not (ladder != "hold" or larger))
     common = {"side": letter, "layer": _layer(sit, skills, layer), "target_policy": "nearest", "facing": f}
     shift = (foe[0] - p0[0], foe[1] - p0[1])
     n = sum(counts.values())
@@ -370,15 +372,13 @@ def _compose(sit, base, side, counts, skills, ladder, enemy, attack, arc=_ARC, l
     return _emit_rows(rows, order, common, hold, shift)
 
 
-def _counts(sit, base, size):
-    return counts_for_cost(sit.mix, size * unit_cost(base, "raider"), base)
-
-
 def compose(sit, side, size, skills, ladder="line", enemy=None, layer=None):
-    """`layer`: where a side without S3 stands (default `sit.layer`); build_scenario sets it for a naive side."""
+    """`size` is a number of heads. `layer`: where a side without S3 stands (default `sit.layer`); build_scenario
+    sets it for a naive side."""
     base = situation.base_scenario(sit)
-    return _compose(sit, base, side, _counts(sit, base, size), frozenset(skills), ladder, enemy, ladder != "hold",
-                    layer=layer)
+    counts = counts_for_heads(sit.mix, size, base)
+    larger = enemy is not None and sum(counts.values()) > sum(enemy[1].values())
+    return _compose(sit, base, side, counts, frozenset(skills), ladder, enemy, larger, layer=layer)
 
 
 # ---- scenarios for rstar ------------------------------------------------------------------------
@@ -390,7 +390,7 @@ def _fit_arc(sit, base, counts, skills, ladder):
     err = None
     for arc in itertools.takewhile(lambda a: a > 0, (_ARC - 10.0 * k for k in itertools.count())):
         scn = copy.deepcopy(base)
-        scn["groups"] = _compose(sit, base, 0, counts, skills, ladder, None, ladder != "hold", arc)
+        scn["groups"] = _compose(sit, base, 0, counts, skills, ladder, None, False, arc)
         try:
             scenario.to_c(scn)
             return arc, None
@@ -407,25 +407,24 @@ def build_scenario(sit, skills, size, ladder="line", processes=None, config=None
     base = situation.base_scenario(sit)
     if config is not None:
         base = apply_config(base, config)
-    skilled_counts = _counts(sit, base, size)
+    skilled_counts = counts_for_heads(sit.mix, size, base)
     naive_layer = sit.layer if config is None else sit.hidden["layer"]   # base rules: no cross-layer fire, nothing to scout
     arc, arc_error = _fit_arc(sit, base, skilled_counts, skills, ladder) if "S2" in skills else (_ARC, None)
 
     def build(ratio, swap):
         if arc is None:
             raise arc_error
-        naive_counts = _counts(sit, base, ratio * size)
+        naive_counts = counts_for_heads(sit.mix, int(ratio * size + 0.5), base)
         if sum(skilled_counts.values()) + sum(naive_counts.values()) > 128:
             raise ValueError("%d units exceed LL_MAX_UNITS 128" % (sum(skilled_counts.values())
                                                                     + sum(naive_counts.values())))
         scn = copy.deepcopy(base)
         scn["groups"] = []
-        skilled_cost = sum(unit_cost(base, t) * n for t, n in skilled_counts.items())
-        naive_cost = sum(unit_cost(base, t) * n for t, n in naive_counts.items())
+        skilled_heads, naive_heads = sum(skilled_counts.values()), sum(naive_counts.values())
         mine = _compose(sit, base, 0, skilled_counts, skills, ladder, (sit.mix, naive_counts),
-                        ladder != "hold" or skilled_cost > naive_cost, arc)
+                        skilled_heads > naive_heads, arc)
         theirs = _compose(sit, base, 1, naive_counts, frozenset(), ladder, (sit.mix, skilled_counts),
-                          ladder != "hold" or naive_cost > skilled_cost, layer=naive_layer)
+                          naive_heads > skilled_heads, layer=naive_layer)
         if swap:
             mine = [dict(g, side="B") for g in mine]
             theirs = [dict(g, side="A") for g in theirs]
@@ -444,11 +443,14 @@ def build_scenario(sit, skills, size, ladder="line", processes=None, config=None
 class Profile:
     cells: list = field(default_factory=list)
 
-    def aggregate(self):
-        """Per combination: the median premium over cells with a premium, how many there are, and how many
-        cells have none (invalid, above or below the scan, short scan, unbuildable): counted, never averaged."""
+    def aggregate(self, map_set=None):
+        """Per combination, over the cells of `map_set` ("space", "land"; None for all): the median premium over
+        cells with a premium, how many there are, and how many cells have none (invalid, above or below the
+        scan, short scan, unbuildable): counted, never averaged."""
         out = {}
         for c in self.cells:
+            if map_set is not None and c["map_set"] != map_set:
+                continue
             out.setdefault(c["combo"], []).append(c)
         return {
             combo: {
@@ -460,10 +462,12 @@ class Profile:
         }
 
 
-def _flags(sit, res, combo, arc):
+def _flags(sit, res, combo, arc, windows):
     flags = ["situation: " + r for r in situation.validate(sit)]
     if not res.points:
         flags.append("unbuildable")
+    if not windows:
+        flags.append("no_windows")
     for name in ("above_scan", "below_scan", "short_scan", "rerun"):
         if getattr(res, name):
             flags.append(name)
@@ -478,9 +482,13 @@ def _flags(sit, res, combo, arc):
     return flags
 
 
+def _windows(build, res):
+    return rstar_windows(build, res) if res.points and res.valid else []
+
+
 def profile(sits, sizes=(8, 16), ladder="line", config=None, processes=None, ratios=None, refine=None,
-            seeds=(0, 1), combos=None):
-    kw = {"seeds": tuple(seeds), "processes": processes}
+            seeds=(0, 1), combos=None, win_margin=0.02):
+    kw = {"seeds": tuple(seeds), "processes": processes, "win_margin": win_margin}
     if ratios is not None:
         kw["ratios"] = tuple(ratios)
     if refine is not None:
@@ -488,16 +496,27 @@ def profile(sits, sizes=(8, 16), ladder="line", config=None, processes=None, rat
     prof = Profile()
     for sit in sits:
         for size in sizes:
-            naive = _rstar(build_scenario(sit, frozenset(), size, ladder, config=config), **kw)
+            naive_build = build_scenario(sit, frozenset(), size, ladder, config=config)
+            naive = _rstar(naive_build, **kw)
+            naive_windows = None
             for combo in (all_combinations() if combos is None else combos):
                 build = build_scenario(sit, combo, size, ladder, config=config)
-                res = naive if not combo else _rstar(build, **kw)
+                if combo:
+                    res = _rstar(build, **kw)
+                    windows = _windows(build, res)
+                else:
+                    res = naive
+                    naive_windows = _windows(naive_build, naive) if naive_windows is None else naive_windows
+                    windows = naive_windows
                 valid = bool(res.points) and res.valid and naive.valid and not res.short_scan
                 premium = None
                 if valid and res.value is not None and naive.value is not None:
                     premium = res.value / naive.value
                 prof.cells.append({
                     "situation": sit.id, "combo": combo, "size": size, "value": res.value, "valid": valid,
-                    "r0": naive.value, "premium": premium, "flags": _flags(sit, res, combo, build.arc),
+                    "r0": naive.value, "premium": premium, "flags": _flags(sit, res, combo, build.arc, windows),
+                    "map_set": sit.map_set, "refusable": sit.refusable, "value_cost": res.value_cost,
+                    "firing_adv_at_rstar": res.firing_adv_at_rstar, "firing_adv_equal": res.firing_adv_equal,
+                    "win_margin": win_margin, "windows": windows,
                 })
     return prof

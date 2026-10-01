@@ -12,6 +12,17 @@ from ..run import run
 
 FAMILIES = ("flat", "block", "wall", "barrier_ramp", "lane", "ramp_defense", "cover")
 ROSTER = ("raider", "interceptor", "vanguard", "warden", "bombard", "bastion")
+MAP_SET = {"flat": "space", "block": "space", "wall": "space", "lane": "space", "cover": "space",
+           "barrier_ramp": "land", "ramp_defense": "land"}
+_REFUSAL = {   # family -> (the larger side could decline the fight, why)
+    "flat": (True, "open ground: the larger side can go round"),
+    "block": (True, "the larger side can go round the block"),
+    "wall": (True, "the larger side can go round the wall's ends"),
+    "cover": (True, "open ground: the larger side can go round the cover"),
+    "barrier_ramp": (True, "another route or layer exists around the barrier"),
+    "lane": (False, "the corridor is the only way through"),
+    "ramp_defense": (False, "the slope is the only way up to the plateau"),
+}
 
 _BASE = Path(__file__).resolve().parents[2] / "scenarios" / "base.toml"
 _DIMS = {"w_cells": 80, "h_cells": 40, "cell": 50.0, "layer_spacing": 0.0}
@@ -24,6 +35,9 @@ _OVERLAP_FROM = 21          # SPEC "over ticks after 20"
 _STUCK_WINDOW = 400
 _STUCK_MOVE = 5.0
 _ASYMMETRY = 100.0
+_SPAWN_ACROSS = 20          # units across a rank (plays._ACROSS)
+_SPAWN_RANKS = 7            # ranks behind it for 128 heads
+_SPAWN_STEP = 50.0          # spacing between units and between ranks
 _TRIES = 1000
 
 
@@ -37,12 +51,24 @@ class Situation:
     anchor_B: tuple
     facing_A: float
     facing_B: float
-    mix: dict
+    mix: dict                   # type name to share of heads, multiples of 0.25 summing to 1
     hidden: dict
     approach_distance: float
     jitter: float = 10.0
     layer: int = 3
     notes: list = field(default_factory=list)
+
+    @property
+    def map_set(self):
+        return MAP_SET[self.family]
+
+    @property
+    def refusable(self):
+        return _REFUSAL[self.family][0]
+
+    @property
+    def refusable_reason(self):
+        return _REFUSAL[self.family][1]
 
 
 def min_spacing(jitter, body_radius=15.0):
@@ -94,6 +120,22 @@ def goal_clear(sit, x, y, layer):
                for ex, ey, el in _edges(sit.terrain) if el == layer)
 
 
+def _spawn_layers(built, anchor, facing):
+    """The layers open over every in-arena cell a force of up to 128 heads spawns on: ranks of 20 across
+    the facing, the further ranks behind the anchor (cells outside the arena fail to build elsewhere)."""
+    f = math.radians(facing)
+    ax, ay, px, py = math.cos(f), math.sin(f), -math.sin(f), math.cos(f)
+    mask = 0b11111
+    for r in range(_SPAWN_RANKS):
+        for i in range(_SPAWN_ACROSS):
+            lat, dep = (i - (_SPAWN_ACROSS - 1) / 2.0) * _SPAWN_STEP, -r * _SPAWN_STEP
+            cr = terrain.cell_of(built.w_cells, built.h_cells, built.cell,
+                                 anchor[0] + dep * ax + lat * px, anchor[1] + dep * ay + lat * py)
+            if cr is not None:
+                mask &= built.open[cr[1] * built.w_cells + cr[0]]
+    return {k for k in range(1, 6) if mask & (1 << (k - 1))}
+
+
 def validate(sit):
     reasons = []
     t = {**_DIMS, **sit.terrain}
@@ -115,6 +157,9 @@ def validate(sit):
         if not goal_clear(sit, x, y, sit.layer):
             reasons.append("anchor %s (%g, %g) is within %g of a slope edge on layer %d"
                            % (name, x, y, _EDGE_CLEAR, sit.layer))
+        if sit.hidden["layer"] not in _spawn_layers(built, (x, y), sit.facing_A if name == "A" else sit.facing_B):
+            reasons.append("hidden layer %d is closed over the spawn ranks at anchor %s"
+                           % (sit.hidden["layer"], name))
     if sit.approach_distance < _MIN_APPROACH:
         reasons.append("approach_distance %g is below %g" % (sit.approach_distance, _MIN_APPROACH))
     if abs(sum(sit.mix.values()) - 1.0) > 1e-9:
@@ -249,13 +294,28 @@ def _draw_mix(rng):
     return {ROSTER[t]: 0.25 * q for t, q in zip(types, quarters)}
 
 
+def _hidden_layers(terr, a, b):
+    """The hidden-layer candidates (2 to 4) open over the spawn ranks at both anchors."""
+    try:
+        built = terrain.build({**_DIMS, **terr})
+    except ValueError:
+        return []
+    spawns = [_spawn_layers(built, p, _facing(p, q)) for p, q in ((a, b), (b, a))]
+    return [k for k in (2, 3, 4) if all(k in layers for layers in spawns)]
+
+
 def _draw(rng, idx, seed, family):
     for _ in range(_TRIES):
         terr, a, b, feature, notes = _BUILDERS[family](rng)
+        terr = {**terr, "layer_spacing": 0.0}
+        mix, route = _draw_mix(rng), rng.randrange(2)
+        layers = _hidden_layers(terr, a, b)
+        if not layers:
+            continue
         sit = Situation(
-            id=idx, seed=seed, family=family, terrain={**terr, "layer_spacing": 0.0}, anchor_A=a, anchor_B=b,
-            facing_A=_facing(a, b), facing_B=_facing(b, a), mix=_draw_mix(rng),
-            hidden={"route": rng.randrange(2), "layer": rng.choice((2, 3, 4))},
+            id=idx, seed=seed, family=family, terrain=terr, anchor_A=a, anchor_B=b,
+            facing_A=_facing(a, b), facing_B=_facing(b, a), mix=mix,
+            hidden={"route": route, "layer": rng.choice(layers)},
             approach_distance=math.dist(a, b), notes=notes)
         asymmetric = feature is None or abs(
             _feature_dist(feature, a) - _feature_dist(feature, b)) > _ASYMMETRY
