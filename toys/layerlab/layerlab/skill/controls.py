@@ -1,4 +1,4 @@
-"""The two controls for R* (SPEC.md section 14.1): a mirror (R* near 1) and a planted range advantage."""
+"""The two controls for R* (SPEC.md sections 14.1 and 14.5): a mirror (R* near 1) and a planted range advantage."""
 import copy
 from pathlib import Path
 
@@ -36,7 +36,7 @@ def _build(size, skilled_type):
     base["types"]["raider_far"]["cost"] = unit_cost(base, "raider")
 
     def build(ratio, swap):
-        other = max(1, round(ratio * size))
+        other = max(1, int(ratio * size + 0.5))
         if size + other > ffi.MAX_UNITS:
             raise ValueError("%d + %d raiders exceed LL_MAX_UNITS %d" % (size, other, ffi.MAX_UNITS))
         skilled_side, other_side = ("B", "A") if swap else ("A", "B")
@@ -56,9 +56,9 @@ def advantage_build(size):
     return _build(size, "raider_far")
 
 
-def mirror_control(size, processes=None):
-    return rstar(mirror_build(size), processes=processes)
+def mirror_control(size, processes=None, win_margin=0.02):
+    return rstar(mirror_build(size), processes=processes, win_margin=win_margin)
 
 
-def advantage_control(size, processes=None):
-    return rstar(advantage_build(size), processes=processes)
+def advantage_control(size, processes=None, win_margin=0.02):
+    return rstar(advantage_build(size), processes=processes, win_margin=win_margin)

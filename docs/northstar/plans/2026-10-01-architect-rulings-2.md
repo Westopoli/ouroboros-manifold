@@ -251,3 +251,15 @@ For Westley: the E-03 generation target still reads "a 110-region world in under
 ## Addendum 13, 2026-10-01 (C1 S6: tactical frame `tier` and `state`)
 
 **A30. Both fields are reserved.** Option (a), docs only: `docs/architecture.md` says `tier` and `state` are reserved and always 0, and the frame examples show 0. No client code reads either today, and neither has a defined meaning or a rule asking for it. `state` is filled only when a rule needs the client to show a unit's order, as a contract piece with its enum table; `tier` when units have a tier source. A transport test pins both at 0 so a later change has to go through the contract.
+
+## Addendum 14, 2026-10-02 (the constants emitter drops hand-added constants)
+
+Source: `docs/northstar/plans/2026-10-02-alg-emit-lossy.md` on `push/INV-algemit`; land the report as a docs piece. `alg_constants.py --emit` rewrites all of `csrc/om_constants.h` and would drop 147 hand-added constants; nothing in the gate compares the header with the bible.
+
+**A31. Approved as three harness pieces, in this order.**
+
+1. **Split.** The 147 hand constants move to `csrc/om_constants_extra.h`, hand-owned, with a `pieces.toml` row (M0). The generated header ends with `#include "om_constants_extra.h"`, emitted by the emitter, so no consumer changes its includes. Acceptance: the set of macro names and values visible to a file that includes `om_constants.h` is identical before and after (compare the preprocessor's macro dump), a full `--emit` then reproduces `om_constants.h` exactly, and the determinism checksum is unchanged. No value changes in this piece.
+2. **Check in the gate.** `alg_constants.py --check` emits to memory and fails when the generated header differs from the file; `merge_gate.sh` runs it beside the lint. Positive control: a hand-edited value in `om_constants.h` makes it fail. The hand patch of the region range then goes away, because ALG-31 already gives 250 and 400.
+3. **Names.** The doubled `OM_OM_MACRO_*` prefix is fixed in the emitter and its consumers renamed in the same piece, values untouched. The 10 names the emitter produces that the header lacks are bible-derived and enter the header through the emit in piece 1; a clash with a hand constant of the same name is reported, not resolved by picking one. The 20 names `--emit` lists as unparsed come to the Architect as a list with the ALG text of each: the fix is either in the emitter or in the bible's wording, decided per name.
+
+A constant that carries a play-tuned or provisional value belongs in the hand-owned header with its comment; a value the bible states belongs in the generated one. Nobody moves a value between them without saying which it is.
