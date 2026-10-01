@@ -867,7 +867,7 @@ static gen_character *gen_pick_previous_candidate(const om_world *w, gen_state *
     if (!gs) return NULL;
     for (uint32_t li = 0; li < gs->n_lineages; li++) {
         gen_lineage *l = &gs->lineages[li];
-        if (!l->used) continue;
+        if (!l->used || l->chapter_count < 1) continue; /* R-058-02: played at least 1 chapter ago */
         uint32_t nearby = 0;
         for (uint32_t i = 0; i < gs->n_characters; i++) {
             gen_character *c = &gs->characters[i];
@@ -1669,7 +1669,7 @@ int32_t om_player_faction_reassign_on_collapse(om_world *w, int32_t player_facti
         for (uint32_t i = 0; i < gs->n_characters && !prev_probe; i++) {
             gen_character *c = &gs->characters[i];
             gen_lineage *l = gen_lineage_find(gs, c->lineage_id);
-            if (!c->used || c->status != GEN_STATUS_ACTIVE || !l) continue;
+            if (!c->used || c->status != GEN_STATUS_ACTIVE || !l || l->chapter_count < 1) continue;
             if (!gen_faction_survives(counts, c->faction)) continue;
             if (gen_region_within_hops(w, region, c->region, OM_SELECTOR_PROXIMITY_HOPS)) prev_probe = c;
         }
