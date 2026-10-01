@@ -67,7 +67,7 @@ int ll_can_see(const ll_state *s, int o, int t) {
     if (elev < 0.0) elev = 0.0;
 
     /* 4. effective radius */
-    double eff_r = uo->ty->sensor * (1.0 - interf) * elev * f;
+    double eff_r = uo->ty->sensor * (1.0 - interf) * elev * f * ll_emit_factor(s, o, t);   /* going dark, ABI 3 */
 
     /* 5. distance, with the vertical term */
     double d3 = ll_dist3(uo->x - ut->x, uo->y - ut->y, uo->layer - ut->layer, ter->layer_spacing);
@@ -103,6 +103,9 @@ int ll_side_vision(ll_state *s) {
         if (!s->u[t].alive || !s->u[t].pre_revealed) continue;
         s->sees[1 - s->u[t].side][t] = 1;
     }
+    for (int side = 0; side < 2; side++)                    /* targeted pings, ABI 3 */
+        for (int t = 0; t < s->n; t++)
+            if (s->u[t].alive && s->u[t].side != side && ll_ping_reveals(s, side, t)) s->sees[side][t] = 1;
     for (int side = 0; side < 2; side++)
         for (int t = 0; t < s->n; t++)
             if (s->u[t].alive && s->u[t].side != side && s->sees[side][t]) any = 1;

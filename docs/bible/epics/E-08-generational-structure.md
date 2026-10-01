@@ -133,13 +133,13 @@ As a player, I want to keep playing in a surviving faction when mine is gone, so
 
 Rules
 - R-062-01  Given the player's faction has zero regions or no longer exists at the end of a time jump, When collapse is checked, Then the chapter ends with reason `faction_collapsed`.
-- R-062-02  Given collapse, When the new faction is chosen, Then [Q-062-01: code picks the surviving faction with the most regions, uniform among ties; the bible says prefer narrative connections, else geographic overlap].
+- R-062-02  Given collapse, When the new faction is chosen, Then the rotation pools of R-058-01 to R-058-03 run restricted to candidates in surviving factions, with the 2-hop distance measured from the last mission's region, and the player joins the faction of the candidate drawn; if both pools are empty, the surviving faction with the most regions is chosen, uniform among ties (Q-062-01).
 - R-062-03  Given no faction with any region survives, When collapse is checked, Then the campaign ends with reason `no_surviving_factions` (interim until S-054 is designed).
 - R-062-04  Given reassignment, When recorded, Then the chronicle carries a major entry framing the fall.
 
 Inputs: registry; ownership.
 Outputs: reassignment record; chronicle.
-Open flags: Q-062-01.
+Open flags: none.
 
 ### S-063 — My two choices at the start
 As a player, I want to pick a difficulty and which kinds of missions I prefer before the first chapter, and change my mind later, so that the game bends to how I like to play without locking me in.

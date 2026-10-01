@@ -24,7 +24,7 @@ TARGET_NEAREST, TARGET_LOWEST_HP, TARGET_HIGHEST_COST = 0, 1, 2
 HALFWAY_BOTH, HALFWAY_RULE, HALFWAY_UNTARGETABLE = 0, 1, 2
 WIN_NONE, WIN_A, WIN_B, WIN_STALEMATE, WIN_CAP, WIN_MUTUAL = 0, 1, 2, 3, 4, 5
 
-ABI_VERSION = 2
+ABI_VERSION = 3
 
 d, i32, u8, f32 = C.c_double, C.c_int32, C.c_uint8, C.c_float
 
@@ -45,6 +45,12 @@ class ll_rules(C.Structure):
         ("transition_speed_mult", d),
         ("separation_weight", d),
         ("spawn_jitter", d),
+        ("emit_see_mult", d * 2),
+        ("emit_seen_mult", d * 2),
+        ("ping_reach", d),
+        ("ping_radius", d),
+        ("ping_s", d),
+        ("ping_cooldown_s", d),
         ("fire_requires_vision", i32),
         ("facing_gates_fire", i32),
         ("halfway_mode", i32),
@@ -55,8 +61,10 @@ class ll_rules(C.Structure):
         ("timed_new_layer_at_half", i32),
         ("max_ticks", i32),
         ("stalemate_ticks", i32),
+        ("emit_on", i32),
         ("pad0_", i32),
         ("pad1_", i32),
+        ("pad2_", i32),
     ]
 
 
@@ -84,6 +92,9 @@ class ll_unit_type(C.Structure):
         ("ab_cooldown_s", d),
         ("pulse_capable", i32),
         ("pad_", i32),
+        ("reach", d * 9),
+        ("reach_on", i32),
+        ("pad2_", i32),
     ]
 
 
@@ -142,6 +153,14 @@ class ll_spawn(C.Structure):
         ("pulse_tick", i32),
         ("target_policy", i32),
         ("pad_", i32),
+        ("emit", i32),
+        ("emit_switch_tick", i32),
+        ("emit_switch_to", i32),
+        ("ping_tick", i32),
+        ("ping_layer", i32),
+        ("pad2_", i32),
+        ("ping_x", d),
+        ("ping_y", d),
     ]
 
 
@@ -180,6 +199,10 @@ class ll_result(C.Structure):
         ("alive_ticks", i32 * 2),
         ("firing_ticks", i32 * 2),
         ("firing_weight", d * 2),
+        ("alerted_tick", i32 * 2),
+        ("alerts", i32 * 2),
+        ("alert_dir_x", d * 2),
+        ("alert_dir_y", d * 2),
         ("unit", ll_unit_out * MAX_UNITS),
     ]
 

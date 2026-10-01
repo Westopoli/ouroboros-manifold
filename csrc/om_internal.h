@@ -33,7 +33,7 @@
  * field order, F2i). */
 #define OM_SAVE_MAGIC "OMSV"
 #define OM_SAVE_MAGIC_LEN 4
-#define OM_SAVE_FORMAT_VERSION 2 /* bumped: SAVE-1 adds faction_pop_history ring */
+#define OM_SAVE_FORMAT_VERSION 4 /* bumped: gen_state gained current commander/lineage, chosen archetype, no-candidate flag, last end reason; version-3 saves are rejected, no migration */
 #define OM_SAVE_BYTE_BITS 8
 #define OM_SAVE_BYTE_MASK 0xFFu
 #define OM_SAVE_SLOT_TACTICAL     0
@@ -409,6 +409,8 @@ typedef struct {
 uint32_t om_grid_query_circle(om_world *w, double x, double y, double r, uint32_t *out_ids, uint32_t max);
 void     om_grid_iter_begin(om_grid_iter *it, om_world *w, double x, double y, double r);
 uint32_t om_grid_iter_next(om_grid_iter *it);
+uint32_t om_grid_query_circle_faction(om_world *w, int32_t faction, double x, double y, double r, uint32_t *out_ids, uint32_t max);
+void     om_grid_iter_begin_faction(om_grid_iter *it, om_world *w, int32_t faction, double x, double y, double r);
 /* For tactical_move.c: sets unit.c's cached position of a living or dead unit
  * and moves it in the grid, so a query made before the next om_tactical_step
  * sees the new position. Unknown id, NULL world or a world with no tactical

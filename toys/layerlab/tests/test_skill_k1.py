@@ -458,7 +458,7 @@ def _walkers(order, goal=(2300.0, 1000.0)):
          grp("A", "walker", 1500.0, 600.0, 1, order=order, goal=list(goal)),
          grp("B", "raider", 3900.0, 150.0, 5)],
         terrain={"preset": "barrier", "wt": 4, "h": 2},
-        rules={"spawn_jitter": 0.0}, run={"max_ticks": 800, "stalemate_ticks": 500})
+        rules={"spawn_jitter": 0.0}, run={"max_ticks": 800, "stalemate_ticks": 1200})   # runs to 800: the last 400 ticks (400..800) come after the walker's slide along the barrier (to about tick 300); with a stalemate timer of 500 the run ended at about 500 and the audit window held the slide: a fixture defect found by the K1 builder
     return add_type(scn, "walker", "raider", movement_kind="walk")
 
 

@@ -1,12 +1,12 @@
 """T1-7-3: handle_command unit cap raised from 256 to OM_MAX_UNITS (10100).
 
-A mission spawns 276 player units; with the old cap of 256 the last 20 unit
+A mission spawns 490 player units; with the old cap of 256 the last 234 unit
 IDs in the sorted list are silently dropped by get_int_array, so a select-all
-move command misses 20 units.
+move command misses 234 units.
 
-Red on unmodified code: unit 276 is at sorted position 276 (beyond old cap of
+Red on unmodified code: unit 490 is at sorted position 490 (beyond old cap of
 256) and receives no move command; after 20 tactical steps it stays at spawn.
-Green after fix: unit 276 is included in the group move and must move >= 5 wu.
+Green after fix: unit 490 is included in the group move and must move >= 5 wu.
 """
 import json
 import subprocess
@@ -23,13 +23,13 @@ STEP10 = {"type": "cmd", "name": "step", "n": 10}
 START = {"type": "cmd", "name": "mission_start", "faction": 0}
 BEGIN = {"type": "cmd", "name": "mission_begin"}
 
-# The mission spawns 276 player units with these seed/region/step params.
-EXPECTED_UNIT_COUNT = 276
+# The mission spawns 490 player units with these seed/region/step params.
+EXPECTED_UNIT_COUNT = 490
 
-# Unit 276 (Bastion, type 5): last in ascending ID order; spawn at (11850, 495).
-# At sorted position 276 it falls beyond old cap=256 and is dropped.
+# Unit 490 (Bastion, type 5): last in ascending ID order; spawn at (11850, 645).
+# At sorted position 490 it falls beyond old cap=256 and is dropped.
 # After the fix it receives the group move and must move >= MIN_DIST_WU.
-CAP_PROOF_UNIT_ID = 276
+CAP_PROOF_UNIT_ID = 490
 CAP_PROOF_DEST_X = 13045.0
 CAP_PROOF_DEST_Y = 1255.0
 MIN_DIST_WU = 5.0
@@ -60,7 +60,7 @@ def _get_player_unit_ids(begin_frame, player_faction=0):
 
 @pytest.fixture(scope="module")
 def cap_proof_frames():
-    """Run mission with a select-all move command carrying all 276 unit IDs."""
+    """Run mission with a select-all move command carrying all 490 unit IDs."""
     # First pass: discover unit IDs from the begin frame.
     discover = _run([SET_SEED, STEP10, START, BEGIN])
     tactical_begin = [f for f in discover if f["type"] == "tactical"]
@@ -102,9 +102,9 @@ def test_cap_proof_unit_at_spawn(cap_proof_frames):
 def test_cap_proof_unit_moved(cap_proof_frames):
     """Unit beyond old cap=256 must move when all player IDs are in the command.
 
-    With old cap=256: unit 276 is at sorted position 276 and is silently
+    With old cap=256: unit 490 is at sorted position 490 and is silently
     dropped; it stays at spawn.  After raising the cap to OM_MAX_UNITS (10100)
-    unit 276 receives the group move and moves >= MIN_DIST_WU in N_STEPS ticks.
+    unit 490 receives the group move and moves >= MIN_DIST_WU in N_STEPS ticks.
     """
     begin, final, _ = cap_proof_frames
     begin_units = {u["id"]: u for u in begin.get("units", [])}

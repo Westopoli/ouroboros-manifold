@@ -11,7 +11,7 @@ Setup (same seed/region/feature/step count as the other transport tests):
   mission_begin.
 
 Part 1 -- single edge unit (R-095-07):
-  Unit 17 (id=17, rightmost of the first spawn row, clear NE path) is commanded alone
+  Unit 23 (id=23, rightmost of the first spawn row, clear NE path) is commanded alone
   to (SPAWN_X+500, SPAWN_Y+500).  After 20 tactical_step frames the unit must have
   moved >= 75 wu toward the destination.
 
@@ -21,15 +21,15 @@ Part 2 -- group speed-sync (R-095-01):
   the group's speed (R-095-01: "all units move at the speed of the slowest member
   until the group has spread further than the magic box").
 
-  Unit 17 (Raider, type 0, ~147 wu/s) and unit 276 (Bastion, type 5, ~40 wu/s)
+  Unit 23 (Raider, type 0, ~147 wu/s) and unit 490 (Bastion, type 5, ~40 wu/s)
   are both at the edge of the spawn formation and can both move.  Commanded together
-  with om_command_move (the unfixed pipe), unit 17 races at Raider speed while
-  unit 276 moves at Bastion speed: ratio ~3.7x.  With om_command_group_move (fixed),
+  with om_command_move (the unfixed pipe), unit 23 races at Raider speed while
+  unit 490 moves at Bastion speed: ratio ~3.7x.  With om_command_group_move (fixed),
   both are capped at the Bastion's speed: ratio ~1.0x.
 
   Positive controls:
-    - Unit 17 must move (sanity check on the begin frame position).
-    - Unit 276 must move (confirms the slow unit also has a clear path).
+    - Unit 23 must move (sanity check on the begin frame position).
+    - Unit 490 must move (confirms the slow unit also has a clear path).
 
 Seed-stability: unit ids and spawn positions are deterministic for seed 1 / 80 regions /
 features [1..7] / 10 strategic steps / faction 0.  If the world changes, the begin-frame
@@ -50,11 +50,11 @@ STEP10 = {"type": "cmd", "name": "step", "n": 10}
 START = {"type": "cmd", "name": "mission_start", "faction": 0}
 BEGIN = {"type": "cmd", "name": "mission_begin"}
 
-# Unit 17 (seed 1, 80 regions, 10 strategic steps, faction 0): rightmost of the
-# first spawn row.  It has a clear NE path unlike units 1..16 which are surrounded
+# Unit 23 (seed 1, 80 regions, 10 strategic steps, faction 0): rightmost of the
+# first spawn row.  It has a clear NE path unlike units 1..22 which are surrounded
 # by neighbours on all ±90° probe headings.
-UNIT_ID = 17
-SPAWN_X = 12240.0
+UNIT_ID = 23
+SPAWN_X = 12330.0
 SPAWN_Y = 15.0
 # Destination: 500 wu NE of spawn (heading ~45°, clear path for this unit).
 DEST_X = SPAWN_X + 500.0
@@ -67,16 +67,16 @@ MIN_DIST_WU = 75.0
 
 # Part 2 -- speed-sync group: Raider + Bastion edge pair (R-095-01).
 # Both units are at the right/top edge of the formation and have a clear NE path.
-# Unit 17: type 0 (Raider), ~147 wu/s solo.  Unit 276: type 5 (Bastion), ~40 wu/s solo.
+# Unit 23: type 0 (Raider), ~147 wu/s solo.  Unit 490: type 5 (Bastion), ~40 wu/s solo.
 # When commanded together via om_command_group_move (the fix), both move at Bastion speed.
 # When commanded via om_command_move (the defect), Raider races ahead at 3.7x Bastion speed.
-FAST_ID = 17    # Raider at (12240, 15)
-SLOW_ID = 276   # Bastion at (11850, 495)
+FAST_ID = 23    # Raider at (12330, 15)
+SLOW_ID = 490   # Bastion at (11850, 645)
 SLOW_SPAWN_X = 11850.0
-SLOW_SPAWN_Y = 495.0
+SLOW_SPAWN_Y = 645.0
 # Shared destination: 1000 wu NE of the midpoint between the two units.
-GROUP_DEST_X = (SPAWN_X + SLOW_SPAWN_X) / 2.0 + 1000.0   # 13045
-GROUP_DEST_Y = (SPAWN_Y + SLOW_SPAWN_Y) / 2.0 + 1000.0   # 1255
+GROUP_DEST_X = (SPAWN_X + SLOW_SPAWN_X) / 2.0 + 1000.0   # 13090
+GROUP_DEST_Y = (SPAWN_Y + SLOW_SPAWN_Y) / 2.0 + 1000.0   # 1330
 # After 20 steps at Bastion speed (~40 wu/s, 2 wu/tick) both units should move ~40 wu.
 # The solo Raider speed is ~147 wu/s (7.35 wu/tick × 20 = 147 wu).
 # Both must have moved, and their displacement ratio must be <= 1.5 (speed-capped group).
@@ -106,7 +106,7 @@ def _run(cmds):
 
 @pytest.fixture(scope="module")
 def movement_frames():
-    """Single-unit edge command (Part 1): unit 17 commanded alone."""
+    """Single-unit edge command (Part 1): unit 23 commanded alone."""
     cmds = [SET_SEED, STEP10, START, BEGIN,
             {"type": "cmd", "name": "command", "verb": "move",
              "units": [UNIT_ID], "x": DEST_X, "y": DEST_Y}]

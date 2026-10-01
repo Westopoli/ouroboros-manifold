@@ -485,8 +485,13 @@ func _pan_input(delta: float) -> void:
 		elif m.y >= r.y - EDGE_MARGIN_PX:
 			dir.y += 1.0
 	if dir != Vector2.ZERO and _world_scale > 0.0:
-		var step := dir.normalized() * PAN_SPEED_PX * delta / _world_scale
+		var step := dir.normalized() * PAN_SPEED_PX * _pan_speed() * delta / _world_scale
 		qa_pan(_camera.x + step.x, _camera.y + step.y)
+
+
+func _pan_speed() -> float:
+	var bus := get_node_or_null("/root/UIDataBus")
+	return 1.0 if bus == null else clampf(float(bus.get_settings().get("pan_speed", 1.0)), 0.5, 2.0)
 
 
 func _unhandled_input(event: InputEvent) -> void:

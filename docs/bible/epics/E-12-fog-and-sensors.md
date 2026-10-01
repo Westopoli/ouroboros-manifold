@@ -38,7 +38,7 @@ Rules
 
 Inputs: unit positions, layers, sensor radii; interference at each position; cover geometry.
 Outputs: per-unit visible set and player-visible list in the tick delta; fog render.
-Open flags: Q-089-01 (last-seen ghost markers, shared with Q-006-02). Q-E12-01 is closed: the seer is a roster unit, costly, with wide cross-layer sight and no attack; its cost and counter are tuned in the layer lab (Q-008-03) and it enters the roster with Q-082-03 to Q-082-05.
+Open flags: Q-089-01 (last-seen ghost markers, shared with Q-006-02). Q-E12-01 is closed: the targeted ping (E-01 S-162) is how a player sees far; the seer is dropped or kept only at a very high cost so that it does not undercut the ping (Q-005-04).
 
 ### S-090 — Hiding in the storm
 As a commander, I want a zone of interference to shrink what units inside it can see and what outsiders can see into it, so that I can hide a force or fear one.

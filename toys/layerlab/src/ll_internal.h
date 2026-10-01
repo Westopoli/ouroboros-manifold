@@ -56,6 +56,13 @@ typedef struct ll_unit {
     double ab_wind_left;          /* seconds of windup remaining */
     double ab_cd;                 /* ability cooldown remaining, seconds */
     double ab_cx, ab_cy;          /* locked cast centre */
+    /* ---- going dark (owner: ll_emit.c, E-01 S-163, ABI 3) ---- */
+    int    emit;                  /* current state: 1 emit, 0 silent */
+    /* ---- targeted ping (owner: ll_ping.c, E-01 S-162, ABI 3) ---- */
+    int    ping_until;            /* tick before which this unit's ping reveal is active, else 0 */
+    int    ping_ready_tick;       /* first tick this unit may ping again */
+    int    ping_layer;            /* the pinged layer of the active ping */
+    double ping_px, ping_py;      /* the pinged place of the active ping */
 } ll_unit;
 
 typedef struct ll_state {
@@ -74,6 +81,10 @@ typedef struct ll_state {
     int      shots[2];
     int      fired_side[2];               /* shots fired this tick, per side */
     void    *nav;                         /* flow-field cache (owner: ll_terrain.c); NULL until ll_nav_init */
+    /* ping alerts (owner: ll_ping.c, ABI 3): per side, filled by ll_ping_update, copied to ll_result */
+    int      alerted_tick[2];             /* first alert tick, -1 none */
+    int      alerts[2];
+    double   alert_dx[2], alert_dy[2];    /* unit vector toward the first pinger (revealed units' centroid to pinger) */
 } ll_state;
 
 /* ---- errors (ll_sim.c) ---- */
@@ -100,6 +111,20 @@ void ll_layers_update(ll_state *s);                     /* step 2: scheduled tra
 void ll_face_init(ll_unit *u, double facing_deg);
 void ll_update_arrival(ll_state *s);                    /* step 2: MOVE arrival */
 void ll_move_units(ll_state *s);                        /* step 5: steer, turn, separate */
+
+/* ---- reach by unit type (ll_reach.c, E-01 S-164, ABI 3) ---- */
+const char *ll_reach_validate(const ll_scenario *sc);   /* NULL when fine */
+double ll_reach_mult(const ll_unit *a, int off);        /* multiplier on a's range at signed offset index `off`; 1.0 when the type has no table; 0 = cannot fire */
+
+/* ---- going dark (ll_emit.c, E-01 S-163, ABI 3) ---- */
+const char *ll_emit_validate(const ll_scenario *sc);
+void   ll_emit_update(ll_state *s);                     /* step 3a: apply scheduled emit/silent switches */
+double ll_emit_factor(const ll_state *s, int o, int t); /* cross-layer sight multiplier for observer o looking at target t: 1.0 when rules.emit_on is 0 or on the same layer */
+
+/* ---- targeted ping (ll_ping.c, E-01 S-162, ABI 3) ---- */
+const char *ll_ping_validate(const ll_scenario *sc);
+void ll_ping_update(ll_state *s);                       /* step 3a: start scheduled pings, expire windows, record alerts */
+int  ll_ping_reveals(const ll_state *s, int side, int t); /* 1 when an active ping of `side` reveals unit t now */
 
 /* ---- combat (ll_combat.c) ---- */
 const char *ll_combat_validate(const ll_scenario *sc);  /* NULL when fine; the burst-ability gate lives here */

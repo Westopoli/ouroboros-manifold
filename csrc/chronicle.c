@@ -129,6 +129,7 @@
 #define CAT_CONSEQUENCE_SUCCESS 30
 #define CAT_CONSEQUENCE_FAILURE 31
 #define CAT_CONSEQUENCE_MIXED 32
+#define CAT_CONSEQUENCE_RIPPLE 33
 
 #define CHRON_MAX_CANDIDATES 256
 #define CHRON_MAX_FINAL 16
@@ -580,6 +581,7 @@ static const char *chron_category_name(uint32_t category) {
     case CAT_CONSEQUENCE_SUCCESS: return "consequence_success";
     case CAT_CONSEQUENCE_FAILURE: return "consequence_failure";
     case CAT_CONSEQUENCE_MIXED: return "consequence_mixed";
+case CAT_CONSEQUENCE_RIPPLE: return "consequence_ripple";
     default: return "unknown";
     }
 }
@@ -1028,6 +1030,7 @@ static const char *chron_field_delta_phrase(uint32_t effective_category) {
     case CAT_CONSEQUENCE_SUCCESS: return "the commander's work bore fruit";
     case CAT_CONSEQUENCE_FAILURE: return "the commander's work came to little";
     case CAT_CONSEQUENCE_MIXED: return "the outcome was neither victory nor ruin";
+    case CAT_CONSEQUENCE_RIPPLE: return "the echo of it was felt across the border";
     default: return "conditions shifted in ways the record still argues over";
     }
 }
@@ -1138,7 +1141,8 @@ static void chron_build_slots(const om_world *w, const om_chronicle_cluster *c, 
     }
     snprintf(slots[SLOT_MISSION_OUTCOME].value, CHRON_SLOT_VALUE_CAP, "%s", outcome);
     snprintf(slots[SLOT_MISSION_ARCHETYPE].value, CHRON_SLOT_VALUE_CAP, "%s", "the commander");
-    snprintf(slots[SLOT_MISSION_REGION].value, CHRON_SLOT_VALUE_CAP, "%s", chron_region_name(c->region));
+    uint32_t mission_region = eff_cat == CAT_CONSEQUENCE_RIPPLE ? om_mission_last_region(w) : c->region;
+    snprintf(slots[SLOT_MISSION_REGION].value, CHRON_SLOT_VALUE_CAP, "%s", chron_region_name(mission_region));
 }
 
 static int chron_slot_lookup(const chron_slot_kv *slots, const char *key, char *out, size_t outcap) {
@@ -1249,6 +1253,17 @@ static int chron_assemble(const om_world *w, uint32_t category, uint32_t region_
     chron_slot_kv slots[CHRON_N_SLOTS];
     chron_build_slots(w, &synth, slots);
 
+    if (category == CAT_CONSEQUENCE_RIPPLE) {
+        /* Q-067-01 (b): the 399-fragment library has no ripple pool yet; until it does,
+         * one placeholder line (rules: missing library content falls back to a placeholder). */
+        char text[CHRON_FRAGMENT_TEXT_CAP];
+        chron_resolve_text("Word of what was done at {mission_region} reached {region_name}, where {field_delta_summary}.",
+                           slots, text, sizeof(text));
+        snprintf(base_out, base_cap, "%s", text);
+        snprintf(expanded_out, expanded_cap, "%s", text);
+        fragment_ids[0] = fragment_ids[1] = fragment_ids[2] = -1;
+        return 1;
+    }
     const chron_fragment *opening = chron_pick_fragment(category, 0, rng);
     const chron_fragment *detail = chron_pick_fragment(category, 1, rng);
     const chron_fragment *closing = chron_pick_fragment(category, 2, rng);
@@ -1364,9 +1379,9 @@ static void chron_push_candidate(chron_state *st, uint32_t type, uint32_t catego
     st->candidate_lineage[st->n_candidates - 1] = -1;
 }
 
-static void chron_push_lineage_candidate(chron_state *st, uint32_t lineage_id, uint32_t region, double score) {
+static void chron_push_lineage_candidate(chron_state *st, uint32_t lineage_id, uint32_t region, uint32_t category, double score) {
     uint32_t n = st->n_candidates;
-    chron_push_candidate(st, CTYPE_LINEAGE, CAT_LINEAGE_QUIET, region, score, -1, 0, 0);
+    chron_push_candidate(st, CTYPE_LINEAGE, category, region, score, -1, 0, 0);
     if (st->n_candidates > n) st->candidate_lineage[n] = (int32_t)lineage_id;
 }
 
@@ -1451,7 +1466,7 @@ static void chron_add_quiet_lineage_cluster(const om_world *w, chron_state *st) 
         for (uint32_t k = 0; om_lineage_history_region(w, id, k) >= 0; k++) region = om_lineage_history_region(w, id, k);
     }
     if (region < 0) return;
-    chron_push_lineage_candidate(st, id, (uint32_t)region, 0.0);
+    chron_push_lineage_candidate(st, id, (uint32_t)region, CAT_LINEAGE_QUIET, 0.0);
 }
 
 /* Stable descending-score insertion sort -- qsort's tie-break order is
@@ -1476,8 +1491,8 @@ static void chron_sort_by_score_desc(om_chronicle_cluster *arr, uint32_t n) {
 
 /* ALG-52 Selection: consequence clusters, then lineage clusters, then the
  * rest by peak score descending, skipping a category already used twice,
- * until CHRONICLE_MAX_ENTRIES; if still under CHRONICLE_MIN_ENTRIES, add
- * skipped clusters in score order regardless of the cap. */
+ * until CHRONICLE_MAX_ENTRIES. The cap wins over the minimum (Westley,
+ * Q-065-01): a quiet jump may show fewer than CHRONICLE_MIN_ENTRIES. */
 static void chron_run_selection(om_world *w) {
     chron_state *st = chron(w);
     om_chronicle_cluster others[CHRON_MAX_CANDIDATES];
@@ -1509,23 +1524,11 @@ static void chron_run_selection(om_world *w) {
     }
     chron_sort_by_score_desc(others, n_others);
 
-    int taken[CHRON_MAX_CANDIDATES];
-    memset(taken, 0, sizeof(int) * n_others);
-
     for (uint32_t i = 0; i < n_others && st->n_clusters < OM_CHRONICLE_MAX_ENTRIES; i++) {
         uint32_t cat = others[i].category % CHRON_SELECTION_CAT_BUCKETS;
         if (cat_count[cat] >= OM_CHRON_CATEGORY_CAP) continue;
         st->clusters[st->n_clusters++] = others[i];
         cat_count[cat]++;
-        taken[i] = 1;
-    }
-
-    if (st->n_clusters < OM_CHRONICLE_MIN_ENTRIES) {
-        for (uint32_t i = 0; i < n_others && st->n_clusters < OM_CHRONICLE_MIN_ENTRIES; i++) {
-            if (taken[i]) continue;
-            st->clusters[st->n_clusters++] = others[i];
-            taken[i] = 1;
-        }
     }
 }
 
@@ -1724,9 +1727,9 @@ void om_chronicle_add_event(om_world *w, uint32_t region_idx, double score) {
     chron_push_candidate(st, CTYPE_REGIONAL, category, region_idx, score, -1, 0, 0);
 }
 
-void om_chronicle_add_lineage_event(om_world *w, uint32_t lineage_id, uint32_t region_idx, double score) {
+void om_chronicle_add_lineage_event(om_world *w, uint32_t lineage_id, uint32_t region_idx, uint32_t category, double score) {
     if (!w) return;
-    chron_push_lineage_candidate(chron(w), lineage_id, region_idx, score);
+    chron_push_lineage_candidate(chron(w), lineage_id, region_idx, category, score);
 }
 
 void om_chronicle_add_mock_entry(om_world *w, uint32_t entry_id, uint64_t start_tick, uint64_t end_tick) {
