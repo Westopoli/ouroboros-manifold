@@ -174,7 +174,7 @@ Pass criterion for the lab, proposed here for Westley to confirm or change (he o
 
 Negative control: with the cross-layer rules off (multipliers zero, no cross-layer fire), no crossing on that axis. A detector that finds crossings with the mechanism off is measuring the harness, not the game. Positive control: the count ratio between two equal forces on flat ground, swept from 1:2 to 2:1, must show its crossing near 1:1; a detector that misses that is not reading.
 
-### 6.1 The firing-share hypothesis (2026-09-30, untested)
+### 6.1 The firing-share hypothesis (2026-09-30, first check in §8)
 
 Westley, 2026-09-30, verbatim, on pricing each advantage as a fixed multiple of numbers:
 
@@ -231,7 +231,30 @@ A run is logged in §8 with its date, the configuration difference from the prev
 
 ## 8. Run log
 
-No runs yet.
+### Pass 1, 2026-09-30: P1 high ground, then the firing-share check
+
+Scenarios: `toys/layerlab/scenarios/x0_mirror.toml`, `x2_high_ground_blind.toml`, `x3_high_ground_no_return.toml`, `x4_high_ground_both_answer.toml`. All are 10 v 10 identical raiders, both sides attack-moving at each other, A on layer 4 and B on layer 3 (X0: both on 3). Cross-layer fire is on between adjacent layers in both directions at full range and damage in X2 to X4; vision looking down one layer is 0.50. What differs: X2 B looks up with factor 0.0 (cannot see A); X3 B sees A (0.50) and cannot fire up (range and damage up = 0); X4 B sees and fires up equally (the null). Transfer class T2 for the numbers, T1 for the null result.
+
+| Scenario | A wins (100 seeds) | B shots | Note |
+|---|---|---|---|
+| X0 mirror, same layer | 47 | 269 | noise floor |
+| X4 symmetric rules, A a layer up | 43 | 269 | a layer alone gives nothing |
+| X2 B cannot see up | 100 | 0 | A keeps 100 percent HP |
+| X3 B sees, cannot fire up | 100 | 0 | same |
+
+A first version of X4 had A attack-moving and B holding: A won 60 of 60 even on the same layer, because A's units converge on a stationary line and B's flank units sit out of range. That is a concave effect, not a layer effect, so every layer scenario uses a symmetric approach.
+
+Vision as the lever (A win rate; rows B's upward vision factor, columns B headcount, A = 10, 20 seeds): at 0.0, no headcount helps B (28 v 10 still loses 20 of 20); at 0.05 (about 40 units of sight), 12 units already win 90 percent; the same cliff holds at every higher factor. Damage as the lever (B's fire-up damage multiplier d against B's headcount, everyone sees everyone): B needs 10 (d = 0.98), 12 (0.75), 14 (0.55), 16 (0.44), 18 (0.35), 20 (0.25) units to reach 50 percent, which is the square-law curve `B = 10 / sqrt(d)` of 6.1.
+
+**The firing-share check** (6.1, built as `layerlab/analysis.py`, `python3 -m layerlab check`). Whole-fight predictions, 100 seeds: X2 and X3 both predictors right 100 of 100 (B never fires, as expected); X0 and X4 right 98 and 99 of 100, which is not the toss-up 6.1 expected. Across the damage sweep (20 seeds a cell), count-only and type-weighted are both wrong 0 of 20 in every cell where A wins with fewer units than B (d = 0.2 at B = 12 and 16, d = 0.4 at 12 and 14, d = 0.6 at 12), and both right 20 of 20 where numbers decide. By the 6.1 table that is wrong and wrong: a number other than position overrode it, and the number is the one the sweep varied.
+
+What the check shows about the instrument:
+- The whole-fight form partly restates the outcome. It is computed from the finished fight, and the side that wins keeps more units alive and firing, so it agrees 98 percent in a mirror where no side has a positional edge. At d = 0.8 with equal counts (A wins 20 of 20 on damage alone) it agrees 20 of 20, which reads "position decided" when a damage number did.
+- A version that looks only at the opening 40 ticks after the first shot cannot leak the ending. It is a coin flip in the mirror and X4 (about 50 of 90 and 48 of 83 decided runs), 0 of 20 in the cells above where fewer units win on damage, and 7 of 15 decided at d = 0.8 with equal counts, which correctly says firing counts did not decide that one.
+- So the opening-window form separates "who got shots off" from "a number decided" better than the whole-fight form. Not yet in `analysis.py`.
+
+What changes next: add the opening-window prediction to `analysis.py` with its own tests; sweep the range-by-offset lever (the other way a layer can decide who gets shots off) and compare it with damage by the firing-share measure; then P2 (the concave) with the lever fixed. Westley's review of this pass goes here.
+
 
 ## 9. Verdict and fold
 
