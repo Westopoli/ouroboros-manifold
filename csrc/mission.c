@@ -2288,6 +2288,27 @@ static void om_mission_spawn_force(om_world *w, om_mission_state *st, const uint
     }
 }
 
+/* R-126-01 layout, no bible number: structures sit on the spine between the two
+ * spawns at equal spacing, alternating left and right of centre by this
+ * fraction of the canvas; owners run player, neutral, enemy from the player's edge. */
+#define OM_MISSION_STRUCTURE_LATERAL 0.25
+#define OM_MISSION_STRUCTURE_SLOTS 64
+
+static void om_mission_place_structures(om_world *w, om_mission_state *st, int cat, double canvas, int32_t player, int32_t enemy) {
+    uint32_t p = 0, e = 0, n = 0;
+    uint32_t total = om_structure_compute_count(w->regions[st->mission_region].military, cat);
+    for (uint32_t i = 0; i < OM_MISSION_STRUCTURE_SLOTS; i++) om_structure_init(w, i, OM_MISSION_POWER_ANCHOR_UNIT_TYPE, 0.0);
+    om_structure_assign_owners((int)st->mission_archetype, total, &p, &e, &n);
+    for (uint32_t i = 0; i < total; i++) {
+        int32_t owner = i < p ? player : (i < p + n ? -1 : enemy);
+        double side = (i % 2 == 0) ? -1.0 : 1.0;
+        om_structure_init(w, i, OM_MISSION_POWER_ANCHOR_UNIT_TYPE, om_unit_power(OM_MISSION_POWER_ANCHOR_UNIT_TYPE));
+        om_structure_set_owner(w, i, owner);
+        om_structure_set_position(w, i, canvas / 2.0 + side * canvas * OM_MISSION_STRUCTURE_LATERAL,
+                                  canvas * (double)(i + 1) / (double)(total + 1));
+    }
+}
+
 static void om_mission_instantiate_map(om_world *w, om_mission_state *st) {
     int cat = om_map_archetype_canvas_category(st->mission_archetype);
     double canvas = om_map_get_canvas_base_dimension(cat);
@@ -2316,6 +2337,7 @@ static void om_mission_instantiate_map(om_world *w, om_mission_state *st) {
      * the only reader of this registration. */
     om_macro_init_force(w, 0, enemy);
     om_macro_set_force_fallback_point(w, 0, canvas / 2.0, canvas - edge);
+    om_mission_place_structures(w, st, cat, canvas, player, enemy);
 }
 
 void om_mission_setup(om_world *w, uint32_t p1, uint32_t archetype, int lineage_connection) {
