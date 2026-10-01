@@ -1821,6 +1821,12 @@ static int gen_time_jump(om_world *w, uint32_t n_ticks, om_time_jump_report *rep
     if (gs->chapter_phase == GEN_PHASE_MISSION) return 1;
     uint64_t start_tick = w->tick;
     uint32_t nr = w->n_regions < OM_MAX_REGIONS ? w->n_regions : OM_MAX_REGIONS;
+    double start_eco[OM_MAX_REGIONS], start_mil[OM_MAX_REGIONS], start_ten[OM_MAX_REGIONS];
+    for (uint32_t r = 0; r < nr; r++) {
+        start_eco[r] = om_region_field(w, r, OM_F_ECONOMY);
+        start_mil[r] = om_region_field(w, r, OM_F_MILITARY);
+        start_ten[r] = om_region_field(w, r, OM_F_TENSION);
+    }
     int event_fired[OM_MAX_REGIONS];
     int32_t start_owner[OM_MAX_REGIONS], last_owner[OM_MAX_REGIONS];
     uint64_t change_tick[OM_MAX_REGIONS];
@@ -1940,7 +1946,17 @@ static int gen_time_jump(om_world *w, uint32_t n_ticks, om_time_jump_report *rep
             gen_lineage *ln = &gs->lineages[li];
             if (!ln->used) continue;
             uint32_t region = ln->n_history ? ln->history[ln->n_history - 1] : om_lineage_home_region(w, ln->id);
-            om_chronicle_add_lineage_event(w, ln->id, region, 0.0);
+            const char *lname = "";
+            for (uint32_t g = 0; g < n_chains; g++)
+                if (chains[g].region == region) { lname = om_event_template_name(w, chains[g].template_id); break; }
+            double d_eco = 0.0, d_mil = 0.0, d_ten = 0.0;
+            if (region < nr) {
+                d_eco = om_region_field(w, region, OM_F_ECONOMY) - start_eco[region];
+                d_mil = om_region_field(w, region, OM_F_MILITARY) - start_mil[region];
+                d_ten = om_region_field(w, region, OM_F_TENSION) - start_ten[region];
+            }
+            uint32_t lcat = om_chronicle_categorize_lineage_cluster(w, lname, d_eco, d_mil, d_ten);
+            om_chronicle_add_lineage_event(w, ln->id, region, lcat, 0.0);
             n_candidates++;
         }
         for (uint32_t r = 0; r < nr && n_candidates < OM_CHRONICLE_MIN_ENTRIES; r++) {
