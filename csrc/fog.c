@@ -360,9 +360,8 @@ int om_fog_faction_sees(const om_world *w, int32_t faction, uint32_t target) {
     double tx, ty;
     uint32_t observer;
     if (!om_fog_unit_pos(w, target, &tx, &ty)) return 0;
-    om_grid_iter_begin(&it, (om_world *)w, tx, ty, om_fog_world_bound(w));
+    om_grid_iter_begin_faction(&it, (om_world *)w, faction, tx, ty, om_fog_world_bound(w));
     while ((observer = om_grid_iter_next(&it)) != 0) {
-        if (om_unit_get_faction(w, observer) != faction) continue;
         if (om_unit_can_see(w, observer, target)) return 1;
     }
     return 0;
