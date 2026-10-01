@@ -273,6 +273,16 @@ What the check shows about the instrument:
 - A version that looks only at the opening 40 ticks after the first shot cannot leak the ending. It is a coin flip in the mirror and X4 (about 50 of 90 and 48 of 83 decided runs), 0 of 20 in the cells above where fewer units win on damage, and 7 of 15 decided at d = 0.8 with equal counts, which correctly says firing counts did not decide that one.
 - So the opening-window form separates "who got shots off" from "a number decided" better than the whole-fight form. Not yet in `analysis.py`.
 
+### Pass 2, 2026-10-01: the range lever, and a finding about target selection
+
+Scenarios `x5_range_advantage.toml` (both sides attack-move) and `x5_range_advantage_hold.toml` (B holds). Same layers or not, the result was the same: **the side with the longer range loses.** Both attack-moving, 200 seeds: A shooting down at 1.1x range wins 11.5 percent (1.0x: 43.5; 1.3x: 9; 2.0x and up: 50). Same layer, no layer rule involved, A range 220 against B 200: A wins 10 percent. With B holding, A wins 200 of 200, and a static start with A in reach and B not has A winning 40 of 40, so the range rule itself is right.
+
+Investigation (with evidence, not guesses): at equal total HP and equal units firing for the first 200 ticks after contact, A is ahead or level and still loses 88 percent. With no approach at all, the inversion survives when the fronts start 195 apart (A reaches many of B's units, B reaches few: A wins 19.5 percent) and vanishes at 150 apart (everyone reaches everyone: 47.5 against a 46.5 baseline). The candidate-set sizes at contact are 4.6 targets per A unit against 2.1 per B unit at 195, and 6.7 against 5.7 at 150. Changing only the target rule decides it: when A focuses the most damaged unit instead of the nearest, A wins 100 percent (and 98.5 percent when both sides focus: the longer range wins, as it should). At equal ranges, one side focusing and the other taking the nearest gives 98 to 2.
+
+Reading: a side with a wide choice of nearest targets spreads its fire and kills slowly; a side with a narrow choice puts all of it on the same few units and kills them first. That is a real consequence of the stated rules (SPEC 5.4, nearest by default), not a coding fault, and it is not visible to the firing-share count, because both sides have the same number of units firing. Two consequences: (1) any lever result with an unequal reach is confounded by who concentrates fire; (2) focus fire is itself a very large lever (98 to 2), which fits the skill-ceiling aim and means "which target a unit picks" is a dimension of the map, not a detail. X2 to X4 and the damage and vision sweeps used equal ranges and are not affected.
+
+Transfer class T1 for the direction (concentration beats spread), T2 for every number.
+
 What changes next: add the opening-window prediction to `analysis.py` with its own tests; sweep the range-by-offset lever (the other way a layer can decide who gets shots off) and compare it with damage by the firing-share measure; then P2 (the concave) with the lever fixed. Westley's review of this pass goes here.
 
 
