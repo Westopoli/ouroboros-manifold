@@ -1,8 +1,9 @@
 /* ll_terrain.c -- grid queries, slope geometry and flow fields (SPEC 5.9, 5.10, 6).
  *
- * A flow field is a Dijkstra cost-to-go from a goal cell over nodes (cell, layer), cached in s->nav by
- * (goal cell, movement kind, auto_transition). Determinism: an indexed binary heap ordered by
- * (cost, node index), neighbours in a fixed order, no pointer-keyed structures. */
+ * A flow field is a Dijkstra cost-to-go in seconds, for one unit type, from the goal node (goal cell, goal
+ * layer) over nodes (cell, layer), cached in s->nav by (goal cell, goal layer, movement kind, unit type,
+ * auto_transition). Determinism: an indexed binary heap ordered by (cost, node index), neighbours in a
+ * fixed order, no pointer-keyed structures. */
 #include <stdlib.h>
 #include <math.h>
 #include "ll_nav.h"
@@ -136,12 +137,23 @@ int ll_goal_cell(const ll_terrain *t, double gx, double gy, int layer, int walke
     return best;
 }
 
+/* Nearest layer to `layer` on which `cell` is passable, ties to the lower layer; 0 when there is none. */
+int ll_goal_layer(const ll_terrain *t, int cell, int layer, int walker) {
+    for (int d = 0; d < LL_LAYERS; d++) {
+        int lo = layer - d, hi = layer + d;
+        if (lo >= 1 && lo <= LL_LAYERS && ll_cell_passable(t, cell, lo, walker)) return lo;
+        if (d > 0 && hi >= 1 && hi <= LL_LAYERS && ll_cell_passable(t, cell, hi, walker)) return hi;
+    }
+    return 0;
+}
+
 /* ---- flow fields (SPEC 5.10) ---- */
 
 #define NAV_SLOTS 16
 
 struct ll_field {
-    int goal_cell, walker, auto_tr;       /* the cache key; goal_cell < 0 marks an empty slot */
+    int goal_cell, goal_layer, walker, type, auto_tr;   /* the cache key; goal_cell < 0 marks an empty slot */
+    double speed, trans_s;                /* of the unit type: edge costs are distance / speed seconds */
     unsigned long long stamp;             /* last use, for deterministic eviction */
     int sb[LL_MAX_SLOPES], st[LL_MAX_SLOPES];   /* cell of each slope's bottom and top edge, -1 outside */
     double *cost;                         /* per node, node = cell * LL_LAYERS + layer - 1 */
@@ -184,10 +196,11 @@ void ll_nav_free(ll_state *s) {
     s->nav = 0;
 }
 
-/* Every layer change costs this much more than the SPEC's penalty * |M - L|. It only breaks ties: with a
- * penalty of 0 it makes fewer transfers cheaper, so a unit jumps straight to the layer it needs instead of
- * stepping through the layers between or flapping between two equal ones. */
-#define CHANGE_EPS 1e-3
+/* Every layer change or slope mount costs this many seconds more than the SPEC's price. It is far below the
+ * 1e-6 s tie rule and only makes a route with fewer changes win an exact tie as a whole, not just at its
+ * first step; TIE_EPS absorbs the rounding of summed doubles when two steps are compared. */
+#define CHANGE_EPS 1e-9
+#define TIE_EPS 1e-12
 
 typedef struct edge { int cell, layer, kind, slope; double w; } edge;
 #define MAX_EDGES (8 + LL_LAYERS + 2 * LL_MAX_SLOPES)
@@ -200,7 +213,7 @@ static int edges(const ll_state *s, const ll_field *f, int cell, int layer, edge
     static const int dys[8] = {0, 0, 1, -1, 1, -1, 1, -1};
     const ll_terrain *t = s->ter;
     int w = t->w_cells, h = t->h_cells, cx = cell % w, cy = cell / w, n = 0;
-    double diag = t->cell * sqrt(2.0);
+    double straight = t->cell / f->speed, diag = t->cell * sqrt(2.0) / f->speed;
     for (int k = 0; k < 8; k++) {
         int nx = cx + dxs[k], ny = cy + dys[k];
         if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
@@ -208,14 +221,14 @@ static int edges(const ll_state *s, const ll_field *f, int cell, int layer, edge
         if (k >= 4 && (!ll_cell_passable(t, cy * w + nx, layer, f->walker) ||
                        !ll_cell_passable(t, ny * w + cx, layer, f->walker))) continue;   /* no corner cutting */
         e[n].cell = ny * w + nx; e[n].layer = layer; e[n].kind = LL_STEP_MOVE; e[n].slope = -1;
-        e[n].w = k >= 4 ? diag : t->cell;
+        e[n].w = k >= 4 ? diag : straight;
         n++;
     }
     if (!f->walker && f->auto_tr) {
         for (int m = 1; m <= LL_LAYERS; m++) {
             if (m == layer || !ll_cell_passable(t, cell, m, 0)) continue;
             e[n].cell = cell; e[n].layer = m; e[n].kind = LL_STEP_LAYER; e[n].slope = -1;
-            e[n].w = (double)s->rules->forced_change_penalty * (double)(m > layer ? m - layer : layer - m) + CHANGE_EPS;
+            e[n].w = f->trans_s + (double)s->rules->forced_change_penalty * (double)(m > layer ? m - layer : layer - m) / f->speed + CHANGE_EPS;
             n++;
         }
     }
@@ -227,7 +240,7 @@ static int edges(const ll_state *s, const ll_field *f, int cell, int layer, edge
             else if (f->st[i] == cell && sl->top_layer == layer) { to = f->sb[i]; tl = sl->bottom_layer; }
             if (to < 0 || !ll_cell_passable(t, to, tl, 1)) continue;
             e[n].cell = to; e[n].layer = tl; e[n].kind = LL_STEP_SLOPE; e[n].slope = i;
-            e[n].w = sl->length;
+            e[n].w = sl->length / f->speed + CHANGE_EPS;
             n++;
         }
     }
@@ -278,9 +291,8 @@ static void build_field(const ll_state *s, ll_nav *nv, ll_field *f) {
         ll_slope_edge(&t->slope[i], 1, &x, &y);
         f->st[i] = ll_terrain_cell(t, x, y);
     }
-    for (int l = 1; l <= LL_LAYERS; l++) {
-        if (!ll_cell_passable(t, f->goal_cell, l, f->walker)) continue;
-        int node = f->goal_cell * LL_LAYERS + l - 1;
+    if (ll_cell_passable(t, f->goal_cell, f->goal_layer, f->walker)) {
+        int node = f->goal_cell * LL_LAYERS + f->goal_layer - 1;
         cost[node] = 0.0;
         nv->heap[hn] = node;
         sift_up(nv, cost, hn);
@@ -304,13 +316,16 @@ static void build_field(const ll_state *s, ll_nav *nv, ll_field *f) {
     }
 }
 
-const ll_field *ll_nav_field(ll_state *s, int goal_cell, int walker) {
+const ll_field *ll_nav_field(ll_state *s, int goal_cell, int goal_layer, int type) {
     ll_nav *nv = (ll_nav *)s->nav;
     if (!nv || goal_cell < 0 || goal_cell >= s->ter->w_cells * s->ter->h_cells) return 0;
-    int auto_tr = s->rules->auto_transition;
+    if (goal_layer < 1 || goal_layer > LL_LAYERS || type < 0 || type >= s->sc->n_types) return 0;
+    const ll_unit_type *ty = &s->sc->types[type];
+    int walker = ty->movement_kind == LL_MOVE_WALK, auto_tr = s->rules->auto_transition;
     for (int i = 0; i < NAV_SLOTS; i++) {
         ll_field *f = &nv->slot[i];
-        if (f->goal_cell == goal_cell && f->walker == walker && f->auto_tr == auto_tr) {
+        if (f->goal_cell == goal_cell && f->goal_layer == goal_layer && f->type == type && f->walker == walker &&
+            f->auto_tr == auto_tr) {
             f->stamp = ++nv->clock;
             return f;
         }
@@ -320,8 +335,12 @@ const ll_field *ll_nav_field(ll_state *s, int goal_cell, int walker) {
         if (nv->slot[i].goal_cell < 0 || nv->slot[i].stamp < nv->slot[victim].stamp) victim = i;
     ll_field *f = &nv->slot[victim];
     f->goal_cell = goal_cell;
+    f->goal_layer = goal_layer;
+    f->type = type;
     f->walker = walker;
     f->auto_tr = auto_tr;
+    f->speed = ty->speed;
+    f->trans_s = ty->transition_s;
     build_field(s, nv, f);
     f->stamp = ++nv->clock;
     return f;
@@ -332,8 +351,8 @@ double ll_field_cost(const ll_field *f, int cell, int layer) {
 }
 
 /* Descent from (cell, layer): the edge minimising edge cost + cost-to-go. A same-layer move wins any
- * tie with a layer change or a slope (within 1e-6), so a unit changes layer or mounts only where the
- * way on is blocked or dearer; among equal alternatives the first in edge order (lowest layer) wins. */
+ * tie with a layer change or a slope (within 1e-6 s), so a unit changes layer or mounts only where the
+ * way on is blocked or dearer. Within a kind, equal totals (within TIE_EPS, rounding) go to the lower node. */
 int ll_field_step(const ll_state *s, const ll_field *f, int cell, int layer, ll_step *out) {
     edge e[MAX_EDGES];
     int n = edges(s, f, cell, layer, e);
@@ -343,8 +362,12 @@ int ll_field_step(const ll_state *s, const ll_field *f, int cell, int layer, ll_
         double c = ll_field_cost(f, e[k].cell, e[k].layer);
         if (c >= LL_FAR) continue;
         double tot = e[k].w + c;
-        if (e[k].kind == LL_STEP_MOVE) { if (bm < 0 || tot < tm) { bm = k; tm = tot; } }
-        else if (bo < 0 || tot < to) { bo = k; to = tot; }
+        int node = e[k].cell * LL_LAYERS + e[k].layer;
+        if (e[k].kind == LL_STEP_MOVE) {
+            if (bm < 0 || tot < tm - TIE_EPS ||
+                (tot <= tm + TIE_EPS && node < e[bm].cell * LL_LAYERS + e[bm].layer)) { bm = k; tm = tot; }
+        } else if (bo < 0 || tot < to - TIE_EPS ||
+                   (tot <= to + TIE_EPS && node < e[bo].cell * LL_LAYERS + e[bo].layer)) { bo = k; to = tot; }
     }
     int k = bm;
     if (bo >= 0 && (bm < 0 || to < tm - 1e-6)) k = bo;
