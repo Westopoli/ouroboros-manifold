@@ -25,13 +25,6 @@
  *     om_mission_candidates + om_mission_setup + om_mission_build_objectives
  *     + om_mission_begin, none of which docs/architecture.md's session
  *     commands text names.
- *   - No accessor wires a force composition into a started mission
- *     (om_mission_get_player_units reads st->player_units[], which nothing
- *     in the reachable API sets before mission_start); "force":{"types":
- *     [],"tiers":[]} is always empty.
- *   - om_objective_spec has no "node" or "radius" field (id, kind,
- *     is_primary, weight, completion, is_complete, is_failed only); both
- *     keys are emitted as 0.
  *   - "region_delta" in the debrief frame is from om_mission_get_region_delta
  *     (T1-8 accessor). om_mission_apply_consequences runs inside om_mission_end
  *     when mission_set is true and end_applied is false; the accessor returns
@@ -816,14 +809,14 @@ static void write_mission(uint32_t archetype, uint32_t region, uint64_t deadline
             jb_key(&j, "kind");
             jb_uint(&j, o->kind);
             jb_putc(&j, ',');
-            jb_key(&j, "node"); /* no field in om_objective_spec; reported */
-            jb_uint(&j, 0);
+            jb_key(&j, "node");
+            jb_int(&j, om_objective_get_node(W, k));
             jb_putc(&j, ',');
             jb_key(&j, "primary");
             jb_bool(&j, o->is_primary);
             jb_putc(&j, ',');
-            jb_key(&j, "radius"); /* no field in om_objective_spec; reported */
-            jb_double(&j, 0.0);
+            jb_key(&j, "radius");
+            jb_double(&j, om_objective_get_radius(W, k));
             jb_putc(&j, ',');
             jb_key(&j, "progress");
             jb_double(&j, o->completion);
@@ -832,10 +825,49 @@ static void write_mission(uint32_t archetype, uint32_t region, uint64_t deadline
     }
     jb_raw(&j, "],");
 
-    /* "force": no accessor wires a composition into a started mission; see
-     * the file-header comment. Always empty. */
+    int32_t counts[6] = {0}, tiers[6] = {0};
+    for (uint32_t u = 0, nu = om_mission_get_force_count(W); u < nu; u++) {
+        int32_t ty = 0, ti = 0;
+        if (!om_mission_get_force_unit(W, u, &ty, &ti) || ty < 0 || ty > 5) continue;
+        counts[ty]++;
+        if (ti > tiers[ty]) tiers[ty] = ti;
+    }
     jb_key(&j, "force");
-    jb_raw(&j, "{\"types\":[],\"tiers\":[]}");
+    jb_raw(&j, "{\"types\":[");
+    for (int t = 0; t < 6; t++) {
+        if (t) jb_putc(&j, ',');
+        jb_int(&j, counts[t]);
+    }
+    jb_raw(&j, "],\"tiers\":[");
+    for (int t = 0; t < 6; t++) {
+        if (t) jb_putc(&j, ',');
+        jb_int(&j, tiers[t]);
+    }
+    jb_raw(&j, "]},");
+
+    om_briefing b;
+    memset(&b, 0, sizeof b);
+    om_mission_assemble_briefing(W, &b);
+    jb_key(&j, "briefing");
+    jb_putc(&j, '{');
+    jb_key(&j, "situation");
+    jb_str(&j, b.has_situation ? b.situation_text : "");
+    jb_putc(&j, ',');
+    jb_key(&j, "objective");
+    jb_str(&j, b.has_objective ? b.objective_text : "");
+    jb_putc(&j, ',');
+    jb_key(&j, "assets");
+    jb_str(&j, b.has_assets ? b.assets_text : "");
+    jb_raw(&j, "},");
+
+    jb_key(&j, "parity");
+    jb_double(&j, om_mission_get_player_parity(W, om_player_faction(W)));
+    jb_putc(&j, ',');
+    jb_key(&j, "commander_unit");
+    jb_uint(&j, om_mission_get_commander_unit(W));
+    jb_putc(&j, ',');
+    jb_key(&j, "quiet_world");
+    jb_bool(&j, 0);
     jb_putc(&j, '}');
     write_frame(j.buf, (uint32_t)j.len);
     jb_free(&j);
