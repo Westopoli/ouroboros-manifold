@@ -10,6 +10,7 @@ signal time_jump_ended(time_jump_id: String)
 
 const SimSession := preload("res://autoload/sim_session.gd")
 const SETTINGS_PATH := "user://settings.cfg"
+const RESOLUTIONS := [Vector2i(1280, 720), Vector2i(1600, 900), Vector2i(1920, 1080), Vector2i(2560, 1440), Vector2i(3440, 1440), Vector2i(3840, 2160)]
 const VALID_RESOLUTION_COUNT := 6
 
 var _source: RefCounted
@@ -90,8 +91,9 @@ func _load_settings() -> void:
 			"resolution_index": config.get_value("display", "resolution_index", 2),
 			"fullscreen": config.get_value("display", "fullscreen", false),
 			"vsync": config.get_value("display", "vsync", true),
-			"edge_scroll_speed": config.get_value("camera", "edge_scroll_speed", 1500),
+			"edge_scroll": bool(config.get_value("camera", "edge_scroll", true)),
 		}
+		_apply_stored_settings()
 	else:
 		_settings = {
 			"master_volume": 80,
@@ -101,8 +103,23 @@ func _load_settings() -> void:
 			"resolution_index": 2,
 			"fullscreen": false,
 			"vsync": true,
-			"edge_scroll_speed": 1500,
+			"edge_scroll": true,
 		}
+
+
+func _apply_stored_settings() -> void:
+	var buses := {"Master": "master_volume", "Music": "music_volume", "SFX": "sfx_volume", "Narration": "narration_volume"}
+	for bus_name in buses:
+		var idx := AudioServer.get_bus_index(bus_name)
+		if idx >= 0:
+			AudioServer.set_bus_volume_db(idx, linear_to_db(float(_settings[buses[bus_name]]) / 100.0))
+	var res_idx := clampi(int(_settings["resolution_index"]), 0, VALID_RESOLUTION_COUNT - 1)
+	if bool(_settings["fullscreen"]):
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+	else:
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+		DisplayServer.window_set_size(RESOLUTIONS[res_idx])
+	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if bool(_settings["vsync"]) else DisplayServer.VSYNC_DISABLED)
 
 
 func get_settings() -> Dictionary:
@@ -118,7 +135,7 @@ func save_settings(settings: Dictionary) -> void:
 		"resolution_index": clampi(int(settings.get("resolution_index", 2)), 0, VALID_RESOLUTION_COUNT - 1),
 		"fullscreen": bool(settings.get("fullscreen", false)),
 		"vsync": bool(settings.get("vsync", true)),
-		"edge_scroll_speed": clampi(int(settings.get("edge_scroll_speed", 1500)), 200, 6000),
+		"edge_scroll": bool(settings.get("edge_scroll", true)),
 	}
 	_settings = clamped
 	var config := ConfigFile.new()
@@ -129,5 +146,5 @@ func save_settings(settings: Dictionary) -> void:
 	config.set_value("display", "resolution_index", clamped["resolution_index"])
 	config.set_value("display", "fullscreen", clamped["fullscreen"])
 	config.set_value("display", "vsync", clamped["vsync"])
-	config.set_value("camera", "edge_scroll_speed", clamped["edge_scroll_speed"])
+	config.set_value("camera", "edge_scroll", clamped["edge_scroll"])
 	config.save(SETTINGS_PATH)
