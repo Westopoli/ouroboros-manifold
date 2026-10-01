@@ -160,3 +160,9 @@ Rule text changed in the same commit: E-16 R-110-01 (the menu lists Era Library;
 **A11. G5b key rebinding is held** on Q-110-04. Nothing is built or tested until Westley answers. Storage, once it is unblocked: the changed bindings in an `[input]` section of the existing settings file, applied to the `InputMap` at boot with the other stored settings.
 
 **A12. G6 TacticalBridge removal.** The test lands as a ratchet in regression mode, like `reach_lint`: the count of referencing files is recorded (25 today), may only fall, and each piece that removes references lowers the recorded number in its own change. The assertion of zero, and the autoload's removal, land after C4's E2 and E3.
+
+## Addendum 5, 2026-10-01 (A7: stop after fixes 3, 1, 2)
+
+Measured after the three fixes, 5,000 units in a clash: round trip median 49 to 54 ms, p95 72 to 77 ms (before: 57 and 71). The estimates in the profile report were too generous; the fixes land anyway, since each is correct and keeps the trace.
+
+**A13. Performance work stops here.** The per-faction cell list in `om_grid` is not approved. It restructures the grid every tactical system reads, and whether it is needed at all depends on the budget (A6): against a 100 ms tick the build already passes on median and p95; against 50 ms it fails on both and the grid change becomes the next piece. Westley's answer decides. Append the after-fix numbers to the profile report and land it; nothing else in this lane is started.
