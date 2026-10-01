@@ -56,6 +56,24 @@ confidence = "likely"
 note = "OMCampaignEndReason (0 active,1 no_surviving_factions)."
 
 [[symbols]]
+name = "om_campaign_commander"
+module = "generational.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }]
+epics = ["E-08"]
+confidence = "likely"
+note = "B6: character id of the current chapter's commander (selector's latest pick), 0 before the first selection. om_character_is_main_character is a cumulative flag, not this."
+
+[[symbols]]
+name = "om_campaign_lineage"
+module = "generational.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }]
+epics = ["E-08"]
+confidence = "likely"
+note = "B6: lineage id of the selector's latest pick (R-057-09), 0 before the first selection."
+
+[[symbols]]
 name = "om_campaign_needs_onboarding"
 module = "generational.c"
 restype = "int"
@@ -118,6 +136,15 @@ params = [{ name = "w", ctype = "const om_world*" }]
 epics = ["E-08"]
 confidence = "confirmed"
 note = "HDR4: public accessor for gen_state.chapter_number; backs sidecar chapter field (S4)."
+
+[[symbols]]
+name = "om_chapter_last_end_reason"
+module = "generational.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }]
+epics = ["E-08"]
+confidence = "likely"
+note = "B6 (A14): GEN_CHAPTER_END_* the latest jump carried (collapse wins over commander death); per jump, 0 when that jump ended no chapter (opening, retry), 0 before any jump."
 
 [[symbols]]
 name = "om_chapter_end_reason_for_collapse"
@@ -450,11 +477,11 @@ note = "Fixture, called in loop x10 (one site)."
 name = "om_chronicle_add_lineage_event"
 module = "chronicle.c"
 restype = "void"
-params = [{ name = "w", ctype = "om_world*" }, { name = "lineage_id", ctype = "uint32_t" }, { name = "region_idx", ctype = "uint32_t" }, { name = "score", ctype = "double" }]
+params = [{ name = "w", ctype = "om_world*" }, { name = "lineage_id", ctype = "uint32_t" }, { name = "region_idx", ctype = "uint32_t" }, { name = "category", ctype = "uint32_t" }, { name = "score", ctype = "double" }]
 epics = ["E-09"]
 confidence = "likely"
-kwargs = ["lineage_id", "region_idx", "score"]
-note = "Fixture. score float literal -> double."
+kwargs = ["lineage_id", "region_idx", "category", "score"]
+note = "Fixture. score float literal -> double. B6 (A1): category parameter added, the cluster stores it."
 
 [[symbols]]
 name = "om_chronicle_add_mock_entry"
@@ -836,12 +863,12 @@ note = "Positional (w, 10, 20) = the mock entry's start_tick/end_tick. Likely na
 
 [[symbols]]
 name = "om_chronicle_has_mission_consequence_flag"
-module = "mission.c"
+module = "generational.c"
 restype = "int"
 params = [{ name = "w", ctype = "const om_world*" }]
 epics = ["E-10"]
 confidence = "likely"
-note = "== 1. Card 266a3 puts in mission.c; not in toml; name says chronicle.c (E-09). Ownership open."
+note = "== 1. Defined in generational.c (consequence chronicle entry lives with the time jump); mission.c holds no definition. Ownership follows where the code lives."
 
 [[symbols]]
 name = "om_chronicle_is_lineage_event"
@@ -1876,6 +1903,15 @@ epics = ["E-08"]
 confidence = "likely"
 kwargs = ["commander_id"]
 note = "Region index == 2."
+
+[[symbols]]
+name = "om_lineage_chapter_count"
+module = "generational.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "lineage_id", ctype = "uint32_t" }]
+epics = ["E-08"]
+confidence = "likely"
+note = "B6 (A17): chapters played in the lineage; 1 at creation, +1 per later selection that keeps it, retry jumps add nothing, 0 for an unknown lineage."
 
 [[symbols]]
 name = "om_lineage_count"
@@ -3199,6 +3235,15 @@ confidence = "likely"
 note = "Region index, compared == selector input region."
 
 [[symbols]]
+name = "om_mission_generator_chosen_archetype"
+module = "generational.c"
+restype = "int32_t"
+params = [{ name = "w", ctype = "const om_world*" }]
+epics = ["E-08"]
+confidence = "likely"
+note = "B6: archetype the generator drew with the chosen region, -1 when it found no candidate."
+
+[[symbols]]
 name = "om_mission_generator_run"
 module = "generational.c"
 restype = "void"
@@ -3287,6 +3332,15 @@ params = [{ name = "w", ctype = "const om_world*" }]
 epics = ["E-10"]
 confidence = "likely"
 note = "HDR4-2-r: unit id the player assigned as commander (R-077-05), 0 if none."
+
+[[symbols]]
+name = "om_mission_assign_commander"
+module = "mission.c"
+restype = "int"
+params = [{ name = "w", ctype = "om_world*" }, { name = "unit_id", ctype = "uint32_t" }]
+epics = ["E-10"]
+confidence = "likely"
+note = "B7: make unit_id the commander (R-077-05). 0 ok, 1 unit missing or not the player's, 2 assigned commander already dead."
 
 [[symbols]]
 name = "om_mission_get_debrief"
