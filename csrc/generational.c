@@ -411,6 +411,11 @@ static void gen_state_put(gen_sw *sw, const gen_state *gs) {
     gen_sw_u32(sw, gs->mission_chosen_region);
     gen_sw_u32(sw, gs->selector_input_region);
     gen_sw_u8(sw, (uint32_t)gs->consequence_consumed);
+    gen_sw_u32(sw, gs->current_commander);
+    gen_sw_u32(sw, gs->current_lineage);
+    gen_sw_i32(sw, gs->chosen_archetype);
+    gen_sw_u8(sw, (uint32_t)gs->has_candidate);
+    gen_sw_i32(sw, gs->last_end_reason);
 }
 
 typedef struct {
@@ -542,6 +547,11 @@ static void gen_state_get(gen_sr *sr, gen_state *gs) {
     gs->mission_chosen_region = gen_sr_u32(sr);
     gs->selector_input_region = gen_sr_u32(sr);
     gs->consequence_consumed = (int)gen_sr_flag(sr);
+    gs->current_commander = gen_sr_u32(sr);
+    gs->current_lineage = gen_sr_u32(sr);
+    gs->chosen_archetype = gen_sr_i32(sr);
+    gs->has_candidate = (int)gen_sr_flag(sr);
+    gs->last_end_reason = gen_sr_i32(sr);
 }
 
 /* A state nothing has written to (allocated lazily by any accessor, including
@@ -555,6 +565,7 @@ static int gen_state_pristine(const gen_state *gs) {
     if (gs->chapter_phase || gs->chapter_number || gs->needs_onboarding || gs->in_transition) return 0;
     if (gs->death_pass_count || gs->time_jump_lineage_gen_tick || gs->time_jump_death_tick) return 0;
     if (gs->mission_chosen_region || gs->selector_input_region || gs->consequence_consumed) return 0;
+    if (gs->current_commander || gs->current_lineage || gs->chosen_archetype || gs->has_candidate || gs->last_end_reason) return 0;
     for (uint32_t i = 0; i < OM_MAX_FACTIONS; i++)
         if (gs->supreme_commander[i] || gs->faction_fallen[i]) return 0;
     for (uint32_t i = 0; i < GEN_REGION_CAP; i++)
