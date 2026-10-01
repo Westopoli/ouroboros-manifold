@@ -3703,6 +3703,15 @@ confidence = "likely"
 note = "Fixture: p1/p2 = c_double x, y (500, 500); p3 = c_double radius (200 wu). Return unused."
 
 [[symbols]]
+name = "om_mission_setup_fallback"
+module = "mission.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }, { name = "region_idx", ctype = "uint32_t" }, { name = "enemy_faction", ctype = "int32_t" }]
+epics = ["E-10"]
+confidence = "likely"
+note = "A3-contract2: quiet-world fallback (R-072-07/08). Archetype Defensive Stand, given region and enemy faction; enemy power follows in mission.c. No parity-floor parameter."
+
+[[symbols]]
 name = "om_mission_setup_hold_zone"
 module = "mission.c"
 restype = "void"

@@ -2135,6 +2135,7 @@ def _bind_e10(lib):
     _bind(lib, "om_mission_setup_destroy_targets", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "objective_idx", "total"))
     _bind(lib, "om_mission_setup_eliminate", [W, ctypes.c_uint32, ctypes.c_double], None, ("w", "objective_idx", "initial_hp"))
     _bind(lib, "om_mission_setup_escort", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "objective_idx", "total"))
+    _bind(lib, "om_mission_setup_fallback", [W, ctypes.c_uint32, ctypes.c_int32], None, ("w", "region_idx", "enemy_faction"))
     _bind(lib, "om_mission_setup_hold_zone", [W, ctypes.c_uint32, ctypes.c_uint64], None, ("w", "objective_idx", "required_ticks"))
     _bind(lib, "om_mission_setup_survive", [W, ctypes.c_uint32, ctypes.c_uint64], None, ("w", "objective_idx", "required_ticks"))
     _bind(lib, "om_mission_setup_tactical", [W, ctypes.c_uint32, ctypes.c_uint64], None, ("w", "p1", "time_limit"))
