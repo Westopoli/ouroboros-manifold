@@ -776,3 +776,31 @@ depends_on = []
 status = "pending"
 tests_pending = true
 size_estimate = "remove bare SimBridge/TacticalBridge references so the file parses without the autoload"
+
+# Mission-plays plan (docs/northstar/plans/2026-09-30-mission-plays-plan.md), Wave 0 item 4:
+# the two new client scene directories the plan's B3 (Refuse flow) and B7 (commander
+# assignment) need. Their hooks into scenes/mission_briefing/** and scenes/tactical_c/**
+# are edits by the existing C4/C5 owners, not by these pieces.
+[[piece]]
+id = "C6-cmd"
+manager = "M3"
+wave = 4
+owns = []
+owns_glob = ["scenes/commander_assign/**"]
+acceptance = []
+depends_on = []
+status = "pending"
+tests_pending = true
+size_estimate = "commander assignment UI for the briefing roster and the tactical reassign action (plan B7, Q-077-02)"
+
+[[piece]]
+id = "C6-refuse"
+manager = "M3"
+wave = 4
+owns = []
+owns_glob = ["scenes/mission_refuse/**"]
+acceptance = []
+depends_on = []
+status = "pending"
+tests_pending = true
+size_estimate = "Refuse flow for the briefing (plan B3, R-078-05, R-079-02)"
