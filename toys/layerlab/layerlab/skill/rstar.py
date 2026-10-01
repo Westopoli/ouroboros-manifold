@@ -1,7 +1,11 @@
-"""R*: the enemy-to-skilled force ratio at which the skilled side's margin crosses zero (SPEC.md section 14.1)."""
+"""R*: the enemy-to-skilled headcount ratio at which the skilled side's margin crosses the win margin (SPEC.md
+sections 14.1 and 14.5)."""
 from dataclasses import dataclass
 
+from ..run import run
+from .cost import force_cost
 from .fight import run_fights
+from .margin import effective_margin
 
 RATIOS = (0.5, 0.7, 0.85, 1.0, 1.2, 1.4, 1.7, 2.0, 2.4, 2.9, 3.5, 4.2, 5.0, 6.0, 8.0)
 _RERUN_SHIFT = 1000
@@ -25,6 +29,10 @@ class RStar:
     short_scan: bool
     label_gap: float
     fights: int
+    win_margin: float
+    value_cost: float
+    firing_adv_at_rstar: float
+    firing_adv_equal: float
 
 
 def isotonic_nonincreasing(xs, ys):
@@ -40,6 +48,7 @@ def isotonic_nonincreasing(xs, ys):
 
 
 def zero_crossing(xs, fitted):
+    """The first x at which `fitted` (non-increasing) goes from above 0 to at or below 0."""
     if not fitted or fitted[0] <= 0 or fitted[-1] > 0:
         return None
     for i in range(1, len(fitted)):
@@ -53,15 +62,32 @@ def _mean(v):
     return sum(v) / len(v)
 
 
+def _interp(xs, ys, x):
+    """Linear interpolation of ys over xs at x; None when x is outside xs or a neighbouring y is None."""
+    for i in range(len(xs) - 1):
+        if xs[i] <= x <= xs[i + 1]:
+            y0, y1 = ys[i], ys[i + 1]
+            if x == xs[i]:
+                return y0
+            if x == xs[i + 1]:
+                return y1
+            if y0 is None or y1 is None:
+                return None
+            return y0 + (y1 - y0) * (x - xs[i]) / (xs[i + 1] - xs[i])
+    return None
+
+
 def _measure(build, ratios, seeds, processes, lib):
     """Run both labels and every seed at each ratio; a ratio `build` rejects is skipped."""
-    jobs, slots, skipped = [], [], []
+    jobs, slots, skipped, cost_ratio = [], [], [], {}
     for r in ratios:
         try:
             scns = (build(r, False), build(r, True))
         except ValueError:
             skipped.append(r)
             continue
+        cost_ratio[r] = _mean([force_cost(scn, 1 - sk) / force_cost(scn, sk)
+                               for sk, scn in zip((0, 1), scns)])
         for swap, scn in zip((False, True), scns):
             for seed in seeds:
                 jobs.append((scn, seed))
@@ -76,20 +102,27 @@ def _measure(build, ratios, seeds, processes, lib):
     for r, rows in by_ratio.items():
         a = [fr.margin for swap, fr in rows if not swap]
         b = [fr.margin for swap, fr in rows if swap]
+        sk_fire = _mean([fr.firing_per_head(int(swap)) for swap, fr in rows])
+        nv_fire = _mean([fr.firing_per_head(1 - int(swap)) for swap, fr in rows])
         points.append({
             "ratio": r, "value": (_mean(a) - _mean(b)) / 2.0,
             "margin_A_label": _mean(a), "margin_B_label": _mean(b),
             "n_stalemate": sum(fr.outcome == "stalemate" for _, fr in rows),
             "n_no_contact": sum(not fr.contact for _, fr in rows),
+            "cost_ratio": cost_ratio[r],
+            "skilled_firing_per_head": sk_fire, "naive_firing_per_head": nv_fire,
+            "skilled_alive_ticks": _mean([fr.alive_ticks[int(swap)] for swap, fr in rows]),
+            "naive_alive_ticks": _mean([fr.alive_ticks[1 - int(swap)] for swap, fr in rows]),
+            "firing_adv": sk_fire / nv_fire if nv_fire else None,
         })
     return points, skipped, len(jobs)
 
 
-def _solve(build, ratios, seeds, refine, processes, lib, viol_tol):
+def _solve(build, ratios, seeds, refine, processes, lib, viol_tol, win_margin):
     scan, skipped, fights = _measure(build, ratios, seeds, processes, lib)
     scan.sort(key=lambda p: p["ratio"])
     points = list(scan)
-    pos = [i for i, p in enumerate(scan) if p["value"] > 0]
+    pos = [i for i, p in enumerate(scan) if p["value"] > win_margin]
     if pos and pos[-1] + 1 < len(scan):
         lo, hi = scan[pos[-1]]["ratio"], scan[pos[-1] + 1]["ratio"]
         for _ in range(refine):
@@ -97,7 +130,7 @@ def _solve(build, ratios, seeds, refine, processes, lib, viol_tol):
             new, skip, n = _measure(build, (mid,), seeds, processes, lib)
             fights += n
             skipped += skip
-            if new and new[0]["value"] > 0:
+            if new and new[0]["value"] > win_margin:
                 lo = mid
             else:
                 hi = mid
@@ -106,13 +139,13 @@ def _solve(build, ratios, seeds, refine, processes, lib, viol_tol):
     xs = [p["ratio"] for p in points]
     vals = [p["value"] for p in points]
     fitted = isotonic_nonincreasing(xs, vals)
-    value = zero_crossing(xs, fitted)
-    above = bool(fitted) and value is None and fitted[-1] > 0
+    value = zero_crossing(xs, [f - win_margin for f in fitted])
+    above = bool(fitted) and value is None and fitted[-1] > win_margin
     below = bool(fitted) and value is None and not above
     violation = max([b - a for a, b in zip(vals, vals[1:]) if b > a], default=0.0)
     scan_max = max((p["ratio"] for p in scan), default=None)
-    losses = [p["ratio"] for p in scan if p["value"] < 0]
-    wins = [p["ratio"] for p in scan if p["value"] > 0]
+    losses = [p["ratio"] for p in scan if p["value"] <= win_margin]
+    wins = [p["ratio"] for p in scan if p["value"] > win_margin]
     return RStar(
         value=value, above_scan=above, below_scan=below, points=points,
         first_loss=min(losses, default=None), last_win=max(wins, default=None),
@@ -120,15 +153,50 @@ def _solve(build, ratios, seeds, refine, processes, lib, viol_tol):
         skipped_ratios=skipped, scan_max=scan_max,
         short_scan=above and scan_max is not None and scan_max <= _TARGET_SCAN,
         label_gap=max((abs(p["margin_A_label"] + p["margin_B_label"]) for p in points), default=0.0),
-        fights=fights,
+        fights=fights, win_margin=win_margin,
+        value_cost=None if value is None else _interp(xs, [p["cost_ratio"] for p in points], value),
+        firing_adv_at_rstar=None if value is None else _interp(xs, [p["firing_adv"] for p in points], value),
+        firing_adv_equal=next((p["firing_adv"] for p in points if p["ratio"] == 1.0), None),
     )
 
 
-def rstar(build, ratios=RATIOS, seeds=(0, 1), refine=4, processes=None, lib="O2", viol_tol=0.15):
-    res = _solve(build, ratios, seeds, refine, processes, lib, viol_tol)
+def rstar(build, ratios=RATIOS, seeds=(0, 1), refine=4, processes=None, lib="O2", viol_tol=0.15,
+          win_margin=0.02):
+    res = _solve(build, ratios, seeds, refine, processes, lib, viol_tol, win_margin)
     if res.monotonic:
         return res
-    again = _solve(build, ratios, tuple(s + _RERUN_SHIFT for s in seeds), refine, processes, lib, viol_tol)
+    again = _solve(build, ratios, tuple(s + _RERUN_SHIFT for s in seeds), refine, processes, lib, viol_tol,
+                   win_margin)
     again.rerun = True
     again.fights += res.fights
     return again
+
+
+def rstar_windows(build, rs, seeds=(0,), window_ticks=100, lib="O2"):
+    """Per-window means of units able to fire and units alive, for the fights either side of the break-even."""
+    out = []
+    for ratio in (rs.last_win, rs.first_loss):
+        if ratio is None:
+            continue
+        for swap in (False, True):
+            scn = build(ratio, swap)
+            sk = int(swap)
+            for seed in seeds:
+                res = run(scn, seed=seed, trace=True, lib=lib)
+                tr = res.trace
+                side = tr["side"][0]
+                fire = (tr["flags"] & 16) != 0
+                alive = tr["alive"] != 0
+                windows = []
+                for start in range(0, len(tr), window_ticks):
+                    sl = slice(start, start + window_ticks)
+                    windows.append({
+                        "skilled_firing": float(fire[sl][:, side == sk].sum(axis=1).mean()),
+                        "naive_firing": float(fire[sl][:, side != sk].sum(axis=1).mean()),
+                        "skilled_alive": float(alive[sl][:, side == sk].sum(axis=1).mean()),
+                        "naive_alive": float(alive[sl][:, side != sk].sum(axis=1).mean()),
+                    })
+                m = effective_margin(res, scn)[0]
+                out.append({"ratio": ratio, "swap": swap, "seed": seed, "margin": -m if swap else m,
+                            "windows": windows})
+    return out
