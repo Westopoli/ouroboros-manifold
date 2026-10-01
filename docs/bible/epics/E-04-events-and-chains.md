@@ -89,7 +89,7 @@ Open flags: none.
 As a commander, I want the galaxy's crises and booms to come from a fixed, authored set, so that the same causes produce the same kinds of history in every campaign.
 
 Rules
-- R-030-01  Given the launch library, When loaded, Then it contains exactly the 26 templates in the table below with these triggers, effects, spawns, and exclusion tags, and a contract test compares the loaded library to the table field by field.
+- R-030-01  Given a new campaign, When its world is created (the pipe's `set_seed`), Then the launch library is loaded into that world, and it contains exactly the 26 templates in the table below with these triggers, effects, spawns, and exclusion tags, and a contract test compares the loaded library to the table field by field.
 - R-030-02  Given a template with no trigger, When triggers are evaluated, Then it never starts a chain; it fires only as a spawn.
 - R-030-03  Given every template's effects, When summed, Then every value is an integer in [−4, 6]; no launch event moves a field by more than 6 in one firing.
 

@@ -88,7 +88,7 @@ As a commander, I want a mission to have one primary objective I can see progres
 
 Rules
 - R-075-01  Given a mission, When objectives are built, Then there is exactly one primary objective and 0 to 3 secondary ones, weights summing to 1.0, the primary carrying at least 0.6.
-- R-075-02  Given hold_zone, When evaluated per tick, Then the hold timer advances only while no enemy unit is inside the zone radius; completion = elapsed/required.
+- R-075-02  Given hold_zone, When evaluated per tick, Then the hold timer advances only while no enemy unit is inside the zone radius; required = 10 minutes of battle time (12,000 base ticks, Westley 2026-09-30; it was the whole time limit, so the zone could only complete on the final tick); completion = elapsed/required, and the mission ends on completion (R-075-07).
 - R-075-03  Given destroy_targets, When evaluated, Then completion = destroyed designated targets/total.
 - R-075-04  Given escort_to_extraction, When evaluated, Then completion = escort units that reached the extraction point alive/total escort units.
 - R-075-05  Given survive_duration, When evaluated, Then completion = elapsed/required, and 0 if every player unit is dead before the time.
@@ -165,7 +165,7 @@ Rules
 
 Inputs: difficulty; onboarding.
 Outputs: parity; candidate scores.
-Open flags: Q-080-03 (the compression values). Q-080-01 is closed: the full ramp ships. Q-080-02 is closed: Crossed Signals, chosen through the options pass, `docs/northstar/research/options/complications/`. Q-079-01 is closed: single-player team model, the host owns difficulty and preferences.
+Open flags: Q-080-03 (the compression values; Westley 2026-09-30: stays open past the MVP, so R-080-02's compression is a no-op until it closes and no piece builds it). Q-080-01 is closed: the full ramp ships. Q-080-02 is closed: Crossed Signals, chosen through the options pass, `docs/northstar/research/options/complications/`. Q-079-01 is closed: single-player team model, the host owns difficulty and preferences.
 
 ## Inputs
 
