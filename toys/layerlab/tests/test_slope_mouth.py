@@ -160,14 +160,20 @@ def test_hard_bodies_hold_on_layer_one_away_from_the_slope(n):
 @pytest.mark.parametrize("n", [5, 10])
 def test_hard_bodies_hold_on_the_plateau_after_the_climb(n):
     """SPEC 5.10 (red today, nobody climbs): on layer 2 (open plateau) no two off-slope units are
-    closer than 29 from 30 ticks after the last unit mounted. Mounting is exempt from blocking
+    closer than 29 from 30 ticks after the last unit dismounted. Mounting is exempt from blocking
     (5.9) but the climbers must not stay overlapped once on open ground. Fails first if some unit
     never mounted, so a no-climb run cannot pass it vacuously."""
     res = _run_box(n)
     mounts = _mounts(res, n)
     assert all(m is not None for m in mounts), "units that never mounted: %s" % [
         i for i, m in enumerate(mounts) if m is None]
-    last = max(mounts)
+    # Landing is exempt too (5.9: a dismounting unit may overlap what stands at the top and normal separation
+    # resolves it), so the window starts 30 ticks after the LAST DISMOUNT (the last tick any unit is on the
+    # slope, trace flag bit2), not after the last mount: the climb of a 300-long slope at speed 150 takes
+    # 40 ticks. (The first version measured from the last mount, a test defect found by the slope-mouth
+    # builder: overlaps of 26 to 29 at ticks 208 to 214 were the last three units landing.)
+    on_slope = np.flatnonzero((res.trace["flags"][:, :n] & 4 > 0).any(axis=1))
+    last = int(on_slope.max()) + 1
     l2 = _overlap_count(res, list(range(n)), 2)
     assert last + 30 < len(l2)
     assert (l2[last + 30:] == 0).all(), "layer-2 overlap after the climb, ticks %s" % (
