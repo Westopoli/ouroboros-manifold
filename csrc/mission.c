@@ -464,6 +464,9 @@ int32_t om_player_faction(const om_world *w) {
     return -1;
 }
 /* Thin alias for internal callers that pre-date the public accessor. */
+/* R-075-02: hold the zone for 10 minutes = 12,000 base ticks. */
+#define OM_MISSION_HOLD_ZONE_REQUIRED_TICKS 12000
+
 static int32_t om_mission_player_faction(const om_world *w) {
     return om_player_faction(w);
 }
@@ -1124,10 +1127,7 @@ void om_mission_build_objectives(om_world *w, uint32_t archetype) {
 
     switch (kind) {
     case OM_MISSION_OBJ_HOLD_ZONE:
-        /* R-075-02's "required" is the mission's own time limit: hold the
-         * zone clear of the enemy for the mission's whole duration (see the
-         * report -- no rule states a separate hold quota). */
-        om_mission_setup_hold_zone(w, 0, om_mission_get_time_limit(w));
+        om_mission_setup_hold_zone(w, 0, OM_MISSION_HOLD_ZONE_REQUIRED_TICKS);
         break;
     case OM_MISSION_OBJ_ELIMINATE_FORCE: {
         int32_t player = om_mission_player_faction(w);
