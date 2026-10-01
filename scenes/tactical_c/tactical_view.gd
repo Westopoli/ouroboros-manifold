@@ -29,6 +29,8 @@ const HUD_OBJECTIVE_NAMES := {
 	0: "Hold the zone", 1: "Destroy targets", 2: "Escort to extraction",
 	3: "Survive", 4: "Eliminate the enemy force",
 }
+const ATTACK_MOVE_FEEDBACK_SECONDS := 1.0
+const ATTACK_MOVE_FEEDBACK_COLOR := Color(1.0, 0.8, 0.2)
 const HUD_OBJECTIVE_FALLBACK := "Carry out the order"
 const EDGE_MARGIN_PX := 4.0
 
@@ -65,6 +67,7 @@ var _camera_initialized := false
 var _camera_canvas: float = 0.0
 var _camera_unbounded := false
 var _zoom := 1.0
+var _attack_move_mode := false
 var _clock_label: Label
 var _objective_label: Label
 var _selection_label: Label
@@ -340,7 +343,8 @@ func send_command(cmd: Dictionary) -> bool:
 		})
 		_commands_sent_last_order = 1
 	_units_in_last_command = unit_ids.size()
-	_last_command = {"ok": ok, "kind": kind, "units": unit_ids.size()}
+	_last_command = {"ok": ok, "kind": kind, "units": unit_ids.size(),
+		"x": float(cmd.get("x", 0.0)), "y": float(cmd.get("y", 0.0))}
 	return ok
 
 
@@ -493,6 +497,8 @@ func _pan_input(delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		_pointer_seen = true
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_A:
+		_attack_move_mode = true
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
 		if mb.button_index == MOUSE_BUTTON_WHEEL_UP and mb.pressed:
@@ -502,14 +508,34 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif mb.button_index == MOUSE_BUTTON_LEFT:
 			if mb.pressed:
 				_drag_start = mb.position
+			elif _attack_move_mode:
+				_attack_move_mode = false
+				_drag_start = Vector2(-1.0, -1.0)
+				var w := _to_world(mb.position)
+				send_command({"kind": "attack_move", "unit_ids": _selected.duplicate(), "x": w.x, "y": w.y})
+				_show_order_feedback(mb.position)
 			else:
 				if _drag_start.x >= 0.0:
 					qa_box_select(_drag_start.x, _drag_start.y, mb.position.x, mb.position.y)
 					_drag_start = Vector2(-1.0, -1.0)
 		elif mb.button_index == MOUSE_BUTTON_RIGHT and mb.pressed:
-			var wx: float = (mb.position.x - SCREEN_W * 0.5) / _world_scale + _camera.x
-			var wy: float = (mb.position.y - SCREEN_H * 0.5) / _world_scale + _camera.y
-			send_command({"kind": "move", "unit_ids": _selected.duplicate(), "x": wx, "y": wy})
+			_attack_move_mode = false
+			var w := _to_world(mb.position)
+			send_command({"kind": "move", "unit_ids": _selected.duplicate(), "x": w.x, "y": w.y})
+
+
+func _to_world(screen: Vector2) -> Vector2:
+	return (screen - Vector2(SCREEN_W, SCREEN_H) * 0.5) / _world_scale + _camera
+
+
+func _show_order_feedback(screen: Vector2) -> void:
+	var marker := _make_unit_visual(_get_local_faction())
+	marker.color = ATTACK_MOVE_FEEDBACK_COLOR
+	marker.position = screen
+	add_child(marker)
+	var tw := marker.create_tween()
+	tw.tween_property(marker, "modulate:a", 0.0, ATTACK_MOVE_FEEDBACK_SECONDS)
+	tw.tween_callback(marker.queue_free)
 
 
 func _visible_ids() -> Dictionary:
