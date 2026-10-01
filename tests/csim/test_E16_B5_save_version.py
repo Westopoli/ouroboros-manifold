@@ -1,5 +1,5 @@
 """B5 (architect rulings round 2, section 2): the saved consequence_consumed flag changes
-the save layout, so OM_SAVE_FORMAT_VERSION goes 2 -> 3 and save.c rejects any other
+the save layout, so OM_SAVE_FORMAT_VERSION goes 2 -> 3 (B5) -> 4 (B6 lifecycle fields, ruling 1.8) and save.c rejects any other
 version cleanly (R-111-03; nothing has shipped, no migration).
 
 The version word is the u32 after the 4-byte magic (little endian), the layout
@@ -10,7 +10,7 @@ import ctypes
 from conftest import OMTier, set_owner, set_region
 
 VERSION_OFFSET = 4
-EXPECTED_VERSION = 3
+EXPECTED_VERSION = 4
 
 
 def _bind_save(lib):
@@ -54,8 +54,8 @@ def _with_version(buf, size, version):
     return out
 
 
-def test_R_111_03_a_save_written_now_carries_version_3(lib, world_factory):
-    """Given a world, When it is saved, Then the version word after the magic is 3 (B5 bumped the layout)."""
+def test_R_111_03_a_save_written_now_carries_version_4(lib, world_factory):
+    """Given a world, When it is saved, Then the version word after the magic is 4 (B6 bumped the layout)."""
     w = _world(lib, world_factory, seed=31)
     buf, size = _save(lib, w)
     assert size > 8
@@ -63,14 +63,14 @@ def test_R_111_03_a_save_written_now_carries_version_3(lib, world_factory):
 
 
 def test_control_R_111_03_the_version_word_reader_sees_a_patched_word(lib, world_factory):
-    """Control: the reader above reports a patched word, so a failing 'carries version 3' means the save wrote another number."""
+    """Control: the reader above reports a patched word, so a failing 'carries version 4' means the save wrote another number."""
     w = _world(lib, world_factory, seed=32)
     buf, size = _save(lib, w)
     assert _version_word(_with_version(buf, size, 77)) == 77
 
 
-def test_R_111_03_a_version_3_save_loads_back(lib, world_factory):
-    """Positive control for the rejection tests: the same patch path with the current version 3 loads, so a refusal below is the version, not the patching."""
+def test_R_111_03_a_version_4_save_loads_back(lib, world_factory):
+    """Positive control for the rejection tests: the same patch path with the current version 4 loads, so a refusal below is the version, not the patching."""
     src = _world(lib, world_factory, seed=33)
     buf, size = _save(lib, src)
     patched = _with_version(buf, size, EXPECTED_VERSION)
@@ -79,22 +79,22 @@ def test_R_111_03_a_version_3_save_loads_back(lib, world_factory):
     assert lib.om_world_get_state_checksum(dst) == lib.om_world_get_state_checksum(src)
 
 
-def test_R_111_03_a_version_2_save_is_refused_cleanly(lib, world_factory):
-    """Given a save from before the bump (version word 2), When loaded, Then it is refused (non-zero return) and the target world is untouched."""
+def test_R_111_03_a_version_3_save_is_refused_cleanly(lib, world_factory):
+    """Given a save from before the bump (version word 3, no migration), When loaded, Then it is refused (non-zero return) and the target world is untouched."""
     src = _world(lib, world_factory, seed=35)
     buf, size = _save(lib, src)
-    old = _with_version(buf, size, 2)
+    old = _with_version(buf, size, 3)
     dst = world_factory(n_regions=4, seed=36)
     before = lib.om_world_get_state_checksum(dst)
     assert lib.om_load_state_read(dst, old, size) != 0
     assert lib.om_world_get_state_checksum(dst) == before
 
 
-def test_R_111_03_a_version_4_save_is_refused_cleanly(lib, world_factory):
-    """Given a save from a later build (version word 4), When loaded, Then it is refused: no migration either way, any other version is rejected."""
+def test_R_111_03_a_version_5_save_is_refused_cleanly(lib, world_factory):
+    """Given a save from a later build (version word 5), When loaded, Then it is refused: no migration either way, any other version is rejected."""
     src = _world(lib, world_factory, seed=37)
     buf, size = _save(lib, src)
-    newer = _with_version(buf, size, 4)
+    newer = _with_version(buf, size, 5)
     dst = world_factory(n_regions=4, seed=38)
     before = lib.om_world_get_state_checksum(dst)
     assert lib.om_load_state_read(dst, newer, size) != 0
