@@ -180,3 +180,9 @@ The coordinator's defaults stand except where this says otherwise.
 **A17. The lineage chapter counter counts chapters played in the lineage.** A new lineage starts at 1 (R-057-08). Each later selection that keeps the lineage (a stay, or a successor after the commander's death, R-061-02) adds one, once; a retry jump adds nothing. The contract piece gains `uint32_t om_lineage_chapter_count(const om_world *w, uint32_t lineage_id);`. Tests: a stay gives 2; a rotation gives the new lineage 1 and leaves the old count as it was; a retry jump changes neither.
 
 **A18. Confirmed.** The generator inside the jump calls `om_mission_refresh_context` for every region before it scores. The five pipe tests that break when the draw moves get test-defect rows in the B6 pipe piece, one row per test saying which fixture value moved and why; the Engineer changes only values that follow from which mission was drawn, and reports any assertion that states a rule's value without changing it.
+
+## Addendum 7, 2026-10-01 (`pieces.toml` ordering)
+
+The dependency fix in d33aa64f removed the only ordering between `B5-chronicle` and `B7b`, and `owner_lint` failed on main. Fixed in this commit: the order on `csrc/generational.c` is `B5-chronicle`, then the new row `B6-lifecycle` (which also owns `csrc/chronicle.c`, after `B8`), then `B7b`. `owner_lint` passes (63 pieces).
+
+**A19.** The F1 and F2 accessors live in `csrc/unit.c` and `csrc/om_internal.h`, which have owners; they need no rows of their own. The `symbol_ownership` lint counting an `extern` declaration that ends in `;` as a definition is a harness defect: approved as a harness piece for an Engineer, with a positive control (a planted declaration is ignored, a planted definition in the wrong file is still caught).
