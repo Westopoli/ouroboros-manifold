@@ -39,11 +39,11 @@ These come from the bible and the register; the lab does not vary them unless a 
 - Layer damage is weighted much more heavily than abilities and passives (Q-083-02, hub principle 4): an ability never outranks position in the lab either.
 - Determinism: same seed and command stream give a byte-identical trace.
 
-## 4. The target: understanding beats numbers (Stage 1 draft, not yet signed)
+## 4. The target: understanding beats numbers (Stage 1, confirmed by Westley 2026-10-01)
 
 Westley, 2026-10-01, verbatim: "players with better understanding of the landscape, unit formation, layer awareness/intentionality, and the other players current position can defeat a much larger force. The goal is to create a game with significant strategic depth. We get to this goal by tuning all the variables we laid out such that that sentence becomes a reality."
 
-This section replaces the four test patterns the lab started with. It is being defined with Westley in batches; what he has ruled is marked, and the rest is draft. The plan it belongs to has three stages: define the conditions (this section), say concretely what the data must show (§6), then change the prototype (§7).
+This section replaces the four test patterns the lab started with. It was defined with Westley in batches on 2026-10-01; his words are quoted where he ruled. Two numbers remain drafts: the share of maps in C8 and the winning margin. The plan it belongs to has three stages: define the conditions (this section), say concretely what the data must show (§6), then change the prototype (§7).
 
 ### 4.1 Five skills
 
@@ -101,7 +101,7 @@ Settled 2026-10-01, verbatim: "Yes refusing a fight counts as a counter, a skill
 - **Skill profile.** For one rule set: the premium of every combination of the five skills (5 singles, 10 pairs, 10 triples, 5 fours, the full set), plus controls and counter-plays.
 - **An honest R\*.** A stalemate is not a win, and the larger, naive side always has to attack, or a side that never moves never loses. "Naive" is a ladder: a blob, a line abreast, and a line that holds still; the last isolates the "side that holds still wins" effect found in pass 1. Bands are judged against the line abreast.
 
-### 4.3 The conditions (draft, restated around units firing; awaiting Westley's confirmation)
+### 4.3 The conditions (restated around units firing; confirmed by Westley 2026-10-01: "yes it matches, proceed")
 
 Westley, 2026-10-01, on fixed pass marks per skill, verbatim: "Q4: Remember, it depends on the number of units that can get shots, not a basic ratio. We need to capture and track the number of units that are able to get shots off on each side, and compare the about of time and number for both. That will indicate the quality of the choke, not just that they should do *1.3x* better because it's not as simple as that."
 
@@ -259,15 +259,25 @@ Status: Westley told the build to go ahead on this map, 2026-09-30 ("continue wi
 
 "Lines crossing" was Westley's first name for the thing to find. Stated as a win probability crossing 0.5 it does not fit a system with no dice, and it never said what a good result looks like. In the terms of §4:
 
-- A **line** is a break-even contour: the set of knob values at which a play's premium equals its target.
-- The **crossing** is the region of rule space where every condition C0 to C9 holds at once.
+- A **line** is the edge, in the space of rule knobs, of where one condition of §4.3 holds: on one side skill wins the firing count and the result follows it, on the other it does not.
+- The **crossing** is the region where every condition C0 to C9 holds at once.
 - **Depth** is that region being non-empty and not a knife-edge: a small change to one knob should not throw a rule set out.
 
-What the lab delivers from its data: (1) the rule sets that pass; (2) for each knob, which skills' premiums it moves and by how much; (3) the rule sets that nearly pass and the condition each misses.
+What the lab delivers from its data: (1) the rule sets that pass; (2) for each knob, which skills' firing advantage and break-even ratio it moves and by how much; (3) the rule sets that nearly pass and the condition each misses; (4) for every rule set, the plot of result against firing advantage, with the fights that fall off the line listed, since those are where a number other than position decided.
 
-The first result is the **baseline profile**: the skill profile of today's default rules, under the base table and the three lever tables of §6.3. It says how far each skill is from its band before anything is tuned. What the runs so far suggest (§8): the layer skill has no edge under vision alone; a concave is worth less than one unit; blindness is worth about one unit and a seer helps only above a sight threshold; the ramp goes from a win to a wipe-out between slope lengths 150 and 200.
+The first result is the **baseline profile**: the skill profile of today's default rules, under the base table and the three lever tables of §6.3. It says, before anything is tuned, whether each skilled play wins the firing count and whether results follow it. What the runs so far suggest (§8): the layer skill has no edge under vision alone; a concave is worth less than one unit; blindness is worth about one unit and a seer helps only above a sight threshold; the ramp goes from a win to a wipe-out between slope lengths 150 and 200.
 
 Controls. Negative: identical forces and plays on a mirrored flat map give R\* = 1.0 within one unit; a detector that reads an advantage there is measuring the harness. Positive: a planted advantage of known direction (the unseen high side of pass 1) gives R\* well above 1.
+
+### Assessment of the prototype against the target (Stage 2, 2026-10-01)
+
+Kept and reused: the engine (five layers, the terrain presets, cover, slopes, walking and flying units, hard bodies, routing across layers, three target policies); the batch runner with one data row per fight; many-variable sampling; replays; the firing counters and the windowed exchange; the test suite and the determinism gate.
+
+Missing for the target: a signed margin; the break-even solver; plays (a unit has one order for the whole fight, so a bait, an ambush or a fall-back cannot be scripted); situations sampled as asymmetric space and land maps, with something hidden; the skill profile and the check of result against firing advantage; guards against the two known artefacts (spawn overlap, units leaving a slope inside enemy bodies); and the three layer actions of `Q-005-03` (the aimed ping, going dark, reach by unit type), without which the layer skill cannot be measured at all.
+
+Dropped: win rate as the headline measure and the crossing search built on it; the proposed randomness knob; experiment E5 in its probability form; E1 and E2 as written.
+
+What the passes so far say about the starting point, each to be re-measured as a firing advantage: a layer gives nothing under symmetric vision alone (pass 3); reach and damage penalties are steep, decisive within 20 percent (pass 3); a concave is worth less than one unit (pass 4); blindness is worth about one unit (pass 4); the ramp turns from a win to a wipe-out between slope lengths 150 and 200 (pass 4).
 
 ### Two ways to search, run side by side
 
@@ -285,7 +295,7 @@ Draft order for the incremental track, to be confirmed against the baseline prof
 
 How the two are compared: whether each reaches a rule set that passes C0 to C9; how many fights it took; how the result holds on situations neither search saw; and how well each step of the path can be explained.
 
-The sections below are the record of how the lab got here. §6.1's firing-share measure is kept as condition C8. §6.2's experiments E1 and E2 are confounded as written (the side that holds still wins) and E5 asks a probability question the lab cannot answer; all three are replaced by the skill profile. §6.3's rulings stand.
+The sections below are the record of how the lab got here. §6.1's firing-share measure is now the centre of the conditions (C1 and C2). §6.2's experiments E1 and E2 are confounded as written (the side that holds still wins) and E5 asks a probability question the lab cannot answer; all three are replaced by the skill profile. §6.3's rulings stand.
 
 ### 6.1 The firing-share hypothesis (2026-09-30, first check in §8)
 
