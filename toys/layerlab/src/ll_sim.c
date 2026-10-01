@@ -118,6 +118,9 @@ static int validate(const ll_scenario *sc) {
     if (!e) e = ll_move_validate(sc);
     if (!e) e = ll_vision_validate(sc);
     if (!e) e = ll_combat_validate(sc);
+    if (!e) e = ll_reach_validate(sc);
+    if (!e) e = ll_emit_validate(sc);
+    if (!e) e = ll_ping_validate(sc);
     if (!e && (sc->n_types < 1 || sc->n_types > LL_MAX_TYPES)) e = "scenario: n_types out of range";
     if (!e && (sc->n_spawns < 0 || sc->n_spawns > LL_MAX_UNITS)) e = "scenario: n_spawns out of range";
     for (int i = 0; !e && i < sc->n_types; i++) e = validate_type(&sc->types[i]);
@@ -131,6 +134,7 @@ static int validate(const ll_scenario *sc) {
 static int setup(ll_state *s, const ll_scenario *sc, uint64_t seed) {
     if (validate(sc)) return 1;
     memset(s, 0, sizeof *s);
+    s->alerted_tick[0] = s->alerted_tick[1] = -1;
     s->sc = sc;
     s->rules = &sc->rules;
     s->ter = &sc->terrain;
@@ -169,6 +173,7 @@ static int setup(ll_state *s, const ll_scenario *sc, uint64_t seed) {
         u->gy = p->gy;
         u->target = u->aim = u->chase = -1;
         u->slope = -1;
+        u->emit = p->emit;
         u->xfer_ordered = p->transfer_layer;
         ll_face_init(u, p->facing_deg);
         u->arc_gate = sc->rules.facing_gates_fire && u->ty->arc_deg < 360.0;   /* SPEC 5.4, 5.12 */
@@ -202,6 +207,7 @@ int ll_run(const ll_scenario *sc, uint64_t seed, ll_result *out, ll_trace *trace
     memset(out, 0, sizeof *out);
     out->first_shot_side = out->first_shot_tick = out->first_contact_tick = -1;
     out->winner = LL_WIN_NONE;
+    out->alerted_tick[0] = out->alerted_tick[1] = -1;
     if (trace) trace->ticks_written = 0;
 
     ll_state s;
@@ -224,6 +230,8 @@ int ll_run(const ll_scenario *sc, uint64_t seed, ll_result *out, ll_trace *trace
         ll_layers_update(&s);                                 /* step 2: effective layers, transfers */
         ll_update_arrival(&s);
         ll_pulse_update(&s);                                  /* step 3: pulses, then vision */
+        ll_emit_update(&s);                                   /* step 3: going dark switches, pings (ABI 3) */
+        ll_ping_update(&s);
         if (ll_side_vision(&s) && out->first_contact_tick < 0)
             out->first_contact_tick = tick;
         ll_acquire(&s);                                       /* step 4 */
@@ -283,6 +291,10 @@ int ll_run(const ll_scenario *sc, uint64_t seed, ll_result *out, ll_trace *trace
     }
 
     ll_nav_free(&s);
+    for (int k = 0; k < 2; k++) {
+        out->alerted_tick[k] = s.alerted_tick[k]; out->alerts[k] = s.alerts[k];
+        out->alert_dir_x[k] = s.alert_dx[k]; out->alert_dir_y[k] = s.alert_dy[k];
+    }
     out->ticks = ran;
     double hp_left[2] = {0.0, 0.0};
     for (int i = 0; i < s.n; i++) {
