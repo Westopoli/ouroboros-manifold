@@ -340,3 +340,11 @@ The generator's `om_mission_fallback_region` picks the player region with the lo
 - The function reads the player faction through `om_mission_player_faction`, the pipe through `om_player_faction`. If the two can ever return different factions, report it before landing; there should be one answer to "who is the player".
 
 **A42. Harness piece 1 filters the 12 names.** The split piece keeps the macro set identical, as ruled: its emit skips the ten wrong `OM_TACTICAL_TICK_RATE_*` names and the two `OM_OM_MACRO_*` names through an explicit, commented skip list, and piece 3 removes that list when it fixes the parse. The piece-1 test allows no extras.
+
+## Addendum 21, 2026-10-02 (who ends the mission, now that the debrief does not)
+
+**A43. The tactical view ends the mission.** At both routing sites in `scenes/tactical_c/tactical_view.gd` (the End Mission button, and the sim reporting the mission over) it sends `mission_end` through the bridge, waits for the debrief frame to arrive, then routes to the debrief. If the frame does not arrive it shows the error panel in place; it does not route to an empty debrief. Piece C5-N with its own test: End Mission sends exactly one `mission_end`, and the debrief then shows the played mission's frame. The bridge stores a debrief frame whenever one arrives, whichever command caused it; no new bridge method is required, and the tests pin none.
+
+This piece and the debrief change of A39 land in one clerk run. Apart, main would either show an empty debrief or end a mission twice.
+
+**A44. The fixture changes are approved** as test-defects under A39 item 2: the 3 assertions in `tests/test_briefing_debrief.gd`, the 3 in `tests/test_sim_session.gd` and the 5 in `tests/test_pipe_error_panels.gd`, each ended or loaded through the bridge as proposed, ledger rows applied with the implementation. The G2 debrief failure case becomes "the bridge holds no frame", Retry re-reads the held frame. The script error that aborts the rest of `_run_live_debrief_tests` is fixed in the same change so no assertion after it goes unrun. `tests/qa/desktop/test_flow_spine.py` S-C8-05 is run after the landing and its result reported.
