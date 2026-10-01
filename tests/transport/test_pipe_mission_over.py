@@ -77,7 +77,18 @@ def test_tactical_step_alone_reaches_mission_over_within_its_time_limit():
     its own deadline_ticks, because om_tactical_step's own mission hook (not
     the client) now calls om_mission_check_terminated and ends it."""
     deadline, max_steps = _steps_for_deadline()
-    frames = _run([SET_SEED, STEP10, START, BEGIN] + [STEP] * max_steps, timeout=180)
+    # A tactical_step with n > 1 writes only its last frame and does not stop
+    # early at mission end (its frame "tick" is the batch's last tick), so one
+    # big batch covers the bulk and the final TAIL ticks go one frame each:
+    # a mission ending in the tail has its first_over frame observed exactly.
+    # A mission that ends earlier is already over in the batch's frame, whose
+    # tick is <= deadline + 2, so the same bound assertion below still holds.
+    tail = min(max_steps, 8)
+    batch = {"type": "cmd", "name": "tactical_step", "n": max_steps - tail}
+    end = {"type": "cmd", "name": "mission_end"}
+    frames = _run([SET_SEED, STEP10, START, BEGIN, batch] + [STEP] * tail + [end], timeout=180)
+    end_frames = frames[-2:]
+    frames = frames[:-2]
 
     tacticals = [f for f in frames if f["type"] == "tactical"]
     over = [t for t in tacticals if t["mission_over"]]
@@ -97,6 +108,5 @@ def test_tactical_step_alone_reaches_mission_over_within_its_time_limit():
     # End Mission must still work unchanged after an auto-ended mission: the
     # explicit command still answers the normal debrief/snapshot pair, not
     # an error, exactly as it does for a mission the client ends itself.
-    end_frames = _run([SET_SEED, STEP10, START, BEGIN] + [STEP] * max_steps + [{"type": "cmd", "name": "mission_end"}], timeout=180)
-    tail_types = [f["type"] for f in end_frames[-2:]]
-    assert tail_types == ["debrief", "snapshot"], end_frames[-2:]
+    tail_types = [f["type"] for f in end_frames]
+    assert tail_types == ["debrief", "snapshot"], end_frames
