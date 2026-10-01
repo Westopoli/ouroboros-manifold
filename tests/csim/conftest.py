@@ -1864,6 +1864,8 @@ def _bind_e08(lib):
     V = ctypes.c_void_p
     W = OMWorldP
     _bind(lib, "om_campaign_check_surviving_factions", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_campaign_commander", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_campaign_lineage", [W], ctypes.c_uint32, ("w",))
     _bind(lib, "om_campaign_needs_onboarding", [W], ctypes.c_int, ("w",))
     _bind(lib, "om_campaign_opening_jump_length", [W], ctypes.c_uint32, ("w",))
     _bind(lib, "om_campaign_start", [W, ctypes.c_uint32], None, ("w", "chapter"), kw=True)
@@ -1871,6 +1873,7 @@ def _bind_e08(lib):
     _bind(lib, "om_chapter_advance_phase", [W], None, ("w",))
     _bind(lib, "om_chapter_current_phase", [W], ctypes.c_int, ("w",))
     _bind(lib, "om_chapter_get_number", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_chapter_last_end_reason", [W], ctypes.c_int, ("w",))
     _bind(lib, "om_chapter_end_reason_for_collapse", [W, ctypes.c_int32], ctypes.c_int, ("w", "player_faction"), kw=True)
     _bind(lib, "om_chapter_mission_realtime", [W], ctypes.c_int, ("w",))
     _bind(lib, "om_chapter_recon_has_clock", [W], ctypes.c_int, ("w",))
@@ -1930,6 +1933,7 @@ def _bind_e08(lib):
     _bind(lib, "om_lineage_spawn_single_descendant", [W, ctypes.c_uint32], ctypes.c_uint32, ("w", "lineage_id"), kw=True)
     _bind(lib, "om_load_state_read", [W, P(ctypes.c_uint8), ctypes.c_uint32], ctypes.c_int, ("w", "buffer", "length"))
     _bind(lib, "om_mission_generator_chosen_region", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_mission_generator_chosen_archetype", [W], ctypes.c_int32, ("w",))
     _bind(lib, "om_mission_generator_run", [W], None, ("w",))
     _bind(lib, "om_mission_tag_rivals", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "mission_region", "commander_id"), kw=True)
     _bind(lib, "om_onboarding_load_from_slot", [W, ctypes.c_uint32, V], None, ("w", "slot_id", "out_cfg"), kw=True)
@@ -1988,7 +1992,7 @@ def _bind_e09(lib):
     _bind(lib, "om_chronicle_add_cluster_direct", [W, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_double], None, ("w", "cluster_type", "category", "score"), kw=True)
     _bind(lib, "om_chronicle_add_consequence_event", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "region_idx", "outcome"), kw=True)
     _bind(lib, "om_chronicle_add_event", [W, ctypes.c_uint32, ctypes.c_double], None, ("w", "region_idx", "score"), kw=True)
-    _bind(lib, "om_chronicle_add_lineage_event", [W, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_double], None, ("w", "lineage_id", "region_idx", "score"), kw=True)
+    _bind(lib, "om_chronicle_add_lineage_event", [W, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_double], None, ("w", "lineage_id", "region_idx", "category", "score"), kw=True)
     _bind(lib, "om_chronicle_add_mock_entry", [W, ctypes.c_uint32, ctypes.c_uint64, ctypes.c_uint64], None, ("w", "entry_id", "start_tick", "end_tick"), kw=True)
     _bind(lib, "om_chronicle_add_ownership_change_event", [W, ctypes.c_uint32, ctypes.c_uint64], None, ("w", "region_idx", "tick"), kw=True)
     _bind(lib, "om_chronicle_add_raw_entry", [W, ctypes.c_uint32, ctypes.c_char_p], None, ("w", "entry_id", "text"), kw=True)

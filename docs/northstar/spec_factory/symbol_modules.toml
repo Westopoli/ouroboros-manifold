@@ -44,6 +44,11 @@ om_lineage_id_at                    = "generational.c"
 om_lineage_first_member_region      = "generational.c"
 # HDR4: chapter number accessor for sidecar/pipe (S4)
 om_chapter_get_number               = "generational.c"
+# B6: chapter lifecycle getters
+om_campaign_commander               = "generational.c"
+om_campaign_lineage                 = "generational.c"
+om_chapter_last_end_reason          = "generational.c"
+om_mission_generator_chosen_archetype = "generational.c"
 # chronicle entries: E-09
 om_chronicle_entry_count            = "chronicle.c"
 # F2n: mission.c objective-drift leaf needs a set/get pair; chronicle reader (B8-4)
