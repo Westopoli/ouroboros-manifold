@@ -247,3 +247,7 @@ Either way it ships with a positive control: a world with one corridor link cut 
 **A29. Order of the build.** One owner at a time: core (`om_internal.h`, `region.c`, `sim.c`, including the `seen[]` array that moves with the cap), then `friction.c` (the adjacency walk; golden checksum unchanged), `worldgen.c`, `save.c` (version 4 to 5). The n² loop near the pipe snapshot is measured at 400 regions first; it is changed only if the number says so, as its own T1-N piece.
 
 For Westley: the E-03 generation target still reads "a 110-region world in under 5 ms". It needs restating for 400 regions; until he does, no test asserts a generation time at the new scale.
+
+## Addendum 13, 2026-10-01 (C1 S6: tactical frame `tier` and `state`)
+
+**A30. Both fields are reserved.** Option (a), docs only: `docs/architecture.md` says `tier` and `state` are reserved and always 0, and the frame examples show 0. No client code reads either today, and neither has a defined meaning or a rule asking for it. `state` is filled only when a rule needs the client to show a unit's order, as a contract piece with its enum table; `tier` when units have a tier source. A transport test pins both at 0 so a later change has to go through the contract.
