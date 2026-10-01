@@ -1,16 +1,22 @@
-"""A4 (docs/northstar/plans/2026-09-30-mission-plays-plan.md, E-10 S-079): the live mission
-frame carries real briefing data, not the zeros T1-2 left behind.
+"""A4 (docs/northstar/plans/2026-10-01-architect-rulings.md section A4, E-10 S-079): the live
+mission frame carries real briefing data, not the zeros T1-2 left behind.
 
-Scope is the part of A4 that docs/architecture.md already documents: the worked example
-`{"type":"mission",...,"objectives":[{"i","kind","node","primary","radius","progress"}],
-"force":{"types":[...],"tiers":[...]}}` (chronicle frame, mission frame, debrief frame). The
-A4 fields `position_name`, `parity`, `objective` text and a top-level `node`/`radius`/
-`force[]` are NOT documented there, so they are not tested here; a contract docs piece must
-land first (see the A4 test report).
+Frame shape (docs/architecture.md mission frame, A4-frame-docs): `{archetype, region,
+deadline_ticks, objectives[{i,kind,node,primary,radius,progress}], force:{types,tiers},
+briefing:{situation,objective,assets}, parity, quiet_world}`. `force.types` is six counts in
+unit-type-id order summing to the player's force size; `force.tiers` is the tier per type;
+`briefing` carries all three non-empty texts (R-079-01); `parity` is a number > 0 (data for
+tests and QA; the client never renders it, R-079-04); `quiet_world` is false for a
+pool-selected mission (R-072-08); no frame carries `position_name` (the client derives names).
 
-Red on main today: handle_mission_start emits radius 0.0 for every objective and
-force {"types":[],"tiers":[]} (header comment of csrc/pipe/om_pipe.c); green once
-handle_mission_start reads the objective radius and the force allocation from the sim.
+Red on main today: handle_mission_start emits radius 0.0 for every objective, force
+{"types":[],"tiers":[]} and no briefing/parity/quiet_world; green once the HDR4-2-r accessors
+land and handle_mission_start reads them. Rule text changed from the first draft of this file
+(force.types was asserted as unit-type ids, now six counts): ledger row in
+docs/northstar/plans/push_ledger_2026-09-22.md.
+
+Tier source: no per-unit tier source exists in the sim, so only the shape of force.tiers is
+asserted (six non-negative ints), never a value.
 
 Positive control: _check_frame rejects the frame main emits today (test_check_frame_*).
 """
@@ -69,10 +75,20 @@ def _check_frame(m):
     assert primary[0]["radius"] > 0, "primary objective radius is %r (T1-2 placeholder zero)" % primary[0]["radius"]
     force = m["force"]
     assert set(force) == {"types", "tiers"}, force
-    assert len(force["types"]) > 0, "force.types is empty (T1-2 placeholder), no player roster shipped"
-    assert len(force["types"]) == len(force["tiers"]), force
-    assert all(isinstance(t, int) and 0 <= t < N_UNIT_TYPES for t in force["types"]), force["types"]
-    assert all(isinstance(t, int) and t >= 0 for t in force["tiers"]), force["tiers"]
+    assert len(force["types"]) == N_UNIT_TYPES, "force.types must be six counts, got %r" % force["types"]
+    assert len(force["tiers"]) == N_UNIT_TYPES, "force.tiers must be six tiers, got %r" % force["tiers"]
+    assert all(isinstance(t, int) and not isinstance(t, bool) and t >= 0 for t in force["types"]), force["types"]
+    assert sum(force["types"]) > 0, "force.types sums to zero: no player roster shipped"
+    assert all(isinstance(t, int) and not isinstance(t, bool) and t >= 0 for t in force["tiers"]), force["tiers"]
+    b = m.get("briefing")
+    assert isinstance(b, dict) and set(b) == {"situation", "objective", "assets"}, "briefing missing or wrong keys: %r" % b
+    for k in ("situation", "objective", "assets"):
+        assert isinstance(b[k], str) and b[k].strip(), "briefing.%s is empty (R-079-01)" % k
+    p = m.get("parity")
+    assert isinstance(p, (int, float)) and not isinstance(p, bool) and p > 0, "parity must be a number > 0, got %r" % (p,)
+    assert m.get("quiet_world") is False, "quiet_world must be false for a pool-selected mission, got %r" % (m.get("quiet_world"),)
+    assert "position_name" not in m, "frames carry no names (A4 ruling 2)"
+    assert "position_name" not in primary[0], "frames carry no names (A4 ruling 2)"
 
 
 def test_check_frame_rejects_todays_empty_frame():
@@ -83,10 +99,35 @@ def test_check_frame_rejects_todays_empty_frame():
         _check_frame(today)
 
 
+DOCUMENTED = {"objectives": [{"i": 0, "kind": 1, "node": 3, "primary": True, "radius": 300.0, "progress": 0.0}],
+              "force": {"types": [2, 2, 1, 0, 0, 0], "tiers": [2, 2, 1, 0, 0, 0]},
+              "briefing": {"situation": "s", "objective": "o", "assets": "a"},
+              "parity": 0.85, "quiet_world": False}
+
+
 def test_check_frame_accepts_the_documented_example():
-    documented = {"objectives": [{"i": 0, "kind": 1, "node": 3, "primary": True, "radius": 300.0, "progress": 0.0}],
-                  "force": {"types": [2, 2, 1, 0, 0, 0], "tiers": [2, 2, 1, 0, 0, 0]}}
-    _check_frame(documented)
+    _check_frame(DOCUMENTED)
+
+
+@pytest.mark.parametrize("mutate", [
+    lambda m: m["briefing"].update(assets=""),
+    lambda m: m["briefing"].pop("situation"),
+    lambda m: m.pop("briefing"),
+    lambda m: m.update(parity=0),
+    lambda m: m.pop("parity"),
+    lambda m: m.update(quiet_world=True),
+    lambda m: m.pop("quiet_world"),
+    lambda m: m.update(position_name="Ridge Point"),
+    lambda m: m["force"].update(types=[2, 2, 1]),
+    lambda m: m["force"].update(types=[0, 0, 0, 0, 0, 0]),
+])
+def test_check_frame_rejects_each_defect(mutate):
+    """Positive control: each ruled field, broken alone, fails the detector."""
+    import copy
+    m = copy.deepcopy(DOCUMENTED)
+    mutate(m)
+    with pytest.raises(AssertionError):
+        _check_frame(m)
 
 
 def test_R075_S079_mission_frame_after_set_seed_and_start_is_live():
@@ -110,8 +151,38 @@ def test_S079_objective_node_indexes_a_tactical_map_node():
     _check_frame(m)  # the index check alone passes on an all-zero frame; tie it to live content
 
 
+def test_S079_primary_objective_node_is_the_map_objective_node():
+    """objectives[0].node (om_objective_get_node) is a spine node of the tactical map, and the
+    primary objective is objectives[0]."""
+    m, _ = _mission([SET_SEED, START])
+    assert m["objectives"][0]["primary"] is True
+    tactical = [f for f in _run([SET_SEED, START, BEGIN]) if f["type"] == "tactical"][0]
+    nodes = {n["i"] for n in tactical["map"]["nodes"]}
+    assert m["objectives"][0]["node"] in nodes
+    _check_frame(m)
+
+
+def test_R079_01_force_types_sum_to_the_player_force_in_the_tactical_frame():
+    """force.types[t] counts the player's units of type t: it matches the faction-0 units the
+    tactical frame lists after mission_begin (tally of om_mission_get_force_unit)."""
+    m, _ = _mission([SET_SEED, START])
+    _check_frame(m)
+    tactical = [f for f in _run([SET_SEED, START, BEGIN]) if f["type"] == "tactical"][0]
+    counts = [0] * N_UNIT_TYPES
+    for u in tactical["units"]:
+        if u["faction"] == 0:
+            counts[u["type"]] += 1
+    assert m["force"]["types"] == counts
+
+
 def test_S079_mission_frame_is_deterministic():
     a, _ = _mission([SET_SEED, START])
     b, _ = _mission([SET_SEED, START])
     assert a == b
     _check_frame(a)
+
+
+def test_R072_08_pool_selected_mission_is_not_quiet_world():
+    m, _ = _mission([SET_SEED, START])
+    assert m["quiet_world"] is False
+    _check_frame(m)
