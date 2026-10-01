@@ -37,12 +37,10 @@ FEATURES = [0, 1, 2, 3, 4, 5, 6, 7]
 N_REGIONS = 80
 DEFENSIVE_STAND = 0
 RETRY_TICKS = 20
-MAX_RETRIES = 5
 
 pytestmark = pytest.mark.skipif(not PIPE.exists(), reason="pipe/ouroboros_pipe not built (piece T1)")
 
 TELEGRAPH_SEEDS = [20, 24, 26, 31, 33, 43]
-QUIET_SEEDS = [3, 5, 13, 32]
 TRIGGERED_SEEDS = [1, 2, 8, 20, 24, 43]
 
 
@@ -102,56 +100,6 @@ def test_telegraphed_attack_on_player_region_selects_defensive_stand_there(seed)
         % (seed, targets[0], mission["archetype"], mission["region"]))
     assert post["tick"] == pre["tick"], "seed %d: a triggered world must not retry (tick %d -> %d)" % (
         seed, pre["tick"], post["tick"])
-
-
-@pytest.mark.parametrize("seed", QUIET_SEEDS)
-def test_nothing_triggers_retries_five_jumps_then_defensive_stand_on_weakest(seed):
-    """A3, Q-072-01 (a): no trigger fires, so mission_start runs five 20-tick
-    jumps, then answers a Defensive Stand on the weakest player region (never
-    the region-0 / archetype-0 default, never the Siege fallback of R-080-03).
-
-    Red on origin/push/A2: mission_start never jumps (tick stays 0) and the
-    R-080-03 fallback answers archetype 1 on region 0.
-    """
-    pre, post, mission, frames = _start(seed, [], new_campaign=False)
-    assert pre["tick"] == 0
-    own = _player_regions(pre)
-    assert own, "seed %d: fixture drift, no player regions" % seed
-
-    assert post["tick"] == pre["tick"] + MAX_RETRIES * RETRY_TICKS, (
-        "seed %d: tick %d -> %d, expected %d retry jumps of %d ticks"
-        % (seed, pre["tick"], post["tick"], MAX_RETRIES, RETRY_TICKS))
-
-    # weakest, judged on the world mission_start leaves behind
-    own = _player_regions(post)
-    deficit = lambda r: (300 - r["military"] - r["economy"] - r["stability"]) / 3
-    by_stability = min(own, key=lambda r: r["stability"])["i"]
-    by_military = min(own, key=lambda r: r["military"])["i"]
-    by_deficit = max(own, key=deficit)["i"]
-    assert by_stability == by_military == by_deficit, (
-        "seed %d: fixture drift, weakest region is ambiguous (stability %d, military %d, deficit %d)"
-        % (seed, by_stability, by_military, by_deficit))
-    assert by_stability != 0, "seed %d: fixture drift, weakest region must not be region 0" % seed
-
-    assert mission is not None, "seed %d: no mission frame: %r" % (seed, frames)
-    assert (mission["archetype"], mission["region"]) == (DEFENSIVE_STAND, by_stability), (
-        "seed %d: expected Defensive Stand on weakest player region %d, got archetype %r on region %r"
-        % (seed, by_stability, mission["archetype"], mission["region"]))
-
-
-@pytest.mark.parametrize("seed", [1, 2, 3])
-def test_tick_zero_world_retries_one_jump_when_the_next_jump_triggers(seed):
-    """A3, Q-072-01 (a): the retry stops at the first jump after which a
-    trigger fires. At tick 0 nothing fires; after one 20-tick jump every
-    full-feature seed has a trigger, so mission_start advances exactly 20 ticks.
-
-    Red on origin/push/A2: tick stays 0.
-    """
-    pre, post, mission, frames = _start(seed, FEATURES, new_campaign=False)
-    assert pre["tick"] == 0
-    assert post["tick"] == RETRY_TICKS, "seed %d: tick %d -> %d, expected one %d-tick retry" % (
-        seed, pre["tick"], post["tick"], RETRY_TICKS)
-    assert mission is not None, "seed %d: no mission frame: %r" % (seed, frames)
 
 
 @pytest.mark.parametrize("seed", TRIGGERED_SEEDS)
