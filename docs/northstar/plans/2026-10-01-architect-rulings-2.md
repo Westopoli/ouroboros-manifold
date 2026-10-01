@@ -54,7 +54,7 @@ As the coordinator found, a header piece cannot land alone: it lands with its im
 1. **The flag is approved.** `consequence_consumed` in `gen_state`, saved. It is also B6's marker (1.3).
 2. **Version bump.** `push/B5-chr` changes the save layout without touching `OM_SAVE_FORMAT_VERSION`. Add the bump (2 to 3) and its comment on that branch before it lands. `save.c` rejects any other version, and that is the intended behaviour for old saves: nothing has shipped, so no migration is written. The load-game screen must show a rejected save as unreadable and not crash; if no test proves that, the Engineer adds one.
 3. **Ripple text.** The hard-coded fragment is accepted as the placeholder the "no runtime API calls" rule allows. It moves to the event template library when ripple templates are written; add a row to the work list under C6. It does not block landing.
-4. **Lineage categorisation** is wired in the same branch or the branch does not land: round 1 B5-4 lists all three categorise functions. `om_chronicle_has_mission_consequence_flag` stops being a stub in the same branch.
+4. **Lineage categorisation** moves to B6 (addendum A1 below). `om_chronicle_has_mission_consequence_flag` stops being a stub in the B5 branch.
 
 ## 3. A7: the delta frame docs
 
@@ -107,3 +107,13 @@ These values were invented by builders or test writers. They stay in the code as
 | B4 structure placement (`mission.c`) | lateral offset 0.25, 64 slots | keep |
 
 Also his to see: ruling 1.1 (the first commander comes from the unrelated pool) and the last line of 1.2 (no re-selection after a retry jump) are read out of existing rules, not new decisions, but they shape the first minute of every campaign.
+
+## Addendum, 2026-10-01 evening (B5 blockers from `push/B5-tests3`)
+
+**A1. Lineage categorisation leaves B5 and joins B6.** This reverses item 2.4 above. Reason: no lineage exists in a pipe campaign until B6 seats one (R-057-09), so a lineage cluster cannot appear in play before then and B5 could not prove it wired. B5 lands with chain and regional categorisation, the consequence entry, the ripple cluster and the cap. Tests on `push/B5-tests3` that need lineage categorisation move to a B6 test branch.
+
+In B6, as a contract piece that lands with its implementation: `om_chronicle_add_lineage_event` gains a category parameter, `void om_chronicle_add_lineage_event(om_world *w, uint32_t lineage_id, uint32_t region_idx, uint32_t category, double score);` (option a; no second variant). `chron_push_lineage_candidate` stores the category it is given. Existing callers and tests are updated as a contract change, with a ledger row. `gen_time_jump` computes the category with `om_chronicle_categorize_lineage_cluster` (R-067-02): the template name is taken from the cluster's events in that region, and net economy, military and tension are that region's field values at the jump's end minus their values at its start. If the jump keeps no per-region start values today, it captures those three fields per region at its start in a local buffer; nothing is saved.
+
+**A2. Mission result is saved: approved.** A save made at the debrief must keep the band, the last mission region, the refused flag, the commander fate and whatever else `gen_time_jump` and the B5/B6 marker read after a mission. `mission.c` (B9-N) implements `mission_state_size/write/read` for that resolved-result state only; a save in the middle of a battle is not in scope and the live tactical state is not written. The install call in `om_world_new` is one line in `region.c`, made under the region.c owner's next piece id in the same clerk landing, following the pattern the other state slots use. Layout change: it rides save version 3 if it lands together with B5; otherwise it bumps the version again. Test (Engineer, transport): finish a mission, save, load, jump; entry 1 of the chronicle is the consequence entry and the band survived.
+
+**A3. Noted, no ruling needed.** Re-arming `consequence_consumed` for a second mission is a defect fix inside B5. The pipe sidecar `format_version` and `load_game.gd`'s `CURRENT_SAVE_VERSION` follow `OM_SAVE_FORMAT_VERSION`.
