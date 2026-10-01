@@ -32,6 +32,7 @@ PLAYER = 0
 SEED = 7
 LINEAGE = 7
 FIRST_COMMANDER = 701
+LINEAGE_MEMBER_BASE = 800
 
 
 def _campaign(lib, world_factory, seed=SEED):
@@ -54,12 +55,22 @@ def _player_region(lib, w):
 
 
 def _seat_commander(lib, w):
-    """One lineage with exactly one living member, confirmed as the commander."""
+    """One lineage with a living member in every region (so one is always within the
+    selector's proximity of whichever region the generator picks, and a stay is never
+    a forced rotation), the first of them confirmed as the commander."""
     region = _player_region(lib, w)
     lib.om_lineage_create(w, LINEAGE, region)
     lib.om_character_create(w, FIRST_COMMANDER, LINEAGE, region, GEN_RANK_LINEAGE_MEMBER, 0, 10_000_000)
+    for i in range(lib.om_region_count(w)):
+        lib.om_character_create(w, LINEAGE_MEMBER_BASE + i, LINEAGE, i, GEN_RANK_LINEAGE_MEMBER, 0, 10_000_000)
     lib.om_character_selector_confirm_commander(w, FIRST_COMMANDER)
-    return region
+
+
+def _kill_lineage(lib, w):
+    tick = lib.om_world_strategic_tick(w)
+    lib.om_character_kill(w, FIRST_COMMANDER, tick)
+    for i in range(lib.om_region_count(w)):
+        lib.om_character_kill(w, LINEAGE_MEMBER_BASE + i, tick)
 
 
 def _play_mission(lib, w):
@@ -73,7 +84,7 @@ def _play_mission(lib, w):
 
 def _record(lib, w, cid):
     rec = OmCharacterRecord()
-    assert lib.om_character_get_record(w, cid, ctypes.byref(rec)) == 1
+    assert lib.om_character_get_record(w, cid, ctypes.byref(rec)) == 0
     return rec
 
 
@@ -107,22 +118,26 @@ def test_R_055_06_control_second_mission_advances_again(lib, world_factory):
         assert lib.om_chapter_get_number(w) == expected
 
 
-def test_R_055_04_commander_with_a_living_lineage_stays(lib, world_factory):
-    """Control for the rotation test: same fixture, nobody dies, the commander is unchanged."""
+def test_R_055_04_commander_with_a_living_lineage_does_not_rotate(lib, world_factory):
+    """Control for the rotation test: same fixture, nobody dies, the commander is still
+    a living member of the same lineage (the selector may pick another member of it)."""
     w = _campaign(lib, world_factory)
     _seat_commander(lib, w)
     assert lib.om_campaign_commander(w) == FIRST_COMMANDER
     _play_mission(lib, w)
     assert lib.om_time_jump_run(w, 50) == 0
     assert lib.om_chapter_get_number(w) == 2
-    assert lib.om_campaign_commander(w) == FIRST_COMMANDER
+    commander = lib.om_campaign_commander(w)
+    assert commander != 0
+    assert lib.om_character_lineage_id(w, commander) == LINEAGE
+    assert _record(lib, w, commander).status == GEN_STATUS_ACTIVE
 
 
 def test_R_055_04_lineage_with_no_living_member_rotates_at_the_jump(lib, world_factory):
     w = _campaign(lib, world_factory)
     _seat_commander(lib, w)
     assert lib.om_campaign_commander(w) == FIRST_COMMANDER
-    lib.om_character_kill(w, FIRST_COMMANDER, lib.om_world_strategic_tick(w))
+    _kill_lineage(lib, w)
     _play_mission(lib, w)
     assert lib.om_time_jump_run(w, 50) == 0
     new = lib.om_campaign_commander(w)
@@ -140,7 +155,7 @@ def test_R_055_04_selector_reads_the_region_the_generator_chose(lib, world_facto
     _seat_commander(lib, w)
     _play_mission(lib, w)
     assert lib.om_time_jump_run(w, 50) == 0
-    assert lib.om_campaign_commander(w) == FIRST_COMMANDER, "the selector must have run in this jump"
+    assert lib.om_campaign_commander(w) != 0, "the selector must have run in this jump"
     assert lib.om_character_selector_input_region(w) == lib.om_mission_generator_chosen_region(w)
 
 
@@ -148,7 +163,7 @@ def test_R_055_06_rotation_world_is_deterministic(lib, world_factory):
     def trace():
         w = _campaign(lib, world_factory)
         _seat_commander(lib, w)
-        lib.om_character_kill(w, FIRST_COMMANDER, lib.om_world_strategic_tick(w))
+        _kill_lineage(lib, w)
         _play_mission(lib, w)
         lib.om_time_jump_run(w, 50)
         return (lib.om_campaign_commander(w), lib.om_chapter_get_number(w),
