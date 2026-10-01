@@ -445,7 +445,7 @@ static void om_macro_issue_group_orders(om_world *w, om_macro_force *f) {
      * since the last evaluation)... */
     if (f->hp_sum_last_eval_set && hp_sum < f->hp_sum_last_eval) contact_now = 1;
     /* ...or any of its units has a visible player unit in range. */
-    for (i = 0; i < n_force && !contact_now; i++) {
+    for (i = 0; i < n_force && !contact_now && !f->has_contact; i++) {
         for (j = 0; j < n_player; j++) {
             if (om_unit_can_see(w, force_ids[i], player_ids[j])) { contact_now = 1; break; }
         }
