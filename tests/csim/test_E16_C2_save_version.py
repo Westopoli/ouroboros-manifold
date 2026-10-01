@@ -1,8 +1,8 @@
 """C2 / HDR5 (gap-fix plan, "HDR5, region scale"): the save writes the region_edge matrix at
 OM_MAX_REGIONS x OM_MAX_REGIONS (csrc/save.c), so 128 -> 512 changes the layout and
-OM_SAVE_FORMAT_VERSION goes 3 -> 4; save.c refuses any other version cleanly (R-111-03, no migration).
+OM_SAVE_FORMAT_VERSION goes 4 -> 5; save.c refuses any other version cleanly (R-111-03, no migration).
 
-Base for these tests: origin/main plus origin/push/T1-b7-td, where the version is 3 (B5 bump).
+Base for these tests: origin/main after B6, where the version is 4 (gen_state gained commander and lineage fields).
 The version word is the u32 after the 4-byte magic, little endian (same layout as
 test_E16_B5_save_version.py).
 """
@@ -11,7 +11,8 @@ import ctypes
 from conftest import OMTier, set_owner, set_region
 
 VERSION_OFFSET = 4
-EXPECTED_VERSION = 4
+EXPECTED_VERSION = 5
+PRE_BUMP_VERSION = 4
 
 
 def _bind_save(lib):
@@ -55,8 +56,8 @@ def _with_version(buf, size, version):
     return out
 
 
-def test_R_111_03_a_save_written_now_carries_version_4(lib, world_factory):
-    """Given a world, When it is saved, Then the version word after the magic is 4 (HDR5 bumped the layout)."""
+def test_R_111_03_a_save_written_now_carries_version_5(lib, world_factory):
+    """Given a world, When it is saved, Then the version word after the magic is 5 (HDR5 bumped the layout)."""
     w = _world(lib, world_factory, seed=41)
     buf, size = _save(lib, w)
     assert size > 8
@@ -64,14 +65,14 @@ def test_R_111_03_a_save_written_now_carries_version_4(lib, world_factory):
 
 
 def test_control_R_111_03_the_version_word_reader_sees_a_patched_word(lib, world_factory):
-    """Control: the reader reports a patched word, so a failing 'carries version 4' means the save wrote another number."""
+    """Control: the reader reports a patched word, so a failing 'carries version 5' means the save wrote another number."""
     w = _world(lib, world_factory, seed=42)
     buf, size = _save(lib, w)
     assert _version_word(_with_version(buf, size, 77)) == 77
 
 
-def test_R_111_03_a_version_4_save_loads_back(lib, world_factory):
-    """Positive control for the refusal: the same patch path with version 4 loads, so a refusal below is the version, not the patching."""
+def test_R_111_03_a_version_5_save_loads_back(lib, world_factory):
+    """Positive control for the refusal: the same patch path with version 5 loads, so a refusal below is the version, not the patching."""
     src = _world(lib, world_factory, seed=43)
     buf, size = _save(lib, src)
     patched = _with_version(buf, size, EXPECTED_VERSION)
@@ -80,11 +81,11 @@ def test_R_111_03_a_version_4_save_loads_back(lib, world_factory):
     assert lib.om_world_get_state_checksum(dst) == lib.om_world_get_state_checksum(src)
 
 
-def test_R_111_03_a_version_3_save_is_refused_cleanly(lib, world_factory):
-    """Given a save from before the bump (version word 3), When loaded, Then it is refused (non-zero return) and the target world is untouched."""
+def test_R_111_03_a_version_4_save_is_refused_cleanly(lib, world_factory):
+    """Given a save from before the bump (version word 4), When loaded, Then it is refused (non-zero return) and the target world is untouched."""
     src = _world(lib, world_factory, seed=45)
     buf, size = _save(lib, src)
-    old = _with_version(buf, size, 3)
+    old = _with_version(buf, size, PRE_BUMP_VERSION)
     dst = world_factory(n_regions=4, seed=46)
     before = lib.om_world_get_state_checksum(dst)
     assert lib.om_load_state_read(dst, old, size) != 0
