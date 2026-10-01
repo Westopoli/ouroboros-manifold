@@ -39,6 +39,18 @@ Recorded as:
 - Decided (economy seat): three resources; the economy player builds buildings and manages a population count or some variation of it.
 - Open: what the economy player actually does, action by action. It must be skill-based like combat, need thinking ahead, and not be busy-work. One direction to explore is an invented game, in the manner of chess, played inside the economic system. Research in `prior_art_economy_gameplay.md`; many surface-level directions in `economy_game_directions.md`.
 
+## Decisions (2026-10-01, third round)
+
+Westley, verbatim, answering `economy_game_directions.md` and the lean stated in chat (The Stewards, Hands and The Board, with The Order Board as the link to the commander):
+
+"What is "order board"? You didn't list that. I like your recommendation, give me a description of what a player managing this sort of economy would literally be doing/seeing. I think that also tech choice should be on the economic player, and that's where the veil can come in, tell me more about it and how we could introduce scouting/information gathering into the economy."
+
+Recorded as:
+
+- Liked, not yet a pick: the combination of The Stewards, Hands, The Board and The Order Board.
+- Decided: technology choice belongs to the economy player.
+- To explore: The Veil, and scouting and information gathering inside the economy. Sketch in `economy_seat_sketch.md`.
+
 ## Files
 
 - `prior_art_resources.md`: cited digest of resource systems in other games.
@@ -46,3 +58,4 @@ Recorded as:
 - `f_variations.md`: Where People Go expanded, two close and two very different variations.
 - `prior_art_economy_gameplay.md`: how other games make economy play fast, skilled and exciting.
 - `economy_game_directions.md`: many surface-level directions for what the economy player does.
+- `economy_seat_sketch.md`: what the economy player sees and does, technology on the seat, the Veil and information gathering.
