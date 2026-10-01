@@ -101,27 +101,37 @@ Settled 2026-10-01, verbatim: "Yes refusing a fight counts as a counter, a skill
 - **Skill profile.** For one rule set: the premium of every combination of the five skills (5 singles, 10 pairs, 10 triples, 5 fours, the full set), plus controls and counter-plays.
 - **An honest R\*.** A stalemate is not a win, and the larger, naive side always has to attack, or a side that never moves never loses. "Naive" is a ladder: a blob, a line abreast, and a line that holds still; the last isolates the "side that holds still wins" effect found in pass 1. Bands are judged against the line abreast.
 
-### 4.3 The conditions (draft; every number is Westley's to set)
+### 4.3 The conditions (draft, restated around units firing; awaiting Westley's confirmation)
 
-A rule set passes when its skill profile meets all of these across many sampled maps and unit mixes, not one arena.
+Westley, 2026-10-01, on fixed pass marks per skill, verbatim: "Q4: Remember, it depends on the number of units that can get shots, not a basic ratio. We need to capture and track the number of units that are able to get shots off on each side, and compare the about of time and number for both. That will indicate the quality of the choke, not just that they should do *1.3x* better because it's not as simple as that."
 
-| # | Condition | Draft target |
+So a skill has no fixed worth. A play is worth what it does to the firing count in that situation: a wide choke is worth little, a narrow one a great deal. The lab therefore tracks, for every fight and each side, how many units are able to fire and for how long (unit-seconds of fire, and the count through time), and judges a rule set on two things: whether skill wins the firing count, and whether the result follows it.
+
+- **Firing advantage** of a play in a situation: the skilled side's unit-seconds of fire per head, against the naive side's, and the same comparison window by window through the fight. This is the "quality of the choke" in his words, and the quality of any other position.
+- **R\*** stays the measure of the result (§4.2): the headcount multiple at which the fight is even.
+
+A rule set passes when all of these hold across the sampled maps:
+
+| # | Condition | What is checked |
 |---|---|---|
-| C0 | Control: identical forces, identical play, mirrored map | R\* = 1.0 (the larger force wins) |
-| C1 | Each skill alone gives a modest edge | about 1.3 for each of S1 to S5 (draft band 1.2 to 1.4) |
-| C2 | All five together give the big upset | 3 or more (five at 1.3 multiply to 3.7; draft band 3 to 4) |
-| C3 | Skills stack | every combination beats each of its parts |
-| C4 | No dominant skill | no single skill reaches the full-mastery level alone |
-| C5 | No dead skill | removing any one skill from the full set lowers R\* noticeably |
-| C6 | Skilled plays have answers (hub principle 5) | on most maps, met by its counter-play, R\* falls back toward 1; refusing the fight counts; a sprung trap or a full surround may have none |
-| C7 | Robust | holds in a large majority of sampled situations (say 80 percent) |
-| C8 | Position, not a number, decides | where the skilled side wins it holds the higher share of units firing (§6.1) |
+| C0 | Control | identical forces, identical play, mirrored map: equal firing counts and R\* = 1.0 |
+| C1 | Skill wins the firing count | each skilled play, where the map offers it, gives its side more units firing for longer than the naive side gets |
+| C2 | The result follows the firing count | R\* rises and falls with the firing advantage, situation by situation: a position that lets three times as many units fire holds about three times the force. A rule set where some other number (a damage multiplier, health, raw range) decides the fight against the firing count fails |
+| C3 | Skills stack | a combination of plays gives a larger firing advantage, and a larger R\*, than each of its parts |
+| C4 | No dominant skill | no single skill produces by itself the advantage the full set does |
+| C5 | No dead skill | removing any one skill from the full set lowers the firing advantage and R\* noticeably |
+| C6 | Skilled plays have answers (hub principle 5) | on most maps the counter-play takes the firing advantage back; refusing the fight counts; a sprung trap or a full surround may have none |
+| C7 | The ceiling is high | in the best situations, with every skill used, the skilled side beats three times its number or more (Westley's choice on the band arithmetic) |
+| C8 | Robust | C1 to C6 hold in a large majority of sampled situations (draft: 80 percent) |
 | C9 | Fights stay readable | fight length stays inside E-11 S-085's window while knobs move |
 
-### 4.4 Open with Westley
+Rough sizes for orientation, not pass marks: a single skill in an ordinary situation is worth about 30 percent more army; the full set three times or more. Draft numbers still to confirm: the 80 percent in C8, and the winning margin (a few percent of starting strength).
 
-1. The exact bands in C1, C2 and C7 (the drafts above follow from his choice of 30 percent per skill).
-5. Which map families count, and in what proportion.
+### 4.4 Maps
+
+Westley, 2026-10-01, verbatim: "Q3: C, space doesn't have ramps but it does have very free layers that can be taken advantage of." The test set has two parts, reported separately. Space maps (the launch era: every unit flies, no ramps) are the ones a rule set must pass: open space, obstacles to go around or over, lanes between obstacles, cover fields, and above all the five free layers, which are the terrain of a space fight. Land maps (ramps, walking units, ground that exists only on some layers) are measured and reported but do not block.
+
+### 4.5 Record of Stage 1 decisions
 
 Decided 2026-10-01, the layer skill (S3). Westley accepted the draft plays for the other four skills ("Otherwise your list looks good") and found the layer system static without an action from the player. After research (queue Q78) he chose three actions together, verbatim: "I think we should give players all 3: going dark, reach by unit type, and the pinging. To avoid the dislike for the short scan for money, these options will be free, we want to induce strategic depth. - units will still see others passively, just a shorter range, the pinging can have a much longer range. I'd also like the player being pinged to get an alert that they were pinged, and a ~60 degree direction that they were pinged from (like the direction indicator skill from World of Warships)." They are E-01 S-162 (targeted ping), S-163 (going dark) and S-164 (reach by unit type). Their numbers are `Q-005-04` and are tuned here. The lab needs all three in the engine before S3 can be measured: a ping aimed at a layer and place, an emit or silent state per group that changes sight and visibility, and a reach table per unit type in place of one range table for everyone.
 
