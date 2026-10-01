@@ -64,7 +64,7 @@
 #include "ouroboros_sim.h"
 
 /* Mirrors OM_SAVE_FORMAT_VERSION in om_internal.h (not visible to the pipe). */
-#define OM_PIPE_SAVE_FORMAT_VERSION 4
+#define OM_PIPE_SAVE_FORMAT_VERSION 5
 
 /* csrc/generational.c GEN_PHASE_BRIEFING / GEN_PHASE_MISSION, not exported
  * by ouroboros_sim.h. See the file-header comment above. */
