@@ -22,6 +22,7 @@ var _frame_loaded: bool = false
 var _deploy_btn: BaseButton = null
 var _deploy_error_label: Label = null
 var _plant_begin_refused: bool = false
+var _error_panel: Control
 
 var _data: Dictionary = {}
 var _accent: Color
@@ -42,20 +43,28 @@ func _ready() -> void:
 		_accent = ThemeConstants.get_era_accent(_data.get("era_id", "roman"))
 		_accent_dim = ThemeConstants.get_era_accent_dim(_data.get("era_id", "roman"))
 		_accent_border = ThemeConstants.get_era_accent_border(_data.get("era_id", "roman"))
-		# C8 flow spine: self-load the live mission frame on a fresh route-in
-		# (no setup() params reached this scene). load_frame()'s
-		# _apply_frame_to_data() overwrites the mock backfill's prose
-		# fields with neutral placeholders, so calling it after the mock
-		# backfill above gives real frame-derived data plus neutral
-		# placeholders for what the frame doesn't carry. A failed live load
-		# keeps the mock backfill and logs the reason; it never falls back
-		# to a fixture frame (C4-3).
-		var bridge = SimSession.bridge()
-		if bridge.load_mission_live(bridge.live_seed(), bridge.DEFAULT_N_REGIONS, bridge.DEFAULT_FEATURES):
-			load_frame(bridge.mission_frame())
-			return
-		push_error("mission_briefing: live mission frame failed: %s" % bridge.last_error())
+		# C8 flow spine: self-load the live mission frame on a fresh route-in.
+		# A failed live load shows the shared error panel and builds no UI;
+		# it never falls back to a fixture frame (C4-3, G2).
+		_load_live()
+		return
 	_build_ui()
+
+
+func _load_live() -> void:
+	var bridge = SimSession.bridge()
+	if bridge.load_mission_live(bridge.live_seed(), bridge.DEFAULT_N_REGIONS, bridge.DEFAULT_FEATURES):
+		if _error_panel != null:
+			_error_panel.hide_error()
+		load_frame(bridge.mission_frame())
+		return
+	var reason: String = bridge.last_error()
+	push_error("mission_briefing: live mission frame failed: %s" % reason)
+	if _error_panel == null:
+		_error_panel = load("res://scenes/shared/error_panel.tscn").instantiate()
+		_error_panel.retry_pressed.connect(_load_live)
+		add_child(_error_panel)
+	_error_panel.show_error(reason if reason != "" else "briefing load failed")
 
 
 func _input(event: InputEvent) -> void:
@@ -809,6 +818,8 @@ func _apply_frame_to_data() -> void:
 # reporting as present.
 func _clear_ui() -> void:
 	for child in get_children():
+		if child == _error_panel:
+			continue
 		remove_child(child)
 		child.queue_free()
 
@@ -833,6 +844,7 @@ func qa_state() -> Dictionary:
 		"objectives": objectives,
 		"deploy_enabled": _deploy_btn != null and not _deploy_btn.disabled,
 		"deploy_error": _deploy_error_label.text if _deploy_error_label != null else "",
+		"error_panel": _error_panel != null and _error_panel.visible and _error_panel.get_node("ErrorPanel").visible,
 	}
 
 
