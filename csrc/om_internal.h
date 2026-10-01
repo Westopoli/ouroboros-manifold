@@ -409,6 +409,8 @@ typedef struct {
 uint32_t om_grid_query_circle(om_world *w, double x, double y, double r, uint32_t *out_ids, uint32_t max);
 void     om_grid_iter_begin(om_grid_iter *it, om_world *w, double x, double y, double r);
 uint32_t om_grid_iter_next(om_grid_iter *it);
+uint32_t om_grid_query_circle_faction(om_world *w, int32_t faction, double x, double y, double r, uint32_t *out_ids, uint32_t max);
+void     om_grid_iter_begin_faction(om_grid_iter *it, om_world *w, int32_t faction, double x, double y, double r);
 /* For tactical_move.c: sets unit.c's cached position of a living or dead unit
  * and moves it in the grid, so a query made before the next om_tactical_step
  * sees the new position. Unknown id, NULL world or a world with no tactical
