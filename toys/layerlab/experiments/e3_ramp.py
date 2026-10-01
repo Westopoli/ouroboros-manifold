@@ -13,7 +13,7 @@ from layerlab.run import run
 from layerlab.analysis import exchange
 from experiments.configs import apply
 
-def build(sl, speed, cfg=None, n_att=10, n_def=10, ru=0.8, d=0.8, sw=200.0, where="top", base="scenarios/x0_mirror.toml"):
+def build(sl, speed, cfg=None, n_att=10, n_def=10, ru=0.8, d=0.8, sw=200.0, where="top", def_off=60.0, base="scenarios/x0_mirror.toml"):
     scn = scenario.load(base)
     t = copy.deepcopy(scn["types"]["raider"]); t["movement_kind"] = "walk"; t["speed"] = float(speed)
     scn["types"]["raider_w"] = t
@@ -23,7 +23,7 @@ def build(sl, speed, cfg=None, n_att=10, n_def=10, ru=0.8, d=0.8, sw=200.0, wher
     # where the defenders hold: "top" = just beyond the slope's top edge; "midline" = on the plateau beside the
     # slope at the midline, 170 off its centre line (inside weapon range 200 of the midline for every length).
     if where == "top":
-        dx, dy = top + 60.0, y
+        dx, dy = top + float(def_off), y
     elif where == "midline":
         dx, dy = 1975.0 + sl / 2.0, y + 170.0 + 100.0
     else:
@@ -40,22 +40,30 @@ def build(sl, speed, cfg=None, n_att=10, n_def=10, ru=0.8, d=0.8, sw=200.0, wher
     return scn
 
 def row(scn, seeds=range(20), window=20):
-    w = 0; sa = []; fr = []; ticks = []
+    """Returns (attackers' win rate, stalemates or caps out of the runs, mean attacker survivors in the runs
+    where someone won, mean firing ratio A/B, mean ticks)."""
+    w = 0; stale = 0; sa = []; fr = []; ticks = []
     for s in seeds:
-        r = run(scn, seed=s, trace=True); w += r.winner == 1; sa.append(r.survivors[0]); ticks.append(r.ticks)
+        r = run(scn, seed=s, trace=True); ticks.append(r.ticks)
+        if r.winner == 1: w += 1
+        if r.winner in (3, 4): stale += 1
+        if r.winner in (1, 2, 5): sa.append(r.survivors[0])
         t = exchange(r, scn, window=window)
         if t.firing_ratio is not None: fr.append(t.firing_ratio)
-    n = len(sa)
-    return w / n, sum(sa) / n, (sum(fr) / len(fr) if fr else float("nan")), sum(ticks) / n
+    n = len(seeds)
+    return w / n, stale, (sum(sa) / len(sa) if sa else float("nan")), (sum(fr) / len(fr) if fr else float("nan")), sum(ticks) / n
 
 if __name__ == "__main__":
     for where in ("top", "midline"):
         for cfg in (None, "LA", "LB", "LC"):
-            print(f"\nE3 ramp, defenders at the {where}, config {cfg or 'default (same-layer fire only)'}: attackers' win rate (survivors, firing ratio A/B); 10 v 10, 20 seeds")
-            print("slope length\\speed  " + "".join(f"{s:>22d}" for s in (40, 80, 150)))
+            print(f"\nE3 ramp, defenders at the {where}, config {cfg or 'default (same-layer fire only)'}: attackers' win rate [stalemates of 20] (attacker survivors, firing ratio A/B); 10 v 10")
+            print("slope length\\speed  " + "".join(f"{s:>30d}" for s in (40, 80, 150)))
             for sl in (150, 300, 600, 900):
                 cells = []
                 for sp in (40, 80, 150):
-                    try: w, sv, fr, tk = row(build(sl, sp, cfg, where=where)); cells.append(f"{w:4.2f} ({sv:4.1f}, {fr:4.2f})     ")
-                    except ValueError as e: cells.append("(skip)".rjust(21))
-                print(f"{sl:>14d}      " + " ".join(cells))
+                    try:
+                        w, st, sv, fr, tk = row(build(sl, sp, cfg, where=where))
+                        cells.append(f"{w:4.2f} [{st:2d}] ({sv:4.1f}, {fr:4.2f})".ljust(30))
+                    except ValueError:
+                        cells.append("(skip)".ljust(30))
+                print(f"{sl:>14d}      " + "".join(cells))
