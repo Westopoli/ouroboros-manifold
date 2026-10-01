@@ -1394,6 +1394,9 @@ double om_zone_sample_interference(const om_world *w, double x, double y, uint32
 
 /* ---- generated from signatures.toml: generational.c ---- */
 int om_campaign_check_surviving_factions(const om_world *w);
+/* B6: character id of the current chapter's commander (the selector's latest
+ * confirmed pick), 0 if none has been selected. */
+uint32_t om_campaign_commander(const om_world *w);
 int om_campaign_needs_onboarding(const om_world *w);
 uint32_t om_campaign_opening_jump_length(const om_world *w);
 void om_campaign_start(om_world *w, uint32_t chapter);

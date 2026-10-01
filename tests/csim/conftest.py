@@ -1864,6 +1864,7 @@ def _bind_e08(lib):
     V = ctypes.c_void_p
     W = OMWorldP
     _bind(lib, "om_campaign_check_surviving_factions", [W], ctypes.c_int, ("w",))
+    _bind(lib, "om_campaign_commander", [W], ctypes.c_uint32, ("w",))
     _bind(lib, "om_campaign_needs_onboarding", [W], ctypes.c_int, ("w",))
     _bind(lib, "om_campaign_opening_jump_length", [W], ctypes.c_uint32, ("w",))
     _bind(lib, "om_campaign_start", [W, ctypes.c_uint32], None, ("w", "chapter"), kw=True)
