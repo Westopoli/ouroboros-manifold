@@ -52,6 +52,8 @@ var _bridge = null
 var _bridge_dirty := false
 var _edge_canvas: Node2D = null  # Node2D in a CanvasLayer; valid only while edges-2d-overlay plant is active
 
+var _error_panel: Control
+
 @onready var _world: Node3D = $World
 @onready var _points: MultiMeshInstance3D = $World/Points
 @onready var _filaments: Node3D = $World/Filaments
@@ -97,10 +99,21 @@ func _load_live_snapshot() -> void:
 	_bridge = SimSession.bridge()
 	if not _bridge.ensure_world(seed, CBridge.DEFAULT_N_REGIONS, CBridge.DEFAULT_FEATURES):
 		push_error("galaxy_view: live snapshot failed: %s" % _bridge.last_error())
+		_show_load_error(_bridge.last_error())
 		_bridge = null
 		return
+	if _error_panel != null:
+		_error_panel.hide_error()
 	_bridge.snapshot_changed.connect(_on_bridge_changed)
 	set_snapshot(_bridge.snapshot())
+
+
+func _show_load_error(reason: String) -> void:
+	if _error_panel == null:
+		_error_panel = load("res://scenes/shared/error_panel.tscn").instantiate()
+		_error_panel.retry_pressed.connect(_load_live_snapshot)
+		$UI.add_child(_error_panel)
+	_error_panel.show_error(reason if reason != "" else "galaxy load failed")
 
 
 func _on_bridge_changed(_tick) -> void:
@@ -185,6 +198,7 @@ func qa_state() -> Dictionary:
 		"pick_radius_px": 0.0 if _plants.get("pick-radius-zero", false) else PICK_RADIUS_PX,
 		"edges_3d": not bool(_plants.get("edges-2d-overlay", false)),
 		"hash": _hash,
+		"error_panel": _error_panel != null and _error_panel.visible and _error_panel.get_node("ErrorPanel").visible,
 	}
 
 
