@@ -221,6 +221,26 @@ Both are computed from the fight after it ends, so they diagnose a run; they do 
 
 **What it changes if it holds.** Expected winners stop being hand labels per scenario: the principle generates the label, and Westley's hand labels become spot checks on it. The collisions he had begun labelling are paused until the check is in; his answers so far all turned on which side gets shots off and for how long. It also bears on which lever carries the layer advantage: under this principle the advantage comes from who can fire (vision, reach, terrain), not from a damage bonus for height. That last point is an inference from his words, not a ruling.
 
+### 6.2 What the theory predicts: experiments from research Q77 (2026-10-01, none run)
+
+Source: `docs/research/topics/lanchester_and_combat_theory.md` (the brief; confidence tags and sources are there). Each row is a prediction from published combat theory that the lab can confirm or refute with small runs. The predictions are the theory's, for identical units with aimed fire; a miss is a finding about the lab or about the theory's assumptions, and either is worth knowing. Nothing here is a ruling.
+
+| # | Experiment | What the theory predicts | Lab needs |
+|---|---|---|---|
+| E1 | Choke breadth. 20 against 10 identical units; sweep how many can engage at once (the lane preset's channel width against unit range) | Survivors slide from the square-law answer, sqrt(20² − 10²) = 17.3, toward the linear answer, 10, as the engaged width shrinks. A cap is a switch of regime (linear while both sides exceed the cap, square once both are under it), not a smooth exponent | lane preset; the per-tick firing counts already built |
+| E2 | Defeat in detail. 20 against 20, the second side arriving in k equal packets with a gap between them | The concentrated side keeps 20 × sqrt(1 − 1/k): 14.1 for two packets, 17.3 for four. The penalty shrinks as the gap closes and vanishes when packets overlap fully | staggered spawn or staggered orders per group |
+| E3 | The slope as a trickle. A force climbs a ramp toward a defender at the top; sweep slope length and unit speed | A long slope strings the climbers out, which is E2 with the packet size set by the slope; slow units on long slopes should fare worst. Lanchester adds that the rule fails when the small force is concealed | ramp preset (slopes, R1) |
+| E4 | Vision as a dial, not a switch. Sweep the fraction of the low side's units that can see the high side (sensor radius, or a few units placed with sight) | The blind side reaches parity with about 1.41 times the numbers when fully blind, 1.28 at one-tenth information, 1.11 at half, 1.03 at four-fifths (derived from the generalized ambush model's kill-rate figures). In that model the blind side still fires, into an area, at reduced effect; in the lab today a blind unit cannot fire at all, which is where pass 1's cliff comes from | no new rule if done by fraction of units with sight; a blind-fire rule (firing at a last-known position at reduced effect) would be a new mechanic and needs Westley's go-ahead |
+| E5 | Staying power. Sweep hits-to-kill (health over damage per shot) with a fixed head start for one side | When hits-to-kill is low, striking first decides the fight and the stronger side can lose; when it is high, the head start washes out. For a duel at equal rates, a head start of one mean kill time raises the win chance from 0.50 to about 0.82 | roster health and damage (R0); a delayed-vision or delayed-order knob for the head start |
+| E6 | Guns that bear. A line crossing the head of a column, with firing arcs on | The firing-count ratio equals the ratio of units whose arc bears, and decays as the column turns; the outcome follows that ratio | facing and arcs (R2) |
+
+Two levers the research points at that need a ruling before they are experiments:
+
+- Height as initiative. Air-combat sources value height as the choice of when to engage and as first sight, and note that regaining height costs more time than spending it. A transfer or slope that is quicker going down than up would express that. Today a timed transfer has one duration either way, and a slope is walked at the unit's speed both ways.
+- Scouting as a multiplier. Naval salvo theory puts scouting on the striking side's effectiveness and alertness on the defender's reply. That is the costly seer unit (`Q-E12-01`) stated as a number to tune.
+
+On the instrument: pass 1 showed the whole-fight prediction restates the outcome and the opening-window form does not. The theory agrees with the opening-window form: Lanchester's quantity is the number firing at each moment, and the early count is what the conditions of the engagement set, before attrition feeds back into it.
+
 ## 7. The lab
 
 `toys/layerlab/` (created when the build starts): standalone C simulation, Python driver (scenarios, sweeps, plots, replay). It reuses csrc's numbers as starting values and none of its code. Spec: `toys/layerlab/SPEC.md`, written before the build. It is built in four rungs, R0 to R3: flat combat and determinism; terrain, vision, transitions and every cross-layer knob; facing, formations and the storm-shaped ability; sweeps, replay and the run log. Every run is small: a handful of seeds and a few values, read at once, then tuned.
