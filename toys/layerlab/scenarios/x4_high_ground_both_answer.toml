@@ -1,0 +1,9 @@
+# X4: as X2, but B sees A (0.50) and can fire up at equal range and damage.
+# Expected winner: NONE from the pillar: both can answer, and the rules are symmetric, so a layer
+# gives no edge. This is the null case and the starting point for the sweeps: the lab moves
+# B's upward vision (rules.vis_factor[5]) and B's upward damage (rules.dmg_mult[5]) and B's
+# count away from this point and looks for where the win rate for A crosses 0.5.
+extends = "x2_high_ground_blind.toml"
+
+[rules]
+vis_factor         = [0.0, 0.0, 0.2, 0.5, 1.0, 0.5, 0.2, 0.0, 0.0]
