@@ -168,3 +168,4 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-162 | E-01 | "I ping a layer I choose at a place I choose and see it for a moment; whoever I ping learns roughly where I am." | Spec'd, blocked on Q-005-04 | `epics/E-01-layer-system.md` S-162 |
 | S-163 | E-01 | "I choose which of my forces look and which stay quiet; looking further means being seen." | Spec'd, blocked on Q-005-04 | `epics/E-01-layer-system.md` S-163 |
 | S-164 | E-01 | "Each unit type reaches only certain layers with its fire, so where I put each type decides who gets shots off." | Spec'd, blocked on Q-005-04, Q-008-03 | `epics/E-01-layer-system.md` S-164 |
+| S-165 | E-17 | "Someday, perhaps: lanes where my troops move faster and strategic ground where they move slower." | Deferred (Q-165-01) | `epics/E-17-map-generation.md` S-165 |
