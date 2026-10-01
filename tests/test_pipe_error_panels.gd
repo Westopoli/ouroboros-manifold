@@ -15,12 +15,16 @@ extends SceneTree
 #     panel stays up while the pipe is still failing
 #   - MainMenu routes to "main_menu" (SceneRouter)
 #   - qa_state()["error_panel"] is true while the panel is showing, false otherwise
+#   - ruling G2/A7: the panel is ONE shared scene, scenes/shared/error_panel.tscn, instanced
+#     by each of the five scenes: the ErrorPanel node is that scene's root or lies inside an
+#     instance of it (checked by scene_file_path up the parent chain)
 # The failure is injected with FailBridge, a c_bridge.gd subclass whose live loads
 # refuse, installed as SimSession's bridge (no seam in the scenes is needed). One
 # scene (briefing) is also failed for real, by killing the pipe process. Every scene
 # has a positive control on a healthy real pipe: no panel.
 
 const CBridge := preload("res://autoload/c_bridge.gd")
+const SHARED_PANEL := "res://scenes/shared/error_panel.tscn"
 const REASON := "pipe exploded (test reason 7731)"
 const SCENES := {
 	"galaxy": "res://scenes/galaxy/galaxy_view.tscn",
@@ -114,6 +118,17 @@ func _panel_showing(scene: Node) -> bool:
 	return p != null and p.is_visible_in_tree()
 
 
+func _is_shared_instance(panel: Node, scene: Node) -> bool:
+	var n: Node = panel
+	while n != null:
+		if n.scene_file_path == SHARED_PANEL:
+			return true
+		if n == scene:
+			break
+		n = n.get_parent()
+	return false
+
+
 func _qa_flag(scene: Node) -> bool:
 	if not scene.has_method("qa_state"):
 		return false
@@ -142,7 +157,10 @@ func _test_failure_shows_panel(scene_name: String) -> void:
 	_assert(_panel_showing(scene), "%s: ErrorPanel exists but is not visible" % tag)
 	_assert(_qa_flag(scene), "%s: qa_state()['error_panel'] is not true while the panel shows" % tag)
 	_assert(fb.attempts >= 1, "control %s: the scene never attempted the live load" % tag)
+	_assert(ResourceLoader.exists(SHARED_PANEL), "%s: %s does not exist" % [tag, SHARED_PANEL])
 	if panel != null:
+		_assert(_is_shared_instance(panel, scene),
+			"%s: ErrorPanel is not an instance of %s" % [tag, SHARED_PANEL])
 		var reason = panel.find_child("ErrorReason", true, false)
 		_assert(reason is Label and (reason as Label).text.find(REASON) != -1,
 			"%s: ErrorReason label missing or does not carry the bridge's last_error() text" % tag)
@@ -216,6 +234,8 @@ func _test_briefing_killed_pipe() -> void:
 	OS.delay_msec(200)
 	var scene := await _mount("mission_briefing")
 	_assert(_panel_showing(scene), "G2 briefing (pipe killed): no visible ErrorPanel after the pipe process died")
+	_assert(_panel(scene) != null and _is_shared_instance(_panel(scene), scene),
+		"G2 briefing (pipe killed): ErrorPanel is not an instance of %s" % SHARED_PANEL)
 	var reason = _panel(scene).find_child("ErrorReason", true, false) if _panel(scene) != null else null
 	_assert(reason is Label and (reason as Label).text.strip_edges() != "",
 		"G2 briefing (pipe killed): ErrorReason is missing or empty")
