@@ -804,3 +804,31 @@ depends_on = []
 status = "pending"
 tests_pending = true
 size_estimate = "Refuse flow for the briefing (plan B3, R-078-05, R-079-02)"
+
+# Mission-plays plan A2 contract piece: two declarations land before B9-N implements
+# om_mission_refresh_context and om_mission_last_region in csrc/mission.c. The header is
+# also owned by core (M0); ordering via depends_on keeps the lint disjoint.
+[[piece]]
+id = "A2-contract"
+manager = "M0"
+wave = 4
+owns = ["csrc/ouroboros_sim.h", "docs/northstar/spec_factory/signatures.toml"]
+owns_glob = []
+acceptance = []
+depends_on = ["core"]
+status = "pending"
+size_estimate = "two declarations plus two signatures.toml rows (plan A2 and the B5 getter)"
+
+# Mission-plays plan B5 (chronicle consequence entry and chain wiring in gen_time_jump).
+# Same file as B7 and B7b; ordered after B7b so the lint sees one owner at a time.
+[[piece]]
+id = "B5-chronicle"
+manager = "M1"
+wave = 4
+owns = ["csrc/generational.c"]
+owns_glob = []
+acceptance = []
+depends_on = ["B7b", "A2-contract"]
+status = "pending"
+tests_pending = true
+size_estimate = "consequence entry plus chain clusters at jump end (plan B5, E-09)"

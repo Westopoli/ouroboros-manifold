@@ -35,11 +35,12 @@ Rules
 - R-072-04  Given a candidate, When preference is computed, Then it is 0.1 for an archetype the player marked rare, else the player's weight, default 0.5.
 - R-072-05  Given scored candidates, When one is selected, Then score = 0.5 · urgency + 0.3 · relevance + 0.2 · preference, the top 5 by score form the draw pool, and one weighted draw proportional to score picks the mission.
 - R-072-06  Given a region with stability 15 under attack by a neighbor at military 80, When scored, Then urgency ≥ 0.8 and it beats any quiet region regardless of relevance and preference.
-- R-072-07  Given no candidate in the pool, When selection runs, Then [Q-072-01].
+- R-072-07  Given no candidate in the pool, When selection runs, Then the sim runs another 20-tick jump and rebuilds the pool, up to 5 times; if the pool is still empty, the mission is a Defensive Stand on the player's weakest region: the player region with the lowest stability composite (ALG-09, the value E-10 reads everywhere as "stability"), ties to the lowest region index. (Q-072-01, Westley 2026-09-13 and 2026-09-30.)
+- R-072-08  Given the fallback of R-072-07, When its forces are composed, Then the enemy is the strongest non-player faction adjacent to the region and its power is never below parity (R-074-03) times the player's force, so the mission always has something to fight; and the fallback being reached at all is a simulation-health warning (`quiet_world` in the mission frame and the T1 trace), because a tuned galaxy always has an attack somewhere. (Westley 2026-09-30: "this situation should never happen if we tune the simulation right.")
 
 Inputs: world; registry; event, action, conquest logs; ledger; onboarding preferences.
 Outputs: mission setup record (region, archetype, trigger context, scores) in the save file and T1 trace.
-Open flags: Q-072-01 (what happens when nothing in the galaxy triggers any archetype).
+Open flags: none.
 
 ### S-073 — Ten kinds of trouble
 As a commander, I want every mission to be a recognizable military situation with its own trigger, shape, and map, so that I learn the grammar of orders and still never see the same mission twice.
@@ -219,7 +220,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-072-01, Q-074-01, Q-078-01, Q-079-01, Q-080-01 (Q-076-01 and Q-076-02 closed 2026-09-29: missions are 30 to 60 minutes; Q-077-01 and Q-077-02 closed 2026-09-28: wounded fate cosmetic, commander assigned to player-chosen unit). Details in `docs/northstar/ambiguity_register.md`.
+Q-074-01, Q-078-01, Q-079-01, Q-080-01 (Q-072-01 closed 2026-09-30: R-072-07/08; Q-076-01 and Q-076-02 closed 2026-09-29: missions are 30 to 60 minutes; Q-077-01 and Q-077-02 closed 2026-09-28: wounded fate cosmetic, commander assigned to player-chosen unit). Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
