@@ -29,12 +29,12 @@ Run a 50-tick jump after a successful mission in region R where a famine chain r
 As a player, I want the scroll to open with what my mission did, always tell me about my family, and then show the biggest stories of the age, so that I read it as my history and not as a log.
 
 Rules
-- R-065-01  Given a time jump with any events, When the scroll is built, Then it has at least 5 and at most 10 entries.
-- R-065-02  Given events flagged as consequences of the last mission, When clusters are ranked, Then they form one consequence cluster that is entry 1, categorized success, failure, or mixed by the mission outcome.
+- R-065-01  Given a time jump with any events, When the scroll is built, Then it has at most 10 entries, and at least 5 whenever the per-category cap of R-065-05 allows it.
+- R-065-02  Given events flagged as consequences of the last mission, When clusters are ranked, Then they form one consequence cluster that is entry 1, categorized by the mission's band: total_success and strong_success give success; partial_success and partial_failure give mixed; total_failure and refusal give failure (Westley 2026-10-01). Flagged events in regions adjacent to the mission region form the `consequence_ripple` cluster (Q-067-01). The consequence cluster appears only in the jump that directly follows the mission; a jump with no mission since the last one has none.
 - R-065-03  Given the player's lineage, When clusters are ranked, Then every lineage cluster is included regardless of score, one per region the lineage touched.
 - R-065-04  Given no event touched the lineage, When clusters are ranked, Then one `lineage_quiet` cluster is included, placed in the lineage's most recent region.
 - R-065-05  Given the remaining clusters, When the budget is filled, Then they are taken in descending peak score, skipping any category that already has 2 entries, until 10 entries.
-- R-065-06  Given fewer than 5 entries after ranking, When the budget is filled, Then skipped clusters are added in score order until 5 or the clusters run out.
+- R-065-06  Given fewer than 5 entries after ranking, When the budget is filled, Then skipped clusters are added in score order only from categories that still have fewer than 2 entries; the cap wins over the minimum, so a quiet jump may show 4 entries (Q-065-01, Westley 2026-10-01).
 - R-065-07  Given the opening jump of a campaign, When the scroll is built, Then it has 3 to 5 entries and no consequence or lineage cluster.
 
 Inputs: time jump event log; mission outcome; ledger.
