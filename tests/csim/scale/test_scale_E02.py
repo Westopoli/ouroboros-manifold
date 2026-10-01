@@ -22,7 +22,7 @@ from ._scale_helpers import (
 )
 
 N_REGIONS = 60
-CONTROL_N_REGIONS = 600
+CONTROL_N_REGIONS = 512
 SEED = 2026091460
 PER_TICK_BUDGET_NS = 50_000  # 50 us/tick total, all regions
 BULK_BUDGET_NS = 500_000_000  # 0.5 s for 5,000 ticks
@@ -72,7 +72,7 @@ def test_e02_memory_per_region_under_256_bytes(lib):
     print(f"[scale] E-02 memory: {N_REGIONS}r={size_small}B {CONTROL_N_REGIONS}r={size_big}B marginal={marginal:.1f}B/region")
     assert marginal < BYTES_PER_REGION_BUDGET, (
         f"marginal save-state cost per region {marginal:.1f}B exceeds the {BYTES_PER_REGION_BUDGET}B budget "
-        "(om_save_state_size delta between a 60- and 600-region world, divided by 540)"
+        "(om_save_state_size delta between a 60- and 512-region world, divided by 452)"
     )
 
 

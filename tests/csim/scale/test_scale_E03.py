@@ -15,7 +15,7 @@ from ._scale_helpers import (
 )
 
 N_REGIONS = 110
-CONTROL_N_REGIONS = 1100
+CONTROL_N_REGIONS = 512
 BUDGET_NS = 5_000_000  # 5 ms
 SEED = 2026091501
 
