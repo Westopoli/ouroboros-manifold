@@ -6,7 +6,7 @@ per tick; queue resolution O(due entries)."
 from ._scale_helpers import OMFeature, assert_budget, assert_control_violates_budget, median_ns, raw_world
 
 N_REGIONS = 60
-CONTROL_N_REGIONS = 600
+CONTROL_N_REGIONS = 512
 BUDGET_NS = 20_000  # 20 us/tick
 SEED = 2026091402
 
