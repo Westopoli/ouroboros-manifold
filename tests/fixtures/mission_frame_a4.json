@@ -1,0 +1,19 @@
+{
+  "type": "mission",
+  "archetype": 2,
+  "region": 7,
+  "deadline_ticks": 380,
+  "objectives": [
+    {"i": 0, "kind": 1, "node": 3, "primary": true, "radius": 300.0, "progress": 0.0},
+    {"i": 1, "kind": 2, "node": 7, "primary": false, "radius": 150.0, "progress": 0.0},
+    {"i": 2, "kind": 0, "node": 12, "primary": false, "radius": 220.0, "progress": 0.0}
+  ],
+  "force": {"types": [2, 2, 1, 0, 0, 0], "tiers": [2, 2, 1, 0, 0, 0]},
+  "briefing": {
+    "situation": "Reconquest conditions have developed on the eastern frontier.",
+    "objective": "Hold the zone until the relief column arrives.",
+    "assets": "Forces committed at parity, though the civilization could not spare everything asked."
+  },
+  "parity": 0.8425166666666667,
+  "quiet_world": false
+}
