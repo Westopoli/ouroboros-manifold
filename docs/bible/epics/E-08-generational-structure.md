@@ -34,7 +34,7 @@ Rules
 - R-055-03  Given the mission resolves, When the outcome resolver applies its consequence bundle (E-10), Then those field changes land before the first tick of the time jump.
 - R-055-04  Given the time jump completes, When the mission generator runs, Then the character selector runs after it and reads the chosen mission region.
 - R-055-05  Given the campaign's first chapter, When the world is generated, Then an opening time jump runs before the first briefing and its chronicle shows 3 to 5 world entries only.
-- R-055-06  Given the chapter counter, When read, Then the campaign starts in chapter 1, the opening jump belongs to chapter 1 and does not advance it, and the counter advances by one at the end of each time jump that follows a mission (played or refused); a retry jump with no mission (E-10 R-072-07) never advances it. At the end of such a jump the order is: collapse check (S-062), mission generator, character selector (R-055-04), chapter advance.
+- R-055-06  Given the chapter counter, When read, Then the campaign starts in chapter 1, the opening jump belongs to chapter 1 and does not advance it, and the counter advances by one at the end of each time jump that follows a mission (played or refused); a retry jump with no mission (E-10 R-072-07) never advances it. At the end of such a jump the order is: collapse check (S-062), mission generator, character selector (R-055-04), chapter advance. At the end of the opening jump the mission generator and the character selector run in that order, with no collapse check and no advance. At the end of a retry jump only the mission generator runs.
 
 Inputs: mission outcome; world state.
 Outputs: chapter record (number, faction, character, start and end tick, end reason) in the save file.
@@ -66,6 +66,7 @@ Rules
 - R-057-06  Given the player stays, When the commander is chosen, Then it is the first living lineage member within 2 hops of the mission region, else the current commander if alive.
 - R-057-07  Given the home region, When it is looked up, Then it is the first region in the lineage's history.
 - R-057-08  Given a rotation, When it is recorded, Then the chapter counter for the new lineage starts at 1 and the record carries the reason (`forced`, `normal`, `commander_death`) and the pool used.
+- R-057-09  Given the campaign has no commander yet (the selection at the end of the opening jump), When selection runs, Then it is a forced rotation (R-057-01) whose previous and nemesis pools are empty, so the unrelated pool (R-058-04) creates the first commander and the first lineage in the mission region; the lineage's chapter counter starts at 1.
 
 Inputs: lineage members; chapter counter; home region delta and stability; RNG.
 Outputs: commander selection record in the save file and chronicle framing.
