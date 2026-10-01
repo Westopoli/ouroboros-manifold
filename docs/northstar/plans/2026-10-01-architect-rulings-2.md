@@ -94,11 +94,11 @@ The A5 test that asserts Refuse is disabled becomes a test-defect row when the b
 4. Coordinator rulings reviewed and upheld: `push/B4-td` (the two driver tests asserted the pending queue, which the drain removes by design; the clerk confirms at landing that only the final assertions changed and no interval did), the A4 marker-name rewrite, the TD-debrief reset.
 5. `test_materialised_unit_is_consumed_from_the_structure_queue`, red before and after B9: an Engineer investigates after the B4 trio lands. It is not reclassified.
 
-## Waiting for Westley (thresholds; not blocking)
+## Provisional values (Westley, 2026-10-01: keep all, tune in play)
 
-These values were invented by builders or test writers. They stay in the code as named constants, marked provisional, until he confirms or changes them.
+These values were invented by builders or test writers. Westley accepted every one as it stands on 2026-10-01, to be tuned in play. Each is a named constant with a comment saying it is a play-tuned value and citing this section; a test that asserts one reads the constant and does not repeat the number. Changing one later is still his call.
 
-| Where | Value | Recommendation |
+| Where | Value | Decision |
 |---|---|---|
 | A3 isolation test, budget lower bound | 0.5 × P × parity | keep; it is a loose floor under the rule's exact value |
 | B1 patrol (`enemy_macro.c`) | radius 600.0, 4 waypoints, arrive within 60.0 | keep, tune in play |
