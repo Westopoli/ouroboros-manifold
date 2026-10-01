@@ -152,6 +152,21 @@
 #define GEN_PHASE_BRIEFING 0
 #define GEN_PHASE_RECON 1
 #define GEN_PHASE_MISSION 2
+/* R-065-02 (Westley 2026-10-01): mission band to the consequence outcome.
+ * Band ids as in csrc/mission.c: 0 total_failure .. 4 total_success, 5 refusal. */
+#define GEN_CLUSTER_CONSEQUENCE 0
+#define GEN_BAND_UNKNOWN (-1)
+#define GEN_OUTCOME_SUCCESS 0
+#define GEN_OUTCOME_FAILURE 1
+#define GEN_OUTCOME_MIXED 2
+
+static uint32_t gen_band_outcome(int32_t band) {
+    switch (band) {
+    case 3: case 4: return GEN_OUTCOME_SUCCESS;
+    case 1: case 2: return GEN_OUTCOME_MIXED;
+    default: return GEN_OUTCOME_FAILURE;
+    }
+}
 #define GEN_PHASE_OUTCOME_RESOLUTION 3
 #define GEN_PHASE_TIME_JUMP 4
 #define GEN_PHASE_CHARACTER_SELECTION 5
@@ -262,6 +277,7 @@ typedef struct {
 
     uint32_t mission_chosen_region;
     uint32_t selector_input_region;
+    int consequence_consumed;
 } gen_state;
 
 /* ---- static helpers ---- */
@@ -384,6 +400,7 @@ static void gen_state_put(gen_sw *sw, const gen_state *gs) {
     gen_sw_u64(sw, gs->time_jump_death_tick);
     gen_sw_u32(sw, gs->mission_chosen_region);
     gen_sw_u32(sw, gs->selector_input_region);
+    gen_sw_u8(sw, (uint32_t)gs->consequence_consumed);
 }
 
 typedef struct {
@@ -514,6 +531,7 @@ static void gen_state_get(gen_sr *sr, gen_state *gs) {
     gs->time_jump_death_tick = gen_sr_u64(sr);
     gs->mission_chosen_region = gen_sr_u32(sr);
     gs->selector_input_region = gen_sr_u32(sr);
+    gs->consequence_consumed = (int)gen_sr_flag(sr);
 }
 
 /* A state nothing has written to (allocated lazily by any accessor, including
@@ -526,7 +544,7 @@ static int gen_state_pristine(const gen_state *gs) {
     if (gs->pool_previous_forced_empty || gs->pool_nemesis_forced_empty) return 0;
     if (gs->chapter_phase || gs->chapter_number || gs->needs_onboarding || gs->in_transition) return 0;
     if (gs->death_pass_count || gs->time_jump_lineage_gen_tick || gs->time_jump_death_tick) return 0;
-    if (gs->mission_chosen_region || gs->selector_input_region) return 0;
+    if (gs->mission_chosen_region || gs->selector_input_region || gs->consequence_consumed) return 0;
     for (uint32_t i = 0; i < OM_MAX_FACTIONS; i++)
         if (gs->supreme_commander[i] || gs->faction_fallen[i]) return 0;
     for (uint32_t i = 0; i < GEN_REGION_CAP; i++)
@@ -1282,8 +1300,12 @@ void om_character_tag_rival(om_world *w, uint32_t character_id, uint32_t rival_o
 }
 
 uint32_t om_chronicle_consequence_entry_count(const om_world *w) {
-    (void)w;
-    return 0;
+    uint32_t n = 0;
+    for (uint32_t i = 0; i < om_chronicle_entry_count(w); i++) {
+        om_chronicle_cluster c;
+        if (om_chronicle_get_cluster(w, i, &c) && c.type == GEN_CLUSTER_CONSEQUENCE) n++;
+    }
+    return n;
 }
 
 int om_chronicle_has_faction_fall_entry(const om_world *w, int32_t old_faction) {
@@ -1831,6 +1853,13 @@ static int gen_time_jump(om_world *w, uint32_t n_ticks, om_time_jump_report *rep
         om_chronicle_build_opening_scroll(w);
     } else {
         uint32_t n_candidates = 0;
+        int32_t band = om_mission_get_band(w);
+        if (band == GEN_BAND_UNKNOWN) gs->consequence_consumed = 0;
+        else if (!gs->consequence_consumed) {
+            om_chronicle_add_consequence_event(w, om_mission_last_region(w), gen_band_outcome(band));
+            gs->consequence_consumed = 1;
+            n_candidates++;
+        }
         for (uint32_t r = 0; r < nr; r++) {
             if (!active[r]) continue;
             om_chronicle_add_event(w, r, peak[r]);
