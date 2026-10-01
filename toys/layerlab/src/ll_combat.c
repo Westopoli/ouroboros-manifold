@@ -134,3 +134,14 @@ int ll_apply_damage(ll_state *s) {
     }
     return any;
 }
+
+/* ---- R2 hook stubs (owner: R2 combat pass). Replace these; the call sites are fixed in ll_sim.c. ---- */
+
+const char *ll_combat_validate(const ll_scenario *sc) {
+    for (int i = 0; i < sc->n_spawns; i++)
+        if (sc->types[sc->spawns[i].type].ability_kind != LL_ABILITY_NONE)
+            return "unimplemented feature: burst ability (ability_kind != NONE) arrives in rung R2";
+    return 0;
+}
+
+void ll_burst_update(ll_state *s) { (void)s; }

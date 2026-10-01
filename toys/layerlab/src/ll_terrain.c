@@ -49,3 +49,8 @@ const char *ll_terrain_validate(const ll_terrain *t) {
     }
     return 0;
 }
+
+/* ---- R1 hook stubs (owner: R1 terrain pass). Replace these; the call sites are fixed in ll_sim.c. ---- */
+
+int ll_nav_init(ll_state *s) { s->nav = 0; return 0; }
+void ll_nav_free(ll_state *s) { s->nav = 0; }
