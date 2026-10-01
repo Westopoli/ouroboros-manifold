@@ -306,6 +306,8 @@ What the check shows about the instrument:
 
 ### Pass 2, 2026-10-01: the range lever, and a finding about target selection
 
+**Superseded by pass 3 (same day).** The inversion described here, and the 98-to-2 size of the focus-fire effect, came mostly from units overlapping in the old movement, not from the nearest-target rule. With hard bodies the longer-range side wins (pass 3). Kept as the record of what the old build showed and how it was diagnosed.
+
 Scenarios `x5_range_advantage.toml` (both sides attack-move) and `x5_range_advantage_hold.toml` (B holds). Same layers or not, the result was the same: **the side with the longer range loses.** Both attack-moving, 200 seeds: A shooting down at 1.1x range wins 11.5 percent (1.0x: 43.5; 1.3x: 9; 2.0x and up: 50). Same layer, no layer rule involved, A range 220 against B 200: A wins 10 percent. With B holding, A wins 200 of 200, and a static start with A in reach and B not has A winning 40 of 40, so the range rule itself is right.
 
 Investigation (with evidence, not guesses): at equal total HP and equal units firing for the first 200 ticks after contact, A is ahead or level and still loses 88 percent. With no approach at all, the inversion survives when the fronts start 195 apart (A reaches many of B's units, B reaches few: A wins 19.5 percent) and vanishes at 150 apart (everyone reaches everyone: 47.5 against a 46.5 baseline). The candidate-set sizes at contact are 4.6 targets per A unit against 2.1 per B unit at 195, and 6.7 against 5.7 at 150. Changing only the target rule decides it: when A focuses the most damaged unit instead of the nearest, A wins 100 percent (and 98.5 percent when both sides focus: the longer range wins, as it should). At equal ranges, one side focusing and the other taking the nearest gives 98 to 2.
@@ -313,6 +315,36 @@ Investigation (with evidence, not guesses): at equal total HP and equal units fi
 Reading: a side with a wide choice of nearest targets spreads its fire and kills slowly; a side with a narrow choice puts all of it on the same few units and kills them first. That is a real consequence of the stated rules (SPEC 5.4, nearest by default), not a coding fault, and it is not visible to the firing-share count, because both sides have the same number of units firing. Two consequences: (1) any lever result with an unequal reach is confounded by who concentrates fire; (2) focus fire is itself a very large lever (98 to 2), which fits the skill-ceiling aim and means "which target a unit picks" is a dimension of the map, not a detail. X2 to X4 and the damage and vision sweeps used equal ranges and are not affected.
 
 Transfer class T1 for the direction (concentration beats spread), T2 for every number.
+
+### Pass 3, 2026-10-01: the decided build (routing, seer, exchange, hard bodies) and the three configurations
+
+Builds merged: shortest route by travel time ending on the ordered layer (E-01 R-001-05, Q-001-05 reading a); the seer type (no attack, wide sight, shared with its side); the windowed exchange in `analysis.py`; **hard bodies**, a sidestep for crowds (SPEC 5.10). 515 tests pass, builds identical. Every earlier number was measured on the old build in which units overlapped freely; the numbers below are from the final build.
+
+**What hard bodies changed (pass 2 corrected).** The mirror (X0) is now 50 of 100, X4 49 of 100. The pass-2 finding that the longer-range side loses is gone: same layer, A range 220 against B 200, both attack-move, nearest target: A wins 72.5 percent (old build 10), at 240 it wins 99, at 300 all. Focus fire against nearest is 68 to 32 (old 98 to 2). The cause was overlap: a side that stands at its longer reach piled its units into the space the other side was walking into, which made firing and kills uneven. So target selection is a real lever but a modest one, not the dominant factor pass 2 reported.
+
+**The three configurations** (high ground, A one layer above B, 10 v 10, both attack-move, nearest-target both, 200 seeds, A win rate; replays in `toys/layerlab/results/replays/`, GIFs not committed):
+
+| Configuration | Setting | High side wins |
+|---|---|---|
+| LA vision only | none | 0.46 (no layer effect) |
+| LB vision and reach | firing up at 0.9x range | 0.76 |
+| | 0.8x | 0.985 |
+| | 0.5x | 1.00 |
+| LC reach and damage | range up 1.0x, damage up 0.9x | 0.785 |
+| | range 1.0x, damage 0.8x | 0.96 |
+| | range 0.8x, damage 0.8x | 1.00 |
+
+Reach and damage each carry the advantage on their own, and each crosses 0.5 at a small penalty (reach about 0.95x, damage about 0.93x). That is a steep curve: a 20 percent penalty on either is already decisive, so the useful range for tuning is narrow.
+
+**The windowed exchange** (`python3 -m layerlab exchange`). Window by window, the share of units firing and the share of damage agree in most windows (the A 220 v B 200 nearest run: 14 of 17 windows agree, three are even, none disagree); the firing counts in that run are level for about 270 ticks and then drift apart as one side loses units faster. So "equal units firing, uneven outcome" in pass 2 was too strong: over the whole engagement the firing share tracks the outcome, which is the principle. The opening-window prediction in the mirror agrees with the winner 65 percent of the time at a 10-tick window and 77 at 80 (200 seeds); the whole-fight form agrees 92. The earlier "coin flip" for the opening window was also a property of the old movement: with hard bodies the early firing count carries real information, and still cannot see the ending.
+
+**E2, defeat in detail** (20 v 20, B in k packets, 20 seeds, final build): the concentrated side keeps more units the more packets and the wider the gap, but less than theory: k = 2 keeps 10 to 12 (theory 14.1), k = 4 keeps 11 to 13.5 (theory 17.3), against 6.8 with one packet. The direction and the dependence on k hold; the size does not.
+
+**E1, choke breadth** (20 attackers v 10 defenders in a corridor, final build): survivors of the 20 slide from 14.7 in a one-cell corridor to 16.5 once it is wide (theory: linear 10 to square law 17.3). Against range the picture is mixed (range 40: 14.2 narrow, 13.6 wide), so E1 shows a graded effect, not the regime switch the theory predicts; formation shape and who walks in first matter as much as the width. Not a clean confirmation.
+
+**The reserves case** (Westley's note: an even exchange is not an even outcome when the totals differ). 10 v 10: A wins 19 of 40. A with a second 10 arriving 800 units behind its first 10, against B's 10: A wins 40 of 40 and keeps 15.7. The first windows are an even exchange (firing share 0.485, damage share 0.486, nobody lost); once the reserve reaches the fight the shares tilt (0.64 by tick 460, 0.89 by the end) and the outcome follows the totals. So the lab does what he expected: the exchange is level while the fronts are level and the larger total wins afterwards.
+
+Not run: the tall-cover scenario of 6.3, because the cover rule is symmetric (both sight lines pass the same obstacle at the same height) and a high-side-sees-over advantage would be a vision asymmetry, which `Q-005-02` closed as symmetric.
 
 What changes next: add the opening-window prediction to `analysis.py` with its own tests; sweep the range-by-offset lever (the other way a layer can decide who gets shots off) and compare it with damage by the firing-share measure; then P2 (the concave) with the lever fixed. Westley's review of this pass goes here.
 
