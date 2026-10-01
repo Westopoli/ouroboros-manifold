@@ -38,10 +38,11 @@ while n_units == 0 (csrc/unit.c), so every world below carries at least one
 spawned unit before it is stepped.
 """
 import ctypes
+import math
 
 import pytest
 
-from conftest import OMFeature
+from conftest import OMFeature, OMVec2
 
 
 class OMUnitType:
@@ -158,6 +159,28 @@ def test_control_no_capturing_faction_present_progress_stays_0(lib, world_factor
     )
 
 
+def _faction_1_units(lib, w):
+    return {
+        uid for uid in range(1, 4096)
+        if lib.om_unit_alive(w, uid) and lib.om_unit_get_faction(w, uid) == 1
+    }
+
+
+def _assert_one_unit_materialised(lib, w, before, rule, why):
+    """The production counter fired exactly once: one new unit of the owning
+    faction, spawned within half the capture radius (150) of the structure, and
+    the timer has subtracted exactly one interval (nothing left over)."""
+    new = _faction_1_units(lib, w) - before
+    assert len(new) == 1, f"{rule}: {why}; expected exactly one new unit, found {len(new)}"
+    pos = OMVec2()
+    lib.om_structure_get_position(w, 0, ctypes.byref(pos))
+    (uid,) = new
+    assert math.hypot(lib.om_unit_position_x(w, uid) - pos.x, lib.om_unit_position_y(w, uid) - pos.y) <= 150.0, (
+        f"{rule}: the produced unit must spawn within 150 of its structure"
+    )
+    assert lib.om_structure_get_timer(w, 0) == 0, f"{rule}: the timer must subtract exactly one interval"
+
+
 def test_R_128_01_production_counter_driven_by_tactical_step_period_1(lib, world_factory):
     """R-128-01, R-099-03: driven ONLY by om_tactical_step (no direct
     om_structure_tick_production or om_structure_set_timer calls), a
@@ -170,17 +193,18 @@ def test_R_128_01_production_counter_driven_by_tactical_step_period_1(lib, world
     lib.om_unit_spawn(w, OMUnitType.RAIDER, 0, 0.0, 0.0, 0)
     lib.om_structure_init(w, 0, 0, power)
     lib.om_structure_set_owner(w, 0, 1)
+    before = _faction_1_units(lib, w)
 
     for _ in range(max(interval_ticks - 1, 0)):
         lib.om_tactical_step(w)
-    assert lib.om_structure_pop_spawned_unit(w, 0) == 0, (
-        "R-128-01: no spawn ready before the full interval has elapsed"
+    assert _faction_1_units(lib, w) == before, (
+        "R-128-01: no unit materialised before the full interval has elapsed"
     )
     lib.om_tactical_step(w)
-    assert lib.om_structure_pop_spawned_unit(w, 0) == 1, (
-        f"R-128-01/R-099-03: driven purely by om_tactical_step, one pending spawn must be ready "
-        f"after {interval_ticks} base ticks (period 1: {interval_ticks} steps) -- the production "
-        "timer accrual driver is not wired into om_tactical_step yet"
+    _assert_one_unit_materialised(
+        lib, w, before, "R-128-01/R-099-03",
+        f"driven purely by om_tactical_step, one unit must materialise after {interval_ticks} "
+        f"base ticks (period 1: {interval_ticks} steps)",
     )
 
 
@@ -195,15 +219,17 @@ def test_R_128_01_production_counter_driven_by_tactical_step_period_2(lib, world
     w = _period_2_world(lib, world_factory, seed=11)
     lib.om_structure_init(w, 0, 0, power)
     lib.om_structure_set_owner(w, 0, 1)
+    before = _faction_1_units(lib, w)
 
     for _ in range(max(steps_at_period_2 - 1, 0)):
         lib.om_tactical_step(w)
-    assert lib.om_structure_pop_spawned_unit(w, 0) == 0, (
-        "R-099-03: no spawn ready before the full interval (in base ticks) has elapsed"
+    assert _faction_1_units(lib, w) == before, (
+        "R-099-03: no unit materialised before the full interval (in base ticks) has elapsed"
     )
     lib.om_tactical_step(w)
-    assert lib.om_structure_pop_spawned_unit(w, 0) == 1, (
-        f"R-099-03: at period 2 the same real-time interval is {steps_at_period_2} steps, half of "
+    _assert_one_unit_materialised(
+        lib, w, before, "R-099-03",
+        f"at period 2 the same real-time interval is {steps_at_period_2} steps, half of "
         "period 1's -- the production timer must scale with the tick period like every other "
-        "per-second quantity"
+        "per-second quantity",
     )
