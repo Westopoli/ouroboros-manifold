@@ -861,6 +861,32 @@ status = "pending"
 tests_pending = true
 size_estimate = "om_player_faction_reassign_on_collapse runs the restricted rotation pools, falls back to most regions"
 
+# Rulings round 2, A7: the shared pipe-error panel every scene instances (gap-fix G2).
+[[piece]]
+id = "G-errorpanel"
+manager = "M3"
+wave = 4
+owns = ["scenes/shared/error_panel.tscn", "scenes/shared/error_panel.gd"]
+owns_glob = []
+acceptance = ["tests/test_pipe_error_panels.gd"]
+depends_on = []
+status = "pending"
+tests_pending = true
+size_estimate = "ErrorPanel scene: reason label, Retry, Main Menu, show_error(reason)"
+
+# Rulings round 2, A8: the debug overlay gate (gap-fix G4).
+[[piece]]
+id = "G-flags"
+manager = "M3"
+wave = 4
+owns = ["autoload/feature_flags.gd"]
+owns_glob = []
+acceptance = []
+depends_on = []
+status = "pending"
+tests_pending = true
+size_estimate = "ENABLE_DEBUG_OVERLAY default false"
+
 # Contract docs pieces (A4 frame docs, B6 frame docs) own the pipe frame spec.
 [[piece]]
 id = "DOCS-arch"
