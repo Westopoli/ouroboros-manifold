@@ -1176,6 +1176,7 @@ static void handle_set_seed(const char *json) {
     g_n_placed_structures = 0;
     for (int i = 0; i < nf; i++) om_world_set_feature(W, (om_feature)feats[i], 1);
     om_world_generate(W);
+    om_events_load_launch(W);
     if (!om_world_generated(W)) {
         write_error("set_seed", "generation failed");
         return;
