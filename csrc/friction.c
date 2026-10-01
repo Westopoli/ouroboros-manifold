@@ -72,16 +72,17 @@ void om_step_friction(om_world *w) {
         if (r->faction_id < 0) continue;
 
         uint32_t hostile_neighbors = 0;
+        const om_edge_type *row = w->region_edge[i];
         for (uint32_t j = 0; j < w->n_regions; ++j) {
             if (i == j) continue;
-
-            om_edge_type edge;
-            if (!om_region_edge(w, i, j, &edge)) continue;
-            if (edge == OM_EDGE_TRADE && !trade_counts) continue;
 
             int32_t nb_faction = w->regions[j].faction_id;
             if (nb_faction < 0) continue;
             if (nb_faction == r->faction_id) continue;
+
+            om_edge_type edge = row[j];
+            if ((int)edge < 0) continue;
+            if (edge == OM_EDGE_TRADE && !trade_counts) continue;
 
             om_stance a_to_b = om_faction_stance(w, r->faction_id, nb_faction);
             om_stance b_to_a = om_faction_stance(w, nb_faction, r->faction_id);
