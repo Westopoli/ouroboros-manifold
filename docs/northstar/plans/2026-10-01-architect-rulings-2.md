@@ -125,3 +125,22 @@ In B6, as a contract piece that lands with its implementation: `om_chronicle_add
 **A4. Neither the timeout nor the gate's coverage changes.** The test steps in batches: `tactical_step` with `n > 1` writes only the last frame (round 1, A7), so the 120 KB frame per tick, which is most of the 7 ms, is not paid. Order: land `push/A7-pipe`; the Engineer updates `push/TD-missionover` to step with a large `n` per call (the same test-defect row covers it: the rule proved is unchanged, the deadline is still read from the frame, nothing is widened); then `relay/04-clock-code`, then `push/B2B3`. The Engineer confirms that a batch stops at the tick the mission ends, or that the last frame reports the ending tick, so the "within its time limit" assertion stays exact; if neither holds, that is a pipe defect to report, not something the test works around.
 
 If the batched test is still over the suite timeout, the Engineer reports the measured time and the split between sim step and pipe. Raising `SUITE_TIMEOUT` extends a window and moving the test out of the gate narrows what the gate proves; both are Westley's to decide, and neither is done without him. No slim-frame or fast-forward verb is added.
+
+## Addendum 3, 2026-10-01 (A7: the sim-step fixes)
+
+Source: `docs/northstar/plans/2026-10-01-a7-sim-profile.md` on `push/A7-profile` (fb6ee6e); land that report as a docs piece. After A7 the round trip at 5,000 units in a clash is median 56 ms, p95 73 ms.
+
+**A5. Fixes 3, 1 and 2 are approved, in that order, one piece each.** They are worth doing under either budget (below): the p95 tail and the E-12 visibility figure need them regardless.
+
+1. Fix 3, `csrc/enemy_macro.c` (B13-N): skip the all-pairs `om_unit_can_see` loop when `has_contact` is already set; nearest-candidate search otherwise.
+2. Fix 1, `csrc/fog.c` (B11-N) with a read-only per-faction accessor in `csrc/unit.c` (B10-N): the accessor is its own small piece and lands first, since one file has one owner at a time.
+3. Fix 2, `csrc/unit.c` (B10-N): nearest-first cell order and enemy-only candidates in `om_tac_nearest_hostile` and `om_tac_nearest_enemy_within_range`, keeping the (d2, id) tie-break and the `OM_TIE_SCAN_WINDOW` fallback exactly.
+
+Conditions on each piece:
+- The trace is unchanged. `scripts/specfactory/checksum_trace.py` matches before and after; a piece whose checksum moves does not land and is reported, not explained away in a ledger row.
+- Tests first (Engineer): an equivalence test that runs the old and the new search over seeded clash and spread scenes and compares every answer, with a positive control (a planted wrong tie-break or a dropped candidate must make it fail). The old function stays in the test tree as the reference, not in `csrc/`.
+- Re-measure with `scripts/bench_tactical_pipe.py` after each piece and append the numbers to the profile report. Stop when the budget in force is met; a remaining fix is then not built.
+
+Fixes 4 and 5 are deferred: 4 needs the ability rules checked per type before anyone can say it keeps the trace, 5 gains little in a clash. Neither is built without a new ruling. No constant, cell size or tick rate is tuned.
+
+**A6. The budget is Westley's and is open.** Round 1 recorded 50 ms per `tactical_step` at 5,000 units. E-13 R-099-03 drops the tactical rate to 10 ticks per second above 1,000 live units, which makes the tick 100 ms at that size, and the E-11, E-12 and E-13 performance figures are stated against that 100 ms tick. Until he says which holds at 5,000 units, the 50 ms figure stays the target and no test asserting either number is written or changed.
