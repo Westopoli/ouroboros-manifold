@@ -69,14 +69,22 @@ def world(pipe_frames):
     for f in FEATURES:
         lib.om_world_set_feature(w, f, 1)
     lib.om_world_generate(w)
+    lib.om_events_load_launch(w)
+    lib.om_mission_load_launch_library(w)
     for _ in range(10):
         lib.om_world_step(w)
     lib.om_mission_start(w, 0)
-    lib.om_mission_build_candidate_pool(w)
-    idx = lib.om_mission_select(w)
-    pool = (csim.OMMissionCandidate * 256)()
-    n = lib.om_mission_candidates(w, pool, 256)
-    region, archetype = (pool[idx].region_idx, pool[idx].archetype) if idx < n else (0, 0)
+    # B6: the mission is the generator's draw from the last jump; with no opening jump
+    # (new_campaign false) there is none yet, so mission_start retries through 20-tick
+    # jumps (A3) until the generator finds a candidate, as handle_mission_start does.
+    for _ in range(5):
+        if lib.om_mission_generator_chosen_archetype(w) >= 0:
+            break
+        lib.om_time_jump_run(w, 20)
+    archetype = lib.om_mission_generator_chosen_archetype(w)
+    region = lib.om_mission_generator_chosen_region(w)
+    if archetype < 0:
+        region, archetype = 0, 0
     mission, _ = pipe_frames
     assert (region, archetype) == (mission["region"], mission["archetype"]), (
         "the ctypes world diverged from the pipe's world before the tactical read: %r vs %r"
