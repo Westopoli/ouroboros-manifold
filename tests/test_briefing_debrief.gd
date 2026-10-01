@@ -316,19 +316,12 @@ func _primary_objective(state: Dictionary) -> Dictionary:
 	return {}
 
 
-func _mutated_mission_frame(mission: Dictionary) -> Dictionary:
-	var m: Dictionary = mission.duplicate(true)
-	m["archetype"] = int(mission.get("archetype", 0)) + 1
-	m["region"] = int(mission.get("region", 0)) + 1
-	m["deadline_ticks"] = int(mission.get("deadline_ticks", 0)) + 50
-	return m
-
-
 # "the primary objective's marker name comes from the client layout table
-# (not the frame)": load two frames that share the primary objective's node
-# id but differ in every other field; the marker name must not move (a
-# table lookup keyed on node alone), and it must not just be the raw node
-# number restated (the naive, wrong implementation this rebind must avoid).
+# (not the frame)": per the A4 ruling (2026-10-01, item 2) the name is derived
+# from objectives[0].node and region via chronicle_names.gd. So for a fixed
+# (node, region) it must not move when only archetype/deadline change (a table
+# lookup, not a frame field), it must move when region changes with the node
+# fixed, and it must not just be the raw node number restated.
 func _check_marker_name_from_table_not_frame(root: Node) -> void:
 	var node := int(_mission["objectives"][0]["node"])
 
@@ -339,11 +332,22 @@ func _check_marker_name_from_table_not_frame(root: Node) -> void:
 	_assert(name1 != str(node) and name1 != ("Node %d" % node),
 		"clean: marker_name should not just restate the frame's raw node id %d (positive control), got %s" % [node, name1])
 
-	root.load_frame(_mutated_mission_frame(_mission))
-	var primary2 := _primary_objective(root.qa_state())
-	var name2 := str(primary2.get("marker_name", ""))
+	var same_region: Dictionary = _mission.duplicate(true)
+	same_region["archetype"] = int(_mission.get("archetype", 0)) + 1
+	same_region["deadline_ticks"] = int(_mission.get("deadline_ticks", 0)) + 50
+	root.load_frame(same_region)
+	var name2 := str(_primary_objective(root.qa_state()).get("marker_name", ""))
 	_assert(name1 == name2,
-		"marker_name for node %d changed from %s to %s when only region/archetype/deadline changed; it must be a function of the node id alone (client layout table), not the surrounding frame" % [node, name1, name2])
+		"marker_name for node %d region %d changed from %s to %s when only archetype/deadline changed; it must be a function of (node, region) via the client table, not other frame fields" % [node, int(_mission.get("region", 0)), name1, name2])
+
+	var other_region: Dictionary = _mission.duplicate(true)
+	other_region["region"] = int(_mission.get("region", 0)) + 1
+	root.load_frame(other_region)
+	var name3 := str(_primary_objective(root.qa_state()).get("marker_name", ""))
+	_assert(name3 != "" and name3 != str(node) and name3 != ("Node %d" % node),
+		"region+1: marker_name '%s' is empty or restates the raw node id" % name3)
+	_assert(name3 != name1,
+		"marker_name '%s' did not change when region changed with node %d fixed (A4 ruling item 2: name derives from node and region)" % [name1, node])
 
 	root.load_frame(_mission.duplicate(true))
 
