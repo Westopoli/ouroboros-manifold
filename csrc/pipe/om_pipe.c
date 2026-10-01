@@ -35,9 +35,9 @@
  *     and "fragment":id0. When om_chronicle_entry_get returns 0 (cluster exists
  *     but text pass never ran for it) fragment_ids is [-1,-1,-1] and fragment is
  *     -1. refs.factions is [entry faction_ref] when it is >= 0, else [].
- *   - Every om_map_get_* node/canvas accessor and om_tactical_step itself
- *     are STUBs (csrc/tactical_mapgen.c, csrc/unit.c: E-11 wiring, card
- *     B10/B12 not landed). There is also no enumerator for live tactical
+ *   - Every om_map_get_* node/canvas accessor is a STUB
+ *     (csrc/tactical_mapgen.c: E-11 wiring, card B10/B12 not landed).
+ *     There is also no enumerator for live tactical
  *     unit ids at all (only per-id accessors like om_unit_get_pos, and no
  *     om_map_get_cover/obstacle count+get pair even once B10 lands map
  *     nodes). "map.nodes" reflects the stub (always empty), "map.cover" and
