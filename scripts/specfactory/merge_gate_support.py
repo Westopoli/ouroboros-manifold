@@ -220,8 +220,8 @@ def _diff_added_definitions(candidate_dir: Path, base_ref: str) -> list[tuple[st
         if not line.startswith("+") or line.startswith("+++"):
             continue
         body = line[1:]
-        if not DEF_RE.match(body):
-            continue
+        if not DEF_RE.match(body) or body.rstrip().endswith(";"):
+            continue  # a line ending in ';' is an extern/prototype, not a definition
         m = SYMBOL_RE.search(body)
         if m and current_file:
             found.append((current_file, m.group(1)))
