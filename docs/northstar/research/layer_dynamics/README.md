@@ -174,6 +174,53 @@ Pass criterion for the lab, proposed here for Westley to confirm or change (he o
 
 Negative control: with the cross-layer rules off (multipliers zero, no cross-layer fire), no crossing on that axis. A detector that finds crossings with the mechanism off is measuring the harness, not the game. Positive control: the count ratio between two equal forces on flat ground, swept from 1:2 to 2:1, must show its crossing near 1:1; a detector that misses that is not reading.
 
+### 6.1 The firing-share hypothesis (2026-09-30, untested)
+
+Westley, 2026-09-30, verbatim, on pricing each advantage as a fixed multiple of numbers:
+
+> holding a choke depends on the choke breadth, the ratio of how many units are able to get shots on both teams. It's not as simple as a 1.5x. If team A is holding the choke (at advantage), and as 3x as many units that *can* shoot, then they can take on 3x the force as long as they stay at that choke. It's about the number of units that can get off shots (which depends on several factors, range, choke breadth, etc.)
+
+> just having a height advantage doesn't mean much, it's the vision that comes with the layer difference that is the advantage. 4 should be folded into 5. But for vision as well, it's not as simple as just a 1.25x, just like the choke it's the ratio of units that can get shots off vs the ones that can't compared to the same numbers for the opposite team. This is leading us to the core of the game: the differentiator is **can your unit get shots off**.
+
+> Maybe we should measure "units firing" as a part of the simulation, it's appearing that most of my responses are leading to the "units firing" response with the labels being somewhat dependent on that reality. Maybe we could have the simulation constantly compare the number of units firing for both sides, and use that to weight which side "should" have won, and if they didn't than there's a number that's off. We should test this theory.
+
+Also from the same message, as scope for the lab:
+
+- Height is not an advantage of its own; the vision that comes with the layer difference is. Height and vision are one advantage.
+- Abilities are out of this calculation for now: "we're tuning base unit properties, abilities are another dimension that's too hard to map out at this time." Scenario X7 and pattern P3 wait.
+- Catching the enemy mid-transition depends on army sizes ("the larger army can just walk up the ramp and kill the smaller army"); it is a tool for setting up traps, surrounds, and unit-type matchups, and is "much more effective when used in combination with" the unit-type counter. Unit type is measured, "not just unit values but their type as well."
+- A hit from behind or the flank is "useless without a surround, vision advantage, or unit placement/count advantage."
+
+**The hypothesis.** Who wins an engagement is decided by how many units on each side can get shots off, and for how long. Chokes, vision, surrounds, slopes, transitions and facing matter only through what they do to that count. Unit type is the one other factor: it weights each shot. If a side with the firing advantage loses, some other number has overridden position, and that number is off.
+
+**Why it is plausible.** It is the Lanchester square law: with aimed fire, a side's strength goes as per-unit firepower times the square of the units firing. The first damage sweep (`toys/layerlab/results/log.md`, B's fire-up damage multiplier d against B's count, A fixed at 10) already fits it. The law predicts B breaks even at 10 / sqrt(d) units:
+
+| B units | 12 | 14 | 16 | 18 | 20 |
+|---|---|---|---|---|---|
+| d at the measured crossing | 0.747 | 0.550 | 0.444 | 0.350 | 0.250 |
+| d the square law predicts (100 / B²) | 0.694 | 0.510 | 0.391 | 0.309 | 0.250 |
+
+**The measurement the lab needs.** Per tick and per side, the number of living units that can fire: a target in range, seen, not blocked, the unit allowed to attack. The result today has total shots and unanswered-fire ticks per side, not this count. Add it to the result (per-tick series in the trace, and the sum over the fight).
+
+**Two predictions, both ignorant of unit stats on purpose.** A prediction built from damage dealt against health always agrees with the outcome, because that is how the fight is computed; it tests nothing. So:
+
+1. Count-only. For each side, firing fraction f = (sum over ticks of units that can fire) / (sum over ticks of units alive); predicted strength = f × (starting count)². The side with the larger strength is the predicted winner. This is a first form; the check below may show a better one.
+2. Type-weighted. The same, with each unit that can fire counted as its category multiplier against its target's category (the Strike, Line, Siege matrix) instead of as 1.
+
+Both are computed from the fight after it ends, so they diagnose a run; they do not forecast it.
+
+**Reading a disagreement.**
+
+| Count-only | Type-weighted | Meaning |
+|---|---|---|
+| right | right | position decided it |
+| wrong | right | unit type decided it; acceptable, that is the rock-paper-scissors |
+| wrong | wrong | another number (a layer damage or range multiplier, health, damage per shot) overrode position: the number that is off |
+
+**The check, on runs that already exist.** X0 (mirror), X2, X3, X4, and the damage sweep. Expected: both predictions match the winner in X2 and X3 (B never fires), are near a toss-up in X0 and X4, and the count-only prediction fails in the sweep's low-d cells, where B has more units firing and still loses because each shot is weak. If that is what comes out, the metric separates "position decided" from "a number decided" and the hypothesis has a working instrument. If the count-only prediction is wrong where no stat differs, the form of the prediction is wrong, not the game.
+
+**What it changes if it holds.** Expected winners stop being hand labels per scenario: the principle generates the label, and Westley's hand labels become spot checks on it. The collisions he had begun labelling are paused until the check is in; his answers so far all turned on which side gets shots off and for how long. It also bears on which lever carries the layer advantage: under this principle the advantage comes from who can fire (vision, reach, terrain), not from a damage bonus for height. That last point is an inference from his words, not a ruling.
+
 ## 7. The lab
 
 `toys/layerlab/` (created when the build starts): standalone C simulation, Python driver (scenarios, sweeps, plots, replay). It reuses csrc's numbers as starting values and none of its code. Spec: `toys/layerlab/SPEC.md`, written before the build. It is built in four rungs, R0 to R3: flat combat and determinism; terrain, vision, transitions and every cross-layer knob; facing, formations and the storm-shaped ability; sweeps, replay and the run log. Every run is small: a handful of seeds and a few values, read at once, then tuned.
