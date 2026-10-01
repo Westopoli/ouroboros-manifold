@@ -4,7 +4,7 @@ Red until the package layerlab/skill/ exists (ModuleNotFoundError on the imports
 
 Layout: (1) the solver SKIPS a ratio whose `build` raises ValueError (scripted runner, as in
 test_skill_k0.py: `layerlab.skill.rstar.run_fights` is replaced, so no C fights), (2) the controls'
-builders: both sides attack-move, spacing, arena, the 128-unit cap, the planted range advantage.
+builders: both sides attack-move, spacing, arena, the unit cap, the planted range advantage.
 
 Conventions the tests fix where SPEC 14.1 is silent (reported to the Architect):
   * `skipped_ratios` is compared as a sorted list; a ratio is skipped when `build` raises for EITHER
@@ -75,7 +75,7 @@ class Script:
     def build(self, ratio, swap):
         self.build_calls.append((ratio, swap))
         if self.unbuildable(ratio, swap):
-            raise ValueError("ratio %g does not fit: %d units exceed LL_MAX_UNITS" % (ratio, 144))
+            raise ValueError("ratio %g does not fit: units exceed LL_MAX_UNITS" % ratio)
         sk, nv = ("B", "A") if swap else ("A", "B")
         scn = make_scenario([grp(sk, "raider", 1000, 1000, 3, count=8),
                              grp(nv, "raider", 3000, 1000, 3, count=max(1, round(8 * ratio)))])
@@ -238,14 +238,20 @@ def test_mirror_build_skilled_force_is_the_fixed_one_and_the_label_follows_swap(
 
 
 @pytest.mark.parametrize("swap", [False, True])
-def test_mirror_build_16_hits_the_unit_cap_at_ratio_eight(swap):
-    """SPEC 14.1 'Unbuildable ratios': size 16 at ratio 8 is 16 + 128 = 144 units, above LL_MAX_UNITS
-    (128): build raises ValueError. Positive controls: ratio 7 (16 + 112 = 128) builds and the loader takes
-    it, as does ratio 6 (112 units)."""
-    assert ffi.MAX_UNITS == 128
-    build = mirror_build(16)
-    with pytest.raises(ValueError):
-        build(8.0, swap)
+def test_mirror_build_16_hits_the_unit_cap_at_ratio_max_units_over_16(swap):
+    """SPEC 14.1 'Unbuildable ratios' (cap 4096 since SPEC 16; was 128 and ratio 8): size 16 at ratio
+    MAX_UNITS / 16 = 256 is 16 + 4096 units, above ffi.MAX_UNITS: build raises ValueError and the message
+    names LL_MAX_UNITS (the count check runs before any arena check, so this is the unit cap and not an
+    arena error). Positive controls: ratio 255 (16 + 4080 = MAX_UNITS exactly) still builds the scenario
+    dict (the unit-cap check is the only one `build` makes), and so do ratios 7 (128 units) and 6 (112
+    units), which the loader also takes."""
+    size = 16
+    over = ffi.MAX_UNITS // size
+    build = mirror_build(size)
+    with pytest.raises(ValueError, match="LL_MAX_UNITS"):
+        build(float(over), swap)
+    at_cap = build(float(over - 1), swap)
+    assert sum(g["count"] for g in at_cap["groups"]) == ffi.MAX_UNITS
     for ratio, total in ((7.0, 128), (6.0, 112)):
         scn = build(ratio, swap)
         spawns = _spawns(scn)
