@@ -1,17 +1,17 @@
 extends SceneTree
 
 # B5 (docs/northstar/plans/2026-10-01-architect-rulings-2.md section 2): the save layout
-# changed, OM_SAVE_FORMAT_VERSION is 3, and save.c rejects every other version. The
+# changed, OM_SAVE_FORMAT_VERSION is 4 (B6 lifecycle fields, ruling 1.8), and save.c rejects every other version. The
 # load-game screen must show a rejected save as unreadable and not crash.
 #
 # Fixtures are real: a live autosave written through the pipe, then a copy whose version
 # word (bytes 4..7 of the .omsave, little endian) and sidecar "format_version" are patched
-# to 2, the pre-bump layout. tests/test_load_game.gd has a version-999 case; this file adds
+# to 3, the pre-bump layout. tests/test_load_game.gd has a version-999 case; this file adds
 # the one that matters after the bump (an old, well-formed save) and the check that a save
-# written now is current (sidecar and scene both say 3, so fresh saves are not refused).
+# written now is current (sidecar and scene both say 4, so fresh saves are not refused).
 
 const SCENE_PATH := "res://scenes/load_game/load_game.tscn"
-const EXPECTED_VERSION := 3
+const EXPECTED_VERSION := 4
 
 var _pass_count := 0
 var _fail_count := 0
@@ -87,13 +87,13 @@ func _run() -> void:
 	if typeof(sidecar) != TYPE_DICTIONARY:
 		return
 
-	# (1) A save written now carries 3, in the file and in its sidecar.
+	# (1) A save written now carries 4, in the file and in its sidecar.
 	var file_version := int(bytes[4]) | (int(bytes[5]) << 8) | (int(bytes[6]) << 16) | (int(bytes[7]) << 24)
 	_assert(file_version == EXPECTED_VERSION, "a save written now has version word %d in its header, expected %d" % [file_version, EXPECTED_VERSION])
 	_assert(int(sidecar.get("format_version", -1)) == EXPECTED_VERSION,
 		"a save written now has sidecar format_version %s, expected %d (csrc/pipe/om_pipe.c writes a constant)" % [sidecar.get("format_version"), EXPECTED_VERSION])
 
-	# (2) The screen's current version is 3 and a fresh save is readable, not refused.
+	# (2) The screen's current version is 4 and a fresh save is readable, not refused.
 	var packed := load(SCENE_PATH) as PackedScene
 	var fresh: Node = packed.instantiate()
 	get_root().add_child(fresh)
@@ -107,19 +107,19 @@ func _run() -> void:
 	fresh.queue_free()
 	await process_frame
 
-	# (3) A well-formed version-2 save is refused by the loader and shown as unreadable.
+	# (3) A well-formed version-3 save is refused by the loader and shown as unreadable.
 	var old := bytes.duplicate()
-	old[4] = 2
+	old[4] = 3
 	old[5] = 0
 	old[6] = 0
 	old[7] = 0
 	_write_bytes(dir.path_join("campaign_old.omsave"), old)
 	var old_side: Dictionary = sidecar.duplicate()
-	old_side["format_version"] = 2
+	old_side["format_version"] = 3
 	_write_text(dir.path_join("campaign_old.omsave.json"), JSON.stringify(old_side))
 
 	var refused: Dictionary = bridge.load("campaign_old")
-	_assert(refused.is_empty(), "load of a version-2 save answered a frame instead of refusing (R-111-03)")
+	_assert(refused.is_empty(), "load of a version-3 save answered a frame instead of refusing (R-111-03)")
 	_assert(bridge.last_error() in ["version mismatch", "corrupt"], "refused load last_error = '%s', expected 'version mismatch' or 'corrupt'" % bridge.last_error())
 
 	var screen: Node = packed.instantiate()
@@ -129,18 +129,18 @@ func _run() -> void:
 	var st: Dictionary = screen.qa_state()
 	var old_row = _row_for(st.get("rows", []), "campaign_old")
 	var good = _row_for(st.get("rows", []), "campaign_1")
-	_assert(old_row != null, "the version-2 save has no row on the load-game screen; slots = %s" % str((st.get("rows", []) as Array).map(func(r): return r.get("slot"))))
+	_assert(old_row != null, "the version-3 save has no row on the load-game screen; slots = %s" % str((st.get("rows", []) as Array).map(func(r): return r.get("slot"))))
 	if old_row != null:
-		_assert(bool(old_row.get("refused", false)), "the version-2 save row is not marked refused")
+		_assert(bool(old_row.get("refused", false)), "the version-3 save row is not marked refused")
 		var label := str(old_row.get("label_text", ""))
-		_assert(label.contains("2") and label.contains(str(EXPECTED_VERSION)) and label.to_lower().contains("incompatible"),
-			"the version-2 row label should name both versions and say incompatible, got '%s'" % label)
+		_assert(label.contains("3") and label.contains(str(EXPECTED_VERSION)) and label.to_lower().contains("incompatible"),
+			"the version-3 row label should name both versions and say incompatible, got '%s'" % label)
 	# Positive control: the same screen shows the current save as loadable, so the refusal above is the version.
 	_assert(good != null and not bool(good.get("refused", true)), "control: the current-version save row is missing or refused on the same screen")
 	# Not a crash: the screen answers again after the click path on the refused row.
 	if screen.has_method("qa_load_slot"):
 		var res = screen.qa_load_slot("campaign_old")
-		_assert(typeof(res) == TYPE_DICTIONARY and (res as Dictionary).is_empty(), "qa_load_slot on the version-2 row answered a frame (type %s)" % str((res as Dictionary).get("type", "?")) if typeof(res) == TYPE_DICTIONARY else "returned a non-dictionary")
+		_assert(typeof(res) == TYPE_DICTIONARY and (res as Dictionary).is_empty(), "qa_load_slot on the version-3 row answered a frame (type %s)" % str((res as Dictionary).get("type", "?")) if typeof(res) == TYPE_DICTIONARY else "returned a non-dictionary")
 	_assert(typeof(screen.qa_state()) == TYPE_DICTIONARY, "qa_state() stopped answering after loading the refused slot")
 	screen.queue_free()
 	await process_frame

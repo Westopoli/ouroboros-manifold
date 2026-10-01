@@ -465,8 +465,9 @@ func _run_c54_tests() -> void:
 # Piece C5-N (2026-09-28 QA-run wiring brief): before this fix, a deployed
 # mission only ever advanced through the qa_step() QA hook -- _process() did
 # nothing, so real play froze at tick 0. Same live-mission setup as
-# _run_c54_tests (seed 1 stepped to strategic tick 10: archetype 3, 572
-# units, so om_tactical_step is not the zero-unit no-op, csrc/unit.c:1651).
+# _run_c54_tests, but seed 3 (stepped to strategic tick 10: under 1,000
+# live units, so R-099-03 does not halve the call rate; om_tactical_step is
+# not the zero-unit no-op, csrc/unit.c:1651).
 # Rate: OM_TACTICAL_TICK_RATE = 20 base ticks/sec (csrc/om_constants.h;
 # E-13 R-099-02, docs/bible/epics/E-13-tactical-combat.md).
 func _run_realtime_step_tests() -> void:
@@ -474,7 +475,7 @@ func _run_realtime_step_tests() -> void:
 	var _b = load("res://autoload/sim_session.gd").bridge()
 	var _CBridge = load("res://autoload/c_bridge.gd")
 	var _TacticalView = load("res://scenes/tactical_c/tactical_view.gd")
-	_b.ensure_session(1, _CBridge.DEFAULT_N_REGIONS, _CBridge.DEFAULT_FEATURES)
+	_b.ensure_session(3, _CBridge.DEFAULT_N_REGIONS, _CBridge.DEFAULT_FEATURES)
 	_b.step(10)
 	var _step_ddl := Time.get_ticks_msec() + 5000
 	while Time.get_ticks_msec() < _step_ddl and int(_b.snapshot().get("tick", 0)) < 10:

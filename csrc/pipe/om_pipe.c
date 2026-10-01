@@ -49,9 +49,7 @@
  *     carry); verb "hold" always answers error.
  *   - om_load_state_read returns one bool for both "version mismatch" and
  *     "corrupt" (csrc/save.c); this file always reports "corrupt".
- *   - No public getter reads back the chapter number set by
- *     om_chapter_start; the save sidecar's "chapter" is always 0.
- *   - GEN_PHASE_BRIEFING/GEN_PHASE_MISSION are private #defines in
+  *   - GEN_PHASE_BRIEFING/GEN_PHASE_MISSION are private #defines in
  *     csrc/generational.c, not exported by ouroboros_sim.h; mirrored below
  *     as OM_PIPE_CHAPTER_PHASE_* since om_chapter_set_phase/
  *     om_chapter_mission_realtime take/read the raw int.
@@ -66,7 +64,7 @@
 #include "ouroboros_sim.h"
 
 /* Mirrors OM_SAVE_FORMAT_VERSION in om_internal.h (not visible to the pipe). */
-#define OM_PIPE_SAVE_FORMAT_VERSION 3
+#define OM_PIPE_SAVE_FORMAT_VERSION 4
 
 /* csrc/generational.c GEN_PHASE_BRIEFING / GEN_PHASE_MISSION, not exported
  * by ouroboros_sim.h. See the file-header comment above. */
@@ -388,6 +386,15 @@ static void write_snapshot(void) {
     jb_putc(&j, ',');
     jb_key(&j, "tick");
     jb_uint(&j, g_tick);
+    jb_putc(&j, ',');
+    jb_key(&j, "chapter");
+    jb_uint(&j, om_chapter_get_number(W));
+    jb_putc(&j, ',');
+    jb_key(&j, "commander");
+    jb_uint(&j, om_campaign_commander(W));
+    jb_putc(&j, ',');
+    jb_key(&j, "lineage");
+    jb_uint(&j, om_campaign_lineage(W));
     jb_putc(&j, ',');
     jb_key(&j, "checksum");
     jb_uint(&j, om_world_get_state_checksum(W));
@@ -931,6 +938,9 @@ static void write_chronicle(uint64_t from_tick, uint64_t to_tick) {
     jb_putc(&j, ',');
     jb_key(&j, "to_tick");
     jb_uint(&j, to_tick);
+    jb_putc(&j, ',');
+    jb_key(&j, "chapter_end_reason");
+    jb_int(&j, om_chapter_last_end_reason(W));
     jb_putc(&j, '}');
     jb_putc(&j, ',');
 
@@ -1425,27 +1435,22 @@ static void handle_mission_start(const char *json) {
      * from the lower-level mission.c/fog.c API. */
     (void)om_mission_start(W, (int32_t)faction);
     for (uint32_t ri = 0; ri < om_region_count(W); ri++) om_mission_refresh_context(W, (int32_t)ri);
-    om_mission_build_candidate_pool(W);
-    static om_mission_candidate pool[256];
-    uint32_t n = om_mission_candidates(W, pool, 256);
+    int32_t drawn = om_mission_generator_chosen_archetype(W);
     /* A3/Q-072-01: an empty pool retries after another 20-tick jump, up to
      * five times, then falls back to Defensive Stand (R-072-07/08). */
-    for (int retry = 0; n == 0 && retry < 5; retry++) {
+    for (int retry = 0; drawn < 0 && retry < 5; retry++) {
         om_time_jump_report report;
         memset(&report, 0, sizeof report);
         if (om_time_jump_run(W, 20, &report) != 0) break;
         g_tick = report.end_tick;
         capture_baseline();
         for (uint32_t ri = 0; ri < om_region_count(W); ri++) om_mission_refresh_context(W, (int32_t)ri);
-        om_mission_build_candidate_pool(W);
-        n = om_mission_candidates(W, pool, 256);
+        drawn = om_mission_generator_chosen_archetype(W);
     }
-    uint32_t idx = om_mission_select(W);
-    n = om_mission_candidates(W, pool, 256);
     uint32_t region = 0, archetype = 0, fb_enemy_ok = 0;
     int32_t fb_enemy = -1;
     int have_mission = 0, quiet_world = 0;
-    if (n == 0) {
+    if (drawn < 0) {
         int32_t player = om_player_faction(W);
         int found = 0;
         double lowest = 0.0;
@@ -1466,9 +1471,9 @@ static void handle_mission_start(const char *json) {
     if (fb_enemy_ok) {
         have_mission = 1;
         quiet_world = 1;
-    } else if (idx < n) {
-        region = pool[idx].region_idx;
-        archetype = pool[idx].archetype;
+    } else if (drawn >= 0) {
+        region = om_mission_generator_chosen_region(W);
+        archetype = (uint32_t)drawn;
         have_mission = 1;
     } else {
         /* R-080-03: the trigger-scored pool found nothing (an early-campaign
@@ -1953,8 +1958,8 @@ static void handle_save(const char *json) {
         jb_key(&sj, "tick");
         jb_uint(&sj, g_tick);
         jb_putc(&sj, ',');
-        jb_key(&sj, "chapter"); /* no getter for the chapter number; reported */
-        jb_uint(&sj, 0);
+        jb_key(&sj, "chapter");
+        jb_uint(&sj, om_chapter_get_number(W));
         jb_putc(&sj, ',');
         jb_key(&sj, "phase");
         jb_int(&sj, om_chapter_current_phase(W));

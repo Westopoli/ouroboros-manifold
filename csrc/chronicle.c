@@ -1379,9 +1379,9 @@ static void chron_push_candidate(chron_state *st, uint32_t type, uint32_t catego
     st->candidate_lineage[st->n_candidates - 1] = -1;
 }
 
-static void chron_push_lineage_candidate(chron_state *st, uint32_t lineage_id, uint32_t region, double score) {
+static void chron_push_lineage_candidate(chron_state *st, uint32_t lineage_id, uint32_t region, uint32_t category, double score) {
     uint32_t n = st->n_candidates;
-    chron_push_candidate(st, CTYPE_LINEAGE, CAT_LINEAGE_QUIET, region, score, -1, 0, 0);
+    chron_push_candidate(st, CTYPE_LINEAGE, category, region, score, -1, 0, 0);
     if (st->n_candidates > n) st->candidate_lineage[n] = (int32_t)lineage_id;
 }
 
@@ -1466,7 +1466,7 @@ static void chron_add_quiet_lineage_cluster(const om_world *w, chron_state *st) 
         for (uint32_t k = 0; om_lineage_history_region(w, id, k) >= 0; k++) region = om_lineage_history_region(w, id, k);
     }
     if (region < 0) return;
-    chron_push_lineage_candidate(st, id, (uint32_t)region, 0.0);
+    chron_push_lineage_candidate(st, id, (uint32_t)region, CAT_LINEAGE_QUIET, 0.0);
 }
 
 /* Stable descending-score insertion sort -- qsort's tie-break order is
@@ -1727,9 +1727,9 @@ void om_chronicle_add_event(om_world *w, uint32_t region_idx, double score) {
     chron_push_candidate(st, CTYPE_REGIONAL, category, region_idx, score, -1, 0, 0);
 }
 
-void om_chronicle_add_lineage_event(om_world *w, uint32_t lineage_id, uint32_t region_idx, double score) {
+void om_chronicle_add_lineage_event(om_world *w, uint32_t lineage_id, uint32_t region_idx, uint32_t category, double score) {
     if (!w) return;
-    chron_push_lineage_candidate(chron(w), lineage_id, region_idx, score);
+    chron_push_lineage_candidate(chron(w), lineage_id, region_idx, category, score);
 }
 
 void om_chronicle_add_mock_entry(om_world *w, uint32_t entry_id, uint64_t start_tick, uint64_t end_tick) {
