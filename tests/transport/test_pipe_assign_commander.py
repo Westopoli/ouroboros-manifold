@@ -14,6 +14,9 @@ probe that names the dead ids; later runs assign one of them as commander
 before the clash. This relies on the pipe being deterministic for a seed and
 a command stream, and on the fixture below staying an Assault; the probe test
 asserts that at least one player unit dies so a drifting fixture fails loudly.
+Dead units are not in a full frame (A7 delta contract: they are filtered out and
+listed once in the next delta's `units_removed`), so the dead ids are the player
+ids at mission_begin minus the player ids in the final full frame.
 
 Not constructible, flagged to the architect: a non-zero `commander_unit` in a
 `mission` frame. The only writer of a `mission` frame is `mission_start`
@@ -100,7 +103,8 @@ def _dead_ids():
     frames = _run(_clash_cmds())
     last = _types(frames, "tactical")[-1]
     assert last["mission_over"] is False, "fixture drifted: the mission ended before the clash read"
-    return tuple(sorted(u["id"] for u in last["units"] if u["faction"] == 0 and u["hp"] <= 0))
+    alive = {u["id"] for u in last["units"] if u["faction"] == 0}
+    return tuple(sorted(set(_centroid_and_ids()[0]) - alive))
 
 
 @lru_cache(maxsize=None)
