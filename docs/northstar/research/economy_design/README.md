@@ -10,7 +10,7 @@ One economy, two drivers: rules when nobody holds the economy seat, a human when
 
 | # | Goal | Depends on | Status |
 |---|---|---|---|
-| 1 | Resources and how they become units | (check against 5's verbs before freezing) | in progress: options in `resources_options.md` |
+| 1 | Resources and how they become units | (check against 5's verbs before freezing) | in progress: options in `resources_options.md`; Westley leans A and F (2026-10-01); F expanded with four variations in `f_variations.md` |
 | 2 | Bases of operations and how they play into objectives | 1 | not started |
 | 3 | Groundwork for auto-generating economic buildings (sister to biome generation) | 1, 2 | not started |
 | 4 | How the economy runs when the player opts out | 1, 2, 3 | not started |
@@ -30,3 +30,4 @@ Each row is the sentence Westley was answering and his answer, verbatim.
 
 - `prior_art_resources.md`: cited digest of resource systems in other games.
 - `resources_options.md`: goal 1 options, three regular and three wild.
+- `f_variations.md`: Where People Go expanded, two close and two very different variations.
