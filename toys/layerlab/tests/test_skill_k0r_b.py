@@ -206,7 +206,8 @@ def test_item6_profile_cells_carry_map_set_and_refusable(monkeypatch):
     monkeypatch.setattr(rstar_mod, "run_fights", lambda jobs, *a, **k: [_fake_fight(scn) for scn, _s in jobs])
     for mod in (rstar_mod, plays):                      # windows run traced fights: not wanted here
         monkeypatch.setattr(mod, "rstar_windows", lambda *a, **k: [], raising=False)
-    sits = [_sit("lane"), _sit("barrier_ramp"), _sit("flat")]
+    # test-defect fix 2026-10-01: _sit gives every situation id 0, so the id lookup below needs distinct ids
+    sits = [dataclasses.replace(_sit(f), id=i) for i, f in enumerate(("lane", "barrier_ramp", "flat"))]
     prof = plays.profile(sits, sizes=(4,), ratios=(0.7, 1.4, 2.8), refine=1, seeds=(0,),
                          combos=[frozenset()], processes=0)
     assert len(prof.cells) == len(sits)

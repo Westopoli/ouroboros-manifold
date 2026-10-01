@@ -9,7 +9,7 @@ import math
 import statistics
 from dataclasses import dataclass, field
 
-from .. import formations, scenario, terrain
+from .. import ffi, formations, scenario, terrain
 from . import situation
 from .cost import counts_for_heads
 from .rstar import rstar as _rstar, rstar_windows
@@ -415,9 +415,9 @@ def build_scenario(sit, skills, size, ladder="line", processes=None, config=None
         if arc is None:
             raise arc_error
         naive_counts = counts_for_heads(sit.mix, int(ratio * size + 0.5), base)
-        if sum(skilled_counts.values()) + sum(naive_counts.values()) > 128:
-            raise ValueError("%d units exceed LL_MAX_UNITS 128" % (sum(skilled_counts.values())
-                                                                    + sum(naive_counts.values())))
+        if sum(skilled_counts.values()) + sum(naive_counts.values()) > ffi.MAX_UNITS:
+            raise ValueError("%d units exceed LL_MAX_UNITS %d" % (sum(skilled_counts.values())
+                                                                    + sum(naive_counts.values()), ffi.MAX_UNITS))
         scn = copy.deepcopy(base)
         scn["groups"] = []
         skilled_heads, naive_heads = sum(skilled_counts.values()), sum(naive_counts.values())
