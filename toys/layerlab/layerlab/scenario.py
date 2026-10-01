@@ -1,5 +1,6 @@
 """Scenario loading, dotted-path edits, diffing, and conversion to the C struct (SPEC.md section 8)."""
 import copy
+import math
 import re
 import tomllib
 from pathlib import Path
@@ -19,7 +20,11 @@ _POLICY = {"nearest": ffi.TARGET_NEAREST, "lowest_hp": ffi.TARGET_LOWEST_HP,
            "highest_cost": ffi.TARGET_HIGHEST_COST}
 _SIDE = {"A": 0, "B": 1}
 _GROUP_KEYS = {"side", "type", "count", "formation", "x", "y", "facing", "layer", "order", "goal",
-               "pre_revealed", "transfer_layer", "transfer_tick", "pulse_tick", "target_policy", "spacing"}
+               "pre_revealed", "transfer_layer", "transfer_tick", "pulse_tick", "target_policy", "spacing",
+               "cols", "center", "R", "arc_deg", "screen_r"}
+_FORMATION_KEYS = ("cols", "center", "R", "arc_deg", "screen_r")
+_GROUP_OPTIONAL = ("spacing", "pre_revealed", "transfer_layer", "transfer_tick", "pulse_tick",
+                   "target_policy") + _FORMATION_KEYS
 _GROUP_REQUIRED = ("side", "type", "count", "x", "y", "layer")
 _COST_DIVISOR = 31.25
 
@@ -58,6 +63,19 @@ def _tokens(path):
     return toks
 
 
+def _optional_key(toks, depth, scn):
+    """True if toks[depth] may be created: the last key of an optional schema key (SPEC.md section 8)."""
+    if depth != len(toks) - 1 or not isinstance(toks[depth], str):
+        return False
+    if depth == 2 and toks[0] == "types":
+        return toks[2] == "cost" and toks[1] in scn.get("types", {})
+    if depth == 2 and toks[0] == "groups":
+        return toks[2] in _GROUP_OPTIONAL
+    if depth == 1 and toks[0] == "terrain":
+        return toks[1] in terrain.PRESET_KEYS.get(scn.get("terrain", {}).get("preset", "flat"), ())
+    return False
+
+
 def set_path(scn, path, value):
     out = copy.deepcopy(scn)
     toks = _tokens(path)
@@ -67,7 +85,7 @@ def set_path(scn, path, value):
         if isinstance(tok, int):
             if not isinstance(node, list) or tok >= len(node):
                 raise KeyError("path %r: no index [%d]" % (path, tok))
-        elif not isinstance(node, dict) or tok not in node:
+        elif not isinstance(node, dict) or (tok not in node and not (last and _optional_key(toks, depth, scn))):
             raise KeyError("path %r: no key %r" % (path, tok))
         if last:
             node[tok] = value
@@ -166,6 +184,23 @@ def _fill_type(tc, name, tdict):
         tc.cost = tc.hp * tc.dmg / tc.interval_s / _COST_DIVISOR
 
 
+def _check_spawn(terr, jitter, where, x, y, layer, walker):
+    """Every cell the unit can be jittered into must be open on its layer (and land for a walker)."""
+    cell, bit = terr.cell, 1 << (layer - 1)
+    c0, r0 = math.floor((x - jitter) / cell), math.floor((y - jitter) / cell)
+    c1 = math.ceil((x + jitter) / cell) - 1 if jitter > 0 else c0
+    r1 = math.ceil((y + jitter) / cell) - 1 if jitter > 0 else r0
+    for r in range(r0, r1 + 1):
+        for c in range(c0, c1 + 1):
+            ok = 0 <= c < terr.w_cells and 0 <= r < terr.h_cells
+            if ok:
+                i = r * terr.w_cells + c
+                ok = terr.open[i] & bit and (not walker or terr.land[i] & bit)
+            if not ok:
+                raise ValueError("%s at (%g, %g) layer %d: cell (%d, %d) is not %s on that layer"
+                                 % (where, x, y, layer, c, r, "land" if walker else "open"))
+
+
 def to_c(scn):
     _check_keys("scenario", scn, _TOP_KEYS)
     sc = ffi.ll_scenario()
@@ -204,9 +239,12 @@ def to_c(scn):
         ti = index[g["type"]]
         spacing = float(g["spacing"]) if "spacing" in g else 2.5 * sc.types[ti].body_radius
         gx, gy = g.get("goal", [g["x"], g["y"]])
+        params = {k: g[k] for k in _FORMATION_KEYS if k in g}
         places = formations.place(g.get("formation", "line"), count, float(g["x"]), float(g["y"]),
-                                  float(g.get("facing", 0.0)), spacing)
-        for x, y, facing in places:
+                                  float(g.get("facing", 0.0)), spacing, **params)
+        walker = sc.types[ti].movement_kind == ffi.MOVE_WALK
+        for k, (x, y, facing) in enumerate(places):
+            _check_spawn(sc.terrain, sc.rules.spawn_jitter, "%s unit %d" % (where, k), x, y, layer, walker)
             s = sc.spawns[n]
             s.side, s.type, s.x, s.y, s.facing_deg, s.layer = side, ti, x, y, facing, layer
             s.order, s.gx, s.gy = order, float(gx), float(gy)

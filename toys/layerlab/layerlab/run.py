@@ -66,3 +66,13 @@ def run(scn, seed=0, trace=False, lib="O2"):
         unanswered_ticks=tuple(out.unanswered_ticks), unit=units,
         trace=trace_arr, raw=C.string_at(C.addressof(out), C.sizeof(out)),
     )
+
+
+def probe_can_see(scn, observer, target, seed=0, lib="O2"):
+    dll = ffi.load_lib(lib)
+    sc = to_c(scn)
+    rc = dll.ll_probe_can_see(C.byref(sc), seed, observer, target)
+    if rc < 0:
+        msg = dll.ll_last_error()
+        raise RuntimeError("ll_probe_can_see failed (%d): %s" % (rc, msg.decode() if msg else ""))
+    return bool(rc)
