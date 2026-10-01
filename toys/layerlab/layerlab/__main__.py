@@ -1,5 +1,6 @@
-"""Command line: python3 -m layerlab run | check | exchange | sweep | replay (SPEC.md section 8)."""
+"""Command line: python3 -m layerlab run | check | exchange | sweep | replay | batch | crossings (SPEC.md section 8)."""
 import argparse
+import json
 import sys
 import tomllib
 
@@ -79,6 +80,35 @@ def _replay(args):
         plt.show()
 
 
+def _batch(args):
+    from .batch import run_rows, write_rows
+    from .sample import grid, make_jobs, random_samples
+    scn = _load(args)
+    with open(args.dims) as fh:
+        dims = json.load(fh)
+    if not isinstance(dims, list):
+        raise ValueError("%s: the dims file must hold a JSON list of dimensions" % args.dims)
+    samples = random_samples(dims, args.n, args.seed) if args.n is not None else grid(dims, args.grid)
+    jobs, skipped = make_jobs(scn, samples, range(args.seeds))
+    rows = run_rows(jobs, processes=args.procs)
+    write_rows(rows, args.out)
+    print("wrote %d rows to %s (%d samples skipped)" % (len(rows), args.out, len(skipped)))
+    for sample, reason in skipped:
+        print("skipped %s: %s" % (sample, reason), file=sys.stderr)
+
+
+def _crossings(args):
+    from .batch import read_rows
+    from .crossing_search import crossing_shift
+    rows = read_rows(args.rows)
+    if not rows:
+        raise ValueError("%s has no rows" % args.rows)
+    for path in (args.var, args.by):
+        if "set:" + path not in rows[0]:
+            raise ValueError("%s has no column 'set:%s'" % (args.rows, path))
+    print(crossing_shift(rows, args.var, args.by, expect=args.expect).text)
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(prog="python3 -m layerlab")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -124,6 +154,25 @@ def main(argv=None):
     v.add_argument("--gif")
     v.add_argument("--set", action="append", metavar="PATH=VALUE")
     v.set_defaults(fn=_replay)
+
+    b = sub.add_parser("batch", help="sample many variables, run every fight, write one CSV row per fight")
+    b.add_argument("scenario")
+    b.add_argument("--dims", required=True, help="JSON file: a list of dimension dicts")
+    how = b.add_mutually_exclusive_group(required=True)
+    how.add_argument("--n", type=int, help="N random samples")
+    how.add_argument("--grid", type=int, help="K points per dimension")
+    b.add_argument("--seed", type=int, default=0, help="seed of the sampler")
+    b.add_argument("--seeds", type=int, default=5, help="N means fight seeds 0..N-1")
+    b.add_argument("--procs", type=int, help="worker processes; omitted, 0 or 1 runs serially")
+    b.add_argument("--out", required=True)
+    b.set_defaults(fn=_batch)
+
+    k = sub.add_parser("crossings", help="does the 0.5 crossing of --var move, or gain a second, with --by")
+    k.add_argument("rows")
+    k.add_argument("--var", required=True)
+    k.add_argument("--by", required=True)
+    k.add_argument("--expect", default="A", choices=["A", "B"])
+    k.set_defaults(fn=_crossings)
 
     args = p.parse_args(argv)
     if args.cmd == "sweep" and args.var2 and not args.values2 or args.cmd == "sweep" and args.values2 and not args.var2:
