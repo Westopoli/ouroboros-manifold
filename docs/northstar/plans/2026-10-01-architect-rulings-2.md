@@ -251,3 +251,56 @@ For Westley: the E-03 generation target still reads "a 110-region world in under
 ## Addendum 13, 2026-10-01 (C1 S6: tactical frame `tier` and `state`)
 
 **A30. Both fields are reserved.** Option (a), docs only: `docs/architecture.md` says `tier` and `state` are reserved and always 0, and the frame examples show 0. No client code reads either today, and neither has a defined meaning or a rule asking for it. `state` is filled only when a rule needs the client to show a unit's order, as a contract piece with its enum table; `tier` when units have a tier source. A transport test pins both at 0 so a later change has to go through the contract.
+
+## Addendum 14, 2026-10-02 (the constants emitter drops hand-added constants)
+
+Source: `docs/northstar/plans/2026-10-02-alg-emit-lossy.md` on `push/INV-algemit`; land the report as a docs piece. `alg_constants.py --emit` rewrites all of `csrc/om_constants.h` and would drop 147 hand-added constants; nothing in the gate compares the header with the bible.
+
+**A31. Approved as three harness pieces, in this order.**
+
+1. **Split.** The 147 hand constants move to `csrc/om_constants_extra.h`, hand-owned, with a `pieces.toml` row (M0). The generated header ends with `#include "om_constants_extra.h"`, emitted by the emitter, so no consumer changes its includes. Acceptance: the set of macro names and values visible to a file that includes `om_constants.h` is identical before and after (compare the preprocessor's macro dump), a full `--emit` then reproduces `om_constants.h` exactly, and the determinism checksum is unchanged. No value changes in this piece.
+2. **Check in the gate.** `alg_constants.py --check` emits to memory and fails when the generated header differs from the file; `merge_gate.sh` runs it beside the lint. Positive control: a hand-edited value in `om_constants.h` makes it fail. The hand patch of the region range then goes away, because ALG-31 already gives 250 and 400.
+3. **Names.** The doubled `OM_OM_MACRO_*` prefix is fixed in the emitter and its consumers renamed in the same piece, values untouched. The 10 names the emitter produces that the header lacks are bible-derived and enter the header through the emit in piece 1; a clash with a hand constant of the same name is reported, not resolved by picking one. The 20 names `--emit` lists as unparsed come to the Architect as a list with the ALG text of each: the fix is either in the emitter or in the bible's wording, decided per name.
+
+A constant that carries a play-tuned or provisional value belongs in the hand-owned header with its comment; a value the bible states belongs in the generated one. Nobody moves a value between them without saying which it is.
+
+## Addendum 15, 2026-10-02 (C2: the memory-per-region budget is red for a real reason)
+
+`tests/csim/scale/test_scale_E02.py::test_e02_memory_per_region_under_256_bytes`: the marginal save-state cost between 60 and 512 regions is 1,601 bytes per region against Westley's 256 (E-02, confirmed 2026-09-14, "a miss is escalated").
+
+**A32. It stays red as a finding and goes to Westley.** Nobody edits the test, the budget or the metric. It was red before HDR5 (for a false reason), so HDR5 lands with it listed as a known red in its ledger row, with the real numbers.
+
+One read-only Engineer task so he can decide on facts: break the 1,601 bytes down by save slot (region fields, edge matrix, events, generational, chronicle, mission, each history ring), at 60, 250, 400 and 512 regions, and say which parts grow with the square of the region count. Append the table to the HDR5 ledger row or a short report. No fix is designed until he has seen it.
+
+The four version-4 pins in `tests/test_load_game_wrong_version.gd` are a test-defect as the coordinator says: the version went to 5 by ruling; ledger row.
+
+## Addendum 16, 2026-10-02 (A31: the unparsed names, decided per name)
+
+Source: `docs/northstar/plans/2026-10-02-alg-unparsed-names.md` on `push/INV-algemit2`; lands with the diagnosis as one docs piece.
+
+**A33. Order of the harness pieces changes to 1, 3, 2.** The gate check would flag the ten wrong `OM_TACTICAL_TICK_RATE_*` names on its first run, so the names piece lands before it.
+
+**A34. Three kinds of resolution.**
+
+*Ignore list.* The emitter gets a small list of names that are not constants, each with a reason, and stops reporting them: `ABILITY_MAP`, `CONQUEST_UNREST` (a template id), `CONSEQUENCE_TABLES`, `ENABLE_ADJACENCY_BONUS`, `ENABLE_OSCILLATION`, `ENABLE_RECRUITMENT`, `FORMATION_MOVE_ENABLED` (switches that are always on), `OUTCOME_THRESHOLDS`, `REGION_TRANSFER_OUTCOMES`, `STARTING_STANCE_OVERRIDES`, `UNIT_STATS`. Their values stay where they are: the 22 `OM_ABILITY_*` and 16 `OM_MISSION_BAND_THRESHOLDS_*` hand constants in the extra header, the tables in the C fences. A name not on the list and not parsed is an error in `--check`.
+
+*Restated in the bible so they emit.* The names piece applies these edits to `docs/bible/algorithms.md` exactly; each states a value already in the text or in the legacy source, none is new. Where a hand constant of the same value exists under another name, the bible's name wins and the consumer is renamed in the same piece; the checksum is unchanged.
+
+| ALG | Edit |
+|---|---|
+| 40 | "(cap `3.0` when the victim's is 0)" becomes "(`BETRAYAL_OPPORTUNITY_CAP = 3.0`, which is also the value when the victim's is 0)" |
+| 22 | "with probability 0.60 ... `round(triangular(4, 8, mode 6))`" names its numbers: `CONQUEST_UNREST_PROBABILITY = 0.60`, `CONQUEST_UNREST_DELAY_RANGE = (4, 8)`, `CONQUEST_UNREST_DELAY_MODE = 6`; `events.c` reads them |
+| 59 | `REFUSAL_TENSION_PENALTY_PCT = 8.0`, with the division by 100 kept in the formula; replaces hand `OM_MISSION_REFUSAL_TENSION_DEFICIT_PCT` |
+| 55 | one clause per name: `RELEVANCE_LINEAGE_WEIGHT = 0.4`, `RELEVANCE_PROXIMITY_WEIGHT = 0.3`, `RELEVANCE_ARCHETYPE_WEIGHT = 0.3`, and the three `GENERATOR_*_WEIGHT` values the same way; the `mission.c` locals go |
+| 50 | the four bonuses written out in the context formula: `SIGNIFICANCE_MISSION_REGION_BONUS = 0.5`, `SIGNIFICANCE_CHARACTER_BONUS = 0.3`, `SIGNIFICANCE_CHAIN_LENGTH_BONUS = 0.1`, `SIGNIFICANCE_LINEAGE_REGION_BONUS = 0.8` |
+| 56 | the minutes become their own keyed list, `MISSION_BASE_MINUTES[archetype]: siege 60, multi_front 60, assault 52.5, containment 52.5, reconquest 45, defensive 37.5, interception 37.5, counterinsurgency 37.5, suppression 30, evacuation 30`, separated from `TACTICAL_TICK_RATE`; the literal table in `mission.c` reads the emitted names |
+| 76 | the leading `OM_` is dropped from the two macro names in the text |
+| 27 | `ARCHETYPE_STARTING_TECH[archetype]: conqueror (5, 15), fortifier (10, 20), warlord (5, 10), opportunist (8, 15), schism (0, 0), player_civilization (10, 20), breakaway (0, 0)`, transcribed from `simulation/config.py` |
+| 75 | `STRUCTURE_COUNT_RANGE[canvas]: small (2, 4), medium (3, 6), large (4, 8)` and `ARCHETYPE_STRUCTURE_SPLIT[archetype]` as (player, enemy, neutral): defensive_stand (0.50, 0.25, 0.25), siege_breaking (0.33, 0.33, 0.34), reconquest (0.25, 0.50, 0.25), assault (0.25, 0.50, 0.25), suppression (0.40, 0.30, 0.30), multi_front_defense (0.40, 0.35, 0.25), interception (0.33, 0.34, 0.33), evacuation (0.50, 0.25, 0.25); both transcribed from `simulation/config.py`. `tactical_support.c` reads the emitted range |
+
+If the emitter cannot parse one of these forms as written, the Engineer reports the form it can parse; the wording is then adjusted here, not improvised.
+
+*Findings, not harness work.* One read-only Engineer check, reported once:
+- Does structure placement (B4, `mission.c`) follow `ARCHETYPE_STRUCTURE_SPLIT`? R-126-01 assigns owners per archetype; if the code uses other fractions, that is a defect to rule on.
+- Does any code set a mid-game faction's starting tech from `ARCHETYPE_STARTING_TECH`? The report found none.
+- The split has no row for containment or counterinsurgency: new register row Q-126-03, for Westley.

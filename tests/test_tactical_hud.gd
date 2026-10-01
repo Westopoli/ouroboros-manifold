@@ -143,7 +143,12 @@ func _test_debug_overlay_off_R104_01() -> void:
 	if ov == null:
 		return
 	_assert(not bool(ov.get("visible")), "A6b-2 G4: the debug overlay (FPS/Tick/Units/Sim) is visible on a fresh tactical view")
-	# H2 control: F3 really toggles it on, so the reading above can be false.
+	# H2 control: with the debug flag on (plan A8, FeatureFlags.ENABLE_DEBUG_OVERLAY), F3 really toggles it on, so the reading above can be false.
+	var flags := get_root().get_node_or_null("FeatureFlags")
+	_assert(flags != null, "A6b-2 setup: FeatureFlags autoload missing")
+	if flags == null:
+		return
+	flags.set("ENABLE_DEBUG_OVERLAY", true)
 	var e := InputEventKey.new()
 	e.keycode = KEY_F3
 	e.physical_keycode = KEY_F3
@@ -157,6 +162,7 @@ func _test_debug_overlay_off_R104_01() -> void:
 		await process_frame
 		await process_frame
 		_assert(not bool(ov.get("visible")), "A6b-2 control H2: second F3 did not hide the overlay again")
+	flags.set("ENABLE_DEBUG_OVERLAY", false)
 
 
 # -- A6b-3: objective name and completion ----------------------------------

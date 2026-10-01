@@ -3,18 +3,16 @@
 ## frame timing beyond the Label render cost.
 ##
 ## See also: docs/stage_specs/stage_13_spec.md (Checkpoint D, Invariant I10).
-##
-## Spec text suggested tick from SimBridge and units from UIDataBus, but in
-## this codebase tick/units live on TacticalBridge — same source the bug
-## report manager already reads (autoload/bug_report_manager.gd).
+## Gated by FeatureFlags.ENABLE_DEBUG_OVERLAY (default false): F3 does nothing
+## unless the flag is set. Tick and units come from the live tactical frame.
 extends CanvasLayer
 
+const SimSession := preload("res://autoload/sim_session.gd")
 const PANEL_MARGIN := 12.0
 const PANEL_PAD := 8.0
 
 var _label: Label
 var _panel: ColorRect
-var _connected: bool = false
 
 
 func _ready() -> void:
@@ -37,11 +35,10 @@ func _ready() -> void:
 
 	visible = false
 
-	if get_node_or_null("/root/TacticalBridge") != null:
-		TacticalBridge.connection_state_changed.connect(_on_connection_changed)
-
 
 func _unhandled_input(event: InputEvent) -> void:
+	if not FeatureFlags.ENABLE_DEBUG_OVERLAY:
+		return
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_F3:
 			visible = not visible
@@ -55,11 +52,12 @@ func _process(_delta: float) -> void:
 	var fps := int(Engine.get_frames_per_second())
 	var tick := -1
 	var unit_count := 0
-	if get_node_or_null("/root/TacticalBridge") != null:
-		tick = int(TacticalBridge.current_tick)
-		unit_count = TacticalBridge.units.size()
+	var frame: Dictionary = SimSession.bridge().tactical_frame()
+	if not frame.is_empty():
+		tick = int(frame.get("tick", -1))
+		unit_count = (frame.get("units", []) as Array).size()
 
-	var status := "connected" if _connected else "disconnected"
+	var status := "connected" if not frame.is_empty() else "disconnected"
 	var tick_str := str(tick) if tick >= 0 else "N/A"
 
 	_label.text = "FPS: %d\nTick: %s\nUnits: %d\nSim: %s" % [fps, tick_str, unit_count, status]
@@ -73,6 +71,3 @@ func _process(_delta: float) -> void:
 	_panel.offset_bottom = PANEL_MARGIN + h
 	_label.position = Vector2(PANEL_PAD, PANEL_PAD)
 
-
-func _on_connection_changed(connected: bool) -> void:
-	_connected = connected
