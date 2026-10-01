@@ -1467,6 +1467,15 @@ double om_mission_compute_urgency(const om_world *w, uint32_t region_idx, uint32
  * combat state (B10), not wired into om_mission_state -- so r defaults to
  * full retention (1.0) until that lands; om_mission_compute_retention is
  * already correct and ready for that wiring (see also: csrc/unit.c). */
+static uint32_t om_mission_main_commander(const om_world *w) {
+    uint32_t n = om_character_count(w);
+    for (uint32_t i = 0; i < n; i++) {
+        uint32_t id = om_character_id_at(w, i);
+        if (om_character_is_main_character(w, id)) return id;
+    }
+    return 0;
+}
+
 void om_mission_end(om_world *w) {
     om_mission_state *st = om_mis(w);
     st->tactical_ended = 1;
@@ -1484,6 +1493,9 @@ void om_mission_end(om_world *w) {
     if (st->mission_set && !st->end_applied) {
         st->end_applied = 1;
         om_mission_apply_consequences(w, st->mission_region, st->mission_archetype, st->band);
+        /* R-058-05 */
+        uint32_t commander = om_mission_main_commander(w);
+        if (commander != 0) om_mission_tag_rivals(w, st->mission_region, commander);
     }
 }
 
