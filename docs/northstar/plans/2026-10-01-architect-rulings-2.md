@@ -318,3 +318,25 @@ If the emitter cannot parse one of these forms as written, the Engineer reports 
 **A37. Option (b) for E-03: a planted-delay control.** The control's job is to prove the timing assertion is live. It is replaced by one that injects a known delay into the measured call and must exceed the budget, the same form as the A22 budget test. The budget, the measured workload of the real test and the helper's floor are untouched. Test-defect row: the old control's premise (ten times the regions) is impossible since A27. E-02, E-04 and E-05 keep their controls while they pass with a wide margin; if one starts to sit near its floor it gets the same replacement, with its own row, not before.
 
 **A38. Before HDR5 lands:** the 13 tests the gate lists as changed assertions are each classed in the ledger (test-defect with the rule that changed, or reverted); none lands unclassed. The `symbol_ownership` report on `om_gen_set_region_range` is the known lint artifact for a comment-only header change and is noted in the row. `test_e17_field_sampling_10000_queries` (9.5 ms against a 7.4 ms scaled budget, red on main before HDR5) is a pre-existing finding: it goes on Westley's list with the numbers, and nobody edits it.
+
+## Addendum 19, 2026-10-02 (B3 client Refuse flow; A3 tie-break)
+
+**A39. Refuse on the briefing.**
+1. Band 5 is named `refusal` in `scenes/debrief/debrief.gd`; the list covers every band the frame can carry, and an unknown band shows the error panel, never a clamped name.
+2. Handoff: the bridge keeps the latest debrief frame after `mission_end` and after `mission_refuse`, and the debrief scene shows that frame. Played and refused missions reach the debrief the same way. The debrief never starts a mission of its own: `load_debrief_live`'s start-then-end leaves the live path, and with no frame held the scene shows the error panel (A7). The Engineer lists which existing debrief tests relied on the self-load; each becomes a fixture change with a ledger row, or is reported if it proved something else.
+3. Refuse routes to the debrief (R-055-01: resolution, then the jump). The debrief of a refusal states the refusal and its consequence and offers the same way on to the jump.
+4. The A5 "Refuse disabled" assertion becomes a test-defect row when the button is wired, as ruled in section 5.
+
+**A40. The fallback picks move into core,** option (c). The pipe keeps the five retries and the `quiet_world` flag and asks core for the picks; it holds no tie-break of its own, so it needs no access to `OM_TIE_EPSILON`. The weakest player region comes from the function the mission generator already uses for the same fallback (`om_mission_fallback_region`), so the pipe and the generator cannot disagree. The enemy pick of A3-1 (nearest by hops, then highest total military, then lowest faction id) moves into `mission.c`; if no public function returns it, the contract gains `int32_t om_mission_fallback_enemy(const om_world *w, uint32_t region_idx);`, landing with its implementation. If the generator's fallback region rule differs from the pipe's current pick in any case, report the difference before changing either. The four `push/A3tie-tests` tests stay as they are and must pass through the pipe.
+
+## Addendum 20, 2026-10-02 (the fallback region: one rule, one function)
+
+The generator's `om_mission_fallback_region` picks the player region with the lowest military plus economy; the pipe picks the lowest stability composite. They differ on 18 to 66 of 400 seeds.
+
+**A41. Option (b): the core function is brought to the rule.** Both paths implement the same answer, Q-072-01, and Westley fixed its meaning on 2026-09-30: weakest is the lowest ALG-09 stability composite, ties to the lowest region index (R-072-07). The military-plus-economy form predates that and is stale. `om_mission_fallback_region` is changed to the rule, the pipe calls it and loses its own copy, and no second function is added. `om_mission_fallback_enemy` is added as in A40.
+
+- The assertions in `tests/csim/test_E10_S072_orders_come_from_where_the_world_hurts.py` and `test_E08_S055...` that pin the old form are test-defects (the rule was clarified after they were written); ledger rows. The four A3tie tests pass unchanged.
+- The determinism checksum moves on seeds where the generator's fallback fires; the ledger row says so.
+- The function reads the player faction through `om_mission_player_faction`, the pipe through `om_player_faction`. If the two can ever return different factions, report it before landing; there should be one answer to "who is the player".
+
+**A42. Harness piece 1 filters the 12 names.** The split piece keeps the macro set identical, as ruled: its emit skips the ten wrong `OM_TACTICAL_TICK_RATE_*` names and the two `OM_OM_MACRO_*` names through an explicit, commented skip list, and piece 3 removes that list when it fixes the parse. The piece-1 test allows no extras.
