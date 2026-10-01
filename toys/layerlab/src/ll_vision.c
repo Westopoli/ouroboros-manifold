@@ -68,3 +68,16 @@ int ll_side_vision(ll_state *s) {
             if (s->u[t].alive && s->u[t].side != side && s->sees[side][t]) any = 1;
     return any;
 }
+
+/* ---- R1 hook stubs (owner: R1 vision pass). Replace these; the call sites are fixed in ll_sim.c. ---- */
+
+const char *ll_vision_validate(const ll_scenario *sc) {
+    if (sc->rules.cover_mode == 1 && sc->terrain.n_cover > 0)
+        return "unimplemented feature: cover (cover_mode = 1 with n_cover > 0) arrives in rung R1";
+    for (int i = 0; i < sc->n_spawns; i++)
+        if (sc->spawns[i].pulse_tick >= 0)
+            return "unimplemented feature: pulse (spawn.pulse_tick >= 0) arrives in rung R1";
+    return 0;
+}
+
+void ll_pulse_update(ll_state *s) { (void)s; }

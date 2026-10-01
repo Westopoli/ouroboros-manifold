@@ -107,3 +107,18 @@ void ll_move_units(ll_state *s) {
         }
     }
 }
+
+/* ---- R1 hook stubs (owner: R1 movement pass). Replace these; the call sites are fixed in ll_sim.c. ---- */
+
+const char *ll_move_validate(const ll_scenario *sc) {
+    for (int i = 0; i < sc->n_spawns; i++) {
+        const ll_spawn *p = &sc->spawns[i];
+        if (sc->types[p->type].movement_kind == LL_MOVE_WALK)
+            return "unimplemented feature: walking units (movement_kind = LL_MOVE_WALK) arrive in rung R1";
+        if (p->transfer_layer != 0)
+            return "unimplemented feature: timed transfer (spawn.transfer_layer != 0) arrives in rung R1";
+    }
+    return 0;
+}
+
+void ll_layers_update(ll_state *s) { (void)s; }
