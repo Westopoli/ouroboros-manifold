@@ -50,10 +50,11 @@ def pipe_frames():
     frames = _run([SET_SEED, {"type": "cmd", "name": "step", "n": 10},
                    {"type": "cmd", "name": "mission_start", "faction": 0},
                    {"type": "cmd", "name": "mission_begin"},
-                   {"type": "cmd", "name": "tactical_step", "n": 1}])
+                   {"type": "cmd", "name": "tactical_step", "n": 1, "full": True}])
     mission = next(f for f in frames if f["type"] == "mission")
     tactical = [f for f in frames if f["type"] == "tactical"]
     assert len(tactical) == 2, [f["type"] for f in frames]
+    assert tactical[-1]["full"] is True, "A7: a tactical_step request with full:true answers a full frame"
     return mission, tactical[-1]
 
 
@@ -160,8 +161,10 @@ def test_visible_matches_the_world(pipe_frames, world):
     lib, w, _ = world
     ids = _units(lib, w)
     factions = sorted({lib.om_unit_get_faction(w, uid) for uid in ids})
+    player = lib.om_player_faction(w)
+    assert player in factions, "control: the player's faction has no units"
     visible = tactical["visible"]
-    assert set(visible) == {str(f) for f in factions}
-    for f in factions:
+    assert set(visible) == {str(player)}, "A7: visible holds only the player's faction"
+    for f in [player]:
         want = [uid for uid in ids if lib.om_player_can_see_unit(w, f, uid)]
         assert visible[str(f)] == want
