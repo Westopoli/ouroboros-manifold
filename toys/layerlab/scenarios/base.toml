@@ -1,0 +1,143 @@
+# Layer lab defaults. Architect-owned; every scenario extends this file.
+# Numbers: csrc/om_constants.h (roster, category matrix, vision factors, pulse),
+# csrc/unit.c (transition times). Rules defaults are same-layer-only combat
+# (register Q-008-01): a scenario turns cross-layer fire on. SPEC.md section 3.
+# Table index order for the 9-entry signed-offset arrays: offset -4 .. +4, so
+# index 4 is the same layer. Offset = target layer minus observer/attacker layer.
+
+[run]
+max_ticks = 6000
+stalemate_ticks = 400
+
+[rules]
+vis_factor         = [0.0, 0.0, 0.2, 0.5, 1.0, 0.5, 0.2, 0.0, 0.0]
+vantage_vis_factor = [0.0, 0.2, 0.4, 1.0, 1.0, 1.0, 0.4, 0.2, 0.0]
+sensor_elev_bonus_per_layer = 0.15
+range_mult         = [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0]
+dmg_mult           = [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0]
+aoe_layer_mult     = [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0]
+# rows: attacker Strike, Line, Siege; columns: target Strike, Line, Siege
+category_mult      = [[1.0, 0.75, 1.5], [1.5, 1.0, 0.75], [0.20, 1.5, 1.0]]
+aoe_cap_mult       = 4.0
+pulse_radius       = 500.0
+pulse_reveal_s     = 2.0
+pulse_cooldown_s   = 20.0
+transition_speed_mult = 1.0
+separation_weight  = 0.5
+spawn_jitter       = 10.0
+fire_requires_vision    = 1
+facing_gates_fire       = 0
+halfway_mode            = 1      # 0 both, 1 rule (Q-004-02), 2 untargetable
+auto_transition         = 1      # E-01 R-001-05; 0 is the control
+cover_mode              = 1
+chase_when_idle         = 0
+forced_change_penalty   = 100000 # Q-001-04 reading (a): a detour always wins
+timed_new_layer_at_half = 1      # Q-004-05 reading (a4)
+
+[terrain]
+preset = "flat"
+w_cells = 80
+h_cells = 40
+cell = 50.0
+layer_spacing = 0.0
+
+# Merged under every [types.*] table.
+[type_defaults]
+movement_kind = "fly"            # Q-004-05 reading (a1): every Settled Reach type flies
+body_radius = 15.0               # OM_UNIT_COLLISION_RADIUS
+arc_deg = 360.0
+aoe_r = 0.0
+ability_kind = 0
+ab_min_targets = 0
+ab_dmg_mult = 0.0
+ab_radius = 0.0
+ab_windup_s = 0.0
+ab_cooldown_s = 0.0
+pulse_capable = 0
+# cost, when a type omits it: hp * dmg / interval_s / 31.25 (Q-074-01, Vanguard = 100)
+
+[types.raider]
+category = "strike"
+hp = 250.0
+dmg = 9.0
+interval_s = 0.8
+range = 200.0
+speed = 150.0
+sensor = 800.0
+transition_s = 1.0
+turn_rate = 6.0
+
+[types.interceptor]
+category = "strike"
+hp = 325.0
+dmg = 6.0
+interval_s = 1.0
+range = 250.0
+speed = 130.0
+sensor = 1000.0
+transition_s = 1.2
+turn_rate = 6.0
+
+[types.vanguard]
+category = "line"
+hp = 500.0
+dmg = 7.5
+interval_s = 1.2
+range = 300.0
+speed = 80.0
+sensor = 700.0
+transition_s = 2.5
+turn_rate = 4.0
+
+[types.warden]
+category = "line"
+hp = 375.0
+dmg = 4.0
+interval_s = 1.5
+range = 350.0
+speed = 70.0
+sensor = 800.0
+transition_s = 2.0
+turn_rate = 4.0
+
+[types.bombard]
+category = "siege"
+hp = 400.0
+dmg = 17.5
+interval_s = 3.0
+range = 1200.0
+speed = 50.0
+sensor = 300.0
+transition_s = 4.0
+aoe_r = 150.0
+turn_rate = 2.5
+
+[types.bastion]
+category = "siege"
+hp = 1050.0
+dmg = 7.0
+interval_s = 1.8
+range = 800.0
+speed = 40.0
+sensor = 300.0
+transition_s = 5.0
+turn_rate = 2.5
+
+# Lab-only stand-in for the storm shape (SPEC.md section 3). Not a game unit.
+[types.caster]
+category = "line"
+hp = 120.0
+dmg = 4.0
+interval_s = 1.5
+range = 450.0
+speed = 55.0
+sensor = 700.0
+transition_s = 3.0
+turn_rate = 4.0
+cost = 150.0
+ability_kind = 1
+ab_min_targets = 3
+ab_dmg_mult = 6.0
+ab_radius = 120.0
+ab_windup_s = 1.5
+ab_cooldown_s = 12.0

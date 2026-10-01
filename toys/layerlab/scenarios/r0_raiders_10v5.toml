@@ -1,0 +1,27 @@
+# X1, the positive control: 10 against 5 of one type, flat, same layer.
+# Expected winner: A (the 10). Not a pillar; arithmetic. README section 5.
+extends = "base.toml"
+
+[[groups]]
+side = "A"
+type = "raider"
+count = 10
+formation = "line"
+x = 1000.0
+y = 1000.0
+facing = 0.0
+layer = 3
+order = "attack_move"
+goal = [3000.0, 1000.0]
+
+[[groups]]
+side = "B"
+type = "raider"
+count = 5
+formation = "line"
+x = 3000.0
+y = 1000.0
+facing = 180.0
+layer = 3
+order = "attack_move"
+goal = [1000.0, 1000.0]
