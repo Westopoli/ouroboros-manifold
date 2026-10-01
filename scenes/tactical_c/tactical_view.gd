@@ -21,6 +21,15 @@ const ZOOM_MIN := 1.0
 const ZOOM_MAX := 4.0
 const ZOOM_STEP := 1.25
 const PAN_SPEED_PX := 600.0
+
+# A6b HUD. The clock reads elapsed mission time (R-104-03) from the frame tick
+# at the sim's tactical rate; objective names follow csrc/mission.c
+# om_mission_objective_kind_name (kind ids R-075-01).
+const HUD_OBJECTIVE_NAMES := {
+	0: "Hold the zone", 1: "Destroy targets", 2: "Escort to extraction",
+	3: "Survive", 4: "Eliminate the enemy force",
+}
+const HUD_OBJECTIVE_FALLBACK := "Carry out the order"
 const EDGE_MARGIN_PX := 4.0
 
 # Real-time stepping (B9-N, 2026-09-28 QA-run wiring brief): before this, a
@@ -56,6 +65,9 @@ var _camera_initialized := false
 var _camera_canvas: float = 0.0
 var _camera_unbounded := false
 var _zoom := 1.0
+var _clock_label: Label
+var _objective_label: Label
+var _selection_label: Label
 var _last_tick := -1
 var _fit_scale := WORLD_SCALE
 var _pointer_seen := false
@@ -105,11 +117,43 @@ func _ready() -> void:
 		load_frame(bridge.tactical_frame())
 	else:
 		push_error("tactical_view: live tactical frame failed: %s" % bridge.last_error())
+	_clock_label = _make_hud_label(Vector2(1500.0, 20.0))
+	_objective_label = _make_hud_label(Vector2(20.0, 20.0))
+	_selection_label = _make_hud_label(Vector2(20.0, SCREEN_H - 60.0))
+	_update_hud()
 	var end_mission_btn := get_node_or_null("CanvasLayer/EndMission")
 	if end_mission_btn != null:
 		end_mission_btn.pressed.connect(func():
 			SceneRouter.go_to("debrief")
 		)
+
+
+func _make_hud_label(pos: Vector2) -> Label:
+	var l := Label.new()
+	l.position = pos
+	$CanvasLayer.add_child(l)
+	return l
+
+
+func _update_hud() -> void:
+	if _clock_label == null:
+		return
+	var secs := int(_frame.get("tick", 0) / int(TACTICAL_BASE_TICKS_PER_SECOND))
+	_clock_label.text = "%02d:%02d" % [secs / 60, secs % 60]
+	var lines: Array[String] = []
+	var bridge = SimSession.bridge()
+	# mission_frame() is empty when this scene is mounted without the briefing
+	# (tests, QA); _session_mission always holds the running mission's frame.
+	# See also: autoload/c_bridge.gd -- needs a public accessor, owned elsewhere.
+	var mission: Dictionary = bridge.mission_frame()
+	if mission.is_empty():
+		mission = bridge.get("_session_mission")
+	for o in mission.get("objectives", []):
+		if bool(o.get("primary", true)):
+			lines.append("%s %d%%" % [HUD_OBJECTIVE_NAMES.get(int(o.get("kind", -1)), HUD_OBJECTIVE_FALLBACK),
+				int(round(float(o.get("progress", 0.0)) * 100.0))])
+	_objective_label.text = "\n".join(lines)
+	_selection_label.text = "%d selected" % _selected.size() if not _selected.is_empty() else ""
 
 
 func _get_local_faction() -> int:
@@ -151,6 +195,7 @@ func load_frame(frame: Dictionary) -> void:
 	_prune_selected()
 	_update_display_px()
 	_redraw()
+	_update_hud()
 
 
 func qa_state() -> Dictionary:
@@ -361,6 +406,7 @@ func qa_box_select(x0: float, y0: float, x1: float, y1: float) -> Array:
 		if sx >= rx0 and sx <= rx1 and sy >= ry0 and sy <= ry1:
 			out.append(int(id_str))
 	_selected = out.duplicate()
+	_update_hud()
 	return out
 
 
@@ -368,6 +414,7 @@ func qa_set_selected(ids: Array) -> void:
 	_selected = []
 	for v in ids:
 		_selected.append(int(v))
+	_update_hud()
 
 
 func qa_pan(x: float, y: float) -> void:
