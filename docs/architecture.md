@@ -281,11 +281,11 @@ Only regions whose stored values changed appear; `checksum` is the world checksu
 
 ### tactical frame (full frame on `snapshot`, every 20th step and on request; delta frame otherwise)
 ```json
-{"type":"tactical","tick":120,"mission_over":false,"band":-1,"map":{"canvas":16000,"nodes":[{"i":0,"kind":0,"x":8000.0,"y":9200.0}],"cover":[{"x":1.0,"y":2.0,"r":120.0,"h":40.0}],"obstacles":[{"x":1.0,"y":2.0,"r":200.0}]},
+{"type":"tactical","tick":120,"mission_over":false,"band":-1,"objectives":[{"i":0,"progress":0.0}],"map":{"canvas":16000,"nodes":[{"i":0,"kind":0,"x":8000.0,"y":9200.0}],"cover":[{"x":1.0,"y":2.0,"r":120.0,"h":40.0}],"obstacles":[{"x":1.0,"y":2.0,"r":200.0}]},
  "full":true,
  "units":[{"id":4,"faction":0,"type":1,"tier":2,"x":100.0,"y":200.0,"hp":80.0,"layer":1,"facing":1.57,"target":-1,"state":0}],
  "visible":{"0":[4,5,9]}}
-{"type":"tactical","tick":121,"mission_over":false,"band":-1,"full":false,
+{"type":"tactical","tick":121,"mission_over":false,"band":-1,"objectives":[{"i":0,"progress":0.25}],"full":false,
  "units_changed":[{"id":4,"faction":0,"type":1,"tier":2,"x":101.0,"y":200.0,"hp":80.0,"layer":1,"facing":1.57,"target":-1,"state":0}],
  "units_removed":[7],
  "visible":{"0":[4,5]}}
@@ -297,6 +297,7 @@ Delta frame (A7, 2026-10-01 ruling; E-13 pipe budget: one `tactical_step` round 
 - `visible` is present on every frame, full or delta, and holds only the player's faction (`player_faction`), the complete id list each time; other factions' keys are never written. It is not diffed.
 - `tactical_step` with `n > 1` runs all `n` steps and writes one frame, for the last step; the delta is taken against the last frame written, so no change from the skipped steps is lost.
 - `mission_over` and `band` ride every frame, as before.
+- `objectives` (A6, 2026-10-01 ruling) rides every frame, full or delta: one `{"i":0,"progress":0.0}` per mission objective, in the mission frame's order, `i` the same index and `progress` the live completion (0.0 to 1.0, the same value as the mission frame's `objectives[].progress` and `om_mission_get_objectives`). It is never diffed: the whole array is written each frame. It lets the HUD show objective completion during play without a second request; the objective's `kind`, `node`, `radius` and `primary` stay in the mission frame.
 
 Reconstruction. The client keeps a dictionary `id -> unit`. On a full frame it replaces the dictionary with `units[]` and keeps `map`. On a delta frame it deletes every id in `units_removed`, then inserts or overwrites every entry of `units_changed`. After any frame the dictionary equals the full state at that frame's `tick`; a client that lost a frame or doubts its state sends `tactical_step` with `"full":true`, and the next full frame resynchronises it.
 Tactical positions are sim state (units move in the sim), so they are sent; strategic region positions are not. `visible[faction]` is built per unit from `om_player_can_see_unit` (`csrc/pipe/om_pipe.c:1126`), not from `om_visibility_compute`, which is a cache primer with no caller in play.
