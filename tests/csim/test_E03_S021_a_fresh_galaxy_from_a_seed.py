@@ -31,12 +31,12 @@ from conftest import (
 
 
 def test_R_021_01_region_count_integer_drawn_uniformly(lib, world_factory):
-    """Given a seed, When the world is generated, Then the region count is an integer drawn uniformly from [60, 110] and the faction count is 15."""
+    """Given a seed, When the world is generated, Then the region count is an integer drawn uniformly from [250, 400] and the faction count is 15."""
     w = world_factory(n_regions=0, seed=42)
     rc = generate(lib, w)
     assert rc == 1, "world generation failed"
     n_regions = lib.om_region_count(w)
-    assert 60 <= n_regions <= 110, f"region count {n_regions} not in [60, 110]"
+    assert 250 <= n_regions <= 400, f"region count {n_regions} not in [250, 400]"
     assert lib.om_faction_count(w) == 15, "faction count is not 15"
 
 
