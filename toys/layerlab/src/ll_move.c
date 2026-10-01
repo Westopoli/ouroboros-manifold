@@ -5,6 +5,7 @@
 #include "ll_nav.h"
 
 #define EPS 1e-9    /* absorbs the rounding of a time or position accumulated tick by tick */
+#define LL_SEPARATION_PASSES 8    /* SPEC 5.10 */
 
 void ll_face_init(ll_unit *u, double facing_deg) {
     double s, c;
@@ -157,6 +158,27 @@ static int can_stand(const ll_state *s, const ll_unit *u, double x, double y) {
     return ll_terrain_open(t, x, y, u->layer);
 }
 
+/* Hard bodies (SPEC 5.10): the step to (x,y) is refused when it lands closer than r_i + r_j to an alive unit on
+ * the same effective layer (neither on a slope), unless already that close and not getting nearer. */
+static int body_blocked(const ll_state *s, const ll_unit *u, double x, double y) {
+    for (int j = 0; j < s->n; j++) {
+        const ll_unit *o = &s->u[j];
+        if (o == u || !o->alive || o->slope >= 0 || o->layer != u->layer) continue;
+        double reach = u->ty->body_radius + o->ty->body_radius;
+        double nx = x - o->x, ny = y - o->y;
+        double after = nx * nx + ny * ny;
+        if (!(after < reach * reach)) continue;
+        double bx = u->x - o->x, by = u->y - o->y;
+        if (bx * bx + by * by < reach * reach && after >= bx * bx + by * by) continue;
+        return 1;
+    }
+    return 0;
+}
+
+static int can_step(const ll_state *s, const ll_unit *u, double x, double y) {
+    return can_stand(s, u, x, y) && !body_blocked(s, u, x, y);
+}
+
 static void mount(ll_unit *u, const ll_slope *sl, int index, int dir) {
     u->slope = index;
     u->slope_dir = dir;
@@ -298,9 +320,9 @@ void ll_move_units(ll_state *s) {
                 double step = u->ty->speed * (u->xfer_to ? s->rules->transition_speed_mult : 1.0) * LL_DT;
                 if (step > d) step = d;
                 double sx = mdx / d * step, sy = mdy / d * step;
-                if (can_stand(s, u, u->x + sx, u->y + sy)) { u->x += sx; u->y += sy; }
-                else if (can_stand(s, u, u->x + sx, u->y)) u->x += sx;
-                else if (can_stand(s, u, u->x, u->y + sy)) u->y += sy;
+                if (can_step(s, u, u->x + sx, u->y + sy)) { u->x += sx; u->y += sy; }
+                else if (can_step(s, u, u->x + sx, u->y)) u->x += sx;
+                else if (can_step(s, u, u->x, u->y + sy)) u->y += sy;
             } else steering = STEER_STAND;
         }
 
@@ -308,26 +330,28 @@ void ll_move_units(ll_state *s) {
         else if (steering == STEER_TARGET) turn_toward(u, mdx, mdy);
     }
 
-    /* same-layer separation, pairs i < j; units on a slope or winding up are not pushed */
+    /* same-layer separation, LL_SEPARATION_PASSES times, pairs i < j; units on a slope or winding up are not pushed */
     double w = s->rules->separation_weight;
-    for (int i = 0; i < s->n; i++) {
-        ll_unit *a = &s->u[i];
-        if (!a->alive || a->slope >= 0) continue;
-        for (int j = i + 1; j < s->n; j++) {
-            ll_unit *b = &s->u[j];
-            if (!b->alive || b->slope >= 0 || a->layer != b->layer) continue;
-            double dx = b->x - a->x, dy = b->y - a->y;
-            double dist = sqrt(dx * dx + dy * dy);
-            double overlap = a->ty->body_radius + b->ty->body_radius - dist;
-            if (!(overlap > 0.0)) continue;
-            double ax = 1.0, ay = 0.0;
-            if (dist > 0.0) { ax = dx / dist; ay = dy / dist; }
-            double push = overlap / 2.0 * w;
-            if (!a->winding && can_stand(s, a, a->x - ax * push, a->y - ay * push)) {
-                a->x -= ax * push; a->y -= ay * push;
-            }
-            if (!b->winding && can_stand(s, b, b->x + ax * push, b->y + ay * push)) {
-                b->x += ax * push; b->y += ay * push;
+    for (int pass = 0; pass < LL_SEPARATION_PASSES; pass++) {
+        for (int i = 0; i < s->n; i++) {
+            ll_unit *a = &s->u[i];
+            if (!a->alive || a->slope >= 0) continue;
+            for (int j = i + 1; j < s->n; j++) {
+                ll_unit *b = &s->u[j];
+                if (!b->alive || b->slope >= 0 || a->layer != b->layer) continue;
+                double dx = b->x - a->x, dy = b->y - a->y;
+                double dist = sqrt(dx * dx + dy * dy);
+                double overlap = a->ty->body_radius + b->ty->body_radius - dist;
+                if (!(overlap > 0.0)) continue;
+                double ax = 1.0, ay = 0.0;
+                if (dist > 0.0) { ax = dx / dist; ay = dy / dist; }
+                double push = overlap / 2.0 * w;
+                if (!a->winding && can_stand(s, a, a->x - ax * push, a->y - ay * push)) {
+                    a->x -= ax * push; a->y -= ay * push;
+                }
+                if (!b->winding && can_stand(s, b, b->x + ax * push, b->y + ay * push)) {
+                    b->x += ax * push; b->y += ay * push;
+                }
             }
         }
     }
