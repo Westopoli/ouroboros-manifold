@@ -40,6 +40,8 @@ var _debrief: Dictionary = {}
 var _chronicle: Dictionary = {}
 var _chronicle_snapshot: Dictionary = {}
 var _tactical: Dictionary = {}
+var _tactical_units: Dictionary = {}
+var _tactical_map: Dictionary = {}
 var _session_args: Array = []
 var _session_id: int = 0
 var _player_faction: int = -1
@@ -431,11 +433,36 @@ func send_unit_command(cmd: Dictionary) -> bool:
 	return true
 
 
-# Advances the already-begun mission by n tactical ticks and captures the
-# last (n-th) tactical frame. Returns false (leaves _tactical empty) if the
-# session is not open, the pipe sends an error, or the step times out.
-# Note: tactical_step n=k sends k tactical frames; this waits for all k and
-# stores the last one so the caller gets the final tick, not an intermediate.
+# Folds a full or delta tactical frame (A7) into the id -> unit dictionary and
+# returns the reconstructed full view tactical_view.gd reads. The map is kept
+# from the last full frame; units are listed in ascending id.
+func _reconstruct_tactical(frame: Dictionary) -> Dictionary:
+	if bool(frame.get("full", true)):
+		_tactical_units = {}
+		_tactical_map = frame.get("map", {})
+	else:
+		for id in frame.get("units_removed", []):
+			_tactical_units.erase(int(id))
+	for u in frame.get("units", frame.get("units_changed", [])):
+		_tactical_units[int(u["id"])] = u
+	var ids := _tactical_units.keys()
+	ids.sort()
+	var units: Array = []
+	for id in ids:
+		units.append(_tactical_units[id])
+	var view := frame.duplicate()
+	for k in ["units_changed", "units_removed"]:
+		view.erase(k)
+	view["full"] = true
+	view["units"] = units
+	view["map"] = _tactical_map
+	return view
+
+
+# Advances the already-begun mission by n tactical ticks and stores the
+# reconstructed frame of the last tick. tactical_step n=k answers one frame
+# (the last step's), so this waits for one. Returns false (leaves _tactical
+# empty) if the session is not open, the pipe sends an error, or it times out.
 func tactical_step_n(n: int) -> bool:
 	if n <= 0:
 		return true
@@ -444,25 +471,23 @@ func tactical_step_n(n: int) -> bool:
 		return false
 	_tactical = {}
 	_last_error = ""
-	# Use a dict so the lambda can mutate state visible outside it; GDScript 4
-	# captures primitives by value (int counter wouldn't propagate out).
-	var state := {"count": 0, "last": {}}
+	# A dict so the lambda can mutate state visible outside it (primitives are captured by value).
+	var state := {"last": {}}
 	var on_frame := func(frame):
 		if String(frame.get("type", "")) == "tactical":
-			state["count"] = int(state["count"]) + 1
 			state["last"] = frame
 	frame_received.connect(on_frame)
 	send_command({"type": "cmd", "name": "tactical_step", "n": n})
 	var deadline_msec := Time.get_ticks_msec() + LIVE_READ_TIMEOUT_MSEC
-	while int(state["count"]) < n and _last_error == "" and Time.get_ticks_msec() < deadline_msec:
+	while (state["last"] as Dictionary).is_empty() and _last_error == "" and Time.get_ticks_msec() < deadline_msec:
 		if pump() == 0:
 			OS.delay_msec(5)
 	frame_received.disconnect(on_frame)
-	if int(state["count"]) != n:
+	if (state["last"] as Dictionary).is_empty():
 		if _last_error == "":
-			_last_error = "timed out waiting for %d tactical frames (got %d)" % [n, int(state["count"])]
+			_last_error = "timed out waiting for the tactical frame"
 		return false
-	_tactical = state["last"]
+	_tactical = _reconstruct_tactical(state["last"])
 	return true
 
 
@@ -520,7 +545,7 @@ func begin_mission_live(seed: int, n_regions: int, features: Array) -> bool:
 	var frames: Dictionary = _request([{"type": "cmd", "name": "mission_begin"}], ["tactical"])
 	if frames.is_empty():
 		return false
-	_tactical = frames["tactical"]
+	_tactical = _reconstruct_tactical(frames["tactical"])
 	return true
 
 
@@ -533,7 +558,7 @@ func load_tactical_live(seed: int, n_regions: int, features: Array) -> bool:
 	var frames: Dictionary = _request([{"type": "cmd", "name": "tactical_step", "n": 1}], ["tactical"])
 	if frames.is_empty():
 		return false
-	_tactical = frames["tactical"]
+	_tactical = _reconstruct_tactical(frames["tactical"])
 	return true
 
 
