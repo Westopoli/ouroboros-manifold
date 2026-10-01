@@ -231,3 +231,19 @@ Smaller points:
 - The previous-descendant pool ignoring "last played at least 1 chapter ago" (R-058-02) is a defect in the existing pool. It is fixed in this piece as a second unit with its own test, since the pick now depends on that pool; a fixture that only passed because of the defect is corrected with a ledger row.
 - `docs/architecture.md`'s line saying Q-062-01 stays open is rewritten when the piece lands.
 - `pieces.toml`: the piece's acceptance lists `tests/csim/test_E08_S062_collapse_pick.py` (this commit).
+
+## Addendum 12, 2026-10-01 (C2: region scale, HDR5)
+
+Rule text changed in the same commit: `docs/bible/algorithms.md` ALG-31 now gives `WORLD_REGION_COUNT_RANGE = (250, 400)`, matching E-03 R-021-01 (Westley, 2026-09-28). The constants regenerate from it. The stale "default [60,110]" comment in `csrc/ouroboros_sim.h` is corrected by the core piece that raises the cap.
+
+**A27. Past the cap.** `OM_MAX_REGIONS` is 512. `om_world_new` with more than 512 regions returns NULL, and a generation range whose draw would exceed the cap leaves the world ungenerated, the same failure shape generation already has for an infeasible count. The tests' pins are approved.
+
+**A28. The R-021-06 corridor test is a test defect.** It took the first empty neighbour as the corridor empty, which held at 60 to 110 regions only by seed luck. The fix, in order of preference:
+1. If the corridor empties can be identified exactly from public data (for example a fixed index order the generator guarantees), the test names each faction's corridor empty and asserts the rule as written: it neighbours that faction's highest frontier, and consecutive factions' corridor empties are linked.
+2. Otherwise the proposed form: some empty neighbour of each faction's highest frontier is adjacent to some empty neighbour of the next faction's.
+
+Either way it ships with a positive control: a world with one corridor link cut must fail the test. If form 2 cannot be made to fail on a cut link, it does not prove the rule; report that and stop. Ledger row as a test-defect; the rule text is unchanged.
+
+**A29. Order of the build.** One owner at a time: core (`om_internal.h`, `region.c`, `sim.c`, including the `seen[]` array that moves with the cap), then `friction.c` (the adjacency walk; golden checksum unchanged), `worldgen.c`, `save.c` (version 4 to 5). The n² loop near the pipe snapshot is measured at 400 regions first; it is changed only if the number says so, as its own T1-N piece.
+
+For Westley: the E-03 generation target still reads "a 110-region world in under 5 ms". It needs restating for 400 regions; until he does, no test asserts a generation time at the new scale.
