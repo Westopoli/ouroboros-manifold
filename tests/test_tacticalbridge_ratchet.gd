@@ -5,7 +5,7 @@ extends SceneTree
 # overlay and E2 bug report rewired, E3 legacy tactical scene deleted).
 #
 # THIS IS A RATCHET, NOT THE FINAL STATE. It cannot go green-by-removal until E2 and E3
-# land, so today it records the files that still name TacticalBridge (25, listed below) and
+# land, so today it records the files that still name TacticalBridge (25, listed below; G4 swapped autoload/debug_overlay.gd for its own test) and
 # asserts the set only shrinks:
 #   - no file outside KNOWN_REFERENCERS may name TacticalBridge or tactical_bridge (a new
 #     reader is a regression, reported by path);
@@ -24,7 +24,6 @@ const EXTENSIONS := ["gd", "tscn", "tres"]
 
 const KNOWN_REFERENCERS := [
 	"autoload/bug_report_manager.gd",
-	"autoload/debug_overlay.gd",
 	"autoload/mission_metrics_recorder.gd",
 	"autoload/qa_daemon.gd",
 	"autoload/ws_input_sanitizer.gd",
@@ -45,6 +44,7 @@ const KNOWN_REFERENCERS := [
 	"scripts/tactical/visibility.gd",
 	"tests/test_boot_scripts_parse.gd",
 	"tests/test_cover_render.gd",
+	"tests/test_debug_overlay_gate.gd",
 	"tests/test_input_router_control_groups.gd",
 	"tests/test_input_router_selection.gd",
 	"tests/test_qa_state_scenes.gd",
