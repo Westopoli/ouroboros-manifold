@@ -1768,10 +1768,6 @@ static void handle_command(const char *json) {
     write_ack("command");
 }
 
-static int slot_name_cmp(const void *a, const void *b) {
-    return strcmp((const char *)a, (const char *)b);
-}
-
 static void handle_list_saves(const char *json) {
     char dir[1024];
     if (!get_str(json, "dir", dir, sizeof dir)) {
@@ -1806,7 +1802,16 @@ static void handle_list_saves(const char *json) {
             memcpy(names[n_names++], ent->d_name, nlen + 1);
         }
         closedir(d);
-        if (n_names > 1) qsort(names, n_names, SLOT_NAME_MAX, slot_name_cmp);
+        for (size_t a = 1; a < n_names; a++) {
+            char tmp[SLOT_NAME_MAX];
+            memcpy(tmp, names[a], SLOT_NAME_MAX);
+            size_t b = a;
+            while (b > 0 && strcmp(names[b - 1], tmp) > 0) {
+                memcpy(names[b], names[b - 1], SLOT_NAME_MAX);
+                b--;
+            }
+            memcpy(names[b], tmp, SLOT_NAME_MAX);
+        }
         for (size_t ni = 0; ni < n_names; ni++) {
             const char *name = names[ni];
             size_t nlen = strlen(name);
