@@ -15,6 +15,14 @@ const SCREEN_H := 1080.0
 const WORLD_SCALE := 0.25
 const UNIT_SIZE := 24.0
 
+# A6a camera. Q-103-04 leaves the bible without numbers: these are named
+# placeholders. Zoom 1.0 fits the whole canvas to the screen height.
+const ZOOM_MIN := 1.0
+const ZOOM_MAX := 4.0
+const ZOOM_STEP := 1.25
+const PAN_SPEED_PX := 600.0
+const EDGE_MARGIN_PX := 4.0
+
 # Real-time stepping (B9-N, 2026-09-28 QA-run wiring brief): before this, a
 # deployed mission only ever advanced through the qa_step() QA hook, so real
 # play froze at tick 0. _process() accumulates real time and requests whole
@@ -47,6 +55,10 @@ var _camera := Vector2.ZERO
 var _camera_initialized := false
 var _camera_canvas: float = 0.0
 var _camera_unbounded := false
+var _zoom := 1.0
+var _last_tick := -1
+var _fit_scale := WORLD_SCALE
+var _pointer_seen := false
 var _facing_fixed := false
 var _frozen_facing: Dictionary = {}
 var _selected: Array = []
@@ -120,9 +132,15 @@ func load_frame(frame: Dictionary) -> void:
 		SceneRouter.go_to("debrief")
 	_canvas = float(frame.get("map", {}).get("canvas", 0.0))
 	if _canvas > 0.0:
-		_world_scale = SCREEN_H / _canvas
-	if _canvas > 0.0 and (not _camera_initialized or _canvas != _camera_canvas):
-		_camera = Vector2(_canvas * 0.5, _canvas * 0.5)
+		_fit_scale = SCREEN_H / _canvas
+		_world_scale = _fit_scale * _zoom
+	var tick := int(frame.get("tick", 0))
+	var fresh_load := tick <= _last_tick
+	_last_tick = tick
+	if _canvas > 0.0 and (not _camera_initialized or _canvas != _camera_canvas or fresh_load):
+		_zoom = 1.0
+		_world_scale = _fit_scale
+		_camera = _force_camera()
 		_camera_initialized = true
 		_camera_canvas = _canvas
 	if _facing_fixed:
@@ -289,6 +307,7 @@ func send_command(cmd: Dictionary) -> bool:
 # mission has not begun yet or has already ended (_mission_over_seen); the
 # scene has no pause/menu state to also gate on.
 func _process(delta: float) -> void:
+	_pan_input(delta)
 	if _mission_over_seen:
 		return
 	var bridge = SimSession.bridge()
@@ -356,13 +375,84 @@ func qa_pan(x: float, y: float) -> void:
 		_camera = Vector2(x, y)
 	else:
 		_camera = Vector2(clampf(x, 0.0, _canvas), clampf(y, 0.0, _canvas))
+	_update_display_px()
 	_redraw()
 
 
+# Frames what the player sees at mission start: shifts the canvas-centred camera
+# just enough to bring every visible unit's sprite on screen; if they cannot all
+# fit, centres on their bounding box.
+func _force_camera() -> Vector2:
+	var centre := Vector2(_canvas * 0.5, _canvas * 0.5)
+	var lf := _get_local_faction()
+	var seen := _visible_ids()
+	var lo := Vector2(INF, INF)
+	var hi := Vector2(-INF, -INF)
+	for u in _frame.get("units", []):
+		if int(u.get("faction", -1)) == lf or seen.has(int(u.get("id"))):
+			var p := Vector2(float(u.get("x", 0.0)), float(u.get("y", 0.0)))
+			lo = lo.min(p)
+			hi = hi.max(p)
+	if lo.x == INF:
+		return centre
+	var pad := UNIT_SIZE * 0.5 / _world_scale
+	var half := Vector2(SCREEN_W, SCREEN_H) * 0.5 / _world_scale
+	var cam := centre
+	for axis in 2:
+		var lo_a := lo[axis] - pad
+		var hi_a := hi[axis] + pad
+		if hi_a - lo_a >= half[axis] * 2.0:
+			cam[axis] = (lo_a + hi_a) * 0.5
+		elif lo_a < centre[axis] - half[axis]:
+			cam[axis] = lo_a + half[axis]
+		elif hi_a > centre[axis] + half[axis]:
+			cam[axis] = hi_a - half[axis]
+	return cam
+
+
+func _zoom_by(factor: float) -> void:
+	_zoom = clampf(_zoom * factor, ZOOM_MIN, ZOOM_MAX)
+	_world_scale = _fit_scale * _zoom
+	qa_pan(_camera.x, _camera.y)
+
+
+func _pan_input(delta: float) -> void:
+	var dir := Vector2.ZERO
+	if Input.is_key_pressed(KEY_LEFT):
+		dir.x -= 1.0
+	if Input.is_key_pressed(KEY_RIGHT):
+		dir.x += 1.0
+	if Input.is_key_pressed(KEY_UP):
+		dir.y -= 1.0
+	if Input.is_key_pressed(KEY_DOWN):
+		dir.y += 1.0
+	if _pointer_seen:
+		var vp := get_viewport()
+		var m := vp.get_mouse_position()
+		var r := vp.get_visible_rect().size
+		if m.x <= EDGE_MARGIN_PX:
+			dir.x -= 1.0
+		elif m.x >= r.x - EDGE_MARGIN_PX:
+			dir.x += 1.0
+		if m.y <= EDGE_MARGIN_PX:
+			dir.y -= 1.0
+		elif m.y >= r.y - EDGE_MARGIN_PX:
+			dir.y += 1.0
+	if dir != Vector2.ZERO and _world_scale > 0.0:
+		var step := dir.normalized() * PAN_SPEED_PX * delta / _world_scale
+		qa_pan(_camera.x + step.x, _camera.y + step.y)
+
+
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseMotion:
+		_pointer_seen = true
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
-		if mb.button_index == MOUSE_BUTTON_LEFT:
+		if mb.button_index == MOUSE_BUTTON_WHEEL_UP and mb.pressed:
+			_zoom_by(ZOOM_STEP)
+		elif mb.button_index == MOUSE_BUTTON_WHEEL_DOWN and mb.pressed:
+			_zoom_by(1.0 / ZOOM_STEP)
+		elif mb.button_index == MOUSE_BUTTON_LEFT:
 			if mb.pressed:
 				_drag_start = mb.position
 			else:
