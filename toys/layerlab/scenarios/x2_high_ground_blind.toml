@@ -1,0 +1,48 @@
+# X2: A holds a layer above B, and B cannot see up. Both sides attack-move toward each other.
+# Pillar (Westley, 2026-09-30): "when units have a layer advantage, they can shoot without
+# being shot back." Expected winner: A.
+#
+# Conditions that make "A should win" true here, and nothing else:
+#   - 10 v 10, identical raiders (250 hp, 9 dmg, 0.8 s, range 200, sensor 800), both
+#     attack-moving at each other along y = 1000 (a symmetric approach: with the same layer and
+#     the same rules this is the X0 mirror, which A wins 48.5 percent of the time);
+#   - A on layer 4, B on layer 3;
+#   - cross-layer fire is ON between adjacent layers in both directions, full range, full damage
+#     (layer position gives no damage or range bonus);
+#   - vision looking DOWN one layer is the production 0.50 (A sees B out to 400);
+#     vision looking UP one layer is 0.0: B cannot see A at any distance (the knob under test,
+#     rules.vis_factor[5]);
+#   - fire requires the shooter's side to see the target.
+# So B can never target A, and A shoots at will.
+extends = "base.toml"
+
+[rules]
+# Index = target layer minus own layer + 4: [3] looking/firing down one layer, [5] up one layer.
+vis_factor         = [0.0, 0.0, 0.2, 0.5, 1.0, 0.0, 0.2, 0.0, 0.0]
+range_mult         = [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0]
+dmg_mult           = [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0]
+aoe_layer_mult     = [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0]
+
+[[groups]]
+side = "A"
+type = "raider"
+count = 10
+formation = "line"
+x = 1000.0
+y = 1000.0
+facing = 0.0
+layer = 4
+order = "attack_move"
+goal = [3000.0, 1000.0]
+
+[[groups]]
+side = "B"
+type = "raider"
+count = 10
+formation = "line"
+x = 3000.0
+y = 1000.0
+facing = 180.0
+layer = 3
+order = "attack_move"
+goal = [1000.0, 1000.0]

@@ -33,7 +33,8 @@ halfway_mode            = 1      # 0 both, 1 rule (Q-004-02), 2 untargetable
 auto_transition         = 1      # E-01 R-001-05; 0 is the control
 cover_mode              = 1
 chase_when_idle         = 0
-forced_change_penalty   = 100000 # Q-001-04 reading (a): a detour always wins
+forced_change_penalty   = 0      # Q-001-04 closed 2026-10-01: the shortest route by travel time wins across layers;
+                                 # an extra cost in world units per layer changed (100000 = a detour always wins)
 timed_new_layer_at_half = 1      # Q-004-05 reading (a4)
 
 [terrain]
@@ -143,3 +144,17 @@ ab_dmg_mult = 6.0
 ab_radius = 120.0
 ab_windup_s = 1.5
 ab_cooldown_s = 12.0
+
+# Lab-only seer (Q-E12-01 closed 2026-10-01): a roster unit, costly, wide cross-layer sight, no attack.
+# Cost and counter are tuned in the lab; the numbers here are starting values, not decisions.
+[types.seer]
+category = "strike"
+hp = 80.0
+dmg = 0.0
+interval_s = 1.0
+range = 0.0
+speed = 90.0
+sensor = 1500.0
+transition_s = 1.5
+turn_rate = 6.0
+cost = 120.0
