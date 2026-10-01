@@ -7,6 +7,7 @@
  * R0 implements fixed-layer combat; features owned by R1/R2 are rejected here, never ignored. */
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "ll_internal.h"
 
@@ -189,13 +190,17 @@ static int setup(ll_state *s, const ll_scenario *sc, uint64_t seed) {
 int ll_probe_can_see(const ll_scenario *sc, uint64_t seed, int observer, int target) {
     ll_err("%s", "");
     if (!sc) { ll_err("null scenario"); return -1; }
-    ll_state s;
-    if (setup(&s, sc, seed)) return -1;
-    if (observer < 0 || observer >= s.n || target < 0 || target >= s.n) {
-        ll_err("probe: unit index out of range");
-        return -1;
+    ll_state *s = malloc(sizeof *s);
+    if (!s) { ll_err("out of memory"); return -1; }
+    int r = -1;
+    if (!setup(s, sc, seed)) {
+        if (observer < 0 || observer >= s->n || target < 0 || target >= s->n)
+            ll_err("probe: unit index out of range");
+        else
+            r = ll_can_see(s, observer, target);
     }
-    return ll_can_see(&s, observer, target);
+    free(s);
+    return r;
 }
 
 /* ---- the run ---- */
@@ -210,64 +215,65 @@ int ll_run(const ll_scenario *sc, uint64_t seed, ll_result *out, ll_trace *trace
     out->alerted_tick[0] = out->alerted_tick[1] = -1;
     if (trace) trace->ticks_written = 0;
 
-    ll_state s;
-    if (setup(&s, sc, seed)) return 1;
-    if (ll_nav_init(&s)) return 1;
+    ll_state *s = malloc(sizeof *s);
+    if (!s) { ll_err("out of memory"); return 1; }
+    if (setup(s, sc, seed)) { free(s); return 1; }
+    if (ll_nav_init(s)) { free(s); return 1; }
 
     double hp0[2] = {0.0, 0.0};
-    for (int i = 0; i < s.n; i++) hp0[s.u[i].side] += s.u[i].hp0;
+    for (int i = 0; i < s->n; i++) hp0[s->u[i].side] += s->u[i].hp0;
 
     int stale = 0, ran = 0;
     const int max_ticks = sc->rules.max_ticks;
     for (int tick = 0; tick < max_ticks; tick++) {
-        s.tick = tick;
+        s->tick = tick;
         int alive_start[2] = {0, 0};
-        for (int i = 0; i < s.n; i++) {                       /* step 1 */
-            if (!s.u[i].alive) continue;
-            alive_start[s.u[i].side]++;
-            s.u[i].cooldown -= LL_DT;
+        for (int i = 0; i < s->n; i++) {                       /* step 1 */
+            if (!s->u[i].alive) continue;
+            alive_start[s->u[i].side]++;
+            s->u[i].cooldown -= LL_DT;
         }
-        ll_layers_update(&s);                                 /* step 2: effective layers, transfers */
-        ll_update_arrival(&s);
-        ll_pulse_update(&s);                                  /* step 3: pulses, then vision */
-        ll_emit_update(&s);                                   /* step 3: going dark switches, pings (ABI 3) */
-        ll_ping_update(&s);
-        if (ll_side_vision(&s) && out->first_contact_tick < 0)
+        ll_layers_update(s);                                 /* step 2: effective layers, transfers */
+        ll_update_arrival(s);
+        ll_pulse_update(s);                                  /* step 3: pulses, then vision */
+        ll_emit_update(s);                                   /* step 3: going dark switches, pings (ABI 3) */
+        ll_ping_update(s);
+        if (ll_side_vision(s) && out->first_contact_tick < 0)
             out->first_contact_tick = tick;
-        ll_acquire(&s);                                       /* step 4 */
-        ll_fire(&s);
-        ll_burst_update(&s);
+        ll_acquire(s);                                       /* step 4 */
+        ll_fire(s);
+        ll_burst_update(s);
         uint8_t can_fire[LL_MAX_UNITS];                       /* SPEC 5.11a: measurement only */
-        for (int i = 0; i < s.n; i++) {
-            const ll_unit *u = &s.u[i];
+        for (int i = 0; i < s->n; i++) {
+            const ll_unit *u = &s->u[i];
             can_fire[i] = 0;
             if (!u->alive) continue;
             out->alive_ticks[u->side]++;
             if (u->winding || u->target < 0) continue;
             can_fire[i] = 1;
             out->firing_ticks[u->side]++;
-            out->firing_weight[u->side] += sc->rules.category_mult[u->ty->category][s.u[u->target].ty->category];
+            out->firing_weight[u->side] += sc->rules.category_mult[u->ty->category][s->u[u->target].ty->category];
         }
-        if (out->first_shot_tick < 0 && (s.fired_side[0] || s.fired_side[1])) {
+        if (out->first_shot_tick < 0 && (s->fired_side[0] || s->fired_side[1])) {
             out->first_shot_tick = tick;
-            out->first_shot_side = s.fired_side[0] ? 0 : 1;
+            out->first_shot_side = s->fired_side[0] ? 0 : 1;
         }
         if (alive_start[0] > 0 && alive_start[1] > 0) {
-            if (s.fired_side[0] && !s.fired_side[1]) out->unanswered_ticks[0]++;
-            if (s.fired_side[1] && !s.fired_side[0]) out->unanswered_ticks[1]++;
+            if (s->fired_side[0] && !s->fired_side[1]) out->unanswered_ticks[0]++;
+            if (s->fired_side[1] && !s->fired_side[0]) out->unanswered_ticks[1]++;
         }
-        ll_move_units(&s);                                    /* step 5 */
-        int hurt = ll_apply_damage(&s);                       /* step 6 */
+        ll_move_units(s);                                    /* step 5 */
+        int hurt = ll_apply_damage(s);                       /* step 6 */
         ran = tick + 1;
 
         int alive[2] = {0, 0};
-        for (int i = 0; i < s.n; i++) if (s.u[i].alive) alive[s.u[i].side]++;
+        for (int i = 0; i < s->n; i++) if (s->u[i].alive) alive[s->u[i].side]++;
         stale = hurt ? 0 : stale + 1;
 
         if (trace && trace->ticks_written < trace->capacity_ticks) {
-            ll_trace_rec *rec = trace->buf + (size_t)trace->ticks_written * (size_t)s.n;
-            for (int i = 0; i < s.n; i++) {
-                const ll_unit *u = &s.u[i];
+            ll_trace_rec *rec = trace->buf + (size_t)trace->ticks_written * (size_t)s->n;
+            for (int i = 0; i < s->n; i++) {
+                const ll_unit *u = &s->u[i];
                 rec[i].x = (float)u->x;
                 rec[i].y = (float)u->y;
                 rec[i].hp = (float)u->hp;
@@ -276,7 +282,7 @@ int ll_run(const ll_scenario *sc, uint64_t seed, ll_result *out, ll_trace *trace
                 rec[i].side = (uint8_t)u->side;
                 rec[i].alive = (uint8_t)u->alive;
                 rec[i].flags = (uint8_t)((u->changing ? 1 : 0) | (u->fired ? 2 : 0) |
-                                         (u->slope >= 0 ? 4 : 0) | (s.sees[1 - u->side][i] ? 8 : 0) |
+                                         (u->slope >= 0 ? 4 : 0) | (s->sees[1 - u->side][i] ? 8 : 0) |
                                          (can_fire[i] ? 16 : 0));
             }
             trace->ticks_written++;
@@ -290,15 +296,15 @@ int ll_run(const ll_scenario *sc, uint64_t seed, ll_result *out, ll_trace *trace
         if (tick + 1 == max_ticks) { out->winner = LL_WIN_CAP; break; }
     }
 
-    ll_nav_free(&s);
+    ll_nav_free(s);
     for (int k = 0; k < 2; k++) {
-        out->alerted_tick[k] = s.alerted_tick[k]; out->alerts[k] = s.alerts[k];
-        out->alert_dir_x[k] = s.alert_dx[k]; out->alert_dir_y[k] = s.alert_dy[k];
+        out->alerted_tick[k] = s->alerted_tick[k]; out->alerts[k] = s->alerts[k];
+        out->alert_dir_x[k] = s->alert_dx[k]; out->alert_dir_y[k] = s->alert_dy[k];
     }
     out->ticks = ran;
     double hp_left[2] = {0.0, 0.0};
-    for (int i = 0; i < s.n; i++) {
-        const ll_unit *u = &s.u[i];
+    for (int i = 0; i < s->n; i++) {
+        const ll_unit *u = &s->u[i];
         if (u->alive) { out->survivors[u->side]++; hp_left[u->side] += u->hp; }
         out->transitions += u->transitions;
         out->unit[i].x = u->x;
@@ -310,9 +316,10 @@ int ll_run(const ll_scenario *sc, uint64_t seed, ll_result *out, ll_trace *trace
     }
     for (int side = 0; side < 2; side++) {
         out->hp_ratio[side] = hp0[side] > 0.0 ? hp_left[side] / hp0[side] : 0.0;
-        out->cost_lost[side] = s.cost_lost[side];
-        out->damage_dealt[side] = s.damage_dealt[side];
-        out->shots[side] = s.shots[side];
+        out->cost_lost[side] = s->cost_lost[side];
+        out->damage_dealt[side] = s->damage_dealt[side];
+        out->shots[side] = s->shots[side];
     }
+    free(s);
     return 0;
 }

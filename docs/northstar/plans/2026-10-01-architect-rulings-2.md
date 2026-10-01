@@ -296,11 +296,17 @@ Source: `docs/northstar/plans/2026-10-02-alg-unparsed-names.md` on `push/INV-alg
 | 56 | the minutes become their own keyed list, `MISSION_BASE_MINUTES[archetype]: siege 60, multi_front 60, assault 52.5, containment 52.5, reconquest 45, defensive 37.5, interception 37.5, counterinsurgency 37.5, suppression 30, evacuation 30`, separated from `TACTICAL_TICK_RATE`; the literal table in `mission.c` reads the emitted names |
 | 76 | the leading `OM_` is dropped from the two macro names in the text |
 | 27 | `ARCHETYPE_STARTING_TECH[archetype]: conqueror (5, 15), fortifier (10, 20), warlord (5, 10), opportunist (8, 15), schism (0, 0), player_civilization (10, 20), breakaway (0, 0)`, transcribed from `simulation/config.py` |
-| 75 | `STRUCTURE_COUNT_RANGE[canvas]: small (2, 4), medium (3, 6), large (4, 8)` and `ARCHETYPE_STRUCTURE_SPLIT[archetype]` as (player, enemy, neutral): defensive_stand (0.50, 0.25, 0.25), siege_breaking (0.33, 0.33, 0.34), reconquest (0.25, 0.50, 0.25), assault (0.25, 0.50, 0.25), suppression (0.40, 0.30, 0.30), multi_front_defense (0.40, 0.35, 0.25), interception (0.33, 0.34, 0.33), evacuation (0.50, 0.25, 0.25); both transcribed from `simulation/config.py`. `tactical_support.c` reads the emitted range |
+| 75 | `STRUCTURE_COUNT_RANGE[canvas]: small (2, 4), medium (3, 6), large (4, 8)` and `ARCHETYPE_STRUCTURE_SPLIT[archetype]` as (player, enemy, neutral): defensive_stand (0.50, 0.25, 0.25), siege_breaking (0.33, 0.33, 0.34), reconquest (0.25, 0.50, 0.25), assault (0.25, 0.50, 0.25), suppression (0.40, 0.30, 0.30), multi_front_defense (0.40, 0.35, 0.25), interception (0.33, 0.34, 0.33), evacuation (0.50, 0.25, 0.25), containment (0.33, 0.34, 0.33), counterinsurgency (0.40, 0.30, 0.30); the range transcribed from `simulation/config.py`, the split as E-15 R-126-01 states it. `tactical_support.c` reads the emitted range |
 
 If the emitter cannot parse one of these forms as written, the Engineer reports the form it can parse; the wording is then adjusted here, not improvised.
 
 *Findings, not harness work.* One read-only Engineer check, reported once:
 - Does structure placement (B4, `mission.c`) follow `ARCHETYPE_STRUCTURE_SPLIT`? R-126-01 assigns owners per archetype; if the code uses other fractions, that is a defect to rule on.
 - Does any code set a mid-game faction's starting tech from `ARCHETYPE_STARTING_TECH`? The report found none.
-- The split has no row for containment or counterinsurgency: new register row Q-126-03, for Westley.
+- (Withdrawn, see A35: the split covers all ten archetypes.)
+
+## Addendum 17, 2026-10-02 (correction: the structure split is complete)
+
+**A35. Q-126-03 is withdrawn and its row removed.** The Architect read a truncated listing: E-15 R-126-01 and the legacy config both give all ten archetypes, including containment (0.33, 0.34, 0.33) and counterinsurgency (0.40, 0.30, 0.30), and the code follows the rule. Nothing was built from the wrong row. The A34 table above is corrected to ten rows.
+
+**A36. Check results.** Structure placement follows R-126-01 for all ten archetypes. The test that proves it compares the code against itself for eight of them, so a wrong table row would pass: approved as a test piece (Engineer), pinning the owner counts for all ten archetypes from R-126-01 at a fixed structure count, with a positive control (one row altered must fail). `ARCHETYPE_STARTING_TECH` has no user in the C game, because no faction is created mid-game with a tech roll; it is restated in ALG-27 for the record and nothing is built.

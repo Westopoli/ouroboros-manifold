@@ -26,11 +26,11 @@
 
 #include <stdint.h>
 
-#define LL_ABI_VERSION     3u
+#define LL_ABI_VERSION     4u
 
 #define LL_LAYERS          5
 #define LL_TICKS_PER_SEC   20
-#define LL_MAX_UNITS       128      /* both sides together */
+#define LL_MAX_UNITS       4096     /* both sides together */
 #define LL_MAX_TYPES       16
 #define LL_MAX_COVER       32
 #define LL_MAX_VANTAGE     16
