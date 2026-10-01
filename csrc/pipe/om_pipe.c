@@ -34,10 +34,10 @@
  *     to read fragment_ids[3] per entry; emitted as "fragment_ids":[id0,id1,id2]
  *     and "fragment":id0. When om_chronicle_entry_get returns 0 (cluster exists
  *     but text pass never ran for it) fragment_ids is [-1,-1,-1] and fragment is
- *     -1. refs.factions is still always [] (no faction refs on a cluster).
- *   - Every om_map_get_* node/canvas accessor and om_tactical_step itself
- *     are STUBs (csrc/tactical_mapgen.c, csrc/unit.c: E-11 wiring, card
- *     B10/B12 not landed). There is also no enumerator for live tactical
+ *     -1. refs.factions is [entry faction_ref] when it is >= 0, else [].
+ *   - Every om_map_get_* node/canvas accessor is a STUB
+ *     (csrc/tactical_mapgen.c: E-11 wiring, card B10/B12 not landed).
+ *     There is also no enumerator for live tactical
  *     unit ids at all (only per-id accessors like om_unit_get_pos, and no
  *     om_map_get_cover/obstacle count+get pair even once B10 lands map
  *     nodes). "map.nodes" reflects the stub (always empty), "map.cover" and
@@ -956,7 +956,9 @@ static void write_chronicle(uint64_t from_tick, uint64_t to_tick) {
             om_chronicle_entry ent;
             memset(&ent, 0, sizeof ent);
             int32_t frags[3] = { -1, -1, -1 };
+            int32_t faction_ref = -1;
             if (om_chronicle_entry_get(W, i, &ent)) {
+                faction_ref = ent.faction_ref;
                 frags[0] = ent.fragment_ids[0];
                 frags[1] = ent.fragment_ids[1];
                 frags[2] = ent.fragment_ids[2];
@@ -991,8 +993,10 @@ static void write_chronicle(uint64_t from_tick, uint64_t to_tick) {
             jb_uint(&j, c.region);
             jb_putc(&j, ']');
             jb_putc(&j, ',');
-            jb_key(&j, "factions"); /* no faction refs on a cluster */
-            jb_raw(&j, "[]");
+            jb_key(&j, "factions");
+            jb_putc(&j, '[');
+            if (faction_ref >= 0) jb_int(&j, faction_ref);
+            jb_putc(&j, ']');
             jb_putc(&j, '}');
             jb_putc(&j, ',');
             jb_key(&j, "fragment");
@@ -1782,13 +1786,38 @@ static void handle_list_saves(const char *json) {
     DIR *d = opendir(dir);
     int wrote = 0;
     if (d) {
+        enum { SLOT_NAME_MAX = 256 };
+        char (*names)[SLOT_NAME_MAX] = NULL;
+        size_t n_names = 0, cap_names = 0;
         struct dirent *ent;
         while ((ent = readdir(d)) != NULL) {
             size_t nlen = strlen(ent->d_name);
-            if (nlen < 6 || strcmp(ent->d_name + nlen - 5, ".json") != 0) continue;
+            if (nlen < 6 || nlen >= SLOT_NAME_MAX || strcmp(ent->d_name + nlen - 5, ".json") != 0) continue;
+            if (n_names == cap_names) {
+                cap_names = cap_names ? cap_names * 2 : 16;
+                char (*grown)[SLOT_NAME_MAX] = realloc(names, cap_names * sizeof *names);
+                if (!grown) break;
+                names = grown;
+            }
+            memcpy(names[n_names++], ent->d_name, nlen + 1);
+        }
+        closedir(d);
+        for (size_t a = 1; a < n_names; a++) {
+            char tmp[SLOT_NAME_MAX];
+            memcpy(tmp, names[a], SLOT_NAME_MAX);
+            size_t b = a;
+            while (b > 0 && strcmp(names[b - 1], tmp) > 0) {
+                memcpy(names[b], names[b - 1], SLOT_NAME_MAX);
+                b--;
+            }
+            memcpy(names[b], tmp, SLOT_NAME_MAX);
+        }
+        for (size_t ni = 0; ni < n_names; ni++) {
+            const char *name = names[ni];
+            size_t nlen = strlen(name);
 
             char full[2048];
-            snprintf(full, sizeof full, "%s/%s", dir, ent->d_name);
+            snprintf(full, sizeof full, "%s/%s", dir, name);
             FILE *f = fopen(full, "rb");
             if (!f) continue;
             fseek(f, 0, SEEK_END);
@@ -1812,7 +1841,7 @@ static void handle_list_saves(const char *json) {
             free(sbuf);
 
             char slot_path[2048];
-            snprintf(slot_path, sizeof slot_path, "%s/%.*s", dir, (int)(nlen - 5), ent->d_name);
+            snprintf(slot_path, sizeof slot_path, "%s/%.*s", dir, (int)(nlen - 5), name);
 
             if (wrote) jb_putc(&j, ',');
             wrote = 1;
@@ -1836,7 +1865,7 @@ static void handle_list_saves(const char *json) {
             jb_int(&j, format_version);
             jb_putc(&j, '}');
         }
-        closedir(d);
+        free(names);
     }
     jb_raw(&j, "]}");
     write_frame(j.buf, (uint32_t)j.len);

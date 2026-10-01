@@ -843,8 +843,8 @@ typedef enum {
 /* ======================================================================
  * E-11: units and combat (epics/E-11-units-and-combat.md). Appended
  * 2026-09-22 (freeze/F2): the tactical orchestrator's wiring only --
- * om_tactical_step is a STUB in csrc/unit.c; the epic's own symbols land with
- * card B10. Nothing above this line changes.
+ * om_tactical_step is the real orchestrator in csrc/unit.c; the epic's own
+ * symbols land with card B10. Nothing above this line changes.
  * ====================================================================== */
 /* The tactical orchestrator (decision 3, two-day-push brief): with
  * OM_FEAT_TACTICAL on, om_world_step calls this once, after every strategic

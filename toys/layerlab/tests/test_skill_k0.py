@@ -15,7 +15,16 @@ Conventions the tests fix where SPEC 14.1 is silent (reported to the Architect):
     makes `label_gap = max |margin_A_label + margin_B_label|` the side-label bias.
   * `first_loss` and `last_win` may be taken over all points (refined included) or the scanned ones;
     the tests only require that they bracket the crossing.
+
+Revised for SPEC 14.5 (test-defect fix, Architect-approved): the scripted fixtures build real group scenarios
+(one raider group per side, counts from the ratio, as test_skill_k0r.py does) because `rstar` now reports the
+cost ratio from the scenarios, and the scripted fight results carry alive_ticks, firing_ticks and heads. The
+default `win_margin` is 0.02 (14.5 item 2), which moves every planted crossing a little (2.5 becomes about
+2.4333); these tests are about the solver's other behaviour, so the scripted `Script.run` passes
+`win_margin=0.0` unless a test gives its own, which keeps the planted numbers. The win margin itself is
+tested in test_skill_k0r.py.
 """
+import copy
 import dataclasses
 import importlib
 import itertools
@@ -507,44 +516,62 @@ def base(r):
     return max(-0.8, min(0.8, (2.5 - r) * 0.3))
 
 
+class FakeFight:
+    """What a scripted run_fights returns: every field a FightResult carries (SPEC 14.5 item 3)."""
+
+    def __init__(self, margin, raw_margin, outcome, contact, heads):
+        self.margin, self.raw_margin, self.outcome = margin, raw_margin, outcome
+        self.ticks, self.contact, self.survivors, self.error = 100, contact, (1, 1), None
+        self.first_contact_tick = 50 if contact else -1
+        self.alive_ticks, self.firing_ticks, self.heads = (100, 100), (50, 50), tuple(heads)
+
+    def firing_per_head(self, label):
+        return self.firing_ticks[label] / self.heads[label] if self.heads[label] else 0.0
+
+
 class Script:
-    """A scripted `run_fights` and a matching `build`.
+    """A scripted `run_fights` and a matching `build` that makes REAL scenario dicts with groups: 8 skilled
+    raiders against round(8 * ratio) naive raiders, the skilled side on label B when swap is True.
 
     skilled(ratio, seed, swap) -> the SKILLED side's margin; the fight's own A-minus-B margin is that on
     label A (swap False) and its negative on label B (swap True). `outcome` and `contact` are optional
-    functions of (ratio, seed, swap)."""
+    functions of (ratio, seed, swap). `run` passes `win_margin=0.0` unless the test gives one (see the module
+    docstring)."""
 
     def __init__(self, monkeypatch, skilled, outcome=None, contact=None):
         self.skilled, self.outcome, self.contact = skilled, outcome, contact
         self.seen = []            # (ratio, swap, seed) for every fight the solver asked for
-        self.built = {}           # id(scenario) -> scenario, to prove scenarios pass through untouched
+        self.built = {}           # id(scenario) -> (scenario, snapshot, ratio, swap), to prove scenarios pass through untouched
         self.calls = 0
         monkeypatch.setattr(rstarmod, "run_fights", self.run_fights)
 
     def build(self, ratio, swap):
-        scn = {"ratio": ratio, "swap": swap}
-        self.built[id(scn)] = scn
+        sk, nv = ("B", "A") if swap else ("A", "B")
+        scn = make_scenario([grp(sk, "raider", 1000, 1000, 3, count=8),
+                             grp(nv, "raider", 3000, 1000, 3, count=max(1, round(8 * ratio)))])
+        scn["groups"].sort(key=lambda g: g["side"])
+        self.built[id(scn)] = (scn, copy.deepcopy(scn), ratio, swap)
         return scn
 
     def run_fights(self, jobs, *args, **kwargs):
         self.calls += 1
         out = []
         for scn, seed in jobs:
-            assert self.built.get(id(scn)) is scn and set(scn) == {"ratio", "swap"}, "scenario was altered"
-            r, sw = scn["ratio"], scn["swap"]
+            keep, snapshot, r, sw = self.built[id(scn)]
+            assert keep is scn and scn == snapshot, "scenario was altered"
             self.seen.append((r, sw, seed))
             s = self.skilled(r, seed, sw)
             m = -s if sw else s
             oc = self.outcome(r, seed, sw) if self.outcome else ("win_A" if m > 0 else "win_B")
             has_contact = self.contact(r, seed, sw) if self.contact else True
             raw = 0.5 if oc == "stalemate" else m          # a stalemate's raw margin is not 0: use `margin`
-            out.append(SimpleNamespace(
-                margin=0.0 if oc in ("stalemate", "cap") else m, raw_margin=raw, outcome=oc, ticks=100,
-                first_contact_tick=50 if has_contact else -1, contact=has_contact, survivors=(1, 1),
-                error=None))
+            n_nv = max(1, round(8 * r))
+            out.append(FakeFight(0.0 if oc in ("stalemate", "cap") else m, raw, oc, has_contact,
+                                 (n_nv, 8) if sw else (8, n_nv)))
         return out
 
     def run(self, **kw):
+        kw.setdefault("win_margin", 0.0)
         return rstar(self.build, **kw)
 
 
@@ -682,7 +709,10 @@ def test_all_stalemates_is_never_winning(monkeypatch):
 def test_stalemate_margin_is_zero_and_counted(monkeypatch):
     """SPEC 14.1 (5): from ratio 2.4 up every fight is a stalemate whose raw margin is +0.5 (the scripted
     runner reports it, the solver must use the effective margin 0): those points have value 0.0 and
-    n_stalemate 4, the others 0; the crossing is where the curve reaches 0 (2.4), not above the scan."""
+    n_stalemate 4, the others 0; the crossing is where the curve reaches 0 (2.4), not above the scan.
+    Restated under SPEC 14.5 (2): a stalemate point (margin 0) is a LOSS (value <= win_margin), so first_loss is
+    the first stalemate ratio 2.4 (it was None under the old `value < 0` rule). Run at win_margin 0.0 (see the
+    module docstring), where the crossing stays 2.4."""
     sc = Script(monkeypatch, lambda r, seed, sw: base(r) if r < 2.4 - 1e-9 else 0.0,
                 outcome=lambda r, seed, sw: "stalemate" if r >= 2.4 - 1e-9 else "win_A")
     res = sc.run(refine=4)
@@ -691,7 +721,7 @@ def test_stalemate_margin_is_zero_and_counted(monkeypatch):
             assert p["n_stalemate"] == 4 and p["value"] == 0.0, p
         else:
             assert p["n_stalemate"] == 0 and p["value"] > 0, p
-    assert res.above_scan is False and res.below_scan is False and res.first_loss is None
+    assert res.above_scan is False and res.below_scan is False and res.first_loss == 2.4
     assert res.last_win < 2.4
     assert res.value == pytest.approx(2.4, abs=1e-6)
 
