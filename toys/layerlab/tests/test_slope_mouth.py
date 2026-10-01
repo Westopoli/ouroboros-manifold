@@ -98,6 +98,18 @@ def _overlap_count(res, units, layer):
     return ((d < OVERLAP_BELOW) & valid & on_layer).sum(axis=(1, 2))
 
 
+def _overlap_count_outside(res, units, layer, centre, radius=40.0):
+    """Like _overlap_count, but ignoring any pair in which either unit lies within `radius` of `centre`: SPEC
+    5.10 lets bodies overlap inside the slope mouth (LL_MOUTH_RADIUS 40), so only overlap outside it is a bug."""
+    d, valid = _pairs(res, units)
+    lay = res.trace[:, units]["layer"].astype(int)
+    on_layer = (lay == layer)[:, :, None] & (lay == layer)[:, None, :]
+    x = res.trace[:, units]["x"].astype(float); y = res.trace[:, units]["y"].astype(float)
+    near = np.hypot(x - centre[0], y - centre[1]) <= radius
+    outside = ~(near[:, :, None] | near[:, None, :])
+    return ((d < OVERLAP_BELOW) & valid & on_layer & outside).sum(axis=(1, 2))
+
+
 def _first_mount(res, i):
     on = np.flatnonzero(unit_trace(res, i).on_slope)
     return int(on[0]) if len(on) else None
@@ -151,9 +163,12 @@ def test_hard_bodies_hold_on_layer_one_away_from_the_slope(n):
     res = _run_box(n)
     mounts = [m for m in _mounts(res, n) if m is not None]
     end = min(mounts) if mounts else len(res.trace)
-    l1 = _overlap_count(res, list(range(n)), 1)
+    # Bodies may overlap inside the slope mouth (SPEC 5.10, LL_MOUTH_RADIUS 40 around the bottom edge centre
+    # (1975, 1000)); only overlap OUTSIDE it counts. (The first version counted every overlap and failed at
+    # ticks 139-140 for pairs 28 to 35 from the edge centre: a test defect once the mouth rule existed.)
+    l1 = _overlap_count_outside(res, list(range(n)), 1, (1975.0, 1000.0))
     assert end > 21, "first mount at tick %d leaves no window" % end
-    assert (l1[20:end] == 0).all(), "layer-1 overlap before the first mount, ticks %s" % (
+    assert (l1[20:end] == 0).all(), "layer-1 overlap outside the mouth before the first mount, ticks %s" % (
         20 + np.flatnonzero(l1[20:end] > 0)[:5])
 
 
