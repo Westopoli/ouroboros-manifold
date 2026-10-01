@@ -29,8 +29,9 @@ RED today: om_campaign_commander, om_campaign_lineage, om_chapter_last_end_reaso
 om_mission_generator_chosen_archetype and om_lineage_chapter_count are declared in
 csrc/ouroboros_sim.h (B6-contract2, B6-contract3) but undefined, so each test that calls one
 fails with an undefined symbol (an AttributeError on the library, which counts as red) until
-the lifecycle is implemented. The A15 tests that read only existing symbols (the collapse
-reassignment, the terminal path) are red on behaviour, not on a symbol.
+the lifecycle is implemented. The A15 tests are red on the undefined
+symbol today too (their mission helper reads the chosen archetype); on the reference patch
+without A15 they are red on behaviour (no reassignment, no terminal flag).
 """
 import ctypes
 
