@@ -1,4 +1,4 @@
-"""Command line: python3 -m layerlab run | check | sweep | replay (SPEC.md section 8)."""
+"""Command line: python3 -m layerlab run | check | exchange | sweep | replay (SPEC.md section 8)."""
 import argparse
 import sys
 import tomllib
@@ -36,6 +36,20 @@ def _run(args):
 def _check(args):
     from .analysis import check
     print(check(_load(args), range(args.seeds), window=args.window).text)
+
+
+def _exchange(args):
+    from .analysis import check_exchange, exchange
+    from .run import run
+    scn = _load(args)
+    r = check_exchange(scn, range(args.seeds), window=args.window)
+    show = lambda v: "-" if v is None else "%.3f" % v
+    print("exchange check: seeds %d  window %d  agree fraction %s  mean firing ratio %s  "
+          "mean damage ratio %s  higher-firing side won %s"
+          % (args.seeds, args.window, show(r["agree_fraction"]), show(r["firing_ratio"]),
+             show(r["damage_ratio"]), show(r["higher_firing_won"])))
+    if args.seeds > 0:
+        print(exchange(run(scn, seed=0, trace=True), scn, window=args.window).text)
 
 
 def _sweep(args):
@@ -81,6 +95,13 @@ def main(argv=None):
     c.add_argument("--window", type=int, default=40, help="opening-window ticks from the first shot; 0 turns it off")
     c.add_argument("--set", action="append", metavar="PATH=VALUE")
     c.set_defaults(fn=_check)
+
+    x = sub.add_parser("exchange", help="windowed firing, damage and loss shares per window")
+    x.add_argument("scenario")
+    x.add_argument("--seeds", type=int, default=20, help="N means seeds 0..N-1")
+    x.add_argument("--window", type=int, default=20, help="ticks per window from the first shot")
+    x.add_argument("--set", action="append", metavar="PATH=VALUE")
+    x.set_defaults(fn=_exchange)
 
     s = sub.add_parser("sweep", help="sweep one or two scenario paths over several seeds")
     s.add_argument("scenario")
