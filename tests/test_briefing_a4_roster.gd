@@ -1,23 +1,21 @@
 extends SceneTree
 
-# A4 client half (docs/northstar/plans/2026-09-30-mission-plays-plan.md; E-10 S-079,
-# R-079-01 Assets section, R-079-04 no raw numbers, R-074-04 player force filled):
-# mission_briefing.gd renders the player's roster from a mission frame's
-# force {"types","tiers"} (docs/architecture.md mission frame) and shows no mock_001 prose
-# or "TICK 0" placeholder on the frame-driven path.
+# A4 client half (docs/northstar/plans/2026-10-01-architect-rulings.md A4; E-10 S-079,
+# R-079-01, R-079-04 no raw numbers, R-074-04 player force filled): mission_briefing.gd
+# renders the player's roster from a mission frame's force {"types","tiers"} (six counts in
+# unit-type-id order), shows the three frame briefing texts (situation, objective, assets),
+# never renders the numeric parity, derives the position name from objectives[0].node and
+# region via scenes/world/chronicle_names.gd (frames carry no names), and shows no mock_001
+# prose or "TICK 0" placeholder on the frame-driven path.
 #
-# Scope is the frame data docs/architecture.md already documents. `position_name`,
-# `parity`, `objective` text and a top-level node/radius/force[] are not documented there
-# (contract docs piece first), so a position-name assertion is deliberately absent; see the
-# A4 test report.
-#
-# Part 1 drives load_frame() with tests/fixtures/mission_frame_seed11.json (needs the client
-# change alone). Part 2 uses the live pipe frame (also needs the pipe piece: today
-# handle_mission_start answers force {"types":[],"tiers":[]}). Part 3 is the positive
-# control: the roster detector must find nothing on a frame with an empty force.
+# Part 1 drives load_frame() with tests/fixtures/mission_frame_a4.json (needs the client
+# change alone). Part 2 uses the live pipe frame (also needs the pipe piece). Part 3 is the
+# positive control: the roster detector must find nothing on a frame with an empty force, and
+# the text/parity detectors must fire on a planted bad render.
 
 const BRIEFING_SCENE_PATH := "res://scenes/mission_briefing/mission_briefing.tscn"
-const FIXTURE_PATH := "res://tests/fixtures/mission_frame_seed11.json"
+const FIXTURE_PATH := "res://tests/fixtures/mission_frame_a4.json"
+const UNMARKED := "Unmarked Position"
 # mock_001 prose that must never appear on a frame-driven briefing (mock_data_source.gd).
 const MOCK_STRINGS := ["OP-2741", "Thessalonica", "Northern Confederation", "Marcus Aurelius", "Fortifier"]
 
@@ -96,6 +94,58 @@ func _check_roster_and_no_fallbacks(root: Node, label: String) -> void:
 	_assert(not joined.contains("TICK 0\n") and not joined.ends_with("TICK 0"), "%s: briefing shows the 'TICK 0' zero placeholder" % label)
 
 
+func _parity_strings(parity: float) -> Array[String]:
+	var out: Array[String] = []
+	for f in ["%.4f", "%.3f", "%.2f", "%.1f"]:
+		out.append(f % parity)
+	out.append(str(parity))
+	out.append("%d%%" % int(round(parity * 100.0)))
+	out.append("%d %%" % int(round(parity * 100.0)))
+	return out
+
+
+# R-079-04: the parity number is data, never text the player reads.
+func _parity_leaks(joined: String, parity: float) -> Array[String]:
+	var leaks: Array[String] = []
+	for p in _parity_strings(parity):
+		if joined.contains(p):
+			leaks.append(p)
+	return leaks
+
+
+func _check_texts_and_parity(root: Node, frame: Dictionary, label: String) -> void:
+	var texts: Array[String] = []
+	_texts(root, texts)
+	var joined := "\n".join(texts)  # compared case-insensitively: the objective header is shown uppercased
+	var b: Dictionary = frame.get("briefing", {})
+	for k in ["situation", "objective", "assets"]:
+		var t: String = str(b.get(k, ""))
+		_assert(t != "", "%s: frame briefing.%s is empty (test setup / pipe piece)" % [label, k])
+		_assert(t != "" and joined.to_lower().contains(t.to_lower()), "%s: briefing does not show the frame's %s text '%s' (R-079-01)" % [label, k, t])
+	var parity := float(frame.get("parity", 0.0))
+	_assert(parity > 0.0, "%s: frame parity is %s, expected a number > 0" % [label, parity])
+	var leaks := _parity_leaks(joined, parity)
+	_assert(leaks.is_empty(), "%s: briefing renders the parity number %s (R-079-04)" % [label, str(leaks)])
+
+
+# Position name from objectives[0].node + region via chronicle_names.gd, shown through
+# qa_state().objectives[0].marker_name. Tables come from library/chronicle/fragments.json.
+func _position_name(root: Node) -> String:
+	var objs: Array = root.qa_state().get("objectives", [])
+	return str((objs[0] as Dictionary).get("marker_name", "")) if objs.size() > 0 else ""
+
+
+func _is_real_name(n: String) -> bool:
+	var stripped := n.strip_edges()
+	if stripped == "" or n.contains("mock_001") or n == UNMARKED or n == "[region]":
+		return false
+	var only_zero := true
+	for c in stripped:
+		if c != "0" and c != " " and c != "." and c != "_":
+			only_zero = false
+	return not only_zero
+
+
 func _run_tests() -> void:
 	var fixture = JSON.parse_string(FileAccess.get_file_as_string(FIXTURE_PATH))
 	_assert(fixture is Dictionary and (fixture["force"]["types"] as Array).size() > 0, "fixture has no force to render (test setup)")
@@ -103,7 +153,27 @@ func _run_tests() -> void:
 	# Part 1: client rendering of the documented force on the fixture frame.
 	var root := await _mount((fixture as Dictionary).duplicate(true))
 	_check_roster_and_no_fallbacks(root, "fixture frame")
+	var fixture_total := 0
+	for c in (fixture["force"]["types"] as Array):
+		fixture_total += int(c)
+	var shown_total := 0
+	for r in _roster_rows(root):
+		shown_total += int(r[1])
+	_assert(shown_total == fixture_total, "fixture frame: roster counts sum to %d, force.types sums to %d" % [shown_total, fixture_total])
+	_check_texts_and_parity(root, fixture as Dictionary, "fixture frame")
+	var name_a := _position_name(root)
+	_assert(_is_real_name(name_a), "fixture frame: position name '%s' is empty, mock_001, a placeholder or zeros (derive from objectives[0].node and region via chronicle_names.gd)" % name_a)
 	root.queue_free()
+	await process_frame
+
+	# Region matters: same node, a different region gives a different position name.
+	var other: Dictionary = (fixture as Dictionary).duplicate(true)
+	other["region"] = int(other["region"]) + 1
+	var other_root := await _mount(other)
+	var name_b := _position_name(other_root)
+	_assert(_is_real_name(name_b), "region+1 frame: position name '%s' is not a real name" % name_b)
+	_assert(name_a != name_b, "position name '%s' did not change with region 7 -> 8 (name must come from node and region)" % name_a)
+	other_root.queue_free()
 	await process_frame
 
 	# Part 3 (positive control): the detector finds no roster when the force is empty.
@@ -111,6 +181,8 @@ func _run_tests() -> void:
 	empty_frame["force"] = {"types": [], "tiers": []}
 	var empty_root := await _mount(empty_frame)
 	_assert(_roster_rows(empty_root).size() == 0, "positive control: an empty force still produced %d roster rows" % _roster_rows(empty_root).size())
+	_assert(not _is_real_name(UNMARKED) and not _is_real_name("mock_001") and not _is_real_name("0 0 0") and _is_real_name("Ridge Point"), "positive control: name detector is wrong")
+	_assert(_parity_leaks("assets: parity 0.84 of theirs", 0.8425166666666667).size() > 0 and _parity_leaks("committed at parity", 0.8425166666666667).is_empty(), "positive control: parity-leak detector is wrong")
 	empty_root.queue_free()
 	await process_frame
 
@@ -125,5 +197,8 @@ func _run_tests() -> void:
 		"live mission frame force.types is empty (pipe piece T1-N: handle_mission_start must ship the allocation)")
 	var live_root := await _mount(live)
 	_check_roster_and_no_fallbacks(live_root, "live frame")
+	_check_texts_and_parity(live_root, live, "live frame")
+	var live_name := _position_name(live_root)
+	_assert(_is_real_name(live_name), "live frame: position name '%s' is empty, mock_001, a placeholder or zeros" % live_name)
 	live_root.queue_free()
 	await process_frame
