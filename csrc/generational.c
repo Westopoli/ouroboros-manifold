@@ -156,6 +156,10 @@
  * Band ids as in csrc/mission.c: 0 total_failure .. 4 total_success, 5 refusal. */
 #define GEN_CLUSTER_CONSEQUENCE 0
 #define GEN_BAND_UNKNOWN (-1)
+#define GEN_BAND_PARTIAL_FAILURE 1
+#define GEN_BAND_PARTIAL_SUCCESS 2
+#define GEN_BAND_STRONG_SUCCESS 3
+#define GEN_BAND_TOTAL_SUCCESS 4
 #define GEN_OUTCOME_SUCCESS 0
 #define GEN_OUTCOME_FAILURE 1
 #define GEN_OUTCOME_MIXED 2
@@ -163,8 +167,8 @@
 
 static uint32_t gen_band_outcome(int32_t band) {
     switch (band) {
-    case 3: case 4: return GEN_OUTCOME_SUCCESS;
-    case 1: case 2: return GEN_OUTCOME_MIXED;
+    case GEN_BAND_STRONG_SUCCESS: case GEN_BAND_TOTAL_SUCCESS: return GEN_OUTCOME_SUCCESS;
+    case GEN_BAND_PARTIAL_FAILURE: case GEN_BAND_PARTIAL_SUCCESS: return GEN_OUTCOME_MIXED;
     default: return GEN_OUTCOME_FAILURE;
     }
 }

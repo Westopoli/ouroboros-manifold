@@ -1491,8 +1491,8 @@ static void chron_sort_by_score_desc(om_chronicle_cluster *arr, uint32_t n) {
 
 /* ALG-52 Selection: consequence clusters, then lineage clusters, then the
  * rest by peak score descending, skipping a category already used twice,
- * until CHRONICLE_MAX_ENTRIES; if still under CHRONICLE_MIN_ENTRIES, add
- * skipped clusters in score order regardless of the cap. */
+ * until CHRONICLE_MAX_ENTRIES. The cap wins over the minimum (Westley,
+ * Q-065-01): a quiet jump may show fewer than CHRONICLE_MIN_ENTRIES. */
 static void chron_run_selection(om_world *w) {
     chron_state *st = chron(w);
     om_chronicle_cluster others[CHRON_MAX_CANDIDATES];
@@ -1524,23 +1524,11 @@ static void chron_run_selection(om_world *w) {
     }
     chron_sort_by_score_desc(others, n_others);
 
-    int taken[CHRON_MAX_CANDIDATES];
-    memset(taken, 0, sizeof(int) * n_others);
-
     for (uint32_t i = 0; i < n_others && st->n_clusters < OM_CHRONICLE_MAX_ENTRIES; i++) {
         uint32_t cat = others[i].category % CHRON_SELECTION_CAT_BUCKETS;
         if (cat_count[cat] >= OM_CHRON_CATEGORY_CAP) continue;
         st->clusters[st->n_clusters++] = others[i];
         cat_count[cat]++;
-        taken[i] = 1;
-    }
-
-    if (st->n_clusters < OM_CHRONICLE_MIN_ENTRIES) {
-        for (uint32_t i = 0; i < n_others && st->n_clusters < OM_CHRONICLE_MIN_ENTRIES; i++) {
-            if (taken[i]) continue;
-            st->clusters[st->n_clusters++] = others[i];
-            taken[i] = 1;
-        }
     }
 }
 
