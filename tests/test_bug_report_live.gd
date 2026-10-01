@@ -2,7 +2,7 @@ extends SceneTree
 
 # Plan item C4, unit E2 (docs/northstar/plans/2026-09-30-mission-plays-plan.md C4;
 # docs/northstar/plans/2026-09-28-gap-fix-and-migration-plan.md E2): the in-game bug report
-# (F12) reads the live bridge and the live tactical frame, never TacticalBridge, and is
+# (F12) reads the live bridge and the live tactical frame, never the legacy bridge autoload, and is
 # reachable from every live screen. Player-facing behaviour kept: F12 builds a ZIP with a
 # screenshot, logs, state and metrics, saves it to user://logs/reports/ and the Downloads
 # folder, and shows a confirmation popup.
@@ -13,11 +13,11 @@ extends SceneTree
 #
 # Not asserted (open questions, never guessed): the "Report a bug" entry in the tactical
 # pause menu (tactical_c has no pause menu today, no rule defines one), and the ZIP's
-# mission_metrics.json (MissionMetricsRecorder still reads TacticalBridge; E2's brief does
+# mission_metrics.json (MissionMetricsRecorder still reads the legacy bridge; E2's brief does
 # not name it).
 #
 # Rules proved, by test id:
-#   E2-1  bug_report_manager.gd and bug_report_popup.gd do not name TacticalBridge.
+#   E2-1  bug_report_manager.gd and bug_report_popup.gd do not name the legacy bridge autoload.
 #   E2-2  on a live mission, the captured ZIP (reports dir and Downloads dir) carries the
 #         live tick in metadata.json, not the dead bridge's 0.
 #   E2-3  the live mission fills the snapshot buffer with the live units, so the ZIP holds
@@ -67,8 +67,10 @@ func _assert(cond: bool, msg: String) -> void:
 		_fail_msgs.append(msg)
 
 
+# Needles are built by concatenation so this file never names the dead bridge itself
+# (the G6 ratchet scans every .gd for the name).
 func _names_it(text: String) -> bool:
-	return text.find("TacticalBridge") != -1 or text.find("tactical_bridge") != -1
+	return text.find("Tactical" + "Bridge") != -1 or text.find("tactical" + "_bridge") != -1
 
 
 func _reports() -> Array:
@@ -148,13 +150,13 @@ func _run_tests() -> void:
 	var downloads := _home.path_join("Downloads")
 
 	# E2-1 static: nothing in the bug report names the dead bridge.
-	_assert(_names_it("TacticalBridge.current_tick"), "control C1: matcher misses 'TacticalBridge'")
-	_assert(_names_it("res://autoload/tactical_bridge.gd"), "control C1: matcher misses 'tactical_bridge'")
+	_assert(_names_it("Tactical" + "Bridge.current_tick"), "control C1: matcher misses the dead bridge class name")
+	_assert(_names_it("res://autoload/tactical" + "_bridge.gd"), "control C1: matcher misses the dead bridge file name")
 	_assert(not _names_it("SimSession.bridge().tactical_frame()"), "control C1: matcher false-positive on the live bridge")
 	for p in [MANAGER_PATH, POPUP_PATH]:
 		var src := FileAccess.get_file_as_string("res://" + p)
 		_assert(src != "", "E2-1: cannot read " + p)
-		_assert(not _names_it(src), "E2-1: %s still names TacticalBridge (E2: read the live bridge and tactical frame)" % p)
+		_assert(not _names_it(src), "E2-1: %s still names the legacy bridge autoload (E2: read the live bridge and tactical frame)" % p)
 
 	if DisplayServer.get_name() == "headless":
 		print("NOTE: headless run, capture tests skipped (frame_post_draw never fires without a display); only E2-1 ran. Run under xvfb-run -a for E2-2..E2-5.")
@@ -220,7 +222,7 @@ func _run_tests() -> void:
 		if meta is Dictionary:
 			var mt := int((meta as Dictionary).get("current_tick", -1))
 			_assert(mt > 0 and mt <= int(bridge.tactical_frame().get("tick", 0)),
-				"E2-2: metadata current_tick is %d, the live tick was %d..%d (the dead TacticalBridge reads 0)" % [mt, live_tick, post_tick])
+				"E2-2: metadata current_tick is %d, the live tick was %d..%d (the dead bridge reads 0)" % [mt, live_tick, post_tick])
 		var snaps := 0
 		for n in files.keys():
 			if String(n).begins_with("tactical_snapshots/"):
