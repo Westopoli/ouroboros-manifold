@@ -6,6 +6,7 @@
 
 #define EPS 1e-9    /* absorbs the rounding of a time or position accumulated tick by tick */
 #define LL_SEPARATION_PASSES 8    /* SPEC 5.10 */
+#define LL_MOUTH_RADIUS 40.0      /* SPEC 5.10 slope mouths */
 
 void ll_face_init(ll_unit *u, double facing_deg) {
     double s, c;
@@ -175,20 +176,30 @@ static int body_blocked(const ll_state *s, const ll_unit *u, double x, double y)
     return 0;
 }
 
+/* Slope mouths (SPEC 5.10): 1 when (x,y) is within LL_MOUTH_RADIUS of the centre of a slope edge that lies on
+ * `layer`. Inside it bodies neither block steps nor are pushed, or two walkers a body width apart at the entry,
+ * whose centre can sit on a flow-field cell boundary, each stand where the other must step and wait forever. */
+static int in_mouth(const ll_terrain *t, int layer, double x, double y) {
+    for (int k = 0; k < t->n_slope; k++) {
+        const ll_slope *sl = &t->slope[k];
+        for (int top = 0; top < 2; top++) {
+            if ((top ? sl->top_layer : sl->bottom_layer) != layer) continue;
+            double ex, ey;
+            ll_slope_edge(sl, top, &ex, &ey);
+            double dx = x - ex, dy = y - ey;
+            if (dx * dx + dy * dy <= LL_MOUTH_RADIUS * LL_MOUTH_RADIUS) return 1;
+        }
+    }
+    return 0;
+}
+
 static int can_step(const ll_state *s, const ll_unit *u, double x, double y) {
-    return can_stand(s, u, x, y) && !body_blocked(s, u, x, y);
+    return can_stand(s, u, x, y) && (in_mouth(s->ter, u->layer, x, y) || !body_blocked(s, u, x, y));
 }
 
 /* How near a walker must be to a slope's edge centre to mount it (SPEC 5.9). */
 static double mount_reach(const ll_state *s, const ll_unit *u) {
     return u->ty->body_radius > 0.5 * s->ter->cell ? u->ty->body_radius : 0.5 * s->ter->cell;
-}
-
-/* Mounting is never blocked by bodies (SPEC 5.9): a step toward a slope's edge centre that ends within mounting
- * reach of it is not refused for overlap, or two walkers waiting at the mouth hold each other off it forever. */
-static int can_step_mouth(const ll_state *s, const ll_unit *u, double x, double y, double ex, double ey) {
-    double dx = x - ex, dy = y - ey, r = mount_reach(s, u);
-    return can_stand(s, u, x, y) && (dx * dx + dy * dy <= r * r || !body_blocked(s, u, x, y));
 }
 
 static void mount(ll_unit *u, const ll_slope *sl, int index, int dir) {
@@ -207,7 +218,7 @@ enum { STEER_STAND = 0, STEER_TARGET = 1, STEER_MOUNTED = 2 };
 /* Chooses the point to steer toward: straight at the goal when the segment is clear, else down the flow
  * field. Starts a forced timed transfer or mounts a slope when the field says so (SPEC 5.10). `olayer` is
  * the layer the unit was ordered on, or 0 when it has none (a spawn transfer chose its layer for it). */
-static int steer(ll_state *s, ll_unit *u, int olayer, double gx, double gy, double *tx, double *ty, int *mouth) {
+static int steer(ll_state *s, ll_unit *u, int olayer, double gx, double gy, double *tx, double *ty) {
     const ll_terrain *t = s->ter;
     int wk = is_walker(u);
     for (int pass = 0; pass < 2; pass++) {
@@ -257,7 +268,6 @@ static int steer(ll_state *s, ll_unit *u, int olayer, double gx, double gy, doub
             return STEER_MOUNTED;
         }
         *tx = ex; *ty = ey;
-        *mouth = 1;
         return STEER_TARGET;
     }
     return STEER_STAND;
@@ -324,8 +334,8 @@ void ll_move_units(ll_state *s) {
         }
 
         double tx = 0.0, ty = 0.0, mdx = 0.0, mdy = 0.0;
-        int steering = STEER_STAND, mouth = 0;
-        if (have) steering = steer(s, u, olayer, gx, gy, &tx, &ty, &mouth);
+        int steering = STEER_STAND;
+        if (have) steering = steer(s, u, olayer, gx, gy, &tx, &ty);
         if (steering == STEER_TARGET) {
             mdx = tx - u->x; mdy = ty - u->y;
             double d = sqrt(mdx * mdx + mdy * mdy);
@@ -333,8 +343,7 @@ void ll_move_units(ll_state *s) {
                 double step = u->ty->speed * (u->xfer_to ? s->rules->transition_speed_mult : 1.0) * LL_DT;
                 if (step > d) step = d;
                 double sx = mdx / d * step, sy = mdy / d * step;
-                if (mouth && can_step_mouth(s, u, u->x + sx, u->y + sy, tx, ty)) { u->x += sx; u->y += sy; }
-                else if (can_step(s, u, u->x + sx, u->y + sy)) { u->x += sx; u->y += sy; }
+                if (can_step(s, u, u->x + sx, u->y + sy)) { u->x += sx; u->y += sy; }
                 else if (can_step(s, u, u->x + sx, u->y)) u->x += sx;
                 else if (can_step(s, u, u->x, u->y + sy)) u->y += sy;
                 else {
@@ -364,6 +373,7 @@ void ll_move_units(ll_state *s) {
             for (int j = i + 1; j < s->n; j++) {
                 ll_unit *b = &s->u[j];
                 if (!b->alive || b->slope >= 0 || a->layer != b->layer) continue;
+                if (in_mouth(s->ter, a->layer, a->x, a->y) || in_mouth(s->ter, b->layer, b->x, b->y)) continue;
                 double dx = b->x - a->x, dy = b->y - a->y;
                 double dist = sqrt(dx * dx + dy * dy);
                 double overlap = a->ty->body_radius + b->ty->body_radius - dist;
