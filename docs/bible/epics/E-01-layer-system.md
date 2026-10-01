@@ -4,14 +4,14 @@
 
 | Check | Result |
 |---|---|
-| Every story has at least one Given/When/Then rule with concrete values | Yes, 11 stories, 65 rules. Rules that depend on an open flag cite it inline. |
+| Every story has at least one Given/When/Then rule with concrete values | Yes, 14 stories, 76 rules. Rules that depend on an open flag cite it inline. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. Every rejection behavior is settled. |
 | Every output listed with where it is observable | Yes, see Outputs. On-screen elevation is fixed globally (Q-E01-01). |
 | Implied-but-unstated behavior turned into flags | Yes; the flags still open are listed at the foot of this file. |
 | Every visible-surface story has a reference | **No — by design a Godot design phase, not a screenshot pull.** `references/E-01/notes.md` records the plan: basic single-layer movement ships first, then Claude builds several interactive layer-system options in Godot for Westley to choose between; the choice fills the references. Blocks S-009, S-010, S-006 until then. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** S-001, S-002 and S-003 are blocked on Q-001-05 (the edges of shortest-route layer changes), S-008 on Q-008-02 and Q-008-03 (the layer lab decides the cross-layer numbers), S-009 on Q-009-02, and S-009, S-010 and S-006 on references. Stories are Spec'd, not Ready.
+**Gate verdict: not passed.** S-001, S-002 and S-003 are blocked on Q-001-05 (the edges of shortest-route layer changes), S-008 on Q-008-02 and Q-008-03 (the layer lab decides the cross-layer numbers), S-009 on Q-009-02, S-162, S-163 and S-164 on Q-005-04 (the numbers and edges of the three layer actions), and S-009, S-010 and S-006 on references. Stories are Spec'd, not Ready.
 
 ## Purpose
 
@@ -108,7 +108,7 @@ Rules
 
 Inputs: observer layer, position, sensor radius; target layer, position; vantage membership; interference intensity at observer position.
 Outputs: per-unit visible set in the tick delta; player-visible unit list; fog reveal on screen.
-Open flags: none. Q-005-02 is closed: vision is symmetric by layer distance to start. Asymmetric vision, seeing further down than up, stays a candidate for later, on one condition from Westley (2026-10-01, verbatim): "going asymmetic could be a good idea if there's a \"counter\" to the highest layer being hte \"best\", say a unit that works particularly well at destroying units from above it to counter."
+Open flags: none. Q-005-02 is closed: vision is symmetric by layer distance to start. Passive cross-layer vision stays beside the three layer actions (S-162 to S-164), at a shorter range than the ping reaches (Q-005-03); how much shorter is Q-005-04. Asymmetric vision, seeing further down than up, stays a candidate for later, on one condition from Westley (2026-10-01, verbatim): "going asymmetic could be a good idea if there's a \"counter\" to the highest layer being hte \"best\", say a unit that works particularly well at destroying units from above it to counter."
 
 ### S-006 — Sensor pulse
 As a commander, I want to spend a pulse to see every layer around a unit for a moment, so that scouting before a commitment is a decision with a cost.
@@ -122,7 +122,7 @@ Rules
 
 Inputs: pulse command; pulse-capable unit; pulse radius (config); cooldown state.
 Outputs: pulse active flag and remaining cooldown in the tick delta; revealed set; cooldown ring on the HUD; visible pulse effect on screen.
-Open flags: none.
+Open flags: Q-005-04 (whether the pulse stays beside the targeted ping of S-162).
 
 ### S-007 — Cover blocks sight by height
 As a commander, I want a tall obstacle to hide units on more layers than a short one, so that where I put a force relative to terrain changes what the enemy can see.
@@ -143,8 +143,8 @@ As a commander, I want to know whether a unit can shoot at an enemy one layer ab
 
 Rules
 - R-008-01  Given an attacker on layer 3 and a visible enemy on layer 3 in range, When the attacker is idle or attack-moving, Then it engages.
-- R-008-02  Given an attacker on layer 3 and a visible enemy on layer 4 in range, When the attacker is idle or attack-moving, Then [Q-008-03 decides: it does not engage (current code), or it engages with a stated range or damage modifier by signed layer offset].
-- R-008-03  Given a Bombard's area attack centered on layer 3, When enemies stand on layers 2 and 4 inside the radius, Then [Q-008-03 decides whether they take damage and at what multiplier].
+- R-008-02  Given an attacker on layer 3 and a visible enemy on layer 4 in range, When the attacker is idle or attack-moving, Then it engages only if its unit type's reach includes one layer up (S-164); the range and damage at that offset are Q-008-03.
+- R-008-03  Given a Bombard's area attack centered on layer 3, When enemies stand on layers 2 and 4 inside the radius, Then they take damage only at the layer offsets the Bombard's reach includes (S-164), at the multiplier Q-008-03 sets.
 - R-008-04  Given an attacker that cannot see a target (S-005), When it would attack that target, Then it does not: a unit never fires at a target it cannot see, on its own layer or another.
 
 End-state (the acceptance bar): the hub's definition of strategic depth (principle 4) holds in the layer lab before any cross-layer rule is written into the sim. Four patterns are each true under at least one reachable configuration and none is true under every configuration: a force with a layer advantage shoots without being shot back; the side in the concave of a surround wins it; a fragile, slow, expensive unit with a devastating ability gives the player who protects it a higher chance of winning; a smaller force can win by position. The third pattern waits until abilities are in scope (Westley, 2026-10-01); until then the lab's verdict rests on the other three.
@@ -192,6 +192,44 @@ Rules
 Inputs: era pack restriction mask (per unit type, set of layers; absent means unrestricted).
 Outputs: command acceptance; spawn layer.
 Open flags: none. Launch scope: capability present, mask absent (A-294, A-321).
+
+### S-162 — Targeted ping
+As a commander, I want to ping a layer I choose at a place I choose and see it for a moment, so that looking across layers is something I do on purpose and at a distance.
+
+Rules
+- R-162-01  Given selected units that can ping, When the player chooses the ping, presses a layer number and clicks a place, Then the player sees that layer around that place for a very short time, at a reach much longer than passive cross-layer vision (S-005) [Q-005-04: radius, duration, reach, which units].
+- R-162-02  Given a ping, When it is cast, Then it costs the player no resource [Q-005-04: what limits repeated use].
+- R-162-03  Given a player whose units are pinged, When the ping lands, Then that player is alerted that they were pinged and is shown a sector of about 60 degrees pointing toward where the ping came from, and nothing more precise.
+- R-162-04  Given an era without the technology for a ping, When the player pings, Then small scouts that cost nothing are sent to the place and give the same short view [Q-005-04: how they travel and whether they can be killed].
+- R-162-05  Given a ping that has ended, When no passive detection applies, Then the units it revealed are hidden again.
+
+Inputs: ping command (selection, layer, place); era pack (ping or scouts).
+Outputs: revealed set for the burst; the alert and its sector on the pinged player's screen; cooldown state.
+Open flags: Q-005-04 (the ping's numbers, the scouts, and whether the sensor pulse of S-006 stays).
+
+### S-163 — Going dark
+As a commander, I want to choose which of my forces look and which stay quiet, so that seeing further is paid for by being seen, and a quiet force can wait unseen.
+
+Rules
+- R-163-01  Given a force set to emit, When it is on the field, Then it sees other layers further than passive vision allows, and units on every layer see it from further away than they otherwise would [Q-005-04: by how much].
+- R-163-02  Given a force set to silent, When it is on the field, Then it is harder to see from other layers and gives up the extra sight that emitting gives [Q-005-04: by how much, and whether its passive cross-layer sight shrinks too].
+- R-163-03  Given a force, When the player switches it between emitting and silent, Then the switch costs no resource [Q-005-04: per unit or per group, and whether it takes time].
+
+Inputs: emit or silent command; selection.
+Outputs: the force's state in the tick delta; its sight and its visibility to others; a mark on screen showing which forces are emitting.
+Open flags: Q-005-04.
+
+### S-164 — Reach by unit type
+As a commander, I want each unit type to reach only certain layers with its fire, so that where I put each type, and which type I put under or over the enemy, decides who gets shots off.
+
+Rules
+- R-164-01  Given a unit type, When its reach is read, Then it names the layer offsets it can fire at: its own layer, and how many layers up and how many down [Q-005-04 and Q-008-03: the table].
+- R-164-02  Given a target at a layer offset outside the attacker's reach, When the attacker would fire, Then it does not, whatever the distance.
+- R-164-03  Given the roster, When reach is assigned, Then no type's reach is free: a type that reaches further or across more layers is weaker to something another type does [Q-005-04: the weaknesses], and at least one type fires upward well, as the answer to a force that holds the top layer.
+
+Inputs: unit type reach table (roster, per era).
+Outputs: attack eligibility by layer offset.
+Open flags: Q-005-04, Q-008-03.
 
 ## Inputs
 
@@ -258,7 +296,7 @@ Numbers to be confirmed by Westley in Stage 3. Proposed: 1,000 units computing c
 
 ## Open ambiguity flags
 
-Q-001-05, Q-008-02, Q-008-03, Q-009-02. Details in `docs/northstar/ambiguity_register.md`.
+Q-001-05, Q-005-04, Q-008-02, Q-008-03, Q-009-02. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

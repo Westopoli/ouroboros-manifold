@@ -158,7 +158,7 @@ Open flags: none.
 
 ## Scale requirements
 
-Confirmed by Westley, 2026-10-01: one pipe `tactical_step` round trip (request sent to frame parsed by the client) takes under 50 ms at 5,000 units, so 20 calls per second hold in the largest battles.
+Confirmed by Westley, 2026-10-01: one pipe `tactical_step` round trip (request sent to frame parsed by the client) takes under 100 ms at 5,000 units, the tick length at the 10 ticks per second the sim runs above 1,000 live units (R-099-03).
 
 Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): movement and collision for 1,000 units in under 3 ms per tick, 10,000 in under 30 ms; route queries under 1,000 per second at 60 wu cells. The 10,000-unit figure is measured at the 10 ticks/s rate the sim drops to above 1,000 live units (E-13 R-099-03), a 100 ms tick; the 1,000-unit figure at 20 ticks/s.
 

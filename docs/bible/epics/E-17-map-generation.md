@@ -126,6 +126,16 @@ Inputs: map seed; era kit.
 Outputs: screen.
 Open flags: Q-119-01. Reference required: `references/E-17/notes.md`, missing (Minecraft and Roblox biome blending are the named references).
 
+### S-165 — Later, perhaps: travel lanes
+As a commander, I may someday want the map to have lanes where troops move faster and strategic ground where they move slower, so that where an army can travel quickly is part of reading the landscape.
+
+Rules
+- R-165-01  Deferred; an idea, not a decision (Q-165-01). As Westley sketched it for a possible game mode: the biome generator lays lanes of travel that sprawl through the map like a tree; troops moving along a lane move at 1.3 times their speed; key strategic positions and layers, such as high ground, slow movement, placed with care; everywhere else is 1.0.
+
+Inputs: none yet.
+Outputs: none yet.
+Open flags: Q-165-01 (whether the idea is wanted, and as a mode or in every map).
+
 ## Inputs
 
 | Input | Source | Range | Rejection |
@@ -173,7 +183,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-112-01, Q-113-01, Q-115-01, Q-117-01, Q-118-01, Q-119-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-112-01, Q-113-01, Q-115-01, Q-117-01, Q-118-01, Q-119-01, Q-165-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

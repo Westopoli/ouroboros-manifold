@@ -36,6 +36,7 @@ Rules
 - R-103-06  Given the Layer Peel, When the player enables it (an option, off by default), Then the five layers fan apart around the focus point into translucent planes, scrolling walks focus between planes, the fan pans and zooms as one, and releasing closes the planes to true height; fog and cross-layer vision are untouched. The peel is a player option [Q-103-04: its default state, and whether the peel's plane focus and the layer strip's focus are one control].
 - R-103-07  Given any view, When the player presses the flip key, Then the camera turns 180 degrees about a center, keeping its pitch and distance, so a 45° view facing south becomes a 45° view facing north [Q-103-04: the key and the center it turns about].
 - R-103-08  Given a selection in the tactical view, When the player presses A and then left-clicks a point or a visible enemy, Then the selection attack-moves there; right-click alone is move (Westley 2026-10-01; the rest of the control scheme stays under Q-103-04).
+- R-103-09  Given the player pans by keys or by edge-scroll, When the zoom changes, Then the pan speed stays the same on screen, so the ground covered per second grows in proportion as the camera zooms out; the Settings pan-speed slider (R-110-02) scales that speed.
 - R-103-04  Given the camera, When it moves, Then it is never bound to a layer; the layer strip changes focus, not the camera.
 
 Inputs: mouse, keyboard, edge scroll.
@@ -153,8 +154,8 @@ Open flags: none new; references shared with E-08 and E-10.
 As a player, I want a main menu that sets the tone and a settings screen that covers the basics, so that the first thing I see is the game and the second is control.
 
 Rules
-- R-110-01  Given launch, When the main menu shows, Then the galaxy particle structure runs behind it at 70 percent opacity with an autonomous camera cycling six moods with 5 s transitions, and the menu offers New Campaign, Continue, Settings, and Quit.
-- R-110-02  Given Settings, When opened, Then it offers resolution, fullscreen, master and music volume, key rebinding for the layer modifier and control groups, and edge-scroll on or off; accessibility options (colorblind palette, UI scale) are a later story, not in the first playtest rounds.
+- R-110-01  Given launch, When the main menu shows, Then the galaxy particle structure runs behind it at 70 percent opacity with an autonomous camera cycling six moods with 5 s transitions, and the menu offers New Campaign, Continue, Era Library, Settings, and Quit, and nothing else.
+- R-110-02  Given Settings, When opened, Then it offers resolution, fullscreen, master and music volume, and a camera pan-speed slider; key rebinding for the layer modifier and control groups joins it once the layer controls (Q-005-03) and the camera controls (Q-103-04) are designed (Q-110-04); accessibility options (colorblind palette, UI scale) are a later story, not in the first playtest rounds.
 - R-110-03  Given Continue, When pressed with a save at a chapter boundary, Then the campaign resumes at that boundary.
 - R-110-04  Given any loading screen the game shows (campaign load, era switch), When displayed, Then it carries information the player would otherwise never see, in the register of the chronicle (what the Long Horizon foreshadows), never wallpaper art or a bare spinner [Q-110-03: what is shown]. No loading screen exists between mission and galaxy (S-108).
 

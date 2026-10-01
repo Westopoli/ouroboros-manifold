@@ -152,6 +152,26 @@
 #define GEN_PHASE_BRIEFING 0
 #define GEN_PHASE_RECON 1
 #define GEN_PHASE_MISSION 2
+/* R-065-02 (Westley 2026-10-01): mission band to the consequence outcome.
+ * Band ids as in csrc/mission.c: 0 total_failure .. 4 total_success, 5 refusal. */
+#define GEN_CLUSTER_CONSEQUENCE 0
+#define GEN_BAND_UNKNOWN (-1)
+#define GEN_BAND_PARTIAL_FAILURE 1
+#define GEN_BAND_PARTIAL_SUCCESS 2
+#define GEN_BAND_STRONG_SUCCESS 3
+#define GEN_BAND_TOTAL_SUCCESS 4
+#define GEN_OUTCOME_SUCCESS 0
+#define GEN_OUTCOME_FAILURE 1
+#define GEN_OUTCOME_MIXED 2
+#define GEN_OUTCOME_RIPPLE 3
+
+static uint32_t gen_band_outcome(int32_t band) {
+    switch (band) {
+    case GEN_BAND_STRONG_SUCCESS: case GEN_BAND_TOTAL_SUCCESS: return GEN_OUTCOME_SUCCESS;
+    case GEN_BAND_PARTIAL_FAILURE: case GEN_BAND_PARTIAL_SUCCESS: return GEN_OUTCOME_MIXED;
+    default: return GEN_OUTCOME_FAILURE;
+    }
+}
 #define GEN_PHASE_OUTCOME_RESOLUTION 3
 #define GEN_PHASE_TIME_JUMP 4
 #define GEN_PHASE_CHARACTER_SELECTION 5
@@ -262,6 +282,12 @@ typedef struct {
 
     uint32_t mission_chosen_region;
     uint32_t selector_input_region;
+    int consequence_consumed;
+    uint32_t current_commander;
+    uint32_t current_lineage;
+    int32_t chosen_archetype;
+    int has_candidate;
+    int last_end_reason;
 } gen_state;
 
 /* ---- static helpers ---- */
@@ -384,6 +410,12 @@ static void gen_state_put(gen_sw *sw, const gen_state *gs) {
     gen_sw_u64(sw, gs->time_jump_death_tick);
     gen_sw_u32(sw, gs->mission_chosen_region);
     gen_sw_u32(sw, gs->selector_input_region);
+    gen_sw_u8(sw, (uint32_t)gs->consequence_consumed);
+    gen_sw_u32(sw, gs->current_commander);
+    gen_sw_u32(sw, gs->current_lineage);
+    gen_sw_i32(sw, gs->chosen_archetype);
+    gen_sw_u8(sw, (uint32_t)gs->has_candidate);
+    gen_sw_i32(sw, gs->last_end_reason);
 }
 
 typedef struct {
@@ -514,6 +546,12 @@ static void gen_state_get(gen_sr *sr, gen_state *gs) {
     gs->time_jump_death_tick = gen_sr_u64(sr);
     gs->mission_chosen_region = gen_sr_u32(sr);
     gs->selector_input_region = gen_sr_u32(sr);
+    gs->consequence_consumed = (int)gen_sr_flag(sr);
+    gs->current_commander = gen_sr_u32(sr);
+    gs->current_lineage = gen_sr_u32(sr);
+    gs->chosen_archetype = gen_sr_i32(sr);
+    gs->has_candidate = (int)gen_sr_flag(sr);
+    gs->last_end_reason = gen_sr_i32(sr);
 }
 
 /* A state nothing has written to (allocated lazily by any accessor, including
@@ -526,7 +564,8 @@ static int gen_state_pristine(const gen_state *gs) {
     if (gs->pool_previous_forced_empty || gs->pool_nemesis_forced_empty) return 0;
     if (gs->chapter_phase || gs->chapter_number || gs->needs_onboarding || gs->in_transition) return 0;
     if (gs->death_pass_count || gs->time_jump_lineage_gen_tick || gs->time_jump_death_tick) return 0;
-    if (gs->mission_chosen_region || gs->selector_input_region) return 0;
+    if (gs->mission_chosen_region || gs->selector_input_region || gs->consequence_consumed) return 0;
+    if (gs->current_commander || gs->current_lineage || gs->chosen_archetype || gs->has_candidate || gs->last_end_reason) return 0;
     for (uint32_t i = 0; i < OM_MAX_FACTIONS; i++)
         if (gs->supreme_commander[i] || gs->faction_fallen[i]) return 0;
     for (uint32_t i = 0; i < GEN_REGION_CAP; i++)
@@ -582,6 +621,21 @@ void om_generational_install_save_hooks(om_world *w) {
     w->generational_state_size = gen_state_size_hook;
     w->generational_state_write = gen_state_write_hook;
     w->generational_state_read = gen_state_read_hook;
+}
+
+/* R-078-06 / architect rulings 2 section 1.3: 1 while the last mission has a known band and
+ * its consequence is not yet consumed by a jump. */
+int om_chronicle_has_mission_consequence_flag(const om_world *w) {
+    const gen_state *gs = (const gen_state *)w->generational_state;
+    if (gs && gs->consequence_consumed) return 0;
+    return om_mission_get_band(w) != GEN_BAND_UNKNOWN;
+}
+
+/* See also: csrc/mission.c om_mission_end / om_mission_resolve_refusal call this: a new result
+ * gets its own consequence in the next jump. Not declared in a header (mission.c declares it). */
+void om_gen_consequence_rearm(om_world *w) {
+    gen_state *gs = (gen_state *)w->generational_state;
+    if (gs) gs->consequence_consumed = 0;
 }
 
 static gen_state *gen_get_state(const om_world *cw) {
@@ -802,17 +856,23 @@ static void gen_stay(const om_world *w, gen_state *gs, uint32_t lineage_id, uint
     out_record->home_region_idx = l && l->n_history > 0 ? l->history[0] : mission_region;
 }
 
-static gen_character *gen_pick_previous_candidate(const om_world *w, gen_state *gs, uint32_t mission_region) {
+static int gen_faction_survives(const uint32_t *surviving_regions, int32_t faction) {
+    return faction >= 0 && (uint32_t)faction < OM_MAX_FACTIONS && surviving_regions[faction] > 0;
+}
+
+static gen_character *gen_pick_previous_candidate(const om_world *w, gen_state *gs, uint32_t mission_region,
+                                                   const uint32_t *surviving_regions) {
     struct { gen_character *c; double score; } cands[GEN_MAX_SCAN_BUF];
     uint32_t n_cands = 0;
     if (!gs) return NULL;
     for (uint32_t li = 0; li < gs->n_lineages; li++) {
         gen_lineage *l = &gs->lineages[li];
-        if (!l->used) continue;
+        if (!l->used || l->chapter_count < 1) continue; /* R-058-02: played at least 1 chapter ago */
         uint32_t nearby = 0;
         for (uint32_t i = 0; i < gs->n_characters; i++) {
             gen_character *c = &gs->characters[i];
             if (!c->used || c->lineage_id != l->id || c->status != GEN_STATUS_ACTIVE) continue;
+            if (surviving_regions && !gen_faction_survives(surviving_regions, c->faction)) continue;
             if (gen_region_within_hops(w, mission_region, c->region, OM_SELECTOR_PROXIMITY_HOPS)) nearby++;
         }
         if (nearby == 0) continue;
@@ -820,6 +880,7 @@ static gen_character *gen_pick_previous_candidate(const om_world *w, gen_state *
         for (uint32_t i = 0; i < gs->n_characters && n_cands < GEN_MAX_SCAN_BUF; i++) {
             gen_character *c = &gs->characters[i];
             if (!c->used || c->lineage_id != l->id || c->status != GEN_STATUS_ACTIVE) continue;
+            if (surviving_regions && !gen_faction_survives(surviving_regions, c->faction)) continue;
             if (!gen_region_within_hops(w, mission_region, c->region, OM_SELECTOR_PROXIMITY_HOPS)) continue;
             cands[n_cands].c = c;
             cands[n_cands].score = score;
@@ -855,7 +916,7 @@ static uint32_t gen_resolve_candidate_for_pool(om_world *w, gen_state *gs, int p
     for (int i = 0; i < GEN_POOL_COUNT; i++) if (PRIORITY[i] != pool) order[oi++] = PRIORITY[i];
     for (int i = 0; i < GEN_POOL_COUNT; i++) {
         if (order[i] == GEN_POOL_PREVIOUS) {
-            gen_character *c = gen_pick_previous_candidate(w, gs, mission_region);
+            gen_character *c = gen_pick_previous_candidate(w, gs, mission_region, NULL);
             if (c) { c->lineage_id = new_lineage_id; return c->id; }
         } else if (order[i] == GEN_POOL_NEMESIS) {
             uint32_t n = om_selector_gather_nemesis_candidates(w, mission_region);
@@ -869,7 +930,12 @@ static uint32_t gen_resolve_candidate_for_pool(om_world *w, gen_state *gs, int p
         } else {
             uint32_t cid = om_selector_draw_unrelated(w, mission_region);
             gen_character *c = gen_char_find(gs, cid);
-            if (c) c->lineage_id = new_lineage_id;
+            if (c) {
+                /* R-058-04: one lineage per unrelated rotation; drop the one the draw minted. */
+                gen_lineage *stray = gen_lineage_find(gs, c->lineage_id);
+                if (stray && c->lineage_id != new_lineage_id) stray->used = 0;
+                c->lineage_id = new_lineage_id;
+            }
             return cid;
         }
     }
@@ -1213,7 +1279,33 @@ void om_character_selector_resolve_commander_death(om_world *w, uint32_t lineage
 
 void om_character_selector_run(om_world *w) {
     gen_state *gs = gen_get_state(w);
-    if (gs) gs->selector_input_region = gs->mission_chosen_region;
+    if (!gs) return;
+    uint32_t region = gs->mission_chosen_region;
+    gs->selector_input_region = region;
+    uint32_t had_commander = gs->current_commander;
+    om_selection_record rec;
+    om_debrief d;
+    if (had_commander == 0) {
+        int pool = om_selector_roll_pool(w, om_rng_draw(w));
+        om_character_selector_force_rotate(w, 0, region, GEN_REASON_FORCED, pool, &rec);
+    } else if (om_mission_get_debrief(w, &d) == 1 && d.commander_fate == 0) {
+        om_character_selector_resolve_commander_death(w, gs->current_lineage, region, &rec);
+    } else {
+        om_character_selector_run_for_lineage(w, gs->current_lineage, region, &rec);
+    }
+    if (rec.commander_id) gs->current_commander = rec.commander_id;
+    if (rec.rotated) {
+        gs->current_lineage = rec.new_lineage_id;
+    } else {
+        /* R-057-08, A17: a selection that keeps the lineage is one more chapter in it. */
+        gen_lineage *kept = gen_lineage_find(gs, gs->current_lineage);
+        if (kept) kept->chapter_count++;
+    }
+}
+
+uint32_t om_lineage_chapter_count(const om_world *w, uint32_t lineage_id) {
+    gen_lineage *l = gen_lineage_find(gen_get_state(w), lineage_id);
+    return l ? l->chapter_count : 0;
 }
 
 void om_character_selector_run_for_lineage(om_world *w, uint32_t lineage_id, uint32_t mission_region,
@@ -1282,8 +1374,12 @@ void om_character_tag_rival(om_world *w, uint32_t character_id, uint32_t rival_o
 }
 
 uint32_t om_chronicle_consequence_entry_count(const om_world *w) {
-    (void)w;
-    return 0;
+    uint32_t n = 0;
+    for (uint32_t i = 0; i < om_chronicle_entry_count(w); i++) {
+        om_chronicle_cluster c;
+        if (om_chronicle_get_cluster(w, i, &c) && c.type == GEN_CLUSTER_CONSEQUENCE && c.category < GEN_OUTCOME_RIPPLE) n++;
+    }
+    return n;
 }
 
 int om_chronicle_has_faction_fall_entry(const om_world *w, int32_t old_faction) {
@@ -1441,21 +1537,46 @@ uint32_t om_mission_generator_chosen_region(const om_world *w) {
     return gs ? gs->mission_chosen_region : 0;
 }
 
+uint32_t om_campaign_commander(const om_world *w) {
+    gen_state *gs = gen_get_state(w);
+    return gs ? gs->current_commander : 0;
+}
+
+uint32_t om_campaign_lineage(const om_world *w) {
+    gen_state *gs = gen_get_state(w);
+    return gs ? gs->current_lineage : 0;
+}
+
+int om_chapter_last_end_reason(const om_world *w) {
+    gen_state *gs = gen_get_state(w);
+    return gs ? gs->last_end_reason : GEN_CHAPTER_END_NORMAL;
+}
+
+int32_t om_mission_generator_chosen_archetype(const om_world *w) {
+    gen_state *gs = gen_get_state(w);
+    return (gs && gs->has_candidate) ? gs->chosen_archetype : -1;
+}
+
 void om_mission_generator_run(om_world *w) {
     gen_state *gs = gen_get_state(w);
     if (!gs || !w) return;
+    for (uint32_t ri = 0; ri < om_region_count(w); ri++) om_mission_refresh_context(w, (int32_t)ri);
     om_mission_build_candidate_pool(w);
     uint32_t n = om_mission_candidates(w, NULL, UINT32_MAX);
     uint32_t chosen;
     if (n == 0) {
         /* Q-072-01 fallback: no candidate triggered anywhere. */
         chosen = om_mission_fallback_region(w);
+        gs->has_candidate = 0;
+        gs->chosen_archetype = -1;
     } else {
         uint32_t idx = om_mission_select(w);
         om_mission_candidate *pool = malloc((size_t)n * sizeof(*pool));
         if (!pool) return;
         om_mission_candidates(w, pool, n);
         chosen = pool[idx < n ? idx : 0].region_idx;
+        gs->chosen_archetype = (int32_t)pool[idx < n ? idx : 0].archetype;
+        gs->has_candidate = 1;
         free(pool);
     }
     gs->mission_chosen_region = chosen;
@@ -1526,21 +1647,63 @@ int om_player_faction_check_collapse(const om_world *w, int32_t player_faction) 
 
 int32_t om_player_faction_reassign_on_collapse(om_world *w, int32_t player_faction) {
     if (!w) return -1;
+    gen_state *gs = gen_get_state(w);
     uint32_t counts[OM_MAX_FACTIONS];
     memset(counts, 0, sizeof(counts));
     for (uint32_t i = 0; i < w->n_regions; i++) {
         int32_t f = w->regions[i].faction_id;
         if (f >= 0 && (uint32_t)f < OM_MAX_FACTIONS && f != player_faction) counts[f]++;
     }
-    int32_t best = -1;
-    uint32_t best_count = 0;
-    for (int32_t f = 0; f < (int32_t)OM_MAX_FACTIONS; f++) {
-        if (counts[f] > best_count) {
-            best_count = counts[f];
-            best = f;
+    /* R-062-02, A24, A26: previous then nemesis pools, surviving factions only, 2 hops from the last mission region. */
+    uint32_t region = om_mission_last_region(w);
+    gen_character *prev_probe = NULL;
+    uint32_t nem_ids[GEN_MAX_NEMESIS_CANDIDATES];
+    uint32_t n_nem = 0;
+    if (gs) {
+        uint32_t n = om_selector_gather_nemesis_candidates(w, region);
+        for (uint32_t i = 0; i < n; i++) {
+            gen_character *c = gen_char_find(gs, gs->nemesis_candidates[i]);
+            if (c && gen_faction_survives(counts, c->faction)) nem_ids[n_nem++] = c->id;
+        }
+        /* probe without drawing: the previous pool is non-empty iff a surviving lineage member is in range */
+        for (uint32_t i = 0; i < gs->n_characters && !prev_probe; i++) {
+            gen_character *c = &gs->characters[i];
+            gen_lineage *l = gen_lineage_find(gs, c->lineage_id);
+            if (!c->used || c->status != GEN_STATUS_ACTIVE || !l || l->chapter_count < 1) continue;
+            if (!gen_faction_survives(counts, c->faction)) continue;
+            if (gen_region_within_hops(w, region, c->region, OM_SELECTOR_PROXIMITY_HOPS)) prev_probe = c;
         }
     }
-    return best;
+    if (prev_probe || n_nem > 0) {
+        int pool = om_selector_roll_pool(w, om_rng_draw(w));
+        if (pool == GEN_POOL_UNRELATED) pool = GEN_POOL_PREVIOUS;
+        for (int step = 0; step < 2; step++) {
+            if (pool == GEN_POOL_PREVIOUS) {
+                gen_character *c = prev_probe ? gen_pick_previous_candidate(w, gs, region, counts) : NULL;
+                if (c) return c->faction;
+                pool = GEN_POOL_NEMESIS;
+            } else {
+                if (n_nem > 0) {
+                    uint32_t idx = (uint32_t)(om_rng_draw(w) * (double)n_nem);
+                    if (idx >= n_nem) idx = n_nem - 1;
+                    return gen_char_find(gs, nem_ids[idx])->faction;
+                }
+                pool = GEN_POOL_PREVIOUS;
+            }
+        }
+    }
+    uint32_t best_count = 0;
+    for (int32_t f = 0; f < (int32_t)OM_MAX_FACTIONS; f++)
+        if (counts[f] > best_count) best_count = counts[f];
+    if (best_count == 0) return -1;
+    int32_t tied[OM_MAX_FACTIONS];
+    uint32_t n_tied = 0;
+    for (int32_t f = 0; f < (int32_t)OM_MAX_FACTIONS; f++)
+        if (counts[f] == best_count) tied[n_tied++] = f;
+    if (n_tied == 1) return tied[0];
+    uint32_t idx = (uint32_t)(om_rng_draw(w) * (double)n_tied);
+    if (idx >= n_tied) idx = n_tied - 1;
+    return tied[idx];
 }
 
 void om_player_faction_record_reassignment(om_world *w, int32_t old_faction, int32_t new_faction) {
@@ -1753,11 +1916,16 @@ static const uint8_t GEN_LAUNCH_EVENT_TIER[] = {
 #define GEN_DEFAULT_EVENT_TIER 2
 #define GEN_OWNERSHIP_CHANGE_TIER 4 /* conquest-grade: CONQUEST_UNREST's tier */
 #define GEN_JUMP_EVENT_BUF 128
+#define GEN_JUMP_CHAIN_CAP 32
+
+typedef struct {
+    int32_t tag;
+    uint32_t region, template_id, n_events;
+    double mil, eco, ten;
+} gen_jump_chain;
 /* ALG-51 step 4 (simulation/chronicle_distiller.py _classify_regional_cluster):
  * regional cluster is growth above +3.0 and decline below -3.0 of the summed
  * economy + population event deltas. Category ids match chronicle.c. */
-#define OM_CHRON_REGIONAL_GROWTH_MIN 3.0
-#define OM_CHRON_REGIONAL_DECLINE_MAX -3.0
 #define GEN_CAT_REGIONAL_GROWTH 21
 #define GEN_CAT_REGIONAL_DECLINE 22
 
@@ -1774,6 +1942,15 @@ static int gen_time_jump(om_world *w, uint32_t n_ticks, om_time_jump_report *rep
     if (gs->chapter_phase == GEN_PHASE_MISSION) return 1;
     uint64_t start_tick = w->tick;
     uint32_t nr = w->n_regions < OM_MAX_REGIONS ? w->n_regions : OM_MAX_REGIONS;
+    /* Architect rulings 2 section 1.3: read once; the chronicle build below flips the flag. */
+    int post_mission = !opening && om_chronicle_has_mission_consequence_flag(w);
+    double start_eco[OM_MAX_REGIONS], start_mil[OM_MAX_REGIONS], start_ten[OM_MAX_REGIONS];
+    for (uint32_t r = 0; r < nr; r++) {
+        start_eco[r] = om_region_field(w, r, OM_F_ECONOMY);
+        start_mil[r] = om_region_field(w, r, OM_F_MILITARY);
+        start_ten[r] = om_region_field(w, r, OM_F_TENSION);
+    }
+    int event_fired[OM_MAX_REGIONS];
     int32_t start_owner[OM_MAX_REGIONS], last_owner[OM_MAX_REGIONS];
     uint64_t change_tick[OM_MAX_REGIONS];
     double peak[OM_MAX_REGIONS], net[OM_MAX_REGIONS];
@@ -1784,9 +1961,12 @@ static int gen_time_jump(om_world *w, uint32_t n_ticks, om_time_jump_report *rep
         peak[r] = 0.0;
         net[r] = 0.0;
         active[r] = 0;
+        event_fired[r] = 0;
     }
     int track_events = om_world_feature(w, OM_FEAT_EVENTS);
     om_fired_event fired[GEN_JUMP_EVENT_BUF];
+    gen_jump_chain chains[GEN_JUMP_CHAIN_CAP];
+    uint32_t n_chains = 0;
     for (uint32_t i = 0; i < n_ticks; i++) {
         om_world_step(w);
         for (uint32_t r = 0; r < nr; r++) {
@@ -1801,6 +1981,24 @@ static int gen_time_jump(om_world *w, uint32_t n_ticks, om_time_jump_report *rep
                           ? GEN_LAUNCH_EVENT_TIER[fired[k].template_id] : GEN_DEFAULT_EVENT_TIER;
             double dsum = 0.0;
             for (uint32_t f = 0; f < OM_F_COUNT; f++) dsum += fabs(fired[k].delta[f]);
+            event_fired[fired[k].region_idx] = 1;
+            if (fired[k].chain_tag > 0) {
+                uint32_t g = 0;
+                while (g < n_chains && chains[g].tag != fired[k].chain_tag) g++;
+                if (g == n_chains && n_chains < GEN_JUMP_CHAIN_CAP) {
+                    memset(&chains[g], 0, sizeof(chains[g]));
+                    chains[g].tag = fired[k].chain_tag;
+                    chains[g].region = fired[k].region_idx;
+                    chains[g].template_id = fired[k].template_id;
+                    n_chains++;
+                }
+                if (g < n_chains) {
+                    chains[g].n_events++;
+                    chains[g].mil += fired[k].delta[OM_F_MILITARY];
+                    chains[g].eco += fired[k].delta[OM_F_ECONOMY];
+                    chains[g].ten += fired[k].delta[OM_F_TENSION];
+                }
+            }
             net[fired[k].region_idx] += fired[k].delta[OM_F_ECONOMY] + fired[k].delta[OM_F_POPULATION];
             double score = om_chronicle_score_event(w, fired[k].region_idx, tier, dsum);
             if (!active[fired[k].region_idx] || score > peak[fired[k].region_idx]) peak[fired[k].region_idx] = score;
@@ -1831,21 +2029,57 @@ static int gen_time_jump(om_world *w, uint32_t n_ticks, om_time_jump_report *rep
         om_chronicle_build_opening_scroll(w);
     } else {
         uint32_t n_candidates = 0;
+        uint32_t tier_transitions[OM_MAX_FACTIONS];
+        (void)om_chronicle_distill_candidates(w, tier_transitions, OM_MAX_FACTIONS);
+        int32_t band = om_mission_get_band(w);
+        if (band == GEN_BAND_UNKNOWN) gs->consequence_consumed = 0;
+        else if (!gs->consequence_consumed) {
+            om_chronicle_add_consequence_event(w, om_mission_last_region(w), gen_band_outcome(band));
+            gs->consequence_consumed = 1;
+            n_candidates++;
+            /* Q-067-01 (b): adjacency is the region_edge graph behind om_region_neighbors,
+             * not mission.c's separate neighbors list. */
+            uint32_t mission_region = om_mission_last_region(w);
+            uint32_t adjacent[OM_MAX_REGIONS];
+            uint32_t n_adj = om_region_neighbors(w, mission_region, adjacent, OM_MAX_REGIONS);
+            for (uint32_t a = 0; a < n_adj; a++) {
+                if (adjacent[a] >= nr || adjacent[a] == mission_region || !event_fired[adjacent[a]]) continue;
+                om_chronicle_add_consequence_event(w, adjacent[a], GEN_OUTCOME_RIPPLE);
+                n_candidates++;
+            }
+        }
         for (uint32_t r = 0; r < nr; r++) {
             if (!active[r]) continue;
             om_chronicle_add_event(w, r, peak[r]);
             n_candidates++;
             if (start_owner[r] != last_owner[r]) continue;
-            if (net[r] > OM_CHRON_REGIONAL_GROWTH_MIN)
-                om_chronicle_add_regional_event(w, r, GEN_CAT_REGIONAL_GROWTH, peak[r]);
-            else if (net[r] < OM_CHRON_REGIONAL_DECLINE_MAX)
-                om_chronicle_add_regional_event(w, r, GEN_CAT_REGIONAL_DECLINE, peak[r]);
+            uint32_t rcat = om_chronicle_categorize_regional_cluster(w, 0, net[r]);
+            if (rcat == GEN_CAT_REGIONAL_GROWTH || rcat == GEN_CAT_REGIONAL_DECLINE)
+                om_chronicle_add_regional_event(w, r, rcat, peak[r]);
         }
+        for (uint32_t g = 0; g < n_chains; g++) {
+            const char *name = om_event_template_name(w, chains[g].template_id);
+            uint32_t ccat = om_chronicle_categorize_chain_cluster(w, name, chains[g].n_events,
+                                                                   chains[g].mil, chains[g].eco, chains[g].ten);
+            om_chronicle_add_chain_event(w, chains[g].tag, chains[g].region, ccat);
+        }
+        uint32_t n_chain_clusters = om_chronicle_build_chain_clusters(w);
+        n_candidates += n_chain_clusters;
         for (uint32_t li = 0; li < gs->n_lineages; li++) {
             gen_lineage *ln = &gs->lineages[li];
             if (!ln->used) continue;
             uint32_t region = ln->n_history ? ln->history[ln->n_history - 1] : om_lineage_home_region(w, ln->id);
-            om_chronicle_add_lineage_event(w, ln->id, region, 0.0);
+            const char *lname = "";
+            for (uint32_t g = 0; g < n_chains; g++)
+                if (chains[g].region == region) { lname = om_event_template_name(w, chains[g].template_id); break; }
+            double d_eco = 0.0, d_mil = 0.0, d_ten = 0.0;
+            if (region < nr) {
+                d_eco = om_region_field(w, region, OM_F_ECONOMY) - start_eco[region];
+                d_mil = om_region_field(w, region, OM_F_MILITARY) - start_mil[region];
+                d_ten = om_region_field(w, region, OM_F_TENSION) - start_ten[region];
+            }
+            uint32_t lcat = om_chronicle_categorize_lineage_cluster(w, lname, d_eco, d_mil, d_ten);
+            om_chronicle_add_lineage_event(w, ln->id, region, lcat, 0.0);
             n_candidates++;
         }
         for (uint32_t r = 0; r < nr && n_candidates < OM_CHRONICLE_MIN_ENTRIES; r++) {
@@ -1856,6 +2090,33 @@ static int gen_time_jump(om_world *w, uint32_t n_ticks, om_time_jump_report *rep
         if (n_candidates == 0) om_chronicle_build_opening_scroll(w);
     }
     om_chronicle_assemble_with_seed(w, start_tick);
+
+    gs->last_end_reason = GEN_CHAPTER_END_NORMAL;
+    if (post_mission) {
+        om_debrief dbf;
+        if (om_player_faction_check_collapse(w, om_player_faction(w))) gs->last_end_reason = GEN_CHAPTER_END_FACTION_COLLAPSED;
+        else if (om_mission_get_debrief(w, &dbf) == 1 && dbf.commander_fate == 0) gs->last_end_reason = GEN_CHAPTER_END_COMMANDER_DEATH;
+    }
+    int terminal = 0;
+    if (gs->last_end_reason == GEN_CHAPTER_END_FACTION_COLLAPSED) {
+        /* A15: reassign before the generator, which needs a player faction that holds regions. */
+        int32_t old_pf = om_player_faction(w);
+        if (om_campaign_check_surviving_factions(w) == GEN_CAMPAIGN_NO_SURVIVING_FACTIONS) {
+            om_campaign_trigger_terminal_restart(w);
+            terminal = 1;
+        } else {
+            int32_t nf = om_player_faction_reassign_on_collapse(w, old_pf);
+            if (nf >= 0) {
+                if (old_pf >= 0) w->faction_archetype[old_pf] = OM_ARCH_DEFAULT;
+                w->faction_archetype[nf] = OM_ARCH_PLAYER;
+            }
+        }
+    }
+    if (!terminal) {
+        om_mission_generator_run(w);
+        if (opening || post_mission) om_character_selector_run(w);
+        if (post_mission) gs->chapter_number++;
+    }
 
     if (report) {
         memset(report, 0, sizeof(*report));

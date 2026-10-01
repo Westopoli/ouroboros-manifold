@@ -592,6 +592,45 @@ def test_no_om_definitions_in_diff_is_clean(tmp_path):
     assert "no om_* definitions" in detail
 
 
+def _ownership_after(tmp_path, filename, text):
+    repo = _init_repo(tmp_path / "repo")
+    sigs = tmp_path / "signatures.toml"
+    _write_signatures(sigs, [("om_gen_consequence_rearm", "region.c")])
+    empty_sm = tmp_path / "symbol_modules.toml"
+    empty_sm.write_text("[symbols]\n")
+    (repo / "csrc" / filename).write_text(text)
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "candidate")
+    return mgs.symbol_ownership_check(repo, "HEAD~1", signatures_path=sigs,
+                                      symbol_modules_path=empty_sm)
+
+
+def test_extern_declaration_in_other_file_is_not_a_definition(tmp_path):
+    ok, detail = _ownership_after(
+        tmp_path, "mission.c", "extern void om_gen_consequence_rearm(om_world *w);\n")
+    assert ok is True, detail
+
+
+def test_prototype_in_header_is_not_a_definition(tmp_path):
+    ok, detail = _ownership_after(
+        tmp_path, "ouroboros_sim.h", "void om_gen_consequence_rearm(om_world *w);\n")
+    assert ok is True, detail
+
+
+def test_positive_control_wrong_file_body_still_rejected_beside_declaration(tmp_path):
+    ok, detail = _ownership_after(
+        tmp_path, "mission.c",
+        "extern void om_gen_consequence_rearm(om_world *w);\n"
+        "void om_gen_consequence_rearm(om_world *w) {\n")
+    assert ok is False
+    assert "om_gen_consequence_rearm" in detail and "mission.c" in detail
+
+
+def test_real_definition_in_owning_file_still_matches(tmp_path):
+    ok, detail = _ownership_after(
+        tmp_path, "region.c", "void om_gen_consequence_rearm(om_world *w) {\n")
+    assert ok is True, detail
+
 # ---------------------------------------------------------------- undertest_warn --
 
 def test_undertest_warn_unknown_piece_skips(tmp_path):

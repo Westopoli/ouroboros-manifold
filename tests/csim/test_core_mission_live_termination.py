@@ -126,9 +126,9 @@ def test_enemy_only_occupancy_blocks_the_hold_and_the_mission_does_not_end(lib, 
 
 def test_time_limit_ends_the_mission_even_with_no_objective_progress(lib, world_factory):
     w = _setup_hold_zone_mission(lib, world_factory)
-    # Leave hold_required_ticks at its real, live-computed value (the time
-    # limit itself, see the report) -- this test proves the *time limit*
-    # path, not a shortened quota, so no override here.
+    # No hold-quota override: the enemy blocks the zone the whole time, so
+    # the hold never completes (R-075-02's required is 12,000 base ticks, no
+    # longer the time limit) and this test proves the *time limit* path.
     limit = lib.om_mission_get_time_limit(w)
     assert limit > 0, "om_mission_get_time_limit returned 0 for a set-up mission"
     cx, cy = _zone_center(lib, w)

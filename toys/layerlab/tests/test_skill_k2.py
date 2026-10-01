@@ -555,21 +555,33 @@ def test_s3_is_the_same_layer_overlay_in_every_combination(combo):
         [dict(g, layer=layer) for g in _compose(sit, 0, rest, 4, "line", enemy)]
 
 
+def _distinct_sit():
+    """sit.layer 3, hidden.layer 4: S3 -> layer 4, S3 + S4 -> layer 5, both differ from the naive layer 3, so
+    S4 changes the play exactly when S3 is present (SPEC 14.3: the S3 layer is guess + 1)."""
+    sit = _sit("lane", mix=MIXED, hidden={"route": 1, "layer": 4})
+    assert sit.layer == 3
+    return sit
+
+
 def test_the_32_combinations_are_distinct_except_the_s4_pairs():
-    sit = _independence_sit()
+    sit = _distinct_sit()
     enemy = _enemy(sit, 4)
     classes = {}
     for combo in _m("plays").all_combinations():
         classes.setdefault(_sig(_compose(sit, 0, combo, 4, "line", enemy)), []).append(combo)
     got = sorted(sorted(tuple(sorted(c)) for c in v) for v in classes.values())
     want = []
+    merged = []
     for n in range(6):
         for c in itertools.combinations(SKILLS5, n):
             if "S3" in c:
-                want.append([c])                                  # S3 uses the hidden layer: S4 changes the play
+                want.append([c])                                  # S3 reads the hidden layer: S4 changes the play
             elif "S4" not in c:
-                want.append(sorted([c, tuple(sorted(set(c) | {"S4"}))]))   # S4 uses nothing here: same play
-    assert len(classes) == 24
+                pair = sorted([c, tuple(sorted(set(c) | {"S4"}))])   # S4 reads nothing here: same play as without it
+                want.append(pair)
+                merged.append(pair)
+    assert len(merged) == 8                                       # C and C + S4 for the 8 subsets C of {S1, S2, S5}
+    assert len(classes) == 32 - 8 == 24
     assert got == sorted(want)
 
 
@@ -613,16 +625,22 @@ def test_build_scenario_swap_is_the_label_swapped_twin():
     assert cost.force_cost(swapped, 0) > cost.force_cost(swapped, 1)  # swap True: skilled is B, naive A first
 
 
-def test_build_scenario_naive_skilled_play_sits_at_the_anchors():
+@pytest.mark.parametrize("swap", (False, True))
+def test_build_scenario_naive_skilled_play_sits_at_the_anchors(swap):
+    """By role: positions stay with the geometry and only the labels swap, so the skilled force is at anchor A
+    and the naive force at anchor B for both swap values."""
     sit = _sit("flat")
-    build = _m("plays").build_scenario(sit, frozenset(), 4, "hold")
-    for swap in (False, True):
-        scn = build(1.0, swap)
-        for letter, anchor in (("A", sit.anchor_A), ("B", sit.anchor_B)):
-            us = [u for u in _units(scn["groups"]) if u["side"] == letter]
-            c = _centroid([(u["x"], u["y"]) for u in us])
-            assert math.hypot(c[0] - anchor[0], c[1] - anchor[1]) <= 1.0
-            assert {u["order"] for u in us} == {"hold"}
+    scn = _m("plays").build_scenario(sit, frozenset(), 4, "hold")(1.0, swap)
+    skilled_label, naive_label = ("B", "A") if swap else ("A", "B")
+    for label, anchor in ((skilled_label, sit.anchor_A), (naive_label, sit.anchor_B)):
+        us = [u for u in _units(scn["groups"]) if u["side"] == label]
+        assert us
+        c = _centroid([(u["x"], u["y"]) for u in us])
+        assert math.hypot(c[0] - anchor[0], c[1] - anchor[1]) <= 1.0
+        assert {u["order"] for u in us} == {"hold"}
+    wrong = [u for u in _units(scn["groups"]) if u["side"] == naive_label]      # control: the label is not the anchor
+    c = _centroid([(u["x"], u["y"]) for u in wrong])
+    assert math.hypot(c[0] - sit.anchor_A[0], c[1] - sit.anchor_A[1]) > 100.0
 
 
 def test_build_scenario_run_params_and_terrain_follow_the_situation():
@@ -707,7 +725,8 @@ def test_profile_is_deterministic():
 
 def _scripted_fights(scn):
     """Bigger force (by cost) wins; a concave play is the skilled side: planted non-monotone on 'flat',
-    a skill bonus on 'lane' (1.6) and 'block' (2.5), none elsewhere."""
+    a skill bonus on 'lane' (1.1) and 'block' (5.0), none elsewhere: the S2 premiums 1.0, ~1.25, ~5.6 have a
+    mean (~2.6) far from the median (~1.25)."""
     cost, fight = _m("cost"), _m("fight")
     ca, cb = cost.force_cost(scn, 0), cost.force_cost(scn, 1)
     conc = {g["side"] for g in scn["groups"] if g.get("formation") == "concave"}
@@ -718,7 +737,7 @@ def _scripted_fights(scn):
         if preset == "flat":
             sx = 1.0 if (co / cs < 1.0 or co / cs >= 2.0) else -1.0
         else:
-            eff = cs * {"lane": 1.6, "block": 2.5}.get(preset, 1.0)
+            eff = cs * {"lane": 1.1, "block": 5.0}.get(preset, 1.0)
             sx = (eff > co) - (eff < co)
         m = float(sx if skilled == 0 else -sx)
     else:
@@ -736,8 +755,8 @@ def test_aggregate_counts_invalid_cells_and_never_averages_them_in(monkeypatch):
     for i, fam in enumerate(("flat", "lane", "block", "wall")):
         sits.append(_sit(fam, id=100 + i))
     combos = [frozenset(), frozenset({"S2"}), frozenset({"S1", "S2"})]
-    prof = _m("plays").profile(sits, sizes=(4,), ratios=(0.7, 1.4, 2.8), refine=1, seeds=(0,),
-                               combos=combos, processes=0)
+    prof = _m("plays").profile(sits, sizes=(4,), ratios=(0.5, 0.9, 1.05, 1.3, 2.0, 3.0, 4.0, 6.0, 8.0), refine=3,
+                               seeds=(0,), combos=combos, processes=0)    # a scan wide enough for the 5.0 bonus
     assert len(prof.cells) == 12
     by = {(_c(c, "situation"), _c(c, "combo")): c for c in prof.cells}
     planted = by[(100, frozenset({"S2"}))]                       # flat + concave: non-monotone, still after the re-run
@@ -757,5 +776,6 @@ def test_aggregate_counts_invalid_cells_and_never_averages_them_in(monkeypatch):
     assert s2["n_invalid"] == 1 and s2["n_valid"] == 3            # the planted cell is counted, not averaged
     ok = sorted(_c(by[(sid, frozenset({"S2"}))], "premium") for sid in (101, 102, 103))
     assert s2["median_premium"] == pytest.approx(ok[1])
-    assert statistics.mean(ok) != pytest.approx(ok[1])            # the fixture can tell a median from a mean
+    assert abs(statistics.mean(ok) - ok[1]) > 0.5                 # the fixture can tell a median from a mean
+    assert ok[0] < ok[1] < ok[2]
     assert agg[frozenset()]["n_invalid"] == 0 and agg[frozenset()]["median_premium"] == pytest.approx(1.0)
