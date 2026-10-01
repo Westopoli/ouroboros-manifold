@@ -15,6 +15,9 @@ def _task(args):
         out.append({"sit": c["situation"], "family": sit.family, "size": c["size"], "config": cfg or "base",
                     "combo": "".join(sorted(s[1] for s in c["combo"])) or "0",
                     "value": c["value"], "r0": c["r0"], "premium": c["premium"], "valid": c["valid"],
+                    "map_set": c["map_set"], "refusable": c["refusable"], "value_cost": c["value_cost"],
+                    "firing_adv_at_rstar": c["firing_adv_at_rstar"], "firing_adv_equal": c["firing_adv_equal"],
+                    "win_margin": c["win_margin"], "windows": c["windows"],
                     "flags": list(c["flags"]) if not isinstance(c["flags"], dict) else c["flags"]})
     return out
 
