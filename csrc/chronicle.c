@@ -129,6 +129,7 @@
 #define CAT_CONSEQUENCE_SUCCESS 30
 #define CAT_CONSEQUENCE_FAILURE 31
 #define CAT_CONSEQUENCE_MIXED 32
+#define CAT_CONSEQUENCE_RIPPLE 33
 
 #define CHRON_MAX_CANDIDATES 256
 #define CHRON_MAX_FINAL 16
@@ -580,6 +581,7 @@ static const char *chron_category_name(uint32_t category) {
     case CAT_CONSEQUENCE_SUCCESS: return "consequence_success";
     case CAT_CONSEQUENCE_FAILURE: return "consequence_failure";
     case CAT_CONSEQUENCE_MIXED: return "consequence_mixed";
+case CAT_CONSEQUENCE_RIPPLE: return "consequence_ripple";
     default: return "unknown";
     }
 }
@@ -1028,6 +1030,7 @@ static const char *chron_field_delta_phrase(uint32_t effective_category) {
     case CAT_CONSEQUENCE_SUCCESS: return "the commander's work bore fruit";
     case CAT_CONSEQUENCE_FAILURE: return "the commander's work came to little";
     case CAT_CONSEQUENCE_MIXED: return "the outcome was neither victory nor ruin";
+    case CAT_CONSEQUENCE_RIPPLE: return "the echo of it was felt across the border";
     default: return "conditions shifted in ways the record still argues over";
     }
 }
@@ -1138,7 +1141,8 @@ static void chron_build_slots(const om_world *w, const om_chronicle_cluster *c, 
     }
     snprintf(slots[SLOT_MISSION_OUTCOME].value, CHRON_SLOT_VALUE_CAP, "%s", outcome);
     snprintf(slots[SLOT_MISSION_ARCHETYPE].value, CHRON_SLOT_VALUE_CAP, "%s", "the commander");
-    snprintf(slots[SLOT_MISSION_REGION].value, CHRON_SLOT_VALUE_CAP, "%s", chron_region_name(c->region));
+    uint32_t mission_region = eff_cat == CAT_CONSEQUENCE_RIPPLE ? om_mission_last_region(w) : c->region;
+    snprintf(slots[SLOT_MISSION_REGION].value, CHRON_SLOT_VALUE_CAP, "%s", chron_region_name(mission_region));
 }
 
 static int chron_slot_lookup(const chron_slot_kv *slots, const char *key, char *out, size_t outcap) {
@@ -1249,6 +1253,17 @@ static int chron_assemble(const om_world *w, uint32_t category, uint32_t region_
     chron_slot_kv slots[CHRON_N_SLOTS];
     chron_build_slots(w, &synth, slots);
 
+    if (category == CAT_CONSEQUENCE_RIPPLE) {
+        /* Q-067-01 (b): the 399-fragment library has no ripple pool yet; until it does,
+         * one placeholder line (rules: missing library content falls back to a placeholder). */
+        char text[CHRON_FRAGMENT_TEXT_CAP];
+        chron_resolve_text("Word of what was done at {mission_region} reached {region_name}, where {field_delta_summary}.",
+                           slots, text, sizeof(text));
+        snprintf(base_out, base_cap, "%s", text);
+        snprintf(expanded_out, expanded_cap, "%s", text);
+        fragment_ids[0] = fragment_ids[1] = fragment_ids[2] = -1;
+        return 1;
+    }
     const chron_fragment *opening = chron_pick_fragment(category, 0, rng);
     const chron_fragment *detail = chron_pick_fragment(category, 1, rng);
     const chron_fragment *closing = chron_pick_fragment(category, 2, rng);

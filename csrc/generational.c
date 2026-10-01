@@ -159,6 +159,7 @@
 #define GEN_OUTCOME_SUCCESS 0
 #define GEN_OUTCOME_FAILURE 1
 #define GEN_OUTCOME_MIXED 2
+#define GEN_OUTCOME_RIPPLE 3
 
 static uint32_t gen_band_outcome(int32_t band) {
     switch (band) {
@@ -1303,7 +1304,7 @@ uint32_t om_chronicle_consequence_entry_count(const om_world *w) {
     uint32_t n = 0;
     for (uint32_t i = 0; i < om_chronicle_entry_count(w); i++) {
         om_chronicle_cluster c;
-        if (om_chronicle_get_cluster(w, i, &c) && c.type == GEN_CLUSTER_CONSEQUENCE) n++;
+        if (om_chronicle_get_cluster(w, i, &c) && c.type == GEN_CLUSTER_CONSEQUENCE && c.category < GEN_OUTCOME_RIPPLE) n++;
     }
     return n;
 }
@@ -1801,6 +1802,7 @@ static int gen_time_jump(om_world *w, uint32_t n_ticks, om_time_jump_report *rep
     if (gs->chapter_phase == GEN_PHASE_MISSION) return 1;
     uint64_t start_tick = w->tick;
     uint32_t nr = w->n_regions < OM_MAX_REGIONS ? w->n_regions : OM_MAX_REGIONS;
+    int event_fired[OM_MAX_REGIONS];
     int32_t start_owner[OM_MAX_REGIONS], last_owner[OM_MAX_REGIONS];
     uint64_t change_tick[OM_MAX_REGIONS];
     double peak[OM_MAX_REGIONS], net[OM_MAX_REGIONS];
@@ -1811,6 +1813,7 @@ static int gen_time_jump(om_world *w, uint32_t n_ticks, om_time_jump_report *rep
         peak[r] = 0.0;
         net[r] = 0.0;
         active[r] = 0;
+        event_fired[r] = 0;
     }
     int track_events = om_world_feature(w, OM_FEAT_EVENTS);
     om_fired_event fired[GEN_JUMP_EVENT_BUF];
@@ -1830,6 +1833,7 @@ static int gen_time_jump(om_world *w, uint32_t n_ticks, om_time_jump_report *rep
                           ? GEN_LAUNCH_EVENT_TIER[fired[k].template_id] : GEN_DEFAULT_EVENT_TIER;
             double dsum = 0.0;
             for (uint32_t f = 0; f < OM_F_COUNT; f++) dsum += fabs(fired[k].delta[f]);
+            event_fired[fired[k].region_idx] = 1;
             if (fired[k].chain_tag > 0) {
                 uint32_t g = 0;
                 while (g < n_chains && chains[g].tag != fired[k].chain_tag) g++;
@@ -1885,6 +1889,16 @@ static int gen_time_jump(om_world *w, uint32_t n_ticks, om_time_jump_report *rep
             om_chronicle_add_consequence_event(w, om_mission_last_region(w), gen_band_outcome(band));
             gs->consequence_consumed = 1;
             n_candidates++;
+            /* Q-067-01 (b): adjacency is the region_edge graph behind om_region_neighbors,
+             * not mission.c's separate neighbors list. */
+            uint32_t mission_region = om_mission_last_region(w);
+            uint32_t adjacent[OM_MAX_REGIONS];
+            uint32_t n_adj = om_region_neighbors(w, mission_region, adjacent, OM_MAX_REGIONS);
+            for (uint32_t a = 0; a < n_adj; a++) {
+                if (adjacent[a] >= nr || adjacent[a] == mission_region || !event_fired[adjacent[a]]) continue;
+                om_chronicle_add_consequence_event(w, adjacent[a], GEN_OUTCOME_RIPPLE);
+                n_candidates++;
+            }
         }
         for (uint32_t r = 0; r < nr; r++) {
             if (!active[r]) continue;
