@@ -14,7 +14,7 @@ def _one(job):
     return (r.winner, r.survivors[0], r.survivors[1], r.ticks)
 
 def pmap_runs(jobs, procs=None):
-    procs = procs or max(1, min(6, (os.cpu_count() or 2) - 2))
+    procs = procs or max(1, min(8, (os.cpu_count() or 2) - 1))
     with ProcessPoolExecutor(max_workers=procs) as ex:
         return list(ex.map(_one, jobs, chunksize=max(1, len(jobs) // (procs * 8) or 1)))
 
