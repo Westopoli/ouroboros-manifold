@@ -171,7 +171,7 @@ static int setup(ll_state *s, const ll_scenario *sc, uint64_t seed) {
         u->slope = -1;
         u->xfer_ordered = p->transfer_layer;
         ll_face_init(u, p->facing_deg);
-        u->arc_gate = u->ty->arc_deg < 360.0;
+        u->arc_gate = sc->rules.facing_gates_fire && u->ty->arc_deg < 360.0;   /* SPEC 5.4, 5.12 */
         if (u->arc_gate) {
             double sn, cs;
             ll_sincos(u->ty->arc_deg * 0.5 * (LL_PI / 180.0), &sn, &cs);

@@ -669,13 +669,13 @@ func _build_footer(parent: Control) -> void:
 	)
 	footer.add_child(deploy_btn)
 
-	var chronicle_btn = load("res://theme/components/tm_button.tscn").instantiate()
-	chronicle_btn.text = "REVIEW CHRONICLE"
-	chronicle_btn.style = 1
-	chronicle_btn.pressed.connect(func():
-		_show_stub_modal("Chronicle review will be available after backend integration.")
-	)
-	footer.add_child(chronicle_btn)
+	var refuse_btn = load("res://theme/components/tm_button.tscn").instantiate()
+	refuse_btn.name = "Refuse"
+	refuse_btn.text = "REFUSE"
+	refuse_btn.style = 1
+	refuse_btn.disabled = true
+	refuse_btn.tooltip_text = "Not wired yet"
+	footer.add_child(refuse_btn)
 
 	var back_btn = load("res://theme/components/tm_button.tscn").instantiate()
 	back_btn.text = "BACK"
@@ -705,48 +705,6 @@ func _build_footer(parent: Control) -> void:
 	err_label.add_theme_color_override("font_color", ThemeConstants.DANGER)
 	parent.add_child(err_label)
 	_deploy_error_label = err_label
-
-
-func _show_stub_modal(message: String) -> void:
-	var overlay := ColorRect.new()
-	overlay.color = Color(0, 0, 0, 0.7)
-	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
-	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
-	add_child(overlay)
-
-	var panel := PanelContainer.new()
-	var style := StyleBoxFlat.new()
-	style.bg_color = ThemeConstants.ELEVATED
-	style.border_color = ThemeConstants.BORDER_COLOR
-	style.set_border_width_all(1)
-	style.set_corner_radius_all(ThemeConstants.BORDER_RADIUS)
-	style.content_margin_left = 40
-	style.content_margin_right = 40
-	style.content_margin_top = 30
-	style.content_margin_bottom = 30
-	panel.add_theme_stylebox_override("panel", style)
-	panel.set_anchors_preset(Control.PRESET_CENTER)
-	panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	panel.grow_vertical = Control.GROW_DIRECTION_BOTH
-	overlay.add_child(panel)
-
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 16)
-	panel.add_child(vbox)
-
-	var msg := Label.new()
-	msg.text = message
-	msg.add_theme_font_override("font", ThemeConstants.font_mono_regular)
-	msg.add_theme_font_size_override("font_size", ThemeConstants.BODY_DATA_SIZE)
-	msg.add_theme_color_override("font_color", ThemeConstants.SECONDARY)
-	msg.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	vbox.add_child(msg)
-
-	var close_btn = load("res://theme/components/tm_button.tscn").instantiate()
-	close_btn.text = "OK"
-	close_btn.style = 1
-	close_btn.pressed.connect(func(): overlay.queue_free())
-	vbox.add_child(close_btn)
 
 
 func _animate_entrance() -> void:

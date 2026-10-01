@@ -12,7 +12,9 @@ stalemate_ticks = 400
 [rules]
 vis_factor         = [0.0, 0.0, 0.2, 0.5, 1.0, 0.5, 0.2, 0.0, 0.0]
 vantage_vis_factor = [0.0, 0.2, 0.4, 1.0, 1.0, 1.0, 0.4, 0.2, 0.0]
-sensor_elev_bonus_per_layer = 0.15
+# Production's 0.15 (OM_ELEVATION_SENSOR_BONUS_PER_TIER) is per elevation tier, which is not a layer;
+# the lab default is 0 so R-005's numbers hold exactly. Sweep it to test an elevation bonus.
+sensor_elev_bonus_per_layer = 0.0
 range_mult         = [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0]
 dmg_mult           = [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0]
 aoe_layer_mult     = [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0]

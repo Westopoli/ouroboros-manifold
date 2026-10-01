@@ -127,7 +127,7 @@ Block and wall differ only in shape (how long the detour is); barrier is the sam
 |---|---|---|---|---|
 | Vision factor by signed offset (target minus observer, 9 values) | 0 to 1 each | symmetric: 1.0, 0.50, 0.20, 0, 0 at absolute offset 0 to 4 (`OM_CONE_LAYER_1_FACTOR`, `OM_CONE_LAYER_2_FACTOR`, `csrc/fog.c:585`); E-01 R-005-05 implies 0 for two below (Q-005-02) | R1 | P1 |
 | Vantage vision factor by signed offset | 0 to 1 each | 1.0, 1.00, 0.40, 0.20, 0 at absolute offset 0 to 4 (E-01 R-005-06) | R1 | P1 |
-| Sensor bonus per layer of elevation | 0 to 0.5 | 0.15 (`OM_ELEVATION_SENSOR_BONUS_PER_TIER`) | R1 | P1 |
+| Sensor bonus per layer of elevation | 0 to 0.5 | none per layer: production's 0.15 (`OM_ELEVATION_SENSOR_BONUS_PER_TIER`) is per elevation tier, which is not a layer; lab default 0, so R-005's numbers hold | R1 | P1 |
 | Range multiplier by signed offset (target minus attacker, 9 values) | 0 to 2 | none; same-layer only (Q-008-01) | R1 | P1 |
 | Damage multiplier by signed offset | 0 to 2 | none | R1 | P1, P4 |
 | Area-damage multiplier by signed offset | 0 to 2 | none | R1 | P2, P3 |
