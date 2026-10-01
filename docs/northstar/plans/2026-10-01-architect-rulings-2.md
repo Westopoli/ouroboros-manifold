@@ -144,3 +144,19 @@ Conditions on each piece:
 Fixes 4 and 5 are deferred: 4 needs the ability rules checked per type before anyone can say it keeps the trace, 5 gains little in a clash. Neither is built without a new ruling. No constant, cell size or tick rate is tuned.
 
 **A6. The budget is Westley's and is open.** Round 1 recorded 50 ms per `tactical_step` at 5,000 units. E-13 R-099-03 drops the tactical rate to 10 ticks per second above 1,000 live units, which makes the tick 100 ms at that size, and the E-11, E-12 and E-13 performance figures are stated against that 100 ms tick. Until he says which holds at 5,000 units, the 50 ms figure stays the target and no test asserting either number is written or changed.
+
+## Addendum 4, 2026-10-01 (Wave C3, client G2 to G6)
+
+Rule text changed in the same commit: E-16 R-110-01 (the menu lists Era Library; Westley's 2026-09-28 decision in the gap-fix plan). New register row Q-110-04.
+
+**A7. G2 error panel.** The names the test pins are ratified and become the shared contract: nodes `ErrorPanel`, `ErrorReason`, `Retry`, `MainMenu`, and `qa_state()["error_panel"]`. One shared scene, `scenes/shared/error_panel.tscn` with its script, instanced by each of the five scenes; it gets a `pieces.toml` row before it is built. How `autoload/c_bridge.gd` reports the failure to the scene is the C2-N unit's choice within that file; nothing more is pinned.
+
+**A8. G4 debug overlay.** `FeatureFlags.ENABLE_DEBUG_OVERLAY` defaults to false, and with it false F3 does nothing; the G4 test asserts both. Control H2 in `tests/test_tactical_hud.gd` keeps its job as a positive control: it sets the flag true, then proves F3 shows and hides the overlay. That edit is a test-defect row landing with G4 (the rule proved, overlay off on a fresh view, is unchanged). `autoload/feature_flags.gd` gets its own `pieces.toml` row.
+
+**A9. G3 main menu.** Exactly five entries: New Campaign, Continue, Era Library, Settings, Quit. The label is "New Campaign"; the test stops accepting "New Game" (a narrowing).
+
+**A10. G5 settings at boot.** The rule wins over the stored key: edge scroll is on or off (R-110-02, Q-110-01). Settings stores a boolean, the tactical camera does not edge-pan when it is off, and the speed slider goes. Pan speed stays the A6 constant. The G5 test is rewritten to the toggle before the Doer builds; it was written today against a misreading, so this is a correction of an unlanded test, with a ledger note. Resolution and fullscreen are applied at boot in the same piece and proven by a desktop test of the kind A6 uses (real display, not headless); it is written, not skipped.
+
+**A11. G5b key rebinding is held** on Q-110-04. Nothing is built or tested until Westley answers. Storage, once it is unblocked: the changed bindings in an `[input]` section of the existing settings file, applied to the `InputMap` at boot with the other stored settings.
+
+**A12. G6 TacticalBridge removal.** The test lands as a ratchet in regression mode, like `reach_lint`: the count of referencing files is recorded (25 today), may only fall, and each piece that removes references lowers the recorded number in its own change. The assertion of zero, and the autoload's removal, land after C4's E2 and E3.
