@@ -179,6 +179,18 @@ static int can_step(const ll_state *s, const ll_unit *u, double x, double y) {
     return can_stand(s, u, x, y) && !body_blocked(s, u, x, y);
 }
 
+/* How near a walker must be to a slope's edge centre to mount it (SPEC 5.9). */
+static double mount_reach(const ll_state *s, const ll_unit *u) {
+    return u->ty->body_radius > 0.5 * s->ter->cell ? u->ty->body_radius : 0.5 * s->ter->cell;
+}
+
+/* Mounting is never blocked by bodies (SPEC 5.9): a step toward a slope's edge centre that ends within mounting
+ * reach of it is not refused for overlap, or two walkers waiting at the mouth hold each other off it forever. */
+static int can_step_mouth(const ll_state *s, const ll_unit *u, double x, double y, double ex, double ey) {
+    double dx = x - ex, dy = y - ey, r = mount_reach(s, u);
+    return can_stand(s, u, x, y) && (dx * dx + dy * dy <= r * r || !body_blocked(s, u, x, y));
+}
+
 static void mount(ll_unit *u, const ll_slope *sl, int index, int dir) {
     u->slope = index;
     u->slope_dir = dir;
@@ -195,7 +207,7 @@ enum { STEER_STAND = 0, STEER_TARGET = 1, STEER_MOUNTED = 2 };
 /* Chooses the point to steer toward: straight at the goal when the segment is clear, else down the flow
  * field. Starts a forced timed transfer or mounts a slope when the field says so (SPEC 5.10). `olayer` is
  * the layer the unit was ordered on, or 0 when it has none (a spawn transfer chose its layer for it). */
-static int steer(ll_state *s, ll_unit *u, int olayer, double gx, double gy, double *tx, double *ty) {
+static int steer(ll_state *s, ll_unit *u, int olayer, double gx, double gy, double *tx, double *ty, int *mouth) {
     const ll_terrain *t = s->ter;
     int wk = is_walker(u);
     for (int pass = 0; pass < 2; pass++) {
@@ -239,12 +251,13 @@ static int steer(ll_state *s, ll_unit *u, int olayer, double gx, double gy, doub
         int dir = st.layer == sl->top_layer ? 1 : -1;
         double ex, ey;
         ll_slope_edge(sl, dir < 0, &ex, &ey);
-        double reach = u->ty->body_radius > 0.5 * t->cell ? u->ty->body_radius : 0.5 * t->cell;
+        double reach = mount_reach(s, u);
         if (sqrt((ex - u->x) * (ex - u->x) + (ey - u->y) * (ey - u->y)) <= reach) {
             mount(u, sl, st.slope, dir);
             return STEER_MOUNTED;
         }
         *tx = ex; *ty = ey;
+        *mouth = 1;
         return STEER_TARGET;
     }
     return STEER_STAND;
@@ -311,8 +324,8 @@ void ll_move_units(ll_state *s) {
         }
 
         double tx = 0.0, ty = 0.0, mdx = 0.0, mdy = 0.0;
-        int steering = STEER_STAND;
-        if (have) steering = steer(s, u, olayer, gx, gy, &tx, &ty);
+        int steering = STEER_STAND, mouth = 0;
+        if (have) steering = steer(s, u, olayer, gx, gy, &tx, &ty, &mouth);
         if (steering == STEER_TARGET) {
             mdx = tx - u->x; mdy = ty - u->y;
             double d = sqrt(mdx * mdx + mdy * mdy);
@@ -320,7 +333,8 @@ void ll_move_units(ll_state *s) {
                 double step = u->ty->speed * (u->xfer_to ? s->rules->transition_speed_mult : 1.0) * LL_DT;
                 if (step > d) step = d;
                 double sx = mdx / d * step, sy = mdy / d * step;
-                if (can_step(s, u, u->x + sx, u->y + sy)) { u->x += sx; u->y += sy; }
+                if (mouth && can_step_mouth(s, u, u->x + sx, u->y + sy, tx, ty)) { u->x += sx; u->y += sy; }
+                else if (can_step(s, u, u->x + sx, u->y + sy)) { u->x += sx; u->y += sy; }
                 else if (can_step(s, u, u->x + sx, u->y)) u->x += sx;
                 else if (can_step(s, u, u->x, u->y + sy)) u->y += sy;
                 else {
