@@ -32,6 +32,10 @@ class Result:
     alive_ticks: tuple
     firing_ticks: tuple
     firing_weight: tuple
+    alerted_tick: tuple
+    alerts: tuple
+    alert_dir_x: tuple
+    alert_dir_y: tuple
     unit: list
     trace: Any = field(default=None, repr=False)
     raw: bytes = field(default=b"", repr=False)
@@ -67,7 +71,9 @@ def run(scn, seed=0, trace=False, lib="O2"):
         first_shot_side=out.first_shot_side, first_shot_tick=out.first_shot_tick,
         first_contact_tick=out.first_contact_tick,
         unanswered_ticks=tuple(out.unanswered_ticks), alive_ticks=tuple(out.alive_ticks),
-        firing_ticks=tuple(out.firing_ticks), firing_weight=tuple(out.firing_weight), unit=units,
+        firing_ticks=tuple(out.firing_ticks), firing_weight=tuple(out.firing_weight),
+        alerted_tick=tuple(out.alerted_tick), alerts=tuple(out.alerts),
+        alert_dir_x=tuple(out.alert_dir_x), alert_dir_y=tuple(out.alert_dir_y), unit=units,
         trace=trace_arr, raw=C.string_at(C.addressof(out), C.sizeof(out)),
     )
 

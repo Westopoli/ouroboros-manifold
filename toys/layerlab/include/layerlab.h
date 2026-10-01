@@ -26,7 +26,7 @@
 
 #include <stdint.h>
 
-#define LL_ABI_VERSION     2u
+#define LL_ABI_VERSION     3u
 
 #define LL_LAYERS          5
 #define LL_TICKS_PER_SEC   20
@@ -72,6 +72,16 @@ typedef struct ll_rules {
     double transition_speed_mult;    /* speed factor during a timed transfer (not on a slope) */
     double separation_weight;        /* 0..1: strength of same-layer overlap push-out */
     double spawn_jitter;             /* +- world units on x and y, drawn per spawn */
+    /* going dark (E-01 S-163; ABI 3). Indexed by the state of the unit concerned: 0 silent, 1 emit. They multiply a
+     * cross-layer sensing radius (own layer unchanged): the observer's state scales how far it sees, the target's
+     * state scales how far it is seen from. Ignored unless emit_on = 1. */
+    double emit_see_mult[2];
+    double emit_seen_mult[2];
+    /* targeted ping (E-01 S-162; ABI 3): a ping aimed at a layer and a place by a unit with spawn.ping_tick >= 0 */
+    double ping_reach;               /* max xy distance from the pinger to the pinged place */
+    double ping_radius;              /* xy radius around the place that is revealed, on the pinged layer only */
+    double ping_s;                   /* seconds the reveal lasts (a very short burst) */
+    double ping_cooldown_s;          /* seconds before the same unit can ping again (the only limit) */
     /* switches (0/1 unless stated) */
     int32_t fire_requires_vision;    /* target must be in the shooter's side's visible set */
     int32_t facing_gates_fire;       /* shooter must be inside its firing arc */
@@ -86,7 +96,8 @@ typedef struct ll_rules {
                                         halfway point (Q-004-05 a4); 0: old layer until done */
     int32_t max_ticks;
     int32_t stalemate_ticks;         /* consecutive ticks with no HP lost anywhere ends the run */
-    int32_t pad0_, pad1_;
+    int32_t emit_on;                 /* 0: the emit/silent multipliers are ignored (legacy behaviour) */
+    int32_t pad0_, pad1_, pad2_;
 } ll_rules;
 
 /* ---- a unit type ---- */
@@ -113,6 +124,12 @@ typedef struct ll_unit_type {
     double  ab_cooldown_s;
     int32_t pulse_capable;
     int32_t pad_;
+    /* reach by unit type (E-01 S-164; ABI 3): multiplier on this type's range by signed offset (target layer minus
+     * its own, +4; index 4 is its own layer). 0 means it cannot fire at that offset whatever the distance. Used only
+     * when reach_on = 1; with 0 every offset is 1.0, the legacy behaviour. Multiplies the global rules tables. */
+    double  reach[9];
+    int32_t reach_on;
+    int32_t pad2_;
 } ll_unit_type;
 
 /* ---- terrain ---- */
@@ -161,6 +178,15 @@ typedef struct ll_spawn {
     int32_t pulse_tick;              /* -1 none; else tick at which a pulse-capable unit pulses */
     int32_t target_policy;           /* LL_TARGET_* */
     int32_t pad_;
+    /* going dark (ABI 3): initial state 1 emit / 0 silent, and one scheduled switch */
+    int32_t emit;
+    int32_t emit_switch_tick;        /* -1 none */
+    int32_t emit_switch_to;          /* state after the switch */
+    /* targeted ping (ABI 3): this unit pings at ping_tick (-1 none) the layer ping_layer at (ping_x, ping_y) */
+    int32_t ping_tick;
+    int32_t ping_layer;
+    int32_t pad2_;
+    double  ping_x, ping_y;
 } ll_spawn;
 
 typedef struct ll_scenario {
@@ -197,6 +223,12 @@ typedef struct ll_result {
     int32_t alive_ticks[2];
     int32_t firing_ticks[2];
     double  firing_weight[2];
+    /* ping alerts (ABI 3): when a ping first reveals at least one unit of a side, that side is alerted. The alert
+     * is the tick and a unit vector from the revealed units' centroid toward the pinger (the player is shown a
+     * sector of about 60 degrees around it; the engine only reports the direction). -1 / 0 when never. */
+    int32_t alerted_tick[2];
+    int32_t alerts[2];             /* number of pings that revealed the side */
+    double  alert_dir_x[2], alert_dir_y[2];
     ll_unit_out unit[LL_MAX_UNITS];
 } ll_result;
 
