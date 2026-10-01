@@ -2,13 +2,18 @@
 Split out of test_pipe_mission_start_context_and_fallback.py; red until A3 is built.
 See that file's docstring for the fixture rationale. Rulings (Westley 2026-09-30):
 R-072-07 weakest region = lowest ALG-09 stability composite (the snapshot's
-`stability`), ties to the lowest region index; R-072-08 the fallback enemy has real
-force floored at parity times the player's, and reaching the fallback sets
-`quiet_world` in the mission frame (documented in docs/architecture.md).
+`stability`), ties to the lowest region index; R-072-08 (architect rulings
+2026-10-01, A3 items 1-3) the fallback enemy is the non-player faction nearest the
+region by connection hops, ties to the highest total military then the lowest
+faction id; its power P is its strongest region's military x 2000 (raised to one
+unit of its cheapest profile if it would field nothing) and the player's budget is
+P x parity (R-074-04); reaching the fallback sets `quiet_world` in the mission
+frame only (documented in docs/architecture.md).
 """
 import ctypes
 import json
 import subprocess
+from collections import deque
 from pathlib import Path
 
 import pytest
@@ -24,8 +29,15 @@ MAX_RETRIES = 5
 pytestmark = pytest.mark.skipif(not PIPE.exists(), reason="pipe/ouroboros_pipe not built (piece T1)")
 
 QUIET_SEEDS = [3, 5, 13, 32]
-# R-074-03: parity is never below 0.75, so 0.75 is the lowest legal parity.
-PARITY_FLOOR = 0.75
+# R-074-03: parity is never below 0.75 and base parity never above 1.0 (R-074-02),
+# so legal parity is in [0.75, 1.0].
+PARITY_MIN = 0.75
+PARITY_MAX = 1.0
+# R-074-05: capacity below 40 (the snapshot's 0..100 scale) removes 20 percent of
+# the player's units; every QUIET_SEEDS fallback region is below it.
+SHORTFALL_KEEP_MIN = 0.75
+ENEMY_POWER_PER_MILITARY = 2000.0  # R-074-01 default form; R-072-08
+SNAPSHOT_ROUNDING = 1e-3  # snapshot military is rounded to two decimals; relative slack on P
 LIB = ROOT / "libouroboros.so"
 
 
@@ -114,28 +126,74 @@ def test_tick_zero_world_retries_one_jump_when_the_next_jump_triggers(seed):
         "seed %d: control, a pool-selected mission must carry quiet_world false (R-072-08): %r" % (seed, mission))
 
 
+def _expected_enemy_faction(snap, region):
+    """R-072-08: the non-player, non-neutral faction nearest `region` by connection
+    hops (breadth-first over snapshot `edges`, any edge type; a faction's distance
+    is its nearest region's), ties to the highest total military across its
+    regions, then the lowest faction id. Returns (faction, strongest region military)."""
+    adj = {}
+    for e in snap["edges"]:
+        adj.setdefault(e["a"], []).append(e["b"])
+        adj.setdefault(e["b"], []).append(e["a"])
+    dist, queue = {region: 0}, deque([region])
+    while queue:
+        x = queue.popleft()
+        for y in adj.get(x, []):
+            if y not in dist:
+                dist[y] = dist[x] + 1
+                queue.append(y)
+    player = snap["player_faction"]
+    stats = {}
+    for r in snap["regions"]:
+        f = r["owner"]
+        if f in (-1, player) or r["i"] not in dist:
+            continue
+        d = stats.setdefault(f, {"hops": dist[r["i"]], "total": 0.0, "max": 0.0})
+        d["hops"] = min(d["hops"], dist[r["i"]])
+        d["total"] += r["military"]
+        d["max"] = max(d["max"], r["military"])
+    assert stats, "fixture drift: no non-player faction reachable from region %d" % region
+    best = min(stats, key=lambda f: (stats[f]["hops"], -stats[f]["total"], f))
+    return best, stats[best]["max"]
+
+
 @pytest.mark.skipif(not LIB.exists(), reason="libouroboros.so not built (om_unit_power)")
 @pytest.mark.parametrize("seed", QUIET_SEEDS)
-def test_fallback_mission_has_real_enemy_force_at_least_parity_times_the_players(seed):
-    """A3, R-072-08: the fallback mission is never empty. The first tactical frame
-    has enemy units (a faction other than the player and neutral), and their total
-    power (om_unit_power per type, R-074 normalised formula) is at least parity
-    times the player's. The mission frame carries no enemy power or faction, so both
-    are read from the tactical frame's units. Parity is taken at its lowest legal
-    value, 0.75 (R-074-03); the enemy's faction being the strongest adjacent
-    non-player faction is not asserted: no fallback-reachable world borders one
-    (see the A3 report).
+def test_fallback_enemy_is_nearest_faction_and_player_budget_follows_its_power(seed):
+    """A3, R-072-08 (architect rulings 2026-10-01 items 1-3): the fallback mission's
+    enemy is the non-player faction nearest the fallback region by connection hops
+    (ties: highest total military, then lowest faction id), and the player's force
+    is sized from that faction's P = strongest region military x 2000 times parity.
 
-    Red until A3 is built: today the fallback is the R-080-03 Siege on region 0.
+    Observable through the pipe: the enemy faction id on the first tactical frame's
+    units, and each side's units. The mission frame carries no parity, budget or
+    enemy field today (A4's `parity` frame field is not built), so the budget is
+    asserted as a bracket: the player's total power (om_unit_power per unit, the
+    R-074 normalised formula) lies between the fill the sim's own
+    om_mission_fill_player_force gives at P x 0.75 (parity floor, times the 0.75
+    R-074-05 shortfall allowance) and at P x 1.0 (parity ceiling), P read from the
+    snapshot (rounded to two decimals, so +-0.1 percent slack).
+
+    Red until A3 is built: today the fallback is the R-080-03 Siege on region 0
+    against whoever owns it.
     """
     lib = ctypes.CDLL(str(LIB))
     lib.om_unit_power.argtypes = [ctypes.c_uint32]
     lib.om_unit_power.restype = ctypes.c_double
+    lib.om_world_new.argtypes = [ctypes.c_uint32, ctypes.c_uint64]
+    lib.om_world_new.restype = ctypes.c_void_p
+    lib.om_world_generate.argtypes = [ctypes.c_void_p]
+    lib.om_world_free.argtypes = [ctypes.c_void_p]
+    lib.om_mission_load_launch_library.argtypes = [ctypes.c_void_p]
+    lib.om_mission_setup.argtypes = [ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_int]
+    lib.om_mission_fill_player_force.argtypes = [ctypes.c_void_p, ctypes.c_double, ctypes.c_double]
+    lib.om_mission_fill_player_force.restype = ctypes.c_double
 
     frames = _run([
         {"type": "cmd", "name": "set_seed", "seed": seed, "n_regions": N_REGIONS,
          "features": [], "new_campaign": False},
         {"type": "cmd", "name": "mission_start", "faction": 0},
+        {"type": "cmd", "name": "snapshot"},
         {"type": "cmd", "name": "mission_begin"},
         {"type": "cmd", "name": "tactical_step", "n": 1},
     ])
@@ -144,14 +202,35 @@ def test_fallback_mission_has_real_enemy_force_at_least_parity_times_the_players
     mission = next((f for f in frames if f["type"] == "mission"), None)
     assert mission is not None and mission.get("quiet_world") is True, (
         "seed %d: R-072-08 fallback must set quiet_world true: %r" % (seed, mission))
+    snap = next(f for f in frames if f["type"] == "snapshot")
     tactical = next((f for f in frames if f["type"] == "tactical"), None)
     assert tactical is not None, "seed %d: no tactical frame: %r" % (seed, frames)
+
+    player = snap["player_faction"]
+    expected_enemy, strongest = _expected_enemy_faction(snap, mission["region"])
     units = tactical["units"]
-    mine = [u for u in units if u["faction"] == 0]
-    theirs = [u for u in units if u["faction"] not in (0, -1)]
+    mine = [u for u in units if u["faction"] == player]
+    theirs = [u for u in units if u["faction"] not in (player, -1)]
     assert mine, "seed %d: fallback mission has no player units" % seed
     assert theirs, "seed %d: fallback mission has no enemy units (R-072-08)" % seed
-    power = lambda us: sum(lib.om_unit_power(u["type"]) for u in us)
-    assert power(theirs) >= PARITY_FLOOR * power(mine), (
-        "seed %d: enemy power %.1f below %.2f x player power %.1f (R-072-08)"
-        % (seed, power(theirs), PARITY_FLOOR, power(mine)))
+    assert {u["faction"] for u in theirs} == {expected_enemy}, (
+        "seed %d: enemy faction(s) %r on the field, expected the nearest-by-hops faction %d (R-072-08)"
+        % (seed, sorted({u["faction"] for u in theirs}), expected_enemy))
+
+    cheapest = min(lib.om_unit_power(t) for t in range(6))
+    p = max(strongest * ENEMY_POWER_PER_MILITARY, cheapest)
+    w = lib.om_world_new(N_REGIONS, seed)
+    try:
+        lib.om_world_generate(w)
+        lib.om_mission_load_launch_library(w)
+        lib.om_mission_setup(w, mission["region"], DEFENSIVE_STAND, 0)
+        low = SHORTFALL_KEEP_MIN * lib.om_mission_fill_player_force(
+            w, p * (1 - SNAPSHOT_ROUNDING), PARITY_MIN)
+        high = lib.om_mission_fill_player_force(w, p * (1 + SNAPSHOT_ROUNDING), PARITY_MAX)
+    finally:
+        lib.om_world_free(w)
+    assert low > 0, "seed %d: fixture drift, the oracle fill is empty for P=%.0f" % (seed, p)
+    got = sum(lib.om_unit_power(u["type"]) for u in mine)
+    assert low <= got <= high, (
+        "seed %d: player power %.1f outside [%.1f, %.1f] for enemy P=%.0f (strongest military %.2f of faction %d) times parity (R-072-08, R-074-04)"
+        % (seed, got, low, high, p, strongest, expected_enemy))
