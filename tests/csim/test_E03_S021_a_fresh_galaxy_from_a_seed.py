@@ -142,26 +142,61 @@ def test_R_021_05_isolated_one_home_region_plus(lib, world_factory):
                 assert lib.om_region_field(w, r, field) == 0.0
 
 
-def test_R_021_06_its_highest_numbered_frontier_region(lib, world_factory):
-    """Given a faction's template is placed, When corridors are laid, Then its highest-numbered frontier region (Isolated/Archipelago: numbered in placement order; Twin Colony: the second home's highest-numbered frontier) links to a chain of exactly 1 empty region, and the 15 factions' corridor ends are linked in faction order into one chain."""
-    w = world_factory(n_regions=0, seed=42)
+def _unlinked_corridor_pairs(lib, w, n_regions):
+    """Faction ids whose corridor end is not linked to the next faction's corridor end.
+    The corridor end is a random pick from the empty pool (not an index-order guarantee), and
+    R-021-07 may attach further empties to the same frontier, so it cannot be named from public
+    data. With extra edges off, an empty attached by R-021-07 has exactly one edge (to the region
+    it attached to), so an empty neighbour of one faction's highest frontier can touch an empty
+    neighbour of the next faction's only through the corridor link. Returns (bad_fids, pairs),
+    pairs[fid] = the (a, b) empty pairs that form that link."""
+    ends = []
+    for fid in range(15):
+        f_frontiers = [r for r in range(n_regions)
+                       if lib.om_region_owner(w, r) == fid and lib.om_region_tier(w, r) == OMTier.FRONTIER]
+        highest_frontier = max(f_frontiers)
+        empty_nbrs = [nbr for nbr in region_neighbors(lib, w, highest_frontier)
+                      if lib.om_region_owner(w, nbr) == -1]
+        assert len(empty_nbrs) >= 1
+        ends.append(empty_nbrs)
+    bad, pairs = [], {}
+    for fid in range(14):
+        found = [(c, n) for c in ends[fid] for n in ends[fid + 1]
+                 if n in region_neighbors(lib, w, c) or c in region_neighbors(lib, w, n)]
+        pairs[fid] = found
+        if not found:
+            bad.append(fid)
+    return bad, pairs
+
+
+def _cut_link(lib, w, a, b):
+    """Remove the undirected edge (a, b): a negative type is "no edge" to om_region_edge."""
+    lib.om_region_set_edge(w, a, b, -1)
+
+
+@pytest.mark.parametrize("seed", [42, 7, 777, 2024])
+def test_R_021_06_its_highest_numbered_frontier_region(lib, world_factory, seed):
+    """Given a faction's template is placed, When corridors are laid, Then its highest-numbered frontier region (Isolated/Archipelago: numbered in placement order; Twin Colony: the second home's highest-numbered frontier) links to a chain of exactly 1 empty region, and the 15 factions' corridor ends are linked in faction order into one chain.
+
+    Test-defect fix (Architect rulings 2, A28): the old form took the first empty neighbour as
+    the corridor end, which held only by seed luck. Some empty neighbour of each faction's
+    highest frontier is linked to some empty neighbour of the next faction's; a positive control
+    cuts one corridor link and the check must then fail."""
+    w = world_factory(n_regions=0, seed=seed)
     gen_set_extra_edges_enabled(lib, w, 0)
     rc = generate(lib, w)
     assert rc == 1
     N = lib.om_region_count(w)
 
-    corridor_empties = []
-    for fid in range(15):
-        f_frontiers = [r for r in range(N) if lib.om_region_owner(w, r) == fid and lib.om_region_tier(w, r) == OMTier.FRONTIER]
-        highest_frontier = max(f_frontiers)
-        empty_nbrs = [nbr for nbr in region_neighbors(lib, w, highest_frontier) if lib.om_region_owner(w, nbr) == -1]
-        assert len(empty_nbrs) >= 1
-        corridor_empties.append(empty_nbrs[0])
+    bad, pairs = _unlinked_corridor_pairs(lib, w, N)
+    assert bad == [], f"corridor link missing after faction(s) {bad}"
 
-    for fid in range(14):
-        c_curr = corridor_empties[fid]
-        c_next = corridor_empties[fid + 1]
-        assert c_next in region_neighbors(lib, w, c_curr) or c_curr in region_neighbors(lib, w, c_next)
+    # positive control: cut every candidate pair of one corridor link; the check must fail on it
+    cut_fid = 6
+    for a, b in pairs[cut_fid]:
+        _cut_link(lib, w, a, b)
+    bad_after, _ = _unlinked_corridor_pairs(lib, w, N)
+    assert bad_after == [cut_fid], "cutting a corridor link must make the check fail on exactly that link"
 
 
 def test_R_021_07_each_links_to_one_already(lib, world_factory):
