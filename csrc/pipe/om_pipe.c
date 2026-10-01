@@ -69,6 +69,8 @@
  * by ouroboros_sim.h. See the file-header comment above. */
 #define OM_PIPE_CHAPTER_PHASE_BRIEFING 0
 #define OM_PIPE_CHAPTER_PHASE_MISSION 2
+/* csrc/mission.c OM_MISSION_BAND_REFUSAL, not exported by ouroboros_sim.h. */
+#define OM_PIPE_MISSION_BAND_REFUSAL 5
 /* Upper bound on unit slots scanned with om_unit_id_at, and on distinct
  * factions listed in a tactical frame's "visible". */
 #define OM_PIPE_UNIT_SCAN_MAX 1000000
@@ -1487,9 +1489,36 @@ static void handle_mission_begin(void) {
     write_tactical();
 }
 
+static int mission_refused(void) {
+    return om_mission_get_band(W) == OM_PIPE_MISSION_BAND_REFUSAL;
+}
+
+static void handle_mission_refuse(void) {
+    if (!W) {
+        write_error("mission_refuse", "no world");
+        return;
+    }
+    if (!om_chapter_mission_realtime(W)) {
+        write_error("mission_refuse", "no mission");
+        return;
+    }
+    if (!in_recon()) {
+        write_error("mission_refuse", "already begun");
+        return;
+    }
+    om_mission_resolve_refusal(W, om_mission_last_region(W));
+    write_debrief();
+    om_chapter_set_phase(W, OM_PIPE_CHAPTER_PHASE_BRIEFING);
+    write_snapshot();
+}
+
 static void handle_mission_end(void) {
     if (!W) {
         write_error("mission_end", "no world");
+        return;
+    }
+    if (mission_refused()) {
+        write_error("mission_end", "no mission");
         return;
     }
     om_mission_end(W);
@@ -1505,6 +1534,10 @@ static void handle_tactical_step(const char *json) {
     }
     if (in_recon()) {
         write_error("tactical_step", "not begun");
+        return;
+    }
+    if (mission_refused()) {
+        write_error("tactical_step", "no mission");
         return;
     }
     int64_t n = 1;
@@ -1945,6 +1978,8 @@ int main(void) {
             handle_mission_start(buf);
         } else if (!strcmp(name, "mission_begin")) {
             handle_mission_begin();
+        } else if (!strcmp(name, "mission_refuse")) {
+            handle_mission_refuse();
         } else if (!strcmp(name, "mission_end")) {
             handle_mission_end();
         } else if (!strcmp(name, "jump")) {
