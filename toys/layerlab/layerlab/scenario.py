@@ -11,7 +11,12 @@ _TOP_KEYS = {"run", "rules", "type_defaults", "types", "terrain", "groups"}
 _RUN_KEYS = ("max_ticks", "stalemate_ticks")
 _RULE_ARRAYS = {
     "vis_factor": (9,), "vantage_vis_factor": (9,), "range_mult": (9,), "dmg_mult": (9,),
-    "aoe_layer_mult": (9,), "category_mult": (3, 3),
+    "aoe_layer_mult": (9,), "category_mult": (3, 3), "emit_see_mult": (2,), "emit_seen_mult": (2,),
+}
+# Keys added in ABI 3 that older scenario files do not carry: absent means the legacy behaviour (SPEC 15).
+_RULE_DEFAULTS = {
+    "emit_see_mult": [1.0, 1.0], "emit_seen_mult": [1.0, 1.0], "emit_on": 0,
+    "ping_reach": 1200.0, "ping_radius": 250.0, "ping_s": 0.5, "ping_cooldown_s": 6.0,
 }
 _CATEGORY = {"strike": ffi.CAT_STRIKE, "line": ffi.CAT_LINE, "siege": ffi.CAT_SIEGE}
 _MOVEMENT = {"fly": ffi.MOVE_FLY, "walk": ffi.MOVE_WALK}
@@ -21,10 +26,12 @@ _POLICY = {"nearest": ffi.TARGET_NEAREST, "lowest_hp": ffi.TARGET_LOWEST_HP,
 _SIDE = {"A": 0, "B": 1}
 _GROUP_KEYS = {"side", "type", "count", "formation", "x", "y", "facing", "layer", "order", "goal", "goals",
                "pre_revealed", "transfer_layer", "transfer_tick", "pulse_tick", "target_policy", "spacing",
-               "cols", "center", "R", "arc_deg", "screen_r"}
+               "cols", "center", "R", "arc_deg", "screen_r",
+               "emit", "emit_switch_tick", "emit_switch_to", "ping_tick", "ping_layer", "ping_x", "ping_y"}
 _FORMATION_KEYS = ("cols", "center", "R", "arc_deg", "screen_r")
 _GROUP_OPTIONAL = ("spacing", "pre_revealed", "transfer_layer", "transfer_tick", "pulse_tick",
-                   "target_policy") + _FORMATION_KEYS
+                   "target_policy", "emit", "emit_switch_tick", "emit_switch_to", "ping_tick", "ping_layer",
+                   "ping_x", "ping_y") + _FORMATION_KEYS
 _GROUP_REQUIRED = ("side", "type", "count", "x", "y", "layer")
 _COST_DIVISOR = 31.25
 
@@ -68,9 +75,11 @@ def _optional_key(toks, depth, scn):
     if depth != len(toks) - 1 or not isinstance(toks[depth], str):
         return False
     if depth == 2 and toks[0] == "types":
-        return toks[2] == "cost" and toks[1] in scn.get("types", {})
+        return toks[2] in ("cost", "reach") and toks[1] in scn.get("types", {})
     if depth == 2 and toks[0] == "groups":
         return toks[2] in _GROUP_OPTIONAL
+    if depth == 1 and toks[0] == "rules":
+        return toks[1] in _RULE_DEFAULTS
     if depth == 1 and toks[0] == "terrain":
         return toks[1] in terrain.PRESET_KEYS.get(scn.get("terrain", {}).get("preset", "flat"), ())
     return False
@@ -141,12 +150,14 @@ def _fill_rules(rules_c, scn):
     _check_keys("[rules]", rules, [n for n, _ in scalar_fields] + list(_RULE_ARRAYS))
     for name, ctype in scalar_fields:
         if name not in rules:
-            raise ValueError("[rules]: missing %r" % name)
+            if name not in _RULE_DEFAULTS:
+                raise ValueError("[rules]: missing %r" % name)
+            rules = {**rules, name: _RULE_DEFAULTS[name]}
         setattr(rules_c, name, int(rules[name]) if ctype is ffi.i32 else float(rules[name]))
     for name, shape in _RULE_ARRAYS.items():
-        if name not in rules:
+        if name not in rules and name not in _RULE_DEFAULTS:
             raise ValueError("[rules]: missing %r" % name)
-        val = rules[name]
+        val = rules[name] if name in rules else _RULE_DEFAULTS[name]
         if len(shape) == 1:
             if len(val) != shape[0]:
                 raise ValueError("[rules] %s needs %d entries, got %d" % (name, shape[0], len(val)))
@@ -167,8 +178,28 @@ def _fill_rules(rules_c, scn):
 def _fill_type(tc, name, tdict):
     fields = {n: t for n, t in ffi.ll_unit_type._fields_ if not n.endswith("_")}
     _check_keys("[types.%s]" % name, tdict, fields)
+    # reach by unit type (ABI 3): optional; a list of 9 multipliers by signed offset -4..+4 (index 4 is the own
+    # layer) or a dict {offset: multiplier} (missing offsets 0); absent means the legacy behaviour (reach_on 0).
+    reach = tdict.get("reach")
+    tc.reach_on = 0
+    for i in range(9):
+        tc.reach[i] = 1.0
+    if reach is not None:
+        if isinstance(reach, dict):
+            vals = [0.0] * 9
+            for off, m in reach.items():
+                if not -4 <= int(off) <= 4:
+                    raise ValueError("[types.%s] reach offset %r outside -4..4" % (name, off))
+                vals[int(off) + 4] = float(m)
+        else:
+            if len(reach) != 9:
+                raise ValueError("[types.%s] reach needs 9 entries (offsets -4..+4)" % name)
+            vals = [float(m) for m in reach]
+        for i, v in enumerate(vals):
+            tc.reach[i] = v
+        tc.reach_on = 1
     for fname, ctype in fields.items():
-        if fname == "cost":
+        if fname in ("cost", "reach", "reach_on"):
             continue
         if fname not in tdict:
             raise ValueError("[types.%s]: missing %r" % (name, fname))
@@ -259,6 +290,13 @@ def to_c(scn):
             s.transfer_layer = int(g.get("transfer_layer", 0))
             s.transfer_tick = int(g.get("transfer_tick", 0))
             s.pulse_tick = int(g.get("pulse_tick", -1))
+            s.emit = int(g.get("emit", 1))
+            s.emit_switch_tick = int(g.get("emit_switch_tick", -1))
+            s.emit_switch_to = int(g.get("emit_switch_to", 0))
+            s.ping_tick = int(g.get("ping_tick", -1))
+            s.ping_layer = int(g.get("ping_layer", 0))
+            s.ping_x = float(g.get("ping_x", 0.0))
+            s.ping_y = float(g.get("ping_y", 0.0))
             s.target_policy = policy
             n += 1
     sc.n_spawns = n
