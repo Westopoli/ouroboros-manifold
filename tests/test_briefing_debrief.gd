@@ -190,6 +190,9 @@ func _run_live_tests() -> void:
 	_assert(int(live_debrief.get("band", -1)) != int(_debrief.get("band")),
 		"live debrief band equals the fixture band; the live check below cannot tell them apart (fixture control)")
 
+	# Earlier scene tests ran mission_start/mission_end on the shared session;
+	# the live frames above come from fresh private bridges, so start clean.
+	load("res://autoload/sim_session.gd").reset()
 	var briefing: Node = (load(BRIEFING_SCENE_PATH) as PackedScene).instantiate()
 	get_root().add_child(briefing)
 	await process_frame
