@@ -274,6 +274,16 @@ typedef struct {
     int      used;
 } om_mission_objective;
 
+/* Mirrors unit.c OM_MAX_UNITS (defines do not cross translation units); a
+ * world cannot hold more units, so the force record cannot overflow. */
+#define OM_MISSION_FORCE_ARRAY_MAX 4096
+
+typedef struct {
+    uint32_t unit_id;
+    int32_t  faction;
+    int32_t  type;
+} om_mission_force_entry;
+
 typedef struct {
     om_mission_candidate pool[OM_MISSION_MAX_CANDIDATES];
     uint32_t n_pool;
@@ -342,6 +352,23 @@ typedef struct {
 
     /* B9-6 fixed MVP tactical layout, instantiated at every om_mission_setup. */
     uint32_t enemy_units[OM_MISSION_N_UNIT_TYPES];
+
+    /* Every unit om_mission_spawn_force placed for the current mission. */
+    om_mission_force_entry force_units[OM_MISSION_FORCE_ARRAY_MAX];
+    uint32_t n_force_units;
+
+    /* Unit id of the player-assigned commander (R-077-05); 0 = none. Set by
+     * the B7 assign piece, never by this module's accessors. */
+    uint32_t commander_unit;
+
+    /* A3 quiet-world fallback (R-072-07/08): enemy faction and power set by
+     * om_mission_setup_fallback for the one om_mission_setup call it makes.
+     * fallback_pending is consumed there; fallback_active stays set until the
+     * next plain om_mission_setup. */
+    int      fallback_pending;
+    int      fallback_active;
+    int32_t  fallback_enemy;
+    double   fallback_power;
 } om_mission_state;
 
 static void om_mis_state_free(void *p) {
@@ -2165,11 +2192,21 @@ static void om_mission_compose_force(om_world *w, om_mission_state *st) {
     if (r >= w->n_regions || r >= OM_MAX_REGIONS) return;
     const om_mission_region_ctx *ctx = &st->region_ctx[r];
     double committed = ctx->conflict_set ? ctx->attack_budget_sum : 0.0;
-    double enemy_power = om_mission_compute_enemy_power(w, st->mission_archetype, committed,
-                                                        om_region_field(w, r, OM_F_MILITARY),
-                                                        om_region_field(w, r, OM_F_POPULATION));
+    double enemy_power = st->fallback_active ? st->fallback_power
+        : om_mission_compute_enemy_power(w, st->mission_archetype, committed,
+                                         om_region_field(w, r, OM_F_MILITARY),
+                                         om_region_field(w, r, OM_F_POPULATION));
     uint32_t enemy_counts[OM_MISSION_N_UNIT_TYPES];
     double enemy_total = om_mission_fill_counts(w, st->mission_archetype, enemy_power, enemy_counts);
+    if (st->fallback_active && enemy_total <= 0.0) {
+        double cheapest_power = 0.0;
+        for (uint32_t t = 0; t < OM_MISSION_N_UNIT_TYPES; t++) {
+            double pr = om_unit_power(t);
+            if (pr > 0.0 && (cheapest_power <= 0.0 || pr < cheapest_power)) cheapest_power = pr;
+        }
+        enemy_power = cheapest_power;
+        enemy_total = om_mission_fill_counts(w, st->mission_archetype, enemy_power, enemy_counts);
+    }
 
     double capacity = om_region_composite(w, r, OM_C_CAPACITY) / OM_MISSION_DEFICIT_FIELD_MAX;
     double parity = om_mission_compute_difficulty_parity(om_mission_compute_base_parity(capacity), OM_MISSION_DIFFICULTY_MEDIUM);
@@ -2199,6 +2236,8 @@ static void om_mission_compose_force(om_world *w, om_mission_state *st) {
  * player, else the owner of its strongest hostile neighbour; with neither it
  * is the first faction id that is not the player's. */
 static int32_t om_mission_enemy_faction(const om_world *w, uint32_t region_idx, int32_t player) {
+    const om_mission_state *st = om_mis_ro(w);
+    if (st && st->fallback_active) return st->fallback_enemy;
     int32_t owner = om_region_owner(w, region_idx);
     if (owner >= 0 && owner != player) return owner;
     if (owner >= 0) {
@@ -2227,7 +2266,7 @@ static int32_t om_mission_enemy_faction(const om_world *w, uint32_t region_idx, 
  * point. The player is faction 0 when no player faction is configured
  * (csrc/fog.c OM_FOG_PLAYER_FACTION). See also: csrc/tactical_mapgen.c for
  * the node storage these calls fill. */
-static void om_mission_spawn_force(om_world *w, const uint32_t *counts, int32_t faction, double x0, double y0, double dir) {
+static void om_mission_spawn_force(om_world *w, om_mission_state *st, const uint32_t *counts, int32_t faction, double x0, double y0, double dir) {
     uint32_t total = 0;
     for (uint32_t t = 0; t < OM_MISSION_N_UNIT_TYPES; t++) total += counts[t];
     uint32_t cols = 1;
@@ -2238,8 +2277,35 @@ static void om_mission_spawn_force(om_world *w, const uint32_t *counts, int32_t 
         for (uint32_t c = 0; c < counts[t]; c++, k++) {
             double x = x0 + ((double)(k % cols) - (double)(cols - 1) / 2.0) * spacing;
             double y = y0 + dir * (double)(k / cols) * spacing;
-            om_unit_spawn(w, (int)t, faction, x, y, 0);
+            uint32_t id = om_unit_spawn(w, (int)t, faction, x, y, 0);
+            if (id != 0 && st->n_force_units < OM_MISSION_FORCE_ARRAY_MAX) {
+                st->force_units[st->n_force_units].unit_id = id;
+                st->force_units[st->n_force_units].faction = faction;
+                st->force_units[st->n_force_units].type    = (int32_t)t;
+                st->n_force_units++;
+            }
         }
+    }
+}
+
+/* R-126-01 layout, no bible number: structures sit on the spine between the two
+ * spawns at equal spacing, alternating left and right of centre by this
+ * fraction of the canvas; owners run player, neutral, enemy from the player's edge. */
+#define OM_MISSION_STRUCTURE_LATERAL 0.25
+#define OM_MISSION_STRUCTURE_SLOTS 64
+
+static void om_mission_place_structures(om_world *w, om_mission_state *st, int cat, double canvas, int32_t player, int32_t enemy) {
+    uint32_t p = 0, e = 0, n = 0;
+    uint32_t total = om_structure_compute_count(w->regions[st->mission_region].military, cat);
+    for (uint32_t i = 0; i < OM_MISSION_STRUCTURE_SLOTS; i++) om_structure_init(w, i, OM_MISSION_POWER_ANCHOR_UNIT_TYPE, 0.0);
+    om_structure_assign_owners((int)st->mission_archetype, total, &p, &e, &n);
+    for (uint32_t i = 0; i < total; i++) {
+        int32_t owner = i < p ? player : (i < p + n ? -1 : enemy);
+        double side = (i % 2 == 0) ? -1.0 : 1.0;
+        om_structure_init(w, i, OM_MISSION_POWER_ANCHOR_UNIT_TYPE, om_unit_power(OM_MISSION_POWER_ANCHOR_UNIT_TYPE));
+        om_structure_set_owner(w, i, owner);
+        om_structure_set_position(w, i, canvas / 2.0 + side * canvas * OM_MISSION_STRUCTURE_LATERAL,
+                                  canvas * (double)(i + 1) / (double)(total + 1));
     }
 }
 
@@ -2256,12 +2322,13 @@ static void om_mission_instantiate_map(om_world *w, om_mission_state *st) {
     om_tactical_reset(w);
     om_map_clear(w);
     memset(st->objective_center_set, 0, sizeof(st->objective_center_set));
+    st->n_force_units = 0;
     om_map_add_spine_node(w, canvas / 2.0, canvas / 2.0, OM_MISSION_SPINE_NODE_OBJECTIVE);
     om_map_add_cover(w, canvas / 2.0, canvas / 2.0, OM_MISSION_OBJECTIVE_COVER_RADIUS, OM_MISSION_OBJECTIVE_COVER_HEIGHT);
     om_map_add_spawn_point(w, canvas / 2.0, edge, player);
     om_map_add_spawn_point(w, canvas / 2.0, canvas - edge, enemy);
-    om_mission_spawn_force(w, st->player_units, player, canvas / 2.0, edge, 1.0);
-    om_mission_spawn_force(w, st->enemy_units, enemy, canvas / 2.0, canvas - edge, -1.0);
+    om_mission_spawn_force(w, st, st->player_units, player, canvas / 2.0, edge, 1.0);
+    om_mission_spawn_force(w, st, st->enemy_units, enemy, canvas / 2.0, canvas - edge, -1.0);
     /* B9-13/Q-123-01: the mission's enemy units are macro force 0 (enemy
      * macro forces are indexed separately from the player's force -- the
      * player is never a macro force). Fallback point is the enemy's own
@@ -2270,6 +2337,7 @@ static void om_mission_instantiate_map(om_world *w, om_mission_state *st) {
      * the only reader of this registration. */
     om_macro_init_force(w, 0, enemy);
     om_macro_set_force_fallback_point(w, 0, canvas / 2.0, canvas - edge);
+    om_mission_place_structures(w, st, cat, canvas, player, enemy);
 }
 
 void om_mission_setup(om_world *w, uint32_t p1, uint32_t archetype, int lineage_connection) {
@@ -2278,6 +2346,8 @@ void om_mission_setup(om_world *w, uint32_t p1, uint32_t archetype, int lineage_
     st->mission_archetype = archetype;
     st->lineage_connection = lineage_connection;
     st->mission_set = 1;
+    st->fallback_active = st->fallback_pending;
+    st->fallback_pending = 0;
 
     /* B9-N: a fresh mission clears the previous one's termination/result
      * state. Without this, the second mission of a multi-mission session
@@ -2311,6 +2381,23 @@ void om_mission_setup(om_world *w, uint32_t p1, uint32_t archetype, int lineage_
     om_mission_reset_started(w);
     st->tactical_baseline_pending = 1;
     om_mission_instantiate_map(w, st);
+}
+
+/* R-074-01 default form: enemy power = the enemy faction's strongest region's
+ * military x 2000 (OM_MILITARY_TO_POWER_SCALE). R-074-04: the player's budget is
+ * that power x parity, which om_mission_compose_force already applies. */
+void om_mission_setup_fallback(om_world *w, uint32_t region_idx, int32_t enemy_faction) {
+    om_mission_state *st = om_mis(w);
+    double strongest = 0.0;
+    for (uint32_t r = 0; r < w->n_regions; r++) {
+        if (om_region_owner(w, r) != enemy_faction) continue;
+        double mil = om_region_field(w, r, OM_F_MILITARY);
+        if (mil > strongest) strongest = mil;
+    }
+    st->fallback_pending = 1;
+    st->fallback_enemy = enemy_faction;
+    st->fallback_power = strongest * OM_MILITARY_TO_POWER_SCALE;
+    om_mission_setup(w, region_idx, OM_MISSION_ARCH_DEFENSIVE_STAND, 0);
 }
 
 void om_mission_setup_destroy_targets(om_world *w, uint32_t objective_idx, uint32_t total) {
@@ -2404,6 +2491,57 @@ int om_objective_get_center(const om_world *w, uint32_t objective_idx, om_vec2 *
     uint32_t node = om_map_get_nth_node_of_type(mw, OM_MISSION_SPINE_NODE_OBJECTIVE, objective_idx);
     om_map_get_node_pos(mw, node, out);
     return 1;
+}
+
+/* Map-node index of objective_idx's spine node, or -1 if absent (same
+ * lookup as om_objective_get_center). */
+int32_t om_objective_get_node(const om_world *w, uint32_t objective_idx) {
+    if (!w) return -1;
+    om_world *mw = (om_world *)w;
+    if (om_map_count_nodes_of_type(mw, OM_MISSION_SPINE_NODE_OBJECTIVE) <= objective_idx) return -1;
+    return (int32_t)om_map_get_nth_node_of_type(mw, OM_MISSION_SPINE_NODE_OBJECTIVE, objective_idx);
+}
+
+/* Radius of the cover disc om_mission_instantiate_map places on the objective
+ * node; the hold check (om_mission_tactical_tick) counts enemies within this
+ * same radius. */
+double om_objective_get_radius(const om_world *w, uint32_t objective_idx) {
+    if (objective_idx != 0 || om_objective_get_node(w, 0) < 0) return 0.0;
+    return OM_MISSION_OBJECTIVE_COVER_RADIUS;
+}
+
+uint32_t om_mission_get_commander_unit(const om_world *w) {
+    const om_mission_state *st = om_mis_ro(w);
+    return st ? st->commander_unit : 0;
+}
+
+/* Player-faction units om_mission_spawn_force recorded for this mission. */
+uint32_t om_mission_get_force_count(const om_world *w) {
+    const om_mission_state *st = om_mis_ro(w);
+    if (!st) return 0;
+    int32_t player = om_mission_player_faction(w);
+    if (player < 0) player = 0;
+    uint32_t n = 0;
+    for (uint32_t i = 0; i < st->n_force_units; i++)
+        if (st->force_units[i].faction == player) n++;
+    return n;
+}
+
+/* i-th player entry. No per-unit tier source exists, so tier is always 0. */
+int om_mission_get_force_unit(const om_world *w, uint32_t i, int32_t *type, int32_t *tier) {
+    const om_mission_state *st = om_mis_ro(w);
+    if (!st) return 0;
+    int32_t player = om_mission_player_faction(w);
+    if (player < 0) player = 0;
+    uint32_t seen = 0;
+    for (uint32_t j = 0; j < st->n_force_units; j++) {
+        if (st->force_units[j].faction != player) continue;
+        if (seen++ != i) continue;
+        if (type) *type = st->force_units[j].type;
+        if (tier) *tier = 0;
+        return 1;
+    }
+    return 0;
 }
 
 /* B9-3: plain wrappers over E-05's om_region_held_since / om_region_owner

@@ -24,6 +24,7 @@ pytestmark = pytest.mark.skipif(
 FEATURES = [1, 2, 3, 4, 5, 6, 7]
 STRUCT_X = 1000.0
 STRUCT_Y = 0.0
+STRUCT_OWNER = 0
 # Half capture radius: R-126-02 bound; unit spawns within this of the structure.
 HALF_CAP_RADIUS = 150.0
 # 1 wu tighter bound: unit must be closer to the given point than to origin.
@@ -85,7 +86,7 @@ def test_place_structure_position_applied():
         {"type": "cmd", "name": "mission_start", "faction": 0},
         {"type": "cmd", "name": "mission_begin"},
         # Structure at (1000, 0). owner=0 = E-05 player faction.
-        {"type": "cmd", "name": "place_structure", "kind": 0, "owner": 0,
+        {"type": "cmd", "name": "place_structure", "kind": 0, "owner": STRUCT_OWNER,
          "x": STRUCT_X, "y": STRUCT_Y},
         # 600 steps > ~540-tick RAIDER interval (power ~90, 27 s * 20 t/s).
         {"type": "cmd", "name": "tactical_step", "n": 600},
@@ -95,14 +96,19 @@ def test_place_structure_position_applied():
     assert tacticals, "tactical_step n=600 must produce tactical frames"
 
     final_units = tacticals[-1].get("units", [])
-    new_units = [u for u in final_units if u["id"] not in initial_ids]
+    # Mission setup (R-126-01, B9-N) places its own structures that spawn units
+    # too; only units of the placed structure's faction are attributed to it, and
+    # the nearest one must be the unit it spawned.
+    new_units = [u for u in final_units
+                 if u["id"] not in initial_ids and u["faction"] == STRUCT_OWNER]
     assert new_units, (
         "R-126-02: player-owned structure at (%.0f,%.0f) must spawn at least "
         "one unit within 600 steps (RAIDER interval ~540 ticks); none found. "
         "Check W-1d (owner=0 is player faction) is on main." % (STRUCT_X, STRUCT_Y))
 
     # The spawned unit must be within half the capture radius of the structure.
-    for u in new_units:
+    nearest = min(new_units, key=lambda u: _dist(u, STRUCT_X, STRUCT_Y))
+    for u in [nearest]:
         d = _dist(u, STRUCT_X, STRUCT_Y)
         assert d <= HALF_CAP_RADIUS + 1e-6, (
             "R-126-02 / W-1e: spawned unit at (%.2f,%.2f) is %.2f wu from "

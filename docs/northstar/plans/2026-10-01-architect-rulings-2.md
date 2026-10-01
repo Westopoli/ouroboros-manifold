@@ -1,0 +1,109 @@
+# Architect rulings, round 2, 2026-10-01 (mission-plays plan, Waves A and B)
+
+Answers the eight items under "Architect rulings still needed" in the coordinator's continuation note of 2026-10-01 (14:21). Round 1 is `2026-10-01-architect-rulings.md` and still holds except where this file says otherwise. Rule text changed in the same commit: E-08 R-055-06 (what runs at the end of the opening jump and of a retry jump) and the new R-057-09 (the first commander). `pieces.toml`: `B5-chronicle` now depends on `A2-contract` only.
+
+None of these rulings sets a threshold. The values waiting for Westley are listed at the end; nothing here is blocked by them.
+
+## Order of work
+
+1. Land now, no ruling needed: `relay/04-clock-code`, then `push/B2B3`; the B4 trio (`push/B4-b9`, `push/B4-b14`, `push/B4-td`) through one clerk; `push/B3-pipe` once its tests are green on fresh main.
+2. B5: add the version bump (below), then land `push/B5-chr`.
+3. B6 contract piece, then B6 sim, then B6 pipe. B6 builds after B5 lands.
+4. B7 contract piece, then sim, pipe, client.
+5. A7 tests and build (docs confirmed below).
+6. Wave C.
+
+## 1. B6: the chapter lifecycle
+
+**1.1 Who seats the first commander.** The selector does, at the end of the opening jump (R-057-09). No commander exists, so the selection is a forced rotation (R-057-01); the previous and nemesis pools are empty, so the draw falls through to the unrelated pool (R-058-01), which creates a character with a new lineage id in the mission region's owning faction (R-058-04). The pool draw is still made, so the random stream has the same shape as any other forced rotation. Nothing in `set_seed` or `om_world_generate` creates characters. The lineage's chapter counter starts at 1 (R-057-08).
+
+**1.2 What runs at the end of which jump** (R-055-06 as rewritten).
+
+| Jump | Collapse check | Generator | Selector | Chapter advance |
+|---|---|---|---|---|
+| Opening | no | yes | yes | no |
+| After a mission, played or refused | yes | yes | yes | yes |
+| Retry (R-072-07) | no | yes | no | no |
+
+The selector is not re-run after a retry jump: the commander chosen for the chapter stays even if the retry moves the mission region. This avoids the "lineage counter incremented twice" failure the epic lists. A commander more than 2 hops from a region reached only through retries is accepted.
+
+**1.3 "A jump that follows a mission."** One marker serves B5 and B6: the last mission has a known band and its consequence is not yet consumed (`consequence_consumed == 0` on `push/B5-chr`). `gen_time_jump` reads that predicate once at its start into a local; the lifecycle steps at the end use the local, because the chronicle build flips the flag in between. A refused mission arms the marker exactly as a played one does (refusal is a band, and round 1 B5-1 maps it to failure). No second marker, no pipe-side static: pipe statics are not saved.
+
+**1.4 The mission generator owns the weighted draw.** `om_mission_generator_run` runs inside the jump and stores the chosen region and the chosen archetype. `handle_mission_start` reads both and makes no draw of its own; its own `om_mission_select` call is removed, not duplicated. When the generator found no candidate it stores that fact, and `handle_mission_start` keeps the landed A3 path (five retry jumps of 20 ticks, then the quiet-world fallback); each retry jump re-runs the generator per the table. The determinism checksum changes because the draw moves; the ledger row says so.
+
+**1.5 The selector orchestrator.** `om_character_selector_run(w)` stops being a one-line copy. It reads the current lineage and the generator's region, then calls the function that fits: no commander yet gives the forced path (1.1); the last mission's commander fate was killed gives the existing commander-death path (R-061-01); otherwise `om_character_selector_run_for_lineage`. It stores the record's commander id and lineage id in `gen_state`. `is_main_character` stays cumulative and is not the source of the current commander. Until B7 lands the fate is never killed, so the commander-death path is reached only from core tests; its transport test ships with B7.
+
+**1.6 Chapter end reason.** `om_time_jump_report` does not change. `gen_state` records the reason of the chapter that just ended: faction collapsed if the collapse check fired, commander death if the commander's fate was killed, otherwise normal. Collapse wins when both hold.
+
+**1.7 Contract piece (replaces `push/B6-contract`; rebuild it on fresh main).** Header, `signatures.toml`, `symbol_modules.toml`, conftest binding, `docs/architecture.md`:
+
+- `uint32_t om_campaign_commander(const om_world *w);` as already drafted: the selector's latest pick, 0 before the first selection.
+- `uint32_t om_campaign_lineage(const om_world *w);` the current lineage id, 0 before the first selection.
+- `int om_chapter_last_end_reason(const om_world *w);` a `GEN_CHAPTER_END_*` value, normal before any chapter has ended.
+- `int32_t om_mission_generator_chosen_archetype(const om_world *w);` the archetype the generator drew, -1 when it found no candidate.
+- Frames as round 1 B6-5: snapshot gains `chapter` and `commander`; the chronicle frame's `jump` object gains `chapter_end_reason`. The save sidecar's `chapter` reads `om_chapter_get_number`, which already exists; the "always 0" note in `om_pipe.c` goes.
+
+As the coordinator found, a header piece cannot land alone: it lands with its implementation, in one clerk run.
+
+**1.8 Save format.** The new `gen_state` fields (current commander, current lineage, chosen archetype, no-candidate flag, last end reason) are saved. `OM_SAVE_FORMAT_VERSION` goes up by one in the B6 sim piece.
+
+**1.9 Fixtures.** The collapse seed (389) and the rotation seed are fixtures, not thresholds. Once the generator moves into the jump the Engineer re-runs the seed search and replaces them, with a ledger row. `push/B6-tests` seats a lineage in every region in its core fixture; that stays valid for core tests, and the transport tests rely on R-057-09 instead of any seeding.
+
+## 2. B5: the saved flag and the ripple text
+
+1. **The flag is approved.** `consequence_consumed` in `gen_state`, saved. It is also B6's marker (1.3).
+2. **Version bump.** `push/B5-chr` changes the save layout without touching `OM_SAVE_FORMAT_VERSION`. Add the bump (2 to 3) and its comment on that branch before it lands. `save.c` rejects any other version, and that is the intended behaviour for old saves: nothing has shipped, so no migration is written. The load-game screen must show a rejected save as unreadable and not crash; if no test proves that, the Engineer adds one.
+3. **Ripple text.** The hard-coded fragment is accepted as the placeholder the "no runtime API calls" rule allows. It moves to the event template library when ripple templates are written; add a row to the work list under C6. It does not block landing.
+4. **Lineage categorisation** is wired in the same branch or the branch does not land: round 1 B5-4 lists all three categorise functions. `om_chronicle_has_mission_consequence_flag` stops being a stub in the same branch.
+
+## 3. A7: the delta frame docs
+
+All three deviations are confirmed; the landed docs are the contract.
+
+1. Delta frames carry no `map`. The map does not change during a mission.
+2. `units_removed[]` stays. Without it the client cannot tell a dead unit from an unchanged one.
+3. "Every 20 steps" counts sim steps since `mission_begin`, and a call with `n > 1` that crosses a multiple of 20 writes a full frame.
+4. `"full":true` on `tactical_step` is the "on request" form round 1 asked for.
+
+Unchanged from round 1: `visible` only for the player's faction; with `n > 1` only the last frame is written; re-measure with `scripts/bench_tactical_pipe.py`; if still over 50 ms, profile and report, tune nothing further.
+
+## 4. B7: commander assignment
+
+1. Reassignment only while the assigned unit lives: confirmed. Once it is dead the fate is settled and `assign_commander` answers the `commander dead` error.
+2. `commander_fate` as an int (0 killed, 1 wounded, 2 survived): confirmed. It matches the Q-077-01 answer (wounded is cosmetic and chronicle only).
+3. A mission that ends with no commander assigned reports 2: confirmed. The client assigns the first roster unit by default, so this is reachable only from a client that skips the call.
+4. **Contract piece (header).** `int om_mission_assign_commander(om_world *w, uint32_t unit_id);` returning 0 on success, 1 when the unit does not exist or is not the player's, 2 when the currently assigned commander is dead. `om_mission_get_commander_unit` keeps its signature and returns the assigned id. Lands with its `mission.c` implementation.
+5. The four R-061 commander-death symbols belong to B7 (plan header). B7 also feeds fate into 1.5 and 1.6.
+
+## 5. B3: the phase after a refusal
+
+The pipe handler supplies it. `mission_refuse` calls `om_mission_resolve_refusal`, then sets the chapter phase to the same value `handle_mission_end` sets, so the next legal command is `jump`. `mission.c` does not change. The refusal arms the B5/B6 marker (1.3), so the jump that follows shows the consequence entry and advances the chapter.
+
+The A5 test that asserts Refuse is disabled becomes a test-defect row when the button is wired: the rule it proved (R-079-02, exactly Accept and Refuse) is unchanged, only the interim disabled state ends.
+
+## 6. A6 follow-ups
+
+1. **Roster and position names.** Accepted for now. They are client-derived and deterministic; a collision is cosmetic. Pinning the formula is naming work for E-21, not this plan. One work-list row under C5.
+2. **Objective node is index 0 on every archetype.** Accepted. Every current map has a single objective node at its centre; this becomes a defect only when an archetype gains a second objective. No work.
+
+## 7. Housekeeping
+
+1. `pieces.toml`: `B5-chronicle` dependency fixed in this commit.
+2. Plan labels get no piece rows; round 1's ruling stands. Ledger rows and the clerk's footprint gate use the owner's piece id (`T1-N`, `B9-N`, ...). Branch names may keep the plan label. A file with no owner gets a row before its piece starts.
+3. A3 pipe tie-break: use `OM_TIE_EPSILON` as the rest of the sim does. One small `T1-N` fix with a test where two regions tie.
+4. Coordinator rulings reviewed and upheld: `push/B4-td` (the two driver tests asserted the pending queue, which the drain removes by design; the clerk confirms at landing that only the final assertions changed and no interval did), the A4 marker-name rewrite, the TD-debrief reset.
+5. `test_materialised_unit_is_consumed_from_the_structure_queue`, red before and after B9: an Engineer investigates after the B4 trio lands. It is not reclassified.
+
+## Waiting for Westley (thresholds; not blocking)
+
+These values were invented by builders or test writers. They stay in the code as named constants, marked provisional, until he confirms or changes them.
+
+| Where | Value | Recommendation |
+|---|---|---|
+| A3 isolation test, budget lower bound | 0.5 × P × parity | keep; it is a loose floor under the rule's exact value |
+| B1 patrol (`enemy_macro.c`) | radius 600.0, 4 waypoints, arrive within 60.0 | keep, tune in play |
+| A6 camera | zoom 1.0 to 4.0 in steps of 1.25, pan 600 px/s, edge margin 4 px | keep, tune in play |
+| A6 order marker | 1.0 s | keep |
+| B4 structure placement (`mission.c`) | lateral offset 0.25, 64 slots | keep |
+
+Also his to see: ruling 1.1 (the first commander comes from the unrelated pool) and the last line of 1.2 (no re-selection after a retry jump) are read out of existing rules, not new decisions, but they shape the first minute of every campaign.

@@ -828,7 +828,19 @@ wave = 4
 owns = ["csrc/generational.c"]
 owns_glob = []
 acceptance = []
-depends_on = ["B7b", "A2-contract"]
+depends_on = ["A2-contract"]
 status = "pending"
 tests_pending = true
 size_estimate = "consequence entry plus chain clusters at jump end (plan B5, E-09)"
+
+# Contract docs pieces (A4 frame docs, B6 frame docs) own the pipe frame spec.
+[[piece]]
+id = "DOCS-arch"
+manager = "M0"
+wave = 4
+owns = ["docs/architecture.md"]
+owns_glob = []
+acceptance = []
+depends_on = []
+status = "pending"
+size_estimate = "owner row for docs/architecture.md contract text"

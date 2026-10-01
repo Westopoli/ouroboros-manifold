@@ -46,6 +46,7 @@ typedef struct ll_unit {
     int    slope;                 /* index into terrain slope[] while on one, else -1 */
     int    slope_dir;             /* +1 climbing toward the top edge, -1 toward the bottom */
     double slope_t;               /* position along the slope, 0 bottom .. 1 top */
+    double slope_lane;            /* lateral offset from the slope axis along its left normal while on it (SPEC 5.9 lanes) */
     double progress;              /* 0..1 transition progress for the trace (0 when not changing) */
     /* ---- vision state (owner: ll_vision.c, SPEC 5.7) ---- */
     int    pulse_until;           /* tick before which this unit's pulse reveal is active, else 0 */

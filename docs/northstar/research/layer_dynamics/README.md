@@ -270,7 +270,7 @@ The values for "shorter" and "lower" are swept, not fixed here. Scenarios to run
 
 **The instrument, restated.** The quantity is the number of units firing on each side, over the whole engagement, not only its opening. The claim to test: when both sides have the same number firing, the exchange is even; when one side holds more firing consistently, it is winning the exchange by about that ratio (weighted by unit type). Pass 1 showed that a whole-fight winner prediction leaks the ending, so the sustained form should compare rates, not predict the winner from totals: per window of ticks, each side's share of units firing against its share of damage dealt and of losses taken. A window where the firing share and the exchange disagree is a number overriding position. The opening-window predictor stays as the forecast; the windowed exchange is the check on "consistent". One thing for the lab to report and Westley to rule on if it matters: an even exchange is not an even outcome when the totals differ, because the side with more units in reserve outlasts the other, which is his own choke example (holding it "as long as they stay at that choke").
 
-Next, in order: the windowed firing-share exchange in `analysis.py`; the three configurations as scenario overlays; E1 and E2 under each; slopes and movement kinds (R1 additions from E-01 R-001-06, R-001-07, R-004-06 to R-004-08) and then E3.
+**State and next (2026-10-01, end of pass 3).** Built: the windowed exchange, the three configurations with replays, hard bodies with a sidestep and a slope mouth, shortest-by-time routing, the seer type, E1 and E2 (fixed and re-run), the reserves case. Not yet valid: E3, which needs hard bodies on slopes with lateral lanes (above). Next, in order: (1) slope bodies, then E3 under LA, LB, LC; (2) the scenarios the three patterns still lack, P2 (the concave, a surround) and P4 (a smaller force by position), both with a symmetric approach; (3) re-run the pass 1 vision and damage-by-headcount sweeps on the final build, since those numbers are from the old movement; (4) E4 (vision as a dial, using the seer), then E5 and E6; (5) many-variable sampling and a search for variables whose 0.5 crossing moves or doubles when another changes, run in parallel with one data row per fight; every non-monotonic curve gets a control first, as pass 2 showed an artifact can fake one.
 
 ## 7. The lab
 
@@ -306,6 +306,8 @@ What the check shows about the instrument:
 
 ### Pass 2, 2026-10-01: the range lever, and a finding about target selection
 
+**Superseded by pass 3 (same day).** The inversion described here, and the 98-to-2 size of the focus-fire effect, came mostly from units overlapping in the old movement, not from the nearest-target rule. With hard bodies the longer-range side wins (pass 3). Kept as the record of what the old build showed and how it was diagnosed.
+
 Scenarios `x5_range_advantage.toml` (both sides attack-move) and `x5_range_advantage_hold.toml` (B holds). Same layers or not, the result was the same: **the side with the longer range loses.** Both attack-moving, 200 seeds: A shooting down at 1.1x range wins 11.5 percent (1.0x: 43.5; 1.3x: 9; 2.0x and up: 50). Same layer, no layer rule involved, A range 220 against B 200: A wins 10 percent. With B holding, A wins 200 of 200, and a static start with A in reach and B not has A winning 40 of 40, so the range rule itself is right.
 
 Investigation (with evidence, not guesses): at equal total HP and equal units firing for the first 200 ticks after contact, A is ahead or level and still loses 88 percent. With no approach at all, the inversion survives when the fronts start 195 apart (A reaches many of B's units, B reaches few: A wins 19.5 percent) and vanishes at 150 apart (everyone reaches everyone: 47.5 against a 46.5 baseline). The candidate-set sizes at contact are 4.6 targets per A unit against 2.1 per B unit at 195, and 6.7 against 5.7 at 150. Changing only the target rule decides it: when A focuses the most damaged unit instead of the nearest, A wins 100 percent (and 98.5 percent when both sides focus: the longer range wins, as it should). At equal ranges, one side focusing and the other taking the nearest gives 98 to 2.
@@ -314,8 +316,86 @@ Reading: a side with a wide choice of nearest targets spreads its fire and kills
 
 Transfer class T1 for the direction (concentration beats spread), T2 for every number.
 
-What changes next: add the opening-window prediction to `analysis.py` with its own tests; sweep the range-by-offset lever (the other way a layer can decide who gets shots off) and compare it with damage by the firing-share measure; then P2 (the concave) with the lever fixed. Westley's review of this pass goes here.
+### Pass 3, 2026-10-01: the decided build (routing, seer, exchange, hard bodies) and the three configurations
 
+Builds merged: shortest route by travel time ending on the ordered layer (E-01 R-001-05, Q-001-05 reading a); the seer type (no attack, wide sight, shared with its side); the windowed exchange in `analysis.py`; **hard bodies**, a sidestep for crowds (SPEC 5.10). 515 tests pass, builds identical. Every earlier number was measured on the old build in which units overlapped freely; the numbers below are from the final build.
+
+**What hard bodies changed (pass 2 corrected).** The mirror (X0) is now 50 of 100, X4 49 of 100. The pass-2 finding that the longer-range side loses is gone: same layer, A range 220 against B 200, both attack-move, nearest target: A wins 72.5 percent (old build 10), at 240 it wins 99, at 300 all. Focus fire against nearest is 68 to 32 (old 98 to 2). The cause was overlap: a side that stands at its longer reach piled its units into the space the other side was walking into, which made firing and kills uneven. So target selection is a real lever but a modest one, not the dominant factor pass 2 reported.
+
+**The three configurations** (high ground, A one layer above B, 10 v 10, both attack-move, nearest-target both, 200 seeds, A win rate; replays in `toys/layerlab/results/replays/`, GIFs not committed):
+
+| Configuration | Setting | High side wins |
+|---|---|---|
+| LA vision only | none | 0.46 (no layer effect) |
+| LB vision and reach | firing up at 0.9x range | 0.76 |
+| | 0.8x | 0.985 |
+| | 0.5x | 1.00 |
+| LC reach and damage | range up 1.0x, damage up 0.9x | 0.785 |
+| | range 1.0x, damage 0.8x | 0.96 |
+| | range 0.8x, damage 0.8x | 1.00 |
+
+Reach and damage each carry the advantage on their own, and each crosses 0.5 at a small penalty (reach about 0.95x, damage about 0.93x). That is a steep curve: a 20 percent penalty on either is already decisive, so the useful range for tuning is narrow.
+
+**The windowed exchange** (`python3 -m layerlab exchange`). Window by window, the share of units firing and the share of damage agree in most windows (the A 220 v B 200 nearest run: 14 of 17 windows agree, three are even, none disagree); the firing counts in that run are level for about 270 ticks and then drift apart as one side loses units faster. So "equal units firing, uneven outcome" in pass 2 was too strong: over the whole engagement the firing share tracks the outcome, which is the principle. The opening-window prediction in the mirror agrees with the winner 65 percent of the time at a 10-tick window and 77 at 80 (200 seeds); the whole-fight form agrees 92. The earlier "coin flip" for the opening window was also a property of the old movement: with hard bodies the early firing count carries real information, and still cannot see the ending.
+
+**E2, defeat in detail** (20 v 20, B in k packets; both sides advance; spawn positions are computed from the arena width and a layout that does not fit raises an error; 20 seeds). The one-packet baseline is a fair fight (A wins 50 percent, keeps 2.9). Survivors rise with the gap and the number of packets: k = 2 keeps 8.2 at gap 100, 10.2 at gap 900 (theory 14.1); k = 4 keeps 5.0 at gap 100 and 14.7 at gap 900 (theory 17.3), a gain of 11.8 over the baseline. The penalty vanishes as the gap closes and the direction holds; the size stays under the theory because the theory has each packet destroyed before the next arrives, and at 900 units (6 s at speed 150) the fights are not finished.
+
+**E1, choke breadth** (20 attackers v 10 defenders walking in a 1000-long `lane` corridor, both advancing, identical formations, 20 seeds). Survivors of the 20 and the firing ratio A/B:
+
+| Corridor width | range 40 | range 200 |
+|---|---|---|
+| 1 cell | 11.3 (1.04) | 11.7 (1.09) |
+| 2 cells | 12.2 (1.12) | 12.5 (1.15) |
+| 4 cells | 13.6 (1.20) | 13.8 (1.26) |
+| 8 cells | 14.2 (1.21) | 15.2 (1.40) |
+
+In a one-cell corridor the exchange is even (firing ratio near 1) and the larger side keeps about the difference (10, the linear law); survivors rise with width toward the square law (17.3) without reaching it because the formations are five abreast at most. Range from 40 to 200 barely matters once the corridor is much longer than the range. This is the regime shift the theory describes, and it is also the reserves case in its natural form: an even exchange with unequal totals.
+
+**The reserves case** (Westley's note: an even exchange is not an even outcome when the totals differ). 10 v 10: A wins 19 of 40. A with a second 10 arriving 800 units behind its first 10, against B's 10: A wins 40 of 40 and keeps 15.7. The first windows are an even exchange (firing share 0.485, damage share 0.486, nobody lost); once the reserve reaches the fight the shares tilt (0.64 by tick 460, 0.89 by the end) and the outcome follows the totals. So the lab does what he expected: the exchange is level while the fronts are level and the larger total wins afterwards.
+
+**E3, the ramp** (walkers climb a slope to defenders on the plateau; slope length 150 to 900, speed 40 to 150; defenders at the top or beside the midline; default rules and LA, LB, LC): not interpretable yet, for a reason the lab found. Two harness faults came first and are fixed (the stalemate timer was shorter than a slow walker's approach, and two walkers at the slope entry blocked each other forever: now the slope mouth does not block bodies, SPEC 5.10). With them gone there are no stalemates, and the result is that **attackers win 100 percent with 6 to 8 of 10 left at every slope length, width and speed**, the opposite of the theory (a long slope strings the climbers out and the defenders profit). The trace shows why: units on a slope are neither blocked nor pushed and ride the slope's centre line, so ten attackers stop just above the midline and stack on one point, all ten firing, while the defenders can bring 3 to 5 units to bear. Slope width has no effect at all (identical numbers at 50, 100 and 200). So E3 measures that stacking, not a trickle. The fix is to give units on a slope hard bodies and lateral lanes across its width (a change to SPEC 5.9); until then no E3 number should be read as a result about slopes. Not done; waiting on a go-ahead, because it changes how slopes behave.
+
+Not run: the tall-cover scenario of 6.3, because the cover rule is symmetric (both sight lines pass the same obstacle at the same height) and a high-side-sees-over advantage would be a vision asymmetry, which `Q-005-02` closed as symmetric.
+
+Everything this pass proposed is done in passes 2 and 3 (the opening-window prediction, the range lever, the windowed exchange). Westley's review of this pass goes here.
+
+
+### Pass 4, 2026-10-01: slope bodies, E3 on the ramp, the pass 1 sweeps again, P2/P4, E4, E5, E6
+
+Builds: units on a slope take a lane across its width (offsets 0, +30, -30, ... within the width), keep it, and queue behind a unit stopped in their lane; slope travel time is unchanged (SPEC 5.9). A slope mouth zone keeps a crowd from deadlocking at the entry. 604 tests pass; a process-pool helper runs thousands of fights in seconds (the proper batch runner with data rows is being built). Fights are run on 8 processes; a pool of 6 ran 3,000 fights in 6 s.
+
+**Pass 1 sweeps on the final build** (the old numbers came from overlapping units). Vision: B's upward sight 0.00 gives A 1.00 whatever B's numbers; 0.05 gives 0.91 at 10 v 10, and B needs 12 units to beat A (11 units: A wins 0.55); at 0.10 it needs 11. The cliff is the same shape, a little softer. Damage: B needs 10 (d = 1.0), 11 to 12 (0.8), 14 (0.6) and 17 (0.4) units to reach 50 percent, close to the square-law 10 / sqrt(d).
+
+**E3, the ramp, with slope bodies** (10 walking attackers climb to 10 defenders; 40 seeds, defenders 300 beyond the top; A = attackers). Now a real trickle: with default rules attackers win 0.79 to 1.00 at slope length 150 and are wiped out (win rate 0.00 to 0.01) from 200 up; the edge is sharp, 0.79 at 150, 0.12 at 175, 0.01 at 200 (200 seeds, speed 80), and does not move with speed (40, 80, 150). With 14 attackers the edge is 0.99 at 150, 0.53 at 175, 0.32 at 200 and about 0.20 from 225 up: a slope longer than about 225 costs the climbers roughly four units and no more. **Crossing candidate**: the slope length where 14 attackers go from certain win to 0.5 (about 175). Not yet controlled (side swap, finer grid, 200+ seeds through the batch runner).
+
+With the defenders beside the midline and cross-layer fire on (LA), attackers win at lengths 300 to 900 (0.93 to 1.00) and lose at 150: a climber below the midline is a layer-1 unit, so under E-01 R-004-06 only layer-1 units can hit it, and it fires up at defenders it can see without return until it crosses the midline. Under LB and LC (reach and damage penalties for firing up) the sign flips again at length 600 and up. This is the first sign that the midline is only a line to hold if the defenders stand out of the climbers' reach: otherwise it is a free-fire zone for the attacker. Not controlled.
+
+**P2 and P4** (concave against a line, both advancing; the line against the line is 0.51 to 0.54 for A, 200 seeds). R = 500: arc 40 gives 0.63, 60 gives 0.87, 100 to 140 gives 0.72 to 0.75, 200 gives 0.89, 240 gives 0.93. The curve in arc angle is non-monotonic (a dip of about 0.15 at 100 to 140 degrees, standard error 0.03), and the control the pass-2 lesson asks for passed: with the sides swapped the concave side wins the same fraction (0.72 against 0.71 at 120, 0.87 against 0.88 at 60), so the dip is geometry, not the harness. Arcs under about 30 degrees put the 10 units closer than a body width and are invalid (a 20 degree arc scored 0.04: an artifact). P4: against a line of 10, a line of 9 wins 0.09, the same 9 in an 80 to 200 degree concave wins 0.07 to 0.14: **the concave is worth less than one unit**; at 10 v 10 it lifts 0.54 to 0.82 to 0.83; at 11 v 10 it takes 0.89 to 1.00.
+
+**E4, the seer** (high side A, 10 raiders on layer 4; low side B, 10 raiders that cannot see up, plus one seer; 200 seeds; A's win rate). Blindness alone is worth about one unit to A (0.92 at 10 v 10 against 0.45 when both see). A seer with cross-layer sight of 750 or more brings A back to 0.56; with 600 or less it does nothing (A 0.93 to 0.97): sight is a threshold lever. Placement matters: a seer 150 behind the line gives 0.56, in front of the line 0.91 (it dies first), 400 behind 0.94 (too far to see). More hit points help B (A 0.60 at 40 hp, 0.34 at 320). One seer costs more than a raider (120 against 90) and buys less than one raider's effect, so as tuned it is not worth its price.
+
+**E5, staying power**: cannot be run. Without spawn jitter a duel is fully deterministic: units that idle before contact have their random attack-timing draw erased, so both sides fire in lockstep and the result is 0 or 1. The theory's probabilities (0.82 for a one-kill-time head start) need per-shot randomness the lab does not have. A lab knob for damage or attack-timing spread (default 0, so nothing changes) would make E5 and the many-variable search richer; not built, not a rule.
+
+**E6, guns that bear** (a line of 10 beside a column of 10 marching past; arcs on). Head on, arcs change nothing (every target is dead ahead and units turn at 6 rad/s). As a broadside with slow turning (0.1 rad/s) the line's win rate goes 0.52 (no arc limit), 0.59 (120 degrees), 0.21 (60), 0.04 (30): arcs decide the fight once turning is slow, and the curve over arc angle is non-monotonic, so it needs the side-swap control before it is a result.
+
+### Pass 5, 2026-10-01: the first systematic datasets and the crossing search
+
+Tooling (SPEC 8, 687 tests pass): `layerlab/batch.py` runs fights on a process pool and writes one row per fight (every swept setting, the seed, winner, survivors, HP ratio, ticks, first shot, firing share, the opening-window prediction, the windowed-exchange agreement); `sample.py` builds grids and seeded random samples over many scenario paths at once; `crossing_search.py` reads the rows and reports where a variable's 0.5 crossing moves, gains a second crossing, or is non-monotonic. The pooled run gives rows equal to the serial run (tested). Speed: 6,300 fights with full rows in 13 s on 8 processes; the datasets are generated by `toys/layerlab/experiments/data_*.py` into `results/data/` (not committed).
+
+**D1, E3 on the ramp** (7 slope lengths x 5 attacker counts x 3 speeds x 3 defender distances x 20 seeds = 6,300 fights; attackers' win rate against 10 defenders). The slope length at which attackers cross 0.5:
+
+| Defenders beyond the top | 12 attackers | 14 attackers | 16 attackers |
+|---|---|---|---|
+| 150 | about 174 to 202 (flat near 0.5) | 278 | 373 |
+| 300 | 162 | 175 | beyond 400 (0.55 at 300) |
+
+The crossing moves with the attackers' number and with the defenders' distance, the interaction the hypothesis asks for. It does not move with walking speed (160, 156, 157 for 40, 80, 150): the theory's "slow units on long slopes fare worst" is not found. Where the defenders hold right at the landing (60 beyond the top) the curves swing wildly (16 attackers: 1.00, 1.00, 0.70, 0.10, 0.27, 0.88, 0.00 across slope lengths); that is a degenerate case, most likely dismounting attackers landing inside the defenders' bodies (the mouth zone lets bodies overlap at the edge), and it needs a control before it counts. Cells have 60 fights, standard error up to 0.065.
+
+**D2, high ground** (up-range multiplier 0.4 to 1.1 x up-damage 0.5 to 1.15 x B's headcount 8 to 14; 2,800 fights). The up-range multiplier at which the high side crosses 0.5 moves with the up-damage multiplier: 0.75 at 1.15, 0.84 at 1.0, 1.0 at 0.85, and no crossing in range below that. Range and damage trade against each other monotonically; the pooled headcounts blur the exact figures, so a conditioned read (fixed headcount) is the next step.
+
+**D3, concave** (arc 40 to 240 degrees x A's count 8 to 12 x radius 400 to 900; 3,600 fights). With 9 and 10 units the win rate over arc is non-monotonic (flagged), the dip the side-swap control already showed to be geometry; there is no clean 0.5 crossing because the concave side mostly wins or mostly loses, which is the P4 result again (the concave is worth under one unit). At radius 400 a crossing near 55 degrees comes from arcs so tight that spawned units overlap.
+
+What is missing before this answers the hypothesis: a conditioned search (fix all but two variables), a control for every non-monotonic curve, more variables sampled at once (positions, formation, layer, rule tables) and random sampling rather than grids, and noise in the fights (see E5) so that more than the count and the geometry decide.
 
 ## 9. Verdict and fold
 
