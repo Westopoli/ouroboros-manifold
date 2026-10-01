@@ -3,7 +3,8 @@
 Rulings: docs/northstar/plans/2026-10-01-architect-rulings-2.md section 1.
 docs/architecture.md: the snapshot frame carries `chapter` (uint, the opening jump belongs
 to chapter 1, it advances once at the end of each jump that follows a mission, played or
-refused) and `commander` (character id of the selector's latest pick); the chronicle
+refused) and `commander` (character id of the selector's latest pick) and `lineage` (its lineage id,
+Addendum 9 A21); the chronicle
 frame's `jump` object carries `chapter_end_reason` (0 normal, 1 commander death, 2 faction
 collapsed).
 
@@ -31,6 +32,7 @@ Not reachable over the pipe today: the commander-death end reason (the commander
 Every field assertion is red on a pipe that does not send the field (a missing key counts as
 red); the controls pin the case the new field must not change.
 """
+import ctypes
 import json
 import subprocess
 from pathlib import Path
@@ -234,3 +236,55 @@ def test_R_062_02_the_collapse_jump_reassigns_the_player_faction_on_the_wire():
     assert final["player_faction"] not in (PLAYER, -1), "the collapse jump did not reassign the player faction"
     held = sum(1 for r in final["regions"] if r["owner"] == final["player_faction"])
     assert held > 0, "reassigned to a faction that holds no region"
+
+
+LIB = ROOT / "libouroboros.so"
+
+
+def _lineage(snapshot):
+    assert "lineage" in snapshot, "snapshot frame has no `lineage` field: %s" % sorted(snapshot)
+    return snapshot["lineage"]
+
+
+def _reference_lineage():
+    """om_campaign_lineage on a world built the way handle_set_seed builds one (opening jump included)."""
+    lib = ctypes.CDLL(str(LIB))
+    lib.om_world_new.argtypes = [ctypes.c_uint32, ctypes.c_uint64]
+    lib.om_world_new.restype = ctypes.c_void_p
+    lib.om_world_set_feature.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_int]
+    for fn in ("om_world_generate", "om_events_load_launch", "om_mission_load_launch_library", "om_world_free"):
+        getattr(lib, fn).argtypes = [ctypes.c_void_p]
+    lib.om_campaign_start.argtypes = [ctypes.c_void_p, ctypes.c_uint32]
+    lib.om_campaign_lineage.argtypes = [ctypes.c_void_p]
+    lib.om_campaign_lineage.restype = ctypes.c_uint32
+    w = lib.om_world_new(80, 1)
+    try:
+        for f in FEATURES:
+            lib.om_world_set_feature(w, f, 1)
+        lib.om_world_generate(w)
+        lib.om_events_load_launch(w)
+        lib.om_mission_load_launch_library(w)
+        lib.om_campaign_start(w, 1)
+        return lib.om_campaign_lineage(w)
+    finally:
+        lib.om_world_free(w)
+
+
+@pytest.mark.skipif(not LIB.exists(), reason="libouroboros.so not built")
+def test_A21_set_seed_snapshot_carries_the_lineage_the_core_reports():
+    frames = _run([SET_SEED, SNAPSHOT])
+    lineage = _lineage(_of_type(frames, "snapshot")[0])
+    assert isinstance(lineage, int) and lineage > 0, "the opening jump must seat a lineage"
+    assert lineage == _reference_lineage()
+
+
+def test_A21_a_retry_jump_runs_no_selector_so_the_lineage_stays():
+    frames = _run([SET_SEED, SNAPSHOT, _jump(), _jump()])
+    lineages = [_lineage(s) for s in _of_type(frames, "snapshot")]
+    assert len(lineages) == 3 and lineages[0] > 0
+    assert lineages == [lineages[0]] * 3
+
+
+def test_A21_control_a_world_set_up_without_the_opening_jump_has_lineage_0():
+    frames = _run([dict(SET_SEED, new_campaign=False), SNAPSHOT])
+    assert _lineage(_of_type(frames, "snapshot")[0]) == 0
