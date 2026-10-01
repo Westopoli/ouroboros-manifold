@@ -1,5 +1,7 @@
 # The economy seat: a sketch of what the player sees and does
 
+Superseded in part, 2026-10-01: Westley dropped the Order Board and rejected the one-minute walkthrough; crews and stewards gave way to literal workers (`baseline_and_buildons.md`). The technology, Veil and information-gathering sections still stand as material.
+
 Written 2026-10-01. A sketch for Westley to react to, not a decision. It combines four directions from `economy_game_directions.md` (1 The Stewards, 5 Hands, 3 The Board, 8 The Order Board), adds technology choice to the seat as Westley asked, and expands 11 The Veil into information gathering. Names and numbers are placeholders.
 
 ## The four parts

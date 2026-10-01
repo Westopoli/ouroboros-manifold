@@ -51,6 +51,20 @@ Recorded as:
 - Decided: technology choice belongs to the economy player.
 - To explore: The Veil, and scouting and information gathering inside the economy. Sketch in `economy_seat_sketch.md`.
 
+## Decisions (2026-10-01, fourth round)
+
+Westley, verbatim, answering `economy_seat_sketch.md`:
+
+"I'm not a fan of the order board, this should really be something they have in their head (like starcraft 2), not physical. In starcraft if you didn't keep an eye on your pop count, you got supply blocked and it took ~30 seconds to fix it, if you were too busy micro'ing and forgot to keep building workers or go to the next tech or keep building production, you ended up behind. That's the kind of dynamic I'm looking for in terms of skill, needing to juggle a couple different things in your mind at once. Skip the order board. - I'm not a fan of the 1 minute in the seat description, that's not really what I had in mind, let's start with something basic and build on it. Let's start with classic AOE Online/3, and include the pieces I've mentioned already, let's grab from Board on the building placement/choice, contested populace, literal workers and also economic buildings, and build on it. - Propose some options for how to build on it given the research we've done, fusions and such, give me 10-15 surface level."
+
+Recorded as:
+
+- Decided: no Order Board. What the commander needs is held in the economy player's head, not shown as tickets.
+- Decided (the skill): juggling several things in mind at once, where forgetting one (population cap, worker production, the next technology, production buildings) puts the player behind, as in StarCraft 2.
+- Decided (the baseline): classic Age of Empires Online and Age of Empires 3, with placement and building choice from The Board, the contested populace, literal workers, and economic buildings.
+- Rejected: the one-minute walkthrough in `economy_seat_sketch.md`. That file's Order Board, crews and stewards are superseded; its technology, Veil and information-gathering sections still stand as material.
+- Next: build-ons for the baseline in `baseline_and_buildons.md`.
+
 ## Files
 
 - `prior_art_resources.md`: cited digest of resource systems in other games.
@@ -59,3 +73,4 @@ Recorded as:
 - `prior_art_economy_gameplay.md`: how other games make economy play fast, skilled and exciting.
 - `economy_game_directions.md`: many surface-level directions for what the economy player does.
 - `economy_seat_sketch.md`: what the economy player sees and does, technology on the seat, the Veil and information gathering.
+- `baseline_and_buildons.md`: the classic baseline and fourteen build-ons.
