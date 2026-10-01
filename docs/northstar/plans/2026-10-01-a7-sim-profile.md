@@ -144,3 +144,16 @@ Current: roundtrip median 57 ms, p95 71 ms (pipe bench, current main). Sim 27.6 
 ## Reproduce
 
 Scratch harness lives in the session scratchpad only (`h.c`: includes `csrc/pipe/om_pipe.c` with `main` renamed, replays the bench setup, calls `om_tactical_step` and `write_tactical` N times; `unit.c` copy with `clock_gettime` around each phase call). Build: `cc -std=gnu11 -O2 -pg -fno-inline` plus the repo determinism flags over `h.c csrc/*.c -lm`; `gprof -b -p` and `-b -q` for flat and graph. Raw outputs not committed.
+
+## Fix 3 re-measure (push/F3, B13-N)
+
+`om_macro_issue_group_orders`: contact loop now skips once `has_contact` is set. Checksum final 12966767929705903382, O0 = O2 = main. Bench: `scripts/bench_tactical_pipe.py 5000 40`, pipe, ms.
+
+| layout | metric | before (profile) | after |
+|---|---|---|---|
+| clash | roundtrip median / p95 | 57 / 71 | 59.7 / 67.2 |
+| clash | sim step median / p95 | 27.6 / n.a. | 29.7 / 31.8 |
+| spread | roundtrip median / p95 | n.a. | 16.4 / 27.6 |
+| spread | sim step median / p95 | n.a. | 3.6 / 6.6 |
+
+Step 20 sim spike: clash 69.9 ms, spread 45.6 ms (steps 1-19 about 20 and 2.5). Step 40 has no spike (clash 30.2, spread 4.6), so the recurring every-20th spike is gone; the first evaluation at step 20 still pays the full all-pairs scan because no contact is set yet (spread never gets contact). 50 ms budget: clash median and p95 both over (60 / 67); spread under. Fixes 1 and 2 still needed for clash. Clash steps after 20 run about 10 ms above steps 1-19 (more units in range after the clash starts), not macro.
