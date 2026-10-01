@@ -152,6 +152,26 @@
 #define GEN_PHASE_BRIEFING 0
 #define GEN_PHASE_RECON 1
 #define GEN_PHASE_MISSION 2
+/* R-065-02 (Westley 2026-10-01): mission band to the consequence outcome.
+ * Band ids as in csrc/mission.c: 0 total_failure .. 4 total_success, 5 refusal. */
+#define GEN_CLUSTER_CONSEQUENCE 0
+#define GEN_BAND_UNKNOWN (-1)
+#define GEN_BAND_PARTIAL_FAILURE 1
+#define GEN_BAND_PARTIAL_SUCCESS 2
+#define GEN_BAND_STRONG_SUCCESS 3
+#define GEN_BAND_TOTAL_SUCCESS 4
+#define GEN_OUTCOME_SUCCESS 0
+#define GEN_OUTCOME_FAILURE 1
+#define GEN_OUTCOME_MIXED 2
+#define GEN_OUTCOME_RIPPLE 3
+
+static uint32_t gen_band_outcome(int32_t band) {
+    switch (band) {
+    case GEN_BAND_STRONG_SUCCESS: case GEN_BAND_TOTAL_SUCCESS: return GEN_OUTCOME_SUCCESS;
+    case GEN_BAND_PARTIAL_FAILURE: case GEN_BAND_PARTIAL_SUCCESS: return GEN_OUTCOME_MIXED;
+    default: return GEN_OUTCOME_FAILURE;
+    }
+}
 #define GEN_PHASE_OUTCOME_RESOLUTION 3
 #define GEN_PHASE_TIME_JUMP 4
 #define GEN_PHASE_CHARACTER_SELECTION 5
@@ -262,6 +282,7 @@ typedef struct {
 
     uint32_t mission_chosen_region;
     uint32_t selector_input_region;
+    int consequence_consumed;
 } gen_state;
 
 /* ---- static helpers ---- */
@@ -384,6 +405,7 @@ static void gen_state_put(gen_sw *sw, const gen_state *gs) {
     gen_sw_u64(sw, gs->time_jump_death_tick);
     gen_sw_u32(sw, gs->mission_chosen_region);
     gen_sw_u32(sw, gs->selector_input_region);
+    gen_sw_u8(sw, (uint32_t)gs->consequence_consumed);
 }
 
 typedef struct {
@@ -514,6 +536,7 @@ static void gen_state_get(gen_sr *sr, gen_state *gs) {
     gs->time_jump_death_tick = gen_sr_u64(sr);
     gs->mission_chosen_region = gen_sr_u32(sr);
     gs->selector_input_region = gen_sr_u32(sr);
+    gs->consequence_consumed = (int)gen_sr_flag(sr);
 }
 
 /* A state nothing has written to (allocated lazily by any accessor, including
@@ -526,7 +549,7 @@ static int gen_state_pristine(const gen_state *gs) {
     if (gs->pool_previous_forced_empty || gs->pool_nemesis_forced_empty) return 0;
     if (gs->chapter_phase || gs->chapter_number || gs->needs_onboarding || gs->in_transition) return 0;
     if (gs->death_pass_count || gs->time_jump_lineage_gen_tick || gs->time_jump_death_tick) return 0;
-    if (gs->mission_chosen_region || gs->selector_input_region) return 0;
+    if (gs->mission_chosen_region || gs->selector_input_region || gs->consequence_consumed) return 0;
     for (uint32_t i = 0; i < OM_MAX_FACTIONS; i++)
         if (gs->supreme_commander[i] || gs->faction_fallen[i]) return 0;
     for (uint32_t i = 0; i < GEN_REGION_CAP; i++)
@@ -582,6 +605,21 @@ void om_generational_install_save_hooks(om_world *w) {
     w->generational_state_size = gen_state_size_hook;
     w->generational_state_write = gen_state_write_hook;
     w->generational_state_read = gen_state_read_hook;
+}
+
+/* R-078-06 / architect rulings 2 section 1.3: 1 while the last mission has a known band and
+ * its consequence is not yet consumed by a jump. */
+int om_chronicle_has_mission_consequence_flag(const om_world *w) {
+    const gen_state *gs = (const gen_state *)w->generational_state;
+    if (gs && gs->consequence_consumed) return 0;
+    return om_mission_get_band(w) != GEN_BAND_UNKNOWN;
+}
+
+/* See also: csrc/mission.c om_mission_end / om_mission_resolve_refusal call this: a new result
+ * gets its own consequence in the next jump. Not declared in a header (mission.c declares it). */
+void om_gen_consequence_rearm(om_world *w) {
+    gen_state *gs = (gen_state *)w->generational_state;
+    if (gs) gs->consequence_consumed = 0;
 }
 
 static gen_state *gen_get_state(const om_world *cw) {
@@ -1282,8 +1320,12 @@ void om_character_tag_rival(om_world *w, uint32_t character_id, uint32_t rival_o
 }
 
 uint32_t om_chronicle_consequence_entry_count(const om_world *w) {
-    (void)w;
-    return 0;
+    uint32_t n = 0;
+    for (uint32_t i = 0; i < om_chronicle_entry_count(w); i++) {
+        om_chronicle_cluster c;
+        if (om_chronicle_get_cluster(w, i, &c) && c.type == GEN_CLUSTER_CONSEQUENCE && c.category < GEN_OUTCOME_RIPPLE) n++;
+    }
+    return n;
 }
 
 int om_chronicle_has_faction_fall_entry(const om_world *w, int32_t old_faction) {
@@ -1753,11 +1795,16 @@ static const uint8_t GEN_LAUNCH_EVENT_TIER[] = {
 #define GEN_DEFAULT_EVENT_TIER 2
 #define GEN_OWNERSHIP_CHANGE_TIER 4 /* conquest-grade: CONQUEST_UNREST's tier */
 #define GEN_JUMP_EVENT_BUF 128
+#define GEN_JUMP_CHAIN_CAP 32
+
+typedef struct {
+    int32_t tag;
+    uint32_t region, template_id, n_events;
+    double mil, eco, ten;
+} gen_jump_chain;
 /* ALG-51 step 4 (simulation/chronicle_distiller.py _classify_regional_cluster):
  * regional cluster is growth above +3.0 and decline below -3.0 of the summed
  * economy + population event deltas. Category ids match chronicle.c. */
-#define OM_CHRON_REGIONAL_GROWTH_MIN 3.0
-#define OM_CHRON_REGIONAL_DECLINE_MAX -3.0
 #define GEN_CAT_REGIONAL_GROWTH 21
 #define GEN_CAT_REGIONAL_DECLINE 22
 
@@ -1774,6 +1821,7 @@ static int gen_time_jump(om_world *w, uint32_t n_ticks, om_time_jump_report *rep
     if (gs->chapter_phase == GEN_PHASE_MISSION) return 1;
     uint64_t start_tick = w->tick;
     uint32_t nr = w->n_regions < OM_MAX_REGIONS ? w->n_regions : OM_MAX_REGIONS;
+    int event_fired[OM_MAX_REGIONS];
     int32_t start_owner[OM_MAX_REGIONS], last_owner[OM_MAX_REGIONS];
     uint64_t change_tick[OM_MAX_REGIONS];
     double peak[OM_MAX_REGIONS], net[OM_MAX_REGIONS];
@@ -1784,9 +1832,12 @@ static int gen_time_jump(om_world *w, uint32_t n_ticks, om_time_jump_report *rep
         peak[r] = 0.0;
         net[r] = 0.0;
         active[r] = 0;
+        event_fired[r] = 0;
     }
     int track_events = om_world_feature(w, OM_FEAT_EVENTS);
     om_fired_event fired[GEN_JUMP_EVENT_BUF];
+    gen_jump_chain chains[GEN_JUMP_CHAIN_CAP];
+    uint32_t n_chains = 0;
     for (uint32_t i = 0; i < n_ticks; i++) {
         om_world_step(w);
         for (uint32_t r = 0; r < nr; r++) {
@@ -1801,6 +1852,24 @@ static int gen_time_jump(om_world *w, uint32_t n_ticks, om_time_jump_report *rep
                           ? GEN_LAUNCH_EVENT_TIER[fired[k].template_id] : GEN_DEFAULT_EVENT_TIER;
             double dsum = 0.0;
             for (uint32_t f = 0; f < OM_F_COUNT; f++) dsum += fabs(fired[k].delta[f]);
+            event_fired[fired[k].region_idx] = 1;
+            if (fired[k].chain_tag > 0) {
+                uint32_t g = 0;
+                while (g < n_chains && chains[g].tag != fired[k].chain_tag) g++;
+                if (g == n_chains && n_chains < GEN_JUMP_CHAIN_CAP) {
+                    memset(&chains[g], 0, sizeof(chains[g]));
+                    chains[g].tag = fired[k].chain_tag;
+                    chains[g].region = fired[k].region_idx;
+                    chains[g].template_id = fired[k].template_id;
+                    n_chains++;
+                }
+                if (g < n_chains) {
+                    chains[g].n_events++;
+                    chains[g].mil += fired[k].delta[OM_F_MILITARY];
+                    chains[g].eco += fired[k].delta[OM_F_ECONOMY];
+                    chains[g].ten += fired[k].delta[OM_F_TENSION];
+                }
+            }
             net[fired[k].region_idx] += fired[k].delta[OM_F_ECONOMY] + fired[k].delta[OM_F_POPULATION];
             double score = om_chronicle_score_event(w, fired[k].region_idx, tier, dsum);
             if (!active[fired[k].region_idx] || score > peak[fired[k].region_idx]) peak[fired[k].region_idx] = score;
@@ -1831,16 +1900,42 @@ static int gen_time_jump(om_world *w, uint32_t n_ticks, om_time_jump_report *rep
         om_chronicle_build_opening_scroll(w);
     } else {
         uint32_t n_candidates = 0;
+        uint32_t tier_transitions[OM_MAX_FACTIONS];
+        (void)om_chronicle_distill_candidates(w, tier_transitions, OM_MAX_FACTIONS);
+        int32_t band = om_mission_get_band(w);
+        if (band == GEN_BAND_UNKNOWN) gs->consequence_consumed = 0;
+        else if (!gs->consequence_consumed) {
+            om_chronicle_add_consequence_event(w, om_mission_last_region(w), gen_band_outcome(band));
+            gs->consequence_consumed = 1;
+            n_candidates++;
+            /* Q-067-01 (b): adjacency is the region_edge graph behind om_region_neighbors,
+             * not mission.c's separate neighbors list. */
+            uint32_t mission_region = om_mission_last_region(w);
+            uint32_t adjacent[OM_MAX_REGIONS];
+            uint32_t n_adj = om_region_neighbors(w, mission_region, adjacent, OM_MAX_REGIONS);
+            for (uint32_t a = 0; a < n_adj; a++) {
+                if (adjacent[a] >= nr || adjacent[a] == mission_region || !event_fired[adjacent[a]]) continue;
+                om_chronicle_add_consequence_event(w, adjacent[a], GEN_OUTCOME_RIPPLE);
+                n_candidates++;
+            }
+        }
         for (uint32_t r = 0; r < nr; r++) {
             if (!active[r]) continue;
             om_chronicle_add_event(w, r, peak[r]);
             n_candidates++;
             if (start_owner[r] != last_owner[r]) continue;
-            if (net[r] > OM_CHRON_REGIONAL_GROWTH_MIN)
-                om_chronicle_add_regional_event(w, r, GEN_CAT_REGIONAL_GROWTH, peak[r]);
-            else if (net[r] < OM_CHRON_REGIONAL_DECLINE_MAX)
-                om_chronicle_add_regional_event(w, r, GEN_CAT_REGIONAL_DECLINE, peak[r]);
+            uint32_t rcat = om_chronicle_categorize_regional_cluster(w, 0, net[r]);
+            if (rcat == GEN_CAT_REGIONAL_GROWTH || rcat == GEN_CAT_REGIONAL_DECLINE)
+                om_chronicle_add_regional_event(w, r, rcat, peak[r]);
         }
+        for (uint32_t g = 0; g < n_chains; g++) {
+            const char *name = om_event_template_name(w, chains[g].template_id);
+            uint32_t ccat = om_chronicle_categorize_chain_cluster(w, name, chains[g].n_events,
+                                                                   chains[g].mil, chains[g].eco, chains[g].ten);
+            om_chronicle_add_chain_event(w, chains[g].tag, chains[g].region, ccat);
+        }
+        uint32_t n_chain_clusters = om_chronicle_build_chain_clusters(w);
+        n_candidates += n_chain_clusters;
         for (uint32_t li = 0; li < gs->n_lineages; li++) {
             gen_lineage *ln = &gs->lineages[li];
             if (!ln->used) continue;

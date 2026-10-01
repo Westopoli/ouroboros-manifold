@@ -160,3 +160,23 @@ Rule text changed in the same commit: E-16 R-110-01 (the menu lists Era Library;
 **A11. G5b key rebinding is held** on Q-110-04. Nothing is built or tested until Westley answers. Storage, once it is unblocked: the changed bindings in an `[input]` section of the existing settings file, applied to the `InputMap` at boot with the other stored settings.
 
 **A12. G6 TacticalBridge removal.** The test lands as a ratchet in regression mode, like `reach_lint`: the count of referencing files is recorded (25 today), may only fall, and each piece that removes references lowers the recorded number in its own change. The assertion of zero, and the autoload's removal, land after C4's E2 and E3.
+
+## Addendum 5, 2026-10-01 (A7: stop after fixes 3, 1, 2)
+
+Measured after the three fixes, 5,000 units in a clash: round trip median 49 to 54 ms, p95 72 to 77 ms (before: 57 and 71). The estimates in the profile report were too generous; the fixes land anyway, since each is correct and keeps the trace.
+
+**A13. Performance work stops here.** The per-faction cell list in `om_grid` is not approved. It restructures the grid every tactical system reads, and whether it is needed at all depends on the budget (A6): against a 100 ms tick the build already passes on median and p95; against 50 ms it fails on both and the grid change becomes the next piece. Westley's answer decides. Append the after-fix numbers to the profile report and land it; nothing else in this lane is started.
+
+## Addendum 6, 2026-10-01 (B6 open items from the contract and tests)
+
+The coordinator's defaults stand except where this says otherwise.
+
+**A14. `chapter_end_reason` is per jump.** It is the reason of the chapter this jump ended, and normal (0) when the jump ended none (opening and retry jumps). `om_chapter_last_end_reason` returns the same value the latest jump's frame carried; its header comment is corrected to say so. Add one test where the two readings differ: a jump that ends a chapter by collapse, then a retry jump, which reads 0.
+
+**A15. Collapse reassigns at the jump.** When the collapse check fires, `om_player_faction_reassign_on_collapse` runs immediately after it and before the mission generator, which needs a player faction that holds regions. It uses the code's current choice (most regions, uniform among ties); Q-062-01 stays open and concerns only which faction is picked, not where the call sits. When no faction survives (R-062-03) the lifecycle stops after the check: no generator, no selector, no advance, and the existing terminal path (`om_campaign_trigger_terminal_restart`) is taken. If the pipe has no way to tell the client the campaign ended, report it as an open item; do not add a frame field for it in this piece. The chronicle entry framing the fall (R-062-04) is not part of B6; add a work-list row under C6.
+
+**A16. One lineage per unrelated rotation.** R-058-04 says a new lineage id, singular. Dropping the stray memberless lineage in `gen_resolve_candidate_for_pool` is the intent; the test for exactly one stays.
+
+**A17. The lineage chapter counter counts chapters played in the lineage.** A new lineage starts at 1 (R-057-08). Each later selection that keeps the lineage (a stay, or a successor after the commander's death, R-061-02) adds one, once; a retry jump adds nothing. The contract piece gains `uint32_t om_lineage_chapter_count(const om_world *w, uint32_t lineage_id);`. Tests: a stay gives 2; a rotation gives the new lineage 1 and leaves the old count as it was; a retry jump changes neither.
+
+**A18. Confirmed.** The generator inside the jump calls `om_mission_refresh_context` for every region before it scores. The five pipe tests that break when the draw moves get test-defect rows in the B6 pipe piece, one row per test saying which fixture value moved and why; the Engineer changes only values that follow from which mission was drawn, and reports any assertion that states a rule's value without changing it.
