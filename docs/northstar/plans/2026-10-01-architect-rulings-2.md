@@ -219,3 +219,15 @@ Rule text changed in the same commit: E-13 pipe budget, `docs/architecture.md` (
 - Tests (Engineer, desktop like A6's): at two zoom levels the same pan input moves the view the same number of screen pixels and a proportionally larger world distance; the slider at 2.0 doubles it; a positive control with zoom scaling removed fails. The G5 toggle test is replaced with a ledger row citing this decision.
 - The galaxy camera (C5, G-G1) follows the same rule when it is built.
 - Pieces: `scenes/settings` (C1-N) and `scenes/tactical_c` (C5-N).
+
+## Addendum 11, 2026-10-01 (A24: the collapse pick's open points)
+
+**A26. The pools measure their 2 hops from the last mission's region** (`om_mission_last_region`), option (a). It is where the player last stood, which is the hub's "geographic overlap"; the collapse check runs only after a mission, so that region always exists. No signature change. R-062-02 says so. This is the Architect's reading of the hub, not Westley's words; he may change it.
+
+Smaller points:
+- The pool roll is made as in any rotation (R-058-01). A roll of the unrelated pool falls through previous, then nemesis, then most regions. The pick creates no character; the selector that follows chooses the commander.
+- A candidate's faction is the character's own faction field, not the owner of the region it stands in.
+- How many random draws the most-regions fallback consumes is not pinned beyond "same seed, same pick"; the checksum guards it.
+- The previous-descendant pool ignoring "last played at least 1 chapter ago" (R-058-02) is a defect in the existing pool. It is fixed in this piece as a second unit with its own test, since the pick now depends on that pool; a fixture that only passed because of the defect is corrected with a ledger row.
+- `docs/architecture.md`'s line saying Q-062-01 stays open is rewritten when the piece lands.
+- `pieces.toml`: the piece's acceptance lists `tests/csim/test_E08_S062_collapse_pick.py` (this commit).
