@@ -62,9 +62,10 @@ def _drops(res, idx, hp0):
     return [(int(r), float(d[r])) for r in np.nonzero(d > 1e-6)[0]]
 
 
-def _casts(res, idx, hp0=250.0):
-    """Rows on which unit idx took a hit of burst size (normal fire on a raider is 6.0)."""
-    return [(r, a) for r, a in _drops(res, idx, hp0) if a > 20.0]
+def _casts(res, idx, hp0=250.0, min_hit=20.0):
+    """Rows on which unit idx took a hit of burst size (normal fire on a raider is 6.0). A scenario
+    with a quiet caster (no normal fire) can pass a small min_hit so a small burst still counts."""
+    return [(r, a) for r, a in _drops(res, idx, hp0) if a > min_hit]
 
 
 def _cluster(type_="raider", ys=(950, 1000, 1050), x=1400):
@@ -110,7 +111,7 @@ def test_burst_damage_follows_its_three_factors(base, aoe_mult, ab_mult, dmg, ex
                  rules={"aoe_layer_mult": table})
     res = run(scn, trace=True)
     for i in (1, 2, 3):
-        ev = _casts(res, i)
+        ev = _casts(res, i, min_hit=1e-6)   # quiet caster: every hit is a burst, whatever its size
         assert len(ev) == 1 and ev[0][1] == pytest.approx(expected, abs=1e-4), (i, ev)
     assert res.damage_dealt[0] == pytest.approx(3 * expected, abs=1e-6)
 
