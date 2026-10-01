@@ -1985,8 +1985,12 @@ void om_mission_resolve_refusal(om_world *w, uint32_t region_idx) {
     st->band_set = 1;
     double *tension = om_mission_region_field_ptr(w, region_idx, OM_F_TENSION);
     if (tension) {
+        double before = *tension;
         double delta = om_consequence_eval_delta_deficit(*tension, OM_MISSION_REFUSAL_TENSION_DEFICIT_PCT);
         *tension = om_consequence_apply_clamped(*tension, delta);
+        st->consequence_seen = 1;
+        for (int f = 0; f < OM_F_COUNT; f++) st->consequence_delta[f] = 0.0;
+        st->consequence_delta[OM_F_TENSION] = *tension - before;
     }
 }
 
