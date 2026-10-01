@@ -106,6 +106,11 @@ func mission_frame() -> Dictionary:
 	return _mission
 
 
+# The running mission's frame, empty when none is running.
+func mission() -> Dictionary:
+	return _session_mission
+
+
 func debrief_frame() -> Dictionary:
 	return _debrief
 
