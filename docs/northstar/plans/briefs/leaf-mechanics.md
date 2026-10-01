@@ -2,7 +2,7 @@
 
 Read once per leaf. The manager's assignment adds only: piece id, owned files, acceptance ids, known leftovers, the state slot name.
 
-Every leaf and doer is spawned with `subagent_type: sonnet46-doer` (Sonnet 4.6, pinned by the agent definition at `.claude/agents/sonnet46-doer.md`), never the bare `sonnet` alias — that alias resolves to Sonnet 5.
+Every leaf and doer is spawned with `subagent_type: doer` (Sonnet 5.5, pinned by the agent definition at `.claude/agents/doer.md`).
 
 ## Where you work
 
