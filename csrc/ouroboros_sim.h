@@ -1580,6 +1580,9 @@ void om_mission_inject_candidate(om_world *w, uint32_t region_idx, uint32_t arch
 int om_mission_is_ended(const om_world *w);
 void om_mission_load_launch_library(om_world *w);
 uint32_t om_mission_objective_count(const om_world *w);
+uint32_t om_mission_last_region(const om_world *w);
+/* Computes the mission-selection score inputs (conflict, chain, relevance, preference) for the region from world state; called by the pipe before scoring. */
+void om_mission_refresh_context(om_world *w, int32_t region);
 void om_mission_resolve_refusal(om_world *w, uint32_t region_idx);
 uint32_t om_mission_select(om_world *w);
 uint32_t om_mission_select_candidate(om_world *w);

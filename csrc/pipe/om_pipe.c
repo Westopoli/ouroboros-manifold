@@ -1265,6 +1265,7 @@ static void handle_mission_start(const char *json) {
      * comment); the real region/archetype/objective wiring is composed here
      * from the lower-level mission.c/fog.c API. */
     (void)om_mission_start(W, (int32_t)faction);
+    for (uint32_t ri = 0; ri < om_region_count(W); ri++) om_mission_refresh_context(W, (int32_t)ri);
     om_mission_build_candidate_pool(W);
     uint32_t idx = om_mission_select(W);
     static om_mission_candidate pool[256];
