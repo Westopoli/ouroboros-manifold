@@ -26,8 +26,23 @@ Each row is the sentence Westley was answering and his answer, verbatim.
 | Q-159-06 | "Bases: Every side has a city: defender's home, attacker's forward base. City dies = battle over, no reinforcement or replenishment." | ""Every side has a city" not necessarily, but every side does have some sort of "base of operations" they need to protect, either recieving resources from someplace else or generating them on site (depends on the simulation and specific mission)." | Decided. Every side has a base of operations it must protect. It is not always a city. It either receives resources from elsewhere or generates them on site; which one depends on the simulation and the mission. This amends the 2026-09-22 answer in `../options/city-spectacle/brief.md` section 8 ("Every side has a city"). |
 | Q-159-07 | "Persistence: Economy persists through time jumps. Damage persists on short jumps; rebuild speed follows civ economy." | ""Economy persists through time jumps", this might be hard to do in the context of the simulation. I'm not so sure about it anymore, it'd be nice, but what would be really nice is giving the player something they get to carry forward, like abilities or something. This is to be explored, but I think it'd be hard to justify "crazy good economy on the 15th mission together" when the simulation is picking a small mission on a planet with very limited resources and a small force. Whatever we choose needs to consolidate with the other parts of the game." | Open. The 2026-09-22 answer that the economy persists through time jumps (`../options/paired-economy/brief.md` section 8) is withdrawn as a fixed constraint. What carries forward between missions is to be explored; one idea is abilities. Whatever is chosen must fit a simulation that can pick a small mission on a poor planet with a small force, and must consolidate with the rest of the game. |
 
+## Decisions (2026-10-01, later the same day)
+
+Westley, verbatim, answering the four variations in `f_variations.md`:
+
+"I like the contested populace idea, but that's not the economic players job, let's make sure that economic locations are placed throughout the map, and significant resources are placed opposite of the objective, so players are forced to either pick one or fight for both. - For the economic player, let's do 3 resources, and let's make them need to build buildings and manage something like pop count or some variation of it, but we need to find out options for what they can actually *do* like the actions they take, and it needs to be skill based just like playing. Despite the ideas, I still feel like we don't have a clear picture of what the economy can look like. Let's research how other games have made building/managing economies fast-paced or exciting. We want to make it skill based like the combat without making it feel like busy-work, maybe we could invent a "game" of sorts like chess that's to be played within the economic system, that requires thinking ahead like the military combat aspect. Let's dig deeper on that idea, research and come back with many surface level options, nothing too in depth but many different directions."
+
+Recorded as:
+
+- Decided: the contested populace is liked, and winning it is not the economy player's job.
+- Decided (map placement, feeds goals 2 and 3): economic locations are placed throughout the map, and significant resources are placed opposite the objective, so a side must pick one or fight for both.
+- Decided (economy seat): three resources; the economy player builds buildings and manages a population count or some variation of it.
+- Open: what the economy player actually does, action by action. It must be skill-based like combat, need thinking ahead, and not be busy-work. One direction to explore is an invented game, in the manner of chess, played inside the economic system. Research in `prior_art_economy_gameplay.md`; many surface-level directions in `economy_game_directions.md`.
+
 ## Files
 
 - `prior_art_resources.md`: cited digest of resource systems in other games.
 - `resources_options.md`: goal 1 options, three regular and three wild.
 - `f_variations.md`: Where People Go expanded, two close and two very different variations.
+- `prior_art_economy_gameplay.md`: how other games make economy play fast, skilled and exciting.
+- `economy_game_directions.md`: many surface-level directions for what the economy player does.
