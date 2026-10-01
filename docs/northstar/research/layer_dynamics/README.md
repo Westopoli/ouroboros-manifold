@@ -39,18 +39,66 @@ These come from the bible and the register; the lab does not vary them unless a 
 - Layer damage is weighted much more heavily than abilities and passives (Q-083-02, hub principle 4): an ability never outranks position in the lab either.
 - Determinism: same seed and command stream give a byte-identical trace.
 
-## 4. Strategic depth: the definition and four test cases
+## 4. The target: understanding beats numbers (Stage 1 draft, not yet signed)
 
-The hub definition (principle 4): the engagement's conditions, not its numbers, decide who wins. Westley's examples are from StarCraft 2; the four patterns below are their abstract form, and each is a named test case. "Expected winner" is what a knowledgeable player would predict from the conditions alone.
+Westley, 2026-10-01, verbatim: "players with better understanding of the landscape, unit formation, layer awareness/intentionality, and the other players current position can defeat a much larger force. The goal is to create a game with significant strategic depth. We get to this goal by tuning all the variables we laid out such that that sentence becomes a reality."
 
-| Pattern | Source | Expected winner | What proves it (observables) |
+This section replaces the four test patterns the lab started with. It is being defined with Westley in batches; what he has ruled is marked, and the rest is draft. The plan it belongs to has three stages: define the conditions (this section), say concretely what the data must show (§6), then change the prototype (§7).
+
+### 4.1 Five skills
+
+| Skill | What the skilled player does | What the naive player does | Source |
 |---|---|---|---|
-| P1 High-ground asymmetry | "when units have a layer advantage, they can shoot without being shot back" | The force with the layer advantage | Unanswered-fire ticks per side; first-shot side; HP-remaining ratio; ticks until the disadvantaged side fires |
-| P2 The concave in a surround | "when units have a surround, the units in the concave with the surround win" | The side in the concave | Winner and HP-remaining ratio across formation and count; cost lost per side |
-| P3 The screened glass cannon | templar are "very weak and slow and expensive, but when they use storm they're devestating to low-health units. A player that effectively protects them has a higher chance of winning" | The player who protects the fragile unit has the higher chance of winning | Win rate across seeds as screen radius varies against enemy speed; cost lost; burst damage landed |
-| P4 The smaller force wins by position | "Organizing your units in specific patterns can lead to better engagements" and the promise in E-01 | The smaller force, in the configuration where position outweighs numbers | Winner with unequal counts; the smallest count ratio at which the smaller side still wins |
+| S1 Landscape | Fights where terrain limits how many enemies can fire: a choke, the far side of a slope's midline, behind tall cover | Fights wherever the armies meet | "understanding of the landscape" |
+| S2 Formation | Arranges units so more of them fire at once: a concave, a screen | Moves as one blob | "unit formation" |
+| S3 Layers | Chooses layers on purpose: splits a force across layers, takes the layer that gives reach or sight, changes layer to deny the enemy a shot | Stays on one layer | "layer awareness/intentionality" |
+| S4 Enemy position | Scouts, so it shoots first and engages from where the enemy cannot answer; and sets traps, engaging on purpose with a lesser force to draw the enemy into a surround | Has no scouting; meets the enemy when it bumps into it | "the other players current position"; and, 2026-10-01: "S4 not only shoots first, but induces traps, shoots on purpose with a lesser force to bring the enemies force into a trap (surround or somethign)." |
+| S5 Unit-type matchup | Arranges its own unit types against the enemy types they beat | Sends every type at whatever is nearest | 2026-10-01: "S2 is not just about more units firing at once, it's also about the rock-paper-scissors, arranging their own rocks agains the enemies scissors, their own paper against the enemies rocks. Yes expand this to an S5, because it's bigger than just a subset of S2." |
 
-Depth holds for a cross-layer rule set when each pattern is true under at least one reachable configuration (one the game can produce) and none is true under every configuration. A pattern true everywhere is a dominant strategy; a pattern true nowhere is a dead mechanic.
+The first prototype sets each side's arrangement once, by script. A reactive version, where a side re-forms during the fight to keep its rocks on the enemy's scissors, is wanted after the prototype if it succeeds (Westley, 2026-10-01); it is not in this build.
+
+Ruled by Westley, 2026-10-01:
+- Skill is represented by scripted plays: for each skill a skilled play and a naive play.
+- Every skill together beats about 2x the numbers.
+- Big upsets need combinations; each skill alone gives a modest edge.
+- With identical units, formation, vision and layer organisation the larger force wins. His words: "Hypothetically this situation would *never* happen in the real game, given there are 5 different layers, different vision, the landscape will be autogenerated and not symmetrical." So it is a control, not a scenario.
+
+### 4.2 The measure
+
+- **Margin.** One signed number per fight: the share of side A's starting strength left, minus side B's. It replaces win rate, which is a probability in a system with no dice (pass 4: combat is deterministic once units are in contact).
+- **Break-even ratio, R\*.** For one rule set, one situation and one pair of plays (a skilled side against a naive side): the enemy force, as a multiple of the skilled side's force, at which the fight is even. R\* = 1.3 means the play is worth 30 percent more army. Force is counted by cost (the Q-074-01 power rating) so mixed unit types compare.
+- **Premium.** Real maps are not symmetric, so a map can favour one start. R0 is the break-even of naive against naive on that map; a skill's premium is R\* / R0. The bands below are judged on the premium.
+- **Skill profile.** For one rule set: the premium of every combination of the five skills (5 singles, 10 pairs, 10 triples, 5 fours, the full set), plus controls and counter-plays.
+- **An honest R\*.** A stalemate is not a win, and the larger, naive side always has to attack, or a side that never moves never loses. "Naive" is a ladder: a blob, a line abreast, and a line that holds still; the last isolates the "side that holds still wins" effect found in pass 1. Bands are judged against the line abreast.
+
+### 4.3 The conditions (draft; every number is Westley's to set)
+
+A rule set passes when its skill profile meets all of these across many sampled maps and unit mixes, not one arena.
+
+| # | Condition | Draft target |
+|---|---|---|
+| C0 | Control: identical forces, identical play, mirrored map | R\* = 1.0 (the larger force wins) |
+| C1 | Each skill alone gives a modest edge | a band for each of S1 to S5, open (question 0 below) |
+| C2 | All five together give the big upset | about 2 (say 1.8 to 2.3) |
+| C3 | Skills stack | every combination beats each of its parts |
+| C4 | No dominant skill | no single skill reaches the full-mastery level alone |
+| C5 | No dead skill | removing any one skill from the full set lowers R\* noticeably |
+| C6 | Every skilled play has an answer (hub principle 5) | met by its counter-play, R\* falls back toward 1 |
+| C7 | Robust | holds in a large majority of sampled situations (say 80 percent) |
+| C8 | Position, not a number, decides | where the skilled side wins it holds the higher share of units firing (§6.1) |
+| C9 | Fights stay readable | fight length stays inside E-11 S-085's window while knobs move |
+
+### 4.4 Open with Westley
+
+0. The band arithmetic. Under the square law advantages multiply. Five skills worth 1.15x each already combine to 2.0x; five at 1.3x would combine to 3.7x. So "each skill worth up to 1.5" and "all together about 2" cannot both hold unless skills overlap. Choose: (a) small singles, about 1.1 to 1.25, that multiply up to 2; (b) larger singles that saturate, so the full set is about 2 and the last skills add little; (c) a higher full-mastery target.
+1. The exact bands in C1, C2 and C7.
+2. For each skill, the plays that count as skilled, and what the naive play may do.
+3. The counter to each skilled play.
+4. What "beats" means: wipes the enemy out, or ends ahead by a margin.
+5. Which map families count, and in what proportion.
+6. Whether 2x is by cost or by headcount when unit types differ.
+
+The labels P1 to P4 in §5's tables are the earlier patterns: P1 (layer advantage) is now S3 and S4, P2 (the concave) is S2, P4 (the smaller force) is the target as a whole, and P3 (the protected fragile unit) waits until abilities are in scope.
 
 ## 5. The dimension map
 
@@ -168,13 +216,21 @@ The table is the lab's configuration surface and the axis list for §6. Each swe
 
 Status: Westley told the build to go ahead on this map, 2026-09-30 ("continue with plan execution given the new rules/info"). The pass criterion in §6 stays proposed until he confirms it.
 
-## 6. The "lines cross" hypothesis, stated testably
+## 6. What the data must show ("lines crossing", made concrete)
 
-Take a variable v (for example the range multiplier for fire from above) and hold every other variable fixed. The expected side's win probability is a function of v. It crosses 0.5 at some value v*. Depth exists on that axis when v* is reachable in play, meaning v* lies inside the range of values the game can produce. Now move a second variable w. Depth grows when w moves v* to another reachable value, or when w creates a second crossing, so two configurations of variables induce depth instead of one. That is Westley's "lines cross".
+"Lines crossing" was Westley's first name for the thing to find. Stated as a win probability crossing 0.5 it does not fit a system with no dice, and it never said what a good result looks like. In the terms of §4:
 
-Pass criterion for the lab, confirmed by Westley 2026-10-01 with the fragile-unit pattern (P3) set aside until abilities are in scope: one shared cross-layer rule set under which patterns P1, P2 and P4 of §4 hold (each true in at least one reachable configuration, none true in every configuration), with at least one crossing on a layer-rule axis and at least one two-variable interaction that adds a crossing. A separate tuned rule set per pattern does not pass.
+- A **line** is a break-even contour: the set of knob values at which a play's premium equals its target.
+- The **crossing** is the region of rule space where every condition C0 to C9 holds at once.
+- **Depth** is that region being non-empty and not a knife-edge: a small change to one knob should not throw a rule set out.
 
-Negative control: with the cross-layer rules off (multipliers zero, no cross-layer fire), no crossing on that axis. A detector that finds crossings with the mechanism off is measuring the harness, not the game. Positive control: the count ratio between two equal forces on flat ground, swept from 1:2 to 2:1, must show its crossing near 1:1; a detector that misses that is not reading.
+What the lab delivers from its data: (1) the rule sets that pass; (2) for each knob, which skills' premiums it moves and by how much; (3) the rule sets that nearly pass and the condition each misses.
+
+The first result is the **baseline profile**: the skill profile of today's default rules, under the base table and the three lever tables of §6.3. It says how far each skill is from its band before anything is tuned. What the runs so far suggest (§8): the layer skill has no edge under vision alone; a concave is worth less than one unit; blindness is worth about one unit and a seer helps only above a sight threshold; the ramp goes from a win to a wipe-out between slope lengths 150 and 200.
+
+Controls. Negative: identical forces and plays on a mirrored flat map give R\* = 1.0 within one unit; a detector that reads an advantage there is measuring the harness. Positive: a planted advantage of known direction (the unseen high side of pass 1) gives R\* well above 1.
+
+The sections below are the record of how the lab got here. §6.1's firing-share measure is kept as condition C8. §6.2's experiments E1 and E2 are confounded as written (the side that holds still wins) and E5 asks a probability question the lab cannot answer; all three are replaced by the skill profile. §6.3's rulings stand.
 
 ### 6.1 The firing-share hypothesis (2026-09-30, first check in §8)
 
