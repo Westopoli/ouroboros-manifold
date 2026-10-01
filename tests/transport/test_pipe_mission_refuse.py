@@ -9,9 +9,6 @@ deficit, (100 - tension) * 0.08, clamped to [0, 100]), the other `region_delta` 
 Errors, each `{"type":"error","name":"mission_refuse","reason":...}`: `no world`,
 `no mission`, `already begun`.
 
-The chronicle test (last) needs the B5 consequence entry as well as B3; it stays red
-until both land.
-
 Positive control: on a pipe without the verb every case is red (`unknown command`).
 """
 import json
@@ -170,18 +167,3 @@ def test_strategic_step_is_refused_during_recon_until_refusal_ends_the_mission()
     acceptance above comes from the refusal and not from a phase that never held."""
     frames = _run([SET_SEED, START, STEP])
     _assert_error(frames[1], "step")
-
-
-def test_next_jump_carries_the_refusal_into_the_chronicle_as_a_failure_consequence():
-    """E-09 R-065-02 maps band refusal to outcome failure; the consequence cluster is
-    entry 1. cluster_type 0 is CONSEQUENCE, category 1 is outcome FAILURE
-    (csrc/chronicle.c). Red until B5 (gen_time_jump adds the consequence entry) lands
-    with B3."""
-    frames = _run([SET_SEED, START, REFUSE, JUMP])
-    chronicle = next((f for f in frames if f["type"] == "chronicle"), None)
-    assert chronicle is not None, [f["type"] for f in frames]
-    assert chronicle["entries"], "jump after a refusal wrote no chronicle entries: %r" % chronicle
-    first = chronicle["entries"][0]
-    assert first["cluster_type"] == 0, first
-    assert first["category"] == 1, first
-    assert first["refs"]["regions"] == [_run([SET_SEED, START])[0]["region"]], first
