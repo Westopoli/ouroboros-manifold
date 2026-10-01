@@ -34,7 +34,7 @@
  *     to read fragment_ids[3] per entry; emitted as "fragment_ids":[id0,id1,id2]
  *     and "fragment":id0. When om_chronicle_entry_get returns 0 (cluster exists
  *     but text pass never ran for it) fragment_ids is [-1,-1,-1] and fragment is
- *     -1. refs.factions is still always [] (no faction refs on a cluster).
+ *     -1. refs.factions is [entry faction_ref] when it is >= 0, else [].
  *   - Every om_map_get_* node/canvas accessor and om_tactical_step itself
  *     are STUBs (csrc/tactical_mapgen.c, csrc/unit.c: E-11 wiring, card
  *     B10/B12 not landed). There is also no enumerator for live tactical
@@ -956,7 +956,9 @@ static void write_chronicle(uint64_t from_tick, uint64_t to_tick) {
             om_chronicle_entry ent;
             memset(&ent, 0, sizeof ent);
             int32_t frags[3] = { -1, -1, -1 };
+            int32_t faction_ref = -1;
             if (om_chronicle_entry_get(W, i, &ent)) {
+                faction_ref = ent.faction_ref;
                 frags[0] = ent.fragment_ids[0];
                 frags[1] = ent.fragment_ids[1];
                 frags[2] = ent.fragment_ids[2];
@@ -991,8 +993,10 @@ static void write_chronicle(uint64_t from_tick, uint64_t to_tick) {
             jb_uint(&j, c.region);
             jb_putc(&j, ']');
             jb_putc(&j, ',');
-            jb_key(&j, "factions"); /* no faction refs on a cluster */
-            jb_raw(&j, "[]");
+            jb_key(&j, "factions");
+            jb_putc(&j, '[');
+            if (faction_ref >= 0) jb_int(&j, faction_ref);
+            jb_putc(&j, ']');
             jb_putc(&j, '}');
             jb_putc(&j, ',');
             jb_key(&j, "fragment");
