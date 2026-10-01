@@ -28,6 +28,7 @@ These come from the bible and the register; the lab does not vary them unless a 
 - Terrain blocks layers at places (E-01 S-001). A unit never occupies a blocked position and layer.
 - Terrain-forced auto-transition: a move order to a place blocked on the unit's layer but open on another auto-transitions it (E-01 R-001-05). The lab has an off switch for it only because a control needs an off state; the ruling itself is settled. The edges the ruling leaves open are `Q-001-04`; the lab takes the recommended reading there and can vary it.
 - A transition is one transition of one duration regardless of distance (Q-002-01), by unit type (Q-004-01: Raider 1.0 s, Interceptor 1.2 s, Vanguard 2.5 s, Warden 2.0 s, Bombard 4.0 s, Bastion 5.0 s). The old layer may attack the unit until the halfway point, the new layer from the halfway point on; visibility follows the normal cross-layer sensor rules (Q-004-02). E-01 R-004-02 carries the same rule.
+- Slopes (Q-004-03, Westley 2026-09-30: "Choice 2 set by the slope, no need for a switch."): a slope is a band of ground joining two adjacent layers. On a slope the transition is the unit's position along it, not a timer: the time is slope length divided by unit speed, the halfway point is the slope's midline, and a unit may stop or turn back (E-01 R-001-06, R-004-06 to R-004-08). The timed rule above applies only to a transfer away from a slope. The lab builds this one way, with no timed-versus-slope switch. What the ruling leaves open is `Q-004-04`; the lab takes the recommended reading there and can vary it.
 - Vision across layers shrinks with distance: production uses factor 0.50 one layer away, 0.20 two layers away, none beyond, by absolute offset in either direction (`csrc/fog.c:585`); E-01 R-005-05 says two layers below is never visible, which disagrees (`Q-005-02`), so the lab takes vision by signed offset and can test both; vantage nodes and interference zones modify it; cover blocks sight by height and never changes damage or movement (E-01 S-007).
 - Production combat is same-layer only (Q-008-01). Every cross-layer rule in the lab is a hypothesis under test, not a fact about the game.
 - Layer damage is weighted much more heavily than abilities and passives (Q-083-02, hub principle 4): an ability never outranks position in the lab either.
@@ -94,14 +95,15 @@ The category multiplier matrix (attacker row, target column) is `OM_CATEGORY_MUL
 
 | Variable | Range | Production value | Rung | Pattern |
 |---|---|---|---|---|
-| Accessibility mask preset (flat, block, wall, barrier, lane; defined below) | 5 footprints | map generator output, binary per layer per position | R1 | P1, P4 |
+| Accessibility mask preset (flat, block, wall, barrier, lane, ramp; defined below) | 6 footprints | map generator output, binary per layer per position | R1 | P1, P4 |
 | Blocked height h: the mask blocks layers 1 to h inside the footprint | 1 to 4 | E-01 S-001 example: h = 2 | R1 | P1, P4 |
+| Slopes: position, width, length, and the two adjacent layers joined | length 100 to 1,000; width 100 to 600 | none in the sim; E-01 R-004-07 uses lengths 150 and 600 | R1 | P1, P4 |
 | Layer spacing | 10 to 200 | none in the sim (Q-E01-01 fixes on-screen elevation only) | R1 | P1 |
 | Cover discs: position, radius, height in layers | 0 to 5 layers | per E-01 S-007 | R1 | P1, P4 |
 | Vantage nodes | count, radius | per E-01 S-005 | R1 | P1 |
 | Interference zones | count, radius, intensity 0 to 1 | per E-01 S-005 | R1 | P1 |
 
-The terrain presets are one mechanism at five footprints. Terrain in this game is only a binary mask: each layer is open or blocked at each position (E-01 R-001-04). There are no slopes. A preset is a footprint (where layers 1 to h are blocked) and the height h; layers above h stay open everywhere. They differ by whether a unit on a blocked layer can walk around, and how far.
+Terrain in this game is a binary mask, each layer open or blocked at each position (E-01 R-001-04), plus slopes, bands of ground that join two adjacent layers (E-01 R-001-06). A preset is a footprint (where layers 1 to h are blocked), the height h, and the slopes on it; layers above h stay open everywhere. The presets differ by whether a unit on a blocked layer can walk around, how far, and whether a slope lets it walk up.
 
 | Preset | Footprint | Unit on layers 1 to h, crossing it | Unit above h | What it tests |
 |---|---|---|---|---|
@@ -110,8 +112,9 @@ The terrain presets are one mechanism at five footprints. Terrain in this game i
 | wall | one long thin region across the arena, with open ends | goes around an end, a long detour | flies over | a line to hold; the flank around the end is the vulnerability |
 | barrier | a region that spans the full arena width: no end to go around | cannot cross on its layer; must change layer (E-01 R-001-05, the ruling) | flies over | the terrain-forced auto-transition; with the ruling off, the unit stops at the edge |
 | lane | two blocks with an open channel between them, open on all five layers | funnels through the channel | flies over the blocks or uses the channel | a choke on the low layers that the high layers bypass |
+| ramp | a barrier with one slope up its face, joining layer h to layer h+1 | walks up the slope; below the midline only the lower layer can hit it, above it only the upper layer (E-01 R-004-06) | flies over | high ground with one way up: the midline is the line to hold, and the slope's length sets how long a climber is exposed |
 
-Block and wall differ only in shape (how long the detour is); barrier is the same wall made so long that there is no detour. Lane is two blocks facing each other. I kept five because each produces a different route decision; if two are not worth separate runs, merge them.
+Block and wall differ only in shape (how long the detour is); barrier is the same wall made so long that there is no detour. Lane is two blocks facing each other. Ramp is the barrier with a slope. Each produces a different route decision; if two are not worth separate runs, merge them. No scenario in the table below uses a slope yet: the high-ground-with-a-ramp scenarios and their expected winners are still to be written.
 
 ### Cross-layer rules (owner: the rule set; the unknowns the lab exists to find)
 
@@ -125,9 +128,9 @@ Block and wall differ only in shape (how long the detour is); barrier is the sam
 | Area-damage multiplier by signed offset | 0 to 2 | none | R1 | P2, P3 |
 | Fire requires vision | on or off | none decided; E-01 R-007-03 lets a hidden attacker hit an observer that cannot see it, so the flag is about the attacker's own sight; the lab uses one visibility function for target choice and for the fire check | R1 | P1 |
 | Facing gates fire | on or off | none | R2 | P2 |
-| Halfway rule during a transition | both always targetable, per rule (old layer until halfway, new layer after), untargetable | per rule (Q-004-02) | R1 | P1, P4 |
+| Halfway rule during a transition | both always targetable, per rule (old layer until halfway, new layer after), untargetable | per rule (Q-004-02); on a slope the halfway point is the midline, by position (Q-004-03) | R1 | P1, P4 |
 | Terrain-forced auto-transition | on or off (off is the control) | on (E-01 R-001-05); edges per Q-001-04 | R1 | P4 |
-| Movement speed during a transition | 0 to 1.0 times | none (mid-transition movement is unspecified in the bible beyond Q-004-02) | R1 | P1 |
+| Movement speed during a timed transfer (not on a slope, where the unit moves at its own speed) | 0 to 1.0 times | none (mid-transition movement is unspecified in the bible beyond Q-004-02) | R1 | P1 |
 
 ### Outcomes and expected winners
 
