@@ -836,12 +836,12 @@ note = "Positional (w, 10, 20) = the mock entry's start_tick/end_tick. Likely na
 
 [[symbols]]
 name = "om_chronicle_has_mission_consequence_flag"
-module = "mission.c"
+module = "generational.c"
 restype = "int"
 params = [{ name = "w", ctype = "const om_world*" }]
 epics = ["E-10"]
 confidence = "likely"
-note = "== 1. Card 266a3 puts in mission.c; not in toml; name says chronicle.c (E-09). Ownership open."
+note = "== 1. Defined in generational.c (consequence chronicle entry lives with the time jump); mission.c holds no definition. Ownership follows where the code lives."
 
 [[symbols]]
 name = "om_chronicle_is_lineage_event"
@@ -3287,6 +3287,15 @@ params = [{ name = "w", ctype = "const om_world*" }]
 epics = ["E-10"]
 confidence = "likely"
 note = "HDR4-2-r: unit id the player assigned as commander (R-077-05), 0 if none."
+
+[[symbols]]
+name = "om_mission_assign_commander"
+module = "mission.c"
+restype = "int"
+params = [{ name = "w", ctype = "om_world*" }, { name = "unit_id", ctype = "uint32_t" }]
+epics = ["E-10"]
+confidence = "likely"
+note = "B7: make unit_id the commander (R-077-05). 0 ok, 1 unit missing or not the player's, 2 assigned commander already dead."
 
 [[symbols]]
 name = "om_mission_get_debrief"

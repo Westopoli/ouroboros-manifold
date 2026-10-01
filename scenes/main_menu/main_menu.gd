@@ -5,7 +5,7 @@ const SimSession := preload("res://autoload/sim_session.gd")
 const HOVER_GLYPH_CAP := 12
 const HOVER_GLYPHS := ["✦", "·"]
 const HOVER_GLYPH_COUNTS := {
-	"NEW GAME": 4, "CONTINUE": 3, "ERA LIBRARY": 3, "SETTINGS": 2, "QUIT": 2,
+	"NEW CAMPAIGN": 4, "CONTINUE": 3, "ERA LIBRARY": 3, "SETTINGS": 2, "QUIT": 2,
 }
 const GLYPH_COLOR := Color("#FFFFFF")
 
@@ -68,7 +68,7 @@ func _build_ui() -> void:
 	content.add_child(spacer2)
 
 	var menu_data := [
-		{"label": "NEW GAME", "action": "galaxy"},
+		{"label": "NEW CAMPAIGN", "action": "galaxy"},
 		{"label": "CONTINUE", "action": "load_game"},
 		{"label": "ERA LIBRARY", "action": "era_library"},
 		{"label": "SETTINGS", "action": "settings"},
@@ -86,17 +86,6 @@ func _build_ui() -> void:
 		_menu_items.append(item)
 	qa_set_bridge(SimSession.bridge())
 
-	var spacer3 := Control.new()
-	spacer3.custom_minimum_size.y = 52
-	content.add_child(spacer3)
-
-	var key_hint := Label.new()
-	key_hint.text = "Have an access key? Visit the Era Library to redeem it."
-	key_hint.add_theme_font_override("font", ThemeConstants.font_mono_regular)
-	key_hint.add_theme_font_size_override("font_size", 20)
-	key_hint.add_theme_color_override("font_color", Color("#D4A017"))
-	content.add_child(key_hint)
-
 	_hover_layer = Control.new()
 	_hover_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_hover_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -112,27 +101,6 @@ func _build_ui() -> void:
 	version.offset_top = -30
 	version.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	add_child(version)
-
-	var replay_tutorial_button := Button.new()
-	replay_tutorial_button.name = "ReplayTutorialButton"
-	replay_tutorial_button.text = "Replay Tutorial"
-	replay_tutorial_button.add_theme_font_override("font", ThemeConstants.font_mono_regular)
-	replay_tutorial_button.add_theme_font_size_override("font_size", 18)
-	replay_tutorial_button.add_theme_color_override("font_color", ThemeConstants.TERTIARY)
-	replay_tutorial_button.flat = true
-	replay_tutorial_button.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-	replay_tutorial_button.offset_left = 30
-	replay_tutorial_button.offset_top = -50
-	replay_tutorial_button.offset_right = 200
-	replay_tutorial_button.offset_bottom = -20
-	replay_tutorial_button.pressed.connect(_on_replay_tutorial_pressed)
-	add_child(replay_tutorial_button)
-
-
-func _on_replay_tutorial_pressed() -> void:
-	var tsm := get_node_or_null("/root/TutorialStateMachine")
-	if tsm != null and tsm.has_method("reset_for_replay"):
-		tsm.call("reset_for_replay")
 
 
 func _setup_world_view_viewport() -> void:

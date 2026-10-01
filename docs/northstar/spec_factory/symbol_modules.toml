@@ -88,6 +88,7 @@ om_objective_get_radius             = "mission.c"
 om_mission_get_force_count          = "mission.c"
 om_mission_get_force_unit           = "mission.c"
 om_mission_get_commander_unit       = "mission.c"
+om_mission_assign_commander         = "mission.c"
 # F2n: tactical_support.c drifted objective centre write (B9-5)
 om_objective_set_center             = "mission.c"
 # units, combat, the tactical tick orchestrator: E-11
@@ -132,3 +133,12 @@ om_map_cover_at                     = "tactical_mapgen.c"
 om_map_clear                        = "tactical_mapgen.c"
 # W-1e: structure position setter (E-15, called by pipe place_structure verb)
 om_structure_set_position           = "tactical_support.c"
+# OWN-tables: cross-file symbols outside headers; ownership follows where the code lives
+om_gen_consequence_rearm            = "generational.c"  # declared extern in mission.c
+om_mission_install_save_hooks       = "mission.c"       # declared extern in region.c
+om_mis_put                          = "mission.c"
+om_mis_put_u32                      = "mission.c"
+om_mis_get_u32                      = "mission.c"
+om_mis_save_read                    = "mission.c"
+om_mis_save_size                    = "mission.c"
+om_mis_save_write                   = "mission.c"
