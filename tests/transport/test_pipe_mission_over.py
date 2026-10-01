@@ -8,9 +8,11 @@ by pressing End Mission -- see the 2026-09-28 QA-run wiring brief.
 The step bound comes from the rule, not a constant: missions are 30 to 60
 minutes of battle time (R-076-02 table, Q-076-02), so the test reads the
 deadline_ticks the mission frame reports and steps DEADLINE_MARGIN past it.
-This test does not choose the archetype: whichever mission seed=1 draws, the
-time-limit path (wired for every archetype, unlike the two objective kinds the
-wiring brief leaves out -- see the report) must still end it.
+Seed 121 is a fixture choice for cost, not a threshold: its first mission is an
+evacuation (30-minute base, shortest deadline of seeds 1-400, 30406 ticks) with
+a small force, so the sim finishes in well under a minute. Evacuation's escort
+objective is one of the two kinds the wiring brief leaves out, so only the
+time-limit path (wired for every archetype) can end it.
 """
 import json
 import subprocess
@@ -21,7 +23,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 PIPE = ROOT / "pipe/ouroboros_pipe"
 FEATURES = [0, 1, 2, 3, 4, 5, 6, 7]
-SET_SEED = {"type": "cmd", "name": "set_seed", "seed": 1, "n_regions": 80, "features": FEATURES}
+SET_SEED = {"type": "cmd", "name": "set_seed", "seed": 121, "n_regions": 80, "features": FEATURES}
 STEP10 = {"type": "cmd", "name": "step", "n": 10}
 START = {"type": "cmd", "name": "mission_start", "faction": 0}
 BEGIN = {"type": "cmd", "name": "mission_begin"}
