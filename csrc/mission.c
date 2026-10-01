@@ -1506,6 +1506,12 @@ void om_mission_end(om_world *w) {
     st->band_set = 1;
     if (!st->commander_fate_set) {
         st->commander_fate = OM_COMMANDER_FATE_SURVIVED;
+        if (st->commander_unit) {
+            uint32_t cu = st->commander_unit;
+            st->commander_fate = om_mission_eval_commander_fate(
+                om_unit_get_hp(w, cu),
+                om_unit_profile_max_hp(w, om_unit_get_unit_type(w, cu)));
+        }
         st->commander_fate_set = 1;
     }
     if (st->mission_set && !st->end_applied) {
@@ -2364,6 +2370,7 @@ void om_mission_setup(om_world *w, uint32_t p1, uint32_t archetype, int lineage_
     st->band_set = 0;
     st->band = OM_MISSION_BAND_UNKNOWN;
     st->commander_fate_set = 0;
+    st->commander_unit = 0;
     st->end_applied = 0;
     st->consequence_seen = 0;
     st->consequence_transferred = 0;
@@ -2512,6 +2519,19 @@ int32_t om_objective_get_node(const om_world *w, uint32_t objective_idx) {
 double om_objective_get_radius(const om_world *w, uint32_t objective_idx) {
     if (objective_idx != 0 || om_objective_get_node(w, 0) < 0) return 0.0;
     return OM_MISSION_OBJECTIVE_COVER_RADIUS;
+}
+
+/* Q-077-02: 0 ok, 1 unknown or not the player's unit, 2 assigned commander dead. */
+int om_mission_assign_commander(om_world *w, uint32_t unit_id) {
+    om_mission_state *st = om_mis(w);
+    if (!unit_id || unit_id > om_unit_count(w)) return 1;
+    int32_t pf = om_mission_player_faction(w);
+    int32_t f = om_unit_get_faction(w, unit_id);
+    if (f < 0 || (pf >= 0 && f != pf)) return 1;
+    if (st->commander_unit && st->commander_unit != unit_id &&
+        om_unit_get_hp(w, st->commander_unit) <= 0.0) return 2;
+    st->commander_unit = unit_id;
+    return 0;
 }
 
 uint32_t om_mission_get_commander_unit(const om_world *w) {
