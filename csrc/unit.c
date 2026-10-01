@@ -1345,9 +1345,9 @@ static void om_tac_nearest_scan_cell(om_tac_state *st, const om_unit_row *self, 
     for (cur = g->head[cell]; cur; cur = g->next[cur - 1]) {
         om_unit_row *cand = &st->units[cur - 1];
         double dx = cand->x - self->x, dy = cand->y - self->y, d2;
-        if (!om_tac_dist_le(dx, dy, radius)) continue;
         if (cand->hp <= 0.0 || cand->stealth) continue;
         if (!om_tac_hostile(self, cand) || cand->layer != self->layer) continue;
+        if (!om_tac_dist_le(dx, dy, radius)) continue;
         d2 = dx * dx + dy * dy;
         if (!acc->best) {
             acc->best = cand; acc->best_d2 = d2;
