@@ -303,10 +303,12 @@ def _clear_of_slopes(sit, rows, layer):
 
 # ---- composition --------------------------------------------------------------------------------
 
-def _layer(sit, skills):
+def _layer(sit, skills, layer):
+    """S3 stands one above the believed enemy layer, clipped to 1..5; without it the side stands on `layer`
+    (the caller's hint for a naive side) or `sit.layer`."""
     if "S3" not in skills:
-        return sit.layer
-    return (sit.hidden["layer"] if "S4" in skills else sit.layer) + 1
+        return sit.layer if layer is None else layer
+    return min(5, max(1, (sit.hidden["layer"] if "S4" in skills else sit.layer) + 1))
 
 
 def _beat_order(sit, base, side, order, counts, enemy, ladder):
@@ -328,14 +330,15 @@ def _beat_order(sit, base, side, order, counts, enemy, ladder):
     return sorted(order, key=key)
 
 
-def _compose(sit, base, side, counts, skills, ladder, enemy, attack, arc=_ARC):
+def _compose(sit, base, side, counts, skills, ladder, enemy, attack, arc=_ARC, layer=None):
     letter = "AB"[side]
     own, foe = _anchor(sit, side), _anchor(sit, 1 - side)
     sp = _spacing(sit)
     order = _type_order(counts)
     f = _bearing(own, foe) if "S5" in skills else _facing(sit, side)    # S5 lays the line exactly across the approach
     p0, across, hold_point = own, _ACROSS, False
-    if "S1" in skills:
+    s1 = "S1" in skills and sit.family != "flat"      # no better point on a flat map: S1 is exactly the naive play
+    if s1:
         spot = _hold_point(sit, base, side, counts, sp)
         if spot is not None:
             p0, f, across = spot
@@ -349,14 +352,14 @@ def _compose(sit, base, side, counts, skills, ladder, enemy, attack, arc=_ARC):
             p0 = (p0[0] - outward[0] * _EDGE_STEP, p0[1] - outward[1] * _EDGE_STEP)
     if "S5" in skills:
         order = _beat_order(sit, base, side, order, counts, enemy, ladder)
-    hold = "S1" in skills or ("S2" not in skills and not attack)
-    common = {"side": letter, "layer": _layer(sit, skills), "target_policy": "nearest", "facing": f}
+    hold = s1 or ("S2" not in skills and not attack)
+    common = {"side": letter, "layer": _layer(sit, skills, layer), "target_policy": "nearest", "facing": f}
     shift = (foe[0] - p0[0], foe[1] - p0[1])
     n = sum(counts.values())
     if "S2" in skills:
         center = foe
         axis = _bearing(foe, p0)
-        r0 = math.hypot(p0[0] - foe[0], p0[1] - foe[1]) if "S1" in skills else 0.5 * sit.approach_distance
+        r0 = math.hypot(p0[0] - foe[0], p0[1] - foe[1]) if s1 else 0.5 * sit.approach_distance
         rows = _concave_rows(n, center, axis, r0, sp, arc)
         _assign(rows, order, counts, _lateral_axis(sit))
         return _emit_rows(rows, order, common, hold, shift)
@@ -371,9 +374,11 @@ def _counts(sit, base, size):
     return counts_for_cost(sit.mix, size * unit_cost(base, "raider"), base)
 
 
-def compose(sit, side, size, skills, ladder="line", enemy=None):
+def compose(sit, side, size, skills, ladder="line", enemy=None, layer=None):
+    """`layer`: where a side without S3 stands (default `sit.layer`); build_scenario sets it for a naive side."""
     base = situation.base_scenario(sit)
-    return _compose(sit, base, side, _counts(sit, base, size), frozenset(skills), ladder, enemy, ladder != "hold")
+    return _compose(sit, base, side, _counts(sit, base, size), frozenset(skills), ladder, enemy, ladder != "hold",
+                    layer=layer)
 
 
 # ---- scenarios for rstar ------------------------------------------------------------------------
@@ -403,6 +408,7 @@ def build_scenario(sit, skills, size, ladder="line", processes=None, config=None
     if config is not None:
         base = apply_config(base, config)
     skilled_counts = _counts(sit, base, size)
+    naive_layer = sit.layer if config is None else sit.hidden["layer"]   # base rules: no cross-layer fire, nothing to scout
     arc, arc_error = _fit_arc(sit, base, skilled_counts, skills, ladder) if "S2" in skills else (_ARC, None)
 
     def build(ratio, swap):
@@ -419,7 +425,7 @@ def build_scenario(sit, skills, size, ladder="line", processes=None, config=None
         mine = _compose(sit, base, 0, skilled_counts, skills, ladder, (sit.mix, naive_counts),
                         ladder != "hold" or skilled_cost > naive_cost, arc)
         theirs = _compose(sit, base, 1, naive_counts, frozenset(), ladder, (sit.mix, skilled_counts),
-                          ladder != "hold" or naive_cost > skilled_cost)
+                          ladder != "hold" or naive_cost > skilled_cost, layer=naive_layer)
         if swap:
             mine = [dict(g, side="B") for g in mine]
             theirs = [dict(g, side="A") for g in theirs]
