@@ -9,9 +9,12 @@ the faction of the candidate drawn. With both pools empty, the surviving faction
 most regions, uniform among ties.
 
 What these tests pin and what they leave open:
-- Fixtures use a complete edge graph, so every candidate is within the pools' 2 hops of any
-  mission region the implementation reads; the pick must not depend on a region the
-  function is not given.
+- The pools' 2 hops are measured from the last mission's region (om_mission_last_region,
+  ruling A26, R-062-02). Most fixtures use a complete edge graph, so every candidate is within
+  2 hops of that region; the last-region tests below use a line graph and move the region.
+- A previous-pool candidate more than 2 hops from the last mission region is not in the pool
+  (R-058-02) and a nemesis descendant more than 2 hops away is not in the nemesis pool
+  (R-058-03); with both pools empty the most-regions rule applies.
 - A fixture with a non-empty pool pins the result whichever pool the 0.70/0.20/0.10 roll
   lands on (a rolled-empty pool falls through previous, then nemesis); the unrelated pool is
   not a collapse pool in these fixtures.
@@ -169,6 +172,54 @@ def test_R_062_02_control_the_player_never_rejoins_its_own_collapsed_faction(lib
         pick = _pick(lib, w)
         assert pick != PLAYER and pick in (1, 2, 3), f"seed {seed}: picked {pick}"
         assert pick == 2, f"seed {seed}: no surviving pool candidate, so the most-regions fallback applies"
+
+
+# ---- the pools' 2 hops are measured from the last mission's region (A26) ----
+
+def _line_graph(lib, w, n=N):
+    for a in range(n - 1):
+        set_edge(lib, w, a, a + 1)
+
+
+def _last_mission_region(lib, w, region):
+    lib.om_mission_start(w, PLAYER)
+    lib.om_mission_setup(w, region, 0, 0)
+    assert lib.om_mission_last_region(w) == region, "fixture: the last mission region must read back"
+
+
+# line 0-1-2-3-4-5; faction 2 holds the most regions, faction 1 holds regions 4 and 5, faction 3 region 3.
+LINE_OWNERS = [2, 2, 2, 3, 1, 1]
+
+
+def test_R_062_02_the_previous_pool_is_measured_from_the_last_mission_region(lib, world_factory):
+    """Given a lineage member in faction 1 at region 5 and one in faction 3 at region 1 on a line graph, When the last mission was at region 0 or 2 only the faction 3 member is within 2 hops and faction 3 is picked, at region 5 only the faction 1 member is and faction 1 is picked, at region 3 both are and either is picked; never the largest faction 2."""
+    cases = {0: 3, 2: 3, 5: 1, 3: None}
+    for last_region, expected in cases.items():
+        for seed in (1, 2, 3, 4):
+            w = world_factory(n_regions=N, seed=seed)
+            _line_graph(lib, w)
+            _owners(lib, w, LINE_OWNERS)
+            _played_lineage(lib, w, lineage=7, faction=1, region=5, member_id=100)
+            _played_lineage(lib, w, lineage=8, faction=3, region=1, member_id=101)
+            _last_mission_region(lib, w, last_region)
+            pick = _pick(lib, w)
+            if expected is None:
+                assert pick in (1, 3), f"last region {last_region}, seed {seed}: both members are in range, got {pick}"
+            else:
+                assert pick == expected, f"last region {last_region}, seed {seed}: got {pick}, expected {expected}"
+
+
+def test_R_062_02_a_nemesis_descendant_beyond_2_hops_of_the_last_mission_region_is_not_a_candidate(lib, world_factory):
+    """Given a nemesis descendant of faction 1 at region 5 and no previous lineage, When the last mission was at region 0 (5 hops away), Then the pools are empty and the most-regions faction 2 wins; when it was at region 4, the descendant is in range and faction 1 wins."""
+    for seed in (1, 2, 3, 4):
+        for last_region, expected in ((0, 2), (4, 1)):
+            w = world_factory(n_regions=N, seed=seed)
+            _line_graph(lib, w)
+            _owners(lib, w, LINE_OWNERS)
+            _nemesis_descendant(lib, w, rival_id=200, commander_id=201, child_id=202,
+                                rival_faction=3, child_faction=1, region=5)
+            _last_mission_region(lib, w, last_region)
+            assert _pick(lib, w) == expected, f"last region {last_region}, seed {seed}"
 
 
 # ---- applied: the collapse jump hands the player faction to the drawn candidate's faction ----
