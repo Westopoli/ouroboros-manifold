@@ -1919,6 +1919,7 @@ def _bind_e08(lib):
     _bind(lib, "om_force_set_surviving_units", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "mission_id", "n_survivors"), kw=True)
     _bind(lib, "om_ledger_commander_death_outcome_band", [W, ctypes.c_uint32], ctypes.c_int, ("w", "commander_id"), kw=True)
     _bind(lib, "om_ledger_commander_death_region", [W, ctypes.c_uint32], ctypes.c_uint32, ("w", "commander_id"), kw=True)
+    _bind(lib, "om_lineage_chapter_count", [W, ctypes.c_uint32], ctypes.c_uint32, ("w", "lineage_id"))
     _bind(lib, "om_lineage_count", [W], ctypes.c_uint32, ("w",))
     _bind(lib, "om_lineage_create", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "lineage_id", "home_region"), kw=True)
     _bind(lib, "om_lineage_first_member_region", [W, ctypes.c_uint32], ctypes.c_int32, ("w", "lineage_id"))

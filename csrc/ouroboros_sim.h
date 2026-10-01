@@ -1408,9 +1408,11 @@ void om_campaign_trigger_terminal_restart(om_world *w);
 void om_chapter_advance_phase(om_world *w);
 int om_chapter_current_phase(const om_world *w);
 uint32_t om_chapter_get_number(const om_world *w);
-/* B6 (R-055-06): why the chapter that last ended ended, a GEN_CHAPTER_END_*
- * value (0 normal, 1 commander death, 2 faction collapsed; collapse wins when
- * both hold); 0 before any chapter has ended. */
+/* B6 (R-055-06, A14): the end reason the latest time jump carried, a
+ * GEN_CHAPTER_END_* value (0 normal, 1 commander death, 2 faction collapsed;
+ * collapse wins when both hold). Per jump: 0 when that jump ended no chapter
+ * (the opening jump and any retry jump), so it can read 0 after a jump that
+ * followed a chapter ending in collapse. 0 before any jump. */
 int om_chapter_last_end_reason(const om_world *w);
 int om_chapter_end_reason_for_collapse(const om_world *w, int32_t player_faction);
 int om_chapter_mission_realtime(const om_world *w);
@@ -1453,6 +1455,11 @@ void om_force_allocator_run(om_world *w, uint32_t mission_id, double budget);
 void om_force_set_surviving_units(om_world *w, uint32_t mission_id, uint32_t n_survivors);
 int om_ledger_commander_death_outcome_band(const om_world *w, uint32_t commander_id);
 uint32_t om_ledger_commander_death_region(const om_world *w, uint32_t commander_id);
+/* B6 (A17, R-057-08): chapters played in the lineage: 1 when the lineage is
+ * created, +1 on each later selection that keeps it (stay, or successor after
+ * the commander's death), once per selection; retry jumps add nothing. 0 for
+ * an unknown lineage. */
+uint32_t om_lineage_chapter_count(const om_world *w, uint32_t lineage_id);
 uint32_t om_lineage_count(const om_world *w);
 void om_lineage_create(om_world *w, uint32_t lineage_id, uint32_t home_region);
 int32_t om_lineage_first_member_region(const om_world *w, uint32_t lineage_id);

@@ -49,6 +49,7 @@ om_campaign_commander               = "generational.c"
 om_campaign_lineage                 = "generational.c"
 om_chapter_last_end_reason          = "generational.c"
 om_mission_generator_chosen_archetype = "generational.c"
+om_lineage_chapter_count            = "generational.c"
 # chronicle entries: E-09
 om_chronicle_entry_count            = "chronicle.c"
 # F2n: mission.c objective-drift leaf needs a set/get pair; chronicle reader (B8-4)

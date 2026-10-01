@@ -144,7 +144,7 @@ restype = "int"
 params = [{ name = "w", ctype = "const om_world*" }]
 epics = ["E-08"]
 confidence = "likely"
-note = "B6: GEN_CHAPTER_END_* of the chapter that last ended (collapse wins over commander death), normal (0) before any ends."
+note = "B6 (A14): GEN_CHAPTER_END_* the latest jump carried (collapse wins over commander death); per jump, 0 when that jump ended no chapter (opening, retry), 0 before any jump."
 
 [[symbols]]
 name = "om_chapter_end_reason_for_collapse"
@@ -1903,6 +1903,15 @@ epics = ["E-08"]
 confidence = "likely"
 kwargs = ["commander_id"]
 note = "Region index == 2."
+
+[[symbols]]
+name = "om_lineage_chapter_count"
+module = "generational.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "lineage_id", ctype = "uint32_t" }]
+epics = ["E-08"]
+confidence = "likely"
+note = "B6 (A17): chapters played in the lineage; 1 at creation, +1 per later selection that keeps it, retry jumps add nothing, 0 for an unknown lineage."
 
 [[symbols]]
 name = "om_lineage_count"
