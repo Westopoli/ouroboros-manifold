@@ -147,7 +147,7 @@ Rules
 - R-008-03  Given a Bombard's area attack centered on layer 3, When enemies stand on layers 2 and 4 inside the radius, Then they take damage only at the layer offsets the Bombard's reach includes (S-164), at the multiplier Q-008-03 sets.
 - R-008-04  Given an attacker that cannot see a target (S-005), When it would attack that target, Then it does not: a unit never fires at a target it cannot see, on its own layer or another.
 
-End-state (the acceptance bar): the hub's definition of strategic depth (principle 4) holds in the layer lab before any cross-layer rule is written into the sim. In the lab's terms (`docs/northstar/research/layer_dynamics/README.md` §4.3): across the space maps, each skilled play wins the count of units able to fire, the result follows that count, the five skills (landscape, formation, layers, enemy position, unit-type matchup) stack with none dominant and none dead, each has an answer on most maps, and the best situations let a side beat three times its number or more. Abilities are outside this bar until they are in scope.
+End-state (the acceptance bar): the hub's definition of strategic depth (principle 4) holds in the layer lab before any cross-layer rule is written into the sim. In the lab's terms (`docs/northstar/research/layer_dynamics/README.md` §4.3): across the space maps, each skilled play wins the count of units able to fire, the result follows that count, the five skills (landscape, formation, layers, enemy position, unit-type matchup) stack with none dominant and none dead, each has an answer on most maps, and the best situations let a side beat a much larger force. Abilities are left out of this bar for now (Westley, 2026-09-30: "let's leave specific abilities out of this calculation for now, we're tuning base unit properties").
 
 Inputs: attacker layer, target layer, range, visibility; the cross-layer rule table (range, damage and area multipliers by signed layer offset, fire-requires-vision, halfway rule) once Q-008-03 closes.
 Outputs: attack events; HP changes in the tick delta.
@@ -200,11 +200,11 @@ Rules
 - R-162-01  Given selected units that can ping, When the player chooses the ping, presses a layer number and clicks a place, Then the player sees that layer around that place for a very short time, at a reach much longer than passive cross-layer vision (S-005) [Q-005-04: radius, duration, reach, which units].
 - R-162-02  Given a ping, When it is cast, Then it costs the player no resource [Q-005-04: what limits repeated use].
 - R-162-03  Given a player whose units are pinged, When the ping lands, Then that player is alerted that they were pinged and is shown a sector of about 60 degrees pointing toward where the ping came from, and nothing more precise.
-- R-162-04  Given an era without the technology for a ping, When the player pings, Then small scouts that cost nothing are sent to the place and give the same short view [Q-005-04: how they travel and whether they can be killed].
+- R-162-04  Given an era without the technology for a ping, When the player pings, Then, if the era uses scouts (proposed, not decided; Westley, 2026-10-01: "we could have them send out little scouts that cost nothing"), small scouts that cost nothing carry the ping [Q-005-04].
 - R-162-05  Given a ping that has ended, When no passive detection applies, Then the units it revealed are hidden again.
 
 Inputs: ping command (selection, layer, place); era pack (ping or scouts).
-Outputs: revealed set for the burst; the alert and its sector on the pinged player's screen; cooldown state.
+Outputs: revealed set for the burst; the alert and its sector on the pinged player's screen; a cooldown, if Q-005-04 adopts one.
 Open flags: Q-005-04 (the ping's numbers, the scouts, and whether the sensor pulse of S-006 stays).
 
 ### S-163 — Going dark
@@ -225,7 +225,7 @@ As a commander, I want each unit type to reach only certain layers with its fire
 Rules
 - R-164-01  Given a unit type, When its reach is read, Then it names the layer offsets it can fire at: its own layer, and how many layers up and how many down [Q-005-04 and Q-008-03: the table].
 - R-164-02  Given a target at a layer offset outside the attacker's reach, When the attacker would fire, Then it does not, whatever the distance.
-- R-164-03  Given the roster, When reach is assigned, Then no type's reach is free: a type that reaches further or across more layers is weaker to something another type does [Q-005-04: the weaknesses], and at least one type fires upward well, as the answer to a force that holds the top layer.
+- R-164-03  Given the roster, When reach is assigned, Then a type that reaches further is weaker to something another type does, so its advantage is temporary (Westley, 2026-10-01: "units with higher range will hypothetically have an advantage but they should be weaker to certain things, thus making the advantage temporary") [Q-005-04: the weaknesses, and whether one type must fire upward well, which he raised as an example of a counter to the top layer].
 
 Inputs: unit type reach table (roster, per era).
 Outputs: attack eligibility by layer offset.

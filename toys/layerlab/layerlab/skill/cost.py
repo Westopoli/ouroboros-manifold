@@ -1,4 +1,4 @@
-"""Force by cost (SPEC.md section 14.1)."""
+"""Force by heads, with cost reported beside it (SPEC.md sections 14.1 and 14.5)."""
 import math
 
 _COST_DIVISOR = 31.25
@@ -50,3 +50,22 @@ def counts_for_cost(shares, total_cost, scn):
                 break
         else:
             return count
+
+
+def counts_for_heads(shares, n, scn):
+    """Largest-remainder rounding of shares * n; a positive share gets at least one head when n covers the types."""
+    pos = {t: s for t, s in shares.items() if s > 0}
+    if n <= 0 or not pos:
+        return {}
+    norm = sum(pos.values())
+    ideal = {t: pos[t] / norm * n for t in pos}
+    floor = 1 if n >= len(pos) else 0
+    count = {t: max(floor, math.floor(ideal[t] + 1e-9)) for t in pos}
+    order = {t: i for i, t in enumerate(pos)}
+    while sum(count.values()) < n:
+        t = min(pos, key=lambda t: (-(ideal[t] - count[t]), order[t]))
+        count[t] += 1
+    while sum(count.values()) > n:
+        t = min((t for t in pos if count[t] > floor), key=lambda t: (ideal[t] - count[t], -order[t]))
+        count[t] -= 1
+    return {t: c for t, c in count.items() if c > 0}

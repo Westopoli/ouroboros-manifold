@@ -743,8 +743,10 @@ def _scripted_fights(scn):
     else:
         m = float((ca > cb) - (ca < cb))
     outcome = "win_A" if m > 0 else "win_B" if m < 0 else "stalemate"
+    sides = [u["side"] for u in cost.side_units(scn)]          # SPEC 14.5 (3): the fight row carries firing counts
     return fight.FightResult(margin=m, raw_margin=m, outcome=outcome, ticks=100, first_contact_tick=10,
-                             contact=True, survivors=())
+                             contact=True, survivors=(), alive_ticks=(100, 100), firing_ticks=(50, 50),
+                             heads=(sides.count(0), sides.count(1)))
 
 
 def test_aggregate_counts_invalid_cells_and_never_averages_them_in(monkeypatch):
