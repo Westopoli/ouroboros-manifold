@@ -201,3 +201,21 @@ With B6 the drawn mission changed and the test takes 495 s against its 500 s han
 - `om_lineage_chapter_count` gets a row in `scripts/specfactory/reach_allowlist.toml` as a test-observability accessor. Justification for the row: the counter is read in play by the selector through the internal state (R-057-02, R-057-04); the public getter exists so the A17 tests can observe it, and no player-facing surface shows the number.
 
 Hypothesis for the `tests/test_tactical_view.gd` tick-rate failure, to confirm or refute before any change: the newly drawn fixture mission has more than 1,000 live units, so the tactical rate correctly drops from 20 to 10 ticks per second (E-13 R-099-03). If confirmed, the test's fixture is at fault, not the game: give it a mission under 1,000 units (ledger row); the expected rate is not changed.
+
+## Addendum 10, 2026-10-01 (Westley's four decisions)
+
+Rule text changed in the same commit: E-13 pipe budget, `docs/architecture.md` (the budget figure), E-08 R-062-02, E-16 R-103-09 (new) and R-110-02, register Q-110-04.
+
+**A22. Pipe budget: 100 ms.** One `tactical_step` round trip at 5,000 units takes under 100 ms, the tick length at the 10 ticks per second of R-099-03. This replaces round 1's 50 ms and closes A6. The build meets it (median about 50 ms, p95 about 75 ms), so the performance lane is closed: the `om_grid` per-faction cell list and fixes 4 and 5 are not built. The Engineer adds the budget test now: `scripts/bench_tactical_pipe.py`'s clash scene at 5,000 units, p95 under 100 ms, with a positive control (a planted delay makes it fail).
+
+**A23. Key rebinding: none for now** (Q-110-04, answer b). G5b is not built until Q-005-03 and Q-103-04 both close. R-110-02 says so.
+
+**A24. Faction after collapse is a gap, and it is built.** Q-062-01 was answered on 2026-09-13 and never built; R-062-02 still carried the flag, and A15 above wrongly called it open. The rule now reads: the rotation pools (previous-descendant, then nemesis-descendant, R-058-01 to R-058-03) run restricted to candidates in surviving factions, and the player joins the drawn candidate's faction; with both pools empty, the surviving faction with the most regions, uniform among ties. One piece on `csrc/generational.c` after `B6-lifecycle` (new row `B6-collapse-pick`, tests first): `om_player_faction_reassign_on_collapse` implements it at the call site A15 fixed. Tests: a fixture where a previously played lineage survives in a smaller faction (the player joins that faction, not the largest); one where only nemesis descendants survive; one with both pools empty (most regions); same seed, same pick. B6 lands first with the current behaviour; this piece follows.
+
+**A25. Camera pan: a speed slider, and speed that scales with zoom.** This reverses A10's toggle.
+- Settings offers a pan-speed slider, not an on/off switch; the toggle that landed with C3-G5 is replaced, and the stored boolean goes. The tactical camera reads the stored speed; today it ignores it.
+- New rule R-103-09: pan speed is constant on screen, for key pan and edge-scroll alike, so the ground covered per second grows in proportion as the camera zooms out. In the tactical camera: world speed = screen speed divided by the camera zoom factor.
+- The slider scales the screen speed. Provisional values under the "Provisional values" section: 0.5 to 2.0 times the A6 base of 600 px/s, default 1.0. Whether the slider's lowest position should switch edge-scroll off is not decided; it does not.
+- Tests (Engineer, desktop like A6's): at two zoom levels the same pan input moves the view the same number of screen pixels and a proportionally larger world distance; the slider at 2.0 doubles it; a positive control with zoom scaling removed fails. The G5 toggle test is replaced with a ledger row citing this decision.
+- The galaxy camera (C5, G-G1) follows the same rule when it is built.
+- Pieces: `scenes/settings` (C1-N) and `scenes/tactical_c` (C5-N).

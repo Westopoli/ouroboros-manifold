@@ -151,7 +151,7 @@ owns = ["csrc/generational.c"]
 acceptance = [
     "tests/csim/test_E08_S055_one_commander_one_mission_then_the_world_moves.py",
 ]
-depends_on = ["B7", "B8", "B10", "B6-lifecycle"]
+depends_on = ["B7", "B8", "B10", "B6-lifecycle", "B6-collapse-pick"]
 status = "pending"
 size_estimate = "1 story, S-055 (needs chronicle.c and unit.c both attached)"
 
@@ -847,6 +847,19 @@ depends_on = ["B5-chronicle", "B8"]
 status = "pending"
 tests_pending = true
 size_estimate = "lifecycle orchestration in gen_time_jump plus the lineage-event category parameter (plan B6, E-08)"
+
+# Rulings round 2, A24: faction pick after collapse (R-062-02, Q-062-01).
+[[piece]]
+id = "B6-collapse-pick"
+manager = "M1"
+wave = 4
+owns = ["csrc/generational.c"]
+owns_glob = []
+acceptance = []
+depends_on = ["B6-lifecycle"]
+status = "pending"
+tests_pending = true
+size_estimate = "om_player_faction_reassign_on_collapse runs the restricted rotation pools, falls back to most regions"
 
 # Contract docs pieces (A4 frame docs, B6 frame docs) own the pipe frame spec.
 [[piece]]
