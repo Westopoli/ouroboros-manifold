@@ -836,12 +836,12 @@ note = "Positional (w, 10, 20) = the mock entry's start_tick/end_tick. Likely na
 
 [[symbols]]
 name = "om_chronicle_has_mission_consequence_flag"
-module = "mission.c"
+module = "generational.c"
 restype = "int"
 params = [{ name = "w", ctype = "const om_world*" }]
 epics = ["E-10"]
 confidence = "likely"
-note = "== 1. Card 266a3 puts in mission.c; not in toml; name says chronicle.c (E-09). Ownership open."
+note = "== 1. Defined in generational.c (consequence chronicle entry lives with the time jump); mission.c holds no definition. Ownership follows where the code lives."
 
 [[symbols]]
 name = "om_chronicle_is_lineage_event"
