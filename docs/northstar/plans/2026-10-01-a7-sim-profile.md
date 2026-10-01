@@ -171,3 +171,16 @@ Step 20 sim spike: clash 69.9 ms, spread 45.6 ms (steps 1-19 about 20 and 2.5). 
 | spread | `visible[]` median | 2.1 | 2.4 | 2.9 |
 
 Saving is about 3 to 6 ms of the 17 ms, below the profile estimate: the accessor filters while walking the existing grid, so every faction's candidates inside the cells are still visited and only the `om_unit_get_faction` call and `om_unit_can_see` are skipped for the wrong faction. Clash is still over the 50 ms budget on median or p95 (51 to 51 median, 57 to 65 p95); spread is under. A true per-faction grid (a per-faction head/next list in `om_grid`, unit.c, its own piece) is what would stop walking wrong-faction candidates at all.
+
+## Fix 2 re-measure (push/F2, B10-N)
+
+`om_tac_nearest_scan_cell`: hp, stealth, hostility and layer rejects now run before `om_tac_dist_le`. Tie-break, OM_TIE_EPSILON semantics and window fallback untouched; nearest-first cell order not done. Checksum final 12966767929705903382, O0 = O2 = main. F1, F2 (21), F3 tests green. Bench: `scripts/bench_tactical_pipe.py 5000 40 <layout>`, pipe, ms, two runs each, tree = F1+F3+F2 (compare column B above).
+
+| layout | metric | B: F1+F3 | F1+F2+F3 run 1 / run 2 |
+|---|---|---|---|
+| clash | roundtrip median / p95 | 51.5 / 65.1 | 53.6 / 76.6 and 48.9 / 72.0 |
+| clash | sim step median / p95 | 28.4 / 36.0 | 27.5 / 40.3 and 25.4 / 37.3 |
+| spread | roundtrip median / p95 | 15.9 / 29.9 | 23.1 / 49.9 and 15.5 / 26.7 |
+| spread | sim step median / p95 | 3.6 / 6.6 | 5.3 / 9.0 and 3.6 / 6.8 |
+
+Gain about 1 to 3 ms on clash sim step, inside run noise (about 3 ms). Budget not met: clash median about 49 to 54, p95 72 to 77 (over 50). Spread median under, p95 borderline (run 1 outlier). Reason: the reorder only skips the distance test for rejected candidates; the walk over every cell candidate remains. Next candidate: per-faction cell list in `om_grid` (own piece, not approved), which also covers fix 1's remaining `visible[]` cost (about 15 ms of clash roundtrip).
