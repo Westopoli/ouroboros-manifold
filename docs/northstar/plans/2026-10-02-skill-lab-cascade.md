@@ -148,6 +148,8 @@ The design chat runs the controls batch on today's engine and reads it with West
 
 ## 5. Cascade B: the engine, G0 to G8 in one cascade
 
+**2026-10-02: G2 and G8 leave this cascade.** They are built on the Linux machine with the rest of the port-parity work (`docs/northstar/plans/2026-10-02-tactical-port-parity-requirements.md`, P1, P3, P8). Cascade B here covers G0, G1 and G3 to G7 and starts after that work lands, since both edit `csrc/unit.c` and `csrc/tactical_move.c`. The G2 and G8 sections below stay as the statement of what the skill lab needs from them.
+
 Westley, 2026-10-01: "Every G doesn't need it's own cascade, it can be done all in one." Waves inside it run in dependency order: W0 the contract (header, `signatures.toml`, the ABI bump) and G0; W1 G1; W2 G2, G3 and G8; W3 G4; W4 G5, G6, G7. If a wave decomposes into more than 16 parts, split the wave.
 
 **The invariant across the steps that add new mechanisms (G1, G4, G5, G6, G7):** with no new call made and every setting at its default, the engine behaves exactly as it does today. Record, before touching `csrc/`, a file of hashes over the unit states of a fixed set of fights (the three skill-lab controls plus `tests/csim` tactical fixtures of the conducting chat's choice); assert the same hashes after every wave, with the two switches below off. The existing `tests/csim` suite does not regress.

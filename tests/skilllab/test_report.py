@@ -1,0 +1,748 @@
+# spec: docs/northstar/plans/skilllab-harness-spec.md::Acceptance criteria::AC-19
+"""Leaf-06: report(batch, out_dir) writes one self-contained HTML page. Asserts on parsed structure.
+
+## Conventions the report tests rely on
+
+The spec (AC 18-19) does not fix these; the tests do, and the leaf-06 brief and spec should state them.
+
+1. Break-even marker: a vertical `<line>` (x1 == x2, y1 != y2) whose x lies strictly between the cx of the dot
+   for N and the cx of the dot for N+1, and the `beats N, loses to N+1` `<text>` has an `x` attribute equal to
+   that line's x. (A gridline at a dot x, or one with no label, is not a marker.)
+2. Every svg `<text>` carries plain numeric `x` and `y` attributes.
+3. Firing chart series labels: the `Side 0` and `Side 1` text are placed at the end of their own line: the text's
+   `y` is strictly nearer to the last point's y of its own polyline than to the last point's y of the other one.
+   (Which polyline is drawn first is not fixed; the label ties a line to its side.)
+4. Firing chart gap shading: one `<polygon points>` or `<path d>` using absolute coordinates only (M/L/Z, no
+   H/V/relative commands) whose numbers contain every polyline x and every polyline y of both lines; it is
+   filled (a `fill` that is not none, or a `class` or `style`). See also 12.
+5. Firing chart and table share a y scale across both lines: a larger count is a smaller y, equal counts equal y.
+6. Firing table: each data row is exactly three cells, tick, Side 0 count, Side 1 count, in that order, one row
+   per sample in sample order; a header row (cells not all numeric) is allowed.
+7. Scan table: a header row (th) holds a cell `In words`; the column under it reads
+   `{size} units beat {enemy_heads}` for a won cell and `{size} units lose to {enemy_heads}` for a lost one; the
+   row of a cell is the one row with a cell equal to its enemy headcount.
+8. The page contains no `url(...)` pointing outside itself: each `url()` target is a `#fragment`, a `data:` URI,
+   or an https host `fonts.googleapis.com`; no other host (no `fonts.gstatic.com`). Every `href`/`src` is a
+   `#fragment`, a `data:` URI or a `fonts.googleapis.com` URL (no relative stylesheet or image).
+9. Each finding sentence sits inside one `<h2>` element (the combined sentence in a single `<h2>`); the only
+   `<h1>` is `Batch.title`. A scan labelled other than `reach`/`identical` gets its own sentence even when the
+   combined sentence is shown; a lone `reach` or lone `identical` is treated like any other label.
+10. Scan table: a column headed `Mean margin` whose cell is the cell's `mean_margin` formatted with 3 decimals
+    (`f"{m:.3f}"`); each dot's `cy` is strictly decreasing in mean margin (larger margin, smaller cy; equal
+    margins, equal cy).
+11. Scan dots are `<circle>` elements whose class list holds `cell` (colour by won/lost is a further class, fill,
+    style or enclosing `<g>`). A scan chart draws no `<polyline>`. A firing chart draws exactly two `<polyline>`
+    and no `class="cell"` circle; no other `<svg>` or `<table>` is in the page; the labels `Side 0` and `Side 1`
+    each appear once per firing chart.
+12. Gap shading (refines 4): the polygon or path is absolute M/L/Z only, and its vertices trace the region between
+    the two lines, so its absolute shoelace area equals the area between the two series (checked on a fixture
+    where one side is never below the other).
+"""
+import os
+import re
+import sys
+from html.parser import HTMLParser
+from pathlib import Path
+from urllib.parse import urlparse
+
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from scripts.skilllab.contract import Batch, CellResult, FightResult, ScanResult  # noqa: E402
+from scripts.skilllab.report import report  # noqa: E402
+
+FONT_HOSTS = {"fonts.googleapis.com"}
+FIRING = [(0, 0, 0), (5, 2, 1), (10, 3, 1), (15, 3, 2), (20, 1, 1), (25, 1, 1)]   # 6 samples: no scan has 6 cells
+# The lines cross and the last tick has side 1 above side 0: ties each polyline to its label.
+FIRING_SKEW = [(0, 0, 0), (5, 1, 3), (10, 2, 4), (15, 4, 3), (20, 3, 5), (25, 3, 5)]   # 6 samples
+
+
+def _fight(firing=None):
+    return FightResult(outcome="side0", margin=0.4, strength_left=(0.7, 0.3), survivors=(11, 4),
+                       heads=(16, 12), ticks=100, first_contact_tick=5,
+                       firing=list(firing if firing is not None else FIRING),
+                       firing_unit_seconds=(2.0, 1.0))
+
+
+def _scan(size, first, last, won_up_to, win_margin=0.05):
+    """Cells first..last; won (margin +0.5) up to won_up_to, lost (-0.5) above; None breaks even if no change."""
+    cells = []
+    for n in range(first, last + 1):
+        won = n <= won_up_to
+        cells.append(CellResult(enemy_heads=n, fights=[_fight()], mean_margin=0.5 if won else -0.5, won=won))
+    changed = any(a.won and not b.won for a, b in zip(cells, cells[1:]))
+    beats = won_up_to if changed else None
+    return ScanResult(size=size, cells=cells, beats=beats, loses_to=None if beats is None else beats + 1,
+                      win_margin=win_margin)
+
+
+def _batch(title="Controls"):
+    reach = _scan(16, 10, 14, 12)      # 5 cells, beats 12
+    ident = _scan(16, 10, 16, 11)      # 7 cells, beats 11
+    return Batch(title=title, scans={"reach": reach, "identical": ident},
+                 firing_example={"reach": _fight(), "identical": _fight()}, rows=[])
+
+
+def _flat(first, last, margin):
+    cells = [CellResult(n, [_fight()], margin, margin > 0.05) for n in range(first, last + 1)]
+    return ScanResult(size=16, cells=cells, beats=None, loses_to=None, win_margin=0.05)
+
+
+class Page(HTMLParser):
+    """Collects the structure the assertions need; no knowledge of how the report builds it."""
+
+    def __init__(self):
+        super().__init__()
+        self.blocks = []          # ("svg"|"table", index) in document order
+        self.svgs = []
+        self.tables = []
+        self.tags = []            # every start tag name
+        self.urls = []
+        self.order = 0
+        self.headings = []        # (order, text)
+        self.h1s = []
+        self.h2s = []             # text of every <h2>
+        self.first_svg_order = None
+        self._chars = []
+        self._svg = None
+        self._table = None
+        self._row = None
+        self._cell = None
+        self._text = None
+        self._text_a = None
+        self._heading = None
+        self._skip = 0
+        self._g = []              # attrs of enclosing <g> elements inside an svg
+
+    @staticmethod
+    def sig(attrs, g):
+        keys = ("fill", "class", "style", "stroke")
+        return tuple([tuple(attrs.get(k) for k in keys)] + [tuple(a.get(k) for k in keys) for a in g])
+
+    def handle_starttag(self, tag, attrs):
+        self._start(tag, dict(attrs), selfclosing=False)
+
+    def handle_startendtag(self, tag, attrs):
+        self._start(tag, dict(attrs), selfclosing=True)
+        self.handle_endtag_inner(tag, selfclosing=True)
+
+    def _start(self, tag, a, selfclosing):
+        self.order += 1
+        self.tags.append(tag)
+        for k in ("href", "src", "xlink:href"):
+            if a.get(k):
+                self.urls.append(a[k])
+        for m in re.finditer(r"url\(\s*['\"]?([^)'\"]+)", a.get("style") or ""):
+            self.urls.append(m.group(1))
+        if tag in ("style", "script"):
+            self._skip += 1
+        if tag == "svg":
+            self._svg = {"circles": [], "lines": [], "polylines": [], "shapes": [], "texts": [], "text_at": [],
+                         "order": self.order}
+            self.svgs.append(self._svg)
+            self.blocks.append(("svg", len(self.svgs) - 1))
+            if self.first_svg_order is None:
+                self.first_svg_order = self.order
+            self._g = []
+        elif self._svg is not None:
+            if tag == "g":
+                self._g.append(a)
+            elif tag == "circle":
+                self._svg["circles"].append({"a": a, "sig": self.sig(a, self._g)})
+            elif tag == "line":
+                self._svg["lines"].append(a)
+            elif tag == "polyline":
+                self._svg["polylines"].append(a)
+            elif tag in ("polygon", "path"):
+                self._svg["shapes"].append({"tag": tag, "a": a})
+            elif tag == "text" and not selfclosing:
+                self._text = []
+                self._text_a = a
+        if tag == "table":
+            self._table = []
+            self.tables.append(self._table)
+            self.blocks.append(("table", len(self.tables) - 1))
+        elif self._table is not None:
+            if tag == "tr":
+                self._row = []
+                self._table.append(self._row)
+            elif tag in ("td", "th") and self._row is not None and not selfclosing:
+                self._cell = []
+        if re.fullmatch(r"h[1-4]", tag) and not selfclosing:
+            self._heading = [self.order, [], tag]
+        if tag in ("style", "script") and selfclosing:
+            self._skip -= 1
+
+    def handle_endtag(self, tag):
+        self.handle_endtag_inner(tag, selfclosing=False)
+
+    def handle_endtag_inner(self, tag, selfclosing):
+        if tag in ("style", "script") and not selfclosing:
+            self._skip -= 1
+        if tag == "svg":
+            self._svg = None
+        elif tag == "g" and self._g:
+            self._g.pop()
+        elif tag == "text" and self._text is not None and self._svg is not None:
+            label = "".join(self._text).strip()
+            self._svg["texts"].append(label)
+            self._svg["text_at"].append((label, self._text_a))
+            self._text = None
+        elif tag in ("td", "th") and self._cell is not None:
+            self._row.append("".join(self._cell).strip())
+            self._cell = None
+        elif tag == "tr":
+            self._row = None
+        elif tag == "table":
+            self._table = None
+        elif re.fullmatch(r"h[1-4]", tag) and self._heading is not None:
+            text = " ".join("".join(self._heading[1]).split())
+            self.headings.append((self._heading[0], text))
+            if self._heading[2] == "h1":
+                self.h1s.append(text)
+            if self._heading[2] == "h2":
+                self.h2s.append(text)
+            self._heading = None
+
+    def handle_data(self, data):
+        if self._skip:
+            return
+        self._chars.append(data)
+        for sink in (self._text, self._cell, self._heading and self._heading[1]):
+            if sink is not None:
+                sink.append(data)
+
+    @property
+    def text(self):
+        return " ".join("".join(self._chars).split())
+
+
+def _render(batch, tmp_path):
+    path = report(batch, tmp_path)
+    html = Path(path).read_text(encoding="utf-8")
+    page = Page()
+    page.feed(html)
+    page.close()
+    return path, html, page
+
+
+def _cell_dots(svg):
+    return [c for c in svg["circles"] if "cell" in (c["a"].get("class") or "").split()]
+
+
+def _scan_svg(page, ncells):
+    """The scan chart svg: the one drawing ncells class="cell" circles, none a firing chart (convention 11)."""
+    found = [s for s in page.svgs if len(_cell_dots(s)) == ncells and len(s["polylines"]) != 2]
+    assert len(found) == 1
+    assert found[0]["polylines"] == []
+    return found[0]
+
+
+def _firing_svgs(page):
+    return [s for s in page.svgs if len(s["polylines"]) == 2]
+
+
+def _xs_ys(polyline):
+    nums = [float(v) for v in re.findall(r"-?\d+(?:\.\d+)?(?:[eE]-?\d+)?", polyline["points"])]
+    return nums[0::2], nums[1::2]
+
+
+def _table_after(page, svg):
+    """The first table that follows the given svg in document order."""
+    seen = False
+    for kind, idx in page.blocks:
+        if kind == "svg" and page.svgs[idx] is svg:
+            seen = True
+        elif kind == "table" and seen:
+            return page.tables[idx]
+    raise AssertionError("no table after the chart")
+
+
+def _floats(text):
+    return [float(v) for v in re.findall(r"-?\d+(?:\.\d+)?(?:[eE]-?\d+)?", text)]
+
+
+def _side_lines(svg):
+    """(y list of side 0, y list of side 1): each polyline is tied to its side by the label placed at its end."""
+    labels = {t: a for t, a in svg["text_at"] if t in ("Side 0", "Side 1")}
+    assert set(labels) == {"Side 0", "Side 1"}
+    lines = [_xs_ys(p)[1] for p in svg["polylines"]]
+    assert len(lines) == 2
+    out = {}
+    for name, a in labels.items():
+        dist = [abs(float(a["y"]) - ys[-1]) for ys in lines]
+        assert dist[0] != dist[1]
+        out[name] = lines[dist.index(min(dist))]
+    assert out["Side 0"] is not out["Side 1"]
+    return out["Side 0"], out["Side 1"]
+
+
+def _follow_counts(counts0, counts1, y0, y1):
+    """Larger count plots at a smaller y, equal counts at equal y, across both lines."""
+    pts = list(zip(counts0, y0)) + list(zip(counts1, y1))
+    for c1, v1 in pts:
+        for c2, v2 in pts:
+            assert (c1 > c2) == (v1 < v2) and (c1 == c2) == (v1 == v2)
+
+
+def _gap_shape(svg, xs, ys):
+    """The shaded gap: a filled polygon/path whose numbers hold every polyline x and every polyline y."""
+    for s in svg["shapes"]:
+        a = s["a"]
+        if a.get("d") is not None and not re.fullmatch(r"[MLZ0-9eE\s,.+-]*", a["d"]):
+            continue                                              # convention 4: absolute M/L/Z only
+        nums = _floats(a.get("points") or a.get("d") or "")
+        filled = a.get("fill") not in (None, "none") or a.get("class") or a.get("style")
+        if filled and set(xs) <= set(nums[0::2]) and set(ys) <= set(nums[1::2]):
+            return s
+    return None
+
+
+def _shoelace(shape):
+    nums = _floats(shape["a"].get("points") or shape["a"].get("d") or "")
+    pts = list(zip(nums[0::2], nums[1::2]))
+    return abs(sum(x1 * y2 - x2 * y1 for (x1, y1), (x2, y2) in zip(pts, pts[1:] + pts[:1]))) / 2
+
+
+def _area_between(xs, ya, yb):
+    """Trapezoid area between two lines that never cross (one never below the other)."""
+    return sum(abs((ya[i] - yb[i]) + (ya[i + 1] - yb[i + 1])) / 2 * (xs[i + 1] - xs[i]) for i in range(len(xs) - 1))
+
+
+def _outside_urls(html):
+    """Hosts of external links, and any url() target that is neither #fragment, data: nor a font host."""
+    bad = []
+    for m in re.finditer(r"url\(\s*['\"]?\s*([^)'\"\s]*)", html):
+        t = m.group(1)
+        host = urlparse(t if not t.startswith("//") else "https:" + t).hostname
+        if not (t.startswith("#") or t.startswith("data:") or host in FONT_HOSTS):
+            bad.append(t)
+    return bad
+
+
+def test_report_returns_one_html_file_inside_out_dir(tmp_path):
+    """AC-18: returns the path of one .html file written into out_dir, and nothing else is written."""
+    path = report(_batch(), tmp_path)
+    p = Path(os.fspath(path))
+    assert p.is_file() and p.suffix == ".html"
+    assert p.resolve().parent == tmp_path.resolve()
+    assert [e.name for e in tmp_path.iterdir()] == [p.name]
+    assert p.stat().st_size > 0
+
+
+def test_heading_states_reach_and_identical_in_soldiers(tmp_path):
+    """AC-19: exact heading sentence for scans labelled reach and identical, above the first figure."""
+    _, _, page = _render(_batch(), tmp_path)
+    sentence = "With longer reach, 16 units beat 12. Identical sides beat 11."
+    assert len([t for t in page.h2s if sentence in t]) == 1
+    hits = [o for o, t in page.headings if sentence in t]
+    assert len(hits) == 1
+    assert hits[0] < page.first_svg_order
+
+
+def test_heading_uses_each_scans_own_numbers(tmp_path):
+    """AC-19: other sizes and break-evens change the sentence (guards against a hard-coded sentence)."""
+    batch = Batch(title="t", scans={"reach": _scan(20, 8, 24, 17), "identical": _scan(20, 8, 24, 15)},
+                  firing_example={"reach": _fight(), "identical": _fight()}, rows=[])
+    _, _, page = _render(batch, tmp_path)
+    assert any("With longer reach, 20 units beat 17. Identical sides beat 15." in t for t in page.h2s)
+
+
+def test_no_break_even_heading_uses_the_scans_own_range(tmp_path):
+    """AC-19: a scan with beats None gets 'No break-even found between {A} and {B} enemy units.'"""
+    batch = Batch(title="t", scans={"alpha": _flat(8, 24, 0.5), "beta": _flat(5, 9, -0.5)},
+                  firing_example={"alpha": _fight(), "beta": _fight()}, rows=[])
+    _, html, page = _render(batch, tmp_path)
+    texts = list(page.h2s)
+    assert any("No break-even found between 8 and 24 enemy units." in t for t in texts)
+    assert any("No break-even found between 5 and 9 enemy units." in t for t in texts)
+    assert "beats None" not in page.text and "loses to None" not in page.text
+    assert not re.search(r"beats \d+, loses to \d+", page.text)
+
+
+def test_break_even_label_on_each_scan_chart(tmp_path):
+    """AC-19: 'beats N, loses to N+1' as a text element on the scan's own chart, N from the scan."""
+    _, _, page = _render(_batch(), tmp_path)
+    reach_svg = _scan_svg(page, 5)
+    ident_svg = _scan_svg(page, 7)
+    assert "beats 12, loses to 13" in reach_svg["texts"]
+    assert "beats 11, loses to 12" in ident_svg["texts"]
+    assert "beats 11, loses to 12" not in reach_svg["texts"]
+
+
+def test_break_even_is_marked_with_a_vertical_line_between_the_two_cells(tmp_path):
+    """AC-19: a vertical line strictly between the dot for N and the dot for N+1, carrying the label (convention 1)."""
+    _, _, page = _render(_batch(), tmp_path)
+    for ncells, first, beats, label in ((5, 10, 12, "beats 12, loses to 13"), (7, 10, 11, "beats 11, loses to 12")):
+        svg = _scan_svg(page, ncells)
+        cx = [float(c["a"]["cx"]) for c in _cell_dots(svg)]
+        beats_x, loses_x = cx[beats - first], cx[beats - first + 1]
+        label_x = [float(a["x"]) for t, a in svg["text_at"] if t == label]
+        assert len(label_x) == 1
+        markers = [l for l in svg["lines"] if "x1" in l and l.get("x1") == l.get("x2") and l.get("y1") != l.get("y2")
+                   and abs(float(l["x1"]) - label_x[0]) < 1e-6]
+        assert markers
+        assert beats_x < label_x[0] < loses_x
+
+
+def test_one_dot_per_cell_in_enemy_order_coloured_by_won_or_lost(tmp_path):
+    """AC-19: one circle per cell, x increasing with enemy headcount, won and lost in two distinct colours."""
+    _, _, page = _render(_batch(), tmp_path)
+    svg = _scan_svg(page, 5)                                 # cells 10..14: won, won, won, lost, lost
+    cx = [float(c["a"]["cx"]) for c in _cell_dots(svg)]
+    assert cx == sorted(cx) and len(set(cx)) == 5
+    sigs = [c["sig"] for c in _cell_dots(svg)]
+    assert sigs[0] == sigs[1] == sigs[2]
+    assert sigs[3] == sigs[4]
+    assert sigs[0] != sigs[3]
+
+
+GRADED = [0.9126, 0.3, -0.1234, -0.7]
+
+
+def _graded_batch():
+    cells = [CellResult(20 + i, [_fight()], m, m > 0.05) for i, m in enumerate(GRADED)]
+    sc = ScanResult(size=17, cells=cells, beats=21, loses_to=22, win_margin=0.05)
+    return Batch(title="t", scans={"graded": sc}, firing_example={"graded": _fight()}, rows=[])
+
+
+def test_dot_height_is_strictly_decreasing_in_mean_margin(tmp_path):
+    """AC-19 / brief 'y = mean margin': larger mean margin plots at smaller cy; equal margins at equal cy (conv. 10)."""
+    for batch, ncells, margins in ((_graded_batch(), 4, GRADED),
+                                   (_batch(), 5, [0.5, 0.5, 0.5, -0.5, -0.5])):
+        _, _, page = _render(batch, tmp_path)
+        cy = [float(c["a"]["cy"]) for c in _cell_dots(_scan_svg(page, ncells))]
+        assert len(cy) == len(margins)
+        for i in range(len(cy)):
+            for j in range(len(cy)):
+                assert (margins[i] > margins[j]) == (cy[i] < cy[j])
+                assert (margins[i] == margins[j]) == (cy[i] == cy[j])
+
+
+def test_scan_table_shows_mean_margin_with_three_decimals(tmp_path):
+    """AC-19: the table repeats the dots' numbers: a `Mean margin` column, mean_margin as f'{m:.3f}' (conv. 10)."""
+    _, _, page = _render(_graded_batch(), tmp_path)
+    table = _table_after(page, _scan_svg(page, 4))
+    header = [c.strip() for c in table[0]]
+    assert header.count("Mean margin") == 1
+    col = header.index("Mean margin")
+    for i, m in enumerate(GRADED):
+        rows = [r for r in table[1:] if str(20 + i) in [c.strip() for c in r]]
+        assert len(rows) == 1
+        assert rows[0][col].strip() == f"{m:.3f}"
+
+
+def test_scan_chart_draws_no_polyline_and_firing_chart_no_cell_dot(tmp_path):
+    """AC-19: the two chart kinds cannot be confused: dots only in scan charts, lines only in firing charts (conv. 11)."""
+    _, _, page = _render(_batch(), tmp_path)
+    assert len(page.svgs) == 4
+    firing = _firing_svgs(page)
+    assert len(firing) == 2
+    for svg in firing:
+        assert _cell_dots(svg) == []
+    for svg in page.svgs:
+        if svg not in firing:
+            assert svg["polylines"] == [] and len(_cell_dots(svg)) > 0
+
+
+def test_no_break_even_scan_draws_no_break_even_label(tmp_path):
+    """AC-19: a scan with beats None draws its dots but no 'beats' label."""
+    batch = Batch(title="t", scans={"alpha": _flat(8, 12, 0.5)}, firing_example={"alpha": _fight()}, rows=[])
+    _, _, page = _render(batch, tmp_path)
+    svg = _scan_svg(page, 5)
+    assert not any("beats" in t for t in svg["texts"])
+
+
+def _skew_batch():
+    return Batch(title="t", scans={"reach": _scan(16, 10, 14, 12), "identical": _scan(16, 10, 16, 11)},
+                 firing_example={"reach": _fight(FIRING_SKEW), "identical": _fight(FIRING_SKEW)}, rows=[])
+
+
+def test_firing_chart_has_two_side_lines_with_labels_and_a_shaded_gap(tmp_path):
+    """AC-19: units-able-to-fire chart: two polylines (one per side), series labels as text, gap shaded."""
+    _, _, page = _render(_batch(), tmp_path)
+    charts = _firing_svgs(page)
+    assert len(charts) == 2
+    svg = charts[0]
+    (xa, ya), (xb, yb) = (_xs_ys(p) for p in svg["polylines"])
+    assert len(xa) == len(xb) == len(FIRING)
+    assert xa == xb and xa == sorted(xa) and len(set(xa)) == len(FIRING)
+    upper, lower = (ya, yb) if sum(ya) < sum(yb) else (yb, ya)
+    assert all(u <= l for u, l in zip(upper, lower)) and any(u < l for u, l in zip(upper, lower))
+    stroke = [(p.get("stroke"), p.get("class"), p.get("style")) for p in svg["polylines"]]
+    assert stroke[0] != stroke[1]
+    assert "Side 0" in svg["texts"] and "Side 1" in svg["texts"]
+    assert _gap_shape(svg, xa, ya + yb) is not None          # convention 4: shape spans both lines
+
+
+def test_gap_shape_is_the_one_between_the_lines_not_an_axis(tmp_path):
+    """AC-19: the shaded gap holds the points of both lines; a classed axis path does not count (convention 4)."""
+    _, _, page = _render(_skew_batch(), tmp_path)
+    assert len(_firing_svgs(page)) == 2
+    for svg in _firing_svgs(page):
+        (xa, ya), (xb, yb) = (_xs_ys(p) for p in svg["polylines"])
+        shape = _gap_shape(svg, xa, ya + yb)
+        assert shape is not None
+        assert _gap_shape({"shapes": [{"tag": "path", "a": {"class": "axis", "d": "M0 0 L0 100 L400 100"}}]},
+                          xa, ya + yb) is None                # positive control: an axis is not the gap
+
+
+def test_gap_polygon_area_is_the_area_between_the_two_series(tmp_path):
+    """AC-19: the shaded gap traces the region between the lines: shoelace area equals the area between (conv. 12)."""
+    _, _, page = _render(_batch(), tmp_path)
+    assert len(_firing_svgs(page)) == 2
+    for svg in _firing_svgs(page):
+        (xa, ya), (xb, yb) = (_xs_ys(p) for p in svg["polylines"])
+        want = _area_between(xa, ya, yb)
+        assert want > 0
+        shape = _gap_shape(svg, xa, ya + yb)
+        assert shape is not None
+        assert abs(_shoelace(shape) - want) <= 1e-3 * want
+    # positive control: a zigzag (a then b, b not reversed) has another area
+    zig = {"a": {"fill": "gray", "points": " ".join(f"{x},{y}" for x, y in zip(xa + xb, ya + yb))}}
+    assert abs(_shoelace(zig) - want) > 1e-3 * want
+
+
+def test_firing_labels_tie_each_polyline_to_its_side(tmp_path):
+    """AC-19: 'one line per side, labelled on the chart': heights follow Side 0 / Side 1 counts per label (conv. 3, 5)."""
+    _, _, page = _render(_skew_batch(), tmp_path)
+    assert len(_firing_svgs(page)) == 2
+    for svg in _firing_svgs(page):
+        y0, y1 = _side_lines(svg)
+        assert len(y0) == len(y1) == len(FIRING_SKEW)
+        _follow_counts([f[1] for f in FIRING_SKEW], [f[2] for f in FIRING_SKEW], y0, y1)
+        assert y0[-1] > y1[-1] and y0[2] > y1[2] and y0[3] < y1[3]     # side 1 ends higher, side 0 higher at tick 15
+
+
+def test_firing_line_heights_follow_the_numbers(tmp_path):
+    """AC-19: equal counts plot at equal height; a larger count plots higher (smaller y) than a smaller one."""
+    _, _, page = _render(_batch(), tmp_path)
+    svg = _firing_svgs(page)[0]
+    (_, ya), (_, yb) = (_xs_ys(p) for p in svg["polylines"])
+    more, fewer = (ya, yb) if sum(ya) < sum(yb) else (yb, ya)
+    assert more[0] == fewer[0] and more[4] == fewer[4]       # ticks 0 and 20: counts equal
+    assert all(more[i] < fewer[i] for i in (1, 2, 3))        # ticks 5, 10, 15: side 0 able more
+
+
+def test_each_chart_is_followed_by_a_table_view(tmp_path):
+    """AC-19: one chart per scan and per firing example, each with one table under it before the next chart."""
+    _, _, page = _render(_batch(), tmp_path)
+    assert len(page.svgs) == 4 and len(page.tables) == 4
+    assert [k for k, _ in page.blocks] == ["svg", "table"] * 4
+
+
+def test_scan_table_lists_every_cell(tmp_path):
+    """AC-19: the table under a scan chart has exactly one row per cell carrying its enemy headcount."""
+    _, _, page = _render(_batch(), tmp_path)
+    table = _table_after(page, _scan_svg(page, 5))
+    for n in range(10, 15):
+        assert len([r for r in table if str(n) in [c.strip() for c in r]]) == 1
+    assert not any(str(n) in [c.strip() for r in table for c in r] for n in (9, 15))
+
+
+def test_scan_table_has_an_in_words_column_with_the_plain_sentence_per_cell(tmp_path):
+    """AC-19 Reading: header `In words`; '{size} units beat {n}' for a won cell, '{size} units lose to {n}' if lost."""
+    batch = Batch(title="t", scans={"reach": _scan(16, 10, 14, 12), "identical": _scan(16, 10, 16, 11),
+                                    "wide": _scan(20, 8, 11, 9)},
+                  firing_example={"reach": _fight(), "identical": _fight(), "wide": _fight()}, rows=[])
+    _, _, page = _render(batch, tmp_path)
+    for ncells, size, first, last, won_up_to in ((5, 16, 10, 14, 12), (7, 16, 10, 16, 11), (4, 20, 8, 11, 9)):
+        table = _table_after(page, _scan_svg(page, ncells))
+        header = [c.strip() for c in table[0]]
+        assert header.count("In words") == 1
+        col = header.index("In words")
+        for n in range(first, last + 1):
+            rows = [r for r in table[1:] if str(n) in [c.strip() for c in r]]
+            assert len(rows) == 1
+            want = f"{size} units beat {n}" if n <= won_up_to else f"{size} units lose to {n}"
+            assert rows[0][col].strip() == want
+
+
+def test_firing_table_repeats_the_sampled_numbers(tmp_path):
+    """AC-19: the table under the firing chart carries every sample as tick, Side 0, Side 1 in order (conv. 6)."""
+    _, _, page = _render(_skew_batch(), tmp_path)
+    assert len(_firing_svgs(page)) == 2
+    for svg in _firing_svgs(page):
+        table = _table_after(page, svg)
+        data = [[c.strip() for c in row] for row in table if row and all(c.strip().isdigit() for c in row)]
+        assert data == [[str(tick), str(a0), str(a1)] for tick, a0, a1 in FIRING_SKEW]
+
+
+def test_page_is_self_contained(tmp_path):
+    """AC-18: no external script; the only external host is fonts.googleapis.com, in links and in url() (conv. 8)."""
+    evil = '<style>body{background:url(https://evil.example.com/x.png)}</style>'
+    assert _outside_urls(evil) == ["https://evil.example.com/x.png"]                   # positive controls
+    assert _outside_urls('<style>@font-face{src:url(https://fonts.gstatic.com/a.woff2)}</style>')
+    assert _outside_urls('<style>a{b:url(x.png)}</style>') == ["x.png"]
+    assert _outside_urls("<style>a{b:url(https://fonts.googleapis.com/css2)} c{d:url(#g)}</style>") == []
+    _, html, page = _render(_batch(), tmp_path)
+    assert not re.search(r"<script[^>]*\bsrc\s*=", html, re.I)
+    assert not re.search(r"@import", html)
+    remote = [u for u in page.urls if re.match(r"(https?:)?//", u.strip())]
+    assert {urlparse(u if not u.startswith("//") else "https:" + u).hostname for u in remote} <= FONT_HOSTS
+    assert "gstatic" not in html
+    assert all(u.strip().startswith(("#", "data:")) or urlparse(u.strip()).hostname in FONT_HOSTS for u in page.urls)
+    assert _outside_urls(html) == []
+
+
+def test_page_has_a_dark_mode(tmp_path):
+    """AC-18: light and dark through prefers-color-scheme."""
+    _, html, _ = _render(_batch(), tmp_path)
+    assert "prefers-color-scheme: dark" in html
+
+
+def test_labels_and_title_are_html_escaped(tmp_path):
+    """AC-18/19: a label like '<b>&' never reaches the page as markup, in its own sentence or anywhere (conv. 9)."""
+    evil = "<b>&"
+    batch = Batch(title=evil, scans={"reach": _scan(16, 10, 14, 12), "identical": _scan(16, 10, 16, 11),
+                                     evil: _scan(16, 10, 14, 12)},
+                  firing_example={evil: _fight(), "reach": _fight(), "identical": _fight()}, rows=[])
+    _, html, page = _render(batch, tmp_path)
+    assert "<b>&" not in html
+    assert "b" not in page.tags
+    assert "&lt;b&gt;&amp;" in html
+    assert "<b>&" in page.text
+    assert evil in page.h1s
+    assert html.lower().count("<html") == 1
+    assert any("<b>&: 16 units beat 12." in t for t in page.h2s)
+    assert any("With longer reach, 16 units beat 12. Identical sides beat 11." in t for t in page.h2s)
+
+
+def test_other_label_beside_reach_and_identical_gets_its_own_sentence(tmp_path):
+    """AC-19 Reading: the combined sentence does not replace the plain sentence of a third scan (conv. 9)."""
+    batch = Batch(title="t", scans={"reach": _scan(16, 10, 14, 12), "identical": _scan(16, 10, 16, 11),
+                                    "mirror": _scan(18, 10, 20, 14), "numbers": _flat(3, 6, 0.5)},
+                  firing_example={k: _fight() for k in ("reach", "identical", "mirror", "numbers")}, rows=[])
+    _, _, page = _render(batch, tmp_path)
+    assert any("With longer reach, 16 units beat 12. Identical sides beat 11." in t for t in page.h2s)
+    assert any("mirror: 18 units beat 14." in t for t in page.h2s)
+    assert any("No break-even found between 3 and 6 enemy units." in t for t in page.h2s)
+
+
+def test_lone_reach_is_treated_like_any_other_label(tmp_path):
+    """AC-19 Reading: with only `reach` present it gets the plain sentence, no combined sentence."""
+    batch = Batch(title="t", scans={"reach": _scan(16, 10, 14, 12)}, firing_example={"reach": _fight()}, rows=[])
+    _, _, page = _render(batch, tmp_path)
+    assert any("reach: 16 units beat 12." in t for t in page.h2s)
+    assert not any("With longer reach" in t or "Identical sides" in t for t in page.h2s)
+
+
+def test_lone_identical_is_treated_like_any_other_label(tmp_path):
+    """AC-19 Reading: with only `identical` present it gets the plain sentence, no combined sentence."""
+    batch = Batch(title="t", scans={"identical": _scan(16, 10, 16, 11)}, firing_example={"identical": _fight()},
+                  rows=[])
+    _, _, page = _render(batch, tmp_path)
+    assert any("identical: 16 units beat 11." in t for t in page.h2s)
+    assert not any("With longer reach" in t or "Identical sides" in t for t in page.h2s)
+
+
+def test_firing_series_are_named_side_0_and_side_1_on_every_firing_chart(tmp_path):
+    """AC-19 Reading: each firing chart carries the text labels 'Side 0' and 'Side 1'."""
+    _, _, page = _render(_batch(), tmp_path)
+    charts = _firing_svgs(page)
+    assert len(charts) == 2
+    for svg in charts:
+        assert svg["texts"].count("Side 0") == 1 and svg["texts"].count("Side 1") == 1
+
+
+def test_report_creates_a_missing_out_dir_with_parents(tmp_path):
+    """AC-18 Reading: a missing out_dir (nested) is created and holds the one html file."""
+    out = tmp_path / "x" / "y"
+    path = report(_batch(), out)
+    assert out.is_dir()
+    assert Path(os.fspath(path)).resolve().parent == out.resolve()
+    assert [e.suffix for e in out.iterdir()] == [".html"]
+
+
+def test_empty_batch_gives_a_valid_page_with_no_figures(tmp_path):
+    """AC-18 Reading: an empty batch gives a valid page: html, title h1, no chart, no table."""
+    batch = Batch(title="Nothing yet", scans={}, firing_example={}, rows=[])
+    path, html, page = _render(batch, tmp_path)
+    assert Path(os.fspath(path)).is_file()
+    assert html.lower().count("<html") == 1 and "</html>" in html.lower()
+    assert page.h1s == ["Nothing yet"]
+    assert page.svgs == [] and page.tables == []
+    assert "prefers-color-scheme: dark" in html
+
+
+def test_batch_title_is_the_pages_h1(tmp_path):
+    """AC-18 Reading: Batch.title is the page's <h1>, the only one, ahead of the first figure."""
+    _, _, page = _render(_batch("Controls run 7"), tmp_path)
+    assert page.h1s == ["Controls run 7"]
+    first_h1 = min(o for o, t in page.headings if t == "Controls run 7")
+    assert first_h1 < page.first_svg_order
+
+
+def test_one_cell_scan_and_one_sample_series_draw_without_raising(tmp_path):
+    """AC-18 Reading: a series with one point is drawn (finite coordinates), never raising."""
+    one = ScanResult(size=16, cells=[CellResult(12, [_fight()], 0.5, True)], beats=None, loses_to=None,
+                     win_margin=0.05)
+    batch = Batch(title="t", scans={"solo": one}, firing_example={"solo": _fight([(0, 2, 1)])}, rows=[])
+    _, _, page = _render(batch, tmp_path)
+    scan_svg = _scan_svg(page, 1)
+    c = _cell_dots(scan_svg)[0]["a"]
+    assert all(v == v and abs(float(v)) != float("inf") for v in (c["cx"], c["cy"]))
+    (xa, ya), (xb, yb) = (_xs_ys(p) for p in _firing_svgs(page)[0]["polylines"])
+    assert len(xa) == len(ya) == len(xb) == len(yb) == 1
+    assert all(abs(v) < 1e9 for v in xa + ya + xb + yb)
+    assert len(page.tables) == 2
+
+
+def test_all_zero_series_is_drawn_flat_and_finite(tmp_path):
+    """AC-18 Reading: all-zero firing counts and all-zero margins draw flat lines/dots, never raising."""
+    zeros = [(t, 0, 0) for t in (0, 5, 10, 15, 20)]
+    flat = _flat(10, 13, 0.0)
+    batch = Batch(title="t", scans={"flat": flat}, firing_example={"flat": _fight(zeros)}, rows=[])
+    _, _, page = _render(batch, tmp_path)
+    cy = [float(c["a"]["cy"]) for c in _cell_dots(_scan_svg(page, 4))]
+    assert len(set(cy)) == 1 and abs(cy[0]) < 1e9
+    (xa, ya), (xb, yb) = (_xs_ys(p) for p in _firing_svgs(page)[0]["polylines"])
+    assert len(set(ya)) == 1 and len(set(yb)) == 1
+    assert ya == yb
+    assert len(ya) == 5 and all(abs(v) < 1e9 for v in ya)
+
+
+def test_reach_with_no_break_even_gives_one_sentence_per_scan(tmp_path):
+    """AC-19 Reading: reach has beats None, identical has a break-even: per-scan sentences, no combined one."""
+    batch = Batch(title="t", scans={"reach": _flat(10, 14, 0.5), "identical": _scan(16, 10, 16, 11)},
+                  firing_example={"reach": _fight(), "identical": _fight()}, rows=[])
+    _, _, page = _render(batch, tmp_path)
+    texts = list(page.h2s)
+    assert any("No break-even found between 10 and 14 enemy units." in t for t in texts)
+    assert any("identical: 16 units beat 11." in t for t in texts)
+    assert not any("With longer reach" in t for t in texts)
+
+
+def test_identical_with_no_break_even_gives_one_sentence_per_scan(tmp_path):
+    """AC-19 Reading: identical has beats None, reach has a break-even: per-scan sentences, no combined one."""
+    batch = Batch(title="t", scans={"reach": _scan(16, 10, 14, 12), "identical": _flat(8, 20, -0.5)},
+                  firing_example={"reach": _fight(), "identical": _fight()}, rows=[])
+    _, _, page = _render(batch, tmp_path)
+    texts = list(page.h2s)
+    assert any("reach: 16 units beat 12." in t for t in texts)
+    assert any("No break-even found between 8 and 20 enemy units." in t for t in texts)
+    assert not any("With longer reach" in t for t in texts)
+
+
+def test_both_without_break_even_give_two_no_break_even_sentences(tmp_path):
+    """AC-19 Reading: reach and identical both beats None: each scan's own no-break-even sentence."""
+    batch = Batch(title="t", scans={"reach": _flat(10, 14, 0.5), "identical": _flat(8, 20, 0.5)},
+                  firing_example={"reach": _fight(), "identical": _fight()}, rows=[])
+    _, _, page = _render(batch, tmp_path)
+    texts = list(page.h2s)
+    assert any("No break-even found between 10 and 14 enemy units." in t for t in texts)
+    assert any("No break-even found between 8 and 20 enemy units." in t for t in texts)
+    assert not any("With longer reach" in t for t in texts)
+    assert not any("units beat" in t for t in texts)
+
+
+def test_other_labels_get_the_plain_units_beat_sentence(tmp_path):
+    """AC-19 Reading: a scan labelled other than reach/identical gets '{label}: {size} units beat {N}.'"""
+    batch = Batch(title="t", scans={"mirror": _scan(18, 10, 20, 14), "numbers": _flat(3, 6, 0.5)},
+                  firing_example={"mirror": _fight(), "numbers": _fight()}, rows=[])
+    _, _, page = _render(batch, tmp_path)
+    texts = list(page.h2s)
+    assert any("mirror: 18 units beat 14." in t for t in texts)
+    assert any("No break-even found between 3 and 6 enemy units." in t for t in texts)
+    assert not any("With longer reach" in t for t in texts)
