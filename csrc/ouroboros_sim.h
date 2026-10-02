@@ -1259,7 +1259,8 @@ int om_chronicle_map_is_master_clock(const om_world *w);
  * text (same index as om_chronicle_entry_get), produced by the sim while it
  * fills the name slots, never found by matching text afterwards. expanded 0 is
  * base_text, 1 is expanded_text. Mentions are in text order, never overlap, and
- * each lies wholly inside the stored text; a name the assembler rewrote (word
+ * each lies wholly inside the stored text and covers the name as it stands there
+ * (a name opening a sentence has its first letter upper-cased); a name the assembler rewrote (word
  * echo synonym, anaphora) or truncated away is not a mention. A faction slot
  * with no owner ("an unclaimed people") is not a mention. Count is 0 for an
  * entry with no mention or an index om_chronicle_entry_get rejects; get returns
