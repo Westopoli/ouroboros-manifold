@@ -713,7 +713,9 @@ def test_fuel_report_open_flag_holds_whole_story_when_no_rule_named(tmp_path):
 def test_fuel_report_real_register_holds_r_039_05_not_205a(tmp_path):
     """R13/Q-039-01, the real audit finding: the real ambiguity register
     flags R-039-05 by name. A card whose acceptance proves that rule is
-    held; the real 205a card (re-cut to exclude R-039-05) is not."""
+    held; the real 205a card (re-cut to exclude R-039-05) is not. The card is
+    a vendored copy (tests/specfactory/fixtures/), identical to Agora's parked
+    205a-e05-collision-lottery.md.hold, so the test needs no other checkout."""
     sys.path.insert(0, str(CARD_LINT.parent))
     import card_lint  # noqa: E402
 
@@ -732,7 +734,7 @@ def test_fuel_report_real_register_holds_r_039_05_not_205a(tmp_path):
     assert card_lint.card_is_held(held_card, project, flagged_rules, flagged_stories)
 
     real_205a = card_lint.parse_card(
-        Path.home() / "Projects/agora/queue/205a-e05-collision-lottery.md"
+        Path(__file__).resolve().parent / "fixtures" / "205a-e05-collision-lottery.md"
     )
     assert not card_lint.card_is_held(real_205a, project, flagged_rules, flagged_stories)
 

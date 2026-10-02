@@ -227,7 +227,7 @@ HEADER_SLICE_RE = re.compile(r"^## Header slice[ \t]*\n(.*?)(?=^## |\Z)", re.S |
 
 
 def parse_card(card_path: Path) -> tuple[dict, str]:
-    import yaml
+    import yaml  # PyYAML: declared in scripts/specfactory/requirements.txt
 
     m = CARD_FRONTMATTER_RE.match(card_path.read_text())
     if not m:
