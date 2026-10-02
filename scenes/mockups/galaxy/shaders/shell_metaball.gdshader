@@ -71,12 +71,12 @@ void fragment() {
 
 	if (t_enter >= t_exit) discard;
 
-	float step_size = (t_exit - t_enter) / 20.0;
+	float step_size = (t_exit - t_enter) / 64.0;
 	vec3 hit_pos = vec3(0.0);
 	bool found = false;
 
 	float hit_rival = 0.0;
-	for (int s = 0; s < 20; s++) {
+	for (int s = 0; s < 64; s++) {
 		float t = t_enter + (float(s) + 0.5) * step_size;
 		vec3 p = cam + ray_dir * t;
 		float own = eval_own_field(p);

@@ -3,16 +3,20 @@ extends RefCounted
 
 # Uniform scale of the whole civilization layer (systems, points, filaments,
 # shells, labels, camera framing); the ambient backdrop rig does not use it.
-const CIV_SCALE := 0.05
+# BALL_RADIUS 50 matches the backdrop's outermost ring (legacy_ambient_rig.gd).
+const CIV_SCALE := 0.5
 const BALL_RADIUS := 100.0 * CIV_SCALE
-const MIN_SPACING := 6.0 * CIV_SCALE
-const LINK_RADIUS := 30.0 * CIV_SCALE
+# Tunable, unscaled units. 22 is the largest spacing that places 220 systems
+# in the ball in about 2k attempts (24 needs 10-15k, 26 fails to fit them).
+const MIN_SPACING := 22.0 * CIV_SCALE
+const LINK_RADIUS := 110.0 * CIV_SCALE
+const INFLUENCE_RADIUS := 10.5 * CIV_SCALE
 const LINK_NEAREST := 3
 const CAPITAL_SIG := 0.85
 const PLAYER_CAPITAL_SIG := 1.0
 const OWN_FRACTION := 0.85
-const SYSTEM_COUNT_MIN := 250
-const SYSTEM_COUNT_MAX := 400
+const SYSTEM_COUNT_MIN := 180
+const SYSTEM_COUNT_MAX := 220
 const FACTION_COUNT_MIN := 4
 const FACTION_COUNT_MAX := 8
 
