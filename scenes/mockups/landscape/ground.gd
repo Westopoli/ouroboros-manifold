@@ -5,6 +5,9 @@ const CLIFF_REFERENCE_WU := 400.0
 const VOID_ELEVATION_THRESHOLD_WU := 100.0
 
 func build(field_map: FieldMap, kit: Dictionary) -> MeshInstance3D:
+	# Space has no ground: its layers are drawn by the placer.
+	if field_map is SpaceFieldMap:
+		return null
 	var dim: int = field_map.dim
 	var spacing: float = FieldMap.SPACING
 	var palette: Dictionary = kit.palette

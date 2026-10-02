@@ -1,0 +1,21 @@
+{
+  "name": "space",
+  "palette": {"sky": "#05070f", "water": "#000814", "zone_a": "#3a4048", "zone_b": "#3a4048", "zone_c": "#3a4048", "zone_d": "#3a4048", "zone_e": "#3a4048", "cliff": "#2a2e34"},
+  "water_is": "void",
+  "terrain": [
+    {"when": {"blocked": true}, "piece": "asteroid", "density": 0.25, "layer_tint": 0.12, "mesh": "ore_chunk", "size": [140, 220], "color": "#5c6470"}
+  ],
+  "city": [],
+  "borders": {
+    "asteroid": {"mesh": "ice_shard", "height": 300, "color": "#9fb6c8"}
+  },
+  "tunnel": {"mesh": "flat_box", "size": [150, 300], "color": "#3fd0ff"},
+  "shaft": {"mesh": "hab_ring", "size": [300, 60], "color": "#ffd23f"},
+  "nodes": {
+    "objective": {"mesh": "spire", "color": "#4a9eb8"},
+    "spawn_point": {"mesh": "hab_pod", "color": "#e0523f"},
+    "staging": {"mesh": "hab_ring", "color": "#6e7580"},
+    "vantage": {"mesh": "prism", "color": "#c8d8e8"}
+  },
+  "backdrop": {"mesh": "asteroid_backdrop", "color": "#3a2a4a", "distance": 30000}
+}

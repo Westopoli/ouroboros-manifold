@@ -7,11 +7,11 @@
 | Every story has at least one Given/When/Then rule with concrete values | S-120 to S-125: yes, 6 stories, 22 rules, numbers from `algorithms.md` ALG-74 and config. S-215 to S-217: 3 stories, 17 rules, design decided 2026-10-02 and not scheduled for building; where Westley has not given a number the rule carries a flag instead. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 5 flags on S-120 to S-125, Q-120-01, Q-121-01, Q-122-01, Q-124-01, Q-125-01, and 8 on S-215 to S-217 (Q-215-01 to Q-215-04, Q-216-01 to Q-216-03, Q-217-01), plus Q-125-03 and Q-212-02 carried. |
+| Implied-but-unstated behavior turned into flags | 1 open flag on S-120 to S-125, Q-125-03, and 8 on S-215 to S-217 (Q-215-01 to Q-215-04, Q-216-01 to Q-216-03, Q-217-01), plus Q-178-04 carried. |
 | Every visible-surface story has a reference | Not applicable. Enemy behavior is observed through units (E-11, E-13). |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on the open flags of S-120 to S-125 and S-215 to S-217. Q-121-01 (two script condition hooks are stubbed to constants in code) and Q-125-01 (Westley's Stage 1 interim difficulty knob, A-156) need answers before tests can be written.
+**Gate verdict: not passed.** Blocked on Q-125-03 (S-125) and on the open flags of S-215 to S-217. S-120 to S-124 have no open flags; gate to be rerun.
 
 ## Purpose
 
@@ -42,6 +42,7 @@ See also: E-11 R-087-04 and E-13 R-096-02 (pursuit and group endings at the unit
 Q-120-01 closed: AI postures deferred; enemy macro scripts use baseline movement speeds for every modifier (no modifier-based speed or spacing change). Decided by Westley, 2026-09-16.
 
 ### S-121 — Timers and thresholds, with noise
+Flag closed, rule text pending: Q-121-01, both conditions, player force in zone and enemy in range, are dropped (R-121-01, R-121-05). The rule below is what the tests read today.
 As a commander, I want the enemy to escalate on a schedule and react to what I do, with the exact moment shifting each time, so that no two runs of the same mission are the same.
 
 Rules
@@ -53,9 +54,10 @@ Rules
 
 Inputs: script; RNG at mission start; tactical state.
 Outputs: transition log.
-Open flags: Q-121-01.
+Open flags: none.
 
 ### S-122 — Forces that notice each other
+Flag closed, rule text pending: Q-122-01, the runner sets the bus flags, and scripts may set custom flags on transitions. The rule below is what the tests read today.
 As a commander, I want a second enemy force to react when I rout the first, so that the enemy feels like it has a plan and not a script.
 
 Rules
@@ -67,7 +69,7 @@ Rules
 
 Inputs: script; bus.
 Outputs: bus state in the T1 trace and save.
-Open flags: Q-122-01.
+Open flags: none.
 
 ### S-123 — The enemy replays like I do
 As a player in a multiplayer match, I want enemy behavior to be a pure function of seed, script, and state, so that every peer sees the same enemy.
@@ -82,6 +84,7 @@ Outputs: replay stream.
 Open flags: none.
 
 ### S-124 — Rare surprises
+Flag closed, rule text pending: Q-124-01, external reinforcement waves ship at launch with p = 0.07 per mission, scheduled at generation and foreshadowed in the briefing. The rule below is what the tests read today.
 As a commander, I want a foreshadowed reinforcement wave to arrive once in a while, so that some missions turn on a moment I could see coming but not time.
 
 Rules
@@ -90,7 +93,7 @@ Rules
 
 Inputs: mission generation RNG.
 Outputs: briefing text; spawn; bus flag.
-Open flags: Q-124-01.
+Open flags: none.
 
 ### S-125 — How hard the enemy tries
 
@@ -104,7 +107,8 @@ Rules
 
 Inputs: difficulty.
 Outputs: enemy force size and prosperity; macro layer awareness; captured session logs.
-Open flags: Q-125-03 (its register candidate (a) ties prosperity to the reinforcement structures' rate, which the economy replaces: prosperity is now the enemy economy's resources, S-215). Q-125-01 is closed by Q-125-02: prosperity and multi-layer intelligence, chosen through the options pass, `docs/northstar/research/options/difficulty-knobs/`.
+Open flags: Q-125-03 (its register candidate (a) ties prosperity to the reinforcement structures' rate, which the economy replaces: prosperity is now the enemy economy's resources, S-215).
+Prosperity and multi-layer intelligence were chosen through the options pass, `docs/northstar/research/options/difficulty-knobs/`.
 
 ### S-215 — The enemy runs an economy too
 As a commander, I want the enemy's base to be run by the same economy rules as mine, richer or poorer by difficulty, and farsighted only if I choose, so that what the enemy builds is what a player could build and I decide how much foresight it has.
@@ -131,14 +135,14 @@ As a commander, I want the enemy's forces to defend its base and its expansions,
 Status: design decided 2026-10-02, not scheduled for building.
 
 Rules
-- R-216-01  Given an enemy base of operations, expansion or forward base (E-22 S-175), When its forces are scripted, Then their behaviour is tied to those places and they defend them [Q-216-01: whether this is done with the five behaviours of R-120-01 or with new ones, or belongs to the economy rules].
-- R-216-02  Given an enemy force that retreats, When the enemy holds a base of operations, Then it plain-moves to that base, which after a fall-back (E-22 S-178) is the expansion or forward base the enemy held; where the enemy holds no base, the fallback point of R-120-02 stands [Q-212-02: what happens to a side with no base].
+- R-216-01  Given an enemy base of operations, expansion or forward works (E-22 S-175), When its forces are scripted, Then their behaviour is tied to those places and they defend them [Q-216-01: whether this is done with the five behaviours of R-120-01 or with new ones, or belongs to the economy rules].
+- R-216-02  Given an enemy force that retreats, When the enemy holds a base of operations, Then it plain-moves to that base, which after a fall-back (E-22 S-178) is the expansion or forward works the enemy held; where the enemy holds no base, the fallback point of R-120-02 stands [Q-178-04: what happens to a side with no base].
 - R-216-03  Given the enemy economy founds an expansion or builds production forward, When it chooses where and when, Then [Q-216-02: whether the economy rules or the behaviour script decide; Westley: "Where it stands shows where the next push comes from"].
 - R-216-04  Given raid lanes set by the terrain (E-22 S-174), When the enemy raids, Then a force travels along a lane to the player's workers or shipments [Q-216-01: which behaviour does this; Q-216-03: whether raiding needs foresight on, since shipments are blind (E-22 S-176)].
 
 Inputs: the enemy's bases (E-22 S-175, S-178); raid lanes (E-17); the script.
 Outputs: enemy commands in the command log; force state in the T1 trace.
-Open flags: Q-216-01, Q-216-02, Q-216-03, Q-212-02.
+Open flags: Q-216-01, Q-216-02, Q-216-03, Q-178-04.
 
 ### S-217 — The enemy uses the layers
 As a commander, I want the enemy to move between layers, ping and go quiet as I can, so that the layers are as much its ground as mine.
@@ -206,13 +210,13 @@ None required.
 - Macro reads true enemy positions the player cannot see (it may; it must not read the player's visible set). An enemy with foresight on learns about the player only through its own side's sight (E-12 R-093-02).
 - The enemy's economy scouts, counter-shifts or disguises with foresight off.
 - Enemy foresight scaled by difficulty instead of left to the player.
-- A retreating force sent to the spawn edge while the enemy holds an expansion or forward base.
+- A retreating force sent to the spawn edge while the enemy holds an expansion or forward works.
 
 ## Open ambiguity flags
 
-Q-120-01, Q-121-01, Q-122-01, Q-124-01, Q-125-01, Q-125-03, Q-215-01 to Q-215-04, Q-216-01 to Q-216-03, Q-217-01, Q-212-02. Details in `docs/northstar/ambiguity_register.md`.
+Q-125-03, Q-215-01 to Q-215-04, Q-216-01 to Q-216-03, Q-217-01, Q-178-04. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
 - E-10 (archetype, script selection, briefing, the enemy's base kind S-210, the end of a mission when a base falls S-212), E-11 (unit loop), E-13 (commands), E-15 (enemy production target ratios, S-128 and its relation to the doctrines of S-215), E-17 (spine nodes as targets, raid lanes), E-21 (script library and validation).
-- E-01 (the layer commands, S-002, S-162, S-163), E-12 (the enemy's sight, R-093-02), E-19 S-159 and E-22 Economy and bases (S-174 raid lanes, S-175 expansions and forward bases, S-178 when a base falls, S-179 and S-181 the economy without a player and the enemy's economy).
+- E-01 (the layer commands, S-002, S-162, S-163), E-12 (the enemy's sight, R-093-02), E-19 S-159 and E-22 Economy and bases (S-174 raid lanes, S-175 expansions and forward works, S-178 when a base falls, S-179 and S-181 the economy without a player and the enemy's economy).

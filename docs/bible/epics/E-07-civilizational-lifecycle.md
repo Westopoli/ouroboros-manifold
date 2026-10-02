@@ -4,14 +4,14 @@
 
 | Check | Result |
 |---|---|
-| Every story has at least one Given/When/Then rule with concrete values | Yes, 6 stories, 27 rules, numbers from `algorithms.md` ALG-41 through ALG-44. |
+| Every story has at least one Given/When/Then rule with concrete values | Yes, 6 stories, 28 rules, numbers from `algorithms.md` ALG-41 through ALG-44. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 4 new flags, Q-049-01, Q-050-01, Q-052-01, Q-054-01. |
+| Implied-but-unstated behavior turned into flags | No open flags on this epic's stories. Q-220-02 (E-02 S-220) and Q-222-01 (E-02 S-222) are cited and held there. |
 | Every visible-surface story has a reference | Not applicable. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on 4 open flags. No story was added to this epic on 2026-10-02; the new flags that touch it are held by E-02 S-220 and S-222. Q-054-01 (the deferred Survival / Exodus / Extinction outcomes, Stage 1 A-063/A-068/A-106/A-165) is the largest and stays deferred with the feature; the other three are narrow.
+**Gate verdict:** no open flags; gate to be rerun. The flags that touch this epic, Q-220-02 and Q-222-01, are held by E-02 S-220 and S-222.
 
 ## Purpose
 
@@ -26,6 +26,7 @@ Take a region with military 40, economy 50, tension 70, population 60 owned by f
 ## Stories
 
 ### S-049 — A revolt can birth a nation
+Flag closed, rule text pending: Q-049-01, the parent faction's budget gains the stolen economy. The rule below is what the tests read today.
 As a commander, I want a revolt that takes hold to create a new faction from the region, so that my enemies, and my own civilization, can come apart.
 
 Rules
@@ -39,7 +40,7 @@ Rules
 
 Inputs: fired faction-creating event; region fields; RNG.
 Outputs: revolt record in the tick log; new faction entry; region owner.
-Open flags: Q-049-01 (the "steal" fractions are taken from the region and given to nobody; the bible says the breakaway claims them. Confirm the region simply loses them).
+Open flags: none.
 
 ### S-050 — Old loyalties
 As a commander, I want a region I took recently to be able to go back to its old owner when it revolts, so that reconquest near a living enemy is a risk.
@@ -53,9 +54,10 @@ Rules
 
 Inputs: previous owner; held-since; registry; RNG.
 Outputs: reversion record; ownership. Reversion on a revolt is the only allegiance change this epic has; where a populace contested in a mission ends up is Q-220-02 (E-02 S-220).
-Open flags: Q-050-01 (the reversion draw is made after the resource split, so a reverted region is damaged twice over: confirm that is intended).
+Open flags: none.
 
 ### S-051 — Nations that never were
+Flag closed, rule text pending: Q-052-01, a starting faction with no regions is kept forever and marked as fallen. The rule below is what the tests read today.
 As a commander, I want a breakaway that never grows to be absorbed by its strongest neighbor, and a faction with no land to disappear, so that the map does not fill with ghosts.
 
 Rules
@@ -68,7 +70,7 @@ Rules
 
 Inputs: registry; region ownership; conquest list this tick.
 Outputs: absorption records in the tick log; registry and ownership changes.
-Open flags: Q-052-01 (starting factions with no regions persist as ghosts forever; confirm they should be removed like breakaways, or kept for the chronicle).
+Open flags: none.
 
 ### S-052 — No plot armor
 As a commander, I want my own civilization to be able to fall, so that the stakes are real and the chronicle can tell its end.
@@ -98,6 +100,7 @@ Outputs: phase label in the faction entry; consumed by E-09 and E-10. Whether it
 Open flags: none.
 
 ### S-054 — Where a civilization ends up
+Flag closed, rule text pending: Q-054-01, S-054 stays deferred to post-launch and expansions; S-049 to S-053 are the complete launch lifecycle scope. The rule below is what the tests read today.
 As a commander, I want a civilization's story to be able to end in survival, escape, or extinction with only relics left, so that the long arc has an ending.
 
 Rules
@@ -105,7 +108,7 @@ Rules
 
 Inputs: none yet.
 Outputs: none yet.
-Open flags: Q-054-01 (Stage 1 deferred the Survival / Exodus / Extinction-with-Amnesia terminal conditions and the Ouroboros restart; interim: history loops back to the first owned era after the last, E-20 R-148-03).
+Open flags: none. Interim: history loops back to the first owned era after the last (E-20 R-148-03).
 
 ## Inputs
 
@@ -152,7 +155,7 @@ None required in this epic.
 
 ## Open ambiguity flags
 
-Q-049-01, Q-050-01, Q-052-01, Q-054-01, and Q-220-02 and Q-222-01 as cited in S-050 and S-053. Details in `docs/northstar/ambiguity_register.md`.
+Q-220-02 and Q-222-01 as cited in S-050 and S-053. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

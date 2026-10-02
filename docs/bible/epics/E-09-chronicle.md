@@ -4,14 +4,14 @@
 
 | Check | Result |
 |---|---|
-| Every story has at least one Given/When/Then rule with concrete values | Yes, 7 stories, 36 rules, numbers from `algorithms.md` ALG-50 through ALG-53. |
+| Every story has at least one Given/When/Then rule with concrete values | Yes, 7 stories, 40 rules, numbers from `algorithms.md` ALG-50 through ALG-53. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 7 flags, Q-065-01, Q-065-02, Q-067-01, Q-068-01, Q-068-03, Q-070-01, Q-070-02. |
+| Implied-but-unstated behavior turned into flags | 2 open flags, Q-068-03 (S-068) and Q-070-02 (S-070); Q-159-07 is cited and held by E-22 S-182. |
 | Every visible-surface story has a reference | **No.** S-069 (the scroll presentation) has a visible surface and no reference. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on 7 open flags and one missing reference. Q-067-01 resolves the Stage 1 finding that the bible says 20 categories and lists 21.
+**Gate verdict: not passed.** Blocked on Q-068-03 (S-068), Q-070-02 (S-070) and one missing reference (S-069).
 
 ## Purpose
 
@@ -39,7 +39,7 @@ Rules
 
 Inputs: time jump event log; mission outcome; ledger.
 Outputs: ordered cluster list; scroll entries.
-Open flags: Q-065-01 (the cap of 2 entries per category is code behavior the bible does not state), Q-065-02 (the hub promises "setup entries" teeing up the next chapter; nothing produces them). R-065-02's mapping already covers the economy's rule that once a side has lost its original main base the best result is partial failure, which gives a mixed consequence entry (E-22 S-178, E-10 S-077).
+Open flags: none. R-065-02's mapping already covers the economy's rule that once a side has lost its original main base the best result is partial failure, which gives a mixed consequence entry (E-22 S-178, E-10 S-077).
 
 ### S-066 — What counts as notable
 As a player, I want a first contact to make the chronicle even if nothing much changed, and a small event to make it only if it snowballed, so that the scroll reads like history and not like a stat feed.
@@ -56,6 +56,7 @@ Outputs: per-event score (T1 trace).
 Open flags: none.
 
 ### S-067 — Stories, not events
+Flag closed, rule text pending: Q-067-01, the list has 21 categories with `consequence_ripple` built, and the fragment count is 399. The rule below is what the tests read today.
 As a player, I want a famine, the revolt it caused, and the compromise that ended it to be one entry, so that the scroll tells causes and not incidents.
 
 Rules
@@ -68,9 +69,10 @@ Rules
 
 Inputs: scored events; ledger.
 Outputs: clusters with type, category, region, peak score, chain tag, tick range.
-Open flags: Q-067-01.
+Open flags: none.
 
 ### S-068 — Written from fragments, never the same twice
+Flag closed, rule text pending: Q-068-01, openings, details and closings ship at 30, 35 and 35 words, and the chronicle writing system gets an overhaul pass before launch. The rule below is what the tests read today.
 As a player, I want each entry to read like a passage from a real history, different every campaign, so that the chronicle feels authored and alive.
 
 Rules
@@ -85,7 +87,7 @@ Rules
 
 Inputs: clusters; fragment library (E-21); ledger; world snapshot; registry names.
 Outputs: entries with base and expanded text, category, region, tick range; warnings.
-Open flags: Q-068-01 (detail limit 35 in the current library rules vs 60 in the framework section), Q-068-03 (whether events inside a mission, such as a base occupied, retaken or fallen back from, or an expansion made, reach the time-jump log and so the consequence slots and the `chain_expansion` category of R-067-04; it depends on what the pair carries forward between missions, Q-159-07 held by E-22 S-182).
+Open flags: Q-068-03 (whether events inside a mission, such as a base occupied, retaken or fallen back from, or an expansion made, reach the time-jump log and so the consequence slots and the `chain_expansion` category of R-067-04; it depends on what the pair carries forward between missions, Q-159-07 held by E-22 S-182).
 
 ### S-069 — Watching history happen
 As a player, I want to watch the map change on the left while the scroll writes itself on the right, and to be able to stop and read, so that the time jump is the game's signature moment and not a loading screen.
@@ -104,6 +106,7 @@ Outputs: on-screen scroll; map animation; pause state.
 Open flags: none beyond the missing reference. In R-069-01 "the map view" means the galaxy map during narration, not the battlefield's map view of E-16 S-161. Reference required: `references/E-09/notes.md`, missing.
 
 ### S-070 — My family is always in the story
+Flag closed, rule text pending: Q-070-01, lineage clusters are capped at 2, merging the rest into the highest-scoring one (R-065-03 still reads one per region). The rule below is what the tests read today.
 As a player, I want the events near my family to bubble up into the scroll, framed as the deeds of a military family, so that the lineage is the spine of the history.
 
 Rules
@@ -113,7 +116,7 @@ Rules
 
 Inputs: ledger lineage locations; event tiers.
 Outputs: scores; attachments; fragment slot values.
-Open flags: Q-070-01 (lineage clusters are one per region the lineage touched, so an active family can take 3 or more of the 10 slots; confirm no cap), Q-070-02 (in a pair a second player runs the economy, and in a team of up to 6 there are more players; whether the economy player or any teammate has a place in the lineage and the chronicle, and how R-070-03's military framing and R-065-03's "the player's lineage" apply, E-19 S-159, S-241).
+Open flags: Q-070-02 (in a pair a second player runs the economy, and in a team of up to 6 there are more players; whether the economy player or any teammate has a place in the lineage and the chronicle, and how R-070-03's military framing and R-065-03's "the player's lineage" apply, E-19 S-159, S-241).
 
 ### S-071 — The fragment library contract
 As a player, I want the scroll to draw on enough authored fragments that I do not see the same sentence twice in a campaign, so that history never repeats itself word for word.
@@ -178,7 +181,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-065-01, Q-065-02, Q-067-01, Q-068-01, Q-068-03, Q-070-01, Q-070-02. Details in `docs/northstar/ambiguity_register.md`.
+Q-068-03, Q-070-02, and Q-159-07 as cited in S-068. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

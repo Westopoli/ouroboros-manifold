@@ -4,14 +4,14 @@
 
 | Check | Result |
 |---|---|
-| Every story has at least one Given/When/Then rule with concrete values | Yes, 10 stories, 58 rules, numbers from `algorithms.md` ALG-11 through ALG-25 and ALG-29. |
+| Every story has at least one Given/When/Then rule with concrete values | Yes, 11 stories, 62 rules, numbers from `algorithms.md` ALG-11 through ALG-25 and ALG-29. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 5 new flags, Q-035-01, Q-036-01, Q-040-01, Q-041-01. |
+| Implied-but-unstated behavior turned into flags | 2 open flags on S-226, Q-226-01 and Q-226-02; Q-228-02 (E-08 S-228) is cited and held elsewhere. |
 | Every visible-surface story has a reference | Not applicable; conflict reaches the player through the world view (E-16), chronicle (E-09), and missions (E-10). |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: S-032 to S-041 passed 2026-09-14; S-226 (added 2026-10-02) has not been through the gate and carries two open flags.** The five flags raised at the gate (Q-035-01, Q-036-01, Q-037-01, Q-040-01, Q-041-01) are answered and folded into the rules below.
+**Gate verdict: not passed.** S-032 to S-041 have no open flags and passed 2026-09-14. S-226 (added 2026-10-02) has not been through the gate and is blocked on Q-226-01 and Q-226-02.
 
 ## Purpose
 
@@ -84,6 +84,7 @@ Outputs: intent record (action, target, commit, source, mode) in the tick log.
 Open flags: none.
 
 ### S-036 — Declared or sprung
+Flag closed, rule text pending: Q-036-02, no reservation: the faction re-decides every tick and attacks may stack on one target. The rule below is what the tests read today.
 As a commander, I want some attacks announced a tick ahead at full strength and others sprung at once at half strength, so that a methodical neighbor and a raider feel different to live beside.
 
 Rules
@@ -97,7 +98,7 @@ Rules
 
 Inputs: archetype preference; target military; defend weight; budget.
 Outputs: attack mode; pending telegraph list; reinforce record.
-Open flags: Q-036-02 (budget reservation and re-targeting while a telegraph waits).
+Open flags: none.
 
 ### S-037 — Battles have a shape
 As a commander, I want an attack's outcome to scale with how decisive it was, and a strong garrison to genuinely absorb a blow, so that fights feel like fights.
@@ -242,7 +243,7 @@ None required in this epic.
 
 ## Open ambiguity flags
 
-Q-226-01, Q-226-02 (S-226), and Q-228-02 (E-08 S-228) as cited in the Inputs note. Q-036-02 (raised 2026-09-15 by the S-036 audit; the tests assume candidate (a)). Q-035-01, Q-036-01, Q-037-01, Q-040-01, Q-041-01 are closed and folded (2026-09-14).
+Q-226-01, Q-226-02 (S-226), and Q-228-02 (E-08 S-228) as cited in the Inputs note.
 
 ## Depends on
 

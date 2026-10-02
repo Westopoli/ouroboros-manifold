@@ -57,7 +57,7 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-051 | E-07 | "A breakaway that never grows is absorbed; a faction with no land disappears." | Spec'd | `epics/E-07-civilizational-lifecycle.md` S-051 |
 | S-052 | E-07 | "My own civilization can fall." | Spec'd | `epics/E-07-civilizational-lifecycle.md` S-052 |
 | S-053 | E-07 | "The sim knows whether my civilization is expanding, at war, overextended, fragmenting, or settled." | Spec'd | `epics/E-07-civilizational-lifecycle.md` S-053 |
-| S-054 | E-07 | "A civilization's story can end in survival, escape, or extinction with only relics left." | Deferred (Q-054-01) | `epics/E-07-civilizational-lifecycle.md` S-054 |
+| S-054 | E-07 | "A civilization's story can end in survival, escape, or extinction with only relics left." | Deferred | `epics/E-07-civilizational-lifecycle.md` S-054 |
 | S-055 | E-08 | "Each chapter is briefing, recon, mission, resolution, time jump, new commander, always in that order." | Spec'd | `epics/E-08-generational-structure.md` S-055 |
 | S-056 | E-08 | "Decades pass while I am gone, and the world decides how many." | Spec'd | `epics/E-08-generational-structure.md` S-056 |
 | S-057 | E-08 | "I stay with a bloodline while its story is alive and move on when it goes quiet." | Spec'd | `epics/E-08-generational-structure.md` S-057 |
@@ -115,14 +115,14 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-109 | E-16 | "The screens around a mission read as orders and reports from my civilization." | Spec'd | `epics/E-16-client-camera-hud-and-world-view.md` S-109 |
 | S-110 | E-16 | "A main menu that sets the tone and settings that cover the basics." | Spec'd | `epics/E-16-client-camera-hud-and-world-view.md` S-110 |
 | S-111 | E-16 | "Saved at every chapter boundary without asking." | Spec'd | `epics/E-16-client-camera-hud-and-world-view.md` S-111 |
-| S-112 | E-17 | "Maps built on hand-authored strategic layouts." | Spec'd (direction changed 2026-10-02, rewrite pending; see S-186, S-191) | `epics/E-17-map-generation.md` S-112 |
-| S-113 | E-17 | "Every place on the map is one of nine things." | Spec'd (direction changed, rewrite pending; see S-191, S-192) | `epics/E-17-map-generation.md` S-113 |
-| S-114 | E-17 | "The space between waypoints feels dense or open, blind or clear, high or low." | Spec'd (direction changed, rewrite pending; see S-188 to S-190) | `epics/E-17-map-generation.md` S-114 |
-| S-115 | E-17 | "A prosperous region's battlefield is cleaner than a war-torn one's." | Spec'd (direction changed, rewrite pending; see S-187) | `epics/E-17-map-generation.md` S-115 |
+| S-112 | E-17 | "Maps built on hand-authored strategic layouts." | Spec'd (the layouts stay and terrain-first generation is added, how they combine is Q-191-04; rewrite pending; see S-186, S-191) | `epics/E-17-map-generation.md` S-112 |
+| S-113 | E-17 | "Every place on the map is one of nine things." | Spec'd (the nine kinds stay and found places are added, Q-191-04; rewrite pending; see S-191, S-192) | `epics/E-17-map-generation.md` S-113 |
+| S-114 | E-17 | "The space between waypoints feels dense or open, blind or clear, high or low." | Spec'd (the gradients stay and terrain-driven fields are added, Q-191-04; rewrite pending; see S-188 to S-190) | `epics/E-17-map-generation.md` S-114 |
+| S-115 | E-17 | "A prosperous region's battlefield is cleaner than a war-torn one's." | Spec'd (the region's flavoring stays and a seed-derived climate and landform are added, Q-191-04; rewrite pending; see S-187) | `epics/E-17-map-generation.md` S-115 |
 | S-116 | E-17 | "Mission maps sized to the situation." | Spec'd (direction changed, rewrite pending; see S-195) | `epics/E-17-map-generation.md` S-116 |
-| S-117 | E-17 | "Maps that do not cheat me." | Spec'd (direction changed, rewrite pending; see S-197) | `epics/E-17-map-generation.md` S-117 |
-| S-118 | E-17 | "Objectives drift and hazards move during a mission." | Spec'd | `epics/E-17-map-generation.md` S-118 |
-| S-119 | E-17 | "Generated sections blend like real terrain, not tiles." | Spec'd (direction changed, rewrite pending; see S-186, S-196) | `epics/E-17-map-generation.md` S-119 |
+| S-117 | E-17 | "Maps that do not cheat me." | Spec'd (the fairness check stays and also scores terrain-first maps, Q-191-04; rewrite pending; see S-197) | `epics/E-17-map-generation.md` S-117 |
+| S-118 | E-17 | "Objectives drift and hazards move during a mission." | Spec'd (the moving objectives stay; how they work on a map that combines a layout with terrain is Q-191-04) | `epics/E-17-map-generation.md` S-118 |
+| S-119 | E-17 | "Generated sections blend like real terrain, not tiles." | Spec'd (terrain is added to the layouts, Q-191-04; rewrite pending; see S-186, S-196) | `epics/E-17-map-generation.md` S-119 |
 | S-120 | E-14 | "Enemy forces advance, hold, patrol, ambush, or retreat, cautiously, aggressively, or in echelons." | Spec'd | `epics/E-14-enemy-macro-behavior.md` S-120 |
 | S-121 | E-14 | "The enemy escalates on a schedule and reacts to me, with the moment shifting each time." | Spec'd | `epics/E-14-enemy-macro-behavior.md` S-121 |
 | S-122 | E-14 | "A second enemy force reacts when I rout the first." | Spec'd | `epics/E-14-enemy-macro-behavior.md` S-122 |
@@ -150,8 +150,8 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-144 | E-19 | "Find a match, invite friends, get into the game." | Spec'd, blocked on Q-144-01 | `epics/E-19-multiplayer.md` S-144 |
 | S-145 | E-20 | "The engine never says starship; a new era is content, never code." | Spec'd | `epics/E-20-multi-era-and-monetization.md` S-145 |
 | S-146 | E-20 | "A checklist of exactly what an era pack contains." | Spec'd, blocked on Q-082-05 | `epics/E-20-multi-era-and-monetization.md` S-146 |
-| S-147 | E-20 | "A past, a present, and a future to play, all one game." | Spec'd, blocked on Q-147-01 | `epics/E-20-multi-era-and-monetization.md` S-147 |
-| S-148 | E-20 | "A campaign moves chronologically through the eras I own." | Spec'd, blocked on Q-148-01 | `epics/E-20-multi-era-and-monetization.md` S-148 |
+| S-147 | E-20 | "An era in space and an era on land to play, all one game." | Spec'd, blocked on Q-147-01 | `epics/E-20-multi-era-and-monetization.md` S-147 |
+| S-148 | E-20 | "A campaign moves chronologically through the eras I own." | Spec'd, blocked on Q-148-04, Q-148-05 | `epics/E-20-multi-era-and-monetization.md` S-148 |
 | S-149 | E-20 | "A fair price and the chance to earn expansions by playing." | Spec'd, blocked on Q-149-02 | `epics/E-20-multi-era-and-monetization.md` S-149 |
 | S-150 | E-20 | "Maps, civilizations, and era systems transfer between eras like skins." | Spec'd, blocked on Q-150-01 | `epics/E-20-multi-era-and-monetization.md` S-150 |
 | S-151 | E-20 | "Someday, eras that feel different." | Deferred (A-321) | `epics/E-20-multi-era-and-monetization.md` S-151 |
@@ -159,7 +159,7 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-153 | E-21 | "One pipeline produces every text library the game reads." | Spec'd, blocked on Q-153-01 | `epics/E-21-offline-ai-pipeline.md` S-153 |
 | S-154 | E-21 | "People, places, units, and factions have names that sound like they belong together." | Spec'd, blocked on Q-155-01 | `epics/E-21-offline-ai-pipeline.md` S-154 |
 | S-155 | E-21 | "A repeatable pipeline turns concept art into clean low-poly models." | Spec'd | `epics/E-21-offline-ai-pipeline.md` S-155 |
-| S-156 | E-21 | "Headless bot matches flag broken matchups automatically." | Spec'd, blocked on Q-158-01 | `epics/E-21-offline-ai-pipeline.md` S-156 |
+| S-156 | E-21 | "Headless bot matches flag broken matchups automatically." | Spec'd, blocked on Q-156-02 | `epics/E-21-offline-ai-pipeline.md` S-156 |
 | S-157 | E-21 | "Someday, per-civilization unit variety and generated archetypes." | Deferred (A-278, A-279) | `epics/E-21-offline-ai-pipeline.md` S-157 |
 | S-158 | E-21 | "Agora reads distilled rules derived from these epics, never the bible." | Spec'd | `epics/E-21-offline-ai-pipeline.md` S-158 |
 | S-159 | E-19 | "A real economy: run by a partner, or running itself." | Design decided 2026-10-01, not scheduled (Q-159-07 to -10) | `epics/E-19-multiplayer.md` S-159 |
@@ -178,10 +178,10 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-172 | E-22 | "I can hide what my production is doing from an enemy who sees my buildings." | Design decided 2026-10-01, not scheduled (Q-159-09, Q-172-01) | `epics/E-22-economy-and-bases.md` S-172 |
 | S-173 | E-22 | "I choose the technology my side goes for, and a normal match has time to go up one or two levels." | Design decided in part 2026-10-02, not scheduled (Q-159-12, Q-173-01, Q-173-02) | `epics/E-22-economy-and-bases.md` S-173 |
 | S-174 | E-22 | "I build walls, gates and towers to cover the lanes raiders take to my workers and shipments." | Design decided 2026-10-01, not scheduled (Q-174-01, Q-174-02) | `epics/E-22-economy-and-bases.md` S-174 |
-| S-175 | E-22 | "I grow settlements into new bases and build production forward, and a side that stays home is overrun." | Design decided 2026-10-01, not scheduled (Q-175-01 to -03) | `epics/E-22-economy-and-bases.md` S-175 |
-| S-176 | E-22 | "Shipments come from the civilization and I cannot see them on the road." | Design decided 2026-10-01, not scheduled (Q-176-01, Q-176-02) | `epics/E-22-economy-and-bases.md` S-176 |
-| S-177 | E-22 | "Every side has a base to protect, and the rich resources lie away from the objective." | Design decided 2026-10-02, not scheduled (Q-159-14, Q-177-01 to -04) | `epics/E-22-economy-and-bases.md` S-177 |
-| S-178 | E-22 | "A fallen base is occupied, not destroyed, and I fall back to an expansion or forward base." | Design decided 2026-10-02, not scheduled (Q-178-01 to -05) | `epics/E-22-economy-and-bases.md` S-178 |
+| S-175 | E-22 | "I grow settlements into new bases and build forward works near the front, and a side that stays home is overrun." | Design decided 2026-10-01, not scheduled (Q-175-01 to -03) | `epics/E-22-economy-and-bases.md` S-175 |
+| S-176 | E-22 | "Shipments come from the civilization, I cannot see them on the road and nobody tells me when one is killed." | Design decided 2026-10-01, not scheduled (Q-176-01, Q-176-02) | `epics/E-22-economy-and-bases.md` S-176 |
+| S-177 | E-22 | "Every side has a base to protect, and the rich resources lie away from the objective." | Design decided 2026-10-02, not scheduled (Q-177-01 to -05) | `epics/E-22-economy-and-bases.md` S-177 |
+| S-178 | E-22 | "A fallen base is occupied, not destroyed, and I fall back to an expansion or forward works." | Design decided 2026-10-02, not scheduled (Q-178-01 to -05) | `epics/E-22-economy-and-bases.md` S-178 |
 | S-179 | E-22 | "When nobody holds the economy seat, rules run it well by a doctrine I can change on the fly." | Design decided 2026-10-02, not scheduled (Q-179-01, Q-179-02) | `epics/E-22-economy-and-bases.md` S-179 |
 | S-180 | E-22 | "Alone I have one dial and I ask for things by pointing at the map." | Design decided 2026-10-02, not scheduled (Q-180-01 to -04) | `epics/E-22-economy-and-bases.md` S-180 |
 | S-181 | E-22 | "The enemy's economy runs on the same rules, and I choose whether it also scouts, counters and disguises." | Design decided 2026-10-02, not scheduled (Q-181-01, Q-181-02) | `epics/E-22-economy-and-bases.md` S-181 |
@@ -193,7 +193,7 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-190 | E-17 | "The layers follow the land under my units." | Design decided 2026-10-02, not scheduled; flag Q-190-01; land maps only | `epics/E-17-map-generation.md` S-190 |
 | S-191 | E-17 | "Bases, objectives and resources sit where the land puts them." | Design decided 2026-10-02, not scheduled; flags Q-191-01 to Q-191-04; land maps only | `epics/E-17-map-generation.md` S-191 |
 | S-192 | E-17 | "Ways up and down I can hold, narrow places to fight over, high ground to take." | Design decided 2026-10-02, not scheduled; flags Q-192-01 to Q-192-05; land maps only | `epics/E-17-map-generation.md` S-192 |
-| S-193 | E-17 | "Cities rise from scaffolds in waves, climb cliffs and reshape around what I place." | Design decided 2026-10-02, not scheduled; flags Q-166-03, Q-193-01 to Q-193-03 | `epics/E-17-map-generation.md` S-193 |
+| S-193 | E-17 | "Cities rise from scaffolds in waves, climb cliffs and reshape around what I place, and dense districts slow units and give cover but always leave natural paths through." | Design decided 2026-10-02, not scheduled; flags Q-193-01 to Q-193-06 | `epics/E-17-map-generation.md` S-193 |
 | S-194 | E-17 | "One continuous world from a single unit to the whole battlefield." | Design decided 2026-10-02, not scheduled; flag Q-194-01 | `epics/E-17-map-generation.md` S-194 |
 | S-195 | E-17 | "Bigger matches have bigger maps." | Design decided 2026-10-02, not scheduled; flags Q-195-01, Q-195-02 | `epics/E-17-map-generation.md` S-195 |
 | S-196 | E-17 | "A land era and a space era look different over the same kind of map." | Design decided 2026-10-02, not scheduled; space landscape itself is Q-166-02 | `epics/E-17-map-generation.md` S-196 |
@@ -205,14 +205,14 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-204 | E-11 | "Walls, gates, towers and production buildings are things on the map that block, are seen and can be attacked." | Design decided 2026-10-02, not scheduled (Q-204-01, Q-204-02, Q-174-02) | `epics/E-11-units-and-combat.md` S-204 |
 | S-205 | E-12 | "An enemy building appears when my units see it and shows what it is doing, so scouting reads a base and hiding a building is a play." | Design decided 2026-10-02, not scheduled (Q-205-01, Q-172-01, Q-159-09, Q-204-01) | `epics/E-12-fog-and-sensors.md` S-205 |
 | S-206 | E-12 | "My side remembers which kinds of enemy unit it has seen, and nothing about where." | Design decided 2026-10-02, not scheduled (Q-206-02, Q-181-02) | `epics/E-12-fog-and-sensors.md` S-206 |
-| S-207 | E-13 | "Routes follow the buildings that rise and fall, the slopes and the steep ground, and no unit is stuck in terrain or walks off the map." | Buildings, slopes, steep ground: design decided 2026-10-02, not scheduled (Q-207-01, Q-207-02, Q-204-01). Push-out and clamp (R-207-06, R-207-07): ruled, built with the tactical port | `epics/E-13-movement-and-command.md` S-207 |
+| S-207 | E-13 | "Routes follow the buildings that rise and fall, the slopes and the steep ground, and no unit is stuck in terrain or walks off the map." | Buildings, slopes, steep ground: design decided 2026-10-02, not scheduled (Q-207-01, Q-174-02, Q-204-01). Push-out and clamp (R-207-06, R-207-07): ruled, built with the tactical port | `epics/E-13-movement-and-command.md` S-207 |
 | S-208 | E-13 | "I can put units on guard at a post so a choke or a slope top holds without them running out." | Decided in principle 2026-10-01, mechanism open (Q-096-01, Q-208-01) | `epics/E-13-movement-and-command.md` S-208 |
 | S-209 | E-13 | "Workers walk the same ground and take the same room as soldiers, and count among the live units." | Design decided 2026-10-02, not scheduled | `epics/E-13-movement-and-command.md` S-209 |
-| S-210 | E-10 | "Each side starts from the base its situation calls for: the archetype and the supply distance decide it, and an attacker gets a supplied forward base." | Design decided 2026-10-02, not scheduled (Q-159-14, Q-210-01 to Q-210-06) | `epics/E-10-missions.md` S-210 |
-| S-211 | E-10 | "The resources on the map fit the situation, tilted toward the better position, and I always have the means to do the job." | Design decided 2026-10-02, not scheduled (Q-211-01 to Q-211-04) | `epics/E-10-missions.md` S-211 |
-| S-212 | E-10 | "Losing my main base costs me the result, never better than partial failure, but I can fall back to what I still hold." | Design decided 2026-10-02, not scheduled (Q-212-01 to Q-212-05) | `epics/E-10-missions.md` S-212 |
-| S-213 | E-10 | "A mission starts with technology that follows the civilization only slightly, so there is still room to climb." | Design decided in part 2026-10-02, not scheduled (Q-213-01, Q-159-12) | `epics/E-10-missions.md` S-213 |
-| S-214 | E-10 | "More players on the team means a bigger map, more enemies and more resources: 64,000 wu for 4 to 6." | Design decided 2026-10-02, not scheduled (Q-214-01, Q-214-02) | `epics/E-10-missions.md` S-214 |
+| S-210 | E-10 | "Each side starts from the base its situation calls for: the archetype and the supply distance decide it, and an attacker gets a supplied forward base." | Design decided 2026-10-02, not scheduled (Q-177-05, Q-210-03, Q-210-04, Q-210-06, and Q-177-01 and Q-191-04 held in E-22 and E-17) | `epics/E-10-missions.md` S-210 |
+| S-211 | E-10 | "The resources on the map fit the situation, tilted toward the better position, and I always have the means to do the job." | Design decided 2026-10-02, not scheduled (Q-211-02 to Q-211-04, and Q-177-02 held in E-22) | `epics/E-10-missions.md` S-211 |
+| S-212 | E-10 | "Losing my main base costs me the result, never better than partial failure, but I can fall back to what I still hold." | Design decided 2026-10-02, not scheduled (Q-212-04, Q-212-05, and Q-178-02, Q-178-04 and Q-178-05 held in E-22) | `epics/E-10-missions.md` S-212 |
+| S-213 | E-10 | "A mission starts with technology that follows the civilization only slightly, so there is still room to climb." | Design decided in part 2026-10-02, not scheduled (Q-173-01, Q-159-12) | `epics/E-10-missions.md` S-213 |
+| S-214 | E-10 | "More players on the team means a bigger map, more enemies and more resources: 64,000 wu for 4 to 6." | Design decided 2026-10-02, not scheduled (Q-214-01, Q-214-02; teams of 6 are a desired future feature) | `epics/E-10-missions.md` S-214 |
 | S-215 | E-14 | "The enemy runs an economy on my rules, richer by difficulty, farsighted only if I choose." | Design decided 2026-10-02, not scheduled (Q-125-03, Q-215-01 to Q-215-04) | `epics/E-14-enemy-macro-behavior.md` S-215 |
 | S-216 | E-14 | "The enemy defends its bases, falls back to what it holds and raids my workers and shipments." | Design decided 2026-10-02, not scheduled (Q-216-01 to Q-216-03) | `epics/E-14-enemy-macro-behavior.md` S-216 |
 | S-217 | E-14 | "The enemy moves between layers, pings and goes quiet as I can." | Design decided 2026-10-02, not scheduled (Q-217-01) | `epics/E-14-enemy-macro-behavior.md` S-217 |
@@ -220,25 +220,25 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-219 | E-15 | "My region's trouble travels across the map where both sides see it and shuts down what it passes over." | Design decided 2026-10-02, not scheduled (Q-219-01 to Q-219-04) | `epics/E-15-reinforcement-supply-and-hazards.md` S-219 |
 | S-220 | E-02 | "What I did in a mission shows in the region when I come back." | Direction decided in part 2026-10-02, not scheduled; Q-220-01, Q-220-02, Q-159-13 | `epics/E-02-region-fields-and-drift.md` S-220 |
 | S-221 | E-02 | "Each region has its own climate, landform and trouble, derived from the seed, with no change to the region record." | Design decided 2026-10-02, not scheduled; Q-221-01, Q-221-02 | `epics/E-02-region-fields-and-drift.md` S-221 |
-| S-222 | E-02 | "A settlement grows in step with how its region is doing." | Decided in part 2026-10-02, not scheduled; Q-222-01, Q-166-03 | `epics/E-02-region-fields-and-drift.md` S-222 |
-| S-223 | E-03 | "The galaxy says how far a mission's region lies from the civilization." | Term undefined, not scheduled; Q-159-14 | `epics/E-03-world-generation.md` S-223 |
+| S-222 | E-02 | "A settlement grows in step with how its region is doing." | Decided in part 2026-10-02, not scheduled; Q-222-01, Q-193-04 to Q-193-06 (E-17) | `epics/E-02-region-fields-and-drift.md` S-222 |
+| S-223 | E-03 | "The galaxy says how far a mission's region lies from the civilization." | Design decided 2026-10-02, not scheduled; the numbers of regions are Q-177-05 | `epics/E-03-world-generation.md` S-223 |
 | S-224 | E-03 | "A 400-region galaxy starts within a time Westley has confirmed." | Open; Q-224-01 | `epics/E-03-world-generation.md` S-224 |
 | S-225 | E-04 | "The history I read agrees with the ground I fight on." | Open; Q-225-01, Q-225-02 | `epics/E-04-events-and-chains.md` S-225 |
 | S-226 | E-05 | "A faction's standing in the galaxy carries into the economy it fights with." | Open; Q-226-01, Q-226-02 | `epics/E-05-faction-agents-and-conflict.md` S-226 |
-| S-227 | E-06 | "A mission starts from the faction's technology, only slightly." | Decided in part 2026-10-02, not scheduled; Q-227-01 to Q-227-03, Q-159-12 | `epics/E-06-diplomacy-and-technology.md` S-227 |
+| S-227 | E-06 | "A mission starts from the faction's technology, only slightly." | Decided in part 2026-10-02, not scheduled; Q-227-02, Q-227-03, and Q-173-01 held in E-22, Q-159-12 | `epics/E-06-diplomacy-and-technology.md` S-227 |
 | S-228 | E-08 | "My pair is part of the chapter, the ledger and the world." | Direction decided 2026-10-02, not scheduled; Q-228-01, Q-228-02 | `epics/E-08-generational-structure.md` S-228 |
 | S-230 | E-16 | "As the economy player of a pair, my screen shows resources, workers, the yield of a lot before I place, my schedule, technology and defenses, and no list of what the commander needs." | Design decided 2026-10-02, not scheduled; Q-230-01 to Q-230-03 | `epics/E-16-client-camera-hud-and-world-view.md` S-230 |
 | S-231 | E-16 | "Alone, I have a dial, a doctrine switch, unit-mix switches and I ask by pointing, even from the map view." | Design decided 2026-10-02, not scheduled; Q-231-01 to Q-231-03 | `epics/E-16-client-camera-hud-and-world-view.md` S-231 |
 | S-232 | E-16 | "I see my ping and my emitting forces, I am told when I am pinged and from which way, and told when a unit cannot reach a layer." | Spec'd, blocked on Q-232-01, Q-232-02 | `epics/E-16-client-camera-hud-and-world-view.md` S-232 |
 | S-233 | E-16 | "I choose how the rules run my economy and whether the enemy's economy is clever." | Design decided 2026-10-02, not scheduled; Q-233-01 | `epics/E-16-client-camera-hud-and-world-view.md` S-233 |
-| S-234 | E-16 | "I zoom from a single unit to the battlefield's map view in one smooth drawing, and the zoom stops there." | Spec'd, blocked on Q-234-01, Q-234-02 | `epics/E-16-client-camera-hud-and-world-view.md` S-234 |
+| S-234 | E-16 | "I zoom from a single unit to the battlefield's map view in one smooth drawing, and the zoom stops there." | Spec'd, blocked on Q-234-01, Q-240-01 | `epics/E-16-client-camera-hud-and-world-view.md` S-234 |
 | S-235 | E-16 | "The map shows where the economy is, weather moving across it, and the ticker tells me what happened to it." | Design decided 2026-10-02, not scheduled; Q-235-01 | `epics/E-16-client-camera-hud-and-world-view.md` S-235 |
 | S-236 | E-18 | "The ground is drawn in deep detail up close and as the shape of the land far away, with no pop between." | Design decided 2026-10-02, not scheduled; land maps only; Q-236-01 (space: Q-166-02) | `epics/E-18-visual-style-and-combat-visuals.md` S-236 |
 | S-237 | E-18 | "A base starts as ground under construction and rises stage by stage, spreading and thickening." | Design decided 2026-10-02, not scheduled; Q-237-01 | `epics/E-18-visual-style-and-combat-visuals.md` S-237 |
-| S-238 | E-18 | "I see workers walk and gather, weather cross the map, and disguised buildings look like what they pretend to be." | Design decided 2026-10-02, not scheduled; Q-238-01, Q-238-02 | `epics/E-18-visual-style-and-combat-visuals.md` S-238 |
+| S-238 | E-18 | "I see workers walk and gather, weather cross the map, and disguised buildings look like what they pretend to be." | Design decided 2026-10-02, not scheduled; Q-238-01 | `epics/E-18-visual-style-and-combat-visuals.md` S-238 |
 | S-239 | E-18 | "A ping, an emitting force and a ping alert read at a glance." | Spec'd, blocked on Q-239-01 | `epics/E-18-visual-style-and-combat-visuals.md` S-239 |
 | S-240 | E-18 | "A screen of thousands of units, workers and buildings stays smooth." | Direction only; blocked on Q-240-01 (Westley's budgets) | `epics/E-18-visual-style-and-combat-visuals.md` S-240 |
-| S-241 | E-19 | "My pair is a sub-civilization in a team of 2, 4 or 6, and the map, resources and enemies grow with the team." | Design decided 2026-10-02, not scheduled; Q-241-01 to Q-241-03 | `epics/E-19-multiplayer.md` S-241 |
+| S-241 | E-19 | "My pair is a sub-civilization in a team of 2 or 4, and the map, resources and enemies grow with the team; teams of 6 are a desired future feature." | Design decided 2026-10-02, not scheduled; Q-214-01, Q-241-02 | `epics/E-19-multiplayer.md` S-241 |
 | S-242 | E-19 | "My building, scheduling and requests reach my partner as commands like any other." | Design decided 2026-10-02, not scheduled; Q-242-01 to Q-242-03 | `epics/E-19-multiplayer.md` S-242 |
 | S-243 | E-20 | "The era pack checklist names what the economy and the landscape need." | Design decided 2026-10-02, not scheduled; Q-243-01, Q-159-08, Q-146-02, Q-146-03 | `epics/E-20-multi-era-and-monetization.md` S-243 |
 | S-244 | E-21 | "The names and teaching text for the economy come from the same pipeline as every other library." | Design decided 2026-10-02, not scheduled; Q-244-01, Q-244-02 | `epics/E-21-offline-ai-pipeline.md` S-244 |

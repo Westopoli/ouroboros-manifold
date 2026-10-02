@@ -6,12 +6,12 @@
 |---|---|
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 15 stories, 82 rules. Rules that depend on an open flag cite it inline. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. Every rejection behavior is settled. |
-| Every output listed with where it is observable | Yes, see Outputs. On-screen elevation follows the map's fitted height bands on land maps (S-010, S-200); whether per-step numbers scale with the step is Q-166-04. |
-| Implied-but-unstated behavior turned into flags | Yes; the flags still open are listed at the foot of this file. |
+| Every output listed with where it is observable | Yes, see Outputs. On-screen elevation follows the map's fitted height bands on land maps (S-010, S-200); per-step numbers scale with the height of the step, and how is Q-166-04, which the skill lab measures. |
+| Implied-but-unstated behavior turned into flags | Yes; the 12 flags still open are listed at the foot of this file. |
 | Every visible-surface story has a reference | **No — by design a Godot design phase, not a screenshot pull.** `references/E-01/notes.md` records the plan: basic single-layer movement ships first, then Claude builds several interactive layer-system options in Godot for Westley to choose between; the choice fills the references. Blocks S-009 and S-010 until then. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed for S-008, S-009, S-010 and S-200; the rest are buildable, except the one part of each of S-007, S-162 and S-163 that carries a new open flag (Q-007-01, Q-162-01, Q-163-01).** S-008 is blocked on Q-008-02, Q-008-03, Q-008-05, Q-008-06 and Q-008-07 (the skill lab decides the cross-layer numbers), S-009 on Q-009-02, S-009 and S-010 on references, and S-200 on Q-166-04 and Q-189-02 (its design is decided and not scheduled for building). S-001 to S-004 and S-162 to S-164 carry provisional numbers held as runtime settings (Q-001-05 and Q-005-04, closed 2026-10-02) and are built by the engine cascade in `docs/northstar/plans/2026-10-02-skill-lab-cascade.md`.
+**Gate verdict: not passed for S-008, S-009, S-010 and S-200; the rest are buildable, except the one part of each of S-007, S-162 and S-163 that carries a new open flag (Q-007-01, Q-162-01, Q-163-01).** S-008 is blocked on Q-008-02, Q-008-03, Q-008-05, Q-008-06 and Q-008-07 (the skill lab decides the cross-layer numbers), S-009 on Q-009-02, S-009 and S-010 on references, and S-200 on Q-166-04 and Q-189-02 (its design is decided and not scheduled for building). S-001 to S-004 and S-162 to S-164 carry provisional numbers held as runtime settings and are built by the engine cascade in `docs/northstar/plans/2026-10-02-skill-lab-cascade.md`.
 
 ## Purpose
 
@@ -35,20 +35,20 @@ Rules
 - R-001-02  Given the same position, When a unit on layer 3 moves through it, Then the unit passes straight through with no detour.
 - R-001-03  Given a position where every layer is open, When any unit moves through it, Then no layer restriction applies.
 - R-001-04  Given any map generated for any era pack, When the map is queried for layer accessibility at every sampled position and layer, Then the answer is a binary open or blocked per layer, and the count of layers is the same for every position on that map.
-- R-001-05  Given a unit ordered to move to a destination, When its route is planned, Then it takes the shortest route to the goal across every layer it may use, changing layer along the way wherever that shortens the route (a flying or swimming unit by a timed transfer, a walking unit by a slope, R-001-07), with S-004's time and exposure applying to each change; so a unit on layer 1 ordered to a place on layer 1 crosses layer 2 when layer 2 lies on the shortest route; and Given a destination blocked on every layer the unit may occupy, When the order is issued, Then the unit paths as close as it can and stops [Q-001-05: whether shortest is by distance or by time, the layer a flying unit ends on, and how a route meets a pending hard transfer or a preference].
+- R-001-05  Given a unit ordered to move to a destination, When its route is planned, Then it takes the route with the shortest travel time to the goal, counting each transfer, across every layer it may use, changing layer along the way wherever that shortens the route (a flying or swimming unit by a timed transfer, a walking unit by a slope, R-001-07), with S-004's time and exposure applying to each change; so a unit on layer 1 ordered to a place on layer 1 crosses layer 2 when layer 2 lies on the shortest route; and Given a destination blocked on every layer the unit may occupy, When the order is issued, Then the unit paths as close as it can and stops; a flying unit ends on the layer it was ordered on, a pending hard transfer stays pending, and a preferred layer is returned to where it is open (provisional, held as runtime settings).
 - R-001-06  Given a map with a slope, When the slope is queried, Then it is a band of ground that joins two layers, adjacent or not (a slope may climb several layers), with a bottom edge on the lower layer, a top edge on the upper layer, a length between them, and a midline halfway along that length; a slope that spans more than two layers has a cross-over at each layer boundary, evenly spaced along its length, and a unit on it counts as on each layer in turn; a unit moving along it passes from one layer to the other (S-004). A map with no slopes, such as open space, has only timed transfers.
 - R-001-07  Given a unit type, When its movement kind is read, Then it is walking, or flying or swimming, set per unit type in the era pack, every Settled Reach type flies and the land era has walking types (E-11 S-201); and Given a flying or swimming unit at a position where the target layer is open and nothing blocks it, When it is ordered or routed (R-001-05) to change layer, Then it makes a timed transfer there (S-004); and Given a walking unit, When it moves, Then it occupies only a layer that has land at its position (the map carries a ground flag per layer per position beside the open or blocked mask), it changes layer only by walking a slope that joins the two layers, and it never changes layer in place or skips layers without ground under it; and Given a walking unit ordered to a layer by a hard transfer or a preference, When a slope reaches that layer, Then it paths to the slope and walks it, and When none does, Then the order is rejected.
 
 Inputs: map layer accessibility mask (binary per layer per position); ground flag per layer per position on land maps (S-200); unit position; unit current layer.
 Outputs: unit path; unit position over time; layer accessibility query result.
-Open flags: none. Q-001-05 is closed with provisional readings, held as runtime settings.
+Open flags: none. The route-change readings in R-001-05 are provisional, held as runtime settings.
 
 ### S-002 — Hard layer transfer
 As a commander, I want to order selected units to a specific layer, so that I can commit a force to a height when timing matters.
 
 Rules
 - R-002-01  Given a selected unit on layer 3 at a position where layer 5 is open, When the player issues a hard transfer to layer 5, Then the unit begins its transition on the same tick and finishes on layer 5 after its transition duration (S-004).
-- R-002-02  Given a selected unit at a position where layer 5 is blocked, When the player issues a hard transfer to layer 5, Then the unit keeps executing its current orders on its current layer, and begins the transition on the first tick it occupies a position where layer 5 is open; and if the unit's route (R-001-05) changes its layer first, the transfer stays pending [Q-001-05].
+- R-002-02  Given a selected unit at a position where layer 5 is blocked, When the player issues a hard transfer to layer 5, Then the unit keeps executing its current orders on its current layer, and begins the transition on the first tick it occupies a position where layer 5 is open; and if the unit's route (R-001-05) changes its layer first, the transfer stays pending.
 - R-002-03  Given a unit with a pending hard transfer, When the player issues a second hard transfer to a different layer, Then the first transfer is discarded and only the second is pending.
 - R-002-04  Given a unit with a pending hard transfer, When the player issues a move order, Then the transfer stays pending; a move order never clears a transfer.
 - R-002-05  Given a hard transfer to the unit's current layer, When it is issued, Then it is accepted and completes immediately with no transition and no vulnerability window.
@@ -57,7 +57,7 @@ Rules
 
 Inputs: layer command (target layer, integer in map range); selection (1 to N units); unit position; accessibility mask.
 Outputs: per-unit pending transfer; per-unit layer field in the tick delta; transition start and end events.
-Open flags: none (Q-001-05, provisional).
+Open flags: none. The route-change readings it relies on (R-001-05) are provisional, held as runtime settings.
 
 ### S-003 — Layer preference
 As a commander, I want to give units a standing preference for a layer, so that a scouting group stays high and a siege group stays low without me re-ordering them at every obstacle.
@@ -65,7 +65,7 @@ As a commander, I want to give units a standing preference for a layer, so that 
 Rules
 - R-003-01  Given a selected unit with no preference, When the player sets preference to layer 2, Then the unit's preference is 2 and it begins a transition to layer 2 on the first tick it is at a position where layer 2 is open and it is not already on layer 2.
 - R-003-02  Given a unit with preference 2 currently on layer 4 because layer 2 is blocked here, When the unit moves to a position where layer 2 is open, Then it begins its transition to layer 2 on that tick without a new order.
-- R-003-03  Given a unit with preference 2 at a position where layer 2 is blocked, When any number of ticks pass, Then the unit continues its current orders on its current layer and never stalls or stops to wait; how a preference constrains the unit's route (R-001-05) is Q-001-05.
+- R-003-03  Given a unit with preference 2 at a position where layer 2 is blocked, When any number of ticks pass, Then the unit continues its current orders on its current layer and never stalls or stops to wait; a preferred layer is returned to where it is open (R-001-05).
 - R-003-04  Given a unit with preference 2, When the player issues a hard transfer to layer 4, Then the preference is cleared and the hard transfer proceeds.
 - R-003-05  Given a unit with preference 2, When the player issues the clear-preference action, Then the preference is cleared and the unit stays on its current layer.
 - R-003-06  Given a unit with preference 2, When the player sets preference 3, Then the preference is 3 and any pending transition toward 2 is replaced.
@@ -74,13 +74,13 @@ Rules
 
 Inputs: preference command (layer integer or clear); modifier key state; selection.
 Outputs: per-unit preferred layer in the tick delta; preference indicator on screen (S-009); save file.
-Open flags: none (Q-001-05, provisional).
+Open flags: none. The route-change readings it relies on (R-001-05) are provisional, held as runtime settings.
 
 ### S-004 — Changing layers takes time and leaves you exposed
 As a commander, I want a layer change to cost time, set by the unit type for a transfer in the open and by the slope's length and my unit's speed on a slope, so that changing layers always exposes the unit and the halfway point of a slope is a line on the map I can read and hold.
 
 Rules
-- R-004-01  Given a Raider that flies or swims (R-001-07) ordered from layer 3 to layer 4 at an open position away from any slope, When the transition starts, Then the unit is on layer 4 exactly one transition duration later, with the duration taken from the unit type's transition time [Q-004-01 for the confirmed numbers; current config: Raider 1.0 s, Interceptor 1.2 s, Vanguard 2.5 s, Warden 2.0 s, Bombard 4.0 s, Bastion 5.0 s]; in the space eras a timed transfer takes the same time down as up.
+- R-004-01  Given a Raider that flies or swims (R-001-07) ordered from layer 3 to layer 4 at an open position away from any slope, When the transition starts, Then the unit is on layer 4 exactly one transition duration later, with the duration taken from the unit type's transition time (Raider 1.0 s, Interceptor 1.2 s, Vanguard 2.5 s, Warden 2.0 s, Bombard 4.0 s, Bastion 5.0 s, confirmed as design values); in the space eras a timed transfer takes the same time down as up.
 - R-004-02  Given a unit mid-transition, When a unit on its old layer would attack it, Then the attack may target it until the transition is halfway completed (half the duration for a timed transfer; the midline for a slope, R-004-06) and not after; and When a unit on its new layer would attack it, Then the attack may target it from the halfway point on and not before; whether either attacker sees it follows the normal cross-layer sensor rules (S-005); and the transitioning unit itself attacks, in a timed transfer or on a slope, as a unit of the layer it is leaving until it reaches the cross-over point (halfway through a timed transfer, the midline of a slope) and as a unit of the layer it is moving to from then on; it attacks only a target its side can see (S-005, R-008-04), and stops attacking a target the moment its side loses sight of it.
 - R-004-03  Given two units of different types ordered to the same layer at the same tick, When the faster type completes, Then the slower type is still mid-transition, and completion order always matches transition-time order.
 - R-004-04  Given a unit mid-transition, When a new hard transfer to another layer is issued, Then the unit completes the current transition first and the new transfer becomes pending.
@@ -91,7 +91,7 @@ Rules
 
 Inputs: unit type transition time (per type, config); transition start tick; slope position, length and the two layers it joins (map); unit speed and position.
 Outputs: unit layer field; transitioning flag and progress in the tick delta; attack eligibility.
-Open flags: Q-166-04 (whether the transition times, set per unit type, scale with the layer step now that height bands are fitted per map; a slope's crossing time already follows its length). A strongpoint at a slope holds the way up or down: its rules are E-15 S-126 and E-17 S-192.
+Open flags: Q-166-04 (the transition times, set per unit type, scale with the height of the layer step now that height bands are fitted per map, and how is to be measured by the skill lab; a slope's crossing time already follows its length). A strongpoint at a slope holds the way up or down: its rules are E-15 S-126 and E-17 S-192.
 
 ### S-005 — Seeing across layers is worse than seeing on your own
 As a commander, I want cross-layer vision to shrink with layer distance, so that a force on a layer I am not watching is a real threat.
@@ -108,7 +108,8 @@ Rules
 
 Inputs: observer layer, position, sensor radius; target layer, position; vantage membership; interference intensity at observer position.
 Outputs: per-unit visible set in the tick delta; player-visible unit list; fog reveal on screen.
-Open flags: Q-166-04 (whether the vision factors scale with the layer step on a map with fitted height bands). Q-005-02 is closed: vision is symmetric by layer distance to start. Passive cross-layer vision stays beside the three layer actions (S-162 to S-164), at a shorter range than the ping reaches (Q-005-03); how much shorter is Q-005-04. Asymmetric vision, seeing further down than up, stays a candidate for later, on one condition from Westley (2026-10-01, verbatim): "going asymmetic could be a good idea if there's a \"counter\" to the highest layer being hte \"best\", say a unit that works particularly well at destroying units from above it to counter."
+Open flags: Q-166-04 (the vision factors scale with the height of the layer step on a map with fitted height bands, and how is to be measured by the skill lab).
+Vision is symmetric by layer distance to start. Passive cross-layer vision stays beside the three layer actions (S-162 to S-164), at a shorter range than the ping reaches. Asymmetric vision, seeing further down than up, stays a candidate for later, on one condition from Westley (2026-10-01, verbatim): "going asymmetic could be a good idea if there's a \"counter\" to the highest layer being hte \"best\", say a unit that works particularly well at destroying units from above it to counter."
 
 ### S-006 — Sensor pulse
 As a commander, I want to spend a pulse to see every layer around a unit for a moment, so that scouting before a commitment is a decision with a cost.
@@ -122,7 +123,7 @@ Rules
 
 Inputs: pulse command; pulse-capable unit; pulse radius (config); cooldown state.
 Outputs: pulse active flag and remaining cooldown in the tick delta; revealed set; cooldown ring on the HUD; visible pulse effect on screen.
-Open flags: Q-005-04 part (3), whether the pulse stays beside the ping. The pulse is not built: the targeted ping of S-162 takes its place (Q-005-04, provisional).
+Open flags: none. The pulse is not built: the targeted ping of S-162 takes its place.
 
 ### S-007 — Cover blocks sight by height
 As a commander, I want a tall obstacle to hide units on more layers than a short one, so that where I put a force relative to terrain changes what the enemy can see.
@@ -153,7 +154,8 @@ End-state (the acceptance bar): the hub's definition of strategic depth (princip
 
 Inputs: attacker layer, target layer, range, visibility; the cross-layer rule table (range, damage and area multipliers by signed layer offset, fire-requires-vision, halfway rule) once Q-008-03 closes.
 Outputs: attack events; HP changes in the tick delta.
-Open flags: Q-008-02 (the research program that decides the cross-layer design, now the skill lab on the real simulation), Q-008-03 (the cross-layer numbers), Q-008-05 (concentration of fire: whether it joins the principle; the nearest enemy stays the game's target rule and a lab-only setting measures focus fire), Q-008-06 (how refusing a fight, which counts as a counter, is checked), Q-008-07 (whether unit-type matchup is judged by the firing count weighted by category). Q-008-01 is closed: the prototype is same-layer only until the lab reports.
+Open flags: Q-008-02 (the research program that decides the cross-layer design, now the skill lab on the real simulation), Q-008-03 (the cross-layer numbers), Q-008-05 (concentration of fire: whether it joins the principle; the nearest enemy stays the game's target rule and a lab-only setting measures focus fire), Q-008-06 (how refusing a fight, which counts as a counter, is checked), Q-008-07 (whether unit-type matchup is judged by the firing count weighted by category).
+The prototype is same-layer only until the lab reports.
 
 ### S-009 — I can see what layer every unit is on
 As a commander, I want to see at a glance which layer each unit is on and which layer I am focused on, so that I never have to guess who can see whom.
@@ -168,7 +170,8 @@ Rules
 
 Inputs: unit layer, preferred layer; focus click or Tab.
 Outputs: ring color per unit; spindle and terrace discs; target mark; focused layer on the strip.
-Open flags: Q-009-02 (the occlusion indicator). Q-009-01 is closed: focus is purely visual, other layers dim slightly. Look chosen through the options pass, `docs/northstar/research/options/layer-system/`, Q-E01-08; Godot renders of it fill `references/E-01/notes.md`.
+Open flags: Q-009-02 (the occlusion indicator).
+Focus is purely visual: other layers dim slightly. The look was chosen through the options pass, `docs/northstar/research/options/layer-system/`; Godot renders of it fill `references/E-01/notes.md`.
 
 ### S-010 — Layers read as height on screen
 As a commander, I want a unit on a higher layer to sit visibly higher than one on a lower layer, so that the layer stack reads as a stack and not as a color code.
@@ -199,39 +202,42 @@ Open flags: none. Launch scope: capability present, mask absent (A-294, A-321).
 As a commander, I want to ping a layer I choose at a place I choose and see it for a moment, so that looking across layers is something I do on purpose and at a distance.
 
 Rules
-- R-162-01  Given selected units that can ping, When the player chooses the ping, presses a layer number and clicks a place, Then the player sees that layer around that place for a very short time, at a reach much longer than passive cross-layer vision (S-005) [Q-005-04: radius, duration, reach, which units; Q-162-01: whether cover or ground between the caster and the place stops the ping, so that it does not see behind them].
-- R-162-02  Given a ping, When it is cast, Then it costs the player no resource [Q-005-04: what limits repeated use].
+- R-162-01  Given selected units that can ping, When the player chooses the ping, presses a layer number and clicks a place, Then the player sees that layer around that place for a very short time, at a reach much longer than passive cross-layer vision (S-005): radius 500, reveal 2 s, reach 2,000 [Q-005-04: which units; Q-162-01: whether cover or ground between the caster and the place stops the ping, so that it does not see behind them].
+- R-162-02  Given a ping, When it is cast, Then it costs the player no resource, and the casting unit has a cooldown of 20 s.
 - R-162-03  Given a player whose units are pinged, When the ping lands, Then that player is alerted that they were pinged and is shown a sector of about 60 degrees pointing toward where the ping came from, and nothing more precise.
-- R-162-04  Given an era without the technology for a ping, When the player pings, Then, if the era uses scouts (proposed, not decided; Westley, 2026-10-01: "we could have them send out little scouts that cost nothing"), small scouts that cost nothing carry the ping [Q-005-04].
+- R-162-04  Given an era without the technology for a ping, When the player pings, Then, if the era uses scouts (proposed, not decided; Westley, 2026-10-01: "we could have them send out little scouts that cost nothing"), small scouts that cost nothing carry the ping.
 - R-162-05  Given a ping that has ended, When no passive detection applies, Then the units it revealed are hidden again.
 
 Inputs: ping command (selection, layer, place); era pack (ping or scouts).
-Outputs: revealed set for the burst; the alert and its sector on the pinged player's screen; a cooldown, if Q-005-04 adopts one.
-Open flags: Q-162-01 (whether a ping sees behind cover or ground). Numbers are provisional runtime settings (Q-005-04): radius 500, reveal 2 s, cooldown 20 s per unit, reach 2,000.
+Outputs: revealed set for the burst; the alert and its sector on the pinged player's screen; the cooldown of 20 s per unit.
+Open flags: Q-162-01 (whether a ping sees behind cover or ground).
+The numbers are provisional runtime settings, tuned by the skill lab.
 
 ### S-163 — Going dark
 As a commander, I want to choose which of my forces look and which stay quiet, so that seeing further is paid for by being seen, and a quiet force can wait unseen.
 
 Rules
-- R-163-01  Given a force set to emit, When it is on the field, Then it sees other layers further than passive vision allows, and units on every layer see it from further away than they otherwise would [Q-005-04: by how much; Q-163-01: whether "every layer" includes the emitter's own layer].
+- R-163-01  Given a force set to emit, When it is on the field, Then it sees other layers further than passive vision allows, and units on every layer see it from further away than they otherwise would: emitting doubles cross-layer sight and being seen [Q-163-01: whether "every layer" includes the emitter's own layer].
 - R-163-02  Given a force set to silent, When it is on the field, Then it is harder to see from other layers and gives up the extra sight that emitting gives [Q-005-04: by how much, and whether its passive cross-layer sight shrinks too].
 - R-163-03  Given a force, When the player switches it between emitting and silent, Then the switch costs no resource [Q-005-04: per unit or per group, and whether it takes time].
 
 Inputs: emit or silent command; selection.
 Outputs: the force's state in the tick delta; its sight and its visibility to others; a mark on screen showing which forces are emitting.
-Open flags: Q-163-01 (whether same-layer sight changes when a force emits). Numbers are provisional runtime settings (Q-005-04): emitting doubles cross-layer sight and being seen; silent is the default.
+Open flags: Q-163-01 (whether same-layer sight changes when a force emits).
+Silent is the default. The numbers are provisional runtime settings, tuned by the skill lab.
 
 ### S-164 — Reach by unit type
 As a commander, I want each unit type to reach only certain layers with its fire, so that where I put each type, and which type I put under or over the enemy, decides who gets shots off.
 
 Rules
-- R-164-01  Given a unit type, When its reach is read, Then it names the layer offsets it can fire at: its own layer, and how many layers up and how many down [Q-005-04 and Q-008-03: the table].
+- R-164-01  Given a unit type, When its reach is read, Then it names the layer offsets it can fire at: its own layer, and how many layers up and how many down: Line its own layer, Raider one layer either way, Interceptor two up and one down, Siege two down [Q-008-03: the range and damage at each offset].
 - R-164-02  Given a target at a layer offset outside the attacker's reach, When the attacker would fire, Then it does not, whatever the distance.
 - R-164-03  Given the roster, When reach is assigned, Then a type that reaches further is weaker to something another type does, so its advantage is temporary (Westley, 2026-10-01: "units with higher range will hypothetically have an advantage but they should be weaker to certain things, thus making the advantage temporary") [Q-005-04: the weaknesses, and whether one type must fire upward well, which he raised as an example of a counter to the top layer].
 
 Inputs: unit type reach table (roster, per era).
 Outputs: attack eligibility by layer offset.
-Open flags: Q-166-04 (whether the reach table scales with the layer step on a map with fitted height bands). The reach table is provisional (Q-005-04): Line own layer, Raider one layer either way, Interceptor two up and one down, Siege two down. The range and damage at each offset are S-008's question (Q-008-03).
+Open flags: Q-166-04 (the reach table scales with the height of the layer step on a map with fitted height bands, and how is to be measured by the skill lab).
+The reach table is provisional. The range and damage at each offset are S-008's question (Q-008-03).
 
 ### S-200 — On land, the ground is the layers
 As a commander on a land map, I want the height of the ground to decide which layers are ground and which are air, so that a mountainside, a valley and a cliff are real places that walking and flying units use differently.
@@ -239,29 +245,29 @@ As a commander on a land map, I want the height of the ground to decide which la
 Design decided 2026-10-02, not scheduled for building. These rules apply to land maps. The space-era landscape is a sister system that is not designed yet (Q-166-02), and no rule here is written for it. E-17 S-188 to S-190 generate what these rules read.
 
 Rules
-- R-200-01  Given a land map, When its layers are set, Then the five layers are five height bands fitted to that map between its lowest and highest ground, so that every layer has ground on it and no elevation mapping is fixed globally; a piece of ground belongs to the layer of the band its height falls in (E-17 S-188) [Q-166-04: whether the numbers written for one standard layer step scale with the step].
+- R-200-01  Given a land map, When its layers are set, Then the five layers are five height bands fitted to that map between its lowest and highest ground, so that every layer has ground on it and no elevation mapping is fixed globally; a piece of ground belongs to the layer of the band its height falls in (E-17 S-188), and the numbers written for one standard layer step scale with the height of the step [Q-166-04: how each number scales, which the skill lab measures].
 - R-200-02  Given a position whose ground falls in band k, When the map is queried there, Then the ground fills layers 1 to k - 1, which are blocked there (R-001-01); layer k and the layers above it are open unless something else blocks them (S-001), so a flying unit may be on the ground's layer or above it and never below; and the ground flag is set on layer k and on no other layer there, except along a slope, where a unit counts as on each layer it passes in turn (R-001-06, R-001-07; E-17 S-190).
 - R-200-03  Given ground too steep to cross, When a walking unit is ordered across it, Then the unit cannot cross it, and the ground is not a slope: a slope is ground that joins two layers and can be climbed (R-001-06), and steep ground joins none (E-17 S-189) [Q-189-02: how steep is too steep to cross].
 - R-200-04  Given two layers at a place that are joined only by ground too steep to cross, When a walking unit is ordered from one to the other, Then it takes another way if one exists and otherwise paths as close as it can and stops (R-001-05); a flying or swimming unit is not stopped by it (R-001-07).
 
 Inputs: the band heights, the ground flag per layer, the slopes and the sections too steep to cross, all from the map generator (E-17 S-188 to S-190).
 Outputs: the accessibility mask and the ground flag per layer per position; the slopes, with their edges and lengths.
-Open flags: Q-166-04 (numbers that assume a standard layer step), Q-189-02 (how steep is too steep, held by E-17), Q-166-02 (space maps).
+Open flags: Q-166-04 (numbers that assume a standard layer step scale with the step's height, as the skill lab measures), Q-189-02 (how steep is too steep, held by E-17), Q-166-02 (space maps).
 
 ## Inputs
 
 | Input | Source | Range | Rejection |
 |---|---|---|---|
 | Layer accessibility mask | Map generator | Binary per layer per sampled position | Not player-issued |
-| Layer count | Engine | 5, fixed [Q-001-01] | Not player-issued |
+| Layer count | Engine | 5, fixed | Not player-issued |
 | Height bands | Map generator | Five bands fitted to each land map between its lowest and highest ground (S-200; E-17 S-188) | Not player-issued |
 | Hard transfer | Player | Target layer in map range, selection 1 to N | Out of range: rejected, no state change. Era mask forbids: rejected |
 | Preference set | Player | Layer in map range or clear | Same as hard transfer |
 | Modifier key | Player | Held or released | None |
 | Ping | Player | Selection of units that can ping, a layer, a place within reach (S-162) | Not capable, out of reach or on cooldown: rejected |
 | Emit or silent | Player | Selection (S-163) | None |
-| Pulse (not built, Q-005-04) | Player | Pulse-capable selected unit, cooldown ready | On cooldown or not capable: rejected |
-| Unit type transition time | Config | 1.0 to 5.0 s [Q-004-01] | Not player-issued |
+| Pulse (not built) | Player | Pulse-capable selected unit, cooldown ready | On cooldown or not capable: rejected |
+| Unit type transition time | Config | 1.0 to 5.0 s | Not player-issued |
 | Slopes | Map generator | Position, length, and the layers joined, adjacent or not | Not player-issued |
 | Land per layer | Map generator | A ground flag per layer per position: where a walking unit can stand, on land maps (S-200) | Not player-issued |
 | Ground too steep to cross | Map generator | Sections of ground, land maps (S-200; E-17 S-189) | Not player-issued |
@@ -279,7 +285,7 @@ Open flags: Q-166-04 (numbers that assume a standard layer step), Q-189-02 (how 
 | Visible set per unit; player-visible list | Tick delta; fog reveal on screen |
 | Ping revealed set; the alert and its sector for the pinged side | Tick delta; screen |
 | Emit or silent state per force | Tick delta; mark on screen |
-| Pulse active, cooldown remaining (not built, Q-005-04) | Tick delta; HUD cooldown ring; pulse effect on screen |
+| Pulse active, cooldown remaining (not built) | Tick delta; HUD cooldown ring; pulse effect on screen |
 | Command rejections | Command acknowledgement in the tick delta with a reason code |
 | Focused layer | HUD strip highlight |
 

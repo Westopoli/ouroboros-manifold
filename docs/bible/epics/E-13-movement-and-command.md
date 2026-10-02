@@ -7,7 +7,7 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 11 stories, 49 rules, numbers from `algorithms.md` ALG-66 through ALG-69 and config. The rules of S-207 to S-209 leave their numbers to open flags. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | Yes; the flags still open are listed at the foot of this file. |
+| Implied-but-unstated behavior turned into flags | Yes; the 9 flags still open are listed at the foot of this file. |
 | Every visible-surface story has a reference | **No.** S-101 (how movement reads: turning, flow around blockers, formation arrival) has a visible surface and no reference. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
@@ -125,7 +125,8 @@ Rules
 
 Inputs: tick deltas.
 Outputs: screen.
-Open flags: Q-101-02 (the collision iteration cap against R-101-01's 30 wu floor). Q-101-01 is closed: arrival is the group centroid reaching the point. Reference required: `references/E-13/notes.md`, missing.
+Open flags: Q-101-02 (the collision iteration cap against R-101-01's 30 wu floor).
+Arrival is the group centroid reaching the point. Reference required: `references/E-13/notes.md`, missing.
 
 ### S-102 — Same commands, same battle
 As a player in a multiplayer match, I want every peer to compute the same movement from the same commands, so that we are all watching one battle.
@@ -147,14 +148,14 @@ Rules
 - R-207-01  Given a structure that blocks (a wall, a gate, a tower or a production building; E-11 S-204), When it is placed, Then the cells of its footprint on the layers it occupies are blocked on the route grid [Q-207-01: whether it blocks from placement, while under construction, or only when finished; Q-204-01: which layers it occupies].
 - R-207-02  Given a structure that falls, When it is destroyed, Then those cells are open again.
 - R-207-03  Given a cell that turns blocked or open (R-207-01, R-207-02), When units route, Then no unit follows a route through a blocked cell, and any route cached for a shared destination (R-097-02) that passes through a changed cell is computed again.
-- R-207-04  Given a gate, When a unit of either side reaches it, Then [Q-207-02: whether it lets its own side's units through and stops the enemy's, and whether it opens and closes].
+- R-207-04  Given a gate, When a unit of either side reaches it, Then [Q-174-02: whether it lets its own side's units through and stops the enemy's, and whether it opens and closes].
 - R-207-05  Given a walking unit, When its route is planned, Then each slope joins its two layers on the route grid at its bottom edge and its top edge, crossing it takes the slope's length over the unit's speed (E-01 R-004-07), the route never passes through ground too steep to cross (E-01 S-200), and the shortest route is the one that takes least time (E-01 R-001-05).
 - R-207-06  Given a unit found inside a blocked cell on its layer, such as one a wall was placed on, When the tick runs, Then it is moved to the nearest open cell and is not left stalled in the cell.
 - R-207-07  Given a position, a destination or a collision push, When it is applied, Then the position is clamped to the map, and a push is slid along a blocked cell and not into it.
 
 Inputs: structures (E-11 S-204); slopes and sections too steep to cross (E-17 S-189, S-190); the route grid.
 Outputs: the route grid and the route cache as they change; unit positions.
-Open flags: Q-207-01, Q-207-02, Q-204-01.
+Open flags: Q-207-01, Q-174-02, Q-204-01.
 
 ### S-208 — Guard
 As a commander, I want to put units on guard at a post, so that I can hold a choke, the top of a slope or a door without the units running out through it.
@@ -234,7 +235,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-096-01, Q-097-02, Q-101-02, Q-207-01, Q-207-02, Q-208-01, and from other epics Q-087-01, Q-204-01, Q-165-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-096-01, Q-097-02, Q-101-02, Q-207-01, Q-174-02, Q-208-01, and from other epics Q-087-01, Q-204-01, Q-165-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

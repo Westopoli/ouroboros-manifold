@@ -10,6 +10,8 @@ const PLANTS: Array[String] = [
 	"flat-terrain",
 	"city-disc",
 	"regen-stall",
+	"space-no-carve",
+	"space-independent-layers",
 ]
 
 var _hud
@@ -59,7 +61,7 @@ func qa_state() -> Dictionary:
 	if camera != null:
 		objective_px = camera.unproject_position(core_pos)
 
-	return {
+	var state := {
 		"seed": _hud.get_seed(),
 		"hash": fm.compute_hash() if fm != null else 0,
 		"canvas_wu": _hud.get_canvas_wu(),
@@ -75,6 +77,19 @@ func qa_state() -> Dictionary:
 		"piece_total": _hud.get_piece_total(),
 		"objective_px": [objective_px.x, objective_px.y],
 	}
+	if fm is SpaceFieldMap:
+		var layer_blocked_pct: Array = []
+		for stat in fm.layer_stats:
+			layer_blocked_pct.append(stat.blocked * 100.0)
+		state["density"] = fm.density
+		state["layer_blocked_pct"] = layer_blocked_pct
+		state["pockets_filled"] = fm.pockets_filled
+		state["tunnels_cut"] = fm.tunnels_cut
+		state["regions_unreachable_after"] = fm.regions_unreachable_after
+		state["crossing_pct"] = fm.crossing_pct
+		state["crossing_marks"] = fm.crossings.size()
+		state["focus_layer"] = _hud.get_focus_layer()
+	return state
 
 
 func qa_plant(id: String) -> bool:
@@ -95,6 +110,10 @@ func qa_set(name: String, value) -> void:
 			_hud.qa_set_stability(float(value))
 		"kit":
 			_hud.qa_set_kit(String(value))
+		"density":
+			_hud.qa_set_density(float(value))
+		"focus":
+			_hud.qa_set_focus(int(value))
 
 
 func qa_camera(height: float, x: float, z: float) -> void:
