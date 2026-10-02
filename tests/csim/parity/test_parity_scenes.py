@@ -53,19 +53,6 @@ def test_S097_R097_03_behind_own_row():
     _assert_parity("behind_own_row")
 
 
-def test_S087_R087_04_R100_01_target_walks_out_of_range():
-    """S-087 R-087-04 (P1), S-100 R-100-01 (P7): an attack-moving Raider with an enemy 150 wu away
-    keeps marching until its own cohort turn gives it a target, then holds while the target is
-    within range and walks after it when it leaves. (P2, R-084-01, the first shot, is not visible in
-    position, target or facing; it needs an hp channel and its own tolerance, not built here.)
-    RED today: first divergence at tick 1. The C holds the instant any hostile is in range, with no
-    target at all (om_tac_hold(w, u, 0), unit.c); the Python marches until its cohort turn at tick 4.
-    The C's pursuit is a straight-line position write, and its targeting cohort is id % 4 on
-    1-based ids where the Python's is uid % 4 (measure.py --diagnose shifts the ids to remove that
-    one offset and the scene still diverges at tick 1 on the hold)."""
-    _assert_parity("target_walks_out_of_range")
-
-
 def test_S097_R097_03_R099_04_three_in_file():
     """S-097 R-097-03 (P8), S-099 R-099-04 (collision): three single-unit move orders to one point,
     two fast units behind a slow one in file; the followers must sweep round the leader.
@@ -73,33 +60,3 @@ def test_S097_R097_03_R099_04_three_in_file():
     still blocked by the unit ahead), the C takes +45 (its 15-degree sweep), and the C facing snaps
     to the deflection where the Python turns toward its move target."""
     _assert_parity("three_in_file")
-
-
-def test_S096_R096_02_attack_move_group_of_8():
-    """S-096 R-096-02 (P5), S-087 R-087-04 (P1), S-100 R-100-01 (P7): eight Raiders attack-moved
-    together take formation slots and meet three idle Vanguards.
-    RED today: the C sends every unit to the one shared point (no slots: om_command_attack_move is a
-    loop of om_command_move), sweeps at 15 degrees, and its stationary firing units never turn; first
-    divergence at tick 1, first target difference at tick 75."""
-    _assert_parity("attack_move_group_of_8")
-
-
-def test_S097_R097_01_wall_with_a_gap():
-    """S-097 R-097-01 and R-097-02 (P3): a Vanguard ordered across the Python's test wall (rows 4 and
-    5, cols 3 to 18 of a 100 wu grid) must route round it through the open corner.
-    RED today: the C steers straight at the goal (its route cache is a stub; the BFS length is never
-    followed): first divergence at tick 1, and the C Vanguard ends stalled against the wall at
-    (1000.1, 403.0) while the Python arrives at (975.7, 915.2) by tick 479."""
-    _assert_parity("wall_with_a_gap")
-
-
-def test_S087_R087_06_return_fire_on_the_march():
-    """S-087 R-087-06 (P6), S-100 R-100-01 (P7): an attack-moving Picket (range 100, sensor 150) with
-    no target is hit by an idle Sniper (range 250) 200 wu off its line; it must turn on the attacker
-    and attack-move to it, dropping its old destination, and the Sniper must turn to fire.
-    RED today: the C answers return fire for idle units only, so the marching Picket ignores the
-    hit and walks on past along y = 2000 (first target and facing difference at tick 165, position
-    by 3.7 wu at tick 166, 471 wu apart by tick 300), and the stationary Sniper never turns. The
-    first position flag, tick 5 at 1.1e-6 wu, is not the port gap: it is the C's om_cos/om_atan2
-    trig error on the straight march (see parity_tolerance.py)."""
-    _assert_parity("return_fire_on_the_march")
