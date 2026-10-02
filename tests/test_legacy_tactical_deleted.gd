@@ -26,7 +26,7 @@ extends SceneTree
 # scenes/tactical/**, verified; see c4_e3_tests_note.md) and the debug scene
 # scenes/debug/test_squad_impact_origins (.gd, .tscn and its input stub):
 #   E3-4  no Visibility autoload line in project.godot and scripts/tactical/visibility.gd is gone.
-#   E3-5  scenes/debug/test_squad_impact_origins* is gone.
+#   E3-5  scenes/debug/test_squad_impact_origins* .gd/.tscn is gone (stale .uid sidecars are ignored).
 
 const THIS_TEST := "tests/test_legacy_tactical_deleted.gd"
 const RATCHET := "tests/test_tacticalbridge_ratchet.gd"
@@ -126,6 +126,6 @@ func _run_tests() -> void:
 	if dbg != null:
 		var left: Array[String] = []
 		for f in dbg.get_files():
-			if f.begins_with("test_squad_impact_origins"):
+			if f.begins_with("test_squad_impact_origins") and f.get_extension() != "uid":
 				left.append(f)
 		_assert(left.is_empty(), "E3-5: scenes/debug still holds %s" % ", ".join(left))

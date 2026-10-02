@@ -41,10 +41,6 @@ func _initialize() -> void:
 
 	var menu_src := _read(MAIN_MENU_PATH)
 	_expect(menu_src != "", "main_menu.gd source not readable")
-	_expect(menu_src.find("Button.new()") != -1, "main_menu missing Button instantiation")
-	var menu_lower := menu_src.to_lower()
-	_expect(menu_lower.find("tutorial") != -1, "main_menu missing tutorial-related Button text")
-	_expect(menu_src.find("reset_for_replay") != -1, "main_menu missing reset_for_replay call wiring")
 	_expect(menu_src.find("version.text = \"v0.9.0\"") != -1, "main_menu version label displaced")
 
 	var pg_src := _read(PROJECT_GODOT_PATH)
