@@ -43,6 +43,8 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[3]
 DATA = HERE / "baseline_hashes.json"
 CHECKPOINT_EVERY = 100
+OM_TP_PURSUE_BY_STEERING = 0   # enum om_tac_param, csrc/ouroboros_sim.h
+OM_TP_ROUTE_AROUND_TERRAIN = 1
 SKILLLAB_MAX_TICKS = 2500
 SKILLLAB_TAIL_TICKS = 20
 
@@ -91,11 +93,13 @@ def csim_handle(lib_path):
 
 def apply_baseline_settings(lib, w):
     """The one place the two movement switches are set to 0 (OM_TP_PURSUE_BY_STEERING and
-    OM_TP_ROUTE_AROUND_TERRAIN, plan Phase A/C). No settings call exists in the engine yet,
-    so this does nothing today and the recorded hashes are of the unchanged code. The wave
-    that adds the settings call MUST set both to 0 here, before any hash is compared; every
-    runner below calls this right after the world is built. (Disabled on purpose, not dead.)"""
-    return None
+    OM_TP_ROUTE_AROUND_TERRAIN, plan Phase A/C), through om_tactical_set_param, so the recorded
+    hashes are checked in baseline mode. Every runner below calls this right after the world is
+    built. The ungated fixes G04, G15 and P9 still change a few fights (see baseline_hashes.json)."""
+    lib.om_tactical_set_param.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_double]
+    lib.om_tactical_set_param.restype = ctypes.c_int
+    for p in (OM_TP_PURSUE_BY_STEERING, OM_TP_ROUTE_AROUND_TERRAIN):
+        lib.om_tactical_set_param(w, p, 0.0)
 
 
 class _Roller:

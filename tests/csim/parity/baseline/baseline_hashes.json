@@ -1,41 +1,41 @@
 {
  "a99_fight_502_gap100": {
   "checkpoints": [
-   "4954df119a5e958e",
-   "9f8226ca18657785",
-   "56d93333c2fab050",
-   "c0a9e409274f54d6",
-   "d8d5180d95787f04",
-   "52be5f2fce9104d4",
-   "2a6eeafe24807a8e",
-   "9a805062d2ed8ce0",
-   "4b14b82576c11862",
-   "7c040b0814029d6d",
-   "78843dc1f021bff0",
-   "8815cbc660c07f24"
+   "c6200fc1f17f1545",
+   "bed512a7cef6e0e5",
+   "e06b77cce79bf070",
+   "d6a86098930b57e5",
+   "26e4e21b0604a16c",
+   "973a44a4d2a7bbc2",
+   "b62901d2169a0732",
+   "e004c717f704fdda",
+   "49a317a9aee74a91",
+   "a245a48a2b1c9e1e",
+   "a43d0260b4142e77",
+   "087dffc21db76a55"
   ],
-  "final": "8815cbc660c07f2404310e3b00778f7a32bd3d52a9d4b49e28faef32d6601d01",
+  "final": "087dffc21db76a55e344eb1baeee8b71b95ce6419633e1f7a63aea599dc990d7",
   "ticks": 1200
  },
  "a99_fight_990_gap300": {
   "checkpoints": [
-   "9a644f1b5f3b39e6",
-   "9feacaaf428ba0a1",
-   "0ecda0e766a17f8c",
-   "4f897f2328248edd",
-   "8a2a3854e025f4a3",
-   "a8f7c1d24f9aeb96",
-   "8839dc9bf545119a",
-   "1b41eafa5237febf",
-   "7fa4f0ed74ab779e",
-   "739684af838d8b9f",
-   "1c1da1d17550131a",
-   "487e4b6a567c4d5e",
-   "32845e506f8dfdf9",
-   "91a2ba7eb3b69cf9",
-   "c5dc305f9b3ec9d2"
+   "b5de1e048d52fff2",
+   "b4b68abd3a05793d",
+   "ab040c702e47d6ca",
+   "6acfb70c587414d1",
+   "563c26fd0dbaae1a",
+   "0294e6fa6ef5d462",
+   "366b1981ac156072",
+   "5d30669fd2e50461",
+   "d6054e6deb296ecd",
+   "1d0a3338ede81efb",
+   "adab851209afd02d",
+   "8e26773964d0b095",
+   "958e6861de103988",
+   "ed446f76eaed799c",
+   "2d9ef44a01ea44af"
   ],
-  "final": "c5dc305f9b3ec9d2c5c3c7512c7bbb907b6682790bf1b9173b9991ca5ebfe794",
+  "final": "2d9ef44a01ea44af290cb59086bd7fbfdc5d0dc3614bf80972969d58c368ed71",
   "ticks": 1500
  },
  "fixture_cover_standoff": {
@@ -55,16 +55,16 @@
   "checkpoints": [
    "f82caf018d644382",
    "9fddc624492d09da",
-   "cb7a306ca0462ab4",
-   "ae9589124a928678",
-   "8436f233a68c25ed",
-   "a2cbadf5efa5ff0d",
-   "af1213eacbc27b84",
-   "bdb572e01ec39b23",
-   "77f7cf45ee6cc718",
-   "e34371cec5c03d09"
+   "5b66060b26f84f75",
+   "d77060a625b39c66",
+   "89207b115d0e4792",
+   "eaf16e8279f627f5",
+   "3730730435df2235",
+   "7665ed3cdba5cd26",
+   "d245a66d45056730",
+   "8a8b0971deb862ff"
   ],
-  "final": "e34371cec5c03d097e1a537b6efed998d1cae1ef9dbd0764ef281db7cb2afb2c",
+  "final": "8a8b0971deb862ffb83e34e954df4c2cd5bcb8653cac41c3aa86920db20a9731",
   "ticks": 1000
  },
  "fixture_wall_gap": {
