@@ -1292,8 +1292,9 @@ static int om_move_collision_once(om_world *w, om_move_state *ms) {
  * same state gives the same (empty) pass again, so the remaining iterations
  * and, next time this state is seen, the whole pass are skipped. settle_*
  * holds that state exactly (bit-compared). */
+#define OM_MOVE_SETTLE_MOVED 4
 static uint8_t om_move_settle_flag(const om_move_state *ms, const om_move_unit *mu, int live) {
-    return (uint8_t)((live ? 1 : 0) | (om_move_is_stationary(mu) ? 2 : 0) | (ms->col_pursue && ms->moved[mu->unit_id] ? 4 : 0));
+    return (uint8_t)((live ? 1 : 0) | (om_move_is_stationary(mu) ? 2 : 0) | (ms->col_pursue && ms->moved[mu->unit_id] ? OM_MOVE_SETTLE_MOVED : 0));
 }
 
 static int om_move_settle_matches(om_world *w, om_move_state *ms) {
