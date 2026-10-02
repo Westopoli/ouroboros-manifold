@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Any, Optional
 
 from scripts.skilllab.contract import BuildFn, CellResult, ScanResult, Setup, WIN_MARGIN
-from scripts.skilllab.scan import scan
+from scripts.skilllab.scan import run_jobs, scan
 
 
 @dataclass
@@ -35,22 +35,15 @@ class SwapControl:
     bias: float
 
 
-def _resolve(fight_fn: Any) -> Any:
-    if fight_fn is None:
-        from scripts.skilllab import fight as fight_module
-        return fight_module.fight
-    return fight_fn
-
-
 def _flips(cells: list) -> list:
     return [Flip(a.enemy_heads, b.enemy_heads, "win_to_loss" if a.won else "loss_to_win")
             for a, b in zip(cells, cells[1:]) if a.won != b.won]
 
 
 def _extend(cell: CellResult, build: BuildFn, start: int, stop: int, win_margin: float,
-            fight_fn: Any) -> CellResult:
-    new = [fight_fn(build(cell.enemy_heads, swap), seed, swap)
-           for swap in (False, True) for seed in range(start, stop)]
+            fight_fn: Any, map_fn: Any) -> CellResult:
+    new = run_jobs([(build(cell.enemy_heads, swap), seed, swap)
+                    for swap in (False, True) for seed in range(start, stop)], fight_fn, map_fn)
     fights = cell.fights + new
     mean_margin = sum(f.margin for f in fights) / len(fights)
     decided = all(f.outcome not in ("stalemate", "cap") for f in fights)
@@ -60,13 +53,14 @@ def _extend(cell: CellResult, build: BuildFn, start: int, stop: int, win_margin:
 
 def find_break_even(build: BuildFn, size: int, enemy_from: int, enemy_to: int, replicates: int = 10,
                     near_replicates: int = 30, max_rounds: int = 2, win_margin: float = WIN_MARGIN,
-                    fight_fn: Any = None) -> BreakEven:
+                    fight_fn: Any = None, map_fn: Any = None) -> BreakEven:
     if near_replicates < replicates:
         raise ValueError("near_replicates must be at least replicates")
     if max_rounds < 0:
         raise ValueError("max_rounds must not be negative")
-    fight_fn = _resolve(fight_fn)
-    result = scan(build, size, enemy_from, enemy_to, replicates, win_margin, fight_fn)
+    if fight_fn is not None and map_fn is not None:
+        raise ValueError("pass fight_fn or map_fn, not both")
+    result = scan(build, size, enemy_from, enemy_to, replicates, win_margin, fight_fn, map_fn)
     cells = result.cells
     flips = _flips(cells)
     refined: set = set()
@@ -78,7 +72,7 @@ def find_break_even(build: BuildFn, size: int, enemy_from: int, enemy_to: int, r
         if near_replicates > replicates:
             for i, c in enumerate(cells):
                 if c.enemy_heads in near:
-                    cells[i] = _extend(c, build, replicates, near_replicates, win_margin, fight_fn)
+                    cells[i] = _extend(c, build, replicates, near_replicates, win_margin, fight_fn, map_fn)
             refined |= near
         flips = _flips(cells)
         if [(f.before, f.after) for f in flips] == before:
@@ -96,18 +90,18 @@ def flip_sides(setup: Setup) -> Setup:
         setup, groups=tuple(dataclasses.replace(g, side=1 - g.side) for g in setup.groups))
 
 
-def swap_control(build: BuildFn, enemy_heads: int, replicates: int, fight_fn: Any = None) -> SwapControl:
+def swap_control(build: BuildFn, enemy_heads: int, replicates: int, fight_fn: Any = None,
+                 map_fn: Any = None) -> SwapControl:
     """Mean margin of the normal fights and of the same fights with sides flipped.
 
     Margins are signed side0 minus side1, so margin_flipped is not negated: a side-blind
     instrument gives margin_flipped == -margin and bias == 0. Numbers only, no pass mark.
     """
-    fight_fn = _resolve(fight_fn)
-    normal, flipped = [], []
-    for transform, out in ((lambda s: s, normal), (flip_sides, flipped)):
-        for swap in (False, True):
-            for seed in range(replicates):
-                out.append(fight_fn(transform(build(enemy_heads, swap)), seed, swap).margin)
+    jobs = [(transform(build(enemy_heads, swap)), seed, swap)
+            for transform in (lambda s: s, flip_sides) for swap in (False, True)
+            for seed in range(replicates)]
+    margins = [r.margin for r in run_jobs(jobs, fight_fn, map_fn)]  # one combined call, normal set first
+    normal, flipped = margins[:len(margins) // 2], margins[len(margins) // 2:]
     margin = sum(normal) / len(normal)
     margin_flipped = sum(flipped) / len(flipped)
     return SwapControl(enemy_heads=enemy_heads, margin=margin, margin_flipped=margin_flipped,

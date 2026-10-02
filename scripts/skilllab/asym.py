@@ -1,7 +1,10 @@
-"""Asymmetric plays: a role (blob, line, skilled, counter) and a unit mix per side."""
+"""Asymmetric plays: a role (blob, line, skilled, counter) and a unit mix per side.
+Skilled and counter come from the skills registry; the S2 ones are an unconfirmed draft and every build says so in build.labels."""
 import math
 from dataclasses import dataclass
+from typing import Optional
 
+from scripts.skilllab import skills
 from scripts.skilllab.contract import Group, Setup
 from scripts.skilllab.formations import place
 from scripts.skilllab.plays import unit_stats
@@ -15,16 +18,18 @@ class Side:
     role: str
     mix: tuple = (("Vanguard", 1),)
     arrangement: str = "interleaved"
+    skill: str = "S2"
+    focus: Optional[tuple] = None
 
 
-def _params(role, n):
-    if role == "blob":
-        return {"radius": 80 + 12 * math.sqrt(n)}
-    if role == "line":
-        return {"spacing": 30}
-    if role == "skilled":
-        return {"arc_deg": 120, "radius": 150 + 12 * math.sqrt(n)}
-    return {"spacing": 30, "cols": 3}
+def _plan(side, n, idx, anchor_y):
+    """(formation, params, facing_deg) for one side."""
+    f = 0.0 if idx == 0 else 180.0
+    if side.role == "blob":
+        return "blob", {"radius": 80 + 12 * math.sqrt(n)}, f
+    if side.role == "line":
+        return "line", {"spacing": 30}, f
+    return skills.get(side.skill, side.role).fn(skills.SideCtx(n, idx, (0.0, anchor_y), side.focus, f))
 
 
 def _split(n, mix):
@@ -70,19 +75,16 @@ def _check(side, size):
 
 
 def _local(side, n, idx, anchor_y):
-    """Points at x = 0 plus the per-name point lists (mix order, empty names dropped)."""
-    f = 0.0 if idx == 0 else 180.0
-    pts = place(_ROLES[side.role], n, 0.0, anchor_y, f, _params(side.role, n))
-    counts = _split(n, side.mix)
-    return pts, counts
+    """Plan, points at x = 0 and the per-name counts."""
+    plan = _plan(side, n, idx, anchor_y)
+    return plan, place(plan[0], n, 0.0, anchor_y, plan[2], plan[1]), _split(n, side.mix)
 
 
-def _groups(side, idx, pts, counts, shift, anchor_y):
-    f = 0.0 if idx == 0 else 180.0
+def _groups(side, idx, plan, pts, counts, shift, anchor_y):
+    formation, params, f = plan
     if len(side.mix) == 1:
-        return [Group(side=idx, unit=side.mix[0][0], count=counts[0], formation=_ROLES[side.role], x=shift,
-                      y=anchor_y, facing_deg=f, layer=0, order="attack_move",
-                      params=_params(side.role, counts[0]))]
+        return [Group(side=idx, unit=side.mix[0][0], count=counts[0], formation=formation, x=shift,
+                      y=anchor_y, facing_deg=f, layer=0, order="attack_move", params=params)]
     kinds = _assign(pts, counts, side.arrangement, 1 if idx == 0 else -1)
     out = []
     for t, (name, _) in enumerate(side.mix):
@@ -93,11 +95,20 @@ def _groups(side, idx, pts, counts, shift, anchor_y):
     return out
 
 
+def _label(side):
+    if side.role in ("blob", "line"):
+        return side.role, "naive"
+    return "%s:%s" % (side.skill, side.role), skills.get(side.skill, side.role).status
+
+
 def asym_play(size, side0, side1, unit_types=None):
     for s in (side0, side1):
         _check(s, size)
     if side0.role == side1.role == "counter":
         raise ValueError("counter against counter is not defined")
+    labels = {}
+    for i, s in enumerate((side0, side1)):
+        labels["play_side%d" % i], labels["status_side%d" % i] = _label(s)
 
     def build(enemy_heads, swap):
         _check(side1, enemy_heads)
@@ -109,10 +120,10 @@ def asym_play(size, side0, side1, unit_types=None):
         anchor_y, local = [0.0, 0.0], [None, None]
         for i in sorted((0, 1), key=lambda i: sides[i].role == "counter"):
             if sides[i].role == "counter":
-                ys = [y for _, y in local[1 - i][0]]
+                ys = [y for _, y in local[1 - i][1]]
                 anchor_y[i] = (max(ys) - min(ys)) / 2.0
             local[i] = _local(sides[i], heads[i], i, anchor_y[i])
-        shift = (-gap / 2 - max(x for x, _ in local[0][0]), gap / 2 - min(x for x, _ in local[1][0]))
+        shift = (-gap / 2 - max(x for x, _ in local[0][1]), gap / 2 - min(x for x, _ in local[1][1]))
         groups = [_groups(sides[i], i, *local[i], shift[i], anchor_y[i]) for i in (0, 1)]
         for i in (0, 1):
             if sides[i].role == "counter":
@@ -120,6 +131,7 @@ def asym_play(size, side0, side1, unit_types=None):
                 goal = max(enemy, key=lambda p: p[1])
                 groups[i] = [Group(**{**g.__dict__, "goal": goal}) for g in groups[i]]
         return Setup(groups=tuple(groups[0] + groups[1]), unit_types=types)
+    build.labels = labels
     return build
 
 
