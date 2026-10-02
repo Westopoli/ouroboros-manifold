@@ -72,14 +72,14 @@ def _spawn_far_raiders(lib, w, n, *, faction_id=0, y_start=1_000_000.0, spacing=
     ]
 
 
-def _period_2_world(lib, world_factory, seed=1):
-    """999 far filler Raiders plus 1 crossing Raider plus 1 near Raider (all
-    faction 0): 1,001 live units. One om_tactical_step call is enough for the
+def _period_2_world(lib, world_factory, seed=1, near_faction=0):
+    """999 far filler Raiders plus 1 crossing Raider (faction 0) plus 1 near
+    Raider (near_faction, at the structure origin): 1,001 live units. One om_tactical_step call is enough for the
     period to read 2 (test_core_tick_period.py's fixture)."""
     w = _tactical_world(lib, world_factory, seed=seed)
     _spawn_far_raiders(lib, w, 999)
     lib.om_unit_spawn(w, OMUnitType.RAIDER, 0, 0.0, 2_000_000.0, 0)
-    lib.om_unit_spawn(w, OMUnitType.RAIDER, 0, 0.0, 0.0, 0)
+    lib.om_unit_spawn(w, OMUnitType.RAIDER, near_faction, 0.0, 0.0, 0)
     lib.om_tactical_step(w)
     assert lib.om_tactical_tick_period(w) == 2, "setup: fixture must already be above the 1,000-live-unit threshold"
     return w
@@ -92,11 +92,12 @@ def test_R_127_01_capture_progress_driven_by_tactical_step_period_1(lib, world_f
     calls: 0.5 at 100 base ticks (5 s of the 10 s capture duration), owner
     flips at 200 base ticks (10 s)."""
     w = _tactical_world(lib, world_factory, seed=1)
-    lib.om_unit_spawn(w, OMUnitType.RAIDER, 0, 0.0, 0.0, 0)
+    # R-127-01/02: the census is computed per tick from unit positions; a real
+    # faction-1 unit at the structure origin is the lone non-owner present.
+    lib.om_unit_spawn(w, OMUnitType.RAIDER, 1, 0.0, 0.0, 0)
 
     lib.om_structure_init(w, 0, 0, 100.0)
     lib.om_structure_set_owner(w, 0, 2)
-    lib.om_structure_set_capturing_faction(w, 0, 1)
 
     for _ in range(100):
         lib.om_tactical_step(w)
@@ -119,11 +120,10 @@ def test_R_127_01_capture_progress_driven_by_tactical_step_period_2(lib, world_f
     half the om_tactical_step calls -- 0.5 at 50 steps (100 base ticks),
     owner flips at 100 steps (200 base ticks)."""
     _bind_tick_period(lib)
-    w = _period_2_world(lib, world_factory, seed=2)
+    w = _period_2_world(lib, world_factory, seed=2, near_faction=1)
 
     lib.om_structure_init(w, 0, 0, 100.0)
     lib.om_structure_set_owner(w, 0, 2)
-    lib.om_structure_set_capturing_faction(w, 0, 1)
 
     for _ in range(50):
         lib.om_tactical_step(w)
@@ -146,11 +146,12 @@ def test_control_no_capturing_faction_present_progress_stays_0(lib, world_factor
     progress must never rise, proving the assertions above are not reading a
     counter that increments unconditionally regardless of contest state."""
     w = _tactical_world(lib, world_factory, seed=3)
-    lib.om_unit_spawn(w, OMUnitType.RAIDER, 0, 0.0, 0.0, 0)
+    # R-127-01/02: anchor placed far outside the 300 wu capture radius so no
+    # faction is present at the structure (origin); step needs a live unit.
+    lib.om_unit_spawn(w, OMUnitType.RAIDER, 0, 0.0, 1_000_000.0, 0)
 
     lib.om_structure_init(w, 0, 0, 100.0)
     lib.om_structure_set_owner(w, 0, 2)
-    # capturing_faction left at its om_structure_init default (no contest).
 
     for _ in range(100):
         lib.om_tactical_step(w)
