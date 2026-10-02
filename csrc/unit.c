@@ -244,6 +244,10 @@ typedef struct {
     double   order_x, order_y;
     double   issued_x, issued_y;
     int      halted;
+    /* R-096-02 (PURSUE_BY_STEERING): the move group an attack-move of two or more units formed (0 for a lone
+     * unit) and whether this member has held a target since; the group ends once every member has. */
+    uint32_t am_gid;
+    int      am_engaged;
     int      anchor_set;
     double   anchor_x, anchor_y;
     int      flinching;
@@ -1723,10 +1727,27 @@ static int om_tac_step_toward(om_world *w, om_unit_row *u, double tx, double ty)
     return d <= step;
 }
 
+static void om_tac_drop_orders(om_unit_row *u);
+
+/* See also: om_tac_move_resume in tactical_move.c, which clears the held flag and keeps the group */
+int om_tac_move_resume(om_world *w, uint32_t unit_id);
+
 static void om_tac_hold(om_world *w, om_unit_row *u, uint32_t target_id) {
     if (u->halted) return;
     om_unit_engage(w, u->unit_id, target_id);
     u->halted = 1;
+    u->am_engaged = 1;
+}
+
+/* R-096-02: an attack-move group has ended once every living member still in it has engaged. */
+static int om_tac_am_group_done(om_world *w, om_tac_state *st, const om_unit_row *u) {
+    uint32_t i;
+    for (i = 0; i < st->n_units; i++) {
+        const om_unit_row *m = &st->units[i];
+        if (!m->in_use || m->hp <= 0.0 || m->am_gid != u->am_gid || m->am_engaged) continue;
+        if (om_unit_get_group_id(w, m->unit_id) == u->am_gid) return 0;
+    }
+    return 1;
 }
 
 /* Hands a held unit its route back: an attack-move resumes toward its
@@ -1736,7 +1757,14 @@ static void om_tac_hold(om_world *w, om_unit_row *u, uint32_t target_id) {
 static void om_tac_release(om_world *w, om_unit_row *u) {
     if (!u->halted) return;
     u->halted = 0;
-    if (u->order == OM_ORDER_ATTACK_MOVE) {
+    if (u->order == OM_ORDER_ATTACK_MOVE && u->am_gid != 0 && om_unit_get_group_id(w, u->unit_id) == u->am_gid) {
+        if (om_tac_am_group_done(w, om_tac(w), u)) {
+            om_tac_drop_orders(u);
+            om_unit_clear_orders(w, u->unit_id);
+        } else {
+            om_tac_move_resume(w, u->unit_id);
+        }
+    } else if (u->order == OM_ORDER_ATTACK_MOVE) {
         om_command_move(w, &u->unit_id, 1, u->order_x, u->order_y);
         u->issued_x = u->order_x;
         u->issued_y = u->order_y;
@@ -1812,6 +1840,8 @@ static void om_tac_drop_orders(om_unit_row *u) {
     u->target_id = 0;
     u->anchor_set = 0;
     u->halted = 0;
+    u->am_gid = 0;
+    u->am_engaged = 0;
 }
 
 static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64_t tick) {
@@ -2062,7 +2092,11 @@ int om_command_activate_ability(om_world *w, const uint32_t *unit_ids, uint32_t 
 
 int om_command_attack_move(om_world *w, const uint32_t *unit_ids, uint32_t n_units, double x, double y) {
     om_tac_state *st = om_tac(w);
-    uint32_t i;
+    uint32_t i, n_found = 0, gid = 0;
+    int grouped;
+    for (i = 0; i < n_units; i++) if (om_registry_find_in(st, unit_ids[i])) n_found++;
+    /* R-096-02: two or more units take move-group slots (PURSUE_BY_STEERING); one is not a group */
+    grouped = om_tac_pursue(w) && n_found >= 2;
     for (i = 0; i < n_units; i++) {
         om_unit_row *u = om_registry_find_in(st, unit_ids[i]);
         if (!u) continue;
@@ -2071,7 +2105,21 @@ int om_command_attack_move(om_world *w, const uint32_t *unit_ids, uint32_t n_uni
         u->order = OM_ORDER_ATTACK_MOVE;
         u->order_x = x; u->order_y = y;
         u->issued_x = x; u->issued_y = y;
-        om_command_move(w, &u->unit_id, 1, x, y);
+        if (!grouped) om_command_move(w, &u->unit_id, 1, x, y);
+    }
+    if (grouped) {
+        uint32_t ids[OM_MAX_UNITS], k = 0;
+        for (i = 0; i < n_units && k < OM_MAX_UNITS; i++) if (om_registry_find_in(st, unit_ids[i])) ids[k++] = unit_ids[i];
+        gid = om_command_group_move(w, ids, k, x, y);
+        for (i = 0; i < k; i++) {
+            om_unit_row *u = om_registry_find_in(st, ids[i]);
+            if (gid != 0) {
+                u->am_gid = gid;
+                om_unit_get_destination(w, ids[i], &u->issued_x, &u->issued_y);
+            } else {
+                om_command_move(w, &u->unit_id, 1, x, y);
+            }
+        }
     }
     return 0;
 }
