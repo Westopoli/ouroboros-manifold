@@ -655,6 +655,27 @@ func begin_mission() -> bool:
 	return false
 
 
+# The player's Refuse (R-078-05): sends mission_refuse and pumps until the
+# refusal debrief frame ends the mission (the bridge holds it for the debrief
+# scene). The debrief is only routed to when the pipe answered; otherwise the
+# reason is surfaced in _deploy_error_label.
+func refuse_mission() -> bool:
+	var bridge = SimSession.bridge()
+	bridge.send_command({"type": "cmd", "name": "mission_refuse"})
+	var deadline: int = Time.get_ticks_msec() + bridge.LIVE_READ_TIMEOUT_MSEC
+	while bridge.mission_active() and bridge.last_error() == "" and Time.get_ticks_msec() < deadline:
+		if bridge.pump() == 0:
+			OS.delay_msec(5)
+	if not bridge.mission_active():
+		return true
+	var err: String = bridge.last_error() if bridge.last_error() != "" else "timed out waiting for the refusal debrief"
+	push_error("mission_briefing: Refuse failed: %s" % err)
+	if _deploy_error_label != null:
+		_deploy_error_label.text = err
+		_deploy_error_label.visible = true
+	return false
+
+
 func _build_footer(parent: Control) -> void:
 	var footer := HBoxContainer.new()
 	footer.add_theme_constant_override("separation", 12)
@@ -679,8 +700,12 @@ func _build_footer(parent: Control) -> void:
 	refuse_btn.name = "Refuse"
 	refuse_btn.text = "REFUSE"
 	refuse_btn.style = 1
-	refuse_btn.disabled = true
-	refuse_btn.tooltip_text = "Not wired yet"
+	# R-078-05: mission_refuse is valid only in recon, like Begin.
+	refuse_btn.disabled = not bridge.mission_active() or bridge.mission_begun()
+	refuse_btn.pressed.connect(func():
+		if refuse_mission():
+			SceneRouter.go_to("debrief")
+	)
 	footer.add_child(refuse_btn)
 
 	var back_btn = load("res://theme/components/tm_button.tscn").instantiate()

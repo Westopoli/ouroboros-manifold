@@ -270,6 +270,7 @@ func pump() -> int:
 			"tactical":
 				_mission_begun = true
 			"debrief":
+				_debrief = frame
 				_mission_active = false
 				_mission_begun = false
 				_session_mission = {}

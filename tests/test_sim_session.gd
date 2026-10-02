@@ -135,8 +135,13 @@ func _run_tests() -> void:
 	_assert(bridge.session_id() == id_run, "the briefing scene opened its own session")
 	briefing.queue_free()
 	await process_frame
+	# A39(b), ledger row day12 "A39 fixture changes": the debrief shows the frame the bridge
+	# holds and no longer ends the mission itself; end it through the bridge first (as the
+	# tactical view does).
+	bridge.send_command({"type": "cmd", "name": "mission_end"})
+	_assert(_pump_until(bridge, func(): return not bridge.mission_active(), 5000), "mission_end did not end the mission the briefing left running")
 	var debrief: Node = await _mount(DEBRIEF_SCENE)
-	_assert(not bridge.mission_active(), "the debrief scene did not end the mission it followed")
+	_assert(not bridge.mission_active(), "the debrief scene left a mission running after the one it followed ended")
 	_assert(bridge.session_id() == id_run, "the debrief scene opened its own session")
 	debrief.queue_free()
 	await process_frame

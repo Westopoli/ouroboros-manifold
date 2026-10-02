@@ -4,7 +4,7 @@ monetization.md R-146-01, R-146-03; docs/northstar/plans/briefs/
 2026-09-21-px-batch-b-spec-content-boundary.md PX-10).
 
 Checks manifest.json (assets/eras/<era>/manifest.json shape) for: every
-required top-level key present (R-146-03: a missing one fails, named); every
+required top-level key present (including era_spatial_scale, era_tone, era_order; test_only is an optional bool) (R-146-03: a missing one fails, named); every
 referenced scene path exists on disk relative to the pack; no unit id
 contains the era's own era_id (R-145-01, "no identifier names an era",
 applied to content); and era_display_name plus any naming_pools entry
@@ -36,6 +36,7 @@ from pathlib import Path
 
 REQUIRED_KEYS = (
     "era_id", "era_display_name", "era_accent_color",
+    "era_spatial_scale", "era_tone", "era_order",
     "units", "structures", "environment", "materials", "faction_colors",
 )
 
@@ -92,6 +93,16 @@ def validate_pack(pack_dir: Path, banned_words_path: Path = DEFAULT_BANNED_WORDS
     for key in REQUIRED_KEYS:
         if key not in manifest:
             findings.append(Finding("FAIL", "MISSING_REQUIRED_KEY", f"manifest.json is missing required key: {key}"))
+
+    for key in ("era_spatial_scale", "era_tone"):
+        value = manifest.get(key)
+        if key in manifest and not (isinstance(value, str) and value.strip()):
+            findings.append(Finding("FAIL", "BAD_ERA_IDENTITY", f"{key} must be non-empty text"))
+    order = manifest.get("era_order")
+    if "era_order" in manifest and (not isinstance(order, int) or isinstance(order, bool)):
+        findings.append(Finding("FAIL", "BAD_ERA_IDENTITY", "era_order must be an int"))
+    if "test_only" in manifest and not isinstance(manifest["test_only"], bool):
+        findings.append(Finding("FAIL", "BAD_ERA_IDENTITY", "test_only must be a bool when present"))
 
     era_id = manifest.get("era_id")
     units = manifest.get("units")

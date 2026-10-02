@@ -554,6 +554,47 @@ The crossing moves with the attackers' number and with the defenders' distance, 
 
 What is missing before this answers the hypothesis: a conditioned search (fix all but two variables), a control for every non-monotonic curve, more variables sampled at once (positions, formation, layer, rule tables) and random sampling rather than grids, and noise in the fights (see E5) so that more than the count and the geometry decide.
 
+### Pass 6, 2026-10-01: testing moves to the design chat; formation (S2) on open ground
+
+From this pass the design chat runs the experiments and reports to Westley directly (his instruction); the lab chat builds on request. Scripts: `toys/layerlab/experiments/b1_inspect.py` (look at what a play does), `b1_scan.py` (one play, one map, one size, whole heads, 10 seeds and both side labels, so 20 fights a cell). A side "beats N" when it wins more than half of the 20. Transfer class T2.
+
+The lab chat's last small batch (8 long-range wardens, flat map) found no effect from the concave; re-run and confirmed. The cause is range: at 350 every unit fires in any formation.
+
+Short-range raiders (range 200), flat map, base rules, all on one layer:
+
+| Our 16 | Enemy | Beats | Loses to | Units firing at 16 v 16, ours against theirs |
+|---|---|---|---|---|
+| blob | blob | 15 | 16 | 4.3 against 4.6 |
+| line | line | 15 | 16 | 9.1 against 9.3 |
+| line | blob | 18 | 19 | 9.8 against 6.3 |
+| concave | blob | 18 | 19 | 12.0 against 7.9 |
+| concave | line | 16 | 17 | 8.4 against 7.3 |
+
+At 8 units, concave against line and line against line both beat 7 and lose to 8.
+
+Reading. Formation is worth three units in sixteen when the enemy comes in a blob, and the side with more units firing won every pairing, so C1 and C2 hold here in direction. The gain is from being wide, not from being curved: a line does as well as a concave against a blob, and a concave is worth one unit against a line. That follows from symmetry: with the same unit type on both sides, if my unit reaches yours, yours reaches mine, so a curve cannot make more of mine fire than of yours unless the enemy is deep. The naive line abreast is therefore already most of the formation skill, and the scripted concave (an arc of half the approach distance around the enemy's start, which then walks in) is not yet the concave Westley means: one that curves around the point where the enemy arrives. One blip to watch: line against line, 16 against 20 and 21, where the margin steps the wrong way (-0.47 then -0.32).
+
+
+### Pass 7, 2026-10-01: landscape (S1) on a lane; no clean result yet, three causes found
+
+Scripts `toys/layerlab/experiments/b1_choke.py`, `b1_choke2.py`, `b1_choke3.py`, `b1_choke4.py`, `b1_look.py`. Short-range raiders (reach 200, spacing 50), a lane 200 wide (four units abreast) through a wall 300 thick, 20 fights a cell. Transfer class T3 until the behaviours below exist.
+
+| Defenders' play | Units firing early, ours against theirs | Result |
+|---|---|---|
+| Both sides walk in (no skill), 16 | 4 against 9 | 16 lose to 16 |
+| The lab's scripted S1: a block four deep at the mouth, 16 | 3 against 4 | 16 lose to 16 |
+| An arc around the mouth, holding, 16 | 2 against 4 | 16 lose to 16 |
+| The same arc, stepping forward to engage | 6 against 8 | 16 lose to 16; they ran through the corridor |
+| A curve one reach from the mouth (walls blocking sight), holding, 16 | 7 against 5 at contact | 16 beat 16, lose to 24; many stand-offs |
+
+Simple arithmetic for the ideal case (attackers held to c firing and refilled from behind, D defenders all firing): the defenders beat about D(D+1)/(2c), which is 34 for 16 defenders against four abreast. Nothing here came near it. Why:
+
+1. **The lane's walls block movement but not sight**, so attackers shoot defenders through the rock. E-01 S-007 has obstacles blocking sight by height; the lab's presets do not. Worked around in these scripts with cover discs along the walls.
+2. **A unit ordered to hold never steps forward, and a unit allowed to chase runs to the enemy wherever it is.** Attackers stop at full reach from the nearest defender, which is the tip of any arc; the rest of the arc is out of reach and stays there. Defenders allowed to chase ran through the corridor and gave up the choke. There is no stance between the two: step up to engage, but stay near the post.
+3. **Reach is four unit-widths.** With reach 200 and spacing 50, only a few units can stand within reach of one spot. That limits a choke and a concave alike; at best 7 of 16 defenders fired. Reach against body size is a knob the lab has not swept.
+
+A held mouth also produced stand-offs (attackers stop in the corridor, nobody in reach), which is the refusal Westley counts as a counter.
+
 ## 9. Verdict and fold
 
 Filled when the pass criterion in §6 is met or shown unreachable. If met: numbers go to `algorithms.md` as ALG rows, S-008 gains rules with values, `Q-008-02` and `Q-008-03` close, and the E-01 gate is re-run. If not met: record what the lab could not show and why, and revise the method; the cross-layer numbers stay open, and Westley decides whether the strategic-depth definition in the hub stands.

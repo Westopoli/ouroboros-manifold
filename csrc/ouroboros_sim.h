@@ -1570,6 +1570,14 @@ double om_mission_eval_escort(om_world *w, uint32_t objective_idx, uint32_t reac
 void om_mission_eval_hold_zone(om_world *w, uint32_t objective_idx, uint32_t enemies_inside);
 double om_mission_eval_survive(om_world *w, uint32_t objective_idx, uint64_t elapsed_ticks, int player_alive);
 uint32_t om_mission_fallback_archetype(const om_world *w);
+/* The non-player, non-neutral faction nearest region_idx by connection hops;
+ * ties to the highest total OM_F_MILITARY (within OM_TIE_EPSILON), then the
+ * lowest faction id. A faction with no path to region_idx ties with the other
+ * unreachable ones on distance and loses to any reachable one. -1 only when no
+ * non-player faction owns a region. (R-072-08, A40, A50) */
+int32_t om_mission_fallback_enemy(const om_world *w, uint32_t region_idx);
+/* The player's weakest region: lowest ALG-09 stability composite
+ * (OM_C_STABILITY), ties to the lowest region index. (R-072-07, A41) */
 uint32_t om_mission_fallback_region(const om_world *w);
 double om_mission_fill_player_force(om_world *w, double P, double parity);
 int om_mission_get_archetype_metadata(const om_world *w, uint32_t archetype, om_archetype_metadata *out);

@@ -27,6 +27,9 @@ def _base_manifest(era_id="synth_era", era_display_name="Synth Era"):
         "era_id": era_id,
         "era_display_name": era_display_name,
         "era_accent_color": "#123456",
+        "era_spatial_scale": "A synthetic scale sentence.",
+        "era_tone": "A synthetic tone sentence.",
+        "era_order": 1,
         "units": {
             "vanguard": {
                 "category": "line", "squad_count": 1, "visual_scale": 1.0,
@@ -254,3 +257,132 @@ def test_greek_placeholder_copy_with_injected_banned_word_rejected(tmp_path):
     assert proc.returncode == 1, proc.stdout + proc.stderr
     assert "BANNED_WORD" in proc.stdout
     assert "prototype" in proc.stdout.lower()
+
+
+# ---- A58 (docs/northstar/plans/2026-10-01-architect-rulings-2.md, Q-C4-E1-05
+# and 07; R-146-03, R-110-05): era_spatial_scale, era_tone and era_order are
+# required pack identity; test_only is an optional bool. Red on main until the
+# validator and the three installed manifests carry them.
+
+import pytest
+
+A58_REQUIRED = ("era_spatial_scale", "era_tone", "era_order")
+TEST_ERA_PACK = REPO / "assets" / "eras" / "test_era"
+
+
+def test_a58_base_manifest_with_new_keys_passes_control(tmp_path):
+    # positive control: the synthetic manifest carries all three and is accepted
+    pack = _write_pack(tmp_path / "pack", _base_manifest())
+    proc = _run(pack, "--banned-words", str(_write_banned_words(tmp_path)))
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+
+
+@pytest.mark.parametrize("key", A58_REQUIRED)
+def test_a58_missing_new_key_named(tmp_path, key):
+    manifest = _base_manifest()
+    del manifest[key]
+    pack = _write_pack(tmp_path / "pack", manifest)
+    proc = _run(pack, "--banned-words", str(_write_banned_words(tmp_path)))
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert "MISSING_REQUIRED_KEY" in proc.stdout
+    assert key in proc.stdout
+
+
+def test_a58_all_three_missing_all_named(tmp_path):
+    manifest = _base_manifest()
+    for key in A58_REQUIRED:
+        del manifest[key]
+    pack = _write_pack(tmp_path / "pack", manifest)
+    proc = _run(pack, "--banned-words", str(_write_banned_words(tmp_path)))
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    for key in A58_REQUIRED:
+        assert key in proc.stdout
+
+
+@pytest.mark.parametrize("bad", ["1", 1.5, True, None, [1]])
+def test_a58_era_order_must_be_int(tmp_path, bad):
+    manifest = _base_manifest()
+    manifest["era_order"] = bad
+    pack = _write_pack(tmp_path / "pack", manifest)
+    proc = _run(pack, "--banned-words", str(_write_banned_words(tmp_path)))
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert "era_order" in proc.stdout
+
+
+@pytest.mark.parametrize("key", ("era_spatial_scale", "era_tone"))
+@pytest.mark.parametrize("bad", [5, None, ["x"], ""])
+def test_a58_text_keys_must_be_nonempty_text(tmp_path, key, bad):
+    manifest = _base_manifest()
+    manifest[key] = bad
+    pack = _write_pack(tmp_path / "pack", manifest)
+    proc = _run(pack, "--banned-words", str(_write_banned_words(tmp_path)))
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert key in proc.stdout
+
+
+@pytest.mark.parametrize("value", [True, False])
+def test_a58_test_only_bool_accepted_optional(tmp_path, value):
+    manifest = _base_manifest()
+    manifest["test_only"] = value
+    pack = _write_pack(tmp_path / "pack", manifest)
+    proc = _run(pack, "--banned-words", str(_write_banned_words(tmp_path)))
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+
+
+def test_a58_test_only_absent_accepted(tmp_path):
+    manifest = _base_manifest()
+    assert "test_only" not in manifest
+    pack = _write_pack(tmp_path / "pack", manifest)
+    proc = _run(pack, "--banned-words", str(_write_banned_words(tmp_path)))
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+
+
+@pytest.mark.parametrize("bad", ["yes", 1, None])
+def test_a58_test_only_must_be_bool_when_present(tmp_path, bad):
+    manifest = _base_manifest()
+    manifest["test_only"] = bad
+    pack = _write_pack(tmp_path / "pack", manifest)
+    proc = _run(pack, "--banned-words", str(_write_banned_words(tmp_path)))
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert "test_only" in proc.stdout
+
+
+@pytest.mark.parametrize("pack_dir", [SETTLED_REACH_PACK, GREEK_PLACEHOLDER_PACK, TEST_ERA_PACK],
+                         ids=["settled_reach", "greek_placeholder", "test_era"])
+def test_a58_installed_pack_has_the_new_keys_and_validates(pack_dir):
+    manifest = json.loads((pack_dir / "manifest.json").read_text())
+    for key in ("era_spatial_scale", "era_tone"):
+        assert isinstance(manifest.get(key), str) and manifest[key].strip(), f"{pack_dir.name}: {key}"
+    order = manifest.get("era_order")
+    assert isinstance(order, int) and not isinstance(order, bool), f"{pack_dir.name}: era_order"
+    proc = _run(pack_dir)
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert "PACK OK" in proc.stdout
+
+
+def test_a58_installed_era_orders_are_distinct_ints():
+    orders = {}
+    for pack_dir in (SETTLED_REACH_PACK, GREEK_PLACEHOLDER_PACK):
+        orders[pack_dir.name] = json.loads((pack_dir / "manifest.json").read_text()).get("era_order")
+    assert all(isinstance(v, int) for v in orders.values()), orders
+    assert orders["settled_reach"] != orders["greek_placeholder"], orders
+
+
+def test_a58_only_test_era_is_test_only():
+    flags = {p.name: json.loads((p / "manifest.json").read_text()).get("test_only", False)
+             for p in (SETTLED_REACH_PACK, GREEK_PLACEHOLDER_PACK, TEST_ERA_PACK)}
+    assert flags == {"settled_reach": False, "greek_placeholder": False, "test_era": True}, flags
+
+
+def test_a58_removing_a_key_from_an_installed_pack_copy_is_rejected(tmp_path):
+    # positive control for the installed-pack checks: a copy missing era_tone fails
+    import shutil
+    broken = tmp_path / "settled_broken"
+    shutil.copytree(SETTLED_REACH_PACK, broken)
+    path = broken / "manifest.json"
+    manifest = json.loads(path.read_text())
+    manifest.pop("era_tone", None)
+    path.write_text(json.dumps(manifest, indent=2))
+    proc = _run(broken)
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert "era_tone" in proc.stdout

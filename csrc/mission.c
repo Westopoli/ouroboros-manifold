@@ -1667,20 +1667,66 @@ uint32_t om_mission_fallback_archetype(const om_world *w) {
 uint32_t om_mission_fallback_region(const om_world *w) {
     int32_t player = om_mission_player_faction(w);
     uint32_t weakest = 0;
-    double weakest_score = 0.0;
+    double lowest = 0.0;
     int found = 0;
     if (player >= 0) {
         for (uint32_t idx = 0; idx < w->n_regions; idx++) {
             if (om_region_owner(w, idx) != player) continue;
-            double combined = om_region_field(w, idx, OM_F_MILITARY) + om_region_field(w, idx, OM_F_ECONOMY);
-            if (!found || combined < weakest_score) {
-                weakest_score = combined;
+            double st = om_region_composite(w, idx, OM_C_STABILITY);
+            if (!found || st < lowest) {
+                lowest = st;
                 weakest = idx;
                 found = 1;
             }
         }
     }
     return weakest;
+}
+
+int32_t om_mission_fallback_enemy(const om_world *w, uint32_t region_idx) {
+    uint32_t n = w->n_regions;
+    int32_t player = om_mission_player_faction(w);
+    int32_t best = -1;
+    double best_mil = 0.0;
+    uint32_t best_hops = 0;
+    if (region_idx >= n) return -1;
+    uint32_t *dist = malloc(n * sizeof *dist), *queue = malloc(n * sizeof *queue);
+    uint32_t nb[256];
+    if (!dist || !queue) { free(dist); free(queue); return -1; }
+    for (uint32_t i = 0; i < n; i++) dist[i] = UINT32_MAX;
+    uint32_t head = 0, tail = 0;
+    dist[region_idx] = 0;
+    queue[tail++] = region_idx;
+    while (head < tail) {
+        uint32_t cur = queue[head++];
+        uint32_t k = om_region_neighbors(w, cur, nb, (uint32_t)(sizeof nb / sizeof *nb));
+        for (uint32_t m = 0; m < k; m++) {
+            if (dist[nb[m]] != UINT32_MAX) continue;
+            dist[nb[m]] = dist[cur] + 1;
+            queue[tail++] = nb[m];
+        }
+    }
+    for (int32_t f = 0; f < (int32_t)om_faction_count(w); f++) {
+        if (f == player) continue;
+        uint32_t hops = UINT32_MAX;
+        double mil = 0.0;
+        int owns = 0;
+        for (uint32_t i = 0; i < n; i++) {
+            if (om_region_owner(w, i) != f) continue;
+            owns = 1;
+            mil += om_region_field(w, i, OM_F_MILITARY);
+            if (dist[i] < hops) hops = dist[i];
+        }
+        if (!owns) continue;
+        if (best < 0 || hops < best_hops || (hops == best_hops && mil > best_mil + OM_TIE_EPSILON)) {
+            best = f;
+            best_hops = hops;
+            best_mil = mil;
+        }
+    }
+    free(dist);
+    free(queue);
+    return best;
 }
 
 /* R-074-04 / ALG-57 Fill, ported from simulation/force_allocator.py

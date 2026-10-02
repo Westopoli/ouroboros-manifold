@@ -10,11 +10,11 @@ One economy, two drivers: rules when nobody holds the economy seat, a human when
 
 | # | Goal | Depends on | Status |
 |---|---|---|---|
-| 1 | Resources and how they become units | (check against 5's verbs before freezing) | in progress: options in `resources_options.md`; Westley leans A and F (2026-10-01); F expanded with four variations in `f_variations.md` |
-| 2 | Bases of operations and how they play into objectives | 1 | not started |
-| 3 | Groundwork for auto-generating economic buildings (sister to biome generation) | 1, 2 | not started |
+| 1 | Resources and how they become units | (check against 5's verbs before freezing) | done 2026-10-01; folded into E-19 S-159; remaining detail is Q-159-08 |
+| 2 | Bases of operations and how they play into objectives | 1 | partly decided (base of operations, resources opposite the objective, expansions, forward bases); the loss condition and mission-type mapping are open (Q-159-11) |
+| 3 | Groundwork for auto-generating economic buildings (sister to biome generation) | 1, 2 | in progress: direction in E-17 S-166, options in `settlement_generation_options.md` (Q-166-01) |
 | 4 | How the economy runs when the player opts out | 1, 2, 3 | not started |
-| 5 | How the economy player literally manages the economy | 1 to 4 | not started |
+| 5 | How the economy player literally manages the economy | 1 to 4 | done 2026-10-01; folded into E-19 S-159; remaining detail is Q-159-09, Q-159-10 |
 
 ## Decisions (2026-10-01)
 
@@ -65,6 +65,51 @@ Recorded as:
 - Rejected: the one-minute walkthrough in `economy_seat_sketch.md`. That file's Order Board, crews and stewards are superseded; its technology, Veil and information-gathering sections still stand as material.
 - Next: build-ons for the baseline in `baseline_and_buildons.md`.
 
+## Decisions (2026-10-01, fifth round)
+
+Westley, verbatim, answering `baseline_and_buildons.md`:
+
+"We could make the economic player be the "production" manager for the production buildings and the units the "commanding" player recieves, that would actually be a cool dynamic because they'd need to communicate with each other. Mark it as a decision. - I like the expansions idea, but let's not let the main city run dry, just make it so that if they stay and don't expand outward for resrouces they get over-run. - I like the one cap for both, but let's make the cap upgradeable significantly, up to thousands of units/workers. (I'd really like to take advantage of the massive computing power computesr these days have access to, make units/visuals really efficient, and just make the game super busy/huge scale, mark this in the bible in the relevant section as a long term goal). - I like the drop off increase, let's do that - Shipments but they don't have vision, they're blind and if they don't show up than you have no idea what happened. - Yes to seasons/weather, let's make specific regions have specific environmental issues that can happen I love that idea record it. - This isn't enough though, this is like probably 1.2x-1.4x sc2 economy macro, the goal was 2-3x. Mark this as the current economic system, then let's reach outward to figure out how to make it more chess-like, to make them have to think ahead, maybe to pay attention to something going on on the map or see what the enemy is doing in their base. Propose some options, a couple standard, a couple wild"
+
+Recorded as:
+
+- Decided: the economy player is the production manager. He runs the production buildings and makes the units the commander receives; the two have to talk.
+- Decided: expansions are in. The main base never runs dry; a side that stays home and does not expand for resources is overrun.
+- Decided: one population cap for workers and soldiers together, upgradeable a long way, up to thousands.
+- Decided, and written into the bible hub ("Reference Hardware"): huge scale is a long-term goal.
+- Decided: haul distance to the drop-off matters.
+- Decided: shipments are in, and they are blind. The side has no vision of a shipment on its way; if it does not arrive, nobody is told why.
+- Decided: seasons and weather are in. Specific regions have specific environmental troubles.
+- Westley's measure: this is about 1.2x to 1.4x a StarCraft 2 economy; the target is 2x to 3x.
+- The above is the current economic system, written out in `current_system.md`.
+- Next: ways to make it more like chess (thinking ahead, watching the map, reading the enemy's base), in `chess_layer_options.md`.
+
+## Decisions (2026-10-01, sixth round)
+
+Westley, verbatim, answering `chess_layer_options.md`:
+
+"I like the counters/retooling, let's explore that option deeper, maybe specific unit roles need specific resources, and heavier resource collection from a specific resource indicates they're making more of that specific role and you need the counter. - I like the walls/towers/raid lanes, let's tack that on - I like the schedule, if it takes a while to change what production you're focusing on and the fact that enemies can see it, we should also givep players a way to disguise/hide their buildings. - I like the weather on the move, let's do it. - Let's also do the potential forward bases. Record all these decisions, I think we have a strong foundation for the economic system. I think we can call it a day on that design front unless I'm not remembering something"
+
+Recorded as:
+
+- Decided: counters and retooling (S1) is in, to be explored deeper. His direction: specific unit roles need specific resources, so heavy gathering of one resource shows which role a side is making more of, and the other side needs the counter.
+- Decided: walls, towers and raid lanes (S3) are in.
+- Decided: the schedule (W3) is in. Changing what production is focused on takes a while and the enemy can see it, so players also get a way to disguise or hide their buildings.
+- Decided: weather on the move (W4) is in.
+- Decided: forward bases (W6) are in.
+- Not picked, not rejected: prizes on a clock (S2), a shared market (S4), demands from the civilization (S5), the Keystone (W1), the Contested Tree (W2), agents (W5).
+- Westley's read: a strong foundation; this design front pauses here.
+
+## Decisions (2026-10-01, seventh round)
+
+Westley, verbatim: "fold into bible specs, mark them done, and then let's start figuring out how the auto-generation of economic buildings will work." The rest of that message, on settlements that build themselves, is verbatim in E-17 S-166 R-166-01.
+
+Recorded as:
+
+- Folded into the bible: E-19 S-159 rewritten (R-159-01 to R-159-13), the hub's toolkit paragraph, the stories catalog row. Register: Q-159-01 and Q-159-04 closed; Q-159-08 to Q-159-11 opened for what remains.
+- Goals 1 and 5 marked done.
+- Goal 3 started: E-17 S-166 holds the direction, Q-166-01 the question, `settlement_generation_options.md` the options.
+
 ## Files
 
 - `prior_art_resources.md`: cited digest of resource systems in other games.
@@ -74,3 +119,6 @@ Recorded as:
 - `economy_game_directions.md`: many surface-level directions for what the economy player does.
 - `economy_seat_sketch.md`: what the economy player sees and does, technology on the seat, the Veil and information gathering.
 - `baseline_and_buildons.md`: the classic baseline and fourteen build-ons.
+- `current_system.md`: the current economic system, as decided so far. Read this first.
+- `chess_layer_options.md`: options for making the seat more like chess.
+- `settlement_generation_options.md`: goal 3 options, seven parts.
