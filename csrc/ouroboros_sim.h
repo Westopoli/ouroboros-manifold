@@ -1616,7 +1616,9 @@ double om_mission_eval_survive(om_world *w, uint32_t objective_idx, uint64_t ela
 uint32_t om_mission_fallback_archetype(const om_world *w);
 /* The non-player, non-neutral faction nearest region_idx by connection hops;
  * ties to the highest total OM_F_MILITARY (within OM_TIE_EPSILON), then the
- * lowest faction id. -1 when no faction qualifies. (R-072-08, A40) */
+ * lowest faction id. A faction with no path to region_idx ties with the other
+ * unreachable ones on distance and loses to any reachable one. -1 only when no
+ * non-player faction owns a region. (R-072-08, A40, A50) */
 int32_t om_mission_fallback_enemy(const om_world *w, uint32_t region_idx);
 /* The player's weakest region: lowest ALG-09 stability composite
  * (OM_C_STABILITY), ties to the lowest region index. (R-072-07, A41) */

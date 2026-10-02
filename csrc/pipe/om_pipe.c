@@ -1420,6 +1420,14 @@ static void handle_mission_start(const char *json) {
     int64_t faction = 0;
     get_i64(json, "faction", &faction);
 
+    int owns_region = 0;
+    for (uint32_t ri = 0; ri < om_region_count(W) && !owns_region; ri++)
+        owns_region = om_region_owner(W, ri) == om_player_faction(W);
+    if (!owns_region) {
+        write_error("mission_start", "player owns no region");
+        return;
+    }
+
     /* om_mission_start itself does not start anything (see the file-header
      * comment); the real region/archetype/objective wiring is composed here
      * from the lower-level mission.c/fog.c API. */

@@ -1710,12 +1710,14 @@ int32_t om_mission_fallback_enemy(const om_world *w, uint32_t region_idx) {
         if (f == player) continue;
         uint32_t hops = UINT32_MAX;
         double mil = 0.0;
+        int owns = 0;
         for (uint32_t i = 0; i < n; i++) {
             if (om_region_owner(w, i) != f) continue;
+            owns = 1;
             mil += om_region_field(w, i, OM_F_MILITARY);
             if (dist[i] < hops) hops = dist[i];
         }
-        if (hops == UINT32_MAX) continue;
+        if (!owns) continue;
         if (best < 0 || hops < best_hops || (hops == best_hops && mil > best_mil + OM_TIE_EPSILON)) {
             best = f;
             best_hops = hops;
