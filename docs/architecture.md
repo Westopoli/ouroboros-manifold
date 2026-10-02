@@ -100,7 +100,7 @@ All extensions are **flag-gated** on the producer side. With the relevant flag o
 
 - **Produced by:** `keyframe_selector.py::select_keyframes` — reads from `world.regions[rid]`. No engine modification.
 - **Consumed by:** `scenes/shared/world_view/world_view_data.gd::set_region_metadata` and downstream `region_info_panel.gd`.
-- **Fallback:** missing `name` → fall back to `region_id`. Missing `tier` → "frontier". Missing `fields` → panel shows "—" for each bar.
+- **Fallback:** `region_info_panel.gd` and `faction_info_panel.gd` take the name for the id from `scenes/world/chronicle_names.gd` (A82); a `name` entry in this payload is not read. Missing `tier` → "frontier". Missing `fields` → panel shows "—" for each bar.
 
 Composite axes (`stability`, `capacity`) are computed Godot-side from the four base fields and are **not transmitted**. This keeps the payload minimal and lets the formula evolve in one place.
 
@@ -160,7 +160,7 @@ The mention contract is in the "chronicle frame" section above: every entry of t
 
 | Field | Producer file | Consumer file (Godot) | Flag |
 |---|---|---|---|
-| `regions_snapshot[].name/tier/fields` | `keyframe_selector.py` | `world_view_data.gd`, `region_info_panel.gd` | `ENABLE_INSPECTION_PANELS` |
+| `regions_snapshot[].tier/fields` | `keyframe_selector.py` | `world_view_data.gd`, `region_info_panel.gd` | `ENABLE_INSPECTION_PANELS` |
 | `factions_snapshot[]` | `keyframe_selector.py` | `world_view_data.gd`, `faction_info_panel.gd`, `faction_palette.gd` | `ENABLE_INSPECTION_PANELS` ‖ `ENABLE_FACTION_PALETTE` |
 | chronicle frame `mentions[]` / `expanded_mentions[]` | `csrc/chronicle.c` → `csrc/pipe/om_pipe.c` | `chronicle_entry.gd`, `chronicle_entry_expansion.gd` | none (A53) |
 | `time_jump_start.ownership_history` | `ownership_history.py` → `keyframe_message.py` | panels (history line, status badge) | `ENABLE_OWNERSHIP_HISTORY` |

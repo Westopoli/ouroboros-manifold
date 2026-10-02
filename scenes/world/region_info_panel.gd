@@ -8,7 +8,10 @@ const TIER_COLORS := {
 	"empty":    Color(0.91, 0.90, 0.88, 0.45),
 }
 
+const _FRAGMENTS_PATH := "res://library/chronicle/fragments.json"
+
 var _region_id: String = ""
+var _names = null
 var _faction_id: String = ""
 
 var _name_label: Label
@@ -208,7 +211,7 @@ func bind(region_meta: Dictionary, faction_id: String, faction_name: String,
 		  faction_color: Color, ownership_line: String) -> void:
 	_faction_id = faction_id
 
-	_name_label.text = String(region_meta.get("name", "—"))
+	_name_label.text = _region_name(str(region_meta.get("region_id", "")))
 	var tier := String(region_meta.get("tier", "—"))
 	_tier_label.text = tier.to_upper()
 	_tier_label.add_theme_color_override("font_color",
@@ -232,6 +235,17 @@ func bind(region_meta: Dictionary, faction_id: String, faction_name: String,
 	_faction_name_label.text = faction_name if faction_name != "" else faction_id
 	_faction_button.disabled = (faction_id == "")
 	_history_label.text = ownership_line
+
+
+func _region_name(raw_id: String) -> String:
+	if raw_id == "":
+		return "—"
+	if _names == null:
+		_names = load("res://scenes/world/chronicle_names.gd").new()
+		var data = JSON.parse_string(FileAccess.get_file_as_string(_FRAGMENTS_PATH))
+		if data is Dictionary:
+			_names.load_tables(data.get("name_tables", {}))
+	return _names.fill_template("{region_name}", raw_id.to_int(), -1)
 
 
 func _set_bar(key: String, raw_value: int) -> void:
