@@ -5,6 +5,12 @@
 # test that is not named here. One node id per line; lines starting with #
 # are comments. Add a line when you add a scale test; the budget misses are
 # tracked in the push ledger, not hidden by this list.
+tests/csim/scale/test_scale_A99_tactical_equivalence.py::test_A99_largest_fight_has_both_sides_over_the_contact_cap
+tests/csim/scale/test_scale_A99_tactical_equivalence.py::test_A99_tactical_trace_equals_recorded_hashes_large[idle_2501]
+tests/csim/scale/test_scale_A99_tactical_equivalence.py::test_A99_tactical_trace_equals_recorded_hashes_large[idle_4996]
+tests/csim/scale/test_scale_A99_tactical_equivalence.py::test_A99_tactical_trace_equals_recorded_hashes_large[fight_2501_gap600]
+tests/csim/scale/test_scale_A99_tactical_equivalence.py::test_A99_tactical_trace_equals_recorded_hashes_large[fight_2501_gap2000]
+tests/csim/scale/test_scale_A99_tactical_equivalence.py::test_A99_tactical_trace_equals_recorded_hashes_large[fight_4996_gap900]
 tests/csim/scale/test_scale_C2_jump.py::test_control_q_021_08_the_jump_exceeds_a_hundredth_of_the_budget
 tests/csim/scale/test_scale_C2_jump.py::test_q_021_08_150_tick_jump_at_400_regions_under_2s
 tests/csim/scale/test_scale_E01.py::test_e01_10000_accessibility_queries_per_tick
