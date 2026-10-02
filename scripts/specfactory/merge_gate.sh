@@ -19,6 +19,7 @@ REPO_ROOT="$(cd "$GATE_DIR/../.." && pwd)"
 PYTHON="${MERGE_GATE_PYTHON:-/home/westopoli/Projects/agora/.venv/bin/python}"
 PIECES_TOML="${MERGE_GATE_PIECES:-$REPO_ROOT/docs/northstar/plans/push/pieces.toml}"
 SIGNATURES_TOML="${MERGE_GATE_SIGNATURES:-$REPO_ROOT/docs/northstar/spec_factory/signatures.toml}"
+PLACEHOLDERS_TXT="${MERGE_GATE_PLACEHOLDERS:-$REPO_ROOT/docs/northstar/spec_factory/placeholder_controls.txt}"
 SYMBOL_MODULES_TOML="$REPO_ROOT/docs/northstar/spec_factory/symbol_modules.toml"
 MAKE_TIMEOUT="${MERGE_GATE_MAKE_TIMEOUT:-300}"
 SUITE_TIMEOUT="${MERGE_GATE_SUITE_TIMEOUT:-600}"
@@ -106,6 +107,14 @@ else
     ok alg_constants ""
 fi
 
+ALGS_LOG="$SCRATCH_ROOT/allowlist_strict.log"
+"$PYTHON" "$GATE_DIR/alg_constants.py" --lint "$CANDIDATE/csrc" --strict >"$ALGS_LOG" 2>&1
+if [[ $? -ne 0 ]]; then
+    reject allowlist_strict "$(grep '^STALE\|^FAIL' "$ALGS_LOG" | tr '\n' ';' | head -c 600)"
+else
+    ok allowlist_strict ""
+fi
+
 # -------------------------------------------------------------- 4. footprint fence
 FP_LOG="$SCRATCH_ROOT/footprint.log"
 "$PYTHON" "$GATE_DIR/merge_gate_support.py" footprint "$CANDIDATE" "$BASE_REF" "$PIECE_ID" \
@@ -143,6 +152,16 @@ if [[ $? -ne 0 ]]; then
     reject sig_blocked "$(tr '\n' ' ' <"$SIGB_LOG")"
 else
     ok sig_blocked "$(cat "$SIGB_LOG")"
+fi
+
+# -------------------------------------------------------------- 5a2. signature artifacts emit-clean (candidate's own table)
+SIGC_LOG="$SCRATCH_ROOT/sig_check.log"
+"$PYTHON" "$GATE_DIR/merge_gate_support.py" sig-check --project "$CANDIDATE" \
+    --table "$CANDIDATE/docs/northstar/spec_factory/signatures.toml" >"$SIGC_LOG" 2>&1
+if [[ $? -ne 0 ]]; then
+    reject sig_check "$(tr '\n' ' ' <"$SIGC_LOG")"
+else
+    ok sig_check "$(cat "$SIGC_LOG")"
 fi
 
 # -------------------------------------------------------------- 5b. reachability lint
@@ -190,6 +209,17 @@ if [[ "$REVERT_MODE" -eq 1 ]]; then
     exit 0
 fi
 
+# -------------------------------------------------------------- 5c. control liveness (A114): the attaching piece's own controls
+CL_LOG="$SCRATCH_ROOT/control_liveness.log"
+"$PYTHON" "$GATE_DIR/merge_gate_support.py" control-liveness "$CANDIDATE" "$PIECE_ID" \
+    --pieces "$PIECES_TOML" --placeholders "$PLACEHOLDERS_TXT" --scratch-root "$SCRATCH_ROOT/liveness" \
+    --python "$PYTHON" >"$CL_LOG" 2>&1
+if [[ $? -ne 0 ]]; then
+    reject control_liveness "$(sed 's/^REJECT //' "$CL_LOG" | tr '\n' ' ')"
+else
+    ok control_liveness "$(sed 's/^OK //' "$CL_LOG" | tr '\n' ' ')"
+fi
+
 # -------------------------------------------------------------- 6. suite_regression, tests/csim and tests/qa/t1 separately
 REG_CSIM_LOG="$SCRATCH_ROOT/regression_csim.log"
 "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/csim \
@@ -207,6 +237,15 @@ if [[ $? -ne 0 ]]; then
     reject regression_qa_t1 "$(cat "$REG_QA_LOG")"
 else
     ok regression_qa_t1 "$(cat "$REG_QA_LOG")"
+fi
+
+REG_SF_LOG="$SCRATCH_ROOT/regression_specfactory.log"
+"$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/specfactory \
+    --python "$PYTHON" --timeout "$SUITE_TIMEOUT" --merge-root "$MERGE_ROOT" >"$REG_SF_LOG" 2>&1
+if [[ $? -ne 0 ]]; then
+    reject specfactory_regression "$(tr '\n' ' ' <"$REG_SF_LOG")"
+else
+    ok specfactory_regression "$(cat "$REG_SF_LOG")"
 fi
 
 # -------------------------------------------------------------- 7. piece acceptance ids green

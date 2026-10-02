@@ -287,7 +287,11 @@ typedef struct {
     uint32_t *prev;
     uint32_t *cell_of;
     uint32_t *scratch;
+    uint32_t *fcnt;   /* per cell, linked units per faction bucket (om_grid_fbucket) */
+    uint32_t *dmg;    /* per cell, badly damaged units; read only while dmg_valid */
+    int       dmg_valid;
 } om_grid;
+#define OM_GRID_FBUCKETS 4
 
 typedef struct {
     om_unit_row        *units;
@@ -324,6 +328,8 @@ static void om_tac_release_arrays(om_tac_state *st) {
     free(st->units);
     free(st->aura_count);
     free(st->grid.head);
+    free(st->grid.fcnt);
+    free(st->grid.dmg);
     free(st->grid.next);
     free(st->grid.prev);
     free(st->grid.cell_of);
@@ -496,9 +502,27 @@ static uint32_t om_grid_cell_of_row(const om_grid *g, const om_unit_row *u) {
            + (uint32_t)om_grid_coord(u->x, g->ox, g->cell, g->cols);
 }
 
+/* Faction bucket: neutral (-1) 0, factions 0 and 1 buckets 1 and 2, every
+ * higher faction the shared last bucket, which is never proven absent. */
+static uint32_t om_grid_fbucket(int32_t faction) {
+    if (faction < 0) return 0;
+    return (uint32_t)faction + 1 < OM_GRID_FBUCKETS ? (uint32_t)faction + 1 : OM_GRID_FBUCKETS - 1;
+}
+
+/* 0 only when the cell provably holds no linked unit of a faction other than
+ * `faction`. */
+static int om_grid_cell_has_other_faction(const om_grid *g, uint32_t cell, int32_t faction) {
+    const uint32_t *c = &g->fcnt[(size_t)cell * OM_GRID_FBUCKETS];
+    uint32_t b = om_grid_fbucket(faction), k;
+    if (b == OM_GRID_FBUCKETS - 1) return 1;
+    for (k = 0; k < OM_GRID_FBUCKETS; k++) if (k != b && c[k]) return 1;
+    return 0;
+}
+
 static void om_grid_link(om_tac_state *st, uint32_t i) {
     om_grid *g = &st->grid;
     uint32_t cell = om_grid_cell_of_row(g, &st->units[i]);
+    g->fcnt[(size_t)cell * OM_GRID_FBUCKETS + om_grid_fbucket(st->units[i].faction_id)]++;
     g->cell_of[i] = cell;
     g->prev[i] = 0;
     g->next[i] = g->head[cell];
@@ -508,6 +532,7 @@ static void om_grid_link(om_tac_state *st, uint32_t i) {
 
 static void om_grid_unlink(om_tac_state *st, uint32_t i) {
     om_grid *g = &st->grid;
+    g->fcnt[(size_t)g->cell_of[i] * OM_GRID_FBUCKETS + om_grid_fbucket(st->units[i].faction_id)]--;
     if (g->prev[i]) g->next[g->prev[i] - 1] = g->next[i];
     else g->head[g->cell_of[i]] = g->next[i];
     if (g->next[i]) g->prev[g->next[i] - 1] = g->prev[i];
@@ -558,11 +583,16 @@ static void om_grid_rebuild(om_tac_state *st) {
     ncells = (uint32_t)g->cols * (uint32_t)g->rows;
     if (ncells > g->head_cap) {
         free(g->head);
+        free(g->fcnt);
+        free(g->dmg);
         g->head = (uint32_t *)malloc((size_t)ncells * sizeof(uint32_t));
-        g->head_cap = g->head ? ncells : 0;
-        if (!g->head) return;
+        g->fcnt = (uint32_t *)malloc((size_t)ncells * OM_GRID_FBUCKETS * sizeof(uint32_t));
+        g->dmg = (uint32_t *)malloc((size_t)ncells * sizeof(uint32_t));
+        g->head_cap = (g->head && g->fcnt && g->dmg) ? ncells : 0;
+        if (!g->head_cap) return;
     }
     memset(g->head, 0, (size_t)ncells * sizeof(uint32_t));
+    memset(g->fcnt, 0, (size_t)ncells * OM_GRID_FBUCKETS * sizeof(uint32_t));
     for (i = st->n_units; i-- > 0;) {
         if (st->units[i].in_use && om_grid_living(&st->units[i])) om_grid_link(st, i);
         else g->cell_of[i] = OM_GRID_UNLINKED;
@@ -581,6 +611,24 @@ static void om_grid_move(om_tac_state *st, uint32_t i) {
 /* Contract (om_internal.h om_grid_iter): visits every unit row whose cached
  * position lies within r of (x, y), inclusive, in cell order (row-major,
  * within a cell the last-linked unit first). */
+/* Iterator filter bits in `done` (bit 0 is the finished flag): bits 1..30 hold
+ * faction + 1 for a faction filter, with OM_ITER_OTHER also set the iterator
+ * is the "any faction but" one. Either way a cell the filter proves empty is
+ * skipped; units within a visited cell keep their order. */
+#define OM_ITER_OTHER 0x80000000u
+#define OM_ITER_FMASK 0x7ffffffeu
+
+static uint32_t om_grid_iter_head(const om_grid *g, const om_grid_iter *it) {
+    uint32_t cell = (uint32_t)it->cy * (uint32_t)g->cols + (uint32_t)it->cx, d = (uint32_t)it->done;
+    int32_t faction = (int32_t)((d & OM_ITER_FMASK) >> 1) - 1;
+    if (d & OM_ITER_OTHER) {
+        if (!om_grid_cell_has_other_faction(g, cell, faction)) return 0;
+    } else if (d & OM_ITER_FMASK) {
+        if (!g->fcnt[(size_t)cell * OM_GRID_FBUCKETS + om_grid_fbucket(faction)]) return 0;
+    }
+    return g->head[cell];
+}
+
 static void om_grid_iter_begin_st(om_grid_iter *it, om_tac_state *st, double x, double y, double r) {
     om_grid *g = &st->grid;
     double reach = (r < 0.0 ? -r : r) + OM_GRID_PAD;
@@ -595,7 +643,7 @@ static void om_grid_iter_begin_st(om_grid_iter *it, om_tac_state *st, double x, 
     it->cy1 = om_grid_coord(y + reach, g->oy, g->cell, g->rows);
     it->cx = it->cx0;
     it->cy = om_grid_coord(y - reach, g->oy, g->cell, g->rows);
-    it->cur = g->head[(uint32_t)it->cy * (uint32_t)g->cols + (uint32_t)it->cx];
+    it->cur = om_grid_iter_head(g, it);
 }
 
 uint32_t om_grid_iter_next(om_grid_iter *it) {
@@ -607,14 +655,15 @@ uint32_t om_grid_iter_next(om_grid_iter *it) {
         while (it->cur) {
             const om_unit_row *u = &st->units[it->cur - 1];
             it->cur = g->next[it->cur - 1];
-            if ((it->done & ~1) && u->faction_id != (int32_t)((uint32_t)it->done >> 1) - 1) continue;
+            if (!((uint32_t)it->done & OM_ITER_OTHER) && ((uint32_t)it->done & OM_ITER_FMASK)
+                && u->faction_id != (int32_t)(((uint32_t)it->done & OM_ITER_FMASK) >> 1) - 1) continue;
             if (om_tac_dist_le(u->x - it->x, u->y - it->y, it->r)) return u->unit_id;
         }
         if (++it->cx > it->cx1) {
             it->cx = it->cx0;
             if (++it->cy > it->cy1) { it->done |= 1; return 0; }
         }
-        it->cur = g->head[(uint32_t)it->cy * (uint32_t)g->cols + (uint32_t)it->cx];
+        it->cur = om_grid_iter_head(g, it);
     }
 }
 
@@ -629,6 +678,16 @@ void om_grid_iter_begin_faction(om_grid_iter *it, om_world *w, int32_t faction, 
     om_grid_iter_begin_st(it, om_tac(w), x, y, r);
     if (faction < 0 || faction >= 0x3fffffff) { it->done |= 1; return; }
     it->done |= (int)((uint32_t)(faction + 1) << 1);
+    if (it->cur) it->cur = om_grid_iter_head(&om_tac(w)->grid, it);
+}
+
+/* Internal: like the faction iterator but over units of every faction except
+ * `faction` (callers still test each unit). */
+static void om_grid_iter_begin_other_st(om_grid_iter *it, om_tac_state *st, int32_t faction, double x, double y, double r) {
+    om_grid_iter_begin_st(it, st, x, y, r);
+    if (it->done) return;
+    it->done = (int)(OM_ITER_OTHER | ((uint32_t)(faction < 0 ? 0 : faction < 0x3fffffff ? faction + 1 : 0x3fffffff) << 1));
+    it->cur = om_grid_iter_head(&st->grid, it);
 }
 
 static void om_grid_sift_down(uint32_t *a, uint32_t root, uint32_t n) {
@@ -856,7 +915,7 @@ static om_unit_row *om_tac_nearest_enemy_within_range(om_tac_state *st, const om
     double best_d2 = 0.0;
     uint32_t id;
     om_grid_iter it;
-    om_grid_iter_begin_st(&it, st, self->x, self->y, range);
+    om_grid_iter_begin_other_st(&it, st, self->faction_id, self->x, self->y, range);
     while ((id = om_grid_iter_next(&it)) != 0) {
         om_unit_row *cand = &st->units[id - 1];
         double dx, dy, d2;
@@ -918,6 +977,7 @@ static double om_grid_cell_gap2(const om_grid *g, int32_t cx, int32_t cy, double
 static int om_tac_enemy_in_cell(om_tac_state *st, const om_unit_row *self, double range, uint32_t cell) {
     const om_grid *g = &st->grid;
     uint32_t cur;
+    if (!om_grid_cell_has_other_faction(g, cell, self->faction_id)) return 0;
     for (cur = g->head[cell]; cur; cur = g->next[cur - 1]) {
         const om_unit_row *cand = &st->units[cur - 1];
         if (!om_tac_dist_le(cand->x - self->x, cand->y - self->y, range)) continue;
@@ -950,7 +1010,7 @@ static int om_tac_enemy_within_range(om_tac_state *st, const om_unit_row *self, 
 static int om_tac_enemy_category_within(om_tac_state *st, const om_unit_row *self, int category, double range) {
     uint32_t id;
     om_grid_iter it;
-    om_grid_iter_begin_st(&it, st, self->x, self->y, range);
+    om_grid_iter_begin_other_st(&it, st, self->faction_id, self->x, self->y, range);
     while ((id = om_grid_iter_next(&it)) != 0) {
         const om_unit_row *cand = &st->units[id - 1];
         if (cand->hp <= 0.0) continue;
@@ -962,16 +1022,57 @@ static int om_tac_enemy_category_within(om_tac_state *st, const om_unit_row *sel
     return 0;
 }
 
+static int om_tac_badly_damaged_candidate(const om_unit_row *self, const om_unit_row *cand) {
+    if (cand->hp <= 0.0) return 0;
+    if (cand->faction_id != self->faction_id) return 0;
+    return !(cand->hp >= cand->max_hp * OM_ABILITY_RALLY_AUTOTRIGGER_HP_FRACTION);
+}
+
+/* Per-cell count of units below the Rally hp threshold (any faction), built
+ * once at the top of the autotrigger scan. Nothing in that scan moves a unit
+ * or lowers hp (Rally only heals), so a cell counted 0 stays 0 for the whole
+ * scan; a stale nonzero count only costs a walk. */
+static void om_grid_build_damage(om_tac_state *st) {
+    om_grid *g = &st->grid;
+    uint32_t c, cur, ncells;
+    g->dmg_valid = 0;
+    if (!g->built) om_grid_rebuild(st);
+    if (!g->built) return;
+    ncells = (uint32_t)g->cols * (uint32_t)g->rows;
+    for (c = 0; c < ncells; c++) {
+        uint32_t n = 0;
+        for (cur = g->head[c]; cur; cur = g->next[cur - 1]) {
+            const om_unit_row *u = &st->units[cur - 1];
+            if (!(u->hp <= 0.0) && !(u->hp >= u->max_hp * OM_ABILITY_RALLY_AUTOTRIGGER_HP_FRACTION)) n++;
+        }
+        g->dmg[c] = n;
+    }
+    g->dmg_valid = 1;
+}
+
 static int om_tac_badly_damaged_friendly_within(om_tac_state *st, const om_unit_row *self, double range) {
+    const om_grid *g = &st->grid;
     uint32_t id;
     om_grid_iter it;
+    if (g->dmg_valid) {
+        om_cell_span sp;
+        int32_t cx, cy;
+        if (!om_grid_span(st, self->x, self->y, range, &sp)) return 0;
+        for (cy = sp.cy0; cy <= sp.cy1; cy++) {
+            for (cx = sp.cx0; cx <= sp.cx1; cx++) {
+                uint32_t cell = (uint32_t)cy * (uint32_t)g->cols + (uint32_t)cx, cur;
+                if (!g->dmg[cell]) continue;
+                for (cur = g->head[cell]; cur; cur = g->next[cur - 1]) {
+                    const om_unit_row *cand = &st->units[cur - 1];
+                    if (om_tac_dist_le(cand->x - self->x, cand->y - self->y, range) && om_tac_badly_damaged_candidate(self, cand)) return 1;
+                }
+            }
+        }
+        return 0;
+    }
     om_grid_iter_begin_st(&it, st, self->x, self->y, range);
     while ((id = om_grid_iter_next(&it)) != 0) {
-        const om_unit_row *cand = &st->units[id - 1];
-        if (cand->hp <= 0.0) continue;
-        if (cand->faction_id != self->faction_id) continue;
-        if (cand->hp >= cand->max_hp * OM_ABILITY_RALLY_AUTOTRIGGER_HP_FRACTION) continue;
-        return 1;
+        if (om_tac_badly_damaged_candidate(self, &st->units[id - 1])) return 1;
     }
     return 0;
 }
@@ -1151,6 +1252,7 @@ static void om_ability_manual_activate(om_world *w, om_tac_state *st, om_unit_ro
  * (Fortify). */
 static void om_ability_autotrigger_scan(om_tac_state *st) {
     uint32_t i;
+    if (st->n_wardens) om_grid_build_damage(st);
     for (i = 0; i < st->n_units; i++) {
         om_unit_row *u = &st->units[i];
         if (!u->in_use || u->hp <= 0.0) continue;
@@ -1191,6 +1293,7 @@ static void om_ability_autotrigger_scan(om_tac_state *st) {
             default: break;
         }
     }
+    st->grid.dmg_valid = 0;
 }
 
 static void om_ability_tick_surge(om_unit_row *u, uint32_t period) {
@@ -1342,6 +1445,7 @@ typedef struct {
 static void om_tac_nearest_scan_cell(om_tac_state *st, const om_unit_row *self, double radius, uint32_t cell, om_nearest_acc *acc) {
     const om_grid *g = &st->grid;
     uint32_t cur;
+    if (!om_grid_cell_has_other_faction(g, cell, self->faction_id)) return;
     for (cur = g->head[cell]; cur; cur = g->next[cur - 1]) {
         om_unit_row *cand = &st->units[cur - 1];
         double dx = cand->x - self->x, dy = cand->y - self->y, d2;
@@ -1395,7 +1499,7 @@ static om_unit_row *om_tac_nearest_hostile(om_tac_state *st, const om_unit_row *
 static int om_tac_hostile_within(om_tac_state *st, const om_unit_row *self, double radius) {
     uint32_t id;
     om_grid_iter it;
-    om_grid_iter_begin_st(&it, st, self->x, self->y, radius);
+    om_grid_iter_begin_other_st(&it, st, self->faction_id, self->x, self->y, radius);
     while ((id = om_grid_iter_next(&it)) != 0) {
         const om_unit_row *cand = &st->units[id - 1];
         if (cand->hp <= 0.0 || cand->stealth) continue;

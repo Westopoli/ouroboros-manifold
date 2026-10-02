@@ -29,6 +29,7 @@ import suite_regression as sr  # noqa: E402
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_PIECES = REPO / "docs/northstar/plans/push/pieces.toml"
 DEFAULT_SIGNATURES = REPO / "docs/northstar/spec_factory/signatures.toml"
+DEFAULT_PLACEHOLDERS = REPO / "docs/northstar/spec_factory/placeholder_controls.txt"
 DEFAULT_SYMBOL_MODULES = REPO / "docs/northstar/spec_factory/symbol_modules.toml"
 
 DEFAULT_IGNORES = (".swarm/**", ".claude/**", "logs/**",
@@ -121,6 +122,21 @@ def sig_blocked_check(project: Path, table: Path) -> tuple[bool, str]:
     if proc.returncode != 0:
         return False, f"sig_table --report failed (rc={proc.returncode}): {proc.stderr.strip()}"
     return True, "no BLOCKED signatures"
+
+
+def sig_check(project: Path, table: Path) -> tuple[bool, str]:
+    """(ok, detail). Runs `sig_table --check`: fails when --emit would change a file;
+    detail names the stale files."""
+    proc = subprocess.run(
+        [sys.executable, str(Path(__file__).resolve().parent / "sig_table.py"),
+         "--project", str(project), "--table", str(table), "--check"],
+        capture_output=True, text=True)
+    if proc.returncode == 0:
+        return True, "signature artifacts emit-clean"
+    for line in proc.stdout.splitlines():
+        if line.startswith("stale:"):
+            return False, f"sig_table --emit would change: {line[len('stale:'):].strip()}"
+    return False, f"sig_table --check failed (rc={proc.returncode}): {(proc.stdout + proc.stderr).strip()}"
 
 
 def _load_pieces(pieces_path: Path) -> dict[str, dict]:
@@ -399,6 +415,52 @@ def acceptance_ids(piece_id: str, *, pieces_path: Path = DEFAULT_PIECES) -> tupl
         elif a.endswith(".py") or "::" in a or a in ("tests/transport", "tests/qa/t1", "tests/csim"):
             pytest_ids.append(a)
     return pytest_ids, godot_ids
+
+
+def piece_controls(piece_ids: list[str], pieces_path: Path, project: Path) -> list[Path]:
+    """Controls of the pieces' epics: an acceptance path `.../test_E<NN>_...` selects
+    tests/csim/controls/test_control_e<NN>_*.py in `project`. No E<NN> path, no controls."""
+    pieces = _load_pieces(pieces_path)
+    epics: set[str] = set()
+    for pid in piece_ids:
+        piece = pieces.get(resolve_piece_id(pid, pieces))
+        for a in (piece or {}).get("acceptance") or []:
+            m = re.search(r"test_E(\d+)_", a)
+            if m:
+                epics.add(m.group(1))
+    found: set[Path] = set()
+    for nn in epics:
+        found.update((Path(project) / "tests/csim/controls").glob(f"test_control_e{nn}_*.py"))
+    return sorted(found)
+
+
+def control_liveness_check(project: Path, piece_ids: list[str], pieces_path: Path, placeholders_path: Path,
+                           scratch_root: Path | None = None, python_exe: str | None = None) -> tuple[bool, str]:
+    """control_liveness.py over the pieces' controls in the candidate, listed placeholders removed first.
+    Rejects any DEAD; an ERROR control (cannot run at all) also rejects, since it proves nothing."""
+    project = Path(project).resolve()
+    listed: set[str] = set()
+    if Path(placeholders_path).exists():
+        listed = {ln.strip() for ln in Path(placeholders_path).read_text().splitlines()
+                  if ln.strip() and not ln.strip().startswith("#")}
+    controls = piece_controls(piece_ids, pieces_path, project)
+    run = [c for c in controls if c.relative_to(project).as_posix() not in listed]
+    skipped = len(controls) - len(run)
+    if not run:
+        return True, f"LIVE=0 DEAD=0 ERROR=0 placeholders_skipped={skipped}"
+    scratch = Path(scratch_root) if scratch_root else Path(tempfile.mkdtemp(prefix="control_liveness."))
+    proc = subprocess.run([python_exe or sys.executable, str(Path(__file__).with_name("control_liveness.py")),
+                           "--project", str(project), "--scratch-root", str(scratch), "--json",
+                           *(["--python", python_exe] if python_exe else []), *map(str, run)],
+                          capture_output=True, text=True)
+    try:
+        report = json.loads(proc.stdout)
+    except ValueError:
+        return False, f"control_liveness.py produced no report: {(proc.stderr or proc.stdout)[:300]}"
+    bad = [f"{v['verdict']} {v['control']}" for v in report["verdicts"] if v["verdict"] != "LIVE"]
+    detail = (f"LIVE={report['live']} DEAD={report['dead']} ERROR={report['error']} "
+              f"placeholders_skipped={skipped}" + (": " + "; ".join(bad) if bad else ""))
+    return not bad, detail
 
 
 def is_increment(piece_id: str, pieces: dict[str, dict]) -> str | None:
@@ -689,6 +751,10 @@ def main(argv: list[str]) -> int:
     sb.add_argument("--project", default=str(REPO))
     sb.add_argument("--table", default=str(DEFAULT_SIGNATURES))
 
+    sc = sub.add_parser("sig-check")
+    sc.add_argument("--project", default=str(REPO))
+    sc.add_argument("--table", default=None)
+
     ai = sub.add_parser("acceptance-ids")
     ai.add_argument("piece_id")
     ai.add_argument("--pieces", default=str(DEFAULT_PIECES))
@@ -699,6 +765,14 @@ def main(argv: list[str]) -> int:
     ut.add_argument("piece_id")
     ut.add_argument("--pieces", default=str(DEFAULT_PIECES))
     ut.add_argument("--cap", type=int, default=10)
+
+    cl = sub.add_parser("control-liveness")
+    cl.add_argument("project")
+    cl.add_argument("piece_ids")
+    cl.add_argument("--pieces", default=str(DEFAULT_PIECES))
+    cl.add_argument("--placeholders", default=str(DEFAULT_PLACEHOLDERS))
+    cl.add_argument("--scratch-root", default=None)
+    cl.add_argument("--python", default=None)
 
     av = sub.add_parser("acceptance-verdict")
     av.add_argument("piece_id")
@@ -724,6 +798,11 @@ def main(argv: list[str]) -> int:
     if args.cmd == "footprint":
         ok, detail = footprint_check(Path(args.candidate_dir), args.base_ref, args.piece_id,
                                       pieces_path=Path(args.pieces))
+    elif args.cmd == "control-liveness":
+        ok, detail = control_liveness_check(Path(args.project), args.piece_ids.split(","), Path(args.pieces),
+                                            Path(args.placeholders),
+                                            scratch_root=Path(args.scratch_root) if args.scratch_root else None,
+                                            python_exe=args.python)
     elif args.cmd == "acceptance-ids":
         pytest_ids, godot_ids = acceptance_ids(args.piece_id, pieces_path=Path(args.pieces))
         for i in pytest_ids:
@@ -739,6 +818,10 @@ def main(argv: list[str]) -> int:
         ok, detail = gd_class_names_check(Path(args.root))
     elif args.cmd == "sig-blocked":
         ok, detail = sig_blocked_check(Path(args.project), Path(args.table))
+    elif args.cmd == "sig-check":
+        project = Path(args.project)
+        ok, detail = sig_check(project, Path(args.table) if args.table
+                               else project / "docs/northstar/spec_factory/signatures.toml")
     elif args.cmd == "acceptance-verdict":
         pieces = _load_pieces(Path(args.pieces))
         resolved = is_increment(args.piece_id, pieces)
