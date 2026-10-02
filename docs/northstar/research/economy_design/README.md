@@ -110,6 +110,22 @@ Recorded as:
 - Goals 1 and 5 marked done.
 - Goal 3 started: E-17 S-166 holds the direction, Q-166-01 the question, `settlement_generation_options.md` the options.
 
+## Decisions (2026-10-02, eighth round: settlement generation)
+
+Westley, verbatim, answering `settlement_generation_options.md`:
+
+"we can remove the project.godot change, it's useless and can be destroyed. 2 other chats are working on this project in parrallel so be careful with git actions you choose - P1: 1C, your 1B said "stops at cliffs", I don't want our population engine to "give up" when it comes across difficult terrain, we are going to design it to have the capacity to adapt and place buildings in sometimes wild locations, like buildings inside of a cliff, or underneath a waterfall, or on a steep mountainside. I want to pick 1C but I wanted to make sure the perception from 1B was corrected regarding the desired behavior of the whole system. P2: 2A P3: 3C+3A. P4: 4B, the point of the biome generation is that it's stochiastic and unrulely P5: 5B+5C P6: 6A sounds the best but it's a little vague, maybe expand on what you meant by this before I lock it in. P7: I'm confused about the two resolutions option. Ideally I'd like to have deep detail when the player is all the way zoomed in, but still get a picture of the landscape shape when they're zoomed out (World of Warships style map view, reference screenshots in repo). Definitely bigger than what we currently have, I want the scale to be un-parralleled in any RTS style game before (no mans sky level scale, smooth transitions between vastly different zoom levels)). This is why we need to design efficient visual systems."
+
+Recorded as:
+
+- Part 1, decided: 1C, the growing field. Corrected for the whole system: the population engine never gives up at difficult terrain. It adapts and places buildings in wild locations, such as inside a cliff, underneath a waterfall, or on a steep mountainside.
+- Part 2, decided: 2A, clear and refill.
+- Part 3, decided: 3C with 3A, waves of growth and stages by threshold.
+- Part 4, decided: 4B, whatever the terrain gives. The biome generation is meant to be stochastic and unruly.
+- Part 5, decided: 5B with 5C, landforms, and the region decides.
+- Part 6, leaning 6A, not locked: he asked for it to be expanded first. Expanded in `settlement_generation_options.md`.
+- Part 7, open: the two-resolutions option was unclear. What he wants: deep detail fully zoomed in, the shape of the landscape zoomed out (World of Warships map view), a map much bigger than today's, scale unparalleled in any RTS, No Man's Sky level, smooth transitions between vastly different zoom levels, and efficient visual systems to make it possible. Restated as option 7D in `settlement_generation_options.md`.
+
 ## Files
 
 - `prior_art_resources.md`: cited digest of resource systems in other games.

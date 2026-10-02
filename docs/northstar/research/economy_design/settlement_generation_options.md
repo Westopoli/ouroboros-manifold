@@ -2,6 +2,20 @@
 
 Written 2026-10-01 for Westley. Options per part, surface level, for him to pick from or fuse. His direction is verbatim in E-17 S-166 R-166-01. The flag is Q-166-01.
 
+## Decided, 2026-10-02
+
+| Part | Decision |
+|---|---|
+| 1 Density field | **1C, the growing field.** And for the whole system: the population engine never gives up at difficult terrain. It adapts, and builds in wild places: inside a cliff, under a waterfall, on a steep mountainside. |
+| 2 Morphing | **2A, clear and refill.** |
+| 3 Growth | **3C with 3A:** waves, and stages by threshold. |
+| 4 Site | **4B, whatever the terrain gives.** The generation is meant to be stochastic and unruly. |
+| 5 Variety | **5B with 5C:** landforms, and the region decides. |
+| 6 Layers | Leaning 6A; expanded below before he locks it. |
+| 7 Scale | Open; restated below as 7D. |
+
+Option 1B's line that the city "stops at cliffs" was wrong for this game and is withdrawn. Difficult ground changes what gets built there, not whether anything is.
+
 ## What he fixed
 
 - The self-built part of a city is mostly cosmetic. The economy itself is run by rules, and run well.
@@ -78,6 +92,77 @@ This is the functional part. The bible's layer rules today: five layers, fixed f
 - **7A. Today's size.** Keep 100 wu cells and a canvas up to 32,000 wu. Everything is generated at once. Simplest; the map is large but not unprecedented.
 - **7B. Bigger, in chunks.** A canvas several times larger, generated and drawn in chunks as the camera and the armies need them.
 - **7C. Two resolutions.** The sim owns a coarse functional map: layer, land, slopes, water, density. It is the same on every machine. The client draws all fine detail (every self-built building, every prop) from the seed and the sim's fields, and none of it feeds back. Buildings the player places are real things in the sim; the self-built city is drawn in bulk and costs the sim nothing. The city is still functional through the fields: dense districts slow movement and give cover, as obstacle and cover density already do.
+
+---
+
+## 6A expanded: terraces are the layers
+
+**The rule.** Height above sea level is cut into five bands, the same on every map. The band a piece of ground falls in is its layer. With peaks of 3,000 to 5,000 wu, a band is about 1,000 wu tall.
+
+| Layer | Height band (placeholder numbers) | Reads as |
+|---|---|---|
+| 1 | sea level to 1,000 | coast, valley floor, river plain |
+| 2 | 1,000 to 2,000 | foothills, lower terraces |
+| 3 | 2,000 to 3,000 | hillsides, plateaus |
+| 4 | 3,000 to 4,000 | high shelves, mountain shoulders |
+| 5 | above 4,000 | peaks, summit fortresses |
+
+**What follows from it, using rules the bible already has.**
+
+- **Ground fills the layers below it.** Where the ground is on layer 3, layers 1 and 2 at that spot are solid rock. That is the bible's existing "terrain blocks layers at specific places". A building inside a cliff, or a tunnel, is an opening in that rock.
+- **Walking units** stand on the ground's layer and change layer only on a slope: a natural ramp, a pass, a switchback road, stairs, a built lift. Where the ground jumps a band steeply, it is a cliff and they cannot cross.
+- **Flying units** can be on the ground's layer or any layer above it, never below.
+- **A slope's halfway line** is already the line where a unit passes from one layer to the next (R-004-06). Every ramp up a mountainside is a line on the map that can be held.
+- **Fighting across bands** uses the cross-layer rules the layer lab is settling. A terrace above a terrace is high ground with real rules behind it.
+- **Inside a band** the ground still rises and falls. That is visual and affects the camera; for the rules it is one layer.
+
+**What it does to a base.**
+
+- A mountainside city has districts on every band. The attacker takes the ramp to layer 2, then the stair to layer 3, and so on; the defender falls back upward.
+- A valley city sits on layer 1 with rims on layer 3. Whoever holds the rim shoots down.
+- A plains city is all on layer 1. Its fights are flat, and flyers own layers 2 to 5.
+- An archipelago is mostly layer 1 with water between; a peak on one island is the high ground.
+
+**Three things to settle inside 6A.**
+
+1. **Benched or natural.** Benched: the generator shapes the ground into wide shelves with steep risers at each band edge, so a layer boundary is always a visible cliff or ramp. Natural: the ground rolls freely and a band edge can cross an open meadow, marked only by a drawn line. Benched is what the prototype's terrace shaping already does, and it is far easier to read.
+2. **Fixed heights or fitted to the map.** Fixed: the bands are the same heights everywhere, so a low map uses only layers 1 and 2 on the ground. Fitted: each map stretches the five bands over its own range, so every map uses all five. The register already answered that the mapping is fixed globally (Q-E01-01).
+3. **Space.** The Settled Reach has no ground. Its layers stay pure altitude, and asteroids and stations are the things that block them. Nothing changes there.
+
+**Cost.** Maps differ in how much layer play the ground gives, by design: the unruly generation decides. It needs testing in the layer lab before it is fixed.
+
+---
+
+## Part 7 restated: what "two resolutions" meant, and option 7D
+
+The earlier wording was unclear. It was about who keeps track of what, not about how sharp anything looks.
+
+- **The sim** needs to know only what affects play: the layer of the ground, where slopes and water are, how dense a district is. It can know that coarsely, and it must be identical on every machine.
+- **The screen** can show as much detail as the zoom calls for. None of that detail has to be stored or sent; it is worked out from the seed when the camera needs it.
+
+What Westley asked for is the screen half, taken as far as it goes:
+
+**7D. One world, continuous detail.**
+
+- **The world is a formula, not a stored map.** Height, biome and density at any point come from the seed. Asking for more detail means sampling the same formula more finely. This is how No Man's Sky and Minecraft hold worlds far larger than memory.
+- **Terrain is drawn in tiles that subdivide as the camera comes down.** From high up, a few large coarse tiles give the shape of the land; close in, small fine tiles give rocks and ledges. The change is gradual, so there is no pop and no loading break.
+- **Buildings and units step down with distance.** Close: full models, construction scaffolds, people. Farther: simple shapes drawn in bulk. Farther still: district-coloured blocks, then the World of Warships map view, with unit groups as icons.
+- **One continuous zoom** from a single unit to the whole battlefield, on the camera's height-above-ground floor already decided.
+- **The self-built city costs the sim nothing.** It is drawn from the density field. Buildings the player places are real things in the sim.
+
+**Two questions inside 7D.**
+
+1. **How big.** Today the largest canvas is 32,000 wu. Size has a price in play: a Raider at speed 150 crosses 32,000 wu in about 3.5 minutes, and a Bastion at speed 40 takes about 13.
+
+| Canvas | Area against today | Raider crossing | Bastion crossing |
+|---|---|---|---|
+| 64,000 wu | 4x | 7 min | 27 min |
+| 128,000 wu | 16x | 14 min | 53 min |
+| 256,000 wu | 64x | 28 min | 107 min |
+
+   Very large maps need a way to move forces fast: travel lanes (E-17 S-165), transports, and the forward bases already decided.
+
+2. **Where the zoom stops.** At the battlefield's map view, or on out to the region and the galaxy in one unbroken motion. The bible currently keeps the galaxy view separate from a mission.
 
 ---
 
