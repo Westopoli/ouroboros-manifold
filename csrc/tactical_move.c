@@ -62,7 +62,8 @@
 #define OM_MOVE_MAX_UNITS (OM_MAX_UNITS + 1)
 #define OM_MOVE_MAX_GROUPS OM_MAX_UNITS
 #define OM_MOVE_MAX_GROUP_MEMBERS OM_MAX_UNITS
-#define OM_MOVE_MAX_DENSITY_CELLS 1024
+/* Dense density grid (A134): one value per 100 wu cell of the largest canvas, per layer. */
+#define OM_MOVE_DENSITY_SIDE (OM_CANVAS_SIZE_RANGES_LARGE_HI / OM_NAVMESH_CELL_SIZE)
 #define OM_MOVE_MAX_ROUTE_CACHE OM_MAX_UNITS
 #define OM_MOVE_MAX_QUEUE OM_MAX_UNITS
 #define OM_MOVE_BFS_CAP 512
@@ -176,13 +177,6 @@ typedef struct {
 
 typedef struct {
     int      in_use;
-    int32_t  cx, cy;
-    uint32_t layer;
-    double   density;
-} om_move_density_cell;
-
-typedef struct {
-    int      in_use;
     uint32_t layer;
     int32_t  cx, cy;
 } om_move_route_entry;
@@ -208,8 +202,7 @@ typedef struct {
     uint64_t last_synced_tick;
     uint32_t period_seen;
 
-    om_move_density_cell density_cells[OM_MOVE_MAX_DENSITY_CELLS];
-    uint32_t              n_density_cells;
+    double               *density; /* OM_LAYER_COUNT * OM_MOVE_DENSITY_SIDE^2, allocated by the first set */
 
     om_move_route_entry route_cache[OM_MOVE_MAX_ROUTE_CACHE];
     uint32_t             n_route_cache;
@@ -318,7 +311,13 @@ static void om_pp_load_defaults(double *out) {
     for (k = 0; k < OM_TP__COUNT; k++) out[k] = OM_PP_ROWS[k].def;
 }
 
+/* Defined in tactical_mapgen.c: the route grid's blocked bits (om_map_block_rect and density above the threshold).
+ * See also: om_mapgen_cell_blocked / om_mapgen_cell_set_density there. */
+int om_mapgen_cell_blocked(const om_world *w, uint32_t layer, int32_t cx, int32_t cy);
+void om_mapgen_cell_set_density(om_world *w, uint32_t layer, int32_t cx, int32_t cy, double density);
+
 static void om_move_state_free_fn(void *p) {
+    if (p) free(((om_move_state *)p)->density);
     free(p);
 }
 
@@ -985,18 +984,32 @@ static om_move_group *om_move_group_find(om_move_state *ms, uint32_t id) {
 
 /* ------------------------------------------------------------- navmesh */
 
-static om_move_density_cell *om_move_density_find(om_move_state *ms, int32_t cx, int32_t cy, uint32_t layer) {
-    uint32_t i;
-    for (i = 0; i < ms->n_density_cells; i++) {
-        om_move_density_cell *c = &ms->density_cells[i];
-        if (c->in_use && c->cx == cx && c->cy == cy && c->layer == layer) return c;
+static int32_t om_move_cells_for(double extent) {
+    int32_t n = (int32_t)(extent / OM_NAVMESH_CELL_SIZE);
+    return (double)n * OM_NAVMESH_CELL_SIZE < extent ? n + 1 : n;
+}
+
+/* A cell of the density grid, or -1 when it lies outside the grid: the canvas when one is set, else the
+ * largest canvas (A134: refused cleanly, nothing stored). */
+static long om_move_density_index(const om_move_state *ms, int32_t cx, int32_t cy, uint32_t layer) {
+    int32_t nx = OM_MOVE_DENSITY_SIDE, ny = OM_MOVE_DENSITY_SIDE;
+    if (ms->canvas_w > 0.0 && ms->canvas_h > 0.0) {
+        nx = om_move_cells_for(ms->canvas_w);
+        ny = om_move_cells_for(ms->canvas_h);
     }
-    return NULL;
+    if (layer >= OM_LAYER_COUNT || cx < 0 || cy < 0 || cx >= nx || cy >= ny) return -1;
+    return ((long)layer * OM_MOVE_DENSITY_SIDE + cy) * OM_MOVE_DENSITY_SIDE + cx;
 }
 
 static double om_move_density_cell_get(om_move_state *ms, int32_t cx, int32_t cy, uint32_t layer) {
-    om_move_density_cell *c = om_move_density_find(ms, cx, cy, layer);
-    return c ? c->density : 0.0;
+    long i = om_move_density_index(ms, cx, cy, layer);
+    return (i < 0 || !ms->density) ? 0.0 : ms->density[i];
+}
+
+/* The route grid as movement reads it: a cell is blocked on a layer when the mapgen grid says so (om_map_block_rect,
+ * the canvas edge) or its density is above the threshold (R-097-01). */
+static int om_move_cell_blocked(const om_world *w, om_move_state *ms, uint32_t layer, int32_t cx, int32_t cy) {
+    return om_mapgen_cell_blocked(w, layer, cx, cy) || om_move_density_cell_get(ms, cx, cy, layer) > OM_NAVMESH_OBSTACLE_THRESHOLD;
 }
 
 static double om_move_density_at_pos(om_move_state *ms, double x, double y, uint32_t layer) {
@@ -1979,22 +1992,17 @@ int om_group_is_active(const om_world *w, uint32_t gid) {
 
 void om_map_set_obstacle_density(om_world *w, uint32_t p0, uint32_t p1, uint32_t p2, double p3) {
     om_move_state *ms;
-    om_move_density_cell *c;
+    long i;
     if (!w) return;
     ms = om_ms(w);
-    c = om_move_density_find(ms, (int32_t)p0, (int32_t)p1, p2);
-    if (c) {
-        c->density = p3;
-        return;
+    i = om_move_density_index(ms, (int32_t)p0, (int32_t)p1, p2);
+    if (i < 0) return;
+    if (!ms->density) {
+        ms->density = (double *)calloc((size_t)OM_LAYER_COUNT * OM_MOVE_DENSITY_SIDE * OM_MOVE_DENSITY_SIDE, sizeof(double));
+        if (!ms->density) return;
     }
-    if (ms->n_density_cells < OM_MOVE_MAX_DENSITY_CELLS) {
-        c = &ms->density_cells[ms->n_density_cells++];
-        c->in_use = 1;
-        c->cx = (int32_t)p0;
-        c->cy = (int32_t)p1;
-        c->layer = p2;
-        c->density = p3;
-    }
+    ms->density[i] = p3;
+    om_mapgen_cell_set_density(w, p2, (int32_t)p0, (int32_t)p1, p3);
 }
 
 uint32_t om_navmesh_find_path(om_world *w, double p0, double p1, double p2, double p3, uint32_t p4) {
@@ -2029,7 +2037,7 @@ double om_navmesh_get_cell_size(const om_world *w) {
 int om_navmesh_is_cell_blocked(const om_world *w, uint32_t p0, uint32_t p1, uint32_t p2) {
     om_world *ww = (om_world *)w;
     if (!w) return 0;
-    return om_move_density_cell_get(om_ms(ww), (int32_t)p0, (int32_t)p1, p2) > OM_NAVMESH_OBSTACLE_THRESHOLD;
+    return om_move_cell_blocked(w, om_ms(ww), p2, (int32_t)p0, (int32_t)p1);
 }
 
 int om_navmesh_is_path_straightened(const om_world *w) {
