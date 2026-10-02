@@ -162,7 +162,7 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-156 | E-21 | "Headless bot matches flag broken matchups automatically." | Spec'd, blocked on Q-158-01 | `epics/E-21-offline-ai-pipeline.md` S-156 |
 | S-157 | E-21 | "Someday, per-civilization unit variety and generated archetypes." | Deferred (A-278, A-279) | `epics/E-21-offline-ai-pipeline.md` S-157 |
 | S-158 | E-21 | "Agora reads distilled rules derived from these epics, never the bible." | Spec'd | `epics/E-21-offline-ai-pipeline.md` S-158 |
-| S-159 | E-19 | "A real economy: run by a partner, or running itself." | Design decided 2026-10-01, not scheduled (Q-159-02, -03, -07 to -11) | `epics/E-19-multiplayer.md` S-159 |
+| S-159 | E-19 | "A real economy: run by a partner, or running itself." | Design decided 2026-10-01, not scheduled (Q-159-02, -03, -07 to -10) | `epics/E-19-multiplayer.md` S-159 |
 | S-160 | E-02 | "A feature I switch off actually skips its step; a fresh world drifts by default." | Ready | `epics/E-02-region-fields-and-drift.md` S-160 |
 | S-161 | E-16 | "I pull the camera back until the battle reads as a map and give groups move orders from there." | Spec'd, blocked on Q-103-05 | `epics/E-16-client-camera-hud-and-world-view.md` S-161 |
 | S-162 | E-01 | "I ping a layer I choose at a place I choose and see it for a moment; whoever I ping learns roughly where I am." | Spec'd | `epics/E-01-layer-system.md` S-162 |
