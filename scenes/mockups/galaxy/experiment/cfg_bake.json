@@ -1,0 +1,10 @@
+{"out":"bake","runs":[
+ {"name":"bake_default","galaxy":"default","mode":"bake"},
+ {"name":"bake_big","galaxy":"big","mode":"bake"},
+ {"name":"dump_default_64","galaxy":"default","mode":"field","grid":64,"variant":{"steps":64,"cross":4,"skip":true,"refine":2,"divisor":2},"positions":["d25"]},
+ {"name":"dump_default_96","galaxy":"default","mode":"field","grid":96,"variant":{"steps":64,"cross":4,"skip":true,"refine":2,"divisor":2},"positions":["d25"]},
+ {"name":"dump_default_128","galaxy":"default","mode":"field","grid":128,"variant":{"steps":64,"cross":4,"skip":true,"refine":2,"divisor":2},"positions":["d25"]},
+ {"name":"dump_big_64","galaxy":"big","mode":"field","grid":64,"variant":{"steps":64,"cross":4,"skip":true,"refine":2,"divisor":2},"positions":["d25"]},
+ {"name":"dump_big_96","galaxy":"big","mode":"field","grid":96,"variant":{"steps":64,"cross":4,"skip":true,"refine":2,"divisor":2},"positions":["d25"]},
+ {"name":"dump_big_128","galaxy":"big","mode":"field","grid":128,"variant":{"steps":64,"cross":4,"skip":true,"refine":2,"divisor":2},"positions":["d25"]}
+]}

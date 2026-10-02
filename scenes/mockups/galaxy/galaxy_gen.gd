@@ -24,6 +24,12 @@ const SYSTEM_COUNT_MAX := 220
 const FACTION_COUNT_MIN := 4
 const FACTION_COUNT_MAX := 8
 
+# Experiment hook (default off, 0 = unchanged): fixed system / faction count and
+# min spacing, set by experiment/probe.gd for the 400 systems / 15 factions case.
+static var exp_system_count := 0
+static var exp_faction_count := 0
+static var exp_min_spacing := 0.0
+
 const SYLLABLES_A := ["Ka", "Vel", "Nor", "Tha", "Ori", "Zan", "Bre", "Sol", "Quin", "Aer", "Dro", "Myl", "Esk", "Pyr", "Ust"]
 const SYLLABLES_B := ["dor", "ris", "nak", "vess", "tum", "lyn", "gar", "phos", "reth", "vane", "kor", "sil", "mund", "thys", "vor"]
 
@@ -43,6 +49,10 @@ func generate(p_seed: int) -> Galaxy:
 
 func _place_systems(galaxy: Galaxy, rng: RandomNumberGenerator) -> void:
 	var count := rng.randi_range(SYSTEM_COUNT_MIN, SYSTEM_COUNT_MAX)
+	var spacing := MIN_SPACING
+	if exp_system_count > 0:
+		count = exp_system_count
+		spacing = exp_min_spacing if exp_min_spacing > 0.0 else MIN_SPACING
 	var placed: Array = []
 	var attempts := 0
 	while placed.size() < count and attempts < count * 250:
@@ -54,7 +64,7 @@ func _place_systems(galaxy: Galaxy, rng: RandomNumberGenerator) -> void:
 		var candidate := Vector3(cos(theta) * sin_phi, cos_phi, sin(theta) * sin_phi) * r
 		var ok := true
 		for p in placed:
-			if p.distance_to(candidate) < MIN_SPACING:
+			if p.distance_to(candidate) < spacing:
 				ok = false
 				break
 		if ok:
@@ -139,6 +149,8 @@ func _seeded_shuffle_range(n: int, rng: RandomNumberGenerator) -> Array:
 func _assign_factions(galaxy: Galaxy, rng: RandomNumberGenerator) -> void:
 	var n := galaxy.systems.size()
 	var faction_count: int = clampi(rng.randi_range(FACTION_COUNT_MIN, FACTION_COUNT_MAX), 1, max(n, 1))
+	if exp_faction_count > 0:
+		faction_count = clampi(exp_faction_count, 1, max(n, 1))
 	var capitals: Array = []
 	capitals.append(rng.randi_range(0, n - 1))
 	while capitals.size() < faction_count:

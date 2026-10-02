@@ -1,0 +1,173 @@
+{
+ "out": "matrix",
+ "runs": [
+  {
+   "name": "m_centre",
+   "galaxy": "big",
+   "mode": "field",
+   "grid": 96,
+   "variant": {
+    "steps": 64,
+    "cross": 4,
+    "skip": true,
+    "refine": 2,
+    "divisor": 2,
+    "reps": 8
+   }
+  },
+  {
+   "name": "m_grid64",
+   "galaxy": "big",
+   "mode": "field",
+   "grid": 64,
+   "variant": {
+    "steps": 64,
+    "cross": 4,
+    "skip": true,
+    "refine": 2,
+    "divisor": 2,
+    "reps": 8
+   }
+  },
+  {
+   "name": "m_grid128",
+   "galaxy": "big",
+   "mode": "field",
+   "grid": 128,
+   "variant": {
+    "steps": 64,
+    "cross": 4,
+    "skip": true,
+    "refine": 2,
+    "divisor": 2,
+    "reps": 8
+   }
+  },
+  {
+   "name": "m_steps32",
+   "galaxy": "big",
+   "mode": "field",
+   "grid": 96,
+   "variant": {
+    "steps": 32,
+    "cross": 4,
+    "skip": true,
+    "refine": 2,
+    "divisor": 2,
+    "reps": 8
+   }
+  },
+  {
+   "name": "m_steps96",
+   "galaxy": "big",
+   "mode": "field",
+   "grid": 96,
+   "variant": {
+    "steps": 96,
+    "cross": 4,
+    "skip": true,
+    "refine": 2,
+    "divisor": 2,
+    "reps": 8
+   }
+  },
+  {
+   "name": "m_div1",
+   "galaxy": "big",
+   "mode": "field",
+   "grid": 96,
+   "variant": {
+    "steps": 64,
+    "cross": 4,
+    "skip": true,
+    "refine": 2,
+    "divisor": 1,
+    "reps": 8
+   }
+  },
+  {
+   "name": "m_div4",
+   "galaxy": "big",
+   "mode": "field",
+   "grid": 96,
+   "variant": {
+    "steps": 64,
+    "cross": 4,
+    "skip": true,
+    "refine": 2,
+    "divisor": 4,
+    "reps": 8
+   }
+  },
+  {
+   "name": "m_skipoff",
+   "galaxy": "big",
+   "mode": "field",
+   "grid": 96,
+   "variant": {
+    "steps": 64,
+    "cross": 4,
+    "skip": false,
+    "refine": 2,
+    "divisor": 2,
+    "reps": 8
+   }
+  },
+  {
+   "name": "m_cross1",
+   "galaxy": "big",
+   "mode": "field",
+   "grid": 96,
+   "variant": {
+    "steps": 64,
+    "cross": 1,
+    "skip": true,
+    "refine": 2,
+    "divisor": 2,
+    "reps": 8
+   }
+  },
+  {
+   "name": "m_centre_default",
+   "galaxy": "default",
+   "mode": "field",
+   "grid": 96,
+   "variant": {
+    "steps": 64,
+    "cross": 4,
+    "skip": true,
+    "refine": 2,
+    "divisor": 2,
+    "reps": 8
+   }
+  },
+  {
+   "name": "m_refine0",
+   "galaxy": "big",
+   "mode": "field",
+   "grid": 96,
+   "variant": {
+    "steps": 64,
+    "cross": 4,
+    "skip": true,
+    "refine": 0,
+    "divisor": 2,
+    "reps": 8
+   }
+  },
+  {
+   "name": "m_refine4",
+   "galaxy": "big",
+   "mode": "field",
+   "grid": 96,
+   "variant": {
+    "steps": 64,
+    "cross": 4,
+    "skip": true,
+    "refine": 4,
+    "divisor": 2,
+    "reps": 8
+   }
+  }
+ ]
+}

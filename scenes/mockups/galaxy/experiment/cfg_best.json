@@ -1,0 +1,173 @@
+{
+ "out": "best",
+ "runs": [
+  {
+   "name": "b_full64",
+   "galaxy": "big",
+   "mode": "field",
+   "grid": 96,
+   "variant": {
+    "steps": 64,
+    "cross": 4,
+    "skip": false,
+    "refine": 2,
+    "divisor": 1,
+    "reps": 4
+   }
+  },
+  {
+   "name": "b_full48",
+   "galaxy": "big",
+   "mode": "field",
+   "grid": 96,
+   "variant": {
+    "steps": 48,
+    "cross": 4,
+    "skip": false,
+    "refine": 2,
+    "divisor": 1,
+    "reps": 4
+   }
+  },
+  {
+   "name": "b_full32",
+   "galaxy": "big",
+   "mode": "field",
+   "grid": 96,
+   "variant": {
+    "steps": 32,
+    "cross": 4,
+    "skip": false,
+    "refine": 2,
+    "divisor": 1,
+    "reps": 4
+   }
+  },
+  {
+   "name": "b_full96",
+   "galaxy": "big",
+   "mode": "field",
+   "grid": 96,
+   "variant": {
+    "steps": 96,
+    "cross": 4,
+    "skip": false,
+    "refine": 2,
+    "divisor": 1,
+    "reps": 4
+   }
+  },
+  {
+   "name": "b_full64_c2",
+   "galaxy": "big",
+   "mode": "field",
+   "grid": 96,
+   "variant": {
+    "steps": 64,
+    "cross": 2,
+    "skip": false,
+    "refine": 2,
+    "divisor": 1,
+    "reps": 4
+   }
+  },
+  {
+   "name": "b_half64",
+   "galaxy": "big",
+   "mode": "field",
+   "grid": 96,
+   "variant": {
+    "steps": 64,
+    "cross": 4,
+    "skip": false,
+    "refine": 2,
+    "divisor": 2,
+    "reps": 8
+   }
+  },
+  {
+   "name": "b_half96",
+   "galaxy": "big",
+   "mode": "field",
+   "grid": 96,
+   "variant": {
+    "steps": 96,
+    "cross": 4,
+    "skip": false,
+    "refine": 2,
+    "divisor": 2,
+    "reps": 8
+   }
+  },
+  {
+   "name": "b_half64_skip",
+   "galaxy": "big",
+   "mode": "field",
+   "grid": 96,
+   "variant": {
+    "steps": 64,
+    "cross": 4,
+    "skip": true,
+    "refine": 2,
+    "divisor": 2,
+    "reps": 8
+   }
+  },
+  {
+   "name": "b_half64_default",
+   "galaxy": "default",
+   "mode": "field",
+   "grid": 96,
+   "variant": {
+    "steps": 64,
+    "cross": 4,
+    "skip": false,
+    "refine": 2,
+    "divisor": 2,
+    "reps": 8
+   }
+  },
+  {
+   "name": "b_half32_c2",
+   "galaxy": "big",
+   "mode": "field",
+   "grid": 96,
+   "variant": {
+    "steps": 32,
+    "cross": 2,
+    "skip": false,
+    "refine": 2,
+    "divisor": 2,
+    "reps": 16
+   }
+  },
+  {
+   "name": "b_q64",
+   "galaxy": "big",
+   "mode": "field",
+   "grid": 96,
+   "variant": {
+    "steps": 64,
+    "cross": 4,
+    "skip": false,
+    "refine": 2,
+    "divisor": 4,
+    "reps": 16
+   }
+  },
+  {
+   "name": "b_full64_default",
+   "galaxy": "default",
+   "mode": "field",
+   "grid": 96,
+   "variant": {
+    "steps": 64,
+    "cross": 4,
+    "skip": false,
+    "refine": 2,
+    "divisor": 1,
+    "reps": 4
+   }
+  }
+ ]
+}

@@ -1,0 +1,6 @@
+{"out":"baseline","runs":[
+ {"name":"base_default_off","galaxy":"default","mode":"old_off"},
+ {"name":"base_default_on","galaxy":"default","mode":"old_on"},
+ {"name":"base_big_off","galaxy":"big","mode":"old_off"},
+ {"name":"base_big_on","galaxy":"big","mode":"old_on"}
+]}

@@ -1,0 +1,136 @@
+shader_type spatial;
+render_mode unshaded, blend_mix, depth_test_disabled, cull_disabled;
+
+// Throwaway experiment: one full-screen pass marching a baked 3D field.
+// Placeholders replaced at load: STEPS, CROSS, SKIP, REFINE.
+const int STEPS = %STEPS%;
+const int CROSS = %CROSS%;
+const bool USE_SKIP = %SKIP%;
+const int REFINE = %REFINE%;
+const float ISO = 0.6;
+const float SKIP_RES = 16.0;
+
+uniform sampler3D field : filter_linear, repeat_disable;
+uniform sampler3D skip_tex : filter_nearest, repeat_disable;
+uniform vec3 gmin;
+uniform float gsize;
+uniform float grid_n;
+uniform float shell_opacity = 0.12;
+uniform vec3 palette[16];
+
+void vertex() {
+	POSITION = vec4(VERTEX.xy, 1.0, 1.0);
+}
+
+float fld(vec3 p) {
+	return texture(field, (p - gmin) / gsize).r;
+}
+
+void fragment() {
+	vec4 vv = INV_PROJECTION_MATRIX * vec4(SCREEN_UV * 2.0 - 1.0, 1.0, 1.0);
+	vec3 ray_dir = normalize((INV_VIEW_MATRIX * vec4(normalize(vv.xyz / vv.w), 0.0)).xyz);
+	vec3 cam = INV_VIEW_MATRIX[3].xyz;
+
+	vec3 inv_dir = 1.0 / (ray_dir + vec3(1e-6));
+	vec3 t1 = (gmin - cam) * inv_dir;
+	vec3 t2 = (gmin + vec3(gsize) - cam) * inv_dir;
+	vec3 t_mn = min(t1, t2);
+	vec3 t_mx = max(t1, t2);
+	float t0 = max(max(max(t_mn.x, t_mn.y), t_mn.z), 0.0);
+	float t_end = min(min(t_mx.x, t_mx.y), t_mx.z);
+
+	float T = 1.0;
+	vec3 C = vec3(0.0);
+	if (t0 < t_end) {
+		float dt = (t_end - t0) / float(STEPS);
+		float cell = gsize / grid_n;
+		vec3 o_uvw = (cam - gmin) / gsize;
+		vec3 d_uvw = ray_dir / gsize;
+		vec3 inv_d_uvw = 1.0 / (d_uvw + vec3(1e-9));
+
+		float t = t0;
+		float t_prev = t0;
+		float f_prev = fld(cam + ray_dir * t0);
+		bool was_inside = f_prev >= ISO;
+		int ncross = 0;
+		bool start_pending = was_inside;   // camera starts inside a bubble: layer at t0
+		t += dt * 0.5;
+
+		for (int s = 0; s < STEPS + 1; s++) {
+			float t_hit = -1.0;
+			float f_cur = 0.0;
+			bool inside = false;
+			if (start_pending) {
+				t_hit = t0;
+				start_pending = false;
+				f_cur = f_prev;
+				inside = true;
+			} else {
+				if (t >= t_end) break;
+				vec3 uvw = o_uvw + d_uvw * t;
+				if (USE_SKIP) {
+					float bm = texture(skip_tex, uvw).r;
+					if (bm < ISO) {
+						vec3 blk = floor(uvw * SKIP_RES);
+						vec3 nb = (blk + step(0.0, d_uvw)) / SKIP_RES;
+						vec3 tt = (nb - o_uvw) * inv_d_uvw;
+						float t_leave = min(min(tt.x, tt.y), tt.z);
+						t = max(t_leave + 0.01, t + dt);
+						t_prev = t_leave;
+						f_prev = 0.0;
+						was_inside = false;
+						continue;
+					}
+				}
+				f_cur = texture(field, uvw).r;
+				inside = f_cur >= ISO;
+				if (inside && !was_inside) {
+					float tl = t_prev;
+					float th = t;
+					for (int r = 0; r < REFINE; r++) {
+						float tm = 0.5 * (tl + th);
+						if (fld(cam + ray_dir * tm) >= ISO) th = tm; else tl = tm;
+					}
+					t_hit = 0.5 * (tl + th);
+				}
+			}
+			if (t_hit >= 0.0) {
+				vec3 p = cam + ray_dir * t_hit;
+				float h = cell;
+				vec3 k0 = vec3(1.0, -1.0, -1.0);
+				vec3 k1 = vec3(-1.0, -1.0, 1.0);
+				vec3 k2 = vec3(-1.0, 1.0, -1.0);
+				vec3 k3 = vec3(1.0, 1.0, 1.0);
+				vec3 n = normalize(k0 * fld(p + k0 * h) + k1 * fld(p + k1 * h) + k2 * fld(p + k2 * h) + k3 * fld(p + k3 * h) + vec3(1e-6));
+				vec3 uvw_h = clamp((p - gmin) / gsize, vec3(0.0), vec3(0.9999));
+				vec4 fv = texture(field, uvw_h);
+				int id = int(texelFetch(field, ivec3(uvw_h * grid_n), 0).b + 0.5);
+				vec3 col = palette[clamp(id, 0, 15)];
+				float rim = 1.0 - abs(dot(n, -ray_dir));
+				rim = rim * rim;
+				float bi = smoothstep(0.15, 0.5, fv.g);
+				vec3 glow = mix(col, vec3(1.0), 0.6);
+				float a = shell_opacity * (0.4 + rim * 1.5);
+				a = mix(a, shell_opacity * 2.5, bi);
+				// unshaded: only ALBEDO reaches the output (EMISSION is ignored), same as the old shader
+				vec3 c = mix(col, glow, bi * 0.7);
+				C += T * a * c;
+				T *= (1.0 - a);
+				ncross++;
+				if (ncross >= CROSS || T < 0.02) break;
+			}
+			was_inside = inside;
+			t_prev = t;
+			f_prev = f_cur;
+			t += dt;
+		}
+	}
+	float A = 1.0 - T;
+	if (A < 0.0005) {
+		ALPHA = 0.0;
+		ALBEDO = vec3(0.0);
+	} else {
+		ALPHA = A;
+		ALBEDO = C / A;
+	}
+}
