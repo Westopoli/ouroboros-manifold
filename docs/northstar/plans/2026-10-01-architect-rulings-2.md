@@ -504,3 +504,17 @@ Rule text changed in the same commit: E-16 R-110-02 and R-110-07, E-09 R-069-03 
 **A86. Faction name shape** (starts with "the ", at least two words, no apostrophe or comma) is accepted as the pool's rule.
 
 **A87. The runner's 300 s default** cutting off `test_chronicle_scene_open` and `test_time_jump_replay` is a harness defect, not a test pass: a test that can only pass with a raised timeout is listed until fixed. Small harness unit: those two tests declare their own needed time (or the runner's limit is counted in frames like the tests' own quit), with the default unchanged for everything else.
+
+## Addendum 31, 2026-10-02 (A81 lands; what it uncovered)
+
+**A88. A81 lands with one red listed.** The cap made three quarters of a full-size world event-dead; that is the worse defect and its fix is not held behind a band that was only ever met under the defect. `push/A81-events-cap-impl` lands together with the two test-defect fixes below. `test_R_045_09_mean_over_all_windows_between` is accepted red for this landing with the diagnosis as evidence (`docs/northstar/proving_ground/evidence/a81_downstream_diagnosis_2026-10-02.md`), named in the ledger as a real balance finding awaiting Westley. It is not skipped, not widened, and not reclassified.
+
+**A89. Two test-defects, approved (Engineer, ledger rows).**
+- `test_pipe_debrief_region_delta`: re-pick a seed that passes on both builds for the right reason (the drawn archetype has a consequence row on the mission region) and correct the docstring. The test asserts the drawn archetype and target so it cannot pass by accident again.
+- `test_pipe_mission_over`: re-pick a seed whose run time is checked on both main and the branch, and assert the drawn archetype so a later world change shows up as a clear failure instead of a 500 s run.
+
+**A90. Knowledge Lost rate (R-045-09) goes to Westley** with the three candidates: retune the event constants, change the revolt economy effect or its recovery, or revisit the per-world target. Nothing is tuned until he chooses.
+
+**A91. Tactical cost at 2,500 units and above.** 52 ms per tick is a finding against the tactical budget, not a test quirk. One Engineer measurement, reported: tactical tick time at 500, 1,000, 2,500 and 5,000 units on the Siege Breaking case, against the E-13 budget, with the profile. The fix (the nearest-scan in `csrc/unit.c`) is ruled after the numbers.
+
+**A92. Specfactory's ten standing failures** get a cleanup unit: an Engineer first classes each (stale test, missing external file, real gap) in one report; fixes follow per class. A suite that is red on main hides new reds.
