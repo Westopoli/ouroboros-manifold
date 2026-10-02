@@ -146,17 +146,33 @@ def test_missing_allowlist_file_means_no_exemptions(tmp_path):
     assert "UNREACHABLE om_unwired_helper" in proc.stdout
 
 
-def test_real_repo_head_lists_om_mission_eval_commander_fate():
-    """The gap-fix plan's own acceptance bar for this lint (Wave 0 item 4):
-    run against origin/main (HEAD here), it must list
-    om_mission_eval_commander_fate -- defined, unit-tested, never called by
-    om_mission_end. If it does not show up, the lint itself is wrong. It
-    takes no om_world* parameter at all and returns int32_t, so it also
-    proves the read exemption is name-based, not signature-based: the
-    broader signature rule ("no om_world* param, non-void return") would
-    have exempted exactly this symbol."""
-    proc = _run(REPO)
-    assert "UNREACHABLE om_mission_eval_commander_fate" in proc.stdout, proc.stdout + proc.stderr
+def test_unwired_non_world_int_returning_symbol_is_listed(tmp_path):
+    """Positive control, synthetic repo (TD-A94-reach-control). The gap-fix
+    plan's Wave 0 item 4 bar was once checked against the live repo's
+    om_mission_eval_commander_fate (defined, unit-tested, never called by
+    om_mission_end); closing that gap with the real call consumed the control
+    (6518a6a5, B7). The same shape lives here: om_eval_fate takes no
+    om_world* parameter and returns int32_t, is tested and never called, so
+    it must be listed. That also proves the read exemption is name-based, not
+    signature-based: the broader signature rule (no om_world* param,
+    non-void return) would have exempted exactly this symbol."""
+    project = _init_project(tmp_path)
+    (project / "csrc" / "ouroboros_sim.h").write_text(
+        _add_decl(HEADER, "int32_t om_eval_fate(int32_t verdict);")
+    )
+    (project / "csrc" / "sim.c").write_text(
+        SIM_C + "int32_t om_eval_fate(int32_t verdict) { return verdict; }\n"
+    )
+    (project / "tests" / "csim" / "test_fixture.py").write_text(
+        TEST_PY + "\ndef test_calls_eval_fate(lib):\n    lib.om_eval_fate(0)\n"
+    )
+    subprocess.run(["git", "add", "."], cwd=project, check=True)
+    subprocess.run(["git", "commit", "-q", "-m", "add eval_fate"], cwd=project, check=True)
+    empty_allowlist = tmp_path / "empty_allowlist.toml"
+    empty_allowlist.write_text("")
+    proc = _run(project, "--allowlist", str(empty_allowlist))
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert "UNREACHABLE om_eval_fate" in proc.stdout, proc.stdout + proc.stderr
 
 
 # ---------------------------------------------------------------- read exemption --

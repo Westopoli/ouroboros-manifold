@@ -1,0 +1,6 @@
+# Python dependencies of the scripts/specfactory harness and tests/specfactory,
+# beyond pytest. The harness environment is ~/Projects/agora/.venv (the default
+# in merge_gate.sh, pieces.py and suite_regression.py); a venv borrowed from
+# elsewhere must install this file: pip install -r scripts/specfactory/requirements.txt
+# prefetch_measure.parse_card imports yaml (tests/specfactory/test_prefetch_measure.py).
+PyYAML>=6.0
