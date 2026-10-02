@@ -62,9 +62,15 @@ def test_R_120_02_patrol_orders_are_plain_moves(lib, world_factory):
     ids = spawn_enemy_squad(lib, w)
     lib.om_macro_set_state(w, 0, OM_MACRO_PATROL, OM_MACRO_MOD_CAUTIOUS)
     start = centroid(lib, w, ids)
+    # Test-defect, A146: the squad walks a diamond and the canvas clamp keeps it inside, so at tick 200 it can be
+    # back near its start. The intent is 'the squad moved': take the largest excursion over the 200 ticks.
+    far = 0.0
+    for t in range(SAMPLE_EVERY, 201, SAMPLE_EVERY):
+        lib.om_tactical_tick_to(w, t)
+        far = max(far, dist(start, centroid(lib, w, ids)))
     lib.om_tactical_tick_to(w, 200)
     assert lib.om_macro_get_last_issued_command_type(w, 0) == OM_MACRO_CMD_MOVE
-    assert dist(start, centroid(lib, w, ids)) > MIN_EXCURSION, "R-120-02: patrol issued no order, squad did not move in 200 ticks"
+    assert far > MIN_EXCURSION, "R-120-02: patrol issued no order, squad did not move in 200 ticks"
 
 
 def test_R_120_02_patrol_detector_positive_control(lib, world_factory):

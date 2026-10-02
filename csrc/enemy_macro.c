@@ -95,6 +95,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* See also: om_move_get_canvas_size in csrc/tactical_move.c (internal, not in the header). */
+void om_move_get_canvas_size(om_world *w, double *width, double *height);
+
 /* B13 (E-14): all state for this module lives in w->macro_state /
  * w->macro_state_free, same convention as w->tactical_state /
  * w->mission_state (F2i slot; csrc/mission.c's om_mis()/om_mis_state_free
@@ -516,15 +519,25 @@ static void om_macro_issue_group_orders(om_world *w, om_macro_force *f) {
         static const double dx[OM_MACRO_PATROL_WAYPOINTS] = { 1.0, 0.0, -1.0, 0.0 };
         static const double dy[OM_MACRO_PATROL_WAYPOINTS] = { 0.0, 1.0, 0.0, -1.0 };
         double cy, cx = om_macro_centroid(w, force_ids, n_force, &cy);
+        double cvw, cvh;
+        om_move_get_canvas_size(w, &cvw, &cvh); /* A146: waypoints are clamped to [0, canvas] when it is set. */
         if (!f->patrol_anchor_set) {
             f->patrol_anchor_x = cx; f->patrol_anchor_y = cy; f->patrol_anchor_set = 1;
         }
         dest_x = f->patrol_anchor_x + dx[f->patrol_idx] * OM_MACRO_PATROL_RADIUS;
         dest_y = f->patrol_anchor_y + dy[f->patrol_idx] * OM_MACRO_PATROL_RADIUS;
+        if (cvw > 0.0 && cvh > 0.0) {
+            dest_x = dest_x < 0.0 ? 0.0 : (dest_x > cvw ? cvw : dest_x);
+            dest_y = dest_y < 0.0 ? 0.0 : (dest_y > cvh ? cvh : dest_y);
+        }
         if ((cx - dest_x) * (cx - dest_x) + (cy - dest_y) * (cy - dest_y) < OM_MACRO_PATROL_ARRIVE * OM_MACRO_PATROL_ARRIVE) {
             f->patrol_idx = (f->patrol_idx + 1) % OM_MACRO_PATROL_WAYPOINTS;
             dest_x = f->patrol_anchor_x + dx[f->patrol_idx] * OM_MACRO_PATROL_RADIUS;
             dest_y = f->patrol_anchor_y + dy[f->patrol_idx] * OM_MACRO_PATROL_RADIUS;
+            if (cvw > 0.0 && cvh > 0.0) {
+                dest_x = dest_x < 0.0 ? 0.0 : (dest_x > cvw ? cvw : dest_x);
+                dest_y = dest_y < 0.0 ? 0.0 : (dest_y > cvh ? cvh : dest_y);
+            }
         }
         if (om_macro_target_changed(f, f->behavior, dest_x, dest_y, n_force)) {
             om_command_move(w, force_ids, n_force, dest_x, dest_y);
