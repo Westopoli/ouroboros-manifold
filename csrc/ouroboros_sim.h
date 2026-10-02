@@ -26,7 +26,13 @@ extern "C" {
 #endif
 
 /* ABI version reported by om_abi_version(). Bump when signatures change. */
-#define OM_ABI_VERSION 3
+#define OM_ABI_VERSION 4
+
+/* Number of layers: engine layers 0 to OM_LAYER_COUNT - 1 (bible layer n is engine layer n - 1). */
+#define OM_LAYER_COUNT 5
+
+/* Largest canvas side om_map_set_canvas accepts; equals OM_CANVAS_SIZE_RANGES_LARGE_HI in om_constants.h. */
+#define OM_MAP_MAX_CANVAS 28000.0
 
 /* Opaque world handle. */
 typedef struct om_world om_world;
@@ -106,7 +112,11 @@ typedef struct om_trace_row {
  * om_player_can_see_friendly, om_player_faction_collapsed,
  * om_mission_get_player_parity, om_mission_get_player_units,
  * om_mission_set_player_units, om_mission_set_player_held_structures_count,
- * om_gen_set_player_preference. */
+ * om_gen_set_player_preference. Bumped to 4 (PP-contract): added om_tactical_get_param/set_param
+ * (om_tac_param), om_map_set_canvas, om_map_block_rect, om_command_set_layer, om_unit_transition_progress,
+ * om_unit_get_target_layer, om_roster_set_reach, om_unit_profile_reach, om_command_set_emission
+ * (om_emission), om_unit_get_emission, om_command_ping, om_ping_alert_count/get (om_ping_alert),
+ * om_unit_get_group_id, om_unit_get_leash_anchor, om_unit_get_engaged. */
 uint32_t om_abi_version(void);
 /* T1's pipe hello checks the caller's struct sizes against the library's own
  * before trusting anything else over the wire (audit 2026-09-21, A F-8-5):
@@ -966,6 +976,75 @@ typedef enum {
 #define OM_CHRON_MENTION_FACTION 0
 #define OM_CHRON_MENTION_REGION 1
 
+/* PP-contract: tunable tactical settings, read and written with om_tactical_get_param and
+ * om_tactical_set_param. Members are only ever appended before OM_TP__COUNT. Defaults and valid
+ * ranges: docs/northstar/plans/push/pp_contract.md section 4. */
+typedef enum {
+    OM_TP_PURSUE_BY_STEERING = 0,
+    OM_TP_ROUTE_AROUND_TERRAIN,
+    OM_TP_LEASH_BEFORE_DAMAGE,
+    OM_TP_TARGET_POLICY,
+    OM_TP_TARGET_BY_SIGHT,
+    OM_TP_ROUTE_ACROSS_LAYERS,
+    OM_TP_ATTACK_MOVE_LEASH,
+    OM_TP_RETURN_FIRE_FLEE_DIST,
+    OM_TP_UNIT_COLLISION_RADIUS,
+    OM_TP_VANTAGE_MULT,
+    OM_TP_AOE_DAMAGE_CAP,
+    OM_TP_TARGETING_COHORTS,
+    OM_TP_CATMULT_LINE_LINE,
+    OM_TP_CATMULT_LINE_SIEGE,
+    OM_TP_CATMULT_LINE_STRIKE,
+    OM_TP_CATMULT_SIEGE_LINE,
+    OM_TP_CATMULT_SIEGE_SIEGE,
+    OM_TP_CATMULT_SIEGE_STRIKE,
+    OM_TP_CATMULT_STRIKE_LINE,
+    OM_TP_CATMULT_STRIKE_SIEGE,
+    OM_TP_CATMULT_STRIKE_STRIKE,
+    OM_TP_EMIT_SIGHT_MULT,
+    OM_TP_EMIT_SEEN_MULT,
+    OM_TP_PING_RADIUS,
+    OM_TP_PING_REVEAL_TICKS,
+    OM_TP_PING_COOLDOWN_TICKS,
+    OM_TP_PING_REACH,
+    OM_TP_VISION_UP_1,
+    OM_TP_VISION_UP_2,
+    OM_TP_VISION_UP_3,
+    OM_TP_VISION_UP_4,
+    OM_TP_VISION_DOWN_1,
+    OM_TP_VISION_DOWN_2,
+    OM_TP_VISION_DOWN_3,
+    OM_TP_VISION_DOWN_4,
+    OM_TP_RANGE_UP_1,
+    OM_TP_RANGE_UP_2,
+    OM_TP_RANGE_UP_3,
+    OM_TP_RANGE_UP_4,
+    OM_TP_RANGE_DOWN_1,
+    OM_TP_RANGE_DOWN_2,
+    OM_TP_RANGE_DOWN_3,
+    OM_TP_RANGE_DOWN_4,
+    OM_TP_DAMAGE_UP_1,
+    OM_TP_DAMAGE_UP_2,
+    OM_TP_DAMAGE_UP_3,
+    OM_TP_DAMAGE_UP_4,
+    OM_TP_DAMAGE_DOWN_1,
+    OM_TP_DAMAGE_DOWN_2,
+    OM_TP_DAMAGE_DOWN_3,
+    OM_TP_DAMAGE_DOWN_4,
+    OM_TP_AREA_UP_1,
+    OM_TP_AREA_UP_2,
+    OM_TP_AREA_UP_3,
+    OM_TP_AREA_UP_4,
+    OM_TP_AREA_DOWN_1,
+    OM_TP_AREA_DOWN_2,
+    OM_TP_AREA_DOWN_3,
+    OM_TP_AREA_DOWN_4,
+    OM_TP__COUNT
+} om_tac_param;
+
+/* PP-contract: a unit's active-emission mode (om_command_set_emission). */
+typedef enum { OM_EMIT_SILENT = 0, OM_EMIT_ACTIVE = 1 } om_emission;
+
 /* ---- generated from signatures.toml: structs ---- */
 typedef struct om_ability_event {
     uint64_t tick;
@@ -1118,6 +1197,12 @@ typedef struct om_onboarding_config {
     double weights[10];
     uint32_t rare_marks[10];
 } om_onboarding_config;
+
+typedef struct om_ping_alert {
+    uint64_t tick;
+    int32_t faction;
+    int32_t sector;
+} om_ping_alert;
 
 typedef struct om_reinforcement_wave {
     uint32_t is_scheduled;
@@ -1407,6 +1492,11 @@ uint32_t om_unit_spawn_with_elevation(om_world *w, int unit_type, int32_t factio
 void om_visibility_compute(om_world *w);
 void om_visibility_set_player_fog(om_world *w, int on);
 double om_zone_sample_interference(const om_world *w, double x, double y, uint32_t layer);
+int om_command_set_emission(om_world *w, const uint32_t *unit_ids, uint32_t n_units, om_emission mode);
+int om_unit_get_emission(const om_world *w, uint32_t unit);
+int om_command_ping(om_world *w, uint32_t caster, uint32_t layer, double x, double y);
+uint32_t om_ping_alert_count(const om_world *w, int32_t faction);
+int om_ping_alert_get(const om_world *w, int32_t faction, uint32_t index, om_ping_alert *out);
 /* ---- end generated: fog.c ---- */
 
 /* ---- generated from signatures.toml: generational.c ---- */
@@ -1711,6 +1801,8 @@ int om_render_detect_repeated_tile_boundary(om_world *w);
 int om_route_grid_is_cell_blocked(double obstacle);
 void om_unit_get_position(om_world *w, uint32_t unit_id, om_vec2 *byref);
 void om_unit_order_hold_node(om_world *w, uint32_t unit_id, uint32_t node_id);
+int om_map_set_canvas(om_world *w, double width, double height);
+int om_map_block_rect(om_world *w, double x0, double y0, double x1, double y1, uint32_t layer_lo, uint32_t layer_hi);
 /* ---- end generated: tactical_mapgen.c ---- */
 
 /* ---- generated from signatures.toml: tactical_move.c ---- */
@@ -1750,6 +1842,16 @@ void om_unit_set_facing(om_world *w, uint32_t p0, double p1);
 void om_unit_set_pos(om_world *w, uint32_t p0, double p1, double p2);
 void om_unit_set_visible_to_faction(om_world *w, uint32_t p0, int32_t p1, int p2);
 void om_unit_teleport(om_world *w, uint32_t unit, double x, double y, uint32_t layer);
+double om_tactical_get_param(const om_world *w, om_tac_param p);
+int om_tactical_set_param(om_world *w, om_tac_param p, double value);
+int om_command_set_layer(om_world *w, const uint32_t *unit_ids, uint32_t n_units, uint32_t layer);
+double om_unit_transition_progress(const om_world *w, uint32_t unit);
+uint32_t om_unit_get_target_layer(const om_world *w, uint32_t unit);
+int om_roster_set_reach(om_world *w, int unit_type, uint32_t layers_up, uint32_t layers_down);
+int om_unit_profile_reach(const om_world *w, int unit_type, uint32_t *up, uint32_t *down);
+uint32_t om_unit_get_group_id(const om_world *w, uint32_t unit);
+int om_unit_get_leash_anchor(const om_world *w, uint32_t unit, double *x, double *y);
+int om_unit_get_engaged(const om_world *w, uint32_t unit);
 /* ---- end generated: tactical_move.c ---- */
 
 /* ---- generated from signatures.toml: tactical_support.c ---- */

@@ -667,4 +667,15 @@ void om_map_clear(om_world *w) {
     if (!w || !w->mapgen_state) return;
     memset(w->mapgen_state, 0, sizeof(om_mapgen_state));
 }
+int om_map_set_canvas(om_world *w, double width, double height) {
+    /* STUB */
+    (void)w; (void)width; (void)height;
+    return 0;
+}
+
+int om_map_block_rect(om_world *w, double x0, double y0, double x1, double y1, uint32_t layer_lo, uint32_t layer_hi) {
+    /* STUB */
+    (void)w; (void)x0; (void)y0; (void)x1; (void)y1; (void)layer_lo; (void)layer_hi;
+    return 0;
+}
 /* ---- end generated stubs ---- */

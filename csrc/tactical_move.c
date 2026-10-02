@@ -1972,3 +1972,64 @@ void om_unit_teleport(om_world *w, uint32_t unit, double x, double y, uint32_t l
     mu->pushed_y = y;
     om_tac_unit_sync_position(w, unit, x, y);
 }
+
+/* ---- generated stubs from signatures.toml ---- */
+double om_tactical_get_param(const om_world *w, om_tac_param p) {
+    /* STUB */
+    (void)w; (void)p;
+    return 0.0;
+}
+
+int om_tactical_set_param(om_world *w, om_tac_param p, double value) {
+    /* STUB */
+    (void)w; (void)p; (void)value;
+    return 0;
+}
+
+int om_command_set_layer(om_world *w, const uint32_t *unit_ids, uint32_t n_units, uint32_t layer) {
+    /* STUB */
+    (void)w; (void)unit_ids; (void)n_units; (void)layer;
+    return 0;
+}
+
+double om_unit_transition_progress(const om_world *w, uint32_t unit) {
+    /* STUB */
+    (void)w; (void)unit;
+    return 0.0;
+}
+
+uint32_t om_unit_get_target_layer(const om_world *w, uint32_t unit) {
+    /* STUB */
+    (void)w; (void)unit;
+    return 0;
+}
+
+int om_roster_set_reach(om_world *w, int unit_type, uint32_t layers_up, uint32_t layers_down) {
+    /* STUB */
+    (void)w; (void)unit_type; (void)layers_up; (void)layers_down;
+    return 0;
+}
+
+int om_unit_profile_reach(const om_world *w, int unit_type, uint32_t *up, uint32_t *down) {
+    /* STUB */
+    (void)w; (void)unit_type; (void)up; (void)down;
+    return 0;
+}
+uint32_t om_unit_get_group_id(const om_world *w, uint32_t unit) {
+    /* STUB */
+    (void)w; (void)unit;
+    return 0;
+}
+
+int om_unit_get_leash_anchor(const om_world *w, uint32_t unit, double *x, double *y) {
+    /* STUB */
+    (void)w; (void)unit; (void)x; (void)y;
+    return 0;
+}
+
+int om_unit_get_engaged(const om_world *w, uint32_t unit) {
+    /* STUB */
+    (void)w; (void)unit;
+    return 0;
+}
+/* ---- end generated stubs ---- */
