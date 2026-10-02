@@ -62,7 +62,7 @@ restype = "uint32_t"
 params = [{ name = "w", ctype = "const om_world*" }]
 epics = ["E-08"]
 confidence = "likely"
-note = "B6: character id of the current chapter's commander (selector's latest pick), 0 before the first selection. om_character_is_main_character is a cumulative flag, not this."
+note = "B6: character id of the current chapter's commander (selector's latest pick), 0 before the first selection. om_character_is_main_character is a cumulative flag, not this. Header doc (moved here from ouroboros_sim.h): B6: character id of the current chapter's commander (the selector's latest pick), 0 before the first selection."
 
 [[symbols]]
 name = "om_campaign_lineage"
@@ -71,7 +71,7 @@ restype = "uint32_t"
 params = [{ name = "w", ctype = "const om_world*" }]
 epics = ["E-08"]
 confidence = "likely"
-note = "B6: lineage id of the selector's latest pick (R-057-09), 0 before the first selection."
+note = "B6: lineage id of the selector's latest pick (R-057-09), 0 before the first selection. Header doc (moved here from ouroboros_sim.h): B6: lineage id of that selection (R-057-09), 0 before the first selection."
 
 [[symbols]]
 name = "om_campaign_needs_onboarding"
@@ -144,7 +144,7 @@ restype = "int"
 params = [{ name = "w", ctype = "const om_world*" }]
 epics = ["E-08"]
 confidence = "likely"
-note = "B6 (A14): GEN_CHAPTER_END_* the latest jump carried (collapse wins over commander death); per jump, 0 when that jump ended no chapter (opening, retry), 0 before any jump."
+note = "B6 (A14): GEN_CHAPTER_END_* the latest jump carried (collapse wins over commander death); per jump, 0 when that jump ended no chapter (opening, retry), 0 before any jump. Header doc (moved here from ouroboros_sim.h): B6 (R-055-06, A14): the end reason the latest time jump carried, a GEN_CHAPTER_END_ value (0 normal, 1 commander death, 2 faction collapsed; collapse wins when both hold). Per jump: 0 when that jump ended no chapter (the opening jump and any retry jump), so it can read 0 after a jump that followed a chapter ending in collapse. 0 before any jump."
 
 [[symbols]]
 name = "om_chapter_end_reason_for_collapse"
@@ -481,7 +481,7 @@ params = [{ name = "w", ctype = "om_world*" }, { name = "lineage_id", ctype = "u
 epics = ["E-09"]
 confidence = "likely"
 kwargs = ["lineage_id", "region_idx", "category", "score"]
-note = "Fixture. score float literal -> double. B6 (A1): category parameter added, the cluster stores it."
+note = "Fixture. score float literal -> double. B6 (A1): category parameter added, the cluster stores it. Header doc (moved here from ouroboros_sim.h): B6 (A1): category is the lineage cluster category the caller computed (om_chronicle_categorize_lineage_cluster, R-067-02); the cluster stores it."
 
 [[symbols]]
 name = "om_chronicle_add_mock_entry"
@@ -850,7 +850,7 @@ restype = "int"
 params = [{ name = "w", ctype = "const om_world*" }, { name = "i", ctype = "uint32_t" }, { name = "tick_out", ctype = "uint64_t*" }]
 epics = ["E-09"]
 confidence = "likely"
-note = "G-C3 (A48 item 13): keyframe i of the last om_chronicle_generate_map_keyframes into *tick_out; 1, or 0 when i is out of range."
+note = "G-C3 (A48 item 13): keyframe i of the last om_chronicle_generate_map_keyframes into *tick_out; 1, or 0 when i is out of range. Header doc (moved here from ouroboros_sim.h): G-C3 (A48 item 13, A59): the keyframe ticks om_chronicle_generate_map_keyframes last chose, sorted ascending with no duplicates; the list is cleared when a jump starts. Copies keyframe i to *tick_out and returns 1; returns 0, writing nothing, when i >= om_chronicle_keyframe_count."
 
 [[symbols]]
 name = "om_chronicle_has_keyframe_at_tick"
@@ -905,7 +905,7 @@ restype = "uint32_t"
 params = [{ name = "w", ctype = "const om_world*" }]
 epics = ["E-09"]
 confidence = "likely"
-note = "G-C3: keyframes stored by the last om_chronicle_generate_map_keyframes; 0 before it has run."
+note = "G-C3: keyframes stored by the last om_chronicle_generate_map_keyframes; 0 before it has run. Header doc (moved here from ouroboros_sim.h): G-C3: number of keyframes the last om_chronicle_generate_map_keyframes stored; 0 before it has run."
 
 [[symbols]]
 name = "om_chronicle_lineage_category_count"
@@ -941,7 +941,7 @@ restype = "uint32_t"
 params = [{ name = "w", ctype = "const om_world*" }, { name = "index", ctype = "uint32_t" }, { name = "expanded", ctype = "int" }]
 epics = ["E-09"]
 confidence = "likely"
-note = "A53 (R-069-07): count of faction/region name mentions in entry index's base (expanded 0) or expanded (1) text; 0 when none or entry not rendered."
+note = "A53 (R-069-07): count of faction/region name mentions in entry index's base (expanded 0) or expanded (1) text; 0 when none or entry not rendered. Header doc (moved here from ouroboros_sim.h): A53 (R-069-07, Q-069-02): the faction and region names in entry `index`'s text (same index as om_chronicle_entry_get), produced by the sim while it fills the name slots, never found by matching text afterwards. expanded 0 is base_text, 1 is expanded_text. Mentions are in text order, never overlap, and each lies wholly inside the stored text and covers the name as it stands there (a name opening a sentence has its first letter upper-cased); a name the assembler rewrote (word echo synonym, anaphora) or truncated away is not a mention. A faction slot with no owner (\"an unclaimed people\") is not a mention. Count is 0 for an entry with no mention or an index om_chronicle_entry_get rejects; get returns 1 on success, 0 when mention_idx is past the count."
 
 [[symbols]]
 name = "om_chronicle_mention_get"
@@ -1320,7 +1320,7 @@ note = "No world; pure function. p0 = (OMVec2 * 2) waypoint array; p1 = waypoint
 name = "om_enemy_production_adapt_target"
 module = "tactical_support.c"
 restype = "void"
-params = [{ name = "byref", ctype = "const om_composition_ratio*" }, { name = "byref", ctype = "const om_composition_ratio*" }, { name = "byref", ctype = "om_composition_ratio*" }]
+params = [{ name = "target", ctype = "const om_composition_ratio*" }, { name = "player", ctype = "const om_composition_ratio*" }, { name = "out", ctype = "om_composition_ratio*" }]
 epics = ["E-15"]
 confidence = "likely"
 note = "No world. p0 = byref base target; p1 = byref player composition; p2 = byref adjusted out. Return unused. Four call sites."
@@ -1329,7 +1329,7 @@ note = "No world. p0 = byref base target; p1 = byref player composition; p2 = by
 name = "om_enemy_production_select_category"
 module = "tactical_support.c"
 restype = "int"
-params = [{ name = "byref", ctype = "const om_composition_ratio*" }, { name = "byref", ctype = "const om_composition_ratio*" }]
+params = [{ name = "target", ctype = "const om_composition_ratio*" }, { name = "current", ctype = "const om_composition_ratio*" }]
 epics = ["E-15"]
 confidence = "likely"
 note = "No world. p0 = byref target ratio; p1 = byref current composition. Return == OMUnitCategory.SIEGE (2); enum om_unit_category (LINE 0, STRIKE 1, SIEGE 2), no C typedef yet; header pattern returns enums"
@@ -1417,6 +1417,16 @@ epics = ["E-06"]
 confidence = "certain"
 source_tests = ["tests/csim/test_E04_S030_external_templates.py"]
 note = "Header verbatim (F2h): const char *om_event_template_name(const om_world *w, uint32_t template_id). No existing accessor maps id -> name (om_event_template_by_name is name -> id; om_event_template_get returns the whole struct). NULL if id out of range. epics omits E-04 for the same _bind_e04-collision reason as om_event_register_external above."
+
+[[symbols]]
+name = "om_events_install_save_hooks"
+module = "events.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
 
 [[symbols]]
 name = "om_events_load_launch"
@@ -1684,6 +1694,16 @@ confidence = "likely"
 note = "Not in header. 1 site inside hasattr fork: (w, faction_id, byref(c_double) x3), return unused -> void. Out-param names from header om_faction_set_tech_multipliers(attack, defense, economy). ALG-26 com"
 
 [[symbols]]
+name = "om_faction_tech_multipliers_recalc"
+module = "faction.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }, { name = "faction_id", ctype = "int32_t" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
 name = "om_faction_tech_tier"
 module = "diplomacy.c"
 restype = "uint32_t"
@@ -1756,6 +1776,16 @@ confidence = "likely"
 note = "Return unused."
 
 [[symbols]]
+name = "om_fog_faction_sees"
+module = "fog.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "faction", ctype = "int32_t" }, { name = "target", ctype = "uint32_t" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
 name = "om_fog_get_drawn_sensor_circle_radius"
 module = "fog.c"
 restype = "double"
@@ -1822,6 +1852,16 @@ confidence = "certain"
 note = "Header verbatim (E-03 block). Reached via conftest gen_set_region_range. Card 223a1 says diplomacy.c; toml says worldgen.c. Not counted in call_site_count."
 
 [[symbols]]
+name = "om_generational_install_save_hooks"
+module = "generational.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
 name = "om_gradient_add_moving_source"
 module = "tactical_mapgen.c"
 restype = "void"
@@ -1865,6 +1905,56 @@ params = [{ name = "p0", ctype = "double" }, { name = "p1", ctype = "double" }, 
 epics = ["E-17"]
 confidence = "likely"
 note = "No world. Test comments: p0 intensity (0.8), p1 radius (600.0), p2 distance r (300.0), p3 falloff type (0 = LINEAR, int literal, enum). Return wrapped c_double, approx 0.4."
+
+[[symbols]]
+name = "om_grid_iter_begin"
+module = "unit.c"
+restype = "void"
+params = [{ name = "it", ctype = "om_grid_iter*" }, { name = "w", ctype = "om_world*" }, { name = "x", ctype = "double" }, { name = "y", ctype = "double" }, { name = "r", ctype = "double" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_grid_iter_begin_faction"
+module = "unit.c"
+restype = "void"
+params = [{ name = "it", ctype = "om_grid_iter*" }, { name = "w", ctype = "om_world*" }, { name = "faction", ctype = "int32_t" }, { name = "x", ctype = "double" }, { name = "y", ctype = "double" }, { name = "r", ctype = "double" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_grid_iter_next"
+module = "unit.c"
+restype = "uint32_t"
+params = [{ name = "it", ctype = "om_grid_iter*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_grid_query_circle"
+module = "unit.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "om_world*" }, { name = "x", ctype = "double" }, { name = "y", ctype = "double" }, { name = "r", ctype = "double" }, { name = "out_ids", ctype = "uint32_t*" }, { name = "max", ctype = "uint32_t" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_grid_query_circle_faction"
+module = "unit.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "om_world*" }, { name = "faction", ctype = "int32_t" }, { name = "x", ctype = "double" }, { name = "y", ctype = "double" }, { name = "r", ctype = "double" }, { name = "out_ids", ctype = "uint32_t*" }, { name = "max", ctype = "uint32_t" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
 
 [[symbols]]
 name = "om_group_is_active"
@@ -1947,7 +2037,7 @@ restype = "uint32_t"
 params = [{ name = "w", ctype = "const om_world*" }, { name = "lineage_id", ctype = "uint32_t" }]
 epics = ["E-08"]
 confidence = "likely"
-note = "B6 (A17): chapters played in the lineage; 1 at creation, +1 per later selection that keeps it, retry jumps add nothing, 0 for an unknown lineage."
+note = "B6 (A17): chapters played in the lineage; 1 at creation, +1 per later selection that keeps it, retry jumps add nothing, 0 for an unknown lineage. Header doc (moved here from ouroboros_sim.h): B6 (A17, R-057-08): chapters played in the lineage: 1 when the lineage is created, +1 on each later selection that keeps it (stay, or successor after the commander's death), once per selection; retry jumps add nothing. 0 for an unknown lineage."
 
 [[symbols]]
 name = "om_lineage_count"
@@ -2333,6 +2423,15 @@ params = [{ name = "w", ctype = "om_world*" }, { name = "p1", ctype = "uint32_t"
 epics = ["E-14"]
 confidence = "likely"
 note = "p1 force id 0, p2 on flag 1. Fixture setter, return ignored."
+
+[[symbols]]
+name = "om_macro_set_force_fallback_point"
+module = "enemy_macro.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }, { name = "force", ctype = "uint32_t" }, { name = "x", ctype = "double" }, { name = "y", ctype = "double" }]
+epics = ["E-15"]
+confidence = "certain"
+note = "B13-8/R-120-02 (Q-120-02): the rout fallback point for this force, set once by the mission at setup (csrc/mission.c om_mission_instantiate_map) to the enemy's own spawn anchor."
 
 [[symbols]]
 name = "om_macro_set_force_hp_pct"
@@ -2743,7 +2842,7 @@ note = "p1 = chokepoint node id. Return compared == 1."
 name = "om_map_instantiate_zone_pos"
 module = "tactical_mapgen.c"
 restype = "void"
-params = [{ name = "p0", ctype = "double" }, { name = "base_pct", ctype = "double" }, { name = "canvas_dim", ctype = "double" }, { name = "int", ctype = "uint64_t" }, { name = "byref", ctype = "OMVec2*" }]
+params = [{ name = "p0", ctype = "double" }, { name = "base_pct", ctype = "double" }, { name = "canvas_dim", ctype = "double" }, { name = "seed", ctype = "uint64_t" }, { name = "out", ctype = "OMVec2*" }]
 epics = ["E-17"]
 confidence = "likely"
 note = "No world. p0/p1 = base_pct x/y (c_double 0.50), p2 = canvas_dim (c_double 10000.0), p3 = int literal 12345, no comment; jitter needs RNG so likely seed. out = byref(OMVec2). Return unused."
@@ -3250,7 +3349,7 @@ restype = "int32_t"
 params = [{ name = "w", ctype = "const om_world*" }, { name = "region_idx", ctype = "uint32_t" }]
 epics = ["E-10"]
 confidence = "likely"
-note = "R-072-08 (A40): nearest non-player non-neutral faction by hops, ties to highest total military (OM_TIE_EPSILON) then lowest id, -1 when none."
+note = "R-072-08 (A40): nearest non-player non-neutral faction by hops, ties to highest total military (OM_TIE_EPSILON) then lowest id, -1 when none. Header doc (moved here from ouroboros_sim.h): The non-player, non-neutral faction nearest region_idx by connection hops; ties to the highest total OM_F_MILITARY (within OM_TIE_EPSILON), then the lowest faction id. A faction with no path to region_idx ties with the other unreachable ones on distance and loses to any reachable one. -1 only when no non-player faction owns a region. (R-072-08, A40, A50)"
 
 [[symbols]]
 name = "om_mission_fallback_region"
@@ -3259,7 +3358,7 @@ restype = "uint32_t"
 params = [{ name = "w", ctype = "const om_world*" }]
 epics = ["E-10"]
 confidence = "likely"
-note = "R-072-07 (A41): the player's lowest OM_C_STABILITY composite region, ties to the lowest index."
+note = "R-072-07 (A41): the player's lowest OM_C_STABILITY composite region, ties to the lowest index. Header doc (moved here from ouroboros_sim.h): The player's weakest region: lowest ALG-09 stability composite (OM_C_STABILITY), ties to the lowest region index. (R-072-07, A41)"
 
 [[symbols]]
 name = "om_mission_fill_player_force"
@@ -3286,7 +3385,7 @@ restype = "int32_t"
 params = [{ name = "w", ctype = "const om_world*" }]
 epics = ["E-08"]
 confidence = "likely"
-note = "B6: archetype the generator drew with the chosen region, -1 when it found no candidate."
+note = "B6: archetype the generator drew with the chosen region, -1 when it found no candidate. Header doc (moved here from ouroboros_sim.h): B6: archetype the generator drew with that region, -1 when it found no candidate."
 
 [[symbols]]
 name = "om_mission_generator_run"
@@ -3376,7 +3475,7 @@ restype = "uint32_t"
 params = [{ name = "w", ctype = "const om_world*" }]
 epics = ["E-10"]
 confidence = "likely"
-note = "HDR4-2-r: unit id the player assigned as commander (R-077-05), 0 if none."
+note = "HDR4-2-r: unit id the player assigned as commander (R-077-05), 0 if none. Header doc (moved here from ouroboros_sim.h): HDR4-2-r/A4: id of the unit the player assigned as commander (R-077-05), 0 if none is assigned or the mission has no force."
 
 [[symbols]]
 name = "om_mission_assign_commander"
@@ -3385,7 +3484,7 @@ restype = "int"
 params = [{ name = "w", ctype = "om_world*" }, { name = "unit_id", ctype = "uint32_t" }]
 epics = ["E-10"]
 confidence = "likely"
-note = "B7: make unit_id the commander (R-077-05). 0 ok, 1 unit missing or not the player's, 2 assigned commander already dead."
+note = "B7: make unit_id the commander (R-077-05). 0 ok, 1 unit missing or not the player's, 2 assigned commander already dead. Header doc (moved here from ouroboros_sim.h): B7 (Q-077-02, R-077-05): make unit_id the commander. 0 on success; 1 when the unit does not exist or is not the player's; 2 when the currently assigned commander is dead (its fate is settled). May be called again to reassign while the assigned unit lives."
 
 [[symbols]]
 name = "om_mission_get_debrief"
@@ -3439,7 +3538,7 @@ restype = "uint32_t"
 params = [{ name = "w", ctype = "const om_world*" }]
 epics = ["E-10"]
 confidence = "likely"
-note = "HDR4-2-r: player-faction units the started mission spawned."
+note = "HDR4-2-r: player-faction units the started mission spawned. Header doc (moved here from ouroboros_sim.h): HDR4-2-r/A4: player-faction units the started mission spawned."
 
 [[symbols]]
 name = "om_mission_get_force_unit"
@@ -3448,7 +3547,7 @@ restype = "int"
 params = [{ name = "w", ctype = "const om_world*" }, { name = "i", ctype = "uint32_t" }, { name = "type", ctype = "int32_t*" }, { name = "tier", ctype = "int32_t*" }]
 epics = ["E-10"]
 confidence = "likely"
-note = "HDR4-2-r: i-th player unit in spawn order; outs may be NULL; 1 on success, 0 out of range."
+note = "HDR4-2-r: i-th player unit in spawn order; outs may be NULL; 1 on success, 0 out of range. Header doc (moved here from ouroboros_sim.h): i-th player-faction unit in spawn order: writes its unit type and tier (either out may be NULL), returns 1; 0 when i is out of range."
 
 [[symbols]]
 name = "om_mission_get_objective_completion"
@@ -3559,6 +3658,15 @@ confidence = "likely"
 note = "Exact == between two calls; ticks -> uint64_t per header rule (uint32_t also fits)."
 
 [[symbols]]
+name = "om_mission_has_ended"
+module = "mission.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }]
+epics = ["E-10"]
+confidence = "certain"
+note = "B9-N: true once om_mission_end has run for the current mission (R-075-07 termination, reached live via om_mission_tactical_tick or by the client's own mission_end command) -- the pipe's tactical frame reads this for \"mission_over\" without re-deriving it from another mechanism."
+
+[[symbols]]
 name = "om_mission_init_seed"
 module = "enemy_macro.c"
 restype = "void"
@@ -3631,13 +3739,33 @@ confidence = "likely"
 note = "Public getter for om_mission_state.mission_region (the last mission's region); read by generational.c for the chronicle consequence entry (plan item B5). Contract piece A2."
 
 [[symbols]]
+name = "om_mission_on_begin"
+module = "mission.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
 name = "om_mission_refresh_context"
 module = "mission.c"
 restype = "void"
 params = [{ name = "w", ctype = "om_world*" }, { name = "region", ctype = "int32_t" }]
 epics = ["E-10"]
 confidence = "likely"
-note = "Computes the mission-selection score inputs (conflict, chain, relevance, preference) for the region from world state; called by the pipe before scoring. Plan item A2 (R-072-02). Contract piece A2."
+note = "Computes the mission-selection score inputs (conflict, chain, relevance, preference) for the region from world state; called by the pipe before scoring. Plan item A2 (R-072-02). Contract piece A2. Header doc (moved here from ouroboros_sim.h): Computes the mission-selection score inputs (conflict, chain, relevance, preference) for the region from world state; called by the pipe before scoring."
+
+[[symbols]]
+name = "om_mission_reset_started"
+module = "fog.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
 
 [[symbols]]
 name = "om_mission_resolve_refusal"
@@ -3823,7 +3951,7 @@ note = "Site (w,0,4)."
 name = "om_mission_setup_extraction_point"
 module = "tactical_support.c"
 restype = "void"
-params = [{ name = "w", ctype = "om_world*" }, { name = "p1", ctype = "double" }, { name = "c_double", ctype = "double" }, { name = "c_double", ctype = "double" }]
+params = [{ name = "w", ctype = "om_world*" }, { name = "x", ctype = "double" }, { name = "y", ctype = "double" }, { name = "radius", ctype = "double" }]
 epics = ["E-15"]
 confidence = "likely"
 note = "Fixture: p1/p2 = c_double x, y (500, 500); p3 = c_double radius (200 wu). Return unused."
@@ -3835,7 +3963,7 @@ restype = "void"
 params = [{ name = "w", ctype = "om_world*" }, { name = "region_idx", ctype = "uint32_t" }, { name = "enemy_faction", ctype = "int32_t" }]
 epics = ["E-10"]
 confidence = "likely"
-note = "A3-contract2: quiet-world fallback (R-072-07/08). Archetype Defensive Stand, given region and enemy faction; enemy power follows in mission.c. No parity-floor parameter."
+note = "A3-contract2: quiet-world fallback (R-072-07/08). Archetype Defensive Stand, given region and enemy faction; enemy power follows in mission.c. No parity-floor parameter. Header doc (moved here from ouroboros_sim.h): A3/R-072-08: quiet-world fallback. Sets the archetype to Defensive Stand, the mission region, and the enemy faction (the pipe picks both); enemy power follows inside mission.c from that faction's strongest region."
 
 [[symbols]]
 name = "om_mission_setup_hold_zone"
@@ -3881,6 +4009,16 @@ params = [{ name = "w", ctype = "om_world*" }, { name = "faction_id", ctype = "i
 epics = ["E-06"]
 confidence = "likely"
 note = "Not in header. 1 site, hasattr-guarded: (w, 0) -> mission id fed to om_mission_unit_tier; else literal 0. Restype: id -> uint32_t, or int32_t if -1 on failure. Mission system is E-10 (toml modules mis"
+
+[[symbols]]
+name = "om_mission_tactical_tick"
+module = "mission.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
 
 [[symbols]]
 name = "om_mission_tag_rivals"
@@ -3962,7 +4100,7 @@ restype = "int32_t"
 params = [{ name = "w", ctype = "const om_world*" }, { name = "objective_idx", ctype = "uint32_t" }]
 epics = ["E-10"]
 confidence = "likely"
-note = "HDR4-2-r: map-node index of the objective, -1 if none."
+note = "HDR4-2-r: map-node index of the objective, -1 if none. Header doc (moved here from ouroboros_sim.h): HDR4-2-r/A4: map-node index of objective_idx, -1 if the objective has none."
 
 [[symbols]]
 name = "om_objective_get_radius"
@@ -3971,7 +4109,7 @@ restype = "double"
 params = [{ name = "w", ctype = "const om_world*" }, { name = "objective_idx", ctype = "uint32_t" }]
 epics = ["E-10"]
 confidence = "likely"
-note = "HDR4-2-r: zone radius of the objective in map units, 0.0 if none."
+note = "HDR4-2-r: zone radius of the objective in map units, 0.0 if none. Header doc (moved here from ouroboros_sim.h): Radius of objective_idx's zone in map units, 0.0 if the objective has none."
 
 [[symbols]]
 name = "om_objective_is_contested"
@@ -5088,6 +5226,26 @@ confidence = "likely"
 note = "No world. p0 = unit type (0). Return == 0 int literal; double cost reading possible, test relies on default int restype."
 
 [[symbols]]
+name = "om_support_tick"
+module = "tactical_support.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
+name = "om_tac_unit_sync_position"
+module = "unit.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }, { name = "unit_id", ctype = "uint32_t" }, { name = "x", ctype = "double" }, { name = "y", ctype = "double" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
+
+[[symbols]]
 name = "om_tactical_category_multiplier"
 module = "unit.c"
 restype = "double"
@@ -5357,7 +5515,7 @@ restype = "uint32_t"
 params = [{ name = "w", ctype = "const om_world*" }, { name = "k", ctype = "uint32_t" }, { name = "owners_out", ctype = "int32_t*" }, { name = "cap", ctype = "uint32_t" }]
 epics = ["E-09"]
 confidence = "likely"
-note = "G-C3 (A48 item 13): owner per region (-1 unowned) at tick start_tick + STRIDE*k of the last jump; returns n_regions, 0 when k out of range or cap < n_regions."
+note = "G-C3 (A48 item 13): owner per region (-1 unowned) at tick start_tick + STRIDE*k of the last jump; returns n_regions, 0 when k out of range or cap < n_regions. Header doc (moved here from ouroboros_sim.h): G-C3 (A48 item 13): the ownership timeline of the last completed om_time_jump_run, one snapshot every OM_OWNERSHIP_TIMELINE_STRIDE ticks. Snapshot k is the owner of each region (faction id, -1 unowned) at tick report.start_tick + STRIDE*k, so k = 0 is the state before the jump's first tick. Snapshots are every STRIDE ticks from the start, so an odd jump length has no snapshot at end_tick (A59). Memory only, never saved. Copies n_regions int32 values into owners_out and returns n_regions; returns 0, writing nothing, when k is not below om_time_jump_ownership_snapshot_count or cap < n_regions."
 
 [[symbols]]
 name = "om_time_jump_interrupt"
@@ -5384,7 +5542,7 @@ restype = "uint32_t"
 params = [{ name = "w", ctype = "const om_world*" }]
 epics = ["E-09"]
 confidence = "likely"
-note = "G-C3: snapshots held for the last completed jump, == report.n_snapshots; 0 before any jump."
+note = "G-C3: snapshots held for the last completed jump, == report.n_snapshots; 0 before any jump. Header doc (moved here from ouroboros_sim.h): G-C3: snapshots held for the last completed jump, == report.n_snapshots (jump_ticks / OM_OWNERSHIP_TIMELINE_STRIDE + 1); 0 before any jump has completed."
 
 [[symbols]]
 name = "om_time_jump_report_faction_field_deltas_count"
@@ -5512,6 +5670,16 @@ params = [{ name = "w", ctype = "om_world*" }, { name = "p0", ctype = "uint32_t"
 epics = ["E-13"]
 confidence = "likely"
 note = "Return unused. Inferred p0=unit_id."
+
+[[symbols]]
+name = "om_unit_clear_target"
+module = "unit.c"
+restype = "void"
+params = [{ name = "w", ctype = "om_world*" }, { name = "unit_id", ctype = "uint32_t" }]
+internal = true
+epics = ["internal"]
+confidence = "certain"
+note = "internal (om_internal.h); no ctypes binding"
 
 [[symbols]]
 name = "om_unit_compute_terrain_speed"
