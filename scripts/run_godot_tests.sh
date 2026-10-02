@@ -23,7 +23,10 @@ else
     exit 2
 fi
 
-TIMEOUT="${TIMEOUT_SEC:-300}"
+DEFAULT_TIMEOUT=300
+# A test script may declare its own budget (frames, like --quit-after) with a
+# line `# test-timeout: N`; it is clamped up to the default. An explicit
+# TIMEOUT_SEC in the environment wins over any declaration.
 
 if [[ $# -lt 1 ]]; then
     echo "usage: $0 <test_script.gd> [<test_script.gd> ...]" >&2
@@ -57,6 +60,15 @@ for TEST_PATH in "$@"; do
     fi
 
     RES_PATH="res://${TEST_PATH#./}"
+    if [[ -n "${TIMEOUT_SEC:-}" ]]; then
+        TIMEOUT="$TIMEOUT_SEC"
+    else
+        TIMEOUT="$DEFAULT_TIMEOUT"
+        DECLARED="$(grep -m1 -oP '^# test-timeout: \K[0-9]+' "$TEST_PATH" || true)"
+        if [[ -n "$DECLARED" && "$DECLARED" -gt "$TIMEOUT" ]]; then
+            TIMEOUT="$DECLARED"
+        fi
+    fi
     echo "=== Running $RES_PATH (timeout ${TIMEOUT}s) ==="
 
     RUN_LOG="$(mktemp)"

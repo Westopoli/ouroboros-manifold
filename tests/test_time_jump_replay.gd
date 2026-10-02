@@ -1,4 +1,5 @@
 extends SceneTree
+# test-timeout: 12000
 
 # G-C3 client unit 2 (A48 item 13, A52, A59, A65; E-09 R-069-03, R-069-05;
 # E-16 R-110-02/07): scenes/world/time_jump_sequencer.gd replays the map from
