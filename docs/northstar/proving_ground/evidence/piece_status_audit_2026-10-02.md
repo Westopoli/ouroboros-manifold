@@ -4,7 +4,7 @@ Scope: every one of the 73 `[[piece]]` rows in `docs/northstar/plans/push/pieces
 
 ## Method and caveats
 
-- Status shapes in the file: `{ state = "attached", attach_sha = ... }` (36 rows), the bare string `"pending"` (35 rows), and no status key at all (`core`, `B10c`).
+- Status shapes in the file: `{ state = "attached", attach_sha = ... }` (21 rows), the bare string `"pending"` (50 rows), and no status key at all (`core`, `B10c`).
 - Test evidence: `tests/csim` was run on a clean worktree of origin/main with the project venv: 1191 passed, 129 failed, 60 skipped, 2 xfailed. 99 of the 129 failures are detector-control tests under `tests/csim/controls/` (the known pre-existing set; the ledger's last sweeps read 128 to 129 failures). The 30 non-control failures are: E-06 R-045-09 (1), E-10 R-078-06 (1), E-11 R-085-02 and R-085-04 (2), E-15 R-130-02 (1), E-17 S112 to S119 (25, no piece row owns E-17 tests).
 - Per-piece "red" counts below are non-control csim failures inside the piece's own acceptance files. Godot-test acceptance (`*.gd`) was not run, so GDScript pieces rely on ledger rows.
 - Ledger piece ids in the early day2 sweep rows ("B8 never attached", "B10b never landed") are stale; later sweeps (passes 6, 7, final, bk-41 to bk-45) supersede them. The ledger never recorded `pieces.toml` attaches after day2 for the B-series, which is why the file lags.
@@ -83,7 +83,6 @@ Red counts are non-control csim failures in the piece's acceptance files. "Lande
 | MK-harness | pending | Ledger day1 "merge MK-harness": `mockup/harness-pass2` (`ff6da0a`) on main; owned files `scripts/mockup_qa.sh` (7 commits), `scripts/mockup_verify.sh`, `scenes/mockups/_shared/**`, `scenes/mockups/landscape/qa/**` all present, last touched 2026-09-22 | attached | medium |
 | C1 | attached 764ed59 | ledger "attach C1" | ok | high |
 | core | none | see requested table | n/a, add status | high |
-| B10c | none | duplicate of row above | | |
 | G-uidatabus | pending | Owner-only gap row, `owns = []`, `tests_pending`. Target `autoload/ui_data_bus.gd` has 12 commits, last `980bf65e` (2026-10-01). No landing row of its own. | leave pending or mark "owner-only"; no build to attach | low |
 | G-tacticalbridge | pending | Same shape; `autoload/tactical_bridge.gd` 10 commits, last `0170a6ac` | same | low |
 | G-simbridge | pending | `4f9f54d8` removed dead push-signal wiring (HEAD of the recent history). Same shape. | same | low |
@@ -125,7 +124,7 @@ Red counts are non-control csim failures in the piece's acceptance files. "Lande
 - Rows whose status looks wrong (proposed change from the toml value): 29.
   - Pending that should be attached: B5, B5b, B7b, B8, B9, B10b (with caveat), B11, B12, B12b, B13, B14, B15m, T2c, Q2, MK-harness, A2-contract, B5-chronicle, B6-lifecycle, B6-collapse-pick, G-errorpanel, G-flags, G-eramanifest, DOCS-arch, HARNESS-sigblocked, HARNESS-symown, G-infopanel, HARNESS-runnertime (27).
   - Status key missing: B10c (should be attached), core (n/a) (2).
-- Rows correct as is: the 36 attached rows (Q1 and the MK-* rows unverifiable from this tree), C6-cmd, C6-refuse, A94-harness, A94-contract.
+- Rows correct as is: the 21 attached rows (Q1 and the MK-* rows unverifiable from this tree), C6-cmd, C6-refuse, A94-harness, A94-contract.
 - Rows with stale owns paths (not status): G-legacytests (3 of 6 paths absent), G-tacticalvisibility (path absent).
-- G-* ownership-only rows (17, not counted above): no build to attach; "pending" is not wrong but means "owner row only". Architect should decide whether those need a status at all.
+- G-* ownership-only rows (19 of the G rows, not counted above): no build to attach; "pending" is not wrong but means "owner row only". Architect should decide whether those need a status at all.
 - Attaches that carry a known open red: B5 (R-045-09, Westley balance finding), B9 (R-078-06), B10b (R-085-02, R-085-04), B14 (R-130-02). Do not mark these attached without recording the red.
