@@ -5,12 +5,12 @@ Written 2026-10-02 by the design chat (ouroboros-b1) for the chat that conducts 
 ## 0. Who does what
 
 - **Design chat (ouroboros-b1):** owns this brief, the bible text, the provisional numbers, and runs the experiments. It does not build.
-- **Conducting chat:** runs two cascades from this brief and reports to the design chat after each. It decides nothing about game behaviour. A rule this brief leaves unclear comes back as a question, not as a choice.
+- **Conducting chat:** runs the cascades below and reports to the design chat after each. (Westley asked for the engine gaps as one cascade; building the harness as its own, earlier cascade is the design chat's split.) It decides nothing about game behaviour. A rule this brief leaves unclear comes back as a question, not as a choice.
 - **Westley:** owns every threshold and tolerance, and anything marked "ask".
 
 ## 1. Method: manager-mode-lite
 
-Westley, 2026-10-01: "Use manager-mode-lite (sonnet subagents for everything, shard test writers and auditors)."
+Westley, 2026-10-01: "Use manager-mode-lite (sonnet subagents for everything, shard test writers and auditors)." That is his definition. The bullets below add this repo's rules (CLAUDE.md, PLAN.md) and the design chat's sequencing.
 
 - Every sub-agent is Sonnet. Name the model on every spawn (CLAUDE.md).
 - Tests first. A shard test writer writes the failing tests for a part; an auditor, a different agent, checks them against this brief before any code; an implementer writes only code and never edits a test. Nobody grades their own tests.
@@ -32,10 +32,10 @@ Repo rules that bind the engine cascade (CLAUDE.md, `docs/northstar/PLAN.md` "Th
 The Mac (arm64) and the Linux machine (x86_64) work on this repo at once.
 
 - No machine paths in code or tests. Find the repo root from the file's own location.
-- Scripts guard their entry point (`if __name__ == "__main__":`) and pass plain data to worker processes. macOS starts workers fresh; Linux forks.
+- Scripts guard their entry point (`if __name__ == "__main__":`) and pass plain data to worker processes. macOS starts workers by spawn; do not rely on fork on either machine.
 - Work lands on `main` in small units. Merge, never rebase. Pull before editing a shared file. Cascade branches and worktrees stay local and are removed at the end; only the result is pushed.
-- Nothing generated is committed: libraries, result tables, pictures, Godot `.import` and `.uid` files.
-- Before starting on the Mac: the working tree must be clean. Westley restores the stray `project.godot` change himself (`git restore project.godot`); the guard blocks agents from discarding files. 34 old agent worktrees sit under `.claude/worktrees/`; ask Westley before removing any.
+- Nothing generated is committed: libraries, result tables, pictures, Godot `.import` and `.uid` files. The one exception is the control hash file of section 3.3.
+- Before starting on the Mac: the cascade tooling needs a clean working tree (the design chat's rule). Westley decided to discard the stray `project.godot` change; the guard blocks agents from discarding files, so he runs `git restore project.godot`. 34 old agent worktrees sit under `.claude/worktrees/`; ask Westley before removing any.
 
 ## 3. Cascade A: the skill lab harness
 
@@ -116,7 +116,7 @@ Umbrella test (red until the cascade is done): `python3 -m scripts.skilllab cont
 
 ### 3.4 The page
 
-One self-contained HTML file per batch, light and dark, no external scripts beyond fonts. Form approved by Westley on 2026-10-01:
+One self-contained HTML file per batch, light and dark, no external scripts beyond fonts. The form is that of the sample Westley called "much better" on 2026-10-01; he named only the top graphic. The bullets describe that sample; a different chart form is allowed when the kind of data changes:
 
 - The heading of each figure states the finding in soldiers ("With longer reach, 16 units beat 17. Identical sides beat 15.").
 - A line of fights by enemy size: one dot per cell, coloured won or lost, the break-even marked and labelled "beats N, loses to N+1".
@@ -138,7 +138,9 @@ The design chat runs the controls batch on today's engine and reads it with West
 
 Westley, 2026-10-01: "Every G doesn't need it's own cascade, it can be done all in one." Waves inside it run in dependency order: W0 the contract (header, `signatures.toml`, the ABI bump) and G0; W1 G1; W2 G2 and G3; W3 G4; W4 G5, G6, G7. If a wave decomposes into more than 16 parts, split the wave.
 
-**The one invariant across every step:** with no new call made and every setting at its default, the engine behaves exactly as it does today. Record, before touching `csrc/`, a file of hashes over the unit states of a fixed set of fights (the three skill-lab controls plus `tests/csim` tactical fixtures of the conducting chat's choice); assert the same hashes after every wave. The existing `tests/csim` suite does not regress.
+**The invariant across the steps that add new mechanisms (G1, G4, G5, G6, G7):** with no new call made and every setting at its default, the engine behaves exactly as it does today. Record, before touching `csrc/`, a file of hashes over the unit states of a fixed set of fights (the three skill-lab controls plus `tests/csim` tactical fixtures of the conducting chat's choice); assert the same hashes after every wave, with the two switches below off. The existing `tests/csim` suite does not regress.
+
+**Two steps change default behaviour on purpose, because the engine is behind its own bible there.** G3 (targeting by sight) changes every fight in which a side cannot see an enemy that is within reach. G2 changes fights on maps with blocked cells. Each gets a setting so the old behaviour stays available as a control: `OM_TP_TARGET_BY_SIGHT` and `OM_TP_ROUTE_AROUND_TERRAIN`, both default 1 (the bible's rule), 0 for today's behaviour. The hash invariant is asserted with both at 0. With both at 1, re-hash the three open-ground controls and report any difference to the design chat; do not explain it away. A `tests/csim` test that encodes the old behaviour is not edited by an implementer: list it in the report, and the design chat rules on it under the change protocol.
 
 Signatures below are proposals in the header's style. The conducting chat may adjust names to match `signatures.toml` conventions; it may not change behaviour.
 
@@ -258,21 +260,21 @@ int      om_ping_alert_get(const om_world *w, int32_t faction, uint32_t index, o
 
 ## 6. Provisional numbers
 
-Westley, 2026-10-01, accepted the recommended starting values as provisional so the stories can be built; every one is a runtime setting (G1) and is tuned by the lab. Engine defaults keep today's behaviour; the lab applies the right-hand column.
+Westley, 2026-10-01, accepted the recommended starting values (`Q-005-04` and `Q-001-05`, option a) as provisional so the stories can be built. That option named kinds of value, not numbers. **The numbers in the right-hand column were chosen by the design chat**, from existing constants where one exists and by judgement otherwise; he has not set or confirmed them. Every one is a runtime setting (G1), tuned by the lab. Engine defaults keep today's behaviour; the lab applies the right-hand column.
 
 | Setting | Engine default | Lab starting value | Source |
 |---|---|---|---|
 | Cross-layer vision, 1 and 2 layers away | 0.50, 0.20 | same | `om_constants.h`; Q-005-02 |
-| Emitting: sight multiplier | 1.0 (no effect until set) | 2.0 | the vantage multiplier is 2.0 |
-| Emitting: seen-from multiplier | 1.0 | 2.0 | same |
+| Emitting: sight multiplier | 1.0 (no effect until set) | 2.0 | design chat proposal, by analogy with the vantage multiplier of 2.0 |
+| Emitting: seen-from multiplier | 1.0 | 2.0 | design chat proposal |
 | Ping radius | 500 | 500 | the unused pulse radius |
 | Ping reveal | 40 ticks (2 s) | same | the unused pulse reveal |
 | Ping cooldown, per unit | 400 ticks (20 s) | same | the unused pulse cooldown |
-| Ping reach from the caster | 2,000 | 2,000 | "much longer range" than passive sight (at most 500) |
+| Ping reach from the caster | 2,000 | 2,000 | design chat proposal; his words are "a much longer range" than passive sight (at most 500) |
 | Reach: Vanguard, Warden (Line) | 0 up, 0 down | 0, 0 | Q-005-04 |
 | Reach: Raider (Strike) | 0, 0 | 1, 1 | Q-005-04 |
-| Reach: Interceptor (Strike) | 0, 0 | 2 up, 1 down: the type that fires upward well | Q-005-04 |
-| Reach: Bombard, Bastion (Siege) | 0, 0 | 0 up, 2 down | Q-005-04 |
+| Reach: Interceptor (Strike) | 0, 0 | 2 up, 1 down | design chat proposal for the type that fires upward well |
+| Reach: Bombard, Bastion (Siege) | 0, 0 | 0 up, 2 down | design chat proposal; Q-005-04 says downward only |
 | Range and damage multiplier per layer of offset | 1.0 | 1.0 | Q-008-03, swept by the lab |
 | Route across layers | on | on | Q-001-04 |
 | Route cost | travel time, transfer time included | same | Q-001-05 |
