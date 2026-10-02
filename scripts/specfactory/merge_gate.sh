@@ -220,6 +220,15 @@ else
     ok control_liveness "$(sed 's/^OK //' "$CL_LOG" | tr '\n' ' ')"
 fi
 
+PC_LOG="$SCRATCH_ROOT/placeholder_controls.log"
+"$PYTHON" "$GATE_DIR/merge_gate_support.py" placeholder-controls "$CANDIDATE" \
+    --placeholders "$PLACEHOLDERS_TXT" >"$PC_LOG" 2>&1
+if [[ $? -ne 0 ]]; then
+    reject placeholder_controls "$(sed 's/^REJECT //' "$PC_LOG" | tr '\n' ' ')"
+else
+    ok placeholder_controls "$(sed 's/^OK //' "$PC_LOG" | tr '\n' ' ')"
+fi
+
 # -------------------------------------------------------------- 6. suite_regression, tests/csim and tests/qa/t1 separately
 REG_CSIM_LOG="$SCRATCH_ROOT/regression_csim.log"
 "$PYTHON" "$GATE_DIR/merge_gate_support.py" regression "$CANDIDATE" "$BASE_REF" tests/csim \
