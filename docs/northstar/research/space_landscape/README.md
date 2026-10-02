@@ -60,6 +60,20 @@ What it shows:
 
 Both end in the same thing: an open-or-blocked answer per layer per position, plus the places where a unit can change layer. Land gets there from height (the ground fills the layers below it, so a blocked layer always has blocked layers under it). Space sets it directly, with no such limit. The simulation needs only the general form, so space is the general case and land is a special case of it. One sister system, two generators, one output.
 
+## The mockup, first look (2026-10-02)
+
+Built to `docs/northstar/plans/2026-10-02-space-kit-mode-spec.md` by a Sonnet Doer; kit `space` in the landscape mockup (`scenes/mockups/landscape/field_map_space.gd`, `kits/space.json`). Screenshots in `mockup/`, taken on the Mac with the QA driver (`scenes/mockups/landscape/qa/space.json`).
+
+What the numbers say, canvas 24,000 wu: generate about 500 to 730 ms, placer 100 to 240 ms, 39,000 pieces at 15 percent blocked and 106,000 at 70 percent. Carving leaves nothing unreachable on seeds 11 to 16 at every density; with carving off, 7 to 13 regions are cut off at 70 percent, so the check has its positive control. Same seed and density give the same hash. Independent layers cut the share of crossings at 70 percent from 17 to 9.5 percent, as the Python check predicted.
+
+What the pictures say, before Westley flies it:
+
+- The mechanism reads: open corridors, blocked mass, a lit tunnel where one was cut, rings at the scarce crossings, and more blocked space as the slider rises.
+- The look does not yet read as sheets of ice. Every blocked cell is a shard, so a heavy field is a spiky mass, and from the tactical camera the five layers stack into one cliff rather than five sheets. Flat slabs for the body of a blocked region with shards only at its edge, and a wider gap or a stronger tint between layers, are the first things to try.
+- Open space is bare void. Something faint under it (a grid, or a dark water plane) would give the eye a reference.
+- The crossing rings are small at tactical zoom and invisible at map zoom.
+- Layer focus works (unfocused layers darken) and is the clearest way to read one layer.
+
 ## Suggested next step
 
-A second kit mode in the landscape mockup: five open-or-blocked maps from slices of one block of noise, a density slider, a reachability check with tunnel cutting, asteroid pieces in the blocked cells, and the crossings marked. That shows whether the look and the play read as intended, before any rule is written.
+Westley flies the kit mode (Kit: space, density slider, keys 1 to 5 for layer focus, 0 for all) and gives the same kind of review as the landscape mockup got. The look items above are the architect's first read, not his.

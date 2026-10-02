@@ -58,3 +58,14 @@ Clean: `scripts/mockup_qa.sh firstlook landscape <out>` — `exit.txt` 0, `error
 
 - One clean `qa_seed`+screenshot regenerate cycle: ~3800-4800ms CPU (`gen`+`ground`+`placer`), independent of resolution.
 - Per rendered frame under llvmpipe/Compatibility at 1280x720: ~840-950ms once warmed up (measured via `_qa.fps_ms`), largely flat 640x360 to 1280x720 (CPU/draw-call bound on ~12,000 placer pieces, not fill-rate bound — see `_shared/README.md`'s SimBridge/timing notes and the main report).
+
+## Space kit mode (2026-10-02)
+
+Kit `space` builds a `SpaceFieldMap` (`field_map_space.gd`); spec `docs/northstar/plans/2026-10-02-space-kit-mode-spec.md`. Drive it with `qa_set kit space`, `qa_set density N`, `qa_set focus K`. Measured headless, Godot 4.6.1, canvas 24000, seeds 11 to 16. Thresholds are the spec's; Westley owns them.
+
+| id | oracle | threshold | measured clean | measured planted | plant |
+|---|---|---|---|---|---|
+| SPACE-DET-1 | `hash` for one seed and density, two runs | equal | equal at densities 15, 35, 55, 70 (seed 11) | | none |
+| SPACE-CARVE-2 | `regions_unreachable_after` | 0 for seeds 11 to 16 at densities 15, 35, 55, 70 | 0 in all 24 runs (also 0 and 90) | above 0 at density 70 on every seed 11 to 16 (7 to 13 regions) | `space-no-carve` |
+| SPACE-LAYERS-3 | mean `crossing_pct` over seeds 11 to 16 at density 70 | lower under the plant than default | 17.24 | 9.52 | `space-independent-layers` |
+| SPACE-KITS-4 | `kit` after `qa_set kit` in the order settled_reach, space, greek, space, settled_reach, greek | each switch lands, no error | all six switches land, no error | | none |
