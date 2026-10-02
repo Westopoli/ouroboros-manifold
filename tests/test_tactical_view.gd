@@ -208,8 +208,10 @@ func _run_live_tests() -> void:
 	load("res://autoload/sim_session.gd").reset()
 	var fresh: Node = (load(SCENE_PATH) as PackedScene).instantiate()
 	get_root().add_child(fresh)
-	await process_frame
-	fresh.set_process(false)  # see the _root mount above for why
+	# A67 (test-defect): _ready() has run synchronously inside add_child(), so
+	# stop processing before any frame is awaited; on a rendered display an
+	# extra _process otherwise ran first and stepped the live tick to 2.
+	fresh.set_process(false)
 	await process_frame
 	var st: Dictionary = fresh.qa_state()
 	_assert(int(st.get("tick", -1)) == int(live.get("tick", -2)),
@@ -543,7 +545,11 @@ func _check_units_count_and_px_in_viewport() -> void:
 	# --headless (observed 100x100 regardless of project.godot's configured
 	# 1920x1080), so a too-small reading falls back to the configured size
 	# rather than asserting against a meaningless 100x100 box.
-	var vp := Vector2(get_root().size)
+	# A67 (test-defect): the scene lays out against the stretched logical
+	# viewport (canvas_items stretch, 1920x1080 base), which is what
+	# get_visible_rect() reports; get_root().size is the raw window and is
+	# 1280x720 under a 720p display.
+	var vp: Vector2 = _root.get_viewport().get_visible_rect().size
 	if vp.x < 200.0 or vp.y < 200.0:
 		vp = Vector2(1920, 1080)
 	var outside := 0
