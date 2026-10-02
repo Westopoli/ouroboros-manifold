@@ -1767,7 +1767,6 @@ double om_mission_compute_starting_force(double c_double);
 uint32_t om_mission_get_reinforcement_trickle(om_world *w);
 void om_mission_set_player_held_structures_count(om_world *w, int32_t faction_id, uint32_t held);
 void om_mission_setup_extraction_point(om_world *w, double x, double y, double radius);
-int om_objective_is_contested(om_world *w, uint32_t objective);
 void om_objective_setup_drifting(om_world *w, uint32_t objective, uint64_t period);
 uint32_t om_render_get_owner_color(int32_t owner);
 uint32_t om_render_get_structure_silhouette_id(void);
