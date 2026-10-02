@@ -65,10 +65,6 @@ symbol = "om_map_block_rect"
 reason = "PP-contract (A139): lab and test fixture call that hand-places a blocked rectangle; live maps carry no terrain until P4 (held). The route grid and sight checks it feeds are reached from om_tactical_step. Stays."
 
 [[allow]]
-symbol = "om_map_set_canvas"
-reason = "PP-contract (A139): the canvas size call is made by mission setup in csrc/mission.c, a unit on the coordinator's branch. Removed in the merge that lands that unit."
-
-[[allow]]
 symbol = "om_command_set_layer"
 reason = "PP-contract (A139): layer change order (Phase C). Removed when the client plan wires it to a pipe handler."
 

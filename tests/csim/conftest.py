@@ -61,7 +61,7 @@ _build_libs()
 # Bumped to 2 at freeze/F2 (OM_FEAT_TACTICAL, the E-06/E-07/E-11 tick-order
 # bug ids, and om_world_get_state_checksum / om_world_set_tick /
 # om_abi_layout_check are new since version 1).
-EXPECTED_ABI_VERSION = 3
+EXPECTED_ABI_VERSION = 4
 
 
 # ---- enum mirrors (om_field / om_composite / om_tier / om_bug) ----
@@ -467,6 +467,74 @@ class OMOutcome:
 class OMCandKind:
     ATTACK = 0
     COLONIZE = 1
+
+
+class OMTacParam:
+    PURSUE_BY_STEERING = 0
+    ROUTE_AROUND_TERRAIN = 1
+    LEASH_BEFORE_DAMAGE = 2
+    TARGET_POLICY = 3
+    TARGET_BY_SIGHT = 4
+    ROUTE_ACROSS_LAYERS = 5
+    ATTACK_MOVE_LEASH = 6
+    RETURN_FIRE_FLEE_DIST = 7
+    UNIT_COLLISION_RADIUS = 8
+    VANTAGE_MULT = 9
+    AOE_DAMAGE_CAP = 10
+    TARGETING_COHORTS = 11
+    CATMULT_LINE_LINE = 12
+    CATMULT_LINE_SIEGE = 13
+    CATMULT_LINE_STRIKE = 14
+    CATMULT_SIEGE_LINE = 15
+    CATMULT_SIEGE_SIEGE = 16
+    CATMULT_SIEGE_STRIKE = 17
+    CATMULT_STRIKE_LINE = 18
+    CATMULT_STRIKE_SIEGE = 19
+    CATMULT_STRIKE_STRIKE = 20
+    EMIT_SIGHT_MULT = 21
+    EMIT_SEEN_MULT = 22
+    PING_RADIUS = 23
+    PING_REVEAL_TICKS = 24
+    PING_COOLDOWN_TICKS = 25
+    PING_REACH = 26
+    VISION_UP_1 = 27
+    VISION_UP_2 = 28
+    VISION_UP_3 = 29
+    VISION_UP_4 = 30
+    VISION_DOWN_1 = 31
+    VISION_DOWN_2 = 32
+    VISION_DOWN_3 = 33
+    VISION_DOWN_4 = 34
+    RANGE_UP_1 = 35
+    RANGE_UP_2 = 36
+    RANGE_UP_3 = 37
+    RANGE_UP_4 = 38
+    RANGE_DOWN_1 = 39
+    RANGE_DOWN_2 = 40
+    RANGE_DOWN_3 = 41
+    RANGE_DOWN_4 = 42
+    DAMAGE_UP_1 = 43
+    DAMAGE_UP_2 = 44
+    DAMAGE_UP_3 = 45
+    DAMAGE_UP_4 = 46
+    DAMAGE_DOWN_1 = 47
+    DAMAGE_DOWN_2 = 48
+    DAMAGE_DOWN_3 = 49
+    DAMAGE_DOWN_4 = 50
+    AREA_UP_1 = 51
+    AREA_UP_2 = 52
+    AREA_UP_3 = 53
+    AREA_UP_4 = 54
+    AREA_DOWN_1 = 55
+    AREA_DOWN_2 = 56
+    AREA_DOWN_3 = 57
+    AREA_DOWN_4 = 58
+    _COUNT = 59
+
+
+class OMEmission:
+    SILENT = 0
+    ACTIVE = 1
 
 
 class OMEvent:
@@ -1615,6 +1683,14 @@ class OmOnboardingConfig(ctypes.Structure):
     ]
 
 
+class OMPingAlert(ctypes.Structure):
+    _fields_ = [
+        ("tick", ctypes.c_uint64),
+        ("faction", ctypes.c_int32),
+        ("sector", ctypes.c_int32),
+    ]
+
+
 class OMReinforcementWave(ctypes.Structure):
     _fields_ = [
         ("is_scheduled", ctypes.c_uint32),
@@ -1771,6 +1847,7 @@ STRUCT_C_NAMES = {
     "OMObjectiveSpec": "om_objective_spec",
     "om_objective_spec": "om_objective_spec",
     "OmOnboardingConfig": "om_onboarding_config",
+    "OMPingAlert": "om_ping_alert",
     "OMReinforcementWave": "om_reinforcement_wave",
     "OMReplayCommand": "om_replay_command",
     "OmReversionRecord": "om_reversion_record",
@@ -1788,6 +1865,25 @@ STRUCT_C_NAMES = {
     "OmClientSnapshot": "om_client_snapshot",
     "om_client_snapshot": "om_client_snapshot",
 }
+
+
+def _bind_e01(lib):
+    if getattr(lib, "_e01_bound", False):
+        return
+    P = ctypes.POINTER
+    V = ctypes.c_void_p
+    W = OMWorldP
+    _bind(lib, "om_command_ping", [W, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_double, ctypes.c_double], ctypes.c_int, ("w", "caster", "layer", "x", "y"))
+    _bind(lib, "om_command_set_emission", [W, P(ctypes.c_uint32), ctypes.c_uint32, ctypes.c_int], ctypes.c_int, ("w", "unit_ids", "n_units", "mode"))
+    _bind(lib, "om_command_set_layer", [W, P(ctypes.c_uint32), ctypes.c_uint32, ctypes.c_uint32], ctypes.c_int, ("w", "unit_ids", "n_units", "layer"))
+    _bind(lib, "om_ping_alert_count", [W, ctypes.c_int32], ctypes.c_uint32, ("w", "faction"))
+    _bind(lib, "om_ping_alert_get", [W, ctypes.c_int32, ctypes.c_uint32, V], ctypes.c_int, ("w", "faction", "index", "out"))
+    _bind(lib, "om_roster_set_reach", [W, ctypes.c_int, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_int, ("w", "unit_type", "layers_up", "layers_down"))
+    _bind(lib, "om_unit_get_emission", [W, ctypes.c_uint32], ctypes.c_int, ("w", "unit"))
+    _bind(lib, "om_unit_get_target_layer", [W, ctypes.c_uint32], ctypes.c_uint32, ("w", "unit"))
+    _bind(lib, "om_unit_profile_reach", [W, ctypes.c_int, P(ctypes.c_uint32), P(ctypes.c_uint32)], ctypes.c_int, ("w", "unit_type", "up", "down"))
+    _bind(lib, "om_unit_transition_progress", [W, ctypes.c_uint32], ctypes.c_double, ("w", "unit"))
+    lib._e01_bound = True
 
 
 def _bind_e06(lib):
@@ -2206,10 +2302,12 @@ def _bind_e11(lib):
     _bind(lib, "om_roster_register_custom_unit", [W, ctypes.c_uint32, ctypes.c_int, ctypes.c_char_p, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_int], ctypes.c_int, ("w", "type_id", "category", "role", "max_hp", "base_damage", "attack_interval", "attack_range", "speed", "sensor_radius", "layer_transition_time", "aoe_radius", "ability_id"))
     _bind(lib, "om_tactical_category_multiplier", [W, ctypes.c_int, ctypes.c_int], ctypes.c_double, ("w", "attacker_category", "target_category"))
     _bind(lib, "om_tactical_disable_abilities", [W], None, ("w",))
+    _bind(lib, "om_tactical_get_param", [W, ctypes.c_int], ctypes.c_double, ("w", "p"))
     _bind(lib, "om_tactical_reset", [W], None, ("w",))
     _bind(lib, "om_tactical_run", [W, ctypes.c_uint64], ctypes.c_uint64, ("w", "n_ticks"))
     _bind(lib, "om_tactical_run_until_eliminated", [W], ctypes.c_uint64, ("w",))
     _bind(lib, "om_tactical_run_until_engagement_ends", [W, ctypes.c_uint32], ctypes.c_uint64, ("w", "unit_id"))
+    _bind(lib, "om_tactical_set_param", [W, ctypes.c_int, ctypes.c_double], ctypes.c_int, ("w", "p", "value"))
     _bind(lib, "om_tactical_spawn_force_composition", [W, ctypes.c_int32, ctypes.c_uint32, ctypes.c_char_p], None, ("w", "faction_id", "count", "composition"))
     _bind(lib, "om_tactical_target_validation_runs_every_tick", [W], ctypes.c_int, ("w",))
     _bind(lib, "om_tactical_telegraph_active", [W, ctypes.c_double, ctypes.c_double], ctypes.c_int, ("w", "x", "y"))
@@ -2224,6 +2322,9 @@ def _bind_e11(lib):
     _bind(lib, "om_unit_deal_damage", [W, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_double], None, ("w", "p1", "p2", "p3"))
     _bind(lib, "om_unit_effective_speed", [W, ctypes.c_uint32], ctypes.c_double, ("w", "unit_id"))
     _bind(lib, "om_unit_fire_aoe_attack", [W, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_double], None, ("w", "attacker_id", "target_id", "radius"))
+    _bind(lib, "om_unit_get_engaged", [W, ctypes.c_uint32], ctypes.c_int, ("w", "unit"))
+    _bind(lib, "om_unit_get_group_id", [W, ctypes.c_uint32], ctypes.c_uint32, ("w", "unit"))
+    _bind(lib, "om_unit_get_leash_anchor", [W, ctypes.c_uint32, P(ctypes.c_double), P(ctypes.c_double)], ctypes.c_int, ("w", "unit", "x", "y"))
     _bind(lib, "om_unit_hp", [W, ctypes.c_uint32], ctypes.c_double, ("w", "unit_id"))
     _bind(lib, "om_unit_in_backswing", [W, ctypes.c_uint32], ctypes.c_int, ("w", "unit_id"))
     _bind(lib, "om_unit_in_flinch", [W, ctypes.c_uint32], ctypes.c_int, ("w", "unit_id"))
@@ -2331,6 +2432,8 @@ def _bind_e13(lib):
     _bind(lib, "om_command_queue_attack_move", [W, ctypes.c_uint32, ctypes.c_double, ctypes.c_double], None, ("w", "p0", "p1", "p2"))
     _bind(lib, "om_command_queue_move", [W, ctypes.c_uint32, ctypes.c_double, ctypes.c_double], None, ("w", "p0", "p1", "p2"))
     _bind(lib, "om_group_is_active", [W, ctypes.c_uint32], ctypes.c_int, ("w", "p0"))
+    _bind(lib, "om_map_block_rect", [W, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_int, ("w", "x0", "y0", "x1", "y1", "layer_lo", "layer_hi"))
+    _bind(lib, "om_map_set_canvas", [W, ctypes.c_double, ctypes.c_double], ctypes.c_int, ("w", "width", "height"))
     _bind(lib, "om_map_set_obstacle_density", [W, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_double], None, ("w", "p0", "p1", "p2", "p3"))
     _bind(lib, "om_navmesh_find_path", [W, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_uint32], ctypes.c_uint32, ("w", "p0", "p1", "p2", "p3", "p4"))
     _bind(lib, "om_navmesh_get_cache_hits", [W], ctypes.c_uint32, ("w",))
@@ -2569,5 +2672,5 @@ def _bind_e17(lib):
     lib._e17_bound = True
 
 
-_GENERATED_BINDERS = (_bind_e06, _bind_e07, _bind_e08, _bind_e09, _bind_e10, _bind_e11, _bind_e12, _bind_e13, _bind_e14, _bind_e15, _bind_e17)
+_GENERATED_BINDERS = (_bind_e01, _bind_e06, _bind_e07, _bind_e08, _bind_e09, _bind_e10, _bind_e11, _bind_e12, _bind_e13, _bind_e14, _bind_e15, _bind_e17)
 # ---- end generated ----

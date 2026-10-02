@@ -222,7 +222,7 @@ typedef struct {
 } om_sup_unit_ext;
 
 typedef struct {
-    om_sup_structure structures[OM_SUP_MAX_STRUCTURES];
+    om_sup_structure structures[OM_SUP_MAX_STRUCTURES + 1]; /* last row: refusal sink for out-of-range indices */
     om_sup_objective objectives[OM_SUP_MAX_OBJECTIVES];
     om_sup_hazard    hazards[OM_SUP_MAX_HAZARDS];
     uint32_t         n_hazards;
@@ -257,7 +257,10 @@ static om_sup_state *om_sup(om_world *w) {
 static om_sup_structure *om_sup_structure_at(om_world *w, uint32_t idx) {
     om_sup_state *st = om_sup(w);
     om_sup_structure *s;
-    if (idx >= OM_SUP_MAX_STRUCTURES) idx = OM_SUP_MAX_STRUCTURES - 1;
+    if (idx >= OM_SUP_MAX_STRUCTURES) {
+        idx = OM_SUP_MAX_STRUCTURES;
+        st->structures[idx].in_use = 0;
+    }
     s = &st->structures[idx];
     if (!s->in_use) {
         memset(s, 0, sizeof(*s));
@@ -478,7 +481,7 @@ uint32_t om_structure_production_interval_ticks(double power) {
 }
 
 void om_structure_init(om_world *w, uint32_t structure, uint32_t unit_type, double power) {
-    om_sup_structure *s = &om_sup(w)->structures[structure < OM_SUP_MAX_STRUCTURES ? structure : OM_SUP_MAX_STRUCTURES - 1];
+    om_sup_structure *s = &om_sup(w)->structures[structure < OM_SUP_MAX_STRUCTURES ? structure : OM_SUP_MAX_STRUCTURES];
     memset(s, 0, sizeof(*s));
     s->in_use = 1;
     s->owner = -1;

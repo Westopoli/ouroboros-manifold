@@ -33,6 +33,8 @@ class Setup:
     max_ticks: int = 6000
     stalemate_ticks: int = 400
     sample_every: int = 5     # ticks between firing-count samples
+    trace: bool = False       # True records FightResult.trace
+    settings: dict = field(default_factory=dict)   # OM_TP_* name -> number, set on the world before tick 1
 
 
 @dataclass
@@ -46,6 +48,7 @@ class FightResult:
     first_contact_tick: int
     firing: list              # [(tick, able0, able1), ...]
     firing_unit_seconds: tuple
+    trace: Optional[list] = None   # [(tick, unit, x, y, target, facing, alive), ...] when Setup.trace, else None
 
 
 @dataclass

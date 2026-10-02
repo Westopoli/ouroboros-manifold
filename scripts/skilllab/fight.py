@@ -80,6 +80,8 @@ def fight(setup, seed=0, swap=False, engine=None):
     try:
         if not setup.abilities:
             engine.disable_abilities(w)
+        for pid, value in [(engine.param_id(n), float(v)) for n, v in setup.settings.items()]:
+            engine.set_param(w, pid, value)
         types = _register_types(engine, w, setup)
         rng, ids_by_group, ranges = random.Random(seed), {}, {}
         for side in ((1, 0) if swap else (0, 1)):
@@ -101,12 +103,25 @@ def _run(engine, w, setup, side_ids, start_hp, ranges, heads):
     hp = dict(start_hp)
     living = [u for ids in side_ids for u in ids]
     firing, tick, quiet, outcome = [], 0, 0, None
+    trace, last = ([] if setup.trace else None), {}
+    all_ids = sorted(living)
+
+    def record():
+        for u in all_ids:
+            if hp[u] > 0:
+                x, y = engine.unit_pos(w, u)
+                last[u] = (x, y, engine.unit_facing(w, u))
+                trace.append((tick, u, x, y, engine.unit_target(w, u), last[u][2], True))
+            else:
+                trace.append((tick, u, last[u][0], last[u][1], 0, last[u][2], False))
 
     def sample():
         a0, a1 = count_able(engine, w, side_ids[0], side_ids[1], ranges)
         firing.append((tick, a0, a1))
 
     sample()
+    if trace is not None:
+        record()
     while outcome is None:
         engine.step(w)
         tick += 1
@@ -117,6 +132,8 @@ def _run(engine, w, setup, side_ids, start_hp, ranges, heads):
                 hp[u], changed = h, True
         living = [u for u in living if hp[u] > 0]
         quiet = 0 if changed else quiet + 1
+        if trace is not None:
+            record()
         alive = [sum(1 for u in ids if hp[u] > 0) for ids in side_ids]
         if alive[0] == 0 and alive[1] == 0:
             outcome = "stalemate"
@@ -136,4 +153,4 @@ def _run(engine, w, setup, side_ids, start_hp, ranges, heads):
     contact = next((t for t, a0, a1 in firing if a0 + a1 > 0), -1)
     return FightResult(outcome=outcome, margin=strength[0] - strength[1], strength_left=strength,
                        survivors=tuple(alive), heads=heads, ticks=tick, first_contact_tick=contact,
-                       firing=firing, firing_unit_seconds=seconds)
+                       firing=firing, firing_unit_seconds=seconds, trace=trace)
