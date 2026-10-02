@@ -1,7 +1,131 @@
-# PP pending list (Architect ruling A135, rulings-2 Addendum 46).
-# One pytest node id per line, relative to the repo root as pytest prints it.
-# Every listed test is marked strict expected-failure ("PP pending: code not
-# built yet"): when it starts passing it FAILS until its line is removed here.
-# Each wave's landing removes its own lines in the same merge.
-# Nothing else may be put on this list: a test failing for any other reason
-# is a finding, not a pending line.
+# PP pending list (Architect A135): node ids red only because their code is not built yet.
+# Strict expected-failure: a test that starts passing fails until its line is removed in the landing merge of its wave.
+# Nothing may be listed here for any other reason.
+
+# A2/A3/A4 (parity scenes go green as their rules land)
+tests/csim/parity/test_parity_scenes.py::test_S087_R087_04_R100_01_target_walks_out_of_range
+tests/csim/parity/test_parity_scenes.py::test_S087_R087_06_return_fire_on_the_march
+tests/csim/parity/test_parity_scenes.py::test_S096_R096_02_attack_move_group_of_8
+tests/csim/parity/test_parity_scenes.py::test_S097_R097_01_wall_with_a_gap
+tests/csim/parity/test_parity_scenes.py::test_S097_R097_03_R099_04_three_in_file
+tests/csim/parity/test_parity_scenes.py::test_S097_R097_03_behind_own_row
+
+# A4 (density cells, 512-cell route search cap)
+tests/csim/scale/test_PP_tables.py::test_PP_route_search_reaches_across_the_canvas
+tests/csim/scale/test_PP_tables.py::test_PP_table_density_cells_cover_the_largest_canvas
+
+# A2 (P9 capture census)
+tests/csim/test_PP_move_capture.py::test_R_127_01_capture_runs_from_the_world_tick
+tests/csim/test_PP_move_capture.py::test_R_127_01_exactly_one_nonowner_faction_captures_in_10_s[neutral]
+tests/csim/test_PP_move_capture.py::test_R_127_01_exactly_one_nonowner_faction_captures_in_10_s[owned_by_another_faction]
+tests/csim/test_PP_move_capture.py::test_R_127_01_radius_is_300_wu[inside_290]
+tests/csim/test_PP_move_capture.py::test_R_127_02_a_second_faction_arriving_resets_progress_to_zero
+
+# A2 (collision, clamp)
+tests/csim/test_PP_move_collision.py::test_P3_collision_push_is_clamped_to_the_canvas
+tests/csim/test_PP_move_collision.py::test_P3_positions_are_clamped_to_the_canvas[bottom_edge-start3-dest3-1-0.0]
+tests/csim/test_PP_move_collision.py::test_P3_positions_are_clamped_to_the_canvas[left_edge-start1-dest1-0-0.0]
+tests/csim/test_PP_move_collision.py::test_P3_positions_are_clamped_to_the_canvas[right_edge-start0-dest0-0-2000.0]
+tests/csim/test_PP_move_collision.py::test_P3_positions_are_clamped_to_the_canvas[top_edge-start2-dest2-1-1000.0]
+tests/csim/test_PP_move_collision.py::test_R_097_05_other_layer_units_do_not_collide
+tests/csim/test_PP_move_collision.py::test_R_099_04_displaced_after_arrival_does_not_re_approach
+tests/csim/test_PP_move_collision.py::test_R_099_04_within_slot_radius_arrives_where_it_stands
+
+# A2 (cover endpoint exemption and height)
+tests/csim/test_PP_move_cover.py::test_R_007_01_02_06_vision_follows_cover_height_and_endpoint_exemption[short_cover_does_not_reach_layer_3]
+tests/csim/test_PP_move_cover.py::test_R_098_02_fire_is_blocked_exactly_as_vision_is[observer_inside_cover]
+tests/csim/test_PP_move_cover.py::test_R_098_02_fire_is_blocked_exactly_as_vision_is[short_cover_does_not_reach_layer_3]
+tests/csim/test_PP_move_cover.py::test_R_098_02_fire_is_blocked_exactly_as_vision_is[target_inside_cover]
+
+# P5, after A2 and A3 (attack-move slots, PURSUE_BY_STEERING switch)
+tests/csim/test_PP_move_group.py::test_P1_pursue_by_steering_on_walks_the_goal_with_steering_and_collision
+tests/csim/test_PP_move_group.py::test_R_095_01_a_unit_that_uses_a_movement_ability_leaves_the_group
+tests/csim/test_PP_move_group.py::test_R_095_03_attack_move_scatter_fallback_beyond_450
+tests/csim/test_PP_move_group.py::test_R_096_02_attack_move_group_takes_formation_slots
+tests/csim/test_PP_move_group.py::test_R_096_02_group_ends_when_every_member_has_engaged_and_does_not_resume
+
+# A4 (routing, blocked cells)
+tests/csim/test_PP_move_route.py::test_P3_block_rect_contract_returns_0_and_fills_the_accessibility_grid
+tests/csim/test_PP_move_route.py::test_P3_route_around_terrain_on_heads_for_the_open_end
+tests/csim/test_PP_move_route.py::test_R_001_01_02_blocked_layers_detour_other_layers_pass_straight_over
+tests/csim/test_PP_move_route.py::test_R_097_01_density_above_0_7_is_blocked_and_routed_around_0_7_is_not
+tests/csim/test_PP_move_route.py::test_R_097_01_no_route_leaves_the_unit_stopped_beside_the_wall_not_inside_a_cell
+tests/csim/test_PP_move_route.py::test_R_097_01_route_goes_around_a_wall_and_never_enters_a_blocked_cell
+tests/csim/test_PP_move_route.py::test_R_097_01_two_masses_with_a_200_wu_gap_the_unit_goes_through_the_gap
+tests/csim/test_PP_move_route.py::test_R_097_09_unit_found_inside_a_blocked_cell_is_moved_to_the_nearest_open_cell
+tests/csim/test_PP_move_route.py::test_R_098_02_blocked_cell_blocks_sight_and_fire_on_its_layers
+tests/csim/test_PP_move_route.py::test_R_099_04_collision_push_into_a_blocked_cell_slides_along_it
+
+# A2 (P8 sweep, P7 facing)
+tests/csim/test_PP_move_steer_face.py::test_R_097_03_group_mates_block
+tests/csim/test_PP_move_steer_face.py::test_R_097_03_mover_on_upper_layer_ignores_lower_layer_blocker
+tests/csim/test_PP_move_steer_face.py::test_R_097_03_only_same_layer_blockers
+tests/csim/test_PP_move_steer_face.py::test_R_097_03_probe_uses_start_of_tick_positions
+tests/csim/test_PP_move_steer_face.py::test_R_097_03_sweep_order_first_clear_none_clear_straight[minus30_when_plus30_blocked]
+tests/csim/test_PP_move_steer_face.py::test_R_097_03_sweep_order_first_clear_none_clear_straight[minus60_when_plus60_blocked]
+tests/csim/test_PP_move_steer_face.py::test_R_097_03_sweep_order_first_clear_none_clear_straight[none_clear_continues_straight]
+tests/csim/test_PP_move_steer_face.py::test_R_097_03_sweep_order_first_clear_none_clear_straight[plus60_first_clear]
+tests/csim/test_PP_move_steer_face.py::test_R_097_04_detour_held_for_60_wu_of_distance_moved[raider_7_5_per_tick]
+tests/csim/test_PP_move_steer_face.py::test_R_097_04_detour_held_for_60_wu_of_distance_moved[vanguard_4_per_tick]
+tests/csim/test_PP_move_steer_face.py::test_R_100_01_engaged_target_outranks_move_target
+tests/csim/test_PP_move_steer_face.py::test_R_100_01_stationary_firing_unit_turns_to_its_target
+tests/csim/test_PP_move_steer_face.py::test_R_102_02_sweep_order_is_documented_in_algorithms_md
+
+# A2/A3 consumers of the settings, A4 block_rect, Phase C set_layer and ping
+tests/csim/test_PP_settings.py::test_E01_A132_block_rect_takes_layers_0_to_4_and_refuses_5
+tests/csim/test_PP_settings.py::test_E01_A132_command_ping_refuses_a_layer_at_or_above_the_count_with_reason_4
+tests/csim/test_PP_settings.py::test_E01_A132_command_set_layer_takes_layers_0_to_4_and_refuses_5
+tests/csim/test_PP_settings.py::test_G1_a_refused_set_leaves_the_fight_as_it_was
+tests/csim/test_PP_settings.py::test_G1_a_set_after_spawn_and_before_the_first_step_applies_to_every_hit
+tests/csim/test_PP_settings.py::test_G1_a_set_before_any_unit_spawns_applies_to_the_whole_fight
+tests/csim/test_PP_settings.py::test_G1_a_set_mid_fight_takes_effect_on_the_next_tick
+tests/csim/test_PP_settings.py::test_PP_a_new_world_starts_at_the_defaults_after_another_world_was_set
+tests/csim/test_PP_settings.py::test_PP_settings_survive_om_tactical_reset
+
+# P5, after A2 and A3
+tests/csim/test_PP_unit_attack_move_group.py::test_R_096_02_attack_moved_group_keeps_the_slowest_members_speed
+tests/csim/test_PP_unit_attack_move_group.py::test_R_096_02_attack_moved_group_takes_move_group_slots[pair_in_file]
+tests/csim/test_PP_unit_attack_move_group.py::test_R_096_02_attack_moved_group_takes_move_group_slots[three_abreast]
+tests/csim/test_PP_unit_attack_move_group.py::test_R_096_02_group_ends_when_every_member_has_engaged
+
+# A3 (G04, G15)
+tests/csim/test_PP_unit_bugfix_G04_G15.py::test_R_083_03_a_second_warden_adds_005_not_009
+tests/csim/test_PP_unit_bugfix_G04_G15.py::test_R_086_02_cooldown_blocks_a_second_trigger_until_it_runs_out
+tests/csim/test_PP_unit_bugfix_G04_G15.py::test_R_086_02_cooldown_of_600_ticks_follows_the_engagement
+tests/csim/test_PP_unit_bugfix_G04_G15.py::test_R_086_02_intercept_ends_when_the_engagement_ends
+
+# A3 (P2)
+tests/csim/test_PP_unit_first_shot.py::test_R_084_01_first_shot_each_unit_of_a_line
+tests/csim/test_PP_unit_first_shot.py::test_R_084_01_first_shot_lands_on_the_tick_the_target_is_first_in_range
+
+# A3 (leash switch)
+tests/csim/test_PP_unit_leash.py::test_R_087_05_leash_switch_default_and_range
+tests/csim/test_PP_unit_leash.py::test_R_096_03_switch_1_drops_before_damage_and_the_unit_walks_on
+tests/csim/test_PP_unit_leash.py::test_R_096_03_switch_back_to_0_restores_the_shot
+tests/csim/test_PP_unit_leash.py::test_control_R_096_03_switch_1_still_fires_inside_the_leash
+
+# A3 (P1)
+tests/csim/test_PP_unit_pursuit.py::test_R_087_04_chase_persists_after_arrival
+tests/csim/test_PP_unit_pursuit.py::test_R_087_04_holds_only_while_its_own_target_is_in_range
+tests/csim/test_PP_unit_pursuit.py::test_R_087_04_move_goal_becomes_the_nearest_visible_enemy
+tests/csim/test_PP_unit_pursuit.py::test_R_087_04_only_a_visible_enemy_is_pursued
+tests/csim/test_PP_unit_pursuit.py::test_R_087_04_out_of_range_target_survives_between_cohort_turns
+tests/csim/test_PP_unit_pursuit.py::test_R_087_04_pursuit_is_ordinary_movement
+tests/csim/test_PP_unit_pursuit.py::test_R_087_04_visible_means_the_units_own_set_in_phase_a
+
+# A3 (P6)
+tests/csim/test_PP_unit_return_fire.py::test_R_087_06_attacker_on_another_layer_is_passed_over[attack_move]
+tests/csim/test_PP_unit_return_fire.py::test_R_087_06_hit_unit_targets_an_attacker_in_range[attack_move]
+tests/csim/test_PP_unit_return_fire.py::test_R_087_06_lowest_id_same_layer_attacker_in_range[high_first-attack_move]
+tests/csim/test_PP_unit_return_fire.py::test_R_087_06_lowest_id_same_layer_attacker_in_range[low_first-attack_move]
+tests/csim/test_PP_unit_return_fire.py::test_R_087_06_lowest_id_same_layer_attacker_in_range[low_first-idle]
+tests/csim/test_PP_unit_return_fire.py::test_R_087_06_lowest_id_same_layer_attacker_out_of_range[high_first-attack_move]
+tests/csim/test_PP_unit_return_fire.py::test_R_087_06_lowest_id_same_layer_attacker_out_of_range[low_first-attack_move]
+tests/csim/test_PP_unit_return_fire.py::test_R_087_06_lowest_id_same_layer_attacker_out_of_range[low_first-idle]
+tests/csim/test_PP_unit_return_fire.py::test_R_087_06_out_of_range_attacker_becomes_the_new_goal[attack_move]
+
+# A3 (target policy)
+tests/csim/test_PP_unit_target_policy.py::test_R_087_03_policy_1_picks_the_most_damaged_in_range[False]
+tests/csim/test_PP_unit_target_policy.py::test_R_087_03_policy_1_picks_the_most_damaged_in_range[True]
+tests/csim/test_PP_unit_target_policy.py::test_R_087_03_policy_back_to_0_picks_the_nearest_again
+tests/csim/test_PP_unit_target_policy.py::test_R_087_03_policy_setting_default_and_range
