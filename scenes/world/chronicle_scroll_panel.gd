@@ -378,31 +378,47 @@ func load_frame(frame: Dictionary) -> void:
 		else:
 			fragment_ids_arr = [int(entry.get("fragment", -1)), -1, -1]
 		var all_minus_one: bool = fragment_ids_arr[0] == -1 and fragment_ids_arr[1] == -1 and fragment_ids_arr[2] == -1
-		var text: String
-		if all_minus_one:
-			text = _structural_line(entry, region_id)
-		else:
-			text = _resolve_fragment_ids(fragment_ids_arr, region_id, faction_id)
+		var text: String = str(entry.get("text", ""))
+		if text == "":
+			if all_minus_one:
+				text = _structural_line(entry, region_id)
+			else:
+				text = _resolve_fragment_ids(fragment_ids_arr, region_id, faction_id)
 		_qa_entries.append({
 			"entry_id": int(entry.get("id", -1)),
 			"fragment_id": fragment_ids_arr[0],
 			"fragment_ids": fragment_ids_arr,
 			"text": text,
+			"mentions": _conv_mentions(entry.get("mentions", [])),
+			"expanded_text": str(entry.get("expanded_text", "")),
+			"expanded_mentions": _conv_mentions(entry.get("expanded_mentions", [])),
 		})
 
 	for child in _entry_container.get_children():
 		child.queue_free()
+	_entries.clear()
 	for qa_entry in _qa_entries:
 		queue_entry({
 			"entry_id": str(qa_entry["entry_id"]),
 			"base_form": qa_entry["text"],
-			"mentions": [],
+			"mentions": qa_entry["mentions"],
+			"expanded_form": qa_entry["expanded_text"],
+			"expanded_mentions": qa_entry["expanded_mentions"],
 		})
 
 	_qa_tick = int(frame.get("jump", {}).get("to_tick", -1))
 	_qa_hash = hash(frame)
 	_qa_regen_count += 1
 	_qa_load_ms = float(Time.get_ticks_usec() - start_usec) / 1000.0
+
+
+func _conv_mentions(arr: Array) -> Array:
+	var out: Array = []
+	for m in arr:
+		var start := int(m.get("start", 0))
+		out.append({"kind": str(m.get("kind", "")), "start": start,
+			"end": start + int(m.get("len", 0)), "id": str(int(m.get("id", -1)))})
+	return out
 
 
 func qa_state() -> Dictionary:
