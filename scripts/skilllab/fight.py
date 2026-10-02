@@ -84,6 +84,13 @@ def fight(setup, seed=0, swap=False, engine=None):
             engine.disable_abilities(w)
         for pid, value in [(engine.param_id(n), float(v)) for n, v in setup.settings.items()]:
             engine.set_param(w, pid, value)
+        if setup.terrain is not None:
+            t = setup.terrain
+            engine.set_canvas(w, t.canvas[0], t.canvas[1])
+            for b in t.blocks:
+                engine.block_rect(w, b.x0, b.y0, b.x1, b.y1, b.layer_lo, b.layer_hi)
+            for c in t.covers:
+                engine.add_cover(w, c.x, c.y, c.radius, c.height)
         types = _register_types(engine, w, setup)
         rng, ids_by_group, ranges = random.Random(seed), {}, {}
         for side in ((1, 0) if swap else (0, 1)):

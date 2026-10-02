@@ -108,6 +108,9 @@ class Engine:
             "om_unit_can_see": ([V, u32, u32], i),
             "om_unit_clear_orders": ([V, u32], None),
             "om_map_add_obstacle": ([V, d, d, d], u32),
+            "om_map_set_canvas": ([V, d, d], i),
+            "om_map_block_rect": ([V, d, d, d, d, u32, u32], i),
+            "om_map_add_cover": ([V, d, d, d, d], u32),
         }
         for name, (argtypes, restype) in sigs.items():
             fn = getattr(self._lib, name)
@@ -215,3 +218,19 @@ class Engine:
         if not radius > 0:
             raise ValueError("blocker radius must be positive, got %r" % (radius,))
         self._lib.om_map_add_obstacle(w, float(x), float(y), float(radius))
+
+    def set_canvas(self, w, width, height):
+        if self._lib.om_map_set_canvas(w, float(width), float(height)) != 0:
+            raise ValueError("om_map_set_canvas(%r, %r) refused (set_canvas)" % (width, height))
+
+    def block_rect(self, w, x0, y0, x1, y1, layer_lo, layer_hi):
+        if self._lib.om_map_block_rect(w, float(x0), float(y0), float(x1), float(y1), int(layer_lo),
+                                       int(layer_hi)) != 0:
+            raise ValueError("om_map_block_rect(%r, %r, %r, %r, %r, %r) refused (block_rect)"
+                             % (x0, y0, x1, y1, layer_lo, layer_hi))
+
+    def add_cover(self, w, x, y, radius, height):
+        idx = int(self._lib.om_map_add_cover(w, float(x), float(y), float(radius), float(height)))
+        if idx == 0:
+            raise ValueError("om_map_add_cover(%r, %r, %r, %r) refused (add_cover)" % (x, y, radius, height))
+        return idx
