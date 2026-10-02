@@ -494,3 +494,13 @@ Rule text changed in the same commit: E-16 R-110-02 and R-110-07, E-09 R-069-03 
 - The name dictionaries in the legacy info panel and the sequencer that the C pipe never fills are dead: the sequencer's goes in the A70 unit, the info panel's under that file's owner as a deletion unit.
 
 **A83. Memory per region** goes to Westley with the audit's breakdown (damage history is 1,536 of the 1,601 bytes; the edge matrix is a fixed 1 MB). No change until he decides; the E-02 memory test stays red and listed.
+
+## Addendum 30, 2026-10-02 (info panel owner; chronicle glob)
+
+**A84. Info panels have an owner.** New piece `G-infopanel` owns `scenes/world/region_info_panel.gd`, `faction_info_panel.gd` and `info_panel_host.gd`; the A82 deletion unit runs under it. The test pins are accepted as written (`region_meta["region_id"]`, `faction_meta["id"]` as a numeric string, `region_rows[i]["region_id"]`): the panels are handed ids and resolve names through `chronicle_names.gd`, never handed names. The `scenes/debug/test_*_info_panel*.gd` scenes that pass name meta are updated in the same unit.
+
+**A85. `scenes/world/chronicle_*` in both C3 and C8** is the round-1 arrangement: C8 depends on C3, both are attached, so one owner at a time holds; no change. New chronicle scene units take C8's next id.
+
+**A86. Faction name shape** (starts with "the ", at least two words, no apostrophe or comma) is accepted as the pool's rule.
+
+**A87. The runner's 300 s default** cutting off `test_chronicle_scene_open` and `test_time_jump_replay` is a harness defect, not a test pass: a test that can only pass with a raised timeout is listed until fixed. Small harness unit: those two tests declare their own needed time (or the runner's limit is counted in frames like the tests' own quit), with the default unchanged for everything else.

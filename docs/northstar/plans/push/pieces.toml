@@ -941,3 +941,17 @@ acceptance = ["tests/specfactory/test_merge_gate_support.py"]
 depends_on = []
 status = "pending"
 size_estimate = "one helper and a few lines in _diff_added_definitions"
+
+# Legacy info panels (region, faction, host). Owner row added for the A82 dead-name-dictionary
+# deletion unit (rulings round 2, A84).
+[[piece]]
+id = "G-infopanel"
+manager = "M3"
+wave = 4
+owns = ["scenes/world/region_info_panel.gd", "scenes/world/faction_info_panel.gd", "scenes/world/info_panel_host.gd"]
+owns_glob = []
+acceptance = ["tests/test_a82_info_panel_names.gd"]
+depends_on = []
+status = "pending"
+tests_pending = true
+size_estimate = "delete the name dictionaries the C pipe never fills; panels take ids and resolve names through chronicle_names.gd"
