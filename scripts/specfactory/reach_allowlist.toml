@@ -55,3 +55,23 @@ reason = "already reachable as its own root (this lint always treats it as one),
 [[allow]]
 symbol = "om_lineage_chapter_count"
 reason = "test-observability accessor (Addendum 9 A21): the selector reads the counter in play through internal state (R-057-02, R-057-04); the getter exists for the A17 tests and no player-facing surface shows it."
+
+[[allow]]
+symbol = "om_tactical_set_param"
+reason = "PP-contract (A139): lab and test entry call. The game never sets a rule number; the harness and tests do. The behaviour behind each parameter is reached from om_tactical_step through om_tactical_get_param. Stays."
+
+[[allow]]
+symbol = "om_map_block_rect"
+reason = "PP-contract (A139): lab and test fixture call that hand-places a blocked rectangle; live maps carry no terrain until P4 (held). The route grid and sight checks it feeds are reached from om_tactical_step. Stays."
+
+[[allow]]
+symbol = "om_map_set_canvas"
+reason = "PP-contract (A139): the canvas size call is made by mission setup in csrc/mission.c, a unit on the coordinator's branch. Removed in the merge that lands that unit."
+
+[[allow]]
+symbol = "om_command_set_layer"
+reason = "PP-contract (A139): layer change order (Phase C). Removed when the client plan wires it to a pipe handler."
+
+[[allow]]
+symbol = "om_command_ping"
+reason = "PP-contract (A139): targeted ping (Phase C). Removed when the client plan wires it to a pipe handler."
