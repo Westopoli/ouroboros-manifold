@@ -1,17 +1,17 @@
 extends SceneTree
 
 # B5 (docs/northstar/plans/2026-10-01-architect-rulings-2.md section 2): the save layout
-# changed, OM_SAVE_FORMAT_VERSION is 4 (B6 lifecycle fields, ruling 1.8), and save.c rejects every other version. The
+# changed, OM_SAVE_FORMAT_VERSION is 5 (B6 lifecycle fields, ruling 1.8), and save.c rejects every other version. The
 # load-game screen must show a rejected save as unreadable and not crash.
 #
 # Fixtures are real: a live autosave written through the pipe, then a copy whose version
 # word (bytes 4..7 of the .omsave, little endian) and sidecar "format_version" are patched
 # to 3, the pre-bump layout. tests/test_load_game.gd has a version-999 case; this file adds
 # the one that matters after the bump (an old, well-formed save) and the check that a save
-# written now is current (sidecar and scene both say 4, so fresh saves are not refused).
+# written now is current (sidecar and scene both say 5, so fresh saves are not refused).
 
 const SCENE_PATH := "res://scenes/load_game/load_game.tscn"
-const EXPECTED_VERSION := 4
+const EXPECTED_VERSION := 5
 
 var _pass_count := 0
 var _fail_count := 0
@@ -87,13 +87,13 @@ func _run() -> void:
 	if typeof(sidecar) != TYPE_DICTIONARY:
 		return
 
-	# (1) A save written now carries 4, in the file and in its sidecar.
+	# (1) A save written now carries 5, in the file and in its sidecar.
 	var file_version := int(bytes[4]) | (int(bytes[5]) << 8) | (int(bytes[6]) << 16) | (int(bytes[7]) << 24)
 	_assert(file_version == EXPECTED_VERSION, "a save written now has version word %d in its header, expected %d" % [file_version, EXPECTED_VERSION])
 	_assert(int(sidecar.get("format_version", -1)) == EXPECTED_VERSION,
 		"a save written now has sidecar format_version %s, expected %d (csrc/pipe/om_pipe.c writes a constant)" % [sidecar.get("format_version"), EXPECTED_VERSION])
 
-	# (2) The screen's current version is 4 and a fresh save is readable, not refused.
+	# (2) The screen's current version is 5 and a fresh save is readable, not refused.
 	var packed := load(SCENE_PATH) as PackedScene
 	var fresh: Node = packed.instantiate()
 	get_root().add_child(fresh)

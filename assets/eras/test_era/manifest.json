@@ -2,6 +2,10 @@
   "era_id": "test_era",
   "era_display_name": "Test Era",
   "era_accent_color": "#ff00ff",
+  "era_spatial_scale": "placeholder: test fixture era with no real spatial scale.",
+  "era_tone": "placeholder: test fixture era with no real tone.",
+  "era_order": 2,
+  "test_only": true,
 
   "units": {
     "vanguard":    { "category": "line",   "squad_count": 1, "visual_scale": 1.0, "tiers": {

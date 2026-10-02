@@ -1500,6 +1500,18 @@ class OmChronicleEntry(ctypes.Structure):
 om_chronicle_entry = OmChronicleEntry
 
 
+class OmChronicleMention(ctypes.Structure):
+    _fields_ = [
+        ("start", ctypes.c_uint32),
+        ("len", ctypes.c_uint32),
+        ("kind", ctypes.c_uint32),
+        ("id", ctypes.c_int32),
+    ]
+
+
+om_chronicle_mention = OmChronicleMention
+
+
 class OmClientUnit(ctypes.Structure):
     _fields_ = [
         ("id", ctypes.c_uint32),
@@ -1742,6 +1754,8 @@ STRUCT_C_NAMES = {
     "om_chronicle_cluster": "om_chronicle_cluster",
     "OmChronicleEntry": "om_chronicle_entry",
     "om_chronicle_entry": "om_chronicle_entry",
+    "OmChronicleMention": "om_chronicle_mention",
+    "om_chronicle_mention": "om_chronicle_mention",
     "OmClientUnit": "om_client_unit",
     "om_client_unit": "om_client_unit",
     "OMCompositionRatio": "om_composition_ratio",
@@ -1970,6 +1984,8 @@ def _bind_e08(lib):
     _bind(lib, "om_time_jump_choose_opening_length", [W], ctypes.c_uint32, ("w",))
     _bind(lib, "om_time_jump_death_pass_count", [W], ctypes.c_uint32, ("w",))
     _bind(lib, "om_time_jump_death_processing_tick", [W], ctypes.c_uint64, ("w",))
+    _bind(lib, "om_time_jump_get_ownership_snapshot", [W, ctypes.c_uint32, V, ctypes.c_uint32], ctypes.c_uint32, ("w", "k", "owners_out", "cap"))
+    _bind(lib, "om_time_jump_ownership_snapshot_count", [W], ctypes.c_uint32, ("w",))
     _bind(lib, "om_time_jump_interrupt", [W], ctypes.c_int, ("w",))
     _bind(lib, "om_time_jump_lineage_generation_tick", [W], ctypes.c_uint64, ("w",))
     _bind(lib, "om_time_jump_report_faction_field_deltas_count", [W, V], ctypes.c_uint32, ("w", "report"))
@@ -2016,6 +2032,8 @@ def _bind_e09(lib):
     _bind(lib, "om_chronicle_dismiss_expanded", [W], None, ("w",))
     _bind(lib, "om_chronicle_distill_and_assemble", [W], None, ("w",))
     _bind(lib, "om_chronicle_entry_get", [W, ctypes.c_uint32, V], ctypes.c_int, ("w", "index", "out"))
+    _bind(lib, "om_chronicle_mention_count", [W, ctypes.c_uint32, ctypes.c_int], ctypes.c_uint32, ("w", "index", "expanded"))
+    _bind(lib, "om_chronicle_mention_get", [W, ctypes.c_uint32, ctypes.c_int, ctypes.c_uint32, V], ctypes.c_int, ("w", "index", "expanded", "mention_idx", "out"))
     _bind(lib, "om_chronicle_entry_is_retained", [W, ctypes.c_uint32], ctypes.c_int, ("w", "entry_id"), kw=True)
     _bind(lib, "om_chronicle_fragment_batch_exceeds_rejection_limit", [W, ctypes.c_uint32, ctypes.c_uint32], ctypes.c_int, ("w", "rejected_count", "total_count"), kw=True)
     _bind(lib, "om_chronicle_fragment_category_count", [W], ctypes.c_uint32, ("w",))
@@ -2025,6 +2043,8 @@ def _bind_e09(lib):
     _bind(lib, "om_chronicle_fragment_library_validate", [W], ctypes.c_int, ("w",))
     _bind(lib, "om_chronicle_fragment_pool_counts", [W, ctypes.c_uint32, V], ctypes.c_int, ("w", "category", "out"))
     _bind(lib, "om_chronicle_generate_map_keyframes", [W], None, ("w",))
+    _bind(lib, "om_chronicle_get_keyframe", [W, ctypes.c_uint32, V], ctypes.c_int, ("w", "i", "tick_out"))
+    _bind(lib, "om_chronicle_keyframe_count", [W], ctypes.c_uint32, ("w",))
     _bind(lib, "om_chronicle_get_cluster", [W, ctypes.c_uint32, V], ctypes.c_int, ("w", "entry", "out"))
     _bind(lib, "om_chronicle_get_full_scroll_text", [W], ctypes.c_char_p, ("w",))
     _bind(lib, "om_chronicle_handle_click", [W, ctypes.c_uint32], ctypes.c_int, ("w", "entry_id"), kw=True)

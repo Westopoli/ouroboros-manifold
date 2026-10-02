@@ -25,6 +25,10 @@ om_world *om_world_new(uint32_t n_regions, uint64_t seed) {
     /* F2d: n_regions == 0 defers the count to om_world_generate() (E-03,
      * ouroboros_sim.h ~line 693-694); regions/n_regions stay NULL/0 here and
      * csrc/worldgen.c's om_world_generate allocates w->regions itself. */
+    if (n_regions > OM_MAX_REGIONS) {
+        free(w);
+        return NULL;
+    }
     if (n_regions > 0) {
         w->regions = calloc(n_regions, sizeof(om_region));
         if (!w->regions) {

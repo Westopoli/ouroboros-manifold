@@ -20,7 +20,7 @@ from ._scale_helpers import (
 
 N_REGIONS = 60
 N_FACTIONS = 15
-CONTROL_N_REGIONS = 600
+CONTROL_N_REGIONS = 512
 PER_TICK_BUDGET_NS = 200_000  # 200 us/tick
 BULK_BUDGET_NS = 5_000_000_000  # 5 s for 5,000 ticks, full agents
 SEED = 2026091405

@@ -1,6 +1,12 @@
 extends Control
 
+const SimSession := preload("res://autoload/sim_session.gd")
+
 enum Phase { INIT, NARRATION, SETTLING, PROCEEDING, EXITING }
+
+# A52, R-069-03: the replay clock; the map never waits for the scroll.
+const REPLAY_TICKS_PER_SECOND := 2
+const ENTRY_HOLD_S := 3.0
 
 var _phase: int = Phase.INIT
 var _shell: Node
@@ -19,9 +25,8 @@ var _info_host: Control
 var _faction_names: Dictionary = {}
 
 var _keyframe_queue: Array[Dictionary] = []
+var _entry_hold_s: float = 0.0
 var _entry_queue: Array[Dictionary] = []
-var _waiting_for_entry: bool = false
-var _current_entry_id: String = ""
 var _regions_state: Dictionary = {}
 var _faction_colors: Dictionary = {}
 var _faction_display_colors: Dictionary = {}
@@ -33,18 +38,108 @@ var _entries_printed: int = 0
 var _flicker_timer: float = 0.0
 var _flicker_interval: float = 3.0
 
-var _ownership_timeline: Array = []
-var _timeline_index: int = 0
-var _timeline_timer: float = 0.0
-var _timeline_interval: float = 0.6
+# Replay of a chronicle frame's "ownership" snapshots (A48 item 13, A59).
+var _rp_active: bool = false
+var _rp_clock: float = 0.0
+var _rp_from: int = 0
+var _rp_to: int = 0
+var _rp_tick: int = 0
+var _rp_snaps: Array = []
+var _rp_live: Array = []
+var _rp_shown: Array = []
+var _rp_keyframes: Array = []
+var _rp_entries: Array = []
+var _rp_keyframes_hit: Array[int] = []
+var _rp_entries_started: Array[int] = []
 
 
 func _ready() -> void:
 	_accent = ThemeConstants.get_era_accent(EraConfig.ACTIVE_ERA_ID)
 	_build_layout()
 	_connect_bus_signals()
-	if SimBridge.USE_LIVE_SIM:
-		SimBridge.send_command({"type": "command", "cmd": "ready_for_time_jump"})
+	# A69: opening the scene sends no command; the jump was issued by Proceed
+	# from the debrief and the bridge holds its frame.
+	var bridge = SimSession.bridge()
+	var frame: Dictionary = bridge.chronicle_frame()
+	_scroll.slide_in()
+	create_tween().tween_property(_world_viewport, "anchor_right", 0.62, 0.40)
+	if frame.is_empty():
+		_settle()
+		return
+	_phase = Phase.NARRATION
+	_skip_btn.visible = true
+	_scroll.set_snapshot(bridge.chronicle_snapshot())
+	_scroll.load_frame(frame)
+	var live: Array = []
+	for i in range(bridge.regions().size()):
+		live.append(bridge.owner_of(i))
+	load_frame(frame, live)
+
+
+# live_owners: owner per region index, -1 unowned. Replaces any replay.
+func load_frame(frame: Dictionary, live_owners: Array) -> void:
+	var jump: Dictionary = frame.get("jump", {})
+	var own = frame.get("ownership")
+	var snaps: Array = own.get("snapshots", []) if own is Dictionary else []
+	_rp_from = int(jump.get("from_tick", 0))
+	_rp_to = int(jump.get("to_tick", 0))
+	_rp_live = live_owners
+	_rp_snaps = snaps
+	_rp_clock = 0.0
+	_rp_keyframes = frame.get("keyframes", [])
+	_rp_entries = frame.get("entries", [])
+	_rp_keyframes_hit = []
+	_rp_entries_started = []
+	_total_entries = _rp_entries.size()
+	_entries_printed = 0
+	_entry_hold_s = 0.0
+	_rp_active = not snaps.is_empty() and _rp_to > _rp_from
+	if _rp_active:
+		_rp_tick = _rp_from
+		_show_owners(snaps[0])
+	else:
+		_rp_tick = _rp_to
+		_show_owners(live_owners)
+
+
+func _advance_replay(delta: float) -> void:
+	if FeatureFlags.ENABLE_INSPECTION_PAUSE and InspectionState.is_paused():
+		return
+	_rp_clock += delta * REPLAY_TICKS_PER_SECOND
+	_rp_tick = _rp_from + int(_rp_clock)
+	for k in _rp_keyframes:
+		if int(k) <= _rp_tick and not _rp_keyframes_hit.has(int(k)):
+			_rp_keyframes_hit.append(int(k))
+	for e in _rp_entries:
+		var id := int(e.get("id", -1))
+		if int(e.get("start_tick", 0)) <= _rp_tick and not _rp_entries_started.has(id):
+			_rp_entries_started.append(id)
+			_scroll.start_printing(str(id))
+	if _rp_tick >= _rp_to:
+		_rp_tick = _rp_to
+		_rp_active = false
+		_show_owners(_rp_live)
+		_try_settle()
+	else:
+		_show_owners(_rp_snaps[mini((_rp_tick - _rp_from) / 2, _rp_snaps.size() - 1)])
+
+
+# Integer region and faction ids map onto the shell's "r<i>" and "f<id>"; a
+# region the shell does not know yet is placed on a ring by index.
+func _show_owners(owners: Array) -> void:
+	if owners == _rp_shown:
+		return
+	_rp_shown = owners.duplicate()
+	var ownership := {}
+	for i in range(owners.size()):
+		var rid := "r%d" % i
+		if not rid in _regions_state:
+			var a := TAU * i / maxi(owners.size(), 1)
+			var pos := Vector3(cos(a) * 10.0, 0.0, sin(a) * 10.0)
+			_regions_state[rid] = {"owner_faction_id": "", "significance": 0.5, "x": pos.x, "y": pos.y, "z": pos.z}
+			_shell.add_region_node(rid, pos, 0.75, _get_faction_color(""), "")
+		ownership[rid] = "f%d" % int(owners[i]) if int(owners[i]) >= 0 else ""
+	_apply_ownership_tick(ownership)
 
 
 func setup(params: Dictionary) -> void:
@@ -91,7 +186,7 @@ func _build_layout() -> void:
 	_scroll.anchor_right = 1.0
 	_scroll.anchor_top = 0.0
 	_scroll.anchor_bottom = 1.0
-	_scroll.visible = false
+	_scroll.hosted = true
 	_scroll.entry_finished_printing.connect(_on_entry_finished_printing)
 	_scroll.all_entries_finished.connect(_on_all_entries_finished)
 	_scroll.entry_expansion_opened.connect(_on_expansion_opened)
@@ -202,14 +297,6 @@ func _on_time_jump_started(tj_id: String, _span_years: int, _total_kf: int, tota
 		_faction_colors[fid] = color
 		_faction_display_colors[faction_names[fid]] = color
 
-	_ownership_timeline = SimBridge.ownership_timeline
-	_timeline_index = 0
-	_timeline_timer = 0.0
-	if _ownership_timeline.size() > 0 and total_entries > 0:
-		var estimated_narration_secs: float = total_entries * 3.5
-		_timeline_interval = estimated_narration_secs / _ownership_timeline.size()
-	else:
-		_timeline_interval = 0.6
 	# Init scroll BEFORE any await — chronicle entries arrive during the same
 	# dispatch cycle and must not be wiped by a late begin_time_jump().
 	_scroll.begin_time_jump(total_entries, _faction_display_colors)
@@ -235,20 +322,21 @@ func _on_chronicle_entry(entry_data: Dictionary) -> void:
 	_entry_queue.append(entry_data)
 
 
-var _time_jump_ended_received: bool = false
-
 func _on_time_jump_ended(_tj_id: String) -> void:
-	_time_jump_ended_received = true
 	_try_settle()
 
 
+# A79, R-069-03: settle when the replay clock is at the jump's last tick and the
+# last entry has printed and held ENTRY_HOLD_S; keyframes never delay it.
 func _try_settle() -> void:
-	if not _time_jump_ended_received:
+	if _phase != Phase.NARRATION or _rp_active:
 		return
-	if not _keyframe_queue.is_empty() or _waiting_for_entry:
+	if _total_entries > 0 and _entry_hold_s < ENTRY_HOLD_S:
 		return
-	if _timeline_index < _ownership_timeline.size():
-		return
+	_settle()
+
+
+func _settle() -> void:
 	_phase = Phase.SETTLING
 	_skip_btn.visible = false
 	if _next_mission_region != "":
@@ -262,7 +350,7 @@ func _try_settle() -> void:
 # --- Keyframe application ---
 
 func _apply_keyframe(kf: Dictionary) -> void:
-	var timeline_active := not _ownership_timeline.is_empty()
+	var timeline_active := _rp_active
 	var regions: Array = kf.get("regions_snapshot", [])
 	for r in regions:
 		var rid: String = r.get("region_id", "")
@@ -336,12 +424,8 @@ func _entry_queue_ids() -> Array[String]:
 
 # --- Scroll callbacks ---
 
-func _on_entry_finished_printing(entry_id: String) -> void:
+func _on_entry_finished_printing(_entry_id: String) -> void:
 	_entries_printed += 1
-	if _waiting_for_entry and entry_id == _current_entry_id:
-		_waiting_for_entry = false
-		_current_entry_id = ""
-	_try_settle()
 
 
 func _on_all_entries_finished() -> void:
@@ -360,9 +444,13 @@ func _on_expansion_closed(_entry_id: String) -> void:
 # --- Ambient flickers during settle ---
 
 func _process(delta: float) -> void:
+	if _rp_active:
+		_advance_replay(delta)
 	if _phase == Phase.NARRATION:
 		_advance_narration()
-		_advance_timeline(delta)
+		if _total_entries > 0 and _entries_printed >= _total_entries:
+			_entry_hold_s += delta
+		_try_settle()
 	elif _phase == Phase.SETTLING:
 		_flicker_timer -= delta
 		if _flicker_timer <= 0.0:
@@ -375,35 +463,13 @@ func _advance_narration() -> void:
 	# See also: scenes/world/world_view_inspection_state.gd, info_panel_host.gd
 	if FeatureFlags.ENABLE_INSPECTION_PAUSE and InspectionState.is_paused():
 		return
-	if _waiting_for_entry:
-		return
-	if _keyframe_queue.is_empty():
-		return
-	var kf: Dictionary = _keyframe_queue.pop_front()
-	_apply_keyframe(kf)
-	var entry_id_val = kf.get("chronicle_entry_id")
-	var entry_id: String = entry_id_val if entry_id_val is String else ""
-	if entry_id != "" and entry_id in _entry_queue_ids():
-		_waiting_for_entry = true
-		_current_entry_id = entry_id
-		_scroll.start_printing(entry_id)
-	else:
-		# No paired entry — check if we should settle
-		_try_settle()
-
-
-func _advance_timeline(delta: float) -> void:
-	if FeatureFlags.ENABLE_INSPECTION_PAUSE and InspectionState.is_paused():
-		return
-	if _ownership_timeline.is_empty() or _timeline_index >= _ownership_timeline.size():
-		return
-	_timeline_timer += delta
-	while _timeline_timer >= _timeline_interval and _timeline_index < _ownership_timeline.size():
-		_timeline_timer -= _timeline_interval
-		_apply_ownership_tick(_ownership_timeline[_timeline_index])
-		_timeline_index += 1
-	if _timeline_index >= _ownership_timeline.size():
-		_try_settle()
+	while not _keyframe_queue.is_empty():
+		var kf: Dictionary = _keyframe_queue.pop_front()
+		_apply_keyframe(kf)
+		var entry_id_val = kf.get("chronicle_entry_id")
+		var entry_id: String = entry_id_val if entry_id_val is String else ""
+		if entry_id != "" and entry_id in _entry_queue_ids():
+			_scroll.start_printing(entry_id)
 
 
 func _apply_ownership_tick(ownership: Dictionary) -> void:
@@ -444,12 +510,12 @@ func _on_skip() -> void:
 	_skip_btn.visible = false
 	while not _keyframe_queue.is_empty():
 		_apply_keyframe(_keyframe_queue.pop_front())
-	for i in range(_timeline_index, _ownership_timeline.size()):
-		_apply_ownership_tick(_ownership_timeline[i])
-	_timeline_index = _ownership_timeline.size()
+	if _rp_active:
+		_rp_active = false
+		_rp_tick = _rp_to
+		_show_owners(_rp_live)
 	_scroll.skip_all()
-	_waiting_for_entry = false
-	_current_entry_id = ""
+	_entry_hold_s = ENTRY_HOLD_S
 	_try_settle()
 
 
@@ -615,4 +681,14 @@ func qa_state() -> Dictionary:
 		"entries_total": _total_entries,
 		"entries_printed": _entries_printed,
 		"plants": [],
+		"replay": {
+			"active": _rp_active,
+			"tick": _rp_tick,
+			"from_tick": _rp_from,
+			"to_tick": _rp_to,
+			"snapshot_count": _rp_snaps.size(),
+			"shown_owners": _rp_shown.duplicate(),
+			"keyframes_hit": _rp_keyframes_hit.duplicate(),
+			"entries_started": _rp_entries_started.duplicate(),
+		},
 	}

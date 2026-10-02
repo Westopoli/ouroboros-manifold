@@ -386,3 +386,121 @@ Source: `docs/northstar/plans/2026-10-01-c4-c5-architect-questions.md` on `push/
 ### A3
 
 **A50. Pin both cases.** A player who owns no region: `mission_start` answers an error and starts nothing; the pipe checks this before asking core for a region, since region 0 is a real region. No reachable enemy: factions that cannot be reached by hops count as equally far, so R-072-08's tie rule picks among them (highest total military, then lowest id); with no non-player faction at all, `mission_start` answers an error. Two transport tests.
+
+## Addendum 23, 2026-10-02 (Westley's answers to the C4 and C5 questions)
+
+Rule text changed in the same commit: E-16 R-110-02 and R-110-07, E-09 R-069-03 and the new R-069-07; register Q-110-05, Q-069-01, Q-069-02, Q-106-04 closed.
+
+**A51. Era Library: no mastery, no tier progress.** Both leave the screen (not "not yet tracked"); they return when that part of the game is defined. This replaces the last clause of A45.
+
+**A52. Replay speed: 2 ticks per second** (R-069-03). A named constant on the client; the 3.0 s hold and 2.0 s tween stand.
+
+**A53. Mentions** (R-069-07, unblocks G-C2). Faction names and system names in an entry are clickable; a click centres the galaxy on that faction's territory or that system. Contract piece first: each chronicle entry in the frame gains `"mentions":[{"start":S,"len":L,"kind":"faction"|"region","id":N}]`, character offsets into the entry text as sent, produced by the sim where it fills the names. Then pipe, then client. Nothing is found by text matching.
+
+**A54. Galaxy quality is a manual setting, never automatic.** This replaces A48 item 8 and the gap-fix plan's frame-time fallback. Settings gains a galaxy quality choice with three values (full, stand-in, fewer particles), default full, stored and applied at boot with the other settings; `qa_state` reports it as `quality_tier` 0, 1, 2. No frame-time trigger, no step-down, no recovery logic is built. Test: each value changes what the galaxy draws, and the game never changes the value itself (a planted slow-frame run leaves it untouched).
+
+**A55. Faction names.** The name table gets at least fifteen simple invented names so no two factions share one; a Doer writes them, plain and pronounceable, none taken from existing fiction. No deeper naming work now.
+
+**A56. Galaxy look: the prototype wins until Westley has looked.** The gap-fix plan (his decision, 2026-09-28) makes the approved prototypes in `scenes/mockups/galaxy/` the live look, and he recalls the prototype as correct and the MVP as differing from it. So A48 items 3 and 4 and the drag direction in item 2 are suspended: where the prototype and the rule text differ (band distances, which edges are drawn, drag direction), the build matches the prototype. `push/C5-G3-impl` lands as built, drawing every edge dim as the prototype does. Each difference from the rule text is listed in the ledger row; the rule text is rewritten to the look he confirms, after he has compared the two.
+
+## Addendum 24, 2026-10-02 (batch 2: galaxy follow-ups, Era Library details, G-C3 contract, quality setting)
+
+**A57. Galaxy, after A56.** Until Westley has compared the prototype with the build, the build keeps the prototype's behaviour, including the vertical drag direction in `mockups/galaxy/orbit_camera.gd`; `push/C5-G3-impl`'s grab-style vertical axis follows the prototype. The two sets of numbers inside the prototype (the zoom controller's 75/65/40/25 and the camera's 70/32.5) are left as they are and nothing is tested for consistency until the rule text is rewritten. Separate finding, not for the coordinator to act on: the prototype's territory shells have been invisible since a790cb20 (influence radius 0.25 against star points of radius 1.4); Westley and the Architect are settling the intended scale, and a brief follows.
+
+**A58. Era Library details** (Q-C4-E1-04 to 08).
+- 04 Ownership store: `user://era_ownership.json`, `{"owned":["era_id", ...]}`. A debug build (`OS.is_debug_build()`) ignores it and owns every installed pack. A release build reads it; with no file, every installed pack is owned, because nothing is sold yet. Store integration is E-20 S-149 and not part of this.
+- 05 The manifest gains what R-146-01 already requires of a pack's identity: `era_spatial_scale` (text), `era_tone` (text) and `era_order` (integer, chronological position). `pack_validate.py` requires them (R-146-03: a missing required entry fails the pack, named). The three installed manifests are filled in the same piece; the text is one plain sentence each, written from the bible's own description of the era where it has one, and marked as placeholder otherwise. This is a pack-contract change: validator and manifests first, then the screen.
+- 06 The roster shows each unit type's id as a title and its category. No role text; the manifest has none and none is invented.
+- 07 A pack whose manifest says `"test_only": true` is never listed. `test_era` gets that key. Tests still load it by id.
+- 08 The Era Library is a viewing screen in the MVP rounds: it has no "play this era" control. New Campaign keeps using the Settled Reach.
+
+**A59. G-C3 contract.**
+- Odd jump lengths: the snapshot count stays as R-056-03 gives it (every 2 ticks from the start). The replay's last picture is the live world state the client already holds after the jump, so no final snapshot is added and no S-056 test changes.
+- Keyframes are per jump: the list is cleared when a jump starts. They are returned sorted ascending with no duplicates; today's unsorted list with repeats is a defect fixed in this piece, with a test.
+- Timelines are kept in memory only and are not saved. After a load the chronicle frame carries no `ownership` and no `keyframes`, and the client shows the scroll over the final state with no replay. The frame documents both fields as optional.
+- About 40 KB per jump at 400 regions is accepted; it is sent once per jump.
+
+**A60. Galaxy quality (A54).**
+- Tier 0: raymarch shells, full ambient field. Tier 1: stand-in shells, full ambient field. Tier 2: stand-in shells, ambient field at half its particle amount (provisional value).
+- The ambient field (R-106-05) is not in the live galaxy yet. Porting `legacy_ambient_rig.gd` into `scenes/galaxy` is its own unit under the galaxy owner, part of the prototype migration. Until it lands, tier 2 draws what tier 1 draws, and the tier-2 particle test waits on that unit; it is not written as a skip.
+- `autoload/ui_data_bus.gd` already has an owner (the piece whose `owns_glob` lists it, `pieces.toml` line 558); the settings and Era Library units take that piece's next ids, one at a time.
+- A stored value outside 0 to 2 is clamped.
+- The galaxy view reads the setting when it is built. A change made while a galaxy view is open applies the next time the view is built; live re-apply is not required.
+
+**A61. Housekeeping.** An Engineer adds the four E3 gap rows from `c4_e3_c6_gap_rows.md` to `docs/northstar/plans/2026-09-30-work-list.md` under C6; the cover row says no rule governs it and names the Architect as owing one. `test_tactical_view` failing 2 of 127 under a 1280x720 virtual display on main is a pre-existing finding: QA's display is 1920x1080 by ruling, so the Engineer first re-runs it at that size and reports; nothing is edited.
+
+## Addendum 25, 2026-10-02 (galaxy: drag direction; the prototype's bubbles)
+
+**A62. Left-drag is grab-style on both axes** (Westley: "Flip the left-click drag direction"). The galaxy follows the pointer vertically as well as horizontally. This replaces the drag sentence of A57: `push/C5-G3-impl`'s grab-style drag was right and stays; the prototype is being corrected to match.
+
+**A63. The prototype's territory bubbles.** Westley confirmed the look of the prototype before a790cb20 (the metaball shells at their original proportion) as the correct one. A Doer is correcting the prototype on `push/mockup-galaxy-scale`: the whole civilization layer shrunk 20 times by one shared factor with the bubbles keeping their proportion, the systems spread through a volume instead of a flat disc, and the backdrop galaxy left at its size. The live galaxy's shells and scale follow that prototype once Westley has approved it by eye; until then C5 does not copy shell or scale constants from the current prototype on main, whose bubbles are invisible.
+
+## Addendum 26, 2026-10-02 (batch 3: HDR5 gate, owner rows, the mentions contract, a display-only test race)
+
+**A64. HDR5 lands.** The `symbol_ownership` hit on `om_gen_set_region_range` is a comment-only change on a declaration line, a false positive; it is accepted for this landing and named in the ledger row with the A49 evidence (both new scale tests pass under `OM_SCALE=1`; the two known reds are E-02 memory and E-17 field sampling). The lint gap is fixed afterwards as a harness piece with a positive control.
+
+**A65. Owner rows.** Added in this commit: `G-eramanifest` (the `settled_reach` and `test_era` manifests). The validator change takes K1's next id and the `greek_placeholder` manifest K2's. No new rows for G-C3, mentions or the quality setting: their units take the next id of each file's existing owner, as round 1 ruled. Order for G-C3: `generational.c` (snapshots, after `B6-collapse-pick`), `chronicle.c` (keyframes), `om_pipe.c`, then `c_bridge.gd` and `time_jump_sequencer.gd`. The mentions units follow the G-C3 pipe unit. On `autoload/ui_data_bus.gd` (`G-uidatabus`): the galaxy quality setting first, then the Era Library unit.
+
+**A66. Mentions contract** (`push/GC2-contract`).
+- (a) Confirmed, with `expanded_text` and `expanded_mentions` kept: the chronicle frame carries the sim's text and the client shows it as sent. The sim is the one source of chronicle prose; the client's rebuilding of prose from fragment ids leaves the live path in the client unit, and `fragment` / `fragment_ids` stay in the frame as data. R-069-07 says so. This does not change A4-2, which is about the mission frame.
+- (b) Offsets are Unicode code points.
+- (c) A region mention carries the id of the region whose name was printed, and a click centres on exactly that region.
+- (d) A faction click centres on the centroid of that faction's systems at the Regional distance.
+- (e) A name the echo-dedup step replaced with a synonym is no longer a name and carries no mention.
+- (f) Two regions printing the same name is a defect of the same kind as the faction names (A55): the region name pool is extended with simple invented names, built from syllable combinations, so every region in a 512-region world has its own. Own small piece under the naming owner.
+- One check before the mentions client unit lands (Engineer, reported): for every region and faction of a seeded world, the name the galaxy view shows equals the name the chronicle text prints. If they differ, the two screens have two naming sources; report it, and the fix (the client taking names from the sim) is ruled then.
+
+**A67. `tests/test_tactical_view.gd` on a real display.** Both failures are test defects, approved for an Engineer with ledger rows: the tick check races an extra `_process` on a rendered display (the fix makes the test independent of how many frames ran before it stops processing; the expected tick per step is unchanged), and the pixel check assumes 1920x1080 where it should read the viewport's actual size.
+
+## Addendum 27, 2026-10-02 (after G-C3 and mentions landed)
+
+**A68. `om_chronicle_mention_get` in the signature table.** The struct gets a binding in `signatures.toml` and conftest so the function is bound and checked like the rest (Engineer). Separately, a harness piece: the merge gate runs `sig_table --report` and fails on a BLOCKED item, with a positive control (a planted unmappable parameter fails the gate).
+
+**A69. The chronicle scene never advances the sim by being opened.** Same fault as the debrief had (A39): a scene issuing a command from `_ready`. The jump is issued once, by the flow that leads to the chronicle (Proceed from the debrief); the sequencer holds that jump's frame and hands it to the embedded scroll panel, and the panel's own jump in `_ready` goes. Opened with no frame held (after a load, or from the galaxy before any jump), the scene shows the scroll with no entries and no replay, and its footer; it sends nothing. Tests: opening the scene sends no `jump`; sequencer and panel show the same frame; after a load, no replay. The general rule for the client from here on: a scene's `_ready` may read state and frames, and sends no command that changes the sim.
+
+**A70. The replay draws on the galaxy view.** The sequencer placing unknown regions on a ring with hashed colours is a stand-in, accepted only while the galaxy stack is held; it is listed in the ledger as a known visual defect. When the galaxy composite lands, the replay takes region positions and faction colours from the galaxy view's own data, and the ring placement is deleted in that unit.
+
+**A71. The panel slides in on the live path.** Entries printing into a hidden panel is a defect against R-069-01 and R-108-02. Small unit with a test: on the live path the panel is visible and at 38 percent width before the first entry prints.
+
+**A72. Keyframes never hold the clock.** Confirmed: keyframes are markers, the map is the master clock and is never delayed (R-069-03). The old behaviour of holding the keyframe queue until the paired entry finished is gone and stays gone.
+
+**A73. Mentions client.** The galaxy-side click behaviour (A66 c and d) stays held with the galaxy stack; the legacy handler in the sequencer remains the only consumer until then. An entry with no mentions is valid. The structural-line fallback for an entry whose text is empty stays, so the count on screen still equals what the distiller produced (R-069-06).
+
+## Addendum 28, 2026-10-02 (A69, A71 and A72 details; harness ownership)
+
+**A74. Proceed from the debrief goes to the sequencer.** `debrief._on_continue` routes to `time_jump`; the sequencer scene embeds the scroll panel and is the one screen that shows a jump. The `chronicle` route stays as the standalone scroll and is not on the Proceed path. The pinned route assertion in `tests/test_briefing_debrief.gd` asserted the old flow; amending that one assertion is a classed test-defect with a ledger row (Engineer).
+
+**A75. Frame hand-over, confirmed.** Proceed issues the jump once through the bridge (`load_chronicle_live`); the bridge holds the frame; the sequencer reads `chronicle_frame()` and hands that same frame to the panel. Neither scene issues a jump.
+
+**A76. Footer with no frame held.** Both controls show. Proceed sends nothing to the sim and moves the player on to the screen that follows the chronicle in the normal flow, exactly as it does after a replay; it is the way forward after a load. Exit to main menu is unchanged.
+
+**A77. The sequencer's legacy `ready_for_time_jump` goes** under the A69 rule. The source scan of the `_ready` body is dropped: the test is behavioural, a recording stand-in for the bridge (and for `SimBridge` while it exists) asserts that opening the scene sends no command. A source scan may not stand in for a behaviour test.
+
+**A78. A71: the panel slides.** R-069-01 stands: it slides in from the right over 0.40 s. The tests keep "visible and at 38 percent width before the first entry prints" and add one assertion that the slide exists (the panel is narrower than 38 percent at the start and reaches it within 0.40 s). Appearing at full width in `_ready` does not pass.
+
+**A79. A72 reaches the settle.** `_keyframe_queue` and `_waiting_for_entry` leave `_try_settle`, and `_waiting_for_entry` is deleted with the hold it served. The footer settles when the replay clock has reached the jump's last tick and the last entry has finished printing and held its minimum time (R-069-03). Keyframes are applied by the clock as their ticks pass, so none is pending at the end.
+
+**A80. Harness.** The sequence is approved: `HARNESS-sigblocked` lands its change to `merge_gate_support.py` and `merge_gate.sh`, then `HARNESS-symown` takes ownership of those files and lands on top; never in parallel. `A68-mention-bind` lands first. No policy change for header prototypes in the symbol lint: a signature change in the header is a contract change and is caught by the signature table gate (A68), which is the right detector for it. The two `pieces.py --check` failures (the `B7` / `B5-chronicle` overlap on `csrc/generational.c`, the `T1` acceptance id) are mine to fix in `pieces.toml`; the coordinator sends the verbatim output and they are fixed in one commit, not worked around.
+
+## Addendum 29, 2026-10-02 (the two audits: event region cap, names)
+
+**A81. Events cover every region.** `OM_EVT_MAX_REGIONS` at 64 against `OM_MAX_REGIONS` at 512 is a defect: on a galaxy of 250 to 400 regions most of the map can never have an event. Test first (Engineer): on a seeded 400-region world, over a run long enough for events to fire, at least one event lands on a region with id 64 or above, with a positive control (the current cap fails it). Then the fix under the owner of `csrc/events.c`: the events table is sized by `OM_MAX_REGIONS`, with no second cap. If the test shows events do reach regions 64 and above today, the reading was wrong; report that and change nothing.
+
+**A82. Names.**
+- The galaxy view takes names from `scenes/world/chronicle_names.gd` and the shared JSON, as the audit recommends. No third table: the galaxy mockup's invented names do not come across with the look.
+- The mission-briefing marker printing `table[(region + node) % 528]` is a defect: a region is shown under its own name everywhere. Small unit with a test (the marker's name equals the chronicle name of that region).
+- Faction names wrapping at 18 breaks A55 for any world with more than 18 factions. The faction pool is extended the same way as the region pool (A66 f): simple invented names from syllable combinations, enough for the faction cap, sim table and client JSON generated from one source so they cannot drift. Same naming piece.
+- The client fallback resolver stays only as the structural-line fallback of A73; its unowned wording is changed to the sim's ("an unclaimed people"). Its other differences are not worth a unit while the sim sends finished text.
+- The name dictionaries in the legacy info panel and the sequencer that the C pipe never fills are dead: the sequencer's goes in the A70 unit, the info panel's under that file's owner as a deletion unit.
+
+**A83. Memory per region** goes to Westley with the audit's breakdown (damage history is 1,536 of the 1,601 bytes; the edge matrix is a fixed 1 MB). No change until he decides; the E-02 memory test stays red and listed.
+
+## Addendum 30, 2026-10-02 (info panel owner; chronicle glob)
+
+**A84. Info panels have an owner.** New piece `G-infopanel` owns `scenes/world/region_info_panel.gd`, `faction_info_panel.gd` and `info_panel_host.gd`; the A82 deletion unit runs under it. The test pins are accepted as written (`region_meta["region_id"]`, `faction_meta["id"]` as a numeric string, `region_rows[i]["region_id"]`): the panels are handed ids and resolve names through `chronicle_names.gd`, never handed names. The `scenes/debug/test_*_info_panel*.gd` scenes that pass name meta are updated in the same unit.
+
+**A85. `scenes/world/chronicle_*` in both C3 and C8** is the round-1 arrangement: C8 depends on C3, both are attached, so one owner at a time holds; no change. New chronicle scene units take C8's next id.
+
+**A86. Faction name shape** (starts with "the ", at least two words, no apostrophe or comma) is accepted as the pool's rule.
+
+**A87. The runner's 300 s default** cutting off `test_chronicle_scene_open` and `test_time_jump_replay` is a harness defect, not a test pass: a test that can only pass with a raised timeout is listed until fixed. Small harness unit: those two tests declare their own needed time (or the runner's limit is counted in frames like the tests' own quit), with the default unchanged for everything else.

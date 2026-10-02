@@ -562,8 +562,12 @@ func _debrief_from_frame() -> Dictionary:
 
 func _on_continue() -> void:
 	UIDataBus.trigger_autosave("post_debrief")
+	var bridge = SimSession.bridge()
+	if not bridge.load_chronicle_live(bridge.live_seed(), bridge.DEFAULT_N_REGIONS, bridge.DEFAULT_FEATURES):
+		_show_error(bridge.last_error() if bridge.last_error() != "" else "chronicle load failed")
+		return
 	debrief_completed.emit()
-	SceneRouter.go_to("chronicle")
+	SceneRouter.go_to("time_jump")
 
 
 func _on_exit() -> void:

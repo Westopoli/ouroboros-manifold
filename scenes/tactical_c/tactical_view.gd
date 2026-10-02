@@ -359,6 +359,7 @@ func issue_command(cmd: Dictionary) -> Dictionary:
 func send_command(cmd: Dictionary) -> bool:
 	var kind := str(cmd.get("kind", ""))
 	var unit_ids: Array = cmd.get("unit_ids", []).duplicate()
+	BugReportManager.log_command(cmd)
 	var bridge = SimSession.bridge()
 	var ok: bool
 	if _move_order_dropped:

@@ -844,6 +844,15 @@ kwargs = ["old_faction"]
 note = "== 1. Card 247a2 -> generational.c; chronicle-ish name, not in toml."
 
 [[symbols]]
+name = "om_chronicle_get_keyframe"
+module = "chronicle.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "i", ctype = "uint32_t" }, { name = "tick_out", ctype = "uint64_t*" }]
+epics = ["E-09"]
+confidence = "likely"
+note = "G-C3 (A48 item 13): keyframe i of the last om_chronicle_generate_map_keyframes into *tick_out; 1, or 0 when i is out of range."
+
+[[symbols]]
 name = "om_chronicle_has_keyframe_at_tick"
 module = "chronicle.c"
 restype = "int"
@@ -890,6 +899,15 @@ confidence = "likely"
 note = "== 1 / == 0."
 
 [[symbols]]
+name = "om_chronicle_keyframe_count"
+module = "chronicle.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }]
+epics = ["E-09"]
+confidence = "likely"
+note = "G-C3: keyframes stored by the last om_chronicle_generate_map_keyframes; 0 before it has run."
+
+[[symbols]]
 name = "om_chronicle_lineage_category_count"
 module = "chronicle.c"
 restype = "uint32_t"
@@ -915,6 +933,24 @@ params = [{ name = "w", ctype = "const om_world*" }]
 epics = ["E-09"]
 confidence = "likely"
 note = "== 1."
+
+[[symbols]]
+name = "om_chronicle_mention_count"
+module = "chronicle.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "index", ctype = "uint32_t" }, { name = "expanded", ctype = "int" }]
+epics = ["E-09"]
+confidence = "likely"
+note = "A53 (R-069-07): count of faction/region name mentions in entry index's base (expanded 0) or expanded (1) text; 0 when none or entry not rendered."
+
+[[symbols]]
+name = "om_chronicle_mention_get"
+module = "chronicle.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "index", ctype = "uint32_t" }, { name = "expanded", ctype = "int" }, { name = "mention_idx", ctype = "uint32_t" }, { name = "out", ctype = "om_chronicle_mention*" }]
+epics = ["E-09"]
+confidence = "likely"
+note = "A53 (R-069-07): fills {start,len} (code point offsets into the text as sent), kind (OM_CHRON_MENTION_FACTION/REGION), id; 1 on success, 0 past the count. om_chronicle_mention struct in header."
 
 [[symbols]]
 name = "om_chronicle_mock_populate_events"
@@ -5315,6 +5351,15 @@ confidence = "likely"
 note = "== report.end_tick."
 
 [[symbols]]
+name = "om_time_jump_get_ownership_snapshot"
+module = "generational.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "k", ctype = "uint32_t" }, { name = "owners_out", ctype = "int32_t*" }, { name = "cap", ctype = "uint32_t" }]
+epics = ["E-09"]
+confidence = "likely"
+note = "G-C3 (A48 item 13): owner per region (-1 unowned) at tick start_tick + STRIDE*k of the last jump; returns n_regions, 0 when k out of range or cap < n_regions."
+
+[[symbols]]
 name = "om_time_jump_interrupt"
 module = "generational.c"
 restype = "int"
@@ -5331,6 +5376,15 @@ params = [{ name = "w", ctype = "const om_world*" }]
 epics = ["E-08"]
 confidence = "likely"
 note = "== report.end_tick (c_uint64)."
+
+[[symbols]]
+name = "om_time_jump_ownership_snapshot_count"
+module = "generational.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }]
+epics = ["E-09"]
+confidence = "likely"
+note = "G-C3: snapshots held for the last completed jump, == report.n_snapshots; 0 before any jump."
 
 [[symbols]]
 name = "om_time_jump_report_faction_field_deltas_count"
@@ -6361,6 +6415,11 @@ fields = [{ name = "type", ctype = "uint32_t" }, { name = "category", ctype = "u
 name = "om_chronicle_entry"
 source_test = "tests/csim/test_E09_S068_written_from_fragments_never_the_same_twice.py"
 fields = [{ name = "id", ctype = "uint32_t" }, { name = "category", ctype = "uint32_t" }, { name = "region", ctype = "uint32_t" }, { name = "base_text", ctype = "char[512]" }, { name = "expanded_text", ctype = "char[1024]" }, { name = "start_tick", ctype = "uint64_t" }, { name = "end_tick", ctype = "uint64_t" }, { name = "fragment_ids", ctype = "int32_t[3]" }, { name = "region_ref", ctype = "int32_t" }, { name = "faction_ref", ctype = "int32_t" }, { name = "lineage_ref", ctype = "int32_t" }]
+
+[[structs]]
+name = "om_chronicle_mention"
+source_test = "csrc/ouroboros_sim.h (A53 R-069-07, A68)"
+fields = [{ name = "start", ctype = "uint32_t" }, { name = "len", ctype = "uint32_t" }, { name = "kind", ctype = "uint32_t" }, { name = "id", ctype = "int32_t" }]
 
 [[structs]]
 name = "om_client_snapshot"

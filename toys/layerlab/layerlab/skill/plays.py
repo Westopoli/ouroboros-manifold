@@ -497,12 +497,12 @@ def profile(sits, sizes=(8, 16), ladder="line", config=None, processes=None, rat
     for sit in sits:
         for size in sizes:
             naive_build = build_scenario(sit, frozenset(), size, ladder, config=config)
-            naive = _rstar(naive_build, **kw)
+            naive = _rstar(naive_build, size=size, **kw)
             naive_windows = None
             for combo in (all_combinations() if combos is None else combos):
                 build = build_scenario(sit, combo, size, ladder, config=config)
                 if combo:
-                    res = _rstar(build, **kw)
+                    res = _rstar(build, size=size, **kw)
                     windows = _windows(build, res)
                 else:
                     res = naive

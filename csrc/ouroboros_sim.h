@@ -738,7 +738,7 @@ typedef enum {
  * generation (R-021-01). A pinned or drawn count below the minimum feasible
  * total (sum of every rolled template's size + one corridor empty per faction)
  * makes generation fail its feasibility check (om_world_generated() == 0). */
-void om_gen_set_region_range(om_world *w, uint32_t lo, uint32_t hi);   /* default [60, 110] (Q-021-05) */
+void om_gen_set_region_range(om_world *w, uint32_t lo, uint32_t hi);   /* default [250, 400] (R-021-01, ALG-31) */
 void om_gen_set_faction_count(om_world *w, uint32_t n);                /* default 15 (R-021-01) */
 void om_gen_set_extra_edge_ratio(om_world *w, double ratio);          /* default 0.12 (R-021-08) */
 /* Player faction (id 0) template preference (R-021-04): raises that template's
@@ -1036,6 +1036,20 @@ typedef struct om_chronicle_entry {
     int32_t lineage_ref;
 } om_chronicle_entry;
 
+/* A53 (R-069-07): one clickable name inside a chronicle entry's text. start and
+ * len are Unicode code point offsets into the entry text exactly as sent (not
+ * byte offsets: the library text holds multi-byte characters such as the em
+ * dash). kind is an OM_CHRON_MENTION_* value; id is the faction id or region
+ * index the name stands for. */
+#define OM_CHRON_MENTION_FACTION 0
+#define OM_CHRON_MENTION_REGION 1
+typedef struct om_chronicle_mention {
+    uint32_t start;
+    uint32_t len;
+    uint32_t kind;
+    int32_t id;
+} om_chronicle_mention;
+
 typedef struct om_client_unit {
     uint32_t id;
     int32_t faction_id;
@@ -1235,12 +1249,31 @@ void om_chronicle_generate_map_keyframes(om_world *w);
 int om_chronicle_get_cluster(const om_world *w, uint32_t entry, om_chronicle_cluster *out);
 const char *om_chronicle_get_full_scroll_text(const om_world *w);
 int om_chronicle_handle_click(om_world *w, uint32_t entry_id);
+/* G-C3 (A48 item 13, A59): the keyframe ticks om_chronicle_generate_map_keyframes last
+ * chose, sorted ascending with no duplicates; the list is cleared when a jump starts. Copies keyframe i to *tick_out and returns 1;
+ * returns 0, writing nothing, when i >= om_chronicle_keyframe_count. */
+int om_chronicle_get_keyframe(const om_world *w, uint32_t i, uint64_t *tick_out);
 int om_chronicle_has_keyframe_at_tick(const om_world *w, uint64_t p0);
 int om_chronicle_has_keyframe_in_range(const om_world *w, uint64_t p0, uint64_t p1);
 int om_chronicle_is_lineage_event(const om_world *w, uint32_t lineage_id, uint32_t region_idx, uint32_t attached_character_id, uint32_t mission_region);
 int om_chronicle_is_paused(const om_world *w);
+/* G-C3: number of keyframes the last om_chronicle_generate_map_keyframes stored;
+ * 0 before it has run. */
+uint32_t om_chronicle_keyframe_count(const om_world *w);
 uint32_t om_chronicle_lineage_category_count(const om_world *w);
 int om_chronicle_map_is_master_clock(const om_world *w);
+/* A53 (R-069-07, Q-069-02): the faction and region names in entry `index`'s
+ * text (same index as om_chronicle_entry_get), produced by the sim while it
+ * fills the name slots, never found by matching text afterwards. expanded 0 is
+ * base_text, 1 is expanded_text. Mentions are in text order, never overlap, and
+ * each lies wholly inside the stored text and covers the name as it stands there
+ * (a name opening a sentence has its first letter upper-cased); a name the assembler rewrote (word
+ * echo synonym, anaphora) or truncated away is not a mention. A faction slot
+ * with no owner ("an unclaimed people") is not a mention. Count is 0 for an
+ * entry with no mention or an index om_chronicle_entry_get rejects; get returns
+ * 1 on success, 0 when mention_idx is past the count. */
+uint32_t om_chronicle_mention_count(const om_world *w, uint32_t index, int expanded);
+int om_chronicle_mention_get(const om_world *w, uint32_t index, int expanded, uint32_t mention_idx, om_chronicle_mention *out);
 void om_chronicle_mock_populate_events(om_world *w, uint32_t n_events);
 double om_chronicle_presentation_entry_hold_sec(const om_world *w);
 double om_chronicle_presentation_map_width_ratio(const om_world *w);
@@ -1507,8 +1540,19 @@ uint32_t om_time_jump_choose_length(om_world *w, uint32_t requested);
 uint32_t om_time_jump_choose_opening_length(om_world *w);
 uint32_t om_time_jump_death_pass_count(const om_world *w);
 uint64_t om_time_jump_death_processing_tick(const om_world *w);
+/* G-C3 (A48 item 13): the ownership timeline of the last completed om_time_jump_run,
+ * one snapshot every OM_OWNERSHIP_TIMELINE_STRIDE ticks. Snapshot k is the owner of
+ * each region (faction id, -1 unowned) at tick report.start_tick + STRIDE*k, so k = 0
+ * is the state before the jump's first tick. Snapshots are every STRIDE ticks from the
+ * start, so an odd jump length has no snapshot at end_tick (A59). Memory only, never saved. Copies n_regions int32 values into
+ * owners_out and returns n_regions; returns 0, writing nothing, when k is not below
+ * om_time_jump_ownership_snapshot_count or cap < n_regions. */
+uint32_t om_time_jump_get_ownership_snapshot(const om_world *w, uint32_t k, int32_t *owners_out, uint32_t cap);
 int om_time_jump_interrupt(om_world *w);
 uint64_t om_time_jump_lineage_generation_tick(const om_world *w);
+/* G-C3: snapshots held for the last completed jump, == report.n_snapshots
+ * (jump_ticks / OM_OWNERSHIP_TIMELINE_STRIDE + 1); 0 before any jump has completed. */
+uint32_t om_time_jump_ownership_snapshot_count(const om_world *w);
 uint32_t om_time_jump_report_faction_field_deltas_count(const om_world *w, const om_time_jump_report *report);
 int om_time_jump_run(om_world *w, uint32_t n_ticks, om_time_jump_report *report);
 void om_time_jump_run_tracked(om_world *w, uint32_t jump);
@@ -1572,7 +1616,9 @@ double om_mission_eval_survive(om_world *w, uint32_t objective_idx, uint64_t ela
 uint32_t om_mission_fallback_archetype(const om_world *w);
 /* The non-player, non-neutral faction nearest region_idx by connection hops;
  * ties to the highest total OM_F_MILITARY (within OM_TIE_EPSILON), then the
- * lowest faction id. -1 when no faction qualifies. (R-072-08, A40) */
+ * lowest faction id. A faction with no path to region_idx ties with the other
+ * unreachable ones on distance and loses to any reachable one. -1 only when no
+ * non-player faction owns a region. (R-072-08, A40, A50) */
 int32_t om_mission_fallback_enemy(const om_world *w, uint32_t region_idx);
 /* The player's weakest region: lowest ALG-09 stability composite
  * (OM_C_STABILITY), ties to the lowest region index. (R-072-07, A41) */

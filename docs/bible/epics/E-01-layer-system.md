@@ -11,7 +11,7 @@
 | Every visible-surface story has a reference | **No — by design a Godot design phase, not a screenshot pull.** `references/E-01/notes.md` records the plan: basic single-layer movement ships first, then Claude builds several interactive layer-system options in Godot for Westley to choose between; the choice fills the references. Blocks S-009, S-010, S-006 until then. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** S-001, S-002 and S-003 are blocked on Q-001-05 (the edges of shortest-route layer changes), S-008 on Q-008-02 and Q-008-03 (the layer lab decides the cross-layer numbers), S-009 on Q-009-02, S-162, S-163 and S-164 on Q-005-04 (the numbers and edges of the three layer actions), and S-009, S-010 and S-006 on references. Stories are Spec'd, not Ready.
+**Gate verdict: not passed for S-008, S-009, S-010 and S-006; the rest are buildable.** S-008 is blocked on Q-008-02 and Q-008-03 (the skill lab decides the cross-layer numbers), S-009 on Q-009-02, and S-009, S-010 and S-006 on references. S-001 to S-004 and S-162 to S-164 carry provisional numbers held as runtime settings (Q-001-05 and Q-005-04, closed 2026-10-02) and are built by the engine cascade in `docs/northstar/plans/2026-10-02-skill-lab-cascade.md`.
 
 ## Purpose
 
@@ -41,7 +41,7 @@ Rules
 
 Inputs: map layer accessibility mask (binary per layer per position); unit position; unit current layer.
 Outputs: unit path; unit position over time; layer accessibility query result.
-Open flags: Q-001-05 (the edges of shortest-route layer changes).
+Open flags: none. Q-001-05 is closed with provisional readings, held as runtime settings.
 
 ### S-002 — Hard layer transfer
 As a commander, I want to order selected units to a specific layer, so that I can commit a force to a height when timing matters.
@@ -57,7 +57,7 @@ Rules
 
 Inputs: layer command (target layer, integer in map range); selection (1 to N units); unit position; accessibility mask.
 Outputs: per-unit pending transfer; per-unit layer field in the tick delta; transition start and end events.
-Open flags: Q-001-05 (how a route that changes layer meets a pending transfer).
+Open flags: none (Q-001-05, provisional).
 
 ### S-003 — Layer preference
 As a commander, I want to give units a standing preference for a layer, so that a scouting group stays high and a siege group stays low without me re-ordering them at every obstacle.
@@ -74,7 +74,7 @@ Rules
 
 Inputs: preference command (layer integer or clear); modifier key state; selection.
 Outputs: per-unit preferred layer in the tick delta; preference indicator on screen (S-009); save file.
-Open flags: Q-001-05 (how a route that changes layer meets a preference).
+Open flags: none (Q-001-05, provisional).
 
 ### S-004 — Changing layers takes time and leaves you exposed
 As a commander, I want a layer change to cost time, set by the unit type for a transfer in the open and by the slope's length and my unit's speed on a slope, so that changing layers always exposes the unit and the halfway point of a slope is a line on the map I can read and hold.
@@ -122,7 +122,7 @@ Rules
 
 Inputs: pulse command; pulse-capable unit; pulse radius (config); cooldown state.
 Outputs: pulse active flag and remaining cooldown in the tick delta; revealed set; cooldown ring on the HUD; visible pulse effect on screen.
-Open flags: Q-005-04 (whether the pulse stays beside the targeted ping of S-162).
+Open flags: none. The pulse is not built: the targeted ping of S-162 takes its place (Q-005-04, provisional).
 
 ### S-007 — Cover blocks sight by height
 As a commander, I want a tall obstacle to hide units on more layers than a short one, so that where I put a force relative to terrain changes what the enemy can see.
@@ -139,7 +139,7 @@ Outputs: visible set; damage applied; unit path.
 Open flags: none.
 
 ### S-008 — Combat across layers
-As a commander, I want to know whether a unit can shoot at an enemy one layer above it, so that layer position is a positional decision and not a guess. The cross-layer rules are decided by the layer lab, a fast standalone simulator (`docs/northstar/research/layer_dynamics/`, `toys/layerlab/`), which sweeps range, damage, vision and terrain in small engagements and maps where the expected side wins because of the engagement's conditions. Its numbers may become the rules below.
+As a commander, I want to know whether a unit can shoot at an enemy one layer above it, so that layer position is a positional decision and not a guess. The cross-layer rules are decided by measurement: the skill lab (`docs/northstar/research/layer_dynamics/README.md`, `scripts/skilllab/`) runs small engagements on the real simulation, varies range, damage, vision and terrain, and maps where the skilled side wins because of the engagement's conditions. Its numbers may become the rules below.
 
 Rules
 - R-008-01  Given an attacker on layer 3 and a visible enemy on layer 3 in range, When the attacker is idle or attack-moving, Then it engages.
@@ -147,11 +147,11 @@ Rules
 - R-008-03  Given a Bombard's area attack centered on layer 3, When enemies stand on layers 2 and 4 inside the radius, Then they take damage only at the layer offsets the Bombard's reach includes (S-164), at the multiplier Q-008-03 sets.
 - R-008-04  Given an attacker that cannot see a target (S-005), When it would attack that target, Then it does not: a unit never fires at a target it cannot see, on its own layer or another.
 
-End-state (the acceptance bar): the hub's definition of strategic depth (principle 4) holds in the layer lab before any cross-layer rule is written into the sim. In the lab's terms (`docs/northstar/research/layer_dynamics/README.md` §4.3): across the space maps, each skilled play wins the count of units able to fire, the result follows that count, the five skills (landscape, formation, layers, enemy position, unit-type matchup) stack with none dominant and none dead, each has an answer on most maps, and the best situations let a side beat a much larger force. Abilities are left out of this bar for now (Westley, 2026-09-30: "let's leave specific abilities out of this calculation for now, we're tuning base unit properties").
+End-state (the acceptance bar): the hub's definition of strategic depth (principle 4) holds in the skill lab before any cross-layer number is fixed. The mechanisms are built with provisional numbers held as runtime settings, so that the lab can move them. In the lab's terms (`docs/northstar/research/layer_dynamics/README.md` section 4): across the space maps, each skilled play wins the count of units able to fire, the result follows that count, the five skills (landscape, formation, layers, enemy position, unit-type matchup) stack with none dominant and none dead, each has an answer on most maps, and the best situations let a side beat a much larger force. Abilities are left out of this bar for now (Westley, 2026-09-30: "let's leave specific abilities out of this calculation for now, we're tuning base unit properties").
 
 Inputs: attacker layer, target layer, range, visibility; the cross-layer rule table (range, damage and area multipliers by signed layer offset, fire-requires-vision, halfway rule) once Q-008-03 closes.
 Outputs: attack events; HP changes in the tick delta.
-Open flags: Q-008-02 (the layer lab: the research program that decides the cross-layer design), Q-008-03 (the cross-layer numbers). Q-008-01 is closed: the prototype is same-layer only until the lab reports.
+Open flags: Q-008-02 (the research program that decides the cross-layer design, now the skill lab on the real simulation), Q-008-03 (the cross-layer numbers). Q-008-01 is closed: the prototype is same-layer only until the lab reports.
 
 ### S-009 — I can see what layer every unit is on
 As a commander, I want to see at a glance which layer each unit is on and which layer I am focused on, so that I never have to guess who can see whom.
@@ -205,7 +205,7 @@ Rules
 
 Inputs: ping command (selection, layer, place); era pack (ping or scouts).
 Outputs: revealed set for the burst; the alert and its sector on the pinged player's screen; a cooldown, if Q-005-04 adopts one.
-Open flags: Q-005-04 (the ping's numbers, the scouts, and whether the sensor pulse of S-006 stays).
+Open flags: none. Numbers are provisional runtime settings (Q-005-04): radius 500, reveal 2 s, cooldown 20 s per unit, reach 2,000.
 
 ### S-163 — Going dark
 As a commander, I want to choose which of my forces look and which stay quiet, so that seeing further is paid for by being seen, and a quiet force can wait unseen.
@@ -217,7 +217,7 @@ Rules
 
 Inputs: emit or silent command; selection.
 Outputs: the force's state in the tick delta; its sight and its visibility to others; a mark on screen showing which forces are emitting.
-Open flags: Q-005-04.
+Open flags: none. Numbers are provisional runtime settings (Q-005-04): emitting doubles cross-layer sight and being seen; silent is the default.
 
 ### S-164 — Reach by unit type
 As a commander, I want each unit type to reach only certain layers with its fire, so that where I put each type, and which type I put under or over the enemy, decides who gets shots off.
@@ -229,7 +229,7 @@ Rules
 
 Inputs: unit type reach table (roster, per era).
 Outputs: attack eligibility by layer offset.
-Open flags: Q-005-04, Q-008-03.
+Open flags: none. The reach table is provisional (Q-005-04): Line own layer, Raider one layer either way, Interceptor two up and one down, Siege two down. The range and damage at each offset are S-008's question (Q-008-03).
 
 ## Inputs
 
@@ -296,7 +296,7 @@ Numbers to be confirmed by Westley in Stage 3. Proposed: 1,000 units computing c
 
 ## Open ambiguity flags
 
-Q-001-05, Q-005-04, Q-008-02, Q-008-03, Q-009-02. Details in `docs/northstar/ambiguity_register.md`.
+Q-008-02, Q-008-03, Q-009-02. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

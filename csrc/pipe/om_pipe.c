@@ -62,9 +62,10 @@
 #include <string.h>
 
 #include "ouroboros_sim.h"
+#include "om_constants.h"
 
 /* Mirrors OM_SAVE_FORMAT_VERSION in om_internal.h (not visible to the pipe). */
-#define OM_PIPE_SAVE_FORMAT_VERSION 4
+#define OM_PIPE_SAVE_FORMAT_VERSION 5
 
 /* csrc/generational.c GEN_PHASE_BRIEFING / GEN_PHASE_MISSION, not exported
  * by ouroboros_sim.h. See the file-header comment above. */
@@ -1011,10 +1012,66 @@ static void write_chronicle(uint64_t from_tick, uint64_t to_tick) {
             jb_putc(&j, ',');
             jb_key(&j, "significance");
             jb_double(&j, c.peak_score);
+            jb_putc(&j, ',');
+            for (int f = 0; f < 2; f++) {
+                jb_key(&j, f ? "expanded_text" : "text");
+                jb_str(&j, f ? ent.expanded_text : ent.base_text);
+                jb_putc(&j, ',');
+                jb_key(&j, f ? "expanded_mentions" : "mentions");
+                jb_putc(&j, '[');
+                uint32_t nm = om_chronicle_mention_count(W, i, f);
+                for (uint32_t k = 0; k < nm; k++) {
+                    om_chronicle_mention m;
+                    if (!om_chronicle_mention_get(W, i, f, k, &m)) break;
+                    if (k) jb_putc(&j, ',');
+                    jb_raw(&j, "{\"start\":"); jb_uint(&j, m.start);
+                    jb_raw(&j, ",\"len\":"); jb_uint(&j, m.len);
+                    jb_raw(&j, ",\"kind\":"); jb_str(&j, m.kind == OM_CHRON_MENTION_FACTION ? "faction" : "region");
+                    jb_raw(&j, ",\"id\":"); jb_int(&j, m.id);
+                    jb_putc(&j, '}');
+                }
+                jb_putc(&j, ']');
+                if (!f) jb_putc(&j, ',');
+            }
             jb_putc(&j, '}');
         }
     }
-    jb_raw(&j, "]}");
+    jb_putc(&j, ']');
+    /* G-C3 (A48 item 13, A59): replay timeline and keyframes, omitted when no jump built a timeline (e.g. after load). */
+    om_chronicle_generate_map_keyframes(W);
+    uint32_t n_snap = om_time_jump_ownership_snapshot_count(W);
+    uint32_t n_reg = om_region_count(W);
+    int32_t *owners = n_snap ? malloc((size_t)(n_reg ? n_reg : 1) * sizeof *owners) : NULL;
+    if (owners) {
+        jb_raw(&j, ",\"ownership\":{\"stride\":");
+        jb_uint(&j, OM_OWNERSHIP_TIMELINE_STRIDE);
+        jb_raw(&j, ",\"from_tick\":");
+        jb_uint(&j, from_tick);
+        jb_raw(&j, ",\"n_regions\":");
+        jb_uint(&j, n_reg);
+        jb_raw(&j, ",\"snapshots\":[");
+        for (uint32_t k = 0; k < n_snap; k++) {
+            if (k) jb_putc(&j, ',');
+            jb_putc(&j, '[');
+            uint32_t got = om_time_jump_get_ownership_snapshot(W, k, owners, n_reg);
+            for (uint32_t r = 0; r < got; r++) {
+                if (r) jb_putc(&j, ',');
+                jb_int(&j, owners[r]);
+            }
+            jb_putc(&j, ']');
+        }
+        jb_raw(&j, "]},\"keyframes\":[");
+        uint32_t n_kf = om_chronicle_keyframe_count(W);
+        for (uint32_t i = 0; i < n_kf; i++) {
+            uint64_t t = 0;
+            if (!om_chronicle_get_keyframe(W, i, &t)) continue;
+            if (i) jb_putc(&j, ',');
+            jb_uint(&j, t);
+        }
+        jb_putc(&j, ']');
+        free(owners);
+    }
+    jb_putc(&j, '}');
     write_frame(j.buf, (uint32_t)j.len);
     jb_free(&j);
 }
@@ -1383,6 +1440,14 @@ static void handle_mission_start(const char *json) {
     }
     int64_t faction = 0;
     get_i64(json, "faction", &faction);
+
+    int owns_region = 0;
+    for (uint32_t ri = 0; ri < om_region_count(W) && !owns_region; ri++)
+        owns_region = om_region_owner(W, ri) == om_player_faction(W);
+    if (!owns_region) {
+        write_error("mission_start", "player owns no region");
+        return;
+    }
 
     /* om_mission_start itself does not start anything (see the file-header
      * comment); the real region/archetype/objective wiring is composed here

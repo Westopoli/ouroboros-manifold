@@ -57,7 +57,7 @@
  * Both original blockers (om_world_new rejecting n_regions == 0; the
  * region_edge[64][64] cap below E-03's 110-region range) are fixed on
  * main as of freeze/F2d (fd01efd): om_world_new(0, seed) now defers the
- * count exactly as this file expects, and OM_MAX_REGIONS is 128 everywhere
+ * count exactly as this file expects, and OM_MAX_REGIONS is 512 everywhere
  * region-indexed. Nothing left to report there.
  * ====================================================================== */
 
@@ -192,6 +192,9 @@ void om_world_generate(om_world *w) {
     uint32_t n_regions = (w->n_regions > 0)
         ? w->n_regions
         : gen_randint(w, w->gen_region_min, w->gen_region_max);
+    /* A27: a count past the cap leaves the world ungenerated, like an infeasible count. */
+    if (n_regions > OM_MAX_REGIONS)
+        return;
 
     /* (2) template rolls, batched, before any placement. */
     om_template templates[OM_MAX_FACTIONS];

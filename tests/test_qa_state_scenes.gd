@@ -14,7 +14,6 @@ extends SceneTree
 #
 # Widget sub-scenes exempt:
 #   scenes/debrief/ribbon_graph.tscn          -- chart embedded in debrief
-#   scenes/tactical/hud.tscn                  -- HUD overlay embedded in tactical
 #   scenes/world/chronicle_entry.tscn         -- entry sub-row (C3-4 owned)
 #   scenes/world/chronicle_entry_expansion.tscn -- expansion widget (C3-4 owned)
 #   scenes/world/faction_info_panel.tscn      -- info panel embedded in world scenes
@@ -24,22 +23,19 @@ extends SceneTree
 # LEFTOVER (owned by C3-4, C7-5 cannot touch):
 #   scenes/world/chronicle_scroll_panel.tscn  -- routed as "chronicle"; owned by C3-4
 #
-# TOTAL .tscn: 50
-#   REQUIRED:      19 (18 owned by C7-5, 1 leftover to C3-4)
-#   debug_scenes:  10
+# TOTAL .tscn: 47 (E3 removed scenes/tactical/** and the debug squad-impact scene)
+#   REQUIRED:      18 (17 owned by C7-5, 1 leftover to C3-4)
+#   debug_scenes:  9
 #   mockup_scenes:  9
 #   harness_scenes: 1
 #   shared_scenes:  4
-#   widget_scenes:  7
-#   Total exempt: 31
-#   19 + 31 = 50 ✓
-#
-# scenes/tactical/tactical.tscn is REQUIRED (router still routes to it as "tactical").
+#   widget_scenes:  6
+#   Total exempt: 29
+#   18 + 29 = 47 ✓
 #
 # Mounting notes:
 #   era_detail, onboarding: call setup({era_id: "settled_reach"}) after add_child
 #   time_jump_sequencer: no setup() needed for qa_state (params set tick etc.)
-#   tactical (legacy): TacticalBridge is an autoload; @onready binds from .tscn
 #   bug_report_popup: setup(path, path) is optional; qa_state safe without it
 #   privacy_modal: @onready binds from .tscn; skips if flag file exists (harmless)
 
@@ -87,11 +83,6 @@ const REQUIRED_SCENES: Array = [
 	{
 		"path": "res://scenes/mission_briefing/mission_briefing.tscn",
 		"scene_name": "mission_briefing",
-		"setup": {},
-	},
-	{
-		"path": "res://scenes/tactical/tactical.tscn",
-		"scene_name": "tactical",
 		"setup": {},
 	},
 	{
