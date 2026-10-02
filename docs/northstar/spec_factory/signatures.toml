@@ -935,6 +935,24 @@ confidence = "likely"
 note = "== 1."
 
 [[symbols]]
+name = "om_chronicle_mention_count"
+module = "chronicle.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "index", ctype = "uint32_t" }, { name = "expanded", ctype = "int" }]
+epics = ["E-09"]
+confidence = "likely"
+note = "A53 (R-069-07): count of faction/region name mentions in entry index's base (expanded 0) or expanded (1) text; 0 when none or entry not rendered."
+
+[[symbols]]
+name = "om_chronicle_mention_get"
+module = "chronicle.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "index", ctype = "uint32_t" }, { name = "expanded", ctype = "int" }, { name = "mention_idx", ctype = "uint32_t" }, { name = "out", ctype = "om_chronicle_mention*" }]
+epics = ["E-09"]
+confidence = "likely"
+note = "A53 (R-069-07): fills {start,len} (code point offsets into the text as sent), kind (OM_CHRON_MENTION_FACTION/REGION), id; 1 on success, 0 past the count. om_chronicle_mention struct in header."
+
+[[symbols]]
 name = "om_chronicle_mock_populate_events"
 module = "chronicle.c"
 restype = "void"

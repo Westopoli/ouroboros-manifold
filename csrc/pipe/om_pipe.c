@@ -1012,6 +1012,27 @@ static void write_chronicle(uint64_t from_tick, uint64_t to_tick) {
             jb_putc(&j, ',');
             jb_key(&j, "significance");
             jb_double(&j, c.peak_score);
+            jb_putc(&j, ',');
+            for (int f = 0; f < 2; f++) {
+                jb_key(&j, f ? "expanded_text" : "text");
+                jb_str(&j, f ? ent.expanded_text : ent.base_text);
+                jb_putc(&j, ',');
+                jb_key(&j, f ? "expanded_mentions" : "mentions");
+                jb_putc(&j, '[');
+                uint32_t nm = om_chronicle_mention_count(W, i, f);
+                for (uint32_t k = 0; k < nm; k++) {
+                    om_chronicle_mention m;
+                    if (!om_chronicle_mention_get(W, i, f, k, &m)) break;
+                    if (k) jb_putc(&j, ',');
+                    jb_raw(&j, "{\"start\":"); jb_uint(&j, m.start);
+                    jb_raw(&j, ",\"len\":"); jb_uint(&j, m.len);
+                    jb_raw(&j, ",\"kind\":"); jb_str(&j, m.kind == OM_CHRON_MENTION_FACTION ? "faction" : "region");
+                    jb_raw(&j, ",\"id\":"); jb_int(&j, m.id);
+                    jb_putc(&j, '}');
+                }
+                jb_putc(&j, ']');
+                if (!f) jb_putc(&j, ',');
+            }
             jb_putc(&j, '}');
         }
     }
