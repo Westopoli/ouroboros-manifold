@@ -49,8 +49,8 @@ HOME_RANGE_DEFAULTS = [
 def test_R_021_01_fresh_world_stores_region_range_and_faction_count_defaults(dbg, dbg_world_factory):
     w = dbg_world_factory(n_regions=1)
     row = read_gen_config(dbg, w)
-    assert (row.region_min, row.region_max) == (60, 110), \
-        "a fresh world's region count range must default to [60, 110] (R-021-01, ALG-31 WORLD_REGION_COUNT_RANGE)"
+    assert (row.region_min, row.region_max) == (250, 400), \
+        "a fresh world's region count range must default to [250, 400] (R-021-01, ALG-31 WORLD_REGION_COUNT_RANGE)"
     assert row.faction_count == 15, \
         "a fresh world's faction count must default to 15 (R-021-01, ALG-31 WORLD_FACTIONS_PER_GAME)"
 

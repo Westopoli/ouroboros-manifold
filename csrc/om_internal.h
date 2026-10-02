@@ -8,10 +8,10 @@
 #include "ouroboros_sim.h"
 
 #define OM_MAX_NEIGHBORS 32
-/* F2d: raised 64 -> 128 so every region-indexed and per-tick-record bound
- * covers E-03's full draw range (OM_WORLD_REGION_COUNT_RANGE_HI = 110,
- * om_constants.h). */
-#define OM_MAX_REGIONS 128
+/* HDR5 (A27): raised 128 -> 512 so every region-indexed and per-tick-record
+ * bound covers E-03's full draw range (OM_WORLD_REGION_COUNT_RANGE_HI = 400,
+ * om_constants.h). om_world_new rejects more than this. */
+#define OM_MAX_REGIONS 512
 #define OM_DAMAGE_HISTORY_CAP 64
 #define OM_TIE_EPSILON 1e-12
 /* F2j: named so save.c (T2c) can bound-check a loaded count against the
@@ -33,7 +33,7 @@
  * field order, F2i). */
 #define OM_SAVE_MAGIC "OMSV"
 #define OM_SAVE_MAGIC_LEN 4
-#define OM_SAVE_FORMAT_VERSION 4 /* bumped: gen_state gained current commander/lineage, chosen archetype, no-candidate flag, last end reason; version-3 saves are rejected, no migration */
+#define OM_SAVE_FORMAT_VERSION 5 /* bumped 4 -> 5 (HDR5): the edge matrix is OM_MAX_REGIONS (512) square, so the layout grew; version-4 saves are refused, no migration. Version 4 added: gen_state gained current commander/lineage, chosen archetype, no-candidate flag, last end reason; version-3 saves are rejected, no migration */
 #define OM_SAVE_BYTE_BITS 8
 #define OM_SAVE_BYTE_MASK 0xFFu
 #define OM_SAVE_SLOT_TACTICAL     0

@@ -72,8 +72,8 @@ def test_emit_ranges_as_lo_hi(tmp_path):
     text = out.read_text()
     assert "#define OM_HOME_POPULATION_RANGE_LO 55" in text
     assert "#define OM_HOME_POPULATION_RANGE_HI 75" in text
-    assert "#define OM_WORLD_REGION_COUNT_RANGE_LO 60" in text
-    assert "#define OM_WORLD_REGION_COUNT_RANGE_HI 110" in text
+    assert "#define OM_WORLD_REGION_COUNT_RANGE_LO 250" in text
+    assert "#define OM_WORLD_REGION_COUNT_RANGE_HI 400" in text
 
 
 def test_emit_keyed_paren_range_table(tmp_path):
