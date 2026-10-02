@@ -858,6 +858,10 @@ static const char *CHRON_REGION_NAMES[] = {
 };
 #define CHRON_N_REGION_NAMES 528
 
+/* Ids 0..17 are the fixed table; ids 18..CHRON_N_FACTION_NAMES-1 are composed from
+ * the syllable arrays, k = id - 18: head = k % heads, tail = (k / heads) % tails, kind = k % kinds.
+ * scripts/library/emit_chronicle_fragments.py repeats this rule to emit
+ * library/chronicle/fragments.json; tests/csim/test_E09_faction_name_pool.py checks they agree. */
 static const char *CHRON_FACTION_NAMES[] = {
     "the Dominion", "the Concord", "the Ashen League", "the Iron Compact",
     "the Free Cities", "the Sable Court", "the Vanguard Accord", "the Twin Banners",
@@ -865,7 +869,12 @@ static const char *CHRON_FACTION_NAMES[] = {
     "the Lantern Guild", "the Hollow Standard", "the Saltmarsh Union", "the Quiet Fleet",
     "the Copper Assembly", "the Evenfall Realm",
 };
-#define CHRON_N_FACTION_NAMES 18
+#define CHRON_N_FIXED_FACTION_NAMES 18
+static const char *CHRON_FACTION_HEADS[] = { "Kel", "Dor", "Vash", "Ilm", "Tor", "Sar", "Nev", "Bram" };
+static const char *CHRON_FACTION_TAILS[] = { "ovan", "ereth", "indal", "umar", "essa", "orin" };
+static const char *CHRON_FACTION_KINDS[] = { "Accord", "Host", "Pact", "League", "Assembly" };
+#define CHRON_N_FACTION_NAMES 64
+#define CHRON_FACTION_NAME_CAP 48
 
 static const char *CHRON_LINEAGE_SURNAMES[] = {
     "Voss", "Kestrel", "Thane", "Ashworth", "Marrow", "Corvane", "Halloway", "Sennett",
@@ -876,9 +885,17 @@ static const char *chron_region_name(uint32_t region_idx) {
     return CHRON_REGION_NAMES[region_idx % CHRON_N_REGION_NAMES];
 }
 
-static const char *chron_faction_name(int32_t faction_id) {
+static const char *chron_faction_name(int32_t faction_id, char *buf, size_t cap) {
     if (faction_id < 0) return "an unclaimed people";
-    return CHRON_FACTION_NAMES[(uint32_t)faction_id % CHRON_N_FACTION_NAMES];
+    uint32_t id = (uint32_t)faction_id % CHRON_N_FACTION_NAMES;
+    if (id < CHRON_N_FIXED_FACTION_NAMES) return CHRON_FACTION_NAMES[id];
+    uint32_t k = id - CHRON_N_FIXED_FACTION_NAMES;
+    uint32_t nh = (uint32_t)(sizeof CHRON_FACTION_HEADS / sizeof CHRON_FACTION_HEADS[0]);
+    uint32_t nt = (uint32_t)(sizeof CHRON_FACTION_TAILS / sizeof CHRON_FACTION_TAILS[0]);
+    uint32_t nk = (uint32_t)(sizeof CHRON_FACTION_KINDS / sizeof CHRON_FACTION_KINDS[0]);
+    snprintf(buf, cap, "the %s%s %s", CHRON_FACTION_HEADS[k % nh], CHRON_FACTION_TAILS[(k / nh) % nt],
+             CHRON_FACTION_KINDS[k % nk]);
+    return buf;
 }
 
 static const char *chron_lineage_surname(uint32_t region_idx) {
@@ -1275,7 +1292,8 @@ static void chron_build_slots(const om_world *w, const om_chronicle_cluster *c, 
     snprintf(slots[SLOT_CHARACTER_NAME].value, CHRON_SLOT_VALUE_CAP, "%s Vane", chron_lineage_surname(c->region));
     snprintf(slots[SLOT_CHARACTER_RANK].value, CHRON_SLOT_VALUE_CAP, "%s", "commander");
     snprintf(slots[SLOT_LINEAGE_NAME].value, CHRON_SLOT_VALUE_CAP, "%s", chron_lineage_surname(c->region));
-    snprintf(slots[SLOT_FACTION_NAME].value, CHRON_SLOT_VALUE_CAP, "%s", chron_faction_name(owner));
+    char fname[CHRON_FACTION_NAME_CAP];
+    snprintf(slots[SLOT_FACTION_NAME].value, CHRON_SLOT_VALUE_CAP, "%s", chron_faction_name(owner, fname, sizeof fname));
     if (owner >= 0) { slots[SLOT_FACTION_NAME].mkind = 0; slots[SLOT_FACTION_NAME].mid = owner; }
     snprintf(slots[SLOT_REGION_NAME].value, CHRON_SLOT_VALUE_CAP, "%s", chron_region_name(c->region));
     slots[SLOT_REGION_NAME].mkind = 1; slots[SLOT_REGION_NAME].mid = (int32_t)c->region;
@@ -1509,7 +1527,8 @@ static void chron_render_region_mention(const om_world *w, uint32_t region_idx, 
     const char *name = chron_region_name(region_idx);
     int32_t owner = om_region_owner(w, region_idx);
     if (is_first_mention && owner >= 0) {
-        snprintf(out, cap, "%s, held by %s", name, chron_faction_name(owner));
+        char fname[CHRON_FACTION_NAME_CAP];
+        snprintf(out, cap, "%s, held by %s", name, chron_faction_name(owner, fname, sizeof fname));
     } else {
         snprintf(out, cap, "%s", name);
     }
@@ -1835,7 +1854,8 @@ static void chron_assemble_all(om_world *w, uint64_t seed) {
                 const char *bare = chron_region_name(st->clusters[i].region);
                 if (strstr(mention, ", held by") && !strstr(bases[i], ", held by")) {
                     int32_t own = om_region_owner(w, st->clusters[i].region);
-                    const char *fn = chron_faction_name(own);
+                    char fnbuf[CHRON_FACTION_NAME_CAP];
+                    const char *fn = chron_faction_name(own, fnbuf, sizeof fnbuf);
                     chron_first_mention_shift(bases[i], sizeof(bases[i]), bsp[i], &nb[i], bare, mention, fn, own, st->clusters[i].region);
                     chron_first_mention_shift(expandeds[i], sizeof(expandeds[i]), esp[i], &ne[i], bare, mention, fn, own, st->clusters[i].region);
                 }

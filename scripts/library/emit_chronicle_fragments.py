@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """scripts/library/emit_chronicle_fragments.py
-Parse csrc/chronicle.c CHRON_FRAGMENTS[] and placeholder name tables,
+Parse csrc/chronicle.c CHRON_FRAGMENTS[] and name tables (the faction pool is the fixed
+names plus the syllable-composed ones, see _faction_pool),
 emit library/chronicle/fragments.json.
 
 Usage:
@@ -77,6 +78,19 @@ def _parse_string_array(src: str, array_name: str) -> list:
     return re.findall(r'"([^"]*)"', m.group(1))
 
 
+def _faction_pool(src: str) -> list:
+    """Fixed names, then the composed ones; repeats the rule in chron_faction_name()."""
+    names = _parse_string_array(src, "CHRON_FACTION_NAMES")
+    if len(names) != _n_define(src, "CHRON_N_FIXED_FACTION_NAMES"):
+        raise SystemExit("ERROR: CHRON_FACTION_NAMES count differs from CHRON_N_FIXED_FACTION_NAMES")
+    heads = _parse_string_array(src, "CHRON_FACTION_HEADS")
+    tails = _parse_string_array(src, "CHRON_FACTION_TAILS")
+    kinds = _parse_string_array(src, "CHRON_FACTION_KINDS")
+    for k in range(_n_define(src, "CHRON_N_FACTION_NAMES") - len(names)):
+        names.append(f"the {heads[k % len(heads)]}{tails[(k // len(heads)) % len(tails)]} {kinds[k % len(kinds)]}")
+    return names
+
+
 def main(out_path: str) -> None:
     src = _read_source()
 
@@ -92,7 +106,7 @@ def main(out_path: str) -> None:
         )
 
     region_names = _parse_string_array(src, "CHRON_REGION_NAMES")
-    faction_names = _parse_string_array(src, "CHRON_FACTION_NAMES")
+    faction_names = _faction_pool(src)
     lineage_surnames = _parse_string_array(src, "CHRON_LINEAGE_SURNAMES")
 
     data = {
