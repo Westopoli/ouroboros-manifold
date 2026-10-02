@@ -2,6 +2,9 @@
   "era_id": "px10_proving_grounds",
   "era_display_name": "The Proving Grounds",
   "era_accent_color": "#ff00ff",
+  "era_spatial_scale": "A fixture pack for the validator proof.",
+  "era_tone": "A fixture pack for the validator proof.",
+  "era_order": 99,
 
   "units": {
     "vanguard":    { "category": "line",   "squad_count": 1, "visual_scale": 1.0, "tiers": {
