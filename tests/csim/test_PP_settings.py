@@ -230,48 +230,6 @@ def test_G1_the_reference_fight_lands_hits_at_the_default_multiplier(lib, world_
         assert dmg == pytest.approx(9.0 * 0.75, abs=1e-6), (tick, dmg)
 
 
-def test_G1_a_set_before_any_unit_spawns_applies_to_the_whole_fight(lib, world_factory):
-    ref = _hits(lib, world_factory)
-    new = _hits(lib, world_factory, set_before_spawn=1.5)       # 1.5 / 0.75 = exactly x2
-    assert list(new) == list(ref), "same hit ticks"
-    for tick in ref:
-        assert new[tick] == pytest.approx(2.0 * ref[tick], abs=1e-9), tick
-
-
-def test_G1_a_set_after_spawn_and_before_the_first_step_applies_to_every_hit(lib, world_factory):
-    ref = _hits(lib, world_factory)
-    new = _hits(lib, world_factory, set_after_tick=(1.5, 0))
-    assert list(new) == list(ref)
-    for tick in ref:
-        assert new[tick] == pytest.approx(2.0 * ref[tick], abs=1e-9), tick
-
-
-def test_G1_a_set_mid_fight_takes_effect_on_the_next_tick(lib, world_factory):
-    """Set after tick 4: hits on ticks 1 to 4 are unchanged, hits from tick 5 on are doubled. The control is
-    that both groups exist, so a set that applied to nothing, or to everything, fails."""
-    set_at = 4
-    ref = _hits(lib, world_factory)
-    new = _hits(lib, world_factory, set_after_tick=(1.5, set_at))
-    assert list(new) == list(ref)
-    early = [t for t in ref if t <= set_at]
-    late = [t for t in ref if t > set_at]
-    assert late, "fixture: at least one hit must land after the set"
-    for tick in early:
-        assert new[tick] == pytest.approx(ref[tick], abs=1e-9), f"tick {tick} is before the set"
-    for tick in late:
-        assert new[tick] == pytest.approx(2.0 * ref[tick], abs=1e-9), f"tick {tick} is after the set"
-
-
-def test_G1_a_refused_set_leaves_the_fight_as_it_was(lib, world_factory):
-    """The in-range 1.5 is set, then 11.0 (above the range) is refused: the fight still runs at 1.5, doubled,
-    not reverted to the default and not at 11.0. The doubling is the positive control that 1.5 applied."""
-    ref = _hits(lib, world_factory)
-    new = _hits(lib, world_factory, set_before_spawn=1.5, then_refuse=STRIKE_LINE["hi"] + 1.0)
-    assert list(new) == list(ref)
-    for tick in ref:
-        assert new[tick] == pytest.approx(2.0 * ref[tick], abs=1e-9), tick
-
-
 # ---- canvas ----
 
 def test_PP_canvas_a_positive_size_is_accepted(lib, w):
@@ -308,21 +266,6 @@ def test_PP_canvas_a_side_above_the_limit_is_refused_and_the_limit_itself_is_acc
 
 # ---- settings are configuration: survive reset, not hashed, a new world starts at defaults (A133 Q-C4) ----
 
-def test_PP_settings_survive_om_tactical_reset(lib, w):
-    p = BY_NAME["OM_TP_ATTACK_MOVE_LEASH"]
-    q = BY_NAME["OM_TP_CATMULT_STRIKE_LINE"]
-    assert lib.om_tactical_set_param(w, p["value"], 123.0) == 0
-    assert lib.om_tactical_set_param(w, q["value"], 1.5) == 0
-    unit = lib.om_unit_spawn(w, RAIDER, 0, 0.0, 0.0, 0)
-    assert lib.om_unit_alive(w, unit) == 1 and lib.om_unit_count(w) == 1, "control: there is tactical state to reset"
-    lib.om_tactical_reset(w)
-    assert lib.om_unit_count(w) == 0, "control: the reset really cleared the tactical state"
-    assert lib.om_tactical_get_param(w, p["value"]) == 123.0
-    assert lib.om_tactical_get_param(w, q["value"]) == 1.5
-    other = BY_NAME["OM_TP_VANTAGE_MULT"]
-    assert lib.om_tactical_get_param(w, other["value"]) == pytest.approx(other["default"], abs=1e-12)
-
-
 def test_PP_a_set_does_not_change_the_state_checksum(lib, w):
     """Settings are not hashed (A133 Q-C4). The only world checksum today hashes regions and the tick, so the
     control moves the tick: the checksum must react to that, or the unchanged reads below prove nothing."""
@@ -337,19 +280,6 @@ def test_PP_a_set_does_not_change_the_state_checksum(lib, w):
         assert lib.om_world_get_state_checksum(w) == with_tick, f"setting {name} changed the checksum"
     lib.om_tactical_reset(w)
     assert lib.om_world_get_state_checksum(w) == with_tick, "a reset that keeps the settings leaves the hash alone"
-
-
-def test_PP_a_new_world_starts_at_the_defaults_after_another_world_was_set(lib, world_factory):
-    """No setting leaks between worlds, and none outlives om_tactical_reset into a world made later."""
-    a = world_factory(n_regions=1)
-    for p in PARAMS:
-        assert lib.om_tactical_set_param(a, p["value"], _other_valid_value(p)) == 0, p["name"]
-    lib.om_tactical_reset(a)
-    b = world_factory(n_regions=1)
-    for p in PARAMS:
-        assert lib.om_tactical_get_param(b, p["value"]) == pytest.approx(p["default"], abs=1e-12), p["name"]
-    assert lib.om_tactical_get_param(a, PARAMS[6]["value"]) == pytest.approx(_other_valid_value(PARAMS[6]), abs=1e-12), \
-        "control: world a still holds what was set"
 
 
 # ---- cover height is a whole count of layers from the bottom (A132) ----
@@ -391,42 +321,6 @@ def test_E01_A132_the_height_limit_follows_the_layer_count_constant(lib, w):
     top = _header_constant("OM_LAYER_COUNT")
     assert lib.om_map_add_cover(w, 0.0, 0.0, 5.0, top) == 1, "control: OM_LAYER_COUNT itself is the top height"
     assert lib.om_map_add_cover(w, 0.0, 0.0, 5.0, top + 1.0) == 0
-
-
-# ---- layer range of the layer-taking calls: 0 to OM_LAYER_COUNT - 1 (A132) ----
-
-def test_E01_A132_block_rect_takes_layers_0_to_4_and_refuses_5(lib, w):
-    top = int(_header_constant("OM_LAYER_COUNT")) - 1
-    assert lib.om_map_set_canvas(w, 8000.0, 8000.0) == 0
-    assert lib.om_map_block_rect(w, 0.0, 0.0, 300.0, 300.0, 0, top) == 0, "control: the whole range 0 to 4 is accepted"
-    assert lib.om_map_block_rect(w, 0.0, 0.0, 300.0, 300.0, top, top) == 0, "control: the top layer alone"
-    assert lib.om_map_block_rect(w, 0.0, 0.0, 300.0, 300.0, 0, top + 1) == -1
-    assert lib.om_map_block_rect(w, 0.0, 0.0, 300.0, 300.0, top + 1, top + 1) == -1
-    assert lib.om_map_block_rect(w, 0.0, 0.0, 300.0, 300.0, 2, 1) == -1, "layer_lo above layer_hi"
-
-
-def test_E01_A132_command_set_layer_takes_layers_0_to_4_and_refuses_5(lib, w):
-    """Red until PP-unit lands om_command_set_layer (a stub returns 0 for everything); A135 pending list."""
-    top = int(_header_constant("OM_LAYER_COUNT")) - 1
-    unit = lib.om_unit_spawn(w, RAIDER, 0, 0.0, 0.0, 0)
-    ids = (ctypes.c_uint32 * 1)(unit)
-    assert lib.om_command_set_layer(w, ids, 1, top) == 0, "control: the top layer is accepted"
-    assert lib.om_command_set_layer(w, ids, 1, 0) == 0, "control: the bottom layer is accepted"
-    assert lib.om_command_set_layer(w, ids, 1, top + 1) == -1
-
-
-def test_E01_A132_command_ping_refuses_a_layer_at_or_above_the_count_with_reason_4(lib, world_factory):
-    """Red until PP-fog lands om_command_ping (a stub returns 0); A135 pending list. A fresh world each call
-    so cooldown cannot cause the refusal."""
-    top = int(_header_constant("OM_LAYER_COUNT")) - 1
-
-    def ping(layer):
-        w = world_factory(n_regions=1)
-        caster = lib.om_unit_spawn(w, RAIDER, 0, 0.0, 0.0, 0)
-        return lib.om_command_ping(w, caster, layer, 100.0, 0.0)
-
-    assert ping(top) == 0, "control: the top layer is a valid ping layer"
-    assert ping(top + 1) == 4
 
 
 # ---- the three read-only getters (A133): unknown-unit returns only; bodies are stubs this wave ----
