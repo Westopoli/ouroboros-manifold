@@ -99,13 +99,13 @@ def report(batch, out_dir) -> str: ...      # path of the HTML page
 
 ### 3.2 Parts
 
-`engine.py` (build the library into a scratch directory with flags chosen by architecture, load it, bind the calls used; after G0, plain `make` output is used), `fight.py`, `formations.py`, `plays.py` (the naive ladder: blob and line abreast; a control play with a reach advantage), `scan.py`, `sample.py`, `rows.py`, `report.py`, `__main__.py` (`python3 -m scripts.skilllab controls`).
+`engine.py` (build the library into a scratch directory with flags chosen by architecture, load it, bind the calls used; after G0, plain `make` output is used), `fight.py`, `formations.py`, `plays.py` (the naive ladder: blob and line abreast; a control play with a damage advantage; `reach_play` stays as a studied play), `scan.py`, `sample.py`, `rows.py`, `report.py`, `__main__.py` (`python3 -m scripts.skilllab controls`).
 
 ### 3.3 Tests that must exist and pass (`tests/skilllab/`)
 
-1. Mirror control: identical sides, flat ground, 16 against 16. Over both spawn orders and 10 replicates, the mean margin is within 0.10 of zero (Westley, 2026-10-02; one fight swings about 0.17 on position shifts). Positive control for the detector: with the swap disabled the same test shows the first-spawned side ahead.
+1. Mirror control: identical sides, flat ground, 16 against 16. Over both spawn orders and 10 replicates, the mean margin is within 0.10 of zero (Westley, 2026-10-02; one fight swings about 0.17 on position shifts). Positive control for the detector: the same cell with 17 against 16 reads the 17 ahead by more than the tolerance. (The first-spawner edge the first draft relied on does not show once positions are shifted; `runs/2026-10-02_harness_check.md`.)
 2. Numbers control: 16 against 8 of the same type: the 16 win every fight.
-3. Planted advantage: 16 units with 20 percent more reach (a custom type) beat a larger enemy than 16 identical units do, by at least one unit.
+3. Planted advantage: 16 units with 20 percent more damage per shot (a custom type) beat a larger enemy than 16 identical units do, by at least one unit. Null control: the same custom type at factor 1.0 equals the identical scan. Reach is not the control: on today's engine more reach made a side worse, because of how units walk in (run file above); reach is a knob to study.
 4. Firing count, hand-built: three units of side 0 in a row and one enemy placed so exactly two are within reach: the sample reads 2 and 1. A second case with an obstacle between one pair reads one fewer.
 5. Determinism: the same setup and seed give byte-identical rows twice.
 6. Cross-machine: the rows for the three controls hash to the values in `tests/skilllab/golden_hashes.json`. The file is written on the first machine and must match on the second. A mismatch is reported to the design chat as a determinism finding, not patched.
@@ -130,13 +130,25 @@ One self-contained HTML file per batch, light and dark, no external scripts beyo
 - Whether `om_tactical_run_until_eliminated`'s own stalemate rule (1800 ticks) interferes with stepping by `om_tactical_step`.
 - The measured fights per second on each machine.
 
+### 3.6 Fixes after the first check (2026-10-02)
+
+The harness is on `swarm/skilllab-harness/integration` with five control tests red. To land it:
+
+1. Mirror tolerance 0.10 and the 17-against-16 positive control (test 1 above).
+2. The planted control uses damage (test 3 above); add `damage_play(size, unit, factor=1.2)` beside `reach_play`; the `controls` command scans identical and damage.
+3. Regenerate `tests/skilllab/golden_hashes.json`.
+4. Units are placed where a player of that skill would have them at contact, not walked in from far apart: plays put the two sides just outside the longer sensor radius of the units involved, the mediocre side as a blob and the skilled side as a spread line. Westley, 2026-10-02: "position matters when measuring numbers and we shoudln't just be lining units up like that."
+5. All green, then merge into `main` and push; remove the swarm branch and worktree.
+
+These are test changes ruled by Westley or by the design chat on a wrong premise of its own; record each as a `test-defect` row in the ledger.
+
 ## 4. Between the cascades
 
 The design chat runs the controls batch on today's engine and reads it with Westley. The engine cascade starts after that.
 
-## 5. Cascade B: the engine, G0 to G7 in one cascade
+## 5. Cascade B: the engine, G0 to G8 in one cascade
 
-Westley, 2026-10-01: "Every G doesn't need it's own cascade, it can be done all in one." Waves inside it run in dependency order: W0 the contract (header, `signatures.toml`, the ABI bump) and G0; W1 G1; W2 G2 and G3; W3 G4; W4 G5, G6, G7. If a wave decomposes into more than 16 parts, split the wave.
+Westley, 2026-10-01: "Every G doesn't need it's own cascade, it can be done all in one." Waves inside it run in dependency order: W0 the contract (header, `signatures.toml`, the ABI bump) and G0; W1 G1; W2 G2, G3 and G8; W3 G4; W4 G5, G6, G7. If a wave decomposes into more than 16 parts, split the wave.
 
 **The invariant across the steps that add new mechanisms (G1, G4, G5, G6, G7):** with no new call made and every setting at its default, the engine behaves exactly as it does today. Record, before touching `csrc/`, a file of hashes over the unit states of a fixed set of fights (the three skill-lab controls plus `tests/csim` tactical fixtures of the conducting chat's choice); assert the same hashes after every wave, with the two switches below off. The existing `tests/csim` suite does not regress.
 
@@ -257,6 +269,25 @@ int      om_ping_alert_get(const om_world *w, int32_t faction, uint32_t index, o
 - Every side with at least one unit inside the pinged disc gets an alert: the tick, and a sector. The sector is the 60-degree slice, numbered 0 to 5 counter-clockwise from the +x axis, that contains the bearing from the centroid of that side's pinged units to the caster. Nothing more precise is exposed (R-162-03).
 - Scouts for eras without the technology (R-162-04) are a proposal, not decided, and are out of this cascade.
 - Tests: a ping on layer 5 from a unit on layer 1 reveals an enemy there for exactly the reveal ticks and then not; an enemy on another layer inside the disc is not revealed; a second ping inside the cooldown is refused; a ping beyond reach is refused; the pinged side's alert sector contains the true bearing, and a caster moved 30 degrees within the same slice gives the same sector; the casting side gets no alert.
+
+### G8. Pursuit as the Python sim does it
+
+Bible: E-11 R-087-03 to R-087-05, E-13 R-097-03. Reference, to be reproduced exactly: `simulation/movement.py` lines 285 to 460 and `simulation/damage.py` lines 190 to 290 (commits `acdcc9af`, `7c8a3de7`). Westley, 2026-10-02: "make sure that we use the same exact logic from the python in the new C, that was tested and it worked perfectly and it's exactly how I want units to move in the C version."
+
+What the C port lost:
+
+- Pursuit bypasses steering. `om_tac_step_toward` in `csrc/unit.c` writes the position in a straight line at the nearest seen enemy. In the Python, pursuit only sets the unit's move goal to the nearest visible enemy each tick, and the unit walks there through the ordinary movement loop: probe 40 ahead; if a unit blocks it, try +30, -30, +60, -60, +90, -90 degrees and take the first clear one; hold that heading for 60 wu; then re-aim.
+- The hold is too broad. The C holds an attack-moving unit as soon as any enemy is within its range (`om_tac_hostile_within`) and never moves it again. The Python holds a unit only while its own target is within its firing range; when the target is out of range the unit pursues.
+
+Build:
+
+- Pursuit goes through `csrc/tactical_move.c`'s movement step (the same path a move order uses), with the goal refreshed to the nearest visible enemy on the cadence the Python uses. `om_tac_step_toward` is no longer used for pursuit (it stays for flinch).
+- Hold only while the unit's own target is alive and within its attack range.
+- The sweep order, probe distance, detour commitment and arrival handling match the Python line for line. Where the C already differs from the Python in any of these (the C sweeps in 15-degree steps), list the difference and report it to the design chat; do not choose.
+- A setting `OM_TP_PURSUE_BY_STEERING`, default 1, 0 for today's behaviour; the hash invariant is asserted with it at 0.
+- Tests: a unit behind a row of its own side, enemy seen beyond range, reaches a firing position by going around and fires (today it does not); a unit whose target walks out of range follows it; a unit with its target in range does not move; three units in file all end within range of the enemy; with the setting at 0 the old hashes hold. A side-by-side fixture: the same small scene run in the Python reference and in C gives the same positions within a stated tolerance, tolerance proposed to Westley.
+
+A wider audit of the port (Python tactical code against C) is running; its findings may add steps here before the cascade starts.
 
 ## 6. Provisional numbers
 
