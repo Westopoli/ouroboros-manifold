@@ -271,9 +271,7 @@ typedef struct {
      * the steering probe reads (R-097-03); it never sees a position an earlier unit moved this tick. */
     double   start_x[OM_MOVE_MAX_UNITS], start_y[OM_MOVE_MAX_UNITS];
     int32_t  start_layer[OM_MOVE_MAX_UNITS];
-    /* PP-move (PURSUE_BY_STEERING): the collision pass under way is the Python's: moved[id] = the unit moved
-     * this tick (only such units start a pair check); col_pursue / col_route cache the two switches. */
-    uint8_t  moved[OM_MOVE_MAX_UNITS];
+    /* PP-move: col_pursue / col_route cache the two switches for the collision pass under way. */
     int      col_pursue, col_route;
     /* PP-move (PURSUE_BY_STEERING): the map canvas, 0 x 0 when unset (no clamp); see om_move_set_canvas_size. */
     double   canvas_w, canvas_h;
@@ -1448,7 +1446,6 @@ static int om_move_collide_pair(om_world *w, om_move_state *ms, uint32_t ia, uin
     double bx = om_move_grid_x(ms, ib), by = om_move_grid_y(ms, ib);
     const double oax = ax, oay = ay, obx = bx, oby = by;
     int changed = 0;
-    if (ms->col_pursue && ms->start_layer[ia] != ms->start_layer[ib]) return 0;
     dx = bx - ax; dy = by - ay;
     target = 2.0 * OM_UNIT_COLLISION_RADIUS;
     if (dx * dx + dy * dy >= target * target) return 0;
@@ -1467,14 +1464,18 @@ static int om_move_collide_pair(om_world *w, om_move_state *ms, uint32_t ia, uin
         int b_stat = ms->stat[ib];
         overlap = target - dist;
         ux = dx / dist; uy = dy / dist;
-        if (a_stat && b_stat && !ms->col_pursue) {
-            /* PP baseline only (switch = 0); deleted with the two movement switches at the end of Phase E (A140)
-             * Both fixed: neither takes a push. Under PURSUE_BY_STEERING two stationary units split it (R-097-06). */
+        if (a_stat && b_stat) {
+            /* Both fixed: cannot resolve without violating the
+             * "stationary takes zero push" rule for either side.
+             * Return 0 without calling grid_set: positions are
+             * unchanged so the grid_set would be a no-op anyway,
+             * and skipping it saves the grid_disp bookkeeping on
+             * every such pair in a settled pile. */
             return 0;
-        } else if (a_stat && !b_stat) {
+        } else if (a_stat) {
             bx += ux * overlap; by += uy * overlap;
             changed = 1;
-        } else if (b_stat && !a_stat) {
+        } else if (b_stat) {
             ax -= ux * overlap; ay -= uy * overlap;
             changed = 1;
         } else {
@@ -1521,7 +1522,7 @@ static int om_move_collision_once(om_world *w, om_move_state *ms) {
     for (id_i = 1; id_i <= ms->discovery_max; id_i++) {
         uint32_t n, k;
         double ax0, ay0;
-        if (!ms->grid_in[id_i] || (ms->col_pursue && !ms->moved[id_i])) continue;
+        if (!ms->grid_in[id_i]) continue;
         ax0 = om_move_grid_x(ms, id_i); ay0 = om_move_grid_y(ms, id_i);
         n = om_move_grid_collect(w, ms, ax0, ay0, target + slack, id_i);
         for (k = 0; k < n; k++) {
@@ -1545,9 +1546,8 @@ static int om_move_collision_once(om_world *w, om_move_state *ms) {
  * same state gives the same (empty) pass again, so the remaining iterations
  * and, next time this state is seen, the whole pass are skipped. settle_*
  * holds that state exactly (bit-compared). */
-#define OM_MOVE_SETTLE_MOVED 4
-static uint8_t om_move_settle_flag(const om_move_state *ms, const om_move_unit *mu, int live) {
-    return (uint8_t)((live ? 1 : 0) | (om_move_is_stationary(mu) ? 2 : 0) | (ms->col_pursue && ms->moved[mu->unit_id] ? OM_MOVE_SETTLE_MOVED : 0));
+static uint8_t om_move_settle_flag(const om_move_unit *mu, int live) {
+    return (uint8_t)((live ? 1 : 0) | (om_move_is_stationary(mu) ? 2 : 0));
 }
 
 static int om_move_settle_matches(om_world *w, om_move_state *ms) {
@@ -1556,7 +1556,7 @@ static int om_move_settle_matches(om_world *w, om_move_state *ms) {
     for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
         const om_move_unit *mu = &ms->units[id];
         int live = mu->in_use && om_unit_alive(w, id);
-        if (live != (int)ms->grid_in[id] || om_move_settle_flag(ms, mu, live) != ms->settle_flag[id]) return 0;
+        if (live != (int)ms->grid_in[id] || om_move_settle_flag(mu, live) != ms->settle_flag[id]) return 0;
         if (live && (memcmp(&mu->x, &ms->settle_x[id], sizeof(double)) != 0
                   || memcmp(&mu->y, &ms->settle_y[id], sizeof(double)) != 0)) return 0;
     }
@@ -1568,28 +1568,19 @@ static void om_move_settle_record(om_move_state *ms) {
     ms->settle_max = ms->discovery_max;
     for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
         const om_move_unit *mu = &ms->units[id];
-        ms->settle_flag[id] = om_move_settle_flag(ms, mu, ms->grid_in[id]);
+        ms->settle_flag[id] = om_move_settle_flag(mu, ms->grid_in[id]);
         ms->settle_x[id] = mu->x;
         ms->settle_y[id] = mu->y;
     }
     ms->settle_valid = 1;
 }
 
-/* all_moved: every unit starts pair checks (a direct om_collision_pass call, where no tick's movement is
- * being resolved); otherwise only a unit whose position differs from its start-of-tick one does. */
-static void om_move_collision_pass_internal(om_world *w, om_move_state *ms, int all_moved) {
+static void om_move_collision_pass_internal(om_world *w, om_move_state *ms) {
     int iter, settled = 0;
     uint32_t id;
     om_move_discover(w, ms);
     ms->col_pursue = om_move_param_on(ms, OM_TP_PURSUE_BY_STEERING);
     ms->col_route = om_move_param_on(ms, OM_TP_ROUTE_AROUND_TERRAIN);
-    if (ms->col_pursue) {
-        for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
-            const om_move_unit *mu = &ms->units[id];
-            ms->moved[id] = (uint8_t)(all_moved || mu->x != ms->start_x[id] || mu->y != ms->start_y[id]);
-            ms->start_layer[id] = mu->in_use && om_unit_alive(w, id) ? om_unit_get_layer(w, id) : -1;
-        }
-    }
     if (om_move_settle_matches(w, ms)) return;
     if (!ms->grid_live) om_move_grid_rebuild(w, ms, 1);
     ms->settle_valid = 0;
@@ -1983,7 +1974,7 @@ static void om_move_tick_once(om_world *w, om_move_state *ms, uint64_t new_tick,
     for (id = 1; id <= ms->discovery_max; id++) {
         om_move_tick_unit(w, ms, id, period);
     }
-    om_move_collision_pass_internal(w, ms, 0);
+    om_move_collision_pass_internal(w, ms);
     if (om_move_param_on(ms, OM_TP_PURSUE_BY_STEERING)) om_move_face_pass(w, ms, period);
     om_move_groups_check_arrival(ms);
 }
@@ -2060,7 +2051,7 @@ void om_collision_pass(om_world *w) {
     if (!w) return;
     om_move_sync(w);
     ms = om_ms(w);
-    om_move_collision_pass_internal(w, ms, 1);
+    om_move_collision_pass_internal(w, ms);
     om_move_push_positions(w, ms);
 }
 
