@@ -638,6 +638,12 @@ void om_visibility_set_player_fog(om_world *w, int on) {
 
 double om_zone_sample_interference(const om_world *w, double x, double y, uint32_t layer) {
     const om_fog_state *st = om_fog_ro(w);
+#ifdef OM_DEBUG_INJECT
+    if (w->inject == OM_BUG_INTERFERENCE_IGNORES_INTENSITY) {
+        double v = om_fog_zone_interference_at(st, w, x, y, layer);
+        return v > 0.0 ? 1.0 : v;
+    }
+#endif
     return om_fog_zone_interference_at(st, w, x, y, layer);
 }
 
