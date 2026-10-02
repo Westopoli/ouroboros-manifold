@@ -889,6 +889,22 @@ static double om_resolve_hit_multiplier(om_world *w, int attacker_category, cons
     return mult;
 }
 
+static int om_tac_pursue(const om_world *w) {
+    return om_tactical_get_param(w, OM_TP_PURSUE_BY_STEERING) != 0.0;
+}
+
+/* R-087-06: the unit returns fire at the lowest-id living same-layer attacker
+ * (a cross-layer one only while no same-layer one has hit it). With pursuit
+ * by steering off, the last writer wins as it did. */
+static void om_tac_note_attacker(om_world *w, om_tac_state *st, om_unit_row *target, const om_unit_row *attacker) {
+    const om_unit_row *cur = om_registry_find_in(st, target->last_attacker);
+    if (cur && cur->hp > 0.0 && om_tac_pursue(w)) {
+        int cur_same = cur->layer == target->layer, new_same = attacker->layer == target->layer;
+        if (cur_same != new_same ? cur_same : cur->unit_id < attacker->unit_id) return;
+    }
+    target->last_attacker = attacker->unit_id;
+}
+
 static void om_tactical_apply_hit(om_world *w, om_unit_row *attacker, om_unit_row *target) {
     double mult = om_resolve_hit_multiplier(w, attacker->category, target);
     double output_mult = om_unit_output_multiplier(w, attacker->unit_id);
@@ -897,7 +913,7 @@ static void om_tactical_apply_hit(om_world *w, om_unit_row *attacker, om_unit_ro
     target->hp -= dmg;
     if (target->hp < 0.0) target->hp = 0.0;
     om_grid_sync(om_tac(w), target->unit_id - 1);
-    target->last_attacker = attacker->unit_id;
+    om_tac_note_attacker(w, om_tac(w), target, attacker);
     attacker->cooldown = 0.0;
     attacker->fired = 1;
     attacker->backswing_ticks_remaining = OM_BACKSWING_TICKS;
@@ -1535,10 +1551,6 @@ static void om_tactical_advance_backswing(om_tac_state *st) {
  * move it; om_tac_release hands the route back. See also:
  * csrc/tactical_move.c om_move_sync -- steps off om_tactical_tick(w). */
 
-static int om_tac_pursue(const om_world *w) {
-    return om_tactical_get_param(w, OM_TP_PURSUE_BY_STEERING) != 0.0;
-}
-
 static int om_tac_hostile(const om_unit_row *a, const om_unit_row *b) {
     return a->faction_id >= 0 && b->faction_id >= 0 && a->faction_id != b->faction_id;
 }
@@ -1788,12 +1800,13 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
         om_unit_row *atk = om_registry_find_in(st, u->last_attacker);
         u->last_attacker = 0;
         if (atk && atk->hp > 0.0 && om_tac_hostile(u, atk)
-            && u->order == OM_ORDER_NONE && u->target_id == 0) {
+            && (u->order == OM_ORDER_NONE || (pursue && u->order == OM_ORDER_ATTACK_MOVE)) && u->target_id == 0) {
             if (noncombat || atk->layer != u->layer || atk->stealth) {
-                om_tac_start_flinch(u, atk);
+                if (u->order == OM_ORDER_NONE) om_tac_start_flinch(u, atk);
             } else if (om_tac_within(u, atk, u->attack_range)) {
                 u->target_id = atk->unit_id;
             } else {
+                u->halted = 0;
                 u->order = OM_ORDER_ATTACK_MOVE;
                 u->order_x = atk->x; u->order_y = atk->y;
                 u->issued_x = atk->x; u->issued_y = atk->y;
@@ -1867,6 +1880,8 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
             }
         } else if (u->order == OM_ORDER_ATTACK_MOVE) {
             om_tac_hold(w, u, t->unit_id);
+            /* a target taken by return fire is anchored here and leashed from the next tick */
+            if (pursue && !u->anchor_set) { u->anchor_x = u->x; u->anchor_y = u->y; u->anchor_set = 1; }
         }
         if (in_range && (u->cooldown >= interval_ticks - OM_TIE_EPSILON || (pursue && !u->fired))
             && om_combat_can_shoot(w, u->unit_id, t->unit_id)) {
@@ -2272,7 +2287,7 @@ void om_unit_deal_damage(om_world *w, uint32_t p1, uint32_t p2, double p3) {
     target->hp -= dmg;
     if (target->hp < 0.0) target->hp = 0.0;
     om_grid_sync(st, target->unit_id - 1);
-    target->last_attacker = attacker->unit_id;
+    om_tac_note_attacker(w, st, target, attacker);
     /* ALG-60: "after firing the unit's movement pauses ATTACK_BACKSWING_SEC"
      * -- any landed hit through this path (auto-fire, manual command, or a
      * test driving the attack directly) pauses the attacker the same way. */
@@ -2337,7 +2352,7 @@ void om_unit_fire_aoe_attack(om_world *w, uint32_t attacker_id, uint32_t target_
         cand->hp -= dmg;
         if (cand->hp < 0.0) cand->hp = 0.0;
         om_grid_sync(st, cand->unit_id - 1);
-        cand->last_attacker = attacker_id;
+        om_tac_note_attacker(w, st, cand, attacker);
         total += dmg;
     }
     attacker->cooldown = 0.0;
