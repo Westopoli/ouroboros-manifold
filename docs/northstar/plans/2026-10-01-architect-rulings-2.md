@@ -504,3 +504,41 @@ Rule text changed in the same commit: E-16 R-110-02 and R-110-07, E-09 R-069-03 
 **A86. Faction name shape** (starts with "the ", at least two words, no apostrophe or comma) is accepted as the pool's rule.
 
 **A87. The runner's 300 s default** cutting off `test_chronicle_scene_open` and `test_time_jump_replay` is a harness defect, not a test pass: a test that can only pass with a raised timeout is listed until fixed. Small harness unit: those two tests declare their own needed time (or the runner's limit is counted in frames like the tests' own quit), with the default unchanged for everything else.
+
+## Addendum 31, 2026-10-02 (A81 lands; what it uncovered)
+
+**A88. A81 lands with one red listed.** The cap made three quarters of a full-size world event-dead; that is the worse defect and its fix is not held behind a band that was only ever met under the defect. `push/A81-events-cap-impl` lands together with the two test-defect fixes below. `test_R_045_09_mean_over_all_windows_between` is accepted red for this landing with the diagnosis as evidence (`docs/northstar/proving_ground/evidence/a81_downstream_diagnosis_2026-10-02.md`), named in the ledger as a real balance finding awaiting Westley. It is not skipped, not widened, and not reclassified.
+
+**A89. Two test-defects, approved (Engineer, ledger rows).**
+- `test_pipe_debrief_region_delta`: re-pick a seed that passes on both builds for the right reason (the drawn archetype has a consequence row on the mission region) and correct the docstring. The test asserts the drawn archetype and target so it cannot pass by accident again.
+- `test_pipe_mission_over`: re-pick a seed whose run time is checked on both main and the branch, and assert the drawn archetype so a later world change shows up as a clear failure instead of a 500 s run.
+
+**A90. Knowledge Lost rate (R-045-09) goes to Westley** with the three candidates: retune the event constants, change the revolt economy effect or its recovery, or revisit the per-world target. Nothing is tuned until he chooses.
+
+**A91. Tactical cost at 2,500 units and above.** 52 ms per tick is a finding against the tactical budget, not a test quirk. One Engineer measurement, reported: tactical tick time at 500, 1,000, 2,500 and 5,000 units on the Siege Breaking case, against the E-13 budget, with the profile. The fix (the nearest-scan in `csrc/unit.c`) is ruled after the numbers.
+
+**A92. Specfactory's ten standing failures** get a cleanup unit: an Engineer first classes each (stale test, missing external file, real gap) in one report; fixes follow per class. A suite that is red on main hides new reds.
+
+## Addendum 32, 2026-10-02 (tactical cost; specfactory cleanup; Westley's holds)
+
+**A93. Tactical step cost is a budget miss, fixed in two moves.** Measured: 3.33 ms at 990 units against 3 ms, 40.7 ms median at 4,996 against 30 ms for 10,000, growth between n^1.5 and n^2.
+- First, tests (Engineer): the E-13 scale figures as tests on the Siege Breaking case, at 1,000 and 10,000 units, timing the same subset the budget names (movement and collision) and, reported beside it, the whole step. Red today, listed.
+- Second, a diagnosis with a proposed fix (Engineer, read and profile only, `perf` not gprof): why `om_grid_iter_next` and `om_tac_nearest_scan_cell` call counts grow 2.3 to 2.6 times per doubling, what the every-20th-step spike is (profiled alone), and a concrete change with its expected exponent. The fix must leave the trace byte-identical (same nearest unit chosen, same tie order); if it cannot, that is said in the proposal. I rule on the proposal; no fix is built before it.
+- The worst-step spikes (130 to 346 ms) are reported against the budget as their own line: a 10 ticks per second sim cannot absorb a 346 ms step.
+
+**A94. Specfactory cleanup, as grouped.**
+- Harness unit: items 1, 2 (regenerate the allowlist), 6 (stale reach test rewritten on the synthetic-repo pattern), 3 (vendored card fixture), and the `yaml` import failures (the dependency is declared where the suite's environment is set up; not skipped).
+- Contract piece: items 4, 5, 7, 8, 9 with the report's six-step fix (generated blocks regenerated, never hand-edited; `internal = true` rows for the fifteen prototypes).
+- Ownership: the coordinator drafts the owner rows on a branch (specfactory tests, `scripts/specfactory`, the allowlist, conftest, and the contract piece ordered after `A2-contract` and `core`), keeping the existing harness pieces' files out of the new globs; I review and land `pieces.toml`.
+- Gate: once the suite is green, `merge_gate.sh` runs `tests/specfactory` and `sig_table.py --check`, and `alg_constants --lint` fails on stale extra allowlist lines, each with a positive control. Last unit of the group.
+- Item 10 (snapshot fixture: compare bytes or structure) is Westley's policy call and waits; the test stays red and listed.
+
+**A95. Held by Westley, 2026-10-02.** The Knowledge Lost rate (A90) waits until the layer and environment systems are designed; he intends a fresh balance simulation then, against the early-repo simulation that hit the target numbers. Nothing is tuned meanwhile and R-045-09 stays red and listed. The memory-per-region budget is to be raised (he agreed); the new figure is recorded when he gives it.
+
+## Addendum 33, 2026-10-02 (A81 landing seeds; the E-13 scale tests)
+
+**A96. Telegraph test seeds.** TD-A89-3 is approved as landed (two seeds valid on both builds, each asserting target, archetype and region). The both-builds rule exists only to cross the landing; once A81 is on main, an Engineer restores the coverage to six seeds chosen on main, same assertions, same ledger row. Seed 24 is not closed by re-picking: an Engineer checks, against the rule text for a telegraphed attack on a player region, whether archetype 8 at another region may outscore Defensive Stand while exactly one telegraphed region exists. If the rule requires Defensive Stand there, it is a real defect in the generator's scoring and is reported as one; if the rule permits it, the row says so with the rule id.
+
+**A97. E-13 scale tests.**
+- (a) They follow the scale suite's convention (`assert_budget`, the budget divided by `OM_SCALE_CPU_FACTOR`), like every other scale budget, so one machine's speed does not decide a pass. This is stricter than the bare figures, never looser; the figures themselves are unchanged and remain Westley's.
+- (b) No debug timing seam and no contract piece for one. A budget measured on a debug library is not a measurement of the game. The whole-step time stands as the test, labelled an upper bound: if the whole step meets the figure the budgeted subset does too. If, after the A93 fix, the whole step still misses while the subset plausibly meets, the question returns with numbers.
