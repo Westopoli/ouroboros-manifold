@@ -19,7 +19,7 @@ tests/csim/scale/test_scale_E01.py::test_e01_1000_units_cross_layer_visibility_p
 tests/csim/scale/test_scale_E02.py::test_control_e02_10x_regions_violates_tightened_budget
 tests/csim/scale/test_scale_E02.py::test_e02_5000_tick_bulk_run_under_budget
 tests/csim/scale/test_scale_E02.py::test_e02_60_regions_drift_per_tick
-tests/csim/scale/test_scale_E02.py::test_e02_memory_per_region_under_256_bytes
+tests/csim/scale/test_scale_E02.py::test_e02_memory_per_region_under_2048_bytes
 tests/csim/scale/test_scale_E03.py::test_control_e03_planted_delay_violates_tightened_budget
 tests/csim/scale/test_scale_E03.py::test_e03_generate_110_region_world_under_5ms
 tests/csim/scale/test_scale_E04.py::test_control_e04_10x_regions_violates_tightened_budget
