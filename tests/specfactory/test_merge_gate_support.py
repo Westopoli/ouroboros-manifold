@@ -631,6 +631,90 @@ def test_real_definition_in_owning_file_still_matches(tmp_path):
         tmp_path, "region.c", "void om_gen_consequence_rearm(om_world *w) {\n")
     assert ok is True, detail
 
+# -------------------------------- symbol_ownership: comment-only header edits (HDR5) --
+# HDR5 (main eae723e4): the gate rejected `om_gen_set_region_range defined in
+# csrc/ouroboros_sim.h, owned by worldgen.c` though the only change was the
+# trailing comment on the prototype line. Comment-only edits must not read
+# as a definition. See also: _diff_added_definitions (the `endswith(";")`
+# prototype test is fooled by a trailing comment).
+
+_HDR5_OLD = ("void om_gen_set_region_range(om_world *w, uint32_t lo, uint32_t hi);"
+             "   /* default [60, 110] (Q-021-05) */\n")
+_HDR5_NEW = ("void om_gen_set_region_range(om_world *w, uint32_t lo, uint32_t hi);"
+             "   /* default [250, 400] (R-021-01, ALG-31) */\n")
+
+
+def _ownership_edit(tmp_path, filename, old, new):
+    """Base commit holds `old` in csrc/<filename>; candidate commit swaps in `new`."""
+    repo = _init_repo(tmp_path / "repo")
+    sigs = tmp_path / "signatures.toml"
+    _write_signatures(sigs, [("om_gen_set_region_range", "worldgen.c")])
+    empty_sm = tmp_path / "symbol_modules.toml"
+    empty_sm.write_text("[symbols]\n")
+    (repo / "csrc" / filename).write_text(old)
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "base2")
+    (repo / "csrc" / filename).write_text(new)
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "candidate")
+    return mgs.symbol_ownership_check(repo, "HEAD~1", signatures_path=sigs,
+                                      symbol_modules_path=empty_sm)
+
+
+def test_hdr5_exact_trailing_block_comment_change_on_prototype_not_flagged(tmp_path):
+    ok, detail = _ownership_edit(tmp_path, "ouroboros_sim.h", _HDR5_OLD, _HDR5_NEW)
+    assert ok is True, detail
+
+
+def test_trailing_line_comment_change_on_prototype_not_flagged(tmp_path):
+    proto = "void om_gen_set_region_range(om_world *w, uint32_t lo, uint32_t hi);"
+    ok, detail = _ownership_edit(tmp_path, "ouroboros_sim.h",
+                                 proto + "  // default [60, 110]\n",
+                                 proto + "  // default [250, 400]\n")
+    assert ok is True, detail
+
+
+def test_comment_added_to_bare_prototype_not_flagged(tmp_path):
+    proto = "void om_gen_set_region_range(om_world *w, uint32_t lo, uint32_t hi);"
+    ok, detail = _ownership_edit(tmp_path, "ouroboros_sim.h",
+                                 proto + "\n", proto + "  /* default [250, 400] */\n")
+    assert ok is True, detail
+
+
+def test_block_comment_text_resembling_a_definition_not_flagged(tmp_path):
+    old = ("/* history:\n"
+           "void om_gen_set_region_range(om_world *w, uint32_t lo) {  was the old shape\n"
+           "*/\n")
+    new = old.replace("was the old shape", "was the older shape")
+    ok, detail = _ownership_edit(tmp_path, "ouroboros_sim.h", old, new)
+    assert ok is True, detail
+
+
+def test_comment_change_on_line_that_also_holds_a_prototype_in_c_file_not_flagged(tmp_path):
+    proto = "extern void om_gen_set_region_range(om_world *w, uint32_t lo, uint32_t hi);"
+    ok, detail = _ownership_edit(tmp_path, "mission.c",
+                                 proto + " /* old */\n", proto + " /* new */\n")
+    assert ok is True, detail
+
+
+def test_positive_control_definition_with_trailing_comment_in_non_owner_still_flagged(tmp_path):
+    ok, detail = _ownership_edit(
+        tmp_path, "mission.c", "int unrelated;\n",
+        "void om_gen_set_region_range(om_world *w, uint32_t lo, uint32_t hi) { /* body */\n")
+    assert ok is False
+    assert "om_gen_set_region_range" in detail and "mission.c" in detail
+
+
+def test_positive_control_real_signature_change_beside_comment_change_flagged(tmp_path):
+    """A definition in a non-owner file whose parameter list changes AND whose
+    comment changes is a real change and must still be named."""
+    old = "void om_gen_set_region_range(om_world *w, uint32_t lo, uint32_t hi) { /* old */\n"
+    new = "void om_gen_set_region_range(om_world *w, uint32_t lo, uint32_t hi, uint32_t step) { /* new */\n"
+    ok, detail = _ownership_edit(tmp_path, "mission.c", old, new)
+    assert ok is False
+    assert "om_gen_set_region_range" in detail and "mission.c" in detail
+
+
 # ---------------------------------------------------------------- undertest_warn --
 
 def test_undertest_warn_unknown_piece_skips(tmp_path):
