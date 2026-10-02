@@ -668,8 +668,14 @@ void om_unit_order_hold_node(om_world *w, uint32_t unit_id, uint32_t node_id) {
     (void)w; (void)unit_id; (void)node_id;
 }
 
+/* Defined in tactical_move.c, which clamps positions to the canvas size.
+ * See also: om_move_set_canvas_size in csrc/tactical_move.c. */
+void om_move_set_canvas_size(om_world *w, double width, double height);
+
 void om_map_clear(om_world *w) {
-    if (!w || !w->mapgen_state) return;
+    if (!w) return;
+    om_move_set_canvas_size(w, 0.0, 0.0);
+    if (!w->mapgen_state) return;
     memset(w->mapgen_state, 0, sizeof(om_mapgen_state));
 }
 int om_map_set_canvas(om_world *w, double width, double height) {
@@ -680,6 +686,7 @@ int om_map_set_canvas(om_world *w, double width, double height) {
     st->has_canvas = 1;
     st->canvas_w = width;
     st->canvas_h = height;
+    om_move_set_canvas_size(w, width, height);
     return 0;
 }
 

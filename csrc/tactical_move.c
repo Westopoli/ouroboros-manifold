@@ -264,6 +264,8 @@ typedef struct {
      * this tick (only such units start a pair check); col_pursue / col_route cache the two switches. */
     uint8_t  moved[OM_MOVE_MAX_UNITS];
     int      col_pursue, col_route;
+    /* PP-move (PURSUE_BY_STEERING): the map canvas, 0 x 0 when unset (no clamp); see om_move_set_canvas_size. */
+    double   canvas_w, canvas_h;
 
     /* PP-move: the tunable settings (om_tac_param); see om_tactical_set_param. */
     double   param[OM_TP__COUNT];
@@ -425,6 +427,23 @@ static om_move_state *om_ms(om_world *w) {
 
 static int om_move_param_on(const om_move_state *ms, om_tac_param p) {
     return ms->param[p] != 0.0;
+}
+
+/* Internal, not in the header: the canvas only lives in the private mapgen state, so om_map_set_canvas and
+ * om_map_clear (tactical_mapgen.c) hand its size over; 0 x 0 = unset.
+ * See also: om_map_set_canvas in csrc/tactical_mapgen.c, the caller. */
+void om_move_set_canvas_size(om_world *w, double width, double height) {
+    om_move_state *ms;
+    if (!w) return;
+    ms = om_ms(w);
+    ms->canvas_w = width;
+    ms->canvas_h = height;
+}
+
+/* Python movement.py: new positions are clamped to [0, width] x [0, height]. */
+static double om_move_clamp_axis(double v, double lim) {
+    if (lim <= 0.0) return v;
+    return v < 0.0 ? 0.0 : (v > lim ? lim : v);
 }
 
 /* ---------------------------------------------------------- unit lookup */
@@ -1210,8 +1229,8 @@ static int om_move_collide_pair(om_world *w, om_move_state *ms, uint32_t ia, uin
          * a's id < b's always here) moves in the canonical +x
          * direction, the higher id the opposite way. */
         double half = target / 2.0;
-        ax += half;
-        bx -= half;
+        ax = om_move_clamp_axis(ax + half, ms->col_pursue ? ms->canvas_w : 0.0);
+        bx = om_move_clamp_axis(bx - half, ms->col_pursue ? ms->canvas_w : 0.0);
         changed = 1;
     } else {
         int a_stat = ms->stat[ia];
@@ -1232,6 +1251,10 @@ static int om_move_collide_pair(om_world *w, om_move_state *ms, uint32_t ia, uin
             ax -= ux * overlap * 0.5; ay -= uy * overlap * 0.5;
             bx += ux * overlap * 0.5; by += uy * overlap * 0.5;
             changed = 1;
+        }
+        if (ms->col_pursue) {
+            ax = om_move_clamp_axis(ax, ms->canvas_w); ay = om_move_clamp_axis(ay, ms->canvas_h);
+            bx = om_move_clamp_axis(bx, ms->canvas_w); by = om_move_clamp_axis(by, ms->canvas_h);
         }
         if (ms->col_route) {
             om_move_slide(w, ms, oax, oay, &ax, &ay);
@@ -1459,8 +1482,8 @@ static void om_move_steer_step(om_world *w, om_move_state *ms, om_move_unit *mu,
               * (double)period / (double)OM_TACTICAL_TICK_RATE;
     move_dist = step_dist < dist ? step_dist : dist;
     if (move_dist > 0.0) {
-        mu->x += steer_x * move_dist;
-        mu->y += steer_y * move_dist;
+        mu->x = om_move_clamp_axis(mu->x + steer_x * move_dist, ms->canvas_w);
+        mu->y = om_move_clamp_axis(mu->y + steer_y * move_dist, ms->canvas_h);
         om_move_grid_update(ms, mu);
     }
     if (mu->deflecting) {
