@@ -58,9 +58,9 @@ def test_R_087_04_pursuit_is_ordinary_movement(lib, world_factory):
     attack_move(lib, w, [u], 0.0, -3000.0)
     step(lib, w, CYCLE)
 
+    prev = _dist(pos(lib, w, u), pos(lib, w, enemy))   # before the getter: it syncs movement early
     assert lib.om_unit_get_current_speed(w, u) == pytest.approx(lib.om_unit_effective_speed(w, u), abs=1e-9), (
         "pursuing unit is not walking at its own speed through the movement layer")
-    prev = _dist(pos(lib, w, u), pos(lib, w, enemy))
     for _ in range(6):
         step(lib, w)
         now = _dist(pos(lib, w, u), pos(lib, w, enemy))

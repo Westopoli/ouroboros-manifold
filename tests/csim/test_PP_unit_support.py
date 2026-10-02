@@ -77,7 +77,7 @@ def attack_move(lib, w, ids, x, y):
 
 def _enum_values():
     text = HEADER.read_text()
-    m = re.search(r"typedef\s+enum\s+om_tac_param\s*\{(.*?)\}\s*om_tac_param\s*;", text, re.S)
+    m = re.search(r"typedef\s+enum\s*\{([^}]*)\}\s*om_tac_param\s*;", text, re.S)
     if not m:
         pytest.fail("contract missing: enum om_tac_param is not in csrc/ouroboros_sim.h "
                     "(PP-contract not landed yet; OM_TP_* settings need it)")
