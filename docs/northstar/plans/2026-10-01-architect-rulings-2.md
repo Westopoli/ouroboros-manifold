@@ -648,3 +648,28 @@ Evidence: `docs/northstar/proving_ground/evidence/unowned_reds_2026-10-02.md`.
 **A128. Controls (the coordinator's items 3 and 5).** e04: first move the real-repo liveness test onto a planted dead fixture, so that fixing a real control never breaks it again; then the missing hook under B1, by a Doer. The placeholder gate's "stale" as built (any listed path that is missing or no longer a placeholder, a filled-in failing control included) is accepted; it is the stricter reading and the right one.
 
 **A129. Still Westley's, unchanged:** whether E-13 bounds the worst step and in which scenario; the E-17 reds; R-085-02 and R-085-04; Knowledge Lost.
+
+## Addendum 46, 2026-10-02 (e04 control; builder wave A1)
+
+**A130. e04: option (a).** The control's polarity is a test defect (TD-A128-e04-polarity): every live control asserts that the injected bug is detected, and this one asserted the clean behaviour. `push/e04-control-polarity` (6f757bfc) lands the hook and the control fix together under B1 and G-controls. Read before ruling: the hook is two guarded lines in `csrc/events.c`, the control now asserts the reused tag, no threshold is touched. Option (c), a real save and reload test, is the right end state and waits for a save call in the header; the control's docstring already says so.
+
+**A131. Prototype B and `csrc/unit.c`.** The builder's A3 wave may start on `unit.c` as soon as the damage-reduction-lists commit is on main; the builder checks the log for it and needs no further word from me. Until then `PP-unit` is not released.
+
+**A132. Layer numbering and cover height (builder Q-C7, Q-C8).** The bible numbers layers 1 to 5 from the bottom; the engine and the tests count the same layers 0 to 4. Layer n in the bible is engine layer n - 1. The valid layer range for every call that takes a layer is 0 to 4, and the header carries the count as one named constant in the ABI 4 piece. `om_map_add_cover` stays one symbol with `double height`; the height is a whole count of layers from the bottom, so height h blocks engine layers 0 to h - 1. Height 1.0 with both units on engine layer 0 blocks, which is what `test_E11_S084_flat_damage.py` expects; 5.0 blocks all five. A height that is fractional, negative, not finite or above 5 is refused (returns 0, nothing added); 0 adds an obstacle that blocks nothing. The plan appendix's separate `uint32_t` call was my error and is corrected in this commit; E-01's Purpose gains the numbering sentence.
+
+**A133. The contract document `pp_contract.md` (builder Q-C1 to Q-C9, and the getters).**
+- Q-C1: the generated stubs land with the contract, in one merge that names `PP-contract` and the four owning pieces (`PP-move`, `PP-mapgen`, `PP-unit`, `PP-fog`). Stubs only; no lint exemption is written.
+- Q-C2: vision per signed offset (`VISION_UP_1..4`, `VISION_DOWN_1..4`) replaces the two cone parameters.
+- Q-C3: canvas rules accepted as written, with one change: a width or height above 28,000 is refused, since the tables are sized for that and nothing may corrupt.
+- Q-C4: settings survive `om_tactical_reset`, are neither saved nor hashed, and a new world starts at the defaults. The game never sets one, so a game trace is unaffected.
+- Q-C5: most damaged is lowest hp fraction, then nearest, then lowest id.
+- Q-C6: the collision-radius setting reaches the collision pass only.
+- Q-C9: the 59 ranges are accepted as refusal bounds for the lab's setting call. They are not game values, thresholds or tolerances; every value the game ships and every pass mark stays Westley's. A search that wants a value outside a bound stops and asks.
+- Three read-only getters (a unit's group id, its leash anchor, its engaged flag) join ABI 4 in the same piece, written into `pp_contract.md` with signatures and unknown-unit returns before any implementation. `tests/csim/test_E02_S020_abi.py` asserting ABI 3 is a test defect with a ledger row.
+
+**A134. Table sizes and the scale audit.** Accepted: per-unit tables at `OM_MAX_UNITS` (10,100), 78,400 density and route cells per layer (280 by 280 at 100 wu, the 28,000 canvas), 3,136 cover obstacles. Conditions: the wave report states the total bytes added; every fixed table refuses when full and returns an error, with a test that fills it, and none corrupts. The findings are bugs, fixed test first under the owning piece: unit id 10,100 unseen by movement; groups and support structures corrupting when full; the 512-cell route search cap, which goes, with the 1,000 route queries per second budget asserted on the largest canvas.
+
+**A135. Tests that are red until a later wave.** The pending list is accepted: one file of test ids owned by `PP-parity`, each marked strict expected-failure, so a test that starts passing fails until its line is removed. Each wave's landing removes its own lines in the same merge. The list is empty at the end of Phase A and again at the end of Phase C, and every wave report gives its length. Nothing else may be put on it: a test that fails for a reason other than "its code has not been built yet" is a finding. Note: the six movement rule test files reached main directly through pull request 51 (036fba3b), outside the merge gate; the builder's first landing puts their ids on the list so main's failure count returns to its base.
+
+**A136. Parity tolerance.** 1e-6 wu in position and 2e-3 rad in facing are carried in the tests as named, provisional values. They are Westley's to confirm, at the Phase B read, beside the measured largest difference per scene. Tightening needs no one; loosening needs him.
+
