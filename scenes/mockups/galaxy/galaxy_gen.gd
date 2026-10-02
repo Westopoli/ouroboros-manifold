@@ -12,8 +12,9 @@ const MIN_SPACING := 22.0 * CIV_SCALE
 const LINK_RADIUS := 110.0 * CIV_SCALE
 # Support radius of the shell kernel (zero beyond it), not a falloff scale.
 # Sized so two full-significance neighbours at the mean nearest-neighbour
-# distance (about 24 unscaled) just merge: 0.87 x 24 = 21.
-const INFLUENCE_RADIUS := 21.0 * CIV_SCALE
+# distance (about 24 unscaled) just merge: 0.87 x 24 = 21; raised to 28 so
+# typical-significance neighbours join too.
+const INFLUENCE_RADIUS := 28.0 * CIV_SCALE
 const LINK_NEAREST := 3
 const CAPITAL_SIG := 0.85
 const PLAYER_CAPITAL_SIG := 1.0

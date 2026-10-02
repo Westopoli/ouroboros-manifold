@@ -7,7 +7,7 @@ uniform sampler2D rival_positions : filter_nearest;
 uniform int rival_count = 0;
 uniform vec3 shell_color = vec3(0.3, 0.6, 1.0);
 // Support radius of the compact kernel (1 - d^2/r^2)^3; zero beyond it.
-uniform float influence_radius = 10.5;
+uniform float influence_radius = 14.0;
 uniform float iso_threshold = 0.6;
 uniform float shell_opacity = 0.12;
 uniform float gap_strength = 0.8;
@@ -76,13 +76,13 @@ void fragment() {
 
 	if (t_enter >= t_exit) discard;
 
-	float step_size = (t_exit - t_enter) / 64.0;
+	float step_size = (t_exit - t_enter) / 52.0;
 	vec3 hit_pos = vec3(0.0);
 	bool found = false;
 
 	float hit_rival = 0.0;
 	float t_hit = 0.0;
-	for (int s = 0; s < 64; s++) {
+	for (int s = 0; s < 52; s++) {
 		float t = t_enter + (float(s) + 0.5) * step_size;
 		vec3 p = cam + ray_dir * t;
 		float own = eval_own_field(p);
