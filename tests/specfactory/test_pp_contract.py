@@ -38,13 +38,13 @@ NEW_CALLS = {
     "om_map_block_rect": ("tactical_mapgen.c", "int", [
         ("w", W), ("x0", "double"), ("y0", "double"), ("x1", "double"), ("y1", "double"),
         ("layer_lo", "uint32_t"), ("layer_hi", "uint32_t")]),
-    "om_command_set_layer": ("unit.c", "int", [
+    "om_command_set_layer": ("tactical_move.c", "int", [
         ("w", W), ("unit_ids", "const uint32_t*"), ("n_units", "uint32_t"), ("layer", "uint32_t")]),
-    "om_unit_transition_progress": ("unit.c", "double", [("w", CW), ("unit", "uint32_t")]),
-    "om_unit_get_target_layer": ("unit.c", "uint32_t", [("w", CW), ("unit", "uint32_t")]),
-    "om_roster_set_reach": ("unit.c", "int", [
+    "om_unit_transition_progress": ("tactical_move.c", "double", [("w", CW), ("unit", "uint32_t")]),
+    "om_unit_get_target_layer": ("tactical_move.c", "uint32_t", [("w", CW), ("unit", "uint32_t")]),
+    "om_roster_set_reach": ("tactical_move.c", "int", [
         ("w", W), ("unit_type", "int"), ("layers_up", "uint32_t"), ("layers_down", "uint32_t")]),
-    "om_unit_profile_reach": ("unit.c", "int", [
+    "om_unit_profile_reach": ("tactical_move.c", "int", [
         ("w", CW), ("unit_type", "int"), ("up", "uint32_t*"), ("down", "uint32_t*")]),
     "om_command_set_emission": ("fog.c", "int", [
         ("w", W), ("unit_ids", "const uint32_t*"), ("n_units", "uint32_t"), ("mode", "om_emission")]),
