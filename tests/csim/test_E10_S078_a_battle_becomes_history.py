@@ -7,7 +7,7 @@ here is the spec, not a bug in the test.
 """
 import pytest
 
-from conftest import OMField, OMTier, read_drift, set_region, set_faction  # adjust imports to what this epic's fixtures need
+from conftest import OMField, OMTier, OmChronicleCluster, read_drift, set_region, set_faction, set_owner  # adjust imports to what this epic's fixtures need
 
 
 import ctypes
@@ -104,15 +104,50 @@ def test_R_078_05_band_refusal_no_force_deployed(lib, world_factory):
     assert lib.om_region_field(w, 0, OMField.TENSION) == pytest.approx(44.8, abs=1e-4)
 
 
+def _consequence_clusters(lib, w):
+    out = []
+    for i in range(lib.om_chronicle_entry_count(w)):
+        c = OmChronicleCluster()
+        assert lib.om_chronicle_get_cluster(w, i, ctypes.byref(c)) == 1
+        if c.type == 0:  # consequence cluster
+            out.append((c.region, c.category))
+    return out
+
+
 def test_R_078_06_resulting_events_carry_mission_consequence(lib, world_factory):
-    """Given the applied deltas, When the time jump starts, Then the resulting events carry the mission-consequence flag for the chronicle (E-09)."""
-    w = world_factory(n_regions=1)
-    lib.om_mission_apply_consequences(w, 0, 0, OMMissionBand.TOTAL_SUCCESS)
+    """Given the applied deltas, When the time jump starts, Then the resulting events carry the mission-consequence flag for the chronicle (E-09).
 
-    lib.om_time_jump_run(w, 20)  # time jump 20 ticks
+    TD-A108-R-078-06 (test-defect): the jump consumes the flag by design (generational.c, consequence_consumed),
+    so reading the flag after the jump is wrong. The flag is carried into the chronicle as a consequence event
+    for the mission region with the band's outcome; a second jump with no new mission adds none."""
+    w = world_factory(n_regions=4, seed=7)
+    for r in range(4):
+        set_region(lib, w, r, tier=OMTier.HOME, military=50.0, economy=50.0, tension=50.0, population=50.0)
+        set_owner(lib, w, r, 0, held_since=-1)
+    lib.om_mission_setup(w, 2, 0, 0)
+    lib.om_mission_build_objectives(w, 0)
+    for i in range(lib.om_mission_objective_count(w)):
+        lib.om_mission_set_objective_completion(w, i, 1.0)
+    lib.om_mission_end(w)
+    assert lib.om_mission_get_band(w) == OMMissionBand.TOTAL_SUCCESS  # fixture check
+    assert lib.om_chronicle_has_mission_consequence_flag(w) == 1  # armed before the jump
 
-    has_flag = lib.om_chronicle_has_mission_consequence_flag(w)
-    assert has_flag == 1
+    assert lib.om_time_jump_run(w, 30, None) == 0
+    # Outcome 0 is success (strong or total success band), on the mission region.
+    assert _consequence_clusters(lib, w) == [(2, 0)]
+
+    assert lib.om_time_jump_run(w, 30, None) == 0
+    assert _consequence_clusters(lib, w) == []
+
+
+def test_control_R_078_06_no_mission_jump_has_no_consequence_event(lib, world_factory):
+    """Positive control for the detector above: a jump with no mission recorded carries no consequence event."""
+    w = world_factory(n_regions=4, seed=7)
+    for r in range(4):
+        set_region(lib, w, r, tier=OMTier.HOME, military=50.0, economy=50.0, tension=50.0, population=50.0)
+        set_owner(lib, w, r, 0, held_since=-1)
+    assert lib.om_time_jump_run(w, 30, None) == 0
+    assert _consequence_clusters(lib, w) == []
 
 
 def test_R_078_07_delta_applies_to_every_player(lib, world_factory):
