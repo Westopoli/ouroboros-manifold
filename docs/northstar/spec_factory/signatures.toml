@@ -844,6 +844,15 @@ kwargs = ["old_faction"]
 note = "== 1. Card 247a2 -> generational.c; chronicle-ish name, not in toml."
 
 [[symbols]]
+name = "om_chronicle_get_keyframe"
+module = "chronicle.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "i", ctype = "uint32_t" }, { name = "tick_out", ctype = "uint64_t*" }]
+epics = ["E-09"]
+confidence = "likely"
+note = "G-C3 (A48 item 13): keyframe i of the last om_chronicle_generate_map_keyframes into *tick_out; 1, or 0 when i is out of range."
+
+[[symbols]]
 name = "om_chronicle_has_keyframe_at_tick"
 module = "chronicle.c"
 restype = "int"
@@ -888,6 +897,15 @@ params = [{ name = "w", ctype = "const om_world*" }]
 epics = ["E-09"]
 confidence = "likely"
 note = "== 1 / == 0."
+
+[[symbols]]
+name = "om_chronicle_keyframe_count"
+module = "chronicle.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }]
+epics = ["E-09"]
+confidence = "likely"
+note = "G-C3: keyframes stored by the last om_chronicle_generate_map_keyframes; 0 before it has run."
 
 [[symbols]]
 name = "om_chronicle_lineage_category_count"
@@ -5306,6 +5324,15 @@ confidence = "likely"
 note = "== report.end_tick."
 
 [[symbols]]
+name = "om_time_jump_get_ownership_snapshot"
+module = "generational.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "k", ctype = "uint32_t" }, { name = "owners_out", ctype = "int32_t*" }, { name = "cap", ctype = "uint32_t" }]
+epics = ["E-09"]
+confidence = "likely"
+note = "G-C3 (A48 item 13): owner per region (-1 unowned) at tick start_tick + STRIDE*k of the last jump; returns n_regions, 0 when k out of range or cap < n_regions."
+
+[[symbols]]
 name = "om_time_jump_interrupt"
 module = "generational.c"
 restype = "int"
@@ -5322,6 +5349,15 @@ params = [{ name = "w", ctype = "const om_world*" }]
 epics = ["E-08"]
 confidence = "likely"
 note = "== report.end_tick (c_uint64)."
+
+[[symbols]]
+name = "om_time_jump_ownership_snapshot_count"
+module = "generational.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }]
+epics = ["E-09"]
+confidence = "likely"
+note = "G-C3: snapshots held for the last completed jump, == report.n_snapshots; 0 before any jump."
 
 [[symbols]]
 name = "om_time_jump_report_faction_field_deltas_count"

@@ -1235,10 +1235,17 @@ void om_chronicle_generate_map_keyframes(om_world *w);
 int om_chronicle_get_cluster(const om_world *w, uint32_t entry, om_chronicle_cluster *out);
 const char *om_chronicle_get_full_scroll_text(const om_world *w);
 int om_chronicle_handle_click(om_world *w, uint32_t entry_id);
+/* G-C3 (A48 item 13): the keyframe ticks om_chronicle_generate_map_keyframes last
+ * chose, in the order it stored them. Copies keyframe i to *tick_out and returns 1;
+ * returns 0, writing nothing, when i >= om_chronicle_keyframe_count. */
+int om_chronicle_get_keyframe(const om_world *w, uint32_t i, uint64_t *tick_out);
 int om_chronicle_has_keyframe_at_tick(const om_world *w, uint64_t p0);
 int om_chronicle_has_keyframe_in_range(const om_world *w, uint64_t p0, uint64_t p1);
 int om_chronicle_is_lineage_event(const om_world *w, uint32_t lineage_id, uint32_t region_idx, uint32_t attached_character_id, uint32_t mission_region);
 int om_chronicle_is_paused(const om_world *w);
+/* G-C3: number of keyframes the last om_chronicle_generate_map_keyframes stored;
+ * 0 before it has run. */
+uint32_t om_chronicle_keyframe_count(const om_world *w);
 uint32_t om_chronicle_lineage_category_count(const om_world *w);
 int om_chronicle_map_is_master_clock(const om_world *w);
 void om_chronicle_mock_populate_events(om_world *w, uint32_t n_events);
@@ -1507,8 +1514,18 @@ uint32_t om_time_jump_choose_length(om_world *w, uint32_t requested);
 uint32_t om_time_jump_choose_opening_length(om_world *w);
 uint32_t om_time_jump_death_pass_count(const om_world *w);
 uint64_t om_time_jump_death_processing_tick(const om_world *w);
+/* G-C3 (A48 item 13): the ownership timeline of the last completed om_time_jump_run,
+ * one snapshot every OM_OWNERSHIP_TIMELINE_STRIDE ticks. Snapshot k is the owner of
+ * each region (faction id, -1 unowned) at tick report.start_tick + STRIDE*k, so k = 0
+ * is the state before the jump's first tick. Copies n_regions int32 values into
+ * owners_out and returns n_regions; returns 0, writing nothing, when k is not below
+ * om_time_jump_ownership_snapshot_count or cap < n_regions. */
+uint32_t om_time_jump_get_ownership_snapshot(const om_world *w, uint32_t k, int32_t *owners_out, uint32_t cap);
 int om_time_jump_interrupt(om_world *w);
 uint64_t om_time_jump_lineage_generation_tick(const om_world *w);
+/* G-C3: snapshots held for the last completed jump, == report.n_snapshots
+ * (jump_ticks / OM_OWNERSHIP_TIMELINE_STRIDE + 1); 0 before any jump has completed. */
+uint32_t om_time_jump_ownership_snapshot_count(const om_world *w);
 uint32_t om_time_jump_report_faction_field_deltas_count(const om_world *w, const om_time_jump_report *report);
 int om_time_jump_run(om_world *w, uint32_t n_ticks, om_time_jump_report *report);
 void om_time_jump_run_tracked(om_world *w, uint32_t jump);

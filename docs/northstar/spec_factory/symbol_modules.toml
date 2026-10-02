@@ -148,3 +148,8 @@ om_mis_get_u32                      = "mission.c"
 om_mis_save_read                    = "mission.c"
 om_mis_save_size                    = "mission.c"
 om_mis_save_write                   = "mission.c"
+# G-C3 (A48 item 13): jump replay snapshots and keyframes
+om_time_jump_ownership_snapshot_count = "generational.c"
+om_time_jump_get_ownership_snapshot = "generational.c"
+om_chronicle_keyframe_count         = "chronicle.c"
+om_chronicle_get_keyframe           = "chronicle.c"
