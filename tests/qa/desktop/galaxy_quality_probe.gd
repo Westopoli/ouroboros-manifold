@@ -12,6 +12,8 @@ extends SceneTree
 #   stored            UIDataBus.get_settings()["galaxy_quality"]
 #   cfg               the settings.cfg text
 #   shells            [[mesh class, material class]] for every MeshInstance3D under the ShellRenderer node
+#   ambient_particles `amount` summed over the node named "AmbientRig" under the view (0 if absent)
+#   emitter_amounts   every particle emitter's `amount` under the view
 #   particles         total `amount` over every GPUParticles3D / CPUParticles3D under the view
 # Slow-frame hook: this probe stalls its own frames (OS.delay_msec between process frames), so no
 # game-side hook is needed and the game cannot tell a planted stall from real load. The measured mean
@@ -74,12 +76,20 @@ func _measure(view: Node) -> Dictionary:
 		_collect_shells(shell_node, shells)
 	var particles := [0]
 	_count_particles(view, particles)
+	var ambient := [0]
+	var amounts: Array = []
+	var rig := view.find_child("AmbientRig", true, false)
+	if rig != null:
+		_count_particles(rig, ambient)
+	_list_amounts(view, amounts)
 	return {
 		"quality_tier": view.qa_state().get("quality_tier", null),
 		"stored": stored,
 		"cfg": cfg_text,
 		"shells": shells,
 		"particles": particles[0],
+		"ambient_particles": ambient[0],
+		"emitter_amounts": amounts,
 	}
 
 
@@ -98,3 +108,9 @@ func _count_particles(node: Node, total: Array) -> void:
 	for child in node.get_children():
 		_count_particles(child, total)
 
+
+func _list_amounts(node: Node, out: Array) -> void:
+	if node is GPUParticles3D or node is CPUParticles3D:
+		out.append(int(node.amount))
+	for child in node.get_children():
+		_list_amounts(child, out)
