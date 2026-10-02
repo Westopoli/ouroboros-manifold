@@ -1412,56 +1412,6 @@ static void handle_set_feature(const char *json) {
     write_ack("set_feature");
 }
 
-/* R-072-08: the non-player, non-neutral faction nearest `region` by
- * connection hops; ties to the highest total military, then the lowest id. */
-static int32_t quiet_world_enemy(uint32_t region) {
-    uint32_t n = om_region_count(W);
-    int32_t player = om_player_faction(W);
-    int32_t nf = (int32_t)om_faction_count(W);
-    int32_t best = -1;
-    double best_mil = 0.0;
-    uint32_t best_hops = 0;
-    uint32_t *dist = malloc(n * sizeof *dist), *queue = malloc(n * sizeof *queue);
-    uint32_t nb[256];
-    if (!dist || !queue) {
-        free(dist);
-        free(queue);
-        return -1;
-    }
-    for (uint32_t i = 0; i < n; i++) dist[i] = UINT32_MAX;
-    uint32_t head = 0, tail = 0;
-    dist[region] = 0;
-    queue[tail++] = region;
-    while (head < tail) {
-        uint32_t cur = queue[head++];
-        uint32_t k = om_region_neighbors(W, cur, nb, 256);
-        for (uint32_t m = 0; m < k; m++) {
-            if (dist[nb[m]] != UINT32_MAX) continue;
-            dist[nb[m]] = dist[cur] + 1;
-            queue[tail++] = nb[m];
-        }
-    }
-    for (int32_t f = 0; f < nf; f++) {
-        if (f == player) continue;
-        uint32_t hops = UINT32_MAX;
-        double mil = 0.0;
-        for (uint32_t i = 0; i < n; i++) {
-            if (om_region_owner(W, i) != f) continue;
-            mil += om_region_field(W, i, OM_F_MILITARY);
-            if (dist[i] < hops) hops = dist[i];
-        }
-        if (hops == UINT32_MAX) continue;
-        if (best < 0 || hops < best_hops || (hops == best_hops && mil > best_mil)) {
-            best = f;
-            best_hops = hops;
-            best_mil = mil;
-        }
-    }
-    free(dist);
-    free(queue);
-    return best;
-}
-
 static void handle_mission_start(const char *json) {
     if (!W) {
         write_error("mission_start", "no world");
@@ -1491,22 +1441,9 @@ static void handle_mission_start(const char *json) {
     int32_t fb_enemy = -1;
     int have_mission = 0, quiet_world = 0;
     if (drawn < 0) {
-        int32_t player = om_player_faction(W);
-        int found = 0;
-        double lowest = 0.0;
-        for (uint32_t i = 0; i < om_region_count(W); i++) {
-            if (om_region_owner(W, i) != player) continue;
-            double st = om_region_composite(W, i, OM_C_STABILITY);
-            if (!found || st < lowest) {
-                lowest = st;
-                region = i;
-                found = 1;
-            }
-        }
-        if (found) {
-            fb_enemy = quiet_world_enemy(region);
-            fb_enemy_ok = fb_enemy >= 0;
-        }
+        region = om_mission_fallback_region(W);
+        fb_enemy = om_mission_fallback_enemy(W, region);
+        fb_enemy_ok = fb_enemy >= 0;
     }
     if (fb_enemy_ok) {
         have_mission = 1;

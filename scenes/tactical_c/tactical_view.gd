@@ -109,6 +109,7 @@ var _units_in_last_command: int = 0
 var _drag_start := Vector2(-1.0, -1.0)
 
 var _error_panel: Control
+var _ending := false
 
 
 func _ready() -> void:
@@ -124,9 +125,7 @@ func _ready() -> void:
 	_update_hud()
 	var end_mission_btn := get_node_or_null("CanvasLayer/EndMission")
 	if end_mission_btn != null:
-		end_mission_btn.pressed.connect(func():
-			SceneRouter.go_to("debrief")
-		)
+		end_mission_btn.pressed.connect(_end_mission)
 
 
 func _load_live() -> void:
@@ -138,11 +137,44 @@ func _load_live() -> void:
 		return
 	var reason: String = bridge.last_error()
 	push_error("tactical_view: live tactical frame failed: %s" % reason)
+	_show_error(reason if reason != "" else "tactical load failed")
+
+
+func _show_error(reason: String) -> void:
 	if _error_panel == null:
 		_error_panel = load("res://scenes/shared/error_panel.tscn").instantiate()
 		_error_panel.retry_pressed.connect(_load_live)
 		add_child(_error_panel)
-	_error_panel.show_error(reason if reason != "" else "tactical load failed")
+	_error_panel.show_error(reason)
+
+
+# A43: both routing sites (End Mission, a mission_over frame) end the mission
+# here: one mission_end, pump until the debrief frame is held (the debrief
+# scene shows it and sends nothing), then route. No frame: error panel, no route.
+func _end_mission() -> void:
+	if _ending:
+		return
+	_ending = true
+	_mission_over_seen = true
+	var bridge = SimSession.bridge()
+	var got := []
+	var on_frame := func(frame):
+		if String(frame.get("type", "")) == "debrief":
+			got.append(frame)
+	bridge.frame_received.connect(on_frame)
+	bridge.send_command({"type": "cmd", "name": "mission_end"})
+	var deadline: int = Time.get_ticks_msec() + bridge.LIVE_READ_TIMEOUT_MSEC
+	while got.is_empty() and Time.get_ticks_msec() < deadline:
+		if bridge.pump() == 0:
+			OS.delay_msec(5)
+	bridge.frame_received.disconnect(on_frame)
+	_ending = false
+	if got.is_empty():
+		var reason: String = bridge.last_error() if bridge.last_error() != "" else "timed out waiting for the debrief frame"
+		push_error("tactical_view: mission_end failed: %s" % reason)
+		_show_error(reason)
+		return
+	SceneRouter.go_to("debrief")
 
 
 func _make_hud_label(pos: Vector2) -> Label:
@@ -184,8 +216,7 @@ func load_frame(frame: Dictionary) -> void:
 	# Route to debrief the same way the End Mission button does, above, and
 	# latch _mission_over_seen so _process() stops requesting more ticks.
 	if bool(frame.get("mission_over", false)):
-		_mission_over_seen = true
-		SceneRouter.go_to("debrief")
+		_end_mission()
 	_canvas = float(frame.get("map", {}).get("canvas", 0.0))
 	if _canvas > 0.0:
 		_fit_scale = SCREEN_H / _canvas
@@ -328,6 +359,7 @@ func issue_command(cmd: Dictionary) -> Dictionary:
 func send_command(cmd: Dictionary) -> bool:
 	var kind := str(cmd.get("kind", ""))
 	var unit_ids: Array = cmd.get("unit_ids", []).duplicate()
+	BugReportManager.log_command(cmd)
 	var bridge = SimSession.bridge()
 	var ok: bool
 	if _move_order_dropped:
