@@ -132,6 +132,14 @@ func _entry_ids(panel: Node) -> Array:
 	return ids
 
 
+# Implementation-neutral: the on-screen fraction of the viewport width the panel covers (its global
+# rect clipped to the viewport), so a position slide and a size slide both measure the same way.
+func _visible_fraction(panel: Control) -> float:
+	var vw := maxf(panel.get_viewport_rect().size.x, 1.0)
+	var r := panel.get_global_rect()
+	return maxf(0.0, minf(r.end.x, vw) - maxf(r.position.x, 0.0)) / vw
+
+
 func _footer_button(seq: Node, text: String) -> Button:
 	var footer = seq.get("_footer")
 	if footer == null:
@@ -241,16 +249,16 @@ func _a71_panel_visible_before_first_entry() -> void:
 		await _unmount(seq)
 		return
 	var t0 := Time.get_ticks_msec()
-	var first_frac: float = panel.size.x / maxf(seq.size.x, 1.0)
+	var first_frac := _visible_fraction(panel)
 	_assert(panel.visible and panel.is_visible_in_tree(),
 		"A71: scroll panel is hidden at the start, before the first entry printed (R-069-01, R-108-02)")
 	_assert(first_frac < 0.38 - WIDTH_TOL,
-		"A78: scroll panel is %.3f of the scene width at the start, expected narrower than 0.38: the panel slides in over 0.40 s (R-069-01)" % first_frac)
+		"A78: scroll panel shows %.3f of the viewport width at the start, expected under 0.38: the panel slides in over 0.40 s, by position or by size (R-069-01)" % first_frac)
 	var reached := -1.0
 	var started_early := false
 	while true:
 		var elapsed := (Time.get_ticks_msec() - t0) / 1000.0
-		var frac: float = panel.size.x / maxf(seq.size.x, 1.0)
+		var frac := _visible_fraction(panel)
 		if absf(frac - 0.38) <= WIDTH_TOL and reached < 0.0:
 			reached = elapsed
 			started_early = (seq.qa_state().get("replay", {}).get("entries_started", []) as Array).size() > 0
