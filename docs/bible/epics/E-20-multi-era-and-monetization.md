@@ -7,15 +7,15 @@
 | Every story has at least one Given/When/Then rule with concrete values | Partly. 8 stories, 28 rules; the architecture rules are concrete, the pricing, era-transition and unlock rules carry flags. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 7 flags on S-145 to S-150, Q-145-01 through Q-150-01, and 6 more: Q-146-02, Q-146-03, Q-149-03, Q-150-02, Q-151-02, Q-243-01. |
+| Implied-but-unstated behavior turned into flags | 7 flags on S-145 to S-150, Q-145-01 through Q-150-01, and 5 more: Q-146-02, Q-146-03, Q-150-02, Q-151-02, Q-243-01. |
 | Every visible-surface story has a reference | Not applicable in this epic; era looks are E-18. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on open flags. Launch has two eras, one in space and one on land (S-147), and the price and contents of the base SKU are open against that (Q-149-03). The era-feel mechanism is chosen (Q-151-01, the Climate of War, after launch); the transition trigger is chosen (Q-148-01, the Long Horizon) with its measure open (Q-148-05); the land era's name (Q-147-01) and the roster size per era (Q-082-05) still need Westley.
+**Gate verdict: not passed.** Blocked on open flags. Launch has two eras, one in space and one on land (S-147), and the base SKU's price buys 3 to 5 eras to start (S-149). The era-feel mechanism is chosen (Q-151-01, the Climate of War, after launch); the transition trigger is chosen (Q-148-01, the Long Horizon) with its measure open (Q-148-05); the land era's name (Q-147-01) and the roster size per era (Q-082-05) still need Westley.
 
 ## Purpose
 
-The engine is a skeleton that never names an era. Eras are packs: names, art, prose, unit models by tier, building pieces and environment assets, landforms and environmental troubles, resource names, doctrines, naming pools, chronicle and briefing fragments, and per-era config values the engine consumes uniformly. Maps, era systems, and civilizations are built as transferable systems, Fortnite-skin style, so any map, any skin, any civilization works in any era. The game launches with two eras, one in space and one on land, in one base SKU on Steam [Q-149-03: the price and contents of that SKU; it was set for three eras at $10 to $15]; further eras are $3 packs, some earnable through play and some exclusive. Era unlocks are the one progression unlock at launch. A campaign can move chronologically through eras the player owns.
+The engine is a skeleton that never names an era. Eras are packs: names, art, prose, unit models by tier, building pieces and environment assets, landforms and environmental troubles, resource names, doctrines, naming pools, chronicle and briefing fragments, and per-era config values the engine consumes uniformly. Maps, era systems, and civilizations are built as transferable systems, Fortnite-skin style, so any map, any skin, any civilization works in any era. The base SKU on Steam costs $15 and buys 3 to 5 eras to start, and the first build starts with two eras, one in space and one on land; each new era costs $3 to $5, some earnable through play and some exclusive. Era unlocks are the one progression unlock at launch. A campaign can move chronologically through eras the player owns.
 
 At launch the two eras' units and rules are essentially the same and the landscape and visuals differ (Westley, 2026-10-02). Differentiation of feel comes after launch as the Climate of War (S-151): per-era fog thickness, engagement pace, and reinforcement rate.
 
@@ -57,7 +57,7 @@ Open flags: Q-146-01 (whether "identical" means byte-identical stat profiles, or
 As a player, I want an era in space and an era on land to play, all one game, so that the smallest version I buy already spans two ages.
 
 Rules
-- R-147-01  Given the launch build, When eras are listed, Then it contains exactly two, one in space and one on land, with units and rules essentially the same and landscape and visuals different (Westley, 2026-10-02), chronologically ordered [Q-147-01: the Settled Reach is the space era; the land era is unnamed and undesigned].
+- R-147-01  Given the first build, When eras are listed, Then it contains exactly two, one in space and one on land, with units and rules essentially the same and landscape and visuals different (Westley, 2026-10-02), chronologically ordered [Q-147-01: the Settled Reach is the space era; the land era is unnamed and undesigned].
 - R-147-02  Given any era, When a mission runs, Then the map generator, mission generator, agents, events, combat, and chronicle are the same code with the era's pack loaded.
 - R-147-03  Given the same seed in two eras, When maps are generated, Then the map seeds are identical and the landscape and the rendering differ, since the land and space landscape systems are sisters with different objects (E-17 S-166; the space system is Q-166-02) [Q-147-02: whether eras share map seeds or eras may weight layouts differently].
 
@@ -82,15 +82,15 @@ Open flags: Q-148-04 (the loop's effect on tech, characters, and the chronicle),
 As a player, I want a fair price and the chance to earn expansions by playing, so that the game respects my time and my wallet.
 
 Rules
-- R-149-01  Given Steam, When the base game is listed, Then it is one SKU containing the two launch eras [Q-149-03: the price, set at $10 to $15 for three eras, and the contents, which now have two]; no subscription, no in-game store, no Workshop at launch.
-- R-149-02  Given an additional era, When listed, Then it is $3.
+- R-149-01  Given Steam, When the base game is listed, Then it is one SKU at $15 that buys 3 to 5 eras to start, and the first build starts with two eras, one in space and one on land (S-147); no subscription, no in-game store, no Workshop at launch.
+- R-149-02  Given a new era, When listed, Then it is $3 to $5.
 - R-149-03  Given an earnable era, When its condition is met in play, Then it unlocks without purchase [Q-149-01: the condition, proposed: complete a campaign of 10 chapters in the preceding era].
 - R-149-04  Given an exclusive era, When read, Then it is purchase-only and marked so on the store page; the launch plan names which eras are which [Q-149-02].
 - R-149-05  Given the unlock system, When read, Then era unlocks are the only unlock type at launch; no player level, no unit unlocks (E-08 R-064-03).
 
 Inputs: store; play state.
 Outputs: ownership; store listing.
-Open flags: Q-149-01, Q-149-02, Q-149-03.
+Open flags: Q-149-01, Q-149-02.
 
 ### S-150 — Systems, not components
 As an era designer, I want maps, civilizations, and era systems to transfer between eras like skins, so that content compounds instead of forking.
@@ -168,7 +168,7 @@ Not applicable; see E-18 per era.
 
 ## Open ambiguity flags
 
-Q-146-01, Q-146-02, Q-146-03, Q-147-01, Q-147-02, Q-148-04, Q-148-05, Q-149-01, Q-149-02, Q-149-03, Q-150-01, Q-150-02, Q-151-02, Q-243-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-146-01, Q-146-02, Q-146-03, Q-147-01, Q-147-02, Q-148-04, Q-148-05, Q-149-01, Q-149-02, Q-150-01, Q-150-02, Q-151-02, Q-243-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

@@ -211,11 +211,11 @@ Decided in part 2026-10-02 (E-17 R-166-03, `docs/northstar/research/economy_desi
 Rules
 - R-222-01  Given a mission region, When the density target of its self-built settlements is set, Then it comes from the region's economy and the mission clock.
 - R-222-02  Given the region's population, or the age of the owning faction (the phase label of E-07 S-053), When the density target is set, Then [Q-222-01: whether and how they also feed it].
-- R-222-03  Given the density field, When it is read, Then whether it lives in the simulation or only on screen is Q-166-03 (E-17), not decided here.
+- R-222-03  Given the density field, When it is read, Then it is in the simulation: dense districts slow units and give cover, and a settlement always has natural paths through it for armies and units (E-17 S-193). How much they slow units, how much cover they give and how the paths are guaranteed are E-17 Q-193-04, Q-193-05 and Q-193-06.
 
 Inputs: the region's economy; the mission clock; the flagged inputs above.
 Outputs: the density target to the settlement generator (E-17 S-166).
-Open flags: Q-222-01, Q-166-03.
+Open flags: Q-222-01. Q-193-04, Q-193-05 and Q-193-06 are cited from E-17 S-193.
 
 ## Inputs
 
@@ -273,7 +273,7 @@ None required. The player-facing surface for region state is E-16 (world view).
 
 ## Open ambiguity flags
 
-Q-220-01, Q-220-02, Q-221-01, Q-221-02, Q-222-01, and Q-159-13 and Q-166-03 as cited in S-220 and S-222. S-012 to S-020 and S-160 have none: Q-013-01 (a), Q-015-01 (b), Q-019-01 (a) were answered 2026-09-13 and folded into the stories above. Details in `docs/northstar/ambiguity_register.md`. Stage 3 e2e: `docs/northstar/e2e/E-02.md`.
+Q-220-01, Q-220-02, Q-221-01, Q-221-02, Q-222-01, and Q-159-13 as cited in S-220 and Q-193-04 to Q-193-06 as cited in S-222. S-012 to S-020 and S-160 have none: Q-013-01 (a), Q-015-01 (b), Q-019-01 (a) were answered 2026-09-13 and folded into the stories above. Details in `docs/northstar/ambiguity_register.md`. Stage 3 e2e: `docs/northstar/e2e/E-02.md`.
 
 ## Depends on
 

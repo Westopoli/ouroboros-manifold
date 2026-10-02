@@ -6,7 +6,7 @@
 |---|---|
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 15 stories, 82 rules. Rules that depend on an open flag cite it inline. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. Every rejection behavior is settled. |
-| Every output listed with where it is observable | Yes, see Outputs. On-screen elevation follows the map's fitted height bands on land maps (S-010, S-200); whether per-step numbers scale with the step is Q-166-04. |
+| Every output listed with where it is observable | Yes, see Outputs. On-screen elevation follows the map's fitted height bands on land maps (S-010, S-200); per-step numbers scale with the height of the step, and how is Q-166-04, which the skill lab measures. |
 | Implied-but-unstated behavior turned into flags | Yes; the flags still open are listed at the foot of this file. |
 | Every visible-surface story has a reference | **No — by design a Godot design phase, not a screenshot pull.** `references/E-01/notes.md` records the plan: basic single-layer movement ships first, then Claude builds several interactive layer-system options in Godot for Westley to choose between; the choice fills the references. Blocks S-009 and S-010 until then. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
@@ -91,7 +91,7 @@ Rules
 
 Inputs: unit type transition time (per type, config); transition start tick; slope position, length and the two layers it joins (map); unit speed and position.
 Outputs: unit layer field; transitioning flag and progress in the tick delta; attack eligibility.
-Open flags: Q-166-04 (whether the transition times, set per unit type, scale with the layer step now that height bands are fitted per map; a slope's crossing time already follows its length). A strongpoint at a slope holds the way up or down: its rules are E-15 S-126 and E-17 S-192.
+Open flags: Q-166-04 (the transition times, set per unit type, scale with the height of the layer step now that height bands are fitted per map, and how is to be measured by the skill lab; a slope's crossing time already follows its length). A strongpoint at a slope holds the way up or down: its rules are E-15 S-126 and E-17 S-192.
 
 ### S-005 — Seeing across layers is worse than seeing on your own
 As a commander, I want cross-layer vision to shrink with layer distance, so that a force on a layer I am not watching is a real threat.
@@ -108,7 +108,7 @@ Rules
 
 Inputs: observer layer, position, sensor radius; target layer, position; vantage membership; interference intensity at observer position.
 Outputs: per-unit visible set in the tick delta; player-visible unit list; fog reveal on screen.
-Open flags: Q-166-04 (whether the vision factors scale with the layer step on a map with fitted height bands). Q-005-02 is closed: vision is symmetric by layer distance to start. Passive cross-layer vision stays beside the three layer actions (S-162 to S-164), at a shorter range than the ping reaches (Q-005-03); how much shorter is Q-005-04. Asymmetric vision, seeing further down than up, stays a candidate for later, on one condition from Westley (2026-10-01, verbatim): "going asymmetic could be a good idea if there's a \"counter\" to the highest layer being hte \"best\", say a unit that works particularly well at destroying units from above it to counter."
+Open flags: Q-166-04 (the vision factors scale with the height of the layer step on a map with fitted height bands, and how is to be measured by the skill lab). Q-005-02 is closed: vision is symmetric by layer distance to start. Passive cross-layer vision stays beside the three layer actions (S-162 to S-164), at a shorter range than the ping reaches (Q-005-03); how much shorter is Q-005-04. Asymmetric vision, seeing further down than up, stays a candidate for later, on one condition from Westley (2026-10-01, verbatim): "going asymmetic could be a good idea if there's a \"counter\" to the highest layer being hte \"best\", say a unit that works particularly well at destroying units from above it to counter."
 
 ### S-006 — Sensor pulse
 As a commander, I want to spend a pulse to see every layer around a unit for a moment, so that scouting before a commitment is a decision with a cost.
@@ -231,7 +231,7 @@ Rules
 
 Inputs: unit type reach table (roster, per era).
 Outputs: attack eligibility by layer offset.
-Open flags: Q-166-04 (whether the reach table scales with the layer step on a map with fitted height bands). The reach table is provisional (Q-005-04): Line own layer, Raider one layer either way, Interceptor two up and one down, Siege two down. The range and damage at each offset are S-008's question (Q-008-03).
+Open flags: Q-166-04 (the reach table scales with the height of the layer step on a map with fitted height bands, and how is to be measured by the skill lab). The reach table is provisional (Q-005-04): Line own layer, Raider one layer either way, Interceptor two up and one down, Siege two down. The range and damage at each offset are S-008's question (Q-008-03).
 
 ### S-200 — On land, the ground is the layers
 As a commander on a land map, I want the height of the ground to decide which layers are ground and which are air, so that a mountainside, a valley and a cliff are real places that walking and flying units use differently.
@@ -239,14 +239,14 @@ As a commander on a land map, I want the height of the ground to decide which la
 Design decided 2026-10-02, not scheduled for building. These rules apply to land maps. The space-era landscape is a sister system that is not designed yet (Q-166-02), and no rule here is written for it. E-17 S-188 to S-190 generate what these rules read.
 
 Rules
-- R-200-01  Given a land map, When its layers are set, Then the five layers are five height bands fitted to that map between its lowest and highest ground, so that every layer has ground on it and no elevation mapping is fixed globally; a piece of ground belongs to the layer of the band its height falls in (E-17 S-188) [Q-166-04: whether the numbers written for one standard layer step scale with the step].
+- R-200-01  Given a land map, When its layers are set, Then the five layers are five height bands fitted to that map between its lowest and highest ground, so that every layer has ground on it and no elevation mapping is fixed globally; a piece of ground belongs to the layer of the band its height falls in (E-17 S-188), and the numbers written for one standard layer step scale with the height of the step [Q-166-04: how each number scales, which the skill lab measures].
 - R-200-02  Given a position whose ground falls in band k, When the map is queried there, Then the ground fills layers 1 to k - 1, which are blocked there (R-001-01); layer k and the layers above it are open unless something else blocks them (S-001), so a flying unit may be on the ground's layer or above it and never below; and the ground flag is set on layer k and on no other layer there, except along a slope, where a unit counts as on each layer it passes in turn (R-001-06, R-001-07; E-17 S-190).
 - R-200-03  Given ground too steep to cross, When a walking unit is ordered across it, Then the unit cannot cross it, and the ground is not a slope: a slope is ground that joins two layers and can be climbed (R-001-06), and steep ground joins none (E-17 S-189) [Q-189-02: how steep is too steep to cross].
 - R-200-04  Given two layers at a place that are joined only by ground too steep to cross, When a walking unit is ordered from one to the other, Then it takes another way if one exists and otherwise paths as close as it can and stops (R-001-05); a flying or swimming unit is not stopped by it (R-001-07).
 
 Inputs: the band heights, the ground flag per layer, the slopes and the sections too steep to cross, all from the map generator (E-17 S-188 to S-190).
 Outputs: the accessibility mask and the ground flag per layer per position; the slopes, with their edges and lengths.
-Open flags: Q-166-04 (numbers that assume a standard layer step), Q-189-02 (how steep is too steep, held by E-17), Q-166-02 (space maps).
+Open flags: Q-166-04 (numbers that assume a standard layer step scale with the step's height, as the skill lab measures), Q-189-02 (how steep is too steep, held by E-17), Q-166-02 (space maps).
 
 ## Inputs
 

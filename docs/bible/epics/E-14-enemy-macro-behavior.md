@@ -131,8 +131,8 @@ As a commander, I want the enemy's forces to defend its base and its expansions,
 Status: design decided 2026-10-02, not scheduled for building.
 
 Rules
-- R-216-01  Given an enemy base of operations, expansion or forward base (E-22 S-175), When its forces are scripted, Then their behaviour is tied to those places and they defend them [Q-216-01: whether this is done with the five behaviours of R-120-01 or with new ones, or belongs to the economy rules].
-- R-216-02  Given an enemy force that retreats, When the enemy holds a base of operations, Then it plain-moves to that base, which after a fall-back (E-22 S-178) is the expansion or forward base the enemy held; where the enemy holds no base, the fallback point of R-120-02 stands [Q-212-02: what happens to a side with no base].
+- R-216-01  Given an enemy base of operations, expansion or forward works (E-22 S-175), When its forces are scripted, Then their behaviour is tied to those places and they defend them [Q-216-01: whether this is done with the five behaviours of R-120-01 or with new ones, or belongs to the economy rules].
+- R-216-02  Given an enemy force that retreats, When the enemy holds a base of operations, Then it plain-moves to that base, which after a fall-back (E-22 S-178) is the expansion or forward works the enemy held; where the enemy holds no base, the fallback point of R-120-02 stands [Q-212-02: what happens to a side with no base].
 - R-216-03  Given the enemy economy founds an expansion or builds production forward, When it chooses where and when, Then [Q-216-02: whether the economy rules or the behaviour script decide; Westley: "Where it stands shows where the next push comes from"].
 - R-216-04  Given raid lanes set by the terrain (E-22 S-174), When the enemy raids, Then a force travels along a lane to the player's workers or shipments [Q-216-01: which behaviour does this; Q-216-03: whether raiding needs foresight on, since shipments are blind (E-22 S-176)].
 
@@ -206,7 +206,7 @@ None required.
 - Macro reads true enemy positions the player cannot see (it may; it must not read the player's visible set). An enemy with foresight on learns about the player only through its own side's sight (E-12 R-093-02).
 - The enemy's economy scouts, counter-shifts or disguises with foresight off.
 - Enemy foresight scaled by difficulty instead of left to the player.
-- A retreating force sent to the spawn edge while the enemy holds an expansion or forward base.
+- A retreating force sent to the spawn edge while the enemy holds an expansion or forward works.
 
 ## Open ambiguity flags
 
@@ -215,4 +215,4 @@ Q-120-01, Q-121-01, Q-122-01, Q-124-01, Q-125-01, Q-125-03, Q-215-01 to Q-215-04
 ## Depends on
 
 - E-10 (archetype, script selection, briefing, the enemy's base kind S-210, the end of a mission when a base falls S-212), E-11 (unit loop), E-13 (commands), E-15 (enemy production target ratios, S-128 and its relation to the doctrines of S-215), E-17 (spine nodes as targets, raid lanes), E-21 (script library and validation).
-- E-01 (the layer commands, S-002, S-162, S-163), E-12 (the enemy's sight, R-093-02), E-19 S-159 and E-22 Economy and bases (S-174 raid lanes, S-175 expansions and forward bases, S-178 when a base falls, S-179 and S-181 the economy without a player and the enemy's economy).
+- E-01 (the layer commands, S-002, S-162, S-163), E-12 (the enemy's sight, R-093-02), E-19 S-159 and E-22 Economy and bases (S-174 raid lanes, S-175 expansions and forward works, S-178 when a base falls, S-179 and S-181 the economy without a player and the enemy's economy).

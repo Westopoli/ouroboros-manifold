@@ -101,15 +101,15 @@ Open flags: none. Closed by Q-025-01 (Westley, 2026-09-12): the buffer is player
 ### S-223 — How far a region is from the civilization
 As a commander, I want the galaxy's graph to say how far a mission's region lies from the civilization's land, so that where a mission happens can help decide what kind of base each side is given.
 
-Direction decided in part 2026-10-02 (E-22 S-177 names "the supply distance in the simulation"); the term itself is undefined. Not scheduled for building.
+Design decided 2026-10-02 (E-22 S-177 names "the supply distance"; Westley, 2026-10-02: "keep"). Not scheduled for building.
 
 Rules
 - R-223-01  Given any two regions, When a distance between them is read, Then the only measure the simulation defines is the number of hops along the graph's edges of any type, as E-08 R-057-01 and E-10 R-072-08 use it.
-- R-223-02  Given the kind of base a mission gives each side (E-22 S-177), When "the supply distance in the simulation" is read, Then [Q-159-14: what supply distance is; Westley does not recognise the term, and the offered meaning is the hops from the mission's region to the nearest region the civilization owns].
+- R-223-02  Given the kind of base a mission gives each side (E-22 S-177), When the supply distance is read, Then it is the number of regions between the mission's region and the nearest region the civilization owns.
 
 Inputs: the graph (S-021, S-023); region ownership.
-Outputs: a distance, once Q-159-14 is answered, to the mission generator (E-10) and to E-22 S-177.
-Open flags: Q-159-14.
+Outputs: the supply distance to the mission generator (E-10) and to E-22 S-177.
+Open flags: none here. The numbers of regions at which the base kind changes are Q-177-05 (E-22 S-177).
 
 ### S-224 — A galaxy at its full size
 As the build, I want generation held to a time budget at the top of the region range, so that a campaign with a 400-region galaxy starts within a time Westley has confirmed.
@@ -173,7 +173,7 @@ None required in this epic. The galaxy view is E-16.
 
 ## Open ambiguity flags
 
-Q-224-01 (S-224), Q-159-14 (S-223, held by E-22 S-177) and Q-221-01 (E-02 S-221). S-021 to S-025 have none: Q-021-01 through Q-021-06, Q-021-08, Q-022-01, Q-022-02, Q-024-01, Q-025-01 are closed and folded above.
+Q-224-01 (S-224) and Q-221-01 (E-02 S-221). S-223 has none; the numbers of regions its supply distance is read against are Q-177-05 (E-22 S-177). S-021 to S-025 have none: Q-021-01 through Q-021-06, Q-021-08, Q-022-01, Q-022-02, Q-024-01, Q-025-01 are closed and folded above.
 
 ## Depends on
 

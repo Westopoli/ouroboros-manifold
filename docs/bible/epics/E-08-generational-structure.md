@@ -170,13 +170,13 @@ Outputs: save file; determinism trace.
 Open flags: none.
 
 ### S-228 — More than one player in a chapter
-As a player in a team of 2, 4 or 6, I want the chapter, the ledger and the world to know I am in a team, so that my pair is a part of the story and not a rider on someone else's.
+As a player in a team of 2 or 4, I want the chapter, the ledger and the world to know I am in a team, so that my pair is a part of the story and not a rider on someone else's.
 
 Direction decided in part 2026-10-02 (DECISIONS H7; E-19 R-159-01): more teammates mean bigger maps, more to do, more resources and more enemies; each player is a sub-commander; each pair is a sub-civilization inside the over-arching civilization. The simulation has no notion of either. Not scheduled for building. S-055 to S-064 are written for one player and one commander and stay as written for it.
 
 Rules
-- R-228-01  Given a chapter played by a team of 2, 4 or 6, When the chapter record, the ledger and the character selector are used, Then [Q-228-01: how a second player, the economy seat of a pair, and each sub-commander enter them; the Invariants below allow exactly one commander per chapter].
-- R-228-02  Given a team of 4 or 6, When each pair is read as a sub-civilization inside the civilization, Then [Q-228-02: how a pair maps onto the simulation, which has one faction per civilization and no sub-civilization; whether onto a faction, a set of regions, or only the chapter].
+- R-228-01  Given a chapter played by a team of 2 or 4, When the chapter record, the ledger and the character selector are used, Then [Q-228-01: how a second player, the economy seat of a pair, and each sub-commander enter them; the Invariants below allow exactly one commander per chapter].
+- R-228-02  Given a team of 4, When each pair is read as a sub-civilization inside the civilization, Then [Q-228-02: how a pair maps onto the simulation, which has one faction per civilization and no sub-civilization; whether onto a faction, a set of regions, or only the chapter].
 
 Inputs: team size and pairs (E-19 S-159).
 Outputs: none until the flags are answered.

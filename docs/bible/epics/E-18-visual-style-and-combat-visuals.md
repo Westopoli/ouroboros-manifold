@@ -7,7 +7,7 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 12 stories, 49 rules; numbers from the bible's combat visuals and animation sections and the Stage 1 A-368, A-369, A-372 rewrites; the world, settlement, economy, layer-action and scale stories (S-236 to S-240) leave numbers and looks to flags. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes; every output is a screen, T2-checkable. |
-| Implied-but-unstated behavior turned into flags | 4 flags on the first stories, Q-132-01, Q-134-01, Q-136-01, Q-138-01, and 8 on S-133 and S-236 to S-240: Q-133-01, Q-236-01, Q-236-02, Q-237-01, Q-238-01, Q-238-02, Q-239-01, Q-240-01. |
+| Implied-but-unstated behavior turned into flags | 4 flags on the first stories, Q-132-01, Q-134-01, Q-136-01, Q-138-01, and 7 on S-133 and S-236 to S-240: Q-133-01, Q-236-01, Q-236-02, Q-237-01, Q-238-01, Q-239-01, Q-240-01. |
 | Every visible-surface story has a reference | **No.** This entire epic is a visible surface. Art of Rally (look), the opening battle of Revenge of the Sith (combat weight), Halo CE (world-building), and Claude Code's spinner (glyph animation) are the bible's named references; none is attached as a screenshot yet. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
@@ -156,13 +156,13 @@ Design decided 2026-10-02, not scheduled for building (E-22).
 
 Rules
 - R-238-01  Given literal workers (E-22 S-167), When they work, Then each is drawn walking to a source, gathering there, and walking to a drop-off; a worker is a unit and counts in the unit budgets (S-240).
-- R-238-02  Given a shipment on its way to a base (E-22 S-176), When the receiving side's screen is drawn, Then the shipment is not shown, because that side has no vision of it [Q-238-02: whether a side with vision of the lane sees it, and how one that arrives is drawn].
+- R-238-02  Given a shipment on its way to a base (E-22 S-176), When the receiving side's screen is drawn, Then the shipment is not shown, because that side has no vision of it at all, and nothing on screen tells the side that a shipment was killed.
 - R-238-03  Given an environmental trouble travelling across the map (E-15), When it is drawn, Then it is seen moving by both sides, and what it passes over is drawn shut down.
 - R-238-04  Given a disguised or hidden building (E-22 S-172), When it is drawn, Then [Q-238-01: how it looks to its owner and to the enemy; how disguise works is Q-159-09].
 
 Inputs: worker, shipment, weather and disguise state from the tick delta.
 Outputs: screen.
-Open flags: Q-238-01, Q-238-02.
+Open flags: Q-238-01.
 
 ### S-239 — Pings and going dark, seen
 As a commander, I want a ping, an emitting force and a ping alert to read at a glance, so that the three layer actions are visible things.
@@ -232,7 +232,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-133-01, Q-134-01, Q-136-01, Q-236-01, Q-236-02, Q-237-01, Q-238-01, Q-238-02, Q-239-01, Q-240-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-133-01, Q-134-01, Q-136-01, Q-236-01, Q-236-02, Q-237-01, Q-238-01, Q-239-01, Q-240-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
