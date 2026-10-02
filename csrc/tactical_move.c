@@ -1400,7 +1400,6 @@ static void om_move_steer_step(om_world *w, om_move_state *ms, om_move_unit *mu,
     }
     steer_x = dx / dist;
     steer_y = dy / dist;
-    mu->facing = om_move_turn_toward(mu->facing, om_atan2(dy, dx), om_move_turn_rate_for(mu->native_speed), period);
     if (mu->deflecting && mu->detour_remaining > 0.0) {
         steer_x = mu->detour_dx;
         steer_y = mu->detour_dy;
@@ -1545,6 +1544,43 @@ static void om_move_tick_unit(om_world *w, om_move_state *ms, uint32_t id, uint3
     }
 }
 
+/* PP-move P7 (R-100-01, PURSUE_BY_STEERING): after the moves and the collision pass, every living unit turns
+ * (at its category's capped rate) toward its engaged target when that target is within 1.5 x its attack
+ * range, else toward its move target, else along its velocity this tick; with none of those it keeps its
+ * facing. A stationary unit that is firing turns too. Python facing.py update_facing.
+ * See also: the facing writes in om_move_tick_unit, which this replaces when the switch is 0. */
+#define OM_PP_FACING_ENGAGE_MULT 1.5
+#define OM_PP_FACING_MIN_MOVE_SQ 1.0
+static void om_move_face_pass(om_world *w, om_move_state *ms, uint32_t period) {
+    uint32_t id;
+    for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
+        om_move_unit *mu = &ms->units[id];
+        uint32_t tgt;
+        double dx = 0.0, dy = 0.0, reach;
+        int have = 0;
+        if (!mu->in_use || !om_unit_alive(w, id)) continue;
+        tgt = om_unit_get_target(w, id);
+        if (tgt != 0 && om_unit_alive(w, tgt)) {
+            const om_move_unit *tm = om_move_get(ms, tgt);
+            reach = om_unit_profile_attack_range(w, om_unit_get_unit_type(w, id)) * OM_PP_FACING_ENGAGE_MULT;
+            dx = (tm && tm->in_use ? tm->x : om_unit_position_x(w, tgt)) - mu->x;
+            dy = (tm && tm->in_use ? tm->y : om_unit_position_y(w, tgt)) - mu->y;
+            have = dx * dx + dy * dy <= reach * reach;
+        }
+        if (!have && mu->has_dest) {
+            dx = mu->dest_x - mu->x;
+            dy = mu->dest_y - mu->y;
+            have = dx * dx + dy * dy > OM_PP_FACING_MIN_MOVE_SQ;
+        }
+        if (!have) {
+            dx = mu->x - mu->prev_x;
+            dy = mu->y - mu->prev_y;
+            have = dx * dx + dy * dy > OM_PP_FACING_MIN_MOVE_SQ;
+        }
+        if (have) mu->facing = om_move_turn_toward(mu->facing, om_atan2(dy, dx), om_move_turn_rate_for(mu->native_speed), period);
+    }
+}
+
 static void om_move_groups_check_arrival(om_move_state *ms) {
     double tol = OM_ARRIVAL_TOLERANCE_MULT * OM_UNIT_COLLISION_RADIUS;
     uint32_t g, m;
@@ -1583,6 +1619,7 @@ static void om_move_tick_once(om_world *w, om_move_state *ms, uint64_t new_tick,
         om_move_tick_unit(w, ms, id, period);
     }
     om_move_collision_pass_internal(w, ms);
+    if (om_move_param_on(ms, OM_TP_PURSUE_BY_STEERING)) om_move_face_pass(w, ms, period);
     om_move_groups_check_arrival(ms);
 }
 
