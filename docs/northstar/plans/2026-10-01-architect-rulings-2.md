@@ -673,3 +673,9 @@ Evidence: `docs/northstar/proving_ground/evidence/unowned_reds_2026-10-02.md`.
 
 **A136. Parity tolerance.** 1e-6 wu in position and 2e-3 rad in facing are carried in the tests as named, provisional values. They are Westley's to confirm, at the Phase B read, beside the measured largest difference per scene. Tightening needs no one; loosening needs him.
 
+
+## Addendum 47, 2026-10-02 (builder: waves in parallel, owner rows)
+
+**A137. Waves A2 and A3 may run in parallel** straight after the A1 landing, without waiting for my reply to a wave report: A2 on `tactical_move.c`, `tactical_support.c` and `fog.c`, A3 on `unit.c` (P2, P1, P6). They are different files under different pieces. P5 touches both `unit.c` and `tactical_move.c` and so runs after both; A4 runs after A2. Reports for A1 to A4 are sent as each wave lands and the builder carries on. It still stops at once for an unclear rule, a missed budget, or anything that would loosen a number, and it stops at the end of Phase A for the Phase B read with Westley.
+
+**A138. Owner rows.** The builder may add `pieces.toml` rows for files of its own pieces (`PP-*`, `SL-harness`) when the footprint fence needs them, with the owner lint clean, and names them in the wave report. It changes no other piece's row. The rows added at 7e5f10ce and after are accepted.
