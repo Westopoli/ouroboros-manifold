@@ -887,6 +887,20 @@ status = "pending"
 tests_pending = true
 size_estimate = "ENABLE_DEBUG_OVERLAY default false"
 
+# Rulings round 2, A58: era pack manifests gain scale, tone and order (Era Library).
+# greek_placeholder's manifest is K2's; pack_validate.py is K1's.
+[[piece]]
+id = "G-eramanifest"
+manager = "M3"
+wave = 4
+owns = ["assets/eras/settled_reach/manifest.json", "assets/eras/test_era/manifest.json"]
+owns_glob = []
+acceptance = []
+depends_on = ["K1"]
+status = "pending"
+tests_pending = true
+size_estimate = "three identity keys per manifest, test_only on test_era"
+
 # Contract docs pieces (A4 frame docs, B6 frame docs) own the pipe frame spec.
 [[piece]]
 id = "DOCS-arch"

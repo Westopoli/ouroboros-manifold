@@ -97,7 +97,7 @@ Rules
 - R-069-04  Given an entry is printing, When the player clicks it, Then nothing happens; Given it is printed (blinking cursor shown), When clicked, Then the expanded form overlays the scroll and the map, clock, and any printing entry pause; dismissing resumes from the exact word and frame.
 - R-069-05  Given every chronicle entry, When keyframes are chosen, Then the map has a keyframe within the entry's tick range; and every ownership change has a keyframe whether or not it has an entry.
 - R-069-06  Given a T2 screenshot at the end of the narration phase, When compared, Then the number of entries on screen equals the number the distiller produced.
-- R-069-07  Given a printed entry, When the player clicks a faction name or a system name in it, Then the galaxy centres on that faction's territory or that system; the sim sends each name's position in the text with the entry, and no other words are clickable (Q-069-02).
+- R-069-07  Given a printed entry, When the player clicks a faction name or a system name in it, Then the galaxy centres on that faction's territory or that system; the sim sends the entry's text and each name's position in it, the client shows that text as sent, and no other words are clickable (Q-069-02).
 
 Inputs: scroll entries with tick ranges; ownership timeline (every 2 ticks); player clicks.
 Outputs: on-screen scroll; map animation; pause state.

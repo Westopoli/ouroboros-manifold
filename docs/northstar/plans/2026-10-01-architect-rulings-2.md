@@ -434,3 +434,20 @@ Rule text changed in the same commit: E-16 R-110-02 and R-110-07, E-09 R-069-03 
 **A62. Left-drag is grab-style on both axes** (Westley: "Flip the left-click drag direction"). The galaxy follows the pointer vertically as well as horizontally. This replaces the drag sentence of A57: `push/C5-G3-impl`'s grab-style drag was right and stays; the prototype is being corrected to match.
 
 **A63. The prototype's territory bubbles.** Westley confirmed the look of the prototype before a790cb20 (the metaball shells at their original proportion) as the correct one. A Doer is correcting the prototype on `push/mockup-galaxy-scale`: the whole civilization layer shrunk 20 times by one shared factor with the bubbles keeping their proportion, the systems spread through a volume instead of a flat disc, and the backdrop galaxy left at its size. The live galaxy's shells and scale follow that prototype once Westley has approved it by eye; until then C5 does not copy shell or scale constants from the current prototype on main, whose bubbles are invisible.
+
+## Addendum 26, 2026-10-02 (batch 3: HDR5 gate, owner rows, the mentions contract, a display-only test race)
+
+**A64. HDR5 lands.** The `symbol_ownership` hit on `om_gen_set_region_range` is a comment-only change on a declaration line, a false positive; it is accepted for this landing and named in the ledger row with the A49 evidence (both new scale tests pass under `OM_SCALE=1`; the two known reds are E-02 memory and E-17 field sampling). The lint gap is fixed afterwards as a harness piece with a positive control.
+
+**A65. Owner rows.** Added in this commit: `G-eramanifest` (the `settled_reach` and `test_era` manifests). The validator change takes K1's next id and the `greek_placeholder` manifest K2's. No new rows for G-C3, mentions or the quality setting: their units take the next id of each file's existing owner, as round 1 ruled. Order for G-C3: `generational.c` (snapshots, after `B6-collapse-pick`), `chronicle.c` (keyframes), `om_pipe.c`, then `c_bridge.gd` and `time_jump_sequencer.gd`. The mentions units follow the G-C3 pipe unit. On `autoload/ui_data_bus.gd` (`G-uidatabus`): the galaxy quality setting first, then the Era Library unit.
+
+**A66. Mentions contract** (`push/GC2-contract`).
+- (a) Confirmed, with `expanded_text` and `expanded_mentions` kept: the chronicle frame carries the sim's text and the client shows it as sent. The sim is the one source of chronicle prose; the client's rebuilding of prose from fragment ids leaves the live path in the client unit, and `fragment` / `fragment_ids` stay in the frame as data. R-069-07 says so. This does not change A4-2, which is about the mission frame.
+- (b) Offsets are Unicode code points.
+- (c) A region mention carries the id of the region whose name was printed, and a click centres on exactly that region.
+- (d) A faction click centres on the centroid of that faction's systems at the Regional distance.
+- (e) A name the echo-dedup step replaced with a synonym is no longer a name and carries no mention.
+- (f) Two regions printing the same name is a defect of the same kind as the faction names (A55): the region name pool is extended with simple invented names, built from syllable combinations, so every region in a 512-region world has its own. Own small piece under the naming owner.
+- One check before the mentions client unit lands (Engineer, reported): for every region and faction of a seeded world, the name the galaxy view shows equals the name the chronicle text prints. If they differ, the two screens have two naming sources; report it, and the fix (the client taking names from the sim) is ruled then.
+
+**A67. `tests/test_tactical_view.gd` on a real display.** Both failures are test defects, approved for an Engineer with ledger rows: the tick check races an extra `_process` on a rendered display (the fix makes the test independent of how many frames ran before it stops processing; the expected tick per step is unchanged), and the pixel check assumes 1920x1080 where it should read the viewport's actual size.
