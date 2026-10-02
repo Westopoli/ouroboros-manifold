@@ -158,6 +158,7 @@ Kept as leads, to be re-measured on the real engine (transfer class T2 or T3):
 - One skill, one map, one size; then widen.
 - A surprising result is first a question about the instrument.
 - Win rate misleads in a system without dice.
+- Position matters when measuring numbers. Two armies walked straight at each other collapse into two flat rows, and the number measured is the walk's. "A real battle isn't going to be a line feeding into each other, it's going to be a blob if they're mediocre players, or a spread out line if they're skilled players" (Westley, 2026-10-02). Setups place units as a player of that skill would have them at contact (`runs/2026-10-02_harness_check.md`).
 
 ## 12. Open
 
