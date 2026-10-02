@@ -133,7 +133,7 @@ Rules
 - R-087-01  Given a unit taking damage from an attacker it cannot see or cannot reach, When the loop runs, Then it moves 200 wu directly away from the damage direction and stops; once the attacker is visible and in range it stands and fights.
 - R-087-02  Given a unit with an active player order, When the loop runs, Then the order wins over auto-engagement; a plain move never acquires or returns fire.
 - R-087-03  Given an idle or attack-moving unit with an enemy within attack range on its layer, When targets are evaluated, Then it attacks the nearest such enemy; an engaged target still alive and in range is kept.
-- R-087-04  Given an attack-moving unit with no enemy in attack range but a visible one within sensor range, When evaluated, Then it moves toward the nearest visible enemy.
+- R-087-04  Given an attack-moving unit whose target is not within its attack range and a visible enemy within sensor range, When evaluated, Then its move goal becomes the nearest visible enemy and it walks there by its ordinary movement (R-097-03), steering around units in its way; it holds position only while its own target is within its attack range, and pursues again when the target leaves that range.
 - R-087-05  Given an attack-moving unit that acquires a target, When it does, Then it anchors at its position, and if the target moves more than 200 wu from the anchor it drops the target and resumes its path.
 - R-087-06  Given an idle unit with no target and no order taking damage, When hit, Then it targets the attacker (return fire); an already-engaged unit ignores incoming damage for targeting.
 - R-087-07  Given a supply or evacuation unit, When the loop runs, Then it never attacks; it flinches and otherwise holds.
