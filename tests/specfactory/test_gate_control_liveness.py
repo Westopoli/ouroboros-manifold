@@ -290,7 +290,7 @@ def test_gate_step_is_skipped_in_revert_mode(tmp_path):
 
 REAL_PIECES = REPO / "docs" / "northstar" / "plans" / "push" / "pieces.toml"
 REAL_PLACEHOLDERS = REPO / "docs" / "northstar" / "spec_factory" / "placeholder_controls.txt"
-DEAD_E08 = "test_control_e08_window_time_jump_clamp_skipped.py"
+DEAD_E04 = "test_control_e04_chain_counter_unsaved.py"
 
 
 def test_real_repo_piece_with_only_live_controls_passes(tmp_path):
@@ -301,14 +301,26 @@ def test_real_repo_piece_with_only_live_controls_passes(tmp_path):
     assert "LIVE=1" in detail and "placeholders_skipped=" in detail
 
 
-def test_real_repo_rejects_b7_for_its_dead_time_jump_control(tmp_path):
-    """Green because the gate rejects. B7 attached (84bdfa5) with E-08's OM_BUG_TIME_JUMP_CLAMP_SKIPPED
-    branch never planted in csrc/generational.c, so the control cannot trip (live_controls_not_tripping_
-    2026-10-02.md, row 3). Positive control on the real repo.
-    See also: A114 item 3. When that branch lands the control goes LIVE and this test is flipped to
-    assert ok is True, in the same change (ledger row)."""
-    assert DEAD_E08 in [p.name for p in mgs.piece_controls(["B7"], REAL_PIECES, REPO)]
-    ok, detail = mgs.control_liveness_check(REPO, ["B7"], REAL_PIECES, REAL_PLACEHOLDERS,
+def test_real_repo_rejects_b1_for_its_dead_chain_counter_control(tmp_path):
+    """Green because the gate rejects. B1 (E-04) carries test_control_e04_chain_counter_unsaved.py, whose
+    injected bug cannot trip today (live_controls_not_tripping_2026-10-02.md, row e04; no fix planned).
+    Positive control on the real repo. Moved here from B7/e08 when the e08 hook landed (ledger row
+    TD-A114-b7-real-repo).
+    See also: when e04 chain_counter_unsaved is fixed, this test must move again to another control that
+    is still dead on main (candidates: e03 starting_ratio_swapped, piece B4, until G-controls fixes it;
+    e11 brace_reduction, piece B10, until its hook lands), in the same change as the fix."""
+    assert DEAD_E04 in [p.name for p in mgs.piece_controls(["B1"], REAL_PIECES, REPO)]
+    ok, detail = mgs.control_liveness_check(REPO, ["B1"], REAL_PIECES, REAL_PLACEHOLDERS,
                                             scratch_root=tmp_path / "scr", python_exe=PYTHON)
     assert ok is False
-    assert DEAD_E08 in detail and "DEAD" in detail
+    assert DEAD_E04 in detail and "DEAD" in detail
+
+
+@pytest.mark.parametrize("piece", ["B7", "B8"])
+def test_real_repo_b7_and_b8_pass_with_live_hooks(tmp_path, piece):
+    """B7 (E-08, OM_BUG_TIME_JUMP_CLAMP_SKIPPED) and B8 (E-09) have their hooks planted: the step reports
+    OK with LIVE counts (their other controls are listed placeholders)."""
+    ok, detail = mgs.control_liveness_check(REPO, [piece], REAL_PIECES, REAL_PLACEHOLDERS,
+                                            scratch_root=tmp_path / "scr", python_exe=PYTHON)
+    assert ok is True, detail
+    assert "DEAD=0" in detail and "LIVE=1" in detail
