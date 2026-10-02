@@ -3,7 +3,7 @@
 
 The file is written on the first machine (SKILLAB_WRITE_GOLDEN=1) and must match on the second.
 SKILLAB_WRITE_GOLDEN=1 refuses to overwrite an existing file; only SKILLAB_WRITE_GOLDEN=force does.
-The planted hash covers the rows of every fight in the identical and reach scans (8..24) and both
+The planted hash covers the rows of every fight in the identical and damage scans (8..24) and both
 scans' beats and loses_to, the same two scans the `controls` command runs.
 A mismatch is a determinism finding to report to the design chat, never a value to patch.
 """
@@ -55,19 +55,19 @@ def controls():
     mirror = scan.cell(plays.blob_play(16), 16, REPLICATES)
     numbers = scan.cell(plays.blob_play(16), 8, REPLICATES)
     identical = scan.scan(plays.blob_play(16), 16, ENEMY_FROM, ENEMY_TO, REPLICATES)
-    reach = scan.scan(plays.reach_play(16), 16, ENEMY_FROM, ENEMY_TO, REPLICATES)
-    return {"mirror": mirror, "numbers": numbers, "identical": identical, "reach": reach}
+    damage = scan.scan(plays.damage_play(16), 16, ENEMY_FROM, ENEMY_TO, REPLICATES)
+    return {"mirror": mirror, "numbers": numbers, "identical": identical, "damage": damage}
 
 
 @pytest.fixture(scope="module")
 def hashes(controls, tmp_path_factory):
     tmp = tmp_path_factory.mktemp("cross_machine")
-    planted_rows = _scan_rows("identical", controls["identical"]) + _scan_rows("reach", controls["reach"])
+    planted_rows = _scan_rows("identical", controls["identical"]) + _scan_rows("damage", controls["damage"])
     planted = hashlib.sha256()
     planted.update(_csv_hash(tmp, "planted", planted_rows).encode())
     planted.update(json.dumps({
         "identical": [controls["identical"].beats, controls["identical"].loses_to],
-        "reach": [controls["reach"].beats, controls["reach"].loses_to],
+        "damage": [controls["damage"].beats, controls["damage"].loses_to],
     }, sort_keys=True).encode())
     return {
         "mirror": _csv_hash(tmp, "mirror", _cell_rows("mirror", controls["mirror"])),
@@ -99,7 +99,7 @@ def test_control_hashes_are_distinct_without_labels(controls, tmp_path):
     """AC 26 positive control, non-vacuous: with no play or enemy_heads label, the rows of the three controls
     still hash differently, and their margin columns differ, so a detector that sees only labels is caught."""
     planted_fights = [f for c in controls["identical"].cells for f in c.fights] + \
-        [f for c in controls["reach"].cells for f in c.fights]
+        [f for c in controls["damage"].cells for f in c.fights]
     fights = {"mirror": controls["mirror"].fights, "numbers": controls["numbers"].fights,
               "planted": planted_fights}
     free = {k: _csv_hash(tmp_path, "free_" + k, _label_free(v)) for k, v in fights.items()}

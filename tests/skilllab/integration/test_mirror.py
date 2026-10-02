@@ -1,5 +1,9 @@
 # spec: docs/northstar/plans/skilllab-harness-spec.md::Acceptance criteria::AC-21
-"""AC 21 mirror control: identical sides, 16 v 16, both spawn orders, 10 replicates."""
+"""AC 21 mirror control: identical sides, 16 v 16, both spawn orders, 10 replicates, mean margin within 0.10 of zero.
+
+Positive control: 17 against 16 reads a mean margin above 0.10. The first-spawner edge of the first draft
+does not show once positions are shifted (docs/northstar/research/layer_dynamics/runs/2026-10-02_harness_check.md).
+"""
 import statistics
 import sys
 from pathlib import Path
@@ -10,11 +14,11 @@ ROOT = Path(__file__).resolve().parents[3]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.skilllab import engine, fight, plays, scan  # noqa: E402
+from scripts.skilllab import engine, plays, scan  # noqa: E402
 
 SIZE = 16
 REPLICATES = 10
-TOLERANCE = 0.05
+TOLERANCE = 0.10   # Westley, 2026-10-02: one fight swings about 0.17 on the position shifts
 
 
 @pytest.fixture(scope="module")
@@ -28,15 +32,12 @@ def mirror_cell(library):
 
 
 @pytest.fixture(scope="module")
-def forced_no_swap_cell(library):
-    def never_swap(setup, seed, swap):
-        return fight.fight(setup, seed, False)
-
-    return scan.cell(plays.blob_play(SIZE), SIZE, REPLICATES, fight_fn=never_swap)
+def seventeen_cell(library):
+    return scan.cell(plays.blob_play(SIZE + 1), SIZE, REPLICATES)
 
 
 def test_mirror_mean_margin_within_tolerance_of_zero(mirror_cell):
-    """AC 21: both orders x 10 replicates, mean margin within 0.05 of zero."""
+    """AC 21: both orders x 10 replicates, mean margin within 0.10 of zero."""
     assert len(mirror_cell.fights) == 2 * REPLICATES
     assert abs(mirror_cell.mean_margin) <= TOLERANCE, mirror_cell.mean_margin
 
@@ -57,8 +58,8 @@ def test_mirror_fights_actually_happened(mirror_cell):
         [f.outcome for f in mirror_cell.fights]
 
 
-def test_mirror_positive_control_swap_forced_off_shows_first_spawner_ahead(forced_no_swap_cell):
-    """AC 21 positive control: swap forced False everywhere, side 0 spawns first and leads by more than 0.05."""
-    assert len(forced_no_swap_cell.fights) == 2 * REPLICATES
-    assert forced_no_swap_cell.mean_margin > TOLERANCE, forced_no_swap_cell.mean_margin
-
+def test_mirror_positive_control_seventeen_against_sixteen_reads_ahead(seventeen_cell):
+    """AC 21 positive control: the same cell with 17 against 16 reads a mean margin above 0.10."""
+    assert len(seventeen_cell.fights) == 2 * REPLICATES
+    assert all(f.heads == (SIZE + 1, SIZE) for f in seventeen_cell.fights)
+    assert seventeen_cell.mean_margin > TOLERANCE, seventeen_cell.mean_margin

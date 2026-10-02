@@ -116,6 +116,14 @@ def reach_play(size: int, unit: str = "Vanguard", factor: float = 1.2) -> BuildF
     raise NotImplementedError
 
 
+def damage_play(size: int, unit: str = "Vanguard", factor: float = 1.2) -> BuildFn:
+    raise NotImplementedError
+
+
+def unit_stats(name: str) -> dict:
+    raise NotImplementedError
+
+
 # scan.py
 def cell(build: BuildFn, enemy_heads: int, replicates: int,
          win_margin: float = WIN_MARGIN, fight_fn: Any = None) -> CellResult:
