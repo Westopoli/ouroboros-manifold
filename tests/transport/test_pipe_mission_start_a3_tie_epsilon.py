@@ -18,8 +18,9 @@ Region, value and seed are fixtures, not thresholds.
 OM_TIE_EPSILON is 1e-12 (csrc/om_internal.h, not visible to the pipe: contract gap).
 
 Controls: with the same patch moved by 1e-3 either way the gap is outside epsilon and the
-larger total wins (faction 9 when it leads, faction 1 when it leads); those two pass on today's
-pipe and prove the sub-epsilon case is the only thing that flips.
+larger total wins (faction 9 when it leads, faction 1 when it leads); they prove the
+sub-epsilon case is the only thing that flips the pick. They share the helper with the tie
+test, so all three read the enemy from a full tactical frame (`"full": true`, A7).
 """
 import ctypes
 import json
@@ -146,7 +147,7 @@ def _fallback_enemy(tmp_path, data):
         {"type": "cmd", "name": "mission_start", "faction": 0},
         {"type": "cmd", "name": "snapshot"},
         {"type": "cmd", "name": "mission_begin"},
-        {"type": "cmd", "name": "tactical_step", "n": 1},
+        {"type": "cmd", "name": "tactical_step", "n": 1, "full": True},  # A7: a delta frame has no `units`
     ])
     errors = [f for f in frames if f["type"] == "error"]
     assert not errors, errors
