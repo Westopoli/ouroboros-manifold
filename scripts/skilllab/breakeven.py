@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Any, Optional
 
 from scripts.skilllab.contract import BuildFn, CellResult, ScanResult, Setup, WIN_MARGIN
-from scripts.skilllab.scan import run_jobs, scan
+from scripts.skilllab.scan import cell_jobs, cell_result, run_jobs, scan
 
 
 @dataclass
@@ -40,17 +40,6 @@ def _flips(cells: list) -> list:
             for a, b in zip(cells, cells[1:]) if a.won != b.won]
 
 
-def _extend(cell: CellResult, build: BuildFn, start: int, stop: int, win_margin: float,
-            fight_fn: Any, map_fn: Any) -> CellResult:
-    new = run_jobs([(build(cell.enemy_heads, swap), seed, swap)
-                    for swap in (False, True) for seed in range(start, stop)], fight_fn, map_fn)
-    fights = cell.fights + new
-    mean_margin = sum(f.margin for f in fights) / len(fights)
-    decided = all(f.outcome not in ("stalemate", "cap") for f in fights)
-    return CellResult(enemy_heads=cell.enemy_heads, fights=fights, mean_margin=mean_margin,
-                      won=mean_margin > win_margin and decided)
-
-
 def find_break_even(build: BuildFn, size: int, enemy_from: int, enemy_to: int, replicates: int = 10,
                     near_replicates: int = 30, max_rounds: int = 2, win_margin: float = WIN_MARGIN,
                     fight_fn: Any = None, map_fn: Any = None) -> BreakEven:
@@ -70,9 +59,15 @@ def find_break_even(build: BuildFn, size: int, enemy_from: int, enemy_to: int, r
         before = [(f.before, f.after) for f in flips]
         near = {h for pair in before for h in pair} - refined
         if near_replicates > replicates:
-            for i, c in enumerate(cells):
-                if c.enemy_heads in near:
-                    cells[i] = _extend(c, build, replicates, near_replicates, win_margin, fight_fn, map_fn)
+            idx = [i for i, c in enumerate(cells) if c.enemy_heads in near]
+            per_cell = [cell_jobs(build, cells[i].enemy_heads, replicates, near_replicates) for i in idx]
+            if idx:
+                results = run_jobs([j for jobs in per_cell for j in jobs], fight_fn, map_fn)
+                pos = 0
+                for i, jobs in zip(idx, per_cell):
+                    cells[i] = cell_result(cells[i].enemy_heads, cells[i].fights + results[pos:pos + len(jobs)],
+                                           win_margin)
+                    pos += len(jobs)
             refined |= near
         flips = _flips(cells)
         if [(f.before, f.after) for f in flips] == before:

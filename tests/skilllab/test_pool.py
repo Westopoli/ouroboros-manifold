@@ -232,24 +232,70 @@ def test_cell_map_fn_jobs_match_serial_order_and_result():
     assert got == expected
 
 
-def test_scan_map_fn_one_call_per_cell_in_serial_order():
-    """Scan hands the map_fn one batch per cell, concatenating to the serial job order; same ScanResult."""
+def test_scan_map_fn_is_one_call_with_all_cells_in_serial_order():
+    """Scan hands the map_fn ONE batch of every cell's jobs, in the serial order; same ScanResult."""
     ser, bat = Serial(), Batched()
     expected = scan(_build, 4, 2, 5, replicates=2, fight_fn=ser)
     got = scan(_build, 4, 2, 5, replicates=2, map_fn=bat)
-    assert len(bat.batches) == 4
+    assert len(bat.batches) == 1
     assert bat.jobs == ser.jobs
+    assert len(bat.batches[0]) == 4 * 2 * 2
     assert got == expected
 
 
-def test_find_break_even_map_fn_includes_refinement_batches():
-    """Scan and refinement batches concatenate to the serial job order; same BreakEven."""
+def test_find_break_even_map_fn_one_call_for_scan_then_one_per_refinement_round():
+    """Initial scan is one call; the one round that adds fights is one call; same job order and BreakEven."""
     ser, bat = Serial(), Batched()
     kw = dict(replicates=2, near_replicates=4, max_rounds=2)
     expected = find_break_even(_build, 4, 2, 5, fight_fn=ser, **kw)
     got = find_break_even(_build, 4, 2, 5, map_fn=bat, **kw)
     assert expected.refined, "the fake margins must produce a flip so refinement runs"
-    assert len(bat.batches) > 4, "refinement batches follow the four scan cells"
+    assert expected.rounds == 1
+    assert len(bat.batches) == 1 + 1
+    assert len(bat.batches[0]) == 4 * 2 * 2
+    heads = [job[0].unit_types["enemy"] for job in bat.batches[1]]
+    assert heads == sorted(heads) and set(heads) == {3, 4}
+    assert bat.jobs == ser.jobs
+    assert got == expected
+
+
+def _moving_margin(setup, seed, swap):
+    # Cell 10 flips to a loss only once refined (seeds 2, 3), so the break-even moves and round 2 fires.
+    enemy = setup.unit_types["enemy"]
+    if enemy == 10:
+        return 0.5 if seed < 2 else -0.5
+    return 0.5 if enemy <= 9 else -0.5
+
+
+def test_find_break_even_map_fn_two_adding_rounds_make_three_calls():
+    """Calls = 1 + rounds that added jobs; each round's batch is its near cells in increasing headcount."""
+    ser, bat = Serial(), Batched()
+    kw = dict(replicates=2, near_replicates=4, max_rounds=2)
+    old = globals()["_margin"]
+    globals()["_margin"] = _moving_margin
+    try:
+        expected = find_break_even(_build, 4, 8, 13, fight_fn=ser, **kw)
+        got = find_break_even(_build, 4, 8, 13, map_fn=bat, **kw)
+    finally:
+        globals()["_margin"] = old
+    assert expected.rounds == 2
+    assert len(bat.batches) == 3
+    assert len(bat.batches[0]) == 6 * 2 * 2
+    for batch, cells in zip(bat.batches[1:], ({10, 11}, {9})):
+        heads = [job[0].unit_types["enemy"] for job in batch]
+        assert heads == sorted(heads) and set(heads) == cells
+        assert len(batch) == len(cells) * 4
+    assert bat.jobs == ser.jobs
+    assert got == expected
+
+
+def test_find_break_even_map_fn_round_adding_nothing_makes_no_call():
+    """near_replicates == replicates: refinement adds no fights, so only the scan call happens."""
+    ser, bat = Serial(), Batched()
+    kw = dict(replicates=2, near_replicates=2, max_rounds=2)
+    expected = find_break_even(_build, 4, 2, 5, fight_fn=ser, **kw)
+    got = find_break_even(_build, 4, 2, 5, map_fn=bat, **kw)
+    assert len(bat.batches) == 1
     assert bat.jobs == ser.jobs
     assert got == expected
 
@@ -295,3 +341,5 @@ def test_map_fn_wrong_result_count_raises(delta):
         cell(_build, 3, 2, map_fn=bad)
     with pytest.raises(ValueError):
         swap_control(_build, 3, 2, map_fn=bad)
+    with pytest.raises(ValueError):
+        scan(_build, 4, 2, 3, replicates=2, map_fn=bad)

@@ -46,3 +46,14 @@ def test_pooled_scan_equals_serial_scan_field_by_field():
         assert (a.enemy_heads, a.mean_margin, a.won) == (b.enemy_heads, b.mean_margin, b.won)
         assert a.fights == b.fights
     assert pooled == serial
+
+
+def test_pooled_find_break_even_equals_serial():
+    """Blob 4 against 3..5, replicates 2, near 3, one round: workers 2 equals the serial result."""
+    from scripts.skilllab.breakeven import find_break_even
+    build = plays.blob_play(4)
+    kw = dict(replicates=2, near_replicates=3, max_rounds=1)
+    serial = find_break_even(build, 4, 3, 5, **kw)
+    with FightPool(2) as fp:
+        pooled = find_break_even(build, 4, 3, 5, map_fn=fp.map, **kw)
+    assert pooled == serial

@@ -25,8 +25,15 @@ def cell(build: BuildFn, enemy_heads: int, replicates: int,
          win_margin: float = WIN_MARGIN, fight_fn: Any = None, map_fn: Any = None) -> CellResult:
     if replicates < 1:
         raise ValueError("replicates must be at least 1")
-    fights = run_jobs([(build(enemy_heads, swap), seed, swap)
-                       for swap in (False, True) for seed in range(replicates)], fight_fn, map_fn)
+    fights = run_jobs(cell_jobs(build, enemy_heads, 0, replicates), fight_fn, map_fn)
+    return cell_result(enemy_heads, fights, win_margin)
+
+
+def cell_jobs(build: BuildFn, enemy_heads: int, start: int, stop: int) -> list:
+    return [(build(enemy_heads, swap), seed, swap) for swap in (False, True) for seed in range(start, stop)]
+
+
+def cell_result(enemy_heads: int, fights: list, win_margin: float) -> CellResult:
     mean_margin = sum(f.margin for f in fights) / len(fights)
     decided = all(f.outcome not in ("stalemate", "cap") for f in fights)
     return CellResult(enemy_heads=enemy_heads, fights=fights, mean_margin=mean_margin,
@@ -39,8 +46,11 @@ def scan(build: BuildFn, size: int, enemy_from: int, enemy_to: int, replicates: 
         raise ValueError("replicates must be at least 1")
     if enemy_from > enemy_to:
         raise ValueError("enemy_from must not exceed enemy_to")
-    cells = [cell(build, heads, replicates, win_margin, fight_fn, map_fn)
-             for heads in range(enemy_from, enemy_to + 1)]
+    heads_range = range(enemy_from, enemy_to + 1)
+    per_cell = [cell_jobs(build, heads, 0, replicates) for heads in heads_range]
+    results = run_jobs([job for jobs in per_cell for job in jobs], fight_fn, map_fn)
+    cells = [cell_result(heads, results[i * len(jobs):(i + 1) * len(jobs)], win_margin)
+             for i, (heads, jobs) in enumerate(zip(heads_range, per_cell))]
     beats = loses_to = None
     for prev, cur in zip(cells, cells[1:]):
         if prev.won and not cur.won:
