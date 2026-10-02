@@ -60,11 +60,11 @@
 /* ---------------------------------------------------------------- setup */
 
 #define OM_MOVE_MAX_UNITS (OM_MAX_UNITS + 1)
-#define OM_MOVE_MAX_GROUPS 64
-#define OM_MOVE_MAX_GROUP_MEMBERS 64
+#define OM_MOVE_MAX_GROUPS OM_MAX_UNITS
+#define OM_MOVE_MAX_GROUP_MEMBERS OM_MAX_UNITS
 #define OM_MOVE_MAX_DENSITY_CELLS 1024
 #define OM_MOVE_MAX_ROUTE_CACHE OM_MAX_UNITS
-#define OM_MOVE_MAX_QUEUE 1024
+#define OM_MOVE_MAX_QUEUE OM_MAX_UNITS
 #define OM_MOVE_BFS_CAP 512
 #define OM_MOVE_BFS_DIR_COUNT 4
 
@@ -167,7 +167,7 @@ typedef struct {
 typedef struct {
     int      active;
     uint32_t id;
-    uint32_t members[OM_MOVE_MAX_GROUP_MEMBERS];
+    uint32_t first_member;
     uint32_t n_members;
     double   click_x, click_y;
     double   speed_cap;
@@ -200,6 +200,8 @@ typedef struct {
 
     om_move_group groups[OM_MOVE_MAX_GROUPS];
     uint32_t      n_groups;
+    uint32_t      group_members[OM_MOVE_MAX_GROUP_MEMBERS];
+    uint32_t      n_group_members;
     uint32_t      next_group_id;
 
     uint64_t last_synced_tick;
@@ -903,6 +905,34 @@ static int om_move_is_stationary(const om_move_unit *mu) {
     return 0;
 }
 
+/* Takes a slot and n member entries; when either table is full, finished
+ * groups are dropped first (nothing reads a finished group but
+ * om_group_is_active, which reports a dropped one as not active). NULL when
+ * still full: the order is refused. */
+static om_move_group *om_move_group_alloc(om_move_state *ms, uint32_t n) {
+    om_move_group *grp;
+    if (n > OM_MOVE_MAX_GROUP_MEMBERS) return NULL;
+    if (ms->n_groups >= OM_MOVE_MAX_GROUPS || ms->n_group_members + n > OM_MOVE_MAX_GROUP_MEMBERS) {
+        uint32_t g, kept = 0, used = 0;
+        for (g = 0; g < ms->n_groups; g++) {
+            om_move_group *src = &ms->groups[g];
+            if (!src->active) continue;
+            memmove(&ms->group_members[used], &ms->group_members[src->first_member], src->n_members * sizeof(uint32_t));
+            ms->groups[kept] = *src;
+            ms->groups[kept].first_member = used;
+            used += src->n_members;
+            kept++;
+        }
+        ms->n_groups = kept;
+        ms->n_group_members = used;
+        if (ms->n_groups >= OM_MOVE_MAX_GROUPS || ms->n_group_members + n > OM_MOVE_MAX_GROUP_MEMBERS) return NULL;
+    }
+    grp = &ms->groups[ms->n_groups++];
+    grp->first_member = ms->n_group_members;
+    ms->n_group_members += n;
+    return grp;
+}
+
 static om_move_group *om_move_group_find(om_move_state *ms, uint32_t id) {
     uint32_t i;
     for (i = 0; i < ms->n_groups; i++) {
@@ -1413,7 +1443,7 @@ static void om_move_groups_check_arrival(om_move_state *ms) {
         int all_within = 1;
         if (!grp->active) continue;
         for (m = 0; m < grp->n_members; m++) {
-            om_move_unit *mu = om_move_get(ms, grp->members[m]);
+            om_move_unit *mu = om_move_get(ms, ms->group_members[grp->first_member + m]);
             double d;
             if (!mu) continue;
             cx += mu->x; cy += mu->y;
@@ -1484,7 +1514,16 @@ static void om_move_sync(om_world *w) {
 
 static void om_move_enqueue(om_world *w, om_move_state *ms, int kind, uint32_t unit, double x, double y) {
     om_move_queue_entry *q;
-    if (ms->n_queue >= OM_MOVE_MAX_QUEUE) return;
+    if (ms->n_queue >= OM_MOVE_MAX_QUEUE) {
+        /* entries from ticks already stepped are spent (om_replay_get_command_count_at_tick
+         * then no longer counts them); entries of this tick are pending and stay. */
+        uint32_t i, kept = 0;
+        for (i = 0; i < ms->n_queue; i++) {
+            if (ms->queue[i].tick >= ms->last_synced_tick) ms->queue[kept++] = ms->queue[i];
+        }
+        ms->n_queue = kept;
+        if (ms->n_queue >= OM_MOVE_MAX_QUEUE) return;
+    }
     q = &ms->queue[ms->n_queue++];
     q->in_use = 1;
     q->tick = om_tactical_tick(w);
@@ -1603,19 +1642,16 @@ uint32_t om_command_group_move(om_world *w, const uint32_t *ids, uint32_t n, dou
         if (d > OM_MAGIC_BOX_SPREAD_RADIUS) scattered = 1;
     }
 
+    grp = om_move_group_alloc(ms, n);
+    if (!grp) return 0;
     gid = ms->next_group_id++;
-    if (ms->n_groups < OM_MOVE_MAX_GROUPS) {
-        grp = &ms->groups[ms->n_groups++];
-    } else {
-        grp = &ms->groups[OM_MOVE_MAX_GROUPS - 1];
-    }
     grp->active = 1;
     grp->id = gid;
     grp->click_x = x;
     grp->click_y = y;
     grp->speed_cap = min_speed;
-    grp->n_members = (n < OM_MOVE_MAX_GROUP_MEMBERS) ? n : OM_MOVE_MAX_GROUP_MEMBERS;
-    for (i = 0; i < grp->n_members; i++) grp->members[i] = ids[i];
+    grp->n_members = n;
+    for (i = 0; i < n; i++) ms->group_members[grp->first_member + i] = ids[i];
 
     for (i = 0; i < n; i++) {
         om_move_unit *mu = om_move_touch(w, ms, ids[i]);
