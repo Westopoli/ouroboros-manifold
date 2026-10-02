@@ -1731,6 +1731,27 @@ void om_collision_pass(om_world *w) {
     om_move_push_positions(w, ms);
 }
 
+/* PP-move (ROUTE_AROUND_TERRAIN, R-098-02, R-007-01/02/06): the fire side of cover, the same test as fog.c's
+ * om_fog_cover_blocks plus the height: a cover disc blocks a line only when neither unit stands inside it
+ * and the line is on a layer the cover reaches (layers 0 to height - 1; for a line between two layers,
+ * the lower one). See also: fog.c om_fog_cover_blocks, the sight side. */
+static int om_combat_cover_blocks(const om_world *w, uint32_t p0, uint32_t p1, double ox, double oy, double tx, double ty) {
+    int32_t l0 = om_unit_get_layer(w, p0), l1 = om_unit_get_layer(w, p1), layer = l0 < l1 ? l0 : l1;
+    uint32_t i, n = om_map_cover_count(w);
+    double dx = tx - ox, dy = ty - oy, len2 = dx * dx + dy * dy;
+    for (i = 0; i < n; i++) {
+        double cx, cy, r, h, t, px, py;
+        if (!om_map_cover_at(w, i, &cx, &cy, &r, &h) || (double)layer >= h) continue;
+        if ((ox - cx) * (ox - cx) + (oy - cy) * (oy - cy) <= r * r || (tx - cx) * (tx - cx) + (ty - cy) * (ty - cy) <= r * r) continue;
+        t = len2 > 0.0 ? ((cx - ox) * dx + (cy - oy) * dy) / len2 : 0.0;
+        t = t < 0.0 ? 0.0 : (t > 1.0 ? 1.0 : t);
+        px = ox + dx * t - cx;
+        py = oy + dy * t - cy;
+        if (px * px + py * py < r * r) return 1;
+    }
+    return 0;
+}
+
 int om_combat_can_shoot(const om_world *w, uint32_t p0, uint32_t p1) {
     /* R-098-01: units never block fire, so no unit is consulted between the
      * endpoints. R-098-02: terrain (this module's density cells) and the
@@ -1750,13 +1771,15 @@ int om_combat_can_shoot(const om_world *w, uint32_t p0, uint32_t p1) {
     dy = om_unit_position_y(ww, p1) - y0;
     dist = sqrt(dx * dx + dy * dy);
     steps = (int)(dist / OM_LOS_SAMPLE_STEP);
+    if (om_move_param_on(ms, OM_TP_ROUTE_AROUND_TERRAIN) && om_combat_cover_blocks(w, p0, p1, x0, y0, x0 + dx, y0 + dy)) return 0;
     for (i = 1; i < steps; i++) {
         double t = (double)i / (double)steps;
         double px = x0 + t * dx, py = y0 + t * dy;
         om_gradient_properties g;
         if (om_move_density_at_pos(ms, px, py, 0) > OM_NAVMESH_OBSTACLE_THRESHOLD) return 0;
         om_map_sample_gradients(ww, px, py, &g);
-        if (g.cover_density > 0.0 || g.obstacle_density > OM_NAVMESH_OBSTACLE_THRESHOLD) return 0;
+        /* PP baseline only (switch = 0); deleted with the two movement switches at the end of Phase E (A140) */
+        if ((g.cover_density > 0.0 && !om_move_param_on(ms, OM_TP_ROUTE_AROUND_TERRAIN)) || g.obstacle_density > OM_NAVMESH_OBSTACLE_THRESHOLD) return 0;
     }
     return 1;
 }
