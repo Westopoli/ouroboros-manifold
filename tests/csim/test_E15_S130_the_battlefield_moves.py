@@ -47,81 +47,157 @@ def test_R_130_01_its_position_interpolation_along_its(lib, world_factory):
     assert pos_out.y == pytest.approx(50.0, abs=1e-4)
 
 
-CONTEST_RADIUS = 300.0  # OM_REINFORCEMENT_CAPTURE_RADIUS; drift span is half of it (150 wu), neither changed here
-PLAYER_FACTION = 1
-ENEMY_FACTION = 2
+ZONE_RADIUS = 400.0  # OM_MISSION_OBJECTIVE_COVER_RADIUS, the radius om_mission_tactical_tick uses
+DRIFT_SPAN = 150.0  # fixed by the drift API (synthesized waypoints); ping-pong furthest point at tick period / 2
+DRIFT_PERIOD = 100
+PLAYER_FACTION = 0
+ENEMY_FACTION = 1
+DEFENSIVE_STAND = 0  # the hold-zone archetype
+RAIDER = 0
 
 
-def _drifting_objective_world(lib, world_factory):
-    """World with faction 1 configured as the player (archetype 0) and faction 2 an enemy, one drifting objective."""
-    from conftest import set_faction
-    w = world_factory(n_regions=1)
-    set_faction(lib, w, PLAYER_FACTION, 0)
-    set_faction(lib, w, ENEMY_FACTION, 1)
-    lib.om_objective_setup_drifting(w, 0, 100)  # period 100
+def _hold_zone_mission(lib, world_factory, drifting=False):
+    """A built hold-zone mission through the live path (om_mission_setup, om_mission_build_objectives), no direct
+    om_mission_setup_hold_zone. Faction 0 is the player; faction 1 owns the mission region, so it is the enemy
+    om_mission_enemy_faction names. A drifting zone is test-only (A119): see om_objective_setup_drifting."""
+    from conftest import OMArchetype, set_faction, set_owner
+    lib.om_unit_position_x.restype = ctypes.c_double
+    lib.om_unit_position_y.restype = ctypes.c_double
+    lib.om_mission_get_objective_completion.restype = ctypes.c_double
+    w = world_factory(n_regions=2)
+    lib.om_world_set_feature(w, 8, 1)  # OMFeature.TACTICAL
+    set_faction(lib, w, PLAYER_FACTION, OMArchetype.PLAYER)
+    set_faction(lib, w, ENEMY_FACTION, OMArchetype.CONQUEROR)
+    set_owner(lib, w, 0, ENEMY_FACTION, held_since=-1)
+    set_owner(lib, w, 1, PLAYER_FACTION, held_since=-1)
+    lib.om_mission_setup(w, 0, DEFENSIVE_STAND, 0)
+    lib.om_mission_build_objectives(w, DEFENSIVE_STAND)
+    assert lib.om_mission_objective_count(w) == 1  # fixture check
+    if drifting:
+        lib.om_objective_setup_drifting(w, 0, DRIFT_PERIOD)
+    # A live player unit well outside every zone placed below keeps the mission running (no player units: it ends at once).
+    c = _center(lib, w)
+    lib.om_unit_spawn(w, RAIDER, PLAYER_FACTION, c.x, c.y + 3000.0, 0)
     return w
 
 
 def _center(lib, w):
     pos = OMVec2()
-    lib.om_objective_get_center(w, 0, ctypes.byref(pos))
+    assert lib.om_objective_get_center(w, 0, ctypes.byref(pos)) == 1
     return pos
 
 
-def test_R_130_02_hold_zone_moves_with_it(lib, world_factory):
-    """Given a drifting objective, When it moves, Then the hold zone moves with it and progress continues only while no enemy is inside the moved zone.
-
-    TD-A109-R-130-02 (test-defect): the old fixture put the enemy on the old centre, 150 wu (the drift span) from the moved
-    centre, still inside the 300 wu zone, so it could not show the zone moving. The enemy now stands on the far side of the old
-    centre from the drift direction: inside the old zone, outside the moved one. No constant changed (the span is a fixed
-    150 wu, so a longer path cannot be built through the drift API; the enemy's offset does the work)."""
-    w = _drifting_objective_world(lib, world_factory)
-    pos_0 = _center(lib, w)
-    lib.om_tactical_tick_to(w, 50)  # ping-pong: furthest point of the path
-    pos_50 = _center(lib, w)
-
-    # Center must have moved
-    drift = ((pos_50.x - pos_0.x) ** 2 + (pos_50.y - pos_0.y) ** 2) ** 0.5
-    assert drift == pytest.approx(150.0, abs=1e-3)  # fixture check
-
-    ux, uy = (pos_50.x - pos_0.x) / drift, (pos_50.y - pos_0.y) / drift
-    ex, ey = pos_0.x - 290.0 * ux, pos_0.y - 290.0 * uy
-    d_old = ((ex - pos_0.x) ** 2 + (ey - pos_0.y) ** 2) ** 0.5
-    d_new = ((ex - pos_50.x) ** 2 + (ey - pos_50.y) ** 2) ** 0.5
-    assert d_old < CONTEST_RADIUS < d_new  # fixture check: inside the old zone, outside the moved one
-
-    lib.om_unit_spawn_combat(w, ENEMY_FACTION, ex, ey)
-    assert lib.om_objective_is_contested(w, 0) == 0
+def _done(lib, w):
+    return lib.om_mission_get_objective_completion(w, 0)
 
 
-def test_control_R_130_02_enemy_inside_the_moved_zone_contests_it(lib, world_factory):
-    """Positive control for the zone-moved check: an enemy standing on the moved centre does contest it."""
-    w = _drifting_objective_world(lib, world_factory)
-    lib.om_tactical_tick_to(w, 50)
-    pos_50 = _center(lib, w)
-    lib.om_unit_spawn_combat(w, ENEMY_FACTION, pos_50.x, pos_50.y)
-    assert lib.om_objective_is_contested(w, 0) == 1
+def _run(lib, w, steps):
+    for _ in range(steps):
+        lib.om_tactical_step(w)
+
+
+def _dist(a, b):
+    return ((a.x - b.x) ** 2 + (a.y - b.y) ** 2) ** 0.5
 
 
 def test_R_130_02_a_friendly_unit_inside_the_zone_does_not_stop_progress(lib, world_factory):
-    """Given a hold zone, When only a friendly (player-faction) unit is inside it, Then the zone is not contested: progress continues only while no ENEMY is inside.
+    """Given a hold zone, When only a friendly (player-faction) unit is inside it, Then progress runs.
 
-    A109 real defect: om_objective_is_contested counts any living unit regardless of faction (csrc/tactical_support.c,
-    B14). RED until that filter lands. See also: test_R_130_02_an_enemy_inside_the_zone_stops_progress."""
-    w = _drifting_objective_world(lib, world_factory)
+    TD-A109-R-130-02 (test-defect, A117/A118): replaces the om_objective_is_contested faction-filter test. The play path
+    is om_tactical_step -> om_mission_tactical_tick -> om_mission_eval_hold_zone."""
+    w = _hold_zone_mission(lib, world_factory)
     c = _center(lib, w)
-    lib.om_unit_spawn_combat(w, PLAYER_FACTION, c.x, c.y)
-    assert lib.om_unit_get_faction(w, 1) == PLAYER_FACTION  # fixture check: the friendly unit exists and is the player's
-    assert lib.om_objective_is_contested(w, 0) == 0
+    lib.om_unit_spawn(w, RAIDER, PLAYER_FACTION, c.x, c.y, 0)
+    _run(lib, w, 20)
+    assert _done(lib, w) > 0.0
 
 
-def test_R_130_02_an_enemy_inside_the_zone_stops_progress(lib, world_factory):
-    """Positive control for the friendly-unit test: an enemy-faction unit on the same spot contests the zone."""
-    w = _drifting_objective_world(lib, world_factory)
+def test_R_130_02_an_enemy_inside_the_zone_stops_progress_and_leaving_resumes_it(lib, world_factory):
+    """Given a hold zone, When an enemy is inside it, Then progress stops; When it leaves, progress resumes with elapsed kept."""
+    w = _hold_zone_mission(lib, world_factory)
     c = _center(lib, w)
-    lib.om_unit_spawn_combat(w, ENEMY_FACTION, c.x, c.y)
-    assert lib.om_unit_get_faction(w, 1) == ENEMY_FACTION  # fixture check
-    assert lib.om_objective_is_contested(w, 0) == 1
+    lib.om_unit_spawn(w, RAIDER, PLAYER_FACTION, c.x, c.y, 0)
+    _run(lib, w, 10)
+    before = _done(lib, w)
+    assert before > 0.0  # control: progress runs with the zone clear
+
+    enemy = lib.om_unit_spawn(w, RAIDER, ENEMY_FACTION, c.x + 100.0, c.y, 0)
+    _run(lib, w, 10)
+    assert _done(lib, w) == before  # stopped, and elapsed not reset
+
+    lib.om_unit_teleport(w, enemy, c.x + ZONE_RADIUS + 200.0, c.y, 0)
+    _run(lib, w, 10)
+    assert _done(lib, w) > before  # resumed from where it was, not from zero
+
+
+def test_control_R_130_02_an_enemy_outside_the_zone_does_not_stop_progress(lib, world_factory):
+    """Positive control for the stop tests: an enemy 500 wu from the centre (outside 400 wu) does not stop progress."""
+    w = _hold_zone_mission(lib, world_factory)
+    c = _center(lib, w)
+    lib.om_unit_spawn(w, RAIDER, ENEMY_FACTION, c.x + 500.0, c.y, 0)
+    _run(lib, w, 10)
+    assert _done(lib, w) > 0.0
+
+
+def _drift_axis(lib, world_factory):
+    """Unit vector from the old centre to the moved centre, read in a scratch world (drift is deterministic)."""
+    w = _hold_zone_mission(lib, world_factory, drifting=True)
+    pos_0 = _center(lib, w)
+    lib.om_tactical_tick_to(w, DRIFT_PERIOD // 2)
+    pos_50 = _center(lib, w)
+    drift = _dist(pos_0, pos_50)
+    assert drift == pytest.approx(DRIFT_SPAN, abs=1e-3)  # fixture check
+    return pos_0, (pos_50.x - pos_0.x) / drift, (pos_50.y - pos_0.y) / drift
+
+
+def test_R_130_02_hold_zone_moves_with_it(lib, world_factory):
+    """Given a drifting objective, When it moves, Then the hold zone moves with it and progress stops once an enemy is inside the moved zone.
+
+    TD-A109-R-130-02 (test-defect, A118): the enemy stands outside the OLD zone and inside the MOVED one, on the drift axis,
+    500 wu from the old centre and 350 wu from the moved centre (span 150 wu). Progress runs before the drift and stops once
+    the zone has moved onto it. No constant changed: the 400 wu radius and 150 wu span stand."""
+    pos_0, ux, uy = _drift_axis(lib, world_factory)
+    w = _hold_zone_mission(lib, world_factory, drifting=True)
+    ex, ey = pos_0.x + 500.0 * ux, pos_0.y + 500.0 * uy
+    enemy_pos = OMVec2(ex, ey)
+    assert _dist(enemy_pos, pos_0) > ZONE_RADIUS  # fixture check: outside the old zone
+    lib.om_unit_spawn(w, RAIDER, ENEMY_FACTION, ex, ey, 0)
+
+    _run(lib, w, 10)  # zone has barely moved (about 30 wu): enemy still outside
+    before = _done(lib, w)
+    assert before > 0.0  # progress runs before the drift reaches the enemy
+
+    _run(lib, w, 40 - 10)  # drifted onward; the enemy has been inside the zone from about tick 34
+    at_40 = _done(lib, w)
+    _run(lib, w, 10)  # to tick 50: furthest point, 350 wu from the enemy
+    assert _dist(_center(lib, w), enemy_pos) == pytest.approx(350.0, abs=1e-3)  # fixture check: inside the moved zone
+    assert _done(lib, w) == at_40  # no progress while the zone sits on the enemy
+    assert at_40 > before  # (it ran until the zone reached the enemy)
+
+
+def test_control_R_130_02_an_enemy_behind_the_old_centre_never_stops_the_drifting_zone(lib, world_factory):
+    """Positive control for the drift test: the same 500 wu offset on the opposite side of the old centre is never inside
+    the zone as it moves away, so progress runs the whole drift. It shows the drift test's stop comes from the zone
+    moving onto the enemy, not from the enemy's distance alone."""
+    pos_0, ux, uy = _drift_axis(lib, world_factory)
+    w = _hold_zone_mission(lib, world_factory, drifting=True)
+    lib.om_unit_spawn(w, RAIDER, ENEMY_FACTION, pos_0.x - 500.0 * ux, pos_0.y - 500.0 * uy, 0)
+    _run(lib, w, 40)
+    at_40 = _done(lib, w)
+    _run(lib, w, 10)
+    assert _done(lib, w) > at_40
+
+
+def test_control_R_130_02_the_stationary_zone_does_not_stop_for_the_same_enemy(lib, world_factory):
+    """Positive control for the drift test: without drift, the enemy 500 wu from the centre never stops progress, so
+    the stop in the drift test is the zone's move."""
+    pos_0, ux, uy = _drift_axis(lib, world_factory)
+    w = _hold_zone_mission(lib, world_factory)
+    lib.om_unit_spawn(w, RAIDER, ENEMY_FACTION, pos_0.x + 500.0 * ux, pos_0.y + 500.0 * uy, 0)
+    _run(lib, w, 40)
+    at_40 = _done(lib, w)
+    _run(lib, w, 10)
+    assert _done(lib, w) > at_40
 
 
 def test_R_130_03_its_capture_radius_spawn_position(lib, world_factory):
