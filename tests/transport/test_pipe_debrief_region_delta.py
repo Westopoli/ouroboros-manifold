@@ -1,9 +1,13 @@
 """T1-11: debrief frame region_delta has at least one non-zero value after a
-decided DEFENSIVE_STAND + TOTAL_SUCCESS mission.
+decided MULTI_FRONT_DEFENSE + TOTAL_SUCCESS mission.
 
-Setup: seed 1, 80 regions, features 0-7, no strategic steps.  With these
-params the pipe auto-selects archetype 0 (DEFENSIVE_STAND) -- the only
-archetype whose consequence table has entries (R-078-02/03).
+Setup: seed 16, 80 regions, features 0-7, no strategic steps.  With these
+params the pipe draws archetype 5 (MULTI_FRONT_DEFENSE) at region 56, on both
+the pre-A81 and post-A81 builds; the test asserts both so a world change cannot
+swap in another archetype unnoticed.  Archetype 5's total_success row targets
+the mission region (R-078-02/03), so region_delta is non-zero.  (The earlier
+seed 1 only passed through the guard fall-through to SIEGE_BREAKING, and A81
+moved it to CONTAINMENT, whose row is not on the mission region; see TD-A89-1.)
 
 The test drives objective 0 to completion=1.0 via objective_complete before
 mission_end so the outcome band is TOTAL_SUCCESS (score >= 0.80), which is
@@ -50,7 +54,7 @@ def _run(cmds):
 
 def test_debrief_region_delta_has_at_least_one_nonzero_after_decided_mission():
     """After mission_start + objective_complete(0, 1.0) + mission_end the debrief
-    region_delta carries non-zero consequences (R-078-02/03 defensive_stand
+    region_delta carries non-zero consequences (R-078-02/03 multi_front_defense
     total_success row).  At least one of military/economy/tension is non-zero.
 
     Red on base: objective_complete verb unknown -> error frame -> objective stays
@@ -62,13 +66,19 @@ def test_debrief_region_delta_has_at_least_one_nonzero_after_decided_mission():
     consequence rows applied -> region_delta non-zero.
     """
     cmds = [
-        {"type": "cmd", "name": "set_seed", "seed": 1, "n_regions": 80,
+        {"type": "cmd", "name": "set_seed", "seed": 16, "n_regions": 80,
          "features": FEATURES, "new_campaign": False},
         {"type": "cmd", "name": "mission_start", "faction": 0},
         {"type": "cmd", "name": "objective_complete", "objective": 0, "completion": 1.0},
         {"type": "cmd", "name": "mission_end"},
     ]
     frames = _run(cmds)
+    mission = next((f for f in frames if f.get("type") == "mission"), None)
+    assert mission is not None, (
+        "no mission frame; frames received: %r" % [f.get("type") for f in frames])
+    assert (mission["archetype"], mission["region"]) == (5, 56), (
+        "seed 16 no longer draws MULTI_FRONT_DEFENSE at region 56 (got archetype "
+        "%r region %r); re-pick the seed" % (mission["archetype"], mission["region"]))
     debrief = next((f for f in frames if f.get("type") == "debrief"), None)
     assert debrief is not None, (
         "no debrief frame; frames received: %r" % [f.get("type") for f in frames])

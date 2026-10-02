@@ -8,9 +8,13 @@ by pressing End Mission -- see the 2026-09-28 QA-run wiring brief.
 The step bound comes from the rule, not a constant: missions are 30 to 60
 minutes of battle time (R-076-02 table, Q-076-02), so the test reads the
 deadline_ticks the mission frame reports and steps DEADLINE_MARGIN past it.
-Seed 121 is a fixture choice for cost, not a threshold: its first mission is an
-evacuation (30-minute base, shortest deadline of seeds 1-400, 30406 ticks) with
-a small force, so the sim finishes in well under a minute. Evacuation's escort
+Seed 3 is a fixture choice for cost, not a threshold: its first mission is an
+evacuation (30-minute base, deadline about 30430 ticks) with a small force
+(about 500 units), so the sim finishes in about a minute. It is one of only two
+seeds in 1-400 that draw an evacuation on both the pre-A81 and post-A81 worlds
+(the other, 154, has a longer deadline post-A81); _steps_for_deadline asserts
+the draw, because a seed that falls through to a siege-breaking mission costs
+50 ms per tick (TD-A89-2). Evacuation's escort
 objective is one of the two kinds the wiring brief leaves out, so only the
 time-limit path (wired for every archetype) can end it.
 """
@@ -23,7 +27,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 PIPE = ROOT / "pipe/ouroboros_pipe"
 FEATURES = [0, 1, 2, 3, 4, 5, 6, 7]
-SET_SEED = {"type": "cmd", "name": "set_seed", "seed": 121, "n_regions": 80, "features": FEATURES}
+SET_SEED = {"type": "cmd", "name": "set_seed", "seed": 3, "n_regions": 80, "features": FEATURES}
 STEP10 = {"type": "cmd", "name": "step", "n": 10}
 START = {"type": "cmd", "name": "mission_start", "faction": 0}
 BEGIN = {"type": "cmd", "name": "mission_begin"}
@@ -33,6 +37,9 @@ QUIT = {"type": "cmd", "name": "quit"}
 # The mission frame's deadline_ticks is the bound; the end check may land up to
 # this many ticks after it (same slack the first_over tick assertion allows).
 DEADLINE_MARGIN = 2
+
+# Mission archetype id of Evacuation (docs/bible R-076-02 table).
+EVACUATION = 7
 
 pytestmark = pytest.mark.skipif(not PIPE.exists(), reason="pipe/ouroboros_pipe not built (piece T1)")
 
@@ -57,7 +64,12 @@ def _run(cmds, timeout=120):
 def _steps_for_deadline():
     """Steps needed to cross this seed's deadline, read from the mission frame."""
     frames = _run([SET_SEED, STEP10, START, BEGIN])
-    deadline = [f for f in frames if f["type"] == "mission"][0]["deadline_ticks"]
+    mission = [f for f in frames if f["type"] == "mission"][0]
+    assert mission["archetype"] == EVACUATION, (
+        "seed 3 no longer draws an evacuation (archetype %r); re-pick the fixture seed"
+        % mission["archetype"])
+    deadline = mission["deadline_ticks"]
+    assert deadline < 31000, "evacuation deadline_ticks=%r, expected the 30-minute base" % deadline
     assert deadline > 0, "deadline_ticks=%r" % deadline
     return deadline, deadline + DEADLINE_MARGIN
 

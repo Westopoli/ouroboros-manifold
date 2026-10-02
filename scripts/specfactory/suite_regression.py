@@ -95,9 +95,33 @@ def parse_junit_extra(xml_path: Path) -> tuple[dict[str, str], int, int]:
         elif skipped_el is not None:
             if skipped_el.get("type") == "pytest.xfail":
                 xfailed += 1
+            elif is_scale_gated(node_id, skipped_el):
+                pass  # counted by parse_junit_scale_gated, on its own line
             else:
                 skipped += 1
     return first_assertion, skipped, xfailed
+
+
+def is_scale_gated(node_id: str, skipped_el) -> bool:
+    """A skip under tests/csim/scale/ whose reason names OM_SCALE (A98)."""
+    reason = (skipped_el.get("message") or "") + (skipped_el.text or "")
+    return node_id.startswith("tests/csim/scale/") and "OM_SCALE" in reason
+
+
+def parse_junit_scale_gated(xml_path: Path) -> tuple[str, ...]:
+    """Sorted node ids of the scale-gated skips (is_scale_gated) in a junit report."""
+    if not Path(xml_path).exists():
+        return ()
+    ids = []
+    for tc in ET.parse(xml_path).getroot().iter("testcase"):
+        skipped_el = tc.find("skipped")
+        if skipped_el is None or skipped_el.get("type") == "pytest.xfail":
+            continue
+        module = tc.get("file") or tc.get("classname", "").replace(".", "/") + ".py"
+        node_id = f"{module}::{tc.get('name', '')}"
+        if is_scale_gated(node_id, skipped_el):
+            ids.append(node_id)
+    return tuple(sorted(ids))
 
 
 @dataclass
@@ -112,6 +136,7 @@ class RunResult:
     first_assertion: dict[str, str] = field(default_factory=dict)
     skipped: int = 0
     xfailed: int = 0
+    scale_gated: tuple[str, ...] = ()
 
 
 def run_pytest(cwd: Path, python_exe: str = DEFAULT_PYTHON, test_args=DEFAULT_TEST_ARGS,
@@ -132,7 +157,8 @@ def run_pytest(cwd: Path, python_exe: str = DEFAULT_PYTHON, test_args=DEFAULT_TE
     first_assertion, skipped, xfailed = ({}, 0, 0) if junit_path is None else parse_junit_extra(junit_path)
     return RunResult(passed=passed, failed=failed, failing_ids=ids, wall_s=round(wall, 2),
                       returncode=r.returncode, stdout=r.stdout, stderr=r.stderr,
-                      first_assertion=first_assertion, skipped=skipped, xfailed=xfailed)
+                      first_assertion=first_assertion, skipped=skipped, xfailed=xfailed,
+                      scale_gated=() if junit_path is None else parse_junit_scale_gated(junit_path))
 
 
 def apply_diff(cwd: Path, diff_text: str) -> None:
@@ -243,6 +269,7 @@ def _run_result_to_dict(r: RunResult) -> dict:
     d.pop("stdout", None)
     d.pop("stderr", None)
     d["failing_ids"] = list(r.failing_ids)
+    d["scale_gated"] = list(r.scale_gated)
     return d
 
 

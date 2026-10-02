@@ -16,9 +16,14 @@ Contract under test:
 - a client keeps id -> unit: full replaces, delta deletes `units_removed` then overwrites
   `units_changed`; after any frame the dict equals the full state at that tick.
 
-Fixture: seed 8 with the eight launch features is a small mission (81 units, 39 + 42 plus
-waves; the opposing groups start 15,670 map units apart and meet around tick 2300 when the
-player's units attack_target one enemy). Seed, tick and unit counts are fixtures, not thresholds.
+Fixture: seed 76 with the eight launch features draws a DEFENSIVE_STAND (archetype 0) at
+region 68, a small mission (118 units on the pre-A81 world, 145 on the A81 build, 80 regions);
+player units that attack_target their nearest enemy see deaths before tick 2400, and the
+objective's live completion creeps up every tick. Seed, tick and unit counts are fixtures,
+not thresholds. The earlier seed 8 (81 units, deaths near tick 2300) became a 363-unit world
+once events reached regions 64+ (A81), where no death arrived by tick 2400 (TD-A89-5); 76 was
+chosen by scanning seeds 1 to 400 on both builds for the same drawn mission, deaths and
+progress; seeds 26, 127, 158, 175 and 287 also pass the whole file on both.
 """
 import json
 import math
@@ -30,7 +35,8 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 PIPE = ROOT / "pipe/ouroboros_pipe"
 FEATURES = [0, 1, 2, 3, 4, 5, 6, 7]
-SEED = 8
+SEED = 76
+DRAWN = (0, 68)  # (archetype, region) the fixture seed draws on both builds
 FULL_PERIOD = 20
 UNIT_KEYS = {"id", "faction", "type", "tier", "x", "y", "hp", "layer", "facing", "target", "state"}
 
@@ -77,6 +83,13 @@ def _begin_frames(extra):
     assert not errors, errors
     mission = next(f for f in frames if f["type"] == "mission")
     return mission, _tacticals(frames)
+
+
+def _assert_drawn(frames):
+    mission = next(f for f in frames if f["type"] == "mission")
+    assert (mission["archetype"], mission["region"]) == DRAWN, (
+        "fixture drift: seed %d drew archetype %r region %r, expected %r" % (
+            SEED, mission["archetype"], mission["region"], DRAWN))
 
 
 def _assert_full(f):
@@ -260,10 +273,11 @@ def test_objectives_ride_every_frame_full_and_delta():
 
 
 def test_objective_progress_is_live_and_never_diffed_across_delta_frames():
-    """Positive control for `progress`: on seed 8 the objective's live completion creeps up
+    """Positive control for `progress`: on seed 76 the objective's live completion creeps up
     every tick, so consecutive delta frames carry different values; a diffed or cached array
     would repeat or omit them."""
     frames = _run([SET_SEED, START, BEGIN, _step(1), _step(1), _step(1)])
+    _assert_drawn(frames)
     tac = _tacticals(frames)
     assert all("objectives" in f for f in tac), "tactical frame has no objectives (A6/A7)"
     progress = [f["objectives"][0]["progress"] for f in tac[1:]]
@@ -341,6 +355,7 @@ def test_a_death_shows_in_units_removed_and_the_full_frame_agrees():
     cmds = _death_script(first)
     cmds.append(_step(0))
     frames = _run([SET_SEED, START, BEGIN] + cmds)
+    _assert_drawn(frames)
     tac = _tacticals(frames)
     assert "full" in tac[1], "tactical frame carries no `full` key (A7)"
     state, removed_at = _apply({}, tac[0]), None
@@ -363,6 +378,7 @@ def test_death_positive_control_every_removed_id_belonged_to_the_previous_state(
     first = _begin_units()
     cmds = _death_script(first)
     frames = _run([SET_SEED, START, BEGIN] + cmds)
+    _assert_drawn(frames)
     tac = _tacticals(frames)
     assert "full" in tac[1], "tactical frame carries no `full` key (A7)"
     state = _apply({}, tac[0])
