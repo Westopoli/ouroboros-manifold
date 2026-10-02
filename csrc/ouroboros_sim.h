@@ -28,6 +28,12 @@ extern "C" {
 /* ABI version reported by om_abi_version(). Bump when signatures change. */
 #define OM_ABI_VERSION 4
 
+/* Number of layers: engine layers 0 to OM_LAYER_COUNT - 1 (bible layer n is engine layer n - 1). */
+#define OM_LAYER_COUNT 5
+
+/* Largest canvas side om_map_set_canvas accepts; equals OM_CANVAS_SIZE_RANGES_LARGE_HI in om_constants.h. */
+#define OM_MAP_MAX_CANVAS 28000.0
+
 /* Opaque world handle. */
 typedef struct om_world om_world;
 
@@ -109,7 +115,8 @@ typedef struct om_trace_row {
  * om_gen_set_player_preference. Bumped to 4 (PP-contract): added om_tactical_get_param/set_param
  * (om_tac_param), om_map_set_canvas, om_map_block_rect, om_command_set_layer, om_unit_transition_progress,
  * om_unit_get_target_layer, om_roster_set_reach, om_unit_profile_reach, om_command_set_emission
- * (om_emission), om_unit_get_emission, om_command_ping, om_ping_alert_count/get (om_ping_alert). */
+ * (om_emission), om_unit_get_emission, om_command_ping, om_ping_alert_count/get (om_ping_alert),
+ * om_unit_get_group_id, om_unit_get_leash_anchor, om_unit_get_engaged. */
 uint32_t om_abi_version(void);
 /* T1's pipe hello checks the caller's struct sizes against the library's own
  * before trusting anything else over the wire (audit 2026-09-21, A F-8-5):
@@ -1842,6 +1849,9 @@ double om_unit_transition_progress(const om_world *w, uint32_t unit);
 uint32_t om_unit_get_target_layer(const om_world *w, uint32_t unit);
 int om_roster_set_reach(om_world *w, int unit_type, uint32_t layers_up, uint32_t layers_down);
 int om_unit_profile_reach(const om_world *w, int unit_type, uint32_t *up, uint32_t *down);
+uint32_t om_unit_get_group_id(const om_world *w, uint32_t unit);
+int om_unit_get_leash_anchor(const om_world *w, uint32_t unit, double *x, double *y);
+int om_unit_get_engaged(const om_world *w, uint32_t unit);
 /* ---- end generated: tactical_move.c ---- */
 
 /* ---- generated from signatures.toml: tactical_support.c ---- */

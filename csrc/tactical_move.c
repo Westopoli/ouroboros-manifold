@@ -2015,4 +2015,21 @@ int om_unit_profile_reach(const om_world *w, int unit_type, uint32_t *up, uint32
     (void)w; (void)unit_type; (void)up; (void)down;
     return 0;
 }
+uint32_t om_unit_get_group_id(const om_world *w, uint32_t unit) {
+    /* STUB */
+    (void)w; (void)unit;
+    return 0;
+}
+
+int om_unit_get_leash_anchor(const om_world *w, uint32_t unit, double *x, double *y) {
+    /* STUB */
+    (void)w; (void)unit; (void)x; (void)y;
+    return 0;
+}
+
+int om_unit_get_engaged(const om_world *w, uint32_t unit) {
+    /* STUB */
+    (void)w; (void)unit;
+    return 0;
+}
 /* ---- end generated stubs ---- */
