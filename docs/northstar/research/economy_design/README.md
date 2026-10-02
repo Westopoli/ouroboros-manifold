@@ -13,7 +13,7 @@ One economy, two drivers: rules when nobody holds the economy seat, a human when
 | 1 | Resources and how they become units | (check against 5's verbs before freezing) | done 2026-10-01; folded into E-19 S-159; remaining detail is Q-159-08 |
 | 2 | Bases of operations and how they play into objectives | 1 | done 2026-10-02; in E-19 S-159 R-159-14 to R-159-17 |
 | 3 | Groundwork for auto-generating economic buildings (sister to biome generation) | 1, 2 | done 2026-10-02; all seven parts decided, in E-17 S-166 (R-166-03 to R-166-06) |
-| 4 | How the economy runs when the player opts out | 1, 2, 3 | in progress: options in `self_running_options.md` (Q-159-02, Q-159-03) |
+| 4 | How the economy runs when the player opts out | 1, 2, 3 | done 2026-10-02; in E-19 S-159 R-159-02 and R-159-18 to R-159-21 |
 | 5 | How the economy player literally manages the economy | 1 to 4 | done 2026-10-01; folded into E-19 S-159; remaining detail is Q-159-09, Q-159-10 |
 
 ## Decisions (2026-10-01)
@@ -187,6 +187,22 @@ Recorded as:
 Westley, verbatim: "all other chats are done, you're the only one left. Yes propose options."
 
 Recorded as: goal 4 options in `self_running_options.md` (Q-159-02, Q-159-03).
+
+## Decisions (2026-10-02, fifteenth round: the self-running economy)
+
+Westley, verbatim, answering `self_running_options.md`:
+
+"A3, player can change it on the fly in order to adapt to what the enemy is doing. B3 C2+4 D2+3, player can tune these by turning off one or the other. E1+3, player pick."
+
+Recorded as:
+
+- Part A, decided: A3, doctrines. The player can change the doctrine on the fly, to adapt to what the enemy is doing.
+- Part B, decided: B3, perfect hands and no foresight.
+- Part C, decided: C2 with C4. One dial for the balance between economy, technology and army, and asking by pointing at the map.
+- Part D, decided: D2 with D3. The rules pick the mix and the commander can override; the rules counter what has been seen. The player can turn either one off.
+- Part E, decided: E1 with E3, the player's pick. The enemy's economy runs on the same rules, and the player chooses whether it also scouts, counters and disguises.
+- Q-159-02 and Q-159-03 closed. Goal 4 marked done. All five goals are done.
+- Next, as Westley set on 2026-10-02: the epics and stories pass.
 
 ## Files
 

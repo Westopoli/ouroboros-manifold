@@ -318,6 +318,11 @@ typedef struct {
     uint64_t            validated_tick;
     om_grid             grid;
     uint32_t           *aura_count;
+    /* aura regen scratch: living units sorted by grid cell (aura_cs is the per-cell start) */
+    double             *aura_x, *aura_y;
+    int32_t            *aura_f;
+    uint32_t           *aura_id, *aura_n, *aura_cs;
+    uint32_t            aura_cap, aura_cs_cap;
     /* units of each type ever spawned since the last reset (a unit's type
      * never changes): zero means no candidate can match, so the aura and
      * fortify scans in om_unit_damage_reduction are skipped. */
@@ -327,6 +332,12 @@ typedef struct {
 static void om_tac_release_arrays(om_tac_state *st) {
     free(st->units);
     free(st->aura_count);
+    free(st->aura_x);
+    free(st->aura_y);
+    free(st->aura_f);
+    free(st->aura_id);
+    free(st->aura_n);
+    free(st->aura_cs);
     free(st->grid.head);
     free(st->grid.fcnt);
     free(st->grid.dmg);
@@ -872,21 +883,77 @@ static double om_warden_aura_reduction_for(om_tac_state *st, const om_unit_row *
     return 1.0 - undamaged_factor;
 }
 
+/* Each Warden counts the same-faction living units in its circle. The counts are
+ * integers, so the walk order does not matter; the candidate cells, the distance
+ * test and the faction test are those of om_grid_iter_begin_st. Candidates are
+ * copied cell by cell into flat arrays first so a query reads no unit rows. */
+static int om_aura_flatten(om_tac_state *st) {
+    om_grid *g = &st->grid;
+    uint32_t cell, ncells, n = 0, id;
+    void *p;
+    if (!g->built) om_grid_rebuild(st);
+    if (!g->built) return 0;
+    ncells = (uint32_t)g->cols * (uint32_t)g->rows;
+    if (ncells + 1 > st->aura_cs_cap) {
+        if (!(p = realloc(st->aura_cs, ((size_t)ncells + 1) * sizeof(uint32_t)))) return 0;
+        st->aura_cs = (uint32_t *)p;
+        st->aura_cs_cap = ncells + 1;
+    }
+    if (st->unit_cap > st->aura_cap) {
+        size_t c = st->unit_cap;
+        if (!(p = realloc(st->aura_x, c * sizeof(double)))) return 0;
+        st->aura_x = (double *)p;
+        if (!(p = realloc(st->aura_y, c * sizeof(double)))) return 0;
+        st->aura_y = (double *)p;
+        if (!(p = realloc(st->aura_f, c * sizeof(int32_t)))) return 0;
+        st->aura_f = (int32_t *)p;
+        if (!(p = realloc(st->aura_id, c * sizeof(uint32_t)))) return 0;
+        st->aura_id = (uint32_t *)p;
+        if (!(p = realloc(st->aura_n, c * sizeof(uint32_t)))) return 0;
+        st->aura_n = (uint32_t *)p;
+        st->aura_cap = st->unit_cap;
+    }
+    for (cell = 0; cell < ncells; cell++) {
+        st->aura_cs[cell] = n;
+        for (id = g->head[cell]; id; id = g->next[id - 1], n++) {
+            const om_unit_row *u = &st->units[id - 1];
+            st->aura_x[n] = u->x;
+            st->aura_y[n] = u->y;
+            st->aura_f[n] = u->faction_id;
+            st->aura_id[n] = id - 1;
+            st->aura_n[n] = 0;
+        }
+    }
+    st->aura_cs[ncells] = n;
+    return 1;
+}
+
 /* R-083-03: healing stacks linearly, unlike the damage reduction above. */
 static void om_tactical_apply_aura_regen(om_world *w) {
     om_tac_state *st = om_tac(w);
-    uint32_t i, id;
+    uint32_t i, k;
     memset(st->aura_count, 0, (size_t)st->n_units * sizeof(uint32_t));
-    for (i = 0; i < st->n_units; i++) {
-        const om_unit_row *warden = &st->units[i];
-        om_grid_iter it;
-        if (!warden->in_use || warden->hp <= 0.0 || warden->unit_type != OM_UT_WARDEN) continue;
-        om_grid_iter_begin_st(&it, st, warden->x, warden->y, (double)OM_WARDEN_AURA_RADIUS);
-        while ((id = om_grid_iter_next(&it)) != 0) {
-            const om_unit_row *cand = &st->units[id - 1];
-            if (cand->hp <= 0.0 || cand->faction_id != warden->faction_id) continue;
-            st->aura_count[id - 1]++;
+    if (st->n_wardens > 0 && om_aura_flatten(st)) {
+        const om_grid *g = &st->grid;
+        const double r = (double)OM_WARDEN_AURA_RADIUS, reach = r + OM_GRID_PAD;
+        for (i = 0; i < st->n_units; i++) {
+            const om_unit_row *warden = &st->units[i];
+            int32_t cx0, cx1, cy0, cy1, cy;
+            if (!warden->in_use || warden->hp <= 0.0 || warden->unit_type != OM_UT_WARDEN) continue;
+            cx0 = om_grid_coord(warden->x - reach, g->ox, g->cell, g->cols);
+            cx1 = om_grid_coord(warden->x + reach, g->ox, g->cell, g->cols);
+            cy0 = om_grid_coord(warden->y - reach, g->oy, g->cell, g->rows);
+            cy1 = om_grid_coord(warden->y + reach, g->oy, g->cell, g->rows);
+            for (cy = cy0; cy <= cy1; cy++) {
+                uint32_t lo = st->aura_cs[(size_t)cy * (size_t)g->cols + (size_t)cx0];
+                uint32_t hi = st->aura_cs[(size_t)cy * (size_t)g->cols + (size_t)cx1 + 1];
+                for (k = lo; k < hi; k++) {
+                    if (st->aura_f[k] == warden->faction_id
+                        && om_tac_dist_le(st->aura_x[k] - warden->x, st->aura_y[k] - warden->y, r)) st->aura_n[k]++;
+                }
+            }
         }
+        for (k = 0; k < st->aura_cs[(size_t)g->cols * (size_t)g->rows]; k++) st->aura_count[st->aura_id[k]] = st->aura_n[k];
     }
     for (i = 0; i < st->n_units; i++) {
         om_unit_row *u = &st->units[i];

@@ -109,7 +109,7 @@ Design decided by Westley, 2026-10-01 (`docs/northstar/research/economy_design/`
 
 Rules
 - R-159-01  The economy seat. An optional mode, entered only through the paired queue, where teams of 2, 4 or 6 form from pairs; in a pair one player commands the military and the other runs the economy, both on the same tactical map. A universe locks its player count, slots and eras at creation. The seat's target is two to three times the system complexity of a proficient StarCraft 2 economy. Its skill is holding several things in mind at once, where forgetting one (the population cap, worker production, the next technology, production) puts the pair behind; nothing on screen lists what the commander needs. Speed of hand gives a small bounded edge, about 1.1x to 1.2x (Q-159-05).
-- R-159-02  Running itself. The same economy is present in every match. When nobody holds the seat, rules run it for the player, and run it well; no intelligent agent is needed. The base is a spectacle in every mode: buildings start under construction and rise, expansions are made, and population density changes over time (E-17 S-166). How the rules decide is open (Q-159-02); what a solo commander may place is open (Q-159-03).
+- R-159-02  Running itself. The same economy is present in every match. When nobody holds the seat, rules run it for the player, and run it well; no intelligent agent is needed. The base is a spectacle in every mode: buildings start under construction and rise, expansions are made, and population density changes over time (E-17 S-166). How the rules decide, and what the solo commander does with them, is R-159-18 to R-159-21.
 - R-159-03  Resources and workers. Three resources, each gathered in its own way, on the model of classic Age of Empires Online and Age of Empires 3. Literal workers are trained at the base and walk to a source. Economic buildings include drop-off points, and the farther workers walk to a drop-off the less they bring in. Which resources they are is open (Q-159-08).
 - R-159-04  Buildings. The economy player places buildings; lots are limited and what stands beside a building changes what it yields. He also builds the defenses: walls, gates and towers, against raids on workers and shipments that come along lanes set by the terrain.
 - R-159-05  Population. One cap is shared by workers and soldiers. It is upgradeable a long way, up to thousands (hub "Reference Hardware", the long-term scale goal).
@@ -125,10 +125,14 @@ Rules
 - R-159-15  What kind of base. The mission archetype (E-10 S-073) and the supply distance in the simulation together decide the kind of base each side is given.
 - R-159-16  Resources and the situation. Base, objective and the significant resources are usually three separate places, not always. Resources are sometimes limited and sometimes abundant, consistent with the situation the simulation gives and slanted by it (a defender has the better position), and the player always has the means to accomplish the mission even when it is hard. The resources are not scored separately: a side that ignores them is overrun unless it rushes and finishes fast. Spending is balanced between economy, technology and army.
 - R-159-17  Strongpoints. The reinforcement structures of E-15 S-126 are strongpoints at the slopes between height bands (E-17 R-166-04). Holding one holds the way up or down and gives production on that band.
+- R-159-18  Doctrines. With nobody in the seat, the rules run the economy by a named doctrine. The player can change the doctrine on the fly, to adapt to what the enemy is doing. The rules have perfect hands and no foresight: they never idle a worker, hit the population cap or leave resources unspent, and they do not scout, read the enemy, counter-pick technology or disguise anything.
+- R-159-19  The commander's hand. A solo commander has one dial for the balance between economy, technology and army, and asks for things by pointing at the map (expand here, fortify this pass, siege at this gate); the rules carry it out. He does not place or queue anything himself.
+- R-159-20  Units when alone. The rules pick the mix of units and the commander can override it; the rules also shift production toward what counters the enemy units his forces have seen, using only what the fog has revealed. The player can turn either behaviour off.
+- R-159-21  The enemy. The enemy's economy runs on the same rules, with prosperity scaled by difficulty (E-14 S-125). The player chooses whether the enemy's economy also scouts, counters and disguises. If a human economy player drops out of a mission, the same rules take his seat.
 
 Inputs: none yet.
 Outputs: none yet.
-Open flags: Q-159-02, Q-159-03, Q-159-07, Q-159-08, Q-159-09, Q-159-10.
+Open flags: Q-159-07, Q-159-08, Q-159-09, Q-159-10.
 
 ## Inputs
 
@@ -171,7 +175,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-140-01, Q-140-02, Q-141-01, Q-141-02, Q-142-01, Q-142-02, Q-144-01, Q-144-02, Q-159-02, Q-159-03, Q-159-07, Q-159-08, Q-159-09, Q-159-10. Details in `docs/northstar/ambiguity_register.md`.
+Q-140-01, Q-140-02, Q-141-01, Q-141-02, Q-142-01, Q-142-02, Q-144-01, Q-144-02, Q-159-07, Q-159-08, Q-159-09, Q-159-10. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
