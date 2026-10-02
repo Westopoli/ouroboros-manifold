@@ -106,8 +106,9 @@
  * (fog.c line-of-sight, tactical_move.c route blocking), same as
  * om_map_sample_obstacle_density below only reports density, not a
  * pass/fail. */
-#define OM_MAPGEN_MAX_COVER 256
-#define OM_MAPGEN_MAX_OBSTACLES 256
+/* A134: one disc per 500 wu patch of the largest canvas, 56 x 56. */
+#define OM_MAPGEN_MAX_COVER 3136
+#define OM_MAPGEN_MAX_OBSTACLES 3136
 /* No header cap exists. Spine is 10 to 30 nodes (R-113, E-17); headroom for spawn points and structures. */
 #define OM_MAPGEN_MAX_NODES 128
 #define OM_MAPGEN_MAX_STRUCTURES 64
@@ -159,6 +160,8 @@ typedef struct {
     uint32_t                n_nodes;
     om_mapgen_structure_row structures[OM_MAPGEN_MAX_STRUCTURES];
     uint32_t                n_structures;
+    int                     has_canvas;
+    double                  canvas_w, canvas_h;
 } om_mapgen_state;
 
 static void om_mapgen_state_free(void *p) {
@@ -258,6 +261,8 @@ double om_gradient_sample_single(double p0, double p1, double p2, int p3) {
 
 uint32_t om_map_add_cover(om_world *w, double x, double y, double radius, double height) {
     om_mapgen_state *st = om_mgs(w);
+    /* A132: height is a whole count of layers; NaN fails the first test. */
+    if (!(height >= 0.0 && height <= (double)OM_LAYER_COUNT) || height != (double)(int)height) return 0;
     if (st->n_cover >= OM_MAPGEN_MAX_COVER) return 0;
     st->cover[st->n_cover].x = x;
     st->cover[st->n_cover].y = y;
@@ -668,8 +673,13 @@ void om_map_clear(om_world *w) {
     memset(w->mapgen_state, 0, sizeof(om_mapgen_state));
 }
 int om_map_set_canvas(om_world *w, double width, double height) {
-    /* STUB */
-    (void)w; (void)width; (void)height;
+    om_mapgen_state *st;
+    if (!w) return -1;
+    if (!(width > 0.0 && width <= OM_MAP_MAX_CANVAS && height > 0.0 && height <= OM_MAP_MAX_CANVAS)) return -1;
+    st = om_mgs(w);
+    st->has_canvas = 1;
+    st->canvas_w = width;
+    st->canvas_h = height;
     return 0;
 }
 

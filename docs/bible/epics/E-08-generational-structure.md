@@ -4,14 +4,14 @@
 
 | Check | Result |
 |---|---|
-| Every story has at least one Given/When/Then rule with concrete values | Yes, 10 stories, 45 rules, numbers from `algorithms.md` ALG-45 through ALG-49 and Stage 1 verdicts A-050, A-052, A-058, A-061. |
+| Every story has at least one Given/When/Then rule with concrete values | Yes, 11 stories, 54 rules, numbers from `algorithms.md` ALG-45 through ALG-49 and Stage 1 verdicts A-050, A-052, A-058, A-061. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 7 new flags, Q-056-01, Q-057-01, Q-058-01, Q-060-01, Q-062-01, Q-063-01, Q-063-02. |
+| Implied-but-unstated behavior turned into flags | 2 open flags on S-228, Q-228-01 and Q-228-02; Q-159-07 and Q-159-13 are cited and held by E-22 S-182 and E-02 S-220. |
 | Every visible-surface story has a reference | **No.** S-063 (onboarding screen) has a visible surface and no reference. The chronicle scroll surface is E-09. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** S-228 (added 2026-10-02) has not been through the gate and carries two open flags. Blocked on 7 open flags and one missing reference. Q-056-01 (the time jump is a fixed 50 ticks in code, not the state-derived 20 to 100 the vision confirms) is the load-bearing one.
+**Gate verdict: not passed.** S-228 (added 2026-10-02) has not been through the gate and is blocked on Q-228-01 and Q-228-02. One reference is missing (S-063). S-055 to S-064 have no open flags; gate to be rerun.
 
 ## Purpose
 
@@ -41,6 +41,7 @@ Outputs: chapter record (number, faction, character, start and end tick, end rea
 Open flags: none. R-055-02 is about the strategic sim; the economy that grows during a mission (E-22 S-182) is part of the mission, and no strategic tick runs for it. The only channel from a mission to the simulation that R-055-03 names is field changes; what else a mission leaves behind is E-02 S-220.
 
 ### S-056 — Decades pass while I am gone
+Flag closed, rule text pending: Q-056-01, the jump length is uniform random in [20, 100] with no state input, flagged for tuning after testing. The rule below is what the tests read today.
 As a player, I want the gap between chapters to be decades long and decided by the world, not by me, so that each return feels like history happened.
 
 Rules
@@ -52,9 +53,10 @@ Rules
 
 Inputs: world state at jump start; config bounds.
 Outputs: time jump report; chronicle input (E-09); map animation input (E-16).
-Open flags: Q-056-01 (state-derived length: which variables, which mapping). No rule here calls a jump short or long; whether damage persisting across a jump depends on its length is part of Q-159-13 (E-02 S-220).
+Open flags: none here. No rule here calls a jump short or long; whether damage persisting across a jump depends on its length is part of Q-159-13 (E-02 S-220).
 
 ### S-057 — Stay with the family or move on
+Flag closed, rule text pending: Q-057-01, declined as an implementation decision: no curve is chosen, the builder picks it and the tests on the decaying stay probability gate it. The rule below is what the tests read today.
 As a player, I want to stay with a bloodline while its story is alive and move on when it goes quiet, so that lineages feel like arcs and not like a counter.
 
 Rules
@@ -70,7 +72,7 @@ Rules
 
 Inputs: lineage members; chapter counter; home region delta and stability; RNG.
 Outputs: commander selection record in the save file and chronicle framing.
-Open flags: Q-057-01 (exact decay curve replacing the hard cap Westley removed, A-050).
+Open flags: none.
 
 ### S-058 — Who I come back as
 As a player, I want my next commander to usually be family, sometimes an old enemy's heir, and rarely a stranger, so that the cast of the galaxy stays connected.
@@ -85,7 +87,7 @@ Rules
 
 Inputs: ledger; chapter history; mission region; RNG.
 Outputs: selection record with pool rolled and pool used.
-Open flags: Q-058-01 (a rotation may land the player in any faction, including the enemy of the faction just served; confirm there is no restriction, A-066).
+Open flags: none.
 
 ### S-059 — The family grows while I am away
 As a player, I want my bloodline to have descendants when I return, spread across nearby regions, so that there is always someone to come back as.
@@ -101,6 +103,7 @@ Outputs: ledger records.
 Open flags: none.
 
 ### S-060 — Named leaders live and die
+Flag closed, rule text pending: Q-060-01, natural deaths are processed per tick. The rule below is what the tests read today.
 As a player, I want the people the chronicle names to be born, serve, age, and die, with someone taking their place, so that the galaxy has faces and not just factions.
 
 Rules
@@ -113,7 +116,7 @@ Rules
 
 Inputs: faction and region events; tick; RNG.
 Outputs: ledger; event attachments in the tick log; chronicle input.
-Open flags: Q-060-01 (per-tick vs end-of-jump death processing; the bible says per tick).
+Open flags: none.
 
 ### S-061 — When my commander dies
 As a player, I want a fallen commander's place taken by a relative nearby if one exists, so that death is a chapter in the family's story and not the end of it.
@@ -142,6 +145,8 @@ Outputs: reassignment record; chronicle.
 Open flags: none.
 
 ### S-063 — My two choices at the start
+Flag closed, rule text pending: Q-063-01, there is no limit on rare marks, but at least one archetype stays unmarked. The rule below is what the tests read today.
+Flag closed, rule text pending: Q-063-02, difficulty and preferences are set once at campaign creation and fixed for the whole campaign, with no mid-campaign change. The rule below is what the tests read today.
 As a player, I want to pick a difficulty and which kinds of missions I prefer before the first chapter, and change my mind later, so that the game bends to how I like to play without locking me in.
 
 Rules
@@ -152,7 +157,7 @@ Rules
 
 Inputs: player choices.
 Outputs: onboarding record in the save file; mission generator weights.
-Open flags: Q-063-01, Q-063-02. Reference required: `references/E-08/notes.md`, missing.
+Open flags: none. Reference required: `references/E-08/notes.md`, missing.
 
 ### S-064 — What carries over
 As a player, I want the world to remember everything and my character to start fresh, so that my legacy is in the galaxy and not in a stat sheet.
@@ -170,13 +175,13 @@ Outputs: save file; determinism trace.
 Open flags: none.
 
 ### S-228 — More than one player in a chapter
-As a player in a team of 2, 4 or 6, I want the chapter, the ledger and the world to know I am in a team, so that my pair is a part of the story and not a rider on someone else's.
+As a player in a team of 2 or 4, I want the chapter, the ledger and the world to know I am in a team, so that my pair is a part of the story and not a rider on someone else's.
 
 Direction decided in part 2026-10-02 (DECISIONS H7; E-19 R-159-01): more teammates mean bigger maps, more to do, more resources and more enemies; each player is a sub-commander; each pair is a sub-civilization inside the over-arching civilization. The simulation has no notion of either. Not scheduled for building. S-055 to S-064 are written for one player and one commander and stay as written for it.
 
 Rules
-- R-228-01  Given a chapter played by a team of 2, 4 or 6, When the chapter record, the ledger and the character selector are used, Then [Q-228-01: how a second player, the economy seat of a pair, and each sub-commander enter them; the Invariants below allow exactly one commander per chapter].
-- R-228-02  Given a team of 4 or 6, When each pair is read as a sub-civilization inside the civilization, Then [Q-228-02: how a pair maps onto the simulation, which has one faction per civilization and no sub-civilization; whether onto a faction, a set of regions, or only the chapter].
+- R-228-01  Given a chapter played by a team of 2 or 4, When the chapter record, the ledger and the character selector are used, Then [Q-228-01: how a second player, the economy seat of a pair, and each sub-commander enter them; the Invariants below allow exactly one commander per chapter].
+- R-228-02  Given a team of 4, When each pair is read as a sub-civilization inside the civilization, Then [Q-228-02: how a pair maps onto the simulation, which has one faction per civilization and no sub-civilization; whether onto a faction, a set of regions, or only the chapter].
 
 Inputs: team size and pairs (E-19 S-159).
 Outputs: none until the flags are answered.
@@ -233,7 +238,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-056-01, Q-057-01, Q-058-01, Q-060-01, Q-062-01, Q-063-01, Q-063-02, and Q-228-01, Q-228-02 (S-228), with Q-159-07 and Q-159-13 held by E-22 S-182 and E-02 S-220. Details in `docs/northstar/ambiguity_register.md`.
+Q-228-01, Q-228-02 (S-228), with Q-159-07 and Q-159-13 held by E-22 S-182 and E-02 S-220. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

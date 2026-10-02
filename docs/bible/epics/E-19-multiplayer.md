@@ -7,15 +7,15 @@
 | Every story has at least one Given/When/Then rule with concrete values | Partly. 9 stories, 33 rules; the determinism and transport rules are concrete, the match-shape rules are placeholders pending Westley, and the paired-mode stories (S-159, S-241, S-242) carry numbers as flags. |
 | Every input listed with range and rejection behavior | Partly; see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 8 flags on S-139 to S-144, Q-139-01 through Q-144-02 (Q-144-02 is closed), Q-144-03, and 6 on S-241 and S-242: Q-241-01 to Q-241-03, Q-242-01 to Q-242-03. |
+| Implied-but-unstated behavior turned into flags | 13 open flags: 8 on S-140 to S-144 (Q-140-01, Q-140-02, Q-141-01, Q-141-02, Q-142-01, Q-142-02, Q-144-01, Q-144-03) and 5 on S-241 and S-242 (Q-214-01, Q-241-02, Q-242-01 to Q-242-03). |
 | Every visible-surface story has a reference | **No.** S-144 (lobby and match flow) is a visible surface with no reference. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** This epic is the largest design gap the Stage 1 audit found (vision_v2 cross-check flag 1; A-540 rewrite-and-promote). Multiplayer is core (vision_v2 Q1, Q3). Below the transport layer, the paired mode's team sizes are decided (S-241); what a match is, co-op or versus, is not (Q-141-01). The determinism decision (`docs/northstar/README.md`) and the Steam Datagram Relay findings (`docs/northstar/research/multiplayer_sdr.md`) are the only settled parts. Sim-core epics must respect S-139 from the first sprint even while the rest of this epic is open.
+**Gate verdict: not passed.** Blocked on the 13 open flags listed at the foot and one missing reference (S-144). This epic is the largest design gap the Stage 1 audit found (vision_v2 cross-check flag 1; A-540 rewrite-and-promote). Multiplayer is core (vision_v2 Q1, Q3). Below the transport layer, the paired mode's team sizes are decided (S-241); what a match is, co-op or versus, is not (Q-141-01). The determinism decision (`docs/northstar/README.md`) and the Steam Datagram Relay findings (`docs/northstar/research/multiplayer_sdr.md`) are the only settled parts. Sim-core epics must respect S-139 from the first sprint even while the rest of this epic is open.
 
 ## Purpose
 
-Ouroboros Manifold is a multiplayer strategic RTS. Every peer runs the same deterministic C simulation and exchanges only commands, so a match costs nothing to host and every player sees one galaxy and one battle. Matched players who all own the same era packs can play a match that traverses eras chronologically. Teams of 2, 4 and 6 play together: each player is a sub-commander, each pair a sub-civilization inside the over-arching civilization, and more players means a bigger map with more to do, more resources and more enemies. What a match is, who commands what, and how the single-player generational loop becomes a shared one are the questions this epic exists to get answered.
+Ouroboros Manifold is a multiplayer strategic RTS. Every peer runs the same deterministic C simulation and exchanges only commands, so a match costs nothing to host and every player sees one galaxy and one battle. Matched players who all own the same era packs can play a match that traverses eras chronologically. Teams of 2 and 4 play together, and teams of 6 are a desired future feature: each player is a sub-commander, each pair a sub-civilization inside the over-arching civilization, and more players means a bigger map with more to do, more resources and more enemies. What a match is, who commands what, and how the single-player generational loop becomes a shared one are the questions this epic exists to get answered.
 
 Vision facts this epic must honor: full real-time, no pause in a match; the civilization has its own plans (agents run for every faction including human-commanded ones); bloodline and lineage are cosmetic; cross-era matches require the same era packs on every peer.
 
@@ -60,7 +60,7 @@ Open flags: Q-140-01, Q-140-02.
 As a player, I want to know what my friends and I are doing together in this galaxy, so that we can play it.
 
 Rules
-- R-141-01  Given a match, When it starts, Then it is played by teams of 2, 4 or 6 (S-241), and [Q-141-01: the match shape: co-op commanders in one civilization, opposing commanders in different civilizations, or both].
+- R-141-01  Given a match, When it starts, Then it is played by teams of 2 or 4 (S-241), and [Q-141-01: the match shape: co-op commanders in one civilization, opposing commanders in different civilizations, or both].
 - R-141-02  Given a match, When missions are generated, Then [Q-141-02: one shared mission with several commanders, or one mission per commander paired into a shared tactical map; relates to Q-079-01]; within a team, a pair is one commander and one economy player on the same tactical map (R-159-01).
 - R-141-03  Given a match, When the time jump runs, Then every peer runs the same jump from the same state and the chronicle prints the same entries.
 
@@ -112,7 +112,7 @@ As a commander, I want to play with a partner who runs the economy behind my war
 Design decided 2026-10-01 and 2026-10-02, not scheduled for building. This story is the paired mode itself; the economy it runs and the economy that runs without a partner are E-22.
 
 Rules
-- R-159-01  The economy seat. An optional mode, entered only through the paired queue, where teams of 2, 4 or 6 form from pairs; in a pair one player commands the military and the other runs the economy, both on the same tactical map. A universe locks its player count, slots and eras at creation. The seat's target is two to three times the system complexity of a proficient StarCraft 2 economy. Its skill is holding several things in mind at once, where forgetting one (the population cap, worker production, the next technology, production) puts the pair behind; nothing on screen lists what the commander needs. Speed of hand gives a small bounded edge, about 1.1x to 1.2x (Q-159-05).
+- R-159-01  The economy seat. An optional mode, entered only through the paired queue, where teams of 2 or 4 form from pairs, and teams of 6 are a desired future feature (S-241); in a pair one player commands the military and the other runs the economy, both on the same tactical map. A universe locks its player count, slots and eras at creation. The seat's target is two to three times the system complexity of a proficient StarCraft 2 economy. Its skill is holding several things in mind at once, where forgetting one (the population cap, worker production, the next technology, production) puts the pair behind; nothing on screen lists what the commander needs. Speed of hand gives a small bounded edge, about 1.1x to 1.2x (Q-159-05).
 
 The economy itself is E-22 Economy and Bases, stories S-167 to S-182: what the seat runs (S-167 to S-178), what happens when a base falls (S-178), the economy run by rules when nobody holds the seat (S-179, S-180) and the enemy's economy (S-181). Strongpoints and moving weather are E-15. The teams, sub-commanders and sub-civilizations are S-241; the pair on the wire is S-242; the economy seat's screen is E-16 S-230.
 
@@ -123,17 +123,17 @@ Open flags: Q-141-01 (co-op or versus); the economy's own flags are E-22's.
 ### S-241 — Teams, sub-commanders and sub-civilizations
 As a player in a team, I want my pair to be a sub-civilization inside the over-arching civilization, with the map, the resources and the enemies growing as players join, so that more friends make a bigger game.
 
-Design decided 2026-10-02 (DECISIONS H7, H13), not scheduled for building. Westley, 2026-10-02: "more teammates = bigger maps and more to do, more resources, more enemies, each player is their own "sub-commander" and we can fabricate "alliances" where each pair of players is their own "sub-civlization" inside the over-arching civlization. essentially the game turned up to 11."
+Design decided 2026-10-02 (DECISIONS H7, H13), not scheduled for building. Teams of 6 are a desired future feature that waits on a higher peer count than the confirmed 4 (R-241-04). Westley, 2026-10-02: "more teammates = bigger maps and more to do, more resources, more enemies, each player is their own "sub-commander" and we can fabricate "alliances" where each pair of players is their own "sub-civlization" inside the over-arching civlization. essentially the game turned up to 11."
 
 Rules
-- R-241-01  Given the paired queue, When a team forms, Then it has 2, 4 or 6 players, in pairs (R-159-01).
+- R-241-01  Given the paired queue, When a team forms, Then it has 2 or 4 players, in pairs (R-159-01). Teams of 6 are a desired future feature (R-241-04).
 - R-241-02  Given a team, When it plays, Then each player is a sub-commander and each pair is a sub-civilization inside the over-arching civilization [Q-241-02: what a sub-civilization is in the rules (its own base, resources, population cap, ledger), and what a sub-commander is when the player runs the economy].
-- R-241-03  Given more players in a team, When the map and mission are made, Then the map is bigger, there is more to do, there are more resources and there are more enemies; Given 4 to 6 players, Then the canvas is 64,000 wu, and smaller matches keep today's sizes (E-17 S-166) [Q-241-01: how much more of each resource and how many more enemies per added pair].
-- R-241-04  Given a team of 6, When the match runs on lockstep, Then every player is a peer; the confirmed scale figure is 4 peers, so the figure for teams of 6 is open [Q-241-03].
+- R-241-03  Given more players in a team, When the map and mission are made, Then the map is bigger, there is more to do, there are more resources and there are more enemies; Given 4 to 6 players, Then the canvas is 64,000 wu, and smaller matches keep today's sizes (E-17 S-166) [Q-214-01: how much more of each resource and how many more enemies per added pair].
+- R-241-04  Given the match runs on lockstep, When a team forms, Then every player is a peer, and the confirmed scale figure is 4 peers, so a team has 2 or 4 players. More than 4 peers, and so teams of 6, are a desired future feature that waits on a higher peer count (Westley, 2026-10-02: "we can keep 4, so long as more is marked as a desired future feature").
 
 Inputs: the pairs in the queue.
 Outputs: a team and its map.
-Open flags: Q-241-01, Q-241-02, Q-241-03.
+Open flags: Q-214-01, Q-241-02.
 
 ### S-242 — A pair on the wire
 As a player in a pair, I want my building, scheduling and requests to reach my partner's machine as commands like any other, so that we play one economy and one war.
@@ -148,7 +148,7 @@ Rules
 
 Inputs: commands by seat.
 Outputs: the same economy on every peer; dropped-command log.
-Open flags: Q-242-01 (R-142-04), Q-242-02, Q-242-03 (the cost the economy adds to a tick and to the checkpoint checksum in a team of 6; E-13 R-099-03 halves the tick rate above 1,000 live units, which changes what 3 ticks of input delay means).
+Open flags: Q-242-01 (R-142-04), Q-242-02, Q-242-03 (the cost the economy adds to a tick and to the checkpoint checksum in a team of 4, and later of 6; E-13 R-099-03 halves the tick rate above 1,000 live units, which changes what 3 ticks of input delay means).
 
 ## Inputs
 
@@ -156,7 +156,7 @@ Open flags: Q-242-01 (R-142-04), Q-242-02, Q-242-03 (the cost the economy adds t
 |---|---|---|---|
 | Peer commands | Peers | signed, tick-stamped | wrong tick, unknown peer, malformed: dropped and logged |
 | Economy and commander commands (build, queue, schedule, technology, doctrine, dial, unit-mix switch, request by pointing) | Pair seats | by seat (S-242) | a command the seat does not give: dropped and logged |
-| Pairing and roles | Paired queue | pairs of two; teams of 2, 4 or 6 | a team of another size is not formed |
+| Pairing and roles | Paired queue | pairs of two; teams of 2 or 4 | a team of another size is not formed |
 | Seed and lobby settings | Host | | |
 | Era ownership | Steam | | |
 
@@ -178,7 +178,7 @@ Open flags: Q-242-01 (R-142-04), Q-242-02, Q-242-03 (the cost the economy adds t
 
 ## Scale requirements
 
-Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): 4 peers; 200 ms command latency tolerated with input delay; 5,000-tick jump identical across peers. Teams of 6 stand (Westley, 2026-10-02), which needs more than 4 peers; the peer count for teams of 6, and whether 200 ms holds there, are Westley's to set [Q-241-03].
+Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): 4 peers; 200 ms command latency tolerated with input delay; 5,000-tick jump identical across peers. More than 4 peers, and so teams of 6, are a desired future feature that waits on a higher peer count (Westley, 2026-10-02). Nothing is confirmed beyond 4 peers.
 
 ## Look and behavior references
 
@@ -197,7 +197,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-140-01, Q-140-02, Q-141-01, Q-141-02, Q-142-01, Q-142-02, Q-144-01, Q-144-03, Q-241-01, Q-241-02, Q-241-03, Q-242-01, Q-242-02, Q-242-03. The economy's flags (Q-159-07 to Q-159-10 and the rest) are E-22's. Details in `docs/northstar/ambiguity_register.md`.
+Q-140-01, Q-140-02, Q-141-01, Q-141-02, Q-142-01, Q-142-02, Q-144-01, Q-144-03, Q-214-01, Q-241-02, Q-242-01, Q-242-02, Q-242-03. The economy's flags (Q-159-07 to Q-159-10 and the rest) are E-22's. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

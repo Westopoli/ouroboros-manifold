@@ -1,17 +1,17 @@
 # E-03 — World Generation and Topology
 
-## Definition-completeness gate (run 2026-09-10, re-checked 2026-09-14 and 2026-09-15 through the full Q-021/Q-022/Q-024/Q-025 fold chain)
+## Definition-completeness gate (run 2026-09-10, re-checked 2026-09-14 and 2026-09-15)
 
 | Check | Result |
 |---|---|
-| Every story has at least one Given/When/Then rule with concrete values | Yes, 5 stories, 28 rules (S-021 grew from 8 to 10 rules folding the per-template shapes in; R-025-04 added folding Q-025-01; the original gate's "22 rules" count was stale even before either fold), numbers from `algorithms.md` ALG-30 and ALG-31. |
+| Every story has at least one Given/When/Then rule with concrete values | Yes, 7 stories, 31 rules, numbers from `algorithms.md` ALG-30 and ALG-31. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 10 flags total across this epic's life (Q-021-01 through Q-021-06, Q-022-01, Q-022-02, Q-024-01, Q-025-01), all closed and folded. A Sonnet test audit caught what the first gate re-check missed: R-021-03/04 said the player's preference "raises" their chosen template's weight without giving the exact number (Q-021-06) — closed, configurable, default 2:1:1. |
+| Implied-but-unstated behavior turned into flags | 1 open flag on this epic's stories, Q-224-01 (S-224); Q-221-01 (E-02 S-221) and Q-177-05 (E-22 S-177) are cited and held elsewhere. |
 | Every visible-surface story has a reference | Not applicable; the galaxy view that draws the graph is E-16. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: S-021 to S-025 passed, 2026-09-15.** Zero open flags in those stories. S-223 and S-224 were added 2026-10-02 and have not been through the gate; S-224 carries one open flag. Every story is folded and consistent with the register and with `algorithms.md`'s ALG-30/ALG-31 (the first pass at this verdict missed that ALG-31 still described the retired fixed-2-region generator; both ALG-30 and ALG-31 are now rewritten to match this epic).
+**Gate verdict: not passed.** S-021 to S-025 have no open flags and passed 2026-09-15. S-223 and S-224 were added 2026-10-02 and have not been through the gate; S-224 is blocked on Q-224-01. Every story is folded and consistent with the register and with `algorithms.md`'s ALG-30/ALG-31 (the first pass at this verdict missed that ALG-31 still described the retired fixed-2-region generator; both ALG-30 and ALG-31 are now rewritten to match this epic).
 
 ## Purpose
 
@@ -42,7 +42,7 @@ Rules
 
 Inputs: seed (64-bit integer); config ranges; player template preference (optional).
 Outputs: world graph in the strategic snapshot; galaxy view (E-16); each faction's rolled template (T1 trace, save file).
-Open flags: none. Q-021-01 through Q-021-06 are closed and folded: every faction independently rolls one of the three named templates, keeping the templates' own region counts (3 for Isolated, 4 to 6 for Twin Colony, 4 for Archipelago) rather than rescaling to a fixed two regions; the galaxy region-count range is [250, 400] (Westley 2026-09-28, from the approved galaxy prototype; replaces [60, 110]); the player's preference weight is a configurable parameter, default 2:1:1 (0.50/0.25/0.25).
+Open flags: none. Every faction independently rolls one of the three named templates, keeping the templates' own region counts (3 for Isolated, 4 to 6 for Twin Colony, 4 for Archipelago) rather than rescaling to a fixed two regions; the galaxy region-count range is [250, 400] (Westley 2026-09-28, from the approved galaxy prototype; replaces [60, 110]); the player's preference weight is a configurable parameter, default 2:1:1 (0.50/0.25/0.25).
 
 ### S-022 — Homes are strong, frontiers are new
 As a commander, I want my home region to feel established and my frontier to feel recently settled, so that the starting shape of my civilization tells a story.
@@ -56,7 +56,7 @@ Rules
 
 Inputs: tier, RNG, faction archetype.
 Outputs: starting fields per region; starting tech per faction.
-Open flags: none. Closed by Q-022-01 and Q-022-02 (Westley, 2026-09-14): per-archetype home ranges are the design, numbers above; frontier regions are archetype-independent.
+Open flags: none. Per-archetype home ranges are the design, numbers above; frontier regions are archetype-independent.
 
 ### S-023 — Routes carry armies, trade, or both
 As a commander, I want a connection between two regions to be a military route, a trade route, or both, so that a region can be rich but exposed, or safe but poor.
@@ -83,7 +83,7 @@ Rules
 
 Inputs: peace, betrayal, conquest, colonization events (E-05, E-06).
 Outputs: edge types in the strategic snapshot.
-Open flags: none. Closed by Q-024-01 (Westley, 2026-09-12): instability-driven edge collapse is a future story, not this epic's Round 1 scope — no rule here implements it. Proposed trigger for that future story: an edge collapses `both`/`trade` → `border` when either endpoint's stability is below 20 for 50 consecutive ticks.
+Open flags: none. Instability-driven edge collapse is a future story, not this epic's Round 1 scope — no rule here implements it. Proposed trigger for that future story: an edge collapses `both`/`trade` → `border` when either endpoint's stability is below 20 for 50 consecutive ticks.
 
 ### S-025 — Nobody starts on your doorstep
 As a commander, I want empty space between me and every other faction at the start, so that first contact is something that happens, not something I spawn into.
@@ -96,20 +96,20 @@ Rules
 
 Inputs: generated graph.
 Outputs: adjacency; a generation-time check that rejects and re-rolls a violating extra edge (R-025-04).
-Open flags: none. Closed by Q-025-01 (Westley, 2026-09-12): the buffer is player-to-NPC only, checked at generation time only — NPC factions may end generation adjacent to each other, and any faction pair may become adjacent later through conquest or colonization (E-05, E-06).
+Open flags: none. The buffer is player-to-NPC only, checked at generation time only — NPC factions may end generation adjacent to each other, and any faction pair may become adjacent later through conquest or colonization (E-05, E-06).
 
 ### S-223 — How far a region is from the civilization
 As a commander, I want the galaxy's graph to say how far a mission's region lies from the civilization's land, so that where a mission happens can help decide what kind of base each side is given.
 
-Direction decided in part 2026-10-02 (E-22 S-177 names "the supply distance in the simulation"); the term itself is undefined. Not scheduled for building.
+Design decided 2026-10-02 (E-22 S-177 names "the supply distance"; Westley, 2026-10-02: "keep"). Not scheduled for building.
 
 Rules
 - R-223-01  Given any two regions, When a distance between them is read, Then the only measure the simulation defines is the number of hops along the graph's edges of any type, as E-08 R-057-01 and E-10 R-072-08 use it.
-- R-223-02  Given the kind of base a mission gives each side (E-22 S-177), When "the supply distance in the simulation" is read, Then [Q-159-14: what supply distance is; Westley does not recognise the term, and the offered meaning is the hops from the mission's region to the nearest region the civilization owns].
+- R-223-02  Given the kind of base a mission gives each side (E-22 S-177), When the supply distance is read, Then it is the number of regions between the mission's region and the nearest region the civilization owns.
 
 Inputs: the graph (S-021, S-023); region ownership.
-Outputs: a distance, once Q-159-14 is answered, to the mission generator (E-10) and to E-22 S-177.
-Open flags: Q-159-14.
+Outputs: the supply distance to the mission generator (E-10) and to E-22 S-177.
+Open flags: none here. The numbers of regions at which the base kind changes are Q-177-05 (E-22 S-177).
 
 ### S-224 — A galaxy at its full size
 As the build, I want generation held to a time budget at the top of the region range, so that a campaign with a 400-region galaxy starts within a time Westley has confirmed.
@@ -173,7 +173,7 @@ None required in this epic. The galaxy view is E-16.
 
 ## Open ambiguity flags
 
-Q-224-01 (S-224), Q-159-14 (S-223, held by E-22 S-177) and Q-221-01 (E-02 S-221). S-021 to S-025 have none: Q-021-01 through Q-021-06, Q-021-08, Q-022-01, Q-022-02, Q-024-01, Q-025-01 are closed and folded above.
+Q-224-01 (S-224) and Q-221-01 (E-02 S-221). S-223 has none; the numbers of regions its supply distance is read against are Q-177-05 (E-22 S-177). S-021 to S-025 have none.
 
 ## Depends on
 
