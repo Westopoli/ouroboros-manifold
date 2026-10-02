@@ -286,7 +286,7 @@ Live wiring gap (see `docs/bible/epics/E-10-missions.md` S-075): only the `hold_
 
 ### chronicle frame, mission frame, debrief frame (on `snapshot` after a jump, mission start, mission end)
 ```json
-{"type":"chronicle","jump":{"from_tick":100,"to_tick":150,"chapter_end_reason":0},"entries":[{"id":12,"start_tick":103,"end_tick":110,"category":3,"cluster_type":1,"refs":{"regions":[3],"factions":[1]},"fragment":417,"fragment_ids":[417,12,-1],"significance":0.8,}],"ownership":{"stride":2,"from_tick":100,"n_regions":4,"snapshots":[[0,0,1,-1],[0,0,1,-1],[0,1,1,-1]]},"keyframes":[103,120]}
+{"type":"chronicle","jump":{"from_tick":100,"to_tick":150,"chapter_end_reason":0},"entries":[{"id":12,"start_tick":103,"end_tick":110,"category":3,"cluster_type":1,"refs":{"regions":[3],"factions":[1]},"fragment":417,"fragment_ids":[417,12,-1],"significance":0.8,"text":"The Iron Vale held.","mentions":[{"start":0,"len":13,"kind":"region","id":3}],"expanded_text":"The Iron Vale held, and the Dominion watched.","expanded_mentions":[{"start":4,"len":13,"kind":"region","id":3},{"start":28,"len":12,"kind":"faction","id":1}]}],"ownership":{"stride":2,"from_tick":100,"n_regions":4,"snapshots":[[0,0,1,-1],[0,0,1,-1],[0,1,1,-1]]},"keyframes":[103,120]}
 {"type":"mission","archetype":2,"region":7,"deadline_ticks":900,"objectives":[{"i":0,"kind":1,"node":3,"primary":true,"radius":300.0,"progress":0.0}],"force":{"types":[2,2,1,0,0,0],"tiers":[2,2,1,0,0,0]},"briefing":{"situation":"...","objective":"...","assets":"..."},"parity":0.85,"commander_unit":0,"quiet_world":false}
 {"type":"debrief","band":2,"achieved":0.8,"brought_home":0.6,"region_delta":{"military":-4.0,"economy":2.0,"tension":-3.0,"population":0.0},"commander_fate":2}
 ```
