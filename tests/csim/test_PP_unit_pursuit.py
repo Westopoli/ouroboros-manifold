@@ -97,7 +97,8 @@ def test_R_087_04_chase_persists_after_arrival(lib, world_factory):
     u = spawn(lib, w, RAIDER, 0, 0.0, 0.0)
     attack_move(lib, w, [u], 300.0, 0.0)
     step(lib, w, 60)                                    # 300 wu at 7.5 per tick = 40 ticks
-    assert pos(lib, w, u) == pytest.approx((300.0, 0.0), abs=1e-6), "fixture: unit should have arrived"
+    # Arrived means within the arrival radius (R-099-04: 1.5 x collision radius 15 = 22.5 wu), not on the point.
+    assert pos(lib, w, u) == pytest.approx((300.0, 0.0), abs=22.5), "fixture: unit should have arrived"
 
     enemy = spawn(lib, w, SUPPLY, 1, 900.0, 0.0)        # 600 wu from the arrived unit
     step(lib, w, CYCLE)

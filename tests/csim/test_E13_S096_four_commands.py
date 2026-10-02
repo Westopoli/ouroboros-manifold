@@ -80,6 +80,13 @@ def test_R_096_02_unit_halts_fires_target_dies(lib, world_factory):
 
     # Target dropped and unit resumes towards point
     assert lib.om_unit_get_target(w, u) == 0
+    # Setup (test-defect, A127): the unit walks by the movement layer (R-087-04), so it is moving again
+    # a few ticks after the drop (measured: 9 steps), not on the very tick the target dies. Step until
+    # it moves, bounded at 12; a unit that never resumes still fails the check below.
+    for _ in range(12):
+        if lib.om_unit_get_current_speed(w, u) > 0.0:
+            break
+        lib.om_world_step(w)
     assert lib.om_unit_get_current_speed(w, u) > 0.0
     dest_x, dest_y = lib.om_unit_get_destination(w, u)
     assert pytest.approx(dest_x, abs=1e-4) == 1000.0

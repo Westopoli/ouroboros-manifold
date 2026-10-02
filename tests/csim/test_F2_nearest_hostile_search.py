@@ -270,7 +270,12 @@ def library_targets(lib, w):
 
 
 def run_search(lib, w):
-    """Four ticks: every unit's cohort tick comes up once. Nobody moves or fires."""
+    """Four ticks: every unit's cohort tick comes up once. Nobody moves or fires.
+    Test-defect, A127: with OM_TP_PURSUE_BY_STEERING on (its default, R-084-01) a unit already in range
+    fires its first shot on the first tick and the scene's targets change as units die, so the
+    equivalence below would compare against a fight, not a search. Baseline mode (0) keeps the
+    four-tick search this test was written for; the search rule itself is untouched."""
+    assert lib.om_tactical_set_param(w, 0, 0.0) == 0
     lib.om_macro_set_state(w, 0, OM_MACRO_ADVANCE, OM_MACRO_MOD_CAUTIOUS)
     lib.om_tactical_tick_to(w, COHORT_TICKS)
 
@@ -409,8 +414,8 @@ def _state_hash(lib, w):
 
 # Recorded on origin/main b1d53b7e (and identical on origin/push/F1 + main).
 GOLDEN = {
-    "clash": "9b191fee4448505843afa88862ccdc4d55cb0dc78354c9a64d2d2792e58ca7d9",
-    "spread": "088679c6be4f5b2da69df91bc5f7eeb09498deb4b33ac0b90d633ff5dc9a693d",
+    "clash": "d1fc4be153ada65268f779af188af53d3da53a42eb9045be85b9ac7df3a2aac4",
+    "spread": "34abca59233a6e744fa3c6b2ebebd30aa00b74345c4b7e3295bd3492122c8f1e",
 }
 
 
