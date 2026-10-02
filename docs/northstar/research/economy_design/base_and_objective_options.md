@@ -2,7 +2,18 @@
 
 Written 2026-10-02 for Westley. Surface level; standard and wild options per part. The flag is Q-159-11.
 
-## Already decided
+## Decided, 2026-10-02
+
+| Part | Decision |
+|---|---|
+| A | **A3 with A5.** Fall back to a held expansion or forward base; a base is occupied, not destroyed, and can be retaken. Once the original main base is lost, the best possible result is partial failure. |
+| B | **B1 with B2.** Archetype and supply distance together decide the kind of base. |
+| C | **C1, not always.** Usually three separate places. Resources are limited or abundant as the simulation's situation dictates, slanted by it, and the player always has the means to do the mission. No separate scoring: ignoring the resources already gets a player overrun unless he rushes. |
+| D | **D4.** Strongpoints at the slopes between height bands. |
+
+Also decided: spending is balanced between economy, technology and army, as in StarCraft.
+
+## Already decided before this round
 
 - Every side has a base of operations it must protect. It is not always a city. It receives resources from elsewhere, generates them on site, or both, depending on the simulation and the mission.
 - Economic locations are spread over the map; the significant resources sit opposite the objective.

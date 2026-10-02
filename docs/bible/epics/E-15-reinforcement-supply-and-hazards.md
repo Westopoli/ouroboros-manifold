@@ -24,6 +24,8 @@ Start a medium Defensive Stand in a region with military 60: 3 to 6 structures, 
 ## Stories
 
 ### S-126 — Most of my force is out there
+
+Direction changed 2026-10-02, rewrite pending: with the economy of E-19 S-159, these structures become strongpoints at the slopes between height bands, and their production is paid for by the economy (E-19 R-159-17). The rules below are what the game does today.
 As a commander, I want reinforcements to come from the region's own garrisons that I capture and hold, so that the map is a resource I fight over without ever building a base.
 
 Rules

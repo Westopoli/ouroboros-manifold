@@ -116,15 +116,19 @@ Rules
 - R-159-06  Production. The economy player runs the production buildings and makes the units the commander receives; what to make is agreed by talking. Production is planned ahead on a schedule, and changing what a building is focused on takes a while.
 - R-159-07  Counters. Unit families counter each other, and specific unit roles need specific resources, so heavy gathering of one resource shows which role a side is making more of, and the other side needs the counter (Q-159-08). An enemy who sees a production building can see what it is doing, so players have a way to disguise or hide their buildings (Q-159-09).
 - R-159-08  Technology. Technology choice belongs to the economy player.
-- R-159-09  Bases. Every side has a base of operations it must protect. It is not always a city. It receives resources from elsewhere, generates them on site, or both, depending on the simulation and the mission (Q-159-06). Settlements on the map can be grown into further bases. The main base never runs dry, but a side that stays home and does not expand is out-produced and overrun. Production can be built forward, near the front or at an expansion, where it reinforces fast and is exposed. What happens when a base of operations falls is open (Q-159-11).
+- R-159-09  Bases. Every side has a base of operations it must protect. It is not always a city. It receives resources from elsewhere, generates them on site, or both, depending on the simulation and the mission (Q-159-06). Settlements on the map can be grown into further bases. The main base never runs dry, but a side that stays home and does not expand is out-produced and overrun. Production can be built forward, near the front or at an expansion, where it reinforces fast and is exposed. What happens when one falls is R-159-14.
 - R-159-10  The map. Economic locations are placed throughout the map, and the significant resources are placed opposite the objective, so a side picks one or fights for both. A neutral populace lives in settlements on the map and is contested; winning it is not the economy player's job.
 - R-159-11  Shipments. The civilization sends shipments to the base. The side has no vision of a shipment on its way, and one that does not arrive gives no explanation.
 - R-159-12  Weather. Specific regions have specific environmental troubles. A trouble travels across the map where both sides can see it and shuts down what it passes over.
 - R-159-13  The city grows during a mission (Q-159-04). What the pair carries forward between missions is open; the economy is not assumed to persist through a time jump (Q-159-07).
+- R-159-14  When a base falls. A base of operations is occupied, not destroyed: the side that takes it gets its production and its people, and the side that lost it can take it back. A side that still holds an expansion or a forward base falls back to it as its base of operations. Once a side has lost its original main base, the best result it can get from the mission is partial failure (E-10 S-077).
+- R-159-15  What kind of base. The mission archetype (E-10 S-073) and the supply distance in the simulation together decide the kind of base each side is given.
+- R-159-16  Resources and the situation. Base, objective and the significant resources are usually three separate places, not always. Resources are sometimes limited and sometimes abundant, consistent with the situation the simulation gives and slanted by it (a defender has the better position), and the player always has the means to accomplish the mission even when it is hard. The resources are not scored separately: a side that ignores them is overrun unless it rushes and finishes fast. Spending is balanced between economy, technology and army.
+- R-159-17  Strongpoints. The reinforcement structures of E-15 S-126 are strongpoints at the slopes between height bands (E-17 R-166-04). Holding one holds the way up or down and gives production on that band.
 
 Inputs: none yet.
 Outputs: none yet.
-Open flags: Q-159-02, Q-159-03, Q-159-07, Q-159-08, Q-159-09, Q-159-10, Q-159-11.
+Open flags: Q-159-02, Q-159-03, Q-159-07, Q-159-08, Q-159-09, Q-159-10.
 
 ## Inputs
 
@@ -167,9 +171,9 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-140-01, Q-140-02, Q-141-01, Q-141-02, Q-142-01, Q-142-02, Q-144-01, Q-144-02, Q-159-02, Q-159-03, Q-159-07, Q-159-08, Q-159-09, Q-159-10, Q-159-11. Details in `docs/northstar/ambiguity_register.md`.
+Q-140-01, Q-140-02, Q-141-01, Q-141-02, Q-142-01, Q-142-02, Q-144-01, Q-144-02, Q-159-02, Q-159-03, Q-159-07, Q-159-08, Q-159-09, Q-159-10. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
 - Every sim epic (determinism), E-08 and E-10 (match flow and missions), E-16 (lobby, pause), E-20 (era packs).
-- S-159's economy also touches E-10 and E-15 (what a fallen base means for outcomes and reinforcement, Q-159-11), E-11 (unit roles and their resources) and E-17 (S-166, the settlement generator). Its self-running form (R-159-02) also touches E-02 (region economic field, the data it grows from), E-16 (world view, where it would render), and E-17 and E-18 (the cheap, procedural, LOD-disciplined visual approach it should follow). It is recorded here because the idea started as a multiplayer-mode question, not because E-19 is necessarily its final home; a later Stage 2 pass may move S-159 or split it once it is scoped for real.
+- S-159's economy also touches E-10 and E-15 (what a fallen base means for outcomes, R-159-14, and what the reinforcement structures become, R-159-17; both epics are rewritten to match in the epics pass), E-11 (unit roles and their resources) and E-17 (S-166, the settlement generator). Its self-running form (R-159-02) also touches E-02 (region economic field, the data it grows from), E-16 (world view, where it would render), and E-17 and E-18 (the cheap, procedural, LOD-disciplined visual approach it should follow). It is recorded here because the idea started as a multiplayer-mode question, not because E-19 is necessarily its final home; a later Stage 2 pass may move S-159 or split it once it is scoped for real.
