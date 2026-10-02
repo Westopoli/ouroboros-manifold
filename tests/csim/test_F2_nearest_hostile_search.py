@@ -276,6 +276,9 @@ def run_search(lib, w):
     equivalence below would compare against a fight, not a search. Baseline mode (0) keeps the
     four-tick search this test was written for; the search rule itself is untouched."""
     assert lib.om_tactical_set_param(w, 0, 0.0) == 0
+    # The scene runs y past the 16000 canvas: with OM_TP_ROUTE_AROUND_TERRAIN on every off-canvas unit is
+    # relocated to the edge on tick 1 (R-097-09), so the reference would see stale positions. Baseline too.
+    assert lib.om_tactical_set_param(w, 1, 0.0) == 0
     lib.om_macro_set_state(w, 0, OM_MACRO_ADVANCE, OM_MACRO_MOD_CAUTIOUS)
     lib.om_tactical_tick_to(w, COHORT_TICKS)
 
