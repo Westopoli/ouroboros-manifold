@@ -4,10 +4,10 @@
 
 | Check | Result |
 |---|---|
-| Every story has at least one Given/When/Then rule with concrete values | Partly. 22 stories. S-112 to S-119 keep the rules built and tested today (numbers from `algorithms.md` ALG-70 through ALG-73 and config), and the layouts they describe stay. The terrain-first stories (S-186 to S-197) carry a number only where Westley gave one, and write every other number as a flag. |
+| Every story has at least one Given/When/Then rule with concrete values | Partly. 22 stories, 107 rules. S-112 to S-119 keep the rules built and tested today (numbers from `algorithms.md` ALG-70 through ALG-73 and config), and the layouts they describe stay. The terrain-first stories (S-186 to S-197) carry a number only where Westley gave one, and write every other number as a flag. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | Yes. 30 new flags, 29 of them in the terrain-first stories, listed under Open ambiguity flags. |
+| Implied-but-unstated behavior turned into flags | Yes. 33 open flags, listed under Open ambiguity flags. |
 | Every visible-surface story has a reference | Yes. `docs/bible/references/E-17/notes.md` holds shots 01 to 13, and `docs/northstar/research/landscape_design/README.md` holds Westley's review of the prototype. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
@@ -30,6 +30,8 @@ Generate a land map for a medium canvas from seed 11. The terrain has height and
 ## Stories
 
 ### S-112 — Bones from the library
+Flag closed, rule text pending: Q-113-01, fairness is a logger only until the generator is tuned in the P2 landscape design phase. The rule below is what the tests read today.
+Flag closed, rule text pending: Q-112-01, the launch ships 8 layouts and grows after testing. The rule below is what the tests read today.
 
 Direction changed 2026-10-02, rewrite pending: the layout library stays and terrain-first generation is added to it, so the terrain engine accounts for the layouts, and how the two combine is not yet defined (S-186, S-191, Q-191-04). The rules below are what the game does today.
 
@@ -45,7 +47,7 @@ Rules
 
 Inputs: archetype; layout library; seed.
 Outputs: instantiated spine (nodes, edges) in the map seed.
-Open flags: none open. Q-112-01 and Q-113-01 are closed in the register.
+Open flags: none.
 
 ### S-113 — Nine kinds of place
 
@@ -65,6 +67,7 @@ Outputs: typed nodes in the map seed; recon render.
 Open flags: none.
 
 ### S-114 — Texture from gradients
+Flag closed, rule text pending: Q-115-01, overlapping gradient sources combine by sum clamped to 1.0: intensity = min(1.0, i1 + i2). The rule below is what the tests read today.
 
 Direction changed 2026-10-02, rewrite pending: the gradient sources stay, and terrain-first generation adds elevation, blocking and layer access that follow from the terrain's height bands and slopes, with steep ground that blocks walking units. How the two combine is not yet defined (S-188, S-189, S-190, Q-191-04). The rules below are what the game does today.
 
@@ -79,9 +82,10 @@ Rules
 
 Inputs: spine; layout hints.
 Outputs: gradient sources in the map seed; sampled fields for E-01, E-12, E-13.
-Open flags: none open. Q-115-01 is closed in the register.
+Open flags: none.
 
 ### S-115 — The region shapes the terrain
+Flag closed, rule text pending: Q-117-01, the multipliers are active with conservative bounds: baseline hazard density * (1 + 0.5 * (100 - stability)/100), with deltas clamped to +-25%. The rule below is what the tests read today.
 
 Direction changed 2026-10-02, rewrite pending: the region's state keeps flavoring interference, hazards and cover, and terrain-first generation adds a climate and landform derived from the seed (S-187, Q-191-04). The rules below are what the game does today.
 
@@ -94,9 +98,10 @@ Rules
 
 Inputs: region fields and composites.
 Outputs: adjusted source intensities.
-Open flags: none open. Q-117-01 is closed in the register.
+Open flags: none.
 
 ### S-116 — Canvas
+Flag closed, rule text pending: Q-118-01, state-based canvas sizing, the bible approach: base size plus or minus 30 percent by region, direction per archetype. The rule below is what the tests read today.
 
 Direction changed 2026-10-02, rewrite pending: a match of 4 to 6 players has a canvas of 64,000 wu, and smaller matches keep today's sizes (S-195). The rules below are what the game does today.
 
@@ -108,9 +113,10 @@ Rules
 
 Inputs: archetype; region.
 Outputs: canvas size in the map seed.
-Open flags: Q-118-02 (which way each archetype pushes the canvas; Q-118-01 is closed in favor of base size plus or minus 30 percent by region). Q-195-01 (what the largest present size is).
+Open flags: Q-118-02 (which way each archetype pushes the canvas). Q-195-01 (what the largest present size is).
 
 ### S-117 — Fair enough
+Flag closed, rule text pending: Q-113-01, a score outside the range is logged only until the generator is tuned in the P2 landscape design phase; switching to reject-and-regenerate is a design-phase decision. The rule below is what the tests read today.
 
 Direction changed 2026-10-02, rewrite pending: the fairness check stays and also scores the terrain and places of a terrain-first map, against a map the situation may deliberately slant (S-197, Q-191-04). The rules below are what the game does today.
 
@@ -123,7 +129,7 @@ Rules
 
 Inputs: map seed.
 Outputs: fairness log; regeneration.
-Open flags: none open. Q-113-01 is closed in the register (logger only until the generator is tuned).
+Open flags: none.
 
 ### S-118 — The battlefield moves
 
@@ -141,6 +147,7 @@ Outputs: node and source positions per tick in the delta; HUD objective marker.
 Open flags: Q-118-03 (whether a strongpoint may drift). Weather that travels across the map and shuts down what it passes over is E-15 S-130, not a drifting source.
 
 ### S-119 — Terrain that reads like a place
+Flag closed, rule text pending: Q-119-01, Track R research comes first, to inform the implementation style. The rule below is what the tests read today.
 
 Direction changed 2026-10-02, rewrite pending: terrain is blended layered noise added to the layouts, and the generator is one generator over one field map read by two kits through one placer (S-186, S-196, Q-191-04). The rules below are what the game does today.
 
@@ -152,7 +159,7 @@ Rules
 
 Inputs: map seed; era kit.
 Outputs: screen.
-Open flags: none open. Q-119-01 is closed in the register. Q-119-02 is closed: the layout library stays and terrain-first generation is added to it (Q-191-04). References: `docs/bible/references/E-17/notes.md` (Minecraft and Roblox biome blending are the named references, shots 09 to 13).
+Open flags: none. The layout library stays and terrain-first generation is added to it (Q-191-04). References: `docs/bible/references/E-17/notes.md` (Minecraft and Roblox biome blending are the named references, shots 09 to 13).
 
 ### S-165 — Later, perhaps: travel lanes
 As a commander, I may someday want the map to have lanes where troops move faster and strategic ground where they move slower, so that where an army can travel quickly is part of reading the landscape.
@@ -441,7 +448,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-118-02, Q-118-03, Q-165-01, Q-166-02, Q-166-04, Q-186-01, Q-187-01, Q-187-02, Q-188-01, Q-188-02, Q-189-01, Q-189-02, Q-189-03, Q-190-01, Q-191-01, Q-191-02, Q-191-03, Q-191-04, Q-192-01, Q-192-02, Q-192-03, Q-192-04, Q-192-05, Q-193-01, Q-193-02, Q-193-03, Q-193-04, Q-193-05, Q-193-06, Q-194-01, Q-195-01, Q-195-02, Q-197-01. Details in `docs/northstar/ambiguity_register.md` for those already there. The new ones are in the audit sidecars `docs/northstar/research/epics_audit_2026-10-02/sidecar_e17.md` and `sidecar_answers2.md` until the register takes them.
+Q-118-02, Q-118-03, Q-165-01, Q-166-02, Q-166-04, Q-186-01, Q-187-01, Q-187-02, Q-188-01, Q-188-02, Q-189-01, Q-189-02, Q-189-03, Q-190-01, Q-191-01, Q-191-02, Q-191-03, Q-191-04, Q-192-01, Q-192-02, Q-192-03, Q-192-04, Q-192-05, Q-193-01, Q-193-02, Q-193-03, Q-193-04, Q-193-05, Q-193-06, Q-194-01, Q-195-01, Q-195-02, Q-197-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

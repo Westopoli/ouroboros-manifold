@@ -7,7 +7,7 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 11 stories, 49 rules, numbers from `algorithms.md` ALG-66 through ALG-69 and config. The rules of S-207 to S-209 leave their numbers to open flags. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | Yes; the flags still open are listed at the foot of this file. |
+| Implied-but-unstated behavior turned into flags | Yes; the 9 flags still open are listed at the foot of this file. |
 | Every visible-surface story has a reference | **No.** S-101 (how movement reads: turning, flow around blockers, formation arrival) has a visible surface and no reference. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
@@ -125,7 +125,8 @@ Rules
 
 Inputs: tick deltas.
 Outputs: screen.
-Open flags: Q-101-02 (the collision iteration cap against R-101-01's 30 wu floor). Q-101-01 is closed: arrival is the group centroid reaching the point. Reference required: `references/E-13/notes.md`, missing.
+Open flags: Q-101-02 (the collision iteration cap against R-101-01's 30 wu floor).
+Arrival is the group centroid reaching the point. Reference required: `references/E-13/notes.md`, missing.
 
 ### S-102 — Same commands, same battle
 As a player in a multiplayer match, I want every peer to compute the same movement from the same commands, so that we are all watching one battle.

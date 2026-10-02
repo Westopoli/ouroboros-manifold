@@ -4,14 +4,14 @@
 
 | Check | Result |
 |---|---|
-| Every story has at least one Given/When/Then rule with concrete values | Yes, 10 stories, 47 rules, all numbers from `algorithms.md` ALG-01 through ALG-10. |
+| Every story has at least one Given/When/Then rule with concrete values | Yes, 13 stories, 60 rules; the numbers of S-012 to S-020 and S-160 are from `algorithms.md` ALG-01 through ALG-10. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. No player inputs; every input is sim-internal. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 3 new flags, Q-013-01, Q-015-01, Q-019-01. |
+| Implied-but-unstated behavior turned into flags | 9 open flags, all on S-220 to S-222: Q-220-01, Q-220-02, Q-159-13, Q-221-01, Q-221-02, Q-222-01, Q-193-04, Q-193-05, Q-193-06. |
 | Every visible-surface story has a reference | Not applicable. No story in this epic has its own visible surface; the world view that shows region state is E-16. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: passed (2026-09-13). Ready (2026-09-14).** The 3 flags (Q-013-01, Q-015-01, Q-019-01) are answered and folded below. Stage 3 e2e is authored (`docs/northstar/e2e/E-02.md`); scale gates confirmed by Westley. All Definition-of-Ready items met; stories S-012 … S-020 are Ready for Stage 5 tests. S-160 (drift feature-switch correctness) added 2026-09-17 from the harness defect investigation; its ID is out of epic-local sequence because S-021 … S-159 are already assigned elsewhere in the catalog. S-220, S-221 and S-222 were added 2026-10-02 from the economy and landscape decisions; S-220 and S-222 carry open flags and have not been through the gate, S-221 is decided and has not been through the gate.
+**Gate verdict: not passed.** S-012 to S-020 and S-160 have no open flags, passed the gate on 2026-09-13 and are Ready (2026-09-14). S-220, S-221 and S-222 have not been through the gate and are blocked on Q-220-01, Q-220-02 and Q-159-13 (S-220), Q-221-01 and Q-221-02 (S-221), and Q-222-01 (S-222, which also cites Q-193-04 to Q-193-06 from E-17 S-193). Stage 3 e2e is authored (`docs/northstar/e2e/E-02.md`); scale gates confirmed by Westley. All Definition-of-Ready items met; stories S-012 … S-020 are Ready for Stage 5 tests. S-160 (drift feature-switch correctness) added 2026-09-17 from the harness defect investigation; its ID is out of epic-local sequence because S-021 … S-159 are already assigned elsewhere in the catalog. S-220, S-221 and S-222 were added 2026-10-02 from the economy and landscape decisions.
 
 ## Purpose
 
@@ -62,7 +62,7 @@ Rules
 
 Inputs: military, economy, population, tension, faction modifiers.
 Outputs: Δmilitary in the drift log; military field.
-Open flags: none. Q-013-01 resolved (a): the bible's "low military near hostile factions accelerates all negative trends" is a stale sentence with no formula, deleted; the attack resolver (E-05) already punishes low military. No rule.
+Open flags: none. No rule makes low military near hostile factions accelerate negative trends: the attack resolver (E-05) already punishes low military.
 
 ### S-014 — People make money, unrest and overreach cost it
 As a commander, I want a region's economy to grow with its population, shrink under tension, and fall back when it outruns what its people can sustain, so that prosperity has a shape.
@@ -88,7 +88,7 @@ Rules
 
 Inputs: neighbor economy (raw, not de-oscillated), edge types (recorded but not a filter), stances.
 Outputs: adjacency term in the drift log.
-Open flags: none. Q-015-01 resolved (b): every edge type counts; the C rewrite drops the current trade-only filter. The relationship gates the bonus, not the edge type.
+Open flags: none. Every edge type counts; the C rewrite drops the current trade-only filter. The relationship gates the bonus, not the edge type.
 
 ### S-016 — Hardship breeds unrest, unrest burns itself out
 As a commander, I want tension to rise when a region is poor, unstable, or starving, and to decay faster the higher it is, so that regions settle into a real equilibrium instead of spiraling.
@@ -143,7 +143,7 @@ Rules
 
 Inputs: field values, source of the change (drift, friction, event, conquest).
 Outputs: clamped field values.
-Open flags: none. Q-019-01 resolved (a): confirmed as written — event effects floor tension at 12.0, drift alone floors it at 0. R-019-04 stands.
+Open flags: none. Event effects floor tension at 12.0 and drift alone floors it at 0 (R-019-04).
 
 ### S-020 — Same seed, same galaxy
 As a player in a multiplayer match, I want the simulation to produce the identical trace from the same seed on every machine, so that everyone is looking at the same galaxy.
@@ -273,7 +273,7 @@ None required. The player-facing surface for region state is E-16 (world view).
 
 ## Open ambiguity flags
 
-Q-220-01, Q-220-02, Q-221-01, Q-221-02, Q-222-01, and Q-159-13 as cited in S-220 and Q-193-04 to Q-193-06 as cited in S-222. S-012 to S-020 and S-160 have none: Q-013-01 (a), Q-015-01 (b), Q-019-01 (a) were answered 2026-09-13 and folded into the stories above. Details in `docs/northstar/ambiguity_register.md`. Stage 3 e2e: `docs/northstar/e2e/E-02.md`.
+Q-220-01, Q-220-02, Q-221-01, Q-221-02, Q-222-01, and Q-159-13 as cited in S-220 and Q-193-04 to Q-193-06 as cited in S-222. S-012 to S-020 and S-160 have none. Details in `docs/northstar/ambiguity_register.md`. Stage 3 e2e: `docs/northstar/e2e/E-02.md`.
 
 ## Depends on
 

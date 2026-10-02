@@ -7,11 +7,11 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 8 stories, 31 rules, numbers from `algorithms.md` ALG-65 and config. The rules of S-205 and S-206 leave their numbers to open flags. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | Yes; the flags still open are listed at the foot of this file. |
+| Implied-but-unstated behavior turned into flags | Yes; the 9 flags still open are listed at the foot of this file. |
 | Every visible-surface story has a reference | **No.** S-094 (how fog and interference look) has a visible surface and no reference. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on open flags and one missing reference. Cross-layer vision, the targeted ping and going dark are specified in E-01 (S-005, S-162, S-163) and referenced here, not duplicated. S-205 and S-206 are design decided, not scheduled for building, and each carries open flags.
+**Gate verdict: not passed.** Blocked on the open flags listed at the foot and one missing reference (S-094). S-090, S-092 and S-093 have no open flags; gate to be rerun. Cross-layer vision, the targeted ping and going dark are specified in E-01 (S-005, S-162, S-163) and referenced here, not duplicated. S-205 and S-206 are design decided, not scheduled for building, and each carries open flags.
 
 ## Purpose
 
@@ -26,6 +26,7 @@ Place a Vanguard (sensor 700) and an enemy Raider at 650 wu on the same layer: t
 ## Stories
 
 ### S-089 — I see what my units see
+Flag closed, rule text pending: Q-089-01, enemies that leave sensor range vanish from the screen with no markers or memory. The rule below is what the tests read today.
 As a commander, I want the map revealed only around my units, so that scouting is a job and the unknown is a threat.
 
 Rules
@@ -38,9 +39,11 @@ Rules
 
 Inputs: unit positions, layers, sensor radii; interference at each position; cover geometry.
 Outputs: per-unit visible set and player-visible list in the tick delta; fog render.
-Open flags: Q-089-01 is closed: there is no memory of last-seen positions. Whether a shipment is a unit, and so whether R-089-05 would show it, is Q-176-02 (E-22 S-176). The line that crosses layers, for sight past cover or ground, is Q-007-01 (E-01 S-007). Q-E12-01 is closed: the targeted ping (E-01 S-162) is how a player sees far; the seer is dropped or kept only at a very high cost so that it does not undercut the ping (Q-005-04).
+Open flags: Q-176-02 (whether a shipment is a unit, and so whether R-089-05 would show it; E-22 S-176), Q-007-01 (the line that crosses layers, for sight past cover or ground; E-01 S-007).
+The targeted ping (E-01 S-162) is how a player sees far; the seer is dropped or kept only at a very high cost so that it does not undercut the ping.
 
 ### S-090 — Hiding in the storm
+Flag closed, rule text pending: Q-090-01, overlapping zones combine by sum clamped to 1, and detection range is also scaled by (1 − interference at the target). The rule below is what the tests read today.
 As a commander, I want a zone of interference to shrink what units inside it can see and what outsiders can see into it, so that I can hide a force or fear one.
 
 Rules
@@ -52,9 +55,10 @@ Rules
 
 Inputs: gradient sources (position, radius, intensity, falloff, layer, motion).
 Outputs: interference field; fog render density.
-Open flags: Q-090-01. Weather that travels across the map and shuts down what it passes over is a hazard of E-15 (S-130), not a moving interference source.
+Open flags: none. Weather that travels across the map and shuts down what it passes over is a hazard of E-15 (S-130), not a moving interference source.
 
 ### S-091 — Standing high
+Flag closed, rule text pending: Q-092-01, the elevation sensor bonus is built: the effective radius is multiplied by 1 + 0.15 times the tier difference, with tiers from the elevation gradient in steps of 0.25. The rule below is what the tests read today.
 As a commander, I want an elevated position to see farther, so that vantage is worth taking.
 
 Rules
@@ -64,7 +68,7 @@ Rules
 
 Inputs: vantage nodes; elevation gradient.
 Outputs: effective radius.
-Open flags: Q-091-01 (how the elevation tiers of R-091-02, closed in Q-092-01 as steps of 0.25, relate to the five height-band layers, now that on land maps elevation and layers come from one height field (E-17 S-190); and whether the bonus is symmetric, since the sign of the tier difference is not stated while vision across layers is symmetric by layer distance, E-01 S-005).
+Open flags: Q-091-01 (how the elevation tiers of R-091-02, steps of 0.25, relate to the five height-band layers, now that on land maps elevation and layers come from one height field (E-17 S-190); and whether the bonus is symmetric, since the sign of the tier difference is not stated while vision across layers is symmetric by layer distance, E-01 S-005).
 
 ### S-092 — Recon, then fog
 As a commander, I want to study the whole map before I commit and then lose sight of everything but what my units see, so that planning and scouting are two different skills.
@@ -92,6 +96,7 @@ Outputs: determinism trace.
 Open flags: none.
 
 ### S-094 — How fog looks
+Flag closed, rule text pending: Q-094-01, no sensor circles are drawn and fog has two states, never seen (darker) and seen before but now dark. The rule below is what the tests read today.
 As a commander, I want unexplored space, interference, and revealed ground to read differently at a glance, so that I know where I am blind.
 
 Rules
@@ -100,7 +105,7 @@ Rules
 
 Inputs: visibility; interference field.
 Outputs: screen.
-Open flags: Q-094-01 (is the sensor circle drawn at all; the HUD section never says). Reference required: `references/E-12/notes.md`, missing.
+Open flags: none. Reference required: `references/E-12/notes.md`, missing.
 
 ### S-205 — Buildings are seen like units, and show what they do
 As a commander, I want an enemy building to appear when my units see it and to show what it is doing, so that scouting reads an enemy base and hiding a building is a play.

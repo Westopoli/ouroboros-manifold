@@ -4,14 +4,14 @@
 
 | Check | Result |
 |---|---|
-| Every story has at least one Given/When/Then rule with concrete values | Yes, 7 stories, 30 rules, numbers from `algorithms.md` ALG-26 through ALG-28 and ALG-38 through ALG-40. |
+| Every story has at least one Given/When/Then rule with concrete values | Yes, 8 stories, 46 rules, numbers from `algorithms.md` ALG-26 through ALG-28 and ALG-38 through ALG-40. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 5 new flags, Q-042-01, Q-043-01, Q-045-01, Q-048-01. |
+| Implied-but-unstated behavior turned into flags | 4 open flags on S-227: Q-227-01, Q-227-02, Q-227-03 and Q-159-12 (held by E-22 S-173). S-042 to S-048 have none. |
 | Every visible-surface story has a reference | Not applicable. Tech tiers change unit look; that reference belongs to E-11. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** S-227 (added 2026-10-02) has not been through the gate and carries three open flags. Blocked on 5 open flags, one of which (Q-045-01, betrayal attack strength and mode) is a straight bible-vs-code disagreement.
+**Gate verdict: not passed.** S-227 (added 2026-10-02) has not been through the gate and is blocked on Q-227-01, Q-227-02, Q-227-03 and Q-159-12 (held by E-22 S-173). S-042 to S-048 have no open flags; gate to be rerun.
 
 ## Purpose
 
@@ -38,7 +38,7 @@ Rules
 
 Inputs: archetype pairs; stance table.
 Outputs: stance table in the strategic snapshot; faction list panel (E-16) colors relationships.
-Open flags: Q-042-01 (the live game starts with an empty stance table and never initializes it, so peace and betrayal never run in play; the diplomacy module is exercised only by diagnostics), Q-043-01 (stance changes "through events" are described in the bible but no launch event template changes a stance).
+Open flags: none.
 
 ### S-043 — Peace grows out of quiet
 As a commander, I want two neutral neighbors who leave each other alone to drift into cooperation, so that alliances emerge from behavior and not from menus.
@@ -57,6 +57,7 @@ Outputs: diplomatic events in the tick log; stance change; edge changes.
 Open flags: none.
 
 ### S-044 — Peace is never safe
+Flag closed, rule text pending: Q-045-01, the betrayal attack commits the betrayer's full budget at surprise efficiency (half efficiency, 0 defender warning window). The rule below is what the tests read today.
 As a commander, I want a cooperative partner to be able to turn on me when it is stronger and under pressure, so that peace is a bet and not a guarantee.
 
 Rules
@@ -70,7 +71,7 @@ Rules
 
 Inputs: stance table; border military; tension; weights.
 Outputs: betrayal event; attack resolution; stance and edge changes.
-Open flags: Q-045-01.
+Open flags: none.
 
 ### S-045 — A faction's technology is one number
 As a commander, I want each faction's technology to be a single level that grows with its economy, so that a thriving civilization pulls ahead and a ruined one stalls.
@@ -91,6 +92,7 @@ Outputs: tech level in the faction entry.
 Open flags: none. Knowledge Lost is stochastic and its constants (eligibility 20.0 economy or a 10.0 population fall over 50 ticks, probability 0.03 per eligible tick, tech −5.0, cooldown 100) are a first tuning; R-045-09 is the target Westley set and the number to retune against.
 
 ### S-046 — Archetypes spend tech differently
+Flag closed, rule text pending: Q-048-01, the economy multiplier is wired into ALG-05 growth. The rule below is what the tests read today.
 As a commander, I want a conqueror's technology to show up as firepower and a fortifier's as walls and wealth, so that the same number tells different stories.
 
 Rules
@@ -102,7 +104,7 @@ Rules
 
 Inputs: archetype; tech.
 Outputs: multipliers used in attack resolution.
-Open flags: Q-048-01. The mission-level economy (E-22) is a possible consumer of the economy multiplier; nothing decides it (Q-226-01).
+Open flags: none here. The mission-level economy (E-22) is a possible consumer of the economy multiplier; nothing decides it (Q-226-01).
 
 ### S-047 — Friends share knowledge
 As a commander, I want the weaker partner in a cooperative pair to catch up toward the stronger, but never past it, so that peace has a tangible reward for the one who needs it.
@@ -194,7 +196,7 @@ None required in this epic.
 
 ## Open ambiguity flags
 
-Q-042-01, Q-043-01, Q-045-01, Q-048-01, and Q-227-01, Q-227-02, Q-227-03 (S-227), with Q-159-12 held by E-22 S-173. Details in `docs/northstar/ambiguity_register.md`.
+Q-227-01, Q-227-02, Q-227-03 (S-227), with Q-159-12 held by E-22 S-173. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

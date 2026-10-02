@@ -7,11 +7,11 @@
 | Every story has at least one Given/When/Then rule with concrete values | Partly. 9 stories, 33 rules; the determinism and transport rules are concrete, the match-shape rules are placeholders pending Westley, and the paired-mode stories (S-159, S-241, S-242) carry numbers as flags. |
 | Every input listed with range and rejection behavior | Partly; see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 8 flags on S-139 to S-144, Q-139-01 through Q-144-02 (Q-144-02 is closed), Q-144-03, and 5 on S-241 and S-242: Q-241-01, Q-241-02, Q-242-01 to Q-242-03. |
+| Implied-but-unstated behavior turned into flags | 13 open flags: 8 on S-140 to S-144 (Q-140-01, Q-140-02, Q-141-01, Q-141-02, Q-142-01, Q-142-02, Q-144-01, Q-144-03) and 5 on S-241 and S-242 (Q-241-01, Q-241-02, Q-242-01 to Q-242-03). |
 | Every visible-surface story has a reference | **No.** S-144 (lobby and match flow) is a visible surface with no reference. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** This epic is the largest design gap the Stage 1 audit found (vision_v2 cross-check flag 1; A-540 rewrite-and-promote). Multiplayer is core (vision_v2 Q1, Q3). Below the transport layer, the paired mode's team sizes are decided (S-241); what a match is, co-op or versus, is not (Q-141-01). The determinism decision (`docs/northstar/README.md`) and the Steam Datagram Relay findings (`docs/northstar/research/multiplayer_sdr.md`) are the only settled parts. Sim-core epics must respect S-139 from the first sprint even while the rest of this epic is open.
+**Gate verdict: not passed.** Blocked on the 13 open flags listed at the foot and one missing reference (S-144). This epic is the largest design gap the Stage 1 audit found (vision_v2 cross-check flag 1; A-540 rewrite-and-promote). Multiplayer is core (vision_v2 Q1, Q3). Below the transport layer, the paired mode's team sizes are decided (S-241); what a match is, co-op or versus, is not (Q-141-01). The determinism decision (`docs/northstar/README.md`) and the Steam Datagram Relay findings (`docs/northstar/research/multiplayer_sdr.md`) are the only settled parts. Sim-core epics must respect S-139 from the first sprint even while the rest of this epic is open.
 
 ## Purpose
 

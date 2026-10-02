@@ -349,7 +349,7 @@ None confirmed for the economy. The direction is thousands of units and workers 
 
 Carried: Q-159-07, Q-159-08, Q-159-09, Q-159-10, Q-159-12, Q-159-13.
 
-New: Q-167-01, Q-167-02, Q-167-03, Q-168-01, Q-168-02, Q-168-03, Q-168-04, Q-169-01, Q-170-01, Q-170-02, Q-170-03, Q-171-01, Q-172-01, Q-173-01, Q-173-02, Q-174-01, Q-174-02, Q-175-01, Q-175-02, Q-175-03, Q-176-01, Q-176-02, Q-177-01, Q-177-02, Q-177-03, Q-177-04, Q-177-05, Q-178-01, Q-178-02, Q-178-03, Q-178-04, Q-178-05, Q-179-01, Q-179-02, Q-180-01, Q-180-02, Q-180-03, Q-180-04, Q-181-01, Q-181-02. Details in `docs/northstar/ambiguity_register.md`; Q-177-05 is in `docs/northstar/research/epics_audit_2026-10-02/sidecar_answers2.md` until the register takes it.
+New: Q-167-01, Q-167-02, Q-167-03, Q-168-01, Q-168-02, Q-168-03, Q-168-04, Q-169-01, Q-170-01, Q-170-02, Q-170-03, Q-171-01, Q-172-01, Q-173-01, Q-173-02, Q-174-01, Q-174-02, Q-175-01, Q-175-02, Q-175-03, Q-176-01, Q-176-02, Q-177-01, Q-177-02, Q-177-03, Q-177-04, Q-177-05, Q-178-01, Q-178-02, Q-178-03, Q-178-04, Q-178-05, Q-179-01, Q-179-02, Q-180-01, Q-180-02, Q-180-03, Q-180-04, Q-181-01, Q-181-02. Details in `docs/northstar/ambiguity_register.md`.
 
 Q-159-10, pieces offered to Westley and neither picked nor rejected. They are not rules. Where one would land is in brackets.
 - Build-ons: upkeep bands (S-169), foraging to farming (S-167), deeper districts (S-168), trading posts at neutral settlements (S-175, S-177), trade caravans (S-175), ages by landmark (S-173), worker scouting (S-172), a return-to-base ability (S-170), workers under raid (S-174).

@@ -57,7 +57,7 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-051 | E-07 | "A breakaway that never grows is absorbed; a faction with no land disappears." | Spec'd | `epics/E-07-civilizational-lifecycle.md` S-051 |
 | S-052 | E-07 | "My own civilization can fall." | Spec'd | `epics/E-07-civilizational-lifecycle.md` S-052 |
 | S-053 | E-07 | "The sim knows whether my civilization is expanding, at war, overextended, fragmenting, or settled." | Spec'd | `epics/E-07-civilizational-lifecycle.md` S-053 |
-| S-054 | E-07 | "A civilization's story can end in survival, escape, or extinction with only relics left." | Deferred (Q-054-01) | `epics/E-07-civilizational-lifecycle.md` S-054 |
+| S-054 | E-07 | "A civilization's story can end in survival, escape, or extinction with only relics left." | Deferred | `epics/E-07-civilizational-lifecycle.md` S-054 |
 | S-055 | E-08 | "Each chapter is briefing, recon, mission, resolution, time jump, new commander, always in that order." | Spec'd | `epics/E-08-generational-structure.md` S-055 |
 | S-056 | E-08 | "Decades pass while I am gone, and the world decides how many." | Spec'd | `epics/E-08-generational-structure.md` S-056 |
 | S-057 | E-08 | "I stay with a bloodline while its story is alive and move on when it goes quiet." | Spec'd | `epics/E-08-generational-structure.md` S-057 |
@@ -151,7 +151,7 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-145 | E-20 | "The engine never says starship; a new era is content, never code." | Spec'd | `epics/E-20-multi-era-and-monetization.md` S-145 |
 | S-146 | E-20 | "A checklist of exactly what an era pack contains." | Spec'd, blocked on Q-082-05 | `epics/E-20-multi-era-and-monetization.md` S-146 |
 | S-147 | E-20 | "An era in space and an era on land to play, all one game." | Spec'd, blocked on Q-147-01 | `epics/E-20-multi-era-and-monetization.md` S-147 |
-| S-148 | E-20 | "A campaign moves chronologically through the eras I own." | Spec'd, blocked on Q-148-01 | `epics/E-20-multi-era-and-monetization.md` S-148 |
+| S-148 | E-20 | "A campaign moves chronologically through the eras I own." | Spec'd, blocked on Q-148-04, Q-148-05 | `epics/E-20-multi-era-and-monetization.md` S-148 |
 | S-149 | E-20 | "A fair price and the chance to earn expansions by playing." | Spec'd, blocked on Q-149-02 | `epics/E-20-multi-era-and-monetization.md` S-149 |
 | S-150 | E-20 | "Maps, civilizations, and era systems transfer between eras like skins." | Spec'd, blocked on Q-150-01 | `epics/E-20-multi-era-and-monetization.md` S-150 |
 | S-151 | E-20 | "Someday, eras that feel different." | Deferred (A-321) | `epics/E-20-multi-era-and-monetization.md` S-151 |
@@ -159,7 +159,7 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-153 | E-21 | "One pipeline produces every text library the game reads." | Spec'd, blocked on Q-153-01 | `epics/E-21-offline-ai-pipeline.md` S-153 |
 | S-154 | E-21 | "People, places, units, and factions have names that sound like they belong together." | Spec'd, blocked on Q-155-01 | `epics/E-21-offline-ai-pipeline.md` S-154 |
 | S-155 | E-21 | "A repeatable pipeline turns concept art into clean low-poly models." | Spec'd | `epics/E-21-offline-ai-pipeline.md` S-155 |
-| S-156 | E-21 | "Headless bot matches flag broken matchups automatically." | Spec'd, blocked on Q-158-01 | `epics/E-21-offline-ai-pipeline.md` S-156 |
+| S-156 | E-21 | "Headless bot matches flag broken matchups automatically." | Spec'd, blocked on Q-156-02 | `epics/E-21-offline-ai-pipeline.md` S-156 |
 | S-157 | E-21 | "Someday, per-civilization unit variety and generated archetypes." | Deferred (A-278, A-279) | `epics/E-21-offline-ai-pipeline.md` S-157 |
 | S-158 | E-21 | "Agora reads distilled rules derived from these epics, never the bible." | Spec'd | `epics/E-21-offline-ai-pipeline.md` S-158 |
 | S-159 | E-19 | "A real economy: run by a partner, or running itself." | Design decided 2026-10-01, not scheduled (Q-159-07 to -10) | `epics/E-19-multiplayer.md` S-159 |

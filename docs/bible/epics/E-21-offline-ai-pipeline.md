@@ -7,7 +7,7 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 8 stories, 30 rules, numbers from the bible's pipeline and naming sections and config; S-244 leaves the sources of the economy's names and text to flags. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 5 flags on the first stories, Q-152-01, Q-153-01, Q-155-01, Q-156-01, Q-158-01 (Q-158-01 is closed, replaced by Q-156-02), and 6 more: Q-153-02, Q-154-01, Q-155-02, Q-156-02, Q-244-01, Q-244-02. |
+| Implied-but-unstated behavior turned into flags | 9 open flags: Q-153-01, Q-153-02, Q-154-01, Q-155-01, Q-155-02, Q-156-01, Q-156-02, Q-244-01, Q-244-02. |
 | Every visible-surface story has a reference | Not applicable; asset looks are E-18. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
@@ -92,7 +92,8 @@ Rules
 
 Inputs: unit profiles; scripted plays.
 Outputs: margin, break-even and units-firing report; flags.
-Open flags: Q-156-02 (the pass marks for the skill lab's conditions, `docs/northstar/research/layer_dynamics/README.md` section 4). Q-158-01 is closed: the measure is margin and break-even, not a win-rate band.
+Open flags: Q-156-02 (the pass marks for the skill lab's conditions, `docs/northstar/research/layer_dynamics/README.md` section 4).
+The balance measure is margin and break-even, not a win-rate band.
 
 ### S-157 — Deferred content generation
 As a designer, I may later want per-civilization unit variety and generated archetypes, so that content grows past what I author.

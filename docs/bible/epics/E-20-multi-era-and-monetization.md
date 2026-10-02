@@ -7,11 +7,11 @@
 | Every story has at least one Given/When/Then rule with concrete values | Partly. 8 stories, 28 rules; the architecture rules are concrete, the pricing, era-transition and unlock rules carry flags. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 7 flags on S-145 to S-150, Q-145-01 through Q-150-01, and 5 more: Q-146-02, Q-146-03, Q-150-02, Q-151-02, Q-243-01. |
+| Implied-but-unstated behavior turned into flags | 12 open flags: Q-146-02, Q-146-03, Q-147-01, Q-147-02, Q-148-04, Q-148-05, Q-149-01, Q-149-02, Q-150-01, Q-150-02, Q-151-02, Q-243-01. |
 | Every visible-surface story has a reference | Not applicable in this epic; era looks are E-18. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on open flags. Launch has two eras, one in space and one on land (S-147), and the base SKU's price buys 3 to 5 eras to start (S-149). The era-feel mechanism is chosen (Q-151-01, the Climate of War, after launch); the transition trigger is chosen (Q-148-01, the Long Horizon) with its measure open (Q-148-05); the land era's name (Q-147-01) and the roster size per era (Q-082-05) still need Westley.
+**Gate verdict: not passed.** Blocked on open flags. Launch has two eras, one in space and one on land (S-147), and the base SKU's price buys 3 to 5 eras to start (S-149). The era-feel mechanism is chosen (the Climate of War, after launch); the transition trigger is chosen (the Long Horizon) with its measure open (Q-148-05); the land era's name (Q-147-01) and the roster size per era (Q-082-05) still need Westley.
 
 ## Purpose
 
@@ -39,6 +39,7 @@ Outputs: grep and contract test results.
 Open flags: none.
 
 ### S-146 — What an era pack is
+Flag closed, rule text pending: Q-146-01, the three launch packs carry byte-identical mechanical config for the MVP; the content diff fence asserts it and is written swappable to a within-band check for later eras. The rule below is what the tests read today.
 As an era designer, I want a checklist of exactly what a pack contains, so that every era is complete and nothing else.
 
 Direction changed 2026-10-02, rewrite pending: a pack also carries what the economy and the landscape need (S-243), the structures of a pack are no longer a fixed 3 to 6 (E-18 R-133-05, Q-133-01), the reinforcement constants become the pace of production (S-151, Q-151-02), and the launch has two eras where R-146-02 says three (S-147). The rules below are what the game does today.
@@ -51,7 +52,7 @@ Rules
 
 Inputs: pack manifest.
 Outputs: validation report; loaded pack.
-Open flags: Q-146-01 (whether "identical" means byte-identical stat profiles, or only identical tempo targets; A-321 says no mechanical differentiation), Q-146-02 (whether resource names, doctrine names and environmental troubles are names or mechanics), Q-146-03 (what the elevation flag of R-146-01 means once every map has ground on all five layers, E-17 R-166-06).
+Open flags: Q-146-02 (whether resource names, doctrine names and environmental troubles are names or mechanics), Q-146-03 (what the elevation flag of R-146-01 means once every map has ground on all five layers, E-17 R-166-06).
 
 ### S-147 — Two eras, one skeleton
 As a player, I want an era in space and an era on land to play, all one game, so that the smallest version I buy already spans two ages.
@@ -76,7 +77,7 @@ Rules
 
 Inputs: ownership; campaign state.
 Outputs: era in the save; chronicle entry.
-Open flags: Q-148-04 (the loop's effect on tech, characters, and the chronicle), Q-148-05 (the reach measure behind the Long Horizon). Q-148-01 is closed: the Long Horizon, chosen through the options pass. Q-148-02 is closed: tech rescales at the boundary, nobody arrives at late game, the leading civilization still leads.
+Open flags: Q-148-04 (the loop's effect on tech, characters, and the chronicle), Q-148-05 (the reach measure behind the Long Horizon).
 
 ### S-149 — Buying and earning eras
 As a player, I want a fair price and the chance to earn expansions by playing, so that the game respects my time and my wallet.
@@ -168,7 +169,7 @@ Not applicable; see E-18 per era.
 
 ## Open ambiguity flags
 
-Q-146-01, Q-146-02, Q-146-03, Q-147-01, Q-147-02, Q-148-04, Q-148-05, Q-149-01, Q-149-02, Q-150-01, Q-150-02, Q-151-02, Q-243-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-146-02, Q-146-03, Q-147-01, Q-147-02, Q-148-04, Q-148-05, Q-149-01, Q-149-02, Q-150-01, Q-150-02, Q-151-02, Q-243-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

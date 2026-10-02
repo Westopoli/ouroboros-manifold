@@ -7,11 +7,11 @@
 | Every story has at least one Given/When/Then rule with concrete values | S-126 to S-131: yes, 6 stories, 27 rules, numbers from `algorithms.md` ALG-75 and config. S-218 and S-219: 2 stories, 14 rules, design decided 2026-10-02 and not scheduled for building; where Westley has not given a number the rule carries a flag instead. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | Flags on S-126 to S-131, Q-126-02, Q-127-01, Q-128-01, Q-129-01, Q-131-01, and 10 on S-218 and S-219 (Q-218-01 to Q-218-06, Q-219-01 to Q-219-04). |
+| Implied-but-unstated behavior turned into flags | No open flags on S-126 to S-131, and 10 on S-218 and S-219 (Q-218-01 to Q-218-06, Q-219-01 to Q-219-04). |
 | Every visible-surface story has a reference | **No.** S-131 (how structures, convoys, and hazards read on screen) has a visible surface and no reference. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on the open flags of S-126 to S-131 and of S-218 and S-219, and on one reference. Q-126-01 (the bible's open tuning questions on production rate, cost model, and baseline trickle were never closed) and Q-127-01 (Westley's Stage 1 note that the C rewrite may scale the starting-force share past half, A-081) are the load-bearing ones.
+**Gate verdict: not passed.** Blocked on the open flags of S-218 and S-219 and on one missing reference (S-131). S-126 to S-131 have no open flags; gate to be rerun.
 
 ## Purpose
 
@@ -71,6 +71,7 @@ Outputs: enemy production choices in the T1 trace.
 Open flags: none.
 
 ### S-129 — Units that cannot fight
+Flag closed, rule text pending: Q-129-01, only combat forces and convoys or evacuees ship at launch; science, intelligence and cultural units wait for future story packs. The rule below is what the tests read today.
 As a commander, I want convoys and evacuees to be real units that die, so that protecting them is a mission and not a checkbox.
 
 Rules
@@ -84,7 +85,7 @@ Rules
 
 Inputs: unit type flags; objectives.
 Outputs: objective progress; screen.
-Open flags: Q-129-01.
+Open flags: none.
 
 ### S-130 — The battlefield moves
 As a commander, I want objectives and garrisons that drift and hazards that travel, so that no position stays solved.
@@ -111,7 +112,7 @@ Rules
 
 Inputs: map seed; ownership.
 Outputs: screen.
-Open flags: Q-131-01 (settlement vs station naming: `docs/bible_history/bible_2_00_world.md` says the one capturable structure is a settlement with its own silhouette; `docs/bible_history/bible_2_00_combat.md` says garrison posts, militia stations, FOBs). Reference required: `references/E-15/notes.md`, missing. See also: R-218-08 and R-219-06 (how strongpoints and troubles read), Q-218-06 (the name).
+Open flags: none here. The capturable structure is named Settlement engine-wide, with an era-skinned model. Reference required: `references/E-15/notes.md`, missing. See also: R-218-08 and R-219-06 (how strongpoints and troubles read), Q-218-06 (the name).
 
 ### S-218 — Strongpoints hold the way up and down
 As a commander on a land map, I want the reinforcement structures to stand at the slopes between height bands, so that holding one holds the way up or down and gives me production on that band, paid for by my economy.
@@ -180,7 +181,7 @@ Open flags: Q-219-01, Q-219-02, Q-219-03, Q-219-04.
 - A destroyed structure never returns (today's rule, R-127-03; Q-218-03 asks whether it stays).
 - A strongpoint stands at a slope between height bands on land maps.
 - A trouble shuts down only what it is passing over, and both sides can see it.
-- Same seed, same spawns and drift, all platforms (pending Q-126-02).
+- Same seed, same spawns and drift, all platforms (every draw comes from the world stream, R-126-02).
 
 ## Scale requirements
 
@@ -207,7 +208,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-129-01, Q-131-01, Q-218-01 to Q-218-06, Q-219-01 to Q-219-04. Details in `docs/northstar/ambiguity_register.md`.
+Q-218-01 to Q-218-06, Q-219-01 to Q-219-04. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

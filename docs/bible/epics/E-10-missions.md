@@ -7,11 +7,11 @@
 | Every story has at least one Given/When/Then rule with concrete values | S-072 to S-080: yes, 9 stories, 48 rules, numbers from `algorithms.md` ALG-54 through ALG-59 and config tables. S-210 to S-214: 5 stories, 22 rules, design decided 2026-10-02 and not scheduled for building; where Westley has not given a number the rule carries a flag instead. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 7 flags on S-072 to S-080, Q-072-01, Q-074-01, Q-076-01, Q-077-01, Q-078-01, Q-079-01, Q-080-01, and 17 on S-210 to S-214 (Q-210-02 to Q-210-06, Q-211-01 to Q-211-04, Q-212-01 to Q-212-05, Q-213-01, Q-214-01, Q-214-02), plus Q-159-12 and Q-177-05 carried from E-22. |
+| Implied-but-unstated behavior turned into flags | 1 open flag on S-072 to S-080, Q-080-03, and 17 on S-210 to S-214 (Q-210-02 to Q-210-06, Q-211-01 to Q-211-04, Q-212-01 to Q-212-05, Q-213-01, Q-214-01, Q-214-02), plus Q-159-12 and Q-177-05 carried from E-22. |
 | Every visible-surface story has a reference | **No.** S-079 (briefing and debrief screens) has a visible surface and no reference. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on the open flags of S-072 to S-080 and of S-210 to S-214, and on one missing reference. Q-076-01 and Q-076-02 are closed (30 to 60 minute missions); `om_mission_get_time_limit` still reads the retired 3 to 4.5 minute table until the clock rewire lands.
+**Gate verdict: not passed.** Blocked on Q-080-03 (S-080), on the open flags of S-210 to S-214, and on one missing reference (S-079). S-072 to S-078 have no open flags; gate to be rerun. Missions run 30 to 60 minutes; `om_mission_get_time_limit` still reads the retired 3 to 4.5 minute table until the clock rewire lands.
 
 ## Purpose
 
@@ -74,6 +74,7 @@ Outputs: loaded archetype table; contract test.
 Open flags: none. Full per-archetype prose from the Stage 1 KEEP rows (A-441 through A-450) moves into the library's archetype entries in E-21. See also: S-210 (the base kind each archetype carries), S-214 (the canvas for 4 to 6 players), Q-210-05.
 
 ### S-074 — You get what the civilization can spare
+Flag closed, rule text pending: Q-074-01, power is (HP * base_damage) / attack_interval, normalized so Vanguard = 100.0. The rule below is what the tests read today.
 As a commander, I want my force sized to the enemy and shaved by how weak my civilization is, but never so small I cannot win, so that scarcity is the difficulty and the enemy is never simply stronger.
 
 Rules
@@ -86,7 +87,7 @@ Rules
 
 Inputs: trigger context; region fields; difficulty; unit roster.
 Outputs: force compositions (both sides) in the mission setup; briefing assets section.
-Open flags: Q-074-01 (the power-rating currency is deferred, A-279; what interim measure sizes forces). See also: S-211 and Q-211-02 (how a shortfall of units sits beside the player always having the means to do the mission).
+Open flags: none here. See also: S-211 and Q-211-02 (how a shortfall of units sits beside the player always having the means to do the mission).
 
 ### S-075 — Hold, destroy, escort, survive, eliminate
 
@@ -132,9 +133,10 @@ Rules
 
 Inputs: objectives; unit store; initial power; commander unit id.
 Outputs: mission result (band, objective score, retention, per-objective, commander fate, ticks elapsed) in the save file and debrief.
-Open flags: none (the cap and the retention question are S-212's, Q-212-01 and Q-212-04). Q-077-01 closed 2026-09-12: wounded = commander ends below 30% HP, cosmetic/chronicle only (folded into R-077-03). Q-077-02 closed 2026-09-28: commander is assigned to a player-chosen unit, may be reassigned during the mission (folded into R-077-05).
+Open flags: none here (the cap and the retention question are S-212's, Q-212-01 and Q-212-04).
 
 ### S-078 — A battle becomes history
+Flag closed, rule text pending: Q-078-01, the targets `home` and `exposed` stay and both resolve to the mission region, so consequences apply to the mission region itself. The rule below is what the tests read today.
 As a commander, I want the outcome to change the region in proportion to how it was doing, so that saving a desperate region matters more than polishing a strong one.
 
 Rules
@@ -148,7 +150,7 @@ Rules
 
 Inputs: mission result; consequence tables; world.
 Outputs: applied deltas in the T1 trace; region fields; ownership.
-Open flags: Q-078-01 (targets `home` and `exposed` in the tables resolve to the mission region in code; the tables mean the faction's home region and its exposed border regions). See also: S-212 and Q-212-03 (how a base occupied at mission end relates to R-078-04's transfer).
+Open flags: none here. See also: S-212 and Q-212-03 (how a base occupied at mission end relates to R-078-04's transfer).
 
 ### S-079 — Orders, not menus
 As a commander, I want to receive my orders as a superior officer would give them, three parts and no haggling, and to see afterward how it went and what it cost, so that the civilization feels like a chain of command.
@@ -174,7 +176,8 @@ Rules
 
 Inputs: difficulty; onboarding.
 Outputs: parity; candidate scores.
-Open flags: Q-080-03 (the compression values; Westley 2026-09-30: stays open past the MVP, so R-080-02's compression is a no-op until it closes and no piece builds it). Q-080-01 is closed: the full ramp ships. Q-080-02 is closed: Crossed Signals, chosen through the options pass, `docs/northstar/research/options/complications/`. Q-079-01 is closed: single-player team model, the host owns difficulty and preferences. See also: Q-211-04 (who owns resource generosity, with the situation's slant in S-211 and the enemy's prosperity in E-14 S-215).
+Open flags: Q-080-03 (the compression values; Westley 2026-09-30: stays open past the MVP, so R-080-02's compression is a no-op until it closes and no piece builds it).
+The full difficulty ramp ships. The complication, Crossed Signals, was chosen through the options pass, `docs/northstar/research/options/complications/`. The host owns difficulty and preferences (single-player team model). See also: Q-211-04 (who owns resource generosity, with the situation's slant in S-211 and the enemy's prosperity in E-14 S-215).
 
 ### S-210 — Each side starts from the base its situation calls for
 As a commander, I want the kind of base each side begins with to follow from the kind of mission and from how far the region lies from the civilization's supply, so that a defender, an attacker and a relief force each fight from a place that makes sense.
@@ -327,7 +330,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-074-01, Q-078-01, Q-079-01, Q-080-01, Q-159-12, Q-177-05, Q-210-02 to Q-210-06, Q-211-01 to Q-211-04, Q-212-01 to Q-212-05, Q-213-01, Q-214-01, Q-214-02 (Q-072-01 closed 2026-09-30: R-072-07/08; Q-076-01 and Q-076-02 closed 2026-09-29: missions are 30 to 60 minutes; Q-077-01 and Q-077-02 closed 2026-09-28: wounded fate cosmetic, commander assigned to player-chosen unit). Details in `docs/northstar/ambiguity_register.md`.
+Q-080-03, Q-159-12, Q-177-05, Q-210-02 to Q-210-06, Q-211-01 to Q-211-04, Q-212-01 to Q-212-05, Q-213-01, Q-214-01, Q-214-02. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
