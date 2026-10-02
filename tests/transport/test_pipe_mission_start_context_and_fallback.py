@@ -40,7 +40,12 @@ RETRY_TICKS = 20
 
 pytestmark = pytest.mark.skipif(not PIPE.exists(), reason="pipe/ouroboros_pipe not built (piece T1)")
 
-TELEGRAPH_SEEDS = [20, 24, 26, 31, 33, 43]
+# seed -> the one player region under telegraph, pinned so a world change shows
+# up as a clear failure. Six seeds of 1-400 chosen on main after A81 (TD-A89-3,
+# A96): each has exactly one telegraphed player region and the R-072-05 draw
+# lands on Defensive Stand there. Selection is a weighted draw over the top 5
+# (R-072-05), so many other seeds legitimately pick another candidate (seed 24).
+TELEGRAPH_SEEDS = {11: 68, 18: 63, 48: 69, 76: 68, 287: 66, 37: 79}
 TRIGGERED_SEEDS = [1, 2, 8, 20, 24, 43]
 
 
@@ -80,7 +85,7 @@ def _player_regions(snap):
     return [r for r in snap["regions"] if r["owner"] == snap["player_faction"]]
 
 
-@pytest.mark.parametrize("seed", TELEGRAPH_SEEDS)
+@pytest.mark.parametrize("seed", sorted(TELEGRAPH_SEEDS))
 def test_telegraphed_attack_on_player_region_selects_defensive_stand_there(seed):
     """A2, R-072-02 (conflict term: recent attacks + committed attack budget):
     a pending telegraph on one player region makes mission_start choose a
@@ -94,6 +99,8 @@ def test_telegraphed_attack_on_player_region_selects_defensive_stand_there(seed)
     own = {r["i"] for r in _player_regions(pre)}
     targets = sorted({t["target"] for t in pre["telegraphs"] if t["target"] in own})
     assert len(targets) == 1, "seed %d: fixture drift, player regions under telegraph = %r" % (seed, targets)
+    assert targets[0] == TELEGRAPH_SEEDS[seed], "seed %d: telegraph target %d, pinned %d" % (
+        seed, targets[0], TELEGRAPH_SEEDS[seed])
     assert mission is not None, "seed %d: no mission frame: %r" % (seed, frames)
     assert (mission["archetype"], mission["region"]) == (DEFENSIVE_STAND, targets[0]), (
         "seed %d: telegraph pending on player region %d but mission_start chose archetype %r on region %r"

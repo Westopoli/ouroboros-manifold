@@ -203,7 +203,7 @@ No player input reaches this epic directly. Missions change fields through the o
 
 ## Scale requirements
 
-Confirmed by Westley 2026-09-14: 60 regions drift in under 50 µs per tick total; 5,000 ticks of drift alone for 60 regions in under 0.5 s; memory per region under 256 bytes. Not loosened by Agora; a miss is escalated.
+Confirmed by Westley 2026-09-14: 60 regions drift in under 50 µs per tick total; 5,000 ticks of drift alone for 60 regions in under 0.5 s; memory per region under 2,048 bytes, with the region connection table (a fixed 1 MB) counted separately (raised from 256 bytes by Westley 2026-10-02, after the audit measured about 1,609 bytes of which 1,536 are damage history). Not loosened by Agora; a miss is escalated.
 
 ## Look and behavior references
 

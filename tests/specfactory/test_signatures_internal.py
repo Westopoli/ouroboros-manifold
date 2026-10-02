@@ -32,7 +32,19 @@ CSRC_DIR = REPO / "csrc"
 # body, so "if none defines it yet" never applies here.
 EXPECTED_MODULE = {
     "om_debug_gen_config": "region.c",
+    "om_events_install_save_hooks": "events.c",
     "om_faction_step_budget": "faction.c",
+    "om_faction_tech_multipliers_recalc": "faction.c",
+    "om_fog_faction_sees": "fog.c",
+    "om_generational_install_save_hooks": "generational.c",
+    "om_grid_iter_begin": "unit.c",
+    "om_grid_iter_begin_faction": "unit.c",
+    "om_grid_iter_next": "unit.c",
+    "om_grid_query_circle": "unit.c",
+    "om_grid_query_circle_faction": "unit.c",
+    "om_mission_on_begin": "mission.c",
+    "om_mission_reset_started": "fog.c",
+    "om_mission_tactical_tick": "mission.c",
     "om_rng_draw": "sim.c",
     "om_rng_seed": "sim.c",
     "om_step_admin_revolts": "friction.c",
@@ -46,6 +58,9 @@ EXPECTED_MODULE = {
     "om_step_resolve": "resolve.c",
     "om_step_technology": "diplomacy.c",
     "om_step_telegraphs": "resolve.c",
+    "om_support_tick": "tactical_support.c",
+    "om_tac_unit_sync_position": "unit.c",
+    "om_unit_clear_target": "unit.c",
 }
 
 PROTO_RE = re.compile(

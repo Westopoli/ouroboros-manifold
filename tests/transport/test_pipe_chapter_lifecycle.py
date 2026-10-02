@@ -15,10 +15,12 @@ only. So after `set_seed` the selector has already seated the first commander (R
 forced rotation whose unrelated pool creates the first character and lineage), and these tests
 rely on that and never seed a character.
 
-Fixtures, not thresholds: seed 156 with 1000-tick jumps loses every player region at the end of
-its second post-mission jump while holding 3 at the end of the first. Found by scanning seeds 1 to
-400 on the B6 reference build (the generator moved into the jump, so the old seed 389 no longer
-collapses); see COLLAPSE_SEED. Seeds 152 and 281 also qualify.
+Fixtures, not thresholds: seed 389 with 1500-tick jumps loses every player region at the end of
+its second post-mission jump while holding 3 (pre-A81 world) or 4 (post-A81 world) at the end of
+the first, and faction 2 takes over. Found by scanning seeds 1 to 400 at 1000, 1500, 2000, 3000,
+4000 and 6000-tick jumps on both origin/main and the A81 build (events reach regions 64+ there, so
+the earlier seed 156 at 1000 ticks, which collapsed on main, keeps 7 regions on the A81 build);
+389 at 1500 ticks is the only pair that collapses on both. See COLLAPSE_SEED and TD-A89-4.
 
 A15 (Addendum 6): when the collapse check fires, the player faction is reassigned in the same
 jump (the snapshot's `player_faction` carries it). When no faction survives the jump takes the
@@ -48,8 +50,9 @@ END = {"type": "cmd", "name": "mission_end"}
 REFUSE = {"type": "cmd", "name": "mission_refuse"}
 SNAPSHOT = {"type": "cmd", "name": "snapshot"}
 QUIT = {"type": "cmd", "name": "quit"}
-COLLAPSE_SEED = 156
-COLLAPSE_JUMP_TICKS = 1000
+COLLAPSE_SEED = 389
+COLLAPSE_JUMP_TICKS = 1500
+COLLAPSE_SUCCESSOR = 2  # faction the collapse jump reassigns the player to, same on both builds
 PLAYER = 0
 REASON_NORMAL, REASON_FACTION_COLLAPSED = 0, 2
 
@@ -234,6 +237,7 @@ def test_R_062_02_the_collapse_jump_reassigns_the_player_faction_on_the_wire():
     final = snaps[-1]
     assert _owned_by_player(final) == 0
     assert final["player_faction"] not in (PLAYER, -1), "the collapse jump did not reassign the player faction"
+    assert final["player_faction"] == COLLAPSE_SUCCESSOR, "fixture drifted: successor faction is %r" % final["player_faction"]
     held = sum(1 for r in final["regions"] if r["owner"] == final["player_faction"])
     assert held > 0, "reassigned to a faction that holds no region"
 

@@ -957,6 +957,15 @@ typedef enum {
 } om_bug_save;
 #endif
 
+/* A53 (R-069-07): one clickable name inside a chronicle entry's text. start and
+ * len are Unicode code point offsets into the entry text exactly as sent (not
+ * byte offsets: the library text holds multi-byte characters such as the em
+ * dash). kind is an OM_CHRON_MENTION_* value; id is the faction id or region
+ * index the name stands for. (Struct om_chronicle_mention is in the generated
+ * structs block below.) */
+#define OM_CHRON_MENTION_FACTION 0
+#define OM_CHRON_MENTION_REGION 1
+
 /* ---- generated from signatures.toml: structs ---- */
 typedef struct om_ability_event {
     uint64_t tick;
@@ -1036,13 +1045,6 @@ typedef struct om_chronicle_entry {
     int32_t lineage_ref;
 } om_chronicle_entry;
 
-/* A53 (R-069-07): one clickable name inside a chronicle entry's text. start and
- * len are Unicode code point offsets into the entry text exactly as sent (not
- * byte offsets: the library text holds multi-byte characters such as the em
- * dash). kind is an OM_CHRON_MENTION_* value; id is the faction id or region
- * index the name stands for. */
-#define OM_CHRON_MENTION_FACTION 0
-#define OM_CHRON_MENTION_REGION 1
 typedef struct om_chronicle_mention {
     uint32_t start;
     uint32_t len;
@@ -1211,8 +1213,6 @@ void om_chronicle_add_chain_event(om_world *w, int32_t chain_tag, uint32_t regio
 void om_chronicle_add_cluster_direct(om_world *w, uint32_t cluster_type, uint32_t category, double score);
 void om_chronicle_add_consequence_event(om_world *w, uint32_t region_idx, uint32_t outcome);
 void om_chronicle_add_event(om_world *w, uint32_t region_idx, double score);
-/* B6 (A1): category is the lineage cluster category the caller computed
- * (om_chronicle_categorize_lineage_cluster, R-067-02); the cluster stores it. */
 void om_chronicle_add_lineage_event(om_world *w, uint32_t lineage_id, uint32_t region_idx, uint32_t category, double score);
 void om_chronicle_add_mock_entry(om_world *w, uint32_t entry_id, uint64_t start_tick, uint64_t end_tick);
 void om_chronicle_add_ownership_change_event(om_world *w, uint32_t region_idx, uint64_t tick);
@@ -1249,29 +1249,14 @@ void om_chronicle_generate_map_keyframes(om_world *w);
 int om_chronicle_get_cluster(const om_world *w, uint32_t entry, om_chronicle_cluster *out);
 const char *om_chronicle_get_full_scroll_text(const om_world *w);
 int om_chronicle_handle_click(om_world *w, uint32_t entry_id);
-/* G-C3 (A48 item 13, A59): the keyframe ticks om_chronicle_generate_map_keyframes last
- * chose, sorted ascending with no duplicates; the list is cleared when a jump starts. Copies keyframe i to *tick_out and returns 1;
- * returns 0, writing nothing, when i >= om_chronicle_keyframe_count. */
 int om_chronicle_get_keyframe(const om_world *w, uint32_t i, uint64_t *tick_out);
 int om_chronicle_has_keyframe_at_tick(const om_world *w, uint64_t p0);
 int om_chronicle_has_keyframe_in_range(const om_world *w, uint64_t p0, uint64_t p1);
 int om_chronicle_is_lineage_event(const om_world *w, uint32_t lineage_id, uint32_t region_idx, uint32_t attached_character_id, uint32_t mission_region);
 int om_chronicle_is_paused(const om_world *w);
-/* G-C3: number of keyframes the last om_chronicle_generate_map_keyframes stored;
- * 0 before it has run. */
 uint32_t om_chronicle_keyframe_count(const om_world *w);
 uint32_t om_chronicle_lineage_category_count(const om_world *w);
 int om_chronicle_map_is_master_clock(const om_world *w);
-/* A53 (R-069-07, Q-069-02): the faction and region names in entry `index`'s
- * text (same index as om_chronicle_entry_get), produced by the sim while it
- * fills the name slots, never found by matching text afterwards. expanded 0 is
- * base_text, 1 is expanded_text. Mentions are in text order, never overlap, and
- * each lies wholly inside the stored text and covers the name as it stands there
- * (a name opening a sentence has its first letter upper-cased); a name the assembler rewrote (word
- * echo synonym, anaphora) or truncated away is not a mention. A faction slot
- * with no owner ("an unclaimed people") is not a mention. Count is 0 for an
- * entry with no mention or an index om_chronicle_entry_get rejects; get returns
- * 1 on success, 0 when mention_idx is past the count. */
 uint32_t om_chronicle_mention_count(const om_world *w, uint32_t index, int expanded);
 int om_chronicle_mention_get(const om_world *w, uint32_t index, int expanded, uint32_t mention_idx, om_chronicle_mention *out);
 void om_chronicle_mock_populate_events(om_world *w, uint32_t n_events);
@@ -1354,10 +1339,7 @@ int om_macro_reads_player_visibility_set(om_world *w);
 int om_macro_resolve_conflict(int p0, int p1);
 int om_macro_resolve_conflict_types(int p0, int p1);
 void om_macro_set_base_transition_true(om_world *w, uint32_t p1, int p2);
-/* B13-8/R-120-02 (Q-120-02): the rout fallback point for this force, set once
- * by the mission at setup (csrc/mission.c om_mission_instantiate_map) to the
- * enemy's own spawn anchor. */
-void om_macro_set_force_fallback_point(om_world *w, uint32_t p1, double p2, double p3);
+void om_macro_set_force_fallback_point(om_world *w, uint32_t force, double x, double y);
 void om_macro_set_force_hp_pct(om_world *w, uint32_t p1, double p2);
 void om_macro_set_hook_true(om_world *w, uint32_t p1, int p2);
 void om_macro_set_state(om_world *w, uint32_t p1, int p2, int p3);
@@ -1429,10 +1411,7 @@ double om_zone_sample_interference(const om_world *w, double x, double y, uint32
 
 /* ---- generated from signatures.toml: generational.c ---- */
 int om_campaign_check_surviving_factions(const om_world *w);
-/* B6: character id of the current chapter's commander (the selector's latest
- * pick), 0 before the first selection. */
 uint32_t om_campaign_commander(const om_world *w);
-/* B6: lineage id of that selection (R-057-09), 0 before the first selection. */
 uint32_t om_campaign_lineage(const om_world *w);
 int om_campaign_needs_onboarding(const om_world *w);
 uint32_t om_campaign_opening_jump_length(const om_world *w);
@@ -1441,11 +1420,6 @@ void om_campaign_trigger_terminal_restart(om_world *w);
 void om_chapter_advance_phase(om_world *w);
 int om_chapter_current_phase(const om_world *w);
 uint32_t om_chapter_get_number(const om_world *w);
-/* B6 (R-055-06, A14): the end reason the latest time jump carried, a
- * GEN_CHAPTER_END_* value (0 normal, 1 commander death, 2 faction collapsed;
- * collapse wins when both hold). Per jump: 0 when that jump ended no chapter
- * (the opening jump and any retry jump), so it can read 0 after a jump that
- * followed a chapter ending in collapse. 0 before any jump. */
 int om_chapter_last_end_reason(const om_world *w);
 int om_chapter_end_reason_for_collapse(const om_world *w, int32_t player_faction);
 int om_chapter_mission_realtime(const om_world *w);
@@ -1479,6 +1453,7 @@ void om_character_set_generation(om_world *w, uint32_t character_id, uint32_t ge
 void om_character_tag_rival(om_world *w, uint32_t character_id, uint32_t rival_of_character_id);
 uint32_t om_chronicle_consequence_entry_count(const om_world *w);
 int om_chronicle_has_faction_fall_entry(const om_world *w, int32_t old_faction);
+int om_chronicle_has_mission_consequence_flag(const om_world *w);
 uint32_t om_chronicle_lineage_entry_count(const om_world *w);
 uint32_t om_event_attached_character_count(const om_world *w, uint32_t event);
 void om_faction_create_named(om_world *w, int32_t faction_id, uint32_t first_region);
@@ -1488,10 +1463,6 @@ void om_force_allocator_run(om_world *w, uint32_t mission_id, double budget);
 void om_force_set_surviving_units(om_world *w, uint32_t mission_id, uint32_t n_survivors);
 int om_ledger_commander_death_outcome_band(const om_world *w, uint32_t commander_id);
 uint32_t om_ledger_commander_death_region(const om_world *w, uint32_t commander_id);
-/* B6 (A17, R-057-08): chapters played in the lineage: 1 when the lineage is
- * created, +1 on each later selection that keeps it (stay, or successor after
- * the commander's death), once per selection; retry jumps add nothing. 0 for
- * an unknown lineage. */
 uint32_t om_lineage_chapter_count(const om_world *w, uint32_t lineage_id);
 uint32_t om_lineage_count(const om_world *w);
 void om_lineage_create(om_world *w, uint32_t lineage_id, uint32_t home_region);
@@ -1506,7 +1477,6 @@ void om_lineage_set_chapter_count(om_world *w, uint32_t lineage_id, uint32_t cha
 uint32_t om_lineage_spawn_descendant_at_tick(om_world *w, uint32_t lineage_id, uint32_t parent_id, uint64_t tick);
 uint32_t om_lineage_spawn_single_descendant(om_world *w, uint32_t lineage_id);
 uint32_t om_mission_generator_chosen_region(const om_world *w);
-/* B6: archetype the generator drew with that region, -1 when it found no candidate. */
 int32_t om_mission_generator_chosen_archetype(const om_world *w);
 void om_mission_generator_run(om_world *w);
 void om_mission_tag_rivals(om_world *w, uint32_t mission_region, uint32_t commander_id);
@@ -1540,18 +1510,9 @@ uint32_t om_time_jump_choose_length(om_world *w, uint32_t requested);
 uint32_t om_time_jump_choose_opening_length(om_world *w);
 uint32_t om_time_jump_death_pass_count(const om_world *w);
 uint64_t om_time_jump_death_processing_tick(const om_world *w);
-/* G-C3 (A48 item 13): the ownership timeline of the last completed om_time_jump_run,
- * one snapshot every OM_OWNERSHIP_TIMELINE_STRIDE ticks. Snapshot k is the owner of
- * each region (faction id, -1 unowned) at tick report.start_tick + STRIDE*k, so k = 0
- * is the state before the jump's first tick. Snapshots are every STRIDE ticks from the
- * start, so an odd jump length has no snapshot at end_tick (A59). Memory only, never saved. Copies n_regions int32 values into
- * owners_out and returns n_regions; returns 0, writing nothing, when k is not below
- * om_time_jump_ownership_snapshot_count or cap < n_regions. */
 uint32_t om_time_jump_get_ownership_snapshot(const om_world *w, uint32_t k, int32_t *owners_out, uint32_t cap);
 int om_time_jump_interrupt(om_world *w);
 uint64_t om_time_jump_lineage_generation_tick(const om_world *w);
-/* G-C3: snapshots held for the last completed jump, == report.n_snapshots
- * (jump_ticks / OM_OWNERSHIP_TIMELINE_STRIDE + 1); 0 before any jump has completed. */
 uint32_t om_time_jump_ownership_snapshot_count(const om_world *w);
 uint32_t om_time_jump_report_faction_field_deltas_count(const om_world *w, const om_time_jump_report *report);
 int om_time_jump_run(om_world *w, uint32_t n_ticks, om_time_jump_report *report);
@@ -1579,7 +1540,6 @@ int om_world_is_terminal(const om_world *w);
 
 /* ---- generated from signatures.toml: mission.c ---- */
 uint64_t om_archetype_base_time_ticks(uint32_t archetype);
-int om_chronicle_has_mission_consequence_flag(const om_world *w);
 double om_consequence_apply_clamped(double current, double delta);
 double om_consequence_eval_delta_current(double current, double pct);
 double om_consequence_eval_delta_deficit(double current, double pct);
@@ -1614,14 +1574,7 @@ double om_mission_eval_escort(om_world *w, uint32_t objective_idx, uint32_t reac
 void om_mission_eval_hold_zone(om_world *w, uint32_t objective_idx, uint32_t enemies_inside);
 double om_mission_eval_survive(om_world *w, uint32_t objective_idx, uint64_t elapsed_ticks, int player_alive);
 uint32_t om_mission_fallback_archetype(const om_world *w);
-/* The non-player, non-neutral faction nearest region_idx by connection hops;
- * ties to the highest total OM_F_MILITARY (within OM_TIE_EPSILON), then the
- * lowest faction id. A faction with no path to region_idx ties with the other
- * unreachable ones on distance and loses to any reachable one. -1 only when no
- * non-player faction owns a region. (R-072-08, A40, A50) */
 int32_t om_mission_fallback_enemy(const om_world *w, uint32_t region_idx);
-/* The player's weakest region: lowest ALG-09 stability composite
- * (OM_C_STABILITY), ties to the lowest region index. (R-072-07, A41) */
 uint32_t om_mission_fallback_region(const om_world *w);
 double om_mission_fill_player_force(om_world *w, double P, double parity);
 int om_mission_get_archetype_metadata(const om_world *w, uint32_t archetype, om_archetype_metadata *out);
@@ -1631,22 +1584,13 @@ uint32_t om_mission_get_briefing_controls(const om_world *w);
 void om_mission_get_briefing_text(const om_world *w, char *out, uint32_t cap);
 double om_mission_get_candidate_score(const om_world *w, uint32_t region_idx, uint32_t archetype);
 uint32_t om_mission_get_compatible_layouts(const om_world *w, uint32_t archetype, uint32_t *out, uint32_t max);
-/* HDR4-2-r/A4: id of the unit the player assigned as commander (R-077-05), 0
- * if none is assigned or the mission has no force. */
 uint32_t om_mission_get_commander_unit(const om_world *w);
-/* B7 (Q-077-02, R-077-05): make unit_id the commander. 0 on success; 1 when
- * the unit does not exist or is not the player's; 2 when the currently
- * assigned commander is dead (its fate is settled). May be called again to
- * reassign while the assigned unit lives. */
 int om_mission_assign_commander(om_world *w, uint32_t unit_id);
 int om_mission_get_debrief(const om_world *w, om_debrief *out);
 uint32_t om_mission_get_deployed_force_count(const om_world *w);
 int32_t om_mission_get_enemy_faction(const om_world *w);
 double om_mission_get_enemy_power(const om_world *w);
-/* HDR4-2-r/A4: player-faction units the started mission spawned. */
 uint32_t om_mission_get_force_count(const om_world *w);
-/* i-th player-faction unit in spawn order: writes its unit type and tier
- * (either out may be NULL), returns 1; 0 when i is out of range. */
 int om_mission_get_force_unit(const om_world *w, uint32_t i, int32_t *type, int32_t *tier);
 double om_mission_get_objective_completion(const om_world *w, uint32_t objective_idx);
 double om_mission_get_objective_score(const om_world *w);
@@ -1656,17 +1600,12 @@ void om_mission_get_player_units(const om_world *w, int32_t faction_id, uint32_t
 int om_mission_get_region_delta(const om_world *w, double *military, double *economy, double *tension, double *population);
 void om_mission_get_shortfall_text(const om_world *w, char *out, uint32_t cap);
 uint64_t om_mission_get_time_limit(const om_world *w);
-/* B9-N: true once om_mission_end has run for the current mission (R-075-07
- * termination, reached live via om_mission_tactical_tick or by the client's
- * own mission_end command) -- the pipe's tactical frame reads this for
- * "mission_over" without re-deriving it from another mechanism. */
 int om_mission_has_ended(const om_world *w);
 void om_mission_inject_candidate(om_world *w, uint32_t region_idx, uint32_t archetype, double score);
 int om_mission_is_ended(const om_world *w);
 void om_mission_load_launch_library(om_world *w);
 uint32_t om_mission_objective_count(const om_world *w);
 uint32_t om_mission_last_region(const om_world *w);
-/* Computes the mission-selection score inputs (conflict, chain, relevance, preference) for the region from world state; called by the pipe before scoring. */
 void om_mission_refresh_context(om_world *w, int32_t region);
 void om_mission_resolve_refusal(om_world *w, uint32_t region_idx);
 uint32_t om_mission_select(om_world *w);
@@ -1684,18 +1623,13 @@ void om_mission_setup(om_world *w, uint32_t p1, uint32_t archetype, int lineage_
 void om_mission_setup_destroy_targets(om_world *w, uint32_t objective_idx, uint32_t total);
 void om_mission_setup_eliminate(om_world *w, uint32_t objective_idx, double initial_hp);
 void om_mission_setup_escort(om_world *w, uint32_t objective_idx, uint32_t total);
-/* A3/R-072-08: quiet-world fallback. Sets the archetype to Defensive Stand,
- * the mission region, and the enemy faction (the pipe picks both); enemy power
- * follows inside mission.c from that faction's strongest region. */
 void om_mission_setup_fallback(om_world *w, uint32_t region_idx, int32_t enemy_faction);
 void om_mission_setup_hold_zone(om_world *w, uint32_t objective_idx, uint64_t required_ticks);
 void om_mission_setup_survive(om_world *w, uint32_t objective_idx, uint64_t required_ticks);
 void om_mission_setup_tactical(om_world *w, uint32_t p1, uint64_t time_limit);
 void om_mission_setup_termination(om_world *w, uint32_t p1, int primary_complete, int p3, uint64_t tick, uint64_t time_limit, int player_alive);
 int om_objective_get_center(const om_world *w, uint32_t objective_idx, om_vec2 *out);
-/* HDR4-2-r/A4: map-node index of objective_idx, -1 if the objective has none. */
 int32_t om_objective_get_node(const om_world *w, uint32_t objective_idx);
-/* Radius of objective_idx's zone in map units, 0.0 if the objective has none. */
 double om_objective_get_radius(const om_world *w, uint32_t objective_idx);
 int om_objective_set_center(om_world *w, uint32_t objective_idx, double x, double y);
 int64_t om_region_get_held_since(const om_world *w, uint32_t idx);
@@ -1753,7 +1687,7 @@ int om_map_get_node_type(om_world *w, uint32_t node);
 uint32_t om_map_get_nth_node_of_type(om_world *w, int p1, uint32_t nth);
 int om_map_get_simulation_coupling(om_world *w);
 int om_map_has_flank_bypass(om_world *w, uint32_t chokepoint);
-void om_map_instantiate_zone_pos(double p0, double base_pct, double canvas_dim, uint64_t p3, om_vec2 *byref);
+void om_map_instantiate_zone_pos(double p0, double base_pct, double canvas_dim, uint64_t seed, om_vec2 *out);
 int om_map_is_reachable_from_all_spawns(om_world *w, uint32_t node);
 int om_map_is_reachable_from_staging(om_world *w, uint32_t node);
 int om_map_is_valid(om_world *w);
@@ -1820,8 +1754,8 @@ void om_unit_teleport(om_world *w, uint32_t unit, double x, double y, uint32_t l
 
 /* ---- generated from signatures.toml: tactical_support.c ---- */
 void om_drift_interpolate(const om_vec2 *p0, uint32_t waypoint, uint64_t period, int p3, uint64_t tick, om_vec2 *byref);
-void om_enemy_production_adapt_target(const om_composition_ratio *byref, const om_composition_ratio *p1, om_composition_ratio *p2);
-int om_enemy_production_select_category(const om_composition_ratio *byref, const om_composition_ratio *p1);
+void om_enemy_production_adapt_target(const om_composition_ratio *target, const om_composition_ratio *player, om_composition_ratio *out);
+int om_enemy_production_select_category(const om_composition_ratio *target, const om_composition_ratio *current);
 void om_hazard_get_launch_types(uint32_t *p0, uint32_t max);
 int om_hazard_is_enabled_at_launch(int p0);
 uint32_t om_hazard_launch_type_count(void);
@@ -1832,7 +1766,7 @@ double om_mission_compute_reinforcement_capacity(double c_double, uint64_t time)
 double om_mission_compute_starting_force(double c_double);
 uint32_t om_mission_get_reinforcement_trickle(om_world *w);
 void om_mission_set_player_held_structures_count(om_world *w, int32_t faction_id, uint32_t held);
-void om_mission_setup_extraction_point(om_world *w, double p1, double c_double, double p3);
+void om_mission_setup_extraction_point(om_world *w, double x, double y, double radius);
 int om_objective_is_contested(om_world *w, uint32_t objective);
 void om_objective_setup_drifting(om_world *w, uint32_t objective, uint64_t period);
 uint32_t om_render_get_owner_color(int32_t owner);

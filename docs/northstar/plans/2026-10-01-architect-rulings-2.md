@@ -542,3 +542,71 @@ Rule text changed in the same commit: E-16 R-110-02 and R-110-07, E-09 R-069-03 
 **A97. E-13 scale tests.**
 - (a) They follow the scale suite's convention (`assert_budget`, the budget divided by `OM_SCALE_CPU_FACTOR`), like every other scale budget, so one machine's speed does not decide a pass. This is stricter than the bare figures, never looser; the figures themselves are unchanged and remain Westley's.
 - (b) No debug timing seam and no contract piece for one. A budget measured on a debug library is not a measurement of the game. The whole-step time stands as the test, labelled an upper bound: if the whole step meets the figure the budgeted subset does too. If, after the A93 fix, the whole step still misses while the subset plausibly meets, the question returns with numbers.
+
+## Addendum 34, 2026-10-02 (the gate and scale-gated tests)
+
+**A98. `push/A93-e13-scale-tests` lands with the gate's `skipped +3` accepted,** on this evidence: the three are the new `OM_SCALE=1`-gated E-13 tests, which run red under `OM_SCALE=1` (3.5 ms against 3 ms; 88 ms against 30 ms) and are listed in the ledger as budget misses under A93. They are gated, not skipped findings. Then a small harness unit under the owner of `merge_gate_support.py`: the gate counts tests gated by `OM_SCALE` in their own line, separate from skips and xfails, and requires each to be named in the scale ledger list; an ordinary new skip still rejects. Positive controls: a new plain skip rejects; a new scale-gated test missing from the list rejects. Running the gate with `OM_SCALE=1` is not the answer.
+
+## Addendum 35, 2026-10-02 (tactical cost: the proposal)
+
+**A99. The A93 proposal is approved, all three changes.** Per-cell faction counts in the grid with the faction-filtered iterator skipping cells without its faction; the damaged-unit prepass for the Warden Rally scan; the grid-based contact check reproducing the 2,048 cap exactly. Built as units of about one file each under the owners of `csrc/unit.c`, `enemy_macro.c`, `fog.c` and `om_internal.h` (the coordinator checks the rows; a missing owner comes to me before the unit starts). The prototype patch is reference, not the change.
+- Before any unit: the equivalence evidence becomes a kept test (Engineer). Per-step unit-state hashes recorded from main for the fifteen runs of the diagnosis (idle and engaged, 502 to 4,996 units, lists over the cap) and asserted after; with the existing checksum trace, O0 equal to O2. A fix that changes one hash does not land.
+- `test_F3_probe_positive_control_counts_calls_while_contact_unset` pins the quadratic call count, which is the defect. Test-defect, approved with a ledger row: it keeps its purpose (the probe registers `om_unit_can_see` calls while contact is unset, and the count is the same on two runs) and drops the `2*n*n` figure.
+- Second round, same method, proposal before build: aura regen (7.5 of 10.3 ms at 4,996) and the damage-reduction scans behind the 10 to 20 ms combat spike at 990 units; and one measurement of sustained melee with thousands of moving units, which nobody has taken. The E-13 tests stay as written; the worst step at 10,098 units (25.8 ms against 22.2 scaled) is reported beside the median until the second round.
+- `perf` is not needed for this; gprof and phase timers were enough. No sysctl is changed.
+
+**A100. Player collapse is far rarer with events working map-wide** (seeds collapsing by the second post-mission jump, 2,000-tick jumps: 34 on main, 1 on the branch). Recorded with A90 and A95 as part of the same balance question for Westley's later simulation; nothing asserted, nothing tuned.
+
+**A101.** The scale ledger list file added to `HARNESS-symown`'s `owns` by the coordinator is accepted. A94-contract landing stacked with its harness follow-up, with only `snapshot_fixture` red, is accepted.
+
+## Addendum 36, 2026-10-02 (tactical fix owners; seed 24; a bible wording)
+
+**A102. Owners for the A99 units.** `csrc/unit.c` under B10c, `csrc/enemy_macro.c` under B13, `csrc/fog.c` under B11, `csrc/om_internal.h` under A94-contract once it has landed. Unit order as proposed: declarations, `unit.c`, `enemy_macro.c`, `fog.c` only if needed. The stale `pending` statuses do not block this; a clerk unit afterwards checks every piece's status against the ledger and main and reports the corrections for me to land.
+
+**A103. A99 equivalence tests accepted as built:** eleven runs (my "fifteen" repeated a figure from the earlier message), the hash contents, the two controls, and TD-A99-F3 as described. One loose end with a consequence: in-use unit counts come out about 4 percent below the nominal figures (4,785 for 4,996). The E-13 tests must count live in-use units, so "1,000" and "10,000" mean units actually simulated; the Engineer of the second round finds the cause of the difference and corrects the tests' unit counts if they are short.
+
+**A104. Seed 24 is permitted** (R-072-05: one weighted draw over the top five). The E-10 "obviously working" paragraph claimed more than the rule; it is rewritten in this commit to say the telegraphed pair is in the draw pool and is drawn on the example seed. No rule changes.
+
+## Addendum 37, 2026-10-02 (galaxy bubbles: measured, redesigned)
+
+**A106. The territory bubbles are rebuilt as a baked field.** Measured on Westley's RTX 3060 (`push/galaxy-field-experiment` 7b535246): the current shader costs 36 to 60 ms per frame at prototype size and 75 to 138 ms at 400 systems and 15 factions; a field baked by the GPU into a 96-cell 3D grid and drawn in one pass costs 0.5 ms at half resolution and 1.9 ms at full 1080p, at either size. Westley's decisions: budget 2 ms on the RTX 3060 at game size and 1080p; same smooth look; tests first with the speed enforced by tests; the backdrop gets a dim direction-only wash, four real-depth star layers and fading edges, with camera-following dust. Spec and build plan: `docs/northstar/plans/2026-10-02-galaxy-bubble-field-spec.md`. Built in the prototype on `push/galaxy-field`; the live galaxy stack stays held (A63) until he approves the result by eye, then one ruling hands over files and constants.
+
+## Addendum 38, 2026-10-02 (piece statuses)
+
+**A105. `pieces.toml` statuses corrected from the audit** (`docs/northstar/proving_ground/evidence/piece_status_audit_2026-10-02.md`), drafted by the coordinator, reviewed and landed here. Landed pieces with no open red are attached with their landing commit (the five the audit gave no commit for were checked: each is that piece's last unit on main). B5, B9, B10b and B14 stay pending with their open red rule named beside them. B5b, B7b, B5-chronicle and G-flags stay pending until someone shows a landing commit and a green acceptance for each. Ownership-only G rows carry no status. G-tacticalvisibility is deleted with its file; G-legacytests keeps the three paths that exist. The A99 hash mismatch was a recording taken before A81 landed, not nondeterminism; closed.
+
+## Addendum 39, 2026-10-02 (the unowned reds)
+
+Evidence: `docs/northstar/proving_ground/evidence/unowned_reds_2026-10-02.md`.
+
+**A107. E-17's 25 red tests are a held epic, not a gap to fill.** The tactical map generator is stubbed because E-17 has open questions (Q-112-01 through Q-119-02) and Westley is designing the layer and environment systems now; an epic with an open flag is not built. The tests stay red and listed under B15m with the Q ids beside them. No unit starts.
+
+**A108. R-078-06 is a test defect.** The rule is about the chronicle: the mission's consequence reaches the jump's chronicle. The flag is consumed by the jump by design. The test asserts instead that the jump's chronicle contains the consequence event for the mission's region with the band's outcome, and that a second jump with no new mission adds none. Engineer, ledger row.
+
+**A109. R-130-02: one test defect and one real defect.** The fixture puts the enemy where it is still inside the moved zone (drift span 150 against a contest radius of 300), so it cannot show the zone moving; the fixture is changed so the enemy is inside the old zone and outside the moved one (a longer drift path in the fixture, not a changed constant). Ledger row. Separately, `om_objective_is_contested` counting any unit regardless of faction is against the rule ("no enemy inside"): test first (a friendly unit inside the zone does not stop progress; an enemy does), then the fix in `csrc/tactical_support.c` under B14.
+
+**A110. R-085-02 and R-085-04 go to Westley** as tactical balance findings: the 50 against 50 mirror lasts 216 s against his 150 to 200 s; Line against Line resolves in 124 s and Siege against Siege in 30 s, against the order Strike, Line, Siege. Before they go to him, one Engineer check that the R-085-04 fixture is a fair like-for-like engagement (same counts, same starting distance per category); if the fixture is skewed that is a test defect and is fixed first. Nothing is tuned.
+
+**A111. Detector controls get an owner and a split.** New piece `G-controls` owns `tests/csim/controls/**` (harness lane; row drafted by the coordinator as before). The 92 placeholder controls are counted by the gate in their own line against `placeholder_controls.txt`, as A98 did for scale tests: a placeholder that is not listed, or a listed one that starts passing, rejects. The 7 live controls whose injection does not trip are the urgent part: a control that cannot fail means its detector is unproven. One Engineer report, each of the seven classed (injection broken, detector blind, or control stale), before anything else in this piece.
+
+**A112. The four unattached pieces.** B5b attaches at 10a1faa3 and B7b at the last of its increments on `generational.c`, on their green acceptance. B5-chronicle gets acceptance ids first (the tests that prove the consequence entry and the chain clusters at jump end; the coordinator proposes them) and attaches when they are green. G-flags attaches when its Godot gate test has been run green; until then both stay pending.
+
+## Addendum 40, 2026-10-02 (memory per region)
+
+**A113. Memory per region: 2,048 bytes** (Westley, 2026-10-02), replacing 256. The region connection table, a fixed 1 MB, is counted separately as a fixed cost and not divided among regions. E-02's performance line is rewritten in this commit. The E-02 memory test takes the new figure (Engineer; a threshold change by its owner, recorded in the ledger, not a test-defect) and measures the per-region record without the fixed table. This closes A83 and the memory half of A95.
+
+## Addendum 41, 2026-10-02 (dead controls; an unwired contest check; balance findings)
+
+**A114. The seven dead controls are brought to life.** Items 3 to 7: one `OM_DEBUG_INJECT` branch each under the file's owner, as started. Items 1 and 2: test fixes under `G-controls` as probed (population driven below zero; a feasible two-faction fixture), plus the missing ratio-swap branch in `worldgen.c` under its owner. Then the gate gap is closed as a harness unit: the merge gate runs `control_liveness.py` for the controls of the piece being attached and rejects a dead one, with its own positive control. Pieces attached with dead controls (B4, B7, B8, B10, B11, B12) keep their status; each control going live is noted in the ledger against its piece.
+
+**A115. The contest check must be wired or deleted.** `om_objective_is_contested` is called only from tests, so R-130-02 ("progress continues only while no enemy is inside the moved zone") is tested and not in play, against the wired rule. An Engineer first reports how hold-zone progress is decided in play today. If another path already stops progress for an enemy in the zone, that path is the one R-130-02's tests exercise and `om_objective_is_contested` is deleted. If none does, test first (through the tactical step: progress stops while an enemy stands in the zone, including a drifted zone, and resumes when it leaves; a friendly unit does not stop it), then wire it under B14. The faction-filter fix in flight continues either way. The enemy-placement deviation in the R-130-02 fixture is accepted.
+
+**A116. R-085-02 and R-085-04 are balance findings for Westley,** kept with the other balance items (A90, A100). The R-085-04 check is accepted: Strike before Line holds in every variant, Line before Siege fails in every variant, so it is not the fixture. One thing the rule leaves open and he will be asked with it: the engagement the order is measured on (counts, distance, orders), since the rule text gives none. Both tests stay red and listed.
+
+## Addendum 42, 2026-10-02 (hold-zone contest: one path)
+
+**A117. The play path is the rule; the duplicate goes.** Hold-zone progress in play is decided by `om_mission_tactical_tick` and `om_mission_eval_hold_zone` (enemy faction only, 400 wu, rebuilt each step). `om_objective_is_contested` duplicates it with a different radius and no faction filter and is called by nothing in play: it is deleted with its header line, its conftest binding and `OM_SUP_CONTEST_SCAN_CAP`, as a contract piece under the header's owner (A94-contract's next id). The faction-filter fix and its red test are dropped, not landed; the rest of `push/A108-A109-tests` lands without that test.
+
+**A118. R-130-02's tests drive `om_tactical_step`** on a built hold-zone mission. Friendly inside: progress runs. Enemy inside: stops; leaves: resumes with elapsed time kept. For the drifted zone the proof is turned round so no constant changes: the enemy stands outside the old zone and inside the moved one (on the drift axis, 500 wu from the old centre is 350 wu from the moved centre), so progress runs before the drift and stops once the zone has moved onto it. The 400 wu radius and the 150 wu span stand.
+
+**A119. Drift is not wired into play yet, and that is recorded, not fixed now.** Which objectives drift comes from the map's spine nodes and their waypoints (R-130-01), which is the held E-17 and E-15 map work. `om_objective_setup_drifting` stays test-only with a comment at the function and a ledger line naming A119 and the Q ids, so it is not mistaken for live behaviour. It is wired in the unit that brings spine waypoints into mission setup.

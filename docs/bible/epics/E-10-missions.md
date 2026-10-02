@@ -21,7 +21,7 @@ Force size is set by parity: the enemy's strength comes from the simulation, the
 
 ## Obviously working in 60 seconds
 
-Put the player's frontier under a telegraphed attack and run the generator. The candidate pool contains (frontier, defensive_stand); its urgency is high; it is selected. The briefing has three sections and names the attacker. Forces: an enemy force worth the attacker's budget × 300 in power, a player force at parity 0.90 of that for capacity 0.5 on medium. Play it out: hold the zone for the required time, lose a third of the force. Final score 0.75 · 1.0 + 0.25 · 0.67 = 0.917, band total_success, region military +15 percent of its deficit, tension −10 percent of current. Same seed, same mission, same forces.
+Put the player's frontier under a telegraphed attack and run the generator. The candidate pool contains (frontier, defensive_stand); its urgency is high, so it is in the top-5 draw pool, and the weighted draw (R-072-05) picks it on the example seed; another seed may draw a different candidate from the pool. The briefing has three sections and names the attacker. Forces: an enemy force worth the attacker's budget × 300 in power, a player force at parity 0.90 of that for capacity 0.5 on medium. Play it out: hold the zone for the required time, lose a third of the force. Final score 0.75 · 1.0 + 0.25 · 0.67 = 0.917, band total_success, region military +15 percent of its deficit, tension −10 percent of current. Same seed, same mission, same forces.
 
 ## Stories
 
