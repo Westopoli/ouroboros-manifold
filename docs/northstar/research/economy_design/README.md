@@ -136,6 +136,17 @@ Recorded as:
 - Part 7: travel time can be changed and is not a reason to hold the map small. The aim is scale unmatched by other strategy games. Comparison with Age of Empires 3 and World of Warships in `map_scale_comparison.md`.
 - Still open in Q-166-01: whether the five height bands are fixed everywhere or fitted to each map; the canvas size; where the zoom stops; whether 7D is the approach.
 
+## Decisions (2026-10-02, tenth round: settlement generation)
+
+Westley, verbatim: "Let's stick with ouroborose today and see how players like it (as long as we pack landscape variety into the maps). - zoom stops at battlefield map view, yes to 7D, I'm confused about the implications of the height band question, give me some more context"
+
+Recorded as:
+
+- Decided: the canvas stays at today's sizes (largest 32,000 wu) for now, to see how players like it, on the condition that landscape variety is packed into the maps.
+- Decided: the zoom stops at the battlefield's map view.
+- Decided: 7D, one world with continuous detail.
+- Still open in Q-166-01: whether the five height bands are fixed everywhere or fitted to each map. More context given in chat and in `settlement_generation_options.md`.
+
 ## Files
 
 - `prior_art_resources.md`: cited digest of resource systems in other games.
