@@ -21,10 +21,12 @@ extends SceneTree
 # Excluded from E3-2: this file, and tests/test_tacticalbridge_ratchet.gd (its
 # known-referencer list is data the Engineer lowers when files vanish, tracked by that test).
 #
-# Open (not asserted): the legacy bridge autoload's perf-logger preload
-# (its file under autoload/ -> scenes/tactical/perf_logger.gd) means E3 cannot land
-# before the autoload stops preloading it (G6, or a pre-step); whether the Visibility
-# autoload (scripts/tactical/visibility.gd, used only by the legacy router) goes with E3.
+# A47: E3 also drops the perf-logger preload from the legacy bridge autoload (covered by
+# E3-2, which sees the preload line), deletes the Visibility autoload (read only by
+# scenes/tactical/**, verified; see c4_e3_tests_note.md) and the debug scene
+# scenes/debug/test_squad_impact_origins (.gd, .tscn and its input stub):
+#   E3-4  no Visibility autoload line in project.godot and scripts/tactical/visibility.gd is gone.
+#   E3-5  scenes/debug/test_squad_impact_origins* is gone.
 
 const THIS_TEST := "tests/test_legacy_tactical_deleted.gd"
 const RATCHET := "tests/test_tacticalbridge_ratchet.gd"
@@ -114,3 +116,16 @@ func _run_tests() -> void:
 		if raw.strip_edges().begins_with("\"tactical\":"):
 			has_route = true
 	_assert(not has_route, "E3-3: SceneRouter.SCENES still has the legacy \"tactical\" route")
+
+	var godot_cfg := FileAccess.get_file_as_string("res://project.godot")
+	_assert(godot_cfg.find("Visibility=") == -1, "E3-4: project.godot still autoloads Visibility")
+	_assert(not FileAccess.file_exists("res://scripts/tactical/visibility.gd"), "E3-4: scripts/tactical/visibility.gd still exists")
+
+	var dbg := DirAccess.open("res://scenes/debug")
+	_assert(dbg != null, "control C3: scenes/debug cannot be listed")
+	if dbg != null:
+		var left: Array[String] = []
+		for f in dbg.get_files():
+			if f.begins_with("test_squad_impact_origins"):
+				left.append(f)
+		_assert(left.is_empty(), "E3-5: scenes/debug still holds %s" % ", ".join(left))

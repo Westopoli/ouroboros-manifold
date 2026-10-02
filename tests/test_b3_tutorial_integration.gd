@@ -2,7 +2,6 @@ extends SceneTree
 
 const TSM_PATH := "res://autoload/tutorial_state_machine.gd"
 const MAIN_MENU_PATH := "res://scenes/main_menu/main_menu.gd"
-const TACTICAL_PATH := "res://scenes/tactical/tactical.gd"
 const PROJECT_GODOT_PATH := "res://project.godot"
 const BEATS_PATH := "res://simulation/library/tutorial/beats.json"
 
@@ -47,12 +46,6 @@ func _initialize() -> void:
 	_expect(menu_lower.find("tutorial") != -1, "main_menu missing tutorial-related Button text")
 	_expect(menu_src.find("reset_for_replay") != -1, "main_menu missing reset_for_replay call wiring")
 	_expect(menu_src.find("version.text = \"v0.9.0\"") != -1, "main_menu version label displaced")
-
-	var tactical_src := _read(TACTICAL_PATH)
-	_expect(tactical_src != "", "tactical.gd source not readable")
-	_expect(tactical_src.find("first_unit_visible") != -1, "tactical.gd missing first_unit_visible reference")
-	_expect(tactical_src.find("first_unit_selected") != -1, "tactical.gd missing first_unit_selected reference")
-	_expect(tactical_src.find("TutorialStateMachine") != -1, "tactical.gd not routing to TutorialStateMachine")
 
 	var pg_src := _read(PROJECT_GODOT_PATH)
 	_expect(pg_src != "", "project.godot source not readable")
