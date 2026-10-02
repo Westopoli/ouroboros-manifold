@@ -220,6 +220,26 @@ def footprint_check(candidate_dir: Path, base_ref: str, piece_id: str, *,
     return True, "OK"
 
 
+_COMMENT_RE = re.compile(r"/\*.*?\*/|//.*")
+
+
+def _in_block_comment_lines(text: str) -> set[int]:
+    """1-based numbers of lines that start inside a /* ... */ comment."""
+    inside: set[int] = set()
+    open_ = False
+    for n, line in enumerate(text.splitlines(), 1):
+        if open_:
+            inside.add(n)
+        rest = line
+        while rest:
+            i = rest.find("*/" if open_ else "/*")
+            if i < 0:
+                break
+            open_ = not open_
+            rest = rest[i + 2:]
+    return inside
+
+
 def _diff_added_definitions(candidate_dir: Path, base_ref: str) -> list[tuple[str, str]]:
     """[(file, symbol), ...] for every `+` line in `git diff base_ref..HEAD`
     matching DEF_RE (a top-level-looking C function definition whose name
@@ -235,14 +255,25 @@ def _diff_added_definitions(candidate_dir: Path, base_ref: str) -> list[tuple[st
 
     found: list[tuple[str, str]] = []
     current_file = None
+    in_comment: set[int] = set()
+    lineno = 0
     for line in proc.stdout.splitlines():
         if line.startswith("+++ "):
             path = line[4:]
             current_file = None if path == "/dev/null" else path[2:] if path.startswith("b/") else path
+            shown = subprocess.run(["git", "show", f"HEAD:{current_file}"], cwd=str(candidate_dir),
+                                   capture_output=True, text=True) if current_file else None
+            in_comment = _in_block_comment_lines(shown.stdout) if shown and shown.returncode == 0 else set()
+            continue
+        if line.startswith("@@"):
+            lineno = int(re.search(r"\+(\d+)", line).group(1)) - 1
             continue
         if not line.startswith("+") or line.startswith("+++"):
             continue
-        body = line[1:]
+        lineno += 1
+        if lineno in in_comment:
+            continue  # text inside a block comment is never a definition
+        body = _COMMENT_RE.sub("", line[1:])
         if not DEF_RE.match(body) or body.rstrip().endswith(";"):
             continue  # a line ending in ';' is an extern/prototype, not a definition
         m = SYMBOL_RE.search(body)
