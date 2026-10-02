@@ -402,3 +402,29 @@ Rule text changed in the same commit: E-16 R-110-02 and R-110-07, E-09 R-069-03 
 **A55. Faction names.** The name table gets at least fifteen simple invented names so no two factions share one; a Doer writes them, plain and pronounceable, none taken from existing fiction. No deeper naming work now.
 
 **A56. Galaxy look: the prototype wins until Westley has looked.** The gap-fix plan (his decision, 2026-09-28) makes the approved prototypes in `scenes/mockups/galaxy/` the live look, and he recalls the prototype as correct and the MVP as differing from it. So A48 items 3 and 4 and the drag direction in item 2 are suspended: where the prototype and the rule text differ (band distances, which edges are drawn, drag direction), the build matches the prototype. `push/C5-G3-impl` lands as built, drawing every edge dim as the prototype does. Each difference from the rule text is listed in the ledger row; the rule text is rewritten to the look he confirms, after he has compared the two.
+
+## Addendum 24, 2026-10-02 (batch 2: galaxy follow-ups, Era Library details, G-C3 contract, quality setting)
+
+**A57. Galaxy, after A56.** Until Westley has compared the prototype with the build, the build keeps the prototype's behaviour, including the vertical drag direction in `mockups/galaxy/orbit_camera.gd`; `push/C5-G3-impl`'s grab-style vertical axis follows the prototype. The two sets of numbers inside the prototype (the zoom controller's 75/65/40/25 and the camera's 70/32.5) are left as they are and nothing is tested for consistency until the rule text is rewritten. Separate finding, not for the coordinator to act on: the prototype's territory shells have been invisible since a790cb20 (influence radius 0.25 against star points of radius 1.4); Westley and the Architect are settling the intended scale, and a brief follows.
+
+**A58. Era Library details** (Q-C4-E1-04 to 08).
+- 04 Ownership store: `user://era_ownership.json`, `{"owned":["era_id", ...]}`. A debug build (`OS.is_debug_build()`) ignores it and owns every installed pack. A release build reads it; with no file, every installed pack is owned, because nothing is sold yet. Store integration is E-20 S-149 and not part of this.
+- 05 The manifest gains what R-146-01 already requires of a pack's identity: `era_spatial_scale` (text), `era_tone` (text) and `era_order` (integer, chronological position). `pack_validate.py` requires them (R-146-03: a missing required entry fails the pack, named). The three installed manifests are filled in the same piece; the text is one plain sentence each, written from the bible's own description of the era where it has one, and marked as placeholder otherwise. This is a pack-contract change: validator and manifests first, then the screen.
+- 06 The roster shows each unit type's id as a title and its category. No role text; the manifest has none and none is invented.
+- 07 A pack whose manifest says `"test_only": true` is never listed. `test_era` gets that key. Tests still load it by id.
+- 08 The Era Library is a viewing screen in the MVP rounds: it has no "play this era" control. New Campaign keeps using the Settled Reach.
+
+**A59. G-C3 contract.**
+- Odd jump lengths: the snapshot count stays as R-056-03 gives it (every 2 ticks from the start). The replay's last picture is the live world state the client already holds after the jump, so no final snapshot is added and no S-056 test changes.
+- Keyframes are per jump: the list is cleared when a jump starts. They are returned sorted ascending with no duplicates; today's unsorted list with repeats is a defect fixed in this piece, with a test.
+- Timelines are kept in memory only and are not saved. After a load the chronicle frame carries no `ownership` and no `keyframes`, and the client shows the scroll over the final state with no replay. The frame documents both fields as optional.
+- About 40 KB per jump at 400 regions is accepted; it is sent once per jump.
+
+**A60. Galaxy quality (A54).**
+- Tier 0: raymarch shells, full ambient field. Tier 1: stand-in shells, full ambient field. Tier 2: stand-in shells, ambient field at half its particle amount (provisional value).
+- The ambient field (R-106-05) is not in the live galaxy yet. Porting `legacy_ambient_rig.gd` into `scenes/galaxy` is its own unit under the galaxy owner, part of the prototype migration. Until it lands, tier 2 draws what tier 1 draws, and the tier-2 particle test waits on that unit; it is not written as a skip.
+- `autoload/ui_data_bus.gd` already has an owner (the piece whose `owns_glob` lists it, `pieces.toml` line 558); the settings and Era Library units take that piece's next ids, one at a time.
+- A stored value outside 0 to 2 is clamped.
+- The galaxy view reads the setting when it is built. A change made while a galaxy view is open applies the next time the view is built; live re-apply is not required.
+
+**A61. Housekeeping.** An Engineer adds the four E3 gap rows from `c4_e3_c6_gap_rows.md` to `docs/northstar/plans/2026-09-30-work-list.md` under C6; the cover row says no rule governs it and names the Architect as owing one. `test_tactical_view` failing 2 of 127 under a 1280x720 virtual display on main is a pre-existing finding: QA's display is 1920x1080 by ruling, so the Engineer first re-runs it at that size and reports; nothing is edited.
