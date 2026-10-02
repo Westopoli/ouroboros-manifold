@@ -912,3 +912,18 @@ acceptance = []
 depends_on = []
 status = "pending"
 size_estimate = "owner row for docs/architecture.md contract text"
+
+# Rulings round 2, A68 (harness half): the merge gate runs sig_table --report and
+# fails on a BLOCKED item. Owns merge_gate_support.py (sig_blocked_check, the
+# sig-blocked subcommand) and merge_gate.sh (the step). HARNESS-symown (landed,
+# no row) also edited merge_gate_support.py; ownership is named here, one owner.
+[[piece]]
+id = "HARNESS-sigblocked"
+manager = "M0"
+wave = 4
+owns = ["scripts/specfactory/merge_gate_support.py", "scripts/specfactory/merge_gate.sh"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_gate_sig_blocked.py"]
+depends_on = []
+status = "pending"
+size_estimate = "one support function and subcommand, one gate step, one env override"

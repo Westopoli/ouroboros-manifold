@@ -4,12 +4,12 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 
 | Story | Epic | In the commander's words | Status | Depth |
 |---|---|---|---|---|
-| S-001 | E-01 | "Terrain blocks some layers in some places, so I choose to go over, go around, or hide in the blocked layers." | Spec'd, blocked on Q-001-05 | `epics/E-01-layer-system.md` S-001 |
-| S-002 | E-01 | "I order selected units to a layer and they go there as soon as they can." | Spec'd, blocked on Q-001-05 | `epics/E-01-layer-system.md` S-002 |
-| S-003 | E-01 | "I give units a standing layer preference and they keep to it without me re-ordering at every obstacle." | Spec'd, blocked on Q-001-05 | `epics/E-01-layer-system.md` S-003 |
+| S-001 | E-01 | "Terrain blocks some layers in some places, so I choose to go over, go around, or hide in the blocked layers." | Spec'd | `epics/E-01-layer-system.md` S-001 |
+| S-002 | E-01 | "I order selected units to a layer and they go there as soon as they can." | Spec'd | `epics/E-01-layer-system.md` S-002 |
+| S-003 | E-01 | "I give units a standing layer preference and they keep to it without me re-ordering at every obstacle." | Spec'd | `epics/E-01-layer-system.md` S-003 |
 | S-004 | E-01 | "Changing layers takes time and exposes the unit; on a slope the halfway line is a place I can see and hold." | Spec'd | `epics/E-01-layer-system.md` S-004 |
 | S-005 | E-01 | "I see less on other layers than on my own, and nothing three layers away, unless I hold a vantage." | Spec'd | `epics/E-01-layer-system.md` S-005 |
-| S-006 | E-01 | "I spend a pulse to see every layer around a unit for two seconds, then it is gone and on cooldown." | Spec'd, blocked on Q-005-04 | `epics/E-01-layer-system.md` S-006 |
+| S-006 | E-01 | "I spend a pulse to see every layer around a unit for two seconds, then it is gone and on cooldown." | Spec'd | `epics/E-01-layer-system.md` S-006 |
 | S-007 | E-01 | "A tall obstacle hides units on more layers than a short one; cover hides but never protects or blocks." | Spec'd | `epics/E-01-layer-system.md` S-007 |
 | S-008 | E-01 | "I know whether my unit can shoot an enemy one layer up." | Spec'd, blocked on Q-008-02, Q-008-03 | `epics/E-01-layer-system.md` S-008 |
 | S-009 | E-01 | "I see at a glance which layer every unit is on and which layer I am focused on." | Spec'd, blocked on Q-009-02 | `epics/E-01-layer-system.md` S-009 |
@@ -165,8 +165,8 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-159 | E-19 | "A real economy: run by a partner, or running itself." | Design decided 2026-10-01, not scheduled (Q-159-02, -03, -07 to -11) | `epics/E-19-multiplayer.md` S-159 |
 | S-160 | E-02 | "A feature I switch off actually skips its step; a fresh world drifts by default." | Ready | `epics/E-02-region-fields-and-drift.md` S-160 |
 | S-161 | E-16 | "I pull the camera back until the battle reads as a map and give groups move orders from there." | Spec'd, blocked on Q-103-05 | `epics/E-16-client-camera-hud-and-world-view.md` S-161 |
-| S-162 | E-01 | "I ping a layer I choose at a place I choose and see it for a moment; whoever I ping learns roughly where I am." | Spec'd, blocked on Q-005-04 | `epics/E-01-layer-system.md` S-162 |
-| S-163 | E-01 | "I choose which of my forces look and which stay quiet; looking further means being seen." | Spec'd, blocked on Q-005-04 | `epics/E-01-layer-system.md` S-163 |
-| S-164 | E-01 | "Each unit type reaches only certain layers with its fire, so where I put each type decides who gets shots off." | Spec'd, blocked on Q-005-04, Q-008-03 | `epics/E-01-layer-system.md` S-164 |
+| S-162 | E-01 | "I ping a layer I choose at a place I choose and see it for a moment; whoever I ping learns roughly where I am." | Spec'd | `epics/E-01-layer-system.md` S-162 |
+| S-163 | E-01 | "I choose which of my forces look and which stay quiet; looking further means being seen." | Spec'd | `epics/E-01-layer-system.md` S-163 |
+| S-164 | E-01 | "Each unit type reaches only certain layers with its fire, so where I put each type decides who gets shots off." | Spec'd | `epics/E-01-layer-system.md` S-164 |
 | S-165 | E-17 | "Someday, perhaps: lanes where my troops move faster and strategic ground where they move slower." | Deferred (Q-165-01) | `epics/E-17-map-generation.md` S-165 |
 | S-166 | E-17 | "Cities and bases that build themselves around what I place, on ground with real height." | Direction recorded, design in progress (Q-166-01) | `epics/E-17-map-generation.md` S-166 |

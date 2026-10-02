@@ -18,7 +18,7 @@ GATE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$GATE_DIR/../.." && pwd)"
 PYTHON="${MERGE_GATE_PYTHON:-/home/westopoli/Projects/agora/.venv/bin/python}"
 PIECES_TOML="${MERGE_GATE_PIECES:-$REPO_ROOT/docs/northstar/plans/push/pieces.toml}"
-SIGNATURES_TOML="$REPO_ROOT/docs/northstar/spec_factory/signatures.toml"
+SIGNATURES_TOML="${MERGE_GATE_SIGNATURES:-$REPO_ROOT/docs/northstar/spec_factory/signatures.toml}"
 SYMBOL_MODULES_TOML="$REPO_ROOT/docs/northstar/spec_factory/symbol_modules.toml"
 MAKE_TIMEOUT="${MERGE_GATE_MAKE_TIMEOUT:-300}"
 SUITE_TIMEOUT="${MERGE_GATE_SUITE_TIMEOUT:-600}"
@@ -133,6 +133,16 @@ if [[ $? -ne 0 ]]; then
     reject symbol_ownership "$(cat "$SYM_LOG")"
 else
     ok symbol_ownership "$(cat "$SYM_LOG")"
+fi
+
+# -------------------------------------------------------------- 5a. signature table BLOCKED items
+SIGB_LOG="$SCRATCH_ROOT/sig_blocked.log"
+"$PYTHON" "$GATE_DIR/merge_gate_support.py" sig-blocked --project "$REPO_ROOT" \
+    --table "$SIGNATURES_TOML" >"$SIGB_LOG" 2>&1
+if [[ $? -ne 0 ]]; then
+    reject sig_blocked "$(tr '\n' ' ' <"$SIGB_LOG")"
+else
+    ok sig_blocked "$(cat "$SIGB_LOG")"
 fi
 
 # -------------------------------------------------------------- 5b. reachability lint

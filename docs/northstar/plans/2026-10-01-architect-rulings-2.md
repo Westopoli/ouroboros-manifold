@@ -465,3 +465,19 @@ Rule text changed in the same commit: E-16 R-110-02 and R-110-07, E-09 R-069-03 
 **A72. Keyframes never hold the clock.** Confirmed: keyframes are markers, the map is the master clock and is never delayed (R-069-03). The old behaviour of holding the keyframe queue until the paired entry finished is gone and stays gone.
 
 **A73. Mentions client.** The galaxy-side click behaviour (A66 c and d) stays held with the galaxy stack; the legacy handler in the sequencer remains the only consumer until then. An entry with no mentions is valid. The structural-line fallback for an entry whose text is empty stays, so the count on screen still equals what the distiller produced (R-069-06).
+
+## Addendum 28, 2026-10-02 (A69, A71 and A72 details; harness ownership)
+
+**A74. Proceed from the debrief goes to the sequencer.** `debrief._on_continue` routes to `time_jump`; the sequencer scene embeds the scroll panel and is the one screen that shows a jump. The `chronicle` route stays as the standalone scroll and is not on the Proceed path. The pinned route assertion in `tests/test_briefing_debrief.gd` asserted the old flow; amending that one assertion is a classed test-defect with a ledger row (Engineer).
+
+**A75. Frame hand-over, confirmed.** Proceed issues the jump once through the bridge (`load_chronicle_live`); the bridge holds the frame; the sequencer reads `chronicle_frame()` and hands that same frame to the panel. Neither scene issues a jump.
+
+**A76. Footer with no frame held.** Both controls show. Proceed sends nothing to the sim and moves the player on to the screen that follows the chronicle in the normal flow, exactly as it does after a replay; it is the way forward after a load. Exit to main menu is unchanged.
+
+**A77. The sequencer's legacy `ready_for_time_jump` goes** under the A69 rule. The source scan of the `_ready` body is dropped: the test is behavioural, a recording stand-in for the bridge (and for `SimBridge` while it exists) asserts that opening the scene sends no command. A source scan may not stand in for a behaviour test.
+
+**A78. A71: the panel slides.** R-069-01 stands: it slides in from the right over 0.40 s. The tests keep "visible and at 38 percent width before the first entry prints" and add one assertion that the slide exists (the panel is narrower than 38 percent at the start and reaches it within 0.40 s). Appearing at full width in `_ready` does not pass.
+
+**A79. A72 reaches the settle.** `_keyframe_queue` and `_waiting_for_entry` leave `_try_settle`, and `_waiting_for_entry` is deleted with the hold it served. The footer settles when the replay clock has reached the jump's last tick and the last entry has finished printing and held its minimum time (R-069-03). Keyframes are applied by the clock as their ticks pass, so none is pending at the end.
+
+**A80. Harness.** The sequence is approved: `HARNESS-sigblocked` lands its change to `merge_gate_support.py` and `merge_gate.sh`, then `HARNESS-symown` takes ownership of those files and lands on top; never in parallel. `A68-mention-bind` lands first. No policy change for header prototypes in the symbol lint: a signature change in the header is a contract change and is caught by the signature table gate (A68), which is the right detector for it. The two `pieces.py --check` failures (the `B7` / `B5-chronicle` overlap on `csrc/generational.c`, the `T1` acceptance id) are mine to fix in `pieces.toml`; the coordinator sends the verbatim output and they are fixed in one commit, not worked around.
