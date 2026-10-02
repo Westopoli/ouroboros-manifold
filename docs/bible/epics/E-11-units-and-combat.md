@@ -4,18 +4,18 @@
 
 | Check | Result |
 |---|---|
-| Every story has at least one Given/When/Then rule with concrete values | Yes, 8 stories, 46 rules, numbers from `algorithms.md` ALG-60 through ALG-64 and the unit table. |
+| Every story has at least one Given/When/Then rule with concrete values | Yes, 12 stories, 61 rules, numbers from `algorithms.md` ALG-60 through ALG-64 and the unit table. The rules of S-201 to S-204 leave their numbers to open flags. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 6 new flags, Q-081-01, Q-082-01, Q-083-01, Q-084-01, Q-086-01, Q-088-01. |
+| Implied-but-unstated behavior turned into flags | Yes; the flags still open are listed at the foot of this file. |
 | Every visible-surface story has a reference | **No.** S-088 (how units read on screen, squads, ability cues) has a visible surface and no reference. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on open flags and one missing reference. Q-081-01 (the Siege-versus-Strike multiplier is 0.20 in code and 0.75 in the bible) and the roster flags Q-082-03 to Q-082-05 (how a 20 to 40 type roster is shaped, balanced, and sized per era) are the load-bearing ones.
+**Gate verdict: not passed.** Blocked on open flags and one missing reference. The roster flags Q-082-03 to Q-082-05 (how a 20 to 40 type roster is shaped, balanced, and sized per era) are the load-bearing ones. The stories added on 2026-10-02 (S-201 to S-204) are design decided, not scheduled for building, and each carries open flags.
 
 ## Purpose
 
-A roster of 20 to 40 unit types per era, in the register of Age of Empires 3 and Age of Empires Online, on three categories and a soft rock-paper-scissors: Strike flanks Siege, Siege crushes Line, Line absorbs Strike. The six Settled Reach types below are the first of them and the tuning baseline. Every unit has stats and exactly one ability; how roles and the roster invariants extend past six types is open (Q-082-03), the roster is balanced by a scoring mechanism still to be designed (Q-082-04), and an era built around a named conflict may weight its roster toward that conflict's sides (Q-082-05). Damage is flat: base damage times a category multiplier, no falloff, no cover reduction. Fights last long enough to read and retreat from; HP, not damage, sets the tempo, so flanks resolve first, the center grinds, and Siege duels last longest. Every unit on both sides runs the same three-check decision loop: flinch from what you cannot fight, obey the player, shoot the nearest thing in range. Abilities are the mastery layer: ignorable by a new player, decisive in skilled hands, every one a commitment with a tradeoff.
+A roster of 20 to 40 unit types per era, in the register of Age of Empires 3 and Age of Empires Online, on three categories and a soft rock-paper-scissors: Strike flanks Siege, Siege crushes Line, Line absorbs Strike. The three categories are the unit families that counter each other (E-22 S-171). The six Settled Reach types below are the first of them and the tuning baseline. Every unit has stats and exactly one ability; how roles and the roster invariants extend past six types is open (Q-082-03), the roster is balanced by a scoring mechanism still to be designed (Q-082-04), and an era built around a named conflict may weight its roster toward that conflict's sides (Q-082-05). Damage is flat: base damage times a category multiplier, no falloff, no cover reduction. Fights last long enough to read and retreat from; HP, not damage, sets the tempo, so flanks resolve first, the center grinds, and Siege duels last longest. Every unit on both sides runs the same three-check decision loop: flinch from what you cannot fight, obey the player, shoot the nearest thing in range. Abilities are the mastery layer: ignorable by a new player, decisive in skilled hands, every one a commitment with a tradeoff. The land era has walking unit types beside the space era's flyers (S-201). Workers are units that cannot fight, and they count in the one population cap and in the unit budgets (S-202). Walls, gates, towers and production buildings are things on the map that block, are seen and can be attacked (S-204). Every unit type has a cost in the three resources by its category (S-203).
 
 The numbers below are the Tier 2 Settled Reach baseline; they are tuned by headless simulation, not by hand (Stage 1 A-261).
 
@@ -58,12 +58,13 @@ Rules
 - R-082-04  Given the roster, When sensor radius is read, Then both Strike units see farther than both Siege units.
 - R-082-05  Given the roster, When AoE is read, Then only the Bombard has an area attack.
 - R-082-06  Given an expansion pack adds a unit type, When loaded, Then it declares category, role, the stats above, and one ability, and no engine code changes.
-- R-082-07  Given an era pack, When its roster is validated, Then it declares between 20 and 40 unit types, each with category, role, the stats above, and one ability, and the roster passes the balance scoring mechanism [Q-082-04]; an era built around a named conflict may weight its roster toward that conflict's sides [Q-082-05].
+- R-082-07  Given an era pack, When its roster is validated, Then it declares between 20 and 40 unit types, each with category, role, the stats above, the declarations of R-082-09, and one ability, and the roster passes the balance scoring mechanism [Q-082-04]; an era built around a named conflict may weight its roster toward that conflict's sides [Q-082-05]; whether worker types count toward the 20 to 40 is Q-167-03.
 - R-082-08  Given Tier 1 and Tier 3, When profiles are read, Then HP and damage are 0.8× and 1.2× the Tier 2 values and all other ratios scale uniformly.
+- R-082-09  Given a unit type added by an era pack or an expansion, When it is loaded, Then it also declares its movement kind (walking, or flying or swimming; E-01 R-001-07), its reach (E-01 S-164), whether it can ping (E-01 S-162), its cost (S-203) and its population weight (E-22 S-169), and no engine code changes.
 
 Inputs: unit profile table (per tier, per era pack).
 Outputs: loaded roster; contract test.
-Open flags: Q-082-03 (categories, roles, and the roster invariants past six types), Q-082-04 (the balance scoring mechanism), Q-082-05 (launch roster size per era and the conflict swing).
+Open flags: Q-082-03 (categories, roles, and the roster invariants past six types), Q-082-04 (the balance scoring mechanism), Q-082-05 (launch roster size per era and the conflict swing), Q-167-03 (whether worker types sit in the roster).
 
 ### S-083 — Stats, trait cards, ability
 As a commander, I want to unlock trait cards and build a force that plays my way, so that units differ in kind, and never in a way that beats positioning.
@@ -80,6 +81,8 @@ Open flags: Q-083-03 (unlock mechanism and the positioning-over-cards weighting 
 
 ### S-084 — Flat damage
 As a commander, I want damage to be simple and legible: base times matchup, full damage at any range within reach, area damage capped, so that I can predict a fight.
+
+Direction changed 2026-10-02, rewrite pending: an area attack reaches enemies on the layer offsets its type's reach includes, not only the attacker's own layer (E-01 S-164, R-008-03). The rules below are what the game does today.
 
 Rules
 - R-084-01  Given an attacker in range of its target every tick, When its attack timer elapses (interval × 20 ticks; a unit's first attack is ready on the tick its target is first in range), Then one attack lands for base × matchup × output multiplier × (1 − reduction), with reduction the sum of Brace 0.50, Fortify 0.20, and Warden aura 0.10 where they apply, capped at 0.9.
@@ -111,6 +114,8 @@ Open flags: none. These are the launch pacing targets (A-340); per-era tempo is 
 ### S-086 — One ability each
 As a commander, I want each unit to have exactly one ability that amplifies its role and costs something, so that mastery is timing and not menus.
 
+Direction changed 2026-10-02, rewrite pending: the Bombard's Barrage reaches enemies on the layer offsets its type's reach includes, not only its own layer (E-01 S-164, R-008-03). The rules below are what the game does today.
+
 Rules
 - R-086-01  Given a Raider with Surge ready, When activated, Then for 60 ticks (3 s) speed × 2.5 and damage × 2.0, then cooldown 1,500 ticks (75 s).
 - R-086-02  Given an Interceptor with Intercept ready and an enemy Strike unit within 350 wu on its layer, When the check runs, Then it triggers automatically: speed × 1.8 and damage × 1.5 for the first engagement, then cooldown 600 ticks (30 s); the player never activates it.
@@ -129,6 +134,8 @@ Open flags: Q-086-01 (bible cooldown ranges differ from code in places: Surge 60
 ### S-087 — Every unit thinks the same way
 As a commander, I want every unit on both sides to flinch from what it cannot fight, obey my orders, and otherwise shoot the nearest enemy in range, so that my skill is direction, not babysitting.
 
+Direction changed 2026-10-02, rewrite pending: an idle or attack-moving unit engages the nearest enemy within its type's reach that its side can see, on its own layer or another (E-01 S-164, R-008-04; E-12 R-093-02). The rules below are what the game does today.
+
 Rules
 - R-087-01  Given a unit taking damage from an attacker it cannot see or cannot reach, When the loop runs, Then it moves 200 wu directly away from the damage direction and stops; once the attacker is visible and in range it stands and fights.
 - R-087-02  Given a unit with an active player order, When the loop runs, Then the order wins over auto-engagement; a plain move never acquires or returns fire.
@@ -141,7 +148,7 @@ Rules
 
 Inputs: unit states; visibility (E-12); orders (E-13).
 Outputs: target ids and attack events in the tick delta.
-Open flags: Q-088-01 (the "cannot reach" branch of the flinch check has no definition of reach; code flinches only on return-fire failure).
+Open flags: Q-087-01 (whether the 200 wu leash of R-087-05 is tested before or after damage; the skill lab runs both and Westley picks). Q-008-05 (the nearest enemy stays the game's target rule; a lab-only setting measures focus fire). Q-088-01 is closed: the flinch also fires when the attacker is visible but out of range with no path to it on the unit's layer; that branch is not built, and the code flinches only when return fire fails to find the attacker.
 
 ### S-088 — Reading units on screen
 As a commander, I want a Strike squad to read as a small group, a Siege unit as a single heavy asset, and every ability to have an unmistakable cue, so that I never misjudge what I am looking at.
@@ -155,11 +162,68 @@ Inputs: unit types; ability events.
 Outputs: screen.
 Open flags: none beyond the missing reference. Reference required: `references/E-11/notes.md`, missing.
 
+### S-201 — Units that walk
+As a commander in the land era, I want unit types that walk, so that slopes, steep ground and strongpoints at slopes decide where an army can go.
+
+Design decided 2026-10-02, not scheduled for building. This story is for the land era. The space era's types fly.
+
+Rules
+- R-201-01  Given the land era pack, When its roster is read, Then it contains unit types whose movement kind is walking (E-01 R-001-07), in the same three categories and under the same roster checks as the space era's roster, because "the units and rules for them will be essentially the same" (Westley, 2026-10-02) [Q-201-01: which unit types the land era has, with their statistics, reach and speeds].
+- R-201-02  Given a walking unit, When it changes layer, Then it does so only by walking a slope (E-01 R-001-07), the time the slope takes is its length over the unit's speed, and the unit type's layer transition time plays no part (E-01 R-004-07).
+
+Inputs: the land era pack's unit profile table.
+Outputs: loaded land roster; contract test.
+Open flags: Q-201-01.
+
+### S-202 — Workers are units that cannot fight
+As a commander, I want workers to be real units that cannot fight and can be killed, so that a base full of workers is something to protect and the unit budgets are honest about them.
+
+Design decided 2026-10-02, not scheduled for building. What workers gather and carry is E-22 S-167.
+
+Rules
+- R-202-01  Given a worker, When the decision loop of S-087 runs, Then it never acquires a target and never returns fire, it flinches from damage, and otherwise holds, follows its move order or does its work (R-087-07, E-15 R-129-01).
+- R-202-02  Given a worker that an enemy's side can see within that enemy's reach, When targets are evaluated, Then it is a target as any enemy unit is (R-087-03), and at 0 HP it is dead (Invariants below) [Q-167-03: worker statistics, including hit points and the category it is hit as; whether raids target workers first is Q-159-10].
+- R-202-03  Given a side's units, When the population is counted, Then every worker counts in the one population cap with the soldiers (E-22 S-169, S-167).
+- R-202-04  Given the unit budgets (the scale requirements of this epic, E-12 and E-13), When workers are counted, Then they count as units with the soldiers, and each figure covers both together.
+
+Inputs: worker type profile (era pack); unit states.
+Outputs: worker hit points and position in the tick delta; kills.
+Open flags: Q-167-03 (worker statistics and whether workers are in the roster), Q-159-10 (workers under raid, not yet picked).
+
+### S-203 — What a unit costs
+As an economy player, I want each unit type to cost the three resources by its category, so that what a side builds and what it gathers match.
+
+Design decided 2026-10-02, not scheduled for building.
+
+Rules
+- R-203-01  Given a unit type, workers included, When its profile is read, Then it carries a cost in the three resources set by its category, Strike, Line or Siege, which are the unit families (E-22 S-171) [Q-159-08: which resource each category needs and how much; roles inside a category are Q-082-03].
+- R-203-02  Given a unit type, When it counts against the population cap, Then it counts by its population weight (E-22 S-169) [Q-169-01: the weight per type].
+
+Inputs: era pack cost table; population weights.
+Outputs: cost and weight in the loaded profile, read by E-22 S-170 and the economy screen.
+Open flags: Q-159-08, Q-169-01, Q-167-01 (what a worker costs).
+
+### S-204 — Buildings are things on the map
+As a commander, I want walls, gates, towers and production buildings to be things on the map that block, are seen and can be attacked, so that an assault has something to break and a defense has something to stand behind.
+
+Design decided 2026-10-02, not scheduled for building. Walls, gates and towers are written for land maps (E-22 S-174). That they block is E-13 S-097, and that they are seen is E-12 S-205.
+
+Rules
+- R-204-01  Given a wall, a gate, a tower or a production building (E-22 S-168, S-170, S-174), When it is placed, Then it is a structure on the map with an owner, a position, a footprint, a layer and hit points [Q-204-01: which layers a structure occupies and blocks; Q-174-02: its statistics].
+- R-204-02  Given an enemy that can see a structure and has it within reach, When it attacks the structure, Then the structure takes damage, and at 0 HP it falls: it stops blocking (E-13 S-097) and stops being seen (E-12 S-205) [Q-174-02: the damage a structure takes from each category].
+- R-204-03  Given an idle or attack-moving unit with an enemy structure within its reach and visible to its side, When targets are evaluated, Then [Q-204-02: whether an idle unit targets structures, and whether before or after units].
+- R-204-04  Given a tower with an enemy within its range that its side sees, When its turn comes, Then [Q-174-02: whether a tower fires, and its damage, range and interval].
+
+Inputs: structure records (E-22 S-168, S-170, S-174); unit states; visibility (E-12).
+Outputs: structure hit points and destroyed events in the tick delta.
+Open flags: Q-204-01, Q-204-02, Q-174-02.
+
 ## Inputs
 
 | Input | Source | Range | Rejection |
 |---|---|---|---|
-| Unit profile table | Era pack, per tier | 20 to 40 types per era, stats as S-082 | missing field fails load |
+| Unit profile table | Era pack, per tier | 20 to 40 types per era, stats as S-082, the declarations of R-082-09 | missing field fails load |
+| Structures | E-22 (S-168, S-170, S-174) | Position, footprint, layer, hit points | |
 | Ability activation | Player (E-13 command) or enemy macro | unit ids | on cooldown or dead: rejected |
 | Positions, layers, visibility | E-01, E-12, E-13 | | |
 | Elevation flag | Era pack | bool, false for the Settled Reach | |
@@ -170,19 +234,21 @@ Open flags: none beyond the missing reference. Reference required: `references/E
 |---|---|
 | HP, target, ability state, cooldown | Tick delta per unit; HUD portrait panel; unit HP bars |
 | Damage and ability events | Tick delta events; renderer cues; T1 trace |
+| Structure hit points; structure destroyed | Tick delta; screen |
 | Pacing invariants | T1 trace |
 
 ## Invariants
 
 - HP in [0, max]; a unit at 0 HP is dead on that tick and never acts again.
 - Exactly one ability per type; at most one active per unit.
-- No damage across layers (pending Q-008-01).
+- No fire across layers outside the attacker type's reach (E-01 S-164); a type with reach 0 fires only on its own layer.
+- A worker never attacks and never returns fire.
 - Total AoE per attack ≤ 4 × base.
 - Same seed and commands, same fight, all platforms.
 
 ## Scale requirements
 
-Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): targeting and damage for 1,000 units in under 2 ms per tick, 10,000 in under 25 ms. The 10,000-unit figure is measured at the 10 ticks/s rate the sim drops to above 1,000 live units (E-13 R-099-03), a 100 ms tick; the 1,000-unit figure at 20 ticks/s.
+Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): targeting and damage for 1,000 units in under 2 ms per tick, 10,000 in under 25 ms. The 10,000-unit figure is measured at the 10 ticks/s rate the sim drops to above 1,000 live units (E-13 R-099-03), a 100 ms tick; the 1,000-unit figure at 20 ticks/s. Workers are units and count in these figures (S-202).
 
 ## Look and behavior references
 
@@ -198,14 +264,18 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 - Cohort stagger skips validation, so a dead target is shot at.
 - Warden aura applies to enemies or stacks without bound.
 - Backswing pauses attacking as well as moving.
+- Workers left out of the unit count, so the budgets pass with a base that holds thousands of them.
+- A unit fires at a layer outside its reach, or at a structure or worker its side cannot see.
 
 ## Open ambiguity flags
 
-Q-081-01, Q-082-01, Q-083-01, Q-084-01, Q-086-01, Q-088-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-082-03, Q-082-04, Q-082-05, Q-083-03, Q-087-01, Q-008-05, Q-201-01, Q-204-01, Q-204-02, and from E-22 Q-159-08, Q-159-10, Q-167-01, Q-167-03, Q-169-01, Q-174-02. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
-- E-01 Layer system (same-layer targeting, transition window).
+- E-01 Layer system (reach by layer offset, transition window, movement kinds, the ground on land maps).
+- E-22 Economy and bases (workers, costs, population, structures).
+- E-15 Reinforcement, supply and hazards (non-combat units, S-129).
 - E-12 Fog and sensors (visibility for acquisition).
 - E-13 Movement (orders, leash, backswing, collisions).
 - E-18 Combat visuals (cues).

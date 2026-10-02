@@ -11,7 +11,7 @@
 | Every visible-surface story has a reference | Not applicable; the galaxy view that draws the graph is E-16. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: passed, 2026-09-15.** Zero open flags. Every story is folded and consistent with the register and with `algorithms.md`'s ALG-30/ALG-31 (the first pass at this verdict missed that ALG-31 still described the retired fixed-2-region generator; both ALG-30 and ALG-31 are now rewritten to match this epic).
+**Gate verdict: S-021 to S-025 passed, 2026-09-15.** Zero open flags in those stories. S-223 and S-224 were added 2026-10-02 and have not been through the gate; S-224 carries one open flag. Every story is folded and consistent with the register and with `algorithms.md`'s ALG-30/ALG-31 (the first pass at this verdict missed that ALG-31 still described the retired fixed-2-region generator; both ALG-30 and ALG-31 are now rewritten to match this epic).
 
 ## Purpose
 
@@ -21,7 +21,7 @@ Two things this epic guarantees: every start is playable (no faction is boxed in
 
 ## Obviously working in 60 seconds
 
-Generate three worlds from seeds 1, 2, 3. Each has between 60 and 110 regions and 15 factions, each faction on one of the three templates (some Isolated at 3 regions, some Twin Colony at 4 to 6, some Archipelago at 4), 45 to 90 inhabited regions total depending on the roll, and the rest empty. No two homes are adjacent. Every region is reachable from every other. Every home has the higher population of its faction's regions. Regenerate seed 1: identical graph, identical template rolls, and identical starting numbers.
+Generate three worlds from seeds 1, 2, 3. Each has between 250 and 400 regions and 15 factions, each faction on one of the three templates (some Isolated at 3 regions, some Twin Colony at 4 to 6, some Archipelago at 4), 45 to 90 inhabited regions total depending on the roll, and the rest empty. No two homes are adjacent. Every region is reachable from every other. Every home has the higher population of its faction's regions. Regenerate seed 1: identical graph, identical template rolls, and identical starting numbers.
 
 ## Stories
 
@@ -98,6 +98,29 @@ Inputs: generated graph.
 Outputs: adjacency; a generation-time check that rejects and re-rolls a violating extra edge (R-025-04).
 Open flags: none. Closed by Q-025-01 (Westley, 2026-09-12): the buffer is player-to-NPC only, checked at generation time only — NPC factions may end generation adjacent to each other, and any faction pair may become adjacent later through conquest or colonization (E-05, E-06).
 
+### S-223 — How far a region is from the civilization
+As a commander, I want the galaxy's graph to say how far a mission's region lies from the civilization's land, so that where a mission happens can help decide what kind of base each side is given.
+
+Direction decided in part 2026-10-02 (E-22 S-177 names "the supply distance in the simulation"); the term itself is undefined. Not scheduled for building.
+
+Rules
+- R-223-01  Given any two regions, When a distance between them is read, Then the only measure the simulation defines is the number of hops along the graph's edges of any type, as E-08 R-057-01 and E-10 R-072-08 use it.
+- R-223-02  Given the kind of base a mission gives each side (E-22 S-177), When "the supply distance in the simulation" is read, Then [Q-159-14: what supply distance is; Westley does not recognise the term, and the offered meaning is the hops from the mission's region to the nearest region the civilization owns].
+
+Inputs: the graph (S-021, S-023); region ownership.
+Outputs: a distance, once Q-159-14 is answered, to the mission generator (E-10) and to E-22 S-177.
+Open flags: Q-159-14.
+
+### S-224 — A galaxy at its full size
+As the build, I want generation held to a time budget at the top of the region range, so that a campaign with a 400-region galaxy starts within a time Westley has confirmed.
+
+Rules
+- R-224-01  Given a world of 400 regions (the top of R-021-01's range), When it is generated, Then generation is O(N + E) and completes within [Q-224-01: the generation budget at 400 regions; 5 ms was confirmed at 110 regions when the range was [60, 110]].
+
+Inputs: seed; the region range.
+Outputs: generation time in the scale test.
+Open flags: Q-224-01.
+
 ## Inputs
 
 | Input | Source | Range | Rejection |
@@ -118,6 +141,8 @@ Open flags: none. Closed by Q-025-01 (Westley, 2026-09-12): the buffer is player
 | Faction list with archetype, starting tech, confidence | Strategic snapshot `factions` |
 | Generation report | T1 trace: seed, N, edge count, buffer check result |
 
+A region's climate, landform and environmental trouble are not outputs of this epic and not part of the region record; they are derived from the seed (E-02 S-221). Whether deriving them touches the draw order of R-022-04 is Q-221-01.
+
 ## Invariants
 
 - Every region reachable from every other.
@@ -128,7 +153,7 @@ Open flags: none. Closed by Q-025-01 (Westley, 2026-09-12): the buffer is player
 
 ## Scale requirements
 
-Governing budget (Westley, 2026-09-28): a time jump of 150 ticks at 400 regions completes in under 2 s; the transition animation, stubbed by reusing the boot loading animation, covers the wait. Measured about 2 ms per pipe step, about 0.3 s for 150 ticks. Per-module micro budgets are informational under this governing figure. Generation target (confirmed by Westley, 2026-09-15, never loosened by Agora; a miss is escalated): generate a 110-region world in under 5 ms; generation is O(N + E). Re-timed from the original 60-region figure (2026-09-14) after the region-count range widened to [60, 110] folding Q-021-04 (variable per-template region counts) — 110 is the new range's max, per Q-021-05.
+Governing budget (Westley, 2026-09-28): a time jump of 150 ticks at 400 regions completes in under 2 s; the transition animation, stubbed by reusing the boot loading animation, covers the wait. Measured about 2 ms per pipe step, about 0.3 s for 150 ticks. Per-module micro budgets are informational under this governing figure. Generation target (confirmed by Westley, 2026-09-15, never loosened by Agora; a miss is escalated): generate a 110-region world in under 5 ms; generation is O(N + E). The scale test times 110 regions, below the range [250, 400] (R-021-01); the budget at 400 regions is Westley's to set [Q-224-01].
 
 ## Look and behavior references
 
@@ -148,7 +173,7 @@ None required in this epic. The galaxy view is E-16.
 
 ## Open ambiguity flags
 
-None. Q-021-01 through Q-021-06, Q-021-08, Q-022-01, Q-022-02, Q-024-01, Q-025-01 are closed and folded above.
+Q-224-01 (S-224), Q-159-14 (S-223, held by E-22 S-177) and Q-221-01 (E-02 S-221). S-021 to S-025 have none: Q-021-01 through Q-021-06, Q-021-08, Q-022-01, Q-022-02, Q-024-01, Q-025-01 are closed and folded above.
 
 ## Depends on
 
@@ -156,3 +181,5 @@ None. Q-021-01 through Q-021-06, Q-021-08, Q-022-01, Q-022-02, Q-024-01, Q-025-0
 - E-05 Faction agents (archetypes, colonize, conquest ownership changes).
 - E-06 Diplomacy (peace and betrayal edge changes).
 - E-08 Generational structure (the world persists across chapters; ruins accumulate).
+- E-02 S-221 (climate, landform and trouble are derived from the seed, not stored in the region record).
+- E-10 Missions and E-22 Economy and bases (S-177) read the distance of S-223.

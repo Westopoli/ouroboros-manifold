@@ -1,6 +1,6 @@
 # The current economic system
 
-As decided by Westley through 2026-10-01. This file states what the economy is now; it is rewritten when a decision changes it. His words are verbatim in `README.md`. It was folded into the bible on 2026-10-01 (E-19 S-159, R-159-01 to R-159-13); the epic wins where the two differ. Nothing here is being built.
+As decided by Westley through 2026-10-01. This file states what the economy is now; it is rewritten when a decision changes it. His words are verbatim in `README.md`. The bible holds it in E-22 Economy and Bases (S-167 to S-182), with the paired mode in E-19 S-159, strongpoints and weather in E-15, and terrain and settlements in E-17; the epics win where this file differs. Nothing here is being built.
 
 The target is 2x to 3x the system complexity of a StarCraft 2 economy. Westley measured the first half of this (the seat, what the player runs, the map) at about 1.2x to 1.4x; the section "Thinking ahead" was added to close the gap. He calls the whole a strong foundation.
 

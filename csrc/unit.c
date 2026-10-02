@@ -288,6 +288,9 @@ typedef struct {
     uint32_t *cell_of;
     uint32_t *scratch;
     uint32_t *fcnt;   /* per cell, linked units per faction bucket (om_grid_fbucket) */
+    uint32_t *khead;  /* per cell, heads of the linked Warden list [2c] and Bastion list [2c+1] (unit index + 1) */
+    uint32_t *knext;  /* per unit, next in its kind list */
+    uint32_t *kprev;  /* per unit, previous in its kind list */
     uint32_t *dmg;    /* per cell, badly damaged units; read only while dmg_valid */
     int       dmg_valid;
 } om_grid;
@@ -340,6 +343,9 @@ static void om_tac_release_arrays(om_tac_state *st) {
     free(st->aura_cs);
     free(st->grid.head);
     free(st->grid.fcnt);
+    free(st->grid.khead);
+    free(st->grid.knext);
+    free(st->grid.kprev);
     free(st->grid.dmg);
     free(st->grid.next);
     free(st->grid.prev);
@@ -371,6 +377,10 @@ static int om_tac_reserve(om_tac_state *st, uint32_t need) {
     st->grid.next = (uint32_t *)p;
     if (!(p = realloc(st->grid.prev, (size_t)cap * sizeof(uint32_t)))) return 0;
     st->grid.prev = (uint32_t *)p;
+    if (!(p = realloc(st->grid.knext, (size_t)cap * sizeof(uint32_t)))) return 0;
+    st->grid.knext = (uint32_t *)p;
+    if (!(p = realloc(st->grid.kprev, (size_t)cap * sizeof(uint32_t)))) return 0;
+    st->grid.kprev = (uint32_t *)p;
     if (!(p = realloc(st->grid.cell_of, (size_t)cap * sizeof(uint32_t)))) return 0;
     st->grid.cell_of = (uint32_t *)p;
     if (!(p = realloc(st->grid.scratch, (size_t)cap * sizeof(uint32_t)))) return 0;
@@ -530,23 +540,44 @@ static int om_grid_cell_has_other_faction(const om_grid *g, uint32_t cell, int32
     return 0;
 }
 
+/* Kind list a unit belongs to: 0 Warden, 1 Bastion, -1 neither. */
+static int om_grid_kind(const om_unit_row *u) {
+    return u->unit_type == OM_UT_WARDEN ? 0 : u->unit_type == OM_UT_BASTION ? 1 : -1;
+}
+
 static void om_grid_link(om_tac_state *st, uint32_t i) {
     om_grid *g = &st->grid;
     uint32_t cell = om_grid_cell_of_row(g, &st->units[i]);
+    int kind;
     g->fcnt[(size_t)cell * OM_GRID_FBUCKETS + om_grid_fbucket(st->units[i].faction_id)]++;
     g->cell_of[i] = cell;
     g->prev[i] = 0;
     g->next[i] = g->head[cell];
     if (g->head[cell]) g->prev[g->head[cell] - 1] = i + 1;
     g->head[cell] = i + 1;
+    kind = om_grid_kind(&st->units[i]);
+    if (kind >= 0) {
+        uint32_t *kh = &g->khead[(size_t)cell * 2 + (uint32_t)kind];
+        g->kprev[i] = 0;
+        g->knext[i] = *kh;
+        if (*kh) g->kprev[*kh - 1] = i + 1;
+        *kh = i + 1;
+    }
 }
 
 static void om_grid_unlink(om_tac_state *st, uint32_t i) {
     om_grid *g = &st->grid;
+    int kind;
     g->fcnt[(size_t)g->cell_of[i] * OM_GRID_FBUCKETS + om_grid_fbucket(st->units[i].faction_id)]--;
     if (g->prev[i]) g->next[g->prev[i] - 1] = g->next[i];
     else g->head[g->cell_of[i]] = g->next[i];
     if (g->next[i]) g->prev[g->next[i] - 1] = g->prev[i];
+    kind = om_grid_kind(&st->units[i]);
+    if (kind >= 0) {
+        if (g->kprev[i]) g->knext[g->kprev[i] - 1] = g->knext[i];
+        else g->khead[(size_t)g->cell_of[i] * 2 + (uint32_t)kind] = g->knext[i];
+        if (g->knext[i]) g->kprev[g->knext[i] - 1] = g->kprev[i];
+    }
 }
 
 /* Living, in the sense every caller filters on: `hp <= 0.0` is dead, so a NaN
@@ -595,15 +626,18 @@ static void om_grid_rebuild(om_tac_state *st) {
     if (ncells > g->head_cap) {
         free(g->head);
         free(g->fcnt);
+        free(g->khead);
         free(g->dmg);
         g->head = (uint32_t *)malloc((size_t)ncells * sizeof(uint32_t));
         g->fcnt = (uint32_t *)malloc((size_t)ncells * OM_GRID_FBUCKETS * sizeof(uint32_t));
         g->dmg = (uint32_t *)malloc((size_t)ncells * sizeof(uint32_t));
-        g->head_cap = (g->head && g->fcnt && g->dmg) ? ncells : 0;
+        g->khead = (uint32_t *)malloc((size_t)ncells * 2 * sizeof(uint32_t));
+        g->head_cap = (g->head && g->fcnt && g->dmg && g->khead) ? ncells : 0;
         if (!g->head_cap) return;
     }
     memset(g->head, 0, (size_t)ncells * sizeof(uint32_t));
     memset(g->fcnt, 0, (size_t)ncells * OM_GRID_FBUCKETS * sizeof(uint32_t));
+    memset(g->khead, 0, (size_t)ncells * 2 * sizeof(uint32_t));
     for (i = st->n_units; i-- > 0;) {
         if (st->units[i].in_use && om_grid_living(&st->units[i])) om_grid_link(st, i);
         else g->cell_of[i] = OM_GRID_UNLINKED;
@@ -655,6 +689,39 @@ static void om_grid_iter_begin_st(om_grid_iter *it, om_tac_state *st, double x, 
     it->cx = it->cx0;
     it->cy = om_grid_coord(y - reach, g->oy, g->cell, g->rows);
     it->cur = om_grid_iter_head(g, it);
+}
+
+/* Counts the linked units of kind list `kind` (0 Warden, 1 Bastion) of
+ * `faction` within r of (x, y): the cells and distance test of
+ * om_grid_iter_begin_st, walking only that kind's list. The bastion scan
+ * (`want_phase` >= 0) stops at the first unit in that ability phase, as the
+ * all-units scan did. Counts and any-of do not depend on the order. */
+static uint32_t om_grid_kind_scan(om_tac_state *st, int kind, int32_t faction, int want_phase, double x, double y, double r) {
+    const om_grid *g = &st->grid;
+    double reach = (r < 0.0 ? -r : r) + OM_GRID_PAD;
+    int32_t cx0, cx1, cy0, cy1, cx, cy;
+    uint32_t n = 0, id;
+    if (!g->built) om_grid_rebuild(st);
+    if (!g->built) return 0;
+    cx0 = om_grid_coord(x - reach, g->ox, g->cell, g->cols);
+    cx1 = om_grid_coord(x + reach, g->ox, g->cell, g->cols);
+    cy0 = om_grid_coord(y - reach, g->oy, g->cell, g->rows);
+    cy1 = om_grid_coord(y + reach, g->oy, g->cell, g->rows);
+    for (cy = cy0; cy <= cy1; cy++) {
+        for (cx = cx0; cx <= cx1; cx++) {
+            uint32_t cell = (uint32_t)cy * (uint32_t)g->cols + (uint32_t)cx;
+            for (id = g->khead[(size_t)cell * 2 + (uint32_t)kind]; id; id = g->knext[id - 1]) {
+                const om_unit_row *cand = &st->units[id - 1];
+                if (cand->hp <= 0.0) continue;
+                if (cand->faction_id != faction) continue;
+                if (want_phase >= 0 && cand->ability_phase != want_phase) continue;
+                if (!om_tac_dist_le(cand->x - x, cand->y - y, r)) continue;
+                n++;
+                if (want_phase >= 0) return n;
+            }
+        }
+    }
+    return n;
 }
 
 uint32_t om_grid_iter_next(om_grid_iter *it) {
@@ -861,22 +928,13 @@ static int om_tactical_multiple_factions_alive(const om_tac_state *st) {
  * repeated multiplication rather than a libm pow() call (determinism
  * contract, scripts/specfactory/libm_lint.py bans pow()). */
 static double om_warden_aura_reduction_for(om_tac_state *st, const om_unit_row *target) {
-    uint32_t id;
-    int n = 0;
+    int n;
     double undamaged_factor;
-    om_grid_iter it;
     if (st->n_wardens == 0) {
         if (!st->grid.built) om_grid_rebuild(st);
         return 0.0;
     }
-    om_grid_iter_begin_st(&it, st, target->x, target->y, (double)OM_WARDEN_AURA_RADIUS);
-    while ((id = om_grid_iter_next(&it)) != 0) {
-        const om_unit_row *cand = &st->units[id - 1];
-        if (cand->hp <= 0.0) continue;
-        if (cand->unit_type != OM_UT_WARDEN) continue;
-        if (cand->faction_id != target->faction_id) continue;
-        n++;
-    }
+    n = (int)om_grid_kind_scan(st, 0, target->faction_id, -1, target->x, target->y, (double)OM_WARDEN_AURA_RADIUS);
     if (n <= 0) return 0.0;
     undamaged_factor = 1.0;
     while (n-- > 0) undamaged_factor *= (1.0 - OM_WARDEN_AURA_DAMAGE_REDUCTION);
@@ -2162,7 +2220,6 @@ double om_unit_damage_reduction(om_world *w, uint32_t unit_id) {
     om_tac_state *st = om_tac(w);
     om_unit_row *row = om_registry_find_in(st, unit_id);
     double reduction = 0.0;
-    uint32_t id;
     int fortify_hit = 0;
     int brace_hit;
     if (!row) return 0.0;
@@ -2182,17 +2239,7 @@ double om_unit_damage_reduction(om_world *w, uint32_t unit_id) {
     } else if (st->n_bastions == 0) {
         if (!st->grid.built) om_grid_rebuild(st);
     } else {
-        om_grid_iter it;
-        om_grid_iter_begin_st(&it, st, row->x, row->y, OM_FORTIFY_RADIUS);
-        while ((id = om_grid_iter_next(&it)) != 0) {
-            const om_unit_row *cand = &st->units[id - 1];
-            if (cand->hp <= 0.0) continue;
-            if (cand->unit_type != OM_UT_BASTION) continue;
-            if (cand->ability_phase != OM_ABILITY_PHASE_ACTIVE) continue;
-            if (cand->faction_id != row->faction_id) continue;
-            fortify_hit = 1;
-            break;
-        }
+        fortify_hit = om_grid_kind_scan(st, 1, row->faction_id, OM_ABILITY_PHASE_ACTIVE, row->x, row->y, OM_FORTIFY_RADIUS) != 0;
     }
     if (fortify_hit) reduction += OM_ABILITY_FORTIFY_DAMAGE_REDUCTION;
     reduction += row->force_warden_aura_reduction

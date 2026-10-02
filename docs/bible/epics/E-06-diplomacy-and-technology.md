@@ -11,7 +11,7 @@
 | Every visible-surface story has a reference | Not applicable. Tech tiers change unit look; that reference belongs to E-11. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on 5 open flags, one of which (Q-045-01, betrayal attack strength and mode) is a straight bible-vs-code disagreement.
+**Gate verdict: not passed.** S-227 (added 2026-10-02) has not been through the gate and carries three open flags. Blocked on 5 open flags, one of which (Q-045-01, betrayal attack strength and mode) is a straight bible-vs-code disagreement.
 
 ## Purpose
 
@@ -102,7 +102,7 @@ Rules
 
 Inputs: archetype; tech.
 Outputs: multipliers used in attack resolution.
-Open flags: Q-048-01.
+Open flags: Q-048-01. The mission-level economy (E-22) is a possible consumer of the economy multiplier; nothing decides it (Q-226-01).
 
 ### S-047 — Friends share knowledge
 As a commander, I want the weaker partner in a cooperative pair to catch up toward the stronger, but never past it, so that peace has a tangible reward for the one who needs it.
@@ -120,6 +120,8 @@ Open flags: none.
 ### S-048 — Three tiers of technology
 As a commander, I want my faction's units to change in kind, not just in number, when its technology crosses a tier line, and to fall back if it slips, so that progress and decline are visible on the battlefield.
 
+Direction changed 2026-10-02, rewrite pending: a mission's starting technology is derived only slightly from the simulation's technology level, and what technology does in a mission is undecided (E-22 S-173, Q-159-12; the reconciliation is S-227). The rules below are what the game does today.
+
 Rules
 - R-048-01  Given tech in [0, 34), When the tier is read, Then it is 1; in [34, 67) it is 2; in [67, 100] it is 3.
 - R-048-02  Given a faction crosses from 33.9 to 34.1, When the next mission generates its forces, Then units use the tier 2 profile; units already fielded in a running mission do not change.
@@ -129,6 +131,21 @@ Rules
 Inputs: tech; tier boundaries [0, 34, 67].
 Outputs: tier in the faction entry; unit profile selection (E-11); chronicle candidate.
 Open flags: none. The per-tier unit profiles are E-11 content.
+
+### S-227 — A mission starts from the faction's technology, only slightly
+As a commander, I want the technology my side starts a mission with to follow the faction's technology only a little, so that a long campaign shows in the field without deciding the match before it starts.
+
+Decided in part 2026-10-02 (DECISIONS H4); the rest is open. Not scheduled for building. What technology does is E-22 S-173 (Q-159-12).
+
+Rules
+- R-227-01  Given a mission generates, When a side's starting technology is set, Then it is derived from the faction's technology level (S-045), only slightly [Q-227-01: the mapping from the faction's number to the mission's starting technology, and how slight is slight].
+- R-227-02  Given an era has a wide range of technology levels (for example 1 to 5), When a normal timed single match is played, Then a side has time to climb one or two levels, as a tech-up does in StarCraft 2.
+- R-227-03  Given a mission ends, When the technology a side reached in it is read, Then [Q-227-02: whether anything flows back into the faction's number (S-045), and whether Knowledge Lost (R-045-07) touches a mission's technology].
+- R-227-04  Given the three tiers of R-048-01 and an era's range of levels, When both are read, Then [Q-227-03: how the three tiers relate to the era's levels, for example 1 to 5].
+
+Inputs: the faction's technology (S-045); the era's range of levels.
+Outputs: a mission's starting technology (E-10 mission generator, E-22 S-173).
+Open flags: Q-227-01, Q-227-02, Q-227-03, Q-159-12.
 
 ## Inputs
 
@@ -177,7 +194,7 @@ None required in this epic.
 
 ## Open ambiguity flags
 
-Q-042-01, Q-043-01, Q-045-01, Q-048-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-042-01, Q-043-01, Q-045-01, Q-048-01, and Q-227-01, Q-227-02, Q-227-03 (S-227), with Q-159-12 held by E-22 S-173. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
@@ -186,3 +203,5 @@ Q-042-01, Q-043-01, Q-045-01, Q-048-01. Details in `docs/northstar/ambiguity_reg
 - E-05 Faction agents (attack resolution for betrayals; tech multipliers consumed there).
 - E-07 Civilizational lifecycle (breakaway creation sets stances and tech).
 - E-11 Units (tier profiles).
+- E-22 Economy and bases (S-173 technology in a mission, S-227).
+- E-10 Missions (the mission generator that sets a mission's starting technology, S-227).
