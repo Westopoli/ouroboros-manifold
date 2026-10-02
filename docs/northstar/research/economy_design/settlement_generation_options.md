@@ -11,8 +11,8 @@ Written 2026-10-01 for Westley. Options per part, surface level, for him to pick
 | 3 Growth | **3C with 3A:** waves, and stages by threshold. |
 | 4 Site | **4B, whatever the terrain gives.** The generation is meant to be stochastic and unruly. |
 | 5 Variety | **5B with 5C:** landforms, and the region decides. |
-| 6 Layers | Leaning 6A; expanded below before he locks it. |
-| 7 Scale | Open; restated below as 7D. |
+| 6 Layers | **6A, terraces are the layers, with a mix of benched and natural ground.** The engine produces a variety of landscapes, and some sections are so steep that units cannot traverse them. Open: bands fixed everywhere or fitted per map. |
+| 7 Scale | Open; restated below as 7D. Travel time can be changed and does not limit the size. Sizes compared in `map_scale_comparison.md`. |
 
 Option 1B's line that the city "stops at cliffs" was wrong for this game and is withdrawn. Difficult ground changes what gets built there, not whether anything is.
 

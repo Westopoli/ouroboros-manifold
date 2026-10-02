@@ -126,6 +126,16 @@ Recorded as:
 - Part 6, leaning 6A, not locked: he asked for it to be expanded first. Expanded in `settlement_generation_options.md`.
 - Part 7, open: the two-resolutions option was unclear. What he wants: deep detail fully zoomed in, the shape of the landscape zoomed out (World of Warships map view), a map much bigger than today's, scale unparalleled in any RTS, No Man's Sky level, smooth transitions between vastly different zoom levels, and efficient visual systems to make it possible. Restated as option 7D in `settlement_generation_options.md`.
 
+## Decisions (2026-10-02, ninth round: settlement generation)
+
+Westley, verbatim: "hand me the remove command. - I like a mix between benched and natural, the biome engine (like minecraft) should produce a variety of landscapes not just one or the other. Some sections of the map may be so steep that units can't traverse it. - travel time can be changed, we want unmatched scale from other RTSs. how does 64k and 128k compare to AOE3s large maps? Or World of Warships maps? Research, don't guess."
+
+Recorded as:
+
+- Part 6, decided: 6A, terraces are the layers, with a mix of benched and natural ground. The biome engine produces a variety of landscapes, not one or the other. Some sections of the map may be so steep that units cannot traverse them.
+- Part 7: travel time can be changed and is not a reason to hold the map small. The aim is scale unmatched by other strategy games. Comparison with Age of Empires 3 and World of Warships in `map_scale_comparison.md`.
+- Still open in Q-166-01: whether the five height bands are fixed everywhere or fitted to each map; the canvas size; where the zoom stops; whether 7D is the approach.
+
 ## Files
 
 - `prior_art_resources.md`: cited digest of resource systems in other games.
@@ -138,3 +148,4 @@ Recorded as:
 - `current_system.md`: the current economic system, as decided so far. Read this first.
 - `chess_layer_options.md`: options for making the seat more like chess.
 - `settlement_generation_options.md`: goal 3 options, seven parts.
+- `map_scale_comparison.md`: canvas sizes against Age of Empires 3 and World of Warships.
