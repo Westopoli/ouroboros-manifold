@@ -908,6 +908,7 @@ static void evt_evaluate_triggers(om_evt_state *s, om_world *w, double snap[][OM
             int32_t tag = ++s->chain_counter;
             evt_fire(s, w, r, tid, tag, OM_SRC_TRIGGER, -1.0, -1, 0, snap[r], sink);
 #ifdef OM_DEBUG_INJECT
+            if (w->inject == OM_BUG_CHAIN_COUNTER_UNSAVED) s->chain_counter = tag - 1;
             if (w->inject == OM_BUG_TRIGGERS_READ_LIVE) {
                 om_event_template *t = &s->templates[tid];
                 om_region *rg = &w->regions[r];
@@ -922,6 +923,9 @@ static void evt_evaluate_triggers(om_evt_state *s, om_world *w, double snap[][OM
         if (revolt_fire) {
             int32_t tag = ++s->chain_counter;
             evt_fire(s, w, r, revolt_tid, tag, OM_SRC_TRIGGER, revolt_draw, -1, 0, snap[r], sink);
+#ifdef OM_DEBUG_INJECT
+            if (w->inject == OM_BUG_CHAIN_COUNTER_UNSAVED) s->chain_counter = tag - 1;
+#endif
         }
     }
 }
