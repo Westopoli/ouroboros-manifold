@@ -1590,7 +1590,7 @@ static void om_move_face_pass(om_world *w, om_move_state *ms, uint32_t period) {
         uint32_t tgt;
         double dx = 0.0, dy = 0.0, reach;
         int have = 0;
-        if (!mu->in_use || !om_unit_alive(w, id)) continue;
+        if (!mu->in_use || mu->kiting || !om_unit_alive(w, id)) continue;
         tgt = om_unit_get_target(w, id);
         if (tgt != 0 && om_unit_alive(w, tgt)) {
             const om_move_unit *tm = om_move_get(ms, tgt);
