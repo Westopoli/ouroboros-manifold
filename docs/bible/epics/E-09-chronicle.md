@@ -91,7 +91,7 @@ Open flags: Q-068-01 (detail limit 35 in the current library rules vs 60 in the 
 As a player, I want to watch the map change on the left while the scroll writes itself on the right, and to be able to stop and read, so that the time jump is the game's signature moment and not a loading screen.
 
 Rules
-- R-069-01  Given the narration phase begins, When the panel appears, Then it slides in from the right over 0.40 s and the map view resizes to 62 percent of the width; at the end it slides out over 0.40 s and the map returns to full width.
+- R-069-01  Given the narration phase begins, When the panel appears, Then it slides in from the right over 0.40 s and the map view resizes to 62 percent of the width; it stays until the player presses Proceed (E-16 R-108-05, R-108-06), then slides out over 0.40 s and the map returns to full width.
 - R-069-02  Given an entry prints, When words appear, Then each word arrives every 0.08 s and fades from 0 to full opacity over 0.20 s.
 - R-069-03  Given the map animation is the master clock, When an entry's tick range is reached, Then that entry begins printing; the map never waits for the scroll; a printed entry holds for at least 3.0 s.
 - R-069-04  Given an entry is printing, When the player clicks it, Then nothing happens; Given it is printed (blinking cursor shown), When clicked, Then the expanded form overlays the scroll and the map, clock, and any printing entry pause; dismissing resumes from the exact word and frame.
