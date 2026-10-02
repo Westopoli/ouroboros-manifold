@@ -17,7 +17,6 @@
 ## _process lerps flat arrays directly into display_x/display_y output arrays.
 ## No per-unit Dictionary allocation per tick or per frame.
 ##
-## See also: scenes/tactical/perf_logger.gd, docs/architecture.md
 extends Node
 
 signal snapshot_received(snapshot: Dictionary)
@@ -39,7 +38,6 @@ var units: Dictionary = {}        # uid (int) → unit dict
 var structures: Dictionary = {}   # uid (int) → structure dict
 var objectives: Array = []
 var map_data: Dictionary = {}
-# See also: scripts/tactical/visibility.gd — fog predicate reads this
 var player_visible_unit_uids: Dictionary = {}  # uid(int) → true; set semantics
 
 # Interpolation buffer: array of tick entries with flat arrays.
@@ -54,7 +52,7 @@ var display_facing: PackedFloat32Array = PackedFloat32Array()
 var display_alive: PackedByteArray = PackedByteArray()
 var unit_count: int = 0  # high-water mark: highest uid + 1
 
-var _logger = preload("res://scenes/tactical/perf_logger.gd").new()
+var _logger = null
 
 
 func _ready() -> void:
