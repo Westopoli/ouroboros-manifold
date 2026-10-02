@@ -68,6 +68,11 @@ def build(lib, units):
     for r in range(lib.om_region_count(w)):
         lib.om_mission_refresh_context(w, r)
     mil = MIL[units]
+    # Deliberate: the region fields go in as economy, population, tension, i.e. (1, 3, 2) with
+    # OM_F_ECONOMY=1, OM_F_TENSION=2, OM_F_POPULATION=3. The hashes recorded in
+    # tests/csim/data/a99_tactical_hashes.json depend on this order, so do not 'fix' it to
+    # economy, tension, population. The E-13 scale test uses the other order and gets different
+    # live-unit counts: see TD-A103-e13-live-units in the push ledger.
     lib.om_region_set(w, 0, lib.om_region_tier(w, 0), mil, lib.om_region_field(w, 0, 1),
                       lib.om_region_field(w, 0, 3), lib.om_region_field(w, 0, 2), 0.0, 0.0,
                       lib.om_region_owner(w, 0))
