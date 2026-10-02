@@ -4,12 +4,14 @@ extends Node3D
 # left-drag pans on the ground plane at a constant on-screen speed, wheel
 # zooms along the forward axis, right-drag orbits the target, a click on a
 # system centres it and zooms to Local. The camera moves only on input or an
-# eased focus; it never drifts on its own.
+# eased focus; it never drifts on its own. An autonomous flag (A48-1) marks a
+# camera moved by a caller (menu backdrop, jump sequencer); any mouse press or
+# drag clears it.
 
 const DIST_MIN := 10.0
 const DIST_MAX := 220.0
 const PITCH_DEG := 55.0
-const LOCAL_DISTANCE := 25.0
+const LOCAL_DISTANCE := 20.0
 const ZOOM_STEP := 0.9
 const ORBIT_RAD_PER_PX := 0.005
 const CLICK_SLOP_PX := 4.0
@@ -22,6 +24,7 @@ var _yaw: float = 0.0
 var _mouse := Vector2(-1.0, -1.0)
 var _dragged := 0.0
 var _tween: Tween
+var _auto := false
 
 @onready var _camera: Camera3D = $Camera3D
 
@@ -34,6 +37,14 @@ func set_view(distance: float, target: Vector3) -> void:
 	_distance = clampf(distance, DIST_MIN, DIST_MAX)
 	_target = target
 	_update_camera()
+
+
+func set_autonomous(on: bool) -> void:
+	_auto = on
+
+
+func is_autonomous() -> bool:
+	return _auto
 
 
 func get_target() -> Vector3:
@@ -75,6 +86,8 @@ func project(pos: Vector3) -> Vector2:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if (event is InputEventMouseButton and event.pressed) or (event is InputEventMouseMotion and event.button_mask != 0):
+		_auto = false
 	if event is InputEventMouseMotion:
 		_mouse = event.position
 		if event.button_mask & MOUSE_BUTTON_MASK_LEFT:
