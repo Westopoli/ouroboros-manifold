@@ -92,6 +92,7 @@ tests/csim/scale/test_PP_tables.py::test_PP_table_route_cache_holds_a_destinatio
 tests/csim/scale/test_PP_tables.py::test_PP_table_route_cache_new_shared_destination_is_cached_after_many
 tests/csim/scale/test_PP_tables.py::test_PP_table_route_cache_over_cap_answers_stay_correct
 tests/csim/scale/test_PP_tables.py::test_PP_route_search_reaches_across_the_canvas
+tests/csim/scale/test_PP_tables.py::test_PP_route_search_wall_without_gap_finds_nothing
 tests/csim/scale/test_PP_tables.py::test_PP_table_cover_holds_the_proposed_count
 tests/csim/scale/test_PP_tables.py::test_PP_table_cover_over_cap_refused_cleanly
 tests/csim/scale/test_PP_tables.py::test_PP_table_obstacles_hold_the_proposed_count
