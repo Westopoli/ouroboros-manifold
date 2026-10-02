@@ -129,6 +129,12 @@
 #define OM_MAPGEN_CANVAS_BASE_MEDIUM 16000.0
 #define OM_MAPGEN_CANVAS_BASE_LARGE 24000.0
 
+/* The 28,000 wu canvas at the 100 wu route cell: 280 cells a side. */
+enum { OM_MAPGEN_GRID_SIDE = (int)(OM_MAP_MAX_CANVAS / OM_NAVMESH_CELL_SIZE) };
+#define OM_MAPGEN_BITS_PER_BYTE 8
+#define OM_MAPGEN_BYTE_SHIFT 3
+#define OM_MAPGEN_BIT_MASK 7
+
 typedef struct {
     double x, y, radius, height;
 } om_mapgen_cover_row;
@@ -162,6 +168,8 @@ typedef struct {
     uint32_t                n_structures;
     int                     has_canvas;
     double                  canvas_w, canvas_h;
+    /* A132/A134: route grid, one blocked bit per 100 wu cell per layer, row-major by cy then cx. */
+    uint8_t                 blocked_bits[(OM_LAYER_COUNT * OM_MAPGEN_GRID_SIDE * OM_MAPGEN_GRID_SIDE + OM_MAPGEN_BIT_MASK) / OM_MAPGEN_BITS_PER_BYTE];
 } om_mapgen_state;
 
 static void om_mapgen_state_free(void *p) {
@@ -206,6 +214,47 @@ static double om_mgs_dist_sq(double ax, double ay, double bx, double by) {
     double dx = ax - bx;
     double dy = ay - by;
     return dx * dx + dy * dy;
+}
+
+/* Route grid. Cells run 0 .. ceil(canvas / cell) - 1 on each axis; anything outside is blocked. */
+static int om_mgs_cells(double extent) {
+    int n = (int)(extent / OM_NAVMESH_CELL_SIZE);
+    if ((double)n * OM_NAVMESH_CELL_SIZE < extent) n++;
+    return n;
+}
+
+static size_t om_mgs_bit(uint32_t layer, int cx, int cy) {
+    return ((size_t)layer * OM_MAPGEN_GRID_SIDE + (size_t)cy) * OM_MAPGEN_GRID_SIDE + (size_t)cx;
+}
+
+static int om_mgs_in_canvas(const om_mapgen_state *st, uint32_t layer, int32_t cx, int32_t cy) {
+    return layer < OM_LAYER_COUNT && cx >= 0 && cy >= 0
+        && cx < om_mgs_cells(st->canvas_w) && cy < om_mgs_cells(st->canvas_h);
+}
+
+static void om_mgs_set_bit(om_mapgen_state *st, uint32_t layer, int cx, int cy, int on) {
+    size_t b = om_mgs_bit(layer, cx, cy);
+    if (on) st->blocked_bits[b >> OM_MAPGEN_BYTE_SHIFT] = (uint8_t)(st->blocked_bits[b >> OM_MAPGEN_BYTE_SHIFT] | (1u << (b & OM_MAPGEN_BIT_MASK)));
+    else st->blocked_bits[b >> OM_MAPGEN_BYTE_SHIFT] = (uint8_t)(st->blocked_bits[b >> OM_MAPGEN_BYTE_SHIFT] & ~(1u << (b & OM_MAPGEN_BIT_MASK)));
+}
+
+/* Route-grid read for the other tactical files: 1 blocked, 0 open; outside the canvas blocked; no canvas, 0.
+ * Defined here only, not in the header (internal helper). See also: om_map_block_rect. */
+int om_mapgen_cell_blocked(const om_world *w, uint32_t layer, int32_t cx, int32_t cy) {
+    const om_mapgen_state *st = w ? om_mgs_ro(w) : NULL;
+    size_t b;
+    if (!st || !st->has_canvas) return 0;
+    if (!om_mgs_in_canvas(st, layer, cx, cy)) return 1;
+    b = om_mgs_bit(layer, cx, cy);
+    return (st->blocked_bits[b >> OM_MAPGEN_BYTE_SHIFT] >> (b & OM_MAPGEN_BIT_MASK)) & 1;
+}
+
+/* Called by om_map_set_obstacle_density (tactical_move.c): a density above the R-097-01 threshold blocks the
+ * cell, anything at or below opens it. Ignored with no canvas or outside it. */
+void om_mapgen_cell_set_density(om_world *w, uint32_t layer, int32_t cx, int32_t cy, double density) {
+    om_mapgen_state *st = w ? (om_mapgen_state *)w->mapgen_state : NULL;
+    if (!st || !st->has_canvas || !om_mgs_in_canvas(st, layer, cx, cy)) return;
+    om_mgs_set_bit(st, layer, cx, cy, om_route_grid_is_cell_blocked(density));
 }
 
 /* ---- generated stubs from signatures.toml ---- */
@@ -598,9 +647,10 @@ void om_map_sample_gradients(om_world *w, double p1, double x, om_gradient_prope
 }
 
 int om_map_sample_layer_accessibility(om_world *w, double p1, double x, uint32_t layer) {
-    /* STUB */
-    (void)w; (void)p1; (void)x; (void)layer;
-    return 0;
+    double px = p1, py = x;
+    if (!w || !om_mgs_ro(w) || !om_mgs_ro(w)->has_canvas) return 1;
+    if (px < 0.0 || py < 0.0) return 0;
+    return !om_mapgen_cell_blocked(w, layer, (int32_t)(px / OM_NAVMESH_CELL_SIZE), (int32_t)(py / OM_NAVMESH_CELL_SIZE));
 }
 
 double om_map_sample_obstacle_density(om_world *w, double p1, double x) {
@@ -683,6 +733,7 @@ int om_map_set_canvas(om_world *w, double width, double height) {
     if (!w) return -1;
     if (!(width > 0.0 && width <= OM_MAP_MAX_CANVAS && height > 0.0 && height <= OM_MAP_MAX_CANVAS)) return -1;
     st = om_mgs(w);
+    if (st->canvas_w != width || st->canvas_h != height) memset(st->blocked_bits, 0, sizeof(st->blocked_bits));
     st->has_canvas = 1;
     st->canvas_w = width;
     st->canvas_h = height;
@@ -691,8 +742,29 @@ int om_map_set_canvas(om_world *w, double width, double height) {
 }
 
 int om_map_block_rect(om_world *w, double x0, double y0, double x1, double y1, uint32_t layer_lo, uint32_t layer_hi) {
-    /* STUB */
-    (void)w; (void)x0; (void)y0; (void)x1; (void)y1; (void)layer_lo; (void)layer_hi;
+    om_mapgen_state *st = w ? (om_mapgen_state *)w->mapgen_state : NULL;
+    double lo_x = x0 < x1 ? x0 : x1, hi_x = x0 < x1 ? x1 : x0;
+    double lo_y = y0 < y1 ? y0 : y1, hi_y = y0 < y1 ? y1 : y0;
+    int ncx, ncy, cx0, cx1, cy0, cy1, cx, cy;
+    uint32_t l;
+    if (!st || !st->has_canvas || layer_lo > layer_hi || layer_hi >= OM_LAYER_COUNT) return -1;
+    if (!(hi_x > lo_x) || !(hi_y > lo_y)) return -1;
+    ncx = om_mgs_cells(st->canvas_w);
+    ncy = om_mgs_cells(st->canvas_h);
+    if (hi_x <= 0.0 || hi_y <= 0.0 || lo_x >= st->canvas_w || lo_y >= st->canvas_h) return 0;
+    lo_x = lo_x < 0.0 ? 0.0 : lo_x;
+    lo_y = lo_y < 0.0 ? 0.0 : lo_y;
+    hi_x = hi_x > st->canvas_w ? st->canvas_w : hi_x;
+    hi_y = hi_y > st->canvas_h ? st->canvas_h : hi_y;
+    cx0 = (int)(lo_x / OM_NAVMESH_CELL_SIZE);
+    cy0 = (int)(lo_y / OM_NAVMESH_CELL_SIZE);
+    cx1 = om_mgs_cells(hi_x) - 1;
+    cy1 = om_mgs_cells(hi_y) - 1;
+    if (cx1 >= ncx) cx1 = ncx - 1;
+    if (cy1 >= ncy) cy1 = ncy - 1;
+    for (l = layer_lo; l <= layer_hi; l++)
+        for (cy = cy0; cy <= cy1; cy++)
+            for (cx = cx0; cx <= cx1; cx++) om_mgs_set_bit(st, l, cx, cy, 1);
     return 0;
 }
 /* ---- end generated stubs ---- */
