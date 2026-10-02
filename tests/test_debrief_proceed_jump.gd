@@ -5,8 +5,11 @@ extends SceneTree
 # chronicle, which is Proceed from the debrief (debrief.gd _on_continue, the
 # CONTINUE button). That flow holds the jump's frame on the shared bridge; the
 # chronicle scene that opens afterwards only reads it and sends nothing.
+# A74: Proceed routes to "time_jump". A75: Proceed issues the jump once through
+# the bridge (load_chronicle_live), the bridge holds the frame, the sequencer
+# reads chronicle_frame() and hands that frame to the panel; neither scene jumps.
 # TESTS FIRST. Expected RED today: Proceed sends no jump (the chronicle panel's
-# _ready does, later), so the flow checks fail; the control (Proceed still emits
+# _ready does, later) and routes to "chronicle", so the flow checks fail; the control (Proceed still emits
 # debrief_completed and routes onward) is GREEN.
 #
 # Run: xvfb-run -a godot --headless --path . -s res://tests/test_debrief_proceed_jump.gd
@@ -66,6 +69,10 @@ func _run_tests() -> void:
 	debrief._on_continue()
 	# control: unchanged behaviour
 	_assert(completed[0], "control: Proceed no longer emits debrief_completed")
+
+	# A74: Proceed routes to the sequencer, which embeds the scroll; "chronicle" is not on this path
+	_assert(str(get_root().get_node("SceneRouter").get("_current_scene_name")) == "time_jump",
+		"A74: Proceed routed to %s, expected time_jump" % str(get_root().get_node("SceneRouter").get("_current_scene_name")))
 
 	# the jump is issued by Proceed itself, before any scene change, exactly once
 	_assert(bridge.count("jump") == 1,

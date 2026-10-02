@@ -1,31 +1,35 @@
 extends SceneTree
 
-# Chronicle scene opening, rulings round 2 Addendum 27 (docs/northstar/plans/
-# 2026-10-01-architect-rulings-2.md) with E-09 R-069-01, R-069-03, R-069-06 and
-# E-16 R-108-02. TESTS FIRST: written before the implementation; red ones name
-# the rule they prove.
+# Chronicle scene opening, rulings round 2 Addenda 27 and 28 (docs/northstar/
+# plans/2026-10-01-architect-rulings-2.md) with E-09 R-069-01, R-069-03,
+# R-069-06 and E-16 R-108-02. TESTS FIRST: written before the implementation;
+# red ones name the rule they prove.
 #
-#   A69  opening the chronicle scene never advances the sim: neither the
-#        sequencer's nor the embedded scroll panel's _ready sends `jump` (or
-#        any other sim-changing command). The jump is issued once by the flow
-#        that leads in (Proceed from the debrief; tests/test_debrief_proceed_jump.gd);
-#        the sequencer holds that jump's frame and the panel shows the same one.
-#        With no frame held (after a load, before any jump) the scene shows the
-#        scroll with no entries, no replay and its footer, and sends nothing.
-#        General rule: a scene's _ready reads state and frames, sends no
-#        command that changes the sim (checked on the sequencer's and the
-#        panel's _ready source, and on the recording bridge).
-#   A71  live path: the scroll panel is visible and at 38 percent width before
-#        the first entry prints (R-069-01, R-108-02).
-#   A72  keyframes never delay the map clock: replay position advances at
-#        REPLAY_TICKS_PER_SECOND with keyframe entries pending (R-069-03).
+#   A69/A75/A77  opening the chronicle scene never advances the sim: neither
+#        the sequencer's nor the embedded scroll panel's _ready sends any
+#        command. Behavioural, no source scan: recording stand-ins for the
+#        shared session bridge (tests/support/recording_bridge.gd) and for the
+#        legacy SimBridge autoload (tests/support/recording_legacy_sink.gd).
+#        The jump is issued once by Proceed from the debrief
+#        (tests/test_debrief_proceed_jump.gd); the sequencer reads the held
+#        frame and hands that same frame to the panel.
+#   A76  no frame held (after a load): scroll with no entries, no replay, both
+#        footer controls (PROCEED, EXIT TO MAIN MENU) shown; Proceed sends no
+#        command and moves on to the screen after the chronicle in the normal
+#        flow (mission_briefing, as after a replay).
+#   A71/A78  live path: the panel slides in (narrower than 38 percent at the
+#        start, at 38 percent within 0.40 s) and is visible at 38 percent
+#        before the first entry prints (R-069-01, R-108-02).
+#   A72/A79  keyframes never delay the map clock (R-069-03), and never delay
+#        settle: settle = replay clock at the jump's last tick AND the last
+#        entry printed and held 3.0 s. A pending keyframe never delays it.
 #   A73  an entry with no mentions is valid; an entry with empty text still
 #        yields the structural line, so the count on screen equals the
 #        distiller's count (R-069-06).
 #
-# Controls (expected GREEN today): A72, A73, and the planted-source detector
-# control. Expected RED today: A69 (all), A71.
-# Interpretations the Architect should confirm are listed in the Doer report.
+# Controls (expected GREEN today): A72 clock, A73, footer hidden while the
+# replay runs, footer hidden at clock end while the last entry still prints.
+# Expected RED today: the rest of A69, A71/A78, A76, A79.
 #
 # Run: xvfb-run -a godot --headless --path . -s res://tests/test_chronicle_scene_open.gd
 
@@ -33,8 +37,12 @@ const SequencerScene := "res://scenes/world/time_jump_sequencer.tscn"
 const PanelScene := "res://scenes/world/chronicle_scroll_panel.tscn"
 const SIM_SESSION := "res://autoload/sim_session.gd"
 const RecordingBridge := preload("res://tests/support/recording_bridge.gd")
+const LegacySink := preload("res://tests/support/recording_legacy_sink.gd")
 const TICKS_PER_SECOND := 2.0
 const WIDTH_TOL := 0.02
+const ENTRY_HOLD_S := 3.0
+const SLIDE_S := 0.40
+const TIMING_SLACK_S := 0.25
 
 var _pass_count := 0
 var _fail_count := 0
@@ -124,46 +132,39 @@ func _entry_ids(panel: Node) -> Array:
 	return ids
 
 
-# A source-level check of the general rule: a _ready body must not mention a
-# command sender. Returns the offending tokens.
-func _ready_body_offences(script_path: String) -> Array:
-	var src := FileAccess.get_file_as_string(script_path)
-	return _offences_in_ready(src)
-
-
-func _offences_in_ready(src: String) -> Array:
-	var start := src.find("func _ready()")
-	if start < 0:
-		return []
-	var end := src.find("\nfunc ", start + 5)
-	var body := src.substr(start, (end if end >= 0 else src.length()) - start)
-	var hits: Array = []
-	for token in ["send_command", "load_chronicle_live", "\"jump\"", "load_debrief_live", "load_mission_live", "ready_for_time_jump"]:
-		if body.find(token) >= 0:
-			hits.append(token)
-	return hits
+func _footer_button(seq: Node, text: String) -> Button:
+	var footer = seq.get("_footer")
+	if footer == null:
+		return null
+	for c in footer.get_children():
+		if c is Button and (c as Button).text == text:
+			return c
+	return null
 
 
 func _run_tests() -> void:
-	# --- detector positive control: the scan flags a planted sender, and not a clean body.
-	_assert(_offences_in_ready("func _ready() -> void:\n\tbridge.send_command({})\n").size() > 0,
-		"control: the _ready scan did not flag a planted send_command")
-	_assert(_offences_in_ready("func _ready() -> void:\n\tvar f = bridge.chronicle_frame()\n\nfunc other():\n\tx.send_command({})\n").is_empty(),
-		"control: the _ready scan flagged a clean _ready (or read past it)")
-
+	# let the autoloads finish _ready (SimBridge opens its command file there) before a stand-in swaps it
+	await process_frame
+	await process_frame
 	await _a69_open_with_frame()
 	await _a69_open_without_frame()
 	await _a69_general_ready_rule()
 	await _a71_panel_visible_before_first_entry()
 	await _a72_keyframes_never_hold_clock()
+	await _a79_settle()
 	await _a73_entries_without_mentions_and_text()
+	await _a76_no_frame_proceed()
 	load(SIM_SESSION).reset()
 
 
 # A69: the sequencer opens on the frame the flow already issued, and sends nothing.
 func _a69_open_with_frame() -> void:
 	var bridge = _install(true)
+	var sink = LegacySink.begin(get_root())
 	var seq: Node = await _mount(SequencerScene)
+	_assert(sink.sent().is_empty(),
+		"A77: opening the chronicle scene sent %s through the legacy SimBridge from _ready" % str(sink.sent()))
+	sink.end()
 	_assert(bridge.count("jump") == 0,
 		"A69: opening the chronicle scene sent %d `jump` command(s) from _ready; the jump belongs to the flow leading in (Proceed from the debrief)" % bridge.count("jump"))
 	_assert(bridge.sim_changing_sent().is_empty(),
@@ -184,7 +185,11 @@ func _a69_open_with_frame() -> void:
 # A69: no frame held (after a load, before any jump).
 func _a69_open_without_frame() -> void:
 	var bridge = _install(false)
+	var sink = LegacySink.begin(get_root())
 	var seq: Node = await _mount(SequencerScene)
+	_assert(sink.sent().is_empty(),
+		"A77: opened with no frame held, the scene sent %s through the legacy SimBridge" % str(sink.sent()))
+	sink.end()
 	_assert(bridge.sent.is_empty(),
 		"A69: opened with no frame held, the scene sent %s; it must send nothing" % str(bridge.sent))
 	var panel := _panel_of(seq)
@@ -198,6 +203,8 @@ func _a69_open_without_frame() -> void:
 	var footer = seq.get("_footer")
 	_assert(footer != null and footer.visible,
 		"A69: opened with no frame held, the footer is not shown (nothing to wait for, so it must not stay hidden)")
+	_assert(_footer_button(seq, "PROCEED") != null and _footer_button(seq, "EXIT TO MAIN MENU") != null,
+		"A76: opened with no frame held, both footer controls (PROCEED, EXIT TO MAIN MENU) must exist")
 	await _unmount(seq)
 
 	# the standalone scroll panel scene (routed as "chronicle") obeys the same rule
@@ -212,11 +219,8 @@ func _a69_open_without_frame() -> void:
 	await _unmount(solo)
 
 
-# A69 general rule: a scene's _ready reads and sends no sim-changing command.
+# A69 general rule, behavioural (A77): the debrief's _ready sends nothing either.
 func _a69_general_ready_rule() -> void:
-	for path in ["res://scenes/world/time_jump_sequencer.gd", "res://scenes/world/chronicle_scroll_panel.gd", "res://scenes/debrief/debrief.gd"]:
-		var hits := _ready_body_offences(path)
-		_assert(hits.is_empty(), "A69 general: %s _ready mentions command senders %s" % [path, str(hits)])
 	var bridge = _install(true)
 	bridge._debrief = {"type": "debrief", "band": 2, "achieved": 0.8, "brought_home": 0.6,
 		"region_delta": {"military": -4.0, "economy": 2.0, "tension": -3.0, "population": 0.0}}
@@ -226,28 +230,38 @@ func _a69_general_ready_rule() -> void:
 	await _unmount(debrief)
 
 
-# A71: slide-in happens before the first entry prints (R-069-01, R-108-02).
+# A71/A78: the panel slides in (narrower than 38 percent at the start, 38 percent within 0.40 s),
+# and is visible at 38 percent before the first entry prints (R-069-01, R-108-02).
 func _a71_panel_visible_before_first_entry() -> void:
 	_install(true)
 	var seq: Node = await _mount(SequencerScene)
 	var panel := _panel_of(seq)
-	var checked := false
-	var frames := 0
-	while frames < 30 and panel != null:
-		var replay: Dictionary = seq.qa_state().get("replay", {})
-		if (replay.get("entries_started", []) as Array).size() > 0:
+	_assert(panel != null, "A71: no scroll panel on the sequencer")
+	if panel == null:
+		await _unmount(seq)
+		return
+	var t0 := Time.get_ticks_msec()
+	var first_frac: float = panel.size.x / maxf(seq.size.x, 1.0)
+	_assert(panel.visible and panel.is_visible_in_tree(),
+		"A71: scroll panel is hidden at the start, before the first entry printed (R-069-01, R-108-02)")
+	_assert(first_frac < 0.38 - WIDTH_TOL,
+		"A78: scroll panel is %.3f of the scene width at the start, expected narrower than 0.38: the panel slides in over 0.40 s (R-069-01)" % first_frac)
+	var reached := -1.0
+	var started_early := false
+	while true:
+		var elapsed := (Time.get_ticks_msec() - t0) / 1000.0
+		var frac: float = panel.size.x / maxf(seq.size.x, 1.0)
+		if absf(frac - 0.38) <= WIDTH_TOL and reached < 0.0:
+			reached = elapsed
+			started_early = (seq.qa_state().get("replay", {}).get("entries_started", []) as Array).size() > 0
 			break
-		if frames >= 1:
-			checked = true
-			var width_frac: float = panel.size.x / maxf(seq.size.x, 1.0)
-			_assert(panel.visible and panel.is_visible_in_tree(),
-				"A71: scroll panel is hidden at frame %d, before the first entry printed (R-069-01, R-108-02)" % frames)
-			_assert(absf(width_frac - 0.38) <= WIDTH_TOL,
-				"A71: scroll panel is %.3f of the scene width before the first entry printed, expected 0.38 (R-108-02)" % width_frac)
+		if elapsed > 2.0:
 			break
 		await process_frame
-		frames += 1
-	_assert(checked, "A71: no frame was sampled before the first entry printed (replay entries already started)")
+	_assert(reached >= 0.0 and reached <= SLIDE_S + TIMING_SLACK_S,
+		"A78: scroll panel reached 38 percent width at %.2f s, expected within %.2f s of the start (R-069-01)" % [reached, SLIDE_S])
+	_assert(reached >= 0.0 and not started_early,
+		"A71: the panel reached 38 percent only after the first entry began printing")
 	await _unmount(seq)
 
 
@@ -318,3 +332,94 @@ func _a73_entries_without_mentions_and_text() -> void:
 	_assert(texts.size() == 3 and texts[1] != "" and texts[1].find("{") < 0 and texts[1].find("[") < 0,
 		"A73: an entry with empty text did not get the structural-line fallback (text %s)" % str(texts[1] if texts.size() > 1 else null))
 	await _unmount(panel)
+
+
+func _timed_footer_run(frame: Dictionary, with_pending_keyframe: bool, limit_s: float) -> Dictionary:
+	_install(true)
+	var seq: Node = await _mount(SequencerScene)
+	seq.load_frame(frame, [1, 1, 1, 1])
+	if with_pending_keyframe:
+		# a keyframe on the legacy bus path that nothing consumes: the old queue-hold shape
+		var bus = get_root().get_node("UIDataBus")
+		bus.time_jump_keyframe.emit({"chronicle_entry_id": "", "regions_snapshot": [], "connections_snapshot": [], "military_events": []})
+	var footer = seq.get("_footer")
+	var t0 := Time.get_ticks_msec()
+	var out := {"clock_end": -1.0, "last_printed": -1.0, "settle": -1.0, "visible_while_replay": false,
+		"visible_at_clock_end_unprinted": false, "printed_at_settle": -1}
+	var total: int = (frame.get("entries", []) as Array).size()
+	while true:
+		await process_frame
+		var elapsed := (Time.get_ticks_msec() - t0) / 1000.0
+		var qa: Dictionary = seq.qa_state()
+		var active := bool(qa.get("replay", {}).get("active", false))
+		var printed := int(qa.get("entries_printed", 0))
+		if active and footer != null and footer.visible:
+			out["visible_while_replay"] = true
+		if not active and out["clock_end"] < 0.0:
+			out["clock_end"] = elapsed
+			if printed < total and footer != null and footer.visible:
+				out["visible_at_clock_end_unprinted"] = true
+		if printed >= total and out["last_printed"] < 0.0:
+			out["last_printed"] = elapsed
+		if footer != null and footer.visible and out["settle"] < 0.0:
+			out["settle"] = elapsed
+			out["printed_at_settle"] = printed
+			break
+		if elapsed > limit_s:
+			break
+	await _unmount(seq)
+	return out
+
+
+# A72/A79: settle = clock at the last tick AND the last entry printed and held 3.0 s; a pending
+# keyframe never delays it (R-069-03).
+func _a79_settle() -> void:
+	# short entries: the clock (5.0 s) ends before the last entry has held 3.0 s
+	for pending in [false, true]:
+		var tag := "with a pending keyframe" if pending else "with no keyframe pending"
+		var r: Dictionary = await _timed_footer_run(_frame(), pending, 12.0)
+		_assert(not r["visible_while_replay"], "A79 control: the footer showed while the replay was still running (%s)" % tag)
+		_assert(r["settle"] >= 0.0,
+			"A79: the footer never settled within 12 s %s; settle is the clock at the last tick plus the last entry printed and held (R-069-03)" % tag)
+		if r["settle"] >= 0.0:
+			_assert(r["settle"] >= r["clock_end"] - 0.05 and r["settle"] >= r["last_printed"] + ENTRY_HOLD_S - TIMING_SLACK_S,
+				"A79: settled at %.2f s %s; clock ended %.2f s, last entry printed %.2f s, it must hold %.1f s first" % [r["settle"], tag, r["clock_end"], r["last_printed"], ENTRY_HOLD_S])
+			_assert(r["settle"] <= r["last_printed"] + ENTRY_HOLD_S + 1.5,
+				"A79: settled at %.2f s %s, long after the last entry printed (%.2f s) and held %.1f s; a pending keyframe must not delay settle" % [r["settle"], tag, r["last_printed"], ENTRY_HOLD_S])
+	# a last entry that is still printing when the clock ends: settle waits for it
+	var frame := _frame()
+	var words := ""
+	for i in range(30):
+		words += "word%d " % i
+	frame["entries"] = [_entry(1, 106, 108, "The border held."), _entry(2, 109, 110, words.strip_edges())]
+	var slow: Dictionary = await _timed_footer_run(frame, true, 18.0)
+	_assert(not slow["visible_at_clock_end_unprinted"],
+		"A79 control: the footer showed at the end of the clock while the last entry was still printing")
+	_assert(slow["settle"] >= 0.0,
+		"A79: the footer never settled within 18 s when the last entry printed after the clock ended")
+	if slow["settle"] >= 0.0:
+		_assert(slow["printed_at_settle"] == 2 and slow["settle"] >= slow["last_printed"] + ENTRY_HOLD_S - TIMING_SLACK_S,
+			"A79: settled at %.2f s with %s of 2 entries printed (last printed %.2f s); settle only after the last entry printed and held %.1f s" % [slow["settle"], str(slow["printed_at_settle"]), slow["last_printed"], ENTRY_HOLD_S])
+
+
+# A76: no frame held; Proceed sends no command and moves on to the screen after the chronicle.
+func _a76_no_frame_proceed() -> void:
+	var bridge = _install(false)
+	var sink = LegacySink.begin(get_root())
+	var seq: Node = await _mount(SequencerScene)
+	var proceed := _footer_button(seq, "PROCEED")
+	_assert(proceed != null, "A76: no PROCEED control with no frame held")
+	var router = get_root().get_node("SceneRouter")
+	router.set("_current_scene_name", "")
+	if proceed != null:
+		seq.call("_on_proceed")
+		var t0 := Time.get_ticks_msec()
+		while str(router.get("_current_scene_name")) == "" and Time.get_ticks_msec() - t0 < 2500:
+			await process_frame
+	_assert(str(router.get("_current_scene_name")) == "mission_briefing",
+		"A76: Proceed with no frame held went to '%s', expected mission_briefing (the screen after the chronicle, as after a replay)" % str(router.get("_current_scene_name")))
+	_assert(bridge.sent.is_empty() and sink.sent().is_empty(),
+		"A76: Proceed with no frame held sent %s / legacy %s; it must send nothing to the sim" % [str(bridge.sent), str(sink.sent())])
+	sink.end()
+	if is_instance_valid(seq):
+		await _unmount(seq)
