@@ -1036,6 +1036,20 @@ typedef struct om_chronicle_entry {
     int32_t lineage_ref;
 } om_chronicle_entry;
 
+/* A53 (R-069-07): one clickable name inside a chronicle entry's text. start and
+ * len are Unicode code point offsets into the entry text exactly as sent (not
+ * byte offsets: the library text holds multi-byte characters such as the em
+ * dash). kind is an OM_CHRON_MENTION_* value; id is the faction id or region
+ * index the name stands for. */
+#define OM_CHRON_MENTION_FACTION 0
+#define OM_CHRON_MENTION_REGION 1
+typedef struct om_chronicle_mention {
+    uint32_t start;
+    uint32_t len;
+    uint32_t kind;
+    int32_t id;
+} om_chronicle_mention;
+
 typedef struct om_client_unit {
     uint32_t id;
     int32_t faction_id;
@@ -1241,6 +1255,17 @@ int om_chronicle_is_lineage_event(const om_world *w, uint32_t lineage_id, uint32
 int om_chronicle_is_paused(const om_world *w);
 uint32_t om_chronicle_lineage_category_count(const om_world *w);
 int om_chronicle_map_is_master_clock(const om_world *w);
+/* A53 (R-069-07, Q-069-02): the faction and region names in entry `index`'s
+ * text (same index as om_chronicle_entry_get), produced by the sim while it
+ * fills the name slots, never found by matching text afterwards. expanded 0 is
+ * base_text, 1 is expanded_text. Mentions are in text order, never overlap, and
+ * each lies wholly inside the stored text; a name the assembler rewrote (word
+ * echo synonym, anaphora) or truncated away is not a mention. A faction slot
+ * with no owner ("an unclaimed people") is not a mention. Count is 0 for an
+ * entry with no mention or an index om_chronicle_entry_get rejects; get returns
+ * 1 on success, 0 when mention_idx is past the count. */
+uint32_t om_chronicle_mention_count(const om_world *w, uint32_t index, int expanded);
+int om_chronicle_mention_get(const om_world *w, uint32_t index, int expanded, uint32_t mention_idx, om_chronicle_mention *out);
 void om_chronicle_mock_populate_events(om_world *w, uint32_t n_events);
 double om_chronicle_presentation_entry_hold_sec(const om_world *w);
 double om_chronicle_presentation_map_width_ratio(const om_world *w);

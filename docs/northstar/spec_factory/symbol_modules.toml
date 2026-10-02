@@ -54,6 +54,9 @@ om_lineage_chapter_count            = "generational.c"
 om_chronicle_entry_count            = "chronicle.c"
 # F2n: mission.c objective-drift leaf needs a set/get pair; chronicle reader (B8-4)
 om_chronicle_entry_get              = "chronicle.c"
+# A53 (G-C2): clickable name spans per entry
+om_chronicle_mention_count          = "chronicle.c"
+om_chronicle_mention_get            = "chronicle.c"
 # F2o: regional/chain cluster event writer, ALG-51 step 4 (B8-5)
 om_chronicle_add_regional_event      = "chronicle.c"
 # event system, including manual firing and character attachment: E-04
