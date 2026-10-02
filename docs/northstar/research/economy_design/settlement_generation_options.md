@@ -11,7 +11,7 @@ Written 2026-10-01 for Westley. Options per part, surface level, for him to pick
 | 3 Growth | **3C with 3A:** waves, and stages by threshold. |
 | 4 Site | **4B, whatever the terrain gives.** The generation is meant to be stochastic and unruly. |
 | 5 Variety | **5B with 5C:** landforms, and the region decides. |
-| 6 Layers | **6A, terraces are the layers, with a mix of benched and natural ground.** The engine produces a variety of landscapes, and some sections are so steep that units cannot traverse them. Open: bands fixed everywhere or fitted per map. |
+| 6 Layers | **6A, terraces are the layers, with a mix of benched and natural ground.** The engine produces a variety of landscapes, and some sections are so steep that units cannot traverse them. The bands are **fitted to each map**, and the generator must give every map enough relief that a layer step is a real height difference, never a meadow slope. |
 | 7 Scale | **7D, one world with continuous detail.** The canvas stays at today's sizes (largest 32,000 wu) for now, to see how players like it, as long as landscape variety is packed into the maps. The zoom stops at the battlefield's map view. |
 
 Option 1B's line that the city "stops at cliffs" was wrong for this game and is withdrawn. Difficult ground changes what gets built there, not whether anything is.
@@ -126,7 +126,7 @@ This is the functional part. The bible's layer rules today: five layers, fixed f
 **Three things to settle inside 6A.**
 
 1. **Benched or natural.** Benched: the generator shapes the ground into wide shelves with steep risers at each band edge, so a layer boundary is always a visible cliff or ramp. Natural: the ground rolls freely and a band edge can cross an open meadow, marked only by a drawn line. Benched is what the prototype's terrace shaping already does, and it is far easier to read.
-2. **Fixed heights or fitted to the map.** Open. In full:
+2. **Fixed heights or fitted to the map.** Decided 2026-10-02: fitted, with the generator responsible for real relief on every map. The options as they were put:
    - **Fixed.** The bands are the same heights on every map. Layer 4 always means high mountain. A flat coastal map has all its ground on layer 1 and no layer play for walking units; a mountain map has all five. What a layer step looks like never changes, so the cross-layer rules always apply to a real height difference.
    - **Fitted.** Each map stretches the five bands over its own lowest and highest ground. Every map has five layers of ground. On a gentle map a band is thin, so a low hill is a layer above the field beside it, and the cross-layer rules for sight and damage apply to a small rise. A layer step is a cliff on one map and a slope in a meadow on another.
    - **Fixed, with a floor on relief.** The bands are fixed, and the generator must give every map ground on at least three of them. Layers mean the same thing everywhere and no map is flat. This matches the condition that landscape variety is packed into the maps, and the register's earlier answer that the mapping is fixed globally (Q-E01-01).

@@ -169,4 +169,4 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-163 | E-01 | "I choose which of my forces look and which stay quiet; looking further means being seen." | Spec'd | `epics/E-01-layer-system.md` S-163 |
 | S-164 | E-01 | "Each unit type reaches only certain layers with its fire, so where I put each type decides who gets shots off." | Spec'd | `epics/E-01-layer-system.md` S-164 |
 | S-165 | E-17 | "Someday, perhaps: lanes where my troops move faster and strategic ground where they move slower." | Deferred (Q-165-01) | `epics/E-17-map-generation.md` S-165 |
-| S-166 | E-17 | "Cities and bases that build themselves around what I place, on ground with real height." | Direction recorded, design in progress (Q-166-01) | `epics/E-17-map-generation.md` S-166 |
+| S-166 | E-17 | "Cities and bases that build themselves around what I place, on ground with real height." | Design decided 2026-10-02, not scheduled | `epics/E-17-map-generation.md` S-166 |
