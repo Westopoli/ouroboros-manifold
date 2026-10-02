@@ -33,6 +33,8 @@ COVER = (100.0, 0.0, 20.0)
 def tw(lib, world_factory):
     w = world_factory(n_regions=1)
     lib.om_world_set_feature(w, OMFeature.TACTICAL, 1)
+    # PP: runs the new movement (switch default 0, A147 option c')
+    lib.om_tactical_set_param(w, 0, 1.0)
     return w
 
 

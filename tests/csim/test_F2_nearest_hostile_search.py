@@ -270,15 +270,7 @@ def library_targets(lib, w):
 
 
 def run_search(lib, w):
-    """Four ticks: every unit's cohort tick comes up once. Nobody moves or fires.
-    Test-defect, A127: with OM_TP_PURSUE_BY_STEERING on (its default, R-084-01) a unit already in range
-    fires its first shot on the first tick and the scene's targets change as units die, so the
-    equivalence below would compare against a fight, not a search. Baseline mode (0) keeps the
-    four-tick search this test was written for; the search rule itself is untouched."""
-    assert lib.om_tactical_set_param(w, 0, 0.0) == 0
-    # The scene runs y past the 16000 canvas: with OM_TP_ROUTE_AROUND_TERRAIN on every off-canvas unit is
-    # relocated to the edge on tick 1 (R-097-09), so the reference would see stale positions. Baseline too.
-    assert lib.om_tactical_set_param(w, 1, 0.0) == 0
+    """Four ticks: every unit's cohort tick comes up once. Nobody moves or fires."""
     lib.om_macro_set_state(w, 0, OM_MACRO_ADVANCE, OM_MACRO_MOD_CAUTIOUS)
     lib.om_tactical_tick_to(w, COHORT_TICKS)
 
@@ -417,8 +409,8 @@ def _state_hash(lib, w):
 
 # Recorded on origin/main b1d53b7e (and identical on origin/push/F1 + main).
 GOLDEN = {
-    "clash": "7dac661a84a6da40859b0ab10f7be7f0b3a0491ad882000301ba69956ae18c75",
-    "spread": "5935634c4ea6d82d073837b8c917c104bf624db46237e17944feccc8a77b9d7c",
+    "clash": "9b191fee4448505843afa88862ccdc4d55cb0dc78354c9a64d2d2792e58ca7d9",
+    "spread": "088679c6be4f5b2da69df91bc5f7eeb09498deb4b33ac0b90d633ff5dc9a693d",
 }
 
 

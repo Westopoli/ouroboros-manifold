@@ -9,7 +9,20 @@ Measure: step one tick at a time; the tick the unit first holds the target is th
 is first in range for it (a spawn-in-range fixture has no earlier tick). The first hit must land on
 that same step.
 """
+import pytest
+
 from test_PP_unit_support import SUPPLY, VANGUARD, RAIDER, hp, spawn, step, target
+
+@pytest.fixture
+def world_factory(world_factory, lib):
+    """The shared factory, plus the new movement switched on."""
+    def make(*args, **kwargs):
+        w = world_factory(*args, **kwargs)
+        # PP: runs the new movement (switch default 0, A147 option c')
+        lib.om_tactical_set_param(w, 0, 1.0)
+        return w
+    return make
+
 
 
 def _first_acquire_and_first_hit(lib, w, attacker, victim, max_steps=60):

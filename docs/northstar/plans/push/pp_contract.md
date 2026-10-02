@@ -66,7 +66,7 @@ Behaviour (brief G1 unless marked):
 - Other files read a setting through the public `om_tactical_get_param`; no internal header change is part of this piece. Storage lives with the world's tactical state and must outlive `om_tactical_reset`: `om_tactical_reset` frees `w->move_state`, so a table kept there would be wiped.
 
 What the parameters mean:
-- `PURSUE_BY_STEERING` 1: pursuit sets the unit's move goal to the nearest visible enemy and walks it through the ordinary movement step (brief G8, plan P1). 0: today's straight-line `om_tac_step_toward` pursuit.
+- `PURSUE_BY_STEERING` default 0 (A147 option c': today's straight-line `om_tac_step_toward` pursuit is the game's movement). 1, the lab switch: pursuit sets the unit's move goal to the nearest visible enemy and walks it through the ordinary movement step (brief G8, plan P1).
 - `ROUTE_AROUND_TERRAIN` 1: movement routes on the 100 wu per-layer grid, blocked cells block sight and fire on their layers (plan P3). 0: today's behaviour (layer 0 sampled, no route grid).
 - `LEASH_BEFORE_DAMAGE` 0: today's order. 1: the Python's order, the leash runs before damage, so an attack-moving unit never shoots a target more than `ATTACK_MOVE_LEASH` from its anchor (parity requirements item 7, audit G03; plan decisions table; A125). The side Westley does not pick is deleted later, with this parameter.
 - `TARGET_POLICY` 0: nearest hostile, the game's rule. 1: most damaged, lab only. "Most damaged" is the lowest hp fraction; ties go to the nearest, then the lowest unit id (A133 Q-C5).
@@ -90,7 +90,7 @@ The `#` column is the enum value. Kind: `bool` accepts exactly 0 or 1; `int` acc
 
 | # | member | kind | default | lo | hi | default source | range basis |
 |---|---|---|---|---|---|---|---|
-| 0 | `OM_TP_PURSUE_BY_STEERING` | bool | 1 | 0 | 1 | plan Phase A Settings; brief G8 | writer: switch: exactly 0 or 1 |
+| 0 | `OM_TP_PURSUE_BY_STEERING` | bool | 0 | 0 | 1 | plan Phase A Settings; brief G8 | writer: switch: exactly 0 or 1 |
 | 1 | `OM_TP_ROUTE_AROUND_TERRAIN` | bool | 1 | 0 | 1 | plan Phase A Settings; brief G2 and section 5 preamble | writer: switch: exactly 0 or 1 |
 | 2 | `OM_TP_LEASH_BEFORE_DAMAGE` | bool | 0 | 0 | 1 | plan appendix (default 0, today's order); rulings-2 A125 | writer: switch: exactly 0 or 1 |
 | 3 | `OM_TP_TARGET_POLICY` | int | 0 | 0 | 1 | plan appendix (0 nearest, the game's rule; 1 most damaged, lab only); rulings-2 A125 | writer: only the two named policies |

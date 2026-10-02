@@ -290,7 +290,7 @@ def test_param_table_in_the_contract_document_is_well_formed():
     assert rows[-1]["name"] == "OM_TP__COUNT"
     by_name = {r["name"]: r for r in rows}
     # the six switches the plan names, hardcoded here so a mis-transcribed table cannot hide
-    for name, default in (("OM_TP_PURSUE_BY_STEERING", 1), ("OM_TP_ROUTE_AROUND_TERRAIN", 1),
+    for name, default in (("OM_TP_PURSUE_BY_STEERING", 0), ("OM_TP_ROUTE_AROUND_TERRAIN", 1),
                           ("OM_TP_LEASH_BEFORE_DAMAGE", 0), ("OM_TP_TARGET_POLICY", 0),
                           ("OM_TP_TARGET_BY_SIGHT", 1), ("OM_TP_ROUTE_ACROSS_LAYERS", 1)):
         assert by_name[name]["default"] == default, name

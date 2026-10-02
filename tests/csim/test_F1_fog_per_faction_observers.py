@@ -296,10 +296,10 @@ def _visible_hash(lib, w):
 
 
 GOLDEN = {
-    "clash": ("7bed3b81bfc38ed3e9cdfff02d16a1adc489c15703a2b41df60c108ea2eb3f86",
-              "48fc6b001bfdbbb339baf261d8f8d80ab524f5eecd40201732a03e9095ec6562"),
-    "spread": ("8fd541d7e763ef12cd5bf7166f4f0915c5c804aed322ad0ca57c8a87e059d361",
-               "959387980c0f0c96a11b8dc1035d014123ad3ea01cfae649310928f896076a1c"),
+    "clash": ("a2ffd097fbb311daeea5b6b329a23b25f9f5ca47d92876e7988b89cd0382e052",
+              "f117de306c02dc3521112b6fce60bd9509636705051e41d45911d1b0e654c518"),
+    "spread": ("b0be5c4ea074ddd6caf484c7f5607a9fcb06ae7d624ec661a82ba44d0f29c154",
+               "9caced15c5faf036fd64081aa3bd5de996562fc82be8f7c221eaa5a305cbc825"),
 }
 
 

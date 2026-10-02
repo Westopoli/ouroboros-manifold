@@ -71,7 +71,7 @@ def test_control_table_has_every_member_and_the_six_named_defaults():
     If the parser read nothing, every parametrized test below would silently vanish; this one would not."""
     assert COUNT == 59
     assert [p["value"] for p in PARAMS] == list(range(COUNT))
-    for name, default in (("OM_TP_PURSUE_BY_STEERING", 1), ("OM_TP_ROUTE_AROUND_TERRAIN", 1),
+    for name, default in (("OM_TP_PURSUE_BY_STEERING", 0), ("OM_TP_ROUTE_AROUND_TERRAIN", 1),
                           ("OM_TP_LEASH_BEFORE_DAMAGE", 0), ("OM_TP_TARGET_POLICY", 0),
                           ("OM_TP_TARGET_BY_SIGHT", 1), ("OM_TP_ROUTE_ACROSS_LAYERS", 1)):
         assert BY_NAME[name]["default"] == default
