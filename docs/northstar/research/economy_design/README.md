@@ -11,7 +11,7 @@ One economy, two drivers: rules when nobody holds the economy seat, a human when
 | # | Goal | Depends on | Status |
 |---|---|---|---|
 | 1 | Resources and how they become units | (check against 5's verbs before freezing) | done 2026-10-01; folded into E-19 S-159; remaining detail is Q-159-08 |
-| 2 | Bases of operations and how they play into objectives | 1 | partly decided (base of operations, resources opposite the objective, expansions, forward bases); the loss condition and mission-type mapping are open (Q-159-11); options in `base_and_objective_options.md` |
+| 2 | Bases of operations and how they play into objectives | 1 | done 2026-10-02; in E-19 S-159 R-159-14 to R-159-17 |
 | 3 | Groundwork for auto-generating economic buildings (sister to biome generation) | 1, 2 | done 2026-10-02; all seven parts decided, in E-17 S-166 (R-166-03 to R-166-06) |
 | 4 | How the economy runs when the player opts out | 1, 2, 3 | not started |
 | 5 | How the economy player literally manages the economy | 1 to 4 | done 2026-10-01; folded into E-19 S-159; remaining detail is Q-159-09, Q-159-10 |
@@ -166,6 +166,21 @@ Recorded as:
 
 - Goal 2 options in `base_and_objective_options.md` (Q-159-11).
 - After the five goals: an epics and stories pass. Audit what exists against commit ce07e919 and the combat and movement decisions, then design new stories and epics from the decisions made in this track.
+
+## Decisions (2026-10-02, thirteenth round: bases and objectives)
+
+Westley, verbatim, answering `base_and_objective_options.md`:
+
+"A3+5, but at the point they've lost their original main base it's partial failure at maximum. B1+2. C1 but not always, somtimes resources can be limited sometimes they can be abundant, but it's gotta be consistent with the situation the simulation gives the players (slanted based on the situation, obviously defenders are going to have a better position) while still giving the player the means to accomplish the mission even if it's hard. It already is somewhat of a second objective, the player that ignores it is going to be over-run if they don't do a rush and finish the game fast. Starcraft was about balancing spending between economy, tech, and army, it will be the same for ourorboros. D4."
+
+Recorded as:
+
+- Part A, decided: A3 with A5. When a base of operations falls, an expansion or forward base the side still holds becomes its base. A base is occupied, not destroyed: the taker gets its production and people, and it can be retaken. Once a side has lost its original main base, the best result it can get is partial failure.
+- Part B, decided: B1 with B2. The mission archetype and the supply distance in the simulation together decide what kind of base each side gets.
+- Part C, decided: C1, but not always. Base, objective and the significant resources are usually three separate places. Resources are sometimes limited and sometimes abundant, consistent with the situation the simulation gives, and slanted by it (defenders have the better position), while the player always has the means to accomplish the mission even when it is hard. No separate scoring for the resources: they already act as a second objective, because a player who ignores them is overrun unless he rushes and finishes fast.
+- Decided, as the seat's core balance: spending is balanced between economy, technology and army, as in StarCraft.
+- Part D, decided: D4. The reinforcement structures are strongpoints at the slopes between height bands. Holding one holds the way up or down and gives production on that band.
+- Q-159-11 closed. Goal 2 marked done.
 
 ## Files
 
