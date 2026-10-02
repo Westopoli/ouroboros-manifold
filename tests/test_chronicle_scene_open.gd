@@ -1,4 +1,5 @@
 extends SceneTree
+# test-timeout: 10000
 
 # Chronicle scene opening, rulings round 2 Addenda 27 and 28 (docs/northstar/
 # plans/2026-10-01-architect-rulings-2.md) with E-09 R-069-01, R-069-03,
