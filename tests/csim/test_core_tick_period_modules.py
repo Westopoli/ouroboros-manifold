@@ -201,8 +201,9 @@ def test_R_127_01_structure_capture_real_time_equivalence(lib, world_factory):
     w1 = _tactical_world(lib, world_factory, seed)
     lib.om_structure_init(w1, 0, 0, ctypes.c_double(100.0))
     lib.om_structure_set_owner(w1, 0, 2)
-    lib.om_structure_set_capturing_faction(w1, 0, 1)
-    _spawn_anchor(lib, w1)
+    # R-127-01/02: the census is computed per tick from unit positions; a real
+    # faction-1 unit at the structure (0,0) is the lone non-owner present.
+    _spawn_anchor(lib, w1, faction_id=1)
 
     for _ in range(100):
         lib.om_tactical_step(w1)
@@ -226,8 +227,7 @@ def test_R_127_01_structure_capture_real_time_equivalence(lib, world_factory):
     w2 = _tactical_world(lib, world_factory, seed)
     lib.om_structure_init(w2, 0, 0, ctypes.c_double(100.0))
     lib.om_structure_set_owner(w2, 0, 2)
-    lib.om_structure_set_capturing_faction(w2, 0, 1)
-    _spawn_anchor(lib, w2)
+    _spawn_anchor(lib, w2, faction_id=1)
     _spawn_fillers(lib, w2)
 
     for _ in range(50):
