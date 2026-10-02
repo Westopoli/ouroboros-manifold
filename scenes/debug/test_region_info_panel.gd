@@ -5,7 +5,7 @@ const RegionInfoPanelScene := preload("res://scenes/world/region_info_panel.tscn
 const MOCK_REGIONS := [
 	{
 		"meta": {
-			"name": "Veraxis Reach", "tier": "home",
+			"region_id": "1", "tier": "home",
 			"military": 78, "economy": 84, "tension": 22, "population": 92,
 			"stability": 71, "capacity": 88,
 		},
@@ -15,7 +15,7 @@ const MOCK_REGIONS := [
 	},
 	{
 		"meta": {
-			"name": "Tepan-Dazur", "tier": "frontier",
+			"region_id": "3", "tier": "frontier",
 			"military": 38, "economy": 41, "tension": 78, "population": 56,
 			"stability": 35, "capacity": 60,
 		},
@@ -25,7 +25,7 @@ const MOCK_REGIONS := [
 	},
 	{
 		"meta": {
-			"name": "Pellis Veil", "tier": "empty",
+			"region_id": "5", "tier": "empty",
 			"military": 12, "economy": 18, "tension": 44, "population": 28,
 		},
 		"faction_id": "f_gamma", "faction_name": "Pellian Order",

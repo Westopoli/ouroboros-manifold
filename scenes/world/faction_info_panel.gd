@@ -10,7 +10,10 @@ const STATUS_COLORS := {
 }
 const REGION_LIST_VISIBLE_CAP := 8
 
+const _FRAGMENTS_PATH := "res://library/chronicle/fragments.json"
+
 var _faction_id: String = ""
+var _names = null
 
 var _name_label: Label
 var _swatch: ColorRect
@@ -170,11 +173,11 @@ func _make_aggregate_row(spec: Dictionary) -> Control:
 
 
 func bind(faction_meta: Dictionary, faction_color: Color, region_rows: Array) -> void:
-	# region_rows: Array of {region_id, name, tier}
-	_faction_id = String(faction_meta.get("id", ""))
+	# region_rows: Array of {region_id, tier}; names come from chronicle_names.gd (A82)
+	_faction_id = str(faction_meta.get("id", ""))
 
 	_swatch.color = faction_color
-	_name_label.text = String(faction_meta.get("name", _faction_id))
+	_name_label.text = _chronicle_name("{faction_name}", _faction_id, true)
 
 	var status := String(faction_meta.get("status", "Stable"))
 	_status_label.text = status.to_upper()
@@ -217,10 +220,22 @@ func _rebuild_region_list(region_rows: Array) -> void:
 		_region_list_more.text = ""
 
 
+func _chronicle_name(slot: String, raw_id: String, is_faction: bool) -> String:
+	if raw_id == "":
+		return "—"
+	if _names == null:
+		_names = load("res://scenes/world/chronicle_names.gd").new()
+		var data = JSON.parse_string(FileAccess.get_file_as_string(_FRAGMENTS_PATH))
+		if data is Dictionary:
+			_names.load_tables(data.get("name_tables", {}))
+	var n := raw_id.to_int()
+	return _names.fill_template(slot, n, n if is_faction else -1)
+
+
 func _build_region_row(row: Dictionary) -> Control:
 	var btn := Button.new()
 	var rid: String = String(row.get("region_id", ""))
-	var rname: String = String(row.get("name", rid))
+	var rname: String = _chronicle_name("{region_name}", rid, false)
 	var tier: String = String(row.get("tier", ""))
 	btn.text = "%s    %s" % [rname, tier.to_upper()]
 	btn.alignment = HORIZONTAL_ALIGNMENT_LEFT

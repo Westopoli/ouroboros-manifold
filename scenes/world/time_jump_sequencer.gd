@@ -626,17 +626,15 @@ func _open_region_panel(region_id: String) -> void:
 	var ownership_line := ""
 	if fid != "":
 		ownership_line = "Held by %s." % fname
-	_info_host.open_region(region_id, r, fid, fname, fcolor, ownership_line)
+	_info_host.open_region(region_id, r.merged({"region_id": region_id}), fid, fname, fcolor, ownership_line)
 
 
 func _open_faction_panel(faction_id: String) -> void:
 	if faction_id == "":
 		return
-	var fname: String = String(_faction_names.get(faction_id, faction_id))
 	var fcolor: Color = _get_faction_color(faction_id)
 	var meta: Dictionary = {
 		"id": faction_id,
-		"name": fname,
 		"archetype": "—",
 		"tech_tier": 0,
 		"status": "Stable",
@@ -667,7 +665,6 @@ func _region_rows_for_faction(faction_id: String) -> Array:
 			continue
 		rows.append({
 			"region_id": rid,
-			"name": String(r.get("name", rid)),
 			"tier": String(r.get("tier", "")),
 		})
 	return rows
