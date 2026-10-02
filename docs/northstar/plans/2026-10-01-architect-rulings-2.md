@@ -348,3 +348,41 @@ The generator's `om_mission_fallback_region` picks the player region with the lo
 This piece and the debrief change of A39 land in one clerk run. Apart, main would either show an empty debrief or end a mission twice.
 
 **A44. The fixture changes are approved** as test-defects under A39 item 2: the 3 assertions in `tests/test_briefing_debrief.gd`, the 3 in `tests/test_sim_session.gd` and the 5 in `tests/test_pipe_error_panels.gd`, each ended or loaded through the bridge as proposed, ledger rows applied with the implementation. The G2 debrief failure case becomes "the bridge holds no frame", Retry re-reads the held frame. The script error that aborts the rest of `_run_live_debrief_tests` is fixed in the same change so no assertion after it goes unrun. `tests/qa/desktop/test_flow_spine.py` S-C8-05 is run after the landing and its result reported.
+
+## Addendum 22, 2026-10-02 (C4 and C5 questions; the gate's skip count; two unpinned A3 cases)
+
+Source: `docs/northstar/plans/2026-10-01-c4-c5-architect-questions.md` on `push/C4C5-questions`; land it as a docs piece. Rule text changed in the same commit: E-16 R-110-05 to R-110-07 (the Era Library), E-09 R-069-01 (the panel leaves on Proceed). New register rows: Q-110-05, Q-106-04, Q-069-01, Q-069-02.
+
+### C4
+
+**A45. E1 Era Library.** The screen's rules are R-110-05 to R-110-07; tests can be written. Ownership: a local ownership store, every installed era owned in development builds. Cards and detail: identity, tiers and roster from the pack manifest, nothing else. Mastery and tier progress read "not yet tracked" until Q-110-05 is answered (the gap-fix plan's wording).
+
+**A46. E2 bug report.** F12 only, handled in one place so it works on every screen; no pause menu is added (the game has no pause, and a menu is a design the bible does not have). The ZIP name gains milliseconds so two captures in one second do not collide. The four files that still name TacticalBridge (`mission_metrics_recorder.gd`, `ws_input_sanitizer.gd`, `qa_daemon.gd`, `scripts/tactical/visibility.gd`): one read-only Engineer check says for each whether live play reaches it. A dead one is deleted in E3; a live one is rewritten onto the live bridge and gets a `pieces.toml` row; `mission_metrics.json` goes in the ZIP only if its recorder is live. Report first, rows after.
+
+**A47. E3 legacy tactical deletion.** E3 includes the one-line edit that drops the perf-logger preload from `autoload/tactical_bridge.gd`; it does not wait for G6. The Visibility autoload goes with E3 if the check in A46 finds nothing live reading it. `scenes/debug/test_squad_impact_origins` is deleted. Cover and control groups: the Engineer lists every rule whose only tests are deleted by E3; each is a gap, entered as a work-list row under C6, and none is counted as proven or skipped. They are not rebuilt inside E3.
+
+### C5
+
+**A48. Rulings, numbered as in the questions document.**
+
+1. The camera has an autonomous flag. The main-menu backdrop sets it (R-110-01); the jump sequencer sets it for the replay and clears it after, and any player input overrides it (R-107-02). The view is told by the sequencer; it polls nothing.
+2. The galaxy pans by left-drag (R-107-01). No key pan or edge-scroll there, so R-103-09 and the pan-speed slider do not apply to it; this withdraws the last bullet but one of A25. Vertical drag is grab-style: the galaxy follows the pointer.
+3. The rule wins: Overview at 75 and above, Regional from 40 to 65, Local below 25, interpolating between. The code's 70 and 32.5 move.
+4. The rule wins: filaments join adjacent systems of the same faction only (R-106-02). Edges between different owners or to neutral systems are not drawn. `push/C5-G3-impl` draws every edge dim; it is changed before it lands.
+5. Size comes from the tier already on the wire; no wire change. The 0.3 / 0.6 / 1.0 mapping is a provisional value under the "Provisional values" section.
+6. Fifteen factions sharing eight names is a content gap: the name table needs at least fifteen entries (work-list row, naming, no names from existing fiction). Until then the wrap stays and the ledger row lists it as a known visual defect. An unknown faction id is an error reported in `qa_state` and shown as "Unknown"; the text "[faction]" never reaches the screen.
+7. The faction list and data panels (R-107-03, R-107-04) are their own unit under the galaxy owner. `qa_state` keys `hover_faction` and `pin_faction` are ratified.
+8. G-G4: key `quality_tier`, values 0 (full), 1 (stand-in), 2 (fewer particles); tests force slow frames through the QA hook, not through real load. The trigger and recovery numbers are Q-106-04; G-G4 is held until Westley answers.
+9. No conflict remains: the panel stays after the last entry, the footer shows Proceed and Exit (R-108-05), and it slides out on Proceed (R-108-06); R-069-01 now says so. The embedded galaxy MISSION button is hidden in the composite. R-108-05 and R-108-07 (footer, Exit) are one new unit; R-108-01 and R-108-06 (pull-back and push-in) are another; both get work-list rows and are built after G-C3.
+10. R-099-03 is the tactical rate and does not govern the replay. The replay speed is Q-069-01. The hold of 3.0 s and the 2.0 s tween stand.
+11. G-C2 mentions are held on Q-069-02.
+12. Ratified: `OrbitCamera.focus_region(int)`, `OrbitCamera.get_hovered()`, adapter ids `str(i)`, node `ChronicleScrollPanel`, route `chronicle`.
+13. G-C3 contract approved as proposed: the chronicle frame gains `"ownership":{"stride":2,"from_tick":N,"n_regions":R,"snapshots":[[...],...]}` with -1 for unowned. If the jump report already holds the snapshots the pipe reads them from it; otherwise the header gains a count and a getter, landing with their implementation. Keyframes are not derived on the client: the frame also gains `"keyframes":[tick,...]` from `om_chronicle_generate_map_keyframes`, which is how that function becomes wired (plan header, round 1) and how R-069-05 stays provable in the sim. Order: contract docs, sim and pipe, then client.
+
+### HDR5 landing
+
+**A49. The skip count.** The two new skips are scale tests that run only under `OM_SCALE=1`, like the rest of that suite. HDR5 lands with the count at 57 on one condition: the clerk attaches a run with `OM_SCALE=1` in which both pass, and the ledger row names them. The gate's comparison is not changed. The path-normalising defect in `merge_gate_support.py` (relative directory gives false "changed assertion" lines) is approved as a harness piece for an Engineer, with a positive control.
+
+### A3
+
+**A50. Pin both cases.** A player who owns no region: `mission_start` answers an error and starts nothing; the pipe checks this before asking core for a region, since region 0 is a real region. No reachable enemy: factions that cannot be reached by hops count as equally far, so R-072-08's tie rule picks among them (highest total military, then lowest id); with no non-player faction at all, `mission_start` answers an error. Two transport tests.

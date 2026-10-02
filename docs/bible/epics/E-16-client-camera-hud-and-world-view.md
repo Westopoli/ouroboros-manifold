@@ -158,10 +158,13 @@ Rules
 - R-110-02  Given Settings, When opened, Then it offers resolution, fullscreen, master and music volume, and a camera pan-speed slider; key rebinding for the layer modifier and control groups joins it once the layer controls (Q-005-03) and the camera controls (Q-103-04) are designed (Q-110-04); accessibility options (colorblind palette, UI scale) are a later story, not in the first playtest rounds.
 - R-110-03  Given Continue, When pressed with a save at a chapter boundary, Then the campaign resumes at that boundary.
 - R-110-04  Given any loading screen the game shows (campaign load, era switch), When displayed, Then it carries information the player would otherwise never see, in the register of the chronicle (what the Long Horizon foreshadows), never wallpaper art or a bare spinner [Q-110-03: what is shown]. No loading screen exists between mission and galaxy (S-108).
+- R-110-05  Given the Era Library, When opened from the main menu, Then the player sees one card per installed era pack that passes validation (E-20 R-146-03), in chronological order, each with the pack's name, spatial scale and tone and whether the player owns it, telling them which ages they can play; a pack that fails validation is not listed.
+- R-110-06  Given an era card, When selected, Then the detail shows that pack's identity, its three tiers and its unit roster, all read from the pack manifest; nothing on the screen is hard-coded.
+- R-110-07  Given ownership, When the Era Library reads it, Then it comes from a local ownership store, and in development builds every installed era is owned; mastery and tier progress read "not yet tracked" [Q-110-05].
 
 Inputs: menu input.
 Outputs: screens.
-Open flags: Q-110-03 (loading screen content; decided before launch).
+Open flags: Q-110-03 (loading screen content; decided before launch), Q-110-05 (mastery and tier progress).
 
 ### S-111 — Saving
 As a player, I want the game saved at every chapter boundary without asking, and to be able to leave at those boundaries, so that I never lose an evening.

@@ -210,6 +210,9 @@ func _run_live_tests() -> void:
 	briefing.queue_free()
 	await process_frame
 
+	# A39(b): the debrief shows the frame the bridge holds, so end the mission through the bridge first.
+	if not await _end_mission_through_bridge(load("res://autoload/sim_session.gd")):
+		return
 	var debrief: Node = (load(DEBRIEF_SCENE_PATH) as PackedScene).instantiate()
 	get_root().add_child(debrief)
 	await process_frame
@@ -586,8 +589,12 @@ func _run_live_debrief_tests() -> void:
 	probe.close_session()
 
 	# no-setup path: achieved_pct and region_delta.military match live frame.
+	# A39(b), ledger row day12 "A39 fixture changes": the debrief no longer loads or ends a
+	# mission itself, it shows the frame the bridge holds. End the same seed-1 mission
+	# through the bridge first, so the no-setup scene has the frame the probe read.
 	var SimSession = load("res://autoload/sim_session.gd")
-	SimSession.reset()
+	if not await _end_mission_through_bridge(SimSession):
+		return
 	var d1: Node = (load(DEBRIEF_SCENE_PATH) as PackedScene).instantiate()
 	get_root().add_child(d1)
 	await process_frame
@@ -642,6 +649,25 @@ func _run_live_debrief_tests() -> void:
 	SimSession.reset()
 
 
+# A39(b): a fresh shared session whose seed-1 mission was started and ended over the
+# bridge, so debrief_frame() holds the played frame a debrief scene then shows. False
+# (assertion recorded) when the pipe does not answer.
+func _end_mission_through_bridge(SimSession) -> bool:
+	var CBridge = load("res://autoload/c_bridge.gd")
+	SimSession.reset()
+	var bridge = SimSession.bridge()
+	if not bridge.load_mission_live(1, CBridge.DEFAULT_N_REGIONS, CBridge.DEFAULT_FEATURES):
+		_assert(false, "A39 setup: load_mission_live(1) failed -- %s" % bridge.last_error())
+		return false
+	bridge.send_command({"type": "cmd", "name": "mission_end"})
+	var deadline := Time.get_ticks_msec() + 5000
+	while bridge.debrief_frame().is_empty() and Time.get_ticks_msec() < deadline:
+		if bridge.pump() == 0:
+			OS.delay_msec(5)
+	_assert(not bridge.debrief_frame().is_empty(), "A39 setup: mission_end was not answered with a debrief frame in 5 s")
+	return not bridge.debrief_frame().is_empty()
+
+
 # Piece C4-9 (docs/northstar/plans/2026-09-28-gap-fix-and-migration-plan.md
 # G1): scenes/debrief/debrief.gd's _on_continue() drops its dead
 # "if SimBridge.USE_LIVE_SIM: SimBridge.send_command({...continue_from_debrief...})"
@@ -676,6 +702,11 @@ func _run_debrief_on_continue_pin() -> void:
 	if packed == null or not (packed is PackedScene):
 		_assert(false, "C4-9 pin: cannot load debrief scene")
 		return
+	# A39(b): _on_continue() autosaves over the shared session, which the debrief no longer
+	# opens itself; end a mission through the bridge first (a script error here used to
+	# abort the three assertions below).
+	if not await _end_mission_through_bridge(load("res://autoload/sim_session.gd")):
+		return
 	var root: Node = (packed as PackedScene).instantiate()
 	get_root().add_child(root)
 	await process_frame
@@ -698,3 +729,4 @@ func _run_debrief_on_continue_pin() -> void:
 
 	root.queue_free()
 	await process_frame
+	load("res://autoload/sim_session.gd").reset()

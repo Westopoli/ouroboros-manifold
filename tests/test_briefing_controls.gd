@@ -3,7 +3,7 @@ extends SceneTree
 # A5 (plan 2026-09-30-mission-plays): the briefing's controls are Accept and Refuse.
 # Proves R-079-02 / S-079: no "Review Chronicle" control, no "after backend
 # integration" placeholder modal; Deploy (Accept) reachable in one click; Refuse
-# present, disabled, with a non-empty tooltip until B3 wires it.
+# present and enabled in recon (B3 wired it; A39(d) replaced the A5 disabled assertions).
 # Style mirrors tests/test_briefing_deploy.gd.
 
 const BRIEFING_SCENE_PATH := "res://scenes/mission_briefing/mission_briefing.tscn"
@@ -41,7 +41,7 @@ func _assert(cond: bool, msg: String) -> void:
 func _run_tests() -> void:
 	await _test_no_chronicle_control_or_placeholder_modal()
 	await _test_deploy_reachable()
-	await _test_refuse_present_disabled_with_tooltip()
+	await _test_refuse_present_and_enabled()
 
 
 func _open_briefing() -> Node:
@@ -115,8 +115,8 @@ func _test_deploy_reachable() -> void:
 	await _close(scene)
 
 
-# R-079-02: Refuse exists; until B3 wires it, disabled with a tooltip, no modal.
-func _test_refuse_present_disabled_with_tooltip() -> void:
+# R-079-02: Refuse exists and is enabled in recon (B3 wired it; A39(d) retired the A5 disabled-with-tooltip assertions).
+func _test_refuse_present_and_enabled() -> void:
 	var scene := await _open_briefing()
 	if scene == null:
 		return
@@ -125,9 +125,7 @@ func _test_refuse_present_disabled_with_tooltip() -> void:
 	if refuse != null:
 		_assert(refuse is BaseButton, "A5: Refuse must be a button")
 		_assert(refuse.is_visible_in_tree(), "A5/R-079-02: Refuse must be visible")
-		_assert(bool(refuse.get("disabled")), "A5: Refuse must be disabled until B3 wires it")
-		_assert(String(refuse.get("tooltip_text")).strip_edges() != "",
-			"A5: Refuse must carry a non-empty tooltip explaining why it is disabled")
+		_assert(not bool(refuse.get("disabled")), "B3/R-078-05: Refuse must be enabled in recon")
 	await _close(scene)
 
 
