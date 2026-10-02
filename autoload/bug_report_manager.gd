@@ -1,11 +1,13 @@
 extends Node
 
+const SimSession := preload("res://autoload/sim_session.gd")
+
 const BUFFER_SNAPSHOTS := 5
 const BUFFER_CADENCE_SEC := 1.0
 const COMMAND_BUFFER_SEC := 5.0
 const REPORTS_DIR := "user://logs/reports"
 
-var _active := false
+var _active := true
 var _timer := 0.0
 var _snapshot_buffer: Array[Dictionary] = []
 var _command_log: Array[Dictionary] = []
@@ -35,7 +37,7 @@ func log_command(cmd: Dictionary) -> void:
 	if not _active:
 		return
 	_command_log.append({
-		"tick": TacticalBridge.current_tick,
+		"tick": _frame().get("tick", 0),
 		"time": Time.get_ticks_msec() / 1000.0,
 		"command": cmd.duplicate(true),
 	})
@@ -46,11 +48,15 @@ func capture() -> void:
 	# Wait one frame so the viewport texture is current
 	await RenderingServer.frame_post_draw
 	var stamp := Time.get_datetime_string_from_system().replace(":", "").replace("-", "").replace("T", "_")
-	var filename := "bug_report_%s.zip" % stamp
+	var ms := int(fmod(Time.get_unix_time_from_system(), 1.0) * 1000.0)
 
 	var screenshot := _capture_screenshot()
 
 	DirAccess.make_dir_recursive_absolute(REPORTS_DIR)
+	# Two captures in one millisecond (same frame) must not share a name.
+	while FileAccess.file_exists(REPORTS_DIR.path_join("bug_report_%s_%03d.zip" % [stamp, ms])):
+		ms = (ms + 1) % 1000
+	var filename := "bug_report_%s_%03d.zip" % [stamp, ms]
 	var reports_path := REPORTS_DIR.path_join(filename)
 
 	var downloads_dir := _get_downloads_dir()
@@ -88,17 +94,24 @@ func _process(delta: float) -> void:
 
 
 func _take_snapshot() -> void:
+	var frame := _frame()
+	if frame.get("units", []).is_empty():
+		return
 	var snap := {
-		"tick": TacticalBridge.current_tick,
+		"tick": frame.get("tick", 0),
 		"time": Time.get_ticks_msec() / 1000.0,
-		"units": TacticalBridge.units.duplicate(true),
-		"structures": TacticalBridge.structures.duplicate(true),
-		"objectives": TacticalBridge.objectives.duplicate(true),
-		"unit_count": TacticalBridge.unit_count,
+		"units": frame["units"].duplicate(true),
+		"structures": frame.get("structures", []).duplicate(true),
+		"objectives": frame.get("objectives", []).duplicate(true),
+		"unit_count": frame["units"].size(),
 	}
 	_snapshot_buffer.append(snap)
 	while _snapshot_buffer.size() > BUFFER_SNAPSHOTS:
 		_snapshot_buffer.pop_front()
+
+
+func _frame() -> Dictionary:
+	return SimSession.bridge().tactical_frame()
 
 
 func _trim_command_log() -> void:
@@ -127,7 +140,7 @@ func _build_zip(screenshot: PackedByteArray) -> PackedByteArray:
 		"game_version": "0.12.0",
 		"os": OS.get_name(),
 		"timestamp": Time.get_datetime_string_from_system(),
-		"current_tick": TacticalBridge.current_tick,
+		"current_tick": _frame().get("tick", 0),
 		"buffer_snapshots_count": _snapshot_buffer.size(),
 		"command_log_entries": _command_log.size(),
 		"note": "Paste this file into Discord for Westopoli.",
