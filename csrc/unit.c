@@ -263,6 +263,9 @@ typedef struct {
     /* where an attack-target order last saw its target (S-093): refreshed
      * every tick the target is visible to the unit's faction. */
     double   last_seen_x, last_seen_y;
+    /* R-084-01: set once the unit has landed an attack; until then the attack
+     * is ready without waiting out the first interval. */
+    int      fired;
 } om_unit_row;
 
 typedef struct {
@@ -896,6 +899,7 @@ static void om_tactical_apply_hit(om_world *w, om_unit_row *attacker, om_unit_ro
     om_grid_sync(om_tac(w), target->unit_id - 1);
     target->last_attacker = attacker->unit_id;
     attacker->cooldown = 0.0;
+    attacker->fired = 1;
     attacker->backswing_ticks_remaining = OM_BACKSWING_TICKS;
     attacker->backswing_active = 1;
 }
@@ -1531,6 +1535,10 @@ static void om_tactical_advance_backswing(om_tac_state *st) {
  * move it; om_tac_release hands the route back. See also:
  * csrc/tactical_move.c om_move_sync -- steps off om_tactical_tick(w). */
 
+static int om_tac_pursue(const om_world *w) {
+    return om_tactical_get_param(w, OM_TP_PURSUE_BY_STEERING) != 0.0;
+}
+
 static int om_tac_hostile(const om_unit_row *a, const om_unit_row *b) {
     return a->faction_id >= 0 && b->faction_id >= 0 && a->faction_id != b->faction_id;
 }
@@ -1725,6 +1733,7 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
     int kind = om_unit_get_order_kind(w, u->unit_id);
     int arrived = has_dest && om_tac_dist_le(dest_x - u->x, dest_y - u->y, OM_TIE_EPSILON);
     int noncombat = om_tac_noncombat(u);
+    int pursue = om_tac_pursue(w);
     om_unit_row *t;
 
     if (u->cooldown < interval_ticks) u->cooldown += (double)om_tac_period(st);
@@ -1859,7 +1868,7 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
         } else if (u->order == OM_ORDER_ATTACK_MOVE) {
             om_tac_hold(w, u, t->unit_id);
         }
-        if (in_range && u->cooldown >= interval_ticks - OM_TIE_EPSILON
+        if (in_range && (u->cooldown >= interval_ticks - OM_TIE_EPSILON || (pursue && !u->fired))
             && om_combat_can_shoot(w, u->unit_id, t->unit_id)) {
             om_tac_fire(w, u, t);
         }
@@ -2332,6 +2341,7 @@ void om_unit_fire_aoe_attack(om_world *w, uint32_t attacker_id, uint32_t target_
         total += dmg;
     }
     attacker->cooldown = 0.0;
+    attacker->fired = 1;
     attacker->backswing_ticks_remaining = OM_BACKSWING_TICKS;
     attacker->backswing_active = 1;
 }
