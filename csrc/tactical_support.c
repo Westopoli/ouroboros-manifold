@@ -633,11 +633,9 @@ static void om_sup_capture_accrue(om_world *w, om_sup_structure *s, int driven, 
     uint64_t now, elapsed;
     /* R-127-01/02: exactly one non-owner faction present and no owner
      * present advances progress; two-or-more non-owner factions or the
-     * owner present resets it. The actual per-tick faction census at the
-     * structure's 300 wu radius is fed in by om_structure_set_capturing_
-     * faction / om_structure_set_contested (the orchestrator's job, out of
-     * this card's declared symbols); this function only advances/resets
-     * the stored progress from that census. */
+     * owner present resets it. om_support_tick runs the census
+     * (om_sup_capture_census) into capturing_faction/contested each tick;
+     * this function only advances/resets the stored progress from them. */
     if (s->contested || s->capturing_faction == OM_SUP_NC_NONE || s->capturing_faction == s->owner) {
         s->capture_progress = 0.0;
         s->capture_accruing = 0;
@@ -845,11 +843,31 @@ static void om_sup_structure_tick_production_driver(om_world *w, om_sup_structur
     }
 }
 
+/* R-127-01/02 census (simulation/reinforcement.py 31-45): living units of each
+ * faction within the capture radius. Neutral units (faction < 0, non-combat
+ * convoys) neither capture nor hold. Exactly one non-owner faction and no owner
+ * unit present is the one capturer; the owner present, or two or more
+ * non-owner factions, is contested (progress resets). */
+static void om_sup_capture_census(om_world *w, om_sup_structure *s) {
+    om_grid_iter it;
+    uint32_t id;
+    int32_t capturer = OM_SUP_NC_NONE;
+    int owner_present = 0, many = 0;
+    om_grid_iter_begin(&it, w, s->x, s->y, (double)OM_REINFORCEMENT_CAPTURE_RADIUS);
+    while ((id = om_grid_iter_next(&it)) != 0) {
+        int32_t f = om_unit_get_faction(w, id);
+        if (f < 0) continue;
+        if (f == s->owner) owner_present = 1;
+        else if (capturer == OM_SUP_NC_NONE) capturer = f;
+        else if (capturer != f) many = 1;
+    }
+    s->contested = owner_present && capturer != OM_SUP_NC_NONE ? 1 : many;
+    s->capturing_faction = (owner_present || many) ? OM_SUP_NC_NONE : capturer;
+}
+
 /* Per-step driver: om_tactical_step calls this once per step after
- * om_macro_tick. Capture is fed by om_structure_set_capturing_faction /
- * om_structure_set_contested (the census stays the caller's input; the
- * fenced fixtures set it directly), and om_structure_tick_capture applies
- * its own advance/reset rules to every live structure. */
+ * om_macro_tick. Each live structure runs its own capture census, and
+ * om_sup_capture_accrue applies the advance/reset rules to the result. */
 void om_support_tick(om_world *w) {
     om_sup_state *st;
     uint32_t i;
@@ -861,6 +879,8 @@ void om_support_tick(om_world *w) {
     for (i = 0; i < OM_SUP_MAX_STRUCTURES; i++) {
         om_sup_structure *s = &st->structures[i];
         if (!s->in_use || s->destroyed) continue;
+        om_sup_structure_refresh_position(w, s);
+        om_sup_capture_census(w, s);
         om_sup_capture_accrue(w, s, 1, i);
         om_sup_structure_tick_production_driver(w, s, i);
     }
