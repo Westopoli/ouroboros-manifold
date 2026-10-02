@@ -472,6 +472,13 @@ void om_move_set_canvas_size(om_world *w, double width, double height) {
     ms->terrain_epoch++;
 }
 
+/* Internal, not in the header: the canvas size om_move_set_canvas_size stored; 0 x 0 = unset.
+ * See also: the patrol waypoint clamp in om_macro_issue_group_orders (csrc/enemy_macro.c), the caller. */
+void om_move_get_canvas_size(om_world *w, double *width, double *height) {
+    *width = w ? om_ms(w)->canvas_w : 0.0;
+    *height = w ? om_ms(w)->canvas_h : 0.0;
+}
+
 /* Python movement.py: new positions are clamped to [0, width] x [0, height]. */
 static double om_move_clamp_axis(double v, double lim) {
     if (lim <= 0.0) return v;
