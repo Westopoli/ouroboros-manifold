@@ -15,7 +15,7 @@
 
 ## Purpose
 
-The layer system is the game's strategic defining characteristic. The battlefield is not a flat plane. It is a stack of five vertical layers, and a unit is always on exactly one of them. Terrain blocks layers at specific places, so a force can go over an obstacle on a high layer or around it on a low one. Vision across layers is worse than vision on your own layer, so a force on a layer you cannot see is a threat you do not know about. Changing layers costs time and leaves the unit briefly vulnerable.
+The layer system is the game's strategic defining characteristic. The battlefield is not a flat plane. It is a stack of five vertical layers, and a unit is always on exactly one of them. The layers are numbered 1 to 5 from the bottom; the engine and its tests count the same layers 0 to 4, so layer n here is engine layer n - 1. Terrain blocks layers at specific places, so a force can go over an obstacle on a high layer or around it on a low one. Vision across layers is worse than vision on your own layer, so a force on a layer you cannot see is a threat you do not know about. Changing layers costs time and leaves the unit briefly vulnerable.
 
 The promise this keeps for the player (vision_v2 Q6): a smaller force that understands surrounds, high ground, and layers beats a larger force that does not. Every rule below exists to make that promise testable.
 
