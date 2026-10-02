@@ -7,7 +7,7 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 12 stories, 49 rules; numbers from the bible's combat visuals and animation sections and the Stage 1 A-368, A-369, A-372 rewrites; the world, settlement, economy, layer-action and scale stories (S-236 to S-240) leave numbers and looks to flags. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes; every output is a screen, T2-checkable. |
-| Implied-but-unstated behavior turned into flags | 4 flags on the first stories, Q-132-01, Q-134-01, Q-136-01, Q-138-01, and 8 on S-133 and S-236 to S-240: Q-133-01, Q-236-01, Q-236-02, Q-237-01, Q-238-01, Q-238-02, Q-239-01, Q-240-01. |
+| Implied-but-unstated behavior turned into flags | 8 open flags: Q-132-02 (S-132), Q-133-01 (S-133), and Q-236-01, Q-236-02, Q-237-01, Q-238-01, Q-239-01, Q-240-01 on S-236 to S-240 (Q-236-02 is also listed on S-132). |
 | Every visible-surface story has a reference | **No.** This entire epic is a visible surface. Art of Rally (look), the opening battle of Revenge of the Sith (combat weight), Halo CE (world-building), and Claude Code's spinner (glyph animation) are the bible's named references; none is attached as a screenshot yet. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
@@ -62,11 +62,11 @@ Rules
 - R-134-02  Given a projectile, When rendered, Then it has a mesh head and a particle trail, and an impact burst at the target on arrival; visual travel time never affects damage timing.
 - R-134-03  Given a hit, When rendered, Then an impact burst of small debris drifts out over 0.5 to 1.0 s with gentle deceleration, scaled by damage, colored by the attacker's trail; and the target blooms with a slow additive emission rise of 0.3 to 0.5 s and fade of 0.3 s. No position jitter, no white-frame flash.
 - R-134-04  Given 200 v 200, When the renderer is under budget pressure, Then projectiles degrade by LOD: full mesh and trail near, billboard and trail far, billboard only very far, culled beyond a count threshold; damage is unaffected.
-- R-134-05  Given the Settled Reach manifest, When read, Then the mesh head is a small glowing sphere, the trail a warm energy ribbon, the impact a small radial flash [Q-134-01: per-type category mapping for the six units is not in the bible].
+- R-134-05  Given the Settled Reach manifest, When read, Then the mesh head is a small glowing sphere, the trail a warm energy ribbon, the impact a small radial flash; the six units use these categories: Raider a rapid kinetic projectile, Interceptor a missile volley, Vanguard a heavy plasma projectile, Warden a continuous defense beam, Bombard an arcing artillery volley, Bastion a dual kinetic cannon.
 
 Inputs: attack events; manifest fields (projectile mesh, trail material, impact scene, visual travel speed, scale, volley count and stagger).
 Outputs: screen.
-Open flags: Q-134-01.
+Open flags: none.
 
 ### S-135 — Abilities have a signature
 As a commander, I want every ability to read at a glance as an ability in progress, mine or theirs, so that I can react to a telegraph and trust my own.
@@ -87,11 +87,11 @@ As a commander, I want a dying ship to flare, burn, drift, and darken, so that I
 Rules
 - R-136-01  Given a unit reaches 0 HP, When the renderer plays destruction, Then: a death bloom brighter than any hit (0.5 s); persistent damage emitters activate (fire, sparks, venting, era-specific); the wreck drifts along its last heading, decelerating; its material darkens toward a desaturated faction color over 3 to 5 s.
 - R-136-02  Given a wreck, When units path, Then it has no collision and no gameplay effect; it is renderer-only.
-- R-136-03  Given many wrecks, When the frame budget is pressed, Then wrecks degrade by LOD and are culled by distance and age [Q-136-01: age and count caps].
+- R-136-03  Given many wrecks, When the frame budget is pressed, Then wrecks degrade by LOD and are culled by distance and age: wrecks fade out after 30 s, with a cap of 150 wrecks.
 
 Inputs: death events.
 Outputs: screen.
-Open flags: Q-136-01.
+Open flags: none.
 
 ### S-137 — Menus and transitions that breathe
 As a player, I want the menus, unlock screens, and era celebrations to feel alive from simple elements composed with precise timing, so that the interface has the same craft as the game.
@@ -156,13 +156,13 @@ Design decided 2026-10-02, not scheduled for building (E-22).
 
 Rules
 - R-238-01  Given literal workers (E-22 S-167), When they work, Then each is drawn walking to a source, gathering there, and walking to a drop-off; a worker is a unit and counts in the unit budgets (S-240).
-- R-238-02  Given a shipment on its way to a base (E-22 S-176), When the receiving side's screen is drawn, Then the shipment is not shown, because that side has no vision of it [Q-238-02: whether a side with vision of the lane sees it, and how one that arrives is drawn].
+- R-238-02  Given a shipment on its way to a base (E-22 S-176), When the receiving side's screen is drawn, Then the shipment is not shown, because that side has no vision of it at all, and nothing on screen tells the side that a shipment was killed.
 - R-238-03  Given an environmental trouble travelling across the map (E-15), When it is drawn, Then it is seen moving by both sides, and what it passes over is drawn shut down.
 - R-238-04  Given a disguised or hidden building (E-22 S-172), When it is drawn, Then [Q-238-01: how it looks to its owner and to the enemy; how disguise works is Q-159-09].
 
 Inputs: worker, shipment, weather and disguise state from the tick delta.
 Outputs: screen.
-Open flags: Q-238-01, Q-238-02.
+Open flags: Q-238-01.
 
 ### S-239 — Pings and going dark, seen
 As a commander, I want a ping, an emitting force and a ping alert to read at a glance, so that the three layer actions are visible things.
@@ -232,7 +232,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-133-01, Q-134-01, Q-136-01, Q-236-01, Q-236-02, Q-237-01, Q-238-01, Q-238-02, Q-239-01, Q-240-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-132-02, Q-133-01, Q-236-01, Q-236-02, Q-237-01, Q-238-01, Q-239-01, Q-240-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

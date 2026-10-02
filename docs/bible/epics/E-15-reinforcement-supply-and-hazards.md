@@ -7,11 +7,11 @@
 | Every story has at least one Given/When/Then rule with concrete values | S-126 to S-131: yes, 6 stories, 27 rules, numbers from `algorithms.md` ALG-75 and config. S-218 and S-219: 2 stories, 14 rules, design decided 2026-10-02 and not scheduled for building; where Westley has not given a number the rule carries a flag instead. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | Flags on S-126 to S-131, Q-126-02, Q-127-01, Q-128-01, Q-129-01, Q-131-01, and 10 on S-218 and S-219 (Q-218-01 to Q-218-06, Q-219-01 to Q-219-04). |
+| Implied-but-unstated behavior turned into flags | No open flags on S-126 to S-131, and 10 on S-218 and S-219 (Q-218-01 to Q-218-06, Q-219-01 to Q-219-04). |
 | Every visible-surface story has a reference | **No.** S-131 (how structures, convoys, and hazards read on screen) has a visible surface and no reference. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on the open flags of S-126 to S-131 and of S-218 and S-219, and on one reference. Q-126-01 (the bible's open tuning questions on production rate, cost model, and baseline trickle were never closed) and Q-127-01 (Westley's Stage 1 note that the C rewrite may scale the starting-force share past half, A-081) are the load-bearing ones.
+**Gate verdict: not passed.** Blocked on the open flags of S-218 and S-219 and on one missing reference (S-131). S-126 to S-131 have no open flags; gate to be rerun.
 
 ## Purpose
 
@@ -71,6 +71,7 @@ Outputs: enemy production choices in the T1 trace.
 Open flags: none.
 
 ### S-129 — Units that cannot fight
+Flag closed, rule text pending: Q-129-01, only combat forces and convoys or evacuees ship at launch; science, intelligence and cultural units wait for future story packs. The rule below is what the tests read today.
 As a commander, I want convoys and evacuees to be real units that die, so that protecting them is a mission and not a checkbox.
 
 Rules
@@ -84,7 +85,7 @@ Rules
 
 Inputs: unit type flags; objectives.
 Outputs: objective progress; screen.
-Open flags: Q-129-01.
+Open flags: none.
 
 ### S-130 — The battlefield moves
 As a commander, I want objectives and garrisons that drift and hazards that travel, so that no position stays solved.
@@ -98,7 +99,7 @@ Rules
 
 Inputs: drift specs from the map seed.
 Outputs: positions per tick in the delta.
-Open flags: none. See also: Q-218-05 (whether a strongpoint may drift off its slope, against R-130-01 and R-130-03) and S-219 (a region's trouble travels; R-130-04's interference source is one kind of moving source).
+Open flags: none. See also: Q-118-03 (whether a strongpoint may drift off its slope, against R-130-01 and R-130-03) and S-219 (a region's trouble travels; R-130-04's interference source is one kind of moving source).
 
 ### S-131 — Reading hazards and structures
 
@@ -111,7 +112,7 @@ Rules
 
 Inputs: map seed; ownership.
 Outputs: screen.
-Open flags: Q-131-01 (settlement vs station naming: `docs/bible_history/bible_2_00_world.md` says the one capturable structure is a settlement with its own silhouette; `docs/bible_history/bible_2_00_combat.md` says garrison posts, militia stations, FOBs). Reference required: `references/E-15/notes.md`, missing. See also: R-218-08 and R-219-06 (how strongpoints and troubles read), Q-218-06 (the name).
+Open flags: none here. The capturable structure is named Settlement engine-wide, with an era-skinned model. Reference required: `references/E-15/notes.md`, missing. See also: R-218-08 and R-219-06 (how strongpoints and troubles read), Q-218-06 (the name).
 
 ### S-218 — Strongpoints hold the way up and down
 As a commander on a land map, I want the reinforcement structures to stand at the slopes between height bands, so that holding one holds the way up or down and gives me production on that band, paid for by my economy.
@@ -125,12 +126,12 @@ Rules
 - R-218-04  Given a held strongpoint, When what it makes is chosen, Then the economy rules choose it on the schedule of E-22 S-170, changing what it makes takes a while, and when nobody holds the economy seat the rules and the commander's override of E-22 S-179 and S-180 decide.
 - R-218-05  Given a strongpoint, When it is attacked or taken, Then it is captured and destroyed as S-127 says [Q-218-03: whether the economy can rebuild a destroyed strongpoint].
 - R-218-06  Given the starting force and the strongpoints' production, When a mission's forces are allocated (E-10 S-074), Then [Q-218-04: whether the split of R-126-04, a fifth given at the start and the rest from structures, survives now that the economy makes units].
-- R-218-07  Given a strongpoint on a slope, When drift specs are read (S-130), Then [Q-218-05: whether a strongpoint may drift off its slope].
-- R-218-08  Given a T2 screenshot, When inspected, Then a strongpoint is distinguishable by owner color from every unit silhouette and from a base, an expansion and a forward base [Q-218-06: the name and the silhouette, since Q-131-01 settled on "Settlement" and E-17 and E-22 use "settlement" for the neutral populace and for self-built cities].
+- R-218-07  Given a strongpoint on a slope, When drift specs are read (S-130), Then [Q-118-03: whether a strongpoint may drift off its slope].
+- R-218-08  Given a T2 screenshot, When inspected, Then a strongpoint is distinguishable by owner color from every unit silhouette and from a base, an expansion and forward works [Q-218-06: the name and the silhouette, since Q-131-01 settled on "Settlement" and E-17 and E-22 use "settlement" for the neutral populace and for self-built cities].
 
 Inputs: the fitted height bands and slopes (E-17); the holder's economy (E-22).
 Outputs: strongpoints (owner, HP, progress, band, position) in the tick delta; production on the band; HUD panel and minimap.
-Open flags: Q-218-01, Q-218-02, Q-218-03, Q-218-04, Q-218-05, Q-218-06.
+Open flags: Q-218-01, Q-218-02, Q-218-03, Q-218-04, Q-118-03, Q-218-06.
 
 ### S-219 — Weather that travels
 As a commander, I want my region's environmental trouble to travel across the map where both sides can see it and to shut down what it passes over, so that the map has a danger and a clock that is not an enemy.
@@ -180,7 +181,7 @@ Open flags: Q-219-01, Q-219-02, Q-219-03, Q-219-04.
 - A destroyed structure never returns (today's rule, R-127-03; Q-218-03 asks whether it stays).
 - A strongpoint stands at a slope between height bands on land maps.
 - A trouble shuts down only what it is passing over, and both sides can see it.
-- Same seed, same spawns and drift, all platforms (pending Q-126-02).
+- Same seed, same spawns and drift, all platforms (every draw comes from the world stream, R-126-02).
 
 ## Scale requirements
 
@@ -207,7 +208,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-129-01, Q-131-01, Q-218-01 to Q-218-06, Q-219-01 to Q-219-04. Details in `docs/northstar/ambiguity_register.md`.
+Q-218-01 to Q-218-06, Q-219-01 to Q-219-04. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
