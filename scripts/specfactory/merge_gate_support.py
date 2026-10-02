@@ -560,7 +560,7 @@ def regression_check(candidate_dir: Path, base_ref: str, test_args: list[str], *
         # both worktree roots to one placeholder before comparing. `before`
         # is already normalized above (freshly run) or already normalized in
         # the cache (a prior run); only `after` still needs it here.
-        after.first_assertion = {k: _normalize_worktree_paths(v, candidate_dir)
+        after.first_assertion = {k: _normalize_worktree_paths(v, Path(candidate_dir).resolve())
                                   for k, v in after.first_assertion.items()}
         report = sr.compare_runs(before, after)
         # A red test whose first assertion line moves is a WARN, not a reject:
