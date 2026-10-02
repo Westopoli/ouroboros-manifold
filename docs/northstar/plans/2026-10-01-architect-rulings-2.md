@@ -518,3 +518,19 @@ Rule text changed in the same commit: E-16 R-110-02 and R-110-07, E-09 R-069-03 
 **A91. Tactical cost at 2,500 units and above.** 52 ms per tick is a finding against the tactical budget, not a test quirk. One Engineer measurement, reported: tactical tick time at 500, 1,000, 2,500 and 5,000 units on the Siege Breaking case, against the E-13 budget, with the profile. The fix (the nearest-scan in `csrc/unit.c`) is ruled after the numbers.
 
 **A92. Specfactory's ten standing failures** get a cleanup unit: an Engineer first classes each (stale test, missing external file, real gap) in one report; fixes follow per class. A suite that is red on main hides new reds.
+
+## Addendum 32, 2026-10-02 (tactical cost; specfactory cleanup; Westley's holds)
+
+**A93. Tactical step cost is a budget miss, fixed in two moves.** Measured: 3.33 ms at 990 units against 3 ms, 40.7 ms median at 4,996 against 30 ms for 10,000, growth between n^1.5 and n^2.
+- First, tests (Engineer): the E-13 scale figures as tests on the Siege Breaking case, at 1,000 and 10,000 units, timing the same subset the budget names (movement and collision) and, reported beside it, the whole step. Red today, listed.
+- Second, a diagnosis with a proposed fix (Engineer, read and profile only, `perf` not gprof): why `om_grid_iter_next` and `om_tac_nearest_scan_cell` call counts grow 2.3 to 2.6 times per doubling, what the every-20th-step spike is (profiled alone), and a concrete change with its expected exponent. The fix must leave the trace byte-identical (same nearest unit chosen, same tie order); if it cannot, that is said in the proposal. I rule on the proposal; no fix is built before it.
+- The worst-step spikes (130 to 346 ms) are reported against the budget as their own line: a 10 ticks per second sim cannot absorb a 346 ms step.
+
+**A94. Specfactory cleanup, as grouped.**
+- Harness unit: items 1, 2 (regenerate the allowlist), 6 (stale reach test rewritten on the synthetic-repo pattern), 3 (vendored card fixture), and the `yaml` import failures (the dependency is declared where the suite's environment is set up; not skipped).
+- Contract piece: items 4, 5, 7, 8, 9 with the report's six-step fix (generated blocks regenerated, never hand-edited; `internal = true` rows for the fifteen prototypes).
+- Ownership: the coordinator drafts the owner rows on a branch (specfactory tests, `scripts/specfactory`, the allowlist, conftest, and the contract piece ordered after `A2-contract` and `core`), keeping the existing harness pieces' files out of the new globs; I review and land `pieces.toml`.
+- Gate: once the suite is green, `merge_gate.sh` runs `tests/specfactory` and `sig_table.py --check`, and `alg_constants --lint` fails on stale extra allowlist lines, each with a positive control. Last unit of the group.
+- Item 10 (snapshot fixture: compare bytes or structure) is Westley's policy call and waits; the test stays red and listed.
+
+**A95. Held by Westley, 2026-10-02.** The Knowledge Lost rate (A90) waits until the layer and environment systems are designed; he intends a fresh balance simulation then, against the early-repo simulation that hit the target numbers. Nothing is tuned meanwhile and R-045-09 stays red and listed. The memory-per-region budget is to be raised (he agreed); the new figure is recorded when he gives it.
