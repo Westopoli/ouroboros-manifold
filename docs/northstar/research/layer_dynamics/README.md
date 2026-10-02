@@ -554,6 +554,27 @@ The crossing moves with the attackers' number and with the defenders' distance, 
 
 What is missing before this answers the hypothesis: a conditioned search (fix all but two variables), a control for every non-monotonic curve, more variables sampled at once (positions, formation, layer, rule tables) and random sampling rather than grids, and noise in the fights (see E5) so that more than the count and the geometry decide.
 
+### Pass 6, 2026-10-01: testing moves to the design chat; formation (S2) on open ground
+
+From this pass the design chat runs the experiments and reports to Westley directly (his instruction); the lab chat builds on request. Scripts: `toys/layerlab/experiments/b1_inspect.py` (look at what a play does), `b1_scan.py` (one play, one map, one size, whole heads, 10 seeds and both side labels, so 20 fights a cell). A side "beats N" when it wins more than half of the 20. Transfer class T2.
+
+The lab chat's last small batch (8 long-range wardens, flat map) found no effect from the concave; re-run and confirmed. The cause is range: at 350 every unit fires in any formation.
+
+Short-range raiders (range 200), flat map, base rules, all on one layer:
+
+| Our 16 | Enemy | Beats | Loses to | Units firing at 16 v 16, ours against theirs |
+|---|---|---|---|---|
+| blob | blob | 15 | 16 | 4.3 against 4.6 |
+| line | line | 15 | 16 | 9.1 against 9.3 |
+| line | blob | 18 | 19 | 9.8 against 6.3 |
+| concave | blob | 18 | 19 | 12.0 against 7.9 |
+| concave | line | 16 | 17 | 8.4 against 7.3 |
+
+At 8 units, concave against line and line against line both beat 7 and lose to 8.
+
+Reading. Formation is worth three units in sixteen when the enemy comes in a blob, and the side with more units firing won every pairing, so C1 and C2 hold here in direction. The gain is from being wide, not from being curved: a line does as well as a concave against a blob, and a concave is worth one unit against a line. That follows from symmetry: with the same unit type on both sides, if my unit reaches yours, yours reaches mine, so a curve cannot make more of mine fire than of yours unless the enemy is deep. The naive line abreast is therefore already most of the formation skill, and the scripted concave (an arc of half the approach distance around the enemy's start, which then walks in) is not yet the concave Westley means: one that curves around the point where the enemy arrives. One blip to watch: line against line, 16 against 20 and 21, where the margin steps the wrong way (-0.47 then -0.32).
+
+
 ## 9. Verdict and fold
 
 Filled when the pass criterion in §6 is met or shown unreachable. If met: numbers go to `algorithms.md` as ALG rows, S-008 gains rules with values, `Q-008-02` and `Q-008-03` close, and the E-01 gate is re-run. If not met: record what the lab could not show and why, and revise the method; the cross-layer numbers stay open, and Westley decides whether the strategic-depth definition in the hub stands.
