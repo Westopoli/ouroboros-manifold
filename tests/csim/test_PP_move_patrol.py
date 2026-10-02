@@ -27,6 +27,7 @@ def _visited(lib, w, ids):
 
 def _run(lib, world_factory, y0):
     w = tactical_world(lib, world_factory)
+    lib.om_tactical_set_param(w, 0, 1.0)  # PP: runs the new movement (switch default 0, A147 option c')
     ids = spawn_enemy_squad(lib, w, y0=y0)
     ax, ay = centroid(lib, w, ids)
     lib.om_macro_set_state(w, 0, OM_MACRO_PATROL, OM_MACRO_MOD_CAUTIOUS)
