@@ -11,7 +11,7 @@
 | Every visible-surface story has a reference | **No — by design a Godot design phase, not a screenshot pull.** `references/E-01/notes.md` records the plan: basic single-layer movement ships first, then Claude builds several interactive layer-system options in Godot for Westley to choose between; the choice fills the references. Blocks S-009, S-010, S-006 until then. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** S-001, S-002 and S-003 are blocked on Q-001-05 (the edges of shortest-route layer changes), S-008 on Q-008-02 and Q-008-03 (the layer lab decides the cross-layer numbers), S-009 on Q-009-02, S-162, S-163 and S-164 on Q-005-04 (the numbers and edges of the three layer actions), and S-009, S-010 and S-006 on references. Stories are Spec'd, not Ready.
+**Gate verdict: not passed.** S-001, S-002 and S-003 are blocked on Q-001-05 (the edges of shortest-route layer changes), S-008 on Q-008-02 and Q-008-03 (the skill lab decides the cross-layer numbers), S-009 on Q-009-02, S-162, S-163 and S-164 on Q-005-04 (the numbers and edges of the three layer actions), and S-009, S-010 and S-006 on references. Stories are Spec'd, not Ready.
 
 ## Purpose
 
@@ -139,7 +139,7 @@ Outputs: visible set; damage applied; unit path.
 Open flags: none.
 
 ### S-008 — Combat across layers
-As a commander, I want to know whether a unit can shoot at an enemy one layer above it, so that layer position is a positional decision and not a guess. The cross-layer rules are decided by the layer lab, a fast standalone simulator (`docs/northstar/research/layer_dynamics/`, `toys/layerlab/`), which sweeps range, damage, vision and terrain in small engagements and maps where the expected side wins because of the engagement's conditions. Its numbers may become the rules below.
+As a commander, I want to know whether a unit can shoot at an enemy one layer above it, so that layer position is a positional decision and not a guess. The cross-layer rules are decided by measurement: the skill lab (`docs/northstar/research/layer_dynamics/README.md`, `scripts/skilllab/`) runs small engagements on the real simulation, varies range, damage, vision and terrain, and maps where the skilled side wins because of the engagement's conditions. Its numbers may become the rules below.
 
 Rules
 - R-008-01  Given an attacker on layer 3 and a visible enemy on layer 3 in range, When the attacker is idle or attack-moving, Then it engages.
@@ -147,11 +147,11 @@ Rules
 - R-008-03  Given a Bombard's area attack centered on layer 3, When enemies stand on layers 2 and 4 inside the radius, Then they take damage only at the layer offsets the Bombard's reach includes (S-164), at the multiplier Q-008-03 sets.
 - R-008-04  Given an attacker that cannot see a target (S-005), When it would attack that target, Then it does not: a unit never fires at a target it cannot see, on its own layer or another.
 
-End-state (the acceptance bar): the hub's definition of strategic depth (principle 4) holds in the layer lab before any cross-layer rule is written into the sim. In the lab's terms (`docs/northstar/research/layer_dynamics/README.md` §4.3): across the space maps, each skilled play wins the count of units able to fire, the result follows that count, the five skills (landscape, formation, layers, enemy position, unit-type matchup) stack with none dominant and none dead, each has an answer on most maps, and the best situations let a side beat a much larger force. Abilities are left out of this bar for now (Westley, 2026-09-30: "let's leave specific abilities out of this calculation for now, we're tuning base unit properties").
+End-state (the acceptance bar): the hub's definition of strategic depth (principle 4) holds in the skill lab before any cross-layer number is fixed. The mechanisms are built with provisional numbers held as runtime settings, so that the lab can move them. In the lab's terms (`docs/northstar/research/layer_dynamics/README.md` section 4): across the space maps, each skilled play wins the count of units able to fire, the result follows that count, the five skills (landscape, formation, layers, enemy position, unit-type matchup) stack with none dominant and none dead, each has an answer on most maps, and the best situations let a side beat a much larger force. Abilities are left out of this bar for now (Westley, 2026-09-30: "let's leave specific abilities out of this calculation for now, we're tuning base unit properties").
 
 Inputs: attacker layer, target layer, range, visibility; the cross-layer rule table (range, damage and area multipliers by signed layer offset, fire-requires-vision, halfway rule) once Q-008-03 closes.
 Outputs: attack events; HP changes in the tick delta.
-Open flags: Q-008-02 (the layer lab: the research program that decides the cross-layer design), Q-008-03 (the cross-layer numbers). Q-008-01 is closed: the prototype is same-layer only until the lab reports.
+Open flags: Q-008-02 (the research program that decides the cross-layer design, now the skill lab on the real simulation), Q-008-03 (the cross-layer numbers). Q-008-01 is closed: the prototype is same-layer only until the lab reports.
 
 ### S-009 — I can see what layer every unit is on
 As a commander, I want to see at a glance which layer each unit is on and which layer I am focused on, so that I never have to guess who can see whom.
