@@ -1657,6 +1657,28 @@ static om_unit_row *om_tac_nearest_hostile(om_tac_state *st, const om_unit_row *
     return acc.best;
 }
 
+/* OM_TP_TARGET_POLICY 1 (lab only, R-087-03): the enemy in attack range with the
+ * lowest hit point fraction, then nearest, then lowest id (ids ascend, so a
+ * candidate replaces the best only when strictly better by OM_TIE_EPSILON). */
+static om_unit_row *om_tac_most_damaged_hostile(om_tac_state *st, const om_unit_row *self, double radius) {
+    om_unit_row *best = NULL;
+    double best_frac = 0.0, best_d2 = 0.0;
+    uint32_t ids[st->n_units + 1];
+    uint32_t j, n = om_grid_query_st(st, self->x, self->y, radius, ids, st->n_units);
+    for (j = 0; j < n; j++) {
+        om_unit_row *cand = &st->units[ids[j] - 1];
+        double dx = cand->x - self->x, dy = cand->y - self->y, d2 = dx * dx + dy * dy;
+        double frac = cand->max_hp > 0.0 ? cand->hp / cand->max_hp : 1.0;
+        if (cand->hp <= 0.0 || cand->stealth) continue;
+        if (!om_tac_hostile(self, cand) || cand->layer != self->layer) continue;
+        if (!best || frac < best_frac - OM_TIE_EPSILON
+            || (frac <= best_frac + OM_TIE_EPSILON && d2 < best_d2 - OM_TIE_EPSILON)) {
+            best = cand; best_frac = frac; best_d2 = d2;
+        }
+    }
+    return best;
+}
+
 static int om_tac_hostile_within(om_tac_state *st, const om_unit_row *self, double radius) {
     uint32_t id;
     om_grid_iter it;
@@ -1799,6 +1821,7 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
     int arrived = has_dest && om_tac_dist_le(dest_x - u->x, dest_y - u->y, OM_TIE_EPSILON);
     int noncombat = om_tac_noncombat(u);
     int pursue = om_tac_pursue(w);
+    int leash_first = om_tactical_get_param(w, OM_TP_LEASH_BEFORE_DAMAGE) != 0.0;
     /* P1: an attack-move that has arrived stays an attack-move (the chase persists) until a new order */
     int chase_idle = pursue && u->order == OM_ORDER_ATTACK_MOVE && !has_dest;
     int ordered = u->order != OM_ORDER_NONE && !chase_idle;
@@ -1894,7 +1917,7 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
             /* P1: with pursuit by steering a target that has left attack range is kept until a cohort turn finds another */
             if (t->layer != u->layer || t->stealth || (!pursue && !om_tac_within(u, t, u->attack_range))) {
                 drop = 1;
-            } else if (u->order == OM_ORDER_ATTACK_MOVE && u->anchor_set
+            } else if (!leash_first && u->order == OM_ORDER_ATTACK_MOVE && u->anchor_set
                        && !om_tac_dist_le(t->x - u->anchor_x, t->y - u->anchor_y, OM_ATTACK_MOVE_LEASH_DIST)) {
                 drop = 1;
             }
@@ -1914,7 +1937,9 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
     t = u->target_id != 0 ? om_registry_find_in(st, u->target_id) : NULL;
     if ((u->target_id == 0 || (pursue && t && !om_tac_within(u, t, u->attack_range))) && u->order != OM_ORDER_ATTACK_TARGET
         && (uint64_t)(u->unit_id % OM_TARGETING_COHORT_COUNT) == tick % OM_TARGETING_COHORT_COUNT) {
-        t = om_tac_nearest_hostile(st, u, u->attack_range);
+        t = om_tactical_get_param(w, OM_TP_TARGET_POLICY) == 1.0
+            ? om_tac_most_damaged_hostile(st, u, u->attack_range)
+            : om_tac_nearest_hostile(st, u, u->attack_range);
         if (t) {
             u->target_id = t->unit_id;
             if (u->order == OM_ORDER_ATTACK_MOVE && (!pursue || !u->anchor_set)) {
@@ -1922,6 +1947,16 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
             }
         } else if (pursue && u->order == OM_ORDER_ATTACK_MOVE) {
             om_tac_pursue_goal(w, st, u);
+        }
+    }
+
+    /* OM_TP_LEASH_BEFORE_DAMAGE 1 (R-087-05, R-096-03; the Python's order): the leash drop runs here, before this
+     * tick's shot; at 0 it runs at the start of the next tick, after the shot. */
+    if (leash_first && u->target_id != 0 && u->order == OM_ORDER_ATTACK_MOVE && u->anchor_set) {
+        t = om_registry_find_in(st, u->target_id);
+        if (t && !om_tac_dist_le(t->x - u->anchor_x, t->y - u->anchor_y, OM_ATTACK_MOVE_LEASH_DIST)) {
+            u->target_id = 0;
+            u->anchor_set = 0;
         }
     }
 
