@@ -13,7 +13,7 @@ One economy, two drivers: rules when nobody holds the economy seat, a human when
 | 1 | Resources and how they become units | (check against 5's verbs before freezing) | done 2026-10-01; folded into E-19 S-159; remaining detail is Q-159-08 |
 | 2 | Bases of operations and how they play into objectives | 1 | done 2026-10-02; in E-19 S-159 R-159-14 to R-159-17 |
 | 3 | Groundwork for auto-generating economic buildings (sister to biome generation) | 1, 2 | done 2026-10-02; all seven parts decided, in E-17 S-166 (R-166-03 to R-166-06) |
-| 4 | How the economy runs when the player opts out | 1, 2, 3 | not started |
+| 4 | How the economy runs when the player opts out | 1, 2, 3 | in progress: options in `self_running_options.md` (Q-159-02, Q-159-03) |
 | 5 | How the economy player literally manages the economy | 1 to 4 | done 2026-10-01; folded into E-19 S-159; remaining detail is Q-159-09, Q-159-10 |
 
 ## Decisions (2026-10-01)
@@ -182,6 +182,12 @@ Recorded as:
 - Part D, decided: D4. The reinforcement structures are strongpoints at the slopes between height bands. Holding one holds the way up or down and gives production on that band.
 - Q-159-11 closed. Goal 2 marked done.
 
+## Decisions (2026-10-02, fourteenth round)
+
+Westley, verbatim: "all other chats are done, you're the only one left. Yes propose options."
+
+Recorded as: goal 4 options in `self_running_options.md` (Q-159-02, Q-159-03).
+
 ## Files
 
 - `prior_art_resources.md`: cited digest of resource systems in other games.
@@ -196,3 +202,4 @@ Recorded as:
 - `settlement_generation_options.md`: goal 3 options, seven parts.
 - `map_scale_comparison.md`: canvas sizes against Age of Empires 3 and World of Warships.
 - `base_and_objective_options.md`: goal 2 options, four parts.
+- `self_running_options.md`: goal 4 options, five parts.
