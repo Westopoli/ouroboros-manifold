@@ -104,7 +104,7 @@
 
 #define OM_FOG_MAX_ZONES 64
 #define OM_FOG_MAX_VANTAGE 32
-#define OM_FOG_MAX_TRACKED_UNITS 512
+#define OM_FOG_MAX_TRACKED_UNITS OM_MAX_UNITS
 #define OM_FOG_MAX_ERA_FLAGS 16
 #define OM_FOG_ERA_NAME_LEN 64
 #define OM_FOG_ERA_FLAG_NAME_LEN 64
@@ -662,5 +662,34 @@ om_client_snapshot *om_client_snapshot_read(const om_world *w) {
         snap->unit_count++;
     }
     return snap;
+}
+int om_command_set_emission(om_world *w, const uint32_t *unit_ids, uint32_t n_units, om_emission mode) {
+    /* STUB */
+    (void)w; (void)unit_ids; (void)n_units; (void)mode;
+    return 0;
+}
+
+int om_unit_get_emission(const om_world *w, uint32_t unit) {
+    /* STUB */
+    (void)w; (void)unit;
+    return 0;
+}
+
+int om_command_ping(om_world *w, uint32_t caster, uint32_t layer, double x, double y) {
+    /* STUB */
+    (void)w; (void)caster; (void)layer; (void)x; (void)y;
+    return 0;
+}
+
+uint32_t om_ping_alert_count(const om_world *w, int32_t faction) {
+    /* STUB */
+    (void)w; (void)faction;
+    return 0;
+}
+
+int om_ping_alert_get(const om_world *w, int32_t faction, uint32_t index, om_ping_alert *out) {
+    /* STUB */
+    (void)w; (void)faction; (void)index; (void)out;
+    return 0;
 }
 /* ---- end generated stubs ---- */

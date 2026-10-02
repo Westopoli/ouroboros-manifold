@@ -5,7 +5,7 @@
 # `wrapper` names the conftest adapter sig_table.py must generate for that symbol.
 
 [meta]
-abi_version = 2
+abi_version = 4
 symbol_count = 622
 struct_count = 38
 ambiguous_remaining = 0
@@ -6430,6 +6430,159 @@ epics = ["E-12"]
 confidence = "likely"
 note = "12 sites, pytest.approx float compare. Needs explicit restype c_double; default ctypes int restype would break every S-090 assert."
 
+[[symbols]]
+name = "om_tactical_get_param"
+module = "tactical_move.c"
+restype = "double"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "p", ctype = "om_tac_param" }]
+epics = ["E-11"]
+confidence = "certain"
+note = "PP-contract: current value of a tactical setting; -1.0 for a NULL world or unknown parameter."
+
+[[symbols]]
+name = "om_tactical_set_param"
+module = "tactical_move.c"
+restype = "int"
+params = [{ name = "w", ctype = "om_world*" }, { name = "p", ctype = "om_tac_param" }, { name = "value", ctype = "double" }]
+epics = ["E-11"]
+confidence = "certain"
+note = "PP-contract: 0 and stored when p and value are valid, else -1 and nothing changes."
+
+[[symbols]]
+name = "om_map_set_canvas"
+module = "tactical_mapgen.c"
+restype = "int"
+params = [{ name = "w", ctype = "om_world*" }, { name = "width", ctype = "double" }, { name = "height", ctype = "double" }]
+epics = ["E-13"]
+confidence = "certain"
+note = "PP-contract: map size movement clamps to; 0 ok, -1 for NaN, infinite, zero or negative."
+
+[[symbols]]
+name = "om_map_block_rect"
+module = "tactical_mapgen.c"
+restype = "int"
+params = [{ name = "w", ctype = "om_world*" }, { name = "x0", ctype = "double" }, { name = "y0", ctype = "double" }, { name = "x1", ctype = "double" }, { name = "y1", ctype = "double" }, { name = "layer_lo", ctype = "uint32_t" }, { name = "layer_hi", ctype = "uint32_t" }]
+epics = ["E-13"]
+confidence = "certain"
+note = "PP-contract: blocks route-grid cells overlapped on layers layer_lo..layer_hi; 0 ok, -1 refused."
+
+[[symbols]]
+name = "om_command_set_layer"
+module = "tactical_move.c"
+restype = "int"
+params = [{ name = "w", ctype = "om_world*" }, { name = "unit_ids", ctype = "const uint32_t*" }, { name = "n_units", ctype = "uint32_t" }, { name = "layer", ctype = "uint32_t" }]
+epics = ["E-01"]
+confidence = "certain"
+note = "PP-contract: orders listed units to a layer; 0 ok, -1 refused."
+
+[[symbols]]
+name = "om_unit_transition_progress"
+module = "tactical_move.c"
+restype = "double"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "unit", ctype = "uint32_t" }]
+epics = ["E-01"]
+confidence = "certain"
+note = "PP-contract: 0.0 settled, in (0,1) mid-transfer; 0.0 for an unknown unit."
+
+[[symbols]]
+name = "om_unit_get_target_layer"
+module = "tactical_move.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "unit", ctype = "uint32_t" }]
+epics = ["E-01"]
+confidence = "certain"
+note = "PP-contract: layer the unit is moving to, or its own; UINT32_MAX for an unknown unit."
+
+[[symbols]]
+name = "om_roster_set_reach"
+module = "tactical_move.c"
+restype = "int"
+params = [{ name = "w", ctype = "om_world*" }, { name = "unit_type", ctype = "int" }, { name = "layers_up", ctype = "uint32_t" }, { name = "layers_down", ctype = "uint32_t" }]
+epics = ["E-01"]
+confidence = "certain"
+note = "PP-contract: layers above and below a unit type may acquire and fire at; 0 ok, -1 unknown type."
+
+[[symbols]]
+name = "om_unit_profile_reach"
+module = "tactical_move.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "unit_type", ctype = "int" }, { name = "up", ctype = "uint32_t*" }, { name = "down", ctype = "uint32_t*" }]
+epics = ["E-01"]
+confidence = "certain"
+note = "PP-contract: writes the type's reach; 0 ok, -1 unknown type."
+
+[[symbols]]
+name = "om_command_set_emission"
+module = "fog.c"
+restype = "int"
+params = [{ name = "w", ctype = "om_world*" }, { name = "unit_ids", ctype = "const uint32_t*" }, { name = "n_units", ctype = "uint32_t" }, { name = "mode", ctype = "om_emission" }]
+epics = ["E-01"]
+confidence = "certain"
+note = "PP-contract: OM_EMIT_SILENT or OM_EMIT_ACTIVE for each listed unit; 0 ok, -1 other mode."
+
+[[symbols]]
+name = "om_unit_get_emission"
+module = "fog.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "unit", ctype = "uint32_t" }]
+epics = ["E-01"]
+confidence = "certain"
+note = "PP-contract: the unit's emission mode; 0 for an unknown unit."
+
+[[symbols]]
+name = "om_command_ping"
+module = "fog.c"
+restype = "int"
+params = [{ name = "w", ctype = "om_world*" }, { name = "caster", ctype = "uint32_t" }, { name = "layer", ctype = "uint32_t" }, { name = "x", ctype = "double" }, { name = "y", ctype = "double" }]
+epics = ["E-01"]
+confidence = "certain"
+note = "PP-contract: 0 ok; refusal reasons 1 caster unknown or dead, 2 beyond PING_REACH, 3 cooldown, 4 layer outside the map."
+
+[[symbols]]
+name = "om_ping_alert_count"
+module = "fog.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "faction", ctype = "int32_t" }]
+epics = ["E-01"]
+confidence = "certain"
+note = "PP-contract: alerts held for faction; 0 for an unknown faction."
+
+[[symbols]]
+name = "om_ping_alert_get"
+module = "fog.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "faction", ctype = "int32_t" }, { name = "index", ctype = "uint32_t" }, { name = "out", ctype = "om_ping_alert*" }]
+epics = ["E-01"]
+confidence = "certain"
+note = "PP-contract: copies alert index (0 oldest) into *out; 0 ok, -1 index out of range or out NULL."
+
+[[symbols]]
+name = "om_unit_get_group_id"
+module = "tactical_move.c"
+restype = "uint32_t"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "unit", ctype = "uint32_t" }]
+epics = ["E-11"]
+confidence = "certain"
+note = "PP-contract (A133): the unit's move group id, ids start at 1; 0 for no group, an unknown unit or a NULL world."
+
+[[symbols]]
+name = "om_unit_get_leash_anchor"
+module = "tactical_move.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "unit", ctype = "uint32_t" }, { name = "x", ctype = "double*" }, { name = "y", ctype = "double*" }]
+epics = ["E-11"]
+confidence = "certain"
+note = "PP-contract (A133): 1 and writes the leash anchor to *x, *y (either may be NULL); 0 and writes nothing for no anchor, an unknown unit or a NULL world."
+
+[[symbols]]
+name = "om_unit_get_engaged"
+module = "tactical_move.c"
+restype = "int"
+params = [{ name = "w", ctype = "const om_world*" }, { name = "unit", ctype = "uint32_t" }]
+epics = ["E-11"]
+confidence = "certain"
+note = "PP-contract (A133): 1 when the unit's engaged flag is set, else 0; 0 for an unknown unit or a NULL world."
+
 [[structs]]
 name = "OMAbilityEvent"
 source_test = "tests/csim/test_E11_S086_one_ability_each.py"
@@ -6639,3 +6792,8 @@ fields = [{ name = "unit_type", ctype = "uint32_t" }, { name = "hp", ctype = "do
 name = "om_vec2"
 source_test = "tests/csim/test_E15_S130_the_battlefield_moves.py (class OMVec2)"
 fields = [{ name = "x", ctype = "double" }, { name = "y", ctype = "double" }]
+
+[[structs]]
+name = "OMPingAlert"
+source_test = "tests/csim/test_PP_settings.py"
+fields = [{ name = "tick", ctype = "uint64_t" }, { name = "faction", ctype = "int32_t" }, { name = "sector", ctype = "int32_t" }]
