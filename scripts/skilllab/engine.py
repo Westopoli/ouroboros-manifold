@@ -91,6 +91,7 @@ class Engine:
             "om_unit_profile_sensor_radius": ([V, i], d),
             "om_unit_profile_layer_transition_time": ([V, i], d),
             "om_unit_profile_aoe_radius": ([V, i], d),
+            "om_unit_profile_reach": ([V, i, c.POINTER(u32), c.POINTER(u32)], i),
             "om_tactical_disable_abilities": ([V], None),
             "om_unit_spawn": ([V, i, c.c_int32, d, d, u32], u32),
             "om_command_attack_move": ([V, c.POINTER(u32), u32, d, d], i),
@@ -105,7 +106,12 @@ class Engine:
             "om_tactical_get_param": ([V, i], d),
             "om_tactical_set_param": ([V, i, d], i),
             "om_combat_can_shoot": ([V, u32, u32], i),
+            "om_unit_can_see": ([V, u32, u32], i),
+            "om_unit_clear_orders": ([V, u32], None),
             "om_map_add_obstacle": ([V, d, d, d], u32),
+            "om_map_set_canvas": ([V, d, d], i),
+            "om_map_block_rect": ([V, d, d, d, d, u32, u32], i),
+            "om_map_add_cover": ([V, d, d, d, d], u32),
         }
         for name, (argtypes, restype) in sigs.items():
             fn = getattr(self._lib, name)
@@ -145,6 +151,12 @@ class Engine:
                 "layer_transition_time": L.om_unit_profile_layer_transition_time(w, t),
                 "aoe_radius": L.om_unit_profile_aoe_radius(w, t)}
 
+    def profile_reach(self, w, type_id):
+        up, down = ctypes.c_uint32(0), ctypes.c_uint32(0)    # the library body may write nothing
+        if self._lib.om_unit_profile_reach(w, int(type_id), ctypes.byref(up), ctypes.byref(down)) != 0:
+            raise ValueError("om_unit_profile_reach(%r) refused" % (type_id,))
+        return (int(up.value), int(down.value))
+
     def disable_abilities(self, w):
         self._lib.om_tactical_disable_abilities(w)
 
@@ -162,6 +174,13 @@ class Engine:
     def _order(fn, w, unit_ids, x, y):
         ids = [int(u) for u in unit_ids]
         fn(w, (ctypes.c_uint32 * len(ids))(*ids), len(ids), float(x), float(y))
+
+    def can_see(self, w, observer, target):
+        return bool(self._lib.om_unit_can_see(w, int(observer), int(target)))
+
+    def clear_orders(self, w, unit_ids):
+        for u in unit_ids:
+            self._lib.om_unit_clear_orders(w, int(u))
 
     def step(self, w):
         self._lib.om_tactical_step(w)
@@ -206,3 +225,19 @@ class Engine:
         if not radius > 0:
             raise ValueError("blocker radius must be positive, got %r" % (radius,))
         self._lib.om_map_add_obstacle(w, float(x), float(y), float(radius))
+
+    def set_canvas(self, w, width, height):
+        if self._lib.om_map_set_canvas(w, float(width), float(height)) != 0:
+            raise ValueError("om_map_set_canvas(%r, %r) refused (set_canvas)" % (width, height))
+
+    def block_rect(self, w, x0, y0, x1, y1, layer_lo, layer_hi):
+        if self._lib.om_map_block_rect(w, float(x0), float(y0), float(x1), float(y1), int(layer_lo),
+                                       int(layer_hi)) != 0:
+            raise ValueError("om_map_block_rect(%r, %r, %r, %r, %r, %r) refused (block_rect)"
+                             % (x0, y0, x1, y1, layer_lo, layer_hi))
+
+    def add_cover(self, w, x, y, radius, height):
+        idx = int(self._lib.om_map_add_cover(w, float(x), float(y), float(radius), float(height)))
+        if idx == 0:
+            raise ValueError("om_map_add_cover(%r, %r, %r, %r) refused (add_cover)" % (x, y, radius, height))
+        return idx

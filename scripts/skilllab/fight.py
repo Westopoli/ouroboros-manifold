@@ -2,8 +2,9 @@
 import random
 
 from scripts.skilllab.contract import SHIFT_MAX, TICKS_PER_SECOND, FightResult
-from scripts.skilllab.firing import count_able
+from scripts.skilllab.firing import count_able, count_able_weighted, unit_weight
 from scripts.skilllab.formations import place
+from scripts.skilllab.timeline import Timeline, first_anchors, validate
 
 FIRST_CUSTOM_TYPE_ID = 100
 
@@ -51,9 +52,7 @@ def _spawn_side(engine, w, setup, side, types, rng, ids_by_group, ranges):
 
 
 def _issue_orders(engine, w, setup, ids_by_group):
-    first_anchor = {}
-    for g in setup.groups:
-        first_anchor.setdefault(g.side, (g.x, g.y))
+    first_anchor, goals = first_anchors(setup), {}
     for gi, g in enumerate(setup.groups):
         if g.order == "idle":
             continue
@@ -64,6 +63,8 @@ def _issue_orders(engine, w, setup, ids_by_group):
             engine.order_move(w, ids_by_group[gi], goal[0], goal[1])
         else:
             raise ValueError("unknown order %r" % (g.order,))
+        goals[gi] = goal
+    return goals
 
 
 def fight(setup, seed=0, swap=False, engine=None):
@@ -72,6 +73,7 @@ def fight(setup, seed=0, swap=False, engine=None):
         raise ValueError("each side needs at least one unit, got headcounts %r" % (heads,))
     if min(setup.max_ticks, setup.stalemate_ticks, setup.sample_every) < 1:
         raise ValueError("max_ticks, stalemate_ticks and sample_every must each be at least 1")
+    validate(setup)
     if engine is None:
         from scripts.skilllab.engine import Engine
         engine = Engine()
@@ -82,27 +84,49 @@ def fight(setup, seed=0, swap=False, engine=None):
             engine.disable_abilities(w)
         for pid, value in [(engine.param_id(n), float(v)) for n, v in setup.settings.items()]:
             engine.set_param(w, pid, value)
+        if setup.terrain is not None:
+            t = setup.terrain
+            engine.set_canvas(w, t.canvas[0], t.canvas[1])
+            for b in t.blocks:
+                engine.block_rect(w, b.x0, b.y0, b.x1, b.y1, b.layer_lo, b.layer_hi)
+            for c in t.covers:
+                engine.add_cover(w, c.x, c.y, c.radius, c.height)
         types = _register_types(engine, w, setup)
         rng, ids_by_group, ranges = random.Random(seed), {}, {}
         for side in ((1, 0) if swap else (0, 1)):
             _spawn_side(engine, w, setup, side, types, rng, ids_by_group, ranges)
-        _issue_orders(engine, w, setup, ids_by_group)
+        goals = _issue_orders(engine, w, setup, ids_by_group)
         side_ids = tuple([u for gi, g in enumerate(setup.groups) if g.side == s for u in ids_by_group[gi]]
                          for s in (0, 1))
         start_hp = {u: engine.unit_hp(w, u) for ids in side_ids for u in ids}
-        return _run(engine, w, setup, side_ids, start_hp, ranges, heads)
+        timeline = Timeline(engine, w, setup, ids_by_group, goals)
+        wt = _weights(engine, w, setup, types, ids_by_group) if setup.weighted else None
+        return _run(engine, w, setup, side_ids, start_hp, ranges, heads, timeline, wt)
     finally:
         engine.free_world(w)
+
+
+def _weights(engine, w, setup, types, ids_by_group):
+    """(weights, reach) per unit id, read from the stats and reach of its type."""
+    weights, reach, by_type = {}, {}, {}
+    for gi, g in enumerate(setup.groups):
+        tid = types[g.unit][0]
+        if tid not in by_type:
+            by_type[tid] = (unit_weight(engine.type_stats(w, tid)), engine.profile_reach(w, tid))
+        for u in ids_by_group[gi]:
+            weights[u], reach[u] = by_type[tid]
+    return weights, reach
 
 
 def _strength(hp, ids, start_hp, head):
     return sum(hp[u] / start_hp[u] for u in ids if hp[u] > 0) / head
 
 
-def _run(engine, w, setup, side_ids, start_hp, ranges, heads):
+def _run(engine, w, setup, side_ids, start_hp, ranges, heads, timeline, wt=None):
     hp = dict(start_hp)
     living = [u for ids in side_ids for u in ids]
     firing, tick, quiet, outcome = [], 0, 0, None
+    weighted = [] if wt else None
     trace, last = ([] if setup.trace else None), {}
     all_ids = sorted(living)
 
@@ -118,10 +142,13 @@ def _run(engine, w, setup, side_ids, start_hp, ranges, heads):
     def sample():
         a0, a1 = count_able(engine, w, side_ids[0], side_ids[1], ranges)
         firing.append((tick, a0, a1))
+        if weighted is not None:
+            weighted.append((tick,) + count_able_weighted(engine, w, side_ids[0], side_ids[1], ranges, wt[0], wt[1]))
 
     sample()
     if trace is not None:
         record()
+    timeline.check(0, hp, zero=True)
     while outcome is None:
         engine.step(w)
         tick += 1
@@ -131,6 +158,7 @@ def _run(engine, w, setup, side_ids, start_hp, ranges, heads):
             if h != hp[u]:
                 hp[u], changed = h, True
         living = [u for u in living if hp[u] > 0]
+        timeline.check(tick, hp)
         quiet = 0 if changed else quiet + 1
         if trace is not None:
             record()
@@ -150,7 +178,10 @@ def _run(engine, w, setup, side_ids, start_hp, ranges, heads):
 
     strength = tuple(_strength(hp, side_ids[s], start_hp, heads[s]) for s in (0, 1))
     seconds = tuple(sum(row[1 + s] for row in firing) * setup.sample_every / TICKS_PER_SECOND for s in (0, 1))
+    wsec = None if weighted is None else tuple(
+        sum(row[1 + s] for row in weighted) * setup.sample_every / TICKS_PER_SECOND for s in (0, 1))
     contact = next((t for t, a0, a1 in firing if a0 + a1 > 0), -1)
     return FightResult(outcome=outcome, margin=strength[0] - strength[1], strength_left=strength,
                        survivors=tuple(alive), heads=heads, ticks=tick, first_contact_tick=contact,
-                       firing=firing, firing_unit_seconds=seconds, trace=trace)
+                       firing=firing, firing_unit_seconds=seconds, trace=trace,
+                       steps_fired=tuple(timeline.fired), weighted=weighted, weighted_unit_seconds=wsec)

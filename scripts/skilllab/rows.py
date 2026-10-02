@@ -20,6 +20,8 @@ def fight_row(result, **labels):
     row["ticks"] = result.ticks
     row["first_contact_tick"] = result.first_contact_tick
     row["firing_unit_seconds_0"], row["firing_unit_seconds_1"] = result.firing_unit_seconds
+    if result.weighted is not None:
+        row["weighted_unit_seconds_0"], row["weighted_unit_seconds_1"] = result.weighted_unit_seconds
     return row
 
 
