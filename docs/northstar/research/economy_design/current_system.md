@@ -1,6 +1,6 @@
 # The current economic system
 
-As decided by Westley through 2026-10-01. This file states what the economy is now; it is rewritten when a decision changes it. His words are verbatim in `README.md`. Nothing here is bible text yet, and nothing here is being built.
+As decided by Westley through 2026-10-01. This file states what the economy is now; it is rewritten when a decision changes it. His words are verbatim in `README.md`. It was folded into the bible on 2026-10-01 (E-19 S-159, R-159-01 to R-159-13); the epic wins where the two differ. Nothing here is being built.
 
 The target is 2x to 3x the system complexity of a StarCraft 2 economy. Westley measured the first half of this (the seat, what the player runs, the map) at about 1.2x to 1.4x; the section "Thinking ahead" was added to close the gap. He calls the whole a strong foundation.
 
@@ -49,8 +49,10 @@ Thousands of units and workers on one map, a busy screen, made possible by effic
 |---|---|
 | What the pair carries forward between missions (a shipment deck is one candidate) | Q-159-07 |
 | How the economy runs with nobody in the seat | Q-159-02 |
-| Which of the offered build-ons not yet answered are in: upkeep bands, foraging to farming, deeper districts, trading posts at neutral settlements, trade caravans, ages by landmark, worker scouting, a return-to-base ability, workers under raid | none yet |
-| Which unit roles need which of the three resources, and what the three resources are | none yet |
-| How disguising or hiding a building works, and what it costs | none yet |
-| Chess-layer options not picked and not rejected: prizes on a clock, a shared market, demands from the civilization, the Keystone, the Contested Tree, agents | `chess_layer_options.md` |
+| Which of the offered build-ons not yet answered are in: upkeep bands, foraging to farming, deeper districts, trading posts at neutral settlements, trade caravans, ages by landmark, worker scouting, a return-to-base ability, workers under raid | Q-159-10 |
+| Which unit roles need which of the three resources, and what the three resources are | Q-159-08 |
+| How disguising or hiding a building works, and what it costs | Q-159-09 |
+| Chess-layer options not picked and not rejected: prizes on a clock, a shared market, demands from the civilization, the Keystone, the Contested Tree, agents | Q-159-10 |
+| What happens when a base of operations falls | Q-159-11 |
+| How settlements build themselves, sites, height and layers | Q-166-01 |
 | Match shape: co-op, versus, or both | Q-141-01, Q-141-02 |

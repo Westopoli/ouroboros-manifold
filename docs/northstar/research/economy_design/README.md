@@ -10,11 +10,11 @@ One economy, two drivers: rules when nobody holds the economy seat, a human when
 
 | # | Goal | Depends on | Status |
 |---|---|---|---|
-| 1 | Resources and how they become units | (check against 5's verbs before freezing) | foundation decided 2026-10-01 (`current_system.md`); open: the three resources' identities and which unit roles need which |
-| 2 | Bases of operations and how they play into objectives | 1 | partly decided (base of operations, resources opposite the objective, expansions, forward bases); the loss condition and mission-type mapping are open |
-| 3 | Groundwork for auto-generating economic buildings (sister to biome generation) | 1, 2 | not started |
+| 1 | Resources and how they become units | (check against 5's verbs before freezing) | done 2026-10-01; folded into E-19 S-159; remaining detail is Q-159-08 |
+| 2 | Bases of operations and how they play into objectives | 1 | partly decided (base of operations, resources opposite the objective, expansions, forward bases); the loss condition and mission-type mapping are open (Q-159-11) |
+| 3 | Groundwork for auto-generating economic buildings (sister to biome generation) | 1, 2 | in progress: direction in E-17 S-166, options in `settlement_generation_options.md` (Q-166-01) |
 | 4 | How the economy runs when the player opts out | 1, 2, 3 | not started |
-| 5 | How the economy player literally manages the economy | 1 to 4 | foundation decided 2026-10-01 (`current_system.md`); details open |
+| 5 | How the economy player literally manages the economy | 1 to 4 | done 2026-10-01; folded into E-19 S-159; remaining detail is Q-159-09, Q-159-10 |
 
 ## Decisions (2026-10-01)
 
@@ -100,6 +100,16 @@ Recorded as:
 - Not picked, not rejected: prizes on a clock (S2), a shared market (S4), demands from the civilization (S5), the Keystone (W1), the Contested Tree (W2), agents (W5).
 - Westley's read: a strong foundation; this design front pauses here.
 
+## Decisions (2026-10-01, seventh round)
+
+Westley, verbatim: "fold into bible specs, mark them done, and then let's start figuring out how the auto-generation of economic buildings will work." The rest of that message, on settlements that build themselves, is verbatim in E-17 S-166 R-166-01.
+
+Recorded as:
+
+- Folded into the bible: E-19 S-159 rewritten (R-159-01 to R-159-13), the hub's toolkit paragraph, the stories catalog row. Register: Q-159-01 and Q-159-04 closed; Q-159-08 to Q-159-11 opened for what remains.
+- Goals 1 and 5 marked done.
+- Goal 3 started: E-17 S-166 holds the direction, Q-166-01 the question, `settlement_generation_options.md` the options.
+
 ## Files
 
 - `prior_art_resources.md`: cited digest of resource systems in other games.
@@ -111,3 +121,4 @@ Recorded as:
 - `baseline_and_buildons.md`: the classic baseline and fourteen build-ons.
 - `current_system.md`: the current economic system, as decided so far. Read this first.
 - `chess_layer_options.md`: options for making the seat more like chess.
+- `settlement_generation_options.md`: goal 3 options, seven parts.

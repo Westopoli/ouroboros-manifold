@@ -136,6 +136,17 @@ Inputs: none yet.
 Outputs: none yet.
 Open flags: Q-165-01 (whether the idea is wanted, and as a mode or in every map).
 
+### S-166 — Settlements that build themselves, on ground with real height
+As a commander, I want cities and bases that grow by themselves around whatever I place, on terrain as varied and as tall as a real landscape, so that the game has a sense of scale no strategy game has had and the base I fight over is a spectacle to watch being built.
+
+Rules
+- R-166-01  Direction recorded, design in progress (Q-166-01). Westley, 2026-10-01, verbatim: "I want the cities to contain building that aren't only placed, a lively and busy environment that's a spectacle to watch and see built. Buildings that start under construction (like AOE3), and slowly get built, expansions made, different levels of population density that change over time. I want the population density to use the biome generation system, the same *heatmap* or whatever you call it (layout). Not restricitve though, the player can place buildings wherever they want, and the city will morph around them. - I'd also like cities/bases to vary in their *location*, by that I mean some are placed in a valley, some are on a mountainside, some are in an archipelago, and I want to take advantage of the layer system. If a city is on a cliffside and the city spans over a whole mountain/valley, the enemy should have to traverse all those layers in ordre to reach everythign. I want the players to get a real sense of scale playing the game and moving their forces around. Massive scale unlike anything seen before in an RTS. Minecraft level variations in landscape (biome/height, etc). This part is significantly visual, but it needs to have the foundations underneath in order for the game to handle it, and it's not *only* visual it's functional too."
+- R-166-02  Fixed by that statement: the self-built buildings are mostly cosmetic and the economy itself is run by rules (E-19 R-159-02); population density comes from the same field map the landscape uses; the player may place a building anywhere and the city reshapes around it; the site of a base varies (valley, mountainside, archipelago); a base may span several layers, and an attacker must cross those layers to reach all of it; the result is functional as well as visual.
+
+Inputs: none yet.
+Outputs: none yet.
+Open flags: Q-166-01. Options: `docs/northstar/research/economy_design/settlement_generation_options.md`.
+
 ## Inputs
 
 | Input | Source | Range | Rejection |
@@ -183,7 +194,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-112-01, Q-113-01, Q-115-01, Q-117-01, Q-118-01, Q-119-01, Q-165-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-112-01, Q-113-01, Q-115-01, Q-117-01, Q-118-01, Q-119-01, Q-165-01, Q-166-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
