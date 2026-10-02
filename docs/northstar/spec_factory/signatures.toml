@@ -4112,15 +4112,6 @@ confidence = "likely"
 note = "HDR4-2-r: zone radius of the objective in map units, 0.0 if none. Header doc (moved here from ouroboros_sim.h): Radius of objective_idx's zone in map units, 0.0 if the objective has none."
 
 [[symbols]]
-name = "om_objective_is_contested"
-module = "tactical_support.c"
-restype = "int"
-params = [{ name = "w", ctype = "om_world*" }, { name = "objective", ctype = "uint32_t" }]
-epics = ["E-15"]
-confidence = "likely"
-note = "p1 = objective idx. Return == 0 flag."
-
-[[symbols]]
 name = "om_objective_set_center"
 module = "mission.c"
 restype = "int"

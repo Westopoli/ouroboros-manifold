@@ -2452,7 +2452,6 @@ def _bind_e15(lib):
     _bind(lib, "om_mission_set_player_held_structures_count", [W, ctypes.c_int32, ctypes.c_uint32], None, ("w", "faction_id", "held"))
     _bind(lib, "om_mission_setup_extraction_point", [W, ctypes.c_double, ctypes.c_double, ctypes.c_double], None, ("w", "x", "y", "radius"))
     _bind(lib, "om_objective_get_center", [W, ctypes.c_uint32, V], ctypes.c_int, ("w", "objective_idx", "out"))
-    _bind(lib, "om_objective_is_contested", [W, ctypes.c_uint32], ctypes.c_int, ("w", "objective"))
     _bind(lib, "om_objective_setup_drifting", [W, ctypes.c_uint32, ctypes.c_uint64], None, ("w", "objective", "period"))
     _bind(lib, "om_render_get_owner_color", [ctypes.c_int32], ctypes.c_uint32, ("owner",))
     _bind(lib, "om_render_get_structure_silhouette_id", [], ctypes.c_uint32, ())
