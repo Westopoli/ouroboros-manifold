@@ -123,6 +123,21 @@ def sig_blocked_check(project: Path, table: Path) -> tuple[bool, str]:
     return True, "no BLOCKED signatures"
 
 
+def sig_check(project: Path, table: Path) -> tuple[bool, str]:
+    """(ok, detail). Runs `sig_table --check`: fails when --emit would change a file;
+    detail names the stale files."""
+    proc = subprocess.run(
+        [sys.executable, str(Path(__file__).resolve().parent / "sig_table.py"),
+         "--project", str(project), "--table", str(table), "--check"],
+        capture_output=True, text=True)
+    if proc.returncode == 0:
+        return True, "signature artifacts emit-clean"
+    for line in proc.stdout.splitlines():
+        if line.startswith("stale:"):
+            return False, f"sig_table --emit would change: {line[len('stale:'):].strip()}"
+    return False, f"sig_table --check failed (rc={proc.returncode}): {(proc.stdout + proc.stderr).strip()}"
+
+
 def _load_pieces(pieces_path: Path) -> dict[str, dict]:
     data = tomllib.loads(Path(pieces_path).read_text())
     return {p["id"]: p for p in data.get("piece", []) if p.get("id")}
@@ -689,6 +704,10 @@ def main(argv: list[str]) -> int:
     sb.add_argument("--project", default=str(REPO))
     sb.add_argument("--table", default=str(DEFAULT_SIGNATURES))
 
+    sc = sub.add_parser("sig-check")
+    sc.add_argument("--project", default=str(REPO))
+    sc.add_argument("--table", default=None)
+
     ai = sub.add_parser("acceptance-ids")
     ai.add_argument("piece_id")
     ai.add_argument("--pieces", default=str(DEFAULT_PIECES))
@@ -739,6 +758,10 @@ def main(argv: list[str]) -> int:
         ok, detail = gd_class_names_check(Path(args.root))
     elif args.cmd == "sig-blocked":
         ok, detail = sig_blocked_check(Path(args.project), Path(args.table))
+    elif args.cmd == "sig-check":
+        project = Path(args.project)
+        ok, detail = sig_check(project, Path(args.table) if args.table
+                               else project / "docs/northstar/spec_factory/signatures.toml")
     elif args.cmd == "acceptance-verdict":
         pieces = _load_pieces(Path(args.pieces))
         resolved = is_increment(args.piece_id, pieces)

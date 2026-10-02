@@ -664,7 +664,7 @@ def lint_file_violations(
     return messages
 
 
-def cmd_lint(csrc_dir: Path) -> int:
+def cmd_lint(csrc_dir: Path, strict: bool = False) -> int:
     if not csrc_dir.is_dir():
         print(f"csrc dir not found: {csrc_dir}", file=sys.stderr)
         return 2
@@ -677,17 +677,28 @@ def cmd_lint(csrc_dir: Path) -> int:
                  if tree_allowlist.is_file() else load_allowlist())
     messages = []
     exempted_total = 0
+    used_new: set[tuple[str, str, int]] = set()
+    used_legacy: set[tuple[str, int, int, str]] = set()
     for c_file in sorted(csrc_dir.glob("*.c")):
         text = c_file.read_text()
         rel = str(c_file.resolve().relative_to(tree))
         grandfathered = c_file.name in GRANDFATHERED_FILES
         exempt_lines, table_errors = find_constants_table_spans(text, rel)
+        if strict and grandfathered:
+            for lineno, col, token, occurrence in find_violations_with_occurrence(text):
+                if lineno not in exempt_lines:
+                    used_new.add((rel, token, occurrence))
+                    used_legacy.add((rel, lineno, col, token))
         messages.extend(table_errors)
         exempted_total += sum(
             1 for lineno, _col, _token, _occ in find_violations_with_occurrence(text)
             if lineno in exempt_lines
         )
         messages.extend(lint_file_violations(rel, text, allowlist, grandfathered, frozenset(exempt_lines)))
+    if strict:
+        stale = [f"{r}:{t}:{o}" for r, t, o in sorted(allowlist.new - used_new)]
+        stale += [f"{r}:{ln}:{c}:{t}" for r, ln, c, t in sorted(allowlist.legacy - used_legacy)]
+        messages.extend(f"STALE {entry}" for entry in stale)
     for m in messages:
         print(m)
     if messages:
@@ -727,12 +738,14 @@ def main(argv: list[str]) -> int:
     g.add_argument("--lint", metavar="CSRC_DIR", help="lint CSRC_DIR/*.c for bare numeric literals")
     g.add_argument("--gen-allowlist", metavar="CSRC_DIR",
                     help="regenerate the grandfathered-literal allowlist from CSRC_DIR/*.c")
+    ap.add_argument("--strict", action="store_true",
+                    help="with --lint: also fail on allowlist entries matching no current violation")
     args = ap.parse_args(argv)
 
     if args.emit:
         return cmd_emit(Path(args.emit))
     if args.lint:
-        return cmd_lint(Path(args.lint))
+        return cmd_lint(Path(args.lint), args.strict)
     return cmd_gen_allowlist(Path(args.gen_allowlist))
 
 
