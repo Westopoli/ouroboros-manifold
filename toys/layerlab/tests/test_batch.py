@@ -193,7 +193,7 @@ def test_job_order_preserved_with_pool_when_costs_differ(mirror, long_first):
 def _mixed_jobs(mirror, raiders):
     jobs = [_job(mirror, s, {COUNT: 10}) for s in range(5)]
     jobs += [_job(raiders, s, {COUNT: 8 + s}) for s in range(5)]
-    jobs.append(_job(mirror, 9, {COUNT: 200}))                       # an error row in the mix
+    jobs.append(_job(mirror, 9, {COUNT: ffi.MAX_UNITS + 1}))                       # an error row in the mix
     jobs.append({"scenario": _cap(mirror), "seed": 1, "settings": {COUNT: 10}})
     return jobs
 
