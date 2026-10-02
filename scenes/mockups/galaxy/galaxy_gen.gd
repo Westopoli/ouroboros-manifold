@@ -1,10 +1,12 @@
 class_name GalaxyGen
 extends RefCounted
 
-const DISC_RADIUS := 100.0
-const Y_JITTER := 8.0
-const MIN_SPACING := 6.0
-const LINK_RADIUS := 30.0
+# Uniform scale of the whole civilization layer (systems, points, filaments,
+# shells, labels, camera framing); the ambient backdrop rig does not use it.
+const CIV_SCALE := 0.05
+const BALL_RADIUS := 100.0 * CIV_SCALE
+const MIN_SPACING := 6.0 * CIV_SCALE
+const LINK_RADIUS := 30.0 * CIV_SCALE
 const LINK_NEAREST := 3
 const CAPITAL_SIG := 0.85
 const PLAYER_CAPITAL_SIG := 1.0
@@ -37,18 +39,18 @@ func _place_systems(galaxy: Galaxy, rng: RandomNumberGenerator) -> void:
 	var attempts := 0
 	while placed.size() < count and attempts < count * 250:
 		attempts += 1
-		var r := DISC_RADIUS * pow(rng.randf(), 1.6)
+		var r := BALL_RADIUS * pow(rng.randf(), 1.0 / 3.0)
+		var cos_phi := rng.randf_range(-1.0, 1.0)
+		var sin_phi := sqrt(1.0 - cos_phi * cos_phi)
 		var theta := rng.randf() * TAU
-		var x := cos(theta) * r
-		var z := sin(theta) * r
+		var candidate := Vector3(cos(theta) * sin_phi, cos_phi, sin(theta) * sin_phi) * r
 		var ok := true
 		for p in placed:
-			if Vector2(p.x, p.z).distance_to(Vector2(x, z)) < MIN_SPACING:
+			if p.distance_to(candidate) < MIN_SPACING:
 				ok = false
 				break
 		if ok:
-			var y := rng.randf_range(-Y_JITTER, Y_JITTER)
-			placed.append(Vector3(x, y, z))
+			placed.append(candidate)
 	for i in range(placed.size()):
 		galaxy.systems.append({
 			"id": i,

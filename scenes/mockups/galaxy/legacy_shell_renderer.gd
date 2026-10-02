@@ -8,8 +8,8 @@ extends Node3D
 # galaxy_adapter.gd, not the live game's slug ids, so the label just title-
 # cases that key directly instead of consulting a region's own record).
 
-const INFLUENCE_RADIUS := 0.25
-const BOX_MARGIN := 8.0
+const INFLUENCE_RADIUS := 5.0 * GalaxyGen.CIV_SCALE
+const BOX_MARGIN := 8.0 * GalaxyGen.CIV_SCALE
 const ISO_THRESHOLD := 0.6
 const SHELL_RES_DIVISOR := 2
 # The raymarch shader's alpha is boosted up to 2.5x at border seams (rim +
@@ -355,6 +355,7 @@ func _rebuild_faction_shell(faction_id: String) -> void:
 		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 		label.no_depth_test = true
 		label.font_size = 24
+		label.pixel_size = 0.01 * GalaxyGen.CIV_SCALE
 		label.outline_size = 4
 		label.modulate = Color(1, 1, 1, 0)
 		add_child(label)
@@ -367,7 +368,7 @@ func _rebuild_faction_shell(faction_id: String) -> void:
 			label_text = rdata.get("faction_id", faction_id)
 			break
 	label.text = label_text.replace("_", " ").capitalize()
-	label.position = centroid + Vector3(0, 3.0, 0)
+	label.position = centroid + Vector3(0, 3.0 * GalaxyGen.CIV_SCALE, 0)
 	label.outline_modulate = Color(color.r * 0.3, color.g * 0.3, color.b * 0.3, 1.0)
 
 

@@ -6,7 +6,7 @@ uniform int system_count = 0;
 uniform sampler2D rival_positions : filter_nearest;
 uniform int rival_count = 0;
 uniform vec3 shell_color = vec3(0.3, 0.6, 1.0);
-uniform float influence_radius = 0.25;
+uniform float influence_radius = 5.0;
 uniform float iso_threshold = 0.6;
 uniform float shell_opacity = 0.12;
 uniform float gap_strength = 0.8;

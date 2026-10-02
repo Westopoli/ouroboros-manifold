@@ -152,7 +152,7 @@ func _check_seed_2() -> void:
 	var moved := 0
 	var n: int = min(systems11.size(), systems12.size())
 	for i in range(n):
-		if systems11[i].pos.distance_to(systems12[i].pos) > 5.0:
+		if systems11[i].pos.distance_to(systems12[i].pos) > 5.0 * GalaxyGen.CIV_SCALE:
 			moved += 1
 	var ok: bool = systems11.size() != systems12.size() or float(moved) / float(n) >= 0.30
 	_assert(ok, "seed 12 must move >=30%% of systems or change count (moved %d/%d)" % [moved, n])
@@ -175,18 +175,18 @@ func _check_colour_5() -> void:
 # plant: bands-frozen
 func _check_band_6() -> void:
 	var cam := _root.get_node("OrbitCamera")
-	cam.qa_camera(80.0, -1)
+	cam.qa_camera(80.0 * GalaxyGen.CIV_SCALE, -1)
 	_assert(cam.get_band() == "Overview", "distance 80 should be Overview, got %s" % cam.get_band())
-	cam.qa_camera(50.0, -1)
+	cam.qa_camera(50.0 * GalaxyGen.CIV_SCALE, -1)
 	_assert(cam.get_band() == "Regional", "distance 50 should be Regional, got %s" % cam.get_band())
-	cam.qa_camera(20.0, -1)
+	cam.qa_camera(20.0 * GalaxyGen.CIV_SCALE, -1)
 	_assert(cam.get_band() == "Local", "distance 20 should be Local, got %s" % cam.get_band())
 
 
 # plant: pick-radius-zero
 func _check_pick_7() -> void:
 	var cam := _root.get_node("OrbitCamera")
-	cam.qa_camera(20.0, 0)
+	cam.qa_camera(20.0 * GalaxyGen.CIV_SCALE, 0)
 	var px: Vector2 = cam.project(0)
 	_assert(cam.pick_at(px) == 0, "pick at system 0's own projected pixel must return 0")
 	_assert(cam.pick_at(px + Vector2(40, 0)) == -1, "pick 40px away must return -1")
@@ -238,7 +238,7 @@ func _check_adapter_13() -> void:
 	_assert(bad == 0, "%d/%d adapter regions have wrong id/owner vs the generator" % [bad, g.systems.size()])
 
 
-# plant: none (self-test: two replay steps must actually move owners[5],
+# plant: none (self-test: two replay steps must actually move owners[1],
 # otherwise the reset half of this check could never fail)
 func _check_replay_reset_14() -> void:
 	_root.qa_seed(11)
@@ -247,7 +247,7 @@ func _check_replay_reset_14() -> void:
 	_root.qa_replay_step()
 	_root.qa_replay_step()
 	var owners_changed: Dictionary = _root.qa_state().owners
-	_assert(owners_changed[5] != owners_fresh[5], "replay-reset self-test: two replay steps should have changed owners[5]")
+	_assert(owners_changed[1] != owners_fresh[1], "replay-reset self-test: two replay steps should have changed owners[1]")
 	_root.qa_replay_restart()
 	await process_frame
 	var owners_after_restart: Dictionary = _root.qa_state().owners
@@ -296,7 +296,7 @@ func _check_replay_9() -> void:
 	_root.qa_replay_step()
 	_root.qa_replay_step()
 	var after: Dictionary = _root.qa_state().owners
-	_assert(after[5] == before[0], "after the first conquest event, owners[5] must equal owners_before[0]")
+	_assert(after[1] == before[0], "after the first conquest event, owners[1] must equal owners_before[0]")
 
 
 func _check_json_10() -> void:

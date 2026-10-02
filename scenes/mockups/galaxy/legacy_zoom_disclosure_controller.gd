@@ -11,10 +11,10 @@ extends Node
 
 signal band_changed(new_band: String, old_band: String)
 
-var overview_min := 75.0
-var overview_regional_blend := 65.0
-var regional_min := 40.0
-var regional_local_blend := 25.0
+var overview_min := 75.0 * GalaxyGen.CIV_SCALE
+var overview_regional_blend := 65.0 * GalaxyGen.CIV_SCALE
+var regional_min := 40.0 * GalaxyGen.CIV_SCALE
+var regional_local_blend := 25.0 * GalaxyGen.CIV_SCALE
 
 var current_band: String = "regional"
 var blend_factor: float = 0.0

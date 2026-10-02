@@ -2,7 +2,7 @@ extends Node3D
 
 const QaPlants := preload("res://scenes/mockups/_shared/qa_plants.gd")
 
-const POINT_BASE_RADIUS := 1.4
+const POINT_BASE_RADIUS := 1.4 * GalaxyGen.CIV_SCALE
 const NEUTRAL_COLOR := Color(0.55, 0.55, 0.58, 1.0)
 const TRADE_DIM := Color(0.42, 0.44, 0.5, 0.5)
 const FLASH_DURATION := 0.6
@@ -11,7 +11,7 @@ const FLASH_DURATION := 0.6
 # colour instead of desaturating everything past one system-width — part of
 # the pass-2 Local-band framing fix, paired with orbit_camera.gd's wider
 # FOCUS_DISTANCE.
-const LOCAL_FAR_WU := 45.0
+const LOCAL_FAR_WU := 45.0 * GalaxyGen.CIV_SCALE
 
 var _galaxy: Galaxy
 var _points: MultiMeshInstance3D
@@ -68,7 +68,7 @@ func build(galaxy: Galaxy) -> void:
 	_build_points()
 	_populate_wv_data()
 	_build_names()
-	update_view(50.0, -1, -1, -1)
+	update_view(50.0 * GalaxyGen.CIV_SCALE, -1, -1, -1)
 
 
 func get_galaxy() -> Galaxy:
@@ -161,12 +161,13 @@ func _build_names() -> void:
 		var label := Label3D.new()
 		label.name = "Name_%d" % f.id
 		label.text = f.name
-		label.position = sum / float(n) + Vector3(0, 6, 0)
+		label.position = sum / float(n) + Vector3(0, 6.0 * GalaxyGen.CIV_SCALE, 0)
 		label.modulate = owner_color(f.id, _galaxy)
 		label.font_size = 40
 		# default pixel_size (0.01) renders 40px text ~0.4wu tall, invisible
-		# against a ~100wu-radius galaxy; scale it up to read at Overview range.
-		label.pixel_size = 0.05
+		# against a ~100wu-radius galaxy (before CIV_SCALE); scale it up to read at
+		# Overview range.
+		label.pixel_size = 0.05 * GalaxyGen.CIV_SCALE
 		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 		label.no_depth_test = true
 		label.modulate.a = 0.0
@@ -184,19 +185,20 @@ func _build_ambient() -> void:
 
 
 func _band_weights(d: float) -> Dictionary:
+	var s := GalaxyGen.CIV_SCALE
 	var w_local := 0.0
 	var w_regional := 0.0
 	var w_overview := 0.0
-	if d <= 25.0:
+	if d <= 25.0 * s:
 		w_local = 1.0
-	elif d < 40.0:
-		var t := (d - 25.0) / 15.0
+	elif d < 40.0 * s:
+		var t := (d - 25.0 * s) / (15.0 * s)
 		w_local = 1.0 - t
 		w_regional = t
-	elif d <= 65.0:
+	elif d <= 65.0 * s:
 		w_regional = 1.0
-	elif d < 75.0:
-		var t2 := (d - 65.0) / 10.0
+	elif d < 75.0 * s:
+		var t2 := (d - 65.0 * s) / (10.0 * s)
 		w_regional = 1.0 - t2
 		w_overview = t2
 	else:
@@ -278,7 +280,7 @@ func flash(system_id: int, color: Color) -> void:
 	_flash_boost[system_id] = 0.0
 	var ring := MeshInstance3D.new()
 	var quad := QuadMesh.new()
-	quad.size = Vector2(3.0, 3.0)
+	quad.size = Vector2(3.0, 3.0) * GalaxyGen.CIV_SCALE
 	ring.mesh = quad
 	ring.position = _galaxy.systems[system_id].pos
 	var mat := StandardMaterial3D.new()

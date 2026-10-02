@@ -1,6 +1,6 @@
 [
-  {"kind": "attack", "from": 0, "to": 5},
-  {"kind": "conquest", "from": 0, "to": 5},
+  {"kind": "attack", "from": 0, "to": 1},
+  {"kind": "conquest", "from": 0, "to": 1},
   {"kind": "attack", "from": 3, "to": 9},
   {"kind": "revolt", "at": 12},
   {"kind": "attack", "from": 7, "to": 14},

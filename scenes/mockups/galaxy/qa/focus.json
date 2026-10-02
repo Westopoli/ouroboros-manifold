@@ -1,6 +1,6 @@
 [
   ["seed", 11],
-  ["call", "qa_camera", 50, -1],
+  ["call", "qa_camera", 2.5, -1],
   ["click", 179.972961425781, 3225.2568359375],
   ["wait_frames", 60],
   ["state", "focused"],

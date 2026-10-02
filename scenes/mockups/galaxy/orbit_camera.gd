@@ -4,14 +4,15 @@ const QaPlants := preload("res://scenes/mockups/_shared/qa_plants.gd")
 
 signal empty_clicked
 
-const DIST_MIN := 15.0
+const DIST_MIN := 15.0 * GalaxyGen.CIV_SCALE
+# Not scaled: the player can still pull back far enough to see the whole backdrop.
 const DIST_MAX := 120.0
 const ZOOM_STEP_FRACTION := 0.10
 const PITCH_MIN_DEG := 20.0
 const PITCH_MAX_DEG := 85.0
 const PITCH_DEFAULT_DEG := 55.0
-const DIST_DEFAULT := 50.0
-const PAN_SPEED := 0.09
+const DIST_DEFAULT := 50.0 * GalaxyGen.CIV_SCALE
+const PAN_SPEED := 0.09 * GalaxyGen.CIV_SCALE
 const ORBIT_YAW_SPEED := 0.01
 const ORBIT_PITCH_SPEED := 0.1
 const PICK_RADIUS_PX := 14.0
@@ -21,11 +22,11 @@ const PICK_RADIUS_PX := 14.0
 # for neighbouring systems and their filaments to still read (paired with
 # galaxy_view.gd's lower LOCAL_FAR_WU-driven desaturation cutoff and capped
 # local_boost).
-const FOCUS_DISTANCE := 28.0
+const FOCUS_DISTANCE := 28.0 * GalaxyGen.CIV_SCALE
 const FOCUS_DURATION := 1.5
 
-const BAND_SPLIT_LOW := 32.5
-const BAND_SPLIT_HIGH := 70.0
+const BAND_SPLIT_LOW := 32.5 * GalaxyGen.CIV_SCALE
+const BAND_SPLIT_HIGH := 70.0 * GalaxyGen.CIV_SCALE
 
 # Ported from scenes/shared/world_view/cameras/orbital_camera_3d.gd's idle
 # auto-orbit (2026-09-22): six moods drifting distance/pitch/yaw-speed/target
@@ -80,10 +81,10 @@ var _blend_from_offset := Vector3.ZERO
 var _blend_timer := 6.0
 var _blend_duration := 6.0
 var _approach_start_dist := DIST_DEFAULT
-var _approach_end_dist := 30.0
+var _approach_end_dist := 30.0 * GalaxyGen.CIV_SCALE
 var _approach_start_pitch := PITCH_DEFAULT_DEG
 var _approach_end_pitch := 24.0
-var _pullback_end_dist := 90.0
+var _pullback_end_dist := 90.0 * GalaxyGen.CIV_SCALE
 var _pullback_end_pitch := 40.0
 
 @onready var _camera: Camera3D = $Camera3D
@@ -150,7 +151,7 @@ func _update_mood_targets() -> void:
 			_blend_from_dist = _mood_target_dist
 			_blend_from_pitch = _mood_target_pitch
 		CameraMood.DRIFT:
-			_mood_target_offset = Vector3(sin(_mood_time * 0.1) * 3.0, 0.0, cos(_mood_time * 0.1) * 3.0)
+			_mood_target_offset = Vector3(sin(_mood_time * 0.1) * 3.0, 0.0, cos(_mood_time * 0.1) * 3.0) * GalaxyGen.CIV_SCALE
 
 
 func _switch_mood() -> void:
@@ -171,44 +172,44 @@ func _switch_mood() -> void:
 
 	match _current_mood:
 		CameraMood.WIDE_ORBIT:
-			_mood_target_dist = randf_range(70.0, 95.0)
+			_mood_target_dist = randf_range(70.0, 95.0) * GalaxyGen.CIV_SCALE
 			_mood_target_pitch = randf_range(25.0, 45.0)
 			_mood_target_yaw_speed = randf_range(0.008, 0.014)
 			_mood_target_offset = Vector3.ZERO
 			_blend_duration = 6.0
 		CameraMood.RING_FOLLOW:
-			_mood_target_dist = 30.0
+			_mood_target_dist = 30.0 * GalaxyGen.CIV_SCALE
 			_mood_target_pitch = PITCH_MIN_DEG
 			_mood_target_yaw_speed = 0.05
 			_mood_target_offset = Vector3.ZERO
 			_blend_duration = 5.0
 		CameraMood.APPROACH:
 			_approach_start_dist = _distance
-			_approach_end_dist = 30.0
+			_approach_end_dist = 30.0 * GalaxyGen.CIV_SCALE
 			_approach_start_pitch = _pitch_deg
 			_approach_end_pitch = 24.0
 			_mood_target_yaw_speed = 0.006
 			_mood_target_offset = Vector3.ZERO
 			_blend_duration = 4.0
 		CameraMood.DRIFT:
-			_mood_target_dist = randf_range(35.0, 55.0)
+			_mood_target_dist = randf_range(35.0, 55.0) * GalaxyGen.CIV_SCALE
 			_mood_target_pitch = randf_range(25.0, 40.0)
 			_mood_target_yaw_speed = 0.003
 			_mood_target_offset = Vector3.ZERO
 			_blend_duration = 5.0
 		CameraMood.PULLBACK:
 			_approach_start_dist = _distance
-			_pullback_end_dist = randf_range(85.0, 105.0)
+			_pullback_end_dist = randf_range(85.0, 105.0) * GalaxyGen.CIV_SCALE
 			_approach_start_pitch = _pitch_deg
 			_pullback_end_pitch = 40.0
 			_mood_target_yaw_speed = 0.006
 			_mood_target_offset = Vector3.ZERO
 			_blend_duration = 4.0
 		CameraMood.UNDERSIDE:
-			_mood_target_dist = randf_range(35.0, 55.0)
+			_mood_target_dist = randf_range(35.0, 55.0) * GalaxyGen.CIV_SCALE
 			_mood_target_pitch = PITCH_MIN_DEG
 			_mood_target_yaw_speed = 0.003
-			_mood_target_offset = Vector3(0.0, 0.0, 4.0)
+			_mood_target_offset = Vector3(0.0, 0.0, 4.0) * GalaxyGen.CIV_SCALE
 			_blend_duration = 6.0
 
 
