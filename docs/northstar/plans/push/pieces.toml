@@ -155,7 +155,7 @@ acceptance = [
 ]
 depends_on = ["B7", "B8", "B10", "B6-lifecycle", "B6-collapse-pick"]
 # A112: attaches at ed4a95cb, the last pre-B5 generational.c increment (B7-8); S-055 first green at
-# 9d7cfdd8 (B7-7) and stays green through ed4a95cb and main. Architect checks the choice (ledger).
+# 9d7cfdd8 (B7-7) and stays green through ed4a95cb and main. Choice confirmed by the Architect (A122).
 status = { state = "attached", attach_sha = "ed4a95cb" }
 size_estimate = "1 story, S-055 (needs chronicle.c and unit.c both attached)"
 
@@ -807,7 +807,7 @@ wave = 4
 owns = ["csrc/generational.c"]
 owns_glob = []
 # A112 proposal: the three E-09 B5 files (26 tests, all green on main; tests/csim/test_E16_B5_save_version.py adds 5 more, green, not listed as it proves save.c).
-# Stays pending until the Architect confirms the ids; landing commits e9d61211, fd378b22, e81cc6af,
+# Ids confirmed by the Architect (A122); landing commits e9d61211, fd378b22, e81cc6af,
 # 0e92629a, c8daf236.
 acceptance = [
     "tests/csim/test_E09_B5_consequence_entry.py",
@@ -815,7 +815,7 @@ acceptance = [
     "tests/csim/test_E09_B5_consequence_flag_save.py",
 ]
 depends_on = ["A2-contract", "B7"]
-status = "pending"
+status = { state = "attached", attach_sha = "c8daf236" }
 size_estimate = "consequence entry plus chain clusters at jump end (plan B5, E-09)"
 
 # Mission-plays plan B6 (chapter lifecycle at jump end: generator, selector, collapse,
