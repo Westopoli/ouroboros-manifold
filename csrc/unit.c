@@ -896,6 +896,22 @@ static int om_tac_pursue(const om_world *w) {
     return om_tactical_get_param(w, OM_TP_PURSUE_BY_STEERING) != 0.0;
 }
 
+/* The Python counts the backswing down as a float (b = max(0, b - dt), dt = 1/20), which leaves 5.5e-17 after ten
+ * steps and so locks movement one tick longer than 0.5 s * 20; with pursuit by steering the C counts the same way
+ * (less the step the shot is fired in, om_tac_fire_pass runs after that step's countdown). Switch 0 keeps
+ * OM_BACKSWING_TICKS. */
+static uint32_t om_tac_backswing_ticks(const om_world *w) {
+    double left = OM_ATTACK_BACKSWING_SEC, dt = 1.0 / (double)OM_TACTICAL_TICK_RATE;
+    uint32_t n = 0;
+    if (!om_tac_pursue(w)) return OM_BACKSWING_TICKS;
+    while (left > 0.0) {
+        left -= dt;
+        if (left < 0.0) left = 0.0;
+        n++;
+    }
+    return n - 1;
+}
+
 /* R-087-06: the unit returns fire at the lowest-id living same-layer attacker
  * (a cross-layer one only while no same-layer one has hit it). With pursuit
  * by steering off, the last writer wins as it did. */
@@ -921,7 +937,7 @@ static void om_tactical_apply_hit(om_world *w, om_unit_row *attacker, om_unit_ro
     om_tac_note_attacker(w, om_tac(w), target, attacker);
     attacker->cooldown = 0.0;
     attacker->fired = 1;
-    attacker->backswing_ticks_remaining = OM_BACKSWING_TICKS;
+    attacker->backswing_ticks_remaining = om_tac_backswing_ticks(w);
     attacker->backswing_active = 1;
 }
 
@@ -1814,6 +1830,33 @@ static void om_tac_drop_orders(om_unit_row *u) {
     u->halted = 0;
 }
 
+static void om_tac_return_fire(om_world *w, om_tac_state *st, om_unit_row *u, int pursue, int noncombat) {
+    if (u->last_attacker != 0) {
+        om_unit_row *atk = om_registry_find_in(st, u->last_attacker);
+        u->last_attacker = 0;
+        /* PP baseline only (switch = 0): return fire for an idle unit only; see also the pursue term (R-087-06) */
+        if (atk && atk->hp > 0.0 && om_tac_hostile(u, atk)
+            && (u->order == OM_ORDER_NONE || (pursue && u->order == OM_ORDER_ATTACK_MOVE)) && u->target_id == 0) {
+            if (noncombat || atk->layer != u->layer || atk->stealth) {
+                if (u->order == OM_ORDER_NONE) om_tac_start_flinch(u, atk);
+            } else if (om_tac_within(u, atk, u->attack_range)) {
+                u->target_id = atk->unit_id;
+            } else {
+                u->halted = 0;
+                u->order = OM_ORDER_ATTACK_MOVE;
+                u->order_x = atk->x; u->order_y = atk->y;
+                u->issued_x = atk->x; u->issued_y = atk->y;
+                om_command_move(w, &u->unit_id, 1, atk->x, atk->y);
+                /* P6: the Python also targets the attacker and anchors here, so the leash can drop it */
+                if (pursue) {
+                    u->target_id = atk->unit_id;
+                    u->anchor_x = u->x; u->anchor_y = u->y; u->anchor_set = 1;
+                }
+            }
+        }
+    }
+}
+
 static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64_t tick) {
     double dest_x = 0.0, dest_y = 0.0, interval_ticks = u->attack_interval * (double)OM_TACTICAL_TICK_RATE;
     int has_dest = om_unit_get_destination(w, u->unit_id, &dest_x, &dest_y);
@@ -1875,25 +1918,7 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
         }
     }
 
-    if (u->last_attacker != 0) {
-        om_unit_row *atk = om_registry_find_in(st, u->last_attacker);
-        u->last_attacker = 0;
-        /* PP baseline only (switch = 0): return fire for an idle unit only; see also the pursue term (R-087-06) */
-        if (atk && atk->hp > 0.0 && om_tac_hostile(u, atk)
-            && (u->order == OM_ORDER_NONE || (pursue && u->order == OM_ORDER_ATTACK_MOVE)) && u->target_id == 0) {
-            if (noncombat || atk->layer != u->layer || atk->stealth) {
-                if (u->order == OM_ORDER_NONE) om_tac_start_flinch(u, atk);
-            } else if (om_tac_within(u, atk, u->attack_range)) {
-                u->target_id = atk->unit_id;
-            } else {
-                u->halted = 0;
-                u->order = OM_ORDER_ATTACK_MOVE;
-                u->order_x = atk->x; u->order_y = atk->y;
-                u->issued_x = atk->x; u->issued_y = atk->y;
-                om_command_move(w, &u->unit_id, 1, atk->x, atk->y);
-            }
-        }
-    }
+    om_tac_return_fire(w, st, u, pursue, noncombat);
     if (noncombat) { u->target_id = 0; return; }
     if (u->flinching) { u->suppress_auto = 1; return; }
 
@@ -1936,7 +1961,8 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
 
     t = u->target_id != 0 ? om_registry_find_in(st, u->target_id) : NULL;
     if ((u->target_id == 0 || (pursue && t && !om_tac_within(u, t, u->attack_range))) && u->order != OM_ORDER_ATTACK_TARGET
-        && (uint64_t)(u->unit_id % OM_TARGETING_COHORT_COUNT) == tick % OM_TARGETING_COHORT_COUNT) {
+        && (uint64_t)((pursue ? u->unit_id - 1 : u->unit_id) % OM_TARGETING_COHORT_COUNT) == tick % OM_TARGETING_COHORT_COUNT) {
+        /* A140: the Python's cohort is uid % N with 0-based uids; with pursuit by steering the C's 1-based ids are shifted to match */
         t = om_tactical_get_param(w, OM_TP_TARGET_POLICY) == 1.0
             ? om_tac_most_damaged_hostile(st, u, u->attack_range)
             : om_tac_nearest_hostile(st, u, u->attack_range);
@@ -1984,7 +2010,8 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
         }
         /* PP baseline only (switch = 0); deleted with the two movement switches at the end of Phase E (A140) */
         /* See also: the pursue && !u->fired term below is the new path (R-084-01) */
-        if (in_range && (u->cooldown >= interval_ticks - OM_TIE_EPSILON || (pursue && !u->fired))
+        /* See also: om_tac_fire_pass, where the new path fires after this tick's movement (P2) */
+        if (!pursue && in_range && u->cooldown >= interval_ticks - OM_TIE_EPSILON
             && om_combat_can_shoot(w, u->unit_id, t->unit_id)) {
             om_tac_fire(w, u, t);
         }
@@ -2005,6 +2032,33 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
             om_tac_release(w, u);
             if (arrived) om_tac_drop_orders(u);
         }
+    }
+}
+
+/* P2: the Python resolves damage after every unit has moved, so a shot needs the target in range at the end of the
+ * tick. With pursuit by steering the C fires here, once the step's movement has been replayed (om_tactical_step). */
+static void om_tac_fire_pass(om_world *w, om_tac_state *st) {
+    uint32_t i;
+    for (i = 0; i < st->n_units; i++) {
+        om_unit_row *u = &st->units[i], *t;
+        double interval_ticks = u->attack_interval * (double)OM_TACTICAL_TICK_RATE;
+        if (!u->in_use || u->hp <= 0.0 || u->target_id == 0 || u->flinching) continue;
+        t = om_registry_find_in(st, u->target_id);
+        if (t && t->hp > 0.0 && om_tac_within(u, t, u->attack_range)
+            && (u->cooldown >= interval_ticks - OM_TIE_EPSILON || !u->fired)
+            && om_combat_can_shoot(w, u->unit_id, t->unit_id)) {
+            om_tac_fire(w, u, t);
+        }
+    }
+    /* the Python's return fire is applied at the end of the same damage pass, not at the victim's next turn */
+    for (i = 0; i < st->n_units; i++) {
+        om_unit_row *u = &st->units[i];
+        double dest_x = 0.0, dest_y = 0.0;
+        int plain_move;
+        if (!u->in_use || u->hp <= 0.0 || u->last_attacker == 0) continue;
+        plain_move = u->order == OM_ORDER_NONE && om_unit_get_destination(w, u->unit_id, &dest_x, &dest_y)
+                     && !om_tac_dist_le(dest_x - u->x, dest_y - u->y, OM_TIE_EPSILON);
+        if (!plain_move) om_tac_return_fire(w, st, u, 1, om_tac_noncombat(u));
     }
 }
 
@@ -2036,6 +2090,10 @@ uint64_t om_tactical_step(om_world *w) {
     om_tactical_apply_aura_regen(w);
     om_tactical_advance_backswing(st);
     om_ability_advance_all(w);
+    if (om_tac_pursue(w)) {
+        om_tac_refresh_positions(w, st);
+        om_tac_fire_pass(w, st);
+    }
     om_macro_tick(w, st->current_tick);
     om_support_tick(w);
     om_mission_tactical_tick(w);
@@ -2404,7 +2462,7 @@ void om_unit_deal_damage(om_world *w, uint32_t p1, uint32_t p2, double p3) {
     /* ALG-60: "after firing the unit's movement pauses ATTACK_BACKSWING_SEC"
      * -- any landed hit through this path (auto-fire, manual command, or a
      * test driving the attack directly) pauses the attacker the same way. */
-    attacker->backswing_ticks_remaining = OM_BACKSWING_TICKS;
+    attacker->backswing_ticks_remaining = om_tac_backswing_ticks(w);
     attacker->backswing_active = 1;
 }
 
@@ -2470,7 +2528,7 @@ void om_unit_fire_aoe_attack(om_world *w, uint32_t attacker_id, uint32_t target_
     }
     attacker->cooldown = 0.0;
     attacker->fired = 1;
-    attacker->backswing_ticks_remaining = OM_BACKSWING_TICKS;
+    attacker->backswing_ticks_remaining = om_tac_backswing_ticks(w);
     attacker->backswing_active = 1;
 }
 
