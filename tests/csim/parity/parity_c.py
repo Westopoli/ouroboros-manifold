@@ -18,8 +18,8 @@ import ctypes
 import subprocess
 from pathlib import Path
 
-from parity_compare import Trace, TWO_PI
-from parity_scenes import CUSTOM_TYPES
+from .parity_compare import Trace, TWO_PI
+from .parity_scenes import CUSTOM_TYPES
 
 REPO = Path(__file__).resolve().parents[3]
 LIB_PATH = REPO / "libouroboros.so"

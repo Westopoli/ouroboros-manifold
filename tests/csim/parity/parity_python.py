@@ -29,8 +29,8 @@ import sys
 import types
 from pathlib import Path
 
-from parity_compare import Trace, TWO_PI
-from parity_scenes import CUSTOM_TYPES
+from .parity_compare import Trace, TWO_PI
+from .parity_scenes import CUSTOM_TYPES
 
 REPO = Path(__file__).resolve().parents[3]
 SIM_DIR = REPO / "simulation"

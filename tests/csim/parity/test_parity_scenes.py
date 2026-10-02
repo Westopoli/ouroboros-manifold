@@ -12,11 +12,11 @@ The comparator and the fixture are proven by test_parity_harness.py (positive co
 """
 import pytest
 
-import parity_c
-import parity_python
-from parity_compare import compare
-from parity_scenes import SCENES, SIX
-from parity_tolerance import PARITY_FACING_TOLERANCE, PARITY_TOLERANCE
+from . import parity_c
+from . import parity_python
+from .parity_compare import compare
+from .parity_scenes import SCENES, SIX
+from .parity_tolerance import PARITY_FACING_TOLERANCE, PARITY_TOLERANCE
 
 _PY = {}
 

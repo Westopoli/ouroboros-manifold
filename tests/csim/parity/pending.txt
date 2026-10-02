@@ -1,0 +1,7 @@
+# PP pending list (Architect ruling A135, rulings-2 Addendum 46).
+# One pytest node id per line, relative to the repo root as pytest prints it.
+# Every listed test is marked strict expected-failure ("PP pending: code not
+# built yet"): when it starts passing it FAILS until its line is removed here.
+# Each wave's landing removes its own lines in the same merge.
+# Nothing else may be put on this list: a test failing for any other reason
+# is a finding, not a pending line.
