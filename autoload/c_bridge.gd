@@ -162,6 +162,9 @@ func list_saves() -> Array:
 # can only load into a world with the save's region count, so the session is
 # first opened for that world from the sidecar's seed and n_regions.
 func load(slot_id: String) -> Dictionary:
+	# A59: timelines are memory-only, so a load leaves no chronicle frame.
+	_chronicle = {}
+	_chronicle_snapshot = {}
 	var path := saves_dir().path_join(slot_id + ".omsave")
 	var sidecar = JSON.parse_string(FileAccess.get_file_as_string(path + ".json"))
 	if not (sidecar is Dictionary) or not sidecar.has("seed") or not sidecar.has("n_regions"):
