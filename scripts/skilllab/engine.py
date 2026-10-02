@@ -105,6 +105,8 @@ class Engine:
             "om_tactical_get_param": ([V, i], d),
             "om_tactical_set_param": ([V, i, d], i),
             "om_combat_can_shoot": ([V, u32, u32], i),
+            "om_unit_can_see": ([V, u32, u32], i),
+            "om_unit_clear_orders": ([V, u32], None),
             "om_map_add_obstacle": ([V, d, d, d], u32),
         }
         for name, (argtypes, restype) in sigs.items():
@@ -162,6 +164,13 @@ class Engine:
     def _order(fn, w, unit_ids, x, y):
         ids = [int(u) for u in unit_ids]
         fn(w, (ctypes.c_uint32 * len(ids))(*ids), len(ids), float(x), float(y))
+
+    def can_see(self, w, observer, target):
+        return bool(self._lib.om_unit_can_see(w, int(observer), int(target)))
+
+    def clear_orders(self, w, unit_ids):
+        for u in unit_ids:
+            self._lib.om_unit_clear_orders(w, int(u))
 
     def step(self, w):
         self._lib.om_tactical_step(w)

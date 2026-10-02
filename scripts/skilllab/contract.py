@@ -26,6 +26,14 @@ class Group:
 
 
 @dataclass(frozen=True)
+class Step:
+    group: int                # index into Setup.groups
+    when: tuple               # ("tick", n) | ("arrive", radius) | ("seen",)
+    order: str                # "attack_move" | "move" | "idle" (idle clears the group's orders)
+    goal: Optional[tuple] = None   # None means the first anchor of the other side, as for Group.goal; ignored for idle
+
+
+@dataclass(frozen=True)
 class Setup:
     groups: tuple
     unit_types: dict          # name -> stats; see spec AC 5 (full stats, or base + scale/set)
@@ -35,6 +43,7 @@ class Setup:
     sample_every: int = 5     # ticks between firing-count samples
     trace: bool = False       # True records FightResult.trace
     settings: dict = field(default_factory=dict)   # OM_TP_* name -> number, set on the world before tick 1
+    timeline: tuple = ()      # Steps issuing later orders; listed order matters
 
 
 @dataclass
@@ -49,6 +58,7 @@ class FightResult:
     firing: list              # [(tick, able0, able1), ...]
     firing_unit_seconds: tuple
     trace: Optional[list] = None   # [(tick, unit, x, y, target, facing, alive), ...] when Setup.trace, else None
+    steps_fired: tuple = ()   # ((step_index, tick), ...) in firing order
 
 
 @dataclass

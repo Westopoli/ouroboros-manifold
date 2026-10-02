@@ -4,6 +4,7 @@ import random
 from scripts.skilllab.contract import SHIFT_MAX, TICKS_PER_SECOND, FightResult
 from scripts.skilllab.firing import count_able
 from scripts.skilllab.formations import place
+from scripts.skilllab.timeline import Timeline, first_anchors, validate
 
 FIRST_CUSTOM_TYPE_ID = 100
 
@@ -51,9 +52,7 @@ def _spawn_side(engine, w, setup, side, types, rng, ids_by_group, ranges):
 
 
 def _issue_orders(engine, w, setup, ids_by_group):
-    first_anchor = {}
-    for g in setup.groups:
-        first_anchor.setdefault(g.side, (g.x, g.y))
+    first_anchor, goals = first_anchors(setup), {}
     for gi, g in enumerate(setup.groups):
         if g.order == "idle":
             continue
@@ -64,6 +63,8 @@ def _issue_orders(engine, w, setup, ids_by_group):
             engine.order_move(w, ids_by_group[gi], goal[0], goal[1])
         else:
             raise ValueError("unknown order %r" % (g.order,))
+        goals[gi] = goal
+    return goals
 
 
 def fight(setup, seed=0, swap=False, engine=None):
@@ -72,6 +73,7 @@ def fight(setup, seed=0, swap=False, engine=None):
         raise ValueError("each side needs at least one unit, got headcounts %r" % (heads,))
     if min(setup.max_ticks, setup.stalemate_ticks, setup.sample_every) < 1:
         raise ValueError("max_ticks, stalemate_ticks and sample_every must each be at least 1")
+    validate(setup)
     if engine is None:
         from scripts.skilllab.engine import Engine
         engine = Engine()
@@ -86,11 +88,12 @@ def fight(setup, seed=0, swap=False, engine=None):
         rng, ids_by_group, ranges = random.Random(seed), {}, {}
         for side in ((1, 0) if swap else (0, 1)):
             _spawn_side(engine, w, setup, side, types, rng, ids_by_group, ranges)
-        _issue_orders(engine, w, setup, ids_by_group)
+        goals = _issue_orders(engine, w, setup, ids_by_group)
         side_ids = tuple([u for gi, g in enumerate(setup.groups) if g.side == s for u in ids_by_group[gi]]
                          for s in (0, 1))
         start_hp = {u: engine.unit_hp(w, u) for ids in side_ids for u in ids}
-        return _run(engine, w, setup, side_ids, start_hp, ranges, heads)
+        timeline = Timeline(engine, w, setup, ids_by_group, goals)
+        return _run(engine, w, setup, side_ids, start_hp, ranges, heads, timeline)
     finally:
         engine.free_world(w)
 
@@ -99,7 +102,7 @@ def _strength(hp, ids, start_hp, head):
     return sum(hp[u] / start_hp[u] for u in ids if hp[u] > 0) / head
 
 
-def _run(engine, w, setup, side_ids, start_hp, ranges, heads):
+def _run(engine, w, setup, side_ids, start_hp, ranges, heads, timeline):
     hp = dict(start_hp)
     living = [u for ids in side_ids for u in ids]
     firing, tick, quiet, outcome = [], 0, 0, None
@@ -122,6 +125,7 @@ def _run(engine, w, setup, side_ids, start_hp, ranges, heads):
     sample()
     if trace is not None:
         record()
+    timeline.check(0, hp, zero=True)
     while outcome is None:
         engine.step(w)
         tick += 1
@@ -131,6 +135,7 @@ def _run(engine, w, setup, side_ids, start_hp, ranges, heads):
             if h != hp[u]:
                 hp[u], changed = h, True
         living = [u for u in living if hp[u] > 0]
+        timeline.check(tick, hp)
         quiet = 0 if changed else quiet + 1
         if trace is not None:
             record()
@@ -153,4 +158,5 @@ def _run(engine, w, setup, side_ids, start_hp, ranges, heads):
     contact = next((t for t, a0, a1 in firing if a0 + a1 > 0), -1)
     return FightResult(outcome=outcome, margin=strength[0] - strength[1], strength_left=strength,
                        survivors=tuple(alive), heads=heads, ticks=tick, first_contact_tick=contact,
-                       firing=firing, firing_unit_seconds=seconds, trace=trace)
+                       firing=firing, firing_unit_seconds=seconds, trace=trace,
+                       steps_fired=tuple(timeline.fired))
