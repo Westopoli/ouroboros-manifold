@@ -721,6 +721,9 @@ void om_unit_order_hold_node(om_world *w, uint32_t unit_id, uint32_t node_id) {
 /* Defined in tactical_move.c, which clamps positions to the canvas size.
  * See also: om_move_set_canvas_size in csrc/tactical_move.c. */
 void om_move_set_canvas_size(om_world *w, double width, double height);
+/* See also: om_move_terrain_changed in csrc/tactical_move.c (bumps the route-cache epoch so cached routes
+ * are not reused after the grid changes, R-207-03). */
+void om_move_terrain_changed(om_world *w);
 
 void om_map_clear(om_world *w) {
     if (!w) return;
@@ -765,6 +768,7 @@ int om_map_block_rect(om_world *w, double x0, double y0, double x1, double y1, u
     for (l = layer_lo; l <= layer_hi; l++)
         for (cy = cy0; cy <= cy1; cy++)
             for (cx = cx0; cx <= cx1; cx++) om_mgs_set_bit(st, l, cx, cy, 1);
+    om_move_terrain_changed(w);
     return 0;
 }
 /* ---- end generated stubs ---- */
