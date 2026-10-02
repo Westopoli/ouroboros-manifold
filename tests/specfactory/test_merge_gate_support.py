@@ -876,3 +876,112 @@ def test_cli_footprint_exit_codes(tmp_path):
     )
     assert proc.returncode == 0
     assert proc.stdout.startswith("OK")
+
+
+# ------------------------------------------- scale-gated tests (Addendum 34, A98) --
+# spec: docs/northstar/plans/2026-10-01-architect-rulings-2.md A98.
+# Contract under test: regression_check counts skipped testcases under
+# tests/csim/scale/ whose skip reason names OM_SCALE on their own line
+# ("scale-gated: N" in detail; RunResult.scale_gated holds their node ids),
+# NOT in `skipped`; each must be named in the scale ledger list
+# (mgs.SCALE_LIST_REL, read from the CANDIDATE tree, one node id per line,
+# `#` comments allowed) or the gate rejects, naming the id. An ordinary skip
+# (any other reason or location) still rejects through skipped_increase.
+
+SCALE_TEST = (
+    "import pytest\n"
+    "pytestmark = pytest.mark.skip(reason='scale suite gated behind OM_SCALE=1')\n"
+    "def test_budget():\n    assert 1 == 2\n"
+)
+SCALE_ID = "tests/csim/scale/test_scale_synth.py::test_budget"
+
+
+def _scale_candidate(tmp_path, *, scale_text=None, list_text=None, extra=None):
+    """Base = one passing test; candidate adds a scale test, a list file,
+    and/or `extra` {relpath: text}. Returns (ok, detail, report)."""
+    repo = _init_pytest_repo(tmp_path / "repo", test_text=GOOD_TEST)
+    base_sha = _git(repo, "rev-parse", "HEAD").stdout.strip()
+    files = dict(extra or {})
+    if scale_text is not None:
+        files["tests/csim/scale/test_scale_synth.py"] = scale_text
+    if list_text is not None:
+        files[mgs.SCALE_LIST_REL] = list_text
+    for rel, text in files.items():
+        p = repo / rel
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(text)
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "candidate")
+    return mgs.regression_check(repo, base_sha, ["."], python_exe=PYTHON, worktree_root=tmp_path)
+
+
+def test_positive_control_scale_test_missing_from_list_rejected(tmp_path):
+    ok, detail, report = _scale_candidate(tmp_path, scale_text=SCALE_TEST)
+    assert ok is False
+    assert SCALE_ID in detail and "scale" in detail
+    assert report.skipped_increase == 0  # counted on its own line, not as a skip
+
+
+def test_scale_test_named_in_list_accepted_and_counted_on_own_line(tmp_path):
+    ok, detail, report = _scale_candidate(
+        tmp_path, scale_text=SCALE_TEST,
+        list_text=f"# scale-gated tests\n{SCALE_ID}\n")
+    assert ok is True, detail
+    assert report.skipped_increase == 0
+    assert list(report.after.scale_gated) == [SCALE_ID]
+    assert "scale-gated: 1" in detail
+
+
+def test_positive_control_plain_skip_outside_scale_dir_rejected(tmp_path):
+    ok, detail, report = _scale_candidate(tmp_path, extra={
+        "test_plain_skip.py": "import pytest\n@pytest.mark.skip(reason='later')\ndef test_x():\n    pass\n"})
+    assert ok is False
+    assert report.skipped_increase == 1
+    assert "skipped +1" in detail
+
+
+def test_positive_control_om_scale_reason_outside_scale_dir_is_ordinary_skip(tmp_path):
+    """Naming OM_SCALE in a skip reason elsewhere is not a way around the
+    skip count: only tests/csim/scale/ is exempt, and only via the list."""
+    ok, detail, report = _scale_candidate(
+        tmp_path, list_text="test_om_scale_elsewhere.py::test_x\n", extra={
+            "test_om_scale_elsewhere.py":
+                "import pytest\n@pytest.mark.skip(reason='gated behind OM_SCALE=1')\ndef test_x():\n    pass\n"})
+    assert ok is False
+    assert report.skipped_increase == 1
+
+
+def test_positive_control_plain_skip_inside_scale_dir_rejected(tmp_path):
+    """A skip in tests/csim/scale/ whose reason does not name OM_SCALE is not
+    scale-gated; listing it does not launder it."""
+    ok, detail, report = _scale_candidate(
+        tmp_path, list_text="tests/csim/scale/test_plain.py::test_x\n", extra={
+            "tests/csim/scale/test_plain.py":
+                "import pytest\n@pytest.mark.skip(reason='later')\ndef test_x():\n    pass\n"})
+    assert ok is False
+    assert report.skipped_increase == 1
+
+
+def test_positive_control_xfail_increase_still_rejected(tmp_path):
+    ok, detail, report = _scale_candidate(
+        tmp_path, scale_text=SCALE_TEST, list_text=f"{SCALE_ID}\n", extra={
+            "test_xf.py": "import pytest\n@pytest.mark.xfail(reason='x')\ndef test_x():\n    assert 1 == 2\n"})
+    assert ok is False
+    assert report.xfailed_increase == 1
+    assert "xfailed +1" in detail
+
+
+def test_real_repo_scale_list_names_every_scale_gated_test_present_today():
+    """Baseline expectation about this repo: every test collected under
+    tests/csim/scale/ (all gated by OM_SCALE when it is unset) is named in the
+    scale ledger list, including the three E-13 siege-breaking tests (the two
+    budget misses of A93 and the control)."""
+    listed = {ln.strip() for ln in (REPO / mgs.SCALE_LIST_REL).read_text().splitlines()
+              if ln.strip() and not ln.lstrip().startswith("#")}
+    proc = subprocess.run([PYTHON, "-m", "pytest", "--collect-only", "-q", "-p", "no:cacheprovider",
+                           "tests/csim/scale"], cwd=REPO, capture_output=True, text=True)
+    present = {ln.strip() for ln in proc.stdout.splitlines() if "::" in ln}
+    assert len(present) >= 50, proc.stdout[-500:]
+    assert present - listed == set()
+    siege = [i for i in present if "test_scale_E13_siege_breaking.py" in i]
+    assert len(siege) == 3 and set(siege) <= listed
