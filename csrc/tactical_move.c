@@ -890,8 +890,9 @@ static om_move_unit *om_move_touch(om_world *w, om_move_state *ms, uint32_t unit
 }
 
 static void om_move_discover(om_world *w, om_move_state *ms) {
-    uint32_t id;
-    for (id = 1; id < OM_MOVE_MAX_UNITS; id++) {
+    uint32_t id, last = om_unit_count(w); /* rows are never freed, so the count is the highest id */
+    if (last >= OM_MOVE_MAX_UNITS) last = OM_MOVE_MAX_UNITS - 1;
+    for (id = 1; id <= last; id++) {
         if (om_unit_alive(w, id)) {
             om_move_touch(w, ms, id);
         }
