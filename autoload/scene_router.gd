@@ -16,7 +16,7 @@ const SCENES := {
 	"settings": "res://scenes/settings/settings.tscn",
 	"galaxy": "res://scenes/galaxy/galaxy_view.tscn",
 	"tactical_c": "res://scenes/tactical_c/tactical_view.tscn",
-	"chronicle": "res://scenes/world/chronicle_scroll_panel.tscn",
+	"chronicle": "res://scenes/world/chronicle_composite.tscn",
 }
 
 var _back_stack: Array[Dictionary] = []
