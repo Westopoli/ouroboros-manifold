@@ -5,45 +5,45 @@ const FactionInfoPanelScene := preload("res://scenes/world/faction_info_panel.ts
 const MOCK_FACTIONS := [
 	{
 		"meta": {
-			"id": "f_alpha", "name": "Dominion of Vaer",
+			"id": "1", "label": "Dominion of Vaer",
 			"archetype": "expansionist", "tech_tier": 3,
 			"status": "Rising",
 			"aggregates": {"military": 312, "economy": 248, "tension": 145, "population": 426},
 		},
 		"count": 12, "total": 24,
 		"regions": [
-			{"region_id": "r_01", "name": "Veraxis Reach",   "tier": "home"},
-			{"region_id": "r_02", "name": "Tepan-Dazur",      "tier": "frontier"},
-			{"region_id": "r_03", "name": "Hollow Span",      "tier": "frontier"},
-			{"region_id": "r_04", "name": "Skarath Umal",     "tier": "frontier"},
-			{"region_id": "r_05", "name": "Pellis Veil",      "tier": "empty"},
-			{"region_id": "r_06", "name": "Carrion Approach", "tier": "frontier"},
-			{"region_id": "r_07", "name": "Mereth Span",      "tier": "frontier"},
-			{"region_id": "r_08", "name": "Dravhon Sereth",   "tier": "frontier"},
-			{"region_id": "r_09", "name": "Eastern Drift",    "tier": "empty"},
-			{"region_id": "r_10", "name": "Lattice Five",     "tier": "frontier"},
-			{"region_id": "r_11", "name": "Old Kestrel Hold", "tier": "home"},
-			{"region_id": "r_12", "name": "Threnody Gap",     "tier": "empty"},
+			{"region_id": "r_01", "tier": "home"},
+			{"region_id": "r_02", "tier": "frontier"},
+			{"region_id": "r_03", "tier": "frontier"},
+			{"region_id": "r_04", "tier": "frontier"},
+			{"region_id": "r_05", "tier": "empty"},
+			{"region_id": "r_06", "tier": "frontier"},
+			{"region_id": "r_07", "tier": "frontier"},
+			{"region_id": "r_08", "tier": "frontier"},
+			{"region_id": "r_09", "tier": "empty"},
+			{"region_id": "r_10", "tier": "frontier"},
+			{"region_id": "r_11", "tier": "home"},
+			{"region_id": "r_12", "tier": "empty"},
 		],
 	},
 	{
 		"meta": {
-			"id": "f_beta", "name": "Kestrel Compact",
+			"id": "2", "label": "Kestrel Compact",
 			"archetype": "balanced", "tech_tier": 2,
 			"status": "Waning",
 			"aggregates": {"military": 78, "economy": 95, "tension": 130, "population": 142},
 		},
 		"count": 4, "total": 24,
 		"regions": [
-			{"region_id": "r_13", "name": "Iron Marches",   "tier": "home"},
-			{"region_id": "r_14", "name": "Suvun Cradle",   "tier": "frontier"},
-			{"region_id": "r_15", "name": "Lower Pellid",   "tier": "frontier"},
-			{"region_id": "r_16", "name": "Empty Reach IX", "tier": "empty"},
+			{"region_id": "r_13", "tier": "home"},
+			{"region_id": "r_14", "tier": "frontier"},
+			{"region_id": "r_15", "tier": "frontier"},
+			{"region_id": "r_16", "tier": "empty"},
 		],
 	},
 	{
 		"meta": {
-			"id": "f_gamma", "name": "Outer Spiral",
+			"id": "3", "label": "Outer Spiral",
 			"archetype": "raider", "tech_tier": 1,
 			"status": "Defeated",
 			"aggregates": {},
@@ -124,7 +124,7 @@ func _build_ui() -> void:
 
 		var caption := Label.new()
 		caption.text = "%s · %d / %d regions · vivacity %.2f" % [
-			f["meta"]["name"], f["count"], f["total"],
+			f["meta"]["label"], f["count"], f["total"],
 			FactionPalette.vivacity_for(fid),
 		]
 		caption.add_theme_font_size_override("font_size", 10)

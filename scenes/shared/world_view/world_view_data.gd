@@ -28,8 +28,8 @@ var territories: Dictionary = {}
 var highlight_id: String = ""
 
 # Stage 11g — additive metadata stores. Empty until a producer populates them.
-var regions_metadata: Dictionary = {}  # rid → {name, tier, military, economy, tension, population, previous_owners}
-var factions: Dictionary = {}          # fid → {name, archetype, tech_tier, region_ids, aggregates, history}
+var regions_metadata: Dictionary = {}  # rid → {region_id, tier, military, economy, tension, population, previous_owners}
+var factions: Dictionary = {}          # fid → {id, archetype, tech_tier, region_ids, aggregates, history}
 var _faction_centroid_cache: Dictionary = {}
 
 

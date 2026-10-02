@@ -4,12 +4,12 @@ const InfoPanelHostScene := preload("res://scenes/world/info_panel_host.tscn")
 
 const REGIONS := {
 	"r_01": {
-		"name": "Veraxis Reach", "tier": "home",
+		"region_id": "1", "tier": "home",
 		"military": 72, "economy": 81, "tension": 38, "population": 64,
 		"stability": 78, "capacity": 82,
 	},
 	"r_05": {
-		"name": "Pellis Veil", "tier": "empty",
+		"region_id": "5", "tier": "empty",
 		"military": 12, "economy": 18, "tension": 22, "population": 8,
 		"stability": 41, "capacity": 28,
 	},
@@ -18,27 +18,27 @@ const REGIONS := {
 const FACTIONS := {
 	"f_alpha": {
 		"meta": {
-			"id": "f_alpha", "name": "Dominion of Vaer",
+			"id": "1", "label": "Dominion of Vaer",
 			"archetype": "expansionist", "tech_tier": 3,
 			"status": "Rising",
 			"aggregates": {"military": 312, "economy": 248, "tension": 145, "population": 426},
 		},
 		"regions": [
-			{"region_id": "r_01", "name": "Veraxis Reach", "tier": "home"},
-			{"region_id": "r_02", "name": "Tepan-Dazur",   "tier": "frontier"},
-			{"region_id": "r_05", "name": "Pellis Veil",   "tier": "empty"},
+			{"region_id": "r_01", "tier": "home"},
+			{"region_id": "r_02", "tier": "frontier"},
+			{"region_id": "r_05", "tier": "empty"},
 		],
 	},
 	"f_beta": {
 		"meta": {
-			"id": "f_beta", "name": "Kestrel Compact",
+			"id": "2", "label": "Kestrel Compact",
 			"archetype": "balanced", "tech_tier": 2,
 			"status": "Waning",
 			"aggregates": {"military": 78, "economy": 95, "tension": 130, "population": 142},
 		},
 		"regions": [
-			{"region_id": "r_13", "name": "Iron Marches", "tier": "home"},
-			{"region_id": "r_14", "name": "Suvun Cradle", "tier": "frontier"},
+			{"region_id": "r_13", "tier": "home"},
+			{"region_id": "r_14", "tier": "frontier"},
 		],
 	},
 }
@@ -144,8 +144,8 @@ func _open_region(rid: String, fid: String) -> void:
 		return
 	var faction_meta: Dictionary = FACTIONS[fid]["meta"]
 	var color: Color = FactionPalette.get_display_color(fid)
-	_host.open_region(rid, meta, fid, String(faction_meta.get("name", fid)), color,
-		"Held by %s for 23y. Previously: —." % faction_meta.get("name", fid))
+	_host.open_region(rid, meta, fid, String(faction_meta.get("label", fid)), color,
+		"Held by %s for 23y. Previously: —." % faction_meta.get("label", fid))
 
 
 func _open_faction(fid: String) -> void:

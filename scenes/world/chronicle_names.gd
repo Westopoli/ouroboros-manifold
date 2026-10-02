@@ -2,10 +2,12 @@ extends RefCounted
 
 # Chronicle name registry. Resolves region/faction/lineage ref ids to
 # placeholder name strings using the tables from library/chronicle/fragments.json.
-# Unknown ids and negative ids render a safe placeholder; never crash.
+# Only the structural-line fallback of A73. Unowned (negative faction id) reads the
+# sim's wording (csrc/chronicle.c chron_faction_name); other unknown ids render a
+# safe placeholder; never crash.
 
 const SAFE_REGION := "[region]"
-const SAFE_FACTION := "[faction]"
+const UNOWNED_FACTION := "an unclaimed people"
 const SAFE_LINEAGE := "[lineage]"
 
 var _region_names: Array = []
@@ -50,8 +52,10 @@ func _region_name(region_id: int) -> String:
 
 
 func _faction_name(faction_id: int) -> String:
-	if _faction_names.is_empty() or faction_id < 0:
-		return SAFE_FACTION
+	if faction_id < 0:
+		return UNOWNED_FACTION
+	if _faction_names.is_empty():
+		return "[faction]"
 	return str(_faction_names[faction_id % _faction_names.size()])
 
 
