@@ -1721,6 +1721,15 @@ static void om_move_terrain_guard(const om_world *w, om_move_state *ms, om_move_
     *ny = mu->y;
 }
 
+/* R-095-01, R-095-06 (Q-095-01; PURSUE_BY_STEERING): a group member moves at the group's slowest pace, except a unit
+ * whose movement ability has it faster than its own base speed, which leaves the cap. */
+static double om_move_member_pace(om_world *w, const om_move_unit *mu, uint32_t id) {
+    double eff = om_unit_effective_speed(w, id);
+    if (mu->group_id == 0) return eff;
+    if (om_tactical_get_param(w, OM_TP_PURSUE_BY_STEERING) != 0.0 && eff > om_unit_profile_speed(w, om_unit_get_unit_type(w, id))) return eff;
+    return mu->speed_cap;
+}
+
 /* PP-move P8, P7 (R-097-03, R-097-04, ALG-68, R-099-04): one unit's move under PURSUE_BY_STEERING, as the
  * Python's update_movement does it. Arrival is the slot radius, with no snap; the seek heading is the
  * unit vector to the destination; a blocked straight probe sweeps +30, -30, +60, -60, +90, -90 degrees
@@ -1773,7 +1782,7 @@ static void om_move_steer_step(om_world *w, om_move_state *ms, om_move_unit *mu,
             }
         }
     }
-    step_dist = ((mu->group_id != 0) ? mu->speed_cap : om_unit_effective_speed(w, id))
+    step_dist = om_move_member_pace(w, mu, id)
               * om_move_terrain_multiplier(om_move_density_at_pos(ms, mu->x, mu->y, route ? (uint32_t)om_move_layer(w, id) : 0))
               * (double)period / (double)OM_TACTICAL_TICK_RATE;
     move_dist = step_dist < dist ? step_dist : dist;
@@ -2462,8 +2471,7 @@ double om_unit_get_current_speed(const om_world *w, uint32_t p0) {
     if (mu->kiting) return om_unit_effective_speed(ww, p0);
     if (om_move_is_stationary(mu)) return 0.0;
     if (mu->waiting) return 0.0;
-    if (mu->group_id != 0) return mu->speed_cap;
-    return om_unit_effective_speed(ww, p0);
+    return om_move_member_pace(ww, mu, p0);
 }
 
 int om_unit_get_destination(const om_world *w, uint32_t p0, double *p1, double *p2) {
@@ -2649,20 +2657,37 @@ int om_unit_profile_reach(const om_world *w, int unit_type, uint32_t *up, uint32
     return 0;
 }
 uint32_t om_unit_get_group_id(const om_world *w, uint32_t unit) {
-    /* STUB */
-    (void)w; (void)unit;
-    return 0;
+    const om_move_state *ms;
+    if (!w) return 0;
+    om_move_sync((om_world *)w);
+    ms = om_ms((om_world *)w);
+    return (unit < OM_MOVE_MAX_UNITS && ms->units[unit].in_use) ? ms->units[unit].group_id : 0;
 }
 
+/* See also: om_tac_unit_leash_anchor in unit.c, which owns the anchor */
+int om_tac_unit_leash_anchor(const om_world *w, uint32_t unit_id, double *x, double *y);
+
 int om_unit_get_leash_anchor(const om_world *w, uint32_t unit, double *x, double *y) {
-    /* STUB */
-    (void)w; (void)unit; (void)x; (void)y;
-    return 0;
+    return w ? om_tac_unit_leash_anchor(w, unit, x, y) : 0;
 }
 
 int om_unit_get_engaged(const om_world *w, uint32_t unit) {
-    /* STUB */
-    (void)w; (void)unit;
-    return 0;
+    const om_move_state *ms;
+    if (!w) return 0;
+    om_move_sync((om_world *)w);
+    ms = om_ms((om_world *)w);
+    return (unit < OM_MOVE_MAX_UNITS && ms->units[unit].in_use) ? ms->units[unit].engaged : 0;
+}
+
+/* See also: om_tac_release in unit.c: a held attack-move group member goes back to its slot with its group and cap */
+int om_tac_move_resume(om_world *w, uint32_t unit_id) {
+    om_move_state *ms;
+    om_move_unit *mu;
+    om_move_sync(w);
+    ms = om_ms(w);
+    mu = om_move_touch(w, ms, unit_id);
+    if (!mu) return 0;
+    mu->engaged = 0;
+    return 1;
 }
 /* ---- end generated stubs ---- */
