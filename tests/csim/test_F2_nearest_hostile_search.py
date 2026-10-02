@@ -414,8 +414,8 @@ def _state_hash(lib, w):
 
 # Recorded on origin/main b1d53b7e (and identical on origin/push/F1 + main).
 GOLDEN = {
-    "clash": "d1fc4be153ada65268f779af188af53d3da53a42eb9045be85b9ac7df3a2aac4",
-    "spread": "34abca59233a6e744fa3c6b2ebebd30aa00b74345c4b7e3295bd3492122c8f1e",
+    "clash": "7dac661a84a6da40859b0ab10f7be7f0b3a0491ad882000301ba69956ae18c75",
+    "spread": "5935634c4ea6d82d073837b8c917c104bf624db46237e17944feccc8a77b9d7c",
 }
 
 

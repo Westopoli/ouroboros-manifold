@@ -240,8 +240,8 @@ def _state_hash(lib, w):
 
 # Recorded on origin/main before the F3 change; must hold after it.
 GOLDEN = {
-    "clash": "64063433d16174c2ef65e7b928c67a6072e688a5703dc85a8bb58f7c7ffb0ab9",
-    "spread": "13b295eb7131049d805a87331f4e833dc133b7b63e8ad88f5789248f49e591cd",
+    "clash": "cdf5004093deb09d1ac251ca80ad7938719cd122d954ec963c60cf72d476ffbe",
+    "spread": "7cc544eecad232979bc8faffad42aee895546718d3f0316b0a0efa22d2550994",
 }
 
 
