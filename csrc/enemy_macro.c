@@ -375,6 +375,8 @@ static void om_macro_log_command(om_world *w, uint64_t tick, uint32_t force_id, 
  * test, which never call om_macro_init_force with a live mission) sees no
  * behavior change here at all -- see also: om_macro_tick below. */
 #define OM_MACRO_ORDER_CAP 2048
+/* Rounding slack on the contact-query radius, as OM_FOG_BOUND_SLACK in fog.c (no bible value). */
+#define OM_MACRO_BOUND_SLACK 1e-9
 /* B1-2: no bible value (R-120-02 says only "waypoints in a cycle"); local choices. */
 #define OM_MACRO_PATROL_RADIUS 600.0
 #define OM_MACRO_PATROL_WAYPOINTS 4
@@ -428,7 +430,7 @@ static void om_macro_remember_order(om_macro_force *f, int behavior, double x, d
 static void om_macro_issue_group_orders(om_world *w, om_macro_force *f) {
     static uint32_t force_ids[OM_MACRO_ORDER_CAP];
     static uint32_t player_ids[OM_MACRO_ORDER_CAP];
-    uint32_t n_force, n_player, i, j;
+    uint32_t n_force, n_player, i;
     double hp_sum = 0.0;
     int contact_now = 0;
     double dest_x = 0.0, dest_y = 0.0;
@@ -445,9 +447,22 @@ static void om_macro_issue_group_orders(om_world *w, om_macro_force *f) {
      * since the last evaluation)... */
     if (f->hp_sum_last_eval_set && hp_sum < f->hp_sum_last_eval) contact_now = 1;
     /* ...or any of its units has a visible player unit in range. */
-    for (i = 0; i < n_force && !contact_now && !f->has_contact; i++) {
-        for (j = 0; j < n_player; j++) {
-            if (om_unit_can_see(w, force_ids[i], player_ids[j])) { contact_now = 1; break; }
+    /* Grid candidates stand in for the old all-pairs scan: the any-of result is
+     * the same because the candidates are the player units the scan considered
+     * (the first OM_MACRO_ORDER_CAP in id order, so ids up to player_ids[n-1])
+     * within the observer's largest possible effective radius (target elevation
+     * 0); om_unit_can_see still decides each pair. */
+    for (i = 0; i < n_force && !contact_now && !f->has_contact && n_player > 0; i++) {
+        double fx = 0.0, fy = 0.0, r;
+        uint32_t nc, k;
+        static uint32_t cand_ids[OM_MACRO_ORDER_CAP];
+        om_unit_get_pos(w, force_ids[i], &fx, &fy);
+        r = om_unit_get_effective_sensor_radius_to_target_elevation(w, force_ids[i], 0) * (1.0 + OM_MACRO_BOUND_SLACK);
+        nc = om_grid_query_circle_faction(w, om_player_faction(w), fx, fy, r, cand_ids, OM_MACRO_ORDER_CAP);
+        if (nc > OM_MACRO_ORDER_CAP) nc = OM_MACRO_ORDER_CAP;
+        for (k = 0; k < nc; k++) {
+            if (cand_ids[k] > player_ids[n_player - 1]) break;
+            if (om_unit_can_see(w, force_ids[i], cand_ids[k])) { contact_now = 1; break; }
         }
     }
     f->hp_sum_last_eval = hp_sum;
