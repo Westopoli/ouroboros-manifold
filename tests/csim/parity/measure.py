@@ -1,29 +1,27 @@
 """Measure the Python reference against the C, scene by scene.
 
-    python tests/csim/parity/measure.py                  # Python vs C: per-scene max position deviation,
+Run from tests/csim/ (parity is a package, so the relative imports below need -m):
+
+    python -m parity.measure                  # Python vs C: per-scene max position deviation,
                                                          # where each channel first leaves tolerance
-    python tests/csim/parity/measure.py --series 20      # plus the per-tick max deviation every 20 ticks
-    python tests/csim/parity/measure.py --diagnose       # same, C ids shifted by 3 so its id % 4 targeting
+    python -m parity.measure --series 20      # plus the per-tick max deviation every 20 ticks
+    python -m parity.measure --diagnose       # same, C ids shifted by 3 so its id % 4 targeting
                                                          # cohort equals the Python's uid % 4 (attribution only)
-    python tests/csim/parity/measure.py --tolerance      # Python vs Python: trig sweep vs fixed direction vectors
+    python -m parity.measure --tolerance      # Python vs Python: trig sweep vs fixed direction vectors
                                                          # (the measurement PARITY_TOLERANCE was proposed from)
-    python tests/csim/parity/measure.py --sensitivity    # Python vs Python: collision pair order reversed
-    python tests/csim/parity/measure.py --scene NAME     # one scene
+    python -m parity.measure --sensitivity    # Python vs Python: collision pair order reversed
+    python -m parity.measure --scene NAME     # one scene
 
 Run with the agora venv python (numpy needed by the Python reference). No pass/fail here: this
 prints numbers; the red/green is tests/csim/parity/test_parity_scenes.py.
 """
 import argparse
-import sys
-from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-
-import parity_c
-import parity_python
-from parity_compare import compare
-from parity_scenes import SCENES
-from parity_tolerance import PARITY_FACING_TOLERANCE, PARITY_TOLERANCE
+from . import parity_c
+from . import parity_python
+from .parity_compare import compare
+from .parity_scenes import SCENES
+from .parity_tolerance import PARITY_FACING_TOLERANCE, PARITY_TOLERANCE
 
 FIXED_DIGITS = (None, 12, 10, 8, 6, 4)   # None = full double; n = the six sweep constants rounded to n decimals
 

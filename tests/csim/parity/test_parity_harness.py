@@ -11,11 +11,11 @@ import math
 
 import pytest
 
-import parity_c
-import parity_python
-from parity_compare import Trace, TWO_PI, compare
-from parity_scenes import CUSTOM_TYPES, SCENES, SIX
-from parity_tolerance import PARITY_FACING_TOLERANCE, PARITY_TOLERANCE
+from . import parity_c
+from . import parity_python
+from .parity_compare import Trace, TWO_PI, compare
+from .parity_scenes import CUSTOM_TYPES, SCENES, SIX
+from .parity_tolerance import PARITY_FACING_TOLERANCE, PARITY_TOLERANCE
 
 
 def _frames_equal(a, b):

@@ -36,6 +36,8 @@ FIXTURE_TESTS = textwrap.dedent('''
         assert False, "a real failure the list must never hide"
 ''')
 
+ELSEWHERE_TESTS = "def test_elsewhere_fails():\n    assert False, 'red until built'\n"
+
 
 def parse_pending(text):
     """The list format: one id per line, '#' comment lines and blank lines
@@ -49,20 +51,25 @@ def parse_pending(text):
     return ids
 
 
-def run_fixture(tmp_path, pending_text, tests=FIXTURE_TESTS):
-    """Build the tmp tree (conftest copy + pending.txt + sub/test_fx.py) and
-    run pytest on it. Returns (returncode, stdout+stderr)."""
+def run_fixture(tmp_path, pending_text, tests=FIXTURE_TESTS, run_args=None, elsewhere=False):
+    """Build the tmp tree (conftest copy + pending.txt + sub/test_fx.py +
+    other/test_elsewhere.py when elsewhere=True) and run pytest on it (the whole tree unless
+    run_args names a subset). Returns (returncode, stdout+stderr)."""
     assert REAL_CONFTEST.is_file(), (
         "tests/csim/parity/conftest.py with the pending-list hook is not built yet")
+    tmp_path.mkdir(exist_ok=True)
     (tmp_path / "pytest.ini").write_text("[pytest]\n")
     (tmp_path / "conftest.py").write_text(REAL_CONFTEST.read_text())
     (tmp_path / "pending.txt").write_text(pending_text)
     sub = tmp_path / "sub"
     sub.mkdir()
     (sub / "test_fx.py").write_text(tests)
+    if elsewhere:
+        (tmp_path / "other").mkdir()
+        (tmp_path / "other" / "test_elsewhere.py").write_text(ELSEWHERE_TESTS)
     r = subprocess.run(
         [sys.executable, "-m", "pytest", "-p", "no:cacheprovider", "-q", "-rA",
-         "--rootdir", str(tmp_path), str(tmp_path)],
+         "--rootdir", str(tmp_path)] + (run_args or [str(tmp_path)]),
         cwd=tmp_path, capture_output=True, text=True, timeout=120)
     return r.returncode, r.stdout + r.stderr
 
@@ -143,8 +150,9 @@ def test_pending_comment_and_blank_lines_are_ignored(tmp_path):
 
 
 def test_pending_stale_id_is_an_error_naming_it(tmp_path):
-    """Stale-line guard: a listed id that no longer exists is an error that
-    names the id (a removed or renamed test must not leave a dead line)."""
+    """Stale-line guard: a listed id whose FILE was collected in this session
+    but whose test is absent is an error that names the id (a removed or
+    renamed test must not leave a dead line)."""
     gone = "sub/test_fx.py::test_removed_long_ago"
     code, out = run_fixture(tmp_path, ID_PASSES + "\n" + gone + "\n")
     assert code != 0, out
@@ -152,6 +160,24 @@ def test_pending_stale_id_is_an_error_naming_it(tmp_path):
     assert "PASSED" not in "\n".join(ln for ln in out.splitlines()
                                      if ln.startswith("PASSED")), (
         "a stale line must stop the run, not run the suite anyway: " + out)
+
+
+def test_pending_id_whose_file_is_not_in_the_run_is_skipped(tmp_path):
+    """Stale-line guard scope (coordinator ruling): the guard only checks ids
+    whose file was collected in this session. A partial run of sub/ alone must
+    not call the listed other/test_elsewhere.py id stale, and its listing
+    neither errors nor changes the outcome of the tests that did run."""
+    elsewhere = "other/test_elsewhere.py::test_elsewhere_fails"
+    code, out = run_fixture(tmp_path, ID_FAILS + "\n" + elsewhere + "\n",
+                            run_args=[str(tmp_path / "sub" / "test_fx.py")], elsewhere=True)
+    assert has(out, "XFAIL", ID_FAILS), out
+    assert has(out, "FAILED", ID_OTHER), out        # the real failure still reported
+    assert "test_elsewhere" not in out, out         # not collected, not an error
+    assert "ERROR" not in out, out
+    # same listing, whole tree: the elsewhere id is now collected and xfailed
+    code2, out2 = run_fixture(tmp_path / "again", ID_FAILS + "\n" + elsewhere + "\n",
+                              elsewhere=True)
+    assert has(out2, "XFAIL", elsewhere), out2
 
 
 def test_pending_duplicate_line_is_an_error(tmp_path):

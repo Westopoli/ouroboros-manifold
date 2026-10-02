@@ -4,7 +4,7 @@ PROPOSED, not confirmed. Westley owns the final value (CLAUDE.md "Tests are the 
 is his; narrowing is allowed, widening needs him). Plan: docs/northstar/plans/
 2026-10-02-movement-layers-and-search-plan.md, Phase A "Verification" 1 ("Tolerance measured
 first, proposed to Westley, then fixed"). Every number below is reproduced by
-`python tests/csim/parity/measure.py --tolerance` and `--sensitivity` (agora venv python).
+`python -m parity.measure --tolerance` (from tests/csim/) and `--sensitivity` (agora venv python).
 
 PARITY_TOLERANCE (position, world units): the largest difference any unit may show against the
 Python on any tick. Measured by running every scene through the Python twice, once with its trig
