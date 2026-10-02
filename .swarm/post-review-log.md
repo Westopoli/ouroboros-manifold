@@ -12,3 +12,5 @@
 | 1 | analysis | leaf-05 | tests/skilllab/test_rows.py, tests/skilllab/test_sample.py, scripts/skilllab/rows.py, scripts/skilllab/sample.py | +0 (confirmed) | 2026-10-02T14:35:33+00:00 | clean | ec952fa8ea3f | db9e6ddf41ca |
 | 1 | analysis | leaf-06 | tests/skilllab/test_report.py, scripts/skilllab/report.py | +0 (confirmed) | 2026-10-02T14:35:36+00:00 | clean | 5626419aca19 | 0427648f3400 |
 | 1 | analysis | leaf-07 | tests/skilllab/test_main.py, scripts/skilllab/__main__.py | +1 | 2026-10-02T14:36:16+00:00 | clean | 9f1dd8eea181 | 9508722d65e8 |
+| 2 | core | leaf-08 | tests/skilllab/test_plays.py, scripts/skilllab/plays.py | +0 (confirmed) | 2026-10-02T15:54:04+00:00 | clean | 4c903e3f0f94 | 154860f02a54 |
+| 2 | analysis | leaf-09 | tests/skilllab/test_main.py, scripts/skilllab/__main__.py | +0 (confirmed) | 2026-10-02T15:55:22+00:00 | clean | 54959c44f073 | be5e75fe1737 |
