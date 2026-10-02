@@ -1089,19 +1089,43 @@ static void om_move_route_touch(om_move_state *ms, uint32_t layer, double dest_x
     }
 }
 
+/* Cells per axis of the search window: the canvas when set, else the largest canvas. */
+static void om_move_window(const om_move_state *ms, int32_t *nx, int32_t *ny) {
+    *nx = OM_MOVE_DENSITY_SIDE;
+    *ny = OM_MOVE_DENSITY_SIDE;
+    if (ms->canvas_w > 0.0 && ms->canvas_h > 0.0) {
+        *nx = om_move_cells_for(ms->canvas_w);
+        *ny = om_move_cells_for(ms->canvas_h);
+    }
+}
+
+/* The route-grid cell a position is in; a position on the canvas edge belongs to the last cell. */
+static void om_move_cell_at(const om_move_state *ms, double x, double y, int32_t *cx, int32_t *cy) {
+    int32_t nx, ny;
+    *cx = (int32_t)floor(x / OM_NAVMESH_CELL_SIZE);
+    *cy = (int32_t)floor(y / OM_NAVMESH_CELL_SIZE);
+    if (!(ms->canvas_w > 0.0 && ms->canvas_h > 0.0)) return;
+    om_move_window(ms, &nx, &ny);
+    if (*cx >= nx && x <= ms->canvas_w) *cx = nx - 1;
+    if (*cy >= ny && y <= ms->canvas_h) *cy = ny - 1;
+}
+
 /* Exact grid walk (Amanatides and Woo) from (x0, y0) to (x1, y1) through the 100 wu cells: 1 when no cell it
  * touches is blocked on the layer. A line through a cell corner needs both side cells open. */
 static int om_move_los_clear(const om_world *w, om_move_state *ms, double x0, double y0, double x1, double y1, uint32_t layer) {
     const double inf = OM_MOVE_GRID_FAR;
-    int32_t cx = (int32_t)floor(x0 / OM_NAVMESH_CELL_SIZE), cy = (int32_t)floor(y0 / OM_NAVMESH_CELL_SIZE);
-    const int32_t ex = (int32_t)floor(x1 / OM_NAVMESH_CELL_SIZE), ey = (int32_t)floor(y1 / OM_NAVMESH_CELL_SIZE);
+    int32_t cx, cy, ex, ey;
     const double dx = x1 - x0, dy = y1 - y0;
     const int32_t sx = dx > 0.0 ? 1 : -1, sy = dy > 0.0 ? 1 : -1;
-    double tx = dx != 0.0 ? ((double)(sx > 0 ? cx + 1 : cx) * OM_NAVMESH_CELL_SIZE - x0) / dx : inf;
-    double ty = dy != 0.0 ? ((double)(sy > 0 ? cy + 1 : cy) * OM_NAVMESH_CELL_SIZE - y0) / dy : inf;
+    double tx, ty;
     const double ddx = dx != 0.0 ? (double)sx * OM_NAVMESH_CELL_SIZE / dx : inf;
     const double ddy = dy != 0.0 ? (double)sy * OM_NAVMESH_CELL_SIZE / dy : inf;
-    int32_t left = (ex > cx ? ex - cx : cx - ex) + (ey > cy ? ey - cy : cy - ey) + 1;
+    int32_t left;
+    om_move_cell_at(ms, x0, y0, &cx, &cy);
+    om_move_cell_at(ms, x1, y1, &ex, &ey);
+    tx = dx != 0.0 ? ((double)(sx > 0 ? cx + 1 : cx) * OM_NAVMESH_CELL_SIZE - x0) / dx : inf;
+    ty = dy != 0.0 ? ((double)(sy > 0 ? cy + 1 : cy) * OM_NAVMESH_CELL_SIZE - y0) / dy : inf;
+    left = (ex > cx ? ex - cx : cx - ex) + (ey > cy ? ey - cy : cy - ey) + 1;
     for (;;) {
         if (om_move_cell_blocked(w, ms, layer, cx, cy)) return 0;
         if ((cx == ex && cy == ey) || left-- <= 0) return 1;
@@ -1111,16 +1135,6 @@ static int om_move_los_clear(const om_world *w, om_move_state *ms, double x0, do
             if (om_move_cell_blocked(w, ms, layer, cx + sx, cy) || om_move_cell_blocked(w, ms, layer, cx, cy + sy)) return 0;
             cx += sx; cy += sy; tx += ddx; ty += ddy;
         }
-    }
-}
-
-/* Cells per axis of the search window: the canvas when set, else the largest canvas. */
-static void om_move_window(const om_move_state *ms, int32_t *nx, int32_t *ny) {
-    *nx = OM_MOVE_DENSITY_SIDE;
-    *ny = OM_MOVE_DENSITY_SIDE;
-    if (ms->canvas_w > 0.0 && ms->canvas_h > 0.0) {
-        *nx = om_move_cells_for(ms->canvas_w);
-        *ny = om_move_cells_for(ms->canvas_h);
     }
 }
 
@@ -1224,10 +1238,11 @@ static int om_move_nearest_reachable(const om_world *w, om_move_state *ms, uint3
 /* Cells the route from (x0, y0) to a destination takes, counting both ends: 2 when the straight line is clear
  * (straightened), 1 when there is no route (also when either end is off the grid). A kept field answers if there is one. last_path_straightened records the first. */
 static uint32_t om_move_route_len(const om_world *w, om_move_state *ms, uint32_t layer, double x0, double y0, double x1, double y1, int *straight) {
-    int32_t nx, ny, scx = (int32_t)floor(x0 / OM_NAVMESH_CELL_SIZE), scy = (int32_t)floor(y0 / OM_NAVMESH_CELL_SIZE);
-    int32_t dcx = (int32_t)floor(x1 / OM_NAVMESH_CELL_SIZE), dcy = (int32_t)floor(y1 / OM_NAVMESH_CELL_SIZE);
+    int32_t nx, ny, scx, scy, dcx, dcy;
     const om_move_field *kept;
     const uint32_t *f;
+    om_move_cell_at(ms, x0, y0, &scx, &scy);
+    om_move_cell_at(ms, x1, y1, &dcx, &dcy);
     *straight = om_move_los_clear(w, ms, x0, y0, x1, y1, layer);
     if (*straight) return 2;
     om_move_window(ms, &nx, &ny);
@@ -1247,23 +1262,27 @@ static uint32_t om_move_route_len(const om_world *w, om_move_state *ms, uint32_t
  * A destination with no route is replaced by the nearest point that can be reached.
  * See also: om_move_steer_step, which follows the aim. */
 static void om_move_route_plan(const om_world *w, om_move_state *ms, om_move_unit *mu, uint32_t layer) {
-    int32_t nx, ny, cx = (int32_t)floor(mu->x / OM_NAVMESH_CELL_SIZE), cy = (int32_t)floor(mu->y / OM_NAVMESH_CELL_SIZE);
+    int32_t nx, ny, cx, cy, dcx, dcy;
+    double tx = om_move_clamp_axis(mu->dest_x, ms->canvas_w), ty = om_move_clamp_axis(mu->dest_y, ms->canvas_h);
     const uint32_t *f;
     om_move_window(ms, &nx, &ny);
+    om_move_cell_at(ms, mu->x, mu->y, &cx, &cy);
+    om_move_cell_at(ms, tx, ty, &dcx, &dcy);
     mu->plan_valid = 1;
     mu->plan_epoch = ms->terrain_epoch;
     mu->aim_is_waypoint = 0;
-    mu->aim_x = mu->dest_x;
-    mu->aim_y = mu->dest_y;
-    if (cx < 0 || cy < 0 || cx >= nx || cy >= ny || om_move_los_clear(w, ms, mu->x, mu->y, mu->dest_x, mu->dest_y, layer)) goto done;
-    f = om_move_field_for(w, ms, layer, (int32_t)floor(mu->dest_x / OM_NAVMESH_CELL_SIZE), (int32_t)floor(mu->dest_y / OM_NAVMESH_CELL_SIZE));
+    mu->aim_x = tx;
+    mu->aim_y = ty;
+    if (cx < 0 || cy < 0 || cx >= nx || cy >= ny || om_move_los_clear(w, ms, mu->x, mu->y, tx, ty, layer)) goto done;
+    f = om_move_field_for(w, ms, layer, dcx, dcy);
     if (!f || f[cy * nx + cx] == OM_MOVE_FIELD_UNREACHED) {
         double px, py;
-        if (!om_move_nearest_reachable(w, ms, layer, mu->x, mu->y, mu->dest_x, mu->dest_y, &px, &py)) goto done;
-        mu->dest_x = mu->aim_x = px;
-        mu->dest_y = mu->aim_y = py;
+        if (!om_move_nearest_reachable(w, ms, layer, mu->x, mu->y, tx, ty, &px, &py)) goto done;
+        mu->dest_x = mu->aim_x = tx = px;
+        mu->dest_y = mu->aim_y = ty = py;
         if (om_move_los_clear(w, ms, mu->x, mu->y, px, py, layer)) goto done;
-        f = om_move_field_for(w, ms, layer, (int32_t)floor(px / OM_NAVMESH_CELL_SIZE), (int32_t)floor(py / OM_NAVMESH_CELL_SIZE));
+        om_move_cell_at(ms, px, py, &dcx, &dcy);
+        f = om_move_field_for(w, ms, layer, dcx, dcy);
         if (!f || f[cy * nx + cx] == OM_MOVE_FIELD_UNREACHED) goto done;
     }
     {
@@ -1289,8 +1308,8 @@ static void om_move_route_plan(const om_world *w, om_move_state *ms, om_move_uni
             mu->aim_is_waypoint = 1;
         }
         if (seen_all && mu->aim_is_waypoint) {
-            mu->aim_x = mu->dest_x;
-            mu->aim_y = mu->dest_y;
+            mu->aim_x = tx;
+            mu->aim_y = ty;
             mu->aim_is_waypoint = 0;
         }
     }
@@ -1647,17 +1666,6 @@ static uint32_t om_move_probe_gather_start(om_move_state *ms, uint32_t self_id, 
         }
     }
     return n;
-}
-
-/* The route-grid cell a position is in; a position on the canvas edge belongs to the last cell. */
-static void om_move_cell_at(const om_move_state *ms, double x, double y, int32_t *cx, int32_t *cy) {
-    int32_t nx, ny;
-    *cx = (int32_t)floor(x / OM_NAVMESH_CELL_SIZE);
-    *cy = (int32_t)floor(y / OM_NAVMESH_CELL_SIZE);
-    if (!(ms->canvas_w > 0.0 && ms->canvas_h > 0.0)) return;
-    om_move_window(ms, &nx, &ny);
-    if (*cx >= nx && x <= ms->canvas_w) *cx = nx - 1;
-    if (*cy >= ny && y <= ms->canvas_h) *cy = ny - 1;
 }
 
 /* R-097-09 (Westley, 2026-10-02): a unit found inside a blocked cell of its layer is moved to the nearest open
