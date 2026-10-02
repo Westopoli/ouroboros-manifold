@@ -11,7 +11,7 @@
 | Every visible-surface story has a reference | **No.** S-101 (how movement reads: turning, flow around blockers, formation arrival) has a visible surface and no reference. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on 5 open flags and one missing reference. Q-095-01 (slowest-unit pace is Westley's Stage 1 decision, A-557, and is not built) is the load-bearing one.
+**Gate verdict: not passed.** Blocked on Q-096-01 (the guard stance), Q-097-02 (two units on one spot), Q-101-02 and one missing reference (S-101). S-095, S-097 to S-100 and S-102 are buildable, and S-096 as written.
 
 ## Purpose
 
@@ -27,7 +27,7 @@ Select 4 Raiders and 4 Bastions 300 wu apart and move them 3,000 wu. They arrive
 As a commander, I want a selection to move at its slowest member's pace and arrive in its shape, and to be able to split off a faster group when I choose, so that cohesion is the default and detaching is a decision.
 
 Rules
-- R-095-01  Given a selection of 2 or more units given a move or attack-move, When they move, Then every unit's speed is capped at the slowest member's speed for that order [Q-095-01: A-557, not built].
+- R-095-01  Given a selection of 2 or more units given a move or attack-move, When they move, Then every unit's speed is capped at the slowest member's base speed, fixed at order time; a unit that activates a movement ability leaves the group and moves at its boosted speed (Q-095-01).
 - R-095-02  Given the selection, When destinations are assigned, Then each unit's destination is the click point plus its offset from the selection's centroid at command time; offsets are computed once and never updated.
 - R-095-03  Given any unit farther than 450 wu from the centroid at command time, When destinations are assigned, Then every unit's destination is the raw click point (scatter fallback).
 - R-095-04  Given a slot destination that is not walkable, When assigned, Then that unit's destination is the raw click point.
@@ -37,14 +37,14 @@ Rules
 
 Inputs: selection; click point; unit speeds and positions.
 Outputs: per-unit move targets and group ids in the tick delta.
-Open flags: Q-095-01.
+Open flags: none.
 
 ### S-096 — Four commands
 As a commander, I want move to be movement and nothing else, attack-move to fight along the way, attack-target to commit, and ability to be a button, so that every order means one thing.
 
 Rules
 - R-096-01  Given a plain move, When the unit travels, Then it acquires no target, returns no fire, and does not stop when hit.
-- R-096-02  Given an attack-move, When an enemy enters attack range on the unit's layer, Then the unit halts and fires; when the target dies or leaves range it resumes toward the point. Units attack-moved together take formation slots as a move group does (R-095-02 to R-095-04); once every member of the group has engaged, the group ends and its members do not resume the march.
+- R-096-02  Given an attack-move, When an enemy enters attack range on the unit's layer, Then the unit halts and fires; when the target dies or leaves range it resumes toward the point. Two or more units attack-moved together take formation slots as a move group does (R-095-02 to R-095-04); once every member of the group has engaged, the group ends and its members do not resume the march. A unit attack-moved alone is not a group: it resumes toward the point after every fight.
 - R-096-03  Given an attack-move engagement, When the target moves more than 200 wu from the unit's anchor (its position at acquisition), Then the unit drops the target and resumes.
 - R-096-04  Given attack-target on enemy E, When issued, Then the unit moves toward E if out of range and attacks E in range until E dies or a new order arrives; if E becomes invisible the unit moves to E's last known position and idles there.
 - R-096-05  Given activate-ability, When issued to a selection, Then each unit with its ability ready activates it; Brace toggles.
@@ -53,7 +53,7 @@ Rules
 
 Inputs: command packets (kind, unit ids, target point or unit).
 Outputs: acknowledgement with reason in the tick delta; unit order state.
-Open flags: none.
+Open flags: Q-096-01 (a guard stance: hold a post and step up to engage; decided after the ruled movement is built and a choke defence has been looked at).
 
 ### S-097 — Around, not through
 As a commander, I want units to route around terrain and flow around each other, and never to walk through anything, so that formations are real.
@@ -65,21 +65,21 @@ Rules
 - R-097-04  Given a unit that took a deflected angle, When it moves, Then it keeps that heading for at least 60 wu before re-evaluating.
 - R-097-05  Given two units on the same layer within 30 wu (2 × radius 15), When the collision pass runs, Then they are pushed apart along the line between them until 30 wu apart, over up to 3 iterations per tick.
 - R-097-06  Given a unit moving through terrain with obstacle density d, When d is in [0.3, 0.7], Then its speed is multiplied by (1 − 0.5 · d); below 0.3 speed is unchanged; at 0.7 and above the cell is blocked (R-097-01). The multiplier is era-uniform; an era pack may not switch it off.
-- R-097-06  Given one unit of the pair is stationary (no move target, or halted by engagement), When pushed, Then it moves 0 and the other takes the full displacement.
-- R-097-07  Given two units at exactly the same position, When pushed, Then the lower unit id moves in the canonical direction (+x).
+- R-097-06  Given one unit of the pair is stationary (no move target, or halted by engagement), When pushed, Then it moves 0 and the other takes the full displacement; given both are stationary and either was displaced earlier in the tick, they split the displacement equally. Only a unit that moved this tick starts a pair check.
+- R-097-07  Given two units at exactly the same position, When pushed, Then the lower unit id moves in the canonical direction (+x) [Q-097-02: the Python reference moves it the other way and by a thousand times the normal push].
 - R-097-08  Given enemy units, When colliding, Then they collide like allies; nobody passes through anybody.
 - R-097-09  Given a direct-move unit (no route waypoints), When obstacle density ahead within 50 wu exceeds 0.3, Then a repulsion opposes the move; units following route waypoints are exempt.
 
 Inputs: map grid; unit positions, targets, states.
 Outputs: positions; route cache; collision log (T1).
-Open flags: none.
+Open flags: Q-097-02.
 
 ### S-098 — Firing through friends
 As a commander, I want my back rank to shoot over my front rank, so that formation depth is an advantage and not a jam.
 
 Rules
 - R-098-01  Given a ranged unit with an ally between it and its target, When it fires, Then the shot lands; friendly units never block fire.
-- R-098-02  Given terrain or cover between them, When it fires, Then the shot is blocked exactly as vision is (E-12, E-01 S-007).
+- R-098-02  Given a blocked cell (R-097-01) or a cover obstacle between them on the layers involved, When it fires, Then the shot is blocked exactly as vision is (E-12, E-01 S-007): cover blocks only up to its height, and only a line that passes through it between two units outside it; a unit standing inside cover is fired at as normal (E-01 R-007-06).
 
 Inputs: positions; terrain.
 Outputs: attack events.
@@ -92,7 +92,7 @@ Rules
 - R-099-01  Given a Strike wing and a Line force both approaching an engaged, immovable friendly front, When they arrive, Then the Strike wing reaches the flank slots first, purely from the steering rules of S-097.
 - R-099-02  Given a Raider, When it moves, Then it covers 150 wu per second at 20 ticks per second, 7.5 wu per tick.
 - R-099-03  Given more than 1,000 live units on the battlefield, When the tactical tick rate drops from 20 to 10 ticks per second (and returns above that count is crossed downward), Then every per-second quantity (speed, attack interval, ability duration and cooldown, drift) is unchanged in real time because per-tick values scale with the tick period, the change happens on a tick boundary, and every peer in a multiplayer session switches on the same tick (decision A, Westley 2026-09-24).
-- R-099-04  Given a unit whose step distance in a tick reaches its remaining distance to its destination, When it snaps to the destination, Then its destination is cleared and it is stationary from that tick onward, and any later displacement by collision or direct position change leaves it at the new position with no re-approach.
+- R-099-04  Given a unit within its arrival radius of its destination (1.5 × collision radius for a formation slot, 2 × for a route waypoint), When the tick runs, Then it has arrived where it stands, without snapping to the point: its destination is cleared and it is stationary from that tick onward, and any later displacement by collision or direct position change leaves it at the new position with no re-approach.
 
 Inputs: none beyond S-097.
 Outputs: positions.
@@ -119,7 +119,7 @@ Rules
 
 Inputs: tick deltas.
 Outputs: screen.
-Open flags: Q-101-01 (arrival tolerance and "settled" look are unspecified). Reference required: `references/E-13/notes.md`, missing.
+Open flags: Q-101-02 (the collision iteration cap against R-101-01's 30 wu floor). Q-101-01 is closed: arrival is the group centroid reaching the point. Reference required: `references/E-13/notes.md`, missing.
 
 ### S-102 — Same commands, same battle
 As a player in a multiplayer match, I want every peer to compute the same movement from the same commands, so that we are all watching one battle.
@@ -151,7 +151,7 @@ Open flags: none.
 ## Invariants
 
 - No two same-layer units within 30 wu after the collision pass, except when the pass hits its iteration cap.
-- A stationary unit never moves from collision.
+- A stationary unit is never moved by a moving unit's collision; two stationary units that overlap separate.
 - A unit never enters a blocked cell.
 - Same seed and commands, same movement, all platforms.
 - Under a plain move, no target is ever acquired.
@@ -160,7 +160,7 @@ Open flags: none.
 
 Confirmed by Westley, 2026-10-01: one pipe `tactical_step` round trip (request sent to frame parsed by the client) takes under 100 ms at 5,000 units, the tick length at the 10 ticks per second the sim runs above 1,000 live units (R-099-03).
 
-Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): movement and collision for 1,000 units in under 3 ms per tick, 10,000 in under 30 ms; route queries under 1,000 per second at 60 wu cells. The 10,000-unit figure is measured at the 10 ticks/s rate the sim drops to above 1,000 live units (E-13 R-099-03), a 100 ms tick; the 1,000-unit figure at 20 ticks/s.
+Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): movement and collision for 1,000 units in under 3 ms per tick, 10,000 in under 30 ms; route queries under 1,000 per second on the route grid (100 wu cells, R-097-01; this line said 60 until 2026-10-02). The 10,000-unit figure is measured at the 10 ticks/s rate the sim drops to above 1,000 live units (E-13 R-099-03), a 100 ms tick; the 1,000-unit figure at 20 ticks/s.
 
 ## Look and behavior references
 
@@ -179,7 +179,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-095-01, Q-101-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-096-01, Q-097-02, Q-101-02. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

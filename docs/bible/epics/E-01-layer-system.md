@@ -81,7 +81,7 @@ As a commander, I want a layer change to cost time, set by the unit type for a t
 
 Rules
 - R-004-01  Given a Raider that flies or swims (R-001-07) ordered from layer 3 to layer 4 at an open position away from any slope, When the transition starts, Then the unit is on layer 4 exactly one transition duration later, with the duration taken from the unit type's transition time [Q-004-01 for the confirmed numbers; current config: Raider 1.0 s, Interceptor 1.2 s, Vanguard 2.5 s, Warden 2.0 s, Bombard 4.0 s, Bastion 5.0 s].
-- R-004-02  Given a unit mid-transition, When a unit on its old layer would attack it, Then the attack may target it until the transition is halfway completed (half the duration for a timed transfer; the midline for a slope, R-004-06) and not after; and When a unit on its new layer would attack it, Then the attack may target it from the halfway point on and not before; whether either attacker sees it follows the normal cross-layer sensor rules (S-005); and the transitioning unit itself attacks, in a timed transfer or on a slope, as a unit of the layer it is leaving until it reaches the cross-over point (halfway through a timed transfer, the midline of a slope) and as a unit of the layer it is moving to from then on; it attacks only a target it can see (S-005, R-008-04), and stops attacking a target the moment the transition takes its sight of that target away.
+- R-004-02  Given a unit mid-transition, When a unit on its old layer would attack it, Then the attack may target it until the transition is halfway completed (half the duration for a timed transfer; the midline for a slope, R-004-06) and not after; and When a unit on its new layer would attack it, Then the attack may target it from the halfway point on and not before; whether either attacker sees it follows the normal cross-layer sensor rules (S-005); and the transitioning unit itself attacks, in a timed transfer or on a slope, as a unit of the layer it is leaving until it reaches the cross-over point (halfway through a timed transfer, the midline of a slope) and as a unit of the layer it is moving to from then on; it attacks only a target its side can see (S-005, R-008-04), and stops attacking a target the moment its side loses sight of it.
 - R-004-03  Given two units of different types ordered to the same layer at the same tick, When the faster type completes, Then the slower type is still mid-transition, and completion order always matches transition-time order.
 - R-004-04  Given a unit mid-transition, When a new hard transfer to another layer is issued, Then the unit completes the current transition first and the new transfer becomes pending.
 - R-004-05  Given the same seed and the same command stream, When the mission runs twice, Then every transition starts and ends on the same tick both times.
@@ -133,6 +133,7 @@ Rules
 - R-007-03  Given a target hidden behind cover, When it attacks an observer that cannot see it, Then the attack lands and the target stays hidden; firing never reveals.
 - R-007-04  Given a target visible despite nearby cover, When it takes damage, Then damage is unmodified; cover is never a damage reduction.
 - R-007-05  Given cover in a unit's path, When it moves, Then movement is unaffected; cover never blocks movement.
+- R-007-06  Given a unit standing inside a cover obstacle's footprint, When sight and fire are computed, Then it is seen and fired at as any unit in the open: an obstacle blocks only a line that passes through it between two units that are both outside it, and only on the layers its height reaches (R-007-01, R-007-02; Westley, 2026-10-02).
 
 Inputs: obstacle position, radius, height; observer and target positions and layers.
 Outputs: visible set; damage applied; unit path.
@@ -145,7 +146,7 @@ Rules
 - R-008-01  Given an attacker on layer 3 and a visible enemy on layer 3 in range, When the attacker is idle or attack-moving, Then it engages.
 - R-008-02  Given an attacker on layer 3 and a visible enemy on layer 4 in range, When the attacker is idle or attack-moving, Then it engages only if its unit type's reach includes one layer up (S-164); the range and damage at that offset are Q-008-03.
 - R-008-03  Given a Bombard's area attack centered on layer 3, When enemies stand on layers 2 and 4 inside the radius, Then they take damage only at the layer offsets the Bombard's reach includes (S-164), at the multiplier Q-008-03 sets.
-- R-008-04  Given an attacker that cannot see a target (S-005), When it would attack that target, Then it does not: a unit never fires at a target it cannot see, on its own layer or another.
+- R-008-04  Given an attacker whose side cannot see a target (S-005, E-12 R-093-02), When it would attack that target, Then it does not: a unit never fires at a target its side cannot see, on its own layer or another; a target seen by any friendly unit or revealed by a ping may be fired at.
 
 End-state (the acceptance bar): the hub's definition of strategic depth (principle 4) holds in the skill lab before any cross-layer number is fixed. The mechanisms are built with provisional numbers held as runtime settings, so that the lab can move them. In the lab's terms (`docs/northstar/research/layer_dynamics/README.md` section 4): across the space maps, each skilled play wins the count of units able to fire, the result follows that count, the five skills (landscape, formation, layers, enemy position, unit-type matchup) stack with none dominant and none dead, each has an answer on most maps, and the best situations let a side beat a much larger force. Abilities are left out of this bar for now (Westley, 2026-09-30: "let's leave specific abilities out of this calculation for now, we're tuning base unit properties").
 
@@ -289,7 +290,7 @@ Numbers to be confirmed by Westley in Stage 3. Proposed: 1,000 units computing c
 - A unit fires at a target it cannot see.
 - Ring colors read from the render's last-known layer instead of the delta.
 - Cover blocks movement, or reduces damage, because a physics layer was reused.
-- A transitioning unit keeps firing at a target its transition has hidden from it, or is barred from firing at one it still sees.
+- A transitioning unit keeps firing at a target its side no longer sees, or is barred from firing at one its side still sees.
 - A walking unit rises in place at a cliff edge like a flying one.
 - A unit on a slope runs its type's transition timer instead of reading its position, so the cross-over is a moment and not the midline; or a unit that turns back on a slope finishes the change anyway.
 - Layer count 5 in config with only 3 elevation bands, so layers 4 and 5 draw at layer 3's height.

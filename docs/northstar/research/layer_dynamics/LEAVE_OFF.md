@@ -1,5 +1,7 @@
 # Leave-off: layer dynamics and the skill lab, 2026-10-02
 
+**Picked up on the Linux machine, 2026-10-02.** The plan that continues this work, with Westley's decisions on the open parity points, is `docs/northstar/plans/2026-10-02-movement-layers-and-search-plan.md`; rulings are in `docs/northstar/plans/2026-10-01-architect-rulings-2.md` (Addendum 45 on). The rest of this file is the Mac's record as it left it.
+
 The design chat on the Mac stopped here. Westley, 2026-10-02: "I'm going to hand this task off to the linux machine, coordinating modifications to the real sim between machines will be difficult. Our work is done for now." All of this work now continues on the Linux machine. Everything is on `origin/main`; nothing is left only on the Mac.
 
 ## Read in this order
