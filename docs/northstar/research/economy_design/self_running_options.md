@@ -2,7 +2,17 @@
 
 Written 2026-10-02 for Westley. Surface level; standard and wild per part. Flags: Q-159-02 (how it runs itself), Q-159-03 (what a solo commander may place).
 
-## Already decided
+## Decided, 2026-10-02
+
+| Part | Decision |
+|---|---|
+| A | **A3, doctrines.** The player can change the doctrine on the fly to adapt to the enemy. |
+| B | **B3.** Perfect hands, no foresight. |
+| C | **C2 with C4.** One dial, and asking by pointing. |
+| D | **D2 with D3.** The player can turn either off. |
+| E | **E1 with E3,** the player's pick. |
+
+## Already decided before this round
 
 - Rules run the economy for the player, and run it well. No intelligent agent.
 - The base is a spectacle in every mode: buildings rise, expansions are made, density changes.
