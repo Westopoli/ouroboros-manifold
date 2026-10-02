@@ -902,6 +902,8 @@ static void om_tac_note_attacker(om_world *w, om_tac_state *st, om_unit_row *tar
         int cur_same = cur->layer == target->layer, new_same = attacker->layer == target->layer;
         if (cur_same != new_same ? cur_same : cur->unit_id < attacker->unit_id) return;
     }
+    /* PP baseline only (switch = 0); deleted with the two movement switches at the end of Phase E (A140) */
+    /* See also: the pursue branch above is the new path (R-087-06); here the last writer wins */
     target->last_attacker = attacker->unit_id;
 }
 
@@ -1799,6 +1801,7 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
     if (u->last_attacker != 0) {
         om_unit_row *atk = om_registry_find_in(st, u->last_attacker);
         u->last_attacker = 0;
+        /* PP baseline only (switch = 0): return fire for an idle unit only; see also the pursue term (R-087-06) */
         if (atk && atk->hp > 0.0 && om_tac_hostile(u, atk)
             && (u->order == OM_ORDER_NONE || (pursue && u->order == OM_ORDER_ATTACK_MOVE)) && u->target_id == 0) {
             if (noncombat || atk->layer != u->layer || atk->stealth) {
@@ -1883,6 +1886,8 @@ static void om_tac_unit_ai(om_world *w, om_tac_state *st, om_unit_row *u, uint64
             /* a target taken by return fire is anchored here and leashed from the next tick */
             if (pursue && !u->anchor_set) { u->anchor_x = u->x; u->anchor_y = u->y; u->anchor_set = 1; }
         }
+        /* PP baseline only (switch = 0); deleted with the two movement switches at the end of Phase E (A140) */
+        /* See also: the pursue && !u->fired term below is the new path (R-084-01) */
         if (in_range && (u->cooldown >= interval_ticks - OM_TIE_EPSILON || (pursue && !u->fired))
             && om_combat_can_shoot(w, u->unit_id, t->unit_id)) {
             om_tac_fire(w, u, t);
