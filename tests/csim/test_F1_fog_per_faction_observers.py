@@ -304,6 +304,9 @@ GOLDEN = {
 
 
 def _full_run(lib, w, kind):
+    if kind == "spread":
+        # PP: scene is off canvas; baseline routing (A147 option c', test-defect)
+        assert lib.om_tactical_set_param(w, 1, 0.0) == 0  # OM_TP_ROUTE_AROUND_TERRAIN
     _build_scene(lib, w, kind, 600, 7)
     lib.om_macro_set_state(w, 0, OM_MACRO_ADVANCE, OM_MACRO_MOD_CAUTIOUS)
     lib.om_tactical_tick_to(w, 400)

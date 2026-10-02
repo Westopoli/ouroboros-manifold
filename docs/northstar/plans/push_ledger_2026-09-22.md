@@ -768,3 +768,6 @@ One row per event: freeze steps, attaches, reverts, parks, rung gates, harness e
 | day20 | TD-PP-default0-test_PP_settings.py (test-defect, A147) | asserted at default 1; PURSUE default is 0 under option c'; setup only. |
 | day20 | TD-PP-default0-test_pp_contract.py (test-defect, A147) | asserted at default 1; PURSUE default is 0 under option c'; setup only. |
 | day20 | TD-PP-default0-test_settings_real.py (test-defect, A147) | asserted at default 1; PURSUE default is 0 under option c'; setup only. |
+| day20 | TD-PP-default0-a99_tactical_hashes.json (re-record once, A140/A147) | four fast A99 hashes (fight_502_gap100, fight_990_gap300, fight_990_gap1500, fight_990_gap3000) differ from origin/main at both switches 0 only because the G04/G15 fixes are ungated; re-recorded once from this build. |
+| day20 | TD-PP-default0-test_F1_fog_per_faction_observers.py (test-defect, A147) | [spread] scene is off canvas; setup sets OM_TP_ROUTE_AROUND_TERRAIN 0 (baseline routing); golden unchanged. |
+| day20 | TD-PP-default0-test_F2_nearest_hostile_search.py (test-defect, A147) | window scene (equivalence window-1000/5000 and the positive control) is off canvas; setup sets OM_TP_ROUTE_AROUND_TERRAIN 0 (baseline routing). |
