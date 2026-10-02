@@ -148,6 +148,9 @@
  * OM_ABILITY_DAMAGE_REDUCTION_CAP 0.9: no ALG/config source; kept local. */
 #define OM_ABILITY_RALLY_AUTOTRIGGER_HP_FRACTION 0.5
 #define OM_ABILITY_DAMAGE_REDUCTION_CAP 0.9
+/* Q-084-01 (c): each further Warden adds half the previous one's reduction
+ * (0.10, 0.05, then 0.025 ...); no ALG/config source for the halving. */
+#define OM_WARDEN_AURA_DIMINISH_FACTOR 0.5
 
 /* ALG-60: "after firing the unit's movement pauses ATTACK_BACKSWING_SEC =
  * 0.5" -- OM_ATTACK_BACKSWING_SEC/OM_TACTICAL_TICK_RATE are both already
@@ -944,23 +947,23 @@ static int om_tactical_multiple_factions_alive(const om_tac_state *st) {
     return 0;
 }
 
-/* R-083-03/Q-084-01: n Wardens in range give diminishing reduction (first
- * 0.10, each additional Warden half the previous one's contribution --
- * equivalently 1 - (1 - OM_WARDEN_AURA_DAMAGE_REDUCTION)^n), computed by
- * repeated multiplication rather than a libm pow() call (determinism
- * contract, scripts/specfactory/libm_lint.py bans pow()). */
+/* R-083-03/Q-084-01: n Wardens in range give diminishing reduction: the first
+ * 0.10, each additional Warden half the previous one's contribution (two
+ * Wardens 0.15). Summed term by term, no libm pow(). */
 static double om_warden_aura_reduction_for(om_tac_state *st, const om_unit_row *target) {
     int n;
-    double undamaged_factor;
+    double total = 0.0, term = OM_WARDEN_AURA_DAMAGE_REDUCTION;
     if (st->n_wardens == 0) {
         if (!st->grid.built) om_grid_rebuild(st);
         return 0.0;
     }
     n = (int)om_grid_kind_scan(st, 0, target->faction_id, -1, target->x, target->y, (double)OM_WARDEN_AURA_RADIUS);
     if (n <= 0) return 0.0;
-    undamaged_factor = 1.0;
-    while (n-- > 0) undamaged_factor *= (1.0 - OM_WARDEN_AURA_DAMAGE_REDUCTION);
-    return 1.0 - undamaged_factor;
+    while (n-- > 0) {
+        total += term;
+        term *= OM_WARDEN_AURA_DIMINISH_FACTOR;
+    }
+    return total;
 }
 
 /* Each Warden counts the same-faction living units in its circle. The counts are
@@ -1454,6 +1457,16 @@ static void om_ability_tick_surge(om_unit_row *u, uint32_t period) {
     }
 }
 
+/* R-086-02: Intercept lasts the engagement: it ends once no enemy Strike unit
+ * is within detection range, and the 600 tick cooldown starts. */
+static void om_ability_tick_intercept(om_tac_state *st, om_unit_row *u) {
+    if (u->ability_phase != OM_ABILITY_PHASE_ACTIVE) return;
+    if (om_tac_enemy_category_within(st, u, OM_CAT_STRIKE, OM_INTERCEPT_DETECTION_RADIUS)) return;
+    u->ability_phase = OM_ABILITY_PHASE_IDLE;
+    u->ability_bonus_on = 0;
+    u->ability_cooldown = OM_ABILITY_INTERCEPT_COOLDOWN_TICKS;
+}
+
 static void om_ability_tick_brace(om_unit_row *u, uint32_t period) {
     if (u->ability_phase != OM_ABILITY_PHASE_WINDUP && u->ability_phase != OM_ABILITY_PHASE_CANCELING) return;
     if (u->ability_ticks_remaining > 0) {
@@ -1510,6 +1523,7 @@ static void om_ability_advance_all(om_world *w) {
         if (!u->in_use || u->hp <= 0.0) continue;
         switch (u->unit_type) {
             case OM_UT_RAIDER:   om_ability_tick_surge(u, period); break;
+            case OM_UT_INTERCEPTOR: om_ability_tick_intercept(st, u); break;
             case OM_UT_VANGUARD: om_ability_tick_brace(u, period); break;
             case OM_UT_BOMBARD:  om_ability_tick_barrage(w, st, u, period); break;
             case OM_UT_BASTION:  om_ability_tick_fortify(u, period); break;
