@@ -161,6 +161,7 @@ typedef struct {
     double   deflect_heading;
     double   deflect_origin_x, deflect_origin_y;
     int      waiting;
+    double   detour_remaining, detour_dx, detour_dy;
     int      visible[OM_MAX_FACTIONS];
 } om_move_unit;
 
@@ -254,6 +255,11 @@ typedef struct {
      * 140-byte stride to units[] trashes cache in the probe inner loop;
      * this array keeps group_id at a 4-byte stride. */
     uint32_t unit_group[OM_MOVE_MAX_UNITS];
+
+    /* PP-move (PURSUE_BY_STEERING): every unit's position and layer at the start of the tick, which
+     * the steering probe reads (R-097-03); it never sees a position an earlier unit moved this tick. */
+    double   start_x[OM_MOVE_MAX_UNITS], start_y[OM_MOVE_MAX_UNITS];
+    int32_t  start_layer[OM_MOVE_MAX_UNITS];
 
     /* PP-move: the tunable settings (om_tac_param); see om_tactical_set_param. */
     double   param[OM_TP__COUNT];
@@ -379,6 +385,14 @@ static double om_move_terrain_multiplier(double density) {
     return 1.0;
 }
 
+/* PP-move P8 (R-097-03, ALG-68): the six sweep headings as fixed direction vectors (cos, sin) of
+ * +30, -30, +60, -60, +90, -90 degrees, in the order the sweep tries them; no trig. */
+#define OM_PP_SQRT3_HALF 0.866025403784439
+#define OM_PP_HALF 0.5
+#define OM_PP_SWEEP_N 6
+static const double OM_PP_SWEEP_COS[OM_PP_SWEEP_N] = { OM_PP_SQRT3_HALF, OM_PP_SQRT3_HALF, OM_PP_HALF, OM_PP_HALF, 0.0, 0.0 };
+static const double OM_PP_SWEEP_SIN[OM_PP_SWEEP_N] = { OM_PP_HALF, -OM_PP_HALF, OM_PP_SQRT3_HALF, -OM_PP_SQRT3_HALF, 1.0, -1.0 };
+
 static const double OM_STEERING_SWEEP_ANGLES[OM_STEERING_SWEEP_COUNT] = {
     0.0,
     OM_STEERING_SWEEP_DELTA_RAD, -OM_STEERING_SWEEP_DELTA_RAD,
@@ -403,6 +417,10 @@ static om_move_state *om_ms(om_world *w) {
         w->move_state_free = om_move_state_free_fn;
     }
     return ms;
+}
+
+static int om_move_param_on(const om_move_state *ms, om_tac_param p) {
+    return ms->param[p] != 0.0;
 }
 
 /* ---------------------------------------------------------- unit lookup */
@@ -1330,6 +1348,96 @@ static void om_move_apply_queue_for_tick(om_world *w, om_move_state *ms, uint64_
     }
 }
 
+/* PP-move P8 (PURSUE_BY_STEERING): the units a probe from (x, y) can touch, as their start-of-tick
+ * positions, into scan_x/scan_y: same layer only, group mates and idle friends included, the unit itself
+ * not. The grid was filed at the start of the tick, so a unit still in a cell is in the cell of its
+ * start-of-tick position; a unit in the spill list is always a candidate. Returns the count. */
+static uint32_t om_move_probe_gather_start(om_move_state *ms, uint32_t self_id, double x, double y) {
+    const double r = OM_STEERING_PROBE_DIST + 2.0 * OM_UNIT_COLLISION_RADIUS + OM_MOVE_GRID_BOUND_PAD;
+    const double r2 = r * r;
+    const int32_t layer = ms->start_layer[self_id];
+    int32_t cx0, cx1, cy0, cy1, cy, cx;
+    uint32_t n = 0, slot;
+    for (slot = ms->slot_base; slot < ms->slot_base + ms->n_spill; slot++) {
+        uint32_t cid = ms->slot_id[slot];
+        double dx = ms->start_x[cid] - x, dy = ms->start_y[cid] - y;
+        if (cid == self_id || ms->start_layer[cid] != layer || dx * dx + dy * dy > r2) continue;
+        ms->scan_x[n] = ms->start_x[cid];
+        ms->scan_y[n] = ms->start_y[cid];
+        n++;
+    }
+    if (!om_move_grid_box(ms, x, y, r, &cx0, &cx1, &cy0, &cy1)) return n;
+    for (cy = cy0; cy <= cy1; cy++) {
+        uint32_t row = (uint32_t)cy * (uint32_t)ms->grid_w;
+        for (cx = cx0; cx <= cx1; cx++) {
+            for (slot = ms->grid_start[row + (uint32_t)cx]; slot < ms->grid_start[row + (uint32_t)cx + 1]; slot++) {
+                uint32_t cid = ms->slot_id[slot];
+                double dx = ms->start_x[cid] - x, dy = ms->start_y[cid] - y;
+                if (ms->unit_slot[cid] != slot || cid == self_id || ms->start_layer[cid] != layer || dx * dx + dy * dy > r2) continue;
+                ms->scan_x[n] = ms->start_x[cid];
+                ms->scan_y[n] = ms->start_y[cid];
+                n++;
+            }
+        }
+    }
+    return n;
+}
+
+/* PP-move P8, P7 (R-097-03, R-097-04, ALG-68, R-099-04): one unit's move under PURSUE_BY_STEERING, as the
+ * Python's update_movement does it. Arrival is the slot radius, with no snap; the seek heading is the
+ * unit vector to the destination; a blocked straight probe sweeps +30, -30, +60, -60, +90, -90 degrees
+ * and takes the first clear one, holding it for the detour distance moved; none clear goes straight on.
+ * See also: the 13-angle sweep in om_move_tick_unit, which this replaces when the switch is 0. */
+static void om_move_steer_step(om_world *w, om_move_state *ms, om_move_unit *mu, uint32_t period) {
+    uint32_t id = mu->unit_id;
+    double dx = mu->dest_x - mu->x, dy = mu->dest_y - mu->y;
+    double dist = sqrt(dx * dx + dy * dy), steer_x, steer_y, step_dist, move_dist;
+    mu->waiting = 0;
+    if (dist < OM_ARRIVAL_TOLERANCE_MULT * OM_UNIT_COLLISION_RADIUS) {
+        mu->has_dest = 0;
+        mu->deflecting = 0;
+        return;
+    }
+    steer_x = dx / dist;
+    steer_y = dy / dist;
+    mu->facing = om_move_turn_toward(mu->facing, om_atan2(dy, dx), om_move_turn_rate_for(mu->native_speed), period);
+    if (mu->deflecting && mu->detour_remaining > 0.0) {
+        steer_x = mu->detour_dx;
+        steer_y = mu->detour_dy;
+    } else {
+        uint32_t k, hints[OM_MOVE_PROBE_HINTS] = {0}, n_near = om_move_probe_gather_start(ms, id, mu->x, mu->y);
+        mu->deflecting = 0;
+        if (n_near && !om_move_probe_clear(ms, n_near, hints, mu->x + OM_STEERING_PROBE_DIST * steer_x, mu->y + OM_STEERING_PROBE_DIST * steer_y)) {
+            double seek_x = steer_x, seek_y = steer_y;
+            for (k = 0; k < OM_PP_SWEEP_N; k++) {
+                double ax = seek_x * OM_PP_SWEEP_COS[k] - seek_y * OM_PP_SWEEP_SIN[k];
+                double ay = seek_x * OM_PP_SWEEP_SIN[k] + seek_y * OM_PP_SWEEP_COS[k];
+                if (!om_move_probe_clear(ms, n_near, hints, mu->x + OM_STEERING_PROBE_DIST * ax, mu->y + OM_STEERING_PROBE_DIST * ay)) continue;
+                steer_x = ax;
+                steer_y = ay;
+                mu->deflecting = 1;
+                mu->detour_dx = ax;
+                mu->detour_dy = ay;
+                mu->detour_remaining = OM_STEERING_DETOUR_MIN_DIST;
+                break;
+            }
+        }
+    }
+    step_dist = ((mu->group_id != 0) ? mu->speed_cap : om_unit_effective_speed(w, id))
+              * om_move_terrain_multiplier(om_move_density_at_pos(ms, mu->x, mu->y, 0))
+              * (double)period / (double)OM_TACTICAL_TICK_RATE;
+    move_dist = step_dist < dist ? step_dist : dist;
+    if (move_dist > 0.0) {
+        mu->x += steer_x * move_dist;
+        mu->y += steer_y * move_dist;
+        om_move_grid_update(ms, mu);
+    }
+    if (mu->deflecting) {
+        mu->detour_remaining -= move_dist;
+        if (mu->detour_remaining <= 0.0) { mu->detour_remaining = 0.0; mu->deflecting = 0; }
+    }
+}
+
 static void om_move_tick_unit(om_world *w, om_move_state *ms, uint32_t id, uint32_t period) {
     om_move_unit *mu = om_move_get(ms, id);
     double heading, speed, dist_to_dest, step_dist;
@@ -1359,6 +1467,9 @@ static void om_move_tick_unit(om_world *w, om_move_state *ms, uint32_t id, uint3
     }
 
     if (om_move_is_stationary(mu)) { mu->waiting = 0; return; }
+    if (om_move_param_on(ms, OM_TP_PURSUE_BY_STEERING)) { om_move_steer_step(w, ms, mu, period); return; }
+    /* PP baseline only (switch = 0); deleted with the two movement switches at the end of Phase E (A140) */
+    /* See also: om_move_steer_step, which replaces everything below when OM_TP_PURSUE_BY_STEERING is 1 */
 
     dist_to_dest = sqrt((mu->dest_x - mu->x) * (mu->dest_x - mu->x)
                        + (mu->dest_y - mu->y) * (mu->dest_y - mu->y));
@@ -1461,6 +1572,13 @@ static void om_move_tick_once(om_world *w, om_move_state *ms, uint64_t new_tick,
     om_move_discover(w, ms);
     om_move_apply_queue_for_tick(w, ms, new_tick - 1);
     om_move_grid_rebuild(w, ms, 1);
+    if (om_move_param_on(ms, OM_TP_PURSUE_BY_STEERING)) {
+        for (id = 1; id <= ms->discovery_max && id < OM_MOVE_MAX_UNITS; id++) {
+            ms->start_x[id] = ms->units[id].x;
+            ms->start_y[id] = ms->units[id].y;
+            ms->start_layer[id] = ms->grid_in[id] ? om_unit_get_layer(w, id) : -1;
+        }
+    }
     for (id = 1; id <= ms->discovery_max; id++) {
         om_move_tick_unit(w, ms, id, period);
     }
