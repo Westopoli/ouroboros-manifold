@@ -21,9 +21,20 @@ Case: Siege Breaking (archetype 1) at region 0 of an 80-region seed-121
 world, built as in docs/northstar/proving_ground/evidence/
 a91_tactical_tick_time_2026-10-02.md (harness a91_tactical_tick_harness.c on
 push/A91-tactical-measure). Unit count is set through region 0's military
-(about 56.5 live units per military point in this binding; the A91 harness measured 58.5). 990 units is the "1,000 units"
-point: 1,002 live units already switches the period to 2 (R-099-03), and the
-1,000-unit figure is the 20 ticks/s one. 10,000 units runs at period 2.
+(about 58 live units per military point). A103 / TD-A103-e13-live-units: "1,000"
+and "10,000" mean LIVE simulated units, alive across all factions at step time
+(om_unit_alive over every in-use slot, counted once the mission has begun and
+before the first step). The earlier 996 / 10,100 figures were short or loose:
+the player force is parity times the enemy force minus a capacity shortfall
+(csrc/mission.c om_mission_compose_force) and the capacity depends on region 0's
+economy, tension and population, which this fixture used to pass in the wrong
+order (fields 0,1,2 instead of OM_F_ECONOMY, OM_F_TENSION, OM_F_POPULATION =
+1,2,3), costing about 4 percent of the player force. The enemy force is exact.
+1,000 live units is the top of the 20 ticks/s band (R-099-03: the period drops
+only ABOVE 1,000): military 17.1 gives 998 live units, and two extra
+player-faction units are spawned to make exactly 1,000 (no military value gives
+1,000: the count jumps from 997 to 1,001). 10,000 live units runs at period 2;
+military 178 reaches the OM_MAX_UNITS cap of 10,100.
 
 What is timed. The budget names movement and collision. In this sim those
 are om_move_sync (csrc/tactical_move.c, static), replayed from inside
@@ -53,6 +64,7 @@ from ._scale_helpers import assert_budget, median_ns
 SEED = 121
 N_REGIONS = 80
 SIEGE_BREAKING = 1
+OM_F_ECONOMY, OM_F_TENSION, OM_F_POPULATION = 1, 2, 3  # csrc/ouroboros_sim.h
 BUDGET_1000_NS = 3_000_000     # E-13: 1,000 units, 3 ms, 20 ticks/s
 BUDGET_10000_NS = 30_000_000   # E-13: 10,000 units, 30 ms, 10 ticks/s (100 ms tick)
 
@@ -75,15 +87,26 @@ def _siege_world(lib, military):
     for r in range(lib.om_region_count(w)):
         lib.om_mission_refresh_context(w, r)
     lib.om_region_set(w, 0, lib.om_region_tier(w, 0), military,
-                      lib.om_region_field(w, 0, 0), lib.om_region_field(w, 0, 1),
-                      lib.om_region_field(w, 0, 2), 0.0, 0.0, lib.om_region_owner(w, 0))
+                      lib.om_region_field(w, 0, OM_F_ECONOMY), lib.om_region_field(w, 0, OM_F_TENSION),
+                      lib.om_region_field(w, 0, OM_F_POPULATION), 0.0, 0.0, lib.om_region_owner(w, 0))
     lib.om_mission_setup(w, 0, SIEGE_BREAKING, 0)
     lib.om_mission_begin(w)
     return w
 
 
-def _measure(lib, military, n, warmup):
+def _top_up(lib, w, target):
+    """Spawn extra player-faction units (type 0) until exactly `target` are alive."""
+    pf = lib.om_player_faction(w)
+    i = 0
+    while _live(lib, w) < target:
+        assert lib.om_unit_spawn(w, 0, pf, 100.0 + 40.0 * i, 100.0, 0), "unit cap reached"
+        i += 1
+
+
+def _measure(lib, military, n, warmup, top_up_to=None):
     w = _siege_world(lib, military)
+    if top_up_to:
+        _top_up(lib, w, top_up_to)
     live = _live(lib, w)
     med = median_ns(lambda: lib.om_tactical_step(w), n=n, warmup=warmup)
     period = lib.om_tactical_tick_period(w)  # set by the first step, so read after the warm-up
@@ -94,10 +117,10 @@ def _measure(lib, military, n, warmup):
 def test_e13_siege_1000_units_whole_step_upper_bound_under_3ms(lib):
     """R-099-03 / E-13 Scale requirements: 1,000 units, movement+collision
     under 3 ms per tick at 20 ticks/s. Upper bound: whole om_tactical_step."""
-    med, live, period = _measure(lib, 17.6, n=200, warmup=5)  # about 990 units
+    med, live, period = _measure(lib, 17.1, n=200, warmup=5, top_up_to=1000)
     print(f"[a93] siege {live} units period={period}: whole om_tactical_step median "
           f"{med / 1e6:.3f} ms (upper bound of movement+collision), budget 3.000 ms")
-    assert 950 <= live <= 1000 and period == 1, f"fixture drifted: {live} units, period {period}"
+    assert live == 1000 and period == 1, f"fixture drifted: {live} units, period {period}"
     assert_budget(med, BUDGET_1000_NS, f"E-13 siege {live} units whole step (upper bound of movement+collision)")
 
 
@@ -107,17 +130,17 @@ def test_e13_siege_10000_units_whole_step_upper_bound_under_30ms(lib):
     med, live, period = _measure(lib, 178.0, n=41, warmup=3)
     print(f"[a93] siege {live} units period={period}: whole om_tactical_step median "
           f"{med / 1e6:.3f} ms (upper bound of movement+collision), budget 30.000 ms")
-    assert 10000 <= live <= 10400 and period == 2, f"fixture drifted: {live} units, period {period}"
+    assert 10000 <= live <= 10100 and period == 2, f"fixture drifted: {live} units, period {period}"
     assert_budget(med, BUDGET_10000_NS, f"E-13 siege {live} units whole step (upper bound of movement+collision)")
 
 
 def test_control_e13_timer_separates_known_slow_from_known_fast(lib):
     """Positive control for the two tests above: the same measurement path
-    must read a ~250-unit Siege case as far cheaper than a 990-unit one, and
+    must read a ~250-unit Siege case as far cheaper than a 1,000-unit one, and
     the clock must read a known 5 ms sleep above a no-op. A timer that cannot
     tell these apart could not detect the budget misses either."""
     fast, live_fast, _ = _measure(lib, 4.3, n=100, warmup=5)
-    slow, live_slow, _ = _measure(lib, 17.6, n=100, warmup=5)
+    slow, live_slow, _ = _measure(lib, 17.1, n=100, warmup=5, top_up_to=1000)
     print(f"[a93-control] {live_fast} units {fast / 1e6:.3f} ms vs {live_slow} units {slow / 1e6:.3f} ms")
     assert live_slow > 3 * live_fast
     assert slow > 4 * fast, f"slow case {slow / 1e6:.3f} ms is not over 4x fast case {fast / 1e6:.3f} ms"

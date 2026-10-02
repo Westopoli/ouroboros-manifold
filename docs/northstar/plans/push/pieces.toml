@@ -103,7 +103,8 @@ acceptance = [
     "tests/csim/test_E06_S048_three_tiers_of_technology.py",
 ]
 depends_on = ["B5"]
-status = "pending"
+# A112: attaches at 10a1faa3 (S-048 three tiers of tech, diplomacy.c); S-048 file green on main.
+status = { state = "attached", attach_sha = "10a1faa3" }
 size_estimate = "1 story, S-048 (three tiers of technology)"
 
 [[piece]]
@@ -153,7 +154,9 @@ acceptance = [
     "tests/csim/test_E08_S055_one_commander_one_mission_then_the_world_moves.py",
 ]
 depends_on = ["B7", "B8", "B10", "B6-lifecycle", "B6-collapse-pick"]
-status = "pending"
+# A112: attaches at ed4a95cb, the last pre-B5 generational.c increment (B7-8); S-055 first green at
+# 9d7cfdd8 (B7-7) and stays green through ed4a95cb and main. Choice confirmed by the Architect (A122).
+status = { state = "attached", attach_sha = "ed4a95cb" }
 size_estimate = "1 story, S-055 (needs chronicle.c and unit.c both attached)"
 
 [[piece]]
@@ -803,10 +806,16 @@ manager = "M1"
 wave = 4
 owns = ["csrc/generational.c"]
 owns_glob = []
-acceptance = []
+# A112 proposal: the three E-09 B5 files (26 tests, all green on main; tests/csim/test_E16_B5_save_version.py adds 5 more, green, not listed as it proves save.c).
+# Ids confirmed by the Architect (A122); landing commits e9d61211, fd378b22, e81cc6af,
+# 0e92629a, c8daf236.
+acceptance = [
+    "tests/csim/test_E09_B5_consequence_entry.py",
+    "tests/csim/test_E09_B5_chain_tags.py",
+    "tests/csim/test_E09_B5_consequence_flag_save.py",
+]
 depends_on = ["A2-contract", "B7"]
-status = "pending"
-tests_pending = true
+status = { state = "attached", attach_sha = "c8daf236" }
 size_estimate = "consequence entry plus chain clusters at jump end (plan B5, E-09)"
 
 # Mission-plays plan B6 (chapter lifecycle at jump end: generator, selector, collapse,
@@ -856,10 +865,10 @@ manager = "M3"
 wave = 4
 owns = ["autoload/feature_flags.gd"]
 owns_glob = []
-acceptance = []
+# A112: Godot gate test run green (13 pass, 0 fail) on origin/main; lands at 4daebc83 (G4).
+acceptance = ["tests/test_debug_overlay_gate.gd"]
 depends_on = []
-status = "pending"
-tests_pending = true
+status = { state = "attached", attach_sha = "4daebc83" }
 size_estimate = "ENABLE_DEBUG_OVERLAY default false"
 
 # Rulings round 2, A58: era pack manifests gain scale, tone and order (Era Library).
@@ -1005,7 +1014,7 @@ size_estimate = "two rows, 15 internal rows, five param renames, comment moves, 
 # Rulings round 2, A117: delete om_objective_is_contested (duplicate of the play path, no caller
 # in csrc) with its header line, signatures.toml row, generated conftest binding (sig_table --emit,
 # never hand-edited) and OM_SUP_CONTEST_SCAN_CAP in tactical_support.c; A119 comment at
-# om_objective_setup_drifting. DRAFT: the Architect reviews and lands this row. The files are
+# om_objective_setup_drifting. Row reviewed and landed by the Architect (A120). The files are
 # owned by A94-contract, B14 and A94-harness; depends_on orders this piece after all three so the
 # single-owner lint sees one owner at a time.
 # See also: A94-contract (the header's contract-piece pattern this follows).
@@ -1017,5 +1026,122 @@ owns = ["csrc/ouroboros_sim.h", "docs/northstar/spec_factory/signatures.toml", "
 owns_glob = []
 acceptance = ["tests/specfactory/test_conftest_bindings.py"]
 depends_on = ["A94-contract", "B14", "A94-harness"]
-status = "pending"
+status = { state = "attached", attach_sha = "a51cb292" }
 size_estimate = "one function deleted (about 30 lines), one header line, one signatures row, one generated binding line, one A119 comment"
+
+# Rulings round 2, A111: detector controls get an owner. tests/csim/conftest.py (the ctypes
+# bindings the controls use) stays A94-harness's. placeholder_controls.txt is the list the gate
+# counts the 92 placeholder controls against. Control test fixes (composite_pre_clamp, the e03
+# starting-ratio control) are edits under this piece; the csrc inject branches are the file
+# owners' units (A114).
+[[piece]]
+id = "G-controls"
+manager = "M0"
+wave = 4
+owns = ["docs/northstar/spec_factory/placeholder_controls.txt"]
+owns_glob = ["tests/csim/controls/**"]
+acceptance = []
+depends_on = ["A94-harness"]
+status = "pending"
+tests_pending = true
+size_estimate = "ownership row only (A111); fixture fixes for controls 1 and 2 come as later units"
+
+# Movement, layers and the search (docs/northstar/plans/2026-10-02-movement-layers-and-search-plan.md,
+# rulings round 2 Addendum 45). The builder chat's pieces. Each csrc file is taken over from the
+# piece that owned it; depends_on orders the take-over so the single-owner lint sees one owner at
+# a time. B10c's two A99 round 2 units (A123) land before PP-unit starts.
+[[piece]]
+id = "PP-contract"
+manager = "M0"
+wave = 5
+owns = ["csrc/ouroboros_sim.h", "docs/northstar/spec_factory/signatures.toml", "tests/csim/conftest.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_conftest_bindings.py"]
+depends_on = ["A117-contract"]
+status = "pending"
+size_estimate = "one contract piece, one ABI bump: the calls in the plan's appendix"
+
+[[piece]]
+id = "PP-parity"
+manager = "M0"
+wave = 5
+owns = []
+owns_glob = ["tests/csim/parity/**"]
+acceptance = []
+depends_on = []
+status = "pending"
+tests_pending = true
+size_estimate = "Python-against-C side-by-side runner and six scenes"
+
+[[piece]]
+id = "PP-move"
+manager = "M0"
+wave = 5
+owns = ["csrc/tactical_move.c"]
+owns_glob = []
+acceptance = []
+depends_on = ["PP-contract", "B12", "B12b"]
+status = "pending"
+tests_pending = true
+size_estimate = "P8, P7, P5 tables, collision, clamp, cover exemption, routing (plan Phase A), in units of about 100 lines"
+
+[[piece]]
+id = "PP-unit"
+manager = "M0"
+wave = 5
+owns = ["csrc/unit.c"]
+owns_glob = []
+acceptance = []
+depends_on = ["PP-contract", "B10", "B10b", "B10c"]
+status = "pending"
+tests_pending = true
+size_estimate = "P1, P2, P5, P6, settings, G04 and G15 fixes; then the layer steps of Phase C"
+
+[[piece]]
+id = "PP-capture"
+manager = "M0"
+wave = 5
+owns = ["csrc/tactical_support.c"]
+owns_glob = []
+acceptance = []
+depends_on = ["B14", "A117-contract"]
+status = "pending"
+tests_pending = true
+size_estimate = "P9 capture census each tick"
+
+[[piece]]
+id = "PP-fog"
+manager = "M0"
+wave = 5
+owns = ["csrc/fog.c"]
+owns_glob = []
+acceptance = []
+depends_on = ["PP-contract", "B11"]
+status = "pending"
+tests_pending = true
+size_estimate = "blocked cells and cover height in sight; side sight, emission and the ping in Phase C"
+
+[[piece]]
+id = "PP-mapgen"
+manager = "M0"
+wave = 5
+owns = ["csrc/tactical_mapgen.c"]
+owns_glob = []
+acceptance = []
+depends_on = ["PP-contract", "B15m"]
+status = "pending"
+tests_pending = true
+size_estimate = "canvas size, block-rect, cover height, layer accessibility from the grid"
+
+[[piece]]
+id = "SL-harness"
+manager = "M0"
+wave = 5
+owns = []
+owns_glob = ["scripts/skilllab/**", "tests/skilllab/**"]
+acceptance = []
+depends_on = []
+status = "pending"
+tests_pending = true
+size_estimate = "plan Phase S: trace, settings, plays, sampler, condition checker, chart forms"
+

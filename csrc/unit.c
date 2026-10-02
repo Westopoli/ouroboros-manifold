@@ -2102,7 +2102,14 @@ double om_unit_damage_reduction(om_world *w, uint32_t unit_id) {
     brace_hit = row->force_brace_reduction
         || (row->unit_type == OM_UT_VANGUARD && row->ability_bonus_on
             && row->ability_phase != OM_ABILITY_PHASE_IDLE);
-    if (brace_hit) reduction += OM_ABILITY_BRACE_DAMAGE_REDUCTION;
+    if (brace_hit) {
+#ifdef OM_DEBUG_INJECT
+        if (w->inject == OM_BUG_BRACE_REDUCTION_WRONG_CONSTANT)
+            reduction += OM_ABILITY_FORTIFY_DAMAGE_REDUCTION;
+        else
+#endif
+        reduction += OM_ABILITY_BRACE_DAMAGE_REDUCTION;
+    }
     if (row->force_fortify_reduction) {
         fortify_hit = 1;
     } else if (st->n_bastions == 0) {

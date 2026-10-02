@@ -610,3 +610,41 @@ Evidence: `docs/northstar/proving_ground/evidence/unowned_reds_2026-10-02.md`.
 **A118. R-130-02's tests drive `om_tactical_step`** on a built hold-zone mission. Friendly inside: progress runs. Enemy inside: stops; leaves: resumes with elapsed time kept. For the drifted zone the proof is turned round so no constant changes: the enemy stands outside the old zone and inside the moved one (on the drift axis, 500 wu from the old centre is 350 wu from the moved centre), so progress runs before the drift and stops once the zone has moved onto it. The 400 wu radius and the 150 wu span stand.
 
 **A119. Drift is not wired into play yet, and that is recorded, not fixed now.** Which objectives drift comes from the map's spine nodes and their waypoints (R-130-01), which is the held E-17 and E-15 map work. `om_objective_setup_drifting` stays test-only with a comment at the function and a ledger line naming A119 and the Q ids, so it is not mistaken for live behaviour. It is wired in the unit that brings spine waypoints into mission setup.
+
+## Addendum 43, 2026-10-02 (A117 row landed; E-13 unit counts)
+
+**A120. `A117-contract` is accepted and attached at a51cb292.** The row's owners, order and acceptance are right; the deletion left no reference in `csrc`, and the binding test passes.
+
+**A121. The E-13 unit-count explanation is accepted.** The shortfall was the test passing region fields in the wrong order to the force builder, not a fault in play. The E-13 tests on 1,000 live (period 1) and 10,000 to 10,100 live (period 2) stand, with budgets unchanged. Two things are recorded, neither changed now: the A99 equivalence builder also passes the fields out of order (economy, population, tension) and keeps doing so because its recorded hashes depend on it, with a comment at the builder saying so; and at 10,100 live the worst single step (25.4 ms) is over the scaled budget while the median passes. The tests assert the median as the rule is written; the worst step is reported with the round 2 results so Westley can decide whether the rule should bound it.
+
+## Addendum 44, 2026-10-02 (A111 and A112 rows landed)
+
+**A122. The draft rows are accepted and landed.** `G-controls` owns `tests/csim/controls/**` and `placeholder_controls.txt`. B5b is attached at 10a1faa3. B7b is attached at ed4a95cb, the last of its own increments, as A112 said; the first-green commit is not used because a piece attaches where its work ends. B5-chronicle takes the three proposed acceptance files and is attached at c8daf236, its last landing commit, all 26 tests being green; the save-version test stays outside its acceptance as it proves `save.c`. G-flags is attached at 4daebc83 on its green Godot gate test. `G-controls` stays pending until the two control fixes and the placeholder gate unit give it acceptance ids.
+
+## Addendum 45, 2026-10-02 (movement and layers into the engine; tactical speed round 2; controls)
+
+**A123. Tactical speed round 2: prototypes A and B are approved** as two one-file units under B10c (`csrc/unit.c`), each proved by the A99 equivalence tests and the per-step hash chains as measured. No snapshot of Warden counts: the order semantics stay as they are, since a snapshot is not byte-identical. There is no round 3 proposal: the nearest-hostile search is rewritten by the movement plan below (P1 and side-sight targeting), and its speed is gated there against E-11's budgets. After A and B land, the coordinator's lane leaves `csrc/unit.c`, `csrc/tactical_move.c`, `csrc/tactical_support.c`, `csrc/fog.c` and `csrc/tactical_mapgen.c` to the builder chat of A124 (pieces `PP-*`). `csrc/mission.c` stays with B9; the builder's one unit there (the canvas size call at mission setup) is handed to the coordinator as a branch to land.
+
+**A124. The movement, layers and search plan is in force:** `docs/northstar/plans/2026-10-02-movement-layers-and-search-plan.md`, approved by Westley 2026-10-02. It continues the Mac design chat's work (`docs/northstar/research/layer_dynamics/LEAVE_OFF.md`) and answers the parity requirements file. A separate builder chat runs it; it reports to the Architect, not to the coordinator. Pieces `PP-contract`, `PP-parity`, `PP-move`, `PP-unit`, `PP-capture`, `PP-fog`, `PP-mapgen`, `SL-harness` are registered in this commit.
+
+**A125. Westley's decisions, 2026-10-02, recorded.** His words are quoted where he gave more than a choice.
+- Group speed: slowest member, as R-095-01 and the C (a ruled difference from the Python). Q-095-01's detach rule is written into the rule.
+- The 200 wu leash before damage: built as a setting; the lab runs both; he picks from the chart; the other side is then deleted.
+- A unit in solid terrain is moved out, not stalled as in the Python.
+- P4 (generated map content) is held for his environment design. Terrain for tests and the lab is hand-placed.
+- Sight: a unit fires at what its side sees ("Side's shared sight"). Siege units, whose sensor is 300, fire beyond it only with a spotter or a ping; accepted.
+- Cover: fire follows the vision rule; a unit inside a cover obstacle is seen and fired at as normal. Cover height: "Yes, we should definitely build it now".
+- Terrain blocks above 0.7: "The current C engine is fine."
+- A lone unit on attack-move: "It should resume its prior goal after the fight is completed."
+- Units pushing apart: "the way that it worked on the Python simulation was perfect, and I'd like to migrate that way to be the way that it is in C as well." One case is held back for him, Q-097-02: the Python throws two units on the same spot apart by a thousand times the normal push.
+- Target choice: "I had imagined that units would only... just fire at the closest unit and we wouldn't have any other way. And I want to retain that, but if we can collect data on an additional switch where units focus fire, then that's okay." A lab-only setting, and one batch that measures what it changes.
+- Guard stance: decided after the movement lands (Q-096-01).
+- Scope: engine only; the client's layer controls follow a working configuration.
+
+**A126. Bible and register in this commit.** E-12: Purpose, S-093 (title, story, R-093-01, R-093-02), the invariant, R-089-01. E-01: R-004-02, R-008-04, new R-007-06. E-11: the Bombard example. E-13: R-095-01, R-096-02, the stationary-pair rule, R-098-02, R-099-04, the invariant, the route-grid cell size in the scale line (100, as R-097-01; it said 60), the gate verdict. `stories.md` S-093. Register: the second rows numbered Q-098-01 and Q-101-01 become Q-098-02 (closed, cover) and Q-101-02 (open); new rows Q-096-01, Q-097-02, Q-008-05, Q-008-06, Q-008-07. Earlier documents that say Q-098-01 for cover height (the port audit, the parity requirements) mean Q-098-02.
+
+**A127. Ready to build, by epic.** E-13: S-095, S-097 to S-100 and S-102 are buildable; S-096 as written, with the guard open. E-12: S-089 and S-093 are buildable; S-090 to S-092 wait on map content. E-11: S-084 and S-087 are buildable as rewritten; the two bugs against ruled text (Intercept's duration, R-086-02; the second Warden's 0.05, Q-084-01) are fixed with a test first. E-01: S-001, S-002, S-004, S-005, S-007, S-162 to S-164 are buildable on provisional numbers held as settings; S-003, S-006, S-008's numbers, S-009 to S-011 are not built. Test defects the builder fixes with ledger rows: the Bombard mirror at 1,000 wu in the R-085-04 test (no spotter), `test_E13_S097_around_not_through.py` (waits when surrounded), the R-127 tests that feed the census by setters, the cover test, and `test_E13_S096_four_commands.py` checked against the lone-unit rule.
+
+**A128. Controls (the coordinator's items 3 and 5).** e04: first move the real-repo liveness test onto a planted dead fixture, so that fixing a real control never breaks it again; then the missing hook under B1, by a Doer. The placeholder gate's "stale" as built (any listed path that is missing or no longer a placeholder, a filled-in failing control included) is accepted; it is the stricter reading and the right one.
+
+**A129. Still Westley's, unchanged:** whether E-13 bounds the worst step and in which scenario; the E-17 reds; R-085-02 and R-085-04; Knowledge Lost.

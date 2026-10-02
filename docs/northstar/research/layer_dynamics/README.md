@@ -1,6 +1,6 @@
 # Layer dynamics: start here
 
-The work to make the layer system and tactical combat carry the game's central promise. This file is the current state: the goal, the principle, the measure, what is decided, what the engine can do, and the plan. It is rewritten when things change. How it got here, with every run of the toy simulator, is `history_2026-09-30_to_10-01.md`. Runs from now on are one file each in `runs/`.
+The work to make the layer system and tactical combat carry the game's central promise. This file is the current state: the goal, the principle, the measure, what is decided, what the engine can do, and the plan. It is rewritten when things change. How it got here, with every run of the toy simulator, is `history_2026-09-30_to_10-01.md`. Runs from now on are one file each in `runs/`. Where the work stopped and what is next: `LEAVE_OFF.md`.
 
 ## 1. The goal
 
@@ -103,33 +103,32 @@ Canonical text is E-01 (`docs/bible/epics/E-01-layer-system.md`) and the registe
 
 ## 7. The instrument
 
-The toy simulator (`toys/layerlab/`) is frozen. Its unit behaviour is not the game's, and results kept turning on that: units overlapping, held units that never step forward, chasing units that run through a choke. The real C sim was compiled on the Mac on 2026-10-01 and runs a 16 against 16 fight headless in 3 ms. Westley: "yes to the real engine, so long as we can accomplish the original goal from the original plan."
+The toy simulator (`toys/layerlab/`) is frozen: its unit behaviour is not the game's, and results kept turning on that. Measuring is done by the **skill lab**, `scripts/skilllab/`, a harness that only calls the real C sim (`csrc/`): it runs fights, counts the units able to fire on each side through the fight, finds break-evens in whole units, and writes the chart page. It is on `main` with its tests (`tests/skilllab/`) and three controls: the mirror, numbers, and a planted 20 percent damage advantage.
 
-What the real engine can do today: headless fights through its public calls, with the game's own unit rules (acquire, anchor, the 200 leash, return fire), group moves, hard collision, unit stats changed at run time, abilities switched off. It is fully deterministic.
+The real engine is deterministic and runs the game's own unit rules. What it lacks:
 
-What it cannot, each a gap against its own bible:
+| Gap | Where it is closed |
+|---|---|
+| The C port lost Python behaviour: pursuit that steers around units, routing around terrain, map content, attack-move groups, return fire on the march, facing, the steering sweep, the first shot, capture | `docs/northstar/plans/2026-10-02-tactical-port-parity-requirements.md`, P1 to P9; audit in `port_gap_audit_2026-10-02.md` |
+| Targeting ignores fog and line of sight | build brief, G3 |
+| No layer changes, slopes, ping, going dark or reach by type; same-layer fire only | build brief, G4 to G7 |
+| Rule numbers are fixed when the library is compiled | build brief, G1 |
+| The root `Makefile` does not build on an arm64 Mac (the harness compiles its own copy) | build brief, G0 |
 
-| Gap | Rule it misses | What it blocks |
-|---|---|---|
-| Units walk straight; obstacles do not block movement; no routing | E-13 R-097-01 | landscape: no choke can exist |
-| Targeting ignores fog and line of sight | E-12 R-093-02, E-01 R-008-04 | enemy position; all vision work |
-| No layer changes, slopes, ping, going dark or reach by type; same-layer fire only | E-01 S-002, S-004, S-162 to S-164 | layers |
-| Rule numbers are fixed when the library is compiled | none (tooling) | tuning anything but unit stats |
-| The first-spawned side shoots first; nothing varies between seeds | a property of the engine | honest measurement, unless the harness swaps sides and shifts positions |
-| The root `Makefile` does not build on an arm64 Mac | determinism contract | building on the Mac |
-
-Westley, 2026-10-01, on a stance between never moving and chasing anywhere: "Yes a guard stance is fine". The real engine's own engage, anchor and leash rules serve as it.
+Until the port parity lands, two armies sent at each other end as two flat rows at weapon range, so the plays start the sides at contact distance (`runs/2026-10-02_harness_check.md`).
 
 ## 8. The plan
 
-1. This record.
-2. The **skill lab**: a harness in `scripts/skilllab/` that only calls the real library. It runs fights, counts units able to fire, finds break-evens in whole units, and writes the chart page. Tests first.
-3. One **controls batch** on today's engine (mirror, numbers, a planted reach advantage), to prove the harness and keep a before-picture.
-4. One **engine cascade** that closes the gaps: a portable build; rule numbers settable at run time; solid terrain with routing; targeting by sight; layer changes; reach by type; going dark; the ping. Tests first, Sonnet sub-agents throughout, with separate test writers and auditors.
-5. **Small batches** on the finished engine, one skill at a time, each read by Westley: formation, matchup, landscape, enemy position, layers, then the knobs, then combinations and counters.
-6. The **search** for every region of settings where the conditions hold, two ways side by side: all settings at once, and step by step ("start the prototype with 2 variables, tune them until the expected behavior is exhibited, and then just keep iteratively adding and tuning"), to "see which one performs better for our goals".
+1. This record. Done.
+2. The skill lab harness. Done.
+3. **Port parity** (P1 to P9), planned and built on the Linux machine.
+4. One **controls batch** on the engine as it then is, with the chart page, read by Westley.
+5. The **engine cascade** for the layer system: a portable build; rule numbers settable at run time; targeting by sight; layer changes; reach by type; going dark; the ping. Tests first, Sonnet sub-agents throughout, with separate test writers and auditors.
+6. **Small batches** on the finished engine, one skill at a time, each read by Westley: formation, matchup, landscape, enemy position, layers, then the knobs, then combinations and counters.
+7. The **search** for every region of settings where the conditions hold, two ways side by side: all settings at once, and step by step ("start the prototype with 2 variables, tune them until the expected behavior is exhibited, and then just keep iteratively adding and tuning"), to "see which one performs better for our goals".
+8. When a working configuration is found and read: the layer interactions go into the MVP.
 
-The build brief for steps 2 to 4 is `docs/northstar/plans/2026-10-02-skill-lab-cascade.md`.
+The harness contract and the engine brief are `docs/northstar/plans/2026-10-02-skill-lab-cascade.md`.
 
 ## 9. Two machines
 

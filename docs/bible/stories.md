@@ -96,7 +96,7 @@ One row per user-facing behavior, in the user's words. Every story enters here f
 | S-090 | E-12 | "A zone of interference shrinks what units inside it see and what outsiders see into it." | Spec'd | `epics/E-12-fog-and-sensors.md` S-090 |
 | S-091 | E-12 | "An elevated position sees farther." | Spec'd | `epics/E-12-fog-and-sensors.md` S-091 |
 | S-092 | E-12 | "I study the whole map before I commit, then lose sight of all but what my units see." | Spec'd | `epics/E-12-fog-and-sensors.md` S-092 |
-| S-093 | E-12 | "Fog changes what I know, never what happens." | Spec'd | `epics/E-12-fog-and-sensors.md` S-093 |
+| S-093 | E-12 | "Fog binds my units and the enemy's by one rule; what I am shown never changes what happens." | Spec'd | `epics/E-12-fog-and-sensors.md` S-093 |
 | S-094 | E-12 | "Unexplored space, interference, and revealed ground read differently at a glance." | Spec'd, needs reference | `epics/E-12-fog-and-sensors.md` S-094 |
 | S-095 | E-13 | "A selection moves at its slowest member's pace and arrives in its shape; I split off a faster group when I choose." | Spec'd | `epics/E-13-movement-and-command.md` S-095 |
 | S-096 | E-13 | "Move is movement, attack-move fights along the way, attack-target commits, ability is a button." | Spec'd | `epics/E-13-movement-and-command.md` S-096 |

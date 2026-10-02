@@ -1870,7 +1870,11 @@ double om_selector_score_previous_lineage(const om_world *w, uint32_t chapters_a
 }
 
 uint32_t om_time_jump_choose_length(om_world *w, uint32_t requested) {
+#ifdef OM_DEBUG_INJECT
+    if (w && w->inject == OM_BUG_TIME_JUMP_CLAMP_SKIPPED) return requested;
+#else
     (void)w;
+#endif
     if (requested < OM_TIME_JUMP_MIN_TICKS) return OM_TIME_JUMP_MIN_TICKS;
     if (requested > OM_TIME_JUMP_MAX_TICKS) return OM_TIME_JUMP_MAX_TICKS;
     return requested;

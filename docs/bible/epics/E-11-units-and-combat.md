@@ -21,7 +21,7 @@ The numbers below are the Tier 2 Settled Reach baseline; they are tuned by headl
 
 ## Obviously working in 60 seconds
 
-Spawn 10 Vanguards versus 10 Raiders at 250 wu apart on layer 3 and attack-move both. The Vanguards win with 5 or more survivors; the fight lasts at least 45 s. Swap the Raiders for 10 Bombards at 1,000 wu: the Bombards kill the Vanguards before they close. Send 4 Raiders around the flank into 4 Bombards: the Bombards die. Pop Surge on a Raider: it moves at 375 wu/s and hits for 18 for 3 s, then cannot Surge again for 75 s. Same seed, same fight, tick for tick.
+Spawn 10 Vanguards versus 10 Raiders at 250 wu apart on layer 3 and attack-move both. The Vanguards win with 5 or more survivors; the fight lasts at least 45 s. Swap the Raiders for 10 Bombards at 1,000 wu with one Raider forward as their eyes: the Bombards fire on the Vanguards as they close; without the Raider the Bombards hold fire until the Vanguards are within their 300 wu sensor (E-12 R-093-02). Send 4 Raiders around the flank into 4 Bombards: the Bombards die. Pop Surge on a Raider: it moves at 375 wu/s and hits for 18 for 3 s, then cannot Surge again for 75 s. Same seed, same fight, tick for tick.
 
 ## Stories
 
@@ -82,7 +82,7 @@ Open flags: Q-083-03 (unlock mechanism and the positioning-over-cards weighting 
 As a commander, I want damage to be simple and legible: base times matchup, full damage at any range within reach, area damage capped, so that I can predict a fight.
 
 Rules
-- R-084-01  Given an attacker in range of its target every tick, When its attack timer elapses (interval × 20 ticks), Then one attack lands for base × matchup × output multiplier × (1 − reduction), with reduction the sum of Brace 0.50, Fortify 0.20, and Warden aura 0.10 where they apply, capped at 0.9.
+- R-084-01  Given an attacker in range of its target every tick, When its attack timer elapses (interval × 20 ticks; a unit's first attack is ready on the tick its target is first in range), Then one attack lands for base × matchup × output multiplier × (1 − reduction), with reduction the sum of Brace 0.50, Fortify 0.20, and Warden aura 0.10 where they apply, capped at 0.9.
 - R-084-02  Given a target at 10 wu or at the full range, When hit, Then damage is identical (no falloff).
 - R-084-03  Given a Bombard attack centered on a target, When resolved, Then every enemy on the Bombard's layer within 150 wu of the target takes full per-target damage, and the total across all targets is capped at 4 × base damage (70), applied in target order until the cap.
 - R-084-04  Given a unit fires, When the attack lands, Then the unit pauses movement for 0.5 s (backswing).
@@ -135,7 +135,7 @@ Rules
 - R-087-03  Given an idle or attack-moving unit with an enemy within attack range on its layer, When targets are evaluated, Then it attacks the nearest such enemy; an engaged target still alive and in range is kept.
 - R-087-04  Given an attack-moving unit whose target is not within its attack range and a visible enemy within sensor range, When evaluated, Then its move goal becomes the nearest visible enemy and it walks there by its ordinary movement (R-097-03), steering around units in its way; it holds position only while its own target is within its attack range, and pursues again when the target leaves that range.
 - R-087-05  Given an attack-moving unit that acquires a target, When it does, Then it anchors at its position, and if the target moves more than 200 wu from the anchor it drops the target and resumes its path.
-- R-087-06  Given an idle unit with no target and no order taking damage, When hit, Then it targets the attacker (return fire); an already-engaged unit ignores incoming damage for targeting.
+- R-087-06  Given an idle or attack-moving unit with no target taking damage, When hit, Then it targets the attacker (return fire); if the attacker is out of range it attack-moves to the attacker, dropping its earlier destination; a plain-moving unit and an already-engaged unit ignore incoming damage for targeting.
 - R-087-07  Given a supply or evacuation unit, When the loop runs, Then it never attacks; it flinches and otherwise holds.
 - R-087-08  Given target acquisition, When it runs, Then each unit re-acquires on every 4th tick (cohort stagger) and validates its current target every tick.
 

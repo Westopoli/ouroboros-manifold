@@ -15,7 +15,7 @@
 
 ## Purpose
 
-The player sees only what their units can sense. Each unit reveals a circle around it, shrunk by whatever interference it is standing in, and the revealed map is the union of those circles. Enemies outside every circle do not exist on screen. Cover blocks sight by height (E-01 S-007). Other layers are seen at reduced range (E-01 S-005) or by pulse (E-01 S-006). Before the mission starts, the player sees all the terrain and none of the enemy; the moment the mission begins, fog falls. Fog is a player-information constraint only: the engine resolves combat identically whatever the player can see, and faction agents in the strategic sim see everything about their neighbors.
+The player sees only what their units can sense. Each unit reveals a circle around it, shrunk by whatever interference it is standing in, and the revealed map is the union of those circles. Enemies outside every circle do not exist on screen. Cover blocks sight by height (E-01 S-007). Other layers are seen at reduced range (E-01 S-005) or by pulse (E-01 S-006). Before the mission starts, the player sees all the terrain and none of the enemy; the moment the mission begins, fog falls. Fog binds every side by the same rule: a unit acquires, pursues and fires only at what its own side can see, so a spotter or a ping lets a long-range unit fire and losing sight stops it. What the player is shown never changes the result, and faction agents in the strategic sim see everything about their neighbors.
 
 At launch there is no era-to-era difference in fog (Stage 1 A-321). The Settled Reach ships with the values below.
 
@@ -29,7 +29,7 @@ Place a Vanguard (sensor 700) and an enemy Raider at 650 wu on the same layer: t
 As a commander, I want the map revealed only around my units, so that scouting is a job and the unknown is a threat.
 
 Rules
-- R-089-01  Given an observer with sensor radius r at interference i, When visibility is computed, Then its effective radius is r × (1 − i), and an enemy on the same layer is visible if its distance ≤ that radius and no cover blocks the line.
+- R-089-01  Given an observer with sensor radius r at interference i, When visibility is computed, Then its effective radius is r × (1 − i), and an enemy on the same layer is visible if its distance ≤ that radius and no cover (E-01 S-007) or blocked cell (E-13 R-097-01) blocks the line.
 - R-089-02  Given every friendly unit's visible set, When the player's view is built, Then the player-visible enemy list is their union.
 - R-089-03  Given an enemy not in the union, When drawn, Then it is not drawn, its HP bar is not drawn, and its position is not in the client's data.
 - R-089-04  Given visibility, When computed, Then it is recomputed every tick from current positions; there is no memory of last-seen positions [Q-089-01].
@@ -79,12 +79,12 @@ Inputs: map; player input.
 Outputs: recon render; mission start.
 Open flags: none.
 
-### S-093 — Fog is for the player, not the engine
-As a commander, I want fog to change what I know and never what happens, so that a battle in the dark is still a fair battle.
+### S-093 — Fog binds every side alike
+As a commander, I want fog to bind my units and the enemy's by one rule, so that a battle in the dark is still a fair battle.
 
 Rules
-- R-093-01  Given two identical battles differing only in the player's visibility, When resolved, Then the traces are identical.
-- R-093-02  Given an enemy unit, When it acquires targets, Then it uses its own visible set with the same rules as the player's units.
+- R-093-01  Given two identical battles differing only in which side the player commands or in what the client draws, When resolved, Then the traces are identical.
+- R-093-02  Given any unit of any side, When it acquires, pursues or fires at a target, Then the target is in its side's visible set: the union of what that side's living units see (R-089-01, E-01 S-005) and what its pings reveal (E-01 S-162); the rule is the same for the player's units and the enemy's (Westley, 2026-10-02). A unit whose sensor is shorter than its range (Bombard, Bastion: sensor 300) fires beyond its sensor only at what another friendly unit or a ping sees.
 - R-093-03  Given the strategic sim, When faction agents decide, Then they read every neighbor region's fields without fog (E-05).
 
 Inputs: none.
@@ -125,7 +125,7 @@ Open flags: Q-094-01 (is the sensor circle drawn at all; the HUD section never s
 
 - Player-visible list ⊆ enemy units on the map.
 - Friendly units always visible.
-- Visibility never changes combat resolution.
+- What the player is shown never changes combat resolution; each side's own visible set does (R-093-02).
 - Same seed, same visibility, all platforms.
 
 ## Scale requirements
@@ -142,6 +142,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 - Interference sampled at the target instead of the observer (or neither).
 - Fog applied during recon, or terrain hidden after Begin.
 - Enemy AI reads the player's visible set.
+- A unit fires at a target that no unit of its side sees.
 - Visibility computed all-pairs and falls off a cliff at scale.
 - Last-seen markers implemented as live positions.
 

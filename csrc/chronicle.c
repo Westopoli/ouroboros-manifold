@@ -2409,7 +2409,11 @@ uint32_t om_chronicle_rendered_entry_count(const om_world *w) {
 }
 
 double om_chronicle_score_base(const om_world *w, uint32_t tier, double delta_sum) {
+#ifdef OM_DEBUG_INJECT
+    if (w && w->inject == OM_BUG_SIGNIFICANCE_CAP_SKIPPED) return (double)tier + delta_sum / OM_SIGNIFICANCE_DELTA_SCALE;
+#else
     (void)w;
+#endif
     return chron_score_base(tier, delta_sum);
 }
 
