@@ -11,7 +11,7 @@ One economy, two drivers: rules when nobody holds the economy seat, a human when
 | # | Goal | Depends on | Status |
 |---|---|---|---|
 | 1 | Resources and how they become units | (check against 5's verbs before freezing) | done 2026-10-01; folded into E-19 S-159; remaining detail is Q-159-08 |
-| 2 | Bases of operations and how they play into objectives | 1 | partly decided (base of operations, resources opposite the objective, expansions, forward bases); the loss condition and mission-type mapping are open (Q-159-11) |
+| 2 | Bases of operations and how they play into objectives | 1 | partly decided (base of operations, resources opposite the objective, expansions, forward bases); the loss condition and mission-type mapping are open (Q-159-11); options in `base_and_objective_options.md` |
 | 3 | Groundwork for auto-generating economic buildings (sister to biome generation) | 1, 2 | done 2026-10-02; all seven parts decided, in E-17 S-166 (R-166-03 to R-166-06) |
 | 4 | How the economy runs when the player opts out | 1, 2, 3 | not started |
 | 5 | How the economy player literally manages the economy | 1 to 4 | done 2026-10-01; folded into E-19 S-159; remaining detail is Q-159-09, Q-159-10 |
@@ -158,6 +158,15 @@ Recorded as:
 - This amends the recorder's note under Q-E01-01 that the elevation mapping is fixed globally. Westley's own words there fixed the count at five layers on every map, which stands.
 - Q-166-01 is closed. All seven parts of goal 3 are decided; goal 3 is marked done.
 
+## Decisions (2026-10-02, twelfth round)
+
+Westley, verbatim: "let's finish goal 2, propose some options, some wild and some standard  - mark in memory that after we finish the 5 goals, we're going to do some work on the epics/stories. We'll audit what exists against the recent ce07e919 commit and combat/movement decisions, and design new stories/epics based on the new batch of decisions that we made during this chat."
+
+Recorded as:
+
+- Goal 2 options in `base_and_objective_options.md` (Q-159-11).
+- After the five goals: an epics and stories pass. Audit what exists against commit ce07e919 and the combat and movement decisions, then design new stories and epics from the decisions made in this track.
+
 ## Files
 
 - `prior_art_resources.md`: cited digest of resource systems in other games.
@@ -171,3 +180,4 @@ Recorded as:
 - `chess_layer_options.md`: options for making the seat more like chess.
 - `settlement_generation_options.md`: goal 3 options, seven parts.
 - `map_scale_comparison.md`: canvas sizes against Age of Empires 3 and World of Warships.
+- `base_and_objective_options.md`: goal 2 options, four parts.
