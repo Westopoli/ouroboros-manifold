@@ -10,11 +10,11 @@ One economy, two drivers: rules when nobody holds the economy seat, a human when
 
 | # | Goal | Depends on | Status |
 |---|---|---|---|
-| 1 | Resources and how they become units | (check against 5's verbs before freezing) | in progress: options in `resources_options.md`; Westley leans A and F (2026-10-01); F expanded with four variations in `f_variations.md` |
-| 2 | Bases of operations and how they play into objectives | 1 | not started |
+| 1 | Resources and how they become units | (check against 5's verbs before freezing) | foundation decided 2026-10-01 (`current_system.md`); open: the three resources' identities and which unit roles need which |
+| 2 | Bases of operations and how they play into objectives | 1 | partly decided (base of operations, resources opposite the objective, expansions, forward bases); the loss condition and mission-type mapping are open |
 | 3 | Groundwork for auto-generating economic buildings (sister to biome generation) | 1, 2 | not started |
 | 4 | How the economy runs when the player opts out | 1, 2, 3 | not started |
-| 5 | How the economy player literally manages the economy | 1 to 4 | not started |
+| 5 | How the economy player literally manages the economy | 1 to 4 | foundation decided 2026-10-01 (`current_system.md`); details open |
 
 ## Decisions (2026-10-01)
 
@@ -83,6 +83,22 @@ Recorded as:
 - Westley's measure: this is about 1.2x to 1.4x a StarCraft 2 economy; the target is 2x to 3x.
 - The above is the current economic system, written out in `current_system.md`.
 - Next: ways to make it more like chess (thinking ahead, watching the map, reading the enemy's base), in `chess_layer_options.md`.
+
+## Decisions (2026-10-01, sixth round)
+
+Westley, verbatim, answering `chess_layer_options.md`:
+
+"I like the counters/retooling, let's explore that option deeper, maybe specific unit roles need specific resources, and heavier resource collection from a specific resource indicates they're making more of that specific role and you need the counter. - I like the walls/towers/raid lanes, let's tack that on - I like the schedule, if it takes a while to change what production you're focusing on and the fact that enemies can see it, we should also givep players a way to disguise/hide their buildings. - I like the weather on the move, let's do it. - Let's also do the potential forward bases. Record all these decisions, I think we have a strong foundation for the economic system. I think we can call it a day on that design front unless I'm not remembering something"
+
+Recorded as:
+
+- Decided: counters and retooling (S1) is in, to be explored deeper. His direction: specific unit roles need specific resources, so heavy gathering of one resource shows which role a side is making more of, and the other side needs the counter.
+- Decided: walls, towers and raid lanes (S3) are in.
+- Decided: the schedule (W3) is in. Changing what production is focused on takes a while and the enemy can see it, so players also get a way to disguise or hide their buildings.
+- Decided: weather on the move (W4) is in.
+- Decided: forward bases (W6) are in.
+- Not picked, not rejected: prizes on a clock (S2), a shared market (S4), demands from the civilization (S5), the Keystone (W1), the Contested Tree (W2), agents (W5).
+- Westley's read: a strong foundation; this design front pauses here.
 
 ## Files
 

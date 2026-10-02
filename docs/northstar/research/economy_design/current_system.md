@@ -2,7 +2,7 @@
 
 As decided by Westley through 2026-10-01. This file states what the economy is now; it is rewritten when a decision changes it. His words are verbatim in `README.md`. Nothing here is bible text yet, and nothing here is being built.
 
-His measure of it: about 1.2x to 1.4x a StarCraft 2 economy. The target is 2x to 3x. The gap is what `chess_layer_options.md` is for.
+The target is 2x to 3x the system complexity of a StarCraft 2 economy. Westley measured the first half of this (the seat, what the player runs, the map) at about 1.2x to 1.4x; the section "Thinking ahead" was added to close the gap. He calls the whole a strong foundation.
 
 ## The seat
 
@@ -30,6 +30,15 @@ His measure of it: about 1.2x to 1.4x a StarCraft 2 economy. The target is 2x to
 - A neutral populace lives in settlements on the map and is contested. Winning it is not the economy player's job.
 - Seasons and weather. Specific regions have specific environmental troubles.
 
+## Thinking ahead
+
+- **Counters and retooling.** Unit families counter each other. A production building is set up for one family at a time, and changing what it makes takes a while. Specific unit roles need specific resources, so heavy gathering of one resource shows which role a side is making more of, and the other side needs the counter. To be explored deeper.
+- **The schedule.** Production is planned ahead on a timeline. Changing what production is focused on takes time, and an enemy who sees a building can see what it is doing.
+- **Disguise.** Because production is slow to change and visible, players have a way to disguise or hide their buildings.
+- **Walls, towers and raid lanes.** The economy player builds the defenses. Raids on workers and shipments come along lanes set by the terrain.
+- **Weather on the move.** The region's environmental trouble travels across the map where both sides can see it, and shuts down what it passes over.
+- **Forward bases.** Production can be built forward, near the front or at an expansion, where it reinforces fast and is exposed. Where it stands shows where the next push comes from.
+
 ## Long-term scale
 
 Thousands of units and workers on one map, a busy screen, made possible by efficient simulation and visuals. Recorded in the bible hub under "Reference Hardware".
@@ -40,6 +49,8 @@ Thousands of units and workers on one map, a busy screen, made possible by effic
 |---|---|
 | What the pair carries forward between missions (a shipment deck is one candidate) | Q-159-07 |
 | How the economy runs with nobody in the seat | Q-159-02 |
-| Which of the offered build-ons not yet answered are in: upkeep bands, foraging to farming, deeper districts, trading posts at neutral settlements, trade caravans, ages by landmark, the Veil and worker scouting, a return-to-base ability, workers under raid | none yet |
-| What closes the gap from 1.4x to 2x or 3x | `chess_layer_options.md` |
+| Which of the offered build-ons not yet answered are in: upkeep bands, foraging to farming, deeper districts, trading posts at neutral settlements, trade caravans, ages by landmark, worker scouting, a return-to-base ability, workers under raid | none yet |
+| Which unit roles need which of the three resources, and what the three resources are | none yet |
+| How disguising or hiding a building works, and what it costs | none yet |
+| Chess-layer options not picked and not rejected: prizes on a clock, a shared market, demands from the civilization, the Keystone, the Contested Tree, agents | `chess_layer_options.md` |
 | Match shape: co-op, versus, or both | Q-141-01, Q-141-02 |
