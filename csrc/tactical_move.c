@@ -1406,17 +1406,17 @@ static int om_move_probe_sure_blocked(const om_move_state *ms, uint32_t n_near, 
     return om_move_probe_blocked(ms, n_near, hints, cand_x, cand_y, sure * sure);
 }
 
-/* PP-move (ROUTE_AROUND_TERRAIN): a push that would end in a blocked cell slides along one axis, else
- * reverts (Python _resolve_collisions). The blocked test is the one formation slots use.
- * See also: om_move_slot_blocked; the blocked grid is wave A4's. */
-static int om_move_slide_blocked(om_world *w, om_move_state *ms, double x, double y) {
-    return om_move_slot_blocked(w, ms, x, y);
+/* PP-move (ROUTE_AROUND_TERRAIN): a push that would end in a blocked cell of the unit's layer, or in an obstacle
+ * disc, slides along one axis, else reverts (Python _resolve_collisions, R-099-04). */
+static int om_move_slide_blocked(om_world *w, om_move_state *ms, uint32_t layer, double x, double y) {
+    return om_move_cell_blocked(w, ms, layer, (int32_t)floor(x / OM_NAVMESH_CELL_SIZE), (int32_t)floor(y / OM_NAVMESH_CELL_SIZE))
+        || om_map_sample_obstacle_density(w, x, y) > OM_NAVMESH_OBSTACLE_THRESHOLD;
 }
 
-static void om_move_slide(om_world *w, om_move_state *ms, double ox, double oy, double *nx, double *ny) {
-    if ((*nx == ox && *ny == oy) || !om_move_slide_blocked(w, ms, *nx, *ny)) return;
-    if (!om_move_slide_blocked(w, ms, *nx, oy)) *ny = oy;
-    else if (!om_move_slide_blocked(w, ms, ox, *ny)) *nx = ox;
+static void om_move_slide(om_world *w, om_move_state *ms, uint32_t layer, double ox, double oy, double *nx, double *ny) {
+    if ((*nx == ox && *ny == oy) || !om_move_slide_blocked(w, ms, layer, *nx, *ny)) return;
+    if (!om_move_slide_blocked(w, ms, layer, *nx, oy)) *ny = oy;
+    else if (!om_move_slide_blocked(w, ms, layer, ox, *ny)) *nx = ox;
     else { *nx = ox; *ny = oy; }
 }
 
@@ -1468,8 +1468,8 @@ static int om_move_collide_pair(om_world *w, om_move_state *ms, uint32_t ia, uin
             bx = om_move_clamp_axis(bx, ms->canvas_w); by = om_move_clamp_axis(by, ms->canvas_h);
         }
         if (ms->col_route) {
-            om_move_slide(w, ms, oax, oay, &ax, &ay);
-            om_move_slide(w, ms, obx, oby, &bx, &by);
+            om_move_slide(w, ms, (uint32_t)om_move_layer(w, ia), oax, oay, &ax, &ay);
+            om_move_slide(w, ms, (uint32_t)om_move_layer(w, ib), obx, oby, &bx, &by);
         }
     }
     om_move_grid_set(ms, ia, ax, ay);
@@ -1649,6 +1649,70 @@ static uint32_t om_move_probe_gather_start(om_move_state *ms, uint32_t self_id, 
     return n;
 }
 
+/* The route-grid cell a position is in; a position on the canvas edge belongs to the last cell. */
+static void om_move_cell_at(const om_move_state *ms, double x, double y, int32_t *cx, int32_t *cy) {
+    int32_t nx, ny;
+    *cx = (int32_t)floor(x / OM_NAVMESH_CELL_SIZE);
+    *cy = (int32_t)floor(y / OM_NAVMESH_CELL_SIZE);
+    if (!(ms->canvas_w > 0.0 && ms->canvas_h > 0.0)) return;
+    om_move_window(ms, &nx, &ny);
+    if (*cx >= nx && x <= ms->canvas_w) *cx = nx - 1;
+    if (*cy >= ny && y <= ms->canvas_h) *cy = ny - 1;
+}
+
+/* R-097-09 (Westley, 2026-10-02): a unit found inside a blocked cell of its layer is moved to the nearest open
+ * cell, not stalled: the nearest point of that cell at least a collision radius inside it; ties go to the lower
+ * cell id. See also: om_move_tick_unit, which calls this each tick while ROUTE_AROUND_TERRAIN is on. */
+static void om_move_leave_blocked(const om_world *w, om_move_state *ms, om_move_unit *mu) {
+    const uint32_t layer = (uint32_t)om_move_layer(w, mu->unit_id);
+    int32_t nx, ny, cx, cy, r, best_x = -1, best_y = -1;
+    double best = OM_MOVE_GRID_FAR;
+    om_move_cell_at(ms, mu->x, mu->y, &cx, &cy);
+    if (!om_move_cell_blocked(w, ms, layer, cx, cy)) return;
+    om_move_window(ms, &nx, &ny);
+    for (r = 1; r < nx + ny; r++) {
+        int32_t x, y;
+        if (best_x >= 0 && (double)r * OM_NAVMESH_CELL_SIZE * (double)r * OM_NAVMESH_CELL_SIZE >= best) break;
+        for (y = cy - r; y <= cy + r; y++) {
+            int32_t step = (y == cy - r || y == cy + r) ? 1 : 2 * r;
+            for (x = cx - r; x <= cx + r; x += step) {
+                double x0, y0, qx, qy, d2;
+                if (x < 0 || y < 0 || x >= nx || y >= ny || om_move_cell_blocked(w, ms, layer, x, y)) continue;
+                x0 = (double)x * OM_NAVMESH_CELL_SIZE;
+                y0 = (double)y * OM_NAVMESH_CELL_SIZE;
+                qx = mu->x < x0 ? x0 : (mu->x > x0 + OM_NAVMESH_CELL_SIZE ? x0 + OM_NAVMESH_CELL_SIZE : mu->x);
+                qy = mu->y < y0 ? y0 : (mu->y > y0 + OM_NAVMESH_CELL_SIZE ? y0 + OM_NAVMESH_CELL_SIZE : mu->y);
+                d2 = (qx - mu->x) * (qx - mu->x) + (qy - mu->y) * (qy - mu->y);
+                if (d2 < best || (d2 == best && (y < best_y || (y == best_y && x < best_x)))) { best = d2; best_x = x; best_y = y; }
+            }
+        }
+    }
+    if (best_x < 0) return;
+    {
+        const double lo = OM_UNIT_COLLISION_RADIUS, hi = OM_NAVMESH_CELL_SIZE - OM_UNIT_COLLISION_RADIUS;
+        double rx = mu->x - (double)best_x * OM_NAVMESH_CELL_SIZE, ry = mu->y - (double)best_y * OM_NAVMESH_CELL_SIZE;
+        mu->x = (double)best_x * OM_NAVMESH_CELL_SIZE + (rx < lo ? lo : (rx > hi ? hi : rx));
+        mu->y = (double)best_y * OM_NAVMESH_CELL_SIZE + (ry < lo ? lo : (ry > hi ? hi : ry));
+    }
+    mu->plan_valid = 0;
+    om_move_grid_update(ms, mu);
+}
+
+/* A step that would end in a blocked cell of the unit's layer slides along one axis, else is dropped, and
+ * the route is planned again (E-13: a unit never enters a blocked cell). */
+static void om_move_terrain_guard(const om_world *w, om_move_state *ms, om_move_unit *mu, uint32_t layer, double *nx, double *ny) {
+    int32_t cx, cy;
+    om_move_cell_at(ms, *nx, *ny, &cx, &cy);
+    if (!om_move_cell_blocked(w, ms, layer, cx, cy)) return;
+    mu->plan_valid = 0;
+    om_move_cell_at(ms, *nx, mu->y, &cx, &cy);
+    if (!om_move_cell_blocked(w, ms, layer, cx, cy)) { *ny = mu->y; return; }
+    om_move_cell_at(ms, mu->x, *ny, &cx, &cy);
+    if (!om_move_cell_blocked(w, ms, layer, cx, cy)) { *nx = mu->x; return; }
+    *nx = mu->x;
+    *ny = mu->y;
+}
+
 /* PP-move P8, P7 (R-097-03, R-097-04, ALG-68, R-099-04): one unit's move under PURSUE_BY_STEERING, as the
  * Python's update_movement does it. Arrival is the slot radius, with no snap; the seek heading is the
  * unit vector to the destination; a blocked straight probe sweeps +30, -30, +60, -60, +90, -90 degrees
@@ -1702,12 +1766,15 @@ static void om_move_steer_step(om_world *w, om_move_state *ms, om_move_unit *mu,
         }
     }
     step_dist = ((mu->group_id != 0) ? mu->speed_cap : om_unit_effective_speed(w, id))
-              * om_move_terrain_multiplier(om_move_density_at_pos(ms, mu->x, mu->y, 0))
+              * om_move_terrain_multiplier(om_move_density_at_pos(ms, mu->x, mu->y, route ? (uint32_t)om_move_layer(w, id) : 0))
               * (double)period / (double)OM_TACTICAL_TICK_RATE;
     move_dist = step_dist < dist ? step_dist : dist;
     if (move_dist > 0.0) {
-        mu->x = om_move_clamp_axis(mu->x + steer_x * move_dist, ms->canvas_w);
-        mu->y = om_move_clamp_axis(mu->y + steer_y * move_dist, ms->canvas_h);
+        double nx = om_move_clamp_axis(mu->x + steer_x * move_dist, ms->canvas_w);
+        double ny = om_move_clamp_axis(mu->y + steer_y * move_dist, ms->canvas_h);
+        if (route) om_move_terrain_guard(w, ms, mu, (uint32_t)om_move_layer(w, id), &nx, &ny);
+        mu->x = nx;
+        mu->y = ny;
         om_move_grid_update(ms, mu);
     }
     if (mu->deflecting) {
@@ -1725,6 +1792,8 @@ static void om_move_tick_unit(om_world *w, om_move_state *ms, uint32_t id, uint3
     mu->prev_x = mu->x;
     mu->prev_y = mu->y;
     mu->prev_facing = mu->facing;
+
+    if (om_move_param_on(ms, OM_TP_ROUTE_AROUND_TERRAIN)) om_move_leave_blocked(w, ms, mu);
 
     if (mu->kiting) {
         om_move_unit *tgt = om_move_touch(w, ms, mu->kite_target);
