@@ -163,10 +163,6 @@
 #define OM_SUP_RENDER_COLOR_ENEMY 0xC02020u
 #define OM_SUP_RENDER_COLOR_NEUTRAL 0x808080u
 
-/* R-130-02 bound for om_objective_is_contested's best-effort unit scan
- * (see its own comment for the missing-accessor gap this works around). */
-#define OM_SUP_CONTEST_SCAN_CAP 512
-
 /* Floating-point slack for a sum-to-1.0/progress-reaches-1.0 comparison
  * (200 additions of a non-exact double like 1/20/10 can land a few ULPs
  * either side of the mathematical target). */
@@ -796,6 +792,7 @@ int om_structure_is_in_capture_radius(om_world *w, uint32_t structure, double x,
     return dist2 <= (double)OM_REINFORCEMENT_CAPTURE_RADIUS * (double)OM_REINFORCEMENT_CAPTURE_RADIUS;
 }
 
+/* A119: test-only, no caller in csrc. Wired when the held E-17/E-15 spine-waypoint work reaches mission setup. */
 void om_objective_setup_drifting(om_world *w, uint32_t objective, uint64_t period) {
     om_sup_objective *o = om_sup_objective_at(w, objective);
     om_vec2 seed;
@@ -808,8 +805,7 @@ void om_objective_setup_drifting(om_world *w, uint32_t objective, uint64_t perio
 /* R-130-02: the objective's centre lives in mission.c; this file keeps only
  * the drift waypoints and period, seeds them from om_objective_get_center in
  * om_objective_setup_drifting, and writes the drifted centre back through
- * om_objective_set_center (om_support_tick each tick, om_objective_is_contested
- * on demand). */
+ * om_objective_set_center (om_support_tick each tick). */
 static void om_sup_objective_refresh_center(om_world *w, om_sup_objective *o, uint32_t objective) {
     om_vec2 pos;
     if (!o->drifting) return;
@@ -865,28 +861,6 @@ void om_support_tick(om_world *w) {
         om_sup_capture_accrue(w, s, 1, i);
         om_sup_structure_tick_production_driver(w, s, i);
     }
-}
-
-/* Best-effort: no public unit.c accessor exposes a unit's faction id
- * (only om_unit_alive/om_unit_position_x/y are used here), so this
- * cannot yet tell an enemy from a friendly inside the zone -- closure
- * leftover, needs e.g. om_unit_get_faction_id from unit.c. Until then,
- * any living unit within the drifted zone counts, which never
- * over-reports "not contested". */
-int om_objective_is_contested(om_world *w, uint32_t objective) {
-    om_sup_objective *o = om_sup_objective_at(w, objective);
-    om_vec2 center;
-    uint32_t id;
-    om_sup_objective_refresh_center(w, o, objective);
-    om_objective_get_center(w, objective, &center);
-    for (id = 1; id <= OM_SUP_CONTEST_SCAN_CAP; id++) {
-        double dx, dy;
-        if (!om_unit_alive(w, id)) continue;
-        dx = om_unit_position_x(w, id) - center.x;
-        dy = om_unit_position_y(w, id) - center.y;
-        if (dx * dx + dy * dy <= (double)OM_REINFORCEMENT_CAPTURE_RADIUS * (double)OM_REINFORCEMENT_CAPTURE_RADIUS) return 1;
-    }
-    return 0;
 }
 
 uint32_t om_hazard_spawn_moving_interference(om_world *w, double x0, double y0, double x1, double y1, uint64_t travel_ticks) {

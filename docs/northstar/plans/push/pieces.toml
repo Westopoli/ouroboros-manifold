@@ -1001,3 +1001,21 @@ acceptance = [
 depends_on = ["A2-contract", "core"]
 status = "pending"
 size_estimate = "two rows, 15 internal rows, five param renames, comment moves, one --emit; header diff comments and ordering only"
+
+# Rulings round 2, A117: delete om_objective_is_contested (duplicate of the play path, no caller
+# in csrc) with its header line, signatures.toml row, generated conftest binding (sig_table --emit,
+# never hand-edited) and OM_SUP_CONTEST_SCAN_CAP in tactical_support.c; A119 comment at
+# om_objective_setup_drifting. DRAFT: the Architect reviews and lands this row. The files are
+# owned by A94-contract, B14 and A94-harness; depends_on orders this piece after all three so the
+# single-owner lint sees one owner at a time.
+# See also: A94-contract (the header's contract-piece pattern this follows).
+[[piece]]
+id = "A117-contract"
+manager = "M0"
+wave = 4
+owns = ["csrc/ouroboros_sim.h", "docs/northstar/spec_factory/signatures.toml", "csrc/tactical_support.c", "tests/csim/conftest.py"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_conftest_bindings.py"]
+depends_on = ["A94-contract", "B14", "A94-harness"]
+status = "pending"
+size_estimate = "one function deleted (about 30 lines), one header line, one signatures row, one generated binding line, one A119 comment"
