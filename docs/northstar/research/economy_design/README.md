@@ -12,7 +12,7 @@ One economy, two drivers: rules when nobody holds the economy seat, a human when
 |---|---|---|---|
 | 1 | Resources and how they become units | (check against 5's verbs before freezing) | done 2026-10-01; folded into E-19 S-159; remaining detail is Q-159-08 |
 | 2 | Bases of operations and how they play into objectives | 1 | partly decided (base of operations, resources opposite the objective, expansions, forward bases); the loss condition and mission-type mapping are open (Q-159-11) |
-| 3 | Groundwork for auto-generating economic buildings (sister to biome generation) | 1, 2 | in progress: direction in E-17 S-166, options in `settlement_generation_options.md` (Q-166-01) |
+| 3 | Groundwork for auto-generating economic buildings (sister to biome generation) | 1, 2 | done 2026-10-02; all seven parts decided, in E-17 S-166 (R-166-03 to R-166-06) |
 | 4 | How the economy runs when the player opts out | 1, 2, 3 | not started |
 | 5 | How the economy player literally manages the economy | 1 to 4 | done 2026-10-01; folded into E-19 S-159; remaining detail is Q-159-09, Q-159-10 |
 
@@ -146,6 +146,17 @@ Recorded as:
 - Decided: the zoom stops at the battlefield's map view.
 - Decided: 7D, one world with continuous detail.
 - Still open in Q-166-01: whether the five height bands are fixed everywhere or fitted to each map. More context given in chat and in `settlement_generation_options.md`.
+
+## Decisions (2026-10-02, eleventh round: settlement generation)
+
+Westley, verbatim: "fitted, if a layer step is only a meadow slope than there's a problem with the landscape generation system."
+
+Recorded as:
+
+- Decided: the five height bands are fitted to each map. Every map has ground on all five layers.
+- Decided, as a requirement on the generator: a layer step is never a mere meadow slope. If it is, the landscape generation is at fault. Every map must have enough relief that each band is a real height difference.
+- This amends the recorder's note under Q-E01-01 that the elevation mapping is fixed globally. Westley's own words there fixed the count at five layers on every map, which stands.
+- Q-166-01 is closed. All seven parts of goal 3 are decided; goal 3 is marked done.
 
 ## Files
 
