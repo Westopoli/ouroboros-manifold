@@ -88,7 +88,7 @@ func _run_tests() -> void:
 	_check_plant_edges_2d_overlay()
 	_check_plant_edges_2d_overlay_draws_lines()
 	_check_plant_pick_radius_zero_R107_01()
-	await _check_bands_follow_rule_A48_3()
+	_check_bands_match_prototype_A56()
 	_check_plant_bands_frozen_R106_03()
 	_check_plant_conquest_no_recolour_R106_02_04()
 	_check_plant_nope_is_false()
@@ -272,29 +272,16 @@ func _check_plant_pick_radius_zero_R107_01() -> void:
 	_assert(after == 0.0, "PLANT pick-radius-zero: pick_radius_px should be 0, got %s" % after)
 
 
-# A48-3: the rule's thresholds win (R-106-03): Overview d >= 75, Regional
-# 40 <= d < 65, Local d < 25. Between those (65-75, 25-40) the rule interpolates
-# properties without naming a band; there the reported band must agree with the
-# zoom disclosure controller that drives the visuals (its lower-cased name), so
-# the HUD label and the rendering cannot disagree. The view's old split points
-# (70, 32.5) fail the consistency half.
-func _check_bands_follow_rule_A48_3() -> void:
-	var pinned := {220.0: "Overview", 100.0: "Overview", 75.0: "Overview", 64.9: "Regional", 50.0: "Regional", 40.0: "Regional", 24.9: "Local", 15.0: "Local", 10.0: "Local"}
+# A56 (suspends A48-3): the prototype's band splits stand until Westley has
+# compared it with the game. scenes/mockups/galaxy/orbit_camera.gd:27-28 splits
+# Overview/Regional at 70 and Regional/Local at 32.5 (BAND_SPLIT_HIGH/LOW); the
+# game's view uses the same numbers. R-106-03's text (75 / 40-65 / 25) is NOT
+# tested here; see docs/northstar/proving_ground/evidence/push_2026-10-01/c5_prototype_vs_rules.md.
+func _check_bands_match_prototype_A56() -> void:
+	var pinned := {220.0: "Overview", 100.0: "Overview", 70.0: "Overview", 69.9: "Regional", 50.0: "Regional", 32.5: "Regional", 32.4: "Local", 15.0: "Local"}
 	for d in pinned:
 		_root.qa_camera(d, -1)
-		_assert(str(_root.qa_state().get("band")) == pinned[d], "A48-3: band at distance %s should be %s, got %s" % [d, pinned[d], _root.qa_state().get("band")])
-	var zoom: Node = null
-	for child in _root.get_children():
-		if "current_band" in child:
-			zoom = child
-	_assert(zoom != null, "A48-3: no zoom disclosure controller under the galaxy view to compare the band with")
-	if zoom == null:
-		return
-	for d in [25.0, 30.0, 32.5, 36.0, 39.9, 65.0, 68.0, 70.0, 72.0, 74.9]:
-		_root.qa_camera(d, -1)
-		await process_frame
-		await process_frame
-		_assert(str(_root.qa_state().get("band")).to_lower() == str(zoom.get("current_band")), "A48-3: at distance %s qa_state band %s but the zoom controller is in %s" % [d, _root.qa_state().get("band"), zoom.get("current_band")])
+		_assert(str(_root.qa_state().get("band")) == pinned[d], "A56 prototype parity: band at distance %s should be %s, got %s" % [d, pinned[d], _root.qa_state().get("band")])
 
 
 func _check_plant_bands_frozen_R106_03() -> void:

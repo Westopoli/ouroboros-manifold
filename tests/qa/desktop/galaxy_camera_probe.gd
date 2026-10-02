@@ -11,7 +11,10 @@ extends SceneTree
 #   A48-2     the galaxy pans by left-drag only; R-103-09 (constant pan speed
 #             on screen) and the pan-speed slider do not apply to it. The
 #             former pan_screen_speed check is dropped (test-defect, ledger).
-#             A vertical drag is grab-style: the map follows the pointer.
+#             A56 SUSPENDS the vertical-grab direction (check vertical_grab removed):
+#             the prototype's drag direction wins until Westley has compared it
+#             (scenes/mockups/galaxy/orbit_camera.gd:256-264). See
+#             docs/northstar/proving_ground/evidence/push_2026-10-01/c5_prototype_vs_rules.md.
 #   A48-1     the camera has an autonomous flag (OrbitCamera.set_autonomous(bool),
 #             is_autonomous(); qa_state()["camera_autonomous"]), set by the menu
 #             backdrop and the jump sequencer; any player input cancels it.
@@ -40,7 +43,7 @@ var _rig: Node
 var _ids: Array = []
 var _check_name := ""
 var _failed: Dictionary = {}
-const CHECKS := ["no_idle_drift", "wheel_zoom", "drag_pan", "vertical_grab", "autonomous_flag", "autonomous_cancelled_by_input", "right_drag_orbit", "click_focus", "focus_region"]
+const CHECKS := ["no_idle_drift", "wheel_zoom", "drag_pan", "autonomous_flag", "autonomous_cancelled_by_input", "right_drag_orbit", "click_focus", "focus_region"]
 
 
 func _initialize() -> void:
@@ -99,8 +102,6 @@ func _run_tests() -> void:
 	await _check_wheel_zoom_R107_01()
 	_check_name = "drag_pan"
 	await _check_drag_pan_R107_01()
-	_check_name = "vertical_grab"
-	await _check_vertical_drag_is_grab_A48_2()
 	_check_name = "autonomous_flag"
 	await _check_autonomous_flag_A48_1()
 	_check_name = "autonomous_cancelled_by_input"
@@ -230,24 +231,6 @@ func _check_drag_pan_R107_01() -> void:
 	_assert(p1.x > p0.x + 10.0, "R-107-01: left-drag right did not move the map right (x %s -> %s)" % [p0.x, p1.x])
 	await _drag(MOUSE_BUTTON_LEFT, _centre() + Vector2(0, 200), Vector2(0, DRAG_PX))
 	_assert(absf(_px(focus).y - p1.y) > 10.0, "R-107-01: a vertical left-drag did not pan the map")
-
-
-# A48-2: grab-style. The pointer goes down on a system and is dragged; the
-# system follows it, so a drag up moves the map up (y falls) and a drag down
-# moves it down. Positive control: the opposite drags in the same run must move
-# it the opposite way, so a camera that pans one way regardless fails one half.
-func _check_vertical_drag_is_grab_A48_2() -> void:
-	var focus := int(_ids[0])
-	_view.qa_camera(80.0, focus)
-	await _frames(3)
-	var start := _px(focus)
-	await _drag(MOUSE_BUTTON_LEFT, start, Vector2(0, -DRAG_PX))
-	var up := _px(focus)
-	_assert(up.y < start.y - DRAG_PX * 0.7, "A48-2: drag up %s px moved the map from y %s to %s; grab-style moves it up with the pointer" % [DRAG_PX, start.y, up.y])
-	_assert(up.distance_to(start + Vector2(0, -DRAG_PX)) < DRAG_PX * 0.3, "A48-2: after the drag the grabbed system is at %s, the pointer is at %s" % [up, start + Vector2(0, -DRAG_PX)])
-	await _drag(MOUSE_BUTTON_LEFT, up, Vector2(0, DRAG_PX * 2.0))
-	var down := _px(focus)
-	_assert(down.y > up.y + DRAG_PX * 1.4, "A48-2 (control): drag down %s px moved the map from y %s to %s; it must follow the pointer down" % [DRAG_PX * 2.0, up.y, down.y])
 
 
 # A48-1: the flag exists, is off by default, and is observable. Idle with no flag
