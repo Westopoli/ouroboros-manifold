@@ -252,7 +252,57 @@ typedef struct {
      * 140-byte stride to units[] trashes cache in the probe inner loop;
      * this array keeps group_id at a 4-byte stride. */
     uint32_t unit_group[OM_MOVE_MAX_UNITS];
+
+    /* PP-move: the tunable settings (om_tac_param); see om_tactical_set_param. */
+    double   param[OM_TP__COUNT];
 } om_move_state;
+
+/* PP-move: every om_tac_param member's kind, default and refusal range (docs/northstar/plans/push/pp_contract.md
+ * section 4). The ranges are the writer's refusal bounds for the lab's setting call, never game values (A133 Q-C9);
+ * they are named here because om_constants.h has no home for them. */
+#define OM_PP_MULT_HI 10.0
+#define OM_PP_AOE_CAP_HI 100.0
+#define OM_PP_PING_REACH_DEFAULT 2000.0
+#define OM_PP_PING_REVEAL_HI 1200
+#define OM_PP_PING_COOLDOWN_HI 12000
+
+typedef struct { uint8_t kind; double def, lo, hi; } om_pp_row;
+enum { OM_PP_BOOL, OM_PP_INT, OM_PP_REAL };
+
+#define OM_PP_SWITCH(d) { OM_PP_BOOL, d, 0.0, 1.0 }
+#define OM_PP_MULT(d) { OM_PP_REAL, d, 0.0, OM_PP_MULT_HI }
+#define OM_PP_MULT4(d) OM_PP_MULT(d), OM_PP_MULT(d), OM_PP_MULT(d), OM_PP_MULT(d)
+#define OM_PP_VIS(d) { OM_PP_REAL, d, 0.0, 1.0 }
+#define OM_PP_VIS4 OM_PP_VIS(OM_CONE_LAYER_1_FACTOR), OM_PP_VIS(OM_CONE_LAYER_2_FACTOR), OM_PP_VIS(0.0), OM_PP_VIS(0.0)
+#define OM_PP_DIST(d) { OM_PP_REAL, d, 0.0, OM_CANVAS_SIZE_RANGES_LARGE_HI }
+
+static const om_pp_row OM_PP_ROWS[OM_TP__COUNT] = {
+    OM_PP_SWITCH(1.0), OM_PP_SWITCH(1.0), OM_PP_SWITCH(0.0),
+    { OM_PP_INT, 0.0, 0.0, 1.0 },
+    OM_PP_SWITCH(1.0), OM_PP_SWITCH(1.0),
+    OM_PP_DIST(OM_ATTACK_MOVE_LEASH_DIST), OM_PP_DIST(OM_RETURN_FIRE_FLEE_DIST),
+    { OM_PP_REAL, OM_UNIT_COLLISION_RADIUS, 0.0, OM_GRID_CELL_SIZE / 2.0 },
+    OM_PP_MULT(OM_VANTAGE_CONE_MULTIPLIER),
+    { OM_PP_REAL, OM_AOE_DAMAGE_CAP_MULTIPLIER, 0.0, OM_PP_AOE_CAP_HI },
+    { OM_PP_INT, OM_TARGETING_COHORT_COUNT, 1.0, OM_TACTICAL_TICK_RATE },
+    OM_PP_MULT(OM_CATEGORY_MULTIPLIER_LINE_LINE), OM_PP_MULT(OM_CATEGORY_MULTIPLIER_LINE_SIEGE),
+    OM_PP_MULT(OM_CATEGORY_MULTIPLIER_LINE_STRIKE), OM_PP_MULT(OM_CATEGORY_MULTIPLIER_SIEGE_LINE),
+    OM_PP_MULT(OM_CATEGORY_MULTIPLIER_SIEGE_SIEGE), OM_PP_MULT(OM_CATEGORY_MULTIPLIER_SIEGE_STRIKE),
+    OM_PP_MULT(OM_CATEGORY_MULTIPLIER_STRIKE_LINE), OM_PP_MULT(OM_CATEGORY_MULTIPLIER_STRIKE_SIEGE),
+    OM_PP_MULT(OM_CATEGORY_MULTIPLIER_STRIKE_STRIKE),
+    OM_PP_MULT(1.0), OM_PP_MULT(1.0),
+    OM_PP_DIST(OM_PULSE_RADIUS),
+    { OM_PP_INT, OM_PULSE_REVEAL_TICKS, 0.0, OM_PP_PING_REVEAL_HI },
+    { OM_PP_INT, OM_PULSE_COOLDOWN_TICKS, 0.0, OM_PP_PING_COOLDOWN_HI },
+    OM_PP_DIST(OM_PP_PING_REACH_DEFAULT),
+    OM_PP_VIS4, OM_PP_VIS4,
+    OM_PP_MULT4(1.0), OM_PP_MULT4(1.0), OM_PP_MULT4(1.0), OM_PP_MULT4(1.0), OM_PP_MULT4(1.0), OM_PP_MULT4(1.0),
+};
+
+static void om_pp_load_defaults(double *out) {
+    uint32_t k;
+    for (k = 0; k < OM_TP__COUNT; k++) out[k] = OM_PP_ROWS[k].def;
+}
 
 static void om_move_state_free_fn(void *p) {
     free(p);
@@ -346,6 +396,7 @@ static om_move_state *om_ms(om_world *w) {
             om_move_sincos_approx(OM_STEERING_SWEEP_ANGLES[k], &ms->sweep_sin[k], &ms->sweep_cos[k]);
         }
         ms->next_group_id = 1;
+        om_pp_load_defaults(ms->param);
         w->move_state = ms;
         w->move_state_free = om_move_state_free_fn;
     }
@@ -1974,15 +2025,23 @@ void om_unit_teleport(om_world *w, uint32_t unit, double x, double y, uint32_t l
 }
 
 /* ---- generated stubs from signatures.toml ---- */
+/* A133 Q-C4: settings are configuration, not simulation state: not saved, not hashed.
+ * # See also: om_tactical_reset (csrc/unit.c) frees w->move_state, which holds them. */
 double om_tactical_get_param(const om_world *w, om_tac_param p) {
-    /* STUB */
-    (void)w; (void)p;
-    return 0.0;
+    const om_move_state *ms;
+    if (!w || (int)p < 0 || p >= OM_TP__COUNT) return -1.0;
+    ms = (const om_move_state *)w->move_state;
+    return ms ? ms->param[p] : OM_PP_ROWS[p].def;
 }
 
 int om_tactical_set_param(om_world *w, om_tac_param p, double value) {
-    /* STUB */
-    (void)w; (void)p; (void)value;
+    const om_pp_row *row;
+    if (!w || (int)p < 0 || p >= OM_TP__COUNT) return -1;
+    row = &OM_PP_ROWS[p];
+    if (!(value >= row->lo && value <= row->hi)) return -1;
+    if (row->kind != OM_PP_REAL && (double)(int64_t)value != value) return -1;
+    if (row->kind == OM_PP_BOOL && value != 0.0 && value != 1.0) return -1;
+    om_ms(w)->param[p] = value;
     return 0;
 }
 
