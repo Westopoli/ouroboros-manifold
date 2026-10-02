@@ -41,10 +41,11 @@ RETRY_TICKS = 20
 pytestmark = pytest.mark.skipif(not PIPE.exists(), reason="pipe/ouroboros_pipe not built (piece T1)")
 
 # seed -> the one player region under telegraph, pinned so a world change shows
-# up as a clear failure. Only seeds 76 and 287 of 1-400 satisfy the test on both
-# the pre-A81 and post-A81 worlds with the same target (TD-A89-3; the earlier
-# seeds 20, 24, 26, 31, 33, 43 drifted when events began to reach regions 64+).
-TELEGRAPH_SEEDS = {76: 68, 287: 66}
+# up as a clear failure. Six seeds of 1-400 chosen on main after A81 (TD-A89-3,
+# A96): each has exactly one telegraphed player region and the R-072-05 draw
+# lands on Defensive Stand there. Selection is a weighted draw over the top 5
+# (R-072-05), so many other seeds legitimately pick another candidate (seed 24).
+TELEGRAPH_SEEDS = {11: 68, 18: 63, 48: 69, 76: 68, 287: 66, 37: 79}
 TRIGGERED_SEEDS = [1, 2, 8, 20, 24, 43]
 
 
