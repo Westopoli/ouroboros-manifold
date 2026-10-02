@@ -5,7 +5,7 @@ extends SceneTree
 # overlay and E2 bug report rewired, E3 legacy tactical scene deleted).
 #
 # THIS IS A RATCHET, NOT THE FINAL STATE. It cannot go green-by-removal until E2 and E3
-# land, so today it records the files that still name TacticalBridge (25, listed below; G4 swapped autoload/debug_overlay.gd for its own test) and
+# land, so today it records the files that still name TacticalBridge (8, listed below; G4 swapped autoload/debug_overlay.gd for its own test) and
 # asserts the set only shrinks:
 #   - no file outside KNOWN_REFERENCERS may name TacticalBridge or tactical_bridge (a new
 #     reader is a regression, reported by path);
@@ -28,25 +28,8 @@ const KNOWN_REFERENCERS := [
 	"autoload/qa_daemon.gd",
 	"autoload/ws_input_sanitizer.gd",
 	"scenes/debug/debug_ws_test.gd",
-	"scenes/debug/test_squad_impact_origins.gd",
-	"scenes/tactical/hud.gd",
-	"scenes/tactical/input_router.gd",
-	"scenes/tactical/perf_logger.gd",
-	"scenes/tactical/tactical.gd",
-	"scenes/tactical/terrain_renderer.gd",
-	"scenes/tactical/unit_renderer.gd",
-	"scenes/tactical/visuals/ability_overlay_manager.gd",
-	"scenes/tactical/visuals/ambient_density_manager.gd",
-	"scenes/tactical/visuals/attack_visual_manager.gd",
-	"scenes/tactical/visuals/combat_heatmap.gd",
-	"scenes/tactical/visuals/destruction_manager.gd",
-	"scenes/tactical/visuals/impact_feedback_manager.gd",
-	"scripts/tactical/visibility.gd",
 	"tests/test_boot_scripts_parse.gd",
-	"tests/test_cover_render.gd",
 	"tests/test_debug_overlay_gate.gd",
-	"tests/test_input_router_control_groups.gd",
-	"tests/test_input_router_selection.gd",
 	"tests/test_qa_state_scenes.gd",
 ]
 

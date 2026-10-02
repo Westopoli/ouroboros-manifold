@@ -273,13 +273,6 @@ def test_umbrella_f_main_menu_replay_button():
     )
 
 
-def test_umbrella_f_tactical_emits_unit_signals():
-    src = _read("scenes/tactical/tactical.gd")
-    assert "first_unit_visible" in src or "first_unit_selected" in src, (
-        "B3-B not landed: tactical.gd must emit first_unit_visible/first_unit_selected signals"
-    )
-
-
 # ---------------------------------------------------------------------------
 # G. B5-C — Release-mode wire-up
 # ---------------------------------------------------------------------------
