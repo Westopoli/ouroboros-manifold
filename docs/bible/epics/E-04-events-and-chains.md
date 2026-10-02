@@ -4,14 +4,14 @@
 
 | Check | Result |
 |---|---|
-| Every story has at least one Given/When/Then rule with concrete values | Yes, 6 stories, 31 rules, values from `algorithms.md` ALG-32 through ALG-37 and the launch library table. |
+| Every story has at least one Given/When/Then rule with concrete values | Yes, 7 stories, 33 rules, values from `algorithms.md` ALG-32 through ALG-37 and the launch library table. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 5 new flags, Q-026-01, Q-027-01, Q-027-02, Q-028-01, Q-031-01. |
+| Implied-but-unstated behavior turned into flags | 2 open flags, Q-225-01 and Q-225-02, both on S-225. |
 | Every visible-surface story has a reference | Not applicable; events reach the player through the chronicle (E-09) and world view (E-16). |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: S-026 to S-031 passed 2026-09-14; S-225 (added 2026-10-02) has not been through the gate and carries two open flags.** The five flags raised at the gate are answered and folded: simultaneous same-tick triggers (Q-026-01, Westley's direction, designed here), triangular spawn delays (Q-027-01), pruned entries logged (Q-027-02), coin-flip tie-break (Q-028-01), S-031 pacing thresholds measured from the Python reference sim (Q-031-01).
+**Gate verdict: not passed.** S-026 to S-031 have no open flags and passed 2026-09-14. S-225 (added 2026-10-02) has not been through the gate and is blocked on Q-225-01 and Q-225-02.
 
 ## Purpose
 
@@ -203,7 +203,7 @@ None required in this epic.
 
 ## Open ambiguity flags
 
-Q-225-01, Q-225-02 (S-225). S-026 to S-031 have none: Q-026-01, Q-027-01, Q-027-02, Q-028-01, Q-031-01 are closed and folded (2026-09-14).
+Q-225-01, Q-225-02 (S-225). S-026 to S-031 have none.
 
 ## Depends on
 

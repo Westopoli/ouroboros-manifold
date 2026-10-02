@@ -5,6 +5,9 @@ const KITS_DIR := "res://scenes/mockups/landscape/kits/"
 const DEFAULT_CANVAS := 24000.0
 const CANVAS_OPTIONS := [16000.0, 24000.0, 32000.0]
 const DEFAULT_KIT := "greek"
+const SPACE_KIT := "space"
+const DEFAULT_DENSITY := 35.0
+const MAX_DENSITY := 90.0
 const SCREENSHOT_DIR := "res://docs/northstar/research/landscape_design/mockup/pass3/"
 const BAND_HEIGHTS := {"micro": 1000.0, "tactical": 3000.0, "map": 20000.0}
 
@@ -18,6 +21,8 @@ var _kit_name: String = DEFAULT_KIT
 var _seed: int = 11
 var _canvas: float = DEFAULT_CANVAS
 var _stability: float = 60.0
+var _density: float = DEFAULT_DENSITY
+var _focus_layer: int = 0
 var _piece_total: int = 0
 var _timing_ms: Dictionary = {}
 var _regen_count: int = 0
@@ -32,7 +37,14 @@ var _regen_count: int = 0
 @onready var _canvas_toggle_button: Button = $VBoxContainer/CanvasToggleButton
 @onready var _timing_label: Label = $VBoxContainer/TimingLabel
 @onready var _stability_slider: HSlider = $VBoxContainer/StabilitySlider
+@onready var _stability_label: Label = $VBoxContainer/StabilityLabel
 @onready var _map_view: Control = $MapView
+
+# Space-kit controls, built here so the scene file stays as it is.
+var _density_label: Label
+var _density_slider: HSlider
+var _focus_label: Label
+var _space_stats_label: Label
 
 
 func _ready() -> void:
@@ -63,6 +75,7 @@ func _ready() -> void:
 	# Regenerate on release, not on every drag tick (Westley: dragging "slows everything down
 	# for a few seconds" because value_changed fired a full regenerate per pixel of drag).
 	_stability_slider.drag_ended.connect(_on_stability_drag_ended)
+	_build_space_controls()
 
 	_regenerate()
 
@@ -79,6 +92,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_on_regenerate_pressed()
 		elif event.keycode == KEY_TAB:
 			_on_kit_toggle_pressed()
+		elif _kit_name == SPACE_KIT and event.keycode >= KEY_0 and event.keycode <= KEY_5:
+			_set_focus(event.keycode - KEY_0)
 		elif event.keycode == KEY_F12:
 			_take_screenshot("manual_%d" % Time.get_unix_time_from_system())
 
@@ -106,19 +121,24 @@ func _regenerate() -> void:
 	var t0 := Time.get_ticks_usec()
 	if QaPlants.is_active("regen-stall"):
 		OS.delay_msec(3000)
-	var field_map := FieldMap.new()
+	var is_space := _kit_name == SPACE_KIT
+	var field_map: FieldMap = SpaceFieldMap.new() if is_space else FieldMap.new()
 	var gen_seed := 11 if QaPlants.is_active("seed-ignored") else _seed
-	field_map.generate(gen_seed, _canvas, _stability)
+	field_map.generate(gen_seed, _canvas, _density if is_space else _stability)
 	var t1 := Time.get_ticks_usec()
 
 	var kit: Dictionary = _kits[_kit_name]
 
 	var ground_builder := GroundBuilder.new()
-	_generated.add_child(ground_builder.build(field_map, kit))
+	var ground := ground_builder.build(field_map, kit)
+	if ground != null:
+		_generated.add_child(ground)
 	var t2 := Time.get_ticks_usec()
 
 	var placer := Placer.new()
 	var result := placer.place(field_map, kit, _generated)
+	if is_space:
+		Placer.apply_layer_focus(_generated, _focus_layer)
 	var t3 := Time.get_ticks_usec()
 
 	_field_map = field_map
@@ -134,6 +154,7 @@ func _regenerate() -> void:
 	_timing_label.text = "Gen: %dms Ground: %dms Placer: %dms (total %dms)" % [gen_ms, ground_ms, placer_ms, gen_ms + ground_ms + placer_ms]
 	print("regenerate timing: gen=%.1fms ground=%.1fms placer=%.1fms total=%.1fms" % [gen_ms, ground_ms, placer_ms, gen_ms + ground_ms + placer_ms])
 	_map_view.set_field_map(field_map)
+	_update_space_controls(field_map)
 	_regen_count += 1
 
 
@@ -163,6 +184,65 @@ func _on_stability_drag_ended(value_changed: bool) -> void:
 		return
 	_stability = _stability_slider.value
 	_regenerate()
+
+
+func _on_density_drag_ended(value_changed: bool) -> void:
+	if not value_changed:
+		return
+	_density = _density_slider.value
+	_regenerate()
+
+
+func _build_space_controls() -> void:
+	var box: VBoxContainer = $VBoxContainer
+	_density_label = Label.new()
+	_density_label.name = "DensityLabel"
+	_density_slider = HSlider.new()
+	_density_slider.name = "DensitySlider"
+	_density_slider.custom_minimum_size = Vector2(160, 0)
+	_density_slider.min_value = 0.0
+	_density_slider.max_value = MAX_DENSITY
+	_density_slider.step = 1.0
+	_density_slider.value = _density
+	_focus_label = Label.new()
+	_focus_label.name = "FocusLabel"
+	_space_stats_label = Label.new()
+	_space_stats_label.name = "SpaceStatsLabel"
+	for control in [_density_label, _density_slider, _focus_label, _space_stats_label]:
+		box.add_child(control)
+	# Same debounce as stability: regenerate on release, not per drag tick.
+	_density_slider.drag_ended.connect(_on_density_drag_ended)
+	_density_slider.value_changed.connect(_on_density_value_changed)
+	_on_density_value_changed(_density)
+	_set_focus(_focus_layer)
+
+
+func _on_density_value_changed(value: float) -> void:
+	_density_label.text = "Density: %d%% blocked" % int(value)
+
+
+func _set_focus(layer: int) -> void:
+	_focus_layer = layer
+	_focus_label.text = "Focus: all" if layer == 0 else "Focus: layer %d" % layer
+	Placer.apply_layer_focus(_generated, layer)
+
+
+func _update_space_controls(field_map: FieldMap) -> void:
+	var is_space := field_map is SpaceFieldMap
+	_stability_label.visible = not is_space
+	_stability_slider.visible = not is_space
+	_density_label.visible = is_space
+	_density_slider.visible = is_space
+	_focus_label.visible = is_space
+	_space_stats_label.visible = is_space
+	if not is_space:
+		return
+	var blocked: Array = []
+	for stat in field_map.layer_stats:
+		blocked.append("%d%%" % int(round(stat.blocked * 100.0)))
+	_space_stats_label.text = "Blocked per layer: %s\nPockets filled: %d  Tunnels cut: %d\nStill unreachable: %d  Marked crossings: %d" % [
+		" ".join(blocked), field_map.pockets_filled, field_map.tunnels_cut,
+		field_map.regions_unreachable_after, field_map.crossings.size()]
 
 
 func _on_band_changed(band: String) -> void:
@@ -284,6 +364,14 @@ func get_stability() -> float:
 	return _stability
 
 
+func get_density() -> float:
+	return _density
+
+
+func get_focus_layer() -> int:
+	return _focus_layer
+
+
 func get_kit_name() -> String:
 	return _kit_name
 
@@ -318,6 +406,16 @@ func qa_set_stability(v: float) -> void:
 	_stability = v
 	_stability_slider.value = v
 	_regenerate()
+
+
+func qa_set_density(v: float) -> void:
+	_density = clamp(v, 0.0, MAX_DENSITY)
+	_density_slider.value = _density
+	_regenerate()
+
+
+func qa_set_focus(layer: int) -> void:
+	_set_focus(layer)
 
 
 func qa_set_kit(kit_name: String) -> void:

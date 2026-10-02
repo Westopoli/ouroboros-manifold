@@ -1,0 +1,46 @@
+"""Process-pool runner for fights: plain data in (setup, seed, swap), FightResult out, one Engine per worker."""
+from __future__ import annotations
+
+import multiprocessing
+
+from scripts.skilllab import engine as engine_module, fight as fight_module
+
+_engine = None
+
+
+def run_job(job):
+    global _engine
+    if not isinstance(_engine, engine_module.Engine):
+        _engine = engine_module.Engine()
+    setup, seed, swap = job
+    return fight_module.fight(setup, seed, swap, _engine)
+
+
+class FightPool:
+    def __init__(self, workers: int):
+        if workers < 1:
+            raise ValueError("workers must be at least 1")
+        self._workers = workers
+        self._pool = None
+        self._closed = False
+
+    def map(self, jobs) -> list:
+        if self._closed:
+            raise RuntimeError("pool is closed")
+        jobs = list(jobs)
+        if self._workers == 1:
+            return [run_job(job) for job in jobs]
+        if self._pool is None:
+            # spawn, never fork: a forked child would inherit the parent's loaded library and world state
+            self._pool = multiprocessing.get_context("spawn").Pool(self._workers)
+        return self._pool.map(run_job, jobs, chunksize=1)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        self._closed = True
+        if self._pool is not None:
+            self._pool.close()
+            self._pool.join()
+            self._pool = None

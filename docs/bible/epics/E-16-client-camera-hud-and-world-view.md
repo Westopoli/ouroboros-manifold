@@ -7,11 +7,11 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 16 stories, 91 rules. Numbers come from the bible's HUD, world view, and transition sections and from config timing values; the economy and layer-action stories (S-230 to S-235) state what must be shown and leave numbers and layout to flags. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs; every output here is a screen region, observable by T2. |
-| Implied-but-unstated behavior turned into flags | 7 flags on the first stories, Q-103-01, Q-104-01, Q-105-01, Q-106-01, Q-108-01, Q-110-01, Q-111-01, and 12 on S-230 to S-235: Q-230-01 to Q-230-03, Q-231-01 to Q-231-03, Q-232-01, Q-232-02, Q-233-01, Q-234-01, Q-234-02, Q-235-01. |
+| Implied-but-unstated behavior turned into flags | 17 open flags: 5 on the first stories, Q-103-04, Q-103-05, Q-103-06, Q-110-03, Q-111-01, and 12 on S-230 to S-235, Q-230-01 to Q-230-03, Q-231-01 to Q-231-03, Q-232-01, Q-232-02, Q-233-01, Q-234-01, Q-240-01, Q-235-01. |
 | Every visible-surface story has a reference | **No.** Every story in this epic is a visible surface; `references/E-16/notes.md` is a stub. The IGoP HUD screenshots the bible cites (`docs/design_questions/igop_hud_reference_alpha.png`, `_beta.png`) are the first entries once Westley confirms them. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on open flags and references. S-230 to S-235 are design decided and not scheduled for building. The camera is chosen (Q-103-03, the Angle Rack and the Layer Peel with a flip key); its control specifics (Q-103-04) and the map view prototype (Q-103-05) are the load-bearing open items. This epic is client-ladder work and is built only after the sim ladders are green (Stage 4 roadmap).
+**Gate verdict: not passed.** Blocked on open flags and references. S-230 to S-235 are design decided and not scheduled for building. The camera is chosen (the Angle Rack and the Layer Peel with a flip key); its control specifics (Q-103-04) and the map view prototype (Q-103-05) are the load-bearing open items. This epic is client-ladder work and is built only after the sim ladders are green (Stage 4 roadmap).
 
 ## Purpose
 
@@ -41,7 +41,8 @@ Rules
 
 Inputs: mouse, keyboard, edge scroll.
 Outputs: viewport transform.
-Open flags: Q-103-04 (control specifics for the chosen camera: keys, the flip center, height floor per view, peel focus versus strip focus). Chosen through the options pass, `docs/northstar/research/options/camera/`, Q-103-03.
+Open flags: Q-103-04 (control specifics for the chosen camera: keys, the flip center, height floor per view, peel focus versus strip focus).
+Chosen through the options pass, `docs/northstar/research/options/camera/`.
 
 ### S-161 — The map view
 As a commander, I want to pull the camera back until the battle reads as a map, give groups basic orders from there, and zoom back in, so that a 20 to 30 screen battlefield is one continuous space.
@@ -58,6 +59,7 @@ Outputs: viewport transform; orders.
 Open flags: Q-103-05 (Sand Table prototype before commitment), Q-103-06 (layer marks for groups beyond pins), Q-234-01. What the map view shows of the economy is S-235. Chosen direction through the options pass, `docs/northstar/research/options/map-view/`.
 
 ### S-104 — The HUD tells me what I need and nothing else
+Flag closed, rule text pending: Q-104-01, single-player pause is allowed (Escape or Pause halts the simulation and opens the menu) and multiplayer never pauses. The rule below is what the tests read today.
 As a commander, I want a lean HUD that shows objectives, my selection, my groups, my structures, the clock, and my commander, and stays out of the way, so that the world is what I look at.
 
 Direction changed 2026-10-02, rewrite pending: the ticker also carries economy events (S-235), and the structure panel's production timers belong to the economy seat's schedule (S-230, E-22 S-170) with the structures themselves strongpoints (E-15). The rules below are what the game does today.
@@ -76,7 +78,7 @@ Rules
 
 Inputs: tick delta; selection; control groups.
 Outputs: HUD panels, T2-checkable.
-Open flags: Q-230-02, Q-230-03, Q-231-01. Q-104-01 is closed (single-player pause is allowed, multiplayer never pauses); the bracket in R-104-03 stays until that rule is rewritten. Reference: IGoP HUD screenshots, pending confirmation.
+Open flags: Q-230-02, Q-230-03, Q-231-01. Reference: IGoP HUD screenshots, pending confirmation.
 
 ### S-105 — Selection and control groups
 As a commander, I want to click, box-select, and bind groups, and never to have an all-army button, so that positional thinking is the whole game.
@@ -93,7 +95,8 @@ Rules
 
 Inputs: mouse, keyboard.
 Outputs: selection set; control group state.
-Open flags: none. The ping of S-232 also takes a layer number key; the keys are Q-232-01 and Q-103-04. Q-106-01 is closed: no replacement affordance; the control-group hotkeys stand. Chosen through the options pass, `docs/northstar/research/options/control-groups/`, Q-105-02.
+Open flags: none here. The ping of S-232 also takes a layer number key; the keys are Q-232-01 and Q-103-04.
+The control-group hotkeys stand, with no replacement affordance. Chosen through the options pass, `docs/northstar/research/options/control-groups/`.
 
 ### S-106 — The galaxy between missions
 As a player, I want to orbit a 3D star map where territory glows, borders touch, and war flashes, so that the world reads at a glance.
@@ -121,7 +124,7 @@ Rules
 
 Inputs: mouse.
 Outputs: camera; panels; tooltip.
-Open flags: Q-108-01 (what "aggregate stats" the data panel shows, given the no-raw-numbers rule for the chronicle: numbers here, or bands).
+Open flags: none. The faction data panel shows its aggregate stats as bands; raw numbers are forbidden in the chronicle, not in the simulation view.
 
 ### S-108 — One unbroken shot
 As a player, I want the mission to pull back into the galaxy and the galaxy to push into the next mission without a cut, so that the world is one space at different scales.
@@ -253,7 +256,7 @@ Rules
 
 Inputs: scroll or zoom input.
 Outputs: viewport transform.
-Open flags: Q-234-01 (whether the Sand Table of S-161 is the zoomed-out end of this one drawing or a separate drawing; Q-103-05 is the prototype question), Q-234-02 (scale, see Scale requirements).
+Open flags: Q-234-01 (whether the Sand Table of S-161 is the zoomed-out end of this one drawing or a separate drawing; Q-103-05 is the prototype question), Q-240-01 (scale, see Scale requirements).
 
 ### S-235 — The map shows the economy and its news
 As a commander, I want the map to show where the economy is and the ticker to tell me what happened to it, so that I can read the war's other half at a glance.
@@ -261,7 +264,7 @@ As a commander, I want the map to show where the economy is and the ticker to te
 Design decided 2026-10-02, not scheduled for building. Strongpoints and slopes apply to land maps; the space-era landscape is not designed (Q-166-02).
 
 Rules
-- R-235-01  Given the map view (S-161) and the tactical view, When the economy's places are drawn, Then the economic locations, the neutral settlements, the objective, the side's base of operations, its expansions and forward bases, and on land maps the strongpoints are marked (E-22 S-175, S-177; E-15).
+- R-235-01  Given the map view (S-161) and the tactical view, When the economy's places are drawn, Then the economic locations, the neutral settlements, the objective, the side's base of operations, its expansions and forward works, and on land maps the strongpoints are marked (E-22 S-175, S-177; E-15).
 - R-235-02  Given an environmental trouble travelling across the map, When it is drawn, Then both sides see where it is as it moves (E-15 holds what it does).
 - R-235-03  Given the ticker (R-104-01), When a base is occupied, a side falls back to an expansion, an expansion is founded, or a weather trouble arrives, Then the ticker names it [Q-235-01: which other economy beats the ticker carries].
 - R-235-04  Given a shipment that does not arrive (E-22 S-176), When the ticker, the banners and the map are read, Then nothing on them explains why.
@@ -300,7 +303,7 @@ Open flags: Q-235-01.
 
 ## Scale requirements
 
-Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): 60 fps with 1,000 units on screen and the HUD live; galaxy view at 60 fps with 250 to 400 systems, shells, and particles, with automatic quality fallback allowed (Q-106-02 closed 2026-09-28); transition never drops below 30 fps. The long-term goal of thousands of units and workers on one map (hub "Reference Hardware") is not yet a client budget; E-18 S-240 states 30 fps at 1,000 units where this epic states 60 fps, and whether workers, buildings and settlement pieces count as units on screen is Q-234-02. Measured on the minimum-spec machine (GTX 1070 class, `game_bible.md` "Reference Hardware"); on the forge's RTX 3060 the same scenes must hold about 110 fps and the transition floor about 55 fps.
+Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): 60 fps with 1,000 units on screen and the HUD live; galaxy view at 60 fps with 250 to 400 systems, shells, and particles, with automatic quality fallback allowed (Q-106-02 closed 2026-09-28); transition never drops below 30 fps. The long-term goal of thousands of units and workers on one map (hub "Reference Hardware") is not yet a client budget; E-18 S-240 states 30 fps at 1,000 units where this epic states 60 fps, and whether workers, buildings and settlement pieces count as units on screen is Q-240-01. Measured on the minimum-spec machine (GTX 1070 class, `game_bible.md` "Reference Hardware"); on the forge's RTX 3060 the same scenes must hold about 110 fps and the transition floor about 55 fps.
 
 ## Look and behavior references
 
@@ -321,7 +324,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-106-01, Q-108-01, Q-230-01, Q-230-02, Q-230-03, Q-231-01, Q-231-02, Q-231-03, Q-232-01, Q-232-02, Q-233-01, Q-234-01, Q-234-02, Q-235-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-230-01, Q-230-02, Q-230-03, Q-231-01, Q-231-02, Q-231-03, Q-232-01, Q-232-02, Q-233-01, Q-234-01, Q-240-01, Q-235-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

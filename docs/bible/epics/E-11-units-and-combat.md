@@ -7,11 +7,11 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 12 stories, 61 rules, numbers from `algorithms.md` ALG-60 through ALG-64 and the unit table. The rules of S-201 to S-204 leave their numbers to open flags. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | Yes; the flags still open are listed at the foot of this file. |
+| Implied-but-unstated behavior turned into flags | Yes; the 15 flags still open are listed at the foot of this file. |
 | Every visible-surface story has a reference | **No.** S-088 (how units read on screen, squads, ability cues) has a visible surface and no reference. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on open flags and one missing reference. The roster flags Q-082-03 to Q-082-05 (how a 20 to 40 type roster is shaped, balanced, and sized per era) are the load-bearing ones. The stories added on 2026-10-02 (S-201 to S-204) are design decided, not scheduled for building, and each carries open flags.
+**Gate verdict: not passed.** Blocked on the open flags listed at the foot and one missing reference (S-088). S-081, S-084, S-085 and S-086 have no open flags; gate to be rerun. The roster flags Q-082-03 to Q-082-05 (how a 20 to 40 type roster is shaped, balanced, and sized per era) are the load-bearing ones. The stories added on 2026-10-02 (S-201 to S-204) are design decided, not scheduled for building, and each carries open flags.
 
 ## Purpose
 
@@ -26,6 +26,7 @@ Spawn 10 Vanguards versus 10 Raiders at 250 wu apart on layer 3 and attack-move 
 ## Stories
 
 ### S-081 — Three categories, a soft triangle
+Flag closed, rule text pending: Q-081-01, Siege to Strike is 0.20 at launch, to be tuned in playtest. The rule below is what the tests read today.
 As a commander, I want Strike to beat Siege, Siege to beat Line, and Line to beat Strike, with none of it a death sentence, so that composition matters and positioning can still overturn it.
 
 Rules
@@ -36,7 +37,7 @@ Rules
 
 Inputs: unit categories; base damage.
 Outputs: damage events in the tick delta; HP.
-Open flags: Q-081-01.
+Open flags: none.
 
 ### S-082 — The roster
 As a commander, I want a roster of 20 to 40 unit types per era, each with a job I can learn, so that a force offers many options and still reads at a glance.
@@ -77,7 +78,8 @@ Rules
 
 Inputs: profile table.
 Outputs: effective stats.
-Open flags: Q-083-03 (unlock mechanism and the positioning-over-cards weighting test). Q-083-01 is closed: cards ship after launch; launch units are stats plus one ability. Q-084-01 is closed: a second Warden's reduction diminishes to 0.05. Chosen through the options pass, `docs/northstar/research/options/unit-traits/`, Q-083-02.
+Open flags: Q-083-03 (unlock mechanism and the positioning-over-cards weighting test).
+Cards ship after launch; launch units are stats plus one ability. The trait option was chosen through the options pass, `docs/northstar/research/options/unit-traits/`.
 
 ### S-084 — Flat damage
 As a commander, I want damage to be simple and legible: base times matchup, full damage at any range within reach, area damage capped, so that I can predict a fight.
@@ -129,7 +131,7 @@ Rules
 
 Inputs: activate command; unit states; positions.
 Outputs: ability state, cooldown, duration in the tick delta; ability events; HUD cooldown ring.
-Open flags: Q-086-01 (bible cooldown ranges differ from code in places: Surge 60 to 90 vs 75, Barrage 75 to 100 vs 90, Fortify 60 to 80 vs 70, Brace 30 to 40 vs 35; confirm the code values as the design).
+Open flags: none.
 
 ### S-087 — Every unit thinks the same way
 As a commander, I want every unit on both sides to flinch from what it cannot fight, obey my orders, and otherwise shoot the nearest enemy in range, so that my skill is direction, not babysitting.
@@ -148,7 +150,8 @@ Rules
 
 Inputs: unit states; visibility (E-12); orders (E-13).
 Outputs: target ids and attack events in the tick delta.
-Open flags: Q-087-01 (whether the 200 wu leash of R-087-05 is tested before or after damage; the skill lab runs both and Westley picks). Q-008-05 (the nearest enemy stays the game's target rule; a lab-only setting measures focus fire). Q-088-01 is closed: the flinch also fires when the attacker is visible but out of range with no path to it on the unit's layer; that branch is not built, and the code flinches only when return fire fails to find the attacker.
+Open flags: Q-087-01 (whether the 200 wu leash of R-087-05 is tested before or after damage; the skill lab runs both and Westley picks). Q-008-05 (the nearest enemy stays the game's target rule; a lab-only setting measures focus fire).
+The flinch also fires when the attacker is visible but out of range with no path to it on the unit's layer; that branch is not built, and the code flinches only when return fire fails to find the attacker.
 
 ### S-088 — Reading units on screen
 As a commander, I want a Strike squad to read as a small group, a Siege unit as a single heavy asset, and every ability to have an unmistakable cue, so that I never misjudge what I am looking at.

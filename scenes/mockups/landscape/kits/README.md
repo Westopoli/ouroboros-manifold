@@ -17,4 +17,6 @@ A kit JSON reskins the same field-map output for one era. Keys:
 
 Fixed mesh vocabulary: `box`, `box_gable`, `prism`, `cone_on_stick`, `flat_box`, `colonnade`, `wall_segment`, `gate_arch`, `bridge_arches`, `cliff_face`, `stair_ramp`, `acropolis`, `camp_ring`, `mountain_range`, `hab_pod`, `hab_ring`, `spire`, `hull_segment`, `airlock`, `docking_spine`, `ore_chunk`, `derelict`, `ice_shard`, `asteroid_backdrop`, `none`.
 
+Space kit (`space.json`, built on a `SpaceFieldMap`): the one `terrain` rule `{when: {blocked: true}}` fills blocked cells of every layer (`density` applies to interior cells only; `layer_tint` lightens each layer toward white); `borders.asteroid` outlines each layer's blocked space; top-level `tunnel` and `shaft` blocks (`{mesh, size, color}`) draw cut tunnels and scarce layer-change marks. `nodes` also takes `spawn_point` there.
+
 Precedence: inside any cell with `district >= 1`, `city` rules win over `terrain` rules.
