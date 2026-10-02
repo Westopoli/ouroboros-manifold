@@ -50,6 +50,7 @@ var _seed: int = DEFAULT_SEED
 var _hash: int = 0
 var _plants: Dictionary = {}
 var _frozen_band: String = ""
+var _unknown: Array = []
 var _names: RefCounted
 var _labels: Node3D
 
@@ -133,7 +134,7 @@ func _render_labels() -> void:
 		counts[owner] = int(counts.get(owner, 0)) + 1
 	for owner in sums:
 		var label := Label3D.new()
-		label.text = _names.fill_template("{faction_name}", -1, owner)
+		label.text = "Unknown" if _unknown.has(owner) else _names.fill_template("{faction_name}", -1, owner)
 		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 		label.no_depth_test = true
 		label.pixel_size = LABEL_PIXEL_SIZE
@@ -216,9 +217,25 @@ func _arg_value(args: PackedStringArray, flag: String) -> String:
 
 func set_snapshot(snapshot: Dictionary) -> void:
 	_regions = snapshot.get("regions", [])
+	_unknown = _unknown_owners(snapshot)
 	_edges = snapshot.get("edges", [])
 	_relayout()
 	_render()
+
+
+func _unknown_owners(snapshot: Dictionary) -> Array:
+	var out := []
+	if not snapshot.has("factions"):
+		return out
+	var known := {}
+	for f in snapshot["factions"]:
+		known[int(f.get("id", -1))] = true
+	for r in snapshot.get("regions", []):
+		var owner := int(r.get("owner", -1))
+		if owner >= 0 and not known.has(owner) and not out.has(owner):
+			out.append(owner)
+	out.sort()
+	return out
 
 
 func qa_state() -> Dictionary:
@@ -260,6 +277,8 @@ func qa_state() -> Dictionary:
 		"region_colours": region_colours,
 		"owner_colours": owner_colours,
 		"band": band,
+		"camera_autonomous": _camera_rig.is_autonomous(),
+		"unknown_factions": _unknown.duplicate(),
 		"distance": distance,
 		"pick_radius_px": 0.0 if _plants.get("pick-radius-zero", false) else PICK_RADIUS_PX,
 		"edges_3d": not bool(_plants.get("edges-2d-overlay", false)),
