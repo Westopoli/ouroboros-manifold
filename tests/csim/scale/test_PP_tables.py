@@ -353,10 +353,21 @@ def test_PP_route_search_reaches_across_the_canvas(lib):
         if 200 <= cy <= 203:
             continue
         lib.om_map_set_obstacle_density(w, 140, cy, 0, 1.0)
-    found = lib.om_navmesh_find_path(w, 13950.0, 5050.0, 14050.0, 5050.0, 0)
+    found = lib.om_navmesh_find_path(w, 13950.0, 5050.0, 14150.0, 5050.0, 0)
     lib.om_world_free(w)
     assert found > 2, ("route search cap binds: no way round a wall with a gap 150 cells away "
                        f"(answer {found}); the search stops after 512 cells")
+
+
+def test_PP_route_search_wall_without_gap_finds_nothing(lib):
+    """Positive control for the test above: the same wall with no gap must NOT give a route."""
+    side = CANVAS_MAX // CELL
+    w = _world(lib)
+    for cy in range(side):
+        lib.om_map_set_obstacle_density(w, 140, cy, 0, 1.0)
+    found = lib.om_navmesh_find_path(w, 13950.0, 5050.0, 14150.0, 5050.0, 0)
+    lib.om_world_free(w)
+    assert found <= 2, f"a wall with no gap must not yield a route (answer {found})"
 
 
 # ============================================================ cover and obstacles (256)
