@@ -38,15 +38,17 @@ enough. Each prints the whole-step figure; a per-phase figure needs the test
 seam named in the report for A93, not present in csrc.
 
 Noise: median of many timed steps after a warm-up (the spike every 20th step
-is the enemy macro evaluation and does not move a median). Thresholds are the
-bare E-13 figures. No OM_SCALE_CPU_FACTOR tightening is applied here: the
-gate figure is exactly 3 ms and 30 ms.
+is the enemy macro evaluation and does not move a median). Thresholds: the E-13
+figures, 3 ms and 30 ms, passed unchanged to the suite's assert_budget, which
+divides by OM_SCALE_CPU_FACTOR like every other test in this directory
+(Architect ruling A97). Whole-step time is the test; there is no debug timing
+seam, and the asserted figure is an upper bound of movement+collision.
 
 Gated behind OM_SCALE=1 like the rest of this directory.
 """
 import time
 
-from ._scale_helpers import median_ns
+from ._scale_helpers import assert_budget, median_ns
 
 SEED = 121
 N_REGIONS = 80
@@ -96,9 +98,7 @@ def test_e13_siege_1000_units_whole_step_upper_bound_under_3ms(lib):
     print(f"[a93] siege {live} units period={period}: whole om_tactical_step median "
           f"{med / 1e6:.3f} ms (upper bound of movement+collision), budget 3.000 ms")
     assert 950 <= live <= 1000 and period == 1, f"fixture drifted: {live} units, period {period}"
-    assert med < BUDGET_1000_NS, (
-        f"E-13 1,000 units: whole-step median {med / 1e6:.3f} ms is not under 3 ms "
-        f"({live} units, upper bound of movement+collision)")
+    assert_budget(med, BUDGET_1000_NS, f"E-13 siege {live} units whole step (upper bound of movement+collision)")
 
 
 def test_e13_siege_10000_units_whole_step_upper_bound_under_30ms(lib):
@@ -108,9 +108,7 @@ def test_e13_siege_10000_units_whole_step_upper_bound_under_30ms(lib):
     print(f"[a93] siege {live} units period={period}: whole om_tactical_step median "
           f"{med / 1e6:.3f} ms (upper bound of movement+collision), budget 30.000 ms")
     assert 10000 <= live <= 10400 and period == 2, f"fixture drifted: {live} units, period {period}"
-    assert med < BUDGET_10000_NS, (
-        f"E-13 10,000 units: whole-step median {med / 1e6:.3f} ms is not under 30 ms "
-        f"({live} units, upper bound of movement+collision)")
+    assert_budget(med, BUDGET_10000_NS, f"E-13 siege {live} units whole step (upper bound of movement+collision)")
 
 
 def test_control_e13_timer_separates_known_slow_from_known_fast(lib):
