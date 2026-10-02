@@ -288,11 +288,16 @@ typedef struct {
     int32_t chosen_archetype;
     int has_candidate;
     int last_end_reason;
+
+    int32_t *own_snap; /* G-C3: memory-only ownership timeline of the last jump, never saved */
+    uint32_t own_n_snap;
+    uint32_t own_n_regions;
 } gen_state;
 
 /* ---- static helpers ---- */
 
 static void gen_state_free(void *p) {
+    if (p) free(((gen_state *)p)->own_snap);
     free(p);
 }
 
@@ -1964,6 +1969,15 @@ static int gen_time_jump(om_world *w, uint32_t n_ticks, om_time_jump_report *rep
         event_fired[r] = 0;
     }
     int track_events = om_world_feature(w, OM_FEAT_EVENTS);
+    uint32_t own_n = n_ticks / OM_OWNERSHIP_TIMELINE_STRIDE + 1;
+    free(gs->own_snap);
+    gs->own_n_snap = 0;
+    gs->own_n_regions = w->n_regions;
+    gs->own_snap = w->n_regions ? malloc((size_t)own_n * w->n_regions * sizeof(int32_t)) : NULL;
+    if (gs->own_snap) {
+        for (uint32_t r = 0; r < w->n_regions; r++) gs->own_snap[r] = om_region_owner(w, r);
+        gs->own_n_snap = 1;
+    }
     om_fired_event fired[GEN_JUMP_EVENT_BUF];
     gen_jump_chain chains[GEN_JUMP_CHAIN_CAP];
     uint32_t n_chains = 0;
@@ -1972,6 +1986,11 @@ static int gen_time_jump(om_world *w, uint32_t n_ticks, om_time_jump_report *rep
         for (uint32_t r = 0; r < nr; r++) {
             int32_t o = om_region_owner(w, r);
             if (o != last_owner[r]) { last_owner[r] = o; change_tick[r] = w->tick; }
+        }
+        if (gs->own_snap && (i + 1) % OM_OWNERSHIP_TIMELINE_STRIDE == 0) {
+            int32_t *row = gs->own_snap + (size_t)gs->own_n_snap * w->n_regions;
+            for (uint32_t r = 0; r < w->n_regions; r++) row[r] = om_region_owner(w, r);
+            gs->own_n_snap++;
         }
         if (!track_events) continue;
         uint32_t nf = om_tick_events(w, fired, GEN_JUMP_EVENT_BUF);
@@ -2128,6 +2147,18 @@ static int gen_time_jump(om_world *w, uint32_t n_ticks, om_time_jump_report *rep
         report->n_snapshots = n_ticks / OM_OWNERSHIP_TIMELINE_STRIDE + 1;
     }
     return 0;
+}
+
+uint32_t om_time_jump_ownership_snapshot_count(const om_world *w) {
+    const gen_state *gs = gen_get_state(w);
+    return gs ? gs->own_n_snap : 0;
+}
+
+uint32_t om_time_jump_get_ownership_snapshot(const om_world *w, uint32_t k, int32_t *owners_out, uint32_t cap) {
+    const gen_state *gs = gen_get_state(w);
+    if (!gs || !owners_out || k >= gs->own_n_snap || cap < gs->own_n_regions) return 0;
+    memcpy(owners_out, gs->own_snap + (size_t)k * gs->own_n_regions, gs->own_n_regions * sizeof(int32_t));
+    return gs->own_n_regions;
 }
 
 int om_time_jump_run(om_world *w, uint32_t n_ticks, om_time_jump_report *report) {

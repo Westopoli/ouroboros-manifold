@@ -1814,6 +1814,7 @@ int om_chronicle_assemble_cluster_entry(om_world *w, uint32_t category, uint32_t
 void om_chronicle_assemble_with_seed(om_world *w, uint64_t seed) {
     if (!w) return;
     chron_state *st = chron(w);
+    st->n_keyframes = 0; /* keyframes are per jump; the pipe regenerates them after om_time_jump_run (G-C3 A59) */
     if (st->n_candidates == 0 && st->n_clusters == 0) {
         chron_synth_opening(w);
     } else {
@@ -1985,16 +1986,35 @@ int om_chronicle_fragment_pool_counts(const om_world *w, uint32_t category, om_f
     return 0;
 }
 
+/* Sorted insert, skipping a tick already listed. */
+static void chron_add_keyframe(chron_state *st, uint64_t tick) {
+    uint32_t pos = 0;
+    while (pos < st->n_keyframes && st->keyframes[pos] < tick) pos++;
+    if (pos < st->n_keyframes && st->keyframes[pos] == tick) return;
+    if (st->n_keyframes >= CHRON_MAX_KEYFRAMES) return;
+    memmove(&st->keyframes[pos + 1], &st->keyframes[pos], (st->n_keyframes - pos) * sizeof st->keyframes[0]);
+    st->keyframes[pos] = tick;
+    st->n_keyframes++;
+}
+
 void om_chronicle_generate_map_keyframes(om_world *w) {
     if (!w) return;
     chron_state *st = chron(w);
     st->n_keyframes = 0;
-    for (uint32_t i = 0; i < st->n_mock_entries && st->n_keyframes < CHRON_MAX_KEYFRAMES; i++) {
-        st->keyframes[st->n_keyframes++] = st->mock_entries[i].start_tick;
-    }
-    for (uint32_t i = 0; i < st->n_ownership_changes && st->n_keyframes < CHRON_MAX_KEYFRAMES; i++) {
-        st->keyframes[st->n_keyframes++] = st->ownership_changes[i].tick;
-    }
+    for (uint32_t i = 0; i < st->n_mock_entries; i++) chron_add_keyframe(st, st->mock_entries[i].start_tick);
+    for (uint32_t i = 0; i < st->n_ownership_changes; i++) chron_add_keyframe(st, st->ownership_changes[i].tick);
+}
+
+uint32_t om_chronicle_keyframe_count(const om_world *w) {
+    const chron_state *st = chron_ro(w);
+    return st ? st->n_keyframes : 0;
+}
+
+int om_chronicle_get_keyframe(const om_world *w, uint32_t i, uint64_t *tick_out) {
+    const chron_state *st = chron_ro(w);
+    if (!st || !tick_out || i >= st->n_keyframes) return 0;
+    *tick_out = st->keyframes[i];
+    return 1;
 }
 
 int om_chronicle_get_cluster(const om_world *w, uint32_t entry, om_chronicle_cluster *out) {
