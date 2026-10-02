@@ -288,6 +288,31 @@ static int om_fog_cover_blocks(const om_world *w, double ox, double oy, double t
     return 0;
 }
 
+#define OM_FOG_GRID_STEP (OM_NAVMESH_CELL_SIZE / 2.0)
+
+/* Defined in tactical_mapgen.c, not in the header: 1 blocked, 0 open, 100 wu cells.
+ * See also: om_mapgen_cell_blocked in tactical_mapgen.c. */
+extern int om_mapgen_cell_blocked(const om_world *w, uint32_t layer, int32_t cx, int32_t cy);
+
+/* R-098-02: a blocked route-grid cell on the lower layer of the pair blocks the line, in addition to cover discs.
+ * Fixed half-cell steps along the line; the cells holding the two units are exempt (standing in it, as with cover).
+ * Only with ROUTE_AROUND_TERRAIN on. See also: om_combat_can_shoot in tactical_move.c (fire side). */
+static int om_fog_grid_blocks(const om_world *w, double ox, double oy, double tx, double ty, uint32_t low_layer) {
+    double dx = tx - ox, dy = ty - oy, len = sqrt(dx * dx + dy * dy);
+    int32_t c0x = (int32_t)(ox / OM_NAVMESH_CELL_SIZE), c0y = (int32_t)(oy / OM_NAVMESH_CELL_SIZE);
+    int32_t c1x = (int32_t)(tx / OM_NAVMESH_CELL_SIZE), c1y = (int32_t)(ty / OM_NAVMESH_CELL_SIZE);
+    int32_t i, n;
+    if (om_tactical_get_param(w, OM_TP_ROUTE_AROUND_TERRAIN) == 0.0) return 0;
+    n = (int32_t)(len / OM_FOG_GRID_STEP) + 1;
+    for (i = 1; i < n; i++) {
+        double f = (double)i / (double)n;
+        int32_t cx = (int32_t)((ox + dx * f) / OM_NAVMESH_CELL_SIZE), cy = (int32_t)((oy + dy * f) / OM_NAVMESH_CELL_SIZE);
+        if ((cx == c0x && cy == c0y) || (cx == c1x && cy == c1y)) continue;
+        if (om_mapgen_cell_blocked(w, low_layer, cx, cy)) return 1;
+    }
+    return 0;
+}
+
 static int om_fog_unit_pos(const om_world *w, uint32_t unit, double *x, double *y) {
     return om_unit_get_pos(w, unit, x, y);
 }
@@ -589,6 +614,7 @@ int om_unit_can_see(const om_world *w, uint32_t observer, uint32_t target) {
     factor = om_unit_get_cross_layer_factor(w, observer, (ol > tl) ? ol - tl : tl - ol);
     if (factor <= 0.0) return 0;
     if (om_fog_dist(ox, oy, tx, ty) > om_fog_effective_radius(st, w, observer, (uint32_t)om_fog_elevation(st, target), 1) * factor) return 0;
+    if (om_fog_grid_blocks(w, ox, oy, tx, ty, (ol < tl) ? ol : tl)) return 0;
     return om_fog_cover_blocks(w, ox, oy, tx, ty, (ol < tl) ? ol : tl) ? 0 : 1;
 }
 
