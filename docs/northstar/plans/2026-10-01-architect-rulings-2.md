@@ -386,3 +386,19 @@ Source: `docs/northstar/plans/2026-10-01-c4-c5-architect-questions.md` on `push/
 ### A3
 
 **A50. Pin both cases.** A player who owns no region: `mission_start` answers an error and starts nothing; the pipe checks this before asking core for a region, since region 0 is a real region. No reachable enemy: factions that cannot be reached by hops count as equally far, so R-072-08's tie rule picks among them (highest total military, then lowest id); with no non-player faction at all, `mission_start` answers an error. Two transport tests.
+
+## Addendum 23, 2026-10-02 (Westley's answers to the C4 and C5 questions)
+
+Rule text changed in the same commit: E-16 R-110-02 and R-110-07, E-09 R-069-03 and the new R-069-07; register Q-110-05, Q-069-01, Q-069-02, Q-106-04 closed.
+
+**A51. Era Library: no mastery, no tier progress.** Both leave the screen (not "not yet tracked"); they return when that part of the game is defined. This replaces the last clause of A45.
+
+**A52. Replay speed: 2 ticks per second** (R-069-03). A named constant on the client; the 3.0 s hold and 2.0 s tween stand.
+
+**A53. Mentions** (R-069-07, unblocks G-C2). Faction names and system names in an entry are clickable; a click centres the galaxy on that faction's territory or that system. Contract piece first: each chronicle entry in the frame gains `"mentions":[{"start":S,"len":L,"kind":"faction"|"region","id":N}]`, character offsets into the entry text as sent, produced by the sim where it fills the names. Then pipe, then client. Nothing is found by text matching.
+
+**A54. Galaxy quality is a manual setting, never automatic.** This replaces A48 item 8 and the gap-fix plan's frame-time fallback. Settings gains a galaxy quality choice with three values (full, stand-in, fewer particles), default full, stored and applied at boot with the other settings; `qa_state` reports it as `quality_tier` 0, 1, 2. No frame-time trigger, no step-down, no recovery logic is built. Test: each value changes what the galaxy draws, and the game never changes the value itself (a planted slow-frame run leaves it untouched).
+
+**A55. Faction names.** The name table gets at least fifteen simple invented names so no two factions share one; a Doer writes them, plain and pronounceable, none taken from existing fiction. No deeper naming work now.
+
+**A56. Galaxy look: the prototype wins until Westley has looked.** The gap-fix plan (his decision, 2026-09-28) makes the approved prototypes in `scenes/mockups/galaxy/` the live look, and he recalls the prototype as correct and the MVP as differing from it. So A48 items 3 and 4 and the drag direction in item 2 are suspended: where the prototype and the rule text differ (band distances, which edges are drawn, drag direction), the build matches the prototype. `push/C5-G3-impl` lands as built, drawing every edge dim as the prototype does. Each difference from the rule text is listed in the ledger row; the rule text is rewritten to the look he confirms, after he has compared the two.
