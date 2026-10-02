@@ -10,7 +10,10 @@ const BALL_RADIUS := 100.0 * CIV_SCALE
 # in the ball in about 2k attempts (24 needs 10-15k, 26 fails to fit them).
 const MIN_SPACING := 22.0 * CIV_SCALE
 const LINK_RADIUS := 110.0 * CIV_SCALE
-const INFLUENCE_RADIUS := 10.5 * CIV_SCALE
+# Support radius of the shell kernel (zero beyond it), not a falloff scale.
+# Sized so two full-significance neighbours at the mean nearest-neighbour
+# distance (about 24 unscaled) just merge: 0.87 x 24 = 21.
+const INFLUENCE_RADIUS := 21.0 * CIV_SCALE
 const LINK_NEAREST := 3
 const CAPITAL_SIG := 0.85
 const PLAYER_CAPITAL_SIG := 1.0

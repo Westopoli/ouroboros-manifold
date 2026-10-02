@@ -9,7 +9,7 @@ extends Node3D
 # cases that key directly instead of consulting a region's own record).
 
 const INFLUENCE_RADIUS := GalaxyGen.INFLUENCE_RADIUS
-const BOX_MARGIN := GalaxyGen.INFLUENCE_RADIUS * 1.6
+const BOX_MARGIN := GalaxyGen.INFLUENCE_RADIUS * 1.15
 const ISO_THRESHOLD := 0.6
 const SHELL_RES_DIVISOR := 2
 # The raymarch shader's alpha is boosted up to 2.5x at border seams (rim +

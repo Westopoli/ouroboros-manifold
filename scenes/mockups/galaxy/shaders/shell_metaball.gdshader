@@ -6,7 +6,8 @@ uniform int system_count = 0;
 uniform sampler2D rival_positions : filter_nearest;
 uniform int rival_count = 0;
 uniform vec3 shell_color = vec3(0.3, 0.6, 1.0);
-uniform float influence_radius = 5.0;
+// Support radius of the compact kernel (1 - d^2/r^2)^3; zero beyond it.
+uniform float influence_radius = 10.5;
 uniform float iso_threshold = 0.6;
 uniform float shell_opacity = 0.12;
 uniform float gap_strength = 0.8;
@@ -28,7 +29,9 @@ float eval_own_field(vec3 p) {
 		vec3 diff = p - sys.xyz;
 		float r = influence_radius * (0.6 + sys.w * 0.4);
 		float d2 = dot(diff, diff);
-		field += (r * r) / (d2 + r * r);
+		if (d2 >= r * r) continue;
+		float k = 1.0 - d2 / (r * r);
+		field += k * k * k;
 	}
 	return field;
 }
@@ -42,7 +45,9 @@ float eval_rival_field(vec3 p) {
 		vec3 diff = p - sys.xyz;
 		float r = influence_radius * (0.6 + sys.w * 0.4);
 		float d2 = dot(diff, diff);
-		best = max(best, (r * r) / (d2 + r * r));
+		if (d2 >= r * r) continue;
+		float k = 1.0 - d2 / (r * r);
+		best = max(best, k * k * k);
 	}
 	return best;
 }
@@ -76,6 +81,7 @@ void fragment() {
 	bool found = false;
 
 	float hit_rival = 0.0;
+	float t_hit = 0.0;
 	for (int s = 0; s < 64; s++) {
 		float t = t_enter + (float(s) + 0.5) * step_size;
 		vec3 p = cam + ray_dir * t;
@@ -93,11 +99,27 @@ void fragment() {
 			found = true;
 			hit_pos = p;
 			hit_rival = rival;
+			t_hit = t;
 			break;
 		}
 	}
 
 	if (!found) discard;
+
+	// Bisect between the last outside sample and the first inside one so the
+	// surface is not quantised to the march step (visible as terrace banding).
+	float t_lo = t_hit - step_size;
+	float t_hi = t_hit;
+	for (int b = 0; b < 5; b++) {
+		float t_mid = 0.5 * (t_lo + t_hi);
+		if (eval_net_field(cam + ray_dir * t_mid) >= iso_threshold) {
+			t_hi = t_mid;
+		} else {
+			t_lo = t_mid;
+		}
+	}
+	hit_pos = cam + ray_dir * t_hi;
+	hit_rival = eval_rival_field(hit_pos);
 
 	float e = step_size * 0.4;
 	vec3 n = normalize(vec3(
