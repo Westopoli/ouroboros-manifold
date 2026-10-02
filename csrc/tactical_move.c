@@ -41,7 +41,7 @@
  *     disjoint (Strike 130-150, Line 70-80, Siege 40-50) for the six
  *     launch types.
  *   - no accessor enumerates a world's units. om_move_discover() probes
- *     unit ids 1..OM_MOVE_DISCOVERY_CAP through the real om_unit_alive(),
+ *     unit ids 1..OM_MAX_UNITS through the real om_unit_alive(),
  *     since ids are dense from 1 (csrc/unit.c om_tac_state.next_unit_id).
  *     Fine at this suite's scale (<=20 units/world); not what the epic's
  *     1,000/10,000-unit scale requirement wants long-term.
@@ -59,12 +59,11 @@
 
 /* ---------------------------------------------------------------- setup */
 
-#define OM_MOVE_MAX_UNITS 10100
-#define OM_MOVE_DISCOVERY_CAP 256
+#define OM_MOVE_MAX_UNITS (OM_MAX_UNITS + 1)
 #define OM_MOVE_MAX_GROUPS 64
 #define OM_MOVE_MAX_GROUP_MEMBERS 64
 #define OM_MOVE_MAX_DENSITY_CELLS 1024
-#define OM_MOVE_MAX_ROUTE_CACHE 256
+#define OM_MOVE_MAX_ROUTE_CACHE OM_MAX_UNITS
 #define OM_MOVE_MAX_QUEUE 1024
 #define OM_MOVE_BFS_CAP 512
 #define OM_MOVE_BFS_DIR_COUNT 4
@@ -211,6 +210,7 @@ typedef struct {
 
     om_move_route_entry route_cache[OM_MOVE_MAX_ROUTE_CACHE];
     uint32_t             n_route_cache;
+    uint32_t             route_evict;
     uint32_t             cache_hits;
     int                  last_path_straightened;
 
@@ -889,7 +889,7 @@ static om_move_unit *om_move_touch(om_world *w, om_move_state *ms, uint32_t unit
 
 static void om_move_discover(om_world *w, om_move_state *ms) {
     uint32_t id;
-    for (id = 1; id < OM_MOVE_DISCOVERY_CAP; id++) {
+    for (id = 1; id < OM_MOVE_MAX_UNITS; id++) {
         if (om_unit_alive(w, id)) {
             om_move_touch(w, ms, id);
         }
@@ -952,8 +952,14 @@ static void om_move_route_touch(om_move_state *ms, uint32_t layer, double dest_x
             return;
         }
     }
-    if (ms->n_route_cache < OM_MOVE_MAX_ROUTE_CACHE) {
-        om_move_route_entry *r = &ms->route_cache[ms->n_route_cache++];
+    {
+        om_move_route_entry *r;
+        if (ms->n_route_cache < OM_MOVE_MAX_ROUTE_CACHE) {
+            r = &ms->route_cache[ms->n_route_cache++];
+        } else {
+            r = &ms->route_cache[ms->route_evict];
+            ms->route_evict = (ms->route_evict + 1) % OM_MOVE_MAX_ROUTE_CACHE;
+        }
         r->in_use = 1;
         r->layer = layer;
         r->cx = cx;
