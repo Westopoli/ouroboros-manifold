@@ -10,7 +10,7 @@ tick, which names friction directly instead of through the whole state.
 import ctypes
 import hashlib
 
-from conftest import gen_set_region_range, generate, read_friction
+from conftest import OmFriction, gen_set_region_range, generate
 
 SEED = 7
 TICKS = 150
@@ -19,7 +19,14 @@ GOLDEN_FRICTION_SHA256 = "315b11b5a92558359133a84506de999268cf4c5c09f703e5ee28ca
 GOLDEN_FRICTION_RECORDS = 4252
 
 
+def _friction_reader(lib):
+    """A private function pointer to om_tick_friction typed with this module's OmFriction. The shared lib attribute can carry argtypes bound to another copy of the class (tests/csim/scale/_scale_helpers.py execs conftest.py under a second module name, and an OM_SCALE=1 run binds first), so it is never used here."""
+    proto = ctypes.CFUNCTYPE(ctypes.c_uint32, ctypes.c_void_p, ctypes.POINTER(OmFriction), ctypes.c_uint32)
+    return proto(("om_tick_friction", lib))
+
+
 def _run(lib, seed):
+    read = _friction_reader(lib)
     w = lib.om_world_new(0, seed)
     assert w
     for feat in range(8):
@@ -30,9 +37,10 @@ def _run(lib, seed):
     n = 0
     for _ in range(TICKS):
         lib.om_world_step(w)
-        recs = read_friction(lib, w)
-        n += len(recs)
-        for r in recs:
+        buf = (OmFriction * 256)()
+        count = read(w, buf, 256)
+        n += count
+        for r in buf[:count]:
             h.update(bytes(r))
     checksum = lib.om_world_get_state_checksum(w)
     lib.om_world_free(w)
