@@ -1,0 +1,168 @@
+"""engine.py: build the production C library outside the repo and drive it through ctypes (spec AC 2 and 3)."""
+import ctypes
+import platform
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+_X86 = ("x86_64", "AMD64", "i386", "i686", "x86")
+# Makefile CFLAGS_COMMON and CFLAGS_DET_BASE (without -Icsrc, handled below), plus -O2; the sse pair is added on x86 only.
+_FLAGS = ["-O2", "-std=c11", "-Wall", "-Wextra", "-fPIC", "-fno-fast-math", "-ffp-contract=off",
+          "-fexcess-precision=standard", "-fno-math-errno"]
+_BUILTIN = {"Raider": 0, "Interceptor": 1, "Vanguard": 2, "Warden": 3, "Bombard": 4, "Bastion": 5}
+_lib_cache = None
+
+
+def build_library(scratch_dir=None):
+    """Compile csrc/*.c into libouroboros.{dylib,so} in scratch_dir (a fresh temp dir if None); return its path."""
+    scratch = Path(scratch_dir) if scratch_dir is not None else Path(tempfile.mkdtemp(prefix="skilllab_"))
+    scratch.mkdir(parents=True, exist_ok=True)
+    out = scratch / ("libouroboros.dylib" if sys.platform == "darwin" else "libouroboros.so")
+    flags = list(_FLAGS)
+    if platform.machine() in _X86:
+        flags += ["-msse2", "-mfpmath=sse"]
+    srcs = sorted(str(p) for p in (ROOT / "csrc").glob("*.c"))
+    cmd = ["cc"] + flags + ["-I" + str(ROOT / "csrc"), "-shared", "-o", str(out)] + srcs
+    try:
+        res = subprocess.run(cmd, capture_output=True, text=True)
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(_tail(e.stderr)) from e
+    except OSError as e:
+        raise RuntimeError("cc could not be run: %s" % e) from e
+    if res.returncode != 0:
+        raise RuntimeError(_tail(res.stderr))
+    return out
+
+
+def _tail(err):
+    if isinstance(err, bytes):
+        err = err.decode(errors="replace")
+    return str(err or "")[-2000:]
+
+
+def _cached_library():
+    global _lib_cache
+    if _lib_cache is None:
+        _lib_cache = build_library()
+    return _lib_cache
+
+
+class Engine:
+    """The ctypes wrapper of the production library; every method takes the world handle first (except new_world)."""
+
+    def __init__(self, lib_path=None):
+        path = Path(lib_path) if lib_path is not None else _cached_library()
+        self._lib = ctypes.CDLL(str(path))      # a nonexistent path raises OSError
+        self._bind()
+
+    def _bind(self):
+        c, V, u32, u64, d, i = (ctypes, ctypes.c_void_p, ctypes.c_uint32, ctypes.c_uint64, ctypes.c_double,
+                                ctypes.c_int)
+        pd = c.POINTER(d)
+        sigs = {
+            "om_world_new": ([u32, u64], V),
+            "om_world_free": ([V], None),
+            "om_roster_register_custom_unit": ([V, u32, i, c.c_char_p, d, d, d, d, d, d, d, d, i], i),
+            "om_unit_profile_category": ([V, i], i),
+            "om_unit_profile_max_hp": ([V, i], d),
+            "om_unit_profile_base_damage": ([V, i], d),
+            "om_unit_profile_attack_interval": ([V, i], d),
+            "om_unit_profile_attack_range": ([V, i], d),
+            "om_unit_profile_speed": ([V, i], d),
+            "om_unit_profile_sensor_radius": ([V, i], d),
+            "om_unit_profile_layer_transition_time": ([V, i], d),
+            "om_unit_profile_aoe_radius": ([V, i], d),
+            "om_tactical_disable_abilities": ([V], None),
+            "om_unit_spawn": ([V, i, c.c_int32, d, d, u32], u32),
+            "om_command_attack_move": ([V, c.POINTER(u32), u32, d, d], i),
+            "om_command_move": ([V, c.POINTER(u32), u32, d, d], i),
+            "om_tactical_step": ([V], u64),
+            "om_unit_get_hp": ([V, u32], d),
+            "om_unit_get_pos": ([V, u32, pd, pd], i),
+            "om_unit_get_layer": ([V, u32], c.c_int32),
+            "om_unit_alive": ([V, u32], i),
+            "om_combat_can_shoot": ([V, u32, u32], i),
+            "om_map_add_obstacle": ([V, d, d, d], u32),
+        }
+        for name, (argtypes, restype) in sigs.items():
+            fn = getattr(self._lib, name)
+            fn.argtypes = argtypes
+            fn.restype = restype
+
+    def new_world(self, seed):
+        w = self._lib.om_world_new(1, int(seed))
+        if not w:
+            raise RuntimeError("om_world_new returned NULL")
+        return ctypes.c_void_p(w)
+
+    def free_world(self, w):
+        self._lib.om_world_free(w)
+
+    def register_unit_type(self, w, type_id, stats):
+        rc = self._lib.om_roster_register_custom_unit(
+            w, int(type_id), int(stats["category"]), str(stats["role"]).encode(), float(stats["max_hp"]),
+            float(stats["base_damage"]), float(stats["attack_interval"]), float(stats["attack_range"]),
+            float(stats["speed"]), float(stats["sensor_radius"]), float(stats["layer_transition_time"]),
+            float(stats["aoe_radius"]), int(stats["ability_id"]))
+        if rc != 0:
+            raise ValueError("om_roster_register_custom_unit(%r) returned %d" % (type_id, rc))
+
+    def type_id(self, name):
+        if name not in _BUILTIN:
+            raise ValueError("unknown built-in unit type %r" % (name,))
+        return _BUILTIN[name]
+
+    def type_stats(self, w, type_id):
+        L, t = self._lib, int(type_id)
+        return {"category": L.om_unit_profile_category(w, t), "max_hp": L.om_unit_profile_max_hp(w, t),
+                "base_damage": L.om_unit_profile_base_damage(w, t),
+                "attack_interval": L.om_unit_profile_attack_interval(w, t),
+                "attack_range": L.om_unit_profile_attack_range(w, t), "speed": L.om_unit_profile_speed(w, t),
+                "sensor_radius": L.om_unit_profile_sensor_radius(w, t),
+                "layer_transition_time": L.om_unit_profile_layer_transition_time(w, t),
+                "aoe_radius": L.om_unit_profile_aoe_radius(w, t)}
+
+    def disable_abilities(self, w):
+        self._lib.om_tactical_disable_abilities(w)
+
+    def spawn(self, w, type_id, faction, x, y, layer):
+        return int(self._lib.om_unit_spawn(w, int(type_id), int(faction), float(x), float(y), int(layer)))
+
+    def order_attack_move(self, w, unit_ids, x, y):
+        self._order(self._lib.om_command_attack_move, w, unit_ids, x, y)
+
+    def order_move(self, w, unit_ids, x, y):
+        # om_command_move, not om_unit_order_move: the latter only records a destination and never moves the unit.
+        self._order(self._lib.om_command_move, w, unit_ids, x, y)
+
+    @staticmethod
+    def _order(fn, w, unit_ids, x, y):
+        ids = [int(u) for u in unit_ids]
+        fn(w, (ctypes.c_uint32 * len(ids))(*ids), len(ids), float(x), float(y))
+
+    def step(self, w):
+        self._lib.om_tactical_step(w)
+
+    def unit_hp(self, w, u):
+        return float(self._lib.om_unit_get_hp(w, int(u)))
+
+    def unit_pos(self, w, u):
+        x, y = ctypes.c_double(), ctypes.c_double()
+        self._lib.om_unit_get_pos(w, int(u), ctypes.byref(x), ctypes.byref(y))
+        return (float(x.value), float(y.value))
+
+    def unit_layer(self, w, u):
+        return int(self._lib.om_unit_get_layer(w, int(u)))
+
+    def unit_alive(self, w, u):
+        return bool(self._lib.om_unit_alive(w, int(u)))
+
+    def can_shoot(self, w, a, b):
+        return bool(self._lib.om_combat_can_shoot(w, int(a), int(b)))
+
+    def add_blocker(self, w, x, y, radius):
+        if not radius > 0:
+            raise ValueError("blocker radius must be positive, got %r" % (radius,))
+        self._lib.om_map_add_obstacle(w, float(x), float(y), float(radius))
