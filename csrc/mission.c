@@ -2386,8 +2386,7 @@ static int32_t om_mission_enemy_faction(const om_world *w, uint32_t region_idx, 
     return player == 0 ? 1 : 0;
 }
 
-/* B9-6 fixed MVP layout (the E-17 generator is out of scope; no setter
- * exists for the canvas): a square canvas of the archetype's base dimension,
+/* B9-6 fixed MVP layout (the E-17 generator is out of scope): a square canvas of the archetype's base dimension,
  * one objective node at its centre, one spawn point per side on opposite
  * edges (inset by one unit collision radius), and each force in a square-ish
  * grid at 2 * OM_UNIT_COLLISION_RADIUS spacing running inward from its spawn
@@ -2449,6 +2448,7 @@ static void om_mission_instantiate_map(om_world *w, om_mission_state *st) {
      * pushed objective centres are cleared first. */
     om_tactical_reset(w);
     om_map_clear(w);
+    om_map_set_canvas(w, canvas, canvas); /* clear unsets the canvas; movement clamps to it */
     memset(st->objective_center_set, 0, sizeof(st->objective_center_set));
     st->n_force_units = 0;
     om_map_add_spine_node(w, canvas / 2.0, canvas / 2.0, OM_MISSION_SPINE_NODE_OBJECTIVE);
