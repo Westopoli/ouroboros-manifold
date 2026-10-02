@@ -451,3 +451,17 @@ Rule text changed in the same commit: E-16 R-110-02 and R-110-07, E-09 R-069-03 
 - One check before the mentions client unit lands (Engineer, reported): for every region and faction of a seeded world, the name the galaxy view shows equals the name the chronicle text prints. If they differ, the two screens have two naming sources; report it, and the fix (the client taking names from the sim) is ruled then.
 
 **A67. `tests/test_tactical_view.gd` on a real display.** Both failures are test defects, approved for an Engineer with ledger rows: the tick check races an extra `_process` on a rendered display (the fix makes the test independent of how many frames ran before it stops processing; the expected tick per step is unchanged), and the pixel check assumes 1920x1080 where it should read the viewport's actual size.
+
+## Addendum 27, 2026-10-02 (after G-C3 and mentions landed)
+
+**A68. `om_chronicle_mention_get` in the signature table.** The struct gets a binding in `signatures.toml` and conftest so the function is bound and checked like the rest (Engineer). Separately, a harness piece: the merge gate runs `sig_table --report` and fails on a BLOCKED item, with a positive control (a planted unmappable parameter fails the gate).
+
+**A69. The chronicle scene never advances the sim by being opened.** Same fault as the debrief had (A39): a scene issuing a command from `_ready`. The jump is issued once, by the flow that leads to the chronicle (Proceed from the debrief); the sequencer holds that jump's frame and hands it to the embedded scroll panel, and the panel's own jump in `_ready` goes. Opened with no frame held (after a load, or from the galaxy before any jump), the scene shows the scroll with no entries and no replay, and its footer; it sends nothing. Tests: opening the scene sends no `jump`; sequencer and panel show the same frame; after a load, no replay. The general rule for the client from here on: a scene's `_ready` may read state and frames, and sends no command that changes the sim.
+
+**A70. The replay draws on the galaxy view.** The sequencer placing unknown regions on a ring with hashed colours is a stand-in, accepted only while the galaxy stack is held; it is listed in the ledger as a known visual defect. When the galaxy composite lands, the replay takes region positions and faction colours from the galaxy view's own data, and the ring placement is deleted in that unit.
+
+**A71. The panel slides in on the live path.** Entries printing into a hidden panel is a defect against R-069-01 and R-108-02. Small unit with a test: on the live path the panel is visible and at 38 percent width before the first entry prints.
+
+**A72. Keyframes never hold the clock.** Confirmed: keyframes are markers, the map is the master clock and is never delayed (R-069-03). The old behaviour of holding the keyframe queue until the paired entry finished is gone and stays gone.
+
+**A73. Mentions client.** The galaxy-side click behaviour (A66 c and d) stays held with the galaxy stack; the legacy handler in the sequencer remains the only consumer until then. An entry with no mentions is valid. The structural-line fallback for an entry whose text is empty stays, so the count on screen still equals what the distiller produced (R-069-06).
