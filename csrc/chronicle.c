@@ -133,6 +133,11 @@
 
 #define CHRON_MAX_CANDIDATES 256
 #define CHRON_MAX_FINAL 16
+typedef struct { uint32_t start, len, kind; int32_t id; } chron_span;
+#define CHRON_MAX_SPANS 16
+#define CHRON_DEDUP_BUF 2048
+#define CHRON_HELD_BY ", held by "
+
 #define CHRON_MAX_RAW_CHAIN 128
 #define CHRON_MAX_TEXT_ENTRIES 64
 #define CHRON_MAX_MOCK_ENTRIES 64
@@ -640,6 +645,8 @@ typedef struct {
      * cluster list is rebuilt. */
     om_chronicle_entry entries[CHRON_MAX_FINAL];
     uint8_t entry_valid[CHRON_MAX_FINAL];
+    chron_span men[CHRON_MAX_FINAL][2][CHRON_MAX_SPANS];
+    uint32_t nmen[CHRON_MAX_FINAL][2];
     uint32_t n_entries;
 
     chron_text_entry text_entries[CHRON_MAX_TEXT_ENTRIES];
@@ -1023,8 +1030,11 @@ static uint32_t chron_word_set_unique_count(const chron_word_set *a) {
 /* Word-echo synonym substitution: on a word's second appearance, replace
  * with its curated synonym if one exists (R-068-06). Operates in place on a
  * fixed buffer. */
-static void chron_dedup_echo_words(char *text, size_t cap) {
-    (void)cap;
+static void chron_dedup_echo_words(char *text, size_t cap, chron_span *sp, uint32_t *nsp) {
+    int dlt[2048];
+    char drop[2048];
+    memset(drop, 0, sizeof drop);
+    size_t in_len = strlen(text);
     char seen[CHRON_MAX_CONTENT_WORDS][32];
     uint32_t n_seen = 0;
     char out[1024];
@@ -1033,8 +1043,10 @@ static void chron_dedup_echo_words(char *text, size_t cap) {
     out[0] = '\0';
     while (*p) {
         const char *start = p;
+        size_t tok_in = (size_t)(start - text);
         while (*p && !isspace((unsigned char)*p)) p++;
         size_t tok_len = (size_t)(p - start);
+        size_t out_at = out_len;
         size_t clean_len = tok_len;
         while (clean_len > 0 && !isalpha((unsigned char)start[clean_len - 1])) clean_len--;
         char clean[32];
@@ -1054,6 +1066,13 @@ static void chron_dedup_echo_words(char *text, size_t cap) {
             }
         }
 
+        if (replacement) {
+            for (size_t i = 0; i < clean_len && tok_in + i < CHRON_DEDUP_BUF; i++) drop[tok_in + i] = 1;
+            for (size_t i = clean_len; i < tok_len && tok_in + i < CHRON_DEDUP_BUF; i++)
+                dlt[tok_in + i] = (int)(out_at + strlen(replacement) + (i - clean_len)) - (int)(tok_in + i);
+        } else {
+            for (size_t i = 0; i < tok_len && tok_in + i < CHRON_DEDUP_BUF; i++) dlt[tok_in + i] = (int)out_at - (int)tok_in;
+        }
         if (replacement) {
             int cap_first = isupper((unsigned char)start[0]);
             size_t rlen = strlen(replacement);
@@ -1076,6 +1095,22 @@ static void chron_dedup_echo_words(char *text, size_t cap) {
     out[out_len] = '\0';
     strncpy(text, out, cap - 1);
     text[cap - 1] = '\0';
+    if (sp && nsp) {
+        uint32_t k2 = 0;
+        for (uint32_t k = 0; k < *nsp; k++) {
+            uint32_t a = sp[k].start, b = sp[k].start + sp[k].len;
+            int ok = b <= in_len && b <= CHRON_DEDUP_BUF;
+            for (uint32_t i = a; ok && i < b; i++) if (drop[i]) ok = 0;
+            if (!ok) continue;
+            uint32_t na = (uint32_t)((int)a + dlt[a]);
+            uint32_t nb = (uint32_t)((int)(b - 1) + dlt[b - 1] + 1);
+            sp[k2] = sp[k];
+            sp[k2].start = na;
+            sp[k2].len = nb - na;
+            k2++;
+        }
+        *nsp = k2;
+    }
 }
 
 #define CHRON_EDIT_DIST_MAX_LEN 255
@@ -1103,7 +1138,7 @@ static uint32_t chron_edit_distance(const char *a, const char *b) {
 
 /* ---- slot resolution (ALG-53) ---- */
 
-typedef struct { const char *key; char value[CHRON_SLOT_VALUE_CAP]; } chron_slot_kv;
+typedef struct { const char *key; char value[CHRON_SLOT_VALUE_CAP]; int mkind; int32_t mid; } chron_slot_kv;
 
 /* The 16 slots the launch fragment library actually uses (scanned from
  * simulation/library/chronicle/fragments.json); chron_build_slots populates
@@ -1232,18 +1267,21 @@ static void chron_build_slots(const om_world *w, const om_chronicle_cluster *c, 
     uint32_t eff_cat = chron_effective_category(c);
     int32_t owner = om_region_owner(w, c->region);
 
-    for (uint32_t i = 0; i < CHRON_N_SLOTS; i++) slots[i].key = CHRON_POPULATED_SLOTS[i];
+    for (uint32_t i = 0; i < CHRON_N_SLOTS; i++) { slots[i].key = CHRON_POPULATED_SLOTS[i]; slots[i].mkind = -1; slots[i].mid = -1; }
 
     snprintf(slots[SLOT_CHARACTER_NAME].value, CHRON_SLOT_VALUE_CAP, "%s Vane", chron_lineage_surname(c->region));
     snprintf(slots[SLOT_CHARACTER_RANK].value, CHRON_SLOT_VALUE_CAP, "%s", "commander");
     snprintf(slots[SLOT_LINEAGE_NAME].value, CHRON_SLOT_VALUE_CAP, "%s", chron_lineage_surname(c->region));
     snprintf(slots[SLOT_FACTION_NAME].value, CHRON_SLOT_VALUE_CAP, "%s", chron_faction_name(owner));
+    if (owner >= 0) { slots[SLOT_FACTION_NAME].mkind = 0; slots[SLOT_FACTION_NAME].mid = owner; }
     snprintf(slots[SLOT_REGION_NAME].value, CHRON_SLOT_VALUE_CAP, "%s", chron_region_name(c->region));
+    slots[SLOT_REGION_NAME].mkind = 1; slots[SLOT_REGION_NAME].mid = (int32_t)c->region;
 
     uint32_t neigh[CHRON_NEIGHBOR_SAMPLE_CAP];
     uint32_t nn = om_region_neighbors(w, c->region, neigh, CHRON_NEIGHBOR_SAMPLE_CAP);
     snprintf(slots[SLOT_ADJACENT_REGION].value, CHRON_SLOT_VALUE_CAP, "%s",
              nn > 0 ? chron_region_name(neigh[0]) : "the neighbouring lands");
+    if (nn > 0) { slots[SLOT_ADJACENT_REGION].mkind = 1; slots[SLOT_ADJACENT_REGION].mid = (int32_t)neigh[0]; }
 
     char desc[CHRON_SLOT_VALUE_CAP];
     chron_event_description(eff_cat, desc, sizeof(desc));
@@ -1271,6 +1309,7 @@ static void chron_build_slots(const om_world *w, const om_chronicle_cluster *c, 
     snprintf(slots[SLOT_MISSION_ARCHETYPE].value, CHRON_SLOT_VALUE_CAP, "%s", "the commander");
     uint32_t mission_region = eff_cat == CAT_CONSEQUENCE_RIPPLE ? om_mission_last_region(w) : c->region;
     snprintf(slots[SLOT_MISSION_REGION].value, CHRON_SLOT_VALUE_CAP, "%s", chron_region_name(mission_region));
+    slots[SLOT_MISSION_REGION].mkind = 1; slots[SLOT_MISSION_REGION].mid = (int32_t)mission_region;
 }
 
 static int chron_slot_lookup(const chron_slot_kv *slots, const char *key, char *out, size_t outcap) {
@@ -1283,7 +1322,8 @@ static int chron_slot_lookup(const chron_slot_kv *slots, const char *key, char *
     return 0;
 }
 
-static void chron_resolve_text(const char *tmpl, const chron_slot_kv *slots, char *out, size_t outcap) {
+static void chron_resolve_text(const char *tmpl, const chron_slot_kv *slots, char *out, size_t outcap, chron_span *sp, uint32_t *nsp) {
+    if (nsp) *nsp = 0;
     size_t out_len = 0;
     const char *p = tmpl;
     while (*p && out_len + 1 < outcap) {
@@ -1298,6 +1338,13 @@ static void chron_resolve_text(const char *tmpl, const chron_slot_kv *slots, cha
                 char val[CHRON_SLOT_VALUE_CAP];
                 if (chron_slot_lookup(slots, key, val, sizeof(val))) {
                     size_t vlen = strlen(val);
+                    for (size_t q = 0; sp && nsp && q < CHRON_N_SLOTS; q++) {
+                        if (strcmp(slots[q].key, key) == 0 && slots[q].mkind >= 0 && *nsp < CHRON_MAX_SPANS) {
+                            sp[*nsp].start = (uint32_t)out_len; sp[*nsp].len = (uint32_t)vlen;
+                            sp[*nsp].kind = (uint32_t)slots[q].mkind; sp[*nsp].id = slots[q].mid;
+                            (*nsp)++;
+                        }
+                    }
                     for (size_t i = 0; i < vlen && out_len + 1 < outcap; i++) out[out_len++] = val[i];
                     p = end + 1;
                     continue;
@@ -1359,6 +1406,7 @@ static void chron_apply_echo_between(const char *tmpl_a, const char *tmpl_b, chr
         if (strstr(tmpl_a, needle) && strstr(tmpl_b, needle)) {
             if (chron_word_count(slots[i].value) >= OM_CHRON_ECHO_WORD_THRESHOLD) {
                 snprintf(slots[i].value, CHRON_SLOT_VALUE_CAP, "%s", chron_anaphoric_form(rng));
+                slots[i].mkind = -1;
             }
         }
     }
@@ -1369,7 +1417,15 @@ static void chron_apply_echo_between(const char *tmpl_a, const char *tmpl_b, chr
  * distill pipeline and the direct om_chronicle_assemble_cluster_entry seam. */
 static int chron_assemble(const om_world *w, uint32_t category, uint32_t region_idx,
                            uint64_t *rng, char *base_out, size_t base_cap,
-                           char *expanded_out, size_t expanded_cap, int32_t *fragment_ids) {
+                           char *expanded_out, size_t expanded_cap, int32_t *fragment_ids,
+                           chron_span *bsp, uint32_t *nb, chron_span *esp, uint32_t *ne) {
+    chron_span tmp_a[CHRON_MAX_SPANS], tmp_b[CHRON_MAX_SPANS], tmp_c[CHRON_MAX_SPANS];
+    uint32_t na0 = 0, nb0 = 0, nc0 = 0, dummy = 0;
+    if (!nb) nb = &dummy;
+    if (!ne) ne = &dummy;
+    if (!bsp) bsp = tmp_a;
+    if (!esp) esp = tmp_b;
+    *nb = 0; *ne = 0;
     om_chronicle_cluster synth;
     memset(&synth, 0, sizeof(synth));
     synth.type = (category >= CAT_CONSEQUENCE_SUCCESS) ? CTYPE_CONSEQUENCE
@@ -1386,7 +1442,8 @@ static int chron_assemble(const om_world *w, uint32_t category, uint32_t region_
          * one placeholder line (rules: missing library content falls back to a placeholder). */
         char text[CHRON_FRAGMENT_TEXT_CAP];
         chron_resolve_text("Word of what was done at {mission_region} reached {region_name}, where {field_delta_summary}.",
-                           slots, text, sizeof(text));
+                           slots, text, sizeof(text), bsp, nb);
+        memcpy(esp, bsp, sizeof(chron_span) * *nb); *ne = *nb;
         snprintf(base_out, base_cap, "%s", text);
         snprintf(expanded_out, expanded_cap, "%s", text);
         fragment_ids[0] = fragment_ids[1] = fragment_ids[2] = -1;
@@ -1404,23 +1461,36 @@ static int chron_assemble(const om_world *w, uint32_t category, uint32_t region_
     chron_apply_echo_between(opening->text, detail->text, slots, rng);
 
     char opening_r[CHRON_FRAGMENT_TEXT_CAP], detail_r[CHRON_FRAGMENT_TEXT_CAP], closing_r[CHRON_FRAGMENT_TEXT_CAP];
-    chron_resolve_text(opening->text, slots, opening_r, sizeof(opening_r));
-    chron_resolve_text(detail->text, slots, detail_r, sizeof(detail_r));
+    chron_resolve_text(opening->text, slots, opening_r, sizeof(opening_r), bsp, nb);
+    chron_resolve_text(detail->text, slots, detail_r, sizeof(detail_r), tmp_c, &nc0);
+    for (uint32_t k = 0; k < nc0 && *nb < CHRON_MAX_SPANS; k++) {
+        bsp[*nb] = tmp_c[k];
+        bsp[*nb].start += (uint32_t)strlen(opening_r) + 1;
+        (*nb)++;
+    }
+    (void)na0; (void)nb0;
 
     char base[1024];
     snprintf(base, sizeof(base), "%s %s", opening_r, detail_r);
-    chron_dedup_echo_words(base, sizeof(base));
+    chron_dedup_echo_words(base, sizeof(base), bsp, nb);
     chron_fix_post_period_caps(base);
     chron_capitalize_first(base);
 
     char expanded[1600];
     if (closing) {
-        chron_resolve_text(closing->text, slots, closing_r, sizeof(closing_r));
+        chron_resolve_text(closing->text, slots, closing_r, sizeof(closing_r), tmp_c, &nc0);
         snprintf(expanded, sizeof(expanded), "%s %s", base, closing_r);
     } else {
+        nc0 = 0;
         snprintf(expanded, sizeof(expanded), "%s", base);
     }
-    chron_dedup_echo_words(expanded, sizeof(expanded));
+    memcpy(esp, bsp, sizeof(chron_span) * *nb); *ne = *nb;
+    for (uint32_t k = 0; k < nc0 && *ne < CHRON_MAX_SPANS; k++) {
+        esp[*ne] = tmp_c[k];
+        esp[*ne].start += (uint32_t)strlen(base) + 1;
+        (*ne)++;
+    }
+    chron_dedup_echo_words(expanded, sizeof(expanded), esp, ne);
     chron_fix_post_period_caps(expanded);
     chron_capitalize_first(expanded);
 
@@ -1690,6 +1760,50 @@ static void chron_synth_opening(om_world *w) {
  * (post cross-entry dedup, R-068-07) base texts into the scroll buffer;
  * entry_count/get_cluster/count_by_type stay driven by st->clusters, which
  * this does not modify -- only the scroll TEXT is deduplicated here. */
+static void chron_first_mention_shift(char *text, size_t cap, chron_span *sp, uint32_t *n, const char *bare,
+                                       const char *mention, const char *fname, int32_t owner, uint32_t region) {
+    const char *pos = strstr(text, bare);
+    if (!pos) return;
+    uint32_t at = (uint32_t)(pos - text), bl = (uint32_t)strlen(bare);
+    char replaced[1700];
+    snprintf(replaced, sizeof(replaced), "%.*s%s%s", (int)at, text, mention, pos + bl);
+    snprintf(text, cap, "%.*s", (int)cap - 1, replaced);
+    uint32_t extra = (uint32_t)strlen(mention) - bl;
+    int have = 0;
+    for (uint32_t k = 0; k < *n; k++) {
+        if (sp[k].start == at && sp[k].len == bl) have = 1;
+        else if (sp[k].start >= at + bl) sp[k].start += extra;
+    }
+    chron_span add[2];
+    uint32_t na = 0;
+    if (!have) { add[na].start = at; add[na].len = bl; add[na].kind = 1; add[na].id = (int32_t)region; na++; }
+    if (owner >= 0) { add[na].start = at + bl + (uint32_t)strlen(CHRON_HELD_BY); add[na].len = (uint32_t)strlen(fname); add[na].kind = 0; add[na].id = owner; na++; }
+    for (uint32_t q = 0; q < na && *n < CHRON_MAX_SPANS; q++) {
+        uint32_t k = *n;
+        while (k > 0 && sp[k - 1].start > add[q].start) { sp[k] = sp[k - 1]; k--; }
+        sp[k] = add[q];
+        (*n)++;
+    }
+}
+
+static uint32_t chron_cp_offset(const char *text, uint32_t byte_off) {
+    uint32_t cp = 0;
+    for (uint32_t i = 0; i < byte_off; i++) if (((unsigned char)text[i] & 0xC0) != 0x80) cp++;
+    return cp;
+}
+
+static void chron_store_spans(chron_span *dst, uint32_t *ndst, const chron_span *src, uint32_t nsrc, const char *text) {
+    uint32_t tl = (uint32_t)strlen(text);
+    *ndst = 0;
+    for (uint32_t k = 0; k < nsrc; k++) {
+        if (src[k].start + src[k].len > tl) continue;
+        dst[*ndst] = src[k];
+        dst[*ndst].start = chron_cp_offset(text, src[k].start);
+        dst[*ndst].len = chron_cp_offset(text, src[k].start + src[k].len) - dst[*ndst].start;
+        (*ndst)++;
+    }
+}
+
 static void chron_assemble_all(om_world *w, uint64_t seed) {
     chron_state *st = chron(w);
     uint64_t rng = seed;
@@ -1697,13 +1811,15 @@ static void chron_assemble_all(om_world *w, uint64_t seed) {
     char expandeds[CHRON_MAX_FINAL][1600];
     int ok[CHRON_MAX_FINAL];
     int32_t frags[CHRON_MAX_FINAL][3];
+    chron_span bsp[CHRON_MAX_FINAL][CHRON_MAX_SPANS], esp[CHRON_MAX_FINAL][CHRON_MAX_SPANS];
+    uint32_t nb[CHRON_MAX_FINAL], ne[CHRON_MAX_FINAL];
     uint32_t n_seen_regions = 0;
     uint32_t seen_regions[CHRON_MAX_FINAL];
 
     for (uint32_t i = 0; i < st->n_clusters; i++) {
         uint32_t eff_cat = chron_effective_category(&st->clusters[i]);
         ok[i] = chron_assemble(w, eff_cat, st->clusters[i].region, &rng,
-                                bases[i], sizeof(bases[i]), expandeds[i], sizeof(expandeds[i]), frags[i]);
+                                bases[i], sizeof(bases[i]), expandeds[i], sizeof(expandeds[i]), frags[i], bsp[i], &nb[i], esp[i], &ne[i]);
         if (ok[i]) {
             int first = 1;
             for (uint32_t j = 0; j < n_seen_regions; j++) {
@@ -1715,22 +1831,10 @@ static void chron_assemble_all(om_world *w, uint64_t seed) {
                 chron_render_region_mention(w, st->clusters[i].region, 1, mention, sizeof(mention));
                 const char *bare = chron_region_name(st->clusters[i].region);
                 if (strstr(mention, ", held by") && !strstr(bases[i], ", held by")) {
-                    char replaced[1024];
-                    const char *pos = strstr(bases[i], bare);
-                    if (pos) {
-                        size_t prefix = (size_t)(pos - bases[i]);
-                        snprintf(replaced, sizeof(replaced), "%.*s%s%s", (int)prefix, bases[i],
-                                 mention, pos + strlen(bare));
-                        snprintf(bases[i], sizeof(bases[i]), "%s", replaced);
-                    }
-                    pos = strstr(expandeds[i], bare);
-                    if (pos) {
-                        char replaced2[1600];
-                        size_t prefix = (size_t)(pos - expandeds[i]);
-                        snprintf(replaced2, sizeof(replaced2), "%.*s%s%s", (int)prefix, expandeds[i],
-                                 mention, pos + strlen(bare));
-                        snprintf(expandeds[i], sizeof(expandeds[i]), "%s", replaced2);
-                    }
+                    int32_t own = om_region_owner(w, st->clusters[i].region);
+                    const char *fn = chron_faction_name(own);
+                    chron_first_mention_shift(bases[i], sizeof(bases[i]), bsp[i], &nb[i], bare, mention, fn, own, st->clusters[i].region);
+                    chron_first_mention_shift(expandeds[i], sizeof(expandeds[i]), esp[i], &ne[i], bare, mention, fn, own, st->clusters[i].region);
                 }
             }
         }
@@ -1742,6 +1846,7 @@ static void chron_assemble_all(om_world *w, uint64_t seed) {
     st->full_scroll_text[0] = '\0';
     st->n_entries = st->n_clusters;
     memset(st->entry_valid, 0, sizeof(st->entry_valid));
+    memset(st->nmen, 0, sizeof(st->nmen));
     size_t pos = 0;
     for (uint32_t i = 0; i < st->n_clusters; i++) {
         if (!ok[i]) continue;
@@ -1777,6 +1882,8 @@ static void chron_assemble_all(om_world *w, uint64_t seed) {
         ent->end_tick = st->clusters[i].end_tick;
         snprintf(ent->base_text, sizeof(ent->base_text), "%.511s", bases[i]);
         snprintf(ent->expanded_text, sizeof(ent->expanded_text), "%.1023s", expandeds[i]);
+        chron_store_spans(st->men[i][0], &st->nmen[i][0], bsp[i], nb[i], ent->base_text);
+        chron_store_spans(st->men[i][1], &st->nmen[i][1], esp[i], ne[i], ent->expanded_text);
         int n = snprintf(st->full_scroll_text + pos, CHRON_FULL_TEXT_CAP - pos, "%s%s",
                           pos > 0 ? "\n\n" : "", bases[i]);
         if (n > 0) pos += (size_t)n;
@@ -1907,7 +2014,7 @@ const char *om_chronicle_apply_word_echo_synonym(om_world *w, const char *text) 
     static char out[1024];
     (void)w;
     snprintf(out, sizeof(out), "%s", text ? text : "");
-    chron_dedup_echo_words(out, sizeof(out));
+    chron_dedup_echo_words(out, sizeof(out), NULL, NULL);
     return out;
 }
 
@@ -1920,7 +2027,7 @@ int om_chronicle_assemble_cluster_entry(om_world *w, uint32_t category, uint32_t
     uint64_t rng = (uint64_t)category * CHRON_RNG_GOLDEN + region_idx;
     char base[CHRON_BASE_TEXT_CAP], expanded[CHRON_EXPANDED_TEXT_CAP];
     int32_t frags[3];
-    int ok = chron_assemble(w, category, region_idx, &rng, base, sizeof(base), expanded, sizeof(expanded), frags);
+    int ok = chron_assemble(w, category, region_idx, &rng, base, sizeof(base), expanded, sizeof(expanded), frags, NULL, NULL, NULL, NULL);
     memset(out_entry, 0, sizeof(*out_entry));
     out_entry->fragment_ids[0] = -1;
     out_entry->fragment_ids[1] = -1;
@@ -2333,6 +2440,22 @@ int om_chronicle_entry_get(const om_world *w, uint32_t index, om_chronicle_entry
     const chron_state *st = chron_ro(w);
     if (!st || !out || index >= st->n_entries || !st->entry_valid[index]) return 0;
     *out = st->entries[index];
+    return 1;
+}
+
+uint32_t om_chronicle_mention_count(const om_world *w, uint32_t index, int expanded) {
+    const chron_state *st = chron_ro(w);
+    if (!st || index >= st->n_entries || !st->entry_valid[index]) return 0;
+    return st->nmen[index][expanded ? 1 : 0];
+}
+
+int om_chronicle_mention_get(const om_world *w, uint32_t index, int expanded, uint32_t mention_idx, om_chronicle_mention *out) {
+    const chron_state *st = chron_ro(w);
+    if (!st || !out || index >= st->n_entries || !st->entry_valid[index]) return 0;
+    int f = expanded ? 1 : 0;
+    if (mention_idx >= st->nmen[index][f]) return 0;
+    const chron_span *m = &st->men[index][f][mention_idx];
+    out->start = m->start; out->len = m->len; out->kind = m->kind; out->id = m->id;
     return 1;
 }
 
