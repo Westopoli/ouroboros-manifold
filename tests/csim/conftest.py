@@ -2099,6 +2099,7 @@ def _bind_e10(lib):
     _bind(lib, "om_mission_eval_hold_zone", [W, ctypes.c_uint32, ctypes.c_uint32], None, ("w", "objective_idx", "enemies_inside"))
     _bind(lib, "om_mission_eval_survive", [W, ctypes.c_uint32, ctypes.c_uint64, ctypes.c_int], ctypes.c_double, ("w", "objective_idx", "elapsed_ticks", "player_alive"))
     _bind(lib, "om_mission_fallback_archetype", [W], ctypes.c_uint32, ("w",))
+    _bind(lib, "om_mission_fallback_enemy", [W, ctypes.c_uint32], ctypes.c_int32, ("w", "region_idx"))
     _bind(lib, "om_mission_fallback_region", [W], ctypes.c_uint32, ("w",))
     _bind(lib, "om_mission_fill_player_force", [W, ctypes.c_double, ctypes.c_double], ctypes.c_double, ("w", "P", "parity"))
     _bind(lib, "om_mission_get_archetype_metadata", [W, ctypes.c_uint32, V], ctypes.c_int, ("w", "archetype", "out"))
