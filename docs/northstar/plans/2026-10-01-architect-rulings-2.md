@@ -546,3 +546,15 @@ Rule text changed in the same commit: E-16 R-110-02 and R-110-07, E-09 R-069-03 
 ## Addendum 34, 2026-10-02 (the gate and scale-gated tests)
 
 **A98. `push/A93-e13-scale-tests` lands with the gate's `skipped +3` accepted,** on this evidence: the three are the new `OM_SCALE=1`-gated E-13 tests, which run red under `OM_SCALE=1` (3.5 ms against 3 ms; 88 ms against 30 ms) and are listed in the ledger as budget misses under A93. They are gated, not skipped findings. Then a small harness unit under the owner of `merge_gate_support.py`: the gate counts tests gated by `OM_SCALE` in their own line, separate from skips and xfails, and requires each to be named in the scale ledger list; an ordinary new skip still rejects. Positive controls: a new plain skip rejects; a new scale-gated test missing from the list rejects. Running the gate with `OM_SCALE=1` is not the answer.
+
+## Addendum 35, 2026-10-02 (tactical cost: the proposal)
+
+**A99. The A93 proposal is approved, all three changes.** Per-cell faction counts in the grid with the faction-filtered iterator skipping cells without its faction; the damaged-unit prepass for the Warden Rally scan; the grid-based contact check reproducing the 2,048 cap exactly. Built as units of about one file each under the owners of `csrc/unit.c`, `enemy_macro.c`, `fog.c` and `om_internal.h` (the coordinator checks the rows; a missing owner comes to me before the unit starts). The prototype patch is reference, not the change.
+- Before any unit: the equivalence evidence becomes a kept test (Engineer). Per-step unit-state hashes recorded from main for the fifteen runs of the diagnosis (idle and engaged, 502 to 4,996 units, lists over the cap) and asserted after; with the existing checksum trace, O0 equal to O2. A fix that changes one hash does not land.
+- `test_F3_probe_positive_control_counts_calls_while_contact_unset` pins the quadratic call count, which is the defect. Test-defect, approved with a ledger row: it keeps its purpose (the probe registers `om_unit_can_see` calls while contact is unset, and the count is the same on two runs) and drops the `2*n*n` figure.
+- Second round, same method, proposal before build: aura regen (7.5 of 10.3 ms at 4,996) and the damage-reduction scans behind the 10 to 20 ms combat spike at 990 units; and one measurement of sustained melee with thousands of moving units, which nobody has taken. The E-13 tests stay as written; the worst step at 10,098 units (25.8 ms against 22.2 scaled) is reported beside the median until the second round.
+- `perf` is not needed for this; gprof and phase timers were enough. No sysctl is changed.
+
+**A100. Player collapse is far rarer with events working map-wide** (seeds collapsing by the second post-mission jump, 2,000-tick jumps: 34 on main, 1 on the branch). Recorded with A90 and A95 as part of the same balance question for Westley's later simulation; nothing asserted, nothing tuned.
+
+**A101.** The scale ledger list file added to `HARNESS-symown`'s `owns` by the coordinator is accepted. A94-contract landing stacked with its harness follow-up, with only `snapshot_fixture` red, is accepted.
