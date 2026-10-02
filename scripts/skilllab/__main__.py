@@ -12,7 +12,7 @@ REPLICATES = 10
 
 def _controls(out_dir):
     out_dir.mkdir(parents=True, exist_ok=True)
-    plays_by_label = {"identical": plays.blob_play(SIZE), "reach": plays.reach_play(SIZE)}
+    plays_by_label = {"identical": plays.blob_play(SIZE), "damage": plays.damage_play(SIZE)}
     scans, firing_example, fight_rows = {}, {}, []
     for label, build in plays_by_label.items():
         result = scan.scan(build, SIZE, ENEMY_FROM, ENEMY_TO, replicates=REPLICATES)
