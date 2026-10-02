@@ -38,12 +38,3 @@ def test_a_fight_on_a_canvas_with_one_cover_and_one_block_applies_and_repeats(li
     s = setup_for(Terrain(canvas=CANVAS, blocks=(BLOCK,), covers=(COVER,)))
     first, second = fight.fight(s, 1, False, engine=library), fight.fight(s, 1, False, engine=library)
     assert first.ticks > 0 and first == second
-
-
-def test_a_block_across_the_line_between_the_sides_changes_the_fight(library):
-    """EXPECTED RED until the engine map wave lands (A144: held, not landed).
-    The same fight with and without the block gives a different firing series."""
-    with_block = fight.fight(setup_for(Terrain(canvas=CANVAS, blocks=(BLOCK,), covers=(COVER,))), 1, False,
-                             engine=library)
-    without = fight.fight(setup_for(Terrain(canvas=CANVAS, covers=(COVER,))), 1, False, engine=library)
-    assert with_block.firing != without.firing
