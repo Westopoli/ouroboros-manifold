@@ -23,3 +23,24 @@ Verbatim:
 | H13 canvas | 64,000 wu when there are 4 to 6 players. Smaller matches keep today's sizes. | Decided |
 | H14 asking by pointing from the map view | Yes, allowed; subject to change. | Decided |
 | The rewrite | "Old epics should be updated to be consistent with the new decisions." | Go |
+
+# Second set of answers, 2026-10-02
+
+Verbatim:
+
+"1: keep 2: affects play, but we need to be careful for it not to be annoying for the player, let's make sure there are natural paths through it for armies/units. 3: scales with height and let's measure it with the lab. 4: Yes 5: two things two names 6: looks good, no changes needed 7: not necessarily replaces the layout library. The terrain engine will need to account for the layouts, the layout design we have is good, especially the moving objectives. The new ideas add on to the old, not necessarily remove. Both can be built at the same time, it's just a slightly more complex system that needs the rules defined before it can be built. 8: your side can't see it's own shipment on the way, no vision at all, no indiciation it was killed 9: we can keep 4, so long as more is marked as a desired future feature. 10: $15 gets you 3-5 eras to start of, each new era is $3-5."
+
+## Recorded as
+
+| # | Question | Decision | Flag |
+|---|---|---|---|
+| 1 | Supply distance | Kept. It is the number of regions between the mission's region and the nearest region the civilization owns. With the archetype it decides the kind of base: in an owned region a base that generates on site, next to one a base with both, deep in foreign ground a base that lives on shipments. | Q-159-14 closed. The thresholds in regions are not given and stay a flag where the rule sits. |
+| 2 | Self-built city | It affects play: dense districts slow units and give cover. It must not be annoying: there are natural paths through a settlement for armies and units. | Q-166-03 closed |
+| 3 | Fitted bands | The cost of a layer step scales with its height, and the skill lab measures it. | Q-166-04 stays open as a lab measurement: how each number scales |
+| 4 | Counter what has been seen | Yes. It is the one exception to the rules having no foresight. | none |
+| 5 | Forward base | Two things, two names. The attacker's starting base, supplied by supply lines, is the **forward base** (Westley's word, DECISIONS H10). Production an economy builds near the front or at an expansion is **forward works** (the name the option had when he picked it). The partial-failure cap concerns the forward base when it is a side's original main base, never forward works. | names are the architect's choice from words already used; Westley may rename |
+| 6 | Archetype-to-base table | Confirmed as written. | Q-210-01 closed |
+| 7 | Layout library | Not replaced. The terrain engine accounts for the layouts; the layout design is good, the moving objectives especially. The new ideas add to the old. Both can be built together. The rules for how terrain and layouts combine must be defined before building. | Q-119-02 closed with this answer; how they combine is Q-191-04 |
+| 8 | Blind shipments | A side cannot see its own shipment on the way. No vision at all, and no indication that it was killed. | Q-238-02 closed |
+| 9 | Peers | 4 stays. More than 4 is a desired future feature. | Q-241-03 closed |
+| 10 | Price | $15 buys 3 to 5 eras to start. Each new era is $3 to $5. The first build still starts with two eras, one in space and one on land (H2). | Q-149-03 closed |
