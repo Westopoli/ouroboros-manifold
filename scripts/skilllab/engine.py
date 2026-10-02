@@ -91,6 +91,7 @@ class Engine:
             "om_unit_profile_sensor_radius": ([V, i], d),
             "om_unit_profile_layer_transition_time": ([V, i], d),
             "om_unit_profile_aoe_radius": ([V, i], d),
+            "om_unit_profile_reach": ([V, i, c.POINTER(u32), c.POINTER(u32)], i),
             "om_tactical_disable_abilities": ([V], None),
             "om_unit_spawn": ([V, i, c.c_int32, d, d, u32], u32),
             "om_command_attack_move": ([V, c.POINTER(u32), u32, d, d], i),
@@ -149,6 +150,12 @@ class Engine:
                 "sensor_radius": L.om_unit_profile_sensor_radius(w, t),
                 "layer_transition_time": L.om_unit_profile_layer_transition_time(w, t),
                 "aoe_radius": L.om_unit_profile_aoe_radius(w, t)}
+
+    def profile_reach(self, w, type_id):
+        up, down = ctypes.c_uint32(0), ctypes.c_uint32(0)    # the library body may write nothing
+        if self._lib.om_unit_profile_reach(w, int(type_id), ctypes.byref(up), ctypes.byref(down)) != 0:
+            raise ValueError("om_unit_profile_reach(%r) refused" % (type_id,))
+        return (int(up.value), int(down.value))
 
     def disable_abilities(self, w):
         self._lib.om_tactical_disable_abilities(w)

@@ -70,6 +70,7 @@ class Setup:
     settings: dict = field(default_factory=dict)   # OM_TP_* name -> number, set on the world before tick 1
     timeline: tuple = ()      # Steps issuing later orders; listed order matters
     terrain: Optional[Terrain] = None   # canvas, blocked rectangles and cover, applied before any unit exists
+    weighted: bool = False    # True records FightResult.weighted
 
 
 @dataclass
@@ -85,6 +86,8 @@ class FightResult:
     firing_unit_seconds: tuple
     trace: Optional[list] = None   # [(tick, unit, x, y, target, facing, alive), ...] when Setup.trace, else None
     steps_fired: tuple = ()   # ((step_index, tick), ...) in firing order
+    weighted: Optional[list] = None   # [(tick, w0, w1), ...] when Setup.weighted, else None
+    weighted_unit_seconds: Optional[tuple] = None   # as firing_unit_seconds, over the weighted series
 
 
 @dataclass

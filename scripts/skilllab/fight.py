@@ -2,7 +2,7 @@
 import random
 
 from scripts.skilllab.contract import SHIFT_MAX, TICKS_PER_SECOND, FightResult
-from scripts.skilllab.firing import count_able
+from scripts.skilllab.firing import count_able, count_able_weighted, unit_weight
 from scripts.skilllab.formations import place
 from scripts.skilllab.timeline import Timeline, first_anchors, validate
 
@@ -100,19 +100,33 @@ def fight(setup, seed=0, swap=False, engine=None):
                          for s in (0, 1))
         start_hp = {u: engine.unit_hp(w, u) for ids in side_ids for u in ids}
         timeline = Timeline(engine, w, setup, ids_by_group, goals)
-        return _run(engine, w, setup, side_ids, start_hp, ranges, heads, timeline)
+        wt = _weights(engine, w, setup, types, ids_by_group) if setup.weighted else None
+        return _run(engine, w, setup, side_ids, start_hp, ranges, heads, timeline, wt)
     finally:
         engine.free_world(w)
+
+
+def _weights(engine, w, setup, types, ids_by_group):
+    """(weights, reach) per unit id, read from the stats and reach of its type."""
+    weights, reach, by_type = {}, {}, {}
+    for gi, g in enumerate(setup.groups):
+        tid = types[g.unit][0]
+        if tid not in by_type:
+            by_type[tid] = (unit_weight(engine.type_stats(w, tid)), engine.profile_reach(w, tid))
+        for u in ids_by_group[gi]:
+            weights[u], reach[u] = by_type[tid]
+    return weights, reach
 
 
 def _strength(hp, ids, start_hp, head):
     return sum(hp[u] / start_hp[u] for u in ids if hp[u] > 0) / head
 
 
-def _run(engine, w, setup, side_ids, start_hp, ranges, heads, timeline):
+def _run(engine, w, setup, side_ids, start_hp, ranges, heads, timeline, wt=None):
     hp = dict(start_hp)
     living = [u for ids in side_ids for u in ids]
     firing, tick, quiet, outcome = [], 0, 0, None
+    weighted = [] if wt else None
     trace, last = ([] if setup.trace else None), {}
     all_ids = sorted(living)
 
@@ -128,6 +142,8 @@ def _run(engine, w, setup, side_ids, start_hp, ranges, heads, timeline):
     def sample():
         a0, a1 = count_able(engine, w, side_ids[0], side_ids[1], ranges)
         firing.append((tick, a0, a1))
+        if weighted is not None:
+            weighted.append((tick,) + count_able_weighted(engine, w, side_ids[0], side_ids[1], ranges, wt[0], wt[1]))
 
     sample()
     if trace is not None:
@@ -162,8 +178,10 @@ def _run(engine, w, setup, side_ids, start_hp, ranges, heads, timeline):
 
     strength = tuple(_strength(hp, side_ids[s], start_hp, heads[s]) for s in (0, 1))
     seconds = tuple(sum(row[1 + s] for row in firing) * setup.sample_every / TICKS_PER_SECOND for s in (0, 1))
+    wsec = None if weighted is None else tuple(
+        sum(row[1 + s] for row in weighted) * setup.sample_every / TICKS_PER_SECOND for s in (0, 1))
     contact = next((t for t, a0, a1 in firing if a0 + a1 > 0), -1)
     return FightResult(outcome=outcome, margin=strength[0] - strength[1], strength_left=strength,
                        survivors=tuple(alive), heads=heads, ticks=tick, first_contact_tick=contact,
                        firing=firing, firing_unit_seconds=seconds, trace=trace,
-                       steps_fired=tuple(timeline.fired))
+                       steps_fired=tuple(timeline.fired), weighted=weighted, weighted_unit_seconds=wsec)
