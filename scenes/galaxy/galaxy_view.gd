@@ -17,6 +17,7 @@ const SimSession := preload("res://autoload/sim_session.gd")
 const GalaxyAdapter := preload("res://scenes/galaxy/galaxy_adapter.gd")
 const ConstellationRenderer := preload("res://scenes/galaxy/legacy_constellation_renderer.gd")
 const ShellRenderer := preload("res://scenes/galaxy/legacy_shell_renderer.gd")
+const ChronicleNames := preload("res://scenes/world/chronicle_names.gd")
 const ZoomController := preload("res://scenes/galaxy/legacy_zoom_disclosure_controller.gd")
 
 const PLANTS := ["seed-ignored", "owner-colour-flat", "edges-2d-overlay",
@@ -35,6 +36,9 @@ const POINT_RADIUS := 1.2
 const OWNER_SAT := 0.65
 const OWNER_VAL := 0.85
 const OWNER_ALPHA := 1.0
+const LABEL_LIFT := 2.0
+const LABEL_PIXEL_SIZE := 0.08
+const LABEL_LIBRARY := "res://library/chronicle/fragments.json"
 const GOLDEN_ANGLE := 0.6180339887498949
 
 var _regions: Array = []
@@ -46,6 +50,8 @@ var _seed: int = DEFAULT_SEED
 var _hash: int = 0
 var _plants: Dictionary = {}
 var _frozen_band: String = ""
+var _names: RefCounted
+var _labels: Node3D
 
 var _gen := GalaxyGen.new()
 var _point_material: StandardMaterial3D
@@ -65,6 +71,7 @@ var _error_panel: Control
 func _ready() -> void:
 	_build_materials()
 	_build_renderers()
+	_build_labels()
 	_camera_rig.set_view(DEFAULT_DISTANCE, Vector3.ZERO)
 	_load_live_snapshot()
 	var mission_btn := get_node_or_null("UI/Mission")
@@ -97,6 +104,46 @@ func _build_renderers() -> void:
 		node.name = pair[1]
 		add_child(node)
 		node.setup(_adapter, _zoom)
+
+
+# R-106-03: faction names float at shell centroids in Overview. The wire carries
+# no names, so they come from chronicle_names.gd's placeholder table (indexed
+# modulo its size, not ruled).
+func _build_labels() -> void:
+	_names = ChronicleNames.new()
+	var lib = JSON.parse_string(FileAccess.get_file_as_string(LABEL_LIBRARY))
+	if lib is Dictionary:
+		_names.load_tables(lib.get("name_tables", {}))
+	_labels = Node3D.new()
+	_labels.name = "FactionLabels"
+	add_child(_labels)
+
+
+func _render_labels() -> void:
+	for child in _labels.get_children():
+		child.free()
+	var sums := {}
+	var counts := {}
+	for r in _regions:
+		var owner := int(r.get("owner", -1))
+		var i := int(r.get("i", -1))
+		if owner < 0 or not _positions.has(i):
+			continue
+		sums[owner] = sums.get(owner, Vector3.ZERO) + _positions[i]
+		counts[owner] = int(counts.get(owner, 0)) + 1
+	for owner in sums:
+		var label := Label3D.new()
+		label.text = _names.fill_template("{faction_name}", -1, owner)
+		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		label.no_depth_test = true
+		label.pixel_size = LABEL_PIXEL_SIZE
+		label.position = sums[owner] / float(counts[owner]) + Vector3(0.0, LABEL_LIFT, 0.0)
+		_labels.add_child(label)
+	_labels.visible = _band_for(_camera_rig.get_distance()) == "Overview"
+
+
+func get_positions() -> Dictionary:
+	return _positions
 
 
 # Self-loading pattern (docs/northstar/plans/push/specs/C8-M3.md
@@ -139,6 +186,7 @@ func _on_bridge_changed(_tick) -> void:
 
 func _process(_delta: float) -> void:
 	_zoom.update_from_distance(_camera_rig.get_distance())
+	_labels.visible = _band_for(_camera_rig.get_distance()) == "Overview"
 	if _bridge == null:
 		return
 	_bridge.pump()
@@ -288,6 +336,7 @@ func _render() -> void:
 		_recompute_region_colours()
 	_render_filaments()
 	_render_points()
+	_render_labels()
 
 
 func _grow_owner_colours() -> void:

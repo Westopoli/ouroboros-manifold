@@ -13,7 +13,7 @@ const LOCAL_DISTANCE := 25.0
 const ZOOM_STEP := 0.9
 const ORBIT_RAD_PER_PX := 0.005
 const CLICK_SLOP_PX := 4.0
-const PICK_RADIUS_PX := 14.0
+const GalaxyView := preload("res://scenes/galaxy/galaxy_view.gd")
 const FOCUS_SEC := 0.6
 
 var _target: Vector3 = Vector3.ZERO
@@ -115,7 +115,7 @@ func _pan(rel: Vector2) -> void:
 
 func _system_at(at: Vector2) -> int:
 	var best := -1
-	var best_d := PICK_RADIUS_PX
+	var best_d := GalaxyView.PICK_RADIUS_PX
 	var positions: Dictionary = _positions()
 	for i in positions:
 		if _camera.is_position_behind(positions[i]):
@@ -129,8 +129,7 @@ func _system_at(at: Vector2) -> int:
 
 func _positions() -> Dictionary:
 	var owner_view := get_parent()
-	var positions = owner_view.get("_positions") if owner_view != null else null
-	return positions if positions is Dictionary else {}
+	return owner_view.get_positions() if owner_view != null and owner_view.has_method("get_positions") else {}
 
 
 func _stop_focus() -> void:
