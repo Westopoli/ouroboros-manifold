@@ -103,7 +103,7 @@ def report(batch, out_dir) -> str: ...      # path of the HTML page
 
 ### 3.3 Tests that must exist and pass (`tests/skilllab/`)
 
-1. Mirror control: identical sides, flat ground, 16 against 16. Over both spawn orders and 10 replicates, the mean margin is within 0.05 of zero. Positive control for the detector: with the swap disabled the same test shows the first-spawned side ahead.
+1. Mirror control: identical sides, flat ground, 16 against 16. Over both spawn orders and 10 replicates, the mean margin is within 0.10 of zero (Westley, 2026-10-02; one fight swings about 0.17 on position shifts). Positive control for the detector: with the swap disabled the same test shows the first-spawned side ahead.
 2. Numbers control: 16 against 8 of the same type: the 16 win every fight.
 3. Planted advantage: 16 units with 20 percent more reach (a custom type) beat a larger enemy than 16 identical units do, by at least one unit.
 4. Firing count, hand-built: three units of side 0 in a row and one enemy placed so exactly two are within reach: the sample reads 2 and 1. A second case with an obstacle between one pair reads one fewer.
