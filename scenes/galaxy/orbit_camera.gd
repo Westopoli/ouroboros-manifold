@@ -11,7 +11,7 @@ extends Node3D
 const DIST_MIN := 10.0
 const DIST_MAX := 220.0
 const PITCH_DEG := 55.0
-const LOCAL_DISTANCE := 20.0
+const LOCAL_DISTANCE := 25.0
 const ZOOM_STEP := 0.9
 const ORBIT_RAD_PER_PX := 0.005
 const CLICK_SLOP_PX := 4.0
