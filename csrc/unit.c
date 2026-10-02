@@ -2157,14 +2157,22 @@ void om_tactical_disable_abilities(om_world *w) {
 /* A reset battle reuses unit ids from 1, so tactical_move.c's per-id mirror
  * (positions, orders, engagement) has to go too; om_ms re-creates its slot
  * lazily on the next command or read. */
+/* A133 Q-C4: the tunable settings live in move_state, which is freed here; they
+ * are configuration, so they survive the reset (a new world starts at the defaults). */
 void om_tactical_reset(om_world *w) {
     om_tac_state *st = om_tac(w);
+    double kept[OM_TP__COUNT];
+    int k;
+    for (k = 0; k < OM_TP__COUNT; k++) kept[k] = om_tactical_get_param(w, (om_tac_param)k);
     om_tac_release_arrays(st);
     memset(st, 0, sizeof(*st));
     st->next_unit_id = 1;
     if (w->move_state && w->move_state_free) {
         w->move_state_free(w->move_state);
         w->move_state = NULL;
+    }
+    for (k = 0; k < OM_TP__COUNT; k++) {
+        if (om_tactical_get_param(w, (om_tac_param)k) != kept[k]) om_tactical_set_param(w, (om_tac_param)k, kept[k]);
     }
 }
 
@@ -2695,6 +2703,17 @@ uint32_t om_tick_read_ability_events(om_world *w, om_ability_event *out, uint32_
 int32_t om_unit_brace_phase(const om_world *w, uint32_t unit_id) {
     const om_unit_row *row = om_registry_find_in(om_tac_ro(w), unit_id);
     return (row && row->unit_type == OM_UT_VANGUARD) ? row->ability_phase : -1;
+}
+
+/* For tactical_move.c's om_unit_get_leash_anchor: 1 and the anchor while an
+ * attack-moving unit holds one, else 0. Needs a prototype in om_internal.h
+ * before tactical_move.c can call it. */
+int om_tac_unit_leash_anchor(const om_world *w, uint32_t unit_id, double *x, double *y) {
+    const om_unit_row *row = om_registry_find_in(om_tac_ro(w), unit_id);
+    if (!row || !row->anchor_set) return 0;
+    if (x) *x = row->anchor_x;
+    if (y) *y = row->anchor_y;
+    return 1;
 }
 
 uint32_t om_unit_count(const om_world *w) {
