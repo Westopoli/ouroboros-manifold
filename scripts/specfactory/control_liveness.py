@@ -179,7 +179,8 @@ RunPair = Callable[[Path], tuple[Outcome, Outcome]]
 
 
 def liveness(control_file: Path, *, run_pair: Optional[RunPair] = None,
-             scratch_root: Optional[Path] = None, python_exe: Optional[str] = None) -> Verdict:
+             scratch_root: Optional[Path] = None, python_exe: Optional[str] = None,
+             project: Optional[Path] = None) -> Verdict:
     """Run one control both ways and judge it. `run_pair`, when given,
     replaces the real (scratch tree + subprocess pytest) mechanics with
     anything returning (as_written, neutralized) Outcomes -- used by the
@@ -188,7 +189,7 @@ def liveness(control_file: Path, *, run_pair: Optional[RunPair] = None,
     bug_id = bug_id_of(control_file)
     if run_pair is None:
         as_written, neutralized = _real_run_pair(
-            control_file, scratch_root=scratch_root, python_exe=python_exe,
+            control_file, scratch_root=scratch_root, python_exe=python_exe, project=project,
         )
     else:
         as_written, neutralized = run_pair(control_file)
@@ -207,27 +208,28 @@ def liveness(control_file: Path, *, run_pair: Optional[RunPair] = None,
 # scratch pytest process can never race the real repo's own conftest-driven
 # `make` (which agora's own build may be touching concurrently).
 
-def ensure_scratch_tree(scratch_root: Path) -> Path:
+def ensure_scratch_tree(scratch_root: Path, project: Optional[Path] = None) -> Path:
+    project = Path(project) if project else REPO_ROOT
     tree = Path(scratch_root) / "tree"
     controls_dir = tree / "tests" / "csim" / "controls"
     controls_dir.mkdir(parents=True, exist_ok=True)
 
     for name in ("libouroboros.so", "libouroboros_dbg.so"):
         link = tree / name
-        target = REPO_ROOT / name
+        target = project / name
         if link.is_symlink() or link.exists():
             link.unlink()
         if target.exists():
             link.symlink_to(target)
 
-    conftest_src = (REPO_ROOT / "tests" / "csim" / "conftest.py").read_text()
+    conftest_src = (project / "tests" / "csim" / "conftest.py").read_text()
     conftest_dst = tree / "tests" / "csim" / "conftest.py"
     conftest_dst.write_text(conftest_src + NEUTRALIZE_SNIPPET)
 
     # conftest.py's world_factory reads the feature-set tables relative to
     # REPO_ROOT (D1, conftest-only): mirror docs/northstar/spec_factory/*.toml
     # into the scratch tree so the fixtures resolve there too.
-    spec_src = REPO_ROOT / "docs" / "northstar" / "spec_factory"
+    spec_src = project / "docs" / "northstar" / "spec_factory"
     spec_dst = tree / "docs" / "northstar" / "spec_factory"
     spec_dst.mkdir(parents=True, exist_ok=True)
     for toml in spec_src.glob("*.toml"):
@@ -293,9 +295,10 @@ def run_batch(tree: Path, control_paths: list[Path], *, neutralize: bool,
 
 
 def _real_run_pair(control_file: Path, *, scratch_root: Optional[Path] = None,
-                    python_exe: Optional[str] = None) -> tuple[Outcome, Outcome]:
+                    python_exe: Optional[str] = None,
+                    project: Optional[Path] = None) -> tuple[Outcome, Outcome]:
     scratch_root = Path(scratch_root) if scratch_root else Path("/tmp/om_control_liveness")
-    tree = ensure_scratch_tree(scratch_root)
+    tree = ensure_scratch_tree(scratch_root, project)
     as_written = run_batch(tree, [control_file], neutralize=False, python_exe=python_exe)
     neutralized = run_batch(tree, [control_file], neutralize=True, python_exe=python_exe)
     return as_written[control_file.name], neutralized[control_file.name]
@@ -311,7 +314,7 @@ class SweepReport:
 
 
 def sweep(control_paths: Optional[list[Path]] = None, *, scratch_root: Optional[Path] = None,
-          python_exe: Optional[str] = None) -> SweepReport:
+          python_exe: Optional[str] = None, project: Optional[Path] = None) -> SweepReport:
     """One pair of batched pytest invocations over every control in
     `control_paths` (default: all of tests/csim/controls), instead of one
     pair per file -- both libraries are already built, so the whole cost is
@@ -321,7 +324,7 @@ def sweep(control_paths: Optional[list[Path]] = None, *, scratch_root: Optional[
     scratch_root = Path(scratch_root) if scratch_root else Path("/tmp/om_control_liveness")
 
     start = time.perf_counter()
-    tree = ensure_scratch_tree(scratch_root)
+    tree = ensure_scratch_tree(scratch_root, project)
     as_written_map = run_batch(tree, control_paths, neutralize=False, python_exe=python_exe)
     neutralized_map = run_batch(tree, control_paths, neutralize=True, python_exe=python_exe)
     elapsed = time.perf_counter() - start
@@ -350,6 +353,7 @@ def main(argv: list[str]) -> int:
     ap.add_argument("controls", nargs="*", help="specific control files (default: every "
                     "tests/csim/controls/test_control_*.py)")
     ap.add_argument("--scratch-root", default=None)
+    ap.add_argument("--project", default=None, help="tree whose conftest, libs and spec tables the scratch tree mirrors (default: this repo)")
     ap.add_argument("--python", default=None, help=f"interpreter for the scratch pytest runs "
                      f"(default: {DEFAULT_PYTHON})")
     ap.add_argument("--json", action="store_true")
@@ -358,7 +362,8 @@ def main(argv: list[str]) -> int:
     control_paths = [Path(c).resolve() for c in args.controls] if args.controls else None
     scratch_root = Path(args.scratch_root) if args.scratch_root else None
 
-    report = sweep(control_paths, scratch_root=scratch_root, python_exe=args.python)
+    report = sweep(control_paths, scratch_root=scratch_root, python_exe=args.python,
+                  project=Path(args.project) if args.project else None)
 
     live = sum(1 for v in report.verdicts if v.verdict == "LIVE")
     dead = sum(1 for v in report.verdicts if v.verdict == "DEAD")
