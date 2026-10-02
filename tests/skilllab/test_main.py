@@ -100,6 +100,7 @@ def test_controls_returns_zero_and_runs_two_scans_with_the_spec_parameters(world
         assert (call["size"], call["enemy_from"], call["enemy_to"], call["replicates"]) == (16, 8, 24, 10)
     builds = [c["build"] for c in world.scan_calls]
     assert world.blob_build in builds and world.damage_build in builds
+    assert builds == [world.blob_build, world.damage_build]          # identical first, then damage
 
 def test_controls_calls_the_plays_with_size_16_and_the_default_damage_factor(world, tmp_path):
     """AC-20/AC-12/AC-23: blob_play(16) and damage_play(16) exactly; no factor override (default 1.2 stays)."""
@@ -140,6 +141,8 @@ def test_controls_writes_controls_csv_once_with_the_built_rows(world, tmp_path):
     assert Path(path).resolve() == (tmp_path / "controls.csv").resolve()
     assert len(rows) == 68
     assert sorted(id(r) for r in rows) == sorted(id(r) for r in world.dicts)
+    assert [id(r) for r in rows] == [id(r) for r in world.dicts]     # file order is fight_row order
+    assert [lab["play"] for _, lab in world.row_calls] == ["identical"] * 34 + ["damage"] * 34
 
 
 def test_controls_reports_once_with_a_batch_of_both_scans(world, tmp_path):
@@ -150,9 +153,11 @@ def test_controls_reports_once_with_a_batch_of_both_scans(world, tmp_path):
     assert Path(out_dir).resolve() == tmp_path.resolve()
     assert isinstance(batch, Batch)
     assert set(batch.scans) == {"identical", "damage"}
+    assert list(batch.scans) == ["identical", "damage"]               # page section order
     assert batch.scans["identical"] is world.results["identical"]
     assert batch.scans["damage"] is world.results["damage"]
     assert sorted(id(r) for r in batch.rows) == sorted(id(r) for r in world.dicts)
+    assert [id(r) for r in batch.rows] == [id(r) for r in world.dicts]
 
 
 def test_controls_firing_example_is_first_fight_of_the_cell_at_16_enemies(world, tmp_path):
