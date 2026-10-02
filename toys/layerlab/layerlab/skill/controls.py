@@ -57,8 +57,8 @@ def advantage_build(size):
 
 
 def mirror_control(size, processes=None, win_margin=0.02):
-    return rstar(mirror_build(size), processes=processes, win_margin=win_margin)
+    return rstar(mirror_build(size), processes=processes, win_margin=win_margin, size=size)
 
 
 def advantage_control(size, processes=None, win_margin=0.02):
-    return rstar(advantage_build(size), processes=processes, win_margin=win_margin)
+    return rstar(advantage_build(size), processes=processes, win_margin=win_margin, size=size)
