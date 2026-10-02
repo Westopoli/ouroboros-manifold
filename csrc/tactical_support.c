@@ -163,8 +163,7 @@
 #define OM_SUP_RENDER_COLOR_ENEMY 0xC02020u
 #define OM_SUP_RENDER_COLOR_NEUTRAL 0x808080u
 
-/* R-130-02 bound for om_objective_is_contested's best-effort unit scan
- * (see its own comment for the missing-accessor gap this works around). */
+/* R-130-02 bound for om_objective_is_contested's unit scan. */
 #define OM_SUP_CONTEST_SCAN_CAP 512
 
 /* Floating-point slack for a sum-to-1.0/progress-reaches-1.0 comparison
@@ -867,21 +866,19 @@ void om_support_tick(om_world *w) {
     }
 }
 
-/* Best-effort: no public unit.c accessor exposes a unit's faction id
- * (only om_unit_alive/om_unit_position_x/y are used here), so this
- * cannot yet tell an enemy from a friendly inside the zone -- closure
- * leftover, needs e.g. om_unit_get_faction_id from unit.c. Until then,
- * any living unit within the drifted zone counts, which never
- * over-reports "not contested". */
+/* R-130-02: "no enemy inside". Only non-player units inside the drifted
+ * zone contest it; a friendly unit does not. */
 int om_objective_is_contested(om_world *w, uint32_t objective) {
     om_sup_objective *o = om_sup_objective_at(w, objective);
     om_vec2 center;
+    int32_t player = om_player_faction(w);
     uint32_t id;
     om_sup_objective_refresh_center(w, o, objective);
     om_objective_get_center(w, objective, &center);
     for (id = 1; id <= OM_SUP_CONTEST_SCAN_CAP; id++) {
         double dx, dy;
         if (!om_unit_alive(w, id)) continue;
+        if (om_unit_get_faction(w, id) == player) continue;
         dx = om_unit_position_x(w, id) - center.x;
         dy = om_unit_position_y(w, id) - center.y;
         if (dx * dx + dy * dy <= (double)OM_REINFORCEMENT_CAPTURE_RADIUS * (double)OM_REINFORCEMENT_CAPTURE_RADIUS) return 1;
