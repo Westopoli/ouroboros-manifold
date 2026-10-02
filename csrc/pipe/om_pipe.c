@@ -62,6 +62,7 @@
 #include <string.h>
 
 #include "ouroboros_sim.h"
+#include "om_constants.h"
 
 /* Mirrors OM_SAVE_FORMAT_VERSION in om_internal.h (not visible to the pipe). */
 #define OM_PIPE_SAVE_FORMAT_VERSION 4
@@ -1014,7 +1015,42 @@ static void write_chronicle(uint64_t from_tick, uint64_t to_tick) {
             jb_putc(&j, '}');
         }
     }
-    jb_raw(&j, "]}");
+    jb_putc(&j, ']');
+    /* G-C3 (A48 item 13, A59): replay timeline and keyframes, omitted when no jump built a timeline (e.g. after load). */
+    om_chronicle_generate_map_keyframes(W);
+    uint32_t n_snap = om_time_jump_ownership_snapshot_count(W);
+    uint32_t n_reg = om_region_count(W);
+    int32_t *owners = n_snap ? malloc((size_t)(n_reg ? n_reg : 1) * sizeof *owners) : NULL;
+    if (owners) {
+        jb_raw(&j, ",\"ownership\":{\"stride\":");
+        jb_uint(&j, OM_OWNERSHIP_TIMELINE_STRIDE);
+        jb_raw(&j, ",\"from_tick\":");
+        jb_uint(&j, from_tick);
+        jb_raw(&j, ",\"n_regions\":");
+        jb_uint(&j, n_reg);
+        jb_raw(&j, ",\"snapshots\":[");
+        for (uint32_t k = 0; k < n_snap; k++) {
+            if (k) jb_putc(&j, ',');
+            jb_putc(&j, '[');
+            uint32_t got = om_time_jump_get_ownership_snapshot(W, k, owners, n_reg);
+            for (uint32_t r = 0; r < got; r++) {
+                if (r) jb_putc(&j, ',');
+                jb_int(&j, owners[r]);
+            }
+            jb_putc(&j, ']');
+        }
+        jb_raw(&j, "]},\"keyframes\":[");
+        uint32_t n_kf = om_chronicle_keyframe_count(W);
+        for (uint32_t i = 0; i < n_kf; i++) {
+            uint64_t t = 0;
+            if (!om_chronicle_get_keyframe(W, i, &t)) continue;
+            if (i) jb_putc(&j, ',');
+            jb_uint(&j, t);
+        }
+        jb_putc(&j, ']');
+        free(owners);
+    }
+    jb_putc(&j, '}');
     write_frame(j.buf, (uint32_t)j.len);
     jb_free(&j);
 }
