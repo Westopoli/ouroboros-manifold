@@ -534,3 +534,11 @@ Rule text changed in the same commit: E-16 R-110-02 and R-110-07, E-09 R-069-03 
 - Item 10 (snapshot fixture: compare bytes or structure) is Westley's policy call and waits; the test stays red and listed.
 
 **A95. Held by Westley, 2026-10-02.** The Knowledge Lost rate (A90) waits until the layer and environment systems are designed; he intends a fresh balance simulation then, against the early-repo simulation that hit the target numbers. Nothing is tuned meanwhile and R-045-09 stays red and listed. The memory-per-region budget is to be raised (he agreed); the new figure is recorded when he gives it.
+
+## Addendum 33, 2026-10-02 (A81 landing seeds; the E-13 scale tests)
+
+**A96. Telegraph test seeds.** TD-A89-3 is approved as landed (two seeds valid on both builds, each asserting target, archetype and region). The both-builds rule exists only to cross the landing; once A81 is on main, an Engineer restores the coverage to six seeds chosen on main, same assertions, same ledger row. Seed 24 is not closed by re-picking: an Engineer checks, against the rule text for a telegraphed attack on a player region, whether archetype 8 at another region may outscore Defensive Stand while exactly one telegraphed region exists. If the rule requires Defensive Stand there, it is a real defect in the generator's scoring and is reported as one; if the rule permits it, the row says so with the rule id.
+
+**A97. E-13 scale tests.**
+- (a) They follow the scale suite's convention (`assert_budget`, the budget divided by `OM_SCALE_CPU_FACTOR`), like every other scale budget, so one machine's speed does not decide a pass. This is stricter than the bare figures, never looser; the figures themselves are unchanged and remain Westley's.
+- (b) No debug timing seam and no contract piece for one. A budget measured on a debug library is not a measurement of the game. The whole-step time stands as the test, labelled an upper bound: if the whole step meets the figure the budgeted subset does too. If, after the A93 fix, the whole step still misses while the subset plausibly meets, the question returns with numbers.
