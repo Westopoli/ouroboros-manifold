@@ -7,14 +7,14 @@ extends SceneTree
 # screenshot, logs, state and metrics, saves it to user://logs/reports/ and the Downloads
 # folder, and shows a confirmation popup.
 #
-# NOTE: the gap-fix plan says "The Architect writes the story in E-16 first". No E-16 rule
-# for the bug report exists on origin/main (grep: none), so there is no R-id to name; the
-# tests cite the gap-fix plan E2 text. Reported as Q-C4-E2-01..03 in the C4 report.
+# NOTE: no E-16 rule for the bug report exists, so there is no R-id to name; the tests cite the
+# gap-fix plan E2 text and Architect ruling A46 (docs/northstar/plans/2026-10-01-architect-
+# rulings-2.md). A46: F12 only, handled in one place so it works on every screen; no pause menu
+# is added (the game has no pause), so no test expects a "Report a bug" menu entry; the ZIP name
+# gains milliseconds (Q-C4-E2-01 and Q-C4-E2-03 answered).
 #
-# Not asserted (open questions, never guessed): the "Report a bug" entry in the tactical
-# pause menu (tactical_c has no pause menu today, no rule defines one), and the ZIP's
-# mission_metrics.json (MissionMetricsRecorder still reads the legacy bridge; E2's brief does
-# not name it).
+# Not asserted: the ZIP's mission_metrics.json (A46: only if its recorder is live; the recorder
+# check is a separate read-only report).
 #
 # Rules proved, by test id:
 #   E2-1  bug_report_manager.gd and bug_report_popup.gd do not name the legacy bridge autoload.
@@ -24,6 +24,10 @@ extends SceneTree
 #         a tactical_snapshots/ entry with units.
 #   E2-4  a command sent through the live view lands in command_log.json.
 #   E2-5  F12 on each live screen produces a ZIP and the "BUG REPORT CAPTURED" popup.
+#   E2-6  two captures inside one second give two distinct ZIP names, and the name carries
+#         milliseconds (A46, Q-C4-E2-03).
+#   E2-7  F12 is handled in exactly one place (A46): one source file hooks the key to a capture,
+#         and one F12 press yields exactly one ZIP and one popup.
 # Positive controls: C1 (matcher), C2 (the live bridge really advanced past tick 0, so
 # E2-2 cannot pass or fail on a dead frame), C3 (the ZIP reader sees metadata.json that
 # any capture writes), C4 (F12 on a bare node already captures, so E2-5's finder works).
@@ -129,6 +133,43 @@ func _press_f12() -> void:
 	Input.parse_input_event(ev)
 
 
+# E2-6: the name must end in a millisecond group (3 digits) after the seconds (6 digits),
+# whatever separator the implementation picks.
+func _has_ms_name(f: String) -> bool:
+	var re := RegEx.new()
+	re.compile("^bug_report_\\d{8}_\\d{6}\\D?\\d{3}\\.zip$")
+	return re.search(f) != null
+
+
+# E2-7: source files under the live directories whose text hooks F12 to a capture. The popup's
+# F12 only dismisses it and the mockup scenes are not on the live path, so neither counts.
+func _f12_capture_hooks(sources: Dictionary) -> Array:
+	var out: Array = []
+	for path in sources.keys():
+		var t: String = sources[path]
+		if t.find("KEY_F12") != -1 and (t.find("capture(") != -1 or t.find("BugReportManager") != -1):
+			out.append(path)
+	return out
+
+
+func _live_sources() -> Dictionary:
+	var out := {}
+	var stack: Array = ["res://autoload", "res://scenes", "res://scripts"]
+	while not stack.is_empty():
+		var d: String = stack.pop_back()
+		var da := DirAccess.open(d)
+		if da == null:
+			continue
+		for sub in da.get_directories():
+			if sub == "mockups" or sub == "harness":
+				continue
+			stack.append(d.path_join(sub))
+		for f in da.get_files():
+			if f.ends_with(".gd"):
+				out[d.path_join(f)] = FileAccess.get_file_as_string(d.path_join(f))
+	return out
+
+
 func _popups() -> Array:
 	var out: Array = []
 	for c in get_root().get_children():
@@ -158,6 +199,16 @@ func _run_tests() -> void:
 		_assert(src != "", "E2-1: cannot read " + p)
 		_assert(not _names_it(src), "E2-1: %s still names the legacy bridge autoload (E2: read the live bridge and tactical frame)" % p)
 
+	# E2-7 static: exactly one source file hooks F12 to a capture.
+	_assert(_f12_capture_hooks({"a.gd": "if k == KEY_F12: capture()", "b.gd": "KEY_F12 BugReportManager.capture()"}).size() == 2, "control C7: hook finder misses a duplicate F12 hook")
+	_assert(_f12_capture_hooks({"a.gd": "if k == KEY_F12: dismiss()"}).is_empty(), "control C7: hook finder false-positive on a dismiss-only handler")
+	var hooks := _f12_capture_hooks(_live_sources())
+	_assert(hooks == ["res://" + MANAGER_PATH], "E2-7: F12 must be hooked to a capture in exactly one place (" + MANAGER_PATH + "), found: " + str(hooks))
+
+	# E2-6 control C6: the name matcher.
+	_assert(_has_ms_name("bug_report_20261001_120000_123.zip"), "control C6: matcher rejects a millisecond name")
+	_assert(not _has_ms_name("bug_report_20261001_120000.zip"), "control C6: matcher accepts a seconds-only name")
+
 	if DisplayServer.get_name() == "headless":
 		print("NOTE: headless run, capture tests skipped (frame_post_draw never fires without a display); only E2-1 ran. Run under xvfb-run -a for E2-2..E2-5.")
 		return
@@ -170,6 +221,47 @@ func _run_tests() -> void:
 	if f0 != "":
 		var files0 := _read_zip(REPORTS_DIR.path_join(f0))
 		_assert(files0.has("metadata.json"), "control C3: ZIP reader found no metadata.json in %s (entries: %s)" % [f0, str(files0.keys())])
+	_clear_popups()
+	await process_frame
+
+	# E2-6 control C5: two captures a clean second apart already give two names.
+	var mgr = get_root().get_node("BugReportManager")
+	before = _reports()
+	await create_timer(1.2).timeout
+	await mgr.capture()
+	await create_timer(1.2).timeout
+	await mgr.capture()
+	var spaced := _reports().filter(func(n): return not before.has(n))
+	_assert(spaced.size() == 2, "control C5: two captures 1.2 s apart gave %d new ZIP names, expected 2" % spaced.size())
+	_clear_popups()
+
+	# E2-6: two captures inside one second must not overwrite each other.
+	before = _reports()
+	await create_timer(1.2).timeout
+	var done := [0]
+	var run_capture := func() -> void:
+		await mgr.capture()
+		done[0] += 1
+	run_capture.call()
+	run_capture.call()
+	var tw := Time.get_ticks_msec()
+	while done[0] < 2 and Time.get_ticks_msec() - tw < 10000:
+		await process_frame
+	var burst := _reports().filter(func(n): return not before.has(n))
+	_assert(burst.size() == 2, "E2-6: two captures in one second gave %d distinct ZIP names, expected 2 (names: %s)" % [burst.size(), str(burst)])
+	for n in burst:
+		_assert(_has_ms_name(n), "E2-6: ZIP name '%s' does not carry milliseconds" % n)
+	_clear_popups()
+	await process_frame
+
+	# E2-7 dynamic: one F12 press gives exactly one ZIP and one popup (a second hook would give two).
+	before = _reports()
+	await _press_f12()
+	await _wait_report(before, 5.0)
+	await create_timer(1.0).timeout
+	var once := _reports().filter(func(n): return not before.has(n))
+	_assert(once.size() == 1, "E2-7: one F12 press produced %d ZIPs, expected exactly 1 (a second handler?)" % once.size())
+	_assert(_popups().size() == 1, "E2-7: one F12 press showed %d popups, expected exactly 1" % _popups().size())
 	_clear_popups()
 	await process_frame
 
