@@ -2,7 +2,7 @@ extends Node
 
 # Copied and trimmed from scenes/shared/world_view/world_view_data.gd (2026-09-22)
 # for the pass-2 galaxy mockup. Only the regions/connections/territories surface
-# that legacy_constellation_renderer.gd and legacy_shell_renderer.gd consume is
+# that legacy_constellation_renderer.gd and shell_renderer.gd consume is
 # kept; Stage-11g inspection metadata (regions_metadata, factions, centroid
 # cache) and the flash/highlight signals are dropped, unused by this mockup
 # (galaxy_view.gd keeps its own flash()).

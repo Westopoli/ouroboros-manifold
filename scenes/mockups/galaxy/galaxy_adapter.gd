@@ -3,8 +3,8 @@ extends RefCounted
 
 # Thin adapter: galaxy_gen.gd's Galaxy (systems/factions/edges) into the
 # regions/connections/territories shape legacy_world_view_data.gd carries,
-# so legacy_constellation_renderer.gd and legacy_shell_renderer.gd (copied
-# from scenes/shared/world_view/renderers/) change as little as possible.
+# so legacy_constellation_renderer.gd (copied from scenes/shared/world_view/renderers/)
+# changes as little as possible and shell_renderer.gd (a rewrite) reads the same shape.
 # See also: scenes/mockups/galaxy/galaxy_view.gd — owner_color()/TRADE_DIM,
 # the single source of truth for point/filament/shell colour this mirrors.
 
