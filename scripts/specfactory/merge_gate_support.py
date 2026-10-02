@@ -25,6 +25,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import suite_regression as sr  # noqa: E402
+from red_check import is_placeholder_control  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[2]
 DEFAULT_PIECES = REPO / "docs/northstar/plans/push/pieces.toml"
@@ -463,6 +464,22 @@ def control_liveness_check(project: Path, piece_ids: list[str], pieces_path: Pat
     return not bad, detail
 
 
+def placeholder_controls_check(project: Path, placeholders_path: Path) -> tuple[bool, str]:
+    """Count the candidate's placeholder controls against the list. Unlisted and stale entries reject."""
+    project = Path(project).resolve()
+    listed: set[str] = set()
+    if Path(placeholders_path).exists():
+        listed = {ln.strip() for ln in Path(placeholders_path).read_text().splitlines()
+                  if ln.strip() and not ln.strip().startswith("#")}
+    found = sorted(f.relative_to(project).as_posix()
+                   for f in (project / "tests/csim/controls").rglob("test_*.py") if is_placeholder_control(f))
+    unlisted = [p for p in found if p not in listed]
+    stale = sorted(p for p in listed if p not in set(found))
+    detail = f"placeholders: {len(found)} unlisted={len(unlisted)} stale={len(stale)}"
+    bad = [f"UNLISTED {p}" for p in unlisted] + [f"STALE {p}" for p in stale]
+    return not bad, detail + (": " + "; ".join(bad) if bad else "")
+
+
 def is_increment(piece_id: str, pieces: dict[str, dict]) -> str | None:
     """The resolved base piece id iff `piece_id` is an increment of it (the
     push plan's straggler rule, `push/<piece>-<n>`) -- resolve_piece_id maps
@@ -774,6 +791,10 @@ def main(argv: list[str]) -> int:
     cl.add_argument("--scratch-root", default=None)
     cl.add_argument("--python", default=None)
 
+    pc = sub.add_parser("placeholder-controls")
+    pc.add_argument("project")
+    pc.add_argument("--placeholders", default=str(DEFAULT_PLACEHOLDERS))
+
     av = sub.add_parser("acceptance-verdict")
     av.add_argument("piece_id")
     av.add_argument("--pieces", default=str(DEFAULT_PIECES))
@@ -803,6 +824,8 @@ def main(argv: list[str]) -> int:
                                             Path(args.placeholders),
                                             scratch_root=Path(args.scratch_root) if args.scratch_root else None,
                                             python_exe=args.python)
+    elif args.cmd == "placeholder-controls":
+        ok, detail = placeholder_controls_check(Path(args.project), Path(args.placeholders))
     elif args.cmd == "acceptance-ids":
         pytest_ids, godot_ids = acceptance_ids(args.piece_id, pieces_path=Path(args.pieces))
         for i in pytest_ids:
