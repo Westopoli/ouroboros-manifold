@@ -726,8 +726,11 @@ static const char *CHRON_REGION_NAMES[] = {
 static const char *CHRON_FACTION_NAMES[] = {
     "the Dominion", "the Concord", "the Ashen League", "the Iron Compact",
     "the Free Cities", "the Sable Court", "the Vanguard Accord", "the Twin Banners",
+    "the Amber Throne", "the River Pact", "the Stonewrights", "the Northwind Host",
+    "the Lantern Guild", "the Hollow Standard", "the Saltmarsh Union", "the Quiet Fleet",
+    "the Copper Assembly", "the Evenfall Realm",
 };
-#define CHRON_N_FACTION_NAMES 8
+#define CHRON_N_FACTION_NAMES 18
 
 static const char *CHRON_LINEAGE_SURNAMES[] = {
     "Voss", "Kestrel", "Thane", "Ashworth", "Marrow", "Corvane", "Halloway", "Sennett",
