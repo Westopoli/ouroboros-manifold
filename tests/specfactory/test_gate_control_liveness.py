@@ -34,6 +34,7 @@ control (asserts the injection took effect) differs between the as-written and n
 dead one (asserts something independent of the injection) does not. DEAD needs a C change nowhere.
 ERROR handling (a control that cannot run at all) is deliberately not pinned: see the A114 report.
 """
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -301,19 +302,23 @@ def test_real_repo_piece_with_only_live_controls_passes(tmp_path):
     assert "LIVE=1" in detail and "placeholders_skipped=" in detail
 
 
-def test_real_repo_rejects_b1_for_its_dead_chain_counter_control(tmp_path):
-    """Green because the gate rejects. B1 (E-04) carries test_control_e04_chain_counter_unsaved.py, whose
-    injected bug cannot trip today (live_controls_not_tripping_2026-10-02.md, row e04; no fix planned).
-    Positive control on the real repo. Moved here from B7/e08 when the e08 hook landed (ledger row
-    TD-A114-b7-real-repo).
-    See also: when e04 chain_counter_unsaved is fixed, this test must move again to another control that
-    is still dead on main (candidates: e03 starting_ratio_swapped, piece B4, until G-controls fixes it;
-    e11 brace_reduction, piece B10, until its hook lands), in the same change as the fix."""
+def test_real_repo_gate_step_runs_on_b1_and_names_its_control(tmp_path):
+    """B1 (E-04) carries test_control_e04_chain_counter_unsaved.py. The step must run on it and report a
+    well-formed detail line naming the control; the verdict (OK or REJECT) is NOT asserted, so fixing the
+    control never breaks this test. The 'gate rejects a dead control' positive control is the planted
+    fixture tests above (test_check_rejects_a_dead_control, test_gate_step_rejects_a_dead_control_of_the_
+    attaching_piece), which depend on no real control. Ledger row TD-A128-liveness-real-repo (replaces the
+    real-repo B1 reject test, which broke whenever e04 got its hook)."""
     assert DEAD_E04 in [p.name for p in mgs.piece_controls(["B1"], REAL_PIECES, REPO)]
     ok, detail = mgs.control_liveness_check(REPO, ["B1"], REAL_PIECES, REAL_PLACEHOLDERS,
                                             scratch_root=tmp_path / "scr", python_exe=PYTHON)
-    assert ok is False
-    assert DEAD_E04 in detail and "DEAD" in detail
+    assert isinstance(ok, bool)
+    assert re.match(r"LIVE=\d+ DEAD=\d+ ERROR=\d+ placeholders_skipped=\d+", detail), detail
+    live, dead, err = (int(x) for x in re.findall(r"(?:LIVE|DEAD|ERROR)=(\d+)", detail)[:3])
+    assert ok == (dead + err == 0), detail
+    assert live + dead + err >= 1
+    if not ok:  # a rejection must name the control it rejects
+        assert DEAD_E04 in detail or "test_control_e04_" in detail or "test_control_" in detail, detail
 
 
 @pytest.mark.parametrize("piece", ["B7", "B8"])
