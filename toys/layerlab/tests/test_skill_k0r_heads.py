@@ -208,8 +208,11 @@ def test_size_none_is_identical_to_not_passing_size(monkeypatch):
     assert explicit == plain
     assert explicit.value == pytest.approx(4.1, abs=1e-6)
     new = [p["ratio"] for p in explicit.points if p["ratio"] not in RATIOS]
-    assert len(new) == 4 and all(4.2 < r < 5.0 for r in new)
-    assert explicit.last_win == 4.2 and explicit.first_loss == 5.0
+    # test-defect fix 2026-10-01: at the default win_margin 0.02 the scan's last win is 3.5 and its first loss 4.2
+    # (line(4.2) = 0.0067 is under the margin), so the old bisection runs inside (3.5, 4.2); 4.2 and 5.0 are the
+    # win_margin = 0 numbers
+    assert len(new) == 4 and all(3.5 < r < 4.2 for r in new)
+    assert explicit.last_win == 3.5 and explicit.first_loss == 4.2
 
 
 def test_size_none_leaves_the_head_fields_empty(monkeypatch):
