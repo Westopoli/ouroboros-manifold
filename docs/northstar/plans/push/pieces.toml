@@ -971,7 +971,7 @@ depends_on = []
 status = "pending"
 size_estimate = "a few lines in the runner plus one comment line in each of two tests"
 
-# Rulings round 2, A94 (DRAFT rows for Architect review; the Architect lands pieces.toml).
+# Rulings round 2, A94 (rows drafted by the coordinator, reviewed and landed by the Architect).
 # Harness unit: the specfactory suite, its scripts, the constants allowlist and the generated
 # conftest. Existing harness pieces keep their files out of this glob: merge_gate.sh and
 # merge_gate_support.py (HARNESS-sigblocked, HARNESS-symown) are the only scripts/specfactory
