@@ -481,3 +481,16 @@ Rule text changed in the same commit: E-16 R-110-02 and R-110-07, E-09 R-069-03 
 **A79. A72 reaches the settle.** `_keyframe_queue` and `_waiting_for_entry` leave `_try_settle`, and `_waiting_for_entry` is deleted with the hold it served. The footer settles when the replay clock has reached the jump's last tick and the last entry has finished printing and held its minimum time (R-069-03). Keyframes are applied by the clock as their ticks pass, so none is pending at the end.
 
 **A80. Harness.** The sequence is approved: `HARNESS-sigblocked` lands its change to `merge_gate_support.py` and `merge_gate.sh`, then `HARNESS-symown` takes ownership of those files and lands on top; never in parallel. `A68-mention-bind` lands first. No policy change for header prototypes in the symbol lint: a signature change in the header is a contract change and is caught by the signature table gate (A68), which is the right detector for it. The two `pieces.py --check` failures (the `B7` / `B5-chronicle` overlap on `csrc/generational.c`, the `T1` acceptance id) are mine to fix in `pieces.toml`; the coordinator sends the verbatim output and they are fixed in one commit, not worked around.
+
+## Addendum 29, 2026-10-02 (the two audits: event region cap, names)
+
+**A81. Events cover every region.** `OM_EVT_MAX_REGIONS` at 64 against `OM_MAX_REGIONS` at 512 is a defect: on a galaxy of 250 to 400 regions most of the map can never have an event. Test first (Engineer): on a seeded 400-region world, over a run long enough for events to fire, at least one event lands on a region with id 64 or above, with a positive control (the current cap fails it). Then the fix under the owner of `csrc/events.c`: the events table is sized by `OM_MAX_REGIONS`, with no second cap. If the test shows events do reach regions 64 and above today, the reading was wrong; report that and change nothing.
+
+**A82. Names.**
+- The galaxy view takes names from `scenes/world/chronicle_names.gd` and the shared JSON, as the audit recommends. No third table: the galaxy mockup's invented names do not come across with the look.
+- The mission-briefing marker printing `table[(region + node) % 528]` is a defect: a region is shown under its own name everywhere. Small unit with a test (the marker's name equals the chronicle name of that region).
+- Faction names wrapping at 18 breaks A55 for any world with more than 18 factions. The faction pool is extended the same way as the region pool (A66 f): simple invented names from syllable combinations, enough for the faction cap, sim table and client JSON generated from one source so they cannot drift. Same naming piece.
+- The client fallback resolver stays only as the structural-line fallback of A73; its unowned wording is changed to the sim's ("an unclaimed people"). Its other differences are not worth a unit while the sim sends finished text.
+- The name dictionaries in the legacy info panel and the sequencer that the C pipe never fills are dead: the sequencer's goes in the A70 unit, the info panel's under that file's owner as a deletion unit.
+
+**A83. Memory per region** goes to Westley with the audit's breakdown (damage history is 1,536 of the 1,601 bytes; the edge matrix is a fixed 1 MB). No change until he decides; the E-02 memory test stays red and listed.
