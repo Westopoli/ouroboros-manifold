@@ -4,20 +4,18 @@ Watch-for (docs/bible/epics/E-04-events-and-chains.md, "Ways this could be
 wrong"): "Chain tag counter not saved, so loading a save reuses tags."
 (R-027-06.)
 
-NOTE (see NOTES.md for the full gap writeup): `ouroboros_sim.h` has no
-om_save/om_load ABI yet, so there is no way to actually round-trip a world
-through a save and reload from this fenced suite and observe a reused chain
-tag after reload -- the literal watch-for this bug describes. This control
-is the closest available proxy: it reuses the fixture shape of
-test_E04_S027_one_thing_leads_to_another.py's
+The csrc hook (events.c, both chain-start sites) rewinds `chain_counter` to
+tag - 1 right after a chain starts, which is what a counter that was never
+saved looks like to the next chain start: the tag is handed out again.
+`ouroboros_sim.h` has no om_save/om_load ABI yet, so the control uses the
+fixture shape of test_E04_S027_one_thing_leads_to_another.py's
 test_R_027_06_its_chain_tag_equals_root (two distinct threshold crossings in
-one region start two distinct chains) and checks `om_chain_counter`
-continuity across those two chain starts within a single session -- the
-counter must advance by exactly one per chain start and never repeat a tag.
-Once om_save/om_load exists, this control should be replaced with a real
-save-reload-reuse test; until then, injecting OM_BUG_CHAIN_COUNTER_UNSAVED
-may not be observable here at all, since the bug only manifests across a
-reload this suite cannot perform.
+one region start two distinct chains) in one session, with the bug injected,
+and asserts the detector trips: the second chain reuses the first chain's tag
+(tag2 == tag1) and `om_chain_counter` did not advance past it. A clean build
+gives the second chain a fresh tag (counter + 1), so the control fails when
+the injected bug is neutralized. Once om_save/om_load exists this can become
+a real save-reload-reuse test. Polarity fixed under TD-A128-e04-polarity.
 """
 from conftest import (
     OMBugE04,
@@ -67,10 +65,8 @@ def test_control_chain_counter_unsaved_trips_the_detector(dbg, dbg_world_factory
     assert len(second) == 1, "Trade Boom did not fire at tick 5 to start the second chain"
     tag2 = second[0].chain_tag
 
-    assert tag2 == counter_after_first + 1 and tag2 != tag1, (
-        "OM_BUG_CHAIN_COUNTER_UNSAVED injected but the second chain's tag "
-        "still advanced cleanly past the first chain's tag and the counter "
-        "read after the first chain -- within a single session this control "
-        "cannot reproduce the reuse-after-reload bug (no om_save/om_load in "
-        "ouroboros_sim.h yet); see NOTES.md"
+    assert tag2 == tag1 and counter_after_first < tag1, (
+        "OM_BUG_CHAIN_COUNTER_UNSAVED injected but the second chain got a "
+        "fresh tag (tag1=%d tag2=%d counter after first chain=%d) -- the "
+        "reused-tag detector did not trip" % (tag1, tag2, counter_after_first)
     )
