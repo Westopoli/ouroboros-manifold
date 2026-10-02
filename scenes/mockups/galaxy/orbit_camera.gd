@@ -262,7 +262,7 @@ func _pan_by(rel: Vector2) -> void:
 	var fwd := Vector3(basis.z.x, 0.0, basis.z.z).normalized()
 	var speed := PAN_SPEED * (_distance / DIST_DEFAULT)
 	_target -= right * rel.x * speed
-	_target += fwd * rel.y * speed
+	_target -= fwd * rel.y * speed
 
 
 func _orbit_by(rel: Vector2) -> void:
