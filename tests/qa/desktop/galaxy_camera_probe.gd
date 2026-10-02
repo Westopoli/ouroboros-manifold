@@ -8,10 +8,15 @@ extends SceneTree
 #             orbits; clicking a system centers on it and zooms to Local.
 #   R-107-02  outside a time jump the camera is fully the player's (no idle
 #             drift of its own).
-#   R-103-09 (A25: "the galaxy camera follows the same rule when it is built"):
-#             pan speed is constant on screen, so the world distance a pan
-#             covers grows in proportion to the camera distance. Read here for
-#             the drag pan, the only pan input R-107-01 names.
+#   A48-2     the galaxy pans by left-drag only; R-103-09 (constant pan speed
+#             on screen) and the pan-speed slider do not apply to it. The
+#             former pan_screen_speed check is dropped (test-defect, ledger).
+#             A vertical drag is grab-style: the map follows the pointer.
+#   A48-1     the camera has an autonomous flag (OrbitCamera.set_autonomous(bool),
+#             is_autonomous(); qa_state()["camera_autonomous"]), set by the menu
+#             backdrop and the jump sequencer; any player input cancels it.
+#             Only the camera's own half is tested here; the menu and sequencer
+#             do not drive the live camera on this base.
 # Events go in through the root Window the way a real mouse does, in real
 # window pixels (the unit qa_state().systems_px is in). Needs a real window
 # (headless pins it to 64x64, below the 14 px pick radius), so it runs under
@@ -35,7 +40,7 @@ var _rig: Node
 var _ids: Array = []
 var _check_name := ""
 var _failed: Dictionary = {}
-const CHECKS := ["no_idle_drift", "wheel_zoom", "drag_pan", "pan_screen_speed", "right_drag_orbit", "click_focus", "focus_region"]
+const CHECKS := ["no_idle_drift", "wheel_zoom", "drag_pan", "vertical_grab", "autonomous_flag", "autonomous_cancelled_by_input", "right_drag_orbit", "click_focus", "focus_region"]
 
 
 func _initialize() -> void:
@@ -94,8 +99,12 @@ func _run_tests() -> void:
 	await _check_wheel_zoom_R107_01()
 	_check_name = "drag_pan"
 	await _check_drag_pan_R107_01()
-	_check_name = "pan_screen_speed"
-	await _check_pan_screen_speed_constant_R103_09()
+	_check_name = "vertical_grab"
+	await _check_vertical_drag_is_grab_A48_2()
+	_check_name = "autonomous_flag"
+	await _check_autonomous_flag_A48_1()
+	_check_name = "autonomous_cancelled_by_input"
+	await _check_input_cancels_autonomy_A48_1()
 	_check_name = "right_drag_orbit"
 	await _check_right_drag_orbits_R107_01()
 	_check_name = "click_focus"
@@ -223,19 +232,65 @@ func _check_drag_pan_R107_01() -> void:
 	_assert(absf(_px(focus).y - p1.y) > 10.0, "R-107-01: a vertical left-drag did not pan the map")
 
 
-func _check_pan_screen_speed_constant_R103_09() -> void:
+# A48-2: grab-style. The pointer goes down on a system and is dragged; the
+# system follows it, so a drag up moves the map up (y falls) and a drag down
+# moves it down. Positive control: the opposite drags in the same run must move
+# it the opposite way, so a camera that pans one way regardless fails one half.
+func _check_vertical_drag_is_grab_A48_2() -> void:
 	var focus := int(_ids[0])
-	var shifts := []
-	for dist in [40.0, 160.0]:
-		_view.qa_camera(dist, focus)
+	_view.qa_camera(80.0, focus)
+	await _frames(3)
+	var start := _px(focus)
+	await _drag(MOUSE_BUTTON_LEFT, start, Vector2(0, -DRAG_PX))
+	var up := _px(focus)
+	_assert(up.y < start.y - DRAG_PX * 0.7, "A48-2: drag up %s px moved the map from y %s to %s; grab-style moves it up with the pointer" % [DRAG_PX, start.y, up.y])
+	_assert(up.distance_to(start + Vector2(0, -DRAG_PX)) < DRAG_PX * 0.3, "A48-2: after the drag the grabbed system is at %s, the pointer is at %s" % [up, start + Vector2(0, -DRAG_PX)])
+	await _drag(MOUSE_BUTTON_LEFT, up, Vector2(0, DRAG_PX * 2.0))
+	var down := _px(focus)
+	_assert(down.y > up.y + DRAG_PX * 1.4, "A48-2 (control): drag down %s px moved the map from y %s to %s; it must follow the pointer down" % [DRAG_PX * 2.0, up.y, down.y])
+
+
+# A48-1: the flag exists, is off by default, and is observable. Idle with no flag
+# still does not drift (no_idle_drift above).
+func _check_autonomous_flag_A48_1() -> void:
+	_assert(_rig.has_method("set_autonomous") and _rig.has_method("is_autonomous"), "A48-1: OrbitCamera has no set_autonomous(bool) / is_autonomous()")
+	if not (_rig.has_method("set_autonomous") and _rig.has_method("is_autonomous")):
+		return
+	_view.qa_camera(100.0, int(_ids[0]))
+	await _frames(3)
+	_assert(_view.qa_state().get("camera_autonomous", null) == false, "A48-1: qa_state camera_autonomous should be false by default (got %s)" % [_view.qa_state().get("camera_autonomous", null)])
+	_assert(not _rig.is_autonomous(), "A48-1: is_autonomous() true by default")
+	_rig.set_autonomous(true)
+	await _frames(2)
+	_assert(_rig.is_autonomous() and _view.qa_state().get("camera_autonomous", null) == true, "A48-1: set_autonomous(true) not reported (camera %s, qa_state %s)" % [_rig.is_autonomous(), _view.qa_state().get("camera_autonomous", null)])
+	_rig.set_autonomous(false)
+	await _frames(2)
+	_assert(not _rig.is_autonomous() and _view.qa_state().get("camera_autonomous", null) == false, "A48-1: set_autonomous(false) not reported")
+
+
+# A48-1 / R-107-02: any player input overrides autonomy. Each input kind starts
+# from a flag that is verified on first (positive control), so a flag that is
+# never set cannot pass.
+func _check_input_cancels_autonomy_A48_1() -> void:
+	if not (_rig.has_method("set_autonomous") and _rig.has_method("is_autonomous")):
+		_assert(false, "A48-1: OrbitCamera has no set_autonomous(bool) / is_autonomous()")
+		return
+	var inputs := ["wheel", "left_drag", "right_drag"]
+	for kind in inputs:
+		_view.qa_camera(100.0, int(_ids[0]))
 		await _frames(3)
-		var p0 := _px(focus)
-		await _drag(MOUSE_BUTTON_LEFT, _centre() + Vector2(0, 200), Vector2(DRAG_PX, 0))
-		shifts.append(_px(focus).x - p0.x)
-	_assert(shifts[0] > 10.0 and shifts[1] > 10.0, "R-103-09: no pan at distance 40/160 (shifts %s)" % [shifts])
-	if shifts[0] > 10.0 and shifts[1] > 10.0:
-		var ratio: float = shifts[1] / shifts[0]
-		_assert(ratio > 0.85 and ratio < 1.15, "R-103-09: the same drag moved the map %s px at distance 40 and %s px at 160; pan speed must be constant on screen" % [shifts[0], shifts[1]])
+		_rig.set_autonomous(true)
+		await _frames(2)
+		_assert(_rig.is_autonomous(), "A48-1 (control): flag not set before the %s input" % kind)
+		match kind:
+			"wheel":
+				await _wheel(MOUSE_BUTTON_WHEEL_UP)
+			"left_drag":
+				await _drag(MOUSE_BUTTON_LEFT, _centre() + Vector2(0, 200), Vector2(DRAG_PX, 0))
+			"right_drag":
+				await _drag(MOUSE_BUTTON_RIGHT, _centre() + Vector2(0, 200), Vector2(DRAG_PX, 0))
+		_assert(not _rig.is_autonomous(), "A48-1: %s input did not cancel the autonomous flag" % kind)
+		_assert(_view.qa_state().get("camera_autonomous", null) == false, "A48-1: qa_state camera_autonomous still true after %s input" % kind)
 
 
 func _check_right_drag_orbits_R107_01() -> void:

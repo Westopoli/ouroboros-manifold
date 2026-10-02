@@ -10,6 +10,11 @@ extends SceneTree
 #             system there is none.
 #   G-G3      names come from the client's own derivation (chronicle_names.gd,
 #             "{faction_name}" for the faction id), since the wire carries none.
+#   A48-6     a faction id the snapshot's factions[] does not list is an error:
+#             its label reads "Unknown", qa_state()["unknown_factions"] (sorted
+#             array of those owner ids, [] when none) reports it, and the text
+#             "[faction]" never reaches the screen. The 15-factions-for-8-names
+#             wrap is a known visual defect (ledger), not tested.
 # Labels are found by being Label3D nodes under the view; the hovered system is
 # read from OrbitCamera.get_hovered() (-1 for none), the prototype camera's name
 # for it. Runs on a real display (hover needs the pick radius in real pixels),
@@ -22,7 +27,7 @@ const SCENE_PATH := "res://scenes/galaxy/galaxy_view.tscn"
 const FIXTURE_PATH := "res://tests/transport/fixtures/snapshot_seed1_tick10.json"
 const NAMES_SCRIPT := "res://scenes/world/chronicle_names.gd"
 const LIBRARY_PATH := "res://library/chronicle/fragments.json"
-const CHECKS := ["labels_overview", "labels_at_centroid", "labels_follow_conquest", "hover_system", "hover_clear"]
+const CHECKS := ["labels_overview", "labels_at_centroid", "labels_follow_conquest", "hover_system", "hover_clear", "unknown_faction"]
 const OVERVIEW_DISTANCE := 150.0
 const SETTLE_SEC := 3.0
 
@@ -77,6 +82,8 @@ func _run_tests() -> void:
 	await _check_hover_system()
 	_check_name = "hover_clear"
 	await _check_hover_clear()
+	_check_name = "unknown_faction"
+	await _check_unknown_faction()
 
 
 func _name_of(faction: int) -> String:
@@ -267,3 +274,29 @@ func _check_hover_clear() -> void:
 	var on := int(_rig.get_hovered())
 	await _move_to(_px(id) + Vector2(0, 90))
 	_assert(on == id and int(_rig.get_hovered()) == -1, "R-107-05: hover did not clear when the pointer left the system (on=%s, after=%s)" % [on, _rig.get_hovered()])
+
+
+# A48-6. Region 0's owner is re-pointed at id 99, which factions[] does not list.
+# Positive control: on the clean fixture unknown_factions is [] and no label
+# reads "Unknown", so a view that always says Unknown, or never reports, fails.
+func _check_unknown_faction() -> void:
+	await _overview()
+	var clean: Dictionary = _view.qa_state()
+	_assert(clean.get("unknown_factions", null) is Array and (clean.get("unknown_factions") as Array).is_empty(), "A48-6 (control): qa_state unknown_factions should be [] on the clean fixture (got %s)" % [clean.get("unknown_factions", null)])
+	_assert(_shown_count("Unknown") == 0, "A48-6 (control): a label reads Unknown with every faction known")
+	var mutated: Dictionary = _snap.duplicate(true)
+	var victim := -1
+	for r in mutated["regions"]:
+		if int(r["owner"]) >= 0:
+			r["owner"] = 99
+			victim = int(r["i"])
+			break
+	_assert(victim != -1, "fixture has no owned region to re-point")
+	_view.set_snapshot(mutated)
+	await _frames(12)
+	var state: Dictionary = _view.qa_state()
+	_assert(state.get("unknown_factions", null) is Array and 99 in (state.get("unknown_factions") as Array), "A48-6: qa_state unknown_factions does not report faction 99 (got %s)" % [state.get("unknown_factions", null)])
+	_assert(_shown_count("Unknown") == 1, "A48-6: expected one shown label reading Unknown for faction 99, found %d" % _shown_count("Unknown"))
+	_assert(_shown_count("[faction]") == 0, "A48-6: a label carries the unresolved '[faction]' placeholder")
+	_view.set_snapshot(_snap)
+	await _frames(12)

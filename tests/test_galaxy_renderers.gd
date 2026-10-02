@@ -8,6 +8,13 @@ extends SceneTree
 #   R-106-02  faction territory: adjacent same-faction systems are joined by
 #             filament arcs (border and both edges solid, trade edges thinner and
 #             dimmer); each faction's systems share one translucent shell.
+#   A48-4     filaments join adjacent systems of the SAME faction only; an edge
+#             between different owners, or to a neutral system, is not drawn
+#             (no connection, no filament). Positive control: the fixture has
+#             such edges, so a renderer that draws every edge fails.
+#   A48-5     the size of a system comes from its wire tier: territory radius
+#             0.3 / 0.6 / 1.0 for tier 0 / 1 / 2 (provisional, no wire change),
+#             and the point size grows with the tier.
 #   R-106-02/R-106-04 (conquest recolour, fenced today by test_galaxy_view.gd):
 #             a region that changes owner is recoloured through its shell.
 # The test finds the pieces by what they expose, not by file name, so the renderers
@@ -84,9 +91,12 @@ func _run_tests() -> void:
 	_check_regions_R106_01(data)
 	_check_territories_R106_02(data)
 	_check_connections_R106_02(data, _snap)
+	_check_only_same_faction_edges_A48_4(data, _snap)
+	await _check_tier_sizes_A48_5(data)
 	await _check_edge_types_R106_02(data)
 	await _check_shells_R106_02(shell)
 	await _check_filaments_R106_02(constellation, data)
+	await _check_filaments_same_faction_only_A48_4(constellation)
 	await _check_conquest_recolours_through_shell_R106_02(data, shell)
 
 
@@ -170,6 +180,83 @@ func _check_connections_R106_02(data: Node, snap: Dictionary) -> void:
 			var want := "trade" if int(e["t"]) == 1 else "border"
 			_assert(connections[key]["connection_type"] == want, "R-106-02: edge %d-%d type t=%d should be %s, adapter says %s" % [a, b, int(e["t"]), want, connections[key]["connection_type"]])
 	_assert(checked >= 5, "fixture has fewer than 5 same-faction edges (checked %d)" % checked)
+
+
+func _edge_key(a: int, b: int) -> String:
+	var ka := str(a)
+	var kb := str(b)
+	return ka + "::" + kb if ka < kb else kb + "::" + ka
+
+
+func _same_faction_keys(snap: Dictionary) -> Dictionary:
+	var keys := {}
+	for e in snap["edges"]:
+		var oa := _owner_of(snap, int(e["a"]))
+		if oa >= 0 and oa == _owner_of(snap, int(e["b"])):
+			keys[_edge_key(int(e["a"]), int(e["b"]))] = true
+	return keys
+
+
+# A48-4: nothing but same-faction edges is drawn. The positive control is the
+# fixture itself: it has edges between different owners and to neutral systems,
+# which a draw-everything adapter turns into connections.
+func _check_only_same_faction_edges_A48_4(data: Node, snap: Dictionary) -> void:
+	var allowed := _same_faction_keys(snap)
+	var cross := 0
+	var neutral := 0
+	for e in snap["edges"]:
+		var oa := _owner_of(snap, int(e["a"]))
+		var ob := _owner_of(snap, int(e["b"]))
+		if oa < 0 or ob < 0:
+			neutral += 1
+		elif oa != ob:
+			cross += 1
+	_assert(cross + neutral >= 5, "A48-4 (control): fixture has %d cross-faction and %d neutral edges; need some to prove they are not drawn" % [cross, neutral])
+	var connections: Dictionary = data.get("connections")
+	_assert(connections.size() == allowed.size(), "A48-4: %d connections drawn, %d same-faction edges (%d cross-faction and %d neutral edges must not be drawn)" % [connections.size(), allowed.size(), cross, neutral])
+	for key in connections:
+		_assert(allowed.has(key), "A48-4: connection %s joins different owners or a neutral system and must not be drawn" % key)
+
+
+func _check_filaments_same_faction_only_A48_4(constellation: Node) -> void:
+	var want := _same_faction_keys(_snap).size()
+	var ok: bool = await _wait_until(func(): return constellation.get_filament_visuals().size() == want)
+	_assert(ok, "A48-4: %d filament arcs drawn, %d same-faction edges" % [constellation.get_filament_visuals().size(), want])
+
+
+# A48-5: the tier on the wire picks the size. Owned regions carry their tier in
+# the territory radius (what the shell is built from); all regions in the point
+# size, which must rise with tier. The fixture's owned regions are tiers 1 and 2
+# only (tier 0 is all neutral), so the neutral tier-0 regions are handed to faction 0
+# first; coverage is asserted so a snapshot without all three tiers cannot pass
+# vacuously.
+func _check_tier_sizes_A48_5(data: Node) -> void:
+	var want := [0.3, 0.6, 1.0]
+	var snap: Dictionary = _snap.duplicate(true)
+	for r in snap["regions"]:
+		if int(r["tier"]) == 0:
+			r["owner"] = 0
+	_view.set_snapshot(snap)
+	await process_frame
+	var territories: Dictionary = data.get("territories")
+	var regions: Dictionary = data.get("regions")
+	var seen := [0, 0, 0]
+	var size_by_tier := [[], [], []]
+	for r in snap["regions"]:
+		var tier := int(r["tier"])
+		var key := str(int(r["i"]))
+		if regions.has(key):
+			size_by_tier[tier].append(float(regions[key]["size"]))
+		if int(r["owner"]) >= 0 and territories.has(key):
+			seen[tier] += 1
+			_assert(absf(float(territories[key]["radius"]) - want[tier]) < 0.001, "A48-5: tier %d region %s has territory radius %s, expected %s" % [tier, key, territories[key]["radius"], want[tier]])
+	for t in range(3):
+		_assert(seen[t] > 0, "A48-5 (control): fixture has no owned region of tier %d" % t)
+		_assert(size_by_tier[t].size() > 0, "A48-5 (control): fixture has no region of tier %d" % t)
+	if size_by_tier[0].size() > 0 and size_by_tier[1].size() > 0 and size_by_tier[2].size() > 0:
+		_assert(size_by_tier[0].max() < size_by_tier[1].min() and size_by_tier[1].max() < size_by_tier[2].min(), "A48-5: point size does not rise strictly with tier (tier0 max %s, tier1 %s..%s, tier2 min %s)" % [size_by_tier[0].max(), size_by_tier[1].min(), size_by_tier[1].max(), size_by_tier[2].min()])
+	_view.set_snapshot(_snap)
+	await process_frame
 
 
 # The fixture's same-faction edges are all type 2 (both); give some of them

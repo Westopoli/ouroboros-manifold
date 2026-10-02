@@ -1,4 +1,4 @@
-# spec: docs/northstar/plans/2026-09-28-gap-fix-and-migration-plan.md G-G1; E-16 R-107-01, R-107-02, R-103-09
+# spec: docs/northstar/plans/2026-09-28-gap-fix-and-migration-plan.md G-G1; E-16 R-107-01, R-107-02; A48-1, A48-2 (docs/northstar/plans/2026-10-01-architect-rulings-2.md)
 """Piece C5-G1: the live galaxy camera takes real mouse input and has focus_region(i).
 
 Runs tests/qa/desktop/galaxy_camera_probe.gd on a real display (headless pins the window to 64x64,
@@ -10,7 +10,7 @@ import pytest
 
 from probe_runner import run_probe
 
-CHECKS = ["no_idle_drift", "wheel_zoom", "drag_pan", "pan_screen_speed", "right_drag_orbit", "click_focus", "focus_region"]
+CHECKS = ["no_idle_drift", "wheel_zoom", "drag_pan", "vertical_grab", "autonomous_flag", "autonomous_cancelled_by_input", "right_drag_orbit", "click_focus", "focus_region"]
 
 
 @pytest.fixture(scope="module")
