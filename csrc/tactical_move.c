@@ -1692,6 +1692,9 @@ uint32_t om_navmesh_get_cache_hits(const om_world *w) {
 }
 
 double om_navmesh_get_cell_size(const om_world *w) {
+#ifdef OM_DEBUG_INJECT
+    if (w && w->inject == OM_BUG_NAVMESH_CELL_SIZE_WRONG_CONSTANT) return OM_NAVMESH_CELL_SIZE * OM_NAVMESH_OBSTACLE_THRESHOLD;
+#endif
     (void)w;
     return OM_NAVMESH_CELL_SIZE;
 }
