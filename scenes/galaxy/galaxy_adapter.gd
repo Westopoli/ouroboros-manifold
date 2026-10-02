@@ -4,10 +4,9 @@ extends "res://scenes/galaxy/legacy_world_view_data.gd"
 # regions / connections / territories dictionaries from a live snapshot so
 # legacy_shell_renderer.gd and legacy_constellation_renderer.gd draw the
 # galaxy. Region ids are str(i); one faction_id per owner groups a faction's
-# systems into one shell. Every edge becomes a filament: border and both-edges
-# (t 0, 2) are solid and take their owner's colour when both ends share an
-# owner, trade (t 1) is thinner, and a cross-faction edge is dimmed. The
-# prototype (scenes/mockups/galaxy/galaxy_adapter.gd) draws all edges too.
+# systems into one shell. Only same-faction edges become filaments (A48-4):
+# border and both-edges (t 0, 2) are solid in the owner's colour, trade (t 1)
+# is thinner and dimmed. Cross-faction and neutral edges are not drawn.
 
 const TRADE_DIM := Color(0.42, 0.44, 0.5, 0.5)
 const EDGE_TRADE := 1
@@ -36,9 +35,10 @@ func apply(snap_regions: Array, snap_edges: Array, positions: Dictionary, colour
 		var b := int(e.get("b", -1))
 		if not (owners.has(a) and owners.has(b)):
 			continue
-		var same_faction: bool = owners[a] >= 0 and owners[a] == owners[b]
+		if owners[a] < 0 or owners[a] != owners[b]:
+			continue
 		var is_trade := int(e.get("t", 0)) == EDGE_TRADE
-		var colour: Color = (regions[str(a)]["color"] as Color) if same_faction and not is_trade else TRADE_DIM
+		var colour: Color = (regions[str(a)]["color"] as Color) if not is_trade else TRADE_DIM
 		add_connection(str(a), str(b), "trade" if is_trade else "border", colour)
 
 
