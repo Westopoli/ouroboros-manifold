@@ -33,6 +33,8 @@ class RStar:
     value_cost: float
     firing_adv_at_rstar: float
     firing_adv_equal: float
+    last_win_heads: int = None
+    first_loss_heads: int = None
 
 
 def isotonic_nonincreasing(xs, ys):
@@ -77,8 +79,9 @@ def _interp(xs, ys, x):
     return None
 
 
-def _measure(build, ratios, seeds, processes, lib):
-    """Run both labels and every seed at each ratio; a ratio `build` rejects is skipped."""
+def _measure(build, ratios, seeds, processes, lib, size=None):
+    """Run both labels and every seed at each ratio; a ratio `build` rejects is skipped. With `size`, each point
+    also carries `heads`, the enemy head count (ratio * size)."""
     jobs, slots, skipped, cost_ratio = [], [], [], {}
     for r in ratios:
         try:
@@ -106,6 +109,7 @@ def _measure(build, ratios, seeds, processes, lib):
         nv_fire = _mean([fr.firing_per_head(1 - int(swap)) for swap, fr in rows])
         points.append({
             "ratio": r, "value": (_mean(a) - _mean(b)) / 2.0,
+            **({} if size is None else {"heads": int(r * size + 0.5)}),
             "margin_A_label": _mean(a), "margin_B_label": _mean(b),
             "n_stalemate": sum(fr.outcome == "stalemate" for _, fr in rows),
             "n_no_contact": sum(not fr.contact for _, fr in rows),
@@ -118,16 +122,23 @@ def _measure(build, ratios, seeds, processes, lib):
     return points, skipped, len(jobs)
 
 
-def _solve(build, ratios, seeds, refine, processes, lib, viol_tol, win_margin):
-    scan, skipped, fights = _measure(build, ratios, seeds, processes, lib)
+def _solve(build, ratios, seeds, refine, processes, lib, viol_tol, win_margin, size=None):
+    if size is not None:
+        ratios = [n / size for n in sorted({max(1, int(r * size + 0.5)) for r in ratios})]
+    scan, skipped, fights = _measure(build, ratios, seeds, processes, lib, size)
     scan.sort(key=lambda p: p["ratio"])
     points = list(scan)
     pos = [i for i, p in enumerate(scan) if p["value"] > win_margin]
     if pos and pos[-1] + 1 < len(scan):
         lo, hi = scan[pos[-1]]["ratio"], scan[pos[-1] + 1]["ratio"]
+        if size is not None:
+            lo, hi = scan[pos[-1]]["heads"], scan[pos[-1] + 1]["heads"]
         for _ in range(refine):
-            mid = (lo + hi) / 2.0
-            new, skip, n = _measure(build, (mid,), seeds, processes, lib)
+            if size is not None and hi - lo < 2:
+                break
+            mid = (lo + hi) // 2 if size is not None else (lo + hi) / 2.0
+            new, skip, n = _measure(build, ((mid / size) if size is not None else mid,), seeds, processes, lib,
+                                    size)
             fights += n
             skipped += skip
             if new and new[0]["value"] > win_margin:
@@ -144,11 +155,14 @@ def _solve(build, ratios, seeds, refine, processes, lib, viol_tol, win_margin):
     below = bool(fitted) and value is None and not above
     violation = max([b - a for a, b in zip(vals, vals[1:]) if b > a], default=0.0)
     scan_max = max((p["ratio"] for p in scan), default=None)
-    losses = [p["ratio"] for p in scan if p["value"] <= win_margin]
-    wins = [p["ratio"] for p in scan if p["value"] > win_margin]
+    edge = scan if size is None else points                 # with a size the refined points set the bracket
+    losses = [p["ratio"] for p in edge if p["value"] <= win_margin]
+    wins = [p["ratio"] for p in edge if p["value"] > win_margin]
     return RStar(
         value=value, above_scan=above, below_scan=below, points=points,
         first_loss=min(losses, default=None), last_win=max(wins, default=None),
+        last_win_heads=None if size is None or not wins else int(max(wins) * size + 0.5),
+        first_loss_heads=None if size is None or not losses else int(min(losses) * size + 0.5),
         violation=violation, monotonic=violation <= viol_tol, rerun=False, valid=violation <= viol_tol,
         skipped_ratios=skipped, scan_max=scan_max,
         short_scan=above and scan_max is not None and scan_max <= _TARGET_SCAN,
@@ -161,12 +175,14 @@ def _solve(build, ratios, seeds, refine, processes, lib, viol_tol, win_margin):
 
 
 def rstar(build, ratios=RATIOS, seeds=(0, 1), refine=4, processes=None, lib="O2", viol_tol=0.15,
-          win_margin=0.02):
-    res = _solve(build, ratios, seeds, refine, processes, lib, viol_tol, win_margin)
+          win_margin=0.02, size=None):
+    """With `size` (the skilled head count) the scan runs over distinct whole enemy head counts and refinement
+    bisects integer head counts (SPEC.md 14.5 item 9); without it the ratios are scanned and bisected as given."""
+    res = _solve(build, ratios, seeds, refine, processes, lib, viol_tol, win_margin, size)
     if res.monotonic:
         return res
     again = _solve(build, ratios, tuple(s + _RERUN_SHIFT for s in seeds), refine, processes, lib, viol_tol,
-                   win_margin)
+                   win_margin, size)
     again.rerun = True
     again.fights += res.fights
     return again
