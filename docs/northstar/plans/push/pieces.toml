@@ -970,3 +970,59 @@ acceptance = ["tests/specfactory/test_runner_declared_time.py"]
 depends_on = []
 status = "pending"
 size_estimate = "a few lines in the runner plus one comment line in each of two tests"
+
+# Rulings round 2, A94 (DRAFT rows for Architect review; the Architect lands pieces.toml).
+# Harness unit: the specfactory suite, its scripts, the constants allowlist and the generated
+# conftest. Existing harness pieces keep their files out of this glob: merge_gate.sh and
+# merge_gate_support.py (HARNESS-sigblocked, HARNESS-symown) are the only scripts/specfactory
+# files starting with "m", so "[!m]*" excludes exactly them; scripts/run_godot_tests.sh
+# (HARNESS-runnertime) is outside scripts/specfactory. The three HARNESS pieces' acceptance
+# tests live in tests/specfactory but acceptance is not ownership. tests/csim/conftest.py is
+# the generated mirror of signatures.toml (sig_table.py --emit); it is owned here and written
+# only by that regeneration, ordered after the contract piece below.
+# Caveat: a future scripts/specfactory file whose name starts with "m" is unowned until a row
+# names it.
+[[piece]]
+id = "A94-harness"
+manager = "M0"
+wave = 4
+owns = ["docs/northstar/spec_factory/constants_allowlist.txt", "tests/csim/conftest.py"]
+owns_glob = ["scripts/specfactory/[!m]*", "tests/specfactory/**"]
+acceptance = ["tests/specfactory"]
+depends_on = ["A94-contract", "K1"]
+status = "pending"
+size_estimate = "allowlist regeneration, vendored 205a fixture, synthetic reach control, PyYAML requirement (branch push/A94-harness-fixes, ledger TD-A94-*); later the gate steps for tests/specfactory, sig_table --check and the stale-allowlist lint, each with a positive control"
+
+# Rulings round 2, A94: the generated-block drift (A92 items 4, 5, 7, 8, 9). Contract piece:
+# header, om_internal.h, signatures.toml and the generated conftest bindings, regenerated and
+# never hand-edited. Ordered after A2-contract and core (both own the header) so the lint sees
+# one owner at a time. Fix, in this order:
+#   1. Add signatures.toml rows for om_macro_set_force_fallback_point and om_mission_has_ended.
+#   2. Move the doc comments inside generated header blocks into the rows' `note` fields.
+#   3. Move the two OM_CHRON_MENTION_* defines out of the generated `structs` block.
+#   4. Add the 15 `internal = true` rows (module = defining .c file) for the om_internal.h
+#      prototypes with no row. (EXTENDING EXPECTED_MODULE in test_signatures_internal.py
+#      is a test-defect with a ledger row, made under A94-harness, which owns that file,
+#      right after this piece lands.)
+#   5. Give the five RENAMED params (om_enemy_production_adapt_target p1 p2,
+#      om_enemy_production_select_category p1, om_map_instantiate_zone_pos p3,
+#      om_mission_setup_extraction_point p3) real names in signatures.toml.
+#   6. Run sig_table.py --emit, confirm sig_table.py --check is clean, review the header diff
+#      (comments and ordering only).
+# Closes test_conftest_bindings x2, test_signatures_internal x3. Item 10 (snapshot fixture)
+# is not part of this piece (Westley's policy call).
+# See also: A94-harness (owns tests/csim/conftest.py, written here only by --emit; depends_on
+# this piece).
+[[piece]]
+id = "A94-contract"
+manager = "M0"
+wave = 4
+owns = ["csrc/ouroboros_sim.h", "csrc/om_internal.h", "docs/northstar/spec_factory/signatures.toml"]
+owns_glob = []
+acceptance = [
+    "tests/specfactory/test_conftest_bindings.py",
+    "tests/specfactory/test_signatures_internal.py",
+]
+depends_on = ["A2-contract", "core"]
+status = "pending"
+size_estimate = "two rows, 15 internal rows, five param renames, comment moves, one --emit; header diff comments and ordering only"
