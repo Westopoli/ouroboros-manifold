@@ -19,6 +19,7 @@ REPO_ROOT="$(cd "$GATE_DIR/../.." && pwd)"
 PYTHON="${MERGE_GATE_PYTHON:-/home/westopoli/Projects/agora/.venv/bin/python}"
 PIECES_TOML="${MERGE_GATE_PIECES:-$REPO_ROOT/docs/northstar/plans/push/pieces.toml}"
 SIGNATURES_TOML="${MERGE_GATE_SIGNATURES:-$REPO_ROOT/docs/northstar/spec_factory/signatures.toml}"
+PLACEHOLDERS_TXT="${MERGE_GATE_PLACEHOLDERS:-$REPO_ROOT/docs/northstar/spec_factory/placeholder_controls.txt}"
 SYMBOL_MODULES_TOML="$REPO_ROOT/docs/northstar/spec_factory/symbol_modules.toml"
 MAKE_TIMEOUT="${MERGE_GATE_MAKE_TIMEOUT:-300}"
 SUITE_TIMEOUT="${MERGE_GATE_SUITE_TIMEOUT:-600}"
@@ -206,6 +207,17 @@ if [[ "$REVERT_MODE" -eq 1 ]]; then
         exit 1
     fi
     exit 0
+fi
+
+# -------------------------------------------------------------- 5c. control liveness (A114): the attaching piece's own controls
+CL_LOG="$SCRATCH_ROOT/control_liveness.log"
+"$PYTHON" "$GATE_DIR/merge_gate_support.py" control-liveness "$CANDIDATE" "$PIECE_ID" \
+    --pieces "$PIECES_TOML" --placeholders "$PLACEHOLDERS_TXT" --scratch-root "$SCRATCH_ROOT/liveness" \
+    --python "$PYTHON" >"$CL_LOG" 2>&1
+if [[ $? -ne 0 ]]; then
+    reject control_liveness "$(sed 's/^REJECT //' "$CL_LOG" | tr '\n' ' ')"
+else
+    ok control_liveness "$(sed 's/^OK //' "$CL_LOG" | tr '\n' ' ')"
 fi
 
 # -------------------------------------------------------------- 6. suite_regression, tests/csim and tests/qa/t1 separately
