@@ -457,6 +457,17 @@ def _normalize_worktree_paths(text: str, *roots: Path) -> str:
     return text
 
 
+SCALE_LIST_REL = "docs/northstar/plans/push/scale_gated_tests.txt"
+
+
+def read_scale_list(root: Path) -> set[str]:
+    path = Path(root) / SCALE_LIST_REL
+    if not path.exists():
+        return set()
+    return {ln.strip() for ln in path.read_text().splitlines()
+            if ln.strip() and not ln.lstrip().startswith("#")}
+
+
 def _harness_sha() -> str:
     """Content hash of suite_regression.py -- folded into every cache entry
     so a harness change (new comparison rule, new junit parsing) invalidates
@@ -479,12 +490,13 @@ def _load_cached_baseline(cache_path: Path, harness_sha: str, suite_key: str) ->
     if data.get("harness_sha") != harness_sha:
         return None
     entry = data.get("suites", {}).get(suite_key)
-    if entry is None:
+    if entry is None or "scale_gated" not in entry:
         return None
     return sr.RunResult(passed=entry["passed"], failed=entry["failed"],
                          failing_ids=tuple(entry["failing_ids"]), wall_s=0.0,
                          returncode=entry["returncode"], first_assertion=dict(entry["first_assertion"]),
-                         skipped=entry["skipped"], xfailed=entry["xfailed"])
+                         skipped=entry["skipped"], xfailed=entry["xfailed"],
+                         scale_gated=tuple(entry["scale_gated"]))
 
 
 def _store_cached_baseline(cache_path: Path, harness_sha: str, main_sha: str,
@@ -502,6 +514,7 @@ def _store_cached_baseline(cache_path: Path, harness_sha: str, main_sha: str,
         "failing_ids": list(result.failing_ids), "returncode": result.returncode,
         "first_assertion": dict(result.first_assertion),
         "skipped": result.skipped, "xfailed": result.xfailed,
+        "scale_gated": list(result.scale_gated),
     }
     cache_path.parent.mkdir(parents=True, exist_ok=True)
     tmp_path = cache_path.with_suffix(".json.tmp")
@@ -621,9 +634,14 @@ def regression_check(candidate_dir: Path, base_ref: str, test_args: list[str], *
         # an attached piece legitimately changes how a still-unbuilt test fails
         # (B3 moved test_E16_S111's failing line by changing the checksum path).
         # Only new red ids and rising skip/xfail counts reject.
-        accept = not report.new_failures and report.skipped_increase <= 0 and report.xfailed_increase <= 0
+        unlisted = sorted(set(after.scale_gated) - read_scale_list(candidate_dir))
+        accept = (not report.new_failures and report.skipped_increase <= 0
+                  and report.xfailed_increase <= 0 and not unlisted)
+        scale_part = f"scale-gated: {len(after.scale_gated)}" if after.scale_gated else ""
         if accept:
             detail = f"OK ({after.passed}p/{after.failed}f)"
+            if scale_part:
+                detail += f"; {scale_part}"
             if report.changed_assertions:
                 detail += f" WARN changed assertions: {report.changed_assertions}"
         else:
@@ -636,6 +654,10 @@ def regression_check(candidate_dir: Path, base_ref: str, test_args: list[str], *
                 parts.append(f"skipped +{report.skipped_increase}")
             if report.xfailed_increase > 0:
                 parts.append(f"xfailed +{report.xfailed_increase}")
+            if unlisted:
+                parts.append(f"scale-gated tests missing from {SCALE_LIST_REL}: {unlisted}")
+            if scale_part:
+                parts.append(scale_part)
             detail = "; ".join(parts)
         return accept, detail, report
     finally:

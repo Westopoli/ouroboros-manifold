@@ -558,3 +558,11 @@ Rule text changed in the same commit: E-16 R-110-02 and R-110-07, E-09 R-069-03 
 **A100. Player collapse is far rarer with events working map-wide** (seeds collapsing by the second post-mission jump, 2,000-tick jumps: 34 on main, 1 on the branch). Recorded with A90 and A95 as part of the same balance question for Westley's later simulation; nothing asserted, nothing tuned.
 
 **A101.** The scale ledger list file added to `HARNESS-symown`'s `owns` by the coordinator is accepted. A94-contract landing stacked with its harness follow-up, with only `snapshot_fixture` red, is accepted.
+
+## Addendum 36, 2026-10-02 (tactical fix owners; seed 24; a bible wording)
+
+**A102. Owners for the A99 units.** `csrc/unit.c` under B10c, `csrc/enemy_macro.c` under B13, `csrc/fog.c` under B11, `csrc/om_internal.h` under A94-contract once it has landed. Unit order as proposed: declarations, `unit.c`, `enemy_macro.c`, `fog.c` only if needed. The stale `pending` statuses do not block this; a clerk unit afterwards checks every piece's status against the ledger and main and reports the corrections for me to land.
+
+**A103. A99 equivalence tests accepted as built:** eleven runs (my "fifteen" repeated a figure from the earlier message), the hash contents, the two controls, and TD-A99-F3 as described. One loose end with a consequence: in-use unit counts come out about 4 percent below the nominal figures (4,785 for 4,996). The E-13 tests must count live in-use units, so "1,000" and "10,000" mean units actually simulated; the Engineer of the second round finds the cause of the difference and corrects the tests' unit counts if they are short.
+
+**A104. Seed 24 is permitted** (R-072-05: one weighted draw over the top five). The E-10 "obviously working" paragraph claimed more than the rule; it is rewritten in this commit to say the telegraphed pair is in the draw pool and is drawn on the example seed. No rule changes.
