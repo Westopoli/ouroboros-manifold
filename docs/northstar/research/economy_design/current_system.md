@@ -47,6 +47,15 @@ The target is 2x to 3x the system complexity of a StarCraft 2 economy. Westley m
 - **Weather on the move.** The region's environmental trouble travels across the map where both sides can see it, and shuts down what it passes over.
 - **Forward bases.** Production can be built forward, near the front or at an expansion, where it reinforces fast and is exposed. Where it stands shows where the next push comes from.
 
+## With nobody in the seat
+
+- **Doctrines.** The rules run the economy by a named doctrine. The player can change the doctrine on the fly to adapt to what the enemy is doing.
+- **How good.** Perfect hands, no foresight: the rules never idle a worker, hit the cap or float resources, and they do not scout, read the enemy, counter-pick technology or disguise.
+- **The commander's hand.** One dial for the balance between economy, technology and army, and asking by pointing at the map (expand here, fortify this, I need siege there).
+- **Units.** The rules pick the mix and the commander can override; the rules also shift production to counter what his forces have seen. The player can turn either off.
+- **The enemy.** The same rules run the enemy's economy. The player chooses whether the enemy's economy also scouts, counters and disguises.
+- If a human economy player drops out of a mission, the same rules take his seat.
+
 ## Long-term scale
 
 Thousands of units and workers on one map, a busy screen, made possible by efficient simulation and visuals. Recorded in the bible hub under "Reference Hardware".
@@ -56,7 +65,6 @@ Thousands of units and workers on one map, a busy screen, made possible by effic
 | Question | Flag |
 |---|---|
 | What the pair carries forward between missions (a shipment deck is one candidate) | Q-159-07 |
-| How the economy runs with nobody in the seat | Q-159-02 |
 | Which of the offered build-ons not yet answered are in: upkeep bands, foraging to farming, deeper districts, trading posts at neutral settlements, trade caravans, ages by landmark, worker scouting, a return-to-base ability, workers under raid | Q-159-10 |
 | Which unit roles need which of the three resources, and what the three resources are | Q-159-08 |
 | How disguising or hiding a building works, and what it costs | Q-159-09 |
