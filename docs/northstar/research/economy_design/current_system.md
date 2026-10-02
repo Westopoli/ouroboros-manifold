@@ -30,6 +30,14 @@ The target is 2x to 3x the system complexity of a StarCraft 2 economy. Westley m
 - A neutral populace lives in settlements on the map and is contested. Winning it is not the economy player's job.
 - Seasons and weather. Specific regions have specific environmental troubles.
 
+## Bases and objectives
+
+- **The balance.** Spending is balanced between economy, technology and army, as in StarCraft.
+- **What kind of base.** The mission archetype and the supply distance in the simulation together decide it.
+- **When a base falls.** A base is occupied, not destroyed; the taker gets its production and people, and it can be retaken. A side that still holds an expansion or forward base falls back to it. Once the original main base has been lost, the best result is partial failure.
+- **Resources.** Base, objective and the significant resources are usually three separate places. How much there is follows the simulation's situation and is slanted by it; the player always has the means to do the mission. Ignoring the resources gets a side overrun unless it rushes.
+- **Strongpoints.** The reinforcement structures sit at the slopes between height bands. Holding one holds the way up or down and gives production on that band.
+
 ## Thinking ahead
 
 - **Counters and retooling.** Unit families counter each other. A production building is set up for one family at a time, and changing what it makes takes a while. Specific unit roles need specific resources, so heavy gathering of one resource shows which role a side is making more of, and the other side needs the counter. To be explored deeper.
@@ -53,6 +61,5 @@ Thousands of units and workers on one map, a busy screen, made possible by effic
 | Which unit roles need which of the three resources, and what the three resources are | Q-159-08 |
 | How disguising or hiding a building works, and what it costs | Q-159-09 |
 | Chess-layer options not picked and not rejected: prizes on a clock, a shared market, demands from the civilization, the Keystone, the Contested Tree, agents | Q-159-10 |
-| What happens when a base of operations falls | Q-159-11 |
 | How settlements build themselves, sites, height and layers | Q-166-01 |
 | Match shape: co-op, versus, or both | Q-141-01, Q-141-02 |
