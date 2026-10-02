@@ -5,8 +5,8 @@ const SimSession := preload("res://autoload/sim_session.gd")
 # C transport v1 rebind (piece C4, leaf-01; A4-client). load_frame()/qa_state()/
 # qa_plant() consume a mission frame (docs/architecture.md "chronicle frame,
 # mission frame, debrief frame"). The frame carries no names (C5 rule): a
-# position name is derived from node and region through chronicle_names.gd,
-# never echoed from the frame's "node" field. "parity" is data, never rendered.
+# marker name is the mission region's own name through chronicle_names.gd (A82,
+# the name the sim chronicle uses), never echoed from the frame's "node" field. "parity" is data, never rendered.
 const _FRAGMENTS_PATH := "res://library/chronicle/fragments.json"
 const _UNIT_NAMES := ["Raider", "Interceptor", "Vanguard", "Warden", "Bombard", "Bastion"]
 
@@ -796,8 +796,7 @@ func load_frame(mission: Dictionary) -> void:
 # mock_001's fake situation text, enemy assessment, force roster, region
 # name, and commander lineage. era_id is left alone (not prose; it only
 # selects the accent color/badge and the frame carries no era field).
-# Marker names go through the existing _marker_name_for_node() table
-# lookup, never the frame's raw node id.
+# Marker names go through _marker_name_for_node(), never the frame's raw node id.
 func _apply_frame_to_data() -> void:
 	_data["tick_counter"] = _frame_deadline_ticks
 
@@ -885,8 +884,7 @@ func qa_plant(id: String) -> bool:
 			return false
 
 
-# Smallest derivation chronicle_names.gd supports: its region-name table indexed
-# by region + node, so the name moves with either (no node-and-region formula is pinned).
+# A82: a marker shows its region's own name; node only picks the offline "Node N" plant.
 func _marker_name_for_node(node: int) -> String:
 	if _plant_marker_from_frame:
 		return "Node %d" % node
@@ -895,7 +893,7 @@ func _marker_name_for_node(node: int) -> String:
 		var data = JSON.parse_string(FileAccess.get_file_as_string(_FRAGMENTS_PATH))
 		if data is Dictionary:
 			_names.load_tables(data.get("name_tables", {}))
-	return _names.fill_template("{region_name}", _frame_region + maxi(node, 0), 0)
+	return _names.fill_template("{region_name}", _frame_region, 0)
 
 
 func _roster_units() -> Array:
