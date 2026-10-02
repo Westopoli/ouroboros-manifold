@@ -104,3 +104,47 @@ def test_control_every_ownership_change_has_a_keyframe():
             exercised = True
             assert kfs, f"seed {seed}: {n_changed} regions changed owner but keyframes is empty"
     assert exercised, "no seed changed ownership (fixture too thin)"
+
+
+def test_A59_keyframes_sorted_ascending_without_duplicates():
+    """A59: the keyframes list is strictly ascending (sorted, no repeats)."""
+    seen_nonempty = False
+    for seed in (1, 2, 3, 4):
+        chron, _ = _jump(seed, 100)
+        kfs = chron.get("keyframes")
+        assert isinstance(kfs, list), "keyframes missing"
+        assert kfs == sorted(set(kfs)), f"seed {seed}: {kfs}"
+        seen_nonempty = seen_nonempty or len(kfs) > 1
+    assert seen_nonempty, "no seed produced two or more keyframes (fixture too thin)"
+
+
+def test_A59_load_leaves_no_timeline_and_next_jump_builds_a_fresh_one(tmp_path):
+    """A59: timelines are memory-only. `load` answers a snapshot and no chronicle
+    frame (so a loaded world has no replay), and the next jump's timeline starts
+    from the loaded world, not from the jump run before the load."""
+    path = str(tmp_path / "slot.omsave")
+    seed = {"type": "cmd", "name": "set_seed", "seed": 1, "n_regions": 80, "features": FEATURES}
+    frames = _run([
+        seed,
+        {"type": "cmd", "name": "save", "path": path},
+        {"type": "cmd", "name": "jump", "ticks": 100},
+        {"type": "cmd", "name": "load", "path": path},
+        {"type": "cmd", "name": "snapshot"},
+        {"type": "cmd", "name": "jump", "ticks": 20},
+    ])
+    types = [f.get("type") for f in frames]
+    chrons = [i for i, t in enumerate(types) if t == "chronicle"]
+    assert len(chrons) == 2, f"expected the two jumps' chronicle frames, got {types}"
+    first, second = chrons
+    # control: the first jump carries a real timeline
+    assert isinstance(frames[first].get("ownership"), dict), "first jump's frame has no ownership"
+    # after the load (between the frames) the pipe sends snapshots only, no chronicle
+    between = types[first + 1:second]
+    assert "chronicle" not in between and "snapshot" in between, between
+    loaded = [f for f in frames[first + 1:second] if f.get("type") == "snapshot"][-1]
+    loaded_owners = [r["owner"] for r in sorted(loaded["regions"], key=lambda r: r["i"])]
+    own = frames[second].get("ownership")
+    assert isinstance(own, dict), "second jump's frame has no ownership"
+    assert len(own["snapshots"]) == 20 // 2 + 1
+    assert own["snapshots"][0] == loaded_owners, "second jump's timeline did not start from the loaded world"
+    assert own["from_tick"] == frames[second]["jump"]["from_tick"]

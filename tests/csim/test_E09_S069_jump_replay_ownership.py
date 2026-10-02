@@ -138,3 +138,64 @@ def test_R_069_05_keyframe_getter_out_of_range_writes_nothing(lib, world_factory
     assert t.value == SENTINEL
     assert lib.om_chronicle_get_keyframe(w, 0, ctypes.byref(t)) == 1  # control
     assert t.value == 7
+
+
+def test_A59_odd_jump_length_adds_no_final_snapshot(lib, world_factory):
+    """A59: an odd length keeps n // STRIDE + 1 snapshots (every 2 ticks from the
+    start); no snapshot is added for the end tick. Control: the even length 24
+    holds the same 13, so 25 gains nothing over 24 (a final-snapshot rule would give 14)."""
+    n = 6
+    w = world_factory(n_regions=n)
+    for ticks, want in ((25, 13), (31, 16), (24, 13)):
+        report = _jump(lib, w, ticks)
+        count = lib.om_time_jump_ownership_snapshot_count(w)
+        assert count == want == report.n_snapshots, (ticks, count)
+        ret, snap = _snapshot(lib, w, count, n)  # one past the last
+        assert ret == 0 and snap == [SENTINEL] * n
+        assert _snapshot(lib, w, count - 1, n)[0] == n  # control: the last real one
+
+
+def _keyframes(lib, w):
+    out = []
+    for i in range(lib.om_chronicle_keyframe_count(w)):
+        t = ctypes.c_uint64(SENTINEL)
+        assert lib.om_chronicle_get_keyframe(w, i, ctypes.byref(t)) == 1
+        out.append(t.value)
+    return out
+
+
+def test_A59_keyframes_sorted_ascending_without_duplicates(lib, world_factory):
+    """Mock entries at 50, 10, 35 and ownership changes at 35 (equal to an entry
+    tick), 10 and 5 give [5, 10, 35, 50]. Today's list is [50, 10, 35, 35, 10, 5]."""
+    w = world_factory(n_regions=4)
+    for eid, start in ((1, 50), (2, 10), (3, 35)):
+        lib.om_chronicle_add_mock_entry(w, entry_id=eid, start_tick=start, end_tick=start + 5)
+    for region, tick in ((0, 35), (1, 10), (2, 5)):
+        lib.om_chronicle_add_ownership_change_event(w, region_idx=region, tick=tick)
+    lib.om_chronicle_generate_map_keyframes(w)
+    assert _keyframes(lib, w) == [5, 10, 35, 50]
+    assert lib.om_chronicle_keyframe_count(w) == 4
+    # control: lookups still see every distinct tick after the sort and dedup
+    for t in (5, 10, 35, 50):
+        assert lib.om_chronicle_has_keyframe_at_tick(w, t) == 1
+    assert lib.om_chronicle_has_keyframe_at_tick(w, 20) == 0
+
+
+def test_A59_keyframes_cleared_when_a_jump_starts(lib, world_factory):
+    """Keyframes are per jump: a jump clears the list, and the next generate
+    returns a sorted unique list again (not the first jump's ticks piled on)."""
+    w = world_factory(n_regions=6)
+    lib.om_chronicle_add_mock_entry(w, entry_id=1, start_tick=900001, end_tick=900005)
+    lib.om_chronicle_generate_map_keyframes(w)
+    assert _keyframes(lib, w) == [900001]  # control: the list is populated before the jump
+    _jump(lib, w, 20)
+    assert lib.om_chronicle_keyframe_count(w) == 0
+    assert lib.om_chronicle_has_keyframe_at_tick(w, 900001) == 0
+    lib.om_chronicle_generate_map_keyframes(w)
+    kfs = _keyframes(lib, w)
+    assert kfs == sorted(set(kfs)), kfs
+    _jump(lib, w, 20)
+    assert lib.om_chronicle_keyframe_count(w) == 0
+    lib.om_chronicle_generate_map_keyframes(w)
+    kfs = _keyframes(lib, w)
+    assert kfs == sorted(set(kfs)), kfs
