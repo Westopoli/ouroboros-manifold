@@ -6,6 +6,7 @@ enum Phase { INIT, NARRATION, SETTLING, PROCEEDING, EXITING }
 
 # A52, R-069-03: the replay clock; the map never waits for the scroll.
 const REPLAY_TICKS_PER_SECOND := 2
+const ENTRY_HOLD_S := 3.0
 
 var _phase: int = Phase.INIT
 var _shell: Node
@@ -24,9 +25,8 @@ var _info_host: Control
 var _faction_names: Dictionary = {}
 
 var _keyframe_queue: Array[Dictionary] = []
+var _entry_hold_s: float = 0.0
 var _entry_queue: Array[Dictionary] = []
-var _waiting_for_entry: bool = false
-var _current_entry_id: String = ""
 var _regions_state: Dictionary = {}
 var _faction_colors: Dictionary = {}
 var _faction_display_colors: Dictionary = {}
@@ -57,14 +57,19 @@ func _ready() -> void:
 	_accent = ThemeConstants.get_era_accent(EraConfig.ACTIVE_ERA_ID)
 	_build_layout()
 	_connect_bus_signals()
-	if SimBridge.USE_LIVE_SIM:
-		SimBridge.send_command({"type": "command", "cmd": "ready_for_time_jump"})
-	# Read after _build_layout: the embedded scroll panel jumps in its own
-	# _ready, so this is the frame it shows.
+	# A69: opening the scene sends no command; the jump was issued by Proceed
+	# from the debrief and the bridge holds its frame.
 	var bridge = SimSession.bridge()
 	var frame: Dictionary = bridge.chronicle_frame()
+	_scroll.slide_in()
+	create_tween().tween_property(_world_viewport, "anchor_right", 0.62, 0.40)
 	if frame.is_empty():
+		_settle()
 		return
+	_phase = Phase.NARRATION
+	_skip_btn.visible = true
+	_scroll.set_snapshot(bridge.chronicle_snapshot())
+	_scroll.load_frame(frame)
 	var live: Array = []
 	for i in range(bridge.regions().size()):
 		live.append(bridge.owner_of(i))
@@ -85,6 +90,9 @@ func load_frame(frame: Dictionary, live_owners: Array) -> void:
 	_rp_entries = frame.get("entries", [])
 	_rp_keyframes_hit = []
 	_rp_entries_started = []
+	_total_entries = _rp_entries.size()
+	_entries_printed = 0
+	_entry_hold_s = 0.0
 	_rp_active = not snaps.is_empty() and _rp_to > _rp_from
 	if _rp_active:
 		_rp_tick = _rp_from
@@ -178,7 +186,7 @@ func _build_layout() -> void:
 	_scroll.anchor_right = 1.0
 	_scroll.anchor_top = 0.0
 	_scroll.anchor_bottom = 1.0
-	_scroll.visible = false
+	_scroll.hosted = true
 	_scroll.entry_finished_printing.connect(_on_entry_finished_printing)
 	_scroll.all_entries_finished.connect(_on_all_entries_finished)
 	_scroll.entry_expansion_opened.connect(_on_expansion_opened)
@@ -314,20 +322,21 @@ func _on_chronicle_entry(entry_data: Dictionary) -> void:
 	_entry_queue.append(entry_data)
 
 
-var _time_jump_ended_received: bool = false
-
 func _on_time_jump_ended(_tj_id: String) -> void:
-	_time_jump_ended_received = true
 	_try_settle()
 
 
+# A79, R-069-03: settle when the replay clock is at the jump's last tick and the
+# last entry has printed and held ENTRY_HOLD_S; keyframes never delay it.
 func _try_settle() -> void:
-	if not _time_jump_ended_received:
+	if _phase != Phase.NARRATION or _rp_active:
 		return
-	if not _keyframe_queue.is_empty() or _waiting_for_entry:
+	if _total_entries > 0 and _entry_hold_s < ENTRY_HOLD_S:
 		return
-	if _rp_active:
-		return
+	_settle()
+
+
+func _settle() -> void:
 	_phase = Phase.SETTLING
 	_skip_btn.visible = false
 	if _next_mission_region != "":
@@ -415,12 +424,8 @@ func _entry_queue_ids() -> Array[String]:
 
 # --- Scroll callbacks ---
 
-func _on_entry_finished_printing(entry_id: String) -> void:
+func _on_entry_finished_printing(_entry_id: String) -> void:
 	_entries_printed += 1
-	if _waiting_for_entry and entry_id == _current_entry_id:
-		_waiting_for_entry = false
-		_current_entry_id = ""
-	_try_settle()
 
 
 func _on_all_entries_finished() -> void:
@@ -443,6 +448,9 @@ func _process(delta: float) -> void:
 		_advance_replay(delta)
 	if _phase == Phase.NARRATION:
 		_advance_narration()
+		if _total_entries > 0 and _entries_printed >= _total_entries:
+			_entry_hold_s += delta
+		_try_settle()
 	elif _phase == Phase.SETTLING:
 		_flicker_timer -= delta
 		if _flicker_timer <= 0.0:
@@ -455,21 +463,13 @@ func _advance_narration() -> void:
 	# See also: scenes/world/world_view_inspection_state.gd, info_panel_host.gd
 	if FeatureFlags.ENABLE_INSPECTION_PAUSE and InspectionState.is_paused():
 		return
-	if _waiting_for_entry:
-		return
-	if _keyframe_queue.is_empty():
-		return
-	var kf: Dictionary = _keyframe_queue.pop_front()
-	_apply_keyframe(kf)
-	var entry_id_val = kf.get("chronicle_entry_id")
-	var entry_id: String = entry_id_val if entry_id_val is String else ""
-	if entry_id != "" and entry_id in _entry_queue_ids():
-		_waiting_for_entry = true
-		_current_entry_id = entry_id
-		_scroll.start_printing(entry_id)
-	else:
-		# No paired entry — check if we should settle
-		_try_settle()
+	while not _keyframe_queue.is_empty():
+		var kf: Dictionary = _keyframe_queue.pop_front()
+		_apply_keyframe(kf)
+		var entry_id_val = kf.get("chronicle_entry_id")
+		var entry_id: String = entry_id_val if entry_id_val is String else ""
+		if entry_id != "" and entry_id in _entry_queue_ids():
+			_scroll.start_printing(entry_id)
 
 
 func _apply_ownership_tick(ownership: Dictionary) -> void:
@@ -515,8 +515,7 @@ func _on_skip() -> void:
 		_rp_tick = _rp_to
 		_show_owners(_rp_live)
 	_scroll.skip_all()
-	_waiting_for_entry = false
-	_current_entry_id = ""
+	_entry_hold_s = ENTRY_HOLD_S
 	_try_settle()
 
 

@@ -158,14 +158,22 @@ func _run_live_tests() -> void:
 	# The scenes share one process-wide session (autoload/sim_session.gd, C2-6):
 	# start the scene under test on a fresh world, the one the private bridge
 	# above answered from.
-	load("res://autoload/sim_session.gd").reset()
+	# A69: opening the panel sends no jump; it shows the frame the flow leading in
+	# (Proceed from the debrief) left on the shared bridge. So issue the live jump
+	# first, then open the panel and expect it to show that held frame. A panel
+	# opened with nothing held is covered by tests/test_chronicle_scene_open.gd.
+	# See also: TD-A69-chronicle-scroll-live in docs/northstar/plans/push_ledger_2026-09-22.md
+	var SimSession = load("res://autoload/sim_session.gd")
+	SimSession.reset()
+	_assert(SimSession.bridge().load_chronicle_live(1, CBridge.DEFAULT_N_REGIONS, CBridge.DEFAULT_FEATURES),
+		"the shared session bridge could not issue the live chronicle jump (last_error = %s)" % SimSession.bridge().last_error())
 	var fresh: Node = (load(SCENE_PATH) as PackedScene).instantiate()
 	get_root().add_child(fresh)
 	await process_frame
 	await process_frame
 	var st: Dictionary = fresh.qa_state()
 	_assert(int(st.get("hash", 0)) == hash(live_frame),
-		"panel with no load_frame() call shows frame hash %s, live frame hash is %s (still showing the fixture?)" % [st.get("hash"), hash(live_frame)])
+		"panel opened on the held live frame (no load_frame() call) shows frame hash %s, live frame hash is %s (still showing the fixture?)" % [st.get("hash"), hash(live_frame)])
 	_assert((st.get("entries", []) as Array).size() + int(st.get("dropped_entries", 0)) == (live_frame.get("entries", []) as Array).size(),
 		"panel shows %d entries + %d dropped, live frame carries %d" % [(st.get("entries", []) as Array).size(), int(st.get("dropped_entries", 0)), (live_frame.get("entries", []) as Array).size()])
 	fresh.queue_free()

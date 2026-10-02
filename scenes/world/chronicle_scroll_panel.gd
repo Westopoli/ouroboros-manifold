@@ -58,6 +58,8 @@ var _qa_regen_count: int = 0
 var _qa_expanded_id: int = -1
 var _qa_tick: int = -1
 
+# Set by the sequencer before add_child: it hands this panel the held frame itself.
+var hosted: bool = false
 var _plant_refs_unresolved: bool = false
 var _plant_entries_dropped: bool = false
 
@@ -65,7 +67,8 @@ var _plant_entries_dropped: bool = false
 func _ready() -> void:
 	_accent = ThemeConstants.get_era_accent(EraConfig.ACTIVE_ERA_ID)
 	_build_ui()
-	_load_live()
+	if not hosted:
+		_load_held()
 	# Stage 11g — listen to the world-view pause coordinator so any holder
 	# (region/faction panel, expansion) halts entry printing.
 	# See also: scenes/world/world_view_inspection_state.gd
@@ -73,21 +76,15 @@ func _ready() -> void:
 		InspectionState.pause_changed.connect(_on_inspection_pause_changed)
 
 
-func _load_live() -> void:
+# A69: opening the scene sends nothing; the frame is the one the flow leading in
+# (Proceed from the debrief) left on the bridge, none after a load.
+func _load_held() -> void:
 	var bridge = SimSession.bridge()
-	if bridge.load_chronicle_live(bridge.live_seed(), bridge.DEFAULT_N_REGIONS, bridge.DEFAULT_FEATURES):
-		if _error_panel != null:
-			_error_panel.hide_error()
-		set_snapshot(bridge.chronicle_snapshot())
-		load_frame(bridge.chronicle_frame())
-	else:
-		var reason: String = bridge.last_error()
-		push_error("chronicle_scroll_panel: live chronicle frame failed: %s" % reason)
-		if _error_panel == null:
-			_error_panel = load("res://scenes/shared/error_panel.tscn").instantiate()
-			_error_panel.retry_pressed.connect(_load_live)
-			add_child(_error_panel)
-		_error_panel.show_error(reason if reason != "" else "chronicle load failed")
+	var frame: Dictionary = bridge.chronicle_frame()
+	if frame.is_empty():
+		return
+	set_snapshot(bridge.chronicle_snapshot())
+	load_frame(frame)
 
 
 func _on_return_pressed() -> void:
@@ -236,8 +233,8 @@ func slide_in() -> void:
 	modulate.a = 0.0
 	visible = true
 	var tw := create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
-	tw.tween_property(self, "position:x", _rest_position_x, 1.0)
-	tw.parallel().tween_property(self, "modulate:a", 1.0, 1.0)
+	tw.tween_property(self, "position:x", _rest_position_x, 0.40)
+	tw.parallel().tween_property(self, "modulate:a", 1.0, 0.40)
 
 
 func slide_out() -> void:

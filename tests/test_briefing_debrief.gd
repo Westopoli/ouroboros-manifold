@@ -724,8 +724,10 @@ func _run_debrief_on_continue_pin() -> void:
 
 	var scene_router := get_root().get_node("SceneRouter")
 	_assert(completed[0] == true, "C4-9 pin: _on_continue() must still emit debrief_completed")
-	_assert(str(scene_router.get("_current_scene_name")) == "chronicle",
-		"C4-9 pin: _on_continue() must still route to chronicle, SceneRouter._current_scene_name = %s" % str(scene_router.get("_current_scene_name")))
+	# TD-A74-proceed-route (A74): Proceed routes to the sequencer ("time_jump"), which embeds the scroll;
+	# "chronicle" stays as the standalone scroll and is not on the Proceed path.
+	_assert(str(scene_router.get("_current_scene_name")) == "time_jump",
+		"C4-9 pin (A74): _on_continue() must route to time_jump, SceneRouter._current_scene_name = %s" % str(scene_router.get("_current_scene_name")))
 
 	root.queue_free()
 	await process_frame
