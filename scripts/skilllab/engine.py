@@ -1,6 +1,7 @@
 """engine.py: build the production C library outside the repo and drive it through ctypes (spec AC 2 and 3)."""
 import ctypes
 import platform
+import re
 import subprocess
 import sys
 import tempfile
@@ -13,6 +14,22 @@ _FLAGS = ["-O2", "-std=c11", "-Wall", "-Wextra", "-fPIC", "-fno-fast-math", "-ff
           "-fexcess-precision=standard", "-fno-math-errno"]
 _BUILTIN = {"Raider": 0, "Interceptor": 1, "Vanguard": 2, "Warden": 3, "Bombard": 4, "Bastion": 5}
 _lib_cache = None
+_param_ids = None
+
+
+def _load_param_ids():
+    """The om_tac_param enum of csrc/ouroboros_sim.h as {name: value}; the header is the contract's source of truth."""
+    global _param_ids
+    if _param_ids is None:
+        text = (ROOT / "csrc" / "ouroboros_sim.h").read_text()
+        body = re.search(r"typedef enum \{([^}]*OM_TP_PURSUE_BY_STEERING[^}]*)\}\s*om_tac_param\s*;", text).group(1)
+        ids, value = {}, 0
+        for m in re.finditer(r"\b(OM_TP_\w+)\s*(?:=\s*(\d+))?\s*,?", re.sub(r"/\*.*?\*/", "", body, flags=re.S)):
+            value = int(m.group(2)) if m.group(2) is not None else value
+            ids[m.group(1)] = value
+            value += 1
+        _param_ids = ids
+    return _param_ids
 
 
 def build_library(scratch_dir=None):
@@ -83,6 +100,10 @@ class Engine:
             "om_unit_get_pos": ([V, u32, pd, pd], i),
             "om_unit_get_layer": ([V, u32], c.c_int32),
             "om_unit_alive": ([V, u32], i),
+            "om_unit_get_target": ([V, u32], u32),
+            "om_unit_get_facing": ([V, u32], d),
+            "om_tactical_get_param": ([V, i], d),
+            "om_tactical_set_param": ([V, i, d], i),
             "om_combat_can_shoot": ([V, u32, u32], i),
             "om_map_add_obstacle": ([V, d, d, d], u32),
         }
@@ -158,6 +179,25 @@ class Engine:
 
     def unit_alive(self, w, u):
         return bool(self._lib.om_unit_alive(w, int(u)))
+
+    def unit_target(self, w, u):
+        return int(self._lib.om_unit_get_target(w, int(u)))
+
+    def unit_facing(self, w, u):
+        return float(self._lib.om_unit_get_facing(w, int(u)))
+
+    def param_id(self, name):
+        ids = _load_param_ids()
+        if name not in ids or name.endswith("__COUNT"):
+            raise ValueError("unknown tactical parameter %r" % (name,))
+        return ids[name]
+
+    def get_param(self, w, param):
+        return float(self._lib.om_tactical_get_param(w, int(param)))
+
+    def set_param(self, w, param, value):
+        if self._lib.om_tactical_set_param(w, int(param), float(value)) != 0:
+            raise ValueError("om_tactical_set_param(%r, %r) refused" % (param, value))
 
     def can_shoot(self, w, a, b):
         return bool(self._lib.om_combat_can_shoot(w, int(a), int(b)))
