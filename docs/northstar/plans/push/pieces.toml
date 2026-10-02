@@ -955,3 +955,18 @@ depends_on = []
 status = "pending"
 tests_pending = true
 size_estimate = "delete the name dictionaries the C pipe never fills; panels take ids and resolve names through chronicle_names.gd"
+
+# Runner-declared test time (rulings round 2, A87): scripts/run_godot_tests.sh reads a
+# `# test-timeout: N` line from the test script; default 300 unchanged. The unit also adds that
+# line to tests/test_chronicle_scene_open.gd and tests/test_time_jump_replay.gd (test-defect,
+# ledger row); those two files are owned here for that one edit only.
+[[piece]]
+id = "HARNESS-runnertime"
+manager = "M0"
+wave = 4
+owns = ["scripts/run_godot_tests.sh", "tests/test_chronicle_scene_open.gd", "tests/test_time_jump_replay.gd"]
+owns_glob = []
+acceptance = ["tests/specfactory/test_runner_declared_time.py"]
+depends_on = []
+status = "pending"
+size_estimate = "a few lines in the runner plus one comment line in each of two tests"
