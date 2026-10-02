@@ -4,10 +4,10 @@ const SimSession := preload("res://autoload/sim_session.gd")
 
 signal debrief_completed
 
-# C transport v1 debrief frame band int -> display string, worst to best.
-# docs/architecture.md "chronicle frame, mission frame, debrief frame";
-# docs/northstar/plans/push/specs/C4.md R-077-02.
-const BAND_NAMES := ["total_failure", "partial_failure", "partial_success", "strong_success", "total_success"]
+# C transport v1 debrief frame band int -> display string, worst to best, then
+# band 5, the refusal debrief (R-078-05). docs/architecture.md "chronicle frame,
+# mission frame, debrief frame"; docs/northstar/plans/push/specs/C4.md R-077-02.
+const BAND_NAMES := ["total_failure", "partial_failure", "partial_success", "strong_success", "total_success", "refusal"]
 
 const PLANTS := ["band-off-by-one"]
 
@@ -41,20 +41,24 @@ func _ready() -> void:
 		_load_live()
 
 
+# A39: the debrief shows the frame the bridge holds from mission_end or
+# mission_refuse and never starts or ends a mission itself.
 func _load_live() -> void:
 	var bridge = SimSession.bridge()
-	if bridge.load_debrief_live(bridge.live_seed(), bridge.DEFAULT_N_REGIONS, bridge.DEFAULT_FEATURES):
-		if _error_panel != null:
-			_error_panel.hide_error()
-		load_frame(bridge.debrief_frame())
+	var held: Dictionary = bridge.debrief_frame()
+	if not held.is_empty():
+		load_frame(held)
 		return
-	var reason: String = bridge.last_error()
-	push_error("debrief: live debrief frame failed: %s" % reason)
+	_show_error(bridge.last_error() if bridge.last_error() != "" else "no debrief frame held")
+
+
+func _show_error(reason: String) -> void:
+	push_error("debrief: debrief frame failed: %s" % reason)
 	if _error_panel == null:
 		_error_panel = load("res://scenes/shared/error_panel.tscn").instantiate()
 		_error_panel.retry_pressed.connect(_load_live)
 		add_child(_error_panel)
-	_error_panel.show_error(reason if reason != "" else "debrief load failed")
+	_error_panel.show_error(reason)
 
 
 func _input(event: InputEvent) -> void:
@@ -66,6 +70,13 @@ func _input(event: InputEvent) -> void:
 # independent of setup()/legacy _params. Replaces stored frame state in full
 # on every call, then rebuilds the on-screen display from it (piece C4-1).
 func load_frame(debrief: Dictionary) -> void:
+	var band := int(debrief.get("band", 0))
+	if band < 0 or band >= BAND_NAMES.size():
+		_frame = {}
+		_show_error("unknown debrief band %d" % band)
+		return
+	if _error_panel != null:
+		_error_panel.hide_error()
 	_frame = {
 		"band": debrief.get("band", 0),
 		"achieved": debrief.get("achieved", 0.0),
@@ -79,7 +90,7 @@ func load_frame(debrief: Dictionary) -> void:
 func qa_state() -> Dictionary:
 	var band_index := int(_frame.get("band", 0))
 	if _plant_band_off_by_one:
-		band_index = mini(band_index + 1, BAND_NAMES.size() - 1)
+		band_index = mini(band_index + 1, BAND_NAMES.size() - 2)
 	var region_delta: Dictionary = _frame.get("region_delta", {})
 	var region_delta_text: Dictionary = {}
 	for k in ["military", "economy", "tension", "population"]:
@@ -88,7 +99,7 @@ func qa_state() -> Dictionary:
 		"scene": "debrief",
 		"tick": -1,
 		"plants": ["band-off-by-one"],
-		"band": BAND_NAMES[band_index],
+		"band": BAND_NAMES[band_index] if not _frame.is_empty() else "",
 		"achieved_pct": float(_frame.get("achieved", 0.0)) * 100.0,
 		"brought_home_pct": float(_frame.get("brought_home", 0.0)) * 100.0,
 		"region_delta": {
