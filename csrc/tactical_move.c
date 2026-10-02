@@ -66,8 +66,12 @@
 #define OM_MOVE_DENSITY_SIDE (OM_CANVAS_SIZE_RANGES_LARGE_HI / OM_NAVMESH_CELL_SIZE)
 #define OM_MOVE_MAX_ROUTE_CACHE OM_MAX_UNITS
 #define OM_MOVE_MAX_QUEUE OM_MAX_UNITS
-#define OM_MOVE_BFS_CAP 512
 #define OM_MOVE_BFS_DIR_COUNT 4
+/* Route fields kept for shared destinations (R-097-02): one distance per cell of the largest canvas, each. */
+#define OM_MOVE_FIELD_POOL 16
+#define OM_MOVE_FIELD_UNREACHED UINT32_MAX
+/* R-099-04: a route waypoint is arrived at within 2 collision radii (a formation slot is 1.5). */
+#define OM_MOVE_WAYPOINT_ARRIVE_MULT 2.0
 
 /* Spatial index over this module's own unit positions (om_move_unit x/y).
  * unit.c's grid (om_grid_query_circle) holds unit.c's position cache, which
@@ -164,6 +168,10 @@ typedef struct {
     int      waiting;
     double   detour_remaining, detour_dx, detour_dy;
     int      visible[OM_MAX_FACTIONS];
+    int      plan_valid;                 /* PP-move route (ROUTE_AROUND_TERRAIN): aim_x/aim_y is the next waypoint */
+    uint32_t plan_epoch;
+    double   plan_dest_x, plan_dest_y, aim_x, aim_y;
+    int      aim_is_waypoint;
 } om_move_unit;
 
 typedef struct {
@@ -180,6 +188,13 @@ typedef struct {
     uint32_t layer;
     int32_t  cx, cy;
 } om_move_route_entry;
+
+typedef struct {
+    int      in_use;
+    uint32_t layer, epoch;
+    int32_t  cx, cy;
+    uint32_t *dist; /* cells to the destination along the grid, counting both ends; OM_MOVE_FIELD_UNREACHED if cut off */
+} om_move_field;
 
 typedef struct {
     int      in_use;
@@ -202,6 +217,9 @@ typedef struct {
     uint64_t last_synced_tick;
     uint32_t period_seen;
 
+    om_move_field        fields[OM_MOVE_FIELD_POOL];
+    uint32_t             field_next, terrain_epoch;
+    uint32_t             *bfs_queue, *bfs_scratch; /* a cell per entry of the largest canvas, allocated by the first search */
     double               *density; /* OM_LAYER_COUNT * OM_MOVE_DENSITY_SIDE^2, allocated by the first set */
 
     om_move_route_entry route_cache[OM_MOVE_MAX_ROUTE_CACHE];
@@ -317,7 +335,14 @@ int om_mapgen_cell_blocked(const om_world *w, uint32_t layer, int32_t cx, int32_
 void om_mapgen_cell_set_density(om_world *w, uint32_t layer, int32_t cx, int32_t cy, double density);
 
 static void om_move_state_free_fn(void *p) {
-    if (p) free(((om_move_state *)p)->density);
+    if (p) {
+        om_move_state *ms = (om_move_state *)p;
+        uint32_t k;
+        for (k = 0; k < OM_MOVE_FIELD_POOL; k++) free(ms->fields[k].dist);
+        free(ms->bfs_queue);
+        free(ms->bfs_scratch);
+        free(ms->density);
+    }
     free(p);
 }
 
@@ -428,6 +453,12 @@ static int om_move_param_on(const om_move_state *ms, om_tac_param p) {
     return ms->param[p] != 0.0;
 }
 
+/* Internal, not in the header: a cell turned blocked or open outside om_map_set_obstacle_density (om_map_block_rect),
+ * so every kept route is stale (R-207-03). See also: om_map_block_rect in csrc/tactical_mapgen.c, the caller to be. */
+void om_move_terrain_changed(om_world *w) {
+    if (w) om_ms(w)->terrain_epoch++;
+}
+
 /* Internal, not in the header: the canvas only lives in the private mapgen state, so om_map_set_canvas and
  * om_map_clear (tactical_mapgen.c) hand its size over; 0 x 0 = unset.
  * See also: om_map_set_canvas in csrc/tactical_mapgen.c, the caller. */
@@ -437,6 +468,7 @@ void om_move_set_canvas_size(om_world *w, double width, double height) {
     ms = om_ms(w);
     ms->canvas_w = width;
     ms->canvas_h = height;
+    ms->terrain_epoch++;
 }
 
 /* Python movement.py: new positions are clamped to [0, width] x [0, height]. */
@@ -891,6 +923,11 @@ static int om_move_grid_any_above(om_world *w, om_move_state *ms, double x, doub
 }
 
 
+static int32_t om_move_layer(const om_world *w, uint32_t id) {
+    int32_t l = om_unit_get_layer(w, id);
+    return l < 0 ? 0 : l;
+}
+
 static om_move_unit *om_move_touch(om_world *w, om_move_state *ms, uint32_t unit_id) {
     om_move_unit *mu = om_move_get(ms, unit_id);
     uint32_t f;
@@ -1052,54 +1089,214 @@ static void om_move_route_touch(om_move_state *ms, uint32_t layer, double dest_x
     }
 }
 
-static int om_move_los_clear(om_move_state *ms, double x0, double y0, double x1, double y1, uint32_t layer) {
-    double dx = x1 - x0, dy = y1 - y0;
-    double dist = sqrt(dx * dx + dy * dy);
-    int steps, i;
-    if (dist < OM_TIE_EPSILON) return 1;
-    steps = (int)(dist / (OM_NAVMESH_CELL_SIZE * 0.5)) + 1;
-    for (i = 0; i <= steps; i++) {
-        double t = (double)i / (double)steps;
-        double px = x0 + t * dx, py = y0 + t * dy;
-        if (om_move_density_at_pos(ms, px, py, layer) > OM_NAVMESH_OBSTACLE_THRESHOLD) return 0;
+/* Exact grid walk (Amanatides and Woo) from (x0, y0) to (x1, y1) through the 100 wu cells: 1 when no cell it
+ * touches is blocked on the layer. A line through a cell corner needs both side cells open. */
+static int om_move_los_clear(const om_world *w, om_move_state *ms, double x0, double y0, double x1, double y1, uint32_t layer) {
+    const double inf = OM_MOVE_GRID_FAR;
+    int32_t cx = (int32_t)floor(x0 / OM_NAVMESH_CELL_SIZE), cy = (int32_t)floor(y0 / OM_NAVMESH_CELL_SIZE);
+    const int32_t ex = (int32_t)floor(x1 / OM_NAVMESH_CELL_SIZE), ey = (int32_t)floor(y1 / OM_NAVMESH_CELL_SIZE);
+    const double dx = x1 - x0, dy = y1 - y0;
+    const int32_t sx = dx > 0.0 ? 1 : -1, sy = dy > 0.0 ? 1 : -1;
+    double tx = dx != 0.0 ? ((double)(sx > 0 ? cx + 1 : cx) * OM_NAVMESH_CELL_SIZE - x0) / dx : inf;
+    double ty = dy != 0.0 ? ((double)(sy > 0 ? cy + 1 : cy) * OM_NAVMESH_CELL_SIZE - y0) / dy : inf;
+    const double ddx = dx != 0.0 ? (double)sx * OM_NAVMESH_CELL_SIZE / dx : inf;
+    const double ddy = dy != 0.0 ? (double)sy * OM_NAVMESH_CELL_SIZE / dy : inf;
+    int32_t left = (ex > cx ? ex - cx : cx - ex) + (ey > cy ? ey - cy : cy - ey) + 1;
+    for (;;) {
+        if (om_move_cell_blocked(w, ms, layer, cx, cy)) return 0;
+        if ((cx == ex && cy == ey) || left-- <= 0) return 1;
+        if (tx < ty) { cx += sx; tx += ddx; }
+        else if (ty < tx) { cy += sy; ty += ddy; }
+        else {
+            if (om_move_cell_blocked(w, ms, layer, cx + sx, cy) || om_move_cell_blocked(w, ms, layer, cx, cy + sy)) return 0;
+            cx += sx; cy += sy; tx += ddx; ty += ddy;
+        }
+    }
+}
+
+/* Cells per axis of the search window: the canvas when set, else the largest canvas. */
+static void om_move_window(const om_move_state *ms, int32_t *nx, int32_t *ny) {
+    *nx = OM_MOVE_DENSITY_SIDE;
+    *ny = OM_MOVE_DENSITY_SIDE;
+    if (ms->canvas_w > 0.0 && ms->canvas_h > 0.0) {
+        *nx = om_move_cells_for(ms->canvas_w);
+        *ny = om_move_cells_for(ms->canvas_h);
+    }
+}
+
+/* Breadth-first fill from one cell over open cells (4 neighbours, +x -x +y -y), O(cells), ties settled by the
+ * fixed neighbour order: dist[y * nx + x] = steps + 1, OM_MOVE_FIELD_UNREACHED elsewhere. With a stop cell
+ * (inside the window) the fill ends once that cell is reached: a one-off query, not a field to keep. */
+static void om_move_bfs_fill(const om_world *w, om_move_state *ms, uint32_t layer, int32_t scx, int32_t scy, int32_t stop_cx, int32_t stop_cy, uint32_t *dist) {
+    static const int32_t OM_BFS_DX[OM_MOVE_BFS_DIR_COUNT] = {1, -1, 0, 0};
+    static const int32_t OM_BFS_DY[OM_MOVE_BFS_DIR_COUNT] = {0, 0, 1, -1};
+    int32_t nx, ny;
+    uint32_t head = 0, tail = 0, i;
+    om_move_window(ms, &nx, &ny);
+    for (i = 0; i < (uint32_t)(nx * ny); i++) dist[i] = OM_MOVE_FIELD_UNREACHED;
+    if (scx < 0 || scy < 0 || scx >= nx || scy >= ny || om_move_cell_blocked(w, ms, layer, scx, scy)) return;
+    dist[scy * nx + scx] = 1;
+    ms->bfs_queue[tail++] = (uint32_t)(scy * nx + scx);
+    while (head < tail) {
+        uint32_t c = ms->bfs_queue[head++];
+        int32_t cx = (int32_t)(c % (uint32_t)nx), cy = (int32_t)(c / (uint32_t)nx);
+        int dir;
+        for (dir = 0; dir < OM_MOVE_BFS_DIR_COUNT; dir++) {
+            int32_t x = cx + OM_BFS_DX[dir], y = cy + OM_BFS_DY[dir];
+            if (x < 0 || y < 0 || x >= nx || y >= ny || dist[y * nx + x] != OM_MOVE_FIELD_UNREACHED) continue;
+            if (om_move_cell_blocked(w, ms, layer, x, y)) continue;
+            dist[y * nx + x] = dist[c] + 1;
+            ms->bfs_queue[tail++] = (uint32_t)(y * nx + x);
+            if (x == stop_cx && y == stop_cy) return;
+        }
+    }
+}
+
+static int om_move_bfs_ready(om_move_state *ms) {
+    const size_t n = (size_t)OM_MOVE_DENSITY_SIDE * OM_MOVE_DENSITY_SIDE;
+    if (!ms->bfs_queue) ms->bfs_queue = (uint32_t *)malloc(n * sizeof(uint32_t));
+    if (!ms->bfs_scratch) ms->bfs_scratch = (uint32_t *)malloc(n * sizeof(uint32_t));
+    return ms->bfs_queue && ms->bfs_scratch;
+}
+
+static om_move_field *om_move_field_kept(om_move_state *ms, uint32_t layer, int32_t cx, int32_t cy) {
+    uint32_t k;
+    for (k = 0; k < OM_MOVE_FIELD_POOL; k++) {
+        om_move_field *f = &ms->fields[k];
+        if (f->in_use && f->layer == layer && f->cx == cx && f->cy == cy && f->epoch == ms->terrain_epoch) return f;
+    }
+    return NULL;
+}
+
+/* The distance field to a destination cell, from the pool of recent destinations (R-097-02: computed once for
+ * a shared destination); NULL when the destination cell is blocked or outside the window. A cell that turns
+ * blocked or open bumps terrain_epoch, which makes every kept field stale (R-207-03). */
+static const uint32_t *om_move_field_for(const om_world *w, om_move_state *ms, uint32_t layer, int32_t cx, int32_t cy) {
+    int32_t nx, ny;
+    om_move_field *f;
+    om_move_window(ms, &nx, &ny);
+    if (cx < 0 || cy < 0 || cx >= nx || cy >= ny || om_move_cell_blocked(w, ms, layer, cx, cy)) return NULL;
+    if ((f = om_move_field_kept(ms, layer, cx, cy)) != NULL) return f->dist;
+    if (!om_move_bfs_ready(ms)) return NULL;
+    f = &ms->fields[ms->field_next];
+    ms->field_next = (ms->field_next + 1) % OM_MOVE_FIELD_POOL;
+    if (!f->dist) f->dist = (uint32_t *)malloc((size_t)OM_MOVE_DENSITY_SIDE * OM_MOVE_DENSITY_SIDE * sizeof(uint32_t));
+    if (!f->dist) { f->in_use = 0; return NULL; }
+    om_move_bfs_fill(w, ms, layer, cx, cy, -1, -1, f->dist);
+    f->in_use = 1;
+    f->layer = layer;
+    f->cx = cx;
+    f->cy = cy;
+    f->epoch = ms->terrain_epoch;
+    return f->dist;
+}
+
+/* No route to (dx, dy): the nearest point to it that can be reached from (sx, sy), as a point at least a
+ * collision radius inside its cell. Ties go to the lower cell id. Returns 0 when the start is not on an open cell. */
+static int om_move_nearest_reachable(const om_world *w, om_move_state *ms, uint32_t layer, double sx, double sy, double dx, double dy, double *ox, double *oy) {
+    int32_t nx, ny, c, scx = (int32_t)floor(sx / OM_NAVMESH_CELL_SIZE), scy = (int32_t)floor(sy / OM_NAVMESH_CELL_SIZE);
+    double best = OM_MOVE_GRID_FAR;
+    int32_t best_c = -1;
+    om_move_window(ms, &nx, &ny);
+    if (!om_move_bfs_ready(ms)) return 0;
+    om_move_bfs_fill(w, ms, layer, scx, scy, -1, -1, ms->bfs_scratch);
+    for (c = 0; c < nx * ny; c++) {
+        double x0, y0, qx, qy, d2;
+        if (ms->bfs_scratch[c] == OM_MOVE_FIELD_UNREACHED) continue;
+        x0 = (double)(c % nx) * OM_NAVMESH_CELL_SIZE;
+        y0 = (double)(c / nx) * OM_NAVMESH_CELL_SIZE;
+        qx = dx < x0 ? x0 : (dx > x0 + OM_NAVMESH_CELL_SIZE ? x0 + OM_NAVMESH_CELL_SIZE : dx);
+        qy = dy < y0 ? y0 : (dy > y0 + OM_NAVMESH_CELL_SIZE ? y0 + OM_NAVMESH_CELL_SIZE : dy);
+        d2 = (qx - dx) * (qx - dx) + (qy - dy) * (qy - dy);
+        if (d2 < best) { best = d2; best_c = c; }
+    }
+    if (best_c < 0) return 0;
+    {
+        double x0 = (double)(best_c % nx) * OM_NAVMESH_CELL_SIZE + OM_UNIT_COLLISION_RADIUS;
+        double y0 = (double)(best_c / nx) * OM_NAVMESH_CELL_SIZE + OM_UNIT_COLLISION_RADIUS;
+        double x1 = x0 + OM_NAVMESH_CELL_SIZE - 2.0 * OM_UNIT_COLLISION_RADIUS, y1 = y0 + OM_NAVMESH_CELL_SIZE - 2.0 * OM_UNIT_COLLISION_RADIUS;
+        *ox = dx < x0 ? x0 : (dx > x1 ? x1 : dx);
+        *oy = dy < y0 ? y0 : (dy > y1 ? y1 : dy);
     }
     return 1;
 }
 
-/* Never exercised by this card's acceptance tests (the one find_path test
- * has an open path); a bounded 4-directional BFS so an obstructed query
- * still returns something usable rather than 0/failure. */
-static uint32_t om_move_bfs_path_len(om_move_state *ms, double x0, double y0, double x1, double y1, uint32_t layer) {
-    int32_t scx = (int32_t)floor(x0 / OM_NAVMESH_CELL_SIZE);
-    int32_t scy = (int32_t)floor(y0 / OM_NAVMESH_CELL_SIZE);
-    int32_t ecx = (int32_t)floor(x1 / OM_NAVMESH_CELL_SIZE);
-    int32_t ecy = (int32_t)floor(y1 / OM_NAVMESH_CELL_SIZE);
-    static const int32_t OM_BFS_DX[OM_MOVE_BFS_DIR_COUNT] = {1, -1, 0, 0};
-    static const int32_t OM_BFS_DY[OM_MOVE_BFS_DIR_COUNT] = {0, 0, 1, -1};
-    int32_t qx[OM_MOVE_BFS_CAP], qy[OM_MOVE_BFS_CAP], qd[OM_MOVE_BFS_CAP];
-    int32_t vx[OM_MOVE_BFS_CAP], vy[OM_MOVE_BFS_CAP];
-    int n_visited = 0, head = 0, tail = 0, dir;
+/* Cells the route from (x0, y0) to a destination takes, counting both ends: 2 when the straight line is clear
+ * (straightened), 1 when there is no route (also when either end is off the grid). A kept field answers if there is one. last_path_straightened records the first. */
+static uint32_t om_move_route_len(const om_world *w, om_move_state *ms, uint32_t layer, double x0, double y0, double x1, double y1, int *straight) {
+    int32_t nx, ny, scx = (int32_t)floor(x0 / OM_NAVMESH_CELL_SIZE), scy = (int32_t)floor(y0 / OM_NAVMESH_CELL_SIZE);
+    int32_t dcx = (int32_t)floor(x1 / OM_NAVMESH_CELL_SIZE), dcy = (int32_t)floor(y1 / OM_NAVMESH_CELL_SIZE);
+    const om_move_field *kept;
+    const uint32_t *f;
+    *straight = om_move_los_clear(w, ms, x0, y0, x1, y1, layer);
+    if (*straight) return 2;
+    om_move_window(ms, &nx, &ny);
+    if (scx < 0 || scy < 0 || scx >= nx || scy >= ny || dcx < 0 || dcy < 0 || dcx >= nx || dcy >= ny) return 1;
+    kept = om_move_field_kept(ms, layer, dcx, dcy);
+    if (kept) f = kept->dist;
+    else {
+        if (!om_move_bfs_ready(ms)) return 1;
+        om_move_bfs_fill(w, ms, layer, dcx, dcy, scx, scy, ms->bfs_scratch);
+        f = ms->bfs_scratch;
+    }
+    return f[scy * nx + scx] == OM_MOVE_FIELD_UNREACHED ? 1 : f[scy * nx + scx];
+}
 
-    qx[tail] = scx; qy[tail] = scy; qd[tail] = 1; tail++;
-    vx[n_visited] = scx; vy[n_visited] = scy; n_visited++;
-
-    while (head < tail) {
-        int32_t cx = qx[head], cy = qy[head], d = qd[head];
-        head++;
-        if (cx == ecx && cy == ecy) return (uint32_t)d;
-        for (dir = 0; dir < OM_MOVE_BFS_DIR_COUNT; dir++) {
-            int32_t nx = cx + OM_BFS_DX[dir], ny = cy + OM_BFS_DY[dir];
-            int seen = 0, i;
-            if (om_move_density_cell_get(ms, nx, ny, layer) > OM_NAVMESH_OBSTACLE_THRESHOLD) continue;
-            for (i = 0; i < n_visited; i++) {
-                if (vx[i] == nx && vy[i] == ny) { seen = 1; break; }
+/* One unit's route (R-097-01, R-097-02): sets aim to the next waypoint toward the destination: the farthest
+ * cell centre on the shortest grid path that is still in line of sight, or the destination itself when it is.
+ * A destination with no route is replaced by the nearest point that can be reached.
+ * See also: om_move_steer_step, which follows the aim. */
+static void om_move_route_plan(const om_world *w, om_move_state *ms, om_move_unit *mu, uint32_t layer) {
+    int32_t nx, ny, cx = (int32_t)floor(mu->x / OM_NAVMESH_CELL_SIZE), cy = (int32_t)floor(mu->y / OM_NAVMESH_CELL_SIZE);
+    const uint32_t *f;
+    om_move_window(ms, &nx, &ny);
+    mu->plan_valid = 1;
+    mu->plan_epoch = ms->terrain_epoch;
+    mu->aim_is_waypoint = 0;
+    mu->aim_x = mu->dest_x;
+    mu->aim_y = mu->dest_y;
+    if (cx < 0 || cy < 0 || cx >= nx || cy >= ny || om_move_los_clear(w, ms, mu->x, mu->y, mu->dest_x, mu->dest_y, layer)) goto done;
+    f = om_move_field_for(w, ms, layer, (int32_t)floor(mu->dest_x / OM_NAVMESH_CELL_SIZE), (int32_t)floor(mu->dest_y / OM_NAVMESH_CELL_SIZE));
+    if (!f || f[cy * nx + cx] == OM_MOVE_FIELD_UNREACHED) {
+        double px, py;
+        if (!om_move_nearest_reachable(w, ms, layer, mu->x, mu->y, mu->dest_x, mu->dest_y, &px, &py)) goto done;
+        mu->dest_x = mu->aim_x = px;
+        mu->dest_y = mu->aim_y = py;
+        if (om_move_los_clear(w, ms, mu->x, mu->y, px, py, layer)) goto done;
+        f = om_move_field_for(w, ms, layer, (int32_t)floor(px / OM_NAVMESH_CELL_SIZE), (int32_t)floor(py / OM_NAVMESH_CELL_SIZE));
+        if (!f || f[cy * nx + cx] == OM_MOVE_FIELD_UNREACHED) goto done;
+    }
+    {
+        static const int32_t OM_BFS_DX[OM_MOVE_BFS_DIR_COUNT] = {1, -1, 0, 0};
+        static const int32_t OM_BFS_DY[OM_MOVE_BFS_DIR_COUNT] = {0, 0, 1, -1};
+        int seen_all = 1;
+        while (f[cy * nx + cx] > 1) {
+            int dir;
+            int32_t bx = cx, by = cy;
+            for (dir = 0; dir < OM_MOVE_BFS_DIR_COUNT; dir++) {
+                int32_t x = cx + OM_BFS_DX[dir], y = cy + OM_BFS_DY[dir];
+                if (x < 0 || y < 0 || x >= nx || y >= ny || f[y * nx + x] != f[cy * nx + cx] - 1) continue;
+                bx = x;
+                by = y;
+                break;
             }
-            if (seen || n_visited >= OM_MOVE_BFS_CAP || tail >= OM_MOVE_BFS_CAP) continue;
-            vx[n_visited] = nx; vy[n_visited] = ny; n_visited++;
-            qx[tail] = nx; qy[tail] = ny; qd[tail] = d + 1; tail++;
+            if (bx == cx && by == cy) { seen_all = 0; break; }
+            cx = bx;
+            cy = by;
+            if (!om_move_los_clear(w, ms, mu->x, mu->y, ((double)cx + 0.5) * OM_NAVMESH_CELL_SIZE, ((double)cy + 0.5) * OM_NAVMESH_CELL_SIZE, layer)) { seen_all = 0; break; }
+            mu->aim_x = ((double)cx + 0.5) * OM_NAVMESH_CELL_SIZE;
+            mu->aim_y = ((double)cy + 0.5) * OM_NAVMESH_CELL_SIZE;
+            mu->aim_is_waypoint = 1;
+        }
+        if (seen_all && mu->aim_is_waypoint) {
+            mu->aim_x = mu->dest_x;
+            mu->aim_y = mu->dest_y;
+            mu->aim_is_waypoint = 0;
         }
     }
-    return 1;
+done:
+    mu->plan_dest_x = mu->dest_x;
+    mu->plan_dest_y = mu->dest_y;
 }
 
 /* ------------------------------------------------------------ collision */
@@ -1459,10 +1656,23 @@ static uint32_t om_move_probe_gather_start(om_move_state *ms, uint32_t self_id, 
  * See also: the 13-angle sweep in om_move_tick_unit, which this replaces when the switch is 0. */
 static void om_move_steer_step(om_world *w, om_move_state *ms, om_move_unit *mu, uint32_t period) {
     uint32_t id = mu->unit_id;
-    double dx = mu->dest_x - mu->x, dy = mu->dest_y - mu->y;
-    double dist = sqrt(dx * dx + dy * dy), steer_x, steer_y, step_dist, move_dist;
+    const int route = om_move_param_on(ms, OM_TP_ROUTE_AROUND_TERRAIN);
+    double dx, dy, dist, steer_x, steer_y, step_dist, move_dist;
+    if (route) {
+        double wx = mu->aim_x - mu->x, wy = mu->aim_y - mu->y;
+        const double reach = OM_MOVE_WAYPOINT_ARRIVE_MULT * OM_UNIT_COLLISION_RADIUS;
+        if (!mu->plan_valid || mu->plan_epoch != ms->terrain_epoch || mu->plan_dest_x != mu->dest_x || mu->plan_dest_y != mu->dest_y
+            || (mu->aim_is_waypoint && wx * wx + wy * wy < reach * reach))
+            om_move_route_plan(w, ms, mu, (uint32_t)om_move_layer(w, id));
+        dx = mu->aim_x - mu->x;
+        dy = mu->aim_y - mu->y;
+    } else {
+        dx = mu->dest_x - mu->x;
+        dy = mu->dest_y - mu->y;
+    }
+    dist = sqrt(dx * dx + dy * dy);
     mu->waiting = 0;
-    if (dist < OM_ARRIVAL_TOLERANCE_MULT * OM_UNIT_COLLISION_RADIUS) {
+    if (sqrt((mu->dest_x - mu->x) * (mu->dest_x - mu->x) + (mu->dest_y - mu->y) * (mu->dest_y - mu->y)) < OM_ARRIVAL_TOLERANCE_MULT * OM_UNIT_COLLISION_RADIUS) {
         mu->has_dest = 0;
         mu->deflecting = 0;
         return;
@@ -2002,22 +2212,20 @@ void om_map_set_obstacle_density(om_world *w, uint32_t p0, uint32_t p1, uint32_t
         if (!ms->density) return;
     }
     ms->density[i] = p3;
+    ms->terrain_epoch++;
     om_mapgen_cell_set_density(w, p2, (int32_t)p0, (int32_t)p1, p3);
 }
 
 uint32_t om_navmesh_find_path(om_world *w, double p0, double p1, double p2, double p3, uint32_t p4) {
     om_move_state *ms;
-    int clear;
+    int straight;
+    uint32_t len;
     if (!w) return 0;
     ms = om_ms(w);
-    clear = om_move_los_clear(ms, p0, p1, p2, p3, p4);
+    len = om_move_route_len(w, ms, p4, p0, p1, p2, p3, &straight);
     om_move_route_touch(ms, p4, p2, p3);
-    if (clear) {
-        ms->last_path_straightened = 1;
-        return 2;
-    }
-    ms->last_path_straightened = 0;
-    return om_move_bfs_path_len(ms, p0, p1, p2, p3, p4);
+    ms->last_path_straightened = straight;
+    return len;
 }
 
 uint32_t om_navmesh_get_cache_hits(const om_world *w) {
