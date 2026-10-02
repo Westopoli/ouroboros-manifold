@@ -7,11 +7,11 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 8 stories, 46 rules, numbers from `algorithms.md` ALG-26 through ALG-28 and ALG-38 through ALG-40. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 4 open flags on S-227: Q-227-01, Q-227-02, Q-227-03 and Q-159-12 (held by E-22 S-173). S-042 to S-048 have none. |
+| Implied-but-unstated behavior turned into flags | 4 open flags on S-227: Q-173-01, Q-227-02, Q-227-03 and Q-159-12 (held by E-22 S-173). S-042 to S-048 have none. |
 | Every visible-surface story has a reference | Not applicable. Tech tiers change unit look; that reference belongs to E-11. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** S-227 (added 2026-10-02) has not been through the gate and is blocked on Q-227-01, Q-227-02, Q-227-03 and Q-159-12 (held by E-22 S-173). S-042 to S-048 have no open flags; gate to be rerun.
+**Gate verdict: not passed.** S-227 (added 2026-10-02) has not been through the gate and is blocked on Q-173-01, Q-227-02, Q-227-03 and Q-159-12 (held by E-22 S-173). S-042 to S-048 have no open flags; gate to be rerun.
 
 ## Purpose
 
@@ -140,14 +140,14 @@ As a commander, I want the technology my side starts a mission with to follow th
 Decided in part 2026-10-02 (DECISIONS H4); the rest is open. Not scheduled for building. What technology does is E-22 S-173 (Q-159-12).
 
 Rules
-- R-227-01  Given a mission generates, When a side's starting technology is set, Then it is derived from the faction's technology level (S-045), only slightly [Q-227-01: the mapping from the faction's number to the mission's starting technology, and how slight is slight].
+- R-227-01  Given a mission generates, When a side's starting technology is set, Then it is derived from the faction's technology level (S-045), only slightly [Q-173-01: the mapping from the faction's number to the mission's starting technology, and how slight is slight].
 - R-227-02  Given an era has a wide range of technology levels (for example 1 to 5), When a normal timed single match is played, Then a side has time to climb one or two levels, as a tech-up does in StarCraft 2.
 - R-227-03  Given a mission ends, When the technology a side reached in it is read, Then [Q-227-02: whether anything flows back into the faction's number (S-045), and whether Knowledge Lost (R-045-07) touches a mission's technology].
 - R-227-04  Given the three tiers of R-048-01 and an era's range of levels, When both are read, Then [Q-227-03: how the three tiers relate to the era's levels, for example 1 to 5].
 
 Inputs: the faction's technology (S-045); the era's range of levels.
 Outputs: a mission's starting technology (E-10 mission generator, E-22 S-173).
-Open flags: Q-227-01, Q-227-02, Q-227-03, Q-159-12.
+Open flags: Q-173-01, Q-227-02, Q-227-03, Q-159-12.
 
 ## Inputs
 
@@ -196,7 +196,7 @@ None required in this epic.
 
 ## Open ambiguity flags
 
-Q-227-01, Q-227-02, Q-227-03 (S-227), with Q-159-12 held by E-22 S-173. Details in `docs/northstar/ambiguity_register.md`.
+Q-173-01, Q-227-02, Q-227-03 (S-227), with Q-159-12 held by E-22 S-173. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

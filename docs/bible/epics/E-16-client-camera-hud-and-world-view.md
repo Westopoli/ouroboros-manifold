@@ -7,7 +7,7 @@
 | Every story has at least one Given/When/Then rule with concrete values | Yes, 16 stories, 91 rules. Numbers come from the bible's HUD, world view, and transition sections and from config timing values; the economy and layer-action stories (S-230 to S-235) state what must be shown and leave numbers and layout to flags. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs; every output here is a screen region, observable by T2. |
-| Implied-but-unstated behavior turned into flags | 17 open flags: 5 on the first stories, Q-103-04, Q-103-05, Q-103-06, Q-110-03, Q-111-01, and 12 on S-230 to S-235, Q-230-01 to Q-230-03, Q-231-01 to Q-231-03, Q-232-01, Q-232-02, Q-233-01, Q-234-01, Q-234-02, Q-235-01. |
+| Implied-but-unstated behavior turned into flags | 17 open flags: 5 on the first stories, Q-103-04, Q-103-05, Q-103-06, Q-110-03, Q-111-01, and 12 on S-230 to S-235, Q-230-01 to Q-230-03, Q-231-01 to Q-231-03, Q-232-01, Q-232-02, Q-233-01, Q-234-01, Q-240-01, Q-235-01. |
 | Every visible-surface story has a reference | **No.** Every story in this epic is a visible surface; `references/E-16/notes.md` is a stub. The IGoP HUD screenshots the bible cites (`docs/design_questions/igop_hud_reference_alpha.png`, `_beta.png`) are the first entries once Westley confirms them. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
@@ -256,7 +256,7 @@ Rules
 
 Inputs: scroll or zoom input.
 Outputs: viewport transform.
-Open flags: Q-234-01 (whether the Sand Table of S-161 is the zoomed-out end of this one drawing or a separate drawing; Q-103-05 is the prototype question), Q-234-02 (scale, see Scale requirements).
+Open flags: Q-234-01 (whether the Sand Table of S-161 is the zoomed-out end of this one drawing or a separate drawing; Q-103-05 is the prototype question), Q-240-01 (scale, see Scale requirements).
 
 ### S-235 — The map shows the economy and its news
 As a commander, I want the map to show where the economy is and the ticker to tell me what happened to it, so that I can read the war's other half at a glance.
@@ -303,7 +303,7 @@ Open flags: Q-235-01.
 
 ## Scale requirements
 
-Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): 60 fps with 1,000 units on screen and the HUD live; galaxy view at 60 fps with 250 to 400 systems, shells, and particles, with automatic quality fallback allowed (Q-106-02 closed 2026-09-28); transition never drops below 30 fps. The long-term goal of thousands of units and workers on one map (hub "Reference Hardware") is not yet a client budget; E-18 S-240 states 30 fps at 1,000 units where this epic states 60 fps, and whether workers, buildings and settlement pieces count as units on screen is Q-234-02. Measured on the minimum-spec machine (GTX 1070 class, `game_bible.md` "Reference Hardware"); on the forge's RTX 3060 the same scenes must hold about 110 fps and the transition floor about 55 fps.
+Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated): 60 fps with 1,000 units on screen and the HUD live; galaxy view at 60 fps with 250 to 400 systems, shells, and particles, with automatic quality fallback allowed (Q-106-02 closed 2026-09-28); transition never drops below 30 fps. The long-term goal of thousands of units and workers on one map (hub "Reference Hardware") is not yet a client budget; E-18 S-240 states 30 fps at 1,000 units where this epic states 60 fps, and whether workers, buildings and settlement pieces count as units on screen is Q-240-01. Measured on the minimum-spec machine (GTX 1070 class, `game_bible.md` "Reference Hardware"); on the forge's RTX 3060 the same scenes must hold about 110 fps and the transition floor about 55 fps.
 
 ## Look and behavior references
 
@@ -324,7 +324,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-230-01, Q-230-02, Q-230-03, Q-231-01, Q-231-02, Q-231-03, Q-232-01, Q-232-02, Q-233-01, Q-234-01, Q-234-02, Q-235-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-230-01, Q-230-02, Q-230-03, Q-231-01, Q-231-02, Q-231-03, Q-232-01, Q-232-02, Q-233-01, Q-234-01, Q-240-01, Q-235-01. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

@@ -7,7 +7,7 @@
 | Every story has at least one Given/When/Then rule with concrete values | Partly. 9 stories, 33 rules; the determinism and transport rules are concrete, the match-shape rules are placeholders pending Westley, and the paired-mode stories (S-159, S-241, S-242) carry numbers as flags. |
 | Every input listed with range and rejection behavior | Partly; see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 13 open flags: 8 on S-140 to S-144 (Q-140-01, Q-140-02, Q-141-01, Q-141-02, Q-142-01, Q-142-02, Q-144-01, Q-144-03) and 5 on S-241 and S-242 (Q-241-01, Q-241-02, Q-242-01 to Q-242-03). |
+| Implied-but-unstated behavior turned into flags | 13 open flags: 8 on S-140 to S-144 (Q-140-01, Q-140-02, Q-141-01, Q-141-02, Q-142-01, Q-142-02, Q-144-01, Q-144-03) and 5 on S-241 and S-242 (Q-214-01, Q-241-02, Q-242-01 to Q-242-03). |
 | Every visible-surface story has a reference | **No.** S-144 (lobby and match flow) is a visible surface with no reference. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
@@ -128,12 +128,12 @@ Design decided 2026-10-02 (DECISIONS H7, H13), not scheduled for building. Teams
 Rules
 - R-241-01  Given the paired queue, When a team forms, Then it has 2 or 4 players, in pairs (R-159-01). Teams of 6 are a desired future feature (R-241-04).
 - R-241-02  Given a team, When it plays, Then each player is a sub-commander and each pair is a sub-civilization inside the over-arching civilization [Q-241-02: what a sub-civilization is in the rules (its own base, resources, population cap, ledger), and what a sub-commander is when the player runs the economy].
-- R-241-03  Given more players in a team, When the map and mission are made, Then the map is bigger, there is more to do, there are more resources and there are more enemies; Given 4 to 6 players, Then the canvas is 64,000 wu, and smaller matches keep today's sizes (E-17 S-166) [Q-241-01: how much more of each resource and how many more enemies per added pair].
+- R-241-03  Given more players in a team, When the map and mission are made, Then the map is bigger, there is more to do, there are more resources and there are more enemies; Given 4 to 6 players, Then the canvas is 64,000 wu, and smaller matches keep today's sizes (E-17 S-166) [Q-214-01: how much more of each resource and how many more enemies per added pair].
 - R-241-04  Given the match runs on lockstep, When a team forms, Then every player is a peer, and the confirmed scale figure is 4 peers, so a team has 2 or 4 players. More than 4 peers, and so teams of 6, are a desired future feature that waits on a higher peer count (Westley, 2026-10-02: "we can keep 4, so long as more is marked as a desired future feature").
 
 Inputs: the pairs in the queue.
 Outputs: a team and its map.
-Open flags: Q-241-01, Q-241-02.
+Open flags: Q-214-01, Q-241-02.
 
 ### S-242 — A pair on the wire
 As a player in a pair, I want my building, scheduling and requests to reach my partner's machine as commands like any other, so that we play one economy and one war.
@@ -197,7 +197,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-140-01, Q-140-02, Q-141-01, Q-141-02, Q-142-01, Q-142-02, Q-144-01, Q-144-03, Q-241-01, Q-241-02, Q-242-01, Q-242-02, Q-242-03. The economy's flags (Q-159-07 to Q-159-10 and the rest) are E-22's. Details in `docs/northstar/ambiguity_register.md`.
+Q-140-01, Q-140-02, Q-141-01, Q-141-02, Q-142-01, Q-142-02, Q-144-01, Q-144-03, Q-214-01, Q-241-02, Q-242-01, Q-242-02, Q-242-03. The economy's flags (Q-159-07 to Q-159-10 and the rest) are E-22's. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

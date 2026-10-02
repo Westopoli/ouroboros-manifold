@@ -7,7 +7,7 @@
 | Every story has at least one Given/When/Then rule with concrete values | S-072 to S-080: yes, 9 stories, 48 rules, numbers from `algorithms.md` ALG-54 through ALG-59 and config tables. S-210 to S-214: 5 stories, 22 rules, design decided 2026-10-02 and not scheduled for building; where Westley has not given a number the rule carries a flag instead. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 1 open flag on S-072 to S-080, Q-080-03, and 17 on S-210 to S-214 (Q-210-02 to Q-210-06, Q-211-01 to Q-211-04, Q-212-01 to Q-212-05, Q-213-01, Q-214-01, Q-214-02), plus Q-159-12 and Q-177-05 carried from E-22. |
+| Implied-but-unstated behavior turned into flags | 1 open flag on S-072 to S-080, Q-080-03, and 17 on S-210 to S-214 (Q-177-01 to Q-210-06, Q-177-02 to Q-211-04, Q-178-05 to Q-212-05, Q-173-01, Q-214-01, Q-214-02), plus Q-159-12 and Q-177-05 carried from E-22. |
 | Every visible-surface story has a reference | **No.** S-079 (briefing and debrief screens) has a visible surface and no reference. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
@@ -46,7 +46,7 @@ Open flags: none.
 
 ### S-073 — Ten kinds of trouble
 
-Direction changed 2026-10-02, rewrite pending: the layout library of R-073-03 stays, and terrain-first generation is added to it, so the terrain engine accounts for the layouts (E-17 S-166 R-166-03, Q-191-04; how an archetype shapes such a map is Q-210-05). The rules below are what the game does today.
+Direction changed 2026-10-02, rewrite pending: the layout library of R-073-03 stays, and terrain-first generation is added to it, so the terrain engine accounts for the layouts (E-17 S-166 R-166-03, Q-191-04; how an archetype shapes such a map is Q-191-04). The rules below are what the game does today.
 As a commander, I want every mission to be a recognizable military situation with its own trigger, shape, and map, so that I learn the grammar of orders and still never see the same mission twice.
 
 Rules
@@ -71,7 +71,7 @@ Rules
 
 Inputs: library tables.
 Outputs: loaded archetype table; contract test.
-Open flags: none. Full per-archetype prose from the Stage 1 KEEP rows (A-441 through A-450) moves into the library's archetype entries in E-21. See also: S-210 (the base kind each archetype carries), S-214 (the canvas for 4 to 6 players), Q-210-05.
+Open flags: none. Full per-archetype prose from the Stage 1 KEEP rows (A-441 through A-450) moves into the library's archetype entries in E-21. See also: S-210 (the base kind each archetype carries), S-214 (the canvas for 4 to 6 players), Q-191-04.
 
 ### S-074 — You get what the civilization can spare
 Flag closed, rule text pending: Q-074-01, power is (HP * base_damage) / attack_interval, normalized so Vanguard = 100.0. The rule below is what the tests read today.
@@ -133,7 +133,7 @@ Rules
 
 Inputs: objectives; unit store; initial power; commander unit id.
 Outputs: mission result (band, objective score, retention, per-objective, commander fate, ticks elapsed) in the save file and debrief.
-Open flags: none here (the cap and the retention question are S-212's, Q-212-01 and Q-212-04).
+Open flags: none here (the cap and the retention question are S-212's, Q-178-05 and Q-212-04).
 
 ### S-078 — A battle becomes history
 Flag closed, rule text pending: Q-078-01, the targets `home` and `exposed` stay and both resolve to the mission region, so consequences apply to the mission region itself. The rule below is what the tests read today.
@@ -150,7 +150,7 @@ Rules
 
 Inputs: mission result; consequence tables; world.
 Outputs: applied deltas in the T1 trace; region fields; ownership.
-Open flags: none here. See also: S-212 and Q-212-03 (how a base occupied at mission end relates to R-078-04's transfer).
+Open flags: none here. See also: S-212 and Q-178-02 (how a base occupied at mission end relates to R-078-04's transfer).
 
 ### S-079 — Orders, not menus
 As a commander, I want to receive my orders as a superior officer would give them, three parts and no haggling, and to see afterward how it went and what it cost, so that the civilization feels like a chain of command.
@@ -185,7 +185,7 @@ As a commander, I want the kind of base each side begins with to follow from the
 Status: design decided 2026-10-02, not scheduled for building.
 
 Rules
-- R-210-01  Given a mission, When its setup is built, Then each side is given one base of operations at the start, and the kind of base is decided by the mission archetype (S-073) together with the supply distance, which is the number of regions between the mission's region and the nearest region the civilization owns (E-03 S-223) [Q-210-02: how the two combine]. The kinds a base can be (generating on site, supplied from elsewhere, or both) and the numbers of regions at which the kind changes are E-22 S-177's [Q-177-05].
+- R-210-01  Given a mission, When its setup is built, Then each side is given one base of operations at the start, and the kind of base is decided by the mission archetype (S-073) together with the supply distance, which is the number of regions between the mission's region and the nearest region the civilization owns (E-03 S-223) [Q-177-01: how the two combine]. The kinds a base can be (generating on site, supplied from elsewhere, or both) and the numbers of regions at which the kind changes are E-22 S-177's [Q-177-05].
 - R-210-02  Given an archetype, When its entry is read, Then it carries a base kind for each side, read from the library as the asset profile is (R-073-02) and not hard-coded. The approach is decided (Westley, 2026-10-02: "B1+2") and the table below, taken from `docs/northstar/research/economy_design/base_and_objective_options.md` part B1, stands as written (Westley, 2026-10-02: "looks good, no changes needed").
 
 | Archetype | Player's base | Enemy's base |
@@ -202,7 +202,7 @@ Rules
 
 Inputs: archetype library; the supply distance (E-03 S-223); the mission's region.
 Outputs: each side's base kind and original main base in the mission setup.
-Open flags: Q-177-05 (carried from E-22 S-177), Q-210-02, Q-210-03, Q-210-04 (whether and where the briefing states each side's base kind), Q-210-05 (how an archetype shapes a map made from layouts and terrain-first generation together, see E-17 Q-191-04), Q-210-06 (where the economy settings are chosen). Where a base stands is whatever the terrain gives (E-17 R-166-03).
+Open flags: Q-177-05 (carried from E-22 S-177), Q-177-01, Q-210-03, Q-210-04 (whether and where the briefing states each side's base kind), Q-191-04 (how an archetype shapes a map made from layouts and terrain-first generation together, see E-17 Q-191-04), Q-210-06 (where the economy settings are chosen). Where a base stands is whatever the terrain gives (E-17 R-166-03).
 
 ### S-211 — The resources fit the situation
 As a commander, I want the resources on the map to be scarce or plentiful as the simulation's situation says, tilted toward the side with the better position, and never so thin that I cannot do the job, so that the economy is part of the mission and never a trap.
@@ -210,14 +210,14 @@ As a commander, I want the resources on the map to be scarce or plentiful as the
 Status: design decided 2026-10-02, not scheduled for building.
 
 Rules
-- R-211-01  Given a mission, When its resources are set, Then they are limited or abundant consistent with the situation the simulation gives the mission's region, and slanted by it (a defender has the better position) [Q-211-01: which parts of the situation decide, and how big the slant is].
+- R-211-01  Given a mission, When its resources are set, Then they are limited or abundant consistent with the situation the simulation gives the mission's region, and slanted by it (a defender has the better position) [Q-177-02: which parts of the situation decide, and how big the slant is].
 - R-211-02  Given any mission, When it is generated, Then the player has the means to accomplish it even when it is hard (Westley, 2026-10-02: "the player always has the means to do the mission") [Q-211-02: how the means are guaranteed, and how that sits beside the shortfall of R-074-05].
 - R-211-03  Given a mission, When base, objective and significant resources are placed, Then they are usually three separate places and not always, and the significant resources sit opposite the objective, so a side picks one or fights for both (E-22 S-177 holds the rule; E-17 places them) [Q-211-03: for each archetype, where the objective sits against each side's base].
 - R-211-04  Given the final score, When the result is classified (S-077), Then the resources are not scored separately: a side that ignores them is overrun unless it rushes and finishes fast.
 
 Inputs: the region's simulation situation; the archetype; difficulty.
 Outputs: the resource situation in the mission setup, for the briefing to state [Q-210-04].
-Open flags: Q-211-01, Q-211-02, Q-211-03, Q-211-04 (who owns "resource generosity" in R-080-02, among difficulty, this story's slant and the enemy's prosperity in E-14 S-215).
+Open flags: Q-177-02, Q-211-02, Q-211-03, Q-211-04 (who owns "resource generosity" in R-080-02, among difficulty, this story's slant and the enemy's prosperity in E-14 S-215).
 
 ### S-212 — When a base falls
 As a commander, I want losing my main base to cost me the result but not always the fight, so that I can fall back to what I still hold and save something.
@@ -227,15 +227,15 @@ Status: design decided 2026-10-02, not scheduled for building. Occupying and ret
 Rules
 - R-212-01  Given the player's side has lost its original main base (S-210), When the result is classified (R-077-02), Then the best band it can get is partial_failure: a final score that would classify higher is classified partial_failure (Westley, 2026-10-02: "at the point they've lost their original main base it's partial failure at maximum"). The cap concerns a forward base only when it is the side's original main base (R-210-04), never forward works.
 - R-212-02  Given a side loses its base of operations while it holds an expansion or forward works, When the loss is applied, Then that expansion or forward works becomes its base of operations and the mission goes on (E-22 S-178, S-175).
-- R-212-03  Given a side loses its base of operations and holds no expansion and no forward works, When the loss is applied, Then [Q-212-02: whether the mission ends at once and is scored, or goes on with what is on the field].
-- R-212-04  Given a side has lost its original main base and retakes it before the mission ends, When the result is classified, Then [Q-212-01: whether the cap of R-212-01 lifts].
-- R-212-05  Given the mission ends while a base is held by the other side, When the region's ownership is set (R-078-04), Then [Q-212-03: whether the region follows the side that holds the base at the end, or the S-073 transfer column decides].
+- R-212-03  Given a side loses its base of operations and holds no expansion and no forward works, When the loss is applied, Then [Q-178-04: whether the mission ends at once and is scored, or goes on with what is on the field].
+- R-212-04  Given a side has lost its original main base and retakes it before the mission ends, When the result is classified, Then [Q-178-05: whether the cap of R-212-01 lifts].
+- R-212-05  Given the mission ends while a base is held by the other side, When the region's ownership is set (R-078-04), Then [Q-178-02: whether the region follows the side that holds the base at the end, or the S-073 transfer column decides].
 - R-212-06  Given the end conditions of R-075-07, When the player's force is judged eliminated, Then [Q-212-05: whether a side with no units in the field but a base with production or workers is eliminated].
 - R-212-07  Given workers and units made during the mission, When retention is computed (R-077-01), Then [Q-212-04: whether they count in deployed power and surviving power].
 
 Inputs: base ownership during the mission (E-22 S-178); the result of S-077.
 Outputs: the band cap and the mission end in the mission result.
-Open flags: Q-212-01, Q-212-02, Q-212-03, Q-212-04, Q-212-05.
+Open flags: Q-178-05, Q-178-04, Q-178-02, Q-212-04, Q-212-05.
 
 ### S-213 — The technology a mission starts with
 As a commander, I want the technology each side starts a mission with to follow, only slightly, from how advanced the civilization is, so that a mission feels of its time and there is still room to climb during it.
@@ -243,13 +243,13 @@ As a commander, I want the technology each side starts a mission with to follow,
 Status: design decided in part 2026-10-02, not scheduled for building. What technology does is E-22 S-173 (Q-159-12).
 
 Rules
-- R-213-01  Given a mission, When its setup is built, Then each side's starting technology level is derived from the simulation's technology level (E-06 S-045), and only slightly [Q-213-01: how slight, and how the faction's 0 to 100 number maps to the era's levels].
+- R-213-01  Given a mission, When its setup is built, Then each side's starting technology level is derived from the simulation's technology level (E-06 S-045), and only slightly [Q-173-01: how slight, and how the faction's 0 to 100 number maps to the era's levels].
 - R-213-02  Given an era with a wide range of technology levels (for example 1 to 5), When a normal timed single match is played, Then there is time to go up one or two levels, as in a StarCraft 2 tech-up (Westley, 2026-10-02), so the starting level shifts a mission only a little.
 - R-213-03  Given a technology level, When a mission uses it, Then what it does is E-22 S-173 and nothing in this story decides it.
 
 Inputs: the faction's technology level (E-06 S-045); the era pack's range of levels.
 Outputs: each side's starting technology level in the mission setup.
-Open flags: Q-213-01, Q-159-12.
+Open flags: Q-173-01, Q-159-12.
 
 ### S-214 — More players, a bigger fight
 As a member of a team of 2 or 4, I want the map, the enemies and the resources to grow with the number of players, so that each of us is a sub-commander and each pair a sub-civilization inside a larger war.
@@ -330,7 +330,7 @@ Confirmed by Westley, 2026-09-14 (never loosened by Agora; a miss is escalated):
 
 ## Open ambiguity flags
 
-Q-080-03, Q-159-12, Q-177-05, Q-210-02 to Q-210-06, Q-211-01 to Q-211-04, Q-212-01 to Q-212-05, Q-213-01, Q-214-01, Q-214-02. Details in `docs/northstar/ambiguity_register.md`.
+Q-080-03, Q-159-12, Q-177-05, Q-177-01 to Q-210-06, Q-177-02 to Q-211-04, Q-178-05 to Q-212-05, Q-173-01, Q-214-01, Q-214-02. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 

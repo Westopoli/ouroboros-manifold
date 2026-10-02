@@ -7,7 +7,7 @@
 | Every story has at least one Given/When/Then rule with concrete values | S-120 to S-125: yes, 6 stories, 22 rules, numbers from `algorithms.md` ALG-74 and config. S-215 to S-217: 3 stories, 17 rules, design decided 2026-10-02 and not scheduled for building; where Westley has not given a number the rule carries a flag instead. |
 | Every input listed with range and rejection behavior | Yes, see Inputs. |
 | Every output listed with where it is observable | Yes, see Outputs. |
-| Implied-but-unstated behavior turned into flags | 1 open flag on S-120 to S-125, Q-125-03, and 8 on S-215 to S-217 (Q-215-01 to Q-215-04, Q-216-01 to Q-216-03, Q-217-01), plus Q-212-02 carried. |
+| Implied-but-unstated behavior turned into flags | 1 open flag on S-120 to S-125, Q-125-03, and 8 on S-215 to S-217 (Q-215-01 to Q-215-04, Q-216-01 to Q-216-03, Q-217-01), plus Q-178-04 carried. |
 | Every visible-surface story has a reference | Not applicable. Enemy behavior is observed through units (E-11, E-13). |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
@@ -136,13 +136,13 @@ Status: design decided 2026-10-02, not scheduled for building.
 
 Rules
 - R-216-01  Given an enemy base of operations, expansion or forward works (E-22 S-175), When its forces are scripted, Then their behaviour is tied to those places and they defend them [Q-216-01: whether this is done with the five behaviours of R-120-01 or with new ones, or belongs to the economy rules].
-- R-216-02  Given an enemy force that retreats, When the enemy holds a base of operations, Then it plain-moves to that base, which after a fall-back (E-22 S-178) is the expansion or forward works the enemy held; where the enemy holds no base, the fallback point of R-120-02 stands [Q-212-02: what happens to a side with no base].
+- R-216-02  Given an enemy force that retreats, When the enemy holds a base of operations, Then it plain-moves to that base, which after a fall-back (E-22 S-178) is the expansion or forward works the enemy held; where the enemy holds no base, the fallback point of R-120-02 stands [Q-178-04: what happens to a side with no base].
 - R-216-03  Given the enemy economy founds an expansion or builds production forward, When it chooses where and when, Then [Q-216-02: whether the economy rules or the behaviour script decide; Westley: "Where it stands shows where the next push comes from"].
 - R-216-04  Given raid lanes set by the terrain (E-22 S-174), When the enemy raids, Then a force travels along a lane to the player's workers or shipments [Q-216-01: which behaviour does this; Q-216-03: whether raiding needs foresight on, since shipments are blind (E-22 S-176)].
 
 Inputs: the enemy's bases (E-22 S-175, S-178); raid lanes (E-17); the script.
 Outputs: enemy commands in the command log; force state in the T1 trace.
-Open flags: Q-216-01, Q-216-02, Q-216-03, Q-212-02.
+Open flags: Q-216-01, Q-216-02, Q-216-03, Q-178-04.
 
 ### S-217 — The enemy uses the layers
 As a commander, I want the enemy to move between layers, ping and go quiet as I can, so that the layers are as much its ground as mine.
@@ -214,7 +214,7 @@ None required.
 
 ## Open ambiguity flags
 
-Q-125-03, Q-215-01 to Q-215-04, Q-216-01 to Q-216-03, Q-217-01, Q-212-02. Details in `docs/northstar/ambiguity_register.md`.
+Q-125-03, Q-215-01 to Q-215-04, Q-216-01 to Q-216-03, Q-217-01, Q-178-04. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
