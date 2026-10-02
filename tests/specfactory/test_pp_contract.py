@@ -28,7 +28,7 @@ DOC = REPO / "docs" / "northstar" / "plans" / "push" / "pp_contract.md"
 
 EXPECTED_ABI = 4
 
-# name -> (module, restype, [(param name, ctype), ...]); the contract document section 1 and 6.
+# name -> (module, restype, [(param name, ctype), ...]); the contract document section 1 and 6 (17 calls).
 W = "om_world*"
 CW = "const om_world*"
 NEW_CALLS = {
@@ -54,6 +54,11 @@ NEW_CALLS = {
     "om_ping_alert_count": ("fog.c", "uint32_t", [("w", CW), ("faction", "int32_t")]),
     "om_ping_alert_get": ("fog.c", "int", [
         ("w", CW), ("faction", "int32_t"), ("index", "uint32_t"), ("out", "om_ping_alert*")]),
+    # A133: three read-only getters, defined in tactical_move.c (never unit.c), stubs in the contract wave
+    "om_unit_get_group_id": ("tactical_move.c", "uint32_t", [("w", CW), ("unit", "uint32_t")]),
+    "om_unit_get_leash_anchor": ("tactical_move.c", "int", [
+        ("w", CW), ("unit", "uint32_t"), ("x", "double*"), ("y", "double*")]),
+    "om_unit_get_engaged": ("tactical_move.c", "int", [("w", CW), ("unit", "uint32_t")]),
 }
 
 HEADER_BLOCK_RE = re.compile(
@@ -237,6 +242,45 @@ def test_ping_alert_struct_row_and_typedef():
         ("tick", "uint64_t"), ("faction", "int32_t"), ("sector", "int32_t")]
     header = strip_c_comments(HEADER.read_text())
     assert re.search(r"typedef\s+struct\s+\w*\s*\{[^}]*\}\s*om_ping_alert\s*;", header, re.S)
+
+
+def define_value(text: str, name: str):
+    """Values of every `#define name value` outside comments, as numbers (ints stay ints)."""
+    out = []
+    for m in re.finditer(rf"^[ \t]*#define[ \t]+{re.escape(name)}[ \t]+([0-9.]+)[ \t]*$", strip_c_comments(text), re.M):
+        out.append(float(m.group(1)) if "." in m.group(1) else int(m.group(1)))
+    return out
+
+
+def test_control_define_value_counts_a_duplicate_and_ignores_comments():
+    text = "/* #define OM_X 1 */\n#define OM_X 5\n#define OM_X 6\n#define OM_Y 2.5\n#define OM_XX 9\n"
+    assert define_value(text, "OM_X") == [5, 6]
+    assert define_value(text, "OM_Y") == [2.5]
+    assert define_value(text, "OM_Z") == []
+
+
+def test_E01_A132_header_carries_the_layer_count_as_one_named_constant_5():
+    """A132: engine layers 0 to 4; the count is one constant, defined once."""
+    assert define_value(HEADER.read_text(), "OM_LAYER_COUNT") == [5]
+
+
+def test_PP_header_carries_the_canvas_limit_as_one_named_constant_28000():
+    """A133 Q-C3: the limit is OM_MAP_MAX_CANVAS, defined once, equal to the constants header's large range."""
+    assert [float(v) for v in define_value(HEADER.read_text(), "OM_MAP_MAX_CANVAS")] == [28000.0]
+    large = define_value((REPO / "csrc" / "om_constants.h").read_text(), "OM_CANVAS_SIZE_RANGES_LARGE_HI")
+    assert [float(v) for v in large] == [28000.0]
+
+
+def test_the_three_getters_are_defined_in_tactical_move_never_in_unit_c():
+    """A133: the stubs go to tactical_move.c. Positive control: a getter defined in unit.c would be found."""
+    getters = ("om_unit_get_group_id", "om_unit_get_leash_anchor", "om_unit_get_engaged")
+    pat = lambda n: rf"^[a-z_0-9 ]+\b{n}\s*\([^)]*\)\s*\{{"
+    assert re.search(pat("om_unit_get_group_id"), "uint32_t om_unit_get_group_id(const om_world *w, uint32_t unit) {\n", re.M)
+    move = strip_c_comments((REPO / "csrc" / "tactical_move.c").read_text())
+    unit = strip_c_comments((REPO / "csrc" / "unit.c").read_text())
+    for n in getters:
+        assert re.search(pat(n), move, re.M), f"{n} must be defined in tactical_move.c"
+        assert not re.search(pat(n), unit, re.M), f"{n} must not be defined in unit.c"
 
 
 def test_param_table_in_the_contract_document_is_well_formed():

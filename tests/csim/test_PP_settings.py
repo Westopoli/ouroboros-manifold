@@ -7,6 +7,11 @@ whole fight, set mid-fight takes effect on the next tick) and the plan appendix 
 The rule numbers behind the settings are R-084-01 (category multiplier, used here to show a set is applied),
 R-087-05 (leash), R-005-02 (cross-layer vision), S-162 and S-163 (ping and emission numbers).
 
+Also here (rulings-2 Addendum 46): canvas limit OM_MAP_MAX_CANVAS (A133 Q-C3), settings survive om_tactical_reset
+and are not hashed (A133 Q-C4), the layer range 0 to OM_LAYER_COUNT - 1 and the cover height rule (A132), and the
+unknown-unit returns of the three read-only getters (A133). The getters' bodies are stubs in the contract wave, so
+no behaviour beyond the unknown-unit return is tested here.
+
 Not here, by design: what the switches DO to movement, targeting or sight. Other writers own that.
 
 The new calls are not bound in tests/csim/conftest.py until the contract lands, so today every test fails on
@@ -16,13 +21,22 @@ behaviour. The defaults, ranges and order are read from the contract document's 
 
 Every refusal check has a positive control: an in-range set on the same parameter that must return 0 and
 read back, so a call that refuses (or accepts) everything cannot pass."""
+import ctypes
 import math
 import pathlib
+import re
 
 import pytest
 
 REPO = pathlib.Path(__file__).resolve().parents[2]
 DOC = REPO / "docs" / "northstar" / "plans" / "push" / "pp_contract.md"
+HEADER = REPO / "csrc" / "ouroboros_sim.h"
+
+
+def _header_constant(name):
+    m = re.search(rf"^[ \t]*#define[ \t]+{name}[ \t]+([0-9.]+)", HEADER.read_text(), re.M)
+    assert m, f"{name} is not defined in csrc/ouroboros_sim.h (A132/A133 name it as a header constant)"
+    return float(m.group(1))
 
 
 def _load_params():
@@ -279,3 +293,176 @@ def test_PP_canvas_a_non_positive_or_non_finite_size_returns_minus_1(lib, w, wid
 def test_PP_canvas_a_null_world_returns_minus_1(lib, w):
     assert lib.om_map_set_canvas(w, 8000.0, 8000.0) == 0, "control"
     assert lib.om_map_set_canvas(None, 8000.0, 8000.0) == -1
+
+
+def test_PP_canvas_a_side_above_the_limit_is_refused_and_the_limit_itself_is_accepted(lib, w):
+    """A133 Q-C3: width or height above OM_MAP_MAX_CANVAS (28,000) returns -1. Control: exactly the limit is fine."""
+    limit = _header_constant("OM_MAP_MAX_CANVAS")
+    assert limit == 28000.0
+    assert lib.om_map_set_canvas(w, limit, limit) == 0, "control: the limit itself is accepted"
+    over = limit + 1.0
+    for width, height in ((over, 8000.0), (8000.0, over), (over, over), (limit * 2, 100.0), (100.0, 1e12)):
+        assert lib.om_map_set_canvas(w, width, height) == -1, f"({width}, {height})"
+    assert lib.om_map_set_canvas(w, 8000.0, 8000.0) == 0, "a refused call leaves the world able to take a good one"
+
+
+# ---- settings are configuration: survive reset, not hashed, a new world starts at defaults (A133 Q-C4) ----
+
+def test_PP_settings_survive_om_tactical_reset(lib, w):
+    p = BY_NAME["OM_TP_ATTACK_MOVE_LEASH"]
+    q = BY_NAME["OM_TP_CATMULT_STRIKE_LINE"]
+    assert lib.om_tactical_set_param(w, p["value"], 123.0) == 0
+    assert lib.om_tactical_set_param(w, q["value"], 1.5) == 0
+    unit = lib.om_unit_spawn(w, RAIDER, 0, 0.0, 0.0, 0)
+    assert lib.om_unit_alive(w, unit) == 1 and lib.om_unit_count(w) == 1, "control: there is tactical state to reset"
+    lib.om_tactical_reset(w)
+    assert lib.om_unit_count(w) == 0, "control: the reset really cleared the tactical state"
+    assert lib.om_tactical_get_param(w, p["value"]) == 123.0
+    assert lib.om_tactical_get_param(w, q["value"]) == 1.5
+    other = BY_NAME["OM_TP_VANTAGE_MULT"]
+    assert lib.om_tactical_get_param(w, other["value"]) == pytest.approx(other["default"], abs=1e-12)
+
+
+def test_PP_a_set_does_not_change_the_state_checksum(lib, w):
+    """Settings are not hashed (A133 Q-C4). The only world checksum today hashes regions and the tick, so the
+    control moves the tick: the checksum must react to that, or the unchanged reads below prove nothing."""
+    before = lib.om_world_get_state_checksum(w)
+    lib.om_world_set_tick(w, 7)
+    with_tick = lib.om_world_get_state_checksum(w)
+    assert with_tick != before, "control: the checksum must react to a state change"
+    lib.om_unit_spawn(w, RAIDER, 0, 0.0, 0.0, 0)
+    for name, v in (("OM_TP_ATTACK_MOVE_LEASH", 0.0), ("OM_TP_CATMULT_STRIKE_LINE", 1.5),
+                    ("OM_TP_TARGETING_COHORTS", 7.0), ("OM_TP_PURSUE_BY_STEERING", 0.0)):
+        assert lib.om_tactical_set_param(w, BY_NAME[name]["value"], v) == 0, name
+        assert lib.om_world_get_state_checksum(w) == with_tick, f"setting {name} changed the checksum"
+    lib.om_tactical_reset(w)
+    assert lib.om_world_get_state_checksum(w) == with_tick, "a reset that keeps the settings leaves the hash alone"
+
+
+def test_PP_a_new_world_starts_at_the_defaults_after_another_world_was_set(lib, world_factory):
+    """No setting leaks between worlds, and none outlives om_tactical_reset into a world made later."""
+    a = world_factory(n_regions=1)
+    for p in PARAMS:
+        assert lib.om_tactical_set_param(a, p["value"], _other_valid_value(p)) == 0, p["name"]
+    lib.om_tactical_reset(a)
+    b = world_factory(n_regions=1)
+    for p in PARAMS:
+        assert lib.om_tactical_get_param(b, p["value"]) == pytest.approx(p["default"], abs=1e-12), p["name"]
+    assert lib.om_tactical_get_param(a, PARAMS[6]["value"]) == pytest.approx(_other_valid_value(PARAMS[6]), abs=1e-12), \
+        "control: world a still holds what was set"
+
+
+# ---- cover height is a whole count of layers from the bottom (A132) ----
+
+def _cover_count(lib, w):
+    return lib.om_map_cover_count(w)
+
+
+def _cover_height(lib, w, index):
+    h = ctypes.c_double(-99.0)
+    assert lib.om_map_cover_at(w, index, None, None, None, ctypes.byref(h)) == 1
+    return h.value
+
+
+@pytest.mark.parametrize("height", [0.0, 1.0, 2.0, 3.0, 4.0, 5.0])
+def test_E01_A132_a_whole_layer_count_height_from_0_to_5_is_accepted_and_stored(lib, w, height):
+    """h blocks engine layers 0 to h-1; 0 adds an obstacle that blocks nothing; 5 blocks all five."""
+    assert _header_constant("OM_LAYER_COUNT") == 5.0
+    n = _cover_count(lib, w)
+    idx = lib.om_map_add_cover(w, 10.0, 20.0, 5.0, height)
+    assert idx == n + 1, f"height {height}: expected the 1-based index of a new row, got {idx}"
+    assert _cover_count(lib, w) == n + 1
+    assert _cover_height(lib, w, n) == height
+
+
+@pytest.mark.parametrize("height", [
+    0.5, 1.5, 4.999, 0.0001, -1.0, -0.5, -5.0, 5.0001, 5.5, 6.0, 100.0, 1e300,
+    float("nan"), math.inf, -math.inf], ids=lambda v: str(v))
+def test_E01_A132_a_fractional_negative_non_finite_or_above_5_height_is_refused(lib, w, height):
+    """Refused: returns 0 and adds nothing. Control: a whole in-range height on the same world is accepted
+    afterwards and gets row index 1, so the refused call left no row behind."""
+    assert lib.om_map_add_cover(w, 10.0, 20.0, 5.0, height) == 0, f"height {height}"
+    assert _cover_count(lib, w) == 0, f"height {height} left a row behind"
+    assert lib.om_map_add_cover(w, 10.0, 20.0, 5.0, 3.0) == 1, "control: a whole height is accepted"
+    assert _cover_count(lib, w) == 1
+
+
+def test_E01_A132_the_height_limit_follows_the_layer_count_constant(lib, w):
+    top = _header_constant("OM_LAYER_COUNT")
+    assert lib.om_map_add_cover(w, 0.0, 0.0, 5.0, top) == 1, "control: OM_LAYER_COUNT itself is the top height"
+    assert lib.om_map_add_cover(w, 0.0, 0.0, 5.0, top + 1.0) == 0
+
+
+# ---- layer range of the layer-taking calls: 0 to OM_LAYER_COUNT - 1 (A132) ----
+
+def test_E01_A132_block_rect_takes_layers_0_to_4_and_refuses_5(lib, w):
+    top = int(_header_constant("OM_LAYER_COUNT")) - 1
+    assert lib.om_map_set_canvas(w, 8000.0, 8000.0) == 0
+    assert lib.om_map_block_rect(w, 0.0, 0.0, 300.0, 300.0, 0, top) == 0, "control: the whole range 0 to 4 is accepted"
+    assert lib.om_map_block_rect(w, 0.0, 0.0, 300.0, 300.0, top, top) == 0, "control: the top layer alone"
+    assert lib.om_map_block_rect(w, 0.0, 0.0, 300.0, 300.0, 0, top + 1) == -1
+    assert lib.om_map_block_rect(w, 0.0, 0.0, 300.0, 300.0, top + 1, top + 1) == -1
+    assert lib.om_map_block_rect(w, 0.0, 0.0, 300.0, 300.0, 2, 1) == -1, "layer_lo above layer_hi"
+
+
+def test_E01_A132_command_set_layer_takes_layers_0_to_4_and_refuses_5(lib, w):
+    """Red until PP-unit lands om_command_set_layer (a stub returns 0 for everything); A135 pending list."""
+    top = int(_header_constant("OM_LAYER_COUNT")) - 1
+    unit = lib.om_unit_spawn(w, RAIDER, 0, 0.0, 0.0, 0)
+    ids = (ctypes.c_uint32 * 1)(unit)
+    assert lib.om_command_set_layer(w, ids, 1, top) == 0, "control: the top layer is accepted"
+    assert lib.om_command_set_layer(w, ids, 1, 0) == 0, "control: the bottom layer is accepted"
+    assert lib.om_command_set_layer(w, ids, 1, top + 1) == -1
+
+
+def test_E01_A132_command_ping_refuses_a_layer_at_or_above_the_count_with_reason_4(lib, world_factory):
+    """Red until PP-fog lands om_command_ping (a stub returns 0); A135 pending list. A fresh world each call
+    so cooldown cannot cause the refusal."""
+    top = int(_header_constant("OM_LAYER_COUNT")) - 1
+
+    def ping(layer):
+        w = world_factory(n_regions=1)
+        caster = lib.om_unit_spawn(w, RAIDER, 0, 0.0, 0.0, 0)
+        return lib.om_command_ping(w, caster, layer, 100.0, 0.0)
+
+    assert ping(top) == 0, "control: the top layer is a valid ping layer"
+    assert ping(top + 1) == 4
+
+
+# ---- the three read-only getters (A133): unknown-unit returns only; bodies are stubs this wave ----
+
+UNKNOWN_UNITS = (0, 99999, 0xFFFFFFFF)
+
+
+def test_A133_getters_return_0_for_an_unknown_unit_and_write_nothing(lib, w):
+    ax, ay = ctypes.c_double(-777.0), ctypes.c_double(-888.0)
+    for uid in UNKNOWN_UNITS:
+        assert lib.om_unit_get_group_id(w, uid) == 0, uid
+        assert lib.om_unit_get_engaged(w, uid) == 0, uid
+        assert lib.om_unit_get_leash_anchor(w, uid, ctypes.byref(ax), ctypes.byref(ay)) == 0, uid
+        assert (ax.value, ay.value) == (-777.0, -888.0), f"unit {uid}: outputs must stay untouched"
+        assert lib.om_unit_get_leash_anchor(w, uid, None, None) == 0, "NULL outputs are allowed"
+
+
+def test_A133_getters_return_0_for_a_null_world(lib, w):
+    unit = lib.om_unit_spawn(w, RAIDER, 0, 0.0, 0.0, 0)
+    assert lib.om_unit_alive(w, unit) == 1, "control: the unit exists in w"
+    ax, ay = ctypes.c_double(-777.0), ctypes.c_double(-888.0)
+    assert lib.om_unit_get_group_id(None, unit) == 0
+    assert lib.om_unit_get_engaged(None, unit) == 0
+    assert lib.om_unit_get_leash_anchor(None, unit, ctypes.byref(ax), ctypes.byref(ay)) == 0
+    assert (ax.value, ay.value) == (-777.0, -888.0)
+
+
+def test_A133_getters_on_a_fresh_live_unit_report_no_group_not_engaged_no_anchor(lib, w):
+    """Positive control for the unknown-unit tests: the same calls on a unit that exists, which has had no
+    order. Group 0 (no group), not engaged, no anchor, outputs untouched. This is a stub-compatible check;
+    A3 adds the behaviour tests (a group id after a group order, an anchor after acquisition, engaged in a fight)."""
+    unit = lib.om_unit_spawn(w, RAIDER, 0, 0.0, 0.0, 0)
+    assert lib.om_unit_alive(w, unit) == 1 and unit not in UNKNOWN_UNITS, "control: a real unit id"
+    ax, ay = ctypes.c_double(-777.0), ctypes.c_double(-888.0)
+    assert lib.om_unit_get_group_id(w, unit) == 0
+    assert lib.om_unit_get_engaged(w, unit) == 0
+    assert lib.om_unit_get_leash_anchor(w, unit, ctypes.byref(ax), ctypes.byref(ay)) == 0
+    assert (ax.value, ay.value) == (-777.0, -888.0)
+    assert lib.om_unit_get_leash_anchor(w, unit, None, None) == 0, "NULL outputs are allowed"
