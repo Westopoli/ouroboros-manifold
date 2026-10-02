@@ -159,6 +159,12 @@ static void gen_place_region(om_world *w, uint32_t idx, om_tier tier, int32_t fi
         econ_val = gen_clamp(pop * OM_STARTING_ECO_RATIO + j1);
         double j2 = gen_uniform(w, -OM_STARTING_FIELD_JITTER, OM_STARTING_FIELD_JITTER);
         mil_val = gen_clamp(pop * OM_STARTING_MIL_RATIO + j2);
+#ifdef OM_DEBUG_INJECT
+        if (w->inject == OM_BUG_STARTING_RATIO_SWAPPED) {
+            econ_val = gen_clamp(pop * OM_STARTING_MIL_RATIO + j1);
+            mil_val  = gen_clamp(pop * OM_STARTING_ECO_RATIO + j2);
+        }
+#endif
     }
     double j3 = gen_uniform(w, -OM_STARTING_FIELD_JITTER, OM_STARTING_FIELD_JITTER);
     double tension_val = gen_clamp(pop * OM_STARTING_TENSION_RATIO + j3);
