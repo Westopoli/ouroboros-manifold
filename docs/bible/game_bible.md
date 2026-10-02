@@ -21,7 +21,7 @@ Read this hub first. Read an epic only when touching the system it owns.
 
 Ouroboros Manifold is a multiplayer strategic real-time strategy game set in a living, stochastic galaxy. The player is not a god, not a king, and not the leader of a civilization. The player is a commander: one person given a task force and an impossible job by a civilization that has its own plans, its own politics, and its own momentum. The world does not revolve around the player. It moves on its own.
 
-Missions are won or lost on positional skill. A smaller force that understands surrounds, high ground, and the 2.5D layer and vision system beats a larger force that does not. That is the skill ceiling, turned up past StarCraft 2's bar. Combat is full real-time, no pause, consistent across every player in a match.
+Missions are won or lost on positional skill. A smaller force that understands surrounds, high ground, and the 2.5D layer and vision system beats a larger force that does not. That is the skill ceiling, turned up past StarCraft 2's bar. Combat is full real-time, consistent across every player in a match; a multiplayer match never pauses.
 
 The game is structured as a generational chain of missions. Each mission is a chapter. Between chapters, decades pass and the galaxy evolves through the simulation. The player returns as someone new: a descendant, an old enemy's heir, or a stranger raised by circumstance. The player's career across generations is the story. The bloodline is cosmetic: it changes who the player is and what the chronicle says, never a simulation number.
 
@@ -45,8 +45,8 @@ The tragedy of understanding something you cannot fully control. You can read th
 - Art of Rally for the look: low-poly, stylized, clean silhouettes.
 - Halo: Combat Evolved for storytelling and world-building, and for music: generated, in that spirit.
 - Fortnite for the architecture of content: any skin, any map, any civilization, transferable across eras.
-- Not Stellaris: you command a task force, not an empire's economy and diplomacy.
-- Not Total War: there is no campaign map and battle map split. One continuous world at two zoom levels.
+- Not Stellaris: you command a task force, not an empire's economy and diplomacy; the economy behind your war is run by rules, or by a partner (`E-22`).
+- Not Total War: there is no campaign map and battle map split. In a mission the world is one world at continuous detail, from a single unit to the battlefield's map view, where the zoom stops (`E-17` S-166, `E-16` S-234); the galaxy is what you see between missions.
 - Not a god game: you do not hover above the world pressing buttons. You are in it.
 
 ### Design inspiration
@@ -57,14 +57,14 @@ The primary narrative and thematic inspiration is the feeling of vast civilizati
 
 Two layers with distinct tempos:
 
-- **Tactical layer, missions.** Full real-time RTS. The player commands force groups on a procedurally laid-out map, one engagement per mission, 30 to 60 minutes of continuous play. The strategic simulation is stopped during a mission.
+- **Tactical layer, missions.** Full real-time RTS. The player commands force groups on a procedurally laid-out map, one engagement per mission, 30 to 60 minutes of continuous play. Behind the fight stands a base and a real economy, run by rules or, in the paired mode, by a second player (`E-22`, `E-19` S-159). The strategic simulation is stopped during a mission; the mission's economy runs on its own tactical rules.
 - **Macro layer, the generational simulation.** A batch-tick simulation of factions, regions, and history that runs forward between missions and produces a chronicle of what happened.
 
 The cycle: mission; outcome resolver (the result becomes proportional changes to the mission region); time jump (the simulation runs 20 to 100 years while the player watches the galaxy animate and a five-to-ten-entry chronicle print itself); character selector and mission generator (the next commander and mission are chosen from the new state); mission again, as someone new.
 
-In a mission the player selects force groups and issues move, attack-move, attack-target, and ability orders; reads the engagement; decides when to commit or break off. Between missions the player watches the chronicle, reads the galaxy, and takes the next orders.
+In a mission the player selects force groups and issues move, attack-move, attack-target, and ability orders; uses the three layer actions on purpose (ping a layer, go dark or emit, and reach by unit type, `E-01` S-162 to S-164); reads the engagement; decides when to commit or break off. Alone, the player steers the economy with a dial, a doctrine, and requests made by pointing at the map (`E-16` S-231). Between missions the player watches the chronicle, reads the galaxy, and takes the next orders.
 
-There is no pause in a mission and no rewind of the galaxy. Chapter boundaries are the save points and the clean exits.
+A single-player mission can be paused from the menu and a multiplayer match never pauses (`E-16` S-104, `E-19` S-142); there is no rewind of the galaxy. Chapter boundaries are the save points and the clean exits.
 
 ## Sacred Design Principles
 
@@ -84,11 +84,11 @@ The player receives a variable set of assets per mission, shaped by simulation s
 
 Units feel real but are not deep characters. They have names. Losing one stings, especially a heavy Siege unit, but attachment is to the mission and the civilization, not to individuals.
 
-The player does not manage an economy or build a base. The civilization allocates a starting force by mission type and its own state; about a fifth of what a full mission can field; the rest, up to and beyond the whole, comes from local reinforcement structures captured and held during the mission, so a player who holds production ends with more than they started with and one who loses it fights with a fifth A thriving civilization gives a well-equipped force. A declining one gives scraps. The gap is where the drama lives.
+The commander does not administer an economy or build a base. The civilization allocates a starting force by mission type and its own state: about a fifth of what a full mission can field. The rest, up to and beyond the whole, is made by production that the economy pays for, in the base, in expansions and forward bases, and in strongpoints held at the slopes between height bands on land maps (`E-22` S-170, S-175, `E-15`). A side that keeps its production and its economy running ends with more than it started with, and one that loses them fights with a fifth. A thriving civilization gives a well-equipped force. A declining one gives scraps. The gap is where the drama lives.
 
-A real economy sits behind every battle (`E-19` S-159, design decided 2026-10-01, not yet scheduled for building). Every side has a base of operations it must protect, with literal workers, three resources, buildings, production and technology. In the core single-commander game rules run it for the player, and run it well, and the base is a spectacle that builds itself while the fight goes on. In an optional paired mode a second player runs it: he gathers, builds, defends, chooses technology and makes the units the commander receives, so the two have to talk. The rule above holds for the commander: he does not administer the economy. Alone, he has one dial for the balance between economy, technology and army, can change the doctrine the rules follow, and asks for things by pointing at the map.
+A real economy stands behind every battle (`E-22`). Every side has a base of operations it must protect, with literal workers, three resources, buildings, production and technology. In the core single-commander game rules run it for the player, and run it well, and the base is a spectacle that builds itself while the fight goes on. In the optional paired mode, in teams of 2, 4 or 6, a second player runs it: he gathers, builds, defends, chooses technology and makes the units the commander receives, so the two have to talk. Who that player is in the chain of command is open (`Q-241-02`). Alone, the commander has one dial for the balance between economy, technology and army, can change the doctrine the rules follow, asks for things by pointing at the map (from the map view too), can override the unit mix the rules pick and switch that behaviour off, and chooses whether the enemy's economy, which runs on the same rules, also scouts, counters and disguises.
 
-Onboarding asks two things before the first chapter, difficulty and mission-type preferences, and both can be changed later. Progression unlocks are era unlocks and, after launch, trait cards (E-11 S-083); there is no player level.
+Onboarding asks two things before the first chapter, difficulty and mission-type preferences, and both can be changed later. The economy choices of a mission, the starting doctrine, the unit-mix behaviours and the enemy economy's foresight, are the player's to make; where is open (`Q-233-01`). Progression unlocks are era unlocks and, after launch, trait cards (E-11 S-083); there is no player level.
 
 ## Tone and Feel
 
@@ -125,20 +125,21 @@ Commander or god? Chronicle material? Era-agnostic? Is losing interesting? Does 
 5. The tragedy of understanding: mastery is knowing why you lost.
 6. A 2.5D layer and vision system that pushes positional skill past the genre's bar.
 7. Multi-era matches on one skeleton.
+8. A real economy behind every battle, run by rules or by a partner, on a world drawn at continuous detail from a single unit to the battlefield, with a base that builds itself.
 
 ## Monetization
 
-Steam, one base SKU at $10 to $15 containing three eras: past, present, and future. Additional eras are $3 packs; some are earnable through play, some are purchase-only. No subscription, no in-game store, no Workshop at launch. The three launch eras share identical mechanics; only art, names, and prose differ. Eras that feel different come after launch, through per-era fog, pace, and reinforcement (E-20 S-151).
+Steam, one base SKU at $10 to $15. The launch set is two eras, one in space and one on land; the price was set for three eras, past, present and future, and whether it and the SKU's contents change is open [Q-149-03]. Additional eras are $3 packs; some are earnable through play, some are purchase-only. No subscription, no in-game store, no Workshop at launch. The launch eras' units and rules are essentially the same; landscape, visuals, art, names, and prose differ. Eras that feel different come after launch, through per-era fog, pace, and the pace of production (E-20 S-151).
 
 ## Reference Hardware
 
 Every scale and frame-rate requirement in the epics is defined for the **minimum-spec machine**, never for the development machine: GeForce GTX 1070 (or equivalent), a Ryzen 5 1600 / Core i5-7600 class CPU, 16 GB RAM, a SATA SSD, at 1920×1080. "60 fps" means 60 fps on that machine. The development machine (the forge: Ryzen 7 3700X, RTX 3060) is faster, so a measurement taken there must clear the budget with margin: GPU frame-rate gates by ×1.85 (60 fps on the 1070 is about 110 fps on the 3060), CPU per-tick and latency budgets by ×1.35 (single-thread speed ratio), disk budgets unchanged (SATA SSD on both). The scale suite (`tests/csim/scale/`) applies the CPU factor through `OM_SCALE_CPU_FACTOR`; a run on an actual minimum-spec machine sets it to 1.0. Westley owns these numbers; they are never loosened by a worker, and a miss is escalated.
 
-**Long-term goal: huge scale.** Westley, 2026-10-01: "I'd really like to take advantage of the massive computing power computers these days have access to, make units/visuals really efficient, and just make the game super busy/huge scale." The long-term target is battles and economies of thousands of units and workers on one map, a busy screen at every zoom, reached by making the simulation and the visuals efficient, not by raising the hardware floor. This is a direction, not a budget: the scale requirements in the epics stay as written until Westley changes them, and new systems are designed so they do not stand in the way of it (E-11, E-18, E-19 S-159).
+**Long-term goal: huge scale.** Westley, 2026-10-01: "I'd really like to take advantage of the massive computing power computers these days have access to, make units/visuals really efficient, and just make the game super busy/huge scale." The long-term target is battles and economies of thousands of units and workers on one map, a busy screen at every zoom, reached by making the simulation and the visuals efficient, not by raising the hardware floor. This is a direction, not a budget: the scale requirements in the epics stay as written until Westley changes them, and new systems are designed so they do not stand in the way of it (E-11, E-16, E-18, E-22). The client's budgets stop at 1,000 units while the simulation's run to 10,000, and the client's budgets for thousands are open (Q-240-01).
 
 ## The Systems
 
-Each is an epic file under `epics/`. Sim core: E-02 region fields and drift, E-03 world generation, E-04 events and chains, E-05 faction agents and conflict, E-06 diplomacy and technology, E-07 civilizational lifecycle, E-08 generational structure, E-09 chronicle, E-10 missions. Tactical: E-01 layer system, E-11 units and combat, E-12 fog and sensors, E-13 movement and command, E-14 enemy macro behavior, E-15 reinforcement and hazards, E-17 map generation. Client and cross-cutting: E-16 camera, HUD, world view, and screens; E-18 visual style and combat visuals; E-19 multiplayer; E-20 multi-era and monetization; E-21 offline AI pipeline. The retained equations are in `algorithms.md`.
+Each is an epic file under `epics/`. Sim core: E-02 region fields and drift, E-03 world generation, E-04 events and chains, E-05 faction agents and conflict, E-06 diplomacy and technology, E-07 civilizational lifecycle, E-08 generational structure, E-09 chronicle, E-10 missions. Tactical: E-01 layer system, E-11 units and combat, E-12 fog and sensors, E-13 movement and command, E-14 enemy macro behavior, E-15 reinforcement, strongpoints and hazards, E-17 map generation (including S-166, settlements that build themselves and landscape with real height), E-22 economy and bases. Client and cross-cutting: E-16 camera, HUD, world view, and screens; E-18 visual style and combat visuals; E-19 multiplayer (including S-159, the paired mode); E-20 multi-era and monetization; E-21 offline AI pipeline. The retained equations are in `algorithms.md`.
 
 ## Document Maintenance
 

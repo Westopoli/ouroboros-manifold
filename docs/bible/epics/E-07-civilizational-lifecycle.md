@@ -11,7 +11,7 @@
 | Every visible-surface story has a reference | Not applicable. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: not passed.** Blocked on 4 open flags. Q-054-01 (the deferred Survival / Exodus / Extinction outcomes, Stage 1 A-063/A-068/A-106/A-165) is the largest and stays deferred with the feature; the other three are narrow.
+**Gate verdict: not passed.** Blocked on 4 open flags. No story was added to this epic on 2026-10-02; the new flags that touch it are held by E-02 S-220 and S-222. Q-054-01 (the deferred Survival / Exodus / Extinction outcomes, Stage 1 A-063/A-068/A-106/A-165) is the largest and stays deferred with the feature; the other three are narrow.
 
 ## Purpose
 
@@ -52,7 +52,7 @@ Rules
 - R-050-05  Given a reversion, When the log is read, Then it records the original and restored factions and the stolen amounts.
 
 Inputs: previous owner; held-since; registry; RNG.
-Outputs: reversion record; ownership.
+Outputs: reversion record; ownership. Reversion on a revolt is the only allegiance change this epic has; where a populace contested in a mission ends up is Q-220-02 (E-02 S-220).
 Open flags: Q-050-01 (the reversion draw is made after the resource split, so a reverted region is damaged twice over: confirm that is intended).
 
 ### S-051 — Nations that never were
@@ -94,7 +94,7 @@ Rules
 - R-053-07  Given the six checks, When evaluated, Then they are evaluated in exactly this order and the first match wins.
 
 Inputs: recent event window; owned regions; world.
-Outputs: phase label in the faction entry; consumed by E-09 and E-10.
+Outputs: phase label in the faction entry; consumed by E-09 and E-10. Whether it also feeds the density of self-built settlements is Q-222-01 (E-02 S-222).
 Open flags: none.
 
 ### S-054 — Where a civilization ends up
@@ -152,7 +152,7 @@ None required in this epic.
 
 ## Open ambiguity flags
 
-Q-049-01, Q-050-01, Q-052-01, Q-054-01. Details in `docs/northstar/ambiguity_register.md`.
+Q-049-01, Q-050-01, Q-052-01, Q-054-01, and Q-220-02 and Q-222-01 as cited in S-050 and S-053. Details in `docs/northstar/ambiguity_register.md`.
 
 ## Depends on
 
@@ -161,3 +161,4 @@ Q-049-01, Q-050-01, Q-052-01, Q-054-01. Details in `docs/northstar/ambiguity_reg
 - E-06 Diplomacy (stances for new factions; tech inheritance).
 - E-08 Generational structure (player rotation when the player's faction falls).
 - E-09 Chronicle (consumer of phase labels and lifecycle records).
+- E-02 S-220 and S-222 (what a mission leaves in a region; whether the phase label feeds settlement growth).

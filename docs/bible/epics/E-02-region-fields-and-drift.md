@@ -11,11 +11,13 @@
 | Every visible-surface story has a reference | Not applicable. No story in this epic has its own visible surface; the world view that shows region state is E-16. |
 | "Obviously working" in 60 seconds named | Yes, see below. |
 
-**Gate verdict: passed (2026-09-13). Ready (2026-09-14).** The 3 flags (Q-013-01, Q-015-01, Q-019-01) are answered and folded below. Stage 3 e2e is authored (`docs/northstar/e2e/E-02.md`); scale gates confirmed by Westley. All Definition-of-Ready items met; stories S-012 … S-020 are Ready for Stage 5 tests. S-160 (drift feature-switch correctness) added 2026-09-17 from the harness defect investigation; its ID is out of epic-local sequence because S-021 … S-159 are already assigned elsewhere in the catalog.
+**Gate verdict: passed (2026-09-13). Ready (2026-09-14).** The 3 flags (Q-013-01, Q-015-01, Q-019-01) are answered and folded below. Stage 3 e2e is authored (`docs/northstar/e2e/E-02.md`); scale gates confirmed by Westley. All Definition-of-Ready items met; stories S-012 … S-020 are Ready for Stage 5 tests. S-160 (drift feature-switch correctness) added 2026-09-17 from the harness defect investigation; its ID is out of epic-local sequence because S-021 … S-159 are already assigned elsewhere in the catalog. S-220, S-221 and S-222 were added 2026-10-02 from the economy and landscape decisions; S-220 and S-222 carry open flags and have not been through the gate, S-221 is decided and has not been through the gate.
 
 ## Purpose
 
 Every region in the galaxy carries four numbers that say how it is doing: military strength, economic output, factional tension, and population. Two derived numbers, stability and capacity, summarize them for everything that makes big decisions. Every tick, slow forces move the four numbers a little: armies cost money, people make money, hardship breeds unrest, unrest hurts production, prosperity grows population. Under those forces a healthy region hums along, a stressed region slides, and a region at the bottom spirals unless someone outside helps it.
+
+A region's climate, landform and environmental trouble are not among the four numbers. They are derived from the world seed (S-221), and the region record gains no field for them. What a mission leaves behind in a region beyond the four numbers is S-220, and which of these numbers a settlement's growth reads is S-222.
 
 This is the ground the whole simulation stands on. Events, factions, missions, and the chronicle all read these numbers. The player never edits them directly; missions do. The equations are retained verbatim from the Python sim (`algorithms.md`), and the C rewrite must reproduce them to the bit.
 
@@ -169,6 +171,52 @@ Inputs: the `OM_FEAT_DRIFT` switch; tick sequence position; trace-enable state.
 Outputs: whether the drift step executed; which economy value the same-tick budget step saw; whether a trace row (and its checksum) was emitted for the tick.
 Open flags: none. A4 (whether EVENTS/FACTIONS/FRICTION/ADMIN_REVOLTS/DIPLOMACY/TECHNOLOGY default on or off in `om_world_new`) is separately flagged and out of this story's scope; this story only fixes `OM_FEAT_DRIFT`'s own switch being ignored and the drift step's position in the tick.
 
+### S-220 — What a mission leaves in a region
+As a commander, I want what happened in a mission to show in the region when I come back, so that the galaxy I return to is the one I fought in.
+
+Direction decided in part 2026-10-02 (E-22 S-177, E-22 S-178); the rest is open, and none of it is scheduled for building. What the pair carries forward between missions is E-22 S-182 (Q-159-07), not this story.
+
+Rules
+- R-220-01  Given a mission resolves, When the outcome resolver applies its consequence bundle (E-10 R-078-01), Then the region's four fields change by the bundle's deltas and, for a transfer band, its owner changes (E-10 R-078-04); these are the only changes a mission makes to a region today.
+- R-220-02  Given a side's base of operations was occupied in the mission, or a side lost its original main base (E-22 S-178), When the mission ends, Then [Q-220-01: what, if anything, the simulation records in or about the region].
+- R-220-03  Given a neutral populace was contested in the mission (E-22 S-177), When the mission ends, Then [Q-220-02: where the populace ended up, in the region's population or tension, in its ownership, or nowhere].
+- R-220-04  Given a base was damaged in the mission and a time jump follows, When the jump ends, Then [Q-159-13: whether the damage persists and how fast it is rebuilt; decided by Westley as "depends on the situation", simulation work to do].
+- R-220-05  Given any state R-220-02 to R-220-04 adds to a region, When memory per region is counted, Then it counts against the budget under Scale requirements.
+
+Inputs: the consequence bundle and the mission's end state (E-10).
+Outputs: the region record, if any of the flags above add to it; the chronicle (E-09).
+Open flags: Q-220-01, Q-220-02, Q-159-13.
+
+### S-221 — A region's climate, landform and trouble come from the seed
+As a commander, I want each region to have its own climate, landform and environmental trouble, so that no two missions are fought on the same kind of ground.
+
+Decided 2026-10-02 (DECISIONS H9): derived from the seed for now, with no change to the simulation's region record. Not scheduled for building. Space-era landscape is not designed (Q-166-02); these rules apply to land maps.
+
+Rules
+- R-221-01  Given any region, When its climate, landform or environmental trouble is needed (E-17 R-166-03, E-15 S-219), Then it is derived from the world seed, and the region record keeps exactly the fields of R-012-01 and gains none for them.
+- R-221-02  Given the same seed, When a region's climate, landform and trouble are derived twice, Then they are identical, on every platform.
+- R-221-03  Given the derivation is made, When it runs, Then [Q-221-01: whether it draws from the world generation's random stream, which would extend R-022-04's draw order, or is derived on its own from the seed and leaves that order alone].
+- R-221-04  Given an empty-tier region, When its climate, landform or trouble is needed, Then [Q-221-02: whether empty regions have them, or only inhabited ones].
+- R-221-05  Given the derivation is later replaced by stored fields, When that is decided, Then it is a contract change to `csrc/ouroboros_sim.h` that lands first as its own piece.
+
+Inputs: the world seed.
+Outputs: climate, landform and environmental trouble to the map generator (E-17 S-166); not part of the strategic snapshot's region entry.
+Open flags: Q-221-01, Q-221-02.
+
+### S-222 — What a settlement's growth reads from a region
+As a commander, I want a settlement to grow in step with how its region is doing, so that a rich region looks rich.
+
+Decided in part 2026-10-02 (E-17 R-166-03, `docs/northstar/research/economy_design/settlement_generation_options.md` option 3A, which Westley picked); the rest is open. Not scheduled for building.
+
+Rules
+- R-222-01  Given a mission region, When the density target of its self-built settlements is set, Then it comes from the region's economy and the mission clock.
+- R-222-02  Given the region's population, or the age of the owning faction (the phase label of E-07 S-053), When the density target is set, Then [Q-222-01: whether and how they also feed it].
+- R-222-03  Given the density field, When it is read, Then whether it lives in the simulation or only on screen is Q-166-03 (E-17), not decided here.
+
+Inputs: the region's economy; the mission clock; the flagged inputs above.
+Outputs: the density target to the settlement generator (E-17 S-166).
+Open flags: Q-222-01, Q-166-03.
+
 ## Inputs
 
 | Input | Source | Range | Rejection |
@@ -181,7 +229,7 @@ Open flags: none. A4 (whether EVENTS/FACTIONS/FRICTION/ADMIN_REVOLTS/DIPLOMACY/T
 | Neighbor economy, edge type, stance | World, diplomacy | as their own epics | Not applicable |
 | Change source | Caller | drift, friction, event, conquest | Not applicable |
 
-No player input reaches this epic directly. Missions change fields through the outcome resolver (E-10).
+No player input reaches this epic directly. Missions change fields through the outcome resolver (E-10). What else a mission may leave in a region is S-220. Climate, landform and environmental trouble are not inputs or fields here; they are derived from the seed (S-221).
 
 ## Outputs
 
@@ -191,6 +239,8 @@ No player input reaches this epic directly. Missions change fields through the o
 | Per-term drift deltas | Tick log `drift` entry per region (T1 trace) |
 | Checksums | T1 trace every 10 ticks |
 | Region condition to the player | World view faction data panel and system hover tooltip (E-16); chronicle fragments (E-09) |
+| Economy (and, per Q-222-01, other fields) to settlement growth | Settlement generator (E-17 S-166), through S-222 |
+| Fields and composites to a mission's situation | Mission generator (E-10 S-074 reads capacity); the richness and base-kind inputs of E-22 S-177 and E-22 S-177 are held by E-22 S-177 |
 
 ## Invariants
 
@@ -203,7 +253,7 @@ No player input reaches this epic directly. Missions change fields through the o
 
 ## Scale requirements
 
-Confirmed by Westley 2026-09-14: 60 regions drift in under 50 µs per tick total; 5,000 ticks of drift alone for 60 regions in under 0.5 s; memory per region under 2,048 bytes, with the region connection table (a fixed 1 MB) counted separately (raised from 256 bytes by Westley 2026-10-02, after the audit measured about 1,609 bytes of which 1,536 are damage history). Not loosened by Agora; a miss is escalated.
+Confirmed by Westley 2026-09-14: 60 regions drift in under 50 µs per tick total; 5,000 ticks of drift alone for 60 regions in under 0.5 s; memory per region under 2,048 bytes, with the region connection table (a fixed 1 MB) counted separately (raised from 256 bytes by Westley 2026-10-02, after the audit measured about 1,609 bytes of which 1,536 are damage history, leaving about 440 bytes of headroom; any per-region state S-220 adds counts against it). Not loosened by Agora; a miss is escalated.
 
 ## Look and behavior references
 
@@ -223,10 +273,13 @@ None required. The player-facing surface for region state is E-16 (world view).
 
 ## Open ambiguity flags
 
-None. Q-013-01 (a), Q-015-01 (b), Q-019-01 (a) all answered 2026-09-13; folded into the stories above. Details in `docs/northstar/ambiguity_register.md`. Stage 3 e2e: `docs/northstar/e2e/E-02.md`.
+Q-220-01, Q-220-02, Q-221-01, Q-221-02, Q-222-01, and Q-159-13 and Q-166-03 as cited in S-220 and S-222. S-012 to S-020 and S-160 have none: Q-013-01 (a), Q-015-01 (b), Q-019-01 (a) were answered 2026-09-13 and folded into the stories above. Details in `docs/northstar/ambiguity_register.md`. Stage 3 e2e: `docs/northstar/e2e/E-02.md`.
 
 ## Depends on
 
 - E-03 World generation (starting fields, phase offsets, tiers, edge types).
 - E-05 Faction agents (modifiers, ownership, stances for the adjacency bonus).
 - E-04 Events (event and conquest sources for the floor rules).
+- E-10 Missions (the consequence bundle that changes fields, S-220).
+- E-17 Map generation (climate, landform and trouble are derived for it, S-221; it reads the economy for settlement growth, S-222).
+- E-22 Economy and bases (S-177 the situation a mission is given from a region; S-182 what carries forward).
