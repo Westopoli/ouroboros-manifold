@@ -7,7 +7,8 @@ extends SceneTree
 #   R-110-06  the detail shows identity, three tiers and unit roster, all from the pack manifest;
 #             nothing on screen is hard-coded
 #   R-110-07  ownership comes from a local ownership store; in dev builds every installed era is
-#             owned; mastery and tier progress read "not yet tracked" (Q-110-05)
+#             owned; the screen shows no mastery or tier progress (A51, Q-110-05 closed (a):
+#             removed, not "not yet tracked")
 # Validation here is the required-key rule of scripts/specfactory/pack_validate.py (R-146-03).
 #
 # Contract required (the scene roots, res://scenes/era_library/):
@@ -15,20 +16,21 @@ extends SceneTree
 #     qa_set_sources(packs_root: String, ownership_path: String) -> void
 #         re-reads packs from <packs_root>/<era_id>/manifest.json and rebuilds the cards;
 #         ownership_path "" or a missing file = the dev default (every installed era owned)
-#     qa_state() -> Dictionary   gains "eras": Array of {id, name, owned: bool,
-#         mastery_text: String, tier_text: String}; "era_count" == eras.size()
+#     qa_state() -> Dictionary   gains "eras": Array of {id, name, owned: bool};
+#         "era_count" == eras.size(); no mastery or tier-progress key anywhere in the state
 #   era_detail.tscn root:
 #     qa_set_sources(packs_root, ownership_path) -> void   (call before setup)
 #     setup({"era_id": id}) as today
 #     qa_state() -> Dictionary   gains "era_id", "name", "owned": bool, "tiers": Array[int]
-#         (the tier numbers in the manifest), "roster": Array of {abstract_type, category},
-#         "mastery_text", "tier_text"
+#         (the tier numbers in the manifest), "roster": Array of {abstract_type, category};
+#         no mastery or tier-progress key
 # With no qa_set_sources call both scenes read res://assets/eras/ (the live default).
 
 const LIB := "res://scenes/era_library/era_library.tscn"
 const DETAIL := "res://scenes/era_library/era_detail.tscn"
 const REAL_PACKS := "res://assets/eras"
 const FIX_ROOT := "user://c4_e1_fixture_packs"
+const PROGRESS_TEXT := ["mastery", "tier progress", "not yet tracked"]
 const LEGACY_TEXT := ["Legionary", "Medicus", "Roman", "Cold War", "Available on Steam", "COMING SOON", "Thalassa", "Tomcat"]
 
 var _pass_count := 0
@@ -109,6 +111,37 @@ func _legacy_hits(node: Node) -> Array:
 	return hits
 
 
+# Names of any mastery/tier-progress text, state key, or progress-bar node under the scene or state.
+func _progress_hits(node: Node, state) -> Array:
+	var hits := []
+	for t in _texts(node, []):
+		for bad in PROGRESS_TEXT:
+			if str(t).findn(bad) >= 0:
+				hits.append("text '%s'" % t)
+	_progress_nodes(node, hits)
+	_progress_keys(state, hits)
+	return hits
+
+
+func _progress_nodes(node: Node, hits: Array) -> void:
+	if node is ProgressBar:
+		hits.append("ProgressBar node %s" % node.name)
+	for c in node.get_children():
+		_progress_nodes(c, hits)
+
+
+func _progress_keys(v, hits: Array) -> void:
+	if v is Dictionary:
+		for k in v.keys():
+			var ks := str(k).to_lower()
+			if ks.find("mastery") >= 0 or ks.find("progress") >= 0:
+				hits.append("state key '%s'" % k)
+			_progress_keys(v[k], hits)
+	elif v is Array:
+		for x in v:
+			_progress_keys(x, hits)
+
+
 func _entry(eras: Array, id: String) -> Dictionary:
 	for e in eras:
 		if e is Dictionary and e.get("id", "") == id:
@@ -137,6 +170,13 @@ func _run_tests() -> void:
 	ctl_label.text = "Legionary"
 	ctl.add_child(ctl_label)
 	_assert(_legacy_hits(ctl).size() == 1, "control: legacy-text scan failed to catch a planted 'Legionary' label")
+	var ctl_prog := Label.new()
+	ctl_prog.text = "Mastery 40%"
+	ctl.add_child(ctl_prog)
+	var ctl_bar := ProgressBar.new()
+	ctl.add_child(ctl_bar)
+	var ctl_hits := _progress_hits(ctl, {"eras": [{"id": "x", "tier_progress": 1}]})
+	_assert(ctl_hits.size() == 3, "control: progress scan caught %s, expected a planted mastery label, ProgressBar and tier_progress key (3)" % [ctl_hits])
 	ctl.free()
 
 	# Fixture packs: two valid, one that fails validation (missing the required key "materials").
@@ -166,9 +206,8 @@ func _run_tests() -> void:
 	_assert(dunes.get("name", "") == "The Fixture Dunes", "R-110-05: card name '%s' is not the manifest's era_display_name" % dunes.get("name", ""))
 	_assert(bool(dunes.get("owned", false)) and bool(_entry(eras, "zz_tide").get("owned", false)),
 		"R-110-07: in a dev build every installed era is owned, got %s" % [eras])
-	for e in eras:
-		_assert(str(e.get("mastery_text", "")).findn("not yet tracked") >= 0 and str(e.get("tier_text", "")).findn("not yet tracked") >= 0,
-			"R-110-07/Q-110-05: card %s mastery_text '%s' tier_text '%s' must read 'not yet tracked'" % [e.get("id"), e.get("mastery_text"), e.get("tier_text")])
+	var phits := _progress_hits(lib, st)
+	_assert(phits.is_empty(), "R-110-07/A51: library shows mastery or tier progress, it must be removed entirely: %s" % [phits])
 	var texts := _texts(lib, [])
 	_assert("The Fixture Dunes" in texts, "R-110-05: no label on the library screen shows the manifest name 'The Fixture Dunes'")
 	var hits := _legacy_hits(lib)
@@ -220,8 +259,8 @@ func _run_tests() -> void:
 		roster[r.get("abstract_type", "")] = r.get("category", "")
 	_assert(roster == {"alpha": "line", "beta": "strike", "gamma": "siege"},
 		"R-110-06: detail roster %s, expected exactly the manifest units alpha/beta/gamma with their categories" % [roster])
-	_assert(str(ds.get("mastery_text", "")).findn("not yet tracked") >= 0 and str(ds.get("tier_text", "")).findn("not yet tracked") >= 0,
-		"R-110-07/Q-110-05: detail mastery_text '%s' tier_text '%s' must read 'not yet tracked'" % [ds.get("mastery_text"), ds.get("tier_text")])
+	var dphits := _progress_hits(det, ds)
+	_assert(dphits.is_empty(), "R-110-07/A51: detail shows mastery or tier progress, it must be removed entirely: %s" % [dphits])
 	var dtexts := _texts(det, [])
 	_assert("The Fixture Dunes" in dtexts, "R-110-06: detail screen shows no label with the manifest name")
 	var dhits := _legacy_hits(det)
